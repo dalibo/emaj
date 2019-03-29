@@ -26,7 +26,7 @@ The function returns the number of tables and sequences that now belong to the t
 
 The *emaj_alter_group()* function also recreates E-Maj objects that may be missing (log tables, functions, …).
 
-The function creates and drops the secondary schemas when needed.
+The function creates and drops the log schemas when needed.
 
 Once altered, a tables group remains in *IDLE* state, but its log tables become empty.
 
@@ -61,8 +61,6 @@ However, some actions are possible while the tables groups are in *LOGGING* stat
 +------------------------------------------------+---------------+-----------------------+
 | Action                                         | LOGGING Group | Method                |
 +================================================+===============+=======================+
-| Change the log schema suffix                   | Yes           | emaj_group_def update |
-+------------------------------------------------+---------------+-----------------------+
 | Change the E-Maj names prefix                  | Yes           | emaj_group_def update |
 +------------------------------------------------+---------------+-----------------------+
 | Change the log data tablespace                 | Yes           | emaj_group_def update |

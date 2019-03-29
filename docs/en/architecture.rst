@@ -61,19 +61,29 @@ To let E-Maj work, some **other technical objects** are also created at extensio
 Some technical tables, whose structure is interesting to know, are described in details: :ref:`emaj_group_def <emaj_group_def>`, :ref:`emaj_param <emaj_param>` and :ref:`emaj_hist <emaj_hist>`.
 
 
+Schemas
+*******
+
+Almost all technical objects created at E-Maj installation are located into the schema named **emaj**. The only exception is the event trigger *emaj_protection_trg* that belongs to the *public* schema.
+
+All objects linked to application tables are stored into schemas named *emaj_<schema>*, where <schema> is the schema name of the application tables.
+
+The creation and the suppression of log schemas are only managed by E-Maj functions. They should NOT contain any other objects than those created by the extension.
+
+
 Norm for E-Maj objects naming
 *****************************
 
-All objects associated to application tables have names built by default with the name of their related table and schema. More precisely, for an application table in a given schema:
+For an application table, the log objects name is prefixed with the table name. More precisely, for an application table:
 
 * the name of the **log table** is: 
-	<schema.name>_<table.name>_log
+	<table.name>_log
 
 * the name of the **log function** is: 
-	<schema.name>_<table.name>_log_fnct
+	<table.name>_log_fnct
 
 * the name of the **sequence** associated to the log table is:
-	<schema.name>_<table.name>_log_seq
+	<table.name>_log_seq
 
 It is also possible to define for each application table the **prefix** of the associated E-Maj objects name. This allows to manage tables with very long names.
 
@@ -92,20 +102,9 @@ Other E-Maj **function** names are also normalised:
 The name of **event triggers** starts with `emaj_` and ends with `_trg`.
 
 
-Schemas
-*******
-
-All technical objects created at E-Maj installation are located into the schema named **emaj**.
-
-By default, all objects linked to a tables group are created in the main schema *emaj*. But it is possible to locate these objects in one or several **secondary schemas**. Secondary schemas' names start with `emaj`, only their suffix being parametrized in :ref:`tables groups definition <emaj_group_def>`.
-
-Only one technical object is not located into the emaj schema: the event trigger *emaj_protection_trg* belongs to the public schema.
-
-
 Tablespaces
 ***********
 
 When the extension is installed, the E-Maj technical tables are stored into the default tablespace set at instance or database level or explicitely set for the current session.
 
 The same rule applies for log tables and index. But using :ref:`tables group parameters <emaj_group_def>`, it is also possible to store log tables and/or their index into specific tablespaces.
-

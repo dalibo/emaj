@@ -32,7 +32,7 @@ Le contenu du ou des groupes de tables que l'on souhaite gérer se définit en g
 +--------------------------+------+------------------------------------------------------------------------------------------------------+
 | grpdef_priority          | INT  | niveau de priorité de la table ou de la séquence dans les traitements E-Maj (optionnel)              |
 +--------------------------+------+------------------------------------------------------------------------------------------------------+
-| grpdef_log_schema_suffix | TEXT | suffixe permettant de construire le nom du schéma contenant les objets E-Maj de la table (optionnel) |
+| grpdef_log_schema_suffix | TEXT | suffixe permettant de construire le nom du schéma contenant les objets E-Maj de la table (déprécié)  |
 +--------------------------+------+------------------------------------------------------------------------------------------------------+
 | grpdef_emaj_names_prefix | TEXT | préfixe des noms d'objets E-Maj générés pour la table (optionnel)                                    |
 +--------------------------+------+------------------------------------------------------------------------------------------------------+
@@ -72,14 +72,6 @@ Les colonnes optionnelles
 
 La colonne **grpdef_priority** est de type entier (*INTEGER*) et peut prendre la valeur *NULL*, Elle permet de définir un ordre de priorité dans le traitements des tables par les fonctions d'E-Maj. Ceci peut-être utile pour faciliter la pose des verrous. En effet, en posant les verrous sur les tables dans le même ordre que les accès applicatifs typiques, on peut limiter le risque de deadlock. Les fonctions E-Maj traitent les tables dans l'ordre croissant de *grpdef_priority*, les valeurs *NULL* étant traitées en dernier. Pour un même niveau de priorité, les tables sont traitées dans l'ordre alphabétique de nom de schéma puis de nom de table.
 
-Pour les installations E-Maj comportant un très grand nombre de tables, il peut s'avérer pratique de répartir tous les objets créés par l'extension dans plusieurs schémas, au lieu de les concentrer dans l'unique schéma emaj. La colonne **grpdef_log_schema_suffix** sert à spécifier le nom du schéma dans lequel la table de log, la séquence de log et les fonctions de log et de rollback seront créées.
-
-Si cette colonne *grpdef_log_schema_suffix* contient une valeur *NULL* ou une chaîne vide, le schéma principal *emaj* sera utilisé. Dans le cas contraire, un schéma secondaire sera utilisé. Son nom est la concaténation de '*emaj*' et de la valeur de la colonne.
-
-La création et la suppression des schémas secondaires sont gérées exclusivement par les fonctions E-Maj. Ils ne devront PAS contenir d'objets autres que ceux créés par E-Maj.
-
-Pour les séquences, la colonne *grpdef_log_schema_suffix* doit rester *NULL*.
-
 Pour les tables dont le nom est très long, le préfixe par défaut des noms d'objet E-Maj générés peut s'avérer trop long pour respecter les limites de PostgreSQL. Mais un autre préfixe peut être défini pour chaque table, en alimentant la colonne **grpdef_emaj_names_prefix**.
 
 Si cette colonne *grpdef_emaj_names_prefix* contient une valeur *NULL*, le préfixe par défaut *<nom_schéma>_<nom_table>* est utilisé.
@@ -113,7 +105,7 @@ La fonction retourne le nombre de tables et de séquences contenues dans le grou
 
 Pour chaque table du groupe, cette fonction crée la table de log associée, la fonction et le trigger de log, ainsi que le trigger bloquant les exécutions de requêtes SQL *TRUNCATE*.
 
-La fonction crée également les éventuels schémas E-Maj secondaires nécessaires.
+La fonction crée également les schémas de log nécessaires.
 
 En revanche, si des tablespaces spécifiques pour les tables de log ou pour leurs index, sont référencés, ceux-ci doivent déjà exister avant l'exécution de la fonction.
 
@@ -372,7 +364,7 @@ La fonction retourne le nombre de tables et de séquences contenues dans le grou
 
 Pour ce groupe de tables, la fonction *emaj_drop_group()* supprime tous les objets qui ont été créés par la fonction :ref:`emaj_create_group() <emaj_create_group>` : tables de log, fonctions de log, triggers de log.
 
-Les éventuels schémas E-Maj secondaires qui deviennent inutilisés sont également supprimés.
+Les éventuels schémas de log qui deviennent inutilisés sont également supprimés.
 
 La pose de verrous qu’entraîne cette opération peut se traduire par la survenue d'une étreinte fatale (*deadlock*). Si la résolution de l'étreinte fatale impacte la fonction E-Maj, le *deadlock* est intercepté et la pose de verrou est automatiquement réitérée, avec un maximum de 5 tentatives.
 

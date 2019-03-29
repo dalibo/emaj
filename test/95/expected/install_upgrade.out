@@ -1,4 +1,5 @@
--- install_upgrade.sql : Upgrade from E-Maj 2.2.2 to next_version while groups are not yet created.
+-- install_upgrade.sql
+-- Install the last stable E-Maj version and immediately upgrade to the devel version, while groups are not yet created.
 -- install E-Maj as an extension 
 --
 ------------------------------------------------------------

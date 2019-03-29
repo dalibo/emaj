@@ -44,9 +44,9 @@ begin;
   update emaj.emaj_relation set rel_kind = 'S' where rel_schema = 'myschema1' and rel_tblseq = 'mytbl1' and upper_inf(rel_time_range);
   select emaj.emaj_start_group('myGroup1','M1');
 rollback;
--- detection of a missing E-Maj secondary schema
+-- detection of a missing E-Maj log schema
 begin;
-  drop schema emajb cascade;
+  drop schema emaj_myschema1 cascade;
   select emaj.emaj_start_group('myGroup1','M1');
 rollback;
 -- detection of a missing log trigger
@@ -56,7 +56,7 @@ begin;
 rollback;
 -- detection of a missing log function
 begin;
-  drop function emaj.myschema1_mytbl1_log_fnct() cascade;
+  drop function emaj_myschema1.mytbl1_log_fnct() cascade;
   select emaj.emaj_start_group('myGroup1','M1');
 rollback;
 -- detection of a missing truncate trigger
@@ -66,7 +66,7 @@ begin;
 rollback;
 -- detection of a missing log table
 begin;
-  drop table emaj.myschema1_mytbl1_log;
+  drop table emaj_myschema1.mytbl1_log;
   select emaj.emaj_start_group('myGroup1','M1');
 rollback;
 -- detection of a change in the application table structure (new column)
@@ -105,7 +105,7 @@ begin;
 rollback;
 -- detection of a log table missing a technical column
 begin;
-  alter table emaj.myschema1_mytbl1_log drop column emaj_verb;
+  alter table emaj_myschema1.mytbl1_log drop column emaj_verb;
   select emaj.emaj_start_group('myGroup1','M1');
 rollback;
 
@@ -152,7 +152,7 @@ truncate myschema1.mytbl1 cascade;
 -- ... for an audit_only group (must be logged)
 truncate "phil's schema3"."phil's tbl1" cascade;
 select "phil's col11", "phil's col12", "phil\s col13", emaj_verb, emaj_tuple, emaj_gid, emaj_user
-  from "emaj #'3"."phil's schema3_phil's tbl1_log";
+  from "emaj_phil's schema3"."phil's tbl1_log";
 
 -- use of % in start mark name
 select emaj.emaj_start_group('myGroup1','Foo%Bar');

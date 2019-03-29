@@ -218,7 +218,7 @@ CREATE TABLE emaj.emaj_group (
 COMMENT ON TABLE emaj.emaj_group IS
 $$Contains created E-Maj groups.$$;
 
--- table containing the primary and secondary E-Maj schemas
+-- table containing the emaj and log schemas
 CREATE TABLE emaj.emaj_schema (
   sch_name                     TEXT        NOT NULL,       -- schema name
   sch_datetime                 TIMESTAMPTZ NOT NULL DEFAULT transaction_timestamp(),
@@ -1024,28 +1024,28 @@ $_check_conf_groups$
 ---- check that several tables of the group have not the same emaj names prefix
     RETURN QUERY
       WITH dupl_prefix AS (
-        SELECT coalesce(grpdef_emaj_names_prefix, grpdef_schema || '_' || grpdef_tblseq) AS prefix, count(*)
+        SELECT grpdef_schema AS logschema, coalesce(grpdef_emaj_names_prefix, grpdef_tblseq) AS prefix, count(*)
           FROM emaj.emaj_group_def
           WHERE grpdef_group = ANY (v_groupNames)
-          GROUP BY 1 HAVING count(*) > 1)
+          GROUP BY 1,2 HAVING count(*) > 1)
       SELECT 10, 1, grpdef_group, grpdef_schema, grpdef_tblseq, prefix,
              format('in the group %s, the table %s.%s would have a duplicate emaj prefix "%s".', quote_ident(grpdef_group), quote_ident(grpdef_schema), quote_ident(grpdef_tblseq), prefix)
         FROM emaj.emaj_group_def, dupl_prefix
-        WHERE coalesce(grpdef_emaj_names_prefix, grpdef_schema || '_' || grpdef_tblseq) = prefix
+        WHERE grpdef_schema = logschema AND coalesce(grpdef_emaj_names_prefix, grpdef_tblseq) = prefix
           AND grpdef_group = ANY (v_groupNames);
 ---- check that emaj names prefix that will be generared will not generate conflict with objects from existing groups
     RETURN QUERY
       WITH dupl_prefix AS (
-        SELECT coalesce(grpdef_emaj_names_prefix, grpdef_schema || '_' || grpdef_tblseq) AS prefix
+        SELECT grpdef_schema AS logschema, coalesce(grpdef_emaj_names_prefix, grpdef_tblseq) AS prefix
           FROM emaj.emaj_group_def, emaj.emaj_relation
-          WHERE coalesce(grpdef_emaj_names_prefix, grpdef_schema || '_' || grpdef_tblseq) || '_log' = rel_log_table
+          WHERE grpdef_schema = rel_log_schema AND coalesce(grpdef_emaj_names_prefix, grpdef_tblseq) || '_log' = rel_log_table
             AND grpdef_group = ANY (v_groupNames)
             AND NOT rel_group = ANY (v_groupNames) AND upper_inf(rel_time_range)
       )
       SELECT 11, 1, grpdef_group, grpdef_schema, grpdef_tblseq, prefix,
              format('in the group %s, the table %s.%s would have an already used emaj prefix "%s".', quote_ident(grpdef_group), quote_ident(grpdef_schema), quote_ident(grpdef_tblseq), prefix)
         FROM emaj.emaj_group_def, dupl_prefix
-        WHERE coalesce(grpdef_emaj_names_prefix, grpdef_schema || '_' || grpdef_tblseq) = prefix
+        WHERE grpdef_schema = logschema AND coalesce(grpdef_emaj_names_prefix, grpdef_tblseq) = prefix
           AND grpdef_group = ANY (v_groupNames);
 ---- check that the log data tablespaces for tables exist
     RETURN QUERY
@@ -1087,14 +1087,6 @@ $_check_conf_groups$
           AND NOT EXISTS (SELECT 1 FROM pg_catalog.pg_class, pg_catalog.pg_namespace, pg_catalog.pg_constraint
                             WHERE relnamespace = pg_namespace.oid AND connamespace = pg_namespace.oid AND conrelid = pg_class.oid
                             AND contype = 'p' AND nspname = grpdef_schema AND relname = grpdef_tblseq);
----- all sequences described in emaj_group_def have their log schema suffix attribute set to NULL
-    RETURN QUERY
-      SELECT 30, 1, grpdef_group, grpdef_schema, grpdef_tblseq, NULL::TEXT,
-             format('in the group %s, for the sequence %s.%s, the secondary log schema suffix is not NULL.', quote_ident(grpdef_group), quote_ident(grpdef_schema), quote_ident(grpdef_tblseq))
-        FROM emaj.emaj_group_def, pg_catalog.pg_class, pg_catalog.pg_namespace
-        WHERE grpdef_schema = nspname AND grpdef_tblseq = relname AND relnamespace = pg_namespace.oid
-          AND grpdef_group = ANY (v_groupNames) AND relkind = 'S' AND grpdef_log_schema_suffix IS NOT NULL;
----- all sequences described in emaj_group_def have their emaj names prefix attribute set to NULL
     RETURN QUERY
       SELECT 31, 1, grpdef_group, grpdef_schema, grpdef_tblseq, NULL::TEXT,
              format('in the group %s, for the sequence %s.%s, the emaj names prefix is not NULL.', quote_ident(grpdef_group), quote_ident(grpdef_schema), quote_ident(grpdef_tblseq))
@@ -1340,26 +1332,25 @@ $_log_truncate_fnct$;
 CREATE OR REPLACE FUNCTION emaj._create_log_schemas(v_function TEXT, v_groupNames TEXT[])
 RETURNS VOID LANGUAGE plpgsql SECURITY DEFINER AS
 $_create_log_schemas$
--- The function creates all secondary log schemas that will be needed to create new log tables. It gives the appropriate rights to emaj users on these schemas.
+-- The function creates all log schemas that will be needed to create new log tables. It gives the appropriate rights to emaj users on these schemas.
 -- Input: calling function to record into the emaj_hist table,
 --        array of group names
--- The function is created as SECURITY DEFINER so that secondary schemas can be owned by superuser
+-- The function is created as SECURITY DEFINER so that log schemas can be owned by superuser
   DECLARE
-    v_schemaPrefix           TEXT = 'emaj';
+    v_schemaPrefix           TEXT = 'emaj_';
     r_schema                 RECORD;
   BEGIN
     FOR r_schema IN
-        SELECT DISTINCT v_schemaPrefix || grpdef_log_schema_suffix AS log_schema FROM emaj.emaj_group_def
+        SELECT DISTINCT v_schemaPrefix || grpdef_schema AS log_schema FROM emaj.emaj_group_def
           WHERE grpdef_group = ANY (v_groupNames)
-            AND grpdef_log_schema_suffix IS NOT NULL AND grpdef_log_schema_suffix <> ''   -- secondary log schemas needed for the groups
             AND NOT EXISTS                                                                -- minus those already created
-              (SELECT 0 FROM emaj.emaj_schema WHERE sch_name = v_schemaPrefix || grpdef_log_schema_suffix)
+              (SELECT 0 FROM emaj.emaj_schema WHERE sch_name = v_schemaPrefix || grpdef_schema)
         ORDER BY 1
       LOOP
 -- check that the schema doesn't already exist
       PERFORM 0 FROM pg_catalog.pg_namespace WHERE nspname = r_schema.log_schema;
       IF FOUND THEN
-        RAISE EXCEPTION '_create_log_schemas: The schema "%" should not exist. Drop it manually, or modify emaj_group_def table''s content.',r_schema.log_schema;
+        RAISE EXCEPTION '_create_log_schemas: The schema "%" should not exist. Drop it manually.',r_schema.log_schema;
       END IF;
 -- create the schema and give the appropriate rights
       EXECUTE 'CREATE SCHEMA ' || quote_ident(r_schema.log_schema);
@@ -1368,7 +1359,7 @@ $_create_log_schemas$
 -- and record the schema creation into the emaj_schema and the emaj_hist tables
       INSERT INTO emaj.emaj_schema (sch_name) VALUES (r_schema.log_schema);
       INSERT INTO emaj.emaj_hist (hist_function, hist_event, hist_object)
-        VALUES (v_function, 'SCHEMA CREATED', quote_ident(r_schema.log_schema));
+        VALUES (v_function, 'LOG_SCHEMA CREATED', quote_ident(r_schema.log_schema));
     END LOOP;
     RETURN;
   END;
@@ -1377,20 +1368,20 @@ $_create_log_schemas$;
 CREATE OR REPLACE FUNCTION emaj._drop_log_schemas(v_function TEXT, v_isForced BOOLEAN)
 RETURNS VOID LANGUAGE plpgsql SECURITY DEFINER AS
 $_drop_log_schemas$
--- The function looks for secondary emaj schemas to drop. Drop them if any.
+-- The function looks for log schemas to drop. Drop them if any.
 -- Input: calling function to record into the emaj_hist table,
 --        boolean telling whether the schema to drop may contain residual objects
--- The function is created as SECURITY DEFINER so that secondary schemas can be dropped in any case
+-- The function is created as SECURITY DEFINER so that log schemas can be dropped in any case
   DECLARE
     r_schema                 RECORD;
   BEGIN
--- For each secondary schema to drop,
+-- For each log schema to drop,
     FOR r_schema IN
         SELECT sch_name AS log_schema FROM emaj.emaj_schema                           -- the existing schemas
           WHERE sch_name <> 'emaj'
           EXCEPT
         SELECT DISTINCT rel_log_schema FROM emaj.emaj_relation                        -- the currently needed schemas (after tables drop)
-          WHERE rel_kind = 'r' and rel_log_schema <> 'emaj'
+          WHERE rel_kind = 'r' AND rel_log_schema <> 'emaj'
         ORDER BY 1
         LOOP
 -- check that the schema really exists
@@ -1415,7 +1406,7 @@ $_drop_log_schemas$
       DELETE FROM emaj.emaj_schema WHERE sch_name = r_schema.log_schema;
 -- record the schema drop in emaj_hist table
       INSERT INTO emaj.emaj_hist (hist_function, hist_event, hist_object)
-        VALUES (v_function,'SCHEMA DROPPED',quote_ident(r_schema.log_schema));
+        VALUES (v_function,'LOG_SCHEMA DROPPED',quote_ident(r_schema.log_schema));
     END LOOP;
     RETURN;
   END;
@@ -1437,8 +1428,7 @@ $_create_tbl$
 --    - the function that logs the tables updates, defined as a trigger
 -- The function is defined as SECURITY DEFINER so that emaj_adm role can use it even if he is not the owner of the application table.
   DECLARE
-    v_emajSchema             TEXT = 'emaj';
-    v_schemaPrefix           TEXT = 'emaj';
+    v_schemaPrefix           TEXT = 'emaj_';
     v_emajNamesPrefix        TEXT;
     v_baseLogTableName       TEXT;
     v_baseLogIdxName         TEXT;
@@ -1461,15 +1451,15 @@ $_create_tbl$
     v_triggerList            TEXT;
   BEGIN
 -- the checks on the table properties are performed by the calling functions
--- build the prefix of all emaj object to create, by default <schema>_<table>
-    v_emajNamesPrefix = coalesce(r_grpdef.grpdef_emaj_names_prefix, r_grpdef.grpdef_schema || '_' || r_grpdef.grpdef_tblseq);
+-- build the prefix of all emaj object to create, by default <table>
+    v_emajNamesPrefix = coalesce(r_grpdef.grpdef_emaj_names_prefix, r_grpdef.grpdef_tblseq);
 -- build the name of emaj components associated to the application table (non schema qualified and not quoted)
     v_baseLogTableName     = v_emajNamesPrefix || '_log';
     v_baseLogIdxName       = v_emajNamesPrefix || '_log_idx';
     v_baseLogFnctName      = v_emajNamesPrefix || '_log_fnct';
     v_baseSequenceName     = v_emajNamesPrefix || '_log_seq';
 -- build the different name for table, trigger, functions,...
-    v_logSchema        = coalesce(v_schemaPrefix || r_grpdef.grpdef_log_schema_suffix, v_emajSchema);
+    v_logSchema        = v_schemaPrefix || r_grpdef.grpdef_schema;
     v_fullTableName    = quote_ident(r_grpdef.grpdef_schema) || '.' || quote_ident(r_grpdef.grpdef_tblseq);
     v_logTableName     = quote_ident(v_logSchema) || '.' || quote_ident(v_baseLogTableName);
     v_logIdxName       = quote_ident(v_baseLogIdxName);
@@ -1682,42 +1672,6 @@ $_add_tbl$
   END;
 $_add_tbl$;
 
-CREATE OR REPLACE FUNCTION emaj._change_log_schema_tbl(r_rel emaj.emaj_relation, v_newLogSchemaSuffix TEXT, v_multiGroup BOOLEAN)
-RETURNS VOID LANGUAGE plpgsql SECURITY DEFINER AS
-$_change_log_schema_tbl$
--- This function processes the change of log schema for an application table
--- Input: the existing emaj_relation row for the table, and the new log schema suffix
--- The function is defined as SECURITY DEFINER so that emaj_adm role can use it even if he is not the owner of the application table.
-  DECLARE
-    v_emajSchema             TEXT = 'emaj';
-    v_schemaPrefix           TEXT = 'emaj';
-    v_newLogSchema           TEXT;
-  BEGIN
--- build the name of new log schema
-    v_newLogSchema = coalesce(v_schemaPrefix || v_newLogSchemaSuffix, v_emajSchema);
--- process the log schema change for the log table and the log sequence
-    EXECUTE 'ALTER TABLE ' || quote_ident(r_rel.rel_log_schema) || '.' || quote_ident(r_rel.rel_log_table)|| ' SET SCHEMA ' || quote_ident(v_newLogSchema);
-    EXECUTE 'ALTER SEQUENCE ' || quote_ident(r_rel.rel_log_schema) || '.' || quote_ident(r_rel.rel_log_sequence)|| ' SET SCHEMA ' || quote_ident(v_newLogSchema);
--- modify the log function (name and content)
-    EXECUTE 'DROP FUNCTION ' || quote_ident(r_rel.rel_log_schema) || '.' || quote_ident(r_rel.rel_log_function) || '() CASCADE';
-    PERFORM emaj._create_log_trigger(quote_ident(r_rel.rel_schema) || '.' || quote_ident(r_rel.rel_tblseq),
-                                     quote_ident(v_newLogSchema) || '.' || quote_ident(r_rel.rel_log_table),
-                                     quote_ident(v_newLogSchema) || '.' || quote_ident(r_rel.rel_log_sequence),
-                                     quote_ident(v_newLogSchema) || '.' || quote_ident(r_rel.rel_log_function));
--- as the group in LOGGING state, keep the trigger enabled
--- adjust sequences schema names in emaj_sequence tables
-    UPDATE emaj.emaj_sequence SET sequ_schema = v_newLogSchema WHERE sequ_schema = r_rel.rel_log_schema AND sequ_name = r_rel.rel_log_sequence;
--- update the table attributes into emaj_relation
-    UPDATE emaj.emaj_relation SET rel_log_schema = v_newLogSchema
-      WHERE rel_schema = r_rel.rel_schema AND rel_tblseq = r_rel.rel_tblseq AND rel_time_range = r_rel.rel_time_range;
--- insert an entry into the emaj_hist table
-    INSERT INTO emaj.emaj_hist (hist_function, hist_event, hist_object, hist_wording)
-      VALUES (CASE WHEN v_multiGroup THEN 'ALTER_GROUPS' ELSE 'ALTER_GROUP' END, 'LOG SCHEMA CHANGED',
-              quote_ident(r_rel.rel_schema) || '.' || quote_ident(r_rel.rel_tblseq), r_rel.rel_log_schema || ' => ' || v_newLogSchema);
-    RETURN;
-  END;
-$_change_log_schema_tbl$;
-
 CREATE OR REPLACE FUNCTION emaj._change_emaj_names_prefix(r_rel emaj.emaj_relation, v_newNamesPrefix TEXT, v_multiGroup BOOLEAN)
 RETURNS VOID LANGUAGE plpgsql SECURITY DEFINER AS
 $_change_emaj_names_prefix$
@@ -1732,7 +1686,7 @@ $_change_emaj_names_prefix$
     v_newLogIndexName        TEXT;
   BEGIN
 -- build the name of new emaj components associated to the application table (non schema qualified and not quoted)
-    v_newEmajNamesPrefix = coalesce(v_newNamesPrefix, r_rel.rel_schema || '_' || r_rel.rel_tblseq);
+    v_newEmajNamesPrefix = coalesce(v_newNamesPrefix, r_rel.rel_tblseq);
     v_newLogTableName    = v_newEmajNamesPrefix || '_log';
     v_newLogIndexName    = v_newEmajNamesPrefix || '_log_idx';
     v_newLogSequenceName = v_newEmajNamesPrefix || '_log_seq';
@@ -2885,7 +2839,7 @@ CREATE OR REPLACE FUNCTION emaj.emaj_create_group(v_groupName TEXT, v_isRollback
 RETURNS INT LANGUAGE plpgsql AS
 $emaj_create_group$
 -- This function creates emaj objects for all tables of a group
--- It also creates the secondary E-Maj schemas when needed
+-- It also creates the log E-Maj schemas when needed
 -- Input: group name,
 --        boolean indicating whether the group is rollbackable or not (true by default),
 --        boolean explicitely indicating whether the group is empty or not
@@ -2937,7 +2891,7 @@ $emaj_create_group$
     INSERT INTO emaj.emaj_group (group_name, group_is_rollbackable, group_creation_time_id, group_has_waiting_changes,
                                  group_is_logging, group_is_rlbk_protected)
       VALUES (v_groupName, v_isRollbackable, v_timeId, FALSE, FALSE, NOT v_isRollbackable);
--- create new E-Maj secondary schemas, if needed
+-- create new E-Maj log schemas, if needed
     PERFORM emaj._create_log_schemas('CREATE_GROUP', ARRAY[v_groupName]);
 -- get and process all tables of the group (in priority order, NULLS being processed last)
     FOR r_grpdef IN
@@ -3058,10 +3012,10 @@ CREATE OR REPLACE FUNCTION emaj._drop_group(v_groupName TEXT, v_isForced BOOLEAN
 RETURNS INT LANGUAGE plpgsql SECURITY DEFINER AS
 $_drop_group$
 -- This function effectively deletes the emaj objects for all tables of a group
--- It also drops secondary schemas that are not useful any more
+-- It also drops log schemas that are not useful any more
 -- Input: group name, and a boolean indicating whether the group's state has to be checked
 -- Output: number of processed tables and sequences
--- The function is defined as SECURITY DEFINER so that secondary schemas can be dropped
+-- The function is defined as SECURITY DEFINER so that log schemas can be dropped
   DECLARE
     v_eventTriggers          TEXT[];
     v_nbTb                   INT;
@@ -3077,7 +3031,7 @@ $_drop_group$
         PERFORM CASE WHEN r_rel.rel_kind = 'r' THEN emaj._drop_tbl(r_rel)
                      WHEN r_rel.rel_kind = 'S' THEN emaj._drop_seq(r_rel) END;
     END LOOP;
--- drop the E-Maj secondary schemas that are now useless (i.e. not used by any other created group)
+-- drop the E-Maj log schemas that are now useless (i.e. not used by any other created group)
     PERFORM emaj._drop_log_schemas(CASE WHEN v_isForced THEN 'FORCE_DROP_GROUP' ELSE 'DROP_GROUP' END, v_isForced);
 -- delete group row from the emaj_group table.
 --   By cascade, it also deletes rows from emaj_mark
@@ -3169,11 +3123,11 @@ $_alter_groups$
       SELECT emaj._disable_event_triggers() INTO v_eventTriggers;
 -- we can now plan all the steps needed to perform the operation
       PERFORM emaj._alter_plan(v_groupNames, v_timeId);
--- create the needed secondary schemas
+-- create the needed log schemas
       PERFORM emaj._create_log_schemas(CASE WHEN v_multiGroup THEN 'ALTER_GROUPS' ELSE 'ALTER_GROUP' END, v_groupNames);
 -- execute the plan
       PERFORM emaj._alter_exec(v_timeId, v_multiGroup);
--- drop the E-Maj secondary schemas that are now useless (i.e. not used by any created group)
+-- drop the E-Maj log schemas that are now useless (i.e. not used by any created group)
       PERFORM emaj._drop_log_schemas(CASE WHEN v_multiGroup THEN 'ALTER_GROUPS' ELSE 'ALTER_GROUP' END, FALSE);
 -- update some attributes in the emaj_group table
       UPDATE emaj.emaj_group
@@ -3201,8 +3155,6 @@ $_alter_plan$
 -- This function build the elementary steps that will be needed to perform an alter_groups operation.
 -- Looking at emaj_relation and emaj_group_def tables, it populates the emaj_alter_plan table that will be used by the _alter_exec() function.
 -- Input: group names array, timestamp id of the operation (it will be used to identify rows in the emaj_alter_plan table)
-  DECLARE
-    v_schemaPrefix           TEXT = 'emaj';
   BEGIN
 -- the plan is built using the same steps order than the coming execution
 -- determine the relations that do not belong to the groups anymore
@@ -3237,19 +3189,6 @@ $_alter_plan$
         FROM emaj.emaj_group
         WHERE group_name = ANY (v_groupNames)
           AND NOT group_is_logging;
--- determine the tables whose log schema in emaj_group_def has changed
-    INSERT INTO emaj.emaj_alter_plan (altr_time_id, altr_step, altr_schema, altr_tblseq, altr_group, altr_priority, altr_new_group)
-      SELECT v_timeId, 'CHANGE_TBL_LOG_SCHEMA', rel_schema, rel_tblseq, rel_group, grpdef_priority,
-             CASE WHEN rel_group <> grpdef_group THEN grpdef_group ELSE NULL END
-        FROM emaj.emaj_relation, emaj.emaj_group_def
-        WHERE rel_schema = grpdef_schema AND rel_tblseq = grpdef_tblseq AND upper_inf(rel_time_range)
-          AND rel_group = ANY (v_groupNames)
-          AND grpdef_group = ANY (v_groupNames)
-          AND rel_kind = 'r'
-          AND rel_log_schema <> (v_schemaPrefix || coalesce(grpdef_log_schema_suffix, ''))
---   exclude tables that will have been repaired in a previous step
-          AND (rel_schema, rel_tblseq) NOT IN (
-            SELECT altr_schema, altr_tblseq FROM emaj.emaj_alter_plan WHERE altr_time_id = v_timeId AND altr_step = 'REPAIR_TBL');
 -- determine the tables whose emaj names prefix in emaj_group_def has changed
     INSERT INTO emaj.emaj_alter_plan (altr_time_id, altr_step, altr_schema, altr_tblseq, altr_group, altr_priority, altr_new_group)
       SELECT v_timeId, 'CHANGE_TBL_NAMES_PREFIX', rel_schema, rel_tblseq, rel_group, grpdef_priority,
@@ -3259,7 +3198,7 @@ $_alter_plan$
           AND rel_group = ANY (v_groupNames)
           AND grpdef_group = ANY (v_groupNames)
           AND rel_kind = 'r'
-          AND rel_log_table <> (coalesce(grpdef_emaj_names_prefix, grpdef_schema || '_' || grpdef_tblseq) || '_log')
+          AND rel_log_table <> (coalesce(grpdef_emaj_names_prefix, grpdef_tblseq) || '_log')
 --   exclude tables that will have been repaired in a previous step
           AND (rel_schema, rel_tblseq) NOT IN (
             SELECT altr_schema, altr_tblseq FROM emaj.emaj_alter_plan WHERE altr_time_id = v_timeId AND altr_step = 'REPAIR_TBL');
@@ -3341,7 +3280,6 @@ $_alter_exec$
 -- It looks at the emaj_alter_plan table and executes elementary step in proper order.
 -- Input: timestamp id of the operation
   DECLARE
-    v_logSchemaSuffix        TEXT;
     v_emajNamesPrefix        TEXT;
     v_logDatTsp              TEXT;
     v_logIdxTsp              TEXT;
@@ -3391,17 +3329,6 @@ $_alter_exec$
 --
         WHEN 'REPAIR_SEQ' THEN
           RAISE EXCEPTION 'alter_exec: Internal error, trying to repair a sequence (%.%) is abnormal.', r_plan.altr_schema, r_plan.altr_tblseq;
---
-        WHEN 'CHANGE_TBL_LOG_SCHEMA' THEN
--- get the table description from emaj_relation
-          SELECT * INTO r_rel FROM emaj.emaj_relation
-            WHERE rel_schema = r_plan.altr_schema AND rel_tblseq = r_plan.altr_tblseq AND upper_inf(rel_time_range);
--- get the table description from emaj_group_def
-          SELECT grpdef_log_schema_suffix INTO v_logSchemaSuffix FROM emaj.emaj_group_def
-            WHERE grpdef_group = coalesce (r_plan.altr_new_group, r_plan.altr_group)
-              AND grpdef_schema = r_plan.altr_schema AND grpdef_tblseq = r_plan.altr_tblseq;
--- then alter the relation, depending on the changes
-          PERFORM emaj._change_log_schema_tbl(r_rel, v_logSchemaSuffix, v_multiGroup);
 --
         WHEN 'CHANGE_TBL_NAMES_PREFIX' THEN
 -- get the table description from emaj_relation
@@ -3532,7 +3459,7 @@ $_start_groups$
 -- if requested by the user, call the emaj_reset_groups() function to erase remaining traces from previous logs
       if v_resetLog THEN
         PERFORM emaj._reset_groups(v_groupNames);
---    drop the secondary schemas that would have been emptied by the _reset_groups() call
+--    drop the log schemas that would have been emptied by the _reset_groups() call
         SELECT emaj._disable_event_triggers() INTO v_eventTriggers;
         PERFORM emaj._drop_log_schemas(CASE WHEN v_multiGroup THEN 'START_GROUPS' ELSE 'START_GROUP' END, FALSE);
         PERFORM emaj._enable_event_triggers(v_eventTriggers);
@@ -4206,7 +4133,7 @@ $_delete_before_mark_group$
         AND sequ_time_id < v_markTimeId;
     DELETE FROM emaj.emaj_relation
       WHERE rel_group = v_groupName AND rel_kind = 'r' AND upper(rel_time_range) <= v_markTimeId;
--- drop the E-Maj secondary schemas that are now useless (i.e. not used by any created group)
+-- drop the E-Maj log schemas that are now useless (i.e. not used by any created group)
     PERFORM emaj._drop_log_schemas('DELETE_BEFORE_MARK_GROUP', FALSE);
 -- delete rows from all other log tables
     FOR r_rel IN
@@ -6059,7 +5986,7 @@ $emaj_reset_group$
     PERFORM emaj._check_group_names(v_groupNames := ARRAY[v_groupName], v_mayBeNull := FALSE, v_lockGroups := TRUE, v_checkList := 'IDLE');
 -- perform the reset operation
     SELECT emaj._reset_groups(ARRAY[v_groupName]) INTO v_nbTb;
--- drop the secondary schemas that would have been emptied by the _reset_groups() call
+-- drop the log schemas that would have been emptied by the _reset_groups() call
     SELECT emaj._disable_event_triggers() INTO v_eventTriggers;
     PERFORM emaj._drop_log_schemas('RESET_GROUP', FALSE);
     PERFORM emaj._enable_event_triggers(v_eventTriggers);
@@ -6790,7 +6717,7 @@ $emaj_snap_log_group$
           ORDER BY rel_priority, rel_schema, rel_tblseq
         LOOP
 --   build names
-      v_fileName = v_dir || '/' || translate(r_tblsq.rel_log_table || '.snap', E' /\\$<>*', '_______');
+      v_fileName = v_dir || '/' || translate(r_tblsq.rel_schema || '_' || r_tblsq.rel_log_table || '.snap', E' /\\$<>*', '_______');
       v_logTableName = quote_ident(r_tblsq.rel_log_schema) || '.' || quote_ident(r_tblsq.rel_log_table);
 --   prepare the execute the COPY statement
       v_stmt= 'COPY (SELECT * FROM ' || v_logTableName || ' WHERE ' || v_conditions
@@ -7461,7 +7388,7 @@ $emaj_verify_all$
     IF FOUND THEN
       RETURN NEXT 'Warning: Some E-Maj event triggers exist but are disabled. You may enable them using the emaj_enable_protection_by_event_triggers() function.';
     END IF;
--- check all E-Maj primary and secondary schemas
+-- check all E-Maj schemas
     FOR r_object IN
       SELECT msg FROM emaj._verify_all_schemas() msg
     LOOP
@@ -7507,7 +7434,6 @@ $_adjust_group_properties$
 -- It returns the number of groups that have been updated.
   DECLARE
     v_nbAdjustedGroups       INT = 0;
-    v_schemaPrefix           TEXT = 'emaj';
   BEGIN
 -- process the group_has_waiting_changes column using one big SQL statement
     WITH
@@ -7525,8 +7451,7 @@ $_adjust_group_properties$
               --         or whose log data tablespace in emaj_group_def has changed
               --         or whose log index tablespace in emaj_group_def has changed
                OR (rel_kind = 'r'
-                  AND (rel_log_schema <> (v_schemaPrefix || coalesce(grpdef_log_schema_suffix, ''))
-                    OR rel_log_table <> (coalesce(grpdef_emaj_names_prefix, grpdef_schema || '_' || grpdef_tblseq) || '_log')
+                  AND (rel_log_table <> (coalesce(grpdef_emaj_names_prefix, grpdef_tblseq) || '_log')
                     OR coalesce(rel_log_dat_tsp,'') <> coalesce(grpdef_log_dat_tsp,'')
                     OR coalesce(rel_log_idx_tsp,'') <> coalesce(grpdef_log_idx_tsp,'')
                       ))

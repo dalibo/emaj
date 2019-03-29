@@ -37,13 +37,7 @@ select emaj.emaj_rename_mark_group('myGroup1','EMAJ_LAST_MARK','End_rollback_to_
 select emaj.emaj_consolidate_rollback_group('myGroup1','End_rollback_to_M2');
 
 -----------------------------
--- Step 4 : revert the alter group myGroup1 by reseting the log schema for mytbl2b
------------------------------
-update emaj.emaj_group_def set grpdef_log_schema_suffix = NULL where grpdef_schema = 'myschema1' and grpdef_tblseq = 'mytbl2b';
-select emaj.emaj_alter_group('myGroup1');
-
------------------------------
--- Step 5 : for myGroup1, update tables again then set 3 marks
+-- Step 4 : for myGroup1, update tables again then set 3 marks
 -----------------------------
 insert into myTbl1 select i, 'DEF', E'\\000'::bytea from generate_series (100,110) as i;
 insert into myTbl2 values (3,'GHI','2010-01-02');
@@ -60,14 +54,14 @@ update myTbl1 set col11 = 99 where col11 = 1;
 select emaj.emaj_set_mark_group('myGroup1','M6');
 
 -----------------------------
--- Step 6 : for myGroup2, logged rollback again then unlogged rollback 
+-- Step 5 : for myGroup2, logged rollback again then unlogged rollback 
 -----------------------------
 select * from emaj.emaj_logged_rollback_group('myGroup2','M2',false) order by 1,2;
 --
 select * from emaj.emaj_rollback_group('myGroup2','M3',false) order by 1,2;
 
 -----------------------------
--- Step 7 : for myGroup1, update tables, rollback, other updates, then logged rollback
+-- Step 6 : for myGroup1, update tables, rollback, other updates, then logged rollback
 -----------------------------
 set search_path=myschema1;
 --
@@ -90,7 +84,7 @@ select * from emaj.emaj_logged_rollback_group('myGroup1','M4',false) order by 1,
 alter table mySchema1.myTbl2 enable trigger myTbl2trg;
 
 -----------------------------
--- Step 8 : for myGroup1, update tables, rename a mark, then delete 2 marks then delete all before a mark 
+-- Step 7 : for myGroup1, update tables, rename a mark, then delete 2 marks then delete all before a mark 
 -----------------------------
 set search_path=myschema1;
 --

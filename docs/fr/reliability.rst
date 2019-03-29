@@ -30,7 +30,7 @@ L'installation d'E-Maj inclut la création de 2 triggers sur événements de typ
 
 * *emaj_sql_drop_trg* bloque la suppression :
 
-  * de tout objet E-Maj (table de logs, séquence de log, fonction de log, trigger de log, schéma secondaire),
+  * de tout objet E-Maj (schéma de log, table de logs, séquence de log, fonction de log et trigger de log),
   * de toute table ou séquence applicatives appartenant à un groupe de tables en état « *LOGGING* »,
   * de tout schéma contenant au moins une table ou séquence appartenant à un groupe de tables en état « *LOGGING* ».
 

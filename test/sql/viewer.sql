@@ -33,7 +33,7 @@ select count(*) from emaj.emaj_rlbk;
 select count(*) from emaj.emaj_rlbk_session;
 select count(*) from emaj.emaj_rlbk_plan;
 select count(*) from emaj.emaj_rlbk_stat;
-select count(*) from emaj.mySchema1_myTbl1_log;
+select count(*) from emaj_mySchema1.myTbl1_log;
 
 -----------------------------
 -- authorized functions
@@ -68,7 +68,7 @@ delete from emaj.emaj_rlbk;
 delete from emaj.emaj_rlbk_session;
 delete from emaj.emaj_rlbk_plan;
 delete from emaj.emaj_rlbk_stat;
-delete from emaj.mySchema1_myTbl1_log;
+delete from emaj_mySchema1.myTbl1_log;
 
 -----------------------------
 -- forbiden functions

@@ -32,7 +32,7 @@ The content of tables groups E-Maj will manage has to be defined by populating t
 +--------------------------+------+---------------------------------------------------------------------------------------------------+
 | grpdef_priority          | INT  | priority level for the table or sequence in E-Maj processing (optional)                           |
 +--------------------------+------+---------------------------------------------------------------------------------------------------+
-| grpdef_log_schema_suffix | TEXT | suffix used to build the name of the schema containing the E-Maj objects for the table (optional) |
+| grpdef_log_schema_suffix | TEXT | suffix used to build the name of the schema containing the E-Maj objects for the table(deprecated)|
 +--------------------------+------+---------------------------------------------------------------------------------------------------+
 | grpdef_emaj_names_prefix | TEXT | prefix of E-Maj objects names generated for the table (optional)                                  |
 +--------------------------+------+---------------------------------------------------------------------------------------------------+
@@ -71,14 +71,6 @@ Optional columns
 
 The type of the **grpdef_priority** column is *INTEGER* and may be *NULL*. It defines a priority order in E-Maj tables processing. This can be useful at table lock time. Indeed, by locking tables in the same order as what is typically done by applications, it may reduce the risk of deadlock. E-Maj functions process tables in *grpdef_priority* ascending order, *NULL* being processed last. For a same priority level, tables are processed in alphabetic order of schema name and table name.
 
-For E-Maj installations having a large number of tables, it may be useful to spread all E-Maj objects on several schemas, instead of concentrating them in the unique emaj schema. The **grpdef_log_schema_suffix** column allows to specify the schema that will hold the log table, the log sequence, and the log and rollback functions for a particular application table.
-
-It this *grpdef_log_schema_suffix* column contains a *NULL* or an empty chain, the emaj main schema will be used. Otherwise, a secondary schema will be used. Its name is then built as the concatenation of '*emaj*' and the column's content.
-
-The creation and the suppression of secondary schemas are only managed by E-Maj functions. They should NOT contain any other objects than those created by the extension.
-
-For sequences, the *grpdef_log_schema_suffix* column must be *NULL*.
-
 For tables having long names, the default prefix for E-Maj objects names may be too long to fit the PostgreSQL limits. But another prefix may be defined for each table, by setting the **grpdef_emaj_names_prefix** column.
 
 If this *grpdef_emaj_names_prefix* column contains a *NULL* value, the default prefix *<nom_schéma>_<nom_table>* is used.
@@ -113,7 +105,7 @@ The function returns the number of tables and sequences contained by the group.
 
 For each table of the group, this function creates the associated log table, the log function and trigger, as well as the trigger that blocks the execution of *TRUNCATE* SQL statements.
 
-The function also creates the secondary E-Maj schemas if needed.
+The function also creates the log schemas, if needed.
 
 On the contrary, if specific tablespaces are referenced for any log table or log index, these tablespaces must exist before the function's execution.
 
@@ -371,6 +363,7 @@ The function returns the number of tables and sequences contained in the group.
 
 For this tables group, the *emaj_drop_group()* function drops all the objects that have been created by the :ref:`emaj_create_group() <emaj_create_group>` function: log tables, log and rollback functions, log triggers.
 
-The function also drops all secondary schemas that have become empty.
+The function also drops all log schemas that are now useless.
+
 The locks set by this operation can lead to deadlock. If the deadlock processing impacts the execution of the E-Maj function, the error is trapped and the lock operation is repeated, with a maximum of 5 attempts.
 

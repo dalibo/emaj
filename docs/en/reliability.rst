@@ -30,7 +30,7 @@ Installing E-Maj adds 2 event triggers of type “*sql_drop*“:
 
 * *emaj_sql_drop_trg* blocks the drop attempts of:
 
-  * any E-Maj object (log table, log sequence, log function, log trigger and secondary schema),
+  * any E-Maj object (log schema, log table, log sequence, log function and log trigger),
   * any application table or sequence belonging to a table group in *LOGGING* state,
   * any schema containing at least one table or sequence belonging to a table group in *LOGGING* state.
 

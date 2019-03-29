@@ -26,7 +26,7 @@ La fonction retourne le nombre de tables et de séquences dorénavant contenues 
 
 La fonction *emaj_alter_group()* recrée également les objets E-Maj qui pourraient manquer (table de log, fonction, …).
 
-La fonction supprime et/ou crée les schémas de log secondaires, en fonction des besoins.
+La fonction supprime et/ou crée les schémas de log, en fonction des besoins.
 
 A l'issue de la modification d'un groupe, celui-ci reste en état « *IDLE* » mais le contenu de ses tables de log est purgé.
 
@@ -61,10 +61,6 @@ Néanmoins certaines actions sont possibles sur des groupes de tables maintenus 
 +----------------------------------------+----------------+--------------------------------+
 | Action                                 | Groupe LOGGING | Méthode                        |
 +========================================+================+================================+
-| Changer le groupe d'appartenance       | Non            |                                |
-+----------------------------------------+----------------+--------------------------------+
-| Changer le suffixe du schéma de log    | Oui            | Ajustement emaj_group_def      |
-+----------------------------------------+----------------+--------------------------------+
 | Changer le préfixe des noms emaj       | Oui            | Ajustement emaj_group_def      |
 +----------------------------------------+----------------+--------------------------------+
 | Changer le tablespace de log data      | Oui            | Ajustement emaj_group_def      |
@@ -76,6 +72,8 @@ Néanmoins certaines actions sont possibles sur des groupes de tables maintenus 
 | Oter une table/séquence d’un groupe    | Oui            | Ajustement emaj_group_def      |
 +----------------------------------------+----------------+--------------------------------+
 | Ajouter une table/séquence à un groupe | Oui            | Ajustement emaj_group_def      |
++----------------------------------------+----------------+--------------------------------+
+| Changer le groupe d'appartenance       | Oui            | Ajustement emaj_group_def      |
 +----------------------------------------+----------------+--------------------------------+
 | Réparer une table ou une séquence      | Oui            | Enchaînement suppression/ajout |
 +----------------------------------------+----------------+--------------------------------+

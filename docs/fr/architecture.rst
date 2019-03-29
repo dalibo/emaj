@@ -61,19 +61,29 @@ Pour le bon fonctionnement d'E-Maj, un certain nombre d'**objets techniques** so
 Quelques tables techniques dont il peut être utile de connaître la structure sont décrites en détail :  :ref:`emaj_group_def <emaj_group_def>`, :ref:`emaj_param <emaj_param>` et :ref:`emaj_hist <emaj_hist>`.
 
 
+Les schémas créés
+*****************
+
+Tous les objets techniques créés lors de l'installation de l'extension sont localisés dans le schéma *emaj*. Seule la fonction associée au trigger sur événement *emaj_protection_trg* appartient au schéma *public*.
+
+Les objets associés aux tables applicatives sont créés dans des schémas nommés *emaj_<schéma>*, où <schéma> est le nom de schéma des tables applicatives.
+
+La création et la suppression de ces **schémas de log** sont gérées exclusivement par les fonctions E-Maj. Ils ne devront PAS contenir d'objets autres que ceux créés par E-Maj.
+
+
 Norme de nommage des objets E-Maj
 *********************************
 
-Les objets associés aux tables applicatives portent des noms construits en utilisant, par défaut, le nom de la table et de son schéma d'appartenance. Ainsi :
+Pour une table applicative, le nom des objets de log est préfixé par le nom de la table. Ainsi :
 
 * le nom de la **table de log** est : 
-	<nom.du.schema>_<nom.de.la.table>_log
+	<nom.de.la.table>_log
 
 * le nom de la **fonction de log** est : 
-	<nom.du.schema>_<nom.de.la.table>_log_fnct
+	<nom.de.la.table>_log_fnct
 
 * le nom de la **séquence** associée à la table de log est :
-    <nom.du.schema>_<nom.de.la.table>_log_seq
+    <nom.de.la.table>_log_seq
 
 Mais il est possible de définir, pour chaque table applicative, le **préfixe** constituant le nom des objets E-Maj associés. Ceci permet notamment de gérer des tables avec des noms très longs.
 
@@ -90,14 +100,6 @@ Les **triggers** créés sur les tables applicatives portent tous le même nom 
 * *emaj_trunc_trg* pour les triggers de contrôle des verbes *TRUNCATE*.
 
 Le nom des **triggers sur événements** commence par `emaj_` et se termine par `_trg`.
-
-
-Les schémas créés
-*****************
-
-Tous les objets techniques créés lors de l'installation de l'extension sont localisés dans le schéma **emaj**. Seule la fonction associée au trigger sur événement « emaj_protection_trg » appartient au schéma « public »
-
-Par défaut, tous les objets liés aux groupes de tables sont créés dans le schéma principal emaj. Mais, au travers du paramétrage des groupes de tables, il est possible de localiser ces objets dans un ou plusieurs **schémas secondaires**. Le nom des schémas secondaires commencent par « emaj », seul leur suffixe peut être défini dans le :ref:`paramétrage des groupes de tables <emaj_group_def>`.
 
 
 Les tablespaces utilisés

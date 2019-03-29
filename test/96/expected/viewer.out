@@ -8,20 +8,20 @@ grant emaj_viewer to emaj_regression_tests_viewer_user;
 -- prepare groups for the test
 -----------------------------
 select emaj.emaj_create_group('myGroup1');
-NOTICE:  table "myschema1_myTbl3_log" does not exist, skipping
+NOTICE:  table "myTbl3_log" does not exist, skipping
 NOTICE:  trigger "emaj_log_trg" for relation "myschema1.myTbl3" does not exist, skipping
 NOTICE:  trigger "emaj_trunc_trg" for relation "myschema1.myTbl3" does not exist, skipping
-NOTICE:  table "myschema1_mytbl1_log" does not exist, skipping
+NOTICE:  table "mytbl1_log" does not exist, skipping
 NOTICE:  trigger "emaj_log_trg" for relation "myschema1.mytbl1" does not exist, skipping
 NOTICE:  trigger "emaj_trunc_trg" for relation "myschema1.mytbl1" does not exist, skipping
-NOTICE:  table "myschema1_mytbl4_log" does not exist, skipping
+NOTICE:  table "mytbl4_log" does not exist, skipping
 NOTICE:  trigger "emaj_log_trg" for relation "myschema1.mytbl4" does not exist, skipping
 NOTICE:  trigger "emaj_trunc_trg" for relation "myschema1.mytbl4" does not exist, skipping
-NOTICE:  table "myschema1_mytbl2_log" does not exist, skipping
+NOTICE:  table "mytbl2_log" does not exist, skipping
 NOTICE:  trigger "emaj_log_trg" for relation "myschema1.mytbl2" does not exist, skipping
 NOTICE:  trigger "emaj_trunc_trg" for relation "myschema1.mytbl2" does not exist, skipping
 WARNING:  _create_tbl: The table "myschema1.mytbl2" has triggers (mytbl2trg). Verify the compatibility with emaj rollback operations (in particular if triggers update one or several other tables). Triggers may have to be manualy disabled before rollback.
-NOTICE:  table "myschema1_mytbl2b_log" does not exist, skipping
+NOTICE:  table "mytbl2b_log" does not exist, skipping
 NOTICE:  trigger "emaj_log_trg" for relation "myschema1.mytbl2b" does not exist, skipping
 NOTICE:  trigger "emaj_trunc_trg" for relation "myschema1.mytbl2b" does not exist, skipping
  emaj_create_group 
@@ -36,13 +36,13 @@ select emaj.emaj_start_group('myGroup1','Start');
 (1 row)
 
 select emaj.emaj_create_group('myGroup2');
-NOTICE:  table "myschema2_myTbl3_log" does not exist, skipping
+NOTICE:  table "myTbl3_log" does not exist, skipping
 NOTICE:  trigger "emaj_log_trg" for relation "myschema2.myTbl3" does not exist, skipping
 NOTICE:  trigger "emaj_trunc_trg" for relation "myschema2.myTbl3" does not exist, skipping
-NOTICE:  table "myschema2_mytbl1_log" does not exist, skipping
+NOTICE:  table "mytbl1_log" does not exist, skipping
 NOTICE:  trigger "emaj_log_trg" for relation "myschema2.mytbl1" does not exist, skipping
 NOTICE:  trigger "emaj_trunc_trg" for relation "myschema2.mytbl1" does not exist, skipping
-NOTICE:  table "myschema2_mytbl2_log" does not exist, skipping
+NOTICE:  table "mytbl2_log" does not exist, skipping
 NOTICE:  trigger "emaj_log_trg" for relation "myschema2.mytbl2" does not exist, skipping
 NOTICE:  trigger "emaj_trunc_trg" for relation "myschema2.mytbl2" does not exist, skipping
 NOTICE:  table "myschema2_mytbl4_log" does not exist, skipping
@@ -51,7 +51,7 @@ NOTICE:  trigger "emaj_trunc_trg" for relation "myschema2.mytbl4" does not exist
 NOTICE:  table "otherPrefix4mytbl5_log" does not exist, skipping
 NOTICE:  trigger "emaj_log_trg" for relation "myschema2.mytbl5" does not exist, skipping
 NOTICE:  trigger "emaj_trunc_trg" for relation "myschema2.mytbl5" does not exist, skipping
-NOTICE:  table "myschema2_mytbl6_log" does not exist, skipping
+NOTICE:  table "mytbl6_log" does not exist, skipping
 NOTICE:  trigger "emaj_log_trg" for relation "myschema2.mytbl6" does not exist, skipping
 NOTICE:  trigger "emaj_trunc_trg" for relation "myschema2.mytbl6" does not exist, skipping
 WARNING:  _check_fk_groups: The foreign key "mytbl6_col61_fkey" on the table "myschema2.mytbl6" references the table "myschema2.mytbl7" that is outside the groups (myGroup2).
@@ -154,7 +154,7 @@ select count(*) from emaj.emaj_rlbk_stat;
      7
 (1 row)
 
-select count(*) from emaj.mySchema1_myTbl1_log;
+select count(*) from emaj_mySchema1.myTbl1_log;
  count 
 -------
      0
@@ -268,8 +268,8 @@ delete from emaj.emaj_rlbk_plan;
 ERROR:  permission denied for relation emaj_rlbk_plan
 delete from emaj.emaj_rlbk_stat;
 ERROR:  permission denied for relation emaj_rlbk_stat
-delete from emaj.mySchema1_myTbl1_log;
-ERROR:  permission denied for relation myschema1_mytbl1_log
+delete from emaj_mySchema1.myTbl1_log;
+ERROR:  permission denied for relation mytbl1_log
 -----------------------------
 -- forbiden functions
 -----------------------------

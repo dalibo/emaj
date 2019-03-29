@@ -10,7 +10,7 @@ Une fonction permet de vérifier la consistance de l'environnement E-Maj. Cela c
 
    SELECT * FROM emaj.emaj_verify_all();
 
-Pour chaque schéma E-Maj (*emaj* et les éventuels schémas secondaires), la fonction vérifie :
+Pour chaque schéma E-Maj (*emaj* et les schémas de log), la fonction vérifie :
 
 * que toutes les tables, fonctions et séquences et tous les types soit sont des objets de l'extension elle-même, soit sont bien liés aux groupes de tables créés,
 * qu'il ne contient ni vue, ni « *foreign table* », ni domaine, ni conversion, ni opérateur et ni classe d'opérateur.

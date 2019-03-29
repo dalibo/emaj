@@ -20,8 +20,7 @@ select group_name, group_has_waiting_changes from emaj.emaj_group where group_na
 
 select emaj.emaj_alter_group('myGroup1','Priority Changed');
 
--- change the emaj names prefix, the log schema, the log data tablespace and the log index tablespace for different tables
-update emaj.emaj_group_def set grpdef_log_schema_suffix = NULL where grpdef_schema = 'myschema2' and grpdef_tblseq = 'myTbl3';
+-- change the emaj names prefix, the log data tablespace and the log index tablespace for different tables
 update emaj.emaj_group_def set grpdef_emaj_names_prefix = 's1t3' where grpdef_schema = 'myschema1' and grpdef_tblseq = 'myTbl3';
 update emaj.emaj_group_def set grpdef_log_dat_tsp = NULL where grpdef_schema = 'myschema1' and grpdef_tblseq = 'mytbl2b';
 update emaj.emaj_group_def set grpdef_log_idx_tsp = 'tsplog1' where grpdef_schema = 'myschema2' and grpdef_tblseq = 'mytbl6';
@@ -44,7 +43,6 @@ update emaj.emaj_group_def set grpdef_priority = 20 where grpdef_schema = 'mysch
 select emaj.emaj_alter_groups(array['myGroup1','myGroup2']);
 
 -- change the other attributes back
-update emaj.emaj_group_def set grpdef_log_schema_suffix = 'C' where grpdef_schema = 'myschema2' and grpdef_tblseq = 'myTbl3';
 update emaj.emaj_group_def set grpdef_emaj_names_prefix = NULL where grpdef_schema = 'myschema1' and grpdef_tblseq = 'myTbl3';
 update emaj.emaj_group_def set grpdef_log_dat_tsp = 'tsp log''2' where grpdef_schema = 'myschema1' and grpdef_tblseq = 'mytbl2b';
 update emaj.emaj_group_def set grpdef_log_idx_tsp = NULL where grpdef_schema = 'myschema2' and grpdef_tblseq = 'mytbl6';
@@ -271,7 +269,7 @@ rollback;
 -- set marks and look at statistics
 select emaj.emaj_set_mark_group('myGroup2','Just after ADD_TBL');
 update myschema2.mytbl7 set col71 = 6 where col71 = 2;
-select col71, emaj_verb, emaj_tuple from emaj.myschema2_mytbl7_log order by emaj_gid;
+select col71, emaj_verb, emaj_tuple from emaj_myschema2.mytbl7_log order by emaj_gid;
 select stat_group, stat_schema, stat_table, stat_first_mark, stat_last_mark, stat_rows
   from emaj.emaj_log_stat_group('myGroup2','ADD_TBL test',NULL);
 select emaj.emaj_set_mark_group('myGroup2','After ADD_TBL');
@@ -296,14 +294,14 @@ begin;
   -- testing delete all marks up to a mark set after the alter_group
   select emaj.emaj_delete_before_mark_group('myGroup2','EMAJ_LAST_MARK');
   select * from emaj.emaj_mark where mark_group = 'myGroup2';
-  select * from emaj.emaj_sequence where sequ_name = 'myschema2_mytbl7_log_seq' order by sequ_time_id;
+  select * from emaj.emaj_sequence where sequ_name = 'mytbl7_log_seq' order by sequ_time_id;
 rollback;
 
 begin;
   -- testing the alter_group mark deletion
   select mark_time_id from emaj.emaj_mark where mark_group = 'myGroup2' and mark_name = 'Alter to add mytbl7';
   select emaj.emaj_delete_mark_group('myGroup2','Alter to add mytbl7');
-  select * from emaj.emaj_sequence where sequ_name = 'myschema2_mytbl7_log_seq' order by sequ_time_id limit 1;
+  select * from emaj.emaj_sequence where sequ_name = 'mytbl7_log_seq' order by sequ_time_id limit 1;
 rollback;
 
 -- test sequences and holes at bounds following a rollback targeting a mark set before an ADD_TBL
@@ -312,7 +310,7 @@ begin;
   select mark_time_id from emaj.emaj_mark where mark_group = 'myGroup2' and mark_name = 'Alter to add mytbl7';
   select rlbk_severity, regexp_replace(rlbk_message,E'\\d\\d\\d\\d/\\d\\d\\/\\d\\d\\ \\d\\d\\:\\d\\d:\\d\\d .*?\\)','<timestamp>)','g')
     from emaj.emaj_rollback_group('myGroup2','Before ADD_TBL',true);
-  select * from emaj.emaj_sequence where sequ_schema = 'emaj' and sequ_name = 'myschema2_mytbl7_log_seq' order by sequ_time_id;
+  select * from emaj.emaj_sequence where sequ_schema = 'emaj_myschema2' and sequ_name = 'mytbl7_log_seq' order by sequ_time_id;
   select * from emaj.emaj_seq_hole where sqhl_schema = 'myschema2' and sqhl_table = 'mytbl7';
   select stat_group, stat_schema, stat_table, stat_first_mark, stat_first_mark_gid, stat_last_mark, stat_last_mark_gid, stat_rows 
     from emaj._log_stat_groups('{"myGroup2"}',false,'ADD_TBL test',NULL);
@@ -322,7 +320,7 @@ rollback;
 select * from emaj.emaj_estimate_rollback_group('myGroup2','Before ADD_TBL',true);
 select rlbk_severity, regexp_replace(rlbk_message,E'\\d\\d\\d\\d/\\d\\d\\/\\d\\d\\ \\d\\d\\:\\d\\d:\\d\\d .*?\\)','<timestamp>)','g')
   from emaj.emaj_logged_rollback_group('myGroup2','Before ADD_TBL',true);
-select col71, emaj_verb, emaj_tuple from emaj.myschema2_mytbl7_log order by emaj_gid;
+select col71, emaj_verb, emaj_tuple from emaj_myschema2.mytbl7_log order by emaj_gid;
 select * from myschema2.mytbl7 order by col71;
 
 -- consolidate this logged rollback
@@ -330,7 +328,7 @@ select emaj.emaj_rename_mark_group('myGroup2','EMAJ_LAST_MARK','Logged_Rlbk_End'
 select mark_time_id from emaj.emaj_mark where mark_group = 'myGroup2' and mark_name = 'Alter to add mytbl7';
 select * from emaj.emaj_get_consolidable_rollbacks() where cons_group = 'myGroup2'; -- should report 1 row to consolidate
 select * from emaj.emaj_consolidate_rollback_group('myGroup2', 'Logged_Rlbk_End');
-select * from emaj.emaj_sequence where sequ_schema = 'emaj' and sequ_name = 'myschema2_mytbl7_log_seq' order by sequ_time_id;
+select * from emaj.emaj_sequence where sequ_schema = 'emaj_myschema2' and sequ_name = 'mytbl7_log_seq' order by sequ_time_id;
 
 -- perform some other updates
 insert into myschema2.myTbl7 values (7),(8),(9);
@@ -338,7 +336,7 @@ insert into myschema2.myTbl7 values (7),(8),(9);
 -- verify the group and detect the lack of the new log table
 begin;
   select emaj.emaj_disable_protection_by_event_triggers();
-  drop table emaj.myschema2_mytbl7_log;
+  drop table emaj_myschema2.mytbl7_log;
   select * from emaj.emaj_verify_all();
   select emaj.emaj_enable_protection_by_event_triggers();
 rollback;
@@ -395,7 +393,7 @@ select group_name, group_last_alter_time_id, group_has_waiting_changes, group_nb
 select * from emaj.emaj_relation where rel_schema = 'myschema1' and (rel_tblseq = 'myTbl3' or rel_tblseq = 'mytbl2b') order by 1,2;
 
 delete from myschema1."myTbl3" where col33 = 1.;
-select count(*) from "emajC"."myschema1_myTbl3_log_1";
+select count(*) from emaj_myschema1."myTbl3_log_1";
 select * from emaj.emaj_verify_all();
 
 -- test statistics following a rollback targeting a mark set before a REMOVE_TBL
@@ -433,7 +431,7 @@ begin;
   select emaj.emaj_delete_before_mark_group('myGroup1','EMAJ_LAST_MARK');
   select 'should not exist' from pg_namespace where nspname = 'emajb';
   select 'should not exist' from pg_class, pg_namespace 
-    where relnamespace = pg_namespace.oid and relname = 'myschema1_mytbl2b_log' and nspname = 'emajb';
+    where relnamespace = pg_namespace.oid and relname = 'mytbl2b_log' and nspname = 'emaj_myschema1';
 rollback;
 
 begin;
@@ -445,7 +443,7 @@ begin;
   select emaj.emaj_delete_mark_group('myGroup1','2 tables removed from myGroup1');
   select * from emaj.emaj_relation where rel_schema = 'myschema1' and (rel_tblseq = 'myTbl3' or rel_tblseq = 'mytbl2b') order by rel_tblseq;
   select * from emaj.emaj_sequence where 
-    sequ_name in ('myschema1_mytbl2b_log_seq', 'myschema1_myTbl3_log_seq') order by sequ_time_id desc, sequ_name limit 2;
+    sequ_name in ('mytbl2b_log_seq', 'myTbl3_log_seq') order by sequ_time_id desc, sequ_name limit 2;
   select * from emaj.emaj_mark where mark_group = 'myGroup1' and mark_name = '2 tables removed from myGroup1';
 rollback;
 
@@ -454,10 +452,10 @@ begin;
   select emaj.emaj_set_mark_group('myGroup1','Mk2d');
   select emaj.emaj_delete_before_mark_group('myGroup1','Mk2b');
   select * from emaj.emaj_relation where rel_group = 'myGroup1' and not upper_inf(rel_time_range) order by 1,2;
-  select 'found' from pg_class, pg_namespace where relnamespace = pg_namespace.oid and relname = 'myschema1_mytbl2b_log_1' and nspname = 'emajb';
+  select 'found' from pg_class, pg_namespace where relnamespace = pg_namespace.oid and relname = 'mytbl2b_log_1' and nspname = 'emaj_myschema1';
   select emaj.emaj_delete_before_mark_group('myGroup1','Mk2d');
   select * from emaj.emaj_relation where rel_group = 'myGroup1' and not upper_inf(rel_time_range) order by 1,2;
-  select 'should not exist' from pg_class, pg_namespace where relnamespace = pg_namespace.oid and relname = 'myschema1_mytbl2b_log' and nspname = 'emajb';
+  select 'should not exist' from pg_class, pg_namespace where relnamespace = pg_namespace.oid and relname = 'mytbl2b_log' and nspname = 'emaj_myschema1';
 rollback;
 
 -- testing rollback and consolidation
@@ -470,7 +468,7 @@ update emaj.emaj_group_def set grpdef_group = 'temporarily_removed'
 select emaj.emaj_alter_group('myGroup1','2nd remove_tbl');
 select * from emaj.emaj_get_consolidable_rollbacks() where cons_group = 'myGroup1';
 select * from emaj.emaj_consolidate_rollback_group('myGroup1', 'Logged_Rlbk_End');
-select count(*) from emaj.myschema1_mytbl1_log_1;   -- the log table should be empty
+select count(*) from emaj_myschema1.mytbl1_log_1;   -- the log table should be empty
 select rlbk_severity, regexp_replace(rlbk_message,E'\\d\\d\\d\\d/\\d\\d\\/\\d\\d\\ \\d\\d\\:\\d\\d:\\d\\d .*?\\)','<timestamp>)','g')
   from emaj.emaj_rollback_group('myGroup1','Mk2b',true) order by 1,2;
 
@@ -479,8 +477,6 @@ begin;
   select emaj.emaj_stop_group('myGroup1');
   select emaj.emaj_reset_group('myGroup1');
   select * from emaj.emaj_relation where rel_group = 'myGroup1' and not upper_inf(rel_time_range) order by 1,2;
-  select 'should not exist' from pg_namespace where nspname = 'emajb';
-  select 'should not exist' from pg_class, pg_namespace where relnamespace = pg_namespace.oid and relname = 'myschema1_mytbl2b_log' and nspname = 'emajb';
 rollback;
 
 -- testing group's stop and start
@@ -488,8 +484,7 @@ begin;
   select emaj.emaj_stop_group('myGroup1');
   select emaj.emaj_start_group('myGroup1');
   select * from emaj.emaj_relation where rel_group = 'myGroup1' and not upper_inf(rel_time_range) order by 1,2;
-  select 'should not exist' from pg_namespace where nspname = 'emajb';
-  select 'should not exist' from pg_class, pg_namespace where relnamespace = pg_namespace.oid and relname = 'myschema1_mytbl2b_log' and nspname = 'emajb';
+  select 'should not exist' from pg_class, pg_namespace where relnamespace = pg_namespace.oid and relname = 'mytbl2b_log' and nspname = 'emaj_myschema1';
 rollback;
 
 -- testing the table drop (remove first the sequence linked to the table, otherwise an event triger fires)
@@ -551,7 +546,7 @@ rollback;
 
 update emaj.emaj_group_def set grpdef_group = 'myGroup1'
   where grpdef_group = 'myGroup2' and grpdef_schema = 'myschema2' and grpdef_tblseq = 'myTbl3_col31_seq';
-update emaj.emaj_group_def set grpdef_group = 'myGroup1', grpdef_log_schema_suffix = NULL, grpdef_emaj_names_prefix = 's2t3',
+update emaj.emaj_group_def set grpdef_group = 'myGroup1', grpdef_emaj_names_prefix = 's2t3',
                                grpdef_log_dat_tsp = 'tsplog1', grpdef_log_idx_tsp = 'tsplog1'
   where grpdef_group = 'myGroup2' and grpdef_schema = 'myschema2' and grpdef_tblseq = 'myTbl3';
 
@@ -607,7 +602,7 @@ select emaj.emaj_gen_sql_groups('{"myGroup1","myGroup2"}', 'before move', NULL, 
 -- revert the emaj_group_def change and apply with a destination group in idle state
 update emaj.emaj_group_def set grpdef_group = 'myGroup2'
   where grpdef_group = 'myGroup1' and grpdef_schema = 'myschema2' and grpdef_tblseq = 'myTbl3_col31_seq';
-update emaj.emaj_group_def set grpdef_group = 'myGroup2', grpdef_log_schema_suffix = 'C', grpdef_emaj_names_prefix = NULL,
+update emaj.emaj_group_def set grpdef_group = 'myGroup2', grpdef_emaj_names_prefix = NULL,
                                grpdef_log_dat_tsp = NULL, grpdef_log_idx_tsp = NULL
   where grpdef_group = 'myGroup1' and grpdef_schema = 'myschema2' and grpdef_tblseq = 'myTbl3';
 select emaj.emaj_stop_group('myGroup2');

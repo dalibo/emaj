@@ -80,17 +80,17 @@ select mark_group, regexp_replace(mark_name,E'\\d\\d\.\\d\\d\\.\\d\\d\\.\\d\\d\\
 select sequ_schema, sequ_name, sequ_time_id, sequ_last_val, sequ_is_called from emaj.emaj_sequence order by sequ_time_id, sequ_schema, sequ_name;
 select sqhl_schema, sqhl_table, sqhl_begin_time_id, sqhl_end_time_id, sqhl_hole_size from emaj.emaj_seq_hole order by 1,2,3;
 -- log tables
-select col11, col12, col13, emaj_verb, emaj_tuple, emaj_gid from emaj.mySchema1_myTbl1_log order by emaj_gid, emaj_tuple desc;
-select col21, col22, col23, emaj_verb, emaj_tuple, emaj_gid from emaj.mySchema1_myTbl2_log order by emaj_gid, emaj_tuple desc;
-select col20, col21, emaj_verb, emaj_tuple, emaj_gid from emajb.mySchema1_myTbl2b_log order by emaj_gid, emaj_tuple desc;
-select col31, col33, emaj_verb, emaj_tuple, emaj_gid from "emajC"."myschema1_myTbl3_log" order by emaj_gid, emaj_tuple desc;
-select col41, col42, col43, col44, col45, emaj_verb, emaj_tuple, emaj_gid from emaj.mySchema1_myTbl4_log order by emaj_gid, emaj_tuple desc;
-select col11, col12, col13, emaj_verb, emaj_tuple, emaj_gid from emaj.mySchema2_myTbl1_log order by emaj_gid, emaj_tuple desc;
-select col21, col22, col23, emaj_verb, emaj_tuple, emaj_gid from emaj.mySchema2_myTbl2_log order by emaj_gid, emaj_tuple desc;
-select col31, col33, emaj_verb, emaj_tuple, emaj_gid from "emajC"."myschema2_myTbl3_log" order by emaj_gid, emaj_tuple desc;
-select col41, col42, col43, col44, col45, emaj_verb, emaj_tuple, emaj_gid from emaj.mySchema2_myTbl4_log order by emaj_gid, emaj_tuple desc;
-select col51, col52, col53, col54, emaj_verb, emaj_tuple, emaj_gid from emaj."otherPrefix4mytbl5_log" order by emaj_gid, emaj_tuple desc;
-select col61, col62, col63, col64, col65, col66, emaj_verb, emaj_tuple, emaj_gid from emaj.mySchema2_myTbl6_log order by emaj_gid, emaj_tuple desc;
+select col11, col12, col13, emaj_verb, emaj_tuple, emaj_gid from emaj_mySchema1.myTbl1_log order by emaj_gid, emaj_tuple desc;
+select col21, col22, col23, emaj_verb, emaj_tuple, emaj_gid from emaj_mySchema1.myTbl2_log order by emaj_gid, emaj_tuple desc;
+select col20, col21, emaj_verb, emaj_tuple, emaj_gid from emaj_mySchema1.myTbl2b_log order by emaj_gid, emaj_tuple desc;
+select col31, col33, emaj_verb, emaj_tuple, emaj_gid from emaj_myschema1."myTbl3_log" order by emaj_gid, emaj_tuple desc;
+select col41, col42, col43, col44, col45, emaj_verb, emaj_tuple, emaj_gid from emaj_mySchema1.myTbl4_log order by emaj_gid, emaj_tuple desc;
+select col11, col12, col13, emaj_verb, emaj_tuple, emaj_gid from emaj_mySchema2.myTbl1_log order by emaj_gid, emaj_tuple desc;
+select col21, col22, col23, emaj_verb, emaj_tuple, emaj_gid from emaj_mySchema2.myTbl2_log order by emaj_gid, emaj_tuple desc;
+select col31, col33, emaj_verb, emaj_tuple, emaj_gid from emaj_myschema2."myTbl3_log" order by emaj_gid, emaj_tuple desc;
+select col41, col42, col43, col44, col45, emaj_verb, emaj_tuple, emaj_gid from emaj_myschema2.myschema2_mytbl4_log order by emaj_gid, emaj_tuple desc;
+select col51, col52, col53, col54, emaj_verb, emaj_tuple, emaj_gid from emaj_myschema2."otherPrefix4mytbl5_log" order by emaj_gid, emaj_tuple desc;
+select col61, col62, col63, col64, col65, col66, emaj_verb, emaj_tuple, emaj_gid from emaj_mySchema2.myTbl6_log order by emaj_gid, emaj_tuple desc;
 
 -----------------------------
 -- Step 9 : test the emaj_alter_group() and emaj_alter_groups() functions with the audit-only phil's group#3, group and a mix of rollbackable and audit-only groups
@@ -104,7 +104,7 @@ reset role;
 alter table "phil's schema3"."phil's tbl1" alter column "phil's col12" type char(11);
 
 set role emaj_regression_tests_adm_user;
-update emaj.emaj_group_def set grpdef_priority = 1, grpdef_log_schema_suffix = '3', grpdef_emaj_names_prefix = 'phil_mytbl2'
+update emaj.emaj_group_def set grpdef_priority = 1, grpdef_emaj_names_prefix = 'phil_mytbl2'
   where grpdef_schema = 'phil''s schema3' and grpdef_tblseq = E'myTbl2\\';
 select emaj.emaj_alter_group('phil''s group#3",');
 select emaj.emaj_start_group('phil''s group#3",','M1_after_alter_group');
@@ -118,7 +118,7 @@ set role emaj_regression_tests_adm_user;
 select emaj.emaj_enable_protection_by_event_triggers();
 select emaj.emaj_create_group('myGroup4');
 
-update emaj.emaj_group_def set grpdef_priority = NULL, grpdef_log_schema_suffix = NULL, grpdef_emaj_names_prefix = NULL
+update emaj.emaj_group_def set grpdef_priority = NULL, grpdef_emaj_names_prefix = NULL
   where grpdef_schema = 'phil''s schema3' and grpdef_tblseq = E'myTbl2\\';
 update emaj.emaj_group_def set grpdef_priority = 999
   where grpdef_schema = 'myschema4' and grpdef_tblseq = 'mytblm';
@@ -191,8 +191,8 @@ select rlbt_rlbk_id, rlbt_step, rlbt_schema, rlbt_table, rlbt_fkey, rlbt_quantit
 select * from "phil's schema3"."phil's tbl1" order by "phil's col11","phil's col12";
 select * from "phil's schema3"."myTbl2\" order by col21;
 -- log tables
-select "phil's col11", "phil's col12", "phil\s col13", emaj_verb, emaj_tuple, emaj_gid from "emaj #'3"."phil's schema3_phil's tbl1_log" order by emaj_gid, emaj_tuple desc;
-select col21, col22, col23, emaj_verb, emaj_tuple, emaj_gid from emaj."phil's schema3_myTbl2\_log" order by emaj_gid, emaj_tuple desc;
+select "phil's col11", "phil's col12", "phil\s col13", emaj_verb, emaj_tuple, emaj_gid from "emaj_phil's schema3"."phil's tbl1_log" order by emaj_gid, emaj_tuple desc;
+select col21, col22, col23, emaj_verb, emaj_tuple, emaj_gid from "emaj_phil's schema3"."myTbl2\_log" order by emaj_gid, emaj_tuple desc;
 
 -----------------------------
 -- Step 11 : for myGroup1, in a transaction, update tables and rollback the transaction, 
@@ -468,7 +468,7 @@ select * from myTbl1 order by col11;
 select * from myTbl2 order by col21;
 
 select mark_group, regexp_replace(mark_name,E'\\d\\d\.\\d\\d\\.\\d\\d\\.\\d\\d\\d','%','g'), mark_time_id, mark_is_deleted, mark_is_rlbk_protected, mark_comment, mark_log_rows_before_next, mark_logged_rlbk_target_mark from emaj.emaj_mark where mark_group = 'myGroup1' order by mark_time_id, mark_group;
-select sequ_schema, sequ_name, sequ_time_id, sequ_last_val, sequ_is_called from emaj.emaj_sequence where sequ_name like 'myschema1%' order by sequ_time_id, sequ_schema, sequ_name;
+select sequ_schema, sequ_name, sequ_time_id, sequ_last_val, sequ_is_called from emaj.emaj_sequence where sequ_schema = 'emaj_myschema1' order by sequ_time_id, sequ_schema, sequ_name;
 select sqhl_schema, sqhl_table, sqhl_begin_time_id, sqhl_end_time_id, sqhl_hole_size from emaj.emaj_seq_hole where sqhl_schema = 'myschema1' order by 1,2,3;
 
 select * from emaj.emaj_rollback_group('myGroup1','Multi-1',false) order by 1,2;
@@ -528,8 +528,8 @@ set role emaj_regression_tests_adm_user;
 select stat_group, stat_schema, stat_table, stat_first_mark, stat_last_mark, stat_rows
   from emaj.emaj_log_stat_group('myGroup4',NULL, NULL) order by 1,2,3,4;
 select * from emaj.emaj_relation where rel_schema = 'myschema4' and rel_tblseq like 'mypar%' order by rel_tblseq, rel_time_range;
-select col1, col2, emaj_verb, emaj_tuple, emaj_gid from emaj.myschema4_mypartP3_log order by emaj_gid;
-select col1, col2, emaj_verb, emaj_tuple, emaj_gid from emaj.myschema4_mypartP1_log_1 order by emaj_gid;
+select col1, col2, emaj_verb, emaj_tuple, emaj_gid from emaj_myschema4.mypartP3_log order by emaj_gid;
+select col1, col2, emaj_verb, emaj_tuple, emaj_gid from emaj_myschema4.mypartP1_log_1 order by emaj_gid;
 
 -- rollback to a mark set before the first changes
 select * from emaj.emaj_rollback_group('myGroup4','Start');
@@ -541,8 +541,8 @@ insert into mySchema4.myTblP values (1,'Initialy stored in partition 2'), (11,'S
 select emaj.emaj_set_mark_group('myGroup4','Before update');
 update mySchema4.myTblP set col1 = 12 where col1=1;
 select emaj.emaj_logged_rollback_group('myGroup4','Before update');
-select col1, col2, col3, emaj_verb, emaj_tuple, emaj_gid from emaj.myschema4_mypartP2_log;
-select col1, col2, col3, emaj_verb, emaj_tuple, emaj_gid from emaj.myschema4_mypartP3_log;
+select col1, col2, col3, emaj_verb, emaj_tuple, emaj_gid from emaj_myschema4.mypartP2_log;
+select col1, col2, col3, emaj_verb, emaj_tuple, emaj_gid from emaj_myschema4.mypartP3_log;
 
 select emaj.emaj_stop_group('myGroup4');
 select emaj.emaj_drop_group('myGroup4');
@@ -566,8 +566,8 @@ insert into myschema5.myOidsTbl values (20),(21),(22);
 update myschema5.myOidsTbl set col1 = 23 where col1 = 22;
 delete from myschema5.myOidsTbl where col1 = 21;
 
-select col1, emaj_verb, emaj_tuple, emaj_gid, emaj_user from emaj.myschema5_myUnloggedTbl_log order by emaj_gid;
-select col1, emaj_verb, emaj_tuple, emaj_gid, emaj_user from emaj.myschema5_myOidsTbl_log order by emaj_gid;
+select col1, emaj_verb, emaj_tuple, emaj_gid, emaj_user from emaj_myschema5.myUnloggedTbl_log order by emaj_gid;
+select col1, emaj_verb, emaj_tuple, emaj_gid, emaj_user from emaj_myschema5.myOidsTbl_log order by emaj_gid;
 
 
 -- disable event triggers for this step and change an application table structure
@@ -594,7 +594,7 @@ select * from emaj.emaj_relation where rel_schema = 'phil''s schema3' and rel_tb
 -- test a remove operation to fix the case of a deleted log table, log sequence or log function
 -----------------------------
 reset role;
-drop table emaj."phil's schema3_mytbl4_log";
+drop table "emaj_phil's schema3".mytbl4_log;
 set role emaj_regression_tests_adm_user;
 select * from emaj.emaj_verify_all();
 

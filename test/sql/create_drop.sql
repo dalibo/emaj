@@ -8,16 +8,16 @@ SET client_min_messages TO WARNING;
 truncate emaj.emaj_group_def;
 insert into emaj.emaj_group_def values ('myGroup1','myschema1','mytbl1',20);
 insert into emaj.emaj_group_def values ('myGroup1','myschema1','mytbl2',NULL,NULL,NULL,'tsplog1','tsplog1');
-insert into emaj.emaj_group_def values ('myGroup1','myschema1','mytbl2b',NULL,'b',NULL,'tsp log''2','tsp log''2');
+insert into emaj.emaj_group_def values ('myGroup1','myschema1','mytbl2b',NULL,NULL,NULL,'tsp log''2','tsp log''2');
 insert into emaj.emaj_group_def values ('myGroup1','myschema1','myTbl3_col31_seq',1);
-insert into emaj.emaj_group_def values ('myGroup1','myschema1','myTbl3',10,'C',NULL,'tsplog1');
+insert into emaj.emaj_group_def values ('myGroup1','myschema1','myTbl3',10,NULL,NULL,'tsplog1');
 insert into emaj.emaj_group_def values ('myGroup1','myschema1','mytbl4',20,NULL,NULL,'tsplog1','tsp log''2');
 insert into emaj.emaj_group_def values ('myGroup1','myschema1','mytbl2b_col20_seq');
 
 insert into emaj.emaj_group_def values ('myGroup2','myschema2','mytbl1');
 insert into emaj.emaj_group_def values ('myGroup2','myschema2','mytbl2');
 insert into emaj.emaj_group_def values ('myGroup2','myschema2','myTbl3_col31_seq');
-insert into emaj.emaj_group_def values ('myGroup2','myschema2','myTbl3',NULL,'C');
+insert into emaj.emaj_group_def values ('myGroup2','myschema2','myTbl3');
 insert into emaj.emaj_group_def values ('myGroup2','myschema2','mytbl4',NULL,NULL,'myschema2_mytbl4');
 insert into emaj.emaj_group_def values ('myGroup2','myschema2','mytbl5',NULL,NULL,'otherPrefix4mytbl5');
 insert into emaj.emaj_group_def values ('myGroup2','myschema2','mytbl6');
@@ -41,7 +41,7 @@ insert into emaj.emaj_group_def values ('myGroup5','myschema5','myoidstbl');
 insert into emaj.emaj_group_def values ('dummyGrp1','dummySchema','mytbl4');
 insert into emaj.emaj_group_def values ('dummyGrp1','myschema1','dummyTable');
 insert into emaj.emaj_group_def values ('dummyGrp2','emaj','emaj_param');
-insert into emaj.emaj_group_def values ('dummyGrp2','emajC','myschema1_myTbl3_log');
+insert into emaj.emaj_group_def values ('dummyGrp2','emaj_myschema1','myTbl3_log');
 insert into emaj.emaj_group_def values ('dummyGrp3','myschema1','mytbl1');
 insert into emaj.emaj_group_def values ('dummyGrp3','myschema2','mytbl2');
 
@@ -81,11 +81,6 @@ begin;
 rollback;
 -- table without pkey for a rollbackable group
 select emaj.emaj_create_group('phil''s group#3",',true);
--- sequence with a log schema suffix defined in the emaj_group_def table
-begin;
-  update emaj.emaj_group_def set grpdef_log_schema_suffix = 'something' where grpdef_group = 'myGroup1' and grpdef_schema = 'myschema1' and grpdef_tblseq = 'myTbl3_col31_seq';
-  select emaj.emaj_create_group('myGroup1');
-rollback;
 -- sequence with an emaj names prefix defined in the emaj_group_def table
 begin;
   update emaj.emaj_group_def set grpdef_emaj_names_prefix = 'something' where grpdef_group = 'myGroup1' and grpdef_schema = 'myschema1' and grpdef_tblseq = 'myTbl3_col31_seq';
@@ -102,29 +97,21 @@ begin;
     where grpdef_group = 'myGroup1' and grpdef_schema = 'myschema1' and grpdef_tblseq = 'mytbl1';
   select emaj.emaj_create_group('myGroup1');
 rollback;
--- already existing secondary schema
+-- already existing log schema
 begin;
-  create schema emajb;
+  create schema emaj_myschema1;
   select emaj.emaj_create_group('myGroup1');
 rollback;
 -- conflict on emaj names prefix inside the group to create
 begin;
   update emaj.emaj_group_def set grpdef_emaj_names_prefix = 'samePrefix' where grpdef_group = 'myGroup1' and grpdef_schema = 'myschema1' and grpdef_tblseq = 'mytbl1';
   update emaj.emaj_group_def set grpdef_emaj_names_prefix = 'samePrefix' where grpdef_group = 'myGroup1' and grpdef_schema = 'myschema1' and grpdef_tblseq = 'mytbl2';
-  update emaj.emaj_group_def set grpdef_emaj_names_prefix = 'myschema1_mytbl4' where grpdef_group = 'myGroup1' and grpdef_schema = 'myschema1' and grpdef_tblseq = 'myTbl3';
+  update emaj.emaj_group_def set grpdef_emaj_names_prefix = 'mytbl4' where grpdef_group = 'myGroup1' and grpdef_schema = 'myschema1' and grpdef_tblseq = 'myTbl3';
   select emaj.emaj_create_group('myGroup1');
-rollback;
--- conflict on emaj names prefix with already create groups
-begin;
-  update emaj.emaj_group_def set grpdef_emaj_names_prefix = 'samePrefix' where grpdef_group = 'myGroup1' and grpdef_schema = 'myschema1' and grpdef_tblseq = 'mytbl1';
-  select emaj.emaj_create_group('myGroup1');
-  update emaj.emaj_group_def set grpdef_emaj_names_prefix = 'samePrefix' where grpdef_group = 'myGroup2' and grpdef_schema = 'myschema2' and grpdef_tblseq = 'mytbl1';
-  update emaj.emaj_group_def set grpdef_emaj_names_prefix = 'myschema1_mytbl2' where grpdef_group = 'myGroup2' and grpdef_schema = 'myschema2' and grpdef_tblseq = 'mytbl2';
-  select emaj.emaj_create_group('myGroup2');
 rollback;
 -- mix a lot of errors
 begin;
-  update emaj.emaj_group_def set grpdef_log_schema_suffix = 'something', grpdef_emaj_names_prefix = 'something', grpdef_log_dat_tsp = 'something' where grpdef_group = 'myGroup1' and grpdef_schema = 'myschema1' and grpdef_tblseq = 'myTbl3_col31_seq';
+  update emaj.emaj_group_def set grpdef_emaj_names_prefix = 'something', grpdef_log_dat_tsp = 'something' where grpdef_group = 'myGroup1' and grpdef_schema = 'myschema1' and grpdef_tblseq = 'myTbl3_col31_seq';
   update emaj.emaj_group_def set grpdef_emaj_names_prefix = 'samePrefix' where grpdef_group = 'myGroup1' and grpdef_schema = 'myschema1' and grpdef_tblseq = 'mytbl1';
   update emaj.emaj_group_def set grpdef_emaj_names_prefix = 'samePrefix' where grpdef_group = 'myGroup1' and grpdef_schema = 'myschema1' and grpdef_tblseq = 'mytbl2';
   alter table myschema1.mytbl1 set with oids;
@@ -167,7 +154,7 @@ select emaj.emaj_create_group('phil''s group#3",',false);
 select emaj.emaj_create_group('myGroup4');
 select emaj.emaj_create_group('myGroup5',false);
 
--- create a group with a table from an E-Maj secondary schema
+-- create a group with a table from an E-Maj log schema
 select emaj.emaj_create_group('dummyGrp2',false);
 
 -- create a group with a table already belonging to another group
@@ -184,7 +171,7 @@ select group_name, group_is_rollbackable, group_creation_time_id,
        group_is_rlbk_protected, group_nb_table, group_nb_sequence, group_comment
   from emaj.emaj_group order by group_name;
 select * from emaj.emaj_relation order by rel_group, rel_priority, rel_schema, rel_tblseq, rel_time_range;
-select * from pg_tables where schemaname like 'emaj%' order by tablename;
+select schemaname, tablename, tableowner, tablespace from pg_tables where schemaname like 'emaj\_%' order by schemaname, tablename;
 
 -----------------------------
 -- emaj_comment_group() tests
@@ -214,9 +201,9 @@ select emaj.emaj_drop_group('unknownGroup');
 select emaj.emaj_start_group('myGroup1','');
 select emaj.emaj_drop_group('myGroup1');
 select emaj.emaj_stop_group('myGroup1');
--- secondary schema with an object blocking the schema drop
+-- log schema with an object blocking the schema drop
 begin;
-  create table emajb.dummy_log (col1 int);
+  create table emaj_myschema1.dummy_log (col1 int);
   select emaj.emaj_drop_group('myGroup1');
 rollback;
 -- should be OK

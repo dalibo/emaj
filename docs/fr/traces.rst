@@ -132,17 +132,15 @@ La colonne *hist_event* peut prendre les valeurs suivantes.
 +------------------------------+------------------------------------------------+
 | LOG INDEX TABLESPACE CHANGED | tablespace pour l’index de log modifié         |
 +------------------------------+------------------------------------------------+
-| LOG SCHEMA CHANGED           | schéma de log modifié                          |
+| LOG_SCHEMA CREATED           | schéma secondaire créé                         |
++------------------------------+------------------------------------------------+
+| LOG_SCHEMA DROPPED           | schéma secondaire supprimé                     |
 +------------------------------+------------------------------------------------+
 | MARK DELETED                 | marque supprimée                               |
 +------------------------------+------------------------------------------------+
 | NAMES PREFIX CHANGED         | préfixe des noms E-Maj modifié                 |
 +------------------------------+------------------------------------------------+
 | NOTICE                       | message d’information issu d’un rollback       |
-+------------------------------+------------------------------------------------+
-| SCHEMA CREATED               | schéma secondaire créé                         |
-+------------------------------+------------------------------------------------+
-| SCHEMA DROPPED               | schéma secondaire supprimé                     |
 +------------------------------+------------------------------------------------+
 | SEQUENCE ADDED               | séquence ajoutée à un groupe de tables actif   |
 +------------------------------+------------------------------------------------+

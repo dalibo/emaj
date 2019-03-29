@@ -132,17 +132,15 @@ The *hist_event* column can take the following values:
 +------------------------------+----------------------------------------------+
 | LOG INDEX TABLESPACE CHANGED | tablespace for the log index modified        |
 +------------------------------+----------------------------------------------+
-| LOG SCHEMA CHANGED           |                                              |
+| LOG_SCHEMA CREATED           | secondary schema created                     |
++------------------------------+----------------------------------------------+
+| LOG_SCHEMA DROPPED           | secondary schema dropped                     |
 +------------------------------+----------------------------------------------+
 | MARK DELETED                 |                                              |
 +------------------------------+----------------------------------------------+
 | NAMES PREFIX CHANGED         | E-Maj names prefix modified                  |
 +------------------------------+----------------------------------------------+
 | NOTICE                       | warning message issued by a rollback         |
-+------------------------------+----------------------------------------------+
-| SCHEMA CREATED               | secondary schema created                     |
-+------------------------------+----------------------------------------------+
-| SCHEMA DROPPED               | secondary schema dropped                     |
 +------------------------------+----------------------------------------------+
 | SEQUENCE ADDED               | sequence added to a logging tables group     |
 +------------------------------+----------------------------------------------+

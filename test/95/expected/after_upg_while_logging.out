@@ -94,38 +94,7 @@ select emaj.emaj_consolidate_rollback_group('myGroup1','End_rollback_to_M2');
 (1 row)
 
 -----------------------------
--- Step 4 : revert the alter group myGroup1 by reseting the log schema for mytbl2b
------------------------------
-update emaj.emaj_group_def set grpdef_log_schema_suffix = NULL where grpdef_schema = 'myschema1' and grpdef_tblseq = 'mytbl2b';
-select emaj.emaj_alter_group('myGroup1');
-NOTICE:  drop cascades to trigger emaj_log_trg on table mytbl2b
-CONTEXT:  SQL statement "DROP FUNCTION emajb.myschema1_mytbl2b_log_fnct() CASCADE"
-PL/pgSQL function emaj._change_log_schema_tbl(emaj.emaj_relation,text,boolean) line 16 at EXECUTE
-SQL statement "SELECT emaj._change_log_schema_tbl(r_rel, v_logSchemaSuffix, v_multiGroup)"
-PL/pgSQL function emaj._alter_exec(bigint,boolean) line 66 at PERFORM
-SQL statement "SELECT emaj._alter_exec(v_timeId, v_multiGroup)"
-PL/pgSQL function emaj._alter_groups(text[],boolean,text) line 56 at PERFORM
-PL/pgSQL function emaj.emaj_alter_group(text,text) line 6 at RETURN
-NOTICE:  trigger "emaj_log_trg" for relation "myschema1.mytbl2b" does not exist, skipping
-CONTEXT:  SQL statement "DROP TRIGGER IF EXISTS emaj_log_trg ON myschema1.mytbl2b"
-PL/pgSQL function emaj._create_log_trigger(text,text,text,text) line 9 at EXECUTE
-SQL statement "SELECT emaj._create_log_trigger(quote_ident(r_rel.rel_schema) || '.' || quote_ident(r_rel.rel_tblseq),
-                                     quote_ident(v_newLogSchema) || '.' || quote_ident(r_rel.rel_log_table),
-                                     quote_ident(v_newLogSchema) || '.' || quote_ident(r_rel.rel_log_sequence),
-                                     quote_ident(v_newLogSchema) || '.' || quote_ident(r_rel.rel_log_function))"
-PL/pgSQL function emaj._change_log_schema_tbl(emaj.emaj_relation,text,boolean) line 17 at PERFORM
-SQL statement "SELECT emaj._change_log_schema_tbl(r_rel, v_logSchemaSuffix, v_multiGroup)"
-PL/pgSQL function emaj._alter_exec(bigint,boolean) line 66 at PERFORM
-SQL statement "SELECT emaj._alter_exec(v_timeId, v_multiGroup)"
-PL/pgSQL function emaj._alter_groups(text[],boolean,text) line 56 at PERFORM
-PL/pgSQL function emaj.emaj_alter_group(text,text) line 6 at RETURN
- emaj_alter_group 
-------------------
-                5
-(1 row)
-
------------------------------
--- Step 5 : for myGroup1, update tables again then set 3 marks
+-- Step 4 : for myGroup1, update tables again then set 3 marks
 -----------------------------
 insert into myTbl1 select i, 'DEF', E'\\000'::bytea from generate_series (100,110) as i;
 insert into myTbl2 values (3,'GHI','2010-01-02');
@@ -156,7 +125,7 @@ select emaj.emaj_set_mark_group('myGroup1','M6');
 (1 row)
 
 -----------------------------
--- Step 6 : for myGroup2, logged rollback again then unlogged rollback 
+-- Step 5 : for myGroup2, logged rollback again then unlogged rollback 
 -----------------------------
 select * from emaj.emaj_logged_rollback_group('myGroup2','M2',false) order by 1,2;
  rlbk_severity |            rlbk_message             
@@ -174,7 +143,7 @@ select * from emaj.emaj_rollback_group('myGroup2','M3',false) order by 1,2;
 (2 rows)
 
 -----------------------------
--- Step 7 : for myGroup1, update tables, rollback, other updates, then logged rollback
+-- Step 6 : for myGroup1, update tables, rollback, other updates, then logged rollback
 -----------------------------
 set search_path=myschema1;
 --
@@ -205,7 +174,7 @@ select * from emaj.emaj_logged_rollback_group('myGroup1','M4',false) order by 1,
 
 alter table mySchema1.myTbl2 enable trigger myTbl2trg;
 -----------------------------
--- Step 8 : for myGroup1, update tables, rename a mark, then delete 2 marks then delete all before a mark 
+-- Step 7 : for myGroup1, update tables, rename a mark, then delete 2 marks then delete all before a mark 
 -----------------------------
 set search_path=myschema1;
 --
@@ -234,7 +203,7 @@ select emaj.emaj_delete_mark_group('myGroup1','M1');
 select emaj.emaj_delete_before_mark_group('myGroup1','M4');
  emaj_delete_before_mark_group 
 -------------------------------
-                             3
+                             2
 (1 row)
 
 -----------------------------
@@ -264,17 +233,16 @@ select time_id, time_last_emaj_gid, time_event from emaj.emaj_time_stamp order b
       19 |                 85 | R
       20 |                 85 | R
       21 |                 92 | M
-      22 |                 92 | A
+      22 |                106 | M
       23 |                106 | M
       24 |                106 | M
-      25 |                106 | M
-      26 |                106 | R
-      27 |                108 | M
-      28 |                108 | R
-      29 |                111 | R
-      30 |                114 | R
-      31 |                117 | M
-(31 rows)
+      25 |                106 | R
+      26 |                108 | M
+      27 |                108 | R
+      28 |                111 | R
+      29 |                114 | R
+      30 |                117 | M
+(30 rows)
 
 select hist_function, hist_event, hist_object,
        regexp_replace(regexp_replace(regexp_replace(hist_wording,
@@ -433,14 +401,6 @@ select hist_function, hist_event, hist_object,
  RENAME_MARK_GROUP        | END                | myGroup1                     | RLBK_M2_%_DONE renamed End_rollback_to_M2                                                     | postgres
  CONSOLIDATE_RLBK_GROUP   | BEGIN              | myGroup1                     | Erase all between marks M2 and End_rollback_to_M2                                             | postgres
  CONSOLIDATE_RLBK_GROUP   | END                | myGroup1                     | 2 tables and 1 sequences processed ; 3 marks deleted                                          | postgres
- ALTER_GROUP              | BEGIN              | myGroup1                     |                                                                                               | postgres
- LOCK_GROUP               | BEGIN              | myGroup1                     |                                                                                               | postgres
- LOCK_GROUP               | END                | myGroup1                     | 4 tables locked, 0 deadlock(s)                                                                | postgres
- SET_MARK_GROUP           | BEGIN              | myGroup1                     | ALTER_%                                                                                       | postgres
- SET_MARK_GROUP           | END                | myGroup1                     | ALTER_%                                                                                       | postgres
- ALTER_GROUP              | LOG SCHEMA CHANGED | myschema1.mytbl2b            | emajb => emaj                                                                                 | postgres
- ALTER_GROUP              | SCHEMA DROPPED     | emajb                        |                                                                                               | postgres
- ALTER_GROUP              | END                | myGroup1                     | Timestamp Id : 22                                                                             | postgres
  SET_MARK_GROUP           | BEGIN              | myGroup1                     |                                                                                               | postgres
  LOCK_GROUP               | BEGIN              | myGroup1                     |                                                                                               | postgres
  LOCK_GROUP               | END                | myGroup1                     | 4 tables locked, 0 deadlock(s)                                                                | postgres
@@ -522,8 +482,8 @@ select hist_function, hist_event, hist_object,
  DELETE_MARK_GROUP        | BEGIN              | myGroup1                     | M1                                                                                            | postgres
  DELETE_MARK_GROUP        | END                | myGroup1                     | M1                                                                                            | postgres
  DELETE_BEFORE_MARK_GROUP | BEGIN              | myGroup1                     | M4                                                                                            | postgres
- DELETE_BEFORE_MARK_GROUP | END                | myGroup1                     | 3 marks deleted ; M4 is now the initial mark                                                  | postgres
-(238 rows)
+ DELETE_BEFORE_MARK_GROUP | END                | myGroup1                     | 2 marks deleted ; M4 is now the initial mark                                                  | postgres
+(230 rows)
 
 --
 reset role;

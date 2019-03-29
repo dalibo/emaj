@@ -21,11 +21,11 @@ select emaj.emaj_reset_group('myGroup1');
 select emaj.emaj_stop_group('myGroup1');
 
 -- log tables are not yet empty
-select count(*) from emaj.myschema1_mytbl1_log;
-select count(*) from emaj.myschema1_mytbl2_log;
-select count(*) from emajb.myschema1_mytbl2b_log;
-select count(*) from "emajC"."myschema1_myTbl3_log";
-select count(*) from emaj.myschema1_mytbl4_log;
+select count(*) from emaj_myschema1.mytbl1_log;
+select count(*) from emaj_myschema1.mytbl2_log;
+select count(*) from emaj_myschema1.mytbl2b_log;
+select count(*) from emaj_myschema1."myTbl3_log";
+select count(*) from emaj_myschema1.mytbl4_log;
 
 -- should be OK
 select emaj.emaj_reset_group('myGroup1');
@@ -34,11 +34,11 @@ begin;
   select emaj.emaj_reset_group('emptyGroup');
 rollback;
 
-select count(*) from emaj.myschema1_mytbl1_log;
-select count(*) from emaj.myschema1_mytbl2_log;
-select count(*) from emajb.myschema1_mytbl2b_log;
-select count(*) from "emajC"."myschema1_myTbl3_log";
-select count(*) from emaj.myschema1_mytbl4_log;
+select count(*) from emaj_myschema1.mytbl1_log;
+select count(*) from emaj_myschema1.mytbl2_log;
+select count(*) from emaj_myschema1.mytbl2b_log;
+select count(*) from emaj_myschema1."myTbl3_log";
+select count(*) from emaj_myschema1.mytbl4_log;
 
 -- test the "no initial mark" error message for the emaj_gen_sql_group()
 --   this test has been moved here because, the emaj_reset_group() function cannot be used into a transaction
@@ -541,15 +541,15 @@ select * from emaj.emaj_verify_all();
 begin;
   create table emaj.dummy1_log (col1 int);
   create table emaj.dummy2 (col1 int);
-  create table emajb.emaj_dummy (col1 int);
+  create table emaj_myschema1.emaj_dummy (col1 int);
   create table emaj.emaj_dummy (col1 int);               -- this one is not detected
   select * from emaj.emaj_verify_all();
 rollback;
 -- detection of unattended functions in E-Maj schemas
 begin;
   create function emaj.dummy1_log_fnct () returns int language sql as $$ select 0 $$;
-  create function "emajC".dummy2_rlbk_fnct () returns int language sql as $$ select 0 $$;
-  create function "emajC".dummy3_fnct () returns int language sql as $$ select 0 $$;
+  create function emaj_myschema1.dummy2_rlbk_fnct () returns int language sql as $$ select 0 $$;
+  create function emaj_myschema1.dummy3_fnct () returns int language sql as $$ select 0 $$;
   create function emaj._dummy4_fnct () returns int language sql as $$ select 0 $$;      -- this one is not detected
   create function emaj.emaj_dummy5_fnct () returns int language sql as $$ select 0 $$;  -- this one is not detected
   select * from emaj.emaj_verify_all();
@@ -557,16 +557,16 @@ rollback;
 -- detection of unattended sequences in E-Maj schemas
 begin;
   create table emaj.dummy1_log (col1 serial);
-  create sequence emajb.dummy2_seq;
-  create sequence emajb.dummy3_log_seq;
+  create sequence emaj_myschema1.dummy2_seq;
+  create sequence emaj_myschema1.dummy3_log_seq;
   create sequence emaj.emaj_dummy4_seq;                  -- this one is not detected
   select * from emaj.emaj_verify_all();
 rollback;
 -- detection of unattended types in E-Maj schemas
 begin;
   create type emaj.dummy1_type as (col1 int);
-  create type emajb.dummy2_type as (col1 int);
-  create type emajb.dummy3_type as (col1 int);
+  create type emaj_myschema1.dummy2_type as (col1 int);
+  create type emaj_myschema1.dummy3_type as (col1 int);
   create type emaj.emaj_dummy4_type as (col1 int);       -- this one is not detected
   select * from emaj.emaj_verify_all();
 rollback;
@@ -577,7 +577,6 @@ begin;
   select * from emaj.emaj_verify_all();
 rollback;
 -- detection of unattended foreign tables in E-Maj schemas
--- (this only gives pertinent results with postgres 9.1+ version)
 begin;
   create extension file_fdw;
   create foreign data wrapper file handler file_fdw_handler;
@@ -588,8 +587,8 @@ begin;
 rollback;
 -- detection of unattended domains in E-Maj schemas
 begin;
-  create domain "emajC".dummy1_domain as int check (VALUE > 0);
-  create domain "emajC".dummy2_domain as int check (VALUE > 0);
+  create domain emaj_myschema1.dummy1_domain as int check (VALUE > 0);
+  create domain emaj_myschema1.dummy2_domain as int check (VALUE > 0);
   select * from emaj.emaj_verify_all();
 rollback;
 
@@ -616,9 +615,9 @@ begin;
   update emaj.emaj_relation set rel_kind = 'S' where rel_schema = 'myschema1' and rel_tblseq = 'mytbl1' and upper_inf(rel_time_range);
   select * from emaj.emaj_verify_all();
 rollback;
--- detection of a missing E-Maj secondary schema
+-- detection of a missing E-Maj log schema
 begin;
-  drop schema emajb cascade;
+  drop schema emaj_myschema1 cascade;
   select * from emaj.emaj_verify_all();
 rollback;
 -- detection of a missing log trigger
@@ -628,7 +627,7 @@ begin;
 rollback;
 -- detection of a missing log function (and trigger)
 begin;
-  drop function emaj.myschema1_mytbl1_log_fnct() cascade;
+  drop function emaj_myschema1.mytbl1_log_fnct() cascade;
   select * from emaj.emaj_verify_all();
 rollback;
 -- detection of a missing truncate trigger
@@ -638,7 +637,7 @@ begin;
 rollback;
 -- detection of a missing log table
 begin;
-  drop table emaj.myschema1_mytbl1_log;
+  drop table emaj_myschema1.mytbl1_log;
   select * from emaj.emaj_verify_all();
 rollback;
 -- detection of a change in the application table structure (new column)
@@ -680,8 +679,8 @@ begin;
 rollback;
 -- detection of a corrupted log table (missing some technical columns)
 begin;
-  alter table emaj.myschema1_mytbl1_log drop column emaj_verb, drop column emaj_tuple;
-  alter table emaj.myschema1_mytbl4_log drop column emaj_gid, drop column emaj_user;
+  alter table emaj_myschema1.mytbl1_log drop column emaj_verb, drop column emaj_tuple;
+  alter table emaj_myschema1.mytbl4_log drop column emaj_gid, drop column emaj_user;
   select * from emaj.emaj_verify_all();
 rollback;
 
@@ -692,8 +691,8 @@ begin;
   create function emaj.dummy_rlbk_fnct () returns int language sql as $$ select 0 $$;
   update emaj.emaj_group set group_pg_version = '8.0.0' where group_name = 'myGroup1';
   drop trigger emaj_log_trg on myschema1.mytbl1;
-  drop function emaj.myschema1_mytbl1_log_fnct() cascade;
-  drop table emaj.myschema1_mytbl1_log;
+  drop function emaj_myschema1.mytbl1_log_fnct() cascade;
+  drop table emaj_myschema1.mytbl1_log;
   alter table myschema1.mytbl1 add column newcol int;
   update emaj.emaj_relation set rel_kind = 'S' where rel_schema = 'myschema2' and rel_tblseq = 'mytbl1' and upper_inf(rel_time_range);
   alter table myschema1.mytbl4 drop constraint mytbl4_pkey;
@@ -797,12 +796,12 @@ begin;
   select * from emaj.emaj_verify_all();
 rollback;
 
--- cases when non E-Maj related objects are stored in emaj secondary schemas
+-- cases when non E-Maj related objects are stored in emaj log schemas
 begin;
-  create sequence emajb.dummySeq;
--- dropping group fails at secondary schema drop step
   select emaj.emaj_stop_group('myGroup1');
+  create sequence emaj_myschema1.dummySeq;
   savepoint sp1;
+-- dropping group fails at log schema drop step
     select emaj.emaj_drop_group('myGroup1');
   rollback to savepoint sp1;
 -- use emaj_verify_all() to understand the problem
@@ -838,13 +837,13 @@ rollback;
 
 -- drop emaj components
 begin;
-  drop table "emajC"."myschema1_myTbl3_log";
+  drop table emaj_myschema1."myTbl3_log";
 rollback;
 begin;
-  drop sequence emaj.myschema1_mytbl1_log_seq;
+  drop sequence emaj_myschema1.mytbl1_log_seq;
 rollback;
 begin;
-  drop function "emajC"."myschema1_myTbl3_log_fnct"() cascade;
+  drop function emaj_myschema1."myTbl3_log_fnct"() cascade;
 rollback;
 begin;
   drop trigger emaj_log_trg on myschema1.mytbl1;
@@ -853,7 +852,7 @@ begin;
   drop schema emaj cascade;
 rollback;
 begin;
-  drop schema emajb cascade;
+  drop schema emaj_myschema1 cascade;
 rollback;
 -- dropping the extension in tested by the install sql script because it depends on the way the extension is created
 
@@ -862,7 +861,7 @@ begin;
   alter table myschema1.mytbl1 alter column col13 type varchar(10);
 rollback;
 begin;
-  alter table emaj.myschema1_mytbl1_log alter column col13 type varchar(10);
+  alter table emaj_myschema1.mytbl1_log alter column col13 type varchar(10);
 rollback;
 
 -- rename a table and/or change its schema (not covered by event triggers in pg9.6-)
@@ -906,8 +905,8 @@ reset role;
 -----------------------------
 -- test a table reclustering (it will use the pkey index as clustered index) and a vacuum full
 -----------------------------
-cluster emaj.myschema1_mytbl1_log;
-vacuum full emaj.myschema1_mytbl1_log;
+cluster emaj_myschema1.mytbl1_log;
+vacuum full emaj_myschema1.mytbl1_log;
 
 -----------------------------
 -- test end: check, reset history and force sequences id

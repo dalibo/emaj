@@ -11,7 +11,7 @@ It consists in checking the integrity of all E-Maj schemas and all created table
 
    SELECT * FROM emaj.emaj_verify_all();
 
-For each E-Maj schema (*emaj* schema and each secondary schema if any) the function verifies that:
+For each E-Maj schema (*emaj* and each log schema) the function verifies that:
 
 * all tables, functions, sequences and types contained in the schema are either objects of the extension, or linked to created tables groups,
 * they don't contain any view, foreign table, domain, conversion, operator or operator class.
