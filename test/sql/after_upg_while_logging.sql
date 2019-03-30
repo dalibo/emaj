@@ -98,6 +98,18 @@ select emaj.emaj_delete_mark_group('myGroup1','M1');
 select emaj.emaj_delete_before_mark_group('myGroup1','M4');
 
 -----------------------------
+-- Step 8 : for myGroup6, perform a table change and verify that no log trigger has been called
+-----------------------------
+insert into mySchema6.table_with_51_characters_long_name_____0_________0a values (1),(2);
+select count(*) from emaj_myschema6."table_with_51_characters_long_name_____0_________0#1_log";
+
+select emaj.emaj_start_group('myGroup6', 'Start G6');
+insert into mySchema6.table_with_51_characters_long_name_____0_________0a values (3),(4);
+delete from mySchema6.table_with_51_characters_long_name_____0_________0a;
+select * from emaj.emaj_log_stat_group('myGroup6','Start G6',NULL);
+select emaj.emaj_rollback_group('myGroup6', 'Start G6');
+
+-----------------------------
 -- test end: check and reset history
 -----------------------------
 select time_id, time_last_emaj_gid, time_event from emaj.emaj_time_stamp order by time_id;

@@ -61,8 +61,6 @@ However, some actions are possible while the tables groups are in *LOGGING* stat
 +------------------------------------------------+---------------+-----------------------+
 | Action                                         | LOGGING Group | Method                |
 +================================================+===============+=======================+
-| Change the E-Maj names prefix                  | Yes           | emaj_group_def update |
-+------------------------------------------------+---------------+-----------------------+
 | Change the log data tablespace                 | Yes           | emaj_group_def update |
 +------------------------------------------------+---------------+-----------------------+
 | Change the log index tablespace                | Yes           | emaj_group_def update |

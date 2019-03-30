@@ -38,6 +38,11 @@ insert into emaj.emaj_group_def values ('myGroup4','myschema4','mypartp2');
 insert into emaj.emaj_group_def values ('myGroup5','myschema5','myunloggedtbl');
 insert into emaj.emaj_group_def values ('myGroup5','myschema5','myoidstbl');
 
+insert into emaj.emaj_group_def values ('myGroup6','myschema6','table_with_50_characters_long_name_____0_________0');
+insert into emaj.emaj_group_def values ('myGroup6','myschema6','table_with_51_characters_long_name_____0_________0a');
+insert into emaj.emaj_group_def values ('myGroup6','myschema6','table_with_55_characters_long_name_____0_________0abcde');
+insert into emaj.emaj_group_def values ('myGroup6','myschema6','table_with_55_characters_long_name_____0_________0fghij');
+
 insert into emaj.emaj_group_def values ('dummyGrp1','dummySchema','mytbl4');
 insert into emaj.emaj_group_def values ('dummyGrp1','myschema1','dummyTable');
 insert into emaj.emaj_group_def values ('dummyGrp2','emaj','emaj_param');
@@ -81,11 +86,6 @@ begin;
 rollback;
 -- table without pkey for a rollbackable group
 select emaj.emaj_create_group('phil''s group#3",',true);
--- sequence with an emaj names prefix defined in the emaj_group_def table
-begin;
-  update emaj.emaj_group_def set grpdef_emaj_names_prefix = 'something' where grpdef_group = 'myGroup1' and grpdef_schema = 'myschema1' and grpdef_tblseq = 'myTbl3_col31_seq';
-  select emaj.emaj_create_group('myGroup1');
-rollback;
 -- sequence with tablespaces defined in the emaj_group_def table
 begin;
   update emaj.emaj_group_def set grpdef_log_dat_tsp = 'something', grpdef_log_idx_tsp = 'something' where grpdef_group = 'myGroup1' and grpdef_schema = 'myschema1' and grpdef_tblseq = 'myTbl3_col31_seq';
@@ -100,21 +100,6 @@ rollback;
 -- already existing log schema
 begin;
   create schema emaj_myschema1;
-  select emaj.emaj_create_group('myGroup1');
-rollback;
--- conflict on emaj names prefix inside the group to create
-begin;
-  update emaj.emaj_group_def set grpdef_emaj_names_prefix = 'samePrefix' where grpdef_group = 'myGroup1' and grpdef_schema = 'myschema1' and grpdef_tblseq = 'mytbl1';
-  update emaj.emaj_group_def set grpdef_emaj_names_prefix = 'samePrefix' where grpdef_group = 'myGroup1' and grpdef_schema = 'myschema1' and grpdef_tblseq = 'mytbl2';
-  update emaj.emaj_group_def set grpdef_emaj_names_prefix = 'mytbl4' where grpdef_group = 'myGroup1' and grpdef_schema = 'myschema1' and grpdef_tblseq = 'myTbl3';
-  select emaj.emaj_create_group('myGroup1');
-rollback;
--- mix a lot of errors
-begin;
-  update emaj.emaj_group_def set grpdef_emaj_names_prefix = 'something', grpdef_log_dat_tsp = 'something' where grpdef_group = 'myGroup1' and grpdef_schema = 'myschema1' and grpdef_tblseq = 'myTbl3_col31_seq';
-  update emaj.emaj_group_def set grpdef_emaj_names_prefix = 'samePrefix' where grpdef_group = 'myGroup1' and grpdef_schema = 'myschema1' and grpdef_tblseq = 'mytbl1';
-  update emaj.emaj_group_def set grpdef_emaj_names_prefix = 'samePrefix' where grpdef_group = 'myGroup1' and grpdef_schema = 'myschema1' and grpdef_tblseq = 'mytbl2';
-  alter table myschema1.mytbl1 set with oids;
   select emaj.emaj_create_group('myGroup1');
 rollback;
 
@@ -153,6 +138,7 @@ rollback;
 select emaj.emaj_create_group('phil''s group#3",',false);
 select emaj.emaj_create_group('myGroup4');
 select emaj.emaj_create_group('myGroup5',false);
+select emaj.emaj_create_group('myGroup6');
 
 -- create a group with a table from an E-Maj log schema
 select emaj.emaj_create_group('dummyGrp2',false);
@@ -211,6 +197,7 @@ select emaj.emaj_drop_group('myGroup1');
 select emaj.emaj_drop_group('myGroup2');
 select emaj.emaj_drop_group('emptyGroup');
 select emaj.emaj_drop_group('myGroup5');
+select emaj.emaj_drop_group('myGroup6');
 
 -- already dropped
 select emaj.emaj_drop_group('myGroup2');

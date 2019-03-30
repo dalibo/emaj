@@ -34,6 +34,11 @@ insert into emaj.emaj_group_def values ('dummyGrp1','dummySchema','mytbl4');
 insert into emaj.emaj_group_def values ('dummyGrp2','myschema1','dummyTable');
 insert into emaj.emaj_group_def values ('dummyGrp3','myschema1','mytbl1');
 insert into emaj.emaj_group_def values ('dummyGrp3','myschema2','mytbl2');
+-- Group with long name tables
+insert into emaj.emaj_group_def values ('myGroup6','myschema6','table_with_50_characters_long_name_____0_________0',NULL,NULL,'shortName1');
+insert into emaj.emaj_group_def values ('myGroup6','myschema6','table_with_51_characters_long_name_____0_________0a',NULL,NULL,'shortName2');
+insert into emaj.emaj_group_def values ('myGroup6','myschema6','table_with_55_characters_long_name_____0_________0abcde',NULL,NULL,'shortName3');
+insert into emaj.emaj_group_def values ('myGroup6','myschema6','table_with_55_characters_long_name_____0_________0fghij',NULL,NULL,'shortName4');
 
 -----------------------------
 -- set the default_tablespace parameter to tspemaj to log tables and indexes into this tablespace
@@ -134,20 +139,24 @@ select emaj.emaj_alter_group('myGroup1');
 set role emaj_regression_tests_adm_user;
 
 -----------------------------
--- Checking steps 1 to 5
+-- Step 6 : managing a group with long name tables
+-----------------------------
+select emaj.emaj_create_group('myGroup6');
+select emaj.emaj_start_group('myGroup6', 'Start G6');
+delete from emaj.emaj_group_def where grpdef_schema = 'myschema6' and grpdef_tblseq = 'table_with_55_characters_long_name_____0_________0abcde';
+select emaj.emaj_alter_group('myGroup6');
+select emaj.emaj_stop_group('myGroup6');
+
+-----------------------------
+-- Checking steps 1 to 6
 -----------------------------
 -- emaj tables
 select time_id, time_last_emaj_gid, time_event from emaj.emaj_time_stamp order by time_id;
 
--- to be uncommented in the next version
---select group_name, group_is_rollbackable, group_creation_time_id,
---       group_last_alter_time_id, group_has_waiting_changes, group_is_logging, 
---       group_is_rlbk_protected, group_nb_table, group_nb_sequence, group_comment
---  from emaj.emaj_group order by group_name;
-select group_name, group_is_logging, group_is_rlbk_protected, group_nb_table, group_nb_sequence, group_is_rollbackable, 
-       group_creation_time_id, group_last_alter_time_id, group_comment
+select group_name, group_is_rollbackable, group_creation_time_id,
+       group_last_alter_time_id, group_has_waiting_changes, group_is_logging, 
+       group_is_rlbk_protected, group_nb_table, group_nb_sequence, group_comment
   from emaj.emaj_group order by group_name;
-
 
 select mark_group, regexp_replace(mark_name,E'\\d\\d\.\\d\\d\\.\\d\\d\\.\\d\\d\\d','%','g'), mark_time_id, 
        mark_is_deleted, mark_is_rlbk_protected, mark_comment, mark_log_rows_before_next, mark_logged_rlbk_target_mark 

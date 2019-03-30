@@ -138,8 +138,6 @@ La colonne *hist_event* peut prendre les valeurs suivantes.
 +------------------------------+------------------------------------------------+
 | MARK DELETED                 | marque supprimée                               |
 +------------------------------+------------------------------------------------+
-| NAMES PREFIX CHANGED         | préfixe des noms E-Maj modifié                 |
-+------------------------------+------------------------------------------------+
 | NOTICE                       | message d’information issu d’un rollback       |
 +------------------------------+------------------------------------------------+
 | SEQUENCE ADDED               | séquence ajoutée à un groupe de tables actif   |

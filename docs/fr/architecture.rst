@@ -85,7 +85,7 @@ Pour une table applicative, le nom des objets de log est préfixé par le nom de
 * le nom de la **séquence** associée à la table de log est :
     <nom.de.la.table>_log_seq
 
-Mais il est possible de définir, pour chaque table applicative, le **préfixe** constituant le nom des objets E-Maj associés. Ceci permet notamment de gérer des tables avec des noms très longs.
+Pour les tables applicatives dont le nom est très long (plus de 50 caractères), le préfixe utilisé pour construire le nom des objets de log est généré pour respecter les règles de nommage de PostgreSQL et éviter tout doublon.
 
 Le nom des tables de log peut porter un suffixe de type « _1 », « _2 », etc. Il s’agit alors d’anciennes tables de logs qui ont été renommées lors d'une modification de groupe de tables.
 

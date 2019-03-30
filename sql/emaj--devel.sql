@@ -1014,32 +1014,16 @@ $_check_conf_groups$
         FROM emaj.emaj_group_def, pg_catalog.pg_class, pg_catalog.pg_namespace
         WHERE grpdef_schema = nspname AND grpdef_tblseq = relname AND relnamespace = pg_namespace.oid
           AND grpdef_group = ANY (v_groupNames) AND relkind = 'r' AND relpersistence = 't';
----- check that several tables of the group have not the same emaj names prefix
+---- check that a table is not assigned several time in the groups
     RETURN QUERY
-      WITH dupl_prefix AS (
-        SELECT grpdef_schema AS logschema, coalesce(grpdef_emaj_names_prefix, grpdef_tblseq) AS prefix, count(*)
+      WITH dupl AS (
+        SELECT grpdef_schema, grpdef_tblseq, count(*)
           FROM emaj.emaj_group_def
           WHERE grpdef_group = ANY (v_groupNames)
           GROUP BY 1,2 HAVING count(*) > 1)
-      SELECT 10, 1, grpdef_group, grpdef_schema, grpdef_tblseq, prefix,
-             format('in the group %s, the table %s.%s would have a duplicate emaj prefix "%s".', quote_ident(grpdef_group), quote_ident(grpdef_schema), quote_ident(grpdef_tblseq), prefix)
-        FROM emaj.emaj_group_def, dupl_prefix
-        WHERE grpdef_schema = logschema AND coalesce(grpdef_emaj_names_prefix, grpdef_tblseq) = prefix
-          AND grpdef_group = ANY (v_groupNames);
----- check that emaj names prefix that will be generared will not generate conflict with objects from existing groups
-    RETURN QUERY
-      WITH dupl_prefix AS (
-        SELECT grpdef_schema AS logschema, coalesce(grpdef_emaj_names_prefix, grpdef_tblseq) AS prefix
-          FROM emaj.emaj_group_def, emaj.emaj_relation
-          WHERE grpdef_schema = rel_log_schema AND coalesce(grpdef_emaj_names_prefix, grpdef_tblseq) || '_log' = rel_log_table
-            AND grpdef_group = ANY (v_groupNames)
-            AND NOT rel_group = ANY (v_groupNames) AND upper_inf(rel_time_range)
-      )
-      SELECT 11, 1, grpdef_group, grpdef_schema, grpdef_tblseq, prefix,
-             format('in the group %s, the table %s.%s would have an already used emaj prefix "%s".', quote_ident(grpdef_group), quote_ident(grpdef_schema), quote_ident(grpdef_tblseq), prefix)
-        FROM emaj.emaj_group_def, dupl_prefix
-        WHERE grpdef_schema = logschema AND coalesce(grpdef_emaj_names_prefix, grpdef_tblseq) = prefix
-          AND grpdef_group = ANY (v_groupNames);
+      SELECT 10, 1, v_groupNames[1], grpdef_schema, grpdef_tblseq, NULL::TEXT,
+             format('the table %s.%s is assigned several times.', quote_ident(grpdef_schema), quote_ident(grpdef_tblseq))
+        FROM dupl;
 ---- check that the log data tablespaces for tables exist
     RETURN QUERY
       SELECT 12, 1, grpdef_group, grpdef_schema, grpdef_tblseq, grpdef_log_dat_tsp,
@@ -1080,12 +1064,6 @@ $_check_conf_groups$
           AND NOT EXISTS (SELECT 1 FROM pg_catalog.pg_class, pg_catalog.pg_namespace, pg_catalog.pg_constraint
                             WHERE relnamespace = pg_namespace.oid AND connamespace = pg_namespace.oid AND conrelid = pg_class.oid
                             AND contype = 'p' AND nspname = grpdef_schema AND relname = grpdef_tblseq);
-    RETURN QUERY
-      SELECT 31, 1, grpdef_group, grpdef_schema, grpdef_tblseq, NULL::TEXT,
-             format('in the group %s, for the sequence %s.%s, the emaj names prefix is not NULL.', quote_ident(grpdef_group), quote_ident(grpdef_schema), quote_ident(grpdef_tblseq))
-        FROM emaj.emaj_group_def, pg_catalog.pg_class, pg_catalog.pg_namespace
-        WHERE grpdef_schema = nspname AND grpdef_tblseq = relname AND relnamespace = pg_namespace.oid
-          AND grpdef_group = ANY (v_groupNames) AND relkind = 'S' AND grpdef_emaj_names_prefix IS NOT NULL;
 ---- all sequences described in emaj_group_def have their data log tablespaces attributes set to NULL
     RETURN QUERY
       SELECT 32, 1, grpdef_group, grpdef_schema, grpdef_tblseq, NULL::TEXT,
@@ -1444,8 +1422,19 @@ $_create_tbl$
     v_triggerList            TEXT;
   BEGIN
 -- the checks on the table properties are performed by the calling functions
--- build the prefix of all emaj object to create, by default <table>
-    v_emajNamesPrefix = coalesce(r_grpdef.grpdef_emaj_names_prefix, r_grpdef.grpdef_tblseq);
+-- build the prefix of all emaj object to create
+    IF length(r_grpdef.grpdef_tblseq) <= 50 THEN
+-- for not too long table name, the prefix is the table name itself
+      v_emajNamesPrefix = r_grpdef.grpdef_tblseq;
+    ELSE
+-- for long table names (over 50 char long), compute the suffix to add to the first 50 characters (#1, #2, ...), by looking at the existing names
+      SELECT substr(r_grpdef.grpdef_tblseq, 1, 50) || '#' || coalesce(max(suffix) + 1, 1)::TEXT INTO v_emajNamesPrefix
+        FROM
+          (SELECT unnest(regexp_matches(substr(rel_log_table, 51),'#(\d+)'))::INT AS suffix
+             FROM emaj.emaj_relation
+             WHERE substr(rel_log_table, 1, 50) = substr(r_grpdef.grpdef_tblseq, 1, 50)
+          ) AS t;
+    END IF;
 -- build the name of emaj components associated to the application table (non schema qualified and not quoted)
     v_baseLogTableName     = v_emajNamesPrefix || '_log';
     v_baseLogIdxName       = v_emajNamesPrefix || '_log_idx';
@@ -1665,53 +1654,6 @@ $_add_tbl$
   END;
 $_add_tbl$;
 
-CREATE OR REPLACE FUNCTION emaj._change_emaj_names_prefix(r_rel emaj.emaj_relation, v_newNamesPrefix TEXT, v_multiGroup BOOLEAN)
-RETURNS VOID LANGUAGE plpgsql SECURITY DEFINER AS
-$_change_emaj_names_prefix$
--- This function processes the change of emaj names prefix for an application table
--- Input: the existing emaj_relation row for the table and the new emaj names prefix
--- The function is defined as SECURITY DEFINER so that emaj_adm role can use it even if he is not the owner of the application table
-  DECLARE
-    v_newEmajNamesPrefix     TEXT;
-    v_newLogTableName        TEXT;
-    v_newLogFunctionName     TEXT;
-    v_newLogSequenceName     TEXT;
-    v_newLogIndexName        TEXT;
-  BEGIN
--- build the name of new emaj components associated to the application table (non schema qualified and not quoted)
-    v_newEmajNamesPrefix = coalesce(v_newNamesPrefix, r_rel.rel_tblseq);
-    v_newLogTableName    = v_newEmajNamesPrefix || '_log';
-    v_newLogIndexName    = v_newEmajNamesPrefix || '_log_idx';
-    v_newLogSequenceName = v_newEmajNamesPrefix || '_log_seq';
-    v_newLogFunctionName = v_newEmajNamesPrefix || '_log_fnct';
--- process the emaj names prefix change
-    EXECUTE 'ALTER TABLE ' || quote_ident(r_rel.rel_log_schema) || '.' || quote_ident(r_rel.rel_log_table)|| ' RENAME TO ' || quote_ident(v_newLogTableName);
-    EXECUTE 'ALTER INDEX ' || quote_ident(r_rel.rel_log_schema) || '.' || quote_ident(r_rel.rel_log_index)|| ' RENAME TO ' || quote_ident(v_newLogIndexName);
-    EXECUTE 'ALTER SEQUENCE ' || quote_ident(r_rel.rel_log_schema) || '.' || quote_ident(r_rel.rel_log_sequence)|| ' RENAME TO ' || quote_ident(v_newLogSequenceName);
--- modify the log function (name and content)
-    EXECUTE 'DROP FUNCTION ' || quote_ident(r_rel.rel_log_schema) || '.' || quote_ident(r_rel.rel_log_function) || '() CASCADE';
-    PERFORM emaj._create_log_trigger(quote_ident(r_rel.rel_schema) || '.' || quote_ident(r_rel.rel_tblseq),
-                                     quote_ident(r_rel.rel_log_schema) || '.' || quote_ident(v_newLogTableName),
-                                     quote_ident(r_rel.rel_log_schema) || '.' || quote_ident(v_newLogSequenceName),
-                                     quote_ident(r_rel.rel_log_schema) || '.' || quote_ident(v_newLogFunctionName));
--- as the group in LOGGING state, keep the trigger enabled
--- adjust sequences schema names in emaj_sequence tables
-    UPDATE emaj.emaj_sequence SET sequ_name = v_newLogSequenceName WHERE sequ_schema = r_rel.rel_log_schema AND sequ_name = r_rel.rel_log_sequence;
--- update the table attributes into emaj_relation
-    UPDATE emaj.emaj_relation
-      SET rel_log_table = v_newLogTableName, rel_log_index = v_newLogIndexName,
-          rel_log_sequence = v_newLogSequenceName, rel_log_function = v_newLogFunctionName
-      WHERE rel_schema = r_rel.rel_schema AND rel_tblseq = r_rel.rel_tblseq AND rel_time_range = r_rel.rel_time_range;
--- insert an entry into the emaj_hist table
-    INSERT INTO emaj.emaj_hist (hist_function, hist_event, hist_object, hist_wording)
-      VALUES (CASE WHEN v_multiGroup THEN 'ALTER_GROUPS' ELSE 'ALTER_GROUP' END, 'NAMES PREFIX CHANGED',
-              quote_ident(r_rel.rel_schema) || '.' || quote_ident(r_rel.rel_tblseq),
-              coalesce(substring(r_rel.rel_log_table FROM '(.*)_log$'),r_rel.rel_log_table,'Internal error in _change_emaj_names_prefix')
-                || ' => ' || v_newEmajNamesPrefix);
-    RETURN;
-  END;
-$_change_emaj_names_prefix$;
-
 CREATE OR REPLACE FUNCTION emaj._change_log_data_tsp_tbl(r_rel emaj.emaj_relation, v_newLogDatTsp TEXT, v_multiGroup BOOLEAN)
 RETURNS VOID LANGUAGE plpgsql SECURITY DEFINER AS
 $_change_log_data_tsp_tbl$
@@ -1802,7 +1744,7 @@ $_remove_tbl$
         FROM emaj.emaj_sequence
         WHERE sequ_schema = v_logSchema AND sequ_name = v_logSequence AND sequ_time_id = v_timeId;
 -- ... compute the suffix to add to the log table and index names (_1, _2, ...), by looking at the existing names
-      SELECT '_'|| coalesce(max(suffix) + 1, 1)::TEXT INTO v_namesSuffix
+      SELECT '_' || coalesce(max(suffix) + 1, 1)::TEXT INTO v_namesSuffix
         FROM
           (SELECT unnest(regexp_matches(rel_log_table,'_(\d+)$'))::INT AS suffix
              FROM emaj.emaj_relation
@@ -3182,19 +3124,6 @@ $_alter_plan$
         FROM emaj.emaj_group
         WHERE group_name = ANY (v_groupNames)
           AND NOT group_is_logging;
--- determine the tables whose emaj names prefix in emaj_group_def has changed
-    INSERT INTO emaj.emaj_alter_plan (altr_time_id, altr_step, altr_schema, altr_tblseq, altr_group, altr_priority, altr_new_group)
-      SELECT v_timeId, 'CHANGE_TBL_NAMES_PREFIX', rel_schema, rel_tblseq, rel_group, grpdef_priority,
-             CASE WHEN rel_group <> grpdef_group THEN grpdef_group ELSE NULL END
-        FROM emaj.emaj_relation, emaj.emaj_group_def
-        WHERE rel_schema = grpdef_schema AND rel_tblseq = grpdef_tblseq AND upper_inf(rel_time_range)
-          AND rel_group = ANY (v_groupNames)
-          AND grpdef_group = ANY (v_groupNames)
-          AND rel_kind = 'r'
-          AND rel_log_table <> (coalesce(grpdef_emaj_names_prefix, grpdef_tblseq) || '_log')
---   exclude tables that will have been repaired in a previous step
-          AND (rel_schema, rel_tblseq) NOT IN (
-            SELECT altr_schema, altr_tblseq FROM emaj.emaj_alter_plan WHERE altr_time_id = v_timeId AND altr_step = 'REPAIR_TBL');
 -- determine the tables whose log data tablespace in emaj_group_def has changed
     INSERT INTO emaj.emaj_alter_plan (altr_time_id, altr_step, altr_schema, altr_tblseq, altr_group, altr_priority, altr_new_group)
       SELECT v_timeId, 'CHANGE_TBL_LOG_DATA_TSP', rel_schema, rel_tblseq, rel_group, grpdef_priority,
@@ -3273,7 +3202,6 @@ $_alter_exec$
 -- It looks at the emaj_alter_plan table and executes elementary step in proper order.
 -- Input: timestamp id of the operation
   DECLARE
-    v_emajNamesPrefix        TEXT;
     v_logDatTsp              TEXT;
     v_logIdxTsp              TEXT;
     v_isRollbackable         BOOLEAN;
@@ -3322,17 +3250,6 @@ $_alter_exec$
 --
         WHEN 'REPAIR_SEQ' THEN
           RAISE EXCEPTION 'alter_exec: Internal error, trying to repair a sequence (%.%) is abnormal.', r_plan.altr_schema, r_plan.altr_tblseq;
---
-        WHEN 'CHANGE_TBL_NAMES_PREFIX' THEN
--- get the table description from emaj_relation
-          SELECT * INTO r_rel FROM emaj.emaj_relation
-            WHERE rel_schema = r_plan.altr_schema AND rel_tblseq = r_plan.altr_tblseq AND upper_inf(rel_time_range);
--- get the table description from emaj_group_def
-          SELECT grpdef_emaj_names_prefix INTO v_emajNamesPrefix FROM emaj.emaj_group_def
-            WHERE grpdef_group = coalesce (r_plan.altr_new_group, r_plan.altr_group)
-              AND grpdef_schema = r_plan.altr_schema AND grpdef_tblseq = r_plan.altr_tblseq;
--- then alter the relation, depending on the changes
-          PERFORM emaj._change_emaj_names_prefix(r_rel, v_emajNamesPrefix, v_multiGroup);
 --
         WHEN 'CHANGE_TBL_LOG_DATA_TSP' THEN
 -- get the table description from emaj_relation
@@ -7439,13 +7356,10 @@ $_adjust_group_properties$
             AND (
               -- the relations that do not belong to the groups anymore
                   grpdef_group IS NULL
-              -- the tables whose log schema in emaj_group_def has changed
-              --         or whose emaj names prefix in emaj_group_def has changed
-              --         or whose log data tablespace in emaj_group_def has changed
+              -- the tables whose log data tablespace in emaj_group_def has changed
               --         or whose log index tablespace in emaj_group_def has changed
                OR (rel_kind = 'r'
-                  AND (rel_log_table <> (coalesce(grpdef_emaj_names_prefix, grpdef_tblseq) || '_log')
-                    OR coalesce(rel_log_dat_tsp,'') <> coalesce(grpdef_log_dat_tsp,'')
+                  AND (coalesce(rel_log_dat_tsp,'') <> coalesce(grpdef_log_dat_tsp,'')
                     OR coalesce(rel_log_idx_tsp,'') <> coalesce(grpdef_log_idx_tsp,'')
                       ))
               -- the tables or sequences that change their group ownership

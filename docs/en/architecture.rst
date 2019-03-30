@@ -85,7 +85,7 @@ For an application table, the log objects name is prefixed with the table name. 
 * the name of the **sequence** associated to the log table is:
 	<table.name>_log_seq
 
-It is also possible to define for each application table the **prefix** of the associated E-Maj objects name. This allows to manage tables with very long names.
+For application tables whose name is very long (over 50 characters), the prefix used to build the log objects name is generated so it respects the PostgreSQL naming rules and avoids name conflict.
 
 A log table name may contain a suffix like “_1”, “_2”, etc. In such a case, it deals with an old log table that has been renamed by an emaj_alter_group operation.
 

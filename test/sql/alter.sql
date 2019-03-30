@@ -44,11 +44,6 @@ begin;
   insert into emaj.emaj_group_def values ('myGroup1','myschema2','mytbl1');
   select emaj.emaj_alter_group('myGroup1');
 rollback;
--- object names prefix cannot be changed for sequence
-begin;
-  update emaj.emaj_group_def set grpdef_emaj_names_prefix = 'dummy' where grpdef_schema = 'myschema1' and grpdef_tblseq = 'myTbl3_col31_seq';
-  select emaj.emaj_alter_group('myGroup1');
-rollback;
 -- log tablespace cannot be changed for sequence
 begin;
   update emaj.emaj_group_def set grpdef_log_dat_tsp = 'b' where grpdef_schema = 'myschema1' and grpdef_tblseq = 'myTbl3_col31_seq';
@@ -99,13 +94,6 @@ select nspname from pg_namespace where nspname like 'emaj%' order by nspname;
 insert into emaj.emaj_group_def values ('myGroup1','myschema1','myTbl3_col31_seq',1);
 select emaj.emaj_alter_group('myGroup1');
 select group_nb_table, group_nb_sequence from emaj.emaj_group where group_name = 'myGroup1';
--- only change the emaj_names_prefix for 1 table
-update emaj.emaj_group_def set grpdef_emaj_names_prefix = 's1t3' where grpdef_schema = 'myschema1' and grpdef_tblseq = 'myTbl3';
-select emaj.emaj_alter_group('myGroup1');
-select count(*) from emaj_myschema1.s1t3_log;
-update emaj.emaj_group_def set grpdef_emaj_names_prefix = NULL where grpdef_schema = 'myschema1' and grpdef_tblseq = 'myTbl3';
-select emaj.emaj_alter_group('myGroup1');
-select count(*) from emaj_myschema1."myTbl3_log";
 -- only change the log data tablespace for 1 table
 update emaj.emaj_group_def set grpdef_log_dat_tsp = NULL where grpdef_schema = 'myschema1' and grpdef_tblseq = 'mytbl2b';
 select emaj.emaj_alter_group('myGroup1');
@@ -232,17 +220,6 @@ insert into emaj.emaj_group_def values ('myGroup1','myschema1','myTbl3_col31_seq
 select emaj.emaj_alter_groups('{"myGroup1","myGroup2"}');
 select group_name, group_nb_table, group_nb_sequence from emaj.emaj_group where group_name = 'myGroup1' or group_name = 'myGroup2' order by 1;
 select nspname from pg_namespace where nspname like 'emaj%' order by nspname;
-
--- change the emaj_names_prefix for 2 tables
-update emaj.emaj_group_def set grpdef_emaj_names_prefix = 's1t3' where grpdef_schema = 'myschema1' and grpdef_tblseq = 'myTbl3';
-select emaj.emaj_alter_groups('{"myGroup1","myGroup2"}');
-select nspname from pg_namespace, pg_class where relnamespace = pg_namespace.oid and relname = 'myTbl3_log';
-select count(*) from emaj_myschema1.s1t3_log;
---
-update emaj.emaj_group_def set grpdef_emaj_names_prefix = NULL where grpdef_schema = 'myschema1' and grpdef_tblseq = 'myTbl3';
-select emaj.emaj_alter_groups('{"myGroup1","myGroup2"}');
-select nspname from pg_namespace, pg_class where relnamespace = pg_namespace.oid and relname = 'myTbl3_log';
-select count(*) from emaj_myschema1."myTbl3_log";
 
 -- only change the log data tablespace for 1 table, the log index tablespace for another table and the priority for a third one
 update emaj.emaj_group_def set grpdef_log_dat_tsp = NULL where grpdef_schema = 'myschema1' and grpdef_tblseq = 'mytbl2b';

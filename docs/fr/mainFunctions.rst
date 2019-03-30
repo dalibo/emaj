@@ -32,9 +32,9 @@ Le contenu du ou des groupes de tables que l'on souhaite gérer se définit en g
 +--------------------------+------+------------------------------------------------------------------------------------------------------+
 | grpdef_priority          | INT  | niveau de priorité de la table ou de la séquence dans les traitements E-Maj (optionnel)              |
 +--------------------------+------+------------------------------------------------------------------------------------------------------+
-| grpdef_log_schema_suffix | TEXT | suffixe permettant de construire le nom du schéma contenant les objets E-Maj de la table (déprécié)  |
+| grpdef_log_schema_suffix | TEXT | (colonne dépréciée)                                                                                  |
 +--------------------------+------+------------------------------------------------------------------------------------------------------+
-| grpdef_emaj_names_prefix | TEXT | préfixe des noms d'objets E-Maj générés pour la table (optionnel)                                    |
+| grpdef_emaj_names_prefix | TEXT | (colonne dépréciée)                                                                                  |
 +--------------------------+------+------------------------------------------------------------------------------------------------------+
 | grpdef_log_dat_tsp       | TEXT | nom du tablespace hébergeant la table de log (optionnel)                                             |
 +--------------------------+------+------------------------------------------------------------------------------------------------------+
@@ -71,14 +71,6 @@ Les colonnes optionnelles
 ^^^^^^^^^^^^^^^^^^^^^^^^^
 
 La colonne **grpdef_priority** est de type entier (*INTEGER*) et peut prendre la valeur *NULL*, Elle permet de définir un ordre de priorité dans le traitements des tables par les fonctions d'E-Maj. Ceci peut-être utile pour faciliter la pose des verrous. En effet, en posant les verrous sur les tables dans le même ordre que les accès applicatifs typiques, on peut limiter le risque de deadlock. Les fonctions E-Maj traitent les tables dans l'ordre croissant de *grpdef_priority*, les valeurs *NULL* étant traitées en dernier. Pour un même niveau de priorité, les tables sont traitées dans l'ordre alphabétique de nom de schéma puis de nom de table.
-
-Pour les tables dont le nom est très long, le préfixe par défaut des noms d'objet E-Maj générés peut s'avérer trop long pour respecter les limites de PostgreSQL. Mais un autre préfixe peut être défini pour chaque table, en alimentant la colonne **grpdef_emaj_names_prefix**.
-
-Si cette colonne *grpdef_emaj_names_prefix* contient une valeur *NULL*, le préfixe par défaut *<nom_schéma>_<nom_table>* est utilisé.
-
-Deux tables différentes ne peuvent pas, explicitement ou implicitement, partager le même préfixe.
-
-Pour les séquences, la colonne *grpdef_emaj_names_prefix* doit rester *NULL*.
 
 Pour optimiser les performances des installations E-Maj comportant un très grand nombre de tables, il peut s'avérer intéressant de répartir les tables de log et leur index dans plusieurs tablespaces. La colonne **grpdef_log_dat_tsp** sert à spécifier le nom du tablespace à utiliser pour la table de log d'une table applicative. De la même manière, la colonne **grpdef_log_idx_tsp** sert à spécifier le nom du tablespace à utiliser pour l'index de la table de log. 
 

@@ -34,6 +34,10 @@ insert into emaj.emaj_group_def values ('myGroup4','myschema4','mypartp1');
 insert into emaj.emaj_group_def values ('myGroup4','myschema4','mypartp2');
 insert into emaj.emaj_group_def values ('myGroup5','myschema5','myunloggedtbl');
 insert into emaj.emaj_group_def values ('myGroup5','myschema5','myoidstbl');
+insert into emaj.emaj_group_def values ('myGroup6','myschema6','table_with_50_characters_long_name_____0_________0');
+insert into emaj.emaj_group_def values ('myGroup6','myschema6','table_with_51_characters_long_name_____0_________0a');
+insert into emaj.emaj_group_def values ('myGroup6','myschema6','table_with_55_characters_long_name_____0_________0abcde');
+insert into emaj.emaj_group_def values ('myGroup6','myschema6','table_with_55_characters_long_name_____0_________0fghij');
 insert into emaj.emaj_group_def values ('dummyGrp1','dummySchema','mytbl4');
 insert into emaj.emaj_group_def values ('dummyGrp1','myschema1','dummyTable');
 insert into emaj.emaj_group_def values ('dummyGrp2','emaj','emaj_param');
@@ -94,13 +98,6 @@ rollback;
 select emaj.emaj_create_group('phil''s group#3",',true);
 WARNING:  emaj_create_group: in the group "phil's group#3"",", the table "phil's schema3"."myTbl2\" has no PRIMARY KEY.
 ERROR:  emaj_create_group: One or several errors have been detected in the emaj_group_def table content.
--- sequence with an emaj names prefix defined in the emaj_group_def table
-begin;
-  update emaj.emaj_group_def set grpdef_emaj_names_prefix = 'something' where grpdef_group = 'myGroup1' and grpdef_schema = 'myschema1' and grpdef_tblseq = 'myTbl3_col31_seq';
-  select emaj.emaj_create_group('myGroup1');
-WARNING:  emaj_create_group: in the group "myGroup1", for the sequence myschema1."myTbl3_col31_seq", the emaj names prefix is not NULL.
-ERROR:  emaj_create_group: One or several errors have been detected in the emaj_group_def table content.
-rollback;
 -- sequence with tablespaces defined in the emaj_group_def table
 begin;
   update emaj.emaj_group_def set grpdef_log_dat_tsp = 'something', grpdef_log_idx_tsp = 'something' where grpdef_group = 'myGroup1' and grpdef_schema = 'myschema1' and grpdef_tblseq = 'myTbl3_col31_seq';
@@ -126,32 +123,6 @@ ERROR:  _create_log_schemas: The schema "emaj_myschema1" should not exist. Drop 
 CONTEXT:  SQL statement "SELECT emaj._create_log_schemas('CREATE_GROUP', ARRAY[v_groupName])"
 PL/pgSQL function emaj.emaj_create_group(text,boolean,boolean) line 56 at PERFORM
 rollback;
--- conflict on emaj names prefix inside the group to create
-begin;
-  update emaj.emaj_group_def set grpdef_emaj_names_prefix = 'samePrefix' where grpdef_group = 'myGroup1' and grpdef_schema = 'myschema1' and grpdef_tblseq = 'mytbl1';
-  update emaj.emaj_group_def set grpdef_emaj_names_prefix = 'samePrefix' where grpdef_group = 'myGroup1' and grpdef_schema = 'myschema1' and grpdef_tblseq = 'mytbl2';
-  update emaj.emaj_group_def set grpdef_emaj_names_prefix = 'mytbl4' where grpdef_group = 'myGroup1' and grpdef_schema = 'myschema1' and grpdef_tblseq = 'myTbl3';
-  select emaj.emaj_create_group('myGroup1');
-WARNING:  emaj_create_group: in the group "myGroup1", the table myschema1."myTbl3" would have a duplicate emaj prefix "mytbl4".
-WARNING:  emaj_create_group: in the group "myGroup1", the table myschema1.mytbl1 would have a duplicate emaj prefix "samePrefix".
-WARNING:  emaj_create_group: in the group "myGroup1", the table myschema1.mytbl2 would have a duplicate emaj prefix "samePrefix".
-WARNING:  emaj_create_group: in the group "myGroup1", the table myschema1.mytbl4 would have a duplicate emaj prefix "mytbl4".
-ERROR:  emaj_create_group: One or several errors have been detected in the emaj_group_def table content.
-rollback;
--- mix a lot of errors
-begin;
-  update emaj.emaj_group_def set grpdef_emaj_names_prefix = 'something', grpdef_log_dat_tsp = 'something' where grpdef_group = 'myGroup1' and grpdef_schema = 'myschema1' and grpdef_tblseq = 'myTbl3_col31_seq';
-  update emaj.emaj_group_def set grpdef_emaj_names_prefix = 'samePrefix' where grpdef_group = 'myGroup1' and grpdef_schema = 'myschema1' and grpdef_tblseq = 'mytbl1';
-  update emaj.emaj_group_def set grpdef_emaj_names_prefix = 'samePrefix' where grpdef_group = 'myGroup1' and grpdef_schema = 'myschema1' and grpdef_tblseq = 'mytbl2';
-  alter table myschema1.mytbl1 set with oids;
-  select emaj.emaj_create_group('myGroup1');
-WARNING:  emaj_create_group: in the group "myGroup1", the table myschema1.mytbl1 would have a duplicate emaj prefix "samePrefix".
-WARNING:  emaj_create_group: in the group "myGroup1", the table myschema1.mytbl2 would have a duplicate emaj prefix "samePrefix".
-WARNING:  emaj_create_group: in the group "myGroup1", the table myschema1.mytbl1 is declared WITH OIDS.
-WARNING:  emaj_create_group: in the group "myGroup1", for the sequence myschema1."myTbl3_col31_seq", the emaj names prefix is not NULL.
-WARNING:  emaj_create_group: in the group "myGroup1", for the sequence myschema1."myTbl3_col31_seq", the data log tablespace is not NULL.
-ERROR:  emaj_create_group: One or several errors have been detected in the emaj_group_def table content.
-rollback;
 -- bad alter_log_table parameter
 begin;
   insert into emaj.emaj_param (param_key, param_value_text) values ('alter_log_table','dummmy content');
@@ -160,7 +131,7 @@ ERROR:  syntax error at or near "dummmy"
 LINE 1: ALTER TABLE emaj_myschema1."myTbl3_log" dummmy content
                                                 ^
 QUERY:  ALTER TABLE emaj_myschema1."myTbl3_log" dummmy content
-CONTEXT:  PL/pgSQL function emaj._create_tbl(emaj.emaj_group_def,bigint,boolean) line 87 at EXECUTE
+CONTEXT:  PL/pgSQL function emaj._create_tbl(emaj.emaj_group_def,bigint,boolean) line 98 at EXECUTE
 SQL statement "SELECT emaj._create_tbl(r_grpdef, v_timeId, v_isRollbackable)"
 PL/pgSQL function emaj.emaj_create_group(text,boolean,boolean) line 67 at PERFORM
 rollback;
@@ -246,6 +217,12 @@ select emaj.emaj_create_group('myGroup5',false);
                  2
 (1 row)
 
+select emaj.emaj_create_group('myGroup6');
+ emaj_create_group 
+-------------------
+                 4
+(1 row)
+
 -- create a group with a table from an E-Maj log schema
 select emaj.emaj_create_group('dummyGrp2',false);
 WARNING:  emaj_create_group: in the group "dummyGrp2", the table or sequence emaj.emaj_param belongs to an E-Maj schema.
@@ -268,8 +245,9 @@ select nspname from pg_namespace where nspname like 'emaj%' order by nspname;
  emaj_myschema2
  emaj_myschema4
  emaj_myschema5
+ emaj_myschema6
  emaj_phil's schema3
-(6 rows)
+(7 rows)
 
 select group_name, group_is_rollbackable, group_creation_time_id,
        group_last_alter_time_id, group_has_waiting_changes, group_is_logging, 
@@ -282,64 +260,73 @@ select group_name, group_is_rollbackable, group_creation_time_id,
  myGroup2         | t                     |                      5 |                          | f                         | f                | f                       |              6 |                 2 | 
  myGroup4         | t                     |                      9 |                          | f                         | f                | f                       |              5 |                 0 | 
  myGroup5         | f                     |                     10 |                          | f                         | f                | t                       |              2 |                 0 | 
+ myGroup6         | t                     |                     11 |                          | f                         | f                | f                       |              4 |                 0 | 
  phil's group#3", | f                     |                      8 |                          | f                         | f                | t                       |              2 |                 2 | 
-(6 rows)
+(7 rows)
 
 select * from emaj.emaj_relation order by rel_group, rel_priority, rel_schema, rel_tblseq, rel_time_range;
-   rel_schema   |    rel_tblseq     | rel_time_range |    rel_group     | rel_kind | rel_priority |   rel_log_schema    |     rel_log_table      | rel_log_dat_tsp |       rel_log_index        | rel_log_idx_tsp |      rel_log_sequence      |      rel_log_function       |                       rel_sql_columns                       |      rel_sql_pk_columns       |                               rel_sql_pk_eq_conditions                                | rel_log_seq_last_value | rel_emaj_verb_attnum 
-----------------+-------------------+----------------+------------------+----------+--------------+---------------------+------------------------+-----------------+----------------------------+-----------------+----------------------------+-----------------------------+-------------------------------------------------------------+-------------------------------+---------------------------------------------------------------------------------------+------------------------+----------------------
- myschema1      | myTbl3_col31_seq  | [3,)           | myGroup1         | S        |            1 |                     |                        |                 |                            |                 |                            |                             |                                                             |                               |                                                                                       |                        |                     
- myschema1      | myTbl3            | [3,)           | myGroup1         | r        |           10 | emaj_myschema1      | myTbl3_log             | tsplog1         | myTbl3_log_idx             |                 | myTbl3_log_seq             | myTbl3_log_fnct             | tbl.col31,tbl.col32,tbl.col33                               | col31                         | tbl.col31 = keys.col31                                                                |                        |                    4
- myschema1      | mytbl1            | [3,)           | myGroup1         | r        |           20 | emaj_myschema1      | mytbl1_log             |                 | mytbl1_log_idx             |                 | mytbl1_log_seq             | mytbl1_log_fnct             | tbl.col11,tbl.col12,tbl.col13                               | col11,col12                   | tbl.col11 = keys.col11 AND tbl.col12 = keys.col12                                     |                        |                    4
- myschema1      | mytbl4            | [3,)           | myGroup1         | r        |           20 | emaj_myschema1      | mytbl4_log             | tsplog1         | mytbl4_log_idx             | tsp log'2       | mytbl4_log_seq             | mytbl4_log_fnct             | tbl.col41,tbl.col42,tbl.col43,tbl.col44,tbl.col45           | col41                         | tbl.col41 = keys.col41                                                                |                        |                    6
- myschema1      | mytbl2            | [3,)           | myGroup1         | r        |              | emaj_myschema1      | mytbl2_log             | tsplog1         | mytbl2_log_idx             | tsplog1         | mytbl2_log_seq             | mytbl2_log_fnct             | tbl.col21,tbl.col22,tbl.col23                               | col21                         | tbl.col21 = keys.col21                                                                |                        |                    4
- myschema1      | mytbl2b           | [3,)           | myGroup1         | r        |              | emaj_myschema1      | mytbl2b_log            | tsp log'2       | mytbl2b_log_idx            | tsp log'2       | mytbl2b_log_seq            | mytbl2b_log_fnct            | tbl.col20,tbl.col21                                         | col20                         | tbl.col20 = keys.col20                                                                |                        |                    3
- myschema1      | mytbl2b_col20_seq | [3,)           | myGroup1         | S        |              |                     |                        |                 |                            |                 |                            |                             |                                                             |                               |                                                                                       |                        |                     
- myschema2      | myTbl3            | [5,)           | myGroup2         | r        |              | emaj_myschema2      | myTbl3_log             |                 | myTbl3_log_idx             |                 | myTbl3_log_seq             | myTbl3_log_fnct             | tbl.col31,tbl.col32,tbl.col33                               | col31                         | tbl.col31 = keys.col31                                                                |                        |                    4
- myschema2      | myTbl3_col31_seq  | [5,)           | myGroup2         | S        |              |                     |                        |                 |                            |                 |                            |                             |                                                             |                               |                                                                                       |                        |                     
- myschema2      | myseq1            | [5,)           | myGroup2         | S        |              |                     |                        |                 |                            |                 |                            |                             |                                                             |                               |                                                                                       |                        |                     
- myschema2      | mytbl1            | [5,)           | myGroup2         | r        |              | emaj_myschema2      | mytbl1_log             |                 | mytbl1_log_idx             |                 | mytbl1_log_seq             | mytbl1_log_fnct             | tbl.col11,tbl.col12,tbl.col13                               | col11,col12                   | tbl.col11 = keys.col11 AND tbl.col12 = keys.col12                                     |                        |                    4
- myschema2      | mytbl2            | [5,)           | myGroup2         | r        |              | emaj_myschema2      | mytbl2_log             |                 | mytbl2_log_idx             |                 | mytbl2_log_seq             | mytbl2_log_fnct             | tbl.col21,tbl.col22,tbl.col23                               | col21                         | tbl.col21 = keys.col21                                                                |                        |                    4
- myschema2      | mytbl4            | [5,)           | myGroup2         | r        |              | emaj_myschema2      | myschema2_mytbl4_log   |                 | myschema2_mytbl4_log_idx   |                 | myschema2_mytbl4_log_seq   | myschema2_mytbl4_log_fnct   | tbl.col41,tbl.col42,tbl.col43,tbl.col44,tbl.col45           | col41                         | tbl.col41 = keys.col41                                                                |                        |                    6
- myschema2      | mytbl5            | [5,)           | myGroup2         | r        |              | emaj_myschema2      | otherPrefix4mytbl5_log |                 | otherPrefix4mytbl5_log_idx |                 | otherPrefix4mytbl5_log_seq | otherPrefix4mytbl5_log_fnct | tbl.col51,tbl.col52,tbl.col53,tbl.col54,tbl.col55           | col51                         | tbl.col51 = keys.col51                                                                |                        |                    6
- myschema2      | mytbl6            | [5,)           | myGroup2         | r        |              | emaj_myschema2      | mytbl6_log             |                 | mytbl6_log_idx             |                 | mytbl6_log_seq             | mytbl6_log_fnct             | tbl.col61,tbl.col62,tbl.col63,tbl.col64,tbl.col65,tbl.col66 | col61                         | tbl.col61 = keys.col61                                                                |                        |                    7
- myschema4      | mypartp1          | [9,)           | myGroup4         | r        |              | emaj_myschema4      | mypartp1_log           |                 | mypartp1_log_idx           |                 | mypartp1_log_seq           | mypartp1_log_fnct           | tbl.col1,tbl.col2,tbl.col3                                  | col1                          | tbl.col1 = keys.col1                                                                  |                        |                    4
- myschema4      | mypartp2          | [9,)           | myGroup4         | r        |              | emaj_myschema4      | mypartp2_log           |                 | mypartp2_log_idx           |                 | mypartp2_log_seq           | mypartp2_log_fnct           | tbl.col1,tbl.col2,tbl.col3                                  | col1                          | tbl.col1 = keys.col1                                                                  |                        |                    4
- myschema4      | mytblc1           | [9,)           | myGroup4         | r        |              | emaj_myschema4      | mytblc1_log            |                 | mytblc1_log_idx            |                 | mytblc1_log_seq            | mytblc1_log_fnct            | tbl.col1,tbl.col2,tbl.col3                                  | col1,col2                     | tbl.col1 = keys.col1 AND tbl.col2 = keys.col2                                         |                        |                    4
- myschema4      | mytblc2           | [9,)           | myGroup4         | r        |              | emaj_myschema4      | mytblc2_log            |                 | mytblc2_log_idx            |                 | mytblc2_log_seq            | mytblc2_log_fnct            | tbl.col1,tbl.col2,tbl.col3                                  | col1,col2                     | tbl.col1 = keys.col1 AND tbl.col2 = keys.col2                                         |                        |                    4
- myschema4      | mytblm            | [9,)           | myGroup4         | r        |              | emaj_myschema4      | mytblm_log             |                 | mytblm_log_idx             |                 | mytblm_log_seq             | mytblm_log_fnct             | tbl.col1,tbl.col2,tbl.col3                                  | col1                          | tbl.col1 = keys.col1                                                                  |                        |                    4
- myschema5      | myoidstbl         | [10,)          | myGroup5         | r        |              | emaj_myschema5      | myoidstbl_log          |                 | myoidstbl_log_idx          |                 | myoidstbl_log_seq          | myoidstbl_log_fnct          | tbl.col1                                                    | col1                          | tbl.col1 = keys.col1                                                                  |                        |                    2
- myschema5      | myunloggedtbl     | [10,)          | myGroup5         | r        |              | emaj_myschema5      | myunloggedtbl_log      |                 | myunloggedtbl_log_idx      |                 | myunloggedtbl_log_seq      | myunloggedtbl_log_fnct      | tbl.col1                                                    | col1                          | tbl.col1 = keys.col1                                                                  |                        |                    2
- phil's schema3 | myTbl2\           | [8,)           | phil's group#3", | r        |              | emaj_phil's schema3 | myTbl2\_log            |                 | myTbl2\_log_idx            |                 | myTbl2\_log_seq            | myTbl2\_log_fnct            | tbl.col21,tbl.col22,tbl.col23                               |                               |                                                                                       |                        |                    4
- phil's schema3 | myTbl2\_col21_seq | [8,)           | phil's group#3", | S        |              |                     |                        |                 |                            |                 |                            |                             |                                                             |                               |                                                                                       |                        |                     
- phil's schema3 | phil's seq\1      | [8,)           | phil's group#3", | S        |              |                     |                        |                 |                            |                 |                            |                             |                                                             |                               |                                                                                       |                        |                     
- phil's schema3 | phil's tbl1       | [8,)           | phil's group#3", | r        |              | emaj_phil's schema3 | phil's tbl1_log        |                 | phil's tbl1_log_idx        |                 | phil's tbl1_log_seq        | phil's tbl1_log_fnct        | tbl."phil's col11",tbl."phil's col12",tbl."phil\s col13"    | "phil's col11","phil's col12" | tbl."phil's col11" = keys."phil's col11" AND tbl."phil's col12" = keys."phil's col12" |                        |                    4
-(26 rows)
+   rel_schema   |                       rel_tblseq                        | rel_time_range |    rel_group     | rel_kind | rel_priority |   rel_log_schema    |                      rel_log_table                       | rel_log_dat_tsp |                        rel_log_index                         | rel_log_idx_tsp |                       rel_log_sequence                       |                       rel_log_function                        |                       rel_sql_columns                       |      rel_sql_pk_columns       |                               rel_sql_pk_eq_conditions                                | rel_log_seq_last_value | rel_emaj_verb_attnum 
+----------------+---------------------------------------------------------+----------------+------------------+----------+--------------+---------------------+----------------------------------------------------------+-----------------+--------------------------------------------------------------+-----------------+--------------------------------------------------------------+---------------------------------------------------------------+-------------------------------------------------------------+-------------------------------+---------------------------------------------------------------------------------------+------------------------+----------------------
+ myschema1      | myTbl3_col31_seq                                        | [3,)           | myGroup1         | S        |            1 |                     |                                                          |                 |                                                              |                 |                                                              |                                                               |                                                             |                               |                                                                                       |                        |                     
+ myschema1      | myTbl3                                                  | [3,)           | myGroup1         | r        |           10 | emaj_myschema1      | myTbl3_log                                               | tsplog1         | myTbl3_log_idx                                               |                 | myTbl3_log_seq                                               | myTbl3_log_fnct                                               | tbl.col31,tbl.col32,tbl.col33                               | col31                         | tbl.col31 = keys.col31                                                                |                        |                    4
+ myschema1      | mytbl1                                                  | [3,)           | myGroup1         | r        |           20 | emaj_myschema1      | mytbl1_log                                               |                 | mytbl1_log_idx                                               |                 | mytbl1_log_seq                                               | mytbl1_log_fnct                                               | tbl.col11,tbl.col12,tbl.col13                               | col11,col12                   | tbl.col11 = keys.col11 AND tbl.col12 = keys.col12                                     |                        |                    4
+ myschema1      | mytbl4                                                  | [3,)           | myGroup1         | r        |           20 | emaj_myschema1      | mytbl4_log                                               | tsplog1         | mytbl4_log_idx                                               | tsp log'2       | mytbl4_log_seq                                               | mytbl4_log_fnct                                               | tbl.col41,tbl.col42,tbl.col43,tbl.col44,tbl.col45           | col41                         | tbl.col41 = keys.col41                                                                |                        |                    6
+ myschema1      | mytbl2                                                  | [3,)           | myGroup1         | r        |              | emaj_myschema1      | mytbl2_log                                               | tsplog1         | mytbl2_log_idx                                               | tsplog1         | mytbl2_log_seq                                               | mytbl2_log_fnct                                               | tbl.col21,tbl.col22,tbl.col23                               | col21                         | tbl.col21 = keys.col21                                                                |                        |                    4
+ myschema1      | mytbl2b                                                 | [3,)           | myGroup1         | r        |              | emaj_myschema1      | mytbl2b_log                                              | tsp log'2       | mytbl2b_log_idx                                              | tsp log'2       | mytbl2b_log_seq                                              | mytbl2b_log_fnct                                              | tbl.col20,tbl.col21                                         | col20                         | tbl.col20 = keys.col20                                                                |                        |                    3
+ myschema1      | mytbl2b_col20_seq                                       | [3,)           | myGroup1         | S        |              |                     |                                                          |                 |                                                              |                 |                                                              |                                                               |                                                             |                               |                                                                                       |                        |                     
+ myschema2      | myTbl3                                                  | [5,)           | myGroup2         | r        |              | emaj_myschema2      | myTbl3_log                                               |                 | myTbl3_log_idx                                               |                 | myTbl3_log_seq                                               | myTbl3_log_fnct                                               | tbl.col31,tbl.col32,tbl.col33                               | col31                         | tbl.col31 = keys.col31                                                                |                        |                    4
+ myschema2      | myTbl3_col31_seq                                        | [5,)           | myGroup2         | S        |              |                     |                                                          |                 |                                                              |                 |                                                              |                                                               |                                                             |                               |                                                                                       |                        |                     
+ myschema2      | myseq1                                                  | [5,)           | myGroup2         | S        |              |                     |                                                          |                 |                                                              |                 |                                                              |                                                               |                                                             |                               |                                                                                       |                        |                     
+ myschema2      | mytbl1                                                  | [5,)           | myGroup2         | r        |              | emaj_myschema2      | mytbl1_log                                               |                 | mytbl1_log_idx                                               |                 | mytbl1_log_seq                                               | mytbl1_log_fnct                                               | tbl.col11,tbl.col12,tbl.col13                               | col11,col12                   | tbl.col11 = keys.col11 AND tbl.col12 = keys.col12                                     |                        |                    4
+ myschema2      | mytbl2                                                  | [5,)           | myGroup2         | r        |              | emaj_myschema2      | mytbl2_log                                               |                 | mytbl2_log_idx                                               |                 | mytbl2_log_seq                                               | mytbl2_log_fnct                                               | tbl.col21,tbl.col22,tbl.col23                               | col21                         | tbl.col21 = keys.col21                                                                |                        |                    4
+ myschema2      | mytbl4                                                  | [5,)           | myGroup2         | r        |              | emaj_myschema2      | mytbl4_log                                               |                 | mytbl4_log_idx                                               |                 | mytbl4_log_seq                                               | mytbl4_log_fnct                                               | tbl.col41,tbl.col42,tbl.col43,tbl.col44,tbl.col45           | col41                         | tbl.col41 = keys.col41                                                                |                        |                    6
+ myschema2      | mytbl5                                                  | [5,)           | myGroup2         | r        |              | emaj_myschema2      | mytbl5_log                                               |                 | mytbl5_log_idx                                               |                 | mytbl5_log_seq                                               | mytbl5_log_fnct                                               | tbl.col51,tbl.col52,tbl.col53,tbl.col54,tbl.col55           | col51                         | tbl.col51 = keys.col51                                                                |                        |                    6
+ myschema2      | mytbl6                                                  | [5,)           | myGroup2         | r        |              | emaj_myschema2      | mytbl6_log                                               |                 | mytbl6_log_idx                                               |                 | mytbl6_log_seq                                               | mytbl6_log_fnct                                               | tbl.col61,tbl.col62,tbl.col63,tbl.col64,tbl.col65,tbl.col66 | col61                         | tbl.col61 = keys.col61                                                                |                        |                    7
+ myschema4      | mypartp1                                                | [9,)           | myGroup4         | r        |              | emaj_myschema4      | mypartp1_log                                             |                 | mypartp1_log_idx                                             |                 | mypartp1_log_seq                                             | mypartp1_log_fnct                                             | tbl.col1,tbl.col2,tbl.col3                                  | col1                          | tbl.col1 = keys.col1                                                                  |                        |                    4
+ myschema4      | mypartp2                                                | [9,)           | myGroup4         | r        |              | emaj_myschema4      | mypartp2_log                                             |                 | mypartp2_log_idx                                             |                 | mypartp2_log_seq                                             | mypartp2_log_fnct                                             | tbl.col1,tbl.col2,tbl.col3                                  | col1                          | tbl.col1 = keys.col1                                                                  |                        |                    4
+ myschema4      | mytblc1                                                 | [9,)           | myGroup4         | r        |              | emaj_myschema4      | mytblc1_log                                              |                 | mytblc1_log_idx                                              |                 | mytblc1_log_seq                                              | mytblc1_log_fnct                                              | tbl.col1,tbl.col2,tbl.col3                                  | col1,col2                     | tbl.col1 = keys.col1 AND tbl.col2 = keys.col2                                         |                        |                    4
+ myschema4      | mytblc2                                                 | [9,)           | myGroup4         | r        |              | emaj_myschema4      | mytblc2_log                                              |                 | mytblc2_log_idx                                              |                 | mytblc2_log_seq                                              | mytblc2_log_fnct                                              | tbl.col1,tbl.col2,tbl.col3                                  | col1,col2                     | tbl.col1 = keys.col1 AND tbl.col2 = keys.col2                                         |                        |                    4
+ myschema4      | mytblm                                                  | [9,)           | myGroup4         | r        |              | emaj_myschema4      | mytblm_log                                               |                 | mytblm_log_idx                                               |                 | mytblm_log_seq                                               | mytblm_log_fnct                                               | tbl.col1,tbl.col2,tbl.col3                                  | col1                          | tbl.col1 = keys.col1                                                                  |                        |                    4
+ myschema5      | myoidstbl                                               | [10,)          | myGroup5         | r        |              | emaj_myschema5      | myoidstbl_log                                            |                 | myoidstbl_log_idx                                            |                 | myoidstbl_log_seq                                            | myoidstbl_log_fnct                                            | tbl.col1                                                    | col1                          | tbl.col1 = keys.col1                                                                  |                        |                    2
+ myschema5      | myunloggedtbl                                           | [10,)          | myGroup5         | r        |              | emaj_myschema5      | myunloggedtbl_log                                        |                 | myunloggedtbl_log_idx                                        |                 | myunloggedtbl_log_seq                                        | myunloggedtbl_log_fnct                                        | tbl.col1                                                    | col1                          | tbl.col1 = keys.col1                                                                  |                        |                    2
+ myschema6      | table_with_50_characters_long_name_____0_________0      | [11,)          | myGroup6         | r        |              | emaj_myschema6      | table_with_50_characters_long_name_____0_________0_log   |                 | table_with_50_characters_long_name_____0_________0_log_idx   |                 | table_with_50_characters_long_name_____0_________0_log_seq   | table_with_50_characters_long_name_____0_________0_log_fnct   | tbl.col1                                                    | col1                          | tbl.col1 = keys.col1                                                                  |                        |                    2
+ myschema6      | table_with_51_characters_long_name_____0_________0a     | [11,)          | myGroup6         | r        |              | emaj_myschema6      | table_with_51_characters_long_name_____0_________0#1_log |                 | table_with_51_characters_long_name_____0_________0#1_log_idx |                 | table_with_51_characters_long_name_____0_________0#1_log_seq | table_with_51_characters_long_name_____0_________0#1_log_fnct | tbl.col1                                                    | col1                          | tbl.col1 = keys.col1                                                                  |                        |                    2
+ myschema6      | table_with_55_characters_long_name_____0_________0abcde | [11,)          | myGroup6         | r        |              | emaj_myschema6      | table_with_55_characters_long_name_____0_________0#1_log |                 | table_with_55_characters_long_name_____0_________0#1_log_idx |                 | table_with_55_characters_long_name_____0_________0#1_log_seq | table_with_55_characters_long_name_____0_________0#1_log_fnct | tbl.col1                                                    | col1                          | tbl.col1 = keys.col1                                                                  |                        |                    2
+ myschema6      | table_with_55_characters_long_name_____0_________0fghij | [11,)          | myGroup6         | r        |              | emaj_myschema6      | table_with_55_characters_long_name_____0_________0#2_log |                 | table_with_55_characters_long_name_____0_________0#2_log_idx |                 | table_with_55_characters_long_name_____0_________0#2_log_seq | table_with_55_characters_long_name_____0_________0#2_log_fnct | tbl.col1                                                    | col1                          | tbl.col1 = keys.col1                                                                  |                        |                    2
+ phil's schema3 | myTbl2\                                                 | [8,)           | phil's group#3", | r        |              | emaj_phil's schema3 | myTbl2\_log                                              |                 | myTbl2\_log_idx                                              |                 | myTbl2\_log_seq                                              | myTbl2\_log_fnct                                              | tbl.col21,tbl.col22,tbl.col23                               |                               |                                                                                       |                        |                    4
+ phil's schema3 | myTbl2\_col21_seq                                       | [8,)           | phil's group#3", | S        |              |                     |                                                          |                 |                                                              |                 |                                                              |                                                               |                                                             |                               |                                                                                       |                        |                     
+ phil's schema3 | phil's seq\1                                            | [8,)           | phil's group#3", | S        |              |                     |                                                          |                 |                                                              |                 |                                                              |                                                               |                                                             |                               |                                                                                       |                        |                     
+ phil's schema3 | phil's tbl1                                             | [8,)           | phil's group#3", | r        |              | emaj_phil's schema3 | phil's tbl1_log                                          |                 | phil's tbl1_log_idx                                          |                 | phil's tbl1_log_seq                                          | phil's tbl1_log_fnct                                          | tbl."phil's col11",tbl."phil's col12",tbl."phil\s col13"    | "phil's col11","phil's col12" | tbl."phil's col11" = keys."phil's col11" AND tbl."phil's col12" = keys."phil's col12" |                        |                    4
+(30 rows)
 
 select schemaname, tablename, tableowner, tablespace from pg_tables where schemaname like 'emaj\_%' order by schemaname, tablename;
-     schemaname      |       tablename        | tableowner | tablespace 
----------------------+------------------------+------------+------------
- emaj_myschema1      | myTbl3_log             | postgres   | tsplog1
- emaj_myschema1      | mytbl1_log             | postgres   | 
- emaj_myschema1      | mytbl2_log             | postgres   | tsplog1
- emaj_myschema1      | mytbl2b_log            | postgres   | tsp log'2
- emaj_myschema1      | mytbl4_log             | postgres   | tsplog1
- emaj_myschema2      | myTbl3_log             | postgres   | 
- emaj_myschema2      | myschema2_mytbl4_log   | postgres   | 
- emaj_myschema2      | mytbl1_log             | postgres   | 
- emaj_myschema2      | mytbl2_log             | postgres   | 
- emaj_myschema2      | mytbl6_log             | postgres   | 
- emaj_myschema2      | otherPrefix4mytbl5_log | postgres   | 
- emaj_myschema4      | mypartp1_log           | postgres   | 
- emaj_myschema4      | mypartp2_log           | postgres   | 
- emaj_myschema4      | mytblc1_log            | postgres   | 
- emaj_myschema4      | mytblc2_log            | postgres   | 
- emaj_myschema4      | mytblm_log             | postgres   | 
- emaj_myschema5      | myoidstbl_log          | postgres   | 
- emaj_myschema5      | myunloggedtbl_log      | postgres   | 
- emaj_phil's schema3 | myTbl2\_log            | postgres   | 
- emaj_phil's schema3 | phil's tbl1_log        | postgres   | 
-(20 rows)
+     schemaname      |                        tablename                         | tableowner | tablespace 
+---------------------+----------------------------------------------------------+------------+------------
+ emaj_myschema1      | myTbl3_log                                               | postgres   | tsplog1
+ emaj_myschema1      | mytbl1_log                                               | postgres   | 
+ emaj_myschema1      | mytbl2_log                                               | postgres   | tsplog1
+ emaj_myschema1      | mytbl2b_log                                              | postgres   | tsp log'2
+ emaj_myschema1      | mytbl4_log                                               | postgres   | tsplog1
+ emaj_myschema2      | myTbl3_log                                               | postgres   | 
+ emaj_myschema2      | mytbl1_log                                               | postgres   | 
+ emaj_myschema2      | mytbl2_log                                               | postgres   | 
+ emaj_myschema2      | mytbl4_log                                               | postgres   | 
+ emaj_myschema2      | mytbl5_log                                               | postgres   | 
+ emaj_myschema2      | mytbl6_log                                               | postgres   | 
+ emaj_myschema4      | mypartp1_log                                             | postgres   | 
+ emaj_myschema4      | mypartp2_log                                             | postgres   | 
+ emaj_myschema4      | mytblc1_log                                              | postgres   | 
+ emaj_myschema4      | mytblc2_log                                              | postgres   | 
+ emaj_myschema4      | mytblm_log                                               | postgres   | 
+ emaj_myschema5      | myoidstbl_log                                            | postgres   | 
+ emaj_myschema5      | myunloggedtbl_log                                        | postgres   | 
+ emaj_myschema6      | table_with_50_characters_long_name_____0_________0_log   | postgres   | 
+ emaj_myschema6      | table_with_51_characters_long_name_____0_________0#1_log | postgres   | 
+ emaj_myschema6      | table_with_55_characters_long_name_____0_________0#1_log | postgres   | 
+ emaj_myschema6      | table_with_55_characters_long_name_____0_________0#2_log | postgres   | 
+ emaj_phil's schema3 | myTbl2\_log                                              | postgres   | 
+ emaj_phil's schema3 | phil's tbl1_log                                          | postgres   | 
+(24 rows)
 
 -----------------------------
 -- emaj_comment_group() tests
@@ -454,6 +441,12 @@ select emaj.emaj_drop_group('myGroup5');
                2
 (1 row)
 
+select emaj.emaj_drop_group('myGroup6');
+ emaj_drop_group 
+-----------------
+               4
+(1 row)
+
 -- already dropped
 select emaj.emaj_drop_group('myGroup2');
 ERROR:  _check_group_names: The group "myGroup2" does not exist.
@@ -558,6 +551,9 @@ select hist_function, hist_event, hist_object,
  CREATE_GROUP     | BEGIN              | myGroup5              | audit_only                     | postgres
  CREATE_GROUP     | LOG_SCHEMA CREATED | emaj_myschema5        |                                | postgres
  CREATE_GROUP     | END                | myGroup5              | 2 tables/sequences processed   | postgres
+ CREATE_GROUP     | BEGIN              | myGroup6              | rollbackable                   | postgres
+ CREATE_GROUP     | LOG_SCHEMA CREATED | emaj_myschema6        |                                | postgres
+ CREATE_GROUP     | END                | myGroup6              | 4 tables/sequences processed   | postgres
  COMMENT_GROUP    |                    | myGroup1              |                                | postgres
  COMMENT_GROUP    |                    | myGroup1              |                                | postgres
  COMMENT_GROUP    |                    | emptyGroup            |                                | postgres
@@ -585,6 +581,9 @@ select hist_function, hist_event, hist_object,
  DROP_GROUP       | BEGIN              | myGroup5              |                                | postgres
  DROP_GROUP       | LOG_SCHEMA DROPPED | emaj_myschema5        |                                | postgres
  DROP_GROUP       | END                | myGroup5              | 2 tables/sequences processed   | postgres
+ DROP_GROUP       | BEGIN              | myGroup6              |                                | postgres
+ DROP_GROUP       | LOG_SCHEMA DROPPED | emaj_myschema6        |                                | postgres
+ DROP_GROUP       | END                | myGroup6              | 4 tables/sequences processed   | postgres
  CREATE_GROUP     | BEGIN              | myGroup1              | audit_only                     | postgres
  CREATE_GROUP     | LOG_SCHEMA CREATED | emaj_myschema1        |                                | postgres
  CREATE_GROUP     | END                | myGroup1              | 7 tables/sequences processed   | postgres
@@ -603,7 +602,7 @@ select hist_function, hist_event, hist_object,
  FORCE_DROP_GROUP | BEGIN              | myGroup2              |                                | postgres
  FORCE_DROP_GROUP | LOG_SCHEMA DROPPED | emaj_myschema2        |                                | postgres
  FORCE_DROP_GROUP | END                | myGroup2              | 8 tables/sequences processed   | postgres
-(62 rows)
+(68 rows)
 
 select time_id, time_last_emaj_gid, time_event from emaj.emaj_time_stamp order by time_id;
  time_id | time_last_emaj_gid | time_event 
@@ -614,10 +613,11 @@ select time_id, time_last_emaj_gid, time_event from emaj.emaj_time_stamp order b
        8 |                  0 | C
        9 |                  0 | C
       10 |                  0 | C
-      11 |                  0 | M
+      11 |                  0 | C
       12 |                  0 | M
-      13 |                  0 | C
-      14 |                  0 | M
-      15 |                  0 | C
-(11 rows)
+      13 |                  0 | M
+      14 |                  0 | C
+      15 |                  0 | M
+      16 |                  0 | C
+(12 rows)
 

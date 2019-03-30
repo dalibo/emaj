@@ -5,7 +5,11 @@ E-Maj - Change log
 ###Enhancements:###
   * All log objects (tables, sequences, functions) are now located in a schema
     named 'emaj_<application-schema>'. And there is now way to change it
-    anymore.
+    anymore. This replaces the use of the grpdef_log_schema_suffix column of
+    the emaj_group_def table.
+  * For tables having a very long name, the log object names are now
+    automatically generated. This replaces the use of the
+    grpdef_emaj_names_prefix column of the emaj_group_def table.
 
 ###Bug fixes:###
   * When checking the emaj_group_def table content, duplicate emaj names

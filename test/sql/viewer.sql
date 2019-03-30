@@ -108,4 +108,3 @@ select emaj.emaj_gen_sql_groups(array['myGroup1'],NULL,NULL,'/tmp/dummy');
 select emaj.emaj_gen_sql_groups(array['myGroup1'],NULL,NULL,'/tmp/dummy',array['']);
 --
 reset role;
-

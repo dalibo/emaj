@@ -61,8 +61,6 @@ Néanmoins certaines actions sont possibles sur des groupes de tables maintenus 
 +----------------------------------------+----------------+--------------------------------+
 | Action                                 | Groupe LOGGING | Méthode                        |
 +========================================+================+================================+
-| Changer le préfixe des noms emaj       | Oui            | Ajustement emaj_group_def      |
-+----------------------------------------+----------------+--------------------------------+
 | Changer le tablespace de log data      | Oui            | Ajustement emaj_group_def      |
 +----------------------------------------+----------------+--------------------------------+
 | Changer le tablespace de log index     | Oui            | Ajustement emaj_group_def      |

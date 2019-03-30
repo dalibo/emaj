@@ -45,10 +45,10 @@ NOTICE:  trigger "emaj_trunc_trg" for relation "myschema2.mytbl1" does not exist
 NOTICE:  table "mytbl2_log" does not exist, skipping
 NOTICE:  trigger "emaj_log_trg" for relation "myschema2.mytbl2" does not exist, skipping
 NOTICE:  trigger "emaj_trunc_trg" for relation "myschema2.mytbl2" does not exist, skipping
-NOTICE:  table "myschema2_mytbl4_log" does not exist, skipping
+NOTICE:  table "mytbl4_log" does not exist, skipping
 NOTICE:  trigger "emaj_log_trg" for relation "myschema2.mytbl4" does not exist, skipping
 NOTICE:  trigger "emaj_trunc_trg" for relation "myschema2.mytbl4" does not exist, skipping
-NOTICE:  table "otherPrefix4mytbl5_log" does not exist, skipping
+NOTICE:  table "mytbl5_log" does not exist, skipping
 NOTICE:  trigger "emaj_log_trg" for relation "myschema2.mytbl5" does not exist, skipping
 NOTICE:  trigger "emaj_trunc_trg" for relation "myschema2.mytbl5" does not exist, skipping
 NOTICE:  table "mytbl6_log" does not exist, skipping
@@ -91,7 +91,7 @@ select count(*) from emaj.emaj_hist;
 select count(*) from emaj.emaj_group_def;
  count 
 -------
-    32
+    36
 (1 row)
 
 select count(*) from emaj.emaj_group;

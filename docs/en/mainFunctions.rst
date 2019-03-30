@@ -32,9 +32,9 @@ The content of tables groups E-Maj will manage has to be defined by populating t
 +--------------------------+------+---------------------------------------------------------------------------------------------------+
 | grpdef_priority          | INT  | priority level for the table or sequence in E-Maj processing (optional)                           |
 +--------------------------+------+---------------------------------------------------------------------------------------------------+
-| grpdef_log_schema_suffix | TEXT | suffix used to build the name of the schema containing the E-Maj objects for the table(deprecated)|
+| grpdef_log_schema_suffix | TEXT | (deprecated column)                                                                               |
 +--------------------------+------+---------------------------------------------------------------------------------------------------+
-| grpdef_emaj_names_prefix | TEXT | prefix of E-Maj objects names generated for the table (optional)                                  |
+| grpdef_emaj_names_prefix | TEXT | (deprecated column)                                                                               |
 +--------------------------+------+---------------------------------------------------------------------------------------------------+
 | grpdef_log_dat_tsp       | TEXT | name of the tablespace containing the log table (optional)                                        |
 +--------------------------+------+---------------------------------------------------------------------------------------------------+
@@ -70,14 +70,6 @@ Optional columns
 ^^^^^^^^^^^^^^^^
 
 The type of the **grpdef_priority** column is *INTEGER* and may be *NULL*. It defines a priority order in E-Maj tables processing. This can be useful at table lock time. Indeed, by locking tables in the same order as what is typically done by applications, it may reduce the risk of deadlock. E-Maj functions process tables in *grpdef_priority* ascending order, *NULL* being processed last. For a same priority level, tables are processed in alphabetic order of schema name and table name.
-
-For tables having long names, the default prefix for E-Maj objects names may be too long to fit the PostgreSQL limits. But another prefix may be defined for each table, by setting the **grpdef_emaj_names_prefix** column.
-
-If this *grpdef_emaj_names_prefix* column contains a *NULL* value, the default prefix *<nom_schéma>_<nom_table>* is used.
-
-Two different tables cannot have the same prefix, explicitely or implicitely.
-
-For sequences, the *grpdef_emaj_names_prefix* column must be *NULL*.
 
 To optimize performances of E-Maj installations having a large number of tables, it may be useful to spread log tables and their index on several tablespaces. The **grpdef_log_dat_tsp** column specifies the name of the tablespace to use for the log table of an application table. Similarly, the **grpdef_log_idx_tsp** column specifies the name of the tablespace to use for the index of the log table.
 

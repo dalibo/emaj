@@ -20,8 +20,7 @@ select group_name, group_has_waiting_changes from emaj.emaj_group where group_na
 
 select emaj.emaj_alter_group('myGroup1','Priority Changed');
 
--- change the emaj names prefix, the log data tablespace and the log index tablespace for different tables
-update emaj.emaj_group_def set grpdef_emaj_names_prefix = 's1t3' where grpdef_schema = 'myschema1' and grpdef_tblseq = 'myTbl3';
+-- change the log data tablespace and the log index tablespace for different tables
 update emaj.emaj_group_def set grpdef_log_dat_tsp = NULL where grpdef_schema = 'myschema1' and grpdef_tblseq = 'mytbl2b';
 update emaj.emaj_group_def set grpdef_log_idx_tsp = 'tsplog1' where grpdef_schema = 'myschema2' and grpdef_tblseq = 'mytbl6';
 set default_tablespace = tspemaj_renamed;
@@ -43,7 +42,6 @@ update emaj.emaj_group_def set grpdef_priority = 20 where grpdef_schema = 'mysch
 select emaj.emaj_alter_groups(array['myGroup1','myGroup2']);
 
 -- change the other attributes back
-update emaj.emaj_group_def set grpdef_emaj_names_prefix = NULL where grpdef_schema = 'myschema1' and grpdef_tblseq = 'myTbl3';
 update emaj.emaj_group_def set grpdef_log_dat_tsp = 'tsp log''2' where grpdef_schema = 'myschema1' and grpdef_tblseq = 'mytbl2b';
 update emaj.emaj_group_def set grpdef_log_idx_tsp = NULL where grpdef_schema = 'myschema2' and grpdef_tblseq = 'mytbl6';
 select emaj.emaj_alter_groups('{"myGroup1","myGroup2"}');
@@ -546,8 +544,7 @@ rollback;
 
 update emaj.emaj_group_def set grpdef_group = 'myGroup1'
   where grpdef_group = 'myGroup2' and grpdef_schema = 'myschema2' and grpdef_tblseq = 'myTbl3_col31_seq';
-update emaj.emaj_group_def set grpdef_group = 'myGroup1', grpdef_emaj_names_prefix = 's2t3',
-                               grpdef_log_dat_tsp = 'tsplog1', grpdef_log_idx_tsp = 'tsplog1'
+update emaj.emaj_group_def set grpdef_group = 'myGroup1', grpdef_log_dat_tsp = 'tsplog1', grpdef_log_idx_tsp = 'tsplog1'
   where grpdef_group = 'myGroup2' and grpdef_schema = 'myschema2' and grpdef_tblseq = 'myTbl3';
 
 -- case when the source group is idle and the destination group is logging
@@ -602,8 +599,7 @@ select emaj.emaj_gen_sql_groups('{"myGroup1","myGroup2"}', 'before move', NULL, 
 -- revert the emaj_group_def change and apply with a destination group in idle state
 update emaj.emaj_group_def set grpdef_group = 'myGroup2'
   where grpdef_group = 'myGroup1' and grpdef_schema = 'myschema2' and grpdef_tblseq = 'myTbl3_col31_seq';
-update emaj.emaj_group_def set grpdef_group = 'myGroup2', grpdef_emaj_names_prefix = NULL,
-                               grpdef_log_dat_tsp = NULL, grpdef_log_idx_tsp = NULL
+update emaj.emaj_group_def set grpdef_group = 'myGroup2', grpdef_log_dat_tsp = NULL, grpdef_log_idx_tsp = NULL
   where grpdef_group = 'myGroup1' and grpdef_schema = 'myschema2' and grpdef_tblseq = 'myTbl3';
 select emaj.emaj_stop_group('myGroup2');
 select emaj.emaj_alter_groups('{"myGroup1","myGroup2"}', 'back to idle myGroup2');

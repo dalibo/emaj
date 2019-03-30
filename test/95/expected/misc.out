@@ -1009,11 +1009,11 @@ myGroup2_sequences_at_Mark23
 myGroup2_sequences_at_Multi-3
 myGroup2_sequences_at____crazy_mark___
 myschema2_myTbl3_log.snap
-myschema2_myschema2_mytbl4_log.snap
 myschema2_mytbl1_log.snap
 myschema2_mytbl2_log.snap
+myschema2_mytbl4_log.snap
+myschema2_mytbl5_log.snap
 myschema2_mytbl6_log.snap
-myschema2_otherPrefix4mytbl5_log.snap
 select emaj.emaj_delete_mark_group('myGroup2',E'/<*crazy mark$>\\');
  emaj_delete_mark_group 
 ------------------------
@@ -1757,12 +1757,12 @@ begin;
 -- setting a mark or rollbacking fails
   savepoint sp1;
     select emaj.emaj_set_mark_group('myGroup2','dummyMark');
-ERROR:  _verify_groups (6): In group "myGroup2", the structure of the application table "myschema2"."mytbl4" is not coherent with its log table ("emaj_myschema2"."myschema2_mytbl4_log"). You may use "SELECT * FROM emaj.emaj_verify_all()" to look for other issues.
+ERROR:  _verify_groups (6): In group "myGroup2", the structure of the application table "myschema2"."mytbl4" is not coherent with its log table ("emaj_myschema2"."mytbl4_log"). You may use "SELECT * FROM emaj.emaj_verify_all()" to look for other issues.
 CONTEXT:  SQL statement "SELECT 0 FROM emaj._verify_groups(array[v_groupName], TRUE)"
 PL/pgSQL function emaj.emaj_set_mark_group(text,text) line 17 at PERFORM
   rollback to savepoint sp1;
     select emaj.emaj_rollback_group('myGroup2','EMAJ_LAST_MARK');
-ERROR:  _verify_groups (6): In group "myGroup2", the structure of the application table "myschema2"."mytbl4" is not coherent with its log table ("emaj_myschema2"."myschema2_mytbl4_log"). You may use "SELECT * FROM emaj.emaj_verify_all()" to look for other issues.
+ERROR:  _verify_groups (6): In group "myGroup2", the structure of the application table "myschema2"."mytbl4" is not coherent with its log table ("emaj_myschema2"."mytbl4_log"). You may use "SELECT * FROM emaj.emaj_verify_all()" to look for other issues.
 CONTEXT:  SQL statement "SELECT 0 FROM emaj._verify_groups(v_groupNames, TRUE)"
 PL/pgSQL function emaj._rlbk_init(text[],text,boolean,integer,boolean,boolean) line 26 at PERFORM
 SQL statement "SELECT emaj._rlbk_init(v_groupNames, v_mark, v_isLoggedRlbk, 1, v_multiGroup, v_isAlterGroupAllowed)"

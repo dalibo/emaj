@@ -4,7 +4,7 @@
 SET client_min_messages TO WARNING;
 
 ------------------------------------------------------------
--- create 3 application schemas with tables, sequences, triggers
+-- create several application schemas with tables, sequences, triggers
 ------------------------------------------------------------
 --
 -- First schema
@@ -91,7 +91,9 @@ CREATE TRIGGER myTbl2trg
   AFTER INSERT OR UPDATE OR DELETE ON myTbl2
   FOR EACH ROW EXECUTE PROCEDURE myTbl2trgfct ();
 
+--
 -- Second schema
+--
 
 DROP SCHEMA IF EXISTS mySchema2 CASCADE;
 CREATE SCHEMA mySchema2;
@@ -175,7 +177,9 @@ CREATE SEQUENCE mySeq1 MINVALUE 1000 MAXVALUE 2000 CYCLE;
 -- This sequence will remain outside any groups until the addition into a group in logging state
 CREATE SEQUENCE mySeq2;
 
+--
 -- Third schema (for an audit_only group)
+--
 
 DROP SCHEMA IF EXISTS "phil's schema3" CASCADE;
 CREATE SCHEMA "phil's schema3";
@@ -211,7 +215,9 @@ ALTER TABLE "myTbl2\" ADD CONSTRAINT mytbl2_col21_fkey FOREIGN KEY (col21) REFER
 
 CREATE SEQUENCE "phil's seq\1" MINVALUE 1000 MAXVALUE 2000 CYCLE;
 
+--
 -- Fourth schema (for partitioning)
+--
 
 DROP SCHEMA IF EXISTS mySchema4 CASCADE;
 CREATE SCHEMA mySchema4;
@@ -274,7 +280,9 @@ CREATE TABLE myPartP2 PARTITION OF myTblP (PRIMARY KEY (col1)) FOR VALUES FROM (
 -- create the table with PG 9.6- so that next scripts do not abort
 CREATE TABLE IF NOT EXISTS myPartP2 (PRIMARY KEY (col1)) INHERITS (myTblP);
 
+--
 -- fifth schema (for tables unsupported in rollbackable tables groups)
+--
 
 DROP SCHEMA IF EXISTS mySchema5 CASCADE;
 CREATE SCHEMA mySchema5;
@@ -295,6 +303,38 @@ CREATE TABLE myOidsTbl (
   PRIMARY KEY (col1)
 ) WITH OIDS;
 
+--
+-- sixth schema (for tables with very long names)
+--
+
+DROP SCHEMA IF EXISTS mySchema6 CASCADE;
+CREATE SCHEMA mySchema6;
+
+SET search_path=mySchema6;
+
+DROP TABLE IF EXISTS table_with_50_characters_long_name_____0_________0;
+CREATE TABLE table_with_50_characters_long_name_____0_________0 (
+  col1       INT     NOT NULL,
+  PRIMARY KEY (col1)
+);
+
+DROP TABLE IF EXISTS table_with_51_characters_long_name_____0_________0a;
+CREATE TABLE table_with_51_characters_long_name_____0_________0a (
+  col1       INT     NOT NULL,
+  PRIMARY KEY (col1)
+);
+
+DROP TABLE IF EXISTS table_with_55_characters_long_name_____0_________0abcde;
+CREATE TABLE table_with_55_characters_long_name_____0_________0abcde (
+  col1       INT     NOT NULL,
+  PRIMARY KEY (col1)
+);
+DROP TABLE IF EXISTS table_with_55_characters_long_name_____0_________0fghij;
+CREATE TABLE table_with_55_characters_long_name_____0_________0fghij (
+  col1       INT     NOT NULL,
+  PRIMARY KEY (col1)
+);
+
 -----------------------------
 -- create roles and give rigths on application objects
 -----------------------------
@@ -302,12 +342,17 @@ create role emaj_regression_tests_adm_user login password 'adm';
 create role emaj_regression_tests_viewer_user login password 'viewer';
 create role emaj_regression_tests_anonym_user login password 'anonym';
 --
-grant all on schema mySchema1, mySchema2, "phil's schema3", mySchema4, mySchema5 to emaj_regression_tests_adm_user, emaj_regression_tests_viewer_user;
+grant all on schema mySchema1, mySchema2, "phil's schema3", mySchema4, mySchema5, mySchema6
+  to emaj_regression_tests_adm_user, emaj_regression_tests_viewer_user;
 --
-grant select on all tables in schema mySchema1, mySchema2, "phil's schema3", mySchema4 to emaj_regression_tests_viewer_user;
-grant select on all sequences in schema mySchema1, mySchema2, mySchema4 to emaj_regression_tests_viewer_user;
+grant select on all tables in schema mySchema1, mySchema2, "phil's schema3", mySchema4, mySchema5, mySchema6
+  to emaj_regression_tests_viewer_user;
+grant select on all sequences in schema mySchema1, mySchema2, mySchema4, mySchema5, mySchema6
+  to emaj_regression_tests_viewer_user;
 --
-grant all on all tables in schema mySchema1, mySchema2, "phil's schema3", mySchema4, mySchema5 to emaj_regression_tests_adm_user;
-grant all on all sequences in schema mySchema1, mySchema2, "phil's schema3", mySchema4, mySchema5 to emaj_regression_tests_adm_user;
+grant all on all tables in schema mySchema1, mySchema2, "phil's schema3", mySchema4, mySchema5, mySchema6
+  to emaj_regression_tests_adm_user;
+grant all on all sequences in schema mySchema1, mySchema2, "phil's schema3", mySchema4, mySchema5, mySchema6
+  to emaj_regression_tests_adm_user;
 --
 grant all on database regression to emaj_regression_tests_anonym_user;

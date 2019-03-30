@@ -88,8 +88,8 @@ select col41, col42, col43, col44, col45, emaj_verb, emaj_tuple, emaj_gid from e
 select col11, col12, col13, emaj_verb, emaj_tuple, emaj_gid from emaj_mySchema2.myTbl1_log order by emaj_gid, emaj_tuple desc;
 select col21, col22, col23, emaj_verb, emaj_tuple, emaj_gid from emaj_mySchema2.myTbl2_log order by emaj_gid, emaj_tuple desc;
 select col31, col33, emaj_verb, emaj_tuple, emaj_gid from emaj_myschema2."myTbl3_log" order by emaj_gid, emaj_tuple desc;
-select col41, col42, col43, col44, col45, emaj_verb, emaj_tuple, emaj_gid from emaj_myschema2.myschema2_mytbl4_log order by emaj_gid, emaj_tuple desc;
-select col51, col52, col53, col54, emaj_verb, emaj_tuple, emaj_gid from emaj_myschema2."otherPrefix4mytbl5_log" order by emaj_gid, emaj_tuple desc;
+select col41, col42, col43, col44, col45, emaj_verb, emaj_tuple, emaj_gid from emaj_myschema2.mytbl4_log order by emaj_gid, emaj_tuple desc;
+select col51, col52, col53, col54, emaj_verb, emaj_tuple, emaj_gid from emaj_myschema2.mytbl5_log order by emaj_gid, emaj_tuple desc;
 select col61, col62, col63, col64, col65, col66, emaj_verb, emaj_tuple, emaj_gid from emaj_mySchema2.myTbl6_log order by emaj_gid, emaj_tuple desc;
 
 -----------------------------
@@ -104,7 +104,7 @@ reset role;
 alter table "phil's schema3"."phil's tbl1" alter column "phil's col12" type char(11);
 
 set role emaj_regression_tests_adm_user;
-update emaj.emaj_group_def set grpdef_priority = 1, grpdef_emaj_names_prefix = 'phil_mytbl2'
+update emaj.emaj_group_def set grpdef_priority = 1, grpdef_log_idx_tsp = 'tsplog1'
   where grpdef_schema = 'phil''s schema3' and grpdef_tblseq = E'myTbl2\\';
 select emaj.emaj_alter_group('phil''s group#3",');
 select emaj.emaj_start_group('phil''s group#3",','M1_after_alter_group');
@@ -118,7 +118,7 @@ set role emaj_regression_tests_adm_user;
 select emaj.emaj_enable_protection_by_event_triggers();
 select emaj.emaj_create_group('myGroup4');
 
-update emaj.emaj_group_def set grpdef_priority = NULL, grpdef_emaj_names_prefix = NULL
+update emaj.emaj_group_def set grpdef_priority = NULL, grpdef_log_idx_tsp = NULL
   where grpdef_schema = 'phil''s schema3' and grpdef_tblseq = E'myTbl2\\';
 update emaj.emaj_group_def set grpdef_priority = 999
   where grpdef_schema = 'myschema4' and grpdef_tblseq = 'mytblm';
@@ -306,7 +306,8 @@ reset role;
 alter table "phil's schema3"."phil's tbl1" rename to table_with_very_looooooooooooooooooooooooooooooooooooooong_name;
 
 set role emaj_regression_tests_adm_user;
-update emaj.emaj_group_def set grpdef_tblseq = 'table_with_very_looooooooooooooooooooooooooooooooooooooong_name', grpdef_emaj_names_prefix = 'short' where grpdef_schema = 'phil''s schema3' and grpdef_tblseq = 'phil''s tbl1';
+update emaj.emaj_group_def set grpdef_tblseq = 'table_with_very_looooooooooooooooooooooooooooooooooooooong_name'
+  where grpdef_schema = 'phil''s schema3' and grpdef_tblseq = 'phil''s tbl1';
 select emaj.emaj_alter_group('phil''s group#3",');
 
 -- use the table and its group

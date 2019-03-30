@@ -5,17 +5,17 @@
 -- drop emaj_regression_tests_adm_user role
 -----------------------------
 revoke emaj_adm from emaj_regression_tests_adm_user;
-revoke all on schema mySchema1, mySchema2, "phil's schema3", mySchema4, mySchema5 from emaj_regression_tests_adm_user;
-revoke all on all tables in schema mySchema1, mySchema2, "phil's schema3", mySchema4, mySchema5 from emaj_regression_tests_adm_user;
-revoke all on all sequences in schema mySchema1, mySchema2, "phil's schema3", mySchema4, mySchema5 from emaj_regression_tests_adm_user;
+revoke all on schema mySchema1, mySchema2, "phil's schema3", mySchema4, mySchema5, mySchema6 from emaj_regression_tests_adm_user;
+revoke all on all tables in schema mySchema1, mySchema2, "phil's schema3", mySchema4, mySchema5, mySchema6 from emaj_regression_tests_adm_user;
+revoke all on all sequences in schema mySchema1, mySchema2, "phil's schema3", mySchema4, mySchema5, mySchema6 from emaj_regression_tests_adm_user;
 drop role emaj_regression_tests_adm_user;
 
 -----------------------------
 -- drop emaj_regression_tests_viewer_user role
 -----------------------------
-revoke all on schema mySchema1, mySchema2, "phil's schema3", mySchema4, mySchema5 from emaj_regression_tests_viewer_user;
-revoke all on all tables in schema mySchema1, mySchema2, "phil's schema3", mySchema4, mySchema5 from emaj_regression_tests_viewer_user;
-revoke all on all sequences in schema mySchema1, mySchema2, "phil's schema3", mySchema4, mySchema5 from emaj_regression_tests_viewer_user;
+revoke all on schema mySchema1, mySchema2, "phil's schema3", mySchema4, mySchema5, mySchema6 from emaj_regression_tests_viewer_user;
+revoke all on all tables in schema mySchema1, mySchema2, "phil's schema3", mySchema4, mySchema5, mySchema6 from emaj_regression_tests_viewer_user;
+revoke all on all sequences in schema mySchema1, mySchema2, "phil's schema3", mySchema4, mySchema5, mySchema6 from emaj_regression_tests_viewer_user;
 drop role emaj_regression_tests_viewer_user;
 
 -----------------------------
@@ -41,4 +41,3 @@ $$;
 -- Dump the regression database (once the test roles have been dropped)
 --------------------------------------------
 \! ${EMAJ_DIR}/test/${PGVER}/bin/pg_dump regression >${EMAJ_DIR}/test/${PGVER}/results/regression.dump
-
