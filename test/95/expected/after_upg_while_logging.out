@@ -225,12 +225,13 @@ select emaj.emaj_start_group('myGroup6', 'Start G6');
 
 insert into mySchema6.table_with_51_characters_long_name_____0_________0a values (3),(4);
 delete from mySchema6.table_with_51_characters_long_name_____0_________0a;
-select * from emaj.emaj_log_stat_group('myGroup6','Start G6',NULL);
- stat_group | stat_schema |                       stat_table                        | stat_first_mark |      stat_first_mark_datetime       | stat_last_mark | stat_last_mark_datetime | stat_rows 
-------------+-------------+---------------------------------------------------------+-----------------+-------------------------------------+----------------+-------------------------+-----------
- myGroup6   | myschema6   | table_with_50_characters_long_name_____0_________0      | Start G6        | Sat Mar 30 03:35:50.348268 2019 PDT |                |                         |         0
- myGroup6   | myschema6   | table_with_51_characters_long_name_____0_________0a     | Start G6        | Sat Mar 30 03:35:50.348268 2019 PDT |                |                         |         6
- myGroup6   | myschema6   | table_with_55_characters_long_name_____0_________0fghij | Start G6        | Sat Mar 30 03:35:50.348268 2019 PDT |                |                         |         0
+select stat_group, stat_schema, stat_table, stat_first_mark, stat_last_mark, stat_rows
+  from emaj.emaj_log_stat_group('myGroup6','Start G6',NULL) order by 1,2,3,4;
+ stat_group | stat_schema |                       stat_table                        | stat_first_mark | stat_last_mark | stat_rows 
+------------+-------------+---------------------------------------------------------+-----------------+----------------+-----------
+ myGroup6   | myschema6   | table_with_50_characters_long_name_____0_________0      | Start G6        |                |         0
+ myGroup6   | myschema6   | table_with_51_characters_long_name_____0_________0a     | Start G6        |                |         6
+ myGroup6   | myschema6   | table_with_55_characters_long_name_____0_________0fghij | Start G6        |                |         0
 (3 rows)
 
 select emaj.emaj_rollback_group('myGroup6', 'Start G6');

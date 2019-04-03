@@ -256,6 +256,14 @@ $do$
   END;
 $do$;
 
+--
+-- drop both grpdef_log_schema_suffix and grpdef_emaj_names_prefix columns from the emaj_group_def table
+--
+ALTER TABLE emaj.emaj_group_def
+  DROP COLUMN grpdef_log_schema_suffix,
+  DROP COLUMN grpdef_emaj_names_prefix;
+
+
 ----------------------------------------------
 --                                          --
 -- emaj enums, tables, views and sequences  --

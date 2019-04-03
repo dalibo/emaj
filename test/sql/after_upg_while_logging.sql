@@ -106,7 +106,8 @@ select count(*) from emaj_myschema6."table_with_51_characters_long_name_____0___
 select emaj.emaj_start_group('myGroup6', 'Start G6');
 insert into mySchema6.table_with_51_characters_long_name_____0_________0a values (3),(4);
 delete from mySchema6.table_with_51_characters_long_name_____0_________0a;
-select * from emaj.emaj_log_stat_group('myGroup6','Start G6',NULL);
+select stat_group, stat_schema, stat_table, stat_first_mark, stat_last_mark, stat_rows
+  from emaj.emaj_log_stat_group('myGroup6','Start G6',NULL) order by 1,2,3,4;
 select emaj.emaj_rollback_group('myGroup6', 'Start G6');
 
 -----------------------------

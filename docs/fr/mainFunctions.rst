@@ -32,10 +32,6 @@ Le contenu du ou des groupes de tables que l'on souhaite gérer se définit en g
 +--------------------------+------+------------------------------------------------------------------------------------------------------+
 | grpdef_priority          | INT  | niveau de priorité de la table ou de la séquence dans les traitements E-Maj (optionnel)              |
 +--------------------------+------+------------------------------------------------------------------------------------------------------+
-| grpdef_log_schema_suffix | TEXT | (colonne dépréciée)                                                                                  |
-+--------------------------+------+------------------------------------------------------------------------------------------------------+
-| grpdef_emaj_names_prefix | TEXT | (colonne dépréciée)                                                                                  |
-+--------------------------+------+------------------------------------------------------------------------------------------------------+
 | grpdef_log_dat_tsp       | TEXT | nom du tablespace hébergeant la table de log (optionnel)                                             |
 +--------------------------+------+------------------------------------------------------------------------------------------------------+
 | grpdef_log_idx_tsp       | TEXT | nom du tablespace hébergeant l'index de la table de log (optionnel)                                  |

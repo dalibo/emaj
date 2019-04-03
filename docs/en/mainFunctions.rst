@@ -32,10 +32,6 @@ The content of tables groups E-Maj will manage has to be defined by populating t
 +--------------------------+------+---------------------------------------------------------------------------------------------------+
 | grpdef_priority          | INT  | priority level for the table or sequence in E-Maj processing (optional)                           |
 +--------------------------+------+---------------------------------------------------------------------------------------------------+
-| grpdef_log_schema_suffix | TEXT | (deprecated column)                                                                               |
-+--------------------------+------+---------------------------------------------------------------------------------------------------+
-| grpdef_emaj_names_prefix | TEXT | (deprecated column)                                                                               |
-+--------------------------+------+---------------------------------------------------------------------------------------------------+
 | grpdef_log_dat_tsp       | TEXT | name of the tablespace containing the log table (optional)                                        |
 +--------------------------+------+---------------------------------------------------------------------------------------------------+
 | grpdef_log_idx_tsp       | TEXT | name of the tablespace containing the index of the log table (optional)                           |

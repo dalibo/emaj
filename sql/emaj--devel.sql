@@ -151,10 +151,6 @@ CREATE TABLE emaj.emaj_group_def (
   grpdef_tblseq                TEXT        NOT NULL,       -- table or sequence name
   grpdef_priority              INTEGER,                    -- priority level (tables are processed in ascending
                                                            --   order, with NULL last)
-  grpdef_log_schema_suffix     TEXT,                       -- schema suffix for the log table, functions and sequence
-                                                           --   (NULL for 'emaj' schema)
-  grpdef_emaj_names_prefix     TEXT,                       -- prefix for all E-Maj objects generated for this table
-                                                           --   (for tables only, NULL = default = <schema>_<table>)
   grpdef_log_dat_tsp           TEXT,                       -- tablespace for the log table (NULL to use default value)
   grpdef_log_idx_tsp           TEXT,                       -- tablespace for the log index (NULL to use default value)
   PRIMARY KEY (grpdef_group, grpdef_schema, grpdef_tblseq)

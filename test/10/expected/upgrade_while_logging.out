@@ -257,17 +257,15 @@ Referenced by:
     TABLE "emaj.emaj_relation" CONSTRAINT "emaj_relation_rel_group_fkey" FOREIGN KEY (rel_group) REFERENCES emaj.emaj_group(group_name)
 Tablespace: "tspemaj"
 
-                     Table "emaj.emaj_group_def"
-          Column          |  Type   | Collation | Nullable | Default 
---------------------------+---------+-----------+----------+---------
- grpdef_group             | text    |           | not null | 
- grpdef_schema            | text    |           | not null | 
- grpdef_tblseq            | text    |           | not null | 
- grpdef_priority          | integer |           |          | 
- grpdef_log_schema_suffix | text    |           |          | 
- grpdef_emaj_names_prefix | text    |           |          | 
- grpdef_log_dat_tsp       | text    |           |          | 
- grpdef_log_idx_tsp       | text    |           |          | 
+                  Table "emaj.emaj_group_def"
+       Column       |  Type   | Collation | Nullable | Default 
+--------------------+---------+-----------+----------+---------
+ grpdef_group       | text    |           | not null | 
+ grpdef_schema      | text    |           | not null | 
+ grpdef_tblseq      | text    |           | not null | 
+ grpdef_priority    | integer |           |          | 
+ grpdef_log_dat_tsp | text    |           |          | 
+ grpdef_log_idx_tsp | text    |           |          | 
 Indexes:
     "emaj_group_def_pkey" PRIMARY KEY, btree (grpdef_group, grpdef_schema, grpdef_tblseq), tablespace "tspemaj"
     "emaj_group_def_idx1" btree (grpdef_schema, grpdef_tblseq), tablespace "tspemaj"
