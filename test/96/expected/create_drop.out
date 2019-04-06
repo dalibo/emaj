@@ -50,34 +50,34 @@ insert into emaj.emaj_group_def values ('dummyGrp3','myschema2','mytbl2');
 -- invalid group names
 select emaj.emaj_create_group(NULL);
 ERROR:  emaj_create_group: The group name can't be NULL or empty.
-CONTEXT:  PL/pgSQL function emaj.emaj_create_group(text,boolean,boolean) line 20 at RAISE
+CONTEXT:  PL/pgSQL function emaj.emaj_create_group(text,boolean,boolean) line 19 at RAISE
 select emaj.emaj_create_group('',false);
 ERROR:  emaj_create_group: The group name can't be NULL or empty.
-CONTEXT:  PL/pgSQL function emaj.emaj_create_group(text,boolean,boolean) line 20 at RAISE
+CONTEXT:  PL/pgSQL function emaj.emaj_create_group(text,boolean,boolean) line 19 at RAISE
 -- group is unknown in emaj_group_def
 select emaj.emaj_create_group('unknownGroup');
 ERROR:  emaj_create_group: The group "unknownGroup" is unknown in the emaj_group_def table. To create an empty group, explicitely set the third parameter to true.
-CONTEXT:  PL/pgSQL function emaj.emaj_create_group(text,boolean,boolean) line 30 at RAISE
+CONTEXT:  PL/pgSQL function emaj.emaj_create_group(text,boolean,boolean) line 29 at RAISE
 select emaj.emaj_create_group('unknownGroup',false);
 ERROR:  emaj_create_group: The group "unknownGroup" is unknown in the emaj_group_def table. To create an empty group, explicitely set the third parameter to true.
-CONTEXT:  PL/pgSQL function emaj.emaj_create_group(text,boolean,boolean) line 30 at RAISE
+CONTEXT:  PL/pgSQL function emaj.emaj_create_group(text,boolean,boolean) line 29 at RAISE
 -- an emtpy group to create is known in emaj_group_def
 select emaj.emaj_create_group('myGroup1',true,true);
 ERROR:  emaj_create_group: The group "myGroup1" is referenced into the emaj_group_def table. This is not consistent with the <is_empty> parameter set to true.
-CONTEXT:  PL/pgSQL function emaj.emaj_create_group(text,boolean,boolean) line 33 at RAISE
+CONTEXT:  PL/pgSQL function emaj.emaj_create_group(text,boolean,boolean) line 32 at RAISE
 -- unknown schema or table in emaj_group_def
 select emaj.emaj_create_group('dummyGrp1');
 WARNING:  emaj_create_group: in the group "dummyGrp1", the table or sequence "dummySchema".mytbl4 does not exist.
 WARNING:  emaj_create_group: in the group "dummyGrp1", the table or sequence myschema1."dummyTable" does not exist.
 ERROR:  emaj_create_group: One or several errors have been detected in the emaj_group_def table content.
-CONTEXT:  PL/pgSQL function emaj.emaj_create_group(text,boolean,boolean) line 45 at RAISE
+CONTEXT:  PL/pgSQL function emaj.emaj_create_group(text,boolean,boolean) line 44 at RAISE
 -- group with a partitionned table (in PG 10+) (abort for lack of PRIMARY KEY with prior PG versions)
 begin;
   insert into emaj.emaj_group_def values ('myGroup4','myschema4','mytblp');
   select emaj.emaj_create_group('myGroup4');
 WARNING:  emaj_create_group: in the group "myGroup4", the table myschema4.mytblp has no PRIMARY KEY.
 ERROR:  emaj_create_group: One or several errors have been detected in the emaj_group_def table content.
-CONTEXT:  PL/pgSQL function emaj.emaj_create_group(text,boolean,boolean) line 45 at RAISE
+CONTEXT:  PL/pgSQL function emaj.emaj_create_group(text,boolean,boolean) line 44 at RAISE
 rollback;
 -- group with a temp table
 begin;
@@ -93,7 +93,7 @@ WARNING:  emaj_create_group: in the group "myGroup5", the table pg_temp_2.mytemp
 WARNING:  emaj_create_group: in the group "myGroup5", the table myschema5.myunloggedtbl is an UNLOGGED table.
 WARNING:  emaj_create_group: in the group "myGroup5", the table myschema5.myoidstbl is declared WITH OIDS.
 ERROR:  emaj_create_group: One or several errors have been detected in the emaj_group_def table content.
-CONTEXT:  PL/pgSQL function emaj.emaj_create_group(text,boolean,boolean) line 45 at RAISE
+CONTEXT:  PL/pgSQL function emaj.emaj_create_group(text,boolean,boolean) line 44 at RAISE
 rollback;
 -- group with an unlogged table and a WITH OIDS table
 begin;
@@ -101,13 +101,13 @@ begin;
 WARNING:  emaj_create_group: in the group "myGroup5", the table myschema5.myunloggedtbl is an UNLOGGED table.
 WARNING:  emaj_create_group: in the group "myGroup5", the table myschema5.myoidstbl is declared WITH OIDS.
 ERROR:  emaj_create_group: One or several errors have been detected in the emaj_group_def table content.
-CONTEXT:  PL/pgSQL function emaj.emaj_create_group(text,boolean,boolean) line 45 at RAISE
+CONTEXT:  PL/pgSQL function emaj.emaj_create_group(text,boolean,boolean) line 44 at RAISE
 rollback;
 -- table without pkey for a rollbackable group
 select emaj.emaj_create_group('phil''s group#3",',true);
 WARNING:  emaj_create_group: in the group "phil's group#3"",", the table "phil's schema3"."myTbl2\" has no PRIMARY KEY.
 ERROR:  emaj_create_group: One or several errors have been detected in the emaj_group_def table content.
-CONTEXT:  PL/pgSQL function emaj.emaj_create_group(text,boolean,boolean) line 45 at RAISE
+CONTEXT:  PL/pgSQL function emaj.emaj_create_group(text,boolean,boolean) line 44 at RAISE
 -- sequence with tablespaces defined in the emaj_group_def table
 begin;
   update emaj.emaj_group_def set grpdef_log_dat_tsp = 'something', grpdef_log_idx_tsp = 'something' where grpdef_group = 'myGroup1' and grpdef_schema = 'myschema1' and grpdef_tblseq = 'myTbl3_col31_seq';
@@ -115,7 +115,7 @@ begin;
 WARNING:  emaj_create_group: in the group "myGroup1", for the sequence myschema1."myTbl3_col31_seq", the data log tablespace is not NULL.
 WARNING:  emaj_create_group: in the group "myGroup1", for the sequence myschema1."myTbl3_col31_seq", the index log tablespace is not NULL.
 ERROR:  emaj_create_group: One or several errors have been detected in the emaj_group_def table content.
-CONTEXT:  PL/pgSQL function emaj.emaj_create_group(text,boolean,boolean) line 45 at RAISE
+CONTEXT:  PL/pgSQL function emaj.emaj_create_group(text,boolean,boolean) line 44 at RAISE
 rollback;
 -- table with invalid tablespaces
 begin;
@@ -125,7 +125,7 @@ begin;
 WARNING:  emaj_create_group: in the group "myGroup1", for the table myschema1.mytbl1, the data log tablespace "dummyTablespace" does not exist.
 WARNING:  emaj_create_group: in the group "myGroup1", for the table myschema1.mytbl1, the index log tablespace "dummyTablespace" does not exist.
 ERROR:  emaj_create_group: One or several errors have been detected in the emaj_group_def table content.
-CONTEXT:  PL/pgSQL function emaj.emaj_create_group(text,boolean,boolean) line 45 at RAISE
+CONTEXT:  PL/pgSQL function emaj.emaj_create_group(text,boolean,boolean) line 44 at RAISE
 rollback;
 -- already existing log schema
 begin;
@@ -134,7 +134,7 @@ begin;
 ERROR:  _create_log_schemas: The schema "emaj_myschema1" should not exist. Drop it manually.
 CONTEXT:  PL/pgSQL function emaj._create_log_schemas(text,text[]) line 20 at RAISE
 SQL statement "SELECT emaj._create_log_schemas('CREATE_GROUP', ARRAY[v_groupName])"
-PL/pgSQL function emaj.emaj_create_group(text,boolean,boolean) line 56 at PERFORM
+PL/pgSQL function emaj.emaj_create_group(text,boolean,boolean) line 55 at PERFORM
 rollback;
 -- bad alter_log_table parameter
 begin;
@@ -144,9 +144,18 @@ ERROR:  syntax error at or near "dummmy"
 LINE 1: ALTER TABLE emaj_myschema1."myTbl3_log" dummmy content
                                                 ^
 QUERY:  ALTER TABLE emaj_myschema1."myTbl3_log" dummmy content
-CONTEXT:  PL/pgSQL function emaj._create_tbl(emaj.emaj_group_def,bigint,boolean) line 98 at EXECUTE
-SQL statement "SELECT emaj._create_tbl(r_grpdef, v_timeId, v_isRollbackable)"
-PL/pgSQL function emaj.emaj_create_group(text,boolean,boolean) line 67 at PERFORM
+CONTEXT:  PL/pgSQL function emaj._create_tbl(text,text,text,integer,text,text,bigint,boolean) line 98 at EXECUTE
+SQL statement "SELECT emaj._create_tbl(grpdef_schema, grpdef_tblseq, grpdef_group, grpdef_priority, grpdef_log_dat_tsp, grpdef_log_idx_tsp, v_timeId, v_isRollbackable)
+      FROM (
+        SELECT grpdef_schema, grpdef_tblseq, grpdef_group, grpdef_priority, grpdef_log_dat_tsp, grpdef_log_idx_tsp
+          FROM emaj.emaj_group_def, pg_catalog.pg_class, pg_catalog.pg_namespace
+          WHERE grpdef_group = v_groupName
+            AND relnamespace = pg_namespace.oid
+            AND nspname = grpdef_schema AND relname = grpdef_tblseq
+            AND relkind = 'r'
+          ORDER BY grpdef_priority, grpdef_schema, grpdef_tblseq
+           ) AS t"
+PL/pgSQL function emaj.emaj_create_group(text,boolean,boolean) line 57 at PERFORM
 rollback;
 -- should be OK
 select emaj.emaj_create_group('myGroup1');
@@ -229,17 +238,17 @@ select emaj.emaj_create_group('dummyGrp2',false);
 WARNING:  emaj_create_group: in the group "dummyGrp2", the table or sequence emaj.emaj_param belongs to an E-Maj schema.
 WARNING:  emaj_create_group: in the group "dummyGrp2", the table or sequence emaj_myschema1."myTbl3_log" belongs to an E-Maj schema.
 ERROR:  emaj_create_group: One or several errors have been detected in the emaj_group_def table content.
-CONTEXT:  PL/pgSQL function emaj.emaj_create_group(text,boolean,boolean) line 45 at RAISE
+CONTEXT:  PL/pgSQL function emaj.emaj_create_group(text,boolean,boolean) line 44 at RAISE
 -- create a group with a table already belonging to another group
 select emaj.emaj_create_group('dummyGrp3');
 WARNING:  emaj_create_group: in the group "dummyGrp3", the table or sequence myschema1.mytbl1 already belongs to the group "myGroup1".
 WARNING:  emaj_create_group: in the group "dummyGrp3", the table or sequence myschema2.mytbl2 already belongs to the group "myGroup2".
 ERROR:  emaj_create_group: One or several errors have been detected in the emaj_group_def table content.
-CONTEXT:  PL/pgSQL function emaj.emaj_create_group(text,boolean,boolean) line 45 at RAISE
+CONTEXT:  PL/pgSQL function emaj.emaj_create_group(text,boolean,boolean) line 44 at RAISE
 -- already created
 select emaj.emaj_create_group('myGroup2');
 ERROR:  emaj_create_group: The group "myGroup2" already exists.
-CONTEXT:  PL/pgSQL function emaj.emaj_create_group(text,boolean,boolean) line 25 at RAISE
+CONTEXT:  PL/pgSQL function emaj.emaj_create_group(text,boolean,boolean) line 24 at RAISE
 -- impact of created groups
 select nspname from pg_namespace where nspname like 'emaj%' order by nspname;
        nspname       
@@ -422,7 +431,7 @@ begin;
 ERROR:  _drop_log_schemas: Cannot drop the schema "emaj_myschema1". It probably owns unattended objects. Use the emaj_verify_all() function to get details.
 CONTEXT:  PL/pgSQL function emaj._drop_log_schemas(text,boolean) line 33 at RAISE
 SQL statement "SELECT emaj._drop_log_schemas(CASE WHEN v_isForced THEN 'FORCE_DROP_GROUP' ELSE 'DROP_GROUP' END, v_isForced)"
-PL/pgSQL function emaj._drop_group(text,boolean) line 23 at PERFORM
+PL/pgSQL function emaj._drop_group(text,boolean) line 24 at PERFORM
 SQL statement "SELECT emaj._drop_group(v_groupName, FALSE)"
 PL/pgSQL function emaj.emaj_drop_group(text) line 14 at SQL statement
 rollback;

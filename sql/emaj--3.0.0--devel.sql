@@ -293,8 +293,10 @@ ALTER TABLE emaj.emaj_group_def
 ------------------------------------------------------------------
 -- drop obsolete functions or functions with modified interface --
 ------------------------------------------------------------------
+DROP FUNCTION IF EXISTS emaj._create_tbl(R_GRPDEF EMAJ.EMAJ_GROUP_DEF,V_TIMEID BIGINT,V_ISROLLBACKABLE BOOLEAN);
 DROP FUNCTION IF EXISTS emaj._change_log_schema_tbl(R_REL EMAJ.EMAJ_RELATION,V_NEWLOGSCHEMASUFFIX TEXT,V_MULTIGROUP BOOLEAN);
 DROP FUNCTION IF EXISTS emaj._change_emaj_names_prefix(R_REL EMAJ.EMAJ_RELATION,V_NEWNAMESPREFIX TEXT,V_MULTIGROUP BOOLEAN);
+DROP FUNCTION IF EXISTS emaj._create_seq(GRPDEF EMAJ.EMAJ_GROUP_DEF,V_TIMEID BIGINT);
 
 ------------------------------------------------------------------
 -- create new or modified functions                             --
@@ -508,7 +510,7 @@ $_drop_log_schemas$
   END;
 $_drop_log_schemas$;
 
-CREATE OR REPLACE FUNCTION emaj._create_tbl(r_grpdef emaj.emaj_group_def, v_timeId BIGINT, v_isRollbackable BOOLEAN)
+CREATE OR REPLACE FUNCTION emaj._create_tbl(v_schema TEXT, v_tbl TEXT, v_groupName TEXT, v_priority INT, v_logDatTsp TEXT, v_logIdxTsp TEXT, v_timeId BIGINT, v_isRollbackable BOOLEAN)
 RETURNS VOID LANGUAGE plpgsql SECURITY DEFINER AS
 $_create_tbl$
 -- This function creates all what is needed to manage the log and rollback operations for an application table
@@ -542,16 +544,16 @@ $_create_tbl$
   BEGIN
 -- the checks on the table properties are performed by the calling functions
 -- build the prefix of all emaj object to create
-    IF length(r_grpdef.grpdef_tblseq) <= 50 THEN
+    IF length(v_tbl) <= 50 THEN
 -- for not too long table name, the prefix is the table name itself
-      v_emajNamesPrefix = r_grpdef.grpdef_tblseq;
+      v_emajNamesPrefix = v_tbl;
     ELSE
 -- for long table names (over 50 char long), compute the suffix to add to the first 50 characters (#1, #2, ...), by looking at the existing names
-      SELECT substr(r_grpdef.grpdef_tblseq, 1, 50) || '#' || coalesce(max(suffix) + 1, 1)::TEXT INTO v_emajNamesPrefix
+      SELECT substr(v_tbl, 1, 50) || '#' || coalesce(max(suffix) + 1, 1)::TEXT INTO v_emajNamesPrefix
         FROM
           (SELECT unnest(regexp_matches(substr(rel_log_table, 51),'#(\d+)'))::INT AS suffix
              FROM emaj.emaj_relation
-             WHERE substr(rel_log_table, 1, 50) = substr(r_grpdef.grpdef_tblseq, 1, 50)
+             WHERE substr(rel_log_table, 1, 50) = substr(v_tbl, 1, 50)
           ) AS t;
     END IF;
 -- build the name of emaj components associated to the application table (non schema qualified and not quoted)
@@ -560,15 +562,15 @@ $_create_tbl$
     v_baseLogFnctName      = v_emajNamesPrefix || '_log_fnct';
     v_baseSequenceName     = v_emajNamesPrefix || '_log_seq';
 -- build the different name for table, trigger, functions,...
-    v_logSchema        = v_schemaPrefix || r_grpdef.grpdef_schema;
-    v_fullTableName    = quote_ident(r_grpdef.grpdef_schema) || '.' || quote_ident(r_grpdef.grpdef_tblseq);
+    v_logSchema        = v_schemaPrefix || v_schema;
+    v_fullTableName    = quote_ident(v_schema) || '.' || quote_ident(v_tbl);
     v_logTableName     = quote_ident(v_logSchema) || '.' || quote_ident(v_baseLogTableName);
     v_logIdxName       = quote_ident(v_baseLogIdxName);
     v_logFnctName      = quote_ident(v_logSchema) || '.' || quote_ident(v_baseLogFnctName);
     v_sequenceName     = quote_ident(v_logSchema) || '.' || quote_ident(v_baseSequenceName);
 -- prepare TABLESPACE clauses for data and index
-    v_dataTblSpace = coalesce('TABLESPACE ' || quote_ident(r_grpdef.grpdef_log_dat_tsp),'');
-    v_idxTblSpace = coalesce('TABLESPACE ' || quote_ident(r_grpdef.grpdef_log_idx_tsp),'');
+    v_dataTblSpace = coalesce('TABLESPACE ' || quote_ident(v_logDatTsp),'');
+    v_idxTblSpace = coalesce('TABLESPACE ' || quote_ident(v_logIdxTsp),'');
 -- Build some pieces of SQL statements that will be needed at table rollback time
 --   build the tables's columns list
     SELECT string_agg(col_name, ',') INTO v_colList FROM (
@@ -653,8 +655,8 @@ $_create_tbl$
                 rel_log_index, rel_log_sequence, rel_log_function,
                 rel_sql_columns, rel_sql_pk_columns, rel_sql_pk_eq_conditions,
                 rel_emaj_verb_attnum)
-        VALUES (r_grpdef.grpdef_schema, r_grpdef.grpdef_tblseq, int8range(v_timeId, NULL, '[)'), r_grpdef.grpdef_group, r_grpdef.grpdef_priority,
-                v_logSchema, r_grpdef.grpdef_log_dat_tsp, r_grpdef.grpdef_log_idx_tsp, 'r', v_baseLogTableName,
+        VALUES (v_schema, v_tbl, int8range(v_timeId, NULL, '[)'), v_groupName, v_priority,
+                v_logSchema, v_logDatTsp, v_logIdxTsp, 'r', v_baseLogTableName,
                 v_baseLogIdxName, v_baseSequenceName, v_baseLogFnctName,
                 v_colList, v_pkColList, v_pkCondList,
                 v_attnum);
@@ -675,6 +677,59 @@ $_create_tbl$
     RETURN;
   END;
 $_create_tbl$;
+
+CREATE OR REPLACE FUNCTION emaj._add_tbl(r_plan emaj.emaj_alter_plan, v_timeId BIGINT, v_multiGroup BOOLEAN)
+RETURNS VOID LANGUAGE plpgsql SECURITY DEFINER AS
+$_add_tbl$
+-- The function adds a table to a group. It is called during an alter group operation.
+-- If the group is in idle state, it simply calls the _create_tbl() function.
+-- Otherwise, it calls the _create_tbl() function, activates the log trigger and
+--    sets a restart value for the log sequence if a previous range exists for the relation.
+-- Required inputs: row from emaj_alter_plan corresponding to the appplication table to proccess, time stamp id of the alter group operation
+-- The function is defined as SECURITY DEFINER so that emaj_adm role can enable triggers on application tables.
+  DECLARE
+    v_isRollbackable         BOOLEAN;
+    v_logSchema              TEXT;
+    v_logSequence            TEXT;
+    v_nextVal                BIGINT;
+    v_fullTableName          TEXT;
+  BEGIN
+-- get the is_rollbackable status of the related group
+    SELECT group_is_rollbackable INTO v_isRollbackable
+      FROM emaj.emaj_group WHERE group_name = r_plan.altr_group;
+-- create the table
+    PERFORM emaj._create_tbl(grpdef_schema, grpdef_tblseq, grpdef_group, grpdef_priority, grpdef_log_dat_tsp, grpdef_log_idx_tsp, v_timeId, v_isRollbackable)
+      FROM emaj.emaj_group_def
+      WHERE grpdef_group = r_plan.altr_group AND grpdef_schema = r_plan.altr_schema AND grpdef_tblseq = r_plan.altr_tblseq;
+-- if the group is in logging state, perform additional tasks
+    IF r_plan.altr_group_is_logging THEN
+-- get the log schema and sequence for the new relation
+      SELECT rel_log_schema, rel_log_sequence INTO v_logSchema, v_logSequence
+        FROM emaj.emaj_relation
+        WHERE rel_schema = r_plan.altr_schema AND rel_tblseq = r_plan.altr_tblseq AND upper_inf(rel_time_range);
+-- get the last log sequence value, if any, for this relation (recorded in emaj_relation at a previous REMOVE_TBL operation)
+      SELECT max(rel_log_seq_last_value) + 1 INTO v_nextVal FROM emaj.emaj_relation
+        WHERE rel_schema = r_plan.altr_schema AND rel_tblseq = r_plan.altr_tblseq
+          AND rel_log_seq_last_value IS NOT NULL;
+-- ... set the new log sequence next_val, if needed
+      IF v_nextVal IS NOT NULL AND v_nextVal > 1 THEN
+        EXECUTE 'ALTER SEQUENCE ' || quote_ident(v_logSchema) || '.' || quote_ident(v_logSequence) || ' RESTART ' || v_nextVal;
+      END IF;
+-- ... record the new log sequence state in the emaj_sequence table for the current alter_group mark
+      INSERT INTO emaj.emaj_sequence (sequ_schema, sequ_name, sequ_time_id, sequ_last_val, sequ_start_val,
+                  sequ_increment, sequ_max_val, sequ_min_val, sequ_cache_val, sequ_is_cycled, sequ_is_called)
+        SELECT * FROM emaj._get_current_sequence_state(v_logSchema, v_logSequence, v_timeId);
+-- ... activate the log and truncate triggers
+      v_fullTableName  = quote_ident(r_plan.altr_schema) || '.' || quote_ident(r_plan.altr_tblseq);
+      EXECUTE 'ALTER TABLE ' || v_fullTableName || ' ENABLE TRIGGER emaj_log_trg, ENABLE TRIGGER emaj_trunc_trg';
+-- ... and insert an entry into the emaj_hist table
+      INSERT INTO emaj.emaj_hist (hist_function, hist_event, hist_object, hist_wording)
+        VALUES (CASE WHEN v_multiGroup THEN 'ALTER_GROUPS' ELSE 'ALTER_GROUP' END, 'TABLE ADDED',
+                v_fullTableName, 'To logging group ' || r_plan.altr_group);
+    END IF;
+    RETURN;
+  END;
+$_add_tbl$;
 
 CREATE OR REPLACE FUNCTION emaj._remove_tbl(r_plan emaj.emaj_alter_plan, v_timeId BIGINT, v_multiGroup BOOLEAN)
 RETURNS VOID LANGUAGE plpgsql SECURITY DEFINER AS
@@ -754,6 +809,74 @@ $_remove_tbl$
   END;
 $_remove_tbl$;
 
+CREATE OR REPLACE FUNCTION emaj._create_seq(v_schema TEXT, v_seq TEXT, v_groupName TEXT, v_priority INT, v_timeId BIGINT)
+RETURNS VOID LANGUAGE plpgsql AS
+$_create_seq$
+-- The function checks whether the sequence is related to a serial column of an application table.
+-- If yes, it verifies that this table also belong to the same group
+-- Required inputs: the emaj_group_def row related to the application sequence to process, the time id of the operation
+  DECLARE
+    v_tableSchema            TEXT;
+    v_tableName              TEXT;
+    v_tableGroup             TEXT;
+  BEGIN
+-- the checks on the sequence properties are performed by the calling functions
+-- get the schema and the name of the table that contains a serial or a "generated as identity" column this sequence is linked to, if one exists
+    SELECT nt.nspname, ct.relname INTO v_tableSchema, v_tableName
+      FROM pg_catalog.pg_class cs, pg_catalog.pg_namespace ns, pg_depend,
+           pg_catalog.pg_class ct, pg_catalog.pg_namespace nt
+      WHERE cs.relname = v_seq AND ns.nspname = v_schema         -- the selected sequence
+        AND cs.relnamespace = ns.oid                             -- join condition for sequence schema name
+        AND ct.relnamespace = nt.oid                             -- join condition for linked table schema name
+        AND pg_depend.objid = cs.oid                             -- join condition for the pg_depend table
+        AND pg_depend.refobjid = ct.oid                          -- join conditions for depended table schema name
+        AND pg_depend.classid = pg_depend.refclassid             -- the classid et refclassid must be 'pg_class'
+        AND pg_depend.classid = (SELECT oid FROM pg_catalog.pg_class WHERE relname = 'pg_class');
+    IF FOUND THEN
+      SELECT grpdef_group INTO v_tableGroup FROM emaj.emaj_group_def
+        WHERE grpdef_schema = v_tableSchema AND grpdef_tblseq = v_tableName;
+      IF NOT FOUND THEN
+        RAISE WARNING '_create_seq: The sequence %.% is linked to table %.% but this table does not belong to any tables group.', v_schema, v_seq, v_tableSchema, v_tableName;
+      ELSE
+        IF v_tableGroup <> v_groupName THEN
+          RAISE WARNING '_create_seq: The sequence %.% is linked to table %.% but this table belong to another tables group (%).', v_schema, v_seq, v_tableSchema, v_tableName, v_tableGroup;
+        END IF;
+      END IF;
+    END IF;
+-- record the sequence in the emaj_relation table
+    INSERT INTO emaj.emaj_relation (rel_schema, rel_tblseq, rel_time_range, rel_group, rel_priority, rel_kind)
+      VALUES (v_schema, v_seq, int8range(v_timeId, NULL, '[)'), v_groupName, v_priority, 'S');
+    RETURN;
+  END;
+$_create_seq$;
+
+CREATE OR REPLACE FUNCTION emaj._add_seq(r_plan emaj.emaj_alter_plan, v_timeId BIGINT, v_multiGroup BOOLEAN)
+RETURNS VOID LANGUAGE plpgsql AS
+$_add_seq$
+-- The function adds a sequence to a group. It is called during an alter group operation.
+-- If the group is in idle state, it simply calls the _create_seq() function.
+-- Otherwise, it calls the _create_seql() function, and record the current state of the sequence
+-- Required inputs: row from emaj_alter_plan corresponding to the appplication sequence to proccess, time stamp id of the alter group operation
+  BEGIN
+-- create the sequence
+    PERFORM emaj._create_seq(grpdef_schema, grpdef_tblseq, grpdef_group, grpdef_priority, v_timeId)
+      FROM emaj.emaj_group_def
+      WHERE grpdef_group = r_plan.altr_group AND grpdef_schema = r_plan.altr_schema AND grpdef_tblseq = r_plan.altr_tblseq;
+-- if the group is in logging state, perform additional tasks
+    IF r_plan.altr_group_is_logging THEN
+-- ... record the new sequence state in the emaj_sequence table for the current alter_group mark
+      INSERT INTO emaj.emaj_sequence (sequ_schema, sequ_name, sequ_time_id, sequ_last_val, sequ_start_val,
+                  sequ_increment, sequ_max_val, sequ_min_val, sequ_cache_val, sequ_is_cycled, sequ_is_called)
+        SELECT * FROM emaj._get_current_sequence_state(r_plan.altr_schema, r_plan.altr_tblseq, v_timeId);
+-- ... and insert an entry into the emaj_hist table
+      INSERT INTO emaj.emaj_hist (hist_function, hist_event, hist_object, hist_wording)
+        VALUES (CASE WHEN v_multiGroup THEN 'ALTER_GROUPS' ELSE 'ALTER_GROUP' END, 'SEQUENCE ADDED',
+                quote_ident(r_plan.altr_schema) || '.' || quote_ident(r_plan.altr_tblseq), 'To logging group ' || r_plan.altr_group);
+    END IF;
+    RETURN;
+  END;
+$_add_seq$;
+
 CREATE OR REPLACE FUNCTION emaj.emaj_create_group(v_groupName TEXT, v_isRollbackable BOOLEAN DEFAULT TRUE, v_is_empty BOOLEAN DEFAULT FALSE)
 RETURNS INT LANGUAGE plpgsql AS
 $emaj_create_group$
@@ -765,9 +888,8 @@ $emaj_create_group$
 -- Output: number of processed tables and sequences
   DECLARE
     v_timeId                 BIGINT;
-    v_nbTbl                  INT = 0;
-    v_nbSeq                  INT = 0;
-    r_grpdef                 emaj.emaj_group_def%ROWTYPE;
+    v_nbTbl                  INT;
+    v_nbSeq                  INT;
     r                        RECORD;
   BEGIN
 -- insert begin in the history
@@ -813,31 +935,33 @@ $emaj_create_group$
 -- create new E-Maj log schemas, if needed
     PERFORM emaj._create_log_schemas('CREATE_GROUP', ARRAY[v_groupName]);
 -- get and process all tables of the group (in priority order, NULLS being processed last)
-    FOR r_grpdef IN
-        SELECT emaj.emaj_group_def.*
+    PERFORM emaj._create_tbl(grpdef_schema, grpdef_tblseq, grpdef_group, grpdef_priority, grpdef_log_dat_tsp, grpdef_log_idx_tsp, v_timeId, v_isRollbackable)
+      FROM (
+        SELECT grpdef_schema, grpdef_tblseq, grpdef_group, grpdef_priority, grpdef_log_dat_tsp, grpdef_log_idx_tsp
           FROM emaj.emaj_group_def, pg_catalog.pg_class, pg_catalog.pg_namespace
           WHERE grpdef_group = v_groupName
             AND relnamespace = pg_namespace.oid
             AND nspname = grpdef_schema AND relname = grpdef_tblseq
             AND relkind = 'r'
           ORDER BY grpdef_priority, grpdef_schema, grpdef_tblseq
-        LOOP
-      PERFORM emaj._create_tbl(r_grpdef, v_timeId, v_isRollbackable);
-      v_nbTbl = v_nbTbl + 1;
-    END LOOP;
+           ) AS t;
+    SELECT count(*) INTO v_nbTbl
+      FROM emaj.emaj_relation
+      WHERE rel_group = v_groupName AND rel_kind = 'r' AND upper_inf(rel_time_range);
 -- get and process all sequences of the group (in priority order, NULLS being processed last)
-    FOR r_grpdef IN
-        SELECT emaj.emaj_group_def.*
+    PERFORM emaj._create_seq(grpdef_schema, grpdef_tblseq, grpdef_group, grpdef_priority, v_timeId)
+      FROM (
+        SELECT grpdef_schema, grpdef_tblseq, grpdef_group, grpdef_priority
           FROM emaj.emaj_group_def, pg_catalog.pg_class, pg_catalog.pg_namespace
           WHERE grpdef_group = v_groupName
             AND relnamespace = pg_namespace.oid
             AND nspname = grpdef_schema AND relname = grpdef_tblseq
             AND relkind = 'S'
           ORDER BY grpdef_priority, grpdef_schema, grpdef_tblseq
-        LOOP
-      PERFORM emaj._create_seq(r_grpdef, v_timeId);
-      v_nbSeq = v_nbSeq + 1;
-    END LOOP;
+           ) AS t;
+    SELECT count(*) INTO v_nbSeq
+      FROM emaj.emaj_relation
+      WHERE rel_group = v_groupName AND rel_kind = 'S' AND upper_inf(rel_time_range);
 -- update tables and sequences counters in the emaj_group table
     UPDATE emaj.emaj_group SET group_nb_table = v_nbTbl, group_nb_sequence = v_nbSeq
       WHERE group_name = v_groupName;
@@ -870,7 +994,8 @@ $_drop_group$
 -- delete the emaj objets for each table of the group
     FOR r_rel IN
         SELECT * FROM emaj.emaj_relation
-          WHERE rel_group = v_groupName ORDER BY rel_priority, rel_schema, rel_tblseq, rel_time_range
+          WHERE rel_group = v_groupName
+          ORDER BY rel_priority, rel_schema, rel_tblseq, rel_time_range
       LOOP
         PERFORM CASE WHEN r_rel.rel_kind = 'r' THEN emaj._drop_tbl(r_rel)
                      WHEN r_rel.rel_kind = 'S' THEN emaj._drop_seq(r_rel) END;
@@ -1090,7 +1215,6 @@ $_alter_exec$
     v_isRollbackable         BOOLEAN;
     r_plan                   emaj.emaj_alter_plan%ROWTYPE;
     r_rel                    emaj.emaj_relation%ROWTYPE;
-    r_grpdef                 emaj.emaj_group_def%ROWTYPE;
   BEGIN
 -- scan the emaj_alter_plan table and execute each elementary item in the proper order
     FOR r_plan IN
@@ -1116,19 +1240,17 @@ $_alter_exec$
           IF r_plan.altr_group_is_logging THEN
             RAISE EXCEPTION 'alter_exec: Cannot repair the table %.%. Its group % is in LOGGING state.', r_plan.altr_schema, r_plan.altr_tblseq, r_plan.altr_group;
           ELSE
--- get the is_rollbackable status of the related group
-            SELECT group_is_rollbackable INTO v_isRollbackable
-              FROM emaj.emaj_group WHERE group_name = r_plan.altr_group;
--- get the table description from emaj_group_def
-            SELECT * INTO r_grpdef
-              FROM emaj.emaj_group_def
-             WHERE grpdef_group = coalesce (r_plan.altr_new_group, r_plan.altr_group)
-               AND grpdef_schema = r_plan.altr_schema AND grpdef_tblseq = r_plan.altr_tblseq;
 -- remove the table from its group
             PERFORM emaj._drop_tbl(emaj.emaj_relation.*) FROM emaj.emaj_relation
               WHERE rel_schema = r_plan.altr_schema AND rel_tblseq = r_plan.altr_tblseq AND upper_inf(rel_time_range);
+-- get the is_rollbackable status of the related group
+            SELECT group_is_rollbackable INTO v_isRollbackable
+              FROM emaj.emaj_group WHERE group_name = r_plan.altr_group;
 -- and recreate it
-            PERFORM emaj._create_tbl(r_grpdef, v_timeId, v_isRollbackable);
+            PERFORM emaj._create_tbl(grpdef_schema, grpdef_tblseq, grpdef_group, grpdef_priority, grpdef_log_dat_tsp, grpdef_log_idx_tsp, v_timeId, v_isRollbackable)
+              FROM emaj.emaj_group_def
+              WHERE grpdef_group = coalesce (r_plan.altr_new_group, r_plan.altr_group)
+                AND grpdef_schema = r_plan.altr_schema AND grpdef_tblseq = r_plan.altr_tblseq;
           END IF;
 --
         WHEN 'REPAIR_SEQ' THEN

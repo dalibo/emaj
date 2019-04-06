@@ -10,6 +10,7 @@ E-Maj - Change log
   * For tables having a very long name, the log object names are now
     automatically generated. This replaces the use of the now dropped
     grpdef_emaj_names_prefix column of the emaj_group_def table.
+  * Minor coding improvements.
 
 ###Bug fixes:###
   * When checking the emaj_group_def table content, duplicate emaj names

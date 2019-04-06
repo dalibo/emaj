@@ -121,7 +121,7 @@ begin;
   select emaj.emaj_create_group('myGroup1');
 ERROR:  _create_log_schemas: The schema "emaj_myschema1" should not exist. Drop it manually.
 CONTEXT:  SQL statement "SELECT emaj._create_log_schemas('CREATE_GROUP', ARRAY[v_groupName])"
-PL/pgSQL function emaj.emaj_create_group(text,boolean,boolean) line 56 at PERFORM
+PL/pgSQL function emaj.emaj_create_group(text,boolean,boolean) line 55 at PERFORM
 rollback;
 -- bad alter_log_table parameter
 begin;
@@ -131,15 +131,33 @@ ERROR:  syntax error at or near "dummmy"
 LINE 1: ALTER TABLE emaj_myschema1."myTbl3_log" dummmy content
                                                 ^
 QUERY:  ALTER TABLE emaj_myschema1."myTbl3_log" dummmy content
-CONTEXT:  PL/pgSQL function emaj._create_tbl(emaj.emaj_group_def,bigint,boolean) line 98 at EXECUTE
-SQL statement "SELECT emaj._create_tbl(r_grpdef, v_timeId, v_isRollbackable)"
-PL/pgSQL function emaj.emaj_create_group(text,boolean,boolean) line 67 at PERFORM
+CONTEXT:  PL/pgSQL function emaj._create_tbl(text,text,text,integer,text,text,bigint,boolean) line 98 at EXECUTE
+SQL statement "SELECT emaj._create_tbl(grpdef_schema, grpdef_tblseq, grpdef_group, grpdef_priority, grpdef_log_dat_tsp, grpdef_log_idx_tsp, v_timeId, v_isRollbackable)
+      FROM (
+        SELECT grpdef_schema, grpdef_tblseq, grpdef_group, grpdef_priority, grpdef_log_dat_tsp, grpdef_log_idx_tsp
+          FROM emaj.emaj_group_def, pg_catalog.pg_class, pg_catalog.pg_namespace
+          WHERE grpdef_group = v_groupName
+            AND relnamespace = pg_namespace.oid
+            AND nspname = grpdef_schema AND relname = grpdef_tblseq
+            AND relkind = 'r'
+          ORDER BY grpdef_priority, grpdef_schema, grpdef_tblseq
+           ) AS t"
+PL/pgSQL function emaj.emaj_create_group(text,boolean,boolean) line 57 at PERFORM
 rollback;
 -- should be OK
 select emaj.emaj_create_group('myGroup1');
 WARNING:  _create_tbl: The table "myschema1.mytbl2" has triggers (mytbl2trg). Verify the compatibility with emaj rollback operations (in particular if triggers update one or several other tables). Triggers may have to be manualy disabled before rollback.
-CONTEXT:  SQL statement "SELECT emaj._create_tbl(r_grpdef, v_timeId, v_isRollbackable)"
-PL/pgSQL function emaj.emaj_create_group(text,boolean,boolean) line 67 at PERFORM
+CONTEXT:  SQL statement "SELECT emaj._create_tbl(grpdef_schema, grpdef_tblseq, grpdef_group, grpdef_priority, grpdef_log_dat_tsp, grpdef_log_idx_tsp, v_timeId, v_isRollbackable)
+      FROM (
+        SELECT grpdef_schema, grpdef_tblseq, grpdef_group, grpdef_priority, grpdef_log_dat_tsp, grpdef_log_idx_tsp
+          FROM emaj.emaj_group_def, pg_catalog.pg_class, pg_catalog.pg_namespace
+          WHERE grpdef_group = v_groupName
+            AND relnamespace = pg_namespace.oid
+            AND nspname = grpdef_schema AND relname = grpdef_tblseq
+            AND relkind = 'r'
+          ORDER BY grpdef_priority, grpdef_schema, grpdef_tblseq
+           ) AS t"
+PL/pgSQL function emaj.emaj_create_group(text,boolean,boolean) line 57 at PERFORM
  emaj_create_group 
 -------------------
                  7
@@ -158,10 +176,10 @@ alter table myschema2.myTbl8 add foreign key (col81) references myschema2.myTbl6
 select emaj.emaj_create_group('myGroup2',true);
 WARNING:  _check_fk_groups: The foreign key "mytbl6_col61_fkey" on the table "myschema2.mytbl6" references the table "myschema2.mytbl7" that is outside the groups (myGroup2).
 CONTEXT:  SQL statement "SELECT emaj._check_fk_groups(array[v_groupName])"
-PL/pgSQL function emaj.emaj_create_group(text,boolean,boolean) line 87 at PERFORM
+PL/pgSQL function emaj.emaj_create_group(text,boolean,boolean) line 88 at PERFORM
 WARNING:  _check_fk_groups: The table "myschema2.mytbl6" is referenced by the foreign key "mytbl8_col81_fkey" on the table "myschema2.mytbl8" that is outside the groups (myGroup2).
 CONTEXT:  SQL statement "SELECT emaj._check_fk_groups(array[v_groupName])"
-PL/pgSQL function emaj.emaj_create_group(text,boolean,boolean) line 87 at PERFORM
+PL/pgSQL function emaj.emaj_create_group(text,boolean,boolean) line 88 at PERFORM
  emaj_create_group 
 -------------------
                  8
@@ -173,8 +191,17 @@ begin;
     where grpdef_schema = 'phil''s schema3' and grpdef_tblseq = E'myTbl2\\';
   select emaj.emaj_create_group('phil''s group#3",',false);
 WARNING:  _create_seq: The sequence phil's schema3.myTbl2\_col21_seq is linked to table phil's schema3.myTbl2\ but this table belong to another tables group (dummyGrp3).
-CONTEXT:  SQL statement "SELECT emaj._create_seq(r_grpdef, v_timeId)"
-PL/pgSQL function emaj.emaj_create_group(text,boolean,boolean) line 80 at PERFORM
+CONTEXT:  SQL statement "SELECT emaj._create_seq(grpdef_schema, grpdef_tblseq, grpdef_group, grpdef_priority, v_timeId)
+      FROM (
+        SELECT grpdef_schema, grpdef_tblseq, grpdef_group, grpdef_priority
+          FROM emaj.emaj_group_def, pg_catalog.pg_class, pg_catalog.pg_namespace
+          WHERE grpdef_group = v_groupName
+            AND relnamespace = pg_namespace.oid
+            AND nspname = grpdef_schema AND relname = grpdef_tblseq
+            AND relkind = 'S'
+          ORDER BY grpdef_priority, grpdef_schema, grpdef_tblseq
+           ) AS t"
+PL/pgSQL function emaj.emaj_create_group(text,boolean,boolean) line 71 at PERFORM
  emaj_create_group 
 -------------------
                  3
@@ -187,8 +214,17 @@ begin;
     where grpdef_schema = 'phil''s schema3' and grpdef_tblseq = E'myTbl2\\';
   select emaj.emaj_create_group('phil''s group#3",',false);
 WARNING:  _create_seq: The sequence phil's schema3.myTbl2\_col21_seq is linked to table phil's schema3.myTbl2\ but this table does not belong to any tables group.
-CONTEXT:  SQL statement "SELECT emaj._create_seq(r_grpdef, v_timeId)"
-PL/pgSQL function emaj.emaj_create_group(text,boolean,boolean) line 80 at PERFORM
+CONTEXT:  SQL statement "SELECT emaj._create_seq(grpdef_schema, grpdef_tblseq, grpdef_group, grpdef_priority, v_timeId)
+      FROM (
+        SELECT grpdef_schema, grpdef_tblseq, grpdef_group, grpdef_priority
+          FROM emaj.emaj_group_def, pg_catalog.pg_class, pg_catalog.pg_namespace
+          WHERE grpdef_group = v_groupName
+            AND relnamespace = pg_namespace.oid
+            AND nspname = grpdef_schema AND relname = grpdef_tblseq
+            AND relkind = 'S'
+          ORDER BY grpdef_priority, grpdef_schema, grpdef_tblseq
+           ) AS t"
+PL/pgSQL function emaj.emaj_create_group(text,boolean,boolean) line 71 at PERFORM
  emaj_create_group 
 -------------------
                  3
@@ -204,8 +240,17 @@ select emaj.emaj_create_group('phil''s group#3",',false);
 
 select emaj.emaj_create_group('myGroup4');
 WARNING:  _create_tbl: The table "myschema4.mytblm" has triggers (mytblm_insert_trigger). Verify the compatibility with emaj rollback operations (in particular if triggers update one or several other tables). Triggers may have to be manualy disabled before rollback.
-CONTEXT:  SQL statement "SELECT emaj._create_tbl(r_grpdef, v_timeId, v_isRollbackable)"
-PL/pgSQL function emaj.emaj_create_group(text,boolean,boolean) line 67 at PERFORM
+CONTEXT:  SQL statement "SELECT emaj._create_tbl(grpdef_schema, grpdef_tblseq, grpdef_group, grpdef_priority, grpdef_log_dat_tsp, grpdef_log_idx_tsp, v_timeId, v_isRollbackable)
+      FROM (
+        SELECT grpdef_schema, grpdef_tblseq, grpdef_group, grpdef_priority, grpdef_log_dat_tsp, grpdef_log_idx_tsp
+          FROM emaj.emaj_group_def, pg_catalog.pg_class, pg_catalog.pg_namespace
+          WHERE grpdef_group = v_groupName
+            AND relnamespace = pg_namespace.oid
+            AND nspname = grpdef_schema AND relname = grpdef_tblseq
+            AND relkind = 'r'
+          ORDER BY grpdef_priority, grpdef_schema, grpdef_tblseq
+           ) AS t"
+PL/pgSQL function emaj.emaj_create_group(text,boolean,boolean) line 57 at PERFORM
  emaj_create_group 
 -------------------
                  5
@@ -412,7 +457,7 @@ begin;
   select emaj.emaj_drop_group('myGroup1');
 ERROR:  _drop_log_schemas: Cannot drop the schema "emaj_myschema1". It probably owns unattended objects. Use the emaj_verify_all() function to get details.
 CONTEXT:  SQL statement "SELECT emaj._drop_log_schemas(CASE WHEN v_isForced THEN 'FORCE_DROP_GROUP' ELSE 'DROP_GROUP' END, v_isForced)"
-PL/pgSQL function emaj._drop_group(text,boolean) line 23 at PERFORM
+PL/pgSQL function emaj._drop_group(text,boolean) line 24 at PERFORM
 SQL statement "SELECT emaj._drop_group(v_groupName, FALSE)"
 PL/pgSQL function emaj.emaj_drop_group(text) line 14 at SQL statement
 rollback;
@@ -472,8 +517,17 @@ PL/pgSQL function emaj.emaj_force_drop_group(text) line 17 at PERFORM
 -- should be OK
 select emaj.emaj_create_group('myGroup1',false);
 WARNING:  _create_tbl: The table "myschema1.mytbl2" has triggers (mytbl2trg). Verify the compatibility with emaj rollback operations (in particular if triggers update one or several other tables). Triggers may have to be manualy disabled before rollback.
-CONTEXT:  SQL statement "SELECT emaj._create_tbl(r_grpdef, v_timeId, v_isRollbackable)"
-PL/pgSQL function emaj.emaj_create_group(text,boolean,boolean) line 67 at PERFORM
+CONTEXT:  SQL statement "SELECT emaj._create_tbl(grpdef_schema, grpdef_tblseq, grpdef_group, grpdef_priority, grpdef_log_dat_tsp, grpdef_log_idx_tsp, v_timeId, v_isRollbackable)
+      FROM (
+        SELECT grpdef_schema, grpdef_tblseq, grpdef_group, grpdef_priority, grpdef_log_dat_tsp, grpdef_log_idx_tsp
+          FROM emaj.emaj_group_def, pg_catalog.pg_class, pg_catalog.pg_namespace
+          WHERE grpdef_group = v_groupName
+            AND relnamespace = pg_namespace.oid
+            AND nspname = grpdef_schema AND relname = grpdef_tblseq
+            AND relkind = 'r'
+          ORDER BY grpdef_priority, grpdef_schema, grpdef_tblseq
+           ) AS t"
+PL/pgSQL function emaj.emaj_create_group(text,boolean,boolean) line 57 at PERFORM
  emaj_create_group 
 -------------------
                  7
@@ -494,10 +548,10 @@ select emaj.emaj_force_drop_group('myGroup1');
 select emaj.emaj_create_group('myGroup2',true);
 WARNING:  _check_fk_groups: The foreign key "mytbl6_col61_fkey" on the table "myschema2.mytbl6" references the table "myschema2.mytbl7" that is outside the groups (myGroup2).
 CONTEXT:  SQL statement "SELECT emaj._check_fk_groups(array[v_groupName])"
-PL/pgSQL function emaj.emaj_create_group(text,boolean,boolean) line 87 at PERFORM
+PL/pgSQL function emaj.emaj_create_group(text,boolean,boolean) line 88 at PERFORM
 WARNING:  _check_fk_groups: The table "myschema2.mytbl6" is referenced by the foreign key "mytbl8_col81_fkey" on the table "myschema2.mytbl8" that is outside the groups (myGroup2).
 CONTEXT:  SQL statement "SELECT emaj._check_fk_groups(array[v_groupName])"
-PL/pgSQL function emaj.emaj_create_group(text,boolean,boolean) line 87 at PERFORM
+PL/pgSQL function emaj.emaj_create_group(text,boolean,boolean) line 88 at PERFORM
  emaj_create_group 
 -------------------
                  8
