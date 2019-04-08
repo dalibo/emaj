@@ -794,11 +794,11 @@ insert into emaj.emaj_group_def values ('myGroup2','myschema2','mytbl7');
 select emaj.emaj_alter_group('myGroup2', 'Alter to add mytbl7');
 NOTICE:  table "mytbl7_log" does not exist, skipping
 CONTEXT:  SQL statement "DROP TABLE IF EXISTS emaj_myschema2.mytbl7_log"
-PL/pgSQL function emaj._create_tbl(text,text,text,integer,text,text,bigint,boolean) line 78 at EXECUTE
-SQL statement "SELECT emaj._create_tbl(grpdef_schema, grpdef_tblseq, grpdef_group, grpdef_priority, grpdef_log_dat_tsp, grpdef_log_idx_tsp, v_timeId, v_isRollbackable)
+PL/pgSQL function emaj._create_tbl(text,text,text,integer,text,text,bigint,boolean,boolean) line 79 at EXECUTE
+SQL statement "SELECT emaj._create_tbl(grpdef_schema, grpdef_tblseq, grpdef_group, grpdef_priority, grpdef_log_dat_tsp, grpdef_log_idx_tsp, v_timeId, v_groupIsRollbackable, r_plan.altr_group_is_logging)
       FROM emaj.emaj_group_def
       WHERE grpdef_group = r_plan.altr_group AND grpdef_schema = r_plan.altr_schema AND grpdef_tblseq = r_plan.altr_tblseq"
-PL/pgSQL function emaj._add_tbl(emaj.emaj_alter_plan,bigint,boolean) line 19 at PERFORM
+PL/pgSQL function emaj._add_tbl(emaj.emaj_alter_plan,bigint,boolean) line 18 at PERFORM
 SQL statement "SELECT emaj._add_tbl(r_plan, v_timeId, v_multiGroup)"
 PL/pgSQL function emaj._alter_exec(bigint,boolean) line 89 at PERFORM
 SQL statement "SELECT emaj._alter_exec(v_timeId, v_multiGroup)"
@@ -808,11 +808,11 @@ NOTICE:  trigger "emaj_log_trg" for relation "myschema2.mytbl7" does not exist, 
 CONTEXT:  SQL statement "DROP TRIGGER IF EXISTS emaj_log_trg ON myschema2.mytbl7"
 PL/pgSQL function emaj._create_log_trigger(text,text,text,text) line 9 at EXECUTE
 SQL statement "SELECT emaj._create_log_trigger(v_fullTableName, v_logTableName, v_sequenceName, v_logFnctName)"
-PL/pgSQL function emaj._create_tbl(text,text,text,integer,text,text,bigint,boolean) line 119 at PERFORM
-SQL statement "SELECT emaj._create_tbl(grpdef_schema, grpdef_tblseq, grpdef_group, grpdef_priority, grpdef_log_dat_tsp, grpdef_log_idx_tsp, v_timeId, v_isRollbackable)
+PL/pgSQL function emaj._create_tbl(text,text,text,integer,text,text,bigint,boolean,boolean) line 120 at PERFORM
+SQL statement "SELECT emaj._create_tbl(grpdef_schema, grpdef_tblseq, grpdef_group, grpdef_priority, grpdef_log_dat_tsp, grpdef_log_idx_tsp, v_timeId, v_groupIsRollbackable, r_plan.altr_group_is_logging)
       FROM emaj.emaj_group_def
       WHERE grpdef_group = r_plan.altr_group AND grpdef_schema = r_plan.altr_schema AND grpdef_tblseq = r_plan.altr_tblseq"
-PL/pgSQL function emaj._add_tbl(emaj.emaj_alter_plan,bigint,boolean) line 19 at PERFORM
+PL/pgSQL function emaj._add_tbl(emaj.emaj_alter_plan,bigint,boolean) line 18 at PERFORM
 SQL statement "SELECT emaj._add_tbl(r_plan, v_timeId, v_multiGroup)"
 PL/pgSQL function emaj._alter_exec(bigint,boolean) line 89 at PERFORM
 SQL statement "SELECT emaj._alter_exec(v_timeId, v_multiGroup)"
@@ -820,11 +820,11 @@ PL/pgSQL function emaj._alter_groups(text[],boolean,text) line 56 at PERFORM
 PL/pgSQL function emaj.emaj_alter_group(text,text) line 6 at RETURN
 NOTICE:  trigger "emaj_trunc_trg" for relation "myschema2.mytbl7" does not exist, skipping
 CONTEXT:  SQL statement "DROP TRIGGER IF EXISTS emaj_trunc_trg ON myschema2.mytbl7"
-PL/pgSQL function emaj._create_tbl(text,text,text,integer,text,text,bigint,boolean) line 124 at EXECUTE
-SQL statement "SELECT emaj._create_tbl(grpdef_schema, grpdef_tblseq, grpdef_group, grpdef_priority, grpdef_log_dat_tsp, grpdef_log_idx_tsp, v_timeId, v_isRollbackable)
+PL/pgSQL function emaj._create_tbl(text,text,text,integer,text,text,bigint,boolean,boolean) line 127 at EXECUTE
+SQL statement "SELECT emaj._create_tbl(grpdef_schema, grpdef_tblseq, grpdef_group, grpdef_priority, grpdef_log_dat_tsp, grpdef_log_idx_tsp, v_timeId, v_groupIsRollbackable, r_plan.altr_group_is_logging)
       FROM emaj.emaj_group_def
       WHERE grpdef_group = r_plan.altr_group AND grpdef_schema = r_plan.altr_schema AND grpdef_tblseq = r_plan.altr_tblseq"
-PL/pgSQL function emaj._add_tbl(emaj.emaj_alter_plan,bigint,boolean) line 19 at PERFORM
+PL/pgSQL function emaj._add_tbl(emaj.emaj_alter_plan,bigint,boolean) line 18 at PERFORM
 SQL statement "SELECT emaj._add_tbl(r_plan, v_timeId, v_multiGroup)"
 PL/pgSQL function emaj._alter_exec(bigint,boolean) line 89 at PERFORM
 SQL statement "SELECT emaj._alter_exec(v_timeId, v_multiGroup)"
@@ -1196,11 +1196,11 @@ insert into emaj.emaj_group_def values ('myGroup2','myschema2','mytbl7');
 select emaj.emaj_alter_group('myGroup2', 'Alter to re-add mytbl7');
 NOTICE:  table "mytbl7_log" does not exist, skipping
 CONTEXT:  SQL statement "DROP TABLE IF EXISTS emaj_myschema2.mytbl7_log"
-PL/pgSQL function emaj._create_tbl(text,text,text,integer,text,text,bigint,boolean) line 78 at EXECUTE
-SQL statement "SELECT emaj._create_tbl(grpdef_schema, grpdef_tblseq, grpdef_group, grpdef_priority, grpdef_log_dat_tsp, grpdef_log_idx_tsp, v_timeId, v_isRollbackable)
+PL/pgSQL function emaj._create_tbl(text,text,text,integer,text,text,bigint,boolean,boolean) line 79 at EXECUTE
+SQL statement "SELECT emaj._create_tbl(grpdef_schema, grpdef_tblseq, grpdef_group, grpdef_priority, grpdef_log_dat_tsp, grpdef_log_idx_tsp, v_timeId, v_groupIsRollbackable, r_plan.altr_group_is_logging)
       FROM emaj.emaj_group_def
       WHERE grpdef_group = r_plan.altr_group AND grpdef_schema = r_plan.altr_schema AND grpdef_tblseq = r_plan.altr_tblseq"
-PL/pgSQL function emaj._add_tbl(emaj.emaj_alter_plan,bigint,boolean) line 19 at PERFORM
+PL/pgSQL function emaj._add_tbl(emaj.emaj_alter_plan,bigint,boolean) line 18 at PERFORM
 SQL statement "SELECT emaj._add_tbl(r_plan, v_timeId, v_multiGroup)"
 PL/pgSQL function emaj._alter_exec(bigint,boolean) line 89 at PERFORM
 SQL statement "SELECT emaj._alter_exec(v_timeId, v_multiGroup)"
@@ -1210,11 +1210,11 @@ NOTICE:  trigger "emaj_log_trg" for relation "myschema2.mytbl7" does not exist, 
 CONTEXT:  SQL statement "DROP TRIGGER IF EXISTS emaj_log_trg ON myschema2.mytbl7"
 PL/pgSQL function emaj._create_log_trigger(text,text,text,text) line 9 at EXECUTE
 SQL statement "SELECT emaj._create_log_trigger(v_fullTableName, v_logTableName, v_sequenceName, v_logFnctName)"
-PL/pgSQL function emaj._create_tbl(text,text,text,integer,text,text,bigint,boolean) line 119 at PERFORM
-SQL statement "SELECT emaj._create_tbl(grpdef_schema, grpdef_tblseq, grpdef_group, grpdef_priority, grpdef_log_dat_tsp, grpdef_log_idx_tsp, v_timeId, v_isRollbackable)
+PL/pgSQL function emaj._create_tbl(text,text,text,integer,text,text,bigint,boolean,boolean) line 120 at PERFORM
+SQL statement "SELECT emaj._create_tbl(grpdef_schema, grpdef_tblseq, grpdef_group, grpdef_priority, grpdef_log_dat_tsp, grpdef_log_idx_tsp, v_timeId, v_groupIsRollbackable, r_plan.altr_group_is_logging)
       FROM emaj.emaj_group_def
       WHERE grpdef_group = r_plan.altr_group AND grpdef_schema = r_plan.altr_schema AND grpdef_tblseq = r_plan.altr_tblseq"
-PL/pgSQL function emaj._add_tbl(emaj.emaj_alter_plan,bigint,boolean) line 19 at PERFORM
+PL/pgSQL function emaj._add_tbl(emaj.emaj_alter_plan,bigint,boolean) line 18 at PERFORM
 SQL statement "SELECT emaj._add_tbl(r_plan, v_timeId, v_multiGroup)"
 PL/pgSQL function emaj._alter_exec(bigint,boolean) line 89 at PERFORM
 SQL statement "SELECT emaj._alter_exec(v_timeId, v_multiGroup)"
@@ -1222,11 +1222,11 @@ PL/pgSQL function emaj._alter_groups(text[],boolean,text) line 56 at PERFORM
 PL/pgSQL function emaj.emaj_alter_group(text,text) line 6 at RETURN
 NOTICE:  trigger "emaj_trunc_trg" for relation "myschema2.mytbl7" does not exist, skipping
 CONTEXT:  SQL statement "DROP TRIGGER IF EXISTS emaj_trunc_trg ON myschema2.mytbl7"
-PL/pgSQL function emaj._create_tbl(text,text,text,integer,text,text,bigint,boolean) line 124 at EXECUTE
-SQL statement "SELECT emaj._create_tbl(grpdef_schema, grpdef_tblseq, grpdef_group, grpdef_priority, grpdef_log_dat_tsp, grpdef_log_idx_tsp, v_timeId, v_isRollbackable)
+PL/pgSQL function emaj._create_tbl(text,text,text,integer,text,text,bigint,boolean,boolean) line 127 at EXECUTE
+SQL statement "SELECT emaj._create_tbl(grpdef_schema, grpdef_tblseq, grpdef_group, grpdef_priority, grpdef_log_dat_tsp, grpdef_log_idx_tsp, v_timeId, v_groupIsRollbackable, r_plan.altr_group_is_logging)
       FROM emaj.emaj_group_def
       WHERE grpdef_group = r_plan.altr_group AND grpdef_schema = r_plan.altr_schema AND grpdef_tblseq = r_plan.altr_tblseq"
-PL/pgSQL function emaj._add_tbl(emaj.emaj_alter_plan,bigint,boolean) line 19 at PERFORM
+PL/pgSQL function emaj._add_tbl(emaj.emaj_alter_plan,bigint,boolean) line 18 at PERFORM
 SQL statement "SELECT emaj._add_tbl(r_plan, v_timeId, v_multiGroup)"
 PL/pgSQL function emaj._alter_exec(bigint,boolean) line 89 at PERFORM
 SQL statement "SELECT emaj._alter_exec(v_timeId, v_multiGroup)"
@@ -1722,11 +1722,11 @@ update emaj.emaj_group_def set grpdef_group = 'myGroup1' where grpdef_group = 't
 select emaj.emaj_alter_group('myGroup1', 'tables re-added to myGroup1');
 NOTICE:  table "myTbl3_log" does not exist, skipping
 CONTEXT:  SQL statement "DROP TABLE IF EXISTS emaj_myschema1."myTbl3_log""
-PL/pgSQL function emaj._create_tbl(text,text,text,integer,text,text,bigint,boolean) line 78 at EXECUTE
-SQL statement "SELECT emaj._create_tbl(grpdef_schema, grpdef_tblseq, grpdef_group, grpdef_priority, grpdef_log_dat_tsp, grpdef_log_idx_tsp, v_timeId, v_isRollbackable)
+PL/pgSQL function emaj._create_tbl(text,text,text,integer,text,text,bigint,boolean,boolean) line 79 at EXECUTE
+SQL statement "SELECT emaj._create_tbl(grpdef_schema, grpdef_tblseq, grpdef_group, grpdef_priority, grpdef_log_dat_tsp, grpdef_log_idx_tsp, v_timeId, v_groupIsRollbackable, r_plan.altr_group_is_logging)
       FROM emaj.emaj_group_def
       WHERE grpdef_group = r_plan.altr_group AND grpdef_schema = r_plan.altr_schema AND grpdef_tblseq = r_plan.altr_tblseq"
-PL/pgSQL function emaj._add_tbl(emaj.emaj_alter_plan,bigint,boolean) line 19 at PERFORM
+PL/pgSQL function emaj._add_tbl(emaj.emaj_alter_plan,bigint,boolean) line 18 at PERFORM
 SQL statement "SELECT emaj._add_tbl(r_plan, v_timeId, v_multiGroup)"
 PL/pgSQL function emaj._alter_exec(bigint,boolean) line 89 at PERFORM
 SQL statement "SELECT emaj._alter_exec(v_timeId, v_multiGroup)"
@@ -1736,11 +1736,11 @@ NOTICE:  trigger "emaj_log_trg" for relation "myschema1.myTbl3" does not exist, 
 CONTEXT:  SQL statement "DROP TRIGGER IF EXISTS emaj_log_trg ON myschema1."myTbl3""
 PL/pgSQL function emaj._create_log_trigger(text,text,text,text) line 9 at EXECUTE
 SQL statement "SELECT emaj._create_log_trigger(v_fullTableName, v_logTableName, v_sequenceName, v_logFnctName)"
-PL/pgSQL function emaj._create_tbl(text,text,text,integer,text,text,bigint,boolean) line 119 at PERFORM
-SQL statement "SELECT emaj._create_tbl(grpdef_schema, grpdef_tblseq, grpdef_group, grpdef_priority, grpdef_log_dat_tsp, grpdef_log_idx_tsp, v_timeId, v_isRollbackable)
+PL/pgSQL function emaj._create_tbl(text,text,text,integer,text,text,bigint,boolean,boolean) line 120 at PERFORM
+SQL statement "SELECT emaj._create_tbl(grpdef_schema, grpdef_tblseq, grpdef_group, grpdef_priority, grpdef_log_dat_tsp, grpdef_log_idx_tsp, v_timeId, v_groupIsRollbackable, r_plan.altr_group_is_logging)
       FROM emaj.emaj_group_def
       WHERE grpdef_group = r_plan.altr_group AND grpdef_schema = r_plan.altr_schema AND grpdef_tblseq = r_plan.altr_tblseq"
-PL/pgSQL function emaj._add_tbl(emaj.emaj_alter_plan,bigint,boolean) line 19 at PERFORM
+PL/pgSQL function emaj._add_tbl(emaj.emaj_alter_plan,bigint,boolean) line 18 at PERFORM
 SQL statement "SELECT emaj._add_tbl(r_plan, v_timeId, v_multiGroup)"
 PL/pgSQL function emaj._alter_exec(bigint,boolean) line 89 at PERFORM
 SQL statement "SELECT emaj._alter_exec(v_timeId, v_multiGroup)"
@@ -1748,11 +1748,11 @@ PL/pgSQL function emaj._alter_groups(text[],boolean,text) line 56 at PERFORM
 PL/pgSQL function emaj.emaj_alter_group(text,text) line 6 at RETURN
 NOTICE:  trigger "emaj_trunc_trg" for relation "myschema1.myTbl3" does not exist, skipping
 CONTEXT:  SQL statement "DROP TRIGGER IF EXISTS emaj_trunc_trg ON myschema1."myTbl3""
-PL/pgSQL function emaj._create_tbl(text,text,text,integer,text,text,bigint,boolean) line 124 at EXECUTE
-SQL statement "SELECT emaj._create_tbl(grpdef_schema, grpdef_tblseq, grpdef_group, grpdef_priority, grpdef_log_dat_tsp, grpdef_log_idx_tsp, v_timeId, v_isRollbackable)
+PL/pgSQL function emaj._create_tbl(text,text,text,integer,text,text,bigint,boolean,boolean) line 127 at EXECUTE
+SQL statement "SELECT emaj._create_tbl(grpdef_schema, grpdef_tblseq, grpdef_group, grpdef_priority, grpdef_log_dat_tsp, grpdef_log_idx_tsp, v_timeId, v_groupIsRollbackable, r_plan.altr_group_is_logging)
       FROM emaj.emaj_group_def
       WHERE grpdef_group = r_plan.altr_group AND grpdef_schema = r_plan.altr_schema AND grpdef_tblseq = r_plan.altr_tblseq"
-PL/pgSQL function emaj._add_tbl(emaj.emaj_alter_plan,bigint,boolean) line 19 at PERFORM
+PL/pgSQL function emaj._add_tbl(emaj.emaj_alter_plan,bigint,boolean) line 18 at PERFORM
 SQL statement "SELECT emaj._add_tbl(r_plan, v_timeId, v_multiGroup)"
 PL/pgSQL function emaj._alter_exec(bigint,boolean) line 89 at PERFORM
 SQL statement "SELECT emaj._alter_exec(v_timeId, v_multiGroup)"
@@ -1760,11 +1760,11 @@ PL/pgSQL function emaj._alter_groups(text[],boolean,text) line 56 at PERFORM
 PL/pgSQL function emaj.emaj_alter_group(text,text) line 6 at RETURN
 NOTICE:  table "mytbl1_log" does not exist, skipping
 CONTEXT:  SQL statement "DROP TABLE IF EXISTS emaj_myschema1.mytbl1_log"
-PL/pgSQL function emaj._create_tbl(text,text,text,integer,text,text,bigint,boolean) line 78 at EXECUTE
-SQL statement "SELECT emaj._create_tbl(grpdef_schema, grpdef_tblseq, grpdef_group, grpdef_priority, grpdef_log_dat_tsp, grpdef_log_idx_tsp, v_timeId, v_isRollbackable)
+PL/pgSQL function emaj._create_tbl(text,text,text,integer,text,text,bigint,boolean,boolean) line 79 at EXECUTE
+SQL statement "SELECT emaj._create_tbl(grpdef_schema, grpdef_tblseq, grpdef_group, grpdef_priority, grpdef_log_dat_tsp, grpdef_log_idx_tsp, v_timeId, v_groupIsRollbackable, r_plan.altr_group_is_logging)
       FROM emaj.emaj_group_def
       WHERE grpdef_group = r_plan.altr_group AND grpdef_schema = r_plan.altr_schema AND grpdef_tblseq = r_plan.altr_tblseq"
-PL/pgSQL function emaj._add_tbl(emaj.emaj_alter_plan,bigint,boolean) line 19 at PERFORM
+PL/pgSQL function emaj._add_tbl(emaj.emaj_alter_plan,bigint,boolean) line 18 at PERFORM
 SQL statement "SELECT emaj._add_tbl(r_plan, v_timeId, v_multiGroup)"
 PL/pgSQL function emaj._alter_exec(bigint,boolean) line 89 at PERFORM
 SQL statement "SELECT emaj._alter_exec(v_timeId, v_multiGroup)"
@@ -1774,11 +1774,11 @@ NOTICE:  trigger "emaj_log_trg" for relation "myschema1.mytbl1" does not exist, 
 CONTEXT:  SQL statement "DROP TRIGGER IF EXISTS emaj_log_trg ON myschema1.mytbl1"
 PL/pgSQL function emaj._create_log_trigger(text,text,text,text) line 9 at EXECUTE
 SQL statement "SELECT emaj._create_log_trigger(v_fullTableName, v_logTableName, v_sequenceName, v_logFnctName)"
-PL/pgSQL function emaj._create_tbl(text,text,text,integer,text,text,bigint,boolean) line 119 at PERFORM
-SQL statement "SELECT emaj._create_tbl(grpdef_schema, grpdef_tblseq, grpdef_group, grpdef_priority, grpdef_log_dat_tsp, grpdef_log_idx_tsp, v_timeId, v_isRollbackable)
+PL/pgSQL function emaj._create_tbl(text,text,text,integer,text,text,bigint,boolean,boolean) line 120 at PERFORM
+SQL statement "SELECT emaj._create_tbl(grpdef_schema, grpdef_tblseq, grpdef_group, grpdef_priority, grpdef_log_dat_tsp, grpdef_log_idx_tsp, v_timeId, v_groupIsRollbackable, r_plan.altr_group_is_logging)
       FROM emaj.emaj_group_def
       WHERE grpdef_group = r_plan.altr_group AND grpdef_schema = r_plan.altr_schema AND grpdef_tblseq = r_plan.altr_tblseq"
-PL/pgSQL function emaj._add_tbl(emaj.emaj_alter_plan,bigint,boolean) line 19 at PERFORM
+PL/pgSQL function emaj._add_tbl(emaj.emaj_alter_plan,bigint,boolean) line 18 at PERFORM
 SQL statement "SELECT emaj._add_tbl(r_plan, v_timeId, v_multiGroup)"
 PL/pgSQL function emaj._alter_exec(bigint,boolean) line 89 at PERFORM
 SQL statement "SELECT emaj._alter_exec(v_timeId, v_multiGroup)"
@@ -1786,11 +1786,11 @@ PL/pgSQL function emaj._alter_groups(text[],boolean,text) line 56 at PERFORM
 PL/pgSQL function emaj.emaj_alter_group(text,text) line 6 at RETURN
 NOTICE:  trigger "emaj_trunc_trg" for relation "myschema1.mytbl1" does not exist, skipping
 CONTEXT:  SQL statement "DROP TRIGGER IF EXISTS emaj_trunc_trg ON myschema1.mytbl1"
-PL/pgSQL function emaj._create_tbl(text,text,text,integer,text,text,bigint,boolean) line 124 at EXECUTE
-SQL statement "SELECT emaj._create_tbl(grpdef_schema, grpdef_tblseq, grpdef_group, grpdef_priority, grpdef_log_dat_tsp, grpdef_log_idx_tsp, v_timeId, v_isRollbackable)
+PL/pgSQL function emaj._create_tbl(text,text,text,integer,text,text,bigint,boolean,boolean) line 127 at EXECUTE
+SQL statement "SELECT emaj._create_tbl(grpdef_schema, grpdef_tblseq, grpdef_group, grpdef_priority, grpdef_log_dat_tsp, grpdef_log_idx_tsp, v_timeId, v_groupIsRollbackable, r_plan.altr_group_is_logging)
       FROM emaj.emaj_group_def
       WHERE grpdef_group = r_plan.altr_group AND grpdef_schema = r_plan.altr_schema AND grpdef_tblseq = r_plan.altr_tblseq"
-PL/pgSQL function emaj._add_tbl(emaj.emaj_alter_plan,bigint,boolean) line 19 at PERFORM
+PL/pgSQL function emaj._add_tbl(emaj.emaj_alter_plan,bigint,boolean) line 18 at PERFORM
 SQL statement "SELECT emaj._add_tbl(r_plan, v_timeId, v_multiGroup)"
 PL/pgSQL function emaj._alter_exec(bigint,boolean) line 89 at PERFORM
 SQL statement "SELECT emaj._alter_exec(v_timeId, v_multiGroup)"
@@ -1798,11 +1798,11 @@ PL/pgSQL function emaj._alter_groups(text[],boolean,text) line 56 at PERFORM
 PL/pgSQL function emaj.emaj_alter_group(text,text) line 6 at RETURN
 NOTICE:  table "mytbl2b_log" does not exist, skipping
 CONTEXT:  SQL statement "DROP TABLE IF EXISTS emaj_myschema1.mytbl2b_log"
-PL/pgSQL function emaj._create_tbl(text,text,text,integer,text,text,bigint,boolean) line 78 at EXECUTE
-SQL statement "SELECT emaj._create_tbl(grpdef_schema, grpdef_tblseq, grpdef_group, grpdef_priority, grpdef_log_dat_tsp, grpdef_log_idx_tsp, v_timeId, v_isRollbackable)
+PL/pgSQL function emaj._create_tbl(text,text,text,integer,text,text,bigint,boolean,boolean) line 79 at EXECUTE
+SQL statement "SELECT emaj._create_tbl(grpdef_schema, grpdef_tblseq, grpdef_group, grpdef_priority, grpdef_log_dat_tsp, grpdef_log_idx_tsp, v_timeId, v_groupIsRollbackable, r_plan.altr_group_is_logging)
       FROM emaj.emaj_group_def
       WHERE grpdef_group = r_plan.altr_group AND grpdef_schema = r_plan.altr_schema AND grpdef_tblseq = r_plan.altr_tblseq"
-PL/pgSQL function emaj._add_tbl(emaj.emaj_alter_plan,bigint,boolean) line 19 at PERFORM
+PL/pgSQL function emaj._add_tbl(emaj.emaj_alter_plan,bigint,boolean) line 18 at PERFORM
 SQL statement "SELECT emaj._add_tbl(r_plan, v_timeId, v_multiGroup)"
 PL/pgSQL function emaj._alter_exec(bigint,boolean) line 89 at PERFORM
 SQL statement "SELECT emaj._alter_exec(v_timeId, v_multiGroup)"
@@ -1812,11 +1812,11 @@ NOTICE:  trigger "emaj_log_trg" for relation "myschema1.mytbl2b" does not exist,
 CONTEXT:  SQL statement "DROP TRIGGER IF EXISTS emaj_log_trg ON myschema1.mytbl2b"
 PL/pgSQL function emaj._create_log_trigger(text,text,text,text) line 9 at EXECUTE
 SQL statement "SELECT emaj._create_log_trigger(v_fullTableName, v_logTableName, v_sequenceName, v_logFnctName)"
-PL/pgSQL function emaj._create_tbl(text,text,text,integer,text,text,bigint,boolean) line 119 at PERFORM
-SQL statement "SELECT emaj._create_tbl(grpdef_schema, grpdef_tblseq, grpdef_group, grpdef_priority, grpdef_log_dat_tsp, grpdef_log_idx_tsp, v_timeId, v_isRollbackable)
+PL/pgSQL function emaj._create_tbl(text,text,text,integer,text,text,bigint,boolean,boolean) line 120 at PERFORM
+SQL statement "SELECT emaj._create_tbl(grpdef_schema, grpdef_tblseq, grpdef_group, grpdef_priority, grpdef_log_dat_tsp, grpdef_log_idx_tsp, v_timeId, v_groupIsRollbackable, r_plan.altr_group_is_logging)
       FROM emaj.emaj_group_def
       WHERE grpdef_group = r_plan.altr_group AND grpdef_schema = r_plan.altr_schema AND grpdef_tblseq = r_plan.altr_tblseq"
-PL/pgSQL function emaj._add_tbl(emaj.emaj_alter_plan,bigint,boolean) line 19 at PERFORM
+PL/pgSQL function emaj._add_tbl(emaj.emaj_alter_plan,bigint,boolean) line 18 at PERFORM
 SQL statement "SELECT emaj._add_tbl(r_plan, v_timeId, v_multiGroup)"
 PL/pgSQL function emaj._alter_exec(bigint,boolean) line 89 at PERFORM
 SQL statement "SELECT emaj._alter_exec(v_timeId, v_multiGroup)"
@@ -1824,11 +1824,11 @@ PL/pgSQL function emaj._alter_groups(text[],boolean,text) line 56 at PERFORM
 PL/pgSQL function emaj.emaj_alter_group(text,text) line 6 at RETURN
 NOTICE:  trigger "emaj_trunc_trg" for relation "myschema1.mytbl2b" does not exist, skipping
 CONTEXT:  SQL statement "DROP TRIGGER IF EXISTS emaj_trunc_trg ON myschema1.mytbl2b"
-PL/pgSQL function emaj._create_tbl(text,text,text,integer,text,text,bigint,boolean) line 124 at EXECUTE
-SQL statement "SELECT emaj._create_tbl(grpdef_schema, grpdef_tblseq, grpdef_group, grpdef_priority, grpdef_log_dat_tsp, grpdef_log_idx_tsp, v_timeId, v_isRollbackable)
+PL/pgSQL function emaj._create_tbl(text,text,text,integer,text,text,bigint,boolean,boolean) line 127 at EXECUTE
+SQL statement "SELECT emaj._create_tbl(grpdef_schema, grpdef_tblseq, grpdef_group, grpdef_priority, grpdef_log_dat_tsp, grpdef_log_idx_tsp, v_timeId, v_groupIsRollbackable, r_plan.altr_group_is_logging)
       FROM emaj.emaj_group_def
       WHERE grpdef_group = r_plan.altr_group AND grpdef_schema = r_plan.altr_schema AND grpdef_tblseq = r_plan.altr_tblseq"
-PL/pgSQL function emaj._add_tbl(emaj.emaj_alter_plan,bigint,boolean) line 19 at PERFORM
+PL/pgSQL function emaj._add_tbl(emaj.emaj_alter_plan,bigint,boolean) line 18 at PERFORM
 SQL statement "SELECT emaj._add_tbl(r_plan, v_timeId, v_multiGroup)"
 PL/pgSQL function emaj._alter_exec(bigint,boolean) line 89 at PERFORM
 SQL statement "SELECT emaj._alter_exec(v_timeId, v_multiGroup)"
@@ -2070,11 +2070,11 @@ begin;
   select emaj.emaj_alter_groups('{"myGroup1","myGroup2"}','add a single table');
 NOTICE:  table "mytbl1_log" does not exist, skipping
 CONTEXT:  SQL statement "DROP TABLE IF EXISTS emaj_myschema1.mytbl1_log"
-PL/pgSQL function emaj._create_tbl(text,text,text,integer,text,text,bigint,boolean) line 78 at EXECUTE
-SQL statement "SELECT emaj._create_tbl(grpdef_schema, grpdef_tblseq, grpdef_group, grpdef_priority, grpdef_log_dat_tsp, grpdef_log_idx_tsp, v_timeId, v_isRollbackable)
+PL/pgSQL function emaj._create_tbl(text,text,text,integer,text,text,bigint,boolean,boolean) line 79 at EXECUTE
+SQL statement "SELECT emaj._create_tbl(grpdef_schema, grpdef_tblseq, grpdef_group, grpdef_priority, grpdef_log_dat_tsp, grpdef_log_idx_tsp, v_timeId, v_groupIsRollbackable, r_plan.altr_group_is_logging)
       FROM emaj.emaj_group_def
       WHERE grpdef_group = r_plan.altr_group AND grpdef_schema = r_plan.altr_schema AND grpdef_tblseq = r_plan.altr_tblseq"
-PL/pgSQL function emaj._add_tbl(emaj.emaj_alter_plan,bigint,boolean) line 19 at PERFORM
+PL/pgSQL function emaj._add_tbl(emaj.emaj_alter_plan,bigint,boolean) line 18 at PERFORM
 SQL statement "SELECT emaj._add_tbl(r_plan, v_timeId, v_multiGroup)"
 PL/pgSQL function emaj._alter_exec(bigint,boolean) line 89 at PERFORM
 SQL statement "SELECT emaj._alter_exec(v_timeId, v_multiGroup)"
@@ -2084,11 +2084,11 @@ NOTICE:  trigger "emaj_log_trg" for relation "myschema1.mytbl1" does not exist, 
 CONTEXT:  SQL statement "DROP TRIGGER IF EXISTS emaj_log_trg ON myschema1.mytbl1"
 PL/pgSQL function emaj._create_log_trigger(text,text,text,text) line 9 at EXECUTE
 SQL statement "SELECT emaj._create_log_trigger(v_fullTableName, v_logTableName, v_sequenceName, v_logFnctName)"
-PL/pgSQL function emaj._create_tbl(text,text,text,integer,text,text,bigint,boolean) line 119 at PERFORM
-SQL statement "SELECT emaj._create_tbl(grpdef_schema, grpdef_tblseq, grpdef_group, grpdef_priority, grpdef_log_dat_tsp, grpdef_log_idx_tsp, v_timeId, v_isRollbackable)
+PL/pgSQL function emaj._create_tbl(text,text,text,integer,text,text,bigint,boolean,boolean) line 120 at PERFORM
+SQL statement "SELECT emaj._create_tbl(grpdef_schema, grpdef_tblseq, grpdef_group, grpdef_priority, grpdef_log_dat_tsp, grpdef_log_idx_tsp, v_timeId, v_groupIsRollbackable, r_plan.altr_group_is_logging)
       FROM emaj.emaj_group_def
       WHERE grpdef_group = r_plan.altr_group AND grpdef_schema = r_plan.altr_schema AND grpdef_tblseq = r_plan.altr_tblseq"
-PL/pgSQL function emaj._add_tbl(emaj.emaj_alter_plan,bigint,boolean) line 19 at PERFORM
+PL/pgSQL function emaj._add_tbl(emaj.emaj_alter_plan,bigint,boolean) line 18 at PERFORM
 SQL statement "SELECT emaj._add_tbl(r_plan, v_timeId, v_multiGroup)"
 PL/pgSQL function emaj._alter_exec(bigint,boolean) line 89 at PERFORM
 SQL statement "SELECT emaj._alter_exec(v_timeId, v_multiGroup)"
@@ -2096,11 +2096,11 @@ PL/pgSQL function emaj._alter_groups(text[],boolean,text) line 56 at PERFORM
 PL/pgSQL function emaj.emaj_alter_groups(text[],text) line 6 at RETURN
 NOTICE:  trigger "emaj_trunc_trg" for relation "myschema1.mytbl1" does not exist, skipping
 CONTEXT:  SQL statement "DROP TRIGGER IF EXISTS emaj_trunc_trg ON myschema1.mytbl1"
-PL/pgSQL function emaj._create_tbl(text,text,text,integer,text,text,bigint,boolean) line 124 at EXECUTE
-SQL statement "SELECT emaj._create_tbl(grpdef_schema, grpdef_tblseq, grpdef_group, grpdef_priority, grpdef_log_dat_tsp, grpdef_log_idx_tsp, v_timeId, v_isRollbackable)
+PL/pgSQL function emaj._create_tbl(text,text,text,integer,text,text,bigint,boolean,boolean) line 127 at EXECUTE
+SQL statement "SELECT emaj._create_tbl(grpdef_schema, grpdef_tblseq, grpdef_group, grpdef_priority, grpdef_log_dat_tsp, grpdef_log_idx_tsp, v_timeId, v_groupIsRollbackable, r_plan.altr_group_is_logging)
       FROM emaj.emaj_group_def
       WHERE grpdef_group = r_plan.altr_group AND grpdef_schema = r_plan.altr_schema AND grpdef_tblseq = r_plan.altr_tblseq"
-PL/pgSQL function emaj._add_tbl(emaj.emaj_alter_plan,bigint,boolean) line 19 at PERFORM
+PL/pgSQL function emaj._add_tbl(emaj.emaj_alter_plan,bigint,boolean) line 18 at PERFORM
 SQL statement "SELECT emaj._add_tbl(r_plan, v_timeId, v_multiGroup)"
 PL/pgSQL function emaj._alter_exec(bigint,boolean) line 89 at PERFORM
 SQL statement "SELECT emaj._alter_exec(v_timeId, v_multiGroup)"
@@ -2168,10 +2168,10 @@ PL/pgSQL function emaj.emaj_alter_groups(text[],text) line 6 at RETURN
 
   select hist_function, hist_event, hist_object, hist_wording from emaj.emaj_hist 
     where hist_function = 'ALTER_GROUPS' order by hist_id desc limit 8;
- hist_function |          hist_event          |         hist_object          |             hist_wording              
----------------+------------------------------+------------------------------+---------------------------------------
+ hist_function |          hist_event          |         hist_object          |                 hist_wording                  
+---------------+------------------------------+------------------------------+-----------------------------------------------
  ALTER_GROUPS  | END                          | myGroup1,myGroup2            | Timestamp Id : 6113
- ALTER_GROUPS  | SEQUENCE MOVED               | myschema2."myTbl3_col31_seq" | From group myGroup2 to group myGroup1
+ ALTER_GROUPS  | SEQUENCE MOVED               | myschema2."myTbl3_col31_seq" | From the group myGroup2 to the group myGroup1
  ALTER_GROUPS  | TABLE MOVED                  | myschema2."myTbl3"           | From group myGroup2 to group myGroup1
  ALTER_GROUPS  | LOG INDEX TABLESPACE CHANGED | myschema2."myTbl3"           | Default tablespace => tsplog1
  ALTER_GROUPS  | LOG DATA TABLESPACE CHANGED  | myschema2."myTbl3"           | Default tablespace => tsplog1
@@ -2441,12 +2441,20 @@ select hist_function, hist_event, hist_object,
  ALTER_GROUP             | BEGIN                        | myGroup1                     |                                                                                                                        | postgres
  ALTER_GROUP             | END                          | myGroup1                     | Timestamp Id : 6009                                                                                                    | postgres
  ALTER_GROUP             | BEGIN                        | myGroup1                     |                                                                                                                        | postgres
+ ALTER_GROUP             | TABLE REMOVED                | myschema1."myTbl3"           | From the group myGroup1                                                                                                | postgres
+ ALTER_GROUP             | TABLE REMOVED                | myschema1.mytbl4             | From the group myGroup1                                                                                                | postgres
+ ALTER_GROUP             | TABLE REMOVED                | myschema1.mytbl2b            | From the group myGroup1                                                                                                | postgres
  ALTER_GROUP             | END                          | myGroup1                     | Timestamp Id : 6010                                                                                                    | postgres
  ALTER_GROUP             | BEGIN                        | myGroup1                     |                                                                                                                        | postgres
+ ALTER_GROUP             | SEQUENCE REMOVED             | myschema1."myTbl3_col31_seq" | From the group myGroup1                                                                                                | postgres
  ALTER_GROUP             | END                          | myGroup1                     | Timestamp Id : 6011                                                                                                    | postgres
  ALTER_GROUP             | BEGIN                        | myGroup1                     |                                                                                                                        | postgres
+ ALTER_GROUP             | TABLE ADDED                  | myschema1."myTbl3"           | To the group myGroup1                                                                                                  | postgres
+ ALTER_GROUP             | TABLE ADDED                  | myschema1.mytbl4             | To the group myGroup1                                                                                                  | postgres
+ ALTER_GROUP             | TABLE ADDED                  | myschema1.mytbl2b            | To the group myGroup1                                                                                                  | postgres
  ALTER_GROUP             | END                          | myGroup1                     | Timestamp Id : 6012                                                                                                    | postgres
  ALTER_GROUP             | BEGIN                        | myGroup1                     |                                                                                                                        | postgres
+ ALTER_GROUP             | SEQUENCE ADDED               | myschema1."myTbl3_col31_seq" | To the group myGroup1                                                                                                  | postgres
  ALTER_GROUP             | END                          | myGroup1                     | Timestamp Id : 6013                                                                                                    | postgres
  ALTER_GROUP             | BEGIN                        | myGroup1                     |                                                                                                                        | postgres
  ALTER_GROUP             | LOG DATA TABLESPACE CHANGED  | myschema1.mytbl2b            | tsp log'2 => Default tablespace                                                                                        | postgres
@@ -2491,11 +2499,17 @@ select hist_function, hist_event, hist_object,
  ALTER_GROUP             | BEGIN                        | myGroup1                     |                                                                                                                        | postgres
  ALTER_GROUP             | END                          | myGroup1                     | Timestamp Id : 6027                                                                                                    | postgres
  ALTER_GROUP             | BEGIN                        | myGroup1                     |                                                                                                                        | postgres
+ ALTER_GROUP             | TABLE REMOVED                | myschema1.mytbl1             | From the group myGroup1                                                                                                | postgres
+ ALTER_GROUP             | TABLE ADDED                  | myschema1.mytbl1_new_name    | To the group myGroup1                                                                                                  | postgres
  ALTER_GROUP             | END                          | myGroup1                     | Timestamp Id : 6028                                                                                                    | postgres
  ALTER_GROUP             | BEGIN                        | myGroup1                     |                                                                                                                        | postgres
  ALTER_GROUP             | LOG_SCHEMA CREATED           | emaj_public                  |                                                                                                                        | postgres
+ ALTER_GROUP             | TABLE REMOVED                | myschema1.mytbl1_new_name    | From the group myGroup1                                                                                                | postgres
+ ALTER_GROUP             | TABLE ADDED                  | public.mytbl1_new_name       | To the group myGroup1                                                                                                  | postgres
  ALTER_GROUP             | END                          | myGroup1                     | Timestamp Id : 6029                                                                                                    | postgres
  ALTER_GROUP             | BEGIN                        | myGroup1                     |                                                                                                                        | postgres
+ ALTER_GROUP             | TABLE REMOVED                | public.mytbl1_new_name       | From the group myGroup1                                                                                                | postgres
+ ALTER_GROUP             | TABLE ADDED                  | myschema1.mytbl1             | To the group myGroup1                                                                                                  | postgres
  ALTER_GROUP             | LOG_SCHEMA DROPPED           | emaj_public                  |                                                                                                                        | postgres
  ALTER_GROUP             | END                          | myGroup1                     | Timestamp Id : 6030                                                                                                    | postgres
  DISABLE_PROTECTION      | EVENT TRIGGERS DISABLED      |                              | emaj_protection_trg, emaj_sql_drop_trg, emaj_table_rewrite_trg                                                         | postgres
@@ -2509,8 +2523,16 @@ select hist_function, hist_event, hist_object,
  ALTER_GROUPS            | BEGIN                        |                              |                                                                                                                        | postgres
  ALTER_GROUPS            | END                          |                              |                                                                                                                        | postgres
  ALTER_GROUPS            | BEGIN                        | myGroup1,myGroup2            |                                                                                                                        | postgres
+ ALTER_GROUPS            | TABLE REMOVED                | myschema1."myTbl3"           | From the group myGroup1                                                                                                | postgres
+ ALTER_GROUPS            | TABLE REMOVED                | myschema1.mytbl2b            | From the group myGroup1                                                                                                | postgres
+ ALTER_GROUPS            | TABLE REMOVED                | myschema2.mytbl4             | From the group myGroup2                                                                                                | postgres
+ ALTER_GROUPS            | SEQUENCE REMOVED             | myschema1."myTbl3_col31_seq" | From the group myGroup1                                                                                                | postgres
  ALTER_GROUPS            | END                          | myGroup1,myGroup2            | Timestamp Id : 6036                                                                                                    | postgres
  ALTER_GROUPS            | BEGIN                        | myGroup1,myGroup2            |                                                                                                                        | postgres
+ ALTER_GROUPS            | TABLE ADDED                  | myschema1."myTbl3"           | To the group myGroup1                                                                                                  | postgres
+ ALTER_GROUPS            | TABLE ADDED                  | myschema1.mytbl2b            | To the group myGroup1                                                                                                  | postgres
+ ALTER_GROUPS            | TABLE ADDED                  | myschema2.mytbl4             | To the group myGroup2                                                                                                  | postgres
+ ALTER_GROUPS            | SEQUENCE ADDED               | myschema1."myTbl3_col31_seq" | To the group myGroup1                                                                                                  | postgres
  ALTER_GROUPS            | END                          | myGroup1,myGroup2            | Timestamp Id : 6037                                                                                                    | postgres
  ALTER_GROUPS            | BEGIN                        | myGroup1,myGroup2            |                                                                                                                        | postgres
  ALTER_GROUPS            | LOG DATA TABLESPACE CHANGED  | myschema1.mytbl2b            | tsp log'2 => Default tablespace                                                                                        | postgres
@@ -2521,8 +2543,12 @@ select hist_function, hist_event, hist_object,
  ALTER_GROUPS            | LOG INDEX TABLESPACE CHANGED | myschema2.mytbl6             | tsplog1 => Default tablespace                                                                                          | postgres
  ALTER_GROUPS            | END                          | myGroup1,myGroup2            | Timestamp Id : 6039                                                                                                    | postgres
  ALTER_GROUPS            | BEGIN                        | myGroup1,myGroup2            |                                                                                                                        | postgres
+ ALTER_GROUPS            | TABLE MOVED                  | myschema2."myTbl3"           | From group myGroup2 to group myGroup1                                                                                  | postgres
+ ALTER_GROUPS            | SEQUENCE MOVED               | myschema2."myTbl3_col31_seq" | From the group myGroup2 to the group myGroup1                                                                          | postgres
  ALTER_GROUPS            | END                          | myGroup1,myGroup2            | Timestamp Id : 6040                                                                                                    | postgres
  ALTER_GROUPS            | BEGIN                        | myGroup1,myGroup2            |                                                                                                                        | postgres
+ ALTER_GROUPS            | TABLE MOVED                  | myschema2."myTbl3"           | From group myGroup1 to group myGroup2                                                                                  | postgres
+ ALTER_GROUPS            | SEQUENCE MOVED               | myschema2."myTbl3_col31_seq" | From the group myGroup1 to the group myGroup2                                                                          | postgres
  ALTER_GROUPS            | END                          | myGroup1,myGroup2            | Timestamp Id : 6041                                                                                                    | postgres
  START_GROUPS            | BEGIN                        | myGroup1,myGroup2            | With log reset                                                                                                         | postgres
  LOCK_GROUPS             | BEGIN                        | myGroup1,myGroup2            |                                                                                                                        | postgres
@@ -2596,7 +2622,7 @@ select hist_function, hist_event, hist_object,
  LOCK_GROUP              | END                          | myGroup2                     | 6 tables locked, 0 deadlock(s)                                                                                         | postgres
  SET_MARK_GROUP          | BEGIN                        | myGroup2                     | Alter to add myseq2                                                                                                    | postgres
  SET_MARK_GROUP          | END                          | myGroup2                     | Alter to add myseq2                                                                                                    | postgres
- ALTER_GROUP             | SEQUENCE ADDED               | myschema2.myseq2             | To logging group myGroup2                                                                                              | postgres
+ ALTER_GROUP             | SEQUENCE ADDED               | myschema2.myseq2             | To the group myGroup2                                                                                                  | postgres
  ALTER_GROUP             | END                          | myGroup2                     | Timestamp Id : 6053                                                                                                    | postgres
  SET_MARK_GROUP          | BEGIN                        | myGroup2                     |                                                                                                                        | postgres
  LOCK_GROUP              | BEGIN                        | myGroup2                     |                                                                                                                        | postgres
@@ -2634,21 +2660,21 @@ select hist_function, hist_event, hist_object,
  SET_MARK_GROUP          | BEGIN                        | myGroup2                     | Alter to remove myseq2                                                                                                 | postgres
  CLEANUP_RLBK_STATE      |                              | Rollback id 6002             | set to COMMITTED                                                                                                       | postgres
  SET_MARK_GROUP          | END                          | myGroup2                     | Alter to remove myseq2                                                                                                 | postgres
- ALTER_GROUP             | SEQUENCE REMOVED             | myschema2.myseq2             | From logging group myGroup2                                                                                            | postgres
+ ALTER_GROUP             | SEQUENCE REMOVED             | myschema2.myseq2             | From the group myGroup2                                                                                                | postgres
  ALTER_GROUP             | END                          | myGroup2                     | Timestamp Id : 6058                                                                                                    | postgres
  ALTER_GROUP             | BEGIN                        | myGroup2                     |                                                                                                                        | postgres
  LOCK_GROUP              | BEGIN                        | myGroup2                     |                                                                                                                        | postgres
  LOCK_GROUP              | END                          | myGroup2                     | 6 tables locked, 0 deadlock(s)                                                                                         | postgres
  SET_MARK_GROUP          | BEGIN                        | myGroup2                     | Alter to re-add myseq2                                                                                                 | postgres
  SET_MARK_GROUP          | END                          | myGroup2                     | Alter to re-add myseq2                                                                                                 | postgres
- ALTER_GROUP             | SEQUENCE ADDED               | myschema2.myseq2             | To logging group myGroup2                                                                                              | postgres
+ ALTER_GROUP             | SEQUENCE ADDED               | myschema2.myseq2             | To the group myGroup2                                                                                                  | postgres
  ALTER_GROUP             | END                          | myGroup2                     | Timestamp Id : 6059                                                                                                    | postgres
  ALTER_GROUP             | BEGIN                        | myGroup2                     |                                                                                                                        | postgres
  LOCK_GROUP              | BEGIN                        | myGroup2                     |                                                                                                                        | postgres
  LOCK_GROUP              | END                          | myGroup2                     | 6 tables locked, 0 deadlock(s)                                                                                         | postgres
  SET_MARK_GROUP          | BEGIN                        | myGroup2                     | Alter to really remove myseq2                                                                                          | postgres
  SET_MARK_GROUP          | END                          | myGroup2                     | Alter to really remove myseq2                                                                                          | postgres
- ALTER_GROUP             | SEQUENCE REMOVED             | myschema2.myseq2             | From logging group myGroup2                                                                                            | postgres
+ ALTER_GROUP             | SEQUENCE REMOVED             | myschema2.myseq2             | From the group myGroup2                                                                                                | postgres
  ALTER_GROUP             | END                          | myGroup2                     | Timestamp Id : 6060                                                                                                    | postgres
  ROLLBACK_GROUP          | BEGIN                        | myGroup2                     | Unlogged rollback to mark ADD_SEQ test (timestamp)                                                                     | postgres
  DBLINK_OPEN_CNX         |                              | rlbk#1                       | Status = 1                                                                                                             | postgres
@@ -2680,7 +2706,7 @@ select hist_function, hist_event, hist_object,
  LOCK_GROUP              | END                          | myGroup1                     | 5 tables locked, 0 deadlock(s)                                                                                         | postgres
  SET_MARK_GROUP          | BEGIN                        | myGroup1                     | Sequence_removed                                                                                                       | postgres
  SET_MARK_GROUP          | END                          | myGroup1                     | Sequence_removed                                                                                                       | postgres
- ALTER_GROUP             | SEQUENCE REMOVED             | myschema1."myTbl3_col31_seq" | From logging group myGroup1                                                                                            | postgres
+ ALTER_GROUP             | SEQUENCE REMOVED             | myschema1."myTbl3_col31_seq" | From the group myGroup1                                                                                                | postgres
  ALTER_GROUP             | END                          | myGroup1                     | Timestamp Id : 6064                                                                                                    | postgres
  SNAP_GROUP              | BEGIN                        | myGroup1                     | /tmp/emaj_test/alter                                                                                                   | postgres
  SNAP_GROUP              | END                          | myGroup1                     | 6 tables/sequences processed                                                                                           | postgres
@@ -2699,7 +2725,7 @@ select hist_function, hist_event, hist_object,
  CLEANUP_RLBK_STATE      |                              | Rollback id 6004             | set to ABORTED                                                                                                         | postgres
  CLEANUP_RLBK_STATE      |                              | Rollback id 6005             | set to ABORTED                                                                                                         | postgres
  SET_MARK_GROUP          | END                          | myGroup1                     | sequence re-added to myGroup1                                                                                          | postgres
- ALTER_GROUP             | SEQUENCE ADDED               | myschema1."myTbl3_col31_seq" | To logging group myGroup1                                                                                              | postgres
+ ALTER_GROUP             | SEQUENCE ADDED               | myschema1."myTbl3_col31_seq" | To the group myGroup1                                                                                                  | postgres
  ALTER_GROUP             | END                          | myGroup1                     | Timestamp Id : 6072                                                                                                    | postgres
  SET_MARK_GROUP          | BEGIN                        | myGroup2                     |                                                                                                                        | postgres
  LOCK_GROUP              | BEGIN                        | myGroup2                     |                                                                                                                        | postgres
@@ -2714,7 +2740,7 @@ select hist_function, hist_event, hist_object,
  LOCK_GROUP              | END                          | myGroup2                     | 6 tables locked, 0 deadlock(s)                                                                                         | postgres
  SET_MARK_GROUP          | BEGIN                        | myGroup2                     | Alter to add mytbl7                                                                                                    | postgres
  SET_MARK_GROUP          | END                          | myGroup2                     | Alter to add mytbl7                                                                                                    | postgres
- ALTER_GROUP             | TABLE ADDED                  | myschema2.mytbl7             | To logging group myGroup2                                                                                              | postgres
+ ALTER_GROUP             | TABLE ADDED                  | myschema2.mytbl7             | To the group myGroup2                                                                                                  | postgres
  ALTER_GROUP             | END                          | myGroup2                     | Timestamp Id : 6075                                                                                                    | postgres
  SET_MARK_GROUP          | BEGIN                        | myGroup2                     |                                                                                                                        | postgres
  LOCK_GROUP              | BEGIN                        | myGroup2                     |                                                                                                                        | postgres
@@ -2755,14 +2781,14 @@ select hist_function, hist_event, hist_object,
  SET_MARK_GROUP          | BEGIN                        | myGroup2                     | Alter to remove mytbl7                                                                                                 | postgres
  CLEANUP_RLBK_STATE      |                              | Rollback id 6007             | set to COMMITTED                                                                                                       | postgres
  SET_MARK_GROUP          | END                          | myGroup2                     | Alter to remove mytbl7                                                                                                 | postgres
- ALTER_GROUP             | TABLE REMOVED                | myschema2.mytbl7             | From logging group myGroup2                                                                                            | postgres
+ ALTER_GROUP             | TABLE REMOVED                | myschema2.mytbl7             | From the group myGroup2                                                                                                | postgres
  ALTER_GROUP             | END                          | myGroup2                     | Timestamp Id : 6082                                                                                                    | postgres
  ALTER_GROUP             | BEGIN                        | myGroup2                     |                                                                                                                        | postgres
  LOCK_GROUP              | BEGIN                        | myGroup2                     |                                                                                                                        | postgres
  LOCK_GROUP              | END                          | myGroup2                     | 6 tables locked, 0 deadlock(s)                                                                                         | postgres
  SET_MARK_GROUP          | BEGIN                        | myGroup2                     | Alter to re-add mytbl7                                                                                                 | postgres
  SET_MARK_GROUP          | END                          | myGroup2                     | Alter to re-add mytbl7                                                                                                 | postgres
- ALTER_GROUP             | TABLE ADDED                  | myschema2.mytbl7             | To logging group myGroup2                                                                                              | postgres
+ ALTER_GROUP             | TABLE ADDED                  | myschema2.mytbl7             | To the group myGroup2                                                                                                  | postgres
  ALTER_GROUP             | END                          | myGroup2                     | Timestamp Id : 6083                                                                                                    | postgres
  SNAP_LOG_GROUP          | BEGIN                        | myGroup2                     | From initial mark to current situation towards /tmp/emaj_test/alter                                                    | postgres
  SNAP_LOG_GROUP          | END                          | myGroup2                     | 11 generated files                                                                                                     | postgres
@@ -2771,7 +2797,7 @@ select hist_function, hist_event, hist_object,
  LOCK_GROUP              | END                          | myGroup2                     | 7 tables locked, 0 deadlock(s)                                                                                         | postgres
  SET_MARK_GROUP          | BEGIN                        | myGroup2                     | Alter to really remove mytbl7                                                                                          | postgres
  SET_MARK_GROUP          | END                          | myGroup2                     | Alter to really remove mytbl7                                                                                          | postgres
- ALTER_GROUP             | TABLE REMOVED                | myschema2.mytbl7             | From logging group myGroup2                                                                                            | postgres
+ ALTER_GROUP             | TABLE REMOVED                | myschema2.mytbl7             | From the group myGroup2                                                                                                | postgres
  ALTER_GROUP             | END                          | myGroup2                     | Timestamp Id : 6085                                                                                                    | postgres
  ROLLBACK_GROUP          | BEGIN                        | myGroup2                     | Unlogged rollback to mark ADD_TBL test (timestamp)                                                                     | postgres
  DBLINK_OPEN_CNX         |                              | rlbk#1                       | Status = 1                                                                                                             | postgres
@@ -2800,8 +2826,8 @@ select hist_function, hist_event, hist_object,
  LOCK_GROUP              | END                          | myGroup1                     | 5 tables locked, 0 deadlock(s)                                                                                         | postgres
  SET_MARK_GROUP          | BEGIN                        | myGroup1                     | 2 tables removed from myGroup1                                                                                         | postgres
  SET_MARK_GROUP          | END                          | myGroup1                     | 2 tables removed from myGroup1                                                                                         | postgres
- ALTER_GROUP             | TABLE REMOVED                | myschema1."myTbl3"           | From logging group myGroup1                                                                                            | postgres
- ALTER_GROUP             | TABLE REMOVED                | myschema1.mytbl2b            | From logging group myGroup1                                                                                            | postgres
+ ALTER_GROUP             | TABLE REMOVED                | myschema1."myTbl3"           | From the group myGroup1                                                                                                | postgres
+ ALTER_GROUP             | TABLE REMOVED                | myschema1.mytbl2b            | From the group myGroup1                                                                                                | postgres
  ALTER_GROUP             | END                          | myGroup1                     | Timestamp Id : 6088                                                                                                    | postgres
  SNAP_GROUP              | BEGIN                        | myGroup1                     | /tmp/emaj_test/alter                                                                                                   | postgres
  SNAP_GROUP              | END                          | myGroup1                     | 5 tables/sequences processed                                                                                           | postgres
@@ -2836,7 +2862,7 @@ select hist_function, hist_event, hist_object,
  SET_MARK_GROUP          | BEGIN                        | myGroup1                     | 2nd remove_tbl                                                                                                         | postgres
  CLEANUP_RLBK_STATE      |                              | Rollback id 6010             | set to COMMITTED                                                                                                       | postgres
  SET_MARK_GROUP          | END                          | myGroup1                     | 2nd remove_tbl                                                                                                         | postgres
- ALTER_GROUP             | TABLE REMOVED                | myschema1.mytbl1             | From logging group myGroup1                                                                                            | postgres
+ ALTER_GROUP             | TABLE REMOVED                | myschema1.mytbl1             | From the group myGroup1                                                                                                | postgres
  ALTER_GROUP             | END                          | myGroup1                     | Timestamp Id : 6094                                                                                                    | postgres
  CONSOLIDATE_RLBK_GROUP  | BEGIN                        | myGroup1                     | Erase all between marks Mk2b and Logged_Rlbk_End                                                                       | postgres
  CONSOLIDATE_RLBK_GROUP  | END                          | myGroup1                     | 1 tables and 2 sequences processed ; 7 marks deleted                                                                   | postgres
@@ -2859,9 +2885,9 @@ select hist_function, hist_event, hist_object,
  SET_MARK_GROUP          | BEGIN                        | myGroup1                     | tables re-added to myGroup1                                                                                            | postgres
  CLEANUP_RLBK_STATE      |                              | Rollback id 6011             | set to COMMITTED                                                                                                       | postgres
  SET_MARK_GROUP          | END                          | myGroup1                     | tables re-added to myGroup1                                                                                            | postgres
- ALTER_GROUP             | TABLE ADDED                  | myschema1."myTbl3"           | To logging group myGroup1                                                                                              | postgres
- ALTER_GROUP             | TABLE ADDED                  | myschema1.mytbl1             | To logging group myGroup1                                                                                              | postgres
- ALTER_GROUP             | TABLE ADDED                  | myschema1.mytbl2b            | To logging group myGroup1                                                                                              | postgres
+ ALTER_GROUP             | TABLE ADDED                  | myschema1."myTbl3"           | To the group myGroup1                                                                                                  | postgres
+ ALTER_GROUP             | TABLE ADDED                  | myschema1.mytbl1             | To the group myGroup1                                                                                                  | postgres
+ ALTER_GROUP             | TABLE ADDED                  | myschema1.mytbl2b            | To the group myGroup1                                                                                                  | postgres
  ALTER_GROUP             | END                          | myGroup1                     | Timestamp Id : 6100                                                                                                    | postgres
  SET_MARK_GROUPS         | BEGIN                        | myGroup1,myGroup2            | Mk3                                                                                                                    | postgres
  LOCK_GROUPS             | BEGIN                        | myGroup1,myGroup2            |                                                                                                                        | postgres
@@ -2997,7 +3023,7 @@ select hist_function, hist_event, hist_object,
  ALTER_GROUPS            | LOG DATA TABLESPACE CHANGED  | myschema2."myTbl3"           | Default tablespace => tsplog1                                                                                          | postgres
  ALTER_GROUPS            | LOG INDEX TABLESPACE CHANGED | myschema2."myTbl3"           | Default tablespace => tsplog1                                                                                          | postgres
  ALTER_GROUPS            | TABLE MOVED                  | myschema2."myTbl3"           | From group myGroup2 to group myGroup1                                                                                  | postgres
- ALTER_GROUPS            | SEQUENCE MOVED               | myschema2."myTbl3_col31_seq" | From group myGroup2 to group myGroup1                                                                                  | postgres
+ ALTER_GROUPS            | SEQUENCE MOVED               | myschema2."myTbl3_col31_seq" | From the group myGroup2 to the group myGroup1                                                                          | postgres
  ALTER_GROUPS            | END                          | myGroup1,myGroup2            | Timestamp Id : 6115                                                                                                    | postgres
  SET_MARK_GROUPS         | BEGIN                        | myGroup1,myGroup2            | after move                                                                                                             | postgres
  LOCK_GROUPS             | BEGIN                        | myGroup1,myGroup2            |                                                                                                                        | postgres
@@ -3067,7 +3093,7 @@ select hist_function, hist_event, hist_object,
  ALTER_GROUPS            | LOG DATA TABLESPACE CHANGED  | myschema2."myTbl3"           | tsplog1 => Default tablespace                                                                                          | postgres
  ALTER_GROUPS            | LOG INDEX TABLESPACE CHANGED | myschema2."myTbl3"           | tsplog1 => Default tablespace                                                                                          | postgres
  ALTER_GROUPS            | TABLE MOVED                  | myschema2."myTbl3"           | From group myGroup1 to group myGroup2                                                                                  | postgres
- ALTER_GROUPS            | SEQUENCE MOVED               | myschema2."myTbl3_col31_seq" | From group myGroup1 to group myGroup2                                                                                  | postgres
+ ALTER_GROUPS            | SEQUENCE MOVED               | myschema2."myTbl3_col31_seq" | From the group myGroup1 to the group myGroup2                                                                          | postgres
  ALTER_GROUPS            | END                          | myGroup1,myGroup2            | Timestamp Id : 6121                                                                                                    | postgres
  FORCE_DROP_GROUP        | BEGIN                        | myGroup1                     |                                                                                                                        | postgres
  FORCE_DROP_GROUP        | LOG_SCHEMA DROPPED           | emaj_myschema1               |                                                                                                                        | postgres
@@ -3078,7 +3104,7 @@ select hist_function, hist_event, hist_object,
  FORCE_DROP_GROUP        | BEGIN                        | myGroup4                     |                                                                                                                        | postgres
  FORCE_DROP_GROUP        | LOG_SCHEMA DROPPED           | emaj_myschema4               |                                                                                                                        | postgres
  FORCE_DROP_GROUP        | END                          | myGroup4                     | 5 tables/sequences processed                                                                                           | postgres
-(688 rows)
+(714 rows)
 
 select time_id, time_last_emaj_gid, time_event from emaj.emaj_time_stamp where time_id > 6000 order by time_id;
  time_id | time_last_emaj_gid | time_event 
