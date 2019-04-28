@@ -15,7 +15,7 @@ Pour chaque schéma E-Maj (*emaj* et les schémas de log), la fonction vérifie 
 * que toutes les tables, fonctions et séquences et tous les types soit sont des objets de l'extension elle-même, soit sont bien liés aux groupes de tables créés,
 * qu'il ne contient ni vue, ni « *foreign table* », ni domaine, ni conversion, ni opérateur et ni classe d'opérateur.
 
-Ensuite, pour chaque groupe de tables créé, la fonction procède aux mêmes contrôles que ceux effectués lors des opérations de démarrage de groupe, de pose de marque et de rollback (plus de détails :ref:`ici <internal_checks>`).
+Ensuite, pour chaque groupe de tables créé, la fonction procède aux mêmes contrôles que ceux effectués lors des opérations de démarrage de groupe, de pose de marque et de rollback (:ref:`plus de détails <internal_checks>`).
 
 La fonction retourne un ensemble de lignes qui décrivent les éventuelles anomalies rencontrées. Si aucune anomalie n'est détectée, la fonction retourne une unique ligne contenant le message ::
 
@@ -24,6 +24,25 @@ La fonction retourne un ensemble de lignes qui décrivent les éventuelles anoma
 La fonction *emaj_verify_all()* peut être exécutée par les rôles membres de *emaj_adm* et *emaj_viewer*.
 
 Si des anomalies sont détectées, par exemple suite à la suppression d'une table applicative référencée dans un groupe, les mesures appropriées doivent être prises. Typiquement, les éventuelles tables de log ou fonctions orphelines doivent être supprimées manuellement.
+
+.. _emaj_keep_enabled_trigger:
+
+Non désactivation de triggers applicatifs lors des Rollbacks E-Maj
+------------------------------------------------------------------
+
+Les triggers applicatifs sont automatiquement désactivés pendant les opérations de rollback E-Maj. Dans certains cas, il peut être souhaitable de les conserver activés (plus de détails :ref:`ici <application_triggers>`). Pour ce faire, on peut utiliser la fonction *emaj_keep_enabled_trigger()*. Elle permet de gérer l’ajout ou la suppression de triggers dans une liste de triggers ne devant pas être désactivés lors des opérations de rollback. ::
+
+	SELECT emaj.emaj_keep_enabled_trigger(<action>, <nom.schéma>, <nom.table>, <trigger>);
+
+Le paramètre <action> peut prendre les valeurs *‘ADD’* pour ajouter un trigger à la liste ou *‘REMOVE’* pour supprimer un trigger de la liste.
+
+L’identité du trigger est définie par les 3 composantes nom de schéma, nom de table et nom du trigger.
+
+Le nom du trigger peut contenir des caractères génériques ‘%’ et ‘_’, dont la signification est identique à ceux présents dans les clauses *LIKE* du langage SQL. On peut ainsi traiter plusieurs triggers d’une même table en un seul appel de la fonction.
+
+La fonction retourne le nombre de triggers effectivement ajoutés ou supprimés.
+
+La fonction ne traite pas les triggers E-Maj (trigger de log ou de protection contre les *TRUNCATE*).
 
 .. _emaj_rollback_activity:
 

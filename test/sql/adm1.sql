@@ -33,6 +33,7 @@ select count(*) from emaj.emaj_rlbk;
 select count(*) from emaj.emaj_rlbk_session;
 select count(*) from emaj.emaj_rlbk_plan;
 select count(*) from emaj.emaj_rlbk_stat;
+select count(*) from emaj.emaj_enabled_trigger;
 select count(*) from emaj_mySchema1.myTbl1_log;
 
 -----------------------------
@@ -78,9 +79,6 @@ insert into myschema2.myTbl8 (col81) values (0);
 alter sequence mySchema2.mySeq1 restart 1000;
 truncate mySchema4.myTblM, mySchema4.myTblC1, mySchema4.myTblC2;
 truncate mySchema4.myTblP, mySchema4.myPartP1, mySchema4.myPartP2;
-
--- starting from this point, disable the trigger on myTbl2
-alter table mySchema1.myTbl2 disable trigger myTbl2trg;
 
 set role emaj_regression_tests_adm_user;
 

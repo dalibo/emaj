@@ -3,6 +3,11 @@ E-Maj - Change log
 <devel>
 ------
 ###Enhancements:###
+  * The rollback functions now automatically disable the application triggers,
+    unless they are set in a list of triggers that should not be automatically
+    disabled during the operation. A new emaj_keep_enabled_trigger() function
+    records the triggers that are not automatically disabled during rollback
+    operations. This may impact existing user rollback procedures.
   * All log objects (tables, sequences, functions) are now located in a schema
     named 'emaj_<application-schema>'. And there is now way to change it
     anymore. This replaces the use of the now dropped grpdef_log_schema_suffix
@@ -562,7 +567,7 @@ E-Maj - Change log
     old related marks and log tables rows cannot be used for any rollback 
     operation any more. Nevertheless, log rows remain visible, old marks can 
     be deleted, renamed or commented, and log statistics can be requested.
-  * Now that logs may survive to a group start, a mark is automaticaly set 
+  * Now that logs may survive to a group start, a mark is automatically set 
     at group stop time so that this operation is clearly visible in the marks 
     list; This mark is named STOP_xxx where this suffix represents the time 
     of the day.
@@ -782,7 +787,8 @@ E-Maj - Change log
     referencing a table that has no row to rollback.
   * in emaj_start_group() and emaj_set_mark_group() functions, avoid empty or 
     NULL mark names. If the supplied mark name is NULL or empty, a name is 
-    automaticaly generated as "MARK_" followed by digits from the current time.
+    automatically generated as "MARK_" followed by digits from the current
+    time.
   * fix an invalid column name referenced in emaj_delete_mark_group() function.
   * in emaj_delete_mark_group() function, fix an erroneous information 
     inserted into the emaj_hist table.
@@ -944,7 +950,7 @@ E-Maj - Change log
     rollback operations on multi-processor servers. A PHP command is created
     for this purpose: emajParallelRollback.php.
   * the emaj_reset_group function is not necessary any more before starting 
-    a group; the log purge is automaticaly done at emaj_start_group function; 
+    a group; the log purge is automatically done at emaj_start_group function.
     But the emaj_reset_function remains so user can purge log tables sooner.
   * issue a warning at emaj_create_group, emaj_start_group and 
     emaj_rollback_group if either a table of the group has a foreign key that 

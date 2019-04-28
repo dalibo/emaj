@@ -83,7 +83,7 @@ NOTICE:  trigger "emaj_trunc_trg" for relation "myschema1.mytbl4" does not exist
 NOTICE:  table "mytbl2_log" does not exist, skipping
 NOTICE:  trigger "emaj_log_trg" for relation "myschema1.mytbl2" does not exist, skipping
 NOTICE:  trigger "emaj_trunc_trg" for relation "myschema1.mytbl2" does not exist, skipping
-WARNING:  _create_tbl: The table "myschema1.mytbl2" has triggers (mytbl2trg). Verify the compatibility with emaj rollback operations (in particular if triggers update one or several other tables). Triggers may have to be manualy disabled before rollback.
+WARNING:  _create_tbl: The table "myschema1.mytbl2" has triggers (mytbl2trg1, mytbl2trg2). They will be automatically disabled during E-Maj rollback operations, unless they have been recorded into the list of triggers that may be kept enabled, with the emaj_keep_enabled_trigger() function.
 NOTICE:  table "mytbl2b_log" does not exist, skipping
 NOTICE:  trigger "emaj_log_trg" for relation "myschema1.mytbl2b" does not exist, skipping
 NOTICE:  trigger "emaj_trunc_trg" for relation "myschema1.mytbl2b" does not exist, skipping
@@ -140,7 +140,7 @@ NOTICE:  trigger "emaj_trunc_trg" for relation "myschema4.mytblc2" does not exis
 NOTICE:  table "mytblm_log" does not exist, skipping
 NOTICE:  trigger "emaj_log_trg" for relation "myschema4.mytblm" does not exist, skipping
 NOTICE:  trigger "emaj_trunc_trg" for relation "myschema4.mytblm" does not exist, skipping
-WARNING:  _create_tbl: The table "myschema4.mytblm" has triggers (mytblm_insert_trigger). Verify the compatibility with emaj rollback operations (in particular if triggers update one or several other tables). Triggers may have to be manualy disabled before rollback.
+WARNING:  _create_tbl: The table "myschema4.mytblm" has triggers (mytblm_insert_trigger). They will be automatically disabled during E-Maj rollback operations, unless they have been recorded into the list of triggers that may be kept enabled, with the emaj_keep_enabled_trigger() function.
  emaj_create_group 
 -------------------
                  5

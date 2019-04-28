@@ -32,7 +32,7 @@ ERROR:  _check_group_names: The group "myGroup1" is currently protected against 
 CONTEXT:  SQL statement "SELECT emaj._check_group_names(v_groupNames := v_groupNames, v_mayBeNull := FALSE, v_lockGroups := TRUE, v_checkList := 'LOGGING,ROLLBACKABLE,UNPROTECTED')"
 PL/pgSQL function emaj._rlbk_check(text[],text,boolean,boolean) line 15 at SQL statement
 SQL statement "SELECT emaj._rlbk_check(v_groupNames, v_mark, v_isAlterGroupAllowed, FALSE)"
-PL/pgSQL function emaj._rlbk_init(text[],text,boolean,integer,boolean,boolean) line 23 at SQL statement
+PL/pgSQL function emaj._rlbk_init(text[],text,boolean,integer,boolean,boolean) line 22 at SQL statement
 SQL statement "SELECT emaj._rlbk_init(v_groupNames, v_mark, v_isLoggedRlbk, 1, v_multiGroup, v_isAlterGroupAllowed)"
 PL/pgSQL function emaj._rlbk_groups(text[],text,boolean,boolean,boolean) line 22 at SQL statement
 PL/pgSQL function emaj.emaj_rollback_groups(text[],text,boolean) line 7 at RETURN QUERY
@@ -59,11 +59,10 @@ set search_path=myschema1;
 --
 update "myTbl3" set col33 = col33 / 2;
 --
-alter table mySchema1.myTbl2 disable trigger myTbl2trg;
 select * from emaj.emaj_rollback_group('myGroup1','M2',false) order by 1,2;
 ERROR:  _rlbk_check: Protected marks (M3) for the group "myGroup1" block the rollback to the mark "M2".
 CONTEXT:  SQL statement "SELECT emaj._rlbk_check(v_groupNames, v_mark, v_isAlterGroupAllowed, FALSE)"
-PL/pgSQL function emaj._rlbk_init(text[],text,boolean,integer,boolean,boolean) line 23 at SQL statement
+PL/pgSQL function emaj._rlbk_init(text[],text,boolean,integer,boolean,boolean) line 22 at SQL statement
 SQL statement "SELECT emaj._rlbk_init(v_groupNames, v_mark, v_isLoggedRlbk, 1, v_multiGroup, v_isAlterGroupAllowed)"
 PL/pgSQL function emaj._rlbk_groups(text[],text,boolean,boolean,boolean) line 22 at SQL statement
 PL/pgSQL function emaj.emaj_rollback_group(text,text,boolean) line 7 at RETURN QUERY
@@ -80,7 +79,6 @@ select * from emaj.emaj_logged_rollback_group('myGroup1','M2',true) order by 1,2
  Notice        | 2 / 4 tables effectively processed.
 (2 rows)
 
-alter table mySchema1.myTbl2 enable trigger myTbl2trg;
 --
 select emaj.emaj_rename_mark_group('myGroup1','EMAJ_LAST_MARK','End_rollback_to_M2');
  emaj_rename_mark_group 
@@ -152,7 +150,6 @@ insert into myTbl1 values (1, 'Step 6', E'\\000'::bytea);
 insert into myTbl4 values (11,'FK...',1,1,'Step 6');
 insert into myTbl4 values (12,'FK...',1,1,'Step 6');
 --
-alter table mySchema1.myTbl2 disable trigger myTbl2trg;
 select * from emaj.emaj_rollback_group('myGroup1','M5',false) order by 1,2;
  rlbk_severity |            rlbk_message             
 ---------------+-------------------------------------
@@ -160,12 +157,10 @@ select * from emaj.emaj_rollback_group('myGroup1','M5',false) order by 1,2;
  Notice        | 2 / 4 tables effectively processed.
 (2 rows)
 
-alter table mySchema1.myTbl2 enable trigger myTbl2trg;
 --
 insert into myTbl1 values (1, 'Step 6', E'\\001'::bytea);
 copy myTbl4 from stdin;
 --
-alter table mySchema1.myTbl2 disable trigger myTbl2trg;
 select * from emaj.emaj_logged_rollback_group('myGroup1','M4',false) order by 1,2;
  rlbk_severity |            rlbk_message             
 ---------------+-------------------------------------
@@ -173,7 +168,6 @@ select * from emaj.emaj_logged_rollback_group('myGroup1','M4',false) order by 1,
  Notice        | 2 / 4 tables effectively processed.
 (2 rows)
 
-alter table mySchema1.myTbl2 enable trigger myTbl2trg;
 -----------------------------
 -- Step 7 : for myGroup1, update tables, rename a mark, then delete 2 marks then delete all before a mark 
 -----------------------------
@@ -637,5 +631,3 @@ delete from mySchema2.myTbl1;
 delete from mySchema2.myTbl2; 
 delete from mySchema2."myTbl3";
 alter sequence mySchema2.mySeq1 restart 9999;
--- but disable the application trigger
-alter table mySchema1.myTbl2 disable trigger myTbl2trg;

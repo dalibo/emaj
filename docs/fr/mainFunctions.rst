@@ -97,7 +97,7 @@ La fonction crée également les schémas de log nécessaires.
 
 En revanche, si des tablespaces spécifiques pour les tables de log ou pour leurs index, sont référencés, ceux-ci doivent déjà exister avant l'exécution de la fonction.
 
-La fonction *emaj_create_group()* contrôle également l'existence de « triggers applicatifs » impliquant les tables du groupe. Si un trigger existe sur une table du groupe, un message d'avertissement est retourné incitant l'utilisateur à vérifier que ce trigger ne fait pas de mises à jour sur des tables n'appartenant pas au groupe.
+La fonction *emaj_create_group()* contrôle également l'existence de « triggers applicatifs » sur les tables du groupe. Si un trigger existe sur une table du groupe, un message est retourné incitant l'utilisateur à vérifier l’impact du trigger lors des éventuels rollbacks E-Maj.
 
 Si une séquence du groupe est associée à une colonne soit de type *SERIAL* ou *BIGSERIAL* soit définie avec une clause *GENERATED AS IDENTITY*, et que sa table d'appartenance ne fait pas partie du groupe, la fonction génère également un message de type *WARNING*. 
 
@@ -198,7 +198,7 @@ La fonction retourne un ensemble de lignes comportant un niveau de sévérité p
 
 Pour être certain qu'aucune transaction concurrente ne mette à jour une table du groupe pendant toute la durée du rollback, la fonction *emaj_rollback_group()* pose explicitement un verrou de type *EXCLUSIVE* sur chacune des tables du groupe. Si des transactions accédant à ces tables en mise à jour sont en cours, ceci peut se traduire par la survenue d'une étreinte fatale (deadlock). Si la résolution de l'étreinte fatale impacte la fonction E-Maj, le deadlock est intercepté et la pose de verrou est automatiquement réitérée, avec un maximum de 5 tentatives. En revanche, les tables du groupe continuent à être accessibles en lecture pendant l'opération.
 
-Si des tables du groupe à « rollbacker » possèdent des triggers, il peut être nécessaire de les désactiver avant le rollback et de les réactiver à l'issue de l'opération (plus de détails :ref:`ici <application_triggers>`).
+Si des tables du groupe à traiter possèdent des *triggers* (déclencheurs), ceux-ci sont, par défaut, temporairement désactivés pendant l’opération. Avec la fonction :ref:`emaj_keep_enabled_trigger()<emaj_keep_enabled_trigger>`, on peut enregistrer des triggers comme « ne devant pas être automatiquement désactivés lors du rollback » (plus de détails :ref:`ici <application_triggers>`).
 
 Si une table impactée par le rollback possède une clé étrangère (*foreign key*) ou est référencée dans une clé étrangère appartenant à une autre table, alors la présence de cette clé étrangère est prise en compte par l'opération de rollback. Si le contrôle des clés créées ou modifiées par le rollback ne peut être différé en fin d'opération (contrainte non déclarée *DEFERRABLE*), alors cette clé étrangère est supprimée en début de rollback puis recréée en fin de rollback.
 
@@ -257,7 +257,7 @@ La fonction retourne un ensemble de lignes comportant un niveau de sévérité p
 
 Pour être certain qu'aucune transaction concurrente ne mette à jour une table du groupe pendant toute la durée du rollback, la fonction *emaj_logged_rollback_group()* pose explicitement un verrou de type *EXCLUSIVE* sur chacune des tables du groupe. Si des transactions accédant à ces tables en mise à jour sont en cours, ceci peut se traduire par la survenue d'une étreinte fatale (*deadlock*). Si la résolution de l'étreinte fatale impacte la fonction E-Maj, le *deadlock* est intercepté et la pose de verrou est automatiquement réitérée, avec un maximum de 5 tentatives. En revanche, les tables du groupe continuent à être accessibles en lecture pendant l'opération.
 
-Si des tables du groupe à rollbacker possèdent des triggers, il peut être nécessaire de les désactiver avant le rollback et de les réactiver à l'issue de l'opération (plus de détails :ref:`ici <application_triggers>`).
+Si des tables du groupe à traiter possèdent des *triggers* (déclencheurs), ceux-ci sont, par défaut, temporairement désactivés pendant l’opération. Avec la fonction :ref:`emaj_keep_enabled_trigger()<emaj_keep_enabled_trigger>`, on peut enregistrer des triggers comme « ne devant pas être automatiquement désactivés lors du rollback » (plus de détails :ref:`ici <application_triggers>`).
 
 Si une table impactée par le rollback possède une clé étrangère (*foreign key*) ou est référencée dans une clé étrangère appartenant à une autre table, alors la présence de cette clé étrangère est prise en compte par l'opération de rollback. Si le contrôle des clés créées ou modifiées par le rollback ne peut être différé en fin d'opération (contrainte non déclarée *DEFERRABLE*), alors cette clé étrangère est supprimée en début de rollback puis recréée en fin de rollback.
 

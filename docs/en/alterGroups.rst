@@ -113,7 +113,7 @@ or ::
 
 If the parameter representing the mark is not specified, or is empty or *NULL*, a name is automatically generated: “ALTER_%”, where the '%' character represents the current transaction start time with a “hh.mn.ss.mmm” pattern.
 
-An E-Maj rollback operation targeting a mark set before such groups changes does **NOT** automaticaly cancel these changes.
+An E-Maj rollback operation targeting a mark set before such groups changes does **NOT** automatically cancel these changes.
 
 However, the administrator can apply the same procedure to reset a tables group to a prior state.
 

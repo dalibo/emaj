@@ -220,6 +220,7 @@ select relname from pg_catalog.pg_class,
 
 -- process the extension upgrade
 ALTER EXTENSION emaj UPDATE TO 'devel';
+WARNING:  E-Maj upgrade: with this new E-Maj version, application triggers are by default automatically disabled during E-Maj rollback operations. This may require some changes in your rollback procedures. Refer to the E-Maj documentation for additional information.
 -----------------------------------------------------------
 -- check installation
 -----------------------------------------------------------
@@ -237,6 +238,7 @@ select relname from pg_catalog.pg_class,
            relname           
 -----------------------------
  emaj_alter_plan
+ emaj_enabled_trigger
  emaj_global_seq
  emaj_group
  emaj_group_def
@@ -255,7 +257,7 @@ select relname from pg_catalog.pg_class,
  emaj_sequence
  emaj_time_stamp
  emaj_time_stamp_time_id_seq
-(19 rows)
+(20 rows)
 
 -- check the emaj_param content
 SELECT param_value_text FROM emaj.emaj_param WHERE param_key = 'emaj_version';

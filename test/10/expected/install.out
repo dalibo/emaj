@@ -34,6 +34,7 @@ select relname from pg_catalog.pg_class,
            relname           
 -----------------------------
  emaj_alter_plan
+ emaj_enabled_trigger
  emaj_global_seq
  emaj_group
  emaj_group_def
@@ -52,7 +53,7 @@ select relname from pg_catalog.pg_class,
  emaj_sequence
  emaj_time_stamp
  emaj_time_stamp_time_id_seq
-(19 rows)
+(20 rows)
 
 -- check the emaj_param content
 SELECT param_value_text FROM emaj.emaj_param WHERE param_key = 'emaj_version';
@@ -176,6 +177,23 @@ primary key, btree, for table "emaj.emaj_alter_plan"
  stat_role                | character varying(32)    |           |          | 
  stat_verb                | character varying(6)     |           |          | 
  stat_rows                | bigint                   |           |          | 
+
+         Table "emaj.emaj_enabled_trigger"
+   Column   | Type | Collation | Nullable | Default 
+------------+------+-----------+----------+---------
+ trg_schema | text |           | not null | 
+ trg_table  | text |           | not null | 
+ trg_name   | text |           | not null | 
+Indexes:
+    "emaj_enabled_trigger_pkey" PRIMARY KEY, btree (trg_schema, trg_table, trg_name)
+
+Index "emaj.emaj_enabled_trigger_pkey"
+   Column   | Type | Definition 
+------------+------+------------
+ trg_schema | text | trg_schema
+ trg_table  | text | trg_table
+ trg_name   | text | trg_name
+primary key, btree, for table "emaj.emaj_enabled_trigger"
 
                        Sequence "emaj.emaj_global_seq"
   Type  | Start | Minimum |       Maximum       | Increment | Cycles? | Cache 
@@ -436,10 +454,10 @@ primary key, btree, for table "emaj.emaj_rlbk"
  rlbp_step               | emaj._rlbk_step_enum     |           | not null | 
  rlbp_schema             | text                     |           | not null | 
  rlbp_table              | text                     |           | not null | 
- rlbp_fkey               | text                     |           | not null | 
+ rlbp_object             | text                     |           | not null | 
  rlbp_batch_number       | integer                  |           |          | 
  rlbp_session            | integer                  |           |          | 
- rlbp_fkey_def           | text                     |           |          | 
+ rlbp_object_def         | text                     |           |          | 
  rlbp_target_time_id     | bigint                   |           |          | 
  rlbp_estimated_quantity | bigint                   |           |          | 
  rlbp_estimated_duration | interval                 |           |          | 
@@ -448,7 +466,7 @@ primary key, btree, for table "emaj.emaj_rlbk"
  rlbp_quantity           | bigint                   |           |          | 
  rlbp_duration           | interval                 |           |          | 
 Indexes:
-    "emaj_rlbk_plan_pkey" PRIMARY KEY, btree (rlbp_rlbk_id, rlbp_step, rlbp_schema, rlbp_table, rlbp_fkey)
+    "emaj_rlbk_plan_pkey" PRIMARY KEY, btree (rlbp_rlbk_id, rlbp_step, rlbp_schema, rlbp_table, rlbp_object)
 Foreign-key constraints:
     "emaj_rlbk_plan_rlbp_rlbk_id_fkey" FOREIGN KEY (rlbp_rlbk_id) REFERENCES emaj.emaj_rlbk(rlbk_id)
 
@@ -459,7 +477,7 @@ Foreign-key constraints:
  rlbp_step    | emaj._rlbk_step_enum | rlbp_step
  rlbp_schema  | text                 | rlbp_schema
  rlbp_table   | text                 | rlbp_table
- rlbp_fkey    | text                 | rlbp_fkey
+ rlbp_object  | text                 | rlbp_object
 primary key, btree, for table "emaj.emaj_rlbk_plan"
 
                 Sequence "emaj.emaj_rlbk_rlbk_id_seq"
@@ -494,12 +512,12 @@ primary key, btree, for table "emaj.emaj_rlbk_session"
  rlbt_step     | emaj._rlbk_step_enum |           | not null | 
  rlbt_schema   | text                 |           | not null | 
  rlbt_table    | text                 |           | not null | 
- rlbt_fkey     | text                 |           | not null | 
+ rlbt_object   | text                 |           | not null | 
  rlbt_rlbk_id  | integer              |           | not null | 
  rlbt_quantity | bigint               |           | not null | 
  rlbt_duration | interval             |           | not null | 
 Indexes:
-    "emaj_rlbk_stat_pkey" PRIMARY KEY, btree (rlbt_step, rlbt_schema, rlbt_table, rlbt_fkey, rlbt_rlbk_id)
+    "emaj_rlbk_stat_pkey" PRIMARY KEY, btree (rlbt_step, rlbt_schema, rlbt_table, rlbt_object, rlbt_rlbk_id)
 Foreign-key constraints:
     "emaj_rlbk_stat_rlbt_rlbk_id_fkey" FOREIGN KEY (rlbt_rlbk_id) REFERENCES emaj.emaj_rlbk(rlbk_id)
 
@@ -509,7 +527,7 @@ Foreign-key constraints:
  rlbt_step    | emaj._rlbk_step_enum | rlbt_step
  rlbt_schema  | text                 | rlbt_schema
  rlbt_table   | text                 | rlbt_table
- rlbt_fkey    | text                 | rlbt_fkey
+ rlbt_object  | text                 | rlbt_object
  rlbt_rlbk_id | integer              | rlbt_rlbk_id
 primary key, btree, for table "emaj.emaj_rlbk_stat"
 

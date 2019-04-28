@@ -8,7 +8,7 @@ alter sequence emaj.emaj_hist_hist_id_seq restart 1000;
 alter sequence emaj.emaj_time_stamp_time_id_seq restart 1000;
 -- prepare groups
 select emaj.emaj_create_group('myGroup1');
-WARNING:  _create_tbl: The table "myschema1.mytbl2" has triggers (mytbl2trg). Verify the compatibility with emaj rollback operations (in particular if triggers update one or several other tables). Triggers may have to be manualy disabled before rollback.
+WARNING:  _create_tbl: The table "myschema1.mytbl2" has triggers (mytbl2trg1, mytbl2trg2). They will be automatically disabled during E-Maj rollback operations, unless they have been recorded into the list of triggers that may be kept enabled, with the emaj_keep_enabled_trigger() function.
 CONTEXT:  SQL statement "SELECT emaj._create_tbl(grpdef_schema, grpdef_tblseq, grpdef_group, grpdef_priority, grpdef_log_dat_tsp, grpdef_log_idx_tsp, v_timeId, v_isRollbackable, FALSE)
       FROM (
         SELECT grpdef_schema, grpdef_tblseq, grpdef_group, grpdef_priority, grpdef_log_dat_tsp, grpdef_log_idx_tsp

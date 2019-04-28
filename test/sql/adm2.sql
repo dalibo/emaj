@@ -185,8 +185,8 @@ select * from emaj.emaj_rollback_group('phil''s group#3",','phil''s mark #3',fal
 select mark_group, regexp_replace(mark_name,E'\\d\\d\.\\d\\d\\.\\d\\d\\.\\d\\d\\d','%','g'), mark_time_id, mark_is_deleted, mark_is_rlbk_protected, mark_comment, mark_log_rows_before_next, mark_logged_rlbk_target_mark from emaj.emaj_mark order by mark_time_id, mark_group;
 select sequ_schema, sequ_name, sequ_time_id, sequ_last_val, sequ_is_called from emaj.emaj_sequence order by sequ_time_id, sequ_schema, sequ_name;
 select sqhl_schema, sqhl_table, sqhl_begin_time_id, sqhl_end_time_id, sqhl_hole_size from emaj.emaj_seq_hole order by 1,2,3;
-select rlbt_rlbk_id, rlbt_step, rlbt_schema, rlbt_table, rlbt_fkey, rlbt_quantity from emaj.emaj_rlbk_stat
-  order by rlbt_rlbk_id, rlbt_step, rlbt_schema, rlbt_table, rlbt_fkey;
+select rlbt_rlbk_id, rlbt_step, rlbt_schema, rlbt_table, rlbt_object, rlbt_quantity from emaj.emaj_rlbk_stat
+  order by rlbt_rlbk_id, rlbt_step, rlbt_schema, rlbt_table, rlbt_object;
 -- user tables
 select * from "phil's schema3"."phil's tbl1" order by "phil's col11","phil's col12";
 select * from "phil's schema3"."myTbl2\" order by col21;
@@ -211,8 +211,8 @@ select * from emaj.emaj_rollback_group('myGroup1','EMAJ_LAST_MARK',false) order 
 -----------------------------
 -- emaj tables
 select sqhl_schema, sqhl_table, sqhl_begin_time_id, sqhl_end_time_id, sqhl_hole_size from emaj.emaj_seq_hole order by 1,2,3;
-select rlbt_rlbk_id, rlbt_step, rlbt_schema, rlbt_table, rlbt_fkey, rlbt_quantity from emaj.emaj_rlbk_stat
-  order by rlbt_rlbk_id, rlbt_step, rlbt_schema, rlbt_table, rlbt_fkey;
+select rlbt_rlbk_id, rlbt_step, rlbt_schema, rlbt_table, rlbt_object, rlbt_quantity from emaj.emaj_rlbk_stat
+  order by rlbt_rlbk_id, rlbt_step, rlbt_schema, rlbt_table, rlbt_object;
 
 -----------------------------
 -- Step 12 : tests snaps and script generation functions
@@ -662,11 +662,11 @@ select rlbk_id, rlbk_groups, rlbk_mark, rlbk_time_id, rlbk_is_logged, rlbk_is_al
 select rlbs_rlbk_id, rlbs_session, 
        case when rlbs_end_datetime is null then 'null' else '[ts]' end as "end_datetime"
   from emaj.emaj_rlbk_session where rlbs_rlbk_id >= 10000  order by rlbs_rlbk_id, rlbs_session;
-select rlbp_rlbk_id, rlbp_step, rlbp_schema, rlbp_table, rlbp_fkey, rlbp_target_time_id, rlbp_batch_number, rlbp_session,
-       rlbp_fkey_def, rlbp_estimated_quantity, rlbp_estimate_method, rlbp_quantity
-  from emaj.emaj_rlbk_plan where rlbp_rlbk_id >= 10000  order by rlbp_rlbk_id, rlbp_step, rlbp_schema, rlbp_table, rlbp_fkey;
-select rlbt_step, rlbt_schema, rlbt_table, rlbt_fkey, rlbt_rlbk_id, rlbt_quantity
-  from emaj.emaj_rlbk_stat where rlbt_rlbk_id >= 10000 order by rlbt_rlbk_id, rlbt_step, rlbt_schema, rlbt_table, rlbt_fkey;
+select rlbp_rlbk_id, rlbp_step, rlbp_schema, rlbp_table, rlbp_object, rlbp_target_time_id, rlbp_batch_number, rlbp_session,
+       rlbp_object_def, rlbp_estimated_quantity, rlbp_estimate_method, rlbp_quantity
+  from emaj.emaj_rlbk_plan where rlbp_rlbk_id >= 10000  order by rlbp_rlbk_id, rlbp_step, rlbp_schema, rlbp_table, rlbp_object;
+select rlbt_step, rlbt_schema, rlbt_table, rlbt_object, rlbt_rlbk_id, rlbt_quantity
+  from emaj.emaj_rlbk_stat where rlbt_rlbk_id >= 10000 order by rlbt_rlbk_id, rlbt_step, rlbt_schema, rlbt_table, rlbt_object;
 
 select time_id, time_last_emaj_gid, time_event from emaj.emaj_time_stamp where time_id >= 10000 order by time_id;
 select hist_id, hist_function, hist_event, hist_object,

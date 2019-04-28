@@ -33,6 +33,7 @@ select count(*) from emaj.emaj_rlbk;
 select count(*) from emaj.emaj_rlbk_session;
 select count(*) from emaj.emaj_rlbk_plan;
 select count(*) from emaj.emaj_rlbk_stat;
+select count(*) from emaj.emaj_enabled_trigger;
 select count(*) from emaj_mySchema1.myTbl1_log;
 
 -----------------------------
@@ -68,11 +69,13 @@ delete from emaj.emaj_rlbk;
 delete from emaj.emaj_rlbk_session;
 delete from emaj.emaj_rlbk_plan;
 delete from emaj.emaj_rlbk_stat;
+delete from emaj_enabled_trigger;
 delete from emaj_mySchema1.myTbl1_log;
 
 -----------------------------
 -- forbiden functions
 -----------------------------
+select emaj.emaj_keep_enabled_trigger('ADD','myschema1','mytbl1','%');
 select emaj.emaj_create_group('myGroup1');
 select emaj.emaj_create_group('myGroup1',true);
 select emaj.emaj_drop_group('myGroup1');

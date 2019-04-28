@@ -16,14 +16,16 @@ The :ref:`emaj_start_group() <emaj_start_group>`, :ref:`emaj_stop_group() <emaj_
 Management of application triggers
 ----------------------------------
 
-Triggers may have been created on application tables. It is not rare that these triggers perform one or more updates on other tables. In such a case, it is the E-Maj administrator's responsibility to understand the impact of rollback operations on tables concerned by triggers, and if needed, to take the appropriate measures.
+Triggers may have been created on application tables. It is not rare that these triggers perform one or more updates on other tables. In such a case, it is the E-Maj administrator's responsibility to understand the impact of E-Maj rollback operations on tables concerned by triggers, and if needed, to take the appropriate measures.
 
-If the trigger simply adjusts the content of the row to insert or update, the logged data will contain the final value of columns. So the rollback would reset the old values without any problem. But may be it would be necessary to deactivate such a trigger during a rollback operation.
+If the trigger simply adjusts the content of the row to insert or update, the logged data will contain the final columns value. So in case of rollback, the log table contains the right data to process. And as the trigger is by default automatically disabled at rollback time, the trigger cannot disturb the rollback processing.
 
 If the trigger updates another table, two cases must be considered:
 
-* if the updated table belong to the same tables group, it would be necessary to deactivate the trigger during a rollback operation, so that E-Maj and only E-Maj performs the updates required by the rollback operation,
-* if the updated table does not belong to the same tables group, it is essential to analyse the consequences of a rollback operation, in order to avoid a de-synchronisation between both tables. In such a case, merely deactivating the trigger may not be sufficient.
+* if the updated table belongs to the same tables group, the automatic trigger disabling and the rollback of both tables will let them in the expected state,
+* if the updated table does not belong to the same tables group, it is essential to analyse the consequences of a rollback operation, in order to avoid a de-synchronisation between both tables. If needed, the :ref:`emaj_keep_enabled_trigger()<emaj_keep_enabled_trigger>` function can be used to not disable the trigger at rollback time. But merely deactivating the trigger may not be sufficient and some other actions may be required.
+
+For more complex triggers, it is essential to perfectly understand their impacts on E-Maj rollbacks and take any appropriate mesure at rollback time.
 
 Internal E-Maj table or sequence change
 ---------------------------------------

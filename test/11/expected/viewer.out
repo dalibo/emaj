@@ -20,7 +20,7 @@ NOTICE:  trigger "emaj_trunc_trg" for relation "myschema1.mytbl4" does not exist
 NOTICE:  table "mytbl2_log" does not exist, skipping
 NOTICE:  trigger "emaj_log_trg" for relation "myschema1.mytbl2" does not exist, skipping
 NOTICE:  trigger "emaj_trunc_trg" for relation "myschema1.mytbl2" does not exist, skipping
-WARNING:  _create_tbl: The table "myschema1.mytbl2" has triggers (mytbl2trg). Verify the compatibility with emaj rollback operations (in particular if triggers update one or several other tables). Triggers may have to be manualy disabled before rollback.
+WARNING:  _create_tbl: The table "myschema1.mytbl2" has triggers (mytbl2trg1, mytbl2trg2). They will be automatically disabled during E-Maj rollback operations, unless they have been recorded into the list of triggers that may be kept enabled, with the emaj_keep_enabled_trigger() function.
 NOTICE:  table "mytbl2b_log" does not exist, skipping
 NOTICE:  trigger "emaj_log_trg" for relation "myschema1.mytbl2b" does not exist, skipping
 NOTICE:  trigger "emaj_trunc_trg" for relation "myschema1.mytbl2b" does not exist, skipping
@@ -145,13 +145,19 @@ select count(*) from emaj.emaj_rlbk_session;
 select count(*) from emaj.emaj_rlbk_plan;
  count 
 -------
-   141
+   149
 (1 row)
 
 select count(*) from emaj.emaj_rlbk_stat;
  count 
 -------
      7
+(1 row)
+
+select count(*) from emaj.emaj_enabled_trigger;
+ count 
+-------
+     0
 (1 row)
 
 select count(*) from emaj_mySchema1.myTbl1_log;
@@ -268,11 +274,17 @@ delete from emaj.emaj_rlbk_plan;
 ERROR:  permission denied for table emaj_rlbk_plan
 delete from emaj.emaj_rlbk_stat;
 ERROR:  permission denied for table emaj_rlbk_stat
+delete from emaj_enabled_trigger;
+ERROR:  relation "emaj_enabled_trigger" does not exist
+LINE 1: delete from emaj_enabled_trigger;
+                    ^
 delete from emaj_mySchema1.myTbl1_log;
 ERROR:  permission denied for table mytbl1_log
 -----------------------------
 -- forbiden functions
 -----------------------------
+select emaj.emaj_keep_enabled_trigger('ADD','myschema1','mytbl1','%');
+ERROR:  permission denied for function emaj_keep_enabled_trigger
 select emaj.emaj_create_group('myGroup1');
 ERROR:  permission denied for function emaj_create_group
 select emaj.emaj_create_group('myGroup1',true);

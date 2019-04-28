@@ -27,11 +27,9 @@ set search_path=myschema1;
 --
 update "myTbl3" set col33 = col33 / 2;
 --
-alter table mySchema1.myTbl2 disable trigger myTbl2trg;
 select * from emaj.emaj_rollback_group('myGroup1','M2',false) order by 1,2;
 select emaj.emaj_unprotect_mark_group('myGroup1','M3');
 select * from emaj.emaj_logged_rollback_group('myGroup1','M2',true) order by 1,2;
-alter table mySchema1.myTbl2 enable trigger myTbl2trg;
 --
 select emaj.emaj_rename_mark_group('myGroup1','EMAJ_LAST_MARK','End_rollback_to_M2');
 select emaj.emaj_consolidate_rollback_group('myGroup1','End_rollback_to_M2');
@@ -69,9 +67,7 @@ insert into myTbl1 values (1, 'Step 6', E'\\000'::bytea);
 insert into myTbl4 values (11,'FK...',1,1,'Step 6');
 insert into myTbl4 values (12,'FK...',1,1,'Step 6');
 --
-alter table mySchema1.myTbl2 disable trigger myTbl2trg;
 select * from emaj.emaj_rollback_group('myGroup1','M5',false) order by 1,2;
-alter table mySchema1.myTbl2 enable trigger myTbl2trg;
 --
 insert into myTbl1 values (1, 'Step 6', E'\\001'::bytea);
 copy myTbl4 from stdin;
@@ -79,9 +75,7 @@ copy myTbl4 from stdin;
 12		1	1	Step 6
 \.
 --
-alter table mySchema1.myTbl2 disable trigger myTbl2trg;
 select * from emaj.emaj_logged_rollback_group('myGroup1','M4',false) order by 1,2;
-alter table mySchema1.myTbl2 enable trigger myTbl2trg;
 
 -----------------------------
 -- Step 7 : for myGroup1, update tables, rename a mark, then delete 2 marks then delete all before a mark 
@@ -150,5 +144,3 @@ delete from mySchema2.myTbl1;
 delete from mySchema2.myTbl2; 
 delete from mySchema2."myTbl3";
 alter sequence mySchema2.mySeq1 restart 9999;
--- but disable the application trigger
-alter table mySchema1.myTbl2 disable trigger myTbl2trg;

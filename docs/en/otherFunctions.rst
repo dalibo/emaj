@@ -16,7 +16,7 @@ For each E-Maj schema (*emaj* and each log schema) the function verifies that:
 * all tables, functions, sequences and types contained in the schema are either objects of the extension, or linked to created tables groups,
 * they don't contain any view, foreign table, domain, conversion, operator or operator class.
 
-Then, for each created tables group, the function performs the same checks as those performed when a group is started, a mark is set, or a rollback is executed (more details :ref:`here <internal_checks>`).
+Then, for each created tables group, the function performs the same checks as those performed when a group is started, a mark is set, or a rollback is executed (:ref:`more details <internal_checks>`).
 
 The function returns a set of rows describing the detected discrepancies. If no error is detected, the function returns a single row containing the following messages::
 
@@ -25,6 +25,25 @@ The function returns a set of rows describing the detected discrepancies. If no 
 The *emaj_verify_all()* function can be executed by any role belonging to *emaj_adm* or *emaj_viewer* roles.
 
 If errors are detected, for instance after an application table referenced in a tables group has been dropped, appropriate measures must be taken. Typically, the potential orphan log tables or functions must be manually dropped. 
+
+.. _emaj_keep_enabled_trigger:
+
+Not disabling application triggers at E-Maj rollback time
+---------------------------------------------------------
+
+Application triggers are automatically disabled during E-Maj rollback operations. Under some circumstances, it may be desirable to keep them enabled (more details :ref:`here <application_triggers>`). The *emaj_keep_enabled_trigger()* function achieves this. It allows to add or remove triggers into/from a list of triggers that do not need to be disabled during rollback operations. ::
+
+	SELECT emaj.emaj_keep_enabled_trigger(<action>, <schema.name>, <table.name>, <trigger.name>);
+
+The *<action>* parameter accepts 2 values: ‘ADD’ to add a trigger to the list or ‘REMOVE’ to delete a trigger from the list.
+
+The trigger is identified by the 3 components: schema name, table name and trigger name.
+
+The trigger name may contain ‘%’ and ‘_’ wildcard characters. These characters have the same meaning as in the *LIKE* clause of the SQL language. Thus several triggers of a single table can be processed by a unique function call.
+
+The function returns the number of triggers effectively added or removed.
+
+The function does not process E-Maj triggers (log triggers or triggers protecting against *TRUNCATE*).
 
 .. _emaj_rollback_activity:
 

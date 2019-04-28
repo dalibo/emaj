@@ -97,7 +97,7 @@ The function also creates the log schemas, if needed.
 
 On the contrary, if specific tablespaces are referenced for any log table or log index, these tablespaces must exist before the function's execution.
 
-The *emaj_create_group()* function also checks the existence of application triggers on any tables of the group. If a trigger exists on a table of the group, a message is returned, suggesting the user to verify that this trigger does not update any tables that would not belong to the group. 
+The *emaj_create_group()* function also checks the existence of application triggers on any tables of the group. If a trigger exists on a table of the group, a message is returned, suggesting the user to check the impact of this trigger on E-Maj rollbacks. 
 
 If a sequence of the group is associated either to a *SERIAL* or *BIGSERIAL* column or to a column created with a *GENERATED AS IDENTITY* clause, and the table that owns this column does not belong to the same tables group, the function also issues a *WARNING* message.
 
@@ -199,7 +199,7 @@ The function returns a set of rows with a severity level set to either “*Notic
 
 To be sure that no concurrent transaction updates any table of the group during the rollback operation, the *emaj_rollback_group()* function explicitly sets an *EXCLUSIVE* lock on each table of the group. If transactions updating these tables are running, this can lead to deadlock. If the deadlock processing impacts the execution of the E-Maj function, the error is trapped and the lock operation is repeated, with a maximum of 5 attempts. But tables of the group remain accessible for read only transactions during the operation.
 
-If tables belonging to the group to rollback have triggers, it may be necessary to de-activate them before the rollback and re-activate them after (more details :ref:`here <application_triggers>`).
+If tables belonging to the group to rollback have triggers, these triggers are by default temporarily disabled during the operation. Using the :ref:`emaj_keep_enabled_trigger()<emaj_keep_enabled_trigger>` function, it is possible to record triggers as ‘not to be automatically disabled at rollback’ (more details :ref:`here <application_triggers>`).
 
 If a table impacted by the rollback owns a foreign key or is referenced by a foreign key from another table, then this foreign key is taken into account by the rollback operation. If the check of the keys created or modified by the rollback cannot be deferred at the end of the operation (constraint not declared as *DEFERRABLE*), then this foreign key is dropped at the beginning of the rollback and recreated at the end.
 
@@ -258,7 +258,7 @@ The function returns a set of rows with a severity level set to either “*Notic
 
 To be sure that no concurrent transaction updates any table of the group during the rollback operation, the *emaj_rollback_group()* function explicitly sets an *EXCLUSIVE* lock on each table of the group. If transactions updating these tables are running, this can lead to deadlock. If the deadlock processing impacts the execution of the E-Maj function, the error is trapped and the lock operation is repeated, with a maximum of 5 attempts. But tables of the group remain accessible for read only transactions during the operation.
 
-If tables belonging to the group to rollback have triggers, it may be necessary to de-activate them before the rollback and re-activate them after (more details :ref:`here <application_triggers>`).
+If tables belonging to the group to rollback have triggers, these triggers are by default temporarily disabled during the operation. Using the :ref:`emaj_keep_enabled_trigger()<emaj_keep_enabled_trigger>` function, it is possible to record triggers as ‘not to be automatically disabled at rollback’ (more details :ref:`here <application_triggers>`).
 
 If a table impacted the rollback owns a foreign key or is referenced by a foreign key from another table, then this foreign key is taken into account by the rollback operation. If the check of the keys created or modified by the rollback cannot be deferred at the end of the operation (constraint not declared as *DEFERRABLE*), then this foreign key is dropped at the beginning of the rollback and recreated at the end.
 

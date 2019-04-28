@@ -138,7 +138,7 @@ La technique mise en œuvre aboutit à avoir des caractères antislash doublés 
 
 Comme la fonction peut générer un gros voire très gros fichier (en fonction du volume des logs), il est de la responsabilité de l'utilisateur de prévoir un espace disque suffisant.
 
-Il est aussi de la responsabilité de l'utilisateur de désactiver d'éventuels triggers avant d'exécuter le script généré.
+Il est aussi de la responsabilité de l'utilisateur de désactiver d'éventuels triggers applicatifs avant d'exécuter le script généré.
 
 La fonction *emaj_gen_sql_groups()* permet de générer des scripts SQL portant sur plusieurs groupes de tables ::
 

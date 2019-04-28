@@ -537,6 +537,11 @@ select emaj.emaj_gen_sql_groups(array['myGroup1','myGroup2'], 'Multi-1', 'Multi-
 -----------------------------
 -- should be OK
 select * from emaj.emaj_verify_all();
+
+--
+-- log schemas content errors tests
+--
+
 -- detection of unattended tables in E-Maj schemas
 begin;
   create table emaj.dummy1_log (col1 int);
@@ -592,7 +597,9 @@ begin;
   select * from emaj.emaj_verify_all();
 rollback;
 
+--
 -- tests on groups errors
+--
 
 -- detection of too old group
 begin;
@@ -697,6 +704,25 @@ begin;
   update emaj.emaj_relation set rel_kind = 'S' where rel_schema = 'myschema2' and rel_tblseq = 'mytbl1' and upper_inf(rel_time_range);
   alter table myschema1.mytbl4 drop constraint mytbl4_pkey;
   alter table myschema1.mytbl4 set with oids;
+  select * from emaj.emaj_verify_all();
+rollback;
+
+--
+-- other tests
+--
+
+-- bad triggers in emaj_enabled_trigger
+begin;
+-- simulate a discrepancy between the emaj_enabled_trigger table content and the existing triggers
+  insert into emaj.emaj_enabled_trigger values ('dummy','mytbl1','mytrg');         -- dropped schema
+  insert into emaj.emaj_enabled_trigger values ('myschema1','dummy','mytrg');      -- dropped table
+  insert into emaj.emaj_enabled_trigger values ('myschema1','mytbl1','dummy');     -- dropped trigger
+-- check
+  select * from emaj.emaj_verify_all();
+-- and fix
+  select emaj.emaj_keep_enabled_trigger('REMOVE','dummy','mytbl1','%');
+  select emaj.emaj_keep_enabled_trigger('REMOVE','myschema1','dummy','%');
+  select emaj.emaj_keep_enabled_trigger('REMOVE','myschema1','mytbl1','dummy');
   select * from emaj.emaj_verify_all();
 rollback;
 

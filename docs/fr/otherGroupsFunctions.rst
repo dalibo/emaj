@@ -76,7 +76,7 @@ La fonction retourne le nombre de tables et de séquences contenues dans le grou
 
 Cette fonction *emaj_force_stop_group()* effectue le même traitement que la fonction :ref:`emaj_stop_group() <emaj_stop_group>`, Elle présente néanmoins les différences suivantes :
 
-* elle gère les éventuelles absences des tables et triggers à désactiver, des messages de type « *Warning* » étant générés dans ces cas,
+* elle gère les éventuelles absences des tables et triggers E-Maj à désactiver, des messages de type « *Warning* » étant générés dans ces cas,
 * elle ne pose PAS de marque d'arrêt.
 
 Une fois la fonction exécutée, le groupe de tables est en état « *IDLE* ». Il peut alors être supprimé ou modifié avec les fonctions :ref:`emaj_alter_group() <emaj_alter_group>` ou :ref:`emaj_drop_group() <emaj_drop_group>`.

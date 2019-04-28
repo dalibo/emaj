@@ -85,6 +85,11 @@ Les fonctions E-Maj disponibles pour les utilisateurs sont listées ci-dessous p
 | :ref:`emaj_get_previous_mark_group               | | groupe TEXT,                | marque TEXT                           |
 | <emaj_get_previous_mark_group>` (V)              | | marque TEXT                 |                                       |
 +--------------------------------------------------+-------------------------------+---------------------------------------+
+| :ref:`emaj_keep_enabled_trigger                  | | action TEXT,                | nb.triggers INT                       |
+| <emaj_keep_enabled_trigger>`                     | | schéma TEXT,                |                                       |
+|                                                  | | table TEXT,                 |                                       |
+|                                                  | | tableau.triggers TEXT[]     |                                       |
++--------------------------------------------------+-------------------------------+---------------------------------------+
 | :ref:`emaj_log_stat_group                        | | groupe TEXT,                | SETOF emaj_log_stat_type              |
 | <emaj_log_stat_group>` (V)                       | | marque.début TEXT,          |                                       |
 |                                                  | | marque.fin TEXT             |                                       |

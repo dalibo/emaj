@@ -118,7 +118,7 @@ Once a mark is protected, any *logged* or *unlogged rollback* attempt is refused
 
 A mark of an "*audit-only*" or an *IDLE* tables group cannot be protected.
 
-When a mark is set, it is not protected. Protected marks of a tables group automaticaly loose their protection when the group is stopped. Warning: deleting a protected mark also deletes its protection. This protection is not moved on an adjacent mark.
+When a mark is set, it is not protected. Protected marks of a tables group automatically loose their protection when the group is stopped. Warning: deleting a protected mark also deletes its protection. This protection is not moved on an adjacent mark.
 
 The emaj_unprotect_mark_group() function remove an existing protection on a tables group mark. ::
 

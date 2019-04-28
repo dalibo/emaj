@@ -92,13 +92,19 @@ select count(*) from emaj.emaj_rlbk_session;
 select count(*) from emaj.emaj_rlbk_plan;
  count 
 -------
-   141
+   149
 (1 row)
 
 select count(*) from emaj.emaj_rlbk_stat;
  count 
 -------
      7
+(1 row)
+
+select count(*) from emaj.emaj_enabled_trigger;
+ count 
+-------
+     0
 (1 row)
 
 select count(*) from emaj_mySchema1.myTbl1_log;
@@ -215,7 +221,7 @@ select count(*) from emaj.emaj_rlbk_session;
 select count(*) from emaj.emaj_rlbk_plan;
  count 
 -------
-   141
+   149
 (1 row)
 
 select count(*) from emaj.emaj_rlbk_stat;
@@ -236,8 +242,6 @@ insert into myschema2.myTbl8 (col81) values (0);
 alter sequence mySchema2.mySeq1 restart 1000;
 truncate mySchema4.myTblM, mySchema4.myTblC1, mySchema4.myTblC2;
 truncate mySchema4.myTblP, mySchema4.myPartP1, mySchema4.myPartP2;
--- starting from this point, disable the trigger on myTbl2
-alter table mySchema1.myTbl2 disable trigger myTbl2trg;
 set role emaj_regression_tests_adm_user;
 -----------------------------
 -- recreate and start groups
@@ -258,7 +262,7 @@ NOTICE:  trigger "emaj_trunc_trg" for relation "myschema1.mytbl4" does not exist
 NOTICE:  table "mytbl2_log" does not exist, skipping
 NOTICE:  trigger "emaj_log_trg" for relation "myschema1.mytbl2" does not exist, skipping
 NOTICE:  trigger "emaj_trunc_trg" for relation "myschema1.mytbl2" does not exist, skipping
-WARNING:  _create_tbl: The table "myschema1.mytbl2" has triggers (mytbl2trg). Verify the compatibility with emaj rollback operations (in particular if triggers update one or several other tables). Triggers may have to be manualy disabled before rollback.
+WARNING:  _create_tbl: The table "myschema1.mytbl2" has triggers (mytbl2trg1, mytbl2trg2). They will be automatically disabled during E-Maj rollback operations, unless they have been recorded into the list of triggers that may be kept enabled, with the emaj_keep_enabled_trigger() function.
 NOTICE:  table "mytbl2b_log" does not exist, skipping
 NOTICE:  trigger "emaj_log_trg" for relation "myschema1.mytbl2b" does not exist, skipping
 NOTICE:  trigger "emaj_trunc_trg" for relation "myschema1.mytbl2b" does not exist, skipping
@@ -410,7 +414,7 @@ select group_name, group_is_rollbackable, group_creation_time_id,
 select mark_group, regexp_replace(mark_name,E'\\d\\d\.\\d\\d\\.\\d\\d\\.\\d\\d\\d','%','g'), mark_time_id, mark_is_deleted, mark_is_rlbk_protected, mark_is_rlbk_protected, mark_comment, mark_log_rows_before_next, mark_logged_rlbk_target_mark from emaj.emaj_mark order by mark_time_id, mark_group;
  mark_group | regexp_replace | mark_time_id | mark_is_deleted | mark_is_rlbk_protected | mark_is_rlbk_protected |  mark_comment  | mark_log_rows_before_next | mark_logged_rlbk_target_mark 
 ------------+----------------+--------------+-----------------+------------------------+------------------------+----------------+---------------------------+------------------------------
- myGroup1   | M1             |        10004 | f               | f                      | f                      |                |                        27 | 
+ myGroup1   | M1             |        10004 | f               | f                      | f                      |                |                        29 | 
  myGroup2   | M1             |        10005 | f               | f                      | f                      |                |                         0 | 
  myGroup1   | M2             |        10006 | f               | f                      | f                      |                |                        11 | 
  myGroup1   | M3             |        10007 | f               | f                      | f                      | Third mark set |                           | 
@@ -437,17 +441,17 @@ select sequ_schema, sequ_name, sequ_time_id, sequ_last_val, sequ_is_called from 
  emaj_myschema1 | myTbl3_log_seq    |        10006 |            10 | t
  emaj_myschema1 | mytbl1_log_seq    |        10006 |            15 | t
  emaj_myschema1 | mytbl2_log_seq    |        10006 |             2 | t
- emaj_myschema1 | mytbl2b_log_seq   |        10006 |             1 | f
+ emaj_myschema1 | mytbl2b_log_seq   |        10006 |             2 | t
  emaj_myschema1 | mytbl4_log_seq    |        10006 |             1 | f
  myschema1      | myTbl3_col31_seq  |        10006 |            20 | t
- myschema1      | mytbl2b_col20_seq |        10006 |             3 | f
+ myschema1      | mytbl2b_col20_seq |        10006 |             4 | t
  emaj_myschema1 | myTbl3_log_seq    |        10007 |            10 | t
  emaj_myschema1 | mytbl1_log_seq    |        10007 |            18 | t
  emaj_myschema1 | mytbl2_log_seq    |        10007 |             2 | t
- emaj_myschema1 | mytbl2b_log_seq   |        10007 |             1 | f
+ emaj_myschema1 | mytbl2b_log_seq   |        10007 |             2 | t
  emaj_myschema1 | mytbl4_log_seq    |        10007 |             8 | t
  myschema1      | myTbl3_col31_seq  |        10007 |            20 | t
- myschema1      | mytbl2b_col20_seq |        10007 |             3 | f
+ myschema1      | mytbl2b_col20_seq |        10007 |             4 | t
 (29 rows)
 
 -- user tables
@@ -475,7 +479,9 @@ select * from mySchema1.myTbl2 order by col21;
 select * from mySchema1.myTbl2b order by col20;
  col20 | col21 
 -------+-------
-(0 rows)
+     3 |     1
+     4 |     2
+(2 rows)
 
 select col31,col33 from mySchema1."myTbl3" order by col31;
  col31 | col33 
@@ -521,12 +527,12 @@ select col11, col12, col13, emaj_verb, emaj_tuple, emaj_gid, emaj_user, emaj_use
      2 | ABC        | \x1c  | UPD       | NEW        |   100012 | postgres  |              | psql
      3 | ABC        | \x0c  | UPD       | OLD        |   100013 | postgres  |              | psql
      3 | ABC        | \x1c  | UPD       | NEW        |   100013 | postgres  |              | psql
-    11 | ABC        | \x0c  | DEL       | OLD        |   100015 | postgres  |              | psql
-    10 | ABC        | \x0c  | DEL       | OLD        |   100032 | postgres  |              | psql
-     1 | ABC        | \x1c  | UPD       | OLD        |   100034 | postgres  |              | psql
-     1 | DEF        | \x1c  | UPD       | NEW        |   100034 | postgres  |              | psql
-     2 | ABC        | \x1c  | UPD       | OLD        |   100035 | postgres  |              | psql
-     2 | DEF        | \x1c  | UPD       | NEW        |   100035 | postgres  |              | psql
+    11 | ABC        | \x0c  | DEL       | OLD        |   100016 | postgres  |              | psql
+    10 | ABC        | \x0c  | DEL       | OLD        |   100034 | postgres  |              | psql
+     1 | ABC        | \x1c  | UPD       | OLD        |   100036 | postgres  |              | psql
+     1 | DEF        | \x1c  | UPD       | NEW        |   100036 | postgres  |              | psql
+     2 | ABC        | \x1c  | UPD       | OLD        |   100037 | postgres  |              | psql
+     2 | DEF        | \x1c  | UPD       | NEW        |   100037 | postgres  |              | psql
 (23 rows)
 
 select col21, col22, col23, emaj_verb, emaj_tuple, emaj_gid, emaj_user, emaj_user_ip, extra_col_appname
@@ -534,47 +540,49 @@ select col21, col22, col23, emaj_verb, emaj_tuple, emaj_gid, emaj_user, emaj_use
  col21 | col22 |   col23    | emaj_verb | emaj_tuple | emaj_gid | emaj_user | emaj_user_ip | extra_col_appname 
 -------+-------+------------+-----------+------------+----------+-----------+--------------+-------------------
      1 | ABC   | 12-31-2010 | INS       | NEW        |   100014 | postgres  |              | psql
-     2 | DEF   |            | INS       | NEW        |   100016 | postgres  |              | psql
+     2 | DEF   |            | INS       | NEW        |   100017 | postgres  |              | psql
 (2 rows)
 
 select col20, col21, emaj_verb, emaj_tuple, emaj_gid, emaj_user, emaj_user_ip, extra_col_appname
     from emaj_mySchema1.myTbl2b_log order by emaj_gid, emaj_tuple desc;
  col20 | col21 | emaj_verb | emaj_tuple | emaj_gid | emaj_user | emaj_user_ip | extra_col_appname 
 -------+-------+-----------+------------+----------+-----------+--------------+-------------------
-(0 rows)
+     3 |     1 | INS       | NEW        |   100015 | postgres  |              | psql
+     4 |     2 | INS       | NEW        |   100018 | postgres  |              | psql
+(2 rows)
 
 select col31, col33, emaj_verb, emaj_tuple, emaj_gid, emaj_user, emaj_user_ip, extra_col_appname
     from emaj_myschema1."myTbl3_log" order by emaj_gid, emaj_tuple desc;
  col31 | col33 | emaj_verb | emaj_tuple | emaj_gid | emaj_user | emaj_user_ip | extra_col_appname 
 -------+-------+-----------+------------+----------+-----------+--------------+-------------------
-    11 | 10.00 | INS       | NEW        |   100017 | postgres  |              | psql
-    12 | 10.00 | INS       | NEW        |   100018 | postgres  |              | psql
-    13 | 10.00 | INS       | NEW        |   100019 | postgres  |              | psql
-    14 | 10.00 | INS       | NEW        |   100020 | postgres  |              | psql
-    15 | 10.00 | INS       | NEW        |   100021 | postgres  |              | psql
-    16 | 10.00 | INS       | NEW        |   100022 | postgres  |              | psql
-    17 | 10.00 | INS       | NEW        |   100023 | postgres  |              | psql
-    18 | 10.00 | INS       | NEW        |   100024 | postgres  |              | psql
-    19 | 10.00 | INS       | NEW        |   100025 | postgres  |              | psql
-    20 | 10.00 | INS       | NEW        |   100026 | postgres  |              | psql
+    11 | 10.00 | INS       | NEW        |   100019 | postgres  |              | psql
+    12 | 10.00 | INS       | NEW        |   100020 | postgres  |              | psql
+    13 | 10.00 | INS       | NEW        |   100021 | postgres  |              | psql
+    14 | 10.00 | INS       | NEW        |   100022 | postgres  |              | psql
+    15 | 10.00 | INS       | NEW        |   100023 | postgres  |              | psql
+    16 | 10.00 | INS       | NEW        |   100024 | postgres  |              | psql
+    17 | 10.00 | INS       | NEW        |   100025 | postgres  |              | psql
+    18 | 10.00 | INS       | NEW        |   100026 | postgres  |              | psql
+    19 | 10.00 | INS       | NEW        |   100027 | postgres  |              | psql
+    20 | 10.00 | INS       | NEW        |   100028 | postgres  |              | psql
 (10 rows)
 
 select col41, col42, col43, col44, col45, emaj_verb, emaj_tuple, emaj_gid, emaj_user, emaj_user_ip, extra_col_appname
     from emaj_mySchema1.myTbl4_log order by emaj_gid, emaj_tuple desc;
  col41 | col42 | col43 | col44 |   col45    | emaj_verb | emaj_tuple | emaj_gid | emaj_user | emaj_user_ip | extra_col_appname 
 -------+-------+-------+-------+------------+-----------+------------+----------+-----------+--------------+-------------------
-     1 | FK... |     1 |     1 | ABC        | INS       | NEW        |   100027 | postgres  |              | psql
-     2 | FK... |     1 |     1 | ABC        | INS       | NEW        |   100028 | postgres  |              | psql
-     1 | FK... |     1 |     1 | ABC        | UPD       | OLD        |   100029 | postgres  |              | psql
-     1 | FK... |     2 |     1 | ABC        | UPD       | NEW        |   100029 | postgres  |              | psql
-     2 | FK... |     1 |     1 | ABC        | UPD       | OLD        |   100030 | postgres  |              | psql
-     2 | FK... |     2 |     1 | ABC        | UPD       | NEW        |   100030 | postgres  |              | psql
-     3 | FK... |     1 |    10 | ABC        | INS       | NEW        |   100031 | postgres  |              | psql
-     3 | FK... |     1 |    10 | ABC        | DEL       | OLD        |   100033 | postgres  |              | psql
-     1 | FK... |     2 |     1 | ABC        | UPD       | OLD        |   100036 | postgres  |              | psql
-     1 | FK... |     2 |       |            | UPD       | NEW        |   100036 | postgres  |              | psql
-     2 | FK... |     2 |     1 | ABC        | UPD       | OLD        |   100037 | postgres  |              | psql
-     2 | FK... |     2 |       |            | UPD       | NEW        |   100037 | postgres  |              | psql
+     1 | FK... |     1 |     1 | ABC        | INS       | NEW        |   100029 | postgres  |              | psql
+     2 | FK... |     1 |     1 | ABC        | INS       | NEW        |   100030 | postgres  |              | psql
+     1 | FK... |     1 |     1 | ABC        | UPD       | OLD        |   100031 | postgres  |              | psql
+     1 | FK... |     2 |     1 | ABC        | UPD       | NEW        |   100031 | postgres  |              | psql
+     2 | FK... |     1 |     1 | ABC        | UPD       | OLD        |   100032 | postgres  |              | psql
+     2 | FK... |     2 |     1 | ABC        | UPD       | NEW        |   100032 | postgres  |              | psql
+     3 | FK... |     1 |    10 | ABC        | INS       | NEW        |   100033 | postgres  |              | psql
+     3 | FK... |     1 |    10 | ABC        | DEL       | OLD        |   100035 | postgres  |              | psql
+     1 | FK... |     2 |     1 | ABC        | UPD       | OLD        |   100038 | postgres  |              | psql
+     1 | FK... |     2 |       |            | UPD       | NEW        |   100038 | postgres  |              | psql
+     2 | FK... |     2 |     1 | ABC        | UPD       | OLD        |   100039 | postgres  |              | psql
+     2 | FK... |     2 |       |            | UPD       | NEW        |   100039 | postgres  |              | psql
 (12 rows)
 
 -----------------------------
@@ -649,7 +657,7 @@ select emaj.emaj_set_mark_group('myGroup2','M3');
 select mark_group, regexp_replace(mark_name,E'\\d\\d\.\\d\\d\\.\\d\\d\\.\\d\\d\\d','%','g'), mark_time_id, mark_is_deleted, mark_is_rlbk_protected, mark_comment, mark_log_rows_before_next, mark_logged_rlbk_target_mark from emaj.emaj_mark order by mark_time_id, mark_group;
  mark_group | regexp_replace | mark_time_id | mark_is_deleted | mark_is_rlbk_protected |  mark_comment  | mark_log_rows_before_next | mark_logged_rlbk_target_mark 
 ------------+----------------+--------------+-----------------+------------------------+----------------+---------------------------+------------------------------
- myGroup1   | M1             |        10004 | f               | f                      |                |                        27 | 
+ myGroup1   | M1             |        10004 | f               | f                      |                |                        29 | 
  myGroup2   | M1             |        10005 | f               | f                      |                |                        41 | 
  myGroup1   | M2             |        10006 | f               | f                      |                |                        11 | 
  myGroup1   | M3             |        10007 | f               | f                      | Third mark set |                         0 | 
@@ -678,17 +686,17 @@ select sequ_schema, sequ_name, sequ_time_id, sequ_last_val, sequ_is_called from 
  emaj_myschema1 | myTbl3_log_seq    |        10006 |            10 | t
  emaj_myschema1 | mytbl1_log_seq    |        10006 |            15 | t
  emaj_myschema1 | mytbl2_log_seq    |        10006 |             2 | t
- emaj_myschema1 | mytbl2b_log_seq   |        10006 |             1 | f
+ emaj_myschema1 | mytbl2b_log_seq   |        10006 |             2 | t
  emaj_myschema1 | mytbl4_log_seq    |        10006 |             1 | f
  myschema1      | myTbl3_col31_seq  |        10006 |            20 | t
- myschema1      | mytbl2b_col20_seq |        10006 |             3 | f
+ myschema1      | mytbl2b_col20_seq |        10006 |             4 | t
  emaj_myschema1 | myTbl3_log_seq    |        10007 |            10 | t
  emaj_myschema1 | mytbl1_log_seq    |        10007 |            18 | t
  emaj_myschema1 | mytbl2_log_seq    |        10007 |             2 | t
- emaj_myschema1 | mytbl2b_log_seq   |        10007 |             1 | f
+ emaj_myschema1 | mytbl2b_log_seq   |        10007 |             2 | t
  emaj_myschema1 | mytbl4_log_seq    |        10007 |             8 | t
  myschema1      | myTbl3_col31_seq  |        10007 |            20 | t
- myschema1      | mytbl2b_col20_seq |        10007 |             3 | f
+ myschema1      | mytbl2b_col20_seq |        10007 |             4 | t
  emaj_myschema2 | myTbl3_log_seq    |        10008 |            10 | t
  emaj_myschema2 | mytbl1_log_seq    |        10008 |            15 | t
  emaj_myschema2 | mytbl2_log_seq    |        10008 |             2 | t
@@ -773,89 +781,89 @@ select * from mySchema2.myTbl6 order by col61;
 select col11, col12, col13, emaj_verb, emaj_tuple, emaj_gid from emaj_mySchema2.myTbl1_log order by emaj_gid, emaj_tuple desc;
  col11 |   col12    | col13 | emaj_verb | emaj_tuple | emaj_gid 
 -------+------------+-------+-----------+------------+----------
-     1 | ABC        | \x0c  | INS       | NEW        |   100038
-     2 | ABC        | \x0c  | INS       | NEW        |   100039
-     3 | ABC        | \x0c  | INS       | NEW        |   100040
-     4 | ABC        | \x0c  | INS       | NEW        |   100041
-     5 | ABC        | \x0c  | INS       | NEW        |   100042
-     6 | ABC        | \x0c  | INS       | NEW        |   100043
-     7 | ABC        | \x0c  | INS       | NEW        |   100044
-     8 | ABC        | \x0c  | INS       | NEW        |   100045
-     9 | ABC        | \x0c  | INS       | NEW        |   100046
-    10 | ABC        | \x0c  | INS       | NEW        |   100047
-    11 | ABC        | \x0c  | INS       | NEW        |   100048
-     1 | ABC        | \x0c  | UPD       | OLD        |   100049
-     1 | ABC        | \x1c  | UPD       | NEW        |   100049
-     2 | ABC        | \x0c  | UPD       | OLD        |   100050
-     2 | ABC        | \x1c  | UPD       | NEW        |   100050
-     3 | ABC        | \x0c  | UPD       | OLD        |   100051
-     3 | ABC        | \x1c  | UPD       | NEW        |   100051
-    11 | ABC        | \x0c  | DEL       | OLD        |   100053
+     1 | ABC        | \x0c  | INS       | NEW        |   100040
+     2 | ABC        | \x0c  | INS       | NEW        |   100041
+     3 | ABC        | \x0c  | INS       | NEW        |   100042
+     4 | ABC        | \x0c  | INS       | NEW        |   100043
+     5 | ABC        | \x0c  | INS       | NEW        |   100044
+     6 | ABC        | \x0c  | INS       | NEW        |   100045
+     7 | ABC        | \x0c  | INS       | NEW        |   100046
+     8 | ABC        | \x0c  | INS       | NEW        |   100047
+     9 | ABC        | \x0c  | INS       | NEW        |   100048
+    10 | ABC        | \x0c  | INS       | NEW        |   100049
+    11 | ABC        | \x0c  | INS       | NEW        |   100050
+     1 | ABC        | \x0c  | UPD       | OLD        |   100051
+     1 | ABC        | \x1c  | UPD       | NEW        |   100051
+     2 | ABC        | \x0c  | UPD       | OLD        |   100052
+     2 | ABC        | \x1c  | UPD       | NEW        |   100052
+     3 | ABC        | \x0c  | UPD       | OLD        |   100053
+     3 | ABC        | \x1c  | UPD       | NEW        |   100053
+    11 | ABC        | \x0c  | DEL       | OLD        |   100055
 (18 rows)
 
 select col21, col22, col23, emaj_verb, emaj_tuple, emaj_gid from emaj_mySchema2.myTbl2_log order by emaj_gid, emaj_tuple desc;
  col21 | col22 |   col23    | emaj_verb | emaj_tuple | emaj_gid 
 -------+-------+------------+-----------+------------+----------
-     1 | ABC   | 01-01-2010 | INS       | NEW        |   100052
-     2 | DEF   |            | INS       | NEW        |   100054
+     1 | ABC   | 01-01-2010 | INS       | NEW        |   100054
+     2 | DEF   |            | INS       | NEW        |   100056
 (2 rows)
 
 select col31, col33, emaj_verb, emaj_tuple, emaj_gid from emaj_myschema2."myTbl3_log" order by emaj_gid, emaj_tuple desc;
  col31 | col33 | emaj_verb | emaj_tuple | emaj_gid 
 -------+-------+-----------+------------+----------
-    11 | 10.00 | INS       | NEW        |   100055
-    12 | 10.00 | INS       | NEW        |   100056
-    13 | 10.00 | INS       | NEW        |   100057
-    14 | 10.00 | INS       | NEW        |   100058
-    15 | 10.00 | INS       | NEW        |   100059
-    16 | 10.00 | INS       | NEW        |   100060
-    17 | 10.00 | INS       | NEW        |   100061
-    18 | 10.00 | INS       | NEW        |   100062
-    19 | 10.00 | INS       | NEW        |   100063
-    20 | 10.00 | INS       | NEW        |   100064
+    11 | 10.00 | INS       | NEW        |   100057
+    12 | 10.00 | INS       | NEW        |   100058
+    13 | 10.00 | INS       | NEW        |   100059
+    14 | 10.00 | INS       | NEW        |   100060
+    15 | 10.00 | INS       | NEW        |   100061
+    16 | 10.00 | INS       | NEW        |   100062
+    17 | 10.00 | INS       | NEW        |   100063
+    18 | 10.00 | INS       | NEW        |   100064
+    19 | 10.00 | INS       | NEW        |   100065
+    20 | 10.00 | INS       | NEW        |   100066
 (10 rows)
 
 select col41, col42, col43, col44, col45, emaj_verb, emaj_tuple, emaj_gid from emaj_myschema2.mytbl4_log order by emaj_gid, emaj_tuple desc;
  col41 | col42 | col43 | col44 |   col45    | emaj_verb | emaj_tuple | emaj_gid 
 -------+-------+-------+-------+------------+-----------+------------+----------
-     1 | FK... |     1 |     1 | ABC        | INS       | NEW        |   100079
-     2 | FK... |     1 |     1 | ABC        | INS       | NEW        |   100080
-     1 | FK... |     1 |     1 | ABC        | UPD       | OLD        |   100081
-     1 | FK... |     2 |     1 | ABC        | UPD       | NEW        |   100081
-     2 | FK... |     1 |     1 | ABC        | UPD       | OLD        |   100082
-     2 | FK... |     2 |     1 | ABC        | UPD       | NEW        |   100082
+     1 | FK... |     1 |     1 | ABC        | INS       | NEW        |   100081
+     2 | FK... |     1 |     1 | ABC        | INS       | NEW        |   100082
+     1 | FK... |     1 |     1 | ABC        | UPD       | OLD        |   100083
+     1 | FK... |     2 |     1 | ABC        | UPD       | NEW        |   100083
+     2 | FK... |     1 |     1 | ABC        | UPD       | OLD        |   100084
+     2 | FK... |     2 |     1 | ABC        | UPD       | NEW        |   100084
 (6 rows)
 
 select col51, col52, col53, col54, emaj_verb, emaj_tuple, emaj_gid from emaj_myschema2.mytbl5_log order by emaj_gid, emaj_tuple desc;
  col51 |     col52     |  col53  |          col54          | emaj_verb | emaj_tuple | emaj_gid 
 -------+---------------+---------+-------------------------+-----------+------------+----------
-     1 | {abc,def,ghi} | {1,2,3} |                         | INS       | NEW        |   100065
-     2 | {abc,def,ghi} | {3,4,5} | {02-01-2000,02-28-2000} | INS       | NEW        |   100066
-     1 | {abc,def,ghi} | {1,2,3} |                         | UPD       | OLD        |   100067
-     1 | {abc,def,ghi} | {1,2,3} | {11-28-2010,12-03-2010} | UPD       | NEW        |   100067
-     2 | {abc,def,ghi} | {3,4,5} | {02-01-2000,02-28-2000} | DEL       | OLD        |   100083
+     1 | {abc,def,ghi} | {1,2,3} |                         | INS       | NEW        |   100067
+     2 | {abc,def,ghi} | {3,4,5} | {02-01-2000,02-28-2000} | INS       | NEW        |   100068
+     1 | {abc,def,ghi} | {1,2,3} |                         | UPD       | OLD        |   100069
+     1 | {abc,def,ghi} | {1,2,3} | {11-28-2010,12-03-2010} | UPD       | NEW        |   100069
+     2 | {abc,def,ghi} | {3,4,5} | {02-01-2000,02-28-2000} | DEL       | OLD        |   100085
 (5 rows)
 
 select col61, col62, col63, col64, col65, col66, emaj_verb, emaj_tuple, emaj_gid from emaj_mySchema2.myTbl6_log order by emaj_gid, emaj_tuple desc;
  col61 |  col62  |    col63    |    col64    |         col65         |     col66      | emaj_verb | emaj_tuple | emaj_gid 
 -------+---------+-------------+-------------+-----------------------+----------------+-----------+------------+----------
-     1 | (1,1.3) | (2,2),(0,0) | <(5,5),1>   | ((-2,-2),(3,0),(1,4)) | 10.20.30.40/27 | INS       | NEW        |   100068
-     2 | (2,1.3) | (2,2),(0,0) | <(5,5),2>   | ((-2,-2),(3,0),(1,4)) | 10.20.30.40/27 | INS       | NEW        |   100069
-     3 | (3,1.3) | (2,2),(0,0) | <(5,5),3>   | ((-2,-2),(3,0),(1,4)) | 10.20.30.40/27 | INS       | NEW        |   100070
-     4 | (4,1.3) | (2,2),(0,0) | <(5,5),4>   | ((-2,-2),(3,0),(1,4)) | 10.20.30.40/27 | INS       | NEW        |   100071
-     5 | (5,1.3) | (2,2),(0,0) | <(5,5),5>   | ((-2,-2),(3,0),(1,4)) | 10.20.30.40/27 | INS       | NEW        |   100072
-     6 | (6,1.3) | (2,2),(0,0) | <(5,5),6>   | ((-2,-2),(3,0),(1,4)) | 10.20.30.40/27 | INS       | NEW        |   100073
-     7 | (7,1.3) | (2,2),(0,0) | <(5,5),7>   | ((-2,-2),(3,0),(1,4)) | 10.20.30.40/27 | INS       | NEW        |   100074
-     8 | (8,1.3) | (2,2),(0,0) | <(5,5),8>   | ((-2,-2),(3,0),(1,4)) | 10.20.30.40/27 | INS       | NEW        |   100075
-     1 | (1,1.3) | (2,2),(0,0) | <(5,5),1>   | ((-2,-2),(3,0),(1,4)) | 10.20.30.40/27 | UPD       | OLD        |   100076
-     1 | (1,1.3) | (2,2),(0,0) | <(5,6),3.5> |                       | 10.20.30.40/27 | UPD       | NEW        |   100076
-     2 | (2,1.3) | (2,2),(0,0) | <(5,5),2>   | ((-2,-2),(3,0),(1,4)) | 10.20.30.40/27 | UPD       | OLD        |   100077
-     2 | (2,1.3) | (2,2),(0,0) | <(5,6),3.5> |                       | 10.20.30.40/27 | UPD       | NEW        |   100077
-     3 | (3,1.3) | (2,2),(0,0) | <(5,5),3>   | ((-2,-2),(3,0),(1,4)) | 10.20.30.40/27 | UPD       | OLD        |   100078
-     3 | (3,1.3) | (2,2),(0,0) | <(5,6),3.5> |                       | 10.20.30.40/27 | UPD       | NEW        |   100078
-     1 | (1,1.3) | (2,2),(0,0) | <(5,6),3.5> |                       | 10.20.30.40/27 | DEL       | OLD        |   100084
-     2 | (2,1.3) | (2,2),(0,0) | <(5,6),3.5> |                       | 10.20.30.40/27 | DEL       | OLD        |   100085
-     3 | (3,1.3) | (2,2),(0,0) | <(5,6),3.5> |                       | 10.20.30.40/27 | DEL       | OLD        |   100086
+     1 | (1,1.3) | (2,2),(0,0) | <(5,5),1>   | ((-2,-2),(3,0),(1,4)) | 10.20.30.40/27 | INS       | NEW        |   100070
+     2 | (2,1.3) | (2,2),(0,0) | <(5,5),2>   | ((-2,-2),(3,0),(1,4)) | 10.20.30.40/27 | INS       | NEW        |   100071
+     3 | (3,1.3) | (2,2),(0,0) | <(5,5),3>   | ((-2,-2),(3,0),(1,4)) | 10.20.30.40/27 | INS       | NEW        |   100072
+     4 | (4,1.3) | (2,2),(0,0) | <(5,5),4>   | ((-2,-2),(3,0),(1,4)) | 10.20.30.40/27 | INS       | NEW        |   100073
+     5 | (5,1.3) | (2,2),(0,0) | <(5,5),5>   | ((-2,-2),(3,0),(1,4)) | 10.20.30.40/27 | INS       | NEW        |   100074
+     6 | (6,1.3) | (2,2),(0,0) | <(5,5),6>   | ((-2,-2),(3,0),(1,4)) | 10.20.30.40/27 | INS       | NEW        |   100075
+     7 | (7,1.3) | (2,2),(0,0) | <(5,5),7>   | ((-2,-2),(3,0),(1,4)) | 10.20.30.40/27 | INS       | NEW        |   100076
+     8 | (8,1.3) | (2,2),(0,0) | <(5,5),8>   | ((-2,-2),(3,0),(1,4)) | 10.20.30.40/27 | INS       | NEW        |   100077
+     1 | (1,1.3) | (2,2),(0,0) | <(5,5),1>   | ((-2,-2),(3,0),(1,4)) | 10.20.30.40/27 | UPD       | OLD        |   100078
+     1 | (1,1.3) | (2,2),(0,0) | <(5,6),3.5> |                       | 10.20.30.40/27 | UPD       | NEW        |   100078
+     2 | (2,1.3) | (2,2),(0,0) | <(5,5),2>   | ((-2,-2),(3,0),(1,4)) | 10.20.30.40/27 | UPD       | OLD        |   100079
+     2 | (2,1.3) | (2,2),(0,0) | <(5,6),3.5> |                       | 10.20.30.40/27 | UPD       | NEW        |   100079
+     3 | (3,1.3) | (2,2),(0,0) | <(5,5),3>   | ((-2,-2),(3,0),(1,4)) | 10.20.30.40/27 | UPD       | OLD        |   100080
+     3 | (3,1.3) | (2,2),(0,0) | <(5,6),3.5> |                       | 10.20.30.40/27 | UPD       | NEW        |   100080
+     1 | (1,1.3) | (2,2),(0,0) | <(5,6),3.5> |                       | 10.20.30.40/27 | DEL       | OLD        |   100086
+     2 | (2,1.3) | (2,2),(0,0) | <(5,6),3.5> |                       | 10.20.30.40/27 | DEL       | OLD        |   100087
+     3 | (3,1.3) | (2,2),(0,0) | <(5,6),3.5> |                       | 10.20.30.40/27 | DEL       | OLD        |   100088
 (17 rows)
 
 -----------------------------
@@ -894,7 +902,7 @@ set role emaj_regression_tests_adm_user;
 select mark_group, regexp_replace(mark_name,E'\\d\\d\.\\d\\d\\.\\d\\d\\.\\d\\d\\d','%','g'), mark_time_id, mark_is_deleted, mark_is_rlbk_protected, mark_comment, mark_log_rows_before_next, mark_logged_rlbk_target_mark from emaj.emaj_mark order by mark_time_id, mark_group;
  mark_group | regexp_replace  | mark_time_id | mark_is_deleted | mark_is_rlbk_protected |  mark_comment  | mark_log_rows_before_next | mark_logged_rlbk_target_mark 
 ------------+-----------------+--------------+-----------------+------------------------+----------------+---------------------------+------------------------------
- myGroup1   | M1              |        10004 | f               | f                      |                |                        27 | 
+ myGroup1   | M1              |        10004 | f               | f                      |                |                        29 | 
  myGroup2   | M1              |        10005 | f               | f                      |                |                        41 | 
  myGroup1   | M2              |        10006 | f               | f                      |                |                        11 | 
  myGroup1   | M3              |        10007 | f               | f                      | Third mark set |                         0 | 
@@ -927,17 +935,17 @@ select sequ_schema, sequ_name, sequ_time_id, sequ_last_val, sequ_is_called from 
  emaj_myschema1 | myTbl3_log_seq    |        10006 |            10 | t
  emaj_myschema1 | mytbl1_log_seq    |        10006 |            15 | t
  emaj_myschema1 | mytbl2_log_seq    |        10006 |             2 | t
- emaj_myschema1 | mytbl2b_log_seq   |        10006 |             1 | f
+ emaj_myschema1 | mytbl2b_log_seq   |        10006 |             2 | t
  emaj_myschema1 | mytbl4_log_seq    |        10006 |             1 | f
  myschema1      | myTbl3_col31_seq  |        10006 |            20 | t
- myschema1      | mytbl2b_col20_seq |        10006 |             3 | f
+ myschema1      | mytbl2b_col20_seq |        10006 |             4 | t
  emaj_myschema1 | myTbl3_log_seq    |        10007 |            10 | t
  emaj_myschema1 | mytbl1_log_seq    |        10007 |            18 | t
  emaj_myschema1 | mytbl2_log_seq    |        10007 |             2 | t
- emaj_myschema1 | mytbl2b_log_seq   |        10007 |             1 | f
+ emaj_myschema1 | mytbl2b_log_seq   |        10007 |             2 | t
  emaj_myschema1 | mytbl4_log_seq    |        10007 |             8 | t
  myschema1      | myTbl3_col31_seq  |        10007 |            20 | t
- myschema1      | mytbl2b_col20_seq |        10007 |             3 | f
+ myschema1      | mytbl2b_col20_seq |        10007 |             4 | t
  emaj_myschema2 | myTbl3_log_seq    |        10008 |            10 | t
  emaj_myschema2 | mytbl1_log_seq    |        10008 |            15 | t
  emaj_myschema2 | mytbl2_log_seq    |        10008 |             2 | t
@@ -1054,101 +1062,101 @@ select * from mySchema2.myTbl6 order by col61;
 select col11, col12, col13, emaj_verb, emaj_tuple, emaj_gid from emaj_mySchema2.myTbl1_log order by emaj_gid, emaj_tuple desc;
  col11 |   col12    | col13 | emaj_verb | emaj_tuple | emaj_gid 
 -------+------------+-------+-----------+------------+----------
-     1 | ABC        | \x0c  | INS       | NEW        |   100038
-     2 | ABC        | \x0c  | INS       | NEW        |   100039
-     3 | ABC        | \x0c  | INS       | NEW        |   100040
-     4 | ABC        | \x0c  | INS       | NEW        |   100041
-     5 | ABC        | \x0c  | INS       | NEW        |   100042
-     6 | ABC        | \x0c  | INS       | NEW        |   100043
-     7 | ABC        | \x0c  | INS       | NEW        |   100044
-     8 | ABC        | \x0c  | INS       | NEW        |   100045
-     9 | ABC        | \x0c  | INS       | NEW        |   100046
-    10 | ABC        | \x0c  | INS       | NEW        |   100047
-    11 | ABC        | \x0c  | INS       | NEW        |   100048
-     1 | ABC        | \x0c  | UPD       | OLD        |   100049
-     1 | ABC        | \x1c  | UPD       | NEW        |   100049
-     2 | ABC        | \x0c  | UPD       | OLD        |   100050
-     2 | ABC        | \x1c  | UPD       | NEW        |   100050
-     3 | ABC        | \x0c  | UPD       | OLD        |   100051
-     3 | ABC        | \x1c  | UPD       | NEW        |   100051
-    11 | ABC        | \x0c  | DEL       | OLD        |   100053
+     1 | ABC        | \x0c  | INS       | NEW        |   100040
+     2 | ABC        | \x0c  | INS       | NEW        |   100041
+     3 | ABC        | \x0c  | INS       | NEW        |   100042
+     4 | ABC        | \x0c  | INS       | NEW        |   100043
+     5 | ABC        | \x0c  | INS       | NEW        |   100044
+     6 | ABC        | \x0c  | INS       | NEW        |   100045
+     7 | ABC        | \x0c  | INS       | NEW        |   100046
+     8 | ABC        | \x0c  | INS       | NEW        |   100047
+     9 | ABC        | \x0c  | INS       | NEW        |   100048
+    10 | ABC        | \x0c  | INS       | NEW        |   100049
+    11 | ABC        | \x0c  | INS       | NEW        |   100050
+     1 | ABC        | \x0c  | UPD       | OLD        |   100051
+     1 | ABC        | \x1c  | UPD       | NEW        |   100051
+     2 | ABC        | \x0c  | UPD       | OLD        |   100052
+     2 | ABC        | \x1c  | UPD       | NEW        |   100052
+     3 | ABC        | \x0c  | UPD       | OLD        |   100053
+     3 | ABC        | \x1c  | UPD       | NEW        |   100053
+    11 | ABC        | \x0c  | DEL       | OLD        |   100055
 (18 rows)
 
 select col21, col22, col23, emaj_verb, emaj_tuple, emaj_gid from emaj_mySchema2.myTbl2_log order by emaj_gid, emaj_tuple desc;
  col21 | col22 |   col23    | emaj_verb | emaj_tuple | emaj_gid 
 -------+-------+------------+-----------+------------+----------
-     1 | ABC   | 01-01-2010 | INS       | NEW        |   100052
-     2 | DEF   |            | INS       | NEW        |   100054
+     1 | ABC   | 01-01-2010 | INS       | NEW        |   100054
+     2 | DEF   |            | INS       | NEW        |   100056
 (2 rows)
 
 select col31, col33, emaj_verb, emaj_tuple, emaj_gid from emaj_myschema2."myTbl3_log" order by emaj_gid, emaj_tuple desc;
  col31 | col33 | emaj_verb | emaj_tuple | emaj_gid 
 -------+-------+-----------+------------+----------
-    11 | 10.00 | INS       | NEW        |   100055
-    12 | 10.00 | INS       | NEW        |   100056
-    13 | 10.00 | INS       | NEW        |   100057
-    14 | 10.00 | INS       | NEW        |   100058
-    15 | 10.00 | INS       | NEW        |   100059
-    16 | 10.00 | INS       | NEW        |   100060
-    17 | 10.00 | INS       | NEW        |   100061
-    18 | 10.00 | INS       | NEW        |   100062
-    19 | 10.00 | INS       | NEW        |   100063
-    20 | 10.00 | INS       | NEW        |   100064
+    11 | 10.00 | INS       | NEW        |   100057
+    12 | 10.00 | INS       | NEW        |   100058
+    13 | 10.00 | INS       | NEW        |   100059
+    14 | 10.00 | INS       | NEW        |   100060
+    15 | 10.00 | INS       | NEW        |   100061
+    16 | 10.00 | INS       | NEW        |   100062
+    17 | 10.00 | INS       | NEW        |   100063
+    18 | 10.00 | INS       | NEW        |   100064
+    19 | 10.00 | INS       | NEW        |   100065
+    20 | 10.00 | INS       | NEW        |   100066
 (10 rows)
 
 select col41, col42, col43, col44, col45, emaj_verb, emaj_tuple, emaj_gid from emaj_myschema2.mytbl4_log order by emaj_gid, emaj_tuple desc;
  col41 | col42 | col43 | col44 |   col45    | emaj_verb | emaj_tuple | emaj_gid 
 -------+-------+-------+-------+------------+-----------+------------+----------
-     1 | FK... |     1 |     1 | ABC        | INS       | NEW        |   100079
-     2 | FK... |     1 |     1 | ABC        | INS       | NEW        |   100080
-     1 | FK... |     1 |     1 | ABC        | UPD       | OLD        |   100081
-     1 | FK... |     2 |     1 | ABC        | UPD       | NEW        |   100081
-     2 | FK... |     1 |     1 | ABC        | UPD       | OLD        |   100082
-     2 | FK... |     2 |     1 | ABC        | UPD       | NEW        |   100082
-     1 | FK... |     2 |     1 | ABC        | DEL       | OLD        |   100087
-     2 | FK... |     2 |     1 | ABC        | DEL       | OLD        |   100088
-     1 | FK... |     2 |     1 | ABC        | INS       | NEW        |   100096
-     2 | FK... |     2 |     1 | ABC        | INS       | NEW        |   100097
+     1 | FK... |     1 |     1 | ABC        | INS       | NEW        |   100081
+     2 | FK... |     1 |     1 | ABC        | INS       | NEW        |   100082
+     1 | FK... |     1 |     1 | ABC        | UPD       | OLD        |   100083
+     1 | FK... |     2 |     1 | ABC        | UPD       | NEW        |   100083
+     2 | FK... |     1 |     1 | ABC        | UPD       | OLD        |   100084
+     2 | FK... |     2 |     1 | ABC        | UPD       | NEW        |   100084
+     1 | FK... |     2 |     1 | ABC        | DEL       | OLD        |   100089
+     2 | FK... |     2 |     1 | ABC        | DEL       | OLD        |   100090
+     1 | FK... |     2 |     1 | ABC        | INS       | NEW        |   100098
+     2 | FK... |     2 |     1 | ABC        | INS       | NEW        |   100099
 (10 rows)
 
 select col51, col52, col53, col54, emaj_verb, emaj_tuple, emaj_gid from emaj_myschema2.mytbl5_log order by emaj_gid, emaj_tuple desc;
  col51 |     col52     |  col53  |          col54          | emaj_verb | emaj_tuple | emaj_gid 
 -------+---------------+---------+-------------------------+-----------+------------+----------
-     1 | {abc,def,ghi} | {1,2,3} |                         | INS       | NEW        |   100065
-     2 | {abc,def,ghi} | {3,4,5} | {02-01-2000,02-28-2000} | INS       | NEW        |   100066
-     1 | {abc,def,ghi} | {1,2,3} |                         | UPD       | OLD        |   100067
-     1 | {abc,def,ghi} | {1,2,3} | {11-28-2010,12-03-2010} | UPD       | NEW        |   100067
-     2 | {abc,def,ghi} | {3,4,5} | {02-01-2000,02-28-2000} | DEL       | OLD        |   100083
-     2 | {abc,def,ghi} | {3,4,5} | {02-01-2000,02-28-2000} | INS       | NEW        |   100092
-     2 | {abc,def,ghi} | {3,4,5} | {02-01-2000,02-28-2000} | DEL       | OLD        |   100098
+     1 | {abc,def,ghi} | {1,2,3} |                         | INS       | NEW        |   100067
+     2 | {abc,def,ghi} | {3,4,5} | {02-01-2000,02-28-2000} | INS       | NEW        |   100068
+     1 | {abc,def,ghi} | {1,2,3} |                         | UPD       | OLD        |   100069
+     1 | {abc,def,ghi} | {1,2,3} | {11-28-2010,12-03-2010} | UPD       | NEW        |   100069
+     2 | {abc,def,ghi} | {3,4,5} | {02-01-2000,02-28-2000} | DEL       | OLD        |   100085
+     2 | {abc,def,ghi} | {3,4,5} | {02-01-2000,02-28-2000} | INS       | NEW        |   100094
+     2 | {abc,def,ghi} | {3,4,5} | {02-01-2000,02-28-2000} | DEL       | OLD        |   100100
 (7 rows)
 
 select col61, col62, col63, col64, col65, col66, emaj_verb, emaj_tuple, emaj_gid from emaj_mySchema2.myTbl6_log order by emaj_gid, emaj_tuple desc;
  col61 |  col62  |    col63    |    col64    |         col65         |     col66      | emaj_verb | emaj_tuple | emaj_gid 
 -------+---------+-------------+-------------+-----------------------+----------------+-----------+------------+----------
-     1 | (1,1.3) | (2,2),(0,0) | <(5,5),1>   | ((-2,-2),(3,0),(1,4)) | 10.20.30.40/27 | INS       | NEW        |   100068
-     2 | (2,1.3) | (2,2),(0,0) | <(5,5),2>   | ((-2,-2),(3,0),(1,4)) | 10.20.30.40/27 | INS       | NEW        |   100069
-     3 | (3,1.3) | (2,2),(0,0) | <(5,5),3>   | ((-2,-2),(3,0),(1,4)) | 10.20.30.40/27 | INS       | NEW        |   100070
-     4 | (4,1.3) | (2,2),(0,0) | <(5,5),4>   | ((-2,-2),(3,0),(1,4)) | 10.20.30.40/27 | INS       | NEW        |   100071
-     5 | (5,1.3) | (2,2),(0,0) | <(5,5),5>   | ((-2,-2),(3,0),(1,4)) | 10.20.30.40/27 | INS       | NEW        |   100072
-     6 | (6,1.3) | (2,2),(0,0) | <(5,5),6>   | ((-2,-2),(3,0),(1,4)) | 10.20.30.40/27 | INS       | NEW        |   100073
-     7 | (7,1.3) | (2,2),(0,0) | <(5,5),7>   | ((-2,-2),(3,0),(1,4)) | 10.20.30.40/27 | INS       | NEW        |   100074
-     8 | (8,1.3) | (2,2),(0,0) | <(5,5),8>   | ((-2,-2),(3,0),(1,4)) | 10.20.30.40/27 | INS       | NEW        |   100075
-     1 | (1,1.3) | (2,2),(0,0) | <(5,5),1>   | ((-2,-2),(3,0),(1,4)) | 10.20.30.40/27 | UPD       | OLD        |   100076
-     1 | (1,1.3) | (2,2),(0,0) | <(5,6),3.5> |                       | 10.20.30.40/27 | UPD       | NEW        |   100076
-     2 | (2,1.3) | (2,2),(0,0) | <(5,5),2>   | ((-2,-2),(3,0),(1,4)) | 10.20.30.40/27 | UPD       | OLD        |   100077
-     2 | (2,1.3) | (2,2),(0,0) | <(5,6),3.5> |                       | 10.20.30.40/27 | UPD       | NEW        |   100077
-     3 | (3,1.3) | (2,2),(0,0) | <(5,5),3>   | ((-2,-2),(3,0),(1,4)) | 10.20.30.40/27 | UPD       | OLD        |   100078
-     3 | (3,1.3) | (2,2),(0,0) | <(5,6),3.5> |                       | 10.20.30.40/27 | UPD       | NEW        |   100078
-     1 | (1,1.3) | (2,2),(0,0) | <(5,6),3.5> |                       | 10.20.30.40/27 | DEL       | OLD        |   100084
-     2 | (2,1.3) | (2,2),(0,0) | <(5,6),3.5> |                       | 10.20.30.40/27 | DEL       | OLD        |   100085
-     3 | (3,1.3) | (2,2),(0,0) | <(5,6),3.5> |                       | 10.20.30.40/27 | DEL       | OLD        |   100086
-     1 | (1,1.3) | (2,2),(0,0) | <(5,6),3.5> |                       | 10.20.30.40/27 | INS       | NEW        |   100089
-     2 | (2,1.3) | (2,2),(0,0) | <(5,6),3.5> |                       | 10.20.30.40/27 | INS       | NEW        |   100090
-     3 | (3,1.3) | (2,2),(0,0) | <(5,6),3.5> |                       | 10.20.30.40/27 | INS       | NEW        |   100091
-     1 | (1,1.3) | (2,2),(0,0) | <(5,6),3.5> |                       | 10.20.30.40/27 | DEL       | OLD        |   100093
-     2 | (2,1.3) | (2,2),(0,0) | <(5,6),3.5> |                       | 10.20.30.40/27 | DEL       | OLD        |   100094
-     3 | (3,1.3) | (2,2),(0,0) | <(5,6),3.5> |                       | 10.20.30.40/27 | DEL       | OLD        |   100095
+     1 | (1,1.3) | (2,2),(0,0) | <(5,5),1>   | ((-2,-2),(3,0),(1,4)) | 10.20.30.40/27 | INS       | NEW        |   100070
+     2 | (2,1.3) | (2,2),(0,0) | <(5,5),2>   | ((-2,-2),(3,0),(1,4)) | 10.20.30.40/27 | INS       | NEW        |   100071
+     3 | (3,1.3) | (2,2),(0,0) | <(5,5),3>   | ((-2,-2),(3,0),(1,4)) | 10.20.30.40/27 | INS       | NEW        |   100072
+     4 | (4,1.3) | (2,2),(0,0) | <(5,5),4>   | ((-2,-2),(3,0),(1,4)) | 10.20.30.40/27 | INS       | NEW        |   100073
+     5 | (5,1.3) | (2,2),(0,0) | <(5,5),5>   | ((-2,-2),(3,0),(1,4)) | 10.20.30.40/27 | INS       | NEW        |   100074
+     6 | (6,1.3) | (2,2),(0,0) | <(5,5),6>   | ((-2,-2),(3,0),(1,4)) | 10.20.30.40/27 | INS       | NEW        |   100075
+     7 | (7,1.3) | (2,2),(0,0) | <(5,5),7>   | ((-2,-2),(3,0),(1,4)) | 10.20.30.40/27 | INS       | NEW        |   100076
+     8 | (8,1.3) | (2,2),(0,0) | <(5,5),8>   | ((-2,-2),(3,0),(1,4)) | 10.20.30.40/27 | INS       | NEW        |   100077
+     1 | (1,1.3) | (2,2),(0,0) | <(5,5),1>   | ((-2,-2),(3,0),(1,4)) | 10.20.30.40/27 | UPD       | OLD        |   100078
+     1 | (1,1.3) | (2,2),(0,0) | <(5,6),3.5> |                       | 10.20.30.40/27 | UPD       | NEW        |   100078
+     2 | (2,1.3) | (2,2),(0,0) | <(5,5),2>   | ((-2,-2),(3,0),(1,4)) | 10.20.30.40/27 | UPD       | OLD        |   100079
+     2 | (2,1.3) | (2,2),(0,0) | <(5,6),3.5> |                       | 10.20.30.40/27 | UPD       | NEW        |   100079
+     3 | (3,1.3) | (2,2),(0,0) | <(5,5),3>   | ((-2,-2),(3,0),(1,4)) | 10.20.30.40/27 | UPD       | OLD        |   100080
+     3 | (3,1.3) | (2,2),(0,0) | <(5,6),3.5> |                       | 10.20.30.40/27 | UPD       | NEW        |   100080
+     1 | (1,1.3) | (2,2),(0,0) | <(5,6),3.5> |                       | 10.20.30.40/27 | DEL       | OLD        |   100086
+     2 | (2,1.3) | (2,2),(0,0) | <(5,6),3.5> |                       | 10.20.30.40/27 | DEL       | OLD        |   100087
+     3 | (3,1.3) | (2,2),(0,0) | <(5,6),3.5> |                       | 10.20.30.40/27 | DEL       | OLD        |   100088
+     1 | (1,1.3) | (2,2),(0,0) | <(5,6),3.5> |                       | 10.20.30.40/27 | INS       | NEW        |   100091
+     2 | (2,1.3) | (2,2),(0,0) | <(5,6),3.5> |                       | 10.20.30.40/27 | INS       | NEW        |   100092
+     3 | (3,1.3) | (2,2),(0,0) | <(5,6),3.5> |                       | 10.20.30.40/27 | INS       | NEW        |   100093
+     1 | (1,1.3) | (2,2),(0,0) | <(5,6),3.5> |                       | 10.20.30.40/27 | DEL       | OLD        |   100095
+     2 | (2,1.3) | (2,2),(0,0) | <(5,6),3.5> |                       | 10.20.30.40/27 | DEL       | OLD        |   100096
+     3 | (3,1.3) | (2,2),(0,0) | <(5,6),3.5> |                       | 10.20.30.40/27 | DEL       | OLD        |   100097
 (23 rows)
 
 -----------------------------
@@ -1198,9 +1206,9 @@ select emaj.emaj_set_mark_group('myGroup1','M6');
 select mark_group, regexp_replace(mark_name,E'\\d\\d\.\\d\\d\\.\\d\\d\\.\\d\\d\\d','%','g'), mark_time_id, mark_is_deleted, mark_is_rlbk_protected, mark_comment, mark_log_rows_before_next, mark_logged_rlbk_target_mark from emaj.emaj_mark order by mark_time_id, mark_group;
  mark_group | regexp_replace  | mark_time_id | mark_is_deleted | mark_is_rlbk_protected | mark_comment | mark_log_rows_before_next | mark_logged_rlbk_target_mark 
 ------------+-----------------+--------------+-----------------+------------------------+--------------+---------------------------+------------------------------
- myGroup1   | M1              |        10004 | f               | f                      |              |                        27 | 
+ myGroup1   | M1              |        10004 | f               | f                      |              |                        29 | 
  myGroup2   | M1              |        10005 | f               | f                      |              |                        41 | 
- myGroup1   | M2              |        10006 | f               | f                      |              |                        13 | 
+ myGroup1   | M2              |        10006 | f               | f                      |              |                        14 | 
  myGroup2   | M2              |        10008 | f               | f                      |              |                         8 | 
  myGroup2   | M3              |        10009 | f               | f                      |              |                         0 | 
  myGroup2   | RLBK_M2_%_START |        10010 | f               | f                      |              |                         6 | 
@@ -1233,10 +1241,10 @@ select sequ_schema, sequ_name, sequ_time_id, sequ_last_val, sequ_is_called from 
  emaj_myschema1 | myTbl3_log_seq    |        10006 |            10 | t
  emaj_myschema1 | mytbl1_log_seq    |        10006 |            15 | t
  emaj_myschema1 | mytbl2_log_seq    |        10006 |             2 | t
- emaj_myschema1 | mytbl2b_log_seq   |        10006 |             1 | f
+ emaj_myschema1 | mytbl2b_log_seq   |        10006 |             2 | t
  emaj_myschema1 | mytbl4_log_seq    |        10006 |             1 | f
  myschema1      | myTbl3_col31_seq  |        10006 |            20 | t
- myschema1      | mytbl2b_col20_seq |        10006 |             3 | f
+ myschema1      | mytbl2b_col20_seq |        10006 |             4 | t
  emaj_myschema2 | myTbl3_log_seq    |        10008 |            10 | t
  emaj_myschema2 | mytbl1_log_seq    |        10008 |            15 | t
  emaj_myschema2 | mytbl2_log_seq    |        10008 |             2 | t
@@ -1288,24 +1296,24 @@ select sequ_schema, sequ_name, sequ_time_id, sequ_last_val, sequ_is_called from 
  emaj_myschema1 | myTbl3_log_seq    |        10015 |            10 | t
  emaj_myschema1 | mytbl1_log_seq    |        10015 |            30 | t
  emaj_myschema1 | mytbl2_log_seq    |        10015 |             3 | t
- emaj_myschema1 | mytbl2b_log_seq   |        10015 |             1 | f
+ emaj_myschema1 | mytbl2b_log_seq   |        10015 |             3 | t
  emaj_myschema1 | mytbl4_log_seq    |        10015 |             8 | t
  myschema1      | myTbl3_col31_seq  |        10015 |            20 | t
- myschema1      | mytbl2b_col20_seq |        10015 |             3 | f
+ myschema1      | mytbl2b_col20_seq |        10015 |             5 | t
  emaj_myschema1 | myTbl3_log_seq    |        10016 |            20 | t
  emaj_myschema1 | mytbl1_log_seq    |        10016 |            30 | t
  emaj_myschema1 | mytbl2_log_seq    |        10016 |             3 | t
- emaj_myschema1 | mytbl2b_log_seq   |        10016 |             1 | f
+ emaj_myschema1 | mytbl2b_log_seq   |        10016 |             3 | t
  emaj_myschema1 | mytbl4_log_seq    |        10016 |             8 | t
  myschema1      | myTbl3_col31_seq  |        10016 |            20 | t
- myschema1      | mytbl2b_col20_seq |        10016 |             3 | f
+ myschema1      | mytbl2b_col20_seq |        10016 |             5 | t
  emaj_myschema1 | myTbl3_log_seq    |        10017 |            20 | t
  emaj_myschema1 | mytbl1_log_seq    |        10017 |            30 | t
  emaj_myschema1 | mytbl2_log_seq    |        10017 |             3 | t
- emaj_myschema1 | mytbl2b_log_seq   |        10017 |             1 | f
+ emaj_myschema1 | mytbl2b_log_seq   |        10017 |             3 | t
  emaj_myschema1 | mytbl4_log_seq    |        10017 |             8 | t
  myschema1      | myTbl3_col31_seq  |        10017 |            20 | t
- myschema1      | mytbl2b_col20_seq |        10017 |             3 | f
+ myschema1      | mytbl2b_col20_seq |        10017 |             5 | t
 (91 rows)
 
 -- user tables
@@ -1345,7 +1353,10 @@ select * from mySchema1.myTbl2 order by col21;
 select * from mySchema1.myTbl2b order by col20;
  col20 | col21 
 -------+-------
-(0 rows)
+     3 |     1
+     4 |     2
+     5 |     3
+(3 rows)
 
 select col31,col33 from mySchema1."myTbl3" order by col31;
  col31 | col33 
@@ -1388,67 +1399,70 @@ select col11, col12, col13, emaj_verb, emaj_tuple, emaj_gid from emaj_mySchema1.
      2 | ABC        | \x1c  | UPD       | NEW        |   100012
      3 | ABC        | \x0c  | UPD       | OLD        |   100013
      3 | ABC        | \x1c  | UPD       | NEW        |   100013
-    11 | ABC        | \x0c  | DEL       | OLD        |   100015
-   100 | DEF        | \x00  | INS       | NEW        |   100099
-   101 | DEF        | \x00  | INS       | NEW        |   100100
-   102 | DEF        | \x00  | INS       | NEW        |   100101
-   103 | DEF        | \x00  | INS       | NEW        |   100102
-   104 | DEF        | \x00  | INS       | NEW        |   100103
-   105 | DEF        | \x00  | INS       | NEW        |   100104
-   106 | DEF        | \x00  | INS       | NEW        |   100105
-   107 | DEF        | \x00  | INS       | NEW        |   100106
-   108 | DEF        | \x00  | INS       | NEW        |   100107
-   109 | DEF        | \x00  | INS       | NEW        |   100108
-   110 | DEF        | \x00  | INS       | NEW        |   100109
-     1 | ABC        | \x1c  | DEL       | OLD        |   100111
+    11 | ABC        | \x0c  | DEL       | OLD        |   100016
+   100 | DEF        | \x00  | INS       | NEW        |   100101
+   101 | DEF        | \x00  | INS       | NEW        |   100102
+   102 | DEF        | \x00  | INS       | NEW        |   100103
+   103 | DEF        | \x00  | INS       | NEW        |   100104
+   104 | DEF        | \x00  | INS       | NEW        |   100105
+   105 | DEF        | \x00  | INS       | NEW        |   100106
+   106 | DEF        | \x00  | INS       | NEW        |   100107
+   107 | DEF        | \x00  | INS       | NEW        |   100108
+   108 | DEF        | \x00  | INS       | NEW        |   100109
+   109 | DEF        | \x00  | INS       | NEW        |   100110
+   110 | DEF        | \x00  | INS       | NEW        |   100111
+     1 | ABC        | \x1c  | DEL       | OLD        |   100114
 (30 rows)
 
 select col21, col22, col23, emaj_verb, emaj_tuple, emaj_gid from emaj_mySchema1.myTbl2_log order by emaj_gid, emaj_tuple desc;
  col21 | col22 |   col23    | emaj_verb | emaj_tuple | emaj_gid 
 -------+-------+------------+-----------+------------+----------
      1 | ABC   | 12-31-2010 | INS       | NEW        |   100014
-     2 | DEF   |            | INS       | NEW        |   100016
-     3 | GHI   | 01-02-2010 | INS       | NEW        |   100110
+     2 | DEF   |            | INS       | NEW        |   100017
+     3 | GHI   | 01-02-2010 | INS       | NEW        |   100112
 (3 rows)
 
 select col20, col21, emaj_verb, emaj_tuple, emaj_gid from emaj_mySchema1.myTbl2b_log order by emaj_gid, emaj_tuple desc;
  col20 | col21 | emaj_verb | emaj_tuple | emaj_gid 
 -------+-------+-----------+------------+----------
-(0 rows)
+     3 |     1 | INS       | NEW        |   100015
+     4 |     2 | INS       | NEW        |   100018
+     5 |     3 | INS       | NEW        |   100113
+(3 rows)
 
 select col31, col33, emaj_verb, emaj_tuple, emaj_gid from emaj_myschema1."myTbl3_log" order by emaj_gid, emaj_tuple desc;
  col31 | col33 | emaj_verb | emaj_tuple | emaj_gid 
 -------+-------+-----------+------------+----------
-    11 | 10.00 | INS       | NEW        |   100017
-    12 | 10.00 | INS       | NEW        |   100018
-    13 | 10.00 | INS       | NEW        |   100019
-    14 | 10.00 | INS       | NEW        |   100020
-    15 | 10.00 | INS       | NEW        |   100021
-    16 | 10.00 | INS       | NEW        |   100022
-    17 | 10.00 | INS       | NEW        |   100023
-    18 | 10.00 | INS       | NEW        |   100024
-    19 | 10.00 | INS       | NEW        |   100025
-    20 | 10.00 | INS       | NEW        |   100026
-    11 | 10.00 | UPD       | OLD        |   100112
-    11 |  5.00 | UPD       | NEW        |   100112
-    12 | 10.00 | UPD       | OLD        |   100113
-    12 |  5.00 | UPD       | NEW        |   100113
-    13 | 10.00 | UPD       | OLD        |   100114
-    13 |  5.00 | UPD       | NEW        |   100114
-    14 | 10.00 | UPD       | OLD        |   100115
-    14 |  5.00 | UPD       | NEW        |   100115
-    15 | 10.00 | UPD       | OLD        |   100116
-    15 |  5.00 | UPD       | NEW        |   100116
-    16 | 10.00 | UPD       | OLD        |   100117
-    16 |  5.00 | UPD       | NEW        |   100117
-    17 | 10.00 | UPD       | OLD        |   100118
-    17 |  5.00 | UPD       | NEW        |   100118
-    18 | 10.00 | UPD       | OLD        |   100119
-    18 |  5.00 | UPD       | NEW        |   100119
-    19 | 10.00 | UPD       | OLD        |   100120
-    19 |  5.00 | UPD       | NEW        |   100120
-    20 | 10.00 | UPD       | OLD        |   100121
-    20 |  5.00 | UPD       | NEW        |   100121
+    11 | 10.00 | INS       | NEW        |   100019
+    12 | 10.00 | INS       | NEW        |   100020
+    13 | 10.00 | INS       | NEW        |   100021
+    14 | 10.00 | INS       | NEW        |   100022
+    15 | 10.00 | INS       | NEW        |   100023
+    16 | 10.00 | INS       | NEW        |   100024
+    17 | 10.00 | INS       | NEW        |   100025
+    18 | 10.00 | INS       | NEW        |   100026
+    19 | 10.00 | INS       | NEW        |   100027
+    20 | 10.00 | INS       | NEW        |   100028
+    11 | 10.00 | UPD       | OLD        |   100115
+    11 |  5.00 | UPD       | NEW        |   100115
+    12 | 10.00 | UPD       | OLD        |   100116
+    12 |  5.00 | UPD       | NEW        |   100116
+    13 | 10.00 | UPD       | OLD        |   100117
+    13 |  5.00 | UPD       | NEW        |   100117
+    14 | 10.00 | UPD       | OLD        |   100118
+    14 |  5.00 | UPD       | NEW        |   100118
+    15 | 10.00 | UPD       | OLD        |   100119
+    15 |  5.00 | UPD       | NEW        |   100119
+    16 | 10.00 | UPD       | OLD        |   100120
+    16 |  5.00 | UPD       | NEW        |   100120
+    17 | 10.00 | UPD       | OLD        |   100121
+    17 |  5.00 | UPD       | NEW        |   100121
+    18 | 10.00 | UPD       | OLD        |   100122
+    18 |  5.00 | UPD       | NEW        |   100122
+    19 | 10.00 | UPD       | OLD        |   100123
+    19 |  5.00 | UPD       | NEW        |   100123
+    20 | 10.00 | UPD       | OLD        |   100124
+    20 |  5.00 | UPD       | NEW        |   100124
 (30 rows)
 
 select col41, col42, col43, col44, col45, emaj_verb, emaj_tuple, emaj_gid from emaj_mySchema1.myTbl4_log order by emaj_gid, emaj_tuple desc;
@@ -1485,9 +1499,9 @@ WARNING:  _check_fk_groups: The table "myschema2.mytbl6" is referenced by the fo
 select mark_group, regexp_replace(mark_name,E'\\d\\d\.\\d\\d\\.\\d\\d\\.\\d\\d\\d','%','g'), mark_time_id, mark_is_deleted, mark_is_rlbk_protected, mark_comment, mark_log_rows_before_next, mark_logged_rlbk_target_mark from emaj.emaj_mark order by mark_time_id, mark_group;
  mark_group | regexp_replace | mark_time_id | mark_is_deleted | mark_is_rlbk_protected | mark_comment | mark_log_rows_before_next | mark_logged_rlbk_target_mark 
 ------------+----------------+--------------+-----------------+------------------------+--------------+---------------------------+------------------------------
- myGroup1   | M1             |        10004 | f               | f                      |              |                        27 | 
+ myGroup1   | M1             |        10004 | f               | f                      |              |                        29 | 
  myGroup2   | M1             |        10005 | f               | f                      |              |                        41 | 
- myGroup1   | M2             |        10006 | f               | f                      |              |                        13 | 
+ myGroup1   | M2             |        10006 | f               | f                      |              |                        14 | 
  myGroup2   | M2             |        10008 | f               | f                      |              |                         8 | 
  myGroup2   | M3             |        10009 | f               | f                      |              |                           | 
  myGroup1   | M4             |        10015 | f               | f                      |              |                        10 | 
@@ -1516,10 +1530,10 @@ select sequ_schema, sequ_name, sequ_time_id, sequ_last_val, sequ_is_called from 
  emaj_myschema1 | myTbl3_log_seq    |        10006 |            10 | t
  emaj_myschema1 | mytbl1_log_seq    |        10006 |            15 | t
  emaj_myschema1 | mytbl2_log_seq    |        10006 |             2 | t
- emaj_myschema1 | mytbl2b_log_seq   |        10006 |             1 | f
+ emaj_myschema1 | mytbl2b_log_seq   |        10006 |             2 | t
  emaj_myschema1 | mytbl4_log_seq    |        10006 |             1 | f
  myschema1      | myTbl3_col31_seq  |        10006 |            20 | t
- myschema1      | mytbl2b_col20_seq |        10006 |             3 | f
+ myschema1      | mytbl2b_col20_seq |        10006 |             4 | t
  emaj_myschema2 | myTbl3_log_seq    |        10008 |            10 | t
  emaj_myschema2 | mytbl1_log_seq    |        10008 |            15 | t
  emaj_myschema2 | mytbl2_log_seq    |        10008 |             2 | t
@@ -1539,24 +1553,24 @@ select sequ_schema, sequ_name, sequ_time_id, sequ_last_val, sequ_is_called from 
  emaj_myschema1 | myTbl3_log_seq    |        10015 |            10 | t
  emaj_myschema1 | mytbl1_log_seq    |        10015 |            30 | t
  emaj_myschema1 | mytbl2_log_seq    |        10015 |             3 | t
- emaj_myschema1 | mytbl2b_log_seq   |        10015 |             1 | f
+ emaj_myschema1 | mytbl2b_log_seq   |        10015 |             3 | t
  emaj_myschema1 | mytbl4_log_seq    |        10015 |             8 | t
  myschema1      | myTbl3_col31_seq  |        10015 |            20 | t
- myschema1      | mytbl2b_col20_seq |        10015 |             3 | f
+ myschema1      | mytbl2b_col20_seq |        10015 |             5 | t
  emaj_myschema1 | myTbl3_log_seq    |        10016 |            20 | t
  emaj_myschema1 | mytbl1_log_seq    |        10016 |            30 | t
  emaj_myschema1 | mytbl2_log_seq    |        10016 |             3 | t
- emaj_myschema1 | mytbl2b_log_seq   |        10016 |             1 | f
+ emaj_myschema1 | mytbl2b_log_seq   |        10016 |             3 | t
  emaj_myschema1 | mytbl4_log_seq    |        10016 |             8 | t
  myschema1      | myTbl3_col31_seq  |        10016 |            20 | t
- myschema1      | mytbl2b_col20_seq |        10016 |             3 | f
+ myschema1      | mytbl2b_col20_seq |        10016 |             5 | t
  emaj_myschema1 | myTbl3_log_seq    |        10017 |            20 | t
  emaj_myschema1 | mytbl1_log_seq    |        10017 |            30 | t
  emaj_myschema1 | mytbl2_log_seq    |        10017 |             3 | t
- emaj_myschema1 | mytbl2b_log_seq   |        10017 |             1 | f
+ emaj_myschema1 | mytbl2b_log_seq   |        10017 |             3 | t
  emaj_myschema1 | mytbl4_log_seq    |        10017 |             8 | t
  myschema1      | myTbl3_col31_seq  |        10017 |            20 | t
- myschema1      | mytbl2b_col20_seq |        10017 |             3 | f
+ myschema1      | mytbl2b_col20_seq |        10017 |             5 | t
 (59 rows)
 
 select sqhl_schema, sqhl_table, sqhl_begin_time_id, sqhl_end_time_id, sqhl_hole_size from emaj.emaj_seq_hole order by 1,2,3;
@@ -1635,89 +1649,89 @@ select * from mySchema2.myTbl6 order by col61;
 select col11, col12, col13, emaj_verb, emaj_tuple, emaj_gid from emaj_mySchema2.myTbl1_log order by emaj_gid, emaj_tuple desc;
  col11 |   col12    | col13 | emaj_verb | emaj_tuple | emaj_gid 
 -------+------------+-------+-----------+------------+----------
-     1 | ABC        | \x0c  | INS       | NEW        |   100038
-     2 | ABC        | \x0c  | INS       | NEW        |   100039
-     3 | ABC        | \x0c  | INS       | NEW        |   100040
-     4 | ABC        | \x0c  | INS       | NEW        |   100041
-     5 | ABC        | \x0c  | INS       | NEW        |   100042
-     6 | ABC        | \x0c  | INS       | NEW        |   100043
-     7 | ABC        | \x0c  | INS       | NEW        |   100044
-     8 | ABC        | \x0c  | INS       | NEW        |   100045
-     9 | ABC        | \x0c  | INS       | NEW        |   100046
-    10 | ABC        | \x0c  | INS       | NEW        |   100047
-    11 | ABC        | \x0c  | INS       | NEW        |   100048
-     1 | ABC        | \x0c  | UPD       | OLD        |   100049
-     1 | ABC        | \x1c  | UPD       | NEW        |   100049
-     2 | ABC        | \x0c  | UPD       | OLD        |   100050
-     2 | ABC        | \x1c  | UPD       | NEW        |   100050
-     3 | ABC        | \x0c  | UPD       | OLD        |   100051
-     3 | ABC        | \x1c  | UPD       | NEW        |   100051
-    11 | ABC        | \x0c  | DEL       | OLD        |   100053
+     1 | ABC        | \x0c  | INS       | NEW        |   100040
+     2 | ABC        | \x0c  | INS       | NEW        |   100041
+     3 | ABC        | \x0c  | INS       | NEW        |   100042
+     4 | ABC        | \x0c  | INS       | NEW        |   100043
+     5 | ABC        | \x0c  | INS       | NEW        |   100044
+     6 | ABC        | \x0c  | INS       | NEW        |   100045
+     7 | ABC        | \x0c  | INS       | NEW        |   100046
+     8 | ABC        | \x0c  | INS       | NEW        |   100047
+     9 | ABC        | \x0c  | INS       | NEW        |   100048
+    10 | ABC        | \x0c  | INS       | NEW        |   100049
+    11 | ABC        | \x0c  | INS       | NEW        |   100050
+     1 | ABC        | \x0c  | UPD       | OLD        |   100051
+     1 | ABC        | \x1c  | UPD       | NEW        |   100051
+     2 | ABC        | \x0c  | UPD       | OLD        |   100052
+     2 | ABC        | \x1c  | UPD       | NEW        |   100052
+     3 | ABC        | \x0c  | UPD       | OLD        |   100053
+     3 | ABC        | \x1c  | UPD       | NEW        |   100053
+    11 | ABC        | \x0c  | DEL       | OLD        |   100055
 (18 rows)
 
 select col21, col22, col23, emaj_verb, emaj_tuple, emaj_gid from emaj_mySchema2.myTbl2_log order by emaj_gid, emaj_tuple desc;
  col21 | col22 |   col23    | emaj_verb | emaj_tuple | emaj_gid 
 -------+-------+------------+-----------+------------+----------
-     1 | ABC   | 01-01-2010 | INS       | NEW        |   100052
-     2 | DEF   |            | INS       | NEW        |   100054
+     1 | ABC   | 01-01-2010 | INS       | NEW        |   100054
+     2 | DEF   |            | INS       | NEW        |   100056
 (2 rows)
 
 select col31, col33, emaj_verb, emaj_tuple, emaj_gid from emaj_myschema2."myTbl3_log" order by emaj_gid, emaj_tuple desc;
  col31 | col33 | emaj_verb | emaj_tuple | emaj_gid 
 -------+-------+-----------+------------+----------
-    11 | 10.00 | INS       | NEW        |   100055
-    12 | 10.00 | INS       | NEW        |   100056
-    13 | 10.00 | INS       | NEW        |   100057
-    14 | 10.00 | INS       | NEW        |   100058
-    15 | 10.00 | INS       | NEW        |   100059
-    16 | 10.00 | INS       | NEW        |   100060
-    17 | 10.00 | INS       | NEW        |   100061
-    18 | 10.00 | INS       | NEW        |   100062
-    19 | 10.00 | INS       | NEW        |   100063
-    20 | 10.00 | INS       | NEW        |   100064
+    11 | 10.00 | INS       | NEW        |   100057
+    12 | 10.00 | INS       | NEW        |   100058
+    13 | 10.00 | INS       | NEW        |   100059
+    14 | 10.00 | INS       | NEW        |   100060
+    15 | 10.00 | INS       | NEW        |   100061
+    16 | 10.00 | INS       | NEW        |   100062
+    17 | 10.00 | INS       | NEW        |   100063
+    18 | 10.00 | INS       | NEW        |   100064
+    19 | 10.00 | INS       | NEW        |   100065
+    20 | 10.00 | INS       | NEW        |   100066
 (10 rows)
 
 select col41, col42, col43, col44, col45, emaj_verb, emaj_tuple, emaj_gid from emaj_myschema2.mytbl4_log order by emaj_gid, emaj_tuple desc;
  col41 | col42 | col43 | col44 |   col45    | emaj_verb | emaj_tuple | emaj_gid 
 -------+-------+-------+-------+------------+-----------+------------+----------
-     1 | FK... |     1 |     1 | ABC        | INS       | NEW        |   100079
-     2 | FK... |     1 |     1 | ABC        | INS       | NEW        |   100080
-     1 | FK... |     1 |     1 | ABC        | UPD       | OLD        |   100081
-     1 | FK... |     2 |     1 | ABC        | UPD       | NEW        |   100081
-     2 | FK... |     1 |     1 | ABC        | UPD       | OLD        |   100082
-     2 | FK... |     2 |     1 | ABC        | UPD       | NEW        |   100082
+     1 | FK... |     1 |     1 | ABC        | INS       | NEW        |   100081
+     2 | FK... |     1 |     1 | ABC        | INS       | NEW        |   100082
+     1 | FK... |     1 |     1 | ABC        | UPD       | OLD        |   100083
+     1 | FK... |     2 |     1 | ABC        | UPD       | NEW        |   100083
+     2 | FK... |     1 |     1 | ABC        | UPD       | OLD        |   100084
+     2 | FK... |     2 |     1 | ABC        | UPD       | NEW        |   100084
 (6 rows)
 
 select col51, col52, col53, col54, emaj_verb, emaj_tuple, emaj_gid from emaj_myschema2.mytbl5_log order by emaj_gid, emaj_tuple desc;
  col51 |     col52     |  col53  |          col54          | emaj_verb | emaj_tuple | emaj_gid 
 -------+---------------+---------+-------------------------+-----------+------------+----------
-     1 | {abc,def,ghi} | {1,2,3} |                         | INS       | NEW        |   100065
-     2 | {abc,def,ghi} | {3,4,5} | {02-01-2000,02-28-2000} | INS       | NEW        |   100066
-     1 | {abc,def,ghi} | {1,2,3} |                         | UPD       | OLD        |   100067
-     1 | {abc,def,ghi} | {1,2,3} | {11-28-2010,12-03-2010} | UPD       | NEW        |   100067
-     2 | {abc,def,ghi} | {3,4,5} | {02-01-2000,02-28-2000} | DEL       | OLD        |   100083
+     1 | {abc,def,ghi} | {1,2,3} |                         | INS       | NEW        |   100067
+     2 | {abc,def,ghi} | {3,4,5} | {02-01-2000,02-28-2000} | INS       | NEW        |   100068
+     1 | {abc,def,ghi} | {1,2,3} |                         | UPD       | OLD        |   100069
+     1 | {abc,def,ghi} | {1,2,3} | {11-28-2010,12-03-2010} | UPD       | NEW        |   100069
+     2 | {abc,def,ghi} | {3,4,5} | {02-01-2000,02-28-2000} | DEL       | OLD        |   100085
 (5 rows)
 
 select col61, col62, col63, col64, col65, col66, emaj_verb, emaj_tuple, emaj_gid from emaj_mySchema2.myTbl6_log order by emaj_gid, emaj_tuple desc;
  col61 |  col62  |    col63    |    col64    |         col65         |     col66      | emaj_verb | emaj_tuple | emaj_gid 
 -------+---------+-------------+-------------+-----------------------+----------------+-----------+------------+----------
-     1 | (1,1.3) | (2,2),(0,0) | <(5,5),1>   | ((-2,-2),(3,0),(1,4)) | 10.20.30.40/27 | INS       | NEW        |   100068
-     2 | (2,1.3) | (2,2),(0,0) | <(5,5),2>   | ((-2,-2),(3,0),(1,4)) | 10.20.30.40/27 | INS       | NEW        |   100069
-     3 | (3,1.3) | (2,2),(0,0) | <(5,5),3>   | ((-2,-2),(3,0),(1,4)) | 10.20.30.40/27 | INS       | NEW        |   100070
-     4 | (4,1.3) | (2,2),(0,0) | <(5,5),4>   | ((-2,-2),(3,0),(1,4)) | 10.20.30.40/27 | INS       | NEW        |   100071
-     5 | (5,1.3) | (2,2),(0,0) | <(5,5),5>   | ((-2,-2),(3,0),(1,4)) | 10.20.30.40/27 | INS       | NEW        |   100072
-     6 | (6,1.3) | (2,2),(0,0) | <(5,5),6>   | ((-2,-2),(3,0),(1,4)) | 10.20.30.40/27 | INS       | NEW        |   100073
-     7 | (7,1.3) | (2,2),(0,0) | <(5,5),7>   | ((-2,-2),(3,0),(1,4)) | 10.20.30.40/27 | INS       | NEW        |   100074
-     8 | (8,1.3) | (2,2),(0,0) | <(5,5),8>   | ((-2,-2),(3,0),(1,4)) | 10.20.30.40/27 | INS       | NEW        |   100075
-     1 | (1,1.3) | (2,2),(0,0) | <(5,5),1>   | ((-2,-2),(3,0),(1,4)) | 10.20.30.40/27 | UPD       | OLD        |   100076
-     1 | (1,1.3) | (2,2),(0,0) | <(5,6),3.5> |                       | 10.20.30.40/27 | UPD       | NEW        |   100076
-     2 | (2,1.3) | (2,2),(0,0) | <(5,5),2>   | ((-2,-2),(3,0),(1,4)) | 10.20.30.40/27 | UPD       | OLD        |   100077
-     2 | (2,1.3) | (2,2),(0,0) | <(5,6),3.5> |                       | 10.20.30.40/27 | UPD       | NEW        |   100077
-     3 | (3,1.3) | (2,2),(0,0) | <(5,5),3>   | ((-2,-2),(3,0),(1,4)) | 10.20.30.40/27 | UPD       | OLD        |   100078
-     3 | (3,1.3) | (2,2),(0,0) | <(5,6),3.5> |                       | 10.20.30.40/27 | UPD       | NEW        |   100078
-     1 | (1,1.3) | (2,2),(0,0) | <(5,6),3.5> |                       | 10.20.30.40/27 | DEL       | OLD        |   100084
-     2 | (2,1.3) | (2,2),(0,0) | <(5,6),3.5> |                       | 10.20.30.40/27 | DEL       | OLD        |   100085
-     3 | (3,1.3) | (2,2),(0,0) | <(5,6),3.5> |                       | 10.20.30.40/27 | DEL       | OLD        |   100086
+     1 | (1,1.3) | (2,2),(0,0) | <(5,5),1>   | ((-2,-2),(3,0),(1,4)) | 10.20.30.40/27 | INS       | NEW        |   100070
+     2 | (2,1.3) | (2,2),(0,0) | <(5,5),2>   | ((-2,-2),(3,0),(1,4)) | 10.20.30.40/27 | INS       | NEW        |   100071
+     3 | (3,1.3) | (2,2),(0,0) | <(5,5),3>   | ((-2,-2),(3,0),(1,4)) | 10.20.30.40/27 | INS       | NEW        |   100072
+     4 | (4,1.3) | (2,2),(0,0) | <(5,5),4>   | ((-2,-2),(3,0),(1,4)) | 10.20.30.40/27 | INS       | NEW        |   100073
+     5 | (5,1.3) | (2,2),(0,0) | <(5,5),5>   | ((-2,-2),(3,0),(1,4)) | 10.20.30.40/27 | INS       | NEW        |   100074
+     6 | (6,1.3) | (2,2),(0,0) | <(5,5),6>   | ((-2,-2),(3,0),(1,4)) | 10.20.30.40/27 | INS       | NEW        |   100075
+     7 | (7,1.3) | (2,2),(0,0) | <(5,5),7>   | ((-2,-2),(3,0),(1,4)) | 10.20.30.40/27 | INS       | NEW        |   100076
+     8 | (8,1.3) | (2,2),(0,0) | <(5,5),8>   | ((-2,-2),(3,0),(1,4)) | 10.20.30.40/27 | INS       | NEW        |   100077
+     1 | (1,1.3) | (2,2),(0,0) | <(5,5),1>   | ((-2,-2),(3,0),(1,4)) | 10.20.30.40/27 | UPD       | OLD        |   100078
+     1 | (1,1.3) | (2,2),(0,0) | <(5,6),3.5> |                       | 10.20.30.40/27 | UPD       | NEW        |   100078
+     2 | (2,1.3) | (2,2),(0,0) | <(5,5),2>   | ((-2,-2),(3,0),(1,4)) | 10.20.30.40/27 | UPD       | OLD        |   100079
+     2 | (2,1.3) | (2,2),(0,0) | <(5,6),3.5> |                       | 10.20.30.40/27 | UPD       | NEW        |   100079
+     3 | (3,1.3) | (2,2),(0,0) | <(5,5),3>   | ((-2,-2),(3,0),(1,4)) | 10.20.30.40/27 | UPD       | OLD        |   100080
+     3 | (3,1.3) | (2,2),(0,0) | <(5,6),3.5> |                       | 10.20.30.40/27 | UPD       | NEW        |   100080
+     1 | (1,1.3) | (2,2),(0,0) | <(5,6),3.5> |                       | 10.20.30.40/27 | DEL       | OLD        |   100086
+     2 | (2,1.3) | (2,2),(0,0) | <(5,6),3.5> |                       | 10.20.30.40/27 | DEL       | OLD        |   100087
+     3 | (3,1.3) | (2,2),(0,0) | <(5,6),3.5> |                       | 10.20.30.40/27 | DEL       | OLD        |   100088
 (17 rows)
 
 -----------------------------
@@ -1765,9 +1779,9 @@ select rlbk_id, rlbk_groups, rlbk_mark, rlbk_time_id, rlbk_is_logged, rlbk_is_al
 select mark_group, regexp_replace(mark_name,E'\\d\\d\.\\d\\d\\.\\d\\d\\.\\d\\d\\d','%','g'), mark_time_id, mark_is_deleted, mark_is_rlbk_protected, mark_comment, mark_log_rows_before_next, mark_logged_rlbk_target_mark from emaj.emaj_mark order by mark_time_id, mark_group;
  mark_group | regexp_replace  | mark_time_id | mark_is_deleted | mark_is_rlbk_protected | mark_comment | mark_log_rows_before_next | mark_logged_rlbk_target_mark 
 ------------+-----------------+--------------+-----------------+------------------------+--------------+---------------------------+------------------------------
- myGroup1   | M1              |        10004 | f               | f                      |              |                        27 | 
+ myGroup1   | M1              |        10004 | f               | f                      |              |                        29 | 
  myGroup2   | M1              |        10005 | f               | f                      |              |                        41 | 
- myGroup1   | M2              |        10006 | f               | f                      |              |                        13 | 
+ myGroup1   | M2              |        10006 | f               | f                      |              |                        14 | 
  myGroup2   | M2              |        10008 | f               | f                      |              |                         8 | 
  myGroup2   | M3              |        10009 | f               | f                      |              |                         0 | 
  myGroup1   | M4              |        10015 | f               | f                      |              |                        10 | 
@@ -1797,10 +1811,10 @@ select sequ_schema, sequ_name, sequ_time_id, sequ_last_val, sequ_is_called from 
  emaj_myschema1 | myTbl3_log_seq    |        10006 |            10 | t
  emaj_myschema1 | mytbl1_log_seq    |        10006 |            15 | t
  emaj_myschema1 | mytbl2_log_seq    |        10006 |             2 | t
- emaj_myschema1 | mytbl2b_log_seq   |        10006 |             1 | f
+ emaj_myschema1 | mytbl2b_log_seq   |        10006 |             2 | t
  emaj_myschema1 | mytbl4_log_seq    |        10006 |             1 | f
  myschema1      | myTbl3_col31_seq  |        10006 |            20 | t
- myschema1      | mytbl2b_col20_seq |        10006 |             3 | f
+ myschema1      | mytbl2b_col20_seq |        10006 |             4 | t
  emaj_myschema2 | myTbl3_log_seq    |        10008 |            10 | t
  emaj_myschema2 | mytbl1_log_seq    |        10008 |            15 | t
  emaj_myschema2 | mytbl2_log_seq    |        10008 |             2 | t
@@ -1820,31 +1834,31 @@ select sequ_schema, sequ_name, sequ_time_id, sequ_last_val, sequ_is_called from 
  emaj_myschema1 | myTbl3_log_seq    |        10015 |            10 | t
  emaj_myschema1 | mytbl1_log_seq    |        10015 |            30 | t
  emaj_myschema1 | mytbl2_log_seq    |        10015 |             3 | t
- emaj_myschema1 | mytbl2b_log_seq   |        10015 |             1 | f
+ emaj_myschema1 | mytbl2b_log_seq   |        10015 |             3 | t
  emaj_myschema1 | mytbl4_log_seq    |        10015 |             8 | t
  myschema1      | myTbl3_col31_seq  |        10015 |            20 | t
- myschema1      | mytbl2b_col20_seq |        10015 |             3 | f
+ myschema1      | mytbl2b_col20_seq |        10015 |             5 | t
  emaj_myschema1 | myTbl3_log_seq    |        10016 |            20 | t
  emaj_myschema1 | mytbl1_log_seq    |        10016 |            30 | t
  emaj_myschema1 | mytbl2_log_seq    |        10016 |             3 | t
- emaj_myschema1 | mytbl2b_log_seq   |        10016 |             1 | f
+ emaj_myschema1 | mytbl2b_log_seq   |        10016 |             3 | t
  emaj_myschema1 | mytbl4_log_seq    |        10016 |             8 | t
  myschema1      | myTbl3_col31_seq  |        10016 |            20 | t
- myschema1      | mytbl2b_col20_seq |        10016 |             3 | f
+ myschema1      | mytbl2b_col20_seq |        10016 |             5 | t
  emaj_myschema1 | myTbl3_log_seq    |        10022 |            20 | t
  emaj_myschema1 | mytbl1_log_seq    |        10022 |            32 | t
  emaj_myschema1 | mytbl2_log_seq    |        10022 |             3 | t
- emaj_myschema1 | mytbl2b_log_seq   |        10022 |             1 | f
+ emaj_myschema1 | mytbl2b_log_seq   |        10022 |             3 | t
  emaj_myschema1 | mytbl4_log_seq    |        10022 |            12 | t
  myschema1      | myTbl3_col31_seq  |        10022 |            20 | t
- myschema1      | mytbl2b_col20_seq |        10022 |             3 | f
+ myschema1      | mytbl2b_col20_seq |        10022 |             5 | t
  emaj_myschema1 | myTbl3_log_seq    |        10023 |            40 | t
  emaj_myschema1 | mytbl1_log_seq    |        10023 |            33 | t
  emaj_myschema1 | mytbl2_log_seq    |        10023 |             3 | t
- emaj_myschema1 | mytbl2b_log_seq   |        10023 |             1 | f
+ emaj_myschema1 | mytbl2b_log_seq   |        10023 |             3 | t
  emaj_myschema1 | mytbl4_log_seq    |        10023 |            14 | t
  myschema1      | myTbl3_col31_seq  |        10023 |            20 | t
- myschema1      | mytbl2b_col20_seq |        10023 |             3 | f
+ myschema1      | mytbl2b_col20_seq |        10023 |             5 | t
 (66 rows)
 
 -- check that mark_log_stat_before_next column is always equal to either NULL or the emaj_log_stat_rows() function's result
@@ -1910,7 +1924,10 @@ select * from mySchema1.myTbl2 order by col21;
 select * from mySchema1.myTbl2b order by col20;
  col20 | col21 
 -------+-------
-(0 rows)
+     3 |     1
+     4 |     2
+     5 |     3
+(3 rows)
 
 select col31,col33 from mySchema1."myTbl3" order by col31;
  col31 | col33 
@@ -1953,98 +1970,101 @@ select col11, col12, col13, emaj_verb, emaj_tuple, emaj_gid from emaj_mySchema1.
      2 | ABC        | \x1c  | UPD       | NEW        |   100012
      3 | ABC        | \x0c  | UPD       | OLD        |   100013
      3 | ABC        | \x1c  | UPD       | NEW        |   100013
-    11 | ABC        | \x0c  | DEL       | OLD        |   100015
-   100 | DEF        | \x00  | INS       | NEW        |   100099
-   101 | DEF        | \x00  | INS       | NEW        |   100100
-   102 | DEF        | \x00  | INS       | NEW        |   100101
-   103 | DEF        | \x00  | INS       | NEW        |   100102
-   104 | DEF        | \x00  | INS       | NEW        |   100103
-   105 | DEF        | \x00  | INS       | NEW        |   100104
-   106 | DEF        | \x00  | INS       | NEW        |   100105
-   107 | DEF        | \x00  | INS       | NEW        |   100106
-   108 | DEF        | \x00  | INS       | NEW        |   100107
-   109 | DEF        | \x00  | INS       | NEW        |   100108
-   110 | DEF        | \x00  | INS       | NEW        |   100109
-     1 | ABC        | \x1c  | DEL       | OLD        |   100111
-     1 | Step 6     | \x01  | INS       | NEW        |   100131
-     1 | Step 6     | \x01  | DEL       | OLD        |   100154
+    11 | ABC        | \x0c  | DEL       | OLD        |   100016
+   100 | DEF        | \x00  | INS       | NEW        |   100101
+   101 | DEF        | \x00  | INS       | NEW        |   100102
+   102 | DEF        | \x00  | INS       | NEW        |   100103
+   103 | DEF        | \x00  | INS       | NEW        |   100104
+   104 | DEF        | \x00  | INS       | NEW        |   100105
+   105 | DEF        | \x00  | INS       | NEW        |   100106
+   106 | DEF        | \x00  | INS       | NEW        |   100107
+   107 | DEF        | \x00  | INS       | NEW        |   100108
+   108 | DEF        | \x00  | INS       | NEW        |   100109
+   109 | DEF        | \x00  | INS       | NEW        |   100110
+   110 | DEF        | \x00  | INS       | NEW        |   100111
+     1 | ABC        | \x1c  | DEL       | OLD        |   100114
+     1 | Step 6     | \x01  | INS       | NEW        |   100134
+     1 | Step 6     | \x01  | DEL       | OLD        |   100157
 (32 rows)
 
 select col21, col22, col23, emaj_verb, emaj_tuple, emaj_gid from emaj_mySchema1.myTbl2_log order by emaj_gid, emaj_tuple desc;
  col21 | col22 |   col23    | emaj_verb | emaj_tuple | emaj_gid 
 -------+-------+------------+-----------+------------+----------
      1 | ABC   | 12-31-2010 | INS       | NEW        |   100014
-     2 | DEF   |            | INS       | NEW        |   100016
-     3 | GHI   | 01-02-2010 | INS       | NEW        |   100110
+     2 | DEF   |            | INS       | NEW        |   100017
+     3 | GHI   | 01-02-2010 | INS       | NEW        |   100112
 (3 rows)
 
 select col20, col21, emaj_verb, emaj_tuple, emaj_gid from emaj_mySchema1.myTbl2b_log order by emaj_gid, emaj_tuple desc;
  col20 | col21 | emaj_verb | emaj_tuple | emaj_gid 
 -------+-------+-----------+------------+----------
-(0 rows)
+     3 |     1 | INS       | NEW        |   100015
+     4 |     2 | INS       | NEW        |   100018
+     5 |     3 | INS       | NEW        |   100113
+(3 rows)
 
 select col31, col33, emaj_verb, emaj_tuple, emaj_gid from emaj_myschema1."myTbl3_log" order by emaj_gid, emaj_tuple desc;
  col31 | col33 | emaj_verb | emaj_tuple | emaj_gid 
 -------+-------+-----------+------------+----------
-    11 | 10.00 | INS       | NEW        |   100017
-    12 | 10.00 | INS       | NEW        |   100018
-    13 | 10.00 | INS       | NEW        |   100019
-    14 | 10.00 | INS       | NEW        |   100020
-    15 | 10.00 | INS       | NEW        |   100021
-    16 | 10.00 | INS       | NEW        |   100022
-    17 | 10.00 | INS       | NEW        |   100023
-    18 | 10.00 | INS       | NEW        |   100024
-    19 | 10.00 | INS       | NEW        |   100025
-    20 | 10.00 | INS       | NEW        |   100026
-    11 | 10.00 | UPD       | OLD        |   100112
-    11 |  5.00 | UPD       | NEW        |   100112
-    12 | 10.00 | UPD       | OLD        |   100113
-    12 |  5.00 | UPD       | NEW        |   100113
-    13 | 10.00 | UPD       | OLD        |   100114
-    13 |  5.00 | UPD       | NEW        |   100114
-    14 | 10.00 | UPD       | OLD        |   100115
-    14 |  5.00 | UPD       | NEW        |   100115
-    15 | 10.00 | UPD       | OLD        |   100116
-    15 |  5.00 | UPD       | NEW        |   100116
-    16 | 10.00 | UPD       | OLD        |   100117
-    16 |  5.00 | UPD       | NEW        |   100117
-    17 | 10.00 | UPD       | OLD        |   100118
-    17 |  5.00 | UPD       | NEW        |   100118
-    18 | 10.00 | UPD       | OLD        |   100119
-    18 |  5.00 | UPD       | NEW        |   100119
-    19 | 10.00 | UPD       | OLD        |   100120
-    19 |  5.00 | UPD       | NEW        |   100120
-    20 | 10.00 | UPD       | OLD        |   100121
-    20 |  5.00 | UPD       | NEW        |   100121
-    11 |  5.00 | DEL       | OLD        |   100134
-    12 |  5.00 | DEL       | OLD        |   100135
-    13 |  5.00 | DEL       | OLD        |   100136
-    14 |  5.00 | DEL       | OLD        |   100137
-    15 |  5.00 | DEL       | OLD        |   100138
-    16 |  5.00 | DEL       | OLD        |   100139
-    17 |  5.00 | DEL       | OLD        |   100140
-    18 |  5.00 | DEL       | OLD        |   100141
-    19 |  5.00 | DEL       | OLD        |   100142
-    20 |  5.00 | DEL       | OLD        |   100143
-    11 | 10.00 | INS       | NEW        |   100144
-    12 | 10.00 | INS       | NEW        |   100145
-    13 | 10.00 | INS       | NEW        |   100146
-    14 | 10.00 | INS       | NEW        |   100147
-    15 | 10.00 | INS       | NEW        |   100148
-    16 | 10.00 | INS       | NEW        |   100149
-    17 | 10.00 | INS       | NEW        |   100150
-    18 | 10.00 | INS       | NEW        |   100151
-    19 | 10.00 | INS       | NEW        |   100152
-    20 | 10.00 | INS       | NEW        |   100153
+    11 | 10.00 | INS       | NEW        |   100019
+    12 | 10.00 | INS       | NEW        |   100020
+    13 | 10.00 | INS       | NEW        |   100021
+    14 | 10.00 | INS       | NEW        |   100022
+    15 | 10.00 | INS       | NEW        |   100023
+    16 | 10.00 | INS       | NEW        |   100024
+    17 | 10.00 | INS       | NEW        |   100025
+    18 | 10.00 | INS       | NEW        |   100026
+    19 | 10.00 | INS       | NEW        |   100027
+    20 | 10.00 | INS       | NEW        |   100028
+    11 | 10.00 | UPD       | OLD        |   100115
+    11 |  5.00 | UPD       | NEW        |   100115
+    12 | 10.00 | UPD       | OLD        |   100116
+    12 |  5.00 | UPD       | NEW        |   100116
+    13 | 10.00 | UPD       | OLD        |   100117
+    13 |  5.00 | UPD       | NEW        |   100117
+    14 | 10.00 | UPD       | OLD        |   100118
+    14 |  5.00 | UPD       | NEW        |   100118
+    15 | 10.00 | UPD       | OLD        |   100119
+    15 |  5.00 | UPD       | NEW        |   100119
+    16 | 10.00 | UPD       | OLD        |   100120
+    16 |  5.00 | UPD       | NEW        |   100120
+    17 | 10.00 | UPD       | OLD        |   100121
+    17 |  5.00 | UPD       | NEW        |   100121
+    18 | 10.00 | UPD       | OLD        |   100122
+    18 |  5.00 | UPD       | NEW        |   100122
+    19 | 10.00 | UPD       | OLD        |   100123
+    19 |  5.00 | UPD       | NEW        |   100123
+    20 | 10.00 | UPD       | OLD        |   100124
+    20 |  5.00 | UPD       | NEW        |   100124
+    11 |  5.00 | DEL       | OLD        |   100137
+    12 |  5.00 | DEL       | OLD        |   100138
+    13 |  5.00 | DEL       | OLD        |   100139
+    14 |  5.00 | DEL       | OLD        |   100140
+    15 |  5.00 | DEL       | OLD        |   100141
+    16 |  5.00 | DEL       | OLD        |   100142
+    17 |  5.00 | DEL       | OLD        |   100143
+    18 |  5.00 | DEL       | OLD        |   100144
+    19 |  5.00 | DEL       | OLD        |   100145
+    20 |  5.00 | DEL       | OLD        |   100146
+    11 | 10.00 | INS       | NEW        |   100147
+    12 | 10.00 | INS       | NEW        |   100148
+    13 | 10.00 | INS       | NEW        |   100149
+    14 | 10.00 | INS       | NEW        |   100150
+    15 | 10.00 | INS       | NEW        |   100151
+    16 | 10.00 | INS       | NEW        |   100152
+    17 | 10.00 | INS       | NEW        |   100153
+    18 | 10.00 | INS       | NEW        |   100154
+    19 | 10.00 | INS       | NEW        |   100155
+    20 | 10.00 | INS       | NEW        |   100156
 (50 rows)
 
 select col41, col42, col43, col44, col45, emaj_verb, emaj_tuple, emaj_gid from emaj_mySchema1.myTbl4_log order by emaj_gid, emaj_tuple desc;
  col41 | col42 | col43 | col44 |   col45    | emaj_verb | emaj_tuple | emaj_gid 
 -------+-------+-------+-------+------------+-----------+------------+----------
-    11 |       |     1 |     1 | Step 6     | INS       | NEW        |   100132
-    12 |       |     1 |     1 | Step 6     | INS       | NEW        |   100133
-    11 |       |     1 |     1 | Step 6     | DEL       | OLD        |   100155
-    12 |       |     1 |     1 | Step 6     | DEL       | OLD        |   100156
+    11 |       |     1 |     1 | Step 6     | INS       | NEW        |   100135
+    12 |       |     1 |     1 | Step 6     | INS       | NEW        |   100136
+    11 |       |     1 |     1 | Step 6     | DEL       | OLD        |   100158
+    12 |       |     1 |     1 | Step 6     | DEL       | OLD        |   100159
 (4 rows)
 
 -----------------------------
@@ -2108,24 +2128,24 @@ select time_id, time_last_emaj_gid, time_event from emaj.emaj_time_stamp where t
    10003 |              99999 | C
    10004 |              99999 | M
    10005 |              99999 | M
-   10006 |             100026 | M
-   10007 |             100037 | M
-   10008 |             100078 | M
-   10009 |             100086 | M
-   10010 |             100086 | R
-   10011 |             100092 | M
-   10012 |             100092 | R
-   10013 |             100098 | M
-   10014 |             100098 | R
-   10015 |             100111 | M
-   10016 |             100121 | M
-   10017 |             100121 | M
-   10018 |             100121 | R
-   10019 |             100127 | M
-   10020 |             100127 | R
-   10021 |             100130 | R
-   10022 |             100133 | R
-   10023 |             100156 | M
+   10006 |             100028 | M
+   10007 |             100039 | M
+   10008 |             100080 | M
+   10009 |             100088 | M
+   10010 |             100088 | R
+   10011 |             100094 | M
+   10012 |             100094 | R
+   10013 |             100100 | M
+   10014 |             100100 | R
+   10015 |             100114 | M
+   10016 |             100124 | M
+   10017 |             100124 | M
+   10018 |             100124 | R
+   10019 |             100130 | M
+   10020 |             100130 | R
+   10021 |             100133 | R
+   10022 |             100136 | R
+   10023 |             100159 | M
 (24 rows)
 
 select sequ_schema, sequ_name, sequ_time_id, sequ_last_val, sequ_is_called from emaj.emaj_sequence order by sequ_time_id, sequ_schema, sequ_name;
@@ -2158,24 +2178,24 @@ select sequ_schema, sequ_name, sequ_time_id, sequ_last_val, sequ_is_called from 
  emaj_myschema1 | myTbl3_log_seq    |        10015 |            10 | t
  emaj_myschema1 | mytbl1_log_seq    |        10015 |            30 | t
  emaj_myschema1 | mytbl2_log_seq    |        10015 |             3 | t
- emaj_myschema1 | mytbl2b_log_seq   |        10015 |             1 | f
+ emaj_myschema1 | mytbl2b_log_seq   |        10015 |             3 | t
  emaj_myschema1 | mytbl4_log_seq    |        10015 |             8 | t
  myschema1      | myTbl3_col31_seq  |        10015 |            20 | t
- myschema1      | mytbl2b_col20_seq |        10015 |             3 | f
+ myschema1      | mytbl2b_col20_seq |        10015 |             5 | t
  emaj_myschema1 | myTbl3_log_seq    |        10016 |            20 | t
  emaj_myschema1 | mytbl1_log_seq    |        10016 |            30 | t
  emaj_myschema1 | mytbl2_log_seq    |        10016 |             3 | t
- emaj_myschema1 | mytbl2b_log_seq   |        10016 |             1 | f
+ emaj_myschema1 | mytbl2b_log_seq   |        10016 |             3 | t
  emaj_myschema1 | mytbl4_log_seq    |        10016 |             8 | t
  myschema1      | myTbl3_col31_seq  |        10016 |            20 | t
- myschema1      | mytbl2b_col20_seq |        10016 |             3 | f
+ myschema1      | mytbl2b_col20_seq |        10016 |             5 | t
  emaj_myschema1 | myTbl3_log_seq    |        10022 |            20 | t
  emaj_myschema1 | mytbl1_log_seq    |        10022 |            32 | t
  emaj_myschema1 | mytbl2_log_seq    |        10022 |             3 | t
- emaj_myschema1 | mytbl2b_log_seq   |        10022 |             1 | f
+ emaj_myschema1 | mytbl2b_log_seq   |        10022 |             3 | t
  emaj_myschema1 | mytbl4_log_seq    |        10022 |            12 | t
  myschema1      | myTbl3_col31_seq  |        10022 |            20 | t
- myschema1      | mytbl2b_col20_seq |        10022 |             3 | f
+ myschema1      | mytbl2b_col20_seq |        10022 |             5 | t
 (45 rows)
 
 select sqhl_schema, sqhl_table, sqhl_begin_time_id, sqhl_end_time_id, sqhl_hole_size from emaj.emaj_seq_hole order by 1,2,3;
@@ -2225,7 +2245,10 @@ select * from mySchema1.myTbl2 order by col21;
 select * from mySchema1.myTbl2b order by col20;
  col20 | col21 
 -------+-------
-(0 rows)
+     3 |     1
+     4 |     2
+     5 |     3
+(3 rows)
 
 select col31,col33 from mySchema1."myTbl3" order by col31;
  col31 | col33 
@@ -2246,8 +2269,8 @@ select * from mySchema1.myTbl4 order by col41;
 select col11, col12, col13, emaj_verb, emaj_tuple, emaj_gid from emaj_mySchema1.myTbl1_log order by emaj_gid, emaj_tuple desc;
  col11 |   col12    | col13 | emaj_verb | emaj_tuple | emaj_gid 
 -------+------------+-------+-----------+------------+----------
-     1 | Step 6     | \x01  | INS       | NEW        |   100131
-     1 | Step 6     | \x01  | DEL       | OLD        |   100154
+     1 | Step 6     | \x01  | INS       | NEW        |   100134
+     1 | Step 6     | \x01  | DEL       | OLD        |   100157
 (2 rows)
 
 select col21, col22, col23, emaj_verb, emaj_tuple, emaj_gid from emaj_mySchema1.myTbl2_log order by emaj_gid, emaj_tuple desc;
@@ -2263,60 +2286,60 @@ select col20, col21, emaj_verb, emaj_tuple, emaj_gid from emaj_mySchema1.myTbl2b
 select col31, col33, emaj_verb, emaj_tuple, emaj_gid from emaj_myschema1."myTbl3_log" order by emaj_gid, emaj_tuple desc;
  col31 | col33 | emaj_verb | emaj_tuple | emaj_gid 
 -------+-------+-----------+------------+----------
-    11 | 10.00 | UPD       | OLD        |   100112
-    11 |  5.00 | UPD       | NEW        |   100112
-    12 | 10.00 | UPD       | OLD        |   100113
-    12 |  5.00 | UPD       | NEW        |   100113
-    13 | 10.00 | UPD       | OLD        |   100114
-    13 |  5.00 | UPD       | NEW        |   100114
-    14 | 10.00 | UPD       | OLD        |   100115
-    14 |  5.00 | UPD       | NEW        |   100115
-    15 | 10.00 | UPD       | OLD        |   100116
-    15 |  5.00 | UPD       | NEW        |   100116
-    16 | 10.00 | UPD       | OLD        |   100117
-    16 |  5.00 | UPD       | NEW        |   100117
-    17 | 10.00 | UPD       | OLD        |   100118
-    17 |  5.00 | UPD       | NEW        |   100118
-    18 | 10.00 | UPD       | OLD        |   100119
-    18 |  5.00 | UPD       | NEW        |   100119
-    19 | 10.00 | UPD       | OLD        |   100120
-    19 |  5.00 | UPD       | NEW        |   100120
-    20 | 10.00 | UPD       | OLD        |   100121
-    20 |  5.00 | UPD       | NEW        |   100121
-    11 |  5.00 | DEL       | OLD        |   100134
-    12 |  5.00 | DEL       | OLD        |   100135
-    13 |  5.00 | DEL       | OLD        |   100136
-    14 |  5.00 | DEL       | OLD        |   100137
-    15 |  5.00 | DEL       | OLD        |   100138
-    16 |  5.00 | DEL       | OLD        |   100139
-    17 |  5.00 | DEL       | OLD        |   100140
-    18 |  5.00 | DEL       | OLD        |   100141
-    19 |  5.00 | DEL       | OLD        |   100142
-    20 |  5.00 | DEL       | OLD        |   100143
-    11 | 10.00 | INS       | NEW        |   100144
-    12 | 10.00 | INS       | NEW        |   100145
-    13 | 10.00 | INS       | NEW        |   100146
-    14 | 10.00 | INS       | NEW        |   100147
-    15 | 10.00 | INS       | NEW        |   100148
-    16 | 10.00 | INS       | NEW        |   100149
-    17 | 10.00 | INS       | NEW        |   100150
-    18 | 10.00 | INS       | NEW        |   100151
-    19 | 10.00 | INS       | NEW        |   100152
-    20 | 10.00 | INS       | NEW        |   100153
-    14 | 10.00 | DEL       | OLD        |   100157
-    15 | 10.00 | DEL       | OLD        |   100158
-    16 | 10.00 | DEL       | OLD        |   100159
-    17 | 10.00 | DEL       | OLD        |   100160
-    18 | 10.00 | DEL       | OLD        |   100161
+    11 | 10.00 | UPD       | OLD        |   100115
+    11 |  5.00 | UPD       | NEW        |   100115
+    12 | 10.00 | UPD       | OLD        |   100116
+    12 |  5.00 | UPD       | NEW        |   100116
+    13 | 10.00 | UPD       | OLD        |   100117
+    13 |  5.00 | UPD       | NEW        |   100117
+    14 | 10.00 | UPD       | OLD        |   100118
+    14 |  5.00 | UPD       | NEW        |   100118
+    15 | 10.00 | UPD       | OLD        |   100119
+    15 |  5.00 | UPD       | NEW        |   100119
+    16 | 10.00 | UPD       | OLD        |   100120
+    16 |  5.00 | UPD       | NEW        |   100120
+    17 | 10.00 | UPD       | OLD        |   100121
+    17 |  5.00 | UPD       | NEW        |   100121
+    18 | 10.00 | UPD       | OLD        |   100122
+    18 |  5.00 | UPD       | NEW        |   100122
+    19 | 10.00 | UPD       | OLD        |   100123
+    19 |  5.00 | UPD       | NEW        |   100123
+    20 | 10.00 | UPD       | OLD        |   100124
+    20 |  5.00 | UPD       | NEW        |   100124
+    11 |  5.00 | DEL       | OLD        |   100137
+    12 |  5.00 | DEL       | OLD        |   100138
+    13 |  5.00 | DEL       | OLD        |   100139
+    14 |  5.00 | DEL       | OLD        |   100140
+    15 |  5.00 | DEL       | OLD        |   100141
+    16 |  5.00 | DEL       | OLD        |   100142
+    17 |  5.00 | DEL       | OLD        |   100143
+    18 |  5.00 | DEL       | OLD        |   100144
+    19 |  5.00 | DEL       | OLD        |   100145
+    20 |  5.00 | DEL       | OLD        |   100146
+    11 | 10.00 | INS       | NEW        |   100147
+    12 | 10.00 | INS       | NEW        |   100148
+    13 | 10.00 | INS       | NEW        |   100149
+    14 | 10.00 | INS       | NEW        |   100150
+    15 | 10.00 | INS       | NEW        |   100151
+    16 | 10.00 | INS       | NEW        |   100152
+    17 | 10.00 | INS       | NEW        |   100153
+    18 | 10.00 | INS       | NEW        |   100154
+    19 | 10.00 | INS       | NEW        |   100155
+    20 | 10.00 | INS       | NEW        |   100156
+    14 | 10.00 | DEL       | OLD        |   100160
+    15 | 10.00 | DEL       | OLD        |   100161
+    16 | 10.00 | DEL       | OLD        |   100162
+    17 | 10.00 | DEL       | OLD        |   100163
+    18 | 10.00 | DEL       | OLD        |   100164
 (45 rows)
 
 select col41, col42, col43, col44, col45, emaj_verb, emaj_tuple, emaj_gid from emaj_mySchema1.myTbl4_log order by emaj_gid, emaj_tuple desc;
  col41 | col42 | col43 | col44 |   col45    | emaj_verb | emaj_tuple | emaj_gid 
 -------+-------+-------+-------+------------+-----------+------------+----------
-    11 |       |     1 |     1 | Step 6     | INS       | NEW        |   100132
-    12 |       |     1 |     1 | Step 6     | INS       | NEW        |   100133
-    11 |       |     1 |     1 | Step 6     | DEL       | OLD        |   100155
-    12 |       |     1 |     1 | Step 6     | DEL       | OLD        |   100156
+    11 |       |     1 |     1 | Step 6     | INS       | NEW        |   100135
+    12 |       |     1 |     1 | Step 6     | INS       | NEW        |   100136
+    11 |       |     1 |     1 | Step 6     | DEL       | OLD        |   100158
+    12 |       |     1 |     1 | Step 6     | DEL       | OLD        |   100159
 (4 rows)
 
 --

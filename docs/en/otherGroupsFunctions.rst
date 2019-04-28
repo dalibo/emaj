@@ -76,7 +76,7 @@ The function returns the number of tables and sequences contained by the group.
 
 The *emaj_force_stop_group()* function performs the same actions as the :ref:`emaj_stop_group() <emaj_stop_group>` function, except that:
 
-* it supports the lack of table or trigger to deactivate, generating a “warning” message in such a case,
+* it supports the lack of table or E-Maj trigger to deactivate, generating a “warning” message in such a case,
 * it does NOT set a stop mark.
 
 Once the function is completed, the tables group is in *IDLE* state. It may then be altered or dropped, using the :ref:`emaj_alter_group() <emaj_alter_group>` or :ref:`emaj_drop_group() <emaj_drop_group>` functions.

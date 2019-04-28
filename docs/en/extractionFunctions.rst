@@ -138,7 +138,7 @@ The used technology may result to doubled backslashes in the output file. These 
 
 As the function can generate a large or even very large file (depending on the log volume), it is the user's responsibility to provide a sufficient disk space.
 
-It is also the user's responsibility to deactivate triggers, if any exist, before executing the generated script.
+It is also the user's responsibility to deactivate application triggers, if any exist, before executing the generated script.
 
 Using the *emaj_gen_sql_groups()* function, it is possible to generate a sql script related to several groups::
 

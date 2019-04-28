@@ -8,6 +8,11 @@
 alter sequence emaj.emaj_hist_hist_id_seq restart 3000;
 alter sequence emaj.emaj_time_stamp_time_id_seq restart 3000;
 
+-- set the triggers state
+select emaj.emaj_keep_enabled_trigger('REMOVE','myschema1','mytbl2','mytbl2%');
+ALTER TABLE mySchema1.myTbl2 ENABLE TRIGGER myTbl2trg2;
+select emaj.emaj_keep_enabled_trigger('ADD','myschema1','mytbl2','mytbl2trg2');
+
 -----------------------------
 -- rollback nothing tests
 -----------------------------
@@ -242,9 +247,7 @@ select col31, col33, emaj_verb, emaj_tuple, emaj_gid from emaj_myschema1."myTbl3
 select col41, col42, col43, col44, col45, emaj_verb, emaj_tuple, emaj_gid from emaj_myschema1.myTbl4_log order by emaj_gid, emaj_tuple desc;
 
 -- rollback #1
-alter table mySchema1.myTbl2 disable trigger myTbl2trg;
 select emaj.emaj_rollback_group('myGroup1','Mark12');
-alter table mySchema1.myTbl2 enable trigger myTbl2trg;
 -- check impact
 select mark_group, regexp_replace(mark_name,E'\\d\\d\.\\d\\d\\.\\d\\d\\.\\d\\d\\d','%','g'), mark_time_id, mark_is_deleted, mark_is_rlbk_protected, mark_comment, mark_log_rows_before_next, mark_logged_rlbk_target_mark from emaj.emaj_mark order by mark_time_id, mark_group;
 select sequ_schema, sequ_name, sequ_time_id, sequ_last_val, sequ_is_called from emaj.emaj_sequence order by sequ_time_id, sequ_schema, sequ_name;
@@ -255,9 +258,7 @@ select col31, col33 from myschema1."myTbl3" order by col31;
 select col41, col42, col43, col44, col45 from myschema1.myTbl4 order by col41;
 
 -- rollback #2 (and stop)
-alter table mySchema1.myTbl2 disable trigger myTbl2trg;
 select emaj.emaj_rollback_group('myGroup1','Mark11');
-alter table mySchema1.myTbl2 enable trigger myTbl2trg;
 select emaj.emaj_stop_group('myGroup1');
 -- check impact
 select mark_group, regexp_replace(mark_name,E'\\d\\d\.\\d\\d\\.\\d\\d\\.\\d\\d\\d','%','g'), mark_time_id, mark_is_deleted, mark_is_rlbk_protected, mark_comment, mark_log_rows_before_next, mark_logged_rlbk_target_mark from emaj.emaj_mark order by mark_time_id, mark_group;
@@ -317,9 +318,7 @@ select col31, col33, emaj_verb, emaj_tuple, emaj_gid from emaj_myschema1."myTbl3
 select col41, col42, col43, col44, col45, emaj_verb, emaj_tuple, emaj_gid from emaj_myschema1.myTbl4_log order by emaj_gid, emaj_tuple desc;
 
 -- logged rollback #1
-alter table mySchema1.myTbl2 disable trigger myTbl2trg;
 select emaj.emaj_logged_rollback_group('myGroup1','Mark12');
-alter table mySchema1.myTbl2 enable trigger myTbl2trg;
 -- check impact
 select mark_group, regexp_replace(mark_name,E'\\d\\d\.\\d\\d\\.\\d\\d\\.\\d\\d\\d','%','g'), mark_time_id, mark_is_deleted, mark_is_rlbk_protected, mark_comment, mark_log_rows_before_next, mark_logged_rlbk_target_mark from emaj.emaj_mark order by mark_time_id, mark_group;
 select sequ_schema, sequ_name, sequ_time_id, sequ_last_val, sequ_is_called from emaj.emaj_sequence order by sequ_time_id, sequ_schema, sequ_name;
@@ -330,9 +329,7 @@ select col31, col33 from myschema1."myTbl3" order by col31;
 select col41, col42, col43, col44, col45 from myschema1.myTbl4 order by col41;
 
 -- logged rollback #2
-alter table mySchema1.myTbl2 disable trigger myTbl2trg;
 select emaj.emaj_logged_rollback_group('myGroup1','Mark11');
-alter table mySchema1.myTbl2 enable trigger myTbl2trg;
 -- check impact
 select mark_group, regexp_replace(mark_name,E'\\d\\d\.\\d\\d\\.\\d\\d\\.\\d\\d\\d','%','g'), mark_time_id, mark_is_deleted, mark_is_rlbk_protected, mark_comment, mark_log_rows_before_next, mark_logged_rlbk_target_mark from emaj.emaj_mark order by mark_time_id, mark_group;
 select sequ_schema, sequ_name, sequ_time_id, sequ_last_val, sequ_is_called from emaj.emaj_sequence order by sequ_time_id, sequ_schema, sequ_name;
@@ -347,9 +344,9 @@ select col20, col21 from myschema1.myTbl2b order by col20;
 -----------------------------
 -- unlogged rollback of logged rollbacks #3
 -----------------------------
-alter table mySchema1.myTbl2 disable trigger myTbl2trg;
+alter table mySchema1.myTbl2 disable trigger myTbl2trg1;
 select emaj.emaj_rollback_group('myGroup1','Mark13');
-alter table mySchema1.myTbl2 enable trigger myTbl2trg;
+alter table mySchema1.myTbl2 enable trigger myTbl2trg1;
 -- check impact
 select mark_group, regexp_replace(mark_name,E'\\d\\d\.\\d\\d\\.\\d\\d\\.\\d\\d\\d','%','g'), mark_time_id, mark_is_deleted, mark_is_rlbk_protected, mark_comment, mark_log_rows_before_next, mark_logged_rlbk_target_mark from emaj.emaj_mark order by mark_time_id, mark_group;
 select sequ_schema, sequ_name, sequ_time_id, sequ_last_val, sequ_is_called from emaj.emaj_sequence order by sequ_time_id, sequ_schema, sequ_name;
@@ -386,7 +383,7 @@ select col1, col2, col3, emaj_verb, emaj_tuple, emaj_gid from emaj_myschema4.myt
 select col1, col2, emaj_verb, emaj_tuple, emaj_gid from emaj_myschema4.mypartp1_log;          -- empty in pg 9.6-
 select col1, col2, emaj_verb, emaj_tuple, emaj_gid from emaj_myschema4.mypartp2_log;          -- empty in pg 9.6-
 
--- use the functions dedicated to the ppa plugin
+-- use the functions dedicated to emaj_web
 -- for an equivalent of "select * from emaj.emaj_rollback_group('myGroup4','myGroup4_start',true);"
 select * from emaj._rlbk_async(emaj._rlbk_init(array['myGroup4'], 'myGroup4_start', false, 1, false, true), false);
 -- and check the result
@@ -407,7 +404,7 @@ begin;
              rlbk_nb_session, rlbk_nb_table, rlbk_nb_sequence, rlbk_eff_nb_table, rlbk_status)
     values (1232,array['group1232'],'mark1232',-2,-1,true,false,
              1,5,4,3,'EXECUTING');
-  insert into emaj.emaj_rlbk_plan (rlbp_rlbk_id, rlbp_step, rlbp_schema, rlbp_table, rlbp_fkey,
+  insert into emaj.emaj_rlbk_plan (rlbp_rlbk_id, rlbp_step, rlbp_schema, rlbp_table, rlbp_object,
              rlbp_estimated_duration, rlbp_estimated_quantity, rlbp_start_datetime, rlbp_duration)
     values (1232, 'RLBK_TABLE','schema','t1','','50 seconds'::interval,null,null,null),
            (1232, 'RLBK_TABLE','schema','t2','','30 seconds'::interval,null,null,null),
@@ -467,14 +464,14 @@ begin;
              rlbk_nb_session, rlbk_nb_table, rlbk_nb_sequence, rlbk_eff_nb_table, rlbk_status)
     values (1233,array['group1233'],'mark1233',-2,-1,true,false,
              1,5,4,3,'LOCKING');
-  insert into emaj.emaj_rlbk_plan (rlbp_rlbk_id, rlbp_step, rlbp_schema, rlbp_table, rlbp_fkey,
+  insert into emaj.emaj_rlbk_plan (rlbp_rlbk_id, rlbp_step, rlbp_schema, rlbp_table, rlbp_object,
              rlbp_estimated_duration, rlbp_start_datetime, rlbp_duration)
     values (1233, 'LOCK_TABLE','schema','t1','',null,null,null),
            (1233, 'LOCK_TABLE','schema','t2','',null,null,null),
            (1233, 'LOCK_TABLE','schema','t3','',null,null,null);
   select rlbk_id, rlbk_status, rlbk_elapse, rlbk_remaining, rlbk_completion_pct from emaj._rollback_activity();
 -- the rollback operation in LOCKING state now has RLBK_TABLE steps
-  insert into emaj.emaj_rlbk_plan (rlbp_rlbk_id, rlbp_step, rlbp_schema, rlbp_table, rlbp_fkey,
+  insert into emaj.emaj_rlbk_plan (rlbp_rlbk_id, rlbp_step, rlbp_schema, rlbp_table, rlbp_object,
              rlbp_estimated_duration, rlbp_start_datetime, rlbp_duration)
     values (1233, 'RLBK_TABLE','schema','t1','','0:20:00'::interval,null,null),
            (1233, 'RLBK_TABLE','schema','t2','','0:02:00'::interval,null,null),
@@ -513,6 +510,7 @@ rollback;
 
 -- should be ok
 set search_path=public,myschema1;
+select emaj.emaj_keep_enabled_trigger('ADD', 'myschema1', 'mytbl2', 'mytbl2trg%');
 
 -- rollback without log rows to delete
 select emaj.emaj_set_mark_group('myGroup1','Conso_M1');
@@ -550,6 +548,7 @@ select sequ_schema, sequ_name, sequ_time_id, sequ_last_val, sequ_is_called from 
 select sqhl_schema, sqhl_table, sqhl_begin_time_id, sqhl_end_time_id, sqhl_hole_size from emaj.emaj_seq_hole where sqhl_schema = 'myschema1' order by 1,2,3;
 
 select emaj.emaj_rollback_group('myGroup1','Conso_M1');
+select emaj.emaj_keep_enabled_trigger('REMOVE', 'myschema1', 'mytbl2', '%');
 
 -- consolidate a stopped (and empty) group
 begin;
@@ -590,11 +589,11 @@ select rlbk_id, rlbk_groups, rlbk_mark, rlbk_time_id, rlbk_is_logged, rlbk_is_al
 select rlbs_rlbk_id, rlbs_session, 
        case when rlbs_end_datetime is null then 'null' else '[ts]' end as "end_datetime"
   from emaj.emaj_rlbk_session order by rlbs_rlbk_id, rlbs_session;
-select rlbp_rlbk_id, rlbp_step, rlbp_schema, rlbp_table, rlbp_fkey, rlbp_target_time_id, rlbp_batch_number, rlbp_session,
-       rlbp_fkey_def, rlbp_estimated_quantity, rlbp_estimate_method, rlbp_quantity
-  from emaj.emaj_rlbk_plan order by rlbp_rlbk_id, rlbp_step, rlbp_schema, rlbp_table, rlbp_fkey;
-select rlbt_step, rlbt_schema, rlbt_table, rlbt_fkey, rlbt_rlbk_id, rlbt_quantity from emaj.emaj_rlbk_stat
-  order by rlbt_rlbk_id, rlbt_step, rlbt_schema, rlbt_table, rlbt_fkey;
+select rlbp_rlbk_id, rlbp_step, rlbp_schema, rlbp_table, rlbp_object, rlbp_target_time_id, rlbp_batch_number, rlbp_session,
+       rlbp_object_def, rlbp_estimated_quantity, rlbp_estimate_method, rlbp_quantity
+  from emaj.emaj_rlbk_plan order by rlbp_rlbk_id, rlbp_step, rlbp_schema, rlbp_table, rlbp_object;
+select rlbt_step, rlbt_schema, rlbt_table, rlbt_object, rlbt_rlbk_id, rlbt_quantity from emaj.emaj_rlbk_stat
+  order by rlbt_rlbk_id, rlbt_step, rlbt_schema, rlbt_table, rlbt_object;
 
 -----------------------------
 -- test end: reset history and force sequences id

@@ -59,7 +59,7 @@ insert into emaj.emaj_rlbk (rlbk_id, rlbk_groups, rlbk_mark, rlbk_mark_time_id, 
            rlbk_nb_table, rlbk_nb_sequence, rlbk_eff_nb_table, rlbk_status)
   values (20101,array['group20101'],'mark20101',-2,-1,true,false,1,
            5,4,3,'EXECUTING');
-insert into emaj.emaj_rlbk_plan (rlbp_rlbk_id, rlbp_step, rlbp_schema, rlbp_table, rlbp_fkey,
+insert into emaj.emaj_rlbk_plan (rlbp_rlbk_id, rlbp_step, rlbp_schema, rlbp_table, rlbp_object,
            rlbp_estimated_duration, rlbp_start_datetime, rlbp_duration)
   values (20101, 'RLBK_TABLE','schema','t1','','50 seconds'::interval,null,null),
          (20101, 'RLBK_TABLE','schema','t2','','30 seconds'::interval,null,null),
@@ -79,7 +79,7 @@ insert into emaj.emaj_rlbk (rlbk_id, rlbk_groups, rlbk_mark, rlbk_mark_time_id, 
            rlbk_nb_table, rlbk_nb_sequence, rlbk_eff_nb_table, rlbk_status)
   values (20102,array['group20102'],'mark20102',-2,-3,true,false,1,
            5,4,3,'LOCKING');
-insert into emaj.emaj_rlbk_plan (rlbp_rlbk_id, rlbp_step, rlbp_schema, rlbp_table, rlbp_fkey,
+insert into emaj.emaj_rlbk_plan (rlbp_rlbk_id, rlbp_step, rlbp_schema, rlbp_table, rlbp_object,
            rlbp_estimated_duration, rlbp_start_datetime, rlbp_duration)
   values (20102, 'LOCK_TABLE','schema','t1','',null,null,null),
          (20102, 'LOCK_TABLE','schema','t2','',null,null,null),
@@ -159,7 +159,7 @@ insert into emaj.emaj_rlbk (rlbk_id, rlbk_groups, rlbk_mark, rlbk_mark_time_id, 
            rlbk_nb_table, rlbk_nb_sequence, rlbk_eff_nb_table, rlbk_status)
   values (20301,array['group20301'],'mark20301',-2,-1,true,false,1,
            5,4,3,'EXECUTING');
-insert into emaj.emaj_rlbk_plan (rlbp_rlbk_id, rlbp_step, rlbp_schema, rlbp_table, rlbp_fkey,
+insert into emaj.emaj_rlbk_plan (rlbp_rlbk_id, rlbp_step, rlbp_schema, rlbp_table, rlbp_object,
            rlbp_estimated_duration, rlbp_start_datetime, rlbp_duration)
   values (20301, 'RLBK_TABLE','schema','t1','','50 seconds'::interval,null,null),
          (20301, 'RLBK_TABLE','schema','t2','','30 seconds'::interval,null,null),
@@ -179,7 +179,7 @@ insert into emaj.emaj_rlbk (rlbk_id, rlbk_groups, rlbk_mark, rlbk_mark_time_id, 
            rlbk_nb_table, rlbk_nb_sequence, rlbk_eff_nb_table, rlbk_status)
   values (20302,array['group20302'],'mark20302',-2,-3,true,false,1,
            5,4,3,'LOCKING');
-insert into emaj.emaj_rlbk_plan (rlbp_rlbk_id, rlbp_step, rlbp_schema, rlbp_table, rlbp_fkey,
+insert into emaj.emaj_rlbk_plan (rlbp_rlbk_id, rlbp_step, rlbp_schema, rlbp_table, rlbp_object,
            rlbp_estimated_duration, rlbp_start_datetime, rlbp_duration)
   values (20302, 'LOCK_TABLE','schema','t1','',null,null,null),
          (20302, 'LOCK_TABLE','schema','t2','',null,null,null),
