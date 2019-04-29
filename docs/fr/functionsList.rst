@@ -6,11 +6,11 @@ Les fonctions E-Maj disponibles pour les utilisateurs sont listées ci-dessous p
 +--------------------------------------------------+-------------------------------+---------------------------------------+
 | Fonctions                                        | Paramètres en entrée          | Données restituées                    |
 +==================================================+===============================+=======================================+
-| :doc:`emaj_alter_group                           | | groupe TEXT                 | nb.tables.et.seq INT                  |
-| <alterGroups>`                                   |                               |                                       |
+| :doc:`emaj_alter_group                           | | groupe TEXT,                | nb.tables.et.seq INT                  |
+| <alterGroups>`                                   | | [marque TEXT]               |                                       |
 +--------------------------------------------------+-------------------------------+---------------------------------------+
-| :doc:`emaj_alter_groups                          | | tableau.groupes TEXT[]      | nb.tables.et.seq INT                  |
-| <multiGroupsFunctions>`                          |                               |                                       |
+| :doc:`emaj_alter_groups                          | | tableau.groupes TEXT[],     | nb.tables.et.seq INT                  |
+| <multiGroupsFunctions>`                          | | [marque TEXT]               |                                       |
 +--------------------------------------------------+-------------------------------+---------------------------------------+
 | :ref:`emaj_cleanup_rollback_state                |                               | nb.rollback INT                       |
 | <emaj_cleanup_rollback_state>`                   |                               |                                       |
