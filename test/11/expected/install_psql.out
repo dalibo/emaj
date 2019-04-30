@@ -7283,7 +7283,7 @@ $emaj_verify_all$
     END LOOP;
 -- check the emaj_enabled_trigger table content
     FOR r_object IN
-      SELECT 'No trigger "' || trg_name || '" found for table "' || trg_schema || '"."' || trg_table || '". Use the emaj_set_disabled triggers() function to adjust the list of application triggers that should not be automatically disabled at rollback time.' AS msg
+      SELECT 'No trigger "' || trg_name || '" found for table "' || trg_schema || '"."' || trg_table || '". Use the emaj_keep_enabled_trigger() function to adjust the list of application triggers that should not be automatically disabled at rollback time.' AS msg
         FROM (
           SELECT trg_schema, trg_table, trg_name FROM emaj.emaj_enabled_trigger
             EXCEPT

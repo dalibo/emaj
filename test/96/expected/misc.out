@@ -1807,12 +1807,12 @@ begin;
   insert into emaj.emaj_enabled_trigger values ('myschema1','mytbl1','dummy');     -- dropped trigger
 -- check
   select * from emaj.emaj_verify_all();
-                                                                                                emaj_verify_all                                                                                                
----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+                                                                                               emaj_verify_all                                                                                                
+--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
  Warning: Some E-Maj event triggers exist but are disabled. You may enable them using the emaj_enable_protection_by_event_triggers() function.
- No trigger "mytrg" found for table "myschema1"."dummy". Use the emaj_set_disabled triggers() function to adjust the list of application triggers that should not be automatically disabled at rollback time.
- No trigger "dummy" found for table "myschema1"."mytbl1". Use the emaj_set_disabled triggers() function to adjust the list of application triggers that should not be automatically disabled at rollback time.
- No trigger "mytrg" found for table "dummy"."mytbl1". Use the emaj_set_disabled triggers() function to adjust the list of application triggers that should not be automatically disabled at rollback time.
+ No trigger "mytrg" found for table "myschema1"."dummy". Use the emaj_keep_enabled_trigger() function to adjust the list of application triggers that should not be automatically disabled at rollback time.
+ No trigger "dummy" found for table "myschema1"."mytbl1". Use the emaj_keep_enabled_trigger() function to adjust the list of application triggers that should not be automatically disabled at rollback time.
+ No trigger "mytrg" found for table "dummy"."mytbl1". Use the emaj_keep_enabled_trigger() function to adjust the list of application triggers that should not be automatically disabled at rollback time.
 (4 rows)
 
 -- and fix
