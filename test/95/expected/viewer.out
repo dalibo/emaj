@@ -577,6 +577,12 @@ select count(*) from emaj.emaj_relation;
     15
 (1 row)
 
+select count(*) from emaj.emaj_rel_hist;
+ count 
+-------
+    74
+(1 row)
+
 select count(*) from emaj.emaj_mark;
  count 
 -------
@@ -725,6 +731,8 @@ delete from emaj.emaj_group;
 ERROR:  permission denied for relation emaj_group
 delete from emaj.emaj_relation;
 ERROR:  permission denied for relation emaj_relation
+delete from emaj.emaj_rel_hist;
+ERROR:  permission denied for relation emaj_rel_hist
 delete from emaj.emaj_mark;
 ERROR:  permission denied for relation emaj_mark
 delete from emaj.emaj_sequence;

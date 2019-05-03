@@ -100,6 +100,7 @@ select relname from pg_catalog.pg_class,
  emaj_hist_hist_id_seq
  emaj_mark
  emaj_param
+ emaj_rel_hist
  emaj_relation
  emaj_rlbk
  emaj_rlbk_plan
@@ -111,7 +112,7 @@ select relname from pg_catalog.pg_class,
  emaj_sequence
  emaj_time_stamp
  emaj_time_stamp_time_id_seq
-(20 rows)
+(21 rows)
 
 -- check the emaj_param content
 SELECT param_value_text FROM emaj.emaj_param WHERE param_key = 'emaj_version';
@@ -410,6 +411,47 @@ Tablespace: "tspemaj"
 -----------+------+------------
  param_key | text | param_key
 primary key, btree, for table "emaj.emaj_param"
+Tablespace: "tspemaj"
+
+                  Table "emaj.emaj_rel_hist"
+     Column      |   Type    | Collation | Nullable | Default 
+-----------------+-----------+-----------+----------+---------
+ relh_schema     | text      |           | not null | 
+ relh_tblseq     | text      |           | not null | 
+ relh_time_range | int8range |           | not null | 
+ relh_group      | text      |           | not null | 
+ relh_kind       | text      |           |          | 
+Indexes:
+    "emaj_rel_hist_pkey" PRIMARY KEY, btree (relh_schema, relh_tblseq, relh_time_range), tablespace "tspemaj"
+    "emaj_rel_hist_idx1" btree (upper(relh_time_range)), tablespace "tspemaj"
+    "emaj_rel_hist_relh_schema_relh_tblseq_relh_time_range_excl" EXCLUDE USING gist (relh_schema WITH =, relh_tblseq WITH =, relh_time_range WITH &&), tablespace "tspemaj"
+Check constraints:
+    "emaj_rel_hist_relh_time_range_check" CHECK (NOT upper_inf(relh_time_range))
+Tablespace: "tspemaj"
+
+     Index "emaj.emaj_rel_hist_idx1"
+ Column |  Type  |       Definition       
+--------+--------+------------------------
+ upper  | bigint | upper(relh_time_range)
+btree, for table "emaj.emaj_rel_hist"
+Tablespace: "tspemaj"
+
+        Index "emaj.emaj_rel_hist_pkey"
+     Column      |   Type    |   Definition    
+-----------------+-----------+-----------------
+ relh_schema     | text      | relh_schema
+ relh_tblseq     | text      | relh_tblseq
+ relh_time_range | int8range | relh_time_range
+primary key, btree, for table "emaj.emaj_rel_hist"
+Tablespace: "tspemaj"
+
+Index "emaj.emaj_rel_hist_relh_schema_relh_tblseq_relh_time_range_excl"
+     Column      |     Type      |   Definition    
+-----------------+---------------+-----------------
+ relh_schema     | gbtreekey_var | relh_schema
+ relh_tblseq     | gbtreekey_var | relh_tblseq
+ relh_time_range | int8range     | relh_time_range
+gist, for table "emaj.emaj_rel_hist"
 Tablespace: "tspemaj"
 
                       Table "emaj.emaj_relation"

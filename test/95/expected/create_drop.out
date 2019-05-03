@@ -553,7 +553,7 @@ begin;
   select emaj.emaj_drop_group('myGroup1');
 ERROR:  _drop_log_schemas: Cannot drop the schema "emaj_myschema1". It probably owns unattended objects. Use the emaj_verify_all() function to get details.
 CONTEXT:  SQL statement "SELECT emaj._drop_log_schemas(CASE WHEN v_isForced THEN 'FORCE_DROP_GROUP' ELSE 'DROP_GROUP' END, v_isForced)"
-PL/pgSQL function emaj._drop_group(text,boolean) line 24 at PERFORM
+PL/pgSQL function emaj._drop_group(text,boolean) line 27 at PERFORM
 SQL statement "SELECT emaj._drop_group(v_groupName, FALSE)"
 PL/pgSQL function emaj.emaj_drop_group(text) line 14 at SQL statement
 rollback;
@@ -678,6 +678,47 @@ select sch_name from emaj.emaj_schema order by 1;
  emaj_phil's schema3
 (3 rows)
 
+select * from emaj.emaj_rel_hist order by 1,2,3;
+ relh_schema |                       relh_tblseq                       | relh_time_range | relh_group | relh_kind 
+-------------+---------------------------------------------------------+-----------------+------------+-----------
+ myschema1   | myTbl3                                                  | [3,15)          | myGroup1   | r
+ myschema1   | myTbl3                                                  | [20,22)         | myGroup1   | r
+ myschema1   | myTbl3_col31_seq                                        | [3,15)          | myGroup1   | S
+ myschema1   | myTbl3_col31_seq                                        | [20,22)         | myGroup1   | S
+ myschema1   | mytbl1                                                  | [3,15)          | myGroup1   | r
+ myschema1   | mytbl1                                                  | [20,22)         | myGroup1   | r
+ myschema1   | mytbl2                                                  | [3,15)          | myGroup1   | r
+ myschema1   | mytbl2                                                  | [20,22)         | myGroup1   | r
+ myschema1   | mytbl2b                                                 | [3,15)          | myGroup1   | r
+ myschema1   | mytbl2b                                                 | [20,22)         | myGroup1   | r
+ myschema1   | mytbl2b_col20_seq                                       | [3,15)          | myGroup1   | S
+ myschema1   | mytbl2b_col20_seq                                       | [20,22)         | myGroup1   | S
+ myschema1   | mytbl4                                                  | [3,15)          | myGroup1   | r
+ myschema1   | mytbl4                                                  | [20,22)         | myGroup1   | r
+ myschema2   | myTbl3                                                  | [5,16)          | myGroup2   | r
+ myschema2   | myTbl3                                                  | [23,24)         | myGroup2   | r
+ myschema2   | myTbl3_col31_seq                                        | [5,16)          | myGroup2   | S
+ myschema2   | myTbl3_col31_seq                                        | [23,24)         | myGroup2   | S
+ myschema2   | myseq1                                                  | [5,16)          | myGroup2   | S
+ myschema2   | myseq1                                                  | [23,24)         | myGroup2   | S
+ myschema2   | mytbl1                                                  | [5,16)          | myGroup2   | r
+ myschema2   | mytbl1                                                  | [23,24)         | myGroup2   | r
+ myschema2   | mytbl2                                                  | [5,16)          | myGroup2   | r
+ myschema2   | mytbl2                                                  | [23,24)         | myGroup2   | r
+ myschema2   | mytbl4                                                  | [5,16)          | myGroup2   | r
+ myschema2   | mytbl4                                                  | [23,24)         | myGroup2   | r
+ myschema2   | mytbl5                                                  | [5,16)          | myGroup2   | r
+ myschema2   | mytbl5                                                  | [23,24)         | myGroup2   | r
+ myschema2   | mytbl6                                                  | [5,16)          | myGroup2   | r
+ myschema2   | mytbl6                                                  | [23,24)         | myGroup2   | r
+ myschema5   | myoidstbl                                               | [10,18)         | myGroup5   | r
+ myschema5   | myunloggedtbl                                           | [10,18)         | myGroup5   | r
+ myschema6   | table_with_50_characters_long_name_____0_________0      | [11,19)         | myGroup6   | r
+ myschema6   | table_with_51_characters_long_name_____0_________0a     | [11,19)         | myGroup6   | r
+ myschema6   | table_with_55_characters_long_name_____0_________0abcde | [11,19)         | myGroup6   | r
+ myschema6   | table_with_55_characters_long_name_____0_________0fghij | [11,19)         | myGroup6   | r
+(36 rows)
+
 select hist_function, hist_event, hist_object, 
        regexp_replace(regexp_replace(hist_wording,E'\\d\\d\.\\d\\d\\.\\d\\d\\.\\d\\d\\d','%','g'),E'\\[.+\\]','(timestamp)','g'), 
        hist_user 
@@ -766,8 +807,15 @@ select time_id, time_last_emaj_gid, time_event from emaj.emaj_time_stamp order b
       11 |                  0 | C
       12 |                  0 | M
       13 |                  0 | M
-      14 |                  0 | C
-      15 |                  0 | M
-      16 |                  0 | C
-(12 rows)
+      15 |                  0 | D
+      16 |                  0 | D
+      17 |                  0 | D
+      18 |                  0 | D
+      19 |                  0 | D
+      20 |                  0 | C
+      21 |                  0 | M
+      22 |                  0 | D
+      23 |                  0 | C
+      24 |                  0 | D
+(19 rows)
 

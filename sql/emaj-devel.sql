@@ -184,7 +184,8 @@ CREATE TABLE emaj.emaj_time_stamp (
                                DEFAULT txid_current(),
   time_last_emaj_gid           BIGINT,                     -- last value of the E-Maj global sequence
   time_event                   CHAR(1),                    -- event type that has generated the time stamp
-                                                           --   C(reate group), A(lter group) , M(ark setting), R(ollback), S(imple)
+                                                           --   C(reate group), D(rop group), A(lter group),
+                                                           --   M(ark setting), R(ollback), S(imple)
   PRIMARY KEY (time_id)
   );
 COMMENT ON TABLE emaj.emaj_time_stamp IS
@@ -260,6 +261,24 @@ $$Contains the content (tables and sequences) of created E-Maj groups.$$;
 CREATE INDEX emaj_relation_idx1 ON emaj.emaj_relation (rel_group, rel_kind);
 -- index on emaj_relation used to speedup _verify_all_schemas() with large E-Maj configuration
 CREATE INDEX emaj_relation_idx2 ON emaj.emaj_relation (rel_log_schema);
+
+-- table containing the history of relations - groups relationship
+CREATE TABLE emaj.emaj_rel_hist (
+  relh_schema                  TEXT        NOT NULL,       -- schema name containing the relation
+  relh_tblseq                  TEXT        NOT NULL,       -- application table or sequence name
+  relh_time_range              INT8RANGE   NOT NULL,       -- range of time id representing the validity time range
+                                           CHECK (NOT upper_inf(relh_time_range)),
+  relh_group                   TEXT        NOT NULL,       -- name of the group that owned the relation
+                                                           --   (the group may not exist in emaj_group anymore)
+  relh_kind                    TEXT,                       -- similar to the relkind column of pg_class table
+                                                           --   ('r' = table, 'S' = sequence)
+  PRIMARY KEY (relh_schema, relh_tblseq, relh_time_range),
+  EXCLUDE USING gist (relh_schema WITH =, relh_tblseq WITH =, relh_time_range WITH &&)
+  );
+-- functional index on emaj_rel_hist used to speedup the history purge function
+CREATE INDEX emaj_rel_hist_idx1 ON emaj.emaj_rel_hist ((upper(relh_time_range)));
+COMMENT ON TABLE emaj.emaj_rel_hist IS
+$$Contains the history of groups content.$$;
 
 -- table containing the marks
 CREATE TABLE emaj.emaj_mark (
@@ -818,9 +837,10 @@ $_purge_hist$
 -- The function is called at start group time and when oldest marks are deleted.
   DECLARE
     v_datetimeLimit          TIMESTAMPTZ;
-    v_nbPurgedHist           BIGINT;
     v_maxTimeId              BIGINT;
     v_maxRlbkId              BIGINT;
+    v_nbPurgedHist           BIGINT;
+    v_nbPurgedRelHist        BIGINT;
     v_nbPurgedRlbk           BIGINT;
     v_nbPurgedAlter          BIGINT;
     v_wording                TEXT = '';
@@ -845,6 +865,12 @@ $_purge_hist$
     GET DIAGNOSTICS v_nbPurgedHist = ROW_COUNT;
     IF v_nbPurgedHist > 0 THEN
       v_wording = v_nbPurgedHist || ' emaj_hist rows deleted';
+    END IF;
+-- delete oldest rows from emaj_rel_hist
+    DELETE FROM emaj.emaj_rel_hist WHERE upper(relh_time_range) < v_maxTimeId;
+    GET DIAGNOSTICS v_nbPurgedRelHist = ROW_COUNT;
+    IF v_nbPurgedRelHist > 0 THEN
+      v_wording = v_wording || ' ; ' || v_nbPurgedRelHist || ' relation history rows deleted';
     END IF;
 -- purge the emaj_alter_plan table
     WITH deleted_alter AS (
@@ -1744,7 +1770,7 @@ $_remove_tbl$
   BEGIN
     IF NOT r_plan.altr_group_is_logging THEN
 -- if the group is in idle state, drop the table immediately
-      PERFORM emaj._drop_tbl(emaj.emaj_relation.*) FROM emaj.emaj_relation
+      PERFORM emaj._drop_tbl(emaj.emaj_relation.*, v_timeId) FROM emaj.emaj_relation
         WHERE rel_schema = r_plan.altr_schema AND rel_tblseq = r_plan.altr_tblseq AND upper_inf(rel_time_range);
     ELSE
 -- if the group is in logging state, ...
@@ -1835,7 +1861,7 @@ $_move_tbl$
   END;
 $_move_tbl$;
 
-CREATE OR REPLACE FUNCTION emaj._drop_tbl(r_rel emaj.emaj_relation)
+CREATE OR REPLACE FUNCTION emaj._drop_tbl(r_rel emaj.emaj_relation, v_timeId BIGINT)
 RETURNS VOID LANGUAGE plpgsql SECURITY DEFINER AS
 $_drop_tbl$
 -- The function deletes all what has been created by _create_tbl function
@@ -1869,8 +1895,18 @@ $_drop_tbl$
     DELETE FROM emaj.emaj_sequence WHERE sequ_schema = r_rel.rel_log_schema AND sequ_name = r_rel.rel_log_sequence;
 -- delete rows related to the table from emaj_seq_hole table (it may delete rows for other not yet processed time_ranges for the same table)
     DELETE FROM emaj.emaj_seq_hole WHERE sqhl_schema = r_rel.rel_schema AND sqhl_table = r_rel.rel_tblseq;
--- and finaly delete the table reference from the emaj_relation table
-    DELETE FROM emaj.emaj_relation WHERE rel_schema = r_rel.rel_schema AND rel_tblseq = r_rel.rel_tblseq AND rel_time_range = r_rel.rel_time_range;
+-- keep a trace of the table group ownership history and finaly delete the table reference from the emaj_relation table
+    WITH deleted AS (
+      DELETE FROM emaj.emaj_relation
+        WHERE rel_schema = r_rel.rel_schema AND rel_tblseq = r_rel.rel_tblseq AND rel_time_range = r_rel.rel_time_range
+        RETURNING rel_schema, rel_tblseq, rel_time_range, rel_group, rel_kind
+      )
+    INSERT INTO emaj.emaj_rel_hist
+             (relh_schema, relh_tblseq, relh_time_range, relh_group, relh_kind)
+      SELECT rel_schema, rel_tblseq,
+             CASE WHEN upper_inf(rel_time_range) THEN int8range(lower(rel_time_range), v_timeId, '[)') ELSE rel_time_range END,
+             rel_group, rel_kind
+        FROM deleted;
     RETURN;
   END;
 $_drop_tbl$;
@@ -1950,11 +1986,11 @@ $_remove_seq$
   BEGIN
     IF r_plan.altr_group_is_logging THEN
 -- if the group is in logging state, just register the end of the relation time frame
-      UPDATE emaj.emaj_relation SET rel_time_range = int8range(lower(rel_time_range),v_timeId,'[)')
+      UPDATE emaj.emaj_relation SET rel_time_range = int8range(lower(rel_time_range),v_timeId, '[)')
         WHERE rel_schema = r_plan.altr_schema AND rel_tblseq = r_plan.altr_tblseq AND upper_inf(rel_time_range);
     ELSE
 -- if the group is in idle state, drop the sequence immediately
-      PERFORM emaj._drop_seq(emaj.emaj_relation.*) FROM emaj.emaj_relation
+      PERFORM emaj._drop_seq(emaj.emaj_relation.*, v_timeId) FROM emaj.emaj_relation
         WHERE rel_schema = r_plan.altr_schema AND rel_tblseq = r_plan.altr_tblseq AND upper_inf(rel_time_range);
     END IF;
 -- insert an entry into the emaj_hist table
@@ -1994,7 +2030,7 @@ $_move_seq$
   END;
 $_move_seq$;
 
-CREATE OR REPLACE FUNCTION emaj._drop_seq(r_rel emaj.emaj_relation)
+CREATE OR REPLACE FUNCTION emaj._drop_seq(r_rel emaj.emaj_relation, v_timeId BIGINT)
 RETURNS VOID LANGUAGE plpgsql AS
 $_drop_seq$
 -- The function deletes the rows stored into emaj_sequence for a particular sequence
@@ -2004,8 +2040,18 @@ $_drop_seq$
 -- if several rows exist in emaj_relation for the same sequence, due to removals and additions while the group was in logging state,
 --   the first function call deletes all emaj_sequence rows for the sequence
     EXECUTE 'DELETE FROM emaj.emaj_sequence WHERE sequ_schema = ' || quote_literal(r_rel.rel_schema) || ' AND sequ_name = ' || quote_literal(r_rel.rel_tblseq);
--- and finaly delete the sequence reference from the emaj_relation table
-    DELETE FROM emaj.emaj_relation WHERE rel_schema = r_rel.rel_schema AND rel_tblseq = r_rel.rel_tblseq AND rel_time_range = r_rel.rel_time_range;
+-- keep a trace of the sequence group ownership history and finaly delete the sequence from the emaj_relation table
+    WITH deleted AS (
+      DELETE FROM emaj.emaj_relation
+        WHERE rel_schema = r_rel.rel_schema AND rel_tblseq = r_rel.rel_tblseq AND rel_time_range = r_rel.rel_time_range
+        RETURNING rel_schema, rel_tblseq, rel_time_range, rel_group, rel_kind
+      )
+    INSERT INTO emaj.emaj_rel_hist
+             (relh_schema, relh_tblseq, relh_time_range, relh_group, relh_kind)
+      SELECT rel_schema, rel_tblseq,
+             CASE WHEN upper_inf(rel_time_range) THEN int8range(lower(rel_time_range), v_timeId, '[)') ELSE rel_time_range END,
+             rel_group, rel_kind
+        FROM deleted;
     RETURN;
   END;
 $_drop_seq$;
@@ -3029,19 +3075,22 @@ $_drop_group$
 -- The function is defined as SECURITY DEFINER so that log schemas can be dropped
   DECLARE
     v_eventTriggers          TEXT[];
+    v_timeId                 BIGINT;
     v_nbTb                   INT;
     r_rel                    emaj.emaj_relation%ROWTYPE;
   BEGIN
 -- disable event triggers that protect emaj components and keep in memory these triggers name
     SELECT emaj._disable_event_triggers() INTO v_eventTriggers;
+-- get the time stamp of the operation
+    SELECT emaj._set_time_stamp('D') INTO v_timeId;
 -- delete the emaj objets for each table of the group
     FOR r_rel IN
         SELECT * FROM emaj.emaj_relation
           WHERE rel_group = v_groupName
           ORDER BY rel_priority, rel_schema, rel_tblseq, rel_time_range
       LOOP
-        PERFORM CASE WHEN r_rel.rel_kind = 'r' THEN emaj._drop_tbl(r_rel)
-                     WHEN r_rel.rel_kind = 'S' THEN emaj._drop_seq(r_rel) END;
+        PERFORM CASE WHEN r_rel.rel_kind = 'r' THEN emaj._drop_tbl(r_rel, v_timeId)
+                     WHEN r_rel.rel_kind = 'S' THEN emaj._drop_seq(r_rel, v_timeId) END;
     END LOOP;
 -- drop the E-Maj log schemas that are now useless (i.e. not used by any other created group)
     PERFORM emaj._drop_log_schemas(CASE WHEN v_isForced THEN 'FORCE_DROP_GROUP' ELSE 'DROP_GROUP' END, v_isForced);
@@ -3310,7 +3359,7 @@ $_alter_exec$
             RAISE EXCEPTION 'alter_exec: Cannot repair the table %.%. Its group % is in LOGGING state.', r_plan.altr_schema, r_plan.altr_tblseq, r_plan.altr_group;
           ELSE
 -- remove the table from its group
-            PERFORM emaj._drop_tbl(emaj.emaj_relation.*) FROM emaj.emaj_relation
+            PERFORM emaj._drop_tbl(emaj.emaj_relation.*, v_timeId) FROM emaj.emaj_relation
               WHERE rel_schema = r_plan.altr_schema AND rel_tblseq = r_plan.altr_tblseq AND upper_inf(rel_time_range);
 -- get the is_rollbackable status of the related group
             SELECT group_is_rollbackable INTO v_isRollbackable
@@ -4109,20 +4158,30 @@ $_delete_before_mark_group$
         LOOP
       EXECUTE 'DROP TABLE IF EXISTS ' || quote_ident(r_rel.rel_log_schema) || '.' || quote_ident(r_rel.rel_log_table) || ' CASCADE';
     END LOOP;
--- delete obsolete emaj_sequence and emaj_relation rows (those corresponding to the just dropped log tables)
+-- delete obsolete emaj_sequence
 -- (the related emaj_seq_hole rows will be deleted just later ; they are not directly linked to a emaj_relation row)
     DELETE FROM emaj.emaj_sequence USING emaj.emaj_relation
       WHERE rel_group = v_groupName AND rel_kind = 'r'
         AND sequ_schema = rel_log_schema AND sequ_name = rel_log_sequence AND upper(rel_time_range) <= v_markTimeId
         AND sequ_time_id < v_markTimeId;
-    DELETE FROM emaj.emaj_relation
-      WHERE rel_group = v_groupName AND rel_kind = 'r' AND upper(rel_time_range) <= v_markTimeId;
+-- keep a trace of the relation group ownership history
+--   and finaly delete from the emaj_relation table the relation that ended before the new first mark
+    WITH deleted AS (
+      DELETE FROM emaj.emaj_relation
+        WHERE rel_group = v_groupName AND upper(rel_time_range) <= v_markTimeId
+        RETURNING rel_schema, rel_tblseq, rel_time_range, rel_group, rel_kind
+      )
+    INSERT INTO emaj.emaj_rel_hist
+             (relh_schema, relh_tblseq, relh_time_range, relh_group, relh_kind)
+      SELECT rel_schema, rel_tblseq, rel_time_range, rel_group, rel_kind
+        FROM deleted;
 -- drop the E-Maj log schemas that are now useless (i.e. not used by any created group)
     PERFORM emaj._drop_log_schemas('DELETE_BEFORE_MARK_GROUP', FALSE);
 -- delete rows from all other log tables
     FOR r_rel IN
         SELECT quote_ident(rel_log_schema) || '.' || quote_ident(rel_log_table) AS log_table_name FROM emaj.emaj_relation
-          WHERE rel_group = v_groupName AND rel_kind = 'r' AND (upper_inf(rel_time_range) OR upper(rel_time_range) > v_markTimeId)
+          WHERE rel_group = v_groupName AND rel_kind = 'r'
+            AND (upper_inf(rel_time_range) OR upper(rel_time_range) > v_markTimeId)
           ORDER BY rel_priority, rel_schema, rel_tblseq
     LOOP
 -- delete log rows prior to the new first mark
@@ -4157,9 +4216,6 @@ $_delete_before_mark_group$
 -- delete oldest marks
     DELETE FROM emaj.emaj_mark WHERE mark_group = v_groupName AND mark_time_id < v_markTimeId;
     GET DIAGNOSTICS v_nbMark = ROW_COUNT;
-
---TODO: drop useless application tables (when a feature will need it)
-
 -- deletes obsolete versions of emaj_relation rows
     DELETE FROM emaj.emaj_relation
       WHERE upper(rel_time_range) < v_markTimeId AND rel_group = v_groupName;
@@ -5903,7 +5959,8 @@ $_delete_between_marks_group$
 -- loop on all tables that belonged to the group at the end of the period
       FOR r_rel IN
           SELECT quote_ident(rel_log_schema) || '.' || quote_ident(rel_log_table) AS log_table_name FROM emaj.emaj_relation
-            WHERE rel_group = v_groupName AND rel_kind = 'r' AND rel_time_range @> v_lastMarkTimeId
+            WHERE rel_group = v_groupName AND rel_kind = 'r'
+              AND rel_time_range @> v_lastMarkTimeId
             ORDER BY rel_priority, rel_schema, rel_tblseq
       LOOP
 -- delete log rows
@@ -6073,9 +6130,17 @@ $_reset_groups$
         LOOP
       EXECUTE 'DROP TABLE IF EXISTS ' || quote_ident(r_rel.rel_log_schema) || '.' || quote_ident(r_rel.rel_log_table) || ' CASCADE';
     END LOOP;
--- deletes old versions of emaj_relation rows (those with a not infinity upper bound)
-    DELETE FROM emaj.emaj_relation
-      WHERE rel_group = ANY (v_groupNames) AND NOT upper_inf(rel_time_range);
+-- keep a trace of the relation group ownership history
+--   and finaly delete the old versions of emaj_relation rows (those with a not infinity upper bound)
+    WITH deleted AS (
+      DELETE FROM emaj.emaj_relation
+        WHERE rel_group = ANY (v_groupNames) AND NOT upper_inf(rel_time_range)
+        RETURNING rel_schema, rel_tblseq, rel_time_range, rel_group, rel_kind
+      )
+    INSERT INTO emaj.emaj_rel_hist
+             (relh_schema, relh_tblseq, relh_time_range, relh_group, relh_kind)
+      SELECT rel_schema, rel_tblseq, rel_time_range, rel_group, rel_kind
+        FROM deleted;
 -- truncate remaining log tables for application tables
     FOR r_rel IN
         SELECT rel_log_schema, rel_log_table, rel_log_sequence FROM emaj.emaj_relation
@@ -6747,7 +6812,8 @@ $emaj_snap_log_group$
 -- process all log tables of the emaj_relation table that enter in the marks range
     FOR r_tblsq IN
         SELECT rel_priority, rel_schema, rel_tblseq, rel_log_schema, rel_log_table FROM emaj.emaj_relation
-          WHERE rel_time_range && int8range(v_firstMarkTimeId, v_lastMarkTimeId,'[)') AND rel_group = v_groupName AND rel_kind = 'r'
+          WHERE rel_group = v_groupName AND rel_kind = 'r'
+            AND rel_time_range && int8range(v_firstMarkTimeId, v_lastMarkTimeId,'[)')
           ORDER BY rel_priority, rel_schema, rel_tblseq
         LOOP
 --   build names
@@ -6767,6 +6833,7 @@ $emaj_snap_log_group$
              ' FROM emaj.emaj_sequence, emaj.emaj_relation' ||
              ' WHERE sequ_time_id = ' || v_firstMarkTimeId ||
              '   AND rel_kind = ''S'' AND rel_group = ' || quote_literal(v_groupName) ||
+             '   AND rel_time_range @> ' || v_firstMarkTimeId || '::BIGINT' ||
              '   AND sequ_schema = rel_schema AND sequ_name = rel_tblseq' ||
              ' ORDER BY sequ_schema, sequ_name) TO ' || quote_literal(v_fileName) || ' ' ||
              coalesce (v_copyOptions, '');
@@ -6784,6 +6851,7 @@ $emaj_snap_log_group$
                ' FROM emaj.emaj_sequence, emaj.emaj_relation' ||
                ' WHERE sequ_time_id = ' || v_lastMarkTimeId ||
                '   AND rel_kind = ''S'' AND rel_group = ' || quote_literal(v_groupName) ||
+               '   AND (rel_time_range @> ' || v_lastMarkTimeId || '::BIGINT OR upper(rel_time_range) = ' || v_lastMarkTimeId || '::BIGINT)'
                '   AND sequ_schema = rel_schema AND sequ_name = rel_tblseq' ||
                ' ORDER BY sequ_schema, sequ_name';
     END IF;
@@ -7922,6 +7990,7 @@ GRANT EXECUTE ON FUNCTION emaj._adjust_group_properties() TO emaj_viewer;
 --SELECT pg_catalog.pg_extension_config_dump('emaj_group','');
 --SELECT pg_catalog.pg_extension_config_dump('emaj_schema','WHERE sch_name <> ''emaj''');
 --SELECT pg_catalog.pg_extension_config_dump('emaj_relation','');
+--SELECT pg_catalog.pg_extension_config_dump('emaj_rel_hist','');
 --SELECT pg_catalog.pg_extension_config_dump('emaj_mark','');
 --SELECT pg_catalog.pg_extension_config_dump('emaj_sequence','');
 --SELECT pg_catalog.pg_extension_config_dump('emaj_seq_hole','');

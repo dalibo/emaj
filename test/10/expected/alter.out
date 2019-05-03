@@ -267,7 +267,7 @@ select group_name, group_last_alter_time_id, group_has_waiting_changes, group_nb
   from emaj.emaj_group where group_name = 'myGroup1';
  group_name | group_last_alter_time_id | group_has_waiting_changes | group_nb_table | group_nb_sequence 
 ------------+--------------------------+---------------------------+----------------+-------------------
- myGroup1   |                     6009 | t                         |              5 |                 2
+ myGroup1   |                     6014 | t                         |              5 |                 2
 (1 row)
 
 select emaj.emaj_alter_group('myGroup1');
@@ -282,7 +282,7 @@ select group_name, group_last_alter_time_id, group_has_waiting_changes, group_nb
   from emaj.emaj_group where group_name = 'myGroup1';
  group_name | group_last_alter_time_id | group_has_waiting_changes | group_nb_table | group_nb_sequence 
 ------------+--------------------------+---------------------------+----------------+-------------------
- myGroup1   |                     6010 | f                         |              2 |                 2
+ myGroup1   |                     6015 | f                         |              2 |                 2
 (1 row)
 
 select nspname from pg_namespace where nspname like 'emaj%' order by nspname;
@@ -318,7 +318,7 @@ select group_name, group_last_alter_time_id, group_has_waiting_changes, group_nb
   from emaj.emaj_group where group_name = 'myGroup1';
  group_name | group_last_alter_time_id | group_has_waiting_changes | group_nb_table | group_nb_sequence 
 ------------+--------------------------+---------------------------+----------------+-------------------
- myGroup1   |                     6011 | t                         |              2 |                 1
+ myGroup1   |                     6016 | t                         |              2 |                 1
 (1 row)
 
 select emaj.emaj_alter_group('myGroup1');
@@ -340,7 +340,7 @@ select group_name, group_last_alter_time_id, group_has_waiting_changes, group_nb
   from emaj.emaj_group where group_name = 'myGroup1';
  group_name | group_last_alter_time_id | group_has_waiting_changes | group_nb_table | group_nb_sequence 
 ------------+--------------------------+---------------------------+----------------+-------------------
- myGroup1   |                     6012 | f                         |              5 |                 1
+ myGroup1   |                     6017 | f                         |              5 |                 1
 (1 row)
 
 select nspname from pg_namespace where nspname like 'emaj%' order by nspname;
@@ -839,8 +839,8 @@ select group_name, group_last_alter_time_id, group_has_waiting_changes, group_nb
   from emaj.emaj_group where group_name IN ('myGroup1','myGroup2') order by group_name;
  group_name | group_last_alter_time_id | group_has_waiting_changes | group_nb_table | group_nb_sequence 
 ------------+--------------------------+---------------------------+----------------+-------------------
- myGroup1   |                     6039 | t                         |              5 |                 2
- myGroup2   |                     6039 | t                         |              6 |                 2
+ myGroup1   |                     6044 | t                         |              5 |                 2
+ myGroup2   |                     6044 | t                         |              6 |                 2
 (2 rows)
 
 select emaj.emaj_alter_groups('{"myGroup1","myGroup2"}');
@@ -855,8 +855,8 @@ select group_name, group_last_alter_time_id, group_has_waiting_changes, group_nb
   from emaj.emaj_group where group_name IN ('myGroup1','myGroup2') order by group_name;
  group_name | group_last_alter_time_id | group_has_waiting_changes | group_nb_table | group_nb_sequence 
 ------------+--------------------------+---------------------------+----------------+-------------------
- myGroup1   |                     6040 | f                         |              6 |                 3
- myGroup2   |                     6040 | f                         |              5 |                 1
+ myGroup1   |                     6045 | f                         |              6 |                 3
+ myGroup2   |                     6045 | f                         |              5 |                 1
 (2 rows)
 
 select rel_group, count(*) from emaj.emaj_relation where rel_group like 'myGroup%' and upper_inf(rel_time_range) group by 1 order by 1;

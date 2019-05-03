@@ -42,6 +42,7 @@ select relname from pg_catalog.pg_class,
  emaj_hist_hist_id_seq
  emaj_mark
  emaj_param
+ emaj_rel_hist
  emaj_relation
  emaj_rlbk
  emaj_rlbk_plan
@@ -53,7 +54,7 @@ select relname from pg_catalog.pg_class,
  emaj_sequence
  emaj_time_stamp
  emaj_time_stamp_time_id_seq
-(20 rows)
+(21 rows)
 
 -- check the emaj_param content
 SELECT param_value_text FROM emaj.emaj_param WHERE param_key = 'emaj_version';
@@ -345,6 +346,43 @@ Indexes:
 -----------+------+------+------------
  param_key | text | yes  | param_key
 primary key, btree, for table "emaj.emaj_param"
+
+                  Table "emaj.emaj_rel_hist"
+     Column      |   Type    | Collation | Nullable | Default 
+-----------------+-----------+-----------+----------+---------
+ relh_schema     | text      |           | not null | 
+ relh_tblseq     | text      |           | not null | 
+ relh_time_range | int8range |           | not null | 
+ relh_group      | text      |           | not null | 
+ relh_kind       | text      |           |          | 
+Indexes:
+    "emaj_rel_hist_pkey" PRIMARY KEY, btree (relh_schema, relh_tblseq, relh_time_range)
+    "emaj_rel_hist_idx1" btree (upper(relh_time_range))
+    "emaj_rel_hist_relh_schema_relh_tblseq_relh_time_range_excl" EXCLUDE USING gist (relh_schema WITH =, relh_tblseq WITH =, relh_time_range WITH &&)
+Check constraints:
+    "emaj_rel_hist_relh_time_range_check" CHECK (NOT upper_inf(relh_time_range))
+
+         Index "emaj.emaj_rel_hist_idx1"
+ Column |  Type  | Key? |       Definition       
+--------+--------+------+------------------------
+ upper  | bigint | yes  | upper(relh_time_range)
+btree, for table "emaj.emaj_rel_hist"
+
+           Index "emaj.emaj_rel_hist_pkey"
+     Column      |   Type    | Key? |   Definition    
+-----------------+-----------+------+-----------------
+ relh_schema     | text      | yes  | relh_schema
+ relh_tblseq     | text      | yes  | relh_tblseq
+ relh_time_range | int8range | yes  | relh_time_range
+primary key, btree, for table "emaj.emaj_rel_hist"
+
+Index "emaj.emaj_rel_hist_relh_schema_relh_tblseq_relh_time_range_excl"
+     Column      |     Type      | Key? |   Definition    
+-----------------+---------------+------+-----------------
+ relh_schema     | gbtreekey_var | yes  | relh_schema
+ relh_tblseq     | gbtreekey_var | yes  | relh_tblseq
+ relh_time_range | int8range     | yes  | relh_time_range
+gist, for table "emaj.emaj_rel_hist"
 
                       Table "emaj.emaj_relation"
           Column          |   Type    | Collation | Nullable | Default 

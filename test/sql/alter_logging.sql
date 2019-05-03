@@ -171,7 +171,7 @@ select group_name, group_last_alter_time_id, group_has_waiting_changes, group_nb
 select emaj.emaj_alter_group('myGroup1','Sequence_removed');
 select group_name, group_last_alter_time_id, group_has_waiting_changes, group_nb_table, group_nb_sequence
   from emaj.emaj_group where group_name = 'myGroup1';
-select * from emaj.emaj_relation where rel_schema = 'myschema1' and rel_tblseq = 'myTbl3_col31_seq';
+select * from emaj.emaj_relation where rel_schema = 'myschema1' and rel_tblseq = 'myTbl3_col31_seq' order by rel_time_range;
 select * from emaj.emaj_verify_all();
 
 --testing snap and sql generation
@@ -197,7 +197,7 @@ select emaj.emaj_gen_sql_group('myGroup1', NULL, 'EMAJ_LAST_MARK', '/tmp/emaj_te
 begin;
   -- testing the alter_group mark deletion
   select emaj.emaj_delete_mark_group('myGroup1','Sequence_removed');
-  select * from emaj.emaj_relation where rel_schema = 'myschema1' and rel_tblseq = 'myTbl3_col31_seq';
+  select * from emaj.emaj_relation where rel_schema = 'myschema1' and rel_tblseq = 'myTbl3_col31_seq' order by rel_time_range;
   select mark_group, regexp_replace(mark_name,E'\\d\\d\.\\d\\d\\.\\d\\d\\.\\d\\d\\d','%','g'), mark_time_id,
     mark_is_deleted, mark_is_rlbk_protected, mark_comment, mark_log_rows_before_next, mark_logged_rlbk_target_mark
     from emaj.emaj_mark where mark_group = 'myGroup1' order by mark_time_id desc limit 2;
@@ -215,16 +215,16 @@ begin;
   savepoint svp1;
   -- testing group's reset
     select emaj.emaj_stop_group('myGroup1');
-    select * from emaj.emaj_relation where rel_group = 'myGroup1' and not upper_inf(rel_time_range) order by 1,2;
+    select * from emaj.emaj_relation where rel_group = 'myGroup1' and not upper_inf(rel_time_range) order by 1,2,3;
     select emaj.emaj_reset_group('myGroup1');
-    select * from emaj.emaj_relation where rel_group = 'myGroup1' and not upper_inf(rel_time_range) order by 1,2;
+    select * from emaj.emaj_relation where rel_group = 'myGroup1' and not upper_inf(rel_time_range) order by 1,2,3;
   rollback to svp1;
   -- testing marks deletion
   select emaj.emaj_set_mark_group('myGroup1','Mk2d');
   select emaj.emaj_delete_before_mark_group('myGroup1','Mk2b');
-  select * from emaj.emaj_relation where rel_group = 'myGroup1' and not upper_inf(rel_time_range) order by 1,2;
+  select * from emaj.emaj_relation where rel_group = 'myGroup1' and not upper_inf(rel_time_range) order by 1,2,3;
   select emaj.emaj_delete_before_mark_group('myGroup1','Mk2d');
-  select * from emaj.emaj_relation where rel_group = 'myGroup1' and not upper_inf(rel_time_range) order by 1,2;
+  select * from emaj.emaj_relation where rel_group = 'myGroup1' and not upper_inf(rel_time_range) order by 1,2,3;
   -- testing the sequence drop
   drop sequence mySchema1."myTbl3_col31_seq" cascade;
 rollback;
@@ -388,7 +388,7 @@ select group_has_waiting_changes from emaj.emaj_group where group_name = 'myGrou
 select emaj.emaj_alter_group('myGroup1', '2 tables removed from myGroup1');
 select group_name, group_last_alter_time_id, group_has_waiting_changes, group_nb_table, group_nb_sequence
   from emaj.emaj_group where group_name = 'myGroup1';
-select * from emaj.emaj_relation where rel_schema = 'myschema1' and (rel_tblseq = 'myTbl3' or rel_tblseq = 'mytbl2b') order by 1,2;
+select * from emaj.emaj_relation where rel_schema = 'myschema1' and (rel_tblseq = 'myTbl3' or rel_tblseq = 'mytbl2b') order by 1,2,3;
 
 delete from myschema1."myTbl3" where col33 = 1.;
 select count(*) from emaj_myschema1."myTbl3_log_1";
@@ -427,9 +427,10 @@ begin;
   select * from emaj.emaj_mark where mark_group = 'myGroup1' and mark_name = 'Mk2b';
 -- testing marks deletion (delete all marks before the alter_group)
   select emaj.emaj_delete_before_mark_group('myGroup1','EMAJ_LAST_MARK');
-  select 'should not exist' from pg_namespace where nspname = 'emajb';
   select 'should not exist' from pg_class, pg_namespace 
-    where relnamespace = pg_namespace.oid and relname = 'mytbl2b_log' and nspname = 'emaj_myschema1';
+    where relnamespace = pg_namespace.oid and nspname = 'emaj_myschema1' and relname in ('myTbl3_log','mytbl2b_log');
+  select * from emaj.emaj_relation where rel_schema = 'myschema1' and rel_tblseq in ('myTbl3','mytbl2b') order by rel_time_range;
+  select * from emaj.emaj_rel_hist where relh_schema = 'myschema1' and relh_tblseq in ('myTbl3','mytbl2b') order by 1,2,3;
 rollback;
 
 begin;
@@ -449,11 +450,13 @@ begin;
 -- testing marks deletion (other cases)
   select emaj.emaj_set_mark_group('myGroup1','Mk2d');
   select emaj.emaj_delete_before_mark_group('myGroup1','Mk2b');
-  select * from emaj.emaj_relation where rel_group = 'myGroup1' and not upper_inf(rel_time_range) order by 1,2;
+  select * from emaj.emaj_relation where rel_group = 'myGroup1' and not upper_inf(rel_time_range) order by 1,2,3;
+  select * from emaj.emaj_rel_hist where relh_schema = 'myschema1' and relh_tblseq = 'mytbl2b' order by 1,2,3;
   select 'found' from pg_class, pg_namespace where relnamespace = pg_namespace.oid and relname = 'mytbl2b_log_1' and nspname = 'emaj_myschema1';
   select emaj.emaj_delete_before_mark_group('myGroup1','Mk2d');
-  select * from emaj.emaj_relation where rel_group = 'myGroup1' and not upper_inf(rel_time_range) order by 1,2;
   select 'should not exist' from pg_class, pg_namespace where relnamespace = pg_namespace.oid and relname = 'mytbl2b_log' and nspname = 'emaj_myschema1';
+  select * from emaj.emaj_relation where rel_group = 'myGroup1' and not upper_inf(rel_time_range) order by 1,2,3;
+  select * from emaj.emaj_rel_hist where relh_schema = 'myschema1' and relh_tblseq = 'mytbl2b' order by 1,2,3;
 rollback;
 
 -- testing rollback and consolidation
@@ -474,14 +477,14 @@ select rlbk_severity, regexp_replace(rlbk_message,E'\\d\\d\\d\\d/\\d\\d\\/\\d\\d
 begin;
   select emaj.emaj_stop_group('myGroup1');
   select emaj.emaj_reset_group('myGroup1');
-  select * from emaj.emaj_relation where rel_group = 'myGroup1' and not upper_inf(rel_time_range) order by 1,2;
+  select * from emaj.emaj_rel_hist where relh_schema = 'myschema1' and upper(relh_time_range) > 6050 order by 1,2,3;
 rollback;
 
 -- testing group's stop and start
 begin;
   select emaj.emaj_stop_group('myGroup1');
   select emaj.emaj_start_group('myGroup1');
-  select * from emaj.emaj_relation where rel_group = 'myGroup1' and not upper_inf(rel_time_range) order by 1,2;
+  select * from emaj.emaj_relation where rel_group = 'myGroup1' and not upper_inf(rel_time_range) order by 1,2,3;
   select 'should not exist' from pg_class, pg_namespace where relnamespace = pg_namespace.oid and relname = 'mytbl2b_log' and nspname = 'emaj_myschema1';
 rollback;
 

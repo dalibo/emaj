@@ -246,6 +246,7 @@ select relname from pg_catalog.pg_class,
  emaj_hist_hist_id_seq
  emaj_mark
  emaj_param
+ emaj_rel_hist
  emaj_relation
  emaj_rlbk
  emaj_rlbk_plan
@@ -257,7 +258,7 @@ select relname from pg_catalog.pg_class,
  emaj_sequence
  emaj_time_stamp
  emaj_time_stamp_time_id_seq
-(20 rows)
+(21 rows)
 
 -- check the emaj_param content
 SELECT param_value_text FROM emaj.emaj_param WHERE param_key = 'emaj_version';

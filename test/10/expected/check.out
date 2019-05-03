@@ -156,7 +156,7 @@ select funcname, calls from pg_stat_user_functions
  _rlbk_tbl                                 |   129
  _rollback_activity                        |    17
  _set_mark_groups                          |   286
- _set_time_stamp                           |   408
+ _set_time_stamp                           |   439
  _start_groups                             |    50
  _stop_groups                              |    65
  _verify_all_groups                        |    42
