@@ -203,6 +203,7 @@ select emaj.emaj_delete_before_mark_group('myGroup1','M4');
 
 -----------------------------
 -- Step 8 : for myGroup6, perform a table change and verify that no log trigger has been called
+--          and finaly drop the group
 -----------------------------
 insert into mySchema6.table_with_51_characters_long_name_____0_________0a values (1),(2);
 select count(*) from emaj_myschema6."table_with_51_characters_long_name_____0_________0#1_log";
@@ -232,6 +233,18 @@ select emaj.emaj_rollback_group('myGroup6', 'Start G6');
  emaj_rollback_group 
 ---------------------
                    1
+(1 row)
+
+select emaj.emaj_stop_group('myGroup6');
+ emaj_stop_group 
+-----------------
+               3
+(1 row)
+
+select emaj.emaj_drop_group('myGroup6');
+ emaj_drop_group 
+-----------------
+               3
 (1 row)
 
 -----------------------------
@@ -276,7 +289,9 @@ select time_id, time_last_emaj_gid, time_event from emaj.emaj_time_stamp order b
       34 |                117 | M
       35 |                117 | M
       36 |                123 | R
-(36 rows)
+      37 |                123 | M
+      38 |                123 | D
+(38 rows)
 
 select hist_function, hist_event, hist_object,
        regexp_replace(regexp_replace(regexp_replace(hist_wording,
@@ -552,7 +567,16 @@ select hist_function, hist_event, hist_object,
  ROLLBACK_TABLE           | END                | myschema6.table_with_51_characters_long_name_____0_________0a     | 4 rolled back primary keys                                                                    | postgres
  ROLLBACK_GROUP           | NOTICE             | Rollback id 11                                                    | 1 / 3 tables effectively processed.                                                           | postgres
  ROLLBACK_GROUP           | END                | myGroup6                                                          | Rollback_id 11, 1 tables and 0 sequences effectively processed                                | postgres
-(265 rows)
+ STOP_GROUP               | BEGIN              | myGroup6                                                          |                                                                                               | postgres
+ LOCK_GROUP               | BEGIN              | myGroup6                                                          |                                                                                               | postgres
+ LOCK_GROUP               | END                | myGroup6                                                          | 3 tables locked, 0 deadlock(s)                                                                | postgres
+ SET_MARK_GROUP           | BEGIN              | myGroup6                                                          | STOP_%                                                                                        | postgres
+ SET_MARK_GROUP           | END                | myGroup6                                                          | STOP_%                                                                                        | postgres
+ STOP_GROUP               | END                | myGroup6                                                          | 3 tables/sequences processed                                                                  | postgres
+ DROP_GROUP               | BEGIN              | myGroup6                                                          |                                                                                               | postgres
+ DROP_GROUP               | LOG_SCHEMA DROPPED | emaj_myschema6                                                    |                                                                                               | postgres
+ DROP_GROUP               | END                | myGroup6                                                          | 3 tables/sequences processed                                                                  | postgres
+(274 rows)
 
 --
 reset role;

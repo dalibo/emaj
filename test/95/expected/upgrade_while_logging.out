@@ -46,19 +46,19 @@ select relname from pg_catalog.pg_class,
 ALTER EXTENSION emaj UPDATE TO 'devel';
 NOTICE:  relation "myschema1_myTbl3_log_seq" does not exist, skipping
 CONTEXT:  SQL statement "ALTER SEQUENCE IF EXISTS emaj."myschema1_myTbl3_log_seq" SET SCHEMA emaj_myschema1"
-PL/pgSQL function inline_code_block line 96 at EXECUTE
+PL/pgSQL function inline_code_block line 97 at EXECUTE
 NOTICE:  relation "myschema1_myTbl3_log_seq" does not exist, skipping
 CONTEXT:  SQL statement "ALTER SEQUENCE IF EXISTS emaj_myschema1."myschema1_myTbl3_log_seq" RENAME TO "myTbl3_log_seq""
-PL/pgSQL function inline_code_block line 99 at EXECUTE
+PL/pgSQL function inline_code_block line 100 at EXECUTE
 NOTICE:  relation "shortName3_log_seq" does not exist, skipping
 CONTEXT:  SQL statement "ALTER SEQUENCE IF EXISTS emaj."shortName3_log_seq" SET SCHEMA emaj_myschema6"
-PL/pgSQL function inline_code_block line 96 at EXECUTE
+PL/pgSQL function inline_code_block line 97 at EXECUTE
 NOTICE:  relation "shortName3_log_seq" does not exist, skipping
 CONTEXT:  SQL statement "ALTER SEQUENCE IF EXISTS emaj_myschema6."shortName3_log_seq" RENAME TO "table_with_55_characters_long_name_____0_________0#1_log_seq""
-PL/pgSQL function inline_code_block line 99 at EXECUTE
+PL/pgSQL function inline_code_block line 100 at EXECUTE
 NOTICE:  drop cascades to trigger emaj_log_trg on table myschema1.mytbl1
 CONTEXT:  SQL statement "DROP FUNCTION emaj.myschema1_mytbl1_log_fnct() CASCADE"
-PL/pgSQL function inline_code_block line 116 at EXECUTE
+PL/pgSQL function inline_code_block line 117 at EXECUTE
 NOTICE:  trigger "emaj_log_trg" for relation "myschema1.mytbl1" does not exist, skipping
 CONTEXT:  SQL statement "DROP TRIGGER IF EXISTS emaj_log_trg ON myschema1.mytbl1"
 PL/pgSQL function _create_log_trigger(text,text,text,text) line 9 at EXECUTE
@@ -66,10 +66,10 @@ SQL statement "SELECT emaj._create_log_trigger(quote_ident(r_rel.rel_schema) || 
                                        quote_ident(r_rel.new_log_schema) || '.' || quote_ident(r_rel.new_log_table),
                                        quote_ident(r_rel.new_log_schema) || '.' || quote_ident(r_rel.new_log_sequence),
                                        quote_ident(r_rel.new_log_schema) || '.' || quote_ident(r_rel.new_log_function))"
-PL/pgSQL function inline_code_block line 117 at PERFORM
+PL/pgSQL function inline_code_block line 118 at PERFORM
 NOTICE:  drop cascades to trigger emaj_log_trg on table myschema1.mytbl2
 CONTEXT:  SQL statement "DROP FUNCTION emaj.myschema1_mytbl2_log_fnct() CASCADE"
-PL/pgSQL function inline_code_block line 116 at EXECUTE
+PL/pgSQL function inline_code_block line 117 at EXECUTE
 NOTICE:  trigger "emaj_log_trg" for relation "myschema1.mytbl2" does not exist, skipping
 CONTEXT:  SQL statement "DROP TRIGGER IF EXISTS emaj_log_trg ON myschema1.mytbl2"
 PL/pgSQL function _create_log_trigger(text,text,text,text) line 9 at EXECUTE
@@ -77,10 +77,10 @@ SQL statement "SELECT emaj._create_log_trigger(quote_ident(r_rel.rel_schema) || 
                                        quote_ident(r_rel.new_log_schema) || '.' || quote_ident(r_rel.new_log_table),
                                        quote_ident(r_rel.new_log_schema) || '.' || quote_ident(r_rel.new_log_sequence),
                                        quote_ident(r_rel.new_log_schema) || '.' || quote_ident(r_rel.new_log_function))"
-PL/pgSQL function inline_code_block line 117 at PERFORM
+PL/pgSQL function inline_code_block line 118 at PERFORM
 NOTICE:  drop cascades to trigger emaj_log_trg on table myschema1.mytbl2b
 CONTEXT:  SQL statement "DROP FUNCTION emajb.myschema1_mytbl2b_log_fnct() CASCADE"
-PL/pgSQL function inline_code_block line 116 at EXECUTE
+PL/pgSQL function inline_code_block line 117 at EXECUTE
 NOTICE:  trigger "emaj_log_trg" for relation "myschema1.mytbl2b" does not exist, skipping
 CONTEXT:  SQL statement "DROP TRIGGER IF EXISTS emaj_log_trg ON myschema1.mytbl2b"
 PL/pgSQL function _create_log_trigger(text,text,text,text) line 9 at EXECUTE
@@ -88,10 +88,10 @@ SQL statement "SELECT emaj._create_log_trigger(quote_ident(r_rel.rel_schema) || 
                                        quote_ident(r_rel.new_log_schema) || '.' || quote_ident(r_rel.new_log_table),
                                        quote_ident(r_rel.new_log_schema) || '.' || quote_ident(r_rel.new_log_sequence),
                                        quote_ident(r_rel.new_log_schema) || '.' || quote_ident(r_rel.new_log_function))"
-PL/pgSQL function inline_code_block line 117 at PERFORM
+PL/pgSQL function inline_code_block line 118 at PERFORM
 NOTICE:  drop cascades to trigger emaj_log_trg on table myschema1.mytbl4
 CONTEXT:  SQL statement "DROP FUNCTION emaj.myschema1_mytbl4_log_fnct() CASCADE"
-PL/pgSQL function inline_code_block line 116 at EXECUTE
+PL/pgSQL function inline_code_block line 117 at EXECUTE
 NOTICE:  trigger "emaj_log_trg" for relation "myschema1.mytbl4" does not exist, skipping
 CONTEXT:  SQL statement "DROP TRIGGER IF EXISTS emaj_log_trg ON myschema1.mytbl4"
 PL/pgSQL function _create_log_trigger(text,text,text,text) line 9 at EXECUTE
@@ -99,10 +99,10 @@ SQL statement "SELECT emaj._create_log_trigger(quote_ident(r_rel.rel_schema) || 
                                        quote_ident(r_rel.new_log_schema) || '.' || quote_ident(r_rel.new_log_table),
                                        quote_ident(r_rel.new_log_schema) || '.' || quote_ident(r_rel.new_log_sequence),
                                        quote_ident(r_rel.new_log_schema) || '.' || quote_ident(r_rel.new_log_function))"
-PL/pgSQL function inline_code_block line 117 at PERFORM
+PL/pgSQL function inline_code_block line 118 at PERFORM
 NOTICE:  drop cascades to trigger emaj_log_trg on table myschema2."myTbl3"
 CONTEXT:  SQL statement "DROP FUNCTION emaj."myschema2_myTbl3_log_fnct"() CASCADE"
-PL/pgSQL function inline_code_block line 116 at EXECUTE
+PL/pgSQL function inline_code_block line 117 at EXECUTE
 NOTICE:  trigger "emaj_log_trg" for relation "myschema2.myTbl3" does not exist, skipping
 CONTEXT:  SQL statement "DROP TRIGGER IF EXISTS emaj_log_trg ON myschema2."myTbl3""
 PL/pgSQL function _create_log_trigger(text,text,text,text) line 9 at EXECUTE
@@ -110,10 +110,10 @@ SQL statement "SELECT emaj._create_log_trigger(quote_ident(r_rel.rel_schema) || 
                                        quote_ident(r_rel.new_log_schema) || '.' || quote_ident(r_rel.new_log_table),
                                        quote_ident(r_rel.new_log_schema) || '.' || quote_ident(r_rel.new_log_sequence),
                                        quote_ident(r_rel.new_log_schema) || '.' || quote_ident(r_rel.new_log_function))"
-PL/pgSQL function inline_code_block line 117 at PERFORM
+PL/pgSQL function inline_code_block line 118 at PERFORM
 NOTICE:  drop cascades to trigger emaj_log_trg on table myschema2.mytbl1
 CONTEXT:  SQL statement "DROP FUNCTION emaj.myschema2_mytbl1_log_fnct() CASCADE"
-PL/pgSQL function inline_code_block line 116 at EXECUTE
+PL/pgSQL function inline_code_block line 117 at EXECUTE
 NOTICE:  trigger "emaj_log_trg" for relation "myschema2.mytbl1" does not exist, skipping
 CONTEXT:  SQL statement "DROP TRIGGER IF EXISTS emaj_log_trg ON myschema2.mytbl1"
 PL/pgSQL function _create_log_trigger(text,text,text,text) line 9 at EXECUTE
@@ -121,10 +121,10 @@ SQL statement "SELECT emaj._create_log_trigger(quote_ident(r_rel.rel_schema) || 
                                        quote_ident(r_rel.new_log_schema) || '.' || quote_ident(r_rel.new_log_table),
                                        quote_ident(r_rel.new_log_schema) || '.' || quote_ident(r_rel.new_log_sequence),
                                        quote_ident(r_rel.new_log_schema) || '.' || quote_ident(r_rel.new_log_function))"
-PL/pgSQL function inline_code_block line 117 at PERFORM
+PL/pgSQL function inline_code_block line 118 at PERFORM
 NOTICE:  drop cascades to trigger emaj_log_trg on table myschema2.mytbl2
 CONTEXT:  SQL statement "DROP FUNCTION emaj.myschema2_mytbl2_log_fnct() CASCADE"
-PL/pgSQL function inline_code_block line 116 at EXECUTE
+PL/pgSQL function inline_code_block line 117 at EXECUTE
 NOTICE:  trigger "emaj_log_trg" for relation "myschema2.mytbl2" does not exist, skipping
 CONTEXT:  SQL statement "DROP TRIGGER IF EXISTS emaj_log_trg ON myschema2.mytbl2"
 PL/pgSQL function _create_log_trigger(text,text,text,text) line 9 at EXECUTE
@@ -132,10 +132,10 @@ SQL statement "SELECT emaj._create_log_trigger(quote_ident(r_rel.rel_schema) || 
                                        quote_ident(r_rel.new_log_schema) || '.' || quote_ident(r_rel.new_log_table),
                                        quote_ident(r_rel.new_log_schema) || '.' || quote_ident(r_rel.new_log_sequence),
                                        quote_ident(r_rel.new_log_schema) || '.' || quote_ident(r_rel.new_log_function))"
-PL/pgSQL function inline_code_block line 117 at PERFORM
+PL/pgSQL function inline_code_block line 118 at PERFORM
 NOTICE:  drop cascades to trigger emaj_log_trg on table myschema2.mytbl4
 CONTEXT:  SQL statement "DROP FUNCTION emaj.myschema2_mytbl4_log_fnct() CASCADE"
-PL/pgSQL function inline_code_block line 116 at EXECUTE
+PL/pgSQL function inline_code_block line 117 at EXECUTE
 NOTICE:  trigger "emaj_log_trg" for relation "myschema2.mytbl4" does not exist, skipping
 CONTEXT:  SQL statement "DROP TRIGGER IF EXISTS emaj_log_trg ON myschema2.mytbl4"
 PL/pgSQL function _create_log_trigger(text,text,text,text) line 9 at EXECUTE
@@ -143,10 +143,10 @@ SQL statement "SELECT emaj._create_log_trigger(quote_ident(r_rel.rel_schema) || 
                                        quote_ident(r_rel.new_log_schema) || '.' || quote_ident(r_rel.new_log_table),
                                        quote_ident(r_rel.new_log_schema) || '.' || quote_ident(r_rel.new_log_sequence),
                                        quote_ident(r_rel.new_log_schema) || '.' || quote_ident(r_rel.new_log_function))"
-PL/pgSQL function inline_code_block line 117 at PERFORM
+PL/pgSQL function inline_code_block line 118 at PERFORM
 NOTICE:  drop cascades to trigger emaj_log_trg on table myschema6.table_with_50_characters_long_name_____0_________0
 CONTEXT:  SQL statement "DROP FUNCTION emaj."shortName1_log_fnct"() CASCADE"
-PL/pgSQL function inline_code_block line 116 at EXECUTE
+PL/pgSQL function inline_code_block line 117 at EXECUTE
 NOTICE:  trigger "emaj_log_trg" for relation "myschema6.table_with_50_characters_long_name_____0_________0" does not exist, skipping
 CONTEXT:  SQL statement "DROP TRIGGER IF EXISTS emaj_log_trg ON myschema6.table_with_50_characters_long_name_____0_________0"
 PL/pgSQL function _create_log_trigger(text,text,text,text) line 9 at EXECUTE
@@ -154,10 +154,10 @@ SQL statement "SELECT emaj._create_log_trigger(quote_ident(r_rel.rel_schema) || 
                                        quote_ident(r_rel.new_log_schema) || '.' || quote_ident(r_rel.new_log_table),
                                        quote_ident(r_rel.new_log_schema) || '.' || quote_ident(r_rel.new_log_sequence),
                                        quote_ident(r_rel.new_log_schema) || '.' || quote_ident(r_rel.new_log_function))"
-PL/pgSQL function inline_code_block line 117 at PERFORM
+PL/pgSQL function inline_code_block line 118 at PERFORM
 NOTICE:  drop cascades to trigger emaj_log_trg on table myschema6.table_with_51_characters_long_name_____0_________0a
 CONTEXT:  SQL statement "DROP FUNCTION emaj."shortName2_log_fnct"() CASCADE"
-PL/pgSQL function inline_code_block line 116 at EXECUTE
+PL/pgSQL function inline_code_block line 117 at EXECUTE
 NOTICE:  trigger "emaj_log_trg" for relation "myschema6.table_with_51_characters_long_name_____0_________0a" does not exist, skipping
 CONTEXT:  SQL statement "DROP TRIGGER IF EXISTS emaj_log_trg ON myschema6.table_with_51_characters_long_name_____0_________0a"
 PL/pgSQL function _create_log_trigger(text,text,text,text) line 9 at EXECUTE
@@ -165,10 +165,10 @@ SQL statement "SELECT emaj._create_log_trigger(quote_ident(r_rel.rel_schema) || 
                                        quote_ident(r_rel.new_log_schema) || '.' || quote_ident(r_rel.new_log_table),
                                        quote_ident(r_rel.new_log_schema) || '.' || quote_ident(r_rel.new_log_sequence),
                                        quote_ident(r_rel.new_log_schema) || '.' || quote_ident(r_rel.new_log_function))"
-PL/pgSQL function inline_code_block line 117 at PERFORM
+PL/pgSQL function inline_code_block line 118 at PERFORM
 NOTICE:  drop cascades to trigger emaj_log_trg on table myschema6.table_with_55_characters_long_name_____0_________0fghij
 CONTEXT:  SQL statement "DROP FUNCTION emaj."shortName4_log_fnct"() CASCADE"
-PL/pgSQL function inline_code_block line 116 at EXECUTE
+PL/pgSQL function inline_code_block line 117 at EXECUTE
 NOTICE:  trigger "emaj_log_trg" for relation "myschema6.table_with_55_characters_long_name_____0_________0fghij" does not exist, skipping
 CONTEXT:  SQL statement "DROP TRIGGER IF EXISTS emaj_log_trg ON myschema6.table_with_55_characters_long_name_____0_________0fghij"
 PL/pgSQL function _create_log_trigger(text,text,text,text) line 9 at EXECUTE
@@ -176,10 +176,10 @@ SQL statement "SELECT emaj._create_log_trigger(quote_ident(r_rel.rel_schema) || 
                                        quote_ident(r_rel.new_log_schema) || '.' || quote_ident(r_rel.new_log_table),
                                        quote_ident(r_rel.new_log_schema) || '.' || quote_ident(r_rel.new_log_sequence),
                                        quote_ident(r_rel.new_log_schema) || '.' || quote_ident(r_rel.new_log_function))"
-PL/pgSQL function inline_code_block line 117 at PERFORM
+PL/pgSQL function inline_code_block line 118 at PERFORM
 NOTICE:  drop cascades to trigger emaj_log_trg on table "phil's schema3"."myTbl2\"
 CONTEXT:  SQL statement "DROP FUNCTION emaj."phil's schema3_myTbl2\_log_fnct"() CASCADE"
-PL/pgSQL function inline_code_block line 116 at EXECUTE
+PL/pgSQL function inline_code_block line 117 at EXECUTE
 NOTICE:  trigger "emaj_log_trg" for relation "phil's schema3.myTbl2\" does not exist, skipping
 CONTEXT:  SQL statement "DROP TRIGGER IF EXISTS emaj_log_trg ON "phil's schema3"."myTbl2\""
 PL/pgSQL function _create_log_trigger(text,text,text,text) line 9 at EXECUTE
@@ -187,10 +187,10 @@ SQL statement "SELECT emaj._create_log_trigger(quote_ident(r_rel.rel_schema) || 
                                        quote_ident(r_rel.new_log_schema) || '.' || quote_ident(r_rel.new_log_table),
                                        quote_ident(r_rel.new_log_schema) || '.' || quote_ident(r_rel.new_log_sequence),
                                        quote_ident(r_rel.new_log_schema) || '.' || quote_ident(r_rel.new_log_function))"
-PL/pgSQL function inline_code_block line 117 at PERFORM
+PL/pgSQL function inline_code_block line 118 at PERFORM
 NOTICE:  drop cascades to trigger emaj_log_trg on table "phil's schema3"."phil's tbl1"
 CONTEXT:  SQL statement "DROP FUNCTION emaj."phil's schema3_phil's tbl1_log_fnct"() CASCADE"
-PL/pgSQL function inline_code_block line 116 at EXECUTE
+PL/pgSQL function inline_code_block line 117 at EXECUTE
 NOTICE:  trigger "emaj_log_trg" for relation "phil's schema3.phil's tbl1" does not exist, skipping
 CONTEXT:  SQL statement "DROP TRIGGER IF EXISTS emaj_log_trg ON "phil's schema3"."phil's tbl1""
 PL/pgSQL function _create_log_trigger(text,text,text,text) line 9 at EXECUTE
@@ -198,7 +198,7 @@ SQL statement "SELECT emaj._create_log_trigger(quote_ident(r_rel.rel_schema) || 
                                        quote_ident(r_rel.new_log_schema) || '.' || quote_ident(r_rel.new_log_table),
                                        quote_ident(r_rel.new_log_schema) || '.' || quote_ident(r_rel.new_log_sequence),
                                        quote_ident(r_rel.new_log_schema) || '.' || quote_ident(r_rel.new_log_function))"
-PL/pgSQL function inline_code_block line 117 at PERFORM
+PL/pgSQL function inline_code_block line 118 at PERFORM
 WARNING:  E-Maj upgrade: with this new E-Maj version, application triggers are by default automatically disabled during E-Maj rollback operations. This may require some changes in your rollback procedures. Refer to the E-Maj documentation for additional information.
 -----------------------------
 -- check installation

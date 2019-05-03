@@ -104,6 +104,7 @@ $do$
       EXECUTE 'CREATE SCHEMA ' || quote_ident(r_schema.log_schema);
       EXECUTE 'GRANT ALL ON SCHEMA ' || quote_ident(r_schema.log_schema) || ' TO emaj_adm';
       EXECUTE 'GRANT USAGE ON SCHEMA ' || quote_ident(r_schema.log_schema) || ' TO emaj_viewer';
+      EXECUTE 'ALTER EXTENSION emaj DROP SCHEMA ' || quote_ident(r_schema.log_schema);
 -- and record the schema creation into the emaj_schema and the emaj_hist tables
       INSERT INTO emaj.emaj_schema (sch_name) VALUES (r_schema.log_schema);
     END LOOP;
@@ -197,6 +198,8 @@ $do$
                                        quote_ident(r_rel.new_log_schema) || '.' || quote_ident(r_rel.new_log_table),
                                        quote_ident(r_rel.new_log_schema) || '.' || quote_ident(r_rel.new_log_sequence),
                                        quote_ident(r_rel.new_log_schema) || '.' || quote_ident(r_rel.new_log_function));
+-- remove the log function from the extension
+      EXECUTE 'ALTER EXTENSION emaj DROP FUNCTION ' || quote_ident(r_rel.new_log_schema) || '.' || quote_ident(r_rel.new_log_function) || '()';
 -- if the group is in IDLE state, disable the just recreated trigger
       IF NOT r_rel.group_is_logging THEN
         EXECUTE 'ALTER TABLE ' || quote_ident(r_rel.rel_schema) || '.' || quote_ident(r_rel.rel_tblseq) || ' DISABLE TRIGGER emaj_log_trg';
