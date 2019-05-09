@@ -44,6 +44,15 @@ La fonction retourne le nombre de triggers effectivement ajoutés ou supprimés.
 
 La fonction ne traite pas les triggers E-Maj (trigger de log ou de protection contre les *TRUNCATE*).
 
+Les triggers ainsi référencés comme "ne devant pas être automatiquement désactivés lors des rollbacks E-Maj" sont enregistrés dans la table *emaj.emaj_enabled_trigger*. Cette table comprend 3 colonnes :
+
+* trg_schema : schéma de la table portant le trigger
+* trg_table : table portant le trigger
+* trg_name : nom du trigger
+
+Pour connaître la liste des triggers enregistrés, il suffit de lister le contenu de la table.
+
+
 .. _emaj_rollback_activity:
 
 Suivi des opérations de rollback en cours

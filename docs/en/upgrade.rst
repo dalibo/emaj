@@ -40,6 +40,11 @@ The same way, if the E-Maj administrator had changed parameters value into the *
 
    CREATE TABLE public.sav_param AS SELECT * FROM emaj.emaj_param WHERE param_key <> 'emaj_version';
 
+If the installed E-Maj version is 3.1.0 or higher, and if the E-Maj administrator has registered application triggers as “not to be automatically disabled at E-Maj rollback time”, it is advisable to save this triggers list, for instance with::
+
+   CREATE TABLE public.sav_enabled_trigger AS SELECT * FROM emaj.emaj_enabled_trigger;
+
+
 E-Maj deletion and re-installation
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
@@ -55,9 +60,14 @@ Restore user data
 ^^^^^^^^^^^^^^^^^
 Data previously saved can now be restored into E-Maj both technical tables, for instance with *INSERT … SELECT* statements. ::
 
-   INSERT INTO emaj.emaj_group_def SELECT * FROM public.sav_group_def;
+   INSERT INTO emaj.emaj_group_def
+		SELECT grpdef_group, grpdef_schema, grpdef_tblseq,
+			grpdef_priority, grpdef_log_dat_tsp, grpdef_log_idx_tsp
+		FROM public.sav_group_def;
 
    INSERT INTO emaj.emaj_param SELECT * FROM public.sav_param;
+
+   INSERT INTO emaj.emaj_enabled_trigger SELECT * FROM public.sav_enabled_trigger;
 
 Once data are copied, temporary tables or files can be deleted.
 

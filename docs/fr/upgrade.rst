@@ -40,6 +40,10 @@ De la même manière, si l'administrateur E-Maj a modifié des paramètres dans 
 
    CREATE TABLE public.sav_param AS SELECT * FROM emaj.emaj_param WHERE param_key <> 'emaj_version';
 
+Si la version E-Maj installée est une version 3.1.0 ou supérieure, et si l’administrateur E-Maj a enregistré des triggers applicatifs comme "ne devant pas être automatiquement désactivés lors des opérations de rollback E-Maj", il est souhaitable de conserver cette liste, avec par exemple ::
+
+   CREATE TABLE public.sav_enabled_trigger AS SELECT * FROM emaj.emaj_enabled_trigger;
+
 
 Suppression et réinstallation d'E-Maj
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -58,9 +62,14 @@ Restauration des données utilisateurs
 
 Les données sauvegardées au préalable peuvent alors être restaurées dans les deux tables techniques d’E-Maj, par exemple avec des requêtes de type *INSERT SELECT*. ::
 
-   INSERT INTO emaj.emaj_group_def SELECT * FROM public.sav_group_def;
+   INSERT INTO emaj.emaj_group_def
+		SELECT grpdef_group, grpdef_schema, grpdef_tblseq,
+			grpdef_priority, grpdef_log_dat_tsp, grpdef_log_idx_tsp
+		FROM public.sav_group_def;
 
    INSERT INTO emaj.emaj_param SELECT * FROM public.sav_param;
+
+   INSERT INTO emaj.emaj_enabled_trigger SELECT * FROM public.sav_enabled_trigger;
 
 Une fois les données copiées, les tables ou fichiers temporaires peuvent être supprimés.
 
