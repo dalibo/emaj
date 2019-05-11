@@ -25,14 +25,14 @@ La fonction *emaj_verify_all()* peut être exécutée par les rôles membres de 
 
 Si des anomalies sont détectées, par exemple suite à la suppression d'une table applicative référencée dans un groupe, les mesures appropriées doivent être prises. Typiquement, les éventuelles tables de log ou fonctions orphelines doivent être supprimées manuellement.
 
-.. _emaj_keep_enabled_trigger:
+.. _emaj_ignore_app_trigger:
 
 Non désactivation de triggers applicatifs lors des Rollbacks E-Maj
 ------------------------------------------------------------------
 
-Les triggers applicatifs sont automatiquement désactivés pendant les opérations de rollback E-Maj. Dans certains cas, il peut être souhaitable de les conserver activés (plus de détails :ref:`ici <application_triggers>`). Pour ce faire, on peut utiliser la fonction *emaj_keep_enabled_trigger()*. Elle permet de gérer l’ajout ou la suppression de triggers dans une liste de triggers ne devant pas être désactivés lors des opérations de rollback. ::
+Les triggers applicatifs sont automatiquement désactivés pendant les opérations de rollback E-Maj. Dans certains cas, il peut être souhaitable de les conserver activés (plus de détails :ref:`ici <application_triggers>`). Pour ce faire, on peut utiliser la fonction *emaj_ignore_app_trigger()*. Elle permet de gérer l’ajout ou la suppression de triggers dans une liste de triggers ne devant pas être désactivés lors des opérations de rollback. ::
 
-	SELECT emaj.emaj_keep_enabled_trigger(<action>, <nom.schéma>, <nom.table>, <trigger>);
+	SELECT emaj.emaj_ignore_app_trigger(<action>, <nom.schéma>, <nom.table>, <trigger>);
 
 Le paramètre <action> peut prendre les valeurs *‘ADD’* pour ajouter un trigger à la liste ou *‘REMOVE’* pour supprimer un trigger de la liste.
 
@@ -44,7 +44,7 @@ La fonction retourne le nombre de triggers effectivement ajoutés ou supprimés.
 
 La fonction ne traite pas les triggers E-Maj (trigger de log ou de protection contre les *TRUNCATE*).
 
-Les triggers ainsi référencés comme "ne devant pas être automatiquement désactivés lors des rollbacks E-Maj" sont enregistrés dans la table *emaj.emaj_enabled_trigger*. Cette table comprend 3 colonnes :
+Les triggers ainsi référencés comme "ne devant pas être automatiquement désactivés lors des rollbacks E-Maj" sont enregistrés dans la table *emaj.emaj_ignored_app_trigger*. Cette table comprend 3 colonnes :
 
 * trg_schema : schéma de la table portant le trigger
 * trg_table : table portant le trigger

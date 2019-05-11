@@ -1,5 +1,5 @@
 -- create_drop.sql : prepare groups content and test emaj_create_group(), emaj_comment_group(),
--- emaj_keep_enabled_trigger(), emaj_drop_group() and emaj_force_drop_group() functions
+-- emaj_ignore_app_trigger(), emaj_drop_group() and emaj_force_drop_group() functions
 --
 SET client_min_messages TO WARNING;
 -----------------------------
@@ -159,7 +159,7 @@ PL/pgSQL function emaj.emaj_create_group(text,boolean,boolean) line 57 at PERFOR
 rollback;
 -- should be OK
 select emaj.emaj_create_group('myGroup1');
-WARNING:  _create_tbl: The table "myschema1.mytbl2" has triggers (mytbl2trg1, mytbl2trg2). They will be automatically disabled during E-Maj rollback operations, unless they have been recorded into the list of triggers that may be kept enabled, with the emaj_keep_enabled_trigger() function.
+WARNING:  _create_tbl: The table "myschema1.mytbl2" has triggers (mytbl2trg1, mytbl2trg2). They will be automatically disabled during E-Maj rollback operations, unless they have been recorded into the list of triggers that may be kept enabled, with the emaj_ignore_app_trigger() function.
  emaj_create_group 
 -------------------
                  7
@@ -215,7 +215,7 @@ select emaj.emaj_create_group('phil''s group#3",',false);
 (1 row)
 
 select emaj.emaj_create_group('myGroup4');
-WARNING:  _create_tbl: The table "myschema4.mytblm" has triggers (mytblm_insert_trigger). They will be automatically disabled during E-Maj rollback operations, unless they have been recorded into the list of triggers that may be kept enabled, with the emaj_keep_enabled_trigger() function.
+WARNING:  _create_tbl: The table "myschema4.mytblm" has triggers (mytblm_insert_trigger). They will be automatically disabled during E-Maj rollback operations, unless they have been recorded into the list of triggers that may be kept enabled, with the emaj_ignore_app_trigger() function.
  emaj_create_group 
 -------------------
                  5
@@ -393,74 +393,74 @@ select group_name, group_comment from emaj.emaj_group where group_name = 'myGrou
 (1 row)
 
 -----------------------------------
--- emaj_keep_enabled_trigger
+-- emaj_ignore_app_trigger
 -----------------------------------
 -- unknown action
-select emaj.emaj_keep_enabled_trigger('dummy','dummy','dummy','dummy');
-ERROR:  emaj_keep_enabled_trigger: the action "dummy" must be either 'ADD' or 'REMOVE'.
-CONTEXT:  PL/pgSQL function emaj.emaj_keep_enabled_trigger(text,text,text,text) line 16 at RAISE
+select emaj.emaj_ignore_app_trigger('dummy','dummy','dummy','dummy');
+ERROR:  emaj_ignore_app_trigger: the action "dummy" must be either 'ADD' or 'REMOVE'.
+CONTEXT:  PL/pgSQL function emaj.emaj_ignore_app_trigger(text,text,text,text) line 16 at RAISE
 -- unknown schema
-select emaj.emaj_keep_enabled_trigger('ADD','dummy','mytbl2','dummy');
-ERROR:  emaj_keep_enabled_trigger: the table "dummy.mytbl2" does not exist.
-CONTEXT:  PL/pgSQL function emaj.emaj_keep_enabled_trigger(text,text,text,text) line 33 at RAISE
+select emaj.emaj_ignore_app_trigger('ADD','dummy','mytbl2','dummy');
+ERROR:  emaj_ignore_app_trigger: the table "dummy.mytbl2" does not exist.
+CONTEXT:  PL/pgSQL function emaj.emaj_ignore_app_trigger(text,text,text,text) line 33 at RAISE
 -- unknown table, and empty or NULL triggers array
-select emaj.emaj_keep_enabled_trigger('ADD','myschema1','dummy','dummy');
-ERROR:  emaj_keep_enabled_trigger: the table "myschema1.dummy" does not exist.
-CONTEXT:  PL/pgSQL function emaj.emaj_keep_enabled_trigger(text,text,text,text) line 33 at RAISE
+select emaj.emaj_ignore_app_trigger('ADD','myschema1','dummy','dummy');
+ERROR:  emaj_ignore_app_trigger: the table "myschema1.dummy" does not exist.
+CONTEXT:  PL/pgSQL function emaj.emaj_ignore_app_trigger(text,text,text,text) line 33 at RAISE
 -- unknown triggers
-select emaj.emaj_keep_enabled_trigger('ADD','myschema1','mytbl2','dummy');
-ERROR:  emaj_keep_enabled_trigger: no trigger like "dummy" found for the table "myschema1.mytbl2".
-CONTEXT:  PL/pgSQL function emaj.emaj_keep_enabled_trigger(text,text,text,text) line 40 at RAISE
+select emaj.emaj_ignore_app_trigger('ADD','myschema1','mytbl2','dummy');
+ERROR:  emaj_ignore_app_trigger: no trigger like "dummy" found for the table "myschema1.mytbl2".
+CONTEXT:  PL/pgSQL function emaj.emaj_ignore_app_trigger(text,text,text,text) line 40 at RAISE
 -- emaj triggers
-select emaj.emaj_keep_enabled_trigger('ADD','myschema1','mytbl2','emaj_trunc_trg');
-WARNING:  emaj_keep_enabled_trigger: the triggers "emaj_trunc_trg" are E-Maj triggers and are not processed by the function.
- emaj_keep_enabled_trigger 
----------------------------
-                         0
+select emaj.emaj_ignore_app_trigger('ADD','myschema1','mytbl2','emaj_trunc_trg');
+WARNING:  emaj_ignore_app_trigger: the triggers "emaj_trunc_trg" are E-Maj triggers and are not processed by the function.
+ emaj_ignore_app_trigger 
+-------------------------
+                       0
 (1 row)
 
-select emaj.emaj_keep_enabled_trigger('ADD','myschema1','mytbl2','emaj_%_trg');
-WARNING:  emaj_keep_enabled_trigger: the triggers "emaj_log_trg, emaj_trunc_trg" are E-Maj triggers and are not processed by the function.
- emaj_keep_enabled_trigger 
----------------------------
-                         0
+select emaj.emaj_ignore_app_trigger('ADD','myschema1','mytbl2','emaj_%_trg');
+WARNING:  emaj_ignore_app_trigger: the triggers "emaj_log_trg, emaj_trunc_trg" are E-Maj triggers and are not processed by the function.
+ emaj_ignore_app_trigger 
+-------------------------
+                       0
 (1 row)
 
 -- add one trigger
-select emaj.emaj_keep_enabled_trigger('ADD','myschema1','mytbl2','mytbl2trg1');
- emaj_keep_enabled_trigger 
----------------------------
-                         1
+select emaj.emaj_ignore_app_trigger('ADD','myschema1','mytbl2','mytbl2trg1');
+ emaj_ignore_app_trigger 
+-------------------------
+                       1
 (1 row)
 
-select * from emaj.emaj_enabled_trigger order by trg_schema, trg_table, trg_name;
+select * from emaj.emaj_ignored_app_trigger order by trg_schema, trg_table, trg_name;
  trg_schema | trg_table |  trg_name  
 ------------+-----------+------------
  myschema1  | mytbl2    | mytbl2trg1
 (1 row)
 
 -- add the same
-select emaj.emaj_keep_enabled_trigger('ADD','myschema1','mytbl2','mytbl2trg1');
- emaj_keep_enabled_trigger 
----------------------------
-                         0
+select emaj.emaj_ignore_app_trigger('ADD','myschema1','mytbl2','mytbl2trg1');
+ emaj_ignore_app_trigger 
+-------------------------
+                       0
 (1 row)
 
-select * from emaj.emaj_enabled_trigger order by trg_schema, trg_table, trg_name;
+select * from emaj.emaj_ignored_app_trigger order by trg_schema, trg_table, trg_name;
  trg_schema | trg_table |  trg_name  
 ------------+-----------+------------
  myschema1  | mytbl2    | mytbl2trg1
 (1 row)
 
 -- add all triggers for a table
-select emaj.emaj_keep_enabled_trigger('ADD','myschema1','mytbl2','%');
-WARNING:  emaj_keep_enabled_trigger: the triggers "emaj_log_trg, emaj_trunc_trg" are E-Maj triggers and are not processed by the function.
- emaj_keep_enabled_trigger 
----------------------------
-                         1
+select emaj.emaj_ignore_app_trigger('ADD','myschema1','mytbl2','%');
+WARNING:  emaj_ignore_app_trigger: the triggers "emaj_log_trg, emaj_trunc_trg" are E-Maj triggers and are not processed by the function.
+ emaj_ignore_app_trigger 
+-------------------------
+                       1
 (1 row)
 
-select * from emaj.emaj_enabled_trigger order by trg_schema, trg_table, trg_name;
+select * from emaj.emaj_ignored_app_trigger order by trg_schema, trg_table, trg_name;
  trg_schema | trg_table |  trg_name  
 ------------+-----------+------------
  myschema1  | mytbl2    | mytbl2trg1
@@ -468,26 +468,26 @@ select * from emaj.emaj_enabled_trigger order by trg_schema, trg_table, trg_name
 (2 rows)
 
 -- remove one trigger
-select emaj.emaj_keep_enabled_trigger('REMOVE','myschema1','mytbl2','mytbl2trg1');
- emaj_keep_enabled_trigger 
----------------------------
-                         1
+select emaj.emaj_ignore_app_trigger('REMOVE','myschema1','mytbl2','mytbl2trg1');
+ emaj_ignore_app_trigger 
+-------------------------
+                       1
 (1 row)
 
-select * from emaj.emaj_enabled_trigger order by trg_schema, trg_table, trg_name;
+select * from emaj.emaj_ignored_app_trigger order by trg_schema, trg_table, trg_name;
  trg_schema | trg_table |  trg_name  
 ------------+-----------+------------
  myschema1  | mytbl2    | mytbl2trg2
 (1 row)
 
 -- remove several triggers
-select emaj.emaj_keep_enabled_trigger('REMOVE','myschema1','mytbl2','%');
- emaj_keep_enabled_trigger 
----------------------------
-                         1
+select emaj.emaj_ignore_app_trigger('REMOVE','myschema1','mytbl2','%');
+ emaj_ignore_app_trigger 
+-------------------------
+                       1
 (1 row)
 
-select * from emaj.emaj_enabled_trigger order by trg_schema, trg_table, trg_name;
+select * from emaj.emaj_ignored_app_trigger order by trg_schema, trg_table, trg_name;
  trg_schema | trg_table | trg_name 
 ------------+-----------+----------
 (0 rows)
@@ -594,7 +594,7 @@ SQL statement "SELECT emaj._check_group_names(v_groupNames := ARRAY[v_groupName]
 PL/pgSQL function emaj.emaj_force_drop_group(text) line 17 at PERFORM
 -- should be OK
 select emaj.emaj_create_group('myGroup1',false);
-WARNING:  _create_tbl: The table "myschema1.mytbl2" has triggers (mytbl2trg1, mytbl2trg2). They will be automatically disabled during E-Maj rollback operations, unless they have been recorded into the list of triggers that may be kept enabled, with the emaj_keep_enabled_trigger() function.
+WARNING:  _create_tbl: The table "myschema1.mytbl2" has triggers (mytbl2trg1, mytbl2trg2). They will be automatically disabled during E-Maj rollback operations, unless they have been recorded into the list of triggers that may be kept enabled, with the emaj_ignore_app_trigger() function.
  emaj_create_group 
 -------------------
                  7

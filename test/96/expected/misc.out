@@ -1799,39 +1799,39 @@ rollback;
 --
 -- other tests
 --
--- bad triggers in emaj_enabled_trigger
+-- bad triggers in emaj_ignored_app_trigger
 begin;
--- simulate a discrepancy between the emaj_enabled_trigger table content and the existing triggers
-  insert into emaj.emaj_enabled_trigger values ('dummy','mytbl1','mytrg');         -- dropped schema
-  insert into emaj.emaj_enabled_trigger values ('myschema1','dummy','mytrg');      -- dropped table
-  insert into emaj.emaj_enabled_trigger values ('myschema1','mytbl1','dummy');     -- dropped trigger
+-- simulate a discrepancy between the emaj_ignored_app_trigger table content and the existing triggers
+  insert into emaj.emaj_ignored_app_trigger values ('dummy','mytbl1','mytrg');         -- dropped schema
+  insert into emaj.emaj_ignored_app_trigger values ('myschema1','dummy','mytrg');      -- dropped table
+  insert into emaj.emaj_ignored_app_trigger values ('myschema1','mytbl1','dummy');     -- dropped trigger
 -- check
   select * from emaj.emaj_verify_all();
-                                                                                               emaj_verify_all                                                                                                
---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+                                                                                              emaj_verify_all                                                                                               
+------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
  Warning: Some E-Maj event triggers exist but are disabled. You may enable them using the emaj_enable_protection_by_event_triggers() function.
- No trigger "mytrg" found for table "myschema1"."dummy". Use the emaj_keep_enabled_trigger() function to adjust the list of application triggers that should not be automatically disabled at rollback time.
- No trigger "dummy" found for table "myschema1"."mytbl1". Use the emaj_keep_enabled_trigger() function to adjust the list of application triggers that should not be automatically disabled at rollback time.
- No trigger "mytrg" found for table "dummy"."mytbl1". Use the emaj_keep_enabled_trigger() function to adjust the list of application triggers that should not be automatically disabled at rollback time.
+ No trigger "mytrg" found for table "myschema1"."dummy". Use the emaj_ignore_app_trigger() function to adjust the list of application triggers that should not be automatically disabled at rollback time.
+ No trigger "dummy" found for table "myschema1"."mytbl1". Use the emaj_ignore_app_trigger() function to adjust the list of application triggers that should not be automatically disabled at rollback time.
+ No trigger "mytrg" found for table "dummy"."mytbl1". Use the emaj_ignore_app_trigger() function to adjust the list of application triggers that should not be automatically disabled at rollback time.
 (4 rows)
 
 -- and fix
-  select emaj.emaj_keep_enabled_trigger('REMOVE','dummy','mytbl1','%');
- emaj_keep_enabled_trigger 
----------------------------
-                         1
+  select emaj.emaj_ignore_app_trigger('REMOVE','dummy','mytbl1','%');
+ emaj_ignore_app_trigger 
+-------------------------
+                       1
 (1 row)
 
-  select emaj.emaj_keep_enabled_trigger('REMOVE','myschema1','dummy','%');
- emaj_keep_enabled_trigger 
----------------------------
-                         1
+  select emaj.emaj_ignore_app_trigger('REMOVE','myschema1','dummy','%');
+ emaj_ignore_app_trigger 
+-------------------------
+                       1
 (1 row)
 
-  select emaj.emaj_keep_enabled_trigger('REMOVE','myschema1','mytbl1','dummy');
- emaj_keep_enabled_trigger 
----------------------------
-                         1
+  select emaj.emaj_ignore_app_trigger('REMOVE','myschema1','mytbl1','dummy');
+ emaj_ignore_app_trigger 
+-------------------------
+                       1
 (1 row)
 
   select * from emaj.emaj_verify_all();

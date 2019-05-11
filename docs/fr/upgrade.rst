@@ -42,7 +42,7 @@ De la même manière, si l'administrateur E-Maj a modifié des paramètres dans 
 
 Si la version E-Maj installée est une version 3.1.0 ou supérieure, et si l’administrateur E-Maj a enregistré des triggers applicatifs comme "ne devant pas être automatiquement désactivés lors des opérations de rollback E-Maj", il est souhaitable de conserver cette liste, avec par exemple ::
 
-   CREATE TABLE public.sav_enabled_trigger AS SELECT * FROM emaj.emaj_enabled_trigger;
+   CREATE TABLE public.sav_ignored_app_trigger AS SELECT * FROM emaj.emaj_ignored_app_trigger;
 
 
 Suppression et réinstallation d'E-Maj
@@ -69,7 +69,7 @@ Les données sauvegardées au préalable peuvent alors être restaurées dans le
 
    INSERT INTO emaj.emaj_param SELECT * FROM public.sav_param;
 
-   INSERT INTO emaj.emaj_enabled_trigger SELECT * FROM public.sav_enabled_trigger;
+   INSERT INTO emaj.emaj_ignored_app_trigger SELECT * FROM public.sav_ignored_app_trigger;
 
 Une fois les données copiées, les tables ou fichiers temporaires peuvent être supprimés.
 

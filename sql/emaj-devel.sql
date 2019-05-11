@@ -457,14 +457,14 @@ COMMENT ON TABLE emaj.emaj_rlbk_stat IS
 $$Contains statistics about previous E-Maj rollback durations.$$;
 
 -- table containing the list of appliction triggers on tables that should not be automatically disabled when launching a rollback operation
--- it is the administrator's responsibility to setup its content, using the emaj_keep_enabled_trigger function
-CREATE TABLE emaj.emaj_enabled_trigger (
+-- it is the administrator's responsibility to setup its content, using the emaj_ignore_app_trigger function
+CREATE TABLE emaj.emaj_ignored_app_trigger (
   trg_schema                   TEXT        NOT NULL,       -- application schema
   trg_table                    TEXT        NOT NULL,       -- application table
   trg_name                     TEXT        NOT NULL,       -- trigger name
   PRIMARY KEY (trg_schema, trg_table, trg_name)
   );
-COMMENT ON TABLE emaj.emaj_enabled_trigger IS
+COMMENT ON TABLE emaj.emaj_ignored_app_trigger IS
 $$Contains the triggers on application tables that do not need to be disabled when rollbacking.$$;
 
 ------------------------------------
@@ -1593,7 +1593,7 @@ $_create_tbl$
         WHERE tgrelid = v_fullTableName::regclass AND tgconstraint = 0 AND tgname NOT LIKE E'emaj\\_%\\_trg') AS t;
 -- if yes, issue a warning (if a trigger updates another table in the same table group or outside) it could generate problem at rollback time)
     IF v_triggerList IS NOT NULL THEN
-      RAISE WARNING '_create_tbl: The table "%" has triggers (%). They will be automatically disabled during E-Maj rollback operations, unless they have been recorded into the list of triggers that may be kept enabled, with the emaj_keep_enabled_trigger() function.', v_fullTableName, v_triggerList;
+      RAISE WARNING '_create_tbl: The table "%" has triggers (%). They will be automatically disabled during E-Maj rollback operations, unless they have been recorded into the list of triggers that may be kept enabled, with the emaj_ignore_app_trigger() function.', v_fullTableName, v_triggerList;
     END IF;
 -- grant appropriate rights to both emaj roles
     EXECUTE 'GRANT SELECT ON TABLE ' || v_logTableName || ' TO emaj_viewer';
@@ -2176,13 +2176,13 @@ $_delete_log_tbl$
   END;
 $_delete_log_tbl$;
 
-CREATE OR REPLACE FUNCTION emaj.emaj_keep_enabled_trigger(v_action TEXT, v_schema TEXT, v_table TEXT, v_trigger TEXT)
+CREATE OR REPLACE FUNCTION emaj.emaj_ignore_app_trigger(v_action TEXT, v_schema TEXT, v_table TEXT, v_trigger TEXT)
 RETURNS INT LANGUAGE plpgsql AS
-$emaj_keep_enabled_trigger$
+$emaj_ignore_app_trigger$
 -- This function records the list of application table triggers that must not be automatically disabled when launching a rollback operation.
 -- Input: the action to perform, either ADD or REMOVE,
 --        the schema and table names of the table that owns the trigger
---        and the trigger to record into or remove from the emaj_enabled_trigger table
+--        and the trigger to record into or remove from the emaj_ignored_app_trigger table
 -- Output: number of recorded or removed triggers
 -- A trigger to add must exist. E-Maj triggers are not processed.
 -- The trigger parameter may contain '%' and/or '_' characters, these characters having the same meaning as in LIKE clauses.
@@ -2193,11 +2193,11 @@ $emaj_keep_enabled_trigger$
   BEGIN
 -- check the action parameter
     IF upper(v_action) NOT IN ('ADD','REMOVE') THEN
-      RAISE EXCEPTION 'emaj_keep_enabled_trigger: the action "%" must be either ''ADD'' or ''REMOVE''.', v_action;
+      RAISE EXCEPTION 'emaj_ignore_app_trigger: the action "%" must be either ''ADD'' or ''REMOVE''.', v_action;
     END IF;
 -- process the REMOVE action
     IF upper(v_action) = 'REMOVE' THEN
-      DELETE FROM emaj.emaj_enabled_trigger
+      DELETE FROM emaj.emaj_ignored_app_trigger
         WHERE trg_schema = v_schema AND trg_table = v_table AND trg_name LIKE v_trigger;
       GET DIAGNOSTICS v_nbRows = ROW_COUNT;
       RETURN v_nbRows;
@@ -2210,14 +2210,14 @@ $emaj_keep_enabled_trigger$
         AND nspname = v_schema AND relname = v_table
         AND relkind = 'r';
     IF NOT FOUND THEN
-      RAISE EXCEPTION 'emaj_keep_enabled_trigger: the table "%.%" does not exist.', v_schema, v_table;
+      RAISE EXCEPTION 'emaj_ignore_app_trigger: the table "%.%" does not exist.', v_schema, v_table;
     END IF;
 -- check that the trigger exists for the table
     PERFORM 1 FROM pg_catalog.pg_trigger
       WHERE tgrelid = v_tableOid
         AND tgname LIKE v_trigger AND NOT tgisinternal;
     IF NOT FOUND THEN
-      RAISE EXCEPTION 'emaj_keep_enabled_trigger: no trigger like "%" found for the table "%.%".', v_trigger, v_schema, v_table;
+      RAISE EXCEPTION 'emaj_ignore_app_trigger: no trigger like "%" found for the table "%.%".', v_trigger, v_schema, v_table;
     END IF;
 -- issue a warning if there is at least 1 emaj trigger selected
     SELECT string_agg(tgname,', ') INTO v_trgList
@@ -2225,10 +2225,10 @@ $emaj_keep_enabled_trigger$
       WHERE tgrelid = v_tableOid
         AND tgname LIKE v_trigger AND tgname IN ('emaj_trunc_trg', 'emaj_log_trg') AND NOT tgisinternal;
     IF v_trgList IS NOT NULL THEN
-      RAISE WARNING 'emaj_keep_enabled_trigger: the triggers "%" are E-Maj triggers and are not processed by the function.', v_trgList;
+      RAISE WARNING 'emaj_ignore_app_trigger: the triggers "%" are E-Maj triggers and are not processed by the function.', v_trgList;
     END IF;
--- insert into the emaj_enabled_trigger table the not yet recorded triggers
-    INSERT INTO emaj.emaj_enabled_trigger
+-- insert into the emaj_ignored_app_trigger table the not yet recorded triggers
+    INSERT INTO emaj.emaj_ignored_app_trigger
       SELECT v_schema, v_table, tgname
         FROM pg_catalog.pg_trigger
         WHERE tgrelid = v_tableOid
@@ -2238,8 +2238,8 @@ $emaj_keep_enabled_trigger$
     GET DIAGNOSTICS v_nbRows = ROW_COUNT;
     RETURN v_nbRows;
   END;
-$emaj_keep_enabled_trigger$;
-COMMENT ON FUNCTION emaj.emaj_keep_enabled_trigger(TEXT,TEXT,TEXT,TEXT) IS
+$emaj_ignore_app_trigger$;
+COMMENT ON FUNCTION emaj.emaj_ignore_app_trigger(TEXT,TEXT,TEXT,TEXT) IS
 $$Records application tables triggers that are not automatically disabled at rollback time.$$;
 
 CREATE OR REPLACE FUNCTION emaj._rlbk_seq(r_rel emaj.emaj_relation, v_timeId BIGINT)
@@ -4863,7 +4863,7 @@ if v_markTimeId is null then raise notice '§§§ attention pour mark % v_markTi
           AND rlbp_rlbk_id = v_rlbkId AND rlbp_step = 'RLBK_TABLE'
           AND NOT tgisinternal AND NOT tgenabled = 'D'
           AND tgname NOT IN ('emaj_trunc_trg','emaj_log_trg')
-          AND NOT EXISTS (SELECT trg_name FROM emaj.emaj_enabled_trigger
+          AND NOT EXISTS (SELECT trg_name FROM emaj.emaj_ignored_app_trigger
                             WHERE trg_schema = rlbp_schema AND trg_table = rlbp_table AND trg_name = tgname);
 -- compute the cost for each ENA_APP_TRG step
 --   if ENA_APP_TRG statistics are available, compute an average cost
@@ -7504,11 +7504,11 @@ $emaj_verify_all$
       RETURN NEXT r_object.msg;
       v_errorFound = TRUE;
     END LOOP;
--- check the emaj_enabled_trigger table content
+-- check the emaj_ignored_app_trigger table content
     FOR r_object IN
-      SELECT 'No trigger "' || trg_name || '" found for table "' || trg_schema || '"."' || trg_table || '". Use the emaj_keep_enabled_trigger() function to adjust the list of application triggers that should not be automatically disabled at rollback time.' AS msg
+      SELECT 'No trigger "' || trg_name || '" found for table "' || trg_schema || '"."' || trg_table || '". Use the emaj_ignore_app_trigger() function to adjust the list of application triggers that should not be automatically disabled at rollback time.' AS msg
         FROM (
-          SELECT trg_schema, trg_table, trg_name FROM emaj.emaj_enabled_trigger
+          SELECT trg_schema, trg_table, trg_name FROM emaj.emaj_ignored_app_trigger
             EXCEPT
           SELECT nspname, relname, tgname
             FROM pg_catalog.pg_namespace, pg_catalog.pg_class, pg_catalog.pg_trigger
@@ -7999,7 +7999,7 @@ GRANT EXECUTE ON FUNCTION emaj._adjust_group_properties() TO emaj_viewer;
 --SELECT pg_catalog.pg_extension_config_dump('emaj_rlbk_session','');
 --SELECT pg_catalog.pg_extension_config_dump('emaj_rlbk_plan','');
 --SELECT pg_catalog.pg_extension_config_dump('emaj_rlbk_stat','');
---SELECT pg_catalog.pg_extension_config_dump('emaj_enabled_trigger','');
+--SELECT pg_catalog.pg_extension_config_dump('emaj_ignored_app_trigger','');
 
 -- register emaj sequences values as candidate for pg_dump
 --SELECT pg_catalog.pg_extension_config_dump('emaj_global_seq','');

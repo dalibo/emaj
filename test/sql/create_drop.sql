@@ -1,5 +1,5 @@
 -- create_drop.sql : prepare groups content and test emaj_create_group(), emaj_comment_group(),
--- emaj_keep_enabled_trigger(), emaj_drop_group() and emaj_force_drop_group() functions
+-- emaj_ignore_app_trigger(), emaj_drop_group() and emaj_force_drop_group() functions
 --
 SET client_min_messages TO WARNING;
 -----------------------------
@@ -177,44 +177,44 @@ select emaj.emaj_comment_group('myGroup1',NULL);
 select group_name, group_comment from emaj.emaj_group where group_name = 'myGroup1';
 
 -----------------------------------
--- emaj_keep_enabled_trigger
+-- emaj_ignore_app_trigger
 -----------------------------------
 
 -- unknown action
-select emaj.emaj_keep_enabled_trigger('dummy','dummy','dummy','dummy');
+select emaj.emaj_ignore_app_trigger('dummy','dummy','dummy','dummy');
 
 -- unknown schema
-select emaj.emaj_keep_enabled_trigger('ADD','dummy','mytbl2','dummy');
+select emaj.emaj_ignore_app_trigger('ADD','dummy','mytbl2','dummy');
 
 -- unknown table, and empty or NULL triggers array
-select emaj.emaj_keep_enabled_trigger('ADD','myschema1','dummy','dummy');
+select emaj.emaj_ignore_app_trigger('ADD','myschema1','dummy','dummy');
 
 -- unknown triggers
-select emaj.emaj_keep_enabled_trigger('ADD','myschema1','mytbl2','dummy');
+select emaj.emaj_ignore_app_trigger('ADD','myschema1','mytbl2','dummy');
 
 -- emaj triggers
-select emaj.emaj_keep_enabled_trigger('ADD','myschema1','mytbl2','emaj_trunc_trg');
-select emaj.emaj_keep_enabled_trigger('ADD','myschema1','mytbl2','emaj_%_trg');
+select emaj.emaj_ignore_app_trigger('ADD','myschema1','mytbl2','emaj_trunc_trg');
+select emaj.emaj_ignore_app_trigger('ADD','myschema1','mytbl2','emaj_%_trg');
 
 -- add one trigger
-select emaj.emaj_keep_enabled_trigger('ADD','myschema1','mytbl2','mytbl2trg1');
-select * from emaj.emaj_enabled_trigger order by trg_schema, trg_table, trg_name;
+select emaj.emaj_ignore_app_trigger('ADD','myschema1','mytbl2','mytbl2trg1');
+select * from emaj.emaj_ignored_app_trigger order by trg_schema, trg_table, trg_name;
 
 -- add the same
-select emaj.emaj_keep_enabled_trigger('ADD','myschema1','mytbl2','mytbl2trg1');
-select * from emaj.emaj_enabled_trigger order by trg_schema, trg_table, trg_name;
+select emaj.emaj_ignore_app_trigger('ADD','myschema1','mytbl2','mytbl2trg1');
+select * from emaj.emaj_ignored_app_trigger order by trg_schema, trg_table, trg_name;
 
 -- add all triggers for a table
-select emaj.emaj_keep_enabled_trigger('ADD','myschema1','mytbl2','%');
-select * from emaj.emaj_enabled_trigger order by trg_schema, trg_table, trg_name;
+select emaj.emaj_ignore_app_trigger('ADD','myschema1','mytbl2','%');
+select * from emaj.emaj_ignored_app_trigger order by trg_schema, trg_table, trg_name;
 
 -- remove one trigger
-select emaj.emaj_keep_enabled_trigger('REMOVE','myschema1','mytbl2','mytbl2trg1');
-select * from emaj.emaj_enabled_trigger order by trg_schema, trg_table, trg_name;
+select emaj.emaj_ignore_app_trigger('REMOVE','myschema1','mytbl2','mytbl2trg1');
+select * from emaj.emaj_ignored_app_trigger order by trg_schema, trg_table, trg_name;
 
 -- remove several triggers
-select emaj.emaj_keep_enabled_trigger('REMOVE','myschema1','mytbl2','%');
-select * from emaj.emaj_enabled_trigger order by trg_schema, trg_table, trg_name;
+select emaj.emaj_ignore_app_trigger('REMOVE','myschema1','mytbl2','%');
+select * from emaj.emaj_ignored_app_trigger order by trg_schema, trg_table, trg_name;
 
 -----------------------------
 -- emaj_drop_group() tests

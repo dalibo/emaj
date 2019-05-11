@@ -34,12 +34,12 @@ select relname from pg_catalog.pg_class,
            relname           
 -----------------------------
  emaj_alter_plan
- emaj_enabled_trigger
  emaj_global_seq
  emaj_group
  emaj_group_def
  emaj_hist
  emaj_hist_hist_id_seq
+ emaj_ignored_app_trigger
  emaj_mark
  emaj_param
  emaj_rel_hist
@@ -179,23 +179,6 @@ primary key, btree, for table "emaj.emaj_alter_plan"
  stat_verb                | character varying(6)     |           |          | 
  stat_rows                | bigint                   |           |          | 
 
-         Table "emaj.emaj_enabled_trigger"
-   Column   | Type | Collation | Nullable | Default 
-------------+------+-----------+----------+---------
- trg_schema | text |           | not null | 
- trg_table  | text |           | not null | 
- trg_name   | text |           | not null | 
-Indexes:
-    "emaj_enabled_trigger_pkey" PRIMARY KEY, btree (trg_schema, trg_table, trg_name)
-
-Index "emaj.emaj_enabled_trigger_pkey"
-   Column   | Type | Key? | Definition 
-------------+------+------+------------
- trg_schema | text | yes  | trg_schema
- trg_table  | text | yes  | trg_table
- trg_name   | text | yes  | trg_name
-primary key, btree, for table "emaj.emaj_enabled_trigger"
-
                        Sequence "emaj.emaj_global_seq"
   Type  | Start | Minimum |       Maximum       | Increment | Cycles? | Cache 
 --------+-------+---------+---------------------+-----------+---------+-------
@@ -286,6 +269,23 @@ Owned by: emaj.emaj_hist.hist_id
 ---------+--------+------+------------
  hist_id | bigint | yes  | hist_id
 primary key, btree, for table "emaj.emaj_hist"
+
+       Table "emaj.emaj_ignored_app_trigger"
+   Column   | Type | Collation | Nullable | Default 
+------------+------+-----------+----------+---------
+ trg_schema | text |           | not null | 
+ trg_table  | text |           | not null | 
+ trg_name   | text |           | not null | 
+Indexes:
+    "emaj_ignored_app_trigger_pkey" PRIMARY KEY, btree (trg_schema, trg_table, trg_name)
+
+Index "emaj.emaj_ignored_app_trigger_pkey"
+   Column   | Type | Key? | Definition 
+------------+------+------+------------
+ trg_schema | text | yes  | trg_schema
+ trg_table  | text | yes  | trg_table
+ trg_name   | text | yes  | trg_name
+primary key, btree, for table "emaj.emaj_ignored_app_trigger"
 
                        Composite type "emaj.emaj_log_stat_type"
           Column          |           Type           | Collation | Nullable | Default 

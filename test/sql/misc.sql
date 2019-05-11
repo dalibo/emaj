@@ -711,18 +711,18 @@ rollback;
 -- other tests
 --
 
--- bad triggers in emaj_enabled_trigger
+-- bad triggers in emaj_ignored_app_trigger
 begin;
--- simulate a discrepancy between the emaj_enabled_trigger table content and the existing triggers
-  insert into emaj.emaj_enabled_trigger values ('dummy','mytbl1','mytrg');         -- dropped schema
-  insert into emaj.emaj_enabled_trigger values ('myschema1','dummy','mytrg');      -- dropped table
-  insert into emaj.emaj_enabled_trigger values ('myschema1','mytbl1','dummy');     -- dropped trigger
+-- simulate a discrepancy between the emaj_ignored_app_trigger table content and the existing triggers
+  insert into emaj.emaj_ignored_app_trigger values ('dummy','mytbl1','mytrg');         -- dropped schema
+  insert into emaj.emaj_ignored_app_trigger values ('myschema1','dummy','mytrg');      -- dropped table
+  insert into emaj.emaj_ignored_app_trigger values ('myschema1','mytbl1','dummy');     -- dropped trigger
 -- check
   select * from emaj.emaj_verify_all();
 -- and fix
-  select emaj.emaj_keep_enabled_trigger('REMOVE','dummy','mytbl1','%');
-  select emaj.emaj_keep_enabled_trigger('REMOVE','myschema1','dummy','%');
-  select emaj.emaj_keep_enabled_trigger('REMOVE','myschema1','mytbl1','dummy');
+  select emaj.emaj_ignore_app_trigger('REMOVE','dummy','mytbl1','%');
+  select emaj.emaj_ignore_app_trigger('REMOVE','myschema1','dummy','%');
+  select emaj.emaj_ignore_app_trigger('REMOVE','myschema1','mytbl1','dummy');
   select * from emaj.emaj_verify_all();
 rollback;
 

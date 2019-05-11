@@ -42,7 +42,7 @@ The same way, if the E-Maj administrator had changed parameters value into the *
 
 If the installed E-Maj version is 3.1.0 or higher, and if the E-Maj administrator has registered application triggers as “not to be automatically disabled at E-Maj rollback time”, it is advisable to save this triggers list, for instance with::
 
-   CREATE TABLE public.sav_enabled_trigger AS SELECT * FROM emaj.emaj_enabled_trigger;
+   CREATE TABLE public.sav_ignored_app_trigger AS SELECT * FROM emaj.emaj_ignored_app_trigger;
 
 
 E-Maj deletion and re-installation
@@ -67,7 +67,7 @@ Data previously saved can now be restored into E-Maj both technical tables, for 
 
    INSERT INTO emaj.emaj_param SELECT * FROM public.sav_param;
 
-   INSERT INTO emaj.emaj_enabled_trigger SELECT * FROM public.sav_enabled_trigger;
+   INSERT INTO emaj.emaj_ignored_app_trigger SELECT * FROM public.sav_ignored_app_trigger;
 
 Once data are copied, temporary tables or files can be deleted.
 

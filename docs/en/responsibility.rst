@@ -23,7 +23,7 @@ If the trigger simply adjusts the content of the row to insert or update, the lo
 If the trigger updates another table, two cases must be considered:
 
 * if the updated table belongs to the same tables group, the automatic trigger disabling and the rollback of both tables will let them in the expected state,
-* if the updated table does not belong to the same tables group, it is essential to analyse the consequences of a rollback operation, in order to avoid a de-synchronisation between both tables. If needed, the :ref:`emaj_keep_enabled_trigger()<emaj_keep_enabled_trigger>` function can be used to not disable the trigger at rollback time. But merely deactivating the trigger may not be sufficient and some other actions may be required.
+* if the updated table does not belong to the same tables group, it is essential to analyse the consequences of a rollback operation, in order to avoid a de-synchronisation between both tables. If needed, the :ref:`emaj_ignore_app_trigger()<emaj_ignore_app_trigger>` function can be used to not disable the trigger at rollback time. But merely deactivating the trigger may not be sufficient and some other actions may be required.
 
 For more complex triggers, it is essential to perfectly understand their impacts on E-Maj rollbacks and take any appropriate mesure at rollback time.
 

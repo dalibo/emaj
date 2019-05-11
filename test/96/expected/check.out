@@ -184,7 +184,7 @@ select funcname, calls from pg_stat_user_functions
  emaj_get_consolidable_rollbacks           |    10
  emaj_get_previous_mark_group              |     8
  emaj_get_previous_mark_group              |     9
- emaj_keep_enabled_trigger                 |    14
+ emaj_ignore_app_trigger                   |    14
  emaj_log_stat_group                       |    23
  emaj_log_stat_groups                      |     5
  emaj_logged_rollback_group                |     9

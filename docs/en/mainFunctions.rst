@@ -199,7 +199,7 @@ The function returns a set of rows with a severity level set to either “*Notic
 
 To be sure that no concurrent transaction updates any table of the group during the rollback operation, the *emaj_rollback_group()* function explicitly sets an *EXCLUSIVE* lock on each table of the group. If transactions updating these tables are running, this can lead to deadlock. If the deadlock processing impacts the execution of the E-Maj function, the error is trapped and the lock operation is repeated, with a maximum of 5 attempts. But tables of the group remain accessible for read only transactions during the operation.
 
-If tables belonging to the group to rollback have triggers, these triggers are by default temporarily disabled during the operation. Using the :ref:`emaj_keep_enabled_trigger()<emaj_keep_enabled_trigger>` function, it is possible to record triggers as ‘not to be automatically disabled at rollback’ (more details :ref:`here <application_triggers>`).
+If tables belonging to the group to rollback have triggers, these triggers are by default temporarily disabled during the operation. Using the :ref:`emaj_ignore_app_trigger()<emaj_ignore_app_trigger>` function, it is possible to record triggers as ‘not to be automatically disabled at rollback’ (more details :ref:`here <application_triggers>`).
 
 If a table impacted by the rollback owns a foreign key or is referenced by a foreign key from another table, then this foreign key is taken into account by the rollback operation. If the check of the keys created or modified by the rollback cannot be deferred at the end of the operation (constraint not declared as *DEFERRABLE*), then this foreign key is dropped at the beginning of the rollback and recreated at the end.
 
@@ -258,7 +258,7 @@ The function returns a set of rows with a severity level set to either “*Notic
 
 To be sure that no concurrent transaction updates any table of the group during the rollback operation, the *emaj_rollback_group()* function explicitly sets an *EXCLUSIVE* lock on each table of the group. If transactions updating these tables are running, this can lead to deadlock. If the deadlock processing impacts the execution of the E-Maj function, the error is trapped and the lock operation is repeated, with a maximum of 5 attempts. But tables of the group remain accessible for read only transactions during the operation.
 
-If tables belonging to the group to rollback have triggers, these triggers are by default temporarily disabled during the operation. Using the :ref:`emaj_keep_enabled_trigger()<emaj_keep_enabled_trigger>` function, it is possible to record triggers as ‘not to be automatically disabled at rollback’ (more details :ref:`here <application_triggers>`).
+If tables belonging to the group to rollback have triggers, these triggers are by default temporarily disabled during the operation. Using the :ref:`emaj_ignore_app_trigger()<emaj_ignore_app_trigger>` function, it is possible to record triggers as ‘not to be automatically disabled at rollback’ (more details :ref:`here <application_triggers>`).
 
 If a table impacted the rollback owns a foreign key or is referenced by a foreign key from another table, then this foreign key is taken into account by the rollback operation. If the check of the keys created or modified by the rollback cannot be deferred at the end of the operation (constraint not declared as *DEFERRABLE*), then this foreign key is dropped at the beginning of the rollback and recreated at the end.
 

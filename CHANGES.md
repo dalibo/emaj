@@ -5,7 +5,7 @@ E-Maj - Change log
 ###Enhancements:###
   * The rollback functions now automatically disable the application triggers,
     unless they are set in a list of triggers that should not be automatically
-    disabled during the operation. A new emaj_keep_enabled_trigger() function
+    disabled during the operation. A new emaj_ignore_app_trigger() function
     records the triggers that are not automatically disabled during rollback
     operations. This may impact existing user rollback procedures.
   * All log objects (tables, sequences, functions) are now located in a schema

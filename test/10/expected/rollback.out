@@ -7,17 +7,17 @@
 alter sequence emaj.emaj_hist_hist_id_seq restart 3000;
 alter sequence emaj.emaj_time_stamp_time_id_seq restart 3000;
 -- set the triggers state
-select emaj.emaj_keep_enabled_trigger('REMOVE','myschema1','mytbl2','mytbl2%');
- emaj_keep_enabled_trigger 
----------------------------
-                         0
+select emaj.emaj_ignore_app_trigger('REMOVE','myschema1','mytbl2','mytbl2%');
+ emaj_ignore_app_trigger 
+-------------------------
+                       0
 (1 row)
 
 ALTER TABLE mySchema1.myTbl2 ENABLE TRIGGER myTbl2trg2;
-select emaj.emaj_keep_enabled_trigger('ADD','myschema1','mytbl2','mytbl2trg2');
- emaj_keep_enabled_trigger 
----------------------------
-                         1
+select emaj.emaj_ignore_app_trigger('ADD','myschema1','mytbl2','mytbl2trg2');
+ emaj_ignore_app_trigger 
+-------------------------
+                       1
 (1 row)
 
 -----------------------------
@@ -2137,10 +2137,10 @@ CONTEXT:  PL/pgSQL function emaj.emaj_consolidate_rollback_group(text,text) line
 rollback;
 -- should be ok
 set search_path=public,myschema1;
-select emaj.emaj_keep_enabled_trigger('ADD', 'myschema1', 'mytbl2', 'mytbl2trg%');
- emaj_keep_enabled_trigger 
----------------------------
-                         1
+select emaj.emaj_ignore_app_trigger('ADD', 'myschema1', 'mytbl2', 'mytbl2trg%');
+ emaj_ignore_app_trigger 
+-------------------------
+                       1
 (1 row)
 
 -- rollback without log rows to delete
@@ -2303,10 +2303,10 @@ select emaj.emaj_rollback_group('myGroup1','Conso_M1');
                    4
 (1 row)
 
-select emaj.emaj_keep_enabled_trigger('REMOVE', 'myschema1', 'mytbl2', '%');
- emaj_keep_enabled_trigger 
----------------------------
-                         2
+select emaj.emaj_ignore_app_trigger('REMOVE', 'myschema1', 'mytbl2', '%');
+ emaj_ignore_app_trigger 
+-------------------------
+                       2
 (1 row)
 
 -- consolidate a stopped (and empty) group

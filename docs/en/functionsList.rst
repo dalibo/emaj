@@ -85,10 +85,10 @@ E-Maj functions that are available to users are listed in alphabetic order below
 | :ref:`emaj_get_previous_mark_group               | | group TEXT,                 | mark TEXT                             |
 | <emaj_get_previous_mark_group>` (V)              | | mark TEXT                   |                                       |
 +--------------------------------------------------+-------------------------------+---------------------------------------+
-| :ref:`emaj_keep_enabled_trigger                  | | action TEXT,                | #.triggers INT                        |
-| <emaj_keep_enabled_trigger>`                     | | schema TEXT,                |                                       |
+| :ref:`emaj_ignore_app_trigger                    | | action TEXT,                | #.triggers INT                        |
+| <emaj_ignore_app_trigger>`                       | | schema TEXT,                |                                       |
 |                                                  | | table TEXT,                 |                                       |
-|                                                  | | triggers.array TEXT[]       |                                       |
+|                                                  | | trigger TEXT                |                                       |
 +--------------------------------------------------+-------------------------------+---------------------------------------+
 | :ref:`emaj_log_stat_group                        | | group TEXT,                 | SETOF emaj_log_stat_type              |
 | <emaj_log_stat_group>` (V)                       | | start.mark TEXT,            |                                       |

@@ -34,7 +34,7 @@ select count(*) from emaj.emaj_rlbk;
 select count(*) from emaj.emaj_rlbk_session;
 select count(*) from emaj.emaj_rlbk_plan;
 select count(*) from emaj.emaj_rlbk_stat;
-select count(*) from emaj.emaj_enabled_trigger;
+select count(*) from emaj.emaj_ignored_app_trigger;
 select count(*) from emaj_mySchema1.myTbl1_log;
 
 -----------------------------

@@ -9,9 +9,9 @@ alter sequence emaj.emaj_hist_hist_id_seq restart 3000;
 alter sequence emaj.emaj_time_stamp_time_id_seq restart 3000;
 
 -- set the triggers state
-select emaj.emaj_keep_enabled_trigger('REMOVE','myschema1','mytbl2','mytbl2%');
+select emaj.emaj_ignore_app_trigger('REMOVE','myschema1','mytbl2','mytbl2%');
 ALTER TABLE mySchema1.myTbl2 ENABLE TRIGGER myTbl2trg2;
-select emaj.emaj_keep_enabled_trigger('ADD','myschema1','mytbl2','mytbl2trg2');
+select emaj.emaj_ignore_app_trigger('ADD','myschema1','mytbl2','mytbl2trg2');
 
 -----------------------------
 -- rollback nothing tests
@@ -510,7 +510,7 @@ rollback;
 
 -- should be ok
 set search_path=public,myschema1;
-select emaj.emaj_keep_enabled_trigger('ADD', 'myschema1', 'mytbl2', 'mytbl2trg%');
+select emaj.emaj_ignore_app_trigger('ADD', 'myschema1', 'mytbl2', 'mytbl2trg%');
 
 -- rollback without log rows to delete
 select emaj.emaj_set_mark_group('myGroup1','Conso_M1');
@@ -548,7 +548,7 @@ select sequ_schema, sequ_name, sequ_time_id, sequ_last_val, sequ_is_called from 
 select sqhl_schema, sqhl_table, sqhl_begin_time_id, sqhl_end_time_id, sqhl_hole_size from emaj.emaj_seq_hole where sqhl_schema = 'myschema1' order by 1,2,3;
 
 select emaj.emaj_rollback_group('myGroup1','Conso_M1');
-select emaj.emaj_keep_enabled_trigger('REMOVE', 'myschema1', 'mytbl2', '%');
+select emaj.emaj_ignore_app_trigger('REMOVE', 'myschema1', 'mytbl2', '%');
 
 -- consolidate a stopped (and empty) group
 begin;

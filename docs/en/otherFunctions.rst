@@ -26,14 +26,14 @@ The *emaj_verify_all()* function can be executed by any role belonging to *emaj_
 
 If errors are detected, for instance after an application table referenced in a tables group has been dropped, appropriate measures must be taken. Typically, the potential orphan log tables or functions must be manually dropped. 
 
-.. _emaj_keep_enabled_trigger:
+.. _emaj_ignore_app_trigger:
 
 Not disabling application triggers at E-Maj rollback time
 ---------------------------------------------------------
 
-Application triggers are automatically disabled during E-Maj rollback operations. Under some circumstances, it may be desirable to keep them enabled (more details :ref:`here <application_triggers>`). The *emaj_keep_enabled_trigger()* function achieves this. It allows to add or remove triggers into/from a list of triggers that do not need to be disabled during rollback operations. ::
+Application triggers are automatically disabled during E-Maj rollback operations. Under some circumstances, it may be desirable to keep them enabled (more details :ref:`here <application_triggers>`). The *emaj_ignore_app_trigger()* function achieves this. It allows to add or remove triggers into/from a list of triggers that do not need to be disabled during rollback operations. ::
 
-	SELECT emaj.emaj_keep_enabled_trigger(<action>, <schema.name>, <table.name>, <trigger.name>);
+	SELECT emaj.emaj_ignore_app_trigger(<action>, <schema.name>, <table.name>, <trigger.name>);
 
 The *<action>* parameter accepts 2 values: ‘ADD’ to add a trigger to the list or ‘REMOVE’ to delete a trigger from the list.
 
@@ -45,7 +45,7 @@ The function returns the number of triggers effectively added or removed.
 
 The function does not process E-Maj triggers (log triggers or triggers protecting against *TRUNCATE*).
 
-The triggers referenced as “not to be automatically disabled during E-Maj rollbacks” are registered into the *emaj.emaj_enabled_trigger* table. This table contains 3 columns:
+The triggers referenced as “not to be automatically disabled during E-Maj rollbacks” are registered into the *emaj.emaj_ignored_app_trigger* table. This table contains 3 columns:
 
 * trg_schema : schema of the table holding the trigger
 * trg_table : table holding the trigger
