@@ -1501,7 +1501,7 @@ alter table myschema1.mytbl1_new_name set schema public;
 update emaj.emaj_group_def set grpdef_schema = 'public'
   where grpdef_schema = 'myschema1' and grpdef_tblseq = 'mytbl1_new_name';
 select emaj.emaj_alter_group('myGroup1');
-NOTICE:  drop cascades to trigger emaj_log_trg on table mytbl1_new_name
+NOTICE:  drop cascades to trigger emaj_log_trg on table public.mytbl1_new_name
 CONTEXT:  SQL statement "DROP FUNCTION IF EXISTS emaj_myschema1.mytbl1_new_name_log_fnct() CASCADE"
 PL/pgSQL function emaj._drop_tbl(emaj.emaj_relation,bigint) line 22 at EXECUTE
 SQL statement "SELECT emaj._drop_tbl(emaj.emaj_relation.*, v_timeId) FROM emaj.emaj_relation

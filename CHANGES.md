@@ -18,6 +18,7 @@ E-Maj - Change log
   * Minor coding improvements.
 
 ###Bug fixes:###
+  * Fix a security vulnerability with functions declared as SECURITY DEFINER.
   * When checking the emaj_group_def table content, duplicate emaj names
     prefix were sometimes erroneously detected.
   * Fix the emaj_delete_before_mark_group() function call. In some rare cases,

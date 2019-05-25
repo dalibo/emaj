@@ -1313,7 +1313,8 @@ $_check_marks_range$
 $_check_marks_range$;
 
 CREATE OR REPLACE FUNCTION emaj._forbid_truncate_fnct()
-RETURNS TRIGGER LANGUAGE plpgsql SECURITY DEFINER AS
+RETURNS TRIGGER LANGUAGE plpgsql
+SECURITY DEFINER SET search_path = pg_catalog, pg_temp AS
 $_forbid_truncate_fnct$
 -- The function is triggered by the execution of TRUNCATE SQL verb on tables of a rollbackable group
 -- in logging mode.
@@ -1343,7 +1344,8 @@ $_log_truncate_fnct$
 $_log_truncate_fnct$;
 
 CREATE OR REPLACE FUNCTION emaj._create_log_schemas(v_function TEXT, v_groupNames TEXT[])
-RETURNS VOID LANGUAGE plpgsql SECURITY DEFINER AS
+RETURNS VOID LANGUAGE plpgsql
+SECURITY DEFINER SET search_path = pg_catalog, pg_temp AS
 $_create_log_schemas$
 -- The function creates all log schemas that will be needed to create new log tables. It gives the appropriate rights to emaj users on these schemas.
 -- Input: calling function to record into the emaj_hist table,
@@ -1379,7 +1381,8 @@ $_create_log_schemas$
 $_create_log_schemas$;
 
 CREATE OR REPLACE FUNCTION emaj._drop_log_schemas(v_function TEXT, v_isForced BOOLEAN)
-RETURNS VOID LANGUAGE plpgsql SECURITY DEFINER AS
+RETURNS VOID LANGUAGE plpgsql
+SECURITY DEFINER SET search_path = pg_catalog, pg_temp AS
 $_drop_log_schemas$
 -- The function looks for log schemas to drop. Drop them if any.
 -- Input: calling function to record into the emaj_hist table,
@@ -1432,7 +1435,8 @@ $_drop_log_schemas$;
 ---------------------------------------------------
 
 CREATE OR REPLACE FUNCTION emaj._create_tbl(v_schema TEXT, v_tbl TEXT, v_groupName TEXT, v_priority INT, v_logDatTsp TEXT, v_logIdxTsp TEXT, v_timeId BIGINT, v_groupIsRollbackable BOOLEAN, v_groupIsLogging BOOLEAN)
-RETURNS VOID LANGUAGE plpgsql SECURITY DEFINER AS
+RETURNS VOID LANGUAGE plpgsql
+SECURITY DEFINER SET search_path = pg_catalog, pg_temp AS
 $_create_tbl$
 -- This function creates all what is needed to manage the log and rollback operations for an application table
 -- Input: the application table to process, the group to add it into, the priority and tablespaces attributes, the time id of the operation,
@@ -1605,7 +1609,8 @@ $_create_tbl$
 $_create_tbl$;
 
 CREATE OR REPLACE FUNCTION emaj._create_log_trigger(v_fullTableName TEXT, v_logTableName TEXT, v_sequenceName TEXT, v_logFnctName TEXT)
-RETURNS VOID LANGUAGE plpgsql SECURITY DEFINER AS
+RETURNS VOID LANGUAGE plpgsql
+SECURITY DEFINER SET search_path = pg_catalog, pg_temp AS
 $_create_log_trigger$
 -- The function creates the log function and the associated log trigger for an application table.
 -- It is called by several functions.
@@ -1636,7 +1641,7 @@ $_create_log_trigger$
          || '  END IF;'
          || '  RETURN NULL;'
          || 'END;'
-         || '$logfnct$ LANGUAGE plpgsql SECURITY DEFINER;';
+         || '$logfnct$ LANGUAGE plpgsql SECURITY DEFINER SET search_path = pg_catalog, pg_temp;';
 -- create the log trigger on the application table, using the previously created log function
     EXECUTE 'CREATE TRIGGER emaj_log_trg'
          || ' AFTER INSERT OR UPDATE OR DELETE ON ' || v_fullTableName
@@ -1646,7 +1651,8 @@ $_create_log_trigger$
 $_create_log_trigger$;
 
 CREATE OR REPLACE FUNCTION emaj._add_tbl(r_plan emaj.emaj_alter_plan, v_timeId BIGINT, v_multiGroup BOOLEAN)
-RETURNS VOID LANGUAGE plpgsql SECURITY DEFINER AS
+RETURNS VOID LANGUAGE plpgsql
+SECURITY DEFINER SET search_path = pg_catalog, pg_temp AS
 $_add_tbl$
 -- The function adds a table to a group. It is called during an alter group operation.
 -- If the group is in idle state, it simply calls the _create_tbl() function.
@@ -1695,7 +1701,8 @@ $_add_tbl$
 $_add_tbl$;
 
 CREATE OR REPLACE FUNCTION emaj._change_log_data_tsp_tbl(r_rel emaj.emaj_relation, v_newLogDatTsp TEXT, v_multiGroup BOOLEAN)
-RETURNS VOID LANGUAGE plpgsql SECURITY DEFINER AS
+RETURNS VOID LANGUAGE plpgsql
+SECURITY DEFINER SET search_path = pg_catalog, pg_temp AS
 $_change_log_data_tsp_tbl$
 -- This function changes the log data tablespace for an application table
 -- Input: the existing emaj_relation row for the table and the new log data tablespace
@@ -1723,7 +1730,8 @@ $_change_log_data_tsp_tbl$
 $_change_log_data_tsp_tbl$;
 
 CREATE OR REPLACE FUNCTION emaj._change_log_index_tsp_tbl(r_rel emaj.emaj_relation, v_newLogIdxTsp TEXT, v_multiGroup BOOLEAN)
-RETURNS VOID LANGUAGE plpgsql SECURITY DEFINER AS
+RETURNS VOID LANGUAGE plpgsql
+SECURITY DEFINER SET search_path = pg_catalog, pg_temp AS
 $_change_log_index_tsp_tbl$
 -- This function changes the log index tablespace for an application table
 -- Input: the existing emaj_relation row for the table and the new log index tablespace
@@ -1751,7 +1759,8 @@ $_change_log_index_tsp_tbl$
 $_change_log_index_tsp_tbl$;
 
 CREATE OR REPLACE FUNCTION emaj._remove_tbl(r_plan emaj.emaj_alter_plan, v_timeId BIGINT, v_multiGroup BOOLEAN)
-RETURNS VOID LANGUAGE plpgsql SECURITY DEFINER AS
+RETURNS VOID LANGUAGE plpgsql
+SECURITY DEFINER SET search_path = pg_catalog, pg_temp AS
 $_remove_tbl$
 -- The function removes a table from a group. It is called during an alter group operation.
 -- If the group is in idle state, it simply calls the _drop_tbl() function.
@@ -1862,7 +1871,8 @@ $_move_tbl$
 $_move_tbl$;
 
 CREATE OR REPLACE FUNCTION emaj._drop_tbl(r_rel emaj.emaj_relation, v_timeId BIGINT)
-RETURNS VOID LANGUAGE plpgsql SECURITY DEFINER AS
+RETURNS VOID LANGUAGE plpgsql
+SECURITY DEFINER SET search_path = pg_catalog, pg_temp AS
 $_drop_tbl$
 -- The function deletes all what has been created by _create_tbl function
 -- Required inputs: row from emaj_relation corresponding to the appplication table to proccess
@@ -2057,7 +2067,8 @@ $_drop_seq$
 $_drop_seq$;
 
 CREATE OR REPLACE FUNCTION emaj._rlbk_tbl(r_rel emaj.emaj_relation, v_minGlobalSeq BIGINT, v_maxGlobalSeq BIGINT, v_nbSession INT, v_isLoggedRlbk BOOLEAN)
-RETURNS BIGINT LANGUAGE plpgsql SECURITY DEFINER AS
+RETURNS BIGINT LANGUAGE plpgsql
+SECURITY DEFINER SET search_path = pg_catalog, pg_temp AS
 $_rlbk_tbl$
 -- This function rollbacks one table to a given point in time represented by the value of the global sequence
 -- The function is called by emaj._rlbk_session_exec()
@@ -2243,7 +2254,8 @@ COMMENT ON FUNCTION emaj.emaj_ignore_app_trigger(TEXT,TEXT,TEXT,TEXT) IS
 $$Records application tables triggers that are not automatically disabled at rollback time.$$;
 
 CREATE OR REPLACE FUNCTION emaj._rlbk_seq(r_rel emaj.emaj_relation, v_timeId BIGINT)
-RETURNS VOID LANGUAGE plpgsql SECURITY DEFINER AS
+RETURNS VOID LANGUAGE plpgsql
+SECURITY DEFINER SET search_path = pg_catalog, pg_temp AS
 $_rlbk_seq$
 -- This function rollbacks one application sequence to a given mark
 -- The function is called by emaj.emaj._rlbk_end()
@@ -3066,7 +3078,8 @@ COMMENT ON FUNCTION emaj.emaj_force_drop_group(TEXT) IS
 $$Drops an E-Maj group, even in LOGGING state.$$;
 
 CREATE OR REPLACE FUNCTION emaj._drop_group(v_groupName TEXT, v_isForced BOOLEAN)
-RETURNS INT LANGUAGE plpgsql SECURITY DEFINER AS
+RETURNS INT LANGUAGE plpgsql
+SECURITY DEFINER SET search_path = pg_catalog, pg_temp AS
 $_drop_group$
 -- This function effectively deletes the emaj objects for all tables of a group
 -- It also drops log schemas that are not useful any more
@@ -3461,7 +3474,8 @@ COMMENT ON FUNCTION emaj.emaj_start_groups(TEXT[],TEXT, BOOLEAN) IS
 $$Starts several E-Maj groups.$$;
 
 CREATE OR REPLACE FUNCTION emaj._start_groups(v_groupNames TEXT[], v_mark TEXT, v_multiGroup BOOLEAN, v_resetLog BOOLEAN)
-RETURNS INT LANGUAGE plpgsql SECURITY DEFINER AS
+RETURNS INT LANGUAGE plpgsql
+SECURITY DEFINER SET search_path = pg_catalog, pg_temp AS
 $_start_groups$
 -- This function activates the log triggers of all the tables for one or several groups and set a first mark
 -- It also delete oldest rows in emaj_hist table
@@ -3583,7 +3597,8 @@ COMMENT ON FUNCTION emaj.emaj_force_stop_group(TEXT) IS
 $$Forces an E-Maj group stop.$$;
 
 CREATE OR REPLACE FUNCTION emaj._stop_groups(v_groupNames TEXT[], v_mark TEXT, v_multiGroup BOOLEAN, v_isForced BOOLEAN)
-RETURNS INT LANGUAGE plpgsql SECURITY DEFINER AS
+RETURNS INT LANGUAGE plpgsql
+SECURITY DEFINER SET search_path = pg_catalog, pg_temp AS
 $_stop_groups$
 -- This function effectively de-activates the log triggers of all the tables for a group.
 -- Input: array of group names, a mark name to set, and a boolean indicating if the function is called by a multi group function
@@ -4691,7 +4706,8 @@ $_rlbk_check$
 $_rlbk_check$;
 
 CREATE OR REPLACE FUNCTION emaj._rlbk_planning(v_rlbkId INT)
-RETURNS INT LANGUAGE plpgsql SECURITY DEFINER AS
+RETURNS INT LANGUAGE plpgsql
+SECURITY DEFINER SET search_path = pg_catalog, pg_temp AS
 $_rlbk_planning$
 -- This function builds the rollback steps for a rollback operation.
 -- It stores the result into the emaj_rlbk_plan table.
@@ -5372,6 +5388,7 @@ $_rlbk_start_mark$;
 
 CREATE OR REPLACE FUNCTION emaj._rlbk_session_exec(v_rlbkId INT, v_session INT)
 RETURNS VOID LANGUAGE plpgsql SECURITY DEFINER AS
+----SECURITY DEFINER SET search_path = pg_catalog, pg_temp AS
 $_rlbk_session_exec$
 -- This function executes the main part of a rollback operation.
 -- It executes the steps identified by _rlbk_planning() and stored into emaj_rlbk_plan, for one session.
@@ -5418,7 +5435,7 @@ $_rlbk_session_exec$
       LOOP
 -- update the emaj_rlbk_plan table to set the step start time
       v_stmt = 'UPDATE emaj.emaj_rlbk_plan SET rlbp_start_datetime = clock_timestamp() ' ||
-               ' WHERE rlbp_rlbk_id = ' || v_rlbkId || 'AND rlbp_step = ' || quote_literal(r_step.rlbp_step) ||
+               ' WHERE rlbp_rlbk_id = ' || v_rlbkId || ' AND rlbp_step = ' || quote_literal(r_step.rlbp_step) ||
                ' AND rlbp_schema = ' || quote_literal(r_step.rlbp_schema) ||
                ' AND rlbp_table = ' || quote_literal(r_step.rlbp_table) ||
                ' AND rlbp_object = ' || quote_literal(r_step.rlbp_object) || ' RETURNING 1';
@@ -5490,7 +5507,7 @@ $_rlbk_session_exec$
         v_stmt = v_stmt || ' , rlbp_quantity = ' || v_nbRows;
       END IF;
       v_stmt = v_stmt ||
-               ' WHERE rlbp_rlbk_id = ' || v_rlbkId || 'AND rlbp_step = ' || quote_literal(r_step.rlbp_step) ||
+               ' WHERE rlbp_rlbk_id = ' || v_rlbkId || ' AND rlbp_step = ' || quote_literal(r_step.rlbp_step) ||
                ' AND rlbp_schema = ' || quote_literal(r_step.rlbp_schema) ||
                ' AND rlbp_table = ' || quote_literal(r_step.rlbp_table) ||
                ' AND rlbp_object = ' || quote_literal(r_step.rlbp_object) || ' RETURNING 1';
@@ -5831,7 +5848,8 @@ COMMENT ON FUNCTION emaj.emaj_cleanup_rollback_state() IS
 $$Sets the status of pending E-Maj rollback events.$$;
 
 CREATE OR REPLACE FUNCTION emaj._cleanup_rollback_state()
-RETURNS INT LANGUAGE plpgsql SECURITY DEFINER AS
+RETURNS INT LANGUAGE plpgsql
+SECURITY DEFINER SET search_path = pg_catalog, pg_temp AS
 $_cleanup_rollback_state$
 -- This function effectively cleans the rollback states up. It is called by the emaj_cleanup_rollback_state()
 -- and by other emaj functions.
@@ -5879,7 +5897,8 @@ $_cleanup_rollback_state$
 $_cleanup_rollback_state$;
 
 CREATE OR REPLACE FUNCTION emaj.emaj_consolidate_rollback_group(v_groupName TEXT, v_endRlbkMark TEXT)
-RETURNS BIGINT LANGUAGE plpgsql SECURITY DEFINER AS
+RETURNS BIGINT LANGUAGE plpgsql
+SECURITY DEFINER SET search_path = pg_catalog, pg_temp AS
 $emaj_consolidate_rollback_group$
 -- This function "consolidates" a rollback for a group. It transforms an already completed logged rollback into an unlogged rollback.
 -- All marks and update logs between a mark used as reference by an unlogged rollback operation and the final mark set by this rollback are suppressed.
@@ -6059,7 +6078,8 @@ COMMENT ON FUNCTION emaj.emaj_get_consolidable_rollbacks() IS
 $$Returns the list of logged rollback operations that can be consolidated.$$;
 
 CREATE OR REPLACE FUNCTION emaj.emaj_reset_group(v_groupName TEXT)
-RETURNS INT LANGUAGE plpgsql SECURITY DEFINER AS
+RETURNS INT LANGUAGE plpgsql
+SECURITY DEFINER SET search_path = pg_catalog, pg_temp AS
 $emaj_reset_group$
 -- This function empties the log tables for all tables of a group and deletes the sequences saves
 -- It calls the emaj_rst_group function to do the job
@@ -6091,7 +6111,8 @@ COMMENT ON FUNCTION emaj.emaj_reset_group(TEXT) IS
 $$Resets all log tables content of a stopped E-Maj group.$$;
 
 CREATE OR REPLACE FUNCTION emaj._reset_groups(v_groupNames TEXT[])
-RETURNS INT LANGUAGE plpgsql SECURITY DEFINER AS
+RETURNS INT LANGUAGE plpgsql
+SECURITY DEFINER SET search_path = pg_catalog, pg_temp AS
 $_reset_groups$
 -- This function empties the log tables for all tables of a group, using a TRUNCATE, and deletes the sequences images
 -- It is called by emaj_reset_group(), emaj_start_group() and emaj_alter_group() functions
@@ -6474,7 +6495,8 @@ COMMENT ON FUNCTION emaj.emaj_estimate_rollback_groups(TEXT[],TEXT,BOOLEAN) IS
 $$Estimates the duration of a potential rollback for a set of tables groups to a given mark.$$;
 
 CREATE OR REPLACE FUNCTION emaj._estimate_rollback_groups(v_groupNames TEXT[], v_multiGroup BOOLEAN, v_mark TEXT, v_isLoggedRlbk BOOLEAN)
-RETURNS INTERVAL LANGUAGE plpgsql SECURITY DEFINER AS
+RETURNS INTERVAL LANGUAGE plpgsql
+SECURITY DEFINER SET search_path = pg_catalog, pg_temp AS
 $_estimate_rollback_groups$
 -- This function effectively computes an approximate duration of a rollback to a predefined mark for a groups array.
 -- It simulates a rollback on 1 session, by calling the _rlbk_planning function that already estimates elementary
@@ -6621,7 +6643,8 @@ $_rollback_activity$
 $_rollback_activity$;
 
 CREATE OR REPLACE FUNCTION emaj.emaj_snap_group(v_groupName TEXT, v_dir TEXT, v_copyOptions TEXT)
-RETURNS INT LANGUAGE plpgsql SECURITY DEFINER AS
+RETURNS INT LANGUAGE plpgsql
+SECURITY DEFINER SET search_path = pg_catalog, pg_temp AS
 $emaj_snap_group$
 -- This function creates a file for each table and sequence belonging to the group.
 -- For tables, these files contain all rows sorted on primary key.
@@ -6726,7 +6749,8 @@ COMMENT ON FUNCTION emaj.emaj_snap_group(TEXT,TEXT,TEXT) IS
 $$Snaps all application tables and sequences of an E-Maj group into a given directory.$$;
 
 CREATE OR REPLACE FUNCTION emaj.emaj_snap_log_group(v_groupName TEXT, v_firstMark TEXT, v_lastMark TEXT, v_dir TEXT, v_copyOptions TEXT)
-RETURNS INT LANGUAGE plpgsql SECURITY DEFINER AS
+RETURNS INT LANGUAGE plpgsql
+SECURITY DEFINER SET search_path = pg_catalog, pg_temp AS
 $emaj_snap_log_group$
 -- This function creates a file for each log table belonging to the group.
 -- It also creates 2 files containing the state of sequences respectively at start mark and end mark
@@ -6873,7 +6897,8 @@ COMMENT ON FUNCTION emaj.emaj_snap_log_group(TEXT,TEXT,TEXT,TEXT,TEXT) IS
 $$Snaps all application tables and sequences of an E-Maj group into a given directory.$$;
 
 CREATE OR REPLACE FUNCTION emaj.emaj_gen_sql_group(v_groupName TEXT, v_firstMark TEXT, v_lastMark TEXT, v_location TEXT, v_tblseqs TEXT[] DEFAULT NULL)
-RETURNS BIGINT LANGUAGE plpgsql SECURITY DEFINER SET standard_conforming_strings = ON AS
+RETURNS BIGINT LANGUAGE plpgsql
+SECURITY DEFINER SET standard_conforming_strings = ON SET search_path = pg_catalog, pg_temp AS
 $emaj_gen_sql_group$
 -- This function generates a SQL script representing all updates performed on a tables group between 2 marks
 -- or beetween a mark and the current situation. The result is stored into an external file.
@@ -6893,7 +6918,8 @@ COMMENT ON FUNCTION emaj.emaj_gen_sql_group(TEXT,TEXT,TEXT,TEXT,TEXT[]) IS
 $$Generates a sql script corresponding to all updates performed on a tables group between two marks and stores it into a given file.$$;
 
 CREATE OR REPLACE FUNCTION emaj.emaj_gen_sql_groups(v_groupNames TEXT[], v_firstMark TEXT, v_lastMark TEXT, v_location TEXT, v_tblseqs TEXT[] DEFAULT NULL)
-RETURNS BIGINT LANGUAGE plpgsql SECURITY DEFINER SET standard_conforming_strings = ON AS
+RETURNS BIGINT LANGUAGE plpgsql
+SECURITY DEFINER SET standard_conforming_strings = ON SET search_path = pg_catalog, pg_temp AS
 $emaj_gen_sql_groups$
 -- This function generates a SQL script representing all updates performed on a set of tables groups between 2 marks
 -- or beetween a mark and the current situation. The result is stored into an external file.
@@ -6913,7 +6939,8 @@ COMMENT ON FUNCTION emaj.emaj_gen_sql_groups(TEXT[],TEXT,TEXT,TEXT,TEXT[]) IS
 $$Generates a sql script corresponding to all updates performed on a set of tables groups between two marks and stores it into a given file.$$;
 
 CREATE OR REPLACE FUNCTION emaj._gen_sql_groups(v_groupNames TEXT[], v_multiGroup BOOLEAN, v_firstMark TEXT, v_lastMark TEXT, v_location TEXT, v_tblseqs TEXT[])
-RETURNS BIGINT LANGUAGE plpgsql SECURITY DEFINER SET standard_conforming_strings = ON AS
+RETURNS BIGINT LANGUAGE plpgsql
+SECURITY DEFINER SET standard_conforming_strings = ON SET search_path = pg_catalog, pg_temp AS
 $_gen_sql_groups$
 -- This function generates a SQL script representing all updates performed on a tables groups array between 2 marks
 -- or beetween a mark and the current situation. The result is stored into an external file.
@@ -7538,7 +7565,8 @@ COMMENT ON FUNCTION emaj.emaj_verify_all() IS
 $$Verifies the consistency between existing E-Maj and application objects.$$;
 
 CREATE OR REPLACE FUNCTION emaj._adjust_group_properties()
-RETURNS INTEGER LANGUAGE plpgsql SECURITY DEFINER AS
+RETURNS INTEGER LANGUAGE plpgsql
+SECURITY DEFINER SET search_path = pg_catalog, pg_temp AS
 $_adjust_group_properties$
 -- The function adjusts the content of the emaj_group table.
 -- It actualy only adjusts the group_has_waiting_changes column.
@@ -7651,7 +7679,8 @@ COMMENT ON FUNCTION public._emaj_protection_event_trigger_fnct() IS
 $$E-Maj extension: support of the emaj_protection_trg event trigger.$$;
 
 CREATE OR REPLACE FUNCTION emaj._event_trigger_sql_drop_fnct()
- RETURNS EVENT_TRIGGER LANGUAGE plpgsql SECURITY DEFINER AS
+RETURNS EVENT_TRIGGER LANGUAGE plpgsql
+SECURITY DEFINER SET search_path = pg_catalog, pg_temp AS
 $_event_trigger_sql_drop_fnct$
 -- This function is called by the emaj_sql_drop_trg event trigger
 -- The function blocks any ddl operation that leads to a drop of
@@ -7740,7 +7769,8 @@ COMMENT ON FUNCTION emaj._event_trigger_sql_drop_fnct() IS
 $$E-Maj extension: support of the emaj_sql_drop_trg event trigger.$$;
 
 CREATE OR REPLACE FUNCTION emaj._event_trigger_table_rewrite_fnct()
- RETURNS EVENT_TRIGGER LANGUAGE plpgsql SECURITY DEFINER AS
+RETURNS EVENT_TRIGGER LANGUAGE plpgsql
+SECURITY DEFINER SET search_path = pg_catalog, pg_temp AS
 $_event_trigger_table_rewrite_fnct$
 -- This function is called by the emaj_table_rewrite_trg event trigger
 -- The function blocks any ddl operation that leads to a table rewrite for:
@@ -7778,7 +7808,7 @@ COMMENT ON FUNCTION emaj._event_trigger_table_rewrite_fnct() IS
 $$E-Maj extension: support of the emaj_table_rewrite_trg event trigger.$$;
 
 CREATE OR REPLACE FUNCTION emaj.emaj_disable_protection_by_event_triggers()
-  RETURNS INT LANGUAGE plpgsql AS
+RETURNS INT LANGUAGE plpgsql AS
 $emaj_disable_protection_by_event_triggers$
 -- This function disables all known E-Maj event triggers that are in enabled state.
 -- It may be used by an emaj_adm role.
@@ -7800,7 +7830,7 @@ COMMENT ON FUNCTION emaj.emaj_disable_protection_by_event_triggers() IS
 $$Disables the protection of E-Maj components by event triggers.$$;
 
 CREATE OR REPLACE FUNCTION emaj.emaj_enable_protection_by_event_triggers()
- RETURNS INT LANGUAGE plpgsql AS
+RETURNS INT LANGUAGE plpgsql AS
 $emaj_enable_protection_by_event_triggers$
 -- This function enables all known E-Maj event triggers that are in disabled state.
 -- It may be used by an emaj_adm role.
@@ -7825,7 +7855,8 @@ COMMENT ON FUNCTION emaj.emaj_enable_protection_by_event_triggers() IS
 $$Enables the protection of E-Maj components by event triggers.$$;
 
 CREATE OR REPLACE FUNCTION emaj._disable_event_triggers()
- RETURNS TEXT[] LANGUAGE plpgsql SECURITY DEFINER AS
+RETURNS TEXT[] LANGUAGE plpgsql
+SECURITY DEFINER SET search_path = pg_catalog, pg_temp AS
 $_disable_event_triggers$
 -- This function disables all known E-Maj event triggers that are in enabled state.
 -- The function is called by functions that alter or drop E-Maj components, such as
@@ -7851,7 +7882,8 @@ $_disable_event_triggers$
 $_disable_event_triggers$;
 
 CREATE OR REPLACE FUNCTION emaj._enable_event_triggers(v_eventTriggers TEXT[])
- RETURNS TEXT[] LANGUAGE plpgsql SECURITY DEFINER AS
+RETURNS TEXT[] LANGUAGE plpgsql
+SECURITY DEFINER SET search_path = pg_catalog, pg_temp AS
 $_enable_event_triggers$
 -- This function enables all event triggers supplied as parameter
 -- The function is called by functions that alter or drop E-Maj components, such as
