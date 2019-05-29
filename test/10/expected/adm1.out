@@ -86,13 +86,13 @@ select count(*) from emaj.emaj_seq_hole;
 select count(*) from emaj.emaj_rlbk;
  count 
 -------
-    39
+    37
 (1 row)
 
 select count(*) from emaj.emaj_rlbk_session;
  count 
 -------
-    39
+    37
 (1 row)
 
 select count(*) from emaj.emaj_rlbk_plan;
@@ -215,13 +215,13 @@ select * from emaj.emaj_seq_hole;
 select count(*) from emaj.emaj_rlbk;
  count 
 -------
-    39
+    37
 (1 row)
 
 select count(*) from emaj.emaj_rlbk_session;
  count 
 -------
-    39
+    37
 (1 row)
 
 select count(*) from emaj.emaj_rlbk_plan;
@@ -1770,12 +1770,13 @@ select * from emaj._rlbk_async(emaj._rlbk_init(array['myGroup1'], 'M4', true, 1,
 (2 rows)
 
 -- and check the rollback result
-select rlbk_id, rlbk_groups, rlbk_mark, rlbk_time_id, rlbk_is_logged, rlbk_is_alter_group_allowed, rlbk_nb_session, rlbk_nb_table, rlbk_nb_sequence, 
-       rlbk_eff_nb_table, rlbk_status, rlbk_messages
+select rlbk_id, rlbk_groups, rlbk_mark, rlbk_mark_time_id, rlbk_time_id, rlbk_is_logged, rlbk_is_alter_group_allowed, 
+       rlbk_nb_session, rlbk_nb_table, rlbk_nb_sequence, rlbk_eff_nb_table, rlbk_status, rlbk_begin_hist_id,
+       rlbk_dblink_schema, rlbk_is_dblink_used, rlbk_messages
  from emaj.emaj_rlbk order by rlbk_id desc limit 1;
- rlbk_id | rlbk_groups | rlbk_mark | rlbk_time_id | rlbk_is_logged | rlbk_is_alter_group_allowed | rlbk_nb_session | rlbk_nb_table | rlbk_nb_sequence | rlbk_eff_nb_table | rlbk_status |                                  rlbk_messages                                   
----------+-------------+-----------+--------------+----------------+-----------------------------+-----------------+---------------+------------------+-------------------+-------------+----------------------------------------------------------------------------------
-   10006 | {myGroup1}  | M4        |        10025 | t              | t                           |               1 |             5 |                2 |                 3 | COMPLETED   | {"Notice: 3 / 5 tables effectively processed.","Notice: 2 sequences processed."}
+ rlbk_id | rlbk_groups | rlbk_mark | rlbk_mark_time_id | rlbk_time_id | rlbk_is_logged | rlbk_is_alter_group_allowed | rlbk_nb_session | rlbk_nb_table | rlbk_nb_sequence | rlbk_eff_nb_table | rlbk_status | rlbk_begin_hist_id | rlbk_dblink_schema | rlbk_is_dblink_used |                                  rlbk_messages                                   
+---------+-------------+-----------+-------------------+--------------+----------------+-----------------------------+-----------------+---------------+------------------+-------------------+-------------+--------------------+--------------------+---------------------+----------------------------------------------------------------------------------
+   10006 | {myGroup1}  | M4        |             10018 |        10025 | t              | t                           |               1 |             5 |                2 |                 3 | COMPLETED   |              10185 | public             | t                   | {"Notice: 3 / 5 tables effectively processed.","Notice: 2 sequences processed."}
 (1 row)
 
 -----------------------------

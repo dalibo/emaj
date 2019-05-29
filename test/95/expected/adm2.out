@@ -38,13 +38,13 @@ select emaj.emaj_set_mark_groups(array['myGroup1','myGroup2'],'Multi-2');
 select * from emaj.emaj_logged_rollback_groups(array['myGroup1','myGroup2'],'Multi-1',false) order by 1,2;
 WARNING:  _check_fk_groups: The foreign key "mytbl6_col61_fkey" on the table "myschema2.mytbl6" references the table "myschema2.mytbl7" that is outside the groups (myGroup1,myGroup2).
 CONTEXT:  SQL statement "SELECT emaj._check_fk_groups(v_groupNames)"
-PL/pgSQL function emaj._rlbk_init(text[],text,boolean,integer,boolean,boolean) line 62 at PERFORM
+PL/pgSQL function emaj._rlbk_init(text[],text,boolean,integer,boolean,boolean) line 58 at PERFORM
 SQL statement "SELECT emaj._rlbk_init(v_groupNames, v_mark, v_isLoggedRlbk, 1, v_multiGroup, v_isAlterGroupAllowed)"
 PL/pgSQL function emaj._rlbk_groups(text[],text,boolean,boolean,boolean) line 22 at SQL statement
 PL/pgSQL function emaj.emaj_logged_rollback_groups(text[],text,boolean) line 11 at RETURN QUERY
 WARNING:  _check_fk_groups: The table "myschema2.mytbl6" is referenced by the foreign key "mytbl8_col81_fkey" on the table "myschema2.mytbl8" that is outside the groups (myGroup1,myGroup2).
 CONTEXT:  SQL statement "SELECT emaj._check_fk_groups(v_groupNames)"
-PL/pgSQL function emaj._rlbk_init(text[],text,boolean,integer,boolean,boolean) line 62 at PERFORM
+PL/pgSQL function emaj._rlbk_init(text[],text,boolean,integer,boolean,boolean) line 58 at PERFORM
 SQL statement "SELECT emaj._rlbk_init(v_groupNames, v_mark, v_isLoggedRlbk, 1, v_multiGroup, v_isAlterGroupAllowed)"
 PL/pgSQL function emaj._rlbk_groups(text[],text,boolean,boolean,boolean) line 22 at SQL statement
 PL/pgSQL function emaj.emaj_logged_rollback_groups(text[],text,boolean) line 11 at RETURN QUERY
@@ -58,13 +58,13 @@ PL/pgSQL function emaj.emaj_logged_rollback_groups(text[],text,boolean) line 11 
 select * from emaj.emaj_rollback_groups(array['myGroup1','myGroup2'],'Multi-2',false) order by 1,2;
 WARNING:  _check_fk_groups: The foreign key "mytbl6_col61_fkey" on the table "myschema2.mytbl6" references the table "myschema2.mytbl7" that is outside the groups (myGroup1,myGroup2).
 CONTEXT:  SQL statement "SELECT emaj._check_fk_groups(v_groupNames)"
-PL/pgSQL function emaj._rlbk_init(text[],text,boolean,integer,boolean,boolean) line 62 at PERFORM
+PL/pgSQL function emaj._rlbk_init(text[],text,boolean,integer,boolean,boolean) line 58 at PERFORM
 SQL statement "SELECT emaj._rlbk_init(v_groupNames, v_mark, v_isLoggedRlbk, 1, v_multiGroup, v_isAlterGroupAllowed)"
 PL/pgSQL function emaj._rlbk_groups(text[],text,boolean,boolean,boolean) line 22 at SQL statement
 PL/pgSQL function emaj.emaj_rollback_groups(text[],text,boolean) line 7 at RETURN QUERY
 WARNING:  _check_fk_groups: The table "myschema2.mytbl6" is referenced by the foreign key "mytbl8_col81_fkey" on the table "myschema2.mytbl8" that is outside the groups (myGroup1,myGroup2).
 CONTEXT:  SQL statement "SELECT emaj._check_fk_groups(v_groupNames)"
-PL/pgSQL function emaj._rlbk_init(text[],text,boolean,integer,boolean,boolean) line 62 at PERFORM
+PL/pgSQL function emaj._rlbk_init(text[],text,boolean,integer,boolean,boolean) line 58 at PERFORM
 SQL statement "SELECT emaj._rlbk_init(v_groupNames, v_mark, v_isLoggedRlbk, 1, v_multiGroup, v_isAlterGroupAllowed)"
 PL/pgSQL function emaj._rlbk_groups(text[],text,boolean,boolean,boolean) line 22 at SQL statement
 PL/pgSQL function emaj.emaj_rollback_groups(text[],text,boolean) line 7 at RETURN QUERY
@@ -78,13 +78,13 @@ PL/pgSQL function emaj.emaj_rollback_groups(text[],text,boolean) line 7 at RETUR
 select * from emaj.emaj_rollback_groups(array['myGroup1','myGroup2'],'Multi-1',false) order by 1,2;
 WARNING:  _check_fk_groups: The foreign key "mytbl6_col61_fkey" on the table "myschema2.mytbl6" references the table "myschema2.mytbl7" that is outside the groups (myGroup1,myGroup2).
 CONTEXT:  SQL statement "SELECT emaj._check_fk_groups(v_groupNames)"
-PL/pgSQL function emaj._rlbk_init(text[],text,boolean,integer,boolean,boolean) line 62 at PERFORM
+PL/pgSQL function emaj._rlbk_init(text[],text,boolean,integer,boolean,boolean) line 58 at PERFORM
 SQL statement "SELECT emaj._rlbk_init(v_groupNames, v_mark, v_isLoggedRlbk, 1, v_multiGroup, v_isAlterGroupAllowed)"
 PL/pgSQL function emaj._rlbk_groups(text[],text,boolean,boolean,boolean) line 22 at SQL statement
 PL/pgSQL function emaj.emaj_rollback_groups(text[],text,boolean) line 7 at RETURN QUERY
 WARNING:  _check_fk_groups: The table "myschema2.mytbl6" is referenced by the foreign key "mytbl8_col81_fkey" on the table "myschema2.mytbl8" that is outside the groups (myGroup1,myGroup2).
 CONTEXT:  SQL statement "SELECT emaj._check_fk_groups(v_groupNames)"
-PL/pgSQL function emaj._rlbk_init(text[],text,boolean,integer,boolean,boolean) line 62 at PERFORM
+PL/pgSQL function emaj._rlbk_init(text[],text,boolean,integer,boolean,boolean) line 58 at PERFORM
 SQL statement "SELECT emaj._rlbk_init(v_groupNames, v_mark, v_isLoggedRlbk, 1, v_multiGroup, v_isAlterGroupAllowed)"
 PL/pgSQL function emaj._rlbk_groups(text[],text,boolean,boolean,boolean) line 22 at SQL statement
 PL/pgSQL function emaj.emaj_rollback_groups(text[],text,boolean) line 7 at RETURN QUERY
@@ -135,7 +135,7 @@ ERROR:  _check_mark_name: For the groups "myGroup1, myGroup2", the mark "Multi-1
 CONTEXT:  SQL statement "SELECT emaj._check_mark_name(v_groupNames := v_groupNames, v_mark := v_mark, v_checkList := 'ACTIVE')"
 PL/pgSQL function emaj._rlbk_check(text[],text,boolean,boolean) line 19 at SQL statement
 SQL statement "SELECT emaj._rlbk_check(v_groupNames, v_mark, v_isAlterGroupAllowed, FALSE)"
-PL/pgSQL function emaj._rlbk_init(text[],text,boolean,integer,boolean,boolean) line 22 at SQL statement
+PL/pgSQL function emaj._rlbk_init(text[],text,boolean,integer,boolean,boolean) line 23 at SQL statement
 SQL statement "SELECT emaj._rlbk_init(v_groupNames, v_mark, v_isLoggedRlbk, 1, v_multiGroup, v_isAlterGroupAllowed)"
 PL/pgSQL function emaj._rlbk_groups(text[],text,boolean,boolean,boolean) line 22 at SQL statement
 PL/pgSQL function emaj.emaj_rollback_groups(text[],text,boolean) line 7 at RETURN QUERY
@@ -162,13 +162,13 @@ select * from emaj.emaj_detailed_log_stat_group('myGroup2','Multi-2',NULL);
 select * from emaj.emaj_rollback_group('myGroup2','Multi-2',false) order by 1,2;
 WARNING:  _check_fk_groups: The foreign key "mytbl6_col61_fkey" on the table "myschema2.mytbl6" references the table "myschema2.mytbl7" that is outside the groups (myGroup2).
 CONTEXT:  SQL statement "SELECT emaj._check_fk_groups(v_groupNames)"
-PL/pgSQL function emaj._rlbk_init(text[],text,boolean,integer,boolean,boolean) line 62 at PERFORM
+PL/pgSQL function emaj._rlbk_init(text[],text,boolean,integer,boolean,boolean) line 58 at PERFORM
 SQL statement "SELECT emaj._rlbk_init(v_groupNames, v_mark, v_isLoggedRlbk, 1, v_multiGroup, v_isAlterGroupAllowed)"
 PL/pgSQL function emaj._rlbk_groups(text[],text,boolean,boolean,boolean) line 22 at SQL statement
 PL/pgSQL function emaj.emaj_rollback_group(text,text,boolean) line 7 at RETURN QUERY
 WARNING:  _check_fk_groups: The table "myschema2.mytbl6" is referenced by the foreign key "mytbl8_col81_fkey" on the table "myschema2.mytbl8" that is outside the groups (myGroup2).
 CONTEXT:  SQL statement "SELECT emaj._check_fk_groups(v_groupNames)"
-PL/pgSQL function emaj._rlbk_init(text[],text,boolean,integer,boolean,boolean) line 62 at PERFORM
+PL/pgSQL function emaj._rlbk_init(text[],text,boolean,integer,boolean,boolean) line 58 at PERFORM
 SQL statement "SELECT emaj._rlbk_init(v_groupNames, v_mark, v_isLoggedRlbk, 1, v_multiGroup, v_isAlterGroupAllowed)"
 PL/pgSQL function emaj._rlbk_groups(text[],text,boolean,boolean,boolean) line 22 at SQL statement
 PL/pgSQL function emaj.emaj_rollback_group(text,text,boolean) line 7 at RETURN QUERY
@@ -263,7 +263,7 @@ ERROR:  _check_mark_name: For the group "myGroup2", the mark "M3" is DELETED.
 CONTEXT:  SQL statement "SELECT emaj._check_mark_name(v_groupNames := v_groupNames, v_mark := v_mark, v_checkList := 'ACTIVE')"
 PL/pgSQL function emaj._rlbk_check(text[],text,boolean,boolean) line 19 at SQL statement
 SQL statement "SELECT emaj._rlbk_check(v_groupNames, v_mark, v_isAlterGroupAllowed, FALSE)"
-PL/pgSQL function emaj._rlbk_init(text[],text,boolean,integer,boolean,boolean) line 22 at SQL statement
+PL/pgSQL function emaj._rlbk_init(text[],text,boolean,integer,boolean,boolean) line 23 at SQL statement
 SQL statement "SELECT emaj._rlbk_init(v_groupNames, v_mark, v_isLoggedRlbk, 1, v_multiGroup, v_isAlterGroupAllowed)"
 PL/pgSQL function emaj._rlbk_groups(text[],text,boolean,boolean,boolean) line 22 at SQL statement
 PL/pgSQL function emaj.emaj_rollback_group(text,text,boolean) line 7 at RETURN QUERY
@@ -1173,13 +1173,13 @@ select stat_group, stat_schema, stat_table, stat_first_mark, stat_last_mark, sta
 select * from emaj.emaj_logged_rollback_group('phil''s group#3",','phil''s mark #3',false) order by 1,2;
 WARNING:  _check_fk_groups: The foreign key "mytbl2_col21_fkey" on the table "phil's schema3.myTbl2\" references the table "phil's schema3.mytbl4" that is outside the groups (phil's group#3",).
 CONTEXT:  SQL statement "SELECT emaj._check_fk_groups(v_groupNames)"
-PL/pgSQL function emaj._rlbk_init(text[],text,boolean,integer,boolean,boolean) line 62 at PERFORM
+PL/pgSQL function emaj._rlbk_init(text[],text,boolean,integer,boolean,boolean) line 58 at PERFORM
 SQL statement "SELECT emaj._rlbk_init(v_groupNames, v_mark, v_isLoggedRlbk, 1, v_multiGroup, v_isAlterGroupAllowed)"
 PL/pgSQL function emaj._rlbk_groups(text[],text,boolean,boolean,boolean) line 22 at SQL statement
 PL/pgSQL function emaj.emaj_logged_rollback_group(text,text,boolean) line 11 at RETURN QUERY
 WARNING:  _check_fk_groups: The table "phil's schema3.phil's tbl1" is referenced by the foreign key "mytbl4_col44_fkey" on the table "phil's schema3.mytbl4" that is outside the groups (phil's group#3",).
 CONTEXT:  SQL statement "SELECT emaj._check_fk_groups(v_groupNames)"
-PL/pgSQL function emaj._rlbk_init(text[],text,boolean,integer,boolean,boolean) line 62 at PERFORM
+PL/pgSQL function emaj._rlbk_init(text[],text,boolean,integer,boolean,boolean) line 58 at PERFORM
 SQL statement "SELECT emaj._rlbk_init(v_groupNames, v_mark, v_isLoggedRlbk, 1, v_multiGroup, v_isAlterGroupAllowed)"
 PL/pgSQL function emaj._rlbk_groups(text[],text,boolean,boolean,boolean) line 22 at SQL statement
 PL/pgSQL function emaj.emaj_logged_rollback_group(text,text,boolean) line 11 at RETURN QUERY
@@ -1192,13 +1192,13 @@ PL/pgSQL function emaj.emaj_logged_rollback_group(text,text,boolean) line 11 at 
 select * from emaj.emaj_rollback_group('phil''s group#3",','phil''s mark #3',false) order by 1,2;
 WARNING:  _check_fk_groups: The foreign key "mytbl2_col21_fkey" on the table "phil's schema3.myTbl2\" references the table "phil's schema3.mytbl4" that is outside the groups (phil's group#3",).
 CONTEXT:  SQL statement "SELECT emaj._check_fk_groups(v_groupNames)"
-PL/pgSQL function emaj._rlbk_init(text[],text,boolean,integer,boolean,boolean) line 62 at PERFORM
+PL/pgSQL function emaj._rlbk_init(text[],text,boolean,integer,boolean,boolean) line 58 at PERFORM
 SQL statement "SELECT emaj._rlbk_init(v_groupNames, v_mark, v_isLoggedRlbk, 1, v_multiGroup, v_isAlterGroupAllowed)"
 PL/pgSQL function emaj._rlbk_groups(text[],text,boolean,boolean,boolean) line 22 at SQL statement
 PL/pgSQL function emaj.emaj_rollback_group(text,text,boolean) line 7 at RETURN QUERY
 WARNING:  _check_fk_groups: The table "phil's schema3.phil's tbl1" is referenced by the foreign key "mytbl4_col44_fkey" on the table "phil's schema3.mytbl4" that is outside the groups (phil's group#3",).
 CONTEXT:  SQL statement "SELECT emaj._check_fk_groups(v_groupNames)"
-PL/pgSQL function emaj._rlbk_init(text[],text,boolean,integer,boolean,boolean) line 62 at PERFORM
+PL/pgSQL function emaj._rlbk_init(text[],text,boolean,integer,boolean,boolean) line 58 at PERFORM
 SQL statement "SELECT emaj._rlbk_init(v_groupNames, v_mark, v_isLoggedRlbk, 1, v_multiGroup, v_isAlterGroupAllowed)"
 PL/pgSQL function emaj._rlbk_groups(text[],text,boolean,boolean,boolean) line 22 at SQL statement
 PL/pgSQL function emaj.emaj_rollback_group(text,text,boolean) line 7 at RETURN QUERY
@@ -1786,13 +1786,13 @@ begin;
   select * from emaj.emaj_rollback_group('myGroup2','Multi-1',false) order by 1,2;
 WARNING:  _check_fk_groups: The foreign key "mytbl6_col61_fkey" on the table "myschema2.mytbl6" references the table "myschema2.mytbl7" that is outside the groups (myGroup2).
 CONTEXT:  SQL statement "SELECT emaj._check_fk_groups(v_groupNames)"
-PL/pgSQL function emaj._rlbk_init(text[],text,boolean,integer,boolean,boolean) line 62 at PERFORM
+PL/pgSQL function emaj._rlbk_init(text[],text,boolean,integer,boolean,boolean) line 58 at PERFORM
 SQL statement "SELECT emaj._rlbk_init(v_groupNames, v_mark, v_isLoggedRlbk, 1, v_multiGroup, v_isAlterGroupAllowed)"
 PL/pgSQL function emaj._rlbk_groups(text[],text,boolean,boolean,boolean) line 22 at SQL statement
 PL/pgSQL function emaj.emaj_rollback_group(text,text,boolean) line 7 at RETURN QUERY
 WARNING:  _check_fk_groups: The table "myschema2.mytbl6" is referenced by the foreign key "mytbl8_col81_fkey" on the table "myschema2.mytbl8" that is outside the groups (myGroup2).
 CONTEXT:  SQL statement "SELECT emaj._check_fk_groups(v_groupNames)"
-PL/pgSQL function emaj._rlbk_init(text[],text,boolean,integer,boolean,boolean) line 62 at PERFORM
+PL/pgSQL function emaj._rlbk_init(text[],text,boolean,integer,boolean,boolean) line 58 at PERFORM
 SQL statement "SELECT emaj._rlbk_init(v_groupNames, v_mark, v_isLoggedRlbk, 1, v_multiGroup, v_isAlterGroupAllowed)"
 PL/pgSQL function emaj._rlbk_groups(text[],text,boolean,boolean,boolean) line 22 at SQL statement
 PL/pgSQL function emaj.emaj_rollback_group(text,text,boolean) line 7 at RETURN QUERY
@@ -1805,13 +1805,13 @@ PL/pgSQL function emaj.emaj_rollback_group(text,text,boolean) line 7 at RETURN Q
   select * from emaj.emaj_rollback_group('phil''s group#3",','M1_rollbackable',false) order by 1,2;
 WARNING:  _check_fk_groups: The foreign key "mytbl2_col21_fkey" on the table "phil's schema3.myTbl2\" references the table "phil's schema3.mytbl4" that is outside the groups (phil's group#3",).
 CONTEXT:  SQL statement "SELECT emaj._check_fk_groups(v_groupNames)"
-PL/pgSQL function emaj._rlbk_init(text[],text,boolean,integer,boolean,boolean) line 62 at PERFORM
+PL/pgSQL function emaj._rlbk_init(text[],text,boolean,integer,boolean,boolean) line 58 at PERFORM
 SQL statement "SELECT emaj._rlbk_init(v_groupNames, v_mark, v_isLoggedRlbk, 1, v_multiGroup, v_isAlterGroupAllowed)"
 PL/pgSQL function emaj._rlbk_groups(text[],text,boolean,boolean,boolean) line 22 at SQL statement
 PL/pgSQL function emaj.emaj_rollback_group(text,text,boolean) line 7 at RETURN QUERY
 WARNING:  _check_fk_groups: The table "phil's schema3.phil's tbl1" is referenced by the foreign key "mytbl4_col44_fkey" on the table "phil's schema3.mytbl4" that is outside the groups (phil's group#3",).
 CONTEXT:  SQL statement "SELECT emaj._check_fk_groups(v_groupNames)"
-PL/pgSQL function emaj._rlbk_init(text[],text,boolean,integer,boolean,boolean) line 62 at PERFORM
+PL/pgSQL function emaj._rlbk_init(text[],text,boolean,integer,boolean,boolean) line 58 at PERFORM
 SQL statement "SELECT emaj._rlbk_init(v_groupNames, v_mark, v_isLoggedRlbk, 1, v_multiGroup, v_isAlterGroupAllowed)"
 PL/pgSQL function emaj._rlbk_groups(text[],text,boolean,boolean,boolean) line 22 at SQL statement
 PL/pgSQL function emaj.emaj_rollback_group(text,text,boolean) line 7 at RETURN QUERY
@@ -2077,13 +2077,13 @@ delete from "phil's schema3".table_with_very_loooooooooooooooooooooooooooooooooo
 select * from emaj.emaj_rollback_group('phil''s group#3",','M1_after_alter_group',false) order by 1,2;
 WARNING:  _check_fk_groups: The foreign key "mytbl2_col21_fkey" on the table "phil's schema3.myTbl2\" references the table "phil's schema3.mytbl4" that is outside the groups (phil's group#3",).
 CONTEXT:  SQL statement "SELECT emaj._check_fk_groups(v_groupNames)"
-PL/pgSQL function emaj._rlbk_init(text[],text,boolean,integer,boolean,boolean) line 62 at PERFORM
+PL/pgSQL function emaj._rlbk_init(text[],text,boolean,integer,boolean,boolean) line 58 at PERFORM
 SQL statement "SELECT emaj._rlbk_init(v_groupNames, v_mark, v_isLoggedRlbk, 1, v_multiGroup, v_isAlterGroupAllowed)"
 PL/pgSQL function emaj._rlbk_groups(text[],text,boolean,boolean,boolean) line 22 at SQL statement
 PL/pgSQL function emaj.emaj_rollback_group(text,text,boolean) line 7 at RETURN QUERY
 WARNING:  _check_fk_groups: The table "phil's schema3.table_with_very_looooooooooooooooooooooooooooooooooooooong_name" is referenced by the foreign key "mytbl4_col44_fkey" on the table "phil's schema3.mytbl4" that is outside the groups (phil's group#3",).
 CONTEXT:  SQL statement "SELECT emaj._check_fk_groups(v_groupNames)"
-PL/pgSQL function emaj._rlbk_init(text[],text,boolean,integer,boolean,boolean) line 62 at PERFORM
+PL/pgSQL function emaj._rlbk_init(text[],text,boolean,integer,boolean,boolean) line 58 at PERFORM
 SQL statement "SELECT emaj._rlbk_init(v_groupNames, v_mark, v_isLoggedRlbk, 1, v_multiGroup, v_isAlterGroupAllowed)"
 PL/pgSQL function emaj._rlbk_groups(text[],text,boolean,boolean,boolean) line 22 at SQL statement
 PL/pgSQL function emaj.emaj_rollback_group(text,text,boolean) line 7 at RETURN QUERY
@@ -2120,7 +2120,7 @@ ERROR:  _check_group_names: The group "myGroup2" is currently protected against 
 CONTEXT:  SQL statement "SELECT emaj._check_group_names(v_groupNames := v_groupNames, v_mayBeNull := FALSE, v_lockGroups := TRUE, v_checkList := 'LOGGING,ROLLBACKABLE,UNPROTECTED')"
 PL/pgSQL function emaj._rlbk_check(text[],text,boolean,boolean) line 15 at SQL statement
 SQL statement "SELECT emaj._rlbk_check(v_groupNames, v_mark, v_isAlterGroupAllowed, FALSE)"
-PL/pgSQL function emaj._rlbk_init(text[],text,boolean,integer,boolean,boolean) line 22 at SQL statement
+PL/pgSQL function emaj._rlbk_init(text[],text,boolean,integer,boolean,boolean) line 23 at SQL statement
 SQL statement "SELECT emaj._rlbk_init(v_groupNames, v_mark, v_isLoggedRlbk, 1, v_multiGroup, v_isAlterGroupAllowed)"
 PL/pgSQL function emaj._rlbk_groups(text[],text,boolean,boolean,boolean) line 22 at SQL statement
 PL/pgSQL function emaj.emaj_rollback_group(text,text,boolean) line 7 at RETURN QUERY
@@ -2146,7 +2146,7 @@ select emaj.emaj_protect_mark_group('myGroup1','Mark_to_protect');
 select * from emaj.emaj_rollback_group('myGroup1','Multi-1',false) order by 1,2;
 ERROR:  _rlbk_check: Protected marks (Mark_to_protect) for the group "myGroup1" block the rollback to the mark "Multi-1".
 CONTEXT:  SQL statement "SELECT emaj._rlbk_check(v_groupNames, v_mark, v_isAlterGroupAllowed, FALSE)"
-PL/pgSQL function emaj._rlbk_init(text[],text,boolean,integer,boolean,boolean) line 22 at SQL statement
+PL/pgSQL function emaj._rlbk_init(text[],text,boolean,integer,boolean,boolean) line 23 at SQL statement
 SQL statement "SELECT emaj._rlbk_init(v_groupNames, v_mark, v_isLoggedRlbk, 1, v_multiGroup, v_isAlterGroupAllowed)"
 PL/pgSQL function emaj._rlbk_groups(text[],text,boolean,boolean,boolean) line 22 at SQL statement
 PL/pgSQL function emaj.emaj_rollback_group(text,text,boolean) line 7 at RETURN QUERY
@@ -3091,7 +3091,7 @@ select col1, col2, emaj_verb, emaj_tuple, emaj_gid from emaj_myschema4.mypartP1_
 select * from emaj.emaj_rollback_group('myGroup4','Start');
 ERROR:  _rlbk_check: This rollback operation would cross some previously executed alter group operations, which is not allowed by the current function parameters.
 CONTEXT:  SQL statement "SELECT emaj._rlbk_check(v_groupNames, v_mark, v_isAlterGroupAllowed, FALSE)"
-PL/pgSQL function emaj._rlbk_init(text[],text,boolean,integer,boolean,boolean) line 22 at SQL statement
+PL/pgSQL function emaj._rlbk_init(text[],text,boolean,integer,boolean,boolean) line 23 at SQL statement
 SQL statement "SELECT emaj._rlbk_init(v_groupNames, v_mark, v_isLoggedRlbk, 1, v_multiGroup, v_isAlterGroupAllowed)"
 PL/pgSQL function emaj._rlbk_groups(text[],text,boolean,boolean,boolean) line 22 at SQL statement
 SQL statement "SELECT rlbk_message::INT FROM emaj._rlbk_groups(array[v_groupName], v_mark, FALSE, FALSE, NULL) WHERE rlbk_severity = 'Notice'"
@@ -3705,42 +3705,42 @@ select emaj.emaj_cleanup_rollback_state();
 (1 row)
 
 -- check rollback related tables
-select rlbk_id, rlbk_groups, rlbk_mark, rlbk_time_id, rlbk_is_logged, rlbk_is_alter_group_allowed, rlbk_nb_session, rlbk_nb_table, rlbk_nb_sequence, 
-       rlbk_eff_nb_table, rlbk_status, rlbk_begin_hist_id, rlbk_is_dblink_used,
+select rlbk_id, rlbk_groups, rlbk_mark, rlbk_time_id, rlbk_is_logged, rlbk_is_alter_group_allowed, rlbk_nb_session, rlbk_nb_table,
+       rlbk_nb_sequence, rlbk_eff_nb_table, rlbk_status, rlbk_begin_hist_id, rlbk_dblink_schema, rlbk_is_dblink_used,
        case when rlbk_end_datetime is null then 'null' else '[ts]' end as "end_datetime",
        regexp_replace(array_to_string(rlbk_messages,'#'),E'\\d\\d\\d\\d/\\d\\d\\/\\d\\d\\ \\d\\d\\:\\d\\d:\\d\\d .*?\\)','<timestamp>)','g')
   from emaj.emaj_rlbk where rlbk_id >= 10000 order by rlbk_id;
- rlbk_id |      rlbk_groups      |      rlbk_mark       | rlbk_time_id | rlbk_is_logged | rlbk_is_alter_group_allowed | rlbk_nb_session | rlbk_nb_table | rlbk_nb_sequence | rlbk_eff_nb_table | rlbk_status | rlbk_begin_hist_id | rlbk_is_dblink_used | end_datetime |                                                                                                                                                                                  regexp_replace                                                                                                                                                                                  
----------+-----------------------+----------------------+--------------+----------------+-----------------------------+-----------------+---------------+------------------+-------------------+-------------+--------------------+---------------------+--------------+----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
-   10000 | {myGroup2}            | M2                   |        10013 | t              | f                           |               1 |             6 |                2 |                 3 | COMMITTED   |              10062 | f                   | [ts]         | Notice: 3 / 6 tables effectively processed.#Notice: 2 sequences processed.
-   10001 | {myGroup2}            | M3                   |        10015 | t              | f                           |               1 |             6 |                2 |                 3 | COMMITTED   |              10081 | f                   | [ts]         | Notice: 3 / 6 tables effectively processed.#Notice: 2 sequences processed.
-   10002 | {myGroup1}            | M2                   |        10017 | f              | f                           |               1 |             5 |                2 |                 2 | COMMITTED   |              10100 | t                   | [ts]         | Notice: 2 / 5 tables effectively processed.#Notice: 2 sequences processed.
-   10003 | {myGroup2}            | M2                   |        10021 | t              | f                           |               1 |             6 |                2 |                 3 | COMMITTED   |              10128 | t                   | [ts]         | Notice: 3 / 6 tables effectively processed.#Notice: 2 sequences processed.
-   10004 | {myGroup2}            | M3                   |        10023 | f              | f                           |               1 |             6 |                2 |                 3 | COMMITTED   |              10148 | t                   | [ts]         | Notice: 3 / 6 tables effectively processed.#Notice: 2 sequences processed.
-   10005 | {myGroup1}            | M5                   |        10024 | f              | f                           |               1 |             5 |                2 |                 2 | COMMITTED   |              10170 | t                   | [ts]         | Notice: 2 / 5 tables effectively processed.#Notice: 2 sequences processed.
-   10006 | {myGroup1}            | M4                   |        10025 | t              | t                           |               1 |             5 |                2 |                 3 | COMMITTED   |              10185 | t                   | [ts]         | Notice: 3 / 5 tables effectively processed.#Notice: 2 sequences processed.
-   10007 | {myGroup1,myGroup2}   | Multi-1              |        10030 | t              | f                           |               1 |            11 |                4 |                 0 | COMMITTED   |              10236 | t                   | [ts]         | Notice: 0 / 11 tables effectively processed.#Notice: 4 sequences processed.
-   10008 | {myGroup1,myGroup2}   | Multi-2              |        10032 | f              | f                           |               1 |            11 |                4 |                 0 | COMMITTED   |              10252 | t                   | [ts]         | Notice: 0 / 11 tables effectively processed.#Notice: 4 sequences processed.
-   10009 | {myGroup1,myGroup2}   | Multi-1              |        10033 | f              | f                           |               1 |            11 |                4 |                 0 | COMMITTED   |              10268 | t                   | [ts]         | Notice: 0 / 11 tables effectively processed.#Notice: 4 sequences processed.
-   10010 | {myGroup2}            | Multi-2              |        10037 | f              | f                           |               1 |             6 |                2 |                 0 | COMMITTED   |              10304 | t                   | [ts]         | Notice: 0 / 6 tables effectively processed.#Notice: 2 sequences processed.
-   10011 | {"phil's group#3\","} | phil's mark #3       |        10051 | t              | f                           |               1 |             2 |                2 |                 0 | COMMITTED   |              10388 | t                   | [ts]         | Notice: 0 / 2 tables effectively processed.#Notice: 2 sequences processed.
-   10012 | {"phil's group#3\","} | phil's mark #3       |        10053 | f              | f                           |               1 |             2 |                2 |                 0 | COMMITTED   |              10402 | t                   | [ts]         | Notice: 0 / 2 tables effectively processed.#Notice: 2 sequences processed.
-   10013 | {myGroup1}            | Multi-1              |        10054 | f              | f                           |               1 |             5 |                2 |                 1 | COMMITTED   |              10414 | t                   | [ts]         | Notice: 1 / 5 tables effectively processed.#Notice: 2 sequences processed.
-   10014 | {myGroup1}            | Multi-1              |        10055 | f              | f                           |               1 |             5 |                2 |                 0 | ABORTED     |              10438 | t                   | [ts]         | Notice: 0 / 5 tables effectively processed.#Notice: 2 sequences processed.
-   10015 | {myGroup2}            | Multi-1              |        10056 | f              | f                           |               1 |             6 |                2 |                 4 | ABORTED     |              10448 | t                   | [ts]         | Notice: 4 / 6 tables effectively processed.#Notice: 2 sequences processed.
-   10016 | {"phil's group#3\","} | M1_rollbackable      |        10057 | f              | f                           |               1 |             2 |                2 |                 2 | ABORTED     |              10466 | t                   | [ts]         | Notice: 2 / 2 tables effectively processed.#Notice: 2 sequences processed.
-   10017 | {"phil's group#3\","} | M1_after_alter_group |        10062 | f              | f                           |               1 |             2 |                2 |                 1 | COMMITTED   |              10514 | t                   | [ts]         | Notice: 1 / 2 tables effectively processed.#Notice: 2 sequences processed.
-   10018 | {myGroup1}            | MC1                  |        10068 | t              | f                           |               1 |             5 |                2 |                 3 | COMMITTED   |              10555 | t                   | [ts]         | Notice: 3 / 5 tables effectively processed.#Notice: 2 sequences processed.
-   10019 | {myGroup1}            | MC3                  |        10073 | t              | f                           |               1 |             5 |                2 |                 2 | COMMITTED   |              10590 | t                   | [ts]         | Notice: 2 / 5 tables effectively processed.#Notice: 2 sequences processed.
-   10020 | {myGroup1}            | MC8                  |        10078 | t              | f                           |               1 |             5 |                2 |                 2 | COMMITTED   |              10625 | t                   | [ts]         | Notice: 2 / 5 tables effectively processed.#Notice: 2 sequences processed.
-   10021 | {myGroup1}            | MC6                  |        10081 | t              | f                           |               1 |             5 |                2 |                 5 | COMMITTED   |              10650 | t                   | [ts]         | Notice: 5 / 5 tables effectively processed.#Notice: 2 sequences processed.
-   10022 | {myGroup1}            | MC10                 |        10084 | t              | f                           |               1 |             5 |                2 |                 1 | COMMITTED   |              10681 | t                   | [ts]         | Notice: 1 / 5 tables effectively processed.#Notice: 2 sequences processed.
-   10023 | {myGroup1}            | MC10                 |        10087 | t              | f                           |               1 |             5 |                2 |                 2 | COMMITTED   |              10702 | t                   | [ts]         | Notice: 2 / 5 tables effectively processed.#Notice: 2 sequences processed.
-   10024 | {myGroup1}            | MC15                 |        10091 | t              | f                           |               1 |             5 |                2 |                 3 | COMMITTED   |              10731 | t                   | [ts]         | Notice: 3 / 5 tables effectively processed.#Notice: 2 sequences processed.
-   10025 | {myGroup1}            | MC16                 |        10094 | t              | f                           |               1 |             5 |                2 |                 3 | COMMITTED   |              10758 | t                   | [ts]         | Notice: 3 / 5 tables effectively processed.#Notice: 2 sequences processed.
-   10026 | {myGroup1}            | Multi-1              |        10096 | f              | f                           |               1 |             5 |                2 |                 3 | COMMITTED   |              10780 | t                   | [ts]         | Notice: 3 / 5 tables effectively processed.#Notice: 2 sequences processed.
-   10027 | {myGroup4}            | Start                |        10110 | f              | t                           |               1 |             5 |                0 |                 0 | COMMITTED   |              10884 | t                   | [ts]         | Notice: 0 / 5 tables effectively processed.#Warning: The table myschema4.mypartp3 has only been rolled back to its latest group attachment (<timestamp>)#Warning: The table myschema4.mypartp1 has been left unchanged (not in group anymore since <timestamp>)#Warning: The sequence myschema4.mytblp_col3_seq has been left unchanged (not in group anymore since <timestamp>)
-   10028 | {myGroup4}            | Before update        |        10112 | t              |                             |               1 |             5 |                0 |                 0 | COMMITTED   |              10902 | t                   | [ts]         | Notice: 0 / 5 tables effectively processed.
+ rlbk_id |      rlbk_groups      |      rlbk_mark       | rlbk_time_id | rlbk_is_logged | rlbk_is_alter_group_allowed | rlbk_nb_session | rlbk_nb_table | rlbk_nb_sequence | rlbk_eff_nb_table | rlbk_status | rlbk_begin_hist_id | rlbk_dblink_schema | rlbk_is_dblink_used | end_datetime |                                                                                                                                                                                  regexp_replace                                                                                                                                                                                  
+---------+-----------------------+----------------------+--------------+----------------+-----------------------------+-----------------+---------------+------------------+-------------------+-------------+--------------------+--------------------+---------------------+--------------+----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+   10000 | {myGroup2}            | M2                   |        10013 | t              | f                           |               1 |             6 |                2 |                 3 | COMMITTED   |              10062 |                    | f                   | [ts]         | Notice: 3 / 6 tables effectively processed.#Notice: 2 sequences processed.
+   10001 | {myGroup2}            | M3                   |        10015 | t              | f                           |               1 |             6 |                2 |                 3 | COMMITTED   |              10081 |                    | f                   | [ts]         | Notice: 3 / 6 tables effectively processed.#Notice: 2 sequences processed.
+   10002 | {myGroup1}            | M2                   |        10017 | f              | f                           |               1 |             5 |                2 |                 2 | COMMITTED   |              10100 | public             | t                   | [ts]         | Notice: 2 / 5 tables effectively processed.#Notice: 2 sequences processed.
+   10003 | {myGroup2}            | M2                   |        10021 | t              | f                           |               1 |             6 |                2 |                 3 | COMMITTED   |              10128 | public             | t                   | [ts]         | Notice: 3 / 6 tables effectively processed.#Notice: 2 sequences processed.
+   10004 | {myGroup2}            | M3                   |        10023 | f              | f                           |               1 |             6 |                2 |                 3 | COMMITTED   |              10148 | public             | t                   | [ts]         | Notice: 3 / 6 tables effectively processed.#Notice: 2 sequences processed.
+   10005 | {myGroup1}            | M5                   |        10024 | f              | f                           |               1 |             5 |                2 |                 2 | COMMITTED   |              10170 | public             | t                   | [ts]         | Notice: 2 / 5 tables effectively processed.#Notice: 2 sequences processed.
+   10006 | {myGroup1}            | M4                   |        10025 | t              | t                           |               1 |             5 |                2 |                 3 | COMMITTED   |              10185 | public             | t                   | [ts]         | Notice: 3 / 5 tables effectively processed.#Notice: 2 sequences processed.
+   10007 | {myGroup1,myGroup2}   | Multi-1              |        10030 | t              | f                           |               1 |            11 |                4 |                 0 | COMMITTED   |              10236 | public             | t                   | [ts]         | Notice: 0 / 11 tables effectively processed.#Notice: 4 sequences processed.
+   10008 | {myGroup1,myGroup2}   | Multi-2              |        10032 | f              | f                           |               1 |            11 |                4 |                 0 | COMMITTED   |              10252 | public             | t                   | [ts]         | Notice: 0 / 11 tables effectively processed.#Notice: 4 sequences processed.
+   10009 | {myGroup1,myGroup2}   | Multi-1              |        10033 | f              | f                           |               1 |            11 |                4 |                 0 | COMMITTED   |              10268 | public             | t                   | [ts]         | Notice: 0 / 11 tables effectively processed.#Notice: 4 sequences processed.
+   10010 | {myGroup2}            | Multi-2              |        10037 | f              | f                           |               1 |             6 |                2 |                 0 | COMMITTED   |              10304 | public             | t                   | [ts]         | Notice: 0 / 6 tables effectively processed.#Notice: 2 sequences processed.
+   10011 | {"phil's group#3\","} | phil's mark #3       |        10051 | t              | f                           |               1 |             2 |                2 |                 0 | COMMITTED   |              10388 | public             | t                   | [ts]         | Notice: 0 / 2 tables effectively processed.#Notice: 2 sequences processed.
+   10012 | {"phil's group#3\","} | phil's mark #3       |        10053 | f              | f                           |               1 |             2 |                2 |                 0 | COMMITTED   |              10402 | public             | t                   | [ts]         | Notice: 0 / 2 tables effectively processed.#Notice: 2 sequences processed.
+   10013 | {myGroup1}            | Multi-1              |        10054 | f              | f                           |               1 |             5 |                2 |                 1 | COMMITTED   |              10414 | public             | t                   | [ts]         | Notice: 1 / 5 tables effectively processed.#Notice: 2 sequences processed.
+   10014 | {myGroup1}            | Multi-1              |        10055 | f              | f                           |               1 |             5 |                2 |                 0 | ABORTED     |              10438 | public             | t                   | [ts]         | Notice: 0 / 5 tables effectively processed.#Notice: 2 sequences processed.
+   10015 | {myGroup2}            | Multi-1              |        10056 | f              | f                           |               1 |             6 |                2 |                 4 | ABORTED     |              10448 | public             | t                   | [ts]         | Notice: 4 / 6 tables effectively processed.#Notice: 2 sequences processed.
+   10016 | {"phil's group#3\","} | M1_rollbackable      |        10057 | f              | f                           |               1 |             2 |                2 |                 2 | ABORTED     |              10466 | public             | t                   | [ts]         | Notice: 2 / 2 tables effectively processed.#Notice: 2 sequences processed.
+   10017 | {"phil's group#3\","} | M1_after_alter_group |        10062 | f              | f                           |               1 |             2 |                2 |                 1 | COMMITTED   |              10514 | public             | t                   | [ts]         | Notice: 1 / 2 tables effectively processed.#Notice: 2 sequences processed.
+   10018 | {myGroup1}            | MC1                  |        10068 | t              | f                           |               1 |             5 |                2 |                 3 | COMMITTED   |              10555 | public             | t                   | [ts]         | Notice: 3 / 5 tables effectively processed.#Notice: 2 sequences processed.
+   10019 | {myGroup1}            | MC3                  |        10073 | t              | f                           |               1 |             5 |                2 |                 2 | COMMITTED   |              10590 | public             | t                   | [ts]         | Notice: 2 / 5 tables effectively processed.#Notice: 2 sequences processed.
+   10020 | {myGroup1}            | MC8                  |        10078 | t              | f                           |               1 |             5 |                2 |                 2 | COMMITTED   |              10625 | public             | t                   | [ts]         | Notice: 2 / 5 tables effectively processed.#Notice: 2 sequences processed.
+   10021 | {myGroup1}            | MC6                  |        10081 | t              | f                           |               1 |             5 |                2 |                 5 | COMMITTED   |              10650 | public             | t                   | [ts]         | Notice: 5 / 5 tables effectively processed.#Notice: 2 sequences processed.
+   10022 | {myGroup1}            | MC10                 |        10084 | t              | f                           |               1 |             5 |                2 |                 1 | COMMITTED   |              10681 | public             | t                   | [ts]         | Notice: 1 / 5 tables effectively processed.#Notice: 2 sequences processed.
+   10023 | {myGroup1}            | MC10                 |        10087 | t              | f                           |               1 |             5 |                2 |                 2 | COMMITTED   |              10702 | public             | t                   | [ts]         | Notice: 2 / 5 tables effectively processed.#Notice: 2 sequences processed.
+   10024 | {myGroup1}            | MC15                 |        10091 | t              | f                           |               1 |             5 |                2 |                 3 | COMMITTED   |              10731 | public             | t                   | [ts]         | Notice: 3 / 5 tables effectively processed.#Notice: 2 sequences processed.
+   10025 | {myGroup1}            | MC16                 |        10094 | t              | f                           |               1 |             5 |                2 |                 3 | COMMITTED   |              10758 | public             | t                   | [ts]         | Notice: 3 / 5 tables effectively processed.#Notice: 2 sequences processed.
+   10026 | {myGroup1}            | Multi-1              |        10096 | f              | f                           |               1 |             5 |                2 |                 3 | COMMITTED   |              10780 | public             | t                   | [ts]         | Notice: 3 / 5 tables effectively processed.#Notice: 2 sequences processed.
+   10027 | {myGroup4}            | Start                |        10110 | f              | t                           |               1 |             5 |                0 |                 0 | COMMITTED   |              10884 | public             | t                   | [ts]         | Notice: 0 / 5 tables effectively processed.#Warning: The table myschema4.mypartp3 has only been rolled back to its latest group attachment (<timestamp>)#Warning: The table myschema4.mypartp1 has been left unchanged (not in group anymore since <timestamp>)#Warning: The sequence myschema4.mytblp_col3_seq has been left unchanged (not in group anymore since <timestamp>)
+   10028 | {myGroup4}            | Before update        |        10112 | t              |                             |               1 |             5 |                0 |                 0 | COMMITTED   |              10902 | public             | t                   | [ts]         | Notice: 0 / 5 tables effectively processed.
 (29 rows)
 
 select rlbs_rlbk_id, rlbs_session, 
@@ -4367,7 +4367,7 @@ select hist_id, hist_function, hist_event, hist_object,
  hist_id |      hist_function       |          hist_event          |                                   hist_object                                    |                                                       regexp_replace                                                       | hist_user 
 ---------+--------------------------+------------------------------+----------------------------------------------------------------------------------+----------------------------------------------------------------------------------------------------------------------------+-----------
    10030 | START_GROUP              | BEGIN                        | myGroup1                                                                         | With log reset                                                                                                             | postgres
-   10031 | PURGE_HISTORY            |                              |                                                                                  | 29 emaj_hist rows deleted ; 89 relation history rows deleted ; 51 alter groups events deleted ; 39 rollback events deleted | postgres
+   10031 | PURGE_HISTORY            |                              |                                                                                  | 29 emaj_hist rows deleted ; 89 relation history rows deleted ; 51 alter groups events deleted ; 37 rollback events deleted | postgres
    10032 | LOCK_GROUP               | BEGIN                        | myGroup1                                                                         |                                                                                                                            | postgres
    10033 | LOCK_GROUP               | END                          | myGroup1                                                                         | 5 tables locked, 0 deadlock(s)                                                                                             | postgres
    10034 | SET_MARK_GROUP           | BEGIN                        | myGroup1                                                                         | M1                                                                                                                         | postgres

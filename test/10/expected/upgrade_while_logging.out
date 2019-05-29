@@ -74,6 +74,10 @@ NOTICE:  drop cascades to trigger emaj_log_trg on table "phil's schema3"."myTbl2
 NOTICE:  trigger "emaj_log_trg" for relation "phil's schema3.myTbl2\" does not exist, skipping
 NOTICE:  drop cascades to trigger emaj_log_trg on table "phil's schema3"."phil's tbl1"
 NOTICE:  trigger "emaj_log_trg" for relation "phil's schema3.phil's tbl1" does not exist, skipping
+NOTICE:  drop cascades to 3 other objects
+DETAIL:  drop cascades to constraint emaj_rlbk_session_rlbs_rlbk_id_fkey on table emaj_rlbk_session
+drop cascades to constraint emaj_rlbk_plan_rlbp_rlbk_id_fkey on table emaj_rlbk_plan
+drop cascades to constraint emaj_rlbk_stat_rlbt_rlbk_id_fkey on table emaj_rlbk_stat
 WARNING:  E-Maj upgrade: with this new E-Maj version, application triggers are by default automatically disabled during E-Maj rollback operations. This may require some changes in your rollback procedures. Refer to the E-Maj documentation for additional information.
 -----------------------------
 -- check installation
@@ -534,6 +538,7 @@ Tablespace: "tspemaj"
  rlbk_eff_nb_table           | integer                  |           |          | 
  rlbk_status                 | emaj._rlbk_status_enum   |           |          | 
  rlbk_begin_hist_id          | bigint                   |           |          | 
+ rlbk_dblink_schema          | text                     |           |          | 
  rlbk_is_dblink_used         | boolean                  |           |          | 
  rlbk_end_datetime           | timestamp with time zone |           |          | 
  rlbk_messages               | text[]                   |           |          | 
@@ -1231,7 +1236,7 @@ select * from emaj.emaj_time_stamp_time_id_seq;
 select * from emaj.emaj_rlbk_rlbk_id_seq;
  last_value | log_cnt | is_called 
 ------------+---------+-----------
-          4 |      29 | t
+          4 |       0 | t
 (1 row)
 
 -- check log sequences position

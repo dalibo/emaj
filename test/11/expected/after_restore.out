@@ -531,50 +531,46 @@ select time_id, time_last_emaj_gid, time_event from emaj.emaj_time_stamp order b
     3008 |                  2 | D
     3017 |                  2 | R
     3018 |                  2 | R
-    3019 |                  2 | R
-    3020 |                  2 | M
+    3019 |                  2 | M
+    3020 |                  2 | R
     3021 |                  2 | R
-    3022 |                  2 | M
+    3022 |                  2 | R
     3023 |                  2 | M
     3024 |                  2 | R
-    3025 |                  2 | R
-    3026 |                  2 | R
+    3025 |                  2 | M
+    3026 |                  2 | M
     3027 |                  2 | M
-    3028 |                  2 | R
-    3029 |                  2 | M
-    3030 |                  2 | M
-    3031 |                  2 | M
-    3032 |                  2 | M
-    3033 |                 29 | M
+    3028 |                  2 | M
+    3029 |                 29 | M
+    3030 |                 41 | M
+    3031 |                 41 | R
+    3032 |                 41 | R
+    3033 |                 41 | M
     3034 |                 41 | M
-    3035 |                 41 | R
-    3036 |                 41 | R
-    3037 |                 41 | M
-    3038 |                 41 | M
-    3039 |                 60 | M
-    3040 |                 71 | M
-    3041 |                 71 | R
-    3042 |                 82 | M
-    3043 |                 82 | R
+    3035 |                 60 | M
+    3036 |                 71 | M
+    3037 |                 71 | R
+    3038 |                 82 | M
+    3039 |                 82 | R
+    3040 |                 96 | M
+    3041 |                 96 | R
+    3042 |                 96 | R
+    3043 |                 96 | R
     3044 |                 96 | M
-    3045 |                 96 | R
-    3046 |                 96 | R
-    3047 |                 96 | R
-    3048 |                 96 | M
-    3049 |                 96 | M
-    3050 |                 99 | M
-    3051 |                102 | R
+    3045 |                 96 | M
+    3046 |                 99 | M
+    3047 |                102 | R
+    3048 |                105 | M
+    3049 |                105 | R
+    3050 |                105 | M
+    3051 |                105 | R
     3052 |                105 | M
-    3053 |                105 | R
-    3054 |                105 | M
-    3055 |                105 | R
-    3056 |                105 | M
-    3057 |                105 | M
-    3058 |                120 | M
-    3059 |                122 | R
-    3060 |                137 | M
-    3061 |                139 | R
-    3065 |                140 | R
+    3053 |                105 | M
+    3054 |                120 | M
+    3055 |                122 | R
+    3056 |                137 | M
+    3057 |                139 | R
+    3061 |                140 | R
     5000 |                140 | M
     5002 |                140 | M
     5003 |                140 | M
@@ -835,7 +831,7 @@ select time_id, time_last_emaj_gid, time_event from emaj.emaj_time_stamp order b
    20205 |             100949 | R
    20206 |             100968 | M
    20207 |             100968 | R
-(388 rows)
+(384 rows)
 
 -- user tables
 select * from mySchema2.myTbl1 order by col11,col12;
@@ -916,7 +912,7 @@ select emaj.emaj_stop_group('myGroup2');
 select count(*) from emaj.emaj_hist;
  count 
 -------
-   159
+   161
 (1 row)
 
 --select hist_id, hist_function, hist_event, hist_object, regexp_replace(regexp_replace(hist_wording,E'\\d\\d\.\\d\\d\\.\\d\\d\\.\\d\\d\\d','%','g'),E'\\[.+\\]','(timestamp)','g'), hist_user from 

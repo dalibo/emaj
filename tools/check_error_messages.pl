@@ -150,6 +150,7 @@ use warnings; use strict;
        && $msgs{$fnctId} ne 'EXCEPTION:alter_exec: Cannot repair the table %.%. Its group % is in LOGGING state.'
                             # execution conditions that cannot be reproduced without parallelism
        && $msgs{$fnctId} ne 'EXCEPTION:_lock_groups: Too many (5) deadlocks encountered while locking tables of group "%".'
+       && $msgs{$fnctId} ne 'EXCEPTION:_rlbk_session_lock: Error while opening the dblink session #% (Status of the dblink connection attempt = % - see E-Maj documentation).'
        && $msgs{$fnctId} ne 'EXCEPTION:_rlbk_session_lock: Too many (5) deadlocks encountered while locking tables for groups "%".'
        && $msgs{$fnctId} ne 'EXCEPTION:_rlbk_start_mark: % Please retry.'
                             # error messages containing timestamp.

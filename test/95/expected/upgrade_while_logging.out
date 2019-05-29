@@ -199,6 +199,10 @@ SQL statement "SELECT emaj._create_log_trigger(quote_ident(r_rel.rel_schema) || 
                                        quote_ident(r_rel.new_log_schema) || '.' || quote_ident(r_rel.new_log_sequence),
                                        quote_ident(r_rel.new_log_schema) || '.' || quote_ident(r_rel.new_log_function))"
 PL/pgSQL function inline_code_block line 118 at PERFORM
+NOTICE:  drop cascades to 3 other objects
+DETAIL:  drop cascades to constraint emaj_rlbk_session_rlbs_rlbk_id_fkey on table emaj_rlbk_session
+drop cascades to constraint emaj_rlbk_plan_rlbp_rlbk_id_fkey on table emaj_rlbk_plan
+drop cascades to constraint emaj_rlbk_stat_rlbt_rlbk_id_fkey on table emaj_rlbk_stat
 WARNING:  E-Maj upgrade: with this new E-Maj version, application triggers are by default automatically disabled during E-Maj rollback operations. This may require some changes in your rollback procedures. Refer to the E-Maj documentation for additional information.
 -----------------------------
 -- check installation
@@ -677,6 +681,7 @@ Tablespace: "tspemaj"
  rlbk_eff_nb_table           | integer                  | 
  rlbk_status                 | emaj._rlbk_status_enum   | 
  rlbk_begin_hist_id          | bigint                   | 
+ rlbk_dblink_schema          | text                     | 
  rlbk_is_dblink_used         | boolean                  | 
  rlbk_end_datetime           | timestamp with time zone | 
  rlbk_messages               | text[]                   | 
@@ -751,7 +756,7 @@ Tablespace: "tspemaj"
  max_value     | bigint  | 9223372036854775807
  min_value     | bigint  | 1
  cache_value   | bigint  | 1
- log_cnt       | bigint  | 29
+ log_cnt       | bigint  | 0
  is_cycled     | boolean | f
  is_called     | boolean | t
 Owned by: emaj.emaj_rlbk.rlbk_id
@@ -1509,7 +1514,7 @@ select * from emaj.emaj_time_stamp_time_id_seq;
 select * from emaj.emaj_rlbk_rlbk_id_seq;
      sequence_name     | last_value | start_value | increment_by |      max_value      | min_value | cache_value | log_cnt | is_cycled | is_called 
 -----------------------+------------+-------------+--------------+---------------------+-----------+-------------+---------+-----------+-----------
- emaj_rlbk_rlbk_id_seq |          4 |           1 |            1 | 9223372036854775807 |         1 |           1 |      29 | f         | t
+ emaj_rlbk_rlbk_id_seq |          4 |           1 |            1 | 9223372036854775807 |         1 |           1 |       0 | f         | t
 (1 row)
 
 -- check log sequences position

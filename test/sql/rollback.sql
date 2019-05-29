@@ -161,12 +161,6 @@ select emaj.emaj_rollback_group('myGroup2','Mark21');
 alter function public.renamed_dblink_connect_u(text,text) rename to dblink_connect_u;
 alter function public.renamed_dblink_connect_u(text) rename to dblink_connect_u;
 
--- dblink_connect not in path
-set search_path='emaj';
-select emaj.emaj_logged_rollback_group('myGroup1','EMAJ_LAST_MARK');
-select emaj.emaj_logged_rollback_group('myGroup2','Mark21');
-reset search_path;
-
 select emaj.emaj_set_mark_groups('{"myGroup1","myGroup2"}','Mark1B');
 
 -- no user/password defined in emaj_param
@@ -387,8 +381,9 @@ select col1, col2, emaj_verb, emaj_tuple, emaj_gid from emaj_myschema4.mypartp2_
 -- for an equivalent of "select * from emaj.emaj_rollback_group('myGroup4','myGroup4_start',true);"
 select * from emaj._rlbk_async(emaj._rlbk_init(array['myGroup4'], 'myGroup4_start', false, 1, false, true), false);
 -- and check the result
-select rlbk_id, rlbk_groups, rlbk_mark, rlbk_time_id, rlbk_is_logged, rlbk_is_alter_group_allowed, rlbk_nb_session, rlbk_nb_table, rlbk_nb_sequence, 
-       rlbk_eff_nb_table, rlbk_status, rlbk_messages
+select rlbk_id, rlbk_groups, rlbk_mark, rlbk_mark_time_id, rlbk_time_id, rlbk_is_logged, rlbk_is_alter_group_allowed, 
+       rlbk_nb_session, rlbk_nb_table, rlbk_nb_sequence, rlbk_eff_nb_table, rlbk_status, rlbk_begin_hist_id,
+       rlbk_dblink_schema, rlbk_is_dblink_used, rlbk_messages
  from emaj.emaj_rlbk order by rlbk_id desc limit 1;
 
 -----------------------------
@@ -582,8 +577,8 @@ select emaj.emaj_cleanup_rollback_state();
 -----------------------------
 -- check rollback tables
 -----------------------------
-select rlbk_id, rlbk_groups, rlbk_mark, rlbk_time_id, rlbk_is_logged, rlbk_is_alter_group_allowed, rlbk_nb_session, rlbk_nb_table, rlbk_nb_sequence, 
-       rlbk_eff_nb_table, rlbk_status, rlbk_begin_hist_id, rlbk_is_dblink_used,
+select rlbk_id, rlbk_groups, rlbk_mark, rlbk_time_id, rlbk_is_logged, rlbk_is_alter_group_allowed, rlbk_nb_session, rlbk_nb_table,
+       rlbk_nb_sequence, rlbk_eff_nb_table, rlbk_status, rlbk_begin_hist_id, rlbk_dblink_schema, rlbk_is_dblink_used,
        case when rlbk_end_datetime is null then 'null' else '[ts]' end as "end_datetime", rlbk_messages
   from emaj.emaj_rlbk order by rlbk_id;
 select rlbs_rlbk_id, rlbs_session, 

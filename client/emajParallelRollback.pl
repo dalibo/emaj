@@ -88,8 +88,8 @@ sub check_opt_groups {
 
 sub check_opt_session {
   $nbSession = $_[1];
-  if (($nbSession <1) || ($nbSession >99)) {
-    die("Number of sessions must be greather than 0 and lower than 100 !\n");
+  if (($nbSession < 1) || ($nbSession > 990)) {
+    die("Number of sessions must be greater than 0 and lower than 100 !\n");
   }
 }
 

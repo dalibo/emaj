@@ -33,7 +33,7 @@ delete from emaj.emaj_param where param_key = 'dblink_user_password';
  E-Maj (version <devel>) - launching parallel rollbacks
 -----------------------------------------------------------
 PHP Warning:  pg_query(): Query failed: ERROR:  _rlbk_init: Cannot use several sessions without dblink connection capability. (Status of the dblink connection attempt = -5 - see E-Maj documentation)
-CONTEXT:  PL/pgSQL function emaj._rlbk_init(text[],text,boolean,integer,boolean,boolean) line 44 at RAISE in /home/postgres/proj/emaj/client/emajParallelRollback.php on line 141
+CONTEXT:  PL/pgSQL function emaj._rlbk_init(text[],text,boolean,integer,boolean,boolean) line 46 at RAISE in /home/postgres/proj/emaj/client/emajParallelRollback.php on line 141
 Call of _rlbk_init() function failed 
 insert into emaj.emaj_param (param_key, param_value_text) 
   values ('dblink_user_password','user=postgres password=postgres');
@@ -51,7 +51,7 @@ select emaj.emaj_alter_group('myGroup1');
 PHP Warning:  pg_query(): Query failed: ERROR:  _rlbk_check: This rollback operation would cross some previously executed alter group operations, which is not allowed by the current function parameters.
 CONTEXT:  PL/pgSQL function emaj._rlbk_check(text[],text,boolean,boolean) line 43 at RAISE
 SQL statement "SELECT emaj._rlbk_check(v_groupNames, v_mark, v_isAlterGroupAllowed, FALSE)"
-PL/pgSQL function emaj._rlbk_init(text[],text,boolean,integer,boolean,boolean) line 22 at SQL statement in /home/postgres/proj/emaj/client/emajParallelRollback.php on line 141
+PL/pgSQL function emaj._rlbk_init(text[],text,boolean,integer,boolean,boolean) line 23 at SQL statement in /home/postgres/proj/emaj/client/emajParallelRollback.php on line 141
 Call of _rlbk_init() function failed 
 -- unlogged rollback for 2 groups in unstrict mode
 \! ${EMAJ_DIR}/client/emajParallelRollback.php -h localhost -d regression -g "myGroup1,myGroup2" -m Multi-1 -s 3 -l -a
@@ -194,7 +194,7 @@ alter sequence mySchema2.mySeq1 restart 9999;
 delete from emaj.emaj_param where param_key = 'dblink_user_password';
 \! ${EMAJ_DIR}/client/emajParallelRollback.pl -h localhost -d regression -g "myGroup1,myGroup2" -m Multi-1 -s 3 -l
 DBD::Pg::st execute failed: ERROR:  _rlbk_init: Cannot use several sessions without dblink connection capability. (Status of the dblink connection attempt = -5 - see E-Maj documentation)
-CONTEXT:  PL/pgSQL function emaj._rlbk_init(text[],text,boolean,integer,boolean,boolean) line 44 at RAISE at /home/postgres/proj/emaj/client/emajParallelRollback.pl line 135.
+CONTEXT:  PL/pgSQL function emaj._rlbk_init(text[],text,boolean,integer,boolean,boolean) line 46 at RAISE at /home/postgres/proj/emaj/client/emajParallelRollback.pl line 135.
  E-Maj (version <devel>) - launching parallel rollbacks
 -----------------------------------------------------------
 insert into emaj.emaj_param (param_key, param_value_text) 

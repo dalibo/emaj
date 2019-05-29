@@ -477,6 +477,7 @@ gist, for table "emaj.emaj_relation"
  rlbk_eff_nb_table           | integer                  | 
  rlbk_status                 | emaj._rlbk_status_enum   | 
  rlbk_begin_hist_id          | bigint                   | 
+ rlbk_dblink_schema          | text                     | 
  rlbk_is_dblink_used         | boolean                  | 
  rlbk_end_datetime           | timestamp with time zone | 
  rlbk_messages               | text[]                   | 
