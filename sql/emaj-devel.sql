@@ -5615,23 +5615,23 @@ $_rlbk_end$
 --     (record the rlbp_estimated_quantity as reference for later forecast)
              '  SELECT rlbp_step, rlbp_schema, rlbp_table, rlbp_object, rlbp_rlbk_id,' ||
              '      rlbp_estimated_quantity, rlbp_duration' ||
-             '    FROM emaj.emaj_rlbk_plan, emaj.emaj_rlbk' ||
-             '    WHERE rlbk_id = rlbp_rlbk_id AND rlbp_rlbk_id = ' || v_rlbkId ||
+             '    FROM emaj.emaj_rlbk_plan' ||
+             '    WHERE rlbp_rlbk_id = ' || v_rlbkId ||
              '      AND rlbp_step IN (''RLBK_TABLE'',''DELETE_LOG'',''ADD_FK'',''SET_FK_IMM'') ' ||
              '  UNION ALL ' ||
 --   for 6 other steps, aggregate other elementary steps into a global row for each step type
              '  SELECT rlbp_step, '''', '''', '''', rlbp_rlbk_id, ' ||
              '      count(*), sum(rlbp_duration)' ||
-             '    FROM emaj.emaj_rlbk_plan, emaj.emaj_rlbk' ||
-             '    WHERE rlbk_id = rlbp_rlbk_id AND rlbp_rlbk_id = ' || v_rlbkId ||
+             '    FROM emaj.emaj_rlbk_plan' ||
+             '    WHERE rlbp_rlbk_id = ' || v_rlbkId ||
              '      AND rlbp_step IN (''DIS_APP_TRG'',''DIS_LOG_TRG'',''DROP_FK'',''SET_FK_DEF'',''ENA_APP_TRG'',''ENA_LOG_TRG'') ' ||
              '    GROUP BY 1, 2, 3, 4, 5' ||
              '  UNION ALL ' ||
 --   and the final CTRLxDBLINK pseudo step statistic
              '  SELECT rlbp_step, '''', '''', '''', rlbp_rlbk_id, ' ||
              '      rlbp_estimated_quantity, ' || quote_literal(v_ctrlDuration) ||
-             '    FROM emaj.emaj_rlbk_plan, emaj.emaj_rlbk' ||
-             '    WHERE rlbk_id = rlbp_rlbk_id AND rlbp_rlbk_id = ' || v_rlbkId ||
+             '    FROM emaj.emaj_rlbk_plan' ||
+             '    WHERE rlbp_rlbk_id = ' || v_rlbkId ||
              '      AND rlbp_step IN (''CTRL+DBLINK'',''CTRL-DBLINK'') ' ||
              ' RETURNING 1';
     PERFORM emaj._dblink_sql_exec('rlbk#1', v_stmt, v_dblinkSchema);
