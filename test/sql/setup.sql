@@ -50,7 +50,7 @@ CREATE TABLE myTbl4 (
   col45       CHAR(10)         ,
   PRIMARY KEY (col41),
   FOREIGN KEY (col43) REFERENCES myTbl2 (col21) DEFERRABLE INITIALLY IMMEDIATE,
-  FOREIGN KEY (col44,col45) REFERENCES myTbl1 (col11,col12) ON DELETE CASCADE ON UPDATE SET NULL DEFERRABLE INITIALLY DEFERRED
+  CONSTRAINT mytbl4_col44_fkey FOREIGN KEY (col44,col45) REFERENCES myTbl1 (col11,col12) ON DELETE CASCADE ON UPDATE SET NULL DEFERRABLE INITIALLY DEFERRED
 );
 
 DO $$
@@ -145,7 +145,7 @@ CREATE TABLE myTbl4 (
   col45       CHAR(10)         ,
   PRIMARY KEY (col41),
   FOREIGN KEY (col43) REFERENCES myTbl2 (col21) DEFERRABLE INITIALLY DEFERRED,
-  FOREIGN KEY (col44,col45) REFERENCES myTbl1 (col11,col12) ON DELETE CASCADE ON UPDATE SET NULL
+  CONSTRAINT mytbl4_col44_fkey FOREIGN KEY (col44,col45) REFERENCES myTbl1 (col11,col12) ON DELETE CASCADE ON UPDATE SET NULL
 );
 
 DROP TABLE IF EXISTS myTbl5 ;
@@ -220,7 +220,7 @@ CREATE TABLE myTbl4 (
   col44       DECIMAL(7)       ,
   col45       CHAR(10)         ,
   PRIMARY KEY (col41),
-  FOREIGN KEY (col44,col45) REFERENCES "phil's tbl1" ("phil's col11","phil's col12") ON DELETE CASCADE ON UPDATE SET NULL
+  CONSTRAINT mytbl4_col44_fkey FOREIGN KEY (col44,col45) REFERENCES "phil's tbl1" ("phil's col11","phil's col12") ON DELETE CASCADE ON UPDATE SET NULL
 );
 ALTER TABLE "myTbl2\" ADD CONSTRAINT mytbl2_col21_fkey FOREIGN KEY (col21) REFERENCES myTbl4 (col41);
 
@@ -308,11 +308,22 @@ CREATE UNLOGGED TABLE myUnloggedTbl (
   PRIMARY KEY (col1)
 );
 
-DROP TABLE IF EXISTS myOidsTbl;
-CREATE TABLE myOidsTbl (
-  col1       INT     NOT NULL,
-  PRIMARY KEY (col1)
-) WITH OIDS;
+DO $$
+BEGIN
+  DROP TABLE IF EXISTS myOidsTbl;
+  IF emaj._pg_version_num() < 120000 THEN
+    EXECUTE 'CREATE TABLE myOidsTbl (
+      col1       INT     NOT NULL,
+      PRIMARY KEY (col1)
+    ) WITH OIDS;';
+  ELSE
+    EXECUTE 'CREATE TABLE myOidsTbl (
+      col1       INT     NOT NULL,
+      PRIMARY KEY (col1)
+    );';
+  END IF;
+END;
+$$;
 
 --
 -- sixth schema (for tables with very long names)

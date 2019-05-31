@@ -3,6 +3,7 @@ E-Maj - Change log
 <devel>
 ------
 ###Enhancements:###
+  * Let E-Maj work with PostgreSQL 12.
   * The rollback functions now automatically disable the application triggers,
     unless they are set in a list of triggers that should not be automatically
     disabled during the operation. A new emaj_ignore_app_trigger() function

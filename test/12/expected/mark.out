@@ -1,0 +1,1357 @@
+-- mark.sql : test emaj_set_mark_group(), emaj_set_mark_groups(), emaj_comment_mark_group(),
+-- emaj_rename_mark_group(), emaj_get_previous_mark_group(), emaj_delete_mark_group(),
+-- emaj_protect_mark_group() and emaj_unprotect_mark_group() functions
+--
+-- set sequence restart value
+alter sequence emaj.emaj_hist_hist_id_seq restart 2000;
+alter sequence emaj.emaj_time_stamp_time_id_seq restart 2000;
+select emaj.emaj_start_group('myGroup1','Mark1');
+ emaj_start_group 
+------------------
+                7
+(1 row)
+
+select emaj.emaj_start_group('myGroup2','Mark2');
+WARNING:  _check_fk_groups: The foreign key "mytbl6_col61_fkey" on the table "myschema2.mytbl6" references the table "myschema2.mytbl7" that is outside the groups (myGroup2).
+WARNING:  _check_fk_groups: The table "myschema2.mytbl6" is referenced by the foreign key "mytbl8_col81_fkey" on the table "myschema2.mytbl8" that is outside the groups (myGroup2).
+ emaj_start_group 
+------------------
+                8
+(1 row)
+
+select emaj.emaj_start_group('emptyGroup','MarkInit');
+ emaj_start_group 
+------------------
+                0
+(1 row)
+
+-----------------------------
+-- emaj_set_mark_group() tests
+-----------------------------
+-- group is unknown in emaj_group_def
+select emaj.emaj_set_mark_group(NULL,NULL);
+ERROR:  _check_group_names: No group to process.
+CONTEXT:  PL/pgSQL function emaj._check_group_names(text[],boolean,boolean,text) line 28 at RAISE
+SQL statement "SELECT emaj._check_group_names(v_groupNames := ARRAY[v_groupName], v_mayBeNull := FALSE, v_lockGroups := TRUE, v_checkList := 'LOGGING')"
+PL/pgSQL function emaj.emaj_set_mark_group(text,text) line 15 at PERFORM
+select emaj.emaj_set_mark_group('unknownGroup',NULL);
+ERROR:  _check_group_names: The group "unknownGroup" does not exist.
+CONTEXT:  PL/pgSQL function emaj._check_group_names(text[],boolean,boolean,text) line 36 at RAISE
+SQL statement "SELECT emaj._check_group_names(v_groupNames := ARRAY[v_groupName], v_mayBeNull := FALSE, v_lockGroups := TRUE, v_checkList := 'LOGGING')"
+PL/pgSQL function emaj.emaj_set_mark_group(text,text) line 15 at PERFORM
+-- reserved mark name
+select emaj.emaj_set_mark_group('myGroup1','EMAJ_LAST_MARK');
+ERROR:  _check_new_mark: "EMAJ_LAST_MARK" is not an allowed name for a new mark.
+CONTEXT:  PL/pgSQL function emaj._check_new_mark(text[],text) line 14 at RAISE
+SQL statement "SELECT emaj._check_new_mark(array[v_groupName], v_mark)"
+PL/pgSQL function emaj.emaj_set_mark_group(text,text) line 19 at SQL statement
+-- should be OK
+select emaj.emaj_set_mark_group('myGroup1','SM1');
+ emaj_set_mark_group 
+---------------------
+                   7
+(1 row)
+
+select emaj.emaj_set_mark_group('myGroup2','SM1');
+ emaj_set_mark_group 
+---------------------
+                   8
+(1 row)
+
+select emaj.emaj_set_mark_group('myGroup2','phil''s mark #1');
+ emaj_set_mark_group 
+---------------------
+                   8
+(1 row)
+
+select emaj.emaj_set_mark_group('emptyGroup','SM1');
+ emaj_set_mark_group 
+---------------------
+                   0
+(1 row)
+
+-- duplicate mark name
+select emaj.emaj_set_mark_group('myGroup1','SM1');
+ERROR:  _check_new_mark: The group "myGroup1" already contains a mark named "SM1".
+CONTEXT:  PL/pgSQL function emaj._check_new_mark(text[],text) line 27 at RAISE
+SQL statement "SELECT emaj._check_new_mark(array[v_groupName], v_mark)"
+PL/pgSQL function emaj.emaj_set_mark_group(text,text) line 19 at SQL statement
+-- mark with generated name and in a single transaction
+begin transaction;
+  select emaj.emaj_set_mark_group('myGroup1',NULL);
+ emaj_set_mark_group 
+---------------------
+                   7
+(1 row)
+
+  select emaj.emaj_set_mark_group('myGroup2','');
+ emaj_set_mark_group 
+---------------------
+                   8
+(1 row)
+
+commit;
+-- default value for mark name
+select pg_sleep(0.001);
+ pg_sleep 
+----------
+ 
+(1 row)
+
+select emaj.emaj_set_mark_group('myGroup2');
+ emaj_set_mark_group 
+---------------------
+                   8
+(1 row)
+
+-- use of % in mark name
+select emaj.emaj_set_mark_group('myGroup1','Foo%Bar');
+ emaj_set_mark_group 
+---------------------
+                   7
+(1 row)
+
+-- multiple emaj_set_mark_group() using the same generated start mark name => fails
+-- this test is commented because the generated error message differs from one run to another
+--begin;
+--  select emaj.emaj_start_group('myGroup4');
+--  select emaj.emaj_set_mark_group('myGroup4');
+--  select emaj.emaj_set_mark_group('myGroup4');
+--rollback;
+-----------------------------
+-- emaj_set_mark_groups() tests
+-----------------------------
+-- NULL group names array
+select emaj.emaj_set_mark_groups(NULL,NULL);
+WARNING:  _check_group_names: No group to process.
+ emaj_set_mark_groups 
+----------------------
+                    0
+(1 row)
+
+-- groups array is unknown in emaj_group_def
+select emaj.emaj_set_mark_groups('{"unknownGroup",""}',NULL);
+ERROR:  _check_group_names: The group "unknownGroup" does not exist.
+CONTEXT:  PL/pgSQL function emaj._check_group_names(text[],boolean,boolean,text) line 36 at RAISE
+SQL statement "SELECT emaj._check_group_names(v_groupNames := v_groupNames, v_mayBeNull := TRUE, v_lockGroups := TRUE, v_checkList := 'LOGGING')"
+PL/pgSQL function emaj.emaj_set_mark_groups(text[],text) line 15 at SQL statement
+-- reserved mark name
+select emaj.emaj_set_mark_groups('{"myGroup1"}','EMAJ_LAST_MARK');
+ERROR:  _check_new_mark: "EMAJ_LAST_MARK" is not an allowed name for a new mark.
+CONTEXT:  PL/pgSQL function emaj._check_new_mark(text[],text) line 14 at RAISE
+SQL statement "SELECT emaj._check_new_mark(v_groupNames, v_mark)"
+PL/pgSQL function emaj.emaj_set_mark_groups(text[],text) line 21 at SQL statement
+-- should be OK
+select emaj.emaj_set_mark_groups('{"myGroup1","myGroup2"}','SM3');
+ emaj_set_mark_groups 
+----------------------
+                   15
+(1 row)
+
+-- duplicate mark name and warning on group names array content
+select emaj.emaj_set_mark_groups(array['myGroup1',NULL,'myGroup2','','myGroup2','emptyGroup','myGroup2','myGroup1'],'SM3');
+ERROR:  _check_new_mark: The groups "myGroup1, myGroup2" already contain a mark named "SM3".
+CONTEXT:  PL/pgSQL function emaj._check_new_mark(text[],text) line 29 at RAISE
+SQL statement "SELECT emaj._check_new_mark(v_groupNames, v_mark)"
+PL/pgSQL function emaj.emaj_set_mark_groups(text[],text) line 21 at SQL statement
+-- generated mark name
+select emaj.emaj_set_mark_groups('{"myGroup1","myGroup2"}','');
+ emaj_set_mark_groups 
+----------------------
+                   15
+(1 row)
+
+select pg_sleep(0.001);
+ pg_sleep 
+----------
+ 
+(1 row)
+
+select emaj.emaj_set_mark_groups('{"myGroup1","myGroup2"}',NULL);
+ emaj_set_mark_groups 
+----------------------
+                   15
+(1 row)
+
+select pg_sleep(0.001);
+ pg_sleep 
+----------
+ 
+(1 row)
+
+select emaj.emaj_set_mark_groups('{"myGroup1","myGroup2"}');
+ emaj_set_mark_groups 
+----------------------
+                   15
+(1 row)
+
+-- use of % in mark name
+select emaj.emaj_set_mark_groups('{"myGroup1","myGroup2"}','Bar%Foo');
+ emaj_set_mark_groups 
+----------------------
+                   15
+(1 row)
+
+-- impact of mark set
+select mark_group, regexp_replace(mark_name,E'\\d\\d\.\\d\\d\\.\\d\\d\\.\\d\\d\\d','%','g'), mark_time_id, mark_is_deleted, mark_is_rlbk_protected, mark_comment, mark_log_rows_before_next, mark_logged_rlbk_target_mark from emaj.emaj_mark order by mark_time_id, mark_group;
+    mark_group    | regexp_replace | mark_time_id | mark_is_deleted | mark_is_rlbk_protected | mark_comment | mark_log_rows_before_next | mark_logged_rlbk_target_mark 
+------------------+----------------+--------------+-----------------+------------------------+--------------+---------------------------+------------------------------
+ phil's group#3", | Mark3          |         1005 | f               | f                      |              |                         0 | 
+ myGroup1         | Mark1          |         2000 | f               | f                      |              |                         0 | 
+ myGroup2         | Mark2          |         2001 | f               | f                      |              |                         0 | 
+ emptyGroup       | MarkInit       |         2002 | f               | f                      |              |                         0 | 
+ myGroup1         | SM1            |         2003 | f               | f                      |              |                         0 | 
+ myGroup2         | SM1            |         2004 | f               | f                      |              |                         0 | 
+ myGroup2         | phil's mark #1 |         2005 | f               | f                      |              |                         0 | 
+ emptyGroup       | SM1            |         2006 | f               | f                      |              |                         0 | 
+ myGroup1         | MARK_%         |         2007 | f               | f                      |              |                         0 | 
+ myGroup2         | MARK_%         |         2008 | f               | f                      |              |                         0 | 
+ myGroup2         | MARK_%         |         2009 | f               | f                      |              |                         0 | 
+ myGroup1         | Foo%Bar        |         2010 | f               | f                      |              |                         0 | 
+ myGroup1         | SM3            |         2011 | f               | f                      |              |                         0 | 
+ myGroup2         | SM3            |         2011 | f               | f                      |              |                         0 | 
+ myGroup1         | MARK_%         |         2012 | f               | f                      |              |                         0 | 
+ myGroup2         | MARK_%         |         2012 | f               | f                      |              |                         0 | 
+ myGroup1         | MARK_%         |         2013 | f               | f                      |              |                         0 | 
+ myGroup2         | MARK_%         |         2013 | f               | f                      |              |                         0 | 
+ myGroup1         | MARK_%         |         2014 | f               | f                      |              |                         0 | 
+ myGroup2         | MARK_%         |         2014 | f               | f                      |              |                         0 | 
+ myGroup1         | Bar%Foo        |         2015 | f               | f                      |              |                           | 
+ myGroup2         | Bar%Foo        |         2015 | f               | f                      |              |                           | 
+(22 rows)
+
+select time_id, time_last_emaj_gid, time_event from emaj.emaj_time_stamp where time_id >= 2000 order by time_id;
+ time_id | time_last_emaj_gid | time_event 
+---------+--------------------+------------
+    2000 |                  2 | M
+    2001 |                  2 | M
+    2002 |                  2 | M
+    2003 |                  2 | M
+    2004 |                  2 | M
+    2005 |                  2 | M
+    2006 |                  2 | M
+    2007 |                  2 | M
+    2008 |                  2 | M
+    2009 |                  2 | M
+    2010 |                  2 | M
+    2011 |                  2 | M
+    2012 |                  2 | M
+    2013 |                  2 | M
+    2014 |                  2 | M
+    2015 |                  2 | M
+(16 rows)
+
+select sequ_schema, sequ_name, sequ_time_id, sequ_last_val, sequ_is_called from emaj.emaj_sequence order by sequ_time_id, sequ_schema, sequ_name;
+     sequ_schema     |      sequ_name      | sequ_time_id | sequ_last_val | sequ_is_called 
+---------------------+---------------------+--------------+---------------+----------------
+ emaj_phil's schema3 | myTbl2\_log_seq     |         1005 |             1 | f
+ emaj_phil's schema3 | phil's tbl1_log_seq |         1005 |             1 | f
+ phil's schema3      | myTbl2\_col21_seq   |         1005 |             1 | f
+ phil's schema3      | phil's seq\1        |         1005 |          1000 | f
+ emaj_myschema1      | myTbl3_log_seq      |         2000 |             1 | f
+ emaj_myschema1      | mytbl1_log_seq      |         2000 |             1 | f
+ emaj_myschema1      | mytbl2_log_seq      |         2000 |             1 | f
+ emaj_myschema1      | mytbl2b_log_seq     |         2000 |             1 | f
+ emaj_myschema1      | mytbl4_log_seq      |         2000 |             1 | f
+ myschema1           | myTbl3_col31_seq    |         2000 |             1 | f
+ myschema1           | mytbl2b_col20_seq   |         2000 |             1 | f
+ emaj_myschema2      | myTbl3_log_seq      |         2001 |             1 | f
+ emaj_myschema2      | mytbl1_log_seq      |         2001 |             1 | f
+ emaj_myschema2      | mytbl2_log_seq      |         2001 |             1 | f
+ emaj_myschema2      | mytbl4_log_seq      |         2001 |             1 | f
+ emaj_myschema2      | mytbl5_log_seq      |         2001 |             1 | f
+ emaj_myschema2      | mytbl6_log_seq      |         2001 |             1 | f
+ myschema2           | myTbl3_col31_seq    |         2001 |             1 | f
+ myschema2           | myseq1              |         2001 |          1000 | f
+ emaj_myschema1      | myTbl3_log_seq      |         2003 |             1 | f
+ emaj_myschema1      | mytbl1_log_seq      |         2003 |             1 | f
+ emaj_myschema1      | mytbl2_log_seq      |         2003 |             1 | f
+ emaj_myschema1      | mytbl2b_log_seq     |         2003 |             1 | f
+ emaj_myschema1      | mytbl4_log_seq      |         2003 |             1 | f
+ myschema1           | myTbl3_col31_seq    |         2003 |             1 | f
+ myschema1           | mytbl2b_col20_seq   |         2003 |             1 | f
+ emaj_myschema2      | myTbl3_log_seq      |         2004 |             1 | f
+ emaj_myschema2      | mytbl1_log_seq      |         2004 |             1 | f
+ emaj_myschema2      | mytbl2_log_seq      |         2004 |             1 | f
+ emaj_myschema2      | mytbl4_log_seq      |         2004 |             1 | f
+ emaj_myschema2      | mytbl5_log_seq      |         2004 |             1 | f
+ emaj_myschema2      | mytbl6_log_seq      |         2004 |             1 | f
+ myschema2           | myTbl3_col31_seq    |         2004 |             1 | f
+ myschema2           | myseq1              |         2004 |          1000 | f
+ emaj_myschema2      | myTbl3_log_seq      |         2005 |             1 | f
+ emaj_myschema2      | mytbl1_log_seq      |         2005 |             1 | f
+ emaj_myschema2      | mytbl2_log_seq      |         2005 |             1 | f
+ emaj_myschema2      | mytbl4_log_seq      |         2005 |             1 | f
+ emaj_myschema2      | mytbl5_log_seq      |         2005 |             1 | f
+ emaj_myschema2      | mytbl6_log_seq      |         2005 |             1 | f
+ myschema2           | myTbl3_col31_seq    |         2005 |             1 | f
+ myschema2           | myseq1              |         2005 |          1000 | f
+ emaj_myschema1      | myTbl3_log_seq      |         2007 |             1 | f
+ emaj_myschema1      | mytbl1_log_seq      |         2007 |             1 | f
+ emaj_myschema1      | mytbl2_log_seq      |         2007 |             1 | f
+ emaj_myschema1      | mytbl2b_log_seq     |         2007 |             1 | f
+ emaj_myschema1      | mytbl4_log_seq      |         2007 |             1 | f
+ myschema1           | myTbl3_col31_seq    |         2007 |             1 | f
+ myschema1           | mytbl2b_col20_seq   |         2007 |             1 | f
+ emaj_myschema2      | myTbl3_log_seq      |         2008 |             1 | f
+ emaj_myschema2      | mytbl1_log_seq      |         2008 |             1 | f
+ emaj_myschema2      | mytbl2_log_seq      |         2008 |             1 | f
+ emaj_myschema2      | mytbl4_log_seq      |         2008 |             1 | f
+ emaj_myschema2      | mytbl5_log_seq      |         2008 |             1 | f
+ emaj_myschema2      | mytbl6_log_seq      |         2008 |             1 | f
+ myschema2           | myTbl3_col31_seq    |         2008 |             1 | f
+ myschema2           | myseq1              |         2008 |          1000 | f
+ emaj_myschema2      | myTbl3_log_seq      |         2009 |             1 | f
+ emaj_myschema2      | mytbl1_log_seq      |         2009 |             1 | f
+ emaj_myschema2      | mytbl2_log_seq      |         2009 |             1 | f
+ emaj_myschema2      | mytbl4_log_seq      |         2009 |             1 | f
+ emaj_myschema2      | mytbl5_log_seq      |         2009 |             1 | f
+ emaj_myschema2      | mytbl6_log_seq      |         2009 |             1 | f
+ myschema2           | myTbl3_col31_seq    |         2009 |             1 | f
+ myschema2           | myseq1              |         2009 |          1000 | f
+ emaj_myschema1      | myTbl3_log_seq      |         2010 |             1 | f
+ emaj_myschema1      | mytbl1_log_seq      |         2010 |             1 | f
+ emaj_myschema1      | mytbl2_log_seq      |         2010 |             1 | f
+ emaj_myschema1      | mytbl2b_log_seq     |         2010 |             1 | f
+ emaj_myschema1      | mytbl4_log_seq      |         2010 |             1 | f
+ myschema1           | myTbl3_col31_seq    |         2010 |             1 | f
+ myschema1           | mytbl2b_col20_seq   |         2010 |             1 | f
+ emaj_myschema1      | myTbl3_log_seq      |         2011 |             1 | f
+ emaj_myschema1      | mytbl1_log_seq      |         2011 |             1 | f
+ emaj_myschema1      | mytbl2_log_seq      |         2011 |             1 | f
+ emaj_myschema1      | mytbl2b_log_seq     |         2011 |             1 | f
+ emaj_myschema1      | mytbl4_log_seq      |         2011 |             1 | f
+ emaj_myschema2      | myTbl3_log_seq      |         2011 |             1 | f
+ emaj_myschema2      | mytbl1_log_seq      |         2011 |             1 | f
+ emaj_myschema2      | mytbl2_log_seq      |         2011 |             1 | f
+ emaj_myschema2      | mytbl4_log_seq      |         2011 |             1 | f
+ emaj_myschema2      | mytbl5_log_seq      |         2011 |             1 | f
+ emaj_myschema2      | mytbl6_log_seq      |         2011 |             1 | f
+ myschema1           | myTbl3_col31_seq    |         2011 |             1 | f
+ myschema1           | mytbl2b_col20_seq   |         2011 |             1 | f
+ myschema2           | myTbl3_col31_seq    |         2011 |             1 | f
+ myschema2           | myseq1              |         2011 |          1000 | f
+ emaj_myschema1      | myTbl3_log_seq      |         2012 |             1 | f
+ emaj_myschema1      | mytbl1_log_seq      |         2012 |             1 | f
+ emaj_myschema1      | mytbl2_log_seq      |         2012 |             1 | f
+ emaj_myschema1      | mytbl2b_log_seq     |         2012 |             1 | f
+ emaj_myschema1      | mytbl4_log_seq      |         2012 |             1 | f
+ emaj_myschema2      | myTbl3_log_seq      |         2012 |             1 | f
+ emaj_myschema2      | mytbl1_log_seq      |         2012 |             1 | f
+ emaj_myschema2      | mytbl2_log_seq      |         2012 |             1 | f
+ emaj_myschema2      | mytbl4_log_seq      |         2012 |             1 | f
+ emaj_myschema2      | mytbl5_log_seq      |         2012 |             1 | f
+ emaj_myschema2      | mytbl6_log_seq      |         2012 |             1 | f
+ myschema1           | myTbl3_col31_seq    |         2012 |             1 | f
+ myschema1           | mytbl2b_col20_seq   |         2012 |             1 | f
+ myschema2           | myTbl3_col31_seq    |         2012 |             1 | f
+ myschema2           | myseq1              |         2012 |          1000 | f
+ emaj_myschema1      | myTbl3_log_seq      |         2013 |             1 | f
+ emaj_myschema1      | mytbl1_log_seq      |         2013 |             1 | f
+ emaj_myschema1      | mytbl2_log_seq      |         2013 |             1 | f
+ emaj_myschema1      | mytbl2b_log_seq     |         2013 |             1 | f
+ emaj_myschema1      | mytbl4_log_seq      |         2013 |             1 | f
+ emaj_myschema2      | myTbl3_log_seq      |         2013 |             1 | f
+ emaj_myschema2      | mytbl1_log_seq      |         2013 |             1 | f
+ emaj_myschema2      | mytbl2_log_seq      |         2013 |             1 | f
+ emaj_myschema2      | mytbl4_log_seq      |         2013 |             1 | f
+ emaj_myschema2      | mytbl5_log_seq      |         2013 |             1 | f
+ emaj_myschema2      | mytbl6_log_seq      |         2013 |             1 | f
+ myschema1           | myTbl3_col31_seq    |         2013 |             1 | f
+ myschema1           | mytbl2b_col20_seq   |         2013 |             1 | f
+ myschema2           | myTbl3_col31_seq    |         2013 |             1 | f
+ myschema2           | myseq1              |         2013 |          1000 | f
+ emaj_myschema1      | myTbl3_log_seq      |         2014 |             1 | f
+ emaj_myschema1      | mytbl1_log_seq      |         2014 |             1 | f
+ emaj_myschema1      | mytbl2_log_seq      |         2014 |             1 | f
+ emaj_myschema1      | mytbl2b_log_seq     |         2014 |             1 | f
+ emaj_myschema1      | mytbl4_log_seq      |         2014 |             1 | f
+ emaj_myschema2      | myTbl3_log_seq      |         2014 |             1 | f
+ emaj_myschema2      | mytbl1_log_seq      |         2014 |             1 | f
+ emaj_myschema2      | mytbl2_log_seq      |         2014 |             1 | f
+ emaj_myschema2      | mytbl4_log_seq      |         2014 |             1 | f
+ emaj_myschema2      | mytbl5_log_seq      |         2014 |             1 | f
+ emaj_myschema2      | mytbl6_log_seq      |         2014 |             1 | f
+ myschema1           | myTbl3_col31_seq    |         2014 |             1 | f
+ myschema1           | mytbl2b_col20_seq   |         2014 |             1 | f
+ myschema2           | myTbl3_col31_seq    |         2014 |             1 | f
+ myschema2           | myseq1              |         2014 |          1000 | f
+ emaj_myschema1      | myTbl3_log_seq      |         2015 |             1 | f
+ emaj_myschema1      | mytbl1_log_seq      |         2015 |             1 | f
+ emaj_myschema1      | mytbl2_log_seq      |         2015 |             1 | f
+ emaj_myschema1      | mytbl2b_log_seq     |         2015 |             1 | f
+ emaj_myschema1      | mytbl4_log_seq      |         2015 |             1 | f
+ emaj_myschema2      | myTbl3_log_seq      |         2015 |             1 | f
+ emaj_myschema2      | mytbl1_log_seq      |         2015 |             1 | f
+ emaj_myschema2      | mytbl2_log_seq      |         2015 |             1 | f
+ emaj_myschema2      | mytbl4_log_seq      |         2015 |             1 | f
+ emaj_myschema2      | mytbl5_log_seq      |         2015 |             1 | f
+ emaj_myschema2      | mytbl6_log_seq      |         2015 |             1 | f
+ myschema1           | myTbl3_col31_seq    |         2015 |             1 | f
+ myschema1           | mytbl2b_col20_seq   |         2015 |             1 | f
+ myschema2           | myTbl3_col31_seq    |         2015 |             1 | f
+ myschema2           | myseq1              |         2015 |          1000 | f
+(147 rows)
+
+-----------------------------
+-- emaj_comment_mark_group() tests
+-----------------------------
+-- group is unknown in emaj_group_def
+select emaj.emaj_comment_mark_group(NULL,NULL,NULL);
+ERROR:  _check_group_names: No group to process.
+CONTEXT:  PL/pgSQL function emaj._check_group_names(text[],boolean,boolean,text) line 28 at RAISE
+SQL statement "SELECT emaj._check_group_names(v_groupNames := ARRAY[v_groupName], v_mayBeNull := FALSE, v_lockGroups := TRUE, v_checkList := '')"
+PL/pgSQL function emaj.emaj_comment_mark_group(text,text,text) line 8 at PERFORM
+select emaj.emaj_comment_mark_group('unknownGroup',NULL,NULL);
+ERROR:  _check_group_names: The group "unknownGroup" does not exist.
+CONTEXT:  PL/pgSQL function emaj._check_group_names(text[],boolean,boolean,text) line 36 at RAISE
+SQL statement "SELECT emaj._check_group_names(v_groupNames := ARRAY[v_groupName], v_mayBeNull := FALSE, v_lockGroups := TRUE, v_checkList := '')"
+PL/pgSQL function emaj.emaj_comment_mark_group(text,text,text) line 8 at PERFORM
+-- mark is unknown
+select emaj.emaj_comment_mark_group('myGroup1','unknownMark',NULL);
+ERROR:  _check_mark_name: The mark "unknownMark" does not exist for the group "myGroup1".
+CONTEXT:  PL/pgSQL function emaj._check_mark_name(text[],text,text) line 41 at RAISE
+SQL statement "SELECT emaj._check_mark_name(v_groupNames := ARRAY[v_groupName], v_mark := v_mark, v_checkList := '')"
+PL/pgSQL function emaj.emaj_comment_mark_group(text,text,text) line 10 at SQL statement
+-- should be OK
+select emaj.emaj_comment_mark_group('myGroup1','SM1','a first comment for group #1');
+ emaj_comment_mark_group 
+-------------------------
+ 
+(1 row)
+
+select emaj.emaj_comment_mark_group('myGroup1','SM1','a better comment for group #1');
+ emaj_comment_mark_group 
+-------------------------
+ 
+(1 row)
+
+select emaj.emaj_comment_mark_group('myGroup2','SM1','a first comment for group #2');
+ emaj_comment_mark_group 
+-------------------------
+ 
+(1 row)
+
+select emaj.emaj_comment_mark_group('myGroup2','SM1',NULL);
+ emaj_comment_mark_group 
+-------------------------
+ 
+(1 row)
+
+select emaj.emaj_comment_mark_group('myGroup2','EMAJ_LAST_MARK','a comment for group #2');
+ emaj_comment_mark_group 
+-------------------------
+ 
+(1 row)
+
+select emaj.emaj_comment_mark_group('myGroup2','phil''s mark #1','a good phil''s comment!');
+ emaj_comment_mark_group 
+-------------------------
+ 
+(1 row)
+
+select emaj.emaj_comment_mark_group('emptyGroup','SM1','a comment on a mark for an empty group');
+ emaj_comment_mark_group 
+-------------------------
+ 
+(1 row)
+
+-----------------------------
+-- emaj_get_previous_mark_group()
+-----------------------------
+-- group is unknown in both emaj_group_def version
+select emaj.emaj_get_previous_mark_group(NULL,NULL::timestamptz);
+ERROR:  _check_group_names: No group to process.
+CONTEXT:  PL/pgSQL function emaj._check_group_names(text[],boolean,boolean,text) line 28 at RAISE
+SQL statement "SELECT emaj._check_group_names(v_groupNames := ARRAY[v_groupName], v_mayBeNull := FALSE, v_lockGroups := FALSE, v_checkList := '')"
+PL/pgSQL function emaj.emaj_get_previous_mark_group(text,timestamp with time zone) line 11 at PERFORM
+select emaj.emaj_get_previous_mark_group('unknownGroup',NULL::timestamptz);
+ERROR:  _check_group_names: The group "unknownGroup" does not exist.
+CONTEXT:  PL/pgSQL function emaj._check_group_names(text[],boolean,boolean,text) line 36 at RAISE
+SQL statement "SELECT emaj._check_group_names(v_groupNames := ARRAY[v_groupName], v_mayBeNull := FALSE, v_lockGroups := FALSE, v_checkList := '')"
+PL/pgSQL function emaj.emaj_get_previous_mark_group(text,timestamp with time zone) line 11 at PERFORM
+select emaj.emaj_get_previous_mark_group(NULL,NULL::text);
+ERROR:  _check_group_names: No group to process.
+CONTEXT:  PL/pgSQL function emaj._check_group_names(text[],boolean,boolean,text) line 28 at RAISE
+SQL statement "SELECT emaj._check_group_names(v_groupNames := ARRAY[v_groupName], v_mayBeNull := FALSE, v_lockGroups := FALSE, v_checkList := '')"
+PL/pgSQL function emaj.emaj_get_previous_mark_group(text,text) line 9 at PERFORM
+select emaj.emaj_get_previous_mark_group('unknownGroup',NULL::text);
+ERROR:  _check_group_names: The group "unknownGroup" does not exist.
+CONTEXT:  PL/pgSQL function emaj._check_group_names(text[],boolean,boolean,text) line 36 at RAISE
+SQL statement "SELECT emaj._check_group_names(v_groupNames := ARRAY[v_groupName], v_mayBeNull := FALSE, v_lockGroups := FALSE, v_checkList := '')"
+PL/pgSQL function emaj.emaj_get_previous_mark_group(text,text) line 9 at PERFORM
+-- mark is unknown in emaj_mark
+select emaj.emaj_get_previous_mark_group('myGroup2','unknownMark');
+ERROR:  _check_mark_name: The mark "unknownMark" does not exist for the group "myGroup2".
+CONTEXT:  PL/pgSQL function emaj._check_mark_name(text[],text,text) line 41 at RAISE
+SQL statement "SELECT emaj._check_mark_name(v_groupNames := ARRAY[v_groupName], v_mark := v_mark, v_checkList := '')"
+PL/pgSQL function emaj.emaj_get_previous_mark_group(text,text) line 11 at SQL statement
+-- should be OK
+select emaj.emaj_get_previous_mark_group('myGroup2',(select time_clock_timestamp from emaj.emaj_mark, emaj.emaj_time_stamp where time_id = mark_time_id and mark_group = 'myGroup2' and mark_name = 'SM1'));
+ emaj_get_previous_mark_group 
+------------------------------
+ Mark2
+(1 row)
+
+select emaj.emaj_get_previous_mark_group('myGroup2',(select time_clock_timestamp from emaj.emaj_mark, emaj.emaj_time_stamp where time_id = mark_time_id and mark_group = 'myGroup2' and mark_name = 'SM1')+'0.000001 SECOND'::interval);
+ emaj_get_previous_mark_group 
+------------------------------
+ SM1
+(1 row)
+
+select emaj.emaj_get_previous_mark_group('myGroup1',(select min(time_clock_timestamp) from emaj.emaj_mark, emaj.emaj_time_stamp where time_id = mark_time_id and mark_group = 'myGroup1'));
+ emaj_get_previous_mark_group 
+------------------------------
+ 
+(1 row)
+
+select emaj.emaj_get_previous_mark_group('myGroup2','SM1');
+ emaj_get_previous_mark_group 
+------------------------------
+ Mark2
+(1 row)
+
+select emaj.emaj_get_previous_mark_group('emptyGroup','SM1');
+ emaj_get_previous_mark_group 
+------------------------------
+ MarkInit
+(1 row)
+
+select coalesce(emaj.emaj_get_previous_mark_group('myGroup2','Mark2'),'No previous mark');
+     coalesce     
+------------------
+ No previous mark
+(1 row)
+
+select emaj.emaj_get_previous_mark_group('myGroup2',(select emaj.emaj_get_previous_mark_group('myGroup2',(select emaj.emaj_get_previous_mark_group('myGroup2',(select emaj.emaj_get_previous_mark_group('myGroup2','EMAJ_LAST_MARK')))))));
+ emaj_get_previous_mark_group 
+------------------------------
+ SM3
+(1 row)
+
+-----------------------------
+-- emaj_rename_mark_group() tests
+-----------------------------
+-- group is unknown in emaj_group_def
+select emaj.emaj_rename_mark_group(NULL,NULL,NULL);
+ERROR:  _check_group_names: No group to process.
+CONTEXT:  PL/pgSQL function emaj._check_group_names(text[],boolean,boolean,text) line 28 at RAISE
+SQL statement "SELECT emaj._check_group_names(v_groupNames := ARRAY[v_groupName], v_mayBeNull := FALSE, v_lockGroups := TRUE, v_checkList := '')"
+PL/pgSQL function emaj.emaj_rename_mark_group(text,text,text) line 12 at PERFORM
+select emaj.emaj_rename_mark_group('unknownGroup',NULL,NULL);
+ERROR:  _check_group_names: The group "unknownGroup" does not exist.
+CONTEXT:  PL/pgSQL function emaj._check_group_names(text[],boolean,boolean,text) line 36 at RAISE
+SQL statement "SELECT emaj._check_group_names(v_groupNames := ARRAY[v_groupName], v_mayBeNull := FALSE, v_lockGroups := TRUE, v_checkList := '')"
+PL/pgSQL function emaj.emaj_rename_mark_group(text,text,text) line 12 at PERFORM
+-- unknown mark name
+select emaj.emaj_rename_mark_group('myGroup1','DummyMark','new mark');
+ERROR:  _check_mark_name: The mark "DummyMark" does not exist for the group "myGroup1".
+CONTEXT:  PL/pgSQL function emaj._check_mark_name(text[],text,text) line 41 at RAISE
+SQL statement "SELECT emaj._check_mark_name(v_groupNames := ARRAY[v_groupName], v_mark := v_mark, v_checkList := '')"
+PL/pgSQL function emaj.emaj_rename_mark_group(text,text,text) line 14 at SQL statement
+-- invalid new mark name
+select emaj.emaj_rename_mark_group('myGroup1','Mark1','EMAJ_LAST_MARK');
+ERROR:  _check_new_mark: "EMAJ_LAST_MARK" is not an allowed name for a new mark.
+CONTEXT:  PL/pgSQL function emaj._check_new_mark(text[],text) line 14 at RAISE
+SQL statement "SELECT emaj._check_new_mark(ARRAY[v_groupName], v_newName)"
+PL/pgSQL function emaj.emaj_rename_mark_group(text,text,text) line 16 at SQL statement
+-- new mark name already exists
+select emaj.emaj_rename_mark_group('myGroup1','EMAJ_LAST_MARK','SM1');
+ERROR:  _check_new_mark: The group "myGroup1" already contains a mark named "SM1".
+CONTEXT:  PL/pgSQL function emaj._check_new_mark(text[],text) line 27 at RAISE
+SQL statement "SELECT emaj._check_new_mark(ARRAY[v_groupName], v_newName)"
+PL/pgSQL function emaj.emaj_rename_mark_group(text,text,text) line 16 at SQL statement
+-- should be OK
+select emaj.emaj_rename_mark_group('myGroup1','EMAJ_LAST_MARK',NULL);
+ emaj_rename_mark_group 
+------------------------
+ 
+(1 row)
+
+select emaj.emaj_rename_mark_group('myGroup1','EMAJ_LAST_MARK','SM2');
+ emaj_rename_mark_group 
+------------------------
+ 
+(1 row)
+
+select emaj.emaj_rename_mark_group('myGroup2','EMAJ_LAST_MARK','SM2');
+ emaj_rename_mark_group 
+------------------------
+ 
+(1 row)
+
+select emaj.emaj_rename_mark_group('myGroup2','phil''s mark #1','john''s mark #1');
+ emaj_rename_mark_group 
+------------------------
+ 
+(1 row)
+
+select emaj.emaj_rename_mark_group('emptyGroup','EMAJ_LAST_MARK','SM2');
+ emaj_rename_mark_group 
+------------------------
+ 
+(1 row)
+
+-- simulate SM2 is the end mark of a logged rollback operations on both myGroup1 and myGroup2 groups
+update emaj.emaj_mark set mark_logged_rlbk_target_mark = 'Mark1' where mark_name = 'SM2';
+select emaj.emaj_rename_mark_group('myGroup1','Mark1','First Mark');
+ emaj_rename_mark_group 
+------------------------
+ 
+(1 row)
+
+-- impact of mark rename
+select mark_group, regexp_replace(mark_name,E'\\d\\d\.\\d\\d\\.\\d\\d\\.\\d\\d\\d','%','g'), mark_time_id, mark_is_deleted, mark_is_rlbk_protected, mark_comment, mark_log_rows_before_next, mark_logged_rlbk_target_mark from emaj.emaj_mark order by mark_time_id, mark_group;
+    mark_group    | regexp_replace | mark_time_id | mark_is_deleted | mark_is_rlbk_protected |              mark_comment              | mark_log_rows_before_next | mark_logged_rlbk_target_mark 
+------------------+----------------+--------------+-----------------+------------------------+----------------------------------------+---------------------------+------------------------------
+ phil's group#3", | Mark3          |         1005 | f               | f                      |                                        |                         0 | 
+ myGroup1         | First Mark     |         2000 | f               | f                      |                                        |                         0 | 
+ myGroup2         | Mark2          |         2001 | f               | f                      |                                        |                         0 | 
+ emptyGroup       | MarkInit       |         2002 | f               | f                      |                                        |                         0 | 
+ myGroup1         | SM1            |         2003 | f               | f                      | a better comment for group #1          |                         0 | 
+ myGroup2         | SM1            |         2004 | f               | f                      |                                        |                         0 | 
+ myGroup2         | john's mark #1 |         2005 | f               | f                      | a good phil's comment!                 |                         0 | 
+ emptyGroup       | SM2            |         2006 | f               | f                      | a comment on a mark for an empty group |                         0 | Mark1
+ myGroup1         | MARK_%         |         2007 | f               | f                      |                                        |                         0 | 
+ myGroup2         | MARK_%         |         2008 | f               | f                      |                                        |                         0 | 
+ myGroup2         | MARK_%         |         2009 | f               | f                      |                                        |                         0 | 
+ myGroup1         | Foo%Bar        |         2010 | f               | f                      |                                        |                         0 | 
+ myGroup1         | SM3            |         2011 | f               | f                      |                                        |                         0 | 
+ myGroup2         | SM3            |         2011 | f               | f                      |                                        |                         0 | 
+ myGroup1         | MARK_%         |         2012 | f               | f                      |                                        |                         0 | 
+ myGroup2         | MARK_%         |         2012 | f               | f                      |                                        |                         0 | 
+ myGroup1         | MARK_%         |         2013 | f               | f                      |                                        |                         0 | 
+ myGroup2         | MARK_%         |         2013 | f               | f                      |                                        |                         0 | 
+ myGroup1         | MARK_%         |         2014 | f               | f                      |                                        |                         0 | 
+ myGroup2         | MARK_%         |         2014 | f               | f                      |                                        |                         0 | 
+ myGroup1         | SM2            |         2015 | f               | f                      |                                        |                           | First Mark
+ myGroup2         | SM2            |         2015 | f               | f                      | a comment for group #2                 |                           | Mark1
+(22 rows)
+
+select sequ_schema, sequ_name, sequ_time_id, sequ_last_val, sequ_is_called from emaj.emaj_sequence order by sequ_time_id, sequ_schema, sequ_name;
+     sequ_schema     |      sequ_name      | sequ_time_id | sequ_last_val | sequ_is_called 
+---------------------+---------------------+--------------+---------------+----------------
+ emaj_phil's schema3 | myTbl2\_log_seq     |         1005 |             1 | f
+ emaj_phil's schema3 | phil's tbl1_log_seq |         1005 |             1 | f
+ phil's schema3      | myTbl2\_col21_seq   |         1005 |             1 | f
+ phil's schema3      | phil's seq\1        |         1005 |          1000 | f
+ emaj_myschema1      | myTbl3_log_seq      |         2000 |             1 | f
+ emaj_myschema1      | mytbl1_log_seq      |         2000 |             1 | f
+ emaj_myschema1      | mytbl2_log_seq      |         2000 |             1 | f
+ emaj_myschema1      | mytbl2b_log_seq     |         2000 |             1 | f
+ emaj_myschema1      | mytbl4_log_seq      |         2000 |             1 | f
+ myschema1           | myTbl3_col31_seq    |         2000 |             1 | f
+ myschema1           | mytbl2b_col20_seq   |         2000 |             1 | f
+ emaj_myschema2      | myTbl3_log_seq      |         2001 |             1 | f
+ emaj_myschema2      | mytbl1_log_seq      |         2001 |             1 | f
+ emaj_myschema2      | mytbl2_log_seq      |         2001 |             1 | f
+ emaj_myschema2      | mytbl4_log_seq      |         2001 |             1 | f
+ emaj_myschema2      | mytbl5_log_seq      |         2001 |             1 | f
+ emaj_myschema2      | mytbl6_log_seq      |         2001 |             1 | f
+ myschema2           | myTbl3_col31_seq    |         2001 |             1 | f
+ myschema2           | myseq1              |         2001 |          1000 | f
+ emaj_myschema1      | myTbl3_log_seq      |         2003 |             1 | f
+ emaj_myschema1      | mytbl1_log_seq      |         2003 |             1 | f
+ emaj_myschema1      | mytbl2_log_seq      |         2003 |             1 | f
+ emaj_myschema1      | mytbl2b_log_seq     |         2003 |             1 | f
+ emaj_myschema1      | mytbl4_log_seq      |         2003 |             1 | f
+ myschema1           | myTbl3_col31_seq    |         2003 |             1 | f
+ myschema1           | mytbl2b_col20_seq   |         2003 |             1 | f
+ emaj_myschema2      | myTbl3_log_seq      |         2004 |             1 | f
+ emaj_myschema2      | mytbl1_log_seq      |         2004 |             1 | f
+ emaj_myschema2      | mytbl2_log_seq      |         2004 |             1 | f
+ emaj_myschema2      | mytbl4_log_seq      |         2004 |             1 | f
+ emaj_myschema2      | mytbl5_log_seq      |         2004 |             1 | f
+ emaj_myschema2      | mytbl6_log_seq      |         2004 |             1 | f
+ myschema2           | myTbl3_col31_seq    |         2004 |             1 | f
+ myschema2           | myseq1              |         2004 |          1000 | f
+ emaj_myschema2      | myTbl3_log_seq      |         2005 |             1 | f
+ emaj_myschema2      | mytbl1_log_seq      |         2005 |             1 | f
+ emaj_myschema2      | mytbl2_log_seq      |         2005 |             1 | f
+ emaj_myschema2      | mytbl4_log_seq      |         2005 |             1 | f
+ emaj_myschema2      | mytbl5_log_seq      |         2005 |             1 | f
+ emaj_myschema2      | mytbl6_log_seq      |         2005 |             1 | f
+ myschema2           | myTbl3_col31_seq    |         2005 |             1 | f
+ myschema2           | myseq1              |         2005 |          1000 | f
+ emaj_myschema1      | myTbl3_log_seq      |         2007 |             1 | f
+ emaj_myschema1      | mytbl1_log_seq      |         2007 |             1 | f
+ emaj_myschema1      | mytbl2_log_seq      |         2007 |             1 | f
+ emaj_myschema1      | mytbl2b_log_seq     |         2007 |             1 | f
+ emaj_myschema1      | mytbl4_log_seq      |         2007 |             1 | f
+ myschema1           | myTbl3_col31_seq    |         2007 |             1 | f
+ myschema1           | mytbl2b_col20_seq   |         2007 |             1 | f
+ emaj_myschema2      | myTbl3_log_seq      |         2008 |             1 | f
+ emaj_myschema2      | mytbl1_log_seq      |         2008 |             1 | f
+ emaj_myschema2      | mytbl2_log_seq      |         2008 |             1 | f
+ emaj_myschema2      | mytbl4_log_seq      |         2008 |             1 | f
+ emaj_myschema2      | mytbl5_log_seq      |         2008 |             1 | f
+ emaj_myschema2      | mytbl6_log_seq      |         2008 |             1 | f
+ myschema2           | myTbl3_col31_seq    |         2008 |             1 | f
+ myschema2           | myseq1              |         2008 |          1000 | f
+ emaj_myschema2      | myTbl3_log_seq      |         2009 |             1 | f
+ emaj_myschema2      | mytbl1_log_seq      |         2009 |             1 | f
+ emaj_myschema2      | mytbl2_log_seq      |         2009 |             1 | f
+ emaj_myschema2      | mytbl4_log_seq      |         2009 |             1 | f
+ emaj_myschema2      | mytbl5_log_seq      |         2009 |             1 | f
+ emaj_myschema2      | mytbl6_log_seq      |         2009 |             1 | f
+ myschema2           | myTbl3_col31_seq    |         2009 |             1 | f
+ myschema2           | myseq1              |         2009 |          1000 | f
+ emaj_myschema1      | myTbl3_log_seq      |         2010 |             1 | f
+ emaj_myschema1      | mytbl1_log_seq      |         2010 |             1 | f
+ emaj_myschema1      | mytbl2_log_seq      |         2010 |             1 | f
+ emaj_myschema1      | mytbl2b_log_seq     |         2010 |             1 | f
+ emaj_myschema1      | mytbl4_log_seq      |         2010 |             1 | f
+ myschema1           | myTbl3_col31_seq    |         2010 |             1 | f
+ myschema1           | mytbl2b_col20_seq   |         2010 |             1 | f
+ emaj_myschema1      | myTbl3_log_seq      |         2011 |             1 | f
+ emaj_myschema1      | mytbl1_log_seq      |         2011 |             1 | f
+ emaj_myschema1      | mytbl2_log_seq      |         2011 |             1 | f
+ emaj_myschema1      | mytbl2b_log_seq     |         2011 |             1 | f
+ emaj_myschema1      | mytbl4_log_seq      |         2011 |             1 | f
+ emaj_myschema2      | myTbl3_log_seq      |         2011 |             1 | f
+ emaj_myschema2      | mytbl1_log_seq      |         2011 |             1 | f
+ emaj_myschema2      | mytbl2_log_seq      |         2011 |             1 | f
+ emaj_myschema2      | mytbl4_log_seq      |         2011 |             1 | f
+ emaj_myschema2      | mytbl5_log_seq      |         2011 |             1 | f
+ emaj_myschema2      | mytbl6_log_seq      |         2011 |             1 | f
+ myschema1           | myTbl3_col31_seq    |         2011 |             1 | f
+ myschema1           | mytbl2b_col20_seq   |         2011 |             1 | f
+ myschema2           | myTbl3_col31_seq    |         2011 |             1 | f
+ myschema2           | myseq1              |         2011 |          1000 | f
+ emaj_myschema1      | myTbl3_log_seq      |         2012 |             1 | f
+ emaj_myschema1      | mytbl1_log_seq      |         2012 |             1 | f
+ emaj_myschema1      | mytbl2_log_seq      |         2012 |             1 | f
+ emaj_myschema1      | mytbl2b_log_seq     |         2012 |             1 | f
+ emaj_myschema1      | mytbl4_log_seq      |         2012 |             1 | f
+ emaj_myschema2      | myTbl3_log_seq      |         2012 |             1 | f
+ emaj_myschema2      | mytbl1_log_seq      |         2012 |             1 | f
+ emaj_myschema2      | mytbl2_log_seq      |         2012 |             1 | f
+ emaj_myschema2      | mytbl4_log_seq      |         2012 |             1 | f
+ emaj_myschema2      | mytbl5_log_seq      |         2012 |             1 | f
+ emaj_myschema2      | mytbl6_log_seq      |         2012 |             1 | f
+ myschema1           | myTbl3_col31_seq    |         2012 |             1 | f
+ myschema1           | mytbl2b_col20_seq   |         2012 |             1 | f
+ myschema2           | myTbl3_col31_seq    |         2012 |             1 | f
+ myschema2           | myseq1              |         2012 |          1000 | f
+ emaj_myschema1      | myTbl3_log_seq      |         2013 |             1 | f
+ emaj_myschema1      | mytbl1_log_seq      |         2013 |             1 | f
+ emaj_myschema1      | mytbl2_log_seq      |         2013 |             1 | f
+ emaj_myschema1      | mytbl2b_log_seq     |         2013 |             1 | f
+ emaj_myschema1      | mytbl4_log_seq      |         2013 |             1 | f
+ emaj_myschema2      | myTbl3_log_seq      |         2013 |             1 | f
+ emaj_myschema2      | mytbl1_log_seq      |         2013 |             1 | f
+ emaj_myschema2      | mytbl2_log_seq      |         2013 |             1 | f
+ emaj_myschema2      | mytbl4_log_seq      |         2013 |             1 | f
+ emaj_myschema2      | mytbl5_log_seq      |         2013 |             1 | f
+ emaj_myschema2      | mytbl6_log_seq      |         2013 |             1 | f
+ myschema1           | myTbl3_col31_seq    |         2013 |             1 | f
+ myschema1           | mytbl2b_col20_seq   |         2013 |             1 | f
+ myschema2           | myTbl3_col31_seq    |         2013 |             1 | f
+ myschema2           | myseq1              |         2013 |          1000 | f
+ emaj_myschema1      | myTbl3_log_seq      |         2014 |             1 | f
+ emaj_myschema1      | mytbl1_log_seq      |         2014 |             1 | f
+ emaj_myschema1      | mytbl2_log_seq      |         2014 |             1 | f
+ emaj_myschema1      | mytbl2b_log_seq     |         2014 |             1 | f
+ emaj_myschema1      | mytbl4_log_seq      |         2014 |             1 | f
+ emaj_myschema2      | myTbl3_log_seq      |         2014 |             1 | f
+ emaj_myschema2      | mytbl1_log_seq      |         2014 |             1 | f
+ emaj_myschema2      | mytbl2_log_seq      |         2014 |             1 | f
+ emaj_myschema2      | mytbl4_log_seq      |         2014 |             1 | f
+ emaj_myschema2      | mytbl5_log_seq      |         2014 |             1 | f
+ emaj_myschema2      | mytbl6_log_seq      |         2014 |             1 | f
+ myschema1           | myTbl3_col31_seq    |         2014 |             1 | f
+ myschema1           | mytbl2b_col20_seq   |         2014 |             1 | f
+ myschema2           | myTbl3_col31_seq    |         2014 |             1 | f
+ myschema2           | myseq1              |         2014 |          1000 | f
+ emaj_myschema1      | myTbl3_log_seq      |         2015 |             1 | f
+ emaj_myschema1      | mytbl1_log_seq      |         2015 |             1 | f
+ emaj_myschema1      | mytbl2_log_seq      |         2015 |             1 | f
+ emaj_myschema1      | mytbl2b_log_seq     |         2015 |             1 | f
+ emaj_myschema1      | mytbl4_log_seq      |         2015 |             1 | f
+ emaj_myschema2      | myTbl3_log_seq      |         2015 |             1 | f
+ emaj_myschema2      | mytbl1_log_seq      |         2015 |             1 | f
+ emaj_myschema2      | mytbl2_log_seq      |         2015 |             1 | f
+ emaj_myschema2      | mytbl4_log_seq      |         2015 |             1 | f
+ emaj_myschema2      | mytbl5_log_seq      |         2015 |             1 | f
+ emaj_myschema2      | mytbl6_log_seq      |         2015 |             1 | f
+ myschema1           | myTbl3_col31_seq    |         2015 |             1 | f
+ myschema1           | mytbl2b_col20_seq   |         2015 |             1 | f
+ myschema2           | myTbl3_col31_seq    |         2015 |             1 | f
+ myschema2           | myseq1              |         2015 |          1000 | f
+(147 rows)
+
+-----------------------------
+-- emaj_delete_mark_group() tests
+-----------------------------
+-- group is unknown in emaj_group_def
+select emaj.emaj_delete_mark_group(NULL,NULL);
+ERROR:  _check_group_names: No group to process.
+CONTEXT:  PL/pgSQL function emaj._check_group_names(text[],boolean,boolean,text) line 28 at RAISE
+SQL statement "SELECT emaj._check_group_names(v_groupNames := ARRAY[v_groupName], v_mayBeNull := FALSE, v_lockGroups := TRUE, v_checkList := '')"
+PL/pgSQL function emaj.emaj_delete_mark_group(text,text) line 27 at PERFORM
+select emaj.emaj_delete_mark_group('unknownGroup',NULL);
+ERROR:  _check_group_names: The group "unknownGroup" does not exist.
+CONTEXT:  PL/pgSQL function emaj._check_group_names(text[],boolean,boolean,text) line 36 at RAISE
+SQL statement "SELECT emaj._check_group_names(v_groupNames := ARRAY[v_groupName], v_mayBeNull := FALSE, v_lockGroups := TRUE, v_checkList := '')"
+PL/pgSQL function emaj.emaj_delete_mark_group(text,text) line 27 at PERFORM
+-- unknown mark name
+select emaj.emaj_delete_mark_group('myGroup2',NULL);
+ERROR:  _check_mark_name: The mark "<NULL>" does not exist for the group "myGroup2".
+CONTEXT:  PL/pgSQL function emaj._check_mark_name(text[],text,text) line 41 at RAISE
+SQL statement "SELECT emaj._check_mark_name(v_groupNames := ARRAY[v_groupName], v_mark := v_mark, v_checkList := '')"
+PL/pgSQL function emaj.emaj_delete_mark_group(text,text) line 29 at SQL statement
+select emaj.emaj_delete_mark_group('myGroup2','DummyMark');
+ERROR:  _check_mark_name: The mark "DummyMark" does not exist for the group "myGroup2".
+CONTEXT:  PL/pgSQL function emaj._check_mark_name(text[],text,text) line 41 at RAISE
+SQL statement "SELECT emaj._check_mark_name(v_groupNames := ARRAY[v_groupName], v_mark := v_mark, v_checkList := '')"
+PL/pgSQL function emaj.emaj_delete_mark_group(text,text) line 29 at SQL statement
+-- next attempts should be OK
+select emaj.emaj_delete_mark_group('myGroup1','EMAJ_LAST_MARK');
+ emaj_delete_mark_group 
+------------------------
+                      1
+(1 row)
+
+-- simulate SM3 is an end mark of a logged rollback operations on myGroup1 group
+update emaj.emaj_mark set mark_logged_rlbk_target_mark = 'SM1' where mark_group = 'myGroup1' and mark_name = 'SM3';
+select emaj.emaj_delete_mark_group('myGroup1','SM1');
+ emaj_delete_mark_group 
+------------------------
+                      1
+(1 row)
+
+select mark_group, mark_name, mark_logged_rlbk_target_mark from emaj.emaj_mark where mark_group = 'myGroup1' and mark_name = 'SM3';
+ mark_group | mark_name | mark_logged_rlbk_target_mark 
+------------+-----------+------------------------------
+ myGroup1   | SM3       | 
+(1 row)
+
+select emaj.emaj_delete_mark_group('emptyGroup','MarkInit');
+ emaj_delete_mark_group 
+------------------------
+                      1
+(1 row)
+
+select emaj.emaj_delete_mark_group('myGroup1','First Mark');
+ emaj_delete_mark_group 
+------------------------
+                      1
+(1 row)
+
+select sum(emaj.emaj_delete_mark_group('myGroup1',mark_name)) from 
+ (select mark_name from emaj.emaj_mark
+    where mark_group = 'myGroup1' and (mark_name ~ E'\\d\\d\.\\d\\d\\.\\d\\d\\.\\d\\d\\d')
+    order by mark_time_id) as t;
+ sum 
+-----
+   5
+(1 row)
+
+    
+select emaj.emaj_delete_mark_group('myGroup2','john''s mark #1');
+ emaj_delete_mark_group 
+------------------------
+                      1
+(1 row)
+
+-- error: at least 1 mark should remain
+select emaj.emaj_delete_mark_group('myGroup1','SM3');
+ERROR:  emaj_delete_mark_group: "SM3" is the only mark of the group. It cannot be deleted.
+CONTEXT:  PL/pgSQL function emaj.emaj_delete_mark_group(text,text) line 34 at RAISE
+-----------------------------
+-- emaj_delete_before_mark_group() tests
+-----------------------------
+-- group is unknown in emaj_group_def
+select emaj.emaj_delete_before_mark_group(NULL,NULL);
+ERROR:  _check_group_names: No group to process.
+CONTEXT:  PL/pgSQL function emaj._check_group_names(text[],boolean,boolean,text) line 28 at RAISE
+SQL statement "SELECT emaj._check_group_names(v_groupNames := ARRAY[v_groupName], v_mayBeNull := FALSE, v_lockGroups := TRUE, v_checkList := '')"
+PL/pgSQL function emaj.emaj_delete_before_mark_group(text,text) line 17 at PERFORM
+select emaj.emaj_delete_before_mark_group('unknownGroup',NULL);
+ERROR:  _check_group_names: The group "unknownGroup" does not exist.
+CONTEXT:  PL/pgSQL function emaj._check_group_names(text[],boolean,boolean,text) line 36 at RAISE
+SQL statement "SELECT emaj._check_group_names(v_groupNames := ARRAY[v_groupName], v_mayBeNull := FALSE, v_lockGroups := TRUE, v_checkList := '')"
+PL/pgSQL function emaj.emaj_delete_before_mark_group(text,text) line 17 at PERFORM
+-- unknown mark name
+select emaj.emaj_delete_before_mark_group('myGroup2','DummyMark');
+ERROR:  _check_mark_name: The mark "DummyMark" does not exist for the group "myGroup2".
+CONTEXT:  PL/pgSQL function emaj._check_mark_name(text[],text,text) line 41 at RAISE
+SQL statement "SELECT emaj._check_mark_name(v_groupNames := ARRAY[v_groupName], v_mark := v_mark, v_checkList := '')"
+PL/pgSQL function emaj.emaj_delete_before_mark_group(text,text) line 23 at SQL statement
+-- NULL input for mark name returns NULL
+select emaj.emaj_delete_before_mark_group('myGroup2',NULL);
+ emaj_delete_before_mark_group 
+-------------------------------
+                              
+(1 row)
+
+-- should be OK
+select emaj.emaj_delete_before_mark_group('myGroup1','SM3');
+ emaj_delete_before_mark_group 
+-------------------------------
+                             0
+(1 row)
+
+select emaj.emaj_delete_before_mark_group('myGroup1','EMAJ_LAST_MARK');
+ emaj_delete_before_mark_group 
+-------------------------------
+                             0
+(1 row)
+
+select emaj.emaj_set_mark_group('emptyGroup','EGM3');
+ emaj_set_mark_group 
+---------------------
+                   0
+(1 row)
+
+select emaj.emaj_set_mark_group('emptyGroup','EGM4');
+ emaj_set_mark_group 
+---------------------
+                   0
+(1 row)
+
+select emaj.emaj_delete_before_mark_group('emptyGroup','SM2');
+ emaj_delete_before_mark_group 
+-------------------------------
+                             0
+(1 row)
+
+-- simulate SM2 is an end mark of a logged rollback operations on myGroup2 group
+update emaj.emaj_mark set mark_logged_rlbk_target_mark = 'SM1' where mark_group = 'myGroup2' and mark_name = 'SM2';
+-- and delete marks including SM1
+select emaj.emaj_delete_before_mark_group('myGroup2',
+      (select emaj.emaj_get_previous_mark_group('myGroup2',
+             (select time_clock_timestamp from emaj.emaj_mark, emaj.emaj_time_stamp where time_id = mark_time_id and mark_group = 'myGroup2' and mark_group = 'myGroup2' and mark_name = 'SM2')+'0.000001 SECOND'::interval)));
+ emaj_delete_before_mark_group 
+-------------------------------
+                             8
+(1 row)
+
+select mark_group, mark_name, mark_logged_rlbk_target_mark from emaj.emaj_mark where mark_group = 'myGroup2' and mark_name = 'SM2';
+ mark_group | mark_name | mark_logged_rlbk_target_mark 
+------------+-----------+------------------------------
+ myGroup2   | SM2       | 
+(1 row)
+
+-- check emaj_delete_before_mark_group() also cleans up the emaj_hist table
+insert into emaj.emaj_param (param_key, param_value_interval) values ('history_retention','0 second'::interval);
+select emaj.emaj_set_mark_group('phil''s group#3",','Mark4');
+ emaj_set_mark_group 
+---------------------
+                   4
+(1 row)
+
+select emaj.emaj_delete_before_mark_group('phil''s group#3",','Mark4');
+ emaj_delete_before_mark_group 
+-------------------------------
+                             1
+(1 row)
+
+delete from emaj.emaj_param where param_key = 'history_retention';
+-----------------------------
+-- emaj_protect_mark_group() tests
+-----------------------------
+-- group is unknown
+select emaj.emaj_protect_mark_group(NULL,NULL);
+ERROR:  _check_group_names: No group to process.
+CONTEXT:  PL/pgSQL function emaj._check_group_names(text[],boolean,boolean,text) line 28 at RAISE
+SQL statement "SELECT emaj._check_group_names(v_groupNames := ARRAY[v_groupName], v_mayBeNull := FALSE, v_lockGroups := TRUE, v_checkList := 'ROLLBACKABLE')"
+PL/pgSQL function emaj.emaj_protect_mark_group(text,text) line 11 at PERFORM
+select emaj.emaj_protect_mark_group('unknownGroup',NULL);
+ERROR:  _check_group_names: The group "unknownGroup" does not exist.
+CONTEXT:  PL/pgSQL function emaj._check_group_names(text[],boolean,boolean,text) line 36 at RAISE
+SQL statement "SELECT emaj._check_group_names(v_groupNames := ARRAY[v_groupName], v_mayBeNull := FALSE, v_lockGroups := TRUE, v_checkList := 'ROLLBACKABLE')"
+PL/pgSQL function emaj.emaj_protect_mark_group(text,text) line 11 at PERFORM
+-- group is not rollbackable
+select emaj.emaj_protect_mark_group('phil''s group#3",',NULL);
+ERROR:  _check_group_names: The group "phil's group#3"," has been created as AUDIT_ONLY.
+CONTEXT:  PL/pgSQL function emaj._check_group_names(text[],boolean,boolean,text) line 50 at RAISE
+SQL statement "SELECT emaj._check_group_names(v_groupNames := ARRAY[v_groupName], v_mayBeNull := FALSE, v_lockGroups := TRUE, v_checkList := 'ROLLBACKABLE')"
+PL/pgSQL function emaj.emaj_protect_mark_group(text,text) line 11 at PERFORM
+-- mark is unknown
+select emaj.emaj_protect_mark_group('myGroup1',NULL);
+ERROR:  _check_mark_name: The mark "<NULL>" does not exist for the group "myGroup1".
+CONTEXT:  PL/pgSQL function emaj._check_mark_name(text[],text,text) line 41 at RAISE
+SQL statement "SELECT emaj._check_mark_name(v_groupNames := ARRAY[v_groupName], v_mark := v_mark, v_checkList := 'ACTIVE')"
+PL/pgSQL function emaj.emaj_protect_mark_group(text,text) line 13 at SQL statement
+select emaj.emaj_protect_mark_group('myGroup1','unknownMark');
+ERROR:  _check_mark_name: The mark "unknownMark" does not exist for the group "myGroup1".
+CONTEXT:  PL/pgSQL function emaj._check_mark_name(text[],text,text) line 41 at RAISE
+SQL statement "SELECT emaj._check_mark_name(v_groupNames := ARRAY[v_groupName], v_mark := v_mark, v_checkList := 'ACTIVE')"
+PL/pgSQL function emaj.emaj_protect_mark_group(text,text) line 13 at SQL statement
+-- should be ok
+select emaj.emaj_protect_mark_group('myGroup1','EMAJ_LAST_MARK');
+ emaj_protect_mark_group 
+-------------------------
+                       1
+(1 row)
+
+select mark_time_id, mark_name, mark_group, mark_is_deleted, mark_is_rlbk_protected from emaj.emaj_mark where mark_group = 'myGroup1';
+ mark_time_id | mark_name | mark_group | mark_is_deleted | mark_is_rlbk_protected 
+--------------+-----------+------------+-----------------+------------------------
+         2011 | SM3       | myGroup1   | f               | t
+(1 row)
+
+select emaj.emaj_protect_mark_group('emptyGroup','EMAJ_LAST_MARK');
+ emaj_protect_mark_group 
+-------------------------
+                       1
+(1 row)
+
+-- protect an already protected group
+select emaj.emaj_protect_mark_group('myGroup1','SM3');
+ emaj_protect_mark_group 
+-------------------------
+                       0
+(1 row)
+
+select mark_time_id, mark_name, mark_group, mark_is_deleted, mark_is_rlbk_protected from emaj.emaj_mark where mark_group = 'myGroup1';
+ mark_time_id | mark_name | mark_group | mark_is_deleted | mark_is_rlbk_protected 
+--------------+-----------+------------+-----------------+------------------------
+         2011 | SM3       | myGroup1   | f               | t
+(1 row)
+
+-----------------------------
+-- emaj_unprotect_mark_group() tests
+-----------------------------
+-- group is unknown
+select emaj.emaj_unprotect_mark_group(NULL,NULL);
+ERROR:  _check_group_names: No group to process.
+CONTEXT:  PL/pgSQL function emaj._check_group_names(text[],boolean,boolean,text) line 28 at RAISE
+SQL statement "SELECT emaj._check_group_names(v_groupNames := ARRAY[v_groupName], v_mayBeNull := FALSE, v_lockGroups := TRUE, v_checkList := 'ROLLBACKABLE')"
+PL/pgSQL function emaj.emaj_unprotect_mark_group(text,text) line 10 at PERFORM
+select emaj.emaj_unprotect_mark_group('unknownGroup',NULL);
+ERROR:  _check_group_names: The group "unknownGroup" does not exist.
+CONTEXT:  PL/pgSQL function emaj._check_group_names(text[],boolean,boolean,text) line 36 at RAISE
+SQL statement "SELECT emaj._check_group_names(v_groupNames := ARRAY[v_groupName], v_mayBeNull := FALSE, v_lockGroups := TRUE, v_checkList := 'ROLLBACKABLE')"
+PL/pgSQL function emaj.emaj_unprotect_mark_group(text,text) line 10 at PERFORM
+-- group is not rollbackable
+select emaj.emaj_unprotect_mark_group('phil''s group#3",',NULL);
+ERROR:  _check_group_names: The group "phil's group#3"," has been created as AUDIT_ONLY.
+CONTEXT:  PL/pgSQL function emaj._check_group_names(text[],boolean,boolean,text) line 50 at RAISE
+SQL statement "SELECT emaj._check_group_names(v_groupNames := ARRAY[v_groupName], v_mayBeNull := FALSE, v_lockGroups := TRUE, v_checkList := 'ROLLBACKABLE')"
+PL/pgSQL function emaj.emaj_unprotect_mark_group(text,text) line 10 at PERFORM
+-- mark is unknown
+select emaj.emaj_unprotect_mark_group('myGroup1',NULL);
+ERROR:  _check_mark_name: The mark "<NULL>" does not exist for the group "myGroup1".
+CONTEXT:  PL/pgSQL function emaj._check_mark_name(text[],text,text) line 41 at RAISE
+SQL statement "SELECT emaj._check_mark_name(v_groupNames := ARRAY[v_groupName], v_mark := v_mark, v_checkList := '')"
+PL/pgSQL function emaj.emaj_unprotect_mark_group(text,text) line 12 at SQL statement
+select emaj.emaj_unprotect_mark_group('myGroup1','unknownMark');
+ERROR:  _check_mark_name: The mark "unknownMark" does not exist for the group "myGroup1".
+CONTEXT:  PL/pgSQL function emaj._check_mark_name(text[],text,text) line 41 at RAISE
+SQL statement "SELECT emaj._check_mark_name(v_groupNames := ARRAY[v_groupName], v_mark := v_mark, v_checkList := '')"
+PL/pgSQL function emaj.emaj_unprotect_mark_group(text,text) line 12 at SQL statement
+-- should be ok
+select emaj.emaj_unprotect_mark_group('myGroup1','EMAJ_LAST_MARK');
+ emaj_unprotect_mark_group 
+---------------------------
+                         1
+(1 row)
+
+select mark_time_id, mark_name, mark_group, mark_is_deleted, mark_is_rlbk_protected from emaj.emaj_mark where mark_group = 'myGroup1';
+ mark_time_id | mark_name | mark_group | mark_is_deleted | mark_is_rlbk_protected 
+--------------+-----------+------------+-----------------+------------------------
+         2011 | SM3       | myGroup1   | f               | f
+(1 row)
+
+select emaj.emaj_unprotect_mark_group('emptyGroup','EMAJ_LAST_MARK');
+ emaj_unprotect_mark_group 
+---------------------------
+                         1
+(1 row)
+
+-- protect an already protected group
+select emaj.emaj_unprotect_mark_group('myGroup1','SM3');
+ emaj_unprotect_mark_group 
+---------------------------
+                         0
+(1 row)
+
+select mark_time_id, mark_name, mark_group, mark_is_deleted, mark_is_rlbk_protected from emaj.emaj_mark where mark_group = 'myGroup1';
+ mark_time_id | mark_name | mark_group | mark_is_deleted | mark_is_rlbk_protected 
+--------------+-----------+------------+-----------------+------------------------
+         2011 | SM3       | myGroup1   | f               | f
+(1 row)
+
+-- check mark protections is removed by stop_group functions
+select emaj.emaj_protect_mark_group('myGroup1','EMAJ_LAST_MARK');
+ emaj_protect_mark_group 
+-------------------------
+                       1
+(1 row)
+
+select regexp_replace(mark_name,E'\\d\\d\.\\d\\d\\.\\d\\d\\.\\d\\d\\d','%','g'), mark_is_deleted, mark_is_rlbk_protected 
+  from emaj.emaj_mark where mark_group = 'myGroup1' order by mark_time_id, mark_group;
+ regexp_replace | mark_is_deleted | mark_is_rlbk_protected 
+----------------+-----------------+------------------------
+ SM3            | f               | t
+(1 row)
+
+  
+select emaj.emaj_stop_group('myGroup1');
+ emaj_stop_group 
+-----------------
+               7
+(1 row)
+
+select regexp_replace(mark_name,E'\\d\\d\.\\d\\d\\.\\d\\d\\.\\d\\d\\d','%','g'), mark_is_deleted, mark_is_rlbk_protected 
+  from emaj.emaj_mark where mark_group = 'myGroup1' order by mark_time_id, mark_group;
+ regexp_replace | mark_is_deleted | mark_is_rlbk_protected 
+----------------+-----------------+------------------------
+ SM3            | t               | f
+ STOP_%         | t               | f
+(2 rows)
+
+-----------------------------
+-- test functions with group not in logging state 
+-----------------------------
+-- myGroup1 is already stopped
+select emaj.emaj_stop_group('myGroup2');
+ emaj_stop_group 
+-----------------
+               8
+(1 row)
+
+select emaj.emaj_set_mark_group('myGroup1','SM1');
+ERROR:  _check_group_names: The group "myGroup1" is not in LOGGING state.
+CONTEXT:  PL/pgSQL function emaj._check_group_names(text[],boolean,boolean,text) line 72 at RAISE
+SQL statement "SELECT emaj._check_group_names(v_groupNames := ARRAY[v_groupName], v_mayBeNull := FALSE, v_lockGroups := TRUE, v_checkList := 'LOGGING')"
+PL/pgSQL function emaj.emaj_set_mark_group(text,text) line 15 at PERFORM
+select emaj.emaj_set_mark_groups(array['myGroup1','myGroup2'],'SM1');
+ERROR:  _check_group_names: The groups "myGroup1, myGroup2" are not in LOGGING state.
+CONTEXT:  PL/pgSQL function emaj._check_group_names(text[],boolean,boolean,text) line 75 at RAISE
+SQL statement "SELECT emaj._check_group_names(v_groupNames := v_groupNames, v_mayBeNull := TRUE, v_lockGroups := TRUE, v_checkList := 'LOGGING')"
+PL/pgSQL function emaj.emaj_set_mark_groups(text[],text) line 15 at SQL statement
+select emaj.emaj_rename_mark_group('myGroup1','EMAJ_LAST_MARK','RENAMED');
+ emaj_rename_mark_group 
+------------------------
+ 
+(1 row)
+
+select emaj.emaj_protect_mark_group('myGroup1','RENAMED');
+ERROR:  _check_mark_name: For the group "myGroup1", the mark "RENAMED" is DELETED.
+CONTEXT:  PL/pgSQL function emaj._check_mark_name(text[],text,text) line 58 at RAISE
+SQL statement "SELECT emaj._check_mark_name(v_groupNames := ARRAY[v_groupName], v_mark := v_mark, v_checkList := 'ACTIVE')"
+PL/pgSQL function emaj.emaj_protect_mark_group(text,text) line 13 at SQL statement
+select emaj.emaj_unprotect_mark_group('myGroup1','EMAJ_LAST_MARK');
+ emaj_unprotect_mark_group 
+---------------------------
+                         0
+(1 row)
+
+-- check marks state
+select mark_group, regexp_replace(mark_name,E'\\d\\d\.\\d\\d\\.\\d\\d\\.\\d\\d\\d','%','g'), mark_time_id, mark_is_deleted, mark_is_rlbk_protected, mark_comment, mark_log_rows_before_next, mark_logged_rlbk_target_mark from emaj.emaj_mark order by mark_time_id, mark_group;
+    mark_group    | regexp_replace | mark_time_id | mark_is_deleted | mark_is_rlbk_protected |              mark_comment              | mark_log_rows_before_next | mark_logged_rlbk_target_mark 
+------------------+----------------+--------------+-----------------+------------------------+----------------------------------------+---------------------------+------------------------------
+ emptyGroup       | SM2            |         2006 | f               | f                      | a comment on a mark for an empty group |                         0 | Mark1
+ myGroup1         | SM3            |         2011 | t               | f                      |                                        |                         0 | 
+ myGroup2         | SM2            |         2015 | t               | f                      | a comment for group #2                 |                         0 | 
+ emptyGroup       | EGM3           |         2016 | f               | f                      |                                        |                         0 | 
+ emptyGroup       | EGM4           |         2017 | f               | f                      |                                        |                         0 | 
+ phil's group#3", | Mark4          |         2018 | f               | f                      |                                        |                         0 | 
+ myGroup1         | RENAMED        |         2019 | t               | f                      |                                        |                         0 | 
+ myGroup2         | STOP_%         |         2020 | t               | f                      |                                        |                         0 | 
+(8 rows)
+
+select sequ_schema, sequ_name, sequ_time_id, sequ_last_val, sequ_is_called from emaj.emaj_sequence order by sequ_time_id, sequ_schema, sequ_name;
+     sequ_schema     |      sequ_name      | sequ_time_id | sequ_last_val | sequ_is_called 
+---------------------+---------------------+--------------+---------------+----------------
+ emaj_myschema1      | myTbl3_log_seq      |         2011 |             1 | f
+ emaj_myschema1      | mytbl1_log_seq      |         2011 |             1 | f
+ emaj_myschema1      | mytbl2_log_seq      |         2011 |             1 | f
+ emaj_myschema1      | mytbl2b_log_seq     |         2011 |             1 | f
+ emaj_myschema1      | mytbl4_log_seq      |         2011 |             1 | f
+ myschema1           | myTbl3_col31_seq    |         2011 |             1 | f
+ myschema1           | mytbl2b_col20_seq   |         2011 |             1 | f
+ emaj_myschema2      | myTbl3_log_seq      |         2015 |             1 | f
+ emaj_myschema2      | mytbl1_log_seq      |         2015 |             1 | f
+ emaj_myschema2      | mytbl2_log_seq      |         2015 |             1 | f
+ emaj_myschema2      | mytbl4_log_seq      |         2015 |             1 | f
+ emaj_myschema2      | mytbl5_log_seq      |         2015 |             1 | f
+ emaj_myschema2      | mytbl6_log_seq      |         2015 |             1 | f
+ myschema2           | myTbl3_col31_seq    |         2015 |             1 | f
+ myschema2           | myseq1              |         2015 |          1000 | f
+ emaj_phil's schema3 | myTbl2\_log_seq     |         2018 |             1 | f
+ emaj_phil's schema3 | phil's tbl1_log_seq |         2018 |             1 | f
+ phil's schema3      | myTbl2\_col21_seq   |         2018 |             1 | f
+ phil's schema3      | phil's seq\1        |         2018 |          1000 | f
+ emaj_myschema1      | myTbl3_log_seq      |         2019 |             1 | f
+ emaj_myschema1      | mytbl1_log_seq      |         2019 |             1 | f
+ emaj_myschema1      | mytbl2_log_seq      |         2019 |             1 | f
+ emaj_myschema1      | mytbl2b_log_seq     |         2019 |             1 | f
+ emaj_myschema1      | mytbl4_log_seq      |         2019 |             1 | f
+ myschema1           | myTbl3_col31_seq    |         2019 |             1 | f
+ myschema1           | mytbl2b_col20_seq   |         2019 |             1 | f
+ emaj_myschema2      | myTbl3_log_seq      |         2020 |             1 | f
+ emaj_myschema2      | mytbl1_log_seq      |         2020 |             1 | f
+ emaj_myschema2      | mytbl2_log_seq      |         2020 |             1 | f
+ emaj_myschema2      | mytbl4_log_seq      |         2020 |             1 | f
+ emaj_myschema2      | mytbl5_log_seq      |         2020 |             1 | f
+ emaj_myschema2      | mytbl6_log_seq      |         2020 |             1 | f
+ myschema2           | myTbl3_col31_seq    |         2020 |             1 | f
+ myschema2           | myseq1              |         2020 |          1000 | f
+(34 rows)
+
+-----------------------------
+-- test end: check, reset history and force sequences id
+-----------------------------
+select time_id, time_last_emaj_gid, time_event from emaj.emaj_time_stamp where time_id >= 2000 order by time_id;
+ time_id | time_last_emaj_gid | time_event 
+---------+--------------------+------------
+    2000 |                  2 | M
+    2001 |                  2 | M
+    2002 |                  2 | M
+    2003 |                  2 | M
+    2004 |                  2 | M
+    2005 |                  2 | M
+    2006 |                  2 | M
+    2007 |                  2 | M
+    2008 |                  2 | M
+    2009 |                  2 | M
+    2010 |                  2 | M
+    2011 |                  2 | M
+    2012 |                  2 | M
+    2013 |                  2 | M
+    2014 |                  2 | M
+    2015 |                  2 | M
+    2016 |                  2 | M
+    2017 |                  2 | M
+    2018 |                  2 | M
+    2019 |                  2 | M
+    2020 |                  2 | M
+(21 rows)
+
+select hist_id, hist_function, hist_event, regexp_replace(hist_object,E'\\d\\d\.\\d\\d\\.\\d\\d\\.\\d\\d\\d','%','g'), regexp_replace(regexp_replace(hist_wording,E'\\d\\d\.\\d\\d\\.\\d\\d\\.\\d\\d\\d','%','g'),E'\\[.+\\]','(timestamp)','g'), hist_user from 
+  (select * from emaj.emaj_hist order by hist_id) as t;
+ hist_id |      hist_function       | hist_event |  regexp_replace   |                 regexp_replace                  | hist_user 
+---------+--------------------------+------------+-------------------+-------------------------------------------------+-----------
+    2033 | SET_MARK_GROUP           | BEGIN      | emptyGroup        |                                                 | postgres
+    2034 | LOCK_GROUP               | BEGIN      | emptyGroup        |                                                 | postgres
+    2035 | LOCK_GROUP               | END        | emptyGroup        | 0 tables locked, 0 deadlock(s)                  | postgres
+    2036 | SET_MARK_GROUP           | END        | emptyGroup        | SM1                                             | postgres
+    2038 | SET_MARK_GROUP           | BEGIN      | myGroup1          |                                                 | postgres
+    2039 | LOCK_GROUP               | BEGIN      | myGroup1          |                                                 | postgres
+    2040 | LOCK_GROUP               | END        | myGroup1          | 5 tables locked, 0 deadlock(s)                  | postgres
+    2041 | SET_MARK_GROUP           | END        | myGroup1          | MARK_%                                          | postgres
+    2042 | SET_MARK_GROUP           | BEGIN      | myGroup2          |                                                 | postgres
+    2043 | LOCK_GROUP               | BEGIN      | myGroup2          |                                                 | postgres
+    2044 | LOCK_GROUP               | END        | myGroup2          | 6 tables locked, 0 deadlock(s)                  | postgres
+    2045 | SET_MARK_GROUP           | END        | myGroup2          | MARK_%                                          | postgres
+    2046 | SET_MARK_GROUP           | BEGIN      | myGroup2          |                                                 | postgres
+    2047 | LOCK_GROUP               | BEGIN      | myGroup2          |                                                 | postgres
+    2048 | LOCK_GROUP               | END        | myGroup2          | 6 tables locked, 0 deadlock(s)                  | postgres
+    2049 | SET_MARK_GROUP           | END        | myGroup2          | MARK_%                                          | postgres
+    2050 | SET_MARK_GROUP           | BEGIN      | myGroup1          |                                                 | postgres
+    2051 | LOCK_GROUP               | BEGIN      | myGroup1          |                                                 | postgres
+    2052 | LOCK_GROUP               | END        | myGroup1          | 5 tables locked, 0 deadlock(s)                  | postgres
+    2053 | SET_MARK_GROUP           | END        | myGroup1          | Foo%Bar                                         | postgres
+    2054 | SET_MARK_GROUPS          | BEGIN      |                   |                                                 | postgres
+    2055 | SET_MARK_GROUPS          | END        |                   |                                                 | postgres
+    2058 | SET_MARK_GROUPS          | BEGIN      | myGroup1,myGroup2 | SM3                                             | postgres
+    2059 | LOCK_GROUPS              | BEGIN      | myGroup1,myGroup2 |                                                 | postgres
+    2060 | LOCK_GROUPS              | END        | myGroup1,myGroup2 | 11 tables locked, 0 deadlock(s)                 | postgres
+    2061 | SET_MARK_GROUPS          | END        | myGroup1,myGroup2 | SM3                                             | postgres
+    2063 | SET_MARK_GROUPS          | BEGIN      | myGroup1,myGroup2 |                                                 | postgres
+    2064 | LOCK_GROUPS              | BEGIN      | myGroup1,myGroup2 |                                                 | postgres
+    2065 | LOCK_GROUPS              | END        | myGroup1,myGroup2 | 11 tables locked, 0 deadlock(s)                 | postgres
+    2066 | SET_MARK_GROUPS          | END        | myGroup1,myGroup2 |                                                 | postgres
+    2067 | SET_MARK_GROUPS          | BEGIN      | myGroup1,myGroup2 |                                                 | postgres
+    2068 | LOCK_GROUPS              | BEGIN      | myGroup1,myGroup2 |                                                 | postgres
+    2069 | LOCK_GROUPS              | END        | myGroup1,myGroup2 | 11 tables locked, 0 deadlock(s)                 | postgres
+    2070 | SET_MARK_GROUPS          | END        | myGroup1,myGroup2 |                                                 | postgres
+    2071 | SET_MARK_GROUPS          | BEGIN      | myGroup1,myGroup2 |                                                 | postgres
+    2072 | LOCK_GROUPS              | BEGIN      | myGroup1,myGroup2 |                                                 | postgres
+    2073 | LOCK_GROUPS              | END        | myGroup1,myGroup2 | 11 tables locked, 0 deadlock(s)                 | postgres
+    2074 | SET_MARK_GROUPS          | END        | myGroup1,myGroup2 |                                                 | postgres
+    2075 | SET_MARK_GROUPS          | BEGIN      | myGroup1,myGroup2 | Bar%Foo                                         | postgres
+    2076 | LOCK_GROUPS              | BEGIN      | myGroup1,myGroup2 |                                                 | postgres
+    2077 | LOCK_GROUPS              | END        | myGroup1,myGroup2 | 11 tables locked, 0 deadlock(s)                 | postgres
+    2078 | SET_MARK_GROUPS          | END        | myGroup1,myGroup2 | Bar%Foo                                         | postgres
+    2079 | COMMENT_MARK_GROUP       |            | myGroup1          | Mark SM1                                        | postgres
+    2080 | COMMENT_MARK_GROUP       |            | myGroup1          | Mark SM1                                        | postgres
+    2081 | COMMENT_MARK_GROUP       |            | myGroup2          | Mark SM1                                        | postgres
+    2082 | COMMENT_MARK_GROUP       |            | myGroup2          | Mark SM1                                        | postgres
+    2083 | COMMENT_MARK_GROUP       |            | myGroup2          | Mark Bar%Foo                                    | postgres
+    2084 | COMMENT_MARK_GROUP       |            | myGroup2          | Mark phil's mark #1                             | postgres
+    2085 | COMMENT_MARK_GROUP       |            | emptyGroup        | Mark SM1                                        | postgres
+    2091 | RENAME_MARK_GROUP        | BEGIN      | myGroup1          | EMAJ_LAST_MARK                                  | postgres
+    2092 | RENAME_MARK_GROUP        | END        | myGroup1          | Bar%Foo renamed MARK_%                          | postgres
+    2093 | RENAME_MARK_GROUP        | BEGIN      | myGroup1          | EMAJ_LAST_MARK                                  | postgres
+    2094 | RENAME_MARK_GROUP        | END        | myGroup1          | MARK_% renamed SM2                              | postgres
+    2095 | RENAME_MARK_GROUP        | BEGIN      | myGroup2          | EMAJ_LAST_MARK                                  | postgres
+    2096 | RENAME_MARK_GROUP        | END        | myGroup2          | Bar%Foo renamed SM2                             | postgres
+    2097 | RENAME_MARK_GROUP        | BEGIN      | myGroup2          | phil's mark #1                                  | postgres
+    2098 | RENAME_MARK_GROUP        | END        | myGroup2          | phil's mark #1 renamed john's mark #1           | postgres
+    2099 | RENAME_MARK_GROUP        | BEGIN      | emptyGroup        | EMAJ_LAST_MARK                                  | postgres
+    2100 | RENAME_MARK_GROUP        | END        | emptyGroup        | SM1 renamed SM2                                 | postgres
+    2101 | RENAME_MARK_GROUP        | BEGIN      | myGroup1          | Mark1                                           | postgres
+    2102 | RENAME_MARK_GROUP        | END        | myGroup1          | Mark1 renamed First Mark                        | postgres
+    2107 | DELETE_MARK_GROUP        | BEGIN      | myGroup1          | EMAJ_LAST_MARK                                  | postgres
+    2108 | DELETE_MARK_GROUP        | END        | myGroup1          | SM2                                             | postgres
+    2109 | DELETE_MARK_GROUP        | BEGIN      | myGroup1          | SM1                                             | postgres
+    2110 | DELETE_MARK_GROUP        | END        | myGroup1          | SM1                                             | postgres
+    2111 | DELETE_MARK_GROUP        | BEGIN      | emptyGroup        | MarkInit                                        | postgres
+    2112 | DELETE_MARK_GROUP        | END        | emptyGroup        | MarkInit                                        | postgres
+    2113 | DELETE_MARK_GROUP        | BEGIN      | myGroup1          | First Mark                                      | postgres
+    2114 | DELETE_MARK_GROUP        | END        | myGroup1          | First Mark                                      | postgres
+    2115 | DELETE_MARK_GROUP        | BEGIN      | myGroup1          | MARK_%                                          | postgres
+    2116 | DELETE_MARK_GROUP        | END        | myGroup1          | MARK_%                                          | postgres
+    2117 | DELETE_MARK_GROUP        | BEGIN      | myGroup1          | Foo%Bar                                         | postgres
+    2118 | DELETE_MARK_GROUP        | END        | myGroup1          | Foo%Bar                                         | postgres
+    2119 | DELETE_MARK_GROUP        | BEGIN      | myGroup1          | MARK_%                                          | postgres
+    2120 | DELETE_MARK_GROUP        | END        | myGroup1          | MARK_%                                          | postgres
+    2121 | DELETE_MARK_GROUP        | BEGIN      | myGroup1          | MARK_%                                          | postgres
+    2122 | DELETE_MARK_GROUP        | END        | myGroup1          | MARK_%                                          | postgres
+    2123 | DELETE_MARK_GROUP        | BEGIN      | myGroup1          | MARK_%                                          | postgres
+    2124 | DELETE_MARK_GROUP        | END        | myGroup1          | MARK_%                                          | postgres
+    2125 | DELETE_MARK_GROUP        | BEGIN      | myGroup2          | john's mark #1                                  | postgres
+    2126 | DELETE_MARK_GROUP        | END        | myGroup2          | john's mark #1                                  | postgres
+    2131 | DELETE_BEFORE_MARK_GROUP | BEGIN      | myGroup2          |                                                 | postgres
+    2132 | DELETE_BEFORE_MARK_GROUP | BEGIN      | myGroup1          | SM3                                             | postgres
+    2133 | DELETE_BEFORE_MARK_GROUP | END        | myGroup1          | 0 marks deleted ; SM3 is now the initial mark   | postgres
+    2134 | DELETE_BEFORE_MARK_GROUP | BEGIN      | myGroup1          | EMAJ_LAST_MARK                                  | postgres
+    2135 | DELETE_BEFORE_MARK_GROUP | END        | myGroup1          | 0 marks deleted ; SM3 is now the initial mark   | postgres
+    2136 | SET_MARK_GROUP           | BEGIN      | emptyGroup        |                                                 | postgres
+    2137 | LOCK_GROUP               | BEGIN      | emptyGroup        |                                                 | postgres
+    2138 | LOCK_GROUP               | END        | emptyGroup        | 0 tables locked, 0 deadlock(s)                  | postgres
+    2139 | SET_MARK_GROUP           | END        | emptyGroup        | EGM3                                            | postgres
+    2140 | SET_MARK_GROUP           | BEGIN      | emptyGroup        |                                                 | postgres
+    2141 | LOCK_GROUP               | BEGIN      | emptyGroup        |                                                 | postgres
+    2142 | LOCK_GROUP               | END        | emptyGroup        | 0 tables locked, 0 deadlock(s)                  | postgres
+    2143 | SET_MARK_GROUP           | END        | emptyGroup        | EGM4                                            | postgres
+    2144 | DELETE_BEFORE_MARK_GROUP | BEGIN      | emptyGroup        | SM2                                             | postgres
+    2145 | DELETE_BEFORE_MARK_GROUP | END        | emptyGroup        | 0 marks deleted ; SM2 is now the initial mark   | postgres
+    2146 | DELETE_BEFORE_MARK_GROUP | BEGIN      | myGroup2          | SM2                                             | postgres
+    2147 | DELETE_BEFORE_MARK_GROUP | END        | myGroup2          | 8 marks deleted ; SM2 is now the initial mark   | postgres
+    2148 | SET_MARK_GROUP           | BEGIN      | phil's group#3",  |                                                 | postgres
+    2149 | LOCK_GROUP               | BEGIN      | phil's group#3",  |                                                 | postgres
+    2150 | LOCK_GROUP               | END        | phil's group#3",  | 2 tables locked, 0 deadlock(s)                  | postgres
+    2151 | SET_MARK_GROUP           | END        | phil's group#3",  | Mark4                                           | postgres
+    2152 | DELETE_BEFORE_MARK_GROUP | BEGIN      | phil's group#3",  | Mark4                                           | postgres
+    2153 | PURGE_HISTORY            |            |                   | 209 emaj_hist rows deleted                      | postgres
+    2154 | DELETE_BEFORE_MARK_GROUP | END        | phil's group#3",  | 1 marks deleted ; Mark4 is now the initial mark | postgres
+    2155 | PROTECT_MARK_GROUP       |            | myGroup1          | Mark SM3 ; status 1                             | postgres
+    2156 | PROTECT_MARK_GROUP       |            | emptyGroup        | Mark EGM4 ; status 1                            | postgres
+    2157 | PROTECT_MARK_GROUP       |            | myGroup1          | Mark SM3 ; status 0                             | postgres
+    2158 | UNPROTECT_MARK_GROUP     |            | myGroup1          | Mark SM3 ; status 1                             | postgres
+    2159 | UNPROTECT_MARK_GROUP     |            | emptyGroup        | Mark EGM4 ; status 1                            | postgres
+    2160 | UNPROTECT_MARK_GROUP     |            | myGroup1          | Mark SM3 ; status 0                             | postgres
+    2161 | PROTECT_MARK_GROUP       |            | myGroup1          | Mark SM3 ; status 1                             | postgres
+    2162 | STOP_GROUP               | BEGIN      | myGroup1          |                                                 | postgres
+    2163 | LOCK_GROUP               | BEGIN      | myGroup1          |                                                 | postgres
+    2164 | LOCK_GROUP               | END        | myGroup1          | 5 tables locked, 0 deadlock(s)                  | postgres
+    2165 | SET_MARK_GROUP           | BEGIN      | myGroup1          | STOP_%                                          | postgres
+    2166 | SET_MARK_GROUP           | END        | myGroup1          | STOP_%                                          | postgres
+    2167 | STOP_GROUP               | END        | myGroup1          | 7 tables/sequences processed                    | postgres
+    2168 | STOP_GROUP               | BEGIN      | myGroup2          |                                                 | postgres
+    2169 | LOCK_GROUP               | BEGIN      | myGroup2          |                                                 | postgres
+    2170 | LOCK_GROUP               | END        | myGroup2          | 6 tables locked, 0 deadlock(s)                  | postgres
+    2171 | SET_MARK_GROUP           | BEGIN      | myGroup2          | STOP_%                                          | postgres
+    2172 | SET_MARK_GROUP           | END        | myGroup2          | STOP_%                                          | postgres
+    2173 | STOP_GROUP               | END        | myGroup2          | 8 tables/sequences processed                    | postgres
+    2176 | RENAME_MARK_GROUP        | BEGIN      | myGroup1          | EMAJ_LAST_MARK                                  | postgres
+    2177 | RENAME_MARK_GROUP        | END        | myGroup1          | STOP_% renamed RENAMED                          | postgres
+    2178 | UNPROTECT_MARK_GROUP     |            | myGroup1          | Mark RENAMED ; status 0                         | postgres
+(127 rows)
+

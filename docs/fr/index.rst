@@ -80,6 +80,7 @@ Bienvenue dans la documentation E-Maj !
 
    functionsList
    content
+   versionsMatrix
 
 Index et tables
 ===============

@@ -190,7 +190,7 @@ CONTEXT:  SQL statement "SELECT 0 FROM emaj._verify_groups(v_groupNames, TRUE)"
 PL/pgSQL function emaj._start_groups(text[],text,boolean,boolean) line 23 at PERFORM
 PL/pgSQL function emaj.emaj_start_group(text,text,boolean) line 12 at RETURN
 rollback;
--- detection of a table altered as WITH OIDS
+-- detection of a table altered as WITH OIDS (PG12+ generates an error)
 begin;
   alter table myschema1."myTbl3" set with oids;
   select emaj.emaj_start_group('myGroup1','M1');

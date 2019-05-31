@@ -1727,7 +1727,7 @@ begin;                                                                        --
 (3 rows)
 
 rollback;
--- detection of tables altered as WITH OIDS
+-- detection of tables altered as WITH OIDS (PG12+ generates an error)
 begin;
   alter table myschema1.mytbl4 set with oids;                                 -- table from a rollbackable group
   alter table "phil's schema3"."myTbl2\" set with oids;                       -- table from an audit_only group
@@ -1779,7 +1779,6 @@ begin;
   alter table myschema1.mytbl1 add column newcol int;
   update emaj.emaj_relation set rel_kind = 'S' where rel_schema = 'myschema2' and rel_tblseq = 'mytbl1' and upper_inf(rel_time_range);
   alter table myschema1.mytbl4 drop constraint mytbl4_pkey;
-  alter table myschema1.mytbl4 set with oids;
   select * from emaj.emaj_verify_all();
                                                                 emaj_verify_all                                                                
 -----------------------------------------------------------------------------------------------------------------------------------------------
@@ -1793,9 +1792,8 @@ begin;
  In group "myGroup1", the log function "emaj_myschema1"."mytbl1_log_fnct" is not found.
  In group "myGroup1", the log trigger "emaj_log_trg" on table "myschema1"."mytbl1" is not found.
  In rollbackable group "myGroup1", the table "myschema1"."mytbl4" has no primary key any more.
- In rollbackable group "myGroup1", the table "myschema1"."mytbl4" is WITH OIDS.
  2 tables groups need to be altered to match their configuration definition or to be repaired
-(12 rows)
+(11 rows)
 
 rollback;
 --
