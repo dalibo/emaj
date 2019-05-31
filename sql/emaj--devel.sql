@@ -1037,9 +1037,11 @@ $_check_conf_groups$
              format('in the group %s, the table or sequence %s.%s does not exist.', quote_ident(grpdef_group), quote_ident(grpdef_schema), quote_ident(grpdef_tblseq))
         FROM emaj.emaj_group_def
         WHERE grpdef_group = ANY(v_groupNames)
-          AND (grpdef_schema, grpdef_tblseq) NOT IN (
-            SELECT nspname, relname FROM pg_catalog.pg_class, pg_catalog.pg_namespace
-              WHERE relnamespace = pg_namespace.oid AND relkind IN ('r','S','p'));
+          AND NOT EXISTS (
+            SELECT 0 FROM pg_catalog.pg_class, pg_catalog.pg_namespace
+              WHERE relnamespace = pg_namespace.oid
+                AND grpdef_schema = nspname AND grpdef_tblseq = relname
+                AND relkind IN ('r','S','p'));
 ---- check that no application table is a partitioned table (only elementary partitions can be managed by E-Maj)
     RETURN QUERY
       SELECT 2, 1, grpdef_group, grpdef_schema, grpdef_tblseq, NULL::TEXT,
@@ -3268,8 +3270,10 @@ $_alter_plan$
           AND rel_group = ANY (v_groupNames)
           AND grpdef_group = ANY (v_groupNames)
 --   exclude relations that will have been removed in a previous step
-          AND (rel_schema, rel_tblseq) NOT IN (
-            SELECT altr_schema, altr_tblseq FROM emaj.emaj_alter_plan WHERE altr_time_id = v_timeId AND altr_step IN ('REMOVE_TBL', 'REMOVE_SEQ'));
+          AND NOT EXISTS (
+            SELECT 0 FROM emaj.emaj_alter_plan
+              WHERE altr_schema = rel_schema AND altr_tblseq = rel_tblseq
+                AND altr_time_id = v_timeId AND altr_step IN ('REMOVE_TBL', 'REMOVE_SEQ'));
 -- determine the groups that will be reset (i.e. those in IDLE state)
     INSERT INTO emaj.emaj_alter_plan (altr_time_id, altr_step, altr_schema, altr_tblseq, altr_group)
       SELECT v_timeId, 'RESET_GROUP', '', '', group_name
@@ -3287,8 +3291,10 @@ $_alter_plan$
           AND rel_kind = 'r'
           AND coalesce(rel_log_dat_tsp,'') <> coalesce(grpdef_log_dat_tsp,'')
 --   exclude tables that will have been repaired in a previous step
-          AND (rel_schema, rel_tblseq) NOT IN (
-            SELECT altr_schema, altr_tblseq FROM emaj.emaj_alter_plan WHERE altr_time_id = v_timeId AND altr_step = 'REPAIR_TBL');
+          AND NOT EXISTS (
+            SELECT 0 FROM emaj.emaj_alter_plan
+              WHERE altr_schema = rel_schema AND altr_tblseq = rel_tblseq
+                AND altr_time_id = v_timeId AND altr_step = 'REPAIR_TBL');
 -- determine the tables whose log data tablespace in emaj_group_def has changed
     INSERT INTO emaj.emaj_alter_plan (altr_time_id, altr_step, altr_schema, altr_tblseq, altr_group, altr_priority, altr_new_group)
       SELECT v_timeId, 'CHANGE_TBL_LOG_INDEX_TSP', rel_schema, rel_tblseq, rel_group, grpdef_priority,
@@ -3300,8 +3306,12 @@ $_alter_plan$
           AND rel_kind = 'r'
           AND coalesce(rel_log_idx_tsp,'') <> coalesce(grpdef_log_idx_tsp,'')
 --   exclude tables that will have been repaired in a previous step
-          AND (rel_schema, rel_tblseq) NOT IN (
-            SELECT altr_schema, altr_tblseq FROM emaj.emaj_alter_plan WHERE altr_time_id = v_timeId AND altr_step = 'REPAIR_TBL');
+----          AND (rel_schema, rel_tblseq) NOT IN (
+----            SELECT altr_schema, altr_tblseq FROM emaj.emaj_alter_plan WHERE altr_time_id = v_timeId AND altr_step = 'REPAIR_TBL');
+          AND NOT EXISTS (-----(rel_schema, rel_tblseq) NOT IN (
+            SELECT 0 FROM emaj.emaj_alter_plan
+              WHERE altr_schema = rel_schema AND altr_tblseq = rel_tblseq
+                AND altr_time_id = v_timeId AND altr_step = 'REPAIR_TBL');
 -- determine the tables or sequences that change their group ownership
     INSERT INTO emaj.emaj_alter_plan (altr_time_id, altr_step, altr_schema, altr_tblseq, altr_group, altr_priority, altr_new_group)
       SELECT v_timeId, CAST(CASE WHEN rel_kind = 'r' THEN 'MOVE_TBL' ELSE 'MOVE_SEQ' END AS emaj._alter_step_enum),
@@ -7580,8 +7590,10 @@ $_adjust_group_properties$
       -- adjust the group_has_waiting_changes column, only when needed
       modified_group AS (
         UPDATE emaj.emaj_group SET group_has_waiting_changes = NOT group_has_waiting_changes
-          WHERE group_has_waiting_changes = FALSE AND group_name IN (SELECT group_name FROM group_with_changes)
-             OR group_has_waiting_changes = TRUE AND group_name NOT IN (SELECT group_name FROM group_with_changes)
+          WHERE (group_has_waiting_changes = FALSE
+                 AND group_name IN (SELECT group_name FROM group_with_changes))
+             OR (group_has_waiting_changes = TRUE
+                 AND NOT EXISTS (SELECT 0 FROM group_with_changes WHERE group_with_changes.group_name = emaj_group.group_name))
           RETURNING group_name, group_has_waiting_changes
       ),
       -- insert a row in the history for each flag change
