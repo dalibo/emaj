@@ -352,7 +352,7 @@ primary key, btree, for table "emaj.emaj_mark"
 ----------------------+----------+-----------
  param_key            | text     | not null
  param_value_text     | text     | 
- param_value_int      | bigint   | 
+ param_value_numeric  | numeric  | 
  param_value_boolean  | boolean  | 
  param_value_interval | interval | 
 Indexes:
@@ -729,7 +729,7 @@ Owned by: emaj.emaj_time_stamp.time_id
 ----------------------+----------+-----------
  param_key            | text     | 
  param_value_text     | text     | 
- param_value_int      | bigint   | 
+ param_value_numeric  | numeric  | 
  param_value_boolean  | boolean  | 
  param_value_interval | interval | 
 

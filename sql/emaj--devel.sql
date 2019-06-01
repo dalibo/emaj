@@ -120,7 +120,7 @@ $$Global sequence to identifiy all rows of emaj log tables.$$;
 CREATE TABLE emaj.emaj_param (
   param_key                    TEXT        NOT NULL,       -- parameter key
   param_value_text             TEXT,                       -- value if type is text, otherwise NULL
-  param_value_int              BIGINT,                     -- value if type is bigint, otherwise NULL
+  param_value_numeric          NUMERIC,                    -- value if type is numeric, otherwise NULL
   param_value_boolean          BOOLEAN,                    -- value if type is boolean, otherwise NULL
   param_value_interval         INTERVAL,                   -- value if type is interval, otherwise NULL
   PRIMARY KEY (param_key)
@@ -628,7 +628,7 @@ CREATE VIEW emaj.emaj_visible_param WITH (security_barrier) AS
   SELECT param_key,
          CASE WHEN param_key = 'dblink_user_password' THEN '<masked data>'
                                                       ELSE param_value_text END AS param_value_text,
-         param_value_int, param_value_boolean, param_value_interval
+         param_value_numeric, param_value_boolean, param_value_interval
   FROM emaj.emaj_param;
 
 ------------------------------------

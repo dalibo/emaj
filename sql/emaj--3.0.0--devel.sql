@@ -269,6 +269,23 @@ $do$;
 ----------------------------------------------
 
 --
+-- rename and change the type of the emaj_param.param_value_int column
+--
+DROP VIEW emaj.emaj_visible_param;
+ALTER TABLE emaj.emaj_param ALTER COLUMN param_value_int TYPE NUMERIC;
+ALTER TABLE emaj.emaj_param RENAME COLUMN param_value_int TO param_value_numeric;
+
+--
+-- recreate the emaj_visible_param view
+--
+CREATE VIEW emaj.emaj_visible_param WITH (security_barrier) AS
+  SELECT param_key,
+         CASE WHEN param_key = 'dblink_user_password' THEN '<masked data>'
+                                                      ELSE param_value_text END AS param_value_text,
+         param_value_numeric, param_value_boolean, param_value_interval
+  FROM emaj.emaj_param;
+
+--
 -- drop both grpdef_log_schema_suffix and grpdef_emaj_names_prefix columns from the emaj_group_def table
 --
 ALTER TABLE emaj.emaj_group_def

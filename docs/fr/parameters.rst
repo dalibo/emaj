@@ -14,7 +14,7 @@ La structure de la table **emaj_param** est la suivante :
 +----------------------+----------+----------------------------------------------------------------+
 | param_value_text     | TEXT     | valeur du paramètre, s'il est de type texte (sinon NULL)       |
 +----------------------+----------+----------------------------------------------------------------+
-| param_value_int      | INT      | valeur du paramètre, s'il est de type entier (sinon NULL)      |
+| param_value_numeric  | NUMERIC  | valeur du paramètre, s'il est de type numérique (sinon NULL)   |
 +----------------------+----------+----------------------------------------------------------------+
 | param_value_boolean  | BOOLEAN  | valeur du paramètre, s'il est de type booléen (sinon NULL)     |
 +----------------------+----------+----------------------------------------------------------------+

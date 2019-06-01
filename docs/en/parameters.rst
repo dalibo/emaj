@@ -14,7 +14,7 @@ The **emaj_param** table structure is the following:
 +----------------------+----------+----------------------------------------------------------------+
 | param_value_text     | TEXT     | parameter value, if its type is text (otherwise NULL)          |
 +----------------------+----------+----------------------------------------------------------------+
-| param_value_int      | INT      | parameter value, if its type is integer (otherwise NULL)       |
+| param_value_numeric  | NUMERIC  | parameter value, if its type is numeric (otherwise NULL)       |
 +----------------------+----------+----------------------------------------------------------------+
 | param_value_boolean  | BOOLEAN  | parameter value, if its type is boolean (otherwise NULL)       |
 +----------------------+----------+----------------------------------------------------------------+
