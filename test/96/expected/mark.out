@@ -32,19 +32,21 @@ select emaj.emaj_start_group('emptyGroup','MarkInit');
 select emaj.emaj_set_mark_group(NULL,NULL);
 ERROR:  _check_group_names: No group to process.
 CONTEXT:  PL/pgSQL function emaj._check_group_names(text[],boolean,boolean,text) line 28 at RAISE
-SQL statement "SELECT emaj._check_group_names(v_groupNames := ARRAY[v_groupName], v_mayBeNull := FALSE, v_lockGroups := TRUE, v_checkList := 'LOGGING')"
+SQL statement "SELECT emaj._check_group_names(v_groupNames := ARRAY[v_groupName], v_mayBeNull := FALSE, v_lockGroups := TRUE,
+                                    v_checkList := 'LOGGING')"
 PL/pgSQL function emaj.emaj_set_mark_group(text,text) line 15 at PERFORM
 select emaj.emaj_set_mark_group('unknownGroup',NULL);
 ERROR:  _check_group_names: The group "unknownGroup" does not exist.
 CONTEXT:  PL/pgSQL function emaj._check_group_names(text[],boolean,boolean,text) line 36 at RAISE
-SQL statement "SELECT emaj._check_group_names(v_groupNames := ARRAY[v_groupName], v_mayBeNull := FALSE, v_lockGroups := TRUE, v_checkList := 'LOGGING')"
+SQL statement "SELECT emaj._check_group_names(v_groupNames := ARRAY[v_groupName], v_mayBeNull := FALSE, v_lockGroups := TRUE,
+                                    v_checkList := 'LOGGING')"
 PL/pgSQL function emaj.emaj_set_mark_group(text,text) line 15 at PERFORM
 -- reserved mark name
 select emaj.emaj_set_mark_group('myGroup1','EMAJ_LAST_MARK');
 ERROR:  _check_new_mark: "EMAJ_LAST_MARK" is not an allowed name for a new mark.
 CONTEXT:  PL/pgSQL function emaj._check_new_mark(text[],text) line 14 at RAISE
 SQL statement "SELECT emaj._check_new_mark(array[v_groupName], v_mark)"
-PL/pgSQL function emaj.emaj_set_mark_group(text,text) line 19 at SQL statement
+PL/pgSQL function emaj.emaj_set_mark_group(text,text) line 20 at SQL statement
 -- should be OK
 select emaj.emaj_set_mark_group('myGroup1','SM1');
  emaj_set_mark_group 
@@ -75,7 +77,7 @@ select emaj.emaj_set_mark_group('myGroup1','SM1');
 ERROR:  _check_new_mark: The group "myGroup1" already contains a mark named "SM1".
 CONTEXT:  PL/pgSQL function emaj._check_new_mark(text[],text) line 27 at RAISE
 SQL statement "SELECT emaj._check_new_mark(array[v_groupName], v_mark)"
-PL/pgSQL function emaj.emaj_set_mark_group(text,text) line 19 at SQL statement
+PL/pgSQL function emaj.emaj_set_mark_group(text,text) line 20 at SQL statement
 -- mark with generated name and in a single transaction
 begin transaction;
   select emaj.emaj_set_mark_group('myGroup1',NULL);
@@ -140,7 +142,7 @@ select emaj.emaj_set_mark_groups('{"myGroup1"}','EMAJ_LAST_MARK');
 ERROR:  _check_new_mark: "EMAJ_LAST_MARK" is not an allowed name for a new mark.
 CONTEXT:  PL/pgSQL function emaj._check_new_mark(text[],text) line 14 at RAISE
 SQL statement "SELECT emaj._check_new_mark(v_groupNames, v_mark)"
-PL/pgSQL function emaj.emaj_set_mark_groups(text[],text) line 21 at SQL statement
+PL/pgSQL function emaj.emaj_set_mark_groups(text[],text) line 22 at SQL statement
 -- should be OK
 select emaj.emaj_set_mark_groups('{"myGroup1","myGroup2"}','SM3');
  emaj_set_mark_groups 
@@ -153,7 +155,7 @@ select emaj.emaj_set_mark_groups(array['myGroup1',NULL,'myGroup2','','myGroup2',
 ERROR:  _check_new_mark: The groups "myGroup1, myGroup2" already contain a mark named "SM3".
 CONTEXT:  PL/pgSQL function emaj._check_new_mark(text[],text) line 29 at RAISE
 SQL statement "SELECT emaj._check_new_mark(v_groupNames, v_mark)"
-PL/pgSQL function emaj.emaj_set_mark_groups(text[],text) line 21 at SQL statement
+PL/pgSQL function emaj.emaj_set_mark_groups(text[],text) line 22 at SQL statement
 -- generated mark name
 select emaj.emaj_set_mark_groups('{"myGroup1","myGroup2"}','');
  emaj_set_mark_groups 
@@ -955,30 +957,33 @@ delete from emaj.emaj_param where param_key = 'history_retention';
 select emaj.emaj_protect_mark_group(NULL,NULL);
 ERROR:  _check_group_names: No group to process.
 CONTEXT:  PL/pgSQL function emaj._check_group_names(text[],boolean,boolean,text) line 28 at RAISE
-SQL statement "SELECT emaj._check_group_names(v_groupNames := ARRAY[v_groupName], v_mayBeNull := FALSE, v_lockGroups := TRUE, v_checkList := 'ROLLBACKABLE')"
+SQL statement "SELECT emaj._check_group_names(v_groupNames := ARRAY[v_groupName], v_mayBeNull := FALSE, v_lockGroups := TRUE,
+                                    v_checkList := 'ROLLBACKABLE')"
 PL/pgSQL function emaj.emaj_protect_mark_group(text,text) line 11 at PERFORM
 select emaj.emaj_protect_mark_group('unknownGroup',NULL);
 ERROR:  _check_group_names: The group "unknownGroup" does not exist.
 CONTEXT:  PL/pgSQL function emaj._check_group_names(text[],boolean,boolean,text) line 36 at RAISE
-SQL statement "SELECT emaj._check_group_names(v_groupNames := ARRAY[v_groupName], v_mayBeNull := FALSE, v_lockGroups := TRUE, v_checkList := 'ROLLBACKABLE')"
+SQL statement "SELECT emaj._check_group_names(v_groupNames := ARRAY[v_groupName], v_mayBeNull := FALSE, v_lockGroups := TRUE,
+                                    v_checkList := 'ROLLBACKABLE')"
 PL/pgSQL function emaj.emaj_protect_mark_group(text,text) line 11 at PERFORM
 -- group is not rollbackable
 select emaj.emaj_protect_mark_group('phil''s group#3",',NULL);
 ERROR:  _check_group_names: The group "phil's group#3"," has been created as AUDIT_ONLY.
 CONTEXT:  PL/pgSQL function emaj._check_group_names(text[],boolean,boolean,text) line 50 at RAISE
-SQL statement "SELECT emaj._check_group_names(v_groupNames := ARRAY[v_groupName], v_mayBeNull := FALSE, v_lockGroups := TRUE, v_checkList := 'ROLLBACKABLE')"
+SQL statement "SELECT emaj._check_group_names(v_groupNames := ARRAY[v_groupName], v_mayBeNull := FALSE, v_lockGroups := TRUE,
+                                    v_checkList := 'ROLLBACKABLE')"
 PL/pgSQL function emaj.emaj_protect_mark_group(text,text) line 11 at PERFORM
 -- mark is unknown
 select emaj.emaj_protect_mark_group('myGroup1',NULL);
 ERROR:  _check_mark_name: The mark "<NULL>" does not exist for the group "myGroup1".
 CONTEXT:  PL/pgSQL function emaj._check_mark_name(text[],text,text) line 41 at RAISE
 SQL statement "SELECT emaj._check_mark_name(v_groupNames := ARRAY[v_groupName], v_mark := v_mark, v_checkList := 'ACTIVE')"
-PL/pgSQL function emaj.emaj_protect_mark_group(text,text) line 13 at SQL statement
+PL/pgSQL function emaj.emaj_protect_mark_group(text,text) line 14 at SQL statement
 select emaj.emaj_protect_mark_group('myGroup1','unknownMark');
 ERROR:  _check_mark_name: The mark "unknownMark" does not exist for the group "myGroup1".
 CONTEXT:  PL/pgSQL function emaj._check_mark_name(text[],text,text) line 41 at RAISE
 SQL statement "SELECT emaj._check_mark_name(v_groupNames := ARRAY[v_groupName], v_mark := v_mark, v_checkList := 'ACTIVE')"
-PL/pgSQL function emaj.emaj_protect_mark_group(text,text) line 13 at SQL statement
+PL/pgSQL function emaj.emaj_protect_mark_group(text,text) line 14 at SQL statement
 -- should be ok
 select emaj.emaj_protect_mark_group('myGroup1','EMAJ_LAST_MARK');
  emaj_protect_mark_group 
@@ -1018,30 +1023,33 @@ select mark_time_id, mark_name, mark_group, mark_is_deleted, mark_is_rlbk_protec
 select emaj.emaj_unprotect_mark_group(NULL,NULL);
 ERROR:  _check_group_names: No group to process.
 CONTEXT:  PL/pgSQL function emaj._check_group_names(text[],boolean,boolean,text) line 28 at RAISE
-SQL statement "SELECT emaj._check_group_names(v_groupNames := ARRAY[v_groupName], v_mayBeNull := FALSE, v_lockGroups := TRUE, v_checkList := 'ROLLBACKABLE')"
+SQL statement "SELECT emaj._check_group_names(v_groupNames := ARRAY[v_groupName], v_mayBeNull := FALSE, v_lockGroups := TRUE,
+                                    v_checkList := 'ROLLBACKABLE')"
 PL/pgSQL function emaj.emaj_unprotect_mark_group(text,text) line 10 at PERFORM
 select emaj.emaj_unprotect_mark_group('unknownGroup',NULL);
 ERROR:  _check_group_names: The group "unknownGroup" does not exist.
 CONTEXT:  PL/pgSQL function emaj._check_group_names(text[],boolean,boolean,text) line 36 at RAISE
-SQL statement "SELECT emaj._check_group_names(v_groupNames := ARRAY[v_groupName], v_mayBeNull := FALSE, v_lockGroups := TRUE, v_checkList := 'ROLLBACKABLE')"
+SQL statement "SELECT emaj._check_group_names(v_groupNames := ARRAY[v_groupName], v_mayBeNull := FALSE, v_lockGroups := TRUE,
+                                    v_checkList := 'ROLLBACKABLE')"
 PL/pgSQL function emaj.emaj_unprotect_mark_group(text,text) line 10 at PERFORM
 -- group is not rollbackable
 select emaj.emaj_unprotect_mark_group('phil''s group#3",',NULL);
 ERROR:  _check_group_names: The group "phil's group#3"," has been created as AUDIT_ONLY.
 CONTEXT:  PL/pgSQL function emaj._check_group_names(text[],boolean,boolean,text) line 50 at RAISE
-SQL statement "SELECT emaj._check_group_names(v_groupNames := ARRAY[v_groupName], v_mayBeNull := FALSE, v_lockGroups := TRUE, v_checkList := 'ROLLBACKABLE')"
+SQL statement "SELECT emaj._check_group_names(v_groupNames := ARRAY[v_groupName], v_mayBeNull := FALSE, v_lockGroups := TRUE,
+                                    v_checkList := 'ROLLBACKABLE')"
 PL/pgSQL function emaj.emaj_unprotect_mark_group(text,text) line 10 at PERFORM
 -- mark is unknown
 select emaj.emaj_unprotect_mark_group('myGroup1',NULL);
 ERROR:  _check_mark_name: The mark "<NULL>" does not exist for the group "myGroup1".
 CONTEXT:  PL/pgSQL function emaj._check_mark_name(text[],text,text) line 41 at RAISE
 SQL statement "SELECT emaj._check_mark_name(v_groupNames := ARRAY[v_groupName], v_mark := v_mark, v_checkList := '')"
-PL/pgSQL function emaj.emaj_unprotect_mark_group(text,text) line 12 at SQL statement
+PL/pgSQL function emaj.emaj_unprotect_mark_group(text,text) line 13 at SQL statement
 select emaj.emaj_unprotect_mark_group('myGroup1','unknownMark');
 ERROR:  _check_mark_name: The mark "unknownMark" does not exist for the group "myGroup1".
 CONTEXT:  PL/pgSQL function emaj._check_mark_name(text[],text,text) line 41 at RAISE
 SQL statement "SELECT emaj._check_mark_name(v_groupNames := ARRAY[v_groupName], v_mark := v_mark, v_checkList := '')"
-PL/pgSQL function emaj.emaj_unprotect_mark_group(text,text) line 12 at SQL statement
+PL/pgSQL function emaj.emaj_unprotect_mark_group(text,text) line 13 at SQL statement
 -- should be ok
 select emaj.emaj_unprotect_mark_group('myGroup1','EMAJ_LAST_MARK');
  emaj_unprotect_mark_group 
@@ -1116,7 +1124,8 @@ select emaj.emaj_stop_group('myGroup2');
 select emaj.emaj_set_mark_group('myGroup1','SM1');
 ERROR:  _check_group_names: The group "myGroup1" is not in LOGGING state.
 CONTEXT:  PL/pgSQL function emaj._check_group_names(text[],boolean,boolean,text) line 72 at RAISE
-SQL statement "SELECT emaj._check_group_names(v_groupNames := ARRAY[v_groupName], v_mayBeNull := FALSE, v_lockGroups := TRUE, v_checkList := 'LOGGING')"
+SQL statement "SELECT emaj._check_group_names(v_groupNames := ARRAY[v_groupName], v_mayBeNull := FALSE, v_lockGroups := TRUE,
+                                    v_checkList := 'LOGGING')"
 PL/pgSQL function emaj.emaj_set_mark_group(text,text) line 15 at PERFORM
 select emaj.emaj_set_mark_groups(array['myGroup1','myGroup2'],'SM1');
 ERROR:  _check_group_names: The groups "myGroup1, myGroup2" are not in LOGGING state.
@@ -1133,7 +1142,7 @@ select emaj.emaj_protect_mark_group('myGroup1','RENAMED');
 ERROR:  _check_mark_name: For the group "myGroup1", the mark "RENAMED" is DELETED.
 CONTEXT:  PL/pgSQL function emaj._check_mark_name(text[],text,text) line 58 at RAISE
 SQL statement "SELECT emaj._check_mark_name(v_groupNames := ARRAY[v_groupName], v_mark := v_mark, v_checkList := 'ACTIVE')"
-PL/pgSQL function emaj.emaj_protect_mark_group(text,text) line 13 at SQL statement
+PL/pgSQL function emaj.emaj_protect_mark_group(text,text) line 14 at SQL statement
 select emaj.emaj_unprotect_mark_group('myGroup1','EMAJ_LAST_MARK');
  emaj_unprotect_mark_group 
 ---------------------------

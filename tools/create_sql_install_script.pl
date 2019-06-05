@@ -46,7 +46,7 @@ use warnings; use strict;
       next;
     }
 # Remove the test on the script execution context 
-    if ($status == 3 && $line =~ /^-- complain if this script is executed in psql, rather than via a CREATE EXTENSION statement/) {
+    if ($status == 3 && $line =~ /^-- Complain if this script is executed in psql, rather than via a CREATE EXTENSION statement/) {
       $line = <FICIN>;
       $status++;
       next;

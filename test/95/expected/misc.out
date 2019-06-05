@@ -179,22 +179,22 @@ select emaj.emaj_set_mark_groups(array['myGroup1','myGroup2'],'Multi-3');
 select * from emaj.emaj_log_stat_group(NULL,NULL,NULL);
 ERROR:  _check_group_names: No group to process.
 CONTEXT:  SQL statement "SELECT emaj._check_group_names(v_groupNames := v_groupNames, v_mayBeNull := v_multiGroup, v_lockGroups := FALSE, v_checkList := '')"
-PL/pgSQL function emaj._log_stat_groups(text[],boolean,text,text) line 20 at SQL statement
+PL/pgSQL function emaj._log_stat_groups(text[],boolean,text,text) line 24 at SQL statement
 PL/pgSQL function emaj.emaj_log_stat_group(text,text,text) line 7 at RETURN QUERY
 select * from emaj.emaj_log_stat_groups(array['unknownGroup'],NULL,NULL);
 ERROR:  _check_group_names: The group "unknownGroup" does not exist.
 CONTEXT:  SQL statement "SELECT emaj._check_group_names(v_groupNames := v_groupNames, v_mayBeNull := v_multiGroup, v_lockGroups := FALSE, v_checkList := '')"
-PL/pgSQL function emaj._log_stat_groups(text[],boolean,text,text) line 20 at SQL statement
+PL/pgSQL function emaj._log_stat_groups(text[],boolean,text,text) line 24 at SQL statement
 PL/pgSQL function emaj.emaj_log_stat_groups(text[],text,text) line 7 at RETURN QUERY
 select * from emaj.emaj_detailed_log_stat_group(NULL,NULL,NULL);
 ERROR:  _check_group_names: No group to process.
 CONTEXT:  SQL statement "SELECT emaj._check_group_names(v_groupNames := v_groupNames, v_mayBeNull := v_multiGroup, v_lockGroups := FALSE, v_checkList := '')"
-PL/pgSQL function emaj._detailed_log_stat_groups(text[],boolean,text,text) line 29 at PERFORM
+PL/pgSQL function emaj._detailed_log_stat_groups(text[],boolean,text,text) line 32 at PERFORM
 PL/pgSQL function emaj.emaj_detailed_log_stat_group(text,text,text) line 8 at RETURN QUERY
 select * from emaj.emaj_detailed_log_stat_groups(array['unknownGroup'],NULL,NULL);
 ERROR:  _check_group_names: The group "unknownGroup" does not exist.
 CONTEXT:  SQL statement "SELECT emaj._check_group_names(v_groupNames := v_groupNames, v_mayBeNull := v_multiGroup, v_lockGroups := FALSE, v_checkList := '')"
-PL/pgSQL function emaj._detailed_log_stat_groups(text[],boolean,text,text) line 29 at PERFORM
+PL/pgSQL function emaj._detailed_log_stat_groups(text[],boolean,text,text) line 32 at PERFORM
 PL/pgSQL function emaj.emaj_detailed_log_stat_groups(text[],text,text) line 8 at RETURN QUERY
 -- invalid marks
 select * from emaj.emaj_log_stat_group('myGroup2','dummyStartMark',NULL);
@@ -202,52 +202,52 @@ ERROR:  _check_mark_name: The mark "dummyStartMark" does not exist for the group
 CONTEXT:  SQL statement "SELECT emaj._check_mark_name (v_groupNames := v_groupNames, v_mark := v_firstMark, v_checkList := '')"
 PL/pgSQL function emaj._check_marks_range(text[],text,text) line 56 at SQL statement
 SQL statement "SELECT * FROM emaj._check_marks_range(v_groupNames, v_firstMark, v_lastMark)"
-PL/pgSQL function emaj._log_stat_groups(text[],boolean,text,text) line 23 at SQL statement
+PL/pgSQL function emaj._log_stat_groups(text[],boolean,text,text) line 28 at SQL statement
 PL/pgSQL function emaj.emaj_log_stat_group(text,text,text) line 7 at RETURN QUERY
 select * from emaj.emaj_log_stat_group('myGroup2',NULL,'dummyEndMark');
 ERROR:  _check_mark_name: The mark "dummyEndMark" does not exist for the group "myGroup2".
 CONTEXT:  SQL statement "SELECT emaj._check_mark_name (v_groupNames := v_groupNames, v_mark := v_lastMark, v_checkList := '')"
 PL/pgSQL function emaj._check_marks_range(text[],text,text) line 65 at SQL statement
 SQL statement "SELECT * FROM emaj._check_marks_range(v_groupNames, v_firstMark, v_lastMark)"
-PL/pgSQL function emaj._log_stat_groups(text[],boolean,text,text) line 23 at SQL statement
+PL/pgSQL function emaj._log_stat_groups(text[],boolean,text,text) line 28 at SQL statement
 PL/pgSQL function emaj.emaj_log_stat_group(text,text,text) line 7 at RETURN QUERY
 select * from emaj.emaj_detailed_log_stat_group('myGroup2','dummyStartMark',NULL);
 ERROR:  _check_mark_name: The mark "dummyStartMark" does not exist for the group "myGroup2".
 CONTEXT:  SQL statement "SELECT emaj._check_mark_name (v_groupNames := v_groupNames, v_mark := v_firstMark, v_checkList := '')"
 PL/pgSQL function emaj._check_marks_range(text[],text,text) line 56 at SQL statement
 SQL statement "SELECT * FROM emaj._check_marks_range(v_groupNames, v_firstMark, v_lastMark)"
-PL/pgSQL function emaj._detailed_log_stat_groups(text[],boolean,text,text) line 32 at SQL statement
+PL/pgSQL function emaj._detailed_log_stat_groups(text[],boolean,text,text) line 35 at SQL statement
 PL/pgSQL function emaj.emaj_detailed_log_stat_group(text,text,text) line 8 at RETURN QUERY
 select * from emaj.emaj_detailed_log_stat_group('myGroup2',NULL,'dummyEndMark');
 ERROR:  _check_mark_name: The mark "dummyEndMark" does not exist for the group "myGroup2".
 CONTEXT:  SQL statement "SELECT emaj._check_mark_name (v_groupNames := v_groupNames, v_mark := v_lastMark, v_checkList := '')"
 PL/pgSQL function emaj._check_marks_range(text[],text,text) line 65 at SQL statement
 SQL statement "SELECT * FROM emaj._check_marks_range(v_groupNames, v_firstMark, v_lastMark)"
-PL/pgSQL function emaj._detailed_log_stat_groups(text[],boolean,text,text) line 32 at SQL statement
+PL/pgSQL function emaj._detailed_log_stat_groups(text[],boolean,text,text) line 35 at SQL statement
 PL/pgSQL function emaj.emaj_detailed_log_stat_group(text,text,text) line 8 at RETURN QUERY
 select * from emaj.emaj_log_stat_groups(array['myGroup1','myGroup2'],NULL,NULL);
 ERROR:  _check_marks_range: The oldest marks of each group do not represent the same point in time.
 CONTEXT:  SQL statement "SELECT * FROM emaj._check_marks_range(v_groupNames, v_firstMark, v_lastMark)"
-PL/pgSQL function emaj._log_stat_groups(text[],boolean,text,text) line 23 at SQL statement
+PL/pgSQL function emaj._log_stat_groups(text[],boolean,text,text) line 28 at SQL statement
 PL/pgSQL function emaj.emaj_log_stat_groups(text[],text,text) line 7 at RETURN QUERY
 select * from emaj.emaj_log_stat_groups(array['myGroup1','myGroup2'],'Multi-1','dummyEndMark');
 ERROR:  _check_mark_name: The mark "dummyEndMark" does not exist for the groups "myGroup1, myGroup2".
 CONTEXT:  SQL statement "SELECT emaj._check_mark_name (v_groupNames := v_groupNames, v_mark := v_lastMark, v_checkList := '')"
 PL/pgSQL function emaj._check_marks_range(text[],text,text) line 65 at SQL statement
 SQL statement "SELECT * FROM emaj._check_marks_range(v_groupNames, v_firstMark, v_lastMark)"
-PL/pgSQL function emaj._log_stat_groups(text[],boolean,text,text) line 23 at SQL statement
+PL/pgSQL function emaj._log_stat_groups(text[],boolean,text,text) line 28 at SQL statement
 PL/pgSQL function emaj.emaj_log_stat_groups(text[],text,text) line 7 at RETURN QUERY
 select * from emaj.emaj_detailed_log_stat_groups(array['myGroup1','myGroup2'],NULL,NULL);
 ERROR:  _check_marks_range: The oldest marks of each group do not represent the same point in time.
 CONTEXT:  SQL statement "SELECT * FROM emaj._check_marks_range(v_groupNames, v_firstMark, v_lastMark)"
-PL/pgSQL function emaj._detailed_log_stat_groups(text[],boolean,text,text) line 32 at SQL statement
+PL/pgSQL function emaj._detailed_log_stat_groups(text[],boolean,text,text) line 35 at SQL statement
 PL/pgSQL function emaj.emaj_detailed_log_stat_groups(text[],text,text) line 8 at RETURN QUERY
 select * from emaj.emaj_detailed_log_stat_groups(array['myGroup1','myGroup2'],'Multi-1','dummyEndMark');
 ERROR:  _check_mark_name: The mark "dummyEndMark" does not exist for the groups "myGroup1, myGroup2".
 CONTEXT:  SQL statement "SELECT emaj._check_mark_name (v_groupNames := v_groupNames, v_mark := v_lastMark, v_checkList := '')"
 PL/pgSQL function emaj._check_marks_range(text[],text,text) line 65 at SQL statement
 SQL statement "SELECT * FROM emaj._check_marks_range(v_groupNames, v_firstMark, v_lastMark)"
-PL/pgSQL function emaj._detailed_log_stat_groups(text[],boolean,text,text) line 32 at SQL statement
+PL/pgSQL function emaj._detailed_log_stat_groups(text[],boolean,text,text) line 35 at SQL statement
 PL/pgSQL function emaj.emaj_detailed_log_stat_groups(text[],text,text) line 8 at RETURN QUERY
 -- start mark > end mark
 -- original test (uncomment for unit test)
@@ -598,16 +598,16 @@ PL/pgSQL function emaj.emaj_estimate_rollback_groups(text[],text,boolean) line 7
 select emaj.emaj_estimate_rollback_group('myGroup2','dummyMark',TRUE);
 ERROR:  _check_mark_name: The mark "dummyMark" does not exist for the group "myGroup2".
 CONTEXT:  SQL statement "SELECT emaj._check_mark_name(v_groupNames := v_groupNames, v_mark := v_mark, v_checkList := 'ACTIVE')"
-PL/pgSQL function emaj._rlbk_check(text[],text,boolean,boolean) line 19 at SQL statement
+PL/pgSQL function emaj._rlbk_check(text[],text,boolean,boolean) line 21 at SQL statement
 SQL statement "SELECT emaj._rlbk_check(v_groupNames, v_mark, TRUE, TRUE)"
-PL/pgSQL function emaj._estimate_rollback_groups(text[],boolean,text,boolean) line 23 at SQL statement
+PL/pgSQL function emaj._estimate_rollback_groups(text[],boolean,text,boolean) line 24 at SQL statement
 PL/pgSQL function emaj.emaj_estimate_rollback_group(text,text,boolean) line 7 at RETURN
 select emaj.emaj_estimate_rollback_groups(array['myGroup1','myGroup2'],'Mark21',TRUE);
 ERROR:  _check_mark_name: The mark "Mark21" does not represent the same point in time for all groups.
 CONTEXT:  SQL statement "SELECT emaj._check_mark_name(v_groupNames := v_groupNames, v_mark := v_mark, v_checkList := 'ACTIVE')"
-PL/pgSQL function emaj._rlbk_check(text[],text,boolean,boolean) line 19 at SQL statement
+PL/pgSQL function emaj._rlbk_check(text[],text,boolean,boolean) line 21 at SQL statement
 SQL statement "SELECT emaj._rlbk_check(v_groupNames, v_mark, TRUE, TRUE)"
-PL/pgSQL function emaj._estimate_rollback_groups(text[],boolean,text,boolean) line 23 at SQL statement
+PL/pgSQL function emaj._estimate_rollback_groups(text[],boolean,text,boolean) line 24 at SQL statement
 PL/pgSQL function emaj.emaj_estimate_rollback_groups(text[],text,boolean) line 7 at RETURN
 -- group not in logging state
 begin;
@@ -619,10 +619,11 @@ begin;
 
   select emaj.emaj_estimate_rollback_group('myGroup1','Mark11',FALSE);
 ERROR:  _check_group_names: The group "myGroup1" is not in LOGGING state.
-CONTEXT:  SQL statement "SELECT emaj._check_group_names(v_groupNames := v_groupNames, v_mayBeNull := FALSE, v_lockGroups := TRUE, v_checkList := 'LOGGING,ROLLBACKABLE')"
+CONTEXT:  SQL statement "SELECT emaj._check_group_names(v_groupNames := v_groupNames, v_mayBeNull := FALSE, v_lockGroups := TRUE,
+                                     v_checkList := 'LOGGING,ROLLBACKABLE')"
 PL/pgSQL function emaj._rlbk_check(text[],text,boolean,boolean) line 13 at SQL statement
 SQL statement "SELECT emaj._rlbk_check(v_groupNames, v_mark, TRUE, TRUE)"
-PL/pgSQL function emaj._estimate_rollback_groups(text[],boolean,text,boolean) line 23 at SQL statement
+PL/pgSQL function emaj._estimate_rollback_groups(text[],boolean,text,boolean) line 24 at SQL statement
 PL/pgSQL function emaj.emaj_estimate_rollback_group(text,text,boolean) line 7 at RETURN
 rollback;
 -- estimate a rollback of an empty group
@@ -1069,14 +1070,14 @@ ERROR:  _check_mark_name: The mark "unknownMark" does not exist for the group "m
 CONTEXT:  SQL statement "SELECT emaj._check_mark_name (v_groupNames := v_groupNames, v_mark := v_firstMark, v_checkList := '')"
 PL/pgSQL function emaj._check_marks_range(text[],text,text) line 56 at SQL statement
 SQL statement "SELECT * FROM emaj._check_marks_range(v_groupNames, v_firstMark, v_lastMark)"
-PL/pgSQL function emaj._gen_sql_groups(text[],boolean,text,text,text,text[]) line 61 at SQL statement
+PL/pgSQL function emaj._gen_sql_groups(text[],boolean,text,text,text,text[]) line 62 at SQL statement
 PL/pgSQL function emaj.emaj_gen_sql_group(text,text,text,text,text[]) line 13 at RETURN
 select emaj.emaj_gen_sql_groups('{"myGroup1","myGroup2"}', 'Mark11', NULL, NULL, NULL);
 ERROR:  _check_mark_name: The mark "Mark11" does not exist for the groups "myGroup1, myGroup2".
 CONTEXT:  SQL statement "SELECT emaj._check_mark_name (v_groupNames := v_groupNames, v_mark := v_firstMark, v_checkList := '')"
 PL/pgSQL function emaj._check_marks_range(text[],text,text) line 56 at SQL statement
 SQL statement "SELECT * FROM emaj._check_marks_range(v_groupNames, v_firstMark, v_lastMark)"
-PL/pgSQL function emaj._gen_sql_groups(text[],boolean,text,text,text,text[]) line 61 at SQL statement
+PL/pgSQL function emaj._gen_sql_groups(text[],boolean,text,text,text,text[]) line 62 at SQL statement
 PL/pgSQL function emaj.emaj_gen_sql_groups(text[],text,text,text,text[]) line 13 at RETURN
 -- invalid end mark
 select emaj.emaj_gen_sql_group('myGroup2', NULL, 'unknownMark', NULL);
@@ -1084,14 +1085,14 @@ ERROR:  _check_mark_name: The mark "unknownMark" does not exist for the group "m
 CONTEXT:  SQL statement "SELECT emaj._check_mark_name (v_groupNames := v_groupNames, v_mark := v_lastMark, v_checkList := '')"
 PL/pgSQL function emaj._check_marks_range(text[],text,text) line 65 at SQL statement
 SQL statement "SELECT * FROM emaj._check_marks_range(v_groupNames, v_firstMark, v_lastMark)"
-PL/pgSQL function emaj._gen_sql_groups(text[],boolean,text,text,text,text[]) line 61 at SQL statement
+PL/pgSQL function emaj._gen_sql_groups(text[],boolean,text,text,text,text[]) line 62 at SQL statement
 PL/pgSQL function emaj.emaj_gen_sql_group(text,text,text,text,text[]) line 13 at RETURN
 select emaj.emaj_gen_sql_groups('{"myGroup1","myGroup2"}', 'Multi-1', 'Mark11', NULL);
 ERROR:  _check_mark_name: The mark "Mark11" does not exist for the groups "myGroup1, myGroup2".
 CONTEXT:  SQL statement "SELECT emaj._check_mark_name (v_groupNames := v_groupNames, v_mark := v_lastMark, v_checkList := '')"
 PL/pgSQL function emaj._check_marks_range(text[],text,text) line 65 at SQL statement
 SQL statement "SELECT * FROM emaj._check_marks_range(v_groupNames, v_firstMark, v_lastMark)"
-PL/pgSQL function emaj._gen_sql_groups(text[],boolean,text,text,text,text[]) line 61 at SQL statement
+PL/pgSQL function emaj._gen_sql_groups(text[],boolean,text,text,text,text[]) line 62 at SQL statement
 PL/pgSQL function emaj.emaj_gen_sql_groups(text[],text,text,text,text[]) line 13 at RETURN
 -- end mark is prior start mark
 -- (mark timestamps are temporarily changed so that regression test can return a stable error message)
@@ -1105,7 +1106,7 @@ begin;
   select emaj.emaj_gen_sql_group('myGroup2', 'Mark22', 'Mark21', NULL);
 ERROR:  _check_marks_range: The start mark "Mark22" (Sat Jan 01 05:00:00 2000 PST) has been set after the end mark "Mark21" (Sat Jan 01 04:00:00 2000 PST).
 CONTEXT:  SQL statement "SELECT * FROM emaj._check_marks_range(v_groupNames, v_firstMark, v_lastMark)"
-PL/pgSQL function emaj._gen_sql_groups(text[],boolean,text,text,text,text[]) line 61 at SQL statement
+PL/pgSQL function emaj._gen_sql_groups(text[],boolean,text,text,text,text[]) line 62 at SQL statement
 PL/pgSQL function emaj.emaj_gen_sql_group(text,text,text,text,text[]) line 13 at RETURN
 rollback;
 begin;
@@ -1118,7 +1119,7 @@ begin;
   select emaj.emaj_gen_sql_groups(array['myGroup1','myGroup2'], 'Multi-3', 'Multi-2', NULL);
 ERROR:  _check_marks_range: The start mark "Multi-3" (Sat Jan 01 05:00:00 2000 PST) has been set after the end mark "Multi-2" (Sat Jan 01 04:00:00 2000 PST).
 CONTEXT:  SQL statement "SELECT * FROM emaj._check_marks_range(v_groupNames, v_firstMark, v_lastMark)"
-PL/pgSQL function emaj._gen_sql_groups(text[],boolean,text,text,text,text[]) line 61 at SQL statement
+PL/pgSQL function emaj._gen_sql_groups(text[],boolean,text,text,text,text[]) line 62 at SQL statement
 PL/pgSQL function emaj.emaj_gen_sql_groups(text[],text,text,text,text[]) line 13 at RETURN
 rollback;
 -- start mark with the same name but that doesn't correspond to the same point in time
@@ -1127,12 +1128,12 @@ ERROR:  _check_mark_name: The mark "Mark21" does not represent the same point in
 CONTEXT:  SQL statement "SELECT emaj._check_mark_name (v_groupNames := v_groupNames, v_mark := v_firstMark, v_checkList := '')"
 PL/pgSQL function emaj._check_marks_range(text[],text,text) line 56 at SQL statement
 SQL statement "SELECT * FROM emaj._check_marks_range(v_groupNames, v_firstMark, v_lastMark)"
-PL/pgSQL function emaj._gen_sql_groups(text[],boolean,text,text,text,text[]) line 61 at SQL statement
+PL/pgSQL function emaj._gen_sql_groups(text[],boolean,text,text,text,text[]) line 62 at SQL statement
 PL/pgSQL function emaj.emaj_gen_sql_groups(text[],text,text,text,text[]) line 13 at RETURN
   select emaj.emaj_gen_sql_groups(array['myGroup1','myGroup2'], NULL, 'Multi-2', NULL, NULL);
 ERROR:  _check_marks_range: The oldest marks of each group do not represent the same point in time.
 CONTEXT:  SQL statement "SELECT * FROM emaj._check_marks_range(v_groupNames, v_firstMark, v_lastMark)"
-PL/pgSQL function emaj._gen_sql_groups(text[],boolean,text,text,text,text[]) line 61 at SQL statement
+PL/pgSQL function emaj._gen_sql_groups(text[],boolean,text,text,text,text[]) line 62 at SQL statement
 PL/pgSQL function emaj.emaj_gen_sql_groups(text[],text,text,text,text[]) line 13 at RETURN
 -- start mark with the same point in time but not with the same name
 begin;
@@ -1145,11 +1146,11 @@ begin;
   select emaj.emaj_start_groups(array['myGroup1','myGroup2'],'Common_mark_name');
 WARNING:  _check_fk_groups: The foreign key "mytbl6_col61_fkey" on the table "myschema2.mytbl6" references the table "myschema2.mytbl7" that is outside the groups (myGroup1,myGroup2).
 CONTEXT:  SQL statement "SELECT emaj._check_fk_groups(v_groupNames)"
-PL/pgSQL function emaj._start_groups(text[],text,boolean,boolean) line 25 at PERFORM
+PL/pgSQL function emaj._start_groups(text[],text,boolean,boolean) line 28 at PERFORM
 PL/pgSQL function emaj.emaj_start_groups(text[],text,boolean) line 11 at RETURN
 WARNING:  _check_fk_groups: The table "myschema2.mytbl6" is referenced by the foreign key "mytbl8_col81_fkey" on the table "myschema2.mytbl8" that is outside the groups (myGroup1,myGroup2).
 CONTEXT:  SQL statement "SELECT emaj._check_fk_groups(v_groupNames)"
-PL/pgSQL function emaj._start_groups(text[],text,boolean,boolean) line 25 at PERFORM
+PL/pgSQL function emaj._start_groups(text[],text,boolean,boolean) line 28 at PERFORM
 PL/pgSQL function emaj.emaj_start_groups(text[],text,boolean) line 11 at RETURN
  emaj_start_groups 
 -------------------
@@ -1165,7 +1166,7 @@ PL/pgSQL function emaj.emaj_start_groups(text[],text,boolean) line 11 at RETURN
   select emaj.emaj_gen_sql_groups(array['myGroup1','myGroup2'], NULL, NULL, NULL);
 ERROR:  _check_marks_range: The oldest marks of each group have not the same name.
 CONTEXT:  SQL statement "SELECT * FROM emaj._check_marks_range(v_groupNames, v_firstMark, v_lastMark)"
-PL/pgSQL function emaj._gen_sql_groups(text[],boolean,text,text,text,text[]) line 61 at SQL statement
+PL/pgSQL function emaj._gen_sql_groups(text[],boolean,text,text,text,text[]) line 62 at SQL statement
 PL/pgSQL function emaj.emaj_gen_sql_groups(text[],text,text,text,text[]) line 13 at RETURN
 rollback;
 -- end mark with the same name but that doesn't correspond to the same point in time
@@ -1174,7 +1175,7 @@ ERROR:  _check_mark_name: The mark "Mark21" does not represent the same point in
 CONTEXT:  SQL statement "SELECT emaj._check_mark_name (v_groupNames := v_groupNames, v_mark := v_lastMark, v_checkList := '')"
 PL/pgSQL function emaj._check_marks_range(text[],text,text) line 65 at SQL statement
 SQL statement "SELECT * FROM emaj._check_marks_range(v_groupNames, v_firstMark, v_lastMark)"
-PL/pgSQL function emaj._gen_sql_groups(text[],boolean,text,text,text,text[]) line 61 at SQL statement
+PL/pgSQL function emaj._gen_sql_groups(text[],boolean,text,text,text,text[]) line 62 at SQL statement
 PL/pgSQL function emaj.emaj_gen_sql_groups(text[],text,text,text,text[]) line 13 at RETURN
 -- empty table/sequence names array
 select emaj.emaj_gen_sql_group('myGroup2', NULL, 'EMAJ_LAST_MARK', '/tmp/emaj_test/sql_scripts/myFile', array['']);
@@ -1809,14 +1810,14 @@ begin;
     select emaj.emaj_set_mark_group('myGroup2','dummyMark');
 ERROR:  _verify_groups (6): In group "myGroup2", the structure of the application table "myschema2"."mytbl4" is not coherent with its log table ("emaj_myschema2"."mytbl4_log"). You may use "SELECT * FROM emaj.emaj_verify_all()" to look for other issues.
 CONTEXT:  SQL statement "SELECT 0 FROM emaj._verify_groups(array[v_groupName], TRUE)"
-PL/pgSQL function emaj.emaj_set_mark_group(text,text) line 17 at PERFORM
+PL/pgSQL function emaj.emaj_set_mark_group(text,text) line 18 at PERFORM
   rollback to savepoint sp1;
     select emaj.emaj_rollback_group('myGroup2','EMAJ_LAST_MARK');
 ERROR:  _verify_groups (6): In group "myGroup2", the structure of the application table "myschema2"."mytbl4" is not coherent with its log table ("emaj_myschema2"."mytbl4_log"). You may use "SELECT * FROM emaj.emaj_verify_all()" to look for other issues.
 CONTEXT:  SQL statement "SELECT 0 FROM emaj._verify_groups(v_groupNames, TRUE)"
 PL/pgSQL function emaj._rlbk_init(text[],text,boolean,integer,boolean,boolean) line 26 at PERFORM
 SQL statement "SELECT emaj._rlbk_init(v_groupNames, v_mark, v_isLoggedRlbk, 1, v_multiGroup, v_isAlterGroupAllowed)"
-PL/pgSQL function emaj._rlbk_groups(text[],text,boolean,boolean,boolean) line 22 at SQL statement
+PL/pgSQL function emaj._rlbk_groups(text[],text,boolean,boolean,boolean) line 25 at SQL statement
 SQL statement "SELECT rlbk_message::INT FROM emaj._rlbk_groups(array[v_groupName], v_mark, FALSE, FALSE, NULL) WHERE rlbk_severity = 'Notice'"
 PL/pgSQL function emaj.emaj_rollback_group(text,text) line 7 at RETURN
   rollback to savepoint sp1;
@@ -1837,10 +1838,10 @@ PL/pgSQL function emaj.emaj_rollback_group(text,text) line 7 at RETURN
     select emaj.emaj_create_group('myGroup2');
 WARNING:  _check_fk_groups: The foreign key "mytbl6_col61_fkey" on the table "myschema2.mytbl6" references the table "myschema2.mytbl7" that is outside the groups (myGroup2).
 CONTEXT:  SQL statement "SELECT emaj._check_fk_groups(array[v_groupName])"
-PL/pgSQL function emaj.emaj_create_group(text,boolean,boolean) line 88 at PERFORM
+PL/pgSQL function emaj.emaj_create_group(text,boolean,boolean) line 91 at PERFORM
 WARNING:  _check_fk_groups: The table "myschema2.mytbl6" is referenced by the foreign key "mytbl8_col81_fkey" on the table "myschema2.mytbl8" that is outside the groups (myGroup2).
 CONTEXT:  SQL statement "SELECT emaj._check_fk_groups(array[v_groupName])"
-PL/pgSQL function emaj.emaj_create_group(text,boolean,boolean) line 88 at PERFORM
+PL/pgSQL function emaj.emaj_create_group(text,boolean,boolean) line 91 at PERFORM
  emaj_create_group 
 -------------------
                  8
@@ -1851,11 +1852,11 @@ PL/pgSQL function emaj.emaj_create_group(text,boolean,boolean) line 88 at PERFOR
   select emaj.emaj_alter_group('myGroup2');
 WARNING:  _check_fk_groups: The foreign key "mytbl6_col61_fkey" on the table "myschema2.mytbl6" references the table "myschema2.mytbl7" that is outside the groups (myGroup2).
 CONTEXT:  SQL statement "SELECT emaj._check_fk_groups(v_groupNames)"
-PL/pgSQL function emaj._alter_groups(text[],boolean,text) line 68 at PERFORM
+PL/pgSQL function emaj._alter_groups(text[],boolean,text) line 72 at PERFORM
 PL/pgSQL function emaj.emaj_alter_group(text,text) line 6 at RETURN
 WARNING:  _check_fk_groups: The table "myschema2.mytbl6" is referenced by the foreign key "mytbl8_col81_fkey" on the table "myschema2.mytbl8" that is outside the groups (myGroup2).
 CONTEXT:  SQL statement "SELECT emaj._check_fk_groups(v_groupNames)"
-PL/pgSQL function emaj._alter_groups(text[],boolean,text) line 68 at PERFORM
+PL/pgSQL function emaj._alter_groups(text[],boolean,text) line 72 at PERFORM
 PL/pgSQL function emaj.emaj_alter_group(text,text) line 6 at RETURN
  emaj_alter_group 
 ------------------
@@ -1891,10 +1892,10 @@ CONTEXT:  PL/pgSQL function emaj.emaj_force_stop_group(text) line 9 at RETURN
   select emaj.emaj_create_group('myGroup2');
 WARNING:  _check_fk_groups: The foreign key "mytbl6_col61_fkey" on the table "myschema2.mytbl6" references the table "myschema2.mytbl7" that is outside the groups (myGroup2).
 CONTEXT:  SQL statement "SELECT emaj._check_fk_groups(array[v_groupName])"
-PL/pgSQL function emaj.emaj_create_group(text,boolean,boolean) line 88 at PERFORM
+PL/pgSQL function emaj.emaj_create_group(text,boolean,boolean) line 91 at PERFORM
 WARNING:  _check_fk_groups: The table "myschema2.mytbl6" is referenced by the foreign key "mytbl8_col81_fkey" on the table "myschema2.mytbl8" that is outside the groups (myGroup2).
 CONTEXT:  SQL statement "SELECT emaj._check_fk_groups(array[v_groupName])"
-PL/pgSQL function emaj.emaj_create_group(text,boolean,boolean) line 88 at PERFORM
+PL/pgSQL function emaj.emaj_create_group(text,boolean,boolean) line 91 at PERFORM
  emaj_create_group 
 -------------------
                  7
@@ -1931,19 +1932,19 @@ CONTEXT:  PL/pgSQL function emaj.emaj_force_stop_group(text) line 9 at RETURN
   select emaj.emaj_alter_group('myGroup2');
 WARNING:  _check_fk_groups: The foreign key "mytbl6_col61_fkey" on the table "myschema2.mytbl6" references the table "myschema2.mytbl7" that is outside the groups (myGroup2).
 CONTEXT:  SQL statement "SELECT emaj._check_fk_groups(v_groupNames)"
-PL/pgSQL function emaj._alter_groups(text[],boolean,text) line 68 at PERFORM
+PL/pgSQL function emaj._alter_groups(text[],boolean,text) line 72 at PERFORM
 PL/pgSQL function emaj.emaj_alter_group(text,text) line 6 at RETURN
 WARNING:  _check_fk_groups: The table "myschema2.mytbl2" is referenced by the foreign key "mytbl4_col43_fkey" on the table "myschema2.mytbl4" that is outside the groups (myGroup2).
 CONTEXT:  SQL statement "SELECT emaj._check_fk_groups(v_groupNames)"
-PL/pgSQL function emaj._alter_groups(text[],boolean,text) line 68 at PERFORM
+PL/pgSQL function emaj._alter_groups(text[],boolean,text) line 72 at PERFORM
 PL/pgSQL function emaj.emaj_alter_group(text,text) line 6 at RETURN
 WARNING:  _check_fk_groups: The table "myschema2.mytbl1" is referenced by the foreign key "mytbl4_col44_fkey" on the table "myschema2.mytbl4" that is outside the groups (myGroup2).
 CONTEXT:  SQL statement "SELECT emaj._check_fk_groups(v_groupNames)"
-PL/pgSQL function emaj._alter_groups(text[],boolean,text) line 68 at PERFORM
+PL/pgSQL function emaj._alter_groups(text[],boolean,text) line 72 at PERFORM
 PL/pgSQL function emaj.emaj_alter_group(text,text) line 6 at RETURN
 WARNING:  _check_fk_groups: The table "myschema2.mytbl6" is referenced by the foreign key "mytbl8_col81_fkey" on the table "myschema2.mytbl8" that is outside the groups (myGroup2).
 CONTEXT:  SQL statement "SELECT emaj._check_fk_groups(v_groupNames)"
-PL/pgSQL function emaj._alter_groups(text[],boolean,text) line 68 at PERFORM
+PL/pgSQL function emaj._alter_groups(text[],boolean,text) line 72 at PERFORM
 PL/pgSQL function emaj.emaj_alter_group(text,text) line 6 at RETURN
  emaj_alter_group 
 ------------------
@@ -1981,19 +1982,19 @@ CONTEXT:  PL/pgSQL function emaj.emaj_force_stop_group(text) line 9 at RETURN
   select emaj.emaj_alter_group('myGroup2');
 WARNING:  _check_fk_groups: The foreign key "mytbl6_col61_fkey" on the table "myschema2.mytbl6" references the table "myschema2.mytbl7" that is outside the groups (myGroup2).
 CONTEXT:  SQL statement "SELECT emaj._check_fk_groups(v_groupNames)"
-PL/pgSQL function emaj._alter_groups(text[],boolean,text) line 68 at PERFORM
+PL/pgSQL function emaj._alter_groups(text[],boolean,text) line 72 at PERFORM
 PL/pgSQL function emaj.emaj_alter_group(text,text) line 6 at RETURN
 WARNING:  _check_fk_groups: The table "myschema2.mytbl2" is referenced by the foreign key "mytbl4_col43_fkey" on the table "myschema2.mytbl4" that is outside the groups (myGroup2).
 CONTEXT:  SQL statement "SELECT emaj._check_fk_groups(v_groupNames)"
-PL/pgSQL function emaj._alter_groups(text[],boolean,text) line 68 at PERFORM
+PL/pgSQL function emaj._alter_groups(text[],boolean,text) line 72 at PERFORM
 PL/pgSQL function emaj.emaj_alter_group(text,text) line 6 at RETURN
 WARNING:  _check_fk_groups: The table "myschema2.mytbl1" is referenced by the foreign key "mytbl4_col44_fkey" on the table "myschema2.mytbl4" that is outside the groups (myGroup2).
 CONTEXT:  SQL statement "SELECT emaj._check_fk_groups(v_groupNames)"
-PL/pgSQL function emaj._alter_groups(text[],boolean,text) line 68 at PERFORM
+PL/pgSQL function emaj._alter_groups(text[],boolean,text) line 72 at PERFORM
 PL/pgSQL function emaj.emaj_alter_group(text,text) line 6 at RETURN
 WARNING:  _check_fk_groups: The table "myschema2.mytbl6" is referenced by the foreign key "mytbl8_col81_fkey" on the table "myschema2.mytbl8" that is outside the groups (myGroup2).
 CONTEXT:  SQL statement "SELECT emaj._check_fk_groups(v_groupNames)"
-PL/pgSQL function emaj._alter_groups(text[],boolean,text) line 68 at PERFORM
+PL/pgSQL function emaj._alter_groups(text[],boolean,text) line 72 at PERFORM
 PL/pgSQL function emaj.emaj_alter_group(text,text) line 6 at RETURN
  emaj_alter_group 
 ------------------
@@ -2024,11 +2025,11 @@ begin;
   select emaj.emaj_alter_group('myGroup2');
 WARNING:  _check_fk_groups: The foreign key "mytbl6_col61_fkey" on the table "myschema2.mytbl6" references the table "myschema2.mytbl7" that is outside the groups (myGroup2).
 CONTEXT:  SQL statement "SELECT emaj._check_fk_groups(v_groupNames)"
-PL/pgSQL function emaj._alter_groups(text[],boolean,text) line 68 at PERFORM
+PL/pgSQL function emaj._alter_groups(text[],boolean,text) line 72 at PERFORM
 PL/pgSQL function emaj.emaj_alter_group(text,text) line 6 at RETURN
 WARNING:  _check_fk_groups: The table "myschema2.mytbl6" is referenced by the foreign key "mytbl8_col81_fkey" on the table "myschema2.mytbl8" that is outside the groups (myGroup2).
 CONTEXT:  SQL statement "SELECT emaj._check_fk_groups(v_groupNames)"
-PL/pgSQL function emaj._alter_groups(text[],boolean,text) line 68 at PERFORM
+PL/pgSQL function emaj._alter_groups(text[],boolean,text) line 72 at PERFORM
 PL/pgSQL function emaj.emaj_alter_group(text,text) line 6 at RETURN
  emaj_alter_group 
 ------------------

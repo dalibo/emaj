@@ -230,7 +230,7 @@ myschema2	myseq2	6059	3	1	1	9223372036854775807	1	1	f	t
 \! grep myseq2 /tmp/emaj_test/alter/myFile
   select emaj.emaj_gen_sql_group('myGroup2', 'Before ADD_SEQ', NULL, '/tmp/emaj_test/alter/myFile',array['myschema2.myseq2']);
 ERROR:  _gen_sql_groups: 1 table/sequence (myschema2.myseq2) did not belong to any of the selected tables groups at Before ADD_SEQ mark time.
-CONTEXT:  PL/pgSQL function emaj._gen_sql_groups(text[],boolean,text,text,text,text[]) line 94 at RAISE
+CONTEXT:  PL/pgSQL function emaj._gen_sql_groups(text[],boolean,text,text,text,text[]) line 96 at RAISE
 PL/pgSQL function emaj.emaj_gen_sql_group(text,text,text,text,text[]) line 13 at RETURN
 \! rm -R /tmp/emaj_test/alter/*
 -- testing mark deletions
@@ -842,7 +842,7 @@ myschema2_mytbl7.snap
 \! rm -R /tmp/emaj_test/alter/*
   select emaj.emaj_gen_sql_group('myGroup2', 'Before ADD_TBL', NULL, '/tmp/emaj_test/alter/myFile',array['myschema2.mytbl7']);
 ERROR:  _gen_sql_groups: 1 table/sequence (myschema2.mytbl7) did not belong to any of the selected tables groups at Before ADD_TBL mark time.
-CONTEXT:  PL/pgSQL function emaj._gen_sql_groups(text[],boolean,text,text,text,text[]) line 94 at RAISE
+CONTEXT:  PL/pgSQL function emaj._gen_sql_groups(text[],boolean,text,text,text,text[]) line 96 at RAISE
 PL/pgSQL function emaj.emaj_gen_sql_group(text,text,text,text,text[]) line 13 at RETURN
 -- testing mark deletions
 begin;
@@ -1616,21 +1616,21 @@ WARNING:  _check_fk_groups: The table "myschema2.mytbl6" is referenced by the fo
 -- execute rollbacks crossing alter group operations
 select emaj.emaj_logged_rollback_groups('{"myGroup1","myGroup2"}','Mk2');
 ERROR:  _rlbk_check: This rollback operation would cross some previously executed alter group operations, which is not allowed by the current function parameters.
-CONTEXT:  PL/pgSQL function emaj._rlbk_check(text[],text,boolean,boolean) line 43 at RAISE
+CONTEXT:  PL/pgSQL function emaj._rlbk_check(text[],text,boolean,boolean) line 47 at RAISE
 SQL statement "SELECT emaj._rlbk_check(v_groupNames, v_mark, v_isAlterGroupAllowed, FALSE)"
 PL/pgSQL function emaj._rlbk_init(text[],text,boolean,integer,boolean,boolean) line 23 at SQL statement
 SQL statement "SELECT emaj._rlbk_init(v_groupNames, v_mark, v_isLoggedRlbk, 1, v_multiGroup, v_isAlterGroupAllowed)"
-PL/pgSQL function emaj._rlbk_groups(text[],text,boolean,boolean,boolean) line 22 at SQL statement
+PL/pgSQL function emaj._rlbk_groups(text[],text,boolean,boolean,boolean) line 25 at SQL statement
 SQL statement "SELECT rlbk_message::INT FROM emaj._rlbk_groups(v_groupNames, v_mark, TRUE, TRUE, NULL) WHERE rlbk_severity = 'Notice'"
 PL/pgSQL function emaj.emaj_logged_rollback_groups(text[],text) line 11 at RETURN
 select * from emaj.emaj_logged_rollback_groups('{"myGroup1","myGroup2"}','Mk2',false) order by 1,2;
 ERROR:  _rlbk_check: This rollback operation would cross some previously executed alter group operations, which is not allowed by the current function parameters.
-CONTEXT:  PL/pgSQL function emaj._rlbk_check(text[],text,boolean,boolean) line 43 at RAISE
+CONTEXT:  PL/pgSQL function emaj._rlbk_check(text[],text,boolean,boolean) line 47 at RAISE
 SQL statement "SELECT emaj._rlbk_check(v_groupNames, v_mark, v_isAlterGroupAllowed, FALSE)"
 PL/pgSQL function emaj._rlbk_init(text[],text,boolean,integer,boolean,boolean) line 23 at SQL statement
 SQL statement "SELECT emaj._rlbk_init(v_groupNames, v_mark, v_isLoggedRlbk, 1, v_multiGroup, v_isAlterGroupAllowed)"
-PL/pgSQL function emaj._rlbk_groups(text[],text,boolean,boolean,boolean) line 22 at SQL statement
-PL/pgSQL function emaj.emaj_logged_rollback_groups(text[],text,boolean) line 11 at RETURN QUERY
+PL/pgSQL function emaj._rlbk_groups(text[],text,boolean,boolean,boolean) line 25 at SQL statement
+PL/pgSQL function emaj.emaj_logged_rollback_groups(text[],text,boolean) line 12 at RETURN QUERY
 select rlbk_severity, regexp_replace(rlbk_message,E'\\d\\d\\d\\d/\\d\\d\\/\\d\\d\\ \\d\\d\\:\\d\\d:\\d\\d .*?\\)','<timestamp>)','g')
   from emaj.emaj_logged_rollback_groups('{"myGroup1","myGroup2"}','Mk2',true) order by 1,2;
 WARNING:  _check_fk_groups: The foreign key "mytbl6_col61_fkey" on the table "myschema2.mytbl6" references the table "myschema2.mytbl7" that is outside the groups (myGroup1,myGroup2).
@@ -1804,7 +1804,7 @@ select emaj.emaj_alter_group('myGroup1', 'move to myGroup1');
 WARNING:  _alter_groups: in the group "myGroup1", the table or sequence myschema2."myTbl3" already belongs to the group "myGroup2".
 WARNING:  _alter_groups: in the group "myGroup1", the table or sequence myschema2."myTbl3_col31_seq" already belongs to the group "myGroup2".
 ERROR:  _alter_groups: One or several errors have been detected in the emaj_group_def table content.
-CONTEXT:  PL/pgSQL function emaj._alter_groups(text[],boolean,text) line 30 at RAISE
+CONTEXT:  PL/pgSQL function emaj._alter_groups(text[],boolean,text) line 31 at RAISE
 PL/pgSQL function emaj.emaj_alter_group(text,text) line 6 at RETURN
 -- should be OK
 -- generates updates before the group change
@@ -1894,7 +1894,7 @@ WARNING:  _check_fk_groups: The table "myschema2.mytbl6" is referenced by the fo
 select emaj.emaj_gen_sql_group('myGroup1', 'before move', NULL, '/tmp/emaj_test/alter/myFile',
   array['myschema2.myTbl3','myschema2.myTbl3_col31_seq']);
 ERROR:  _gen_sql_groups: 2 tables/sequences (myschema2.myTbl3, myschema2.myTbl3_col31_seq) did not belong to any of the selected tables groups at before move mark time.
-CONTEXT:  PL/pgSQL function emaj._gen_sql_groups(text[],boolean,text,text,text,text[]) line 96 at RAISE
+CONTEXT:  PL/pgSQL function emaj._gen_sql_groups(text[],boolean,text,text,text,text[]) line 99 at RAISE
 PL/pgSQL function emaj.emaj_gen_sql_group(text,text,text,text,text[]) line 13 at RETURN
 select emaj.emaj_gen_sql_groups('{"myGroup1","myGroup2"}', 'before move', NULL, '/tmp/emaj_test/alter/myFile',
   array['myschema2.myTbl3','myschema2.myTbl3_col31_seq']);

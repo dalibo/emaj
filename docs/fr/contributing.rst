@@ -77,7 +77,7 @@ Le codage du script emaj- -devel.sql respecte les règles suivantes :
 * les tables internes et les fonctions appelables par les utilisateurs doivent avoir un commentaire,
 * les mots-clé du langage sont mis en majuscule, les noms d'objets sont en minuscule,
 * l’indentation est de 2 caractères espace,
-* les lignes ne doivent pas comporter de caractère de tabulation et ne doivent pas se terminer par des espaces,
+* les lignes ne doivent pas comporter de caractère de tabulation, ne doivent pas dépasser 140 caractères et ne doivent pas se terminer par des espaces,
 * dans la structure des fonctions, les délimiteurs du code doivent reprendre le nom de la fonction entouré par un caractère $ (ou *$do$* pour les blocs de code)
 * les noms de variables sont préfixés par *v_* pour les variables simples ou *r_* pour les variables de type *RECORD*,
 * le code doit être compatible avec toutes les versions de PostgreSQL supportées par la version E-Maj courante. Quand cela s’avére strictement nécessaire, le code peut être différencié en fonction de la version de PostgreSQL.

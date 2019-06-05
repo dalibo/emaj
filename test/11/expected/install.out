@@ -15,7 +15,7 @@ CREATE EXTENSION emaj VERSION 'devel';
 BEGIN;
   DROP EXTENSION emaj CASCADE;
 ERROR:  E-Maj event trigger: Attempting to drop the emaj extension. Please use the emaj_uninstall.sql script if you really want to remove all E-Maj components.
-CONTEXT:  PL/pgSQL function _emaj_protection_event_trigger_fnct() line 20 at RAISE
+CONTEXT:  PL/pgSQL function _emaj_protection_event_trigger_fnct() line 21 at RAISE
 ROLLBACK;
 -----------------------------
 -- check installation

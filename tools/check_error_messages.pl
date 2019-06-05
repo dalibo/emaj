@@ -139,8 +139,8 @@ use warnings; use strict;
                             # installation conditions that are not met during the tests
       if ($msgs{$fnctId} ne 'EXCEPTION:E-Maj installation: The current user (%) is not a superuser.'
        && $msgs{$fnctId} ne 'EXCEPTION:E-Maj installation: The current postgres version (%) is too old for this E-Maj version. It should be at least 9.5.'
-       && $msgs{$fnctId} ne 'WARNING:E-Maj installation: As the max_prepared_transactions parameter value (%) on this cluster is too low, no parallel rollback is possible.'
-       && $msgs{$fnctId} ne 'EXCEPTION:_verify_groups : The current postgres version (%) is not compatible with this E-Maj version. It should be at least 9.5.'
+       && $msgs{$fnctId} ne 'WARNING:E-Maj installation: As the max_prepared_transactions parameter value (%) on this cluster is too low, no parallel'
+       && $msgs{$fnctId} ne 'EXCEPTION:_verify_groups: The current postgres version (%) is not compatible with this E-Maj version.'
                             # internal errors (errors that should never appear and that would due to coding error)
        && $msgs{$fnctId} ne 'EXCEPTION:_drop_log_schemas: Internal error (the schema "%" does not exist).'
        && $msgs{$fnctId} ne 'EXCEPTION:emaj_reset_group: Internal error (group "%" is empty).'
@@ -150,7 +150,7 @@ use warnings; use strict;
        && $msgs{$fnctId} ne 'EXCEPTION:alter_exec: Cannot repair the table %.%. Its group % is in LOGGING state.'
                             # execution conditions that cannot be reproduced without parallelism
        && $msgs{$fnctId} ne 'EXCEPTION:_lock_groups: Too many (5) deadlocks encountered while locking tables of group "%".'
-       && $msgs{$fnctId} ne 'EXCEPTION:_rlbk_session_lock: Error while opening the dblink session #% (Status of the dblink connection attempt = % - see E-Maj documentation).'
+       && $msgs{$fnctId} ne 'EXCEPTION:_rlbk_session_lock: Error while opening the dblink session #% (Status of the dblink connection attempt = %'
        && $msgs{$fnctId} ne 'EXCEPTION:_rlbk_session_lock: Too many (5) deadlocks encountered while locking tables for groups "%".'
        && $msgs{$fnctId} ne 'EXCEPTION:_rlbk_start_mark: % Please retry.'
                             # error messages containing timestamp.
@@ -173,4 +173,3 @@ use warnings; use strict;
   }
   print "Analysis Completed.\n"
 # end of the script
-

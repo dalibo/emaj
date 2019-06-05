@@ -74,7 +74,7 @@ Coding the *emaj- -devel.sql* script must follow these rules:
 * the internal tables and the functions callable by end users must have a comment,
 * the language keywords are in upper case, objects names are in lower case,
 * the code is indented with 2 space characters,
-* lines must not contain tab characters and must not end with spaces,
+* lines must not contain tab characters, must not be longer than 140 characters long and must not end with spaces,
 * in the functions structure, the code delimiters must contain the function name surrounded with a $ character (or *$do$* for code blocks),
 * variables names are prefixed with *v_* for simple variables or *r_* for *RECORD* type variables,
 * the code must be compatible with all PostgreSQL versions supported by the current E-Maj version. When this is striclty necessary, the code may be differenciated depending on the PostgreSQL version.

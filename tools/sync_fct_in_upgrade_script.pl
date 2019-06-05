@@ -104,7 +104,7 @@ use warnings; use strict;
       $returnType = $1;
     } else {
 # detect function format with INOUT or OUT parameters
-      if ($code =~ /\((.*?)\)/) {
+      if ($code =~ /\((.*?)\)/s) {
         $parameters = $1;
         @parameters = split(/,/, $parameters);
 # analyze each parameter in the function parenthesis
@@ -175,27 +175,20 @@ use warnings; use strict;
   while (<FICPREVSRC>){
     $line = $_;
 
-    # Do not process 3 temporary functions specific to old installation scripts (they are directly dropped in the installation script)
-    # TODO: these 3 lines can be suppressed when 1.3.0 will not be the previous version anymore
-#    if ($line =~ /^CREATE OR REPLACE FUNCTION (public\.emaj_tmp_pre_install|emaj\._tmp_create_some_components|emaj\._tmp_post_install)/) {
-#      next;
-#    }
-  
     # Stop the analysis of the source at event trigger creation
     # (As the few functions created in this section depends on the postgres version, the processing would be too complex)
     # TODO: remove the next line once event triggers will be supported by all postgres version compatible with E-Maj
-    last if ($line =~ /^-- event triggers and related functions --/);
+    last if ($line =~ /^-- event triggers                       --/);
 
     # Beginning of a CREATE FUNCTION sql verb
-    if ($line =~ /^CREATE\s+OR\s+REPLACE\s+FUNCTION\s+((.*?)\.(.*?)\(.*\))/) {
-      $fnctSignature = $1; 
-      if ($status != 0) {
-        die "ERROR : the function $fnctSignature starts but the end of the preceeding function has not been detected\n";
-      }
+    if ($status == 0 && $line =~ /^CREATE\s+OR\s+REPLACE\s+FUNCTION\s+((.*?)\.(.*?)\()/) {
       $status = 1;
       $nbFctPrevSrc++;
-      $cleanSignature = cleanUpSignature($fnctSignature);
+      $fnctSignature = '';
       $procedure = '';
+    }
+    if ($status == 1) {
+      $fnctSignature .= $line;
     }
     # aggregate the whole function code
     if (($status == 1) || ($status == 2)) {
@@ -210,6 +203,9 @@ use warnings; use strict;
     # Pattern $...$ that starts the function
     if ($status == 1 && $line =~ /^\$(.*)\$/) {
       $startFnctMark = $1;
+      $fnctSignature =~ s/\n/ /sg;
+      $fnctSignature =~ s/^CREATE\s+OR\s+REPLACE\s+FUNCTION\s+((.*?)\.(.*?)\(.*\))/$1/;
+      $cleanSignature = cleanUpSignature($fnctSignature);
       $status = 2;
     }
   }
@@ -232,15 +228,14 @@ use warnings; use strict;
     last if ($line =~ /^-- event triggers and related functions --/);
 
     # Beginning of a CREATE FUNCTION sql verb
-    if ($line =~ /^CREATE\s+OR\s+REPLACE\s+FUNCTION\s+((.*?)\.(.*?)\(.*\))/) {
-      $fnctSignature = $1;
-      if ($status != 0) {
-        die "ERROR : the function $fnctSignature starts but the end of the preceeding function or comment has not been detected\n";
-      }
+    if ($status == 0 && $line =~ /^CREATE\s+OR\s+REPLACE\s+FUNCTION\s+((.*?)\.(.*?)\()/) {
       $status = 1;
       $nbFctCurrSrc++;
-      $cleanSignature = cleanUpSignature($fnctSignature);
+      $fnctSignature = '';
       $procedure = '';
+    }
+    if ($status == 1) {
+      $fnctSignature .= $line;
     }
     # aggregate the whole function code
     if (($status == 1) || ($status == 2)) {
@@ -256,6 +251,9 @@ use warnings; use strict;
     if ($status == 1 && $line =~ /^\$(.*)\$/) {
       $startFnctMark = $1;
       $status = 2;
+      $fnctSignature =~ s/\n/ /sg;
+      $fnctSignature =~ s/^CREATE\s+OR\s+REPLACE\s+FUNCTION\s+((.*?)\.(.*?)\(.*\))/$1/;
+      $cleanSignature = cleanUpSignature($fnctSignature);
     }
     # Beginning of a COMMENT ON FUNCTION sql verb
     if ($line =~ /^COMMENT\s+ON\s+FUNCTION\s+((.*?)\.(.*?)\(.*\))/) {

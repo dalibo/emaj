@@ -57,6 +57,10 @@ use warnings; use strict;
     if ($line =~ / $/) {
       print "WARNING: the line $nbl_src ends with spaces\n";
     }
+	# detection of too long line
+    if (length($line) > 140) {
+      print "WARNING: the line $nbl_src is too long\n";
+    }
 
 # pattern detection
     # Beginning of a CREATE FUNCTION sql verb
