@@ -24,7 +24,9 @@ E-Maj - Change log
     prefix were sometimes erroneously detected.
   * Fix the emaj_delete_before_mark_group() function call. In some rare cases,
     it failed on a missing log table.
-
+  * Fix a permission exception raised when a non superuser role attempt to
+    execute an emaj_delete_before_mark() function that needs to drop an old
+    log table.
 
 3.0.0 (2019-Mar-19)
 ------

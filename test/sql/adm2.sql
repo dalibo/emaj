@@ -525,6 +525,11 @@ reset role;
 drop table mySchema4.myPartP1;
 set role emaj_regression_tests_adm_user;
 
+-- verify that emaj_adm has the proper grants to delete old marks leading to an old log table drop
+begin transaction;
+  select emaj.emaj_delete_before_mark_group('myGroup4','EMAJ_LAST_MARK');
+rollback;
+
 -- look at statistics and log content
 select stat_group, stat_schema, stat_table, stat_first_mark, stat_last_mark, stat_rows
   from emaj.emaj_log_stat_group('myGroup4',NULL, NULL) order by 1,2,3,4;

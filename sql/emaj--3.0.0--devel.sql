@@ -3702,7 +3702,8 @@ COMMENT ON FUNCTION emaj.emaj_delete_mark_group(TEXT,TEXT) IS
 $$Deletes a mark for an E-Maj group.$$;
 
 CREATE OR REPLACE FUNCTION emaj._delete_before_mark_group(v_groupName TEXT, v_mark TEXT)
-RETURNS INT LANGUAGE plpgsql AS
+RETURNS INT LANGUAGE plpgsql
+SECURITY DEFINER SET search_path = pg_catalog, pg_temp AS
 $_delete_before_mark_group$
 -- This function deletes all logs and marks set before a given mark.
 -- The function is called by the emaj_delete_before_mark_group(), emaj_delete_mark_group() functions.
