@@ -25,6 +25,26 @@ La fonction *emaj_verify_all()* peut être exécutée par les rôles membres de 
 
 Si des anomalies sont détectées, par exemple suite à la suppression d'une table applicative référencée dans un groupe, les mesures appropriées doivent être prises. Typiquement, les éventuelles tables de log ou fonctions orphelines doivent être supprimées manuellement.
 
+.. _emaj_get_current_log_table:
+
+Obtenir l’identité de la table de log courante associée à une table applicative
+--------------------------------------------------------------------------------
+
+La fonction *emaj_get_current_log_table()* permet d’obtenir le schéma et le nom de la table de log courante associée à une table applicative. ::
+
+	SELECT log_schema, log_table FROM
+		emaj_get_current_log_table(<schéma>, <table>);
+
+La fonction retourne toujours 1 ligne. Si la table applicative n’appartient pas actuellement à un groupe de tables, les colonnes *log_schema* et *log_table* ont une valeur NULL.
+
+La fonction *emaj_get_current_log_table()* peut être exécutée par les rôles membres de *emaj_adm* et *emaj_viewer*.
+
+Il est ainsi possible de construire une requête accédant à une table de log. Par exemple ::
+
+	SELECT 'select count(*) from '
+		|| quote_ident(log_schema) || '.' || quote_ident(log_table)
+		FROM emaj.emaj_get_current_log_table('monschema','matable');
+
 .. _emaj_ignore_app_trigger:
 
 Non désactivation de triggers applicatifs lors des Rollbacks E-Maj

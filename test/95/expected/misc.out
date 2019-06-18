@@ -1022,6 +1022,30 @@ select emaj.emaj_delete_mark_group('myGroup2',E'/<*crazy mark$>\\');
 (1 row)
 
 -----------------------------
+-- emaj_get_current_log_table() test
+-----------------------------
+-- not found
+select * from emaj.emaj_get_current_log_table('myschema1', 'dummy_table');
+ log_schema | log_table 
+------------+-----------
+            | 
+(1 row)
+
+-- found
+select * from emaj.emaj_get_current_log_table('myschema1', 'mytbl1');
+   log_schema   | log_table  
+----------------+------------
+ emaj_myschema1 | mytbl1_log
+(1 row)
+
+select 'select count(*) from ' || quote_ident(log_schema) || '.' || quote_ident(log_table)
+  from emaj.emaj_get_current_log_table('myschema1','mytbl1');
+                    ?column?                    
+------------------------------------------------
+ select count(*) from emaj_myschema1.mytbl1_log
+(1 row)
+
+-----------------------------
 -- emaj_gen_sql_group() and emaj_gen_sql_groups() test
 -----------------------------
 -- set/reset directory for snaps

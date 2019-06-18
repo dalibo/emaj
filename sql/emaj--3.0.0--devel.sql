@@ -1121,6 +1121,25 @@ $_drop_log_schemas$
   END;
 $_drop_log_schemas$;
 
+CREATE OR REPLACE FUNCTION emaj.emaj_get_current_log_table(v_app_schema TEXT, v_app_table TEXT,
+                                                           OUT log_schema TEXT, OUT log_table TEXT)
+LANGUAGE plpgsql AS
+$emaj_get_current_log_table$
+-- The function returns the current log table for a given application schema and table.
+-- It returns NULL values if the table doesn't currently belong to a tables group.
+-- Inputs: schema and table names
+-- Outputs: schema and table of the currently associated log table
+  BEGIN
+-- get the requested data from the emaj_relation table
+    SELECT rel_log_schema, rel_log_table INTO log_schema, log_table
+      FROM emaj.emaj_relation
+      WHERE rel_schema = v_app_schema AND rel_tblseq = v_app_table AND upper_inf(rel_time_range);
+    RETURN;
+  END;
+$emaj_get_current_log_table$;
+COMMENT ON FUNCTION emaj.emaj_get_current_log_table(TEXT,TEXT) IS
+$$Retrieve the current log table of a given application table.$$;
+
 CREATE OR REPLACE FUNCTION emaj._create_tbl(v_schema TEXT, v_tbl TEXT, v_groupName TEXT, v_priority INT, v_logDatTsp TEXT,
                                             v_logIdxTsp TEXT, v_timeId BIGINT, v_groupIsRollbackable BOOLEAN, v_groupIsLogging BOOLEAN)
 RETURNS VOID LANGUAGE plpgsql
@@ -7279,6 +7298,9 @@ GRANT EXECUTE ON ALL FUNCTIONS IN SCHEMA emaj TO emaj_adm;
 GRANT SELECT ON ALL TABLES IN SCHEMA emaj TO emaj_viewer;
 GRANT SELECT ON ALL SEQUENCES IN SCHEMA emaj TO emaj_viewer;
 REVOKE SELECT ON TABLE emaj.emaj_param FROM emaj_viewer;
+
+GRANT EXECUTE ON FUNCTION emaj.emaj_get_current_log_table(app_schema TEXT, app_table TEXT,
+                          OUT log_schema TEXT, OUT log_table TEXT) TO emaj_viewer;
 
 ------------------------------------
 --                                --

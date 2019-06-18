@@ -79,6 +79,9 @@ Les fonctions E-Maj disponibles pour les utilisateurs sont listées ci-dessous p
 | :ref:`emaj_get_consolidable_rollbacks            |                               | SETOF emaj_consolidable_rollback_type |
 | <emaj_get_consolidable_rollbacks>` (V)           |                               |                                       |
 +--------------------------------------------------+-------------------------------+---------------------------------------+
+| :ref:`emaj_get_current_log_table                 | | schéma TEXT,                | (schéma.log TEXT, table.log TEXT)     |
+| <emaj_get_current_log_table>` (V)                | | table TEXT                  |                                       |
++--------------------------------------------------+-------------------------------+---------------------------------------+
 | :ref:`emaj_get_previous_mark_group               | | groupe TEXT,                | marque TEXT                           |
 | <emaj_get_previous_mark_group>` (V)              | | date.heure TIMESTAMPTZ      |                                       |
 +--------------------------------------------------+-------------------------------+---------------------------------------+

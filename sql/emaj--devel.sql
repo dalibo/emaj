@@ -1488,6 +1488,25 @@ $_drop_log_schemas$;
 --                                               --
 ---------------------------------------------------
 
+CREATE OR REPLACE FUNCTION emaj.emaj_get_current_log_table(v_app_schema TEXT, v_app_table TEXT,
+                                                           OUT log_schema TEXT, OUT log_table TEXT)
+LANGUAGE plpgsql AS
+$emaj_get_current_log_table$
+-- The function returns the current log table for a given application schema and table.
+-- It returns NULL values if the table doesn't currently belong to a tables group.
+-- Inputs: schema and table names
+-- Outputs: schema and table of the currently associated log table
+  BEGIN
+-- get the requested data from the emaj_relation table
+    SELECT rel_log_schema, rel_log_table INTO log_schema, log_table
+      FROM emaj.emaj_relation
+      WHERE rel_schema = v_app_schema AND rel_tblseq = v_app_table AND upper_inf(rel_time_range);
+    RETURN;
+  END;
+$emaj_get_current_log_table$;
+COMMENT ON FUNCTION emaj.emaj_get_current_log_table(TEXT,TEXT) IS
+$$Retrieve the current log table of a given application table.$$;
+
 CREATE OR REPLACE FUNCTION emaj._create_tbl(v_schema TEXT, v_tbl TEXT, v_groupName TEXT, v_priority INT, v_logDatTsp TEXT,
                                             v_logIdxTsp TEXT, v_timeId BIGINT, v_groupIsRollbackable BOOLEAN, v_groupIsLogging BOOLEAN)
 RETURNS VOID LANGUAGE plpgsql
@@ -8187,6 +8206,8 @@ GRANT EXECUTE ON FUNCTION emaj._check_group_names(v_groupNames TEXT[], v_mayBeNu
 GRANT EXECUTE ON FUNCTION emaj._check_mark_name(v_groupNames TEXT[], v_mark TEXT, v_checkList TEXT) TO emaj_viewer;
 GRANT EXECUTE ON FUNCTION emaj._check_marks_range(v_groupNames TEXT[], INOUT v_firstMark TEXT, INOUT v_lastMark TEXT,
                           OUT v_firstMarkTimeId BIGINT, OUT v_lastMarkTimeId BIGINT) TO emaj_viewer;
+GRANT EXECUTE ON FUNCTION emaj.emaj_get_current_log_table(v_app_schema TEXT, v_app_table TEXT,
+                          OUT log_schema TEXT, OUT log_table TEXT) TO emaj_viewer;
 GRANT EXECUTE ON FUNCTION emaj._log_stat_tbl(r_rel emaj.emaj_relation, v_firstMarkTimeId BIGINT, v_lastMarkTimeId BIGINT) TO emaj_viewer;
 GRANT EXECUTE ON FUNCTION emaj._verify_groups(v_groupNames TEXT[], v_onErrorStop boolean) TO emaj_viewer;
 GRANT EXECUTE ON FUNCTION emaj.emaj_get_previous_mark_group(v_groupName TEXT, v_datetime TIMESTAMPTZ) TO emaj_viewer;

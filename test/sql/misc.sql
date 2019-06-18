@@ -414,6 +414,16 @@ select emaj.emaj_snap_log_group('myGroup2','Mark21',E'/<*crazy mark$>\\','/tmp/e
 select emaj.emaj_delete_mark_group('myGroup2',E'/<*crazy mark$>\\');
 
 -----------------------------
+-- emaj_get_current_log_table() test
+-----------------------------
+-- not found
+select * from emaj.emaj_get_current_log_table('myschema1', 'dummy_table');
+-- found
+select * from emaj.emaj_get_current_log_table('myschema1', 'mytbl1');
+select 'select count(*) from ' || quote_ident(log_schema) || '.' || quote_ident(log_table)
+  from emaj.emaj_get_current_log_table('myschema1','mytbl1');
+
+-----------------------------
 -- emaj_gen_sql_group() and emaj_gen_sql_groups() test
 -----------------------------
 -- set/reset directory for snaps

@@ -175,6 +175,12 @@ select count(*) from emaj_mySchema1.myTbl1_log;
 -----------------------------
 -- authorized functions
 -----------------------------
+select * from emaj.emaj_get_current_log_table('myschema1', 'mytbl1');
+   log_schema   | log_table  
+----------------+------------
+ emaj_myschema1 | mytbl1_log
+(1 row)
+
 select * from emaj.emaj_verify_all();
   emaj_verify_all  
 -------------------

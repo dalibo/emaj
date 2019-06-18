@@ -26,6 +26,26 @@ The *emaj_verify_all()* function can be executed by any role belonging to *emaj_
 
 If errors are detected, for instance after an application table referenced in a tables group has been dropped, appropriate measures must be taken. Typically, the potential orphan log tables or functions must be manually dropped. 
 
+.. _emaj_get_current_log_table:
+
+Getting the current log table linked to an application table
+------------------------------------------------------------
+
+The *emaj_get_current_log_table()* function allows to get the schema and table names of the current log table linked to a given application table. ::
+
+	SELECT log_schema, log_table FROM
+		emaj_get_current_log_table(<schema>, <table>);
+
+The function always returns 1 row. If the application table does not currently belong to any tables group, the *log_schema* and *log_table* columns are set to NULL.
+
+The *emaj_get_current_log_table()* function can be used by *emaj_adm* and *emaj_viewer* E-Maj roles.
+
+It is possible to build a statement accessing a log table. For instance::
+
+	SELECT 'select count(*) from '
+		|| quote_ident(log_schema) || '.' || quote_ident(log_table)
+		FROM emaj.emaj_get_current_log_table('myschema','mytable');
+
 .. _emaj_ignore_app_trigger:
 
 Not disabling application triggers at E-Maj rollback time

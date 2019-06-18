@@ -16,6 +16,8 @@ E-Maj - Change log
   * For tables having a very long name, the log object names are now
     automatically generated. This replaces the use of the now dropped
     grpdef_emaj_names_prefix column of the emaj_group_def table.
+  * Add a new emaj_get_current_log_table() function that retrieves the current
+    log table name of a given application table.
   * Minor coding improvements.
 
 ###Bug fixes:###

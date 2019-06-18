@@ -7,11 +7,11 @@
 # and build the upgrade script leaving unchanged the other existing parts of the upgrade script.
 # It also recreates functions that need to be, due to dropped tables whose type is referenced as parameter.
 #
-# In the existing upgrade script, it requires 2 patterns that delimit the functions section to process: 2 lines beginning with
+# In the existing upgrade script, it requires 2 patterns that delimit the functions section to process: 2 lines starting with
 #     --<begin_functions>
 #     --<end_functions>
 # In the source script, it requires that:
-# - all variable names used in functions signature start with either v_ or r_
+# - all input variables names used in functions signature start with either v_ or r_
 # - the event triggers and related functions must be set at the end of the script.
 
 use warnings; use strict;
@@ -258,13 +258,15 @@ use warnings; use strict;
     # Beginning of a COMMENT ON FUNCTION sql verb
     if ($line =~ /^COMMENT\s+ON\s+FUNCTION\s+((.*?)\.(.*?)\(.*\))/) {
       $fnctSignature = $1;
+print "signature : $fnctSignature\n";
       if ($status != 0) {
         die "ERROR : the comment $fnctSignature starts but the end of the preceeding function or comment has not been detected\n";
       }
       $status = 3;
       $nbCommentCurrSrc++;
-      $cleanSignature = cleanUpSignature($fnctSignature);
       $comment = '';
+      $cleanSignature = cleanUpSignature($fnctSignature);
+print "  => cleanSignature : $cleanSignature\n";
     }
     # aggregate the whole comment code
     if ($status == 3) {
