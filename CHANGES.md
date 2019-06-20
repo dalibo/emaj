@@ -3,6 +3,15 @@ E-Maj - Change log
 <devel>
 ------
 ###Enhancements:###
+
+
+###Bug fixes:###
+
+
+
+3.1.0 (2019-Jun-20)
+------
+###Enhancements:###
   * Let E-Maj work with PostgreSQL 12.
   * The rollback functions now automatically disable the application triggers,
     unless they are set in a list of triggers that should not be automatically
