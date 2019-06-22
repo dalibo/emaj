@@ -18,8 +18,8 @@ use warnings; use strict;
 
 # The 3 variables below are to be customized
   my $ficCurrSrc = "/home/postgres/proj/emaj/sql/emaj--devel.sql";
-  my $ficPrevSrc = "/home/postgres/proj/emaj/sql/emaj--3.0.0.sql";
-  my $ficUpgrade = "/home/postgres/proj/emaj/sql/emaj--3.0.0--devel.sql";
+  my $ficPrevSrc = "/home/postgres/proj/emaj/sql/emaj--3.1.0.sql";
+  my $ficUpgrade = "/home/postgres/proj/emaj/sql/emaj--3.1.0--devel.sql";
 
   my $upgradeScriptHeader = '';  # existing code from the upgrade script before the functions definition
   my $upgradeScriptFooter = '';  # existing code from the upgrade script after the functions definition
@@ -258,7 +258,6 @@ use warnings; use strict;
     # Beginning of a COMMENT ON FUNCTION sql verb
     if ($line =~ /^COMMENT\s+ON\s+FUNCTION\s+((.*?)\.(.*?)\(.*\))/) {
       $fnctSignature = $1;
-print "signature : $fnctSignature\n";
       if ($status != 0) {
         die "ERROR : the comment $fnctSignature starts but the end of the preceeding function or comment has not been detected\n";
       }
@@ -266,7 +265,6 @@ print "signature : $fnctSignature\n";
       $nbCommentCurrSrc++;
       $comment = '';
       $cleanSignature = cleanUpSignature($fnctSignature);
-print "  => cleanSignature : $cleanSignature\n";
     }
     # aggregate the whole comment code
     if ($status == 3) {

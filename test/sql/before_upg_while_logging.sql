@@ -35,10 +35,10 @@ insert into emaj.emaj_group_def values ('dummyGrp2','myschema1','dummyTable');
 insert into emaj.emaj_group_def values ('dummyGrp3','myschema1','mytbl1');
 insert into emaj.emaj_group_def values ('dummyGrp3','myschema2','mytbl2');
 -- Group with long name tables
-insert into emaj.emaj_group_def values ('myGroup6','myschema6','table_with_50_characters_long_name_____0_________0',NULL,NULL,'shortName1');
-insert into emaj.emaj_group_def values ('myGroup6','myschema6','table_with_51_characters_long_name_____0_________0a',NULL,NULL,'shortName2');
-insert into emaj.emaj_group_def values ('myGroup6','myschema6','table_with_55_characters_long_name_____0_________0abcde',NULL,NULL,'shortName3');
-insert into emaj.emaj_group_def values ('myGroup6','myschema6','table_with_55_characters_long_name_____0_________0fghij',NULL,NULL,'shortName4');
+insert into emaj.emaj_group_def values ('myGroup6','myschema6','table_with_50_characters_long_name_____0_________0');
+insert into emaj.emaj_group_def values ('myGroup6','myschema6','table_with_51_characters_long_name_____0_________0a');
+insert into emaj.emaj_group_def values ('myGroup6','myschema6','table_with_55_characters_long_name_____0_________0abcde');
+insert into emaj.emaj_group_def values ('myGroup6','myschema6','table_with_55_characters_long_name_____0_________0fghij');
 
 -----------------------------
 -- set the default_tablespace parameter to tspemaj to log tables and indexes into this tablespace
@@ -129,9 +129,8 @@ select emaj.emaj_logged_rollback_group('myGroup2','M3');
 select emaj.emaj_set_mark_groups('{"myGroup1","myGroup2"}','Common');
 
 -----------------------------
--- Step 5 : alter group myGroup1 by changing a log schema and removing a table
+-- Step 5 : alter group myGroup1 by removing a table
 -----------------------------
-update emaj.emaj_group_def set grpdef_log_schema_suffix = 'b' where grpdef_schema = 'myschema1' and grpdef_tblseq = 'mytbl2b';
 delete from emaj.emaj_group_def where grpdef_schema = 'myschema1' and grpdef_tblseq = 'myTbl3';
 
 reset role;
@@ -171,18 +170,17 @@ select sqhl_schema, sqhl_table, sqhl_begin_time_id, sqhl_end_time_id, sqhl_hole_
 select * from emaj.emaj_alter_plan order by 1,2,3,4,5;
 
 -- log tables
-select col11, col12, col13, emaj_verb, emaj_tuple, emaj_gid from emaj.mySchema1_myTbl1_log order by emaj_gid, emaj_tuple desc;
-select col21, col22, col23, emaj_verb, emaj_tuple, emaj_gid from emaj.mySchema1_myTbl2_log order by emaj_gid, emaj_tuple desc;
-select col20, col21, emaj_verb, emaj_tuple, emaj_gid from emajb.mySchema1_myTbl2b_log order by emaj_gid, emaj_tuple desc;
-select col31, col33, emaj_verb, emaj_tuple, emaj_gid from emaj."myschema1_myTbl3_log_1" order by emaj_gid, emaj_tuple desc;
-select col41, col42, col43, col44, col45, emaj_verb, emaj_tuple, emaj_gid from emaj.mySchema1_myTbl4_log order by emaj_gid, emaj_tuple desc;
+select col11, col12, col13, emaj_verb, emaj_tuple, emaj_gid from emaj_mySchema1.myTbl1_log order by emaj_gid, emaj_tuple desc;
+select col21, col22, col23, emaj_verb, emaj_tuple, emaj_gid from emaj_mySchema1.myTbl2_log order by emaj_gid, emaj_tuple desc;
+select col20, col21, emaj_verb, emaj_tuple, emaj_gid from emaj_mySchema1.myTbl2b_log order by emaj_gid, emaj_tuple desc;
+select col31, col33, emaj_verb, emaj_tuple, emaj_gid from emaj_myschema1."myTbl3_log_1" order by emaj_gid, emaj_tuple desc;
+select col41, col42, col43, col44, col45, emaj_verb, emaj_tuple, emaj_gid from emaj_mySchema1.myTbl4_log order by emaj_gid, emaj_tuple desc;
 --
-select col11, col12, col13, emaj_verb, emaj_tuple, emaj_gid from emaj.mySchema2_myTbl1_log order by emaj_gid, emaj_tuple desc;
-select col21, col22, col23, emaj_verb, emaj_tuple, emaj_gid from emaj.mySchema2_myTbl2_log order by emaj_gid, emaj_tuple desc;
-select col31, col33, emaj_verb, emaj_tuple, emaj_gid from emaj."myschema2_myTbl3_log" order by emaj_gid, emaj_tuple desc;
-select col41, col42, col43, col44, col45, emaj_verb, emaj_tuple, emaj_gid from emaj.mySchema2_myTbl4_log order by emaj_gid, emaj_tuple desc;
+select col11, col12, col13, emaj_verb, emaj_tuple, emaj_gid from emaj_mySchema2.myTbl1_log order by emaj_gid, emaj_tuple desc;
+select col21, col22, col23, emaj_verb, emaj_tuple, emaj_gid from emaj_mySchema2.myTbl2_log order by emaj_gid, emaj_tuple desc;
+select col31, col33, emaj_verb, emaj_tuple, emaj_gid from emaj_myschema2."myTbl3_log" order by emaj_gid, emaj_tuple desc;
+select col41, col42, col43, col44, col45, emaj_verb, emaj_tuple, emaj_gid from emaj_mySchema2.myTbl4_log order by emaj_gid, emaj_tuple desc;
 
 -------------------------------
 -- Specific tests for this upgrade
 -------------------------------
-update emaj.emaj_group_def set grpdef_priority = 21 where grpdef_schema = 'myschema1' and grpdef_tblseq = 'mytbl1';
