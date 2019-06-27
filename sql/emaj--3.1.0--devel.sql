@@ -98,6 +98,45 @@ SELECT emaj._disable_event_triggers();
 ------------------------------------------------------------------
 -- create new or modified functions                             --
 ------------------------------------------------------------------
+CREATE OR REPLACE FUNCTION emaj._event_trigger_table_rewrite_fnct()
+RETURNS EVENT_TRIGGER LANGUAGE plpgsql
+SECURITY DEFINER SET search_path = pg_catalog, pg_temp AS
+$_event_trigger_table_rewrite_fnct$
+-- This function is called by the emaj_table_rewrite_trg event trigger.
+-- The function blocks any ddl operation that leads to a table rewrite for:
+--   - an application table registered into an active (not stopped) E-Maj group,
+--   - an E-Maj log table.
+-- The function is declared SECURITY DEFINER so that non emaj roles can access the emaj internal tables when altering their tables.
+  DECLARE
+    v_tableSchema            TEXT;
+    v_tableName              TEXT;
+    v_groupName              TEXT;
+  BEGIN
+-- get the schema and table names of the altered table
+    SELECT nspname, relname INTO v_tableSchema, v_tableName FROM pg_catalog.pg_class, pg_catalog.pg_namespace
+      WHERE relnamespace = pg_namespace.oid AND pg_class.oid = pg_event_trigger_table_rewrite_oid();
+-- look at the emaj_relation table to verify that the table being rewritten does not belong to any active (not stopped) group
+    SELECT rel_group INTO v_groupName FROM emaj.emaj_relation, emaj.emaj_group
+      WHERE rel_schema = v_tableSchema AND rel_tblseq = v_tableName AND upper_inf(rel_time_range)
+        AND group_name = rel_group AND group_is_logging;
+    IF FOUND THEN
+-- the table is an application table that belongs to a group, so raise an exception
+      RAISE EXCEPTION 'E-Maj event trigger: Attempting to change the application table "%.%" structure. But the table belongs to the'
+                      ' active tables group "%".', v_tableSchema, v_tableName , v_groupName;
+    END IF;
+-- look at the emaj_relation table to verify that the table being rewritten is not a known log table
+    SELECT rel_group INTO v_groupName FROM emaj.emaj_relation
+      WHERE rel_log_schema = v_tableSchema AND rel_log_table = v_tableName;
+    IF FOUND THEN
+-- the table is an E-Maj log table, so raise an exception
+      RAISE EXCEPTION 'E-Maj event trigger: Attempting to change the log table "%.%" structure. But the table belongs to the tables'
+                      ' group "%".', v_tableSchema, v_tableName , v_groupName;
+    END IF;
+  END;
+$_event_trigger_table_rewrite_fnct$;
+COMMENT ON FUNCTION emaj._event_trigger_table_rewrite_fnct() IS
+$$E-Maj extension: support of the emaj_table_rewrite_trg event trigger.$$;
+
 --<end_functions>                                pattern used by the tool that extracts and insert the functions definition
 ------------------------------------------
 --                                      --

@@ -126,7 +126,7 @@ select funcname, calls from pg_stat_user_functions
  _enable_event_triggers                    |   288
  _estimate_rollback_groups                 |    13
  _event_trigger_sql_drop_fnct              |   113
- _event_trigger_table_rewrite_fnct         |   138
+ _event_trigger_table_rewrite_fnct         |   139
  _gen_sql_groups                           |    23
  _gen_sql_tbl                              |    43
  _get_current_sequence_state               |  2308

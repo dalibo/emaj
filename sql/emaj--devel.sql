@@ -8008,8 +8008,8 @@ $_event_trigger_table_rewrite_fnct$
       WHERE relnamespace = pg_namespace.oid AND pg_class.oid = pg_event_trigger_table_rewrite_oid();
 -- look at the emaj_relation table to verify that the table being rewritten does not belong to any active (not stopped) group
     SELECT rel_group INTO v_groupName FROM emaj.emaj_relation, emaj.emaj_group
-      WHERE rel_schema = v_tableSchema AND rel_tblseq = v_tableName
-              AND group_name = rel_group AND group_is_logging;
+      WHERE rel_schema = v_tableSchema AND rel_tblseq = v_tableName AND upper_inf(rel_time_range)
+        AND group_name = rel_group AND group_is_logging;
     IF FOUND THEN
 -- the table is an application table that belongs to a group, so raise an exception
       RAISE EXCEPTION 'E-Maj event trigger: Attempting to change the application table "%.%" structure. But the table belongs to the'

@@ -495,6 +495,11 @@ begin;
   drop table mySchema1."myTbl3";
 rollback;
 
+-- testing an ALTER TABLE leading to a table rewrite
+begin;
+  alter table mySchema1."myTbl3" alter column col33 type decimal (10,1);
+rollback;
+
 -- re-add all removed tables
 update emaj.emaj_group_def set grpdef_group = 'myGroup1' where grpdef_group = 'temporarily_removed';
 select emaj.emaj_alter_group('myGroup1', 'tables re-added to myGroup1');

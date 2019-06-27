@@ -6,8 +6,10 @@ E-Maj - Change log
 
 
 ###Bug fixes:###
-
-
+  * Fix a bug in the event trigger function that checks table rewrites. When
+    an application table has been removed from a logging tables group and an
+    ALTER TABLE leads then to a table rewrite, the event trigger erroneously
+    blocked the statement.
 
 3.1.0 (2019-Jun-20)
 ------
