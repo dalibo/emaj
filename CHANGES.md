@@ -3,7 +3,7 @@ E-Maj - Change log
 <devel>
 ------
 ###Enhancements:###
-
+  * Minor coding improvements.
 
 ###Bug fixes:###
   * Fix a bug in the event trigger function that checks table rewrites. When
