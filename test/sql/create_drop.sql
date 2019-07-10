@@ -1,4 +1,5 @@
 -- create_drop.sql : prepare groups content and test emaj_create_group(), emaj_comment_group(),
+-- emaj_assign_table(), emaj_assign_tables(),
 -- emaj_ignore_app_trigger(), emaj_drop_group() and emaj_force_drop_group() functions
 --
 SET client_min_messages TO WARNING;
@@ -175,6 +176,73 @@ select emaj.emaj_comment_group('emptyGroup','an empty group');
 select group_name, group_comment from emaj.emaj_group where group_name = 'myGroup1';
 select emaj.emaj_comment_group('myGroup1',NULL);
 select group_name, group_comment from emaj.emaj_group where group_name = 'myGroup1';
+
+-----------------------------------
+-- emaj_assign_table
+-----------------------------------
+select emaj.emaj_drop_group('myGroup1');
+select emaj.emaj_create_group('myGroup1b', true, true);  -- rollbackable and empty
+
+-- error cases
+-- bad group name
+select emaj.emaj_assign_table('myschema1','mytbl1','dummyGroup');
+-- bad schema
+select emaj.emaj_assign_table('dummySchema','mytbl1','myGroup1b');
+select emaj.emaj_assign_table('emaj','mytbl1','myGroup1b');
+-- bad table
+select emaj.emaj_assign_table('myschema1','dummyTable','myGroup1b');
+-- partitionned table (abort for lack of PRIMARY KEY with prior PG versions)
+select emaj.emaj_assign_table('myschema4','mytblp','myGroup1b');
+-- temp table
+begin;
+  CREATE TEMPORARY TABLE myTempTbl (
+    col1       INT     NOT NULL,
+    PRIMARY KEY (col1)
+  );
+  select emaj.emaj_assign_table(nspname,'mytemptbl','myGroup1b') from pg_class, pg_namespace
+    where relnamespace = pg_namespace.oid and relname = 'mytemptbl';
+rollback;
+-- unlogged table
+select emaj.emaj_assign_table('myschema5','myunloggedtbl','myGroup1b');
+-- table WITH OIDS
+select emaj.emaj_assign_table('myschema5','myoidstbl','myGroup1b');
+-- table without PKEY
+select emaj.emaj_assign_table('phil''s schema3','myTbl2\','myGroup1b');
+
+-- invalid tablespace
+select emaj.emaj_assign_table('myschema1','mytbl1','myGroup1b',null,'dummytsp');
+select emaj.emaj_assign_table('myschema1','mytbl1','myGroup1b',null,null,'dummytsp');
+
+-- erroneously existing log schema
+begin;
+  create schema emaj_myschema1;
+  select emaj.emaj_assign_table('myschema1','mytbl1','myGroup1b');
+rollback;
+
+-- ok
+select emaj.emaj_assign_table('myschema1','mytbl1','myGroup1b');
+-- already assigned table
+select emaj.emaj_assign_table('myschema1','mytbl1','myGroup1b');
+
+-----------------------------------
+-- emaj_assign_tables
+-----------------------------------
+-- error cases
+-- bad group name
+select emaj.emaj_assign_tables('dummySchema',array['dummyTable'],'dummyGroup');
+-- bad tables
+select emaj.emaj_assign_tables('myschema1',array['dummytbl1','dummytbl2'],'myGroup1b');
+-- empty tables array
+select emaj.emaj_assign_tables('myschema1',array[]::text[],'myGroup1b');
+select emaj.emaj_assign_tables('myschema1',null,'myGroup1b');
+select emaj.emaj_assign_tables('myschema1',array[''],'myGroup1b');
+
+-- ok (with a duplicate table name)
+select emaj.emaj_assign_tables('myschema1',array['mytbl2','mytbl2b','mytbl2'],'myGroup1b');
+
+
+select emaj.emaj_drop_group('myGroup1b');
+select emaj.emaj_create_group('myGroup1');
 
 -----------------------------------
 -- emaj_ignore_app_trigger

@@ -242,7 +242,7 @@ select hist_function, hist_event, hist_object,
  hist_function  | hist_event | hist_object |                        regexp_replace                        | hist_user 
 ----------------+------------+-------------+--------------------------------------------------------------+-----------
  START_GROUP    | BEGIN      | myGroup1    | With log reset                                               | postgres
- PURGE_HISTORY  |            |             | 77 emaj_hist rows deleted ; 36 relation history rows deleted | postgres
+ PURGE_HISTORY  |            |             | 92 emaj_hist rows deleted ; 46 relation history rows deleted | postgres
  LOCK_GROUP     | BEGIN      | myGroup1    |                                                              | postgres
  LOCK_GROUP     | END        | myGroup1    | 5 tables locked, 0 deadlock(s)                               | postgres
  SET_MARK_GROUP | BEGIN      | myGroup1    | Mark1                                                        | postgres
@@ -1161,7 +1161,7 @@ select hist_id, hist_function, hist_event, hist_object,
  hist_id |  hist_function   | hist_event |                  hist_object                  |                        regexp_replace                        | hist_user 
 ---------+------------------+------------+-----------------------------------------------+--------------------------------------------------------------+-----------
     1028 | START_GROUP      | BEGIN      | myGroup1                                      | With log reset                                               | postgres
-    1029 | PURGE_HISTORY    |            |                                               | 77 emaj_hist rows deleted ; 36 relation history rows deleted | postgres
+    1029 | PURGE_HISTORY    |            |                                               | 92 emaj_hist rows deleted ; 46 relation history rows deleted | postgres
     1030 | LOCK_GROUP       | BEGIN      | myGroup1                                      |                                                              | postgres
     1031 | LOCK_GROUP       | END        | myGroup1                                      | 5 tables locked, 0 deadlock(s)                               | postgres
     1032 | SET_MARK_GROUP   | BEGIN      | myGroup1                                      | Mark1                                                        | postgres

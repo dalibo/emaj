@@ -1450,6 +1450,239 @@ $_drop_log_schemas$;
 -- Elementary functions for tables and sequences --
 --                                               --
 ---------------------------------------------------
+CREATE OR REPLACE FUNCTION emaj.emaj_assign_table(v_schema TEXT, v_table TEXT, v_group TEXT, v_priority INT DEFAULT NULL,
+                                                  v_logDatTsp TEXT DEFAULT NULL, v_logIdxTsp TEXT DEFAULT NULL)
+RETURNS INTEGER LANGUAGE plpgsql AS
+$emaj_assign_table$
+-- The function assigns a table into a tables group.
+-- Inputs: schema name, table name, group name,
+--         priority (optional), log data tablespace (optional) and log index tablespace (optional)
+-- Outputs: number of tables effectively assigned to the tables group, id. 1
+  BEGIN
+    RETURN emaj._assign_tables(v_schema, ARRAY[v_table], v_group, v_priority, v_logDatTsp, v_logIdxTsp, FALSE);
+  END;
+$emaj_assign_table$;
+COMMENT ON FUNCTION emaj.emaj_assign_table(TEXT,TEXT,TEXT,INT,TEXT,TEXT) IS
+$$Assign a table into a tables group.$$;
+CREATE OR REPLACE FUNCTION emaj.emaj_assign_tables(v_schema TEXT, v_tables TEXT[], v_group TEXT, v_priority INT DEFAULT NULL,
+                                                  v_logDatTsp TEXT DEFAULT NULL, v_logIdxTsp TEXT DEFAULT NULL)
+RETURNS INTEGER LANGUAGE plpgsql AS
+$emaj_assign_tables$
+-- The function assigns several tables at once into a tables group.
+-- Inputs: schema, array of table names, group name,
+--         priority (optional), log data tablespace (optional) and log index tablespace (optional)
+-- Outputs: number of tables effectively assigned to the tables group
+  BEGIN
+    RETURN emaj._assign_tables(v_schema, v_tables, v_group, v_priority, v_logDatTsp, v_logIdxTsp, TRUE);
+  END;
+$emaj_assign_tables$;
+COMMENT ON FUNCTION emaj.emaj_assign_tables(TEXT,TEXT[],TEXT,INT,TEXT,TEXT) IS
+$$Assign several tables into a tables group.$$;
+CREATE OR REPLACE FUNCTION emaj._assign_tables(v_schema TEXT, v_tables TEXT[], v_group TEXT, v_priority INT,
+                                               v_logDatTsp TEXT, v_logIdxTsp TEXT, v_multiTable BOOLEAN)
+RETURNS INTEGER LANGUAGE plpgsql AS
+$_assign_tables$
+-- The function effectively assigns tables into a tables group.
+-- Inputs: schema, array of table names, group name, priority, log data tablespace and log index tablespace
+-- Outputs: number of tables effectively assigned to the tables group
+  DECLARE
+    v_groupIsRollbackable    BOOLEAN;
+    v_groupIsLogging         BOOLEAN;
+    v_list                   TEXT;
+    v_timeId                 BIGINT;
+    v_schemaPrefix           TEXT = 'emaj_';
+    v_logSchema              TEXT;
+    v_logSequence            TEXT;
+    v_nextVal                BIGINT;
+    v_nbAssignedTbl          INT = 0;
+    r_table                  RECORD;
+  BEGIN
+-- check supplied parameters
+-- check the group name and if ok, get some properties of the group
+    PERFORM emaj._check_group_names(v_groupNames := ARRAY[v_group], v_mayBeNull := FALSE, v_lockGroups := TRUE, v_checkList := '');
+    SELECT group_is_rollbackable, group_is_logging INTO v_groupIsRollbackable, v_groupIsLogging
+      FROM emaj.emaj_group WHERE group_name = v_group;
+-- check the supplied schema exists and is not an E-Maj schema
+    PERFORM 1 FROM pg_catalog.pg_namespace
+      WHERE nspname = v_schema;
+    IF NOT FOUND THEN
+      RAISE EXCEPTION '_assign_tables: The schema "%" does not exist.', v_schema;
+    END IF;
+    PERFORM 1 FROM emaj.emaj_schema
+      WHERE sch_name = v_schema;
+    IF FOUND THEN
+      RAISE EXCEPTION '_assign_tables: The schema "%" is an E-Maj schema.', v_schema;
+    END IF;
+-- check tables
+-- remove duplicates values, NULL and empty strings from the supplied table names array
+    SELECT array_agg(DISTINCT table_name) INTO v_tables FROM unnest(v_tables) AS table_name
+      WHERE table_name IS NOT NULL AND table_name <> '';
+-- process empty array
+    IF v_tables IS NULL THEN
+      RAISE WARNING '_assign_tables: No table to process.';
+      RETURN 0;
+    END IF;
+-- check that application tables exist
+    WITH tables AS (
+      SELECT unnest(v_tables) AS table_name)
+    SELECT string_agg(quote_ident(v_schema) || '.' || quote_ident(table_name), ', ') INTO v_list
+      FROM (
+        SELECT table_name FROM tables
+        WHERE NOT EXISTS (
+          SELECT 0 FROM pg_catalog.pg_class, pg_catalog.pg_namespace
+            WHERE relnamespace = pg_namespace.oid
+              AND nspname = v_schema AND relname = table_name
+              AND relkind IN ('r','S','p'))
+      ) AS t;
+    IF v_list IS NOT NULL THEN
+      RAISE EXCEPTION '_assign_tables: some tables (%) do not exist.', v_list;
+    END IF;
+-- check that no application table is a partitioned table (only elementary partitions can be managed by E-Maj)
+    SELECT string_agg(quote_ident(v_schema) || '.' || quote_ident(relname), ', ') INTO v_list
+      FROM pg_catalog.pg_class, pg_catalog.pg_namespace
+      WHERE relnamespace = pg_namespace.oid
+        AND nspname = v_schema AND relname = ANY(v_tables)
+        AND relkind = 'p';
+    IF v_list IS NOT NULL THEN
+      RAISE EXCEPTION '_assign_tables: some tables (%) are partitionned tables (only elementary partitions are supported by E-Maj).',
+                      v_list;
+    END IF;
+-- check no table is a TEMP table
+    SELECT string_agg(quote_ident(v_schema) || '.' || quote_ident(relname), ', ') INTO v_list
+      FROM pg_catalog.pg_class, pg_catalog.pg_namespace
+      WHERE relnamespace = pg_namespace.oid
+        AND nspname = v_schema AND relname = ANY(v_tables)
+        AND relkind = 'r' AND relpersistence = 't';
+    IF v_list IS NOT NULL THEN
+      RAISE EXCEPTION '_assign_tables: some tables (%) are TEMP tables.', v_list;
+    END IF;
+-- check no table is an unlogged table (blocking rollbackable groups only)
+    IF v_groupIsRollbackable THEN
+      SELECT string_agg(quote_ident(v_schema) || '.' || quote_ident(relname), ', ') INTO v_list
+        FROM pg_catalog.pg_class, pg_catalog.pg_namespace
+        WHERE relnamespace = pg_namespace.oid
+          AND nspname = v_schema AND relname = ANY(v_tables)
+          AND relkind = 'r' AND relpersistence = 'u';
+      IF v_list IS NOT NULL THEN
+        RAISE EXCEPTION '_assign_tables: some tables (%) are UNLOGGED tables.', v_list;
+      END IF;
+    END IF;
+-- with PG11-, check no table is a WITH OIDS table (blocking rollbackable groups only)
+    IF emaj._pg_version_num() < 120000 AND v_groupIsRollbackable THEN
+      SELECT string_agg(quote_ident(v_schema) || '.' || quote_ident(relname), ', ') INTO v_list
+        FROM pg_catalog.pg_class, pg_catalog.pg_namespace
+        WHERE relnamespace = pg_namespace.oid
+          AND nspname = v_schema AND relname = ANY(v_tables)
+          AND relkind = 'r' AND relhasoids;
+      IF v_list IS NOT NULL THEN
+        RAISE EXCEPTION '_assign_tables: some tables (%) are declared WITH OIDS.', v_list;
+      END IF;
+    END IF;
+-- check every table has a primary key (blocking rollbackable groups only)
+    IF v_groupIsRollbackable THEN
+      SELECT string_agg(quote_ident(v_schema) || '.' || quote_ident(relname), ', ') INTO v_list
+        FROM pg_catalog.pg_class t, pg_catalog.pg_namespace
+        WHERE t.relnamespace = pg_namespace.oid
+          AND nspname = v_schema AND t.relname = ANY(v_tables)
+          AND relkind = 'r'
+          AND NOT EXISTS (SELECT 1 FROM pg_catalog.pg_class c, pg_catalog.pg_namespace, pg_catalog.pg_constraint
+                            WHERE c.relnamespace = pg_namespace.oid AND connamespace = pg_namespace.oid AND conrelid = c.oid
+                            AND contype = 'p' AND nspname = v_schema AND c.relname = t.relname);
+      IF v_list IS NOT NULL THEN
+        RAISE EXCEPTION '_assign_tables: some tables (%) have no PRIMARY KEY.', v_list;
+      END IF;
+    END IF;
+-- check that no table already belongs to a group
+    SELECT string_agg(quote_ident(v_schema) || '.' || quote_ident(rel_tblseq), ', ') INTO v_list
+      FROM emaj.emaj_relation
+      WHERE rel_schema = v_schema AND rel_tblseq = ANY(v_tables) AND upper_inf(rel_time_range);
+    IF v_list IS NOT NULL THEN
+      RAISE EXCEPTION '_assign_tables: some tables (%) already belong to a group.', v_list;
+    END IF;
+-- check that the tablespaces exist, if supplied
+    IF v_logDatTsp IS NOT NULL AND NOT EXISTS (SELECT 1 FROM pg_catalog.pg_tablespace WHERE spcname = v_logDatTsp) THEN
+      RAISE EXCEPTION '_assign_tables: the log data tablespace "%" does not exists.', v_logDatTsp;
+    END IF;
+    IF v_logIdxTsp IS NOT NULL AND NOT EXISTS (SELECT 1 FROM pg_catalog.pg_tablespace WHERE spcname = v_logIdxTsp) THEN
+      RAISE EXCEPTION '_assign_tables: the log index tablespace "%" does not exists.', v_logIdxTsp;
+    END IF;
+-- OK,
+-- get the time stamp of the operation
+    SELECT emaj._set_time_stamp('A') INTO v_timeId;
+-- for LOGGING groups, lock all tables to get a stable point
+    IF v_groupIsLogging THEN
+-- use a ROW EXCLUSIVE lock mode, preventing for a transaction currently updating data, but not conflicting with simple read access or
+--  vacuum operation.
+      PERFORM emaj._lock_groups(ARRAY[v_group], 'ROW EXCLUSIVE', FALSE);
+-- and set the mark, using the same time identifier
+      PERFORM emaj._set_mark_groups(ARRAY[v_group], 'ASSIGN_%', FALSE, TRUE, NULL, v_timeId);
+    END IF;
+-- create new log schemas if needed
+    v_logSchema = v_schemaPrefix || v_schema;
+    IF NOT EXISTS (SELECT 0 FROM emaj.emaj_schema WHERE sch_name = v_logSchema) THEN
+-- check that the schema doesn't already exist
+      PERFORM 0 FROM pg_catalog.pg_namespace WHERE nspname = v_logSchema;
+      IF FOUND THEN
+        RAISE EXCEPTION '_assign_tables: The schema "%" should not exist. Drop it manually.',v_logSchema;
+      END IF;
+-- create the schema and give the appropriate rights
+      EXECUTE format('CREATE SCHEMA %I',
+                     v_logSchema);
+      EXECUTE format('GRANT ALL ON SCHEMA %I TO emaj_adm',
+                     v_logSchema);
+      EXECUTE format('GRANT USAGE ON SCHEMA %I TO emaj_viewer',
+                     v_logSchema);
+-- and record the schema creation into the emaj_schema and the emaj_hist tables
+      INSERT INTO emaj.emaj_schema (sch_name) VALUES (v_logSchema);
+      INSERT INTO emaj.emaj_hist (hist_function, hist_event, hist_object)
+        VALUES (CASE WHEN v_multiTable THEN 'ASSIGN_TABLE' ELSE 'ASSIGN_TABLES' END, 'LOG_SCHEMA CREATED', quote_ident(v_logSchema));
+    END IF;
+-- effectively create the log components for each table
+    FOR r_table IN
+      SELECT unnest(v_tables) AS table_name
+        LOOP
+--raise warning 'table %',r_table.table_name;
+-- create the table
+      PERFORM emaj._create_tbl(v_schema, r_table.table_name, v_group, v_priority, v_logDatTsp, v_logIdxTsp,
+                               v_timeId, v_groupIsRollbackable, v_groupIsLogging);
+-- if the group is in logging state, perform additional tasks
+      IF v_groupIsLogging THEN
+-- ... get the log schema and sequence for the new relation
+        SELECT rel_log_schema, rel_log_sequence INTO v_logSchema, v_logSequence
+          FROM emaj.emaj_relation
+          WHERE rel_schema = v_schema AND rel_tblseq = r_table.table_name AND upper_inf(rel_time_range);
+-- ... get the last log sequence value, if any, for this relation (recorded in emaj_relation at a previous REMOVE_TBL operation)
+        SELECT max(rel_log_seq_last_value) + 1 INTO v_nextVal FROM emaj.emaj_relation
+          WHERE rel_schema = v_schema AND rel_tblseq = r_table.table_name
+            AND rel_log_seq_last_value IS NOT NULL;
+-- ... set the new log sequence next_val, if needed
+        IF v_nextVal IS NOT NULL AND v_nextVal > 1 THEN
+          EXECUTE format('ALTER SEQUENCE %I.%I RESTART %s',
+                         v_logSchema, v_logSequence, v_nextVal);
+        END IF;
+-- ... record the new log sequence state in the emaj_sequence table for the current alter_group mark
+        INSERT INTO emaj.emaj_sequence (sequ_schema, sequ_name, sequ_time_id, sequ_last_val, sequ_start_val,
+                    sequ_increment, sequ_max_val, sequ_min_val, sequ_cache_val, sequ_is_cycled, sequ_is_called)
+          SELECT * FROM emaj._get_current_sequence_state(v_logSchema, v_logSequence, v_timeId);
+      END IF;
+-- insert an entry into the emaj_hist table
+      INSERT INTO emaj.emaj_hist (hist_function, hist_event, hist_object, hist_wording)
+        VALUES (CASE WHEN v_multiTable THEN 'ASSIGN_TABLE' ELSE 'ASSIGN_TABLES' END, 'TABLE ADDED',
+                quote_ident(v_schema) || '.' || quote_ident(r_table.table_name),
+                'To the' || CASE WHEN v_groupIsLogging THEN ' logging' ELSE '' END || ' group ' || v_group);
+      v_nbAssignedTbl = v_nbAssignedTbl + 1;
+    END LOOP;
+-- adjust the group characteristics
+    UPDATE emaj.emaj_group
+      SET group_last_alter_time_id = v_timeId,
+          group_nb_table = (SELECT count(*) FROM emaj.emaj_relation
+                              WHERE rel_group = group_name AND upper_inf(rel_time_range) AND rel_kind = 'r')
+      WHERE group_name = v_group;
+-- check foreign keys with tables outside the groups
+    PERFORM emaj._check_fk_groups(array[v_group]);
+    RETURN v_nbAssignedTbl;
+  END;
+$_assign_tables$;
 CREATE OR REPLACE FUNCTION emaj.emaj_get_current_log_table(v_app_schema TEXT, v_app_table TEXT,
                                                            OUT log_schema TEXT, OUT log_table TEXT)
 LANGUAGE plpgsql AS
@@ -8168,7 +8401,7 @@ $do$
     RETURN;
   END;
 $do$;
-psql:sql/emaj-devel.sql:8357: NOTICE:  E-Maj installation: E-Maj successfully installed.
+psql:sql/emaj-devel.sql:8594: NOTICE:  E-Maj installation: E-Maj successfully installed.
 COMMIT;
 -----------------------------
 -- check installation

@@ -462,18 +462,24 @@ select time_id, time_last_emaj_gid, time_event from emaj.emaj_time_stamp order b
        9 |                  0 | C
       10 |                  0 | C
       11 |                  0 | C
-      12 |                  0 | M
-      13 |                  0 | M
-      15 |                  0 | D
+      12 |                  0 | D
+      13 |                  0 | C
+      14 |                  0 | A
+      15 |                  0 | A
       16 |                  0 | D
-      17 |                  0 | D
-      18 |                  0 | D
-      19 |                  0 | D
-      20 |                  0 | C
-      21 |                  0 | M
+      17 |                  0 | C
+      18 |                  0 | M
+      19 |                  0 | M
+      21 |                  0 | D
       22 |                  0 | D
-      23 |                  0 | C
+      23 |                  0 | D
       24 |                  0 | D
+      25 |                  0 | D
+      26 |                  0 | C
+      27 |                  0 | M
+      28 |                  0 | D
+      29 |                  0 | C
+      30 |                  0 | D
     1000 |                  0 | C
     1001 |                  0 | C
     1002 |                  0 | C
@@ -831,7 +837,7 @@ select time_id, time_last_emaj_gid, time_event from emaj.emaj_time_stamp order b
    20205 |             100949 | R
    20206 |             100968 | M
    20207 |             100968 | R
-(384 rows)
+(390 rows)
 
 -- user tables
 select * from mySchema2.myTbl1 order by col11,col12;
