@@ -2414,21 +2414,21 @@ PL/pgSQL function emaj.emaj_start_group(text,text,boolean) line 12 at RETURN
 (1 row)
 
 insert into myschema2.mytbl1 values (100, 'Started', E'\\000'::bytea);
---  begin;
-select emaj.emaj_remove_tables('myschema2','{"mytbl1","mytbl2","myTbl3"}');
+begin;
+select emaj.emaj_remove_tables('myschema2','{"mytbl1","mytbl2","myTbl3"}','REMOVE_3_TABLES');
  emaj_remove_tables 
 --------------------
                   3
 (1 row)
 
-select emaj.emaj_assign_tables('myschema2','{"mytbl1","mytbl2","myTbl3"}','myGroup2');
+select emaj.emaj_assign_tables('myschema2','{"mytbl1","mytbl2","myTbl3"}','myGroup2',null,null,null,'ASSIGN_3_TABLES');
 NOTICE:  table "myTbl3_log" does not exist, skipping
 CONTEXT:  SQL statement "DROP TABLE IF EXISTS emaj_myschema2."myTbl3_log""
 PL/pgSQL function emaj._create_tbl(text,text,text,integer,text,text,bigint,boolean,boolean) line 80 at EXECUTE
 SQL statement "SELECT emaj._create_tbl(v_schema, r_table.table_name, v_group, v_priority, v_logDatTsp, v_logIdxTsp,
                                v_timeId, v_groupIsRollbackable, v_groupIsLogging)"
 PL/pgSQL function emaj._assign_tables(text,text[],text,integer,text,text,text,boolean) line 169 at PERFORM
-PL/pgSQL function emaj.emaj_assign_tables(text,text[],text,integer,text,text) line 7 at RETURN
+PL/pgSQL function emaj.emaj_assign_tables(text,text[],text,integer,text,text,text) line 8 at RETURN
 NOTICE:  trigger "emaj_log_trg" for relation "myschema2.myTbl3" does not exist, skipping
 CONTEXT:  SQL statement "DROP TRIGGER IF EXISTS emaj_log_trg ON myschema2."myTbl3""
 PL/pgSQL function emaj._create_log_trigger(text,text,text,text) line 9 at EXECUTE
@@ -2437,21 +2437,21 @@ PL/pgSQL function emaj._create_tbl(text,text,text,integer,text,text,bigint,boole
 SQL statement "SELECT emaj._create_tbl(v_schema, r_table.table_name, v_group, v_priority, v_logDatTsp, v_logIdxTsp,
                                v_timeId, v_groupIsRollbackable, v_groupIsLogging)"
 PL/pgSQL function emaj._assign_tables(text,text[],text,integer,text,text,text,boolean) line 169 at PERFORM
-PL/pgSQL function emaj.emaj_assign_tables(text,text[],text,integer,text,text) line 7 at RETURN
+PL/pgSQL function emaj.emaj_assign_tables(text,text[],text,integer,text,text,text) line 8 at RETURN
 NOTICE:  trigger "emaj_trunc_trg" for relation "myschema2.myTbl3" does not exist, skipping
 CONTEXT:  SQL statement "DROP TRIGGER IF EXISTS emaj_trunc_trg ON myschema2."myTbl3""
 PL/pgSQL function emaj._create_tbl(text,text,text,integer,text,text,bigint,boolean,boolean) line 135 at EXECUTE
 SQL statement "SELECT emaj._create_tbl(v_schema, r_table.table_name, v_group, v_priority, v_logDatTsp, v_logIdxTsp,
                                v_timeId, v_groupIsRollbackable, v_groupIsLogging)"
 PL/pgSQL function emaj._assign_tables(text,text[],text,integer,text,text,text,boolean) line 169 at PERFORM
-PL/pgSQL function emaj.emaj_assign_tables(text,text[],text,integer,text,text) line 7 at RETURN
+PL/pgSQL function emaj.emaj_assign_tables(text,text[],text,integer,text,text,text) line 8 at RETURN
 NOTICE:  table "mytbl1_log" does not exist, skipping
 CONTEXT:  SQL statement "DROP TABLE IF EXISTS emaj_myschema2.mytbl1_log"
 PL/pgSQL function emaj._create_tbl(text,text,text,integer,text,text,bigint,boolean,boolean) line 80 at EXECUTE
 SQL statement "SELECT emaj._create_tbl(v_schema, r_table.table_name, v_group, v_priority, v_logDatTsp, v_logIdxTsp,
                                v_timeId, v_groupIsRollbackable, v_groupIsLogging)"
 PL/pgSQL function emaj._assign_tables(text,text[],text,integer,text,text,text,boolean) line 169 at PERFORM
-PL/pgSQL function emaj.emaj_assign_tables(text,text[],text,integer,text,text) line 7 at RETURN
+PL/pgSQL function emaj.emaj_assign_tables(text,text[],text,integer,text,text,text) line 8 at RETURN
 NOTICE:  trigger "emaj_log_trg" for relation "myschema2.mytbl1" does not exist, skipping
 CONTEXT:  SQL statement "DROP TRIGGER IF EXISTS emaj_log_trg ON myschema2.mytbl1"
 PL/pgSQL function emaj._create_log_trigger(text,text,text,text) line 9 at EXECUTE
@@ -2460,21 +2460,21 @@ PL/pgSQL function emaj._create_tbl(text,text,text,integer,text,text,bigint,boole
 SQL statement "SELECT emaj._create_tbl(v_schema, r_table.table_name, v_group, v_priority, v_logDatTsp, v_logIdxTsp,
                                v_timeId, v_groupIsRollbackable, v_groupIsLogging)"
 PL/pgSQL function emaj._assign_tables(text,text[],text,integer,text,text,text,boolean) line 169 at PERFORM
-PL/pgSQL function emaj.emaj_assign_tables(text,text[],text,integer,text,text) line 7 at RETURN
+PL/pgSQL function emaj.emaj_assign_tables(text,text[],text,integer,text,text,text) line 8 at RETURN
 NOTICE:  trigger "emaj_trunc_trg" for relation "myschema2.mytbl1" does not exist, skipping
 CONTEXT:  SQL statement "DROP TRIGGER IF EXISTS emaj_trunc_trg ON myschema2.mytbl1"
 PL/pgSQL function emaj._create_tbl(text,text,text,integer,text,text,bigint,boolean,boolean) line 135 at EXECUTE
 SQL statement "SELECT emaj._create_tbl(v_schema, r_table.table_name, v_group, v_priority, v_logDatTsp, v_logIdxTsp,
                                v_timeId, v_groupIsRollbackable, v_groupIsLogging)"
 PL/pgSQL function emaj._assign_tables(text,text[],text,integer,text,text,text,boolean) line 169 at PERFORM
-PL/pgSQL function emaj.emaj_assign_tables(text,text[],text,integer,text,text) line 7 at RETURN
+PL/pgSQL function emaj.emaj_assign_tables(text,text[],text,integer,text,text,text) line 8 at RETURN
 NOTICE:  table "mytbl2_log" does not exist, skipping
 CONTEXT:  SQL statement "DROP TABLE IF EXISTS emaj_myschema2.mytbl2_log"
 PL/pgSQL function emaj._create_tbl(text,text,text,integer,text,text,bigint,boolean,boolean) line 80 at EXECUTE
 SQL statement "SELECT emaj._create_tbl(v_schema, r_table.table_name, v_group, v_priority, v_logDatTsp, v_logIdxTsp,
                                v_timeId, v_groupIsRollbackable, v_groupIsLogging)"
 PL/pgSQL function emaj._assign_tables(text,text[],text,integer,text,text,text,boolean) line 169 at PERFORM
-PL/pgSQL function emaj.emaj_assign_tables(text,text[],text,integer,text,text) line 7 at RETURN
+PL/pgSQL function emaj.emaj_assign_tables(text,text[],text,integer,text,text,text) line 8 at RETURN
 NOTICE:  trigger "emaj_log_trg" for relation "myschema2.mytbl2" does not exist, skipping
 CONTEXT:  SQL statement "DROP TRIGGER IF EXISTS emaj_log_trg ON myschema2.mytbl2"
 PL/pgSQL function emaj._create_log_trigger(text,text,text,text) line 9 at EXECUTE
@@ -2483,22 +2483,22 @@ PL/pgSQL function emaj._create_tbl(text,text,text,integer,text,text,bigint,boole
 SQL statement "SELECT emaj._create_tbl(v_schema, r_table.table_name, v_group, v_priority, v_logDatTsp, v_logIdxTsp,
                                v_timeId, v_groupIsRollbackable, v_groupIsLogging)"
 PL/pgSQL function emaj._assign_tables(text,text[],text,integer,text,text,text,boolean) line 169 at PERFORM
-PL/pgSQL function emaj.emaj_assign_tables(text,text[],text,integer,text,text) line 7 at RETURN
+PL/pgSQL function emaj.emaj_assign_tables(text,text[],text,integer,text,text,text) line 8 at RETURN
 NOTICE:  trigger "emaj_trunc_trg" for relation "myschema2.mytbl2" does not exist, skipping
 CONTEXT:  SQL statement "DROP TRIGGER IF EXISTS emaj_trunc_trg ON myschema2.mytbl2"
 PL/pgSQL function emaj._create_tbl(text,text,text,integer,text,text,bigint,boolean,boolean) line 135 at EXECUTE
 SQL statement "SELECT emaj._create_tbl(v_schema, r_table.table_name, v_group, v_priority, v_logDatTsp, v_logIdxTsp,
                                v_timeId, v_groupIsRollbackable, v_groupIsLogging)"
 PL/pgSQL function emaj._assign_tables(text,text[],text,integer,text,text,text,boolean) line 169 at PERFORM
-PL/pgSQL function emaj.emaj_assign_tables(text,text[],text,integer,text,text) line 7 at RETURN
+PL/pgSQL function emaj.emaj_assign_tables(text,text[],text,integer,text,text,text) line 8 at RETURN
 WARNING:  _check_fk_groups: The foreign key "mytbl6_col61_fkey" on the table "myschema2.mytbl6" references the table "myschema2.mytbl7" that is outside the groups (myGroup2).
 CONTEXT:  SQL statement "SELECT emaj._check_fk_groups(array[v_group])"
 PL/pgSQL function emaj._assign_tables(text,text[],text,integer,text,text,text,boolean) line 207 at PERFORM
-PL/pgSQL function emaj.emaj_assign_tables(text,text[],text,integer,text,text) line 7 at RETURN
+PL/pgSQL function emaj.emaj_assign_tables(text,text[],text,integer,text,text,text) line 8 at RETURN
 WARNING:  _check_fk_groups: The table "myschema2.mytbl6" is referenced by the foreign key "mytbl8_col81_fkey" on the table "myschema2.mytbl8" that is outside the groups (myGroup2).
 CONTEXT:  SQL statement "SELECT emaj._check_fk_groups(array[v_group])"
 PL/pgSQL function emaj._assign_tables(text,text[],text,integer,text,text,text,boolean) line 207 at PERFORM
-PL/pgSQL function emaj.emaj_assign_tables(text,text[],text,integer,text,text) line 7 at RETURN
+PL/pgSQL function emaj.emaj_assign_tables(text,text[],text,integer,text,text,text) line 8 at RETURN
  emaj_assign_tables 
 --------------------
                   3
@@ -2518,7 +2518,7 @@ PL/pgSQL function emaj._create_tbl(text,text,text,integer,text,text,bigint,boole
 SQL statement "SELECT emaj._create_tbl(v_schema, r_table.table_name, v_group, v_priority, v_logDatTsp, v_logIdxTsp,
                                v_timeId, v_groupIsRollbackable, v_groupIsLogging)"
 PL/pgSQL function emaj._assign_tables(text,text[],text,integer,text,text,text,boolean) line 169 at PERFORM
-PL/pgSQL function emaj.emaj_assign_tables(text,text[],text,integer,text,text) line 7 at RETURN
+PL/pgSQL function emaj.emaj_assign_tables(text,text[],text,integer,text,text,text) line 8 at RETURN
 NOTICE:  trigger "emaj_log_trg" for relation "myschema2.myTbl3" does not exist, skipping
 CONTEXT:  SQL statement "DROP TRIGGER IF EXISTS emaj_log_trg ON myschema2."myTbl3""
 PL/pgSQL function emaj._create_log_trigger(text,text,text,text) line 9 at EXECUTE
@@ -2527,21 +2527,21 @@ PL/pgSQL function emaj._create_tbl(text,text,text,integer,text,text,bigint,boole
 SQL statement "SELECT emaj._create_tbl(v_schema, r_table.table_name, v_group, v_priority, v_logDatTsp, v_logIdxTsp,
                                v_timeId, v_groupIsRollbackable, v_groupIsLogging)"
 PL/pgSQL function emaj._assign_tables(text,text[],text,integer,text,text,text,boolean) line 169 at PERFORM
-PL/pgSQL function emaj.emaj_assign_tables(text,text[],text,integer,text,text) line 7 at RETURN
+PL/pgSQL function emaj.emaj_assign_tables(text,text[],text,integer,text,text,text) line 8 at RETURN
 NOTICE:  trigger "emaj_trunc_trg" for relation "myschema2.myTbl3" does not exist, skipping
 CONTEXT:  SQL statement "DROP TRIGGER IF EXISTS emaj_trunc_trg ON myschema2."myTbl3""
 PL/pgSQL function emaj._create_tbl(text,text,text,integer,text,text,bigint,boolean,boolean) line 135 at EXECUTE
 SQL statement "SELECT emaj._create_tbl(v_schema, r_table.table_name, v_group, v_priority, v_logDatTsp, v_logIdxTsp,
                                v_timeId, v_groupIsRollbackable, v_groupIsLogging)"
 PL/pgSQL function emaj._assign_tables(text,text[],text,integer,text,text,text,boolean) line 169 at PERFORM
-PL/pgSQL function emaj.emaj_assign_tables(text,text[],text,integer,text,text) line 7 at RETURN
+PL/pgSQL function emaj.emaj_assign_tables(text,text[],text,integer,text,text,text) line 8 at RETURN
 NOTICE:  table "mytbl1_log" does not exist, skipping
 CONTEXT:  SQL statement "DROP TABLE IF EXISTS emaj_myschema2.mytbl1_log"
 PL/pgSQL function emaj._create_tbl(text,text,text,integer,text,text,bigint,boolean,boolean) line 80 at EXECUTE
 SQL statement "SELECT emaj._create_tbl(v_schema, r_table.table_name, v_group, v_priority, v_logDatTsp, v_logIdxTsp,
                                v_timeId, v_groupIsRollbackable, v_groupIsLogging)"
 PL/pgSQL function emaj._assign_tables(text,text[],text,integer,text,text,text,boolean) line 169 at PERFORM
-PL/pgSQL function emaj.emaj_assign_tables(text,text[],text,integer,text,text) line 7 at RETURN
+PL/pgSQL function emaj.emaj_assign_tables(text,text[],text,integer,text,text,text) line 8 at RETURN
 NOTICE:  trigger "emaj_log_trg" for relation "myschema2.mytbl1" does not exist, skipping
 CONTEXT:  SQL statement "DROP TRIGGER IF EXISTS emaj_log_trg ON myschema2.mytbl1"
 PL/pgSQL function emaj._create_log_trigger(text,text,text,text) line 9 at EXECUTE
@@ -2550,21 +2550,21 @@ PL/pgSQL function emaj._create_tbl(text,text,text,integer,text,text,bigint,boole
 SQL statement "SELECT emaj._create_tbl(v_schema, r_table.table_name, v_group, v_priority, v_logDatTsp, v_logIdxTsp,
                                v_timeId, v_groupIsRollbackable, v_groupIsLogging)"
 PL/pgSQL function emaj._assign_tables(text,text[],text,integer,text,text,text,boolean) line 169 at PERFORM
-PL/pgSQL function emaj.emaj_assign_tables(text,text[],text,integer,text,text) line 7 at RETURN
+PL/pgSQL function emaj.emaj_assign_tables(text,text[],text,integer,text,text,text) line 8 at RETURN
 NOTICE:  trigger "emaj_trunc_trg" for relation "myschema2.mytbl1" does not exist, skipping
 CONTEXT:  SQL statement "DROP TRIGGER IF EXISTS emaj_trunc_trg ON myschema2.mytbl1"
 PL/pgSQL function emaj._create_tbl(text,text,text,integer,text,text,bigint,boolean,boolean) line 135 at EXECUTE
 SQL statement "SELECT emaj._create_tbl(v_schema, r_table.table_name, v_group, v_priority, v_logDatTsp, v_logIdxTsp,
                                v_timeId, v_groupIsRollbackable, v_groupIsLogging)"
 PL/pgSQL function emaj._assign_tables(text,text[],text,integer,text,text,text,boolean) line 169 at PERFORM
-PL/pgSQL function emaj.emaj_assign_tables(text,text[],text,integer,text,text) line 7 at RETURN
+PL/pgSQL function emaj.emaj_assign_tables(text,text[],text,integer,text,text,text) line 8 at RETURN
 NOTICE:  table "mytbl2_log" does not exist, skipping
 CONTEXT:  SQL statement "DROP TABLE IF EXISTS emaj_myschema2.mytbl2_log"
 PL/pgSQL function emaj._create_tbl(text,text,text,integer,text,text,bigint,boolean,boolean) line 80 at EXECUTE
 SQL statement "SELECT emaj._create_tbl(v_schema, r_table.table_name, v_group, v_priority, v_logDatTsp, v_logIdxTsp,
                                v_timeId, v_groupIsRollbackable, v_groupIsLogging)"
 PL/pgSQL function emaj._assign_tables(text,text[],text,integer,text,text,text,boolean) line 169 at PERFORM
-PL/pgSQL function emaj.emaj_assign_tables(text,text[],text,integer,text,text) line 7 at RETURN
+PL/pgSQL function emaj.emaj_assign_tables(text,text[],text,integer,text,text,text) line 8 at RETURN
 NOTICE:  trigger "emaj_log_trg" for relation "myschema2.mytbl2" does not exist, skipping
 CONTEXT:  SQL statement "DROP TRIGGER IF EXISTS emaj_log_trg ON myschema2.mytbl2"
 PL/pgSQL function emaj._create_log_trigger(text,text,text,text) line 9 at EXECUTE
@@ -2573,28 +2573,28 @@ PL/pgSQL function emaj._create_tbl(text,text,text,integer,text,text,bigint,boole
 SQL statement "SELECT emaj._create_tbl(v_schema, r_table.table_name, v_group, v_priority, v_logDatTsp, v_logIdxTsp,
                                v_timeId, v_groupIsRollbackable, v_groupIsLogging)"
 PL/pgSQL function emaj._assign_tables(text,text[],text,integer,text,text,text,boolean) line 169 at PERFORM
-PL/pgSQL function emaj.emaj_assign_tables(text,text[],text,integer,text,text) line 7 at RETURN
+PL/pgSQL function emaj.emaj_assign_tables(text,text[],text,integer,text,text,text) line 8 at RETURN
 NOTICE:  trigger "emaj_trunc_trg" for relation "myschema2.mytbl2" does not exist, skipping
 CONTEXT:  SQL statement "DROP TRIGGER IF EXISTS emaj_trunc_trg ON myschema2.mytbl2"
 PL/pgSQL function emaj._create_tbl(text,text,text,integer,text,text,bigint,boolean,boolean) line 135 at EXECUTE
 SQL statement "SELECT emaj._create_tbl(v_schema, r_table.table_name, v_group, v_priority, v_logDatTsp, v_logIdxTsp,
                                v_timeId, v_groupIsRollbackable, v_groupIsLogging)"
 PL/pgSQL function emaj._assign_tables(text,text[],text,integer,text,text,text,boolean) line 169 at PERFORM
-PL/pgSQL function emaj.emaj_assign_tables(text,text[],text,integer,text,text) line 7 at RETURN
+PL/pgSQL function emaj.emaj_assign_tables(text,text[],text,integer,text,text,text) line 8 at RETURN
 WARNING:  _check_fk_groups: The foreign key "mytbl6_col61_fkey" on the table "myschema2.mytbl6" references the table "myschema2.mytbl7" that is outside the groups (myGroup2).
 CONTEXT:  SQL statement "SELECT emaj._check_fk_groups(array[v_group])"
 PL/pgSQL function emaj._assign_tables(text,text[],text,integer,text,text,text,boolean) line 207 at PERFORM
-PL/pgSQL function emaj.emaj_assign_tables(text,text[],text,integer,text,text) line 7 at RETURN
+PL/pgSQL function emaj.emaj_assign_tables(text,text[],text,integer,text,text,text) line 8 at RETURN
 WARNING:  _check_fk_groups: The table "myschema2.mytbl6" is referenced by the foreign key "mytbl8_col81_fkey" on the table "myschema2.mytbl8" that is outside the groups (myGroup2).
 CONTEXT:  SQL statement "SELECT emaj._check_fk_groups(array[v_group])"
 PL/pgSQL function emaj._assign_tables(text,text[],text,integer,text,text,text,boolean) line 207 at PERFORM
-PL/pgSQL function emaj.emaj_assign_tables(text,text[],text,integer,text,text) line 7 at RETURN
+PL/pgSQL function emaj.emaj_assign_tables(text,text[],text,integer,text,text,text) line 8 at RETURN
  emaj_assign_tables 
 --------------------
                   3
 (1 row)
 
---  commit;
+commit;
 -- checks
 select count(*) from emaj.emaj_mark where mark_group = 'myGroup2' and (mark_name like 'REMOVE%' or mark_name like 'ASSIGN%');
  count 
@@ -3392,15 +3392,15 @@ select hist_function, hist_event, hist_object,
  START_GROUP             | END                          | myGroup2                     | 8 tables/sequences processed                                                                                           | postgres
  LOCK_GROUP              | BEGIN                        | myGroup2,myGroup2,myGroup2   |                                                                                                                        | postgres
  LOCK_GROUP              | END                          | myGroup2,myGroup2,myGroup2   | 6 tables locked, 0 deadlock(s)                                                                                         | postgres
- SET_MARK_GROUP          | BEGIN                        | myGroup2,myGroup2,myGroup2   | REMOVE_%                                                                                                               | postgres
- SET_MARK_GROUP          | END                          | myGroup2,myGroup2,myGroup2   | REMOVE_%                                                                                                               | postgres
+ SET_MARK_GROUP          | BEGIN                        | myGroup2,myGroup2,myGroup2   | REMOVE_3_TABLES                                                                                                        | postgres
+ SET_MARK_GROUP          | END                          | myGroup2,myGroup2,myGroup2   | REMOVE_3_TABLES                                                                                                        | postgres
  REMOVE_TABLES           | TABLE REMOVED                | myschema2."myTbl3"           | From the logging group myGroup2                                                                                        | postgres
  REMOVE_TABLES           | TABLE REMOVED                | myschema2.mytbl1             | From the logging group myGroup2                                                                                        | postgres
  REMOVE_TABLES           | TABLE REMOVED                | myschema2.mytbl2             | From the logging group myGroup2                                                                                        | postgres
  LOCK_GROUP              | BEGIN                        | myGroup2                     |                                                                                                                        | postgres
  LOCK_GROUP              | END                          | myGroup2                     | 3 tables locked, 0 deadlock(s)                                                                                         | postgres
- SET_MARK_GROUP          | BEGIN                        | myGroup2                     | ASSIGN_%                                                                                                               | postgres
- SET_MARK_GROUP          | END                          | myGroup2                     | ASSIGN_%                                                                                                               | postgres
+ SET_MARK_GROUP          | BEGIN                        | myGroup2                     | ASSIGN_3_TABLES                                                                                                        | postgres
+ SET_MARK_GROUP          | END                          | myGroup2                     | ASSIGN_3_TABLES                                                                                                        | postgres
  ASSIGN_TABLES           | TABLE ADDED                  | myschema2."myTbl3"           | To the logging group myGroup2                                                                                          | postgres
  ASSIGN_TABLES           | TABLE ADDED                  | myschema2.mytbl1             | To the logging group myGroup2                                                                                          | postgres
  ASSIGN_TABLES           | TABLE ADDED                  | myschema2.mytbl2             | To the logging group myGroup2                                                                                          | postgres

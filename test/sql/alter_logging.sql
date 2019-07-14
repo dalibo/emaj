@@ -618,16 +618,16 @@ select emaj.emaj_alter_groups('{"myGroup1","myGroup2"}', 'back to idle myGroup2'
 select emaj.emaj_start_group('myGroup2','Start');
 insert into myschema2.mytbl1 values (100, 'Started', E'\\000'::bytea);
 
---  begin;
-select emaj.emaj_remove_tables('myschema2','{"mytbl1","mytbl2","myTbl3"}');
+begin;
+select emaj.emaj_remove_tables('myschema2','{"mytbl1","mytbl2","myTbl3"}','REMOVE_3_TABLES');
 
-select emaj.emaj_assign_tables('myschema2','{"mytbl1","mytbl2","myTbl3"}','myGroup2');
+select emaj.emaj_assign_tables('myschema2','{"mytbl1","mytbl2","myTbl3"}','myGroup2',null,null,null,'ASSIGN_3_TABLES');
 insert into myschema2.mytbl1 values (110, 'Assigned', E'\\000'::bytea);
 
 select emaj.emaj_remove_tables('myschema2','{"mytbl1","mytbl2","myTbl3"}');
 
 select emaj.emaj_assign_tables('myschema2','{"mytbl1","mytbl2","myTbl3"}','myGroup2');
---  commit;
+commit;
 
 -- checks
 select count(*) from emaj.emaj_mark where mark_group = 'myGroup2' and (mark_name like 'REMOVE%' or mark_name like 'ASSIGN%');

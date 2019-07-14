@@ -101,7 +101,7 @@ select funcname, calls from pg_stat_user_functions
  _change_log_index_tsp_tbl                 |    11
  _check_conf_groups                        |   130
  _check_fk_groups                          |   241
- _check_group_names                        |   954
+ _check_group_names                        |   955
  _check_mark_name                          |   351
  _check_marks_range                        |   113
  _check_new_mark                           |   254

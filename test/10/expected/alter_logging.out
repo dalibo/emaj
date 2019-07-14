@@ -1939,14 +1939,14 @@ WARNING:  _check_fk_groups: The table "myschema2.mytbl6" is referenced by the fo
 (1 row)
 
 insert into myschema2.mytbl1 values (100, 'Started', E'\\000'::bytea);
---  begin;
-select emaj.emaj_remove_tables('myschema2','{"mytbl1","mytbl2","myTbl3"}');
+begin;
+select emaj.emaj_remove_tables('myschema2','{"mytbl1","mytbl2","myTbl3"}','REMOVE_3_TABLES');
  emaj_remove_tables 
 --------------------
                   3
 (1 row)
 
-select emaj.emaj_assign_tables('myschema2','{"mytbl1","mytbl2","myTbl3"}','myGroup2');
+select emaj.emaj_assign_tables('myschema2','{"mytbl1","mytbl2","myTbl3"}','myGroup2',null,null,null,'ASSIGN_3_TABLES');
 NOTICE:  table "myTbl3_log" does not exist, skipping
 NOTICE:  trigger "emaj_log_trg" for relation "myschema2.myTbl3" does not exist, skipping
 NOTICE:  trigger "emaj_trunc_trg" for relation "myschema2.myTbl3" does not exist, skipping
@@ -1987,7 +1987,7 @@ WARNING:  _check_fk_groups: The table "myschema2.mytbl6" is referenced by the fo
                   3
 (1 row)
 
---  commit;
+commit;
 -- checks
 select count(*) from emaj.emaj_mark where mark_group = 'myGroup2' and (mark_name like 'REMOVE%' or mark_name like 'ASSIGN%');
  count 
@@ -2778,15 +2778,15 @@ select hist_function, hist_event, hist_object,
  START_GROUP             | END                          | myGroup2                     | 8 tables/sequences processed                                                                                           | postgres
  LOCK_GROUP              | BEGIN                        | myGroup2,myGroup2,myGroup2   |                                                                                                                        | postgres
  LOCK_GROUP              | END                          | myGroup2,myGroup2,myGroup2   | 6 tables locked, 0 deadlock(s)                                                                                         | postgres
- SET_MARK_GROUP          | BEGIN                        | myGroup2,myGroup2,myGroup2   | REMOVE_%                                                                                                               | postgres
- SET_MARK_GROUP          | END                          | myGroup2,myGroup2,myGroup2   | REMOVE_%                                                                                                               | postgres
+ SET_MARK_GROUP          | BEGIN                        | myGroup2,myGroup2,myGroup2   | REMOVE_3_TABLES                                                                                                        | postgres
+ SET_MARK_GROUP          | END                          | myGroup2,myGroup2,myGroup2   | REMOVE_3_TABLES                                                                                                        | postgres
  REMOVE_TABLES           | TABLE REMOVED                | myschema2."myTbl3"           | From the logging group myGroup2                                                                                        | postgres
  REMOVE_TABLES           | TABLE REMOVED                | myschema2.mytbl1             | From the logging group myGroup2                                                                                        | postgres
  REMOVE_TABLES           | TABLE REMOVED                | myschema2.mytbl2             | From the logging group myGroup2                                                                                        | postgres
  LOCK_GROUP              | BEGIN                        | myGroup2                     |                                                                                                                        | postgres
  LOCK_GROUP              | END                          | myGroup2                     | 3 tables locked, 0 deadlock(s)                                                                                         | postgres
- SET_MARK_GROUP          | BEGIN                        | myGroup2                     | ASSIGN_%                                                                                                               | postgres
- SET_MARK_GROUP          | END                          | myGroup2                     | ASSIGN_%                                                                                                               | postgres
+ SET_MARK_GROUP          | BEGIN                        | myGroup2                     | ASSIGN_3_TABLES                                                                                                        | postgres
+ SET_MARK_GROUP          | END                          | myGroup2                     | ASSIGN_3_TABLES                                                                                                        | postgres
  ASSIGN_TABLES           | TABLE ADDED                  | myschema2."myTbl3"           | To the logging group myGroup2                                                                                          | postgres
  ASSIGN_TABLES           | TABLE ADDED                  | myschema2.mytbl1             | To the logging group myGroup2                                                                                          | postgres
  ASSIGN_TABLES           | TABLE ADDED                  | myschema2.mytbl2             | To the logging group myGroup2                                                                                          | postgres

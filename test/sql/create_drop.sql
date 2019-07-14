@@ -213,6 +213,9 @@ select emaj.emaj_assign_table('phil''s schema3','myTbl2\','myGroup1b');
 select emaj.emaj_assign_table('myschema1','mytbl1','myGroup1b',null,'dummytsp');
 select emaj.emaj_assign_table('myschema1','mytbl1','myGroup1b',null,null,'dummytsp');
 
+-- bad mark
+select emaj.emaj_assign_table('myschema1','mytbl1','myGroup1b',null,null,null,'EMAJ_LAST_MARK');
+
 -- erroneously existing log schema
 begin;
   create schema emaj_myschema1;
@@ -254,6 +257,8 @@ select emaj.emaj_remove_table('myschema1','dummyTable');
 select emaj.emaj_remove_tables('myschema1',array[]::text[]);
 select emaj.emaj_remove_tables('myschema1',null);
 select emaj.emaj_remove_tables('myschema1',array['']);
+-- bad mark
+select emaj.emaj_remove_table('myschema1','mytbl1','EMAJ_LAST_MARK');
 
 -- ok
 select emaj.emaj_remove_table('myschema1','mytbl1');

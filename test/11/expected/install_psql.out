@@ -1451,32 +1451,36 @@ $_drop_log_schemas$;
 --                                               --
 ---------------------------------------------------
 CREATE OR REPLACE FUNCTION emaj.emaj_assign_table(v_schema TEXT, v_table TEXT, v_group TEXT, v_priority INT DEFAULT NULL,
-                                                  v_logDatTsp TEXT DEFAULT NULL, v_logIdxTsp TEXT DEFAULT NULL)
+                                                  v_logDatTsp TEXT DEFAULT NULL, v_logIdxTsp TEXT DEFAULT NULL,
+                                                  v_mark TEXT DEFAULT 'ASSIGN_%')
 RETURNS INTEGER LANGUAGE plpgsql AS
 $emaj_assign_table$
 -- The function assigns a table into a tables group.
 -- Inputs: schema name, table name, group name,
---         priority (optional), log data tablespace (optional) and log index tablespace (optional)
+--         priority (optional), log data tablespace (optional) and log index tablespace (optional),
+--         mark name to set when logging groups (optional)
 -- Outputs: number of tables effectively assigned to the tables group, id. 1
   BEGIN
-    RETURN emaj._assign_tables(v_schema, ARRAY[v_table], v_group, v_priority, v_logDatTsp, v_logIdxTsp, 'ASSIGN_%', FALSE);
+    RETURN emaj._assign_tables(v_schema, ARRAY[v_table], v_group, v_priority, v_logDatTsp, v_logIdxTsp, v_mark , FALSE);
   END;
 $emaj_assign_table$;
-COMMENT ON FUNCTION emaj.emaj_assign_table(TEXT,TEXT,TEXT,INT,TEXT,TEXT) IS
+COMMENT ON FUNCTION emaj.emaj_assign_table(TEXT,TEXT,TEXT,INT,TEXT,TEXT,TEXT) IS
 $$Assign a table into a tables group.$$;
 CREATE OR REPLACE FUNCTION emaj.emaj_assign_tables(v_schema TEXT, v_tables TEXT[], v_group TEXT, v_priority INT DEFAULT NULL,
-                                                  v_logDatTsp TEXT DEFAULT NULL, v_logIdxTsp TEXT DEFAULT NULL)
+                                                  v_logDatTsp TEXT DEFAULT NULL, v_logIdxTsp TEXT DEFAULT NULL,
+                                                  v_mark TEXT DEFAULT 'ASSIGN_%')
 RETURNS INTEGER LANGUAGE plpgsql AS
 $emaj_assign_tables$
 -- The function assigns several tables at once into a tables group.
 -- Inputs: schema, array of table names, group name,
---         priority (optional), log data tablespace (optional) and log index tablespace (optional)
+--         priority (optional), log data tablespace (optional) and log index tablespace (optional),
+--         mark name to set when logging groups (optional)
 -- Outputs: number of tables effectively assigned to the tables group
   BEGIN
-    RETURN emaj._assign_tables(v_schema, v_tables, v_group, v_priority, v_logDatTsp, v_logIdxTsp, 'ASSIGN_%', TRUE);
+    RETURN emaj._assign_tables(v_schema, v_tables, v_group, v_priority, v_logDatTsp, v_logIdxTsp, v_mark, TRUE);
   END;
 $emaj_assign_tables$;
-COMMENT ON FUNCTION emaj.emaj_assign_tables(TEXT,TEXT[],TEXT,INT,TEXT,TEXT) IS
+COMMENT ON FUNCTION emaj.emaj_assign_tables(TEXT,TEXT[],TEXT,INT,TEXT,TEXT,TEXT) IS
 $$Assign several tables into a tables group.$$;
 CREATE OR REPLACE FUNCTION emaj._assign_tables(v_schema TEXT, v_tables TEXT[], v_group TEXT, v_priority INT,
                                                v_logDatTsp TEXT, v_logIdxTsp TEXT, v_mark TEXT, v_multiTable BOOLEAN)
@@ -1691,29 +1695,29 @@ $_assign_tables$
     RETURN v_nbAssignedTbl;
   END;
 $_assign_tables$;
-CREATE OR REPLACE FUNCTION emaj.emaj_remove_table(v_schema TEXT, v_table TEXT)
+CREATE OR REPLACE FUNCTION emaj.emaj_remove_table(v_schema TEXT, v_table TEXT, v_mark TEXT DEFAULT 'REMOVE_%')
 RETURNS INTEGER LANGUAGE plpgsql AS
 $emaj_remove_table$
 -- The function removes a table from its tables group.
--- Inputs: schema name, table name
+-- Inputs: schema name, table name, mark name to set when logging groups (optional)
 -- Outputs: number of tables effectively removed to the tables group, id. 1
   BEGIN
-    RETURN emaj._remove_tables(v_schema, ARRAY[v_table], 'REMOVE_%', FALSE);
+    RETURN emaj._remove_tables(v_schema, ARRAY[v_table], v_mark, FALSE);
   END;
 $emaj_remove_table$;
-COMMENT ON FUNCTION emaj.emaj_remove_table(TEXT,TEXT) IS
+COMMENT ON FUNCTION emaj.emaj_remove_table(TEXT,TEXT,TEXT) IS
 $$Remove a table from its tables group.$$;
-CREATE OR REPLACE FUNCTION emaj.emaj_remove_tables(v_schema TEXT, v_tables TEXT[])
+CREATE OR REPLACE FUNCTION emaj.emaj_remove_tables(v_schema TEXT, v_tables TEXT[], v_mark TEXT DEFAULT 'REMOVE_%')
 RETURNS INTEGER LANGUAGE plpgsql AS
 $emaj_remove_tables$
 -- The function removes several tables at once from their tables group.
--- Inputs: schema, array of table names
+-- Inputs: schema, array of table names, mark name to set when logging groups (optional)
 -- Outputs: number of tables effectively removed from the tables group
   BEGIN
-    RETURN emaj._remove_tables(v_schema, v_tables, 'REMOVE_%', TRUE);
+    RETURN emaj._remove_tables(v_schema, v_tables, v_mark, TRUE);
   END;
 $emaj_remove_tables$;
-COMMENT ON FUNCTION emaj.emaj_remove_tables(TEXT,TEXT[]) IS
+COMMENT ON FUNCTION emaj.emaj_remove_tables(TEXT,TEXT[],TEXT) IS
 $$Remove several tables from their tables group.$$;
 CREATE OR REPLACE FUNCTION emaj._remove_tables(v_schema TEXT, v_tables TEXT[], v_mark TEXT, v_multiTable BOOLEAN)
 RETURNS INTEGER LANGUAGE plpgsql AS
@@ -8591,7 +8595,7 @@ $do$
     RETURN;
   END;
 $do$;
-psql:sql/emaj-devel.sql:8786: NOTICE:  E-Maj installation: E-Maj successfully installed.
+psql:sql/emaj-devel.sql:8790: NOTICE:  E-Maj installation: E-Maj successfully installed.
 COMMIT;
 -----------------------------
 -- check installation
