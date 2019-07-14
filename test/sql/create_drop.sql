@@ -1,5 +1,5 @@
 -- create_drop.sql : prepare groups content and test emaj_create_group(), emaj_comment_group(),
--- emaj_assign_table(), emaj_assign_tables(),
+-- emaj_assign_table(), emaj_assign_tables(), emaj_remove_table(), emaj_remove_tables(),
 -- emaj_ignore_app_trigger(), emaj_drop_group() and emaj_force_drop_group() functions
 --
 SET client_min_messages TO WARNING;
@@ -240,6 +240,35 @@ select emaj.emaj_assign_tables('myschema1',array[''],'myGroup1b');
 -- ok (with a duplicate table name)
 select emaj.emaj_assign_tables('myschema1',array['mytbl2','mytbl2b','mytbl2'],'myGroup1b');
 
+select group_last_alter_time_id, group_nb_table, group_nb_sequence from emaj.emaj_group where group_name = 'myGroup1b';
+
+-----------------------------------
+-- emaj_remove_table
+-----------------------------------
+
+-- error cases
+-- table not in a group
+select emaj.emaj_remove_table('dummySchema','mytbl1');
+select emaj.emaj_remove_table('myschema1','dummyTable');
+-- empty tables array
+select emaj.emaj_remove_tables('myschema1',array[]::text[]);
+select emaj.emaj_remove_tables('myschema1',null);
+select emaj.emaj_remove_tables('myschema1',array['']);
+
+-- ok
+select emaj.emaj_remove_table('myschema1','mytbl1');
+
+-----------------------------------
+-- emaj_remove_tables
+-----------------------------------
+-- error cases
+-- table not in a group
+select emaj.emaj_remove_tables('myschema1',array['dummyTable','mytbl1','mytbl2']);
+
+-- ok (with a duplicate table name)
+select emaj.emaj_remove_tables('myschema1',array['mytbl2','mytbl2b','mytbl2']);
+
+select group_last_alter_time_id, group_nb_table, group_nb_sequence from emaj.emaj_group where group_name = 'myGroup1b';
 
 select emaj.emaj_drop_group('myGroup1b');
 select emaj.emaj_create_group('myGroup1');

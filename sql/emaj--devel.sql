@@ -1506,7 +1506,7 @@ $emaj_assign_table$
 --         priority (optional), log data tablespace (optional) and log index tablespace (optional)
 -- Outputs: number of tables effectively assigned to the tables group, id. 1
   BEGIN
-    RETURN emaj._assign_tables(v_schema, ARRAY[v_table], v_group, v_priority, v_logDatTsp, v_logIdxTsp, FALSE);
+    RETURN emaj._assign_tables(v_schema, ARRAY[v_table], v_group, v_priority, v_logDatTsp, v_logIdxTsp, 'ASSIGN_%', FALSE);
   END;
 $emaj_assign_table$;
 COMMENT ON FUNCTION emaj.emaj_assign_table(TEXT,TEXT,TEXT,INT,TEXT,TEXT) IS
@@ -1521,26 +1521,29 @@ $emaj_assign_tables$
 --         priority (optional), log data tablespace (optional) and log index tablespace (optional)
 -- Outputs: number of tables effectively assigned to the tables group
   BEGIN
-    RETURN emaj._assign_tables(v_schema, v_tables, v_group, v_priority, v_logDatTsp, v_logIdxTsp, TRUE);
+    RETURN emaj._assign_tables(v_schema, v_tables, v_group, v_priority, v_logDatTsp, v_logIdxTsp, 'ASSIGN_%', TRUE);
   END;
 $emaj_assign_tables$;
 COMMENT ON FUNCTION emaj.emaj_assign_tables(TEXT,TEXT[],TEXT,INT,TEXT,TEXT) IS
 $$Assign several tables into a tables group.$$;
 
 CREATE OR REPLACE FUNCTION emaj._assign_tables(v_schema TEXT, v_tables TEXT[], v_group TEXT, v_priority INT,
-                                               v_logDatTsp TEXT, v_logIdxTsp TEXT, v_multiTable BOOLEAN)
+                                               v_logDatTsp TEXT, v_logIdxTsp TEXT, v_mark TEXT, v_multiTable BOOLEAN)
 RETURNS INTEGER LANGUAGE plpgsql AS
 $_assign_tables$
 -- The function effectively assigns tables into a tables group.
--- Inputs: schema, array of table names, group name, priority, log data tablespace and log index tablespace
+-- Inputs: schema, array of table names, group name, priority, log data tablespace and log index tablespace,
+--         mark to set for lonnging groups, a boolean indicating whether several tables need to be processed
 -- Outputs: number of tables effectively assigned to the tables group
   DECLARE
     v_groupIsRollbackable    BOOLEAN;
     v_groupIsLogging         BOOLEAN;
     v_list                   TEXT;
     v_timeId                 BIGINT;
+    v_markName               TEXT;
     v_schemaPrefix           TEXT = 'emaj_';
     v_logSchema              TEXT;
+    v_eventTriggers          TEXT[];
     v_logSequence            TEXT;
     v_nextVal                BIGINT;
     v_nbAssignedTbl          INT = 0;
@@ -1655,6 +1658,8 @@ $_assign_tables$
     IF v_logIdxTsp IS NOT NULL AND NOT EXISTS (SELECT 1 FROM pg_catalog.pg_tablespace WHERE spcname = v_logIdxTsp) THEN
       RAISE EXCEPTION '_assign_tables: the log index tablespace "%" does not exists.', v_logIdxTsp;
     END IF;
+-- check the supplied mark
+    SELECT emaj._check_new_mark(array[v_group], v_mark) INTO v_markName;
 -- OK,
 -- get the time stamp of the operation
     SELECT emaj._set_time_stamp('A') INTO v_timeId;
@@ -1664,7 +1669,7 @@ $_assign_tables$
 --  vacuum operation.
       PERFORM emaj._lock_groups(ARRAY[v_group], 'ROW EXCLUSIVE', FALSE);
 -- and set the mark, using the same time identifier
-      PERFORM emaj._set_mark_groups(ARRAY[v_group], 'ASSIGN_%', FALSE, TRUE, NULL, v_timeId);
+      PERFORM emaj._set_mark_groups(ARRAY[v_group], v_markName, FALSE, TRUE, NULL, v_timeId);
     END IF;
 -- create new log schemas if needed
     v_logSchema = v_schemaPrefix || v_schema;
@@ -1684,13 +1689,14 @@ $_assign_tables$
 -- and record the schema creation into the emaj_schema and the emaj_hist tables
       INSERT INTO emaj.emaj_schema (sch_name) VALUES (v_logSchema);
       INSERT INTO emaj.emaj_hist (hist_function, hist_event, hist_object)
-        VALUES (CASE WHEN v_multiTable THEN 'ASSIGN_TABLE' ELSE 'ASSIGN_TABLES' END, 'LOG_SCHEMA CREATED', quote_ident(v_logSchema));
+        VALUES (CASE WHEN v_multiTable THEN 'ASSIGN_TABLES' ELSE 'ASSIGN_TABLE' END, 'LOG_SCHEMA CREATED', quote_ident(v_logSchema));
     END IF;
+-- disable event triggers that protect emaj components and keep in memory these triggers name
+    SELECT emaj._disable_event_triggers() INTO v_eventTriggers;
 -- effectively create the log components for each table
     FOR r_table IN
       SELECT unnest(v_tables) AS table_name
         LOOP
---raise warning 'table %',r_table.table_name;
 -- create the table
       PERFORM emaj._create_tbl(v_schema, r_table.table_name, v_group, v_priority, v_logDatTsp, v_logIdxTsp,
                                v_timeId, v_groupIsRollbackable, v_groupIsLogging);
@@ -1716,11 +1722,13 @@ $_assign_tables$
       END IF;
 -- insert an entry into the emaj_hist table
       INSERT INTO emaj.emaj_hist (hist_function, hist_event, hist_object, hist_wording)
-        VALUES (CASE WHEN v_multiTable THEN 'ASSIGN_TABLE' ELSE 'ASSIGN_TABLES' END, 'TABLE ADDED',
+        VALUES (CASE WHEN v_multiTable THEN 'ASSIGN_TABLES' ELSE 'ASSIGN_TABLE' END, 'TABLE ADDED',
                 quote_ident(v_schema) || '.' || quote_ident(r_table.table_name),
                 'To the' || CASE WHEN v_groupIsLogging THEN ' logging' ELSE '' END || ' group ' || v_group);
       v_nbAssignedTbl = v_nbAssignedTbl + 1;
     END LOOP;
+-- enable previously disabled event triggers
+    PERFORM emaj._enable_event_triggers(v_eventTriggers);
 -- adjust the group characteristics
     UPDATE emaj.emaj_group
       SET group_last_alter_time_id = v_timeId,
@@ -1733,6 +1741,190 @@ $_assign_tables$
   END;
 $_assign_tables$;
 
+CREATE OR REPLACE FUNCTION emaj.emaj_remove_table(v_schema TEXT, v_table TEXT)
+RETURNS INTEGER LANGUAGE plpgsql AS
+$emaj_remove_table$
+-- The function removes a table from its tables group.
+-- Inputs: schema name, table name
+-- Outputs: number of tables effectively removed to the tables group, id. 1
+  BEGIN
+    RETURN emaj._remove_tables(v_schema, ARRAY[v_table], 'REMOVE_%', FALSE);
+  END;
+$emaj_remove_table$;
+COMMENT ON FUNCTION emaj.emaj_remove_table(TEXT,TEXT) IS
+$$Remove a table from its tables group.$$;
+
+CREATE OR REPLACE FUNCTION emaj.emaj_remove_tables(v_schema TEXT, v_tables TEXT[])
+RETURNS INTEGER LANGUAGE plpgsql AS
+$emaj_remove_tables$
+-- The function removes several tables at once from their tables group.
+-- Inputs: schema, array of table names
+-- Outputs: number of tables effectively removed from the tables group
+  BEGIN
+    RETURN emaj._remove_tables(v_schema, v_tables, 'REMOVE_%', TRUE);
+  END;
+$emaj_remove_tables$;
+COMMENT ON FUNCTION emaj.emaj_remove_tables(TEXT,TEXT[]) IS
+$$Remove several tables from their tables group.$$;
+
+CREATE OR REPLACE FUNCTION emaj._remove_tables(v_schema TEXT, v_tables TEXT[], v_mark TEXT, v_multiTable BOOLEAN)
+RETURNS INTEGER LANGUAGE plpgsql AS
+$_remove_tables$
+-- The function effectively removes tables from their tables group.
+-- Inputs: schema, array of table names, mark to set if for logging groups, boolean to indicate whether several tables need to be processed
+-- Outputs: number of tables effectively assigned to the tables group
+  DECLARE
+    v_list                   TEXT;
+    v_timeId                 BIGINT;
+    v_groups                 TEXT[];
+    v_loggingGroups          TEXT[];
+    v_groupName              TEXT;
+    v_groupIsLogging         BOOLEAN;
+    v_markName               TEXT;
+    v_schemaPrefix           TEXT = 'emaj_';
+    v_eventTriggers          TEXT[];
+    v_logSchema              TEXT;
+    v_nbRemovedTbl           INT = 0;
+    v_logSequenceLastValue   BIGINT;
+    v_namesSuffix            TEXT;
+    v_fullTableName          TEXT;
+    r_table                  RECORD;
+    r_relation               emaj.emaj_relation%ROWTYPE;
+  BEGIN
+-- check supplied parameters
+-- remove duplicates values, NULL and empty strings from the supplied table names array
+    SELECT array_agg(DISTINCT table_name) INTO v_tables FROM unnest(v_tables) AS table_name
+      WHERE table_name IS NOT NULL AND table_name <> '';
+-- process empty array
+    IF v_tables IS NULL THEN
+      RAISE WARNING '_remove_tables: No table to process.';
+      RETURN 0;
+    END IF;
+-- check that the tables currently belong to a tables group (not necessarily the same one)
+    WITH all_supplied_tables AS (
+      SELECT unnest(v_tables) AS table_name),
+         tables_in_group AS (
+      SELECT rel_tblseq FROM emaj.emaj_relation
+        WHERE rel_schema = v_schema AND rel_tblseq = ANY(v_tables) AND upper_inf(rel_time_range))
+    SELECT string_agg(quote_ident(v_schema) || '.' || quote_ident(table_name), ', ') INTO v_list
+      FROM (
+        SELECT table_name FROM all_supplied_tables
+          EXCEPT
+        SELECT rel_tblseq FROM tables_in_group) AS t;
+    IF v_list IS NOT NULL THEN
+      RAISE EXCEPTION '_remove_tables: some tables (%) do not currently belong to any tables group.', v_list;
+    END IF;
+-- check the supplied mark
+    SELECT emaj._check_new_mark(array[v_groupName], v_mark) INTO v_markName;
+-- OK,
+    v_logSchema = v_schemaPrefix || v_schema;
+-- get the time stamp of the operation
+    SELECT emaj._set_time_stamp('A') INTO v_timeId;
+-- get the lists of groups and logging groups holding these tables, if any
+    SELECT array_agg(rel_group) INTO v_groups FROM emaj.emaj_relation, emaj.emaj_group
+      WHERE rel_group = group_name
+        AND rel_schema = v_schema AND rel_tblseq = ANY(v_tables) AND upper_inf(rel_time_range);
+    SELECT array_agg(rel_group) INTO v_loggingGroups FROM emaj.emaj_relation, emaj.emaj_group
+      WHERE rel_group = group_name
+        AND rel_schema = v_schema AND rel_tblseq = ANY(v_tables) AND upper_inf(rel_time_range)
+        AND group_is_logging;
+-- for LOGGING groups, lock all tables to get a stable point
+    IF v_loggingGroups IS NOT NULL THEN
+-- use a ROW EXCLUSIVE lock mode, preventing for a transaction currently updating data, but not conflicting with simple read access or
+--  vacuum operation.
+      PERFORM emaj._lock_groups(v_loggingGroups, 'ROW EXCLUSIVE', FALSE);
+-- and set the mark, using the same time identifier
+      PERFORM emaj._set_mark_groups(v_loggingGroups, v_markName, FALSE, TRUE, NULL, v_timeId);
+    END IF;
+-- disable event triggers that protect emaj components and keep in memory these triggers name
+    SELECT emaj._disable_event_triggers() INTO v_eventTriggers;
+-- effectively drop the log components for each table
+    FOR r_table IN
+      SELECT unnest(v_tables) AS table_name
+        LOOP
+-- get the emaj_relation row of the table to process and some characteristics of the group that holds the table
+      SELECT emaj_relation.* INTO r_relation FROM emaj.emaj_relation
+        WHERE rel_schema = v_schema AND rel_tblseq = r_table.table_name AND upper_inf(rel_time_range);
+      SELECT group_name, group_is_logging INTO v_groupName, v_groupIsLogging FROM emaj.emaj_group
+        WHERE group_name = r_relation.rel_group;
+--raise warning 'table %',r_table.table_name;
+      IF NOT v_groupIsLogging THEN
+-- if the group is idle, drop the table
+        PERFORM emaj._drop_tbl(r_relation, v_timeId);
+      ELSE
+-- if the group is in logging state, perform additional tasks
+-- ... get the current log sequence characteristics
+        SELECT CASE WHEN sequ_is_called THEN sequ_last_val ELSE sequ_last_val - sequ_increment END INTO STRICT v_logSequenceLastValue
+          FROM emaj.emaj_sequence
+          WHERE sequ_schema = r_relation.rel_log_schema AND sequ_name = r_relation.rel_log_sequence AND sequ_time_id = v_timeId;
+-- ... compute the suffix to add to the log table and index names (_1, _2, ...), by looking at the existing names
+        SELECT '_' || coalesce(max(suffix) + 1, 1)::TEXT INTO v_namesSuffix
+          FROM
+            (SELECT unnest(regexp_matches(rel_log_table,'_(\d+)$'))::INT AS suffix
+               FROM emaj.emaj_relation
+               WHERE rel_schema = v_schema AND rel_tblseq = r_table.table_name
+            ) AS t;
+-- ... rename the log table and its index (they may have been dropped)
+        EXECUTE format('ALTER TABLE IF EXISTS %I.%I RENAME TO %I',
+                       v_logSchema, r_relation.rel_log_table, r_relation.rel_log_table || v_namesSuffix);
+        EXECUTE format('ALTER INDEX IF EXISTS %I.%I RENAME TO %I',
+                       v_logSchema, r_relation.rel_log_index, r_relation.rel_log_index || v_namesSuffix);
+-- ... drop the log and truncate triggers
+--     (check the application table exists before dropping its triggers to avoid an error fires with postgres version <= 9.3)
+        v_fullTableName  = quote_ident(v_schema) || '.' || quote_ident(r_table.table_name);
+        PERFORM 0 FROM pg_catalog.pg_class, pg_catalog.pg_namespace
+          WHERE relnamespace = pg_namespace.oid
+            AND nspname = v_schema AND relname = r_table.table_name AND relkind = 'r';
+        IF FOUND THEN
+          EXECUTE format('DROP TRIGGER IF EXISTS emaj_log_trg ON %s',
+                         v_fullTableName);
+          EXECUTE format('DROP TRIGGER IF EXISTS emaj_trunc_trg ON %s',
+                         v_fullTableName);
+        END IF;
+-- ... drop the log function and the log sequence
+-- (but we keep the sequence related data in the emaj_sequence and the emaj_seq_hole tables)
+        EXECUTE format('DROP FUNCTION IF EXISTS %I.%I() CASCADE',
+                       v_logSchema, r_relation.rel_log_function);
+        EXECUTE format('DROP SEQUENCE IF EXISTS %I.%I',
+                       v_logSchema, r_relation.rel_log_sequence);
+-- ... register the end of the relation time frame, the last value of the log sequence, the log table and index names change,
+-- and reset the content of now useless columns
+-- (but do not reset the rel_log_sequence value: it will be needed later for _drop_tbl() for the emaj_sequence cleanup)
+        UPDATE emaj.emaj_relation
+          SET rel_time_range = int8range(lower(rel_time_range), v_timeId, '[)'),
+              rel_log_table = r_relation.rel_log_table || v_namesSuffix , rel_log_index = r_relation.rel_log_index || v_namesSuffix,
+              rel_log_function = NULL, rel_sql_columns = NULL, rel_sql_pk_columns = NULL, rel_sql_pk_eq_conditions = NULL,
+              rel_log_seq_last_value = v_logSequenceLastValue
+          WHERE rel_schema = v_schema AND rel_tblseq = r_table.table_name AND upper_inf(rel_time_range);
+      END IF;
+-- insert an entry into the emaj_hist table
+      INSERT INTO emaj.emaj_hist (hist_function, hist_event, hist_object, hist_wording)
+        VALUES (CASE WHEN v_multiTable THEN 'REMOVE_TABLES' ELSE 'REMOVE_TABLE' END, 'TABLE REMOVED',
+                quote_ident(v_schema) || '.' || quote_ident(r_table.table_name),
+                'From the' || CASE WHEN v_groupIsLogging THEN ' logging' ELSE '' END || ' group ' || v_groupName);
+      v_nbRemovedTbl = v_nbRemovedTbl + 1;
+    END LOOP;
+-- drop the log schema if it is now useless
+    IF NOT EXISTS (SELECT 0 FROM emaj.emaj_relation WHERE rel_log_schema = v_logSchema) THEN
+-- drop the schema
+      EXECUTE format('DROP SCHEMA %I',
+                     v_logSchema);
+-- and record the schema drop into the emaj_schema and the emaj_hist tables
+      DELETE FROM emaj.emaj_schema WHERE sch_name = v_logSchema;
+      INSERT INTO emaj.emaj_hist (hist_function, hist_event, hist_object)
+        VALUES (CASE WHEN v_multiTable THEN 'REMOVE_TABLES' ELSE 'REMOVE_TABLE' END, 'LOG_SCHEMA DROPPED', quote_ident(v_logSchema));
+    END IF;
+-- enable previously disabled event triggers
+    PERFORM emaj._enable_event_triggers(v_eventTriggers);
+-- adjust the groups characteristics
+    UPDATE emaj.emaj_group
+      SET group_last_alter_time_id = v_timeId,
+          group_nb_table = (SELECT count(*) FROM emaj.emaj_relation
+                              WHERE rel_group = group_name AND upper_inf(rel_time_range) AND rel_kind = 'r')
+      WHERE group_name = ANY (v_groups);
+    RETURN v_nbRemovedTbl;
+  END;
+$_remove_tables$;
 
 CREATE OR REPLACE FUNCTION emaj.emaj_get_current_log_table(v_app_schema TEXT, v_app_table TEXT,
                                                            OUT log_schema TEXT, OUT log_table TEXT)
@@ -2229,7 +2421,7 @@ RETURNS VOID LANGUAGE plpgsql
 SECURITY DEFINER SET search_path = pg_catalog, pg_temp AS
 $_drop_tbl$
 -- The function deletes all what has been created by _create_tbl function.
--- Required inputs: row from emaj_relation corresponding to the appplication table to proccess.
+-- Required inputs: row from emaj_relation corresponding to the appplication table to proccess, time id.
 -- The function is defined as SECURITY DEFINER so that emaj_adm role can use it even if he is not the owner of the application table.
   DECLARE
     v_fullTableName          TEXT;

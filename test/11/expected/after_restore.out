@@ -464,22 +464,24 @@ select time_id, time_last_emaj_gid, time_event from emaj.emaj_time_stamp order b
       11 |                  0 | C
       12 |                  0 | D
       13 |                  0 | C
-      14 |                  0 | A
       15 |                  0 | A
-      16 |                  0 | D
-      17 |                  0 | C
-      18 |                  0 | M
-      19 |                  0 | M
-      21 |                  0 | D
-      22 |                  0 | D
-      23 |                  0 | D
+      16 |                  0 | A
+      17 |                  0 | A
+      18 |                  0 | A
+      19 |                  0 | D
+      20 |                  0 | C
+      21 |                  0 | M
+      22 |                  0 | M
       24 |                  0 | D
       25 |                  0 | D
-      26 |                  0 | C
-      27 |                  0 | M
+      26 |                  0 | D
+      27 |                  0 | D
       28 |                  0 | D
       29 |                  0 | C
-      30 |                  0 | D
+      30 |                  0 | M
+      31 |                  0 | D
+      32 |                  0 | C
+      33 |                  0 | D
     1000 |                  0 | C
     1001 |                  0 | C
     1002 |                  0 | C
@@ -692,13 +694,18 @@ select time_id, time_last_emaj_gid, time_event from emaj.emaj_time_stamp order b
     6124 |              11887 | R
     6125 |              11887 | M
     6126 |              11887 | A
-    6127 |              11887 | D
-    6128 |              11887 | D
-    6129 |              11887 | D
-    6130 |              11887 | C
-    6131 |              11887 | M
-    6132 |              11887 | C
-    6133 |              11887 | M
+    6127 |              11887 | M
+    6128 |              11888 | A
+    6129 |              11888 | A
+    6130 |              11889 | A
+    6131 |              11889 | A
+    6132 |              11889 | D
+    6133 |              11889 | D
+    6134 |              11889 | D
+    6135 |              11889 | C
+    6136 |              11889 | M
+    6137 |              11889 | C
+    6138 |              11889 | M
    10000 |              99999 | M
    10001 |              99999 | D
    10002 |              99999 | D
@@ -837,7 +844,7 @@ select time_id, time_last_emaj_gid, time_event from emaj.emaj_time_stamp order b
    20205 |             100949 | R
    20206 |             100968 | M
    20207 |             100968 | R
-(390 rows)
+(397 rows)
 
 -- user tables
 select * from mySchema2.myTbl1 order by col11,col12;
