@@ -446,23 +446,23 @@ select emaj.emaj_create_group('myGroup1b', true, true);  -- rollbackable and emp
 select emaj.emaj_assign_table('myschema1','mytbl1','dummyGroup');
 ERROR:  _check_group_names: The group "dummyGroup" does not exist.
 CONTEXT:  SQL statement "SELECT emaj._check_group_names(v_groupNames := ARRAY[v_group], v_mayBeNull := FALSE, v_lockGroups := TRUE, v_checkList := '')"
-PL/pgSQL function emaj._assign_tables(text,text[],text,integer,text,text,text,boolean) line 22 at PERFORM
-PL/pgSQL function emaj.emaj_assign_table(text,text,text,integer,text,text,text) line 8 at RETURN
+PL/pgSQL function emaj._assign_tables(text,text[],text,jsonb,text,boolean) line 26 at PERFORM
+PL/pgSQL function emaj.emaj_assign_table(text,text,text,jsonb,text) line 10 at RETURN
 -- bad schema
 select emaj.emaj_assign_table('dummySchema','mytbl1','myGroup1b');
 ERROR:  _assign_tables: The schema "dummySchema" does not exist.
-CONTEXT:  PL/pgSQL function emaj.emaj_assign_table(text,text,text,integer,text,text,text) line 8 at RETURN
+CONTEXT:  PL/pgSQL function emaj.emaj_assign_table(text,text,text,jsonb,text) line 10 at RETURN
 select emaj.emaj_assign_table('emaj','mytbl1','myGroup1b');
 ERROR:  _assign_tables: The schema "emaj" is an E-Maj schema.
-CONTEXT:  PL/pgSQL function emaj.emaj_assign_table(text,text,text,integer,text,text,text) line 8 at RETURN
+CONTEXT:  PL/pgSQL function emaj.emaj_assign_table(text,text,text,jsonb,text) line 10 at RETURN
 -- bad table
 select emaj.emaj_assign_table('myschema1','dummyTable','myGroup1b');
 ERROR:  _assign_tables: some tables (myschema1."dummyTable") do not exist.
-CONTEXT:  PL/pgSQL function emaj.emaj_assign_table(text,text,text,integer,text,text,text) line 8 at RETURN
+CONTEXT:  PL/pgSQL function emaj.emaj_assign_table(text,text,text,jsonb,text) line 10 at RETURN
 -- partitionned table (abort for lack of PRIMARY KEY with prior PG versions)
 select emaj.emaj_assign_table('myschema4','mytblp','myGroup1b');
 ERROR:  _assign_tables: some tables (myschema4.mytblp) have no PRIMARY KEY.
-CONTEXT:  PL/pgSQL function emaj.emaj_assign_table(text,text,text,integer,text,text,text) line 8 at RETURN
+CONTEXT:  PL/pgSQL function emaj.emaj_assign_table(text,text,text,jsonb,text) line 10 at RETURN
 -- temp table
 begin;
   CREATE TEMPORARY TABLE myTempTbl (
@@ -472,46 +472,54 @@ begin;
   select emaj.emaj_assign_table(nspname,'mytemptbl','myGroup1b') from pg_class, pg_namespace
     where relnamespace = pg_namespace.oid and relname = 'mytemptbl';
 ERROR:  _assign_tables: some tables (pg_temp_2.mytemptbl) are TEMP tables.
-CONTEXT:  PL/pgSQL function emaj.emaj_assign_table(text,text,text,integer,text,text,text) line 8 at RETURN
+CONTEXT:  PL/pgSQL function emaj.emaj_assign_table(text,text,text,jsonb,text) line 10 at RETURN
 rollback;
 -- unlogged table
 select emaj.emaj_assign_table('myschema5','myunloggedtbl','myGroup1b');
 ERROR:  _assign_tables: some tables (myschema5.myunloggedtbl) are UNLOGGED tables.
-CONTEXT:  PL/pgSQL function emaj.emaj_assign_table(text,text,text,integer,text,text,text) line 8 at RETURN
+CONTEXT:  PL/pgSQL function emaj.emaj_assign_table(text,text,text,jsonb,text) line 10 at RETURN
 -- table WITH OIDS
 select emaj.emaj_assign_table('myschema5','myoidstbl','myGroup1b');
 ERROR:  _assign_tables: some tables (myschema5.myoidstbl) are declared WITH OIDS.
-CONTEXT:  PL/pgSQL function emaj.emaj_assign_table(text,text,text,integer,text,text,text) line 8 at RETURN
+CONTEXT:  PL/pgSQL function emaj.emaj_assign_table(text,text,text,jsonb,text) line 10 at RETURN
 -- table without PKEY
 select emaj.emaj_assign_table('phil''s schema3','myTbl2\','myGroup1b');
 ERROR:  _assign_tables: some tables ("phil's schema3"."myTbl2\") have no PRIMARY KEY.
-CONTEXT:  PL/pgSQL function emaj.emaj_assign_table(text,text,text,integer,text,text,text) line 8 at RETURN
+CONTEXT:  PL/pgSQL function emaj.emaj_assign_table(text,text,text,jsonb,text) line 10 at RETURN
+-- invalid priority
+select emaj.emaj_assign_table('myschema1','mytbl1','myGroup1b','{"priority":"not_numeric"}'::jsonb);
+ERROR:  _assign_tables: the "priority" property is not numeric.
+CONTEXT:  PL/pgSQL function emaj.emaj_assign_table(text,text,text,jsonb,text) line 10 at RETURN
 -- invalid tablespace
-select emaj.emaj_assign_table('myschema1','mytbl1','myGroup1b',null,'dummytsp');
+select emaj.emaj_assign_table('myschema1','mytbl1','myGroup1b','{"log_data_tablespace":"dummytsp"}'::jsonb);
 ERROR:  _assign_tables: the log data tablespace "dummytsp" does not exists.
-CONTEXT:  PL/pgSQL function emaj.emaj_assign_table(text,text,text,integer,text,text,text) line 8 at RETURN
-select emaj.emaj_assign_table('myschema1','mytbl1','myGroup1b',null,null,'dummytsp');
+CONTEXT:  PL/pgSQL function emaj.emaj_assign_table(text,text,text,jsonb,text) line 10 at RETURN
+select emaj.emaj_assign_table('myschema1','mytbl1','myGroup1b','{"log_index_tablespace":"dummytsp"}'::jsonb);
 ERROR:  _assign_tables: the log index tablespace "dummytsp" does not exists.
-CONTEXT:  PL/pgSQL function emaj.emaj_assign_table(text,text,text,integer,text,text,text) line 8 at RETURN
+CONTEXT:  PL/pgSQL function emaj.emaj_assign_table(text,text,text,jsonb,text) line 10 at RETURN
+-- unknown property
+select emaj.emaj_assign_table('myschema1','mytbl1','myGroup1b','{"unknown_property":null}'::jsonb);
+ERROR:  _assign_tables: properties "{"unknown_property": null}" are unknown .
+CONTEXT:  PL/pgSQL function emaj.emaj_assign_table(text,text,text,jsonb,text) line 10 at RETURN
 -- bad mark
-select emaj.emaj_assign_table('myschema1','mytbl1','myGroup1b',null,null,null,'EMAJ_LAST_MARK');
+select emaj.emaj_assign_table('myschema1','mytbl1','myGroup1b',null,'EMAJ_LAST_MARK');
 ERROR:  _check_new_mark: "EMAJ_LAST_MARK" is not an allowed name for a new mark.
 CONTEXT:  SQL statement "SELECT emaj._check_new_mark(array[v_group], v_mark)"
-PL/pgSQL function emaj._assign_tables(text,text[],text,integer,text,text,text,boolean) line 130 at SQL statement
-PL/pgSQL function emaj.emaj_assign_table(text,text,text,integer,text,text,text) line 8 at RETURN
+PL/pgSQL function emaj._assign_tables(text,text[],text,jsonb,text,boolean) line 148 at SQL statement
+PL/pgSQL function emaj.emaj_assign_table(text,text,text,jsonb,text) line 10 at RETURN
 -- erroneously existing log schema
 begin;
   create schema emaj_myschema1;
   select emaj.emaj_assign_table('myschema1','mytbl1','myGroup1b');
 ERROR:  _assign_tables: The schema "emaj_myschema1" should not exist. Drop it manually.
-CONTEXT:  PL/pgSQL function emaj.emaj_assign_table(text,text,text,integer,text,text,text) line 8 at RETURN
+CONTEXT:  PL/pgSQL function emaj.emaj_assign_table(text,text,text,jsonb,text) line 10 at RETURN
 rollback;
 -- ok
 select emaj.emaj_assign_table('myschema1','mytbl1','myGroup1b');
 WARNING:  _check_fk_groups: The table "myschema1.mytbl1" is referenced by the foreign key "mytbl4_col44_fkey" on the table "myschema1.mytbl4" that is outside the groups (myGroup1b).
 CONTEXT:  SQL statement "SELECT emaj._check_fk_groups(array[v_group])"
-PL/pgSQL function emaj._assign_tables(text,text[],text,integer,text,text,text,boolean) line 207 at PERFORM
-PL/pgSQL function emaj.emaj_assign_table(text,text,text,integer,text,text,text) line 8 at RETURN
+PL/pgSQL function emaj._assign_tables(text,text[],text,jsonb,text,boolean) line 224 at PERFORM
+PL/pgSQL function emaj.emaj_assign_table(text,text,text,jsonb,text) line 10 at RETURN
  emaj_assign_table 
 -------------------
                  1
@@ -520,7 +528,7 @@ PL/pgSQL function emaj.emaj_assign_table(text,text,text,integer,text,text,text) 
 -- already assigned table
 select emaj.emaj_assign_table('myschema1','mytbl1','myGroup1b');
 ERROR:  _assign_tables: some tables (myschema1.mytbl1) already belong to a group.
-CONTEXT:  PL/pgSQL function emaj.emaj_assign_table(text,text,text,integer,text,text,text) line 8 at RETURN
+CONTEXT:  PL/pgSQL function emaj.emaj_assign_table(text,text,text,jsonb,text) line 10 at RETURN
 -----------------------------------
 -- emaj_assign_tables
 -----------------------------------
@@ -529,16 +537,16 @@ CONTEXT:  PL/pgSQL function emaj.emaj_assign_table(text,text,text,integer,text,t
 select emaj.emaj_assign_tables('dummySchema',array['dummyTable'],'dummyGroup');
 ERROR:  _check_group_names: The group "dummyGroup" does not exist.
 CONTEXT:  SQL statement "SELECT emaj._check_group_names(v_groupNames := ARRAY[v_group], v_mayBeNull := FALSE, v_lockGroups := TRUE, v_checkList := '')"
-PL/pgSQL function emaj._assign_tables(text,text[],text,integer,text,text,text,boolean) line 22 at PERFORM
-PL/pgSQL function emaj.emaj_assign_tables(text,text[],text,integer,text,text,text) line 8 at RETURN
+PL/pgSQL function emaj._assign_tables(text,text[],text,jsonb,text,boolean) line 26 at PERFORM
+PL/pgSQL function emaj.emaj_assign_tables(text,text[],text,jsonb,text) line 9 at RETURN
 -- bad tables
 select emaj.emaj_assign_tables('myschema1',array['dummytbl1','dummytbl2'],'myGroup1b');
 ERROR:  _assign_tables: some tables (myschema1.dummytbl1, myschema1.dummytbl2) do not exist.
-CONTEXT:  PL/pgSQL function emaj.emaj_assign_tables(text,text[],text,integer,text,text,text) line 8 at RETURN
+CONTEXT:  PL/pgSQL function emaj.emaj_assign_tables(text,text[],text,jsonb,text) line 9 at RETURN
 -- empty tables array
 select emaj.emaj_assign_tables('myschema1',array[]::text[],'myGroup1b');
 WARNING:  _assign_tables: No table to process.
-CONTEXT:  PL/pgSQL function emaj.emaj_assign_tables(text,text[],text,integer,text,text,text) line 8 at RETURN
+CONTEXT:  PL/pgSQL function emaj.emaj_assign_tables(text,text[],text,jsonb,text) line 9 at RETURN
  emaj_assign_tables 
 --------------------
                   0
@@ -546,7 +554,7 @@ CONTEXT:  PL/pgSQL function emaj.emaj_assign_tables(text,text[],text,integer,tex
 
 select emaj.emaj_assign_tables('myschema1',null,'myGroup1b');
 WARNING:  _assign_tables: No table to process.
-CONTEXT:  PL/pgSQL function emaj.emaj_assign_tables(text,text[],text,integer,text,text,text) line 8 at RETURN
+CONTEXT:  PL/pgSQL function emaj.emaj_assign_tables(text,text[],text,jsonb,text) line 9 at RETURN
  emaj_assign_tables 
 --------------------
                   0
@@ -554,7 +562,7 @@ CONTEXT:  PL/pgSQL function emaj.emaj_assign_tables(text,text[],text,integer,tex
 
 select emaj.emaj_assign_tables('myschema1',array[''],'myGroup1b');
 WARNING:  _assign_tables: No table to process.
-CONTEXT:  PL/pgSQL function emaj.emaj_assign_tables(text,text[],text,integer,text,text,text) line 8 at RETURN
+CONTEXT:  PL/pgSQL function emaj.emaj_assign_tables(text,text[],text,jsonb,text) line 9 at RETURN
  emaj_assign_tables 
 --------------------
                   0
@@ -563,18 +571,18 @@ CONTEXT:  PL/pgSQL function emaj.emaj_assign_tables(text,text[],text,integer,tex
 -- ok (with a duplicate table name)
 select emaj.emaj_assign_tables('myschema1',array['mytbl2','mytbl2b','mytbl2'],'myGroup1b');
 WARNING:  _create_tbl: The table "myschema1.mytbl2" has triggers (mytbl2trg1, mytbl2trg2). They will be automatically disabled during E-Maj rollback operations, unless they have been recorded into the list of triggers that may be kept enabled, with the emaj_ignore_app_trigger() function.
-CONTEXT:  SQL statement "SELECT emaj._create_tbl(v_schema, r_table.table_name, v_group, v_priority, v_logDatTsp, v_logIdxTsp,
+CONTEXT:  SQL statement "SELECT emaj._create_tbl(v_schema, v_oneTable, v_group, v_priority, v_logDatTsp, v_logIdxTsp,
                                v_timeId, v_groupIsRollbackable, v_groupIsLogging)"
-PL/pgSQL function emaj._assign_tables(text,text[],text,integer,text,text,text,boolean) line 169 at PERFORM
-PL/pgSQL function emaj.emaj_assign_tables(text,text[],text,integer,text,text,text) line 8 at RETURN
+PL/pgSQL function emaj._assign_tables(text,text[],text,jsonb,text,boolean) line 186 at PERFORM
+PL/pgSQL function emaj.emaj_assign_tables(text,text[],text,jsonb,text) line 9 at RETURN
 WARNING:  _check_fk_groups: The table "myschema1.mytbl2" is referenced by the foreign key "mytbl4_col43_fkey" on the table "myschema1.mytbl4" that is outside the groups (myGroup1b).
 CONTEXT:  SQL statement "SELECT emaj._check_fk_groups(array[v_group])"
-PL/pgSQL function emaj._assign_tables(text,text[],text,integer,text,text,text,boolean) line 207 at PERFORM
-PL/pgSQL function emaj.emaj_assign_tables(text,text[],text,integer,text,text,text) line 8 at RETURN
+PL/pgSQL function emaj._assign_tables(text,text[],text,jsonb,text,boolean) line 224 at PERFORM
+PL/pgSQL function emaj.emaj_assign_tables(text,text[],text,jsonb,text) line 9 at RETURN
 WARNING:  _check_fk_groups: The table "myschema1.mytbl1" is referenced by the foreign key "mytbl4_col44_fkey" on the table "myschema1.mytbl4" that is outside the groups (myGroup1b).
 CONTEXT:  SQL statement "SELECT emaj._check_fk_groups(array[v_group])"
-PL/pgSQL function emaj._assign_tables(text,text[],text,integer,text,text,text,boolean) line 207 at PERFORM
-PL/pgSQL function emaj.emaj_assign_tables(text,text[],text,integer,text,text,text) line 8 at RETURN
+PL/pgSQL function emaj._assign_tables(text,text[],text,jsonb,text,boolean) line 224 at PERFORM
+PL/pgSQL function emaj.emaj_assign_tables(text,text[],text,jsonb,text) line 9 at RETURN
  emaj_assign_tables 
 --------------------
                   2

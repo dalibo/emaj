@@ -621,12 +621,13 @@ insert into myschema2.mytbl1 values (100, 'Started', E'\\000'::bytea);
 begin;
 select emaj.emaj_remove_tables('myschema2','{"mytbl1","mytbl2","myTbl3"}','REMOVE_3_TABLES');
 
-select emaj.emaj_assign_tables('myschema2','{"mytbl1","mytbl2","myTbl3"}','myGroup2',null,null,null,'ASSIGN_3_TABLES');
+select emaj.emaj_assign_tables('myschema2','{"mytbl1","mytbl2","myTbl3"}','myGroup2',null,'ASSIGN_3_TABLES');
 insert into myschema2.mytbl1 values (110, 'Assigned', E'\\000'::bytea);
 
 select emaj.emaj_remove_tables('myschema2','{"mytbl1","mytbl2","myTbl3"}');
 
-select emaj.emaj_assign_tables('myschema2','{"mytbl1","mytbl2","myTbl3"}','myGroup2');
+select emaj.emaj_assign_tables('myschema2','{"mytbl1","mytbl2","myTbl3"}','myGroup2',
+                               '{"priority":1, "log_data_tablespace":"tsplog1", "log_index_tablespace":"tsplog1"}'::jsonb);
 commit;
 
 -- checks

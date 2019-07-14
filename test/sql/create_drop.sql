@@ -209,12 +209,18 @@ select emaj.emaj_assign_table('myschema5','myoidstbl','myGroup1b');
 -- table without PKEY
 select emaj.emaj_assign_table('phil''s schema3','myTbl2\','myGroup1b');
 
+-- invalid priority
+select emaj.emaj_assign_table('myschema1','mytbl1','myGroup1b','{"priority":"not_numeric"}'::jsonb);
+
 -- invalid tablespace
-select emaj.emaj_assign_table('myschema1','mytbl1','myGroup1b',null,'dummytsp');
-select emaj.emaj_assign_table('myschema1','mytbl1','myGroup1b',null,null,'dummytsp');
+select emaj.emaj_assign_table('myschema1','mytbl1','myGroup1b','{"log_data_tablespace":"dummytsp"}'::jsonb);
+select emaj.emaj_assign_table('myschema1','mytbl1','myGroup1b','{"log_index_tablespace":"dummytsp"}'::jsonb);
+
+-- unknown property
+select emaj.emaj_assign_table('myschema1','mytbl1','myGroup1b','{"unknown_property":null}'::jsonb);
 
 -- bad mark
-select emaj.emaj_assign_table('myschema1','mytbl1','myGroup1b',null,null,null,'EMAJ_LAST_MARK');
+select emaj.emaj_assign_table('myschema1','mytbl1','myGroup1b',null,'EMAJ_LAST_MARK');
 
 -- erroneously existing log schema
 begin;

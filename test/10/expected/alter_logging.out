@@ -1946,7 +1946,7 @@ select emaj.emaj_remove_tables('myschema2','{"mytbl1","mytbl2","myTbl3"}','REMOV
                   3
 (1 row)
 
-select emaj.emaj_assign_tables('myschema2','{"mytbl1","mytbl2","myTbl3"}','myGroup2',null,null,null,'ASSIGN_3_TABLES');
+select emaj.emaj_assign_tables('myschema2','{"mytbl1","mytbl2","myTbl3"}','myGroup2',null,'ASSIGN_3_TABLES');
 NOTICE:  table "myTbl3_log" does not exist, skipping
 NOTICE:  trigger "emaj_log_trg" for relation "myschema2.myTbl3" does not exist, skipping
 NOTICE:  trigger "emaj_trunc_trg" for relation "myschema2.myTbl3" does not exist, skipping
@@ -1970,7 +1970,8 @@ select emaj.emaj_remove_tables('myschema2','{"mytbl1","mytbl2","myTbl3"}');
                   3
 (1 row)
 
-select emaj.emaj_assign_tables('myschema2','{"mytbl1","mytbl2","myTbl3"}','myGroup2');
+select emaj.emaj_assign_tables('myschema2','{"mytbl1","mytbl2","myTbl3"}','myGroup2',
+                               '{"priority":1, "log_data_tablespace":"tsplog1", "log_index_tablespace":"tsplog1"}'::jsonb);
 NOTICE:  table "myTbl3_log" does not exist, skipping
 NOTICE:  trigger "emaj_log_trg" for relation "myschema2.myTbl3" does not exist, skipping
 NOTICE:  trigger "emaj_trunc_trg" for relation "myschema2.myTbl3" does not exist, skipping
@@ -2002,13 +2003,13 @@ select * from emaj.emaj_relation where rel_schema = 'myschema2' and rel_tblseq i
  myschema2  | myTbl3     | [6120,6126)    | myGroup1  | r        |              | emaj_myschema2 | myTbl3_log    |                 | myTbl3_log_idx   |                 | myTbl3_log_seq   | myTbl3_log_fnct  | tbl.col31,tbl.col32,tbl.col33 | col31              | tbl.col31 = keys.col31                            |                        |                    4
  myschema2  | myTbl3     | [6126,6128)    | myGroup2  | r        |              | emaj_myschema2 | myTbl3_log_1  |                 | myTbl3_log_idx_1 |                 | myTbl3_log_seq   |                  |                               |                    |                                                   |                     10 |                    4
  myschema2  | myTbl3     | [6129,6130)    | myGroup2  | r        |              | emaj_myschema2 | myTbl3_log_2  |                 | myTbl3_log_idx_2 |                 | myTbl3_log_seq   |                  |                               |                    |                                                   |                     10 |                    4
- myschema2  | myTbl3     | [6131,)        | myGroup2  | r        |              | emaj_myschema2 | myTbl3_log    |                 | myTbl3_log_idx   |                 | myTbl3_log_seq   | myTbl3_log_fnct  | tbl.col31,tbl.col32,tbl.col33 | col31              | tbl.col31 = keys.col31                            |                        |                    4
+ myschema2  | myTbl3     | [6131,)        | myGroup2  | r        |            1 | emaj_myschema2 | myTbl3_log    | tsplog1         | myTbl3_log_idx   | tsplog1         | myTbl3_log_seq   | myTbl3_log_fnct  | tbl.col31,tbl.col32,tbl.col33 | col31              | tbl.col31 = keys.col31                            |                        |                    4
  myschema2  | mytbl1     | [6008,6128)    | myGroup2  | r        |              | emaj_myschema2 | mytbl1_log_1  |                 | mytbl1_log_idx_1 |                 | mytbl1_log_seq   |                  |                               |                    |                                                   |                      1 |                    4
  myschema2  | mytbl1     | [6129,6130)    | myGroup2  | r        |              | emaj_myschema2 | mytbl1_log_2  |                 | mytbl1_log_idx_2 |                 | mytbl1_log_seq   |                  |                               |                    |                                                   |                      2 |                    4
- myschema2  | mytbl1     | [6131,)        | myGroup2  | r        |              | emaj_myschema2 | mytbl1_log    |                 | mytbl1_log_idx   |                 | mytbl1_log_seq   | mytbl1_log_fnct  | tbl.col11,tbl.col12,tbl.col13 | col11,col12        | tbl.col11 = keys.col11 AND tbl.col12 = keys.col12 |                        |                    4
+ myschema2  | mytbl1     | [6131,)        | myGroup2  | r        |            1 | emaj_myschema2 | mytbl1_log    | tsplog1         | mytbl1_log_idx   | tsplog1         | mytbl1_log_seq   | mytbl1_log_fnct  | tbl.col11,tbl.col12,tbl.col13 | col11,col12        | tbl.col11 = keys.col11 AND tbl.col12 = keys.col12 |                        |                    4
  myschema2  | mytbl2     | [6008,6128)    | myGroup2  | r        |              | emaj_myschema2 | mytbl2_log_1  |                 | mytbl2_log_idx_1 |                 | mytbl2_log_seq   |                  |                               |                    |                                                   |                      0 |                    4
  myschema2  | mytbl2     | [6129,6130)    | myGroup2  | r        |              | emaj_myschema2 | mytbl2_log_2  |                 | mytbl2_log_idx_2 |                 | mytbl2_log_seq   |                  |                               |                    |                                                   |                      0 |                    4
- myschema2  | mytbl2     | [6131,)        | myGroup2  | r        |              | emaj_myschema2 | mytbl2_log    |                 | mytbl2_log_idx   |                 | mytbl2_log_seq   | mytbl2_log_fnct  | tbl.col21,tbl.col22,tbl.col23 | col21              | tbl.col21 = keys.col21                            |                        |                    4
+ myschema2  | mytbl2     | [6131,)        | myGroup2  | r        |            1 | emaj_myschema2 | mytbl2_log    | tsplog1         | mytbl2_log_idx   | tsplog1         | mytbl2_log_seq   | mytbl2_log_fnct  | tbl.col21,tbl.col22,tbl.col23 | col21              | tbl.col21 = keys.col21                            |                        |                    4
 (10 rows)
 
 select sequ_schema, sequ_name, sequ_time_id, sequ_last_val, sequ_is_called from emaj.emaj_sequence

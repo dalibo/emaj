@@ -1497,42 +1497,43 @@ $_drop_log_schemas$;
 --                                               --
 ---------------------------------------------------
 
-CREATE OR REPLACE FUNCTION emaj.emaj_assign_table(v_schema TEXT, v_table TEXT, v_group TEXT, v_priority INT DEFAULT NULL,
-                                                  v_logDatTsp TEXT DEFAULT NULL, v_logIdxTsp TEXT DEFAULT NULL,
+CREATE OR REPLACE FUNCTION emaj.emaj_assign_table(v_schema TEXT, v_table TEXT, v_group TEXT, v_properties JSONB DEFAULT NULL,
                                                   v_mark TEXT DEFAULT 'ASSIGN_%')
 RETURNS INTEGER LANGUAGE plpgsql AS
 $emaj_assign_table$
 -- The function assigns a table into a tables group.
--- Inputs: schema name, table name, group name,
+-- Inputs: schema name, table name, assignment group name, assignment properties (optional),
 --         priority (optional), log data tablespace (optional) and log index tablespace (optional),
 --         mark name to set when logging groups (optional)
--- Outputs: number of tables effectively assigned to the tables group, id. 1
+-- Outputs: number of tables effectively assigned to the tables group, ie. 1
+-- The JSONB v_properties parameter has the following structure '{"priority":..., "log_data_tablespace":..., "log_index_tablespace":...}'
+--   each properties being NULL by default
   BEGIN
-    RETURN emaj._assign_tables(v_schema, ARRAY[v_table], v_group, v_priority, v_logDatTsp, v_logIdxTsp, v_mark , FALSE);
+    RETURN emaj._assign_tables(v_schema, ARRAY[v_table], v_group, v_properties, v_mark , FALSE);
   END;
 $emaj_assign_table$;
-COMMENT ON FUNCTION emaj.emaj_assign_table(TEXT,TEXT,TEXT,INT,TEXT,TEXT,TEXT) IS
+COMMENT ON FUNCTION emaj.emaj_assign_table(TEXT,TEXT,TEXT,JSONB,TEXT) IS
 $$Assign a table into a tables group.$$;
 
-CREATE OR REPLACE FUNCTION emaj.emaj_assign_tables(v_schema TEXT, v_tables TEXT[], v_group TEXT, v_priority INT DEFAULT NULL,
-                                                  v_logDatTsp TEXT DEFAULT NULL, v_logIdxTsp TEXT DEFAULT NULL,
-                                                  v_mark TEXT DEFAULT 'ASSIGN_%')
+CREATE OR REPLACE FUNCTION emaj.emaj_assign_tables(v_schema TEXT, v_tables TEXT[], v_group TEXT, v_properties JSONB DEFAULT NULL,
+                                                   v_mark TEXT DEFAULT 'ASSIGN_%')
 RETURNS INTEGER LANGUAGE plpgsql AS
 $emaj_assign_tables$
 -- The function assigns several tables at once into a tables group.
--- Inputs: schema, array of table names, group name,
---         priority (optional), log data tablespace (optional) and log index tablespace (optional),
+-- Inputs: schema, array of table names, assignment group name, assignment properties (optional),
 --         mark name to set when logging groups (optional)
 -- Outputs: number of tables effectively assigned to the tables group
+-- The JSONB v_properties parameter has the following structure '{"priority":..., "log_data_tablespace":..., "log_index_tablespace":...}'
+--   each properties being NULL by default
   BEGIN
-    RETURN emaj._assign_tables(v_schema, v_tables, v_group, v_priority, v_logDatTsp, v_logIdxTsp, v_mark, TRUE);
+    RETURN emaj._assign_tables(v_schema, v_tables, v_group, v_properties, v_mark, TRUE);
   END;
 $emaj_assign_tables$;
-COMMENT ON FUNCTION emaj.emaj_assign_tables(TEXT,TEXT[],TEXT,INT,TEXT,TEXT,TEXT) IS
+COMMENT ON FUNCTION emaj.emaj_assign_tables(TEXT,TEXT[],TEXT,JSONB,TEXT) IS
 $$Assign several tables into a tables group.$$;
 
-CREATE OR REPLACE FUNCTION emaj._assign_tables(v_schema TEXT, v_tables TEXT[], v_group TEXT, v_priority INT,
-                                               v_logDatTsp TEXT, v_logIdxTsp TEXT, v_mark TEXT, v_multiTable BOOLEAN)
+CREATE OR REPLACE FUNCTION emaj._assign_tables(v_schema TEXT, v_tables TEXT[], v_group TEXT, v_properties JSONB, v_mark TEXT,
+                                               v_multiTable BOOLEAN)
 RETURNS INTEGER LANGUAGE plpgsql AS
 $_assign_tables$
 -- The function effectively assigns tables into a tables group.
@@ -1540,6 +1541,10 @@ $_assign_tables$
 --         mark to set for lonnging groups, a boolean indicating whether several tables need to be processed
 -- Outputs: number of tables effectively assigned to the tables group
   DECLARE
+    v_priority               INT;
+    v_logDatTsp              TEXT;
+    v_logIdxTsp              TEXT;
+    v_extraProperties        JSONB;
     v_groupIsRollbackable    BOOLEAN;
     v_groupIsLogging         BOOLEAN;
     v_list                   TEXT;
@@ -1548,10 +1553,10 @@ $_assign_tables$
     v_schemaPrefix           TEXT = 'emaj_';
     v_logSchema              TEXT;
     v_eventTriggers          TEXT[];
+    v_oneTable               TEXT;
     v_logSequence            TEXT;
     v_nextVal                BIGINT;
     v_nbAssignedTbl          INT = 0;
-    r_table                  RECORD;
   BEGIN
 -- check supplied parameters
 -- check the group name and if ok, get some properties of the group
@@ -1655,12 +1660,26 @@ $_assign_tables$
     IF v_list IS NOT NULL THEN
       RAISE EXCEPTION '_assign_tables: some tables (%) already belong to a group.', v_list;
     END IF;
+-- check the priority is numeric
+    BEGIN
+      v_priority = (v_properties->>'priority')::INT;
+    EXCEPTION
+      WHEN invalid_text_representation THEN
+        RAISE EXCEPTION '_assign_tables: the "priority" property is not numeric.';
+    END;
 -- check that the tablespaces exist, if supplied
+    v_logDatTsp = v_properties->>'log_data_tablespace';
     IF v_logDatTsp IS NOT NULL AND NOT EXISTS (SELECT 1 FROM pg_catalog.pg_tablespace WHERE spcname = v_logDatTsp) THEN
       RAISE EXCEPTION '_assign_tables: the log data tablespace "%" does not exists.', v_logDatTsp;
     END IF;
+    v_logIdxTsp = v_properties->>'log_index_tablespace';
     IF v_logIdxTsp IS NOT NULL AND NOT EXISTS (SELECT 1 FROM pg_catalog.pg_tablespace WHERE spcname = v_logIdxTsp) THEN
       RAISE EXCEPTION '_assign_tables: the log index tablespace "%" does not exists.', v_logIdxTsp;
+    END IF;
+-- check no properties are unknown
+    v_extraProperties = v_properties - 'priority' - 'log_data_tablespace' - 'log_index_tablespace';
+    IF v_extraProperties IS NOT NULL AND v_extraProperties <> '{}' THEN
+      RAISE EXCEPTION '_assign_tables: properties "%" are unknown .', v_extraProperties;
     END IF;
 -- check the supplied mark
     SELECT emaj._check_new_mark(array[v_group], v_mark) INTO v_markName;
@@ -1698,21 +1717,20 @@ $_assign_tables$
 -- disable event triggers that protect emaj components and keep in memory these triggers name
     SELECT emaj._disable_event_triggers() INTO v_eventTriggers;
 -- effectively create the log components for each table
-    FOR r_table IN
-      SELECT unnest(v_tables) AS table_name
+    FOREACH v_oneTable IN ARRAY v_tables
         LOOP
 -- create the table
-      PERFORM emaj._create_tbl(v_schema, r_table.table_name, v_group, v_priority, v_logDatTsp, v_logIdxTsp,
+      PERFORM emaj._create_tbl(v_schema, v_oneTable, v_group, v_priority, v_logDatTsp, v_logIdxTsp,
                                v_timeId, v_groupIsRollbackable, v_groupIsLogging);
 -- if the group is in logging state, perform additional tasks
       IF v_groupIsLogging THEN
 -- ... get the log schema and sequence for the new relation
         SELECT rel_log_schema, rel_log_sequence INTO v_logSchema, v_logSequence
           FROM emaj.emaj_relation
-          WHERE rel_schema = v_schema AND rel_tblseq = r_table.table_name AND upper_inf(rel_time_range);
+          WHERE rel_schema = v_schema AND rel_tblseq = v_oneTable AND upper_inf(rel_time_range);
 -- ... get the last log sequence value, if any, for this relation (recorded in emaj_relation at a previous REMOVE_TBL operation)
         SELECT max(rel_log_seq_last_value) + 1 INTO v_nextVal FROM emaj.emaj_relation
-          WHERE rel_schema = v_schema AND rel_tblseq = r_table.table_name
+          WHERE rel_schema = v_schema AND rel_tblseq = v_oneTable
             AND rel_log_seq_last_value IS NOT NULL;
 -- ... set the new log sequence next_val, if needed
         IF v_nextVal IS NOT NULL AND v_nextVal > 1 THEN
@@ -1727,7 +1745,7 @@ $_assign_tables$
 -- insert an entry into the emaj_hist table
       INSERT INTO emaj.emaj_hist (hist_function, hist_event, hist_object, hist_wording)
         VALUES (CASE WHEN v_multiTable THEN 'ASSIGN_TABLES' ELSE 'ASSIGN_TABLE' END, 'TABLE ADDED',
-                quote_ident(v_schema) || '.' || quote_ident(r_table.table_name),
+                quote_ident(v_schema) || '.' || quote_ident(v_oneTable),
                 'To the' || CASE WHEN v_groupIsLogging THEN ' logging' ELSE '' END || ' group ' || v_group);
       v_nbAssignedTbl = v_nbAssignedTbl + 1;
     END LOOP;
@@ -1787,12 +1805,12 @@ $_remove_tables$
     v_markName               TEXT;
     v_schemaPrefix           TEXT = 'emaj_';
     v_eventTriggers          TEXT[];
+    v_oneTable               TEXT;
     v_logSchema              TEXT;
     v_nbRemovedTbl           INT = 0;
     v_logSequenceLastValue   BIGINT;
     v_namesSuffix            TEXT;
     v_fullTableName          TEXT;
-    r_table                  RECORD;
     r_relation               emaj.emaj_relation%ROWTYPE;
   BEGIN
 -- check supplied parameters
@@ -1843,15 +1861,13 @@ $_remove_tables$
 -- disable event triggers that protect emaj components and keep in memory these triggers name
     SELECT emaj._disable_event_triggers() INTO v_eventTriggers;
 -- effectively drop the log components for each table
-    FOR r_table IN
-      SELECT unnest(v_tables) AS table_name
+    FOREACH v_oneTable IN ARRAY v_tables
         LOOP
 -- get the emaj_relation row of the table to process and some characteristics of the group that holds the table
       SELECT emaj_relation.* INTO r_relation FROM emaj.emaj_relation
-        WHERE rel_schema = v_schema AND rel_tblseq = r_table.table_name AND upper_inf(rel_time_range);
+        WHERE rel_schema = v_schema AND rel_tblseq = v_oneTable AND upper_inf(rel_time_range);
       SELECT group_name, group_is_logging INTO v_groupName, v_groupIsLogging FROM emaj.emaj_group
         WHERE group_name = r_relation.rel_group;
---raise warning 'table %',r_table.table_name;
       IF NOT v_groupIsLogging THEN
 -- if the group is idle, drop the table
         PERFORM emaj._drop_tbl(r_relation, v_timeId);
@@ -1866,7 +1882,7 @@ $_remove_tables$
           FROM
             (SELECT unnest(regexp_matches(rel_log_table,'_(\d+)$'))::INT AS suffix
                FROM emaj.emaj_relation
-               WHERE rel_schema = v_schema AND rel_tblseq = r_table.table_name
+               WHERE rel_schema = v_schema AND rel_tblseq = v_oneTable
             ) AS t;
 -- ... rename the log table and its index (they may have been dropped)
         EXECUTE format('ALTER TABLE IF EXISTS %I.%I RENAME TO %I',
@@ -1875,10 +1891,10 @@ $_remove_tables$
                        v_logSchema, r_relation.rel_log_index, r_relation.rel_log_index || v_namesSuffix);
 -- ... drop the log and truncate triggers
 --     (check the application table exists before dropping its triggers to avoid an error fires with postgres version <= 9.3)
-        v_fullTableName  = quote_ident(v_schema) || '.' || quote_ident(r_table.table_name);
+        v_fullTableName  = quote_ident(v_schema) || '.' || quote_ident(v_oneTable);
         PERFORM 0 FROM pg_catalog.pg_class, pg_catalog.pg_namespace
           WHERE relnamespace = pg_namespace.oid
-            AND nspname = v_schema AND relname = r_table.table_name AND relkind = 'r';
+            AND nspname = v_schema AND relname = v_oneTable AND relkind = 'r';
         IF FOUND THEN
           EXECUTE format('DROP TRIGGER IF EXISTS emaj_log_trg ON %s',
                          v_fullTableName);
@@ -1899,12 +1915,14 @@ $_remove_tables$
               rel_log_table = r_relation.rel_log_table || v_namesSuffix , rel_log_index = r_relation.rel_log_index || v_namesSuffix,
               rel_log_function = NULL, rel_sql_columns = NULL, rel_sql_pk_columns = NULL, rel_sql_pk_eq_conditions = NULL,
               rel_log_seq_last_value = v_logSequenceLastValue
-          WHERE rel_schema = v_schema AND rel_tblseq = r_table.table_name AND upper_inf(rel_time_range);
+----          WHERE rel_schema = v_schema AND rel_tblseq = r_table.table_name AND upper_inf(rel_time_range);
+          WHERE rel_schema = v_schema AND rel_tblseq = v_oneTable AND upper_inf(rel_time_range);
       END IF;
 -- insert an entry into the emaj_hist table
       INSERT INTO emaj.emaj_hist (hist_function, hist_event, hist_object, hist_wording)
         VALUES (CASE WHEN v_multiTable THEN 'REMOVE_TABLES' ELSE 'REMOVE_TABLE' END, 'TABLE REMOVED',
-                quote_ident(v_schema) || '.' || quote_ident(r_table.table_name),
+----                quote_ident(v_schema) || '.' || quote_ident(r_table.table_name),
+                quote_ident(v_schema) || '.' || quote_ident(v_oneTable),
                 'From the' || CASE WHEN v_groupIsLogging THEN ' logging' ELSE '' END || ' group ' || v_groupName);
       v_nbRemovedTbl = v_nbRemovedTbl + 1;
     END LOOP;
