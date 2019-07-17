@@ -44,6 +44,8 @@ Le tableau suivant liste les fonctions multi-groupes existantes et leur fonction
 
 Les paramètres des fonctions multi-groupes sont les mêmes que ceux de leurs fonctions mono-groupe associées, à l’exception du premier. Le paramètre groupe de tables de type *TEXT* est remplacé par une paramètre de type *tableau de TEXT* représentant la liste des groupes de tables.
 
+.. _multi_groups_syntax:
+
 Syntaxes pour exprimer un tableau de groupes
 --------------------------------------------
 

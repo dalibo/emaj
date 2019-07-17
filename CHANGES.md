@@ -3,6 +3,11 @@ E-Maj - Change log
 <devel>
 ------
 ###Enhancements:###
+  * The new emaj_assign_table(), emaj_assign_tables(), emaj_remove_table(),
+    emaj_remove_tables(), emaj_assign_sequence(), emaj_assign_sequences(),
+    emaj_remove_sequence() and emaj_remove_sequences() functions allow the
+    administrator to directly assign or remove tables or sequences into a
+    tables group, without updating the emaj_group_def table.
   * Minor coding improvements.
 
 ###Bug fixes:###

@@ -613,29 +613,37 @@ select emaj.emaj_stop_group('myGroup2');
 select emaj.emaj_alter_groups('{"myGroup1","myGroup2"}', 'back to idle myGroup2');
 
 -----------------------------
--- remove and add tables without updating emaj_group_def
+-- remove and add tables and sequences without updating emaj_group_def
 -----------------------------
 select emaj.emaj_start_group('myGroup2','Start');
 insert into myschema2.mytbl1 values (100, 'Started', E'\\000'::bytea);
+select nextval('myschema2.myseq1');
 
 begin;
 select emaj.emaj_remove_tables('myschema2','{"mytbl1","mytbl2","myTbl3"}','REMOVE_3_TABLES');
+select emaj.emaj_remove_sequence('myschema2','myseq1','REMOVE_1_SEQUENCES');
 
 select emaj.emaj_assign_tables('myschema2','{"mytbl1","mytbl2","myTbl3"}','myGroup2',null,'ASSIGN_3_TABLES');
+select emaj.emaj_assign_sequences('myschema2','{"myseq1","myseq2"}','myGroup2',null,'ASSIGN_2_SEQUENCES');
 insert into myschema2.mytbl1 values (110, 'Assigned', E'\\000'::bytea);
+select nextval('myschema2.myseq1');
 
 select emaj.emaj_remove_tables('myschema2','{"mytbl1","mytbl2","myTbl3"}');
+select emaj.emaj_remove_sequences('myschema2','{"myseq1","myseq2"}','REMOVE_2_SEQUENCES');
 
 select emaj.emaj_assign_tables('myschema2','{"mytbl1","mytbl2","myTbl3"}','myGroup2',
                                '{"priority":1, "log_data_tablespace":"tsplog1", "log_index_tablespace":"tsplog1"}'::jsonb);
+select emaj.emaj_assign_sequences('myschema2','{"myseq1","myseq2"}','myGroup2',null,'ASSIGN-2-SEQUENCES_AGAIN');
 commit;
 
 -- checks
 select count(*) from emaj.emaj_mark where mark_group = 'myGroup2' and (mark_name like 'REMOVE%' or mark_name like 'ASSIGN%');
-select * from emaj.emaj_relation where rel_schema = 'myschema2' and rel_tblseq in ('mytbl1','mytbl2','myTbl3')
+select * from emaj.emaj_relation where rel_schema = 'myschema2' and rel_tblseq in ('mytbl1','mytbl2','myTbl3','myseq1','myseq2')
   order by rel_schema, rel_tblseq, rel_time_range;
 select sequ_schema, sequ_name, sequ_time_id, sequ_last_val, sequ_is_called from emaj.emaj_sequence
   where sequ_schema = 'emaj_myschema2' and sequ_name = 'mytbl1_log_seq' order by sequ_name, sequ_time_id;
+select sequ_schema, sequ_name, sequ_time_id, sequ_last_val, sequ_is_called from emaj.emaj_sequence
+  where sequ_schema = 'myschema2' and sequ_name like 'myseq%' order by sequ_name, sequ_time_id;
 
 -----------------------------
 -- test end: check

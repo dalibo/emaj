@@ -6,7 +6,7 @@ Modification des groupes de tables
 Plusieurs types d'événements peuvent rendre nécessaire la modification d'un groupe de tables : 
 
 * la composition du groupe de tables change, avec l'ajout ou la suppression de tables ou de séquence dans le groupe,
-* un des paramètres liés à une table change dans la configuration E-Maj (priorité, schéma de log, tablespace,…),
+* un des paramètres liés à une table change dans la configuration E-Maj (priorité, tablespace,…),
 * une ou plusieurs tables applicatives appartenant au groupe de tables voient leur structure évoluer (ajout ou suppression de colonnes, changement de type de colonne,...).
 
 Modification de groupes en état *IDLE*
@@ -68,8 +68,10 @@ Néanmoins certaines actions sont possibles sur des groupes de tables maintenus 
 | Changer la priorité E-Maj              | Oui            | Ajustement emaj_group_def      |
 +----------------------------------------+----------------+--------------------------------+
 | Oter une table/séquence d’un groupe    | Oui            | Ajustement emaj_group_def      |
+|                                        |                | ou ajustement dynamique        |
 +----------------------------------------+----------------+--------------------------------+
 | Ajouter une table/séquence à un groupe | Oui            | Ajustement emaj_group_def      |
+|                                        |                | ou ajustement dynamique        |
 +----------------------------------------+----------------+--------------------------------+
 | Changer le groupe d'appartenance       | Oui            | Ajustement emaj_group_def      |
 +----------------------------------------+----------------+--------------------------------+
@@ -112,11 +114,74 @@ ou ::
 
    SELECT emaj.emaj_alter_groups('<tableau.des.groupes>' [,'<marque>']);
 
-Si le paramètre représentant la marque n'est pas spécifié, ou s'il est vide ou *NULL*, un nom est automatiquement généré : « ALTER_% », où le caractère '%' représente l'heure de début de la transaction courante, au format « hh.mn.ss.mmm ».
+Si le paramètre représentant la marque n'est pas spécifié, ou s'il est vide ou *NULL*, un nom est automatiquement généré : "ALTER_%", où le caractère '%' représente l'heure de début de la transaction courante, au format « hh.mn.ss.mmm ».
 
 Une opération de rollback E-Maj ciblant une marque antérieure à une modification de groupes de tables ne procède **PAS** automatiquement à une annulation de ces changements.
 
 Néanmoins, l’administrateur a la possibilité d’appliquer cette même procédure pour revenir à un état antérieur.
+
+.. _dynamic_ajustment:
+
+Méthode "Ajustement dynamique"
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+Quelques fonctions permettent d’ajuster dynamiquement le contenu des groupes de tables sans modification de la table *emaj_group_def*.
+
+Ainsi, pour ajouter une ou plusieurs tables dans un groupe de tables ::
+
+	SELECT emaj.emaj_assign_table(‘<schéma>’,’<table>’, '<nom.du.groupe>' [,’propriétés’ [,’<marque>’]]);
+
+ou ::
+
+	SELECT emaj.emaj_assign_tables(‘<schéma>’,’<tableau.de.tables>’, '<nom.du.groupe>' [,’propriétés’ [,’<marque>’]] );
+
+Pour ajouter une ou plusieurs séquences dans un groupe de tables ::
+
+	SELECT emaj.emaj_assign_sequence(‘<schéma>’,’<séquence>’, '<nom.du.groupe>' [,’<marque>’]);
+
+ou ::
+
+	SELECT emaj.emaj_assign_sequences(‘<schéma>’, ’<tableau.de.séquences>’, '<nom.du.groupe>' [,’<marque>’] );
+
+Pour retirer une ou plusieurs tables d’un groupe de tables ::
+
+	SELECT emaj.emaj_remove_table(‘<schéma>’,’<table>’ [,’<marque>’] );
+
+ou ::
+
+	SELECT emaj.emaj_remove_tables(‘<schéma>’,’<tableau.de.tables>’, [,’<marque>’] );
+
+Pour retirer une ou plusieurs séquences d’un groupe de tables ::
+
+	SELECT emaj.emaj_remove_sequence(‘<schéma>’,’<séquence>’, [,’<marque>’] );
+
+ou ::
+
+	SELECT emaj.emaj_remove_sequences(‘<schéma>’, ’<tableau.de.séquences>’ [,’<marque>’] );
+
+Pour les fonctions traitant plusieurs tables ou séquences en une seule opération, le paramètre fourni est un tableau de *TEXT*. Pour plus de précisions sur la syntaxe, on peut se reporter aux :ref:`tableaux de groupes <multi_groups_syntax>`.
+
+Le paramètre *<propriété>* des deux fonctions d’ajout de tables à un groupe de tables permet de préciser certaines propriétés pour la ou les tables. Ces propriétés correspondent aux colonnes *grpdef_priority*, *grpdef_log_dat_tsp* et *grpdef_log_idx_tsp* de la table *emaj_group_def*.
+
+Ce paramètre *<propriété>*, optionnel, est de type *JSONB*. On peut le valoriser ainsi ::
+
+	‘{ "priority" : <n> , "log_data_tablespace" : "<xxx>" , "log_index_tablespace" : "<yyy>" }’
+
+où :
+    • <n> est le niveau de priorité pour la ou les tables
+    • <xxx> est le nom du tablespace pour les tables de log
+    • <yyy> est le nom du tablespace pour les index de log
+
+Si une des propriétés n’est pas valorisée, sa valeur est NULL.
+
+Pour toutes les fonctions, un verrou exclusif est posé sur chaque table du ou des groupes de tables concernés, afin de garantir la stabilité des groupes durant ces opérations.
+
+Lors de l’exécution des fonctions, les groupes de tables concernés peuvent être en état *IDLE* ou *LOGGING*.
+
+Lorsque le groupe de table est actif (état *LOGGING*), une marque est posée. Son nom prend la valeur du dernier paramètre fourni lors de l’appel de la fonction. Ce paramètre est optionnel. S’il n’est pas fourni, le nom de la marque est généré avec un préfixe "ASSIGN" ou "REMOVE".
+
+Toutes ces fonctions retournent le nombre de tables ou séquences effectivement ajoutées ou supprimées.
+
 
 Incidence des ajouts ou suppressions de tables et séquences dans un groupe en état *LOGGING*
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^

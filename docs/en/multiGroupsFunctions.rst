@@ -44,6 +44,8 @@ The following table lists the multi-groups functions, with their relative mono-g
 
 The parameters of multi-groups functions are the same as those of their related mono-group function, except the first one. The *TEXT* table group parameter is replaced by a *TEXT ARRAY* parameter representing a tables groups list.
 
+.. _multi_groups_syntax:
+
 Syntax for groups array
 -----------------------
 

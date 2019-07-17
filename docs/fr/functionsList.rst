@@ -12,6 +12,28 @@ Les fonctions E-Maj disponibles pour les utilisateurs sont listées ci-dessous p
 | :doc:`emaj_alter_groups                          | | tableau.groupes TEXT[],     | nb.tables.et.seq INT                  |
 | <multiGroupsFunctions>`                          | | [marque TEXT]               |                                       |
 +--------------------------------------------------+-------------------------------+---------------------------------------+
+| :ref:`emaj_assign_sequence                       | | schéma TEXT,                | 1 INT                                 |
+| <dynamic_ajustment>`                             | | séquence TEXT,              |                                       |
+|                                                  | | groupe TEXT,                |                                       |
+|                                                  | | [ marque TEXT ]             |                                       |
++--------------------------------------------------+-------------------------------+---------------------------------------+
+| :ref:`emaj_assign_sequences                      | | schéma TEXT,                | nb.séquences INT                      |
+| <dynamic_ajustment>`                             | | tableau.séquences TEXT[],   |                                       |
+|                                                  | | groupe TEXT,                |                                       |
+|                                                  | | [ marque TEXT ]             |                                       |
++--------------------------------------------------+-------------------------------+---------------------------------------+
+| :ref:`emaj_assign_table                          | | schéma TEXT,                | 1 INT                                 |
+| <dynamic_ajustment>`                             | | table TEXT,                 |                                       |
+|                                                  | | groupe TEXT,                |                                       |
+|                                                  | | [ propriétés JSONB ]        |                                       |
+|                                                  | | [ marque TEXT ]             |                                       |
++--------------------------------------------------+-------------------------------+---------------------------------------+
+| :ref:`emaj_assign_tables                         | | schéma TEXT,                | nb.tables INT                         |
+| <dynamic_ajustment>`                             | | tableau.tables TEXT[],      |                                       |
+|                                                  | | groupe TEXT,                |                                       |
+|                                                  | | [ propriétés JSONB ]        |                                       |
+|                                                  | | [ marque TEXT ]             |                                       |
++--------------------------------------------------+-------------------------------+---------------------------------------+
 | :ref:`emaj_cleanup_rollback_state                |                               | nb.rollback INT                       |
 | <emaj_cleanup_rollback_state>`                   |                               |                                       |
 +--------------------------------------------------+-------------------------------+---------------------------------------+
@@ -116,6 +138,22 @@ Les fonctions E-Maj disponibles pour les utilisateurs sont listées ci-dessous p
 +--------------------------------------------------+-------------------------------+---------------------------------------+
 | :ref:`emaj_protect_mark_group                    | | groupe TEXT,                | 0/1 INT                               |
 | <emaj_protect_mark_group>`                       | | marque TEXT                 |                                       |
++--------------------------------------------------+-------------------------------+---------------------------------------+
+| :ref:`emaj_remove_sequence                       | | schéma TEXT,                | 1 INT                                 |
+| <dynamic_ajustment>`                             | | séquence TEXT,              |                                       |
+|                                                  | | [ marque TEXT ]             |                                       |
++--------------------------------------------------+-------------------------------+---------------------------------------+
+| :ref:`emaj_remove_sequences                      | | schéma TEXT,                | nb.séquences INT                      |
+| <dynamic_ajustment>`                             | | tableau.séquences TEXT[],   |                                       |
+|                                                  | | [ marque TEXT ]             |                                       |
++--------------------------------------------------+-------------------------------+---------------------------------------+
+| :ref:`emaj_remove_table                          | | schéma TEXT,                | 1 INT                                 |
+| <dynamic_ajustment>`                             | | table TEXT,                 |                                       |
+|                                                  | | [ marque TEXT ]             |                                       |
++--------------------------------------------------+-------------------------------+---------------------------------------+
+| :ref:`emaj_remove_tables                         | | schéma TEXT,                | nb.tables INT                         |
+| <dynamic_ajustment>`                             | | tableau.tables TEXT[],      |                                       |
+|                                                  | | [ marque TEXT ]             |                                       |
 +--------------------------------------------------+-------------------------------+---------------------------------------+
 | :ref:`emaj_rename_mark_group                     | | groupe TEXT,                |                                       |
 | <emaj_rename_mark_group>`                        | | marque TEXT,                |                                       |

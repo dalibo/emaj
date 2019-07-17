@@ -6,7 +6,7 @@ Modifying tables groups
 Several types of events may lead to alter a tables group:
 
 * the tables group definition may change, some tables or sequences may have been added or suppressed,
-* one of the parameters linked to a table (priority, schema, tablespaces,...) may have been modified,
+* one of the parameters linked to a table (priority, tablespaces,...) may have been modified,
 * the structure of one or several application tables of the tables group may have changed, such as an added or dropped column or a change in a column type.
 
 Modifying a tables group in *IDLE* state
@@ -68,8 +68,10 @@ However, some actions are possible while the tables groups are in *LOGGING* stat
 | Change the E-Maj priority                      | Yes           | emaj_group_def update |
 +------------------------------------------------+---------------+-----------------------+
 | Remove a table/sequence from a group           | Yes           | emaj_group_def update |
+|                                                |               | or dynamic adjustment |
 +------------------------------------------------+---------------+-----------------------+
 | Add a table/sequence to a group                | Yes           | emaj_group_def update |
+|                                                |               | or dynamic adjustment |
 +------------------------------------------------+---------------+-----------------------+
 | Change the group ownership of a table/sequence | Yes           | emaj_group_def update |
 +------------------------------------------------+---------------+-----------------------+
@@ -91,6 +93,70 @@ However, some actions are possible while the tables groups are in *LOGGING* stat
 +------------------------------------------------+---------------+-----------------------+
 | Other forms of ALTER SEQUENCE                  | Yes           | No E-Maj impact       |
 +------------------------------------------------+---------------+-----------------------+
+
+
+.. _dynamic_ajustment:
+
+“Dynamic adjustment” method
+^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+Somme functions allow to dynamically adjust the tables groups content without modifying the *emaj_group_def* table.
+
+To add one or several tables into a tables group::
+
+	SELECT emaj.emaj_assign_table(‘<schema>’, ’<table>’, '<groupe.name>' [,’properties’ [,’<mark>’]]);
+
+or ::
+
+	SELECT emaj.emaj_assign_tables(‘<schema>’, ’<tables.array>’, '<group.name>' [,’properties’ [,’<mark>’]] );
+
+To add one or several sequences into a tables group::
+
+	SELECT emaj.emaj_assign_sequence(‘<schema>’, ’<sequence>’, '<group.name>' [,’<mark>’]);
+
+or ::
+
+	SELECT emaj.emaj_assign_sequences(‘<schema>’, ’<sequences.array>’, '<group.name>' [,’<mark>’] );
+
+To remove one or several tables from a tables group::
+
+	SELECT emaj.emaj_remove_table(‘<schema>’, ’<table>’ [,’<mark>’] );
+
+or ::
+
+	SELECT emaj.emaj_remove_tables(‘<schema>’, ’<tables.array>’ [,’<mark>’] );
+
+To remove one or several sequences from a tables group::
+
+	SELECT emaj.emaj_remove_sequence(‘<schema>’, ’<sequence>’ [,’<mark>’] );
+
+or ::
+
+	SELECT emaj.emaj_remove_sequences(‘<schema>’, ’<sequences.array>’ [,’<mark>’] );
+
+For functions processing several tables or sequences in a single operation, the supplied parameter is a *TEXT* array. For more details about the syntax, refer to the :ref:`tables groups array <multi_groups_syntax>`.
+
+The *<properties>* parameter of both functions that assign a tables to a tables group allows to specify some properties for the table or tables. These properties correspond to the *grpdef_priority*, *grpdef_log_dat_tsp* and *grpdef_log_idx_tsp* columns of the *emaj_group_def* table.
+
+This optional *<properties>* parameter is of type *JSONB*. Its value can be set like this::
+
+	‘{ "priority" : <n> , "log_data_tablespace" : "<xxx>" , "log_index_tablespace" : "<yyy>" }’
+
+where:
+    • <n> is the priority level for the table or tables
+    • <xxx> is the name of the tablespace to handle log tables
+    • <yyy> is the name of the tablespace to handle log indexes
+
+If one of these properties is not set, its value is NULL.
+
+For all these functions, an exclusive lock is set on each table of the concerned table groups, so that the groups stability can be guaranted during these operations.
+
+These concerned tables groups can be either in *IDLE* or in *LOGGING* state while the functions are executed.
+
+When the tables group is in *LOGGING* state, a mark is set. Its name is defined by the last parameter of the function. This parameter is optional. If not supplied, the mark name is generated, with a "ASSIGN" or "REMOVE" prefix.
+
+All these functions return the number of effectively assigned or removed tables or sequences.
+
 
 The "emaj_group_def update" method
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^

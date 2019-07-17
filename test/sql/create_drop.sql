@@ -1,5 +1,6 @@
 -- create_drop.sql : prepare groups content and test emaj_create_group(), emaj_comment_group(),
 -- emaj_assign_table(), emaj_assign_tables(), emaj_remove_table(), emaj_remove_tables(),
+-- emaj_assign_sequence(), emaj_assign_sequences(), emaj_remove_sequence(), emaj_remove_sequences(),
 -- emaj_ignore_app_trigger(), emaj_drop_group() and emaj_force_drop_group() functions
 --
 SET client_min_messages TO WARNING;
@@ -281,8 +282,88 @@ select emaj.emaj_remove_tables('myschema1',array['mytbl2','mytbl2b','mytbl2']);
 
 select group_last_alter_time_id, group_nb_table, group_nb_sequence from emaj.emaj_group where group_name = 'myGroup1b';
 
+-----------------------------------
+-- emaj_assign_sequence
+-----------------------------------
+select emaj.emaj_drop_group('myGroup2');
+select emaj.emaj_create_group('myGroup2b', true, true);  -- rollbackable and empty
+
+-- error cases
+-- bad group name
+select emaj.emaj_assign_sequence('myschema2','myseq1','dummyGroup');
+-- bad schema
+select emaj.emaj_assign_sequence('dummySchema','myseq1','myGroup2b');
+select emaj.emaj_assign_sequence('emaj','myseq1','myGroup2b');
+-- bad sequence
+select emaj.emaj_assign_sequence('myschema2','dummySequence','myGroup2b');
+
+-- invalid priority
+select emaj.emaj_assign_sequence('myschema2','myseq1','myGroup2b','{"priority":"not_numeric"}'::jsonb);
+
+-- unknown property
+select emaj.emaj_assign_sequence('myschema2','myseq1','myGroup2b','{"unknown_property":null}'::jsonb);
+
+-- bad mark
+select emaj.emaj_assign_sequence('myschema2','myseq1','myGroup2b',null,'EMAJ_LAST_MARK');
+
+-- ok
+select emaj.emaj_assign_sequence('myschema2','myseq1','myGroup2b');
+-- already assigned sequence
+select emaj.emaj_assign_sequence('myschema2','myseq1','myGroup2b');
+
+-----------------------------------
+-- emaj_assign_sequences
+-----------------------------------
+-- error cases
+-- bad group name
+select emaj.emaj_assign_sequences('dummySchema',array['dummySequence'],'dummyGroup');
+-- bad sequences
+select emaj.emaj_assign_sequences('myschema2',array['dummyseq1','dummyseq2'],'myGroup2b');
+-- empty sequences array
+select emaj.emaj_assign_sequences('myschema2',array[]::text[],'myGroup2b');
+select emaj.emaj_assign_sequences('myschema2',null,'myGroup2b');
+select emaj.emaj_assign_sequences('myschema2',array[''],'myGroup2b');
+
+-- ok (with a duplicate sequence name)
+select emaj.emaj_assign_sequences('myschema2',array['myseq2','myseq2'],'myGroup2b');
+
+select group_last_alter_time_id, group_nb_table, group_nb_sequence from emaj.emaj_group where group_name = 'myGroup2b';
+
+-----------------------------------
+-- emaj_remove_sequence
+-----------------------------------
+
+-- error cases
+-- sequence not in a group
+select emaj.emaj_remove_sequence('dummySchema','myseq1');
+select emaj.emaj_remove_sequence('myschema2','dummySequence');
+-- empty sequences array
+select emaj.emaj_remove_sequences('myschema2',array[]::text[]);
+select emaj.emaj_remove_sequences('myschema2',null);
+select emaj.emaj_remove_sequences('myschema2',array['']);
+-- bad mark
+select emaj.emaj_remove_sequence('myschema2','myseq1','EMAJ_LAST_MARK');
+
+-- ok
+select emaj.emaj_remove_sequence('myschema2','myseq1');
+
+-----------------------------------
+-- emaj_remove_sequences
+-----------------------------------
+-- error cases
+-- sequence not in a group
+select emaj.emaj_remove_sequences('myschema2',array['dummyTable','myseq2']);
+
+-- ok (with a duplicate sequence name)
+select emaj.emaj_remove_sequences('myschema2',array['myseq2','myseq2']);
+
+select group_last_alter_time_id, group_nb_table, group_nb_sequence from emaj.emaj_group where group_name = 'myGroup2b';
+
+
 select emaj.emaj_drop_group('myGroup1b');
+select emaj.emaj_drop_group('myGroup2b');
 select emaj.emaj_create_group('myGroup1');
+select emaj.emaj_create_group('myGroup2');
 
 -----------------------------------
 -- emaj_ignore_app_trigger

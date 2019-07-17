@@ -1510,7 +1510,6 @@ RETURNS INTEGER LANGUAGE plpgsql AS
 $emaj_assign_table$
 -- The function assigns a table into a tables group.
 -- Inputs: schema name, table name, assignment group name, assignment properties (optional),
---         priority (optional), log data tablespace (optional) and log index tablespace (optional),
 --         mark name to set when logging groups (optional)
 -- Outputs: number of tables effectively assigned to the tables group, ie. 1
 -- The JSONB v_properties parameter has the following structure '{"priority":..., "log_data_tablespace":..., "log_index_tablespace":...}'
@@ -1544,7 +1543,7 @@ CREATE OR REPLACE FUNCTION emaj._assign_tables(v_schema TEXT, v_tables TEXT[], v
 RETURNS INTEGER LANGUAGE plpgsql AS
 $_assign_tables$
 -- The function effectively assigns tables into a tables group.
--- Inputs: schema, array of table names, group name, priority, log data tablespace and log index tablespace,
+-- Inputs: schema, array of table names, group name, properties as JSON structure
 --         mark to set for lonnging groups, a boolean indicating whether several tables need to be processed
 -- Outputs: number of tables effectively assigned to the tables group
   DECLARE
@@ -1600,7 +1599,7 @@ $_assign_tables$
           SELECT 0 FROM pg_catalog.pg_class, pg_catalog.pg_namespace
             WHERE relnamespace = pg_namespace.oid
               AND nspname = v_schema AND relname = table_name
-              AND relkind IN ('r','S','p'))
+              AND relkind IN ('r','p'))
       ) AS t;
     IF v_list IS NOT NULL THEN
       RAISE EXCEPTION '_assign_tables: some tables (%) do not exist.', v_list;
@@ -1686,7 +1685,7 @@ $_assign_tables$
 -- check no properties are unknown
     v_extraProperties = v_properties - 'priority' - 'log_data_tablespace' - 'log_index_tablespace';
     IF v_extraProperties IS NOT NULL AND v_extraProperties <> '{}' THEN
-      RAISE EXCEPTION '_assign_tables: properties "%" are unknown .', v_extraProperties;
+      RAISE EXCEPTION '_assign_tables: properties "%" are unknown.', v_extraProperties;
     END IF;
 -- check the supplied mark
     SELECT emaj._check_new_mark(array[v_group], v_mark) INTO v_markName;
@@ -1775,7 +1774,7 @@ RETURNS INTEGER LANGUAGE plpgsql AS
 $emaj_remove_table$
 -- The function removes a table from its tables group.
 -- Inputs: schema name, table name, mark name to set when logging groups (optional)
--- Outputs: number of tables effectively removed to the tables group, id. 1
+-- Outputs: number of tables effectively removed to the tables group, ie. 1
   BEGIN
     RETURN emaj._remove_tables(v_schema, ARRAY[v_table], v_mark, FALSE);
   END;
@@ -1804,12 +1803,12 @@ $_remove_tables$
 -- Outputs: number of tables effectively assigned to the tables group
   DECLARE
     v_list                   TEXT;
+    v_markName               TEXT;
     v_timeId                 BIGINT;
     v_groups                 TEXT[];
     v_loggingGroups          TEXT[];
     v_groupName              TEXT;
     v_groupIsLogging         BOOLEAN;
-    v_markName               TEXT;
     v_schemaPrefix           TEXT = 'emaj_';
     v_eventTriggers          TEXT[];
     v_oneTable               TEXT;
@@ -1849,14 +1848,17 @@ $_remove_tables$
     v_logSchema = v_schemaPrefix || v_schema;
 -- get the time stamp of the operation
     SELECT emaj._set_time_stamp('A') INTO v_timeId;
--- get the lists of groups and logging groups holding these tables, if any
-    SELECT array_agg(rel_group) INTO v_groups FROM emaj.emaj_relation, emaj.emaj_group
-      WHERE rel_group = group_name
-        AND rel_schema = v_schema AND rel_tblseq = ANY(v_tables) AND upper_inf(rel_time_range);
-    SELECT array_agg(rel_group) INTO v_loggingGroups FROM emaj.emaj_relation, emaj.emaj_group
-      WHERE rel_group = group_name
-        AND rel_schema = v_schema AND rel_tblseq = ANY(v_tables) AND upper_inf(rel_time_range)
-        AND group_is_logging;
+-- get the lists of groups and logging groups holding these tables, if any.
+-- It locks the tables groups so that no other operation simultaneously occurs these groups
+    WITH tables_group AS (
+      SELECT group_name, group_is_logging FROM emaj.emaj_relation, emaj.emaj_group
+        WHERE rel_group = group_name
+          AND rel_schema = v_schema AND rel_tblseq = ANY(v_tables) AND upper_inf(rel_time_range)
+        FOR UPDATE OF emaj_group
+      )
+    SELECT (SELECT array_agg(group_name) FROM tables_group),
+           (SELECT array_agg(group_name) FROM tables_group WHERE group_is_logging)
+      INTO v_groups, v_loggingGroups;
 -- for LOGGING groups, lock all tables to get a stable point
     IF v_loggingGroups IS NOT NULL THEN
 -- use a ROW EXCLUSIVE lock mode, preventing for a transaction currently updating data, but not conflicting with simple read access or
@@ -1922,13 +1924,11 @@ $_remove_tables$
               rel_log_table = r_relation.rel_log_table || v_namesSuffix , rel_log_index = r_relation.rel_log_index || v_namesSuffix,
               rel_log_function = NULL, rel_sql_columns = NULL, rel_sql_pk_columns = NULL, rel_sql_pk_eq_conditions = NULL,
               rel_log_seq_last_value = v_logSequenceLastValue
-----          WHERE rel_schema = v_schema AND rel_tblseq = r_table.table_name AND upper_inf(rel_time_range);
           WHERE rel_schema = v_schema AND rel_tblseq = v_oneTable AND upper_inf(rel_time_range);
       END IF;
 -- insert an entry into the emaj_hist table
       INSERT INTO emaj.emaj_hist (hist_function, hist_event, hist_object, hist_wording)
         VALUES (CASE WHEN v_multiTable THEN 'REMOVE_TABLES' ELSE 'REMOVE_TABLE' END, 'TABLE REMOVED',
-----                quote_ident(v_schema) || '.' || quote_ident(r_table.table_name),
                 quote_ident(v_schema) || '.' || quote_ident(v_oneTable),
                 'From the' || CASE WHEN v_groupIsLogging THEN ' logging' ELSE '' END || ' group ' || v_groupName);
       v_nbRemovedTbl = v_nbRemovedTbl + 1;
@@ -2502,6 +2502,287 @@ $_drop_tbl$
     RETURN;
   END;
 $_drop_tbl$;
+
+CREATE OR REPLACE FUNCTION emaj.emaj_assign_sequence(v_schema TEXT, v_sequence TEXT, v_group TEXT, v_properties JSONB DEFAULT NULL,
+                                                     v_mark TEXT DEFAULT 'ASSIGN_%')
+RETURNS INTEGER LANGUAGE plpgsql AS
+$emaj_assign_sequence$
+-- The function assigns a sequence into a tables group.
+-- Inputs: schema name, sequence name, assignment group name, assignment properties (optional),
+--         mark name to set when logging groups (optional)
+-- Outputs: number of sequences effectively assigned to the tables group, ie. 1
+-- The JSONB v_properties parameter has currenlty only one field '{"priority":...}' the properties being NULL by default
+  BEGIN
+    RETURN emaj._assign_sequences(v_schema, ARRAY[v_sequence], v_group, v_properties, v_mark , FALSE);
+  END;
+$emaj_assign_sequence$;
+COMMENT ON FUNCTION emaj.emaj_assign_sequence(TEXT,TEXT,TEXT,JSONB,TEXT) IS
+$$Assign a sequence into a tables group.$$;
+
+CREATE OR REPLACE FUNCTION emaj.emaj_assign_sequences(v_schema TEXT, v_sequences TEXT[], v_group TEXT, v_properties JSONB DEFAULT NULL,
+                                                      v_mark TEXT DEFAULT 'ASSIGN_%')
+RETURNS INTEGER LANGUAGE plpgsql AS
+$emaj_assign_sequences$
+-- The function assigns several sequences at once into a tables group.
+-- Inputs: schema, array of sequence names, assignment group name, assignment properties (optional),
+--         mark name to set when logging groups (optional)
+-- Outputs: number of sequences effectively assigned to the tables group
+-- The JSONB v_properties parameter has currenlty only one field '{"priority":...}' the properties being NULL by default
+  BEGIN
+    RETURN emaj._assign_sequences(v_schema, v_sequences, v_group, v_properties, v_mark, TRUE);
+  END;
+$emaj_assign_sequences$;
+COMMENT ON FUNCTION emaj.emaj_assign_sequences(TEXT,TEXT[],TEXT,JSONB,TEXT) IS
+$$Assign several sequences into a tables group.$$;
+
+CREATE OR REPLACE FUNCTION emaj._assign_sequences(v_schema TEXT, v_sequences TEXT[], v_group TEXT, v_properties JSONB,
+                                                  v_mark TEXT, v_multiSequence BOOLEAN)
+RETURNS INTEGER LANGUAGE plpgsql AS
+$_assign_sequences$
+-- The function effectively assigns sequences into a tables group.
+-- Inputs: schema, array of sequence names, group name, properties as JSON structure,
+--         mark to set for lonnging groups, a boolean indicating whether several sequences need to be processed
+-- Outputs: number of sequences effectively assigned to the tables group
+  DECLARE
+    v_groupIsLogging         BOOLEAN;
+    v_priority               INT;
+    v_extraProperties        JSONB;
+    v_list                   TEXT;
+    v_timeId                 BIGINT;
+    v_markName               TEXT;
+    v_oneSequence            TEXT;
+    v_nbAssignedSeq          INT = 0;
+  BEGIN
+-- check supplied parameters
+-- check the group name and if ok, get some properties of the group
+    PERFORM emaj._check_group_names(v_groupNames := ARRAY[v_group], v_mayBeNull := FALSE, v_lockGroups := TRUE, v_checkList := '');
+    SELECT group_is_logging INTO v_groupIsLogging
+      FROM emaj.emaj_group WHERE group_name = v_group;
+-- check the supplied schema exists and is not an E-Maj schema
+    PERFORM 1 FROM pg_catalog.pg_namespace
+      WHERE nspname = v_schema;
+    IF NOT FOUND THEN
+      RAISE EXCEPTION '_assign_sequences: The schema "%" does not exist.', v_schema;
+    END IF;
+    PERFORM 1 FROM emaj.emaj_schema
+      WHERE sch_name = v_schema;
+    IF FOUND THEN
+      RAISE EXCEPTION '_assign_sequences: The schema "%" is an E-Maj schema.', v_schema;
+    END IF;
+-- check sequences
+-- remove duplicates values, NULL and empty strings from the supplied sequence names array
+    SELECT array_agg(DISTINCT sequence_name) INTO v_sequences FROM unnest(v_sequences) AS sequence_name
+      WHERE sequence_name IS NOT NULL AND sequence_name <> '';
+-- process empty array
+    IF v_sequences IS NULL THEN
+      RAISE WARNING '_assign_sequences: No sequence to process.';
+      RETURN 0;
+    END IF;
+-- check that application sequences exist
+    WITH sequences AS (
+      SELECT unnest(v_sequences) AS sequence_name)
+    SELECT string_agg(quote_ident(v_schema) || '.' || quote_ident(sequence_name), ', ') INTO v_list
+      FROM (
+        SELECT sequence_name FROM sequences
+        WHERE NOT EXISTS (
+          SELECT 0 FROM pg_catalog.pg_class, pg_catalog.pg_namespace
+            WHERE relnamespace = pg_namespace.oid
+              AND nspname = v_schema AND relname = sequence_name
+              AND relkind IN ('S'))
+      ) AS t;
+    IF v_list IS NOT NULL THEN
+      RAISE EXCEPTION '_assign_sequences: some sequences (%) do not exist.', v_list;
+    END IF;
+-- check that no sequence already belongs to a group
+    SELECT string_agg(quote_ident(v_schema) || '.' || quote_ident(rel_tblseq), ', ') INTO v_list
+      FROM emaj.emaj_relation
+      WHERE rel_schema = v_schema AND rel_tblseq = ANY(v_sequences) AND upper_inf(rel_time_range);
+    IF v_list IS NOT NULL THEN
+      RAISE EXCEPTION '_assign_sequences: some sequences (%) already belong to a group.', v_list;
+    END IF;
+-- check the priority is numeric
+    BEGIN
+      v_priority = (v_properties->>'priority')::INT;
+    EXCEPTION
+      WHEN invalid_text_representation THEN
+        RAISE EXCEPTION '_assign_sequences: the "priority" property is not numeric.';
+    END;
+-- check no properties are unknown
+    v_extraProperties = v_properties - 'priority';
+    IF v_extraProperties IS NOT NULL AND v_extraProperties <> '{}' THEN
+      RAISE EXCEPTION '_assign_sequences: properties "%" are unknown.', v_extraProperties;
+    END IF;
+-- check the supplied mark
+    SELECT emaj._check_new_mark(array[v_group], v_mark) INTO v_markName;
+-- OK,
+-- get the time stamp of the operation
+    SELECT emaj._set_time_stamp('A') INTO v_timeId;
+-- for LOGGING groups, lock all tables to get a stable point
+    IF v_groupIsLogging THEN
+-- use a ROW EXCLUSIVE lock mode, preventing for a transaction currently updating data, but not conflicting with simple read access or
+--  vacuum operation.
+      PERFORM emaj._lock_groups(ARRAY[v_group], 'ROW EXCLUSIVE', FALSE);
+-- and set the mark, using the same time identifier
+      PERFORM emaj._set_mark_groups(ARRAY[v_group], v_markName, FALSE, TRUE, NULL, v_timeId);
+    END IF;
+-- effectively create the log components for each table
+    FOREACH v_oneSequence IN ARRAY v_sequences
+        LOOP
+-- create the sequence
+      PERFORM emaj._create_seq(v_schema, v_oneSequence, v_group, v_priority, v_timeId);
+-- if the group is in logging state, perform additional tasks
+      IF v_groupIsLogging THEN
+-- ... record the new sequence state in the emaj_sequence table for the current alter_group mark
+        INSERT INTO emaj.emaj_sequence (sequ_schema, sequ_name, sequ_time_id, sequ_last_val, sequ_start_val,
+                    sequ_increment, sequ_max_val, sequ_min_val, sequ_cache_val, sequ_is_cycled, sequ_is_called)
+          SELECT * FROM emaj._get_current_sequence_state(v_schema, v_oneSequence, v_timeId);
+      END IF;
+-- insert an entry into the emaj_hist table
+      INSERT INTO emaj.emaj_hist (hist_function, hist_event, hist_object, hist_wording)
+        VALUES (CASE WHEN v_multiSequence THEN 'ASSIGN_SEQUENCES' ELSE 'ASSIGN_SEQUENCE' END, 'SEQUENCE ADDED',
+                quote_ident(v_schema) || '.' || quote_ident(v_oneSequence),
+                'To the' || CASE WHEN v_groupIsLogging THEN ' logging' ELSE '' END || ' group ' || v_group);
+      v_nbAssignedSeq = v_nbAssignedSeq + 1;
+    END LOOP;
+-- adjust the group characteristics
+    UPDATE emaj.emaj_group
+      SET group_last_alter_time_id = v_timeId,
+          group_nb_sequence = (SELECT count(*) FROM emaj.emaj_relation
+                              WHERE rel_group = group_name AND upper_inf(rel_time_range) AND rel_kind = 'S')
+      WHERE group_name = v_group;
+    RETURN v_nbAssignedSeq;
+  END;
+$_assign_sequences$;
+
+CREATE OR REPLACE FUNCTION emaj.emaj_remove_sequence(v_schema TEXT, v_sequence TEXT, v_mark TEXT DEFAULT 'REMOVE_%')
+RETURNS INTEGER LANGUAGE plpgsql AS
+$emaj_remove_sequence$
+-- The function removes a sequence from its tables group.
+-- Inputs: schema name, sequence name, mark name to set when logging groups (optional)
+-- Outputs: number of sequences effectively removed to the tables group, id. 1
+  BEGIN
+    RETURN emaj._remove_sequences(v_schema, ARRAY[v_sequence], v_mark, FALSE);
+  END;
+$emaj_remove_sequence$;
+COMMENT ON FUNCTION emaj.emaj_remove_sequence(TEXT,TEXT,TEXT) IS
+$$Remove a sequence from its tables group.$$;
+
+CREATE OR REPLACE FUNCTION emaj.emaj_remove_sequences(v_schema TEXT, v_sequences TEXT[], v_mark TEXT DEFAULT 'REMOVE_%')
+RETURNS INTEGER LANGUAGE plpgsql AS
+$emaj_remove_sequences$
+-- The function removes several sequences at once from their tables group.
+-- Inputs: schema, array of sequence names, mark name to set when logging groups (optional)
+-- Outputs: number of sequences effectively removed from the tables group
+  BEGIN
+    RETURN emaj._remove_sequences(v_schema, v_sequences, v_mark, TRUE);
+  END;
+$emaj_remove_sequences$;
+COMMENT ON FUNCTION emaj.emaj_remove_sequences(TEXT,TEXT[],TEXT) IS
+$$Remove several sequences from their tables group.$$;
+
+CREATE OR REPLACE FUNCTION emaj._remove_sequences(v_schema TEXT, v_sequences TEXT[], v_mark TEXT, v_multiSequence BOOLEAN)
+RETURNS INTEGER LANGUAGE plpgsql AS
+$_remove_sequences$
+-- The function effectively removes sequences from their sequences group.
+-- Inputs: schema, array of sequence names, mark to set if for logging groups,
+--         boolean to indicate whether several sequences need to be processed
+-- Outputs: number of sequences effectively assigned to the sequences group
+  DECLARE
+    v_list                   TEXT;
+    v_markName               TEXT;
+    v_timeId                 BIGINT;
+    v_groups                 TEXT[];
+    v_loggingGroups          TEXT[];
+    v_groupName              TEXT;
+    v_groupIsLogging         BOOLEAN;
+    v_eventTriggers          TEXT[];
+    v_oneSequence            TEXT;
+    v_nbRemovedSeq           INT = 0;
+    r_relation               emaj.emaj_relation%ROWTYPE;
+  BEGIN
+-- check supplied parameters
+-- remove duplicates values, NULL and empty strings from the supplied sequence names array
+    SELECT array_agg(DISTINCT sequence_name) INTO v_sequences FROM unnest(v_sequences) AS sequence_name
+      WHERE sequence_name IS NOT NULL AND sequence_name <> '';
+-- process empty array
+    IF v_sequences IS NULL THEN
+      RAISE WARNING '_remove_sequences: No sequence to process.';
+      RETURN 0;
+    END IF;
+-- check that the sequences currently belong to a tables group (not necessarily the same one)
+    WITH all_supplied_sequences AS (
+      SELECT unnest(v_sequences) AS sequence_name),
+         sequences_in_group AS (
+      SELECT rel_tblseq FROM emaj.emaj_relation
+        WHERE rel_schema = v_schema AND rel_tblseq = ANY(v_sequences) AND upper_inf(rel_time_range))
+    SELECT string_agg(quote_ident(v_schema) || '.' || quote_ident(sequence_name), ', ') INTO v_list
+      FROM (
+        SELECT sequence_name FROM all_supplied_sequences
+          EXCEPT
+        SELECT rel_tblseq FROM sequences_in_group) AS t;
+    IF v_list IS NOT NULL THEN
+      RAISE EXCEPTION '_remove_sequences: some sequences (%) do not currently belong to any tables group.', v_list;
+    END IF;
+-- check the supplied mark
+    SELECT emaj._check_new_mark(array[v_groupName], v_mark) INTO v_markName;
+-- OK,
+-- get the time stamp of the operation
+    SELECT emaj._set_time_stamp('A') INTO v_timeId;
+-- get the lists of groups and logging groups holding these sequences, if any
+-- It locks the tables groups so that no other operation simultaneously occurs these groups
+    WITH tables_group AS (
+      SELECT group_name, group_is_logging FROM emaj.emaj_relation, emaj.emaj_group
+        WHERE rel_group = group_name
+          AND rel_schema = v_schema AND rel_tblseq = ANY(v_sequences) AND upper_inf(rel_time_range)
+        FOR UPDATE OF emaj_group
+      )
+    SELECT (SELECT array_agg(group_name) FROM tables_group),
+           (SELECT array_agg(group_name) FROM tables_group WHERE group_is_logging)
+      INTO v_groups, v_loggingGroups;
+-- for LOGGING groups, lock all tables to get a stable point
+    IF v_loggingGroups IS NOT NULL THEN
+-- use a ROW EXCLUSIVE lock mode, preventing for a transaction currently updating data, but not conflicting with simple read access or
+--  vacuum operation.
+      PERFORM emaj._lock_groups(v_loggingGroups, 'ROW EXCLUSIVE', FALSE);
+-- and set the mark, using the same time identifier
+      PERFORM emaj._set_mark_groups(v_loggingGroups, v_markName, FALSE, TRUE, NULL, v_timeId);
+    END IF;
+-- disable event triggers that protect emaj components and keep in memory these triggers name
+    SELECT emaj._disable_event_triggers() INTO v_eventTriggers;
+-- effectively drop the log components for each sequence
+    FOREACH v_oneSequence IN ARRAY v_sequences
+        LOOP
+-- get the emaj_relation row of the sequence to process and some characteristics of the group that holds the sequence
+      SELECT emaj_relation.* INTO r_relation FROM emaj.emaj_relation
+        WHERE rel_schema = v_schema AND rel_tblseq = v_oneSequence AND upper_inf(rel_time_range);
+      SELECT group_name, group_is_logging INTO v_groupName, v_groupIsLogging FROM emaj.emaj_group
+        WHERE group_name = r_relation.rel_group;
+      IF NOT v_groupIsLogging THEN
+-- if the group is idle, drop the sequence
+        PERFORM emaj._drop_seq(r_relation, v_timeId);
+      ELSE
+-- if the group is in logging state, just register the end of the relation time frame
+        UPDATE emaj.emaj_relation SET rel_time_range = int8range(lower(rel_time_range),v_timeId, '[)')
+          WHERE rel_schema = v_schema AND rel_tblseq = v_oneSequence AND upper_inf(rel_time_range);
+      END IF;
+-- insert an entry into the emaj_hist table
+      INSERT INTO emaj.emaj_hist (hist_function, hist_event, hist_object, hist_wording)
+        VALUES (CASE WHEN v_multiSequence THEN 'REMOVE_SEQUENCES' ELSE 'REMOVE_SEQUENCE' END, 'SEQUENCE REMOVED',
+                quote_ident(v_schema) || '.' || quote_ident(v_oneSequence),
+                'From the' || CASE WHEN v_groupIsLogging THEN ' logging' ELSE '' END || ' group ' || v_groupName);
+      v_nbRemovedSeq = v_nbRemovedSeq + 1;
+    END LOOP;
+-- enable previously disabled event triggers
+    PERFORM emaj._enable_event_triggers(v_eventTriggers);
+-- adjust the groups characteristics
+    UPDATE emaj.emaj_group
+      SET group_last_alter_time_id = v_timeId,
+          group_nb_sequence = (SELECT count(*) FROM emaj.emaj_relation
+                              WHERE rel_group = group_name AND upper_inf(rel_time_range) AND rel_kind = 'r')
+      WHERE group_name = ANY (v_groups);
+    RETURN v_nbRemovedSeq;
+  END;
+$_remove_sequences$;
 
 CREATE OR REPLACE FUNCTION emaj._create_seq(v_schema TEXT, v_seq TEXT, v_groupName TEXT, v_priority INT, v_timeId BIGINT)
 RETURNS VOID LANGUAGE plpgsql AS

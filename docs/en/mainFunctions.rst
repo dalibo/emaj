@@ -105,7 +105,7 @@ A specific version of the function allows to create an empty tables group, i.e. 
 
    SELECT emaj.emaj_create_group('<group.name>', <is_rollbackable>, <is_empty>);
 
-The third parameter is *false* by default. If it is set to *true*, the group must not be referenced in the *emaj_group_def* table. Once created, an empty group can be then populated using the :doc:`emaj_alter_group() <alterGroups>` function.
+The third parameter is *false* by default. If it is set to *true*, the group must not be referenced in the *emaj_group_def* table. Once created, an empty group can be then populated using the :doc:`emaj_alter_group() <alterGroups>` function or :ref:`dynamic tables groups adjustment function<dynamic_ajustment>`.
 
 All actions that are chained by the *emaj_create_group()* function are executed on behalf of a unique transaction. As a consequence, if an error occurs during the operation, all tables, functions and triggers already created by the function are cancelled.
 

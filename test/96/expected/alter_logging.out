@@ -1928,7 +1928,7 @@ WARNING:  _check_fk_groups: The table "myschema2.mytbl6" is referenced by the fo
 (1 row)
 
 -----------------------------
--- remove and add tables without updating emaj_group_def
+-- remove and add tables and sequences without updating emaj_group_def
 -----------------------------
 select emaj.emaj_start_group('myGroup2','Start');
 WARNING:  _check_fk_groups: The foreign key "mytbl6_col61_fkey" on the table "myschema2.mytbl6" references the table "myschema2.mytbl7" that is outside the groups (myGroup2).
@@ -1939,11 +1939,23 @@ WARNING:  _check_fk_groups: The table "myschema2.mytbl6" is referenced by the fo
 (1 row)
 
 insert into myschema2.mytbl1 values (100, 'Started', E'\\000'::bytea);
+select nextval('myschema2.myseq1');
+ nextval 
+---------
+    1000
+(1 row)
+
 begin;
 select emaj.emaj_remove_tables('myschema2','{"mytbl1","mytbl2","myTbl3"}','REMOVE_3_TABLES');
  emaj_remove_tables 
 --------------------
                   3
+(1 row)
+
+select emaj.emaj_remove_sequence('myschema2','myseq1','REMOVE_1_SEQUENCES');
+ emaj_remove_sequence 
+----------------------
+                    1
 (1 row)
 
 select emaj.emaj_assign_tables('myschema2','{"mytbl1","mytbl2","myTbl3"}','myGroup2',null,'ASSIGN_3_TABLES');
@@ -1963,11 +1975,29 @@ WARNING:  _check_fk_groups: The table "myschema2.mytbl6" is referenced by the fo
                   3
 (1 row)
 
+select emaj.emaj_assign_sequences('myschema2','{"myseq1","myseq2"}','myGroup2',null,'ASSIGN_2_SEQUENCES');
+ emaj_assign_sequences 
+-----------------------
+                     2
+(1 row)
+
 insert into myschema2.mytbl1 values (110, 'Assigned', E'\\000'::bytea);
+select nextval('myschema2.myseq1');
+ nextval 
+---------
+    1001
+(1 row)
+
 select emaj.emaj_remove_tables('myschema2','{"mytbl1","mytbl2","myTbl3"}');
  emaj_remove_tables 
 --------------------
                   3
+(1 row)
+
+select emaj.emaj_remove_sequences('myschema2','{"myseq1","myseq2"}','REMOVE_2_SEQUENCES');
+ emaj_remove_sequences 
+-----------------------
+                     2
 (1 row)
 
 select emaj.emaj_assign_tables('myschema2','{"mytbl1","mytbl2","myTbl3"}','myGroup2',
@@ -1988,29 +2018,40 @@ WARNING:  _check_fk_groups: The table "myschema2.mytbl6" is referenced by the fo
                   3
 (1 row)
 
+select emaj.emaj_assign_sequences('myschema2','{"myseq1","myseq2"}','myGroup2',null,'ASSIGN-2-SEQUENCES_AGAIN');
+ emaj_assign_sequences 
+-----------------------
+                     2
+(1 row)
+
 commit;
 -- checks
 select count(*) from emaj.emaj_mark where mark_group = 'myGroup2' and (mark_name like 'REMOVE%' or mark_name like 'ASSIGN%');
  count 
 -------
-     4
+     8
 (1 row)
 
-select * from emaj.emaj_relation where rel_schema = 'myschema2' and rel_tblseq in ('mytbl1','mytbl2','myTbl3')
+select * from emaj.emaj_relation where rel_schema = 'myschema2' and rel_tblseq in ('mytbl1','mytbl2','myTbl3','myseq1','myseq2')
   order by rel_schema, rel_tblseq, rel_time_range;
  rel_schema | rel_tblseq | rel_time_range | rel_group | rel_kind | rel_priority | rel_log_schema | rel_log_table | rel_log_dat_tsp |  rel_log_index   | rel_log_idx_tsp | rel_log_sequence | rel_log_function |        rel_sql_columns        | rel_sql_pk_columns |             rel_sql_pk_eq_conditions              | rel_log_seq_last_value | rel_emaj_verb_attnum 
 ------------+------------+----------------+-----------+----------+--------------+----------------+---------------+-----------------+------------------+-----------------+------------------+------------------+-------------------------------+--------------------+---------------------------------------------------+------------------------+----------------------
  myschema2  | myTbl3     | [6120,6126)    | myGroup1  | r        |              | emaj_myschema2 | myTbl3_log    |                 | myTbl3_log_idx   |                 | myTbl3_log_seq   | myTbl3_log_fnct  | tbl.col31,tbl.col32,tbl.col33 | col31              | tbl.col31 = keys.col31                            |                        |                    4
  myschema2  | myTbl3     | [6126,6128)    | myGroup2  | r        |              | emaj_myschema2 | myTbl3_log_1  |                 | myTbl3_log_idx_1 |                 | myTbl3_log_seq   |                  |                               |                    |                                                   |                     10 |                    4
- myschema2  | myTbl3     | [6129,6130)    | myGroup2  | r        |              | emaj_myschema2 | myTbl3_log_2  |                 | myTbl3_log_idx_2 |                 | myTbl3_log_seq   |                  |                               |                    |                                                   |                     10 |                    4
- myschema2  | myTbl3     | [6131,)        | myGroup2  | r        |            1 | emaj_myschema2 | myTbl3_log    | tsplog1         | myTbl3_log_idx   | tsplog1         | myTbl3_log_seq   | myTbl3_log_fnct  | tbl.col31,tbl.col32,tbl.col33 | col31              | tbl.col31 = keys.col31                            |                        |                    4
+ myschema2  | myTbl3     | [6130,6132)    | myGroup2  | r        |              | emaj_myschema2 | myTbl3_log_2  |                 | myTbl3_log_idx_2 |                 | myTbl3_log_seq   |                  |                               |                    |                                                   |                     10 |                    4
+ myschema2  | myTbl3     | [6134,)        | myGroup2  | r        |            1 | emaj_myschema2 | myTbl3_log    | tsplog1         | myTbl3_log_idx   | tsplog1         | myTbl3_log_seq   | myTbl3_log_fnct  | tbl.col31,tbl.col32,tbl.col33 | col31              | tbl.col31 = keys.col31                            |                        |                    4
+ myschema2  | myseq1     | [6008,6129)    | myGroup2  | S        |              |                |               |                 |                  |                 |                  |                  |                               |                    |                                                   |                        |                     
+ myschema2  | myseq1     | [6131,6133)    | myGroup2  | S        |              |                |               |                 |                  |                 |                  |                  |                               |                    |                                                   |                        |                     
+ myschema2  | myseq1     | [6135,)        | myGroup2  | S        |              |                |               |                 |                  |                 |                  |                  |                               |                    |                                                   |                        |                     
+ myschema2  | myseq2     | [6131,6133)    | myGroup2  | S        |              |                |               |                 |                  |                 |                  |                  |                               |                    |                                                   |                        |                     
+ myschema2  | myseq2     | [6135,)        | myGroup2  | S        |              |                |               |                 |                  |                 |                  |                  |                               |                    |                                                   |                        |                     
  myschema2  | mytbl1     | [6008,6128)    | myGroup2  | r        |              | emaj_myschema2 | mytbl1_log_1  |                 | mytbl1_log_idx_1 |                 | mytbl1_log_seq   |                  |                               |                    |                                                   |                      1 |                    4
- myschema2  | mytbl1     | [6129,6130)    | myGroup2  | r        |              | emaj_myschema2 | mytbl1_log_2  |                 | mytbl1_log_idx_2 |                 | mytbl1_log_seq   |                  |                               |                    |                                                   |                      2 |                    4
- myschema2  | mytbl1     | [6131,)        | myGroup2  | r        |            1 | emaj_myschema2 | mytbl1_log    | tsplog1         | mytbl1_log_idx   | tsplog1         | mytbl1_log_seq   | mytbl1_log_fnct  | tbl.col11,tbl.col12,tbl.col13 | col11,col12        | tbl.col11 = keys.col11 AND tbl.col12 = keys.col12 |                        |                    4
+ myschema2  | mytbl1     | [6130,6132)    | myGroup2  | r        |              | emaj_myschema2 | mytbl1_log_2  |                 | mytbl1_log_idx_2 |                 | mytbl1_log_seq   |                  |                               |                    |                                                   |                      2 |                    4
+ myschema2  | mytbl1     | [6134,)        | myGroup2  | r        |            1 | emaj_myschema2 | mytbl1_log    | tsplog1         | mytbl1_log_idx   | tsplog1         | mytbl1_log_seq   | mytbl1_log_fnct  | tbl.col11,tbl.col12,tbl.col13 | col11,col12        | tbl.col11 = keys.col11 AND tbl.col12 = keys.col12 |                        |                    4
  myschema2  | mytbl2     | [6008,6128)    | myGroup2  | r        |              | emaj_myschema2 | mytbl2_log_1  |                 | mytbl2_log_idx_1 |                 | mytbl2_log_seq   |                  |                               |                    |                                                   |                      0 |                    4
- myschema2  | mytbl2     | [6129,6130)    | myGroup2  | r        |              | emaj_myschema2 | mytbl2_log_2  |                 | mytbl2_log_idx_2 |                 | mytbl2_log_seq   |                  |                               |                    |                                                   |                      0 |                    4
- myschema2  | mytbl2     | [6131,)        | myGroup2  | r        |            1 | emaj_myschema2 | mytbl2_log    | tsplog1         | mytbl2_log_idx   | tsplog1         | mytbl2_log_seq   | mytbl2_log_fnct  | tbl.col21,tbl.col22,tbl.col23 | col21              | tbl.col21 = keys.col21                            |                        |                    4
-(10 rows)
+ myschema2  | mytbl2     | [6130,6132)    | myGroup2  | r        |              | emaj_myschema2 | mytbl2_log_2  |                 | mytbl2_log_idx_2 |                 | mytbl2_log_seq   |                  |                               |                    |                                                   |                      0 |                    4
+ myschema2  | mytbl2     | [6134,)        | myGroup2  | r        |            1 | emaj_myschema2 | mytbl2_log    | tsplog1         | mytbl2_log_idx   | tsplog1         | mytbl2_log_seq   | mytbl2_log_fnct  | tbl.col21,tbl.col22,tbl.col23 | col21              | tbl.col21 = keys.col21                            |                        |                    4
+(15 rows)
 
 select sequ_schema, sequ_name, sequ_time_id, sequ_last_val, sequ_is_called from emaj.emaj_sequence
   where sequ_schema = 'emaj_myschema2' and sequ_name = 'mytbl1_log_seq' order by sequ_name, sequ_time_id;
@@ -2018,10 +2059,29 @@ select sequ_schema, sequ_name, sequ_time_id, sequ_last_val, sequ_is_called from 
 ----------------+----------------+--------------+---------------+----------------
  emaj_myschema2 | mytbl1_log_seq |         6127 |             1 | f
  emaj_myschema2 | mytbl1_log_seq |         6128 |             1 | t
- emaj_myschema2 | mytbl1_log_seq |         6129 |             2 | f
- emaj_myschema2 | mytbl1_log_seq |         6130 |             2 | t
- emaj_myschema2 | mytbl1_log_seq |         6131 |             3 | f
-(5 rows)
+ emaj_myschema2 | mytbl1_log_seq |         6130 |             2 | f
+ emaj_myschema2 | mytbl1_log_seq |         6131 |             2 | f
+ emaj_myschema2 | mytbl1_log_seq |         6132 |             2 | t
+ emaj_myschema2 | mytbl1_log_seq |         6134 |             3 | f
+ emaj_myschema2 | mytbl1_log_seq |         6135 |             3 | f
+(7 rows)
+
+select sequ_schema, sequ_name, sequ_time_id, sequ_last_val, sequ_is_called from emaj.emaj_sequence
+  where sequ_schema = 'myschema2' and sequ_name like 'myseq%' order by sequ_name, sequ_time_id;
+ sequ_schema | sequ_name | sequ_time_id | sequ_last_val | sequ_is_called 
+-------------+-----------+--------------+---------------+----------------
+ myschema2   | myseq1    |         6127 |          1000 | f
+ myschema2   | myseq1    |         6128 |          1000 | t
+ myschema2   | myseq1    |         6129 |          1000 | t
+ myschema2   | myseq1    |         6131 |          1000 | t
+ myschema2   | myseq1    |         6132 |          1001 | t
+ myschema2   | myseq1    |         6133 |          1001 | t
+ myschema2   | myseq1    |         6135 |          1001 | t
+ myschema2   | myseq2    |         6131 |             3 | f
+ myschema2   | myseq2    |         6132 |             3 | f
+ myschema2   | myseq2    |         6133 |             3 | f
+ myschema2   | myseq2    |         6135 |             3 | f
+(11 rows)
 
 -----------------------------
 -- test end: check
@@ -2036,7 +2096,7 @@ select emaj.emaj_force_drop_group('myGroup2');
 NOTICE:  table "myTbl3_log" does not exist, skipping
  emaj_force_drop_group 
 -----------------------
-                     8
+                     9
 (1 row)
 
 select emaj.emaj_force_drop_group('myGroup4');
@@ -2786,11 +2846,22 @@ select hist_function, hist_event, hist_object,
  REMOVE_TABLES           | TABLE REMOVED                | myschema2.mytbl2             | From the logging group myGroup2                                                                                        | postgres
  LOCK_GROUP              | BEGIN                        | myGroup2                     |                                                                                                                        | postgres
  LOCK_GROUP              | END                          | myGroup2                     | 3 tables locked, 0 deadlock(s)                                                                                         | postgres
+ SET_MARK_GROUP          | BEGIN                        | myGroup2                     | REMOVE_1_SEQUENCES                                                                                                     | postgres
+ SET_MARK_GROUP          | END                          | myGroup2                     | REMOVE_1_SEQUENCES                                                                                                     | postgres
+ REMOVE_SEQUENCE         | SEQUENCE REMOVED             | myschema2.myseq1             | From the logging group myGroup2                                                                                        | postgres
+ LOCK_GROUP              | BEGIN                        | myGroup2                     |                                                                                                                        | postgres
+ LOCK_GROUP              | END                          | myGroup2                     | 3 tables locked, 0 deadlock(s)                                                                                         | postgres
  SET_MARK_GROUP          | BEGIN                        | myGroup2                     | ASSIGN_3_TABLES                                                                                                        | postgres
  SET_MARK_GROUP          | END                          | myGroup2                     | ASSIGN_3_TABLES                                                                                                        | postgres
  ASSIGN_TABLES           | TABLE ADDED                  | myschema2."myTbl3"           | To the logging group myGroup2                                                                                          | postgres
  ASSIGN_TABLES           | TABLE ADDED                  | myschema2.mytbl1             | To the logging group myGroup2                                                                                          | postgres
  ASSIGN_TABLES           | TABLE ADDED                  | myschema2.mytbl2             | To the logging group myGroup2                                                                                          | postgres
+ LOCK_GROUP              | BEGIN                        | myGroup2                     |                                                                                                                        | postgres
+ LOCK_GROUP              | END                          | myGroup2                     | 6 tables locked, 0 deadlock(s)                                                                                         | postgres
+ SET_MARK_GROUP          | BEGIN                        | myGroup2                     | ASSIGN_2_SEQUENCES                                                                                                     | postgres
+ SET_MARK_GROUP          | END                          | myGroup2                     | ASSIGN_2_SEQUENCES                                                                                                     | postgres
+ ASSIGN_SEQUENCES        | SEQUENCE ADDED               | myschema2.myseq1             | To the logging group myGroup2                                                                                          | postgres
+ ASSIGN_SEQUENCES        | SEQUENCE ADDED               | myschema2.myseq2             | To the logging group myGroup2                                                                                          | postgres
  LOCK_GROUP              | BEGIN                        | myGroup2,myGroup2,myGroup2   |                                                                                                                        | postgres
  LOCK_GROUP              | END                          | myGroup2,myGroup2,myGroup2   | 6 tables locked, 0 deadlock(s)                                                                                         | postgres
  SET_MARK_GROUP          | BEGIN                        | myGroup2,myGroup2,myGroup2   | REMOVE_%                                                                                                               | postgres
@@ -2798,6 +2869,12 @@ select hist_function, hist_event, hist_object,
  REMOVE_TABLES           | TABLE REMOVED                | myschema2."myTbl3"           | From the logging group myGroup2                                                                                        | postgres
  REMOVE_TABLES           | TABLE REMOVED                | myschema2.mytbl1             | From the logging group myGroup2                                                                                        | postgres
  REMOVE_TABLES           | TABLE REMOVED                | myschema2.mytbl2             | From the logging group myGroup2                                                                                        | postgres
+ LOCK_GROUP              | BEGIN                        | myGroup2,myGroup2            |                                                                                                                        | postgres
+ LOCK_GROUP              | END                          | myGroup2,myGroup2            | 3 tables locked, 0 deadlock(s)                                                                                         | postgres
+ SET_MARK_GROUP          | BEGIN                        | myGroup2,myGroup2            | REMOVE_2_SEQUENCES                                                                                                     | postgres
+ SET_MARK_GROUP          | END                          | myGroup2,myGroup2            | REMOVE_2_SEQUENCES                                                                                                     | postgres
+ REMOVE_SEQUENCES        | SEQUENCE REMOVED             | myschema2.myseq1             | From the logging group myGroup2                                                                                        | postgres
+ REMOVE_SEQUENCES        | SEQUENCE REMOVED             | myschema2.myseq2             | From the logging group myGroup2                                                                                        | postgres
  LOCK_GROUP              | BEGIN                        | myGroup2                     |                                                                                                                        | postgres
  LOCK_GROUP              | END                          | myGroup2                     | 3 tables locked, 0 deadlock(s)                                                                                         | postgres
  SET_MARK_GROUP          | BEGIN                        | myGroup2                     | ASSIGN_%                                                                                                               | postgres
@@ -2805,16 +2882,22 @@ select hist_function, hist_event, hist_object,
  ASSIGN_TABLES           | TABLE ADDED                  | myschema2."myTbl3"           | To the logging group myGroup2                                                                                          | postgres
  ASSIGN_TABLES           | TABLE ADDED                  | myschema2.mytbl1             | To the logging group myGroup2                                                                                          | postgres
  ASSIGN_TABLES           | TABLE ADDED                  | myschema2.mytbl2             | To the logging group myGroup2                                                                                          | postgres
+ LOCK_GROUP              | BEGIN                        | myGroup2                     |                                                                                                                        | postgres
+ LOCK_GROUP              | END                          | myGroup2                     | 6 tables locked, 0 deadlock(s)                                                                                         | postgres
+ SET_MARK_GROUP          | BEGIN                        | myGroup2                     | ASSIGN-2-SEQUENCES_AGAIN                                                                                               | postgres
+ SET_MARK_GROUP          | END                          | myGroup2                     | ASSIGN-2-SEQUENCES_AGAIN                                                                                               | postgres
+ ASSIGN_SEQUENCES        | SEQUENCE ADDED               | myschema2.myseq1             | To the logging group myGroup2                                                                                          | postgres
+ ASSIGN_SEQUENCES        | SEQUENCE ADDED               | myschema2.myseq2             | To the logging group myGroup2                                                                                          | postgres
  FORCE_DROP_GROUP        | BEGIN                        | myGroup1                     |                                                                                                                        | postgres
  FORCE_DROP_GROUP        | LOG_SCHEMA DROPPED           | emaj_myschema1               |                                                                                                                        | postgres
  FORCE_DROP_GROUP        | END                          | myGroup1                     | 7 tables/sequences processed                                                                                           | postgres
  FORCE_DROP_GROUP        | BEGIN                        | myGroup2                     |                                                                                                                        | postgres
  FORCE_DROP_GROUP        | LOG_SCHEMA DROPPED           | emaj_myschema2               |                                                                                                                        | postgres
- FORCE_DROP_GROUP        | END                          | myGroup2                     | 8 tables/sequences processed                                                                                           | postgres
+ FORCE_DROP_GROUP        | END                          | myGroup2                     | 9 tables/sequences processed                                                                                           | postgres
  FORCE_DROP_GROUP        | BEGIN                        | myGroup4                     |                                                                                                                        | postgres
  FORCE_DROP_GROUP        | LOG_SCHEMA DROPPED           | emaj_myschema4               |                                                                                                                        | postgres
  FORCE_DROP_GROUP        | END                          | myGroup4                     | 5 tables/sequences processed                                                                                           | postgres
-(748 rows)
+(771 rows)
 
 select time_id, time_last_emaj_gid, time_event from emaj.emaj_time_stamp where time_id > 6000 order by time_id;
  time_id | time_last_emaj_gid | time_event 
@@ -2926,12 +3009,16 @@ select time_id, time_last_emaj_gid, time_event from emaj.emaj_time_stamp where t
     6127 |              11887 | M
     6128 |              11888 | A
     6129 |              11888 | A
-    6130 |              11889 | A
-    6131 |              11889 | A
-    6132 |              11889 | D
-    6133 |              11889 | D
-    6134 |              11889 | D
-(112 rows)
+    6130 |              11888 | A
+    6131 |              11888 | A
+    6132 |              11889 | A
+    6133 |              11889 | A
+    6134 |              11889 | A
+    6135 |              11889 | A
+    6136 |              11889 | D
+    6137 |              11889 | D
+    6138 |              11889 | D
+(116 rows)
 
 select * from emaj.emaj_alter_plan order by 1,2,3,4,5;
  altr_time_id |        altr_step         | altr_schema |   altr_tblseq    | altr_group | altr_priority | altr_group_is_logging | altr_new_group | altr_new_group_is_logging | altr_rlbk_id 
