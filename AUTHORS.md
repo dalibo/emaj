@@ -6,6 +6,10 @@ Philippe Beaudoin
 Thibaud Walkowiak
 
 **Many thanks** (for their patches, comments, suggestions, help in translation, etc) to:
+* Djamel Haddadi
+* Damien Cazeil, for the logo design
+* Marie-Claude Quidoz and the DRBD organization at CNRS
+* The CNAF DB administrators team
 * Ronan Dunklau
 * Mayeul Kauffmann
 * Jean-Paul Argudo and the Dalibo team
