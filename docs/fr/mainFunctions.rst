@@ -126,9 +126,9 @@ Le groupe de tables doit être au préalable à l'état inactif.
 
 Le démarrage du groupe de tables créé une première marque.
 
-S'il est spécifié, le nom de la marque initiale peut contenir un caractère générique '%'. Ce caractère est alors remplacé par l'heure de début de la transaction courante, au format « *hh.mn.ss.mmm* »,
+S'il est spécifié, le nom de la marque initiale peut contenir un caractère générique '%'. Ce caractère est alors remplacé par l'heure courante, au format *hh.mn.ss.mmmm*,
 
-Si le paramètre représentant la marque n'est pas spécifié, ou s'il est vide ou *NULL*, un nom est automatiquement généré : "*START_%*", où le caractère '%' représente l'heure de début de la transaction courante, au format « *hh.mn.ss.mmm* ».
+Si le paramètre représentant la marque n'est pas spécifié, ou s'il est vide ou *NULL*, un nom est automatiquement généré : "*START_%*", où le caractère '%' représente l'heure courante, au format *hh.mn.ss.mmmm*.
  
 Le paramètre *<anciens.logs.à.effacer>* est un booléen optionnel. Par défaut sa valeur est égal à vrai (true), ce qui signifie que les tables de log du groupe de tables sont purgées de toutes anciennes données avant l'activation des triggers de log. Si le paramètre est explicitement positionné à « faux » (false), les anciens enregistrements sont conservés dans les tables de log. De la même manière, les anciennes marques sont conservées, même si ces dernières ne sont alors plus utilisables pour un éventuel rollback (des mises à jour ont pu être effectuées sans être tracées alors que le groupe de tables était arrêté).
 
@@ -160,9 +160,9 @@ Le groupe de tables doit être à l'état actif.
 
 Une marque de même nom ne doit pas déjà exister pour le groupe de tables.
 
-Le nom de la marque peut contenir un caractère générique '%'. Ce caractère est alors remplacé par l'heure de début de la transaction courante, au format « *hh.mn.ss.mmm* »,
+Le nom de la marque peut contenir un caractère générique '%'. Ce caractère est alors remplacé par l'heure courante, au format *hh.mn.ss.mmmm*,
 
-Si le paramètre représentant la marque n'est pas spécifié ou s'il est vide ou *NULL*, un nom est automatiquement généré : « *MARK_%* », où le caractère '%' représente l'heure de début de la transaction courante, au format « *hh.mn.ss.mmm* ».
+Si le paramètre représentant la marque n'est pas spécifié ou s'il est vide ou *NULL*, un nom est automatiquement généré : « *MARK_%* », où le caractère '%' représente l'heure courante, au format *hh.mn.ss.mmmm*.
  
 La fonction retourne le nombre de tables et de séquences contenues dans le groupe.
 
@@ -318,7 +318,7 @@ Lorsqu'on souhaite arrêter l'enregistrement des mises à jour des tables d'un g
 La fonction retourne le nombre de tables et de séquences contenues dans le groupe.
 
 La fonction pose automatiquement une marque correspondant à la fin de l'enregistrement. 
-Si le paramètre représentant cette marque n'est pas spécifié ou s'il est vide ou *NULL*, un nom est automatiquement généré : « *STOP_%* », où le caractère '%' représente l'heure de début de la transaction courante, au format « *hh.mn.ss.mmm* ».
+Si le paramètre représentant cette marque n'est pas spécifié ou s'il est vide ou *NULL*, un nom est automatiquement généré : « *STOP_%* », où le caractère '%' représente l'heure courante, au format *hh.mn.ss.mmmm*.
 
 L'arrêt d'un groupe de table désactive simplement les triggers de log des tables applicatives du groupe. La pose de verrous de type *SHARE ROW EXCLUSIVE* qu’entraîne cette opération peut se traduire par la survenue d'une étreinte fatale (*deadlock*).  Si la résolution de l'étreinte fatale impacte la fonction E-Maj, le deadlock est intercepté et la pose de verrou est automatiquement réitérée, avec un maximum de 5 tentatives.
 

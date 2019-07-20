@@ -1275,7 +1275,7 @@ $_check_new_mark$
       v_markName = 'MARK_%';
     END IF;
 -- process % wild characters in mark name
-    v_markName = replace(v_markName, '%', to_char(current_timestamp, 'HH24.MI.SS.MS'));
+    v_markName = replace(v_markName, '%', substring(to_char(clock_timestamp(), 'HH24.MI.SS.US') from 1 for 13));
 -- check that the mark does not exist for any groups
     SELECT string_agg(mark_group,', ' ORDER BY mark_group), count(*) INTO v_groupList, v_count
       FROM emaj.emaj_mark WHERE mark_name = v_markName AND mark_group = ANY(v_groupNames);
@@ -6330,7 +6330,7 @@ $_rlbk_start_mark$
     IF v_isLoggedRlbk THEN
 -- If rollback is "logged" rollback, set a mark named with the pattern:
 -- 'RLBK_<mark name to rollback to>_%_START', where % represents the rollback start time
-      v_markName = 'RLBK_' || v_mark || '_' || to_char(v_rlbkDatetime, 'HH24.MI.SS.MS') || '_START';
+      v_markName = 'RLBK_' || v_mark || '_' || substring(to_char(v_rlbkDatetime, 'HH24.MI.SS.US') from 1 for 13) || '_START';
       PERFORM emaj._set_mark_groups(v_groupNames, v_markName, v_multiGroup, TRUE, NULL, v_timeId, v_dblinkSchema);
     END IF;
     RETURN;
@@ -6608,7 +6608,7 @@ $_rlbk_end$
 -- if rollback is "logged" rollback, automatically set a mark representing the tables state just after the rollback.
 -- this mark is named 'RLBK_<mark name to rollback to>_%_DONE', where % represents the rollback start time
     IF v_isLoggedRlbk THEN
-      v_markName = 'RLBK_' || v_mark || '_' || to_char(v_rlbkDatetime, 'HH24.MI.SS.MS') || '_DONE';
+      v_markName = 'RLBK_' || v_mark || '_' || substring(to_char(v_rlbkDatetime, 'HH24.MI.SS.US') from 1 for 13) || '_DONE';
       PERFORM emaj._set_mark_groups(v_groupNames, v_markName, v_multiGroup, TRUE, v_mark);
     END IF;
 -- build and return the execution report

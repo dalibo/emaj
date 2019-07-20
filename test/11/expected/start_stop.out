@@ -239,7 +239,7 @@ select emaj.emaj_start_group('myGroup1','Mark1');
 
 -- check old events are deleted
 select hist_function, hist_event, hist_object,
-       regexp_replace(regexp_replace(hist_wording,E'\\d\\d\.\\d\\d\\.\\d\\d\\.\\d\\d\\d','%','g'),E'\\[.+\\]','(timestamp)','g'),
+       regexp_replace(regexp_replace(hist_wording,E'\\d\\d\.\\d\\d\\.\\d\\d\\.\\d\\d\\d\\d','%','g'),E'\\[.+\\]','(timestamp)','g'),
        hist_user
   from emaj.emaj_hist order by hist_id;
  hist_function  | hist_event | hist_object |                        regexp_replace                         | hist_user 
@@ -348,7 +348,7 @@ CONTEXT:  PL/pgSQL function emaj._check_group_names(text[],boolean,boolean,text)
 SQL statement "SELECT emaj._check_group_names(v_groupNames := v_groupNames, v_mayBeNull := v_multiGroup, v_lockGroups := TRUE, v_checkList := 'IDLE')"
 PL/pgSQL function emaj._start_groups(text[],text,boolean,boolean) line 21 at SQL statement
 PL/pgSQL function emaj.emaj_start_group(text,text,boolean) line 12 at RETURN
-select mark_group, regexp_replace(mark_name,E'\\d\\d\.\\d\\d\\.\\d\\d\\.\\d\\d\\d','%','g'), mark_time_id, mark_is_deleted, mark_is_rlbk_protected, mark_comment, mark_log_rows_before_next, mark_logged_rlbk_target_mark from emaj.emaj_mark order by mark_time_id, mark_group;
+select mark_group, regexp_replace(mark_name,E'\\d\\d\.\\d\\d\\.\\d\\d\\.\\d\\d\\d\\d','%','g'), mark_time_id, mark_is_deleted, mark_is_rlbk_protected, mark_comment, mark_log_rows_before_next, mark_logged_rlbk_target_mark from emaj.emaj_mark order by mark_time_id, mark_group;
     mark_group    | regexp_replace | mark_time_id | mark_is_deleted | mark_is_rlbk_protected | mark_comment | mark_log_rows_before_next | mark_logged_rlbk_target_mark 
 ------------------+----------------+--------------+-----------------+------------------------+--------------+---------------------------+------------------------------
  myGroup2         | Mark2          |         1004 | t               | f                      |              |                         0 | 
@@ -378,7 +378,7 @@ select group_name, group_is_logging, group_is_rlbk_protected from emaj.emaj_grou
  phil's group#3", | t                | t
 (5 rows)
 
-select mark_group, regexp_replace(mark_name,E'\\d\\d\.\\d\\d\\.\\d\\d\\.\\d\\d\\d','%','g'), mark_time_id, mark_is_deleted, mark_is_rlbk_protected, mark_comment, mark_log_rows_before_next, mark_logged_rlbk_target_mark from emaj.emaj_mark order by mark_time_id, mark_group;
+select mark_group, regexp_replace(mark_name,E'\\d\\d\.\\d\\d\\.\\d\\d\\.\\d\\d\\d\\d','%','g'), mark_time_id, mark_is_deleted, mark_is_rlbk_protected, mark_comment, mark_log_rows_before_next, mark_logged_rlbk_target_mark from emaj.emaj_mark order by mark_time_id, mark_group;
     mark_group    | regexp_replace | mark_time_id | mark_is_deleted | mark_is_rlbk_protected | mark_comment | mark_log_rows_before_next | mark_logged_rlbk_target_mark 
 ------------------+----------------+--------------+-----------------+------------------------+--------------+---------------------------+------------------------------
  myGroup2         | Mark2          |         1004 | t               | f                      |              |                         0 | 
@@ -479,7 +479,7 @@ select group_name, group_is_logging, group_is_rlbk_protected from emaj.emaj_grou
  phil's group#3", | t                | t
 (5 rows)
 
-select mark_group, regexp_replace(mark_name,E'\\d\\d\.\\d\\d\\.\\d\\d\\.\\d\\d\\d','%','g'), mark_time_id, mark_is_deleted, mark_is_rlbk_protected, mark_comment, mark_log_rows_before_next, mark_logged_rlbk_target_mark from emaj.emaj_mark order by mark_time_id, mark_group;
+select mark_group, regexp_replace(mark_name,E'\\d\\d\.\\d\\d\\.\\d\\d\\.\\d\\d\\d\\d','%','g'), mark_time_id, mark_is_deleted, mark_is_rlbk_protected, mark_comment, mark_log_rows_before_next, mark_logged_rlbk_target_mark from emaj.emaj_mark order by mark_time_id, mark_group;
     mark_group    | regexp_replace | mark_time_id | mark_is_deleted | mark_is_rlbk_protected | mark_comment | mark_log_rows_before_next | mark_logged_rlbk_target_mark 
 ------------------+----------------+--------------+-----------------+------------------------+--------------+---------------------------+------------------------------
  myGroup2         | Mark2          |         1004 | t               | f                      |              |                         0 | 
@@ -549,7 +549,7 @@ WARNING:  _check_fk_groups: The table "myschema2.mytbl6" is referenced by the fo
 (1 row)
 
 commit;
-select mark_group, regexp_replace(mark_name,E'\\d\\d\.\\d\\d\\.\\d\\d\\.\\d\\d\\d','%','g'), mark_time_id, mark_is_deleted, mark_is_rlbk_protected, mark_comment, mark_log_rows_before_next, mark_logged_rlbk_target_mark from emaj.emaj_mark order by mark_time_id, mark_group;
+select mark_group, regexp_replace(mark_name,E'\\d\\d\.\\d\\d\\.\\d\\d\\.\\d\\d\\d\\d','%','g'), mark_time_id, mark_is_deleted, mark_is_rlbk_protected, mark_comment, mark_log_rows_before_next, mark_logged_rlbk_target_mark from emaj.emaj_mark order by mark_time_id, mark_group;
     mark_group    | regexp_replace | mark_time_id | mark_is_deleted | mark_is_rlbk_protected | mark_comment | mark_log_rows_before_next | mark_logged_rlbk_target_mark 
 ------------------+----------------+--------------+-----------------+------------------------+--------------+---------------------------+------------------------------
  phil's group#3", | Mark3          |         1005 | f               | f                      |              |                         0 | 
@@ -690,7 +690,7 @@ select group_name, group_is_logging, group_is_rlbk_protected from emaj.emaj_grou
  phil's group#3", | t                | t
 (5 rows)
 
-select mark_group, regexp_replace(mark_name,E'\\d\\d\.\\d\\d\\.\\d\\d\\.\\d\\d\\d','%','g'), mark_time_id, mark_is_deleted, mark_is_rlbk_protected, mark_comment, mark_log_rows_before_next, mark_logged_rlbk_target_mark from emaj.emaj_mark order by mark_time_id, mark_group;
+select mark_group, regexp_replace(mark_name,E'\\d\\d\.\\d\\d\\.\\d\\d\\.\\d\\d\\d\\d','%','g'), mark_time_id, mark_is_deleted, mark_is_rlbk_protected, mark_comment, mark_log_rows_before_next, mark_logged_rlbk_target_mark from emaj.emaj_mark order by mark_time_id, mark_group;
     mark_group    | regexp_replace | mark_time_id | mark_is_deleted | mark_is_rlbk_protected | mark_comment | mark_log_rows_before_next | mark_logged_rlbk_target_mark 
 ------------------+----------------+--------------+-----------------+------------------------+--------------+---------------------------+------------------------------
  phil's group#3", | Mark3          |         1005 | f               | f                      |              |                         0 | 
@@ -772,7 +772,7 @@ select emaj.emaj_stop_groups(array['myGroup1','myGroup2'],'Global Stop at %');
                15
 (1 row)
 
-select mark_group, regexp_replace(mark_name,E'\\d\\d\.\\d\\d\\.\\d\\d\\.\\d\\d\\d','%','g'), mark_time_id, mark_is_deleted, mark_is_rlbk_protected, mark_comment, mark_log_rows_before_next, mark_logged_rlbk_target_mark from emaj.emaj_mark order by mark_time_id, mark_group;
+select mark_group, regexp_replace(mark_name,E'\\d\\d\.\\d\\d\\.\\d\\d\\.\\d\\d\\d\\d','%','g'), mark_time_id, mark_is_deleted, mark_is_rlbk_protected, mark_comment, mark_log_rows_before_next, mark_logged_rlbk_target_mark from emaj.emaj_mark order by mark_time_id, mark_group;
     mark_group    |  regexp_replace  | mark_time_id | mark_is_deleted | mark_is_rlbk_protected | mark_comment | mark_log_rows_before_next | mark_logged_rlbk_target_mark 
 ------------------+------------------+--------------+-----------------+------------------------+--------------+---------------------------+------------------------------
  phil's group#3", | Mark3            |         1005 | f               | f                      |              |                         0 | 
@@ -899,7 +899,7 @@ select group_name, group_is_logging, group_is_rlbk_protected from emaj.emaj_grou
  phil's group#3", | t                | t
 (5 rows)
 
-select mark_group, regexp_replace(mark_name,E'\\d\\d\.\\d\\d\\.\\d\\d\\.\\d\\d\\d','%','g'), mark_time_id, mark_is_deleted, mark_is_rlbk_protected, mark_comment, mark_log_rows_before_next, mark_logged_rlbk_target_mark from emaj.emaj_mark order by mark_time_id, mark_group;
+select mark_group, regexp_replace(mark_name,E'\\d\\d\.\\d\\d\\.\\d\\d\\.\\d\\d\\d\\d','%','g'), mark_time_id, mark_is_deleted, mark_is_rlbk_protected, mark_comment, mark_log_rows_before_next, mark_logged_rlbk_target_mark from emaj.emaj_mark order by mark_time_id, mark_group;
     mark_group    | regexp_replace | mark_time_id | mark_is_deleted | mark_is_rlbk_protected | mark_comment | mark_log_rows_before_next | mark_logged_rlbk_target_mark 
 ------------------+----------------+--------------+-----------------+------------------------+--------------+---------------------------+------------------------------
  phil's group#3", | Mark3          |         1005 | f               | f                      |              |                         0 | 
@@ -1108,7 +1108,7 @@ select group_is_logging, group_is_rlbk_protected from emaj.emaj_group where grou
 
 -- test end: (groups are stopped) reset history and force sequences id
 select hist_id, hist_function, hist_event, hist_object, 
-  regexp_replace(regexp_replace(hist_wording,E'\\d\\d\.\\d\\d\\.\\d\\d\\.\\d\\d\\d','%','g'),E'\\[.+\\]','(timestamp)','g'),
+  regexp_replace(regexp_replace(hist_wording,E'\\d\\d\.\\d\\d\\.\\d\\d\\.\\d\\d\\d\\d','%','g'),E'\\[.+\\]','(timestamp)','g'),
   hist_user from emaj.emaj_hist order by hist_id;
  hist_id |  hist_function   | hist_event |                  hist_object                  |                        regexp_replace                         | hist_user 
 ---------+------------------+------------+-----------------------------------------------+---------------------------------------------------------------+-----------

@@ -177,7 +177,7 @@ or ::
 
    SELECT emaj.emaj_alter_groups('<group.names.array>' [,’<mark>’]);
 
-If the parameter representing the mark is not specified, or is empty or *NULL*, a name is automatically generated: “ALTER_%”, where the '%' character represents the current transaction start time with a “hh.mn.ss.mmm” pattern.
+If the parameter representing the mark is not specified, or is empty or *NULL*, a name is automatically generated: “ALTER_%”, where the '%' character represents the current time with a *hh.mn.ss.mmmm* pattern.
 
 An E-Maj rollback operation targeting a mark set before such groups changes does **NOT** automatically cancel these changes.
 

@@ -217,7 +217,7 @@ PL/pgSQL function emaj.emaj_rollback_group(text,text,boolean) line 7 at RETURN Q
 -- Checking step 8
 -----------------------------
 -- emaj tables
-select mark_group, regexp_replace(mark_name,E'\\d\\d\.\\d\\d\\.\\d\\d\\.\\d\\d\\d','%','g'), mark_time_id, mark_is_deleted, mark_is_rlbk_protected, mark_comment, mark_log_rows_before_next, mark_logged_rlbk_target_mark from emaj.emaj_mark order by mark_time_id, mark_group;
+select mark_group, regexp_replace(mark_name,E'\\d\\d\.\\d\\d\\.\\d\\d\\.\\d\\d\\d\\d','%','g'), mark_time_id, mark_is_deleted, mark_is_rlbk_protected, mark_comment, mark_log_rows_before_next, mark_logged_rlbk_target_mark from emaj.emaj_mark order by mark_time_id, mark_group;
  mark_group |        regexp_replace        | mark_time_id | mark_is_deleted | mark_is_rlbk_protected |     mark_comment     | mark_log_rows_before_next | mark_logged_rlbk_target_mark 
 ------------+------------------------------+--------------+-----------------+------------------------+----------------------+---------------------------+------------------------------
  myGroup2   | M3                           |        10012 | t               | f                      | This mark is deleted |                         0 | 
@@ -684,7 +684,7 @@ WARNING:  _check_fk_groups: The table "phil's schema3.phil's tbl1" is referenced
 -- Checking step 10
 -----------------------------
 -- emaj tables
-select mark_group, regexp_replace(mark_name,E'\\d\\d\.\\d\\d\\.\\d\\d\\.\\d\\d\\d','%','g'), mark_time_id, mark_is_deleted, mark_is_rlbk_protected, mark_comment, mark_log_rows_before_next, mark_logged_rlbk_target_mark from emaj.emaj_mark order by mark_time_id, mark_group;
+select mark_group, regexp_replace(mark_name,E'\\d\\d\.\\d\\d\\.\\d\\d\\.\\d\\d\\d\\d','%','g'), mark_time_id, mark_is_deleted, mark_is_rlbk_protected, mark_comment, mark_log_rows_before_next, mark_logged_rlbk_target_mark from emaj.emaj_mark order by mark_time_id, mark_group;
     mark_group    |        regexp_replace        | mark_time_id | mark_is_deleted | mark_is_rlbk_protected |     mark_comment     | mark_log_rows_before_next | mark_logged_rlbk_target_mark 
 ------------------+------------------------------+--------------+-----------------+------------------------+----------------------+---------------------------+------------------------------
  myGroup2         | M3                           |        10012 | t               | f                      | This mark is deleted |                         0 | 
@@ -1628,7 +1628,7 @@ select * from emaj.emaj_logged_rollback_group('myGroup1','MC3',false) order by 1
  Notice        | 2 sequences processed.
 (2 rows)
 
-select cons_group, regexp_replace(cons_end_rlbk_mark_name,E'\\d\\d\.\\d\\d\\.\\d\\d\\.\\d\\d\\d','%','g'), 
+select cons_group, regexp_replace(cons_end_rlbk_mark_name,E'\\d\\d\.\\d\\d\\.\\d\\d\\.\\d\\d\\d\\d','%','g'), 
        cons_target_rlbk_mark_name, cons_end_rlbk_mark_time_id, cons_target_rlbk_mark_time_id, cons_rows, cons_marks, cons_marks
   from emaj.emaj_get_consolidable_rollbacks();
  cons_group | regexp_replace  | cons_target_rlbk_mark_name | cons_end_rlbk_mark_time_id | cons_target_rlbk_mark_time_id | cons_rows | cons_marks | cons_marks 
@@ -1639,7 +1639,7 @@ select cons_group, regexp_replace(cons_end_rlbk_mark_name,E'\\d\\d\.\\d\\d\\.\\d
 
   
 -- consolidate both logged rollback at once
-select cons_target_rlbk_mark_name, regexp_replace(cons_end_rlbk_mark_name,E'\\d\\d\.\\d\\d\\.\\d\\d\\.\\d\\d\\d','%','g'), 
+select cons_target_rlbk_mark_name, regexp_replace(cons_end_rlbk_mark_name,E'\\d\\d\.\\d\\d\\.\\d\\d\\.\\d\\d\\d\\d','%','g'), 
        emaj.emaj_consolidate_rollback_group(cons_group, cons_end_rlbk_mark_name)
   from emaj.emaj_get_consolidable_rollbacks() where cons_group = 'myGroup1';
  cons_target_rlbk_mark_name | regexp_replace  | emaj_consolidate_rollback_group 
@@ -1648,7 +1648,7 @@ select cons_target_rlbk_mark_name, regexp_replace(cons_end_rlbk_mark_name,E'\\d\
  MC3                        | RLBK_MC3_%_DONE |                               4
 (2 rows)
 
-select cons_group, regexp_replace(cons_end_rlbk_mark_name,E'\\d\\d\.\\d\\d\\.\\d\\d\\.\\d\\d\\d','%','g'), 
+select cons_group, regexp_replace(cons_end_rlbk_mark_name,E'\\d\\d\.\\d\\d\\.\\d\\d\\.\\d\\d\\d\\d','%','g'), 
        cons_target_rlbk_mark_name, cons_end_rlbk_mark_time_id, cons_target_rlbk_mark_time_id, cons_rows, cons_marks
   from emaj.emaj_get_consolidable_rollbacks();
  cons_group | regexp_replace  | cons_target_rlbk_mark_name | cons_end_rlbk_mark_time_id | cons_target_rlbk_mark_time_id | cons_rows | cons_marks 
@@ -1898,7 +1898,7 @@ select * from myTbl2 order by col21;
   4000 | TC15  | 
 (5 rows)
 
-select mark_group, regexp_replace(mark_name,E'\\d\\d\.\\d\\d\\.\\d\\d\\.\\d\\d\\d','%','g'), mark_time_id, mark_is_deleted, mark_is_rlbk_protected, mark_comment, mark_log_rows_before_next, mark_logged_rlbk_target_mark from emaj.emaj_mark where mark_group = 'myGroup1' order by mark_time_id, mark_group;
+select mark_group, regexp_replace(mark_name,E'\\d\\d\.\\d\\d\\.\\d\\d\\.\\d\\d\\d\\d','%','g'), mark_time_id, mark_is_deleted, mark_is_rlbk_protected, mark_comment, mark_log_rows_before_next, mark_logged_rlbk_target_mark from emaj.emaj_mark where mark_group = 'myGroup1' order by mark_time_id, mark_group;
  mark_group |        regexp_replace        | mark_time_id | mark_is_deleted | mark_is_rlbk_protected | mark_comment | mark_log_rows_before_next | mark_logged_rlbk_target_mark 
 ------------+------------------------------+--------------+-----------------+------------------------+--------------+---------------------------+------------------------------
  myGroup1   | M4                           |        10018 | t               | f                      |              |                        10 | 
@@ -3209,7 +3209,7 @@ select time_id, time_last_emaj_gid, time_event from emaj.emaj_time_stamp where t
 
 select hist_id, hist_function, hist_event, hist_object,
        regexp_replace(regexp_replace(regexp_replace(hist_wording,
-            E'\\d\\d\.\\d\\d\\.\\d\\d\\.\\d\\d\\d','%','g'),
+            E'\\d\\d\.\\d\\d\\.\\d\\d\\.\\d\\d\\d\\d','%','g'),
             E'\\d\\d\\d\\d/\\d\\d\\/\\d\\d\\ \\d\\d\\:\\d\\d:\\d\\d .*?\\)','<timestamp>)','g'),
             E'\\[.+\\]','(timestamp)','g'), 
        hist_user

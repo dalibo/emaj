@@ -566,7 +566,7 @@ begin;
  myschema1  | myTbl3_col31_seq | [6042,6069)    | myGroup1  | S        |            1 |                |               |                 |               |                 |                  |                  |                 |                    |                          |                        |                     
 (1 row)
 
-  select mark_group, regexp_replace(mark_name,E'\\d\\d\.\\d\\d\\.\\d\\d\\.\\d\\d\\d','%','g'), mark_time_id,
+  select mark_group, regexp_replace(mark_name,E'\\d\\d\.\\d\\d\\.\\d\\d\\.\\d\\d\\d\\d','%','g'), mark_time_id,
     mark_is_deleted, mark_is_rlbk_protected, mark_comment, mark_log_rows_before_next, mark_logged_rlbk_target_mark
     from emaj.emaj_mark where mark_group = 'myGroup1' order by mark_time_id desc limit 2;
  mark_group | regexp_replace | mark_time_id | mark_is_deleted | mark_is_rlbk_protected | mark_comment | mark_log_rows_before_next | mark_logged_rlbk_target_mark 
@@ -1575,7 +1575,7 @@ select emaj.emaj_set_mark_groups('{"myGroup1","myGroup2"}','Mk3');
                    15
 (1 row)
 
-select mark_group, regexp_replace(mark_name,E'\\d\\d\.\\d\\d\\.\\d\\d\\.\\d\\d\\d','%','g'), mark_time_id, mark_is_deleted,
+select mark_group, regexp_replace(mark_name,E'\\d\\d\.\\d\\d\\.\\d\\d\\.\\d\\d\\d\\d','%','g'), mark_time_id, mark_is_deleted,
        mark_is_rlbk_protected, mark_comment, mark_log_rows_before_next, mark_logged_rlbk_target_mark
   from emaj.emaj_mark order by mark_time_id, mark_group;
  mark_group |       regexp_replace        | mark_time_id | mark_is_deleted | mark_is_rlbk_protected | mark_comment | mark_log_rows_before_next | mark_logged_rlbk_target_mark 
@@ -1994,7 +1994,7 @@ select emaj.emaj_remove_tables('myschema2','{"mytbl1","mytbl2","myTbl3"}');
                   3
 (1 row)
 
-select emaj.emaj_remove_sequences('myschema2','{"myseq1","myseq2"}','REMOVE_2_SEQUENCES');
+select emaj.emaj_remove_sequences('myschema2','{"myseq1","myseq2"}');
  emaj_remove_sequences 
 -----------------------
                      2
@@ -2018,7 +2018,7 @@ WARNING:  _check_fk_groups: The table "myschema2.mytbl6" is referenced by the fo
                   3
 (1 row)
 
-select emaj.emaj_assign_sequences('myschema2','{"myseq1","myseq2"}','myGroup2',null,'ASSIGN-2-SEQUENCES_AGAIN');
+select emaj.emaj_assign_sequences('myschema2','{"myseq1","myseq2"}','myGroup2');
  emaj_assign_sequences 
 -----------------------
                      2
@@ -2119,7 +2119,7 @@ select sch_name from emaj.emaj_schema order by 1;
 
 select hist_function, hist_event, hist_object,
        regexp_replace(regexp_replace(regexp_replace(hist_wording,
-            E'\\d\\d\.\\d\\d\\.\\d\\d\\.\\d\\d\\d','%','g'),
+            E'\\d\\d\.\\d\\d\\.\\d\\d\\.\\d\\d\\d\\d','%','g'),
             E'\\d\\d\\d\\d/\\d\\d\\/\\d\\d\\ \\d\\d\\:\\d\\d:\\d\\d .*?\\)','<timestamp>)','g'),
             E'\\[.+\\]','(timestamp)','g'), 
        hist_user 
@@ -2871,8 +2871,8 @@ select hist_function, hist_event, hist_object,
  REMOVE_TABLES           | TABLE REMOVED                | myschema2.mytbl2             | From the logging group myGroup2                                                                                        | postgres
  LOCK_GROUP              | BEGIN                        | myGroup2,myGroup2            |                                                                                                                        | postgres
  LOCK_GROUP              | END                          | myGroup2,myGroup2            | 3 tables locked, 0 deadlock(s)                                                                                         | postgres
- SET_MARK_GROUP          | BEGIN                        | myGroup2,myGroup2            | REMOVE_2_SEQUENCES                                                                                                     | postgres
- SET_MARK_GROUP          | END                          | myGroup2,myGroup2            | REMOVE_2_SEQUENCES                                                                                                     | postgres
+ SET_MARK_GROUP          | BEGIN                        | myGroup2,myGroup2            | REMOVE_%                                                                                                               | postgres
+ SET_MARK_GROUP          | END                          | myGroup2,myGroup2            | REMOVE_%                                                                                                               | postgres
  REMOVE_SEQUENCES        | SEQUENCE REMOVED             | myschema2.myseq1             | From the logging group myGroup2                                                                                        | postgres
  REMOVE_SEQUENCES        | SEQUENCE REMOVED             | myschema2.myseq2             | From the logging group myGroup2                                                                                        | postgres
  LOCK_GROUP              | BEGIN                        | myGroup2                     |                                                                                                                        | postgres
@@ -2884,8 +2884,8 @@ select hist_function, hist_event, hist_object,
  ASSIGN_TABLES           | TABLE ADDED                  | myschema2.mytbl2             | To the logging group myGroup2                                                                                          | postgres
  LOCK_GROUP              | BEGIN                        | myGroup2                     |                                                                                                                        | postgres
  LOCK_GROUP              | END                          | myGroup2                     | 6 tables locked, 0 deadlock(s)                                                                                         | postgres
- SET_MARK_GROUP          | BEGIN                        | myGroup2                     | ASSIGN-2-SEQUENCES_AGAIN                                                                                               | postgres
- SET_MARK_GROUP          | END                          | myGroup2                     | ASSIGN-2-SEQUENCES_AGAIN                                                                                               | postgres
+ SET_MARK_GROUP          | BEGIN                        | myGroup2                     | ASSIGN_%                                                                                                               | postgres
+ SET_MARK_GROUP          | END                          | myGroup2                     | ASSIGN_%                                                                                                               | postgres
  ASSIGN_SEQUENCES        | SEQUENCE ADDED               | myschema2.myseq1             | To the logging group myGroup2                                                                                          | postgres
  ASSIGN_SEQUENCES        | SEQUENCE ADDED               | myschema2.myseq2             | To the logging group myGroup2                                                                                          | postgres
  FORCE_DROP_GROUP        | BEGIN                        | myGroup1                     |                                                                                                                        | postgres

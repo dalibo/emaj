@@ -114,7 +114,7 @@ ou ::
 
    SELECT emaj.emaj_alter_groups('<tableau.des.groupes>' [,'<marque>']);
 
-Si le paramètre représentant la marque n'est pas spécifié, ou s'il est vide ou *NULL*, un nom est automatiquement généré : "ALTER_%", où le caractère '%' représente l'heure de début de la transaction courante, au format « hh.mn.ss.mmm ».
+Si le paramètre représentant la marque n'est pas spécifié, ou s'il est vide ou *NULL*, un nom est automatiquement généré : "ALTER_%", où le caractère '%' représente l'heure courante, au format *hh.mn.ss.mmmm*.
 
 Une opération de rollback E-Maj ciblant une marque antérieure à une modification de groupes de tables ne procède **PAS** automatiquement à une annulation de ces changements.
 

@@ -1207,7 +1207,7 @@ select * from emaj.emaj_rel_hist order by 1,2,3;
 (56 rows)
 
 select hist_function, hist_event, hist_object, 
-       regexp_replace(regexp_replace(hist_wording,E'\\d\\d\.\\d\\d\\.\\d\\d\\.\\d\\d\\d','%','g'),E'\\[.+\\]','(timestamp)','g'), 
+       regexp_replace(regexp_replace(hist_wording,E'\\d\\d\.\\d\\d\\.\\d\\d\\.\\d\\d\\d\\d','%','g'),E'\\[.+\\]','(timestamp)','g'), 
        hist_user 
   from emaj.emaj_hist order by hist_id;
   hist_function   |     hist_event     |      hist_object      |         regexp_replace         | hist_user 

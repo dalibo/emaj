@@ -198,7 +198,7 @@ begin;
   -- testing the alter_group mark deletion
   select emaj.emaj_delete_mark_group('myGroup1','Sequence_removed');
   select * from emaj.emaj_relation where rel_schema = 'myschema1' and rel_tblseq = 'myTbl3_col31_seq' order by rel_time_range;
-  select mark_group, regexp_replace(mark_name,E'\\d\\d\.\\d\\d\\.\\d\\d\\.\\d\\d\\d','%','g'), mark_time_id,
+  select mark_group, regexp_replace(mark_name,E'\\d\\d\.\\d\\d\\.\\d\\d\\.\\d\\d\\d\\d','%','g'), mark_time_id,
     mark_is_deleted, mark_is_rlbk_protected, mark_comment, mark_log_rows_before_next, mark_logged_rlbk_target_mark
     from emaj.emaj_mark where mark_group = 'myGroup1' order by mark_time_id desc limit 2;
 rollback;
@@ -508,7 +508,7 @@ select emaj.emaj_cleanup_rollback_state();
 
 -- set an intermediate mark
 select emaj.emaj_set_mark_groups('{"myGroup1","myGroup2"}','Mk3');
-select mark_group, regexp_replace(mark_name,E'\\d\\d\.\\d\\d\\.\\d\\d\\.\\d\\d\\d','%','g'), mark_time_id, mark_is_deleted,
+select mark_group, regexp_replace(mark_name,E'\\d\\d\.\\d\\d\\.\\d\\d\\.\\d\\d\\d\\d','%','g'), mark_time_id, mark_is_deleted,
        mark_is_rlbk_protected, mark_comment, mark_log_rows_before_next, mark_logged_rlbk_target_mark
   from emaj.emaj_mark order by mark_time_id, mark_group;
 
@@ -629,11 +629,11 @@ insert into myschema2.mytbl1 values (110, 'Assigned', E'\\000'::bytea);
 select nextval('myschema2.myseq1');
 
 select emaj.emaj_remove_tables('myschema2','{"mytbl1","mytbl2","myTbl3"}');
-select emaj.emaj_remove_sequences('myschema2','{"myseq1","myseq2"}','REMOVE_2_SEQUENCES');
+select emaj.emaj_remove_sequences('myschema2','{"myseq1","myseq2"}');
 
 select emaj.emaj_assign_tables('myschema2','{"mytbl1","mytbl2","myTbl3"}','myGroup2',
                                '{"priority":1, "log_data_tablespace":"tsplog1", "log_index_tablespace":"tsplog1"}'::jsonb);
-select emaj.emaj_assign_sequences('myschema2','{"myseq1","myseq2"}','myGroup2',null,'ASSIGN-2-SEQUENCES_AGAIN');
+select emaj.emaj_assign_sequences('myschema2','{"myseq1","myseq2"}','myGroup2');
 commit;
 
 -- checks
@@ -656,7 +656,7 @@ select nspname from pg_namespace where nspname like 'emaj%' order by nspname;
 select sch_name from emaj.emaj_schema order by 1;
 select hist_function, hist_event, hist_object,
        regexp_replace(regexp_replace(regexp_replace(hist_wording,
-            E'\\d\\d\.\\d\\d\\.\\d\\d\\.\\d\\d\\d','%','g'),
+            E'\\d\\d\.\\d\\d\\.\\d\\d\\.\\d\\d\\d\\d','%','g'),
             E'\\d\\d\\d\\d/\\d\\d\\/\\d\\d\\ \\d\\d\\:\\d\\d:\\d\\d .*?\\)','<timestamp>)','g'),
             E'\\[.+\\]','(timestamp)','g'), 
        hist_user 

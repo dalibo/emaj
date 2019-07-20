@@ -127,9 +127,9 @@ The group must be first in *IDLE* state.
 
 When a tables group is started, a first mark is created.
  
-If specified, the initial mark name may contain a generic '%' character. Then this character is replaced by the current transaction start time, with the pattern "*hh.mn.ss.mmm*",
+If specified, the initial mark name may contain a generic '%' character. Then this character is replaced by the current time, with the pattern *hh.mn.ss.mmmm*,
 
-If the parameter representing the mark is not specified, or is empty or NULL, a name is automatically generated: "*START_%*", where the '%' character represents the current transaction start time with a "*hh.mn.ss.mmm*" pattern.
+If the parameter representing the mark is not specified, or is empty or NULL, a name is automatically generated: "*START_%*", where the '%' character represents the current time with a *hh.mn.ss.mmmm* pattern.
 
 The *<are.old.logs.to.be.deleted?>* parameter is an optional boolean. By default, its value is true, meaning that all log tables of the tables group are purged before the trigger activation. If the value is explicitly set to false, all rows from log tables are kept as is. The old marks are also preserved, even-though they are not usable for a rollback any more, (unlogged updates may have occurred while the tables group was stopped).
 
@@ -161,9 +161,9 @@ The tables group must be in *LOGGING* state.
 
 A mark having the same name can not already exist for this tables group.
 
-The mark name may contain a generic '%' character. Then this character is replaced by the current transaction start time, with the pattern "*hh.mn.ss.mmm*",
+The mark name may contain a generic '%' character. Then this character is replaced by the current time, with the pattern *hh.mn.ss.mmmm*.
 
-If the parameter representing the mark is not specified or is empty or *NULL*, a name is automatically generated: "*MARK_%*", where the '%' character represents the current transaction start time with a “*hh.mn.ss.mmm*” pattern.
+If the parameter representing the mark is not specified or is empty or *NULL*, a name is automatically generated: "*MARK_%*", where the '%' character represents the current time with a *hh.mn.ss.mmmm* pattern.
 
 The function returns the number of tables and sequences contained in the group.
 
@@ -317,7 +317,7 @@ When one wishes to stop the updates recording for tables of a group, it is possi
 
 The function returns the number of tables and sequences contained in the group.
 
-If the mark parameter is not specified or is empty or *NULL*, a mark name is generated: "*STOP_%*" where '%' represents the current transaction start time expressed as “*hh.mn.ss.mmm*”.
+If the mark parameter is not specified or is empty or *NULL*, a mark name is generated: "*STOP_%*" where '%' represents the current time expressed as *hh.mn.ss.mmmm*.
 
 Stopping a tables group simply deactivates log triggers of application tables of the group. The setting of *SHARE ROW EXCLUSIVE* locks may lead to deadlock. If the deadlock processing impacts the execution of the E-Maj function, the error is trapped and the lock operation is repeated, with a maximum of 5 attempts.
 

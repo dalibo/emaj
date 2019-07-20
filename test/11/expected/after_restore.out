@@ -92,7 +92,7 @@ select emaj.emaj_set_mark_group('myGroup2','After restore mark');
 -- Checking step 1
 -----------------------------
 -- emaj tables
-select mark_group, regexp_replace(mark_name,E'\\d\\d\.\\d\\d\\.\\d\\d\\.\\d\\d\\d','%','g'), mark_time_id, mark_is_deleted, mark_is_rlbk_protected, mark_comment, mark_log_rows_before_next, mark_logged_rlbk_target_mark from emaj.emaj_mark order by mark_time_id, mark_group;
+select mark_group, regexp_replace(mark_name,E'\\d\\d\.\\d\\d\\.\\d\\d\\.\\d\\d\\d\\d','%','g'), mark_time_id, mark_is_deleted, mark_is_rlbk_protected, mark_comment, mark_log_rows_before_next, mark_logged_rlbk_target_mark from emaj.emaj_mark order by mark_time_id, mark_group;
  mark_group |        regexp_replace        | mark_time_id | mark_is_deleted | mark_is_rlbk_protected |     mark_comment     | mark_log_rows_before_next | mark_logged_rlbk_target_mark 
 ------------+------------------------------+--------------+-----------------+------------------------+----------------------+---------------------------+------------------------------
  myGroup2   | M3                           |        10012 | t               | f                      | This mark is deleted |                         0 | 
@@ -350,7 +350,7 @@ WARNING:  _check_fk_groups: The table "myschema2.mytbl6" is referenced by the fo
 -- Checking step 2
 -----------------------------
 -- emaj tables
-select mark_group, regexp_replace(mark_name,E'\\d\\d\.\\d\\d\\.\\d\\d\\.\\d\\d\\d','%','g'), mark_time_id, mark_is_deleted, mark_is_rlbk_protected, mark_comment, mark_log_rows_before_next, mark_logged_rlbk_target_mark from emaj.emaj_mark order by mark_time_id, mark_group;
+select mark_group, regexp_replace(mark_name,E'\\d\\d\.\\d\\d\\.\\d\\d\\.\\d\\d\\d\\d','%','g'), mark_time_id, mark_is_deleted, mark_is_rlbk_protected, mark_comment, mark_log_rows_before_next, mark_logged_rlbk_target_mark from emaj.emaj_mark order by mark_time_id, mark_group;
  mark_group |        regexp_replace        | mark_time_id | mark_is_deleted | mark_is_rlbk_protected |     mark_comment     | mark_log_rows_before_next | mark_logged_rlbk_target_mark 
 ------------+------------------------------+--------------+-----------------+------------------------+----------------------+---------------------------+------------------------------
  myGroup2   | M3                           |        10012 | t               | f                      | This mark is deleted |                         0 | 
