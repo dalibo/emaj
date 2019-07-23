@@ -115,7 +115,7 @@ use warnings; use strict;
 #            print "Nothing found for : Script $script, Message $msg \n";
 #          }
           if ($nbFound > 1) {
-            print "!!! In script $script, the message '$msg' has been found at several places in the source\n";
+            print "!!! In script $script, the message '$msg' has been found at several ($nbFound) places in the source\n";
           }
           if ($nbFound >= 1) {
 # at least one place in the source fit the message read from the regression tests output, so increment usage counter (of the last found, if several)

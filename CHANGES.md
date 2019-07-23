@@ -11,6 +11,8 @@ E-Maj - Change log
   * The part of mark names generated from the timestamp, now use the
     clock_timestamp (instead of the transaction timestamp) and has one
     additional digit.
+  * Only issue a warning when creating an empty group that is configured in
+    the emaj_group_def table.
   * Minor coding improvements.
 
 ###Bug fixes:###

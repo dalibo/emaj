@@ -2097,6 +2097,114 @@ $_lock_groups$
   END;
 $_lock_groups$;
 
+CREATE OR REPLACE FUNCTION emaj.emaj_create_group(v_groupName TEXT, v_isRollbackable BOOLEAN DEFAULT TRUE,
+                                                  v_is_empty BOOLEAN DEFAULT FALSE)
+RETURNS INT LANGUAGE plpgsql AS
+$emaj_create_group$
+-- This function creates emaj objects for all tables of a group.
+-- It also creates the log E-Maj schemas when needed.
+-- Input: group name,
+--        boolean indicating whether the group is rollbackable or not (true by default),
+--        boolean explicitely indicating whether the group is empty or not
+-- Output: number of processed tables and sequences
+  DECLARE
+    v_timeId                 BIGINT;
+    v_nbTbl                  INT = 0;
+    v_nbSeq                  INT = 0;
+    r                        RECORD;
+  BEGIN
+-- insert begin in the history
+    INSERT INTO emaj.emaj_hist (hist_function, hist_event, hist_object, hist_wording)
+      VALUES ('CREATE_GROUP', 'BEGIN', v_groupName, CASE WHEN v_isRollbackable THEN 'rollbackable' ELSE 'audit_only' END);
+-- check that the group name is valid
+    IF v_groupName IS NULL OR v_groupName = '' THEN
+      RAISE EXCEPTION 'emaj_create_group: The group name can''t be NULL or empty.';
+    END IF;
+-- check that the group is not yet recorded in emaj_group table
+    PERFORM 0 FROM emaj.emaj_group WHERE group_name = v_groupName;
+    IF FOUND THEN
+      RAISE EXCEPTION 'emaj_create_group: The group "%" already exists.', v_groupName;
+    END IF;
+-- check the consistency between the emaj_group_def table content and the v_is_empty input parameter
+    PERFORM 0 FROM emaj.emaj_group_def WHERE grpdef_group = v_groupName LIMIT 1;
+    IF NOT v_is_empty AND NOT FOUND THEN
+       RAISE EXCEPTION 'emaj_create_group: The group "%" is unknown in the emaj_group_def table. To create an empty group,'
+                       ' explicitely set the third parameter to true.', v_groupName;
+    END IF;
+    IF v_is_empty AND FOUND THEN
+       RAISE WARNING 'emaj_create_group: Although the group "%" is referenced into the emaj_group_def table, it is left empty.',
+                     v_groupName;
+    END IF;
+-- performs various checks on the group's content described in the emaj_group_def table
+    IF NOT v_is_empty THEN
+      FOR r IN
+        SELECT chk_message FROM emaj._check_conf_groups(ARRAY[v_groupName])
+          WHERE (v_isRollbackable AND chk_severity <= 2)
+             OR (NOT v_isRollbackable AND chk_severity <= 1)
+          ORDER BY chk_msg_type, chk_group, chk_schema, chk_tblseq
+      LOOP
+        RAISE WARNING 'emaj_create_group: error, %', r.chk_message;
+      END LOOP;
+      IF FOUND THEN
+        RAISE EXCEPTION 'emaj_create_group: One or several errors have been detected in the emaj_group_def table content.';
+      END IF;
+    END IF;
+-- OK
+-- get the time stamp of the operation
+    SELECT emaj._set_time_stamp('C') INTO v_timeId;
+-- insert the row describing the group into the emaj_group table
+-- (The group_is_rlbk_protected boolean column is always initialized as not group_is_rollbackable)
+    INSERT INTO emaj.emaj_group (group_name, group_is_rollbackable, group_creation_time_id, group_has_waiting_changes,
+                                 group_is_logging, group_is_rlbk_protected, group_nb_table, group_nb_sequence)
+      VALUES (v_groupName, v_isRollbackable, v_timeId, FALSE, FALSE, NOT v_isRollbackable, 0, 0);
+-- populate the group
+    IF NOT v_is_empty THEN
+-- create new E-Maj log schemas, if needed
+      PERFORM emaj._create_log_schemas('CREATE_GROUP', ARRAY[v_groupName]);
+-- get and process all tables of the group (in priority order, NULLS being processed last)
+      PERFORM emaj._create_tbl(grpdef_schema, grpdef_tblseq, grpdef_group, grpdef_priority, grpdef_log_dat_tsp, grpdef_log_idx_tsp,
+                               v_timeId, v_isRollbackable, FALSE)
+        FROM (
+          SELECT grpdef_schema, grpdef_tblseq, grpdef_group, grpdef_priority, grpdef_log_dat_tsp, grpdef_log_idx_tsp
+            FROM emaj.emaj_group_def, pg_catalog.pg_class, pg_catalog.pg_namespace
+            WHERE grpdef_group = v_groupName
+              AND relnamespace = pg_namespace.oid
+              AND nspname = grpdef_schema AND relname = grpdef_tblseq
+              AND relkind = 'r'
+            ORDER BY grpdef_priority, grpdef_schema, grpdef_tblseq
+             ) AS t;
+      SELECT count(*) INTO v_nbTbl
+        FROM emaj.emaj_relation
+        WHERE rel_group = v_groupName AND rel_kind = 'r' AND upper_inf(rel_time_range);
+-- get and process all sequences of the group (in priority order, NULLS being processed last)
+      PERFORM emaj._create_seq(grpdef_schema, grpdef_tblseq, grpdef_group, grpdef_priority, v_timeId)
+        FROM (
+          SELECT grpdef_schema, grpdef_tblseq, grpdef_group, grpdef_priority
+            FROM emaj.emaj_group_def, pg_catalog.pg_class, pg_catalog.pg_namespace
+            WHERE grpdef_group = v_groupName
+              AND relnamespace = pg_namespace.oid
+              AND nspname = grpdef_schema AND relname = grpdef_tblseq
+              AND relkind = 'S'
+            ORDER BY grpdef_priority, grpdef_schema, grpdef_tblseq
+             ) AS t;
+      SELECT count(*) INTO v_nbSeq
+        FROM emaj.emaj_relation
+        WHERE rel_group = v_groupName AND rel_kind = 'S' AND upper_inf(rel_time_range);
+-- update tables and sequences counters in the emaj_group table
+      UPDATE emaj.emaj_group SET group_nb_table = v_nbTbl, group_nb_sequence = v_nbSeq
+        WHERE group_name = v_groupName;
+-- check foreign keys with tables outside the group
+      PERFORM emaj._check_fk_groups(array[v_groupName]);
+    END IF;
+-- insert end in the history
+    INSERT INTO emaj.emaj_hist (hist_function, hist_event, hist_object, hist_wording)
+      VALUES ('CREATE_GROUP', 'END', v_groupName, v_nbTbl + v_nbSeq || ' tables/sequences processed');
+    RETURN v_nbTbl + v_nbSeq;
+  END;
+$emaj_create_group$;
+COMMENT ON FUNCTION emaj.emaj_create_group(TEXT,BOOLEAN,BOOLEAN) IS
+$$Creates an E-Maj group.$$;
+
 CREATE OR REPLACE FUNCTION emaj._start_groups(v_groupNames TEXT[], v_mark TEXT, v_multiGroup BOOLEAN, v_resetLog BOOLEAN)
 RETURNS INT LANGUAGE plpgsql
 SECURITY DEFINER SET search_path = pg_catalog, pg_temp AS

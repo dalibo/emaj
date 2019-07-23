@@ -101,11 +101,11 @@ La fonction *emaj_create_group()* contrôle également l'existence de « trigge
 
 Si une séquence du groupe est associée à une colonne soit de type *SERIAL* ou *BIGSERIAL* soit définie avec une clause *GENERATED AS IDENTITY*, et que sa table d'appartenance ne fait pas partie du groupe, la fonction génère également un message de type *WARNING*. 
 
-Une forme particulière de la fonction permet de créer un groupe de table vide, c’est à dire ne contenant à sa création aucune table ni séquence ::
+Une forme particulière de la fonction permet de créer un groupe de tables vide, c’est à dire ne contenant à sa création aucune table ni séquence ::
 
    SELECT emaj.emaj_create_group('<nom.du.groupe>', <est.rollbackable>, <est.vide>);
 
-Le troisième paramètre prend la valeur *faux* par défaut. Si le paramètre est valorisé à *vrai*, le groupe ne doit pas être référencé dans la table *emaj_group_def*. Une fois créé, un groupe vide peut ensuite être peuplé, à l’aide de la fonction :doc:`emaj_alter_group() <alterGroups>` ou des fonctions d’:ref:`ajustement dynamique des groupes de tables <dynamic_ajustment>`.
+Le troisième paramètre prend la valeur *faux* par défaut. Si le paramètre est valorisé à *vrai*, le groupe peut être référencé dans la table *emaj_group_def*. Mais dans ce cas, le contenu de la table *emaj_group_def* est ignoré. Une fois créé, un groupe vide peut ensuite être peuplé, à l’aide de la fonction :doc:`emaj_alter_group() <alterGroups>` ou des fonctions d’:ref:`ajustement dynamique des groupes de tables <dynamic_ajustment>`.
 
 Toutes les actions enchaînées par la fonction *emaj_create_group()* sont exécutées au sein d'une unique transaction. En conséquence, si une erreur survient durant l'opération, toutes les tables, fonctions et triggers déjà créés par la fonction sont annulées.
 

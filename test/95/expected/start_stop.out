@@ -10,17 +10,17 @@ alter sequence emaj.emaj_time_stamp_time_id_seq restart 1000;
 select emaj.emaj_create_group('myGroup1');
 WARNING:  _create_tbl: The table "myschema1.mytbl2" has triggers (mytbl2trg1, mytbl2trg2). They will be automatically disabled during E-Maj rollback operations, unless they have been recorded into the list of triggers that may be kept enabled, with the emaj_ignore_app_trigger() function.
 CONTEXT:  SQL statement "SELECT emaj._create_tbl(grpdef_schema, grpdef_tblseq, grpdef_group, grpdef_priority, grpdef_log_dat_tsp, grpdef_log_idx_tsp,
-                             v_timeId, v_isRollbackable, FALSE)
-      FROM (
-        SELECT grpdef_schema, grpdef_tblseq, grpdef_group, grpdef_priority, grpdef_log_dat_tsp, grpdef_log_idx_tsp
-          FROM emaj.emaj_group_def, pg_catalog.pg_class, pg_catalog.pg_namespace
-          WHERE grpdef_group = v_groupName
-            AND relnamespace = pg_namespace.oid
-            AND nspname = grpdef_schema AND relname = grpdef_tblseq
-            AND relkind = 'r'
-          ORDER BY grpdef_priority, grpdef_schema, grpdef_tblseq
-           ) AS t"
-PL/pgSQL function emaj.emaj_create_group(text,boolean,boolean) line 59 at PERFORM
+                               v_timeId, v_isRollbackable, FALSE)
+        FROM (
+          SELECT grpdef_schema, grpdef_tblseq, grpdef_group, grpdef_priority, grpdef_log_dat_tsp, grpdef_log_idx_tsp
+            FROM emaj.emaj_group_def, pg_catalog.pg_class, pg_catalog.pg_namespace
+            WHERE grpdef_group = v_groupName
+              AND relnamespace = pg_namespace.oid
+              AND nspname = grpdef_schema AND relname = grpdef_tblseq
+              AND relkind = 'r'
+            ORDER BY grpdef_priority, grpdef_schema, grpdef_tblseq
+             ) AS t"
+PL/pgSQL function emaj.emaj_create_group(text,boolean,boolean) line 63 at PERFORM
  emaj_create_group 
 -------------------
                  7
@@ -29,10 +29,10 @@ PL/pgSQL function emaj.emaj_create_group(text,boolean,boolean) line 59 at PERFOR
 select emaj.emaj_create_group('myGroup2');
 WARNING:  _check_fk_groups: The foreign key "mytbl6_col61_fkey" on the table "myschema2.mytbl6" references the table "myschema2.mytbl7" that is outside the groups (myGroup2).
 CONTEXT:  SQL statement "SELECT emaj._check_fk_groups(array[v_groupName])"
-PL/pgSQL function emaj.emaj_create_group(text,boolean,boolean) line 91 at PERFORM
+PL/pgSQL function emaj.emaj_create_group(text,boolean,boolean) line 95 at PERFORM
 WARNING:  _check_fk_groups: The table "myschema2.mytbl6" is referenced by the foreign key "mytbl8_col81_fkey" on the table "myschema2.mytbl8" that is outside the groups (myGroup2).
 CONTEXT:  SQL statement "SELECT emaj._check_fk_groups(array[v_groupName])"
-PL/pgSQL function emaj.emaj_create_group(text,boolean,boolean) line 91 at PERFORM
+PL/pgSQL function emaj.emaj_create_group(text,boolean,boolean) line 95 at PERFORM
  emaj_create_group 
 -------------------
                  8

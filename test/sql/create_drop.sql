@@ -63,7 +63,9 @@ select emaj.emaj_create_group('',false);
 select emaj.emaj_create_group('unknownGroup');
 select emaj.emaj_create_group('unknownGroup',false);
 -- an emtpy group to create is known in emaj_group_def
-select emaj.emaj_create_group('myGroup1',true,true);
+begin;
+  select emaj.emaj_create_group('myGroup1',true,true);
+rollback;
 -- unknown schema or table in emaj_group_def
 select emaj.emaj_create_group('dummyGrp1');
 -- group with a partitionned table (in PG 10+) (abort for lack of PRIMARY KEY with prior PG versions)

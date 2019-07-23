@@ -100,14 +100,14 @@ select funcname, calls from pg_stat_user_functions
  _assign_tables                            |     7
  _change_log_data_tsp_tbl                  |    19
  _change_log_index_tsp_tbl                 |    11
- _check_conf_groups                        |   132
- _check_fk_groups                          |   243
+ _check_conf_groups                        |   125
+ _check_fk_groups                          |   236
  _check_group_names                        |   975
  _check_mark_name                          |   351
  _check_marks_range                        |   113
  _check_new_mark                           |   262
  _cleanup_rollback_state                   |   307
- _create_log_schemas                       |   114
+ _create_log_schemas                       |   107
  _create_log_trigger                       |   167
  _create_seq                               |    58
  _create_tbl                               |   167
@@ -160,7 +160,7 @@ select funcname, calls from pg_stat_user_functions
  _rlbk_tbl                                 |   131
  _rollback_activity                        |    17
  _set_mark_groups                          |   291
- _set_time_stamp                           |   461
+ _set_time_stamp                           |   462
  _start_groups                             |    51
  _stop_groups                              |    65
  _verify_all_groups                        |    42
@@ -175,7 +175,7 @@ select funcname, calls from pg_stat_user_functions
  emaj_comment_group                        |     5
  emaj_comment_mark_group                   |    10
  emaj_consolidate_rollback_group           |    13
- emaj_create_group                         |    35
+ emaj_create_group                         |    36
  emaj_delete_before_mark_group             |    16
  emaj_delete_mark_group                    |    28
  emaj_detailed_log_stat_group              |    26
@@ -230,7 +230,7 @@ select funcname, calls from pg_stat_user_functions
 select sum(calls) from pg_stat_user_functions where funcname like E'emaj\\_%';
  sum 
 -----
- 822
+ 823
 (1 row)
 
 -----------------------------
