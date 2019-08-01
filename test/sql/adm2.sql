@@ -95,7 +95,10 @@ select col61, col62, col63, col64, col65, col66, emaj_verb, emaj_tuple, emaj_gid
 -----------------------------
 -- Step 9 : test the emaj_alter_group() and emaj_alter_groups() functions with the audit-only phil's group#3, group and a mix of rollbackable and audit-only groups
 -----------------------------
-select emaj.emaj_create_group('phil''s group#3",',false);
+-- create the audit-only group empty and then populate it with tables and sequences
+select emaj.emaj_create_group('phil''s group#3",',false,true);
+select emaj.emaj_assign_tables('phil''s schema3', '.*', 'mytbl4', 'phil''s group#3",');
+select emaj.emaj_assign_sequences('phil''s schema3', '.*', '', 'phil''s group#3",');
 
 -- disable event triggers for this step to allow an application table structure change
 select emaj.emaj_disable_protection_by_event_triggers();

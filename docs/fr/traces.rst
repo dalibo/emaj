@@ -38,6 +38,14 @@ La colonne *hist_function* peut prendre les valeurs suivantes.
 +----------------------------------+---------------------------------------------------------------------------------------+
 | ALTER_GROUPS                     | modification de plusieurs groupes de tables                                           |
 +----------------------------------+---------------------------------------------------------------------------------------+
+| ASSIGN_SEQUENCE                  | affectation d’une séquence à un groupe de tables                                      |
++----------------------------------+---------------------------------------------------------------------------------------+
+| ASSIGN_SEQUENCES                 | affectation de séquences à un groupe de tables                                        |
++----------------------------------+---------------------------------------------------------------------------------------+
+| ASSIGN_TABLE                     | affectation d’une table à un groupe de tables                                         |
++----------------------------------+---------------------------------------------------------------------------------------+
+| ASSIGN_TABLES                    | affectation de tables à un groupe de tables                                           |
++----------------------------------+---------------------------------------------------------------------------------------+
 | CLEANUP_RLBK_STATE               | nettoyage du code état des opérations de rollback récemment terminées                 |
 +----------------------------------+---------------------------------------------------------------------------------------+
 | COMMENT_GROUP                    | positionnement d'un commentaire sur un groupe                                         |
@@ -81,6 +89,14 @@ La colonne *hist_function* peut prendre les valeurs suivantes.
 | PROTECT_MARK_GROUP               | pose d'une protection contre les rollbacks sur une marque d'un groupe                 |
 +----------------------------------+---------------------------------------------------------------------------------------+
 | PURGE_HISTORY                    | suppression dans la table *emaj_hist* des événements antérieurs au délai de rétention |
++----------------------------------+---------------------------------------------------------------------------------------+
+| REMOVE_SEQUENCE                  | suppression d’une séquence de son groupe de tables                                    |
++----------------------------------+---------------------------------------------------------------------------------------+
+| REMOVE_SEQUENCES                 | suppression de séquences de leur groupe de tables                                     |
++----------------------------------+---------------------------------------------------------------------------------------+
+| REMOVE_TABLE                     | suppression d’une table de son groupe de tables                                       |
++----------------------------------+---------------------------------------------------------------------------------------+
+| REMOVE_TABLES                    | suppression de tables de leur groupe de tables                                        |
 +----------------------------------+---------------------------------------------------------------------------------------+
 | RENAME_MARK_GROUP                | renommage d'une marque pour un groupe de tables                                       |
 +----------------------------------+---------------------------------------------------------------------------------------+

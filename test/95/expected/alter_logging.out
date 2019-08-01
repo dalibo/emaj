@@ -183,25 +183,18 @@ select group_name, group_last_alter_time_id, group_has_waiting_changes, group_nb
  myGroup2   |                     6055 | t                         |              6 |                 2
 (1 row)
 
-select emaj.emaj_alter_group('myGroup2', 'Alter to add myseq2');
-WARNING:  _check_fk_groups: The foreign key "mytbl6_col61_fkey" on the table "myschema2.mytbl6" references the table "myschema2.mytbl7" that is outside the groups (myGroup2).
-CONTEXT:  SQL statement "SELECT emaj._check_fk_groups(v_groupNames)"
-PL/pgSQL function emaj._alter_groups(text[],boolean,text) line 72 at PERFORM
-PL/pgSQL function emaj.emaj_alter_group(text,text) line 6 at RETURN
-WARNING:  _check_fk_groups: The table "myschema2.mytbl6" is referenced by the foreign key "mytbl8_col81_fkey" on the table "myschema2.mytbl8" that is outside the groups (myGroup2).
-CONTEXT:  SQL statement "SELECT emaj._check_fk_groups(v_groupNames)"
-PL/pgSQL function emaj._alter_groups(text[],boolean,text) line 72 at PERFORM
-PL/pgSQL function emaj.emaj_alter_group(text,text) line 6 at RETURN
- emaj_alter_group 
-------------------
-                9
+--select emaj.emaj_alter_group('myGroup2', 'Alter to add myseq2');
+select emaj.emaj_assign_sequence('myschema2', 'myseq2', 'myGroup2', null, 'Alter to add myseq2');
+ emaj_assign_sequence 
+----------------------
+                    1
 (1 row)
 
 select group_name, group_last_alter_time_id, group_has_waiting_changes, group_nb_table, group_nb_sequence
   from emaj.emaj_group where group_name = 'myGroup2';
  group_name | group_last_alter_time_id | group_has_waiting_changes | group_nb_table | group_nb_sequence 
 ------------+--------------------------+---------------------------+----------------+-------------------
- myGroup2   |                     6058 | f                         |              6 |                 3
+ myGroup2   |                     6058 | t                         |              6 |                 3
 (1 row)
 
 select * from emaj.emaj_relation where rel_schema = 'myschema2' and rel_tblseq = 'myseq2' order by rel_time_range;
@@ -560,17 +553,18 @@ select group_name, group_last_alter_time_id, group_has_waiting_changes, group_nb
  myGroup1   |                     6055 | t                         |              5 |                 2
 (1 row)
 
-select emaj.emaj_alter_group('myGroup1','Sequence_removed');
- emaj_alter_group 
-------------------
-                6
+--select emaj.emaj_alter_group('myGroup1','Sequence_removed');
+select emaj.emaj_remove_sequence('myschema1', 'myTbl3_col31_seq', 'Sequence_removed');
+ emaj_remove_sequence 
+----------------------
+                    1
 (1 row)
 
 select group_name, group_last_alter_time_id, group_has_waiting_changes, group_nb_table, group_nb_sequence
   from emaj.emaj_group where group_name = 'myGroup1';
  group_name | group_last_alter_time_id | group_has_waiting_changes | group_nb_table | group_nb_sequence 
 ------------+--------------------------+---------------------------+----------------+-------------------
- myGroup1   |                     6069 | f                         |              5 |                 1
+ myGroup1   |                     6069 | t                         |              5 |                 1
 (1 row)
 
 select * from emaj.emaj_relation where rel_schema = 'myschema1' and rel_tblseq = 'myTbl3_col31_seq' order by rel_time_range;
@@ -791,62 +785,45 @@ select emaj.emaj_set_mark_group('myGroup2','Before ADD_TBL');
 delete from myschema2.mytbl7 where col71 = 3;
 -- then add the table to the group
 insert into emaj.emaj_group_def values ('myGroup2','myschema2','mytbl7');
-select emaj.emaj_alter_group('myGroup2', 'Alter to add mytbl7');
+--select emaj.emaj_alter_group('myGroup2', 'Alter to add mytbl7');
+select emaj.emaj_assign_table('myschema2', 'mytbl7', 'myGroup2', null, 'Alter to add mytbl7');
 NOTICE:  table "mytbl7_log" does not exist, skipping
 CONTEXT:  SQL statement "DROP TABLE IF EXISTS emaj_myschema2.mytbl7_log"
 PL/pgSQL function emaj._create_tbl(text,text,text,integer,text,text,bigint,boolean,boolean) line 80 at EXECUTE
-SQL statement "SELECT emaj._create_tbl(grpdef_schema, grpdef_tblseq, grpdef_group, grpdef_priority, grpdef_log_dat_tsp, grpdef_log_idx_tsp,
-                             v_timeId, v_groupIsRollbackable, r_plan.altr_group_is_logging)
-      FROM emaj.emaj_group_def
-      WHERE grpdef_group = r_plan.altr_group AND grpdef_schema = r_plan.altr_schema AND grpdef_tblseq = r_plan.altr_tblseq"
-PL/pgSQL function emaj._add_tbl(emaj.emaj_alter_plan,bigint,boolean) line 19 at PERFORM
-SQL statement "SELECT emaj._add_tbl(r_plan, v_timeId, v_multiGroup)"
-PL/pgSQL function emaj._alter_exec(bigint,boolean) line 92 at PERFORM
-SQL statement "SELECT emaj._alter_exec(v_timeId, v_multiGroup)"
-PL/pgSQL function emaj._alter_groups(text[],boolean,text) line 58 at PERFORM
-PL/pgSQL function emaj.emaj_alter_group(text,text) line 6 at RETURN
+SQL statement "SELECT emaj._create_tbl(v_schema, v_oneTable, v_group, v_priority, v_logDatTsp, v_logIdxTsp,
+                                 v_timeId, v_groupIsRollbackable, v_groupIsLogging)"
+PL/pgSQL function emaj._assign_tables(text,text[],text,jsonb,text,boolean,boolean) line 237 at PERFORM
+PL/pgSQL function emaj.emaj_assign_table(text,text,text,jsonb,text) line 7 at RETURN
 NOTICE:  trigger "emaj_log_trg" for relation "myschema2.mytbl7" does not exist, skipping
 CONTEXT:  SQL statement "DROP TRIGGER IF EXISTS emaj_log_trg ON myschema2.mytbl7"
 PL/pgSQL function emaj._create_log_trigger(text,text,text,text) line 9 at EXECUTE
 SQL statement "SELECT emaj._create_log_trigger(v_fullTableName, v_logTableName, v_sequenceName, v_logFnctName)"
 PL/pgSQL function emaj._create_tbl(text,text,text,integer,text,text,bigint,boolean,boolean) line 127 at PERFORM
-SQL statement "SELECT emaj._create_tbl(grpdef_schema, grpdef_tblseq, grpdef_group, grpdef_priority, grpdef_log_dat_tsp, grpdef_log_idx_tsp,
-                             v_timeId, v_groupIsRollbackable, r_plan.altr_group_is_logging)
-      FROM emaj.emaj_group_def
-      WHERE grpdef_group = r_plan.altr_group AND grpdef_schema = r_plan.altr_schema AND grpdef_tblseq = r_plan.altr_tblseq"
-PL/pgSQL function emaj._add_tbl(emaj.emaj_alter_plan,bigint,boolean) line 19 at PERFORM
-SQL statement "SELECT emaj._add_tbl(r_plan, v_timeId, v_multiGroup)"
-PL/pgSQL function emaj._alter_exec(bigint,boolean) line 92 at PERFORM
-SQL statement "SELECT emaj._alter_exec(v_timeId, v_multiGroup)"
-PL/pgSQL function emaj._alter_groups(text[],boolean,text) line 58 at PERFORM
-PL/pgSQL function emaj.emaj_alter_group(text,text) line 6 at RETURN
+SQL statement "SELECT emaj._create_tbl(v_schema, v_oneTable, v_group, v_priority, v_logDatTsp, v_logIdxTsp,
+                                 v_timeId, v_groupIsRollbackable, v_groupIsLogging)"
+PL/pgSQL function emaj._assign_tables(text,text[],text,jsonb,text,boolean,boolean) line 237 at PERFORM
+PL/pgSQL function emaj.emaj_assign_table(text,text,text,jsonb,text) line 7 at RETURN
 NOTICE:  trigger "emaj_trunc_trg" for relation "myschema2.mytbl7" does not exist, skipping
 CONTEXT:  SQL statement "DROP TRIGGER IF EXISTS emaj_trunc_trg ON myschema2.mytbl7"
 PL/pgSQL function emaj._create_tbl(text,text,text,integer,text,text,bigint,boolean,boolean) line 135 at EXECUTE
-SQL statement "SELECT emaj._create_tbl(grpdef_schema, grpdef_tblseq, grpdef_group, grpdef_priority, grpdef_log_dat_tsp, grpdef_log_idx_tsp,
-                             v_timeId, v_groupIsRollbackable, r_plan.altr_group_is_logging)
-      FROM emaj.emaj_group_def
-      WHERE grpdef_group = r_plan.altr_group AND grpdef_schema = r_plan.altr_schema AND grpdef_tblseq = r_plan.altr_tblseq"
-PL/pgSQL function emaj._add_tbl(emaj.emaj_alter_plan,bigint,boolean) line 19 at PERFORM
-SQL statement "SELECT emaj._add_tbl(r_plan, v_timeId, v_multiGroup)"
-PL/pgSQL function emaj._alter_exec(bigint,boolean) line 92 at PERFORM
-SQL statement "SELECT emaj._alter_exec(v_timeId, v_multiGroup)"
-PL/pgSQL function emaj._alter_groups(text[],boolean,text) line 58 at PERFORM
-PL/pgSQL function emaj.emaj_alter_group(text,text) line 6 at RETURN
+SQL statement "SELECT emaj._create_tbl(v_schema, v_oneTable, v_group, v_priority, v_logDatTsp, v_logIdxTsp,
+                                 v_timeId, v_groupIsRollbackable, v_groupIsLogging)"
+PL/pgSQL function emaj._assign_tables(text,text[],text,jsonb,text,boolean,boolean) line 237 at PERFORM
+PL/pgSQL function emaj.emaj_assign_table(text,text,text,jsonb,text) line 7 at RETURN
 WARNING:  _check_fk_groups: The table "myschema2.mytbl6" is referenced by the foreign key "mytbl8_col81_fkey" on the table "myschema2.mytbl8" that is outside the groups (myGroup2).
-CONTEXT:  SQL statement "SELECT emaj._check_fk_groups(v_groupNames)"
-PL/pgSQL function emaj._alter_groups(text[],boolean,text) line 72 at PERFORM
-PL/pgSQL function emaj.emaj_alter_group(text,text) line 6 at RETURN
- emaj_alter_group 
-------------------
-                9
+CONTEXT:  SQL statement "SELECT emaj._check_fk_groups(array[v_group])"
+PL/pgSQL function emaj._assign_tables(text,text[],text,jsonb,text,boolean,boolean) line 278 at PERFORM
+PL/pgSQL function emaj.emaj_assign_table(text,text,text,jsonb,text) line 7 at RETURN
+ emaj_assign_table 
+-------------------
+                 1
 (1 row)
 
 select group_name, group_last_alter_time_id, group_has_waiting_changes, group_nb_table, group_nb_sequence
   from emaj.emaj_group where group_name = 'myGroup2';
  group_name | group_last_alter_time_id | group_has_waiting_changes | group_nb_table | group_nb_sequence 
 ------------+--------------------------+---------------------------+----------------+-------------------
- myGroup2   |                     6080 | f                         |              7 |                 2
+ myGroup2   |                     6080 | t                         |              7 |                 2
 (1 row)
 
 select * from emaj.emaj_relation where rel_schema = 'myschema2' and rel_tblseq = 'mytbl7' order by rel_time_range;
@@ -1364,17 +1341,18 @@ select group_has_waiting_changes from emaj.emaj_group where group_name = 'myGrou
  t
 (1 row)
 
-select emaj.emaj_alter_group('myGroup1', '2 tables removed from myGroup1');
- emaj_alter_group 
-------------------
-                5
+--select emaj.emaj_alter_group('myGroup1', '2 tables removed from myGroup1');
+select emaj.emaj_remove_tables('myschema1', '^(myTbl3|mytbl2b)$', null, '2 tables removed from myGroup1');
+ emaj_remove_tables 
+--------------------
+                  2
 (1 row)
 
 select group_name, group_last_alter_time_id, group_has_waiting_changes, group_nb_table, group_nb_sequence
   from emaj.emaj_group where group_name = 'myGroup1';
  group_name | group_last_alter_time_id | group_has_waiting_changes | group_nb_table | group_nb_sequence 
 ------------+--------------------------+---------------------------+----------------+-------------------
- myGroup1   |                     6093 | f                         |              3 |                 2
+ myGroup1   |                     6093 | t                         |              3 |                 2
 (1 row)
 
 select * from emaj.emaj_relation where rel_schema = 'myschema1' and (rel_tblseq = 'myTbl3' or rel_tblseq = 'mytbl2b') order by 1,2,3;
@@ -2420,215 +2398,323 @@ select nextval('myschema2.myseq1');
     1000
 (1 row)
 
+-- remove and assign somes tables and sequences in a single transaction
 begin;
-select emaj.emaj_remove_tables('myschema2','{"mytbl1","mytbl2","myTbl3"}','REMOVE_3_TABLES');
+  select emaj.emaj_remove_tables('myschema2','{"mytbl1","mytbl2","myTbl3"}'::text[],'REMOVE_3_TABLES');
  emaj_remove_tables 
 --------------------
                   3
 (1 row)
 
-select emaj.emaj_remove_sequence('myschema2','myseq1','REMOVE_1_SEQUENCES');
+  select emaj.emaj_remove_sequence('myschema2','myseq1','REMOVE_1_SEQUENCES');
  emaj_remove_sequence 
 ----------------------
                     1
 (1 row)
 
-select emaj.emaj_assign_tables('myschema2','{"mytbl1","mytbl2","myTbl3"}','myGroup2',null,'ASSIGN_3_TABLES');
+  select emaj.emaj_assign_tables('myschema2','{"mytbl1","mytbl2","myTbl3"}'::text[],'myGroup2',null,'ASSIGN_3_TABLES');
 NOTICE:  table "myTbl3_log" does not exist, skipping
 CONTEXT:  SQL statement "DROP TABLE IF EXISTS emaj_myschema2."myTbl3_log""
 PL/pgSQL function emaj._create_tbl(text,text,text,integer,text,text,bigint,boolean,boolean) line 80 at EXECUTE
 SQL statement "SELECT emaj._create_tbl(v_schema, v_oneTable, v_group, v_priority, v_logDatTsp, v_logIdxTsp,
-                               v_timeId, v_groupIsRollbackable, v_groupIsLogging)"
-PL/pgSQL function emaj._assign_tables(text,text[],text,jsonb,text,boolean) line 186 at PERFORM
-PL/pgSQL function emaj.emaj_assign_tables(text,text[],text,jsonb,text) line 9 at RETURN
+                                 v_timeId, v_groupIsRollbackable, v_groupIsLogging)"
+PL/pgSQL function emaj._assign_tables(text,text[],text,jsonb,text,boolean,boolean) line 237 at PERFORM
+PL/pgSQL function emaj.emaj_assign_tables(text,text[],text,jsonb,text) line 7 at RETURN
 NOTICE:  trigger "emaj_log_trg" for relation "myschema2.myTbl3" does not exist, skipping
 CONTEXT:  SQL statement "DROP TRIGGER IF EXISTS emaj_log_trg ON myschema2."myTbl3""
 PL/pgSQL function emaj._create_log_trigger(text,text,text,text) line 9 at EXECUTE
 SQL statement "SELECT emaj._create_log_trigger(v_fullTableName, v_logTableName, v_sequenceName, v_logFnctName)"
 PL/pgSQL function emaj._create_tbl(text,text,text,integer,text,text,bigint,boolean,boolean) line 127 at PERFORM
 SQL statement "SELECT emaj._create_tbl(v_schema, v_oneTable, v_group, v_priority, v_logDatTsp, v_logIdxTsp,
-                               v_timeId, v_groupIsRollbackable, v_groupIsLogging)"
-PL/pgSQL function emaj._assign_tables(text,text[],text,jsonb,text,boolean) line 186 at PERFORM
-PL/pgSQL function emaj.emaj_assign_tables(text,text[],text,jsonb,text) line 9 at RETURN
+                                 v_timeId, v_groupIsRollbackable, v_groupIsLogging)"
+PL/pgSQL function emaj._assign_tables(text,text[],text,jsonb,text,boolean,boolean) line 237 at PERFORM
+PL/pgSQL function emaj.emaj_assign_tables(text,text[],text,jsonb,text) line 7 at RETURN
 NOTICE:  trigger "emaj_trunc_trg" for relation "myschema2.myTbl3" does not exist, skipping
 CONTEXT:  SQL statement "DROP TRIGGER IF EXISTS emaj_trunc_trg ON myschema2."myTbl3""
 PL/pgSQL function emaj._create_tbl(text,text,text,integer,text,text,bigint,boolean,boolean) line 135 at EXECUTE
 SQL statement "SELECT emaj._create_tbl(v_schema, v_oneTable, v_group, v_priority, v_logDatTsp, v_logIdxTsp,
-                               v_timeId, v_groupIsRollbackable, v_groupIsLogging)"
-PL/pgSQL function emaj._assign_tables(text,text[],text,jsonb,text,boolean) line 186 at PERFORM
-PL/pgSQL function emaj.emaj_assign_tables(text,text[],text,jsonb,text) line 9 at RETURN
+                                 v_timeId, v_groupIsRollbackable, v_groupIsLogging)"
+PL/pgSQL function emaj._assign_tables(text,text[],text,jsonb,text,boolean,boolean) line 237 at PERFORM
+PL/pgSQL function emaj.emaj_assign_tables(text,text[],text,jsonb,text) line 7 at RETURN
 NOTICE:  table "mytbl1_log" does not exist, skipping
 CONTEXT:  SQL statement "DROP TABLE IF EXISTS emaj_myschema2.mytbl1_log"
 PL/pgSQL function emaj._create_tbl(text,text,text,integer,text,text,bigint,boolean,boolean) line 80 at EXECUTE
 SQL statement "SELECT emaj._create_tbl(v_schema, v_oneTable, v_group, v_priority, v_logDatTsp, v_logIdxTsp,
-                               v_timeId, v_groupIsRollbackable, v_groupIsLogging)"
-PL/pgSQL function emaj._assign_tables(text,text[],text,jsonb,text,boolean) line 186 at PERFORM
-PL/pgSQL function emaj.emaj_assign_tables(text,text[],text,jsonb,text) line 9 at RETURN
+                                 v_timeId, v_groupIsRollbackable, v_groupIsLogging)"
+PL/pgSQL function emaj._assign_tables(text,text[],text,jsonb,text,boolean,boolean) line 237 at PERFORM
+PL/pgSQL function emaj.emaj_assign_tables(text,text[],text,jsonb,text) line 7 at RETURN
 NOTICE:  trigger "emaj_log_trg" for relation "myschema2.mytbl1" does not exist, skipping
 CONTEXT:  SQL statement "DROP TRIGGER IF EXISTS emaj_log_trg ON myschema2.mytbl1"
 PL/pgSQL function emaj._create_log_trigger(text,text,text,text) line 9 at EXECUTE
 SQL statement "SELECT emaj._create_log_trigger(v_fullTableName, v_logTableName, v_sequenceName, v_logFnctName)"
 PL/pgSQL function emaj._create_tbl(text,text,text,integer,text,text,bigint,boolean,boolean) line 127 at PERFORM
 SQL statement "SELECT emaj._create_tbl(v_schema, v_oneTable, v_group, v_priority, v_logDatTsp, v_logIdxTsp,
-                               v_timeId, v_groupIsRollbackable, v_groupIsLogging)"
-PL/pgSQL function emaj._assign_tables(text,text[],text,jsonb,text,boolean) line 186 at PERFORM
-PL/pgSQL function emaj.emaj_assign_tables(text,text[],text,jsonb,text) line 9 at RETURN
+                                 v_timeId, v_groupIsRollbackable, v_groupIsLogging)"
+PL/pgSQL function emaj._assign_tables(text,text[],text,jsonb,text,boolean,boolean) line 237 at PERFORM
+PL/pgSQL function emaj.emaj_assign_tables(text,text[],text,jsonb,text) line 7 at RETURN
 NOTICE:  trigger "emaj_trunc_trg" for relation "myschema2.mytbl1" does not exist, skipping
 CONTEXT:  SQL statement "DROP TRIGGER IF EXISTS emaj_trunc_trg ON myschema2.mytbl1"
 PL/pgSQL function emaj._create_tbl(text,text,text,integer,text,text,bigint,boolean,boolean) line 135 at EXECUTE
 SQL statement "SELECT emaj._create_tbl(v_schema, v_oneTable, v_group, v_priority, v_logDatTsp, v_logIdxTsp,
-                               v_timeId, v_groupIsRollbackable, v_groupIsLogging)"
-PL/pgSQL function emaj._assign_tables(text,text[],text,jsonb,text,boolean) line 186 at PERFORM
-PL/pgSQL function emaj.emaj_assign_tables(text,text[],text,jsonb,text) line 9 at RETURN
+                                 v_timeId, v_groupIsRollbackable, v_groupIsLogging)"
+PL/pgSQL function emaj._assign_tables(text,text[],text,jsonb,text,boolean,boolean) line 237 at PERFORM
+PL/pgSQL function emaj.emaj_assign_tables(text,text[],text,jsonb,text) line 7 at RETURN
 NOTICE:  table "mytbl2_log" does not exist, skipping
 CONTEXT:  SQL statement "DROP TABLE IF EXISTS emaj_myschema2.mytbl2_log"
 PL/pgSQL function emaj._create_tbl(text,text,text,integer,text,text,bigint,boolean,boolean) line 80 at EXECUTE
 SQL statement "SELECT emaj._create_tbl(v_schema, v_oneTable, v_group, v_priority, v_logDatTsp, v_logIdxTsp,
-                               v_timeId, v_groupIsRollbackable, v_groupIsLogging)"
-PL/pgSQL function emaj._assign_tables(text,text[],text,jsonb,text,boolean) line 186 at PERFORM
-PL/pgSQL function emaj.emaj_assign_tables(text,text[],text,jsonb,text) line 9 at RETURN
+                                 v_timeId, v_groupIsRollbackable, v_groupIsLogging)"
+PL/pgSQL function emaj._assign_tables(text,text[],text,jsonb,text,boolean,boolean) line 237 at PERFORM
+PL/pgSQL function emaj.emaj_assign_tables(text,text[],text,jsonb,text) line 7 at RETURN
 NOTICE:  trigger "emaj_log_trg" for relation "myschema2.mytbl2" does not exist, skipping
 CONTEXT:  SQL statement "DROP TRIGGER IF EXISTS emaj_log_trg ON myschema2.mytbl2"
 PL/pgSQL function emaj._create_log_trigger(text,text,text,text) line 9 at EXECUTE
 SQL statement "SELECT emaj._create_log_trigger(v_fullTableName, v_logTableName, v_sequenceName, v_logFnctName)"
 PL/pgSQL function emaj._create_tbl(text,text,text,integer,text,text,bigint,boolean,boolean) line 127 at PERFORM
 SQL statement "SELECT emaj._create_tbl(v_schema, v_oneTable, v_group, v_priority, v_logDatTsp, v_logIdxTsp,
-                               v_timeId, v_groupIsRollbackable, v_groupIsLogging)"
-PL/pgSQL function emaj._assign_tables(text,text[],text,jsonb,text,boolean) line 186 at PERFORM
-PL/pgSQL function emaj.emaj_assign_tables(text,text[],text,jsonb,text) line 9 at RETURN
+                                 v_timeId, v_groupIsRollbackable, v_groupIsLogging)"
+PL/pgSQL function emaj._assign_tables(text,text[],text,jsonb,text,boolean,boolean) line 237 at PERFORM
+PL/pgSQL function emaj.emaj_assign_tables(text,text[],text,jsonb,text) line 7 at RETURN
 NOTICE:  trigger "emaj_trunc_trg" for relation "myschema2.mytbl2" does not exist, skipping
 CONTEXT:  SQL statement "DROP TRIGGER IF EXISTS emaj_trunc_trg ON myschema2.mytbl2"
 PL/pgSQL function emaj._create_tbl(text,text,text,integer,text,text,bigint,boolean,boolean) line 135 at EXECUTE
 SQL statement "SELECT emaj._create_tbl(v_schema, v_oneTable, v_group, v_priority, v_logDatTsp, v_logIdxTsp,
-                               v_timeId, v_groupIsRollbackable, v_groupIsLogging)"
-PL/pgSQL function emaj._assign_tables(text,text[],text,jsonb,text,boolean) line 186 at PERFORM
-PL/pgSQL function emaj.emaj_assign_tables(text,text[],text,jsonb,text) line 9 at RETURN
+                                 v_timeId, v_groupIsRollbackable, v_groupIsLogging)"
+PL/pgSQL function emaj._assign_tables(text,text[],text,jsonb,text,boolean,boolean) line 237 at PERFORM
+PL/pgSQL function emaj.emaj_assign_tables(text,text[],text,jsonb,text) line 7 at RETURN
 WARNING:  _check_fk_groups: The foreign key "mytbl6_col61_fkey" on the table "myschema2.mytbl6" references the table "myschema2.mytbl7" that is outside the groups (myGroup2).
 CONTEXT:  SQL statement "SELECT emaj._check_fk_groups(array[v_group])"
-PL/pgSQL function emaj._assign_tables(text,text[],text,jsonb,text,boolean) line 224 at PERFORM
-PL/pgSQL function emaj.emaj_assign_tables(text,text[],text,jsonb,text) line 9 at RETURN
+PL/pgSQL function emaj._assign_tables(text,text[],text,jsonb,text,boolean,boolean) line 278 at PERFORM
+PL/pgSQL function emaj.emaj_assign_tables(text,text[],text,jsonb,text) line 7 at RETURN
 WARNING:  _check_fk_groups: The table "myschema2.mytbl6" is referenced by the foreign key "mytbl8_col81_fkey" on the table "myschema2.mytbl8" that is outside the groups (myGroup2).
 CONTEXT:  SQL statement "SELECT emaj._check_fk_groups(array[v_group])"
-PL/pgSQL function emaj._assign_tables(text,text[],text,jsonb,text,boolean) line 224 at PERFORM
-PL/pgSQL function emaj.emaj_assign_tables(text,text[],text,jsonb,text) line 9 at RETURN
+PL/pgSQL function emaj._assign_tables(text,text[],text,jsonb,text,boolean,boolean) line 278 at PERFORM
+PL/pgSQL function emaj.emaj_assign_tables(text,text[],text,jsonb,text) line 7 at RETURN
  emaj_assign_tables 
 --------------------
                   3
 (1 row)
 
-select emaj.emaj_assign_sequences('myschema2','{"myseq1","myseq2"}','myGroup2',null,'ASSIGN_2_SEQUENCES');
+  select emaj.emaj_assign_sequences('myschema2','{"myseq1","myseq2"}'::text[],'myGroup2',null,'ASSIGN_2_SEQUENCES');
  emaj_assign_sequences 
 -----------------------
                      2
 (1 row)
 
-insert into myschema2.mytbl1 values (110, 'Assigned', E'\\000'::bytea);
-select nextval('myschema2.myseq1');
+  insert into myschema2.mytbl1 values (110, 'Assigned', E'\\000'::bytea);
+  select nextval('myschema2.myseq1');
  nextval 
 ---------
     1001
 (1 row)
 
-select emaj.emaj_remove_tables('myschema2','{"mytbl1","mytbl2","myTbl3"}');
+  -- what if some (all but the emaj sequence) emaj components are missing at remove_table time ?
+  select emaj.emaj_disable_protection_by_event_triggers();
+ emaj_disable_protection_by_event_triggers 
+-------------------------------------------
+                                         3
+(1 row)
+
+  drop table emaj_myschema2.mytbl1_log;
+  drop function emaj_myschema2.mytbl1_log_fnct() cascade;
+NOTICE:  drop cascades to trigger emaj_log_trg on table myschema2.mytbl1
+  select emaj.emaj_enable_protection_by_event_triggers();
+ emaj_enable_protection_by_event_triggers 
+------------------------------------------
+                                        3
+(1 row)
+
+  select emaj.emaj_remove_tables('myschema2','{"mytbl1","mytbl2","myTbl3"}');
+NOTICE:  relation "mytbl1_log" does not exist, skipping
+CONTEXT:  SQL statement "ALTER TABLE IF EXISTS emaj_myschema2.mytbl1_log RENAME TO mytbl1_log_2"
+PL/pgSQL function emaj._remove_tables(text,text[],text,boolean,boolean) line 105 at EXECUTE
+PL/pgSQL function emaj.emaj_remove_tables(text,text[],text) line 6 at RETURN
+NOTICE:  relation "mytbl1_log_idx" does not exist, skipping
+CONTEXT:  SQL statement "ALTER INDEX IF EXISTS emaj_myschema2.mytbl1_log_idx RENAME TO mytbl1_log_idx_2"
+PL/pgSQL function emaj._remove_tables(text,text[],text,boolean,boolean) line 107 at EXECUTE
+PL/pgSQL function emaj.emaj_remove_tables(text,text[],text) line 6 at RETURN
+NOTICE:  trigger "emaj_log_trg" for relation "myschema2.mytbl1" does not exist, skipping
+CONTEXT:  SQL statement "DROP TRIGGER IF EXISTS emaj_log_trg ON myschema2.mytbl1"
+PL/pgSQL function emaj._remove_tables(text,text[],text,boolean,boolean) line 116 at EXECUTE
+PL/pgSQL function emaj.emaj_remove_tables(text,text[],text) line 6 at RETURN
+NOTICE:  function emaj_myschema2.mytbl1_log_fnct() does not exist, skipping
+CONTEXT:  SQL statement "DROP FUNCTION IF EXISTS emaj_myschema2.mytbl1_log_fnct() CASCADE"
+PL/pgSQL function emaj._remove_tables(text,text[],text,boolean,boolean) line 123 at EXECUTE
+PL/pgSQL function emaj.emaj_remove_tables(text,text[],text) line 6 at RETURN
  emaj_remove_tables 
 --------------------
                   3
 (1 row)
 
-select emaj.emaj_remove_sequences('myschema2','{"myseq1","myseq2"}');
+  select emaj.emaj_remove_sequences('myschema2','{"myseq1","myseq2"}');
  emaj_remove_sequences 
 -----------------------
                      2
 (1 row)
 
-select emaj.emaj_assign_tables('myschema2','{"mytbl1","mytbl2","myTbl3"}','myGroup2',
-                               '{"priority":1, "log_data_tablespace":"tsplog1", "log_index_tablespace":"tsplog1"}'::jsonb);
+  select emaj.emaj_assign_tables('myschema2','{"mytbl1","mytbl2","myTbl3"}','myGroup2',
+                                 '{"priority":1, "log_data_tablespace":"tsplog1", "log_index_tablespace":"tsplog1"}'::jsonb);
 NOTICE:  table "myTbl3_log" does not exist, skipping
 CONTEXT:  SQL statement "DROP TABLE IF EXISTS emaj_myschema2."myTbl3_log""
 PL/pgSQL function emaj._create_tbl(text,text,text,integer,text,text,bigint,boolean,boolean) line 80 at EXECUTE
 SQL statement "SELECT emaj._create_tbl(v_schema, v_oneTable, v_group, v_priority, v_logDatTsp, v_logIdxTsp,
-                               v_timeId, v_groupIsRollbackable, v_groupIsLogging)"
-PL/pgSQL function emaj._assign_tables(text,text[],text,jsonb,text,boolean) line 186 at PERFORM
-PL/pgSQL function emaj.emaj_assign_tables(text,text[],text,jsonb,text) line 9 at RETURN
+                                 v_timeId, v_groupIsRollbackable, v_groupIsLogging)"
+PL/pgSQL function emaj._assign_tables(text,text[],text,jsonb,text,boolean,boolean) line 237 at PERFORM
+PL/pgSQL function emaj.emaj_assign_tables(text,text[],text,jsonb,text) line 7 at RETURN
 NOTICE:  trigger "emaj_log_trg" for relation "myschema2.myTbl3" does not exist, skipping
 CONTEXT:  SQL statement "DROP TRIGGER IF EXISTS emaj_log_trg ON myschema2."myTbl3""
 PL/pgSQL function emaj._create_log_trigger(text,text,text,text) line 9 at EXECUTE
 SQL statement "SELECT emaj._create_log_trigger(v_fullTableName, v_logTableName, v_sequenceName, v_logFnctName)"
 PL/pgSQL function emaj._create_tbl(text,text,text,integer,text,text,bigint,boolean,boolean) line 127 at PERFORM
 SQL statement "SELECT emaj._create_tbl(v_schema, v_oneTable, v_group, v_priority, v_logDatTsp, v_logIdxTsp,
-                               v_timeId, v_groupIsRollbackable, v_groupIsLogging)"
-PL/pgSQL function emaj._assign_tables(text,text[],text,jsonb,text,boolean) line 186 at PERFORM
-PL/pgSQL function emaj.emaj_assign_tables(text,text[],text,jsonb,text) line 9 at RETURN
+                                 v_timeId, v_groupIsRollbackable, v_groupIsLogging)"
+PL/pgSQL function emaj._assign_tables(text,text[],text,jsonb,text,boolean,boolean) line 237 at PERFORM
+PL/pgSQL function emaj.emaj_assign_tables(text,text[],text,jsonb,text) line 7 at RETURN
 NOTICE:  trigger "emaj_trunc_trg" for relation "myschema2.myTbl3" does not exist, skipping
 CONTEXT:  SQL statement "DROP TRIGGER IF EXISTS emaj_trunc_trg ON myschema2."myTbl3""
 PL/pgSQL function emaj._create_tbl(text,text,text,integer,text,text,bigint,boolean,boolean) line 135 at EXECUTE
 SQL statement "SELECT emaj._create_tbl(v_schema, v_oneTable, v_group, v_priority, v_logDatTsp, v_logIdxTsp,
-                               v_timeId, v_groupIsRollbackable, v_groupIsLogging)"
-PL/pgSQL function emaj._assign_tables(text,text[],text,jsonb,text,boolean) line 186 at PERFORM
-PL/pgSQL function emaj.emaj_assign_tables(text,text[],text,jsonb,text) line 9 at RETURN
+                                 v_timeId, v_groupIsRollbackable, v_groupIsLogging)"
+PL/pgSQL function emaj._assign_tables(text,text[],text,jsonb,text,boolean,boolean) line 237 at PERFORM
+PL/pgSQL function emaj.emaj_assign_tables(text,text[],text,jsonb,text) line 7 at RETURN
 NOTICE:  table "mytbl1_log" does not exist, skipping
 CONTEXT:  SQL statement "DROP TABLE IF EXISTS emaj_myschema2.mytbl1_log"
 PL/pgSQL function emaj._create_tbl(text,text,text,integer,text,text,bigint,boolean,boolean) line 80 at EXECUTE
 SQL statement "SELECT emaj._create_tbl(v_schema, v_oneTable, v_group, v_priority, v_logDatTsp, v_logIdxTsp,
-                               v_timeId, v_groupIsRollbackable, v_groupIsLogging)"
-PL/pgSQL function emaj._assign_tables(text,text[],text,jsonb,text,boolean) line 186 at PERFORM
-PL/pgSQL function emaj.emaj_assign_tables(text,text[],text,jsonb,text) line 9 at RETURN
+                                 v_timeId, v_groupIsRollbackable, v_groupIsLogging)"
+PL/pgSQL function emaj._assign_tables(text,text[],text,jsonb,text,boolean,boolean) line 237 at PERFORM
+PL/pgSQL function emaj.emaj_assign_tables(text,text[],text,jsonb,text) line 7 at RETURN
 NOTICE:  trigger "emaj_log_trg" for relation "myschema2.mytbl1" does not exist, skipping
 CONTEXT:  SQL statement "DROP TRIGGER IF EXISTS emaj_log_trg ON myschema2.mytbl1"
 PL/pgSQL function emaj._create_log_trigger(text,text,text,text) line 9 at EXECUTE
 SQL statement "SELECT emaj._create_log_trigger(v_fullTableName, v_logTableName, v_sequenceName, v_logFnctName)"
 PL/pgSQL function emaj._create_tbl(text,text,text,integer,text,text,bigint,boolean,boolean) line 127 at PERFORM
 SQL statement "SELECT emaj._create_tbl(v_schema, v_oneTable, v_group, v_priority, v_logDatTsp, v_logIdxTsp,
-                               v_timeId, v_groupIsRollbackable, v_groupIsLogging)"
-PL/pgSQL function emaj._assign_tables(text,text[],text,jsonb,text,boolean) line 186 at PERFORM
-PL/pgSQL function emaj.emaj_assign_tables(text,text[],text,jsonb,text) line 9 at RETURN
+                                 v_timeId, v_groupIsRollbackable, v_groupIsLogging)"
+PL/pgSQL function emaj._assign_tables(text,text[],text,jsonb,text,boolean,boolean) line 237 at PERFORM
+PL/pgSQL function emaj.emaj_assign_tables(text,text[],text,jsonb,text) line 7 at RETURN
 NOTICE:  trigger "emaj_trunc_trg" for relation "myschema2.mytbl1" does not exist, skipping
 CONTEXT:  SQL statement "DROP TRIGGER IF EXISTS emaj_trunc_trg ON myschema2.mytbl1"
 PL/pgSQL function emaj._create_tbl(text,text,text,integer,text,text,bigint,boolean,boolean) line 135 at EXECUTE
 SQL statement "SELECT emaj._create_tbl(v_schema, v_oneTable, v_group, v_priority, v_logDatTsp, v_logIdxTsp,
-                               v_timeId, v_groupIsRollbackable, v_groupIsLogging)"
-PL/pgSQL function emaj._assign_tables(text,text[],text,jsonb,text,boolean) line 186 at PERFORM
-PL/pgSQL function emaj.emaj_assign_tables(text,text[],text,jsonb,text) line 9 at RETURN
+                                 v_timeId, v_groupIsRollbackable, v_groupIsLogging)"
+PL/pgSQL function emaj._assign_tables(text,text[],text,jsonb,text,boolean,boolean) line 237 at PERFORM
+PL/pgSQL function emaj.emaj_assign_tables(text,text[],text,jsonb,text) line 7 at RETURN
 NOTICE:  table "mytbl2_log" does not exist, skipping
 CONTEXT:  SQL statement "DROP TABLE IF EXISTS emaj_myschema2.mytbl2_log"
 PL/pgSQL function emaj._create_tbl(text,text,text,integer,text,text,bigint,boolean,boolean) line 80 at EXECUTE
 SQL statement "SELECT emaj._create_tbl(v_schema, v_oneTable, v_group, v_priority, v_logDatTsp, v_logIdxTsp,
-                               v_timeId, v_groupIsRollbackable, v_groupIsLogging)"
-PL/pgSQL function emaj._assign_tables(text,text[],text,jsonb,text,boolean) line 186 at PERFORM
-PL/pgSQL function emaj.emaj_assign_tables(text,text[],text,jsonb,text) line 9 at RETURN
+                                 v_timeId, v_groupIsRollbackable, v_groupIsLogging)"
+PL/pgSQL function emaj._assign_tables(text,text[],text,jsonb,text,boolean,boolean) line 237 at PERFORM
+PL/pgSQL function emaj.emaj_assign_tables(text,text[],text,jsonb,text) line 7 at RETURN
 NOTICE:  trigger "emaj_log_trg" for relation "myschema2.mytbl2" does not exist, skipping
 CONTEXT:  SQL statement "DROP TRIGGER IF EXISTS emaj_log_trg ON myschema2.mytbl2"
 PL/pgSQL function emaj._create_log_trigger(text,text,text,text) line 9 at EXECUTE
 SQL statement "SELECT emaj._create_log_trigger(v_fullTableName, v_logTableName, v_sequenceName, v_logFnctName)"
 PL/pgSQL function emaj._create_tbl(text,text,text,integer,text,text,bigint,boolean,boolean) line 127 at PERFORM
 SQL statement "SELECT emaj._create_tbl(v_schema, v_oneTable, v_group, v_priority, v_logDatTsp, v_logIdxTsp,
-                               v_timeId, v_groupIsRollbackable, v_groupIsLogging)"
-PL/pgSQL function emaj._assign_tables(text,text[],text,jsonb,text,boolean) line 186 at PERFORM
-PL/pgSQL function emaj.emaj_assign_tables(text,text[],text,jsonb,text) line 9 at RETURN
+                                 v_timeId, v_groupIsRollbackable, v_groupIsLogging)"
+PL/pgSQL function emaj._assign_tables(text,text[],text,jsonb,text,boolean,boolean) line 237 at PERFORM
+PL/pgSQL function emaj.emaj_assign_tables(text,text[],text,jsonb,text) line 7 at RETURN
 NOTICE:  trigger "emaj_trunc_trg" for relation "myschema2.mytbl2" does not exist, skipping
 CONTEXT:  SQL statement "DROP TRIGGER IF EXISTS emaj_trunc_trg ON myschema2.mytbl2"
 PL/pgSQL function emaj._create_tbl(text,text,text,integer,text,text,bigint,boolean,boolean) line 135 at EXECUTE
 SQL statement "SELECT emaj._create_tbl(v_schema, v_oneTable, v_group, v_priority, v_logDatTsp, v_logIdxTsp,
-                               v_timeId, v_groupIsRollbackable, v_groupIsLogging)"
-PL/pgSQL function emaj._assign_tables(text,text[],text,jsonb,text,boolean) line 186 at PERFORM
-PL/pgSQL function emaj.emaj_assign_tables(text,text[],text,jsonb,text) line 9 at RETURN
+                                 v_timeId, v_groupIsRollbackable, v_groupIsLogging)"
+PL/pgSQL function emaj._assign_tables(text,text[],text,jsonb,text,boolean,boolean) line 237 at PERFORM
+PL/pgSQL function emaj.emaj_assign_tables(text,text[],text,jsonb,text) line 7 at RETURN
 WARNING:  _check_fk_groups: The foreign key "mytbl6_col61_fkey" on the table "myschema2.mytbl6" references the table "myschema2.mytbl7" that is outside the groups (myGroup2).
 CONTEXT:  SQL statement "SELECT emaj._check_fk_groups(array[v_group])"
-PL/pgSQL function emaj._assign_tables(text,text[],text,jsonb,text,boolean) line 224 at PERFORM
-PL/pgSQL function emaj.emaj_assign_tables(text,text[],text,jsonb,text) line 9 at RETURN
+PL/pgSQL function emaj._assign_tables(text,text[],text,jsonb,text,boolean,boolean) line 278 at PERFORM
+PL/pgSQL function emaj.emaj_assign_tables(text,text[],text,jsonb,text) line 7 at RETURN
 WARNING:  _check_fk_groups: The table "myschema2.mytbl6" is referenced by the foreign key "mytbl8_col81_fkey" on the table "myschema2.mytbl8" that is outside the groups (myGroup2).
 CONTEXT:  SQL statement "SELECT emaj._check_fk_groups(array[v_group])"
-PL/pgSQL function emaj._assign_tables(text,text[],text,jsonb,text,boolean) line 224 at PERFORM
-PL/pgSQL function emaj.emaj_assign_tables(text,text[],text,jsonb,text) line 9 at RETURN
+PL/pgSQL function emaj._assign_tables(text,text[],text,jsonb,text,boolean,boolean) line 278 at PERFORM
+PL/pgSQL function emaj.emaj_assign_tables(text,text[],text,jsonb,text) line 7 at RETURN
  emaj_assign_tables 
 --------------------
                   3
 (1 row)
 
-select emaj.emaj_assign_sequences('myschema2','{"myseq1","myseq2"}','myGroup2');
+  select emaj.emaj_assign_sequences('myschema2','{"myseq1","myseq2"}','myGroup2');
  emaj_assign_sequences 
 -----------------------
                      2
+(1 row)
+
+commit;
+-- alter a table in a logging group
+select emaj.emaj_remove_table('myschema1','mytbl4');
+ emaj_remove_table 
+-------------------
+                 1
+(1 row)
+
+alter table myschema1.mytbl4 alter column col45 type varchar(15);
+select emaj.emaj_assign_table('myschema1','mytbl4','myGroup1');
+NOTICE:  table "mytbl4_log" does not exist, skipping
+CONTEXT:  SQL statement "DROP TABLE IF EXISTS emaj_myschema1.mytbl4_log"
+PL/pgSQL function emaj._create_tbl(text,text,text,integer,text,text,bigint,boolean,boolean) line 80 at EXECUTE
+SQL statement "SELECT emaj._create_tbl(v_schema, v_oneTable, v_group, v_priority, v_logDatTsp, v_logIdxTsp,
+                                 v_timeId, v_groupIsRollbackable, v_groupIsLogging)"
+PL/pgSQL function emaj._assign_tables(text,text[],text,jsonb,text,boolean,boolean) line 237 at PERFORM
+PL/pgSQL function emaj.emaj_assign_table(text,text,text,jsonb,text) line 7 at RETURN
+NOTICE:  trigger "emaj_log_trg" for relation "myschema1.mytbl4" does not exist, skipping
+CONTEXT:  SQL statement "DROP TRIGGER IF EXISTS emaj_log_trg ON myschema1.mytbl4"
+PL/pgSQL function emaj._create_log_trigger(text,text,text,text) line 9 at EXECUTE
+SQL statement "SELECT emaj._create_log_trigger(v_fullTableName, v_logTableName, v_sequenceName, v_logFnctName)"
+PL/pgSQL function emaj._create_tbl(text,text,text,integer,text,text,bigint,boolean,boolean) line 127 at PERFORM
+SQL statement "SELECT emaj._create_tbl(v_schema, v_oneTable, v_group, v_priority, v_logDatTsp, v_logIdxTsp,
+                                 v_timeId, v_groupIsRollbackable, v_groupIsLogging)"
+PL/pgSQL function emaj._assign_tables(text,text[],text,jsonb,text,boolean,boolean) line 237 at PERFORM
+PL/pgSQL function emaj.emaj_assign_table(text,text,text,jsonb,text) line 7 at RETURN
+NOTICE:  trigger "emaj_trunc_trg" for relation "myschema1.mytbl4" does not exist, skipping
+CONTEXT:  SQL statement "DROP TRIGGER IF EXISTS emaj_trunc_trg ON myschema1.mytbl4"
+PL/pgSQL function emaj._create_tbl(text,text,text,integer,text,text,bigint,boolean,boolean) line 135 at EXECUTE
+SQL statement "SELECT emaj._create_tbl(v_schema, v_oneTable, v_group, v_priority, v_logDatTsp, v_logIdxTsp,
+                                 v_timeId, v_groupIsRollbackable, v_groupIsLogging)"
+PL/pgSQL function emaj._assign_tables(text,text[],text,jsonb,text,boolean,boolean) line 237 at PERFORM
+PL/pgSQL function emaj.emaj_assign_table(text,text,text,jsonb,text) line 7 at RETURN
+ emaj_assign_table 
+-------------------
+                 1
+(1 row)
+
+begin;
+  select emaj.emaj_remove_table('myschema1','mytbl4');
+ emaj_remove_table 
+-------------------
+                 1
+(1 row)
+
+  alter table myschema1.mytbl4 alter column col45 type varchar(10);
+  select emaj.emaj_assign_table('myschema1','mytbl4','myGroup1');
+NOTICE:  table "mytbl4_log" does not exist, skipping
+CONTEXT:  SQL statement "DROP TABLE IF EXISTS emaj_myschema1.mytbl4_log"
+PL/pgSQL function emaj._create_tbl(text,text,text,integer,text,text,bigint,boolean,boolean) line 80 at EXECUTE
+SQL statement "SELECT emaj._create_tbl(v_schema, v_oneTable, v_group, v_priority, v_logDatTsp, v_logIdxTsp,
+                                 v_timeId, v_groupIsRollbackable, v_groupIsLogging)"
+PL/pgSQL function emaj._assign_tables(text,text[],text,jsonb,text,boolean,boolean) line 237 at PERFORM
+PL/pgSQL function emaj.emaj_assign_table(text,text,text,jsonb,text) line 7 at RETURN
+NOTICE:  trigger "emaj_log_trg" for relation "myschema1.mytbl4" does not exist, skipping
+CONTEXT:  SQL statement "DROP TRIGGER IF EXISTS emaj_log_trg ON myschema1.mytbl4"
+PL/pgSQL function emaj._create_log_trigger(text,text,text,text) line 9 at EXECUTE
+SQL statement "SELECT emaj._create_log_trigger(v_fullTableName, v_logTableName, v_sequenceName, v_logFnctName)"
+PL/pgSQL function emaj._create_tbl(text,text,text,integer,text,text,bigint,boolean,boolean) line 127 at PERFORM
+SQL statement "SELECT emaj._create_tbl(v_schema, v_oneTable, v_group, v_priority, v_logDatTsp, v_logIdxTsp,
+                                 v_timeId, v_groupIsRollbackable, v_groupIsLogging)"
+PL/pgSQL function emaj._assign_tables(text,text[],text,jsonb,text,boolean,boolean) line 237 at PERFORM
+PL/pgSQL function emaj.emaj_assign_table(text,text,text,jsonb,text) line 7 at RETURN
+NOTICE:  trigger "emaj_trunc_trg" for relation "myschema1.mytbl4" does not exist, skipping
+CONTEXT:  SQL statement "DROP TRIGGER IF EXISTS emaj_trunc_trg ON myschema1.mytbl4"
+PL/pgSQL function emaj._create_tbl(text,text,text,integer,text,text,bigint,boolean,boolean) line 135 at EXECUTE
+SQL statement "SELECT emaj._create_tbl(v_schema, v_oneTable, v_group, v_priority, v_logDatTsp, v_logIdxTsp,
+                                 v_timeId, v_groupIsRollbackable, v_groupIsLogging)"
+PL/pgSQL function emaj._assign_tables(text,text[],text,jsonb,text,boolean,boolean) line 237 at PERFORM
+PL/pgSQL function emaj.emaj_assign_table(text,text,text,jsonb,text) line 7 at RETURN
+ emaj_assign_table 
+-------------------
+                 1
 (1 row)
 
 commit;
@@ -2702,6 +2788,14 @@ select emaj.emaj_force_drop_group('myGroup1');
 select emaj.emaj_force_drop_group('myGroup2');
 NOTICE:  table "myTbl3_log" does not exist, skipping
 CONTEXT:  SQL statement "DROP TABLE IF EXISTS emaj_myschema2."myTbl3_log" CASCADE"
+PL/pgSQL function emaj._drop_tbl(emaj.emaj_relation,bigint) line 32 at EXECUTE
+SQL statement "SELECT CASE WHEN r_rel.rel_kind = 'r' THEN emaj._drop_tbl(r_rel, v_timeId)
+                     WHEN r_rel.rel_kind = 'S' THEN emaj._drop_seq(r_rel, v_timeId) END"
+PL/pgSQL function emaj._drop_group(text,boolean) line 23 at PERFORM
+SQL statement "SELECT emaj._drop_group(v_groupName, TRUE)"
+PL/pgSQL function emaj.emaj_force_drop_group(text) line 19 at SQL statement
+NOTICE:  table "mytbl1_log_2" does not exist, skipping
+CONTEXT:  SQL statement "DROP TABLE IF EXISTS emaj_myschema2.mytbl1_log_2 CASCADE"
 PL/pgSQL function emaj._drop_tbl(emaj.emaj_relation,bigint) line 32 at EXECUTE
 SQL statement "SELECT CASE WHEN r_rel.rel_kind = 'r' THEN emaj._drop_tbl(r_rel, v_timeId)
                      WHEN r_rel.rel_kind = 'S' THEN emaj._drop_seq(r_rel, v_timeId) END"
@@ -2967,13 +3061,13 @@ select hist_function, hist_event, hist_object,
  LOCK_GROUP              | END                          | myGroup2                     | 6 tables locked, 0 deadlock(s)                                                                                         | postgres
  SET_MARK_GROUP          | END                          | myGroup2                     | Before ADD_SEQ                                                                                                         | postgres
  ADJUST_GROUP_PROPERTIES |                              | myGroup2                     | Set the group_has_waiting_changes column to true                                                                       | postgres
- ALTER_GROUP             | BEGIN                        | myGroup2                     |                                                                                                                        | postgres
+ ASSIGN_SEQUENCE         | BEGIN                        |                              |                                                                                                                        | postgres
  LOCK_GROUP              | BEGIN                        | myGroup2                     |                                                                                                                        | postgres
  LOCK_GROUP              | END                          | myGroup2                     | 6 tables locked, 0 deadlock(s)                                                                                         | postgres
  SET_MARK_GROUP          | BEGIN                        | myGroup2                     | Alter to add myseq2                                                                                                    | postgres
  SET_MARK_GROUP          | END                          | myGroup2                     | Alter to add myseq2                                                                                                    | postgres
- ALTER_GROUP             | SEQUENCE ADDED               | myschema2.myseq2             | To the group myGroup2                                                                                                  | postgres
- ALTER_GROUP             | END                          | myGroup2                     | Timestamp Id : 6058                                                                                                    | postgres
+ ASSIGN_SEQUENCE         | SEQUENCE ADDED               | myschema2.myseq2             | To the logging group myGroup2                                                                                          | postgres
+ ASSIGN_SEQUENCE         | END                          |                              | 1 sequences assigned to the group myGroup2                                                                             | postgres
  SET_MARK_GROUP          | BEGIN                        | myGroup2                     |                                                                                                                        | postgres
  LOCK_GROUP              | BEGIN                        | myGroup2                     |                                                                                                                        | postgres
  LOCK_GROUP              | END                          | myGroup2                     | 6 tables locked, 0 deadlock(s)                                                                                         | postgres
@@ -3051,13 +3145,14 @@ select hist_function, hist_event, hist_object,
  LOCK_GROUP              | BEGIN                        | myGroup1                     |                                                                                                                        | postgres
  LOCK_GROUP              | END                          | myGroup1                     | 5 tables locked, 0 deadlock(s)                                                                                         | postgres
  SET_MARK_GROUP          | END                          | myGroup1                     | Before_remove                                                                                                          | postgres
- ALTER_GROUP             | BEGIN                        | myGroup1                     |                                                                                                                        | postgres
+ REMOVE_SEQUENCE         | BEGIN                        |                              |                                                                                                                        | postgres
  LOCK_GROUP              | BEGIN                        | myGroup1                     |                                                                                                                        | postgres
  LOCK_GROUP              | END                          | myGroup1                     | 5 tables locked, 0 deadlock(s)                                                                                         | postgres
  SET_MARK_GROUP          | BEGIN                        | myGroup1                     | Sequence_removed                                                                                                       | postgres
  SET_MARK_GROUP          | END                          | myGroup1                     | Sequence_removed                                                                                                       | postgres
- ALTER_GROUP             | SEQUENCE REMOVED             | myschema1."myTbl3_col31_seq" | From the group myGroup1                                                                                                | postgres
- ALTER_GROUP             | END                          | myGroup1                     | Timestamp Id : 6069                                                                                                    | postgres
+ REMOVE_SEQUENCE         | SEQUENCE REMOVED             | myschema1."myTbl3_col31_seq" | From the logging group myGroup1                                                                                        | postgres
+ REMOVE_SEQUENCE         | END                          |                              | 1 sequences removed from their groups                                                                                  | postgres
+ ADJUST_GROUP_PROPERTIES |                              | myGroup1                     | Set the group_has_waiting_changes column to false                                                                      | postgres
  SNAP_GROUP              | BEGIN                        | myGroup1                     | /tmp/emaj_test/alter                                                                                                   | postgres
  SNAP_GROUP              | END                          | myGroup1                     | 6 tables/sequences processed                                                                                           | postgres
  SNAP_LOG_GROUP          | BEGIN                        | myGroup1                     | From mark Mk1 to current situation towards /tmp/emaj_test/alter                                                        | postgres
@@ -3085,13 +3180,13 @@ select hist_function, hist_event, hist_object,
  LOCK_GROUP              | BEGIN                        | myGroup2                     |                                                                                                                        | postgres
  LOCK_GROUP              | END                          | myGroup2                     | 6 tables locked, 0 deadlock(s)                                                                                         | postgres
  SET_MARK_GROUP          | END                          | myGroup2                     | Before ADD_TBL                                                                                                         | postgres
- ALTER_GROUP             | BEGIN                        | myGroup2                     |                                                                                                                        | postgres
+ ASSIGN_TABLE            | BEGIN                        |                              |                                                                                                                        | postgres
  LOCK_GROUP              | BEGIN                        | myGroup2                     |                                                                                                                        | postgres
  LOCK_GROUP              | END                          | myGroup2                     | 6 tables locked, 0 deadlock(s)                                                                                         | postgres
  SET_MARK_GROUP          | BEGIN                        | myGroup2                     | Alter to add mytbl7                                                                                                    | postgres
  SET_MARK_GROUP          | END                          | myGroup2                     | Alter to add mytbl7                                                                                                    | postgres
- ALTER_GROUP             | TABLE ADDED                  | myschema2.mytbl7             | To the group myGroup2                                                                                                  | postgres
- ALTER_GROUP             | END                          | myGroup2                     | Timestamp Id : 6080                                                                                                    | postgres
+ ASSIGN_TABLE            | TABLE ADDED                  | myschema2.mytbl7             | To the logging group myGroup2                                                                                          | postgres
+ ASSIGN_TABLE            | END                          |                              | 1 tables assigned to the group myGroup2                                                                                | postgres
  SET_MARK_GROUP          | BEGIN                        | myGroup2                     |                                                                                                                        | postgres
  LOCK_GROUP              | BEGIN                        | myGroup2                     |                                                                                                                        | postgres
  LOCK_GROUP              | END                          | myGroup2                     | 7 tables locked, 0 deadlock(s)                                                                                         | postgres
@@ -3171,14 +3266,15 @@ select hist_function, hist_event, hist_object,
  CLEANUP_RLBK_STATE      |                              | Rollback id 6008             | set to COMMITTED                                                                                                       | postgres
  SET_MARK_GROUP          | END                          | myGroup1                     | Mk2c                                                                                                                   | postgres
  ADJUST_GROUP_PROPERTIES |                              | myGroup1                     | Set the group_has_waiting_changes column to true                                                                       | postgres
- ALTER_GROUP             | BEGIN                        | myGroup1                     |                                                                                                                        | postgres
- LOCK_GROUP              | BEGIN                        | myGroup1                     |                                                                                                                        | postgres
- LOCK_GROUP              | END                          | myGroup1                     | 5 tables locked, 0 deadlock(s)                                                                                         | postgres
- SET_MARK_GROUP          | BEGIN                        | myGroup1                     | 2 tables removed from myGroup1                                                                                         | postgres
- SET_MARK_GROUP          | END                          | myGroup1                     | 2 tables removed from myGroup1                                                                                         | postgres
- ALTER_GROUP             | TABLE REMOVED                | myschema1."myTbl3"           | From the group myGroup1                                                                                                | postgres
- ALTER_GROUP             | TABLE REMOVED                | myschema1.mytbl2b            | From the group myGroup1                                                                                                | postgres
- ALTER_GROUP             | END                          | myGroup1                     | Timestamp Id : 6093                                                                                                    | postgres
+ REMOVE_TABLES           | BEGIN                        |                              |                                                                                                                        | postgres
+ LOCK_GROUP              | BEGIN                        | myGroup1,myGroup1            |                                                                                                                        | postgres
+ LOCK_GROUP              | END                          | myGroup1,myGroup1            | 5 tables locked, 0 deadlock(s)                                                                                         | postgres
+ SET_MARK_GROUP          | BEGIN                        | myGroup1,myGroup1            | 2 tables removed from myGroup1                                                                                         | postgres
+ SET_MARK_GROUP          | END                          | myGroup1,myGroup1            | 2 tables removed from myGroup1                                                                                         | postgres
+ REMOVE_TABLES           | TABLE REMOVED                | myschema1."myTbl3"           | From the logging group myGroup1                                                                                        | postgres
+ REMOVE_TABLES           | TABLE REMOVED                | myschema1.mytbl2b            | From the logging group myGroup1                                                                                        | postgres
+ REMOVE_TABLES           | END                          |                              | 2 tables removed from their groups                                                                                     | postgres
+ ADJUST_GROUP_PROPERTIES |                              | myGroup1                     | Set the group_has_waiting_changes column to false                                                                      | postgres
  SNAP_GROUP              | BEGIN                        | myGroup1                     | /tmp/emaj_test/alter                                                                                                   | postgres
  SNAP_GROUP              | END                          | myGroup1                     | 5 tables/sequences processed                                                                                           | postgres
  SNAP_LOG_GROUP          | BEGIN                        | myGroup1                     | From initial mark to current situation towards /tmp/emaj_test/alter                                                    | postgres
@@ -3451,6 +3547,7 @@ select hist_function, hist_event, hist_object,
  SET_MARK_GROUP          | BEGIN                        | myGroup2                     | Start                                                                                                                  | postgres
  SET_MARK_GROUP          | END                          | myGroup2                     | Start                                                                                                                  | postgres
  START_GROUP             | END                          | myGroup2                     | 8 tables/sequences processed                                                                                           | postgres
+ REMOVE_TABLES           | BEGIN                        |                              |                                                                                                                        | postgres
  LOCK_GROUP              | BEGIN                        | myGroup2,myGroup2,myGroup2   |                                                                                                                        | postgres
  LOCK_GROUP              | END                          | myGroup2,myGroup2,myGroup2   | 6 tables locked, 0 deadlock(s)                                                                                         | postgres
  SET_MARK_GROUP          | BEGIN                        | myGroup2,myGroup2,myGroup2   | REMOVE_3_TABLES                                                                                                        | postgres
@@ -3458,11 +3555,15 @@ select hist_function, hist_event, hist_object,
  REMOVE_TABLES           | TABLE REMOVED                | myschema2."myTbl3"           | From the logging group myGroup2                                                                                        | postgres
  REMOVE_TABLES           | TABLE REMOVED                | myschema2.mytbl1             | From the logging group myGroup2                                                                                        | postgres
  REMOVE_TABLES           | TABLE REMOVED                | myschema2.mytbl2             | From the logging group myGroup2                                                                                        | postgres
+ REMOVE_TABLES           | END                          |                              | 3 tables removed from their groups                                                                                     | postgres
+ REMOVE_SEQUENCE         | BEGIN                        |                              |                                                                                                                        | postgres
  LOCK_GROUP              | BEGIN                        | myGroup2                     |                                                                                                                        | postgres
  LOCK_GROUP              | END                          | myGroup2                     | 3 tables locked, 0 deadlock(s)                                                                                         | postgres
  SET_MARK_GROUP          | BEGIN                        | myGroup2                     | REMOVE_1_SEQUENCES                                                                                                     | postgres
  SET_MARK_GROUP          | END                          | myGroup2                     | REMOVE_1_SEQUENCES                                                                                                     | postgres
  REMOVE_SEQUENCE         | SEQUENCE REMOVED             | myschema2.myseq1             | From the logging group myGroup2                                                                                        | postgres
+ REMOVE_SEQUENCE         | END                          |                              | 1 sequences removed from their groups                                                                                  | postgres
+ ASSIGN_TABLES           | BEGIN                        |                              |                                                                                                                        | postgres
  LOCK_GROUP              | BEGIN                        | myGroup2                     |                                                                                                                        | postgres
  LOCK_GROUP              | END                          | myGroup2                     | 3 tables locked, 0 deadlock(s)                                                                                         | postgres
  SET_MARK_GROUP          | BEGIN                        | myGroup2                     | ASSIGN_3_TABLES                                                                                                        | postgres
@@ -3470,12 +3571,18 @@ select hist_function, hist_event, hist_object,
  ASSIGN_TABLES           | TABLE ADDED                  | myschema2."myTbl3"           | To the logging group myGroup2                                                                                          | postgres
  ASSIGN_TABLES           | TABLE ADDED                  | myschema2.mytbl1             | To the logging group myGroup2                                                                                          | postgres
  ASSIGN_TABLES           | TABLE ADDED                  | myschema2.mytbl2             | To the logging group myGroup2                                                                                          | postgres
+ ASSIGN_TABLES           | END                          |                              | 3 tables assigned to the group myGroup2                                                                                | postgres
+ ASSIGN_SEQUENCES        | BEGIN                        |                              |                                                                                                                        | postgres
  LOCK_GROUP              | BEGIN                        | myGroup2                     |                                                                                                                        | postgres
  LOCK_GROUP              | END                          | myGroup2                     | 6 tables locked, 0 deadlock(s)                                                                                         | postgres
  SET_MARK_GROUP          | BEGIN                        | myGroup2                     | ASSIGN_2_SEQUENCES                                                                                                     | postgres
  SET_MARK_GROUP          | END                          | myGroup2                     | ASSIGN_2_SEQUENCES                                                                                                     | postgres
  ASSIGN_SEQUENCES        | SEQUENCE ADDED               | myschema2.myseq1             | To the logging group myGroup2                                                                                          | postgres
  ASSIGN_SEQUENCES        | SEQUENCE ADDED               | myschema2.myseq2             | To the logging group myGroup2                                                                                          | postgres
+ ASSIGN_SEQUENCES        | END                          |                              | 2 sequences assigned to the group myGroup2                                                                             | postgres
+ DISABLE_PROTECTION      | EVENT TRIGGERS DISABLED      |                              | emaj_protection_trg, emaj_sql_drop_trg, emaj_table_rewrite_trg                                                         | postgres
+ ENABLE_PROTECTION       | EVENT TRIGGERS ENABLED       |                              | emaj_protection_trg, emaj_sql_drop_trg, emaj_table_rewrite_trg                                                         | postgres
+ REMOVE_TABLES           | BEGIN                        |                              |                                                                                                                        | postgres
  LOCK_GROUP              | BEGIN                        | myGroup2,myGroup2,myGroup2   |                                                                                                                        | postgres
  LOCK_GROUP              | END                          | myGroup2,myGroup2,myGroup2   | 6 tables locked, 0 deadlock(s)                                                                                         | postgres
  SET_MARK_GROUP          | BEGIN                        | myGroup2,myGroup2,myGroup2   | REMOVE_%                                                                                                               | postgres
@@ -3483,12 +3590,16 @@ select hist_function, hist_event, hist_object,
  REMOVE_TABLES           | TABLE REMOVED                | myschema2."myTbl3"           | From the logging group myGroup2                                                                                        | postgres
  REMOVE_TABLES           | TABLE REMOVED                | myschema2.mytbl1             | From the logging group myGroup2                                                                                        | postgres
  REMOVE_TABLES           | TABLE REMOVED                | myschema2.mytbl2             | From the logging group myGroup2                                                                                        | postgres
+ REMOVE_TABLES           | END                          |                              | 3 tables removed from their groups                                                                                     | postgres
+ REMOVE_SEQUENCES        | BEGIN                        |                              |                                                                                                                        | postgres
  LOCK_GROUP              | BEGIN                        | myGroup2,myGroup2            |                                                                                                                        | postgres
  LOCK_GROUP              | END                          | myGroup2,myGroup2            | 3 tables locked, 0 deadlock(s)                                                                                         | postgres
  SET_MARK_GROUP          | BEGIN                        | myGroup2,myGroup2            | REMOVE_%                                                                                                               | postgres
  SET_MARK_GROUP          | END                          | myGroup2,myGroup2            | REMOVE_%                                                                                                               | postgres
  REMOVE_SEQUENCES        | SEQUENCE REMOVED             | myschema2.myseq1             | From the logging group myGroup2                                                                                        | postgres
  REMOVE_SEQUENCES        | SEQUENCE REMOVED             | myschema2.myseq2             | From the logging group myGroup2                                                                                        | postgres
+ REMOVE_SEQUENCES        | END                          |                              | 2 sequences removed from their groups                                                                                  | postgres
+ ASSIGN_TABLES           | BEGIN                        |                              |                                                                                                                        | postgres
  LOCK_GROUP              | BEGIN                        | myGroup2                     |                                                                                                                        | postgres
  LOCK_GROUP              | END                          | myGroup2                     | 3 tables locked, 0 deadlock(s)                                                                                         | postgres
  SET_MARK_GROUP          | BEGIN                        | myGroup2                     | ASSIGN_%                                                                                                               | postgres
@@ -3496,12 +3607,43 @@ select hist_function, hist_event, hist_object,
  ASSIGN_TABLES           | TABLE ADDED                  | myschema2."myTbl3"           | To the logging group myGroup2                                                                                          | postgres
  ASSIGN_TABLES           | TABLE ADDED                  | myschema2.mytbl1             | To the logging group myGroup2                                                                                          | postgres
  ASSIGN_TABLES           | TABLE ADDED                  | myschema2.mytbl2             | To the logging group myGroup2                                                                                          | postgres
+ ASSIGN_TABLES           | END                          |                              | 3 tables assigned to the group myGroup2                                                                                | postgres
+ ASSIGN_SEQUENCES        | BEGIN                        |                              |                                                                                                                        | postgres
  LOCK_GROUP              | BEGIN                        | myGroup2                     |                                                                                                                        | postgres
  LOCK_GROUP              | END                          | myGroup2                     | 6 tables locked, 0 deadlock(s)                                                                                         | postgres
  SET_MARK_GROUP          | BEGIN                        | myGroup2                     | ASSIGN_%                                                                                                               | postgres
  SET_MARK_GROUP          | END                          | myGroup2                     | ASSIGN_%                                                                                                               | postgres
  ASSIGN_SEQUENCES        | SEQUENCE ADDED               | myschema2.myseq1             | To the logging group myGroup2                                                                                          | postgres
  ASSIGN_SEQUENCES        | SEQUENCE ADDED               | myschema2.myseq2             | To the logging group myGroup2                                                                                          | postgres
+ ASSIGN_SEQUENCES        | END                          |                              | 2 sequences assigned to the group myGroup2                                                                             | postgres
+ REMOVE_TABLE            | BEGIN                        |                              |                                                                                                                        | postgres
+ LOCK_GROUP              | BEGIN                        | myGroup1                     |                                                                                                                        | postgres
+ LOCK_GROUP              | END                          | myGroup1                     | 5 tables locked, 0 deadlock(s)                                                                                         | postgres
+ SET_MARK_GROUP          | BEGIN                        | myGroup1                     | REMOVE_%                                                                                                               | postgres
+ SET_MARK_GROUP          | END                          | myGroup1                     | REMOVE_%                                                                                                               | postgres
+ REMOVE_TABLE            | TABLE REMOVED                | myschema1.mytbl4             | From the logging group myGroup1                                                                                        | postgres
+ REMOVE_TABLE            | END                          |                              | 1 tables removed from their groups                                                                                     | postgres
+ ASSIGN_TABLE            | BEGIN                        |                              |                                                                                                                        | postgres
+ LOCK_GROUP              | BEGIN                        | myGroup1                     |                                                                                                                        | postgres
+ LOCK_GROUP              | END                          | myGroup1                     | 4 tables locked, 0 deadlock(s)                                                                                         | postgres
+ SET_MARK_GROUP          | BEGIN                        | myGroup1                     | ASSIGN_%                                                                                                               | postgres
+ SET_MARK_GROUP          | END                          | myGroup1                     | ASSIGN_%                                                                                                               | postgres
+ ASSIGN_TABLE            | TABLE ADDED                  | myschema1.mytbl4             | To the logging group myGroup1                                                                                          | postgres
+ ASSIGN_TABLE            | END                          |                              | 1 tables assigned to the group myGroup1                                                                                | postgres
+ REMOVE_TABLE            | BEGIN                        |                              |                                                                                                                        | postgres
+ LOCK_GROUP              | BEGIN                        | myGroup1                     |                                                                                                                        | postgres
+ LOCK_GROUP              | END                          | myGroup1                     | 5 tables locked, 0 deadlock(s)                                                                                         | postgres
+ SET_MARK_GROUP          | BEGIN                        | myGroup1                     | REMOVE_%                                                                                                               | postgres
+ SET_MARK_GROUP          | END                          | myGroup1                     | REMOVE_%                                                                                                               | postgres
+ REMOVE_TABLE            | TABLE REMOVED                | myschema1.mytbl4             | From the logging group myGroup1                                                                                        | postgres
+ REMOVE_TABLE            | END                          |                              | 1 tables removed from their groups                                                                                     | postgres
+ ASSIGN_TABLE            | BEGIN                        |                              |                                                                                                                        | postgres
+ LOCK_GROUP              | BEGIN                        | myGroup1                     |                                                                                                                        | postgres
+ LOCK_GROUP              | END                          | myGroup1                     | 4 tables locked, 0 deadlock(s)                                                                                         | postgres
+ SET_MARK_GROUP          | BEGIN                        | myGroup1                     | ASSIGN_%                                                                                                               | postgres
+ SET_MARK_GROUP          | END                          | myGroup1                     | ASSIGN_%                                                                                                               | postgres
+ ASSIGN_TABLE            | TABLE ADDED                  | myschema1.mytbl4             | To the logging group myGroup1                                                                                          | postgres
+ ASSIGN_TABLE            | END                          |                              | 1 tables assigned to the group myGroup1                                                                                | postgres
  FORCE_DROP_GROUP        | BEGIN                        | myGroup1                     |                                                                                                                        | postgres
  FORCE_DROP_GROUP        | LOG_SCHEMA DROPPED           | emaj_myschema1               |                                                                                                                        | postgres
  FORCE_DROP_GROUP        | END                          | myGroup1                     | 7 tables/sequences processed                                                                                           | postgres
@@ -3511,7 +3653,7 @@ select hist_function, hist_event, hist_object,
  FORCE_DROP_GROUP        | BEGIN                        | myGroup4                     |                                                                                                                        | postgres
  FORCE_DROP_GROUP        | LOG_SCHEMA DROPPED           | emaj_myschema4               |                                                                                                                        | postgres
  FORCE_DROP_GROUP        | END                          | myGroup4                     | 5 tables/sequences processed                                                                                           | postgres
-(771 rows)
+(819 rows)
 
 select time_id, time_last_emaj_gid, time_event from emaj.emaj_time_stamp where time_id > 6000 order by time_id;
  time_id | time_last_emaj_gid | time_event 
@@ -3629,10 +3771,14 @@ select time_id, time_last_emaj_gid, time_event from emaj.emaj_time_stamp where t
     6133 |              11889 | A
     6134 |              11889 | A
     6135 |              11889 | A
-    6136 |              11889 | D
-    6137 |              11889 | D
-    6138 |              11889 | D
-(116 rows)
+    6136 |              11889 | A
+    6137 |              11889 | A
+    6138 |              11889 | A
+    6139 |              11889 | A
+    6140 |              11889 | D
+    6141 |              11889 | D
+    6142 |              11889 | D
+(120 rows)
 
 select * from emaj.emaj_alter_plan order by 1,2,3,4,5;
  altr_time_id |        altr_step         | altr_schema |   altr_tblseq    | altr_group | altr_priority | altr_group_is_logging | altr_new_group | altr_new_group_is_logging | altr_rlbk_id 
@@ -3741,13 +3887,13 @@ select * from emaj.emaj_alter_plan order by 1,2,3,4,5;
          6063 | REMOVE_SEQ               | myschema2   | myseq2           | myGroup2   |               | t                     |                |                           |         6003
          6064 | ADD_SEQ                  | myschema2   | myseq2           | myGroup2   |               | t                     |                |                           |         6003
          6065 | REMOVE_SEQ               | myschema2   | myseq2           | myGroup2   |               | t                     |                |                           |         6003
-         6069 | REMOVE_SEQ               | myschema1   | myTbl3_col31_seq | myGroup1   |             1 | t                     |                |                           |         6010
+         6069 | REMOVE_SEQ               | myschema1   | myTbl3_col31_seq | myGroup1   |               | t                     |                |                           |         6010
          6077 | ADD_SEQ                  | myschema1   | myTbl3_col31_seq | myGroup1   |             1 | t                     |                |                           |         6010
          6080 | ADD_TBL                  | myschema2   | mytbl7           | myGroup2   |               | t                     |                |                           |         6007
          6087 | REMOVE_TBL               | myschema2   | mytbl7           | myGroup2   |               | t                     |                |                           |         6008
          6088 | ADD_TBL                  | myschema2   | mytbl7           | myGroup2   |               | t                     |                |                           |         6008
          6090 | REMOVE_TBL               | myschema2   | mytbl7           | myGroup2   |               | t                     |                |                           |         6008
-         6093 | REMOVE_TBL               | myschema1   | myTbl3           | myGroup1   |            10 | t                     |                |                           |         6010
+         6093 | REMOVE_TBL               | myschema1   | myTbl3           | myGroup1   |               | t                     |                |                           |         6010
          6093 | REMOVE_TBL               | myschema1   | mytbl2b          | myGroup1   |               | t                     |                |                           |         6010
          6099 | REMOVE_TBL               | myschema1   | mytbl1           | myGroup1   |            20 | t                     |                |                           |         6011
          6105 | ADD_TBL                  | myschema1   | myTbl3           | myGroup1   |            10 | t                     |                |                           |         6013
@@ -3762,6 +3908,29 @@ select * from emaj.emaj_alter_plan order by 1,2,3,4,5;
          6126 | CHANGE_TBL_LOG_INDEX_TSP | myschema2   | myTbl3           | myGroup1   |               | t                     | myGroup2       | f                         |             
          6126 | MOVE_TBL                 | myschema2   | myTbl3           | myGroup1   |               | t                     | myGroup2       | f                         |             
          6126 | MOVE_SEQ                 | myschema2   | myTbl3_col31_seq | myGroup1   |               | t                     | myGroup2       | f                         |             
-(125 rows)
+         6128 | REMOVE_TBL               | myschema2   | myTbl3           | myGroup2   |               | t                     |                |                           |             
+         6128 | REMOVE_TBL               | myschema2   | mytbl1           | myGroup2   |               | t                     |                |                           |             
+         6128 | REMOVE_TBL               | myschema2   | mytbl2           | myGroup2   |               | t                     |                |                           |             
+         6129 | REMOVE_SEQ               | myschema2   | myseq1           | myGroup2   |               | t                     |                |                           |             
+         6130 | ADD_TBL                  | myschema2   | myTbl3           | myGroup2   |               | t                     |                |                           |             
+         6130 | ADD_TBL                  | myschema2   | mytbl1           | myGroup2   |               | t                     |                |                           |             
+         6130 | ADD_TBL                  | myschema2   | mytbl2           | myGroup2   |               | t                     |                |                           |             
+         6131 | ADD_SEQ                  | myschema2   | myseq1           | myGroup2   |               | t                     |                |                           |             
+         6131 | ADD_SEQ                  | myschema2   | myseq2           | myGroup2   |               | t                     |                |                           |             
+         6132 | REMOVE_TBL               | myschema2   | myTbl3           | myGroup2   |               | t                     |                |                           |             
+         6132 | REMOVE_TBL               | myschema2   | mytbl1           | myGroup2   |               | t                     |                |                           |             
+         6132 | REMOVE_TBL               | myschema2   | mytbl2           | myGroup2   |               | t                     |                |                           |             
+         6133 | REMOVE_SEQ               | myschema2   | myseq1           | myGroup2   |               | t                     |                |                           |             
+         6133 | REMOVE_SEQ               | myschema2   | myseq2           | myGroup2   |               | t                     |                |                           |             
+         6134 | ADD_TBL                  | myschema2   | myTbl3           | myGroup2   |               | t                     |                |                           |             
+         6134 | ADD_TBL                  | myschema2   | mytbl1           | myGroup2   |               | t                     |                |                           |             
+         6134 | ADD_TBL                  | myschema2   | mytbl2           | myGroup2   |               | t                     |                |                           |             
+         6135 | ADD_SEQ                  | myschema2   | myseq1           | myGroup2   |               | t                     |                |                           |             
+         6135 | ADD_SEQ                  | myschema2   | myseq2           | myGroup2   |               | t                     |                |                           |             
+         6136 | REMOVE_TBL               | myschema1   | mytbl4           | myGroup1   |               | t                     |                |                           |             
+         6137 | ADD_TBL                  | myschema1   | mytbl4           | myGroup1   |               | t                     |                |                           |             
+         6138 | REMOVE_TBL               | myschema1   | mytbl4           | myGroup1   |               | t                     |                |                           |             
+         6139 | ADD_TBL                  | myschema1   | mytbl4           | myGroup1   |               | t                     |                |                           |             
+(148 rows)
 
 truncate emaj.emaj_hist;

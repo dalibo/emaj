@@ -135,31 +135,67 @@ ou ::
 
 	SELECT emaj.emaj_assign_tables(‘<schéma>’,’<tableau.de.tables>’, '<nom.du.groupe>' [,’propriétés’ [,’<marque>’]] );
 
+ou ::
+
+	SELECT emaj.emaj_assign_tables(‘<schéma>’, '<filtre.de.tables.à.inclure>', '<filtre.de.tables.à.exclure>', '<nom.du.groupe>' [,’propriétés’ [,’<marque>’]] );
+
 Pour ajouter une ou plusieurs séquences dans un groupe de tables ::
 
-	SELECT emaj.emaj_assign_sequence(‘<schéma>’,’<séquence>’, '<nom.du.groupe>' [,’<marque>’]);
+	SELECT emaj.emaj_assign_sequence('<schéma>', '<séquence>', '<nom.du.groupe>' [,'<marque>']);
 
 ou ::
 
-	SELECT emaj.emaj_assign_sequences(‘<schéma>’, ’<tableau.de.séquences>’, '<nom.du.groupe>' [,’<marque>’] );
+	SELECT emaj.emaj_assign_sequences('<schéma>', '<tableau.de.séquences>', '<nom.du.groupe>' [,'<marque>'] );
+
+ou ::
+
+	SELECT emaj.emaj_assign_sequences('<schéma>', '<filtre.de.séquences.à.inclure>', '<filtre.de.séquences.à.exclure>', '<nom.du.groupe>' [,’<marque>’] );
 
 Pour retirer une ou plusieurs tables d’un groupe de tables ::
 
-	SELECT emaj.emaj_remove_table(‘<schéma>’,’<table>’ [,’<marque>’] );
+	SELECT emaj.emaj_remove_table('<schéma>', '<table>' [,’<marque>’] );
 
 ou ::
 
-	SELECT emaj.emaj_remove_tables(‘<schéma>’,’<tableau.de.tables>’, [,’<marque>’] );
+	SELECT emaj.emaj_remove_tables('<schéma>', '<tableau.de.tables>' [,'<marque>'] );
+
+ou ::
+
+	SELECT emaj.emaj_remove_tables('<schéma>', '<filtre.de.tables.à.inclure>', '<filtre.de.tables.à.exclure>' [,'<marque>'] );
 
 Pour retirer une ou plusieurs séquences d’un groupe de tables ::
 
-	SELECT emaj.emaj_remove_sequence(‘<schéma>’,’<séquence>’, [,’<marque>’] );
+	SELECT emaj.emaj_remove_sequence('<schéma>', '<séquence>' [,’<marque>’] );
 
 ou ::
 
-	SELECT emaj.emaj_remove_sequences(‘<schéma>’, ’<tableau.de.séquences>’ [,’<marque>’] );
+	SELECT emaj.emaj_remove_sequences('<schéma>', '<tableau.de.séquences>' [,'<marque>'] );
 
-Pour les fonctions traitant plusieurs tables ou séquences en une seule opération, le paramètre fourni est un tableau de *TEXT*. Pour plus de précisions sur la syntaxe, on peut se reporter aux :ref:`tableaux de groupes <multi_groups_syntax>`.
+ou ::
+
+	SELECT emaj.emaj_remove_sequences('<schéma>', '<filtre.de.séquences.à.inclure>', '<filtre.de.séquences.à.exclure>' [,'<marque>'] );
+
+Pour les fonctions traitant plusieurs tables ou séquences en une seule opération, la liste des tables ou séquences à traiter est soit fournie par un paramètre de type tableau de *TEXT*, soit construite à partir de deux expressions rationnelles fournies en paramètres.
+
+Un tableau de *TEXT* est typiquement exprimé avec une syntaxe du type ::
+
+	ARRAY['élément1', 'élément2', ...]
+
+Les deux expressions rationnelles suivent la syntaxe *POSIX* (se référer à la documentation PostgreSQL pour plus de détails). Quelques exemples de filtres.
+
+Pour sélectionner toutes les tables ou séquences du schéma *mon_schema* ::
+
+	'mon_schema', '.*', ''
+
+Pour sélectionner toutes les tables de ce schéma, et dont le nom commence par *'tbl'* ::
+
+	'mon_schema', '^tbl.*', ''
+
+Pour sélectionner toutes les tables de ce schéma, et dont le nom commence par *'tbl'*, à l’exception de celles dont le nom se termine par *'_sav'* ::
+
+	'mon_schema', '^tbl.*', '_sav$'
+
+Les fonctions d’assignation à un groupe de tables construisant leur sélection à partir des deux expressions rationnelles tiennent compte du contexte des tables ou séquences concernées. Ne sont pas sélectionnées par exemple : les tables ou séquences déjà affectées, les tables sans clé primaire pour un groupe de tables *rollbackable* ou celles déclarées *UNLOGGED*.
 
 Le paramètre *<propriété>* des deux fonctions d’ajout de tables à un groupe de tables permet de préciser certaines propriétés pour la ou les tables. Ces propriétés correspondent aux colonnes *grpdef_priority*, *grpdef_log_dat_tsp* et *grpdef_log_idx_tsp* de la table *emaj_group_def*.
 

@@ -237,7 +237,7 @@ select emaj.emaj_assign_table('myschema1','mytbl1','myGroup1b');
 select emaj.emaj_assign_table('myschema1','mytbl1','myGroup1b');
 
 -----------------------------------
--- emaj_assign_tables
+-- emaj_assign_tables with array
 -----------------------------------
 -- error cases
 -- bad group name
@@ -253,6 +253,42 @@ select emaj.emaj_assign_tables('myschema1',array[''],'myGroup1b');
 select emaj.emaj_assign_tables('myschema1',array['mytbl2','mytbl2b','mytbl2'],'myGroup1b');
 
 select group_last_alter_time_id, group_nb_table, group_nb_sequence from emaj.emaj_group where group_name = 'myGroup1b';
+
+-----------------------------------
+-- emaj_assign_tables with filters
+-----------------------------------
+-- error cases
+-- bad group name
+select emaj.emaj_assign_tables('dummySchema','dummyIncludeFilter','dummyExcludeFilter','dummyGroup');
+-- bad schema
+select emaj.emaj_assign_tables('dummySchema','dummyIncludeFilter','dummyExcludeFilter','myGroup1b');
+select emaj.emaj_assign_tables('emaj','dummyIncludeFilter','dummyExcludeFilter','myGroup1b');
+-- empty tables array
+select emaj.emaj_assign_tables('myschema1',null,null,'myGroup1b');
+select emaj.emaj_assign_tables('myschema1','','','myGroup1b');
+select emaj.emaj_assign_tables('myschema1','mytbl1','mytbl1','myGroup1b');
+
+-- excluded tables
+-- bad types
+select emaj.emaj_assign_tables('myschema4','mytblp$','','myGroup1b');
+select emaj.emaj_assign_tables('myschema5','unlogged|oids','','myGroup1b');
+-- temp table
+begin;
+  CREATE TEMPORARY TABLE myTempTbl (
+    col1       INT     NOT NULL,
+    PRIMARY KEY (col1)
+  );
+  select emaj.emaj_assign_tables(nspname,'mytemptbl','','myGroup1b') from pg_class, pg_namespace
+    where relnamespace = pg_namespace.oid and relname = 'mytemptbl';
+rollback;
+-- table without pkey for a rollbackable group
+select emaj.emaj_assign_tables('phil''s schema3','myTbl2\\','','myGroup1b');
+
+-- already assigned
+select emaj.emaj_assign_tables('myschema1','mytbl(2|2b)$','','myGroup1b');
+
+-- OK
+  select emaj.emaj_assign_tables('myschema1','.*','mytbl(2|2b)$','myGroup1b');
 
 -----------------------------------
 -- emaj_remove_table
@@ -273,7 +309,7 @@ select emaj.emaj_remove_table('myschema1','mytbl1','EMAJ_LAST_MARK');
 select emaj.emaj_remove_table('myschema1','mytbl1');
 
 -----------------------------------
--- emaj_remove_tables
+-- emaj_remove_tables with array
 -----------------------------------
 -- error cases
 -- table not in a group
@@ -282,10 +318,21 @@ select emaj.emaj_remove_tables('myschema1',array['dummyTable','mytbl1','mytbl2']
 -- ok (with a duplicate table name)
 select emaj.emaj_remove_tables('myschema1',array['mytbl2','mytbl2b','mytbl2']);
 
+-----------------------------------
+-- emaj_remove_tables with filters
+-----------------------------------
+-- empty tables array
+select emaj.emaj_remove_tables('myschema1',null,null);
+select emaj.emaj_remove_tables('myschema1','','');
+select emaj.emaj_remove_tables('myschema1','mytbl1','mytbl1');
+
+-- ok
+select emaj.emaj_remove_tables('myschema1','my(t|T)bl\d$','mytbl2');
+
 select group_last_alter_time_id, group_nb_table, group_nb_sequence from emaj.emaj_group where group_name = 'myGroup1b';
 
 -----------------------------------
--- emaj_assign_sequence
+-- emaj_assign_sequence with array
 -----------------------------------
 select emaj.emaj_drop_group('myGroup2');
 select emaj.emaj_create_group('myGroup2b', true, true);  -- rollbackable and empty
@@ -314,7 +361,7 @@ select emaj.emaj_assign_sequence('myschema2','myseq1','myGroup2b');
 select emaj.emaj_assign_sequence('myschema2','myseq1','myGroup2b');
 
 -----------------------------------
--- emaj_assign_sequences
+-- emaj_assign_sequences with array
 -----------------------------------
 -- error cases
 -- bad group name
@@ -328,6 +375,26 @@ select emaj.emaj_assign_sequences('myschema2',array[''],'myGroup2b');
 
 -- ok (with a duplicate sequence name)
 select emaj.emaj_assign_sequences('myschema2',array['myseq2','myseq2'],'myGroup2b');
+
+-----------------------------------
+-- emaj_assign_sequences with filters
+-----------------------------------
+-- error cases
+-- bad group name
+select emaj.emaj_assign_sequences('dummySchema','dummyIncludeFilter','dummyExcludeFilter','dummyGroup');
+-- bad schema
+select emaj.emaj_assign_sequences('dummySchema','dummyIncludeFilter','dummyExcludeFilter','myGroup2b');
+select emaj.emaj_assign_sequences('emaj','dummyIncludeFilter','dummyExcludeFilter','myGroup2b');
+-- empty sequences array
+select emaj.emaj_assign_sequences('myschema2',null,null,'myGroup2b');
+select emaj.emaj_assign_sequences('myschema2','','','myGroup2b');
+select emaj.emaj_assign_sequences('myschema2','myseq2','myseq2','myGroup2b');
+
+-- already assigned
+select emaj.emaj_assign_sequences('myschema2','seq1','','myGroup2b');
+
+-- OK
+select emaj.emaj_assign_sequences('myschema2','.*','myseq1$','myGroup2b');
 
 select group_last_alter_time_id, group_nb_table, group_nb_sequence from emaj.emaj_group where group_name = 'myGroup2b';
 
@@ -350,7 +417,7 @@ select emaj.emaj_remove_sequence('myschema2','myseq1','EMAJ_LAST_MARK');
 select emaj.emaj_remove_sequence('myschema2','myseq1');
 
 -----------------------------------
--- emaj_remove_sequences
+-- emaj_remove_sequences with array
 -----------------------------------
 -- error cases
 -- sequence not in a group
@@ -358,6 +425,17 @@ select emaj.emaj_remove_sequences('myschema2',array['dummyTable','myseq2']);
 
 -- ok (with a duplicate sequence name)
 select emaj.emaj_remove_sequences('myschema2',array['myseq2','myseq2']);
+
+-----------------------------------
+-- emaj_remove_sequences with filters
+-----------------------------------
+-- empty tables array
+select emaj.emaj_remove_sequences('myschema2',null,null);
+select emaj.emaj_remove_sequences('myschema2','','');
+select emaj.emaj_remove_sequences('myschema2','myseq1','myseq1');
+
+-- ok
+select emaj.emaj_remove_sequences('myschema2','.*','');
 
 select group_last_alter_time_id, group_nb_table, group_nb_sequence from emaj.emaj_group where group_name = 'myGroup2b';
 

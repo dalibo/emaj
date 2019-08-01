@@ -38,6 +38,14 @@ The *hist_function* column can take the following values:
 +----------------------------------+----------------------------------------------------------------------------+
 | ALTER_GROUPS                     | tables groups change                                                       |
 +----------------------------------+----------------------------------------------------------------------------+
+| ASSIGN_SEQUENCE                  | sequence assigned to a tables group                                        |
++----------------------------------+----------------------------------------------------------------------------+
+| ASSIGN_SEQUENCES                 | sequences assigned to a tables group                                       |
++----------------------------------+----------------------------------------------------------------------------+
+| ASSIGN_TABLE                     | table assigned to a tables group                                           |
++----------------------------------+----------------------------------------------------------------------------+
+| ASSIGN_TABLES                    | tables assigned to a tables group                                          |
++----------------------------------+----------------------------------------------------------------------------+
 | CLEANUP_RLBK_STATE               | cleanup the state of recently completed rollback operations                |
 +----------------------------------+----------------------------------------------------------------------------+
 | COMMENT_GROUP                    | comment set on a group                                                     |
@@ -81,6 +89,14 @@ The *hist_function* column can take the following values:
 | PROTECT_MARK_GROUP               | set a protection against rollbacks on a mark for a group                   |
 +----------------------------------+----------------------------------------------------------------------------+
 | PURGE_HISTORY                    | delete from the *emaj_hist* table the events prior the retention delay     |
++----------------------------------+----------------------------------------------------------------------------+
+| REMOVE_SEQUENCE                  | sequence removed from its tables group                                     |
++----------------------------------+----------------------------------------------------------------------------+
+| REMOVE_SEQUENCES                 | sequences removed from their tables group                                  |
++----------------------------------+----------------------------------------------------------------------------+
+| REMOVE_TABLE                     | table removed from its tables group                                        |
++----------------------------------+----------------------------------------------------------------------------+
+| REMOVE_TABLES                    | tables removed from their tables group                                     |
 +----------------------------------+----------------------------------------------------------------------------+
 | RENAME_MARK_GROUP                | mark rename for a tables group                                             |
 +----------------------------------+----------------------------------------------------------------------------+

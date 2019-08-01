@@ -104,37 +104,74 @@ Somme functions allow to dynamically adjust the tables groups content without mo
 
 To add one or several tables into a tables group::
 
-	SELECT emaj.emaj_assign_table(‘<schema>’, ’<table>’, '<groupe.name>' [,’properties’ [,’<mark>’]]);
+	SELECT emaj.emaj_assign_table('<schema>', '<table>', '<groupe.name>' [,'properties' [,'<mark>']]);
 
 or ::
 
-	SELECT emaj.emaj_assign_tables(‘<schema>’, ’<tables.array>’, '<group.name>' [,’properties’ [,’<mark>’]] );
+	SELECT emaj.emaj_assign_tables('<schema>', '<tables.array>', '<group.name>' [,'properties' [,'<mark>']] );
+
+or ::
+
+	SELECT emaj.emaj_assign_tables('<schema>', '<tables.to.include.filter>', '<tables.to.exclude.filter>', '<group.name>' [,'properties' [, '<mark>']] );
+
 
 To add one or several sequences into a tables group::
 
-	SELECT emaj.emaj_assign_sequence(‘<schema>’, ’<sequence>’, '<group.name>' [,’<mark>’]);
+	SELECT emaj.emaj_assign_sequence('<schema>', '<sequence>', '<group.name>' [,'<mark>']);
 
 or ::
 
-	SELECT emaj.emaj_assign_sequences(‘<schema>’, ’<sequences.array>’, '<group.name>' [,’<mark>’] );
+	SELECT emaj.emaj_assign_sequences('<schema>', '<sequences.array>', '<group.name>' [,'<mark>'] );
+
+or ::
+
+	SELECT emaj.emaj_assign_sequences('<schema>', '<sequences.to.include.filter>', '<sequences.to.exclude.filter>', '<group.name>' [,'properties' [, '<mark>']] );
 
 To remove one or several tables from a tables group::
 
-	SELECT emaj.emaj_remove_table(‘<schema>’, ’<table>’ [,’<mark>’] );
+	SELECT emaj.emaj_remove_table('<schema>', '<table>' [,'<mark>'] );
 
 or ::
 
-	SELECT emaj.emaj_remove_tables(‘<schema>’, ’<tables.array>’ [,’<mark>’] );
+	SELECT emaj.emaj_remove_tables('<schema>', '<tables.array>' [,'<mark>'] );
+
+or ::
+
+	SELECT emaj.emaj_remove_tables('<schema>', '<tables.to.include.filter>', '<tables.to.exclude.filter>' [,'<mark>'] );
 
 To remove one or several sequences from a tables group::
 
-	SELECT emaj.emaj_remove_sequence(‘<schema>’, ’<sequence>’ [,’<mark>’] );
+	SELECT emaj.emaj_remove_sequence('<schema>', '<sequence>' [,'<mark>'] );
 
 or ::
 
-	SELECT emaj.emaj_remove_sequences(‘<schema>’, ’<sequences.array>’ [,’<mark>’] );
+	SELECT emaj.emaj_remove_sequences('<schema>', '<sequences.array>' [,'<mark>'] );
 
-For functions processing several tables or sequences in a single operation, the supplied parameter is a *TEXT* array. For more details about the syntax, refer to the :ref:`tables groups array <multi_groups_syntax>`.
+or ::
+
+	SELECT emaj.emaj_remove_sequences('<schema>', '<sequences.to.include.filter>', '<sequences.to.exclude.filter>' [,'<mark>'] );
+
+For functions processing several tables or sequences in a single operation, the list of tables or sequences to process is either provided by a parameter of type *TEXT* array, or  built with two regular expressions provided as parameters. 
+
+A *TEXT* array is typically expressed with a syntax like::
+
+	ARRAY['element_1', 'element_2', ...]
+
+Both regular expressions follow the POSIX rules. Refer to the PostgreSQL documentation for more details. Some examples.
+
+To selects all tables or sequences of the schema my_schema::
+
+	‘my_schema’,‘.*’,’’	
+
+To select all tables of this schema and whose name start with ‘tbl’::
+
+	‘my_schema’,‘^tbl.*’,’’
+
+To select all tables of this schema and whose name start with ‘tbl’, except those who end with ‘_sav’::
+
+	‘my_schema’,‘^tbl.*’,’_sav$’
+
+The functions assigning tables or sequences to tables groups that build their selection with regular expressions take into account the context of the tables or sequences. Are not selected for instance: tables or sequences already assigned or tables without primary key for *rollbackable* groups, or *UNLOGGED* tables.
 
 The *<properties>* parameter of both functions that assign a tables to a tables group allows to specify some properties for the table or tables. These properties correspond to the *grpdef_priority*, *grpdef_log_dat_tsp* and *grpdef_log_idx_tsp* columns of the *emaj_group_def* table.
 

@@ -15,11 +15,22 @@ E-Maj functions that are available to users are listed in alphabetic order below
 | :ref:`emaj_assign_sequence                       | | schema TEXT,                | 1 INT                                 |
 | <dynamic_ajustment>`                             | | sequence TEXT,              |                                       |
 |                                                  | | group TEXT,                 |                                       |
+|                                                  | | [ properties JSONB ]        |                                       |
 |                                                  | | [ mark TEXT ]               |                                       |
 +--------------------------------------------------+-------------------------------+---------------------------------------+
 | :ref:`emaj_assign_sequences                      | | schema TEXT,                | #.sequences INT                       |
 | <dynamic_ajustment>`                             | | sequences.array TEXT[],     |                                       |
 |                                                  | | group TEXT,                 |                                       |
+|                                                  | | [ properties JSONB ]        |                                       |
+|                                                  | | [ mark TEXT ]               |                                       |
++--------------------------------------------------+-------------------------------+---------------------------------------+
+| :ref:`emaj_assign_sequences                      | | schema TEXT,                | #.sequences INT                       |
+| <dynamic_ajustment>`                             | | sequences.to.include.filter |                                       |
+|                                                  | |   TEXT,                     |                                       |
+|                                                  | | sequences.to.exclude.filter |                                       |
+|                                                  | |   TEXT,                     |                                       |
+|                                                  | | group TEXT,                 |                                       |
+|                                                  | | [ properties JSONB ]        |                                       |
 |                                                  | | [ mark TEXT ]               |                                       |
 +--------------------------------------------------+-------------------------------+---------------------------------------+
 | :ref:`emaj_assign_table                          | | schema TEXT,                | 1 INT                                 |
@@ -30,6 +41,15 @@ E-Maj functions that are available to users are listed in alphabetic order below
 +--------------------------------------------------+-------------------------------+---------------------------------------+
 | :ref:`emaj_assign_tables                         | | schema TEXT,                | #.tables INT                          |
 | <dynamic_ajustment>`                             | | tables.array TEXT[],        |                                       |
+|                                                  | | group TEXT,                 |                                       |
+|                                                  | | [ properties JSONB ]        |                                       |
+|                                                  | | [ mark TEXT ]               |                                       |
++--------------------------------------------------+-------------------------------+---------------------------------------+
+| :ref:`emaj_assign_tables                         | | schema TEXT,                | #.tables INT                          |
+| <dynamic_ajustment>`                             | | tables.to.include.filter    |                                       |
+|                                                  | |   TEXT,                     |                                       |
+|                                                  | | tables.to.exclude.filter    |                                       |
+|                                                  | |   TEXT,                     |                                       |
 |                                                  | | group TEXT,                 |                                       |
 |                                                  | | [ properties JSONB ]        |                                       |
 |                                                  | | [ mark TEXT ]               |                                       |
@@ -147,12 +167,26 @@ E-Maj functions that are available to users are listed in alphabetic order below
 | <dynamic_ajustment>`                             | | sequences.array TEXT[],     |                                       |
 |                                                  | | [ mark TEXT ]               |                                       |
 +--------------------------------------------------+-------------------------------+---------------------------------------+
+| :ref:`emaj_remove_sequences                      | | schema TEXT,                | #.sequences INT                       |
+| <dynamic_ajustment>`                             | | sequences.to.include.filter |                                       |
+|                                                  | |   TEXT,                     |                                       |
+|                                                  | | sequences.to.exclude.filter |                                       |
+|                                                  | |   TEXT,                     |                                       |
+|                                                  | | [ mark TEXT ]               |                                       |
++--------------------------------------------------+-------------------------------+---------------------------------------+
 | :ref:`emaj_remove_table                          | | schema TEXT,                | 1 INT                                 |
 | <dynamic_ajustment>`                             | | table TEXT,                 |                                       |
 |                                                  | | [ mark TEXT ]               |                                       |
 +--------------------------------------------------+-------------------------------+---------------------------------------+
 | :ref:`emaj_remove_tables                         | | schema TEXT,                | #.tables INT                          |
 | <dynamic_ajustment>`                             | | tables.array TEXT[],        |                                       |
+|                                                  | | [ mark TEXT ]               |                                       |
++--------------------------------------------------+-------------------------------+---------------------------------------+
+| :ref:`emaj_remove_tables                         | | schema TEXT,                | #.tables INT                          |
+| <dynamic_ajustment>`                             | | tables.to.include.filter    |                                       |
+|                                                  | |   TEXT,                     |                                       |
+|                                                  | | tables.to.exclude.filter    |                                       |
+|                                                  | |   TEXT,                     |                                       |
 |                                                  | | [ mark TEXT ]               |                                       |
 +--------------------------------------------------+-------------------------------+---------------------------------------+
 | :ref:`emaj_rename_mark_group                     | | group TEXT,                 |                                       |

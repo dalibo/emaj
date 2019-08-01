@@ -422,27 +422,27 @@ select emaj.emaj_assign_table('myschema1','mytbl1','dummyGroup');
 ERROR:  _check_group_names: The group "dummyGroup" does not exist.
 CONTEXT:  PL/pgSQL function emaj._check_group_names(text[],boolean,boolean,text) line 36 at RAISE
 SQL statement "SELECT emaj._check_group_names(v_groupNames := ARRAY[v_group], v_mayBeNull := FALSE, v_lockGroups := TRUE, v_checkList := '')"
-PL/pgSQL function emaj._assign_tables(text,text[],text,jsonb,text,boolean) line 26 at PERFORM
-PL/pgSQL function emaj.emaj_assign_table(text,text,text,jsonb,text) line 9 at RETURN
+PL/pgSQL function emaj._assign_tables(text,text[],text,jsonb,text,boolean,boolean) line 34 at PERFORM
+PL/pgSQL function emaj.emaj_assign_table(text,text,text,jsonb,text) line 7 at RETURN
 -- bad schema
 select emaj.emaj_assign_table('dummySchema','mytbl1','myGroup1b');
 ERROR:  _assign_tables: The schema "dummySchema" does not exist.
-CONTEXT:  PL/pgSQL function emaj._assign_tables(text,text[],text,jsonb,text,boolean) line 33 at RAISE
-PL/pgSQL function emaj.emaj_assign_table(text,text,text,jsonb,text) line 9 at RETURN
+CONTEXT:  PL/pgSQL function emaj._assign_tables(text,text[],text,jsonb,text,boolean,boolean) line 41 at RAISE
+PL/pgSQL function emaj.emaj_assign_table(text,text,text,jsonb,text) line 7 at RETURN
 select emaj.emaj_assign_table('emaj','mytbl1','myGroup1b');
 ERROR:  _assign_tables: The schema "emaj" is an E-Maj schema.
-CONTEXT:  PL/pgSQL function emaj._assign_tables(text,text[],text,jsonb,text,boolean) line 38 at RAISE
-PL/pgSQL function emaj.emaj_assign_table(text,text,text,jsonb,text) line 9 at RETURN
+CONTEXT:  PL/pgSQL function emaj._assign_tables(text,text[],text,jsonb,text,boolean,boolean) line 46 at RAISE
+PL/pgSQL function emaj.emaj_assign_table(text,text,text,jsonb,text) line 7 at RETURN
 -- bad table
 select emaj.emaj_assign_table('myschema1','dummyTable','myGroup1b');
-ERROR:  _assign_tables: some tables (myschema1."dummyTable") do not exist.
-CONTEXT:  PL/pgSQL function emaj._assign_tables(text,text[],text,jsonb,text,boolean) line 62 at RAISE
-PL/pgSQL function emaj.emaj_assign_table(text,text,text,jsonb,text) line 9 at RETURN
+ERROR:  _assign_tables: In schema myschema1, some tables ("dummyTable") do not exist.
+CONTEXT:  PL/pgSQL function emaj._assign_tables(text,text[],text,jsonb,text,boolean,boolean) line 66 at RAISE
+PL/pgSQL function emaj.emaj_assign_table(text,text,text,jsonb,text) line 7 at RETURN
 -- partitionned table (abort for lack of PRIMARY KEY with prior PG versions)
 select emaj.emaj_assign_table('myschema4','mytblp','myGroup1b');
-ERROR:  _assign_tables: some tables (myschema4.mytblp) have no PRIMARY KEY.
-CONTEXT:  PL/pgSQL function emaj._assign_tables(text,text[],text,jsonb,text,boolean) line 116 at RAISE
-PL/pgSQL function emaj.emaj_assign_table(text,text,text,jsonb,text) line 9 at RETURN
+ERROR:  _assign_tables: In schema myschema4, some tables (mytblp) have no PRIMARY KEY.
+CONTEXT:  PL/pgSQL function emaj._assign_tables(text,text[],text,jsonb,text,boolean,boolean) line 150 at RAISE
+PL/pgSQL function emaj.emaj_assign_table(text,text,text,jsonb,text) line 7 at RETURN
 -- temp table
 begin;
   CREATE TEMPORARY TABLE myTempTbl (
@@ -451,58 +451,58 @@ begin;
   );
   select emaj.emaj_assign_table(nspname,'mytemptbl','myGroup1b') from pg_class, pg_namespace
     where relnamespace = pg_namespace.oid and relname = 'mytemptbl';
-ERROR:  _assign_tables: some tables (pg_temp_2.mytemptbl) are TEMP tables.
-CONTEXT:  PL/pgSQL function emaj._assign_tables(text,text[],text,jsonb,text,boolean) line 81 at RAISE
-PL/pgSQL function emaj.emaj_assign_table(text,text,text,jsonb,text) line 9 at RETURN
+ERROR:  _assign_tables: In schema pg_temp_2, some tables (mytemptbl) are TEMP tables.
+CONTEXT:  PL/pgSQL function emaj._assign_tables(text,text[],text,jsonb,text,boolean,boolean) line 94 at RAISE
+PL/pgSQL function emaj.emaj_assign_table(text,text,text,jsonb,text) line 7 at RETURN
 rollback;
 -- unlogged table
 select emaj.emaj_assign_table('myschema5','myunloggedtbl','myGroup1b');
-ERROR:  _assign_tables: some tables (myschema5.myunloggedtbl) are UNLOGGED tables.
-CONTEXT:  PL/pgSQL function emaj._assign_tables(text,text[],text,jsonb,text,boolean) line 91 at RAISE
-PL/pgSQL function emaj.emaj_assign_table(text,text,text,jsonb,text) line 9 at RETURN
+ERROR:  _assign_tables: In schema myschema5, some tables (myunloggedtbl) are UNLOGGED tables.
+CONTEXT:  PL/pgSQL function emaj._assign_tables(text,text[],text,jsonb,text,boolean,boolean) line 111 at RAISE
+PL/pgSQL function emaj.emaj_assign_table(text,text,text,jsonb,text) line 7 at RETURN
 -- table WITH OIDS
 select emaj.emaj_assign_table('myschema5','myoidstbl','myGroup1b');
-ERROR:  _assign_tables: some tables (myschema5.myoidstbl) are declared WITH OIDS.
-CONTEXT:  PL/pgSQL function emaj._assign_tables(text,text[],text,jsonb,text,boolean) line 102 at RAISE
-PL/pgSQL function emaj.emaj_assign_table(text,text,text,jsonb,text) line 9 at RETURN
+ERROR:  _assign_tables: In schema myschema5, some tables (myoidstbl) are declared WITH OIDS.
+CONTEXT:  PL/pgSQL function emaj._assign_tables(text,text[],text,jsonb,text,boolean,boolean) line 129 at RAISE
+PL/pgSQL function emaj.emaj_assign_table(text,text,text,jsonb,text) line 7 at RETURN
 -- table without PKEY
 select emaj.emaj_assign_table('phil''s schema3','myTbl2\','myGroup1b');
-ERROR:  _assign_tables: some tables ("phil's schema3"."myTbl2\") have no PRIMARY KEY.
-CONTEXT:  PL/pgSQL function emaj._assign_tables(text,text[],text,jsonb,text,boolean) line 116 at RAISE
-PL/pgSQL function emaj.emaj_assign_table(text,text,text,jsonb,text) line 9 at RETURN
+ERROR:  _assign_tables: In schema "phil's schema3", some tables ("myTbl2\") have no PRIMARY KEY.
+CONTEXT:  PL/pgSQL function emaj._assign_tables(text,text[],text,jsonb,text,boolean,boolean) line 150 at RAISE
+PL/pgSQL function emaj.emaj_assign_table(text,text,text,jsonb,text) line 7 at RETURN
 -- invalid priority
 select emaj.emaj_assign_table('myschema1','mytbl1','myGroup1b','{"priority":"not_numeric"}'::jsonb);
 ERROR:  _assign_tables: the "priority" property is not numeric.
-CONTEXT:  PL/pgSQL function emaj._assign_tables(text,text[],text,jsonb,text,boolean) line 131 at RAISE
-PL/pgSQL function emaj.emaj_assign_table(text,text,text,jsonb,text) line 9 at RETURN
+CONTEXT:  PL/pgSQL function emaj._assign_tables(text,text[],text,jsonb,text,boolean,boolean) line 178 at RAISE
+PL/pgSQL function emaj.emaj_assign_table(text,text,text,jsonb,text) line 7 at RETURN
 -- invalid tablespace
 select emaj.emaj_assign_table('myschema1','mytbl1','myGroup1b','{"log_data_tablespace":"dummytsp"}'::jsonb);
 ERROR:  _assign_tables: the log data tablespace "dummytsp" does not exists.
-CONTEXT:  PL/pgSQL function emaj._assign_tables(text,text[],text,jsonb,text,boolean) line 136 at RAISE
-PL/pgSQL function emaj.emaj_assign_table(text,text,text,jsonb,text) line 9 at RETURN
+CONTEXT:  PL/pgSQL function emaj._assign_tables(text,text[],text,jsonb,text,boolean,boolean) line 183 at RAISE
+PL/pgSQL function emaj.emaj_assign_table(text,text,text,jsonb,text) line 7 at RETURN
 select emaj.emaj_assign_table('myschema1','mytbl1','myGroup1b','{"log_index_tablespace":"dummytsp"}'::jsonb);
 ERROR:  _assign_tables: the log index tablespace "dummytsp" does not exists.
-CONTEXT:  PL/pgSQL function emaj._assign_tables(text,text[],text,jsonb,text,boolean) line 140 at RAISE
-PL/pgSQL function emaj.emaj_assign_table(text,text,text,jsonb,text) line 9 at RETURN
+CONTEXT:  PL/pgSQL function emaj._assign_tables(text,text[],text,jsonb,text,boolean,boolean) line 187 at RAISE
+PL/pgSQL function emaj.emaj_assign_table(text,text,text,jsonb,text) line 7 at RETURN
 -- unknown property
 select emaj.emaj_assign_table('myschema1','mytbl1','myGroup1b','{"unknown_property":null}'::jsonb);
 ERROR:  _assign_tables: properties "{"unknown_property": null}" are unknown.
-CONTEXT:  PL/pgSQL function emaj._assign_tables(text,text[],text,jsonb,text,boolean) line 145 at RAISE
-PL/pgSQL function emaj.emaj_assign_table(text,text,text,jsonb,text) line 9 at RETURN
+CONTEXT:  PL/pgSQL function emaj._assign_tables(text,text[],text,jsonb,text,boolean,boolean) line 192 at RAISE
+PL/pgSQL function emaj.emaj_assign_table(text,text,text,jsonb,text) line 7 at RETURN
 -- bad mark
 select emaj.emaj_assign_table('myschema1','mytbl1','myGroup1b',null,'EMAJ_LAST_MARK');
 ERROR:  _check_new_mark: "EMAJ_LAST_MARK" is not an allowed name for a new mark.
 CONTEXT:  PL/pgSQL function emaj._check_new_mark(text[],text) line 14 at RAISE
 SQL statement "SELECT emaj._check_new_mark(array[v_group], v_mark)"
-PL/pgSQL function emaj._assign_tables(text,text[],text,jsonb,text,boolean) line 148 at SQL statement
-PL/pgSQL function emaj.emaj_assign_table(text,text,text,jsonb,text) line 9 at RETURN
+PL/pgSQL function emaj._assign_tables(text,text[],text,jsonb,text,boolean,boolean) line 195 at SQL statement
+PL/pgSQL function emaj.emaj_assign_table(text,text,text,jsonb,text) line 7 at RETURN
 -- erroneously existing log schema
 begin;
   create schema emaj_myschema1;
   select emaj.emaj_assign_table('myschema1','mytbl1','myGroup1b');
 ERROR:  _assign_tables: The schema "emaj_myschema1" should not exist. Drop it manually.
-CONTEXT:  PL/pgSQL function emaj._assign_tables(text,text[],text,jsonb,text,boolean) line 166 at RAISE
-PL/pgSQL function emaj.emaj_assign_table(text,text,text,jsonb,text) line 9 at RETURN
+CONTEXT:  PL/pgSQL function emaj._assign_tables(text,text[],text,jsonb,text,boolean,boolean) line 217 at RAISE
+PL/pgSQL function emaj.emaj_assign_table(text,text,text,jsonb,text) line 7 at RETURN
 rollback;
 -- ok
 select emaj.emaj_assign_table('myschema1','mytbl1','myGroup1b');
@@ -514,11 +514,11 @@ WARNING:  _check_fk_groups: The table "myschema1.mytbl1" is referenced by the fo
 
 -- already assigned table
 select emaj.emaj_assign_table('myschema1','mytbl1','myGroup1b');
-ERROR:  _assign_tables: some tables (myschema1.mytbl1) already belong to a group.
-CONTEXT:  PL/pgSQL function emaj._assign_tables(text,text[],text,jsonb,text,boolean) line 124 at RAISE
-PL/pgSQL function emaj.emaj_assign_table(text,text,text,jsonb,text) line 9 at RETURN
+ERROR:  _assign_tables: In schema myschema1, some tables (mytbl1) already belong to a group.
+CONTEXT:  PL/pgSQL function emaj._assign_tables(text,text[],text,jsonb,text,boolean,boolean) line 165 at RAISE
+PL/pgSQL function emaj.emaj_assign_table(text,text,text,jsonb,text) line 7 at RETURN
 -----------------------------------
--- emaj_assign_tables
+-- emaj_assign_tables with array
 -----------------------------------
 -- error cases
 -- bad group name
@@ -526,13 +526,13 @@ select emaj.emaj_assign_tables('dummySchema',array['dummyTable'],'dummyGroup');
 ERROR:  _check_group_names: The group "dummyGroup" does not exist.
 CONTEXT:  PL/pgSQL function emaj._check_group_names(text[],boolean,boolean,text) line 36 at RAISE
 SQL statement "SELECT emaj._check_group_names(v_groupNames := ARRAY[v_group], v_mayBeNull := FALSE, v_lockGroups := TRUE, v_checkList := '')"
-PL/pgSQL function emaj._assign_tables(text,text[],text,jsonb,text,boolean) line 26 at PERFORM
-PL/pgSQL function emaj.emaj_assign_tables(text,text[],text,jsonb,text) line 9 at RETURN
+PL/pgSQL function emaj._assign_tables(text,text[],text,jsonb,text,boolean,boolean) line 34 at PERFORM
+PL/pgSQL function emaj.emaj_assign_tables(text,text[],text,jsonb,text) line 7 at RETURN
 -- bad tables
 select emaj.emaj_assign_tables('myschema1',array['dummytbl1','dummytbl2'],'myGroup1b');
-ERROR:  _assign_tables: some tables (myschema1.dummytbl1, myschema1.dummytbl2) do not exist.
-CONTEXT:  PL/pgSQL function emaj._assign_tables(text,text[],text,jsonb,text,boolean) line 62 at RAISE
-PL/pgSQL function emaj.emaj_assign_tables(text,text[],text,jsonb,text) line 9 at RETURN
+ERROR:  _assign_tables: In schema myschema1, some tables (dummytbl1, dummytbl2) do not exist.
+CONTEXT:  PL/pgSQL function emaj._assign_tables(text,text[],text,jsonb,text,boolean,boolean) line 66 at RAISE
+PL/pgSQL function emaj.emaj_assign_tables(text,text[],text,jsonb,text) line 7 at RETURN
 -- empty tables array
 select emaj.emaj_assign_tables('myschema1',array[]::text[],'myGroup1b');
 WARNING:  _assign_tables: No table to process.
@@ -572,17 +572,120 @@ select group_last_alter_time_id, group_nb_table, group_nb_sequence from emaj.ema
 (1 row)
 
 -----------------------------------
+-- emaj_assign_tables with filters
+-----------------------------------
+-- error cases
+-- bad group name
+select emaj.emaj_assign_tables('dummySchema','dummyIncludeFilter','dummyExcludeFilter','dummyGroup');
+ERROR:  _check_group_names: The group "dummyGroup" does not exist.
+CONTEXT:  PL/pgSQL function emaj._check_group_names(text[],boolean,boolean,text) line 36 at RAISE
+SQL statement "SELECT emaj._check_group_names(v_groupNames := ARRAY[v_group], v_mayBeNull := FALSE, v_lockGroups := TRUE, v_checkList := '')"
+PL/pgSQL function emaj._assign_tables(text,text[],text,jsonb,text,boolean,boolean) line 34 at PERFORM
+PL/pgSQL function emaj.emaj_assign_tables(text,text,text,text,jsonb,text) line 23 at RETURN
+-- bad schema
+select emaj.emaj_assign_tables('dummySchema','dummyIncludeFilter','dummyExcludeFilter','myGroup1b');
+ERROR:  _assign_tables: The schema "dummySchema" does not exist.
+CONTEXT:  PL/pgSQL function emaj._assign_tables(text,text[],text,jsonb,text,boolean,boolean) line 41 at RAISE
+PL/pgSQL function emaj.emaj_assign_tables(text,text,text,text,jsonb,text) line 23 at RETURN
+select emaj.emaj_assign_tables('emaj','dummyIncludeFilter','dummyExcludeFilter','myGroup1b');
+ERROR:  _assign_tables: The schema "emaj" is an E-Maj schema.
+CONTEXT:  PL/pgSQL function emaj._assign_tables(text,text[],text,jsonb,text,boolean,boolean) line 46 at RAISE
+PL/pgSQL function emaj.emaj_assign_tables(text,text,text,text,jsonb,text) line 23 at RETURN
+-- empty tables array
+select emaj.emaj_assign_tables('myschema1',null,null,'myGroup1b');
+WARNING:  _assign_tables: No table to process.
+ emaj_assign_tables 
+--------------------
+                  0
+(1 row)
+
+select emaj.emaj_assign_tables('myschema1','','','myGroup1b');
+WARNING:  _assign_tables: No table to process.
+ emaj_assign_tables 
+--------------------
+                  0
+(1 row)
+
+select emaj.emaj_assign_tables('myschema1','mytbl1','mytbl1','myGroup1b');
+WARNING:  _assign_tables: No table to process.
+ emaj_assign_tables 
+--------------------
+                  0
+(1 row)
+
+-- excluded tables
+-- bad types
+select emaj.emaj_assign_tables('myschema4','mytblp$','','myGroup1b');
+WARNING:  _assign_tables: Some tables without PRIMARY KEY (mytblp) are not selected.
+WARNING:  _assign_tables: No table to process.
+ emaj_assign_tables 
+--------------------
+                  0
+(1 row)
+
+select emaj.emaj_assign_tables('myschema5','unlogged|oids','','myGroup1b');
+WARNING:  _assign_tables: Some UNLOGGED tables (myunloggedtbl) are not selected.
+WARNING:  _assign_tables: Some WITH OIDS tables (myoidstbl) are not selected.
+WARNING:  _assign_tables: No table to process.
+ emaj_assign_tables 
+--------------------
+                  0
+(1 row)
+
+-- temp table
+begin;
+  CREATE TEMPORARY TABLE myTempTbl (
+    col1       INT     NOT NULL,
+    PRIMARY KEY (col1)
+  );
+  select emaj.emaj_assign_tables(nspname,'mytemptbl','','myGroup1b') from pg_class, pg_namespace
+    where relnamespace = pg_namespace.oid and relname = 'mytemptbl';
+WARNING:  _assign_tables: Some TEMP tables (mytemptbl) are not selected.
+WARNING:  _assign_tables: No table to process.
+ emaj_assign_tables 
+--------------------
+                  0
+(1 row)
+
+rollback;
+-- table without pkey for a rollbackable group
+select emaj.emaj_assign_tables('phil''s schema3','myTbl2\\','','myGroup1b');
+WARNING:  _assign_tables: Some tables without PRIMARY KEY ("myTbl2\") are not selected.
+WARNING:  _assign_tables: No table to process.
+ emaj_assign_tables 
+--------------------
+                  0
+(1 row)
+
+-- already assigned
+select emaj.emaj_assign_tables('myschema1','mytbl(2|2b)$','','myGroup1b');
+WARNING:  _assign_tables: Some tables already belonging to a group (mytbl2, mytbl2b) are not selected.
+WARNING:  _assign_tables: No table to process.
+ emaj_assign_tables 
+--------------------
+                  0
+(1 row)
+
+-- OK
+  select emaj.emaj_assign_tables('myschema1','.*','mytbl(2|2b)$','myGroup1b');
+WARNING:  _assign_tables: Some tables already belonging to a group (mytbl1) are not selected.
+ emaj_assign_tables 
+--------------------
+                  2
+(1 row)
+
+-----------------------------------
 -- emaj_remove_table
 -----------------------------------
 -- error cases
 -- table not in a group
 select emaj.emaj_remove_table('dummySchema','mytbl1');
 ERROR:  _remove_tables: some tables ("dummySchema".mytbl1) do not currently belong to any tables group.
-CONTEXT:  PL/pgSQL function emaj._remove_tables(text,text[],text,boolean) line 44 at RAISE
+CONTEXT:  PL/pgSQL function emaj._remove_tables(text,text[],text,boolean,boolean) line 46 at RAISE
 PL/pgSQL function emaj.emaj_remove_table(text,text,text) line 6 at RETURN
 select emaj.emaj_remove_table('myschema1','dummyTable');
 ERROR:  _remove_tables: some tables (myschema1."dummyTable") do not currently belong to any tables group.
-CONTEXT:  PL/pgSQL function emaj._remove_tables(text,text[],text,boolean) line 44 at RAISE
+CONTEXT:  PL/pgSQL function emaj._remove_tables(text,text[],text,boolean,boolean) line 46 at RAISE
 PL/pgSQL function emaj.emaj_remove_table(text,text,text) line 6 at RETURN
 -- empty tables array
 select emaj.emaj_remove_tables('myschema1',array[]::text[]);
@@ -611,7 +714,7 @@ select emaj.emaj_remove_table('myschema1','mytbl1','EMAJ_LAST_MARK');
 ERROR:  _check_new_mark: "EMAJ_LAST_MARK" is not an allowed name for a new mark.
 CONTEXT:  PL/pgSQL function emaj._check_new_mark(text[],text) line 14 at RAISE
 SQL statement "SELECT emaj._check_new_mark(array[v_groupName], v_mark)"
-PL/pgSQL function emaj._remove_tables(text,text[],text,boolean) line 47 at SQL statement
+PL/pgSQL function emaj._remove_tables(text,text[],text,boolean,boolean) line 50 at SQL statement
 PL/pgSQL function emaj.emaj_remove_table(text,text,text) line 6 at RETURN
 -- ok
 select emaj.emaj_remove_table('myschema1','mytbl1');
@@ -621,13 +724,13 @@ select emaj.emaj_remove_table('myschema1','mytbl1');
 (1 row)
 
 -----------------------------------
--- emaj_remove_tables
+-- emaj_remove_tables with array
 -----------------------------------
 -- error cases
 -- table not in a group
 select emaj.emaj_remove_tables('myschema1',array['dummyTable','mytbl1','mytbl2']);
 ERROR:  _remove_tables: some tables (myschema1."dummyTable", myschema1.mytbl1) do not currently belong to any tables group.
-CONTEXT:  PL/pgSQL function emaj._remove_tables(text,text[],text,boolean) line 44 at RAISE
+CONTEXT:  PL/pgSQL function emaj._remove_tables(text,text[],text,boolean,boolean) line 46 at RAISE
 PL/pgSQL function emaj.emaj_remove_tables(text,text[],text) line 6 at RETURN
 -- ok (with a duplicate table name)
 select emaj.emaj_remove_tables('myschema1',array['mytbl2','mytbl2b','mytbl2']);
@@ -636,14 +739,46 @@ select emaj.emaj_remove_tables('myschema1',array['mytbl2','mytbl2b','mytbl2']);
                   2
 (1 row)
 
+-----------------------------------
+-- emaj_remove_tables with filters
+-----------------------------------
+-- empty tables array
+select emaj.emaj_remove_tables('myschema1',null,null);
+WARNING:  _remove_tables: No table to process.
+ emaj_remove_tables 
+--------------------
+                  0
+(1 row)
+
+select emaj.emaj_remove_tables('myschema1','','');
+WARNING:  _remove_tables: No table to process.
+ emaj_remove_tables 
+--------------------
+                  0
+(1 row)
+
+select emaj.emaj_remove_tables('myschema1','mytbl1','mytbl1');
+WARNING:  _remove_tables: No table to process.
+ emaj_remove_tables 
+--------------------
+                  0
+(1 row)
+
+-- ok
+select emaj.emaj_remove_tables('myschema1','my(t|T)bl\d$','mytbl2');
+ emaj_remove_tables 
+--------------------
+                  2
+(1 row)
+
 select group_last_alter_time_id, group_nb_table, group_nb_sequence from emaj.emaj_group where group_name = 'myGroup1b';
  group_last_alter_time_id | group_nb_table | group_nb_sequence 
 --------------------------+----------------+-------------------
-                       19 |              0 |                 0
+                       21 |              0 |                 0
 (1 row)
 
 -----------------------------------
--- emaj_assign_sequence
+-- emaj_assign_sequence with array
 -----------------------------------
 select emaj.emaj_drop_group('myGroup2');
  emaj_drop_group 
@@ -663,39 +798,39 @@ select emaj.emaj_assign_sequence('myschema2','myseq1','dummyGroup');
 ERROR:  _check_group_names: The group "dummyGroup" does not exist.
 CONTEXT:  PL/pgSQL function emaj._check_group_names(text[],boolean,boolean,text) line 36 at RAISE
 SQL statement "SELECT emaj._check_group_names(v_groupNames := ARRAY[v_group], v_mayBeNull := FALSE, v_lockGroups := TRUE, v_checkList := '')"
-PL/pgSQL function emaj._assign_sequences(text,text[],text,jsonb,text,boolean) line 18 at PERFORM
-PL/pgSQL function emaj.emaj_assign_sequence(text,text,text,jsonb,text) line 8 at RETURN
+PL/pgSQL function emaj._assign_sequences(text,text[],text,jsonb,text,boolean,boolean) line 24 at PERFORM
+PL/pgSQL function emaj.emaj_assign_sequence(text,text,text,jsonb,text) line 7 at RETURN
 -- bad schema
 select emaj.emaj_assign_sequence('dummySchema','myseq1','myGroup2b');
 ERROR:  _assign_sequences: The schema "dummySchema" does not exist.
-CONTEXT:  PL/pgSQL function emaj._assign_sequences(text,text[],text,jsonb,text,boolean) line 25 at RAISE
-PL/pgSQL function emaj.emaj_assign_sequence(text,text,text,jsonb,text) line 8 at RETURN
+CONTEXT:  PL/pgSQL function emaj._assign_sequences(text,text[],text,jsonb,text,boolean,boolean) line 31 at RAISE
+PL/pgSQL function emaj.emaj_assign_sequence(text,text,text,jsonb,text) line 7 at RETURN
 select emaj.emaj_assign_sequence('emaj','myseq1','myGroup2b');
 ERROR:  _assign_sequences: The schema "emaj" is an E-Maj schema.
-CONTEXT:  PL/pgSQL function emaj._assign_sequences(text,text[],text,jsonb,text,boolean) line 30 at RAISE
-PL/pgSQL function emaj.emaj_assign_sequence(text,text,text,jsonb,text) line 8 at RETURN
+CONTEXT:  PL/pgSQL function emaj._assign_sequences(text,text[],text,jsonb,text,boolean,boolean) line 36 at RAISE
+PL/pgSQL function emaj.emaj_assign_sequence(text,text,text,jsonb,text) line 7 at RETURN
 -- bad sequence
 select emaj.emaj_assign_sequence('myschema2','dummySequence','myGroup2b');
-ERROR:  _assign_sequences: some sequences (myschema2."dummySequence") do not exist.
-CONTEXT:  PL/pgSQL function emaj._assign_sequences(text,text[],text,jsonb,text,boolean) line 54 at RAISE
-PL/pgSQL function emaj.emaj_assign_sequence(text,text,text,jsonb,text) line 8 at RETURN
+ERROR:  _assign_sequences: In schema myschema2, some sequences ("dummySequence") do not exist.
+CONTEXT:  PL/pgSQL function emaj._assign_sequences(text,text[],text,jsonb,text,boolean,boolean) line 56 at RAISE
+PL/pgSQL function emaj.emaj_assign_sequence(text,text,text,jsonb,text) line 7 at RETURN
 -- invalid priority
 select emaj.emaj_assign_sequence('myschema2','myseq1','myGroup2b','{"priority":"not_numeric"}'::jsonb);
 ERROR:  _assign_sequences: the "priority" property is not numeric.
-CONTEXT:  PL/pgSQL function emaj._assign_sequences(text,text[],text,jsonb,text,boolean) line 68 at RAISE
-PL/pgSQL function emaj.emaj_assign_sequence(text,text,text,jsonb,text) line 8 at RETURN
+CONTEXT:  PL/pgSQL function emaj._assign_sequences(text,text[],text,jsonb,text,boolean,boolean) line 78 at RAISE
+PL/pgSQL function emaj.emaj_assign_sequence(text,text,text,jsonb,text) line 7 at RETURN
 -- unknown property
 select emaj.emaj_assign_sequence('myschema2','myseq1','myGroup2b','{"unknown_property":null}'::jsonb);
 ERROR:  _assign_sequences: properties "{"unknown_property": null}" are unknown.
-CONTEXT:  PL/pgSQL function emaj._assign_sequences(text,text[],text,jsonb,text,boolean) line 73 at RAISE
-PL/pgSQL function emaj.emaj_assign_sequence(text,text,text,jsonb,text) line 8 at RETURN
+CONTEXT:  PL/pgSQL function emaj._assign_sequences(text,text[],text,jsonb,text,boolean,boolean) line 83 at RAISE
+PL/pgSQL function emaj.emaj_assign_sequence(text,text,text,jsonb,text) line 7 at RETURN
 -- bad mark
 select emaj.emaj_assign_sequence('myschema2','myseq1','myGroup2b',null,'EMAJ_LAST_MARK');
 ERROR:  _check_new_mark: "EMAJ_LAST_MARK" is not an allowed name for a new mark.
 CONTEXT:  PL/pgSQL function emaj._check_new_mark(text[],text) line 14 at RAISE
 SQL statement "SELECT emaj._check_new_mark(array[v_group], v_mark)"
-PL/pgSQL function emaj._assign_sequences(text,text[],text,jsonb,text,boolean) line 76 at SQL statement
-PL/pgSQL function emaj.emaj_assign_sequence(text,text,text,jsonb,text) line 8 at RETURN
+PL/pgSQL function emaj._assign_sequences(text,text[],text,jsonb,text,boolean,boolean) line 86 at SQL statement
+PL/pgSQL function emaj.emaj_assign_sequence(text,text,text,jsonb,text) line 7 at RETURN
 -- ok
 select emaj.emaj_assign_sequence('myschema2','myseq1','myGroup2b');
  emaj_assign_sequence 
@@ -705,11 +840,11 @@ select emaj.emaj_assign_sequence('myschema2','myseq1','myGroup2b');
 
 -- already assigned sequence
 select emaj.emaj_assign_sequence('myschema2','myseq1','myGroup2b');
-ERROR:  _assign_sequences: some sequences (myschema2.myseq1) already belong to a group.
-CONTEXT:  PL/pgSQL function emaj._assign_sequences(text,text[],text,jsonb,text,boolean) line 61 at RAISE
-PL/pgSQL function emaj.emaj_assign_sequence(text,text,text,jsonb,text) line 8 at RETURN
+ERROR:  _assign_sequences: In schema myschema2, some sequences (myseq1) already belong to a group.
+CONTEXT:  PL/pgSQL function emaj._assign_sequences(text,text[],text,jsonb,text,boolean,boolean) line 65 at RAISE
+PL/pgSQL function emaj.emaj_assign_sequence(text,text,text,jsonb,text) line 7 at RETURN
 -----------------------------------
--- emaj_assign_sequences
+-- emaj_assign_sequences with array
 -----------------------------------
 -- error cases
 -- bad group name
@@ -717,13 +852,13 @@ select emaj.emaj_assign_sequences('dummySchema',array['dummySequence'],'dummyGro
 ERROR:  _check_group_names: The group "dummyGroup" does not exist.
 CONTEXT:  PL/pgSQL function emaj._check_group_names(text[],boolean,boolean,text) line 36 at RAISE
 SQL statement "SELECT emaj._check_group_names(v_groupNames := ARRAY[v_group], v_mayBeNull := FALSE, v_lockGroups := TRUE, v_checkList := '')"
-PL/pgSQL function emaj._assign_sequences(text,text[],text,jsonb,text,boolean) line 18 at PERFORM
-PL/pgSQL function emaj.emaj_assign_sequences(text,text[],text,jsonb,text) line 8 at RETURN
+PL/pgSQL function emaj._assign_sequences(text,text[],text,jsonb,text,boolean,boolean) line 24 at PERFORM
+PL/pgSQL function emaj.emaj_assign_sequences(text,text[],text,jsonb,text) line 7 at RETURN
 -- bad sequences
 select emaj.emaj_assign_sequences('myschema2',array['dummyseq1','dummyseq2'],'myGroup2b');
-ERROR:  _assign_sequences: some sequences (myschema2.dummyseq1, myschema2.dummyseq2) do not exist.
-CONTEXT:  PL/pgSQL function emaj._assign_sequences(text,text[],text,jsonb,text,boolean) line 54 at RAISE
-PL/pgSQL function emaj.emaj_assign_sequences(text,text[],text,jsonb,text) line 8 at RETURN
+ERROR:  _assign_sequences: In schema myschema2, some sequences (dummyseq1, dummyseq2) do not exist.
+CONTEXT:  PL/pgSQL function emaj._assign_sequences(text,text[],text,jsonb,text,boolean,boolean) line 56 at RAISE
+PL/pgSQL function emaj.emaj_assign_sequences(text,text[],text,jsonb,text) line 7 at RETURN
 -- empty sequences array
 select emaj.emaj_assign_sequences('myschema2',array[]::text[],'myGroup2b');
 WARNING:  _assign_sequences: No sequence to process.
@@ -753,10 +888,70 @@ select emaj.emaj_assign_sequences('myschema2',array['myseq2','myseq2'],'myGroup2
                      1
 (1 row)
 
+-----------------------------------
+-- emaj_assign_sequences with filters
+-----------------------------------
+-- error cases
+-- bad group name
+select emaj.emaj_assign_sequences('dummySchema','dummyIncludeFilter','dummyExcludeFilter','dummyGroup');
+ERROR:  _check_group_names: The group "dummyGroup" does not exist.
+CONTEXT:  PL/pgSQL function emaj._check_group_names(text[],boolean,boolean,text) line 36 at RAISE
+SQL statement "SELECT emaj._check_group_names(v_groupNames := ARRAY[v_group], v_mayBeNull := FALSE, v_lockGroups := TRUE, v_checkList := '')"
+PL/pgSQL function emaj._assign_sequences(text,text[],text,jsonb,text,boolean,boolean) line 24 at PERFORM
+PL/pgSQL function emaj.emaj_assign_sequences(text,text,text,text,jsonb,text) line 23 at RETURN
+-- bad schema
+select emaj.emaj_assign_sequences('dummySchema','dummyIncludeFilter','dummyExcludeFilter','myGroup2b');
+ERROR:  _assign_sequences: The schema "dummySchema" does not exist.
+CONTEXT:  PL/pgSQL function emaj._assign_sequences(text,text[],text,jsonb,text,boolean,boolean) line 31 at RAISE
+PL/pgSQL function emaj.emaj_assign_sequences(text,text,text,text,jsonb,text) line 23 at RETURN
+select emaj.emaj_assign_sequences('emaj','dummyIncludeFilter','dummyExcludeFilter','myGroup2b');
+ERROR:  _assign_sequences: The schema "emaj" is an E-Maj schema.
+CONTEXT:  PL/pgSQL function emaj._assign_sequences(text,text[],text,jsonb,text,boolean,boolean) line 36 at RAISE
+PL/pgSQL function emaj.emaj_assign_sequences(text,text,text,text,jsonb,text) line 23 at RETURN
+-- empty sequences array
+select emaj.emaj_assign_sequences('myschema2',null,null,'myGroup2b');
+WARNING:  _assign_sequences: No sequence to process.
+ emaj_assign_sequences 
+-----------------------
+                     0
+(1 row)
+
+select emaj.emaj_assign_sequences('myschema2','','','myGroup2b');
+WARNING:  _assign_sequences: No sequence to process.
+ emaj_assign_sequences 
+-----------------------
+                     0
+(1 row)
+
+select emaj.emaj_assign_sequences('myschema2','myseq2','myseq2','myGroup2b');
+WARNING:  _assign_sequences: No sequence to process.
+ emaj_assign_sequences 
+-----------------------
+                     0
+(1 row)
+
+-- already assigned
+select emaj.emaj_assign_sequences('myschema2','seq1','','myGroup2b');
+WARNING:  _assign_sequences: Some sequences already belonging to a group (myseq1) are not selected.
+WARNING:  _assign_sequences: No sequence to process.
+ emaj_assign_sequences 
+-----------------------
+                     0
+(1 row)
+
+-- OK
+select emaj.emaj_assign_sequences('myschema2','.*','myseq1$','myGroup2b');
+WARNING:  _assign_sequences: Some sequences already belonging to a group (myseq2) are not selected.
+WARNING:  _create_seq: The sequence myschema2.myTbl3_col31_seq is linked to table myschema2.myTbl3 but this table belong to another tables group (myGroup2).
+ emaj_assign_sequences 
+-----------------------
+                     1
+(1 row)
+
 select group_last_alter_time_id, group_nb_table, group_nb_sequence from emaj.emaj_group where group_name = 'myGroup2b';
  group_last_alter_time_id | group_nb_table | group_nb_sequence 
 --------------------------+----------------+-------------------
-                       23 |              0 |                 2
+                       26 |              0 |                 3
 (1 row)
 
 -----------------------------------
@@ -766,11 +961,11 @@ select group_last_alter_time_id, group_nb_table, group_nb_sequence from emaj.ema
 -- sequence not in a group
 select emaj.emaj_remove_sequence('dummySchema','myseq1');
 ERROR:  _remove_sequences: some sequences ("dummySchema".myseq1) do not currently belong to any tables group.
-CONTEXT:  PL/pgSQL function emaj._remove_sequences(text,text[],text,boolean) line 40 at RAISE
+CONTEXT:  PL/pgSQL function emaj._remove_sequences(text,text[],text,boolean,boolean) line 40 at RAISE
 PL/pgSQL function emaj.emaj_remove_sequence(text,text,text) line 6 at RETURN
 select emaj.emaj_remove_sequence('myschema2','dummySequence');
 ERROR:  _remove_sequences: some sequences (myschema2."dummySequence") do not currently belong to any tables group.
-CONTEXT:  PL/pgSQL function emaj._remove_sequences(text,text[],text,boolean) line 40 at RAISE
+CONTEXT:  PL/pgSQL function emaj._remove_sequences(text,text[],text,boolean,boolean) line 40 at RAISE
 PL/pgSQL function emaj.emaj_remove_sequence(text,text,text) line 6 at RETURN
 -- empty sequences array
 select emaj.emaj_remove_sequences('myschema2',array[]::text[]);
@@ -799,7 +994,7 @@ select emaj.emaj_remove_sequence('myschema2','myseq1','EMAJ_LAST_MARK');
 ERROR:  _check_new_mark: "EMAJ_LAST_MARK" is not an allowed name for a new mark.
 CONTEXT:  PL/pgSQL function emaj._check_new_mark(text[],text) line 14 at RAISE
 SQL statement "SELECT emaj._check_new_mark(array[v_groupName], v_mark)"
-PL/pgSQL function emaj._remove_sequences(text,text[],text,boolean) line 43 at SQL statement
+PL/pgSQL function emaj._remove_sequences(text,text[],text,boolean,boolean) line 44 at SQL statement
 PL/pgSQL function emaj.emaj_remove_sequence(text,text,text) line 6 at RETURN
 -- ok
 select emaj.emaj_remove_sequence('myschema2','myseq1');
@@ -809,13 +1004,13 @@ select emaj.emaj_remove_sequence('myschema2','myseq1');
 (1 row)
 
 -----------------------------------
--- emaj_remove_sequences
+-- emaj_remove_sequences with array
 -----------------------------------
 -- error cases
 -- sequence not in a group
 select emaj.emaj_remove_sequences('myschema2',array['dummyTable','myseq2']);
 ERROR:  _remove_sequences: some sequences (myschema2."dummyTable") do not currently belong to any tables group.
-CONTEXT:  PL/pgSQL function emaj._remove_sequences(text,text[],text,boolean) line 40 at RAISE
+CONTEXT:  PL/pgSQL function emaj._remove_sequences(text,text[],text,boolean,boolean) line 40 at RAISE
 PL/pgSQL function emaj.emaj_remove_sequences(text,text[],text) line 6 at RETURN
 -- ok (with a duplicate sequence name)
 select emaj.emaj_remove_sequences('myschema2',array['myseq2','myseq2']);
@@ -824,10 +1019,42 @@ select emaj.emaj_remove_sequences('myschema2',array['myseq2','myseq2']);
                      1
 (1 row)
 
+-----------------------------------
+-- emaj_remove_sequences with filters
+-----------------------------------
+-- empty tables array
+select emaj.emaj_remove_sequences('myschema2',null,null);
+WARNING:  _remove_sequences: No sequence to process.
+ emaj_remove_sequences 
+-----------------------
+                     0
+(1 row)
+
+select emaj.emaj_remove_sequences('myschema2','','');
+WARNING:  _remove_sequences: No sequence to process.
+ emaj_remove_sequences 
+-----------------------
+                     0
+(1 row)
+
+select emaj.emaj_remove_sequences('myschema2','myseq1','myseq1');
+WARNING:  _remove_sequences: No sequence to process.
+ emaj_remove_sequences 
+-----------------------
+                     0
+(1 row)
+
+-- ok
+select emaj.emaj_remove_sequences('myschema2','.*','');
+ emaj_remove_sequences 
+-----------------------
+                     1
+(1 row)
+
 select group_last_alter_time_id, group_nb_table, group_nb_sequence from emaj.emaj_group where group_name = 'myGroup2b';
  group_last_alter_time_id | group_nb_table | group_nb_sequence 
 --------------------------+----------------+-------------------
-                       25 |              0 |                 0
+                       29 |              0 |                 0
 (1 row)
 
 select emaj.emaj_drop_group('myGroup1b');
@@ -1114,170 +1341,261 @@ select * from emaj.emaj_rel_hist order by 1,2,3;
  relh_schema |                       relh_tblseq                       | relh_time_range | relh_group | relh_kind 
 -------------+---------------------------------------------------------+-----------------+------------+-----------
  myschema1   | myTbl3                                                  | [4,13)          | myGroup1   | r
- myschema1   | myTbl3                                                  | [28,33)         | myGroup1   | r
- myschema1   | myTbl3                                                  | [38,40)         | myGroup1   | r
+ myschema1   | myTbl3                                                  | [18,21)         | myGroup1b  | r
+ myschema1   | myTbl3                                                  | [32,37)         | myGroup1   | r
+ myschema1   | myTbl3                                                  | [42,44)         | myGroup1   | r
  myschema1   | myTbl3_col31_seq                                        | [4,13)          | myGroup1   | S
- myschema1   | myTbl3_col31_seq                                        | [28,33)         | myGroup1   | S
- myschema1   | myTbl3_col31_seq                                        | [38,40)         | myGroup1   | S
+ myschema1   | myTbl3_col31_seq                                        | [32,37)         | myGroup1   | S
+ myschema1   | myTbl3_col31_seq                                        | [42,44)         | myGroup1   | S
  myschema1   | mytbl1                                                  | [4,13)          | myGroup1   | r
- myschema1   | mytbl1                                                  | [16,18)         | myGroup1b  | r
- myschema1   | mytbl1                                                  | [28,33)         | myGroup1   | r
- myschema1   | mytbl1                                                  | [38,40)         | myGroup1   | r
+ myschema1   | mytbl1                                                  | [16,19)         | myGroup1b  | r
+ myschema1   | mytbl1                                                  | [32,37)         | myGroup1   | r
+ myschema1   | mytbl1                                                  | [42,44)         | myGroup1   | r
  myschema1   | mytbl2                                                  | [4,13)          | myGroup1   | r
- myschema1   | mytbl2                                                  | [17,19)         | myGroup1b  | r
- myschema1   | mytbl2                                                  | [28,33)         | myGroup1   | r
- myschema1   | mytbl2                                                  | [38,40)         | myGroup1   | r
+ myschema1   | mytbl2                                                  | [17,20)         | myGroup1b  | r
+ myschema1   | mytbl2                                                  | [32,37)         | myGroup1   | r
+ myschema1   | mytbl2                                                  | [42,44)         | myGroup1   | r
  myschema1   | mytbl2b                                                 | [4,13)          | myGroup1   | r
- myschema1   | mytbl2b                                                 | [17,19)         | myGroup1b  | r
- myschema1   | mytbl2b                                                 | [28,33)         | myGroup1   | r
- myschema1   | mytbl2b                                                 | [38,40)         | myGroup1   | r
+ myschema1   | mytbl2b                                                 | [17,20)         | myGroup1b  | r
+ myschema1   | mytbl2b                                                 | [32,37)         | myGroup1   | r
+ myschema1   | mytbl2b                                                 | [42,44)         | myGroup1   | r
  myschema1   | mytbl2b_col20_seq                                       | [4,13)          | myGroup1   | S
- myschema1   | mytbl2b_col20_seq                                       | [28,33)         | myGroup1   | S
- myschema1   | mytbl2b_col20_seq                                       | [38,40)         | myGroup1   | S
+ myschema1   | mytbl2b_col20_seq                                       | [32,37)         | myGroup1   | S
+ myschema1   | mytbl2b_col20_seq                                       | [42,44)         | myGroup1   | S
  myschema1   | mytbl4                                                  | [4,13)          | myGroup1   | r
- myschema1   | mytbl4                                                  | [28,33)         | myGroup1   | r
- myschema1   | mytbl4                                                  | [38,40)         | myGroup1   | r
- myschema2   | myTbl3                                                  | [6,20)          | myGroup2   | r
- myschema2   | myTbl3                                                  | [29,34)         | myGroup2   | r
- myschema2   | myTbl3                                                  | [41,42)         | myGroup2   | r
- myschema2   | myTbl3_col31_seq                                        | [6,20)          | myGroup2   | S
- myschema2   | myTbl3_col31_seq                                        | [29,34)         | myGroup2   | S
- myschema2   | myTbl3_col31_seq                                        | [41,42)         | myGroup2   | S
- myschema2   | myseq1                                                  | [6,20)          | myGroup2   | S
- myschema2   | myseq1                                                  | [22,24)         | myGroup2b  | S
- myschema2   | myseq1                                                  | [29,34)         | myGroup2   | S
- myschema2   | myseq1                                                  | [41,42)         | myGroup2   | S
- myschema2   | myseq2                                                  | [23,25)         | myGroup2b  | S
- myschema2   | mytbl1                                                  | [6,20)          | myGroup2   | r
- myschema2   | mytbl1                                                  | [29,34)         | myGroup2   | r
- myschema2   | mytbl1                                                  | [41,42)         | myGroup2   | r
- myschema2   | mytbl2                                                  | [6,20)          | myGroup2   | r
- myschema2   | mytbl2                                                  | [29,34)         | myGroup2   | r
- myschema2   | mytbl2                                                  | [41,42)         | myGroup2   | r
- myschema2   | mytbl4                                                  | [6,20)          | myGroup2   | r
- myschema2   | mytbl4                                                  | [29,34)         | myGroup2   | r
- myschema2   | mytbl4                                                  | [41,42)         | myGroup2   | r
- myschema2   | mytbl5                                                  | [6,20)          | myGroup2   | r
- myschema2   | mytbl5                                                  | [29,34)         | myGroup2   | r
- myschema2   | mytbl5                                                  | [41,42)         | myGroup2   | r
- myschema2   | mytbl6                                                  | [6,20)          | myGroup2   | r
- myschema2   | mytbl6                                                  | [29,34)         | myGroup2   | r
- myschema2   | mytbl6                                                  | [41,42)         | myGroup2   | r
- myschema5   | myoidstbl                                               | [11,36)         | myGroup5   | r
- myschema5   | myunloggedtbl                                           | [11,36)         | myGroup5   | r
- myschema6   | table_with_50_characters_long_name_____0_________0      | [12,37)         | myGroup6   | r
- myschema6   | table_with_51_characters_long_name_____0_________0a     | [12,37)         | myGroup6   | r
- myschema6   | table_with_55_characters_long_name_____0_________0abcde | [12,37)         | myGroup6   | r
- myschema6   | table_with_55_characters_long_name_____0_________0fghij | [12,37)         | myGroup6   | r
-(56 rows)
+ myschema1   | mytbl4                                                  | [18,21)         | myGroup1b  | r
+ myschema1   | mytbl4                                                  | [32,37)         | myGroup1   | r
+ myschema1   | mytbl4                                                  | [42,44)         | myGroup1   | r
+ myschema2   | myTbl3                                                  | [6,22)          | myGroup2   | r
+ myschema2   | myTbl3                                                  | [33,38)         | myGroup2   | r
+ myschema2   | myTbl3                                                  | [45,46)         | myGroup2   | r
+ myschema2   | myTbl3_col31_seq                                        | [6,22)          | myGroup2   | S
+ myschema2   | myTbl3_col31_seq                                        | [26,29)         | myGroup2b  | S
+ myschema2   | myTbl3_col31_seq                                        | [33,38)         | myGroup2   | S
+ myschema2   | myTbl3_col31_seq                                        | [45,46)         | myGroup2   | S
+ myschema2   | myseq1                                                  | [6,22)          | myGroup2   | S
+ myschema2   | myseq1                                                  | [24,27)         | myGroup2b  | S
+ myschema2   | myseq1                                                  | [33,38)         | myGroup2   | S
+ myschema2   | myseq1                                                  | [45,46)         | myGroup2   | S
+ myschema2   | myseq2                                                  | [25,28)         | myGroup2b  | S
+ myschema2   | mytbl1                                                  | [6,22)          | myGroup2   | r
+ myschema2   | mytbl1                                                  | [33,38)         | myGroup2   | r
+ myschema2   | mytbl1                                                  | [45,46)         | myGroup2   | r
+ myschema2   | mytbl2                                                  | [6,22)          | myGroup2   | r
+ myschema2   | mytbl2                                                  | [33,38)         | myGroup2   | r
+ myschema2   | mytbl2                                                  | [45,46)         | myGroup2   | r
+ myschema2   | mytbl4                                                  | [6,22)          | myGroup2   | r
+ myschema2   | mytbl4                                                  | [33,38)         | myGroup2   | r
+ myschema2   | mytbl4                                                  | [45,46)         | myGroup2   | r
+ myschema2   | mytbl5                                                  | [6,22)          | myGroup2   | r
+ myschema2   | mytbl5                                                  | [33,38)         | myGroup2   | r
+ myschema2   | mytbl5                                                  | [45,46)         | myGroup2   | r
+ myschema2   | mytbl6                                                  | [6,22)          | myGroup2   | r
+ myschema2   | mytbl6                                                  | [33,38)         | myGroup2   | r
+ myschema2   | mytbl6                                                  | [45,46)         | myGroup2   | r
+ myschema5   | myoidstbl                                               | [11,40)         | myGroup5   | r
+ myschema5   | myunloggedtbl                                           | [11,40)         | myGroup5   | r
+ myschema6   | table_with_50_characters_long_name_____0_________0      | [12,41)         | myGroup6   | r
+ myschema6   | table_with_51_characters_long_name_____0_________0a     | [12,41)         | myGroup6   | r
+ myschema6   | table_with_55_characters_long_name_____0_________0abcde | [12,41)         | myGroup6   | r
+ myschema6   | table_with_55_characters_long_name_____0_________0fghij | [12,41)         | myGroup6   | r
+(59 rows)
 
 select hist_function, hist_event, hist_object, 
        regexp_replace(regexp_replace(hist_wording,E'\\d\\d\.\\d\\d\\.\\d\\d\\.\\d\\d\\d\\d','%','g'),E'\\[.+\\]','(timestamp)','g'), 
        hist_user 
   from emaj.emaj_hist order by hist_id;
-  hist_function   |     hist_event     |      hist_object      |         regexp_replace         | hist_user 
-------------------+--------------------+-----------------------+--------------------------------+-----------
- CREATE_GROUP     | BEGIN              | myGroup1              | rollbackable                   | postgres
- CREATE_GROUP     | LOG_SCHEMA CREATED | emaj_myschema1        |                                | postgres
- CREATE_GROUP     | END                | myGroup1              | 7 tables/sequences processed   | postgres
- CREATE_GROUP     | BEGIN              | emptyGroup            | audit_only                     | postgres
- CREATE_GROUP     | END                | emptyGroup            | 0 tables/sequences processed   | postgres
- CREATE_GROUP     | BEGIN              | myGroup2              | rollbackable                   | postgres
- CREATE_GROUP     | LOG_SCHEMA CREATED | emaj_myschema2        |                                | postgres
- CREATE_GROUP     | END                | myGroup2              | 8 tables/sequences processed   | postgres
- CREATE_GROUP     | BEGIN              | phil's group#3",      | audit_only                     | postgres
- CREATE_GROUP     | LOG_SCHEMA CREATED | "emaj_phil's schema3" |                                | postgres
- CREATE_GROUP     | END                | phil's group#3",      | 4 tables/sequences processed   | postgres
- CREATE_GROUP     | BEGIN              | myGroup4              | rollbackable                   | postgres
- CREATE_GROUP     | LOG_SCHEMA CREATED | emaj_myschema4        |                                | postgres
- CREATE_GROUP     | END                | myGroup4              | 5 tables/sequences processed   | postgres
- CREATE_GROUP     | BEGIN              | myGroup5              | audit_only                     | postgres
- CREATE_GROUP     | LOG_SCHEMA CREATED | emaj_myschema5        |                                | postgres
- CREATE_GROUP     | END                | myGroup5              | 2 tables/sequences processed   | postgres
- CREATE_GROUP     | BEGIN              | myGroup6              | rollbackable                   | postgres
- CREATE_GROUP     | LOG_SCHEMA CREATED | emaj_myschema6        |                                | postgres
- CREATE_GROUP     | END                | myGroup6              | 4 tables/sequences processed   | postgres
- COMMENT_GROUP    |                    | myGroup1              |                                | postgres
- COMMENT_GROUP    |                    | myGroup1              |                                | postgres
- COMMENT_GROUP    |                    | emptyGroup            |                                | postgres
- COMMENT_GROUP    |                    | myGroup1              |                                | postgres
- DROP_GROUP       | BEGIN              | myGroup1              |                                | postgres
- DROP_GROUP       | LOG_SCHEMA DROPPED | emaj_myschema1        |                                | postgres
- DROP_GROUP       | END                | myGroup1              | 7 tables/sequences processed   | postgres
- CREATE_GROUP     | BEGIN              | myGroup1b             | rollbackable                   | postgres
- CREATE_GROUP     | END                | myGroup1b             | 0 tables/sequences processed   | postgres
- ASSIGN_TABLE     | LOG_SCHEMA CREATED | emaj_myschema1        |                                | postgres
- ASSIGN_TABLE     | TABLE ADDED        | myschema1.mytbl1      | To the group myGroup1b         | postgres
- ASSIGN_TABLES    | TABLE ADDED        | myschema1.mytbl2      | To the group myGroup1b         | postgres
- ASSIGN_TABLES    | TABLE ADDED        | myschema1.mytbl2b     | To the group myGroup1b         | postgres
- REMOVE_TABLE     | TABLE REMOVED      | myschema1.mytbl1      | From the group myGroup1b       | postgres
- REMOVE_TABLES    | TABLE REMOVED      | myschema1.mytbl2      | From the group myGroup1b       | postgres
- REMOVE_TABLES    | TABLE REMOVED      | myschema1.mytbl2b     | From the group myGroup1b       | postgres
- REMOVE_TABLES    | LOG_SCHEMA DROPPED | emaj_myschema1        |                                | postgres
- DROP_GROUP       | BEGIN              | myGroup2              |                                | postgres
- DROP_GROUP       | LOG_SCHEMA DROPPED | emaj_myschema2        |                                | postgres
- DROP_GROUP       | END                | myGroup2              | 8 tables/sequences processed   | postgres
- CREATE_GROUP     | BEGIN              | myGroup2b             | rollbackable                   | postgres
- CREATE_GROUP     | END                | myGroup2b             | 0 tables/sequences processed   | postgres
- ASSIGN_SEQUENCE  | SEQUENCE ADDED     | myschema2.myseq1      | To the group myGroup2b         | postgres
- ASSIGN_SEQUENCES | SEQUENCE ADDED     | myschema2.myseq2      | To the group myGroup2b         | postgres
- REMOVE_SEQUENCE  | SEQUENCE REMOVED   | myschema2.myseq1      | From the group myGroup2b       | postgres
- REMOVE_SEQUENCES | SEQUENCE REMOVED   | myschema2.myseq2      | From the group myGroup2b       | postgres
- DROP_GROUP       | BEGIN              | myGroup1b             |                                | postgres
- DROP_GROUP       | END                | myGroup1b             | 0 tables/sequences processed   | postgres
- DROP_GROUP       | BEGIN              | myGroup2b             |                                | postgres
- DROP_GROUP       | END                | myGroup2b             | 0 tables/sequences processed   | postgres
- CREATE_GROUP     | BEGIN              | myGroup1              | rollbackable                   | postgres
- CREATE_GROUP     | LOG_SCHEMA CREATED | emaj_myschema1        |                                | postgres
- CREATE_GROUP     | END                | myGroup1              | 7 tables/sequences processed   | postgres
- CREATE_GROUP     | BEGIN              | myGroup2              | rollbackable                   | postgres
- CREATE_GROUP     | LOG_SCHEMA CREATED | emaj_myschema2        |                                | postgres
- CREATE_GROUP     | END                | myGroup2              | 8 tables/sequences processed   | postgres
- START_GROUP      | BEGIN              | myGroup1              | With log reset                 | postgres
- LOCK_GROUP       | BEGIN              | myGroup1              |                                | postgres
- LOCK_GROUP       | END                | myGroup1              | 5 tables locked, 0 deadlock(s) | postgres
- SET_MARK_GROUP   | BEGIN              | myGroup1              | START_%                        | postgres
- SET_MARK_GROUP   | END                | myGroup1              | START_%                        | postgres
- START_GROUP      | END                | myGroup1              | 7 tables/sequences processed   | postgres
- STOP_GROUP       | BEGIN              | myGroup1              |                                | postgres
- LOCK_GROUP       | BEGIN              | myGroup1              |                                | postgres
- LOCK_GROUP       | END                | myGroup1              | 5 tables locked, 0 deadlock(s) | postgres
- SET_MARK_GROUP   | BEGIN              | myGroup1              | STOP_%                         | postgres
- SET_MARK_GROUP   | END                | myGroup1              | STOP_%                         | postgres
- STOP_GROUP       | END                | myGroup1              | 7 tables/sequences processed   | postgres
- DROP_GROUP       | BEGIN              | myGroup1              |                                | postgres
- DROP_GROUP       | LOG_SCHEMA DROPPED | emaj_myschema1        |                                | postgres
- DROP_GROUP       | END                | myGroup1              | 7 tables/sequences processed   | postgres
- DROP_GROUP       | BEGIN              | myGroup2              |                                | postgres
- DROP_GROUP       | LOG_SCHEMA DROPPED | emaj_myschema2        |                                | postgres
- DROP_GROUP       | END                | myGroup2              | 8 tables/sequences processed   | postgres
- DROP_GROUP       | BEGIN              | emptyGroup            |                                | postgres
- DROP_GROUP       | END                | emptyGroup            | 0 tables/sequences processed   | postgres
- DROP_GROUP       | BEGIN              | myGroup5              |                                | postgres
- DROP_GROUP       | LOG_SCHEMA DROPPED | emaj_myschema5        |                                | postgres
- DROP_GROUP       | END                | myGroup5              | 2 tables/sequences processed   | postgres
- DROP_GROUP       | BEGIN              | myGroup6              |                                | postgres
- DROP_GROUP       | LOG_SCHEMA DROPPED | emaj_myschema6        |                                | postgres
- DROP_GROUP       | END                | myGroup6              | 4 tables/sequences processed   | postgres
- CREATE_GROUP     | BEGIN              | myGroup1              | audit_only                     | postgres
- CREATE_GROUP     | LOG_SCHEMA CREATED | emaj_myschema1        |                                | postgres
- CREATE_GROUP     | END                | myGroup1              | 7 tables/sequences processed   | postgres
- START_GROUP      | BEGIN              | myGroup1              | With log reset                 | postgres
- LOCK_GROUP       | BEGIN              | myGroup1              |                                | postgres
- LOCK_GROUP       | END                | myGroup1              | 5 tables locked, 0 deadlock(s) | postgres
- SET_MARK_GROUP   | BEGIN              | myGroup1              | START_%                        | postgres
- SET_MARK_GROUP   | END                | myGroup1              | START_%                        | postgres
- START_GROUP      | END                | myGroup1              | 7 tables/sequences processed   | postgres
- FORCE_DROP_GROUP | BEGIN              | myGroup1              |                                | postgres
- FORCE_DROP_GROUP | LOG_SCHEMA DROPPED | emaj_myschema1        |                                | postgres
- FORCE_DROP_GROUP | END                | myGroup1              | 7 tables/sequences processed   | postgres
- CREATE_GROUP     | BEGIN              | myGroup2              | rollbackable                   | postgres
- CREATE_GROUP     | LOG_SCHEMA CREATED | emaj_myschema2        |                                | postgres
- CREATE_GROUP     | END                | myGroup2              | 8 tables/sequences processed   | postgres
- FORCE_DROP_GROUP | BEGIN              | myGroup2              |                                | postgres
- FORCE_DROP_GROUP | LOG_SCHEMA DROPPED | emaj_myschema2        |                                | postgres
- FORCE_DROP_GROUP | END                | myGroup2              | 8 tables/sequences processed   | postgres
-(100 rows)
+  hist_function   |     hist_event     |         hist_object          |               regexp_replace                | hist_user 
+------------------+--------------------+------------------------------+---------------------------------------------+-----------
+ CREATE_GROUP     | BEGIN              | myGroup1                     | rollbackable                                | postgres
+ CREATE_GROUP     | LOG_SCHEMA CREATED | emaj_myschema1               |                                             | postgres
+ CREATE_GROUP     | END                | myGroup1                     | 7 tables/sequences processed                | postgres
+ CREATE_GROUP     | BEGIN              | emptyGroup                   | audit_only                                  | postgres
+ CREATE_GROUP     | END                | emptyGroup                   | 0 tables/sequences processed                | postgres
+ CREATE_GROUP     | BEGIN              | myGroup2                     | rollbackable                                | postgres
+ CREATE_GROUP     | LOG_SCHEMA CREATED | emaj_myschema2               |                                             | postgres
+ CREATE_GROUP     | END                | myGroup2                     | 8 tables/sequences processed                | postgres
+ CREATE_GROUP     | BEGIN              | phil's group#3",             | audit_only                                  | postgres
+ CREATE_GROUP     | LOG_SCHEMA CREATED | "emaj_phil's schema3"        |                                             | postgres
+ CREATE_GROUP     | END                | phil's group#3",             | 4 tables/sequences processed                | postgres
+ CREATE_GROUP     | BEGIN              | myGroup4                     | rollbackable                                | postgres
+ CREATE_GROUP     | LOG_SCHEMA CREATED | emaj_myschema4               |                                             | postgres
+ CREATE_GROUP     | END                | myGroup4                     | 5 tables/sequences processed                | postgres
+ CREATE_GROUP     | BEGIN              | myGroup5                     | audit_only                                  | postgres
+ CREATE_GROUP     | LOG_SCHEMA CREATED | emaj_myschema5               |                                             | postgres
+ CREATE_GROUP     | END                | myGroup5                     | 2 tables/sequences processed                | postgres
+ CREATE_GROUP     | BEGIN              | myGroup6                     | rollbackable                                | postgres
+ CREATE_GROUP     | LOG_SCHEMA CREATED | emaj_myschema6               |                                             | postgres
+ CREATE_GROUP     | END                | myGroup6                     | 4 tables/sequences processed                | postgres
+ COMMENT_GROUP    |                    | myGroup1                     |                                             | postgres
+ COMMENT_GROUP    |                    | myGroup1                     |                                             | postgres
+ COMMENT_GROUP    |                    | emptyGroup                   |                                             | postgres
+ COMMENT_GROUP    |                    | myGroup1                     |                                             | postgres
+ DROP_GROUP       | BEGIN              | myGroup1                     |                                             | postgres
+ DROP_GROUP       | LOG_SCHEMA DROPPED | emaj_myschema1               |                                             | postgres
+ DROP_GROUP       | END                | myGroup1                     | 7 tables/sequences processed                | postgres
+ CREATE_GROUP     | BEGIN              | myGroup1b                    | rollbackable                                | postgres
+ CREATE_GROUP     | END                | myGroup1b                    | 0 tables/sequences processed                | postgres
+ ASSIGN_TABLE     | BEGIN              |                              |                                             | postgres
+ ASSIGN_TABLE     | LOG_SCHEMA CREATED | emaj_myschema1               |                                             | postgres
+ ASSIGN_TABLE     | TABLE ADDED        | myschema1.mytbl1             | To the group myGroup1b                      | postgres
+ ASSIGN_TABLE     | END                |                              | 1 tables assigned to the group myGroup1b    | postgres
+ ASSIGN_TABLES    | BEGIN              |                              |                                             | postgres
+ ASSIGN_TABLES    | END                |                              | 0 tables assigned to the group myGroup1b    | postgres
+ ASSIGN_TABLES    | BEGIN              |                              |                                             | postgres
+ ASSIGN_TABLES    | END                |                              | 0 tables assigned to the group myGroup1b    | postgres
+ ASSIGN_TABLES    | BEGIN              |                              |                                             | postgres
+ ASSIGN_TABLES    | END                |                              | 0 tables assigned to the group myGroup1b    | postgres
+ ASSIGN_TABLES    | BEGIN              |                              |                                             | postgres
+ ASSIGN_TABLES    | TABLE ADDED        | myschema1.mytbl2             | To the group myGroup1b                      | postgres
+ ASSIGN_TABLES    | TABLE ADDED        | myschema1.mytbl2b            | To the group myGroup1b                      | postgres
+ ASSIGN_TABLES    | END                |                              | 2 tables assigned to the group myGroup1b    | postgres
+ ASSIGN_TABLES    | BEGIN              |                              |                                             | postgres
+ ASSIGN_TABLES    | END                |                              | 0 tables assigned to the group myGroup1b    | postgres
+ ASSIGN_TABLES    | BEGIN              |                              |                                             | postgres
+ ASSIGN_TABLES    | END                |                              | 0 tables assigned to the group myGroup1b    | postgres
+ ASSIGN_TABLES    | BEGIN              |                              |                                             | postgres
+ ASSIGN_TABLES    | END                |                              | 0 tables assigned to the group myGroup1b    | postgres
+ ASSIGN_TABLES    | BEGIN              |                              |                                             | postgres
+ ASSIGN_TABLES    | END                |                              | 0 tables assigned to the group myGroup1b    | postgres
+ ASSIGN_TABLES    | BEGIN              |                              |                                             | postgres
+ ASSIGN_TABLES    | END                |                              | 0 tables assigned to the group myGroup1b    | postgres
+ ASSIGN_TABLES    | BEGIN              |                              |                                             | postgres
+ ASSIGN_TABLES    | END                |                              | 0 tables assigned to the group myGroup1b    | postgres
+ ASSIGN_TABLES    | BEGIN              |                              |                                             | postgres
+ ASSIGN_TABLES    | END                |                              | 0 tables assigned to the group myGroup1b    | postgres
+ ASSIGN_TABLES    | BEGIN              |                              |                                             | postgres
+ ASSIGN_TABLES    | TABLE ADDED        | myschema1."myTbl3"           | To the group myGroup1b                      | postgres
+ ASSIGN_TABLES    | TABLE ADDED        | myschema1.mytbl4             | To the group myGroup1b                      | postgres
+ ASSIGN_TABLES    | END                |                              | 2 tables assigned to the group myGroup1b    | postgres
+ REMOVE_TABLES    | BEGIN              |                              |                                             | postgres
+ REMOVE_TABLES    | END                |                              | 0 tables removed from their groups          | postgres
+ REMOVE_TABLES    | BEGIN              |                              |                                             | postgres
+ REMOVE_TABLES    | END                |                              | 0 tables removed from their groups          | postgres
+ REMOVE_TABLES    | BEGIN              |                              |                                             | postgres
+ REMOVE_TABLES    | END                |                              | 0 tables removed from their groups          | postgres
+ REMOVE_TABLE     | BEGIN              |                              |                                             | postgres
+ REMOVE_TABLE     | TABLE REMOVED      | myschema1.mytbl1             | From the group myGroup1b                    | postgres
+ REMOVE_TABLE     | END                |                              | 1 tables removed from their groups          | postgres
+ REMOVE_TABLES    | BEGIN              |                              |                                             | postgres
+ REMOVE_TABLES    | TABLE REMOVED      | myschema1.mytbl2             | From the group myGroup1b                    | postgres
+ REMOVE_TABLES    | TABLE REMOVED      | myschema1.mytbl2b            | From the group myGroup1b                    | postgres
+ REMOVE_TABLES    | END                |                              | 2 tables removed from their groups          | postgres
+ REMOVE_TABLES    | BEGIN              |                              |                                             | postgres
+ REMOVE_TABLES    | END                |                              | 0 tables removed from their groups          | postgres
+ REMOVE_TABLES    | BEGIN              |                              |                                             | postgres
+ REMOVE_TABLES    | END                |                              | 0 tables removed from their groups          | postgres
+ REMOVE_TABLES    | BEGIN              |                              |                                             | postgres
+ REMOVE_TABLES    | END                |                              | 0 tables removed from their groups          | postgres
+ REMOVE_TABLES    | BEGIN              |                              |                                             | postgres
+ REMOVE_TABLES    | TABLE REMOVED      | myschema1."myTbl3"           | From the group myGroup1b                    | postgres
+ REMOVE_TABLES    | TABLE REMOVED      | myschema1.mytbl4             | From the group myGroup1b                    | postgres
+ REMOVE_TABLES    | LOG_SCHEMA DROPPED | emaj_myschema1               |                                             | postgres
+ REMOVE_TABLES    | END                |                              | 2 tables removed from their groups          | postgres
+ DROP_GROUP       | BEGIN              | myGroup2                     |                                             | postgres
+ DROP_GROUP       | LOG_SCHEMA DROPPED | emaj_myschema2               |                                             | postgres
+ DROP_GROUP       | END                | myGroup2                     | 8 tables/sequences processed                | postgres
+ CREATE_GROUP     | BEGIN              | myGroup2b                    | rollbackable                                | postgres
+ CREATE_GROUP     | END                | myGroup2b                    | 0 tables/sequences processed                | postgres
+ ASSIGN_SEQUENCE  | BEGIN              |                              |                                             | postgres
+ ASSIGN_SEQUENCE  | SEQUENCE ADDED     | myschema2.myseq1             | To the group myGroup2b                      | postgres
+ ASSIGN_SEQUENCE  | END                |                              | 1 sequences assigned to the group myGroup2b | postgres
+ ASSIGN_SEQUENCES | BEGIN              |                              |                                             | postgres
+ ASSIGN_SEQUENCES | END                |                              | 0 sequences assigned to the group myGroup2b | postgres
+ ASSIGN_SEQUENCES | BEGIN              |                              |                                             | postgres
+ ASSIGN_SEQUENCES | END                |                              | 0 sequences assigned to the group myGroup2b | postgres
+ ASSIGN_SEQUENCES | BEGIN              |                              |                                             | postgres
+ ASSIGN_SEQUENCES | END                |                              | 0 sequences assigned to the group myGroup2b | postgres
+ ASSIGN_SEQUENCES | BEGIN              |                              |                                             | postgres
+ ASSIGN_SEQUENCES | SEQUENCE ADDED     | myschema2.myseq2             | To the group myGroup2b                      | postgres
+ ASSIGN_SEQUENCES | END                |                              | 1 sequences assigned to the group myGroup2b | postgres
+ ASSIGN_SEQUENCES | BEGIN              |                              |                                             | postgres
+ ASSIGN_SEQUENCES | END                |                              | 0 sequences assigned to the group myGroup2b | postgres
+ ASSIGN_SEQUENCES | BEGIN              |                              |                                             | postgres
+ ASSIGN_SEQUENCES | END                |                              | 0 sequences assigned to the group myGroup2b | postgres
+ ASSIGN_SEQUENCES | BEGIN              |                              |                                             | postgres
+ ASSIGN_SEQUENCES | END                |                              | 0 sequences assigned to the group myGroup2b | postgres
+ ASSIGN_SEQUENCES | BEGIN              |                              |                                             | postgres
+ ASSIGN_SEQUENCES | END                |                              | 0 sequences assigned to the group myGroup2b | postgres
+ ASSIGN_SEQUENCES | BEGIN              |                              |                                             | postgres
+ ASSIGN_SEQUENCES | SEQUENCE ADDED     | myschema2."myTbl3_col31_seq" | To the group myGroup2b                      | postgres
+ ASSIGN_SEQUENCES | END                |                              | 1 sequences assigned to the group myGroup2b | postgres
+ REMOVE_SEQUENCES | BEGIN              |                              |                                             | postgres
+ REMOVE_SEQUENCES | END                |                              | 0 sequences removed from their groups       | postgres
+ REMOVE_SEQUENCES | BEGIN              |                              |                                             | postgres
+ REMOVE_SEQUENCES | END                |                              | 0 sequences removed from their groups       | postgres
+ REMOVE_SEQUENCES | BEGIN              |                              |                                             | postgres
+ REMOVE_SEQUENCES | END                |                              | 0 sequences removed from their groups       | postgres
+ REMOVE_SEQUENCE  | BEGIN              |                              |                                             | postgres
+ REMOVE_SEQUENCE  | SEQUENCE REMOVED   | myschema2.myseq1             | From the group myGroup2b                    | postgres
+ REMOVE_SEQUENCE  | END                |                              | 1 sequences removed from their groups       | postgres
+ REMOVE_SEQUENCES | BEGIN              |                              |                                             | postgres
+ REMOVE_SEQUENCES | SEQUENCE REMOVED   | myschema2.myseq2             | From the group myGroup2b                    | postgres
+ REMOVE_SEQUENCES | END                |                              | 1 sequences removed from their groups       | postgres
+ REMOVE_SEQUENCES | BEGIN              |                              |                                             | postgres
+ REMOVE_SEQUENCES | END                |                              | 0 sequences removed from their groups       | postgres
+ REMOVE_SEQUENCES | BEGIN              |                              |                                             | postgres
+ REMOVE_SEQUENCES | END                |                              | 0 sequences removed from their groups       | postgres
+ REMOVE_SEQUENCES | BEGIN              |                              |                                             | postgres
+ REMOVE_SEQUENCES | END                |                              | 0 sequences removed from their groups       | postgres
+ REMOVE_SEQUENCES | BEGIN              |                              |                                             | postgres
+ REMOVE_SEQUENCES | SEQUENCE REMOVED   | myschema2."myTbl3_col31_seq" | From the group myGroup2b                    | postgres
+ REMOVE_SEQUENCES | END                |                              | 1 sequences removed from their groups       | postgres
+ DROP_GROUP       | BEGIN              | myGroup1b                    |                                             | postgres
+ DROP_GROUP       | END                | myGroup1b                    | 0 tables/sequences processed                | postgres
+ DROP_GROUP       | BEGIN              | myGroup2b                    |                                             | postgres
+ DROP_GROUP       | END                | myGroup2b                    | 0 tables/sequences processed                | postgres
+ CREATE_GROUP     | BEGIN              | myGroup1                     | rollbackable                                | postgres
+ CREATE_GROUP     | LOG_SCHEMA CREATED | emaj_myschema1               |                                             | postgres
+ CREATE_GROUP     | END                | myGroup1                     | 7 tables/sequences processed                | postgres
+ CREATE_GROUP     | BEGIN              | myGroup2                     | rollbackable                                | postgres
+ CREATE_GROUP     | LOG_SCHEMA CREATED | emaj_myschema2               |                                             | postgres
+ CREATE_GROUP     | END                | myGroup2                     | 8 tables/sequences processed                | postgres
+ START_GROUP      | BEGIN              | myGroup1                     | With log reset                              | postgres
+ LOCK_GROUP       | BEGIN              | myGroup1                     |                                             | postgres
+ LOCK_GROUP       | END                | myGroup1                     | 5 tables locked, 0 deadlock(s)              | postgres
+ SET_MARK_GROUP   | BEGIN              | myGroup1                     | START_%                                     | postgres
+ SET_MARK_GROUP   | END                | myGroup1                     | START_%                                     | postgres
+ START_GROUP      | END                | myGroup1                     | 7 tables/sequences processed                | postgres
+ STOP_GROUP       | BEGIN              | myGroup1                     |                                             | postgres
+ LOCK_GROUP       | BEGIN              | myGroup1                     |                                             | postgres
+ LOCK_GROUP       | END                | myGroup1                     | 5 tables locked, 0 deadlock(s)              | postgres
+ SET_MARK_GROUP   | BEGIN              | myGroup1                     | STOP_%                                      | postgres
+ SET_MARK_GROUP   | END                | myGroup1                     | STOP_%                                      | postgres
+ STOP_GROUP       | END                | myGroup1                     | 7 tables/sequences processed                | postgres
+ DROP_GROUP       | BEGIN              | myGroup1                     |                                             | postgres
+ DROP_GROUP       | LOG_SCHEMA DROPPED | emaj_myschema1               |                                             | postgres
+ DROP_GROUP       | END                | myGroup1                     | 7 tables/sequences processed                | postgres
+ DROP_GROUP       | BEGIN              | myGroup2                     |                                             | postgres
+ DROP_GROUP       | LOG_SCHEMA DROPPED | emaj_myschema2               |                                             | postgres
+ DROP_GROUP       | END                | myGroup2                     | 8 tables/sequences processed                | postgres
+ DROP_GROUP       | BEGIN              | emptyGroup                   |                                             | postgres
+ DROP_GROUP       | END                | emptyGroup                   | 0 tables/sequences processed                | postgres
+ DROP_GROUP       | BEGIN              | myGroup5                     |                                             | postgres
+ DROP_GROUP       | LOG_SCHEMA DROPPED | emaj_myschema5               |                                             | postgres
+ DROP_GROUP       | END                | myGroup5                     | 2 tables/sequences processed                | postgres
+ DROP_GROUP       | BEGIN              | myGroup6                     |                                             | postgres
+ DROP_GROUP       | LOG_SCHEMA DROPPED | emaj_myschema6               |                                             | postgres
+ DROP_GROUP       | END                | myGroup6                     | 4 tables/sequences processed                | postgres
+ CREATE_GROUP     | BEGIN              | myGroup1                     | audit_only                                  | postgres
+ CREATE_GROUP     | LOG_SCHEMA CREATED | emaj_myschema1               |                                             | postgres
+ CREATE_GROUP     | END                | myGroup1                     | 7 tables/sequences processed                | postgres
+ START_GROUP      | BEGIN              | myGroup1                     | With log reset                              | postgres
+ LOCK_GROUP       | BEGIN              | myGroup1                     |                                             | postgres
+ LOCK_GROUP       | END                | myGroup1                     | 5 tables locked, 0 deadlock(s)              | postgres
+ SET_MARK_GROUP   | BEGIN              | myGroup1                     | START_%                                     | postgres
+ SET_MARK_GROUP   | END                | myGroup1                     | START_%                                     | postgres
+ START_GROUP      | END                | myGroup1                     | 7 tables/sequences processed                | postgres
+ FORCE_DROP_GROUP | BEGIN              | myGroup1                     |                                             | postgres
+ FORCE_DROP_GROUP | LOG_SCHEMA DROPPED | emaj_myschema1               |                                             | postgres
+ FORCE_DROP_GROUP | END                | myGroup1                     | 7 tables/sequences processed                | postgres
+ CREATE_GROUP     | BEGIN              | myGroup2                     | rollbackable                                | postgres
+ CREATE_GROUP     | LOG_SCHEMA CREATED | emaj_myschema2               |                                             | postgres
+ CREATE_GROUP     | END                | myGroup2                     | 8 tables/sequences processed                | postgres
+ FORCE_DROP_GROUP | BEGIN              | myGroup2                     |                                             | postgres
+ FORCE_DROP_GROUP | LOG_SCHEMA DROPPED | emaj_myschema2               |                                             | postgres
+ FORCE_DROP_GROUP | END                | myGroup2                     | 8 tables/sequences processed                | postgres
+(188 rows)
 
 select time_id, time_last_emaj_gid, time_event from emaj.emaj_time_stamp order by time_id;
  time_id | time_last_emaj_gid | time_event 
@@ -1295,27 +1613,31 @@ select time_id, time_last_emaj_gid, time_event from emaj.emaj_time_stamp order b
       17 |                  0 | A
       18 |                  0 | A
       19 |                  0 | A
-      20 |                  0 | D
-      21 |                  0 | C
-      22 |                  0 | A
-      23 |                  0 | A
+      20 |                  0 | A
+      21 |                  0 | A
+      22 |                  0 | D
+      23 |                  0 | C
       24 |                  0 | A
       25 |                  0 | A
-      26 |                  0 | D
-      27 |                  0 | D
-      28 |                  0 | C
-      29 |                  0 | C
-      30 |                  0 | M
-      31 |                  0 | M
-      33 |                  0 | D
-      34 |                  0 | D
-      35 |                  0 | D
-      36 |                  0 | D
+      26 |                  0 | A
+      27 |                  0 | A
+      28 |                  0 | A
+      29 |                  0 | A
+      30 |                  0 | D
+      31 |                  0 | D
+      32 |                  0 | C
+      33 |                  0 | C
+      34 |                  0 | M
+      35 |                  0 | M
       37 |                  0 | D
-      38 |                  0 | C
-      39 |                  0 | M
+      38 |                  0 | D
+      39 |                  0 | D
       40 |                  0 | D
-      41 |                  0 | C
-      42 |                  0 | D
-(35 rows)
+      41 |                  0 | D
+      42 |                  0 | C
+      43 |                  0 | M
+      44 |                  0 | D
+      45 |                  0 | C
+      46 |                  0 | D
+(39 rows)
 

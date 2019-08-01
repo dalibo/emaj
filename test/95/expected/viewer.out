@@ -614,7 +614,7 @@ select count(*) from emaj.emaj_relation;
 select count(*) from emaj.emaj_rel_hist;
  count 
 -------
-    84
+    86
 (1 row)
 
 select count(*) from emaj.emaj_mark;

@@ -65,7 +65,9 @@ select emaj._adjust_group_properties();
 
 select group_name, group_last_alter_time_id, group_has_waiting_changes, group_nb_table, group_nb_sequence
   from emaj.emaj_group where group_name = 'myGroup2';
-select emaj.emaj_alter_group('myGroup2', 'Alter to add myseq2');
+--select emaj.emaj_alter_group('myGroup2', 'Alter to add myseq2');
+select emaj.emaj_assign_sequence('myschema2', 'myseq2', 'myGroup2', null, 'Alter to add myseq2');
+
 select group_name, group_last_alter_time_id, group_has_waiting_changes, group_nb_table, group_nb_sequence
   from emaj.emaj_group where group_name = 'myGroup2';
 select * from emaj.emaj_relation where rel_schema = 'myschema2' and rel_tblseq = 'myseq2' order by rel_time_range;
@@ -168,7 +170,8 @@ select emaj.emaj_set_mark_group('myGroup1','Before_remove');
 update emaj.emaj_group_def set grpdef_group = 'temporarily_removed' where grpdef_schema = 'myschema1' and grpdef_tblseq = 'myTbl3_col31_seq';
 select group_name, group_last_alter_time_id, group_has_waiting_changes, group_nb_table, group_nb_sequence
   from emaj.emaj_group where group_name = 'myGroup1';
-select emaj.emaj_alter_group('myGroup1','Sequence_removed');
+--select emaj.emaj_alter_group('myGroup1','Sequence_removed');
+select emaj.emaj_remove_sequence('myschema1', 'myTbl3_col31_seq', 'Sequence_removed');
 select group_name, group_last_alter_time_id, group_has_waiting_changes, group_nb_table, group_nb_sequence
   from emaj.emaj_group where group_name = 'myGroup1';
 select * from emaj.emaj_relation where rel_schema = 'myschema1' and rel_tblseq = 'myTbl3_col31_seq' order by rel_time_range;
@@ -248,7 +251,9 @@ delete from myschema2.mytbl7 where col71 = 3;
 
 -- then add the table to the group
 insert into emaj.emaj_group_def values ('myGroup2','myschema2','mytbl7');
-select emaj.emaj_alter_group('myGroup2', 'Alter to add mytbl7');
+--select emaj.emaj_alter_group('myGroup2', 'Alter to add mytbl7');
+select emaj.emaj_assign_table('myschema2', 'mytbl7', 'myGroup2', null, 'Alter to add mytbl7');
+
 select group_name, group_last_alter_time_id, group_has_waiting_changes, group_nb_table, group_nb_sequence
   from emaj.emaj_group where group_name = 'myGroup2';
 select * from emaj.emaj_relation where rel_schema = 'myschema2' and rel_tblseq = 'mytbl7' order by rel_time_range;
@@ -370,7 +375,6 @@ select rlbk_severity, regexp_replace(rlbk_message,E'\\d\\d\\d\\d/\\d\\d\\/\\d\\d
   from emaj.emaj_rollback_group('myGroup2', 'ADD_TBL test',true);
 select * from myschema2.mytbl7 order by col71;
 
-
 -----------------------------
 -- remove tables
 -----------------------------
@@ -385,7 +389,9 @@ update emaj.emaj_group set group_has_waiting_changes = false where group_name = 
 select emaj._adjust_group_properties();
 select group_has_waiting_changes from emaj.emaj_group where group_name = 'myGroup1';
 
-select emaj.emaj_alter_group('myGroup1', '2 tables removed from myGroup1');
+--select emaj.emaj_alter_group('myGroup1', '2 tables removed from myGroup1');
+select emaj.emaj_remove_tables('myschema1', '^(myTbl3|mytbl2b)$', null, '2 tables removed from myGroup1');
+
 select group_name, group_last_alter_time_id, group_has_waiting_changes, group_nb_table, group_nb_sequence
   from emaj.emaj_group where group_name = 'myGroup1';
 select * from emaj.emaj_relation where rel_schema = 'myschema1' and (rel_tblseq = 'myTbl3' or rel_tblseq = 'mytbl2b') order by 1,2,3;
@@ -619,21 +625,38 @@ select emaj.emaj_start_group('myGroup2','Start');
 insert into myschema2.mytbl1 values (100, 'Started', E'\\000'::bytea);
 select nextval('myschema2.myseq1');
 
+-- remove and assign somes tables and sequences in a single transaction
 begin;
-select emaj.emaj_remove_tables('myschema2','{"mytbl1","mytbl2","myTbl3"}','REMOVE_3_TABLES');
-select emaj.emaj_remove_sequence('myschema2','myseq1','REMOVE_1_SEQUENCES');
+  select emaj.emaj_remove_tables('myschema2','{"mytbl1","mytbl2","myTbl3"}'::text[],'REMOVE_3_TABLES');
+  select emaj.emaj_remove_sequence('myschema2','myseq1','REMOVE_1_SEQUENCES');
 
-select emaj.emaj_assign_tables('myschema2','{"mytbl1","mytbl2","myTbl3"}','myGroup2',null,'ASSIGN_3_TABLES');
-select emaj.emaj_assign_sequences('myschema2','{"myseq1","myseq2"}','myGroup2',null,'ASSIGN_2_SEQUENCES');
-insert into myschema2.mytbl1 values (110, 'Assigned', E'\\000'::bytea);
-select nextval('myschema2.myseq1');
+  select emaj.emaj_assign_tables('myschema2','{"mytbl1","mytbl2","myTbl3"}'::text[],'myGroup2',null,'ASSIGN_3_TABLES');
+  select emaj.emaj_assign_sequences('myschema2','{"myseq1","myseq2"}'::text[],'myGroup2',null,'ASSIGN_2_SEQUENCES');
+  insert into myschema2.mytbl1 values (110, 'Assigned', E'\\000'::bytea);
+  select nextval('myschema2.myseq1');
 
-select emaj.emaj_remove_tables('myschema2','{"mytbl1","mytbl2","myTbl3"}');
-select emaj.emaj_remove_sequences('myschema2','{"myseq1","myseq2"}');
+  -- what if some (all but the emaj sequence) emaj components are missing at remove_table time ?
+  select emaj.emaj_disable_protection_by_event_triggers();
+  drop table emaj_myschema2.mytbl1_log;
+  drop function emaj_myschema2.mytbl1_log_fnct() cascade;
+  select emaj.emaj_enable_protection_by_event_triggers();
+  select emaj.emaj_remove_tables('myschema2','{"mytbl1","mytbl2","myTbl3"}');
+  select emaj.emaj_remove_sequences('myschema2','{"myseq1","myseq2"}');
 
-select emaj.emaj_assign_tables('myschema2','{"mytbl1","mytbl2","myTbl3"}','myGroup2',
-                               '{"priority":1, "log_data_tablespace":"tsplog1", "log_index_tablespace":"tsplog1"}'::jsonb);
-select emaj.emaj_assign_sequences('myschema2','{"myseq1","myseq2"}','myGroup2');
+  select emaj.emaj_assign_tables('myschema2','{"mytbl1","mytbl2","myTbl3"}','myGroup2',
+                                 '{"priority":1, "log_data_tablespace":"tsplog1", "log_index_tablespace":"tsplog1"}'::jsonb);
+  select emaj.emaj_assign_sequences('myschema2','{"myseq1","myseq2"}','myGroup2');
+commit;
+
+-- alter a table in a logging group
+select emaj.emaj_remove_table('myschema1','mytbl4');
+alter table myschema1.mytbl4 alter column col45 type varchar(15);
+select emaj.emaj_assign_table('myschema1','mytbl4','myGroup1');
+
+begin;
+  select emaj.emaj_remove_table('myschema1','mytbl4');
+  alter table myschema1.mytbl4 alter column col45 type varchar(10);
+  select emaj.emaj_assign_table('myschema1','mytbl4','myGroup1');
 commit;
 
 -- checks
