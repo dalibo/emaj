@@ -389,8 +389,11 @@ update emaj.emaj_group set group_has_waiting_changes = false where group_name = 
 select emaj._adjust_group_properties();
 select group_has_waiting_changes from emaj.emaj_group where group_name = 'myGroup1';
 
---select emaj.emaj_alter_group('myGroup1', '2 tables removed from myGroup1');
 select emaj.emaj_remove_tables('myschema1', '^(myTbl3|mytbl2b)$', null, '2 tables removed from myGroup1');
+
+-- sync emaj_group_def and try to alter the group: there should not be any change
+select emaj.emaj_sync_def_group('myGroup1');
+select emaj.emaj_alter_group('myGroup1', 'useless ALTER');
 
 select group_name, group_last_alter_time_id, group_has_waiting_changes, group_nb_table, group_nb_sequence
   from emaj.emaj_group where group_name = 'myGroup1';

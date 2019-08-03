@@ -218,6 +218,14 @@ Lorsque le groupe de table est actif (état *LOGGING*), une marque est posée. S
 
 Toutes ces fonctions retournent le nombre de tables ou séquences effectivement ajoutées ou supprimées.
 
+.. _emaj_sync_def_group:
+
+Une fois effectuées des modifications en dynamique du contenu des groupes de tables, la table *emaj_group_def* ne reflète plus la configuration courante des groupes. L’administrateur E-Maj peut alors, pour un groupe de table donné, synchroniser le contenu de la table *emaj_group_def* à partir de la situation courante. ::
+
+	SELECT emaj.emaj_sync_def_group(‘<groupe>’);
+
+La fonction retourne le nombre de tables et séquences contenues dans le groupe de tables traité.
+
 
 Incidence des ajouts ou suppressions de tables et séquences dans un groupe en état *LOGGING*
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^

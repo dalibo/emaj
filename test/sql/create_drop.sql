@@ -1,4 +1,5 @@
 -- create_drop.sql : prepare groups content and test emaj_create_group(), emaj_comment_group(),
+-- emaj_sync_def_group()
 -- emaj_assign_table(), emaj_assign_tables(), emaj_remove_table(), emaj_remove_tables(),
 -- emaj_assign_sequence(), emaj_assign_sequences(), emaj_remove_sequence(), emaj_remove_sequences(),
 -- emaj_ignore_app_trigger(), emaj_drop_group() and emaj_force_drop_group() functions
@@ -179,6 +180,36 @@ select emaj.emaj_comment_group('emptyGroup','an empty group');
 select group_name, group_comment from emaj.emaj_group where group_name = 'myGroup1';
 select emaj.emaj_comment_group('myGroup1',NULL);
 select group_name, group_comment from emaj.emaj_group where group_name = 'myGroup1';
+
+-----------------------------------
+-- emaj_sync_def_group
+-----------------------------------
+-- bad group name
+select emaj.emaj_sync_def_group(null);
+select emaj.emaj_sync_def_group('dummyGroup');
+
+-- ok
+select emaj.emaj_sync_def_group('myGroup1');
+
+-- resync all and check the result
+--   set/reset directory for exports
+\! mkdir -p /tmp/emaj_test/group_def
+\! rm -R /tmp/emaj_test/group_def
+\! mkdir /tmp/emaj_test/group_def
+
+--   export the current emaj_group_def content
+copy (select * from emaj.emaj_group_def order by grpdef_group, grpdef_schema, grpdef_tblseq) to '/tmp/emaj_test/group_def/before_image';
+
+--   resync all created groups
+select group_name, group_nb_table + group_nb_sequence as table_and_sequence, emaj.emaj_sync_def_group(group_name) as function_result 
+  from emaj.emaj_group order by group_name;
+
+--   export the modified emaj_group_def content
+copy (select * from emaj.emaj_group_def order by grpdef_group, grpdef_schema, grpdef_tblseq) to '/tmp/emaj_test/group_def/after_image';
+
+--   there should not be any differences
+\! diff /tmp/emaj_test/group_def/before_image /tmp/emaj_test/group_def/after_image
+\! rm -R /tmp/emaj_test/group_def
 
 -----------------------------------
 -- emaj_assign_table

@@ -126,6 +126,8 @@ La colonne *hist_function* peut prendre les valeurs suivantes.
 +----------------------------------+---------------------------------------------------------------------------------------+
 | STOP_GROUPS                      | arrêt de plusieurs groupes de tables                                                  |
 +----------------------------------+---------------------------------------------------------------------------------------+
+| SYNC_DEF_GROUP                   | synchronisation de la table *emaj_group_def*                                          |
++----------------------------------+---------------------------------------------------------------------------------------+
 | UNPROTECT_GROUP                  | suppression d'une protection contre les rollbacks sur un groupe                       |
 +----------------------------------+---------------------------------------------------------------------------------------+
 | UNPROTECT_MARK_GROUP             | suppression d'une protection contre les rollbacks sur une marque d'un groupe          |
@@ -133,43 +135,45 @@ La colonne *hist_function* peut prendre les valeurs suivantes.
 
 La colonne *hist_event* peut prendre les valeurs suivantes.
 
-+------------------------------+------------------------------------------------+
-| Valeur                       | Signification                                  |
-+==============================+================================================+
-| BEGIN                        | début                                          |
-+------------------------------+------------------------------------------------+
-| END                          | fin                                            |
-+------------------------------+------------------------------------------------+
-| EVENT TRIGGERS DISABLED      | triggers sur événements désactivés             |
-+------------------------------+------------------------------------------------+
-| EVENT TRIGGERS ENABLED       | triggers sur événements activés                |
-+------------------------------+------------------------------------------------+
-| LOG DATA TABLESPACE CHANGED  | tablespace pour la table de log modifié        |
-+------------------------------+------------------------------------------------+
-| LOG INDEX TABLESPACE CHANGED | tablespace pour l’index de log modifié         |
-+------------------------------+------------------------------------------------+
-| LOG_SCHEMA CREATED           | schéma secondaire créé                         |
-+------------------------------+------------------------------------------------+
-| LOG_SCHEMA DROPPED           | schéma secondaire supprimé                     |
-+------------------------------+------------------------------------------------+
-| MARK DELETED                 | marque supprimée                               |
-+------------------------------+------------------------------------------------+
-| NOTICE                       | message d’information issu d’un rollback       |
-+------------------------------+------------------------------------------------+
-| SEQUENCE ADDED               | séquence ajoutée à un groupe de tables actif   |
-+------------------------------+------------------------------------------------+
-| SEQUENCE MOVED               | séquence déplacée d’un groupe à un autre       |
-+------------------------------+------------------------------------------------+
-| SEQUENCE REMOVED             | séquence supprimée d’un groupe de tables actif |
-+------------------------------+------------------------------------------------+
-| TABLE ADDED                  | table ajoutée à un groupe de tables actif      |
-+------------------------------+------------------------------------------------+
-| TABLE MOVED                  | table déplacée d’un groupe à un autre          |
-+------------------------------+------------------------------------------------+
-| TABLE REMOVED                | table supprimée d’un groupe de tables actif    |
-+------------------------------+------------------------------------------------+
-| WARNING                      | message d’avertissement issu d’un rollback     |
-+------------------------------+------------------------------------------------+
++------------------------------+----------------------------------------------------+
+| Valeur                       | Signification                                      |
++==============================+====================================================+
+| BEGIN                        | début                                              |
++------------------------------+----------------------------------------------------+
+| EMAJ_GROUP_DEF SYNCHRONIZED  | groupe de tables synchronisé dans *emaj_group_def* |
++------------------------------+----------------------------------------------------+
+| END                          | fin                                                |
++------------------------------+----------------------------------------------------+
+| EVENT TRIGGERS DISABLED      | triggers sur événements désactivés                 |
++------------------------------+----------------------------------------------------+
+| EVENT TRIGGERS ENABLED       | triggers sur événements activés                    |
++------------------------------+----------------------------------------------------+
+| LOG DATA TABLESPACE CHANGED  | tablespace pour la table de log modifié            |
++------------------------------+----------------------------------------------------+
+| LOG INDEX TABLESPACE CHANGED | tablespace pour l’index de log modifié             |
++------------------------------+----------------------------------------------------+
+| LOG_SCHEMA CREATED           | schéma secondaire créé                             |
++------------------------------+----------------------------------------------------+
+| LOG_SCHEMA DROPPED           | schéma secondaire supprimé                         |
++------------------------------+----------------------------------------------------+
+| MARK DELETED                 | marque supprimée                                   |
++------------------------------+----------------------------------------------------+
+| NOTICE                       | message d’information issu d’un rollback           |
++------------------------------+----------------------------------------------------+
+| SEQUENCE ADDED               | séquence ajoutée à un groupe de tables actif       |
++------------------------------+----------------------------------------------------+
+| SEQUENCE MOVED               | séquence déplacée d’un groupe à un autre           |
++------------------------------+----------------------------------------------------+
+| SEQUENCE REMOVED             | séquence supprimée d’un groupe de tables actif     |
++------------------------------+----------------------------------------------------+
+| TABLE ADDED                  | table ajoutée à un groupe de tables actif          |
++------------------------------+----------------------------------------------------+
+| TABLE MOVED                  | table déplacée d’un groupe à un autre              |
++------------------------------+----------------------------------------------------+
+| TABLE REMOVED                | table supprimée d’un groupe de tables actif        |
++------------------------------+----------------------------------------------------+
+| WARNING                      | message d’avertissement issu d’un rollback         |
++------------------------------+----------------------------------------------------+
 
 Le contenu de la table *emaj_hist* peut être visualisé par quiconque dispose des autorisations suffisantes (rôles super-utilisateur, *emaj_adm* ou *emaj_viewer*)
 

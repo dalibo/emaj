@@ -126,6 +126,8 @@ The *hist_function* column can take the following values:
 +----------------------------------+----------------------------------------------------------------------------+
 | STOP_GROUPS                      | tables groups stop                                                         |
 +----------------------------------+----------------------------------------------------------------------------+
+| SYNC_DEF_GROUP                   | *emaj_group_def* table synchronization                                     |
++----------------------------------+----------------------------------------------------------------------------+
 | UNPROTECT_GROUP                  | remove a protection against rollbacks on a group                           |
 +----------------------------------+----------------------------------------------------------------------------+
 | UNPROTECT_MARK_GROUP             | remove a protection against rollbacks on a mark for a group                |
@@ -133,45 +135,47 @@ The *hist_function* column can take the following values:
 
 The *hist_event* column can take the following values:
 
-+------------------------------+----------------------------------------------+
-| Value                        | Meaning                                      |
-+==============================+==============================================+
-| BEGIN                        |                                              |
-+------------------------------+----------------------------------------------+
-| END                          |                                              |
-+------------------------------+----------------------------------------------+
-| EVENT TRIGGERS DISABLED      |                                              |
-+------------------------------+----------------------------------------------+
-| EVENT TRIGGERS ENABLED       |                                              |
-+------------------------------+----------------------------------------------+
-| LOG DATA TABLESPACE CHANGED  | tablespace for the log table modified        |
-+------------------------------+----------------------------------------------+
-| LOG INDEX TABLESPACE CHANGED | tablespace for the log index modified        |
-+------------------------------+----------------------------------------------+
-| LOG_SCHEMA CREATED           | secondary schema created                     |
-+------------------------------+----------------------------------------------+
-| LOG_SCHEMA DROPPED           | secondary schema dropped                     |
-+------------------------------+----------------------------------------------+
-| MARK DELETED                 |                                              |
-+------------------------------+----------------------------------------------+
-| NAMES PREFIX CHANGED         | E-Maj names prefix modified                  |
-+------------------------------+----------------------------------------------+
-| NOTICE                       | warning message issued by a rollback         |
-+------------------------------+----------------------------------------------+
-| SEQUENCE ADDED               | sequence added to a logging tables group     |
-+------------------------------+----------------------------------------------+
-| SEQUENCE MOVED               | sequence moved from one group to another     |
-+------------------------------+----------------------------------------------+
-| SEQUENCE REMOVED             | sequence removed from a logging tables group |
-+------------------------------+----------------------------------------------+
-| TABLE ADDED                  | table  added to a logging tables group       |
-+------------------------------+----------------------------------------------+
-| TABLE MOVED                  | table moved from one group to another        |
-+------------------------------+----------------------------------------------+
-| TABLE REMOVED                | table removed from a logging tables group    |
-+------------------------------+----------------------------------------------+
-| WARNING                      | warning message issued by a rollback         |
-+------------------------------+----------------------------------------------+
++------------------------------+---------------------------------------------------------+
+| Value                        | Meaning                                                 |
++==============================+=========================================================+
+| BEGIN                        |                                                         |
++------------------------------+---------------------------------------------------------+
+| EMAJ_GROUP_DEF SYNCHRONIZED  | tables group synchronized in the *emaj_group_def* table |
++------------------------------+---------------------------------------------------------+
+| END                          |                                                         |
++------------------------------+---------------------------------------------------------+
+| EVENT TRIGGERS DISABLED      |                                                         |
++------------------------------+---------------------------------------------------------+
+| EVENT TRIGGERS ENABLED       |                                                         |
++------------------------------+---------------------------------------------------------+
+| LOG DATA TABLESPACE CHANGED  | tablespace for the log table modified                   |
++------------------------------+---------------------------------------------------------+
+| LOG INDEX TABLESPACE CHANGED | tablespace for the log index modified                   |
++------------------------------+---------------------------------------------------------+
+| LOG_SCHEMA CREATED           | secondary schema created                                |
++------------------------------+---------------------------------------------------------+
+| LOG_SCHEMA DROPPED           | secondary schema dropped                                |
++------------------------------+---------------------------------------------------------+
+| MARK DELETED                 |                                                         |
++------------------------------+---------------------------------------------------------+
+| NAMES PREFIX CHANGED         | E-Maj names prefix modified                             |
++------------------------------+---------------------------------------------------------+
+| NOTICE                       | warning message issued by a rollback                    |
++------------------------------+---------------------------------------------------------+
+| SEQUENCE ADDED               | sequence added to a logging tables group                |
++------------------------------+---------------------------------------------------------+
+| SEQUENCE MOVED               | sequence moved from one group to another                |
++------------------------------+---------------------------------------------------------+
+| SEQUENCE REMOVED             | sequence removed from a logging tables group            |
++------------------------------+---------------------------------------------------------+
+| TABLE ADDED                  | table  added to a logging tables group                  |
++------------------------------+---------------------------------------------------------+
+| TABLE MOVED                  | table moved from one group to another                   |
++------------------------------+---------------------------------------------------------+
+| TABLE REMOVED                | table removed from a logging tables group               |
++------------------------------+---------------------------------------------------------+
+| WARNING                      | warning message issued by a rollback                    |
++------------------------------+---------------------------------------------------------+
 
 The *emaj_hist* content can be viewed by anyone who has the proper access rights on this table (*superuser*, *emaj_adm* or *emaj_viewer* roles).
 

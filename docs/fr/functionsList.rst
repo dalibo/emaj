@@ -236,6 +236,9 @@ Les fonctions E-Maj disponibles pour les utilisateurs sont listées ci-dessous p
 | :doc:`emaj_stop_groups                           | | tableau.groupes TEXT[],     | nb.tables.et.seq INT                  |
 | <multiGroupsFunctions>`                          | | [marque TEXT]               |                                       |
 +--------------------------------------------------+-------------------------------+---------------------------------------+
+| :ref:`emaj_sync_def_group                        | | groupe TEXT                 | nb.tables.et.seq INT                  |
+| <emaj_sync_def_group>`                           |                               |                                       |
++--------------------------------------------------+-------------------------------+---------------------------------------+
 | :ref:`emaj_unprotect_group                       | | groupe TEXT                 | 0/1 INT                               |
 | <emaj_unprotect_group>`                          |                               |                                       |
 +--------------------------------------------------+-------------------------------+---------------------------------------+

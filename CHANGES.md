@@ -8,6 +8,9 @@ E-Maj - Change log
     emaj_remove_sequence() and emaj_remove_sequences() functions allow the
     administrator to directly assign or remove tables or sequences into a
     tables group, without updating the emaj_group_def table.
+  * The new emaj_sync_def_group() allows to synchronize the emaj_group_def
+    table with the current content of created groups whose content may have
+    been dynamically modified.
   * The part of mark names generated from the timestamp, now use the
     clock_timestamp (instead of the transaction timestamp) and has one
     additional digit.

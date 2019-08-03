@@ -194,6 +194,14 @@ When the tables group is in *LOGGING* state, a mark is set. Its name is defined 
 
 All these functions return the number of effectively assigned or removed tables or sequences.
 
+.. _emaj_sync_def_group:
+
+Once dynamic changes performed on tables groups content, the *emaj_group_def* table does not reflect the configuration of the tables groups anymore. But for a given tables group, the E-Maj administrator can synchronize the *emaj_group_def* table content with the current state with::
+
+	SELECT emaj.emaj_sync_def_group(‘<group>’);
+
+The function returns the number of tables and sequences contained in the tables group.
+
 
 The "emaj_group_def update" method
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^

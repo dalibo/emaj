@@ -4587,6 +4587,37 @@ $_alter_exec$
   END;
 $_alter_exec$;
 
+CREATE OR REPLACE FUNCTION emaj.emaj_sync_def_group(v_group TEXT)
+RETURNS INTEGER LANGUAGE plpgsql AS
+$emaj_sync_def_group$
+-- The function re-synchronizes the content of the emaj_group_def table for one tables group
+--   based on the current groups content.
+-- Inputs: group name
+-- Outputs: number of tables and sequences of the tables group
+  DECLARE
+    v_nbTblSeq               INT;
+  BEGIN
+-- check that the group exists
+    PERFORM emaj._check_group_names(v_groupNames := ARRAY[v_group], v_mayBeNull := FALSE, v_lockGroups := FALSE, v_checkList := '');
+-- in emaj_group_def, delete existing rows for the group
+    DELETE FROM emaj.emaj_group_def WHERE grpdef_group = v_group;
+-- ... and insert the rows describing the current group content
+    INSERT INTO emaj.emaj_group_def (grpdef_group, grpdef_schema, grpdef_tblseq, grpdef_priority, grpdef_log_dat_tsp, grpdef_log_idx_tsp)
+      SELECT rel_group, rel_schema, rel_tblseq, rel_priority, rel_log_dat_tsp, rel_log_idx_tsp
+        FROM emaj.emaj_relation
+        WHERE rel_group = v_group AND upper_inf(rel_time_range);
+    GET DIAGNOSTICS v_nbTblSeq = ROW_COUNT;
+-- reset the group_has_waiting_changes flag
+    UPDATE emaj.emaj_group SET group_has_waiting_changes = FALSE WHERE group_name = v_group;
+-- take a trace in the emaj_hist table
+    INSERT INTO emaj.emaj_hist (hist_function, hist_event, hist_object)
+      VALUES ('SYNC_DEF_GROUP', 'EMAJ_GROUP_DEF SYNCHRONIZED', v_group);
+    RETURN v_nbTblSeq;
+  END;
+$emaj_sync_def_group$;
+COMMENT ON FUNCTION emaj.emaj_sync_def_group(TEXT) IS
+$$Re-synchronize the content of the emaj_group_def table for one tables group based on its current content.$$;
+
 CREATE OR REPLACE FUNCTION emaj.emaj_start_group(v_groupName TEXT, v_mark TEXT DEFAULT 'START_%', v_resetLog BOOLEAN DEFAULT TRUE)
 RETURNS INT LANGUAGE plpgsql AS
 $emaj_start_group$
