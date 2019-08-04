@@ -183,7 +183,7 @@ begin;
 
   select emaj.emaj_alter_group('myGroup1');
 ERROR:  alter_exec: Cannot repair the table myschema1.mytbl1. Its group myGroup1 is in LOGGING state.
-CONTEXT:  PL/pgSQL function emaj._alter_exec(bigint,boolean) line 34 at RAISE
+CONTEXT:  PL/pgSQL function emaj._alter_exec(bigint,boolean) line 38 at RAISE
 SQL statement "SELECT emaj._alter_exec(v_timeId, v_multiGroup)"
 PL/pgSQL function emaj._alter_groups(text[],boolean,text) line 58 at PERFORM
 PL/pgSQL function emaj.emaj_alter_group(text,text) line 6 at RETURN
@@ -663,7 +663,7 @@ WARNING:  _check_fk_groups: The table "myschema2.mytbl6" is referenced by the fo
 
   select emaj.emaj_alter_groups('{"myGroup2","myGroup1","myGroup4"}');
 ERROR:  alter_exec: Cannot repair the table myschema1.mytbl1. Its group myGroup1 is in LOGGING state.
-CONTEXT:  PL/pgSQL function emaj._alter_exec(bigint,boolean) line 34 at RAISE
+CONTEXT:  PL/pgSQL function emaj._alter_exec(bigint,boolean) line 38 at RAISE
 SQL statement "SELECT emaj._alter_exec(v_timeId, v_multiGroup)"
 PL/pgSQL function emaj._alter_groups(text[],boolean,text) line 58 at PERFORM
 PL/pgSQL function emaj.emaj_alter_groups(text[],text) line 6 at RETURN

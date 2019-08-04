@@ -90,8 +90,8 @@ select funcname, calls from pg_stat_user_functions
   order by funcname, funcid;
                  funcname                  | calls 
 -------------------------------------------+-------
- _add_seq                                  |     7
- _add_tbl                                  |    20
+ _add_seq                                  |    17
+ _add_tbl                                  |    36
  _adjust_group_properties                  |    45
  _alter_exec                               |    73
  _alter_groups                             |    74
@@ -141,10 +141,10 @@ select funcname, calls from pg_stat_user_functions
  _move_seq                                 |     5
  _move_tbl                                 |     5
  _purge_hist                               |    72
- _remove_seq                               |    16
+ _remove_seq                               |    23
  _remove_sequences                         |    12
  _remove_tables                            |    14
- _remove_tbl                               |    41
+ _remove_tbl                               |    56
  _reset_groups                             |   104
  _rlbk_async                               |     2
  _rlbk_check                               |    96

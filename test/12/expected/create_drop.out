@@ -727,11 +727,11 @@ WARNING:  _assign_tables: Some tables already belonging to a group (mytbl1) are 
 -- table not in a group
 select emaj.emaj_remove_table('dummySchema','mytbl1');
 ERROR:  _remove_tables: some tables ("dummySchema".mytbl1) do not currently belong to any tables group.
-CONTEXT:  PL/pgSQL function emaj._remove_tables(text,text[],text,boolean,boolean) line 46 at RAISE
+CONTEXT:  PL/pgSQL function emaj._remove_tables(text,text[],text,boolean,boolean) line 44 at RAISE
 PL/pgSQL function emaj.emaj_remove_table(text,text,text) line 6 at RETURN
 select emaj.emaj_remove_table('myschema1','dummyTable');
 ERROR:  _remove_tables: some tables (myschema1."dummyTable") do not currently belong to any tables group.
-CONTEXT:  PL/pgSQL function emaj._remove_tables(text,text[],text,boolean,boolean) line 46 at RAISE
+CONTEXT:  PL/pgSQL function emaj._remove_tables(text,text[],text,boolean,boolean) line 44 at RAISE
 PL/pgSQL function emaj.emaj_remove_table(text,text,text) line 6 at RETURN
 -- empty tables array
 select emaj.emaj_remove_tables('myschema1',array[]::text[]);
@@ -760,7 +760,7 @@ select emaj.emaj_remove_table('myschema1','mytbl1','EMAJ_LAST_MARK');
 ERROR:  _check_new_mark: "EMAJ_LAST_MARK" is not an allowed name for a new mark.
 CONTEXT:  PL/pgSQL function emaj._check_new_mark(text[],text) line 14 at RAISE
 SQL statement "SELECT emaj._check_new_mark(array[v_groupName], v_mark)"
-PL/pgSQL function emaj._remove_tables(text,text[],text,boolean,boolean) line 50 at SQL statement
+PL/pgSQL function emaj._remove_tables(text,text[],text,boolean,boolean) line 48 at SQL statement
 PL/pgSQL function emaj.emaj_remove_table(text,text,text) line 6 at RETURN
 -- ok
 select emaj.emaj_remove_table('myschema1','mytbl1');
@@ -776,7 +776,7 @@ select emaj.emaj_remove_table('myschema1','mytbl1');
 -- table not in a group
 select emaj.emaj_remove_tables('myschema1',array['dummyTable','mytbl1','mytbl2']);
 ERROR:  _remove_tables: some tables (myschema1.mytbl1, myschema1."dummyTable") do not currently belong to any tables group.
-CONTEXT:  PL/pgSQL function emaj._remove_tables(text,text[],text,boolean,boolean) line 46 at RAISE
+CONTEXT:  PL/pgSQL function emaj._remove_tables(text,text[],text,boolean,boolean) line 44 at RAISE
 PL/pgSQL function emaj.emaj_remove_tables(text,text[],text) line 6 at RETURN
 -- ok (with a duplicate table name)
 select emaj.emaj_remove_tables('myschema1',array['mytbl2','mytbl2b','mytbl2']);
@@ -844,38 +844,38 @@ select emaj.emaj_assign_sequence('myschema2','myseq1','dummyGroup');
 ERROR:  _check_group_names: The group "dummyGroup" does not exist.
 CONTEXT:  PL/pgSQL function emaj._check_group_names(text[],boolean,boolean,text) line 36 at RAISE
 SQL statement "SELECT emaj._check_group_names(v_groupNames := ARRAY[v_group], v_mayBeNull := FALSE, v_lockGroups := TRUE, v_checkList := '')"
-PL/pgSQL function emaj._assign_sequences(text,text[],text,jsonb,text,boolean,boolean) line 24 at PERFORM
+PL/pgSQL function emaj._assign_sequences(text,text[],text,jsonb,text,boolean,boolean) line 26 at PERFORM
 PL/pgSQL function emaj.emaj_assign_sequence(text,text,text,jsonb,text) line 7 at RETURN
 -- bad schema
 select emaj.emaj_assign_sequence('dummySchema','myseq1','myGroup2b');
 ERROR:  _assign_sequences: The schema "dummySchema" does not exist.
-CONTEXT:  PL/pgSQL function emaj._assign_sequences(text,text[],text,jsonb,text,boolean,boolean) line 31 at RAISE
+CONTEXT:  PL/pgSQL function emaj._assign_sequences(text,text[],text,jsonb,text,boolean,boolean) line 33 at RAISE
 PL/pgSQL function emaj.emaj_assign_sequence(text,text,text,jsonb,text) line 7 at RETURN
 select emaj.emaj_assign_sequence('emaj','myseq1','myGroup2b');
 ERROR:  _assign_sequences: The schema "emaj" is an E-Maj schema.
-CONTEXT:  PL/pgSQL function emaj._assign_sequences(text,text[],text,jsonb,text,boolean,boolean) line 36 at RAISE
+CONTEXT:  PL/pgSQL function emaj._assign_sequences(text,text[],text,jsonb,text,boolean,boolean) line 38 at RAISE
 PL/pgSQL function emaj.emaj_assign_sequence(text,text,text,jsonb,text) line 7 at RETURN
 -- bad sequence
 select emaj.emaj_assign_sequence('myschema2','dummySequence','myGroup2b');
 ERROR:  _assign_sequences: In schema myschema2, some sequences ("dummySequence") do not exist.
-CONTEXT:  PL/pgSQL function emaj._assign_sequences(text,text[],text,jsonb,text,boolean,boolean) line 56 at RAISE
+CONTEXT:  PL/pgSQL function emaj._assign_sequences(text,text[],text,jsonb,text,boolean,boolean) line 58 at RAISE
 PL/pgSQL function emaj.emaj_assign_sequence(text,text,text,jsonb,text) line 7 at RETURN
 -- invalid priority
 select emaj.emaj_assign_sequence('myschema2','myseq1','myGroup2b','{"priority":"not_numeric"}'::jsonb);
 ERROR:  _assign_sequences: the "priority" property is not numeric.
-CONTEXT:  PL/pgSQL function emaj._assign_sequences(text,text[],text,jsonb,text,boolean,boolean) line 78 at RAISE
+CONTEXT:  PL/pgSQL function emaj._assign_sequences(text,text[],text,jsonb,text,boolean,boolean) line 80 at RAISE
 PL/pgSQL function emaj.emaj_assign_sequence(text,text,text,jsonb,text) line 7 at RETURN
 -- unknown property
 select emaj.emaj_assign_sequence('myschema2','myseq1','myGroup2b','{"unknown_property":null}'::jsonb);
 ERROR:  _assign_sequences: properties "{"unknown_property": null}" are unknown.
-CONTEXT:  PL/pgSQL function emaj._assign_sequences(text,text[],text,jsonb,text,boolean,boolean) line 83 at RAISE
+CONTEXT:  PL/pgSQL function emaj._assign_sequences(text,text[],text,jsonb,text,boolean,boolean) line 85 at RAISE
 PL/pgSQL function emaj.emaj_assign_sequence(text,text,text,jsonb,text) line 7 at RETURN
 -- bad mark
 select emaj.emaj_assign_sequence('myschema2','myseq1','myGroup2b',null,'EMAJ_LAST_MARK');
 ERROR:  _check_new_mark: "EMAJ_LAST_MARK" is not an allowed name for a new mark.
 CONTEXT:  PL/pgSQL function emaj._check_new_mark(text[],text) line 14 at RAISE
 SQL statement "SELECT emaj._check_new_mark(array[v_group], v_mark)"
-PL/pgSQL function emaj._assign_sequences(text,text[],text,jsonb,text,boolean,boolean) line 86 at SQL statement
+PL/pgSQL function emaj._assign_sequences(text,text[],text,jsonb,text,boolean,boolean) line 88 at SQL statement
 PL/pgSQL function emaj.emaj_assign_sequence(text,text,text,jsonb,text) line 7 at RETURN
 -- ok
 select emaj.emaj_assign_sequence('myschema2','myseq1','myGroup2b');
@@ -887,7 +887,7 @@ select emaj.emaj_assign_sequence('myschema2','myseq1','myGroup2b');
 -- already assigned sequence
 select emaj.emaj_assign_sequence('myschema2','myseq1','myGroup2b');
 ERROR:  _assign_sequences: In schema myschema2, some sequences (myseq1) already belong to a group.
-CONTEXT:  PL/pgSQL function emaj._assign_sequences(text,text[],text,jsonb,text,boolean,boolean) line 65 at RAISE
+CONTEXT:  PL/pgSQL function emaj._assign_sequences(text,text[],text,jsonb,text,boolean,boolean) line 67 at RAISE
 PL/pgSQL function emaj.emaj_assign_sequence(text,text,text,jsonb,text) line 7 at RETURN
 -----------------------------------
 -- emaj_assign_sequences with array
@@ -898,12 +898,12 @@ select emaj.emaj_assign_sequences('dummySchema',array['dummySequence'],'dummyGro
 ERROR:  _check_group_names: The group "dummyGroup" does not exist.
 CONTEXT:  PL/pgSQL function emaj._check_group_names(text[],boolean,boolean,text) line 36 at RAISE
 SQL statement "SELECT emaj._check_group_names(v_groupNames := ARRAY[v_group], v_mayBeNull := FALSE, v_lockGroups := TRUE, v_checkList := '')"
-PL/pgSQL function emaj._assign_sequences(text,text[],text,jsonb,text,boolean,boolean) line 24 at PERFORM
+PL/pgSQL function emaj._assign_sequences(text,text[],text,jsonb,text,boolean,boolean) line 26 at PERFORM
 PL/pgSQL function emaj.emaj_assign_sequences(text,text[],text,jsonb,text) line 7 at RETURN
 -- bad sequences
 select emaj.emaj_assign_sequences('myschema2',array['dummyseq1','dummyseq2'],'myGroup2b');
 ERROR:  _assign_sequences: In schema myschema2, some sequences (dummyseq1, dummyseq2) do not exist.
-CONTEXT:  PL/pgSQL function emaj._assign_sequences(text,text[],text,jsonb,text,boolean,boolean) line 56 at RAISE
+CONTEXT:  PL/pgSQL function emaj._assign_sequences(text,text[],text,jsonb,text,boolean,boolean) line 58 at RAISE
 PL/pgSQL function emaj.emaj_assign_sequences(text,text[],text,jsonb,text) line 7 at RETURN
 -- empty sequences array
 select emaj.emaj_assign_sequences('myschema2',array[]::text[],'myGroup2b');
@@ -943,16 +943,16 @@ select emaj.emaj_assign_sequences('dummySchema','dummyIncludeFilter','dummyExclu
 ERROR:  _check_group_names: The group "dummyGroup" does not exist.
 CONTEXT:  PL/pgSQL function emaj._check_group_names(text[],boolean,boolean,text) line 36 at RAISE
 SQL statement "SELECT emaj._check_group_names(v_groupNames := ARRAY[v_group], v_mayBeNull := FALSE, v_lockGroups := TRUE, v_checkList := '')"
-PL/pgSQL function emaj._assign_sequences(text,text[],text,jsonb,text,boolean,boolean) line 24 at PERFORM
+PL/pgSQL function emaj._assign_sequences(text,text[],text,jsonb,text,boolean,boolean) line 26 at PERFORM
 PL/pgSQL function emaj.emaj_assign_sequences(text,text,text,text,jsonb,text) line 23 at RETURN
 -- bad schema
 select emaj.emaj_assign_sequences('dummySchema','dummyIncludeFilter','dummyExcludeFilter','myGroup2b');
 ERROR:  _assign_sequences: The schema "dummySchema" does not exist.
-CONTEXT:  PL/pgSQL function emaj._assign_sequences(text,text[],text,jsonb,text,boolean,boolean) line 31 at RAISE
+CONTEXT:  PL/pgSQL function emaj._assign_sequences(text,text[],text,jsonb,text,boolean,boolean) line 33 at RAISE
 PL/pgSQL function emaj.emaj_assign_sequences(text,text,text,text,jsonb,text) line 23 at RETURN
 select emaj.emaj_assign_sequences('emaj','dummyIncludeFilter','dummyExcludeFilter','myGroup2b');
 ERROR:  _assign_sequences: The schema "emaj" is an E-Maj schema.
-CONTEXT:  PL/pgSQL function emaj._assign_sequences(text,text[],text,jsonb,text,boolean,boolean) line 36 at RAISE
+CONTEXT:  PL/pgSQL function emaj._assign_sequences(text,text[],text,jsonb,text,boolean,boolean) line 38 at RAISE
 PL/pgSQL function emaj.emaj_assign_sequences(text,text,text,text,jsonb,text) line 23 at RETURN
 -- empty sequences array
 select emaj.emaj_assign_sequences('myschema2',null,null,'myGroup2b');
@@ -1007,11 +1007,11 @@ select group_last_alter_time_id, group_nb_table, group_nb_sequence from emaj.ema
 -- sequence not in a group
 select emaj.emaj_remove_sequence('dummySchema','myseq1');
 ERROR:  _remove_sequences: some sequences ("dummySchema".myseq1) do not currently belong to any tables group.
-CONTEXT:  PL/pgSQL function emaj._remove_sequences(text,text[],text,boolean,boolean) line 40 at RAISE
+CONTEXT:  PL/pgSQL function emaj._remove_sequences(text,text[],text,boolean,boolean) line 41 at RAISE
 PL/pgSQL function emaj.emaj_remove_sequence(text,text,text) line 6 at RETURN
 select emaj.emaj_remove_sequence('myschema2','dummySequence');
 ERROR:  _remove_sequences: some sequences (myschema2."dummySequence") do not currently belong to any tables group.
-CONTEXT:  PL/pgSQL function emaj._remove_sequences(text,text[],text,boolean,boolean) line 40 at RAISE
+CONTEXT:  PL/pgSQL function emaj._remove_sequences(text,text[],text,boolean,boolean) line 41 at RAISE
 PL/pgSQL function emaj.emaj_remove_sequence(text,text,text) line 6 at RETURN
 -- empty sequences array
 select emaj.emaj_remove_sequences('myschema2',array[]::text[]);
@@ -1040,7 +1040,7 @@ select emaj.emaj_remove_sequence('myschema2','myseq1','EMAJ_LAST_MARK');
 ERROR:  _check_new_mark: "EMAJ_LAST_MARK" is not an allowed name for a new mark.
 CONTEXT:  PL/pgSQL function emaj._check_new_mark(text[],text) line 14 at RAISE
 SQL statement "SELECT emaj._check_new_mark(array[v_groupName], v_mark)"
-PL/pgSQL function emaj._remove_sequences(text,text[],text,boolean,boolean) line 44 at SQL statement
+PL/pgSQL function emaj._remove_sequences(text,text[],text,boolean,boolean) line 45 at SQL statement
 PL/pgSQL function emaj.emaj_remove_sequence(text,text,text) line 6 at RETURN
 -- ok
 select emaj.emaj_remove_sequence('myschema2','myseq1');
@@ -1056,7 +1056,7 @@ select emaj.emaj_remove_sequence('myschema2','myseq1');
 -- sequence not in a group
 select emaj.emaj_remove_sequences('myschema2',array['dummyTable','myseq2']);
 ERROR:  _remove_sequences: some sequences (myschema2."dummyTable") do not currently belong to any tables group.
-CONTEXT:  PL/pgSQL function emaj._remove_sequences(text,text[],text,boolean,boolean) line 40 at RAISE
+CONTEXT:  PL/pgSQL function emaj._remove_sequences(text,text[],text,boolean,boolean) line 41 at RAISE
 PL/pgSQL function emaj.emaj_remove_sequences(text,text[],text) line 6 at RETURN
 -- ok (with a duplicate sequence name)
 select emaj.emaj_remove_sequences('myschema2',array['myseq2','myseq2']);

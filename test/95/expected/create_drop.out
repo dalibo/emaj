@@ -572,7 +572,7 @@ rollback;
 select emaj.emaj_assign_table('myschema1','mytbl1','myGroup1b');
 WARNING:  _check_fk_groups: The table "myschema1.mytbl1" is referenced by the foreign key "mytbl4_col44_fkey" on the table "myschema1.mytbl4" that is outside the groups (myGroup1b).
 CONTEXT:  SQL statement "SELECT emaj._check_fk_groups(array[v_group])"
-PL/pgSQL function emaj._assign_tables(text,text[],text,jsonb,text,boolean,boolean) line 278 at PERFORM
+PL/pgSQL function emaj._assign_tables(text,text[],text,jsonb,text,boolean,boolean) line 253 at PERFORM
 PL/pgSQL function emaj.emaj_assign_table(text,text,text,jsonb,text) line 7 at RETURN
  emaj_assign_table 
 -------------------
@@ -625,17 +625,20 @@ CONTEXT:  PL/pgSQL function emaj.emaj_assign_tables(text,text[],text,jsonb,text)
 -- ok (with a duplicate table name)
 select emaj.emaj_assign_tables('myschema1',array['mytbl2','mytbl2b','mytbl2'],'myGroup1b');
 WARNING:  _create_tbl: The table "myschema1.mytbl2" has triggers (mytbl2trg1, mytbl2trg2). They will be automatically disabled during E-Maj rollback operations, unless they have been recorded into the list of triggers that may be kept enabled, with the emaj_ignore_app_trigger() function.
-CONTEXT:  SQL statement "SELECT emaj._create_tbl(v_schema, v_oneTable, v_group, v_priority, v_logDatTsp, v_logIdxTsp,
-                                 v_timeId, v_groupIsRollbackable, v_groupIsLogging)"
+CONTEXT:  SQL statement "SELECT emaj._create_tbl(v_schema, v_table, v_group, v_priority, v_logDatTsp, v_logIdxTsp,
+                             v_timeId, v_groupIsRollbackable, v_groupIsLogging)"
+PL/pgSQL function emaj._add_tbl(text,text,text,integer,text,text,boolean,bigint,text) line 19 at PERFORM
+SQL statement "SELECT emaj._add_tbl(v_schema, v_oneTable, v_group, v_priority, v_logDatTsp, v_logIdxTsp, v_groupIsLogging,
+                              v_timeId, v_function)"
 PL/pgSQL function emaj._assign_tables(text,text[],text,jsonb,text,boolean,boolean) line 237 at PERFORM
 PL/pgSQL function emaj.emaj_assign_tables(text,text[],text,jsonb,text) line 7 at RETURN
 WARNING:  _check_fk_groups: The table "myschema1.mytbl2" is referenced by the foreign key "mytbl4_col43_fkey" on the table "myschema1.mytbl4" that is outside the groups (myGroup1b).
 CONTEXT:  SQL statement "SELECT emaj._check_fk_groups(array[v_group])"
-PL/pgSQL function emaj._assign_tables(text,text[],text,jsonb,text,boolean,boolean) line 278 at PERFORM
+PL/pgSQL function emaj._assign_tables(text,text[],text,jsonb,text,boolean,boolean) line 253 at PERFORM
 PL/pgSQL function emaj.emaj_assign_tables(text,text[],text,jsonb,text) line 7 at RETURN
 WARNING:  _check_fk_groups: The table "myschema1.mytbl1" is referenced by the foreign key "mytbl4_col44_fkey" on the table "myschema1.mytbl4" that is outside the groups (myGroup1b).
 CONTEXT:  SQL statement "SELECT emaj._check_fk_groups(array[v_group])"
-PL/pgSQL function emaj._assign_tables(text,text[],text,jsonb,text,boolean,boolean) line 278 at PERFORM
+PL/pgSQL function emaj._assign_tables(text,text[],text,jsonb,text,boolean,boolean) line 253 at PERFORM
 PL/pgSQL function emaj.emaj_assign_tables(text,text[],text,jsonb,text) line 7 at RETURN
  emaj_assign_tables 
 --------------------
@@ -803,7 +806,7 @@ CONTEXT:  PL/pgSQL function emaj.emaj_remove_tables(text,text[],text) line 6 at 
 select emaj.emaj_remove_table('myschema1','mytbl1','EMAJ_LAST_MARK');
 ERROR:  _check_new_mark: "EMAJ_LAST_MARK" is not an allowed name for a new mark.
 CONTEXT:  SQL statement "SELECT emaj._check_new_mark(array[v_groupName], v_mark)"
-PL/pgSQL function emaj._remove_tables(text,text[],text,boolean,boolean) line 50 at SQL statement
+PL/pgSQL function emaj._remove_tables(text,text[],text,boolean,boolean) line 48 at SQL statement
 PL/pgSQL function emaj.emaj_remove_table(text,text,text) line 6 at RETURN
 -- ok
 select emaj.emaj_remove_table('myschema1','mytbl1');
@@ -888,7 +891,7 @@ select emaj.emaj_create_group('myGroup2b', true, true);  -- rollbackable and emp
 select emaj.emaj_assign_sequence('myschema2','myseq1','dummyGroup');
 ERROR:  _check_group_names: The group "dummyGroup" does not exist.
 CONTEXT:  SQL statement "SELECT emaj._check_group_names(v_groupNames := ARRAY[v_group], v_mayBeNull := FALSE, v_lockGroups := TRUE, v_checkList := '')"
-PL/pgSQL function emaj._assign_sequences(text,text[],text,jsonb,text,boolean,boolean) line 24 at PERFORM
+PL/pgSQL function emaj._assign_sequences(text,text[],text,jsonb,text,boolean,boolean) line 26 at PERFORM
 PL/pgSQL function emaj.emaj_assign_sequence(text,text,text,jsonb,text) line 7 at RETURN
 -- bad schema
 select emaj.emaj_assign_sequence('dummySchema','myseq1','myGroup2b');
@@ -913,7 +916,7 @@ CONTEXT:  PL/pgSQL function emaj.emaj_assign_sequence(text,text,text,jsonb,text)
 select emaj.emaj_assign_sequence('myschema2','myseq1','myGroup2b',null,'EMAJ_LAST_MARK');
 ERROR:  _check_new_mark: "EMAJ_LAST_MARK" is not an allowed name for a new mark.
 CONTEXT:  SQL statement "SELECT emaj._check_new_mark(array[v_group], v_mark)"
-PL/pgSQL function emaj._assign_sequences(text,text[],text,jsonb,text,boolean,boolean) line 86 at SQL statement
+PL/pgSQL function emaj._assign_sequences(text,text[],text,jsonb,text,boolean,boolean) line 88 at SQL statement
 PL/pgSQL function emaj.emaj_assign_sequence(text,text,text,jsonb,text) line 7 at RETURN
 -- ok
 select emaj.emaj_assign_sequence('myschema2','myseq1','myGroup2b');
@@ -934,7 +937,7 @@ CONTEXT:  PL/pgSQL function emaj.emaj_assign_sequence(text,text,text,jsonb,text)
 select emaj.emaj_assign_sequences('dummySchema',array['dummySequence'],'dummyGroup');
 ERROR:  _check_group_names: The group "dummyGroup" does not exist.
 CONTEXT:  SQL statement "SELECT emaj._check_group_names(v_groupNames := ARRAY[v_group], v_mayBeNull := FALSE, v_lockGroups := TRUE, v_checkList := '')"
-PL/pgSQL function emaj._assign_sequences(text,text[],text,jsonb,text,boolean,boolean) line 24 at PERFORM
+PL/pgSQL function emaj._assign_sequences(text,text[],text,jsonb,text,boolean,boolean) line 26 at PERFORM
 PL/pgSQL function emaj.emaj_assign_sequences(text,text[],text,jsonb,text) line 7 at RETURN
 -- bad sequences
 select emaj.emaj_assign_sequences('myschema2',array['dummyseq1','dummyseq2'],'myGroup2b');
@@ -980,7 +983,7 @@ select emaj.emaj_assign_sequences('myschema2',array['myseq2','myseq2'],'myGroup2
 select emaj.emaj_assign_sequences('dummySchema','dummyIncludeFilter','dummyExcludeFilter','dummyGroup');
 ERROR:  _check_group_names: The group "dummyGroup" does not exist.
 CONTEXT:  SQL statement "SELECT emaj._check_group_names(v_groupNames := ARRAY[v_group], v_mayBeNull := FALSE, v_lockGroups := TRUE, v_checkList := '')"
-PL/pgSQL function emaj._assign_sequences(text,text[],text,jsonb,text,boolean,boolean) line 24 at PERFORM
+PL/pgSQL function emaj._assign_sequences(text,text[],text,jsonb,text,boolean,boolean) line 26 at PERFORM
 PL/pgSQL function emaj.emaj_assign_sequences(text,text,text,text,jsonb,text) line 23 at RETURN
 -- bad schema
 select emaj.emaj_assign_sequences('dummySchema','dummyIncludeFilter','dummyExcludeFilter','myGroup2b');
@@ -1030,8 +1033,10 @@ select emaj.emaj_assign_sequences('myschema2','.*','myseq1$','myGroup2b');
 WARNING:  _assign_sequences: Some sequences already belonging to a group (myseq2) are not selected.
 CONTEXT:  PL/pgSQL function emaj.emaj_assign_sequences(text,text,text,text,jsonb,text) line 23 at RETURN
 WARNING:  _create_seq: The sequence myschema2.myTbl3_col31_seq is linked to table myschema2.myTbl3 but this table belong to another tables group (myGroup2).
-CONTEXT:  SQL statement "SELECT emaj._create_seq(v_schema, v_oneSequence, v_group, v_priority, v_timeId)"
-PL/pgSQL function emaj._assign_sequences(text,text[],text,jsonb,text,boolean,boolean) line 106 at PERFORM
+CONTEXT:  SQL statement "SELECT emaj._create_seq(v_schema, v_sequence, v_group, v_priority, v_timeId)"
+PL/pgSQL function emaj._add_seq(text,text,text,integer,boolean,bigint,text) line 9 at PERFORM
+SQL statement "SELECT emaj._add_seq(v_schema, v_oneSequence, v_group, v_priority, v_groupIsLogging, v_timeId, v_function)"
+PL/pgSQL function emaj._assign_sequences(text,text[],text,jsonb,text,boolean,boolean) line 107 at PERFORM
 PL/pgSQL function emaj.emaj_assign_sequences(text,text,text,text,jsonb,text) line 23 at RETURN
  emaj_assign_sequences 
 -----------------------
@@ -1084,7 +1089,7 @@ CONTEXT:  PL/pgSQL function emaj.emaj_remove_sequences(text,text[],text) line 6 
 select emaj.emaj_remove_sequence('myschema2','myseq1','EMAJ_LAST_MARK');
 ERROR:  _check_new_mark: "EMAJ_LAST_MARK" is not an allowed name for a new mark.
 CONTEXT:  SQL statement "SELECT emaj._check_new_mark(array[v_groupName], v_mark)"
-PL/pgSQL function emaj._remove_sequences(text,text[],text,boolean,boolean) line 44 at SQL statement
+PL/pgSQL function emaj._remove_sequences(text,text[],text,boolean,boolean) line 45 at SQL statement
 PL/pgSQL function emaj.emaj_remove_sequence(text,text,text) line 6 at RETURN
 -- ok
 select emaj.emaj_remove_sequence('myschema2','myseq1');

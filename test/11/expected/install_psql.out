@@ -1374,7 +1374,7 @@ $_create_log_schemas$
             AND NOT EXISTS                                                                -- minus those already created
               (SELECT 0 FROM emaj.emaj_schema WHERE sch_name = v_schemaPrefix || grpdef_schema)
         ORDER BY 1
-      LOOP
+    LOOP
 -- check that the schema doesn't already exist
       PERFORM 0 FROM pg_catalog.pg_namespace WHERE nspname = r_schema.log_schema;
       IF FOUND THEN
@@ -1414,7 +1414,7 @@ $_drop_log_schemas$
         SELECT DISTINCT rel_log_schema FROM emaj.emaj_relation                        -- the currently needed schemas (after tables drop)
           WHERE rel_kind = 'r' AND rel_log_schema <> 'emaj'
         ORDER BY 1
-        LOOP
+    LOOP
 -- check that the schema really exists
       PERFORM 0 FROM pg_catalog.pg_namespace WHERE nspname = r_schema.log_schema;
       IF NOT FOUND THEN
@@ -1522,12 +1522,13 @@ $_assign_tables$
 --   each properties being NULL by default
 -- The function is created as SECURITY DEFINER so that log schemas can be owned by superuser
   DECLARE
+    v_function               TEXT;
+    v_groupIsRollbackable    BOOLEAN;
+    v_groupIsLogging         BOOLEAN;
     v_priority               INT;
     v_logDatTsp              TEXT;
     v_logIdxTsp              TEXT;
     v_extraProperties        JSONB;
-    v_groupIsRollbackable    BOOLEAN;
-    v_groupIsLogging         BOOLEAN;
     v_list                   TEXT;
     v_array                  TEXT[];
     v_timeId                 BIGINT;
@@ -1536,13 +1537,12 @@ $_assign_tables$
     v_logSchema              TEXT;
     v_eventTriggers          TEXT[];
     v_oneTable               TEXT;
-    v_logSequence            TEXT;
-    v_nextVal                BIGINT;
     v_nbAssignedTbl          INT = 0;
   BEGIN
+    v_function = CASE WHEN v_multiTable THEN 'ASSIGN_TABLES' ELSE 'ASSIGN_TABLE' END;
 -- insert the begin entry into the emaj_hist table
-      INSERT INTO emaj.emaj_hist (hist_function, hist_event)
-        VALUES (CASE WHEN v_multiTable THEN 'ASSIGN_TABLES' ELSE 'ASSIGN_TABLE' END, 'BEGIN');
+    INSERT INTO emaj.emaj_hist (hist_function, hist_event)
+      VALUES (v_function, 'BEGIN');
 -- check supplied parameters
 -- check the group name and if ok, get some properties of the group
     PERFORM emaj._check_group_names(v_groupNames := ARRAY[v_group], v_mayBeNull := FALSE, v_lockGroups := TRUE, v_checkList := '');
@@ -1746,38 +1746,13 @@ $_assign_tables$
       SELECT emaj._disable_event_triggers() INTO v_eventTriggers;
 -- effectively create the log components for each table
       FOREACH v_oneTable IN ARRAY v_tables
-          LOOP
+      LOOP
 -- create the table
-        PERFORM emaj._create_tbl(v_schema, v_oneTable, v_group, v_priority, v_logDatTsp, v_logIdxTsp,
-                                 v_timeId, v_groupIsRollbackable, v_groupIsLogging);
--- if the group is in logging state, perform additional tasks
-        IF v_groupIsLogging THEN
--- ... get the log schema and sequence for the new relation
-          SELECT rel_log_schema, rel_log_sequence INTO v_logSchema, v_logSequence
-            FROM emaj.emaj_relation
-            WHERE rel_schema = v_schema AND rel_tblseq = v_oneTable AND upper_inf(rel_time_range);
--- ... get the last log sequence value, if any, for this relation (recorded in emaj_relation at a previous REMOVE_TBL operation)
-          SELECT max(rel_log_seq_last_value) + 1 INTO v_nextVal FROM emaj.emaj_relation
-            WHERE rel_schema = v_schema AND rel_tblseq = v_oneTable
-              AND rel_log_seq_last_value IS NOT NULL;
--- ... set the new log sequence next_val, if needed
-          IF v_nextVal IS NOT NULL AND v_nextVal > 1 THEN
-            EXECUTE format('ALTER SEQUENCE %I.%I RESTART %s',
-                           v_logSchema, v_logSequence, v_nextVal);
-          END IF;
--- ... record the new log sequence state in the emaj_sequence table for the current alter_group mark
-          INSERT INTO emaj.emaj_sequence (sequ_schema, sequ_name, sequ_time_id, sequ_last_val, sequ_start_val,
-                      sequ_increment, sequ_max_val, sequ_min_val, sequ_cache_val, sequ_is_cycled, sequ_is_called)
-            SELECT * FROM emaj._get_current_sequence_state(v_logSchema, v_logSequence, v_timeId);
-        END IF;
+        PERFORM emaj._add_tbl(v_schema, v_oneTable, v_group, v_priority, v_logDatTsp, v_logIdxTsp, v_groupIsLogging,
+                              v_timeId, v_function);
 -- insert an entry into the emaj_alter_plan table (so that future rollback may see the change)
         INSERT INTO emaj.emaj_alter_plan (altr_time_id, altr_step, altr_schema, altr_tblseq, altr_group, altr_group_is_logging)
           VALUES (v_timeId, 'ADD_TBL', v_schema, v_oneTable, v_group, v_groupIsLogging);
--- insert an entry into the emaj_hist table
-        INSERT INTO emaj.emaj_hist (hist_function, hist_event, hist_object, hist_wording)
-          VALUES (CASE WHEN v_multiTable THEN 'ASSIGN_TABLES' ELSE 'ASSIGN_TABLE' END, 'TABLE ADDED',
-                  quote_ident(v_schema) || '.' || quote_ident(v_oneTable),
-                  'To the' || CASE WHEN v_groupIsLogging THEN ' logging' ELSE '' END || ' group ' || v_group);
         v_nbAssignedTbl = v_nbAssignedTbl + 1;
       END LOOP;
 -- enable previously disabled event triggers
@@ -1793,8 +1768,7 @@ $_assign_tables$
     END IF;
 -- insert the end entry into the emaj_hist table
     INSERT INTO emaj.emaj_hist (hist_function, hist_event, hist_wording)
-      VALUES (CASE WHEN v_multiTable THEN 'ASSIGN_TABLES' ELSE 'ASSIGN_TABLE' END, 'END',
-              v_nbAssignedTbl || ' tables assigned to the group ' || v_group);
+      VALUES (v_function, 'END', v_nbAssignedTbl || ' tables assigned to the group ' || v_group);
     RETURN v_nbAssignedTbl;
   END;
 $_assign_tables$;
@@ -1863,6 +1837,7 @@ $_remove_tables$
 -- Outputs: number of tables effectively assigned to the tables group
 -- The function is created as SECURITY DEFINER so that log schemas can be dropped
   DECLARE
+    v_function               TEXT;
     v_list                   TEXT;
     v_markName               TEXT;
     v_timeId                 BIGINT;
@@ -1875,14 +1850,11 @@ $_remove_tables$
     v_oneTable               TEXT;
     v_logSchema              TEXT;
     v_nbRemovedTbl           INT = 0;
-    v_logSequenceLastValue   BIGINT;
-    v_namesSuffix            TEXT;
-    v_fullTableName          TEXT;
-    r_relation               emaj.emaj_relation%ROWTYPE;
   BEGIN
+    v_function = CASE WHEN v_multiTable THEN 'REMOVE_TABLES' ELSE 'REMOVE_TABLE' END;
 -- insert the begin entry into the emaj_hist table
     INSERT INTO emaj.emaj_hist (hist_function, hist_event)
-      VALUES (CASE WHEN v_multiTable THEN 'REMOVE_TABLES' ELSE 'REMOVE_TABLE' END, 'BEGIN');
+      VALUES (v_function, 'BEGIN');
 -- check the tables list
     IF NOT v_arrayFromRegex THEN
 -- remove duplicates values, NULL and empty strings from the supplied table names array
@@ -1936,69 +1908,17 @@ $_remove_tables$
       SELECT emaj._disable_event_triggers() INTO v_eventTriggers;
 -- effectively drop the log components for each table
       FOREACH v_oneTable IN ARRAY v_tables
-          LOOP
--- get the emaj_relation row of the table to process and some characteristics of the group that holds the table
-        SELECT emaj_relation.* INTO r_relation FROM emaj.emaj_relation
-          WHERE rel_schema = v_schema AND rel_tblseq = v_oneTable AND upper_inf(rel_time_range);
-        SELECT group_name, group_is_logging INTO v_groupName, v_groupIsLogging FROM emaj.emaj_group
-          WHERE group_name = r_relation.rel_group;
-        IF NOT v_groupIsLogging THEN
--- if the group is idle, drop the table
-          PERFORM emaj._drop_tbl(r_relation, v_timeId);
-        ELSE
--- if the group is in logging state, perform additional tasks
--- ... get the current log sequence characteristics
-          SELECT CASE WHEN sequ_is_called THEN sequ_last_val ELSE sequ_last_val - sequ_increment END INTO STRICT v_logSequenceLastValue
-            FROM emaj.emaj_sequence
-            WHERE sequ_schema = r_relation.rel_log_schema AND sequ_name = r_relation.rel_log_sequence AND sequ_time_id = v_timeId;
--- ... compute the suffix to add to the log table and index names (_1, _2, ...), by looking at the existing names
-          SELECT '_' || coalesce(max(suffix) + 1, 1)::TEXT INTO v_namesSuffix
-            FROM
-              (SELECT unnest(regexp_matches(rel_log_table,'_(\d+)$'))::INT AS suffix
-                 FROM emaj.emaj_relation
-                 WHERE rel_schema = v_schema AND rel_tblseq = v_oneTable
-              ) AS t;
--- ... rename the log table and its index (they may have been dropped)
-          EXECUTE format('ALTER TABLE IF EXISTS %I.%I RENAME TO %I',
-                         v_logSchema, r_relation.rel_log_table, r_relation.rel_log_table || v_namesSuffix);
-          EXECUTE format('ALTER INDEX IF EXISTS %I.%I RENAME TO %I',
-                         v_logSchema, r_relation.rel_log_index, r_relation.rel_log_index || v_namesSuffix);
--- ... drop the log and truncate triggers
---     (check the application table exists before dropping its triggers to avoid an error fires with postgres version <= 9.3)
-          v_fullTableName  = quote_ident(v_schema) || '.' || quote_ident(v_oneTable);
-          PERFORM 0 FROM pg_catalog.pg_class, pg_catalog.pg_namespace
-            WHERE relnamespace = pg_namespace.oid
-              AND nspname = v_schema AND relname = v_oneTable AND relkind = 'r';
-          IF FOUND THEN
-            EXECUTE format('DROP TRIGGER IF EXISTS emaj_log_trg ON %s',
-                           v_fullTableName);
-            EXECUTE format('DROP TRIGGER IF EXISTS emaj_trunc_trg ON %s',
-                           v_fullTableName);
-          END IF;
--- ... drop the log function and the log sequence
--- (but we keep the sequence related data in the emaj_sequence and the emaj_seq_hole tables)
-          EXECUTE format('DROP FUNCTION IF EXISTS %I.%I() CASCADE',
-                         v_logSchema, r_relation.rel_log_function);
-          EXECUTE format('DROP SEQUENCE IF EXISTS %I.%I',
-                         v_logSchema, r_relation.rel_log_sequence);
--- ... register the end of the relation time frame, the last value of the log sequence, the log table and index names change,
--- and reset the content of now useless columns
--- (but do not reset the rel_log_sequence value: it will be needed later for _drop_tbl() for the emaj_sequence cleanup)
-          UPDATE emaj.emaj_relation
-            SET rel_time_range = int8range(lower(rel_time_range), v_timeId, '[)'),
-                rel_log_table = r_relation.rel_log_table || v_namesSuffix , rel_log_index = r_relation.rel_log_index || v_namesSuffix,
-                rel_log_function = NULL, rel_sql_columns = NULL, rel_sql_pk_columns = NULL, rel_sql_pk_eq_conditions = NULL,
-                rel_log_seq_last_value = v_logSequenceLastValue
-            WHERE rel_schema = v_schema AND rel_tblseq = v_oneTable AND upper_inf(rel_time_range);
-        END IF;
+      LOOP
+-- get some characteristics of the group that holds the table
+        SELECT rel_group, group_is_logging INTO v_groupName, v_groupIsLogging
+          FROM emaj.emaj_relation, emaj.emaj_group
+          WHERE rel_group = group_name
+            AND rel_schema = v_schema AND rel_tblseq = v_oneTable AND upper_inf(rel_time_range);
+-- drop this table
+        PERFORM emaj._remove_tbl(v_schema, v_oneTable, v_groupName, v_groupIsLogging, v_timeId, v_function);
 -- insert an entry into the emaj_alter_plan table (so that future rollback may see the change)
         INSERT INTO emaj.emaj_alter_plan (altr_time_id, altr_step, altr_schema, altr_tblseq, altr_group, altr_group_is_logging)
           VALUES (v_timeId, 'REMOVE_TBL', v_schema, v_oneTable, v_groupName, v_groupIsLogging);
--- insert an entry into the emaj_hist table
-        INSERT INTO emaj.emaj_hist (hist_function, hist_event, hist_object, hist_wording)
-          VALUES (CASE WHEN v_multiTable THEN 'REMOVE_TABLES' ELSE 'REMOVE_TABLE' END, 'TABLE REMOVED',
-                  quote_ident(v_schema) || '.' || quote_ident(v_oneTable),
-                  'From the' || CASE WHEN v_groupIsLogging THEN ' logging' ELSE '' END || ' group ' || v_groupName);
         v_nbRemovedTbl = v_nbRemovedTbl + 1;
       END LOOP;
 -- drop the log schema if it is now useless
@@ -2022,8 +1942,7 @@ $_remove_tables$
     END IF;
 -- insert the end entry into the emaj_hist table
     INSERT INTO emaj.emaj_hist (hist_function, hist_event, hist_wording)
-      VALUES (CASE WHEN v_multiTable THEN 'REMOVE_TABLES' ELSE 'REMOVE_TABLE' END, 'END',
-              v_nbRemovedTbl || ' tables removed from their groups');
+      VALUES (v_function, 'END', v_nbRemovedTbl || ' tables removed from their groups');
     RETURN v_nbRemovedTbl;
   END;
 $_remove_tables$;
@@ -2281,16 +2200,17 @@ $_create_log_trigger$
     RETURN;
   END;
 $_create_log_trigger$;
-CREATE OR REPLACE FUNCTION emaj._add_tbl(r_plan emaj.emaj_alter_plan, v_timeId BIGINT, v_multiGroup BOOLEAN)
+CREATE OR REPLACE FUNCTION emaj._add_tbl(v_schema TEXT, v_table TEXT, v_group TEXT, v_priority INT, v_logDatTsp TEXT, v_logIdxTsp TEXT,
+                                         v_groupIsLogging BOOLEAN, v_timeId BIGINT, v_function TEXT)
 RETURNS VOID LANGUAGE plpgsql
 SECURITY DEFINER SET search_path = pg_catalog, pg_temp AS
 $_add_tbl$
--- The function adds a table to a group. It is called during an alter group operation.
+-- The function adds a table to a group. It is called during an alter group or a dynamic assignment operation.
 -- If the group is in idle state, it simply calls the _create_tbl() function.
 -- Otherwise, it calls the _create_tbl() function, activates the log trigger and
 --    sets a restart value for the log sequence if a previous range exists for the relation.
--- Required inputs: row from emaj_alter_plan corresponding to the appplication table to proccess, time stamp id of the alter group
--- operation.
+-- Required inputs: schema and table to add, group name, priority, log data and index tablespace, the group's logging state,
+--                  the time stamp id of the operation, main calling function.
 -- The function is defined as SECURITY DEFINER so that emaj_adm role can enable triggers on application tables.
   DECLARE
     v_groupIsRollbackable    BOOLEAN;
@@ -2300,21 +2220,19 @@ $_add_tbl$
   BEGIN
 -- get the is_rollbackable status of the related group
     SELECT group_is_rollbackable INTO v_groupIsRollbackable
-      FROM emaj.emaj_group WHERE group_name = r_plan.altr_group;
+      FROM emaj.emaj_group WHERE group_name = v_group;
 -- create the table
-    PERFORM emaj._create_tbl(grpdef_schema, grpdef_tblseq, grpdef_group, grpdef_priority, grpdef_log_dat_tsp, grpdef_log_idx_tsp,
-                             v_timeId, v_groupIsRollbackable, r_plan.altr_group_is_logging)
-      FROM emaj.emaj_group_def
-      WHERE grpdef_group = r_plan.altr_group AND grpdef_schema = r_plan.altr_schema AND grpdef_tblseq = r_plan.altr_tblseq;
+    PERFORM emaj._create_tbl(v_schema, v_table, v_group, v_priority, v_logDatTsp, v_logIdxTsp,
+                             v_timeId, v_groupIsRollbackable, v_groupIsLogging);
 -- if the group is in logging state, perform additional tasks
-    IF r_plan.altr_group_is_logging THEN
+    IF v_groupIsLogging THEN
 -- ... get the log schema and sequence for the new relation
       SELECT rel_log_schema, rel_log_sequence INTO v_logSchema, v_logSequence
         FROM emaj.emaj_relation
-        WHERE rel_schema = r_plan.altr_schema AND rel_tblseq = r_plan.altr_tblseq AND upper_inf(rel_time_range);
+        WHERE rel_schema = v_schema AND rel_tblseq = v_table AND upper_inf(rel_time_range);
 -- ... get the last log sequence value, if any, for this relation (recorded in emaj_relation at a previous REMOVE_TBL operation)
       SELECT max(rel_log_seq_last_value) + 1 INTO v_nextVal FROM emaj.emaj_relation
-        WHERE rel_schema = r_plan.altr_schema AND rel_tblseq = r_plan.altr_tblseq
+        WHERE rel_schema = v_schema AND rel_tblseq = v_table
           AND rel_log_seq_last_value IS NOT NULL;
 -- ... set the new log sequence next_val, if needed
       IF v_nextVal IS NOT NULL AND v_nextVal > 1 THEN
@@ -2327,9 +2245,9 @@ $_add_tbl$
         SELECT * FROM emaj._get_current_sequence_state(v_logSchema, v_logSequence, v_timeId);
     END IF;
 -- insert an entry into the emaj_hist table
-      INSERT INTO emaj.emaj_hist (hist_function, hist_event, hist_object, hist_wording)
-        VALUES (CASE WHEN v_multiGroup THEN 'ALTER_GROUPS' ELSE 'ALTER_GROUP' END, 'TABLE ADDED',
-                quote_ident(r_plan.altr_schema) || '.' || quote_ident(r_plan.altr_tblseq), 'To the group ' || r_plan.altr_group);
+    INSERT INTO emaj.emaj_hist (hist_function, hist_event, hist_object, hist_wording)
+      VALUES (v_function, 'TABLE ADDED', quote_ident(v_schema) || '.' || quote_ident(v_table),
+              'To the ' || CASE WHEN v_groupIsLogging THEN 'logging ' ELSE '' END || 'group ' || v_group);
     RETURN;
   END;
 $_add_tbl$;
@@ -2391,16 +2309,17 @@ $_change_log_index_tsp_tbl$
     RETURN;
   END;
 $_change_log_index_tsp_tbl$;
-CREATE OR REPLACE FUNCTION emaj._remove_tbl(r_plan emaj.emaj_alter_plan, v_timeId BIGINT, v_multiGroup BOOLEAN)
+CREATE OR REPLACE FUNCTION emaj._remove_tbl(v_schema TEXT, v_table TEXT, v_group TEXT, v_groupIsLogging BOOLEAN,
+                                            v_timeId BIGINT, v_function TEXT)
 RETURNS VOID LANGUAGE plpgsql
 SECURITY DEFINER SET search_path = pg_catalog, pg_temp AS
 $_remove_tbl$
--- The function removes a table from a group. It is called during an alter group operation.
+-- The function removes a table from a group. It is called during an alter group or a dynamic removal operation.
 -- If the group is in idle state, it simply calls the _drop_tbl() function.
 -- Otherwise, only triggers, log function and log sequence are dropped now. The other components will be dropped later (at reset_group
 -- time for instance).
--- Required inputs: row from emaj_alter_plan corresponding to the appplication table to proccess, time stamp id of the alter group
--- operation.
+-- Required inputs: schema and sequence to remove, related group name and logging state,
+--                  time stamp id of the operation, main calling function.
 -- The function is defined as SECURITY DEFINER so that emaj_adm role can drop triggers on application tables.
   DECLARE
     v_logSchema              TEXT;
@@ -2412,17 +2331,17 @@ $_remove_tbl$
     v_namesSuffix            TEXT;
     v_fullTableName          TEXT;
   BEGIN
-    IF NOT r_plan.altr_group_is_logging THEN
+    IF NOT v_groupIsLogging THEN
 -- if the group is in idle state, drop the table immediately
       PERFORM emaj._drop_tbl(emaj.emaj_relation.*, v_timeId) FROM emaj.emaj_relation
-        WHERE rel_schema = r_plan.altr_schema AND rel_tblseq = r_plan.altr_tblseq AND upper_inf(rel_time_range);
+        WHERE rel_schema = v_schema AND rel_tblseq = v_table AND upper_inf(rel_time_range);
     ELSE
 -- if the group is in logging state, ...
 -- ... get the current relation characteristics
       SELECT rel_log_schema, rel_log_table, rel_log_index, rel_log_function, rel_log_sequence
         INTO v_logSchema, v_currentLogTable, v_currentLogIndex, v_logFunction, v_logSequence
         FROM emaj.emaj_relation
-        WHERE rel_schema = r_plan.altr_schema AND rel_tblseq = r_plan.altr_tblseq AND upper_inf(rel_time_range);
+        WHERE rel_schema = v_schema AND rel_tblseq = v_table AND upper_inf(rel_time_range);
 -- ... get the current log sequence characteristics
       SELECT CASE WHEN sequ_is_called THEN sequ_last_val ELSE sequ_last_val - sequ_increment END INTO STRICT v_logSequenceLastValue
         FROM emaj.emaj_sequence
@@ -2432,7 +2351,7 @@ $_remove_tbl$
         FROM
           (SELECT unnest(regexp_matches(rel_log_table,'_(\d+)$'))::INT AS suffix
              FROM emaj.emaj_relation
-             WHERE rel_schema = r_plan.altr_schema AND rel_tblseq = r_plan.altr_tblseq
+             WHERE rel_schema = v_schema AND rel_tblseq = v_table
           ) AS t;
 -- ... rename the log table and its index (they may have been dropped)
       EXECUTE format('ALTER TABLE IF EXISTS %I.%I RENAME TO %I',
@@ -2442,10 +2361,10 @@ $_remove_tbl$
 --TODO: share some code with _drop_tbl() ?
 -- ... drop the log and truncate triggers
 --     (check the application table exists before dropping its triggers to avoid an error fires with postgres version <= 9.3)
-      v_fullTableName  = quote_ident(r_plan.altr_schema) || '.' || quote_ident(r_plan.altr_tblseq);
+      v_fullTableName  = quote_ident(v_schema) || '.' || quote_ident(v_table);
       PERFORM 0 FROM pg_catalog.pg_class, pg_catalog.pg_namespace
         WHERE relnamespace = pg_namespace.oid
-          AND nspname = r_plan.altr_schema AND relname = r_plan.altr_tblseq AND relkind = 'r';
+          AND nspname = v_schema AND relname = v_table AND relkind = 'r';
       IF FOUND THEN
         EXECUTE format('DROP TRIGGER IF EXISTS emaj_log_trg ON %s',
                        v_fullTableName);
@@ -2466,21 +2385,20 @@ $_remove_tbl$
             rel_log_table = v_currentLogTable || v_namesSuffix , rel_log_index = v_currentLogIndex || v_namesSuffix,
             rel_log_function = NULL, rel_sql_columns = NULL, rel_sql_pk_columns = NULL, rel_sql_pk_eq_conditions = NULL,
             rel_log_seq_last_value = v_logSequenceLastValue
-        WHERE rel_schema = r_plan.altr_schema AND rel_tblseq = r_plan.altr_tblseq AND upper_inf(rel_time_range);
+        WHERE rel_schema = v_schema AND rel_tblseq = v_table AND upper_inf(rel_time_range);
     END IF;
 -- insert an entry into the emaj_hist table
     INSERT INTO emaj.emaj_hist (hist_function, hist_event, hist_object, hist_wording)
-      VALUES (CASE WHEN v_multiGroup THEN 'ALTER_GROUPS' ELSE 'ALTER_GROUP' END, 'TABLE REMOVED',
-              quote_ident(r_plan.altr_schema) || '.' || quote_ident(r_plan.altr_tblseq), 'From the group ' || r_plan.altr_group);
+      VALUES (v_function, 'TABLE REMOVED', quote_ident(v_schema) || '.' || quote_ident(v_table),
+              'From the ' || CASE WHEN v_groupIsLogging THEN 'logging ' ELSE '' END || 'group ' || v_group);
     RETURN;
   END;
 $_remove_tbl$;
 CREATE OR REPLACE FUNCTION emaj._move_tbl(r_plan emaj.emaj_alter_plan, v_timeId BIGINT)
 RETURNS VOID LANGUAGE plpgsql AS
 $_move_tbl$
--- The function change the group ownership of a table. It is called during an alter group operation.
--- Required inputs: row from emaj_alter_plan corresponding to the appplication table to proccess, time stamp id of the alter group
--- operation.
+-- The function change the group ownership of a table. It is called during an alter group or a dynamic assignment operation.
+-- Required inputs: row from emaj_alter_plan corresponding to the appplication table to proccess, time stamp id of the operation.
   BEGIN
     IF NOT r_plan.altr_group_is_logging AND NOT r_plan.altr_new_group_is_logging THEN
 -- no group is logging, so just adapt the last emaj_relation row related to the table
@@ -2635,6 +2553,7 @@ $_assign_sequences$
 -- Outputs: number of sequences effectively assigned to the tables group
 -- The JSONB v_properties parameter has currenlty only one field '{"priority":...}' the properties being NULL by default
   DECLARE
+    v_function               TEXT;
     v_groupIsLogging         BOOLEAN;
     v_priority               INT;
     v_extraProperties        JSONB;
@@ -2645,9 +2564,10 @@ $_assign_sequences$
     v_oneSequence            TEXT;
     v_nbAssignedSeq          INT = 0;
   BEGIN
+    v_function = CASE WHEN v_multiSequence THEN 'ASSIGN_SEQUENCES' ELSE 'ASSIGN_SEQUENCE' END;
 -- insert the begin entry into the emaj_hist table
     INSERT INTO emaj.emaj_hist (hist_function, hist_event)
-      VALUES (CASE WHEN v_multiSequence THEN 'ASSIGN_SEQUENCES' ELSE 'ASSIGN_SEQUENCE' END, 'BEGIN');
+      VALUES (v_function, 'BEGIN');
 -- check supplied parameters
 -- check the group name and if ok, get some properties of the group
     PERFORM emaj._check_group_names(v_groupNames := ARRAY[v_group], v_mayBeNull := FALSE, v_lockGroups := TRUE, v_checkList := '');
@@ -2730,24 +2650,11 @@ $_assign_sequences$
       END IF;
 -- effectively create the log components for each table
       FOREACH v_oneSequence IN ARRAY v_sequences
-          LOOP
--- create the sequence
-        PERFORM emaj._create_seq(v_schema, v_oneSequence, v_group, v_priority, v_timeId);
--- if the group is in logging state, perform additional tasks
-        IF v_groupIsLogging THEN
--- ... record the new sequence state in the emaj_sequence table for the current alter_group mark
-          INSERT INTO emaj.emaj_sequence (sequ_schema, sequ_name, sequ_time_id, sequ_last_val, sequ_start_val,
-                      sequ_increment, sequ_max_val, sequ_min_val, sequ_cache_val, sequ_is_cycled, sequ_is_called)
-            SELECT * FROM emaj._get_current_sequence_state(v_schema, v_oneSequence, v_timeId);
-        END IF;
+      LOOP
+        PERFORM emaj._add_seq(v_schema, v_oneSequence, v_group, v_priority, v_groupIsLogging, v_timeId, v_function);
 -- insert an entry into the emaj_alter_plan table (so that future rollback may see the change)
         INSERT INTO emaj.emaj_alter_plan (altr_time_id, altr_step, altr_schema, altr_tblseq, altr_group, altr_group_is_logging)
           VALUES (v_timeId, 'ADD_SEQ', v_schema, v_oneSequence, v_group, v_groupIsLogging);
--- insert an entry into the emaj_hist table
-        INSERT INTO emaj.emaj_hist (hist_function, hist_event, hist_object, hist_wording)
-          VALUES (CASE WHEN v_multiSequence THEN 'ASSIGN_SEQUENCES' ELSE 'ASSIGN_SEQUENCE' END, 'SEQUENCE ADDED',
-                  quote_ident(v_schema) || '.' || quote_ident(v_oneSequence),
-                  'To the' || CASE WHEN v_groupIsLogging THEN ' logging' ELSE '' END || ' group ' || v_group);
         v_nbAssignedSeq = v_nbAssignedSeq + 1;
       END LOOP;
 -- adjust the group characteristics
@@ -2759,8 +2666,7 @@ $_assign_sequences$
     END IF;
 -- insert the end entry into the emaj_hist table
     INSERT INTO emaj.emaj_hist (hist_function, hist_event, hist_wording)
-      VALUES (CASE WHEN v_multiSequence THEN 'ASSIGN_SEQUENCES' ELSE 'ASSIGN_SEQUENCE' END, 'END',
-              v_nbAssignedSeq || ' sequences assigned to the group ' || v_group);
+      VALUES (v_function, 'END', v_nbAssignedSeq || ' sequences assigned to the group ' || v_group);
     RETURN v_nbAssignedSeq;
   END;
 $_assign_sequences$;
@@ -2827,6 +2733,7 @@ $_remove_sequences$
 --         a boolean indicating whether the tables array has been built from regex filters
 -- Outputs: number of sequences effectively assigned to the sequences group
   DECLARE
+    v_function               TEXT;
     v_list                   TEXT;
     v_markName               TEXT;
     v_timeId                 BIGINT;
@@ -2837,11 +2744,11 @@ $_remove_sequences$
     v_eventTriggers          TEXT[];
     v_oneSequence            TEXT;
     v_nbRemovedSeq           INT = 0;
-    r_relation               emaj.emaj_relation%ROWTYPE;
   BEGIN
+    v_function = CASE WHEN v_multiSequence THEN 'REMOVE_SEQUENCES' ELSE 'REMOVE_SEQUENCE' END;
 -- insert the begin entry into the emaj_hist table
     INSERT INTO emaj.emaj_hist (hist_function, hist_event)
-      VALUES (CASE WHEN v_multiSequence THEN 'REMOVE_SEQUENCES' ELSE 'REMOVE_SEQUENCE' END, 'BEGIN');
+      VALUES (v_function, 'BEGIN');
 -- check sequences array
     IF NOT v_arrayFromRegex THEN
 -- remove duplicates values, NULL and empty strings from the supplied sequence names array
@@ -2894,28 +2801,17 @@ $_remove_sequences$
       SELECT emaj._disable_event_triggers() INTO v_eventTriggers;
 -- effectively drop the log components for each sequence
       FOREACH v_oneSequence IN ARRAY v_sequences
-          LOOP
--- get the emaj_relation row of the sequence to process and some characteristics of the group that holds the sequence
-        SELECT emaj_relation.* INTO r_relation FROM emaj.emaj_relation
-          WHERE rel_schema = v_schema AND rel_tblseq = v_oneSequence AND upper_inf(rel_time_range);
-        SELECT group_name, group_is_logging INTO v_groupName, v_groupIsLogging FROM emaj.emaj_group
-          WHERE group_name = r_relation.rel_group;
-        IF NOT v_groupIsLogging THEN
--- if the group is idle, drop the sequence
-          PERFORM emaj._drop_seq(r_relation, v_timeId);
-        ELSE
--- if the group is in logging state, just register the end of the relation time frame
-          UPDATE emaj.emaj_relation SET rel_time_range = int8range(lower(rel_time_range),v_timeId, '[)')
-            WHERE rel_schema = v_schema AND rel_tblseq = v_oneSequence AND upper_inf(rel_time_range);
-        END IF;
--- insert an entry into the emaj_alter_plan table (so that future rollback may see the change)
+      LOOP
+-- get some characteristics of the group that holds the sequence
+        SELECT rel_group, group_is_logging INTO v_groupName, v_groupIsLogging
+          FROM emaj.emaj_relation, emaj.emaj_group
+          WHERE rel_group = group_name
+            AND rel_schema = v_schema AND rel_tblseq = v_oneSequence AND upper_inf(rel_time_range);
+-- drop this sequence
+        PERFORM emaj._remove_seq(v_schema, v_oneSequence, v_groupName, v_groupIsLogging, v_timeId, v_function);
+-- record the change into the emaj_alter_plan table (so that future rollback may see the change)
         INSERT INTO emaj.emaj_alter_plan (altr_time_id, altr_step, altr_schema, altr_tblseq, altr_group, altr_group_is_logging)
           VALUES (v_timeId, 'REMOVE_SEQ', v_schema, v_oneSequence, v_groupName, v_groupIsLogging);
--- insert an entry into the emaj_hist table
-        INSERT INTO emaj.emaj_hist (hist_function, hist_event, hist_object, hist_wording)
-          VALUES (CASE WHEN v_multiSequence THEN 'REMOVE_SEQUENCES' ELSE 'REMOVE_SEQUENCE' END, 'SEQUENCE REMOVED',
-                  quote_ident(v_schema) || '.' || quote_ident(v_oneSequence),
-                  'From the' || CASE WHEN v_groupIsLogging THEN ' logging' ELSE '' END || ' group ' || v_groupName);
         v_nbRemovedSeq = v_nbRemovedSeq + 1;
       END LOOP;
 -- enable previously disabled event triggers
@@ -2929,8 +2825,7 @@ $_remove_sequences$
     END IF;
 -- insert the end entry into the emaj_hist table
     INSERT INTO emaj.emaj_hist (hist_function, hist_event, hist_wording)
-      VALUES (CASE WHEN v_multiSequence THEN 'REMOVE_SEQUENCES' ELSE 'REMOVE_SEQUENCE' END, 'END',
-              v_nbRemovedSeq || ' sequences removed from their groups');
+      VALUES (v_function, 'END', v_nbRemovedSeq || ' sequences removed from their groups');
     RETURN v_nbRemovedSeq;
   END;
 $_remove_sequences$;
@@ -2977,60 +2872,60 @@ $_create_seq$
     RETURN;
   END;
 $_create_seq$;
-CREATE OR REPLACE FUNCTION emaj._add_seq(r_plan emaj.emaj_alter_plan, v_timeId BIGINT, v_multiGroup BOOLEAN)
+CREATE OR REPLACE FUNCTION emaj._add_seq(v_schema TEXT, v_sequence TEXT, v_group TEXT, v_priority INT, v_groupIsLogging BOOLEAN,
+                                         v_timeId BIGINT, v_function TEXT)
 RETURNS VOID LANGUAGE plpgsql AS
 $_add_seq$
--- The function adds a sequence to a group. It is called during an alter group operation.
+-- The function adds a sequence to a group. It is called during an alter group or a dynamic assignment operation.
 -- If the group is in idle state, it simply calls the _create_seq() function.
--- Otherwise, it calls the _create_seql() function, and record the current state of the sequence.
--- Required inputs: row from emaj_alter_plan corresponding to the appplication sequence to proccess, time stamp id of the alter group
--- operation.
+-- Otherwise, it calls the _create_seql() function, and records the current state of the sequence.
+-- Required inputs: schema and sequence to add, group name, priority, the group's logging state,
+--                  the time stamp id of the operation, main calling function.
   BEGIN
 -- create the sequence
-    PERFORM emaj._create_seq(grpdef_schema, grpdef_tblseq, grpdef_group, grpdef_priority, v_timeId)
-      FROM emaj.emaj_group_def
-      WHERE grpdef_group = r_plan.altr_group AND grpdef_schema = r_plan.altr_schema AND grpdef_tblseq = r_plan.altr_tblseq;
+    PERFORM emaj._create_seq(v_schema, v_sequence, v_group, v_priority, v_timeId);
 -- if the group is in logging state, perform additional tasks
-    IF r_plan.altr_group_is_logging THEN
+    IF v_groupIsLogging THEN
 -- ... record the new sequence state in the emaj_sequence table for the current alter_group mark
       INSERT INTO emaj.emaj_sequence (sequ_schema, sequ_name, sequ_time_id, sequ_last_val, sequ_start_val,
                   sequ_increment, sequ_max_val, sequ_min_val, sequ_cache_val, sequ_is_cycled, sequ_is_called)
-        SELECT * FROM emaj._get_current_sequence_state(r_plan.altr_schema, r_plan.altr_tblseq, v_timeId);
+        SELECT * FROM emaj._get_current_sequence_state(v_schema, v_sequence, v_timeId);
     END IF;
 -- insert an entry into the emaj_hist table
     INSERT INTO emaj.emaj_hist (hist_function, hist_event, hist_object, hist_wording)
-      VALUES (CASE WHEN v_multiGroup THEN 'ALTER_GROUPS' ELSE 'ALTER_GROUP' END, 'SEQUENCE ADDED',
-              quote_ident(r_plan.altr_schema) || '.' || quote_ident(r_plan.altr_tblseq), 'To the group ' || r_plan.altr_group);
+      VALUES (v_function, 'SEQUENCE ADDED', quote_ident(v_schema) || '.' || quote_ident(v_sequence),
+              'To the ' || CASE WHEN v_groupIsLogging THEN 'logging ' ELSE '' END || 'group ' || v_group);
     RETURN;
   END;
 $_add_seq$;
-CREATE OR REPLACE FUNCTION emaj._remove_seq(r_plan emaj.emaj_alter_plan, v_timeId BIGINT, v_multiGroup BOOLEAN)
+CREATE OR REPLACE FUNCTION emaj._remove_seq(v_schema TEXT, v_sequence TEXT, v_group TEXT, v_groupIsLogging BOOLEAN,
+                                            v_timeId BIGINT, v_function TEXT)
 RETURNS VOID LANGUAGE plpgsql AS
 $_remove_seq$
--- The function removes a sequence from a group. It is called during an alter group operation.
--- Required inputs: row from emaj_alter_plan corresponding to the appplication sequence to proccess, time stamp id of the
--- alter group operation.
+-- The function removes a sequence from a group. It is called during an alter group or a dynamic removal operation.
+-- Required inputs: schema and sequence to remove, related group name and logging state,
+--                  time stamp id of the operation, main calling function.
   BEGIN
-    IF r_plan.altr_group_is_logging THEN
--- if the group is in logging state, just register the end of the relation time frame
-      UPDATE emaj.emaj_relation SET rel_time_range = int8range(lower(rel_time_range),v_timeId, '[)')
-        WHERE rel_schema = r_plan.altr_schema AND rel_tblseq = r_plan.altr_tblseq AND upper_inf(rel_time_range);
-    ELSE
+    IF NOT v_groupIsLogging THEN
 -- if the group is in idle state, drop the sequence immediately
       PERFORM emaj._drop_seq(emaj.emaj_relation.*, v_timeId) FROM emaj.emaj_relation
-        WHERE rel_schema = r_plan.altr_schema AND rel_tblseq = r_plan.altr_tblseq AND upper_inf(rel_time_range);
+        WHERE rel_schema = v_schema AND rel_tblseq = v_sequence AND upper_inf(rel_time_range);
+    ELSE
+-- if the group is in logging state, just register the end of the relation time frame
+      UPDATE emaj.emaj_relation SET rel_time_range = int8range(lower(rel_time_range),v_timeId, '[)')
+        WHERE rel_schema = v_schema AND rel_tblseq = v_sequence AND upper_inf(rel_time_range);
     END IF;
 -- insert an entry into the emaj_hist table
     INSERT INTO emaj.emaj_hist (hist_function, hist_event, hist_object, hist_wording)
-      VALUES (CASE WHEN v_multiGroup THEN 'ALTER_GROUPS' ELSE 'ALTER_GROUP' END, 'SEQUENCE REMOVED',
-              quote_ident(r_plan.altr_schema) || '.' || quote_ident(r_plan.altr_tblseq), 'From the group ' || r_plan.altr_group);
+      VALUES (v_function, 'SEQUENCE REMOVED', quote_ident(v_schema) || '.' || quote_ident(v_sequence),
+              'From the ' || CASE WHEN v_groupIsLogging THEN 'logging ' ELSE '' END || 'group ' || v_group);
     RETURN;
   END;
 $_remove_seq$;
 CREATE OR REPLACE FUNCTION emaj._move_seq(r_plan emaj.emaj_alter_plan, v_timeId BIGINT)
 RETURNS VOID LANGUAGE plpgsql AS
 $_move_seq$
--- The function change the group ownership of a sequence. It is called during an alter group operation.
+-- The function change the group ownership of a sequence. It is called during an alter group or a dynamic assignment operation.
 -- Required inputs: row from emaj_alter_plan corresponding to the appplication sequence to proccess, time stamp id of the
 -- alter group operation.
   BEGIN
@@ -3853,7 +3748,7 @@ $_check_fk_groups$
                  WHERE rel_schema = nf.nspname AND rel_tblseq = tf.relname
                    AND upper_inf(rel_time_range) AND rel_group = ANY (v_groupNames))
         ORDER BY 1,2,3
-      LOOP
+    LOOP
       RAISE WARNING '_check_fk_groups: The foreign key "%" on the table "%.%" references the table "%.%" that is outside the groups (%).',
         r_fk.conname,r_fk.rel_schema,r_fk.rel_tblseq,r_fk.nspname,r_fk.relname,array_to_string(v_groupNames,',');
     END LOOP;
@@ -3874,7 +3769,7 @@ $_check_fk_groups$
               (SELECT NULL FROM emaj.emaj_relation
                  WHERE rel_schema = n.nspname AND rel_tblseq = t.relname AND upper_inf(rel_time_range) AND rel_group = ANY (v_groupNames))
         ORDER BY 1,2,3
-      LOOP
+    LOOP
       RAISE WARNING '_check_fk_groups: The table "%.%" is referenced by the foreign key "%" on the table "%.%" that is outside'
                     ' the groups (%).', r_fk.rel_schema, r_fk.rel_tblseq, r_fk.conname, r_fk.nspname, r_fk.relname,
                     array_to_string(v_groupNames,',');
@@ -3911,7 +3806,7 @@ $_lock_groups$
                WHERE rel_group = ANY (v_groupNames) AND rel_kind = 'r' AND upper_inf(rel_time_range)
                  AND relnamespace = pg_namespace.oid AND nspname = rel_schema AND relname = rel_tblseq
                ORDER BY rel_priority, rel_schema, rel_tblseq
-            LOOP
+        LOOP
 -- lock the table
           v_fullTableName = quote_ident(r_tblsq.rel_schema) || '.' || quote_ident(r_tblsq.rel_tblseq);
           EXECUTE format('LOCK TABLE %s IN %s MODE',
@@ -4139,7 +4034,7 @@ $_drop_group$
         SELECT * FROM emaj.emaj_relation
           WHERE rel_group = v_groupName
           ORDER BY rel_priority, rel_schema, rel_tblseq, rel_time_range
-      LOOP
+    LOOP
         PERFORM CASE WHEN r_rel.rel_kind = 'r' THEN emaj._drop_tbl(r_rel, v_timeId)
                      WHEN r_rel.rel_kind = 'S' THEN emaj._drop_seq(r_rel, v_timeId) END;
     END LOOP;
@@ -4385,27 +4280,31 @@ $_alter_exec$
 -- It looks at the emaj_alter_plan table and executes elementary step in proper order.
 -- Input: timestamp id of the operation
   DECLARE
+    v_function               TEXT;
     v_logDatTsp              TEXT;
     v_logIdxTsp              TEXT;
     v_isRollbackable         BOOLEAN;
     r_plan                   emaj.emaj_alter_plan%ROWTYPE;
     r_rel                    emaj.emaj_relation%ROWTYPE;
   BEGIN
+    v_function = CASE WHEN v_multiGroup THEN 'ALTER_GROUPS' ELSE 'ALTER_GROUP' END;
 -- scan the emaj_alter_plan table and execute each elementary item in the proper order
     FOR r_plan IN
       SELECT *
         FROM emaj.emaj_alter_plan
         WHERE altr_time_id = v_timeId
         ORDER BY altr_step, altr_priority, altr_schema, altr_tblseq, altr_group
-      LOOP
+    LOOP
       CASE r_plan.altr_step
         WHEN 'REMOVE_TBL' THEN
 -- remove a table from its group
-          PERFORM emaj._remove_tbl(r_plan, v_timeId, v_multiGroup);
+          PERFORM emaj._remove_tbl(r_plan.altr_schema, r_plan.altr_tblseq, r_plan.altr_group, r_plan.altr_group_is_logging,
+                                   v_timeId, v_function);
 --
         WHEN 'REMOVE_SEQ' THEN
 -- remove a sequence from its group
-          PERFORM emaj._remove_seq(r_plan, v_timeId, v_multiGroup);
+          PERFORM emaj._remove_seq(r_plan.altr_schema, r_plan.altr_tblseq, r_plan.altr_group, r_plan.altr_group_is_logging,
+                                   v_timeId, v_function);
 --
         WHEN 'RESET_GROUP' THEN
 -- reset a group
@@ -4471,11 +4370,15 @@ $_alter_exec$
 --
         WHEN 'ADD_TBL' THEN
 -- add a table to a group
-          PERFORM emaj._add_tbl(r_plan, v_timeId, v_multiGroup);
+          PERFORM emaj._add_tbl(r_plan.altr_schema, r_plan.altr_tblseq, r_plan.altr_group, grpdef_priority, grpdef_log_dat_tsp,
+                                grpdef_log_idx_tsp, r_plan.altr_group_is_logging, v_timeId, v_function)
+            FROM emaj.emaj_group_def
+            WHERE grpdef_group = r_plan.altr_group AND grpdef_schema = r_plan.altr_schema AND grpdef_tblseq = r_plan.altr_tblseq;
 --
         WHEN 'ADD_SEQ' THEN
 -- add a sequence to a group
-          PERFORM emaj._add_seq(r_plan, v_timeId, v_multiGroup);
+          PERFORM emaj._add_seq(r_plan.altr_schema, r_plan.altr_tblseq, r_plan.altr_group, r_plan.altr_priority,
+                                r_plan.altr_group_is_logging, v_timeId, v_function);
 --
       END CASE;
     END LOOP;
@@ -4603,7 +4506,7 @@ $_start_groups$
       FOR r_tblsq IN
          SELECT rel_priority, rel_schema, rel_tblseq, rel_kind FROM emaj.emaj_relation
            WHERE upper_inf(rel_time_range) AND rel_group = ANY (v_groupNames) ORDER BY rel_priority, rel_schema, rel_tblseq
-         LOOP
+      LOOP
         CASE r_tblsq.rel_kind
           WHEN 'r' THEN
 -- if it is a table, enable the emaj log and truncate triggers
@@ -4730,7 +4633,7 @@ $_stop_groups$
             WHERE upper_inf(rel_time_range) AND rel_group = ANY (v_groupNames)
               AND NOT EXISTS (SELECT nspname FROM pg_catalog.pg_namespace WHERE nspname = rel_schema)
             ORDER BY rel_schema
-        LOOP
+      LOOP
         IF v_isForced THEN
           RAISE WARNING '_stop_groups: The schema "%" does not exist any more.', r_schema.rel_schema;
         ELSE
@@ -4742,7 +4645,7 @@ $_stop_groups$
           SELECT rel_priority, rel_schema, rel_tblseq, rel_kind FROM emaj.emaj_relation
             WHERE upper_inf(rel_time_range) AND rel_group = ANY (v_groupNames)
             ORDER BY rel_priority, rel_schema, rel_tblseq
-        LOOP
+      LOOP
         CASE r_tblsq.rel_kind
           WHEN 'r' THEN
 -- if it is a table, check the table still exists
@@ -5258,7 +5161,7 @@ $_delete_before_mark_group$
           SELECT rel_log_schema, rel_log_table FROM emaj.emaj_relation
             WHERE rel_kind = 'r' AND (upper(rel_time_range) > v_markTimeId OR upper_inf(rel_time_range))
           ORDER BY 1,2
-        LOOP
+    LOOP
       EXECUTE format('DROP TABLE IF EXISTS %I.%I CASCADE',
                      r_rel.rel_log_schema, r_rel.rel_log_table);
     END LOOP;
@@ -5874,7 +5777,7 @@ $_rlbk_planning$
     FOR r_tbl IN
         SELECT * FROM emaj.emaj_rlbk_plan
         WHERE rlbp_rlbk_id = v_rlbkId AND rlbp_step = 'RLBK_TABLE' ORDER BY rlbp_estimated_quantity DESC
-      LOOP
+    LOOP
 --   is the table already allocated to a batch number (it may have been already allocated because of a fkey link) ?
       PERFORM 0 FROM emaj.emaj_rlbk_plan
         WHERE rlbp_rlbk_id = v_rlbkId AND rlbp_step = 'RLBK_TABLE'
@@ -6027,7 +5930,7 @@ $_rlbk_planning$
           AND c.confrelid  = rt.oid AND rt.relnamespace  = rn.oid        -- joins for referenced table and namespace
           AND rn.nspname = r.rlbp_schema AND rt.relname = r.rlbp_table   -- join on emaj_rlbk_plan table
       ORDER BY nspname, relname, conname
-      LOOP
+    LOOP
 -- depending on the foreign key characteristics, record as 'to be dropped' or 'to be set deffered' or 'to just be reset immediate'
       IF NOT r_fk.condeferrable OR r_fk.confupdtype <> 'a' OR r_fk.confdeltype <> 'a' THEN
 -- non deferrable fkeys and deferrable fkeys with an action for UPDATE or DELETE other than 'no action' need to be dropped
@@ -6087,7 +5990,7 @@ $_rlbk_planning$
     FOR r_tbl IN
         SELECT * FROM emaj.emaj_rlbk_plan
         WHERE rlbp_rlbk_id = v_rlbkId AND rlbp_step = 'RLBK_TABLE'
-      LOOP
+    LOOP
 -- first look at the previous rollback durations for the table and with similar rollback volume (same order of magnitude)
       SELECT sum(rlbt_duration) * r_tbl.rlbp_estimated_quantity / sum(rlbt_quantity) INTO v_estimDuration
         FROM emaj.emaj_rlbk_stat
@@ -6117,7 +6020,7 @@ $_rlbk_planning$
     FOR r_tbl IN
         SELECT * FROM emaj.emaj_rlbk_plan
         WHERE rlbp_rlbk_id = v_rlbkId AND rlbp_step = 'DELETE_LOG'
-      LOOP
+    LOOP
 -- first look at the previous rollback durations for the table and with similar rollback volume (same order of magnitude)
       SELECT sum(rlbt_duration) * r_tbl.rlbp_estimated_quantity / sum(rlbt_quantity) INTO v_estimDuration
         FROM emaj.emaj_rlbk_stat
@@ -6147,7 +6050,7 @@ $_rlbk_planning$
     FOR r_fk IN
         SELECT * FROM emaj.emaj_rlbk_plan
         WHERE rlbp_rlbk_id = v_rlbkId AND rlbp_step = 'ADD_FK'
-      LOOP
+    LOOP
       IF r_fk.rlbp_estimated_quantity = 0 THEN
 -- empty table (or table not analyzed) => duration = 0
         v_estimDuration = '0 SECONDS'::INTERVAL;
@@ -6184,7 +6087,7 @@ $_rlbk_planning$
     FOR r_fk IN
         SELECT * FROM emaj.emaj_rlbk_plan
         WHERE rlbp_rlbk_id = v_rlbkId AND rlbp_step = 'SET_FK_IMM'
-      LOOP
+    LOOP
 -- if fkey checks statistics are available for this fkey, compute an average cost
       SELECT sum(rlbt_duration) * r_fk.rlbp_estimated_quantity / sum(rlbt_quantity) INTO v_estimDuration
         FROM emaj.emaj_rlbk_stat
@@ -6216,7 +6119,7 @@ $_rlbk_planning$
           WHERE rlbp_rlbk_id = v_rlbkId AND rlbp_batch_number IS NOT NULL
           GROUP BY rlbp_batch_number
           ORDER BY sum(rlbp_estimated_duration) DESC
-      LOOP
+    LOOP
 --   compute the least loaded session
       v_minSession=1; v_minDuration = v_sessionLoad [1];
       FOR v_session IN 2 .. v_nbSession LOOP
@@ -6288,7 +6191,7 @@ $_rlbk_set_batch_number$
                 WHERE contype = 'f' AND conrelid = v_fullTableName::regclass
                   AND t.oid = confrelid AND relnamespace = n.oid
               )
-      LOOP
+    LOOP
 -- recursive call to allocate these linked tables to the same batch_number
       PERFORM emaj._rlbk_set_batch_number(v_rlbkId, v_batchNumber, r_tbl.rlbp_schema, r_tbl.rlbp_table);
     END LOOP;
@@ -6351,7 +6254,7 @@ $_rlbk_session_lock$
               AND rlbp_rlbk_id = v_rlbkId AND rlbp_step = 'LOCK_TABLE'
               AND rlbp_session = v_session
             ORDER BY rel_priority, rel_schema, rel_tblseq
-            LOOP
+        LOOP
 --   lock each table
 --     The locking level is EXCLUSIVE mode.
 --     This blocks all concurrent update capabilities of all tables of the groups (including tables with no logged update to rollback),
@@ -6510,7 +6413,7 @@ $_rlbk_session_exec$
           AND rlbp_rlbk_id = v_rlbkId AND rlbp_step NOT IN ('LOCK_TABLE','CTRL-DBLINK','CTRL+DBLINK')
           AND rlbp_session = v_session
         ORDER BY rlbp_batch_number, step_order, rlbp_table, rlbp_object
-      LOOP
+    LOOP
 -- update the emaj_rlbk_plan table to set the step start time
       v_stmt = 'UPDATE emaj.emaj_rlbk_plan SET rlbp_start_datetime = clock_timestamp() ' ||
                ' WHERE rlbp_rlbk_id = ' || v_rlbkId || ' AND rlbp_step = ' || quote_literal(r_step.rlbp_step) ||
@@ -6831,7 +6734,7 @@ $_rlbk_end$
               WHERE altr_rank = 1
             ) AS t2
           ORDER BY altr_time_id, altr_step, altr_schema, altr_tblseq
-        LOOP
+      LOOP
           INSERT INTO emaj.emaj_hist (hist_function, hist_event, hist_object, hist_wording)
             VALUES (CASE WHEN v_multiGroup THEN 'ROLLBACK_GROUPS' ELSE 'ROLLBACK_GROUP' END, 'WARNING', 'Rollback id ' || v_rlbkId,
                     r_msg.message);
@@ -6937,7 +6840,7 @@ $_cleanup_rollback_state$
         GROUP BY rlbk_id, rlbk_status, rlbk_begin_hist_id, rlbk_nb_session
         HAVING count(rlbs_txid) = rlbk_nb_session                               -- all sessions tx must be visible
         ORDER BY rlbk_id
-      LOOP
+    LOOP
 -- look at the emaj_hist to find the trace of the rollback begin event
       PERFORM 0 FROM emaj.emaj_hist WHERE hist_id = r_rlbk.rlbk_begin_hist_id;
       IF FOUND THEN
@@ -7213,7 +7116,7 @@ $_reset_groups$
           SELECT rel_log_schema, rel_log_table FROM emaj.emaj_relation
             WHERE rel_kind = 'r' AND upper_inf(rel_time_range)
           ORDER BY 1,2
-        LOOP
+    LOOP
       EXECUTE format('DROP TABLE IF EXISTS %I.%I CASCADE',
                      r_rel.rel_log_schema, r_rel.rel_log_table);
     END LOOP;
@@ -7233,7 +7136,7 @@ $_reset_groups$
         SELECT rel_log_schema, rel_log_table, rel_log_sequence FROM emaj.emaj_relation
           WHERE rel_group = ANY (v_groupNames) AND rel_kind = 'r'
           ORDER BY rel_priority, rel_schema, rel_tblseq
-        LOOP
+    LOOP
 --   truncate the log table
       EXECUTE format('TRUNCATE %I.%I',
                      r_rel.rel_log_schema, r_rel.rel_log_table);
@@ -7460,7 +7363,7 @@ $_detailed_log_stat_groups$
               AND (upper_inf(rel_time_range) OR upper(rel_time_range) > v_firstMarkTimeId)               --   at the requested time frame
               AND (v_lastMarkTimeId IS NULL OR lower(rel_time_range) < v_lastMarkTimeId)
             ORDER BY rel_schema, rel_tblseq, rel_time_range
-          LOOP
+      LOOP
 -- compute the lower bound for this table
         IF v_firstMarkTimeId >= lower(r_tblsq.rel_time_range) THEN
 -- usual case: the table belonged to the group at statistics start mark
@@ -7667,7 +7570,7 @@ $_rollback_activity$
              LEFT OUTER JOIN emaj.emaj_time_stamp t2 ON (rlbk_time_id = t2.time_id)
         WHERE rlbk_status IN ('PLANNING', 'LOCKING', 'EXECUTING')
         ORDER BY rlbk_id
-        LOOP
+    LOOP
 -- compute the estimated remaining duration
 --   for rollback operations in 'PLANNING' state, the remaining duration is NULL
       IF r_rlbk.rlbk_status IN ('LOCKING', 'EXECUTING') THEN
@@ -7756,7 +7659,7 @@ $emaj_snap_group$
         SELECT rel_priority, rel_schema, rel_tblseq, rel_kind FROM emaj.emaj_relation
           WHERE upper_inf(rel_time_range) AND rel_group = v_groupName
           ORDER BY rel_priority, rel_schema, rel_tblseq
-        LOOP
+    LOOP
       v_fileName = v_dir || '/' || translate(r_tblsq.rel_schema || '_' || r_tblsq.rel_tblseq || '.snap', E' /\\$<>*', '_______');
       v_fullTableName = quote_ident(r_tblsq.rel_schema) || '.' || quote_ident(r_tblsq.rel_tblseq);
       CASE r_tblsq.rel_kind
@@ -7906,7 +7809,7 @@ $emaj_snap_log_group$
           WHERE rel_group = v_groupName AND rel_kind = 'r'
             AND rel_time_range && int8range(v_firstMarkTimeId, v_lastMarkTimeId,'[)')
           ORDER BY rel_priority, rel_schema, rel_tblseq
-        LOOP
+    LOOP
 --   build names
       v_fileName = v_dir || '/' || translate(r_tblsq.rel_schema || '_' || r_tblsq.rel_log_table || '.snap', E' /\\$<>*', '_______');
       v_logTableName = quote_ident(r_tblsq.rel_log_schema) || '.' || quote_ident(r_tblsq.rel_log_table);
@@ -8148,7 +8051,7 @@ $_gen_sql_groups$
               AND emaj._log_stat_tbl(emaj_relation, v_firstMarkTimeId,                            -- only tables having updates to process
                                     least(v_lastMarkTimeId, upper(rel_time_range))) > 0
             ORDER BY rel_priority, rel_schema, rel_tblseq
-          LOOP
+      LOOP
         SELECT emaj._gen_sql_tbl(r_rel, v_firstEmajGid, v_lastEmajGid) INTO v_nbSQL;
         v_cumNbSQL = v_cumNbSQL + v_nbSQL;
       END LOOP;
@@ -8160,7 +8063,7 @@ $_gen_sql_groups$
               AND rel_time_range @> v_firstMarkTimeId                                -- sequences belonging to the groups at the start mark
               AND (v_tblseqs IS NULL OR rel_schema || '.' || rel_tblseq = ANY (v_tblseqs))         -- filtered or not by the user
             ORDER BY rel_priority DESC, rel_schema DESC, rel_tblseq DESC
-          LOOP
+      LOOP
         v_fullSeqName = quote_ident(r_tblsq.rel_schema) || '.' || quote_ident(r_tblsq.rel_tblseq);
         IF v_lastMarkTimeId IS NULL AND upper_inf(r_tblsq.rel_time_range) THEN
 -- no supplied last mark and the sequence currently belongs to its group, so get current sequence characteritics
@@ -9148,7 +9051,7 @@ $do$
     RETURN;
   END;
 $do$;
-psql:sql/emaj-devel.sql:9354: NOTICE:  E-Maj installation: E-Maj successfully installed.
+psql:sql/emaj-devel.sql:9257: NOTICE:  E-Maj installation: E-Maj successfully installed.
 COMMIT;
 -----------------------------
 -- check installation
