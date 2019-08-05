@@ -2045,7 +2045,7 @@ SQL statement "SELECT emaj._add_tbl(r_plan.altr_schema, r_plan.altr_tblseq, r_pl
                                 grpdef_log_idx_tsp, r_plan.altr_group_is_logging, v_timeId, v_function)
             FROM emaj.emaj_group_def
             WHERE grpdef_group = r_plan.altr_group AND grpdef_schema = r_plan.altr_schema AND grpdef_tblseq = r_plan.altr_tblseq"
-PL/pgSQL function emaj._alter_exec(bigint,boolean) line 96 at PERFORM
+PL/pgSQL function emaj._alter_exec(bigint,boolean) line 98 at PERFORM
 SQL statement "SELECT emaj._alter_exec(v_timeId, v_multiGroup)"
 PL/pgSQL function emaj._alter_groups(text[],boolean,text) line 58 at PERFORM
 PL/pgSQL function emaj.emaj_alter_group(text,text) line 6 at RETURN
@@ -2061,7 +2061,7 @@ SQL statement "SELECT emaj._add_tbl(r_plan.altr_schema, r_plan.altr_tblseq, r_pl
                                 grpdef_log_idx_tsp, r_plan.altr_group_is_logging, v_timeId, v_function)
             FROM emaj.emaj_group_def
             WHERE grpdef_group = r_plan.altr_group AND grpdef_schema = r_plan.altr_schema AND grpdef_tblseq = r_plan.altr_tblseq"
-PL/pgSQL function emaj._alter_exec(bigint,boolean) line 96 at PERFORM
+PL/pgSQL function emaj._alter_exec(bigint,boolean) line 98 at PERFORM
 SQL statement "SELECT emaj._alter_exec(v_timeId, v_multiGroup)"
 PL/pgSQL function emaj._alter_groups(text[],boolean,text) line 58 at PERFORM
 PL/pgSQL function emaj.emaj_alter_group(text,text) line 6 at RETURN
@@ -3044,7 +3044,7 @@ SQL statement "SELECT emaj._add_tbl(r_plan.altr_schema, r_plan.altr_tblseq, r_pl
                                 grpdef_log_idx_tsp, r_plan.altr_group_is_logging, v_timeId, v_function)
             FROM emaj.emaj_group_def
             WHERE grpdef_group = r_plan.altr_group AND grpdef_schema = r_plan.altr_schema AND grpdef_tblseq = r_plan.altr_tblseq"
-PL/pgSQL function emaj._alter_exec(bigint,boolean) line 96 at PERFORM
+PL/pgSQL function emaj._alter_exec(bigint,boolean) line 98 at PERFORM
 SQL statement "SELECT emaj._alter_exec(v_timeId, v_multiGroup)"
 PL/pgSQL function emaj._alter_groups(text[],boolean,text) line 58 at PERFORM
 PL/pgSQL function emaj.emaj_alter_group(text,text) line 6 at RETURN
@@ -3060,7 +3060,7 @@ SQL statement "SELECT emaj._add_tbl(r_plan.altr_schema, r_plan.altr_tblseq, r_pl
                                 grpdef_log_idx_tsp, r_plan.altr_group_is_logging, v_timeId, v_function)
             FROM emaj.emaj_group_def
             WHERE grpdef_group = r_plan.altr_group AND grpdef_schema = r_plan.altr_schema AND grpdef_tblseq = r_plan.altr_tblseq"
-PL/pgSQL function emaj._alter_exec(bigint,boolean) line 96 at PERFORM
+PL/pgSQL function emaj._alter_exec(bigint,boolean) line 98 at PERFORM
 SQL statement "SELECT emaj._alter_exec(v_timeId, v_multiGroup)"
 PL/pgSQL function emaj._alter_groups(text[],boolean,text) line 58 at PERFORM
 PL/pgSQL function emaj.emaj_alter_group(text,text) line 6 at RETURN
@@ -3074,7 +3074,7 @@ SQL statement "SELECT emaj._add_tbl(r_plan.altr_schema, r_plan.altr_tblseq, r_pl
                                 grpdef_log_idx_tsp, r_plan.altr_group_is_logging, v_timeId, v_function)
             FROM emaj.emaj_group_def
             WHERE grpdef_group = r_plan.altr_group AND grpdef_schema = r_plan.altr_schema AND grpdef_tblseq = r_plan.altr_tblseq"
-PL/pgSQL function emaj._alter_exec(bigint,boolean) line 96 at PERFORM
+PL/pgSQL function emaj._alter_exec(bigint,boolean) line 98 at PERFORM
 SQL statement "SELECT emaj._alter_exec(v_timeId, v_multiGroup)"
 PL/pgSQL function emaj._alter_groups(text[],boolean,text) line 58 at PERFORM
 PL/pgSQL function emaj.emaj_alter_group(text,text) line 6 at RETURN
@@ -3083,7 +3083,7 @@ CONTEXT:  SQL statement "SELECT emaj._create_seq(v_schema, v_sequence, v_group, 
 PL/pgSQL function emaj._add_seq(text,text,text,integer,boolean,bigint,text) line 9 at PERFORM
 SQL statement "SELECT emaj._add_seq(r_plan.altr_schema, r_plan.altr_tblseq, r_plan.altr_group, r_plan.altr_priority,
                                 r_plan.altr_group_is_logging, v_timeId, v_function)"
-PL/pgSQL function emaj._alter_exec(bigint,boolean) line 103 at PERFORM
+PL/pgSQL function emaj._alter_exec(bigint,boolean) line 105 at PERFORM
 SQL statement "SELECT emaj._alter_exec(v_timeId, v_multiGroup)"
 PL/pgSQL function emaj._alter_groups(text[],boolean,text) line 58 at PERFORM
 PL/pgSQL function emaj.emaj_alter_group(text,text) line 6 at RETURN
@@ -3525,7 +3525,7 @@ SQL statement "SELECT emaj._add_tbl(r_plan.altr_schema, r_plan.altr_tblseq, r_pl
                                 grpdef_log_idx_tsp, r_plan.altr_group_is_logging, v_timeId, v_function)
             FROM emaj.emaj_group_def
             WHERE grpdef_group = r_plan.altr_group AND grpdef_schema = r_plan.altr_schema AND grpdef_tblseq = r_plan.altr_tblseq"
-PL/pgSQL function emaj._alter_exec(bigint,boolean) line 96 at PERFORM
+PL/pgSQL function emaj._alter_exec(bigint,boolean) line 98 at PERFORM
 SQL statement "SELECT emaj._alter_exec(v_timeId, v_multiGroup)"
 PL/pgSQL function emaj._alter_groups(text[],boolean,text) line 58 at PERFORM
 PL/pgSQL function emaj.emaj_alter_group(text,text) line 6 at RETURN
@@ -3541,7 +3541,7 @@ SQL statement "SELECT emaj._add_tbl(r_plan.altr_schema, r_plan.altr_tblseq, r_pl
                                 grpdef_log_idx_tsp, r_plan.altr_group_is_logging, v_timeId, v_function)
             FROM emaj.emaj_group_def
             WHERE grpdef_group = r_plan.altr_group AND grpdef_schema = r_plan.altr_schema AND grpdef_tblseq = r_plan.altr_tblseq"
-PL/pgSQL function emaj._alter_exec(bigint,boolean) line 96 at PERFORM
+PL/pgSQL function emaj._alter_exec(bigint,boolean) line 98 at PERFORM
 SQL statement "SELECT emaj._alter_exec(v_timeId, v_multiGroup)"
 PL/pgSQL function emaj._alter_groups(text[],boolean,text) line 58 at PERFORM
 PL/pgSQL function emaj.emaj_alter_group(text,text) line 6 at RETURN
@@ -3555,7 +3555,7 @@ SQL statement "SELECT emaj._add_tbl(r_plan.altr_schema, r_plan.altr_tblseq, r_pl
                                 grpdef_log_idx_tsp, r_plan.altr_group_is_logging, v_timeId, v_function)
             FROM emaj.emaj_group_def
             WHERE grpdef_group = r_plan.altr_group AND grpdef_schema = r_plan.altr_schema AND grpdef_tblseq = r_plan.altr_tblseq"
-PL/pgSQL function emaj._alter_exec(bigint,boolean) line 96 at PERFORM
+PL/pgSQL function emaj._alter_exec(bigint,boolean) line 98 at PERFORM
 SQL statement "SELECT emaj._alter_exec(v_timeId, v_multiGroup)"
 PL/pgSQL function emaj._alter_groups(text[],boolean,text) line 58 at PERFORM
 PL/pgSQL function emaj.emaj_alter_group(text,text) line 6 at RETURN
@@ -3622,7 +3622,7 @@ SQL statement "SELECT emaj._add_tbl(r_plan.altr_schema, r_plan.altr_tblseq, r_pl
                                 grpdef_log_idx_tsp, r_plan.altr_group_is_logging, v_timeId, v_function)
             FROM emaj.emaj_group_def
             WHERE grpdef_group = r_plan.altr_group AND grpdef_schema = r_plan.altr_schema AND grpdef_tblseq = r_plan.altr_tblseq"
-PL/pgSQL function emaj._alter_exec(bigint,boolean) line 96 at PERFORM
+PL/pgSQL function emaj._alter_exec(bigint,boolean) line 98 at PERFORM
 SQL statement "SELECT emaj._alter_exec(v_timeId, v_multiGroup)"
 PL/pgSQL function emaj._alter_groups(text[],boolean,text) line 58 at PERFORM
 PL/pgSQL function emaj.emaj_alter_group(text,text) line 6 at RETURN
@@ -3638,7 +3638,7 @@ SQL statement "SELECT emaj._add_tbl(r_plan.altr_schema, r_plan.altr_tblseq, r_pl
                                 grpdef_log_idx_tsp, r_plan.altr_group_is_logging, v_timeId, v_function)
             FROM emaj.emaj_group_def
             WHERE grpdef_group = r_plan.altr_group AND grpdef_schema = r_plan.altr_schema AND grpdef_tblseq = r_plan.altr_tblseq"
-PL/pgSQL function emaj._alter_exec(bigint,boolean) line 96 at PERFORM
+PL/pgSQL function emaj._alter_exec(bigint,boolean) line 98 at PERFORM
 SQL statement "SELECT emaj._alter_exec(v_timeId, v_multiGroup)"
 PL/pgSQL function emaj._alter_groups(text[],boolean,text) line 58 at PERFORM
 PL/pgSQL function emaj.emaj_alter_group(text,text) line 6 at RETURN
@@ -3652,7 +3652,7 @@ SQL statement "SELECT emaj._add_tbl(r_plan.altr_schema, r_plan.altr_tblseq, r_pl
                                 grpdef_log_idx_tsp, r_plan.altr_group_is_logging, v_timeId, v_function)
             FROM emaj.emaj_group_def
             WHERE grpdef_group = r_plan.altr_group AND grpdef_schema = r_plan.altr_schema AND grpdef_tblseq = r_plan.altr_tblseq"
-PL/pgSQL function emaj._alter_exec(bigint,boolean) line 96 at PERFORM
+PL/pgSQL function emaj._alter_exec(bigint,boolean) line 98 at PERFORM
 SQL statement "SELECT emaj._alter_exec(v_timeId, v_multiGroup)"
 PL/pgSQL function emaj._alter_groups(text[],boolean,text) line 58 at PERFORM
 PL/pgSQL function emaj.emaj_alter_group(text,text) line 6 at RETURN
@@ -3733,7 +3733,7 @@ SQL statement "SELECT emaj._add_tbl(r_plan.altr_schema, r_plan.altr_tblseq, r_pl
                                 grpdef_log_idx_tsp, r_plan.altr_group_is_logging, v_timeId, v_function)
             FROM emaj.emaj_group_def
             WHERE grpdef_group = r_plan.altr_group AND grpdef_schema = r_plan.altr_schema AND grpdef_tblseq = r_plan.altr_tblseq"
-PL/pgSQL function emaj._alter_exec(bigint,boolean) line 96 at PERFORM
+PL/pgSQL function emaj._alter_exec(bigint,boolean) line 98 at PERFORM
 SQL statement "SELECT emaj._alter_exec(v_timeId, v_multiGroup)"
 PL/pgSQL function emaj._alter_groups(text[],boolean,text) line 58 at PERFORM
 PL/pgSQL function emaj.emaj_alter_group(text,text) line 6 at RETURN
@@ -3749,7 +3749,7 @@ SQL statement "SELECT emaj._add_tbl(r_plan.altr_schema, r_plan.altr_tblseq, r_pl
                                 grpdef_log_idx_tsp, r_plan.altr_group_is_logging, v_timeId, v_function)
             FROM emaj.emaj_group_def
             WHERE grpdef_group = r_plan.altr_group AND grpdef_schema = r_plan.altr_schema AND grpdef_tblseq = r_plan.altr_tblseq"
-PL/pgSQL function emaj._alter_exec(bigint,boolean) line 96 at PERFORM
+PL/pgSQL function emaj._alter_exec(bigint,boolean) line 98 at PERFORM
 SQL statement "SELECT emaj._alter_exec(v_timeId, v_multiGroup)"
 PL/pgSQL function emaj._alter_groups(text[],boolean,text) line 58 at PERFORM
 PL/pgSQL function emaj.emaj_alter_group(text,text) line 6 at RETURN

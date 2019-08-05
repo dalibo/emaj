@@ -1803,11 +1803,11 @@ WARNING:  _check_fk_groups: The table "myschema2.mytbl6" is referenced by the fo
 
   select hist_function, hist_event, hist_object, hist_wording from emaj.emaj_hist 
     where hist_function = 'ALTER_GROUPS' order by hist_id desc limit 8;
- hist_function |          hist_event          |         hist_object          |                 hist_wording                  
----------------+------------------------------+------------------------------+-----------------------------------------------
+ hist_function |          hist_event          |         hist_object          |                     hist_wording                      
+---------------+------------------------------+------------------------------+-------------------------------------------------------
  ALTER_GROUPS  | END                          | myGroup1,myGroup2            | Timestamp Id : 6119
- ALTER_GROUPS  | SEQUENCE MOVED               | myschema2."myTbl3_col31_seq" | From the group myGroup2 to the group myGroup1
- ALTER_GROUPS  | TABLE MOVED                  | myschema2."myTbl3"           | From group myGroup2 to group myGroup1
+ ALTER_GROUPS  | SEQUENCE MOVED               | myschema2."myTbl3_col31_seq" | From the group myGroup2 to the logging group myGroup1
+ ALTER_GROUPS  | TABLE MOVED                  | myschema2."myTbl3"           | From the group myGroup2 to the logging group myGroup1
  ALTER_GROUPS  | LOG INDEX TABLESPACE CHANGED | myschema2."myTbl3"           | Default tablespace => tsplog1
  ALTER_GROUPS  | LOG DATA TABLESPACE CHANGED  | myschema2."myTbl3"           | Default tablespace => tsplog1
  ALTER_GROUPS  | BEGIN                        | myGroup1,myGroup2            | 
@@ -2350,11 +2350,11 @@ select hist_function, hist_event, hist_object,
  ALTER_GROUPS            | LOG INDEX TABLESPACE CHANGED | myschema2.mytbl6             | tsplog1 => Default tablespace                                                                                          | postgres
  ALTER_GROUPS            | END                          | myGroup1,myGroup2            | Timestamp Id : 6044                                                                                                    | postgres
  ALTER_GROUPS            | BEGIN                        | myGroup1,myGroup2            |                                                                                                                        | postgres
- ALTER_GROUPS            | TABLE MOVED                  | myschema2."myTbl3"           | From group myGroup2 to group myGroup1                                                                                  | postgres
+ ALTER_GROUPS            | TABLE MOVED                  | myschema2."myTbl3"           | From the group myGroup2 to the group myGroup1                                                                          | postgres
  ALTER_GROUPS            | SEQUENCE MOVED               | myschema2."myTbl3_col31_seq" | From the group myGroup2 to the group myGroup1                                                                          | postgres
  ALTER_GROUPS            | END                          | myGroup1,myGroup2            | Timestamp Id : 6045                                                                                                    | postgres
  ALTER_GROUPS            | BEGIN                        | myGroup1,myGroup2            |                                                                                                                        | postgres
- ALTER_GROUPS            | TABLE MOVED                  | myschema2."myTbl3"           | From group myGroup1 to group myGroup2                                                                                  | postgres
+ ALTER_GROUPS            | TABLE MOVED                  | myschema2."myTbl3"           | From the group myGroup1 to the group myGroup2                                                                          | postgres
  ALTER_GROUPS            | SEQUENCE MOVED               | myschema2."myTbl3_col31_seq" | From the group myGroup1 to the group myGroup2                                                                          | postgres
  ALTER_GROUPS            | END                          | myGroup1,myGroup2            | Timestamp Id : 6046                                                                                                    | postgres
  START_GROUPS            | BEGIN                        | myGroup1,myGroup2            | With log reset                                                                                                         | postgres
@@ -2837,8 +2837,8 @@ select hist_function, hist_event, hist_object,
  SET_MARK_GROUPS         | END                          | myGroup1,myGroup2            | move to myGroup1                                                                                                       | postgres
  ALTER_GROUPS            | LOG DATA TABLESPACE CHANGED  | myschema2."myTbl3"           | Default tablespace => tsplog1                                                                                          | postgres
  ALTER_GROUPS            | LOG INDEX TABLESPACE CHANGED | myschema2."myTbl3"           | Default tablespace => tsplog1                                                                                          | postgres
- ALTER_GROUPS            | TABLE MOVED                  | myschema2."myTbl3"           | From group myGroup2 to group myGroup1                                                                                  | postgres
- ALTER_GROUPS            | SEQUENCE MOVED               | myschema2."myTbl3_col31_seq" | From the group myGroup2 to the group myGroup1                                                                          | postgres
+ ALTER_GROUPS            | TABLE MOVED                  | myschema2."myTbl3"           | From the logging group myGroup2 to the logging group myGroup1                                                          | postgres
+ ALTER_GROUPS            | SEQUENCE MOVED               | myschema2."myTbl3_col31_seq" | From the logging group myGroup2 to the logging group myGroup1                                                          | postgres
  ALTER_GROUPS            | END                          | myGroup1,myGroup2            | Timestamp Id : 6121                                                                                                    | postgres
  SET_MARK_GROUPS         | BEGIN                        | myGroup1,myGroup2            | after move                                                                                                             | postgres
  LOCK_GROUPS             | BEGIN                        | myGroup1,myGroup2            |                                                                                                                        | postgres
@@ -2907,8 +2907,8 @@ select hist_function, hist_event, hist_object,
  SET_MARK_GROUPS         | END                          | myGroup1                     | back to idle myGroup2                                                                                                  | postgres
  ALTER_GROUPS            | LOG DATA TABLESPACE CHANGED  | myschema2."myTbl3"           | tsplog1 => Default tablespace                                                                                          | postgres
  ALTER_GROUPS            | LOG INDEX TABLESPACE CHANGED | myschema2."myTbl3"           | tsplog1 => Default tablespace                                                                                          | postgres
- ALTER_GROUPS            | TABLE MOVED                  | myschema2."myTbl3"           | From group myGroup1 to group myGroup2                                                                                  | postgres
- ALTER_GROUPS            | SEQUENCE MOVED               | myschema2."myTbl3_col31_seq" | From the group myGroup1 to the group myGroup2                                                                          | postgres
+ ALTER_GROUPS            | TABLE MOVED                  | myschema2."myTbl3"           | From the logging group myGroup1 to the group myGroup2                                                                  | postgres
+ ALTER_GROUPS            | SEQUENCE MOVED               | myschema2."myTbl3_col31_seq" | From the logging group myGroup1 to the group myGroup2                                                                  | postgres
  ALTER_GROUPS            | END                          | myGroup1,myGroup2            | Timestamp Id : 6127                                                                                                    | postgres
  START_GROUP             | BEGIN                        | myGroup2                     | With log reset                                                                                                         | postgres
  LOCK_GROUP              | BEGIN                        | myGroup2                     |                                                                                                                        | postgres

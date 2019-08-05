@@ -2317,7 +2317,7 @@ $_add_tbl$
   END;
 $_add_tbl$;
 
-CREATE OR REPLACE FUNCTION emaj._change_log_data_tsp_tbl(r_rel emaj.emaj_relation, v_newLogDatTsp TEXT, v_multiGroup BOOLEAN)
+CREATE OR REPLACE FUNCTION emaj._change_log_data_tsp_tbl(r_rel emaj.emaj_relation, v_newLogDatTsp TEXT, v_function TEXT)
 RETURNS VOID LANGUAGE plpgsql
 SECURITY DEFINER SET search_path = pg_catalog, pg_temp AS
 $_change_log_data_tsp_tbl$
@@ -2340,14 +2340,14 @@ $_change_log_data_tsp_tbl$
       WHERE rel_schema = r_rel.rel_schema AND rel_tblseq = r_rel.rel_tblseq AND rel_time_range = r_rel.rel_time_range;
 -- insert an entry into the emaj_hist table
     INSERT INTO emaj.emaj_hist (hist_function, hist_event, hist_object, hist_wording)
-      VALUES (CASE WHEN v_multiGroup THEN 'ALTER_GROUPS' ELSE 'ALTER_GROUP' END, 'LOG DATA TABLESPACE CHANGED',
+      VALUES (v_function, 'LOG DATA TABLESPACE CHANGED',
               quote_ident(r_rel.rel_schema) || '.' || quote_ident(r_rel.rel_tblseq),
               coalesce(r_rel.rel_log_dat_tsp, 'Default tablespace') || ' => ' || coalesce(v_newLogDatTsp, 'Default tablespace'));
     RETURN;
   END;
 $_change_log_data_tsp_tbl$;
 
-CREATE OR REPLACE FUNCTION emaj._change_log_index_tsp_tbl(r_rel emaj.emaj_relation, v_newLogIdxTsp TEXT, v_multiGroup BOOLEAN)
+CREATE OR REPLACE FUNCTION emaj._change_log_index_tsp_tbl(r_rel emaj.emaj_relation, v_newLogIdxTsp TEXT, v_function TEXT)
 RETURNS VOID LANGUAGE plpgsql
 SECURITY DEFINER SET search_path = pg_catalog, pg_temp AS
 $_change_log_index_tsp_tbl$
@@ -2370,7 +2370,7 @@ $_change_log_index_tsp_tbl$
       WHERE rel_schema = r_rel.rel_schema AND rel_tblseq = r_rel.rel_tblseq AND rel_time_range = r_rel.rel_time_range;
 -- insert an entry into the emaj_hist table
     INSERT INTO emaj.emaj_hist (hist_function, hist_event, hist_object, hist_wording)
-      VALUES (CASE WHEN v_multiGroup THEN 'ALTER_GROUPS' ELSE 'ALTER_GROUP' END, 'LOG INDEX TABLESPACE CHANGED',
+      VALUES (v_function, 'LOG INDEX TABLESPACE CHANGED',
               quote_ident(r_rel.rel_schema) || '.' || quote_ident(r_rel.rel_tblseq),
               coalesce(r_rel.rel_log_idx_tsp, 'Default tablespace') || ' => ' || coalesce(v_newLogIdxTsp, 'Default tablespace'));
     RETURN;
@@ -2463,36 +2463,39 @@ $_remove_tbl$
   END;
 $_remove_tbl$;
 
-CREATE OR REPLACE FUNCTION emaj._move_tbl(r_plan emaj.emaj_alter_plan, v_timeId BIGINT)
+CREATE OR REPLACE FUNCTION emaj._move_tbl(v_schema TEXT, v_table TEXT, v_group TEXT, v_groupIsLogging BOOLEAN, v_newGroup TEXT,
+                                          v_newGroupIsLogging BOOLEAN, v_timeId BIGINT, v_function TEXT)
 RETURNS VOID LANGUAGE plpgsql AS
 $_move_tbl$
 -- The function change the group ownership of a table. It is called during an alter group or a dynamic assignment operation.
--- Required inputs: row from emaj_alter_plan corresponding to the appplication table to proccess, time stamp id of the operation.
+-- Required inputs: schema and table to move, related group names and logging state,
+--                  time stamp id of the operation, main calling function.
   BEGIN
-    IF NOT r_plan.altr_group_is_logging AND NOT r_plan.altr_new_group_is_logging THEN
+    IF NOT v_groupIsLogging AND NOT v_newGroupIsLogging THEN
 -- no group is logging, so just adapt the last emaj_relation row related to the table
       UPDATE emaj.emaj_relation
-        SET rel_group = r_plan.altr_new_group, rel_time_range = int8range(v_timeId, NULL, '[)')
-        WHERE rel_schema = r_plan.altr_schema AND rel_tblseq = r_plan.altr_tblseq AND upper_inf(rel_time_range);
+        SET rel_group = v_newGroup, rel_time_range = int8range(v_timeId, NULL, '[)')
+        WHERE rel_schema = v_schema AND rel_tblseq = v_table AND upper_inf(rel_time_range);
     ELSE
 -- register the end of the previous relation time frame and create a new relation time frame with the new group
       UPDATE emaj.emaj_relation
         SET rel_time_range = int8range(lower(rel_time_range),v_timeId,'[)')
-        WHERE rel_schema = r_plan.altr_schema AND rel_tblseq = r_plan.altr_tblseq AND upper_inf(rel_time_range);
+        WHERE rel_schema = v_schema AND rel_tblseq = v_table AND upper_inf(rel_time_range);
       INSERT INTO emaj.emaj_relation (rel_schema, rel_tblseq, rel_time_range, rel_group, rel_kind, rel_priority, rel_log_schema,
                                       rel_log_table, rel_log_dat_tsp, rel_log_index, rel_log_idx_tsp, rel_log_sequence, rel_log_function,
                                       rel_sql_columns, rel_sql_pk_columns, rel_sql_pk_eq_conditions,rel_log_seq_last_value,
                                       rel_emaj_verb_attnum)
-        SELECT rel_schema, rel_tblseq, int8range(v_timeId, NULL, '[)'), r_plan.altr_new_group, rel_kind, rel_priority, rel_log_schema,
+        SELECT rel_schema, rel_tblseq, int8range(v_timeId, NULL, '[)'), v_newGroup, rel_kind, rel_priority, rel_log_schema,
                rel_log_table, rel_log_dat_tsp, rel_log_index, rel_log_idx_tsp, rel_log_sequence, rel_log_function,
                rel_sql_columns, rel_sql_pk_columns, rel_sql_pk_eq_conditions, rel_log_seq_last_value, rel_emaj_verb_attnum
           FROM emaj.emaj_relation
-          WHERE rel_schema = r_plan.altr_schema AND rel_tblseq = r_plan.altr_tblseq AND upper(rel_time_range) = v_timeId;
+          WHERE rel_schema = v_schema AND rel_tblseq = v_table AND upper(rel_time_range) = v_timeId;
     END IF;
 -- insert an entry into the emaj_hist table
     INSERT INTO emaj.emaj_hist (hist_function, hist_event, hist_object, hist_wording)
-      VALUES ('ALTER_GROUPS', 'TABLE MOVED', quote_ident(r_plan.altr_schema) || '.' || quote_ident(r_plan.altr_tblseq),
-              'From group ' || r_plan.altr_group || ' to group ' || r_plan.altr_new_group);
+      VALUES (v_function, 'TABLE MOVED', quote_ident(v_schema) || '.' || quote_ident(v_table),
+              'From the ' || CASE WHEN v_groupIsLogging THEN 'logging ' ELSE '' END || 'group ' || v_group ||
+              ' to the ' || CASE WHEN v_newGroupIsLogging THEN 'logging ' ELSE '' END || 'group ' || v_newGroup);
     RETURN;
   END;
 $_move_tbl$;
@@ -3004,32 +3007,39 @@ $_remove_seq$
   END;
 $_remove_seq$;
 
-CREATE OR REPLACE FUNCTION emaj._move_seq(r_plan emaj.emaj_alter_plan, v_timeId BIGINT)
+CREATE OR REPLACE FUNCTION emaj._move_seq(v_schema TEXT, v_sequence TEXT, v_group TEXT, v_groupIsLogging BOOLEAN, v_newGroup TEXT,
+                                          v_newGroupIsLogging BOOLEAN, v_timeId BIGINT, v_function TEXT)
 RETURNS VOID LANGUAGE plpgsql AS
 $_move_seq$
 -- The function change the group ownership of a sequence. It is called during an alter group or a dynamic assignment operation.
--- Required inputs: row from emaj_alter_plan corresponding to the appplication sequence to proccess, time stamp id of the
--- alter group operation.
+-- Required inputs: schema and sequence to move, related group names and logging state,
+--                  time stamp id of the operation, main calling function.
   BEGIN
-    IF NOT r_plan.altr_group_is_logging AND NOT r_plan.altr_new_group_is_logging THEN
+    IF NOT v_groupIsLogging AND NOT v_newGroupIsLogging THEN
 -- no group is logging, so just adapt the last emaj_relation row related to the sequence
       UPDATE emaj.emaj_relation
-        SET rel_group = r_plan.altr_new_group, rel_time_range = int8range(v_timeId, NULL, '[)')
-        WHERE rel_schema = r_plan.altr_schema AND rel_tblseq = r_plan.altr_tblseq AND upper_inf(rel_time_range);
+        SET rel_group = v_newGroup, rel_time_range = int8range(v_timeId, NULL, '[)')
+        WHERE rel_schema = v_schema AND rel_tblseq = v_sequence AND upper_inf(rel_time_range);
     ELSE
 -- register the end of the previous relation time frame and create a new relation time frame with the new group
       UPDATE emaj.emaj_relation
         SET rel_time_range = int8range(lower(rel_time_range),v_timeId,'[)')
-        WHERE rel_schema = r_plan.altr_schema AND rel_tblseq = r_plan.altr_tblseq AND upper_inf(rel_time_range);
-      INSERT INTO emaj.emaj_relation (rel_schema, rel_tblseq, rel_time_range, rel_group, rel_priority, rel_kind)
-        SELECT rel_schema, rel_tblseq, int8range(v_timeId, NULL, '[)'), r_plan.altr_new_group, rel_priority, rel_kind
+        WHERE rel_schema = v_schema AND rel_tblseq = v_sequence AND upper_inf(rel_time_range);
+      INSERT INTO emaj.emaj_relation (rel_schema, rel_tblseq, rel_time_range, rel_group, rel_kind, rel_priority, rel_log_schema,
+                                      rel_log_table, rel_log_dat_tsp, rel_log_index, rel_log_idx_tsp, rel_log_sequence, rel_log_function,
+                                      rel_sql_columns, rel_sql_pk_columns, rel_sql_pk_eq_conditions,rel_log_seq_last_value,
+                                      rel_emaj_verb_attnum)
+        SELECT rel_schema, rel_tblseq, int8range(v_timeId, NULL, '[)'), v_newGroup, rel_kind, rel_priority, rel_log_schema,
+               rel_log_table, rel_log_dat_tsp, rel_log_index, rel_log_idx_tsp, rel_log_sequence, rel_log_function,
+               rel_sql_columns, rel_sql_pk_columns, rel_sql_pk_eq_conditions, rel_log_seq_last_value, rel_emaj_verb_attnum
           FROM emaj.emaj_relation
-          WHERE rel_schema = r_plan.altr_schema AND rel_tblseq = r_plan.altr_tblseq AND upper(rel_time_range) = v_timeId;
+          WHERE rel_schema = v_schema AND rel_tblseq = v_sequence AND upper(rel_time_range) = v_timeId;
     END IF;
 -- insert an entry into the emaj_hist table
     INSERT INTO emaj.emaj_hist (hist_function, hist_event, hist_object, hist_wording)
-      VALUES ('ALTER_GROUPS', 'SEQUENCE MOVED', quote_ident(r_plan.altr_schema) || '.' || quote_ident(r_plan.altr_tblseq),
-              'From the group ' || r_plan.altr_group || ' to the group ' || r_plan.altr_new_group);
+      VALUES (v_function, 'SEQUENCE MOVED', quote_ident(v_schema) || '.' || quote_ident(v_sequence),
+              'From the ' || CASE WHEN v_groupIsLogging THEN 'logging ' ELSE '' END || 'group ' || v_group ||
+              ' to the ' || CASE WHEN v_newGroupIsLogging THEN 'logging ' ELSE '' END || 'group ' || v_newGroup);
     RETURN;
   END;
 $_move_seq$;
@@ -4446,7 +4456,7 @@ $_alter_exec$
             WHERE grpdef_group = coalesce (r_plan.altr_new_group, r_plan.altr_group)
               AND grpdef_schema = r_plan.altr_schema AND grpdef_tblseq = r_plan.altr_tblseq;
 -- then alter the relation, depending on the changes
-          PERFORM emaj._change_log_data_tsp_tbl(r_rel, v_logDatTsp, v_multiGroup);
+          PERFORM emaj._change_log_data_tsp_tbl(r_rel, v_logDatTsp, v_function);
 --
         WHEN 'CHANGE_TBL_LOG_INDEX_TSP' THEN
 -- get the table description from emaj_relation
@@ -4457,15 +4467,17 @@ $_alter_exec$
             WHERE grpdef_group = coalesce (r_plan.altr_new_group, r_plan.altr_group)
               AND grpdef_schema = r_plan.altr_schema AND grpdef_tblseq = r_plan.altr_tblseq;
 -- then alter the relation, depending on the changes
-          PERFORM emaj._change_log_index_tsp_tbl(r_rel, v_logIdxTsp, v_multiGroup);
+          PERFORM emaj._change_log_index_tsp_tbl(r_rel, v_logIdxTsp, v_function);
 --
         WHEN 'MOVE_TBL' THEN
 -- move a table from one group to another group
-          PERFORM emaj._move_tbl(r_plan, v_timeId);
+          PERFORM emaj._move_tbl(r_plan.altr_schema, r_plan.altr_tblseq, r_plan.altr_group, r_plan.altr_group_is_logging,
+                                r_plan.altr_new_group, r_plan.altr_new_group_is_logging, v_timeId, v_function);
 --
         WHEN 'MOVE_SEQ' THEN
 -- move a sequence from one group to another group
-          PERFORM emaj._move_seq(r_plan, v_timeId);
+          PERFORM emaj._move_seq(r_plan.altr_schema, r_plan.altr_tblseq, r_plan.altr_group, r_plan.altr_group_is_logging,
+                                r_plan.altr_new_group, r_plan.altr_new_group_is_logging, v_timeId, v_function);
 --
         WHEN 'CHANGE_REL_PRIORITY' THEN
 -- update the emaj_relation table to report the priority change
