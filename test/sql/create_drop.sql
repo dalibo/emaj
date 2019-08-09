@@ -329,10 +329,6 @@ select emaj.emaj_assign_tables('myschema1','mytbl(2|2b)$','','myGroup1b');
 -- table not in a group
 select emaj.emaj_remove_table('dummySchema','mytbl1');
 select emaj.emaj_remove_table('myschema1','dummyTable');
--- empty tables array
-select emaj.emaj_remove_tables('myschema1',array[]::text[]);
-select emaj.emaj_remove_tables('myschema1',null);
-select emaj.emaj_remove_tables('myschema1',array['']);
 -- bad mark
 select emaj.emaj_remove_table('myschema1','mytbl1','EMAJ_LAST_MARK');
 
@@ -343,6 +339,10 @@ select emaj.emaj_remove_table('myschema1','mytbl1');
 -- emaj_remove_tables with array
 -----------------------------------
 -- error cases
+-- empty tables array
+select emaj.emaj_remove_tables('myschema1',array[]::text[]);
+select emaj.emaj_remove_tables('myschema1',null);
+select emaj.emaj_remove_tables('myschema1',array['']);
 -- table not in a group
 select emaj.emaj_remove_tables('myschema1',array['dummyTable','mytbl1','mytbl2']);
 
@@ -437,10 +437,6 @@ select group_last_alter_time_id, group_nb_table, group_nb_sequence from emaj.ema
 -- sequence not in a group
 select emaj.emaj_remove_sequence('dummySchema','myseq1');
 select emaj.emaj_remove_sequence('myschema2','dummySequence');
--- empty sequences array
-select emaj.emaj_remove_sequences('myschema2',array[]::text[]);
-select emaj.emaj_remove_sequences('myschema2',null);
-select emaj.emaj_remove_sequences('myschema2',array['']);
 -- bad mark
 select emaj.emaj_remove_sequence('myschema2','myseq1','EMAJ_LAST_MARK');
 
@@ -451,6 +447,10 @@ select emaj.emaj_remove_sequence('myschema2','myseq1');
 -- emaj_remove_sequences with array
 -----------------------------------
 -- error cases
+-- empty sequences array
+select emaj.emaj_remove_sequences('myschema2',array[]::text[]);
+select emaj.emaj_remove_sequences('myschema2',null);
+select emaj.emaj_remove_sequences('myschema2',array['']);
 -- sequence not in a group
 select emaj.emaj_remove_sequences('myschema2',array['dummyTable','myseq2']);
 

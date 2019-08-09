@@ -1,4 +1,5 @@
--- alter.sql : test emaj_alter_group() and emaj_alter_groups() functions
+-- alter.sql : test emaj_alter_group(), emaj_alter_groups(),
+--                  emaj_move_table() and emaj_move_tables() functions
 --
 -- set sequence restart value
 alter sequence emaj.emaj_hist_hist_id_seq restart 6000;
@@ -1815,7 +1816,7 @@ drop table emaj_myschema1.mytbl1_log;
 select emaj.emaj_alter_group('myGroup1');
 NOTICE:  table "mytbl1_log" does not exist, skipping
 CONTEXT:  SQL statement "DROP TABLE IF EXISTS emaj_myschema1.mytbl1_log CASCADE"
-PL/pgSQL function emaj._drop_tbl(emaj.emaj_relation,bigint) line 32 at EXECUTE
+PL/pgSQL function emaj._drop_tbl(emaj.emaj_relation,bigint) line 35 at EXECUTE
 SQL statement "SELECT emaj._drop_tbl(emaj.emaj_relation.*, v_timeId) FROM emaj.emaj_relation
               WHERE rel_schema = r_plan.altr_schema AND rel_tblseq = r_plan.altr_tblseq AND upper_inf(rel_time_range)"
 PL/pgSQL function emaj._alter_exec(bigint,boolean) line 42 at PERFORM
@@ -2384,4 +2385,161 @@ PL/pgSQL function emaj.emaj_alter_groups(text[],text) line 6 at RETURN
 (1 row)
 
 rollback;
+-----------------------------------
+-- emaj_move_table
+-----------------------------------
+-- error cases
+-- table not in a group
+select emaj.emaj_move_table('dummySchema','mytbl1','myGroup1');
+ERROR:  _move_tables: some tables ("dummySchema".mytbl1) do not currently belong to any tables group.
+CONTEXT:  PL/pgSQL function emaj.emaj_move_table(text,text,text,text) line 6 at RETURN
+select emaj.emaj_move_table('myschema1','dummyTable','myGroup1');
+ERROR:  _move_tables: some tables (myschema1."dummyTable") do not currently belong to any tables group.
+CONTEXT:  PL/pgSQL function emaj.emaj_move_table(text,text,text,text) line 6 at RETURN
+-- bad new group
+select emaj.emaj_move_table('myschema1','mytbl1','dummyGroup');
+ERROR:  _check_group_names: The group "dummyGroup" does not exist.
+CONTEXT:  SQL statement "SELECT emaj._check_group_names(v_groupNames := ARRAY[v_newGroup], v_mayBeNull := FALSE, v_lockGroups := TRUE, v_checkList := '')"
+PL/pgSQL function emaj._move_tables(text,text[],text,text,boolean,boolean) line 27 at PERFORM
+PL/pgSQL function emaj.emaj_move_table(text,text,text,text) line 6 at RETURN
+-- bad mark
+select emaj.emaj_move_table('myschema1','mytbl1','myGroup1','EMAJ_LAST_MARK');
+WARNING:  _move_tables: some tables (myschema1.mytbl1) already belong to the tables group myGroup1.
+CONTEXT:  PL/pgSQL function emaj.emaj_move_table(text,text,text,text) line 6 at RETURN
+ERROR:  _check_new_mark: "EMAJ_LAST_MARK" is not an allowed name for a new mark.
+CONTEXT:  SQL statement "SELECT emaj._check_new_mark(array[v_groupName], v_mark)"
+PL/pgSQL function emaj._move_tables(text,text[],text,text,boolean,boolean) line 61 at SQL statement
+PL/pgSQL function emaj.emaj_move_table(text,text,text,text) line 6 at RETURN
+-- move to the same group
+select emaj.emaj_move_table('myschema1','mytbl1','myGroup1');
+WARNING:  _move_tables: some tables (myschema1.mytbl1) already belong to the tables group myGroup1.
+CONTEXT:  PL/pgSQL function emaj.emaj_move_table(text,text,text,text) line 6 at RETURN
+ emaj_move_table 
+-----------------
+               0
+(1 row)
+
+-- ok
+select emaj.emaj_move_table('myschema1','mytbl1','myGroup2');
+ emaj_move_table 
+-----------------
+               1
+(1 row)
+
+-----------------------------------
+-- emaj_move_tables with array
+-----------------------------------
+-- error cases
+-- table not in a group
+select emaj.emaj_move_tables('myschema1',array['dummyTable','mytbl1','mytbl2'],'myGroup1');
+ERROR:  _move_tables: some tables (myschema1."dummyTable") do not currently belong to any tables group.
+CONTEXT:  PL/pgSQL function emaj.emaj_move_tables(text,text[],text,text) line 6 at RETURN
+-- empty tables array
+select emaj.emaj_move_tables('myschema1',array[]::text[],'myGroup1');
+WARNING:  _move_tables: No table to process.
+CONTEXT:  PL/pgSQL function emaj.emaj_move_tables(text,text[],text,text) line 6 at RETURN
+ emaj_move_tables 
+------------------
+                0
+(1 row)
+
+select emaj.emaj_move_tables('myschema1',null,'myGroup1');
+WARNING:  _move_tables: No table to process.
+CONTEXT:  PL/pgSQL function emaj.emaj_move_tables(text,text[],text,text) line 6 at RETURN
+ emaj_move_tables 
+------------------
+                0
+(1 row)
+
+select emaj.emaj_move_tables('myschema1',array[''],'myGroup1');
+WARNING:  _move_tables: No table to process.
+CONTEXT:  PL/pgSQL function emaj.emaj_move_tables(text,text[],text,text) line 6 at RETURN
+ emaj_move_tables 
+------------------
+                0
+(1 row)
+
+-- ok (with a duplicate table name)
+select emaj.emaj_move_tables('myschema1',array['mytbl2','mytbl2b','mytbl2'],'myGroup2');
+ emaj_move_tables 
+------------------
+                2
+(1 row)
+
+select rel_schema, rel_tblseq, rel_group from emaj.emaj_relation
+  where rel_schema = 'myschema1' and upper_inf(rel_time_range)
+  order by 1,2,3;
+ rel_schema |    rel_tblseq     | rel_group 
+------------+-------------------+-----------
+ myschema1  | myTbl3            | myGroup1
+ myschema1  | myTbl3_col31_seq  | myGroup1
+ myschema1  | mytbl1            | myGroup2
+ myschema1  | mytbl2            | myGroup2
+ myschema1  | mytbl2b           | myGroup2
+ myschema1  | mytbl2b_col20_seq | myGroup1
+ myschema1  | mytbl4            | myGroup1
+(7 rows)
+
+-----------------------------------
+-- emaj_move_tables with filters
+-----------------------------------
+-- empty tables array
+select emaj.emaj_move_tables('myschema1',null,null,'myGroup1');
+WARNING:  _move_tables: No table to process.
+CONTEXT:  PL/pgSQL function emaj.emaj_move_tables(text,text,text,text,text) line 23 at RETURN
+ emaj_move_tables 
+------------------
+                0
+(1 row)
+
+select emaj.emaj_move_tables('myschema1','','','myGroup1');
+WARNING:  _move_tables: No table to process.
+CONTEXT:  PL/pgSQL function emaj.emaj_move_tables(text,text,text,text,text) line 23 at RETURN
+ emaj_move_tables 
+------------------
+                0
+(1 row)
+
+select emaj.emaj_move_tables('myschema1','mytbl1','mytbl1','myGroup1');
+WARNING:  _move_tables: No table to process.
+CONTEXT:  PL/pgSQL function emaj.emaj_move_tables(text,text,text,text,text) line 23 at RETURN
+ emaj_move_tables 
+------------------
+                0
+(1 row)
+
+-- ok and go back to myGroup1
+select emaj.emaj_move_tables('myschema1','my(t|T)bl.*','mytbl2$','myGroup1');
+ emaj_move_tables 
+------------------
+                2
+(1 row)
+
+select emaj.emaj_move_tables('myschema1','.*','','myGroup1');
+ emaj_move_tables 
+------------------
+                1
+(1 row)
+
+select altr_time_id, altr_step, altr_schema, altr_tblseq, altr_group, altr_priority, altr_group_is_logging,
+       altr_new_group, altr_new_group_is_logging from emaj.emaj_alter_plan
+  order by 1 desc, 2,3,4 limit 6;
+ altr_time_id | altr_step | altr_schema | altr_tblseq | altr_group | altr_priority | altr_group_is_logging | altr_new_group | altr_new_group_is_logging 
+--------------+-----------+-------------+-------------+------------+---------------+-----------------------+----------------+---------------------------
+         6053 | MOVE_TBL  | myschema1   | mytbl2      | myGroup2   |               | f                     | myGroup1       | f
+         6052 | MOVE_TBL  | myschema1   | mytbl1      | myGroup2   |               | f                     | myGroup1       | f
+         6052 | MOVE_TBL  | myschema1   | mytbl2b     | myGroup2   |               | f                     | myGroup1       | f
+         6051 | MOVE_TBL  | myschema1   | mytbl2      | myGroup1   |               | f                     | myGroup2       | f
+         6051 | MOVE_TBL  | myschema1   | mytbl2b     | myGroup1   |               | f                     | myGroup2       | f
+         6050 | MOVE_TBL  | myschema1   | mytbl1      | myGroup1   |               | f                     | myGroup2       | f
+(6 rows)
+
+select group_last_alter_time_id, group_nb_table, group_nb_sequence from emaj.emaj_group 
+  where group_name in ('myGroup1','myGroup2') order by 1 desc ,2,3;
+ group_last_alter_time_id | group_nb_table | group_nb_sequence 
+--------------------------+----------------+-------------------
+                     6053 |              5 |                 2
+                     6053 |              6 |                 2
+(2 rows)
+
 -- checks are performed by the alterLogging.sql script

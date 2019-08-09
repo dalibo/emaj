@@ -735,6 +735,24 @@ select emaj.emaj_remove_table('myschema1','dummyTable');
 ERROR:  _remove_tables: some tables (myschema1."dummyTable") do not currently belong to any tables group.
 CONTEXT:  PL/pgSQL function emaj._remove_tables(text,text[],text,boolean,boolean) line 44 at RAISE
 PL/pgSQL function emaj.emaj_remove_table(text,text,text) line 6 at RETURN
+-- bad mark
+select emaj.emaj_remove_table('myschema1','mytbl1','EMAJ_LAST_MARK');
+ERROR:  _check_new_mark: "EMAJ_LAST_MARK" is not an allowed name for a new mark.
+CONTEXT:  PL/pgSQL function emaj._check_new_mark(text[],text) line 14 at RAISE
+SQL statement "SELECT emaj._check_new_mark(array[v_groupName], v_mark)"
+PL/pgSQL function emaj._remove_tables(text,text[],text,boolean,boolean) line 48 at SQL statement
+PL/pgSQL function emaj.emaj_remove_table(text,text,text) line 6 at RETURN
+-- ok
+select emaj.emaj_remove_table('myschema1','mytbl1');
+ emaj_remove_table 
+-------------------
+                 1
+(1 row)
+
+-----------------------------------
+-- emaj_remove_tables with array
+-----------------------------------
+-- error cases
 -- empty tables array
 select emaj.emaj_remove_tables('myschema1',array[]::text[]);
 WARNING:  _remove_tables: No table to process.
@@ -757,24 +775,6 @@ WARNING:  _remove_tables: No table to process.
                   0
 (1 row)
 
--- bad mark
-select emaj.emaj_remove_table('myschema1','mytbl1','EMAJ_LAST_MARK');
-ERROR:  _check_new_mark: "EMAJ_LAST_MARK" is not an allowed name for a new mark.
-CONTEXT:  PL/pgSQL function emaj._check_new_mark(text[],text) line 14 at RAISE
-SQL statement "SELECT emaj._check_new_mark(array[v_groupName], v_mark)"
-PL/pgSQL function emaj._remove_tables(text,text[],text,boolean,boolean) line 48 at SQL statement
-PL/pgSQL function emaj.emaj_remove_table(text,text,text) line 6 at RETURN
--- ok
-select emaj.emaj_remove_table('myschema1','mytbl1');
- emaj_remove_table 
--------------------
-                 1
-(1 row)
-
------------------------------------
--- emaj_remove_tables with array
------------------------------------
--- error cases
 -- table not in a group
 select emaj.emaj_remove_tables('myschema1',array['dummyTable','mytbl1','mytbl2']);
 ERROR:  _remove_tables: some tables (myschema1.mytbl1, myschema1."dummyTable") do not currently belong to any tables group.
@@ -1015,6 +1015,24 @@ select emaj.emaj_remove_sequence('myschema2','dummySequence');
 ERROR:  _remove_sequences: some sequences (myschema2."dummySequence") do not currently belong to any tables group.
 CONTEXT:  PL/pgSQL function emaj._remove_sequences(text,text[],text,boolean,boolean) line 41 at RAISE
 PL/pgSQL function emaj.emaj_remove_sequence(text,text,text) line 6 at RETURN
+-- bad mark
+select emaj.emaj_remove_sequence('myschema2','myseq1','EMAJ_LAST_MARK');
+ERROR:  _check_new_mark: "EMAJ_LAST_MARK" is not an allowed name for a new mark.
+CONTEXT:  PL/pgSQL function emaj._check_new_mark(text[],text) line 14 at RAISE
+SQL statement "SELECT emaj._check_new_mark(array[v_groupName], v_mark)"
+PL/pgSQL function emaj._remove_sequences(text,text[],text,boolean,boolean) line 45 at SQL statement
+PL/pgSQL function emaj.emaj_remove_sequence(text,text,text) line 6 at RETURN
+-- ok
+select emaj.emaj_remove_sequence('myschema2','myseq1');
+ emaj_remove_sequence 
+----------------------
+                    1
+(1 row)
+
+-----------------------------------
+-- emaj_remove_sequences with array
+-----------------------------------
+-- error cases
 -- empty sequences array
 select emaj.emaj_remove_sequences('myschema2',array[]::text[]);
 WARNING:  _remove_sequences: No sequence to process.
@@ -1037,24 +1055,6 @@ WARNING:  _remove_sequences: No sequence to process.
                      0
 (1 row)
 
--- bad mark
-select emaj.emaj_remove_sequence('myschema2','myseq1','EMAJ_LAST_MARK');
-ERROR:  _check_new_mark: "EMAJ_LAST_MARK" is not an allowed name for a new mark.
-CONTEXT:  PL/pgSQL function emaj._check_new_mark(text[],text) line 14 at RAISE
-SQL statement "SELECT emaj._check_new_mark(array[v_groupName], v_mark)"
-PL/pgSQL function emaj._remove_sequences(text,text[],text,boolean,boolean) line 45 at SQL statement
-PL/pgSQL function emaj.emaj_remove_sequence(text,text,text) line 6 at RETURN
--- ok
-select emaj.emaj_remove_sequence('myschema2','myseq1');
- emaj_remove_sequence 
-----------------------
-                    1
-(1 row)
-
------------------------------------
--- emaj_remove_sequences with array
------------------------------------
--- error cases
 -- sequence not in a group
 select emaj.emaj_remove_sequences('myschema2',array['dummyTable','myseq2']);
 ERROR:  _remove_sequences: some sequences (myschema2."dummyTable") do not currently belong to any tables group.
@@ -1494,7 +1494,7 @@ select hist_function, hist_event, hist_object,
  CREATE_GROUP     | END                         | myGroup1b                    | 0 tables/sequences processed                | postgres
  ASSIGN_TABLE     | BEGIN                       |                              |                                             | postgres
  ASSIGN_TABLE     | LOG_SCHEMA CREATED          | emaj_myschema1               |                                             | postgres
- ASSIGN_TABLE     | TABLE ADDED                 | myschema1.mytbl1             | To the group myGroup1b                      | postgres
+ ASSIGN_TABLE     | TABLE ADDED                 | myschema1.mytbl1             | To the idle group myGroup1b                 | postgres
  ASSIGN_TABLE     | END                         |                              | 1 tables assigned to the group myGroup1b    | postgres
  ASSIGN_TABLES    | BEGIN                       |                              |                                             | postgres
  ASSIGN_TABLES    | END                         |                              | 0 tables assigned to the group myGroup1b    | postgres
@@ -1503,8 +1503,8 @@ select hist_function, hist_event, hist_object,
  ASSIGN_TABLES    | BEGIN                       |                              |                                             | postgres
  ASSIGN_TABLES    | END                         |                              | 0 tables assigned to the group myGroup1b    | postgres
  ASSIGN_TABLES    | BEGIN                       |                              |                                             | postgres
- ASSIGN_TABLES    | TABLE ADDED                 | myschema1.mytbl2             | To the group myGroup1b                      | postgres
- ASSIGN_TABLES    | TABLE ADDED                 | myschema1.mytbl2b            | To the group myGroup1b                      | postgres
+ ASSIGN_TABLES    | TABLE ADDED                 | myschema1.mytbl2             | To the idle group myGroup1b                 | postgres
+ ASSIGN_TABLES    | TABLE ADDED                 | myschema1.mytbl2b            | To the idle group myGroup1b                 | postgres
  ASSIGN_TABLES    | END                         |                              | 2 tables assigned to the group myGroup1b    | postgres
  ASSIGN_TABLES    | BEGIN                       |                              |                                             | postgres
  ASSIGN_TABLES    | END                         |                              | 0 tables assigned to the group myGroup1b    | postgres
@@ -1521,21 +1521,21 @@ select hist_function, hist_event, hist_object,
  ASSIGN_TABLES    | BEGIN                       |                              |                                             | postgres
  ASSIGN_TABLES    | END                         |                              | 0 tables assigned to the group myGroup1b    | postgres
  ASSIGN_TABLES    | BEGIN                       |                              |                                             | postgres
- ASSIGN_TABLES    | TABLE ADDED                 | myschema1.mytbl4             | To the group myGroup1b                      | postgres
- ASSIGN_TABLES    | TABLE ADDED                 | myschema1."myTbl3"           | To the group myGroup1b                      | postgres
+ ASSIGN_TABLES    | TABLE ADDED                 | myschema1.mytbl4             | To the idle group myGroup1b                 | postgres
+ ASSIGN_TABLES    | TABLE ADDED                 | myschema1."myTbl3"           | To the idle group myGroup1b                 | postgres
  ASSIGN_TABLES    | END                         |                              | 2 tables assigned to the group myGroup1b    | postgres
- REMOVE_TABLES    | BEGIN                       |                              |                                             | postgres
- REMOVE_TABLES    | END                         |                              | 0 tables removed from their groups          | postgres
- REMOVE_TABLES    | BEGIN                       |                              |                                             | postgres
- REMOVE_TABLES    | END                         |                              | 0 tables removed from their groups          | postgres
- REMOVE_TABLES    | BEGIN                       |                              |                                             | postgres
- REMOVE_TABLES    | END                         |                              | 0 tables removed from their groups          | postgres
  REMOVE_TABLE     | BEGIN                       |                              |                                             | postgres
- REMOVE_TABLE     | TABLE REMOVED               | myschema1.mytbl1             | From the group myGroup1b                    | postgres
+ REMOVE_TABLE     | TABLE REMOVED               | myschema1.mytbl1             | From the idle group myGroup1b               | postgres
  REMOVE_TABLE     | END                         |                              | 1 tables removed from their groups          | postgres
  REMOVE_TABLES    | BEGIN                       |                              |                                             | postgres
- REMOVE_TABLES    | TABLE REMOVED               | myschema1.mytbl2             | From the group myGroup1b                    | postgres
- REMOVE_TABLES    | TABLE REMOVED               | myschema1.mytbl2b            | From the group myGroup1b                    | postgres
+ REMOVE_TABLES    | END                         |                              | 0 tables removed from their groups          | postgres
+ REMOVE_TABLES    | BEGIN                       |                              |                                             | postgres
+ REMOVE_TABLES    | END                         |                              | 0 tables removed from their groups          | postgres
+ REMOVE_TABLES    | BEGIN                       |                              |                                             | postgres
+ REMOVE_TABLES    | END                         |                              | 0 tables removed from their groups          | postgres
+ REMOVE_TABLES    | BEGIN                       |                              |                                             | postgres
+ REMOVE_TABLES    | TABLE REMOVED               | myschema1.mytbl2             | From the idle group myGroup1b               | postgres
+ REMOVE_TABLES    | TABLE REMOVED               | myschema1.mytbl2b            | From the idle group myGroup1b               | postgres
  REMOVE_TABLES    | END                         |                              | 2 tables removed from their groups          | postgres
  REMOVE_TABLES    | BEGIN                       |                              |                                             | postgres
  REMOVE_TABLES    | END                         |                              | 0 tables removed from their groups          | postgres
@@ -1544,8 +1544,8 @@ select hist_function, hist_event, hist_object,
  REMOVE_TABLES    | BEGIN                       |                              |                                             | postgres
  REMOVE_TABLES    | END                         |                              | 0 tables removed from their groups          | postgres
  REMOVE_TABLES    | BEGIN                       |                              |                                             | postgres
- REMOVE_TABLES    | TABLE REMOVED               | myschema1."myTbl3"           | From the group myGroup1b                    | postgres
- REMOVE_TABLES    | TABLE REMOVED               | myschema1.mytbl4             | From the group myGroup1b                    | postgres
+ REMOVE_TABLES    | TABLE REMOVED               | myschema1."myTbl3"           | From the idle group myGroup1b               | postgres
+ REMOVE_TABLES    | TABLE REMOVED               | myschema1.mytbl4             | From the idle group myGroup1b               | postgres
  REMOVE_TABLES    | LOG_SCHEMA DROPPED          | emaj_myschema1               |                                             | postgres
  REMOVE_TABLES    | END                         |                              | 2 tables removed from their groups          | postgres
  DROP_GROUP       | BEGIN                       | myGroup2                     |                                             | postgres
@@ -1554,7 +1554,7 @@ select hist_function, hist_event, hist_object,
  CREATE_GROUP     | BEGIN                       | myGroup2b                    | rollbackable                                | postgres
  CREATE_GROUP     | END                         | myGroup2b                    | 0 tables/sequences processed                | postgres
  ASSIGN_SEQUENCE  | BEGIN                       |                              |                                             | postgres
- ASSIGN_SEQUENCE  | SEQUENCE ADDED              | myschema2.myseq1             | To the group myGroup2b                      | postgres
+ ASSIGN_SEQUENCE  | SEQUENCE ADDED              | myschema2.myseq1             | To the idle group myGroup2b                 | postgres
  ASSIGN_SEQUENCE  | END                         |                              | 1 sequences assigned to the group myGroup2b | postgres
  ASSIGN_SEQUENCES | BEGIN                       |                              |                                             | postgres
  ASSIGN_SEQUENCES | END                         |                              | 0 sequences assigned to the group myGroup2b | postgres
@@ -1563,7 +1563,7 @@ select hist_function, hist_event, hist_object,
  ASSIGN_SEQUENCES | BEGIN                       |                              |                                             | postgres
  ASSIGN_SEQUENCES | END                         |                              | 0 sequences assigned to the group myGroup2b | postgres
  ASSIGN_SEQUENCES | BEGIN                       |                              |                                             | postgres
- ASSIGN_SEQUENCES | SEQUENCE ADDED              | myschema2.myseq2             | To the group myGroup2b                      | postgres
+ ASSIGN_SEQUENCES | SEQUENCE ADDED              | myschema2.myseq2             | To the idle group myGroup2b                 | postgres
  ASSIGN_SEQUENCES | END                         |                              | 1 sequences assigned to the group myGroup2b | postgres
  ASSIGN_SEQUENCES | BEGIN                       |                              |                                             | postgres
  ASSIGN_SEQUENCES | END                         |                              | 0 sequences assigned to the group myGroup2b | postgres
@@ -1574,19 +1574,19 @@ select hist_function, hist_event, hist_object,
  ASSIGN_SEQUENCES | BEGIN                       |                              |                                             | postgres
  ASSIGN_SEQUENCES | END                         |                              | 0 sequences assigned to the group myGroup2b | postgres
  ASSIGN_SEQUENCES | BEGIN                       |                              |                                             | postgres
- ASSIGN_SEQUENCES | SEQUENCE ADDED              | myschema2."myTbl3_col31_seq" | To the group myGroup2b                      | postgres
+ ASSIGN_SEQUENCES | SEQUENCE ADDED              | myschema2."myTbl3_col31_seq" | To the idle group myGroup2b                 | postgres
  ASSIGN_SEQUENCES | END                         |                              | 1 sequences assigned to the group myGroup2b | postgres
- REMOVE_SEQUENCES | BEGIN                       |                              |                                             | postgres
- REMOVE_SEQUENCES | END                         |                              | 0 sequences removed from their groups       | postgres
- REMOVE_SEQUENCES | BEGIN                       |                              |                                             | postgres
- REMOVE_SEQUENCES | END                         |                              | 0 sequences removed from their groups       | postgres
- REMOVE_SEQUENCES | BEGIN                       |                              |                                             | postgres
- REMOVE_SEQUENCES | END                         |                              | 0 sequences removed from their groups       | postgres
  REMOVE_SEQUENCE  | BEGIN                       |                              |                                             | postgres
- REMOVE_SEQUENCE  | SEQUENCE REMOVED            | myschema2.myseq1             | From the group myGroup2b                    | postgres
+ REMOVE_SEQUENCE  | SEQUENCE REMOVED            | myschema2.myseq1             | From the idle group myGroup2b               | postgres
  REMOVE_SEQUENCE  | END                         |                              | 1 sequences removed from their groups       | postgres
  REMOVE_SEQUENCES | BEGIN                       |                              |                                             | postgres
- REMOVE_SEQUENCES | SEQUENCE REMOVED            | myschema2.myseq2             | From the group myGroup2b                    | postgres
+ REMOVE_SEQUENCES | END                         |                              | 0 sequences removed from their groups       | postgres
+ REMOVE_SEQUENCES | BEGIN                       |                              |                                             | postgres
+ REMOVE_SEQUENCES | END                         |                              | 0 sequences removed from their groups       | postgres
+ REMOVE_SEQUENCES | BEGIN                       |                              |                                             | postgres
+ REMOVE_SEQUENCES | END                         |                              | 0 sequences removed from their groups       | postgres
+ REMOVE_SEQUENCES | BEGIN                       |                              |                                             | postgres
+ REMOVE_SEQUENCES | SEQUENCE REMOVED            | myschema2.myseq2             | From the idle group myGroup2b               | postgres
  REMOVE_SEQUENCES | END                         |                              | 1 sequences removed from their groups       | postgres
  REMOVE_SEQUENCES | BEGIN                       |                              |                                             | postgres
  REMOVE_SEQUENCES | END                         |                              | 0 sequences removed from their groups       | postgres
@@ -1595,7 +1595,7 @@ select hist_function, hist_event, hist_object,
  REMOVE_SEQUENCES | BEGIN                       |                              |                                             | postgres
  REMOVE_SEQUENCES | END                         |                              | 0 sequences removed from their groups       | postgres
  REMOVE_SEQUENCES | BEGIN                       |                              |                                             | postgres
- REMOVE_SEQUENCES | SEQUENCE REMOVED            | myschema2."myTbl3_col31_seq" | From the group myGroup2b                    | postgres
+ REMOVE_SEQUENCES | SEQUENCE REMOVED            | myschema2."myTbl3_col31_seq" | From the idle group myGroup2b               | postgres
  REMOVE_SEQUENCES | END                         |                              | 1 sequences removed from their groups       | postgres
  DROP_GROUP       | BEGIN                       | myGroup1b                    |                                             | postgres
  DROP_GROUP       | END                         | myGroup1b                    | 0 tables/sequences processed                | postgres

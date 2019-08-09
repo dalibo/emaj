@@ -1,4 +1,5 @@
--- alter.sql : test emaj_alter_group() and emaj_alter_groups() functions
+-- alter.sql : test emaj_alter_group(), emaj_alter_groups(),
+--                  emaj_move_table() and emaj_move_tables() functions
 --
 -- set sequence restart value
 alter sequence emaj.emaj_hist_hist_id_seq restart 6000;
@@ -265,5 +266,61 @@ begin;
   insert into emaj.emaj_group_def values ('myGroup2','myschema2','myseq1');
   select emaj.emaj_alter_groups('{"myGroup1","myGroup2"}');
 rollback;
+
+-----------------------------------
+-- emaj_move_table
+-----------------------------------
+
+-- error cases
+-- table not in a group
+select emaj.emaj_move_table('dummySchema','mytbl1','myGroup1');
+select emaj.emaj_move_table('myschema1','dummyTable','myGroup1');
+-- bad new group
+select emaj.emaj_move_table('myschema1','mytbl1','dummyGroup');
+-- bad mark
+select emaj.emaj_move_table('myschema1','mytbl1','myGroup1','EMAJ_LAST_MARK');
+
+-- move to the same group
+select emaj.emaj_move_table('myschema1','mytbl1','myGroup1');
+
+-- ok
+select emaj.emaj_move_table('myschema1','mytbl1','myGroup2');
+
+-----------------------------------
+-- emaj_move_tables with array
+-----------------------------------
+-- error cases
+-- table not in a group
+select emaj.emaj_move_tables('myschema1',array['dummyTable','mytbl1','mytbl2'],'myGroup1');
+-- empty tables array
+select emaj.emaj_move_tables('myschema1',array[]::text[],'myGroup1');
+select emaj.emaj_move_tables('myschema1',null,'myGroup1');
+select emaj.emaj_move_tables('myschema1',array[''],'myGroup1');
+
+-- ok (with a duplicate table name)
+select emaj.emaj_move_tables('myschema1',array['mytbl2','mytbl2b','mytbl2'],'myGroup2');
+
+select rel_schema, rel_tblseq, rel_group from emaj.emaj_relation
+  where rel_schema = 'myschema1' and upper_inf(rel_time_range)
+  order by 1,2,3;
+
+-----------------------------------
+-- emaj_move_tables with filters
+-----------------------------------
+-- empty tables array
+select emaj.emaj_move_tables('myschema1',null,null,'myGroup1');
+select emaj.emaj_move_tables('myschema1','','','myGroup1');
+select emaj.emaj_move_tables('myschema1','mytbl1','mytbl1','myGroup1');
+
+-- ok and go back to myGroup1
+select emaj.emaj_move_tables('myschema1','my(t|T)bl.*','mytbl2$','myGroup1');
+select emaj.emaj_move_tables('myschema1','.*','','myGroup1');
+
+select altr_time_id, altr_step, altr_schema, altr_tblseq, altr_group, altr_priority, altr_group_is_logging,
+       altr_new_group, altr_new_group_is_logging from emaj.emaj_alter_plan
+  order by 1 desc, 2,3,4 limit 6;
+select group_last_alter_time_id, group_nb_table, group_nb_sequence from emaj.emaj_group 
+  where group_name in ('myGroup1','myGroup2') order by 1 desc ,2,3;
+
 
 -- checks are performed by the alterLogging.sql script

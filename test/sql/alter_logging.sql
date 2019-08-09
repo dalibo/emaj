@@ -672,12 +672,30 @@ select sequ_schema, sequ_name, sequ_time_id, sequ_last_val, sequ_is_called from 
   where sequ_schema = 'myschema2' and sequ_name like 'myseq%' order by sequ_name, sequ_time_id;
 
 -----------------------------
+-- change group ownership for some tables and sequences without updating emaj_group_def
+-----------------------------
+-- from an idle to a logging group
+select emaj.emaj_move_tables('myschema4','.*','','myGroup1','MOVE_TBL_idle_to_logging');
+
+-- from a logging group to another logging group
+select emaj.emaj_move_tables('myschema4','.*','','myGroup2','MOVE_TBL_logging_to_logging');
+
+-- and back to the idle group
+select emaj.emaj_move_tables('myschema4','.*','','myGroup4','MOVE_TBL_logging_to_idle');
+
+-----------------------------
 -- test end: check
 -----------------------------
+select * from emaj.emaj_relation where rel_schema = 'myschema4' order by 1,2,3;
 
-select emaj.emaj_force_drop_group('myGroup1');
-select emaj.emaj_force_drop_group('myGroup2');
-select emaj.emaj_force_drop_group('myGroup4');
+select emaj.emaj_stop_group('myGroup1');
+select emaj.emaj_drop_group('myGroup1');
+
+select emaj.emaj_stop_group('myGroup2');
+select emaj.emaj_drop_group('myGroup2');
+
+select emaj.emaj_drop_group('myGroup4');
+
 select nspname from pg_namespace where nspname like 'emaj%' order by nspname;
 select sch_name from emaj.emaj_schema order by 1;
 select hist_function, hist_event, hist_object,

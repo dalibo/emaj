@@ -5,9 +5,14 @@ E-Maj - Change log
 ###Enhancements:###
   * The new emaj_assign_table(), emaj_assign_tables(), emaj_remove_table(),
     emaj_remove_tables(), emaj_assign_sequence(), emaj_assign_sequences(),
-    emaj_remove_sequence() and emaj_remove_sequences() functions allow the
-    administrator to directly assign or remove tables or sequences into a
-    tables group, without updating the emaj_group_def table.
+    emaj_remove_sequence() and emaj_remove_sequences() functions allow to
+    dynamically assign or remove tables or sequences into a tables group,
+    without updating the emaj_group_def table. The group may be either in
+    idle or logging state.
+  * The new emaj_move_table() and emaj_move_tables() funtions allow to
+    dynamically move one or several tables from one tables group to another,
+    without updating the emaj_group_def table. The groups may be either in
+    idle or logging state.
   * The new emaj_sync_def_group() allows to synchronize the emaj_group_def
     table with the current content of created groups whose content may have
     been dynamically modified.
@@ -23,6 +28,9 @@ E-Maj - Change log
     an application table has been removed from a logging tables group and an
     ALTER TABLE leads then to a table rewrite, the event trigger erroneously
     blocked the statement.
+  * Fix a bug. When a table was moved from one group to another and one of
+    the group then is dropped, trying to set a mark on or stop the other
+    group fails because some sequences information had been mistakenly deleted.
 
 3.1.0 (2019-Jun-20)
 ------

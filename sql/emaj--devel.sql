@@ -1888,7 +1888,7 @@ $_remove_tables$
 -- Inputs: schema, array of table names, mark to set if for logging groups,
 --         boolean to indicate whether several tables need to be processed,
 --         a boolean indicating whether the tables array has been built from regex filters
--- Outputs: number of tables effectively assigned to the tables group
+-- Outputs: number of tables effectively removed to the tables group
 -- The function is created as SECURITY DEFINER so that log schemas can be dropped
   DECLARE
     v_function               TEXT;
@@ -1914,7 +1914,7 @@ $_remove_tables$
 -- remove duplicates values, NULL and empty strings from the supplied table names array
       SELECT array_agg(DISTINCT table_name) INTO v_tables FROM unnest(v_tables) AS table_name
         WHERE table_name IS NOT NULL AND table_name <> '';
--- check that the tables currently belong to a tables group (not necessarily the same one)
+-- check that the tables currently belong to a tables group (not necessarily the same for all tables)
       WITH all_supplied_tables AS (
         SELECT unnest(v_tables) AS table_name),
            tables_in_group AS (
@@ -2000,6 +2000,186 @@ $_remove_tables$
     RETURN v_nbRemovedTbl;
   END;
 $_remove_tables$;
+
+CREATE OR REPLACE FUNCTION emaj.emaj_move_table(v_schema TEXT, v_table TEXT, v_newGroup TEXT, v_mark TEXT DEFAULT 'MOVE_%')
+RETURNS INTEGER LANGUAGE plpgsql AS
+$emaj_move_table$
+-- The function moves a table from its tables group to another tables group.
+-- Inputs: schema name, table name, new group name, mark name to set when logging groups (optional)
+-- Outputs: number of tables effectively moved to the new tables group, ie. 1
+  BEGIN
+    RETURN emaj._move_tables(v_schema, ARRAY[v_table], v_newGroup, v_mark, FALSE, FALSE);
+  END;
+$emaj_move_table$;
+COMMENT ON FUNCTION emaj.emaj_move_table(TEXT,TEXT,TEXT,TEXT) IS
+$$Move a table from its tables group to another tables group.$$;
+
+CREATE OR REPLACE FUNCTION emaj.emaj_move_tables(v_schema TEXT, v_tables TEXT[], v_newGroup TEXT, v_mark TEXT DEFAULT 'MOVE_%')
+RETURNS INTEGER LANGUAGE plpgsql AS
+$emaj_move_tables$
+-- The function moves several tables at once from their tables group to another tables group.
+-- Inputs: schema, array of table names, new group name, mark name to set when logging groups (optional)
+-- Outputs: number of tables effectively moved to the new tables group
+  BEGIN
+    RETURN emaj._move_tables(v_schema, v_tables, v_newGroup, v_mark, TRUE, FALSE);
+  END;
+$emaj_move_tables$;
+COMMENT ON FUNCTION emaj.emaj_move_tables(TEXT,TEXT[],TEXT,TEXT) IS
+$$Move several tables from their tables group to another tables group.$$;
+
+CREATE OR REPLACE FUNCTION emaj.emaj_move_tables(v_schema TEXT, v_tablesIncludeFilter TEXT, v_tablesExcludeFilter TEXT,
+                                                 v_newGroup TEXT, v_mark TEXT DEFAULT 'MOVE_%')
+RETURNS INTEGER LANGUAGE plpgsql AS
+$emaj_move_tables$
+-- The function moves tables on name patterns from their tables group to another tables group.
+-- Inputs: schema, 2 patterns to filter table names (one to include and another to exclude), new group name,
+--         mark name to set when logging groups (optional)
+-- Outputs: number of tables effectively moved to the new tables group
+  DECLARE
+    v_tables                 TEXT[];
+  BEGIN
+-- process empty filters as NULL
+    SELECT CASE WHEN v_tablesIncludeFilter = '' THEN NULL ELSE v_tablesIncludeFilter END,
+           CASE WHEN v_tablesExcludeFilter = '' THEN NULL ELSE v_tablesExcludeFilter END
+      INTO v_tablesIncludeFilter, v_tablesExcludeFilter;
+-- Build the list of tables names satisfying the pattern
+    SELECT array_agg(rel_tblseq) INTO v_tables FROM (
+      SELECT rel_tblseq FROM emaj.emaj_relation
+        WHERE rel_schema = v_schema
+          AND rel_tblseq ~ v_tablesIncludeFilter
+          AND (v_tablesExcludeFilter IS NULL OR rel_tblseq !~ v_tablesExcludeFilter)
+          AND rel_kind = 'r' AND upper_inf(rel_time_range)
+          AND rel_group <> v_newGroup
+        ORDER BY rel_tblseq) AS t;
+-- call the _move_tables() function for execution
+    RETURN emaj._move_tables(v_schema, v_tables, v_newGroup, v_mark, TRUE, TRUE);
+  END;
+$emaj_move_tables$;
+COMMENT ON FUNCTION emaj.emaj_move_tables(TEXT,TEXT,TEXT,TEXT,TEXT) IS
+$$Move several tables on name patterns from their tables group to another tables group.$$;
+
+CREATE OR REPLACE FUNCTION emaj._move_tables(v_schema TEXT, v_tables TEXT[], v_newGroup TEXT, v_mark TEXT, v_multiTable BOOLEAN,
+                                             v_arrayFromRegex BOOLEAN)
+RETURNS INTEGER LANGUAGE plpgsql
+SECURITY DEFINER SET search_path = pg_catalog, pg_temp AS
+$_move_tables$
+-- The function effectively moves tables from their tables group to another tables group.
+-- Inputs: schema, array of table names, new group name, mark to set if for logging groups,
+--         boolean to indicate whether several tables need to be processed,
+--         a boolean indicating whether the tables array has been built from regex filters
+-- Outputs: number of tables effectively moved to the tables group
+-- The function is created as SECURITY DEFINER so that log schemas can be dropped
+  DECLARE
+    v_function               TEXT;
+    v_newGroupIsLogging      BOOLEAN;
+    v_list                   TEXT;
+    v_uselessTables          TEXT[];
+    v_markName               TEXT;
+    v_timeId                 BIGINT;
+    v_groups                 TEXT[];
+    v_loggingGroups          TEXT[];
+    v_groupName              TEXT;
+    v_groupIsLogging         BOOLEAN;
+    v_oneTable               TEXT;
+    v_nbMovedTbl             INT = 0;
+  BEGIN
+    v_function = CASE WHEN v_multiTable THEN 'MOVE_TABLES' ELSE 'MOVE_TABLE' END;
+-- insert the begin entry into the emaj_hist table
+    INSERT INTO emaj.emaj_hist (hist_function, hist_event)
+      VALUES (v_function, 'BEGIN');
+-- check the group name and if ok, get some properties of the group
+    PERFORM emaj._check_group_names(v_groupNames := ARRAY[v_newGroup], v_mayBeNull := FALSE, v_lockGroups := TRUE, v_checkList := '');
+    SELECT group_is_logging INTO v_newGroupIsLogging
+      FROM emaj.emaj_group WHERE group_name = v_NewGroup;
+-- check the tables list
+    IF NOT v_arrayFromRegex THEN
+-- remove duplicates values, NULL and empty strings from the supplied table names array
+      SELECT array_agg(DISTINCT table_name) INTO v_tables FROM unnest(v_tables) AS table_name
+        WHERE table_name IS NOT NULL AND table_name <> '';
+-- check that the tables currently belong to a tables group (not necessarily the same for all table)
+      WITH all_supplied_tables AS (
+        SELECT unnest(v_tables) AS table_name),
+           tables_in_group AS (
+        SELECT rel_tblseq FROM emaj.emaj_relation
+          WHERE rel_schema = v_schema AND rel_tblseq = ANY(v_tables) AND upper_inf(rel_time_range))
+      SELECT string_agg(quote_ident(v_schema) || '.' || quote_ident(table_name), ', ') INTO v_list
+        FROM (
+          SELECT table_name FROM all_supplied_tables
+            EXCEPT
+          SELECT rel_tblseq FROM tables_in_group) AS t;
+      IF v_list IS NOT NULL THEN
+        RAISE EXCEPTION '_move_tables: some tables (%) do not currently belong to any tables group.', v_list;
+      END IF;
+-- remove tables that already belong to the new group
+      SELECT string_agg(quote_ident(v_schema) || '.' || quote_ident(rel_tblseq), ', '), array_agg(rel_tblseq)
+        INTO v_list, v_uselessTables
+        FROM emaj.emaj_relation
+        WHERE rel_schema = v_schema AND rel_tblseq = ANY(v_tables) AND upper_inf(rel_time_range)
+          AND rel_group = v_newGroup;
+      IF v_list IS NOT NULL THEN
+        RAISE WARNING '_move_tables: some tables (%) already belong to the tables group %.', v_list, v_newGroup;
+        SELECT array_remove(v_tables, useless_table) INTO v_tables FROM unnest(v_uselessTables) AS useless_table;
+      END IF;
+    END IF;
+-- check the supplied mark
+    SELECT emaj._check_new_mark(array[v_groupName], v_mark) INTO v_markName;
+-- OK,
+    IF v_tables IS NULL THEN
+-- when no tables are finaly selected, just warn
+      RAISE WARNING '_move_tables: No table to process.';
+    ELSE
+-- get the time stamp of the operation
+      SELECT emaj._set_time_stamp('A') INTO v_timeId;
+-- get the lists of groups and logging groups holding these tables, if any.
+-- It locks the tables groups so that no other operation simultaneously occurs these groups
+      WITH tables_group AS (
+        SELECT group_name, group_is_logging FROM emaj.emaj_group
+          WHERE group_name = v_newGroup OR
+                group_name IN
+                 (SELECT DISTINCT rel_group FROM emaj.emaj_relation
+                    WHERE rel_schema = v_schema AND rel_tblseq = ANY(v_tables) AND upper_inf(rel_time_range))
+          FOR UPDATE OF emaj_group
+        )
+      SELECT (SELECT array_agg(group_name) FROM tables_group),
+             (SELECT array_agg(group_name) FROM tables_group WHERE group_is_logging)
+        INTO v_groups, v_loggingGroups;
+-- for LOGGING groups, lock all tables to get a stable point
+      IF v_loggingGroups IS NOT NULL THEN
+-- use a ROW EXCLUSIVE lock mode, preventing for a transaction currently updating data, but not conflicting with simple read access or
+--  vacuum operation.
+        PERFORM emaj._lock_groups(v_loggingGroups, 'ROW EXCLUSIVE', FALSE);
+-- and set the mark, using the same time identifier
+        PERFORM emaj._set_mark_groups(v_loggingGroups, v_markName, TRUE, TRUE, NULL, v_timeId);
+      END IF;
+-- effectively move each table
+      FOREACH v_oneTable IN ARRAY v_tables
+      LOOP
+-- get some characteristics of the group that holds the table before the move
+        SELECT rel_group, group_is_logging INTO v_groupName, v_groupIsLogging
+          FROM emaj.emaj_relation, emaj.emaj_group
+          WHERE rel_group = group_name
+            AND rel_schema = v_schema AND rel_tblseq = v_oneTable AND upper_inf(rel_time_range);
+-- move this table
+        PERFORM emaj._move_tbl(v_schema, v_oneTable, v_groupName, v_groupIsLogging, v_newGroup, v_newGroupIsLogging, v_timeId, v_function);
+-- insert an entry into the emaj_alter_plan table (so that future rollback may see the change)
+        INSERT INTO emaj.emaj_alter_plan (altr_time_id, altr_step, altr_schema, altr_tblseq, altr_group, altr_group_is_logging,
+                                          altr_new_group, altr_new_group_is_logging)
+          VALUES (v_timeId, 'MOVE_TBL', v_schema, v_oneTable, v_groupName, v_groupIsLogging, v_newGroup, v_newGroupIsLogging);
+        v_nbMovedTbl = v_nbMovedTbl + 1;
+      END LOOP;
+-- adjust the groups characteristics
+      UPDATE emaj.emaj_group
+        SET group_last_alter_time_id = v_timeId,
+            group_nb_table = (SELECT count(*) FROM emaj.emaj_relation
+                                WHERE rel_group = group_name AND upper_inf(rel_time_range) AND rel_kind = 'r')
+        WHERE group_name = ANY (v_groups);
+    END IF;
+-- insert the end entry into the emaj_hist table
+    INSERT INTO emaj.emaj_hist (hist_function, hist_event, hist_wording)
+      VALUES (v_function, 'END', v_nbMovedTbl || ' tables moved to the new tables group ' || v_newGroup);
+    RETURN v_nbMovedTbl;
+  END;
+$_move_tables$;
 
 CREATE OR REPLACE FUNCTION emaj.emaj_get_current_log_table(v_app_schema TEXT, v_app_table TEXT,
                                                            OUT log_schema TEXT, OUT log_table TEXT)
@@ -2297,7 +2477,7 @@ $_add_tbl$
         EXECUTE format('ALTER SEQUENCE %I.%I RESTART %s',
                        v_logSchema, v_logSequence, v_nextVal);
       END IF;
--- ... record the new log sequence state in the emaj_sequence table for the current alter_group mark
+-- ... record the new log sequence state in the emaj_sequence table for the current operation mark
       INSERT INTO emaj.emaj_sequence (sequ_schema, sequ_name, sequ_time_id, sequ_last_val, sequ_start_val,
                   sequ_increment, sequ_max_val, sequ_min_val, sequ_cache_val, sequ_is_cycled, sequ_is_called)
         SELECT * FROM emaj._get_current_sequence_state(v_logSchema, v_logSequence, v_timeId);
@@ -2305,7 +2485,7 @@ $_add_tbl$
 -- insert an entry into the emaj_hist table
     INSERT INTO emaj.emaj_hist (hist_function, hist_event, hist_object, hist_wording)
       VALUES (v_function, 'TABLE ADDED', quote_ident(v_schema) || '.' || quote_ident(v_table),
-              'To the ' || CASE WHEN v_groupIsLogging THEN 'logging ' ELSE '' END || 'group ' || v_group);
+              'To the ' || CASE WHEN v_groupIsLogging THEN 'logging ' ELSE 'idle ' END || 'group ' || v_group);
     RETURN;
   END;
 $_add_tbl$;
@@ -2451,20 +2631,23 @@ $_remove_tbl$
 -- insert an entry into the emaj_hist table
     INSERT INTO emaj.emaj_hist (hist_function, hist_event, hist_object, hist_wording)
       VALUES (v_function, 'TABLE REMOVED', quote_ident(v_schema) || '.' || quote_ident(v_table),
-              'From the ' || CASE WHEN v_groupIsLogging THEN 'logging ' ELSE '' END || 'group ' || v_group);
+              'From the ' || CASE WHEN v_groupIsLogging THEN 'logging ' ELSE 'idle ' END || 'group ' || v_group);
     RETURN;
   END;
 $_remove_tbl$;
 
-CREATE OR REPLACE FUNCTION emaj._move_tbl(v_schema TEXT, v_table TEXT, v_group TEXT, v_groupIsLogging BOOLEAN, v_newGroup TEXT,
+CREATE OR REPLACE FUNCTION emaj._move_tbl(v_schema TEXT, v_table TEXT, v_oldGroup TEXT, v_oldGroupIsLogging BOOLEAN, v_newGroup TEXT,
                                           v_newGroupIsLogging BOOLEAN, v_timeId BIGINT, v_function TEXT)
 RETURNS VOID LANGUAGE plpgsql AS
 $_move_tbl$
 -- The function change the group ownership of a table. It is called during an alter group or a dynamic assignment operation.
--- Required inputs: schema and table to move, related group names and logging state,
+-- Required inputs: schema and table to move, old and new group names and their logging state,
 --                  time stamp id of the operation, main calling function.
+  DECLARE
+    v_logSchema              TEXT;
+    v_logSequence            TEXT;
   BEGIN
-    IF NOT v_groupIsLogging AND NOT v_newGroupIsLogging THEN
+    IF NOT v_oldGroupIsLogging AND NOT v_newGroupIsLogging THEN
 -- no group is logging, so just adapt the last emaj_relation row related to the table
       UPDATE emaj.emaj_relation
         SET rel_group = v_newGroup, rel_time_range = int8range(v_timeId, NULL, '[)')
@@ -2484,11 +2667,22 @@ $_move_tbl$
           FROM emaj.emaj_relation
           WHERE rel_schema = v_schema AND rel_tblseq = v_table AND upper(rel_time_range) = v_timeId;
     END IF;
+-- if the new group is in logging state,
+    IF NOT v_oldGroupIsLogging AND v_newGroupIsLogging THEN
+-- ... get the log schema and sequence for the new relation
+      SELECT rel_log_schema, rel_log_sequence INTO v_logSchema, v_logSequence
+        FROM emaj.emaj_relation
+        WHERE rel_schema = v_schema AND rel_tblseq = v_table AND upper_inf(rel_time_range);
+-- ... record the new log sequence state in the emaj_sequence table for the current operation mark
+      INSERT INTO emaj.emaj_sequence (sequ_schema, sequ_name, sequ_time_id, sequ_last_val, sequ_start_val,
+                  sequ_increment, sequ_max_val, sequ_min_val, sequ_cache_val, sequ_is_cycled, sequ_is_called)
+        SELECT * FROM emaj._get_current_sequence_state(v_logSchema, v_logSequence, v_timeId);
+    END IF;
 -- insert an entry into the emaj_hist table
     INSERT INTO emaj.emaj_hist (hist_function, hist_event, hist_object, hist_wording)
       VALUES (v_function, 'TABLE MOVED', quote_ident(v_schema) || '.' || quote_ident(v_table),
-              'From the ' || CASE WHEN v_groupIsLogging THEN 'logging ' ELSE '' END || 'group ' || v_group ||
-              ' to the ' || CASE WHEN v_newGroupIsLogging THEN 'logging ' ELSE '' END || 'group ' || v_newGroup);
+              'From the ' || CASE WHEN v_oldGroupIsLogging THEN 'logging ' ELSE 'idle ' END || 'group ' || v_oldGroup ||
+              ' to the ' || CASE WHEN v_newGroupIsLogging THEN 'logging ' ELSE 'idle ' END || 'group ' || v_newGroup);
     RETURN;
   END;
 $_move_tbl$;
@@ -2504,7 +2698,7 @@ $_drop_tbl$
     v_fullTableName          TEXT;
   BEGIN
     v_fullTableName    = quote_ident(r_rel.rel_schema) || '.' || quote_ident(r_rel.rel_tblseq);
--- if the table has been unlinked from its logging group, only the renamed log table has to be removed
+-- if the table is currently linked to a group, drop the log trigger, function and sequence
     IF upper_inf(r_rel.rel_time_range) THEN
 -- check the table exists before dropping its triggers
       PERFORM 0 FROM pg_catalog.pg_class, pg_catalog.pg_namespace
@@ -2526,15 +2720,24 @@ $_drop_tbl$
       EXECUTE format('DROP SEQUENCE IF EXISTS %I.%I',
                      r_rel.rel_log_schema, r_rel.rel_log_sequence);
     END IF;
--- drop the log table
-    EXECUTE format('DROP TABLE IF EXISTS %I.%I CASCADE',
-                   r_rel.rel_log_schema, r_rel.rel_log_table);
--- delete rows related to the log sequence from emaj_sequence table (it my delete rows for other not yet processed time_ranges for the
--- same table)
-    DELETE FROM emaj.emaj_sequence WHERE sequ_schema = r_rel.rel_log_schema AND sequ_name = r_rel.rel_log_sequence;
+-- drop the log table if it is not referenced on other timeranges (for potentially other groups)
+    IF NOT EXISTS(SELECT 1 FROM emaj.emaj_relation
+                    WHERE rel_log_schema = r_rel.rel_log_schema AND rel_log_table = r_rel.rel_log_table
+                      AND rel_time_range <> r_rel.rel_time_range) THEN
+      EXECUTE format('DROP TABLE IF EXISTS %I.%I CASCADE',
+                     r_rel.rel_log_schema, r_rel.rel_log_table);
+    END IF;
+-- process log sequence information if the sequence is not referenced in other timerange (for potentially other groups)
+    IF NOT EXISTS(SELECT 1 FROM emaj.emaj_relation
+                    WHERE rel_log_schema = r_rel.rel_log_schema AND rel_log_sequence = r_rel.rel_log_sequence
+                      AND rel_time_range <> r_rel.rel_time_range) THEN
+-- delete rows related to the log sequence from emaj_sequence table
+-- (it may delete rows for other already processed time_ranges for the same table)
+      DELETE FROM emaj.emaj_sequence WHERE sequ_schema = r_rel.rel_log_schema AND sequ_name = r_rel.rel_log_sequence;
 -- delete rows related to the table from emaj_seq_hole table
--- (it may delete rows for other not yet processed time_ranges for the same table).
-    DELETE FROM emaj.emaj_seq_hole WHERE sqhl_schema = r_rel.rel_schema AND sqhl_table = r_rel.rel_tblseq;
+-- (it may delete rows for other already processed time_ranges for the same table)
+      DELETE FROM emaj.emaj_seq_hole WHERE sqhl_schema = r_rel.rel_schema AND sqhl_table = r_rel.rel_tblseq;
+    END IF;
 -- keep a trace of the table group ownership history and finaly delete the table reference from the emaj_relation table
     WITH deleted AS (
       DELETE FROM emaj.emaj_relation
@@ -2970,7 +3173,7 @@ $_add_seq$
 -- insert an entry into the emaj_hist table
     INSERT INTO emaj.emaj_hist (hist_function, hist_event, hist_object, hist_wording)
       VALUES (v_function, 'SEQUENCE ADDED', quote_ident(v_schema) || '.' || quote_ident(v_sequence),
-              'To the ' || CASE WHEN v_groupIsLogging THEN 'logging ' ELSE '' END || 'group ' || v_group);
+              'To the ' || CASE WHEN v_groupIsLogging THEN 'logging ' ELSE 'idle ' END || 'group ' || v_group);
     RETURN;
   END;
 $_add_seq$;
@@ -2995,20 +3198,20 @@ $_remove_seq$
 -- insert an entry into the emaj_hist table
     INSERT INTO emaj.emaj_hist (hist_function, hist_event, hist_object, hist_wording)
       VALUES (v_function, 'SEQUENCE REMOVED', quote_ident(v_schema) || '.' || quote_ident(v_sequence),
-              'From the ' || CASE WHEN v_groupIsLogging THEN 'logging ' ELSE '' END || 'group ' || v_group);
+              'From the ' || CASE WHEN v_groupIsLogging THEN 'logging ' ELSE 'idle ' END || 'group ' || v_group);
     RETURN;
   END;
 $_remove_seq$;
 
-CREATE OR REPLACE FUNCTION emaj._move_seq(v_schema TEXT, v_sequence TEXT, v_group TEXT, v_groupIsLogging BOOLEAN, v_newGroup TEXT,
+CREATE OR REPLACE FUNCTION emaj._move_seq(v_schema TEXT, v_sequence TEXT, v_oldGroup TEXT, v_oldGroupIsLogging BOOLEAN, v_newGroup TEXT,
                                           v_newGroupIsLogging BOOLEAN, v_timeId BIGINT, v_function TEXT)
 RETURNS VOID LANGUAGE plpgsql AS
 $_move_seq$
 -- The function change the group ownership of a sequence. It is called during an alter group or a dynamic assignment operation.
--- Required inputs: schema and sequence to move, related group names and logging state,
+-- Required inputs: schema and sequence to move, old and new group names and their logging state,
 --                  time stamp id of the operation, main calling function.
   BEGIN
-    IF NOT v_groupIsLogging AND NOT v_newGroupIsLogging THEN
+    IF NOT v_oldGroupIsLogging AND NOT v_newGroupIsLogging THEN
 -- no group is logging, so just adapt the last emaj_relation row related to the sequence
       UPDATE emaj.emaj_relation
         SET rel_group = v_newGroup, rel_time_range = int8range(v_timeId, NULL, '[)')
@@ -3031,8 +3234,8 @@ $_move_seq$
 -- insert an entry into the emaj_hist table
     INSERT INTO emaj.emaj_hist (hist_function, hist_event, hist_object, hist_wording)
       VALUES (v_function, 'SEQUENCE MOVED', quote_ident(v_schema) || '.' || quote_ident(v_sequence),
-              'From the ' || CASE WHEN v_groupIsLogging THEN 'logging ' ELSE '' END || 'group ' || v_group ||
-              ' to the ' || CASE WHEN v_newGroupIsLogging THEN 'logging ' ELSE '' END || 'group ' || v_newGroup);
+              'From the ' || CASE WHEN v_oldGroupIsLogging THEN 'logging ' ELSE 'idle ' END || 'group ' || v_oldGroup ||
+              ' to the ' || CASE WHEN v_newGroupIsLogging THEN 'logging ' ELSE 'idle ' END || 'group ' || v_newGroup);
     RETURN;
   END;
 $_move_seq$;
