@@ -676,12 +676,15 @@ select sequ_schema, sequ_name, sequ_time_id, sequ_last_val, sequ_is_called from 
 -----------------------------
 -- from an idle to a logging group
 select emaj.emaj_move_tables('myschema4','.*','','myGroup1','MOVE_TBL_idle_to_logging');
+select emaj.emaj_move_sequences('myschema2','.*','','myGroup1','MOVE_SEQ_idle_to_logging');
 
 -- from a logging group to another logging group
 select emaj.emaj_move_tables('myschema4','.*','','myGroup2','MOVE_TBL_logging_to_logging');
+select emaj.emaj_move_sequences('myschema2','.*','','myGroup2','MOVE_SEQ_logging_to_logging');
 
 -- and back to the idle group
 select emaj.emaj_move_tables('myschema4','.*','','myGroup4','MOVE_TBL_logging_to_idle');
+select emaj.emaj_move_sequences('myschema2','.*','','myGroup4','MOVE_SEQ_logging_to_idle');
 
 -----------------------------
 -- test end: check
@@ -707,5 +710,6 @@ select hist_function, hist_event, hist_object,
   from emaj.emaj_hist where hist_id > 6000 order by hist_id;
 select time_id, time_last_emaj_gid, time_event from emaj.emaj_time_stamp where time_id > 6000 order by time_id;
 select * from emaj.emaj_alter_plan order by 1,2,3,4,5;
+select * from emaj.emaj_rel_hist order by 1,2,3;
 
 truncate emaj.emaj_hist;

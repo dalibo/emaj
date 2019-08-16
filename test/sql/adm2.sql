@@ -324,9 +324,16 @@ select * from emaj.emaj_rollback_group('phil''s group#3",','M1_after_alter_group
 select emaj.emaj_stop_group('phil''s group#3",');
 select emaj.emaj_drop_group('phil''s group#3",');
 
+--
+reset role;
+alter table "phil's schema3".table_with_very_looooooooooooooooooooooooooooooooooooooong_name rename to "phil's tbl1";
+update emaj.emaj_group_def set grpdef_tblseq = 'phil''s tbl1'
+  where grpdef_schema = 'phil''s schema3' and grpdef_tblseq = 'table_with_very_looooooooooooooooooooooooooooooooooooooong_name';
+
 -----------------------------
 -- Step 14 : test use of groups or marks protection
 -----------------------------
+set role emaj_regression_tests_adm_user;
 -- try to rollback a protected group
 select emaj.emaj_protect_group('myGroup2');
 select * from emaj.emaj_rollback_group('myGroup2','M3',false) order by 1,2;
@@ -656,6 +663,143 @@ select emaj.emaj_stop_group('phil''s group#3",');
 select emaj.emaj_drop_group('phil''s group#3",');
 
 -----------------------------
+-- Step 19 : test use of dynamic tables group management (assign, move, remove)
+-----------------------------
+
+-- create, start and populate groups
+-- grp_tmp is empty, grp_tmp_3 and grp_tmp_4 contains tables and sequences frop respectively phil''s schema3 and myschema4
+-- grp_tmp_4 is started before being populated
+select emaj.emaj_create_group('grp_tmp',true,true);
+select emaj.emaj_create_group('grp_tmp_3',true,true);
+select emaj.emaj_create_group('grp_tmp_4',true,true);
+select emaj.emaj_start_groups('{"grp_tmp","grp_tmp_4"}','Start');
+begin;
+  select emaj.emaj_assign_tables('phil''s schema3','.*','','grp_tmp_3');
+  select emaj.emaj_assign_sequences('phil''s schema3','.*','','grp_tmp_3');
+  select emaj.emaj_assign_tables('myschema4','.*','','grp_tmp_4');
+  select emaj.emaj_assign_sequences('myschema4','.*','','grp_tmp_4');
+  select emaj.emaj_ignore_app_trigger('ADD','myschema4','mytblm','mytblm_insert_trigger');
+commit;
+select emaj.emaj_start_group('grp_tmp_3','Start');
+select emaj.emaj_set_mark_groups('{"grp_tmp_3","grp_tmp_4","grp_tmp"}','Mk1');
+
+-- perform some changes and set marks
+insert into "phil's schema3".mytbl4 (col41)
+  select i from generate_series(3,8) i;
+delete from "phil's schema3"."myTbl2\";
+insert into "phil's schema3"."myTbl2\" (col22,col23)
+  select 'After Mk1','12-31-2020' from generate_series(1,3);
+
+select emaj.emaj_set_mark_groups('{"grp_tmp_3","grp_tmp_4","grp_tmp"}','Mk2');
+
+insert into "phil's schema3"."myTbl2\" (col22,col23)
+  select 'After Mk2','12-31-2030' from generate_series(1,3);
+select nextval(E'"phil''s schema3"."phil''s seq\\1"');
+insert into myschema4.mytblm
+  select '2006-06-30'::date + ('1 year'::interval) * i, i, 'After Mk2'
+    from generate_series(0,9) i;
+
+select emaj.emaj_set_mark_groups('{"grp_tmp_3","grp_tmp_4","grp_tmp"}','Mk3');
+
+delete from myschema4.mytblm
+  where col1 = '2006-06-30';
+update myschema4.mytblm set col3 = 'After Mk2 and updated after Mk3'
+  where col1 > '2013-01-01';
+
+-- rollback to the previous mark (old syntax)
+select emaj.emaj_rollback_groups('{"grp_tmp_3","grp_tmp_4","grp_tmp"}','Mk3');
+
+-- move all tables and sequences into grp_tmp and set a common mark
+select emaj.emaj_move_tables('phil''s schema3','.*','','grp_tmp','Move_tbl_3_to_tmp');
+select emaj.emaj_move_sequences('phil''s schema3','.*','','grp_tmp','Move_seq_3_to_tmp');
+select emaj.emaj_move_tables('myschema4','.*','','grp_tmp','Move_tbl_4_to_tmp');
+select emaj.emaj_move_sequences('myschema4','.*','','grp_tmp','Move_seq_4_to_tmp');
+
+select emaj.emaj_set_mark_groups('{"grp_tmp_3","grp_tmp_4","grp_tmp"}','Mk4');
+
+-- perform some other changes and set marks
+update "phil's schema3".mytbl4 set col42 = 'Updated after Mk4'
+  where col41 > 5;
+delete from "phil's schema3"."myTbl2\"
+  where col21 = 4;
+delete from "phil's schema3".mytbl4
+  where col41 = 4;
+
+select emaj.emaj_set_mark_groups('{"grp_tmp_3","grp_tmp_4","grp_tmp"}','Mk5');
+
+insert into myschema4.mytblm
+  select '2017-06-30'::date + ('1 year'::interval) * i, 5, 'After Mk5'
+    from generate_series(0,3) i;
+select nextval(E'"phil''s schema3"."phil''s seq\\1"');
+
+select emaj.emaj_set_mark_groups('{"grp_tmp_3","grp_tmp_4","grp_tmp"}','Mk6');
+
+update myschema4.mytblm set col3 = 'After Mk5 and updated after Mk6'
+  where col1 > '2017-01-01';
+
+-- remove the table mytblm
+select emaj.emaj_remove_table('myschema4','mytblc1','Remove_mytblc1');
+select emaj.emaj_remove_sequence('phil''s schema3','phil''s seq\1','Remove_myseq1');
+
+-- logged rollback to Mk5
+select rlbk_severity, regexp_replace(rlbk_message,E'\\d\\d\\d\\d/\\d\\d\\/\\d\\d\\ \\d\\d\\:\\d\\d:\\d\\d .*?\\)','<timestamp>)','g')
+  from emaj.emaj_logged_rollback_groups('{"grp_tmp_3","grp_tmp_4","grp_tmp"}','Mk5', true);
+select emaj.emaj_rename_mark_group(group_name,'EMAJ_LAST_MARK','End_logged_rollback')
+  from (values ('grp_tmp_3'),('grp_tmp_4'),('grp_tmp')) as t(group_name);
+
+-- perform some other changes and set marks
+delete from myschema4.mytblm
+  where col1 = '2018-06-30';
+
+select emaj.emaj_set_mark_groups('{"grp_tmp_3","grp_tmp_4","grp_tmp"}','Mk7');
+
+delete from mySchema4.mytblm;
+
+-- consolidate the logged rollback
+select * from emaj.emaj_get_consolidable_rollbacks() order by 1,2;
+select emaj.emaj_consolidate_rollback_group('grp_tmp','End_logged_rollback');
+
+select stat_group, stat_schema, stat_table, stat_first_mark, stat_last_mark, stat_rows
+  from emaj.emaj_log_stat_groups('{"grp_tmp_3","grp_tmp_4","grp_tmp"}','Mk1',null)
+  order by stat_first_mark_datetime, stat_schema, stat_table;
+select mark_time_id, regexp_replace(mark_name,E'\\d\\d\.\\d\\d\\.\\d\\d\\.\\d\\d\\d\\d','%','g'), mark_group,
+       mark_is_deleted, mark_log_rows_before_next
+  from emaj.emaj_mark where mark_group in ('grp_tmp_3','grp_tmp_4','grp_tmp')
+  order by 1,2,3;
+
+-- generate sql script
+\! rm -Rf /tmp/emaj_test/sql_scripts
+\! mkdir /tmp/emaj_test/sql_scripts
+select emaj.emaj_gen_sql_groups('{"grp_tmp_3","grp_tmp_4","grp_tmp"}','Mk1',null,'/tmp/emaj_test/sql_scripts/allGroups.sql');
+--  \! grep -iP '(insert|update|delete|alter)' /tmp/emaj_test/sql_scripts/allGroups.sql
+\! rm -Rf /tmp/emaj_test/sql_scripts
+
+-- rollback to a mark set before the tables and sequences move
+select rlbk_severity, regexp_replace(rlbk_message,E'\\d\\d\\d\\d/\\d\\d\\/\\d\\d\\ \\d\\d\\:\\d\\d:\\d\\d .*?\\)','<timestamp>)','g')
+  from emaj.emaj_rollback_groups('{"grp_tmp_3","grp_tmp_4","grp_tmp"}','Mk3', false);
+select rlbk_severity, regexp_replace(rlbk_message,E'\\d\\d\\d\\d/\\d\\d\\/\\d\\d\\ \\d\\d\\:\\d\\d:\\d\\d .*?\\)','<timestamp>)','g')
+  from emaj.emaj_rollback_groups('{"grp_tmp_3","grp_tmp_4","grp_tmp"}','Mk3',true);
+
+select stat_group, stat_schema, stat_table, stat_first_mark, stat_last_mark, stat_rows
+  from emaj.emaj_log_stat_groups('{"grp_tmp_3","grp_tmp_4","grp_tmp"}','Mk1',null)
+  order by stat_first_mark_datetime, stat_schema, stat_table;
+
+-- delete all marks before Mk3
+select emaj.emaj_delete_before_mark_group(group_name,'Mk3')
+  from (values ('grp_tmp_3'),('grp_tmp_4'),('grp_tmp')) as t(group_name);
+
+-- reset groups at their initial state
+select emaj.emaj_stop_group('grp_tmp_3');
+select emaj.emaj_drop_group('grp_tmp_3');
+select emaj.emaj_set_mark_group('grp_tmp_4','Last_mark');
+select emaj.emaj_force_drop_group('grp_tmp_4');
+select emaj.emaj_stop_group('grp_tmp');
+select emaj.emaj_drop_group('grp_tmp');
+
+select * from emaj.emaj_rel_hist order by 1,2,3;
+select * from emaj.emaj_relation where rel_schema in ('phil''s schema3','myschema4');
+
+-----------------------------
 -- test end: check, reset history and force sequences id
 -----------------------------
 -- first set all rollback events state
@@ -686,7 +830,6 @@ select hist_id, hist_function, hist_event, hist_object,
   from emaj.emaj_hist order by hist_id;
 --
 reset role;
-alter table "phil's schema3".table_with_very_looooooooooooooooooooooooooooooooooooooong_name rename to "phil's tbl1";
 
 -- the groups are left in their current state for the parallel rollback test.
 select count(*) from mySchema1.myTbl4;

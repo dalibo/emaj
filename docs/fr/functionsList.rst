@@ -142,13 +142,49 @@ Les fonctions E-Maj disponibles pour les utilisateurs sont listées ci-dessous p
 +--------------------------------------------------+-------------------------------+---------------------------------------+
 | :ref:`emaj_logged_rollback_group                 | | groupe TEXT,                | SETOF (sévérité TEXT, message TEXT)   |
 | <emaj_logged_rollback_group>`                    | | marque TEXT,                |                                       |
-|                                                  | | est_modif_groupe_autorisé   |                                       |
+|                                                  | | est.modif.groupe.autorisée  |                                       |
 |                                                  | |  BOOLEAN                    |                                       |
 +--------------------------------------------------+-------------------------------+---------------------------------------+
 | :doc:`emaj_logged_rollback_groups                | | tableau.groupes TEXT[],     | SETOF (sévérité TEXT, message TEXT)   |
 | <multiGroupsFunctions>`                          | | marque TEXT,                |                                       |
-|                                                  | | est_modif_groupe_autorisé   |                                       |
+|                                                  | | est.modif.groupe.autorisée  |                                       |
 |                                                  | |  BOOLEAN                    |                                       |
++--------------------------------------------------+-------------------------------+---------------------------------------+
+| :ref:`emaj_move_sequence                         | | schéma TEXT,                | 1 INT                                 |
+| <dynamic_ajustment>`                             | | séquence TEXT,              |                                       |
+|                                                  | | nouveau.groupe TEXT,        |                                       |
+|                                                  | | [ marque TEXT ]             |                                       |
++--------------------------------------------------+-------------------------------+---------------------------------------+
+| :ref:`emaj_move_sequences                        | | schéma TEXT,                | nb.séquences INT                      |
+| <dynamic_ajustment>`                             | | tableau.séquences TEXT[],   |                                       |
+|                                                  | | nouveau.groupe TEXT,        |                                       |
+|                                                  | | [ marque TEXT ]             |                                       |
++--------------------------------------------------+-------------------------------+---------------------------------------+
+| :ref:`emaj_move_sequences                        | | schéma TEXT,                | nb.séquences INT                      |
+| <dynamic_ajustment>`                             | | filtre.séquences.à.inclure  |                                       |
+|                                                  | |   TEXT,                     |                                       |
+|                                                  | | filtre.séquences.à.exclure  |                                       |
+|                                                  | |   TEXT,                     |                                       |
+|                                                  | | nouveau.groupe TEXT,        |                                       |
+|                                                  | | [ marque TEXT ]             |                                       |
++--------------------------------------------------+-------------------------------+---------------------------------------+
+| :ref:`emaj_move_table                            | | schéma TEXT,                | 1 INT                                 |
+| <dynamic_ajustment>`                             | | table TEXT,                 |                                       |
+|                                                  | | nouveau.groupe TEXT,        |                                       |
+|                                                  | | [ marque TEXT ]             |                                       |
++--------------------------------------------------+-------------------------------+---------------------------------------+
+| :ref:`emaj_move_tables                           | | schéma TEXT,                | nb.tables INT                         |
+| <dynamic_ajustment>`                             | | tableau.tables TEXT[],      |                                       |
+|                                                  | | nouveau.groupe TEXT,        |                                       |
+|                                                  | | [ marque TEXT ]             |                                       |
++--------------------------------------------------+-------------------------------+---------------------------------------+
+| :ref:`emaj_move_tables                           | | schéma TEXT,                | nb.tables INT                         |
+| <dynamic_ajustment>`                             | | filtre.tables.à.inclure     |                                       |
+|                                                  | |   TEXT,                     |                                       |
+|                                                  | | filtre.tables.à.exclure     |                                       |
+|                                                  | |   TEXT,                     |                                       |
+|                                                  | | nouveau.groupe TEXT,        |                                       |
+|                                                  | | [ marque TEXT ]             |                                       |
 +--------------------------------------------------+-------------------------------+---------------------------------------+
 | :ref:`emaj_protect_group                         | | groupe TEXT                 | 0/1 INT                               |
 | <emaj_protect_group>`                            |                               |                                       |

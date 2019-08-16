@@ -145,13 +145,49 @@ E-Maj functions that are available to users are listed in alphabetic order below
 +--------------------------------------------------+-------------------------------+---------------------------------------+
 | :ref:`emaj_logged_rollback_group                 | | group TEXT,                 | SETOF (severity TEXT, message TEXT)   |
 | <emaj_logged_rollback_group>`                    | | mark TEXT,                  |                                       |
-|                                                  | | is_alter_group_allowed      |                                       |
+|                                                  | | is.alter.group.allowed      |                                       |
 |                                                  | |  BOOLEAN                    |                                       |
 +--------------------------------------------------+-------------------------------+---------------------------------------+
 | :doc:`emaj_logged_rollback_groups                | | groups.array TEXT[],        | SETOF (severity TEXT, message TEXT)   |
 | <multiGroupsFunctions>`                          | | mark TEXT,                  |                                       |
-|                                                  | | is_alter_group_allowed      |                                       |
+|                                                  | | is.alter.group.allowed      |                                       |
 |                                                  | |  BOOLEAN                    |                                       |
++--------------------------------------------------+-------------------------------+---------------------------------------+
+| :ref:`emaj_move_sequence                         | | schema TEXT,                | 1 INT                                 |
+| <dynamic_ajustment>`                             | | sequence TEXT,              |                                       |
+|                                                  | | new.group TEXT,             |                                       |
+|                                                  | | [ mark TEXT ]               |                                       |
++--------------------------------------------------+-------------------------------+---------------------------------------+
+| :ref:`emaj_move_sequences                        | | schema TEXT,                | #.sequences INT                       |
+| <dynamic_ajustment>`                             | | sequences.array TEXT[],     |                                       |
+|                                                  | | new.group TEXT,             |                                       |
+|                                                  | | [ mark TEXT ]               |                                       |
++--------------------------------------------------+-------------------------------+---------------------------------------+
+| :ref:`emaj_move_sequences                        | | schema TEXT,                | #.sequences INT                       |
+| <dynamic_ajustment>`                             | | sequences.to.include.filter |                                       |
+|                                                  | |   TEXT,                     |                                       |
+|                                                  | | sequences.to.exclude.filter |                                       |
+|                                                  | |   TEXT,                     |                                       |
+|                                                  | | new.group TEXT,             |                                       |
+|                                                  | | [ mark TEXT ]               |                                       |
++--------------------------------------------------+-------------------------------+---------------------------------------+
+| :ref:`emaj_move_table                            | | schema TEXT,                | 1 INT                                 |
+| <dynamic_ajustment>`                             | | table TEXT,                 |                                       |
+|                                                  | | new.group TEXT,             |                                       |
+|                                                  | | [ mark TEXT ]               |                                       |
++--------------------------------------------------+-------------------------------+---------------------------------------+
+| :ref:`emaj_move_tables                           | | schema TEXT,                | #.tables INT                          |
+| <dynamic_ajustment>`                             | | tables.array TEXT[],        |                                       |
+|                                                  | | new.group TEXT,             |                                       |
+|                                                  | | [ mark TEXT ]               |                                       |
++--------------------------------------------------+-------------------------------+---------------------------------------+
+| :ref:`emaj_move_tables                           | | schema TEXT,                | #.tables INT                          |
+| <dynamic_ajustment>`                             | | tables.to.include.filter    |                                       |
+|                                                  | |   TEXT,                     |                                       |
+|                                                  | | tables.to.exclude.filter    |                                       |
+|                                                  | |   TEXT,                     |                                       |
+|                                                  | | new.group TEXT,             |                                       |
+|                                                  | | [ mark TEXT ]               |                                       |
 +--------------------------------------------------+-------------------------------+---------------------------------------+
 | :ref:`emaj_protect_group                         | | group TEXT                  | 0/1 INT                               |
 | <emaj_protect_group>`                            |                               |                                       |

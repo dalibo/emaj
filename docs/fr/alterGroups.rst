@@ -73,7 +73,8 @@ Néanmoins certaines actions sont possibles sur des groupes de tables maintenus 
 | Ajouter une table/séquence à un groupe | Oui            | Ajustement emaj_group_def      |
 |                                        |                | ou ajustement dynamique        |
 +----------------------------------------+----------------+--------------------------------+
-| Changer le groupe d'appartenance       | Oui            | Ajustement emaj_group_def      |
+| Déplacer une table/séquence vers un    | Oui            | Ajustement emaj_group_def      |
+| autre groupe                           |                | ou ajustement dynamique        |
 +----------------------------------------+----------------+--------------------------------+
 | Réparer une table ou une séquence      | Oui            | Enchaînement suppression/ajout |
 +----------------------------------------+----------------+--------------------------------+
@@ -127,7 +128,7 @@ Méthode "Ajustement dynamique"
 
 Quelques fonctions permettent d’ajuster dynamiquement le contenu des groupes de tables sans modification de la table *emaj_group_def*.
 
-Ainsi, pour ajouter une ou plusieurs tables dans un groupe de tables ::
+Ainsi, pour **ajouter une ou plusieurs tables** dans un groupe de tables ::
 
 	SELECT emaj.emaj_assign_table(‘<schéma>’,’<table>’, '<nom.du.groupe>' [,’propriétés’ [,’<marque>’]]);
 
@@ -139,7 +140,7 @@ ou ::
 
 	SELECT emaj.emaj_assign_tables(‘<schéma>’, '<filtre.de.tables.à.inclure>', '<filtre.de.tables.à.exclure>', '<nom.du.groupe>' [,’propriétés’ [,’<marque>’]] );
 
-Pour ajouter une ou plusieurs séquences dans un groupe de tables ::
+Pour **ajouter une ou plusieurs séquences** dans un groupe de tables ::
 
 	SELECT emaj.emaj_assign_sequence('<schéma>', '<séquence>', '<nom.du.groupe>' [,'<marque>']);
 
@@ -151,7 +152,7 @@ ou ::
 
 	SELECT emaj.emaj_assign_sequences('<schéma>', '<filtre.de.séquences.à.inclure>', '<filtre.de.séquences.à.exclure>', '<nom.du.groupe>' [,’<marque>’] );
 
-Pour retirer une ou plusieurs tables d’un groupe de tables ::
+Pour **retirer une ou plusieurs tables** d’un groupe de tables ::
 
 	SELECT emaj.emaj_remove_table('<schéma>', '<table>' [,’<marque>’] );
 
@@ -163,7 +164,7 @@ ou ::
 
 	SELECT emaj.emaj_remove_tables('<schéma>', '<filtre.de.tables.à.inclure>', '<filtre.de.tables.à.exclure>' [,'<marque>'] );
 
-Pour retirer une ou plusieurs séquences d’un groupe de tables ::
+Pour **retirer une ou plusieurs séquences** d’un groupe de tables ::
 
 	SELECT emaj.emaj_remove_sequence('<schéma>', '<séquence>' [,’<marque>’] );
 
@@ -174,6 +175,30 @@ ou ::
 ou ::
 
 	SELECT emaj.emaj_remove_sequences('<schéma>', '<filtre.de.séquences.à.inclure>', '<filtre.de.séquences.à.exclure>' [,'<marque>'] );
+
+Pour **déplacer une ou plusieurs tables** vers un autre groupe de tables ::
+
+	SELECT emaj.emaj_move_table('<schéma>', '<table>', 'nouveau.groupe' [,’<marque>’] );
+
+ou ::
+
+	SELECT emaj.emaj_move_tables('<schéma>', '<tableau.de.tables>', 'nouveau.groupe' [,'<marque>'] );
+
+ou ::
+
+	SELECT emaj.emaj_move_tables('<schéma>', '<filtre.de.tables.à.inclure>', '<filtre.de.tables.à.exclure>', 'nouveau.groupe' [,'<marque>'] );
+
+Pour **déplacer une ou plusieurs séquences** vers un autre groupe de tables ::
+
+	SELECT emaj.emaj_move_sequence('<schéma>', '<séquence>', 'nouveau.groupe' [,’<marque>’] );
+
+ou ::
+
+	SELECT emaj.emaj_move_sequences('<schéma>', '<tableau.de.séquences>', 'nouveau.groupe' [,'<marque>'] );
+
+ou ::
+
+	SELECT emaj.emaj_move_sequences('<schéma>', '<filtre.de.séquences.à.inclure>', '<filtre.de.séquences.à.exclure>', 'nouveau.groupe' [,'<marque>'] );
 
 Pour les fonctions traitant plusieurs tables ou séquences en une seule opération, la liste des tables ou séquences à traiter est soit fournie par un paramètre de type tableau de *TEXT*, soit construite à partir de deux expressions rationnelles fournies en paramètres.
 
@@ -214,9 +239,9 @@ Pour toutes les fonctions, un verrou exclusif est posé sur chaque table du ou d
 
 Lors de l’exécution des fonctions, les groupes de tables concernés peuvent être en état *IDLE* ou *LOGGING*.
 
-Lorsque le groupe de table est actif (état *LOGGING*), une marque est posée. Son nom prend la valeur du dernier paramètre fourni lors de l’appel de la fonction. Ce paramètre est optionnel. S’il n’est pas fourni, le nom de la marque est généré avec un préfixe "ASSIGN" ou "REMOVE".
+Lorsque le groupe de table est actif (état *LOGGING*), une marque est posée. Son nom prend la valeur du dernier paramètre fourni lors de l’appel de la fonction. Ce paramètre est optionnel. S’il n’est pas fourni, le nom de la marque est généré avec un préfixe "ASSIGN", "MOVE" ou "REMOVE".
 
-Toutes ces fonctions retournent le nombre de tables ou séquences effectivement ajoutées ou supprimées.
+Toutes ces fonctions retournent le nombre de tables ou séquences effectivement ajoutées, déplacées ou supprimées.
 
 .. _emaj_sync_def_group:
 

@@ -9,10 +9,11 @@ E-Maj - Change log
     dynamically assign or remove tables or sequences into a tables group,
     without updating the emaj_group_def table. The group may be either in
     idle or logging state.
-  * The new emaj_move_table() and emaj_move_tables() funtions allow to
-    dynamically move one or several tables from one tables group to another,
-    without updating the emaj_group_def table. The groups may be either in
-    idle or logging state.
+  * The new emaj_move_table(), emaj_move_tables(), emaj_move_sequence() and
+    emaj_move_sequences() funtions allow to dynamically move one or several
+    tables or sequences from one tables group to another, without updating
+    the emaj_group_def table. The groups may be either in idle or logging
+    state.
   * The new emaj_sync_def_group() allows to synchronize the emaj_group_def
     table with the current content of created groups whose content may have
     been dynamically modified.
@@ -31,6 +32,9 @@ E-Maj - Change log
   * Fix a bug. When a table was moved from one group to another and one of
     the group then is dropped, trying to set a mark on or stop the other
     group fails because some sequences information had been mistakenly deleted.
+  * Fix a bug that occured when a table has been moved from one tables group
+    to another and then removed from any group. The next tables group
+    consistency checks erroneously detected a missing log table.
 
 3.1.0 (2019-Jun-20)
 ------

@@ -1,5 +1,5 @@
 -- alter.sql : test emaj_alter_group(), emaj_alter_groups(),
---                  emaj_move_table() and emaj_move_tables() functions
+--                  emaj_move_table(), emaj_move_tables(), emaj_move_sequence() and emaj_move_sequences() functions
 --
 -- set sequence restart value
 alter sequence emaj.emaj_hist_hist_id_seq restart 6000;
@@ -301,7 +301,7 @@ select emaj.emaj_move_tables('myschema1',array[''],'myGroup1');
 select emaj.emaj_move_tables('myschema1',array['mytbl2','mytbl2b','mytbl2'],'myGroup2');
 
 select rel_schema, rel_tblseq, rel_group from emaj.emaj_relation
-  where rel_schema = 'myschema1' and upper_inf(rel_time_range)
+  where rel_schema = 'myschema1' and rel_kind = 'r' and upper_inf(rel_time_range)
   order by 1,2,3;
 
 -----------------------------------
@@ -322,5 +322,58 @@ select altr_time_id, altr_step, altr_schema, altr_tblseq, altr_group, altr_prior
 select group_last_alter_time_id, group_nb_table, group_nb_sequence from emaj.emaj_group 
   where group_name in ('myGroup1','myGroup2') order by 1 desc ,2,3;
 
+-----------------------------------
+-- emaj_move_sequence
+-----------------------------------
+
+-- error cases
+-- sequence not in a group
+select emaj.emaj_move_sequence('dummySchema','myseq1','myGroup1');
+select emaj.emaj_move_sequence('myschema2','dummySequence','myGroup1');
+-- bad new group
+select emaj.emaj_move_sequence('myschema2','myseq1','dummyGroup');
+-- bad mark
+select emaj.emaj_move_sequence('myschema2','myseq1','myGroup1','EMAJ_LAST_MARK');
+
+-- move to the same group
+select emaj.emaj_move_sequence('myschema2','myseq1','myGroup2');
+
+-- ok
+select emaj.emaj_move_sequence('myschema2','myseq1','myGroup1');
+
+-----------------------------------
+-- emaj_move_sequences with array
+-----------------------------------
+-- error cases
+-- sequence not in a group
+select emaj.emaj_move_sequences('myschema2',array['dummySequence','myseq1'],'myGroup1');
+-- empty tables array
+select emaj.emaj_move_sequences('myschema2',array[]::text[],'myGroup1');
+select emaj.emaj_move_sequences('myschema2',null,'myGroup1');
+select emaj.emaj_move_sequences('myschema2',array[''],'myGroup1');
+
+-- ok (with a duplicate sequence name)
+select emaj.emaj_move_sequences('myschema2',array['myseq1','myseq1'],'myGroup4');
+
+select rel_schema, rel_tblseq, rel_group from emaj.emaj_relation
+  where rel_schema = 'myschema2' and rel_kind = 'S' and upper_inf(rel_time_range)
+  order by 1,2,3;
+
+-----------------------------------
+-- emaj_move_sequences with filters
+-----------------------------------
+-- empty sequences array
+select emaj.emaj_move_sequences('myschema21',null,null,'myGroup2');
+select emaj.emaj_move_sequences('myschema21','','','myGroup2');
+select emaj.emaj_move_sequences('myschema21','myseq1','myseq1','myGroup2');
+
+-- ok and go back to myGroup2
+select emaj.emaj_move_sequences('myschema2','.*','','myGroup2');
+
+select altr_time_id, altr_step, altr_schema, altr_tblseq, altr_group, altr_priority, altr_group_is_logging,
+       altr_new_group, altr_new_group_is_logging from emaj.emaj_alter_plan
+  order by 1 desc, 2,3,4 limit 3;
+select group_last_alter_time_id, group_nb_table, group_nb_sequence from emaj.emaj_group 
+  where group_name in ('myGroup1','myGroup2','myGroup4') order by 1 desc ,2,3;
 
 -- checks are performed by the alterLogging.sql script

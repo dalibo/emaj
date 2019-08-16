@@ -84,6 +84,14 @@ La colonne *hist_function* peut prendre les valeurs suivantes.
 +----------------------------------+---------------------------------------------------------------------------------------+
 | LOCK_SESSION                     | pose d'un verrou sur les tables d'une session de rollback                             |
 +----------------------------------+---------------------------------------------------------------------------------------+
+| MOVE_SEQUENCE                    | déplacement d’une séquence vers un autre groupe de tables                             |
++----------------------------------+---------------------------------------------------------------------------------------+
+| MOVE_SEQUENCES                   | déplacement de séquences vers un autre groupe de tables                               |
++----------------------------------+---------------------------------------------------------------------------------------+
+| MOVE_TABLE                       | déplacement d’une table vers un autre groupe de tables                                |
++----------------------------------+---------------------------------------------------------------------------------------+
+| MOVE_TABLES                      | déplacement de tables vers un autre groupe de tables                                  |
++----------------------------------+---------------------------------------------------------------------------------------+
 | PROTECT_GROUP                    | pose d'une protection contre les rollbacks sur un groupe                              |
 +----------------------------------+---------------------------------------------------------------------------------------+
 | PROTECT_MARK_GROUP               | pose d'une protection contre les rollbacks sur une marque d'un groupe                 |

@@ -73,7 +73,8 @@ However, some actions are possible while the tables groups are in *LOGGING* stat
 | Add a table/sequence to a group                | Yes           | emaj_group_def update |
 |                                                |               | or dynamic adjustment |
 +------------------------------------------------+---------------+-----------------------+
-| Change the group ownership of a table/sequence | Yes           | emaj_group_def update |
+| Move a table/sequence to another tables group  | Yes           | emaj_group_def update |
+|                                                |               | or dynamic adjustment |
 +------------------------------------------------+---------------+-----------------------+
 | Repair a table or a sequence                   | Yes           | chaining remove/add   |
 +------------------------------------------------+---------------+-----------------------+
@@ -102,7 +103,7 @@ However, some actions are possible while the tables groups are in *LOGGING* stat
 
 Somme functions allow to dynamically adjust the tables groups content without modifying the *emaj_group_def* table.
 
-To add one or several tables into a tables group::
+To **add one or several tables** into a tables group::
 
 	SELECT emaj.emaj_assign_table('<schema>', '<table>', '<groupe.name>' [,'properties' [,'<mark>']]);
 
@@ -115,7 +116,7 @@ or ::
 	SELECT emaj.emaj_assign_tables('<schema>', '<tables.to.include.filter>', '<tables.to.exclude.filter>', '<group.name>' [,'properties' [, '<mark>']] );
 
 
-To add one or several sequences into a tables group::
+To **add one or several sequences** into a tables group::
 
 	SELECT emaj.emaj_assign_sequence('<schema>', '<sequence>', '<group.name>' [,'<mark>']);
 
@@ -127,7 +128,7 @@ or ::
 
 	SELECT emaj.emaj_assign_sequences('<schema>', '<sequences.to.include.filter>', '<sequences.to.exclude.filter>', '<group.name>' [,'properties' [, '<mark>']] );
 
-To remove one or several tables from a tables group::
+To **remove one or several tables** from a tables group::
 
 	SELECT emaj.emaj_remove_table('<schema>', '<table>' [,'<mark>'] );
 
@@ -139,7 +140,7 @@ or ::
 
 	SELECT emaj.emaj_remove_tables('<schema>', '<tables.to.include.filter>', '<tables.to.exclude.filter>' [,'<mark>'] );
 
-To remove one or several sequences from a tables group::
+To **remove one or several sequences** from a tables group::
 
 	SELECT emaj.emaj_remove_sequence('<schema>', '<sequence>' [,'<mark>'] );
 
@@ -150,6 +151,30 @@ or ::
 or ::
 
 	SELECT emaj.emaj_remove_sequences('<schema>', '<sequences.to.include.filter>', '<sequences.to.exclude.filter>' [,'<mark>'] );
+
+To **move one or several tables** to another tables group::
+
+	SELECT emaj.emaj_move_table('<schema>', '<table>', '<new.group' [,'<mark>'] );
+
+or ::
+
+	SELECT emaj.emaj_move_tables('<schema>', '<tables.array>', '<new.group' [,'<mark>'] );
+
+or ::
+
+	SELECT emaj.emaj_move_tables('<schema>', '<tables.to.include.filter>', '<tables.to.exclude.filter>', '<new.group' [,'<mark>'] );
+
+To **move one or several sequences** to another tables group::
+
+	SELECT emaj.emaj_move_sequence('<schema>', '<sequence>', '<new.group' [,'<mark>'] );
+
+or ::
+
+	SELECT emaj.emaj_move_sequences('<schema>', '<sequences.array>', '<new.group' [,'<mark>'] );
+
+or ::
+
+	SELECT emaj.emaj_move_sequences('<schema>', '<sequences.to.include.filter>', '<sequences.to.exclude.filter>', '<new.group' [,'<mark>'] );
 
 For functions processing several tables or sequences in a single operation, the list of tables or sequences to process is either provided by a parameter of type *TEXT* array, or  built with two regular expressions provided as parameters. 
 
@@ -190,9 +215,9 @@ For all these functions, an exclusive lock is set on each table of the concerned
 
 These concerned tables groups can be either in *IDLE* or in *LOGGING* state while the functions are executed.
 
-When the tables group is in *LOGGING* state, a mark is set. Its name is defined by the last parameter of the function. This parameter is optional. If not supplied, the mark name is generated, with a "ASSIGN" or "REMOVE" prefix.
+When the tables group is in *LOGGING* state, a mark is set. Its name is defined by the last parameter of the function. This parameter is optional. If not supplied, the mark name is generated, with a "ASSIGN", "MOVE" or "REMOVE" prefix.
 
-All these functions return the number of effectively assigned or removed tables or sequences.
+All these functions return the number of effectively assigned, moved or removed tables or sequences.
 
 .. _emaj_sync_def_group:
 
