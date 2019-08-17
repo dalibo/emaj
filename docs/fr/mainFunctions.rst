@@ -21,21 +21,21 @@ La table emaj_group_def
 
 Le contenu du ou des groupes de tables que l'on souhaite gérer se définit en garnissant la table **emaj.emaj_group_def**. Il faut insérer dans cette table une ligne par table ou séquence applicative à intégrer dans un groupe. Cette table *emaj_group_def* a la structure suivante :
 
-+--------------------------+------+------------------------------------------------------------------------------------------------------+
-| Colonne                  | Type | Description                                                                                          |
-+==========================+======+======================================================================================================+
-| grpdef_group             | TEXT | nom du groupe de tables                                                                              |
-+--------------------------+------+------------------------------------------------------------------------------------------------------+
-| grpdef_schema            | TEXT | nom du schéma contenant la table ou la séquence applicative                                          |
-+--------------------------+------+------------------------------------------------------------------------------------------------------+
-| grpdef_tblseq            | TEXT | nom de la table ou de la séquence applicative                                                        |
-+--------------------------+------+------------------------------------------------------------------------------------------------------+
-| grpdef_priority          | INT  | niveau de priorité de la table ou de la séquence dans les traitements E-Maj (optionnel)              |
-+--------------------------+------+------------------------------------------------------------------------------------------------------+
-| grpdef_log_dat_tsp       | TEXT | nom du tablespace hébergeant la table de log (optionnel)                                             |
-+--------------------------+------+------------------------------------------------------------------------------------------------------+
-| grpdef_log_idx_tsp       | TEXT | nom du tablespace hébergeant l'index de la table de log (optionnel)                                  |
-+--------------------------+------+------------------------------------------------------------------------------------------------------+
++--------------------------+------+-------------------------------------------------------------------------+
+| Colonne                  | Type | Description                                                             |
++==========================+======+=========================================================================+
+| grpdef_group             | TEXT | nom du groupe de tables                                                 |
++--------------------------+------+-------------------------------------------------------------------------+
+| grpdef_schema            | TEXT | nom du schéma contenant la table ou la séquence applicative             |
++--------------------------+------+-------------------------------------------------------------------------+
+| grpdef_tblseq            | TEXT | nom de la table ou de la séquence applicative                           |
++--------------------------+------+-------------------------------------------------------------------------+
+| grpdef_priority          | INT  | niveau de priorité de la table dans les traitements E-Maj (optionnel)   |
++--------------------------+------+-------------------------------------------------------------------------+
+| grpdef_log_dat_tsp       | TEXT | nom du tablespace hébergeant la table de log (optionnel)                |
++--------------------------+------+-------------------------------------------------------------------------+
+| grpdef_log_idx_tsp       | TEXT | nom du tablespace hébergeant l'index de la table de log (optionnel)     |
++--------------------------+------+-------------------------------------------------------------------------+
 
 L'administrateur peut alimenter cette table par tout moyen usuel : verbe SQL *INSERT*, verbe SQL *COPY*, commande *psql \\copy*, outil graphique, etc.
 
@@ -72,7 +72,7 @@ Pour optimiser les performances des installations E-Maj comportant un très gran
 
 Si une colonne *grpdef_log_dat_tsp* ou *grpdef_log_idx_tsp* contient une valeur *NULL* (valeur par défaut), le tablespace par défaut de la session courante au moment de la création du groupe est utilisé.
 
-Pour les séquences, les colonnes *grpdef_log_dat_tsp* et *grpdef_log_idx_tsp* doivent rester NULL.
+Pour les séquences, les colonnes *grpdef_priority*, *grpdef_log_dat_tsp* et *grpdef_log_idx_tsp* doivent rester NULL.
 
 .. _emaj_create_group:
 

@@ -1432,7 +1432,7 @@ select * from emaj.emaj_group_def order by 1,2,3;
  dummyGrp2        | myschema1      | dummyTable                                              |                 |                    | 
  dummyGrp3        | myschema1      | mytbl1                                                  |                 |                    | 
  dummyGrp3        | myschema2      | mytbl2                                                  |                 |                    | 
- myGroup1         | myschema1      | myTbl3_col31_seq                                        |               1 |                    | 
+ myGroup1         | myschema1      | myTbl3_col31_seq                                        |                 |                    | 
  myGroup1         | myschema1      | mytbl1                                                  |              20 |                    | 
  myGroup1         | myschema1      | mytbl2                                                  |                 |                    | 
  myGroup1         | myschema1      | mytbl2b                                                 |                 |                    | 
@@ -1451,83 +1451,11 @@ select * from emaj.emaj_group_def order by 1,2,3;
  phil's group#3", | phil's schema3 | phil's tbl1                                             |                 |                    | 
 (21 rows)
 
-select rlbp_rlbk_id, rlbp_step, rlbp_schema, rlbp_table, rlbp_object from emaj.emaj_rlbk_plan order by 1,2,3,4,5;
- rlbp_rlbk_id |  rlbp_step  | rlbp_schema | rlbp_table |    rlbp_object    
---------------+-------------+-------------+------------+-------------------
-            1 | DIS_LOG_TRG | myschema1   | mytbl1     | 
-            1 | DROP_FK     | myschema1   | mytbl4     | mytbl4_col44_fkey
-            1 | RLBK_TABLE  | myschema1   | mytbl1     | 
-            1 | DELETE_LOG  | myschema1   | mytbl1     | 
-            1 | ADD_FK      | myschema1   | mytbl4     | mytbl4_col44_fkey
-            1 | ENA_LOG_TRG | myschema1   | mytbl1     | 
-            1 | CTRL-DBLINK |             |            | 
-            2 | DIS_APP_TRG | myschema1   | mytbl2     | mytbl2trg1
-            2 | DIS_LOG_TRG | myschema1   | mytbl2     | 
-            2 | DIS_LOG_TRG | myschema1   | mytbl2b    | 
-            2 | DIS_LOG_TRG | myschema1   | mytbl4     | 
-            2 | DROP_FK     | myschema1   | mytbl4     | mytbl4_col44_fkey
-            2 | SET_FK_DEF  | myschema1   | mytbl4     | mytbl4_col43_fkey
-            2 | RLBK_TABLE  | myschema1   | mytbl2     | 
-            2 | RLBK_TABLE  | myschema1   | mytbl2b    | 
-            2 | RLBK_TABLE  | myschema1   | mytbl4     | 
-            2 | DELETE_LOG  | myschema1   | mytbl2     | 
-            2 | DELETE_LOG  | myschema1   | mytbl2b    | 
-            2 | DELETE_LOG  | myschema1   | mytbl4     | 
-            2 | SET_FK_IMM  | myschema1   | mytbl4     | mytbl4_col43_fkey
-            2 | ADD_FK      | myschema1   | mytbl4     | mytbl4_col44_fkey
-            2 | ENA_APP_TRG | myschema1   | mytbl2     | mytbl2trg1
-            2 | ENA_LOG_TRG | myschema1   | mytbl2     | 
-            2 | ENA_LOG_TRG | myschema1   | mytbl2b    | 
-            2 | ENA_LOG_TRG | myschema1   | mytbl4     | 
-            2 | CTRL-DBLINK |             |            | 
-            3 | DROP_FK     | myschema2   | mytbl4     | mytbl4_col44_fkey
-            3 | RLBK_TABLE  | myschema2   | mytbl4     | 
-            3 | SET_FK_IMM  | myschema2   | mytbl4     | mytbl4_col43_fkey
-            3 | ADD_FK      | myschema2   | mytbl4     | mytbl4_col44_fkey
-            3 | CTRL-DBLINK |             |            | 
-            4 | DROP_FK     | myschema2   | mytbl4     | mytbl4_col44_fkey
-            4 | RLBK_TABLE  | myschema2   | mytbl4     | 
-            4 | SET_FK_IMM  | myschema2   | mytbl4     | mytbl4_col43_fkey
-            4 | ADD_FK      | myschema2   | mytbl4     | mytbl4_col44_fkey
-            4 | CTRL-DBLINK |             |            | 
-(36 rows)
-
-select rlbt_step, rlbt_schema, rlbt_table, rlbt_object, rlbt_rlbk_id, rlbt_quantity from emaj.emaj_rlbk_stat order by 1,2,3,4,5;
-  rlbt_step  | rlbt_schema | rlbt_table |    rlbt_object    | rlbt_rlbk_id | rlbt_quantity 
--------------+-------------+------------+-------------------+--------------+---------------
- DIS_APP_TRG |             |            |                   |            2 |             1
- DIS_LOG_TRG |             |            |                   |            1 |             1
- DIS_LOG_TRG |             |            |                   |            2 |             3
- DROP_FK     |             |            |                   |            1 |             1
- DROP_FK     |             |            |                   |            2 |             1
- DROP_FK     |             |            |                   |            3 |             1
- DROP_FK     |             |            |                   |            4 |             1
- SET_FK_DEF  |             |            |                   |            2 |             1
- RLBK_TABLE  | myschema1   | mytbl1     |                   |            1 |             6
- RLBK_TABLE  | myschema1   | mytbl2     |                   |            2 |             1
- RLBK_TABLE  | myschema1   | mytbl2b    |                   |            2 |             1
- RLBK_TABLE  | myschema1   | mytbl4     |                   |            2 |             1
- RLBK_TABLE  | myschema2   | mytbl4     |                   |            3 |             4
- RLBK_TABLE  | myschema2   | mytbl4     |                   |            4 |             2
- DELETE_LOG  | myschema1   | mytbl1     |                   |            1 |             6
- DELETE_LOG  | myschema1   | mytbl2     |                   |            2 |             1
- DELETE_LOG  | myschema1   | mytbl2b    |                   |            2 |             1
- DELETE_LOG  | myschema1   | mytbl4     |                   |            2 |             1
- SET_FK_IMM  | myschema1   | mytbl4     | mytbl4_col43_fkey |            2 |             2
- SET_FK_IMM  | myschema2   | mytbl4     | mytbl4_col43_fkey |            3 |             4
- SET_FK_IMM  | myschema2   | mytbl4     | mytbl4_col43_fkey |            4 |             2
- ADD_FK      | myschema1   | mytbl4     | mytbl4_col44_fkey |            1 |             0
- ADD_FK      | myschema1   | mytbl4     | mytbl4_col44_fkey |            2 |             0
- ADD_FK      | myschema2   | mytbl4     | mytbl4_col44_fkey |            3 |             0
- ADD_FK      | myschema2   | mytbl4     | mytbl4_col44_fkey |            4 |             0
- ENA_APP_TRG |             |            |                   |            2 |             1
- ENA_LOG_TRG |             |            |                   |            1 |             1
- ENA_LOG_TRG |             |            |                   |            2 |             3
- CTRL-DBLINK |             |            |                   |            1 |             6
- CTRL-DBLINK |             |            |                   |            2 |            18
- CTRL-DBLINK |             |            |                   |            3 |             4
- CTRL-DBLINK |             |            |                   |            4 |             4
-(32 rows)
+--   the next statement shouldn't return any row
+select * from emaj.emaj_relation where rel_kind = 'S' and rel_priority is not null;
+ rel_schema | rel_tblseq | rel_time_range | rel_group | rel_kind | rel_priority | rel_log_schema | rel_log_table | rel_log_dat_tsp | rel_log_index | rel_log_idx_tsp | rel_log_sequence | rel_log_function | rel_sql_columns | rel_sql_pk_columns | rel_sql_pk_eq_conditions | rel_log_seq_last_value | rel_emaj_verb_attnum 
+------------+------------+----------------+-----------+----------+--------------+----------------+---------------+-----------------+---------------+-----------------+------------------+------------------+-----------------+--------------------+--------------------------+------------------------+----------------------
+(0 rows)
 
 -- log tables
 select col11, col12, col13, emaj_verb, emaj_tuple, emaj_gid from emaj_mySchema1.myTbl1_log order by emaj_gid, emaj_tuple desc;

@@ -3085,10 +3085,10 @@ SQL statement "SELECT emaj._alter_exec(v_timeId, v_multiGroup)"
 PL/pgSQL function emaj._alter_groups(text[],boolean,text) line 58 at PERFORM
 PL/pgSQL function emaj.emaj_alter_group(text,text) line 6 at RETURN
 WARNING:  _create_seq: The sequence myschema4.mytblp_col3_seq is linked to table myschema4.mytblp but this table does not belong to any tables group.
-CONTEXT:  SQL statement "SELECT emaj._create_seq(v_schema, v_sequence, v_group, v_priority, v_timeId)"
-PL/pgSQL function emaj._add_seq(text,text,text,integer,boolean,bigint,text) line 9 at PERFORM
-SQL statement "SELECT emaj._add_seq(r_plan.altr_schema, r_plan.altr_tblseq, r_plan.altr_group, r_plan.altr_priority,
-                                r_plan.altr_group_is_logging, v_timeId, v_function)"
+CONTEXT:  SQL statement "SELECT emaj._create_seq(v_schema, v_sequence, v_group, v_timeId)"
+PL/pgSQL function emaj._add_seq(text,text,text,boolean,bigint,text) line 9 at PERFORM
+SQL statement "SELECT emaj._add_seq(r_plan.altr_schema, r_plan.altr_tblseq, r_plan.altr_group, r_plan.altr_group_is_logging,
+                                v_timeId, v_function)"
 PL/pgSQL function emaj._alter_exec(bigint,boolean) line 105 at PERFORM
 SQL statement "SELECT emaj._alter_exec(v_timeId, v_multiGroup)"
 PL/pgSQL function emaj._alter_groups(text[],boolean,text) line 58 at PERFORM
@@ -3927,11 +3927,11 @@ PL/pgSQL function emaj.emaj_assign_tables(text,text,text,text,jsonb,text) line 2
 
   select emaj.emaj_assign_sequences('phil''s schema3','.*','','grp_tmp_3');
 WARNING:  _create_seq: The sequence phil's schema3.myTbl2\_col21_seq is linked to table phil's schema3.myTbl2\ but this table belong to another tables group (phil's group#3",).
-CONTEXT:  SQL statement "SELECT emaj._create_seq(v_schema, v_sequence, v_group, v_priority, v_timeId)"
-PL/pgSQL function emaj._add_seq(text,text,text,integer,boolean,bigint,text) line 9 at PERFORM
-SQL statement "SELECT emaj._add_seq(v_schema, v_oneSequence, v_group, v_priority, v_groupIsLogging, v_timeId, v_function)"
-PL/pgSQL function emaj._assign_sequences(text,text[],text,jsonb,text,boolean,boolean) line 107 at PERFORM
-PL/pgSQL function emaj.emaj_assign_sequences(text,text,text,text,jsonb,text) line 23 at RETURN
+CONTEXT:  SQL statement "SELECT emaj._create_seq(v_schema, v_sequence, v_group, v_timeId)"
+PL/pgSQL function emaj._add_seq(text,text,text,boolean,bigint,text) line 9 at PERFORM
+SQL statement "SELECT emaj._add_seq(v_schema, v_oneSequence, v_group, v_groupIsLogging, v_timeId, v_function)"
+PL/pgSQL function emaj._assign_sequences(text,text[],text,text,boolean,boolean) line 93 at PERFORM
+PL/pgSQL function emaj.emaj_assign_sequences(text,text,text,text,text) line 23 at RETURN
  emaj_assign_sequences 
 -----------------------
                      2
@@ -4115,11 +4115,11 @@ PL/pgSQL function emaj.emaj_assign_tables(text,text,text,text,jsonb,text) line 2
 
   select emaj.emaj_assign_sequences('myschema4','.*','','grp_tmp_4');
 WARNING:  _create_seq: The sequence myschema4.mytblp_col3_seq is linked to table myschema4.mytblp but this table does not belong to any tables group.
-CONTEXT:  SQL statement "SELECT emaj._create_seq(v_schema, v_sequence, v_group, v_priority, v_timeId)"
-PL/pgSQL function emaj._add_seq(text,text,text,integer,boolean,bigint,text) line 9 at PERFORM
-SQL statement "SELECT emaj._add_seq(v_schema, v_oneSequence, v_group, v_priority, v_groupIsLogging, v_timeId, v_function)"
-PL/pgSQL function emaj._assign_sequences(text,text[],text,jsonb,text,boolean,boolean) line 107 at PERFORM
-PL/pgSQL function emaj.emaj_assign_sequences(text,text,text,text,jsonb,text) line 23 at RETURN
+CONTEXT:  SQL statement "SELECT emaj._create_seq(v_schema, v_sequence, v_group, v_timeId)"
+PL/pgSQL function emaj._add_seq(text,text,text,boolean,bigint,text) line 9 at PERFORM
+SQL statement "SELECT emaj._add_seq(v_schema, v_oneSequence, v_group, v_groupIsLogging, v_timeId, v_function)"
+PL/pgSQL function emaj._assign_sequences(text,text[],text,text,boolean,boolean) line 93 at PERFORM
+PL/pgSQL function emaj.emaj_assign_sequences(text,text,text,text,text) line 23 at RETURN
  emaj_assign_sequences 
 -----------------------
                      1

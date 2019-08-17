@@ -354,7 +354,7 @@ select nspname from pg_namespace where nspname like 'emaj%' order by nspname;
 (4 rows)
 
 -- only 1 sequence to add
-insert into emaj.emaj_group_def values ('myGroup1','myschema1','myTbl3_col31_seq',1);
+insert into emaj.emaj_group_def values ('myGroup1','myschema1','myTbl3_col31_seq');
 select emaj.emaj_alter_group('myGroup1');
  emaj_alter_group 
 ------------------
@@ -730,7 +730,7 @@ select nspname from pg_namespace where nspname like 'emaj%' order by nspname;
 insert into emaj.emaj_group_def values ('myGroup1','myschema1','mytbl2b',NULL,'tsp log''2','tsp log''2');
 insert into emaj.emaj_group_def values ('myGroup1','myschema1','myTbl3',10,'tsplog1');
 insert into emaj.emaj_group_def values ('myGroup2','myschema2','mytbl4');
-insert into emaj.emaj_group_def values ('myGroup1','myschema1','myTbl3_col31_seq',1);
+insert into emaj.emaj_group_def values ('myGroup1','myschema1','myTbl3_col31_seq');
 select emaj.emaj_alter_groups('{"myGroup1","myGroup2"}');
 NOTICE:  table "myTbl3_log" does not exist, skipping
 NOTICE:  trigger "emaj_log_trg" for relation "myschema1.myTbl3" does not exist, skipping

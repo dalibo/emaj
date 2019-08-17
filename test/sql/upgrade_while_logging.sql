@@ -60,8 +60,8 @@ select * from "emaj_phil's schema3"."myTbl2\_log_seq";
 
 -- technical tables
 select * from emaj.emaj_group_def order by 1,2,3;
-select rlbp_rlbk_id, rlbp_step, rlbp_schema, rlbp_table, rlbp_object from emaj.emaj_rlbk_plan order by 1,2,3,4,5;
-select rlbt_step, rlbt_schema, rlbt_table, rlbt_object, rlbt_rlbk_id, rlbt_quantity from emaj.emaj_rlbk_stat order by 1,2,3,4,5;
+--   the next statement shouldn't return any row
+select * from emaj.emaj_relation where rel_kind = 'S' and rel_priority is not null;
 
 -- log tables
 select col11, col12, col13, emaj_verb, emaj_tuple, emaj_gid from emaj_mySchema1.myTbl1_log order by emaj_gid, emaj_tuple desc;

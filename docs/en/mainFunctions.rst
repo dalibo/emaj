@@ -19,23 +19,23 @@ Define tables groups
 The emaj_group_def table
 ^^^^^^^^^^^^^^^^^^^^^^^^
 
-The content of tables groups E-Maj will manage has to be defined by populating the **emaj.emaj_group_def** table. One row has to be inserted into this table for each application table or sequence to include into a tables group. This  *emaj.emaj_group_def* table has the following structure:
+The content of tables groups that E-Maj will manage has to be defined by populating the **emaj.emaj_group_def** table. One row has to be inserted into this table for each application table or sequence to include into a tables group. This  *emaj.emaj_group_def* table has the following structure:
 
-+--------------------------+------+---------------------------------------------------------------------------------------------------+
-| Column                   | Type | Description                                                                                       |
-+==========================+======+===================================================================================================+
-| grpdef_group             | TEXT | tables group name                                                                                 |
-+--------------------------+------+---------------------------------------------------------------------------------------------------+
-| grpdef_schema            | TEXT | name of the schema containing the application table or sequence                                   |
-+--------------------------+------+---------------------------------------------------------------------------------------------------+
-| grpdef_tblseq            | TEXT | application table or sequence name                                                                |
-+--------------------------+------+---------------------------------------------------------------------------------------------------+
-| grpdef_priority          | INT  | priority level for the table or sequence in E-Maj processing (optional)                           |
-+--------------------------+------+---------------------------------------------------------------------------------------------------+
-| grpdef_log_dat_tsp       | TEXT | name of the tablespace containing the log table (optional)                                        |
-+--------------------------+------+---------------------------------------------------------------------------------------------------+
-| grpdef_log_idx_tsp       | TEXT | name of the tablespace containing the index of the log table (optional)                           |
-+--------------------------+------+---------------------------------------------------------------------------------------------------+
++--------------------------+------+--------------------------------------------------------------------------+
+| Column                   | Type | Description                                                              |
++==========================+======+==========================================================================+
+| grpdef_group             | TEXT | tables group name                                                        |
++--------------------------+------+--------------------------------------------------------------------------+
+| grpdef_schema            | TEXT | name of the schema containing the application table or sequence          |
++--------------------------+------+--------------------------------------------------------------------------+
+| grpdef_tblseq            | TEXT | application table or sequence name                                       |
++--------------------------+------+--------------------------------------------------------------------------+
+| grpdef_priority          | INT  | priority level for the table in E-Maj processing (optional)              |
++--------------------------+------+--------------------------------------------------------------------------+
+| grpdef_log_dat_tsp       | TEXT | name of the tablespace containing the log table (optional)               |
++--------------------------+------+--------------------------------------------------------------------------+
+| grpdef_log_idx_tsp       | TEXT | name of the tablespace containing the index of the log table (optional)  |
++--------------------------+------+--------------------------------------------------------------------------+
 
 The administrator can populate this table by any usual mean: *INSERT* SQL verb, *COPY* SQL verb, *\\copy psql* command, graphic tool, etc.
 
@@ -71,7 +71,7 @@ To optimize performances of E-Maj installations having a large number of tables,
 
 If a column *grpdef_log_dat_tsp* or *grpdef_log_idx_tsp* is *NULL* (default value), the default tablespace of the current session at tables group creation is used.
 
-For sequences, both *grpdef_log_dat_tsp* and *grpdef_log_idx_tsp* columns must be *NULL*.
+For sequences, the *grpdef_priority*, *grpdef_log_dat_tsp* and *grpdef_log_idx_tsp* columns must be *NULL*.
 
 
 .. _emaj_create_group:

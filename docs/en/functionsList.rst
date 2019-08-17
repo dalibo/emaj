@@ -15,13 +15,11 @@ E-Maj functions that are available to users are listed in alphabetic order below
 | :ref:`emaj_assign_sequence                       | | schema TEXT,                | 1 INT                                 |
 | <dynamic_ajustment>`                             | | sequence TEXT,              |                                       |
 |                                                  | | group TEXT,                 |                                       |
-|                                                  | | [ properties JSONB ]        |                                       |
 |                                                  | | [ mark TEXT ]               |                                       |
 +--------------------------------------------------+-------------------------------+---------------------------------------+
 | :ref:`emaj_assign_sequences                      | | schema TEXT,                | #.sequences INT                       |
 | <dynamic_ajustment>`                             | | sequences.array TEXT[],     |                                       |
 |                                                  | | group TEXT,                 |                                       |
-|                                                  | | [ properties JSONB ]        |                                       |
 |                                                  | | [ mark TEXT ]               |                                       |
 +--------------------------------------------------+-------------------------------+---------------------------------------+
 | :ref:`emaj_assign_sequences                      | | schema TEXT,                | #.sequences INT                       |
@@ -30,7 +28,6 @@ E-Maj functions that are available to users are listed in alphabetic order below
 |                                                  | | sequences.to.exclude.filter |                                       |
 |                                                  | |   TEXT,                     |                                       |
 |                                                  | | group TEXT,                 |                                       |
-|                                                  | | [ properties JSONB ]        |                                       |
 |                                                  | | [ mark TEXT ]               |                                       |
 +--------------------------------------------------+-------------------------------+---------------------------------------+
 | :ref:`emaj_assign_table                          | | schema TEXT,                | 1 INT                                 |

@@ -12,7 +12,7 @@ truncate emaj.emaj_group_def;
 insert into emaj.emaj_group_def values ('myGroup1','myschema1','mytbl1',20);
 insert into emaj.emaj_group_def values ('myGroup1','myschema1','mytbl2',NULL,'tsplog1','tsplog1');
 insert into emaj.emaj_group_def values ('myGroup1','myschema1','mytbl2b',NULL,'tsp log''2','tsp log''2');
-insert into emaj.emaj_group_def values ('myGroup1','myschema1','myTbl3_col31_seq',1);
+insert into emaj.emaj_group_def values ('myGroup1','myschema1','myTbl3_col31_seq');
 insert into emaj.emaj_group_def values ('myGroup1','myschema1','myTbl3',10,'tsplog1');
 insert into emaj.emaj_group_def values ('myGroup1','myschema1','mytbl4',20,'tsplog1','tsp log''2');
 insert into emaj.emaj_group_def values ('myGroup1','myschema1','mytbl2b_col20_seq');
@@ -115,10 +115,12 @@ select emaj.emaj_create_group('phil''s group#3",',true);
 WARNING:  emaj_create_group: error, in the group "phil's group#3"",", the table "phil's schema3"."myTbl2\" has no PRIMARY KEY.
 ERROR:  emaj_create_group: One or several errors have been detected in the emaj_group_def table content.
 CONTEXT:  PL/pgSQL function emaj.emaj_create_group(text,boolean,boolean) line 47 at RAISE
--- sequence with tablespaces defined in the emaj_group_def table
+-- sequence with tablespaces and priority defined in the emaj_group_def table
 begin;
-  update emaj.emaj_group_def set grpdef_log_dat_tsp = 'something', grpdef_log_idx_tsp = 'something' where grpdef_group = 'myGroup1' and grpdef_schema = 'myschema1' and grpdef_tblseq = 'myTbl3_col31_seq';
+  update emaj.emaj_group_def set grpdef_log_dat_tsp = 'something', grpdef_log_idx_tsp = 'something', grpdef_priority = 1
+    where grpdef_group = 'myGroup1' and grpdef_schema = 'myschema1' and grpdef_tblseq = 'myTbl3_col31_seq';
   select emaj.emaj_create_group('myGroup1');
+WARNING:  emaj_create_group: error, in the group "myGroup1", for the sequence myschema1."myTbl3_col31_seq", the priority is not NULL.
 WARNING:  emaj_create_group: error, in the group "myGroup1", for the sequence myschema1."myTbl3_col31_seq", the data log tablespace is not NULL.
 WARNING:  emaj_create_group: error, in the group "myGroup1", for the sequence myschema1."myTbl3_col31_seq", the index log tablespace is not NULL.
 ERROR:  emaj_create_group: One or several errors have been detected in the emaj_group_def table content.
@@ -288,10 +290,10 @@ select group_name, group_is_rollbackable, group_creation_time_id,
 select * from emaj.emaj_relation order by rel_group, rel_priority, rel_schema, rel_tblseq, rel_time_range;
    rel_schema   |                       rel_tblseq                        | rel_time_range |    rel_group     | rel_kind | rel_priority |   rel_log_schema    |                      rel_log_table                       | rel_log_dat_tsp |                        rel_log_index                         | rel_log_idx_tsp |                       rel_log_sequence                       |                       rel_log_function                        |                       rel_sql_columns                       |      rel_sql_pk_columns       |                               rel_sql_pk_eq_conditions                                | rel_log_seq_last_value | rel_emaj_verb_attnum 
 ----------------+---------------------------------------------------------+----------------+------------------+----------+--------------+---------------------+----------------------------------------------------------+-----------------+--------------------------------------------------------------+-----------------+--------------------------------------------------------------+---------------------------------------------------------------+-------------------------------------------------------------+-------------------------------+---------------------------------------------------------------------------------------+------------------------+----------------------
- myschema1      | myTbl3_col31_seq                                        | [4,)           | myGroup1         | S        |            1 |                     |                                                          |                 |                                                              |                 |                                                              |                                                               |                                                             |                               |                                                                                       |                        |                     
  myschema1      | myTbl3                                                  | [4,)           | myGroup1         | r        |           10 | emaj_myschema1      | myTbl3_log                                               | tsplog1         | myTbl3_log_idx                                               |                 | myTbl3_log_seq                                               | myTbl3_log_fnct                                               | tbl.col31,tbl.col32,tbl.col33                               | col31                         | tbl.col31 = keys.col31                                                                |                        |                    4
  myschema1      | mytbl1                                                  | [4,)           | myGroup1         | r        |           20 | emaj_myschema1      | mytbl1_log                                               |                 | mytbl1_log_idx                                               |                 | mytbl1_log_seq                                               | mytbl1_log_fnct                                               | tbl.col11,tbl.col12,tbl.col13                               | col11,col12                   | tbl.col11 = keys.col11 AND tbl.col12 = keys.col12                                     |                        |                    4
  myschema1      | mytbl4                                                  | [4,)           | myGroup1         | r        |           20 | emaj_myschema1      | mytbl4_log                                               | tsplog1         | mytbl4_log_idx                                               | tsp log'2       | mytbl4_log_seq                                               | mytbl4_log_fnct                                               | tbl.col41,tbl.col42,tbl.col43,tbl.col44,tbl.col45           | col41                         | tbl.col41 = keys.col41                                                                |                        |                    6
+ myschema1      | myTbl3_col31_seq                                        | [4,)           | myGroup1         | S        |              |                     |                                                          |                 |                                                              |                 |                                                              |                                                               |                                                             |                               |                                                                                       |                        |                     
  myschema1      | mytbl2                                                  | [4,)           | myGroup1         | r        |              | emaj_myschema1      | mytbl2_log                                               | tsplog1         | mytbl2_log_idx                                               | tsplog1         | mytbl2_log_seq                                               | mytbl2_log_fnct                                               | tbl.col21,tbl.col22,tbl.col23                               | col21                         | tbl.col21 = keys.col21                                                                |                        |                    4
  myschema1      | mytbl2b                                                 | [4,)           | myGroup1         | r        |              | emaj_myschema1      | mytbl2b_log                                              | tsp log'2       | mytbl2b_log_idx                                              | tsp log'2       | mytbl2b_log_seq                                              | mytbl2b_log_fnct                                              | tbl.col20,tbl.col21                                         | col20                         | tbl.col20 = keys.col20                                                                |                        |                    3
  myschema1      | mytbl2b_col20_seq                                       | [4,)           | myGroup1         | S        |              |                     |                                                          |                 |                                                              |                 |                                                              |                                                               |                                                             |                               |                                                                                       |                        |                     
@@ -844,39 +846,29 @@ select emaj.emaj_assign_sequence('myschema2','myseq1','dummyGroup');
 ERROR:  _check_group_names: The group "dummyGroup" does not exist.
 CONTEXT:  PL/pgSQL function emaj._check_group_names(text[],boolean,boolean,text) line 36 at RAISE
 SQL statement "SELECT emaj._check_group_names(v_groupNames := ARRAY[v_group], v_mayBeNull := FALSE, v_lockGroups := TRUE, v_checkList := '')"
-PL/pgSQL function emaj._assign_sequences(text,text[],text,jsonb,text,boolean,boolean) line 26 at PERFORM
-PL/pgSQL function emaj.emaj_assign_sequence(text,text,text,jsonb,text) line 7 at RETURN
+PL/pgSQL function emaj._assign_sequences(text,text[],text,text,boolean,boolean) line 24 at PERFORM
+PL/pgSQL function emaj.emaj_assign_sequence(text,text,text,text) line 6 at RETURN
 -- bad schema
 select emaj.emaj_assign_sequence('dummySchema','myseq1','myGroup2b');
 ERROR:  _assign_sequences: The schema "dummySchema" does not exist.
-CONTEXT:  PL/pgSQL function emaj._assign_sequences(text,text[],text,jsonb,text,boolean,boolean) line 33 at RAISE
-PL/pgSQL function emaj.emaj_assign_sequence(text,text,text,jsonb,text) line 7 at RETURN
+CONTEXT:  PL/pgSQL function emaj._assign_sequences(text,text[],text,text,boolean,boolean) line 31 at RAISE
+PL/pgSQL function emaj.emaj_assign_sequence(text,text,text,text) line 6 at RETURN
 select emaj.emaj_assign_sequence('emaj','myseq1','myGroup2b');
 ERROR:  _assign_sequences: The schema "emaj" is an E-Maj schema.
-CONTEXT:  PL/pgSQL function emaj._assign_sequences(text,text[],text,jsonb,text,boolean,boolean) line 38 at RAISE
-PL/pgSQL function emaj.emaj_assign_sequence(text,text,text,jsonb,text) line 7 at RETURN
+CONTEXT:  PL/pgSQL function emaj._assign_sequences(text,text[],text,text,boolean,boolean) line 36 at RAISE
+PL/pgSQL function emaj.emaj_assign_sequence(text,text,text,text) line 6 at RETURN
 -- bad sequence
 select emaj.emaj_assign_sequence('myschema2','dummySequence','myGroup2b');
 ERROR:  _assign_sequences: In schema myschema2, some sequences ("dummySequence") do not exist.
-CONTEXT:  PL/pgSQL function emaj._assign_sequences(text,text[],text,jsonb,text,boolean,boolean) line 58 at RAISE
-PL/pgSQL function emaj.emaj_assign_sequence(text,text,text,jsonb,text) line 7 at RETURN
--- invalid priority
-select emaj.emaj_assign_sequence('myschema2','myseq1','myGroup2b','{"priority":"not_numeric"}'::jsonb);
-ERROR:  _assign_sequences: the "priority" property is not numeric.
-CONTEXT:  PL/pgSQL function emaj._assign_sequences(text,text[],text,jsonb,text,boolean,boolean) line 80 at RAISE
-PL/pgSQL function emaj.emaj_assign_sequence(text,text,text,jsonb,text) line 7 at RETURN
--- unknown property
-select emaj.emaj_assign_sequence('myschema2','myseq1','myGroup2b','{"unknown_property":null}'::jsonb);
-ERROR:  _assign_sequences: properties "{"unknown_property": null}" are unknown.
-CONTEXT:  PL/pgSQL function emaj._assign_sequences(text,text[],text,jsonb,text,boolean,boolean) line 85 at RAISE
-PL/pgSQL function emaj.emaj_assign_sequence(text,text,text,jsonb,text) line 7 at RETURN
+CONTEXT:  PL/pgSQL function emaj._assign_sequences(text,text[],text,text,boolean,boolean) line 56 at RAISE
+PL/pgSQL function emaj.emaj_assign_sequence(text,text,text,text) line 6 at RETURN
 -- bad mark
-select emaj.emaj_assign_sequence('myschema2','myseq1','myGroup2b',null,'EMAJ_LAST_MARK');
+select emaj.emaj_assign_sequence('myschema2','myseq1','myGroup2b','EMAJ_LAST_MARK');
 ERROR:  _check_new_mark: "EMAJ_LAST_MARK" is not an allowed name for a new mark.
 CONTEXT:  PL/pgSQL function emaj._check_new_mark(text[],text) line 14 at RAISE
 SQL statement "SELECT emaj._check_new_mark(array[v_group], v_mark)"
-PL/pgSQL function emaj._assign_sequences(text,text[],text,jsonb,text,boolean,boolean) line 88 at SQL statement
-PL/pgSQL function emaj.emaj_assign_sequence(text,text,text,jsonb,text) line 7 at RETURN
+PL/pgSQL function emaj._assign_sequences(text,text[],text,text,boolean,boolean) line 74 at SQL statement
+PL/pgSQL function emaj.emaj_assign_sequence(text,text,text,text) line 6 at RETURN
 -- ok
 select emaj.emaj_assign_sequence('myschema2','myseq1','myGroup2b');
  emaj_assign_sequence 
@@ -887,8 +879,8 @@ select emaj.emaj_assign_sequence('myschema2','myseq1','myGroup2b');
 -- already assigned sequence
 select emaj.emaj_assign_sequence('myschema2','myseq1','myGroup2b');
 ERROR:  _assign_sequences: In schema myschema2, some sequences (myseq1) already belong to a group.
-CONTEXT:  PL/pgSQL function emaj._assign_sequences(text,text[],text,jsonb,text,boolean,boolean) line 67 at RAISE
-PL/pgSQL function emaj.emaj_assign_sequence(text,text,text,jsonb,text) line 7 at RETURN
+CONTEXT:  PL/pgSQL function emaj._assign_sequences(text,text[],text,text,boolean,boolean) line 65 at RAISE
+PL/pgSQL function emaj.emaj_assign_sequence(text,text,text,text) line 6 at RETURN
 -----------------------------------
 -- emaj_assign_sequences with array
 -----------------------------------
@@ -898,13 +890,13 @@ select emaj.emaj_assign_sequences('dummySchema',array['dummySequence'],'dummyGro
 ERROR:  _check_group_names: The group "dummyGroup" does not exist.
 CONTEXT:  PL/pgSQL function emaj._check_group_names(text[],boolean,boolean,text) line 36 at RAISE
 SQL statement "SELECT emaj._check_group_names(v_groupNames := ARRAY[v_group], v_mayBeNull := FALSE, v_lockGroups := TRUE, v_checkList := '')"
-PL/pgSQL function emaj._assign_sequences(text,text[],text,jsonb,text,boolean,boolean) line 26 at PERFORM
-PL/pgSQL function emaj.emaj_assign_sequences(text,text[],text,jsonb,text) line 7 at RETURN
+PL/pgSQL function emaj._assign_sequences(text,text[],text,text,boolean,boolean) line 24 at PERFORM
+PL/pgSQL function emaj.emaj_assign_sequences(text,text[],text,text) line 7 at RETURN
 -- bad sequences
 select emaj.emaj_assign_sequences('myschema2',array['dummyseq1','dummyseq2'],'myGroup2b');
 ERROR:  _assign_sequences: In schema myschema2, some sequences (dummyseq1, dummyseq2) do not exist.
-CONTEXT:  PL/pgSQL function emaj._assign_sequences(text,text[],text,jsonb,text,boolean,boolean) line 58 at RAISE
-PL/pgSQL function emaj.emaj_assign_sequences(text,text[],text,jsonb,text) line 7 at RETURN
+CONTEXT:  PL/pgSQL function emaj._assign_sequences(text,text[],text,text,boolean,boolean) line 56 at RAISE
+PL/pgSQL function emaj.emaj_assign_sequences(text,text[],text,text) line 7 at RETURN
 -- empty sequences array
 select emaj.emaj_assign_sequences('myschema2',array[]::text[],'myGroup2b');
 WARNING:  _assign_sequences: No sequence to process.
@@ -943,17 +935,17 @@ select emaj.emaj_assign_sequences('dummySchema','dummyIncludeFilter','dummyExclu
 ERROR:  _check_group_names: The group "dummyGroup" does not exist.
 CONTEXT:  PL/pgSQL function emaj._check_group_names(text[],boolean,boolean,text) line 36 at RAISE
 SQL statement "SELECT emaj._check_group_names(v_groupNames := ARRAY[v_group], v_mayBeNull := FALSE, v_lockGroups := TRUE, v_checkList := '')"
-PL/pgSQL function emaj._assign_sequences(text,text[],text,jsonb,text,boolean,boolean) line 26 at PERFORM
-PL/pgSQL function emaj.emaj_assign_sequences(text,text,text,text,jsonb,text) line 23 at RETURN
+PL/pgSQL function emaj._assign_sequences(text,text[],text,text,boolean,boolean) line 24 at PERFORM
+PL/pgSQL function emaj.emaj_assign_sequences(text,text,text,text,text) line 23 at RETURN
 -- bad schema
 select emaj.emaj_assign_sequences('dummySchema','dummyIncludeFilter','dummyExcludeFilter','myGroup2b');
 ERROR:  _assign_sequences: The schema "dummySchema" does not exist.
-CONTEXT:  PL/pgSQL function emaj._assign_sequences(text,text[],text,jsonb,text,boolean,boolean) line 33 at RAISE
-PL/pgSQL function emaj.emaj_assign_sequences(text,text,text,text,jsonb,text) line 23 at RETURN
+CONTEXT:  PL/pgSQL function emaj._assign_sequences(text,text[],text,text,boolean,boolean) line 31 at RAISE
+PL/pgSQL function emaj.emaj_assign_sequences(text,text,text,text,text) line 23 at RETURN
 select emaj.emaj_assign_sequences('emaj','dummyIncludeFilter','dummyExcludeFilter','myGroup2b');
 ERROR:  _assign_sequences: The schema "emaj" is an E-Maj schema.
-CONTEXT:  PL/pgSQL function emaj._assign_sequences(text,text[],text,jsonb,text,boolean,boolean) line 38 at RAISE
-PL/pgSQL function emaj.emaj_assign_sequences(text,text,text,text,jsonb,text) line 23 at RETURN
+CONTEXT:  PL/pgSQL function emaj._assign_sequences(text,text[],text,text,boolean,boolean) line 36 at RAISE
+PL/pgSQL function emaj.emaj_assign_sequences(text,text,text,text,text) line 23 at RETURN
 -- empty sequences array
 select emaj.emaj_assign_sequences('myschema2',null,null,'myGroup2b');
 WARNING:  _assign_sequences: No sequence to process.

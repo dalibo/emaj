@@ -92,7 +92,7 @@ select group_name, group_last_alter_time_id, group_has_waiting_changes, group_nb
   from emaj.emaj_group where group_name = 'myGroup1';
 select nspname from pg_namespace where nspname like 'emaj%' order by nspname;
 -- only 1 sequence to add
-insert into emaj.emaj_group_def values ('myGroup1','myschema1','myTbl3_col31_seq',1);
+insert into emaj.emaj_group_def values ('myGroup1','myschema1','myTbl3_col31_seq');
 select emaj.emaj_alter_group('myGroup1');
 select group_nb_table, group_nb_sequence from emaj.emaj_group where group_name = 'myGroup1';
 -- only change the log data tablespace for 1 table
@@ -217,7 +217,7 @@ select nspname from pg_namespace where nspname like 'emaj%' order by nspname;
 insert into emaj.emaj_group_def values ('myGroup1','myschema1','mytbl2b',NULL,'tsp log''2','tsp log''2');
 insert into emaj.emaj_group_def values ('myGroup1','myschema1','myTbl3',10,'tsplog1');
 insert into emaj.emaj_group_def values ('myGroup2','myschema2','mytbl4');
-insert into emaj.emaj_group_def values ('myGroup1','myschema1','myTbl3_col31_seq',1);
+insert into emaj.emaj_group_def values ('myGroup1','myschema1','myTbl3_col31_seq');
 select emaj.emaj_alter_groups('{"myGroup1","myGroup2"}');
 select group_name, group_nb_table, group_nb_sequence from emaj.emaj_group where group_name = 'myGroup1' or group_name = 'myGroup2' order by 1;
 select nspname from pg_namespace where nspname like 'emaj%' order by nspname;

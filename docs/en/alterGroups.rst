@@ -126,7 +126,7 @@ or ::
 
 or ::
 
-	SELECT emaj.emaj_assign_sequences('<schema>', '<sequences.to.include.filter>', '<sequences.to.exclude.filter>', '<group.name>' [,'properties' [, '<mark>']] );
+	SELECT emaj.emaj_assign_sequences('<schema>', '<sequences.to.include.filter>', '<sequences.to.exclude.filter>', '<group.name>' [, '<mark>'] );
 
 To **remove one or several tables** from a tables group::
 

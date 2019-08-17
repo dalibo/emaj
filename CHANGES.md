@@ -22,6 +22,8 @@ E-Maj - Change log
     additional digit.
   * Only issue a warning when creating an empty group that is configured in
     the emaj_group_def table.
+  * The priority column of the emaj_group_def configuration table must remain
+    NULL for sequences.
   * Minor coding improvements.
 
 ###Bug fixes:###

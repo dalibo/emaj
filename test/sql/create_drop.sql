@@ -12,7 +12,7 @@ truncate emaj.emaj_group_def;
 insert into emaj.emaj_group_def values ('myGroup1','myschema1','mytbl1',20);
 insert into emaj.emaj_group_def values ('myGroup1','myschema1','mytbl2',NULL,'tsplog1','tsplog1');
 insert into emaj.emaj_group_def values ('myGroup1','myschema1','mytbl2b',NULL,'tsp log''2','tsp log''2');
-insert into emaj.emaj_group_def values ('myGroup1','myschema1','myTbl3_col31_seq',1);
+insert into emaj.emaj_group_def values ('myGroup1','myschema1','myTbl3_col31_seq');
 insert into emaj.emaj_group_def values ('myGroup1','myschema1','myTbl3',10,'tsplog1');
 insert into emaj.emaj_group_def values ('myGroup1','myschema1','mytbl4',20,'tsplog1','tsp log''2');
 insert into emaj.emaj_group_def values ('myGroup1','myschema1','mytbl2b_col20_seq');
@@ -91,9 +91,10 @@ begin;
 rollback;
 -- table without pkey for a rollbackable group
 select emaj.emaj_create_group('phil''s group#3",',true);
--- sequence with tablespaces defined in the emaj_group_def table
+-- sequence with tablespaces and priority defined in the emaj_group_def table
 begin;
-  update emaj.emaj_group_def set grpdef_log_dat_tsp = 'something', grpdef_log_idx_tsp = 'something' where grpdef_group = 'myGroup1' and grpdef_schema = 'myschema1' and grpdef_tblseq = 'myTbl3_col31_seq';
+  update emaj.emaj_group_def set grpdef_log_dat_tsp = 'something', grpdef_log_idx_tsp = 'something', grpdef_priority = 1
+    where grpdef_group = 'myGroup1' and grpdef_schema = 'myschema1' and grpdef_tblseq = 'myTbl3_col31_seq';
   select emaj.emaj_create_group('myGroup1');
 rollback;
 -- table with invalid tablespaces
@@ -377,14 +378,8 @@ select emaj.emaj_assign_sequence('emaj','myseq1','myGroup2b');
 -- bad sequence
 select emaj.emaj_assign_sequence('myschema2','dummySequence','myGroup2b');
 
--- invalid priority
-select emaj.emaj_assign_sequence('myschema2','myseq1','myGroup2b','{"priority":"not_numeric"}'::jsonb);
-
--- unknown property
-select emaj.emaj_assign_sequence('myschema2','myseq1','myGroup2b','{"unknown_property":null}'::jsonb);
-
 -- bad mark
-select emaj.emaj_assign_sequence('myschema2','myseq1','myGroup2b',null,'EMAJ_LAST_MARK');
+select emaj.emaj_assign_sequence('myschema2','myseq1','myGroup2b','EMAJ_LAST_MARK');
 
 -- ok
 select emaj.emaj_assign_sequence('myschema2','myseq1','myGroup2b');

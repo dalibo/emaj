@@ -148,7 +148,7 @@ select group_name, group_last_alter_time_id, group_has_waiting_changes, group_nb
 (1 row)
 
 --select emaj.emaj_alter_group('myGroup2', 'Alter to add myseq2');
-select emaj.emaj_assign_sequence('myschema2', 'myseq2', 'myGroup2', null, 'Alter to add myseq2');
+select emaj.emaj_assign_sequence('myschema2', 'myseq2', 'myGroup2', 'Alter to add myseq2');
  emaj_assign_sequence 
 ----------------------
                     1
@@ -487,7 +487,7 @@ select group_name, group_last_alter_time_id, group_has_waiting_changes, group_nb
 select * from emaj.emaj_relation where rel_schema = 'myschema1' and rel_tblseq = 'myTbl3_col31_seq' order by rel_time_range;
  rel_schema |    rel_tblseq    | rel_time_range | rel_group | rel_kind | rel_priority | rel_log_schema | rel_log_table | rel_log_dat_tsp | rel_log_index | rel_log_idx_tsp | rel_log_sequence | rel_log_function | rel_sql_columns | rel_sql_pk_columns | rel_sql_pk_eq_conditions | rel_log_seq_last_value | rel_emaj_verb_attnum 
 ------------+------------------+----------------+-----------+----------+--------------+----------------+---------------+-----------------+---------------+-----------------+------------------+------------------+-----------------+--------------------+--------------------------+------------------------+----------------------
- myschema1  | myTbl3_col31_seq | [6042,6078)    | myGroup1  | S        |            1 |                |               |                 |               |                 |                  |                  |                 |                    |                          |                        |                     
+ myschema1  | myTbl3_col31_seq | [6042,6078)    | myGroup1  | S        |              |                |               |                 |               |                 |                  |                  |                 |                    |                          |                        |                     
 (1 row)
 
 select * from emaj.emaj_verify_all();
@@ -563,7 +563,7 @@ begin;
   select * from emaj.emaj_relation where rel_schema = 'myschema1' and rel_tblseq = 'myTbl3_col31_seq' order by rel_time_range;
  rel_schema |    rel_tblseq    | rel_time_range | rel_group | rel_kind | rel_priority | rel_log_schema | rel_log_table | rel_log_dat_tsp | rel_log_index | rel_log_idx_tsp | rel_log_sequence | rel_log_function | rel_sql_columns | rel_sql_pk_columns | rel_sql_pk_eq_conditions | rel_log_seq_last_value | rel_emaj_verb_attnum 
 ------------+------------------+----------------+-----------+----------+--------------+----------------+---------------+-----------------+---------------+-----------------+------------------+------------------+-----------------+--------------------+--------------------------+------------------------+----------------------
- myschema1  | myTbl3_col31_seq | [6042,6078)    | myGroup1  | S        |            1 |                |               |                 |               |                 |                  |                  |                 |                    |                          |                        |                     
+ myschema1  | myTbl3_col31_seq | [6042,6078)    | myGroup1  | S        |              |                |               |                 |               |                 |                  |                  |                 |                    |                          |                        |                     
 (1 row)
 
   select mark_group, regexp_replace(mark_name,E'\\d\\d\.\\d\\d\\.\\d\\d\\.\\d\\d\\d\\d','%','g'), mark_time_id,
@@ -618,7 +618,7 @@ begin;
     select * from emaj.emaj_relation where rel_group = 'myGroup1' and not upper_inf(rel_time_range) order by 1,2,3;
  rel_schema |    rel_tblseq    | rel_time_range | rel_group | rel_kind | rel_priority | rel_log_schema | rel_log_table | rel_log_dat_tsp | rel_log_index | rel_log_idx_tsp | rel_log_sequence | rel_log_function | rel_sql_columns | rel_sql_pk_columns | rel_sql_pk_eq_conditions | rel_log_seq_last_value | rel_emaj_verb_attnum 
 ------------+------------------+----------------+-----------+----------+--------------+----------------+---------------+-----------------+---------------+-----------------+------------------+------------------+-----------------+--------------------+--------------------------+------------------------+----------------------
- myschema1  | myTbl3_col31_seq | [6042,6078)    | myGroup1  | S        |            1 |                |               |                 |               |                 |                  |                  |                 |                    |                          |                        |                     
+ myschema1  | myTbl3_col31_seq | [6042,6078)    | myGroup1  | S        |              |                |               |                 |               |                 |                  |                  |                 |                    |                          |                        |                     
 (1 row)
 
     select emaj.emaj_reset_group('myGroup1');
@@ -649,7 +649,7 @@ begin;
   select * from emaj.emaj_relation where rel_group = 'myGroup1' and not upper_inf(rel_time_range) order by 1,2,3;
  rel_schema |    rel_tblseq    | rel_time_range | rel_group | rel_kind | rel_priority | rel_log_schema | rel_log_table | rel_log_dat_tsp | rel_log_index | rel_log_idx_tsp | rel_log_sequence | rel_log_function | rel_sql_columns | rel_sql_pk_columns | rel_sql_pk_eq_conditions | rel_log_seq_last_value | rel_emaj_verb_attnum 
 ------------+------------------+----------------+-----------+----------+--------------+----------------+---------------+-----------------+---------------+-----------------+------------------+------------------+-----------------+--------------------+--------------------------+------------------------+----------------------
- myschema1  | myTbl3_col31_seq | [6042,6078)    | myGroup1  | S        |            1 |                |               |                 |               |                 |                  |                  |                 |                    |                          |                        |                     
+ myschema1  | myTbl3_col31_seq | [6042,6078)    | myGroup1  | S        |              |                |               |                 |               |                 |                  |                  |                 |                    |                          |                        |                     
 (1 row)
 
   select emaj.emaj_delete_before_mark_group('myGroup1','Mk2d');
@@ -1395,7 +1395,7 @@ begin;
  rel_schema |    rel_tblseq    | rel_time_range | rel_group | rel_kind | rel_priority | rel_log_schema | rel_log_table | rel_log_dat_tsp |   rel_log_index   | rel_log_idx_tsp | rel_log_sequence | rel_log_function | rel_sql_columns | rel_sql_pk_columns | rel_sql_pk_eq_conditions | rel_log_seq_last_value | rel_emaj_verb_attnum 
 ------------+------------------+----------------+-----------+----------+--------------+----------------+---------------+-----------------+-------------------+-----------------+------------------+------------------+-----------------+--------------------+--------------------------+------------------------+----------------------
  myschema1  | myTbl3           | [6042,6102)    | myGroup1  | r        |           10 | emaj_myschema1 | myTbl3_log_1  | tsplog1         | myTbl3_log_idx_1  |                 | myTbl3_log_seq   |                  |                 |                    |                          |                      3 |                    4
- myschema1  | myTbl3_col31_seq | [6042,6078)    | myGroup1  | S        |            1 |                |               |                 |                   |                 |                  |                  |                 |                    |                          |                        |                     
+ myschema1  | myTbl3_col31_seq | [6042,6078)    | myGroup1  | S        |              |                |               |                 |                   |                 |                  |                  |                 |                    |                          |                        |                     
  myschema1  | mytbl2b          | [6052,6102)    | myGroup1  | r        |              | emaj_myschema1 | mytbl2b_log_1 | tsp log'2       | mytbl2b_log_idx_1 | tsp log'2       | mytbl2b_log_seq  |                  |                 |                    |                          |                      0 |                    3
 (3 rows)
 
@@ -1730,8 +1730,8 @@ begin;
 ------------+-------------------+----------------+-----------+----------+--------------+----------------+---------------+-----------------+-------------------+-----------------+------------------+------------------+-----------------+--------------------+--------------------------+------------------------+----------------------
  myschema1  | myTbl3            | [6042,6102)    | myGroup1  | r        |           10 | emaj_myschema1 | myTbl3_log_1  | tsplog1         | myTbl3_log_idx_1  |                 | myTbl3_log_seq   |                  |                 |                    |                          |                      3 |                    4
  myschema1  | myTbl3            | [6115,6125)    | myGroup1  | r        |           10 | emaj_myschema1 | myTbl3_log_2  | tsplog1         | myTbl3_log_idx_2  |                 | myTbl3_log_seq   |                  |                 |                    |                          |                      3 |                    4
- myschema1  | myTbl3_col31_seq  | [6042,6078)    | myGroup1  | S        |            1 |                |               |                 |                   |                 |                  |                  |                 |                    |                          |                        |                     
- myschema1  | myTbl3_col31_seq  | [6086,6125)    | myGroup1  | S        |            1 |                |               |                 |                   |                 |                  |                  |                 |                    |                          |                        |                     
+ myschema1  | myTbl3_col31_seq  | [6042,6078)    | myGroup1  | S        |              |                |               |                 |                   |                 |                  |                  |                 |                    |                          |                        |                     
+ myschema1  | myTbl3_col31_seq  | [6086,6125)    | myGroup1  | S        |              |                |               |                 |                   |                 |                  |                  |                 |                    |                          |                        |                     
  myschema1  | mytbl1            | [6052,6109)    | myGroup1  | r        |           20 | emaj_myschema1 | mytbl1_log_1  |                 | mytbl1_log_idx_1  |                 | mytbl1_log_seq   |                  |                 |                    |                          |                      2 |                    4
  myschema1  | mytbl1            | [6115,6125)    | myGroup1  | r        |           20 | emaj_myschema1 | mytbl1_log_2  |                 | mytbl1_log_idx_2  |                 | mytbl1_log_seq   |                  |                 |                    |                          |                      2 |                    4
  myschema1  | mytbl2            | [6053,6125)    | myGroup1  | r        |              | emaj_myschema1 | mytbl2_log_1  | tsplog1         | mytbl2_log_idx_1  | tsplog1         | mytbl2_log_seq   |                  |                 |                    |                          |                      0 |                    4
@@ -2002,7 +2002,7 @@ WARNING:  _check_fk_groups: The table "myschema2.mytbl6" is referenced by the fo
                   3
 (1 row)
 
-  select emaj.emaj_assign_sequences('myschema2','{"myseq1","myseq2"}'::text[],'myGroup2',null,'ASSIGN_2_SEQUENCES');
+  select emaj.emaj_assign_sequences('myschema2','{"myseq1","myseq2"}'::text[],'myGroup2','ASSIGN_2_SEQUENCES');
  emaj_assign_sequences 
 -----------------------
                      2
@@ -3390,14 +3390,14 @@ select * from emaj.emaj_alter_plan order by 1,2,3,4,5;
          6015 | REMOVE_TBL               | myschema1   | mytbl2b          | myGroup1   |               | f                     |                |                           |             
          6015 | REMOVE_TBL               | myschema1   | mytbl4           | myGroup1   |            20 | f                     |                |                           |             
          6015 | RESET_GROUP              |             |                  | myGroup1   |               | f                     |                |                           |             
-         6016 | REMOVE_SEQ               | myschema1   | myTbl3_col31_seq | myGroup1   |             1 | f                     |                |                           |             
+         6016 | REMOVE_SEQ               | myschema1   | myTbl3_col31_seq | myGroup1   |               | f                     |                |                           |             
          6016 | RESET_GROUP              |             |                  | myGroup1   |               | f                     |                |                           |             
          6017 | RESET_GROUP              |             |                  | myGroup1   |               | f                     |                |                           |             
          6017 | ADD_TBL                  | myschema1   | myTbl3           | myGroup1   |            10 | f                     |                |                           |             
          6017 | ADD_TBL                  | myschema1   | mytbl2b          | myGroup1   |               | f                     |                |                           |             
          6017 | ADD_TBL                  | myschema1   | mytbl4           | myGroup1   |            20 | f                     |                |                           |             
          6018 | RESET_GROUP              |             |                  | myGroup1   |               | f                     |                |                           |             
-         6018 | ADD_SEQ                  | myschema1   | myTbl3_col31_seq | myGroup1   |             1 | f                     |                |                           |             
+         6018 | ADD_SEQ                  | myschema1   | myTbl3_col31_seq | myGroup1   |               | f                     |                |                           |             
          6019 | RESET_GROUP              |             |                  | myGroup1   |               | f                     |                |                           |             
          6019 | CHANGE_TBL_LOG_DATA_TSP  | myschema1   | mytbl2b          | myGroup1   |               | f                     |                |                           |             
          6020 | RESET_GROUP              |             |                  | myGroup1   |               | f                     |                |                           |             
@@ -3451,7 +3451,7 @@ select * from emaj.emaj_alter_plan order by 1,2,3,4,5;
          6041 | REMOVE_TBL               | myschema1   | myTbl3           | myGroup1   |            10 | f                     |                |                           |             
          6041 | REMOVE_TBL               | myschema1   | mytbl2b          | myGroup1   |               | f                     |                |                           |             
          6041 | REMOVE_TBL               | myschema2   | mytbl4           | myGroup2   |               | f                     |                |                           |             
-         6041 | REMOVE_SEQ               | myschema1   | myTbl3_col31_seq | myGroup1   |             1 | f                     |                |                           |             
+         6041 | REMOVE_SEQ               | myschema1   | myTbl3_col31_seq | myGroup1   |               | f                     |                |                           |             
          6041 | RESET_GROUP              |             |                  | myGroup1   |               | f                     |                |                           |             
          6041 | RESET_GROUP              |             |                  | myGroup2   |               | f                     |                |                           |             
          6042 | RESET_GROUP              |             |                  | myGroup1   |               | f                     |                |                           |             
@@ -3459,7 +3459,7 @@ select * from emaj.emaj_alter_plan order by 1,2,3,4,5;
          6042 | ADD_TBL                  | myschema1   | myTbl3           | myGroup1   |            10 | f                     |                |                           |             
          6042 | ADD_TBL                  | myschema1   | mytbl2b          | myGroup1   |               | f                     |                |                           |             
          6042 | ADD_TBL                  | myschema2   | mytbl4           | myGroup2   |               | f                     |                |                           |             
-         6042 | ADD_SEQ                  | myschema1   | myTbl3_col31_seq | myGroup1   |             1 | f                     |                |                           |             
+         6042 | ADD_SEQ                  | myschema1   | myTbl3_col31_seq | myGroup1   |               | f                     |                |                           |             
          6043 | RESET_GROUP              |             |                  | myGroup1   |               | f                     |                |                           |             
          6043 | RESET_GROUP              |             |                  | myGroup2   |               | f                     |                |                           |             
          6043 | CHANGE_TBL_LOG_DATA_TSP  | myschema1   | mytbl2b          | myGroup1   |               | f                     |                |                           |             
@@ -3498,7 +3498,7 @@ select * from emaj.emaj_alter_plan order by 1,2,3,4,5;
          6073 | ADD_SEQ                  | myschema2   | myseq2           | myGroup2   |               | t                     |                |                           |         6003
          6074 | REMOVE_SEQ               | myschema2   | myseq2           | myGroup2   |               | t                     |                |                           |         6003
          6078 | REMOVE_SEQ               | myschema1   | myTbl3_col31_seq | myGroup1   |               | t                     |                |                           |         6010
-         6086 | ADD_SEQ                  | myschema1   | myTbl3_col31_seq | myGroup1   |             1 | t                     |                |                           |         6010
+         6086 | ADD_SEQ                  | myschema1   | myTbl3_col31_seq | myGroup1   |               | t                     |                |                           |         6010
          6089 | ADD_TBL                  | myschema2   | mytbl7           | myGroup2   |               | t                     |                |                           |         6007
          6096 | REMOVE_TBL               | myschema2   | mytbl7           | myGroup2   |               | t                     |                |                           |         6008
          6097 | ADD_TBL                  | myschema2   | mytbl7           | myGroup2   |               | t                     |                |                           |         6008

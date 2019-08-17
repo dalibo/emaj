@@ -842,19 +842,19 @@ ERROR:  emaj_snap_group: The directory parameter cannot be NULL.
 CONTEXT:  PL/pgSQL function emaj.emaj_snap_group(text,text,text) line 33 at RAISE
 select emaj.emaj_snap_group('myGroup1','unknown_directory',NULL);
 ERROR:  relative path not allowed for COPY to file
-CONTEXT:  SQL statement "COPY (SELECT sequencename, rel.last_value, start_value, increment_by, max_value, min_value, cache_size, cycle, rel.is_called FROM myschema1."myTbl3_col31_seq" rel, pg_sequences WHERE schemaname = 'myschema1' AND sequencename = 'myTbl3_col31_seq') TO 'unknown_directory/myschema1_myTbl3_col31_seq.snap' "
+CONTEXT:  SQL statement "COPY (SELECT * FROM myschema1."myTbl3" ORDER BY col31) TO 'unknown_directory/myschema1_myTbl3.snap' "
 PL/pgSQL function emaj.emaj_snap_group(text,text,text) line 87 at EXECUTE
 select emaj.emaj_snap_group('myGroup1','/unknown_directory',NULL);
-ERROR:  could not open file "/unknown_directory/myschema1_myTbl3_col31_seq.snap" for writing: No such file or directory
+ERROR:  could not open file "/unknown_directory/myschema1_myTbl3.snap" for writing: No such file or directory
 HINT:  COPY TO instructs the PostgreSQL server process to write a file. You may want a client-side facility such as psql's \copy.
-CONTEXT:  SQL statement "COPY (SELECT sequencename, rel.last_value, start_value, increment_by, max_value, min_value, cache_size, cycle, rel.is_called FROM myschema1."myTbl3_col31_seq" rel, pg_sequences WHERE schemaname = 'myschema1' AND sequencename = 'myTbl3_col31_seq') TO '/unknown_directory/myschema1_myTbl3_col31_seq.snap' "
+CONTEXT:  SQL statement "COPY (SELECT * FROM myschema1."myTbl3" ORDER BY col31) TO '/unknown_directory/myschema1_myTbl3.snap' "
 PL/pgSQL function emaj.emaj_snap_group(text,text,text) line 87 at EXECUTE
 -- invalid COPY TO options
 select emaj.emaj_snap_group('myGroup1','/tmp/emaj_test/snaps','dummy_option');
 ERROR:  syntax error at or near "dummy_option"
-LINE 1: .../emaj_test/snaps/myschema1_myTbl3_col31_seq.snap' dummy_opti...
+LINE 1: ...) TO '/tmp/emaj_test/snaps/myschema1_myTbl3.snap' dummy_opti...
                                                              ^
-QUERY:  COPY (SELECT sequencename, rel.last_value, start_value, increment_by, max_value, min_value, cache_size, cycle, rel.is_called FROM myschema1."myTbl3_col31_seq" rel, pg_sequences WHERE schemaname = 'myschema1' AND sequencename = 'myTbl3_col31_seq') TO '/tmp/emaj_test/snaps/myschema1_myTbl3_col31_seq.snap' dummy_option
+QUERY:  COPY (SELECT * FROM myschema1."myTbl3" ORDER BY col31) TO '/tmp/emaj_test/snaps/myschema1_myTbl3.snap' dummy_option
 CONTEXT:  PL/pgSQL function emaj.emaj_snap_group(text,text,text) line 87 at EXECUTE
 -- SQL injection attempt
 select emaj.emaj_snap_group('myGroup1','/tmp/emaj_test/snaps','; CREATE ROLE fake LOGIN PASSWORD '''' SUPERUSER');

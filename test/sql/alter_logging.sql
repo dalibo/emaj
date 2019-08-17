@@ -66,7 +66,7 @@ select emaj._adjust_group_properties();
 select group_name, group_last_alter_time_id, group_has_waiting_changes, group_nb_table, group_nb_sequence
   from emaj.emaj_group where group_name = 'myGroup2';
 --select emaj.emaj_alter_group('myGroup2', 'Alter to add myseq2');
-select emaj.emaj_assign_sequence('myschema2', 'myseq2', 'myGroup2', null, 'Alter to add myseq2');
+select emaj.emaj_assign_sequence('myschema2', 'myseq2', 'myGroup2', 'Alter to add myseq2');
 
 select group_name, group_last_alter_time_id, group_has_waiting_changes, group_nb_table, group_nb_sequence
   from emaj.emaj_group where group_name = 'myGroup2';
@@ -634,7 +634,7 @@ begin;
   select emaj.emaj_remove_sequence('myschema2','myseq1','REMOVE_1_SEQUENCES');
 
   select emaj.emaj_assign_tables('myschema2','{"mytbl1","mytbl2","myTbl3"}'::text[],'myGroup2',null,'ASSIGN_3_TABLES');
-  select emaj.emaj_assign_sequences('myschema2','{"myseq1","myseq2"}'::text[],'myGroup2',null,'ASSIGN_2_SEQUENCES');
+  select emaj.emaj_assign_sequences('myschema2','{"myseq1","myseq2"}'::text[],'myGroup2','ASSIGN_2_SEQUENCES');
   insert into myschema2.mytbl1 values (110, 'Assigned', E'\\000'::bytea);
   select nextval('myschema2.myseq1');
 

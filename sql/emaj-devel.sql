@@ -1055,7 +1055,7 @@ $_check_conf_groups$
 --  - tables are not TEMPORARY
 --  - for rollbackable groups, tables are not UNLOGGED or WITH OIDS
 --  - for rollbackable groups, all tables have a PRIMARY KEY
---  - for sequences, the tablespaces, emaj log schema and emaj object name prefix are all set to NULL
+--  - for sequences, the tablespaces and emaj priority are all set to NULL
 --  - for tables, configured tablespaces exist
 -- The function is directly called by Emaj_web.
 -- Input: name array of the tables groups to check
@@ -1163,7 +1163,15 @@ $_check_conf_groups$
           AND NOT EXISTS (SELECT 1 FROM pg_catalog.pg_class, pg_catalog.pg_namespace, pg_catalog.pg_constraint
                             WHERE relnamespace = pg_namespace.oid AND connamespace = pg_namespace.oid AND conrelid = pg_class.oid
                             AND contype = 'p' AND nspname = grpdef_schema AND relname = grpdef_tblseq);
----- all sequences described in emaj_group_def have their data log tablespaces attributes set to NULL
+---- all sequences described in emaj_group_def have their priority attribute set to NULL
+    RETURN QUERY
+      SELECT 31, 1, grpdef_group, grpdef_schema, grpdef_tblseq, NULL::TEXT,
+             format('in the group %s, for the sequence %s.%s, the priority is not NULL.',
+                    quote_ident(grpdef_group), quote_ident(grpdef_schema), quote_ident(grpdef_tblseq))
+        FROM emaj.emaj_group_def, pg_catalog.pg_class, pg_catalog.pg_namespace
+        WHERE grpdef_schema = nspname AND grpdef_tblseq = relname AND relnamespace = pg_namespace.oid
+          AND grpdef_group = ANY (v_groupNames) AND relkind = 'S' AND grpdef_priority IS NOT NULL;
+---- all sequences described in emaj_group_def have their data log tablespace attribute set to NULL
     RETURN QUERY
       SELECT 32, 1, grpdef_group, grpdef_schema, grpdef_tblseq, NULL::TEXT,
              format('in the group %s, for the sequence %s.%s, the data log tablespace is not NULL.',
@@ -1171,7 +1179,7 @@ $_check_conf_groups$
         FROM emaj.emaj_group_def, pg_catalog.pg_class, pg_catalog.pg_namespace
         WHERE grpdef_schema = nspname AND grpdef_tblseq = relname AND relnamespace = pg_namespace.oid
           AND grpdef_group = ANY (v_groupNames) AND relkind = 'S' AND grpdef_log_dat_tsp IS NOT NULL;
----- all sequences described in emaj_group_def have their index log tablespaces attributes set to NULL
+---- all sequences described in emaj_group_def have their index log tablespace attribute set to NULL
     RETURN QUERY
       SELECT 33, 1, grpdef_group, grpdef_schema, grpdef_tblseq, NULL::TEXT,
              format('in the group %s, for the sequence %s.%s, the index log tablespace is not NULL.',
@@ -2758,43 +2766,40 @@ $_drop_tbl$
   END;
 $_drop_tbl$;
 
-CREATE OR REPLACE FUNCTION emaj.emaj_assign_sequence(v_schema TEXT, v_sequence TEXT, v_group TEXT, v_properties JSONB DEFAULT NULL,
-                                                     v_mark TEXT DEFAULT 'ASSIGN_%')
+CREATE OR REPLACE FUNCTION emaj.emaj_assign_sequence(v_schema TEXT, v_sequence TEXT, v_group TEXT, v_mark TEXT DEFAULT 'ASSIGN_%')
 RETURNS INTEGER LANGUAGE plpgsql AS
 $emaj_assign_sequence$
 -- The function assigns a sequence into a tables group.
--- Inputs: schema name, sequence name, assignment group name, assignment properties (optional),
---         mark name to set when logging groups (optional)
+-- Inputs: schema name, sequence name, assignment group name, mark name to set when logging groups (optional)
 -- Outputs: number of sequences effectively assigned to the tables group, ie. 1
   BEGIN
-    RETURN emaj._assign_sequences(v_schema, ARRAY[v_sequence], v_group, v_properties, v_mark , FALSE, FALSE);
+    RETURN emaj._assign_sequences(v_schema, ARRAY[v_sequence], v_group, v_mark , FALSE, FALSE);
   END;
 $emaj_assign_sequence$;
-COMMENT ON FUNCTION emaj.emaj_assign_sequence(TEXT,TEXT,TEXT,JSONB,TEXT) IS
+COMMENT ON FUNCTION emaj.emaj_assign_sequence(TEXT,TEXT,TEXT,TEXT) IS
 $$Assign a sequence into a tables group.$$;
 
-CREATE OR REPLACE FUNCTION emaj.emaj_assign_sequences(v_schema TEXT, v_sequences TEXT[], v_group TEXT, v_properties JSONB DEFAULT NULL,
-                                                      v_mark TEXT DEFAULT 'ASSIGN_%')
+CREATE OR REPLACE FUNCTION emaj.emaj_assign_sequences(v_schema TEXT, v_sequences TEXT[], v_group TEXT, v_mark TEXT DEFAULT 'ASSIGN_%')
 RETURNS INTEGER LANGUAGE plpgsql AS
 $emaj_assign_sequences$
 -- The function assigns several sequences at once into a tables group.
--- Inputs: schema, array of sequence names, assignment group name, assignment properties (optional),
+-- Inputs: schema, array of sequence names, assignment group name,
 --         mark name to set when logging groups (optional)
 -- Outputs: number of sequences effectively assigned to the tables group
   BEGIN
-    RETURN emaj._assign_sequences(v_schema, v_sequences, v_group, v_properties, v_mark, TRUE, FALSE);
+    RETURN emaj._assign_sequences(v_schema, v_sequences, v_group, v_mark, TRUE, FALSE);
   END;
 $emaj_assign_sequences$;
-COMMENT ON FUNCTION emaj.emaj_assign_sequences(TEXT,TEXT[],TEXT,JSONB,TEXT) IS
+COMMENT ON FUNCTION emaj.emaj_assign_sequences(TEXT,TEXT[],TEXT,TEXT) IS
 $$Assign several sequences into a tables group.$$;
 
 CREATE OR REPLACE FUNCTION emaj.emaj_assign_sequences(v_schema TEXT, v_sequencesIncludeFilter TEXT, v_sequencesExcludeFilter TEXT,
-                                                      v_group TEXT, v_properties JSONB DEFAULT NULL, v_mark TEXT DEFAULT 'ASSIGN_%')
+                                                      v_group TEXT, v_mark TEXT DEFAULT 'ASSIGN_%')
 RETURNS INTEGER LANGUAGE plpgsql AS
 $emaj_assign_sequences$
 -- The function assigns sequences on name regexp pattern into a tables group.
--- Inputs: schema name, 2 patterns to filter sequence names (one to include and another to exclude) , assignment group name,
---         assignment properties (optional), mark name to set when logging groups (optional)
+-- Inputs: schema name, 2 patterns to filter sequence names (one to include and another to exclude), assignment group name,
+--         mark name to set when logging groups (optional)
 -- Outputs: number of sequences effectively assigned to the tables group
   DECLARE
     v_sequences              TEXT[];
@@ -2813,18 +2818,18 @@ $emaj_assign_sequences$
           AND relkind IN ('S')
         ORDER BY relname) AS t;
 -- OK, call the _assign_sequences() function for execution
-    RETURN emaj._assign_sequences(v_schema, v_sequences, v_group, v_properties, v_mark, TRUE, TRUE);
+    RETURN emaj._assign_sequences(v_schema, v_sequences, v_group, v_mark, TRUE, TRUE);
   END;
 $emaj_assign_sequences$;
-COMMENT ON FUNCTION emaj.emaj_assign_sequences(TEXT,TEXT,TEXT,TEXT,JSONB,TEXT) IS
+COMMENT ON FUNCTION emaj.emaj_assign_sequences(TEXT,TEXT,TEXT,TEXT,TEXT) IS
 $$Assign sequences on name patterns into a tables group.$$;
 
-CREATE OR REPLACE FUNCTION emaj._assign_sequences(v_schema TEXT, v_sequences TEXT[], v_group TEXT, v_properties JSONB,
-                                                  v_mark TEXT, v_multiSequence BOOLEAN, v_arrayFromRegex BOOLEAN)
+CREATE OR REPLACE FUNCTION emaj._assign_sequences(v_schema TEXT, v_sequences TEXT[], v_group TEXT, v_mark TEXT,
+                                                  v_multiSequence BOOLEAN, v_arrayFromRegex BOOLEAN)
 RETURNS INTEGER LANGUAGE plpgsql AS
 $_assign_sequences$
 -- The function effectively assigns sequences into a tables group.
--- Inputs: schema, array of sequence names, group name, properties as JSON structure,
+-- Inputs: schema, array of sequence names, group name,
 --         mark to set for lonnging groups, a boolean indicating whether several sequences need to be processed,
 --         a boolean indicating whether the tables array has been built from regex filters
 -- Outputs: number of sequences effectively assigned to the tables group
@@ -2832,8 +2837,6 @@ $_assign_sequences$
   DECLARE
     v_function               TEXT;
     v_groupIsLogging         BOOLEAN;
-    v_priority               INT;
-    v_extraProperties        JSONB;
     v_list                   TEXT;
     v_array                  TEXT[];
     v_timeId                 BIGINT;
@@ -2896,18 +2899,6 @@ $_assign_sequences$
           FROM (SELECT unnest(v_sequences) EXCEPT SELECT unnest(v_array)) AS t(remaining_sequence);
       END IF;
     END IF;
--- check the priority is numeric
-    BEGIN
-      v_priority = (v_properties->>'priority')::INT;
-    EXCEPTION
-      WHEN invalid_text_representation THEN
-        RAISE EXCEPTION '_assign_sequences: the "priority" property is not numeric.';
-    END;
--- check no properties are unknown
-    v_extraProperties = v_properties - 'priority';
-    IF v_extraProperties IS NOT NULL AND v_extraProperties <> '{}' THEN
-      RAISE EXCEPTION '_assign_sequences: properties "%" are unknown.', v_extraProperties;
-    END IF;
 -- check the supplied mark
     SELECT emaj._check_new_mark(array[v_group], v_mark) INTO v_markName;
 -- OK,
@@ -2928,7 +2919,7 @@ $_assign_sequences$
 -- effectively create the log components for each table
       FOREACH v_oneSequence IN ARRAY v_sequences
       LOOP
-        PERFORM emaj._add_seq(v_schema, v_oneSequence, v_group, v_priority, v_groupIsLogging, v_timeId, v_function);
+        PERFORM emaj._add_seq(v_schema, v_oneSequence, v_group, v_groupIsLogging, v_timeId, v_function);
 -- insert an entry into the emaj_alter_plan table (so that future rollback may see the change)
         INSERT INTO emaj.emaj_alter_plan (altr_time_id, altr_step, altr_schema, altr_tblseq, altr_group, altr_group_is_logging)
           VALUES (v_timeId, 'ADD_SEQ', v_schema, v_oneSequence, v_group, v_groupIsLogging);
@@ -3292,7 +3283,7 @@ $_move_sequences$
   END;
 $_move_sequences$;
 
-CREATE OR REPLACE FUNCTION emaj._create_seq(v_schema TEXT, v_seq TEXT, v_groupName TEXT, v_priority INT, v_timeId BIGINT)
+CREATE OR REPLACE FUNCTION emaj._create_seq(v_schema TEXT, v_seq TEXT, v_groupName TEXT, v_timeId BIGINT)
 RETURNS VOID LANGUAGE plpgsql AS
 $_create_seq$
 -- The function checks whether the sequence is related to a serial column of an application table.
@@ -3330,13 +3321,13 @@ $_create_seq$
       END IF;
     END IF;
 -- record the sequence in the emaj_relation table
-    INSERT INTO emaj.emaj_relation (rel_schema, rel_tblseq, rel_time_range, rel_group, rel_priority, rel_kind)
-      VALUES (v_schema, v_seq, int8range(v_timeId, NULL, '[)'), v_groupName, v_priority, 'S');
+    INSERT INTO emaj.emaj_relation (rel_schema, rel_tblseq, rel_time_range, rel_group, rel_kind)
+      VALUES (v_schema, v_seq, int8range(v_timeId, NULL, '[)'), v_groupName, 'S');
     RETURN;
   END;
 $_create_seq$;
 
-CREATE OR REPLACE FUNCTION emaj._add_seq(v_schema TEXT, v_sequence TEXT, v_group TEXT, v_priority INT, v_groupIsLogging BOOLEAN,
+CREATE OR REPLACE FUNCTION emaj._add_seq(v_schema TEXT, v_sequence TEXT, v_group TEXT, v_groupIsLogging BOOLEAN,
                                          v_timeId BIGINT, v_function TEXT)
 RETURNS VOID LANGUAGE plpgsql AS
 $_add_seq$
@@ -3347,7 +3338,7 @@ $_add_seq$
 --                  the time stamp id of the operation, main calling function.
   BEGIN
 -- create the sequence
-    PERFORM emaj._create_seq(v_schema, v_sequence, v_group, v_priority, v_timeId);
+    PERFORM emaj._create_seq(v_schema, v_sequence, v_group, v_timeId);
 -- if the group is in logging state, perform additional tasks
     IF v_groupIsLogging THEN
 -- ... record the new sequence state in the emaj_sequence table for the current alter_group mark
@@ -4390,8 +4381,8 @@ $emaj_create_group$
       SELECT count(*) INTO v_nbTbl
         FROM emaj.emaj_relation
         WHERE rel_group = v_groupName AND rel_kind = 'r' AND upper_inf(rel_time_range);
--- get and process all sequences of the group (in priority order, NULLS being processed last)
-      PERFORM emaj._create_seq(grpdef_schema, grpdef_tblseq, grpdef_group, grpdef_priority, v_timeId)
+-- get and process all sequences of the group (in alphabetical order)
+      PERFORM emaj._create_seq(grpdef_schema, grpdef_tblseq, grpdef_group, v_timeId)
         FROM (
           SELECT grpdef_schema, grpdef_tblseq, grpdef_group, grpdef_priority
             FROM emaj.emaj_group_def, pg_catalog.pg_class, pg_catalog.pg_namespace
@@ -4399,7 +4390,7 @@ $emaj_create_group$
               AND relnamespace = pg_namespace.oid
               AND nspname = grpdef_schema AND relname = grpdef_tblseq
               AND relkind = 'S'
-            ORDER BY grpdef_priority, grpdef_schema, grpdef_tblseq
+            ORDER BY grpdef_schema, grpdef_tblseq
              ) AS t;
       SELECT count(*) INTO v_nbSeq
         FROM emaj.emaj_relation
@@ -4726,11 +4717,12 @@ $_alter_plan$
         AND rel_group = ANY (v_groupNames)
         AND grpdef_group = ANY (v_groupNames)
         AND rel_group <> grpdef_group;
--- determine the relation that change their priority level
+-- determine the tables that change their priority level
     INSERT INTO emaj.emaj_alter_plan (altr_time_id, altr_step, altr_schema, altr_tblseq, altr_group, altr_priority)
       SELECT v_timeId, 'CHANGE_REL_PRIORITY', rel_schema, rel_tblseq, rel_group, grpdef_priority
       FROM emaj.emaj_relation, emaj.emaj_group_def
       WHERE rel_schema = grpdef_schema AND rel_tblseq = grpdef_tblseq AND upper_inf(rel_time_range)
+        AND rel_kind = 'r'
         AND rel_group = ANY (v_groupNames)
         AND grpdef_group = ANY (v_groupNames)
         AND ( (rel_priority IS NULL AND grpdef_priority IS NOT NULL) OR
@@ -4868,8 +4860,8 @@ $_alter_exec$
 --
         WHEN 'ADD_SEQ' THEN
 -- add a sequence to a group
-          PERFORM emaj._add_seq(r_plan.altr_schema, r_plan.altr_tblseq, r_plan.altr_group, r_plan.altr_priority,
-                                r_plan.altr_group_is_logging, v_timeId, v_function);
+          PERFORM emaj._add_seq(r_plan.altr_schema, r_plan.altr_tblseq, r_plan.altr_group, r_plan.altr_group_is_logging,
+                                v_timeId, v_function);
 --
       END CASE;
     END LOOP;
@@ -7150,7 +7142,7 @@ $_rlbk_end$
     PERFORM emaj._rlbk_seq(t.*, greatest(v_markTimeId, lower(t.rel_time_range)))
       FROM (SELECT * FROM emaj.emaj_relation
               WHERE upper_inf(rel_time_range) AND rel_group = ANY (v_groupNames) AND rel_kind = 'S'
-              ORDER BY rel_priority, rel_schema, rel_tblseq) as t;
+              ORDER BY rel_schema, rel_tblseq) as t;
     GET DIAGNOSTICS v_nbSeq = ROW_COUNT;
 -- if rollback is "logged" rollback, automatically set a mark representing the tables state just after the rollback.
 -- this mark is named 'RLBK_<mark name to rollback to>_%_DONE', where % represents the rollback start time
@@ -8611,7 +8603,7 @@ $_gen_sql_groups$
             WHERE rel_group = ANY (v_groupNames) AND rel_kind = 'S'
               AND rel_time_range @> v_firstMarkTimeId                                -- sequences belonging to the groups at the start mark
               AND (v_tblseqs IS NULL OR rel_schema || '.' || rel_tblseq = ANY (v_tblseqs))         -- filtered or not by the user
-            ORDER BY rel_priority DESC, rel_schema DESC, rel_tblseq DESC
+            ORDER BY rel_schema DESC, rel_tblseq DESC
       LOOP
         v_fullSeqName = quote_ident(r_tblsq.rel_schema) || '.' || quote_ident(r_tblsq.rel_tblseq);
         IF v_lastMarkTimeId IS NULL AND upper_inf(r_tblsq.rel_time_range) THEN
