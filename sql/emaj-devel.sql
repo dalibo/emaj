@@ -4959,7 +4959,6 @@ $_start_groups$
   DECLARE
     v_nbTblSeq               INT = 0;
     v_markName               TEXT;
-    v_fullTableName          TEXT;
     v_eventTriggers          TEXT[];
     r_tblsq                  RECORD;
   BEGIN
@@ -4999,18 +4998,14 @@ $_start_groups$
 -- enable all log triggers for the groups
 -- for each relation currently belonging to the group,
       FOR r_tblsq IN
-         SELECT rel_priority, rel_schema, rel_tblseq, rel_kind FROM emaj.emaj_relation
+         SELECT rel_kind, quote_ident(rel_schema) || '.' || quote_ident(rel_tblseq) AS full_relation_name FROM emaj.emaj_relation
            WHERE upper_inf(rel_time_range) AND rel_group = ANY (v_groupNames) ORDER BY rel_priority, rel_schema, rel_tblseq
       LOOP
-        CASE r_tblsq.rel_kind
-          WHEN 'r' THEN
+        IF r_tblsq.rel_kind = 'r' THEN
 -- if it is a table, enable the emaj log and truncate triggers
-            v_fullTableName  = quote_ident(r_tblsq.rel_schema) || '.' || quote_ident(r_tblsq.rel_tblseq);
-            EXECUTE format('ALTER TABLE %s ENABLE TRIGGER emaj_log_trg, ENABLE TRIGGER emaj_trunc_trg',
-                           v_fullTableName);
-          WHEN 'S' THEN
--- if it is a sequence, nothing to do
-        END CASE;
+          EXECUTE format('ALTER TABLE %s ENABLE TRIGGER emaj_log_trg, ENABLE TRIGGER emaj_trunc_trg',
+                           r_tblsq.full_relation_name);
+        END IF;
         v_nbTblSeq = v_nbTblSeq + 1;
       END LOOP;
 -- update the state of the group row from the emaj_group table
@@ -5145,51 +5140,48 @@ $_stop_groups$
             WHERE upper_inf(rel_time_range) AND rel_group = ANY (v_groupNames)
             ORDER BY rel_priority, rel_schema, rel_tblseq
       LOOP
-        CASE r_tblsq.rel_kind
-          WHEN 'r' THEN
+        IF r_tblsq.rel_kind = 'r' THEN
 -- if it is a table, check the table still exists
-            PERFORM 1 FROM pg_catalog.pg_namespace, pg_catalog.pg_class
-              WHERE  relnamespace = pg_namespace.oid AND nspname = r_tblsq.rel_schema AND relname = r_tblsq.rel_tblseq;
-            IF NOT FOUND THEN
-              IF v_isForced THEN
-                RAISE WARNING '_stop_groups: The table "%.%" does not exist any more.', r_tblsq.rel_schema, r_tblsq.rel_tblseq;
-              ELSE
-                RAISE EXCEPTION '_stop_groups: The table "%.%" does not exist any more.', r_tblsq.rel_schema, r_tblsq.rel_tblseq;
-              END IF;
+          PERFORM 1 FROM pg_catalog.pg_namespace, pg_catalog.pg_class
+            WHERE  relnamespace = pg_namespace.oid AND nspname = r_tblsq.rel_schema AND relname = r_tblsq.rel_tblseq;
+          IF NOT FOUND THEN
+            IF v_isForced THEN
+              RAISE WARNING '_stop_groups: The table "%.%" does not exist any more.', r_tblsq.rel_schema, r_tblsq.rel_tblseq;
             ELSE
--- and disable the emaj log and truncate triggers
---   errors are captured so that emaj_force_stop_group() can be silently executed
-              v_fullTableName  = quote_ident(r_tblsq.rel_schema) || '.' || quote_ident(r_tblsq.rel_tblseq);
-              BEGIN
-                EXECUTE format('ALTER TABLE %s DISABLE TRIGGER emaj_log_trg',
-                               v_fullTableName);
-              EXCEPTION
-                WHEN undefined_object THEN
-                  IF v_isForced THEN
-                    RAISE WARNING '_stop_groups: The log trigger "emaj_log_trg" on table "%.%" does not exist any more.',
-                      r_tblsq.rel_schema, r_tblsq.rel_tblseq;
-                  ELSE
-                    RAISE EXCEPTION '_stop_groups: The log trigger "emaj_log_trg" on table "%.%" does not exist any more.',
-                      r_tblsq.rel_schema, r_tblsq.rel_tblseq;
-                  END IF;
-              END;
-              BEGIN
-                EXECUTE format('ALTER TABLE %s DISABLE TRIGGER emaj_trunc_trg',
-                               v_fullTableName);
-              EXCEPTION
-                WHEN undefined_object THEN
-                  IF v_isForced THEN
-                    RAISE WARNING '_stop_groups: The truncate trigger "emaj_trunc_trg" on table "%.%" does not exist any more.',
-                      r_tblsq.rel_schema, r_tblsq.rel_tblseq;
-                  ELSE
-                    RAISE EXCEPTION '_stop_groups: The truncate trigger "emaj_trunc_trg" on table "%.%" does not exist any more.',
-                      r_tblsq.rel_schema, r_tblsq.rel_tblseq;
-                  END IF;
-              END;
+              RAISE EXCEPTION '_stop_groups: The table "%.%" does not exist any more.', r_tblsq.rel_schema, r_tblsq.rel_tblseq;
             END IF;
-          WHEN 'S' THEN
--- if it is a sequence, nothing to do
-        END CASE;
+          ELSE
+-- ... and disable the emaj log and truncate triggers
+--     errors are captured so that emaj_force_stop_group() can be silently executed
+            v_fullTableName  = quote_ident(r_tblsq.rel_schema) || '.' || quote_ident(r_tblsq.rel_tblseq);
+            BEGIN
+              EXECUTE format('ALTER TABLE %s DISABLE TRIGGER emaj_log_trg',
+                             v_fullTableName);
+            EXCEPTION
+              WHEN undefined_object THEN
+                IF v_isForced THEN
+                  RAISE WARNING '_stop_groups: The log trigger "emaj_log_trg" on table "%.%" does not exist any more.',
+                    r_tblsq.rel_schema, r_tblsq.rel_tblseq;
+                ELSE
+                  RAISE EXCEPTION '_stop_groups: The log trigger "emaj_log_trg" on table "%.%" does not exist any more.',
+                    r_tblsq.rel_schema, r_tblsq.rel_tblseq;
+                END IF;
+            END;
+            BEGIN
+              EXECUTE format('ALTER TABLE %s DISABLE TRIGGER emaj_trunc_trg',
+                             v_fullTableName);
+            EXCEPTION
+              WHEN undefined_object THEN
+                IF v_isForced THEN
+                  RAISE WARNING '_stop_groups: The truncate trigger "emaj_trunc_trg" on table "%.%" does not exist any more.',
+                    r_tblsq.rel_schema, r_tblsq.rel_tblseq;
+                ELSE
+                  RAISE EXCEPTION '_stop_groups: The truncate trigger "emaj_trunc_trg" on table "%.%" does not exist any more.',
+                    r_tblsq.rel_schema, r_tblsq.rel_tblseq;
+                END IF;
+            END;
+          END IF;
+        END IF;
         v_nbTblSeq = v_nbTblSeq + 1;
       END LOOP;
       IF NOT v_isForced THEN
