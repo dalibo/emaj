@@ -84,6 +84,10 @@ The *hist_function* column can take the following values:
 +----------------------------------+----------------------------------------------------------------------------+
 | LOCK_SESSION                     | lock set on tables for a rollback session                                  |
 +----------------------------------+----------------------------------------------------------------------------+
+| MODIFY_TABLE                     | table properties change                                                    |
++----------------------------------+----------------------------------------------------------------------------+
+| MODIFY_TABLES                    | tables properties change                                                   |
++----------------------------------+----------------------------------------------------------------------------+
 | MOVE_SEQUENCE                    | sequence moved to another tables group                                     |
 +----------------------------------+----------------------------------------------------------------------------+
 | MOVE_SEQUENCES                   | sequences moved to another tables group                                    |
@@ -169,6 +173,8 @@ The *hist_event* column can take the following values:
 | NAMES PREFIX CHANGED         | E-Maj names prefix modified                             |
 +------------------------------+---------------------------------------------------------+
 | NOTICE                       | warning message issued by a rollback                    |
++------------------------------+---------------------------------------------------------+
+| PRIORITY CHANGED             | priority level modified                                 |
 +------------------------------+---------------------------------------------------------+
 | SEQUENCE ADDED               | sequence added to a logging tables group                |
 +------------------------------+---------------------------------------------------------+

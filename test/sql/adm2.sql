@@ -663,7 +663,7 @@ select emaj.emaj_stop_group('phil''s group#3",');
 select emaj.emaj_drop_group('phil''s group#3",');
 
 -----------------------------
--- Step 19 : test use of dynamic tables group management (assign, move, remove)
+-- Step 19 : test use of dynamic tables group management (assign, move, remove, change)
 -----------------------------
 
 -- create, start and populate groups
@@ -708,6 +708,9 @@ update myschema4.mytblm set col3 = 'After Mk2 and updated after Mk3'
 
 -- rollback to the previous mark (old syntax)
 select emaj.emaj_rollback_groups('{"grp_tmp_3","grp_tmp_4","grp_tmp"}','Mk3');
+
+-- change some priority and log tablespaces
+select emaj.emaj_modify_tables('phil''s schema3','.*tbl1','','{"priority":-1,"log_data_tablespace":"tsp log''2"}'::jsonb,'Modify 1 table');
 
 -- move all tables and sequences into grp_tmp and set a common mark
 select emaj.emaj_move_tables('phil''s schema3','.*','','grp_tmp','Move_tbl_3_to_tmp');
@@ -773,6 +776,9 @@ select mark_time_id, regexp_replace(mark_name,E'\\d\\d\.\\d\\d\\.\\d\\d\\.\\d\\d
 select emaj.emaj_gen_sql_groups('{"grp_tmp_3","grp_tmp_4","grp_tmp"}','Mk1',null,'/tmp/emaj_test/sql_scripts/allGroups.sql');
 --  \! grep -iP '(insert|update|delete|alter)' /tmp/emaj_test/sql_scripts/allGroups.sql
 \! rm -Rf /tmp/emaj_test/sql_scripts
+
+-- revert the priority and log tablespaces changes
+select emaj.emaj_modify_tables('phil''s schema3','.*tbl1','','{"priority":null,"log_data_tablespace":null}'::jsonb,'revert changes for 1 table');
 
 -- rollback to a mark set before the tables and sequences move
 select rlbk_severity, regexp_replace(rlbk_message,E'\\d\\d\\d\\d/\\d\\d\\/\\d\\d\\ \\d\\d\\:\\d\\d:\\d\\d .*?\\)','<timestamp>)','g')

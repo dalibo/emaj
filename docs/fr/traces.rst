@@ -84,6 +84,10 @@ La colonne *hist_function* peut prendre les valeurs suivantes.
 +----------------------------------+---------------------------------------------------------------------------------------+
 | LOCK_SESSION                     | pose d'un verrou sur les tables d'une session de rollback                             |
 +----------------------------------+---------------------------------------------------------------------------------------+
+| MODIFY_TABLE                     | modification des propriétés d’une table                                               |
++----------------------------------+---------------------------------------------------------------------------------------+
+| MODIFY_TABLES                    | modification des propriétés de tables                                                 |
++----------------------------------+---------------------------------------------------------------------------------------+
 | MOVE_SEQUENCE                    | déplacement d’une séquence vers un autre groupe de tables                             |
 +----------------------------------+---------------------------------------------------------------------------------------+
 | MOVE_SEQUENCES                   | déplacement de séquences vers un autre groupe de tables                               |
@@ -167,6 +171,8 @@ La colonne *hist_event* peut prendre les valeurs suivantes.
 | MARK DELETED                 | marque supprimée                                   |
 +------------------------------+----------------------------------------------------+
 | NOTICE                       | message d’information issu d’un rollback           |
++------------------------------+----------------------------------------------------+
+| PRIORITY CHANGED             | priorité modifiée                                  |
 +------------------------------+----------------------------------------------------+
 | SEQUENCE ADDED               | séquence ajoutée à un groupe de tables actif       |
 +------------------------------+----------------------------------------------------+

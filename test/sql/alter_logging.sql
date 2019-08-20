@@ -687,6 +687,26 @@ select emaj.emaj_move_tables('myschema4','.*','','myGroup4','MOVE_TBL_logging_to
 select emaj.emaj_move_sequences('myschema2','.*','','myGroup4','MOVE_SEQ_logging_to_idle');
 
 -----------------------------
+-- change priority and tablespaces attributes without updating emaj_group_def
+-----------------------------
+
+-- change the priority
+select emaj.emaj_modify_table('myschema1','mytbl1','{"priority":31}'::jsonb,'Priority dynamically changed');
+
+-- change the log data tablespace and the log index tablespace for different tables
+set default_tablespace = tspemaj_renamed;
+select emaj.emaj_modify_tables('myschema1','{"mytbl2b"}','{"log_data_tablespace":null}'::jsonb,'Log data tablespace dynamically changed');
+select emaj.emaj_modify_tables('myschema2','.*6','','{"log_index_tablespace":"tsplog1"}'::jsonb,'Log index tablespace dynamically changed');
+reset default_tablespace;
+
+-- change the priority back
+select emaj.emaj_modify_table('myschema1','mytbl1','{"priority":20}'::jsonb);
+
+-- change the tablespaces back
+select emaj.emaj_modify_tables('myschema1','{"mytbl2b"}','{"log_data_tablespace":"tsp log''2"}'::jsonb);
+select emaj.emaj_modify_tables('myschema2','.*6','','{"log_index_tablespace":null}'::jsonb);
+
+-----------------------------
 -- test end: check
 -----------------------------
 select * from emaj.emaj_relation where rel_schema = 'myschema4' order by 1,2,3;

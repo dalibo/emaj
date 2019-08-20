@@ -2190,6 +2190,249 @@ $_move_tables$
   END;
 $_move_tables$;
 
+CREATE OR REPLACE FUNCTION emaj.emaj_modify_table(v_schema TEXT, v_table TEXT, v_changedProperties JSONB,
+                                                  v_mark TEXT DEFAULT 'MODIFY_%')
+RETURNS INTEGER LANGUAGE plpgsql AS
+$emaj_modify_table$
+-- The function modifies the assignment properties of a table.
+-- Inputs: schema name, table name, assignment properties changes,
+--         mark name to set when logging groups (optional)
+-- Outputs: number of tables effectively modified, ie 0 or 1
+  BEGIN
+    RETURN emaj._modify_tables(v_schema, ARRAY[v_table], v_changedProperties, v_mark, FALSE, FALSE);
+  END;
+$emaj_modify_table$;
+COMMENT ON FUNCTION emaj.emaj_modify_table(TEXT,TEXT,JSONB,TEXT) IS
+$$Modify the assignment properties of a table.$$;
+
+CREATE OR REPLACE FUNCTION emaj.emaj_modify_tables(v_schema TEXT, v_tables TEXT[], v_changedProperties JSONB,
+                                                   v_mark TEXT DEFAULT 'MODIFY_%')
+RETURNS INTEGER LANGUAGE plpgsql AS
+$emaj_modify_tables$
+-- The function modifies the assignment properties for several tables at once.
+-- Inputs: schema, array of table names, assignment properties,
+--         mark name to set when logging groups (optional)
+-- Outputs: number of tables effectively modified
+  BEGIN
+    RETURN emaj._modify_tables(v_schema, v_tables, v_changedProperties, v_mark, TRUE, FALSE);
+  END;
+$emaj_modify_tables$;
+COMMENT ON FUNCTION emaj.emaj_modify_tables(TEXT,TEXT[],JSONB,TEXT) IS
+$$Modify the assignment properties of several tables.$$;
+
+CREATE OR REPLACE FUNCTION emaj.emaj_modify_tables(v_schema TEXT, v_tablesIncludeFilter TEXT, v_tablesExcludeFilter TEXT,
+                                                   v_properties JSONB, v_mark TEXT DEFAULT 'MODIFY_%')
+RETURNS INTEGER LANGUAGE plpgsql AS
+$emaj_modify_tables$
+-- The function modifies the assignment properties for several tables selected on name regexp pattern at once.
+-- Inputs: schema name, 2 patterns to filter table names (one to include and another to exclude),
+--         assignment properties, mark name to set when logging groups (optional)
+-- Outputs: number of tables effectively modified
+  DECLARE
+    v_tables                 TEXT[];
+  BEGIN
+-- process empty filters as NULL
+    SELECT CASE WHEN v_tablesIncludeFilter = '' THEN NULL ELSE v_tablesIncludeFilter END,
+           CASE WHEN v_tablesExcludeFilter = '' THEN NULL ELSE v_tablesExcludeFilter END
+      INTO v_tablesIncludeFilter, v_tablesExcludeFilter;
+-- Build the list of tables names satisfying the pattern
+    SELECT array_agg(relname) INTO v_tables FROM (
+      SELECT relname FROM pg_catalog.pg_class, pg_catalog.pg_namespace
+        WHERE relnamespace = pg_namespace.oid
+          AND nspname = v_schema
+          AND relname ~ v_tablesIncludeFilter
+          AND (v_tablesExcludeFilter IS NULL OR relname !~ v_tablesExcludeFilter)
+          AND relkind IN ('r', 'p')
+        ORDER BY relname) AS t;
+-- call the _modify_tables() function for execution
+    RETURN emaj._modify_tables(v_schema, v_tables, v_properties, v_mark, TRUE, TRUE);
+  END;
+$emaj_modify_tables$;
+COMMENT ON FUNCTION emaj.emaj_modify_tables(TEXT,TEXT,TEXT,JSONB,TEXT) IS
+$$Modify the assignment properties of several tables selected on name patterns.$$;
+
+CREATE OR REPLACE FUNCTION emaj._modify_tables(v_schema TEXT, v_tables TEXT[], v_changedProperties JSONB, v_mark TEXT,
+                                               v_multiTable BOOLEAN, v_arrayFromRegex BOOLEAN)
+RETURNS INTEGER LANGUAGE plpgsql AS
+$_modify_tables$
+-- The function effectively modify the assignment properties of tables.
+-- Inputs: schema, array of table names, properties as JSON structure
+--         mark to set for logging groups, a boolean indicating whether several tables need to be processed,
+--         a boolean indicating whether the tables array has been built from regex filters
+-- Outputs: number of tables effectively modified
+-- The JSONB v_properties parameter has the following structure '{"priority":..., "log_data_tablespace":..., "log_index_tablespace":...}'
+--   each properties can be set to NULL to delete a previously set value
+  DECLARE
+    v_function               TEXT;
+    v_priorityChanged        BOOLEAN = FALSE;
+    v_newPriority            INT;
+    v_logDatTspChanged       BOOLEAN = FALSE;
+    v_newLogDatTsp           TEXT;
+    v_logIdxTspChanged       BOOLEAN = FALSE;
+    v_newLogIdxTsp           TEXT;
+    v_extraProperties        JSONB;
+    v_list                   TEXT;
+    v_array                  TEXT[];
+    v_groups                 TEXT[];
+    v_loggingGroups          TEXT[];
+    v_timeId                 BIGINT;
+    v_markName               TEXT;
+    v_isTableChanged         BOOLEAN;
+    v_nbChangedTbl           INT = 0;
+    r_rel                    RECORD;
+  BEGIN
+    v_function = CASE WHEN v_multiTable THEN 'MODIFY_TABLES' ELSE 'MODIFY_TABLE' END;
+-- insert the begin entry into the emaj_hist table
+    INSERT INTO emaj.emaj_hist (hist_function, hist_event)
+      VALUES (v_function, 'BEGIN');
+-- check supplied parameters
+-- check the supplied schema exists and is not an E-Maj schema
+    PERFORM 1 FROM pg_catalog.pg_namespace
+      WHERE nspname = v_schema;
+    IF NOT FOUND THEN
+      RAISE EXCEPTION '_modify_tables: The schema "%" does not exist.', v_schema;
+    END IF;
+    PERFORM 1 FROM emaj.emaj_schema
+      WHERE sch_name = v_schema;
+    IF FOUND THEN
+      RAISE EXCEPTION '_modify_tables: The schema "%" is an E-Maj schema.', v_schema;
+    END IF;
+-- check tables
+    IF NOT v_arrayFromRegex THEN
+-- from the tables array supplied by the user, remove duplicates values, NULL and empty strings from the supplied table names array
+      SELECT array_agg(DISTINCT table_name) INTO v_tables FROM unnest(v_tables) AS table_name
+        WHERE table_name IS NOT NULL AND table_name <> '';
+-- check that the tables currently belong to a tables group (not necessarily the same for all tables)
+      WITH all_supplied_tables AS (
+        SELECT unnest(v_tables) AS table_name),
+           tables_in_group AS (
+        SELECT rel_tblseq FROM emaj.emaj_relation
+          WHERE rel_schema = v_schema AND rel_tblseq = ANY(v_tables) AND upper_inf(rel_time_range))
+      SELECT string_agg(quote_ident(v_schema) || '.' || quote_ident(table_name), ', ') INTO v_list
+        FROM (
+          SELECT table_name FROM all_supplied_tables
+            EXCEPT
+          SELECT rel_tblseq FROM tables_in_group) AS t;
+      IF v_list IS NOT NULL THEN
+        RAISE EXCEPTION '_modify_tables: some tables (%) do not currently belong to any tables group.', v_list;
+      END IF;
+    END IF;
+-- get the new priority, if supplied, and check the priority is numeric
+    IF v_changedProperties ? 'priority' THEN
+      BEGIN
+        v_newPriority = (v_changedProperties->>'priority')::INT;
+      EXCEPTION
+        WHEN invalid_text_representation THEN
+          RAISE EXCEPTION '_modify_tables: the "priority" property is not numeric.';
+      END;
+      v_priorityChanged = TRUE;
+    END IF;
+-- get the new tablespaces if supplied and check that the tablespaces exist
+    IF v_changedProperties ? 'log_data_tablespace' THEN
+      v_newLogDatTsp = v_changedProperties->>'log_data_tablespace';
+      IF v_newLogDatTsp IS NOT NULL AND NOT EXISTS (SELECT 1 FROM pg_catalog.pg_tablespace WHERE spcname = v_newLogDatTsp) THEN
+        RAISE EXCEPTION '_modify_tables: the log data tablespace "%" does not exists.', v_newLogDatTsp;
+      END IF;
+      v_logDatTspChanged = TRUE;
+    END IF;
+    IF v_changedProperties ? 'log_index_tablespace' THEN
+      v_newLogIdxTsp = v_changedProperties->>'log_index_tablespace';
+      IF v_newLogIdxTsp IS NOT NULL AND NOT EXISTS (SELECT 1 FROM pg_catalog.pg_tablespace WHERE spcname = v_newLogIdxTsp) THEN
+        RAISE EXCEPTION '_modify_tables: the log index tablespace "%" does not exists.', v_newLogIdxTsp;
+      END IF;
+      v_logIdxTspChanged = TRUE;
+    END IF;
+-- check no properties are unknown
+    v_extraProperties = v_changedProperties - 'priority' - 'log_data_tablespace' - 'log_index_tablespace';
+    IF v_extraProperties IS NOT NULL AND v_extraProperties <> '{}' THEN
+      RAISE EXCEPTION '_modify_tables: properties "%" are unknown.', v_extraProperties;
+    END IF;
+-- get the lists of groups and logging groups holding these tables, if any.
+-- The FOR UPDATE clause locks the tables groups so that no other operation simultaneously occurs on these groups
+-- (the CTE is needed for the FOR UPDATE clause not allowed when aggregate functions)
+    WITH tables_group AS (
+      SELECT group_name, group_is_logging FROM emaj.emaj_group
+        WHERE group_name IN
+               (SELECT DISTINCT rel_group FROM emaj.emaj_relation
+                  WHERE rel_schema = v_schema AND rel_tblseq = ANY(v_tables) AND upper_inf(rel_time_range))
+        FOR UPDATE OF emaj_group
+      )
+    SELECT array_agg(group_name ORDER BY group_name),
+           array_agg(group_name ORDER BY group_name) FILTER (WHERE group_is_logging)
+      INTO v_groups, v_loggingGroups
+      FROM tables_group;
+-- check the supplied mark
+    SELECT emaj._check_new_mark(v_groups, v_mark) INTO v_markName;
+-- OK,
+    IF v_tables IS NULL OR v_tables = '{}' THEN
+-- when no tables are finaly selected, just warn
+      RAISE WARNING '_modified_tables: No table to process.';
+    ELSE
+-- get the time stamp of the operation
+      SELECT emaj._set_time_stamp('A') INTO v_timeId;
+-- for LOGGING groups, lock all tables to get a stable point
+      IF v_loggingGroups IS NOT NULL THEN
+-- use a ROW EXCLUSIVE lock mode, preventing for a transaction currently updating data, but not conflicting with simple read access or
+--  vacuum operation.
+        PERFORM emaj._lock_groups(v_loggingGroups, 'ROW EXCLUSIVE', FALSE);
+-- and set the mark, using the same time identifier
+        PERFORM emaj._set_mark_groups(v_loggingGroups, v_markName, TRUE, TRUE, NULL, v_timeId);
+      END IF;
+-- process the changes for each table, if any
+      FOR r_rel IN
+        SELECT rel_tblseq, rel_time_range, rel_log_schema, rel_priority, rel_log_table, rel_log_index, rel_log_dat_tsp,
+               rel_log_idx_tsp, rel_group, group_is_logging
+          FROM emaj.emaj_relation, emaj.emaj_group
+          WHERE rel_group = group_name
+            AND rel_schema = v_schema AND rel_tblseq = ANY(v_tables) AND upper_inf(rel_time_range)
+          ORDER BY rel_priority, rel_schema, rel_tblseq
+      LOOP
+        v_isTableChanged = FALSE;
+-- change the priority, if needed
+        IF v_priorityChanged AND
+            (r_rel.rel_priority <> v_newPriority
+            OR (r_rel.rel_priority IS NULL AND v_newPriority IS NOT NULL)
+            OR (r_rel.rel_priority IS NOT NULL AND v_newPriority IS NULL)) THEN
+          v_isTableChanged = TRUE;
+--   call the dedicated function
+          PERFORM emaj._change_priority_tbl(v_schema, r_rel.rel_tblseq, r_rel.rel_priority, v_newPriority, v_function);
+--   and insert an entry into the emaj_alter_plan table (so that future rollback may see the change)
+          INSERT INTO emaj.emaj_alter_plan (altr_time_id, altr_step, altr_schema, altr_tblseq, altr_group,
+                                            altr_priority,  altr_group_is_logging)
+            VALUES (v_timeId, 'CHANGE_REL_PRIORITY', v_schema, r_rel.rel_tblseq, r_rel.rel_group, v_newPriority, r_rel.group_is_logging);
+        END IF;
+-- change the log data tablespace, if needed
+        IF v_logDatTspChanged AND coalesce(v_newLogDatTsp, '') <> coalesce(r_rel.rel_log_dat_tsp, '') THEN
+          v_isTableChanged = TRUE;
+--   call the dedicated function
+          PERFORM emaj._change_log_data_tsp_tbl(v_schema, r_rel.rel_tblseq, r_rel.rel_log_schema, r_rel.rel_log_table,
+                                                r_rel.rel_log_dat_tsp, v_newLogDatTsp, v_function);
+--   and insert an entry into the emaj_alter_plan table (so that future rollback may see the change)
+          INSERT INTO emaj.emaj_alter_plan (altr_time_id, altr_step, altr_schema, altr_tblseq, altr_group, altr_group_is_logging)
+            VALUES (v_timeId, 'CHANGE_TBL_LOG_DATA_TSP', v_schema, r_rel.rel_tblseq, r_rel.rel_group, r_rel.group_is_logging);
+        END IF;
+-- change the log index tablespace, if needed
+        IF v_logIdxTspChanged AND coalesce(v_newLogIdxTsp, '') <> coalesce(r_rel.rel_log_idx_tsp, '') THEN
+          v_isTableChanged = TRUE;
+--   call the dedicated function
+          PERFORM emaj._change_log_index_tsp_tbl(v_schema, r_rel.rel_tblseq, r_rel.rel_log_schema, r_rel.rel_log_index,
+                                                 r_rel.rel_log_idx_tsp, v_newLogIdxTsp, v_function);
+--   and insert an entry into the emaj_alter_plan table (so that future rollback may see the change)
+          INSERT INTO emaj.emaj_alter_plan (altr_time_id, altr_step, altr_schema, altr_tblseq, altr_group, altr_group_is_logging)
+            VALUES (v_timeId, 'CHANGE_TBL_LOG_INDEX_TSP', v_schema, r_rel.rel_tblseq, r_rel.rel_group, r_rel.group_is_logging);
+        END IF;
+        IF v_isTableChanged THEN
+          v_nbChangedTbl = v_nbChangedTbl + 1;
+        END IF;
+      END LOOP;
+    END IF;
+-- insert the end entry into the emaj_hist table
+    INSERT INTO emaj.emaj_hist (hist_function, hist_event, hist_wording)
+      VALUES (v_function, 'END', v_nbChangedTbl || ' tables effectively modified');
+    RETURN v_nbChangedTbl;
+  END;
+$_modify_tables$;
+
 CREATE OR REPLACE FUNCTION emaj.emaj_get_current_log_table(v_app_schema TEXT, v_app_table TEXT,
                                                            OUT log_schema TEXT, OUT log_table TEXT)
 LANGUAGE plpgsql AS
@@ -2499,12 +2742,34 @@ $_add_tbl$
   END;
 $_add_tbl$;
 
-CREATE OR REPLACE FUNCTION emaj._change_log_data_tsp_tbl(r_rel emaj.emaj_relation, v_newLogDatTsp TEXT, v_function TEXT)
+CREATE OR REPLACE FUNCTION emaj._change_priority_tbl(v_schema TEXT, v_table TEXT, v_currentPriority INT, v_newPriority INT,
+                                                     v_function TEXT)
+RETURNS VOID LANGUAGE plpgsql AS
+$_change_priority_tbl$
+-- This function changes the priority for an application table.
+-- Input: the table identity, the old and new priorities and the calling function.
+  BEGIN
+-- update the emaj_relation row for the table
+    UPDATE emaj.emaj_relation SET rel_priority = v_newPriority
+      FROM emaj.emaj_group
+      WHERE rel_group = group_name
+        AND rel_schema = v_schema AND rel_tblseq = v_table AND upper_inf(rel_time_range);
+-- insert an entry into the emaj_hist table
+    INSERT INTO emaj.emaj_hist (hist_function, hist_event, hist_object, hist_wording)
+      VALUES (v_function, 'PRIORITY CHANGED',
+              quote_ident(v_schema) || '.' || quote_ident(v_table),
+              coalesce(v_currentPriority::char, 'NULL') || ' => ' || coalesce(v_newPriority::char, 'NULL'));
+    RETURN;
+  END;
+$_change_priority_tbl$;
+
+CREATE OR REPLACE FUNCTION emaj._change_log_data_tsp_tbl(v_schema TEXT, v_table TEXT, v_logSchema TEXT, v_currentLogTable TEXT,
+                                                         v_currentLogDatTsp TEXT, v_newLogDatTsp TEXT, v_function TEXT)
 RETURNS VOID LANGUAGE plpgsql
 SECURITY DEFINER SET search_path = pg_catalog, pg_temp AS
 $_change_log_data_tsp_tbl$
 -- This function changes the log data tablespace for an application table.
--- Input: the existing emaj_relation row for the table and the new log data tablespace
+-- Input: the existing emaj_relation characteristics for the table, the new log data tablespace and the calling function.
 -- The function is defined as SECURITY DEFINER so that emaj_adm role can use it even if he is not the owner of the application table.
   DECLARE
     v_newTsp                 TEXT;
@@ -2516,25 +2781,26 @@ $_change_log_data_tsp_tbl$
     END IF;
 -- process the log data tablespace change
     EXECUTE format('ALTER TABLE %I.%I SET TABLESPACE %I',
-                   r_rel.rel_log_schema, r_rel.rel_log_table, v_newTsp);
+                   v_logSchema, v_currentLogTable, v_newTsp);
 -- update the table attributes into emaj_relation
     UPDATE emaj.emaj_relation SET rel_log_dat_tsp = v_newLogDatTsp
-      WHERE rel_schema = r_rel.rel_schema AND rel_tblseq = r_rel.rel_tblseq AND rel_time_range = r_rel.rel_time_range;
+      WHERE rel_schema = v_schema AND rel_tblseq = v_table AND upper_inf(rel_time_range);
 -- insert an entry into the emaj_hist table
     INSERT INTO emaj.emaj_hist (hist_function, hist_event, hist_object, hist_wording)
       VALUES (v_function, 'LOG DATA TABLESPACE CHANGED',
-              quote_ident(r_rel.rel_schema) || '.' || quote_ident(r_rel.rel_tblseq),
-              coalesce(r_rel.rel_log_dat_tsp, 'Default tablespace') || ' => ' || coalesce(v_newLogDatTsp, 'Default tablespace'));
+              quote_ident(v_schema) || '.' || quote_ident(v_table),
+              coalesce(v_currentLogDatTsp, 'Default tablespace') || ' => ' || coalesce(v_newLogDatTsp, 'Default tablespace'));
     RETURN;
   END;
 $_change_log_data_tsp_tbl$;
 
-CREATE OR REPLACE FUNCTION emaj._change_log_index_tsp_tbl(r_rel emaj.emaj_relation, v_newLogIdxTsp TEXT, v_function TEXT)
+CREATE OR REPLACE FUNCTION emaj._change_log_index_tsp_tbl(v_schema TEXT, v_table TEXT, v_logSchema TEXT, v_currentLogIndex TEXT,
+                                                         v_currentLogIdxTsp TEXT, v_newLogIdxTsp TEXT, v_function TEXT)
 RETURNS VOID LANGUAGE plpgsql
 SECURITY DEFINER SET search_path = pg_catalog, pg_temp AS
 $_change_log_index_tsp_tbl$
 -- This function changes the log index tablespace for an application table.
--- Input: the existing emaj_relation row for the table and the new log index tablespace
+-- Input: the existing emaj_relation characteristics for the table, the new log index tablespace and the calling function.
 -- The function is defined as SECURITY DEFINER so that emaj_adm role can use it even if he is not the owner of the application table.
   DECLARE
     v_newTsp                 TEXT;
@@ -2546,15 +2812,15 @@ $_change_log_index_tsp_tbl$
     END IF;
 -- process the log index tablespace change
     EXECUTE format('ALTER INDEX %I.%I SET TABLESPACE %I',
-                   r_rel.rel_log_schema, r_rel.rel_log_index, v_newTsp);
+                   v_logSchema, v_currentLogIndex, v_newTsp);
 -- update the table attributes into emaj_relation
     UPDATE emaj.emaj_relation SET rel_log_idx_tsp = v_newLogIdxTsp
-      WHERE rel_schema = r_rel.rel_schema AND rel_tblseq = r_rel.rel_tblseq AND rel_time_range = r_rel.rel_time_range;
+      WHERE rel_schema = v_schema AND rel_tblseq = v_table AND upper_inf(rel_time_range);
 -- insert an entry into the emaj_hist table
     INSERT INTO emaj.emaj_hist (hist_function, hist_event, hist_object, hist_wording)
       VALUES (v_function, 'LOG INDEX TABLESPACE CHANGED',
-              quote_ident(r_rel.rel_schema) || '.' || quote_ident(r_rel.rel_tblseq),
-              coalesce(r_rel.rel_log_idx_tsp, 'Default tablespace') || ' => ' || coalesce(v_newLogIdxTsp, 'Default tablespace'));
+              quote_ident(v_schema) || '.' || quote_ident(v_table),
+              coalesce(v_currentLogIdxTsp, 'Default tablespace') || ' => ' || coalesce(v_newLogIdxTsp, 'Default tablespace'));
     RETURN;
   END;
 $_change_log_index_tsp_tbl$;
@@ -4816,7 +5082,8 @@ $_alter_exec$
             WHERE grpdef_group = coalesce (r_plan.altr_new_group, r_plan.altr_group)
               AND grpdef_schema = r_plan.altr_schema AND grpdef_tblseq = r_plan.altr_tblseq;
 -- then alter the relation, depending on the changes
-          PERFORM emaj._change_log_data_tsp_tbl(r_rel, v_logDatTsp, v_function);
+          PERFORM emaj._change_log_data_tsp_tbl(r_rel.rel_schema, r_rel.rel_tblseq, r_rel.rel_log_schema, r_rel.rel_log_table,
+                                                r_rel.rel_log_dat_tsp, v_logDatTsp, v_function);
 --
         WHEN 'CHANGE_TBL_LOG_INDEX_TSP' THEN
 -- get the table description from emaj_relation
@@ -4827,7 +5094,8 @@ $_alter_exec$
             WHERE grpdef_group = coalesce (r_plan.altr_new_group, r_plan.altr_group)
               AND grpdef_schema = r_plan.altr_schema AND grpdef_tblseq = r_plan.altr_tblseq;
 -- then alter the relation, depending on the changes
-          PERFORM emaj._change_log_index_tsp_tbl(r_rel, v_logIdxTsp, v_function);
+          PERFORM emaj._change_log_index_tsp_tbl(r_rel.rel_schema, r_rel.rel_tblseq, r_rel.rel_log_schema, r_rel.rel_log_index,
+                                                 r_rel.rel_log_idx_tsp, v_logIdxTsp, v_function);
 --
         WHEN 'MOVE_TBL' THEN
 -- move a table from one group to another group
@@ -4840,9 +5108,11 @@ $_alter_exec$
                                 r_plan.altr_new_group, r_plan.altr_new_group_is_logging, v_timeId, v_function);
 --
         WHEN 'CHANGE_REL_PRIORITY' THEN
--- update the emaj_relation table to report the priority change
-          UPDATE emaj.emaj_relation SET rel_priority = r_plan.altr_priority
+-- get the table description from emaj_relation
+          SELECT * INTO r_rel FROM emaj.emaj_relation
             WHERE rel_schema = r_plan.altr_schema AND rel_tblseq = r_plan.altr_tblseq AND upper_inf(rel_time_range);
+-- update the emaj_relation table to report the priority change
+          PERFORM emaj._change_priority_tbl(r_plan.altr_schema, r_plan.altr_tblseq, r_rel.rel_priority, r_plan.altr_priority, v_function);
 --
         WHEN 'ADD_TBL' THEN
 -- add a table to a group

@@ -150,6 +150,24 @@ Les fonctions E-Maj disponibles pour les utilisateurs sont listées ci-dessous p
 |                                                  | | est.modif.groupe.autorisée  |                                       |
 |                                                  | |  BOOLEAN                    |                                       |
 +--------------------------------------------------+-------------------------------+---------------------------------------+
+| :ref:`emaj_modify_table                          | | schéma TEXT,                | nb.tables INT                         |
+| <dynamic_ajustment>`                             | | table TEXT,                 |                                       |
+|                                                  | | propriétés JSONB,           |                                       |
+|                                                  | | [ marque TEXT ]             |                                       |
++--------------------------------------------------+-------------------------------+---------------------------------------+
+| :ref:`emaj_modify_tables                         | | schéma TEXT,                | nb.tables INT                         |
+| <dynamic_ajustment>`                             | | tableau.tables TEXT[],      |                                       |
+|                                                  | | propriétés JSONB,           |                                       |
+|                                                  | | [ marque TEXT ]             |                                       |
++--------------------------------------------------+-------------------------------+---------------------------------------+
+| :ref:`emaj_modify_tables                         | | schéma TEXT,                | nb.tables INT                         |
+| <dynamic_ajustment>`                             | | filtre.tables.à.inclure     |                                       |
+|                                                  | |   TEXT,                     |                                       |
+|                                                  | | filtre.tables.à.exclure     |                                       |
+|                                                  | |   TEXT,                     |                                       |
+|                                                  | | propriétés JSONB,           |                                       |
+|                                                  | | [ marque TEXT ]             |                                       |
++--------------------------------------------------+-------------------------------+---------------------------------------+
 | :ref:`emaj_move_sequence                         | | schéma TEXT,                | 1 INT                                 |
 | <dynamic_ajustment>`                             | | séquence TEXT,              |                                       |
 |                                                  | | nouveau.groupe TEXT,        |                                       |

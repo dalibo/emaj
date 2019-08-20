@@ -62,10 +62,13 @@ Néanmoins certaines actions sont possibles sur des groupes de tables maintenus 
 | Action                                 | Groupe LOGGING | Méthode                        |
 +========================================+================+================================+
 | Changer le tablespace de log data      | Oui            | Ajustement emaj_group_def      |
+|                                        |                | ou ajustement dynamique        |
 +----------------------------------------+----------------+--------------------------------+
 | Changer le tablespace de log index     | Oui            | Ajustement emaj_group_def      |
+|                                        |                | ou ajustement dynamique        |
 +----------------------------------------+----------------+--------------------------------+
 | Changer la priorité E-Maj              | Oui            | Ajustement emaj_group_def      |
+|                                        |                | ou ajustement dynamique        |
 +----------------------------------------+----------------+--------------------------------+
 | Oter une table/séquence d’un groupe    | Oui            | Ajustement emaj_group_def      |
 |                                        |                | ou ajustement dynamique        |
@@ -130,15 +133,15 @@ Quelques fonctions permettent d’ajuster dynamiquement le contenu des groupes d
 
 Ainsi, pour **ajouter une ou plusieurs tables** dans un groupe de tables ::
 
-	SELECT emaj.emaj_assign_table(‘<schéma>’,’<table>’, '<nom.du.groupe>' [,’propriétés’ [,’<marque>’]]);
+	SELECT emaj.emaj_assign_table(‘<schéma>’, ’<table>’, '<nom.du.groupe>' [,’<propriétés>’ [,’<marque>’]]);
 
 ou ::
 
-	SELECT emaj.emaj_assign_tables(‘<schéma>’,’<tableau.de.tables>’, '<nom.du.groupe>' [,’propriétés’ [,’<marque>’]] );
+	SELECT emaj.emaj_assign_tables(‘<schéma>’, ’<tableau.de.tables>’, '<nom.du.groupe>' [,’<propriétés>’ [,’<marque>’]] );
 
 ou ::
 
-	SELECT emaj.emaj_assign_tables(‘<schéma>’, '<filtre.de.tables.à.inclure>', '<filtre.de.tables.à.exclure>', '<nom.du.groupe>' [,’propriétés’ [,’<marque>’]] );
+	SELECT emaj.emaj_assign_tables(‘<schéma>’, '<filtre.de.tables.à.inclure>', '<filtre.de.tables.à.exclure>', '<nom.du.groupe>' [,’<propriétés>’ [,’<marque>’]] );
 
 Pour **ajouter une ou plusieurs séquences** dans un groupe de tables ::
 
@@ -151,6 +154,18 @@ ou ::
 ou ::
 
 	SELECT emaj.emaj_assign_sequences('<schéma>', '<filtre.de.séquences.à.inclure>', '<filtre.de.séquences.à.exclure>', '<nom.du.groupe>' [,’<marque>’] );
+
+Pour **modifier les propriétés d’une ou plusieurs tables** ::
+
+	SELECT emaj.emaj_modify_table(‘<schéma>’, ’<table>’, ’<propriétés.modifiées>’ [,’<marque>’]]);
+
+ou ::
+
+	SELECT emaj.emaj_modify_tables(‘<schéma>’, ’<tableau.de.tables>’, ’<propriétés.modifiées>’ [,’<marque>’]]);
+
+ou ::
+
+	SELECT emaj.emaj_modify_tables(‘<schéma>’, '<filtre.de.tables.à.inclure>', '<filtre.de.tables.à.exclure>',’<propriétés.modifiées>’ [,’<marque>’]]);
 
 Pour **retirer une ou plusieurs tables** d’un groupe de tables ::
 
@@ -222,9 +237,9 @@ Pour sélectionner toutes les tables de ce schéma, et dont le nom commence par 
 
 Les fonctions d’assignation à un groupe de tables construisant leur sélection à partir des deux expressions rationnelles tiennent compte du contexte des tables ou séquences concernées. Ne sont pas sélectionnées par exemple : les tables ou séquences déjà affectées, les tables sans clé primaire pour un groupe de tables *rollbackable* ou celles déclarées *UNLOGGED*.
 
-Le paramètre *<propriété>* des deux fonctions d’ajout de tables à un groupe de tables permet de préciser certaines propriétés pour la ou les tables. Ces propriétés correspondent aux colonnes *grpdef_priority*, *grpdef_log_dat_tsp* et *grpdef_log_idx_tsp* de la table *emaj_group_def*.
+Le paramètre *<propriétés>* des fonctions d’ajout de tables à un groupe de tables ou de modifications de tables permet de valoriser certaines propriétés pour la ou les tables. Ces propriétés correspondent aux colonnes *grpdef_priority*, *grpdef_log_dat_tsp* et *grpdef_log_idx_tsp* de la table *emaj_group_def*.
 
-Ce paramètre *<propriété>*, optionnel, est de type *JSONB*. On peut le valoriser ainsi ::
+Ce paramètre *<propriété>* est de type *JSONB*. On peut le valoriser ainsi ::
 
 	‘{ "priority" : <n> , "log_data_tablespace" : "<xxx>" , "log_index_tablespace" : "<yyy>" }’
 
@@ -239,9 +254,9 @@ Pour toutes les fonctions, un verrou exclusif est posé sur chaque table du ou d
 
 Lors de l’exécution des fonctions, les groupes de tables concernés peuvent être en état *IDLE* ou *LOGGING*.
 
-Lorsque le groupe de table est actif (état *LOGGING*), une marque est posée. Son nom prend la valeur du dernier paramètre fourni lors de l’appel de la fonction. Ce paramètre est optionnel. S’il n’est pas fourni, le nom de la marque est généré avec un préfixe "ASSIGN", "MOVE" ou "REMOVE".
+Lorsque le groupe de table est actif (état *LOGGING*), une marque est posée. Son nom prend la valeur du dernier paramètre fourni lors de l’appel de la fonction. Ce paramètre est optionnel. S’il n’est pas fourni, le nom de la marque est généré avec un préfixe "ASSIGN", "MODIFY", "MOVE" ou "REMOVE".
 
-Toutes ces fonctions retournent le nombre de tables ou séquences effectivement ajoutées, déplacées ou supprimées.
+Toutes ces fonctions retournent le nombre de tables ou séquences effectivement ajoutées, modifiées, déplacées ou supprimées.
 
 .. _emaj_sync_def_group:
 

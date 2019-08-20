@@ -150,6 +150,24 @@ E-Maj functions that are available to users are listed in alphabetic order below
 |                                                  | | is.alter.group.allowed      |                                       |
 |                                                  | |  BOOLEAN                    |                                       |
 +--------------------------------------------------+-------------------------------+---------------------------------------+
+| :ref:`emaj_modify_table                          | | schema TEXT,                | #.tables INT                          |
+| <dynamic_ajustment>`                             | | table TEXT,                 |                                       |
+|                                                  | | properties JSONB,           |                                       |
+|                                                  | | [ mark TEXT ]               |                                       |
++--------------------------------------------------+-------------------------------+---------------------------------------+
+| :ref:`emaj_modify_tables                         | | schema TEXT,                | #.tables INT                          |
+| <dynamic_ajustment>`                             | | tables.array TEXT[],        |                                       |
+|                                                  | | properties JSONB,           |                                       |
+|                                                  | | [ mark TEXT ]               |                                       |
++--------------------------------------------------+-------------------------------+---------------------------------------+
+| :ref:`emaj_modify_tables                         | | schema TEXT,                | #.tables INT                          |
+| <dynamic_ajustment>`                             | | tables.to.include.filter    |                                       |
+|                                                  | |   TEXT,                     |                                       |
+|                                                  | | tables.to.exclude.filter    |                                       |
+|                                                  | |   TEXT,                     |                                       |
+|                                                  | | properties JSONB,           |                                       |
+|                                                  | | [ mark TEXT ]               |                                       |
++--------------------------------------------------+-------------------------------+---------------------------------------+
 | :ref:`emaj_move_sequence                         | | schema TEXT,                | 1 INT                                 |
 | <dynamic_ajustment>`                             | | sequence TEXT,              |                                       |
 |                                                  | | new.group TEXT,             |                                       |

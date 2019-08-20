@@ -1,5 +1,6 @@
 -- alter.sql : test emaj_alter_group(), emaj_alter_groups(),
---                  emaj_move_table(), emaj_move_tables(), emaj_move_sequence() and emaj_move_sequences() functions
+--                  emaj_move_table(), emaj_move_tables(), emaj_move_sequence(), emaj_move_sequences()
+--                  emaj_modify_table() and emaj_modify_tables() functions
 --
 -- set sequence restart value
 alter sequence emaj.emaj_hist_hist_id_seq restart 6000;
@@ -375,5 +376,81 @@ select altr_time_id, altr_step, altr_schema, altr_tblseq, altr_group, altr_prior
   order by 1 desc, 2,3,4 limit 3;
 select group_last_alter_time_id, group_nb_table, group_nb_sequence from emaj.emaj_group 
   where group_name in ('myGroup1','myGroup2','myGroup4') order by 1 desc ,2,3;
+
+-----------------------------------
+-- emaj_modify_table
+-----------------------------------
+
+-- error cases
+-- table not in a group
+select emaj.emaj_modify_table('dummySchema','mytbl1',null);
+select emaj.emaj_modify_table('myschema1','dummyTable',null);
+
+-- invalid priority
+select emaj.emaj_modify_table('myschema1','mytbl1','{"priority":"not_numeric"}'::jsonb);
+-- invalid tablespace
+select emaj.emaj_modify_table('myschema1','mytbl1','{"log_data_tablespace":"dummytsp"}'::jsonb);
+select emaj.emaj_modify_table('myschema1','mytbl1','{"log_index_tablespace":"dummytsp"}'::jsonb);
+-- unknown property
+select emaj.emaj_modify_table('myschema1','mytbl1','{"unknown_property":null}'::jsonb);
+
+-- bad mark
+select emaj.emaj_modify_table('myschema1','mytbl1',null,'EMAJ_LAST_MARK');
+
+-- ok
+-- change a priority
+select emaj.emaj_modify_table('myschema1','mytbl2','{"priority":1}');
+
+-- change a log data tablespace
+select emaj.emaj_modify_table('myschema1','mytbl1','{"log_data_tablespace":"tsp log''2"}');
+-- change a log index tablespace
+select emaj.emaj_modify_table('myschema1','mytbl1','{"log_index_tablespace":"tsp log''2"}');
+
+select rel_schema, rel_tblseq, rel_time_range, rel_priority from emaj.emaj_relation
+  where rel_schema = 'myschema1' and rel_tblseq = 'mytbl2' order by 3 desc ,1,2 limit 2;
+select rel_schema, rel_tblseq, rel_time_range, rel_log_dat_tsp, rel_log_idx_tsp from emaj.emaj_relation
+  where rel_schema = 'myschema1' and rel_tblseq = 'mytbl1' order by 3 desc ,1,2 limit 2;
+
+-- revert changes
+select emaj.emaj_modify_table('myschema1','mytbl2','{"priority":null}');
+select emaj.emaj_modify_table('myschema1','mytbl1','{"log_data_tablespace":null, "log_index_tablespace":null}');
+
+select rel_schema, rel_tblseq, rel_time_range, rel_priority from emaj.emaj_relation
+  where rel_schema = 'myschema1' and rel_tblseq = 'mytbl2' order by 3 desc ,1,2 limit 2;
+select rel_schema, rel_tblseq, rel_time_range, rel_log_dat_tsp, rel_log_idx_tsp from emaj.emaj_relation
+  where rel_schema = 'myschema1' and rel_tblseq = 'mytbl1' order by 3 desc ,1,2 limit 2;
+
+-------------------------------------
+---- emaj_modify_tables with array
+-------------------------------------
+-- error cases
+-- table not in a group
+select emaj.emaj_modify_tables('myschema2',array['dummyTable','mytbl1','mytbl2'],null);
+-- empty tables array
+select emaj.emaj_modify_tables('myschema2',array[]::text[],null);
+select emaj.emaj_modify_tables('myschema2',null,null);
+select emaj.emaj_modify_tables('myschema2',array[''],null);
+
+---- ok (with a duplicate table name)
+select emaj.emaj_modify_tables('myschema2',array['mytbl1','mytbl2','mytbl2'],'{"priority":10,"log_data_tablespace":"tsplog1"}');
+select rel_schema, rel_tblseq, rel_time_range, rel_priority, rel_log_dat_tsp from emaj.emaj_relation
+  where rel_schema = 'myschema2' and rel_tblseq in ('mytbl1','mytbl2') order by 1,2,3;
+
+-----------------------------------
+-- emaj_modify_tables with filters
+-----------------------------------
+-- empty tables array
+select emaj.emaj_modify_tables('myschema2',null,null,null::jsonb);
+select emaj.emaj_modify_tables('myschema2','','',null::jsonb);
+select emaj.emaj_modify_tables('myschema2','mytbl1','mytbl1',null::jsonb);
+
+-- ok and revert the previous changes
+select emaj.emaj_modify_tables('myschema2','mytbl.*','','{"priority":null,"log_data_tablespace":null}'::jsonb);
+select rel_schema, rel_tblseq, rel_time_range, rel_priority, rel_log_dat_tsp, rel_log_idx_tsp from emaj.emaj_relation
+  where rel_schema = 'myschema2' and rel_tblseq like 'mytbl%' order by 1,2,3;
+
+select altr_time_id, altr_step, altr_schema, altr_tblseq, altr_group, altr_priority, altr_group_is_logging,
+       altr_new_group, altr_new_group_is_logging from emaj.emaj_alter_plan
+  order by 1 desc, 2,3,4 limit 14;
 
 -- checks are performed by the alterLogging.sql script

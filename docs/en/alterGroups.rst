@@ -62,10 +62,13 @@ However, some actions are possible while the tables groups are in *LOGGING* stat
 | Action                                         | LOGGING Group | Method                |
 +================================================+===============+=======================+
 | Change the log data tablespace                 | Yes           | emaj_group_def update |
+|                                                |               | or dynamic adjustment |
 +------------------------------------------------+---------------+-----------------------+
 | Change the log index tablespace                | Yes           | emaj_group_def update |
+|                                                |               | or dynamic adjustment |
 +------------------------------------------------+---------------+-----------------------+
 | Change the E-Maj priority                      | Yes           | emaj_group_def update |
+|                                                |               | or dynamic adjustment |
 +------------------------------------------------+---------------+-----------------------+
 | Remove a table/sequence from a group           | Yes           | emaj_group_def update |
 |                                                |               | or dynamic adjustment |
@@ -105,16 +108,15 @@ Somme functions allow to dynamically adjust the tables groups content without mo
 
 To **add one or several tables** into a tables group::
 
-	SELECT emaj.emaj_assign_table('<schema>', '<table>', '<groupe.name>' [,'properties' [,'<mark>']]);
+	SELECT emaj.emaj_assign_table('<schema>', '<table>', '<groupe.name>' [,'<properties>' [,'<mark>']]);
 
 or ::
 
-	SELECT emaj.emaj_assign_tables('<schema>', '<tables.array>', '<group.name>' [,'properties' [,'<mark>']] );
+	SELECT emaj.emaj_assign_tables('<schema>', '<tables.array>', '<group.name>' [,'<properties>' [,'<mark>']] );
 
 or ::
 
-	SELECT emaj.emaj_assign_tables('<schema>', '<tables.to.include.filter>', '<tables.to.exclude.filter>', '<group.name>' [,'properties' [, '<mark>']] );
-
+	SELECT emaj.emaj_assign_tables('<schema>', '<tables.to.include.filter>', '<tables.to.exclude.filter>', '<group.name>' [,'<properties>' [, '<mark>']] );
 
 To **add one or several sequences** into a tables group::
 
@@ -127,6 +129,19 @@ or ::
 or ::
 
 	SELECT emaj.emaj_assign_sequences('<schema>', '<sequences.to.include.filter>', '<sequences.to.exclude.filter>', '<group.name>' [, '<mark>'] );
+
+To **modify the properties of one or several tables**::
+
+	SELECT emaj.emaj_modify_table('<schema>', '<table>', '<modified.properties>' [,'<mark>']]);
+
+or ::
+
+	SELECT emaj.emaj_modify_tables('<schema>', '<tables.array>', '<modified.properties>' [,'<mark>']]);
+
+or ::
+
+	SELECT emaj.emaj_modify_tables('<schema>', '<tables.to.include.filter>', '<tables.to.exclude.filter>', '<modified.properties>' [,'<mark>']]);
+
 
 To **remove one or several tables** from a tables group::
 
@@ -198,9 +213,9 @@ To select all tables of this schema and whose name start with ‘tbl’, except 
 
 The functions assigning tables or sequences to tables groups that build their selection with regular expressions take into account the context of the tables or sequences. Are not selected for instance: tables or sequences already assigned or tables without primary key for *rollbackable* groups, or *UNLOGGED* tables.
 
-The *<properties>* parameter of both functions that assign a tables to a tables group allows to specify some properties for the table or tables. These properties correspond to the *grpdef_priority*, *grpdef_log_dat_tsp* and *grpdef_log_idx_tsp* columns of the *emaj_group_def* table.
+The *<properties>* parameter of functions that assign or modify tables allows to set values to some properties for the table or tables. These properties correspond to the *grpdef_priority*, *grpdef_log_dat_tsp* and *grpdef_log_idx_tsp* columns of the *emaj_group_def* table.
 
-This optional *<properties>* parameter is of type *JSONB*. Its value can be set like this::
+This *<properties>* parameter is of type *JSONB*. Its value can be set like this::
 
 	‘{ "priority" : <n> , "log_data_tablespace" : "<xxx>" , "log_index_tablespace" : "<yyy>" }’
 
@@ -215,9 +230,9 @@ For all these functions, an exclusive lock is set on each table of the concerned
 
 These concerned tables groups can be either in *IDLE* or in *LOGGING* state while the functions are executed.
 
-When the tables group is in *LOGGING* state, a mark is set. Its name is defined by the last parameter of the function. This parameter is optional. If not supplied, the mark name is generated, with a "ASSIGN", "MOVE" or "REMOVE" prefix.
+When the tables group is in *LOGGING* state, a mark is set. Its name is defined by the last parameter of the function. This parameter is optional. If not supplied, the mark name is generated, with a "ASSIGN", "MODIFY", "MOVE" or "REMOVE" prefix.
 
-All these functions return the number of effectively assigned, moved or removed tables or sequences.
+All these functions return the number of effectively assigned, modified, moved or removed tables or sequences.
 
 .. _emaj_sync_def_group:
 

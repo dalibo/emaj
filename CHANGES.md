@@ -14,6 +14,10 @@ E-Maj - Change log
     tables or sequences from one tables group to another, without updating
     the emaj_group_def table. The groups may be either in idle or logging
     state.
+  * The new emaj_modify_table() and emaj_modify_tables() funtions allow to
+    dynamically modify the priority level and/or the data or index log
+    tablepaces for one or several tables, without updating the emaj_group_def
+    table. The groups may be either in idle or logging state.
   * The new emaj_sync_def_group() allows to synchronize the emaj_group_def
     table with the current content of created groups whose content may have
     been dynamically modified.
