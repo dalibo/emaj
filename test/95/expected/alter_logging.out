@@ -2746,13 +2746,24 @@ PL/pgSQL function emaj.emaj_assign_tables(text,text[],text,jsonb,text) line 7 at
                   3
 (1 row)
 
-  select emaj.emaj_assign_sequences('myschema2','{"myseq1","myseq2"}','myGroup2');
+  select emaj.emaj_assign_sequences('myschema2','{"myseq1","myseq2"}'::text[],'myGroup2','Mark_assign_sequences');
  emaj_assign_sequences 
 -----------------------
                      2
 (1 row)
 
 commit;
+-- remove tables and sequences with bad marks
+select emaj.emaj_remove_table('myschema2','mytbl1','Mark_assign_sequences');
+ERROR:  _check_new_mark: The group "myGroup2" already contains a mark named "Mark_assign_sequences".
+CONTEXT:  SQL statement "SELECT emaj._check_new_mark(v_loggingGroups, v_mark)"
+PL/pgSQL function emaj._remove_tables(text,text[],text,boolean,boolean) line 59 at SQL statement
+PL/pgSQL function emaj.emaj_remove_table(text,text,text) line 6 at RETURN
+select emaj.emaj_remove_sequence('myschema2','myseq1','Mark_assign_sequences');
+ERROR:  _check_new_mark: The group "myGroup2" already contains a mark named "Mark_assign_sequences".
+CONTEXT:  SQL statement "SELECT emaj._check_new_mark(v_loggingGroups, v_mark)"
+PL/pgSQL function emaj._remove_sequences(text,text[],text,boolean,boolean) line 56 at SQL statement
+PL/pgSQL function emaj.emaj_remove_sequence(text,text,text) line 6 at RETURN
 -- alter a table in a logging group
 select emaj.emaj_remove_table('myschema1','mytbl4');
  emaj_remove_table 
@@ -2850,7 +2861,7 @@ commit;
 select count(*) from emaj.emaj_mark where mark_group = 'myGroup2' and (mark_name like 'REMOVE%' or mark_name like 'ASSIGN%');
  count 
 -------
-     8
+     7
 (1 row)
 
 select * from emaj.emaj_relation where rel_schema = 'myschema2' and rel_tblseq in ('mytbl1','mytbl2','myTbl3','myseq1','myseq2')
@@ -2921,6 +2932,17 @@ select emaj.emaj_move_sequences('myschema2','.*','','myGroup1','MOVE_SEQ_idle_to
                    3
 (1 row)
 
+-- bad mark
+select emaj.emaj_move_tables('myschema4','.*','','myGroup2',emaj.emaj_get_previous_mark_group('myGroup1',now()));
+ERROR:  _check_new_mark: The groups "myGroup1, myGroup2" already contain a mark named "MOVE_SEQ_idle_to_logging".
+CONTEXT:  SQL statement "SELECT emaj._check_new_mark(v_loggingGroups, v_mark)"
+PL/pgSQL function emaj._move_tables(text,text[],text,text,boolean,boolean) line 76 at SQL statement
+PL/pgSQL function emaj.emaj_move_tables(text,text,text,text,text) line 23 at RETURN
+select emaj.emaj_move_sequences('myschema2','.*','','myGroup2',emaj.emaj_get_previous_mark_group('myGroup1',now()));
+ERROR:  _check_new_mark: The groups "myGroup1, myGroup2" already contain a mark named "MOVE_SEQ_idle_to_logging".
+CONTEXT:  SQL statement "SELECT emaj._check_new_mark(v_loggingGroups, v_mark)"
+PL/pgSQL function emaj._move_sequences(text,text[],text,text,boolean,boolean) line 75 at SQL statement
+PL/pgSQL function emaj.emaj_move_sequences(text,text,text,text,text) line 23 at RETURN
 -- from a logging group to another logging group
 select emaj.emaj_move_tables('myschema4','.*','','myGroup2','MOVE_TBL_logging_to_logging');
  emaj_move_tables 
@@ -2950,6 +2972,12 @@ select emaj.emaj_move_sequences('myschema2','.*','','myGroup4','MOVE_SEQ_logging
 -----------------------------
 -- change priority and tablespaces attributes without updating emaj_group_def
 -----------------------------
+-- bad mark
+select emaj.emaj_modify_table('myschema1','mytbl1','{"priority":31}'::jsonb,emaj.emaj_get_previous_mark_group('myGroup1',now()));
+ERROR:  _check_new_mark: The group "myGroup1" already contains a mark named "MOVE_SEQ_logging_to_logging".
+CONTEXT:  SQL statement "SELECT emaj._check_new_mark(v_loggingGroups, v_mark)"
+PL/pgSQL function emaj._modify_tables(text,text[],jsonb,text,boolean,boolean) line 109 at SQL statement
+PL/pgSQL function emaj.emaj_modify_table(text,text,jsonb,text) line 7 at RETURN
 -- change the priority
 select emaj.emaj_modify_table('myschema1','mytbl1','{"priority":31}'::jsonb,'Priority dynamically changed');
  emaj_modify_table 
@@ -3960,8 +3988,8 @@ select hist_function, hist_event, hist_object,
  ASSIGN_SEQUENCES        | BEGIN                        |                              |                                                                                                                        | postgres
  LOCK_GROUP              | BEGIN                        | myGroup2                     |                                                                                                                        | postgres
  LOCK_GROUP              | END                          | myGroup2                     | 6 tables locked, 0 deadlock(s)                                                                                         | postgres
- SET_MARK_GROUP          | BEGIN                        | myGroup2                     | ASSIGN_%                                                                                                               | postgres
- SET_MARK_GROUP          | END                          | myGroup2                     | ASSIGN_%                                                                                                               | postgres
+ SET_MARK_GROUP          | BEGIN                        | myGroup2                     | Mark_assign_sequences                                                                                                  | postgres
+ SET_MARK_GROUP          | END                          | myGroup2                     | Mark_assign_sequences                                                                                                  | postgres
  ASSIGN_SEQUENCES        | SEQUENCE ADDED               | myschema2.myseq1             | To the logging group myGroup2                                                                                          | postgres
  ASSIGN_SEQUENCES        | SEQUENCE ADDED               | myschema2.myseq2             | To the logging group myGroup2                                                                                          | postgres
  ASSIGN_SEQUENCES        | END                          |                              | 2 sequences assigned to the group myGroup2                                                                             | postgres

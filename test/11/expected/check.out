@@ -103,7 +103,7 @@ select funcname, calls from pg_stat_user_functions
  _change_priority_tbl                      |    21
  _check_conf_groups                        |   121
  _check_fk_groups                          |   244
- _check_group_names                        |  1081
+ _check_group_names                        |  1086
  _check_mark_name                          |   365
  _check_marks_range                        |   116
  _check_new_mark                           |   378
@@ -197,7 +197,7 @@ select funcname, calls from pg_stat_user_functions
  emaj_gen_sql_groups                       |     7
  emaj_get_consolidable_rollbacks           |    11
  emaj_get_current_log_table                |     4
- emaj_get_previous_mark_group              |     8
+ emaj_get_previous_mark_group              |    11
  emaj_get_previous_mark_group              |     9
  emaj_ignore_app_trigger                   |    15
  emaj_log_stat_group                       |    23
@@ -248,7 +248,7 @@ select funcname, calls from pg_stat_user_functions
 select sum(calls) from pg_stat_user_functions where funcname like E'emaj\\_%';
  sum 
 -----
- 956
+ 959
 (1 row)
 
 -----------------------------

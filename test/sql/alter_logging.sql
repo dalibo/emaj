@@ -648,8 +648,12 @@ begin;
 
   select emaj.emaj_assign_tables('myschema2','{"mytbl1","mytbl2","myTbl3"}','myGroup2',
                                  '{"priority":1, "log_data_tablespace":"tsplog1", "log_index_tablespace":"tsplog1"}'::jsonb);
-  select emaj.emaj_assign_sequences('myschema2','{"myseq1","myseq2"}','myGroup2');
+  select emaj.emaj_assign_sequences('myschema2','{"myseq1","myseq2"}'::text[],'myGroup2','Mark_assign_sequences');
 commit;
+
+-- remove tables and sequences with bad marks
+select emaj.emaj_remove_table('myschema2','mytbl1','Mark_assign_sequences');
+select emaj.emaj_remove_sequence('myschema2','myseq1','Mark_assign_sequences');
 
 -- alter a table in a logging group
 select emaj.emaj_remove_table('myschema1','mytbl4');
@@ -678,6 +682,10 @@ select sequ_schema, sequ_name, sequ_time_id, sequ_last_val, sequ_is_called from 
 select emaj.emaj_move_tables('myschema4','.*','','myGroup1','MOVE_TBL_idle_to_logging');
 select emaj.emaj_move_sequences('myschema2','.*','','myGroup1','MOVE_SEQ_idle_to_logging');
 
+-- bad mark
+select emaj.emaj_move_tables('myschema4','.*','','myGroup2',emaj.emaj_get_previous_mark_group('myGroup1',now()));
+select emaj.emaj_move_sequences('myschema2','.*','','myGroup2',emaj.emaj_get_previous_mark_group('myGroup1',now()));
+
 -- from a logging group to another logging group
 select emaj.emaj_move_tables('myschema4','.*','','myGroup2','MOVE_TBL_logging_to_logging');
 select emaj.emaj_move_sequences('myschema2','.*','','myGroup2','MOVE_SEQ_logging_to_logging');
@@ -689,6 +697,9 @@ select emaj.emaj_move_sequences('myschema2','.*','','myGroup4','MOVE_SEQ_logging
 -----------------------------
 -- change priority and tablespaces attributes without updating emaj_group_def
 -----------------------------
+
+-- bad mark
+select emaj.emaj_modify_table('myschema1','mytbl1','{"priority":31}'::jsonb,emaj.emaj_get_previous_mark_group('myGroup1',now()));
 
 -- change the priority
 select emaj.emaj_modify_table('myschema1','mytbl1','{"priority":31}'::jsonb,'Priority dynamically changed');

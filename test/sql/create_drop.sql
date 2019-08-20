@@ -282,7 +282,8 @@ select emaj.emaj_assign_tables('myschema1',null,'myGroup1b');
 select emaj.emaj_assign_tables('myschema1',array[''],'myGroup1b');
 
 -- ok (with a duplicate table name)
-select emaj.emaj_assign_tables('myschema1',array['mytbl2','mytbl2b','mytbl2'],'myGroup1b');
+select emaj.emaj_assign_tables('myschema1',array['mytbl2','mytbl2b','mytbl2'],'myGroup1b',
+                               '{"priority":1, "log_data_tablespace":"tsplog1", "log_index_tablespace":"tsplog1"}'::jsonb);
 
 select group_last_alter_time_id, group_nb_table, group_nb_sequence from emaj.emaj_group where group_name = 'myGroup1b';
 

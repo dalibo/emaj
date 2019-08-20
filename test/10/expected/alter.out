@@ -916,11 +916,11 @@ rollback;
 -----------------------------------
 -- error cases
 -- table not in a group
-select emaj.emaj_move_table('dummySchema','mytbl1','myGroup1');
+select emaj.emaj_move_table('dummySchema','mytbl1','myGroup2');
 ERROR:  _move_tables: some tables ("dummySchema".mytbl1) do not currently belong to any tables group.
 CONTEXT:  PL/pgSQL function emaj._move_tables(text,text[],text,text,boolean,boolean) line 47 at RAISE
 PL/pgSQL function emaj.emaj_move_table(text,text,text,text) line 6 at RETURN
-select emaj.emaj_move_table('myschema1','dummyTable','myGroup1');
+select emaj.emaj_move_table('myschema1','dummyTable','myGroup2');
 ERROR:  _move_tables: some tables (myschema1."dummyTable") do not currently belong to any tables group.
 CONTEXT:  PL/pgSQL function emaj._move_tables(text,text[],text,text,boolean,boolean) line 47 at RAISE
 PL/pgSQL function emaj.emaj_move_table(text,text,text,text) line 6 at RETURN
@@ -932,12 +932,11 @@ SQL statement "SELECT emaj._check_group_names(v_groupNames := ARRAY[v_newGroup],
 PL/pgSQL function emaj._move_tables(text,text[],text,text,boolean,boolean) line 27 at PERFORM
 PL/pgSQL function emaj.emaj_move_table(text,text,text,text) line 6 at RETURN
 -- bad mark
-select emaj.emaj_move_table('myschema1','mytbl1','myGroup1','EMAJ_LAST_MARK');
-WARNING:  _move_tables: some tables (myschema1.mytbl1) already belong to the tables group myGroup1.
+select emaj.emaj_move_table('myschema1','mytbl1','myGroup2','EMAJ_LAST_MARK');
 ERROR:  _check_new_mark: "EMAJ_LAST_MARK" is not an allowed name for a new mark.
 CONTEXT:  PL/pgSQL function emaj._check_new_mark(text[],text) line 14 at RAISE
-SQL statement "SELECT emaj._check_new_mark(array[v_groupName], v_mark)"
-PL/pgSQL function emaj._move_tables(text,text[],text,text,boolean,boolean) line 61 at SQL statement
+SQL statement "SELECT emaj._check_new_mark(v_loggingGroups, v_mark)"
+PL/pgSQL function emaj._move_tables(text,text[],text,text,boolean,boolean) line 76 at SQL statement
 PL/pgSQL function emaj.emaj_move_table(text,text,text,text) line 6 at RETURN
 -- move to the same group
 select emaj.emaj_move_table('myschema1','mytbl1','myGroup1');
@@ -1087,8 +1086,8 @@ PL/pgSQL function emaj.emaj_move_sequence(text,text,text,text) line 6 at RETURN
 select emaj.emaj_move_sequence('myschema2','myseq1','myGroup1','EMAJ_LAST_MARK');
 ERROR:  _check_new_mark: "EMAJ_LAST_MARK" is not an allowed name for a new mark.
 CONTEXT:  PL/pgSQL function emaj._check_new_mark(text[],text) line 14 at RAISE
-SQL statement "SELECT emaj._check_new_mark(array[v_groupName], v_mark)"
-PL/pgSQL function emaj._move_sequences(text,text[],text,text,boolean,boolean) line 60 at SQL statement
+SQL statement "SELECT emaj._check_new_mark(v_loggingGroups, v_mark)"
+PL/pgSQL function emaj._move_sequences(text,text[],text,text,boolean,boolean) line 75 at SQL statement
 PL/pgSQL function emaj.emaj_move_sequence(text,text,text,text) line 6 at RETURN
 -- move to the same group
 select emaj.emaj_move_sequence('myschema2','myseq1','myGroup2');
@@ -1239,7 +1238,7 @@ PL/pgSQL function emaj.emaj_modify_table(text,text,jsonb,text) line 7 at RETURN
 select emaj.emaj_modify_table('myschema1','mytbl1',null,'EMAJ_LAST_MARK');
 ERROR:  _check_new_mark: "EMAJ_LAST_MARK" is not an allowed name for a new mark.
 CONTEXT:  PL/pgSQL function emaj._check_new_mark(text[],text) line 14 at RAISE
-SQL statement "SELECT emaj._check_new_mark(v_groups, v_mark)"
+SQL statement "SELECT emaj._check_new_mark(v_loggingGroups, v_mark)"
 PL/pgSQL function emaj._modify_tables(text,text[],jsonb,text,boolean,boolean) line 109 at SQL statement
 PL/pgSQL function emaj.emaj_modify_table(text,text,jsonb,text) line 7 at RETURN
 -- ok

@@ -1944,8 +1944,19 @@ $_remove_tables$
         RAISE EXCEPTION '_remove_tables: some tables (%) do not currently belong to any tables group.', v_list;
       END IF;
     END IF;
+-- get the lists of groups and logging groups holding these tables, if any.
+-- It locks the tables groups so that no other operation simultaneously occurs these groups
+    WITH tables_group AS (
+      SELECT group_name, group_is_logging FROM emaj.emaj_relation, emaj.emaj_group
+        WHERE rel_group = group_name
+          AND rel_schema = v_schema AND rel_tblseq = ANY(v_tables) AND upper_inf(rel_time_range)
+        FOR UPDATE OF emaj_group
+      )
+    SELECT (SELECT array_agg(group_name) FROM tables_group),
+           (SELECT array_agg(group_name) FROM tables_group WHERE group_is_logging)
+      INTO v_groups, v_loggingGroups;
 -- check the supplied mark
-    SELECT emaj._check_new_mark(array[v_groupName], v_mark) INTO v_markName;
+    SELECT emaj._check_new_mark(v_loggingGroups, v_mark) INTO v_markName;
 -- OK,
     IF v_tables IS NULL THEN
 -- when no tables are finaly selected, just warn
@@ -1954,17 +1965,6 @@ $_remove_tables$
       v_logSchema = v_schemaPrefix || v_schema;
 -- get the time stamp of the operation
       SELECT emaj._set_time_stamp('A') INTO v_timeId;
--- get the lists of groups and logging groups holding these tables, if any.
--- It locks the tables groups so that no other operation simultaneously occurs these groups
-      WITH tables_group AS (
-        SELECT group_name, group_is_logging FROM emaj.emaj_relation, emaj.emaj_group
-          WHERE rel_group = group_name
-            AND rel_schema = v_schema AND rel_tblseq = ANY(v_tables) AND upper_inf(rel_time_range)
-          FOR UPDATE OF emaj_group
-        )
-      SELECT (SELECT array_agg(group_name) FROM tables_group),
-             (SELECT array_agg(group_name) FROM tables_group WHERE group_is_logging)
-        INTO v_groups, v_loggingGroups;
 -- for LOGGING groups, lock all tables to get a stable point
       IF v_loggingGroups IS NOT NULL THEN
 -- use a ROW EXCLUSIVE lock mode, preventing for a transaction currently updating data, but not conflicting with simple read access or
@@ -2135,8 +2135,23 @@ $_move_tables$
         SELECT array_remove(v_tables, useless_table) INTO v_tables FROM unnest(v_uselessTables) AS useless_table;
       END IF;
     END IF;
+-- get the lists of groups and logging groups holding these tables, if any.
+-- It locks the tables groups so that no other operation simultaneously occurs these groups
+-- (the CTE is needed for the FOR UPDATE clause not allowed when aggregate functions)
+    WITH tables_group AS (
+      SELECT group_name, group_is_logging FROM emaj.emaj_group
+        WHERE group_name = v_newGroup OR
+              group_name IN
+               (SELECT DISTINCT rel_group FROM emaj.emaj_relation
+                  WHERE rel_schema = v_schema AND rel_tblseq = ANY(v_tables) AND upper_inf(rel_time_range))
+        FOR UPDATE OF emaj_group
+      )
+    SELECT array_agg(group_name ORDER BY group_name),
+           array_agg(group_name ORDER BY group_name) FILTER (WHERE group_is_logging)
+      INTO v_groups, v_loggingGroups
+      FROM tables_group;
 -- check the supplied mark
-    SELECT emaj._check_new_mark(array[v_groupName], v_mark) INTO v_markName;
+    SELECT emaj._check_new_mark(v_loggingGroups, v_mark) INTO v_markName;
 -- OK,
     IF v_tables IS NULL THEN
 -- when no tables are finaly selected, just warn
@@ -2144,21 +2159,6 @@ $_move_tables$
     ELSE
 -- get the time stamp of the operation
       SELECT emaj._set_time_stamp('A') INTO v_timeId;
--- get the lists of groups and logging groups holding these tables, if any.
--- It locks the tables groups so that no other operation simultaneously occurs these groups
--- (the CTE is needed for the FOR UPDATE clause not allowed when aggregate functions)
-      WITH tables_group AS (
-        SELECT group_name, group_is_logging FROM emaj.emaj_group
-          WHERE group_name = v_newGroup OR
-                group_name IN
-                 (SELECT DISTINCT rel_group FROM emaj.emaj_relation
-                    WHERE rel_schema = v_schema AND rel_tblseq = ANY(v_tables) AND upper_inf(rel_time_range))
-          FOR UPDATE OF emaj_group
-        )
-      SELECT array_agg(group_name ORDER BY group_name),
-             array_agg(group_name ORDER BY group_name) FILTER (WHERE group_is_logging)
-        INTO v_groups, v_loggingGroups
-        FROM tables_group;
 -- for LOGGING groups, lock all tables to get a stable point
       IF v_loggingGroups IS NOT NULL THEN
 -- use a ROW EXCLUSIVE lock mode, preventing for a transaction currently updating data, but not conflicting with simple read access or
@@ -2369,7 +2369,7 @@ $_modify_tables$
       INTO v_groups, v_loggingGroups
       FROM tables_group;
 -- check the supplied mark
-    SELECT emaj._check_new_mark(v_groups, v_mark) INTO v_markName;
+    SELECT emaj._check_new_mark(v_loggingGroups, v_mark) INTO v_markName;
 -- OK,
     IF v_tables IS NULL OR v_tables = '{}' THEN
 -- when no tables are finaly selected, just warn
@@ -3307,8 +3307,19 @@ $_remove_sequences$
         RAISE EXCEPTION '_remove_sequences: some sequences (%) do not currently belong to any tables group.', v_list;
       END IF;
     END IF;
+-- get the lists of groups and logging groups holding these sequences, if any
+-- It locks the tables groups so that no other operation simultaneously occurs these groups
+    WITH tables_group AS (
+      SELECT group_name, group_is_logging FROM emaj.emaj_relation, emaj.emaj_group
+        WHERE rel_group = group_name
+          AND rel_schema = v_schema AND rel_tblseq = ANY(v_sequences) AND upper_inf(rel_time_range)
+        FOR UPDATE OF emaj_group
+      )
+    SELECT (SELECT array_agg(group_name) FROM tables_group),
+           (SELECT array_agg(group_name) FROM tables_group WHERE group_is_logging)
+      INTO v_groups, v_loggingGroups;
 -- check the supplied mark
-    SELECT emaj._check_new_mark(array[v_groupName], v_mark) INTO v_markName;
+    SELECT emaj._check_new_mark(v_loggingGroups, v_mark) INTO v_markName;
 -- OK,
     IF v_sequences IS NULL THEN
 -- when no sequences are finaly selected, just warn
@@ -3316,17 +3327,6 @@ $_remove_sequences$
     ELSE
 -- get the time stamp of the operation
       SELECT emaj._set_time_stamp('A') INTO v_timeId;
--- get the lists of groups and logging groups holding these sequences, if any
--- It locks the tables groups so that no other operation simultaneously occurs these groups
-      WITH tables_group AS (
-        SELECT group_name, group_is_logging FROM emaj.emaj_relation, emaj.emaj_group
-          WHERE rel_group = group_name
-            AND rel_schema = v_schema AND rel_tblseq = ANY(v_sequences) AND upper_inf(rel_time_range)
-          FOR UPDATE OF emaj_group
-        )
-      SELECT (SELECT array_agg(group_name) FROM tables_group),
-             (SELECT array_agg(group_name) FROM tables_group WHERE group_is_logging)
-        INTO v_groups, v_loggingGroups;
 -- for LOGGING groups, lock all tables to get a stable point
       IF v_loggingGroups IS NOT NULL THEN
 -- use a ROW EXCLUSIVE lock mode, preventing for a transaction currently updating data, but not conflicting with simple read access or
@@ -3486,8 +3486,23 @@ $_move_sequences$
         SELECT array_remove(v_sequences, useless_sequence) INTO v_sequences FROM unnest(v_uselessSequences) AS useless_sequence;
       END IF;
     END IF;
+-- get the lists of groups and logging groups holding these sequences, if any.
+-- It locks the tables groups so that no other operation simultaneously occurs these groups
+-- (the CTE is needed for the FOR UPDATE clause not allowed when aggregate functions)
+    WITH tables_group AS (
+      SELECT group_name, group_is_logging FROM emaj.emaj_group
+        WHERE group_name = v_newGroup OR
+              group_name IN
+               (SELECT DISTINCT rel_group FROM emaj.emaj_relation
+                  WHERE rel_schema = v_schema AND rel_tblseq = ANY(v_sequences) AND upper_inf(rel_time_range))
+        FOR UPDATE OF emaj_group
+      )
+    SELECT array_agg(group_name ORDER BY group_name),
+           array_agg(group_name ORDER BY group_name) FILTER (WHERE group_is_logging)
+      INTO v_groups, v_loggingGroups
+      FROM tables_group;
 -- check the supplied mark
-    SELECT emaj._check_new_mark(array[v_groupName], v_mark) INTO v_markName;
+    SELECT emaj._check_new_mark(v_loggingGroups, v_mark) INTO v_markName;
 -- OK,
     IF v_sequences IS NULL THEN
 -- when no sequences are finaly selected, just warn
@@ -3495,21 +3510,6 @@ $_move_sequences$
     ELSE
 -- get the time stamp of the operation
       SELECT emaj._set_time_stamp('A') INTO v_timeId;
--- get the lists of groups and logging groups holding these sequences, if any.
--- It locks the tables groups so that no other operation simultaneously occurs these groups
--- (the CTE is needed for the FOR UPDATE clause not allowed when aggregate functions)
-      WITH tables_group AS (
-        SELECT group_name, group_is_logging FROM emaj.emaj_group
-          WHERE group_name = v_newGroup OR
-                group_name IN
-                 (SELECT DISTINCT rel_group FROM emaj.emaj_relation
-                    WHERE rel_schema = v_schema AND rel_tblseq = ANY(v_sequences) AND upper_inf(rel_time_range))
-          FOR UPDATE OF emaj_group
-        )
-      SELECT array_agg(group_name ORDER BY group_name),
-             array_agg(group_name ORDER BY group_name) FILTER (WHERE group_is_logging)
-        INTO v_groups, v_loggingGroups
-        FROM tables_group;
 -- for LOGGING groups, lock all tables to get a stable point
       IF v_loggingGroups IS NOT NULL THEN
 -- use a ROW EXCLUSIVE lock mode, preventing for a transaction currently updating data, but not conflicting with simple read access or

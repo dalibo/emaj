@@ -274,12 +274,12 @@ rollback;
 
 -- error cases
 -- table not in a group
-select emaj.emaj_move_table('dummySchema','mytbl1','myGroup1');
-select emaj.emaj_move_table('myschema1','dummyTable','myGroup1');
+select emaj.emaj_move_table('dummySchema','mytbl1','myGroup2');
+select emaj.emaj_move_table('myschema1','dummyTable','myGroup2');
 -- bad new group
 select emaj.emaj_move_table('myschema1','mytbl1','dummyGroup');
 -- bad mark
-select emaj.emaj_move_table('myschema1','mytbl1','myGroup1','EMAJ_LAST_MARK');
+select emaj.emaj_move_table('myschema1','mytbl1','myGroup2','EMAJ_LAST_MARK');
 
 -- move to the same group
 select emaj.emaj_move_table('myschema1','mytbl1','myGroup1');

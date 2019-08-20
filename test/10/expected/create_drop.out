@@ -606,7 +606,8 @@ WARNING:  _assign_tables: No table to process.
 (1 row)
 
 -- ok (with a duplicate table name)
-select emaj.emaj_assign_tables('myschema1',array['mytbl2','mytbl2b','mytbl2'],'myGroup1b');
+select emaj.emaj_assign_tables('myschema1',array['mytbl2','mytbl2b','mytbl2'],'myGroup1b',
+                               '{"priority":1, "log_data_tablespace":"tsplog1", "log_index_tablespace":"tsplog1"}'::jsonb);
 WARNING:  _create_tbl: The table "myschema1.mytbl2" has triggers (mytbl2trg1, mytbl2trg2). They will be automatically disabled during E-Maj rollback operations, unless they have been recorded into the list of triggers that may be kept enabled, with the emaj_ignore_app_trigger() function.
 WARNING:  _check_fk_groups: The table "myschema1.mytbl2" is referenced by the foreign key "mytbl4_col43_fkey" on the table "myschema1.mytbl4" that is outside the groups (myGroup1b).
 WARNING:  _check_fk_groups: The table "myschema1.mytbl1" is referenced by the foreign key "mytbl4_col44_fkey" on the table "myschema1.mytbl4" that is outside the groups (myGroup1b).
@@ -741,8 +742,8 @@ PL/pgSQL function emaj.emaj_remove_table(text,text,text) line 6 at RETURN
 select emaj.emaj_remove_table('myschema1','mytbl1','EMAJ_LAST_MARK');
 ERROR:  _check_new_mark: "EMAJ_LAST_MARK" is not an allowed name for a new mark.
 CONTEXT:  PL/pgSQL function emaj._check_new_mark(text[],text) line 14 at RAISE
-SQL statement "SELECT emaj._check_new_mark(array[v_groupName], v_mark)"
-PL/pgSQL function emaj._remove_tables(text,text[],text,boolean,boolean) line 48 at SQL statement
+SQL statement "SELECT emaj._check_new_mark(v_loggingGroups, v_mark)"
+PL/pgSQL function emaj._remove_tables(text,text[],text,boolean,boolean) line 59 at SQL statement
 PL/pgSQL function emaj.emaj_remove_table(text,text,text) line 6 at RETURN
 -- ok
 select emaj.emaj_remove_table('myschema1','mytbl1');
@@ -1011,8 +1012,8 @@ PL/pgSQL function emaj.emaj_remove_sequence(text,text,text) line 6 at RETURN
 select emaj.emaj_remove_sequence('myschema2','myseq1','EMAJ_LAST_MARK');
 ERROR:  _check_new_mark: "EMAJ_LAST_MARK" is not an allowed name for a new mark.
 CONTEXT:  PL/pgSQL function emaj._check_new_mark(text[],text) line 14 at RAISE
-SQL statement "SELECT emaj._check_new_mark(array[v_groupName], v_mark)"
-PL/pgSQL function emaj._remove_sequences(text,text[],text,boolean,boolean) line 45 at SQL statement
+SQL statement "SELECT emaj._check_new_mark(v_loggingGroups, v_mark)"
+PL/pgSQL function emaj._remove_sequences(text,text[],text,boolean,boolean) line 56 at SQL statement
 PL/pgSQL function emaj.emaj_remove_sequence(text,text,text) line 6 at RETURN
 -- ok
 select emaj.emaj_remove_sequence('myschema2','myseq1');
