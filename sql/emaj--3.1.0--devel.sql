@@ -1467,6 +1467,10 @@ $_modify_tables$
           v_nbChangedTbl = v_nbChangedTbl + 1;
         END IF;
       END LOOP;
+-- adjust the groups characteristics
+      UPDATE emaj.emaj_group
+        SET group_last_alter_time_id = v_timeId
+        WHERE group_name = ANY(v_groups);
     END IF;
 -- insert the end entry into the emaj_hist table
     INSERT INTO emaj.emaj_hist (hist_function, hist_event, hist_wording)

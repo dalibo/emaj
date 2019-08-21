@@ -199,7 +199,7 @@ CREATE TABLE emaj.emaj_group (
   group_creation_time_id       BIGINT      NOT NULL,       -- time stamp of the group's creation
   group_pg_version             TEXT        NOT NULL        -- postgres version at emaj_create_group() time
                                DEFAULT substring (version() FROM E'PostgreSQL\\s([.,0-9,A-Z,a-z]*)'),
-  group_last_alter_time_id     BIGINT,                     -- time stamp of the last emaj_alter_group() call
+  group_last_alter_time_id     BIGINT,                     -- time stamp of the last group structure change
                                                            --   set to NULL at emaj_create_group() time
   group_has_waiting_changes    BOOLEAN     NOT NULL,       -- are there recent changes in emaj_group_def not yet applied in emaj_group ?
   group_is_logging             BOOLEAN     NOT NULL,       -- are log triggers activated ?
@@ -2363,6 +2363,10 @@ $_modify_tables$
           v_nbChangedTbl = v_nbChangedTbl + 1;
         END IF;
       END LOOP;
+-- adjust the groups characteristics
+      UPDATE emaj.emaj_group
+        SET group_last_alter_time_id = v_timeId
+        WHERE group_name = ANY(v_groups);
     END IF;
 -- insert the end entry into the emaj_hist table
     INSERT INTO emaj.emaj_hist (hist_function, hist_event, hist_wording)
@@ -9679,7 +9683,7 @@ $do$
     RETURN;
   END;
 $do$;
-psql:sql/emaj-devel.sql:9898: NOTICE:  E-Maj installation: E-Maj successfully installed.
+psql:sql/emaj-devel.sql:9902: NOTICE:  E-Maj installation: E-Maj successfully installed.
 COMMIT;
 -----------------------------
 -- check installation
