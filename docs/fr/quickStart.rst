@@ -36,23 +36,23 @@ Utilisation de l’extension
 
 Vous pouvez maintenant vous connecter à la base de données avec le rôle qui possède les droits d’administration E-Maj.
 
-Il faut tout d'abord garnir la table *emaj_group_def* de définition des groupes avec une ligne par table ou séquence à associer à un groupe. On peut ajouter une table avec une requête du type ::
+Il faut tout d’abord créer un groupe de tables vide (ici de type *ROLLBACKABLE*) ::
 
-  INSERT INTO emaj.emaj_group_def (grpdef_group, grpdef_schema, grpdef_tblseq) 
-	VALUES ('mon_groupe', 'mon_schema', 'ma_table');
+   SELECT emaj.emaj_create_group('mon_groupe', true, true);
 
-ou sélectionner toutes les tables d’un schéma avec ::
+On peut alors le garnir de tables et séquences avec des requêtes du type ::
 
-  INSERT INTO emaj.emaj_group_def (grpdef_group, grpdef_schema, grpdef_tblseq) 
-	SELECT 'mon_groupe', 'mon_schema', table_name
-	  FROM information_schema.tables 
-	  WHERE table_schema = 'mon_schema' AND table_type = 'BASE TABLE';
+   SELECT emaj.emaj_assign_table('mon_schéma', 'ma_table', 'mon_groupe');
 
-sachant que les tables insérées dans un groupe de tables doivent avoir une clé primaire.
+pour ajouter une table, ou encore, pour ajouter toutes les tables et les séquences d’un schéma ::
 
-Ensuite, la séquence typique ::
+   SELECT emaj.emaj_assign_tables('mon_schéma', '.*', '', 'mon_groupe');
 
-  SELECT emaj.emaj_create_group('mon_groupe');
+   SELECT emaj.emaj_assign_sequences('mon_schéma', '.*', '', 'mon_groupe');
+
+Notez que seules les tables ayant une clé primaire sont affectées à un groupe de tables *ROLLBACKABLE*.
+
+Ensuite, l’enchaînement typique de commandes ::
 
   SELECT emaj.emaj_start_group('mon_groupe', 'Mark-1');
 
@@ -72,7 +72,7 @@ Ensuite, la séquence typique ::
 
   SELECT emaj.emaj_drop_group('mon_groupe');
 
-permet de créer puis « démarrer » le groupe de tables, d'enregistrer les mises à jour en posant des marques intermédiaires, de revenir à l'une d'elles, d’arrêter l’enregistrement et enfin de supprimer le groupe.
+permet de « démarrer » le groupe de tables, d'enregistrer les mises à jour en posant des marques intermédiaires, de revenir à l'une d'elles, d’arrêter l’enregistrement et enfin de supprimer le groupe.
 
 Pour plus de précisions, les principales fonctions sont décrites :doc:`ici <mainFunctions>`.
 

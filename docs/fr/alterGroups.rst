@@ -1,175 +1,94 @@
 Modification des groupes de tables
 ==================================
 
-.. _emaj_alter_group:
+Généralités
+-----------
 
 Plusieurs types d'événements peuvent rendre nécessaire la modification d'un groupe de tables : 
 
 * la composition du groupe de tables change, avec l'ajout ou la suppression de tables ou de séquence dans le groupe,
 * un des paramètres liés à une table change dans la configuration E-Maj (priorité, tablespace,…),
-* une ou plusieurs tables applicatives appartenant au groupe de tables voient leur structure évoluer (ajout ou suppression de colonnes, changement de type de colonne,...).
+* une ou plusieurs tables applicatives appartenant au groupe de tables voient leur structure évoluer (ajout ou suppression de colonnes, changement de type de colonne,...),
+* une table ou une séquence change de nom ou de schéma.
 
-Modification de groupes en état *IDLE*
---------------------------------------
+Lorsque la modification touche un groupe de tables en état *LOGGING*, il peut être nécessaire de sortir temporairement la table ou séquence concernée de son groupe de tables, avec des impacts sur les éventuelles opérations postérieures de rollback E-Maj.
 
-Dans tous les cas, la démarche suivante peut être suivie :
+Le plus souvent, en fonction de l’utilisation ou non de la :ref:`table de configuration emaj_group_def<emaj_group_def>`, les modifications peuvent être réalisées :
 
-* arrêter le groupe s'il est dans un état actif, avec la fonction :ref:`emaj_stop_group() <emaj_stop_group>`,
-* adapter le contenu de la table :ref:`emaj_group_def <emaj_group_def>` et/ou modifier la structure des tables applicatives,
-* supprimer puis recréer le groupe avec les fonctions :ref:`emaj_drop_group() <emaj_drop_group>` et :ref:`emaj_create_group() <emaj_create_group>`.
+* soit en dynamique, au travers de fonctions dédiées,
+* soit en modifiant le contenu de la table *emaj_group_def* , puis en exécutant une fonction *emaj_alter_group()*,
 
-Mais l'enchaînement des deux fonctions emaj_drop_group() et emaj_create_group() peut être remplacé par l'exécution de la fonction *emaj_alter_group()*, avec une requête SQL du type ::
+Le tableau suivant liste les actions possibles, en fonction de la méthode choisie.
 
-   SELECT emaj.emaj_alter_group('<nom.du.groupe>');
++--------------------------------------------------------+------------------------+-------------------------------+
+| Actions                                                | Ajustement dynamique   | Ajustement par emaj_group_def |
++========================================================+========================+===============================+
+| Ajouter une table/séquence à un groupe                 | Fonctions dédiées      | emaj_alter_group()            |
++--------------------------------------------------------+------------------------+-------------------------------+
+| Supprimer une table/séquence d’un groupe               | Fonctions dédiées      | emaj_alter_group()            |
++--------------------------------------------------------+------------------------+-------------------------------+
+| Déplacer une table/séquence vers un autre groupe       | Fonctions dédiées      | emaj_alter_group()            |
++--------------------------------------------------------+------------------------+-------------------------------+
+| Changer le tablespace de la table ou de l'index de log | Fonctions dédiées      | emaj_alter_group()            |
++--------------------------------------------------------+------------------------+-------------------------------+
+| Changer la priorité E-Maj d'une table                  | Fonctions dédiées      | emaj_alter_group()            |
++--------------------------------------------------------+------------------------+-------------------------------+
+| Réparer une table                                      | Sortie du groupe +     | emaj_alter_group()            |
+|                                                        | Ajout dans le groupe   |                               |
++--------------------------------------------------------+------------------------+-------------------------------+
+| Renommer une table                                     | Sortie du groupe +     | Sortie du groupe +            |
+|                                                        | ALTER TABLE + Ajout    | ALTER TABLE + Ajout           |
++--------------------------------------------------------+------------------------+-------------------------------+
+| Renommer une séquence                                  | Sortie du groupe +     | Sortie du groupe +            |
+|                                                        | ALTER SEQUENCE + Ajout | ALTER SEQUENCE + Ajout        |
++--------------------------------------------------------+------------------------+-------------------------------+
+| Changer le schéma d’une table                          | Sortie du groupe +     | Sortie du groupe +            |
+|                                                        | ALTER TABLE + Ajout    | ALTER TABLE + Ajout           |
++--------------------------------------------------------+------------------------+-------------------------------+
+| Changer le schéma d’une séquence                       | Sortie du groupe +     | Sortie du groupe +            |
+|                                                        | ALTER SEQUENCE + Ajout | ALTER SEQUENCE + Ajout        |
++--------------------------------------------------------+------------------------+-------------------------------+
+| Renommer une colonne d’une table                       | Sortie du groupe +     | Sortie du groupe +            |
+|                                                        | ALTER TABLE + Ajout    | ALTER TABLE + Ajout           |
++--------------------------------------------------------+------------------------+-------------------------------+
+| Changer la structure d’une table                       | Sortie du groupe +     | Sortie du groupe +            |
+|                                                        | ALTER TABLE + Ajout    | ALTER TABLE + Ajout           |
++--------------------------------------------------------+------------------------+-------------------------------+
+| Autres formes d’ALTER TABLE                            | Sans impact E-Maj                                      |
++--------------------------------------------------------+------------------------+-------------------------------+
+| Autres formes d’ALTER SEQUENCE                         | Sans impact E-Maj                                      |
++--------------------------------------------------------+------------------------+-------------------------------+
 
-La fonction retourne le nombre de tables et de séquences dorénavant contenues dans le groupe de tables.
+Les modifications de composition de groupes de tables en état *LOGGING* peuvent avoir des conséquences sur les opérations de rollback E-Maj ou de génération de scripts SQL (voir plus bas).
 
-La fonction *emaj_alter_group()* recrée également les objets E-Maj qui pourraient manquer (table de log, fonction, …).
-
-La fonction supprime et/ou crée les schémas de log, en fonction des besoins.
-
-A l'issue de la modification d'un groupe, celui-ci reste en état « *IDLE* » mais le contenu de ses tables de log est purgé.
-
-Le caractère « *rollbackable* » ou « *audit_only* » du groupe de tables ne peut être modifié par cette commande. Pour changer cette caractéristique, il faut supprimer puis recréer le groupe de tables, en utilisant successivement les fonctions :ref:`emaj_drop_group() <emaj_drop_group>` et :ref:`emaj_create_group() <emaj_create_group>`.
-
-Toutes les actions enchaînées par la fonction *emaj_alter_group()* sont exécutées au sein d'une unique transaction. En conséquence, si une erreur survient durant l'opération, le groupe de tables se retrouve dans son état initial.
-
-Dans la plupart des cas, l'exécution de la fonction *emaj_alter_group()* est nettement plus rapide que  l'enchaînement des deux fonctions :ref:`emaj_drop_group() <emaj_drop_group>` et :ref:`emaj_create_group() <emaj_create_group>`.
-
-Il est possible d'anticiper la mise à jour de la table *emaj_group_def*, alors que le groupe de tables est encore actif. Cette mise à jour ne prendra bien sûr effet qu'à l'issue de l'exécution de la fonction *emaj_alter_group()*. 
-
-Plusieurs groupes de tables peuvent être modifiés en même temps, en utilisant la fonction *emaj_alter_groups()* ::
-
-   SELECT emaj.emaj_alter_groups('<tableau.des.groupes>');
-
-Cette fonction permet notamment de déplacer une table ou une séquence d’un groupe de tables à un autre dans une même opération.
-
-Plus d'information sur les :doc:`fonctions multi-groupes <multiGroupsFunctions>`. 
-
-.. _alter_logging_group:
-
-Modification de groupes en état *LOGGING*
------------------------------------------
-
-Mais la méthode précédente présente plusieurs inconvénients :
-
-* les logs antérieurs à l’opération sont perdus,
-* il n’est plus possible de remettre le groupe de tables dans un état antérieur.
-
-Néanmoins certaines actions sont possibles sur des groupes de tables maintenus en état *LOGGING*. Le tableau suivant liste ces actions possibles et leurs conditions de réalisation. Des détails sur les méthodes à suivre sont présentés plus bas.
-
-+----------------------------------------+----------------+--------------------------------+
-| Action                                 | Groupe LOGGING | Méthode                        |
-+========================================+================+================================+
-| Changer le tablespace de log data      | Oui            | Ajustement emaj_group_def      |
-|                                        |                | ou ajustement dynamique        |
-+----------------------------------------+----------------+--------------------------------+
-| Changer le tablespace de log index     | Oui            | Ajustement emaj_group_def      |
-|                                        |                | ou ajustement dynamique        |
-+----------------------------------------+----------------+--------------------------------+
-| Changer la priorité E-Maj              | Oui            | Ajustement emaj_group_def      |
-|                                        |                | ou ajustement dynamique        |
-+----------------------------------------+----------------+--------------------------------+
-| Oter une table/séquence d’un groupe    | Oui            | Ajustement emaj_group_def      |
-|                                        |                | ou ajustement dynamique        |
-+----------------------------------------+----------------+--------------------------------+
-| Ajouter une table/séquence à un groupe | Oui            | Ajustement emaj_group_def      |
-|                                        |                | ou ajustement dynamique        |
-+----------------------------------------+----------------+--------------------------------+
-| Déplacer une table/séquence vers un    | Oui            | Ajustement emaj_group_def      |
-| autre groupe                           |                | ou ajustement dynamique        |
-+----------------------------------------+----------------+--------------------------------+
-| Réparer une table ou une séquence      | Oui            | Enchaînement suppression/ajout |
-+----------------------------------------+----------------+--------------------------------+
-| Renommer une table                     | Non            |                                |
-+----------------------------------------+----------------+--------------------------------+
-| Renommer une séquence                  | Non            |                                |
-+----------------------------------------+----------------+--------------------------------+
-| Changer le schéma d’une table          | Non            |                                |
-+----------------------------------------+----------------+--------------------------------+
-| Changer le schéma d’une séquence       | Non            |                                |
-+----------------------------------------+----------------+--------------------------------+
-| Renommer une colonne d’une table       | Non            |                                |
-+----------------------------------------+----------------+--------------------------------+
-| Changer la structure d’une table       | Non            |                                |
-+----------------------------------------+----------------+--------------------------------+
-| Autres formes d’ALTER TABLE            | Oui            | Sans impact E-Maj              |
-+----------------------------------------+----------------+--------------------------------+
-| Autres formes d’ALTER SEQUENCE         | Oui            | Sans impact E-Maj              |
-+----------------------------------------+----------------+--------------------------------+
-
-Méthode "Ajustement emaj_group_def"
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-
-La plupart des attributs de la table :ref:`emaj_group_def <emaj_group_def>` décrivant les groupes de tables peuvent être modifiés et pris en compte en dynamique, sans que les groupes de tables ne soient arrêtés.
-
-Pour ce faire, il suffit d’enchaîner les opérations :
-
-* modifier la table :ref:`emaj_group_def <emaj_group_def>`,
-* appeler l’une des fonctions *emaj_alter_group()* ou *emaj_alter_groups()*.
-
-Pour les groupes de tables en état *LOGGING*, ces fonctions posent un verrou de type *ROW EXCLUSIVE* sur chaque table applicative constituant les groupes de tables concernés. 
-
-Sur ces mêmes groupes, elles posent également une marque dont le nom peut être fourni en paramètre. La syntaxe de ces appels devient ::
-
-   SELECT emaj.emaj_alter_group('<nom.du.groupe>' [,'<marque>']);
-
-ou ::
-
-   SELECT emaj.emaj_alter_groups('<tableau.des.groupes>' [,'<marque>']);
-
-Si le paramètre représentant la marque n'est pas spécifié, ou s'il est vide ou *NULL*, un nom est automatiquement généré : "ALTER_%", où le caractère '%' représente l'heure courante, au format *hh.mn.ss.mmmm*.
-
-Une opération de rollback E-Maj ciblant une marque antérieure à une modification de groupes de tables ne procède **PAS** automatiquement à une annulation de ces changements.
-
-Néanmoins, l’administrateur a la possibilité d’appliquer cette même procédure pour revenir à un état antérieur.
+D’une manière générale, même si le groupe de tables est en état *LOGGING*, une opération de rollback E-Maj ciblant une marque antérieure à une modification de groupes de tables ne procède PAS automatiquement à une annulation de ces changements. Néanmoins, l’administrateur a la possibilité d’appliquer lui même les changements permettant de  remettre uns structure de groupe de tables à un état antérieur.
 
 .. _dynamic_ajustment:
 
-Méthode "Ajustement dynamique"
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+Méthode « Ajustement dynamique »
+--------------------------------
 
 Quelques fonctions permettent d’ajuster dynamiquement le contenu des groupes de tables sans modification de la table *emaj_group_def*.
 
-Ainsi, pour **ajouter une ou plusieurs tables** dans un groupe de tables ::
+Ajouter des tables ou des séquences à un groupe
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-	SELECT emaj.emaj_assign_table(‘<schéma>’, ’<table>’, '<nom.du.groupe>' [,’<propriétés>’ [,’<marque>’]]);
+Les fonctions d’:ref:`assignation d’une ou plusieurs tables ou séquences<assign_table_sequence>` à un groupe de tables, utilisées pour la création des groupes, sont utilisables également au cours de la vie du groupe.
 
-ou ::
+Lors de l’exécution des fonctions, les groupes de tables concernés peuvent être en état *IDLE* ou *LOGGING*.
 
-	SELECT emaj.emaj_assign_tables(‘<schéma>’, ’<tableau.de.tables>’, '<nom.du.groupe>' [,’<propriétés>’ [,’<marque>’]] );
+Lorsque le groupe de tables est actif (état *LOGGING*), un verrou exclusif est posé sur chaque table du groupe.
 
-ou ::
+Lorsque le groupe de table est actif, une marque est également posée. Son nom prend la valeur du dernier paramètre fourni lors de l’appel de la fonction. Ce paramètre est optionnel. S’il n’est pas fourni, le nom de la marque posée est généré avec un préfixe *ASSIGN*.
 
-	SELECT emaj.emaj_assign_tables(‘<schéma>’, '<filtre.de.tables.à.inclure>', '<filtre.de.tables.à.exclure>', '<nom.du.groupe>' [,’<propriétés>’ [,’<marque>’]] );
+.. _remove_table_sequence:
 
-Pour **ajouter une ou plusieurs séquences** dans un groupe de tables ::
+Retirer des tables de leur groupe de tables
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-	SELECT emaj.emaj_assign_sequence('<schéma>', '<séquence>', '<nom.du.groupe>' [,'<marque>']);
+Les 3 fonctions suivantes permettent de retirer une ou plusieurs tables de leur groupe de tables ::
 
-ou ::
-
-	SELECT emaj.emaj_assign_sequences('<schéma>', '<tableau.de.séquences>', '<nom.du.groupe>' [,'<marque>'] );
-
-ou ::
-
-	SELECT emaj.emaj_assign_sequences('<schéma>', '<filtre.de.séquences.à.inclure>', '<filtre.de.séquences.à.exclure>', '<nom.du.groupe>' [,’<marque>’] );
-
-Pour **modifier les propriétés d’une ou plusieurs tables** ::
-
-	SELECT emaj.emaj_modify_table(‘<schéma>’, ’<table>’, ’<propriétés.modifiées>’ [,’<marque>’]]);
-
-ou ::
-
-	SELECT emaj.emaj_modify_tables(‘<schéma>’, ’<tableau.de.tables>’, ’<propriétés.modifiées>’ [,’<marque>’]]);
-
-ou ::
-
-	SELECT emaj.emaj_modify_tables(‘<schéma>’, '<filtre.de.tables.à.inclure>', '<filtre.de.tables.à.exclure>',’<propriétés.modifiées>’ [,’<marque>’]]);
-
-Pour **retirer une ou plusieurs tables** d’un groupe de tables ::
-
-	SELECT emaj.emaj_remove_table('<schéma>', '<table>' [,’<marque>’] );
+	SELECT emaj.emaj_remove_table('<schéma>', '<table>' [,'<marque>'] );
 
 ou ::
 
@@ -179,9 +98,18 @@ ou ::
 
 	SELECT emaj.emaj_remove_tables('<schéma>', '<filtre.de.tables.à.inclure>', '<filtre.de.tables.à.exclure>' [,'<marque>'] );
 
-Pour **retirer une ou plusieurs séquences** d’un groupe de tables ::
+Leur fonctionnement est identique aux fonctions d’assignation de tables.
 
-	SELECT emaj.emaj_remove_sequence('<schéma>', '<séquence>' [,’<marque>’] );
+Quand plusieurs tables sont sorties, celles-ci ne proviennent pas nécessairement d’un même groupe de tables d’origine.
+
+Lorsque le ou les groupes de tables d’origine sont actifs et que la marque n’est pas fournie en paramètre, le nom de la marque posée est généré avec un préfixe *REMOVE*.
+
+Retirer des séquences de leur groupe de tables
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+Les 3 fonctions suivantes permettent de retirer une ou plusieurs séquences de leur groupe de tables ::
+
+	SELECT emaj.emaj_remove_sequence('<schéma>', '<séquence>' [,'<marque>'] );
 
 ou ::
 
@@ -191,9 +119,20 @@ ou ::
 
 	SELECT emaj.emaj_remove_sequences('<schéma>', '<filtre.de.séquences.à.inclure>', '<filtre.de.séquences.à.exclure>' [,'<marque>'] );
 
-Pour **déplacer une ou plusieurs tables** vers un autre groupe de tables ::
+Leur fonctionnement est identique aux fonctions d’assignation de séquences.
 
-	SELECT emaj.emaj_move_table('<schéma>', '<table>', 'nouveau.groupe' [,’<marque>’] );
+Quand plusieurs séquences sont sorties, celles-ci ne proviennent pas nécessairement d’un même groupe de tables d’origine.
+
+Lorsque le groupe de tables est actif et que la marque n’est pas fournie en paramètre, le nom de la marque posée est généré avec un préfixe *REMOVE*.
+
+.. _move_table_sequence:
+
+Déplacer des tables vers un autre groupe de tables
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+3 fonctions permettent de déplacer une ou plusieurs tables vers un autre groupe de tables ::
+
+	SELECT emaj.emaj_move_table('<schéma>', '<table>', 'nouveau.groupe' [,'<marque>'] );
 
 ou ::
 
@@ -203,9 +142,16 @@ ou ::
 
 	SELECT emaj.emaj_move_tables('<schéma>', '<filtre.de.tables.à.inclure>', '<filtre.de.tables.à.exclure>', 'nouveau.groupe' [,'<marque>'] );
 
-Pour **déplacer une ou plusieurs séquences** vers un autre groupe de tables ::
+Quand plusieurs tables sont déplacées, celles-ci ne proviennent pas nécessairement d’un même groupe de tables d’origine.
 
-	SELECT emaj.emaj_move_sequence('<schéma>', '<séquence>', 'nouveau.groupe' [,’<marque>’] );
+Lorsque le ou les groupes de tables d’origine sont actifs et que la marque n’est pas fournie en paramètre, le nom de la marque posée est généré avec un préfixe *MOVE*.
+
+Déplacer des séquences vers un autre groupe de tables
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+3 fonctions permettent de déplacer une ou plusieurs séquences vers un autre groupe de tables ::
+
+	SELECT emaj.emaj_move_sequence('<schéma>', '<séquence>', 'nouveau.groupe' [,'<marque>'] );
 
 ou ::
 
@@ -215,60 +161,69 @@ ou ::
 
 	SELECT emaj.emaj_move_sequences('<schéma>', '<filtre.de.séquences.à.inclure>', '<filtre.de.séquences.à.exclure>', 'nouveau.groupe' [,'<marque>'] );
 
-Pour les fonctions traitant plusieurs tables ou séquences en une seule opération, la liste des tables ou séquences à traiter est soit fournie par un paramètre de type tableau de *TEXT*, soit construite à partir de deux expressions rationnelles fournies en paramètres.
+Quand plusieurs séquences sont déplacées, celles-ci ne proviennent pas nécessairement d’un même groupe de tables d’origine.
 
-Un tableau de *TEXT* est typiquement exprimé avec une syntaxe du type ::
+Lorsque le groupe de tables est actif et que la marque n’est pas fournie en paramètre, le nom de la marque posée est généré avec un préfixe *MOVE*.
 
-	ARRAY['élément1', 'élément2', ...]
+.. _modify_table:
 
-Les deux expressions rationnelles suivent la syntaxe *POSIX* (se référer à la documentation PostgreSQL pour plus de détails). Quelques exemples de filtres.
+Modifier les  propriétés de tables
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Pour sélectionner toutes les tables ou séquences du schéma *mon_schema* ::
+3 fonctions permettent de modifier les propriétés d’une table ou de plusieurs tables d’un même schéma ::
 
-	'mon_schema', '.*', ''
+	SELECT emaj.emaj_modify_table('<schéma>', '<table>', '<propriétés.modifiées>' [,'<marque>']]);
 
-Pour sélectionner toutes les tables de ce schéma, et dont le nom commence par *'tbl'* ::
+ou ::
 
-	'mon_schema', '^tbl.*', ''
+	SELECT emaj.emaj_modify_tables('<schéma>', '<tableau.de.tables>', '<propriétés.modifiées>' [,'<marque>']]);
 
-Pour sélectionner toutes les tables de ce schéma, et dont le nom commence par *'tbl'*, à l’exception de celles dont le nom se termine par *'_sav'* ::
+ou ::
 
-	'mon_schema', '^tbl.*', '_sav$'
+	SELECT emaj.emaj_modify_tables('<schéma>', '<filtre.de.tables.à.inclure>', '<filtre.de.tables.à.exclure>','<propriétés.modifiées>' [,'<marque>']]);
 
-Les fonctions d’assignation à un groupe de tables construisant leur sélection à partir des deux expressions rationnelles tiennent compte du contexte des tables ou séquences concernées. Ne sont pas sélectionnées par exemple : les tables ou séquences déjà affectées, les tables sans clé primaire pour un groupe de tables *rollbackable* ou celles déclarées *UNLOGGED*.
+Le paramètre <propriétés.modifiées> est de type JSONB. Ses champs élémentaires sont les mêmes que pour le paramètre <propriétés> des :ref:`fonctions d'assignation de tables<assign_table_sequence>`. Mais ce paramètre <propriétés.modifiées> ne contient que les propriétés ... à modifier. Les propriétés non valorisées restent inchangées. On peut affecter la valeur par défaut d’une propriété en la valorisant avec un *NULL* (le null *JSON*).
 
-Le paramètre *<propriétés>* des fonctions d’ajout de tables à un groupe de tables ou de modifications de tables permet de valoriser certaines propriétés pour la ou les tables. Ces propriétés correspondent aux colonnes *grpdef_priority*, *grpdef_log_dat_tsp* et *grpdef_log_idx_tsp* de la table *emaj_group_def*.
+Les fonctions retournent le nombre de tables ayant subi au moins une modification de propriété.
 
-Ce paramètre *<propriété>* est de type *JSONB*. On peut le valoriser ainsi ::
+Lorsque le groupe de tables est actif et que la marque n’est pas fournie en paramètre, le nom de la marque posée est généré avec un préfixe *MODIFY*.
 
-	‘{ "priority" : <n> , "log_data_tablespace" : "<xxx>" , "log_index_tablespace" : "<yyy>" }’
+.. _emaj_alter_group:
 
-où :
-    • <n> est le niveau de priorité pour la ou les tables
-    • <xxx> est le nom du tablespace pour les tables de log
-    • <yyy> est le nom du tablespace pour les index de log
+Modification par ajustement de la table emaj_group_def
+------------------------------------------------------
 
-Si une des propriétés n’est pas valorisée, sa valeur est NULL.
+Pour éviter de devoir supprimer puis recréer complètement un ou plusieurs groupes de tables après modification de la table *emaj_group_def*, une fonction permet de traiter  uniquement les impacts de ces modifications ::
 
-Pour toutes les fonctions, un verrou exclusif est posé sur chaque table du ou des groupes de tables concernés, afin de garantir la stabilité des groupes durant ces opérations.
+   SELECT emaj.emaj_alter_group('<nom.du.groupe>' [,'<marque>']);
 
-Lors de l’exécution des fonctions, les groupes de tables concernés peuvent être en état *IDLE* ou *LOGGING*.
+La fonction retourne le nombre de tables et de séquences dorénavant contenues dans le groupe de tables.
 
-Lorsque le groupe de table est actif (état *LOGGING*), une marque est posée. Son nom prend la valeur du dernier paramètre fourni lors de l’appel de la fonction. Ce paramètre est optionnel. S’il n’est pas fourni, le nom de la marque est généré avec un préfixe "ASSIGN", "MODIFY", "MOVE" ou "REMOVE".
+La fonction *emaj_alter_group()* recrée également les objets E-Maj qui pourraient manquer (table de log, fonction, …). Elle supprime et/ou crée les schémas de log, en fonction des besoins.
 
-Toutes ces fonctions retournent le nombre de tables ou séquences effectivement ajoutées, modifiées, déplacées ou supprimées.
+Si le groupe de table est en état *IDLE*, le contenu de ses tables de log est purgé.
 
-.. _emaj_sync_def_group:
+Si le groupe de table est en état *LOGGING*, la fonction :
 
-Une fois effectuées des modifications en dynamique du contenu des groupes de tables, la table *emaj_group_def* ne reflète plus la configuration courante des groupes. L’administrateur E-Maj peut alors, pour un groupe de table donné, synchroniser le contenu de la table *emaj_group_def* à partir de la situation courante. ::
+* pose un verrou de type ROW EXCLUSIVE sur chaque table applicative du groupe de tables,
+* pose une marque dont le nom peut être fourni en paramètre.
 
-	SELECT emaj.emaj_sync_def_group(‘<groupe>’);
+Si le paramètre représentant la marque n'est pas spécifié, ou s'il est vide ou *NULL*, un nom est automatiquement généré : *ALTER_%*, où le caractère '%' représente l'heure courante, au format "hh.mn.ss.mmmm".
 
-La fonction retourne le nombre de tables et séquences contenues dans le groupe de tables traité.
+Toutes les actions enchaînées par la fonction *emaj_alter_group()* sont exécutées au sein d'une unique transaction. En conséquence, si une erreur survient durant l'opération, le groupe de tables se retrouve dans son état initial.
 
+Il est possible d'anticiper la mise à jour de la table *emaj_group_def*, alors que le groupe de tables est encore actif. Cette mise à jour ne prendra bien sûr effet qu'à l'issue de l'exécution de la fonction *emaj_alter_group()*. 
+
+Plusieurs groupes de tables peuvent être modifiés en même temps, en utilisant la fonction *emaj_alter_groups()* ::
+
+   SELECT emaj.emaj_alter_groups('<tableau.des.groupes>' [,'<marque>']);
+
+Cette fonction permet notamment de déplacer une table ou une séquence d’un groupe de tables à un autre dans une même opération.
+
+La syntaxe de représentation des tableaux de groupes de tables est présentée :doc:`ici<multiGroupsFunctions>`.
 
 Incidence des ajouts ou suppressions de tables et séquences dans un groupe en état *LOGGING*
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+--------------------------------------------------------------------------------------------
 
 .. caution::
 
@@ -321,21 +276,42 @@ Si la structure d’une table applicative a été modifiée par mégarde alors q
 
 Quand une table change de groupe d’affectation, l’incidence sur la capacité de générer un script SQL ou de procéder à un rollback des groupes de tables source et destination est similaire à ce que serait la suppression de la table du groupe source puis son ajout dans le groupe destination.
 
-Méthode "Enchaînement suppression/ajout"
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+Réparation de groupe de tables
+------------------------------
 
-Même si les triggers sur événements mis en place avec E-Maj limitent les risques, il peut arriver que des composants E-Maj supportant une table applicative (table, séquence ou fonction de log) soient supprimés. Le groupe de tables contenant cette table ne peut alors plus fonctionner correctement.
+Même si les triggers sur événements mis en place avec E-Maj limitent les risques, il peut arriver que des composants E-Maj supportant une table applicative (table, fonction ou trigger de log) soient supprimés. Le groupe de tables contenant cette table ne peut alors plus fonctionner correctement.
 
-Pour résoudre le problème sans arrêter le groupe de tables (et ainsi perdre le bénéfice des logs enregistrés), il est possible de sortir puis réintégrer la table de son groupe de tables en le laissant actif. Pour ce faire, il suffit d’enchaîner les 4 étapes :
+Pour résoudre le problème sans arrêter le groupe de tables (et ainsi perdre le bénéfice des logs enregistrés), il est possible de sortir puis réintégrer la table de son groupe de tables en le laissant actif. Pour ce faire, il suffit d’enchaîner les 2 commandes ::
 
-* suppression de la ligne correspondant à la table dans la table *emaj_group_def*,
-* appel de la fonction *emaj_alter_group()* pour le groupe de tables concerné, afin d’effectivement détacher la table du groupe,
-* ajout de la ligne correspondant à la table dans la table *emaj_group_def*,
-* appel à nouveau de la fonction *emaj_alter_group()* pour le groupe de tables concerné, afin de réintégrer la table au groupe.
+   SELECT emaj.emaj_remove_table('<schéma>', '<table>' [,'<marque>']);
 
-Naturellement, à l’issue de la sortie de la table de son groupe, le contenu des logs associés n’est plus exploitable pour un éventuel rollback ou une éventuelle génération de script.
+   SELECT emaj.emaj_assign_table('<schéma>', '<table>', '<groupe>' [,'propriétés' [,'<marque>']] );
 
-Il peut arriver également qu’une table ou séquence applicative soit supprimée. Dans ce cas, on pourra sortir la table ou séquence du groupe de table actif, en enchaînant les 2 étapes :
+Naturellement, une fois la table sortie de son groupe, le contenu des logs associés n’est plus exploitable pour un éventuel rollback ou une éventuelle génération de script.
 
-* suppression de la ligne correspondant à la table/séquence dans la table *emaj_group_def*,
-* appel de la fonction *emaj_alter_group()* pour le groupe de tables concerné.
+Néanmoins, si la séquence de log est absente (cas de figure hautement improbable) et que le groupe de tables est en état *LOGGING*, la réparation nécessite de :ref:`forcer l'arrêt du groupe<emaj_force_stop_group>` avant de sortir puis réassigner la table.
+
+Il peut arriver également qu’une table ou séquence applicative soit supprimée accidentellement avant d’avoir été sortie de son groupe de tables. Dans ce cas, on pourra sortir à posteriori cette table ou cette séquence de son groupe de tables, même si celui-ci est actif
+
+* soit en exécutant uniquement la fonction *emaj_remove_table()* ou *emaj_remove_sequence()* appropriée,
+* soit en enchaînant les 2 étapes de suppression de la ligne correspondant à la table/séquence dans la table *emaj_group_def*, et d'appel de la fonction *emaj_alter_group()* pour le groupe de tables concerné.
+
+.. _emaj_sync_def_group:
+
+Combiner gestion dynamique des groupes de tables et configuration par emaj_group_def
+------------------------------------------------------------------------------------
+
+En principe, il faut choisir une fois pour toute la méthode de gestion du contenu des groupes de tables : gestion dynamique ou par la table de configuration *emaj_group_def*. Il est néanmoins possible de mixer les 2 méthodes.
+
+La difficulté réside alors dans le fait qu’une fois effectuées des modifications en dynamique du contenu des groupes de tables, la table *emaj_group_def* ne reflète plus la configuration courante des groupes.
+
+Pour éviter de reporter manuellement les modifications apportées en dynamique dans la table *emaj_group_def*, sans garantie de fiabilité, l’administrateur E-Maj peut, pour un groupe de tables donné, synchroniser le contenu de la table *emaj_group_def* à partir de la situation courante. Pour cela, il peut exécuter ::
+
+   SELECT emaj.emaj_sync_def_group('<groupe>');
+
+La fonction retourne le nombre de tables et séquences contenues dans le groupe de tables traité.
+
+Le schéma suivant représente les flux de modifications possibles :
+
+.. image:: images/alter_group_methods.png
+   :align: center

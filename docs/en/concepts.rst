@@ -3,6 +3,8 @@ Concepts
 
 E-Maj is built on three main concepts.
 
+.. _tables_group:
+
 Tables Group
 ************
 

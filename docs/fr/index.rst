@@ -35,6 +35,7 @@ Bienvenue dans la documentation E-Maj !
    :caption: Comment utiliser E-Maj :
 
    accessPolicy
+   groupsCreationFunctions
    mainFunctions
    alterGroups
    otherGroupsFunctions

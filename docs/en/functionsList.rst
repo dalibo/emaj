@@ -1,29 +1,28 @@
 E-Maj functions list
 ====================
 
-E-Maj functions that are available to users are listed in alphabetic order below. They are all callable by roles having *emaj_adm* privileges. The chart also specifies those callable by *emaj_viewer* roles (sign *(V)* behind the function name).
+The E-Maj functions that are available to users can be grouped into 3 categories. They are listed below, in alphabetic order.
+
+They are all callable by roles having *emaj_adm* privileges. The charts also specifys those callable by *emaj_viewer* roles (sign *(V)* behind the function name).
+
+Tables or sequences level functions
+-----------------------------------
 
 +--------------------------------------------------+-------------------------------+---------------------------------------+
 | Functions                                        | Input parameters              | Output data                           |
 +==================================================+===============================+=======================================+
-| :doc:`emaj_alter_group                           | | group TEXT,                 | #.tables.and.seq INT                  |
-| <alterGroups>`                                   | | [mark TEXT]                 |                                       |
-+--------------------------------------------------+-------------------------------+---------------------------------------+
-| :doc:`emaj_alter_groups                          | | groups.array TEXT[],        | #.tables.and.seq INT                  |
-| <multiGroupsFunctions>`                          | | [mark TEXT]                 |                                       |
-+--------------------------------------------------+-------------------------------+---------------------------------------+
 | :ref:`emaj_assign_sequence                       | | schema TEXT,                | 1 INT                                 |
-| <dynamic_ajustment>`                             | | sequence TEXT,              |                                       |
+| <assign_table_sequence>`                         | | sequence TEXT,              |                                       |
 |                                                  | | group TEXT,                 |                                       |
 |                                                  | | [ mark TEXT ]               |                                       |
 +--------------------------------------------------+-------------------------------+---------------------------------------+
 | :ref:`emaj_assign_sequences                      | | schema TEXT,                | #.sequences INT                       |
-| <dynamic_ajustment>`                             | | sequences.array TEXT[],     |                                       |
+| <assign_table_sequence>`                         | | sequences.array TEXT[],     |                                       |
 |                                                  | | group TEXT,                 |                                       |
 |                                                  | | [ mark TEXT ]               |                                       |
 +--------------------------------------------------+-------------------------------+---------------------------------------+
 | :ref:`emaj_assign_sequences                      | | schema TEXT,                | #.sequences INT                       |
-| <dynamic_ajustment>`                             | | sequences.to.include.filter |                                       |
+| <assign_table_sequence>`                         | | sequences.to.include.filter |                                       |
 |                                                  | |   TEXT,                     |                                       |
 |                                                  | | sequences.to.exclude.filter |                                       |
 |                                                  | |   TEXT,                     |                                       |
@@ -31,19 +30,19 @@ E-Maj functions that are available to users are listed in alphabetic order below
 |                                                  | | [ mark TEXT ]               |                                       |
 +--------------------------------------------------+-------------------------------+---------------------------------------+
 | :ref:`emaj_assign_table                          | | schema TEXT,                | 1 INT                                 |
-| <dynamic_ajustment>`                             | | table TEXT,                 |                                       |
+| <assign_table_sequence>`                         | | table TEXT,                 |                                       |
 |                                                  | | group TEXT,                 |                                       |
 |                                                  | | [ properties JSONB ]        |                                       |
 |                                                  | | [ mark TEXT ]               |                                       |
 +--------------------------------------------------+-------------------------------+---------------------------------------+
 | :ref:`emaj_assign_tables                         | | schema TEXT,                | #.tables INT                          |
-| <dynamic_ajustment>`                             | | tables.array TEXT[],        |                                       |
+| <assign_table_sequence>`                         | | tables.array TEXT[],        |                                       |
 |                                                  | | group TEXT,                 |                                       |
 |                                                  | | [ properties JSONB ]        |                                       |
 |                                                  | | [ mark TEXT ]               |                                       |
 +--------------------------------------------------+-------------------------------+---------------------------------------+
 | :ref:`emaj_assign_tables                         | | schema TEXT,                | #.tables INT                          |
-| <dynamic_ajustment>`                             | | tables.to.include.filter    |                                       |
+| <assign_table_sequence>`                         | | tables.to.include.filter    |                                       |
 |                                                  | |   TEXT,                     |                                       |
 |                                                  | | tables.to.exclude.filter    |                                       |
 |                                                  | |   TEXT,                     |                                       |
@@ -51,8 +50,111 @@ E-Maj functions that are available to users are listed in alphabetic order below
 |                                                  | | [ properties JSONB ]        |                                       |
 |                                                  | | [ mark TEXT ]               |                                       |
 +--------------------------------------------------+-------------------------------+---------------------------------------+
-| :ref:`emaj_cleanup_rollback_state                |                               | #.rollback INT                        |
-| <emaj_cleanup_rollback_state>`                   |                               |                                       |
+| :ref:`emaj_get_current_log_table                 | | schema TEXT,                | (log.schema TEXT, log.table TEXT)     |
+| <emaj_get_current_log_table>` (V)                | | table TEXT                  |                                       |
++--------------------------------------------------+-------------------------------+---------------------------------------+
+| :ref:`emaj_ignore_app_trigger                    | | action TEXT,                | #.triggers INT                        |
+| <emaj_ignore_app_trigger>`                       | | schema TEXT,                |                                       |
+|                                                  | | table TEXT,                 |                                       |
+|                                                  | | trigger TEXT                |                                       |
++--------------------------------------------------+-------------------------------+---------------------------------------+
+| :ref:`emaj_modify_table                          | | schema TEXT,                | #.tables INT                          |
+| <modify_table>`                                  | | table TEXT,                 |                                       |
+|                                                  | | properties JSONB,           |                                       |
+|                                                  | | [ mark TEXT ]               |                                       |
++--------------------------------------------------+-------------------------------+---------------------------------------+
+| :ref:`emaj_modify_tables                         | | schema TEXT,                | #.tables INT                          |
+| <modify_table>`                                  | | tables.array TEXT[],        |                                       |
+|                                                  | | properties JSONB,           |                                       |
+|                                                  | | [ mark TEXT ]               |                                       |
++--------------------------------------------------+-------------------------------+---------------------------------------+
+| :ref:`emaj_modify_tables                         | | schema TEXT,                | #.tables INT                          |
+| <modify_table>`                                  | | tables.to.include.filter    |                                       |
+|                                                  | |   TEXT,                     |                                       |
+|                                                  | | tables.to.exclude.filter    |                                       |
+|                                                  | |   TEXT,                     |                                       |
+|                                                  | | properties JSONB,           |                                       |
+|                                                  | | [ mark TEXT ]               |                                       |
++--------------------------------------------------+-------------------------------+---------------------------------------+
+| :ref:`emaj_move_sequence                         | | schema TEXT,                | 1 INT                                 |
+| <move_table_sequence>`                           | | sequence TEXT,              |                                       |
+|                                                  | | new.group TEXT,             |                                       |
+|                                                  | | [ mark TEXT ]               |                                       |
++--------------------------------------------------+-------------------------------+---------------------------------------+
+| :ref:`emaj_move_sequences                        | | schema TEXT,                | #.sequences INT                       |
+| <move_table_sequence>`                           | | sequences.array TEXT[],     |                                       |
+|                                                  | | new.group TEXT,             |                                       |
+|                                                  | | [ mark TEXT ]               |                                       |
++--------------------------------------------------+-------------------------------+---------------------------------------+
+| :ref:`emaj_move_sequences                        | | schema TEXT,                | #.sequences INT                       |
+| <move_table_sequence>`                           | | sequences.to.include.filter |                                       |
+|                                                  | |   TEXT,                     |                                       |
+|                                                  | | sequences.to.exclude.filter |                                       |
+|                                                  | |   TEXT,                     |                                       |
+|                                                  | | new.group TEXT,             |                                       |
+|                                                  | | [ mark TEXT ]               |                                       |
++--------------------------------------------------+-------------------------------+---------------------------------------+
+| :ref:`emaj_move_table                            | | schema TEXT,                | 1 INT                                 |
+| <move_table_sequence>`                           | | table TEXT,                 |                                       |
+|                                                  | | new.group TEXT,             |                                       |
+|                                                  | | [ mark TEXT ]               |                                       |
++--------------------------------------------------+-------------------------------+---------------------------------------+
+| :ref:`emaj_move_tables                           | | schema TEXT,                | #.tables INT                          |
+| <move_table_sequence>`                           | | tables.array TEXT[],        |                                       |
+|                                                  | | new.group TEXT,             |                                       |
+|                                                  | | [ mark TEXT ]               |                                       |
++--------------------------------------------------+-------------------------------+---------------------------------------+
+| :ref:`emaj_move_tables                           | | schema TEXT,                | #.tables INT                          |
+| <move_table_sequence>`                           | | tables.to.include.filter    |                                       |
+|                                                  | |   TEXT,                     |                                       |
+|                                                  | | tables.to.exclude.filter    |                                       |
+|                                                  | |   TEXT,                     |                                       |
+|                                                  | | new.group TEXT,             |                                       |
+|                                                  | | [ mark TEXT ]               |                                       |
++--------------------------------------------------+-------------------------------+---------------------------------------+
+| :ref:`emaj_remove_sequence                       | | schema TEXT,                | 1 INT                                 |
+| <remove_table_sequence>`                         | | sequence TEXT,              |                                       |
+|                                                  | | [ mark TEXT ]               |                                       |
++--------------------------------------------------+-------------------------------+---------------------------------------+
+| :ref:`emaj_remove_sequences                      | | schema TEXT,                | #.sequences INT                       |
+| <remove_table_sequence>`                         | | sequences.array TEXT[],     |                                       |
+|                                                  | | [ mark TEXT ]               |                                       |
++--------------------------------------------------+-------------------------------+---------------------------------------+
+| :ref:`emaj_remove_sequences                      | | schema TEXT,                | #.sequences INT                       |
+| <remove_table_sequence>`                         | | sequences.to.include.filter |                                       |
+|                                                  | |   TEXT,                     |                                       |
+|                                                  | | sequences.to.exclude.filter |                                       |
+|                                                  | |   TEXT,                     |                                       |
+|                                                  | | [ mark TEXT ]               |                                       |
++--------------------------------------------------+-------------------------------+---------------------------------------+
+| :ref:`emaj_remove_table                          | | schema TEXT,                | 1 INT                                 |
+| <remove_table_sequence>`                         | | table TEXT,                 |                                       |
+|                                                  | | [ mark TEXT ]               |                                       |
++--------------------------------------------------+-------------------------------+---------------------------------------+
+| :ref:`emaj_remove_tables                         | | schema TEXT,                | #.tables INT                          |
+| <remove_table_sequence>`                         | | tables.array TEXT[],        |                                       |
+|                                                  | | [ mark TEXT ]               |                                       |
++--------------------------------------------------+-------------------------------+---------------------------------------+
+| :ref:`emaj_remove_tables                         | | schema TEXT,                | #.tables INT                          |
+| <remove_table_sequence>`                         | | tables.to.include.filter    |                                       |
+|                                                  | |   TEXT,                     |                                       |
+|                                                  | | tables.to.exclude.filter    |                                       |
+|                                                  | |   TEXT,                     |                                       |
+|                                                  | | [ mark TEXT ]               |                                       |
++--------------------------------------------------+-------------------------------+---------------------------------------+
+
+
+Groups level functions
+----------------------
+
++--------------------------------------------------+-------------------------------+---------------------------------------+
+| Functions                                        | Input parameters              | Output data                           |
++==================================================+===============================+=======================================+
+| :ref:`emaj_alter_group                           | | group TEXT,                 | #.tables.and.seq INT                  |
+| <emaj_alter_group>`                              | | [mark TEXT]                 |                                       |
++--------------------------------------------------+-------------------------------+---------------------------------------+
+| :doc:`emaj_alter_groups                          | | groups.array TEXT[],        | #.tables.and.seq INT                  |
+| <multiGroupsFunctions>`                          | | [mark TEXT]                 |                                       |
 +--------------------------------------------------+-------------------------------+---------------------------------------+
 | :ref:`emaj_comment_group                         | | group TEXT,                 |                                       |
 | <emaj_comment_group>`                            | | comment TEXT                |                                       |
@@ -82,14 +184,8 @@ E-Maj functions that are available to users are listed in alphabetic order below
 | <multiGroupsFunctions>` (V)                      | | start.mark TEXT,            |                                       |
 |                                                  | | end.mark TEXT               |                                       |
 +--------------------------------------------------+-------------------------------+---------------------------------------+
-| :ref:`emaj_disable_protection_by_event_triggers  |                               | #.triggers INT                        |
-| <emaj_disable_protection_by_event_triggers>`     |                               |                                       |
-+--------------------------------------------------+-------------------------------+---------------------------------------+
 | :ref:`emaj_drop_group                            | | group TEXT                  | #.tables.and.seq INT                  |
 | <emaj_drop_group>`                               |                               |                                       |
-+--------------------------------------------------+-------------------------------+---------------------------------------+
-| :ref:`emaj_enable_protection_by_event_triggers   |                               | #.triggers INT                        |
-| <emaj_enable_protection_by_event_triggers>`      |                               |                                       |
 +--------------------------------------------------+-------------------------------+---------------------------------------+
 | :ref:`emaj_estimate_rollback_group               | | group TEXT,                 | duration INTERVAL                     |
 | <emaj_estimate_rollback_group>` (V)              | | mark TEXT                   |                                       |
@@ -115,22 +211,11 @@ E-Maj functions that are available to users are listed in alphabetic order below
 |                                                  | | output.file.path TEXT,      |                                       |
 |                                                  | | [tables.seq.array TEXT[]]   |                                       |
 +--------------------------------------------------+-------------------------------+---------------------------------------+
-| :ref:`emaj_get_consolidable_rollbacks            |                               | SETOF emaj_consolidable_rollback_type |
-| <emaj_get_consolidable_rollbacks>` (V)           |                               |                                       |
-+--------------------------------------------------+-------------------------------+---------------------------------------+
-| :ref:`emaj_get_current_log_table                 | | schema TEXT,                | (log.schema TEXT, log.table TEXT)     |
-| <emaj_get_current_log_table>` (V)                | | table TEXT                  |                                       |
-+--------------------------------------------------+-------------------------------+---------------------------------------+
 | :ref:`emaj_get_previous_mark_group               | | group TEXT,                 | mark TEXT                             |
 | <emaj_get_previous_mark_group>` (V)              | | date.time TIMESTAMPTZ       |                                       |
 +--------------------------------------------------+-------------------------------+---------------------------------------+
 | :ref:`emaj_get_previous_mark_group               | | group TEXT,                 | mark TEXT                             |
 | <emaj_get_previous_mark_group>` (V)              | | mark TEXT                   |                                       |
-+--------------------------------------------------+-------------------------------+---------------------------------------+
-| :ref:`emaj_ignore_app_trigger                    | | action TEXT,                | #.triggers INT                        |
-| <emaj_ignore_app_trigger>`                       | | schema TEXT,                |                                       |
-|                                                  | | table TEXT,                 |                                       |
-|                                                  | | trigger TEXT                |                                       |
 +--------------------------------------------------+-------------------------------+---------------------------------------+
 | :ref:`emaj_log_stat_group                        | | group TEXT,                 | SETOF emaj_log_stat_type              |
 | <emaj_log_stat_group>` (V)                       | | start.mark TEXT,            |                                       |
@@ -150,95 +235,11 @@ E-Maj functions that are available to users are listed in alphabetic order below
 |                                                  | | is.alter.group.allowed      |                                       |
 |                                                  | |  BOOLEAN                    |                                       |
 +--------------------------------------------------+-------------------------------+---------------------------------------+
-| :ref:`emaj_modify_table                          | | schema TEXT,                | #.tables INT                          |
-| <dynamic_ajustment>`                             | | table TEXT,                 |                                       |
-|                                                  | | properties JSONB,           |                                       |
-|                                                  | | [ mark TEXT ]               |                                       |
-+--------------------------------------------------+-------------------------------+---------------------------------------+
-| :ref:`emaj_modify_tables                         | | schema TEXT,                | #.tables INT                          |
-| <dynamic_ajustment>`                             | | tables.array TEXT[],        |                                       |
-|                                                  | | properties JSONB,           |                                       |
-|                                                  | | [ mark TEXT ]               |                                       |
-+--------------------------------------------------+-------------------------------+---------------------------------------+
-| :ref:`emaj_modify_tables                         | | schema TEXT,                | #.tables INT                          |
-| <dynamic_ajustment>`                             | | tables.to.include.filter    |                                       |
-|                                                  | |   TEXT,                     |                                       |
-|                                                  | | tables.to.exclude.filter    |                                       |
-|                                                  | |   TEXT,                     |                                       |
-|                                                  | | properties JSONB,           |                                       |
-|                                                  | | [ mark TEXT ]               |                                       |
-+--------------------------------------------------+-------------------------------+---------------------------------------+
-| :ref:`emaj_move_sequence                         | | schema TEXT,                | 1 INT                                 |
-| <dynamic_ajustment>`                             | | sequence TEXT,              |                                       |
-|                                                  | | new.group TEXT,             |                                       |
-|                                                  | | [ mark TEXT ]               |                                       |
-+--------------------------------------------------+-------------------------------+---------------------------------------+
-| :ref:`emaj_move_sequences                        | | schema TEXT,                | #.sequences INT                       |
-| <dynamic_ajustment>`                             | | sequences.array TEXT[],     |                                       |
-|                                                  | | new.group TEXT,             |                                       |
-|                                                  | | [ mark TEXT ]               |                                       |
-+--------------------------------------------------+-------------------------------+---------------------------------------+
-| :ref:`emaj_move_sequences                        | | schema TEXT,                | #.sequences INT                       |
-| <dynamic_ajustment>`                             | | sequences.to.include.filter |                                       |
-|                                                  | |   TEXT,                     |                                       |
-|                                                  | | sequences.to.exclude.filter |                                       |
-|                                                  | |   TEXT,                     |                                       |
-|                                                  | | new.group TEXT,             |                                       |
-|                                                  | | [ mark TEXT ]               |                                       |
-+--------------------------------------------------+-------------------------------+---------------------------------------+
-| :ref:`emaj_move_table                            | | schema TEXT,                | 1 INT                                 |
-| <dynamic_ajustment>`                             | | table TEXT,                 |                                       |
-|                                                  | | new.group TEXT,             |                                       |
-|                                                  | | [ mark TEXT ]               |                                       |
-+--------------------------------------------------+-------------------------------+---------------------------------------+
-| :ref:`emaj_move_tables                           | | schema TEXT,                | #.tables INT                          |
-| <dynamic_ajustment>`                             | | tables.array TEXT[],        |                                       |
-|                                                  | | new.group TEXT,             |                                       |
-|                                                  | | [ mark TEXT ]               |                                       |
-+--------------------------------------------------+-------------------------------+---------------------------------------+
-| :ref:`emaj_move_tables                           | | schema TEXT,                | #.tables INT                          |
-| <dynamic_ajustment>`                             | | tables.to.include.filter    |                                       |
-|                                                  | |   TEXT,                     |                                       |
-|                                                  | | tables.to.exclude.filter    |                                       |
-|                                                  | |   TEXT,                     |                                       |
-|                                                  | | new.group TEXT,             |                                       |
-|                                                  | | [ mark TEXT ]               |                                       |
-+--------------------------------------------------+-------------------------------+---------------------------------------+
 | :ref:`emaj_protect_group                         | | group TEXT                  | 0/1 INT                               |
 | <emaj_protect_group>`                            |                               |                                       |
 +--------------------------------------------------+-------------------------------+---------------------------------------+
 | :ref:`emaj_protect_mark_group                    | | group TEXT,                 | 0/1 INT                               |
 | <emaj_protect_mark_group>`                       | | mark TEXT                   |                                       |
-+--------------------------------------------------+-------------------------------+---------------------------------------+
-| :ref:`emaj_remove_sequence                       | | schema TEXT,                | 1 INT                                 |
-| <dynamic_ajustment>`                             | | sequence TEXT,              |                                       |
-|                                                  | | [ mark TEXT ]               |                                       |
-+--------------------------------------------------+-------------------------------+---------------------------------------+
-| :ref:`emaj_remove_sequences                      | | schema TEXT,                | #.sequences INT                       |
-| <dynamic_ajustment>`                             | | sequences.array TEXT[],     |                                       |
-|                                                  | | [ mark TEXT ]               |                                       |
-+--------------------------------------------------+-------------------------------+---------------------------------------+
-| :ref:`emaj_remove_sequences                      | | schema TEXT,                | #.sequences INT                       |
-| <dynamic_ajustment>`                             | | sequences.to.include.filter |                                       |
-|                                                  | |   TEXT,                     |                                       |
-|                                                  | | sequences.to.exclude.filter |                                       |
-|                                                  | |   TEXT,                     |                                       |
-|                                                  | | [ mark TEXT ]               |                                       |
-+--------------------------------------------------+-------------------------------+---------------------------------------+
-| :ref:`emaj_remove_table                          | | schema TEXT,                | 1 INT                                 |
-| <dynamic_ajustment>`                             | | table TEXT,                 |                                       |
-|                                                  | | [ mark TEXT ]               |                                       |
-+--------------------------------------------------+-------------------------------+---------------------------------------+
-| :ref:`emaj_remove_tables                         | | schema TEXT,                | #.tables INT                          |
-| <dynamic_ajustment>`                             | | tables.array TEXT[],        |                                       |
-|                                                  | | [ mark TEXT ]               |                                       |
-+--------------------------------------------------+-------------------------------+---------------------------------------+
-| :ref:`emaj_remove_tables                         | | schema TEXT,                | #.tables INT                          |
-| <dynamic_ajustment>`                             | | tables.to.include.filter    |                                       |
-|                                                  | |   TEXT,                     |                                       |
-|                                                  | | tables.to.exclude.filter    |                                       |
-|                                                  | |   TEXT,                     |                                       |
-|                                                  | | [ mark TEXT ]               |                                       |
 +--------------------------------------------------+-------------------------------+---------------------------------------+
 | :ref:`emaj_rename_mark_group                     | | group TEXT,                 |                                       |
 | <emaj_rename_mark_group>`                        | | mark TEXT,                  |                                       |
@@ -246,9 +247,6 @@ E-Maj functions that are available to users are listed in alphabetic order below
 +--------------------------------------------------+-------------------------------+---------------------------------------+
 | :ref:`emaj_reset_group                           | | group TEXT                  | #.tables.and.seq INT                  |
 | <emaj_reset_group>`                              |                               |                                       |
-+--------------------------------------------------+-------------------------------+---------------------------------------+
-| :ref:`emaj_rollback_activity                     |                               | SETOF emaj_rollback_activity_type     |
-| <emaj_rollback_activity>` (V)                    |                               |                                       |
 +--------------------------------------------------+-------------------------------+---------------------------------------+
 | :ref:`emaj_rollback_group                        | | group TEXT,                 | SETOF (severity TEXT, message TEXT)   |
 | <emaj_rollback_group>`                           | | mark TEXT,                  |                                       |
@@ -299,7 +297,27 @@ E-Maj functions that are available to users are listed in alphabetic order below
 | :ref:`emaj_unprotect_mark_group                  | | group TEXT,                 | 0/1 INT                               |
 | <emaj_unprotect_mark_group>`                     | | mark TEXT                   |                                       |
 +--------------------------------------------------+-------------------------------+---------------------------------------+
-| :ref:`emaj_verify_all                            |                               | Setof TEXT                            |
+
+General purpose functions
+-------------------------
++--------------------------------------------------+-------------------------------+---------------------------------------+
+| Functions                                        | Input parameters              | Output data                           |
++==================================================+===============================+=======================================+
+| :ref:`emaj_cleanup_rollback_state                |                               | #.rollback INT                        |
+| <emaj_cleanup_rollback_state>`                   |                               |                                       |
++--------------------------------------------------+-------------------------------+---------------------------------------+
+| :ref:`emaj_disable_protection_by_event_triggers  |                               | #.triggers INT                        |
+| <emaj_disable_protection_by_event_triggers>`     |                               |                                       |
++--------------------------------------------------+-------------------------------+---------------------------------------+
+| :ref:`emaj_enable_protection_by_event_triggers   |                               | #.triggers INT                        |
+| <emaj_enable_protection_by_event_triggers>`      |                               |                                       |
++--------------------------------------------------+-------------------------------+---------------------------------------+
+| :ref:`emaj_get_consolidable_rollbacks            |                               | SETOF emaj_consolidable_rollback_type |
+| <emaj_get_consolidable_rollbacks>` (V)           |                               |                                       |
++--------------------------------------------------+-------------------------------+---------------------------------------+
+| :ref:`emaj_rollback_activity                     |                               | SETOF emaj_rollback_activity_type     |
+| <emaj_rollback_activity>` (V)                    |                               |                                       |
++--------------------------------------------------+-------------------------------+---------------------------------------+
+| :ref:`emaj_verify_all                            |                               | SETOF TEXT                            |
 | <emaj_verify_all>` (V)                           |                               |                                       |
 +--------------------------------------------------+-------------------------------+---------------------------------------+
-

@@ -3,6 +3,8 @@ Concepts
 
 E-Maj s'appuie sur trois concepts principaux.
  
+.. _tables_group:
+
 Groupe de tables
 ****************
 

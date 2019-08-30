@@ -73,7 +73,7 @@ As at least one mark must remain after the function has been performed, a mark d
 
 If the deleted mark is the first mark of the tables group, the useless rows of log tables are deleted.
 
-If a table has been :ref:`detached from a tables group in LOGGING state<alter_logging_group>`, and the deleted mark corresponds to the last known mark for this table, the logs for the period between this mark and the preceeding one are deleted,
+If a table has been :ref:`detached from a tables group in LOGGING state<remove_table>`, and the deleted mark corresponds to the last known mark for this table, the logs for the period between this mark and the preceeding one are deleted,
 
 .. _emaj_delete_before_mark_group:
 

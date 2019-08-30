@@ -38,23 +38,23 @@ Extension use
 
 You can now log on the database with the role having the E-Maj administration rights.
 
-As a first step, the *emaj_group_def* table that defines groups must be populated with one row per table or sequence to link to the group. A table can be added with a statement like::
+Then, an empty (here *ROLLBACKABLE*) tables group must be created::
 
-  INSERT INTO emaj.emaj_group_def (grpdef_group, grpdef_schema, grpdef_tblseq) 
-	VALUES ('my_group', 'my_schema', 'my_table');
+   SELECT emaj.emaj_create_group('my_group', true, true);
 
-or select all tables of a schema with::
+The tables group can now be populated with tables and sequences, using statements like::
 
-  INSERT INTO emaj.emaj_group_def (grpdef_group, grpdef_schema, grpdef_tblseq)
-	SELECT 'my_group', 'my_schema', table_name
-		FROM information_schema.tables 
-		WHERE table_schema = 'my_schema' AND table_type = 'BASE TABLE';
+   SELECT emaj.emaj_assign_table('my_schema', 'my_table', 'my_group');
 
-knowning that tables inserted into a group must have a primary key.
+to add a table into the group, or, to add all tables and sequences of a given schema::
 
-Then the typical sequence::
+   SELECT emaj.emaj_assign_tables('my_schema', '.*', '', 'my_group');
 
-  SELECT emaj.emaj_create_group('my_group');
+   SELECT emaj.emaj_assign_sequences('my_schema', '.*', '', 'my_group');
+
+Note that only tables having a primary key will be effectively assigned to a *ROLLBACKABLE* group.
+
+Then the typical commands sequence::
 
   SELECT emaj.emaj_start_group('my_group', 'Mark-1');
 
@@ -74,7 +74,7 @@ Then the typical sequence::
 
   SELECT emaj.emaj_drop_group('my_group');
 
-would create and start the tables group, log updates and set several intermediate marks, go back to one of them, stop the recording and finally drop the group.
+will start the tables group, log updates and set several intermediate marks, go back to one of them, stop the recording and finally drop the group.
 
 For more details, main functions are described :doc:`here <mainFunctions>`.
 
