@@ -657,6 +657,11 @@ begin;
   drop table emaj_myschema1.mytbl1_log;
   select * from emaj.emaj_verify_all();
 rollback;
+-- detection of a missing log sequence
+begin;
+  drop sequence emaj_myschema1.mytbl1_log_seq;
+  select * from emaj.emaj_verify_all();
+rollback;
 -- detection of a change in the application table structure (new column)
 begin;
   alter table myschema1.mytbl1 add column newcol int;

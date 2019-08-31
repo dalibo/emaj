@@ -8827,6 +8827,17 @@ $_verify_all_groups$
                  WHERE nspname = rel_log_schema AND relname = rel_log_table
                    AND relnamespace = pg_namespace.oid)
         ORDER BY rel_schema, rel_tblseq, 1;
+-- check the log sequence for all tables referenced in the emaj_relation table still exist
+    RETURN QUERY
+      SELECT 'In group "' || rel_group || '", the log sequence "' ||
+               rel_log_schema || '"."' || rel_log_sequence || '" is not found.' AS msg
+        FROM emaj.emaj_relation
+        WHERE upper_inf(rel_time_range) AND rel_kind = 'r'
+          AND NOT EXISTS
+              (SELECT NULL FROM pg_catalog.pg_namespace, pg_catalog.pg_class
+                 WHERE nspname = rel_log_schema AND relname = rel_log_sequence
+                   AND relnamespace = pg_namespace.oid)
+        ORDER BY rel_schema, rel_tblseq, 1;
 -- check the log function for each table referenced in the emaj_relation table still exist
     RETURN QUERY
       SELECT 'In group "' || rel_group || '", the log function "' || rel_log_schema || '"."' || rel_log_function || '" is not found.'
@@ -9117,7 +9128,7 @@ $emaj_verify_all$
   DECLARE
     v_errorFound             BOOLEAN = FALSE;
     v_nbMissingEventTrigger  INT;
-    v_nbGroupNeedAlter       INT;
+    v_nbOutOfSyncGroup       INT;
     r_object                 RECORD;
   BEGIN
 -- Global checks
@@ -9172,18 +9183,17 @@ $emaj_verify_all$
       RETURN NEXT r_object.msg;
       v_errorFound = TRUE;
     END LOOP;
-
 -- final message if no error has been yet detected
     IF NOT v_errorFound THEN
       RETURN NEXT 'No error detected';
     END IF;
 -- check the value of the group_has_waiting_changes column of the emaj_group table, and reset it at the right value if needed
     PERFORM emaj._adjust_group_properties();
--- if tables groups are out of sync with emaj_group_def, report it
-    SELECT count(*) INTO v_nbGroupNeedAlter FROM emaj.emaj_group
+-- if there are tables groups out of sync with emaj_group_def, report it
+    SELECT count(*) INTO v_nbOutOfSyncGroup FROM emaj.emaj_group
       WHERE group_has_waiting_changes;
-    IF v_nbGroupNeedAlter > 0 THEN
-      RETURN NEXT v_nbGroupNeedAlter || ' tables groups need to be altered to match their configuration definition or to be repaired';
+    IF v_nbOutOfSyncGroup > 0 THEN
+      RETURN NEXT v_nbOutOfSyncGroup || ' tables groups are not in sync with their emaj_group_def configuration or need to be repaired.';
     END IF;
     RETURN;
   END;
@@ -9683,7 +9693,7 @@ $do$
     RETURN;
   END;
 $do$;
-psql:sql/emaj-devel.sql:9902: NOTICE:  E-Maj installation: E-Maj successfully installed.
+psql:sql/emaj-devel.sql:9912: NOTICE:  E-Maj installation: E-Maj successfully installed.
 COMMIT;
 -----------------------------
 -- check installation

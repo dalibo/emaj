@@ -28,6 +28,8 @@ E-Maj - Change log
     the emaj_group_def table.
   * The priority column of the emaj_group_def configuration table must remain
     NULL for sequences.
+  * Improve the emaj_verify_all() function to also detect missing log
+    sequences.
   * Minor coding improvements.
 
 ###Bug fixes:###

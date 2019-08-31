@@ -913,12 +913,13 @@ select time_id, time_last_emaj_gid, time_event from emaj.emaj_time_stamp order b
    10153 |             100598 | M
    10154 |             100604 | A
    10155 |             100604 | R
-   10156 |             100604 | M
-   10157 |             100604 | D
-   10158 |             100604 | M
-   10159 |             100604 | D
-   10160 |             100604 | M
-   10161 |             100604 | D
+   10157 |             100604 | A
+   10158 |             100604 | A
+   10159 |             100604 | M
+   10160 |             100604 | D
+   10161 |             100604 | M
+   10162 |             100604 | D
+   10163 |             100604 | D
    20000 |             100683 | A
    20001 |             100683 | R
    20002 |             100746 | M
@@ -931,7 +932,7 @@ select time_id, time_last_emaj_gid, time_event from emaj.emaj_time_stamp order b
    20205 |             101000 | R
    20206 |             101019 | M
    20207 |             101019 | R
-(484 rows)
+(485 rows)
 
 -- user tables
 select * from mySchema2.myTbl1 order by col11,col12;

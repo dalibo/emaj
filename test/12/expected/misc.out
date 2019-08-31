@@ -1565,7 +1565,7 @@ drop cascades to function myschema1.mytbl2trgfct2()
  In group "myGroup1", the table "myschema1"."mytbl2b" does not exist any more.
  In group "myGroup1", the sequence "myschema1"."mytbl2b_col20_seq" does not exist any more.
  In group "myGroup1", the table "myschema1"."mytbl4" does not exist any more.
- 1 tables groups need to be altered to match their configuration definition or to be repaired
+ 1 tables groups are not in sync with their emaj_group_def configuration or need to be repaired.
 (10 rows)
 
   select group_has_waiting_changes from emaj.emaj_group where group_name = 'myGroup1';
@@ -1583,7 +1583,7 @@ begin;
 -----------------------------------------------------------------------------------------------------------------------------------------------
  Warning: Some E-Maj event triggers exist but are disabled. You may enable them using the emaj_enable_protection_by_event_triggers() function.
  In group "myGroup1", the table "myschema1"."mytbl4" does not exist any more.
- 1 tables groups need to be altered to match their configuration definition or to be repaired
+ 1 tables groups are not in sync with their emaj_group_def configuration or need to be repaired.
 (3 rows)
 
 rollback;
@@ -1595,7 +1595,7 @@ begin;
 -----------------------------------------------------------------------------------------------------------------------------------------------
  Warning: Some E-Maj event triggers exist but are disabled. You may enable them using the emaj_enable_protection_by_event_triggers() function.
  In group "myGroup1", the sequence "myschema1"."mytbl1" does not exist any more.
- 1 tables groups need to be altered to match their configuration definition or to be repaired
+ 1 tables groups are not in sync with their emaj_group_def configuration or need to be repaired.
 (3 rows)
 
 rollback;
@@ -1633,6 +1633,11 @@ drop cascades to trigger emaj_log_trg on table myschema1.mytbl2b
  In group "myGroup1", the log table "emaj_myschema1"."mytbl2_log" is not found.
  In group "myGroup1", the log table "emaj_myschema1"."mytbl2b_log" is not found.
  In group "myGroup1", the log table "emaj_myschema1"."mytbl4_log" is not found.
+ In group "myGroup1", the log sequence "emaj_myschema1"."myTbl3_log_seq" is not found.
+ In group "myGroup1", the log sequence "emaj_myschema1"."mytbl1_log_seq" is not found.
+ In group "myGroup1", the log sequence "emaj_myschema1"."mytbl2_log_seq" is not found.
+ In group "myGroup1", the log sequence "emaj_myschema1"."mytbl2b_log_seq" is not found.
+ In group "myGroup1", the log sequence "emaj_myschema1"."mytbl4_log_seq" is not found.
  In group "myGroup1", the log function "emaj_myschema1"."myTbl3_log_fnct" is not found.
  In group "myGroup1", the log function "emaj_myschema1"."mytbl1_log_fnct" is not found.
  In group "myGroup1", the log function "emaj_myschema1"."mytbl2_log_fnct" is not found.
@@ -1643,8 +1648,8 @@ drop cascades to trigger emaj_log_trg on table myschema1.mytbl2b
  In group "myGroup1", the log trigger "emaj_log_trg" on table "myschema1"."mytbl2" is not found.
  In group "myGroup1", the log trigger "emaj_log_trg" on table "myschema1"."mytbl2b" is not found.
  In group "myGroup1", the log trigger "emaj_log_trg" on table "myschema1"."mytbl4" is not found.
- 1 tables groups need to be altered to match their configuration definition or to be repaired
-(18 rows)
+ 1 tables groups are not in sync with their emaj_group_def configuration or need to be repaired.
+(23 rows)
 
 rollback;
 -- detection of a missing log trigger
@@ -1655,7 +1660,7 @@ begin;
 -----------------------------------------------------------------------------------------------------------------------------------------------
  Warning: Some E-Maj event triggers exist but are disabled. You may enable them using the emaj_enable_protection_by_event_triggers() function.
  In group "myGroup1", the log trigger "emaj_log_trg" on table "myschema1"."mytbl1" is not found.
- 1 tables groups need to be altered to match their configuration definition or to be repaired
+ 1 tables groups are not in sync with their emaj_group_def configuration or need to be repaired.
 (3 rows)
 
 rollback;
@@ -1669,7 +1674,7 @@ NOTICE:  drop cascades to trigger emaj_log_trg on table myschema1.mytbl1
  Warning: Some E-Maj event triggers exist but are disabled. You may enable them using the emaj_enable_protection_by_event_triggers() function.
  In group "myGroup1", the log function "emaj_myschema1"."mytbl1_log_fnct" is not found.
  In group "myGroup1", the log trigger "emaj_log_trg" on table "myschema1"."mytbl1" is not found.
- 1 tables groups need to be altered to match their configuration definition or to be repaired
+ 1 tables groups are not in sync with their emaj_group_def configuration or need to be repaired.
 (4 rows)
 
 rollback;
@@ -1681,7 +1686,7 @@ begin;
 -----------------------------------------------------------------------------------------------------------------------------------------------
  Warning: Some E-Maj event triggers exist but are disabled. You may enable them using the emaj_enable_protection_by_event_triggers() function.
  In group "myGroup1", the truncate trigger "emaj_trunc_trg" on table "myschema1"."mytbl1" is not found.
- 1 tables groups need to be altered to match their configuration definition or to be repaired
+ 1 tables groups are not in sync with their emaj_group_def configuration or need to be repaired.
 (3 rows)
 
 rollback;
@@ -1693,8 +1698,19 @@ begin;
 -----------------------------------------------------------------------------------------------------------------------------------------------
  Warning: Some E-Maj event triggers exist but are disabled. You may enable them using the emaj_enable_protection_by_event_triggers() function.
  In group "myGroup1", the log table "emaj_myschema1"."mytbl1_log" is not found.
- 1 tables groups need to be altered to match their configuration definition or to be repaired
+ 1 tables groups are not in sync with their emaj_group_def configuration or need to be repaired.
 (3 rows)
+
+rollback;
+-- detection of a missing log sequence
+begin;
+  drop sequence emaj_myschema1.mytbl1_log_seq;
+  select * from emaj.emaj_verify_all();
+                                                                emaj_verify_all                                                                
+-----------------------------------------------------------------------------------------------------------------------------------------------
+ Warning: Some E-Maj event triggers exist but are disabled. You may enable them using the emaj_enable_protection_by_event_triggers() function.
+ In group "myGroup1", the log sequence "emaj_myschema1"."mytbl1_log_seq" is not found.
+(2 rows)
 
 rollback;
 -- detection of a change in the application table structure (new column)
@@ -1708,7 +1724,7 @@ begin;
  Warning: Some E-Maj event triggers exist but are disabled. You may enable them using the emaj_enable_protection_by_event_triggers() function.
  In group "myGroup1", the structure of the application table "myschema1"."mytbl1" is not coherent with its log table ("emaj_myschema1"."mytbl1_log").
  In group "myGroup1", the structure of the application table "myschema1"."mytbl2" is not coherent with its log table ("emaj_myschema1"."mytbl2_log").
- 1 tables groups need to be altered to match their configuration definition or to be repaired
+ 1 tables groups are not in sync with their emaj_group_def configuration or need to be repaired.
 (4 rows)
 
 rollback;
@@ -1721,7 +1737,7 @@ begin;
 ------------------------------------------------------------------------------------------------------------------------------------------------------
  Warning: Some E-Maj event triggers exist but are disabled. You may enable them using the emaj_enable_protection_by_event_triggers() function.
  In group "myGroup1", the structure of the application table "myschema1"."mytbl4" is not coherent with its log table ("emaj_myschema1"."mytbl4_log").
- 1 tables groups need to be altered to match their configuration definition or to be repaired
+ 1 tables groups are not in sync with their emaj_group_def configuration or need to be repaired.
 (3 rows)
 
 rollback;
@@ -1735,7 +1751,7 @@ NOTICE:  drop cascades to constraint mytbl2_col21_fkey on table "phil's schema3"
 -----------------------------------------------------------------------------------------------------------------------------------------------
  Warning: Some E-Maj event triggers exist but are disabled. You may enable them using the emaj_enable_protection_by_event_triggers() function.
  In rollbackable group "myGroup1", the table "myschema1"."mytbl4" has no primary key any more.
- 1 tables groups need to be altered to match their configuration definition or to be repaired
+ 1 tables groups are not in sync with their emaj_group_def configuration or need to be repaired.
 (3 rows)
 
 rollback;
@@ -1748,7 +1764,7 @@ begin;                                                                        --
 -----------------------------------------------------------------------------------------------------------------------------------------------
  Warning: Some E-Maj event triggers exist but are disabled. You may enable them using the emaj_enable_protection_by_event_triggers() function.
  In rollbackable group "myGroup1", the table "myschema1"."mytbl4" is UNLOGGED or TEMP.
- 1 tables groups need to be altered to match their configuration definition or to be repaired
+ 1 tables groups are not in sync with their emaj_group_def configuration or need to be repaired.
 (3 rows)
 
 rollback;
@@ -1774,7 +1790,7 @@ begin;
 -----------------------------------------------------------------------------------------------------------------------------------------------
  Warning: Some E-Maj event triggers exist but are disabled. You may enable them using the emaj_enable_protection_by_event_triggers() function.
  In rollbackable group "myGroup1", the primary key of the table "myschema1"."mytbl4" has changed (col41 => col41,col42).
- 1 tables groups need to be altered to match their configuration definition or to be repaired
+ 1 tables groups are not in sync with their emaj_group_def configuration or need to be repaired.
 (3 rows)
 
 rollback;
@@ -1788,7 +1804,7 @@ begin;
  Warning: Some E-Maj event triggers exist but are disabled. You may enable them using the emaj_enable_protection_by_event_triggers() function.
  In group "myGroup1", the log table "emaj_myschema1"."mytbl1_log" miss some technical columns (emaj_tuple, emaj_verb).
  In group "myGroup1", the log table "emaj_myschema1"."mytbl4_log" miss some technical columns (emaj_gid, emaj_user).
- 1 tables groups need to be altered to match their configuration definition or to be repaired
+ 1 tables groups are not in sync with their emaj_group_def configuration or need to be repaired.
 (4 rows)
 
 rollback;
@@ -1817,7 +1833,7 @@ begin;
  In group "myGroup1", the log function "emaj_myschema1"."mytbl1_log_fnct" is not found.
  In group "myGroup1", the log trigger "emaj_log_trg" on table "myschema1"."mytbl1" is not found.
  In rollbackable group "myGroup1", the table "myschema1"."mytbl4" has no primary key any more.
- 2 tables groups need to be altered to match their configuration definition or to be repaired
+ 2 tables groups are not in sync with their emaj_group_def configuration or need to be repaired.
 (11 rows)
 
 rollback;

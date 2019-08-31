@@ -740,7 +740,7 @@ select emaj.emaj_set_mark_groups('{"grp_tmp_3","grp_tmp_4","grp_tmp"}','Mk6');
 update myschema4.mytblm set col3 = 'After Mk5 and updated after Mk6'
   where col1 > '2017-01-01';
 
--- remove the table mytblm
+-- remove the table mytblm and the sequence phil's seq\1
 select emaj.emaj_remove_table('myschema4','mytblc1','Remove_mytblc1');
 select emaj.emaj_remove_sequence('phil''s schema3','phil''s seq\1','Remove_myseq1');
 
@@ -793,6 +793,26 @@ select stat_group, stat_schema, stat_table, stat_first_mark, stat_last_mark, sta
 -- delete all marks before Mk3
 select emaj.emaj_delete_before_mark_group(group_name,'Mk3')
   from (values ('grp_tmp_3'),('grp_tmp_4'),('grp_tmp')) as t(group_name);
+
+-- test a remove_table following log sequence deletion
+select emaj.emaj_disable_protection_by_event_triggers();
+reset role;
+drop sequence "emaj_phil's schema3".mytbl4_log_seq;
+set role emaj_regression_tests_adm_user;
+select emaj.emaj_enable_protection_by_event_triggers();
+select * from emaj.emaj_verify_all();
+--     a removal while the group is LOGGING fails
+select emaj.emaj_remove_table('phil''s schema3','mytbl4');
+select emaj.emaj_force_stop_group('grp_tmp');
+select emaj.emaj_remove_table('phil''s schema3','mytbl4');
+select emaj.emaj_assign_table('phil''s schema3','mytbl4','grp_tmp');
+select * from emaj.emaj_verify_all();
+
+----  select * from emaj.emaj_relation where rel_schema = 'myschema4' and rel_tblseq = 'mytblc1' order by rel_time_range;
+----  select emaj.emaj_reset_group('grp_tmp');
+----  select * from emaj.emaj_verify_all();
+----  select * from emaj.emaj_relation where rel_schema = 'myschema4' and rel_tblseq = 'mytblc1' order by rel_time_range;
+----select emaj.emaj_start_group('grp_tmp','Group restart');
 
 -- reset groups at their initial state
 select emaj.emaj_stop_group('grp_tmp_3');
