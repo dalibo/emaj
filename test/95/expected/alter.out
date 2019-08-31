@@ -2687,7 +2687,7 @@ select group_last_alter_time_id, group_nb_table, group_nb_sequence from emaj.ema
 -- error cases
 -- table not in a group
 select emaj.emaj_modify_table('dummySchema','mytbl1',null);
-ERROR:  _modify_tables: The schema "dummySchema" does not exist.
+ERROR:  _modify_tables: some tables ("dummySchema".mytbl1) do not currently belong to any tables group.
 CONTEXT:  PL/pgSQL function emaj.emaj_modify_table(text,text,jsonb,text) line 7 at RETURN
 select emaj.emaj_modify_table('myschema1','dummyTable',null);
 ERROR:  _modify_tables: some tables (myschema1."dummyTable") do not currently belong to any tables group.
@@ -2711,7 +2711,7 @@ CONTEXT:  PL/pgSQL function emaj.emaj_modify_table(text,text,jsonb,text) line 7 
 select emaj.emaj_modify_table('myschema1','mytbl1',null,'EMAJ_LAST_MARK');
 ERROR:  _check_new_mark: "EMAJ_LAST_MARK" is not an allowed name for a new mark.
 CONTEXT:  SQL statement "SELECT emaj._check_new_mark(v_loggingGroups, v_mark)"
-PL/pgSQL function emaj._modify_tables(text,text[],jsonb,text,boolean,boolean) line 109 at SQL statement
+PL/pgSQL function emaj._modify_tables(text,text[],jsonb,text,boolean,boolean) line 98 at SQL statement
 PL/pgSQL function emaj.emaj_modify_table(text,text,jsonb,text) line 7 at RETURN
 -- ok
 -- change a priority

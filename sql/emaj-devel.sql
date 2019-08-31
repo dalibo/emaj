@@ -2293,17 +2293,6 @@ $_modify_tables$
     INSERT INTO emaj.emaj_hist (hist_function, hist_event)
       VALUES (v_function, 'BEGIN');
 -- check supplied parameters
--- check the supplied schema exists and is not an E-Maj schema
-    PERFORM 1 FROM pg_catalog.pg_namespace
-      WHERE nspname = v_schema;
-    IF NOT FOUND THEN
-      RAISE EXCEPTION '_modify_tables: The schema "%" does not exist.', v_schema;
-    END IF;
-    PERFORM 1 FROM emaj.emaj_schema
-      WHERE sch_name = v_schema;
-    IF FOUND THEN
-      RAISE EXCEPTION '_modify_tables: The schema "%" is an E-Maj schema.', v_schema;
-    END IF;
 -- check tables
     IF NOT v_arrayFromRegex THEN
 -- from the tables array supplied by the user, remove duplicates values, NULL and empty strings from the supplied table names array

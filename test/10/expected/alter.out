@@ -1208,38 +1208,38 @@ select group_last_alter_time_id, group_nb_table, group_nb_sequence from emaj.ema
 -- error cases
 -- table not in a group
 select emaj.emaj_modify_table('dummySchema','mytbl1',null);
-ERROR:  _modify_tables: The schema "dummySchema" does not exist.
-CONTEXT:  PL/pgSQL function emaj._modify_tables(text,text[],jsonb,text,boolean,boolean) line 37 at RAISE
+ERROR:  _modify_tables: some tables ("dummySchema".mytbl1) do not currently belong to any tables group.
+CONTEXT:  PL/pgSQL function emaj._modify_tables(text,text[],jsonb,text,boolean,boolean) line 50 at RAISE
 PL/pgSQL function emaj.emaj_modify_table(text,text,jsonb,text) line 7 at RETURN
 select emaj.emaj_modify_table('myschema1','dummyTable',null);
 ERROR:  _modify_tables: some tables (myschema1."dummyTable") do not currently belong to any tables group.
-CONTEXT:  PL/pgSQL function emaj._modify_tables(text,text[],jsonb,text,boolean,boolean) line 61 at RAISE
+CONTEXT:  PL/pgSQL function emaj._modify_tables(text,text[],jsonb,text,boolean,boolean) line 50 at RAISE
 PL/pgSQL function emaj.emaj_modify_table(text,text,jsonb,text) line 7 at RETURN
 -- invalid priority
 select emaj.emaj_modify_table('myschema1','mytbl1','{"priority":"not_numeric"}'::jsonb);
 ERROR:  _modify_tables: the "priority" property is not numeric.
-CONTEXT:  PL/pgSQL function emaj._modify_tables(text,text[],jsonb,text,boolean,boolean) line 70 at RAISE
+CONTEXT:  PL/pgSQL function emaj._modify_tables(text,text[],jsonb,text,boolean,boolean) line 59 at RAISE
 PL/pgSQL function emaj.emaj_modify_table(text,text,jsonb,text) line 7 at RETURN
 -- invalid tablespace
 select emaj.emaj_modify_table('myschema1','mytbl1','{"log_data_tablespace":"dummytsp"}'::jsonb);
 ERROR:  _modify_tables: the log data tablespace "dummytsp" does not exists.
-CONTEXT:  PL/pgSQL function emaj._modify_tables(text,text[],jsonb,text,boolean,boolean) line 78 at RAISE
+CONTEXT:  PL/pgSQL function emaj._modify_tables(text,text[],jsonb,text,boolean,boolean) line 67 at RAISE
 PL/pgSQL function emaj.emaj_modify_table(text,text,jsonb,text) line 7 at RETURN
 select emaj.emaj_modify_table('myschema1','mytbl1','{"log_index_tablespace":"dummytsp"}'::jsonb);
 ERROR:  _modify_tables: the log index tablespace "dummytsp" does not exists.
-CONTEXT:  PL/pgSQL function emaj._modify_tables(text,text[],jsonb,text,boolean,boolean) line 85 at RAISE
+CONTEXT:  PL/pgSQL function emaj._modify_tables(text,text[],jsonb,text,boolean,boolean) line 74 at RAISE
 PL/pgSQL function emaj.emaj_modify_table(text,text,jsonb,text) line 7 at RETURN
 -- unknown property
 select emaj.emaj_modify_table('myschema1','mytbl1','{"unknown_property":null}'::jsonb);
 ERROR:  _modify_tables: properties "{"unknown_property": null}" are unknown.
-CONTEXT:  PL/pgSQL function emaj._modify_tables(text,text[],jsonb,text,boolean,boolean) line 92 at RAISE
+CONTEXT:  PL/pgSQL function emaj._modify_tables(text,text[],jsonb,text,boolean,boolean) line 81 at RAISE
 PL/pgSQL function emaj.emaj_modify_table(text,text,jsonb,text) line 7 at RETURN
 -- bad mark
 select emaj.emaj_modify_table('myschema1','mytbl1',null,'EMAJ_LAST_MARK');
 ERROR:  _check_new_mark: "EMAJ_LAST_MARK" is not an allowed name for a new mark.
 CONTEXT:  PL/pgSQL function emaj._check_new_mark(text[],text) line 14 at RAISE
 SQL statement "SELECT emaj._check_new_mark(v_loggingGroups, v_mark)"
-PL/pgSQL function emaj._modify_tables(text,text[],jsonb,text,boolean,boolean) line 109 at SQL statement
+PL/pgSQL function emaj._modify_tables(text,text[],jsonb,text,boolean,boolean) line 98 at SQL statement
 PL/pgSQL function emaj.emaj_modify_table(text,text,jsonb,text) line 7 at RETURN
 -- ok
 -- change a priority
@@ -1315,7 +1315,7 @@ select rel_schema, rel_tblseq, rel_time_range, rel_log_dat_tsp, rel_log_idx_tsp 
 -- table not in a group
 select emaj.emaj_modify_tables('myschema2',array['dummyTable','mytbl1','mytbl2'],null);
 ERROR:  _modify_tables: some tables (myschema2."dummyTable") do not currently belong to any tables group.
-CONTEXT:  PL/pgSQL function emaj._modify_tables(text,text[],jsonb,text,boolean,boolean) line 61 at RAISE
+CONTEXT:  PL/pgSQL function emaj._modify_tables(text,text[],jsonb,text,boolean,boolean) line 50 at RAISE
 PL/pgSQL function emaj.emaj_modify_tables(text,text[],jsonb,text) line 7 at RETURN
 -- empty tables array
 select emaj.emaj_modify_tables('myschema2',array[]::text[],null);
