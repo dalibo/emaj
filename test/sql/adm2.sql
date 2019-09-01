@@ -807,12 +807,7 @@ select emaj.emaj_force_stop_group('grp_tmp');
 select emaj.emaj_remove_table('phil''s schema3','mytbl4');
 select emaj.emaj_assign_table('phil''s schema3','mytbl4','grp_tmp');
 select * from emaj.emaj_verify_all();
-
-----  select * from emaj.emaj_relation where rel_schema = 'myschema4' and rel_tblseq = 'mytblc1' order by rel_time_range;
-----  select emaj.emaj_reset_group('grp_tmp');
-----  select * from emaj.emaj_verify_all();
-----  select * from emaj.emaj_relation where rel_schema = 'myschema4' and rel_tblseq = 'mytblc1' order by rel_time_range;
-----select emaj.emaj_start_group('grp_tmp','Group restart');
+select emaj.emaj_start_group('grp_tmp','Group restart');
 
 -- reset groups at their initial state
 select emaj.emaj_stop_group('grp_tmp_3');

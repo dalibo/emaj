@@ -3042,11 +3042,12 @@ select * from emaj.emaj_verify_all();
  1 tables groups are not in sync with their emaj_group_def configuration or need to be repaired.
 (2 rows)
 
-----  select * from emaj.emaj_relation where rel_schema = 'myschema4' and rel_tblseq = 'mytblc1' order by rel_time_range;
-----  select emaj.emaj_reset_group('grp_tmp');
-----  select * from emaj.emaj_verify_all();
-----  select * from emaj.emaj_relation where rel_schema = 'myschema4' and rel_tblseq = 'mytblc1' order by rel_time_range;
-----select emaj.emaj_start_group('grp_tmp','Group restart');
+select emaj.emaj_start_group('grp_tmp','Group restart');
+ emaj_start_group 
+------------------
+                9
+(1 row)
+
 -- reset groups at their initial state
 select emaj.emaj_stop_group('grp_tmp_3');
  emaj_stop_group 
@@ -3073,10 +3074,9 @@ select emaj.emaj_force_drop_group('grp_tmp_4');
 (1 row)
 
 select emaj.emaj_stop_group('grp_tmp');
-WARNING:  _stop_groups: The group "grp_tmp" is already in IDLE state.
  emaj_stop_group 
 -----------------
-               0
+               9
 (1 row)
 
 select emaj.emaj_drop_group('grp_tmp');
@@ -3093,10 +3093,10 @@ select * from emaj.emaj_rel_hist order by 1,2,3;
  myschema4      | mypartp2                                                        | [10044,10047)   | myGroup4         | r
  myschema4      | mypartp2                                                        | [10099,10117)   | myGroup4         | r
  myschema4      | mypartp2                                                        | [10134,10144)   | grp_tmp_4        | r
- myschema4      | mypartp2                                                        | [10144,10163)   | grp_tmp          | r
+ myschema4      | mypartp2                                                        | [10144,10165)   | grp_tmp          | r
  myschema4      | mypartp3                                                        | [10110,10117)   | myGroup4         | r
  myschema4      | mypartp3                                                        | [10134,10144)   | grp_tmp_4        | r
- myschema4      | mypartp3                                                        | [10144,10163)   | grp_tmp          | r
+ myschema4      | mypartp3                                                        | [10144,10165)   | grp_tmp          | r
  myschema4      | mytblc1                                                         | [10044,10047)   | myGroup4         | r
  myschema4      | mytblc1                                                         | [10099,10117)   | myGroup4         | r
  myschema4      | mytblc1                                                         | [10134,10144)   | grp_tmp_4        | r
@@ -3104,33 +3104,33 @@ select * from emaj.emaj_rel_hist order by 1,2,3;
  myschema4      | mytblc2                                                         | [10044,10047)   | myGroup4         | r
  myschema4      | mytblc2                                                         | [10099,10117)   | myGroup4         | r
  myschema4      | mytblc2                                                         | [10134,10144)   | grp_tmp_4        | r
- myschema4      | mytblc2                                                         | [10144,10163)   | grp_tmp          | r
+ myschema4      | mytblc2                                                         | [10144,10165)   | grp_tmp          | r
  myschema4      | mytblm                                                          | [10044,10047)   | myGroup4         | r
  myschema4      | mytblm                                                          | [10099,10117)   | myGroup4         | r
  myschema4      | mytblm                                                          | [10134,10144)   | grp_tmp_4        | r
- myschema4      | mytblm                                                          | [10144,10163)   | grp_tmp          | r
+ myschema4      | mytblm                                                          | [10144,10165)   | grp_tmp          | r
  myschema4      | mytblp_col3_seq                                                 | [10110,10111)   | myGroup4         | S
  myschema4      | mytblp_col3_seq                                                 | [10135,10145)   | grp_tmp_4        | S
- myschema4      | mytblp_col3_seq                                                 | [10145,10163)   | grp_tmp          | S
+ myschema4      | mytblp_col3_seq                                                 | [10145,10165)   | grp_tmp          | S
  myschema5      | myoidstbl                                                       | [10118,10127)   | phil's group#3", | r
  myschema5      | myunloggedtbl                                                   | [10118,10127)   | phil's group#3", | r
  phil's schema3 | myTbl2\                                                         | [10039,10046)   | phil's group#3", | r
  phil's schema3 | myTbl2\                                                         | [10048,10066)   | phil's group#3", | r
  phil's schema3 | myTbl2\                                                         | [10118,10127)   | phil's group#3", | r
  phil's schema3 | myTbl2\                                                         | [10132,10142)   | grp_tmp_3        | r
- phil's schema3 | myTbl2\                                                         | [10142,10163)   | grp_tmp          | r
+ phil's schema3 | myTbl2\                                                         | [10142,10165)   | grp_tmp          | r
  phil's schema3 | myTbl2\_col21_seq                                               | [10040,10046)   | phil's group#3", | S
  phil's schema3 | myTbl2\_col21_seq                                               | [10048,10066)   | phil's group#3", | S
  phil's schema3 | myTbl2\_col21_seq                                               | [10118,10127)   | phil's group#3", | S
  phil's schema3 | myTbl2\_col21_seq                                               | [10133,10143)   | grp_tmp_3        | S
- phil's schema3 | myTbl2\_col21_seq                                               | [10143,10163)   | grp_tmp          | S
+ phil's schema3 | myTbl2\_col21_seq                                               | [10143,10165)   | grp_tmp          | S
  phil's schema3 | mytbl4                                                          | [10118,10120)   | phil's group#3", | r
  phil's schema3 | mytbl4                                                          | [10121,10122)   | phil's group#3", | r
  phil's schema3 | mytbl4                                                          | [10123,10124)   | phil's group#3", | r
  phil's schema3 | mytbl4                                                          | [10125,10127)   | phil's group#3", | r
  phil's schema3 | mytbl4                                                          | [10132,10142)   | grp_tmp_3        | r
  phil's schema3 | mytbl4                                                          | [10142,10157)   | grp_tmp          | r
- phil's schema3 | mytbl4                                                          | [10158,10163)   | grp_tmp          | r
+ phil's schema3 | mytbl4                                                          | [10158,10165)   | grp_tmp          | r
  phil's schema3 | phil's seq\1                                                    | [10040,10046)   | phil's group#3", | S
  phil's schema3 | phil's seq\1                                                    | [10048,10066)   | phil's group#3", | S
  phil's schema3 | phil's seq\1                                                    | [10118,10124)   | phil's group#3", | S
@@ -3143,7 +3143,7 @@ select * from emaj.emaj_rel_hist order by 1,2,3;
  phil's schema3 | phil's tbl1                                                     | [10048,10061)   | phil's group#3", | r
  phil's schema3 | phil's tbl1                                                     | [10118,10127)   | phil's group#3", | r
  phil's schema3 | phil's tbl1                                                     | [10132,10142)   | grp_tmp_3        | r
- phil's schema3 | phil's tbl1                                                     | [10142,10163)   | grp_tmp          | r
+ phil's schema3 | phil's tbl1                                                     | [10142,10165)   | grp_tmp          | r
  phil's schema3 | table_with_very_looooooooooooooooooooooooooooooooooooooong_name | [10061,10066)   | phil's group#3", | r
 (57 rows)
 
@@ -3925,11 +3925,13 @@ select time_id, time_last_emaj_gid, time_event from emaj.emaj_time_stamp where t
    10157 |             100614 | A
    10158 |             100614 | A
    10159 |             100614 | M
-   10160 |             100614 | D
-   10161 |             100614 | M
-   10162 |             100614 | D
+   10160 |             100614 | M
+   10161 |             100614 | D
+   10162 |             100614 | M
    10163 |             100614 | D
-(163 rows)
+   10164 |             100614 | M
+   10165 |             100614 | D
+(165 rows)
 
 select hist_id, hist_function, hist_event, hist_object,
        regexp_replace(regexp_replace(regexp_replace(hist_wording,
@@ -5125,28 +5127,38 @@ select hist_id, hist_function, hist_event, hist_object,
    11276 | ASSIGN_TABLE             | BEGIN                        |                                                                                  |                                                                                                                                | postgres
    11277 | ASSIGN_TABLE             | TABLE ADDED                  | "phil's schema3".mytbl4                                                          | To the idle group grp_tmp                                                                                                      | postgres
    11278 | ASSIGN_TABLE             | END                          |                                                                                  | 1 tables assigned to the group grp_tmp                                                                                         | postgres
-   11279 | STOP_GROUP               | BEGIN                        | grp_tmp_3                                                                        |                                                                                                                                | postgres
-   11280 | LOCK_GROUP               | BEGIN                        | grp_tmp_3                                                                        |                                                                                                                                | postgres
-   11281 | LOCK_GROUP               | END                          | grp_tmp_3                                                                        | 0 tables locked, 0 deadlock(s)                                                                                                 | postgres
-   11282 | SET_MARK_GROUP           | BEGIN                        | grp_tmp_3                                                                        | STOP_%                                                                                                                         | postgres
+   11279 | START_GROUP              | BEGIN                        | grp_tmp                                                                          | With log reset                                                                                                                 | postgres
+   11280 | LOCK_GROUP               | BEGIN                        | grp_tmp                                                                          |                                                                                                                                | postgres
+   11281 | LOCK_GROUP               | END                          | grp_tmp                                                                          | 7 tables locked, 0 deadlock(s)                                                                                                 | postgres
+   11282 | SET_MARK_GROUP           | BEGIN                        | grp_tmp                                                                          | Group restart                                                                                                                  | postgres
    11283 | CLEANUP_RLBK_STATE       |                              | Rollback id 10031                                                                | set to COMMITTED                                                                                                               | postgres
-   11284 | SET_MARK_GROUP           | END                          | grp_tmp_3                                                                        | STOP_%                                                                                                                         | postgres
-   11285 | STOP_GROUP               | END                          | grp_tmp_3                                                                        | 0 tables/sequences processed                                                                                                   | postgres
-   11286 | DROP_GROUP               | BEGIN                        | grp_tmp_3                                                                        |                                                                                                                                | postgres
-   11287 | DROP_GROUP               | END                          | grp_tmp_3                                                                        | 0 tables/sequences processed                                                                                                   | postgres
-   11288 | SET_MARK_GROUP           | BEGIN                        | grp_tmp_4                                                                        |                                                                                                                                | postgres
-   11289 | LOCK_GROUP               | BEGIN                        | grp_tmp_4                                                                        |                                                                                                                                | postgres
-   11290 | LOCK_GROUP               | END                          | grp_tmp_4                                                                        | 0 tables locked, 0 deadlock(s)                                                                                                 | postgres
-   11291 | SET_MARK_GROUP           | END                          | grp_tmp_4                                                                        | Last_mark                                                                                                                      | postgres
-   11292 | FORCE_DROP_GROUP         | BEGIN                        | grp_tmp_4                                                                        |                                                                                                                                | postgres
-   11293 | FORCE_DROP_GROUP         | END                          | grp_tmp_4                                                                        | 0 tables/sequences processed                                                                                                   | postgres
-   11294 | STOP_GROUP               | BEGIN                        | grp_tmp                                                                          |                                                                                                                                | postgres
-   11295 | STOP_GROUP               | END                          |                                                                                  | 0 tables/sequences processed                                                                                                   | postgres
-   11296 | DROP_GROUP               | BEGIN                        | grp_tmp                                                                          |                                                                                                                                | postgres
-   11297 | DROP_GROUP               | LOG_SCHEMA DROPPED           | emaj_myschema4                                                                   |                                                                                                                                | postgres
-   11298 | DROP_GROUP               | LOG_SCHEMA DROPPED           | "emaj_phil's schema3"                                                            |                                                                                                                                | postgres
-   11299 | DROP_GROUP               | END                          | grp_tmp                                                                          | 9 tables/sequences processed                                                                                                   | postgres
-(1206 rows)
+   11284 | SET_MARK_GROUP           | END                          | grp_tmp                                                                          | Group restart                                                                                                                  | postgres
+   11285 | START_GROUP              | END                          | grp_tmp                                                                          | 9 tables/sequences processed                                                                                                   | postgres
+   11286 | STOP_GROUP               | BEGIN                        | grp_tmp_3                                                                        |                                                                                                                                | postgres
+   11287 | LOCK_GROUP               | BEGIN                        | grp_tmp_3                                                                        |                                                                                                                                | postgres
+   11288 | LOCK_GROUP               | END                          | grp_tmp_3                                                                        | 0 tables locked, 0 deadlock(s)                                                                                                 | postgres
+   11289 | SET_MARK_GROUP           | BEGIN                        | grp_tmp_3                                                                        | STOP_%                                                                                                                         | postgres
+   11290 | SET_MARK_GROUP           | END                          | grp_tmp_3                                                                        | STOP_%                                                                                                                         | postgres
+   11291 | STOP_GROUP               | END                          | grp_tmp_3                                                                        | 0 tables/sequences processed                                                                                                   | postgres
+   11292 | DROP_GROUP               | BEGIN                        | grp_tmp_3                                                                        |                                                                                                                                | postgres
+   11293 | DROP_GROUP               | END                          | grp_tmp_3                                                                        | 0 tables/sequences processed                                                                                                   | postgres
+   11294 | SET_MARK_GROUP           | BEGIN                        | grp_tmp_4                                                                        |                                                                                                                                | postgres
+   11295 | LOCK_GROUP               | BEGIN                        | grp_tmp_4                                                                        |                                                                                                                                | postgres
+   11296 | LOCK_GROUP               | END                          | grp_tmp_4                                                                        | 0 tables locked, 0 deadlock(s)                                                                                                 | postgres
+   11297 | SET_MARK_GROUP           | END                          | grp_tmp_4                                                                        | Last_mark                                                                                                                      | postgres
+   11298 | FORCE_DROP_GROUP         | BEGIN                        | grp_tmp_4                                                                        |                                                                                                                                | postgres
+   11299 | FORCE_DROP_GROUP         | END                          | grp_tmp_4                                                                        | 0 tables/sequences processed                                                                                                   | postgres
+   11300 | STOP_GROUP               | BEGIN                        | grp_tmp                                                                          |                                                                                                                                | postgres
+   11301 | LOCK_GROUP               | BEGIN                        | grp_tmp                                                                          |                                                                                                                                | postgres
+   11302 | LOCK_GROUP               | END                          | grp_tmp                                                                          | 7 tables locked, 0 deadlock(s)                                                                                                 | postgres
+   11303 | SET_MARK_GROUP           | BEGIN                        | grp_tmp                                                                          | STOP_%                                                                                                                         | postgres
+   11304 | SET_MARK_GROUP           | END                          | grp_tmp                                                                          | STOP_%                                                                                                                         | postgres
+   11305 | STOP_GROUP               | END                          | grp_tmp                                                                          | 9 tables/sequences processed                                                                                                   | postgres
+   11306 | DROP_GROUP               | BEGIN                        | grp_tmp                                                                          |                                                                                                                                | postgres
+   11307 | DROP_GROUP               | LOG_SCHEMA DROPPED           | emaj_myschema4                                                                   |                                                                                                                                | postgres
+   11308 | DROP_GROUP               | LOG_SCHEMA DROPPED           | "emaj_phil's schema3"                                                            |                                                                                                                                | postgres
+   11309 | DROP_GROUP               | END                          | grp_tmp                                                                          | 9 tables/sequences processed                                                                                                   | postgres
+(1216 rows)
 
 --
 reset role;

@@ -5774,13 +5774,14 @@ $_delete_before_mark_group$
     SELECT time_last_emaj_gid, mark_time_id INTO v_markGlobalSeq, v_markTimeId
       FROM emaj.emaj_mark, emaj.emaj_time_stamp
       WHERE mark_time_id = time_id AND mark_group = v_groupName AND mark_name = v_mark;
--- drop obsolete old log tables (whose end time stamp is older than the new first mark time stamp)
+-- drop obsolete old log tables (whose end time stamp is older than the new first mark time stamp or which are linked to other groups)
     FOR r_rel IN
           SELECT DISTINCT rel_log_schema, rel_log_table FROM emaj.emaj_relation
             WHERE rel_group = v_groupName AND rel_kind = 'r' AND upper(rel_time_range) <= v_markTimeId
         EXCEPT
           SELECT rel_log_schema, rel_log_table FROM emaj.emaj_relation
-            WHERE rel_kind = 'r' AND (upper(rel_time_range) > v_markTimeId OR upper_inf(rel_time_range))
+            WHERE rel_kind = 'r'
+              AND (upper(rel_time_range) > v_markTimeId OR upper_inf(rel_time_range) OR rel_group <> v_groupName)
           ORDER BY 1,2
     LOOP
       EXECUTE format('DROP TABLE IF EXISTS %I.%I CASCADE',
@@ -7729,13 +7730,14 @@ $_reset_groups$
     DELETE FROM emaj.emaj_sequence USING emaj.emaj_relation
       WHERE rel_schema = sequ_schema AND rel_tblseq = sequ_name AND
             rel_group = ANY (v_groupNames) AND rel_kind = 'S';
--- drop obsolete emaj objects for removed tables
+-- drop obsolete log tables (but keep those linked to other groups)
     FOR r_rel IN
           SELECT DISTINCT rel_log_schema, rel_log_table FROM emaj.emaj_relation
             WHERE rel_group = ANY (v_groupNames) AND rel_kind = 'r' AND NOT upper_inf(rel_time_range)
         EXCEPT
           SELECT rel_log_schema, rel_log_table FROM emaj.emaj_relation
-            WHERE rel_kind = 'r' AND upper_inf(rel_time_range)
+            WHERE rel_kind = 'r'
+              AND (upper_inf(rel_time_range) OR NOT rel_group = ANY (v_groupNames))
           ORDER BY 1,2
     LOOP
       EXECUTE format('DROP TABLE IF EXISTS %I.%I CASCADE',
@@ -9682,7 +9684,7 @@ $do$
     RETURN;
   END;
 $do$;
-psql:sql/emaj-devel.sql:9901: NOTICE:  E-Maj installation: E-Maj successfully installed.
+psql:sql/emaj-devel.sql:9903: NOTICE:  E-Maj installation: E-Maj successfully installed.
 COMMIT;
 -----------------------------
 -- check installation
