@@ -499,7 +499,6 @@ select emaj.emaj_gen_sql_groups(array['myGroup1','myGroup2'], 'Multi-1', NULL, '
      'myschema1.mytbl1','foo','myschema2.myTbl3_col31_seq','phil''s schema3.phil''s tbl1']);
 
 -- invalid location path name
-select emaj.emaj_gen_sql_group('myGroup1', NULL, NULL, NULL);
 select emaj.emaj_gen_sql_group('myGroup1', NULL, NULL, '/tmp/unknownDirectory/myFile');
 select emaj.emaj_gen_sql_groups(array['myGroup1','myGroup2'], 'Multi-1', NULL, '/tmp/unknownDirectory/myFile');
 
@@ -516,6 +515,11 @@ select emaj.emaj_gen_sql_groups(array['myGroup1','myGroup2'], 'Multi-1', NULL, '
 select emaj.emaj_gen_sql_groups(array['myGroup1','myGroup2'], 'Multi-2', 'Multi-3', '/tmp/emaj_test/sql_scripts/myFile');
 select emaj.emaj_gen_sql_group('myGroup2', NULL, 'EMAJ_LAST_MARK', '/tmp/emaj_test/sql_scripts/myFile');
 select sum(stat_rows)+2 as check from emaj.emaj_detailed_log_stat_group('myGroup2',NULL,'EMAJ_LAST_MARK');
+
+-- should be ok with no output file supplied
+select emaj.emaj_gen_sql_group('myGroup1', NULL, NULL, NULL);
+\copy (select * from emaj_sql_script) to '/dev/null'
+drop table emaj_temp_script cascade;
 
 -- should be ok, with tables and sequences filtering
 select stat_group, stat_schema, stat_table, stat_first_mark, stat_last_mark, stat_role, stat_verb, stat_rows

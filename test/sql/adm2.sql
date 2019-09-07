@@ -260,6 +260,13 @@ select sum(stat_rows) + 2 as check from emaj.emaj_detailed_log_stat_group('myGro
 select emaj.emaj_gen_sql_group('phil''s group#3",', 'M1_rollbackable', NULL, '/tmp/emaj_test/sql_scripts/Group3.sql');
 select sum(stat_rows) + 2 as check from emaj.emaj_detailed_log_stat_group('phil''s group#3",', 'M1_rollbackable', NULL);
 
+-- generate another sql script for myGroup1 but with a manual export and check both scripts are the same
+select emaj.emaj_gen_sql_group('myGroup1', 'Multi-1', NULL, NULL);
+\copy (select * from emaj_sql_script) to '/tmp/emaj_test/sql_scripts/myGroup1_2.sql'
+-- mask timestamp in initial comment and compare
+\! find /tmp/emaj_test/sql_scripts -name '*.sql' -type f -print0 | xargs -0 sed -i -s 's/at .*$/at [ts]$/'
+\! diff /tmp/emaj_test/sql_scripts/myGroup1.sql /tmp/emaj_test/sql_scripts/myGroup1_2.sql
+
 -- process \\ in script files
 \! find /tmp/emaj_test/sql_scripts -name '*.sql' -type f -print0 | xargs -0 sed -i_s -s 's/\\\\/\\/g'
 -- comment transaction commands for the need of the current test

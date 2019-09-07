@@ -102,9 +102,16 @@ Un *NULL* ou une chaîne vide peuvent être utilisés comme marque de fin. Ils r
 
 Le mot clé *'EMAJ_LAST_MARK'* peut être utilisé comme marque de fin. Il représente alors la dernière marque posée.
 
-Le nom du fichier de sortie doit être exprimé sous forme de chemin absolu. Le fichier doit disposer des permissions adéquates pour que l'instance postgreSQL puisse y écrire. Si le fichier existe déjà, son contenu sera écrasé.
+Le nom du fichier de sortie doit être exprimé sous forme de chemin absolu. Le fichier doit disposer des permissions adéquates pour que l'instance postgreSQL puisse y écrire. Si le fichier existe déjà, son contenu est écrasé.
 
-Le dernier paramètre, optionnel, permet de filtrer la liste des tables et séquences à traiter. Si le paramètre est omis ou a la valeur *NULL*, toutes les tables et séquences du groupe de tables sont traitées. S'il est spécifié, le paramètre doit être exprimé sous la forme d'un tableau non vide d'éléments texte, chacun d'eux représentant le nom d'une table ou d'une séquence préfixé par le nom de schéma. On peut utiliser indifféremment  les syntaxes ::
+Le nom du fichier de sortie peut prendre une valeur NULL. Dans ce cas, le script SQL est préparé dans une table temporaire, accessible ensuite au travers d’une vue temporaire *emaj_sql_script*. A partir du client *psql*, on peut donc enchaîner dans une même session ::
+
+   SELECT emaj.emaj_gen_sql_group('<nom.du.groupe>', '<marque.début>', '<marque.fin>', NULL [,<liste.tables.séquences>]);
+   \copy (SELECT * FROM emaj_sql_script) TO ‘fichier’
+
+Cette méthode permet de générer un fichier en dehors des systèmes de fichiers accessibles par l’instance PostgreSQL.
+
+Le dernier paramètre de la fonction emaj_gen_sql_group() est optionnel. Il permet de filtrer la liste des tables et séquences à traiter. Si le paramètre est omis ou a la valeur *NULL*, toutes les tables et séquences du groupe de tables sont traitées. S'il est spécifié, le paramètre doit être exprimé sous la forme d'un tableau non vide d'éléments texte, chacun d'eux représentant le nom d'une table ou d'une séquence préfixé par le nom de schéma. On peut utiliser indifféremment  les syntaxes ::
 
    ARRAY['sch1.tbl1','sch1.tbl2']
 
@@ -114,7 +121,7 @@ ou ::
 
 La fonction retourne le nombre de requêtes générées (hors commentaire et gestion de transaction).
 
-Il n'est pas nécessaire que le groupe de tables soit dans un état inactif, c'est-à-dire qu'il ait été arrêté au préalable. 
+Le groupe de tables peut être dans un état actif ou inactif. 
 
 Pour que le script puisse être généré, toutes les tables doivent avoir une clé primaire explicite (*PRIMARY KEY*).
 

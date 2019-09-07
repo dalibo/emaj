@@ -8676,6 +8676,7 @@ $emaj_gen_sql_group$
 --        - start mark, NULL representing the first mark
 --        - end mark, NULL representing the current situation, and 'EMAJ_LAST_MARK' the last set mark for the group
 --        - absolute pathname describing the file that will hold the result
+--          (may be NULL if the caller reads the temporary table that will hold the script after the function execution)
 --        - array of schema qualified table and sequence names to only process those tables and sequences (NULL by default)
 -- Output: number of generated SQL statements (non counting comments and transaction management)
   BEGIN
@@ -8698,6 +8699,7 @@ $emaj_gen_sql_groups$
 --        - start mark, NULL representing the first mark
 --        - end mark, NULL representing the current situation, and 'EMAJ_LAST_MARK' the last set mark for the group
 --        - absolute pathname describing the file that will hold the result
+--          (may be NULL if the caller reads the temporary table that will hold the script after the function execution)
 --        - array of schema qualified table and sequence names to only process those tables and sequences (NULL by default)
 -- Output: number of generated SQL statements (non counting comments and transaction management)
   BEGIN
@@ -8710,8 +8712,7 @@ $$Generates a sql script replaying all updates performed on a tables groups set 
 
 CREATE OR REPLACE FUNCTION emaj._gen_sql_groups(v_groupNames TEXT[], v_multiGroup BOOLEAN, v_firstMark TEXT, v_lastMark TEXT,
                                                 v_location TEXT, v_tblseqs TEXT[])
-RETURNS BIGINT LANGUAGE plpgsql
-SECURITY DEFINER SET standard_conforming_strings = ON SET search_path = pg_catalog, pg_temp AS
+RETURNS BIGINT LANGUAGE plpgsql AS
 $_gen_sql_groups$
 -- This function generates a SQL script representing all updates performed on a tables groups array between 2 marks
 -- or beetween a mark and the current situation. The result is stored into an external file.
@@ -8724,6 +8725,7 @@ $_gen_sql_groups$
 --        - start mark, NULL representing the first mark
 --        - end mark, NULL representing the current situation, and 'EMAJ_LAST_MARK' the last set mark for the group
 --        - absolute pathname describing the file that will hold the result
+--          (may be NULL if the caller reads the temporary table that will hold the script after the function execution)
 --        - optional array of schema qualified table and sequence names to only process those tables and sequences
 -- Output: number of generated SQL statements (non counting comments and transaction management)
   DECLARE
@@ -8749,7 +8751,6 @@ $_gen_sql_groups$
       VALUES (CASE WHEN v_multiGroup THEN 'GEN_SQL_GROUPS' ELSE 'GEN_SQL_GROUP' END, 'BEGIN', array_to_string(v_groupNames,','),
        CASE WHEN v_firstMark IS NULL OR v_firstMark = '' THEN 'From initial mark' ELSE 'From mark ' || v_firstMark END ||
        CASE WHEN v_lastMark IS NULL OR v_lastMark = '' THEN ' to current situation' ELSE ' to mark ' || v_lastMark END ||
-       ' towards ' || v_location ||
        CASE WHEN v_tblseqs IS NOT NULL THEN ' with tables/sequences filtering' ELSE '' END );
 -- check the group name
     SELECT emaj._check_group_names(v_groupNames := v_groupNames, v_mayBeNull := v_multiGroup, v_lockGroups := FALSE, v_checkList := '')
@@ -8823,16 +8824,8 @@ $_gen_sql_groups$
                   array_to_string(v_groupNames,','), 'No mark in the group(s) => no file has been generated');
         RETURN 0;
       END IF;
--- test the supplied output file name by inserting a temporary line (trap NULL or bad file name)
-      BEGIN
-        EXECUTE format('COPY (SELECT ''-- _gen_sql_groups() function in progress - started at %s'') TO %L',
-                       statement_timestamp(), v_location);
-      EXCEPTION
-        WHEN OTHERS THEN
-          RAISE EXCEPTION '_gen_sql_groups: The file "%" cannot be used as script output file.', v_location;
-      END;
--- end of checks
--- create temporary table
+-- create a temporary table to hold the generated script
+      DROP TABLE IF EXISTS emaj_temp_script CASCADE;
       CREATE TEMP TABLE emaj_temp_script (
         scr_emaj_gid           BIGINT,              -- the emaj_gid of the corresponding log row,
                                                     --   0 for initial technical statements,
@@ -8841,6 +8834,19 @@ $_gen_sql_groups$
         scr_emaj_txid          BIGINT,              -- for future use, to insert commit statement at each txid change
         scr_sql                TEXT                 -- the generated sql text
       );
+      GRANT SELECT ON emaj_temp_script TO PUBLIC;
+-- test the supplied output file name by inserting a temporary line
+      IF v_location IS NOT NULL THEN
+        INSERT INTO emaj_temp_script SELECT 0, 1, 0, '-- SQL script generation in progress - started at ' || statement_timestamp();
+        BEGIN
+          PERFORM emaj._export_sql_script(v_location);
+        EXCEPTION
+          WHEN OTHERS THEN
+            RAISE EXCEPTION '_gen_sql_groups: The file "%" cannot be used as script output file.', v_location;
+        END;
+        DELETE FROM emaj_temp_script;
+      END IF;
+-- end of checks
 -- for each application table referenced in the emaj_relation table, process the related log table, by calling the _gen_sql_tbl() function
       FOR r_rel IN
           SELECT * FROM emaj.emaj_relation
@@ -8925,21 +8931,40 @@ $_gen_sql_groups$
       INSERT INTO emaj_temp_script SELECT NULL, 1, txid_current(), 'COMMIT;';
       INSERT INTO emaj_temp_script SELECT NULL, 10, txid_current(), 'RESET standard_conforming_strings;';
       INSERT INTO emaj_temp_script SELECT NULL, 11, txid_current(), 'RESET escape_string_warning;';
--- write the SQL script on the external file
-      EXECUTE format('COPY (SELECT scr_sql FROM emaj_temp_script ORDER BY scr_emaj_gid NULLS LAST, scr_subid ) TO %L',
-                     v_location);
--- drop the temporary table
-      DROP TABLE IF EXISTS emaj_temp_script;
+-- if an output file is supplied, write the SQL script on the external file and drop the temporary table
+      IF v_location IS NOT NULL THEN
+        PERFORM emaj._export_sql_script(v_location);
+        DROP TABLE IF EXISTS emaj_temp_script;
+      ELSE
+-- otherwise create a view to ease the generation script export
+        CREATE TEMPORARY VIEW emaj_sql_script AS
+          SELECT scr_sql FROM emaj_temp_script ORDER BY scr_emaj_gid NULLS LAST, scr_subid;
+        GRANT SELECT ON emaj_sql_script TO PUBLIC;
+      END IF;
 -- return the number of sql verbs generated into the output file
       v_cumNbSQL = v_cumNbSQL + v_nbSeq;
     END IF;
 -- insert end in the history and return
     INSERT INTO emaj.emaj_hist (hist_function, hist_event, hist_object, hist_wording)
       VALUES (CASE WHEN v_multiGroup THEN 'GEN_SQL_GROUPS' ELSE 'GEN_SQL_GROUP' END, 'END',
-              array_to_string(v_groupNames,','), v_cumNbSQL || ' generated statements');
+              array_to_string(v_groupNames,','), v_cumNbSQL || ' generated statements' ||
+                CASE WHEN v_location IS NOT NULL THEN ' - script exported into ' || v_location ELSE ' - script not exported' END );
     RETURN v_cumNbSQL;
   END;
 $_gen_sql_groups$;
+
+CREATE OR REPLACE FUNCTION emaj._export_sql_script(v_location TEXT)
+RETURNS VOID LANGUAGE plpgsql
+SECURITY DEFINER SET standard_conforming_strings = ON SET search_path = pg_catalog, pg_temp AS
+$_export_sql_script$
+-- This function export a sql script generated by the _gen_sql_groups() function into a file
+-- Input: - absolute pathname describing the file that will hold the result (NOT NULL)
+-- The function is declared as SECURITY DEFINER to allow the use of the COPY SQL statement
+  BEGIN
+    EXECUTE format('COPY (SELECT scr_sql FROM emaj_temp_script ORDER BY scr_emaj_gid NULLS LAST, scr_subid ) TO %L',
+                       v_location);
+  END;
+$_export_sql_script$;
 
 ------------------------------------
 --                                --

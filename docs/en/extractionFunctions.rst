@@ -98,13 +98,21 @@ To generate this SQL script, just execute the following statement::
    SELECT emaj.emaj_gen_sql_group('<group.name>', '<start.mark>', '<end.mark>', '<file>' [, <tables/sequences.array>);
 
 A *NULL* value or an empty string may be used as start mark, representing the first known mark.
+
 A *NULL* value or an empty string may be used as end mark, representing the current situation.
 
 The keyword *'EMAJ_LAST_MARK'* can be used as mark name, representing the last set mark.
 
 The output file name must be supplied as an absolute pathname. It must have the appropriate permission so that the PostgreSQL instance can write to it. If the file already exists, its content is overwritten.
 
-The last parameter is optional. It allows filtering of the tables and sequences to process. If the parameter is omitted or has a *NULL* value, all tables and sequences of the tables group are processed. If specified, the parameter must be expressed as a non empty array of text elements, each of them representing a schema qualified table or sequence name. Both syntaxes can be used::
+The output file name may be set to NULL. In this case, the SQL script is prepared in a temporary table that can then be accessed through a temporary view, *emaj_sql_script*. Using *psql*, the script can be exported with both commands::
+
+   SELECT emaj.emaj_gen_sql_group('<group.name>', '<start.mark>', '<end.mark>', NULL [, <tables/sequences.array>);
+   \copy (SELECT * FROM emaj_sql_script) TO ‘file’
+
+This method allows to generate a script in a file located outside the file systems accessible by the PostgreSQL instance.
+
+The last parameter of the emaj_gen_sql_group() function is optional. It allows filtering of the tables and sequences to process. If the parameter is omitted or has a *NULL* value, all tables and sequences of the tables group are processed. If specified, the parameter must be expressed as a non empty array of text elements, each of them representing a schema qualified table or sequence name. Both syntaxes can be used::
 
    ARRAY['sch1.tbl1','sch1.tbl2']
 
@@ -114,7 +122,7 @@ or::
 
 The function returns the number of generated statements (not including comments and transaction management statements).
 
-The tables group may be in *IDLE* state while the function is called.
+The tables group may be in *IDLE* or in *LOGGING* state while the function is called.
 
 In order to generate the script, all tables must have an explicit *PRIMARY KEY*.
 

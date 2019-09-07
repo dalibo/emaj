@@ -221,6 +221,7 @@ myseq2	5	1	1	9223372036854775807	1	1	f	t
 myschema2	myseq2	6075	3	1	1	9223372036854775807	1	1	f	t
 \! rm -R /tmp/emaj_test/alter/*
   select emaj.emaj_gen_sql_group('myGroup2', 'Before ADD_SEQ', NULL, '/tmp/emaj_test/alter/myFile');
+NOTICE:  table "emaj_temp_script" does not exist, skipping
  emaj_gen_sql_group 
 --------------------
                   2
@@ -230,7 +231,7 @@ myschema2	myseq2	6075	3	1	1	9223372036854775807	1	1	f	t
   select emaj.emaj_gen_sql_group('myGroup2', 'Before ADD_SEQ', NULL, '/tmp/emaj_test/alter/myFile',array['myschema2.myseq2']);
 ERROR:  _gen_sql_groups: 1 table/sequence (myschema2.myseq2) did not belong to any of the selected tables groups at Before ADD_SEQ mark time.
 CONTEXT:  PL/pgSQL function emaj._gen_sql_groups(text[],boolean,text,text,text,text[]) line 96 at RAISE
-PL/pgSQL function emaj.emaj_gen_sql_group(text,text,text,text,text[]) line 13 at RETURN
+PL/pgSQL function emaj.emaj_gen_sql_group(text,text,text,text,text[]) line 14 at RETURN
 \! rm -R /tmp/emaj_test/alter/*
 -- testing mark deletions
 begin;
@@ -535,6 +536,7 @@ select emaj.emaj_set_mark_group('myGroup1','After_remove');
 
 -- testing sql script generation
 select emaj.emaj_gen_sql_group('myGroup1', NULL, 'EMAJ_LAST_MARK', '/tmp/emaj_test/alter/myFile',array['myschema1.myTbl3_col31_seq']);
+NOTICE:  table "emaj_temp_script" does not exist, skipping
  emaj_gen_sql_group 
 --------------------
                   1
@@ -844,7 +846,7 @@ myschema2_mytbl7.snap
   select emaj.emaj_gen_sql_group('myGroup2', 'Before ADD_TBL', NULL, '/tmp/emaj_test/alter/myFile',array['myschema2.mytbl7']);
 ERROR:  _gen_sql_groups: 1 table/sequence (myschema2.mytbl7) did not belong to any of the selected tables groups at Before ADD_TBL mark time.
 CONTEXT:  PL/pgSQL function emaj._gen_sql_groups(text[],boolean,text,text,text,text[]) line 96 at RAISE
-PL/pgSQL function emaj.emaj_gen_sql_group(text,text,text,text,text[]) line 13 at RETURN
+PL/pgSQL function emaj.emaj_gen_sql_group(text,text,text,text,text[]) line 14 at RETURN
 -- testing mark deletions
 begin;
   -- testing delete a single mark set after the table addition
@@ -1283,6 +1285,7 @@ select emaj.emaj_snap_log_group('myGroup1',NULL,NULL,'/tmp/emaj_test/alter',NULL
 /tmp/emaj_test/alter/myschema1_mytbl4_log.snap
 \! rm -R /tmp/emaj_test/alter/*
   select emaj.emaj_gen_sql_group('myGroup1', NULL, NULL, '/tmp/emaj_test/alter/myFile',array['myschema1.myTbl3']);
+NOTICE:  table "emaj_temp_script" does not exist, skipping
  emaj_gen_sql_group 
 --------------------
                   2
@@ -1890,6 +1893,7 @@ select  stat_group, stat_schema, stat_table, stat_first_mark, stat_last_mark, st
 -- generate a sql script crossing the move (before rollback)
 select emaj.emaj_gen_sql_groups('{"myGroup1","myGroup2"}', 'before move', NULL, '/tmp/emaj_test/alter/myFile',
   array['myschema2.myTbl3','myschema2.myTbl3_col31_seq']);
+NOTICE:  table "emaj_temp_script" does not exist, skipping
  emaj_gen_sql_groups 
 ---------------------
                    4
@@ -1925,9 +1929,10 @@ select emaj.emaj_gen_sql_group('myGroup1', 'before move', NULL, '/tmp/emaj_test/
   array['myschema2.myTbl3','myschema2.myTbl3_col31_seq']);
 ERROR:  _gen_sql_groups: 2 tables/sequences (myschema2.myTbl3, myschema2.myTbl3_col31_seq) did not belong to any of the selected tables groups at before move mark time.
 CONTEXT:  PL/pgSQL function emaj._gen_sql_groups(text[],boolean,text,text,text,text[]) line 99 at RAISE
-PL/pgSQL function emaj.emaj_gen_sql_group(text,text,text,text,text[]) line 13 at RETURN
+PL/pgSQL function emaj.emaj_gen_sql_group(text,text,text,text,text[]) line 14 at RETURN
 select emaj.emaj_gen_sql_groups('{"myGroup1","myGroup2"}', 'before move', NULL, '/tmp/emaj_test/alter/myFile',
   array['myschema2.myTbl3','myschema2.myTbl3_col31_seq']);
+NOTICE:  table "emaj_temp_script" does not exist, skipping
  emaj_gen_sql_groups 
 ---------------------
                    4
@@ -2706,8 +2711,8 @@ select hist_function, hist_event, hist_object,
  SNAP_GROUP              | END                          | myGroup2                     | 9 tables/sequences processed                                                                                           | postgres
  SNAP_LOG_GROUP          | BEGIN                        | myGroup2                     | From initial mark to mark After ADD_SEQ towards /tmp/emaj_test/alter                                                   | postgres
  SNAP_LOG_GROUP          | END                          | myGroup2                     | 9 generated files                                                                                                      | postgres
- GEN_SQL_GROUP           | BEGIN                        | myGroup2                     | From mark Before ADD_SEQ to current situation towards /tmp/emaj_test/alter/myFile                                      | postgres
- GEN_SQL_GROUP           | END                          | myGroup2                     | 2 generated statements                                                                                                 | postgres
+ GEN_SQL_GROUP           | BEGIN                        | myGroup2                     | From mark Before ADD_SEQ to current situation                                                                          | postgres
+ GEN_SQL_GROUP           | END                          | myGroup2                     | 2 generated statements - script exported into /tmp/emaj_test/alter/myFile                                              | postgres
  ROLLBACK_GROUP          | BEGIN                        | myGroup2                     | Logged rollback to mark Before ADD_SEQ (timestamp)                                                                     | postgres
  DBLINK_OPEN_CNX         |                              | rlbk#1                       | Status = 1                                                                                                             | postgres
  LOCK_GROUP              | BEGIN                        | myGroup2                     | Rollback session #1                                                                                                    | postgres
@@ -2791,8 +2796,8 @@ select hist_function, hist_event, hist_object,
  LOCK_GROUP              | BEGIN                        | myGroup1                     |                                                                                                                        | postgres
  LOCK_GROUP              | END                          | myGroup1                     | 5 tables locked, 0 deadlock(s)                                                                                         | postgres
  SET_MARK_GROUP          | END                          | myGroup1                     | After_remove                                                                                                           | postgres
- GEN_SQL_GROUP           | BEGIN                        | myGroup1                     | From initial mark to mark EMAJ_LAST_MARK towards /tmp/emaj_test/alter/myFile with tables/sequences filtering           | postgres
- GEN_SQL_GROUP           | END                          | myGroup1                     | 1 generated statements                                                                                                 | postgres
+ GEN_SQL_GROUP           | BEGIN                        | myGroup1                     | From initial mark to mark EMAJ_LAST_MARK with tables/sequences filtering                                               | postgres
+ GEN_SQL_GROUP           | END                          | myGroup1                     | 1 generated statements - script exported into /tmp/emaj_test/alter/myFile                                              | postgres
  ALTER_GROUP             | BEGIN                        | myGroup1                     |                                                                                                                        | postgres
  LOCK_GROUP              | BEGIN                        | myGroup1                     |                                                                                                                        | postgres
  LOCK_GROUP              | END                          | myGroup1                     | 5 tables locked, 0 deadlock(s)                                                                                         | postgres
@@ -2915,8 +2920,8 @@ select hist_function, hist_event, hist_object,
  SNAP_GROUP              | END                          | myGroup1                     | 5 tables/sequences processed                                                                                           | postgres
  SNAP_LOG_GROUP          | BEGIN                        | myGroup1                     | From initial mark to current situation towards /tmp/emaj_test/alter                                                    | postgres
  SNAP_LOG_GROUP          | END                          | myGroup1                     | 8 generated files                                                                                                      | postgres
- GEN_SQL_GROUP           | BEGIN                        | myGroup1                     | From initial mark to current situation towards /tmp/emaj_test/alter/myFile with tables/sequences filtering             | postgres
- GEN_SQL_GROUP           | END                          | myGroup1                     | 2 generated statements                                                                                                 | postgres
+ GEN_SQL_GROUP           | BEGIN                        | myGroup1                     | From initial mark to current situation with tables/sequences filtering                                                 | postgres
+ GEN_SQL_GROUP           | END                          | myGroup1                     | 2 generated statements - script exported into /tmp/emaj_test/alter/myFile                                              | postgres
  ROLLBACK_GROUP          | BEGIN                        | myGroup1                     | Logged rollback to mark Mk2b (timestamp)                                                                               | postgres
  DBLINK_OPEN_CNX         |                              | rlbk#1                       | Status = 1                                                                                                             | postgres
  LOCK_GROUP              | BEGIN                        | myGroup1                     | Rollback session #1                                                                                                    | postgres
@@ -3111,8 +3116,8 @@ select hist_function, hist_event, hist_object,
  LOCK_GROUPS             | BEGIN                        | myGroup1,myGroup2            |                                                                                                                        | postgres
  LOCK_GROUPS             | END                          | myGroup1,myGroup2            | 11 tables locked, 0 deadlock(s)                                                                                        | postgres
  SET_MARK_GROUPS         | END                          | myGroup1,myGroup2            | after move                                                                                                             | postgres
- GEN_SQL_GROUPS          | BEGIN                        | myGroup1,myGroup2            | From mark before move to current situation towards /tmp/emaj_test/alter/myFile with tables/sequences filtering         | postgres
- GEN_SQL_GROUPS          | END                          | myGroup1,myGroup2            | 4 generated statements                                                                                                 | postgres
+ GEN_SQL_GROUPS          | BEGIN                        | myGroup1,myGroup2            | From mark before move to current situation with tables/sequences filtering                                             | postgres
+ GEN_SQL_GROUPS          | END                          | myGroup1,myGroup2            | 4 generated statements - script exported into /tmp/emaj_test/alter/myFile                                              | postgres
  ROLLBACK_GROUPS         | BEGIN                        | myGroup1,myGroup2            | Logged rollback to mark after move (timestamp)                                                                         | postgres
  DBLINK_OPEN_CNX         |                              | rlbk#1                       | Status = 1                                                                                                             | postgres
  LOCK_GROUP              | BEGIN                        | myGroup1,myGroup2            | Rollback session #1                                                                                                    | postgres
@@ -3157,8 +3162,8 @@ select hist_function, hist_event, hist_object,
  ROLLBACK_GROUPS         | WARNING                      | Rollback id 6019             | The sequence myschema2."myTbl3_col31_seq" has only been rolled back to its latest group attachment state (<timestamp>) | postgres
  DBLINK_CLOSE_CNX        |                              | rlbk#1                       |                                                                                                                        | postgres
  ROLLBACK_GROUPS         | END                          | myGroup1,myGroup2            | Rollback_id 6019, 1 tables and 4 sequences effectively processed                                                       | postgres
- GEN_SQL_GROUPS          | BEGIN                        | myGroup1,myGroup2            | From mark before move to current situation towards /tmp/emaj_test/alter/myFile with tables/sequences filtering         | postgres
- GEN_SQL_GROUPS          | END                          | myGroup1,myGroup2            | 4 generated statements                                                                                                 | postgres
+ GEN_SQL_GROUPS          | BEGIN                        | myGroup1,myGroup2            | From mark before move to current situation with tables/sequences filtering                                             | postgres
+ GEN_SQL_GROUPS          | END                          | myGroup1,myGroup2            | 4 generated statements - script exported into /tmp/emaj_test/alter/myFile                                              | postgres
  STOP_GROUP              | BEGIN                        | myGroup2                     |                                                                                                                        | postgres
  LOCK_GROUP              | BEGIN                        | myGroup2                     |                                                                                                                        | postgres
  LOCK_GROUP              | END                          | myGroup2                     | 5 tables locked, 0 deadlock(s)                                                                                         | postgres
