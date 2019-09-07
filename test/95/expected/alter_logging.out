@@ -259,7 +259,7 @@ myschema2	myseq2	6075	3	1	1	9223372036854775807	1	1	f	t
   select emaj.emaj_gen_sql_group('myGroup2', 'Before ADD_SEQ', NULL, '/tmp/emaj_test/alter/myFile');
 NOTICE:  table "emaj_temp_script" does not exist, skipping
 CONTEXT:  SQL statement "DROP TABLE IF EXISTS emaj_temp_script CASCADE"
-PL/pgSQL function emaj._gen_sql_groups(text[],boolean,text,text,text,text[]) line 113 at SQL statement
+PL/pgSQL function emaj._gen_sql_groups(text[],boolean,text,text,text,text[]) line 114 at SQL statement
 PL/pgSQL function emaj.emaj_gen_sql_group(text,text,text,text,text[]) line 14 at RETURN
  emaj_gen_sql_group 
 --------------------
@@ -624,7 +624,7 @@ select emaj.emaj_set_mark_group('myGroup1','After_remove');
 select emaj.emaj_gen_sql_group('myGroup1', NULL, 'EMAJ_LAST_MARK', '/tmp/emaj_test/alter/myFile',array['myschema1.myTbl3_col31_seq']);
 NOTICE:  table "emaj_temp_script" does not exist, skipping
 CONTEXT:  SQL statement "DROP TABLE IF EXISTS emaj_temp_script CASCADE"
-PL/pgSQL function emaj._gen_sql_groups(text[],boolean,text,text,text,text[]) line 113 at SQL statement
+PL/pgSQL function emaj._gen_sql_groups(text[],boolean,text,text,text,text[]) line 114 at SQL statement
 PL/pgSQL function emaj.emaj_gen_sql_group(text,text,text,text,text[]) line 14 at RETURN
  emaj_gen_sql_group 
 --------------------
@@ -637,11 +637,13 @@ PL/pgSQL function emaj.emaj_gen_sql_group(text,text,text,text,text[]) line 14 at
 --    only for the following tables/sequences: myschema1.myTbl3_col31_seq
 SET standard_conforming_strings = OFF;
 SET escape_string_warning = OFF;
+SET datestyle = 'ISO, YMD';
 BEGIN TRANSACTION;
 ALTER SEQUENCE myschema1."myTbl3_col31_seq" RESTART 11 START 1 INCREMENT 1 MAXVALUE 9223372036854775807 MINVALUE 1 CACHE 1 NO CYCLE;
 COMMIT;
 RESET standard_conforming_strings;
 RESET escape_string_warning;
+RESET datestyle;
 \! rm -R /tmp/emaj_test/alter/*
 begin;
   -- testing the alter_group mark deletion
@@ -1483,7 +1485,7 @@ select emaj.emaj_snap_log_group('myGroup1',NULL,NULL,'/tmp/emaj_test/alter',NULL
   select emaj.emaj_gen_sql_group('myGroup1', NULL, NULL, '/tmp/emaj_test/alter/myFile',array['myschema1.myTbl3']);
 NOTICE:  table "emaj_temp_script" does not exist, skipping
 CONTEXT:  SQL statement "DROP TABLE IF EXISTS emaj_temp_script CASCADE"
-PL/pgSQL function emaj._gen_sql_groups(text[],boolean,text,text,text,text[]) line 113 at SQL statement
+PL/pgSQL function emaj._gen_sql_groups(text[],boolean,text,text,text,text[]) line 114 at SQL statement
 PL/pgSQL function emaj.emaj_gen_sql_group(text,text,text,text,text[]) line 14 at RETURN
  emaj_gen_sql_group 
 --------------------
@@ -2346,7 +2348,7 @@ select emaj.emaj_gen_sql_groups('{"myGroup1","myGroup2"}', 'before move', NULL, 
   array['myschema2.myTbl3','myschema2.myTbl3_col31_seq']);
 NOTICE:  table "emaj_temp_script" does not exist, skipping
 CONTEXT:  SQL statement "DROP TABLE IF EXISTS emaj_temp_script CASCADE"
-PL/pgSQL function emaj._gen_sql_groups(text[],boolean,text,text,text,text[]) line 113 at SQL statement
+PL/pgSQL function emaj._gen_sql_groups(text[],boolean,text,text,text,text[]) line 114 at SQL statement
 PL/pgSQL function emaj.emaj_gen_sql_groups(text[],text,text,text,text[]) line 14 at RETURN
  emaj_gen_sql_groups 
 ---------------------
@@ -2409,7 +2411,7 @@ select emaj.emaj_gen_sql_groups('{"myGroup1","myGroup2"}', 'before move', NULL, 
   array['myschema2.myTbl3','myschema2.myTbl3_col31_seq']);
 NOTICE:  table "emaj_temp_script" does not exist, skipping
 CONTEXT:  SQL statement "DROP TABLE IF EXISTS emaj_temp_script CASCADE"
-PL/pgSQL function emaj._gen_sql_groups(text[],boolean,text,text,text,text[]) line 113 at SQL statement
+PL/pgSQL function emaj._gen_sql_groups(text[],boolean,text,text,text,text[]) line 114 at SQL statement
 PL/pgSQL function emaj.emaj_gen_sql_groups(text[],text,text,text,text[]) line 14 at RETURN
  emaj_gen_sql_groups 
 ---------------------

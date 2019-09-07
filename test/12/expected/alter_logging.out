@@ -230,7 +230,7 @@ NOTICE:  table "emaj_temp_script" does not exist, skipping
 \! grep myseq2 /tmp/emaj_test/alter/myFile
   select emaj.emaj_gen_sql_group('myGroup2', 'Before ADD_SEQ', NULL, '/tmp/emaj_test/alter/myFile',array['myschema2.myseq2']);
 ERROR:  _gen_sql_groups: 1 table/sequence (myschema2.myseq2) did not belong to any of the selected tables groups at Before ADD_SEQ mark time.
-CONTEXT:  PL/pgSQL function emaj._gen_sql_groups(text[],boolean,text,text,text,text[]) line 96 at RAISE
+CONTEXT:  PL/pgSQL function emaj._gen_sql_groups(text[],boolean,text,text,text,text[]) line 97 at RAISE
 PL/pgSQL function emaj.emaj_gen_sql_group(text,text,text,text,text[]) line 14 at RETURN
 \! rm -R /tmp/emaj_test/alter/*
 -- testing mark deletions
@@ -548,11 +548,13 @@ NOTICE:  table "emaj_temp_script" does not exist, skipping
 --    only for the following tables/sequences: myschema1.myTbl3_col31_seq
 SET standard_conforming_strings = OFF;
 SET escape_string_warning = OFF;
+SET datestyle = 'ISO, YMD';
 BEGIN TRANSACTION;
 ALTER SEQUENCE myschema1."myTbl3_col31_seq" RESTART 11 START 1 INCREMENT 1 MAXVALUE 2147483647 MINVALUE 1 CACHE 1 NO CYCLE;
 COMMIT;
 RESET standard_conforming_strings;
 RESET escape_string_warning;
+RESET datestyle;
 \! rm -R /tmp/emaj_test/alter/*
 begin;
   -- testing the alter_group mark deletion
@@ -845,7 +847,7 @@ myschema2_mytbl7.snap
 \! rm -R /tmp/emaj_test/alter/*
   select emaj.emaj_gen_sql_group('myGroup2', 'Before ADD_TBL', NULL, '/tmp/emaj_test/alter/myFile',array['myschema2.mytbl7']);
 ERROR:  _gen_sql_groups: 1 table/sequence (myschema2.mytbl7) did not belong to any of the selected tables groups at Before ADD_TBL mark time.
-CONTEXT:  PL/pgSQL function emaj._gen_sql_groups(text[],boolean,text,text,text,text[]) line 96 at RAISE
+CONTEXT:  PL/pgSQL function emaj._gen_sql_groups(text[],boolean,text,text,text,text[]) line 97 at RAISE
 PL/pgSQL function emaj.emaj_gen_sql_group(text,text,text,text,text[]) line 14 at RETURN
 -- testing mark deletions
 begin;
@@ -1928,7 +1930,7 @@ WARNING:  _check_fk_groups: The table "myschema2.mytbl6" is referenced by the fo
 select emaj.emaj_gen_sql_group('myGroup1', 'before move', NULL, '/tmp/emaj_test/alter/myFile',
   array['myschema2.myTbl3','myschema2.myTbl3_col31_seq']);
 ERROR:  _gen_sql_groups: 2 tables/sequences (myschema2.myTbl3, myschema2.myTbl3_col31_seq) did not belong to any of the selected tables groups at before move mark time.
-CONTEXT:  PL/pgSQL function emaj._gen_sql_groups(text[],boolean,text,text,text,text[]) line 99 at RAISE
+CONTEXT:  PL/pgSQL function emaj._gen_sql_groups(text[],boolean,text,text,text,text[]) line 100 at RAISE
 PL/pgSQL function emaj.emaj_gen_sql_group(text,text,text,text,text[]) line 14 at RETURN
 select emaj.emaj_gen_sql_groups('{"myGroup1","myGroup2"}', 'before move', NULL, '/tmp/emaj_test/alter/myFile',
   array['myschema2.myTbl3','myschema2.myTbl3_col31_seq']);

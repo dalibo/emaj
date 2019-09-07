@@ -3,9 +3,10 @@ E-Maj - Change log
 <devel>
 ------
 ###Enhancements:###
-  * In emaj_gen_sql_group() and emaj_gen_sql_groups() functions, a NULL value
-    for the "output file" parameter prepares the SQL script in a temporary
-    table that can be then accessed via a emaj_sql_script view.
+  * In the emaj_gen_sql_group() and emaj_gen_sql_groups() functions, a NULL
+    value for the "output file" parameter prepares the SQL script in a
+    temporary table that can be then accessed via a emaj_sql_script view.
+    Also set an ISO DateStyle session parameter in the generated scripts.
   * The new emaj_assign_table(), emaj_assign_tables(), emaj_remove_table(),
     emaj_remove_tables(), emaj_assign_sequence(), emaj_assign_sequences(),
     emaj_remove_sequence() and emaj_remove_sequences() functions allow to

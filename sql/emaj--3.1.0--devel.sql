@@ -5806,7 +5806,8 @@ $$Generates a sql script replaying all updates performed on a tables groups set 
 
 CREATE OR REPLACE FUNCTION emaj._gen_sql_groups(v_groupNames TEXT[], v_multiGroup BOOLEAN, v_firstMark TEXT, v_lastMark TEXT,
                                                 v_location TEXT, v_tblseqs TEXT[])
-RETURNS BIGINT LANGUAGE plpgsql AS
+RETURNS BIGINT LANGUAGE plpgsql
+SET DateStyle = 'ISO, YMD' AS
 $_gen_sql_groups$
 -- This function generates a SQL script representing all updates performed on a tables groups array between 2 marks
 -- or beetween a mark and the current situation. The result is stored into an external file.
@@ -5837,6 +5838,7 @@ $_gen_sql_groups$
     v_endComment             TEXT;
     v_endTimeId              BIGINT;
     v_rqSeq                  TEXT;
+    v_dateStyle              TEXT;
     r_tblsq                  RECORD;
     r_rel                    emaj.emaj_relation%ROWTYPE;
   BEGIN
@@ -6017,14 +6019,19 @@ $_gen_sql_groups$
       IF v_tblseqs IS NOT NULL THEN
         INSERT INTO emaj_temp_script SELECT 0, 4, 0, '--    only for the following tables/sequences: ' || array_to_string(v_tblseqs,',');
       END IF;
--- encapsulate the sql statements inside a TRANSACTION
--- and manage the standard_conforming_strings option to properly handle special characters
+-- encapsulate the sql statements inside a TRANSACTION,
+-- and define some session parameters:
+--    - the standard_conforming_strings option to properly handle special characters,
+--    - the DateStyle mode used at export time
+      SELECT setting INTO v_dateStyle FROM pg_settings WHERE name = 'DateStyle';
       INSERT INTO emaj_temp_script SELECT 0, 10, 0, 'SET standard_conforming_strings = OFF;';
       INSERT INTO emaj_temp_script SELECT 0, 11, 0, 'SET escape_string_warning = OFF;';
+      INSERT INTO emaj_temp_script SELECT 0, 12, 0, 'SET datestyle = ' || quote_literal(v_dateStyle) || ';';
       INSERT INTO emaj_temp_script SELECT 0, 20, 0, 'BEGIN TRANSACTION;';
       INSERT INTO emaj_temp_script SELECT NULL, 1, txid_current(), 'COMMIT;';
       INSERT INTO emaj_temp_script SELECT NULL, 10, txid_current(), 'RESET standard_conforming_strings;';
       INSERT INTO emaj_temp_script SELECT NULL, 11, txid_current(), 'RESET escape_string_warning;';
+      INSERT INTO emaj_temp_script SELECT NULL, 11, txid_current(), 'RESET datestyle;';
 -- if an output file is supplied, write the SQL script on the external file and drop the temporary table
       IF v_location IS NOT NULL THEN
         PERFORM emaj._export_sql_script(v_location);
