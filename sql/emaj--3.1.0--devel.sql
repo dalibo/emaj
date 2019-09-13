@@ -2881,38 +2881,13 @@ $_rlbk_seq$
     END IF;
 -- Build the ALTER SEQUENCE statement, depending on the differences between the present values and the related
 --   values at the requested mark time
-    v_stmt='';
-    IF curr_seq_rec.last_value <> mark_seq_rec.sequ_last_val OR
-       curr_seq_rec.is_called <> mark_seq_rec.sequ_is_called THEN
-      IF mark_seq_rec.sequ_is_called THEN
-        v_stmt=v_stmt || ' RESTART ' || mark_seq_rec.sequ_last_val + mark_seq_rec.sequ_increment;
-      ELSE
-        v_stmt=v_stmt || ' RESTART ' || mark_seq_rec.sequ_last_val;
-      END IF;
-    END IF;
-    IF curr_seq_rec.start_value <> mark_seq_rec.sequ_start_val THEN
-      v_stmt=v_stmt || ' START ' || mark_seq_rec.sequ_start_val;
-    END IF;
-    IF curr_seq_rec.increment_by <> mark_seq_rec.sequ_increment THEN
-      v_stmt=v_stmt || ' INCREMENT ' || mark_seq_rec.sequ_increment;
-    END IF;
-    IF curr_seq_rec.min_value <> mark_seq_rec.sequ_min_val THEN
-      v_stmt=v_stmt || ' MINVALUE ' || mark_seq_rec.sequ_min_val;
-    END IF;
-    IF curr_seq_rec.max_value <> mark_seq_rec.sequ_max_val THEN
-      v_stmt=v_stmt || ' MAXVALUE ' || mark_seq_rec.sequ_max_val;
-    END IF;
-    IF curr_seq_rec.cache_value <> mark_seq_rec.sequ_cache_val THEN
-      v_stmt=v_stmt || ' CACHE ' || mark_seq_rec.sequ_cache_val;
-    END IF;
-    IF curr_seq_rec.is_cycled <> mark_seq_rec.sequ_is_cycled THEN
-      IF mark_seq_rec.sequ_is_cycled = 'f' THEN
-        v_stmt=v_stmt || ' NO ';
-      END IF;
-      v_stmt=v_stmt || ' CYCLE ';
-    END IF;
+    SELECT emaj._build_alter_seq(curr_seq_rec.last_value, curr_seq_rec.is_called, curr_seq_rec.increment_by,
+                                 curr_seq_rec.start_value, curr_seq_rec.min_value, curr_seq_rec.max_value,
+                                 curr_seq_rec.cache_value, curr_seq_rec.is_cycled, mark_seq_rec.sequ_last_val,
+                                 mark_seq_rec.sequ_is_called, mark_seq_rec.sequ_increment, mark_seq_rec.sequ_start_val,
+                                 mark_seq_rec.sequ_min_val, mark_seq_rec.sequ_max_val, mark_seq_rec.sequ_cache_val,
+                                 mark_seq_rec.sequ_is_cycled) INTO v_stmt;
 -- and execute the statement if at least one parameter has changed
-
     IF v_stmt <> '' THEN
       EXECUTE format('ALTER SEQUENCE %s %s',
                      v_fullSeqName, v_stmt);
@@ -2923,6 +2898,57 @@ $_rlbk_seq$
     RETURN;
   END;
 $_rlbk_seq$;
+
+CREATE OR REPLACE FUNCTION emaj._build_alter_seq(v_refLastValue BIGINT, v_refIsCalled BOOLEAN, v_refIncrementBy BIGINT,
+                                                 v_refStartValue BIGINT, v_refMinValue BIGINT, v_refMaxValue BIGINT,
+                                                 v_refCacheValue BIGINT, v_refIsCycled BOOLEAN, v_trgLastValue BIGINT,
+                                                 v_trgIsCalled BOOLEAN, v_trgIncrementBy BIGINT, v_trgStartValue BIGINT,
+                                                 v_trgMinValue BIGINT, v_trgMaxValue BIGINT, v_trgCacheValue BIGINT,
+                                                 v_trgIsCycled BOOLEAN)
+RETURNS TEXT LANGUAGE plpgsql AS
+$_build_alter_seq$
+-- This function builds an ALTER SEQUENCE clause including only the sequence characteristics that have changed between a reference
+-- and a target.
+-- The function is called by _rlbk_seq() and _gen_sql_groups()
+-- Input: elementary reference and target sequence characteristics
+-- Output: the alter sequence clause with all modified characteristics
+  DECLARE
+    v_stmt                   TEXT;
+  BEGIN
+    v_stmt='';
+-- Build the ALTER SEQUENCE clause, depending on the differences between the reference and target values
+    IF v_refLastValue <> v_trgLastValue OR
+       v_refIsCalled <> v_trgIsCalled THEN
+      IF v_trgIsCalled THEN
+        v_stmt = v_stmt || ' RESTART ' || v_trgLastValue + v_trgIncrementBy;
+      ELSE
+        v_stmt = v_stmt || ' RESTART ' || v_trgLastValue;
+      END IF;
+    END IF;
+    IF v_refStartValue <> v_trgStartValue THEN
+      v_stmt = v_stmt || ' START ' || v_trgStartValue;
+    END IF;
+    IF v_refIncrementBy <> v_trgIncrementBy THEN
+      v_stmt = v_stmt || ' INCREMENT ' || v_trgIncrementBy;
+    END IF;
+    IF v_refMinValue <> v_trgMinValue THEN
+      v_stmt = v_stmt || ' MINVALUE ' || v_trgMinValue;
+    END IF;
+    IF v_refMaxValue <> v_trgMaxValue THEN
+      v_stmt = v_stmt || ' MAXVALUE ' || v_trgMaxValue;
+    END IF;
+    IF v_refCacheValue <> v_trgCacheValue THEN
+      v_stmt = v_stmt || ' CACHE ' || v_trgCacheValue;
+    END IF;
+    IF v_refIsCycled <> v_trgIsCycled THEN
+      IF v_trgIsCycled = 'f' THEN
+        v_stmt = v_stmt || ' NO ';
+      END IF;
+      v_stmt=v_stmt || ' CYCLE ';
+    END IF;
+    RETURN v_stmt;
+  END;
+$_build_alter_seq$;
 
 CREATE OR REPLACE FUNCTION emaj._log_stat_tbl(r_rel emaj.emaj_relation, v_beginTimeId BIGINT, v_endTimeId BIGINT)
 RETURNS BIGINT LANGUAGE plpgsql AS
@@ -2980,11 +3006,12 @@ $_log_stat_tbl$
 $_log_stat_tbl$;
 
 CREATE OR REPLACE FUNCTION emaj._gen_sql_tbl(r_rel emaj.emaj_relation, v_firstEmajGid BIGINT, v_lastEmajGid BIGINT)
-RETURNS BIGINT LANGUAGE plpgsql SECURITY DEFINER SET standard_conforming_strings = ON AS
+RETURNS BIGINT LANGUAGE plpgsql
+SECURITY DEFINER SET standard_conforming_strings = ON AS
 $_gen_sql_tbl$
 -- This function generates SQL commands representing all updates performed on a table between 2 marks
 -- or beetween a mark and the current situation.
--- These command are stored into a temporary table created by the _gen_sql_groups() calling function.
+-- These commands are stored into a temporary table created by the _gen_sql_groups() calling function.
 -- Input: row from emaj_relation corresponding to the appplication table to proccess,
 --        the global sequence value at requested start and end marks
 -- Output: number of generated SQL statements
@@ -3100,6 +3127,92 @@ $_gen_sql_tbl$
     RETURN v_nbSQL;
   END;
 $_gen_sql_tbl$;
+
+CREATE OR REPLACE FUNCTION emaj._gen_sql_seq(r_rel emaj.emaj_relation, v_firstMarkTimeId BIGINT, v_lastMarkTimeId BIGINT, v_nbSeq BIGINT)
+RETURNS BIGINT LANGUAGE plpgsql AS
+$_gen_sql_seq$
+-- This function generates a SQL command to set the final characteristics of a sequence.
+-- The command is stored into a temporary table created by the _gen_sql_groups() calling function.
+-- Input: row from emaj_relation corresponding to the appplication sequence to proccess,
+--        the time id at requested start and end marks,
+--        the number of already processed sequences
+-- Output: number of generated SQL statements (0 or 1)
+  DECLARE
+    v_fullSeqName            TEXT;
+    v_refLastValue           BIGINT;
+    v_refIsCalled            BOOLEAN;
+    v_refIncrementBy         BIGINT;
+    v_refStartValue          BIGINT;
+    v_refMinValue            BIGINT;
+    v_refMaxValue            BIGINT;
+    v_refCacheValue          BIGINT;
+    v_refIsCycled            BOOLEAN;
+    v_stmt                   TEXT;
+    v_trgLastValue           BIGINT;
+    v_trgIsCalled            BOOLEAN;
+    v_trgIncrementBy         BIGINT;
+    v_trgStartValue          BIGINT;
+    v_trgMinValue            BIGINT;
+    v_trgMaxValue            BIGINT;
+    v_trgCacheValue          BIGINT;
+    v_trgIsCycled            BOOLEAN;
+    v_endTimeId              BIGINT;
+    v_rqSeq                  TEXT;
+  BEGIN
+    v_fullSeqName = quote_ident(r_rel.rel_schema) || '.' || quote_ident(r_rel.rel_tblseq);
+-- get the sequence characteristics at start mark
+    SELECT sequ_last_val, sequ_is_called, sequ_increment, sequ_start_val,
+           sequ_min_val, sequ_max_val, sequ_cache_val, sequ_is_cycled
+      INTO STRICT v_refLastValue, v_refIsCalled, v_refIncrementBy, v_refStartValue,
+           v_refMinValue, v_refMaxValue, v_refCacheValue, v_refIsCycled
+      FROM emaj.emaj_sequence
+      WHERE sequ_schema = r_rel.rel_schema AND sequ_name = r_rel.rel_tblseq
+        AND sequ_time_id = v_firstMarkTimeId;
+-- get the sequence characteristics at end mark or the current state
+    IF v_lastMarkTimeId IS NULL AND upper_inf(r_rel.rel_time_range) THEN
+-- no supplied last mark and the sequence currently belongs to its group, so get current sequence characteritics
+      IF emaj._pg_version_num() >= 100000 THEN
+        v_stmt = 'SELECT rel.last_value, is_called, increment_by, start_value, min_value, max_value, cache_size, cycle '
+              || 'FROM ' || v_fullSeqName  || ' rel, pg_catalog.pg_sequences '
+              || ' WHERE schemaname = ' || quote_literal(r_rel.rel_schema) || ' AND sequencename = '
+              || quote_literal(r_rel.rel_tblseq);
+      ELSE
+        v_stmt = 'SELECT last_value, is_called, increment_by, start_value, min_value, max_value, cache_value, is_cycled '
+              || 'FROM ' || v_fullSeqName;
+      END IF;
+      EXECUTE v_stmt INTO v_trgLastValue, v_trgIsCalled, v_trgIncrementBy, v_trgStartValue,
+                          v_trgMinValue, v_trgMaxValue, v_trgCacheValue, v_trgIsCycled;
+    ELSE
+-- a last mark is supplied, or the sequence does not belong to its groupe anymore, so get sequence characteristics from the emaj_sequence
+-- table
+      v_endTimeId = CASE WHEN upper_inf(r_rel.rel_time_range) OR v_lastMarkTimeId < upper(r_rel.rel_time_range)
+                           THEN v_lastMarkTimeId
+                         ELSE upper(r_rel.rel_time_range) END;
+      SELECT sequ_last_val, sequ_is_called, sequ_increment, sequ_start_val,
+             sequ_min_val, sequ_max_val, sequ_cache_val, sequ_is_cycled
+        INTO STRICT v_trgLastValue, v_trgIsCalled, v_trgIncrementBy, v_trgStartValue,
+             v_trgMinValue, v_trgMaxValue, v_trgCacheValue, v_trgIsCycled
+        FROM emaj.emaj_sequence
+        WHERE sequ_schema = r_rel.rel_schema AND sequ_name = r_rel.rel_tblseq
+          AND sequ_time_id = v_endTimeId;
+    END IF;
+-- build the ALTER SEQUENCE clause
+    SELECT emaj._build_alter_seq(v_refLastValue, v_refIsCalled, v_refIncrementBy, v_refStartValue,
+                                 v_refMinValue, v_refMaxValue, v_refCacheValue, v_refIsCycled,
+                                 v_trgLastValue, v_trgIsCalled, v_trgIncrementBy, v_trgStartValue,
+                                 v_trgMinValue, v_trgMaxValue, v_trgCacheValue, v_trgIsCycled) INTO v_rqSeq;
+-- insert into the temp table and return 1 if at least 1 characteristic needs to be changed
+    IF v_rqSeq <> '' THEN
+      v_rqSeq = 'ALTER SEQUENCE ' || v_fullSeqName || ' ' || v_rqSeq || ';';
+      EXECUTE 'INSERT INTO emaj_temp_script '
+              '  SELECT NULL, -1 * $1, txid_current(), $2'
+        USING v_nbSeq + 1, v_rqSeq;
+      RETURN 1;
+    END IF;
+-- otherwise return 0
+    RETURN 0;
+  END;
+$_gen_sql_seq$;
 
 CREATE OR REPLACE FUNCTION emaj._get_current_sequence_state(v_schema TEXT, v_sequence TEXT, v_timeId BIGINT)
 RETURNS emaj.emaj_sequence LANGUAGE plpgsql AS
@@ -5834,12 +5947,8 @@ $_gen_sql_groups$
     v_nbSQL                  BIGINT;
     v_nbSeq                  INT;
     v_cumNbSQL               BIGINT = 0;
-    v_fullSeqName            TEXT;
     v_endComment             TEXT;
-    v_endTimeId              BIGINT;
-    v_rqSeq                  TEXT;
     v_dateStyle              TEXT;
-    r_tblsq                  RECORD;
     r_rel                    emaj.emaj_relation%ROWTYPE;
   BEGIN
 -- insert begin in the history
@@ -5943,71 +6052,10 @@ $_gen_sql_groups$
         DELETE FROM emaj_temp_script;
       END IF;
 -- end of checks
--- for each application table referenced in the emaj_relation table, process the related log table, by calling the _gen_sql_tbl() function
-      FOR r_rel IN
-          SELECT * FROM emaj.emaj_relation
-            WHERE rel_group = ANY (v_groupNames) AND rel_kind = 'r'                               -- tables belonging to the groups
-              AND rel_time_range @> v_firstMarkTimeId                                             --   at the first mark time
-              AND (v_tblseqs IS NULL OR rel_schema || '.' || rel_tblseq = ANY (v_tblseqs))        -- filtered or not by the user
-              AND emaj._log_stat_tbl(emaj_relation, v_firstMarkTimeId,                            -- only tables having updates to process
-                                    least(v_lastMarkTimeId, upper(rel_time_range))) > 0
-            ORDER BY rel_priority, rel_schema, rel_tblseq
-      LOOP
-        SELECT emaj._gen_sql_tbl(r_rel, v_firstEmajGid, v_lastEmajGid) INTO v_nbSQL;
-        v_cumNbSQL = v_cumNbSQL + v_nbSQL;
-      END LOOP;
--- process sequences
-      v_nbSeq = 0;
-      FOR r_tblsq IN
-          SELECT rel_priority, rel_schema, rel_tblseq, rel_time_range FROM emaj.emaj_relation
-            WHERE rel_group = ANY (v_groupNames) AND rel_kind = 'S'
-              AND rel_time_range @> v_firstMarkTimeId                                -- sequences belonging to the groups at the start mark
-              AND (v_tblseqs IS NULL OR rel_schema || '.' || rel_tblseq = ANY (v_tblseqs))         -- filtered or not by the user
-            ORDER BY rel_schema DESC, rel_tblseq DESC
-      LOOP
-        v_fullSeqName = quote_ident(r_tblsq.rel_schema) || '.' || quote_ident(r_tblsq.rel_tblseq);
-        IF v_lastMarkTimeId IS NULL AND upper_inf(r_tblsq.rel_time_range) THEN
--- no supplied last mark and the sequence currently belongs to its group, so get current sequence characteritics
-          IF emaj._pg_version_num() >= 100000 THEN
-            EXECUTE 'SELECT ''ALTER SEQUENCE ' || replace(v_fullSeqName,'''','''''')
-                 || ''' || '' RESTART '' || CASE WHEN rel.is_called THEN rel.last_value + increment_by ELSE rel.last_value END || '' '
-                 || 'START '' || start_value || '' INCREMENT '' || increment_by  || '' MAXVALUE '' || max_value  || '' '
-                 || 'MINVALUE '' || min_value || '' CACHE '' || cache_size || '
-                 || 'CASE WHEN NOT cycle THEN '' NO'' ELSE '''' END || '' CYCLE;'' '
-                 || 'FROM ' || v_fullSeqName  || ' rel, pg_catalog.pg_sequences '
-                 || ' WHERE schemaname = ' || quote_literal(r_tblsq.rel_schema) || ' AND sequencename = '
-                 || quote_literal(r_tblsq.rel_tblseq) INTO v_rqSeq;
-          ELSE
-            EXECUTE 'SELECT ''ALTER SEQUENCE ' || replace(v_fullSeqName,'''','''''')
-                 || ''' || '' RESTART '' || CASE WHEN is_called THEN last_value + increment_by ELSE last_value END || '' '
-                 || 'START '' || start_value || '' INCREMENT '' || increment_by  || '' MAXVALUE '' || max_value  || '' '
-                 || 'MINVALUE '' || min_value || '' CACHE '' || cache_value || '
-                 || 'CASE WHEN NOT is_cycled THEN '' NO'' ELSE '''' END || '' CYCLE;'' '
-                 || 'FROM ' || v_fullSeqName INTO v_rqSeq;
-          END IF;
-        ELSE
--- a last mark is supplied, or the sequence does not belong to its groupe anymore, so get sequence characteristics from the emaj_sequence
--- table
-          v_endTimeId = CASE WHEN upper_inf(r_tblsq.rel_time_range) OR v_lastMarkTimeId < upper(r_tblsq.rel_time_range)
-                               THEN v_lastMarkTimeId
-                             ELSE upper(r_tblsq.rel_time_range) END;
-          EXECUTE 'SELECT ''ALTER SEQUENCE ' || replace(v_fullSeqName,'''','''''')
-               || ''' || '' RESTART '' || CASE WHEN sequ_is_called THEN sequ_last_val + sequ_increment ELSE sequ_last_val END || '
-               || ''' START '' || sequ_start_val || '' INCREMENT '' || sequ_increment  || '' MAXVALUE '' || sequ_max_val  || '
-               || ''' MINVALUE '' || sequ_min_val || '' CACHE '' || sequ_cache_val || '
-               || 'CASE WHEN NOT sequ_is_cycled THEN '' NO'' ELSE '''' END || '' CYCLE;'' '
-               || 'FROM emaj.emaj_sequence '
-               || 'WHERE sequ_schema = ' || quote_literal(r_tblsq.rel_schema)
-               || '  AND sequ_name = ' || quote_literal(r_tblsq.rel_tblseq)
-               || '  AND sequ_time_id = ' || v_endTimeId INTO v_rqSeq;
-        END IF;
--- insert into temp table
-        v_nbSeq = v_nbSeq + 1;
-        EXECUTE 'INSERT INTO emaj_temp_script '
-                '  SELECT NULL, -1 * $1, txid_current(), $2'
-          USING v_nbSeq, v_rqSeq;
-      END LOOP;
--- add initial comments
+-- insert initial comments, define some session parameters:
+--    - the standard_conforming_strings option to properly handle special characters,
+--    - the DateStyle mode used at export time
+-- and a transaction start
       IF v_lastMarkTimeId IS NOT NULL THEN
         v_endComment = ' and mark ' || v_lastMark;
       ELSE
@@ -6019,15 +6067,38 @@ $_gen_sql_groups$
       IF v_tblseqs IS NOT NULL THEN
         INSERT INTO emaj_temp_script SELECT 0, 4, 0, '--    only for the following tables/sequences: ' || array_to_string(v_tblseqs,',');
       END IF;
--- encapsulate the sql statements inside a TRANSACTION,
--- and define some session parameters:
---    - the standard_conforming_strings option to properly handle special characters,
---    - the DateStyle mode used at export time
       SELECT setting INTO v_dateStyle FROM pg_settings WHERE name = 'DateStyle';
       INSERT INTO emaj_temp_script SELECT 0, 10, 0, 'SET standard_conforming_strings = OFF;';
       INSERT INTO emaj_temp_script SELECT 0, 11, 0, 'SET escape_string_warning = OFF;';
       INSERT INTO emaj_temp_script SELECT 0, 12, 0, 'SET datestyle = ' || quote_literal(v_dateStyle) || ';';
       INSERT INTO emaj_temp_script SELECT 0, 20, 0, 'BEGIN TRANSACTION;';
+-- process tables
+      FOR r_rel IN
+          SELECT * FROM emaj.emaj_relation
+            WHERE rel_group = ANY (v_groupNames) AND rel_kind = 'r'                               -- tables belonging to the groups
+              AND rel_time_range @> v_firstMarkTimeId                                             --   at the first mark time
+              AND (v_tblseqs IS NULL OR rel_schema || '.' || rel_tblseq = ANY (v_tblseqs))        -- filtered or not by the user
+              AND emaj._log_stat_tbl(emaj_relation, v_firstMarkTimeId,                            -- only tables having updates to process
+                                    least(v_lastMarkTimeId, upper(rel_time_range))) > 0
+            ORDER BY rel_priority, rel_schema, rel_tblseq
+      LOOP
+-- for each application table referenced in the emaj_relation table, process the related log table, by calling the _gen_sql_tbl() function
+        SELECT emaj._gen_sql_tbl(r_rel, v_firstEmajGid, v_lastEmajGid) INTO v_nbSQL;
+        v_cumNbSQL = v_cumNbSQL + v_nbSQL;
+      END LOOP;
+-- process sequences
+      v_nbSeq = 0;
+      FOR r_rel IN
+          SELECT * FROM emaj.emaj_relation
+            WHERE rel_group = ANY (v_groupNames) AND rel_kind = 'S'
+              AND rel_time_range @> v_firstMarkTimeId                                -- sequences belonging to the groups at the start mark
+              AND (v_tblseqs IS NULL OR rel_schema || '.' || rel_tblseq = ANY (v_tblseqs))         -- filtered or not by the user
+            ORDER BY rel_schema DESC, rel_tblseq DESC
+      LOOP
+-- process each sequence and increment the sequence counter
+        v_nbSeq = v_nbSeq + emaj._gen_sql_seq(r_rel, v_firstMarkTimeId, v_lastMarkTimeId, v_nbSeq);
+      END LOOP;
+-- add command to committhe transaction and reset the modified session parameters
       INSERT INTO emaj_temp_script SELECT NULL, 1, txid_current(), 'COMMIT;';
       INSERT INTO emaj_temp_script SELECT NULL, 10, txid_current(), 'RESET standard_conforming_strings;';
       INSERT INTO emaj_temp_script SELECT NULL, 11, txid_current(), 'RESET escape_string_warning;';

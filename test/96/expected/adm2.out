@@ -1161,6 +1161,10 @@ insert into mytbl2 values (11, E'row 1 with a true \\ character\r... and row 2 w
 insert into mytbl1 values (200, E'Start\tEnd ', E'A\\000B'::BYTEA);
 update mytbl1 set col12 = E' Start\tEnd' where col11 = 200;
 delete from mytbl1 where col13 = E'A\\000B'::BYTEA;
+-- also apply some changes in sequence characteristics
+reset role;
+alter sequence myschema2.myseq1 minvalue 1 maxvalue 100 increment 10 start 21 restart 11 cache 2 cycle;
+set role emaj_regression_tests_adm_user;
 -- reset directory for snaps
 \! rm -Rf /tmp/emaj_test/snaps
 \! mkdir -p /tmp/emaj_test/snaps
@@ -1207,12 +1211,12 @@ phil's_schema3_phil's_tbl1.snap
 -- reset directory for emaj_gen_sql_group tests
 \! rm -Rf /tmp/emaj_test/sql_scripts
 \! mkdir /tmp/emaj_test/sql_scripts
--- generate sql script for each active group (and check the result with detailed log statistics + number of sequences)
+-- generate a sql script for each active group (and check the result with detailed log statistics + number of sequences)
 select emaj.emaj_gen_sql_group('myGroup1', 'Multi-1', NULL, '/tmp/emaj_test/sql_scripts/myGroup1.sql');
 NOTICE:  table "emaj_temp_script" does not exist, skipping
  emaj_gen_sql_group 
 --------------------
-                  2
+                  0
 (1 row)
 
 select coalesce(sum(stat_rows),0) + 2 as check from emaj.emaj_detailed_log_stat_group('myGroup1', 'Multi-1', NULL);
@@ -1227,7 +1231,7 @@ select emaj.emaj_gen_sql_group('myGroup2', 'Multi-1', NULL, '/tmp/emaj_test/sql_
 NOTICE:  table "emaj_temp_script" does not exist, skipping
  emaj_gen_sql_group 
 --------------------
-                 27
+                 26
 (1 row)
 
 select sum(stat_rows) + 2 as check from emaj.emaj_detailed_log_stat_group('myGroup2', 'Multi-1', NULL);
@@ -1240,7 +1244,7 @@ select emaj.emaj_gen_sql_group('phil''s group#3",', 'M1_rollbackable', NULL, '/t
 NOTICE:  table "emaj_temp_script" does not exist, skipping
  emaj_gen_sql_group 
 --------------------
-                 57
+                 56
 (1 row)
 
 select sum(stat_rows) + 2 as check from emaj.emaj_detailed_log_stat_group('phil''s group#3",', 'M1_rollbackable', NULL);
@@ -1254,14 +1258,14 @@ select emaj.emaj_gen_sql_group('myGroup1', 'Multi-1', NULL, NULL);
 NOTICE:  table "emaj_temp_script" does not exist, skipping
  emaj_gen_sql_group 
 --------------------
-                  2
+                  0
 (1 row)
 
 \copy (select * from emaj_sql_script) to '/tmp/emaj_test/sql_scripts/myGroup1_2.sql'
 -- mask timestamp in initial comment and compare
 \! find /tmp/emaj_test/sql_scripts -name '*.sql' -type f -print0 | xargs -0 sed -i -s 's/at .*$/at [ts]$/'
 \! diff /tmp/emaj_test/sql_scripts/myGroup1.sql /tmp/emaj_test/sql_scripts/myGroup1_2.sql
--- process \\ in script files
+-- process \\ characters in script files
 \! find /tmp/emaj_test/sql_scripts -name '*.sql' -type f -print0 | xargs -0 sed -i_s -s 's/\\\\/\\/g'
 -- comment transaction commands for the need of the current test
 \! find /tmp/emaj_test/sql_scripts -name '*.sql' -type f -print0 | xargs -0 sed -i -s 's/^BEGIN/--BEGIN/;s/^COMMIT/--COMMIT/'
@@ -1316,8 +1320,6 @@ SET standard_conforming_strings = OFF;
 SET escape_string_warning = OFF;
 SET datestyle = 'ISO, YMD';
 --BEGIN TRANSACTION;
-ALTER SEQUENCE myschema1."myTbl3_col31_seq" RESTART 21 START 1 INCREMENT 1 MAXVALUE 9223372036854775807 MINVALUE 1 CACHE 1 NO CYCLE;
-ALTER SEQUENCE myschema1.mytbl2b_col20_seq RESTART 6 START 1 INCREMENT 1 MAXVALUE 9223372036854775807 MINVALUE 1 CACHE 1 NO CYCLE;
 --COMMIT;
 RESET standard_conforming_strings;
 RESET escape_string_warning;
@@ -1356,8 +1358,7 @@ INSERT INTO myschema2.mytbl2 VALUES (11, E'row 1 with a true \\ character\r... a
 INSERT INTO myschema2.mytbl1 VALUES (200, 'Start\tEnd', E'\\x410042');
 UPDATE ONLY myschema2.mytbl1 SET col11 = 200, col12 = ' Start\tEnd', col13 = E'\\x410042' WHERE col11 = 200 AND col12 = 'Start\tEnd';
 DELETE FROM ONLY myschema2.mytbl1 WHERE col11 = 200 AND col12 = ' Start\tEnd';
-ALTER SEQUENCE myschema2."myTbl3_col31_seq" RESTART 21 START 1 INCREMENT 1 MAXVALUE 9223372036854775807 MINVALUE 1 CACHE 1 NO CYCLE;
-ALTER SEQUENCE myschema2.myseq1 RESTART 1004 START 1000 INCREMENT 1 MAXVALUE 9223372036854775807 MINVALUE 1000 CACHE 1 NO CYCLE;
+ALTER SEQUENCE myschema2.myseq1  RESTART 11 START 21 INCREMENT 10 MINVALUE 1 MAXVALUE 100 CACHE 2 CYCLE ;
 --COMMIT;
 RESET standard_conforming_strings;
 RESET escape_string_warning;
@@ -1425,8 +1426,7 @@ INSERT INTO "phil's schema3"."myTbl2\" VALUES (2, 'DEF', NULL);
 DELETE FROM ONLY "phil's schema3"."phil's tbl1" WHERE "phil's col11" = 10 AND "phil's col12" = 'AB''C';
 UPDATE ONLY "phil's schema3"."phil's tbl1" SET "phil's col11" = 1, "phil's col12" = 'DEF', "phil\s col13" = E'\\x1c' WHERE "phil's col11" = 1 AND "phil's col12" = 'AB''C';
 UPDATE ONLY "phil's schema3"."phil's tbl1" SET "phil's col11" = 2, "phil's col12" = 'DEF', "phil\s col13" = E'\\x1c' WHERE "phil's col11" = 2 AND "phil's col12" = 'AB''C';
-ALTER SEQUENCE "phil's schema3"."myTbl2\_col21_seq" RESTART 1 START 1 INCREMENT 1 MAXVALUE 9223372036854775807 MINVALUE 1 CACHE 1 NO CYCLE;
-ALTER SEQUENCE "phil's schema3"."phil's seq\1" RESTART 1002 START 1000 INCREMENT 1 MAXVALUE 2000 MINVALUE 1000 CACHE 1 CYCLE;
+ALTER SEQUENCE "phil's schema3"."phil's seq\1"  RESTART 1002;
 --COMMIT;
 RESET standard_conforming_strings;
 RESET escape_string_warning;
@@ -1457,26 +1457,14 @@ rollback;
 -- - the effect of RESTART on is_called and next_val attributes
 -- - internal log_cnt value being reset
 \! diff --exclude _INFO_s /tmp/emaj_test/snaps /tmp/emaj_test/snaps2
-diff --exclude _INFO_s /tmp/emaj_test/snaps/myschema1_myTbl3_col31_seq.snap /tmp/emaj_test/snaps2/myschema1_myTbl3_col31_seq.snap
-2c2
-< myTbl3_col31_seq,20,1,1,9223372036854775807,1,1,f,t
----
-> myTbl3_col31_seq,21,1,1,9223372036854775807,1,1,f,f
-diff --exclude _INFO_s /tmp/emaj_test/snaps/myschema1_mytbl2b_col20_seq.snap /tmp/emaj_test/snaps2/myschema1_mytbl2b_col20_seq.snap
-2c2
-< mytbl2b_col20_seq,5,1,1,9223372036854775807,1,1,f,t
----
-> mytbl2b_col20_seq,6,1,1,9223372036854775807,1,1,f,f
-diff --exclude _INFO_s /tmp/emaj_test/snaps/myschema2_myTbl3_col31_seq.snap /tmp/emaj_test/snaps2/myschema2_myTbl3_col31_seq.snap
-2c2
-< myTbl3_col31_seq,20,1,1,9223372036854775807,1,1,f,t
----
-> myTbl3_col31_seq,21,1,1,9223372036854775807,1,1,f,f
 diff --exclude _INFO_s /tmp/emaj_test/snaps/phil's_schema3_phil's_seq_1.snap /tmp/emaj_test/snaps2/phil's_schema3_phil's_seq_1.snap
 2c2
 < phil's seq\1,1001,1000,1,2000,1000,1,t,t
 ---
 > phil's seq\1,1002,1000,1,2000,1000,1,t,f
+-- reset the sequence myschema2.myseq1 to its previous characteristics
+reset role;
+alter sequence myschema2.myseq1 restart 1004 start 1000 increment 1 maxvalue 9223372036854775807 minvalue 1000 cache 1 no cycle;
 set role emaj_regression_tests_adm_user;
 -----------------------------
 -- Step 13 : test use of a table with a very long name (63 characters long)
@@ -2908,7 +2896,7 @@ select emaj.emaj_gen_sql_groups('{"grp_tmp_3","grp_tmp_4","grp_tmp"}','Mk1',null
 NOTICE:  drop cascades to view emaj_sql_script
  emaj_gen_sql_groups 
 ---------------------
-                  27
+                  26
 (1 row)
 
 --  \! grep -iP '(insert|update|delete|alter)' /tmp/emaj_test/sql_scripts/allGroups.sql
@@ -4346,13 +4334,13 @@ select hist_id, hist_function, hist_event, hist_object,
    10441 | SNAP_GROUP               | BEGIN                        | phil's group#3",                                                                 | /tmp/emaj_test/snaps                                                                                                           | postgres
    10442 | SNAP_GROUP               | END                          | phil's group#3",                                                                 | 4 tables/sequences processed                                                                                                   | postgres
    10443 | GEN_SQL_GROUP            | BEGIN                        | myGroup1                                                                         | From mark Multi-1 to current situation                                                                                         | postgres
-   10444 | GEN_SQL_GROUP            | END                          | myGroup1                                                                         | 2 generated statements - script exported into /tmp/emaj_test/sql_scripts/myGroup1.sql                                          | postgres
+   10444 | GEN_SQL_GROUP            | END                          | myGroup1                                                                         | 0 generated statements - script exported into /tmp/emaj_test/sql_scripts/myGroup1.sql                                          | postgres
    10445 | GEN_SQL_GROUP            | BEGIN                        | myGroup2                                                                         | From mark Multi-1 to current situation with tables/sequences filtering                                                         | postgres
-   10446 | GEN_SQL_GROUP            | END                          | myGroup2                                                                         | 27 generated statements - script exported into /tmp/emaj_test/sql_scripts/myGroup2.sql                                         | postgres
+   10446 | GEN_SQL_GROUP            | END                          | myGroup2                                                                         | 26 generated statements - script exported into /tmp/emaj_test/sql_scripts/myGroup2.sql                                         | postgres
    10447 | GEN_SQL_GROUP            | BEGIN                        | phil's group#3",                                                                 | From mark M1_rollbackable to current situation                                                                                 | postgres
-   10448 | GEN_SQL_GROUP            | END                          | phil's group#3",                                                                 | 57 generated statements - script exported into /tmp/emaj_test/sql_scripts/Group3.sql                                           | postgres
+   10448 | GEN_SQL_GROUP            | END                          | phil's group#3",                                                                 | 56 generated statements - script exported into /tmp/emaj_test/sql_scripts/Group3.sql                                           | postgres
    10449 | GEN_SQL_GROUP            | BEGIN                        | myGroup1                                                                         | From mark Multi-1 to current situation                                                                                         | postgres
-   10450 | GEN_SQL_GROUP            | END                          | myGroup1                                                                         | 2 generated statements - script not exported                                                                                   | postgres
+   10450 | GEN_SQL_GROUP            | END                          | myGroup1                                                                         | 0 generated statements - script not exported                                                                                   | postgres
    10501 | STOP_GROUP               | BEGIN                        | phil's group#3",                                                                 |                                                                                                                                | postgres
    10502 | LOCK_GROUP               | BEGIN                        | phil's group#3",                                                                 |                                                                                                                                | postgres
    10503 | LOCK_GROUP               | END                          | phil's group#3",                                                                 | 2 tables locked, 0 deadlock(s)                                                                                                 | postgres
@@ -5034,7 +5022,7 @@ select hist_id, hist_function, hist_event, hist_object,
    11183 | CONSOLIDATE_RLBK_GROUP   | BEGIN                        | grp_tmp                                                                          | Erase all between marks Mk5 and End_logged_rollback                                                                            | postgres
    11184 | CONSOLIDATE_RLBK_GROUP   | END                          | grp_tmp                                                                          | 2 tables and 2 sequences processed ; 4 marks deleted                                                                           | postgres
    11185 | GEN_SQL_GROUPS           | BEGIN                        | grp_tmp_3,grp_tmp_4,grp_tmp                                                      | From mark Mk1 to current situation                                                                                             | postgres
-   11186 | GEN_SQL_GROUPS           | END                          | grp_tmp,grp_tmp_3,grp_tmp_4                                                      | 27 generated statements - script exported into /tmp/emaj_test/sql_scripts/allGroups.sql                                        | postgres
+   11186 | GEN_SQL_GROUPS           | END                          | grp_tmp,grp_tmp_3,grp_tmp_4                                                      | 26 generated statements - script exported into /tmp/emaj_test/sql_scripts/allGroups.sql                                        | postgres
    11187 | MODIFY_TABLES            | BEGIN                        |                                                                                  |                                                                                                                                | postgres
    11188 | LOCK_GROUP               | BEGIN                        | grp_tmp                                                                          |                                                                                                                                | postgres
    11189 | LOCK_GROUP               | END                          | grp_tmp                                                                          | 7 tables locked, 0 deadlock(s)                                                                                                 | postgres

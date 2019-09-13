@@ -236,6 +236,11 @@ insert into mytbl1 values (200, E'Start\tEnd ', E'A\\000B'::BYTEA);
 update mytbl1 set col12 = E' Start\tEnd' where col11 = 200;
 delete from mytbl1 where col13 = E'A\\000B'::BYTEA;
 
+-- also apply some changes in sequence characteristics
+reset role;
+alter sequence myschema2.myseq1 minvalue 1 maxvalue 100 increment 10 start 21 restart 11 cache 2 cycle;
+set role emaj_regression_tests_adm_user;
+
 -- reset directory for snaps
 \! rm -Rf /tmp/emaj_test/snaps
 \! mkdir -p /tmp/emaj_test/snaps
@@ -250,7 +255,7 @@ select emaj.emaj_snap_group('phil''s group#3",','/tmp/emaj_test/snaps','CSV HEAD
 \! rm -Rf /tmp/emaj_test/sql_scripts
 \! mkdir /tmp/emaj_test/sql_scripts
 
--- generate sql script for each active group (and check the result with detailed log statistics + number of sequences)
+-- generate a sql script for each active group (and check the result with detailed log statistics + number of sequences)
 select emaj.emaj_gen_sql_group('myGroup1', 'Multi-1', NULL, '/tmp/emaj_test/sql_scripts/myGroup1.sql');
 select coalesce(sum(stat_rows),0) + 2 as check from emaj.emaj_detailed_log_stat_group('myGroup1', 'Multi-1', NULL);
 select emaj.emaj_gen_sql_group('myGroup2', 'Multi-1', NULL, '/tmp/emaj_test/sql_scripts/myGroup2.sql', array[
@@ -267,7 +272,7 @@ select emaj.emaj_gen_sql_group('myGroup1', 'Multi-1', NULL, NULL);
 \! find /tmp/emaj_test/sql_scripts -name '*.sql' -type f -print0 | xargs -0 sed -i -s 's/at .*$/at [ts]$/'
 \! diff /tmp/emaj_test/sql_scripts/myGroup1.sql /tmp/emaj_test/sql_scripts/myGroup1_2.sql
 
--- process \\ in script files
+-- process \\ characters in script files
 \! find /tmp/emaj_test/sql_scripts -name '*.sql' -type f -print0 | xargs -0 sed -i_s -s 's/\\\\/\\/g'
 -- comment transaction commands for the need of the current test
 \! find /tmp/emaj_test/sql_scripts -name '*.sql' -type f -print0 | xargs -0 sed -i -s 's/^BEGIN/--BEGIN/;s/^COMMIT/--COMMIT/'
@@ -303,6 +308,10 @@ rollback;
 -- - the effect of RESTART on is_called and next_val attributes
 -- - internal log_cnt value being reset
 \! diff --exclude _INFO_s /tmp/emaj_test/snaps /tmp/emaj_test/snaps2
+
+-- reset the sequence myschema2.myseq1 to its previous characteristics
+reset role;
+alter sequence myschema2.myseq1 restart 1004 start 1000 increment 1 maxvalue 9223372036854775807 minvalue 1000 cache 1 no cycle;
 
 set role emaj_regression_tests_adm_user;
 

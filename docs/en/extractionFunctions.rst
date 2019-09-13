@@ -89,7 +89,7 @@ The structure of log tables is described :ref:`here <logTableStructure>`.
 SQL script generation to replay logged updates
 ----------------------------------------------
 
-Log tables contain all needed information to replay updates. Therefore, it is possible to generate SQL statements corresponding to all updates that occurred between two marks or between a mark and the current situation, and record them into a file. This is the purpose of the *emaj_gen_sql_group()* function.
+Log tables contain all needed information to replay updates. Therefore, it is possible to generate SQL statements corresponding to all updates that occurred between two marks or between a mark and the current situation. This is the purpose of the *emaj_gen_sql_group()* function.
 
 So these updates can be replayed after the corresponding tables have been restored in their state at the initial mark, without being obliged to rerun application programs.
 
@@ -103,7 +103,7 @@ A *NULL* value or an empty string may be used as end mark, representing the curr
 
 The keyword *'EMAJ_LAST_MARK'* can be used as mark name, representing the last set mark.
 
-The output file name must be supplied as an absolute pathname. It must have the appropriate permission so that the PostgreSQL instance can write to it. If the file already exists, its content is overwritten.
+If supplied, the output file name must be an absolute pathname. It must have the appropriate permission so that the PostgreSQL instance can write to it. If the file already exists, its content is overwritten.
 
 The output file name may be set to NULL. In this case, the SQL script is prepared in a temporary table that can then be accessed through a temporary view, *emaj_sql_script*. Using *psql*, the script can be exported with both commands::
 
@@ -112,7 +112,7 @@ The output file name may be set to NULL. In this case, the SQL script is prepare
 
 This method allows to generate a script in a file located outside the file systems accessible by the PostgreSQL instance.
 
-The last parameter of the emaj_gen_sql_group() function is optional. It allows filtering of the tables and sequences to process. If the parameter is omitted or has a *NULL* value, all tables and sequences of the tables group are processed. If specified, the parameter must be expressed as a non empty array of text elements, each of them representing a schema qualified table or sequence name. Both syntaxes can be used::
+The last parameter of the *emaj_gen_sql_group()* function is optional. It allows filtering of the tables and sequences to process. If the parameter is omitted or has a *NULL* value, all tables and sequences of the tables group are processed. If specified, the parameter must be expressed as a non empty array of text elements, each of them representing a schema qualified table or sequence name. Both syntaxes can be used::
 
    ARRAY['sch1.tbl1','sch1.tbl2']
 
@@ -144,7 +144,7 @@ The used technology may result to doubled backslashes in the output file. These 
 
    sed 's/\\\\/\\/g' <file.name> | psql ...
 
-As the function can generate a large or even very large file (depending on the log volume), it is the user's responsibility to provide a sufficient disk space.
+As the function can generate a large, or even very large, file (depending on the log volume), it is the user's responsibility to provide a sufficient disk space.
 
 It is also the user's responsibility to deactivate application triggers, if any exist, before executing the generated script.
 
@@ -153,4 +153,3 @@ Using the *emaj_gen_sql_groups()* function, it is possible to generate a sql scr
    SELECT emaj.emaj_gen_sql_groups('<group.names.array>', '<start.mark>', '<end.mark>', '<file>' [, <tables/sequences.array>);
 
 More information about :doc:`multi-groups functions <multiGroupsFunctions>`.
-

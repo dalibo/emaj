@@ -198,7 +198,7 @@ select sequ_schema, sequ_name, sequ_time_id, sequ_last_val, sequ_is_called from 
  emaj_myschema2 | mytbl5_log_seq    |        20001 |            16 | t
  emaj_myschema2 | mytbl6_log_seq    |        20001 |            70 | t
  myschema2      | myseq1            |        20001 |          9999 | f
- myschema2      | myTbl3_col31_seq  |        20001 |            21 | f
+ myschema2      | myTbl3_col31_seq  |        20001 |            20 | t
  emaj_myschema2 | mytbl1_log_seq    |        20002 |            41 | t
  emaj_myschema2 | mytbl2_log_seq    |        20002 |            12 | t
  emaj_myschema2 | myTbl3_log_seq    |        20002 |            30 | t
@@ -206,7 +206,7 @@ select sequ_schema, sequ_name, sequ_time_id, sequ_last_val, sequ_is_called from 
  emaj_myschema2 | mytbl5_log_seq    |        20002 |            17 | t
  emaj_myschema2 | mytbl6_log_seq    |        20002 |            77 | t
  myschema2      | myseq1            |        20002 |          1004 | f
- myschema2      | myTbl3_col31_seq  |        20002 |            21 | f
+ myschema2      | myTbl3_col31_seq  |        20002 |            20 | t
  emaj_myschema2 | mytbl1_log_seq    |        20201 |            51 | t
  emaj_myschema2 | mytbl2_log_seq    |        20201 |            14 | t
  emaj_myschema2 | myTbl3_log_seq    |        20201 |            40 | t
@@ -214,7 +214,7 @@ select sequ_schema, sequ_name, sequ_time_id, sequ_last_val, sequ_is_called from 
  emaj_myschema2 | mytbl5_log_seq    |        20201 |            18 | t
  emaj_myschema2 | mytbl6_log_seq    |        20201 |            82 | t
  myschema2      | myseq1            |        20201 |          9999 | f
- myschema2      | myTbl3_col31_seq  |        20201 |            21 | f
+ myschema2      | myTbl3_col31_seq  |        20201 |            20 | t
  emaj_myschema2 | mytbl1_log_seq    |        20202 |            61 | t
  emaj_myschema2 | mytbl2_log_seq    |        20202 |            16 | t
  emaj_myschema2 | myTbl3_log_seq    |        20202 |            50 | t
@@ -222,7 +222,7 @@ select sequ_schema, sequ_name, sequ_time_id, sequ_last_val, sequ_is_called from 
  emaj_myschema2 | mytbl5_log_seq    |        20202 |            19 | t
  emaj_myschema2 | mytbl6_log_seq    |        20202 |            89 | t
  myschema2      | myseq1            |        20202 |          1004 | f
- myschema2      | myTbl3_col31_seq  |        20202 |            21 | f
+ myschema2      | myTbl3_col31_seq  |        20202 |            20 | t
  emaj_myschema2 | mytbl1_log_seq    |        20203 |            61 | t
  emaj_myschema2 | mytbl2_log_seq    |        20203 |            16 | t
  emaj_myschema2 | myTbl3_log_seq    |        20203 |            50 | t
@@ -230,7 +230,7 @@ select sequ_schema, sequ_name, sequ_time_id, sequ_last_val, sequ_is_called from 
  emaj_myschema2 | mytbl5_log_seq    |        20203 |            19 | t
  emaj_myschema2 | mytbl6_log_seq    |        20203 |            89 | t
  myschema2      | myseq1            |        20203 |          1004 | f
- myschema2      | myTbl3_col31_seq  |        20203 |            21 | f
+ myschema2      | myTbl3_col31_seq  |        20203 |            20 | t
  emaj_myschema2 | mytbl1_log_seq    |        20204 |            81 | t
  emaj_myschema2 | mytbl2_log_seq    |        20204 |            20 | t
  emaj_myschema2 | myTbl3_log_seq    |        20204 |            70 | t
@@ -238,7 +238,7 @@ select sequ_schema, sequ_name, sequ_time_id, sequ_last_val, sequ_is_called from 
  emaj_myschema2 | mytbl5_log_seq    |        20204 |            21 | t
  emaj_myschema2 | mytbl6_log_seq    |        20204 |           101 | t
  myschema2      | myseq1            |        20204 |          1004 | f
- myschema2      | myTbl3_col31_seq  |        20204 |            21 | f
+ myschema2      | myTbl3_col31_seq  |        20204 |            20 | t
  emaj_myschema2 | mytbl1_log_seq    |        20206 |            99 | t
  emaj_myschema2 | mytbl2_log_seq    |        20206 |            21 | t
  emaj_myschema2 | myTbl3_log_seq    |        20206 |            70 | t
@@ -246,7 +246,7 @@ select sequ_schema, sequ_name, sequ_time_id, sequ_last_val, sequ_is_called from 
  emaj_myschema2 | mytbl5_log_seq    |        20206 |            21 | t
  emaj_myschema2 | mytbl6_log_seq    |        20206 |           101 | t
  myschema2      | myseq1            |        20206 |          1004 | t
- myschema2      | myTbl3_col31_seq  |        20206 |            21 | f
+ myschema2      | myTbl3_col31_seq  |        20206 |            20 | t
 (130 rows)
 
 -- user tables
