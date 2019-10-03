@@ -1034,8 +1034,7 @@ begin;
 -----------------------------------------------------------------------------------------------------------------------------------------------
  Warning: Some E-Maj event triggers exist but are disabled. You may enable them using the emaj_enable_protection_by_event_triggers() function.
  In group "myGroup2", the log table "emaj_myschema2"."mytbl7_log" is not found.
- 1 tables groups are not in sync with their emaj_group_def configuration or need to be repaired.
-(3 rows)
+(2 rows)
 
   select emaj.emaj_enable_protection_by_event_triggers();
  emaj_enable_protection_by_event_triggers 

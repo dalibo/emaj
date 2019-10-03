@@ -2415,8 +2415,7 @@ select * from emaj.emaj_verify_all();
 ------------------------------------------------------------------------------------------------------------------------------------------------------------------------
  Warning: Some E-Maj event triggers exist but are disabled. You may enable them using the emaj_enable_protection_by_event_triggers() function.
  In group "phil's group#3",", the structure of the application table "phil's schema3"."mytbl4" is not coherent with its log table ("emaj_phil's schema3"."mytbl4_log").
- 1 tables groups are not in sync with their emaj_group_def configuration or need to be repaired.
-(3 rows)
+(2 rows)
 
 delete from emaj.emaj_group_def where grpdef_schema = 'phil''s schema3' and grpdef_tblseq = 'mytbl4';
 select emaj.emaj_alter_group('phil''s group#3",','remove_the_damaged_table');
@@ -2453,8 +2452,7 @@ select * from emaj.emaj_verify_all();
 -----------------------------------------------------------------------------------------------------------------------------------------------
  Warning: Some E-Maj event triggers exist but are disabled. You may enable them using the emaj_enable_protection_by_event_triggers() function.
  In group "phil's group#3",", the log table "emaj_phil's schema3"."mytbl4_log" is not found.
- 1 tables groups are not in sync with their emaj_group_def configuration or need to be repaired.
-(3 rows)
+(2 rows)
 
 delete from emaj.emaj_group_def where grpdef_schema = 'phil''s schema3' and grpdef_tblseq = 'mytbl4';
 select emaj.emaj_alter_group('phil''s group#3",','remove_the_damaged_table_2');
@@ -2995,11 +2993,10 @@ select emaj.emaj_enable_protection_by_event_triggers();
 (1 row)
 
 select * from emaj.emaj_verify_all();
-                                         emaj_verify_all                                         
--------------------------------------------------------------------------------------------------
+                                      emaj_verify_all                                      
+-------------------------------------------------------------------------------------------
  In group "grp_tmp", the log sequence "emaj_phil's schema3"."mytbl4_log_seq" is not found.
- 1 tables groups are not in sync with their emaj_group_def configuration or need to be repaired.
-(2 rows)
+(1 row)
 
 --     a removal while the group is LOGGING fails
 select emaj.emaj_remove_table('phil''s schema3','mytbl4');
@@ -3048,11 +3045,10 @@ NOTICE:  trigger "emaj_trunc_trg" for relation "phil's schema3.mytbl4" does not 
 (1 row)
 
 select * from emaj.emaj_verify_all();
-                                         emaj_verify_all                                         
--------------------------------------------------------------------------------------------------
+  emaj_verify_all  
+-------------------
  No error detected
- 1 tables groups are not in sync with their emaj_group_def configuration or need to be repaired.
-(2 rows)
+(1 row)
 
 select emaj.emaj_start_group('grp_tmp','Group restart');
  emaj_start_group 

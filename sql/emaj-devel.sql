@@ -9409,7 +9409,6 @@ $emaj_verify_all$
   DECLARE
     v_errorFound             BOOLEAN = FALSE;
     v_nbMissingEventTrigger  INT;
-    v_nbOutOfSyncGroup       INT;
     r_object                 RECORD;
   BEGIN
 -- Global checks
@@ -9470,12 +9469,6 @@ $emaj_verify_all$
     END IF;
 -- check the value of the group_has_waiting_changes column of the emaj_group table, and reset it at the right value if needed
     PERFORM emaj._adjust_group_properties();
--- if there are tables groups out of sync with emaj_group_def, report it
-    SELECT count(*) INTO v_nbOutOfSyncGroup FROM emaj.emaj_group
-      WHERE group_has_waiting_changes;
-    IF v_nbOutOfSyncGroup > 0 THEN
-      RETURN NEXT v_nbOutOfSyncGroup || ' tables groups are not in sync with their emaj_group_def configuration or need to be repaired.';
-    END IF;
     RETURN;
   END;
 $emaj_verify_all$;

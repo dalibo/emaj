@@ -28,6 +28,9 @@ E-Maj - Change log
   * The new emaj_sync_def_group() allows to synchronize the emaj_group_def
     table with the current content of created groups whose content may have
     been dynamically modified.
+  * The emaj_verify_all() function does not return a warning anymore
+    indicating whether some tables groups need to be altered to match their
+    emaj_group_def configuration.
   * The part of mark names generated from the timestamp, now use the
     clock_timestamp (instead of the transaction timestamp) and has one
     additional digit.
