@@ -193,7 +193,7 @@ delete from emaj.emaj_group_def;
 insert into emaj.emaj_group_def values ('myGroup1','myschema1','mytbl1',20);
 insert into emaj.emaj_group_def values ('myGroup1','myschema1','mytbl2',NULL);
 insert into emaj.emaj_group_def values ('myGroup1','myschema1','mytbl2b',NULL);
-insert into emaj.emaj_group_def values ('myGroup1','myschema1','myTbl3_col31_seq',1);
+insert into emaj.emaj_group_def values ('myGroup1','myschema1','myTbl3_col31_seq');
 insert into emaj.emaj_group_def values ('myGroup1','myschema1','myTbl3',10);
 insert into emaj.emaj_group_def values ('myGroup1','myschema1','mytbl4',20);
 insert into emaj.emaj_group_def values ('myGroup2','myschema2','mytbl1');

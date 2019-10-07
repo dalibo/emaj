@@ -8,11 +8,11 @@ L’accès à Emaj_web depuis un navigateur affiche la page d’accueil.
 
 Pour se connecter à une base de données, sélectionnez l’instance souhaitée dans l’arborescence de gauche ou dans l’onglet « serveurs », et remplissez les identifiants et mots de passe de connexion. Plusieurs connexions peuvent rester ouvertes simultanément.
 
-Une fois connecté à une base de données dans laquelle l'extension emaj a été installée, l’utilisateur interagit avec l’extension, en fonction des droits dont il dispose (super-utilisateur, *emaj_adm* ou *emaj_viewer*).
+Une fois connecté à une base de données dans laquelle l'extension emaj a été installée, l’utilisateur interagit avec l’extension en fonction des droits dont il dispose (super-utilisateur, *emaj_adm* ou *emaj_viewer*).
 
 Située à gauche, l'arborescence de navigation offre la visibilité de toutes les instances configurées, réparties éventuellement dans des groupes d’instances, et des bases de données qu’elles contiennent. En dépliant l’objet base de données, on accède aux groupes de tables E-Maj et aux schémas existants.
 
-.. figure:: images/web01.png
+.. figure:: images/emajweb_browser.png
 	:align: center
 
 	Figure 1 – Arborescence de navigation.
@@ -23,16 +23,15 @@ Liste des groupes de tables
 
 En sélectionnant une base de données, l'utilisateur accède à une page qui liste les groupes de tables créés dans cette base de données.
 
-.. figure:: images/web02.png
+.. figure:: images/emajweb_groups.png
    :align: center
 
    Figure 2 – Liste des groupes de tables.
 
-Trois listes distinctes sont affichées :
+Deux listes distinctes sont affichées :
 
 * les groupes de tables en état « *démarrés* »,
-* les groupes de tables en état « *arrêtés* »,
-* les groupes de tables référencés dans la table :ref:`emaj_group_def <emaj_group_def>`, mais qui n’ont pas encore été créés.
+* les groupes de tables en état « *arrêtés* ».
 
 Pour chaque groupe de tables créé, sont affichés les attributs suivants :
 
@@ -58,12 +57,12 @@ Les entêtes de page contiennent :
 
 Deux barres d'icônes permettent de naviguer dans les différentes fonctions d'Emaj_web : l'une regroupe les fonctions globales de l'interface, et l'autre les fonctions associées à un groupe de tables particulier.
 
-.. figure:: images/web03.png
+.. figure:: images/emajweb_maintabs.png
    :align: center
 
    Figure 3 – Barre d'icônes principale.
 
-.. figure:: images/web04.png
+.. figure:: images/emajweb_groupstabs.png
    :align: center
 
    Figure 4 – Barre d'icônes des groupes de tables.
@@ -74,7 +73,7 @@ Sur certains tableaux, il est possible de trier en dynamique les lignes affiché
 
 Sur certains tableaux également, une icône à gauche de la ligne de titre fait apparaître ou disparaître des champs de saisie permettant le filtrage des lignes affichées.
 
-.. figure:: images/web05.png
+.. figure:: images/emajweb_filter.png
    :align: center
 
    Figure 5 – Filtrage des groupes de tables démarrés. Ne sont affichés ici que les groupes de tables dont le nom comprend « *my* » et contenant plus de 2 marques, cette liste étant triée par ordre décroissant du nombre de tables.
@@ -87,7 +86,7 @@ Détail d'un groupe de tables
 
 Depuis la page listant les groupes de tables, il est possible d'en savoir davantage sur un groupe de tables particulier en cliquant sur son nom. Cette page est aussi accessible par l'icône « *Propriétés* » de la barre des groupes ou par l'arborescence de gauche.
 
-.. figure:: images/web06.png
+.. figure:: images/emajweb_groupproperties.png
    :align: center
 
    Figure 6 – Détail d'un groupe de tables
@@ -123,7 +122,7 @@ Si la borne de fin correspond à la situation courante, une case à cocher perme
 
 La figure suivante montre un exemple de statistiques détaillées.
 
-.. figure:: images/web07.png
+.. figure:: images/emajweb_groupstat.png
    :align: center
 
    Figure 7 – Statistiques détaillées des mises à jour enregistrées entre 2 marques
@@ -132,7 +131,7 @@ La page restituée contient une première ligne contenant des compteurs globaux.
 
 Sur chacune des lignes du tableau de statistiques, un bouton « *SQL* » permet à l'utilisateur de visualiser facilement le contenu des mises à jour enregistrées dans les tables de log. Un clic sur ce bouton ouvre l'éditeur de requêtes SQL et propose la requête visualisant le contenu de la table de log correspondant à la sélection (table, tranche de temps, rôle, type de requête). L'utilisateur peut la modifier à sa convenance avant de l'exécuter, afin, par exemple, de cibler davantage les lignes qui l'intéressent.
 
-.. figure:: images/web08.png
+.. figure:: images/emajweb_rollbacksim.png
    :align: center
 
    Figure 8 – Résultat de la simulation d'un rollback avec estimation du nombre de mises à jour par table.
@@ -146,51 +145,37 @@ L'onglet « *Contenu* » de la barre des groupes permet d'obtenir une vision s
 
 Le tableau affiché reprend, pour chaque table et séquence du groupe, les caractéristiques configurées dans la table :ref:`emaj_group_def <emaj_group_def>`, ainsi que la place prise par la table de log et son index.
 
-.. figure:: images/web09.png
+.. figure:: images/emajweb_groupcontent.png
    :align: center
 
    Figure 9 – Contenu d'un groupe de tables.
 
 
-Configuration des groupes de tables
------------------------------------
+Schémas et configuration des groupes de tables
+----------------------------------------------
 
-En sélectionnant l’onglet « *Configuration Groupes* » de la barre principale, l'utilisateur atteint la fonction qui gère la définition du contenu des groupes de tables.
+L’onglet « *Schémas* » permet de lister les schémas présents dans la base de données. 
 
-La partie supérieure de la page liste les schémas existants dans la base de données (à l'exception des schémas dédiés à E-Maj). En sélectionnant un schéma, la liste de ses tables et séquences apparaît.
+En en sélectionnant un, deux listes sont alors affichées : celle des tables puis celle des séquences contenues dans ce schéma.
 
-.. figure:: images/web10.png
+Pour chaque liste, on trouve les propriétés E-Maj et quelques caractéristiques générales des objets. Des boutons d’action permettent d’accéder à leur structure ou contenu, et de gérer l’assignation des objets dans les groupes de tables.
+
+.. figure:: images/emajweb_schemas.png
    :align: center
 
-   Figure 10 – Configuration des groupes de tables.
+   Figure 10 – Contenu des schémas et configuration des groupes de tables.
 
-Il est alors possible de voir ou de modifier l’affectation des tables et séquences dans les groupes. Les actions effectuées ici modifient le contenu de la table :ref:`emaj_group_def <emaj_group_def>` utilisée pour la création du groupe de tables.
+Triggers
+--------
 
-Sont listés pour chaque table ou séquence :
+L’onglet « *Triggers* » liste les triggers applicatifs (ceux qui ne sont pas liés à E-Maj), avec leurs principales caractéristiques.
 
-* son type,
-* le groupe de table auquel il appartient, s'il y en a un,
-* les attributs de la table ou de la séquence dans :ref:`emaj_group_def <emaj_group_def>`, si elle est déjà affectée à un groupe :
+Un bouton permet de changer le mode de désactivation lors des rollbacks E-Maj.
 
-  * le niveau de priorité affecté dans le groupe,
-  * le suffixe définissant le schéma de log,
-  * le préfixe éventuel des noms des objets E-Maj associés à la table,
-  * le nom du tablespace éventuel supportant la table de log,
-  * le nom du tablespace éventuel supportant l'index de la table de log,
+.. figure:: images/emajweb_triggers.png
+   :align: center
 
-* son propriétaire,
-* le tablespace auquel elle est rattachée, s'il y en a un,
-* son commentaire enregistré dans la base de données.
-
-Les deux listes de schémas et de tables et séquences affichent également les objets déjà référencés dans la table :ref:`emaj_group_def <emaj_group_def>` mais qui n'existe pas dans la base de données. Ces objets sont identifiés par une icône « ! » dans la première colonne de chaque tableau.
-
-A l'aide de boutons, il est possible :
-
-* d'assigner une table ou une séquence à un groupe de tables nouveau ou existant,
-* de modifier les propriétés de la table ou de la séquence dans son groupe de tables,
-* de détacher une table ou une séquence de son groupe de tables.
-
-Notons que les modifications apportées au contenu de la table :ref:`emaj_group_def <emaj_group_def>` ne prendront effet que lorsque les groupes de tables concernés seront soit modifiés, soit supprimés puis recréés.
+   Figure 11 – Liste des triggers applicatifs
 
 
 Suivi des opérations de rollback
@@ -206,26 +191,16 @@ L'utilisateur peut filtrer la liste des rollbacks terminés sur une profondeur d
 
 Pour chaque rollback tracé consolidable listé, un bouton permet d’exécuter la consolidation.
 
-.. figure:: images/web11.png
+.. figure:: images/emajweb_rollbacks.png
    :align: center
 
-   Figure 11 – Suivi des opérations de rollback.
-
-
-Contenu des schémas
--------------------
-
-L’onglet *Schémas* permet de sélectionner un schéma, pour :
-
-* lister les tables ou les séquences qu’il contient,
-* voir la structure ou le contenu d’une table particulière,
-* voir les propriétés d’une séquence particulière.
+   Figure 12 – Suivi des opérations de rollback.
 
 
 État de l'environnement E-Maj
 -----------------------------
 
-En sélectionnant l’onglet « *Envir. E-Maj* » de la barre principale, l'utilisateur accède à une synthèse de l'état de l'environnement E-Maj.
+En sélectionnant l’onglet « *E-Maj* » de la barre principale, l'utilisateur accède à une synthèse de l'état de l'environnement E-Maj.
 
 Sont d'abord restitués :
 
@@ -234,8 +209,10 @@ Sont d'abord restitués :
 
 Puis l'intégrité de l'environnement est testé ; le résultat de l'exécution de la fonction :ref:`emaj_verify_all() <emaj_verify_all>` est affiché.
 
-.. figure:: images/web12.png
+Enfin sont listés les paramètres de fonctionnement de l’extension emaj, qu’ils soient présents dans la table *emaj_param* ou valorisés par défaut.
+
+.. figure:: images/emajweb_emaj.png
    :align: center
 
-   Figure 12 – État de l'environnement E-Maj 
+   Figure 13 – État de l'environnement E-Maj 
 

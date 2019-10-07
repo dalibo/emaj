@@ -12,7 +12,7 @@ Once connected to a database where the emaj extension has been installed, the us
 
 On the left, the browser tree shows all the configured instances, that may be split into instances groups, and all the databases they contain. By unfolding a database object, the user reaches the E-Maj tables groups and the existing schemas.
 
-.. figure:: images/web01.png
+.. figure:: images/emajweb_browser.png
 	:align: center
 
 	Figure 1 – The browser tree.
@@ -23,15 +23,15 @@ Tables groups list
 
 By selecting a database, the user reaches a page that lists all tables groups created in this database.
 
-.. figure:: images/web02.png
+.. figure:: images/emajweb_groups.png
    :align: center
 
    Figure 2 – Tables groups list.
 
-This page displays three lists: 
-* the tables groups in *LOGGING* state
-* the tables groups in *IDLE* state,
-* the tables groups referenced into the :ref:`emaj_group_def <emaj_group_def>` table but not yet created.
+This page displays two lists: 
+
+* the tables groups in *LOGGING* state,
+* the tables groups in *IDLE* state.
 
 For each created tables group, the following attributes are displayed:
 
@@ -57,12 +57,12 @@ The page headers contain:
 
 The user can navigate in Emaj_web functions using two icon bars: one for the general purpose functions and the other for the functions concerning a single tables group.
 
-.. figure:: images/web03.png
+.. figure:: images/emajweb_maintabs.png
    :align: center
 
    Figure 3 – Main icons bar.
 
-.. figure:: images/web04.png
+.. figure:: images/emajweb_groupstabs.png
    :align: center
 
    Figure 4 – Tables groups icons bar.
@@ -73,7 +73,7 @@ On some tables, it is possible to dynamically sort displayed rows, using small v
 
 On some tables too, an icon located at the left of the header row, let show or hide input fields that can be used to dynamically filter displayed rows.
 
-.. figure:: images/web05.png
+.. figure:: images/emajweb_filter.png
    :align: center
 
    Figure 5 – Filtering the tables groups in *LOGGING* state. Here, only tables groups whose name contains “my” and having more than 2 marks are displayed, sorted in descending order by number of tables.
@@ -86,7 +86,7 @@ Tables group details
 
 From the tables groups list page, it is possible to get more information about a particular tables group by clicking on its name. This page is also accessible with the “*Properties*” icon of the groups bar and through the left browsing tree.
 
-.. figure:: images/web06.png
+.. figure:: images/emajweb_groupproperties.png
    :align: center
 
    Figure 6 – Details of a tables group
@@ -123,7 +123,7 @@ If the end of the range corresponds to the current situation, a check box allows
 
 The figure below shows an example of detailed statistics.
 
-.. figure:: images/web07.png
+.. figure:: images/emajweb_groupstat.png
    :align: center
 
    Figure 7 – Detailed statistics about updates recorded between two marks
@@ -132,7 +132,7 @@ The displayed page contains a first line returning global counters.
 
 On each line of the statistics table, the user can click on a “*SQL*” button to easily look at the log tables content. A click on this button opens the SQL editor window and proposes the statement displaying the content of the log table that corresponds to the selection (table, time frame, role, statement type). The user can modify this suggested statement before executing it to better fit his needs.
 
-.. figure:: images/web08.png
+.. figure:: images/emajweb_rollbacksim.png
    :align: center
 
    Figure 8 – Result of the rollback simulation, with the estimated number of updates for each table. 
@@ -146,51 +146,38 @@ Using the “*Content*” tab of the group's bar, it is possible to get a summar
 
 For each table and sequence belonging to the group, the displayed table shows the characteristics configured into the :ref:`emaj_group_def <emaj_group_def>` table, as well as the disk space used by the log table and its index.
 
-.. figure:: images/web09.png
+.. figure:: images/emajweb_groupcontent.png
    :align: center
 
    Figure 9 – A tables group's content.
 
 
-Tables groups configuration
----------------------------
+Schemas and tables groups configuration
+---------------------------------------
 
-By selecting the “*Groups configuration*” tab of the main bar, the user reaches the function that manages the tables groups content configuration.
+The "*Schemas*" tab displays the list of schemas contained in the database.
 
-The upper part of the page lists the existing schemas (except schemas dedicated to E-Maj). By selecting a schema, the list of its tables and sequences appears.
+By selecting one of them, two additional lists are displayed: the tables and the sequences contained by this schema.
 
-.. figure:: images/web10.png
+For both lists, the E-Maj properties and some general properties of each object become visible. Some action buttons allow to reach their structure or content and manage their assignment to tables groups.
+
+.. figure:: images/emajweb_schemas.png
    :align: center
 
-   Figure 10 – Tables groups content configuration.
+   Figure 10 – Schema content and tables groups configuration.
 
-The user can then view or modify the tables and sequences assignment into tables groups. All these actions update the content of the :ref:`emaj_group_def <emaj_group_def>` table used for the tables groups creation.
 
-The following information is listed for each table or sequence:
+Triggers
+--------
 
-* its type
-* the tables group it belongs to, if any,
-* the following attributes of the table or sequence in the :ref:`emaj_group_def <emaj_group_def>` table, if assigned:
+The "*Triggers*"tab lists the application triggers (those not linked to E-Maj), with their main characteristics. 
 
-   * the priority level in the group,
-   * the suffix that defines log schema,
-   * the prefix used to build the E-Maj object names for this table,
-   * the optional tablespace name for the log table,
-   * the optional tablespace name for the log table's index,
+A button allows to switch their de-activation mode at E-Maj rollback time.
 
-* its owner,
-* the tablespace it belongs to, if any,
-* the associated comment in the database.
+.. figure:: images/emajweb_triggers.png
+   :align: center
 
-The schemas list and the tables and sequences list also display the objects that are known in the :ref:`emaj_group_def <emaj_group_def>` table but don't exist in the database. These objects are identified with a “!” icon in the first column of each list.
-
-With buttons, it is possible to:
-
-* assign a table or a sequence to a new or an already known tables group,
-* modify the properties of a table or a sequence inside its tables group,
-* remove a table or a sequence from its tables group.
-
-Note that any change applied in the :ref:`emaj_group_def <emaj_group_def>` table's content will only be effective when the concerned tables groups will be altered, or dropped and re-created.
+   Figure 11 – Application triggers list.
 
 Monitoring rollback operations
 ------------------------------
@@ -205,26 +192,16 @@ For completed operations, the user can filter on a more or less deep history.
 
 For each consolidable rollback, a button allows to effectively consolidate the operation.
 
-.. figure:: images/web11.png
+.. figure:: images/emajweb_rollbacks.png
    :align: center
 
-   Figure 11 – Rollback operations monitoring.
-
-
-Schemas content
----------------
-
-The *Schemas* tab allows to select schemas in order to:
-
-* list tables or sequences it contains,
-* see the structure or the content of a particular table,
-* see the properties of a particular sequence.
+   Figure 12 – Rollback operations monitoring.
 
 
 E-Maj environment state
 -----------------------
 
-By selecting the “*E-Maj*” tab of the main bar, the user reaches an overview of the E-Maj environment state.
+By selecting the "*E-Maj*" tab of the main bar, the user reaches an overview of the E-Maj environment state.
 
 First, some items are displayed:
 
@@ -233,7 +210,9 @@ First, some items are displayed:
 
 Then, the environment integrity is checked; the result of the :ref:`emaj_verify_all() <emaj_verify_all>` function execution is displayed.
 
-.. figure:: images/web12.png
+The page ends with a list of the extension parameters value, be they present in the *emaj_param table* or set to their default value.
+
+.. figure:: images/emajweb_emaj.png
    :align: center
 
-   Figure 12 – The E-Maj environment state.
+   Figure 13 – The E-Maj environment state.
