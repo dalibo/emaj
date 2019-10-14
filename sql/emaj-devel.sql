@@ -3006,7 +3006,8 @@ $_drop_tbl$
 -- (it may delete rows for other already processed time_ranges for the same table)
       DELETE FROM emaj.emaj_sequence WHERE sequ_schema = r_rel.rel_log_schema AND sequ_name = r_rel.rel_log_sequence;
 -- delete rows related to the table from emaj_seq_hole table
--- (it may delete rows for other already processed time_ranges for the same table)
+-- (it may delete holes for timeranges that do not belong to the group, if a table has been moved to another group,
+--  but is safe enough for rollbacks)
       DELETE FROM emaj.emaj_seq_hole WHERE sqhl_schema = r_rel.rel_schema AND sqhl_table = r_rel.rel_tblseq;
     END IF;
 -- keep a trace of the table group ownership history and finaly delete the table reference from the emaj_relation table
@@ -6069,7 +6070,9 @@ $_delete_before_mark_group$
         USING v_markGlobalSeq;
     END LOOP;
 -- process emaj_seq_hole content
--- delete all existing holes (if any) before the mark
+-- delete all existing holes, if any, before the mark
+-- (it may delete holes for timeranges that do not belong to the group, if a table has been moved to another group,
+--  but is safe enough for rollbacks)
     DELETE FROM emaj.emaj_seq_hole USING emaj.emaj_relation
       WHERE rel_group = v_groupName AND rel_kind = 'r'
         AND rel_schema = sqhl_schema AND rel_tblseq = sqhl_table
@@ -7473,7 +7476,7 @@ $_rlbk_end$
         WHERE sequ_schema = rel_log_schema AND sequ_name = rel_log_sequence AND upper_inf(rel_time_range)
           AND rel_group = ANY (v_groupNames) AND rel_kind = 'r'
           AND sequ_time_id > v_markTimeId
-          AND lower(rel_time_range) <> sequ_time_id;
+          AND sequ_time_id <@ rel_time_range AND sequ_time_id <> lower(rel_time_range);
     END IF;
 -- delete the now useless 'LOCK TABLE' steps from the emaj_rlbk_plan table
     v_stmt = 'DELETE FROM emaj.emaj_rlbk_plan ' ||
@@ -7894,7 +7897,7 @@ $_delete_between_marks_group$
       WHERE sequ_schema = rel_log_schema AND sequ_name = rel_log_sequence AND rel_time_range @> v_lastMarkTimeId
         AND rel_group = v_groupName AND rel_kind = 'r'
         AND sequ_time_id > v_firstMarkTimeId AND sequ_time_id < v_lastMarkTimeId
-        AND lower(rel_time_range) <> sequ_time_id;
+        AND sequ_time_id <@ rel_time_range AND sequ_time_id <> lower(rel_time_range);
 -- in emaj_mark, reset the mark_logged_rlbk_target_mark column to null for marks of the group that will remain
 --    and that may have one of the deleted marks as target mark from a previous logged rollback operation
     UPDATE emaj.emaj_mark SET mark_logged_rlbk_target_mark = NULL
@@ -8001,8 +8004,11 @@ $_reset_groups$
 -- delete emaj_sequence rows related to the tables of the groups
     DELETE FROM emaj.emaj_sequence USING emaj.emaj_relation
       WHERE sequ_schema = rel_log_schema AND sequ_name = rel_log_sequence
-        AND rel_group = ANY (v_groupNames) AND rel_kind = 'r';
+        AND rel_group = ANY (v_groupNames) AND rel_kind = 'r'
+        AND sequ_time_id <@ rel_time_range AND sequ_time_id <> lower(rel_time_range);
 -- delete all sequence holes for the tables of the groups
+-- (it may delete holes for timeranges that do not belong to the group, if a table has been moved to another group,
+--  but is safe enough for rollbacks)
     DELETE FROM emaj.emaj_seq_hole USING emaj.emaj_relation
       WHERE rel_schema = sqhl_schema AND rel_tblseq = sqhl_table
         AND rel_group = ANY (v_groupNames) AND rel_kind = 'r';

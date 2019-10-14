@@ -53,6 +53,10 @@ E-Maj - Change log
   * Fix a bug that occured when a table has been moved from one tables group
     to another and then removed from any group. The next tables group
     consistency checks erroneously detected a missing log table.
+  * Fix 3 bugs that occured when a table has been moved from one tables group
+    to another and then this later group is either rolled back or reset or a 
+    rollback is consolidated. The next attempt to get log statistics on the
+    former group failed.
 
 3.1.0 (2019-Jun-20)
 ------

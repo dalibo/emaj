@@ -140,7 +140,7 @@ select funcname, calls from pg_stat_user_functions
  _get_previous_mark_group                  |    37
  _lock_groups                              |   289
  _log_stat_groups                          |    33
- _log_stat_tbl                             |  5586
+ _log_stat_tbl                             |  5579
  _log_truncate_fnct                        |     2
  _modify_tables                            |    21
  _move_seq                                 |    20
