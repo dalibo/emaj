@@ -17,7 +17,7 @@ delete from emaj.emaj_group_def;
 insert into emaj.emaj_group_def values ('myGroup1','myschema1','mytbl1',20);
 insert into emaj.emaj_group_def values ('myGroup1','myschema1','mytbl2',NULL);
 insert into emaj.emaj_group_def values ('myGroup1','myschema1','mytbl2b',NULL);
-insert into emaj.emaj_group_def values ('myGroup1','myschema1','myTbl3_col31_seq',1);
+insert into emaj.emaj_group_def values ('myGroup1','myschema1','myTbl3_col31_seq');
 insert into emaj.emaj_group_def values ('myGroup1','myschema1','myTbl3',10);
 insert into emaj.emaj_group_def values ('myGroup1','myschema1','mytbl4',20);
 insert into emaj.emaj_group_def values ('myGroup2','myschema2','mytbl1');
@@ -157,7 +157,7 @@ select group_name, group_is_rollbackable, group_creation_time_id,
        group_is_rlbk_protected, group_nb_table, group_nb_sequence, group_comment
   from emaj.emaj_group order by group_name;
 
-select mark_group, regexp_replace(mark_name,E'\\d\\d\.\\d\\d\\.\\d\\d\\.\\d\\d\\d','%','g'), mark_time_id, 
+select mark_group, regexp_replace(mark_name,E'\\d\\d\.\\d\\d\\.\\d\\d\\.\\d\\d\\d\\d','%','g'), mark_time_id, 
        mark_is_deleted, mark_is_rlbk_protected, mark_comment, mark_log_rows_before_next, mark_logged_rlbk_target_mark 
   from emaj.emaj_mark order by mark_time_id, mark_group;
 

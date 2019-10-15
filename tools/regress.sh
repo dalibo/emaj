@@ -30,7 +30,7 @@ typeset -r EMAJ_REGTEST_PGUPGRADE_PGVER='9.5!11'
 typeset -r EMAJ_REGTEST_UPGRADE=('install_upgrade' 'setup' 'create_drop' 'start_stop' 'mark' 'rollback' 'misc' 'alter' 'alter_logging' 'viewer' 'adm1' 'adm2' 'client' 'check' 'cleanup')
 typeset -r EMAJ_REGTEST_UPGRADE_PGVER=${EMAJ_SUPPORTED_PGVER[@]}
 typeset -r EMAJ_REGTEST_MIXED=('install_previous' 'setup' 'before_upg_while_logging' 'upgrade_while_logging' 'after_upg_while_logging' 'cleanup')
-typeset -r EMAJ_REGTEST_MIXED_PGVER=(9.3 9.5 10)
+typeset -r EMAJ_REGTEST_MIXED_PGVER=(9.5 10 12)
 declare -A EMAJ_REGTEST_MENU_ACTIONS
 declare -A EMAJ_REGTEST_MENU
 

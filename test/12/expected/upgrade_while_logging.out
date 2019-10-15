@@ -166,14 +166,14 @@ Foreign-key constraints:
     "emaj_alter_plan_altr_time_id_fkey" FOREIGN KEY (altr_time_id) REFERENCES emaj.emaj_time_stamp(time_id)
 Tablespace: "tspemaj"
 
-          Index "emaj.emaj_alter_plan_pkey"
-    Column    |         Type          |  Definition  
---------------+-----------------------+--------------
- altr_time_id | bigint                | altr_time_id
- altr_step    | emaj._alter_step_enum | altr_step
- altr_schema  | text                  | altr_schema
- altr_tblseq  | text                  | altr_tblseq
- altr_group   | text                  | altr_group
+             Index "emaj.emaj_alter_plan_pkey"
+    Column    |         Type          | Key? |  Definition  
+--------------+-----------------------+------+--------------
+ altr_time_id | bigint                | yes  | altr_time_id
+ altr_step    | emaj._alter_step_enum | yes  | altr_step
+ altr_schema  | text                  | yes  | altr_schema
+ altr_tblseq  | text                  | yes  | altr_tblseq
+ altr_group   | text                  | yes  | altr_group
 primary key, btree, for table "emaj.emaj_alter_plan"
 Tablespace: "tspemaj"
 
@@ -244,31 +244,31 @@ Indexes:
     "emaj_group_def_pkey" PRIMARY KEY, btree (grpdef_group, grpdef_schema, grpdef_tblseq), tablespace "tspemaj"
     "emaj_group_def_idx1" btree (grpdef_schema, grpdef_tblseq), tablespace "tspemaj"
 Triggers:
-    emaj_group_def_change_trg AFTER INSERT OR DELETE OR UPDATE ON emaj.emaj_group_def FOR EACH ROW EXECUTE PROCEDURE emaj._emaj_group_def_change_fnct()
-    emaj_group_def_truncate_trg AFTER TRUNCATE ON emaj.emaj_group_def FOR EACH STATEMENT EXECUTE PROCEDURE emaj._emaj_group_def_change_fnct()
+    emaj_group_def_change_trg AFTER INSERT OR DELETE OR UPDATE ON emaj.emaj_group_def FOR EACH ROW EXECUTE FUNCTION emaj._emaj_group_def_change_fnct()
+    emaj_group_def_truncate_trg AFTER TRUNCATE ON emaj.emaj_group_def FOR EACH STATEMENT EXECUTE FUNCTION emaj._emaj_group_def_change_fnct()
 Tablespace: "tspemaj"
 
-   Index "emaj.emaj_group_def_idx1"
-    Column     | Type |  Definition   
----------------+------+---------------
- grpdef_schema | text | grpdef_schema
- grpdef_tblseq | text | grpdef_tblseq
+      Index "emaj.emaj_group_def_idx1"
+    Column     | Type | Key? |  Definition   
+---------------+------+------+---------------
+ grpdef_schema | text | yes  | grpdef_schema
+ grpdef_tblseq | text | yes  | grpdef_tblseq
 btree, for table "emaj.emaj_group_def"
 Tablespace: "tspemaj"
 
-   Index "emaj.emaj_group_def_pkey"
-    Column     | Type |  Definition   
----------------+------+---------------
- grpdef_group  | text | grpdef_group
- grpdef_schema | text | grpdef_schema
- grpdef_tblseq | text | grpdef_tblseq
+      Index "emaj.emaj_group_def_pkey"
+    Column     | Type | Key? |  Definition   
+---------------+------+------+---------------
+ grpdef_group  | text | yes  | grpdef_group
+ grpdef_schema | text | yes  | grpdef_schema
+ grpdef_tblseq | text | yes  | grpdef_tblseq
 primary key, btree, for table "emaj.emaj_group_def"
 Tablespace: "tspemaj"
 
-  Index "emaj.emaj_group_pkey"
-   Column   | Type | Definition 
-------------+------+------------
- group_name | text | group_name
+     Index "emaj.emaj_group_pkey"
+   Column   | Type | Key? | Definition 
+------------+------+------+------------
+ group_name | text | yes  | group_name
 primary key, btree, for table "emaj.emaj_group"
 Tablespace: "tspemaj"
 
@@ -293,10 +293,10 @@ Tablespace: "tspemaj"
  bigint |     1 |       1 | 9223372036854775807 |         1 | no      |     1
 Owned by: emaj.emaj_hist.hist_id
 
-  Index "emaj.emaj_hist_pkey"
- Column  |  Type  | Definition 
----------+--------+------------
- hist_id | bigint | hist_id
+     Index "emaj.emaj_hist_pkey"
+ Column  |  Type  | Key? | Definition 
+---------+--------+------+------------
+ hist_id | bigint | yes  | hist_id
 primary key, btree, for table "emaj.emaj_hist"
 Tablespace: "tspemaj"
 
@@ -311,11 +311,11 @@ Indexes:
 Tablespace: "tspemaj"
 
 Index "emaj.emaj_ignored_app_trigger_pkey"
-   Column   | Type | Definition 
-------------+------+------------
- trg_schema | text | trg_schema
- trg_table  | text | trg_table
- trg_name   | text | trg_name
+   Column   | Type | Key? | Definition 
+------------+------+------+------------
+ trg_schema | text | yes  | trg_schema
+ trg_table  | text | yes  | trg_table
+ trg_name   | text | yes  | trg_name
 primary key, btree, for table "emaj.emaj_ignored_app_trigger"
 Tablespace: "tspemaj"
 
@@ -350,18 +350,18 @@ Foreign-key constraints:
     "emaj_mark_mark_time_id_fkey" FOREIGN KEY (mark_time_id) REFERENCES emaj.emaj_time_stamp(time_id)
 Tablespace: "tspemaj"
 
-     Index "emaj.emaj_mark_idx1"
-    Column    |  Type  |  Definition  
---------------+--------+--------------
- mark_time_id | bigint | mark_time_id
+         Index "emaj.emaj_mark_idx1"
+    Column    |  Type  | Key? |  Definition  
+--------------+--------+------+--------------
+ mark_time_id | bigint | yes  | mark_time_id
 btree, for table "emaj.emaj_mark"
 Tablespace: "tspemaj"
 
-  Index "emaj.emaj_mark_pkey"
-   Column   | Type | Definition 
-------------+------+------------
- mark_group | text | mark_group
- mark_name  | text | mark_name
+      Index "emaj.emaj_mark_pkey"
+   Column   | Type | Key? | Definition 
+------------+------+------+------------
+ mark_group | text | yes  | mark_group
+ mark_name  | text | yes  | mark_name
 primary key, btree, for table "emaj.emaj_mark"
 Tablespace: "tspemaj"
 
@@ -377,10 +377,10 @@ Indexes:
     "emaj_param_pkey" PRIMARY KEY, btree (param_key), tablespace "tspemaj"
 Tablespace: "tspemaj"
 
- Index "emaj.emaj_param_pkey"
-  Column   | Type | Definition 
------------+------+------------
- param_key | text | param_key
+     Index "emaj.emaj_param_pkey"
+  Column   | Type | Key? | Definition 
+-----------+------+------+------------
+ param_key | text | yes  | param_key
 primary key, btree, for table "emaj.emaj_param"
 Tablespace: "tspemaj"
 
@@ -400,28 +400,28 @@ Check constraints:
     "emaj_rel_hist_relh_time_range_check" CHECK (NOT upper_inf(relh_time_range))
 Tablespace: "tspemaj"
 
-     Index "emaj.emaj_rel_hist_idx1"
- Column |  Type  |       Definition       
---------+--------+------------------------
- upper  | bigint | upper(relh_time_range)
+         Index "emaj.emaj_rel_hist_idx1"
+ Column |  Type  | Key? |       Definition       
+--------+--------+------+------------------------
+ upper  | bigint | yes  | upper(relh_time_range)
 btree, for table "emaj.emaj_rel_hist"
 Tablespace: "tspemaj"
 
-        Index "emaj.emaj_rel_hist_pkey"
-     Column      |   Type    |   Definition    
------------------+-----------+-----------------
- relh_schema     | text      | relh_schema
- relh_tblseq     | text      | relh_tblseq
- relh_time_range | int8range | relh_time_range
+           Index "emaj.emaj_rel_hist_pkey"
+     Column      |   Type    | Key? |   Definition    
+-----------------+-----------+------+-----------------
+ relh_schema     | text      | yes  | relh_schema
+ relh_tblseq     | text      | yes  | relh_tblseq
+ relh_time_range | int8range | yes  | relh_time_range
 primary key, btree, for table "emaj.emaj_rel_hist"
 Tablespace: "tspemaj"
 
 Index "emaj.emaj_rel_hist_relh_schema_relh_tblseq_relh_time_range_excl"
-     Column      |     Type      |   Definition    
------------------+---------------+-----------------
- relh_schema     | gbtreekey_var | relh_schema
- relh_tblseq     | gbtreekey_var | relh_tblseq
- relh_time_range | int8range     | relh_time_range
+     Column      |     Type      | Key? |   Definition    
+-----------------+---------------+------+-----------------
+ relh_schema     | gbtreekey_var | yes  | relh_schema
+ relh_tblseq     | gbtreekey_var | yes  | relh_tblseq
+ relh_time_range | int8range     | yes  | relh_time_range
 gist, for table "emaj.emaj_rel_hist"
 Tablespace: "tspemaj"
 
@@ -456,36 +456,36 @@ Foreign-key constraints:
     "emaj_relation_rel_log_schema_fkey" FOREIGN KEY (rel_log_schema) REFERENCES emaj.emaj_schema(sch_name)
 Tablespace: "tspemaj"
 
-Index "emaj.emaj_relation_idx1"
-  Column   | Type | Definition 
------------+------+------------
- rel_group | text | rel_group
- rel_kind  | text | rel_kind
+   Index "emaj.emaj_relation_idx1"
+  Column   | Type | Key? | Definition 
+-----------+------+------+------------
+ rel_group | text | yes  | rel_group
+ rel_kind  | text | yes  | rel_kind
 btree, for table "emaj.emaj_relation"
 Tablespace: "tspemaj"
 
-    Index "emaj.emaj_relation_idx2"
-     Column     | Type |   Definition   
-----------------+------+----------------
- rel_log_schema | text | rel_log_schema
+        Index "emaj.emaj_relation_idx2"
+     Column     | Type | Key? |   Definition   
+----------------+------+------+----------------
+ rel_log_schema | text | yes  | rel_log_schema
 btree, for table "emaj.emaj_relation"
 Tablespace: "tspemaj"
 
-       Index "emaj.emaj_relation_pkey"
-     Column     |   Type    |   Definition   
-----------------+-----------+----------------
- rel_schema     | text      | rel_schema
- rel_tblseq     | text      | rel_tblseq
- rel_time_range | int8range | rel_time_range
+          Index "emaj.emaj_relation_pkey"
+     Column     |   Type    | Key? |   Definition   
+----------------+-----------+------+----------------
+ rel_schema     | text      | yes  | rel_schema
+ rel_tblseq     | text      | yes  | rel_tblseq
+ rel_time_range | int8range | yes  | rel_time_range
 primary key, btree, for table "emaj.emaj_relation"
 Tablespace: "tspemaj"
 
 Index "emaj.emaj_relation_rel_schema_rel_tblseq_rel_time_range_excl"
-     Column     |     Type      |   Definition   
-----------------+---------------+----------------
- rel_schema     | gbtreekey_var | rel_schema
- rel_tblseq     | gbtreekey_var | rel_tblseq
- rel_time_range | int8range     | rel_time_range
+     Column     |     Type      | Key? |   Definition   
+----------------+---------------+------+----------------
+ rel_schema     | gbtreekey_var | yes  | rel_schema
+ rel_tblseq     | gbtreekey_var | yes  | rel_tblseq
+ rel_time_range | int8range     | yes  | rel_time_range
 gist, for table "emaj.emaj_relation"
 Tablespace: "tspemaj"
 
@@ -521,17 +521,17 @@ Referenced by:
     TABLE "emaj.emaj_rlbk_stat" CONSTRAINT "emaj_rlbk_stat_rlbt_rlbk_id_fkey" FOREIGN KEY (rlbt_rlbk_id) REFERENCES emaj.emaj_rlbk(rlbk_id)
 Tablespace: "tspemaj"
 
-            Index "emaj.emaj_rlbk_idx1"
-   Column    |          Type          | Definition  
--------------+------------------------+-------------
- rlbk_status | emaj._rlbk_status_enum | rlbk_status
+                Index "emaj.emaj_rlbk_idx1"
+   Column    |          Type          | Key? | Definition  
+-------------+------------------------+------+-------------
+ rlbk_status | emaj._rlbk_status_enum | yes  | rlbk_status
 btree, for table "emaj.emaj_rlbk", predicate (rlbk_status = ANY (ARRAY['PLANNING'::emaj._rlbk_status_enum, 'LOCKING'::emaj._rlbk_status_enum, 'EXECUTING'::emaj._rlbk_status_enum, 'COMPLETED'::emaj._rlbk_status_enum]))
 Tablespace: "tspemaj"
 
-  Index "emaj.emaj_rlbk_pkey"
- Column  |  Type   | Definition 
----------+---------+------------
- rlbk_id | integer | rlbk_id
+      Index "emaj.emaj_rlbk_pkey"
+ Column  |  Type   | Key? | Definition 
+---------+---------+------+------------
+ rlbk_id | integer | yes  | rlbk_id
 primary key, btree, for table "emaj.emaj_rlbk"
 Tablespace: "tspemaj"
 
@@ -559,14 +559,14 @@ Foreign-key constraints:
     "emaj_rlbk_plan_rlbp_rlbk_id_fkey" FOREIGN KEY (rlbp_rlbk_id) REFERENCES emaj.emaj_rlbk(rlbk_id)
 Tablespace: "tspemaj"
 
-          Index "emaj.emaj_rlbk_plan_pkey"
-    Column    |         Type         |  Definition  
---------------+----------------------+--------------
- rlbp_rlbk_id | integer              | rlbp_rlbk_id
- rlbp_step    | emaj._rlbk_step_enum | rlbp_step
- rlbp_schema  | text                 | rlbp_schema
- rlbp_table   | text                 | rlbp_table
- rlbp_object  | text                 | rlbp_object
+             Index "emaj.emaj_rlbk_plan_pkey"
+    Column    |         Type         | Key? |  Definition  
+--------------+----------------------+------+--------------
+ rlbp_rlbk_id | integer              | yes  | rlbp_rlbk_id
+ rlbp_step    | emaj._rlbk_step_enum | yes  | rlbp_step
+ rlbp_schema  | text                 | yes  | rlbp_schema
+ rlbp_table   | text                 | yes  | rlbp_table
+ rlbp_object  | text                 | yes  | rlbp_object
 primary key, btree, for table "emaj.emaj_rlbk_plan"
 Tablespace: "tspemaj"
 
@@ -590,11 +590,11 @@ Foreign-key constraints:
     "emaj_rlbk_session_rlbs_rlbk_id_fkey" FOREIGN KEY (rlbs_rlbk_id) REFERENCES emaj.emaj_rlbk(rlbk_id)
 Tablespace: "tspemaj"
 
-  Index "emaj.emaj_rlbk_session_pkey"
-    Column    |  Type   |  Definition  
---------------+---------+--------------
- rlbs_rlbk_id | integer | rlbs_rlbk_id
- rlbs_session | integer | rlbs_session
+     Index "emaj.emaj_rlbk_session_pkey"
+    Column    |  Type   | Key? |  Definition  
+--------------+---------+------+--------------
+ rlbs_rlbk_id | integer | yes  | rlbs_rlbk_id
+ rlbs_session | integer | yes  | rlbs_session
 primary key, btree, for table "emaj.emaj_rlbk_session"
 Tablespace: "tspemaj"
 
@@ -614,14 +614,14 @@ Foreign-key constraints:
     "emaj_rlbk_stat_rlbt_rlbk_id_fkey" FOREIGN KEY (rlbt_rlbk_id) REFERENCES emaj.emaj_rlbk(rlbk_id)
 Tablespace: "tspemaj"
 
-          Index "emaj.emaj_rlbk_stat_pkey"
-    Column    |         Type         |  Definition  
---------------+----------------------+--------------
- rlbt_step    | emaj._rlbk_step_enum | rlbt_step
- rlbt_schema  | text                 | rlbt_schema
- rlbt_table   | text                 | rlbt_table
- rlbt_object  | text                 | rlbt_object
- rlbt_rlbk_id | integer              | rlbt_rlbk_id
+             Index "emaj.emaj_rlbk_stat_pkey"
+    Column    |         Type         | Key? |  Definition  
+--------------+----------------------+------+--------------
+ rlbt_step    | emaj._rlbk_step_enum | yes  | rlbt_step
+ rlbt_schema  | text                 | yes  | rlbt_schema
+ rlbt_table   | text                 | yes  | rlbt_table
+ rlbt_object  | text                 | yes  | rlbt_object
+ rlbt_rlbk_id | integer              | yes  | rlbt_rlbk_id
 primary key, btree, for table "emaj.emaj_rlbk_stat"
 Tablespace: "tspemaj"
 
@@ -655,10 +655,10 @@ Referenced by:
     TABLE "emaj.emaj_relation" CONSTRAINT "emaj_relation_rel_log_schema_fkey" FOREIGN KEY (rel_log_schema) REFERENCES emaj.emaj_schema(sch_name)
 Tablespace: "tspemaj"
 
-Index "emaj.emaj_schema_pkey"
-  Column  | Type | Definition 
-----------+------+------------
- sch_name | text | sch_name
+    Index "emaj.emaj_schema_pkey"
+  Column  | Type | Key? | Definition 
+----------+------+------+------------
+ sch_name | text | yes  | sch_name
 primary key, btree, for table "emaj.emaj_schema"
 Tablespace: "tspemaj"
 
@@ -677,12 +677,12 @@ Foreign-key constraints:
     "emaj_seq_hole_sqhl_end_time_id_fkey" FOREIGN KEY (sqhl_end_time_id) REFERENCES emaj.emaj_time_stamp(time_id)
 Tablespace: "tspemaj"
 
-         Index "emaj.emaj_seq_hole_pkey"
-       Column       |  Type  |     Definition     
---------------------+--------+--------------------
- sqhl_schema        | text   | sqhl_schema
- sqhl_table         | text   | sqhl_table
- sqhl_begin_time_id | bigint | sqhl_begin_time_id
+             Index "emaj.emaj_seq_hole_pkey"
+       Column       |  Type  | Key? |     Definition     
+--------------------+--------+------+--------------------
+ sqhl_schema        | text   | yes  | sqhl_schema
+ sqhl_table         | text   | yes  | sqhl_table
+ sqhl_begin_time_id | bigint | yes  | sqhl_begin_time_id
 primary key, btree, for table "emaj.emaj_seq_hole"
 Tablespace: "tspemaj"
 
@@ -706,12 +706,12 @@ Foreign-key constraints:
     "emaj_sequence_sequ_time_id_fkey" FOREIGN KEY (sequ_time_id) REFERENCES emaj.emaj_time_stamp(time_id)
 Tablespace: "tspemaj"
 
-   Index "emaj.emaj_sequence_pkey"
-    Column    |  Type  |  Definition  
---------------+--------+--------------
- sequ_schema  | text   | sequ_schema
- sequ_name    | text   | sequ_name
- sequ_time_id | bigint | sequ_time_id
+       Index "emaj.emaj_sequence_pkey"
+    Column    |  Type  | Key? |  Definition  
+--------------+--------+------+--------------
+ sequ_schema  | text   | yes  | sequ_schema
+ sequ_name    | text   | yes  | sequ_name
+ sequ_time_id | bigint | yes  | sequ_time_id
 primary key, btree, for table "emaj.emaj_sequence"
 Tablespace: "tspemaj"
 
@@ -739,10 +739,10 @@ Referenced by:
     TABLE "emaj.emaj_sequence" CONSTRAINT "emaj_sequence_sequ_time_id_fkey" FOREIGN KEY (sequ_time_id) REFERENCES emaj.emaj_time_stamp(time_id)
 Tablespace: "tspemaj"
 
-Index "emaj.emaj_time_stamp_pkey"
- Column  |  Type  | Definition 
----------+--------+------------
- time_id | bigint | time_id
+  Index "emaj.emaj_time_stamp_pkey"
+ Column  |  Type  | Key? | Definition 
+---------+--------+------+------------
+ time_id | bigint | yes  | time_id
 primary key, btree, for table "emaj.emaj_time_stamp"
 Tablespace: "tspemaj"
 
@@ -777,11 +777,11 @@ Indexes:
     "myTbl3_log_idx_1" UNIQUE, btree (emaj_gid, emaj_tuple) CLUSTER, tablespace "tspemaj"
 Tablespace: "tspemaj"
 
-    Index "emaj_myschema1.myTbl3_log_idx_1"
-   Column   |         Type         | Definition 
-------------+----------------------+------------
- emaj_gid   | bigint               | emaj_gid
- emaj_tuple | character varying(3) | emaj_tuple
+        Index "emaj_myschema1.myTbl3_log_idx_1"
+   Column   |         Type         | Key? | Definition 
+------------+----------------------+------+------------
+ emaj_gid   | bigint               | yes  | emaj_gid
+ emaj_tuple | character varying(3) | yes  | emaj_tuple
 unique, btree, for table "emaj_myschema1.myTbl3_log_1", clustered
 Tablespace: "tspemaj"
 
@@ -801,11 +801,11 @@ Indexes:
     "mytbl1_log_idx" UNIQUE, btree (emaj_gid, emaj_tuple) CLUSTER, tablespace "tspemaj"
 Tablespace: "tspemaj"
 
-     Index "emaj_myschema1.mytbl1_log_idx"
-   Column   |         Type         | Definition 
-------------+----------------------+------------
- emaj_gid   | bigint               | emaj_gid
- emaj_tuple | character varying(3) | emaj_tuple
+         Index "emaj_myschema1.mytbl1_log_idx"
+   Column   |         Type         | Key? | Definition 
+------------+----------------------+------+------------
+ emaj_gid   | bigint               | yes  | emaj_gid
+ emaj_tuple | character varying(3) | yes  | emaj_tuple
 unique, btree, for table "emaj_myschema1.mytbl1_log", clustered
 Tablespace: "tspemaj"
 
@@ -830,11 +830,11 @@ Indexes:
     "mytbl2_log_idx" UNIQUE, btree (emaj_gid, emaj_tuple) CLUSTER, tablespace "tspemaj"
 Tablespace: "tspemaj"
 
-     Index "emaj_myschema1.mytbl2_log_idx"
-   Column   |         Type         | Definition 
-------------+----------------------+------------
- emaj_gid   | bigint               | emaj_gid
- emaj_tuple | character varying(3) | emaj_tuple
+         Index "emaj_myschema1.mytbl2_log_idx"
+   Column   |         Type         | Key? | Definition 
+------------+----------------------+------+------------
+ emaj_gid   | bigint               | yes  | emaj_gid
+ emaj_tuple | character varying(3) | yes  | emaj_tuple
 unique, btree, for table "emaj_myschema1.mytbl2_log", clustered
 Tablespace: "tspemaj"
 
@@ -858,11 +858,11 @@ Indexes:
     "mytbl2b_log_idx" UNIQUE, btree (emaj_gid, emaj_tuple) CLUSTER, tablespace "tspemaj"
 Tablespace: "tspemaj"
 
-     Index "emaj_myschema1.mytbl2b_log_idx"
-   Column   |         Type         | Definition 
-------------+----------------------+------------
- emaj_gid   | bigint               | emaj_gid
- emaj_tuple | character varying(3) | emaj_tuple
+        Index "emaj_myschema1.mytbl2b_log_idx"
+   Column   |         Type         | Key? | Definition 
+------------+----------------------+------+------------
+ emaj_gid   | bigint               | yes  | emaj_gid
+ emaj_tuple | character varying(3) | yes  | emaj_tuple
 unique, btree, for table "emaj_myschema1.mytbl2b_log", clustered
 Tablespace: "tspemaj"
 
@@ -889,11 +889,11 @@ Indexes:
     "mytbl4_log_idx" UNIQUE, btree (emaj_gid, emaj_tuple) CLUSTER, tablespace "tspemaj"
 Tablespace: "tspemaj"
 
-     Index "emaj_myschema1.mytbl4_log_idx"
-   Column   |         Type         | Definition 
-------------+----------------------+------------
- emaj_gid   | bigint               | emaj_gid
- emaj_tuple | character varying(3) | emaj_tuple
+         Index "emaj_myschema1.mytbl4_log_idx"
+   Column   |         Type         | Key? | Definition 
+------------+----------------------+------+------------
+ emaj_gid   | bigint               | yes  | emaj_gid
+ emaj_tuple | character varying(3) | yes  | emaj_tuple
 unique, btree, for table "emaj_myschema1.mytbl4_log", clustered
 Tablespace: "tspemaj"
 
@@ -918,11 +918,11 @@ Indexes:
     "myTbl3_log_idx" UNIQUE, btree (emaj_gid, emaj_tuple) CLUSTER, tablespace "tspemaj"
 Tablespace: "tspemaj"
 
-     Index "emaj_myschema2.myTbl3_log_idx"
-   Column   |         Type         | Definition 
-------------+----------------------+------------
- emaj_gid   | bigint               | emaj_gid
- emaj_tuple | character varying(3) | emaj_tuple
+         Index "emaj_myschema2.myTbl3_log_idx"
+   Column   |         Type         | Key? | Definition 
+------------+----------------------+------+------------
+ emaj_gid   | bigint               | yes  | emaj_gid
+ emaj_tuple | character varying(3) | yes  | emaj_tuple
 unique, btree, for table "emaj_myschema2.myTbl3_log", clustered
 Tablespace: "tspemaj"
 
@@ -947,11 +947,11 @@ Indexes:
     "mytbl1_log_idx" UNIQUE, btree (emaj_gid, emaj_tuple) CLUSTER, tablespace "tspemaj"
 Tablespace: "tspemaj"
 
-     Index "emaj_myschema2.mytbl1_log_idx"
-   Column   |         Type         | Definition 
-------------+----------------------+------------
- emaj_gid   | bigint               | emaj_gid
- emaj_tuple | character varying(3) | emaj_tuple
+         Index "emaj_myschema2.mytbl1_log_idx"
+   Column   |         Type         | Key? | Definition 
+------------+----------------------+------+------------
+ emaj_gid   | bigint               | yes  | emaj_gid
+ emaj_tuple | character varying(3) | yes  | emaj_tuple
 unique, btree, for table "emaj_myschema2.mytbl1_log", clustered
 Tablespace: "tspemaj"
 
@@ -976,11 +976,11 @@ Indexes:
     "mytbl2_log_idx" UNIQUE, btree (emaj_gid, emaj_tuple) CLUSTER, tablespace "tspemaj"
 Tablespace: "tspemaj"
 
-     Index "emaj_myschema2.mytbl2_log_idx"
-   Column   |         Type         | Definition 
-------------+----------------------+------------
- emaj_gid   | bigint               | emaj_gid
- emaj_tuple | character varying(3) | emaj_tuple
+         Index "emaj_myschema2.mytbl2_log_idx"
+   Column   |         Type         | Key? | Definition 
+------------+----------------------+------+------------
+ emaj_gid   | bigint               | yes  | emaj_gid
+ emaj_tuple | character varying(3) | yes  | emaj_tuple
 unique, btree, for table "emaj_myschema2.mytbl2_log", clustered
 Tablespace: "tspemaj"
 
@@ -1007,11 +1007,11 @@ Indexes:
     "mytbl4_log_idx" UNIQUE, btree (emaj_gid, emaj_tuple) CLUSTER, tablespace "tspemaj"
 Tablespace: "tspemaj"
 
-     Index "emaj_myschema2.mytbl4_log_idx"
-   Column   |         Type         | Definition 
-------------+----------------------+------------
- emaj_gid   | bigint               | emaj_gid
- emaj_tuple | character varying(3) | emaj_tuple
+         Index "emaj_myschema2.mytbl4_log_idx"
+   Column   |         Type         | Key? | Definition 
+------------+----------------------+------+------------
+ emaj_gid   | bigint               | yes  | emaj_gid
+ emaj_tuple | character varying(3) | yes  | emaj_tuple
 unique, btree, for table "emaj_myschema2.mytbl4_log", clustered
 Tablespace: "tspemaj"
 
@@ -1035,10 +1035,10 @@ Indexes:
 Tablespace: "tspemaj"
 
 Index "emaj_myschema6.table_with_50_characters_long_name_____0_________0_log_idx"
-   Column   |         Type         | Definition 
-------------+----------------------+------------
- emaj_gid   | bigint               | emaj_gid
- emaj_tuple | character varying(3) | emaj_tuple
+   Column   |         Type         | Key? | Definition 
+------------+----------------------+------+------------
+ emaj_gid   | bigint               | yes  | emaj_gid
+ emaj_tuple | character varying(3) | yes  | emaj_tuple
 unique, btree, for table "emaj_myschema6.table_with_50_characters_long_name_____0_________0_log", clustered
 Tablespace: "tspemaj"
 
@@ -1062,10 +1062,10 @@ Indexes:
 Tablespace: "tspemaj"
 
 Index "emaj_myschema6.table_with_51_characters_long_name_____0_________0#1_log_idx"
-   Column   |         Type         | Definition 
-------------+----------------------+------------
- emaj_gid   | bigint               | emaj_gid
- emaj_tuple | character varying(3) | emaj_tuple
+   Column   |         Type         | Key? | Definition 
+------------+----------------------+------+------------
+ emaj_gid   | bigint               | yes  | emaj_gid
+ emaj_tuple | character varying(3) | yes  | emaj_tuple
 unique, btree, for table "emaj_myschema6.table_with_51_characters_long_name_____0_________0#1_log", clustered
 Tablespace: "tspemaj"
 
@@ -1089,10 +1089,10 @@ Indexes:
 Tablespace: "tspemaj"
 
 Index "emaj_myschema6.table_with_55_characters_long_name_____0_________0#1_log_idx_1"
-   Column   |         Type         | Definition 
-------------+----------------------+------------
- emaj_gid   | bigint               | emaj_gid
- emaj_tuple | character varying(3) | emaj_tuple
+   Column   |         Type         | Key? | Definition 
+------------+----------------------+------+------------
+ emaj_gid   | bigint               | yes  | emaj_gid
+ emaj_tuple | character varying(3) | yes  | emaj_tuple
 unique, btree, for table "emaj_myschema6.table_with_55_characters_long_name_____0_________0#1_log_1", clustered
 Tablespace: "tspemaj"
 
@@ -1111,10 +1111,10 @@ Indexes:
 Tablespace: "tspemaj"
 
 Index "emaj_myschema6.table_with_55_characters_long_name_____0_________0#2_log_idx"
-   Column   |         Type         | Definition 
-------------+----------------------+------------
- emaj_gid   | bigint               | emaj_gid
- emaj_tuple | character varying(3) | emaj_tuple
+   Column   |         Type         | Key? | Definition 
+------------+----------------------+------+------------
+ emaj_gid   | bigint               | yes  | emaj_gid
+ emaj_tuple | character varying(3) | yes  | emaj_tuple
 unique, btree, for table "emaj_myschema6.table_with_55_characters_long_name_____0_________0#2_log", clustered
 Tablespace: "tspemaj"
 
@@ -1139,11 +1139,11 @@ Indexes:
     "myTbl2\_log_idx" UNIQUE, btree (emaj_gid, emaj_tuple) CLUSTER, tablespace "tspemaj"
 Tablespace: "tspemaj"
 
-  Index "emaj_phil's schema3.myTbl2\_log_idx"
-   Column   |         Type         | Definition 
-------------+----------------------+------------
- emaj_gid   | bigint               | emaj_gid
- emaj_tuple | character varying(3) | emaj_tuple
+      Index "emaj_phil's schema3.myTbl2\_log_idx"
+   Column   |         Type         | Key? | Definition 
+------------+----------------------+------+------------
+ emaj_gid   | bigint               | yes  | emaj_gid
+ emaj_tuple | character varying(3) | yes  | emaj_tuple
 unique, btree, for table "emaj_phil's schema3.myTbl2\_log", clustered
 Tablespace: "tspemaj"
 
@@ -1168,11 +1168,11 @@ Indexes:
     "phil's tbl1_log_idx" UNIQUE, btree (emaj_gid, emaj_tuple) CLUSTER, tablespace "tspemaj"
 Tablespace: "tspemaj"
 
-Index "emaj_phil's schema3.phil's tbl1_log_idx"
-   Column   |         Type         | Definition 
-------------+----------------------+------------
- emaj_gid   | bigint               | emaj_gid
- emaj_tuple | character varying(3) | emaj_tuple
+    Index "emaj_phil's schema3.phil's tbl1_log_idx"
+   Column   |         Type         | Key? | Definition 
+------------+----------------------+------+------------
+ emaj_gid   | bigint               | yes  | emaj_gid
+ emaj_tuple | character varying(3) | yes  | emaj_tuple
 unique, btree, for table "emaj_phil's schema3.phil's tbl1_log", clustered
 Tablespace: "tspemaj"
 
