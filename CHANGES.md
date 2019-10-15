@@ -3,6 +3,15 @@ E-Maj - Change log
 <devel>
 ------
 ###Enhancements:###
+
+
+###Bug fixes:###
+
+
+
+3.2.0 (2019-Oct-15)
+------
+###Enhancements:###
   * In the emaj_gen_sql_group() and emaj_gen_sql_groups() functions, a NULL
     value for the "output file" parameter prepares the SQL script in a
     temporary table that can be then accessed via a emaj_sql_script view.

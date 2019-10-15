@@ -1,5 +1,5 @@
 --
--- E-Maj: migration from 3.1.0 to <devel>
+-- E-Maj: migration from 3.1.0 to 3.2.0
 --
 -- This software is distributed under the GNU General Public License.
 --
@@ -57,7 +57,7 @@ $do$;
 
 -- insert the upgrade begin record in the operation history
 INSERT INTO emaj.emaj_hist (hist_function, hist_event, hist_object, hist_wording)
-  VALUES ('EMAJ_INSTALL','BEGIN','E-Maj <devel>', 'Upgrade from 3.1.0 started');
+  VALUES ('EMAJ_INSTALL','BEGIN','E-Maj 3.2.0', 'Upgrade from 3.1.0 started');
 
 -- lock emaj_group table to avoid any concurrent E-Maj activity
 LOCK TABLE emaj.emaj_group IN EXCLUSIVE MODE;
@@ -6617,11 +6617,11 @@ INSERT INTO pg_catalog.pg_description (objoid, classoid, objsubid, description)
        );
 
 -- update the version id in the emaj_param table
-UPDATE emaj.emaj_param SET param_value_text = '<devel>' WHERE param_key = 'emaj_version';
+UPDATE emaj.emaj_param SET param_value_text = '3.2.0' WHERE param_key = 'emaj_version';
 
 -- insert the upgrade end record in the operation history
 INSERT INTO emaj.emaj_hist (hist_function, hist_event, hist_object, hist_wording)
-  VALUES ('EMAJ_INSTALL','END','E-Maj <devel>', 'Upgrade from 3.1.0 completed');
+  VALUES ('EMAJ_INSTALL','END','E-Maj 3.2.0', 'Upgrade from 3.1.0 completed');
 
 -- post installation checks
 DO
