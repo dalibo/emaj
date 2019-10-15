@@ -18,6 +18,7 @@
 \echo '---------------------------------------------------------------------------'
 
 \set ON_ERROR_STOP
+\pset pager off
 \set ECHO none
 SET client_min_messages TO WARNING;
 
@@ -128,22 +129,17 @@ CREATE SEQUENCE mySeq1 MINVALUE 1000 MAXVALUE 2000 CYCLE;
 \echo '---------------------------------------------------------------------------'
 
 \echo '---'
-\echo '--- Populate the emaj_group_def table.'
+\echo '--- Create both table groups.'
 \echo '---'
-delete from emaj.emaj_group_def where grpdef_group in ('emaj demo group 1','emaj demo group 2');
-insert into emaj.emaj_group_def values 
-    ('emaj demo group 1','emaj_demo_app_schema','mytbl1',null,'_demo'),
-    ('emaj demo group 1','emaj_demo_app_schema','mytbl2',null,'_demo'),
-    ('emaj demo group 2','emaj_demo_app_schema','myTbl3_col31_seq',null,null),
-    ('emaj demo group 2','emaj_demo_app_schema','myTbl3',null,'_demo'),
-    ('emaj demo group 1','emaj_demo_app_schema','mytbl4',null,'_demo'),
-    ('emaj demo group 2','emaj_demo_app_schema','myseq1',null,null);
+select emaj.emaj_create_group('emaj demo group 1',true,true);
+select emaj.emaj_create_group('emaj demo group 2',true,true);
 
 \echo '---'
-\echo '--- Create both table groups (the function returns the number of objects belonging to the group).'
+\echo '--- Populate both groups.'
 \echo '---'
-select emaj.emaj_create_group('emaj demo group 1',true);
-select emaj.emaj_create_group('emaj demo group 2',true);
+select emaj.emaj_assign_tables('emaj_demo_app_schema',array['mytbl1','mytbl2','mytbl4'],'emaj demo group 1');
+select emaj.emaj_assign_table('emaj_demo_app_schema','myTbl3','emaj demo group 2');
+select emaj.emaj_assign_sequences('emaj_demo_app_schema','.*','','emaj demo group 2');
 
 \echo '---'
 \echo '--- Set a comment for the first table group.'
@@ -156,10 +152,10 @@ select emaj.emaj_comment_group('emaj demo group 1','This group has no sequence')
 select * from emaj.emaj_group where group_name in ('emaj demo group 1','emaj demo group 2');
 
 \echo '---'
-\echo '--- Look at the content of the emaj_demo schema containing our log tables.'
+\echo '--- Look at the content of the emaj_emaj_demo_app_schema schema containing our log tables.'
 \echo '---'
 select relname from pg_class, pg_namespace 
-  where relnamespace = pg_namespace.oid and nspname = 'emaj_demo' and relkind = 'r';
+  where relnamespace = pg_namespace.oid and nspname = 'emaj_emaj_demo_app_schema' and relkind = 'r';
 
 \echo '---------------------------------------------------------------------------'
 \echo '---                                                                     ---'
@@ -180,7 +176,7 @@ insert into myTbl4 values (1,'FK...',1,1,'ABC');
 \echo '---'
 \echo '---  As log triggers are not yet enabled, log tables remain empty.'
 \echo '---'
-select * from emaj_demo.emaj_demo_app_schema_mytbl1_log;
+select * from emaj_emaj_demo_app_schema.mytbl1_log;
 
 \echo '---------------------------------------------------------------------------'
 \echo '---                                                                     ---'
@@ -203,7 +199,7 @@ delete from myTbl4 where col41 = 1;
 \echo '---'
 \echo '--- Look at the myTbl4 log table.'
 \echo '---'
-select * from emaj_demo.emaj_demo_app_schema_mytbl4_log;
+select * from emaj_emaj_demo_app_schema.mytbl4_log;
 
 \echo '---------------------------------------------------------------------------'
 \echo '---                                                                     ---'
@@ -342,7 +338,7 @@ select * from emaj.emaj_mark where mark_group = 'emaj demo group 1' order by mar
 \echo '---'
 \echo '--- And the rollback operation has been logged.'
 \echo '---'
-select * from emaj_demo.emaj_demo_app_schema_mytbl4_log;
+select * from emaj_emaj_demo_app_schema.mytbl4_log;
 
 \echo '---------------------------------------------------------------------------'
 \echo '---                                                                     ---'
@@ -482,7 +478,7 @@ select * from emaj_demo_app_schema.mySeq1;
 \echo '---'
 \echo '--- Look at the log table linked to myTbl4.'
 \echo '---'
-select * from emaj_demo.emaj_demo_app_schema_mytbl4_log;
+select * from emaj_emaj_demo_app_schema.mytbl4_log;
 
 \echo '---'
 \echo '--- Purge the obsolete log.'
@@ -492,7 +488,7 @@ select emaj.emaj_delete_before_mark_group('emaj demo group 1','MARK5');
 \echo '---'
 \echo '--- Look at the result in the log table and in the emaj_mark table.'
 \echo '---'
-select * from emaj_demo.emaj_demo_app_schema_mytbl4_log;
+select * from emaj_emaj_demo_app_schema.mytbl4_log;
 select * from emaj.emaj_mark where mark_group = 'emaj demo group 1' order by mark_time_id;
 
 \echo '---------------------------------------------------------------------------'
@@ -519,7 +515,7 @@ select * from emaj.emaj_mark where mark_group in ('emaj demo group 1','emaj demo
 \echo '---'
 \echo '--- The log rows are still there too, but are not usable for any rollback.'
 \echo '---'
-select * from emaj_demo."emaj_demo_app_schema_myTbl3_log";
+select * from emaj_emaj_demo_app_schema."myTbl3_log";
 
 \echo '---------------------------------------------------------------------------'
 \echo '---                                                                     ---'
@@ -529,19 +525,21 @@ select * from emaj_demo."emaj_demo_app_schema_myTbl3_log";
 
 \echo '---'
 \echo '--- While the first group is IDLE, alter the myTbl4 table.'
+\echo '--- To do that, the table must be temporarily removed from its group.'
 \echo '---'
+select emaj.emaj_remove_table('emaj_demo_app_schema','mytbl4');
 alter table emaj_demo_app_schema.myTbl4 add column col46 bigint;
+select emaj.emaj_assign_table('emaj_demo_app_schema','mytbl4','emaj demo group 1');
 
 \echo '---'
-\echo '--- Move mySeq1 sequence into the first group.'
+\echo '--- Move mySeq1 sequence to the first group.'
 \echo '---'
-update emaj.emaj_group_def set grpdef_group = 'emaj demo group 1' where grpdef_tblseq = 'myseq1' and grpdef_group = 'emaj demo group 2';
+select emaj.emaj_move_sequence('emaj_demo_app_schema','myseq1','emaj demo group 1');
 
 \echo '---'
-\echo '--- Ask E-Maj to take into account these changes (starting with the second group to detach the sequence from it).'
+\echo '--- Verify that the whole E-Maj environment is in good shape.'
 \echo '---'
-select emaj.emaj_alter_group('emaj demo group 2');
-select emaj.emaj_alter_group('emaj demo group 1');
+select * from emaj.emaj_verify_all();
 
 \echo '---'
 \echo '--- Both groups are now ready to be started.'
@@ -567,4 +565,3 @@ select * from emaj.emaj_hist where hist_id >= (select hist_id from emaj.emaj_his
 \echo '---'
 \echo '--- This ends the E-Maj demo. Thank You for using E-Maj and have fun!'
 \echo '---'
-
