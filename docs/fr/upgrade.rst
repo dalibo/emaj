@@ -27,13 +27,14 @@ Pour ce type de mise à jour, il n'est pas nécessaire d'utiliser la procédure 
 Arrêt des groupes de tables
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Si certains groupes de tables sont encore actifs, il faut au préalable les arrêter à l'aide de la fonction :ref:`emaj_stop_group() <emaj_stop_group>` (ou de la fonction:ref:`emaj_force_stop_group() <emaj_force_stop_group>` si :ref:`emaj_stop_group() <emaj_stop_group>` retourne une erreur).
+Si certains groupes de tables sont encore actifs, il faut au préalable les arrêter à l'aide de la fonction :ref:`emaj_stop_group() <emaj_stop_group>` (ou de la fonction :ref:`emaj_force_stop_group() <emaj_force_stop_group>` si :ref:`emaj_stop_group() <emaj_stop_group>` retourne une erreur).
 
 Sauvegarde des données utilisateurs
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Il peut en effet être utile de sauvegarder le contenu de la table *emaj_group_def* pour un rechargement facile après le changement de version, par exemple en la copiant sur un fichier par une commande *\copy*, ou en dupliquant la table en dehors du schéma *emaj* avec une requête SQL ::
+Il peut en effet être utile de sauvegarder le contenu de la table *emaj_group_def* pour un rechargement facile après le changement de version, par exemple en la copiant sur un fichier par une commande *\copy*, ou en dupliquant la table en dehors du schéma *emaj*. Si la version courante d’E-Maj contient la fonction *emaj_sync_def_group()* (3.2+), il est prudent de synchroniser d’abord la table *emaj_group_def* avec la configuration actuelle des groupes créés ::
 
+   SELECT group_name, emaj.emaj_sync_def_group(group_name) FROM emaj.emaj_group;
    CREATE TABLE public.sav_group_def AS SELECT * FROM emaj.emaj_group_def;
 
 De la même manière, si l'administrateur E-Maj a modifié des paramètres dans la table *emaj_param*, il peut être souhaitable d'en conserver les valeurs, avec par exemple ::

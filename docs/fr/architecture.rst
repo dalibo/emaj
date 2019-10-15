@@ -52,7 +52,7 @@ Pour le bon fonctionnement d'E-Maj, un certain nombre d'**objets techniques** so
 * 8 types composites et 3 énumérations,
 * 1 vue,
 * 2 triggers,
-* plus de 120 fonctions, dont une cinquantaine directement appelables par les utilisateurs,
+* plus de 150 fonctions, dont plus de 70 directement :doc:`appelables par les utilisateurs<functionsList>`,
 * 1 séquence, nommée *emaj_global_seq*, permettant d'associer à chaque mise à jour enregistrée dans une table de log quelconque de la base de données un identifiant unique de valeur croissante au fil du temps,
 * 1 schéma spécifique, nommé *emaj*, qui contient tous ces objets,
 * 2 rôles de type groupe (sans possibilité de connexion) : *emaj_adm* pour administrer les composants E-Maj, et *emaj_viewer* pour uniquement consulter les composants E-Maj,

@@ -71,7 +71,7 @@ Pour qu'il reste au moins une marque après l'exécution de la fonction, l'effac
 
 Si la marque effacée est la première marque pour le groupe, les lignes devenues inutiles dans les tables de log sont supprimées.
 
-Si une table a été :ref:`détachée d’un groupe de tables<remove_table>` et que la marque effacée correspond à la dernière marque connue pour cette table, les logs couvrant l’intervalle de temps entre cette marque et la marque précédente sont supprimés.
+Si une table a été :ref:`détachée d’un groupe de tables<remove_table_sequence>` et que la marque effacée correspond à la dernière marque connue pour cette table, les logs couvrant l’intervalle de temps entre cette marque et la marque précédente sont supprimés.
 
 
 .. _emaj_delete_before_mark_group:

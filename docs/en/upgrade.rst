@@ -32,8 +32,9 @@ If some tables groups are in *LOGGING* state, they must be stopped, using the :r
 Save user data
 ^^^^^^^^^^^^^^
 
-It may be useful to save the content of the *emaj_group_def* table in order to be able to easily reload it after the version update, by copying it outside the cluster with a *\copy* command, or by duplicating the table outside the *emaj* schema with a SQL statement like::
+It may be useful to save the content of the *emaj_group_def* table in order to be able to easily reload it after the version update, by copying it outside the cluster with a *\copy* command, or by duplicating the table outside the *emaj* schema. Il the current E-Maj version contains the *emaj_sync_def_group()* function (3.2+), it is recommended to previously synchronize the *emaj_group_def* table with the current groups structure::
 
+   SELECT group_name, emaj.emaj_sync_def_group(group_name) FROM emaj.emaj_group;
    CREATE TABLE public.sav_group_def AS SELECT * FROM emaj.emaj_group_def;
 
 The same way, if the E-Maj administrator had changed parameters value into the *emaj_param* table, it may also be useful to keep a trace of these changes, for instance with::

@@ -52,7 +52,7 @@ To let E-Maj work, some **other technical objects** are also created at extensio
 * 8 composite and 3 enum types,
 * 1 view,
 * 2 triggers,
-* more than 120 functions, about 50 of them being directly callable by users,
+* more than 150 functions, more than 70 of them being directly :doc:`callable by users<functionsList>`,
 * 1 sequence named *emaj_global_seq* used to assign to every update recorded in any log table of the database a unique identifier with an increasing value over time,
 * 1 specific schema, named emaj, that contains all these relational objects,
 * 2 roles acting as groups (NOLOGIN): *emaj_adm* to manage E-Maj components, and *emaj_viewer* to only look at E-Maj components
