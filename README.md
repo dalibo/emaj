@@ -73,6 +73,6 @@ Any contribution on the project is welcome. A part of the documentation deals wi
 Support
 -------
 
-For additional support or bug report, please contact Philippe BEAUDOIN (phb <dot> emaj <at> free <dot> fr) or create an issue on the github repository.
+For additional support or bug report, please create an issue on the github repository or contact Philippe BEAUDOIN (phb <dot> emaj <at> free <dot> fr).
 
 Any feedback is welcome, even to just notice you use and appreciate E-Maj ;-)
