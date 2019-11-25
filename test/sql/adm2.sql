@@ -730,6 +730,7 @@ select emaj.emaj_modify_tables('phil''s schema3','.*tbl1','','{"priority":-1,"lo
 
 -- move all tables and sequences into grp_tmp and set a common mark
 select emaj.emaj_move_tables('phil''s schema3','.*','','grp_tmp','Move_tbl_3_to_tmp');
+select * from emaj.emaj_verify_all();
 select emaj.emaj_move_sequences('phil''s schema3','.*','','grp_tmp','Move_seq_3_to_tmp');
 select emaj.emaj_move_tables('myschema4','.*','','grp_tmp','Move_tbl_4_to_tmp');
 select emaj.emaj_move_sequences('myschema4','.*','','grp_tmp','Move_seq_4_to_tmp');
@@ -816,6 +817,7 @@ reset role;
 drop sequence "emaj_phil's schema3".mytbl4_log_seq;
 set role emaj_regression_tests_adm_user;
 select emaj.emaj_enable_protection_by_event_triggers();
+-- note that the warning about the mytblp_col3_seq sequence is normal
 select * from emaj.emaj_verify_all();
 --     a removal while the group is LOGGING fails
 select emaj.emaj_remove_table('phil''s schema3','mytbl4');

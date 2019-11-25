@@ -3,7 +3,8 @@ E-Maj - Change log
 <devel>
 ------
 ###Enhancements:###
-
+  * The emaj_verify_all() function now warns about sequences linked to serial
+    columns which related tables are not in the same tables group.
 
 ###Bug fixes:###
 

@@ -4624,35 +4624,35 @@ select * from emaj.emaj_rel_hist order by 1,2,3;
  myschema2      | mytbl6            | [6008,6172)     | myGroup2         | r
  myschema2      | mytbl7            | [6096,6103)     | myGroup2         | r
  myschema2      | mytbl7            | [6104,6106)     | myGroup2         | r
- myschema4      | mypartp1          | [10,6005)       | myGroup4         | r
+ myschema4      | mypartp1          | [9,6005)        | myGroup4         | r
  myschema4      | mypartp1          | [6010,6157)     | myGroup4         | r
  myschema4      | mypartp1          | [6157,6159)     | myGroup1         | r
  myschema4      | mypartp1          | [6159,6161)     | myGroup2         | r
  myschema4      | mypartp1          | [6161,6173)     | myGroup4         | r
- myschema4      | mypartp2          | [10,6005)       | myGroup4         | r
+ myschema4      | mypartp2          | [9,6005)        | myGroup4         | r
  myschema4      | mypartp2          | [6010,6157)     | myGroup4         | r
  myschema4      | mypartp2          | [6157,6159)     | myGroup1         | r
  myschema4      | mypartp2          | [6159,6161)     | myGroup2         | r
  myschema4      | mypartp2          | [6161,6173)     | myGroup4         | r
- myschema4      | mytblc1           | [10,6005)       | myGroup4         | r
+ myschema4      | mytblc1           | [9,6005)        | myGroup4         | r
  myschema4      | mytblc1           | [6010,6157)     | myGroup4         | r
  myschema4      | mytblc1           | [6157,6159)     | myGroup1         | r
  myschema4      | mytblc1           | [6159,6161)     | myGroup2         | r
  myschema4      | mytblc1           | [6161,6173)     | myGroup4         | r
- myschema4      | mytblc2           | [10,6005)       | myGroup4         | r
+ myschema4      | mytblc2           | [9,6005)        | myGroup4         | r
  myschema4      | mytblc2           | [6010,6157)     | myGroup4         | r
  myschema4      | mytblc2           | [6157,6159)     | myGroup1         | r
  myschema4      | mytblc2           | [6159,6161)     | myGroup2         | r
  myschema4      | mytblc2           | [6161,6173)     | myGroup4         | r
- myschema4      | mytblm            | [10,6005)       | myGroup4         | r
+ myschema4      | mytblm            | [9,6005)        | myGroup4         | r
  myschema4      | mytblm            | [6010,6157)     | myGroup4         | r
  myschema4      | mytblm            | [6157,6159)     | myGroup1         | r
  myschema4      | mytblm            | [6159,6161)     | myGroup2         | r
  myschema4      | mytblm            | [6161,6173)     | myGroup4         | r
- phil's schema3 | myTbl2\           | [9,6004)        | phil's group#3", | r
- phil's schema3 | myTbl2\_col21_seq | [9,6004)        | phil's group#3", | S
- phil's schema3 | phil's seq\1      | [9,6004)        | phil's group#3", | S
- phil's schema3 | phil's tbl1       | [9,6004)        | phil's group#3", | r
+ phil's schema3 | myTbl2\           | [8,6004)        | phil's group#3", | r
+ phil's schema3 | myTbl2\_col21_seq | [8,6004)        | phil's group#3", | S
+ phil's schema3 | phil's seq\1      | [8,6004)        | phil's group#3", | S
+ phil's schema3 | phil's tbl1       | [8,6004)        | phil's group#3", | r
  public         | mytbl1_new_name   | [6034,6035)     | myGroup1         | r
 (123 rows)
 

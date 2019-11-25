@@ -3546,40 +3546,9 @@ $_move_sequences$;
 CREATE OR REPLACE FUNCTION emaj._create_seq(v_schema TEXT, v_seq TEXT, v_groupName TEXT, v_timeId BIGINT)
 RETURNS VOID LANGUAGE plpgsql AS
 $_create_seq$
--- The function checks whether the sequence is related to a serial column of an application table.
--- If yes, it verifies that this table also belong to the same group.
+-- The function records a sequence into a tables group
 -- Required inputs: the application sequence to process, the group to add it into, the priority attribute, the time id of the operation.
-  DECLARE
-    v_tableSchema            TEXT;
-    v_tableName              TEXT;
-    v_tableGroup             TEXT;
   BEGIN
--- the checks on the sequence properties are performed by the calling functions
--- get the schema and the name of the table that contains a serial or a "generated as identity" column this sequence is linked to, if
--- one exists
-    SELECT nt.nspname, ct.relname INTO v_tableSchema, v_tableName
-      FROM pg_catalog.pg_class cs, pg_catalog.pg_namespace ns, pg_depend,
-           pg_catalog.pg_class ct, pg_catalog.pg_namespace nt
-      WHERE cs.relname = v_seq AND ns.nspname = v_schema         -- the selected sequence
-        AND cs.relnamespace = ns.oid                             -- join condition for sequence schema name
-        AND ct.relnamespace = nt.oid                             -- join condition for linked table schema name
-        AND pg_depend.objid = cs.oid                             -- join condition for the pg_depend table
-        AND pg_depend.refobjid = ct.oid                          -- join conditions for depended table schema name
-        AND pg_depend.classid = pg_depend.refclassid             -- the classid et refclassid must be 'pg_class'
-        AND pg_depend.classid = (SELECT oid FROM pg_catalog.pg_class WHERE relname = 'pg_class');
-    IF FOUND THEN
-      SELECT grpdef_group INTO v_tableGroup FROM emaj.emaj_group_def
-        WHERE grpdef_schema = v_tableSchema AND grpdef_tblseq = v_tableName;
-      IF NOT FOUND THEN
-        RAISE WARNING '_create_seq: The sequence %.% is linked to table %.% but this table does not belong to any tables group.',
-          v_schema, v_seq, v_tableSchema, v_tableName;
-      ELSE
-        IF v_tableGroup <> v_groupName THEN
-          RAISE WARNING '_create_seq: The sequence %.% is linked to table %.% but this table belong to another tables group (%).',
-            v_schema, v_seq, v_tableSchema, v_tableName, v_tableGroup;
-        END IF;
-      END IF;
-    END IF;
 -- record the sequence in the emaj_relation table
     INSERT INTO emaj.emaj_relation (rel_schema, rel_tblseq, rel_time_range, rel_group, rel_kind)
       VALUES (v_schema, v_seq, int8range(v_timeId, NULL, '[)'), v_groupName, 'S');
@@ -9067,8 +9036,12 @@ CREATE OR REPLACE FUNCTION emaj._verify_all_groups()
 RETURNS SETOF TEXT LANGUAGE plpgsql AS
 $_verify_all_groups$
 -- The function verifies the consistency of all E-Maj groups.
--- It returns a set of warning messages for discovered discrepancies. If no error is detected, no row is returned.
+-- It returns a set of error or warning messages for discovered discrepancies.
+-- If no error is detected, no row is returned.
   BEGIN
+--
+-- Errors detection
+--
 -- check the postgres version at groups creation time is compatible (i.e. >= 8.4)
     RETURN QUERY
       SELECT 'The group "' || group_name || '" has been created with a non compatible postgresql version (' ||
@@ -9306,6 +9279,42 @@ $_verify_all_groups$
           ORDER BY 1,2,3
         ) AS t;
 --
+-- Warnings detection
+--
+-- check all sequences associated to a serial or a "generated as identity" column have their related table in the same group
+    RETURN QUERY
+      SELECT msg FROM (
+        WITH serial_dependencies AS (
+          SELECT rs.rel_group AS seq_group, rs.rel_schema AS seq_schema, rs.rel_tblseq AS seq_name,
+                 rt.rel_group AS tbl_group, nt.nspname AS tbl_schema, ct.relname AS tbl_name
+            FROM emaj.emaj_relation rs
+                 JOIN pg_catalog.pg_class cs ON cs.relname = rel_tblseq
+                 JOIN pg_catalog.pg_namespace ns ON cs.relnamespace = ns.oid AND ns.nspname = rel_schema
+                 JOIN pg_depend ON pg_depend.objid = cs.oid
+                 JOIN pg_catalog.pg_class ct ON pg_depend.refobjid = ct.oid
+                 JOIN pg_catalog.pg_namespace nt ON ct.relnamespace = nt.oid
+                 LEFT OUTER JOIN emaj.emaj_relation rt ON rt.rel_schema = nt.nspname AND rt.rel_tblseq = ct.relname
+            WHERE rs.rel_kind = 'S' AND upper_inf(rs.rel_time_range)
+              AND (rt.rel_time_range IS NULL OR upper_inf(rt.rel_time_range))
+              AND pg_depend.classid = pg_depend.refclassid             -- the classid et refclassid must be 'pg_class'
+              AND pg_depend.classid = (SELECT oid FROM pg_catalog.pg_class WHERE relname = 'pg_class')
+        )
+        SELECT DISTINCT seq_schema, seq_name,
+               'Warning: In group "' || seq_group || '", the sequence "' || seq_schema || '"."' || seq_name ||
+               '" is linked to the table "' || tbl_schema || '"."' || tbl_name ||
+               '" but this table does not belong to any tables group.' AS msg
+          FROM serial_dependencies
+          WHERE tbl_group IS NULL
+        UNION ALL
+        SELECT DISTINCT seq_schema, seq_name,
+               'Warning: In group "' || seq_group || '", the sequence "' || seq_schema || '"."' || seq_name ||
+               '" is linked to the table "' || tbl_schema || '"."' || tbl_name ||
+               '" but this table belongs to another tables group (' || tbl_group || ').' AS msg
+          FROM serial_dependencies
+          WHERE tbl_group <> seq_group
+        ORDER BY 1,2,3
+        ) AS t;
+--
     RETURN;
   END;
 $_verify_all_groups$;
@@ -9541,7 +9550,8 @@ $_adjust_group_properties$
       ),
       -- get the list of groups that would need to be altered
       group_with_changes AS (
-        SELECT DISTINCT rel_group as group_name FROM tblseq_with_changes
+        SELECT DISTINCT rel_group AS group_name
+          FROM tblseq_with_changes
       ),
       -- adjust the group_has_waiting_changes column, only when needed
       modified_group AS (
@@ -9557,6 +9567,7 @@ $_adjust_group_properties$
         INSERT INTO emaj.emaj_hist (hist_function, hist_object, hist_wording)
           SELECT 'ADJUST_GROUP_PROPERTIES', group_name, 'Set the group_has_waiting_changes column to ' || group_has_waiting_changes
             FROM modified_group
+            ORDER BY group_name
       )
       SELECT count(*) INTO v_nbAdjustedGroups FROM modified_group;
     RETURN v_nbAdjustedGroups;

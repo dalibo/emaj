@@ -126,18 +126,12 @@ alter table myschema2.myTbl6 add foreign key (col61) references myschema2.myTbl7
 alter table myschema2.myTbl8 add foreign key (col81) references myschema2.myTbl6 (col61) deferrable;
 select emaj.emaj_create_group('myGroup2',true);
 
--- should be OK, but with a warning for linked table belonging to another group
-begin;
-  update emaj.emaj_group_def set grpdef_group = 'dummyGrp3' 
-    where grpdef_schema = 'phil''s schema3' and grpdef_tblseq = E'myTbl2\\';
-  select emaj.emaj_create_group('phil''s group#3",',false);
-rollback;
-
 -- should be OK, but with a warning for linked table not belonging to any group
 begin;
   delete from emaj.emaj_group_def
     where grpdef_schema = 'phil''s schema3' and grpdef_tblseq = E'myTbl2\\';
   select emaj.emaj_create_group('phil''s group#3",',false);
+  select * from emaj.emaj_verify_all();
 rollback;
 
 -- should be OK
