@@ -36,18 +36,6 @@ select emaj.emaj_set_mark_groups(array['myGroup1','myGroup2'],'Multi-2');
 
 -- logged rollback to Multi-1
 select * from emaj.emaj_logged_rollback_groups(array['myGroup1','myGroup2'],'Multi-1',false) order by 1,2;
-WARNING:  _check_fk_groups: The foreign key "mytbl6_col61_fkey" on the table "myschema2.mytbl6" references the table "myschema2.mytbl7" that is outside the groups (myGroup1,myGroup2).
-CONTEXT:  SQL statement "SELECT emaj._check_fk_groups(v_groupNames)"
-PL/pgSQL function emaj._rlbk_init(text[],text,boolean,integer,boolean,boolean) line 61 at PERFORM
-SQL statement "SELECT emaj._rlbk_init(v_groupNames, v_mark, v_isLoggedRlbk, 1, v_multiGroup, v_isAlterGroupAllowed)"
-PL/pgSQL function emaj._rlbk_groups(text[],text,boolean,boolean,boolean) line 25 at SQL statement
-PL/pgSQL function emaj.emaj_logged_rollback_groups(text[],text,boolean) line 12 at RETURN QUERY
-WARNING:  _check_fk_groups: The table "myschema2.mytbl6" is referenced by the foreign key "mytbl8_col81_fkey" on the table "myschema2.mytbl8" that is outside the groups (myGroup1,myGroup2).
-CONTEXT:  SQL statement "SELECT emaj._check_fk_groups(v_groupNames)"
-PL/pgSQL function emaj._rlbk_init(text[],text,boolean,integer,boolean,boolean) line 61 at PERFORM
-SQL statement "SELECT emaj._rlbk_init(v_groupNames, v_mark, v_isLoggedRlbk, 1, v_multiGroup, v_isAlterGroupAllowed)"
-PL/pgSQL function emaj._rlbk_groups(text[],text,boolean,boolean,boolean) line 25 at SQL statement
-PL/pgSQL function emaj.emaj_logged_rollback_groups(text[],text,boolean) line 12 at RETURN QUERY
  rlbk_severity |             rlbk_message             
 ---------------+--------------------------------------
  Notice        | 0 / 11 tables effectively processed.
@@ -56,18 +44,6 @@ PL/pgSQL function emaj.emaj_logged_rollback_groups(text[],text,boolean) line 12 
 
 -- rollback to Multi-2
 select * from emaj.emaj_rollback_groups(array['myGroup1','myGroup2'],'Multi-2',false) order by 1,2;
-WARNING:  _check_fk_groups: The foreign key "mytbl6_col61_fkey" on the table "myschema2.mytbl6" references the table "myschema2.mytbl7" that is outside the groups (myGroup1,myGroup2).
-CONTEXT:  SQL statement "SELECT emaj._check_fk_groups(v_groupNames)"
-PL/pgSQL function emaj._rlbk_init(text[],text,boolean,integer,boolean,boolean) line 61 at PERFORM
-SQL statement "SELECT emaj._rlbk_init(v_groupNames, v_mark, v_isLoggedRlbk, 1, v_multiGroup, v_isAlterGroupAllowed)"
-PL/pgSQL function emaj._rlbk_groups(text[],text,boolean,boolean,boolean) line 25 at SQL statement
-PL/pgSQL function emaj.emaj_rollback_groups(text[],text,boolean) line 8 at RETURN QUERY
-WARNING:  _check_fk_groups: The table "myschema2.mytbl6" is referenced by the foreign key "mytbl8_col81_fkey" on the table "myschema2.mytbl8" that is outside the groups (myGroup1,myGroup2).
-CONTEXT:  SQL statement "SELECT emaj._check_fk_groups(v_groupNames)"
-PL/pgSQL function emaj._rlbk_init(text[],text,boolean,integer,boolean,boolean) line 61 at PERFORM
-SQL statement "SELECT emaj._rlbk_init(v_groupNames, v_mark, v_isLoggedRlbk, 1, v_multiGroup, v_isAlterGroupAllowed)"
-PL/pgSQL function emaj._rlbk_groups(text[],text,boolean,boolean,boolean) line 25 at SQL statement
-PL/pgSQL function emaj.emaj_rollback_groups(text[],text,boolean) line 8 at RETURN QUERY
  rlbk_severity |             rlbk_message             
 ---------------+--------------------------------------
  Notice        | 0 / 11 tables effectively processed.
@@ -76,18 +52,6 @@ PL/pgSQL function emaj.emaj_rollback_groups(text[],text,boolean) line 8 at RETUR
 
 -- rollback and stop to Multi-1
 select * from emaj.emaj_rollback_groups(array['myGroup1','myGroup2'],'Multi-1',false) order by 1,2;
-WARNING:  _check_fk_groups: The foreign key "mytbl6_col61_fkey" on the table "myschema2.mytbl6" references the table "myschema2.mytbl7" that is outside the groups (myGroup1,myGroup2).
-CONTEXT:  SQL statement "SELECT emaj._check_fk_groups(v_groupNames)"
-PL/pgSQL function emaj._rlbk_init(text[],text,boolean,integer,boolean,boolean) line 61 at PERFORM
-SQL statement "SELECT emaj._rlbk_init(v_groupNames, v_mark, v_isLoggedRlbk, 1, v_multiGroup, v_isAlterGroupAllowed)"
-PL/pgSQL function emaj._rlbk_groups(text[],text,boolean,boolean,boolean) line 25 at SQL statement
-PL/pgSQL function emaj.emaj_rollback_groups(text[],text,boolean) line 8 at RETURN QUERY
-WARNING:  _check_fk_groups: The table "myschema2.mytbl6" is referenced by the foreign key "mytbl8_col81_fkey" on the table "myschema2.mytbl8" that is outside the groups (myGroup1,myGroup2).
-CONTEXT:  SQL statement "SELECT emaj._check_fk_groups(v_groupNames)"
-PL/pgSQL function emaj._rlbk_init(text[],text,boolean,integer,boolean,boolean) line 61 at PERFORM
-SQL statement "SELECT emaj._rlbk_init(v_groupNames, v_mark, v_isLoggedRlbk, 1, v_multiGroup, v_isAlterGroupAllowed)"
-PL/pgSQL function emaj._rlbk_groups(text[],text,boolean,boolean,boolean) line 25 at SQL statement
-PL/pgSQL function emaj.emaj_rollback_groups(text[],text,boolean) line 8 at RETURN QUERY
  rlbk_severity |             rlbk_message             
 ---------------+--------------------------------------
  Notice        | 0 / 11 tables effectively processed.
@@ -160,18 +124,6 @@ select * from emaj.emaj_detailed_log_stat_group('myGroup2','Multi-2',NULL);
 (0 rows)
 
 select * from emaj.emaj_rollback_group('myGroup2','Multi-2',false) order by 1,2;
-WARNING:  _check_fk_groups: The foreign key "mytbl6_col61_fkey" on the table "myschema2.mytbl6" references the table "myschema2.mytbl7" that is outside the groups (myGroup2).
-CONTEXT:  SQL statement "SELECT emaj._check_fk_groups(v_groupNames)"
-PL/pgSQL function emaj._rlbk_init(text[],text,boolean,integer,boolean,boolean) line 61 at PERFORM
-SQL statement "SELECT emaj._rlbk_init(v_groupNames, v_mark, v_isLoggedRlbk, 1, v_multiGroup, v_isAlterGroupAllowed)"
-PL/pgSQL function emaj._rlbk_groups(text[],text,boolean,boolean,boolean) line 25 at SQL statement
-PL/pgSQL function emaj.emaj_rollback_group(text,text,boolean) line 7 at RETURN QUERY
-WARNING:  _check_fk_groups: The table "myschema2.mytbl6" is referenced by the foreign key "mytbl8_col81_fkey" on the table "myschema2.mytbl8" that is outside the groups (myGroup2).
-CONTEXT:  SQL statement "SELECT emaj._check_fk_groups(v_groupNames)"
-PL/pgSQL function emaj._rlbk_init(text[],text,boolean,integer,boolean,boolean) line 61 at PERFORM
-SQL statement "SELECT emaj._rlbk_init(v_groupNames, v_mark, v_isLoggedRlbk, 1, v_multiGroup, v_isAlterGroupAllowed)"
-PL/pgSQL function emaj._rlbk_groups(text[],text,boolean,boolean,boolean) line 25 at SQL statement
-PL/pgSQL function emaj.emaj_rollback_group(text,text,boolean) line 7 at RETURN QUERY
  rlbk_severity |            rlbk_message             
 ---------------+-------------------------------------
  Notice        | 0 / 6 tables effectively processed.
@@ -1197,18 +1149,6 @@ select stat_group, stat_schema, stat_table, stat_first_mark, stat_last_mark, sta
 
 --
 select * from emaj.emaj_logged_rollback_group('phil''s group#3",','phil''s mark #3',false) order by 1,2;
-WARNING:  _check_fk_groups: The foreign key "mytbl2_col21_fkey" on the table "phil's schema3.myTbl2\" references the table "phil's schema3.mytbl4" that is outside the groups (phil's group#3",).
-CONTEXT:  SQL statement "SELECT emaj._check_fk_groups(v_groupNames)"
-PL/pgSQL function emaj._rlbk_init(text[],text,boolean,integer,boolean,boolean) line 61 at PERFORM
-SQL statement "SELECT emaj._rlbk_init(v_groupNames, v_mark, v_isLoggedRlbk, 1, v_multiGroup, v_isAlterGroupAllowed)"
-PL/pgSQL function emaj._rlbk_groups(text[],text,boolean,boolean,boolean) line 25 at SQL statement
-PL/pgSQL function emaj.emaj_logged_rollback_group(text,text,boolean) line 11 at RETURN QUERY
-WARNING:  _check_fk_groups: The table "phil's schema3.phil's tbl1" is referenced by the foreign key "mytbl4_col44_fkey" on the table "phil's schema3.mytbl4" that is outside the groups (phil's group#3",).
-CONTEXT:  SQL statement "SELECT emaj._check_fk_groups(v_groupNames)"
-PL/pgSQL function emaj._rlbk_init(text[],text,boolean,integer,boolean,boolean) line 61 at PERFORM
-SQL statement "SELECT emaj._rlbk_init(v_groupNames, v_mark, v_isLoggedRlbk, 1, v_multiGroup, v_isAlterGroupAllowed)"
-PL/pgSQL function emaj._rlbk_groups(text[],text,boolean,boolean,boolean) line 25 at SQL statement
-PL/pgSQL function emaj.emaj_logged_rollback_group(text,text,boolean) line 11 at RETURN QUERY
  rlbk_severity |            rlbk_message             
 ---------------+-------------------------------------
  Notice        | 0 / 2 tables effectively processed.
@@ -1216,18 +1156,6 @@ PL/pgSQL function emaj.emaj_logged_rollback_group(text,text,boolean) line 11 at 
 (2 rows)
 
 select * from emaj.emaj_rollback_group('phil''s group#3",','phil''s mark #3',false) order by 1,2;
-WARNING:  _check_fk_groups: The foreign key "mytbl2_col21_fkey" on the table "phil's schema3.myTbl2\" references the table "phil's schema3.mytbl4" that is outside the groups (phil's group#3",).
-CONTEXT:  SQL statement "SELECT emaj._check_fk_groups(v_groupNames)"
-PL/pgSQL function emaj._rlbk_init(text[],text,boolean,integer,boolean,boolean) line 61 at PERFORM
-SQL statement "SELECT emaj._rlbk_init(v_groupNames, v_mark, v_isLoggedRlbk, 1, v_multiGroup, v_isAlterGroupAllowed)"
-PL/pgSQL function emaj._rlbk_groups(text[],text,boolean,boolean,boolean) line 25 at SQL statement
-PL/pgSQL function emaj.emaj_rollback_group(text,text,boolean) line 7 at RETURN QUERY
-WARNING:  _check_fk_groups: The table "phil's schema3.phil's tbl1" is referenced by the foreign key "mytbl4_col44_fkey" on the table "phil's schema3.mytbl4" that is outside the groups (phil's group#3",).
-CONTEXT:  SQL statement "SELECT emaj._check_fk_groups(v_groupNames)"
-PL/pgSQL function emaj._rlbk_init(text[],text,boolean,integer,boolean,boolean) line 61 at PERFORM
-SQL statement "SELECT emaj._rlbk_init(v_groupNames, v_mark, v_isLoggedRlbk, 1, v_multiGroup, v_isAlterGroupAllowed)"
-PL/pgSQL function emaj._rlbk_groups(text[],text,boolean,boolean,boolean) line 25 at SQL statement
-PL/pgSQL function emaj.emaj_rollback_group(text,text,boolean) line 7 at RETURN QUERY
  rlbk_severity |            rlbk_message             
 ---------------+-------------------------------------
  Notice        | 0 / 2 tables effectively processed.
@@ -1847,18 +1775,6 @@ begin;
 (2 rows)
 
   select * from emaj.emaj_rollback_group('myGroup2','Multi-1',false) order by 1,2;
-WARNING:  _check_fk_groups: The foreign key "mytbl6_col61_fkey" on the table "myschema2.mytbl6" references the table "myschema2.mytbl7" that is outside the groups (myGroup2).
-CONTEXT:  SQL statement "SELECT emaj._check_fk_groups(v_groupNames)"
-PL/pgSQL function emaj._rlbk_init(text[],text,boolean,integer,boolean,boolean) line 61 at PERFORM
-SQL statement "SELECT emaj._rlbk_init(v_groupNames, v_mark, v_isLoggedRlbk, 1, v_multiGroup, v_isAlterGroupAllowed)"
-PL/pgSQL function emaj._rlbk_groups(text[],text,boolean,boolean,boolean) line 25 at SQL statement
-PL/pgSQL function emaj.emaj_rollback_group(text,text,boolean) line 7 at RETURN QUERY
-WARNING:  _check_fk_groups: The table "myschema2.mytbl6" is referenced by the foreign key "mytbl8_col81_fkey" on the table "myschema2.mytbl8" that is outside the groups (myGroup2).
-CONTEXT:  SQL statement "SELECT emaj._check_fk_groups(v_groupNames)"
-PL/pgSQL function emaj._rlbk_init(text[],text,boolean,integer,boolean,boolean) line 61 at PERFORM
-SQL statement "SELECT emaj._rlbk_init(v_groupNames, v_mark, v_isLoggedRlbk, 1, v_multiGroup, v_isAlterGroupAllowed)"
-PL/pgSQL function emaj._rlbk_groups(text[],text,boolean,boolean,boolean) line 25 at SQL statement
-PL/pgSQL function emaj.emaj_rollback_group(text,text,boolean) line 7 at RETURN QUERY
  rlbk_severity |            rlbk_message             
 ---------------+-------------------------------------
  Notice        | 2 sequences processed.
@@ -1866,18 +1782,6 @@ PL/pgSQL function emaj.emaj_rollback_group(text,text,boolean) line 7 at RETURN Q
 (2 rows)
 
   select * from emaj.emaj_rollback_group('phil''s group#3",','M1_rollbackable',false) order by 1,2;
-WARNING:  _check_fk_groups: The foreign key "mytbl2_col21_fkey" on the table "phil's schema3.myTbl2\" references the table "phil's schema3.mytbl4" that is outside the groups (phil's group#3",).
-CONTEXT:  SQL statement "SELECT emaj._check_fk_groups(v_groupNames)"
-PL/pgSQL function emaj._rlbk_init(text[],text,boolean,integer,boolean,boolean) line 61 at PERFORM
-SQL statement "SELECT emaj._rlbk_init(v_groupNames, v_mark, v_isLoggedRlbk, 1, v_multiGroup, v_isAlterGroupAllowed)"
-PL/pgSQL function emaj._rlbk_groups(text[],text,boolean,boolean,boolean) line 25 at SQL statement
-PL/pgSQL function emaj.emaj_rollback_group(text,text,boolean) line 7 at RETURN QUERY
-WARNING:  _check_fk_groups: The table "phil's schema3.phil's tbl1" is referenced by the foreign key "mytbl4_col44_fkey" on the table "phil's schema3.mytbl4" that is outside the groups (phil's group#3",).
-CONTEXT:  SQL statement "SELECT emaj._check_fk_groups(v_groupNames)"
-PL/pgSQL function emaj._rlbk_init(text[],text,boolean,integer,boolean,boolean) line 61 at PERFORM
-SQL statement "SELECT emaj._rlbk_init(v_groupNames, v_mark, v_isLoggedRlbk, 1, v_multiGroup, v_isAlterGroupAllowed)"
-PL/pgSQL function emaj._rlbk_groups(text[],text,boolean,boolean,boolean) line 25 at SQL statement
-PL/pgSQL function emaj.emaj_rollback_group(text,text,boolean) line 7 at RETURN QUERY
  rlbk_severity |            rlbk_message             
 ---------------+-------------------------------------
  Notice        | 2 / 2 tables effectively processed.
@@ -2096,14 +2000,6 @@ PL/pgSQL function emaj._alter_exec(bigint,boolean) line 102 at PERFORM
 SQL statement "SELECT emaj._alter_exec(v_timeId, v_multiGroup)"
 PL/pgSQL function emaj._alter_groups(text[],boolean,text) line 58 at PERFORM
 PL/pgSQL function emaj.emaj_alter_group(text,text) line 6 at RETURN
-WARNING:  _check_fk_groups: The foreign key "mytbl2_col21_fkey" on the table "phil's schema3.myTbl2\" references the table "phil's schema3.mytbl4" that is outside the groups (phil's group#3",).
-CONTEXT:  SQL statement "SELECT emaj._check_fk_groups(v_groupNames)"
-PL/pgSQL function emaj._alter_groups(text[],boolean,text) line 72 at PERFORM
-PL/pgSQL function emaj.emaj_alter_group(text,text) line 6 at RETURN
-WARNING:  _check_fk_groups: The table "phil's schema3.table_with_very_looooooooooooooooooooooooooooooooooooooong_name" is referenced by the foreign key "mytbl4_col44_fkey" on the table "phil's schema3.mytbl4" that is outside the groups (phil's group#3",).
-CONTEXT:  SQL statement "SELECT emaj._check_fk_groups(v_groupNames)"
-PL/pgSQL function emaj._alter_groups(text[],boolean,text) line 72 at PERFORM
-PL/pgSQL function emaj.emaj_alter_group(text,text) line 6 at RETURN
  emaj_alter_group 
 ------------------
                 4
@@ -2133,18 +2029,6 @@ select emaj.emaj_set_mark_group('phil''s group#3",','M2');
 
 delete from "phil's schema3".table_with_very_looooooooooooooooooooooooooooooooooooooong_name where "phil's col11" > 18;
 select * from emaj.emaj_rollback_group('phil''s group#3",','M1_after_alter_group',false) order by 1,2;
-WARNING:  _check_fk_groups: The foreign key "mytbl2_col21_fkey" on the table "phil's schema3.myTbl2\" references the table "phil's schema3.mytbl4" that is outside the groups (phil's group#3",).
-CONTEXT:  SQL statement "SELECT emaj._check_fk_groups(v_groupNames)"
-PL/pgSQL function emaj._rlbk_init(text[],text,boolean,integer,boolean,boolean) line 61 at PERFORM
-SQL statement "SELECT emaj._rlbk_init(v_groupNames, v_mark, v_isLoggedRlbk, 1, v_multiGroup, v_isAlterGroupAllowed)"
-PL/pgSQL function emaj._rlbk_groups(text[],text,boolean,boolean,boolean) line 25 at SQL statement
-PL/pgSQL function emaj.emaj_rollback_group(text,text,boolean) line 7 at RETURN QUERY
-WARNING:  _check_fk_groups: The table "phil's schema3.table_with_very_looooooooooooooooooooooooooooooooooooooong_name" is referenced by the foreign key "mytbl4_col44_fkey" on the table "phil's schema3.mytbl4" that is outside the groups (phil's group#3",).
-CONTEXT:  SQL statement "SELECT emaj._check_fk_groups(v_groupNames)"
-PL/pgSQL function emaj._rlbk_init(text[],text,boolean,integer,boolean,boolean) line 61 at PERFORM
-SQL statement "SELECT emaj._rlbk_init(v_groupNames, v_mark, v_isLoggedRlbk, 1, v_multiGroup, v_isAlterGroupAllowed)"
-PL/pgSQL function emaj._rlbk_groups(text[],text,boolean,boolean,boolean) line 25 at SQL statement
-PL/pgSQL function emaj.emaj_rollback_group(text,text,boolean) line 7 at RETURN QUERY
  rlbk_severity |            rlbk_message             
 ---------------+-------------------------------------
  Notice        | 1 / 2 tables effectively processed.
@@ -3527,11 +3411,13 @@ reset role;
 alter table "phil's schema3".mytbl4 alter column col45 type char(11);
 set role emaj_regression_tests_adm_user;
 select * from emaj.emaj_verify_all();
-                                                                            emaj_verify_all                                                                             
-------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+                                                                                        emaj_verify_all                                                                                         
+------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
  Warning: Some E-Maj event triggers exist but are disabled. You may enable them using the emaj_enable_protection_by_event_triggers() function.
  In group "phil's group#3",", the structure of the application table "phil's schema3"."mytbl4" is not coherent with its log table ("emaj_phil's schema3"."mytbl4_log").
-(2 rows)
+ Warning: In the group "myGroup2", the foreign key "mytbl6_col61_fkey" on the table "myschema2"."mytbl6" references the table "myschema2"."mytbl7" that does not belong to any group.
+ Warning: In the group "myGroup2", the table "myschema2"."mytbl6" is referenced by the the foreign key "mytbl8_col81_fkey" of the table "myschema2"."mytbl8" that does not belong to any group.
+(4 rows)
 
 delete from emaj.emaj_group_def where grpdef_schema = 'phil''s schema3' and grpdef_tblseq = 'mytbl4';
 select emaj.emaj_alter_group('phil''s group#3",','remove_the_damaged_table');
@@ -3605,11 +3491,13 @@ reset role;
 drop table "emaj_phil's schema3".mytbl4_log;
 set role emaj_regression_tests_adm_user;
 select * from emaj.emaj_verify_all();
-                                                                emaj_verify_all                                                                
------------------------------------------------------------------------------------------------------------------------------------------------
+                                                                                        emaj_verify_all                                                                                         
+------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
  Warning: Some E-Maj event triggers exist but are disabled. You may enable them using the emaj_enable_protection_by_event_triggers() function.
  In group "phil's group#3",", the log table "emaj_phil's schema3"."mytbl4_log" is not found.
-(2 rows)
+ Warning: In the group "myGroup2", the foreign key "mytbl6_col61_fkey" on the table "myschema2"."mytbl6" references the table "myschema2"."mytbl7" that does not belong to any group.
+ Warning: In the group "myGroup2", the table "myschema2"."mytbl6" is referenced by the the foreign key "mytbl8_col81_fkey" of the table "myschema2"."mytbl8" that does not belong to any group.
+(4 rows)
 
 delete from emaj.emaj_group_def where grpdef_schema = 'phil''s schema3' and grpdef_tblseq = 'mytbl4';
 select emaj.emaj_alter_group('phil''s group#3",','remove_the_damaged_table_2');
@@ -4207,11 +4095,13 @@ select emaj.emaj_move_tables('phil''s schema3','.*','','grp_tmp','Move_tbl_3_to_
 (1 row)
 
 select * from emaj.emaj_verify_all();
-                                                                                       emaj_verify_all                                                                                        
-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
- Warning: In group "grp_tmp_4", the sequence "myschema4"."mytblp_col3_seq" is linked to the table "myschema4"."mytblp" but this table does not belong to any tables group.
- Warning: In group "grp_tmp_3", the sequence "phil's schema3"."myTbl2\_col21_seq" is linked to the table "phil's schema3"."myTbl2\" but this table belongs to another tables group (grp_tmp).
-(2 rows)
+                                                                                         emaj_verify_all                                                                                          
+--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+ Warning: In the group "grp_tmp_4", the sequence "myschema4"."mytblp_col3_seq" is linked to the table "myschema4"."mytblp" but this table does not belong to any tables group.
+ Warning: In the group "grp_tmp_3", the sequence "phil's schema3"."myTbl2\_col21_seq" is linked to the table "phil's schema3"."myTbl2\" but this table belongs to another tables group (grp_tmp).
+ Warning: In the group "myGroup2", the foreign key "mytbl6_col61_fkey" on the table "myschema2"."mytbl6" references the table "myschema2"."mytbl7" that does not belong to any group.
+ Warning: In the group "myGroup2", the table "myschema2"."mytbl6" is referenced by the the foreign key "mytbl8_col81_fkey" of the table "myschema2"."mytbl8" that does not belong to any group.
+(4 rows)
 
 select emaj.emaj_move_sequences('phil''s schema3','.*','','grp_tmp','Move_seq_3_to_tmp');
  emaj_move_sequences 
@@ -4498,11 +4388,13 @@ select emaj.emaj_enable_protection_by_event_triggers();
 
 -- note that the warning about the mytblp_col3_seq sequence is normal
 select * from emaj.emaj_verify_all();
-                                                                             emaj_verify_all                                                                             
--------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+                                                                                        emaj_verify_all                                                                                         
+------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
  In group "grp_tmp", the log sequence "emaj_phil's schema3"."mytbl4_log_seq" is not found.
- Warning: In group "grp_tmp", the sequence "myschema4"."mytblp_col3_seq" is linked to the table "myschema4"."mytblp" but this table does not belong to any tables group.
-(2 rows)
+ Warning: In the group "grp_tmp", the sequence "myschema4"."mytblp_col3_seq" is linked to the table "myschema4"."mytblp" but this table does not belong to any tables group.
+ Warning: In the group "myGroup2", the foreign key "mytbl6_col61_fkey" on the table "myschema2"."mytbl6" references the table "myschema2"."mytbl7" that does not belong to any group.
+ Warning: In the group "myGroup2", the table "myschema2"."mytbl6" is referenced by the the foreign key "mytbl8_col81_fkey" of the table "myschema2"."mytbl8" that does not belong to any group.
+(4 rows)
 
 --     a removal while the group is LOGGING fails
 select emaj.emaj_remove_table('phil''s schema3','mytbl4');
@@ -4579,10 +4471,12 @@ PL/pgSQL function emaj.emaj_assign_table(text,text,text,jsonb,text) line 7 at RE
 (1 row)
 
 select * from emaj.emaj_verify_all();
-                                                                             emaj_verify_all                                                                             
--------------------------------------------------------------------------------------------------------------------------------------------------------------------------
- Warning: In group "grp_tmp", the sequence "myschema4"."mytblp_col3_seq" is linked to the table "myschema4"."mytblp" but this table does not belong to any tables group.
-(1 row)
+                                                                                        emaj_verify_all                                                                                         
+------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+ Warning: In the group "grp_tmp", the sequence "myschema4"."mytblp_col3_seq" is linked to the table "myschema4"."mytblp" but this table does not belong to any tables group.
+ Warning: In the group "myGroup2", the foreign key "mytbl6_col61_fkey" on the table "myschema2"."mytbl6" references the table "myschema2"."mytbl7" that does not belong to any group.
+ Warning: In the group "myGroup2", the table "myschema2"."mytbl6" is referenced by the the foreign key "mytbl8_col81_fkey" of the table "myschema2"."mytbl8" that does not belong to any group.
+(3 rows)
 
 select emaj.emaj_start_group('grp_tmp','Group restart');
  emaj_start_group 
@@ -5463,7 +5357,7 @@ select hist_id, hist_function, hist_event, hist_object,
  hist_id |      hist_function       |          hist_event          |                                   hist_object                                    |                                                         regexp_replace                                                         | hist_user 
 ---------+--------------------------+------------------------------+----------------------------------------------------------------------------------+--------------------------------------------------------------------------------------------------------------------------------+-----------
    10030 | START_GROUP              | BEGIN                        | myGroup1                                                                         | With log reset                                                                                                                 | postgres
-   10031 | PURGE_HISTORY            |                              |                                                                                  | 29 emaj_hist rows deleted ; 138 relation history rows deleted ; 89 alter groups events deleted ; 37 rollback events deleted    | postgres
+   10031 | PURGE_HISTORY            |                              |                                                                                  | 29 emaj_hist rows deleted ; 140 relation history rows deleted ; 91 alter groups events deleted ; 37 rollback events deleted    | postgres
    10032 | LOCK_GROUP               | BEGIN                        | myGroup1                                                                         |                                                                                                                                | postgres
    10033 | LOCK_GROUP               | END                          | myGroup1                                                                         | 5 tables locked, 0 deadlock(s)                                                                                                 | postgres
    10034 | SET_MARK_GROUP           | BEGIN                        | myGroup1                                                                         | M1                                                                                                                             | postgres

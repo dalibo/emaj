@@ -115,7 +115,7 @@ select count(*) from emaj.emaj_relation;
 select count(*) from emaj.emaj_rel_hist;
  count 
 -------
-   123
+   125
 (1 row)
 
 select count(*) from emaj.emaj_mark;
@@ -182,10 +182,11 @@ select * from emaj.emaj_get_current_log_table('myschema1', 'mytbl1');
 (1 row)
 
 select * from emaj.emaj_verify_all();
-  emaj_verify_all  
--------------------
- No error detected
-(1 row)
+                                                                                        emaj_verify_all                                                                                         
+------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+ Warning: In the group "myGroup2", the foreign key "mytbl6_col61_fkey" on the table "myschema2"."mytbl6" references the table "myschema2"."mytbl7" that does not belong to any group.
+ Warning: In the group "myGroup2", the table "myschema2"."mytbl6" is referenced by the the foreign key "mytbl8_col81_fkey" of the table "myschema2"."mytbl8" that does not belong to any group.
+(2 rows)
 
 select emaj.emaj_get_previous_mark_group('myGroup1', current_timestamp);
  emaj_get_previous_mark_group 

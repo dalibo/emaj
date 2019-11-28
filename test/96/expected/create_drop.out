@@ -206,10 +206,12 @@ begin;
 (1 row)
 
   select * from emaj.emaj_verify_all();
-                                                                                        emaj_verify_all                                                                                        
------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
- Warning: In group "phil's group#3",", the sequence "phil's schema3"."myTbl2\_col21_seq" is linked to the table "phil's schema3"."myTbl2\" but this table does not belong to any tables group.
-(1 row)
+                                                                                          emaj_verify_all                                                                                          
+---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+ Warning: In the group "phil's group#3",", the sequence "phil's schema3"."myTbl2\_col21_seq" is linked to the table "phil's schema3"."myTbl2\" but this table does not belong to any tables group.
+ Warning: In the group "myGroup2", the foreign key "mytbl6_col61_fkey" on the table "myschema2"."mytbl6" references the table "myschema2"."mytbl7" that does not belong to any group.
+ Warning: In the group "myGroup2", the table "myschema2"."mytbl6" is referenced by the the foreign key "mytbl8_col81_fkey" of the table "myschema2"."mytbl8" that does not belong to any group.
+(3 rows)
 
 rollback;
 -- should be OK
@@ -549,7 +551,6 @@ PL/pgSQL function emaj.emaj_assign_table(text,text,text,jsonb,text) line 7 at RE
 rollback;
 -- ok
 select emaj.emaj_assign_table('myschema1','mytbl1','myGroup1b');
-WARNING:  _check_fk_groups: The table "myschema1.mytbl1" is referenced by the foreign key "mytbl4_col44_fkey" on the table "myschema1.mytbl4" that is outside the groups (myGroup1b).
  emaj_assign_table 
 -------------------
                  1
@@ -602,8 +603,6 @@ WARNING:  _assign_tables: No table to process.
 select emaj.emaj_assign_tables('myschema1',array['mytbl2','mytbl2b','mytbl2'],'myGroup1b',
                                '{"priority":1, "log_data_tablespace":"tsplog1", "log_index_tablespace":"tsplog1"}'::jsonb);
 WARNING:  _create_tbl: The table "myschema1.mytbl2" has triggers (mytbl2trg1, mytbl2trg2). They will be automatically disabled during E-Maj rollback operations, unless they have been recorded into the list of triggers that may be kept enabled, with the emaj_ignore_app_trigger() function.
-WARNING:  _check_fk_groups: The table "myschema1.mytbl2" is referenced by the foreign key "mytbl4_col43_fkey" on the table "myschema1.mytbl4" that is outside the groups (myGroup1b).
-WARNING:  _check_fk_groups: The table "myschema1.mytbl1" is referenced by the foreign key "mytbl4_col44_fkey" on the table "myschema1.mytbl4" that is outside the groups (myGroup1b).
  emaj_assign_tables 
 --------------------
                   2

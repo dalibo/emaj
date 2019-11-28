@@ -5,6 +5,8 @@ E-Maj - Change log
 ###Enhancements:###
   * The emaj_verify_all() function now warns about sequences linked to serial
     columns which related tables are not in the same tables group.
+  * The emaj_verify_all() function now warns about tables linked by foreign
+    keys and that are not all in the same table group.
 
 ###Bug fixes:###
 

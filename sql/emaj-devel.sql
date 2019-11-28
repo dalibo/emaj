@@ -1828,8 +1828,10 @@ $_assign_tables$
             group_nb_table = (SELECT count(*) FROM emaj.emaj_relation
                                 WHERE rel_group = group_name AND upper_inf(rel_time_range) AND rel_kind = 'r')
         WHERE group_name = v_group;
--- check foreign keys with tables outside the groups
-      PERFORM emaj._check_fk_groups(array[v_group]);
+-- if the group is logging, check foreign keys with tables outside the groups (otherwise the check will be done at the group start time)
+      IF v_groupIsLogging THEN
+        PERFORM emaj._check_fk_groups(array[v_group]);
+      END IF;
     END IF;
 -- insert the end entry into the emaj_hist table
     INSERT INTO emaj.emaj_hist (hist_function, hist_event, hist_wording)
@@ -4965,8 +4967,8 @@ $_alter_groups$
         WHERE group_name = ANY (v_groupNames);
 -- enable previously disabled event triggers
       PERFORM emaj._enable_event_triggers(v_eventTriggers);
--- check foreign keys with tables outside the groups
-      PERFORM emaj._check_fk_groups(v_groupNames);
+-- check foreign keys with tables outside the groups in logging state
+      PERFORM emaj._check_fk_groups(v_loggingGroups);
     END IF;
 -- insert end in the history
     INSERT INTO emaj.emaj_hist (hist_function, hist_event, hist_object, hist_wording)
@@ -6480,8 +6482,6 @@ $_rlbk_init$
                v_nbSession || ',' || v_nbTblInGroups || ',' || v_nbSeqInGroups || ', ''PLANNING'',' || v_histId || ',' ||
                quote_nullable(v_dbLinkSchema) || ',' || v_isDblinkUsed || ') RETURNING rlbk_id';
       SELECT emaj._dblink_sql_exec('rlbk#1', v_stmt, v_dblinkSchema) INTO v_rlbkId;
--- issue warnings in case of foreign keys with tables outside the groups
-      PERFORM emaj._check_fk_groups(v_groupNames);
 -- call the rollback planning function to define all the elementary steps to perform,
 -- compute their estimated duration and spread the elementary steps among sessions
       v_stmt = 'SELECT emaj._rlbk_planning(' || v_rlbkId || ')';
@@ -9281,7 +9281,7 @@ $_verify_all_groups$
 --
 -- Warnings detection
 --
--- check all sequences associated to a serial or a "generated as identity" column have their related table in the same group
+-- detect all sequences associated to a serial or a "generated as identity" column have their related table in the same group
     RETURN QUERY
       SELECT msg FROM (
         WITH serial_dependencies AS (
@@ -9300,18 +9300,67 @@ $_verify_all_groups$
               AND pg_depend.classid = (SELECT oid FROM pg_catalog.pg_class WHERE relname = 'pg_class')
         )
         SELECT DISTINCT seq_schema, seq_name,
-               'Warning: In group "' || seq_group || '", the sequence "' || seq_schema || '"."' || seq_name ||
+               'Warning: In the group "' || seq_group || '", the sequence "' || seq_schema || '"."' || seq_name ||
                '" is linked to the table "' || tbl_schema || '"."' || tbl_name ||
                '" but this table does not belong to any tables group.' AS msg
           FROM serial_dependencies
           WHERE tbl_group IS NULL
         UNION ALL
         SELECT DISTINCT seq_schema, seq_name,
-               'Warning: In group "' || seq_group || '", the sequence "' || seq_schema || '"."' || seq_name ||
+               'Warning: In the group "' || seq_group || '", the sequence "' || seq_schema || '"."' || seq_name ||
                '" is linked to the table "' || tbl_schema || '"."' || tbl_name ||
                '" but this table belongs to another tables group (' || tbl_group || ').' AS msg
           FROM serial_dependencies
           WHERE tbl_group <> seq_group
+        ORDER BY 1,2,3
+        ) AS t;
+-- detect tables linked by a foreign key but not belonging to the same tables group
+    RETURN QUERY
+      SELECT msg FROM (
+        WITH fk_dependencies AS (           -- all foreign keys that link 2 tables at least one of both belongs to a tables group
+          SELECT n.nspname AS tbl_schema, t.relname AS tbl_name, c.conname, nf.nspname AS reftbl_schema, tf.relname AS reftbl_name,
+                 r.rel_group AS tbl_group, g.group_is_rollbackable AS tbl_group_is_rollbackable,
+                 rf.rel_group AS reftbl_group, gf.group_is_rollbackable AS reftbl_group_is_rollbackable
+            FROM pg_catalog.pg_constraint c
+                 JOIN pg_catalog.pg_class t      ON t.oid = c.conrelid
+                 JOIN pg_catalog.pg_namespace n  ON n.oid = t.relnamespace
+                 JOIN pg_catalog.pg_class tf     ON tf.oid = c.confrelid
+                 JOIN pg_catalog.pg_namespace nf ON nf.oid = tf.relnamespace
+                 LEFT OUTER JOIN emaj.emaj_relation r ON r.rel_schema = n.nspname AND r.rel_tblseq = t.relname
+                                                     AND upper_inf(r.rel_time_range)
+                 LEFT OUTER JOIN emaj.emaj_group g ON g.group_name = r.rel_group
+                 LEFT OUTER JOIN emaj.emaj_relation rf ON rf.rel_schema = nf.nspname AND rf.rel_tblseq = tf.relname
+                                                     AND upper_inf(rf.rel_time_range)
+                 LEFT OUTER JOIN emaj.emaj_group gf ON gf.group_name = rf.rel_group
+            WHERE contype = 'f'                                         -- FK constraints only
+              AND (r.rel_group IS NOT NULL OR rf.rel_group IS NOT NULL) -- at least the table or the referenced table belongs to
+                                                                        -- a tables group
+        )
+        SELECT tbl_schema, tbl_name,
+               'Warning: In the group "' || tbl_group || '", the foreign key "' || conname ||
+               '" on the table "' || tbl_schema || '"."' || tbl_name ||
+               '" references the table "' || reftbl_schema || '"."' || reftbl_name || '" that does not belong to any group.' AS msg
+          FROM fk_dependencies
+          WHERE tbl_group IS NOT NULL AND tbl_group_is_rollbackable
+            AND reftbl_group IS NULL
+        UNION ALL
+        SELECT tbl_schema, tbl_name,
+               'Warning: In the group "' || reftbl_group || '", the table "' || reftbl_schema || '"."' || reftbl_name ||
+               '" is referenced by the the foreign key "' || conname ||
+               '" of the table "' || tbl_schema || '"."' || tbl_name || '" that does not belong to any group.' AS msg
+          FROM fk_dependencies
+          WHERE reftbl_group IS NOT NULL AND reftbl_group_is_rollbackable
+            AND tbl_group IS NULL
+        UNION ALL
+        SELECT tbl_schema, tbl_name,
+               'Warning: In the group "' || tbl_group || '", the foreign key "' || conname ||
+               '" on the table "' || tbl_schema || '"."' || tbl_name ||
+               '" references the table "' || reftbl_schema || '"."' || reftbl_name || '" that belongs to another group ("' ||
+               reftbl_group || '")' AS msg
+          FROM fk_dependencies
+          WHERE tbl_group IS NOT NULL AND reftbl_group IS NOT NULL
+            AND tbl_group <> reftbl_group
+            AND (tbl_group_is_rollbackable OR reftbl_group_is_rollbackable)
         ORDER BY 1,2,3
         ) AS t;
 --

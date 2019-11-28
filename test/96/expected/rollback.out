@@ -634,8 +634,6 @@ rollback;
 begin;
   delete from emaj.emaj_sequence where sequ_schema = 'myschema2' and sequ_name = 'myseq1';
   select emaj.emaj_rollback_group('myGroup2','Mark21');
-WARNING:  _check_fk_groups: The foreign key "mytbl6_col61_fkey" on the table "myschema2.mytbl6" references the table "myschema2.mytbl7" that is outside the groups (myGroup2).
-WARNING:  _check_fk_groups: The table "myschema2.mytbl6" is referenced by the foreign key "mytbl8_col81_fkey" on the table "myschema2.mytbl8" that is outside the groups (myGroup2).
 ERROR:  _rlbk_seq: No mark at time id "3003" can be found for the sequence "myschema2.myseq1".
 CONTEXT:  PL/pgSQL function emaj._rlbk_seq(emaj.emaj_relation,bigint) line 21 at RAISE
 SQL statement "SELECT emaj._rlbk_seq(t.*, greatest(v_markTimeId, lower(t.rel_time_range)))
@@ -658,8 +656,6 @@ select emaj.emaj_rollback_group('myGroup1','EMAJ_LAST_MARK');
 (1 row)
 
 select emaj.emaj_rollback_group('myGroup2','Mark21');
-WARNING:  _check_fk_groups: The foreign key "mytbl6_col61_fkey" on the table "myschema2.mytbl6" references the table "myschema2.mytbl7" that is outside the groups (myGroup2).
-WARNING:  _check_fk_groups: The table "myschema2.mytbl6" is referenced by the foreign key "mytbl8_col81_fkey" on the table "myschema2.mytbl8" that is outside the groups (myGroup2).
  emaj_rollback_group 
 ---------------------
                    2
@@ -675,8 +671,6 @@ select emaj.emaj_set_mark_groups('{"myGroup1","myGroup2"}','Mark1B');
 
 -- no user/password defined in emaj_param
 select emaj.emaj_rollback_groups('{"myGroup1","myGroup2"}','EMAJ_LAST_MARK');
-WARNING:  _check_fk_groups: The foreign key "mytbl6_col61_fkey" on the table "myschema2.mytbl6" references the table "myschema2.mytbl7" that is outside the groups (myGroup1,myGroup2).
-WARNING:  _check_fk_groups: The table "myschema2.mytbl6" is referenced by the foreign key "mytbl8_col81_fkey" on the table "myschema2.mytbl8" that is outside the groups (myGroup1,myGroup2).
  emaj_rollback_groups 
 ----------------------
                     4
@@ -686,8 +680,6 @@ WARNING:  _check_fk_groups: The table "myschema2.mytbl6" is referenced by the fo
 insert into emaj.emaj_param (param_key, param_value_text) 
   values ('dblink_user_password','user=<user> password=<password>');
 select emaj.emaj_rollback_groups('{"myGroup1","myGroup2"}','Mark1B');
-WARNING:  _check_fk_groups: The foreign key "mytbl6_col61_fkey" on the table "myschema2.mytbl6" references the table "myschema2.mytbl7" that is outside the groups (myGroup1,myGroup2).
-WARNING:  _check_fk_groups: The table "myschema2.mytbl6" is referenced by the foreign key "mytbl8_col81_fkey" on the table "myschema2.mytbl8" that is outside the groups (myGroup1,myGroup2).
  emaj_rollback_groups 
 ----------------------
                     4
@@ -697,8 +689,6 @@ WARNING:  _check_fk_groups: The table "myschema2.mytbl6" is referenced by the fo
 begin;
   set transaction isolation level repeatable read;
   select emaj.emaj_logged_rollback_groups('{"myGroup1","myGroup2"}','EMAJ_LAST_MARK');
-WARNING:  _check_fk_groups: The foreign key "mytbl6_col61_fkey" on the table "myschema2.mytbl6" references the table "myschema2.mytbl7" that is outside the groups (myGroup1,myGroup2).
-WARNING:  _check_fk_groups: The table "myschema2.mytbl6" is referenced by the foreign key "mytbl8_col81_fkey" on the table "myschema2.mytbl8" that is outside the groups (myGroup1,myGroup2).
  emaj_logged_rollback_groups 
 -----------------------------
                            4
@@ -709,8 +699,6 @@ commit;
 update emaj.emaj_param set param_value_text = 'user=postgres password=postgres' 
   where param_key = 'dblink_user_password';
 select emaj.emaj_logged_rollback_groups('{"myGroup1","myGroup2"}','Mark1B');
-WARNING:  _check_fk_groups: The foreign key "mytbl6_col61_fkey" on the table "myschema2.mytbl6" references the table "myschema2.mytbl7" that is outside the groups (myGroup1,myGroup2).
-WARNING:  _check_fk_groups: The table "myschema2.mytbl6" is referenced by the foreign key "mytbl8_col81_fkey" on the table "myschema2.mytbl8" that is outside the groups (myGroup1,myGroup2).
  emaj_logged_rollback_groups 
 -----------------------------
                            4

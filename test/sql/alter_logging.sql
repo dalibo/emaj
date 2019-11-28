@@ -645,7 +645,6 @@ begin;
   select emaj.emaj_enable_protection_by_event_triggers();
   select emaj.emaj_remove_tables('myschema2','{"mytbl1","mytbl2","myTbl3"}');
   select emaj.emaj_remove_sequences('myschema2','{"myseq1","myseq2"}');
-
   select emaj.emaj_assign_tables('myschema2','{"mytbl1","mytbl2","myTbl3"}','myGroup2',
                                  '{"priority":1, "log_data_tablespace":"tsplog1", "log_index_tablespace":"tsplog1"}'::jsonb);
   select emaj.emaj_assign_sequences('myschema2','{"myseq1","myseq2"}'::text[],'myGroup2','Mark_assign_sequences');
@@ -693,6 +692,11 @@ select emaj.emaj_move_sequences('myschema2','.*','','myGroup2','MOVE_SEQ_logging
 -- and back to the idle group
 select emaj.emaj_move_tables('myschema4','.*','','myGroup4','MOVE_TBL_logging_to_idle');
 select emaj.emaj_move_sequences('myschema2','.*','','myGroup4','MOVE_SEQ_logging_to_idle');
+
+-- move a table with fkey and verify all
+select emaj.emaj_move_table('myschema2','mytbl2','myGroup1','Move a table with fkey');
+select * from emaj.emaj_verify_all();
+select emaj.emaj_move_table('myschema2','mytbl2','myGroup2','Move a table with fkey back');
 
 -----------------------------
 -- change priority and tablespaces attributes without updating emaj_group_def

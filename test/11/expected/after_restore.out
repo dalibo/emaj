@@ -342,8 +342,6 @@ select stat_group, stat_schema, stat_table, stat_first_mark, stat_last_mark, sta
 (6 rows)
 
 select emaj.emaj_rollback_group('myGroup2','Multi-1');
-WARNING:  _check_fk_groups: The foreign key "mytbl6_col61_fkey" on the table "myschema2.mytbl6" references the table "myschema2.mytbl7" that is outside the groups (myGroup2).
-WARNING:  _check_fk_groups: The table "myschema2.mytbl6" is referenced by the foreign key "mytbl8_col81_fkey" on the table "myschema2.mytbl8" that is outside the groups (myGroup2).
  emaj_rollback_group 
 ---------------------
                    8
@@ -756,15 +754,17 @@ select time_id, time_last_emaj_gid, time_event from emaj.emaj_time_stamp order b
     6166 |              11889 | A
     6167 |              11889 | A
     6168 |              11889 | A
-    6169 |              11889 | M
-    6170 |              11889 | D
+    6169 |              11889 | A
+    6170 |              11889 | A
     6171 |              11889 | M
     6172 |              11889 | D
-    6173 |              11889 | D
-    6174 |              11889 | C
-    6175 |              11889 | M
+    6173 |              11889 | M
+    6174 |              11889 | D
+    6175 |              11889 | D
     6176 |              11889 | C
     6177 |              11889 | M
+    6178 |              11889 | C
+    6179 |              11889 | M
    10000 |              99999 | M
    10001 |              99999 | D
    10002 |              99999 | D
@@ -942,7 +942,7 @@ select time_id, time_last_emaj_gid, time_event from emaj.emaj_time_stamp order b
    20205 |             101000 | R
    20206 |             101019 | M
    20207 |             101019 | R
-(487 rows)
+(489 rows)
 
 -- user tables
 select * from mySchema2.myTbl1 order by col11,col12;
