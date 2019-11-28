@@ -1435,10 +1435,11 @@ NOTICE:  table "emaj_temp_script" does not exist, skipping
 select * from emaj.emaj_verify_all();
                                                                                         emaj_verify_all                                                                                         
 ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
- Warning: Some E-Maj event triggers exist but are disabled. You may enable them using the emaj_enable_protection_by_event_triggers() function.
  Warning: In the group "myGroup2", the foreign key "mytbl6_col61_fkey" on the table "myschema2"."mytbl6" references the table "myschema2"."mytbl7" that does not belong to any group.
  Warning: In the group "myGroup2", the table "myschema2"."mytbl6" is referenced by the the foreign key "mytbl8_col81_fkey" of the table "myschema2"."mytbl8" that does not belong to any group.
-(3 rows)
+ Warning: Some E-Maj event triggers exist but are disabled. You may enable them using the emaj_enable_protection_by_event_triggers() function.
+ No error detected
+(4 rows)
 
 --
 -- log schemas content errors tests
@@ -1449,16 +1450,13 @@ begin;
   create table emaj.dummy2 (col1 int);
   create table emaj_myschema1.emaj_dummy (col1 int);
   create table emaj.emaj_dummy (col1 int);               -- this one is not detected
-  select * from emaj.emaj_verify_all();
-                                                                                        emaj_verify_all                                                                                         
-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
- Warning: Some E-Maj event triggers exist but are disabled. You may enable them using the emaj_enable_protection_by_event_triggers() function.
- In schema "emaj", the table "emaj"."dummy1_log" is not linked to any created tables group.
- In schema "emaj", the table "emaj"."dummy2" is not linked to any created tables group.
- In schema "emaj_myschema1", the table "emaj_myschema1"."emaj_dummy" is not linked to any created tables group.
- Warning: In the group "myGroup2", the foreign key "mytbl6_col61_fkey" on the table "myschema2"."mytbl6" references the table "myschema2"."mytbl7" that does not belong to any group.
- Warning: In the group "myGroup2", the table "myschema2"."mytbl6" is referenced by the the foreign key "mytbl8_col81_fkey" of the table "myschema2"."mytbl8" that does not belong to any group.
-(6 rows)
+  select * from emaj.emaj_verify_all() t(msg) where msg like 'Error%';
+                                                            msg                                                            
+---------------------------------------------------------------------------------------------------------------------------
+ Error: In the schema "emaj", the table "emaj"."dummy1_log" is not linked to any created tables group.
+ Error: In the schema "emaj", the table "emaj"."dummy2" is not linked to any created tables group.
+ Error: In the schema "emaj_myschema1", the table "emaj_myschema1"."emaj_dummy" is not linked to any created tables group.
+(3 rows)
 
 rollback;
 -- detection of unattended functions in E-Maj schemas
@@ -1468,16 +1466,13 @@ begin;
   create function emaj_myschema1.dummy3_fnct () returns int language sql as $$ select 0 $$;
   create function emaj._dummy4_fnct () returns int language sql as $$ select 0 $$;      -- this one is not detected
   create function emaj.emaj_dummy5_fnct () returns int language sql as $$ select 0 $$;  -- this one is not detected
-  select * from emaj.emaj_verify_all();
-                                                                                        emaj_verify_all                                                                                         
-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
- Warning: Some E-Maj event triggers exist but are disabled. You may enable them using the emaj_enable_protection_by_event_triggers() function.
- In schema "emaj", the function "emaj"."dummy1_log_fnct" is not linked to any created tables group.
- In schema "emaj_myschema1", the function "emaj_myschema1"."dummy2_rlbk_fnct" is not linked to any created tables group.
- In schema "emaj_myschema1", the function "emaj_myschema1"."dummy3_fnct" is not linked to any created tables group.
- Warning: In the group "myGroup2", the foreign key "mytbl6_col61_fkey" on the table "myschema2"."mytbl6" references the table "myschema2"."mytbl7" that does not belong to any group.
- Warning: In the group "myGroup2", the table "myschema2"."mytbl6" is referenced by the the foreign key "mytbl8_col81_fkey" of the table "myschema2"."mytbl8" that does not belong to any group.
-(6 rows)
+  select * from emaj.emaj_verify_all() t(msg) where msg like 'Error%';
+                                                                msg                                                                 
+------------------------------------------------------------------------------------------------------------------------------------
+ Error: In the schema "emaj", the function "emaj"."dummy1_log_fnct" is not linked to any created tables group.
+ Error: In the schema "emaj_myschema1", the function "emaj_myschema1"."dummy2_rlbk_fnct" is not linked to any created tables group.
+ Error: In the schema "emaj_myschema1", the function "emaj_myschema1"."dummy3_fnct" is not linked to any created tables group.
+(3 rows)
 
 rollback;
 -- detection of unattended sequences in E-Maj schemas
@@ -1486,17 +1481,14 @@ begin;
   create sequence emaj_myschema1.dummy2_seq;
   create sequence emaj_myschema1.dummy3_log_seq;
   create sequence emaj.emaj_dummy4_seq;                  -- this one is not detected
-  select * from emaj.emaj_verify_all();
-                                                                                        emaj_verify_all                                                                                         
-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
- Warning: Some E-Maj event triggers exist but are disabled. You may enable them using the emaj_enable_protection_by_event_triggers() function.
- In schema "emaj", the table "emaj"."dummy1_log" is not linked to any created tables group.
- In schema "emaj", the sequence "emaj"."dummy1_log_col1_seq" is not linked to any created tables group.
- In schema "emaj_myschema1", the sequence "emaj_myschema1"."dummy2_seq" is not linked to any created tables group.
- In schema "emaj_myschema1", the sequence "emaj_myschema1"."dummy3_log_seq" is not linked to any created tables group.
- Warning: In the group "myGroup2", the foreign key "mytbl6_col61_fkey" on the table "myschema2"."mytbl6" references the table "myschema2"."mytbl7" that does not belong to any group.
- Warning: In the group "myGroup2", the table "myschema2"."mytbl6" is referenced by the the foreign key "mytbl8_col81_fkey" of the table "myschema2"."mytbl8" that does not belong to any group.
-(7 rows)
+  select * from emaj.emaj_verify_all() t(msg) where msg like 'Error%';
+                                                               msg                                                                
+----------------------------------------------------------------------------------------------------------------------------------
+ Error: In the schema "emaj", the table "emaj"."dummy1_log" is not linked to any created tables group.
+ Error: In the schema "emaj", the sequence "emaj"."dummy1_log_col1_seq" is not linked to any created tables group.
+ Error: In the schema "emaj_myschema1", the sequence "emaj_myschema1"."dummy2_seq" is not linked to any created tables group.
+ Error: In the schema "emaj_myschema1", the sequence "emaj_myschema1"."dummy3_log_seq" is not linked to any created tables group.
+(4 rows)
 
 rollback;
 -- detection of unattended types in E-Maj schemas
@@ -1505,31 +1497,25 @@ begin;
   create type emaj_myschema1.dummy2_type as (col1 int);
   create type emaj_myschema1.dummy3_type as (col1 int);
   create type emaj.emaj_dummy4_type as (col1 int);       -- this one is not detected
-  select * from emaj.emaj_verify_all();
-                                                                                        emaj_verify_all                                                                                         
-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
- Warning: Some E-Maj event triggers exist but are disabled. You may enable them using the emaj_enable_protection_by_event_triggers() function.
- In schema "emaj", the type "emaj"."dummy1_type" is not an E-Maj component.
- In schema "emaj_myschema1", the type "emaj_myschema1"."dummy2_type" is not an E-Maj component.
- In schema "emaj_myschema1", the type "emaj_myschema1"."dummy3_type" is not an E-Maj component.
- Warning: In the group "myGroup2", the foreign key "mytbl6_col61_fkey" on the table "myschema2"."mytbl6" references the table "myschema2"."mytbl7" that does not belong to any group.
- Warning: In the group "myGroup2", the table "myschema2"."mytbl6" is referenced by the the foreign key "mytbl8_col81_fkey" of the table "myschema2"."mytbl8" that does not belong to any group.
-(6 rows)
+  select * from emaj.emaj_verify_all() t(msg) where msg like 'Error%';
+                                                    msg                                                    
+-----------------------------------------------------------------------------------------------------------
+ Error: In the schema "emaj", the type "emaj"."dummy1_type" is not an E-Maj component.
+ Error: In the schema "emaj_myschema1", the type "emaj_myschema1"."dummy2_type" is not an E-Maj component.
+ Error: In the schema "emaj_myschema1", the type "emaj_myschema1"."dummy3_type" is not an E-Maj component.
+(3 rows)
 
 rollback;
 -- detection of unattended views in E-Maj schemas
 begin;
   create view emaj.dummy1_view as select hist_id, hist_function, hist_event, hist_object from emaj.emaj_hist;
   create view emaj.dummy2_view as select hist_id, hist_function, hist_event, hist_object from emaj.emaj_hist;
-  select * from emaj.emaj_verify_all();
-                                                                                        emaj_verify_all                                                                                         
-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
- Warning: Some E-Maj event triggers exist but are disabled. You may enable them using the emaj_enable_protection_by_event_triggers() function.
- In schema "emaj", the view "emaj"."dummy1_view" is not an E-Maj component.
- In schema "emaj", the view "emaj"."dummy2_view" is not an E-Maj component.
- Warning: In the group "myGroup2", the foreign key "mytbl6_col61_fkey" on the table "myschema2"."mytbl6" references the table "myschema2"."mytbl7" that does not belong to any group.
- Warning: In the group "myGroup2", the table "myschema2"."mytbl6" is referenced by the the foreign key "mytbl8_col81_fkey" of the table "myschema2"."mytbl8" that does not belong to any group.
-(5 rows)
+  select * from emaj.emaj_verify_all() t(msg) where msg like 'Error%';
+                                          msg                                          
+---------------------------------------------------------------------------------------
+ Error: In the schema "emaj", the view "emaj"."dummy1_view" is not an E-Maj component.
+ Error: In the schema "emaj", the view "emaj"."dummy2_view" is not an E-Maj component.
+(2 rows)
 
 rollback;
 -- detection of unattended foreign tables in E-Maj schemas
@@ -1539,30 +1525,24 @@ begin;
   create server file_server foreign data wrapper file;
   create foreign table emaj.dummy1_ftbl (ligne TEXT) server file_server options(filename '/tmp/emaj_test/log_snaps/_INFO');
   create foreign table emaj.dummy2_ftbl (ligne TEXT) server file_server options(filename '/tmp/emaj_test/log_snaps/_INFO');
-  select * from emaj.emaj_verify_all();
-                                                                                        emaj_verify_all                                                                                         
-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
- Warning: Some E-Maj event triggers exist but are disabled. You may enable them using the emaj_enable_protection_by_event_triggers() function.
- In schema "emaj", the foreign table "emaj"."dummy1_ftbl" is not an E-Maj component.
- In schema "emaj", the foreign table "emaj"."dummy2_ftbl" is not an E-Maj component.
- Warning: In the group "myGroup2", the foreign key "mytbl6_col61_fkey" on the table "myschema2"."mytbl6" references the table "myschema2"."mytbl7" that does not belong to any group.
- Warning: In the group "myGroup2", the table "myschema2"."mytbl6" is referenced by the the foreign key "mytbl8_col81_fkey" of the table "myschema2"."mytbl8" that does not belong to any group.
-(5 rows)
+  select * from emaj.emaj_verify_all() t(msg) where msg like 'Error%';
+                                              msg                                               
+------------------------------------------------------------------------------------------------
+ Error: In the schema "emaj", the foreign table "emaj"."dummy1_ftbl" is not an E-Maj component.
+ Error: In the schema "emaj", the foreign table "emaj"."dummy2_ftbl" is not an E-Maj component.
+(2 rows)
 
 rollback;
 -- detection of unattended domains in E-Maj schemas
 begin;
   create domain emaj_myschema1.dummy1_domain as int check (VALUE > 0);
   create domain emaj_myschema1.dummy2_domain as int check (VALUE > 0);
-  select * from emaj.emaj_verify_all();
-                                                                                        emaj_verify_all                                                                                         
-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
- Warning: Some E-Maj event triggers exist but are disabled. You may enable them using the emaj_enable_protection_by_event_triggers() function.
- In schema "emaj_myschema1", the domain "emaj_myschema1"."dummy1_domain" is not an E-Maj component.
- In schema "emaj_myschema1", the domain "emaj_myschema1"."dummy2_domain" is not an E-Maj component.
- Warning: In the group "myGroup2", the foreign key "mytbl6_col61_fkey" on the table "myschema2"."mytbl6" references the table "myschema2"."mytbl7" that does not belong to any group.
- Warning: In the group "myGroup2", the table "myschema2"."mytbl6" is referenced by the the foreign key "mytbl8_col81_fkey" of the table "myschema2"."mytbl8" that does not belong to any group.
-(5 rows)
+  select * from emaj.emaj_verify_all() t(msg) where msg like 'Error%';
+                                                      msg                                                      
+---------------------------------------------------------------------------------------------------------------
+ Error: In the schema "emaj_myschema1", the domain "emaj_myschema1"."dummy1_domain" is not an E-Maj component.
+ Error: In the schema "emaj_myschema1", the domain "emaj_myschema1"."dummy2_domain" is not an E-Maj component.
+(2 rows)
 
 rollback;
 --
@@ -1571,14 +1551,11 @@ rollback;
 -- detection of too old group
 begin;
   update emaj.emaj_group set group_pg_version = '8.0.0' where group_name = 'myGroup1';
-  select * from emaj.emaj_verify_all();
-                                                                                        emaj_verify_all                                                                                         
-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
- Warning: Some E-Maj event triggers exist but are disabled. You may enable them using the emaj_enable_protection_by_event_triggers() function.
- The group "myGroup1" has been created with a non compatible postgresql version (8.0.0). It must be dropped and recreated.
- Warning: In the group "myGroup2", the foreign key "mytbl6_col61_fkey" on the table "myschema2"."mytbl6" references the table "myschema2"."mytbl7" that does not belong to any group.
- Warning: In the group "myGroup2", the table "myschema2"."mytbl6" is referenced by the the foreign key "mytbl8_col81_fkey" of the table "myschema2"."mytbl8" that does not belong to any group.
-(4 rows)
+  select * from emaj.emaj_verify_all() t(msg) where msg like 'Error%';
+                                                               msg                                                                
+----------------------------------------------------------------------------------------------------------------------------------
+ Error: The group "myGroup1" has been created with a non compatible postgresql version (8.0.0). It must be dropped and recreated.
+(1 row)
 
 rollback;
 -- detection of a missing application schema
@@ -1592,21 +1569,18 @@ drop cascades to table myschema1.mytbl4
 drop cascades to table myschema1.mytbl2b
 drop cascades to function myschema1.mytbl2trgfct1()
 drop cascades to function myschema1.mytbl2trgfct2()
-  select * from emaj.emaj_verify_all();
-                                                                                        emaj_verify_all                                                                                         
-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
- Warning: Some E-Maj event triggers exist but are disabled. You may enable them using the emaj_enable_protection_by_event_triggers() function.
- The application schema "myschema1" does not exist any more.
- In group "myGroup1", the table "myschema1"."myTbl3" does not exist any more.
- In group "myGroup1", the sequence "myschema1"."myTbl3_col31_seq" does not exist any more.
- In group "myGroup1", the table "myschema1"."mytbl1" does not exist any more.
- In group "myGroup1", the table "myschema1"."mytbl2" does not exist any more.
- In group "myGroup1", the table "myschema1"."mytbl2b" does not exist any more.
- In group "myGroup1", the sequence "myschema1"."mytbl2b_col20_seq" does not exist any more.
- In group "myGroup1", the table "myschema1"."mytbl4" does not exist any more.
- Warning: In the group "myGroup2", the foreign key "mytbl6_col61_fkey" on the table "myschema2"."mytbl6" references the table "myschema2"."mytbl7" that does not belong to any group.
- Warning: In the group "myGroup2", the table "myschema2"."mytbl6" is referenced by the the foreign key "mytbl8_col81_fkey" of the table "myschema2"."mytbl8" that does not belong to any group.
-(11 rows)
+  select * from emaj.emaj_verify_all() t(msg) where msg like 'Error%';
+                                                  msg                                                  
+-------------------------------------------------------------------------------------------------------
+ Error: The application schema "myschema1" does not exist any more.
+ Error: In the group "myGroup1", the table "myschema1"."myTbl3" does not exist any more.
+ Error: In the group "myGroup1", the sequence "myschema1"."myTbl3_col31_seq" does not exist any more.
+ Error: In the group "myGroup1", the table "myschema1"."mytbl1" does not exist any more.
+ Error: In the group "myGroup1", the table "myschema1"."mytbl2" does not exist any more.
+ Error: In the group "myGroup1", the table "myschema1"."mytbl2b" does not exist any more.
+ Error: In the group "myGroup1", the sequence "myschema1"."mytbl2b_col20_seq" does not exist any more.
+ Error: In the group "myGroup1", the table "myschema1"."mytbl4" does not exist any more.
+(8 rows)
 
   select group_has_waiting_changes from emaj.emaj_group where group_name = 'myGroup1';
  group_has_waiting_changes 
@@ -1618,27 +1592,21 @@ rollback;
 -- detection of a missing application relation
 begin;
   drop table myschema1.mytbl4;
-  select * from emaj.emaj_verify_all();
-                                                                                        emaj_verify_all                                                                                         
-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
- Warning: Some E-Maj event triggers exist but are disabled. You may enable them using the emaj_enable_protection_by_event_triggers() function.
- In group "myGroup1", the table "myschema1"."mytbl4" does not exist any more.
- Warning: In the group "myGroup2", the foreign key "mytbl6_col61_fkey" on the table "myschema2"."mytbl6" references the table "myschema2"."mytbl7" that does not belong to any group.
- Warning: In the group "myGroup2", the table "myschema2"."mytbl6" is referenced by the the foreign key "mytbl8_col81_fkey" of the table "myschema2"."mytbl8" that does not belong to any group.
-(4 rows)
+  select * from emaj.emaj_verify_all() t(msg) where msg like 'Error%';
+                                           msg                                           
+-----------------------------------------------------------------------------------------
+ Error: In the group "myGroup1", the table "myschema1"."mytbl4" does not exist any more.
+(1 row)
 
 rollback;
 -- detection of relation type change (a table is now a sequence!)
 begin;
   update emaj.emaj_relation set rel_kind = 'S' where rel_schema = 'myschema1' and rel_tblseq = 'mytbl1' and upper_inf(rel_time_range);
-  select * from emaj.emaj_verify_all();
-                                                                                        emaj_verify_all                                                                                         
-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
- Warning: Some E-Maj event triggers exist but are disabled. You may enable them using the emaj_enable_protection_by_event_triggers() function.
- In group "myGroup1", the sequence "myschema1"."mytbl1" does not exist any more.
- Warning: In the group "myGroup2", the foreign key "mytbl6_col61_fkey" on the table "myschema2"."mytbl6" references the table "myschema2"."mytbl7" that does not belong to any group.
- Warning: In the group "myGroup2", the table "myschema2"."mytbl6" is referenced by the the foreign key "mytbl8_col81_fkey" of the table "myschema2"."mytbl8" that does not belong to any group.
-(4 rows)
+  select * from emaj.emaj_verify_all() t(msg) where msg like 'Error%';
+                                            msg                                             
+--------------------------------------------------------------------------------------------
+ Error: In the group "myGroup1", the sequence "myschema1"."mytbl1" does not exist any more.
+(1 row)
 
 rollback;
 -- detection of a missing E-Maj log schema
@@ -1665,101 +1633,83 @@ drop cascades to table emaj_myschema1.mytbl2b_log
 drop cascades to sequence emaj_myschema1.mytbl2b_log_seq
 drop cascades to function emaj_myschema1.mytbl2b_log_fnct()
 drop cascades to trigger emaj_log_trg on table myschema1.mytbl2b
-  select * from emaj.emaj_verify_all();
-                                                                                        emaj_verify_all                                                                                         
-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
- Warning: Some E-Maj event triggers exist but are disabled. You may enable them using the emaj_enable_protection_by_event_triggers() function.
- The E-Maj schema "emaj_myschema1" does not exist any more.
- In group "myGroup1", the log table "emaj_myschema1"."myTbl3_log" is not found.
- In group "myGroup1", the log table "emaj_myschema1"."mytbl1_log" is not found.
- In group "myGroup1", the log table "emaj_myschema1"."mytbl2_log" is not found.
- In group "myGroup1", the log table "emaj_myschema1"."mytbl2b_log" is not found.
- In group "myGroup1", the log table "emaj_myschema1"."mytbl4_log" is not found.
- In group "myGroup1", the log sequence "emaj_myschema1"."myTbl3_log_seq" is not found.
- In group "myGroup1", the log sequence "emaj_myschema1"."mytbl1_log_seq" is not found.
- In group "myGroup1", the log sequence "emaj_myschema1"."mytbl2_log_seq" is not found.
- In group "myGroup1", the log sequence "emaj_myschema1"."mytbl2b_log_seq" is not found.
- In group "myGroup1", the log sequence "emaj_myschema1"."mytbl4_log_seq" is not found.
- In group "myGroup1", the log function "emaj_myschema1"."myTbl3_log_fnct" is not found.
- In group "myGroup1", the log function "emaj_myschema1"."mytbl1_log_fnct" is not found.
- In group "myGroup1", the log function "emaj_myschema1"."mytbl2_log_fnct" is not found.
- In group "myGroup1", the log function "emaj_myschema1"."mytbl2b_log_fnct" is not found.
- In group "myGroup1", the log function "emaj_myschema1"."mytbl4_log_fnct" is not found.
- In group "myGroup1", the log trigger "emaj_log_trg" on table "myschema1"."myTbl3" is not found.
- In group "myGroup1", the log trigger "emaj_log_trg" on table "myschema1"."mytbl1" is not found.
- In group "myGroup1", the log trigger "emaj_log_trg" on table "myschema1"."mytbl2" is not found.
- In group "myGroup1", the log trigger "emaj_log_trg" on table "myschema1"."mytbl2b" is not found.
- In group "myGroup1", the log trigger "emaj_log_trg" on table "myschema1"."mytbl4" is not found.
- Warning: In the group "myGroup2", the foreign key "mytbl6_col61_fkey" on the table "myschema2"."mytbl6" references the table "myschema2"."mytbl7" that does not belong to any group.
- Warning: In the group "myGroup2", the table "myschema2"."mytbl6" is referenced by the the foreign key "mytbl8_col81_fkey" of the table "myschema2"."mytbl8" that does not belong to any group.
-(24 rows)
+  select * from emaj.emaj_verify_all() t(msg) where msg like 'Error%';
+                                                     msg                                                     
+-------------------------------------------------------------------------------------------------------------
+ Error: The E-Maj schema "emaj_myschema1" does not exist any more.
+ Error: In the group "myGroup1", the log table "emaj_myschema1"."myTbl3_log" is not found.
+ Error: In the group "myGroup1", the log table "emaj_myschema1"."mytbl1_log" is not found.
+ Error: In the group "myGroup1", the log table "emaj_myschema1"."mytbl2_log" is not found.
+ Error: In the group "myGroup1", the log table "emaj_myschema1"."mytbl2b_log" is not found.
+ Error: In the group "myGroup1", the log table "emaj_myschema1"."mytbl4_log" is not found.
+ Error: In the group "myGroup1", the log sequence "emaj_myschema1"."myTbl3_log_seq" is not found.
+ Error: In the group "myGroup1", the log sequence "emaj_myschema1"."mytbl1_log_seq" is not found.
+ Error: In the group "myGroup1", the log sequence "emaj_myschema1"."mytbl2_log_seq" is not found.
+ Error: In the group "myGroup1", the log sequence "emaj_myschema1"."mytbl2b_log_seq" is not found.
+ Error: In the group "myGroup1", the log sequence "emaj_myschema1"."mytbl4_log_seq" is not found.
+ Error: In the group "myGroup1", the log function "emaj_myschema1"."myTbl3_log_fnct" is not found.
+ Error: In the group "myGroup1", the log function "emaj_myschema1"."mytbl1_log_fnct" is not found.
+ Error: In the group "myGroup1", the log function "emaj_myschema1"."mytbl2_log_fnct" is not found.
+ Error: In the group "myGroup1", the log function "emaj_myschema1"."mytbl2b_log_fnct" is not found.
+ Error: In the group "myGroup1", the log function "emaj_myschema1"."mytbl4_log_fnct" is not found.
+ Error: In the group "myGroup1", the log trigger "emaj_log_trg" on table "myschema1"."myTbl3" is not found.
+ Error: In the group "myGroup1", the log trigger "emaj_log_trg" on table "myschema1"."mytbl1" is not found.
+ Error: In the group "myGroup1", the log trigger "emaj_log_trg" on table "myschema1"."mytbl2" is not found.
+ Error: In the group "myGroup1", the log trigger "emaj_log_trg" on table "myschema1"."mytbl2b" is not found.
+ Error: In the group "myGroup1", the log trigger "emaj_log_trg" on table "myschema1"."mytbl4" is not found.
+(21 rows)
 
 rollback;
 -- detection of a missing log trigger
 begin;
   drop trigger emaj_log_trg on myschema1.mytbl1;
-  select * from emaj.emaj_verify_all();
-                                                                                        emaj_verify_all                                                                                         
-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
- Warning: Some E-Maj event triggers exist but are disabled. You may enable them using the emaj_enable_protection_by_event_triggers() function.
- In group "myGroup1", the log trigger "emaj_log_trg" on table "myschema1"."mytbl1" is not found.
- Warning: In the group "myGroup2", the foreign key "mytbl6_col61_fkey" on the table "myschema2"."mytbl6" references the table "myschema2"."mytbl7" that does not belong to any group.
- Warning: In the group "myGroup2", the table "myschema2"."mytbl6" is referenced by the the foreign key "mytbl8_col81_fkey" of the table "myschema2"."mytbl8" that does not belong to any group.
-(4 rows)
+  select * from emaj.emaj_verify_all() t(msg) where msg like 'Error%';
+                                                    msg                                                     
+------------------------------------------------------------------------------------------------------------
+ Error: In the group "myGroup1", the log trigger "emaj_log_trg" on table "myschema1"."mytbl1" is not found.
+(1 row)
 
 rollback;
 -- detection of a missing log function (and trigger)
 begin;
   drop function emaj_myschema1.mytbl1_log_fnct() cascade;
 NOTICE:  drop cascades to trigger emaj_log_trg on table myschema1.mytbl1
-  select * from emaj.emaj_verify_all();
-                                                                                        emaj_verify_all                                                                                         
-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
- Warning: Some E-Maj event triggers exist but are disabled. You may enable them using the emaj_enable_protection_by_event_triggers() function.
- In group "myGroup1", the log function "emaj_myschema1"."mytbl1_log_fnct" is not found.
- In group "myGroup1", the log trigger "emaj_log_trg" on table "myschema1"."mytbl1" is not found.
- Warning: In the group "myGroup2", the foreign key "mytbl6_col61_fkey" on the table "myschema2"."mytbl6" references the table "myschema2"."mytbl7" that does not belong to any group.
- Warning: In the group "myGroup2", the table "myschema2"."mytbl6" is referenced by the the foreign key "mytbl8_col81_fkey" of the table "myschema2"."mytbl8" that does not belong to any group.
-(5 rows)
+  select * from emaj.emaj_verify_all() t(msg) where msg like 'Error%';
+                                                    msg                                                     
+------------------------------------------------------------------------------------------------------------
+ Error: In the group "myGroup1", the log function "emaj_myschema1"."mytbl1_log_fnct" is not found.
+ Error: In the group "myGroup1", the log trigger "emaj_log_trg" on table "myschema1"."mytbl1" is not found.
+(2 rows)
 
 rollback;
 -- detection of a missing truncate trigger
 begin;
   drop trigger emaj_trunc_trg on myschema1.mytbl1;
-  select * from emaj.emaj_verify_all();
-                                                                                        emaj_verify_all                                                                                         
-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
- Warning: Some E-Maj event triggers exist but are disabled. You may enable them using the emaj_enable_protection_by_event_triggers() function.
- In group "myGroup1", the truncate trigger "emaj_trunc_trg" on table "myschema1"."mytbl1" is not found.
- Warning: In the group "myGroup2", the foreign key "mytbl6_col61_fkey" on the table "myschema2"."mytbl6" references the table "myschema2"."mytbl7" that does not belong to any group.
- Warning: In the group "myGroup2", the table "myschema2"."mytbl6" is referenced by the the foreign key "mytbl8_col81_fkey" of the table "myschema2"."mytbl8" that does not belong to any group.
-(4 rows)
+  select * from emaj.emaj_verify_all() t(msg) where msg like 'Error%';
+                                                        msg                                                        
+-------------------------------------------------------------------------------------------------------------------
+ Error: In the group "myGroup1", the truncate trigger "emaj_trunc_trg" on table "myschema1"."mytbl1" is not found.
+(1 row)
 
 rollback;
 -- detection of a missing log table
 begin;
   drop table emaj_myschema1.mytbl1_log;
-  select * from emaj.emaj_verify_all();
-                                                                                        emaj_verify_all                                                                                         
-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
- Warning: Some E-Maj event triggers exist but are disabled. You may enable them using the emaj_enable_protection_by_event_triggers() function.
- In group "myGroup1", the log table "emaj_myschema1"."mytbl1_log" is not found.
- Warning: In the group "myGroup2", the foreign key "mytbl6_col61_fkey" on the table "myschema2"."mytbl6" references the table "myschema2"."mytbl7" that does not belong to any group.
- Warning: In the group "myGroup2", the table "myschema2"."mytbl6" is referenced by the the foreign key "mytbl8_col81_fkey" of the table "myschema2"."mytbl8" that does not belong to any group.
-(4 rows)
+  select * from emaj.emaj_verify_all() t(msg) where msg like 'Error%';
+                                            msg                                            
+-------------------------------------------------------------------------------------------
+ Error: In the group "myGroup1", the log table "emaj_myschema1"."mytbl1_log" is not found.
+(1 row)
 
 rollback;
 -- detection of a missing log sequence
 begin;
   drop sequence emaj_myschema1.mytbl1_log_seq;
-  select * from emaj.emaj_verify_all();
-                                                                                        emaj_verify_all                                                                                         
-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
- Warning: Some E-Maj event triggers exist but are disabled. You may enable them using the emaj_enable_protection_by_event_triggers() function.
- In group "myGroup1", the log sequence "emaj_myschema1"."mytbl1_log_seq" is not found.
- Warning: In the group "myGroup2", the foreign key "mytbl6_col61_fkey" on the table "myschema2"."mytbl6" references the table "myschema2"."mytbl7" that does not belong to any group.
- Warning: In the group "myGroup2", the table "myschema2"."mytbl6" is referenced by the the foreign key "mytbl8_col81_fkey" of the table "myschema2"."mytbl8" that does not belong to any group.
-(4 rows)
+  select * from emaj.emaj_verify_all() t(msg) where msg like 'Error%';
+                                               msg                                                
+--------------------------------------------------------------------------------------------------
+ Error: In the group "myGroup1", the log sequence "emaj_myschema1"."mytbl1_log_seq" is not found.
+(1 row)
 
 rollback;
 -- detection of a change in the application table structure (new column)
@@ -1767,29 +1717,23 @@ begin;
   alter table myschema1.mytbl1 add column newcol int;
   alter table myschema1.mytbl1 add column othernewcol text;
   alter table myschema1.mytbl2 add column newcol int;
-  select * from emaj.emaj_verify_all();
-                                                                                        emaj_verify_all                                                                                         
-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
- Warning: Some E-Maj event triggers exist but are disabled. You may enable them using the emaj_enable_protection_by_event_triggers() function.
- In group "myGroup1", the structure of the application table "myschema1"."mytbl1" is not coherent with its log table ("emaj_myschema1"."mytbl1_log").
- In group "myGroup1", the structure of the application table "myschema1"."mytbl2" is not coherent with its log table ("emaj_myschema1"."mytbl2_log").
- Warning: In the group "myGroup2", the foreign key "mytbl6_col61_fkey" on the table "myschema2"."mytbl6" references the table "myschema2"."mytbl7" that does not belong to any group.
- Warning: In the group "myGroup2", the table "myschema2"."mytbl6" is referenced by the the foreign key "mytbl8_col81_fkey" of the table "myschema2"."mytbl8" that does not belong to any group.
-(5 rows)
+  select * from emaj.emaj_verify_all() t(msg) where msg like 'Error%';
+                                                                               msg                                                                               
+-----------------------------------------------------------------------------------------------------------------------------------------------------------------
+ Error: In the group "myGroup1", the structure of the application table "myschema1"."mytbl1" is not coherent with its log table ("emaj_myschema1"."mytbl1_log").
+ Error: In the group "myGroup1", the structure of the application table "myschema1"."mytbl2" is not coherent with its log table ("emaj_myschema1"."mytbl2_log").
+(2 rows)
 
 rollback;
 -- detection of a change in the application table structure (column type change)
 begin;
   alter table myschema1.mytbl4 drop column col42;
   alter table myschema1.mytbl4 alter column col45 type varchar(15);
-  select * from emaj.emaj_verify_all();
-                                                                                        emaj_verify_all                                                                                         
-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
- Warning: Some E-Maj event triggers exist but are disabled. You may enable them using the emaj_enable_protection_by_event_triggers() function.
- In group "myGroup1", the structure of the application table "myschema1"."mytbl4" is not coherent with its log table ("emaj_myschema1"."mytbl4_log").
- Warning: In the group "myGroup2", the foreign key "mytbl6_col61_fkey" on the table "myschema2"."mytbl6" references the table "myschema2"."mytbl7" that does not belong to any group.
- Warning: In the group "myGroup2", the table "myschema2"."mytbl6" is referenced by the the foreign key "mytbl8_col81_fkey" of the table "myschema2"."mytbl8" that does not belong to any group.
-(4 rows)
+  select * from emaj.emaj_verify_all() t(msg) where msg like 'Error%';
+                                                                               msg                                                                               
+-----------------------------------------------------------------------------------------------------------------------------------------------------------------
+ Error: In the group "myGroup1", the structure of the application table "myschema1"."mytbl4" is not coherent with its log table ("emaj_myschema1"."mytbl4_log").
+(1 row)
 
 rollback;
 -- detection of missing primary key on tables belonging to a rollbackable group
@@ -1797,28 +1741,22 @@ begin;
   alter table myschema1.mytbl4 drop constraint mytbl4_pkey;                   -- table from a rollbackable group
   alter table "phil's schema3".mytbl4 drop constraint mytbl4_pkey cascade;    -- table from an audit_only group
 NOTICE:  drop cascades to constraint mytbl2_col21_fkey on table "phil's schema3"."myTbl2\"
-  select * from emaj.emaj_verify_all();
-                                                                                        emaj_verify_all                                                                                         
-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
- Warning: Some E-Maj event triggers exist but are disabled. You may enable them using the emaj_enable_protection_by_event_triggers() function.
- In rollbackable group "myGroup1", the table "myschema1"."mytbl4" has no primary key any more.
- Warning: In the group "myGroup2", the foreign key "mytbl6_col61_fkey" on the table "myschema2"."mytbl6" references the table "myschema2"."mytbl7" that does not belong to any group.
- Warning: In the group "myGroup2", the table "myschema2"."mytbl6" is referenced by the the foreign key "mytbl8_col81_fkey" of the table "myschema2"."mytbl8" that does not belong to any group.
-(4 rows)
+  select * from emaj.emaj_verify_all() t(msg) where msg like 'Error%';
+                                                   msg                                                    
+----------------------------------------------------------------------------------------------------------
+ Error: In the rollbackable group "myGroup1", the table "myschema1"."mytbl4" has no primary key any more.
+(1 row)
 
 rollback;
 -- detection of tables altered as UNLOGGED
 begin;                                                                        -- needs 9.5+
   alter table myschema1.mytbl4 set unlogged;                                  -- table from a rollbackable group
   alter table "phil's schema3"."myTbl2\" set unlogged;                        -- table from an audit_only group
-  select * from emaj.emaj_verify_all();
-                                                                                        emaj_verify_all                                                                                         
-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
- Warning: Some E-Maj event triggers exist but are disabled. You may enable them using the emaj_enable_protection_by_event_triggers() function.
- In rollbackable group "myGroup1", the table "myschema1"."mytbl4" is UNLOGGED or TEMP.
- Warning: In the group "myGroup2", the foreign key "mytbl6_col61_fkey" on the table "myschema2"."mytbl6" references the table "myschema2"."mytbl7" that does not belong to any group.
- Warning: In the group "myGroup2", the table "myschema2"."mytbl6" is referenced by the the foreign key "mytbl8_col81_fkey" of the table "myschema2"."mytbl8" that does not belong to any group.
-(4 rows)
+  select * from emaj.emaj_verify_all() t(msg) where msg like 'Error%';
+                                               msg                                                
+--------------------------------------------------------------------------------------------------
+ Error: In the rollbackable group "myGroup1", the table "myschema1"."mytbl4" is UNLOGGED or TEMP.
+(1 row)
 
 rollback;
 -- detection of tables altered as WITH OIDS (PG12+ generates an error)
@@ -1831,36 +1769,30 @@ LINE 1: alter table myschema1.mytbl4 set with oids;
 ERROR:  syntax error at or near "with"
 LINE 1: alter table "phil's schema3"."myTbl2\" set with oids;
                                                    ^
-  select * from emaj.emaj_verify_all();
+  select * from emaj.emaj_verify_all() t(msg) where msg like 'Error%';
 ERROR:  current transaction is aborted, commands ignored until end of transaction block
 rollback;
 -- detection of modified primary key
 begin;
   alter table myschema1.mytbl4 drop constraint mytbl4_pkey;
   alter table myschema1.mytbl4 add primary key (col41, col42);
-  select * from emaj.emaj_verify_all();
-                                                                                        emaj_verify_all                                                                                         
-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
- Warning: Some E-Maj event triggers exist but are disabled. You may enable them using the emaj_enable_protection_by_event_triggers() function.
- In rollbackable group "myGroup1", the primary key of the table "myschema1"."mytbl4" has changed (col41 => col41,col42).
- Warning: In the group "myGroup2", the foreign key "mytbl6_col61_fkey" on the table "myschema2"."mytbl6" references the table "myschema2"."mytbl7" that does not belong to any group.
- Warning: In the group "myGroup2", the table "myschema2"."mytbl6" is referenced by the the foreign key "mytbl8_col81_fkey" of the table "myschema2"."mytbl8" that does not belong to any group.
-(4 rows)
+  select * from emaj.emaj_verify_all() t(msg) where msg like 'Error%';
+                                                                msg                                                                 
+------------------------------------------------------------------------------------------------------------------------------------
+ Error: In the rollbackable group "myGroup1", the primary key of the table "myschema1"."mytbl4" has changed (col41 => col41,col42).
+(1 row)
 
 rollback;
 -- detection of a corrupted log table (missing some technical columns)
 begin;
   alter table emaj_myschema1.mytbl1_log drop column emaj_verb, drop column emaj_tuple;
   alter table emaj_myschema1.mytbl4_log drop column emaj_gid, drop column emaj_user;
-  select * from emaj.emaj_verify_all();
-                                                                                        emaj_verify_all                                                                                         
-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
- Warning: Some E-Maj event triggers exist but are disabled. You may enable them using the emaj_enable_protection_by_event_triggers() function.
- In group "myGroup1", the log table "emaj_myschema1"."mytbl1_log" miss some technical columns (emaj_tuple, emaj_verb).
- In group "myGroup1", the log table "emaj_myschema1"."mytbl4_log" miss some technical columns (emaj_gid, emaj_user).
- Warning: In the group "myGroup2", the foreign key "mytbl6_col61_fkey" on the table "myschema2"."mytbl6" references the table "myschema2"."mytbl7" that does not belong to any group.
- Warning: In the group "myGroup2", the table "myschema2"."mytbl6" is referenced by the the foreign key "mytbl8_col81_fkey" of the table "myschema2"."mytbl8" that does not belong to any group.
-(5 rows)
+  select * from emaj.emaj_verify_all() t(msg) where msg like 'Error%';
+                                                               msg                                                                
+----------------------------------------------------------------------------------------------------------------------------------
+ Error: In the group "myGroup1", the log table "emaj_myschema1"."mytbl1_log" miss some technical columns (emaj_tuple, emaj_verb).
+ Error: In the group "myGroup1", the log table "emaj_myschema1"."mytbl4_log" miss some technical columns (emaj_gid, emaj_user).
+(2 rows)
 
 rollback;
 -- almost all in 1
@@ -1875,22 +1807,19 @@ begin;
   alter table myschema1.mytbl1 add column newcol int;
   update emaj.emaj_relation set rel_kind = 'S' where rel_schema = 'myschema2' and rel_tblseq = 'mytbl1' and upper_inf(rel_time_range);
   alter table myschema1.mytbl4 drop constraint mytbl4_pkey;
-  select * from emaj.emaj_verify_all();
-                                                                                        emaj_verify_all                                                                                         
-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
- Warning: Some E-Maj event triggers exist but are disabled. You may enable them using the emaj_enable_protection_by_event_triggers() function.
- In schema "emaj", the table "emaj"."dummy_log" is not linked to any created tables group.
- In schema "emaj", the function "emaj"."dummy_log_fnct" is not linked to any created tables group.
- In schema "emaj", the function "emaj"."dummy_rlbk_fnct" is not linked to any created tables group.
- The group "myGroup1" has been created with a non compatible postgresql version (8.0.0). It must be dropped and recreated.
- In group "myGroup2", the sequence "myschema2"."mytbl1" does not exist any more.
- In group "myGroup1", the log table "emaj_myschema1"."mytbl1_log" is not found.
- In group "myGroup1", the log function "emaj_myschema1"."mytbl1_log_fnct" is not found.
- In group "myGroup1", the log trigger "emaj_log_trg" on table "myschema1"."mytbl1" is not found.
- In rollbackable group "myGroup1", the table "myschema1"."mytbl4" has no primary key any more.
- Warning: In the group "myGroup2", the foreign key "mytbl6_col61_fkey" on the table "myschema2"."mytbl6" references the table "myschema2"."mytbl7" that does not belong to any group.
- Warning: In the group "myGroup2", the table "myschema2"."mytbl6" is referenced by the the foreign key "mytbl8_col81_fkey" of the table "myschema2"."mytbl8" that does not belong to any group.
-(12 rows)
+  select * from emaj.emaj_verify_all() t(msg) where msg like 'Error%';
+                                                               msg                                                                
+----------------------------------------------------------------------------------------------------------------------------------
+ Error: In the schema "emaj", the table "emaj"."dummy_log" is not linked to any created tables group.
+ Error: In the schema "emaj", the function "emaj"."dummy_log_fnct" is not linked to any created tables group.
+ Error: In the schema "emaj", the function "emaj"."dummy_rlbk_fnct" is not linked to any created tables group.
+ Error: The group "myGroup1" has been created with a non compatible postgresql version (8.0.0). It must be dropped and recreated.
+ Error: In the group "myGroup2", the sequence "myschema2"."mytbl1" does not exist any more.
+ Error: In the group "myGroup1", the log table "emaj_myschema1"."mytbl1_log" is not found.
+ Error: In the group "myGroup1", the log function "emaj_myschema1"."mytbl1_log_fnct" is not found.
+ Error: In the group "myGroup1", the log trigger "emaj_log_trg" on table "myschema1"."mytbl1" is not found.
+ Error: In the rollbackable group "myGroup1", the table "myschema1"."mytbl4" has no primary key any more.
+(9 rows)
 
 rollback;
 --
@@ -1903,16 +1832,13 @@ begin;
   insert into emaj.emaj_ignored_app_trigger values ('myschema1','dummy','mytrg');      -- dropped table
   insert into emaj.emaj_ignored_app_trigger values ('myschema1','mytbl1','dummy');     -- dropped trigger
 -- check
-  select * from emaj.emaj_verify_all();
-                                                                                              emaj_verify_all                                                                                               
-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
- Warning: Some E-Maj event triggers exist but are disabled. You may enable them using the emaj_enable_protection_by_event_triggers() function.
- Warning: In the group "myGroup2", the foreign key "mytbl6_col61_fkey" on the table "myschema2"."mytbl6" references the table "myschema2"."mytbl7" that does not belong to any group.
- Warning: In the group "myGroup2", the table "myschema2"."mytbl6" is referenced by the the foreign key "mytbl8_col81_fkey" of the table "myschema2"."mytbl8" that does not belong to any group.
- No trigger "mytrg" found for table "dummy"."mytbl1". Use the emaj_ignore_app_trigger() function to adjust the list of application triggers that should not be automatically disabled at rollback time.
- No trigger "mytrg" found for table "myschema1"."dummy". Use the emaj_ignore_app_trigger() function to adjust the list of application triggers that should not be automatically disabled at rollback time.
- No trigger "dummy" found for table "myschema1"."mytbl1". Use the emaj_ignore_app_trigger() function to adjust the list of application triggers that should not be automatically disabled at rollback time.
-(6 rows)
+  select * from emaj.emaj_verify_all() t(msg) where msg like 'Error%';
+                                                                                                        msg                                                                                                        
+-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+ Error: No trigger "mytrg" found for table "dummy"."mytbl1". Use the emaj_ignore_app_trigger() function to adjust the list of application triggers that should not be automatically disabled at rollback time.
+ Error: No trigger "mytrg" found for table "myschema1"."dummy". Use the emaj_ignore_app_trigger() function to adjust the list of application triggers that should not be automatically disabled at rollback time.
+ Error: No trigger "dummy" found for table "myschema1"."mytbl1". Use the emaj_ignore_app_trigger() function to adjust the list of application triggers that should not be automatically disabled at rollback time.
+(3 rows)
 
 -- and fix
   select emaj.emaj_ignore_app_trigger('REMOVE','dummy','mytbl1','%');
@@ -1933,13 +1859,10 @@ begin;
                        1
 (1 row)
 
-  select * from emaj.emaj_verify_all();
-                                                                                        emaj_verify_all                                                                                         
-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
- Warning: Some E-Maj event triggers exist but are disabled. You may enable them using the emaj_enable_protection_by_event_triggers() function.
- Warning: In the group "myGroup2", the foreign key "mytbl6_col61_fkey" on the table "myschema2"."mytbl6" references the table "myschema2"."mytbl7" that does not belong to any group.
- Warning: In the group "myGroup2", the table "myschema2"."mytbl6" is referenced by the the foreign key "mytbl8_col81_fkey" of the table "myschema2"."mytbl8" that does not belong to any group.
-(3 rows)
+  select * from emaj.emaj_verify_all() t(msg) where msg like 'Error%';
+ msg 
+-----
+(0 rows)
 
 rollback;
 --------------------------------
@@ -2035,10 +1958,11 @@ WARNING:  _check_fk_groups: The table "myschema2.mytbl6" is referenced by the fo
   select * from emaj.emaj_verify_all();
                                                                                         emaj_verify_all                                                                                         
 ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
- Warning: Some E-Maj event triggers exist but are disabled. You may enable them using the emaj_enable_protection_by_event_triggers() function.
  Warning: In the group "myGroup2", the foreign key "mytbl6_col61_fkey" on the table "myschema2"."mytbl6" references the table "myschema2"."mytbl7" that does not belong to any group.
  Warning: In the group "myGroup2", the table "myschema2"."mytbl6" is referenced by the the foreign key "mytbl8_col81_fkey" of the table "myschema2"."mytbl8" that does not belong to any group.
-(3 rows)
+ Warning: Some E-Maj event triggers exist but are disabled. You may enable them using the emaj_enable_protection_by_event_triggers() function.
+ No error detected
+(4 rows)
 
 rollback;
 -- cases when a log trigger on an application table is dropped
@@ -2070,12 +1994,13 @@ WARNING:  _stop_groups: The log trigger "emaj_log_trg" on table "myschema2.mytbl
   select * from emaj.emaj_verify_all();
                                                                                         emaj_verify_all                                                                                         
 ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
- Warning: Some E-Maj event triggers exist but are disabled. You may enable them using the emaj_enable_protection_by_event_triggers() function.
  Warning: In the group "myGroup2", the table "myschema2"."mytbl1" is referenced by the the foreign key "mytbl4_col44_fkey" of the table "myschema2"."mytbl4" that does not belong to any group.
  Warning: In the group "myGroup2", the table "myschema2"."mytbl2" is referenced by the the foreign key "mytbl4_col43_fkey" of the table "myschema2"."mytbl4" that does not belong to any group.
  Warning: In the group "myGroup2", the foreign key "mytbl6_col61_fkey" on the table "myschema2"."mytbl6" references the table "myschema2"."mytbl7" that does not belong to any group.
  Warning: In the group "myGroup2", the table "myschema2"."mytbl6" is referenced by the the foreign key "mytbl8_col81_fkey" of the table "myschema2"."mytbl8" that does not belong to any group.
-(5 rows)
+ Warning: Some E-Maj event triggers exist but are disabled. You may enable them using the emaj_enable_protection_by_event_triggers() function.
+ No error detected
+(6 rows)
 
 rollback;
 -- cases when a truncate trigger on an application table is dropped
@@ -2107,12 +2032,13 @@ WARNING:  _stop_groups: The truncate trigger "emaj_trunc_trg" on table "myschema
   select * from emaj.emaj_verify_all();
                                                                                         emaj_verify_all                                                                                         
 ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
- Warning: Some E-Maj event triggers exist but are disabled. You may enable them using the emaj_enable_protection_by_event_triggers() function.
  Warning: In the group "myGroup2", the table "myschema2"."mytbl1" is referenced by the the foreign key "mytbl4_col44_fkey" of the table "myschema2"."mytbl4" that does not belong to any group.
  Warning: In the group "myGroup2", the table "myschema2"."mytbl2" is referenced by the the foreign key "mytbl4_col43_fkey" of the table "myschema2"."mytbl4" that does not belong to any group.
  Warning: In the group "myGroup2", the foreign key "mytbl6_col61_fkey" on the table "myschema2"."mytbl6" references the table "myschema2"."mytbl7" that does not belong to any group.
  Warning: In the group "myGroup2", the table "myschema2"."mytbl6" is referenced by the the foreign key "mytbl8_col81_fkey" of the table "myschema2"."mytbl8" that does not belong to any group.
-(5 rows)
+ Warning: Some E-Maj event triggers exist but are disabled. You may enable them using the emaj_enable_protection_by_event_triggers() function.
+ No error detected
+(6 rows)
 
 rollback;
 -- cases when an application sequence is dropped
@@ -2137,10 +2063,11 @@ begin;
   select * from emaj.emaj_verify_all();
                                                                                         emaj_verify_all                                                                                         
 ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
- Warning: Some E-Maj event triggers exist but are disabled. You may enable them using the emaj_enable_protection_by_event_triggers() function.
  Warning: In the group "myGroup2", the foreign key "mytbl6_col61_fkey" on the table "myschema2"."mytbl6" references the table "myschema2"."mytbl7" that does not belong to any group.
  Warning: In the group "myGroup2", the table "myschema2"."mytbl6" is referenced by the the foreign key "mytbl8_col81_fkey" of the table "myschema2"."mytbl8" that does not belong to any group.
-(3 rows)
+ Warning: Some E-Maj event triggers exist but are disabled. You may enable them using the emaj_enable_protection_by_event_triggers() function.
+ No error detected
+(4 rows)
 
 rollback;
 -- cases when an application schema is dropped
@@ -2205,10 +2132,10 @@ PL/pgSQL function emaj.emaj_drop_group(text) line 14 at SQL statement
   select * from emaj.emaj_verify_all();
                                                                                         emaj_verify_all                                                                                         
 ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
- Warning: Some E-Maj event triggers exist but are disabled. You may enable them using the emaj_enable_protection_by_event_triggers() function.
- In schema "emaj_myschema1", the sequence "emaj_myschema1"."dummyseq" is not linked to any created tables group.
+ Error: In the schema "emaj_myschema1", the sequence "emaj_myschema1"."dummyseq" is not linked to any created tables group.
  Warning: In the group "myGroup2", the foreign key "mytbl6_col61_fkey" on the table "myschema2"."mytbl6" references the table "myschema2"."mytbl7" that does not belong to any group.
  Warning: In the group "myGroup2", the table "myschema2"."mytbl6" is referenced by the the foreign key "mytbl8_col81_fkey" of the table "myschema2"."mytbl8" that does not belong to any group.
+ Warning: Some E-Maj event triggers exist but are disabled. You may enable them using the emaj_enable_protection_by_event_triggers() function.
 (4 rows)
 
 -- use emaj_force_drop_group to solve the problem
@@ -2222,10 +2149,11 @@ PL/pgSQL function emaj.emaj_drop_group(text) line 14 at SQL statement
   select * from emaj.emaj_verify_all();
                                                                                         emaj_verify_all                                                                                         
 ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
- Warning: Some E-Maj event triggers exist but are disabled. You may enable them using the emaj_enable_protection_by_event_triggers() function.
  Warning: In the group "myGroup2", the foreign key "mytbl6_col61_fkey" on the table "myschema2"."mytbl6" references the table "myschema2"."mytbl7" that does not belong to any group.
  Warning: In the group "myGroup2", the table "myschema2"."mytbl6" is referenced by the the foreign key "mytbl8_col81_fkey" of the table "myschema2"."mytbl8" that does not belong to any group.
-(3 rows)
+ Warning: Some E-Maj event triggers exist but are disabled. You may enable them using the emaj_enable_protection_by_event_triggers() function.
+ No error detected
+(4 rows)
 
 rollback;
 -----------------------------
@@ -2340,10 +2268,11 @@ begin;
   select emaj.emaj_verify_all();
                                                                                         emaj_verify_all                                                                                         
 ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
- Warning: Some E-Maj event triggers are missing. Your database administrator may (re)create them using the emaj_upgrade_after_postgres_upgrade.sql script.
  Warning: In the group "myGroup2", the foreign key "mytbl6_col61_fkey" on the table "myschema2"."mytbl6" references the table "myschema2"."mytbl7" that does not belong to any group.
  Warning: In the group "myGroup2", the table "myschema2"."mytbl6" is referenced by the the foreign key "mytbl8_col81_fkey" of the table "myschema2"."mytbl8" that does not belong to any group.
-(3 rows)
+ Warning: Some E-Maj event triggers are missing. Your database administrator may (re)create them using the emaj_upgrade_after_postgres_upgrade.sql script.
+ No error detected
+(4 rows)
 
 rollback;
 -- a non emaj user should be able to create, alter and drop a table without being disturbed by E-Maj event triggers

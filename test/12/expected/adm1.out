@@ -205,10 +205,10 @@ select * from emaj.emaj_mark;
 select * from emaj.emaj_sequence;
   sequ_schema   |   sequ_name    | sequ_time_id | sequ_last_val | sequ_start_val | sequ_increment |    sequ_max_val     | sequ_min_val | sequ_cache_val | sequ_is_cycled | sequ_is_called 
 ----------------+----------------+--------------+---------------+----------------+----------------+---------------------+--------------+----------------+----------------+----------------
+ emaj_myschema2 | mytbl7_log_seq |         6096 |             1 |              1 |              1 | 9223372036854775807 |            1 |              1 | f              | f
  emaj_myschema2 | mytbl7_log_seq |         6103 |            10 |              1 |              1 | 9223372036854775807 |            1 |              1 | f              | t
  emaj_myschema2 | mytbl7_log_seq |         6104 |            11 |              1 |              1 | 9223372036854775807 |            1 |              1 | f              | f
  emaj_myschema2 | mytbl7_log_seq |         6106 |            11 |              1 |              1 | 9223372036854775807 |            1 |              1 | f              | t
- emaj_myschema2 | mytbl7_log_seq |         6096 |             1 |              1 |              1 | 9223372036854775807 |            1 |              1 | f              | f
 (4 rows)
 
 select * from emaj.emaj_seq_hole;
@@ -2394,7 +2394,8 @@ select * from emaj.emaj_verify_all();
 ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
  Warning: In the group "myGroup2", the foreign key "mytbl6_col61_fkey" on the table "myschema2"."mytbl6" references the table "myschema2"."mytbl7" that does not belong to any group.
  Warning: In the group "myGroup2", the table "myschema2"."mytbl6" is referenced by the the foreign key "mytbl8_col81_fkey" of the table "myschema2"."mytbl8" that does not belong to any group.
-(2 rows)
+ No error detected
+(3 rows)
 
 select emaj.emaj_create_group('dummyGroup');
 ERROR:  emaj_create_group: The group "dummyGroup" is unknown in the emaj_group_def table. To create an empty group, explicitely set the third parameter to true.

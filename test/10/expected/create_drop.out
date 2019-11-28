@@ -211,7 +211,8 @@ begin;
  Warning: In the group "phil's group#3",", the sequence "phil's schema3"."myTbl2\_col21_seq" is linked to the table "phil's schema3"."myTbl2\" but this table does not belong to any tables group.
  Warning: In the group "myGroup2", the foreign key "mytbl6_col61_fkey" on the table "myschema2"."mytbl6" references the table "myschema2"."mytbl7" that does not belong to any group.
  Warning: In the group "myGroup2", the table "myschema2"."mytbl6" is referenced by the the foreign key "mytbl8_col81_fkey" of the table "myschema2"."mytbl8" that does not belong to any group.
-(3 rows)
+ No error detected
+(4 rows)
 
 rollback;
 -- should be OK
