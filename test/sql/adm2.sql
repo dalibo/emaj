@@ -82,7 +82,7 @@ select sqhl_schema, sqhl_table, sqhl_begin_time_id, sqhl_end_time_id, sqhl_hole_
 -- log tables
 select col11, col12, col13, emaj_verb, emaj_tuple, emaj_gid from emaj_mySchema1.myTbl1_log order by emaj_gid, emaj_tuple desc;
 select col21, col22, col23, emaj_verb, emaj_tuple, emaj_gid from emaj_mySchema1.myTbl2_log order by emaj_gid, emaj_tuple desc;
-select col20, col21, emaj_verb, emaj_tuple, emaj_gid from emaj_mySchema1.myTbl2b_log order by emaj_gid, emaj_tuple desc;
+select col20, col21, col22, col23, emaj_verb, emaj_tuple, emaj_gid from emaj_mySchema1.myTbl2b_log order by emaj_gid, emaj_tuple desc;
 select col31, col33, emaj_verb, emaj_tuple, emaj_gid from emaj_myschema1."myTbl3_log" order by emaj_gid, emaj_tuple desc;
 select col41, col42, col43, col44, col45, emaj_verb, emaj_tuple, emaj_gid from emaj_mySchema1.myTbl4_log order by emaj_gid, emaj_tuple desc;
 select col11, col12, col13, emaj_verb, emaj_tuple, emaj_gid from emaj_mySchema2.myTbl1_log order by emaj_gid, emaj_tuple desc;
@@ -220,7 +220,13 @@ select rlbt_rlbk_id, rlbt_step, rlbt_schema, rlbt_table, rlbt_object, rlbt_quant
 -----------------------------
 -- Step 12 : tests snaps and script generation functions
 -----------------------------
--- first add some updates for tables with unusual types (arrays, geometric)
+-- first perform changes in a table with generated columns
+set search_path=public,myschema1;
+insert into mytbl2b (col21) values (10),(11);
+update mytbl2b set col21 = 12 where col21 = 11;
+delete from mytbl2b where col21 >= 10;
+
+-- add some updates for tables with unusual types (arrays, geometric)
 set search_path=public,myschema2;
 insert into myTbl5 values (10,'{"abc","def","ghi"}','{1,2,3}',NULL,'{}');
 insert into myTbl5 values (20,array['abc','def','ghi'],array[3,4,5],array['2000/02/01'::date,'2000/02/28'::date],'{"id":1000, "c1":"abc"}');
@@ -292,6 +298,7 @@ begin;
   select * from emaj.emaj_rollback_group('myGroup2','Multi-1',false) order by 1,2;
   select * from emaj.emaj_rollback_group('phil''s group#3",','M1_rollbackable',false) order by 1,2;
 
+  \! cat /tmp/emaj_test/sql_scripts/myGroup1.sql
 \i /tmp/emaj_test/sql_scripts/myGroup1.sql
 \i /tmp/emaj_test/sql_scripts/myGroup2.sql
 \i /tmp/emaj_test/sql_scripts/Group3.sql

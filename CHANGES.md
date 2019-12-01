@@ -9,7 +9,11 @@ E-Maj - Change log
     keys and that are not all in the same table group.
 
 ###Bug fixes:###
-
+  * For tables having columns defined as GENERATED ALWAYS AS IDENTITY (pg10+)
+    or GENERATED ALWAYS AS (expression (pg12+)), the SQL generation functions
+    produced a script that failed when executed.
+  * For tables having columns defined as GENERATED ALWAYS AS (expression),
+    the E-Maj rollback functions failed.
 
 
 3.2.0 (2019-Oct-15)

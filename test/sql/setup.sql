@@ -60,12 +60,24 @@ BEGIN
     EXECUTE 'CREATE TABLE myTbl2b (
       col20       SERIAL           NOT NULL,
       col21       INT              NOT NULL,
+      col22       FLOAT,
+      col23       BOOLEAN          DEFAULT TRUE,
+      PRIMARY KEY (col20)
+    );';
+  ELSIF emaj._pg_version_num() < 120000 THEN
+    EXECUTE 'CREATE TABLE myTbl2b (
+      col20       INT              NOT NULL GENERATED ALWAYS AS IDENTITY,
+      col21       INT              NOT NULL,
+      col22       FLOAT,
+      col23       BOOLEAN          DEFAULT TRUE,
       PRIMARY KEY (col20)
     );';
   ELSE
     EXECUTE 'CREATE TABLE myTbl2b (
       col20       INT              NOT NULL GENERATED ALWAYS AS IDENTITY,
       col21       INT              NOT NULL,
+      col22       FLOAT            GENERATED ALWAYS AS (1::float / col21) STORED,
+      col23       BOOLEAN          DEFAULT TRUE,
       PRIMARY KEY (col20)
     );';
   END IF;

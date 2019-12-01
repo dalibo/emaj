@@ -1232,8 +1232,10 @@ PL/pgSQL function emaj._gen_sql_groups(text[],boolean,text,text,text,text[]) lin
 PL/pgSQL function emaj.emaj_gen_sql_groups(text[],text,text,text,text[]) line 14 at RETURN
 ERROR:  _gen_sql_groups: The file "/tmp/unknownDirectory/myFile" cannot be used as script output file.
 CONTEXT:  PL/pgSQL function emaj.emaj_gen_sql_groups(text[],text,text,text,text[]) line 14 at RETURN
--- should be ok (generated files content is checked later in adm2.sql scenario)
--- (getting counters from detailed log statistics + the number of sequences included in the group allows a comparison with the result of emaj_gen_sql_group function)
+-- should be ok
+-- generated files content is checked later in adm2.sql scenario
+-- getting counters from detailed log statistics + the number of sequences included in the group allows a comparison
+--   with the result of the emaj_gen_sql_group() function
 select emaj.emaj_gen_sql_group('emptyGroup', NULL, NULL, '/tmp/emaj_test/sql_scripts/myFile');
 NOTICE:  table "emaj_temp_script" does not exist, skipping
 CONTEXT:  SQL statement "DROP TABLE IF EXISTS emaj_temp_script CASCADE"

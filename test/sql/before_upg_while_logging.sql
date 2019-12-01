@@ -84,6 +84,7 @@ delete from myTbl1 where col11 > 3;
 select emaj.emaj_rollback_group('myGroup1','M3');
 insert into myTbl2 values (3,'GHI',NULL);
 update myTbl4 set col43 = 3 where col41 = 2;
+-- note that this rollback fails with PG12 in E-Maj 3.2.0, but should succeed in later version (comment to delete then)
 select emaj.emaj_rollback_group('myGroup1','M3');
 --
 select emaj.emaj_protect_mark_group('myGroup1','M3');
@@ -172,7 +173,7 @@ select * from emaj.emaj_alter_plan order by 1,2,3,4,5;
 -- log tables
 select col11, col12, col13, emaj_verb, emaj_tuple, emaj_gid from emaj_mySchema1.myTbl1_log order by emaj_gid, emaj_tuple desc;
 select col21, col22, col23, emaj_verb, emaj_tuple, emaj_gid from emaj_mySchema1.myTbl2_log order by emaj_gid, emaj_tuple desc;
-select col20, col21, emaj_verb, emaj_tuple, emaj_gid from emaj_mySchema1.myTbl2b_log order by emaj_gid, emaj_tuple desc;
+select col20, col21, col22, col23, emaj_verb, emaj_tuple, emaj_gid from emaj_mySchema1.myTbl2b_log order by emaj_gid, emaj_tuple desc;
 select col31, col33, emaj_verb, emaj_tuple, emaj_gid from emaj_myschema1."myTbl3_log_1" order by emaj_gid, emaj_tuple desc;
 select col41, col42, col43, col44, col45, emaj_verb, emaj_tuple, emaj_gid from emaj_mySchema1.myTbl4_log order by emaj_gid, emaj_tuple desc;
 --

@@ -902,6 +902,8 @@ Tablespace: "tspemaj"
 --------------+--------------------------+------------------------------------------------------------
  col20        | integer                  | 
  col21        | integer                  | 
+ col22        | double precision         | 
+ col23        | boolean                  | 
  emaj_verb    | character varying(3)     | 
  emaj_tuple   | character varying(3)     | 
  emaj_gid     | bigint                   | not null default nextval('emaj.emaj_global_seq'::regclass)
@@ -1493,11 +1495,11 @@ select col21, col22, col23, emaj_verb, emaj_tuple, emaj_gid from emaj_mySchema1.
      2 | DEF   |            | INS       | NEW        |       18
 (2 rows)
 
-select col20, col21, emaj_verb, emaj_tuple, emaj_gid from emaj_mySchema1.myTbl2b_log order by emaj_gid, emaj_tuple desc;
- col20 | col21 | emaj_verb | emaj_tuple | emaj_gid 
--------+-------+-----------+------------+----------
-     1 |     1 | INS       | NEW        |       16
-     2 |     2 | INS       | NEW        |       19
+select col20, col21, col22, col23, emaj_verb, emaj_tuple, emaj_gid from emaj_mySchema1.myTbl2b_log order by emaj_gid, emaj_tuple desc;
+ col20 | col21 | col22 | col23 | emaj_verb | emaj_tuple | emaj_gid 
+-------+-------+-------+-------+-----------+------------+----------
+     1 |     1 |       | t     | INS       | NEW        |       16
+     2 |     2 |       | t     | INS       | NEW        |       19
 (2 rows)
 
 select col31, col33, emaj_verb, emaj_tuple, emaj_gid from emaj_myschema1."myTbl3_log_1" order by emaj_gid, emaj_tuple desc;

@@ -491,10 +491,10 @@ select * from mySchema1.myTbl2 order by col21;
 (2 rows)
 
 select * from mySchema1.myTbl2b order by col20;
- col20 | col21 
--------+-------
-     3 |     1
-     4 |     2
+ col20 | col21 | col22 | col23 
+-------+-------+-------+-------
+     3 |     1 |       | t
+     4 |     2 |       | t
 (2 rows)
 
 select col31,col33 from mySchema1."myTbl3" order by col31;
@@ -557,12 +557,12 @@ select col21, col22, col23, emaj_verb, emaj_tuple, emaj_gid, emaj_user, emaj_use
      2 | DEF   |            | INS       | NEW        |   100017 | postgres  |              | psql
 (2 rows)
 
-select col20, col21, emaj_verb, emaj_tuple, emaj_gid, emaj_user, emaj_user_ip, extra_col_appname
+select col20, col21, col22, col23, emaj_verb, emaj_tuple, emaj_gid, emaj_user, emaj_user_ip, extra_col_appname
     from emaj_mySchema1.myTbl2b_log order by emaj_gid, emaj_tuple desc;
- col20 | col21 | emaj_verb | emaj_tuple | emaj_gid | emaj_user | emaj_user_ip | extra_col_appname 
--------+-------+-----------+------------+----------+-----------+--------------+-------------------
-     3 |     1 | INS       | NEW        |   100015 | postgres  |              | psql
-     4 |     2 | INS       | NEW        |   100018 | postgres  |              | psql
+ col20 | col21 | col22 | col23 | emaj_verb | emaj_tuple | emaj_gid | emaj_user | emaj_user_ip | extra_col_appname 
+-------+-------+-------+-------+-----------+------------+----------+-----------+--------------+-------------------
+     3 |     1 |       | t     | INS       | NEW        |   100015 | postgres  |              | psql
+     4 |     2 |       | t     | INS       | NEW        |   100018 | postgres  |              | psql
 (2 rows)
 
 select col31, col33, emaj_verb, emaj_tuple, emaj_gid, emaj_user, emaj_user_ip, extra_col_appname
@@ -1373,11 +1373,11 @@ select * from mySchema1.myTbl2 order by col21;
 (3 rows)
 
 select * from mySchema1.myTbl2b order by col20;
- col20 | col21 
--------+-------
-     3 |     1
-     4 |     2
-     5 |     3
+ col20 | col21 | col22 | col23 
+-------+-------+-------+-------
+     3 |     1 |       | t
+     4 |     2 |       | t
+     5 |     3 |       | t
 (3 rows)
 
 select col31,col33 from mySchema1."myTbl3" order by col31;
@@ -1444,12 +1444,12 @@ select col21, col22, col23, emaj_verb, emaj_tuple, emaj_gid from emaj_mySchema1.
      3 | GHI   | 01-02-2010 | INS       | NEW        |   100112
 (3 rows)
 
-select col20, col21, emaj_verb, emaj_tuple, emaj_gid from emaj_mySchema1.myTbl2b_log order by emaj_gid, emaj_tuple desc;
- col20 | col21 | emaj_verb | emaj_tuple | emaj_gid 
--------+-------+-----------+------------+----------
-     3 |     1 | INS       | NEW        |   100015
-     4 |     2 | INS       | NEW        |   100018
-     5 |     3 | INS       | NEW        |   100113
+select col20, col21, col22, col23, emaj_verb, emaj_tuple, emaj_gid from emaj_mySchema1.myTbl2b_log order by emaj_gid, emaj_tuple desc;
+ col20 | col21 | col22 | col23 | emaj_verb | emaj_tuple | emaj_gid 
+-------+-------+-------+-------+-----------+------------+----------
+     3 |     1 |       | t     | INS       | NEW        |   100015
+     4 |     2 |       | t     | INS       | NEW        |   100018
+     5 |     3 |       | t     | INS       | NEW        |   100113
 (3 rows)
 
 select col31, col33, emaj_verb, emaj_tuple, emaj_gid from emaj_myschema1."myTbl3_log" order by emaj_gid, emaj_tuple desc;
@@ -1949,11 +1949,11 @@ select * from mySchema1.myTbl2 order by col21;
 (3 rows)
 
 select * from mySchema1.myTbl2b order by col20;
- col20 | col21 
--------+-------
-     3 |     1
-     4 |     2
-     5 |     3
+ col20 | col21 | col22 | col23 
+-------+-------+-------+-------
+     3 |     1 |       | t
+     4 |     2 |       | t
+     5 |     3 |       | t
 (3 rows)
 
 select col31,col33 from mySchema1."myTbl3" order by col31;
@@ -2022,12 +2022,12 @@ select col21, col22, col23, emaj_verb, emaj_tuple, emaj_gid from emaj_mySchema1.
      3 | GHI   | 01-02-2010 | INS       | NEW        |   100112
 (3 rows)
 
-select col20, col21, emaj_verb, emaj_tuple, emaj_gid from emaj_mySchema1.myTbl2b_log order by emaj_gid, emaj_tuple desc;
- col20 | col21 | emaj_verb | emaj_tuple | emaj_gid 
--------+-------+-----------+------------+----------
-     3 |     1 | INS       | NEW        |   100015
-     4 |     2 | INS       | NEW        |   100018
-     5 |     3 | INS       | NEW        |   100113
+select col20, col21, col22, col23, emaj_verb, emaj_tuple, emaj_gid from emaj_mySchema1.myTbl2b_log order by emaj_gid, emaj_tuple desc;
+ col20 | col21 | col22 | col23 | emaj_verb | emaj_tuple | emaj_gid 
+-------+-------+-------+-------+-----------+------------+----------
+     3 |     1 |       | t     | INS       | NEW        |   100015
+     4 |     2 |       | t     | INS       | NEW        |   100018
+     5 |     3 |       | t     | INS       | NEW        |   100113
 (3 rows)
 
 select col31, col33, emaj_verb, emaj_tuple, emaj_gid from emaj_myschema1."myTbl3_log" order by emaj_gid, emaj_tuple desc;
@@ -2277,11 +2277,11 @@ select * from mySchema1.myTbl2 order by col21;
 (3 rows)
 
 select * from mySchema1.myTbl2b order by col20;
- col20 | col21 
--------+-------
-     3 |     1
-     4 |     2
-     5 |     3
+ col20 | col21 | col22 | col23 
+-------+-------+-------+-------
+     3 |     1 |       | t
+     4 |     2 |       | t
+     5 |     3 |       | t
 (3 rows)
 
 select col31,col33 from mySchema1."myTbl3" order by col31;
@@ -2312,9 +2312,9 @@ select col21, col22, col23, emaj_verb, emaj_tuple, emaj_gid from emaj_mySchema1.
 -------+-------+-------+-----------+------------+----------
 (0 rows)
 
-select col20, col21, emaj_verb, emaj_tuple, emaj_gid from emaj_mySchema1.myTbl2b_log order by emaj_gid, emaj_tuple desc;
- col20 | col21 | emaj_verb | emaj_tuple | emaj_gid 
--------+-------+-----------+------------+----------
+select col20, col21, col22, col23, emaj_verb, emaj_tuple, emaj_gid from emaj_mySchema1.myTbl2b_log order by emaj_gid, emaj_tuple desc;
+ col20 | col21 | col22 | col23 | emaj_verb | emaj_tuple | emaj_gid 
+-------+-------+-------+-------+-----------+------------+----------
 (0 rows)
 
 select col31, col33, emaj_verb, emaj_tuple, emaj_gid from emaj_myschema1."myTbl3_log" order by emaj_gid, emaj_tuple desc;

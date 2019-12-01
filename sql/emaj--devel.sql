@@ -2513,12 +2513,16 @@ $_create_tbl$
     v_dataTblSpace = coalesce('TABLESPACE ' || quote_ident(v_logDatTsp),'');
     v_idxTblSpace = coalesce('TABLESPACE ' || quote_ident(v_logIdxTsp),'');
 -- Build some pieces of SQL statements that will be needed at table rollback time
---   build the tables's columns list
-    SELECT string_agg(col_name, ',') INTO v_colList FROM (
-      SELECT 'tbl.' || quote_ident(attname) AS col_name FROM pg_catalog.pg_attribute
-        WHERE attrelid = v_fullTableName::regclass
-          AND attnum > 0 AND NOT attisdropped
-        ORDER BY attnum) AS t;
+--   build the tables's columns list, bypassing the generated columns that cannot be processed at emaj rollback time
+    v_stmt = 'SELECT string_agg(col_name, '','') FROM ('
+             '  SELECT ''tbl.'' || quote_ident(attname) AS col_name FROM pg_catalog.pg_attribute'
+             '    WHERE attrelid = %s::regclass'
+             '      AND attnum > 0 AND NOT attisdropped';
+    IF emaj._pg_version_num() >= 120000 THEN
+      v_stmt = v_stmt || '    AND attgenerated = ''''';
+    END IF;
+    v_stmt = v_stmt || '  ORDER BY attnum) AS t';
+    EXECUTE format(v_stmt, quote_literal(v_fullTableName)) INTO v_colList;
 --   build the pkey columns list and the "equality on the primary key" conditions
     SELECT string_agg(col_pk_name, ','), string_agg(col_pk_cond, ' AND ') INTO v_pkColList, v_pkCondList FROM (
       SELECT quote_ident(attname) AS col_pk_name,
@@ -3717,14 +3721,17 @@ $_rlbk_tbl$
     END IF;
 -- insert into the application table rows that were deleted or updated during the rolled back period
     IF emaj._pg_version_num() >= 100000 THEN
+-- add this clause allow to properly process columns declared as GENERATED ALWAYS AS IDENTITY
       v_insertClause = ' OVERRIDING SYSTEM VALUE';
     END IF;
-    EXECUTE format('INSERT INTO %s %s'
+    EXECUTE format('INSERT INTO %s (%s) %s'
                    '  SELECT %s FROM %s tbl, %s keys '
                    '    WHERE %s AND tbl.emaj_gid = keys.emaj_gid AND tbl.emaj_tuple = ''OLD'''
                    '      AND tbl.emaj_gid > %s AND tbl.emaj_gid <= %s',
-                   v_fullTableName, v_insertClause, r_rel.rel_sql_columns, v_logTableName, v_tmpTable,
-                   r_rel.rel_sql_pk_eq_conditions, v_minGlobalSeq, v_maxGlobalSeq);
+                   v_fullTableName, replace(r_rel.rel_sql_columns, 'tbl.',''), v_insertClause,
+                   r_rel.rel_sql_columns, v_logTableName, v_tmpTable,
+                   r_rel.rel_sql_pk_eq_conditions,
+                   v_minGlobalSeq, v_maxGlobalSeq);
 -- drop the now useless temporary table
     EXECUTE format('DROP TABLE %s',
                    v_tmpTable);
@@ -4034,8 +4041,12 @@ $_gen_sql_tbl$
   DECLARE
     v_fullTableName          TEXT;
     v_logTableName           TEXT;
-    v_valList                TEXT;
-    v_setList                TEXT;
+    v_extraColumns           TEXT;
+    v_colList                TEXT = ' (';
+    v_isColListNeeded        BOOLEAN = FALSE;
+    v_valList                TEXT = '';
+    v_setList                TEXT = '';
+    v_insertClause           TEXT = '';
     v_pkCondList             TEXT;
     v_unquotedType           TEXT[] = array['smallint','integer','bigint','numeric','decimal',
                                              'int2','int4','int8','serial','bigserial',
@@ -4055,29 +4066,57 @@ $_gen_sql_tbl$
 -- retrieve from pg_attribute all columns of the application table and build :
 -- - the VALUES list used in the INSERT statements
 -- - the SET list used in the UPDATE statements
-    v_valList = '';
-    v_setList = '';
-    FOR r_col IN
-      SELECT attname, format_type(atttypid,atttypmod) FROM pg_catalog.pg_attribute
-       WHERE attrelid = v_fullTableName ::regclass
-         AND attnum > 0 AND NOT attisdropped
-       ORDER BY attnum
+    IF emaj._pg_version_num() >= 120000 THEN
+      v_extraColumns = ',attidentity, attgenerated';
+    ELSIF emaj._pg_version_num() >= 100000 THEN
+      v_extraColumns = ', attidentity, ''''::TEXT AS attgenerated';
+    ELSE
+      v_extraColumns = ', ''''::TEXT AS attidentity, ''''::TEXT AS attgenerated';
+    END IF;
+    FOR r_col IN EXECUTE format(
+      ' SELECT attname, format_type(atttypid,atttypmod) %s FROM pg_catalog.pg_attribute'
+      ' WHERE attrelid = %s::regclass'
+      '   AND attnum > 0 AND NOT attisdropped'
+      ' ORDER BY attnum', v_extraColumns, quote_literal(v_fullTableName))
     LOOP
+-- build the INSERT column list, excluding the GENERATED ALWAYS AS (expression) columns
+      IF r_col.attgenerated = '' THEN
+        v_colList = v_colList || quote_ident(replace(r_col.attname,'''','''''')) || ', ';
+      ELSE
+        v_isColListNeeded = TRUE;
+      END IF;
 -- test if the column format (up to the parenthesis) belongs to the list of formats that do not require any quotation (like numeric
 -- data types)
       IF regexp_replace(r_col.format_type,E'\\(.*$','') = ANY(v_unquotedType) THEN
 -- literal for this column can remain as is
-        v_valList = v_valList || ''' || coalesce(o.' || quote_ident(r_col.attname) || '::TEXT,''NULL'') || '', ';
-        v_setList = v_setList || quote_ident(replace(r_col.attname,'''','''''')) || ' = '' || coalesce(n.'
-                              || quote_ident(r_col.attname) || ' ::TEXT,''NULL'') || '', ';
+        IF r_col.attgenerated = '' THEN                                     -- GENERATED ALWAYS AS (expression) columns are not inserted
+          v_valList = v_valList || ''' || coalesce(o.' || quote_ident(r_col.attname) || '::TEXT,''NULL'') || '', ';
+        END IF;
+        IF r_col.attidentity <> 'a' AND r_col.attgenerated = '' THEN        -- GENERATED ALWAYS columns are not updated
+          v_setList = v_setList || quote_ident(replace(r_col.attname,'''','''''')) || ' = '' || coalesce(n.'
+                                || quote_ident(r_col.attname) || ' ::TEXT,''NULL'') || '', ';
+        END IF;
       ELSE
 -- literal for this column must be quoted
-        v_valList = v_valList || ''' || quote_nullable(o.' || quote_ident(r_col.attname) || ') || '', ';
-        v_setList = v_setList || quote_ident(replace(r_col.attname,'''','''''')) || ' = '' || quote_nullable(n.'
-                              || quote_ident(r_col.attname) || ') || '', ';
+        IF r_col.attgenerated = '' THEN                                     -- GENERATED ALWAYS AS (expression) columns are not inserted
+          v_valList = v_valList || ''' || quote_nullable(o.' || quote_ident(r_col.attname) || ') || '', ';
+        END IF;
+        IF r_col.attidentity <> 'a' AND r_col.attgenerated = '' THEN        -- GENERATED ALWAYS columns are not updated
+          v_setList = v_setList || quote_ident(replace(r_col.attname,'''','''''')) || ' = '' || quote_nullable(n.'
+                                || quote_ident(r_col.attname) || ') || '', ';
+        END IF;
+      END IF;
+-- if at least one column is defined as GENERATED ALWAYS AS IDENTITY, the INSERT statement will need a OVERRIDING SYSTEM VALUE clause
+      IF r_col.attidentity = 'a' THEN
+        v_insertClause = ' OVERRIDING SYSTEM VALUE';
       END IF;
     END LOOP;
 -- suppress the final separators
+    IF v_isColListNeeded THEN
+      v_colList = substring(v_colList FROM 1 FOR char_length(v_colList) - 2) || ')';
+    ELSE
+      v_colList = '';
+    END IF;
     v_valList = substring(v_valList FROM 1 FOR char_length(v_valList) - 2);
     v_setList = substring(v_setList FROM 1 FOR char_length(v_setList) - 2);
 -- retrieve all columns that represents the pkey and build the "pkey equal" conditions set that will be used in UPDATE and DELETE
@@ -4106,7 +4145,8 @@ $_gen_sql_tbl$
 -- suppress the final separator
     v_pkCondList = substring(v_pkCondList FROM 1 FOR char_length(v_pkCondList) - 5);
 -- prepare sql skeletons for each statement type
-    v_rqInsert = '''INSERT INTO ' || replace(v_fullTableName,'''','''''') || ' VALUES (' || v_valList || ');''';
+    v_rqInsert = '''INSERT INTO ' || replace(v_fullTableName,'''','''''') || v_colList || v_insertClause
+              || ' VALUES (' || v_valList || ');''';
     v_rqUpdate = '''UPDATE ONLY ' || replace(v_fullTableName,'''','''''') || ' SET ' || v_setList || ' WHERE ' || v_pkCondList || ';''';
     v_rqDelete = '''DELETE FROM ONLY ' || replace(v_fullTableName,'''','''''') || ' WHERE ' || v_pkCondList || ';''';
     v_rqTruncate = '''TRUNCATE ' || replace(v_fullTableName,'''','''''') || ';''';

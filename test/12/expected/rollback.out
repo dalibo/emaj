@@ -956,15 +956,15 @@ select col21, col22, emaj_verb, emaj_tuple, emaj_gid from emaj_myschema1.mytbl2_
      3 |       | DEL       | OLD        |       28
 (8 rows)
 
-select col20, col21, emaj_verb, emaj_tuple, emaj_gid from emaj_myschema1.mytbl2b_log order by emaj_gid, emaj_tuple desc;
- col20 | col21 | emaj_verb | emaj_tuple | emaj_gid 
--------+-------+-----------+------------+----------
-     1 |     1 | INS       | NEW        |       18
-     2 |     2 | INS       | NEW        |       21
-     3 |     3 | INS       | NEW        |       23
-     4 |     2 | INS       | NEW        |       25
-     5 |     3 | INS       | NEW        |       27
-     6 |     3 | INS       | NEW        |       29
+select col20, col21, col22, col23, emaj_verb, emaj_tuple, emaj_gid from emaj_myschema1.mytbl2b_log order by emaj_gid, emaj_tuple desc;
+ col20 | col21 |       col22        | col23 | emaj_verb | emaj_tuple | emaj_gid 
+-------+-------+--------------------+-------+-----------+------------+----------
+     1 |     1 |                  1 | t     | INS       | NEW        |       18
+     2 |     2 |                0.5 | t     | INS       | NEW        |       21
+     3 |     3 | 0.3333333333333333 | t     | INS       | NEW        |       23
+     4 |     2 |                0.5 | t     | INS       | NEW        |       25
+     5 |     3 | 0.3333333333333333 | t     | INS       | NEW        |       27
+     6 |     3 | 0.3333333333333333 | t     | INS       | NEW        |       29
 (6 rows)
 
 select col31, col33, emaj_verb, emaj_tuple, emaj_gid from emaj_myschema1."myTbl3_log" order by emaj_gid, emaj_tuple desc;
@@ -1145,9 +1145,9 @@ select col21, col22, emaj_verb, emaj_tuple, emaj_gid from emaj_myschema1.myTbl2_
 -------+-------+-----------+------------+----------
 (0 rows)
 
-select col20, col21, emaj_verb, emaj_tuple, emaj_gid from emaj_myschema1.myTbl2b_log order by emaj_gid, emaj_tuple desc;
- col20 | col21 | emaj_verb | emaj_tuple | emaj_gid 
--------+-------+-----------+------------+----------
+select col20, col21, col22, col23, emaj_verb, emaj_tuple, emaj_gid from emaj_myschema1.myTbl2b_log order by emaj_gid, emaj_tuple desc;
+ col20 | col21 | col22 | col23 | emaj_verb | emaj_tuple | emaj_gid 
+-------+-------+-------+-------+-----------+------------+----------
 (0 rows)
 
 select col11, col12, col13 from myschema1.myTbl1 order by col11, col12;
@@ -1344,11 +1344,11 @@ select col21, col22, emaj_verb, emaj_tuple, emaj_gid from emaj_myschema1.mytbl2_
      2 | DEF   | INS       | NEW        |       59
 (2 rows)
 
-select col20, col21, emaj_verb, emaj_tuple, emaj_gid from emaj_myschema1.mytbl2b_log order by emaj_gid, emaj_tuple desc;
- col20 | col21 | emaj_verb | emaj_tuple | emaj_gid 
--------+-------+-----------+------------+----------
-     1 |     1 | INS       | NEW        |       57
-     2 |     2 | INS       | NEW        |       60
+select col20, col21, col22, col23, emaj_verb, emaj_tuple, emaj_gid from emaj_myschema1.mytbl2b_log order by emaj_gid, emaj_tuple desc;
+ col20 | col21 | col22 | col23 | emaj_verb | emaj_tuple | emaj_gid 
+-------+-------+-------+-------+-----------+------------+----------
+     1 |     1 |     1 | t     | INS       | NEW        |       57
+     2 |     2 |   0.5 | t     | INS       | NEW        |       60
 (2 rows)
 
 select col31, col33, emaj_verb, emaj_tuple, emaj_gid from emaj_myschema1."myTbl3_log" order by emaj_gid, emaj_tuple desc;
@@ -1632,13 +1632,13 @@ select col21, col22, emaj_verb, emaj_tuple, emaj_gid from emaj_myschema1.myTbl2_
      2 | DEF   | DEL       | OLD        |       94
 (4 rows)
 
-select col20, col21, emaj_verb, emaj_tuple, emaj_gid from emaj_myschema1.myTbl2b_log order by emaj_gid, emaj_tuple desc;
- col20 | col21 | emaj_verb | emaj_tuple | emaj_gid 
--------+-------+-----------+------------+----------
-     1 |     1 | INS       | NEW        |       57
-     2 |     2 | INS       | NEW        |       60
-     1 |     1 | DEL       | OLD        |       95
-     2 |     2 | DEL       | OLD        |       96
+select col20, col21, col22, col23, emaj_verb, emaj_tuple, emaj_gid from emaj_myschema1.myTbl2b_log order by emaj_gid, emaj_tuple desc;
+ col20 | col21 | col22 | col23 | emaj_verb | emaj_tuple | emaj_gid 
+-------+-------+-------+-------+-----------+------------+----------
+     1 |     1 |     1 | t     | INS       | NEW        |       57
+     2 |     2 |   0.5 | t     | INS       | NEW        |       60
+     1 |     1 |     1 | t     | DEL       | OLD        |       95
+     2 |     2 |   0.5 | t     | DEL       | OLD        |       96
 (4 rows)
 
 select col11, col12, col13 from myschema1.myTbl1 order by col11, col12;
@@ -1759,11 +1759,11 @@ select col21, col22, emaj_verb, emaj_tuple, emaj_gid from emaj_myschema1.myTbl2_
      2 | DEF   | INS       | NEW        |       59
 (2 rows)
 
-select col20, col21, emaj_verb, emaj_tuple, emaj_gid from emaj_myschema1.myTbl2b_log order by emaj_gid, emaj_tuple desc;
- col20 | col21 | emaj_verb | emaj_tuple | emaj_gid 
--------+-------+-----------+------------+----------
-     1 |     1 | INS       | NEW        |       57
-     2 |     2 | INS       | NEW        |       60
+select col20, col21, col22, col23, emaj_verb, emaj_tuple, emaj_gid from emaj_myschema1.myTbl2b_log order by emaj_gid, emaj_tuple desc;
+ col20 | col21 | col22 | col23 | emaj_verb | emaj_tuple | emaj_gid 
+-------+-------+-------+-------+-----------+------------+----------
+     1 |     1 |     1 | t     | INS       | NEW        |       57
+     2 |     2 |   0.5 | t     | INS       | NEW        |       60
 (2 rows)
 
 select col11, col12, col13 from myschema1.myTbl1 order by col11, col12;
