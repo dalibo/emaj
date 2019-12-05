@@ -6025,7 +6025,7 @@ $_delete_before_mark_group$
   BEGIN
 -- disable event triggers that protect emaj components and keep in memory these triggers name
     SELECT emaj._disable_event_triggers() INTO v_eventTriggers;
--- retrieve the timestamp and the emaj_gid value and the time stamp id of the mark
+-- retrieve the timestamp and the emaj_gid value and the time stamp id of the target new first mark
     SELECT time_last_emaj_gid, mark_time_id INTO v_markGlobalSeq, v_markTimeId
       FROM emaj.emaj_mark, emaj.emaj_time_stamp
       WHERE mark_time_id = time_id AND mark_group = v_groupName AND mark_name = v_mark;
@@ -8004,20 +8004,28 @@ $_reset_groups$
 -- delete all marks for the groups from the emaj_mark table
     DELETE FROM emaj.emaj_mark WHERE mark_group = ANY (v_groupNames);
 -- delete emaj_sequence rows related to the tables of the groups
-    DELETE FROM emaj.emaj_sequence USING emaj.emaj_relation
+    DELETE FROM emaj.emaj_sequence USING emaj.emaj_relation r1
       WHERE sequ_schema = rel_log_schema AND sequ_name = rel_log_sequence
         AND rel_group = ANY (v_groupNames) AND rel_kind = 'r'
-        AND sequ_time_id <@ rel_time_range AND sequ_time_id <> lower(rel_time_range);
+        AND ((sequ_time_id <@ rel_time_range               -- all log sequences inside the relation time range
+             AND (sequ_time_id <> lower(rel_time_range)    -- except the lower bound if
+                  OR NOT EXISTS(                           --   it is the upper bound of another time range for another group
+                     SELECT 1 FROM emaj.emaj_relation r2
+                       WHERE r2.rel_log_schema = sequ_schema AND r2.rel_log_sequence = sequ_name
+                         AND upper(r2.rel_time_range) = sequ_time_id
+                         AND NOT (r2.rel_group = ANY (v_groupNames)) )))
+         OR (sequ_time_id = upper(rel_time_range)          -- but including the upper bound if
+                  AND NOT EXISTS (                         --   it is not the lower bound of another time range (for any group)
+                     SELECT 1 FROM emaj.emaj_relation r3
+                       WHERE r3.rel_log_schema = sequ_schema AND r3.rel_log_sequence = sequ_name
+                         AND lower(r3.rel_time_range) = sequ_time_id))
+            );
 -- delete all sequence holes for the tables of the groups
 -- (it may delete holes for timeranges that do not belong to the group, if a table has been moved to another group,
 --  but is safe enough for rollbacks)
     DELETE FROM emaj.emaj_seq_hole USING emaj.emaj_relation
       WHERE rel_schema = sqhl_schema AND rel_tblseq = sqhl_table
         AND rel_group = ANY (v_groupNames) AND rel_kind = 'r';
--- delete emaj_sequence rows related to the sequences of the groups
-    DELETE FROM emaj.emaj_sequence USING emaj.emaj_relation
-      WHERE rel_schema = sequ_schema AND rel_tblseq = sequ_name AND
-            rel_group = ANY (v_groupNames) AND rel_kind = 'S';
 -- drop obsolete log tables (but keep those linked to other groups)
     FOR r_rel IN
           SELECT DISTINCT rel_log_schema, rel_log_table FROM emaj.emaj_relation
@@ -8031,6 +8039,21 @@ $_reset_groups$
       EXECUTE format('DROP TABLE IF EXISTS %I.%I CASCADE',
                      r_rel.rel_log_schema, r_rel.rel_log_table);
     END LOOP;
+-- delete emaj_sequence rows related to the sequences of the groups
+    DELETE FROM emaj.emaj_sequence USING emaj.emaj_relation
+      WHERE sequ_schema = rel_schema AND sequ_name = rel_tblseq
+        AND rel_group = ANY (v_groupNames) AND rel_kind = 'S'
+        AND ((sequ_time_id <@ rel_time_range               -- all application sequences inside the relation time range
+             AND (sequ_time_id <> lower(rel_time_range)    -- except the lower bound if
+                  OR NOT EXISTS(                           --   it is the upper bound of another time range for another group
+                     SELECT 1 FROM emaj.emaj_relation r2
+                       WHERE r2.rel_schema = sequ_schema AND r2.rel_tblseq = sequ_name AND upper(r2.rel_time_range) = sequ_time_id
+                         AND NOT (r2.rel_group = ANY (v_groupNames)) )))
+         OR (sequ_time_id = upper(rel_time_range)          -- including the upper bound if
+                  AND NOT EXISTS (                         --   it is not the lower bound of another time range for another group
+                     SELECT 1 FROM emaj.emaj_relation r3
+                       WHERE r3.rel_schema = sequ_schema AND r3.rel_tblseq = sequ_name AND lower(r3.rel_time_range) = sequ_time_id))
+            );
 -- keep a trace of the relation group ownership history
 --   and finaly delete the old versions of emaj_relation rows (those with a not infinity upper bound)
     WITH deleted AS (

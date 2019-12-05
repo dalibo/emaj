@@ -241,10 +241,6 @@ select mark_group, regexp_replace(mark_name,E'\\d\\d\.\\d\\d\\.\\d\\d\\.\\d\\d\\
 select sequ_schema, sequ_name, sequ_time_id, sequ_last_val, sequ_is_called from emaj.emaj_sequence order by sequ_time_id, sequ_schema, sequ_name;
   sequ_schema   |     sequ_name     | sequ_time_id | sequ_last_val | sequ_is_called 
 ----------------+-------------------+--------------+---------------+----------------
- emaj_myschema2 | mytbl7_log_seq    |         6096 |             1 | f
- emaj_myschema2 | mytbl7_log_seq    |         6103 |            10 | t
- emaj_myschema2 | mytbl7_log_seq    |         6104 |            11 | f
- emaj_myschema2 | mytbl7_log_seq    |         6106 |            11 | t
  emaj_myschema2 | myTbl3_log_seq    |        10012 |            10 | t
  emaj_myschema2 | mytbl1_log_seq    |        10012 |            15 | t
  emaj_myschema2 | mytbl2_log_seq    |        10012 |             2 | t
@@ -319,7 +315,7 @@ select sequ_schema, sequ_name, sequ_time_id, sequ_last_val, sequ_is_called from 
  myschema1      | mytbl2b_col20_seq |        10035 |             5 | t
  myschema2      | myTbl3_col31_seq  |        10035 |            20 | t
  myschema2      | myseq1            |        10035 |          1004 | f
-(78 rows)
+(74 rows)
 
 select sqhl_schema, sqhl_table, sqhl_begin_time_id, sqhl_end_time_id, sqhl_hole_size from emaj.emaj_seq_hole order by 1,2,3;
  sqhl_schema | sqhl_table | sqhl_begin_time_id | sqhl_end_time_id | sqhl_hole_size 
@@ -1187,10 +1183,6 @@ select mark_group, regexp_replace(mark_name,E'\\d\\d\.\\d\\d\\.\\d\\d\\.\\d\\d\\
 select sequ_schema, sequ_name, sequ_time_id, sequ_last_val, sequ_is_called from emaj.emaj_sequence order by sequ_time_id, sequ_schema, sequ_name;
      sequ_schema     |      sequ_name      | sequ_time_id | sequ_last_val | sequ_is_called 
 ---------------------+---------------------+--------------+---------------+----------------
- emaj_myschema2      | mytbl7_log_seq      |         6096 |             1 | f
- emaj_myschema2      | mytbl7_log_seq      |         6103 |            10 | t
- emaj_myschema2      | mytbl7_log_seq      |         6104 |            11 | f
- emaj_myschema2      | mytbl7_log_seq      |         6106 |            11 | t
  emaj_myschema2      | myTbl3_log_seq      |        10012 |            10 | t
  emaj_myschema2      | mytbl1_log_seq      |        10012 |            15 | t
  emaj_myschema2      | mytbl2_log_seq      |        10012 |             2 | t
@@ -1277,7 +1269,7 @@ select sequ_schema, sequ_name, sequ_time_id, sequ_last_val, sequ_is_called from 
  emaj_phil's schema3 | phil's tbl1_log_seq |        10052 |            53 | t
  phil's schema3      | myTbl2\_col21_seq   |        10052 |             1 | f
  phil's schema3      | phil's seq\1        |        10052 |          1001 | t
-(90 rows)
+(86 rows)
 
 select sqhl_schema, sqhl_table, sqhl_begin_time_id, sqhl_end_time_id, sqhl_hole_size from emaj.emaj_seq_hole order by 1,2,3;
  sqhl_schema | sqhl_table | sqhl_begin_time_id | sqhl_end_time_id | sqhl_hole_size 

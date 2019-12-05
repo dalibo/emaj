@@ -127,7 +127,7 @@ select count(*) from emaj.emaj_mark;
 select count(*) from emaj.emaj_sequence;
  count 
 -------
-    11
+     7
 (1 row)
 
 select count(*) from emaj.emaj_seq_hole;

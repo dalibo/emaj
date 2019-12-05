@@ -618,6 +618,7 @@ update emaj.emaj_group_def set grpdef_group = 'myGroup2'
   where grpdef_group = 'myGroup1' and grpdef_schema = 'myschema2' and grpdef_tblseq = 'myTbl3_col31_seq';
 update emaj.emaj_group_def set grpdef_group = 'myGroup2', grpdef_log_dat_tsp = NULL, grpdef_log_idx_tsp = NULL
   where grpdef_group = 'myGroup1' and grpdef_schema = 'myschema2' and grpdef_tblseq = 'myTbl3';
+
 select emaj.emaj_stop_group('myGroup2');
 select emaj.emaj_alter_groups('{"myGroup1","myGroup2"}', 'back to idle myGroup2');
 
@@ -688,6 +689,15 @@ select emaj.emaj_move_sequences('myschema2','.*','','myGroup2',emaj.emaj_get_pre
 -- from a logging group to another logging group
 select emaj.emaj_move_tables('myschema4','.*','','myGroup2','MOVE_TBL_logging_to_logging');
 select emaj.emaj_move_sequences('myschema2','.*','','myGroup2','MOVE_SEQ_logging_to_logging');
+
+-- reset an idle group to check the emaj_sequence cleaning
+begin;
+  select emaj.emaj_reset_group('myGroup4');
+  select rel_group, count(*) from emaj.emaj_sequence, emaj.emaj_relation
+    where sequ_schema = rel_schema and sequ_name = rel_tblseq and sequ_time_id <@ rel_time_range
+      and sequ_schema = 'myschema2' and sequ_name = 'myseq1'
+    group by 1;
+rollback;
 
 -- and back to the idle group
 select emaj.emaj_move_tables('myschema4','.*','','myGroup4','MOVE_TBL_logging_to_idle');

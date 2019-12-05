@@ -2198,6 +2198,25 @@ select emaj.emaj_move_sequences('myschema2','.*','','myGroup2','MOVE_SEQ_logging
                    3
 (1 row)
 
+-- reset an idle group to check the emaj_sequence cleaning
+begin;
+  select emaj.emaj_reset_group('myGroup4');
+ emaj_reset_group 
+------------------
+                0
+(1 row)
+
+  select rel_group, count(*) from emaj.emaj_sequence, emaj.emaj_relation
+    where sequ_schema = rel_schema and sequ_name = rel_tblseq and sequ_time_id <@ rel_time_range
+      and sequ_schema = 'myschema2' and sequ_name = 'myseq1'
+    group by 1;
+ rel_group | count 
+-----------+-------
+ myGroup1  |     2
+ myGroup2  |     6
+(2 rows)
+
+rollback;
 -- and back to the idle group
 select emaj.emaj_move_tables('myschema4','.*','','myGroup4','MOVE_TBL_logging_to_idle');
  emaj_move_tables 

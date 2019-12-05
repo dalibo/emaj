@@ -166,7 +166,7 @@ update myTbl4 set col43 = 3 where col41 = 2;
 select emaj.emaj_rollback_group('myGroup1','M3');
 ERROR:  cannot insert into column "col22"
 DETAIL:  Column "col22" is a generated column.
-CONTEXT:  SQL statement "INSERT INTO myschema1.mytbl2b  OVERRIDING SYSTEM VALUE  SELECT tbl.col20,tbl.col21,tbl.col22,tbl.col23 FROM emaj_myschema1.mytbl2b_log tbl, emaj_tmp_11262 keys     WHERE tbl.col20 = keys.col20 AND tbl.emaj_gid = keys.emaj_gid AND tbl.emaj_tuple = 'OLD'      AND tbl.emaj_gid > 40 AND tbl.emaj_gid <= 49"
+CONTEXT:  SQL statement "INSERT INTO myschema1.mytbl2b  OVERRIDING SYSTEM VALUE  SELECT tbl.col20,tbl.col21,tbl.col22,tbl.col23 FROM emaj_myschema1.mytbl2b_log tbl, emaj_tmp_22335 keys     WHERE tbl.col20 = keys.col20 AND tbl.emaj_gid = keys.emaj_gid AND tbl.emaj_tuple = 'OLD'      AND tbl.emaj_gid > 40 AND tbl.emaj_gid <= 49"
 PL/pgSQL function emaj._rlbk_tbl(emaj.emaj_relation,bigint,bigint,integer,boolean) line 55 at EXECUTE
 SQL statement "SELECT emaj._rlbk_tbl(emaj_relation.*,
                                 CASE WHEN v_rlbkMarkTimeId = r_step.rlbp_target_time_id THEN v_lastGlobalSeq      -- common case

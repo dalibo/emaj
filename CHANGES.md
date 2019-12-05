@@ -14,6 +14,9 @@ E-Maj - Change log
     produced a script that failed when executed.
   * For tables having columns defined as GENERATED ALWAYS AS (expression),
     the E-Maj rollback functions failed.
+  * When tables or sequences were removed from their group or moved to another
+    group, the internal emaj_sequence table was not properly cleanup at group
+    reset time.
 
 
 3.2.0 (2019-Oct-15)
