@@ -941,11 +941,16 @@ $_delete_before_mark_group$
     SELECT time_last_emaj_gid, mark_time_id INTO v_markGlobalSeq, v_markTimeId
       FROM emaj.emaj_mark, emaj.emaj_time_stamp
       WHERE mark_time_id = time_id AND mark_group = v_groupName AND mark_name = v_mark;
--- drop obsolete old log tables (whose end time stamp is older than the new first mark time stamp or which are linked to other groups)
+--
+-- first process all obsolete time ranges for the group
+--
+-- drop obsolete old log tables
     FOR r_rel IN
+          -- log tables for the group, whose end time stamp is older than the new first mark time stamp
           SELECT DISTINCT rel_log_schema, rel_log_table FROM emaj.emaj_relation
-            WHERE rel_group = v_groupName AND rel_kind = 'r' AND upper(rel_time_range) <= v_markTimeId
+            WHERE rel_kind = 'r' AND rel_group = v_groupName AND upper(rel_time_range) <= v_markTimeId
         EXCEPT
+          -- unless they are also used for more recent time range, or are also linked to other groups
           SELECT rel_log_schema, rel_log_table FROM emaj.emaj_relation
             WHERE rel_kind = 'r'
               AND (upper(rel_time_range) > v_markTimeId OR upper_inf(rel_time_range) OR rel_group <> v_groupName)
@@ -954,12 +959,17 @@ $_delete_before_mark_group$
       EXECUTE format('DROP TABLE IF EXISTS %I.%I CASCADE',
                      r_rel.rel_log_schema, r_rel.rel_log_table);
     END LOOP;
--- delete obsolete emaj_sequence
--- (the related emaj_seq_hole rows will be deleted just later ; they are not directly linked to a emaj_relation row)
-    DELETE FROM emaj.emaj_sequence USING emaj.emaj_relation
+-- delete emaj_sequence rows corresponding to obsolete relation time range that will be deleted just later
+-- (the related emaj_seq_hole rows will be deleted just later ; they are not directly linked to an emaj_relation row)
+    DELETE FROM emaj.emaj_sequence USING emaj.emaj_relation r1
       WHERE rel_group = v_groupName AND rel_kind = 'r'
         AND sequ_schema = rel_log_schema AND sequ_name = rel_log_sequence AND upper(rel_time_range) <= v_markTimeId
-        AND sequ_time_id < v_markTimeId;
+        AND (sequ_time_id < v_markTimeId                  -- all sequences prior the mark time
+          OR (sequ_time_id = v_markTimeId                 -- and the sequence of the mark time
+              AND NOT EXISTS (                            --   if it is not the lower bound of an adjacent time range
+                SELECT 1 FROM emaj.emaj_relation r2
+                  WHERE r2.rel_schema = r1.rel_log_schema AND r2.rel_tblseq = r1.rel_log_sequence
+                    AND lower(r2.rel_time_range) = v_marktimeid)));
 -- keep a trace of the relation group ownership history
 --   and finaly delete from the emaj_relation table the relation that ended before the new first mark
     WITH deleted AS (
@@ -973,7 +983,10 @@ $_delete_before_mark_group$
         FROM deleted;
 -- drop the E-Maj log schemas that are now useless (i.e. not used by any created group)
     PERFORM emaj._drop_log_schemas('DELETE_BEFORE_MARK_GROUP', FALSE);
--- delete rows from all other log tables
+--
+-- then process the current relation time range for the group
+--
+-- delete rows from all log tables
     FOR r_rel IN
         SELECT quote_ident(rel_log_schema) || '.' || quote_ident(rel_log_table) AS log_table_name FROM emaj.emaj_relation
           WHERE rel_group = v_groupName AND rel_kind = 'r'
@@ -995,12 +1008,14 @@ $_delete_before_mark_group$
         AND sqhl_begin_time_id < v_markTimeId;
 -- now the sequences related to the mark to delete can be suppressed
 --   delete first application sequences related data for the group
+--   the sequence state at time range bounds are kept (if the mark comes from a logging group alter operation)
     DELETE FROM emaj.emaj_sequence USING emaj.emaj_relation
       WHERE sequ_schema = rel_schema AND sequ_name = rel_tblseq AND rel_time_range @> sequ_time_id
         AND rel_group = v_groupName AND rel_kind = 'S'
         AND sequ_time_id < v_markTimeId
         AND lower(rel_time_range) <> sequ_time_id;
 --   delete then emaj sequences related data for the group
+--   the sequence state at time range bounds are kept
     DELETE FROM emaj.emaj_sequence USING emaj.emaj_relation
       WHERE sequ_schema = rel_log_schema AND sequ_name = rel_log_sequence AND rel_time_range @> sequ_time_id
         AND rel_group = v_groupName AND rel_kind = 'r'
@@ -1016,9 +1031,6 @@ $_delete_before_mark_group$
 -- delete oldest marks
     DELETE FROM emaj.emaj_mark WHERE mark_group = v_groupName AND mark_time_id < v_markTimeId;
     GET DIAGNOSTICS v_nbMark = ROW_COUNT;
--- deletes obsolete versions of emaj_relation rows
-    DELETE FROM emaj.emaj_relation
-      WHERE upper(rel_time_range) < v_markTimeId AND rel_group = v_groupName;
 -- enable previously disabled event triggers
     PERFORM emaj._enable_event_triggers(v_eventTriggers);
 -- purge the emaj history, if needed (even if no mark as been really dropped)
