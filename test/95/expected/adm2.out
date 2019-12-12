@@ -448,7 +448,7 @@ WARNING:  emaj_create_group: Although the group "phil's group#3"," is referenced
 select emaj.emaj_assign_tables('phil''s schema3', '.*', 'mytbl4', 'phil''s group#3",');
 NOTICE:  table "myTbl2\_log" does not exist, skipping
 CONTEXT:  SQL statement "DROP TABLE IF EXISTS "emaj_phil's schema3"."myTbl2\_log""
-PL/pgSQL function emaj._create_tbl(text,text,text,integer,text,text,bigint,boolean,boolean) line 84 at EXECUTE
+PL/pgSQL function emaj._create_tbl(text,text,text,integer,text,text,bigint,boolean,boolean) line 73 at EXECUTE
 SQL statement "SELECT emaj._create_tbl(v_schema, v_table, v_group, v_priority, v_logDatTsp, v_logIdxTsp,
                              v_timeId, v_groupIsRollbackable, v_groupIsLogging)"
 PL/pgSQL function emaj._add_tbl(text,text,text,integer,text,text,boolean,bigint,text) line 19 at PERFORM
@@ -460,7 +460,7 @@ NOTICE:  trigger "emaj_log_trg" for relation "phil's schema3.myTbl2\" does not e
 CONTEXT:  SQL statement "DROP TRIGGER IF EXISTS emaj_log_trg ON "phil's schema3"."myTbl2\""
 PL/pgSQL function emaj._create_log_trigger(text,text,text,text) line 9 at EXECUTE
 SQL statement "SELECT emaj._create_log_trigger(v_fullTableName, v_logTableName, v_sequenceName, v_logFnctName)"
-PL/pgSQL function emaj._create_tbl(text,text,text,integer,text,text,bigint,boolean,boolean) line 131 at PERFORM
+PL/pgSQL function emaj._create_tbl(text,text,text,integer,text,text,bigint,boolean,boolean) line 120 at PERFORM
 SQL statement "SELECT emaj._create_tbl(v_schema, v_table, v_group, v_priority, v_logDatTsp, v_logIdxTsp,
                              v_timeId, v_groupIsRollbackable, v_groupIsLogging)"
 PL/pgSQL function emaj._add_tbl(text,text,text,integer,text,text,boolean,bigint,text) line 19 at PERFORM
@@ -470,7 +470,7 @@ PL/pgSQL function emaj._assign_tables(text,text[],text,jsonb,text,boolean,boolea
 PL/pgSQL function emaj.emaj_assign_tables(text,text,text,text,jsonb,text) line 23 at RETURN
 NOTICE:  trigger "emaj_trunc_trg" for relation "phil's schema3.myTbl2\" does not exist, skipping
 CONTEXT:  SQL statement "DROP TRIGGER IF EXISTS emaj_trunc_trg ON "phil's schema3"."myTbl2\""
-PL/pgSQL function emaj._create_tbl(text,text,text,integer,text,text,bigint,boolean,boolean) line 139 at EXECUTE
+PL/pgSQL function emaj._create_tbl(text,text,text,integer,text,text,bigint,boolean,boolean) line 128 at EXECUTE
 SQL statement "SELECT emaj._create_tbl(v_schema, v_table, v_group, v_priority, v_logDatTsp, v_logIdxTsp,
                              v_timeId, v_groupIsRollbackable, v_groupIsLogging)"
 PL/pgSQL function emaj._add_tbl(text,text,text,integer,text,text,boolean,bigint,text) line 19 at PERFORM
@@ -480,7 +480,7 @@ PL/pgSQL function emaj._assign_tables(text,text[],text,jsonb,text,boolean,boolea
 PL/pgSQL function emaj.emaj_assign_tables(text,text,text,text,jsonb,text) line 23 at RETURN
 NOTICE:  table "phil's tbl1_log" does not exist, skipping
 CONTEXT:  SQL statement "DROP TABLE IF EXISTS "emaj_phil's schema3"."phil's tbl1_log""
-PL/pgSQL function emaj._create_tbl(text,text,text,integer,text,text,bigint,boolean,boolean) line 84 at EXECUTE
+PL/pgSQL function emaj._create_tbl(text,text,text,integer,text,text,bigint,boolean,boolean) line 73 at EXECUTE
 SQL statement "SELECT emaj._create_tbl(v_schema, v_table, v_group, v_priority, v_logDatTsp, v_logIdxTsp,
                              v_timeId, v_groupIsRollbackable, v_groupIsLogging)"
 PL/pgSQL function emaj._add_tbl(text,text,text,integer,text,text,boolean,bigint,text) line 19 at PERFORM
@@ -492,7 +492,7 @@ NOTICE:  trigger "emaj_log_trg" for relation "phil's schema3.phil's tbl1" does n
 CONTEXT:  SQL statement "DROP TRIGGER IF EXISTS emaj_log_trg ON "phil's schema3"."phil's tbl1""
 PL/pgSQL function emaj._create_log_trigger(text,text,text,text) line 9 at EXECUTE
 SQL statement "SELECT emaj._create_log_trigger(v_fullTableName, v_logTableName, v_sequenceName, v_logFnctName)"
-PL/pgSQL function emaj._create_tbl(text,text,text,integer,text,text,bigint,boolean,boolean) line 131 at PERFORM
+PL/pgSQL function emaj._create_tbl(text,text,text,integer,text,text,bigint,boolean,boolean) line 120 at PERFORM
 SQL statement "SELECT emaj._create_tbl(v_schema, v_table, v_group, v_priority, v_logDatTsp, v_logIdxTsp,
                              v_timeId, v_groupIsRollbackable, v_groupIsLogging)"
 PL/pgSQL function emaj._add_tbl(text,text,text,integer,text,text,boolean,bigint,text) line 19 at PERFORM
@@ -502,7 +502,7 @@ PL/pgSQL function emaj._assign_tables(text,text[],text,jsonb,text,boolean,boolea
 PL/pgSQL function emaj.emaj_assign_tables(text,text,text,text,jsonb,text) line 23 at RETURN
 NOTICE:  trigger "emaj_trunc_trg" for relation "phil's schema3.phil's tbl1" does not exist, skipping
 CONTEXT:  SQL statement "DROP TRIGGER IF EXISTS emaj_trunc_trg ON "phil's schema3"."phil's tbl1""
-PL/pgSQL function emaj._create_tbl(text,text,text,integer,text,text,bigint,boolean,boolean) line 139 at EXECUTE
+PL/pgSQL function emaj._create_tbl(text,text,text,integer,text,text,bigint,boolean,boolean) line 128 at EXECUTE
 SQL statement "SELECT emaj._create_tbl(v_schema, v_table, v_group, v_priority, v_logDatTsp, v_logIdxTsp,
                              v_timeId, v_groupIsRollbackable, v_groupIsLogging)"
 PL/pgSQL function emaj._add_tbl(text,text,text,integer,text,text,boolean,bigint,text) line 19 at PERFORM
@@ -536,7 +536,7 @@ update emaj.emaj_group_def set grpdef_priority = 1, grpdef_log_idx_tsp = 'tsplog
 select emaj.emaj_alter_group('phil''s group#3",');
 NOTICE:  table "phil's tbl1_log" does not exist, skipping
 CONTEXT:  SQL statement "DROP TABLE IF EXISTS "emaj_phil's schema3"."phil's tbl1_log""
-PL/pgSQL function emaj._create_tbl(text,text,text,integer,text,text,bigint,boolean,boolean) line 84 at EXECUTE
+PL/pgSQL function emaj._create_tbl(text,text,text,integer,text,text,bigint,boolean,boolean) line 73 at EXECUTE
 SQL statement "SELECT emaj._create_tbl(grpdef_schema, grpdef_tblseq, grpdef_group, grpdef_priority, grpdef_log_dat_tsp, grpdef_log_idx_tsp,
                                      v_timeId, v_isRollbackable, r_plan.altr_group_is_logging)
               FROM emaj.emaj_group_def
@@ -550,7 +550,7 @@ NOTICE:  trigger "emaj_log_trg" for relation "phil's schema3.phil's tbl1" does n
 CONTEXT:  SQL statement "DROP TRIGGER IF EXISTS emaj_log_trg ON "phil's schema3"."phil's tbl1""
 PL/pgSQL function emaj._create_log_trigger(text,text,text,text) line 9 at EXECUTE
 SQL statement "SELECT emaj._create_log_trigger(v_fullTableName, v_logTableName, v_sequenceName, v_logFnctName)"
-PL/pgSQL function emaj._create_tbl(text,text,text,integer,text,text,bigint,boolean,boolean) line 131 at PERFORM
+PL/pgSQL function emaj._create_tbl(text,text,text,integer,text,text,bigint,boolean,boolean) line 120 at PERFORM
 SQL statement "SELECT emaj._create_tbl(grpdef_schema, grpdef_tblseq, grpdef_group, grpdef_priority, grpdef_log_dat_tsp, grpdef_log_idx_tsp,
                                      v_timeId, v_isRollbackable, r_plan.altr_group_is_logging)
               FROM emaj.emaj_group_def
@@ -562,7 +562,7 @@ PL/pgSQL function emaj._alter_groups(text[],boolean,text) line 58 at PERFORM
 PL/pgSQL function emaj.emaj_alter_group(text,text) line 6 at RETURN
 NOTICE:  trigger "emaj_trunc_trg" for relation "phil's schema3.phil's tbl1" does not exist, skipping
 CONTEXT:  SQL statement "DROP TRIGGER IF EXISTS emaj_trunc_trg ON "phil's schema3"."phil's tbl1""
-PL/pgSQL function emaj._create_tbl(text,text,text,integer,text,text,bigint,boolean,boolean) line 139 at EXECUTE
+PL/pgSQL function emaj._create_tbl(text,text,text,integer,text,text,bigint,boolean,boolean) line 128 at EXECUTE
 SQL statement "SELECT emaj._create_tbl(grpdef_schema, grpdef_tblseq, grpdef_group, grpdef_priority, grpdef_log_dat_tsp, grpdef_log_idx_tsp,
                                      v_timeId, v_isRollbackable, r_plan.altr_group_is_logging)
               FROM emaj.emaj_group_def
@@ -601,7 +601,7 @@ select emaj.emaj_enable_protection_by_event_triggers();
 select emaj.emaj_create_group('myGroup4');
 NOTICE:  table "mypartp1_log" does not exist, skipping
 CONTEXT:  SQL statement "DROP TABLE IF EXISTS emaj_myschema4.mypartp1_log"
-PL/pgSQL function emaj._create_tbl(text,text,text,integer,text,text,bigint,boolean,boolean) line 84 at EXECUTE
+PL/pgSQL function emaj._create_tbl(text,text,text,integer,text,text,bigint,boolean,boolean) line 73 at EXECUTE
 SQL statement "SELECT emaj._create_tbl(grpdef_schema, grpdef_tblseq, grpdef_group, grpdef_priority, grpdef_log_dat_tsp, grpdef_log_idx_tsp,
                                v_timeId, v_isRollbackable, FALSE)
         FROM (
@@ -618,7 +618,7 @@ NOTICE:  trigger "emaj_log_trg" for relation "myschema4.mypartp1" does not exist
 CONTEXT:  SQL statement "DROP TRIGGER IF EXISTS emaj_log_trg ON myschema4.mypartp1"
 PL/pgSQL function emaj._create_log_trigger(text,text,text,text) line 9 at EXECUTE
 SQL statement "SELECT emaj._create_log_trigger(v_fullTableName, v_logTableName, v_sequenceName, v_logFnctName)"
-PL/pgSQL function emaj._create_tbl(text,text,text,integer,text,text,bigint,boolean,boolean) line 131 at PERFORM
+PL/pgSQL function emaj._create_tbl(text,text,text,integer,text,text,bigint,boolean,boolean) line 120 at PERFORM
 SQL statement "SELECT emaj._create_tbl(grpdef_schema, grpdef_tblseq, grpdef_group, grpdef_priority, grpdef_log_dat_tsp, grpdef_log_idx_tsp,
                                v_timeId, v_isRollbackable, FALSE)
         FROM (
@@ -633,7 +633,7 @@ SQL statement "SELECT emaj._create_tbl(grpdef_schema, grpdef_tblseq, grpdef_grou
 PL/pgSQL function emaj.emaj_create_group(text,boolean,boolean) line 63 at PERFORM
 NOTICE:  trigger "emaj_trunc_trg" for relation "myschema4.mypartp1" does not exist, skipping
 CONTEXT:  SQL statement "DROP TRIGGER IF EXISTS emaj_trunc_trg ON myschema4.mypartp1"
-PL/pgSQL function emaj._create_tbl(text,text,text,integer,text,text,bigint,boolean,boolean) line 139 at EXECUTE
+PL/pgSQL function emaj._create_tbl(text,text,text,integer,text,text,bigint,boolean,boolean) line 128 at EXECUTE
 SQL statement "SELECT emaj._create_tbl(grpdef_schema, grpdef_tblseq, grpdef_group, grpdef_priority, grpdef_log_dat_tsp, grpdef_log_idx_tsp,
                                v_timeId, v_isRollbackable, FALSE)
         FROM (
@@ -648,7 +648,7 @@ SQL statement "SELECT emaj._create_tbl(grpdef_schema, grpdef_tblseq, grpdef_grou
 PL/pgSQL function emaj.emaj_create_group(text,boolean,boolean) line 63 at PERFORM
 NOTICE:  table "mypartp2_log" does not exist, skipping
 CONTEXT:  SQL statement "DROP TABLE IF EXISTS emaj_myschema4.mypartp2_log"
-PL/pgSQL function emaj._create_tbl(text,text,text,integer,text,text,bigint,boolean,boolean) line 84 at EXECUTE
+PL/pgSQL function emaj._create_tbl(text,text,text,integer,text,text,bigint,boolean,boolean) line 73 at EXECUTE
 SQL statement "SELECT emaj._create_tbl(grpdef_schema, grpdef_tblseq, grpdef_group, grpdef_priority, grpdef_log_dat_tsp, grpdef_log_idx_tsp,
                                v_timeId, v_isRollbackable, FALSE)
         FROM (
@@ -665,7 +665,7 @@ NOTICE:  trigger "emaj_log_trg" for relation "myschema4.mypartp2" does not exist
 CONTEXT:  SQL statement "DROP TRIGGER IF EXISTS emaj_log_trg ON myschema4.mypartp2"
 PL/pgSQL function emaj._create_log_trigger(text,text,text,text) line 9 at EXECUTE
 SQL statement "SELECT emaj._create_log_trigger(v_fullTableName, v_logTableName, v_sequenceName, v_logFnctName)"
-PL/pgSQL function emaj._create_tbl(text,text,text,integer,text,text,bigint,boolean,boolean) line 131 at PERFORM
+PL/pgSQL function emaj._create_tbl(text,text,text,integer,text,text,bigint,boolean,boolean) line 120 at PERFORM
 SQL statement "SELECT emaj._create_tbl(grpdef_schema, grpdef_tblseq, grpdef_group, grpdef_priority, grpdef_log_dat_tsp, grpdef_log_idx_tsp,
                                v_timeId, v_isRollbackable, FALSE)
         FROM (
@@ -680,7 +680,7 @@ SQL statement "SELECT emaj._create_tbl(grpdef_schema, grpdef_tblseq, grpdef_grou
 PL/pgSQL function emaj.emaj_create_group(text,boolean,boolean) line 63 at PERFORM
 NOTICE:  trigger "emaj_trunc_trg" for relation "myschema4.mypartp2" does not exist, skipping
 CONTEXT:  SQL statement "DROP TRIGGER IF EXISTS emaj_trunc_trg ON myschema4.mypartp2"
-PL/pgSQL function emaj._create_tbl(text,text,text,integer,text,text,bigint,boolean,boolean) line 139 at EXECUTE
+PL/pgSQL function emaj._create_tbl(text,text,text,integer,text,text,bigint,boolean,boolean) line 128 at EXECUTE
 SQL statement "SELECT emaj._create_tbl(grpdef_schema, grpdef_tblseq, grpdef_group, grpdef_priority, grpdef_log_dat_tsp, grpdef_log_idx_tsp,
                                v_timeId, v_isRollbackable, FALSE)
         FROM (
@@ -695,7 +695,7 @@ SQL statement "SELECT emaj._create_tbl(grpdef_schema, grpdef_tblseq, grpdef_grou
 PL/pgSQL function emaj.emaj_create_group(text,boolean,boolean) line 63 at PERFORM
 NOTICE:  table "mytblc1_log" does not exist, skipping
 CONTEXT:  SQL statement "DROP TABLE IF EXISTS emaj_myschema4.mytblc1_log"
-PL/pgSQL function emaj._create_tbl(text,text,text,integer,text,text,bigint,boolean,boolean) line 84 at EXECUTE
+PL/pgSQL function emaj._create_tbl(text,text,text,integer,text,text,bigint,boolean,boolean) line 73 at EXECUTE
 SQL statement "SELECT emaj._create_tbl(grpdef_schema, grpdef_tblseq, grpdef_group, grpdef_priority, grpdef_log_dat_tsp, grpdef_log_idx_tsp,
                                v_timeId, v_isRollbackable, FALSE)
         FROM (
@@ -712,7 +712,7 @@ NOTICE:  trigger "emaj_log_trg" for relation "myschema4.mytblc1" does not exist,
 CONTEXT:  SQL statement "DROP TRIGGER IF EXISTS emaj_log_trg ON myschema4.mytblc1"
 PL/pgSQL function emaj._create_log_trigger(text,text,text,text) line 9 at EXECUTE
 SQL statement "SELECT emaj._create_log_trigger(v_fullTableName, v_logTableName, v_sequenceName, v_logFnctName)"
-PL/pgSQL function emaj._create_tbl(text,text,text,integer,text,text,bigint,boolean,boolean) line 131 at PERFORM
+PL/pgSQL function emaj._create_tbl(text,text,text,integer,text,text,bigint,boolean,boolean) line 120 at PERFORM
 SQL statement "SELECT emaj._create_tbl(grpdef_schema, grpdef_tblseq, grpdef_group, grpdef_priority, grpdef_log_dat_tsp, grpdef_log_idx_tsp,
                                v_timeId, v_isRollbackable, FALSE)
         FROM (
@@ -727,7 +727,7 @@ SQL statement "SELECT emaj._create_tbl(grpdef_schema, grpdef_tblseq, grpdef_grou
 PL/pgSQL function emaj.emaj_create_group(text,boolean,boolean) line 63 at PERFORM
 NOTICE:  trigger "emaj_trunc_trg" for relation "myschema4.mytblc1" does not exist, skipping
 CONTEXT:  SQL statement "DROP TRIGGER IF EXISTS emaj_trunc_trg ON myschema4.mytblc1"
-PL/pgSQL function emaj._create_tbl(text,text,text,integer,text,text,bigint,boolean,boolean) line 139 at EXECUTE
+PL/pgSQL function emaj._create_tbl(text,text,text,integer,text,text,bigint,boolean,boolean) line 128 at EXECUTE
 SQL statement "SELECT emaj._create_tbl(grpdef_schema, grpdef_tblseq, grpdef_group, grpdef_priority, grpdef_log_dat_tsp, grpdef_log_idx_tsp,
                                v_timeId, v_isRollbackable, FALSE)
         FROM (
@@ -742,7 +742,7 @@ SQL statement "SELECT emaj._create_tbl(grpdef_schema, grpdef_tblseq, grpdef_grou
 PL/pgSQL function emaj.emaj_create_group(text,boolean,boolean) line 63 at PERFORM
 NOTICE:  table "mytblc2_log" does not exist, skipping
 CONTEXT:  SQL statement "DROP TABLE IF EXISTS emaj_myschema4.mytblc2_log"
-PL/pgSQL function emaj._create_tbl(text,text,text,integer,text,text,bigint,boolean,boolean) line 84 at EXECUTE
+PL/pgSQL function emaj._create_tbl(text,text,text,integer,text,text,bigint,boolean,boolean) line 73 at EXECUTE
 SQL statement "SELECT emaj._create_tbl(grpdef_schema, grpdef_tblseq, grpdef_group, grpdef_priority, grpdef_log_dat_tsp, grpdef_log_idx_tsp,
                                v_timeId, v_isRollbackable, FALSE)
         FROM (
@@ -759,7 +759,7 @@ NOTICE:  trigger "emaj_log_trg" for relation "myschema4.mytblc2" does not exist,
 CONTEXT:  SQL statement "DROP TRIGGER IF EXISTS emaj_log_trg ON myschema4.mytblc2"
 PL/pgSQL function emaj._create_log_trigger(text,text,text,text) line 9 at EXECUTE
 SQL statement "SELECT emaj._create_log_trigger(v_fullTableName, v_logTableName, v_sequenceName, v_logFnctName)"
-PL/pgSQL function emaj._create_tbl(text,text,text,integer,text,text,bigint,boolean,boolean) line 131 at PERFORM
+PL/pgSQL function emaj._create_tbl(text,text,text,integer,text,text,bigint,boolean,boolean) line 120 at PERFORM
 SQL statement "SELECT emaj._create_tbl(grpdef_schema, grpdef_tblseq, grpdef_group, grpdef_priority, grpdef_log_dat_tsp, grpdef_log_idx_tsp,
                                v_timeId, v_isRollbackable, FALSE)
         FROM (
@@ -774,7 +774,7 @@ SQL statement "SELECT emaj._create_tbl(grpdef_schema, grpdef_tblseq, grpdef_grou
 PL/pgSQL function emaj.emaj_create_group(text,boolean,boolean) line 63 at PERFORM
 NOTICE:  trigger "emaj_trunc_trg" for relation "myschema4.mytblc2" does not exist, skipping
 CONTEXT:  SQL statement "DROP TRIGGER IF EXISTS emaj_trunc_trg ON myschema4.mytblc2"
-PL/pgSQL function emaj._create_tbl(text,text,text,integer,text,text,bigint,boolean,boolean) line 139 at EXECUTE
+PL/pgSQL function emaj._create_tbl(text,text,text,integer,text,text,bigint,boolean,boolean) line 128 at EXECUTE
 SQL statement "SELECT emaj._create_tbl(grpdef_schema, grpdef_tblseq, grpdef_group, grpdef_priority, grpdef_log_dat_tsp, grpdef_log_idx_tsp,
                                v_timeId, v_isRollbackable, FALSE)
         FROM (
@@ -789,7 +789,7 @@ SQL statement "SELECT emaj._create_tbl(grpdef_schema, grpdef_tblseq, grpdef_grou
 PL/pgSQL function emaj.emaj_create_group(text,boolean,boolean) line 63 at PERFORM
 NOTICE:  table "mytblm_log" does not exist, skipping
 CONTEXT:  SQL statement "DROP TABLE IF EXISTS emaj_myschema4.mytblm_log"
-PL/pgSQL function emaj._create_tbl(text,text,text,integer,text,text,bigint,boolean,boolean) line 84 at EXECUTE
+PL/pgSQL function emaj._create_tbl(text,text,text,integer,text,text,bigint,boolean,boolean) line 73 at EXECUTE
 SQL statement "SELECT emaj._create_tbl(grpdef_schema, grpdef_tblseq, grpdef_group, grpdef_priority, grpdef_log_dat_tsp, grpdef_log_idx_tsp,
                                v_timeId, v_isRollbackable, FALSE)
         FROM (
@@ -806,7 +806,7 @@ NOTICE:  trigger "emaj_log_trg" for relation "myschema4.mytblm" does not exist, 
 CONTEXT:  SQL statement "DROP TRIGGER IF EXISTS emaj_log_trg ON myschema4.mytblm"
 PL/pgSQL function emaj._create_log_trigger(text,text,text,text) line 9 at EXECUTE
 SQL statement "SELECT emaj._create_log_trigger(v_fullTableName, v_logTableName, v_sequenceName, v_logFnctName)"
-PL/pgSQL function emaj._create_tbl(text,text,text,integer,text,text,bigint,boolean,boolean) line 131 at PERFORM
+PL/pgSQL function emaj._create_tbl(text,text,text,integer,text,text,bigint,boolean,boolean) line 120 at PERFORM
 SQL statement "SELECT emaj._create_tbl(grpdef_schema, grpdef_tblseq, grpdef_group, grpdef_priority, grpdef_log_dat_tsp, grpdef_log_idx_tsp,
                                v_timeId, v_isRollbackable, FALSE)
         FROM (
@@ -821,7 +821,7 @@ SQL statement "SELECT emaj._create_tbl(grpdef_schema, grpdef_tblseq, grpdef_grou
 PL/pgSQL function emaj.emaj_create_group(text,boolean,boolean) line 63 at PERFORM
 NOTICE:  trigger "emaj_trunc_trg" for relation "myschema4.mytblm" does not exist, skipping
 CONTEXT:  SQL statement "DROP TRIGGER IF EXISTS emaj_trunc_trg ON myschema4.mytblm"
-PL/pgSQL function emaj._create_tbl(text,text,text,integer,text,text,bigint,boolean,boolean) line 139 at EXECUTE
+PL/pgSQL function emaj._create_tbl(text,text,text,integer,text,text,bigint,boolean,boolean) line 128 at EXECUTE
 SQL statement "SELECT emaj._create_tbl(grpdef_schema, grpdef_tblseq, grpdef_group, grpdef_priority, grpdef_log_dat_tsp, grpdef_log_idx_tsp,
                                v_timeId, v_isRollbackable, FALSE)
         FROM (
@@ -859,7 +859,7 @@ update emaj.emaj_group_def set grpdef_priority = 999
 select emaj.emaj_alter_groups('{"phil''s group#3\",","myGroup4"}');
 NOTICE:  table "phil's tbl1_log" does not exist, skipping
 CONTEXT:  SQL statement "DROP TABLE IF EXISTS "emaj_phil's schema3"."phil's tbl1_log""
-PL/pgSQL function emaj._create_tbl(text,text,text,integer,text,text,bigint,boolean,boolean) line 84 at EXECUTE
+PL/pgSQL function emaj._create_tbl(text,text,text,integer,text,text,bigint,boolean,boolean) line 73 at EXECUTE
 SQL statement "SELECT emaj._create_tbl(grpdef_schema, grpdef_tblseq, grpdef_group, grpdef_priority, grpdef_log_dat_tsp, grpdef_log_idx_tsp,
                                      v_timeId, v_isRollbackable, r_plan.altr_group_is_logging)
               FROM emaj.emaj_group_def
@@ -873,7 +873,7 @@ NOTICE:  trigger "emaj_log_trg" for relation "phil's schema3.phil's tbl1" does n
 CONTEXT:  SQL statement "DROP TRIGGER IF EXISTS emaj_log_trg ON "phil's schema3"."phil's tbl1""
 PL/pgSQL function emaj._create_log_trigger(text,text,text,text) line 9 at EXECUTE
 SQL statement "SELECT emaj._create_log_trigger(v_fullTableName, v_logTableName, v_sequenceName, v_logFnctName)"
-PL/pgSQL function emaj._create_tbl(text,text,text,integer,text,text,bigint,boolean,boolean) line 131 at PERFORM
+PL/pgSQL function emaj._create_tbl(text,text,text,integer,text,text,bigint,boolean,boolean) line 120 at PERFORM
 SQL statement "SELECT emaj._create_tbl(grpdef_schema, grpdef_tblseq, grpdef_group, grpdef_priority, grpdef_log_dat_tsp, grpdef_log_idx_tsp,
                                      v_timeId, v_isRollbackable, r_plan.altr_group_is_logging)
               FROM emaj.emaj_group_def
@@ -885,7 +885,7 @@ PL/pgSQL function emaj._alter_groups(text[],boolean,text) line 58 at PERFORM
 PL/pgSQL function emaj.emaj_alter_groups(text[],text) line 6 at RETURN
 NOTICE:  trigger "emaj_trunc_trg" for relation "phil's schema3.phil's tbl1" does not exist, skipping
 CONTEXT:  SQL statement "DROP TRIGGER IF EXISTS emaj_trunc_trg ON "phil's schema3"."phil's tbl1""
-PL/pgSQL function emaj._create_tbl(text,text,text,integer,text,text,bigint,boolean,boolean) line 139 at EXECUTE
+PL/pgSQL function emaj._create_tbl(text,text,text,integer,text,text,bigint,boolean,boolean) line 128 at EXECUTE
 SQL statement "SELECT emaj._create_tbl(grpdef_schema, grpdef_tblseq, grpdef_group, grpdef_priority, grpdef_log_dat_tsp, grpdef_log_idx_tsp,
                                      v_timeId, v_isRollbackable, r_plan.altr_group_is_logging)
               FROM emaj.emaj_group_def
@@ -946,7 +946,7 @@ set role emaj_regression_tests_adm_user;
 select emaj.emaj_create_group('phil''s group#3",',true);
 NOTICE:  table "myTbl2\_log" does not exist, skipping
 CONTEXT:  SQL statement "DROP TABLE IF EXISTS "emaj_phil's schema3"."myTbl2\_log""
-PL/pgSQL function emaj._create_tbl(text,text,text,integer,text,text,bigint,boolean,boolean) line 84 at EXECUTE
+PL/pgSQL function emaj._create_tbl(text,text,text,integer,text,text,bigint,boolean,boolean) line 73 at EXECUTE
 SQL statement "SELECT emaj._create_tbl(grpdef_schema, grpdef_tblseq, grpdef_group, grpdef_priority, grpdef_log_dat_tsp, grpdef_log_idx_tsp,
                                v_timeId, v_isRollbackable, FALSE)
         FROM (
@@ -963,7 +963,7 @@ NOTICE:  trigger "emaj_log_trg" for relation "phil's schema3.myTbl2\" does not e
 CONTEXT:  SQL statement "DROP TRIGGER IF EXISTS emaj_log_trg ON "phil's schema3"."myTbl2\""
 PL/pgSQL function emaj._create_log_trigger(text,text,text,text) line 9 at EXECUTE
 SQL statement "SELECT emaj._create_log_trigger(v_fullTableName, v_logTableName, v_sequenceName, v_logFnctName)"
-PL/pgSQL function emaj._create_tbl(text,text,text,integer,text,text,bigint,boolean,boolean) line 131 at PERFORM
+PL/pgSQL function emaj._create_tbl(text,text,text,integer,text,text,bigint,boolean,boolean) line 120 at PERFORM
 SQL statement "SELECT emaj._create_tbl(grpdef_schema, grpdef_tblseq, grpdef_group, grpdef_priority, grpdef_log_dat_tsp, grpdef_log_idx_tsp,
                                v_timeId, v_isRollbackable, FALSE)
         FROM (
@@ -978,7 +978,7 @@ SQL statement "SELECT emaj._create_tbl(grpdef_schema, grpdef_tblseq, grpdef_grou
 PL/pgSQL function emaj.emaj_create_group(text,boolean,boolean) line 63 at PERFORM
 NOTICE:  trigger "emaj_trunc_trg" for relation "phil's schema3.myTbl2\" does not exist, skipping
 CONTEXT:  SQL statement "DROP TRIGGER IF EXISTS emaj_trunc_trg ON "phil's schema3"."myTbl2\""
-PL/pgSQL function emaj._create_tbl(text,text,text,integer,text,text,bigint,boolean,boolean) line 139 at EXECUTE
+PL/pgSQL function emaj._create_tbl(text,text,text,integer,text,text,bigint,boolean,boolean) line 128 at EXECUTE
 SQL statement "SELECT emaj._create_tbl(grpdef_schema, grpdef_tblseq, grpdef_group, grpdef_priority, grpdef_log_dat_tsp, grpdef_log_idx_tsp,
                                v_timeId, v_isRollbackable, FALSE)
         FROM (
@@ -993,7 +993,7 @@ SQL statement "SELECT emaj._create_tbl(grpdef_schema, grpdef_tblseq, grpdef_grou
 PL/pgSQL function emaj.emaj_create_group(text,boolean,boolean) line 63 at PERFORM
 NOTICE:  table "phil's tbl1_log" does not exist, skipping
 CONTEXT:  SQL statement "DROP TABLE IF EXISTS "emaj_phil's schema3"."phil's tbl1_log""
-PL/pgSQL function emaj._create_tbl(text,text,text,integer,text,text,bigint,boolean,boolean) line 84 at EXECUTE
+PL/pgSQL function emaj._create_tbl(text,text,text,integer,text,text,bigint,boolean,boolean) line 73 at EXECUTE
 SQL statement "SELECT emaj._create_tbl(grpdef_schema, grpdef_tblseq, grpdef_group, grpdef_priority, grpdef_log_dat_tsp, grpdef_log_idx_tsp,
                                v_timeId, v_isRollbackable, FALSE)
         FROM (
@@ -1010,7 +1010,7 @@ NOTICE:  trigger "emaj_log_trg" for relation "phil's schema3.phil's tbl1" does n
 CONTEXT:  SQL statement "DROP TRIGGER IF EXISTS emaj_log_trg ON "phil's schema3"."phil's tbl1""
 PL/pgSQL function emaj._create_log_trigger(text,text,text,text) line 9 at EXECUTE
 SQL statement "SELECT emaj._create_log_trigger(v_fullTableName, v_logTableName, v_sequenceName, v_logFnctName)"
-PL/pgSQL function emaj._create_tbl(text,text,text,integer,text,text,bigint,boolean,boolean) line 131 at PERFORM
+PL/pgSQL function emaj._create_tbl(text,text,text,integer,text,text,bigint,boolean,boolean) line 120 at PERFORM
 SQL statement "SELECT emaj._create_tbl(grpdef_schema, grpdef_tblseq, grpdef_group, grpdef_priority, grpdef_log_dat_tsp, grpdef_log_idx_tsp,
                                v_timeId, v_isRollbackable, FALSE)
         FROM (
@@ -1025,7 +1025,7 @@ SQL statement "SELECT emaj._create_tbl(grpdef_schema, grpdef_tblseq, grpdef_grou
 PL/pgSQL function emaj.emaj_create_group(text,boolean,boolean) line 63 at PERFORM
 NOTICE:  trigger "emaj_trunc_trg" for relation "phil's schema3.phil's tbl1" does not exist, skipping
 CONTEXT:  SQL statement "DROP TRIGGER IF EXISTS emaj_trunc_trg ON "phil's schema3"."phil's tbl1""
-PL/pgSQL function emaj._create_tbl(text,text,text,integer,text,text,bigint,boolean,boolean) line 139 at EXECUTE
+PL/pgSQL function emaj._create_tbl(text,text,text,integer,text,text,bigint,boolean,boolean) line 128 at EXECUTE
 SQL statement "SELECT emaj._create_tbl(grpdef_schema, grpdef_tblseq, grpdef_group, grpdef_priority, grpdef_log_dat_tsp, grpdef_log_idx_tsp,
                                v_timeId, v_isRollbackable, FALSE)
         FROM (
@@ -1998,7 +1998,7 @@ PL/pgSQL function emaj._alter_groups(text[],boolean,text) line 58 at PERFORM
 PL/pgSQL function emaj.emaj_alter_group(text,text) line 6 at RETURN
 NOTICE:  table "table_with_very_looooooooooooooooooooooooooooooooo#1_log" does not exist, skipping
 CONTEXT:  SQL statement "DROP TABLE IF EXISTS "emaj_phil's schema3"."table_with_very_looooooooooooooooooooooooooooooooo#1_log""
-PL/pgSQL function emaj._create_tbl(text,text,text,integer,text,text,bigint,boolean,boolean) line 84 at EXECUTE
+PL/pgSQL function emaj._create_tbl(text,text,text,integer,text,text,bigint,boolean,boolean) line 73 at EXECUTE
 SQL statement "SELECT emaj._create_tbl(v_schema, v_table, v_group, v_priority, v_logDatTsp, v_logIdxTsp,
                              v_timeId, v_groupIsRollbackable, v_groupIsLogging)"
 PL/pgSQL function emaj._add_tbl(text,text,text,integer,text,text,boolean,bigint,text) line 19 at PERFORM
@@ -2014,7 +2014,7 @@ NOTICE:  trigger "emaj_log_trg" for relation "phil's schema3.table_with_very_loo
 CONTEXT:  SQL statement "DROP TRIGGER IF EXISTS emaj_log_trg ON "phil's schema3".table_with_very_looooooooooooooooooooooooooooooooooooooong_name"
 PL/pgSQL function emaj._create_log_trigger(text,text,text,text) line 9 at EXECUTE
 SQL statement "SELECT emaj._create_log_trigger(v_fullTableName, v_logTableName, v_sequenceName, v_logFnctName)"
-PL/pgSQL function emaj._create_tbl(text,text,text,integer,text,text,bigint,boolean,boolean) line 131 at PERFORM
+PL/pgSQL function emaj._create_tbl(text,text,text,integer,text,text,bigint,boolean,boolean) line 120 at PERFORM
 SQL statement "SELECT emaj._create_tbl(v_schema, v_table, v_group, v_priority, v_logDatTsp, v_logIdxTsp,
                              v_timeId, v_groupIsRollbackable, v_groupIsLogging)"
 PL/pgSQL function emaj._add_tbl(text,text,text,integer,text,text,boolean,bigint,text) line 19 at PERFORM
@@ -2641,7 +2641,7 @@ select * from emaj.emaj_rollback_group('myGroup1','Multi-1',false) order by 1,2;
 select emaj.emaj_create_group('myGroup4');
 NOTICE:  table "mytblm_log" does not exist, skipping
 CONTEXT:  SQL statement "DROP TABLE IF EXISTS emaj_myschema4.mytblm_log"
-PL/pgSQL function emaj._create_tbl(text,text,text,integer,text,text,bigint,boolean,boolean) line 84 at EXECUTE
+PL/pgSQL function emaj._create_tbl(text,text,text,integer,text,text,bigint,boolean,boolean) line 73 at EXECUTE
 SQL statement "SELECT emaj._create_tbl(grpdef_schema, grpdef_tblseq, grpdef_group, grpdef_priority, grpdef_log_dat_tsp, grpdef_log_idx_tsp,
                                v_timeId, v_isRollbackable, FALSE)
         FROM (
@@ -2658,7 +2658,7 @@ NOTICE:  trigger "emaj_log_trg" for relation "myschema4.mytblm" does not exist, 
 CONTEXT:  SQL statement "DROP TRIGGER IF EXISTS emaj_log_trg ON myschema4.mytblm"
 PL/pgSQL function emaj._create_log_trigger(text,text,text,text) line 9 at EXECUTE
 SQL statement "SELECT emaj._create_log_trigger(v_fullTableName, v_logTableName, v_sequenceName, v_logFnctName)"
-PL/pgSQL function emaj._create_tbl(text,text,text,integer,text,text,bigint,boolean,boolean) line 131 at PERFORM
+PL/pgSQL function emaj._create_tbl(text,text,text,integer,text,text,bigint,boolean,boolean) line 120 at PERFORM
 SQL statement "SELECT emaj._create_tbl(grpdef_schema, grpdef_tblseq, grpdef_group, grpdef_priority, grpdef_log_dat_tsp, grpdef_log_idx_tsp,
                                v_timeId, v_isRollbackable, FALSE)
         FROM (
@@ -2673,7 +2673,7 @@ SQL statement "SELECT emaj._create_tbl(grpdef_schema, grpdef_tblseq, grpdef_grou
 PL/pgSQL function emaj.emaj_create_group(text,boolean,boolean) line 63 at PERFORM
 NOTICE:  trigger "emaj_trunc_trg" for relation "myschema4.mytblm" does not exist, skipping
 CONTEXT:  SQL statement "DROP TRIGGER IF EXISTS emaj_trunc_trg ON myschema4.mytblm"
-PL/pgSQL function emaj._create_tbl(text,text,text,integer,text,text,bigint,boolean,boolean) line 139 at EXECUTE
+PL/pgSQL function emaj._create_tbl(text,text,text,integer,text,text,bigint,boolean,boolean) line 128 at EXECUTE
 SQL statement "SELECT emaj._create_tbl(grpdef_schema, grpdef_tblseq, grpdef_group, grpdef_priority, grpdef_log_dat_tsp, grpdef_log_idx_tsp,
                                v_timeId, v_isRollbackable, FALSE)
         FROM (
@@ -2701,7 +2701,7 @@ CONTEXT:  SQL statement "SELECT emaj._create_tbl(grpdef_schema, grpdef_tblseq, g
 PL/pgSQL function emaj.emaj_create_group(text,boolean,boolean) line 63 at PERFORM
 NOTICE:  table "mypartp1_log" does not exist, skipping
 CONTEXT:  SQL statement "DROP TABLE IF EXISTS emaj_myschema4.mypartp1_log"
-PL/pgSQL function emaj._create_tbl(text,text,text,integer,text,text,bigint,boolean,boolean) line 84 at EXECUTE
+PL/pgSQL function emaj._create_tbl(text,text,text,integer,text,text,bigint,boolean,boolean) line 73 at EXECUTE
 SQL statement "SELECT emaj._create_tbl(grpdef_schema, grpdef_tblseq, grpdef_group, grpdef_priority, grpdef_log_dat_tsp, grpdef_log_idx_tsp,
                                v_timeId, v_isRollbackable, FALSE)
         FROM (
@@ -2718,7 +2718,7 @@ NOTICE:  trigger "emaj_log_trg" for relation "myschema4.mypartp1" does not exist
 CONTEXT:  SQL statement "DROP TRIGGER IF EXISTS emaj_log_trg ON myschema4.mypartp1"
 PL/pgSQL function emaj._create_log_trigger(text,text,text,text) line 9 at EXECUTE
 SQL statement "SELECT emaj._create_log_trigger(v_fullTableName, v_logTableName, v_sequenceName, v_logFnctName)"
-PL/pgSQL function emaj._create_tbl(text,text,text,integer,text,text,bigint,boolean,boolean) line 131 at PERFORM
+PL/pgSQL function emaj._create_tbl(text,text,text,integer,text,text,bigint,boolean,boolean) line 120 at PERFORM
 SQL statement "SELECT emaj._create_tbl(grpdef_schema, grpdef_tblseq, grpdef_group, grpdef_priority, grpdef_log_dat_tsp, grpdef_log_idx_tsp,
                                v_timeId, v_isRollbackable, FALSE)
         FROM (
@@ -2733,7 +2733,7 @@ SQL statement "SELECT emaj._create_tbl(grpdef_schema, grpdef_tblseq, grpdef_grou
 PL/pgSQL function emaj.emaj_create_group(text,boolean,boolean) line 63 at PERFORM
 NOTICE:  trigger "emaj_trunc_trg" for relation "myschema4.mypartp1" does not exist, skipping
 CONTEXT:  SQL statement "DROP TRIGGER IF EXISTS emaj_trunc_trg ON myschema4.mypartp1"
-PL/pgSQL function emaj._create_tbl(text,text,text,integer,text,text,bigint,boolean,boolean) line 139 at EXECUTE
+PL/pgSQL function emaj._create_tbl(text,text,text,integer,text,text,bigint,boolean,boolean) line 128 at EXECUTE
 SQL statement "SELECT emaj._create_tbl(grpdef_schema, grpdef_tblseq, grpdef_group, grpdef_priority, grpdef_log_dat_tsp, grpdef_log_idx_tsp,
                                v_timeId, v_isRollbackable, FALSE)
         FROM (
@@ -2748,7 +2748,7 @@ SQL statement "SELECT emaj._create_tbl(grpdef_schema, grpdef_tblseq, grpdef_grou
 PL/pgSQL function emaj.emaj_create_group(text,boolean,boolean) line 63 at PERFORM
 NOTICE:  table "mypartp2_log" does not exist, skipping
 CONTEXT:  SQL statement "DROP TABLE IF EXISTS emaj_myschema4.mypartp2_log"
-PL/pgSQL function emaj._create_tbl(text,text,text,integer,text,text,bigint,boolean,boolean) line 84 at EXECUTE
+PL/pgSQL function emaj._create_tbl(text,text,text,integer,text,text,bigint,boolean,boolean) line 73 at EXECUTE
 SQL statement "SELECT emaj._create_tbl(grpdef_schema, grpdef_tblseq, grpdef_group, grpdef_priority, grpdef_log_dat_tsp, grpdef_log_idx_tsp,
                                v_timeId, v_isRollbackable, FALSE)
         FROM (
@@ -2765,7 +2765,7 @@ NOTICE:  trigger "emaj_log_trg" for relation "myschema4.mypartp2" does not exist
 CONTEXT:  SQL statement "DROP TRIGGER IF EXISTS emaj_log_trg ON myschema4.mypartp2"
 PL/pgSQL function emaj._create_log_trigger(text,text,text,text) line 9 at EXECUTE
 SQL statement "SELECT emaj._create_log_trigger(v_fullTableName, v_logTableName, v_sequenceName, v_logFnctName)"
-PL/pgSQL function emaj._create_tbl(text,text,text,integer,text,text,bigint,boolean,boolean) line 131 at PERFORM
+PL/pgSQL function emaj._create_tbl(text,text,text,integer,text,text,bigint,boolean,boolean) line 120 at PERFORM
 SQL statement "SELECT emaj._create_tbl(grpdef_schema, grpdef_tblseq, grpdef_group, grpdef_priority, grpdef_log_dat_tsp, grpdef_log_idx_tsp,
                                v_timeId, v_isRollbackable, FALSE)
         FROM (
@@ -2780,7 +2780,7 @@ SQL statement "SELECT emaj._create_tbl(grpdef_schema, grpdef_tblseq, grpdef_grou
 PL/pgSQL function emaj.emaj_create_group(text,boolean,boolean) line 63 at PERFORM
 NOTICE:  trigger "emaj_trunc_trg" for relation "myschema4.mypartp2" does not exist, skipping
 CONTEXT:  SQL statement "DROP TRIGGER IF EXISTS emaj_trunc_trg ON myschema4.mypartp2"
-PL/pgSQL function emaj._create_tbl(text,text,text,integer,text,text,bigint,boolean,boolean) line 139 at EXECUTE
+PL/pgSQL function emaj._create_tbl(text,text,text,integer,text,text,bigint,boolean,boolean) line 128 at EXECUTE
 SQL statement "SELECT emaj._create_tbl(grpdef_schema, grpdef_tblseq, grpdef_group, grpdef_priority, grpdef_log_dat_tsp, grpdef_log_idx_tsp,
                                v_timeId, v_isRollbackable, FALSE)
         FROM (
@@ -2795,7 +2795,7 @@ SQL statement "SELECT emaj._create_tbl(grpdef_schema, grpdef_tblseq, grpdef_grou
 PL/pgSQL function emaj.emaj_create_group(text,boolean,boolean) line 63 at PERFORM
 NOTICE:  table "mytblc1_log" does not exist, skipping
 CONTEXT:  SQL statement "DROP TABLE IF EXISTS emaj_myschema4.mytblc1_log"
-PL/pgSQL function emaj._create_tbl(text,text,text,integer,text,text,bigint,boolean,boolean) line 84 at EXECUTE
+PL/pgSQL function emaj._create_tbl(text,text,text,integer,text,text,bigint,boolean,boolean) line 73 at EXECUTE
 SQL statement "SELECT emaj._create_tbl(grpdef_schema, grpdef_tblseq, grpdef_group, grpdef_priority, grpdef_log_dat_tsp, grpdef_log_idx_tsp,
                                v_timeId, v_isRollbackable, FALSE)
         FROM (
@@ -2812,7 +2812,7 @@ NOTICE:  trigger "emaj_log_trg" for relation "myschema4.mytblc1" does not exist,
 CONTEXT:  SQL statement "DROP TRIGGER IF EXISTS emaj_log_trg ON myschema4.mytblc1"
 PL/pgSQL function emaj._create_log_trigger(text,text,text,text) line 9 at EXECUTE
 SQL statement "SELECT emaj._create_log_trigger(v_fullTableName, v_logTableName, v_sequenceName, v_logFnctName)"
-PL/pgSQL function emaj._create_tbl(text,text,text,integer,text,text,bigint,boolean,boolean) line 131 at PERFORM
+PL/pgSQL function emaj._create_tbl(text,text,text,integer,text,text,bigint,boolean,boolean) line 120 at PERFORM
 SQL statement "SELECT emaj._create_tbl(grpdef_schema, grpdef_tblseq, grpdef_group, grpdef_priority, grpdef_log_dat_tsp, grpdef_log_idx_tsp,
                                v_timeId, v_isRollbackable, FALSE)
         FROM (
@@ -2827,7 +2827,7 @@ SQL statement "SELECT emaj._create_tbl(grpdef_schema, grpdef_tblseq, grpdef_grou
 PL/pgSQL function emaj.emaj_create_group(text,boolean,boolean) line 63 at PERFORM
 NOTICE:  trigger "emaj_trunc_trg" for relation "myschema4.mytblc1" does not exist, skipping
 CONTEXT:  SQL statement "DROP TRIGGER IF EXISTS emaj_trunc_trg ON myschema4.mytblc1"
-PL/pgSQL function emaj._create_tbl(text,text,text,integer,text,text,bigint,boolean,boolean) line 139 at EXECUTE
+PL/pgSQL function emaj._create_tbl(text,text,text,integer,text,text,bigint,boolean,boolean) line 128 at EXECUTE
 SQL statement "SELECT emaj._create_tbl(grpdef_schema, grpdef_tblseq, grpdef_group, grpdef_priority, grpdef_log_dat_tsp, grpdef_log_idx_tsp,
                                v_timeId, v_isRollbackable, FALSE)
         FROM (
@@ -2842,7 +2842,7 @@ SQL statement "SELECT emaj._create_tbl(grpdef_schema, grpdef_tblseq, grpdef_grou
 PL/pgSQL function emaj.emaj_create_group(text,boolean,boolean) line 63 at PERFORM
 NOTICE:  table "mytblc2_log" does not exist, skipping
 CONTEXT:  SQL statement "DROP TABLE IF EXISTS emaj_myschema4.mytblc2_log"
-PL/pgSQL function emaj._create_tbl(text,text,text,integer,text,text,bigint,boolean,boolean) line 84 at EXECUTE
+PL/pgSQL function emaj._create_tbl(text,text,text,integer,text,text,bigint,boolean,boolean) line 73 at EXECUTE
 SQL statement "SELECT emaj._create_tbl(grpdef_schema, grpdef_tblseq, grpdef_group, grpdef_priority, grpdef_log_dat_tsp, grpdef_log_idx_tsp,
                                v_timeId, v_isRollbackable, FALSE)
         FROM (
@@ -2859,7 +2859,7 @@ NOTICE:  trigger "emaj_log_trg" for relation "myschema4.mytblc2" does not exist,
 CONTEXT:  SQL statement "DROP TRIGGER IF EXISTS emaj_log_trg ON myschema4.mytblc2"
 PL/pgSQL function emaj._create_log_trigger(text,text,text,text) line 9 at EXECUTE
 SQL statement "SELECT emaj._create_log_trigger(v_fullTableName, v_logTableName, v_sequenceName, v_logFnctName)"
-PL/pgSQL function emaj._create_tbl(text,text,text,integer,text,text,bigint,boolean,boolean) line 131 at PERFORM
+PL/pgSQL function emaj._create_tbl(text,text,text,integer,text,text,bigint,boolean,boolean) line 120 at PERFORM
 SQL statement "SELECT emaj._create_tbl(grpdef_schema, grpdef_tblseq, grpdef_group, grpdef_priority, grpdef_log_dat_tsp, grpdef_log_idx_tsp,
                                v_timeId, v_isRollbackable, FALSE)
         FROM (
@@ -2874,7 +2874,7 @@ SQL statement "SELECT emaj._create_tbl(grpdef_schema, grpdef_tblseq, grpdef_grou
 PL/pgSQL function emaj.emaj_create_group(text,boolean,boolean) line 63 at PERFORM
 NOTICE:  trigger "emaj_trunc_trg" for relation "myschema4.mytblc2" does not exist, skipping
 CONTEXT:  SQL statement "DROP TRIGGER IF EXISTS emaj_trunc_trg ON myschema4.mytblc2"
-PL/pgSQL function emaj._create_tbl(text,text,text,integer,text,text,bigint,boolean,boolean) line 139 at EXECUTE
+PL/pgSQL function emaj._create_tbl(text,text,text,integer,text,text,bigint,boolean,boolean) line 128 at EXECUTE
 SQL statement "SELECT emaj._create_tbl(grpdef_schema, grpdef_tblseq, grpdef_group, grpdef_priority, grpdef_log_dat_tsp, grpdef_log_idx_tsp,
                                v_timeId, v_isRollbackable, FALSE)
         FROM (
@@ -2990,7 +2990,7 @@ insert into emaj.emaj_group_def values ('myGroup4','myschema4','mytblp_col3_seq'
 select emaj.emaj_alter_group('myGroup4','Add partition 3');
 NOTICE:  table "mypartp3_log" does not exist, skipping
 CONTEXT:  SQL statement "DROP TABLE IF EXISTS emaj_myschema4.mypartp3_log"
-PL/pgSQL function emaj._create_tbl(text,text,text,integer,text,text,bigint,boolean,boolean) line 84 at EXECUTE
+PL/pgSQL function emaj._create_tbl(text,text,text,integer,text,text,bigint,boolean,boolean) line 73 at EXECUTE
 SQL statement "SELECT emaj._create_tbl(v_schema, v_table, v_group, v_priority, v_logDatTsp, v_logIdxTsp,
                              v_timeId, v_groupIsRollbackable, v_groupIsLogging)"
 PL/pgSQL function emaj._add_tbl(text,text,text,integer,text,text,boolean,bigint,text) line 19 at PERFORM
@@ -3006,7 +3006,7 @@ NOTICE:  trigger "emaj_log_trg" for relation "myschema4.mypartp3" does not exist
 CONTEXT:  SQL statement "DROP TRIGGER IF EXISTS emaj_log_trg ON myschema4.mypartp3"
 PL/pgSQL function emaj._create_log_trigger(text,text,text,text) line 9 at EXECUTE
 SQL statement "SELECT emaj._create_log_trigger(v_fullTableName, v_logTableName, v_sequenceName, v_logFnctName)"
-PL/pgSQL function emaj._create_tbl(text,text,text,integer,text,text,bigint,boolean,boolean) line 131 at PERFORM
+PL/pgSQL function emaj._create_tbl(text,text,text,integer,text,text,bigint,boolean,boolean) line 120 at PERFORM
 SQL statement "SELECT emaj._create_tbl(v_schema, v_table, v_group, v_priority, v_logDatTsp, v_logIdxTsp,
                              v_timeId, v_groupIsRollbackable, v_groupIsLogging)"
 PL/pgSQL function emaj._add_tbl(text,text,text,integer,text,text,boolean,bigint,text) line 19 at PERFORM
@@ -3020,7 +3020,7 @@ PL/pgSQL function emaj._alter_groups(text[],boolean,text) line 58 at PERFORM
 PL/pgSQL function emaj.emaj_alter_group(text,text) line 6 at RETURN
 NOTICE:  trigger "emaj_trunc_trg" for relation "myschema4.mypartp3" does not exist, skipping
 CONTEXT:  SQL statement "DROP TRIGGER IF EXISTS emaj_trunc_trg ON myschema4.mypartp3"
-PL/pgSQL function emaj._create_tbl(text,text,text,integer,text,text,bigint,boolean,boolean) line 139 at EXECUTE
+PL/pgSQL function emaj._create_tbl(text,text,text,integer,text,text,bigint,boolean,boolean) line 128 at EXECUTE
 SQL statement "SELECT emaj._create_tbl(v_schema, v_table, v_group, v_priority, v_logDatTsp, v_logIdxTsp,
                              v_timeId, v_groupIsRollbackable, v_groupIsLogging)"
 PL/pgSQL function emaj._add_tbl(text,text,text,integer,text,text,boolean,bigint,text) line 19 at PERFORM
@@ -3072,12 +3072,14 @@ select stat_group, stat_schema, stat_table, stat_first_mark, stat_last_mark, sta
  myGroup4   | myschema4   | mytblm     | Start           |                    |         0
 (6 rows)
 
-select * from emaj.emaj_relation where rel_schema = 'myschema4' and rel_tblseq like 'mypar%' order by rel_tblseq, rel_time_range;
- rel_schema | rel_tblseq | rel_time_range | rel_group | rel_kind | rel_priority | rel_log_schema | rel_log_table  | rel_log_dat_tsp |   rel_log_index    | rel_log_idx_tsp | rel_log_sequence | rel_log_function  |      rel_sql_columns       | rel_sql_pk_columns | rel_sql_pk_eq_conditions | rel_log_seq_last_value | rel_emaj_verb_attnum 
-------------+------------+----------------+-----------+----------+--------------+----------------+----------------+-----------------+--------------------+-----------------+------------------+-------------------+----------------------------+--------------------+--------------------------+------------------------+----------------------
- myschema4  | mypartp1   | [10099,10111)  | myGroup4  | r        |              | emaj_myschema4 | mypartp1_log_1 |                 | mypartp1_log_idx_1 |                 | mypartp1_log_seq |                   |                            |                    |                          |                      0 |                    4
- myschema4  | mypartp2   | [10099,)       | myGroup4  | r        |              | emaj_myschema4 | mypartp2_log   |                 | mypartp2_log_idx   |                 | mypartp2_log_seq | mypartp2_log_fnct | tbl.col1,tbl.col2,tbl.col3 | col1               | tbl.col1 = keys.col1     |                        |                    4
- myschema4  | mypartp3   | [10110,)       | myGroup4  | r        |              | emaj_myschema4 | mypartp3_log   |                 | mypartp3_log_idx   |                 | mypartp3_log_seq | mypartp3_log_fnct | tbl.col1,tbl.col2,tbl.col3 | col1               | tbl.col1 = keys.col1     |                        |                    4
+select rel_schema, rel_tblseq, rel_time_range, rel_group, rel_kind, rel_log_schema, rel_log_table,
+       rel_emaj_verb_attnum, rel_has_always_ident_col, rel_log_seq_last_value
+  from emaj.emaj_relation where rel_schema = 'myschema4' and rel_tblseq like 'mypar%' order by rel_tblseq, rel_time_range;
+ rel_schema | rel_tblseq | rel_time_range | rel_group | rel_kind | rel_log_schema | rel_log_table  | rel_emaj_verb_attnum | rel_has_always_ident_col | rel_log_seq_last_value 
+------------+------------+----------------+-----------+----------+----------------+----------------+----------------------+--------------------------+------------------------
+ myschema4  | mypartp1   | [10099,10111)  | myGroup4  | r        | emaj_myschema4 | mypartp1_log_1 |                    4 | f                        |                      0
+ myschema4  | mypartp2   | [10099,)       | myGroup4  | r        | emaj_myschema4 | mypartp2_log   |                    4 | f                        |                       
+ myschema4  | mypartp3   | [10110,)       | myGroup4  | r        | emaj_myschema4 | mypartp3_log   |                    4 | f                        |                       
 (3 rows)
 
 select col1, col2, emaj_verb, emaj_tuple, emaj_gid from emaj_myschema4.mypartP3_log order by emaj_gid;
@@ -3155,7 +3157,7 @@ insert into emaj.emaj_group_def values ('phil''s group#3",','phil''s schema3','m
 select emaj.emaj_create_group('phil''s group#3",',false);
 NOTICE:  table "myoidstbl_log" does not exist, skipping
 CONTEXT:  SQL statement "DROP TABLE IF EXISTS emaj_myschema5.myoidstbl_log"
-PL/pgSQL function emaj._create_tbl(text,text,text,integer,text,text,bigint,boolean,boolean) line 84 at EXECUTE
+PL/pgSQL function emaj._create_tbl(text,text,text,integer,text,text,bigint,boolean,boolean) line 73 at EXECUTE
 SQL statement "SELECT emaj._create_tbl(grpdef_schema, grpdef_tblseq, grpdef_group, grpdef_priority, grpdef_log_dat_tsp, grpdef_log_idx_tsp,
                                v_timeId, v_isRollbackable, FALSE)
         FROM (
@@ -3172,7 +3174,7 @@ NOTICE:  trigger "emaj_log_trg" for relation "myschema5.myoidstbl" does not exis
 CONTEXT:  SQL statement "DROP TRIGGER IF EXISTS emaj_log_trg ON myschema5.myoidstbl"
 PL/pgSQL function emaj._create_log_trigger(text,text,text,text) line 9 at EXECUTE
 SQL statement "SELECT emaj._create_log_trigger(v_fullTableName, v_logTableName, v_sequenceName, v_logFnctName)"
-PL/pgSQL function emaj._create_tbl(text,text,text,integer,text,text,bigint,boolean,boolean) line 131 at PERFORM
+PL/pgSQL function emaj._create_tbl(text,text,text,integer,text,text,bigint,boolean,boolean) line 120 at PERFORM
 SQL statement "SELECT emaj._create_tbl(grpdef_schema, grpdef_tblseq, grpdef_group, grpdef_priority, grpdef_log_dat_tsp, grpdef_log_idx_tsp,
                                v_timeId, v_isRollbackable, FALSE)
         FROM (
@@ -3187,7 +3189,7 @@ SQL statement "SELECT emaj._create_tbl(grpdef_schema, grpdef_tblseq, grpdef_grou
 PL/pgSQL function emaj.emaj_create_group(text,boolean,boolean) line 63 at PERFORM
 NOTICE:  trigger "emaj_trunc_trg" for relation "myschema5.myoidstbl" does not exist, skipping
 CONTEXT:  SQL statement "DROP TRIGGER IF EXISTS emaj_trunc_trg ON myschema5.myoidstbl"
-PL/pgSQL function emaj._create_tbl(text,text,text,integer,text,text,bigint,boolean,boolean) line 139 at EXECUTE
+PL/pgSQL function emaj._create_tbl(text,text,text,integer,text,text,bigint,boolean,boolean) line 128 at EXECUTE
 SQL statement "SELECT emaj._create_tbl(grpdef_schema, grpdef_tblseq, grpdef_group, grpdef_priority, grpdef_log_dat_tsp, grpdef_log_idx_tsp,
                                v_timeId, v_isRollbackable, FALSE)
         FROM (
@@ -3202,7 +3204,7 @@ SQL statement "SELECT emaj._create_tbl(grpdef_schema, grpdef_tblseq, grpdef_grou
 PL/pgSQL function emaj.emaj_create_group(text,boolean,boolean) line 63 at PERFORM
 NOTICE:  table "myunloggedtbl_log" does not exist, skipping
 CONTEXT:  SQL statement "DROP TABLE IF EXISTS emaj_myschema5.myunloggedtbl_log"
-PL/pgSQL function emaj._create_tbl(text,text,text,integer,text,text,bigint,boolean,boolean) line 84 at EXECUTE
+PL/pgSQL function emaj._create_tbl(text,text,text,integer,text,text,bigint,boolean,boolean) line 73 at EXECUTE
 SQL statement "SELECT emaj._create_tbl(grpdef_schema, grpdef_tblseq, grpdef_group, grpdef_priority, grpdef_log_dat_tsp, grpdef_log_idx_tsp,
                                v_timeId, v_isRollbackable, FALSE)
         FROM (
@@ -3219,7 +3221,7 @@ NOTICE:  trigger "emaj_log_trg" for relation "myschema5.myunloggedtbl" does not 
 CONTEXT:  SQL statement "DROP TRIGGER IF EXISTS emaj_log_trg ON myschema5.myunloggedtbl"
 PL/pgSQL function emaj._create_log_trigger(text,text,text,text) line 9 at EXECUTE
 SQL statement "SELECT emaj._create_log_trigger(v_fullTableName, v_logTableName, v_sequenceName, v_logFnctName)"
-PL/pgSQL function emaj._create_tbl(text,text,text,integer,text,text,bigint,boolean,boolean) line 131 at PERFORM
+PL/pgSQL function emaj._create_tbl(text,text,text,integer,text,text,bigint,boolean,boolean) line 120 at PERFORM
 SQL statement "SELECT emaj._create_tbl(grpdef_schema, grpdef_tblseq, grpdef_group, grpdef_priority, grpdef_log_dat_tsp, grpdef_log_idx_tsp,
                                v_timeId, v_isRollbackable, FALSE)
         FROM (
@@ -3234,7 +3236,7 @@ SQL statement "SELECT emaj._create_tbl(grpdef_schema, grpdef_tblseq, grpdef_grou
 PL/pgSQL function emaj.emaj_create_group(text,boolean,boolean) line 63 at PERFORM
 NOTICE:  trigger "emaj_trunc_trg" for relation "myschema5.myunloggedtbl" does not exist, skipping
 CONTEXT:  SQL statement "DROP TRIGGER IF EXISTS emaj_trunc_trg ON myschema5.myunloggedtbl"
-PL/pgSQL function emaj._create_tbl(text,text,text,integer,text,text,bigint,boolean,boolean) line 139 at EXECUTE
+PL/pgSQL function emaj._create_tbl(text,text,text,integer,text,text,bigint,boolean,boolean) line 128 at EXECUTE
 SQL statement "SELECT emaj._create_tbl(grpdef_schema, grpdef_tblseq, grpdef_group, grpdef_priority, grpdef_log_dat_tsp, grpdef_log_idx_tsp,
                                v_timeId, v_isRollbackable, FALSE)
         FROM (
@@ -3249,7 +3251,7 @@ SQL statement "SELECT emaj._create_tbl(grpdef_schema, grpdef_tblseq, grpdef_grou
 PL/pgSQL function emaj.emaj_create_group(text,boolean,boolean) line 63 at PERFORM
 NOTICE:  table "myTbl2\_log" does not exist, skipping
 CONTEXT:  SQL statement "DROP TABLE IF EXISTS "emaj_phil's schema3"."myTbl2\_log""
-PL/pgSQL function emaj._create_tbl(text,text,text,integer,text,text,bigint,boolean,boolean) line 84 at EXECUTE
+PL/pgSQL function emaj._create_tbl(text,text,text,integer,text,text,bigint,boolean,boolean) line 73 at EXECUTE
 SQL statement "SELECT emaj._create_tbl(grpdef_schema, grpdef_tblseq, grpdef_group, grpdef_priority, grpdef_log_dat_tsp, grpdef_log_idx_tsp,
                                v_timeId, v_isRollbackable, FALSE)
         FROM (
@@ -3266,7 +3268,7 @@ NOTICE:  trigger "emaj_log_trg" for relation "phil's schema3.myTbl2\" does not e
 CONTEXT:  SQL statement "DROP TRIGGER IF EXISTS emaj_log_trg ON "phil's schema3"."myTbl2\""
 PL/pgSQL function emaj._create_log_trigger(text,text,text,text) line 9 at EXECUTE
 SQL statement "SELECT emaj._create_log_trigger(v_fullTableName, v_logTableName, v_sequenceName, v_logFnctName)"
-PL/pgSQL function emaj._create_tbl(text,text,text,integer,text,text,bigint,boolean,boolean) line 131 at PERFORM
+PL/pgSQL function emaj._create_tbl(text,text,text,integer,text,text,bigint,boolean,boolean) line 120 at PERFORM
 SQL statement "SELECT emaj._create_tbl(grpdef_schema, grpdef_tblseq, grpdef_group, grpdef_priority, grpdef_log_dat_tsp, grpdef_log_idx_tsp,
                                v_timeId, v_isRollbackable, FALSE)
         FROM (
@@ -3281,7 +3283,7 @@ SQL statement "SELECT emaj._create_tbl(grpdef_schema, grpdef_tblseq, grpdef_grou
 PL/pgSQL function emaj.emaj_create_group(text,boolean,boolean) line 63 at PERFORM
 NOTICE:  trigger "emaj_trunc_trg" for relation "phil's schema3.myTbl2\" does not exist, skipping
 CONTEXT:  SQL statement "DROP TRIGGER IF EXISTS emaj_trunc_trg ON "phil's schema3"."myTbl2\""
-PL/pgSQL function emaj._create_tbl(text,text,text,integer,text,text,bigint,boolean,boolean) line 139 at EXECUTE
+PL/pgSQL function emaj._create_tbl(text,text,text,integer,text,text,bigint,boolean,boolean) line 128 at EXECUTE
 SQL statement "SELECT emaj._create_tbl(grpdef_schema, grpdef_tblseq, grpdef_group, grpdef_priority, grpdef_log_dat_tsp, grpdef_log_idx_tsp,
                                v_timeId, v_isRollbackable, FALSE)
         FROM (
@@ -3296,7 +3298,7 @@ SQL statement "SELECT emaj._create_tbl(grpdef_schema, grpdef_tblseq, grpdef_grou
 PL/pgSQL function emaj.emaj_create_group(text,boolean,boolean) line 63 at PERFORM
 NOTICE:  table "mytbl4_log" does not exist, skipping
 CONTEXT:  SQL statement "DROP TABLE IF EXISTS "emaj_phil's schema3".mytbl4_log"
-PL/pgSQL function emaj._create_tbl(text,text,text,integer,text,text,bigint,boolean,boolean) line 84 at EXECUTE
+PL/pgSQL function emaj._create_tbl(text,text,text,integer,text,text,bigint,boolean,boolean) line 73 at EXECUTE
 SQL statement "SELECT emaj._create_tbl(grpdef_schema, grpdef_tblseq, grpdef_group, grpdef_priority, grpdef_log_dat_tsp, grpdef_log_idx_tsp,
                                v_timeId, v_isRollbackable, FALSE)
         FROM (
@@ -3313,7 +3315,7 @@ NOTICE:  trigger "emaj_log_trg" for relation "phil's schema3.mytbl4" does not ex
 CONTEXT:  SQL statement "DROP TRIGGER IF EXISTS emaj_log_trg ON "phil's schema3".mytbl4"
 PL/pgSQL function emaj._create_log_trigger(text,text,text,text) line 9 at EXECUTE
 SQL statement "SELECT emaj._create_log_trigger(v_fullTableName, v_logTableName, v_sequenceName, v_logFnctName)"
-PL/pgSQL function emaj._create_tbl(text,text,text,integer,text,text,bigint,boolean,boolean) line 131 at PERFORM
+PL/pgSQL function emaj._create_tbl(text,text,text,integer,text,text,bigint,boolean,boolean) line 120 at PERFORM
 SQL statement "SELECT emaj._create_tbl(grpdef_schema, grpdef_tblseq, grpdef_group, grpdef_priority, grpdef_log_dat_tsp, grpdef_log_idx_tsp,
                                v_timeId, v_isRollbackable, FALSE)
         FROM (
@@ -3328,7 +3330,7 @@ SQL statement "SELECT emaj._create_tbl(grpdef_schema, grpdef_tblseq, grpdef_grou
 PL/pgSQL function emaj.emaj_create_group(text,boolean,boolean) line 63 at PERFORM
 NOTICE:  trigger "emaj_trunc_trg" for relation "phil's schema3.mytbl4" does not exist, skipping
 CONTEXT:  SQL statement "DROP TRIGGER IF EXISTS emaj_trunc_trg ON "phil's schema3".mytbl4"
-PL/pgSQL function emaj._create_tbl(text,text,text,integer,text,text,bigint,boolean,boolean) line 139 at EXECUTE
+PL/pgSQL function emaj._create_tbl(text,text,text,integer,text,text,bigint,boolean,boolean) line 128 at EXECUTE
 SQL statement "SELECT emaj._create_tbl(grpdef_schema, grpdef_tblseq, grpdef_group, grpdef_priority, grpdef_log_dat_tsp, grpdef_log_idx_tsp,
                                v_timeId, v_isRollbackable, FALSE)
         FROM (
@@ -3343,7 +3345,7 @@ SQL statement "SELECT emaj._create_tbl(grpdef_schema, grpdef_tblseq, grpdef_grou
 PL/pgSQL function emaj.emaj_create_group(text,boolean,boolean) line 63 at PERFORM
 NOTICE:  table "phil's tbl1_log" does not exist, skipping
 CONTEXT:  SQL statement "DROP TABLE IF EXISTS "emaj_phil's schema3"."phil's tbl1_log""
-PL/pgSQL function emaj._create_tbl(text,text,text,integer,text,text,bigint,boolean,boolean) line 84 at EXECUTE
+PL/pgSQL function emaj._create_tbl(text,text,text,integer,text,text,bigint,boolean,boolean) line 73 at EXECUTE
 SQL statement "SELECT emaj._create_tbl(grpdef_schema, grpdef_tblseq, grpdef_group, grpdef_priority, grpdef_log_dat_tsp, grpdef_log_idx_tsp,
                                v_timeId, v_isRollbackable, FALSE)
         FROM (
@@ -3360,7 +3362,7 @@ NOTICE:  trigger "emaj_log_trg" for relation "phil's schema3.phil's tbl1" does n
 CONTEXT:  SQL statement "DROP TRIGGER IF EXISTS emaj_log_trg ON "phil's schema3"."phil's tbl1""
 PL/pgSQL function emaj._create_log_trigger(text,text,text,text) line 9 at EXECUTE
 SQL statement "SELECT emaj._create_log_trigger(v_fullTableName, v_logTableName, v_sequenceName, v_logFnctName)"
-PL/pgSQL function emaj._create_tbl(text,text,text,integer,text,text,bigint,boolean,boolean) line 131 at PERFORM
+PL/pgSQL function emaj._create_tbl(text,text,text,integer,text,text,bigint,boolean,boolean) line 120 at PERFORM
 SQL statement "SELECT emaj._create_tbl(grpdef_schema, grpdef_tblseq, grpdef_group, grpdef_priority, grpdef_log_dat_tsp, grpdef_log_idx_tsp,
                                v_timeId, v_isRollbackable, FALSE)
         FROM (
@@ -3375,7 +3377,7 @@ SQL statement "SELECT emaj._create_tbl(grpdef_schema, grpdef_tblseq, grpdef_grou
 PL/pgSQL function emaj.emaj_create_group(text,boolean,boolean) line 63 at PERFORM
 NOTICE:  trigger "emaj_trunc_trg" for relation "phil's schema3.phil's tbl1" does not exist, skipping
 CONTEXT:  SQL statement "DROP TRIGGER IF EXISTS emaj_trunc_trg ON "phil's schema3"."phil's tbl1""
-PL/pgSQL function emaj._create_tbl(text,text,text,integer,text,text,bigint,boolean,boolean) line 139 at EXECUTE
+PL/pgSQL function emaj._create_tbl(text,text,text,integer,text,text,bigint,boolean,boolean) line 128 at EXECUTE
 SQL statement "SELECT emaj._create_tbl(grpdef_schema, grpdef_tblseq, grpdef_group, grpdef_priority, grpdef_log_dat_tsp, grpdef_log_idx_tsp,
                                v_timeId, v_isRollbackable, FALSE)
         FROM (
@@ -3463,7 +3465,7 @@ insert into emaj.emaj_group_def values ('phil''s group#3",','phil''s schema3','m
 select emaj.emaj_alter_group('phil''s group#3",','re_add_the_table');
 NOTICE:  table "mytbl4_log" does not exist, skipping
 CONTEXT:  SQL statement "DROP TABLE IF EXISTS "emaj_phil's schema3".mytbl4_log"
-PL/pgSQL function emaj._create_tbl(text,text,text,integer,text,text,bigint,boolean,boolean) line 84 at EXECUTE
+PL/pgSQL function emaj._create_tbl(text,text,text,integer,text,text,bigint,boolean,boolean) line 73 at EXECUTE
 SQL statement "SELECT emaj._create_tbl(v_schema, v_table, v_group, v_priority, v_logDatTsp, v_logIdxTsp,
                              v_timeId, v_groupIsRollbackable, v_groupIsLogging)"
 PL/pgSQL function emaj._add_tbl(text,text,text,integer,text,text,boolean,bigint,text) line 19 at PERFORM
@@ -3479,7 +3481,7 @@ NOTICE:  trigger "emaj_log_trg" for relation "phil's schema3.mytbl4" does not ex
 CONTEXT:  SQL statement "DROP TRIGGER IF EXISTS emaj_log_trg ON "phil's schema3".mytbl4"
 PL/pgSQL function emaj._create_log_trigger(text,text,text,text) line 9 at EXECUTE
 SQL statement "SELECT emaj._create_log_trigger(v_fullTableName, v_logTableName, v_sequenceName, v_logFnctName)"
-PL/pgSQL function emaj._create_tbl(text,text,text,integer,text,text,bigint,boolean,boolean) line 131 at PERFORM
+PL/pgSQL function emaj._create_tbl(text,text,text,integer,text,text,bigint,boolean,boolean) line 120 at PERFORM
 SQL statement "SELECT emaj._create_tbl(v_schema, v_table, v_group, v_priority, v_logDatTsp, v_logIdxTsp,
                              v_timeId, v_groupIsRollbackable, v_groupIsLogging)"
 PL/pgSQL function emaj._add_tbl(text,text,text,integer,text,text,boolean,bigint,text) line 19 at PERFORM
@@ -3493,7 +3495,7 @@ PL/pgSQL function emaj._alter_groups(text[],boolean,text) line 58 at PERFORM
 PL/pgSQL function emaj.emaj_alter_group(text,text) line 6 at RETURN
 NOTICE:  trigger "emaj_trunc_trg" for relation "phil's schema3.mytbl4" does not exist, skipping
 CONTEXT:  SQL statement "DROP TRIGGER IF EXISTS emaj_trunc_trg ON "phil's schema3".mytbl4"
-PL/pgSQL function emaj._create_tbl(text,text,text,integer,text,text,bigint,boolean,boolean) line 139 at EXECUTE
+PL/pgSQL function emaj._create_tbl(text,text,text,integer,text,text,bigint,boolean,boolean) line 128 at EXECUTE
 SQL statement "SELECT emaj._create_tbl(v_schema, v_table, v_group, v_priority, v_logDatTsp, v_logIdxTsp,
                              v_timeId, v_groupIsRollbackable, v_groupIsLogging)"
 PL/pgSQL function emaj._add_tbl(text,text,text,integer,text,text,boolean,bigint,text) line 19 at PERFORM
@@ -3511,10 +3513,10 @@ PL/pgSQL function emaj.emaj_alter_group(text,text) line 6 at RETURN
 (1 row)
 
 select * from emaj.emaj_relation where rel_schema = 'phil''s schema3' and rel_tblseq = 'mytbl4' order by rel_time_range;
-   rel_schema   | rel_tblseq | rel_time_range |    rel_group     | rel_kind | rel_priority |   rel_log_schema    | rel_log_table | rel_log_dat_tsp |  rel_log_index   | rel_log_idx_tsp | rel_log_sequence | rel_log_function |                  rel_sql_columns                  | rel_sql_pk_columns | rel_sql_pk_eq_conditions | rel_log_seq_last_value | rel_emaj_verb_attnum 
-----------------+------------+----------------+------------------+----------+--------------+---------------------+---------------+-----------------+------------------+-----------------+------------------+------------------+---------------------------------------------------+--------------------+--------------------------+------------------------+----------------------
- phil's schema3 | mytbl4     | [10118,10120)  | phil's group#3", | r        |              | emaj_phil's schema3 | mytbl4_log_1  |                 | mytbl4_log_idx_1 |                 | mytbl4_log_seq   |                  |                                                   |                    |                          |                      0 |                    6
- phil's schema3 | mytbl4     | [10121,)       | phil's group#3", | r        |              | emaj_phil's schema3 | mytbl4_log    |                 | mytbl4_log_idx   |                 | mytbl4_log_seq   | mytbl4_log_fnct  | tbl.col41,tbl.col42,tbl.col43,tbl.col44,tbl.col45 | col41              | tbl.col41 = keys.col41   |                        |                    6
+   rel_schema   | rel_tblseq | rel_time_range |    rel_group     | rel_kind | rel_priority |   rel_log_schema    | rel_log_table | rel_log_dat_tsp |  rel_log_index   | rel_log_idx_tsp | rel_log_sequence | rel_log_function | rel_emaj_verb_attnum | rel_has_always_ident_col |               rel_sql_rlbk_columns                | rel_sql_rlbk_pk_columns | rel_sql_rlbk_pk_conditions | rel_sql_gen_ins_col |                                                                                        rel_sql_gen_ins_val                                                                                         |                                                                                                              rel_sql_gen_upd_set                                                                                                              | rel_sql_gen_pk_conditions | rel_log_seq_last_value 
+----------------+------------+----------------+------------------+----------+--------------+---------------------+---------------+-----------------+------------------+-----------------+------------------+------------------+----------------------+--------------------------+---------------------------------------------------+-------------------------+----------------------------+---------------------+----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+---------------------------+------------------------
+ phil's schema3 | mytbl4     | [10118,10120)  | phil's group#3", | r        |              | emaj_phil's schema3 | mytbl4_log_1  |                 | mytbl4_log_idx_1 |                 | mytbl4_log_seq   |                  |                    6 | f                        |                                                   |                         |                            |                     | ' || coalesce(o.col41::TEXT,'NULL') || ', ' || quote_nullable(o.col42) || ', ' || coalesce(o.col43::TEXT,'NULL') || ', ' || coalesce(o.col44::TEXT,'NULL') || ', ' || quote_nullable(o.col45) || ' | col41 = ' || coalesce(n.col41 ::TEXT,'NULL') || ', col42 = ' || quote_nullable(n.col42) || ', col43 = ' || coalesce(n.col43 ::TEXT,'NULL') || ', col44 = ' || coalesce(n.col44 ::TEXT,'NULL') || ', col45 = ' || quote_nullable(n.col45) || ' | col41 = ' || o.col41 || ' |                      0
+ phil's schema3 | mytbl4     | [10121,)       | phil's group#3", | r        |              | emaj_phil's schema3 | mytbl4_log    |                 | mytbl4_log_idx   |                 | mytbl4_log_seq   | mytbl4_log_fnct  |                    6 | f                        | tbl.col41,tbl.col42,tbl.col43,tbl.col44,tbl.col45 | col41                   | tbl.col41 = keys.col41     |                     | ' || coalesce(o.col41::TEXT,'NULL') || ', ' || quote_nullable(o.col42) || ', ' || coalesce(o.col43::TEXT,'NULL') || ', ' || coalesce(o.col44::TEXT,'NULL') || ', ' || quote_nullable(o.col45) || ' | col41 = ' || coalesce(n.col41 ::TEXT,'NULL') || ', col42 = ' || quote_nullable(n.col42) || ', col43 = ' || coalesce(n.col43 ::TEXT,'NULL') || ', col44 = ' || coalesce(n.col44 ::TEXT,'NULL') || ', col45 = ' || quote_nullable(n.col45) || ' | col41 = ' || o.col41 || ' |                       
 (2 rows)
 
 -----------------------------
@@ -3561,7 +3563,7 @@ insert into emaj.emaj_group_def values ('phil''s group#3",','phil''s schema3','m
 select emaj.emaj_alter_group('phil''s group#3",','re_add_the_table_2');
 NOTICE:  table "mytbl4_log" does not exist, skipping
 CONTEXT:  SQL statement "DROP TABLE IF EXISTS "emaj_phil's schema3".mytbl4_log"
-PL/pgSQL function emaj._create_tbl(text,text,text,integer,text,text,bigint,boolean,boolean) line 84 at EXECUTE
+PL/pgSQL function emaj._create_tbl(text,text,text,integer,text,text,bigint,boolean,boolean) line 73 at EXECUTE
 SQL statement "SELECT emaj._create_tbl(v_schema, v_table, v_group, v_priority, v_logDatTsp, v_logIdxTsp,
                              v_timeId, v_groupIsRollbackable, v_groupIsLogging)"
 PL/pgSQL function emaj._add_tbl(text,text,text,integer,text,text,boolean,bigint,text) line 19 at PERFORM
@@ -3577,7 +3579,7 @@ NOTICE:  trigger "emaj_log_trg" for relation "phil's schema3.mytbl4" does not ex
 CONTEXT:  SQL statement "DROP TRIGGER IF EXISTS emaj_log_trg ON "phil's schema3".mytbl4"
 PL/pgSQL function emaj._create_log_trigger(text,text,text,text) line 9 at EXECUTE
 SQL statement "SELECT emaj._create_log_trigger(v_fullTableName, v_logTableName, v_sequenceName, v_logFnctName)"
-PL/pgSQL function emaj._create_tbl(text,text,text,integer,text,text,bigint,boolean,boolean) line 131 at PERFORM
+PL/pgSQL function emaj._create_tbl(text,text,text,integer,text,text,bigint,boolean,boolean) line 120 at PERFORM
 SQL statement "SELECT emaj._create_tbl(v_schema, v_table, v_group, v_priority, v_logDatTsp, v_logIdxTsp,
                              v_timeId, v_groupIsRollbackable, v_groupIsLogging)"
 PL/pgSQL function emaj._add_tbl(text,text,text,integer,text,text,boolean,bigint,text) line 19 at PERFORM
@@ -3591,7 +3593,7 @@ PL/pgSQL function emaj._alter_groups(text[],boolean,text) line 58 at PERFORM
 PL/pgSQL function emaj.emaj_alter_group(text,text) line 6 at RETURN
 NOTICE:  trigger "emaj_trunc_trg" for relation "phil's schema3.mytbl4" does not exist, skipping
 CONTEXT:  SQL statement "DROP TRIGGER IF EXISTS emaj_trunc_trg ON "phil's schema3".mytbl4"
-PL/pgSQL function emaj._create_tbl(text,text,text,integer,text,text,bigint,boolean,boolean) line 139 at EXECUTE
+PL/pgSQL function emaj._create_tbl(text,text,text,integer,text,text,bigint,boolean,boolean) line 128 at EXECUTE
 SQL statement "SELECT emaj._create_tbl(v_schema, v_table, v_group, v_priority, v_logDatTsp, v_logIdxTsp,
                              v_timeId, v_groupIsRollbackable, v_groupIsLogging)"
 PL/pgSQL function emaj._add_tbl(text,text,text,integer,text,text,boolean,bigint,text) line 19 at PERFORM
@@ -3608,12 +3610,13 @@ PL/pgSQL function emaj.emaj_alter_group(text,text) line 6 at RETURN
                 7
 (1 row)
 
-select * from emaj.emaj_relation where rel_schema = 'phil''s schema3' and rel_tblseq = 'mytbl4' order by rel_time_range;
-   rel_schema   | rel_tblseq | rel_time_range |    rel_group     | rel_kind | rel_priority |   rel_log_schema    | rel_log_table | rel_log_dat_tsp |  rel_log_index   | rel_log_idx_tsp | rel_log_sequence | rel_log_function |                  rel_sql_columns                  | rel_sql_pk_columns | rel_sql_pk_eq_conditions | rel_log_seq_last_value | rel_emaj_verb_attnum 
-----------------+------------+----------------+------------------+----------+--------------+---------------------+---------------+-----------------+------------------+-----------------+------------------+------------------+---------------------------------------------------+--------------------+--------------------------+------------------------+----------------------
- phil's schema3 | mytbl4     | [10118,10120)  | phil's group#3", | r        |              | emaj_phil's schema3 | mytbl4_log_1  |                 | mytbl4_log_idx_1 |                 | mytbl4_log_seq   |                  |                                                   |                    |                          |                      0 |                    6
- phil's schema3 | mytbl4     | [10121,10122)  | phil's group#3", | r        |              | emaj_phil's schema3 | mytbl4_log_2  |                 | mytbl4_log_idx_2 |                 | mytbl4_log_seq   |                  |                                                   |                    |                          |                      0 |                    6
- phil's schema3 | mytbl4     | [10123,)       | phil's group#3", | r        |              | emaj_phil's schema3 | mytbl4_log    |                 | mytbl4_log_idx   |                 | mytbl4_log_seq   | mytbl4_log_fnct  | tbl.col41,tbl.col42,tbl.col43,tbl.col44,tbl.col45 | col41              | tbl.col41 = keys.col41   |                        |                    6
+select rel_schema, rel_tblseq, rel_time_range, rel_group, rel_kind
+  from emaj.emaj_relation where rel_schema = 'phil''s schema3' and rel_tblseq = 'mytbl4' order by rel_time_range;
+   rel_schema   | rel_tblseq | rel_time_range |    rel_group     | rel_kind 
+----------------+------------+----------------+------------------+----------
+ phil's schema3 | mytbl4     | [10118,10120)  | phil's group#3", | r
+ phil's schema3 | mytbl4     | [10121,10122)  | phil's group#3", | r
+ phil's schema3 | mytbl4     | [10123,)       | phil's group#3", | r
 (3 rows)
 
 -----------------------------
@@ -3672,7 +3675,7 @@ alter sequence "phil's schema3"."phil's seq\1_sav" rename to "phil's seq\1";
 select emaj.emaj_alter_group('phil''s group#3",','revert_last_changes');
 NOTICE:  table "mytbl4_log" does not exist, skipping
 CONTEXT:  SQL statement "DROP TABLE IF EXISTS "emaj_phil's schema3".mytbl4_log"
-PL/pgSQL function emaj._create_tbl(text,text,text,integer,text,text,bigint,boolean,boolean) line 84 at EXECUTE
+PL/pgSQL function emaj._create_tbl(text,text,text,integer,text,text,bigint,boolean,boolean) line 73 at EXECUTE
 SQL statement "SELECT emaj._create_tbl(v_schema, v_table, v_group, v_priority, v_logDatTsp, v_logIdxTsp,
                              v_timeId, v_groupIsRollbackable, v_groupIsLogging)"
 PL/pgSQL function emaj._add_tbl(text,text,text,integer,text,text,boolean,bigint,text) line 19 at PERFORM
@@ -3688,7 +3691,7 @@ NOTICE:  trigger "emaj_log_trg" for relation "phil's schema3.mytbl4" does not ex
 CONTEXT:  SQL statement "DROP TRIGGER IF EXISTS emaj_log_trg ON "phil's schema3".mytbl4"
 PL/pgSQL function emaj._create_log_trigger(text,text,text,text) line 9 at EXECUTE
 SQL statement "SELECT emaj._create_log_trigger(v_fullTableName, v_logTableName, v_sequenceName, v_logFnctName)"
-PL/pgSQL function emaj._create_tbl(text,text,text,integer,text,text,bigint,boolean,boolean) line 131 at PERFORM
+PL/pgSQL function emaj._create_tbl(text,text,text,integer,text,text,bigint,boolean,boolean) line 120 at PERFORM
 SQL statement "SELECT emaj._create_tbl(v_schema, v_table, v_group, v_priority, v_logDatTsp, v_logIdxTsp,
                              v_timeId, v_groupIsRollbackable, v_groupIsLogging)"
 PL/pgSQL function emaj._add_tbl(text,text,text,integer,text,text,boolean,bigint,text) line 19 at PERFORM
@@ -3767,7 +3770,7 @@ begin;
   select emaj.emaj_assign_tables('phil''s schema3','.*','','grp_tmp_3');
 NOTICE:  table "myTbl2\_log" does not exist, skipping
 CONTEXT:  SQL statement "DROP TABLE IF EXISTS "emaj_phil's schema3"."myTbl2\_log""
-PL/pgSQL function emaj._create_tbl(text,text,text,integer,text,text,bigint,boolean,boolean) line 84 at EXECUTE
+PL/pgSQL function emaj._create_tbl(text,text,text,integer,text,text,bigint,boolean,boolean) line 73 at EXECUTE
 SQL statement "SELECT emaj._create_tbl(v_schema, v_table, v_group, v_priority, v_logDatTsp, v_logIdxTsp,
                              v_timeId, v_groupIsRollbackable, v_groupIsLogging)"
 PL/pgSQL function emaj._add_tbl(text,text,text,integer,text,text,boolean,bigint,text) line 19 at PERFORM
@@ -3779,7 +3782,7 @@ NOTICE:  trigger "emaj_log_trg" for relation "phil's schema3.myTbl2\" does not e
 CONTEXT:  SQL statement "DROP TRIGGER IF EXISTS emaj_log_trg ON "phil's schema3"."myTbl2\""
 PL/pgSQL function emaj._create_log_trigger(text,text,text,text) line 9 at EXECUTE
 SQL statement "SELECT emaj._create_log_trigger(v_fullTableName, v_logTableName, v_sequenceName, v_logFnctName)"
-PL/pgSQL function emaj._create_tbl(text,text,text,integer,text,text,bigint,boolean,boolean) line 131 at PERFORM
+PL/pgSQL function emaj._create_tbl(text,text,text,integer,text,text,bigint,boolean,boolean) line 120 at PERFORM
 SQL statement "SELECT emaj._create_tbl(v_schema, v_table, v_group, v_priority, v_logDatTsp, v_logIdxTsp,
                              v_timeId, v_groupIsRollbackable, v_groupIsLogging)"
 PL/pgSQL function emaj._add_tbl(text,text,text,integer,text,text,boolean,bigint,text) line 19 at PERFORM
@@ -3789,7 +3792,7 @@ PL/pgSQL function emaj._assign_tables(text,text[],text,jsonb,text,boolean,boolea
 PL/pgSQL function emaj.emaj_assign_tables(text,text,text,text,jsonb,text) line 23 at RETURN
 NOTICE:  trigger "emaj_trunc_trg" for relation "phil's schema3.myTbl2\" does not exist, skipping
 CONTEXT:  SQL statement "DROP TRIGGER IF EXISTS emaj_trunc_trg ON "phil's schema3"."myTbl2\""
-PL/pgSQL function emaj._create_tbl(text,text,text,integer,text,text,bigint,boolean,boolean) line 139 at EXECUTE
+PL/pgSQL function emaj._create_tbl(text,text,text,integer,text,text,bigint,boolean,boolean) line 128 at EXECUTE
 SQL statement "SELECT emaj._create_tbl(v_schema, v_table, v_group, v_priority, v_logDatTsp, v_logIdxTsp,
                              v_timeId, v_groupIsRollbackable, v_groupIsLogging)"
 PL/pgSQL function emaj._add_tbl(text,text,text,integer,text,text,boolean,bigint,text) line 19 at PERFORM
@@ -3799,7 +3802,7 @@ PL/pgSQL function emaj._assign_tables(text,text[],text,jsonb,text,boolean,boolea
 PL/pgSQL function emaj.emaj_assign_tables(text,text,text,text,jsonb,text) line 23 at RETURN
 NOTICE:  table "mytbl4_log" does not exist, skipping
 CONTEXT:  SQL statement "DROP TABLE IF EXISTS "emaj_phil's schema3".mytbl4_log"
-PL/pgSQL function emaj._create_tbl(text,text,text,integer,text,text,bigint,boolean,boolean) line 84 at EXECUTE
+PL/pgSQL function emaj._create_tbl(text,text,text,integer,text,text,bigint,boolean,boolean) line 73 at EXECUTE
 SQL statement "SELECT emaj._create_tbl(v_schema, v_table, v_group, v_priority, v_logDatTsp, v_logIdxTsp,
                              v_timeId, v_groupIsRollbackable, v_groupIsLogging)"
 PL/pgSQL function emaj._add_tbl(text,text,text,integer,text,text,boolean,bigint,text) line 19 at PERFORM
@@ -3811,7 +3814,7 @@ NOTICE:  trigger "emaj_log_trg" for relation "phil's schema3.mytbl4" does not ex
 CONTEXT:  SQL statement "DROP TRIGGER IF EXISTS emaj_log_trg ON "phil's schema3".mytbl4"
 PL/pgSQL function emaj._create_log_trigger(text,text,text,text) line 9 at EXECUTE
 SQL statement "SELECT emaj._create_log_trigger(v_fullTableName, v_logTableName, v_sequenceName, v_logFnctName)"
-PL/pgSQL function emaj._create_tbl(text,text,text,integer,text,text,bigint,boolean,boolean) line 131 at PERFORM
+PL/pgSQL function emaj._create_tbl(text,text,text,integer,text,text,bigint,boolean,boolean) line 120 at PERFORM
 SQL statement "SELECT emaj._create_tbl(v_schema, v_table, v_group, v_priority, v_logDatTsp, v_logIdxTsp,
                              v_timeId, v_groupIsRollbackable, v_groupIsLogging)"
 PL/pgSQL function emaj._add_tbl(text,text,text,integer,text,text,boolean,bigint,text) line 19 at PERFORM
@@ -3821,7 +3824,7 @@ PL/pgSQL function emaj._assign_tables(text,text[],text,jsonb,text,boolean,boolea
 PL/pgSQL function emaj.emaj_assign_tables(text,text,text,text,jsonb,text) line 23 at RETURN
 NOTICE:  trigger "emaj_trunc_trg" for relation "phil's schema3.mytbl4" does not exist, skipping
 CONTEXT:  SQL statement "DROP TRIGGER IF EXISTS emaj_trunc_trg ON "phil's schema3".mytbl4"
-PL/pgSQL function emaj._create_tbl(text,text,text,integer,text,text,bigint,boolean,boolean) line 139 at EXECUTE
+PL/pgSQL function emaj._create_tbl(text,text,text,integer,text,text,bigint,boolean,boolean) line 128 at EXECUTE
 SQL statement "SELECT emaj._create_tbl(v_schema, v_table, v_group, v_priority, v_logDatTsp, v_logIdxTsp,
                              v_timeId, v_groupIsRollbackable, v_groupIsLogging)"
 PL/pgSQL function emaj._add_tbl(text,text,text,integer,text,text,boolean,bigint,text) line 19 at PERFORM
@@ -3831,7 +3834,7 @@ PL/pgSQL function emaj._assign_tables(text,text[],text,jsonb,text,boolean,boolea
 PL/pgSQL function emaj.emaj_assign_tables(text,text,text,text,jsonb,text) line 23 at RETURN
 NOTICE:  table "phil's tbl1_log" does not exist, skipping
 CONTEXT:  SQL statement "DROP TABLE IF EXISTS "emaj_phil's schema3"."phil's tbl1_log""
-PL/pgSQL function emaj._create_tbl(text,text,text,integer,text,text,bigint,boolean,boolean) line 84 at EXECUTE
+PL/pgSQL function emaj._create_tbl(text,text,text,integer,text,text,bigint,boolean,boolean) line 73 at EXECUTE
 SQL statement "SELECT emaj._create_tbl(v_schema, v_table, v_group, v_priority, v_logDatTsp, v_logIdxTsp,
                              v_timeId, v_groupIsRollbackable, v_groupIsLogging)"
 PL/pgSQL function emaj._add_tbl(text,text,text,integer,text,text,boolean,bigint,text) line 19 at PERFORM
@@ -3843,7 +3846,7 @@ NOTICE:  trigger "emaj_log_trg" for relation "phil's schema3.phil's tbl1" does n
 CONTEXT:  SQL statement "DROP TRIGGER IF EXISTS emaj_log_trg ON "phil's schema3"."phil's tbl1""
 PL/pgSQL function emaj._create_log_trigger(text,text,text,text) line 9 at EXECUTE
 SQL statement "SELECT emaj._create_log_trigger(v_fullTableName, v_logTableName, v_sequenceName, v_logFnctName)"
-PL/pgSQL function emaj._create_tbl(text,text,text,integer,text,text,bigint,boolean,boolean) line 131 at PERFORM
+PL/pgSQL function emaj._create_tbl(text,text,text,integer,text,text,bigint,boolean,boolean) line 120 at PERFORM
 SQL statement "SELECT emaj._create_tbl(v_schema, v_table, v_group, v_priority, v_logDatTsp, v_logIdxTsp,
                              v_timeId, v_groupIsRollbackable, v_groupIsLogging)"
 PL/pgSQL function emaj._add_tbl(text,text,text,integer,text,text,boolean,bigint,text) line 19 at PERFORM
@@ -3853,7 +3856,7 @@ PL/pgSQL function emaj._assign_tables(text,text[],text,jsonb,text,boolean,boolea
 PL/pgSQL function emaj.emaj_assign_tables(text,text,text,text,jsonb,text) line 23 at RETURN
 NOTICE:  trigger "emaj_trunc_trg" for relation "phil's schema3.phil's tbl1" does not exist, skipping
 CONTEXT:  SQL statement "DROP TRIGGER IF EXISTS emaj_trunc_trg ON "phil's schema3"."phil's tbl1""
-PL/pgSQL function emaj._create_tbl(text,text,text,integer,text,text,bigint,boolean,boolean) line 139 at EXECUTE
+PL/pgSQL function emaj._create_tbl(text,text,text,integer,text,text,bigint,boolean,boolean) line 128 at EXECUTE
 SQL statement "SELECT emaj._create_tbl(v_schema, v_table, v_group, v_priority, v_logDatTsp, v_logIdxTsp,
                              v_timeId, v_groupIsRollbackable, v_groupIsLogging)"
 PL/pgSQL function emaj._add_tbl(text,text,text,integer,text,text,boolean,bigint,text) line 19 at PERFORM
@@ -3877,7 +3880,7 @@ WARNING:  _assign_tables: Some tables without PRIMARY KEY (mytblp) are not selec
 CONTEXT:  PL/pgSQL function emaj.emaj_assign_tables(text,text,text,text,jsonb,text) line 23 at RETURN
 NOTICE:  table "mypartp3_log" does not exist, skipping
 CONTEXT:  SQL statement "DROP TABLE IF EXISTS emaj_myschema4.mypartp3_log"
-PL/pgSQL function emaj._create_tbl(text,text,text,integer,text,text,bigint,boolean,boolean) line 84 at EXECUTE
+PL/pgSQL function emaj._create_tbl(text,text,text,integer,text,text,bigint,boolean,boolean) line 73 at EXECUTE
 SQL statement "SELECT emaj._create_tbl(v_schema, v_table, v_group, v_priority, v_logDatTsp, v_logIdxTsp,
                              v_timeId, v_groupIsRollbackable, v_groupIsLogging)"
 PL/pgSQL function emaj._add_tbl(text,text,text,integer,text,text,boolean,bigint,text) line 19 at PERFORM
@@ -3889,7 +3892,7 @@ NOTICE:  trigger "emaj_log_trg" for relation "myschema4.mypartp3" does not exist
 CONTEXT:  SQL statement "DROP TRIGGER IF EXISTS emaj_log_trg ON myschema4.mypartp3"
 PL/pgSQL function emaj._create_log_trigger(text,text,text,text) line 9 at EXECUTE
 SQL statement "SELECT emaj._create_log_trigger(v_fullTableName, v_logTableName, v_sequenceName, v_logFnctName)"
-PL/pgSQL function emaj._create_tbl(text,text,text,integer,text,text,bigint,boolean,boolean) line 131 at PERFORM
+PL/pgSQL function emaj._create_tbl(text,text,text,integer,text,text,bigint,boolean,boolean) line 120 at PERFORM
 SQL statement "SELECT emaj._create_tbl(v_schema, v_table, v_group, v_priority, v_logDatTsp, v_logIdxTsp,
                              v_timeId, v_groupIsRollbackable, v_groupIsLogging)"
 PL/pgSQL function emaj._add_tbl(text,text,text,integer,text,text,boolean,bigint,text) line 19 at PERFORM
@@ -3899,7 +3902,7 @@ PL/pgSQL function emaj._assign_tables(text,text[],text,jsonb,text,boolean,boolea
 PL/pgSQL function emaj.emaj_assign_tables(text,text,text,text,jsonb,text) line 23 at RETURN
 NOTICE:  trigger "emaj_trunc_trg" for relation "myschema4.mypartp3" does not exist, skipping
 CONTEXT:  SQL statement "DROP TRIGGER IF EXISTS emaj_trunc_trg ON myschema4.mypartp3"
-PL/pgSQL function emaj._create_tbl(text,text,text,integer,text,text,bigint,boolean,boolean) line 139 at EXECUTE
+PL/pgSQL function emaj._create_tbl(text,text,text,integer,text,text,bigint,boolean,boolean) line 128 at EXECUTE
 SQL statement "SELECT emaj._create_tbl(v_schema, v_table, v_group, v_priority, v_logDatTsp, v_logIdxTsp,
                              v_timeId, v_groupIsRollbackable, v_groupIsLogging)"
 PL/pgSQL function emaj._add_tbl(text,text,text,integer,text,text,boolean,bigint,text) line 19 at PERFORM
@@ -3909,7 +3912,7 @@ PL/pgSQL function emaj._assign_tables(text,text[],text,jsonb,text,boolean,boolea
 PL/pgSQL function emaj.emaj_assign_tables(text,text,text,text,jsonb,text) line 23 at RETURN
 NOTICE:  table "mypartp2_log" does not exist, skipping
 CONTEXT:  SQL statement "DROP TABLE IF EXISTS emaj_myschema4.mypartp2_log"
-PL/pgSQL function emaj._create_tbl(text,text,text,integer,text,text,bigint,boolean,boolean) line 84 at EXECUTE
+PL/pgSQL function emaj._create_tbl(text,text,text,integer,text,text,bigint,boolean,boolean) line 73 at EXECUTE
 SQL statement "SELECT emaj._create_tbl(v_schema, v_table, v_group, v_priority, v_logDatTsp, v_logIdxTsp,
                              v_timeId, v_groupIsRollbackable, v_groupIsLogging)"
 PL/pgSQL function emaj._add_tbl(text,text,text,integer,text,text,boolean,bigint,text) line 19 at PERFORM
@@ -3921,7 +3924,7 @@ NOTICE:  trigger "emaj_log_trg" for relation "myschema4.mypartp2" does not exist
 CONTEXT:  SQL statement "DROP TRIGGER IF EXISTS emaj_log_trg ON myschema4.mypartp2"
 PL/pgSQL function emaj._create_log_trigger(text,text,text,text) line 9 at EXECUTE
 SQL statement "SELECT emaj._create_log_trigger(v_fullTableName, v_logTableName, v_sequenceName, v_logFnctName)"
-PL/pgSQL function emaj._create_tbl(text,text,text,integer,text,text,bigint,boolean,boolean) line 131 at PERFORM
+PL/pgSQL function emaj._create_tbl(text,text,text,integer,text,text,bigint,boolean,boolean) line 120 at PERFORM
 SQL statement "SELECT emaj._create_tbl(v_schema, v_table, v_group, v_priority, v_logDatTsp, v_logIdxTsp,
                              v_timeId, v_groupIsRollbackable, v_groupIsLogging)"
 PL/pgSQL function emaj._add_tbl(text,text,text,integer,text,text,boolean,bigint,text) line 19 at PERFORM
@@ -3931,7 +3934,7 @@ PL/pgSQL function emaj._assign_tables(text,text[],text,jsonb,text,boolean,boolea
 PL/pgSQL function emaj.emaj_assign_tables(text,text,text,text,jsonb,text) line 23 at RETURN
 NOTICE:  trigger "emaj_trunc_trg" for relation "myschema4.mypartp2" does not exist, skipping
 CONTEXT:  SQL statement "DROP TRIGGER IF EXISTS emaj_trunc_trg ON myschema4.mypartp2"
-PL/pgSQL function emaj._create_tbl(text,text,text,integer,text,text,bigint,boolean,boolean) line 139 at EXECUTE
+PL/pgSQL function emaj._create_tbl(text,text,text,integer,text,text,bigint,boolean,boolean) line 128 at EXECUTE
 SQL statement "SELECT emaj._create_tbl(v_schema, v_table, v_group, v_priority, v_logDatTsp, v_logIdxTsp,
                              v_timeId, v_groupIsRollbackable, v_groupIsLogging)"
 PL/pgSQL function emaj._add_tbl(text,text,text,integer,text,text,boolean,bigint,text) line 19 at PERFORM
@@ -3941,7 +3944,7 @@ PL/pgSQL function emaj._assign_tables(text,text[],text,jsonb,text,boolean,boolea
 PL/pgSQL function emaj.emaj_assign_tables(text,text,text,text,jsonb,text) line 23 at RETURN
 NOTICE:  table "mytblc1_log" does not exist, skipping
 CONTEXT:  SQL statement "DROP TABLE IF EXISTS emaj_myschema4.mytblc1_log"
-PL/pgSQL function emaj._create_tbl(text,text,text,integer,text,text,bigint,boolean,boolean) line 84 at EXECUTE
+PL/pgSQL function emaj._create_tbl(text,text,text,integer,text,text,bigint,boolean,boolean) line 73 at EXECUTE
 SQL statement "SELECT emaj._create_tbl(v_schema, v_table, v_group, v_priority, v_logDatTsp, v_logIdxTsp,
                              v_timeId, v_groupIsRollbackable, v_groupIsLogging)"
 PL/pgSQL function emaj._add_tbl(text,text,text,integer,text,text,boolean,bigint,text) line 19 at PERFORM
@@ -3953,7 +3956,7 @@ NOTICE:  trigger "emaj_log_trg" for relation "myschema4.mytblc1" does not exist,
 CONTEXT:  SQL statement "DROP TRIGGER IF EXISTS emaj_log_trg ON myschema4.mytblc1"
 PL/pgSQL function emaj._create_log_trigger(text,text,text,text) line 9 at EXECUTE
 SQL statement "SELECT emaj._create_log_trigger(v_fullTableName, v_logTableName, v_sequenceName, v_logFnctName)"
-PL/pgSQL function emaj._create_tbl(text,text,text,integer,text,text,bigint,boolean,boolean) line 131 at PERFORM
+PL/pgSQL function emaj._create_tbl(text,text,text,integer,text,text,bigint,boolean,boolean) line 120 at PERFORM
 SQL statement "SELECT emaj._create_tbl(v_schema, v_table, v_group, v_priority, v_logDatTsp, v_logIdxTsp,
                              v_timeId, v_groupIsRollbackable, v_groupIsLogging)"
 PL/pgSQL function emaj._add_tbl(text,text,text,integer,text,text,boolean,bigint,text) line 19 at PERFORM
@@ -3963,7 +3966,7 @@ PL/pgSQL function emaj._assign_tables(text,text[],text,jsonb,text,boolean,boolea
 PL/pgSQL function emaj.emaj_assign_tables(text,text,text,text,jsonb,text) line 23 at RETURN
 NOTICE:  trigger "emaj_trunc_trg" for relation "myschema4.mytblc1" does not exist, skipping
 CONTEXT:  SQL statement "DROP TRIGGER IF EXISTS emaj_trunc_trg ON myschema4.mytblc1"
-PL/pgSQL function emaj._create_tbl(text,text,text,integer,text,text,bigint,boolean,boolean) line 139 at EXECUTE
+PL/pgSQL function emaj._create_tbl(text,text,text,integer,text,text,bigint,boolean,boolean) line 128 at EXECUTE
 SQL statement "SELECT emaj._create_tbl(v_schema, v_table, v_group, v_priority, v_logDatTsp, v_logIdxTsp,
                              v_timeId, v_groupIsRollbackable, v_groupIsLogging)"
 PL/pgSQL function emaj._add_tbl(text,text,text,integer,text,text,boolean,bigint,text) line 19 at PERFORM
@@ -3973,7 +3976,7 @@ PL/pgSQL function emaj._assign_tables(text,text[],text,jsonb,text,boolean,boolea
 PL/pgSQL function emaj.emaj_assign_tables(text,text,text,text,jsonb,text) line 23 at RETURN
 NOTICE:  table "mytblc2_log" does not exist, skipping
 CONTEXT:  SQL statement "DROP TABLE IF EXISTS emaj_myschema4.mytblc2_log"
-PL/pgSQL function emaj._create_tbl(text,text,text,integer,text,text,bigint,boolean,boolean) line 84 at EXECUTE
+PL/pgSQL function emaj._create_tbl(text,text,text,integer,text,text,bigint,boolean,boolean) line 73 at EXECUTE
 SQL statement "SELECT emaj._create_tbl(v_schema, v_table, v_group, v_priority, v_logDatTsp, v_logIdxTsp,
                              v_timeId, v_groupIsRollbackable, v_groupIsLogging)"
 PL/pgSQL function emaj._add_tbl(text,text,text,integer,text,text,boolean,bigint,text) line 19 at PERFORM
@@ -3985,7 +3988,7 @@ NOTICE:  trigger "emaj_log_trg" for relation "myschema4.mytblc2" does not exist,
 CONTEXT:  SQL statement "DROP TRIGGER IF EXISTS emaj_log_trg ON myschema4.mytblc2"
 PL/pgSQL function emaj._create_log_trigger(text,text,text,text) line 9 at EXECUTE
 SQL statement "SELECT emaj._create_log_trigger(v_fullTableName, v_logTableName, v_sequenceName, v_logFnctName)"
-PL/pgSQL function emaj._create_tbl(text,text,text,integer,text,text,bigint,boolean,boolean) line 131 at PERFORM
+PL/pgSQL function emaj._create_tbl(text,text,text,integer,text,text,bigint,boolean,boolean) line 120 at PERFORM
 SQL statement "SELECT emaj._create_tbl(v_schema, v_table, v_group, v_priority, v_logDatTsp, v_logIdxTsp,
                              v_timeId, v_groupIsRollbackable, v_groupIsLogging)"
 PL/pgSQL function emaj._add_tbl(text,text,text,integer,text,text,boolean,bigint,text) line 19 at PERFORM
@@ -3995,7 +3998,7 @@ PL/pgSQL function emaj._assign_tables(text,text[],text,jsonb,text,boolean,boolea
 PL/pgSQL function emaj.emaj_assign_tables(text,text,text,text,jsonb,text) line 23 at RETURN
 NOTICE:  trigger "emaj_trunc_trg" for relation "myschema4.mytblc2" does not exist, skipping
 CONTEXT:  SQL statement "DROP TRIGGER IF EXISTS emaj_trunc_trg ON myschema4.mytblc2"
-PL/pgSQL function emaj._create_tbl(text,text,text,integer,text,text,bigint,boolean,boolean) line 139 at EXECUTE
+PL/pgSQL function emaj._create_tbl(text,text,text,integer,text,text,bigint,boolean,boolean) line 128 at EXECUTE
 SQL statement "SELECT emaj._create_tbl(v_schema, v_table, v_group, v_priority, v_logDatTsp, v_logIdxTsp,
                              v_timeId, v_groupIsRollbackable, v_groupIsLogging)"
 PL/pgSQL function emaj._add_tbl(text,text,text,integer,text,text,boolean,bigint,text) line 19 at PERFORM
@@ -4005,7 +4008,7 @@ PL/pgSQL function emaj._assign_tables(text,text[],text,jsonb,text,boolean,boolea
 PL/pgSQL function emaj.emaj_assign_tables(text,text,text,text,jsonb,text) line 23 at RETURN
 NOTICE:  table "mytblm_log" does not exist, skipping
 CONTEXT:  SQL statement "DROP TABLE IF EXISTS emaj_myschema4.mytblm_log"
-PL/pgSQL function emaj._create_tbl(text,text,text,integer,text,text,bigint,boolean,boolean) line 84 at EXECUTE
+PL/pgSQL function emaj._create_tbl(text,text,text,integer,text,text,bigint,boolean,boolean) line 73 at EXECUTE
 SQL statement "SELECT emaj._create_tbl(v_schema, v_table, v_group, v_priority, v_logDatTsp, v_logIdxTsp,
                              v_timeId, v_groupIsRollbackable, v_groupIsLogging)"
 PL/pgSQL function emaj._add_tbl(text,text,text,integer,text,text,boolean,bigint,text) line 19 at PERFORM
@@ -4017,7 +4020,7 @@ NOTICE:  trigger "emaj_log_trg" for relation "myschema4.mytblm" does not exist, 
 CONTEXT:  SQL statement "DROP TRIGGER IF EXISTS emaj_log_trg ON myschema4.mytblm"
 PL/pgSQL function emaj._create_log_trigger(text,text,text,text) line 9 at EXECUTE
 SQL statement "SELECT emaj._create_log_trigger(v_fullTableName, v_logTableName, v_sequenceName, v_logFnctName)"
-PL/pgSQL function emaj._create_tbl(text,text,text,integer,text,text,bigint,boolean,boolean) line 131 at PERFORM
+PL/pgSQL function emaj._create_tbl(text,text,text,integer,text,text,bigint,boolean,boolean) line 120 at PERFORM
 SQL statement "SELECT emaj._create_tbl(v_schema, v_table, v_group, v_priority, v_logDatTsp, v_logIdxTsp,
                              v_timeId, v_groupIsRollbackable, v_groupIsLogging)"
 PL/pgSQL function emaj._add_tbl(text,text,text,integer,text,text,boolean,bigint,text) line 19 at PERFORM
@@ -4027,7 +4030,7 @@ PL/pgSQL function emaj._assign_tables(text,text[],text,jsonb,text,boolean,boolea
 PL/pgSQL function emaj.emaj_assign_tables(text,text,text,text,jsonb,text) line 23 at RETURN
 NOTICE:  trigger "emaj_trunc_trg" for relation "myschema4.mytblm" does not exist, skipping
 CONTEXT:  SQL statement "DROP TRIGGER IF EXISTS emaj_trunc_trg ON myschema4.mytblm"
-PL/pgSQL function emaj._create_tbl(text,text,text,integer,text,text,bigint,boolean,boolean) line 139 at EXECUTE
+PL/pgSQL function emaj._create_tbl(text,text,text,integer,text,text,bigint,boolean,boolean) line 128 at EXECUTE
 SQL statement "SELECT emaj._create_tbl(v_schema, v_table, v_group, v_priority, v_logDatTsp, v_logIdxTsp,
                              v_timeId, v_groupIsRollbackable, v_groupIsLogging)"
 PL/pgSQL function emaj._add_tbl(text,text,text,integer,text,text,boolean,bigint,text) line 19 at PERFORM
@@ -4481,7 +4484,7 @@ NOTICE:  trigger "emaj_log_trg" for relation "phil's schema3.mytbl4" does not ex
 CONTEXT:  SQL statement "DROP TRIGGER IF EXISTS emaj_log_trg ON "phil's schema3".mytbl4"
 PL/pgSQL function emaj._create_log_trigger(text,text,text,text) line 9 at EXECUTE
 SQL statement "SELECT emaj._create_log_trigger(v_fullTableName, v_logTableName, v_sequenceName, v_logFnctName)"
-PL/pgSQL function emaj._create_tbl(text,text,text,integer,text,text,bigint,boolean,boolean) line 131 at PERFORM
+PL/pgSQL function emaj._create_tbl(text,text,text,integer,text,text,bigint,boolean,boolean) line 120 at PERFORM
 SQL statement "SELECT emaj._create_tbl(v_schema, v_table, v_group, v_priority, v_logDatTsp, v_logIdxTsp,
                              v_timeId, v_groupIsRollbackable, v_groupIsLogging)"
 PL/pgSQL function emaj._add_tbl(text,text,text,integer,text,text,boolean,bigint,text) line 19 at PERFORM
@@ -4491,7 +4494,7 @@ PL/pgSQL function emaj._assign_tables(text,text[],text,jsonb,text,boolean,boolea
 PL/pgSQL function emaj.emaj_assign_table(text,text,text,jsonb,text) line 7 at RETURN
 NOTICE:  trigger "emaj_trunc_trg" for relation "phil's schema3.mytbl4" does not exist, skipping
 CONTEXT:  SQL statement "DROP TRIGGER IF EXISTS emaj_trunc_trg ON "phil's schema3".mytbl4"
-PL/pgSQL function emaj._create_tbl(text,text,text,integer,text,text,bigint,boolean,boolean) line 139 at EXECUTE
+PL/pgSQL function emaj._create_tbl(text,text,text,integer,text,text,bigint,boolean,boolean) line 128 at EXECUTE
 SQL statement "SELECT emaj._create_tbl(v_schema, v_table, v_group, v_priority, v_logDatTsp, v_logIdxTsp,
                              v_timeId, v_groupIsRollbackable, v_groupIsLogging)"
 PL/pgSQL function emaj._add_tbl(text,text,text,integer,text,text,boolean,bigint,text) line 19 at PERFORM
@@ -4618,10 +4621,11 @@ select * from emaj.emaj_rel_hist order by 1,2,3;
  phil's schema3 | table_with_very_looooooooooooooooooooooooooooooooooooooong_name | [10061,10066)   | phil's group#3", | r
 (57 rows)
 
-select * from emaj.emaj_relation where rel_schema in ('phil''s schema3','myschema4');
- rel_schema | rel_tblseq | rel_time_range | rel_group | rel_kind | rel_priority | rel_log_schema | rel_log_table | rel_log_dat_tsp | rel_log_index | rel_log_idx_tsp | rel_log_sequence | rel_log_function | rel_sql_columns | rel_sql_pk_columns | rel_sql_pk_eq_conditions | rel_log_seq_last_value | rel_emaj_verb_attnum 
-------------+------------+----------------+-----------+----------+--------------+----------------+---------------+-----------------+---------------+-----------------+------------------+------------------+-----------------+--------------------+--------------------------+------------------------+----------------------
-(0 rows)
+select count(*) from emaj.emaj_relation where rel_schema in ('phil''s schema3','myschema4');
+ count 
+-------
+     0
+(1 row)
 
 -----------------------------
 -- test end: check, reset history and force sequences id

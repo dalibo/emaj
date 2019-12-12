@@ -70,7 +70,8 @@ select emaj.emaj_assign_sequence('myschema2', 'myseq2', 'myGroup2', 'Alter to ad
 
 select group_name, group_last_alter_time_id, group_has_waiting_changes, group_nb_table, group_nb_sequence
   from emaj.emaj_group where group_name = 'myGroup2';
-select * from emaj.emaj_relation where rel_schema = 'myschema2' and rel_tblseq = 'myseq2' order by rel_time_range;
+select rel_schema, rel_tblseq, rel_time_range, rel_group, rel_kind
+  from emaj.emaj_relation where rel_schema = 'myschema2' and rel_tblseq = 'myseq2' order by rel_time_range;
 select * from emaj.emaj_sequence where sequ_name = 'myseq2';
 
 -- perform some other updates
@@ -143,7 +144,8 @@ select emaj.emaj_alter_group('myGroup2', 'Alter to remove myseq2');
 
 insert into emaj.emaj_group_def values ('myGroup2','myschema2','myseq2');
 select emaj.emaj_alter_group('myGroup2', 'Alter to re-add myseq2');
-select * from emaj.emaj_relation where rel_schema = 'myschema2' and rel_tblseq = 'myseq2' order by rel_time_range;
+select rel_schema, rel_tblseq, rel_time_range, rel_group, rel_kind
+  from emaj.emaj_relation where rel_schema = 'myschema2' and rel_tblseq = 'myseq2' order by rel_time_range;
 
 -- finaly remove mySeq2 from the group
 delete from emaj.emaj_group_def where grpdef_schema = 'myschema2' and grpdef_tblseq = 'myseq2';
@@ -170,11 +172,11 @@ select emaj.emaj_set_mark_group('myGroup1','Before_remove');
 update emaj.emaj_group_def set grpdef_group = 'temporarily_removed' where grpdef_schema = 'myschema1' and grpdef_tblseq = 'myTbl3_col31_seq';
 select group_name, group_last_alter_time_id, group_has_waiting_changes, group_nb_table, group_nb_sequence
   from emaj.emaj_group where group_name = 'myGroup1';
---select emaj.emaj_alter_group('myGroup1','Sequence_removed');
 select emaj.emaj_remove_sequence('myschema1', 'myTbl3_col31_seq', 'Sequence_removed');
 select group_name, group_last_alter_time_id, group_has_waiting_changes, group_nb_table, group_nb_sequence
   from emaj.emaj_group where group_name = 'myGroup1';
-select * from emaj.emaj_relation where rel_schema = 'myschema1' and rel_tblseq = 'myTbl3_col31_seq' order by rel_time_range;
+select rel_schema, rel_tblseq, rel_time_range, rel_group, rel_kind
+  from emaj.emaj_relation where rel_schema = 'myschema1' and rel_tblseq = 'myTbl3_col31_seq' order by rel_time_range;
 select * from emaj.emaj_verify_all();
 
 --testing snap and sql generation
@@ -200,7 +202,8 @@ select emaj.emaj_gen_sql_group('myGroup1', NULL, 'EMAJ_LAST_MARK', '/tmp/emaj_te
 begin;
   -- testing the alter_group mark deletion
   select emaj.emaj_delete_mark_group('myGroup1','Sequence_removed');
-  select * from emaj.emaj_relation where rel_schema = 'myschema1' and rel_tblseq = 'myTbl3_col31_seq' order by rel_time_range;
+  select rel_schema, rel_tblseq, rel_time_range, rel_group, rel_kind
+    from emaj.emaj_relation where rel_schema = 'myschema1' and rel_tblseq = 'myTbl3_col31_seq' order by rel_time_range;
   select mark_group, regexp_replace(mark_name,E'\\d\\d\.\\d\\d\\.\\d\\d\\.\\d\\d\\d\\d','%','g'), mark_time_id,
     mark_is_deleted, mark_is_rlbk_protected, mark_comment, mark_log_rows_before_next, mark_logged_rlbk_target_mark
     from emaj.emaj_mark where mark_group = 'myGroup1' order by mark_time_id desc limit 2;
@@ -218,16 +221,18 @@ begin;
   savepoint svp1;
   -- testing group's reset
     select emaj.emaj_stop_group('myGroup1');
-    select * from emaj.emaj_relation where rel_group = 'myGroup1' and not upper_inf(rel_time_range) order by 1,2,3;
+    select rel_schema, rel_tblseq, rel_time_range, rel_group, rel_kind
+      from emaj.emaj_relation where rel_group = 'myGroup1' and not upper_inf(rel_time_range) order by 1,2,3;
     select emaj.emaj_reset_group('myGroup1');
-    select * from emaj.emaj_relation where rel_group = 'myGroup1' and not upper_inf(rel_time_range) order by 1,2,3;
+    select count(*) from emaj.emaj_relation where rel_group = 'myGroup1' and not upper_inf(rel_time_range) order by 1,2,3;
   rollback to svp1;
   -- testing marks deletion
   select emaj.emaj_set_mark_group('myGroup1','Mk2d');
   select emaj.emaj_delete_before_mark_group('myGroup1','Mk2b');
-  select * from emaj.emaj_relation where rel_group = 'myGroup1' and not upper_inf(rel_time_range) order by 1,2,3;
+  select rel_schema, rel_tblseq, rel_time_range, rel_group, rel_kind
+    from emaj.emaj_relation where rel_group = 'myGroup1' and not upper_inf(rel_time_range) order by 1,2,3;
   select emaj.emaj_delete_before_mark_group('myGroup1','Mk2d');
-  select * from emaj.emaj_relation where rel_group = 'myGroup1' and not upper_inf(rel_time_range) order by 1,2,3;
+  select count(*) from emaj.emaj_relation where rel_group = 'myGroup1' and not upper_inf(rel_time_range) order by 1,2,3;
   -- testing the sequence drop
   drop sequence mySchema1."myTbl3_col31_seq" cascade;
 rollback;
@@ -256,7 +261,8 @@ select emaj.emaj_assign_table('myschema2', 'mytbl7', 'myGroup2', null, 'Alter to
 
 select group_name, group_last_alter_time_id, group_has_waiting_changes, group_nb_table, group_nb_sequence
   from emaj.emaj_group where group_name = 'myGroup2';
-select * from emaj.emaj_relation where rel_schema = 'myschema2' and rel_tblseq = 'mytbl7' order by rel_time_range;
+select rel_schema, rel_tblseq, rel_time_range, rel_group, rel_kind, rel_log_schema, rel_log_table
+  from emaj.emaj_relation where rel_schema = 'myschema2' and rel_tblseq = 'mytbl7' order by rel_time_range;
 -- perform some other updates
 insert into myschema2.mytbl7 values (4),(5);
 
@@ -350,7 +356,8 @@ select emaj.emaj_alter_group('myGroup2', 'Alter to remove mytbl7');
 
 insert into emaj.emaj_group_def values ('myGroup2','myschema2','mytbl7');
 select emaj.emaj_alter_group('myGroup2', 'Alter to re-add mytbl7');
-select * from emaj.emaj_relation where rel_schema = 'myschema2' and rel_tblseq = 'mytbl7' order by rel_time_range;
+select rel_schema, rel_tblseq, rel_time_range, rel_group, rel_kind, rel_log_schema, rel_log_table, rel_log_seq_last_value
+  from emaj.emaj_relation where rel_schema = 'myschema2' and rel_tblseq = 'mytbl7' order by rel_time_range;
 delete from myschema2.myTbl7 where col71 = 9;
 
 -- get statistics, using directly internal functions as done by web clients
@@ -397,7 +404,8 @@ select emaj.emaj_alter_group('myGroup1', 'useless ALTER');
 
 select group_name, group_last_alter_time_id, group_has_waiting_changes, group_nb_table, group_nb_sequence
   from emaj.emaj_group where group_name = 'myGroup1';
-select * from emaj.emaj_relation where rel_schema = 'myschema1' and (rel_tblseq = 'myTbl3' or rel_tblseq = 'mytbl2b') order by 1,2,3;
+select rel_schema, rel_tblseq, rel_time_range, rel_group, rel_kind, rel_log_schema, rel_log_table, rel_log_seq_last_value
+  from emaj.emaj_relation where rel_schema = 'myschema1' and (rel_tblseq = 'myTbl3' or rel_tblseq = 'mytbl2b') order by 1,2,3;
 
 delete from myschema1."myTbl3" where col33 = 1.;
 select count(*) from emaj_myschema1."myTbl3_log_1";
@@ -438,7 +446,7 @@ begin;
   select emaj.emaj_delete_before_mark_group('myGroup1','EMAJ_LAST_MARK');
   select 'should not exist' from pg_class, pg_namespace 
     where relnamespace = pg_namespace.oid and nspname = 'emaj_myschema1' and relname in ('myTbl3_log','mytbl2b_log');
-  select * from emaj.emaj_relation where rel_schema = 'myschema1' and rel_tblseq in ('myTbl3','mytbl2b') order by rel_time_range;
+  select count(*) from emaj.emaj_relation where rel_schema = 'myschema1' and rel_tblseq in ('myTbl3','mytbl2b') order by rel_time_range;
   select * from emaj.emaj_rel_hist where relh_schema = 'myschema1' and relh_tblseq in ('myTbl3','mytbl2b') order by 1,2,3;
 rollback;
 
@@ -449,7 +457,8 @@ begin;
     from emaj.emaj_mark where mark_group = 'myGroup1' order by mark_time_id desc limit 2;
     
   select emaj.emaj_delete_mark_group('myGroup1','2 tables removed from myGroup1');
-  select * from emaj.emaj_relation where rel_schema = 'myschema1' and (rel_tblseq = 'myTbl3' or rel_tblseq = 'mytbl2b') order by rel_tblseq;
+  select rel_schema, rel_tblseq, rel_time_range, rel_group, rel_kind, rel_log_schema, rel_log_table, rel_log_seq_last_value
+    from emaj.emaj_relation where rel_schema = 'myschema1' and (rel_tblseq = 'myTbl3' or rel_tblseq = 'mytbl2b') order by rel_tblseq;
   select * from emaj.emaj_sequence where 
     sequ_name in ('mytbl2b_log_seq', 'myTbl3_log_seq') order by sequ_time_id desc, sequ_name limit 2;
   select * from emaj.emaj_mark where mark_group = 'myGroup1' and mark_name = '2 tables removed from myGroup1';
@@ -459,12 +468,13 @@ begin;
 -- testing marks deletion (other cases)
   select emaj.emaj_set_mark_group('myGroup1','Mk2d');
   select emaj.emaj_delete_before_mark_group('myGroup1','Mk2b');
-  select * from emaj.emaj_relation where rel_group = 'myGroup1' and not upper_inf(rel_time_range) order by 1,2,3;
+  select rel_schema, rel_tblseq, rel_time_range, rel_group, rel_kind, rel_log_schema, rel_log_table, rel_log_seq_last_value
+    from emaj.emaj_relation where rel_group = 'myGroup1' and not upper_inf(rel_time_range) order by 1,2,3;
   select * from emaj.emaj_rel_hist where relh_schema = 'myschema1' and relh_tblseq = 'mytbl2b' order by 1,2,3;
   select 'found' from pg_class, pg_namespace where relnamespace = pg_namespace.oid and relname = 'mytbl2b_log_1' and nspname = 'emaj_myschema1';
   select emaj.emaj_delete_before_mark_group('myGroup1','Mk2d');
   select 'should not exist' from pg_class, pg_namespace where relnamespace = pg_namespace.oid and relname = 'mytbl2b_log' and nspname = 'emaj_myschema1';
-  select * from emaj.emaj_relation where rel_group = 'myGroup1' and not upper_inf(rel_time_range) order by 1,2,3;
+  select count(*) from emaj.emaj_relation where rel_group = 'myGroup1' and not upper_inf(rel_time_range) order by 1,2,3;
   select * from emaj.emaj_rel_hist where relh_schema = 'myschema1' and relh_tblseq = 'mytbl2b' order by 1,2,3;
 rollback;
 
@@ -493,7 +503,8 @@ rollback;
 begin;
   select emaj.emaj_stop_group('myGroup1');
   select emaj.emaj_start_group('myGroup1');
-  select * from emaj.emaj_relation where rel_group = 'myGroup1' and not upper_inf(rel_time_range) order by 1,2,3;
+  select rel_schema, rel_tblseq, rel_time_range, rel_group, rel_kind, rel_log_schema, rel_log_table, rel_log_seq_last_value
+    from emaj.emaj_relation where rel_group = 'myGroup1' and not upper_inf(rel_time_range) order by 1,2,3;
   select 'should not exist' from pg_class, pg_namespace where relnamespace = pg_namespace.oid and relname = 'mytbl2b_log' and nspname = 'emaj_myschema1';
 rollback;
 
@@ -544,13 +555,15 @@ select * from emaj.emaj_rollback_groups('{"myGroup1","myGroup2"}','Mk1',false) o
 begin;
   delete from emaj.emaj_group_def where grpdef_group IN ('myGroup1','myGroup2');
   select emaj.emaj_alter_groups('{"myGroup1","myGroup2"}','empty groups');
-  select * from emaj.emaj_relation where rel_group IN ('myGroup1','myGroup2') order by rel_schema, rel_tblseq, rel_time_range;
+  select rel_schema, rel_tblseq, rel_time_range, rel_group, rel_kind, rel_log_schema, rel_log_table, rel_log_seq_last_value
+    from emaj.emaj_relation where rel_group IN ('myGroup1','myGroup2') order by rel_schema, rel_tblseq, rel_time_range;
 -- add one table and sequence to the empty groups
   insert into emaj.emaj_group_def values ('myGroup1','myschema1','mytbl1',20);
 -- TODO: uncomment the next line once it will be possible to add a sequence to a logging group
 --  insert into emaj.emaj_group_def values ('myGroup2','myschema2','myseq1');
   select emaj.emaj_alter_groups('{"myGroup1","myGroup2"}','add a single table');
-  select * from emaj.emaj_relation
+  select rel_schema, rel_tblseq, rel_time_range, rel_group, rel_kind, rel_log_schema, rel_log_table, rel_log_seq_last_value
+    from emaj.emaj_relation
     where (rel_schema = 'myschema1' and rel_tblseq = 'mytbl1') or (rel_schema = 'myschema2' and rel_tblseq = 'myseq1')
     order by rel_schema, rel_tblseq, rel_time_range;
 rollback;
@@ -668,7 +681,8 @@ commit;
 
 -- checks
 select count(*) from emaj.emaj_mark where mark_group = 'myGroup2' and (mark_name like 'REMOVE%' or mark_name like 'ASSIGN%');
-select * from emaj.emaj_relation where rel_schema = 'myschema2' and rel_tblseq in ('mytbl1','mytbl2','myTbl3','myseq1','myseq2')
+select rel_schema, rel_tblseq, rel_time_range, rel_group, rel_kind, rel_log_schema, rel_log_table, rel_log_seq_last_value
+  from emaj.emaj_relation where rel_schema = 'myschema2' and rel_tblseq in ('mytbl1','mytbl2','myTbl3','myseq1','myseq2')
   order by rel_schema, rel_tblseq, rel_time_range;
 select sequ_schema, sequ_name, sequ_time_id, sequ_last_val, sequ_is_called from emaj.emaj_sequence
   where sequ_schema = 'emaj_myschema2' and sequ_name = 'mytbl1_log_seq' order by sequ_name, sequ_time_id;
@@ -734,8 +748,6 @@ select emaj.emaj_modify_tables('myschema2','.*6','','{"log_index_tablespace":nul
 -----------------------------
 -- test end: check
 -----------------------------
-select * from emaj.emaj_relation where rel_schema = 'myschema4' order by 1,2,3;
-
 select emaj.emaj_stop_group('myGroup1');
 select emaj.emaj_drop_group('myGroup1');
 

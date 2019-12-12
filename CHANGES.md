@@ -17,6 +17,8 @@ E-Maj - Change log
   * When tables or sequences were removed from their group or moved to another
     group, the internal emaj_sequence table was not properly cleanup at group
     reset time or at delete oldest marks time.
+  * When a table structure has changed, the sql script generation on a time
+    range prior the structure change produced incorrect statements.
 
 
 3.2.0 (2019-Oct-15)

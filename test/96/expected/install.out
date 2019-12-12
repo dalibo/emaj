@@ -402,27 +402,32 @@ Index "emaj.emaj_rel_hist_relh_schema_relh_tblseq_relh_time_range_excl"
  relh_time_range | int8range     | relh_time_range
 gist, for table "emaj.emaj_rel_hist"
 
-            Table "emaj.emaj_relation"
-          Column          |   Type    | Modifiers 
---------------------------+-----------+-----------
- rel_schema               | text      | not null
- rel_tblseq               | text      | not null
- rel_time_range           | int8range | not null
- rel_group                | text      | not null
- rel_kind                 | text      | 
- rel_priority             | integer   | 
- rel_log_schema           | text      | 
- rel_log_table            | text      | 
- rel_log_dat_tsp          | text      | 
- rel_log_index            | text      | 
- rel_log_idx_tsp          | text      | 
- rel_log_sequence         | text      | 
- rel_log_function         | text      | 
- rel_sql_columns          | text      | 
- rel_sql_pk_columns       | text      | 
- rel_sql_pk_eq_conditions | text      | 
- rel_log_seq_last_value   | bigint    | 
- rel_emaj_verb_attnum     | smallint  | 
+             Table "emaj.emaj_relation"
+           Column           |   Type    | Modifiers 
+----------------------------+-----------+-----------
+ rel_schema                 | text      | not null
+ rel_tblseq                 | text      | not null
+ rel_time_range             | int8range | not null
+ rel_group                  | text      | not null
+ rel_kind                   | text      | 
+ rel_priority               | integer   | 
+ rel_log_schema             | text      | 
+ rel_log_table              | text      | 
+ rel_log_dat_tsp            | text      | 
+ rel_log_index              | text      | 
+ rel_log_idx_tsp            | text      | 
+ rel_log_sequence           | text      | 
+ rel_log_function           | text      | 
+ rel_emaj_verb_attnum       | smallint  | 
+ rel_has_always_ident_col   | boolean   | 
+ rel_sql_rlbk_columns       | text      | 
+ rel_sql_rlbk_pk_columns    | text      | 
+ rel_sql_rlbk_pk_conditions | text      | 
+ rel_sql_gen_ins_col        | text      | 
+ rel_sql_gen_ins_val        | text      | 
+ rel_sql_gen_upd_set        | text      | 
+ rel_sql_gen_pk_conditions  | text      | 
+ rel_log_seq_last_value     | bigint    | 
 Indexes:
     "emaj_relation_pkey" PRIMARY KEY, btree (rel_schema, rel_tblseq, rel_time_range)
     "emaj_relation_idx1" btree (rel_group, rel_kind)

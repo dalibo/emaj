@@ -548,6 +548,25 @@ select emaj.emaj_gen_sql_group('myGroup2', NULL, 'EMAJ_LAST_MARK', '/tmp/emaj_te
 select emaj.emaj_gen_sql_groups(array['myGroup1','myGroup2'], 'Multi-1', 'Multi-3', '/tmp/emaj_test/sql_scripts/myFile', array[
      'myschema1.mytbl4','myschema2.mytbl4','myschema1.mytbl4','myschema2.mytbl4']);
 \! grep 'only for' /tmp/emaj_test/sql_scripts/myFile
+
+-- generate a sql script after a table structure change but on a time frame prior the change
+begin;
+  select emaj.emaj_set_mark_group('myGroup2','Test sql generation');
+  insert into mySchema2.myTbl2 values(1000,'Text',current_date);
+  update mySchema2.myTbl2 set col22 = 'New text' where col21 = 1000;
+  delete from mySchema2.myTbl2 where col21 = 1000;
+  select emaj.emaj_remove_table('myschema2', 'mytbl2','Before ALTER mytbl2');
+  alter table mySchema2.myTbl2 rename column col21 to id;
+  select emaj.emaj_gen_sql_group('myGroup2', 'Test sql generation', 'Before ALTER mytbl2','/tmp/emaj_test/sql_scripts/altered_tbl.sql');
+rollback;
+-- comment transaction commands and mask the timestamp in the initial comment for the need of the current test
+\! find /tmp/emaj_test/sql_scripts -name '*.sql' -type f -print0 | xargs -0 sed -i -s 's/^BEGIN/--BEGIN/;s/^COMMIT/--COMMIT/'
+\! find /tmp/emaj_test/sql_scripts -name '*.sql' -type f -print0 | xargs -0 sed -i -s 's/at .*$/at [ts]$/'
+-- and execute the generated script
+begin;
+  \i /tmp/emaj_test/sql_scripts/altered_tbl.sql
+rollback;
+
 -----------------------------
 -- emaj_verify_all() test
 -----------------------------

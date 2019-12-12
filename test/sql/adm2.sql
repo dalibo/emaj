@@ -566,7 +566,9 @@ rollback;
 -- look at statistics and log content
 select stat_group, stat_schema, stat_table, stat_first_mark, stat_last_mark, stat_rows
   from emaj.emaj_log_stat_group('myGroup4',NULL, NULL) order by 1,2,3,4;
-select * from emaj.emaj_relation where rel_schema = 'myschema4' and rel_tblseq like 'mypar%' order by rel_tblseq, rel_time_range;
+select rel_schema, rel_tblseq, rel_time_range, rel_group, rel_kind, rel_log_schema, rel_log_table,
+       rel_emaj_verb_attnum, rel_has_always_ident_col, rel_log_seq_last_value
+  from emaj.emaj_relation where rel_schema = 'myschema4' and rel_tblseq like 'mypar%' order by rel_tblseq, rel_time_range;
 select col1, col2, emaj_verb, emaj_tuple, emaj_gid from emaj_myschema4.mypartP3_log order by emaj_gid;
 select col1, col2, emaj_verb, emaj_tuple, emaj_gid from emaj_myschema4.mypartP1_log_1 order by emaj_gid;
 
@@ -643,7 +645,8 @@ select emaj.emaj_alter_group('phil''s group#3",','remove_the_damaged_table_2');
 insert into emaj.emaj_group_def values ('phil''s group#3",','phil''s schema3','mytbl4');
 select emaj.emaj_alter_group('phil''s group#3",','re_add_the_table_2');
 
-select * from emaj.emaj_relation where rel_schema = 'phil''s schema3' and rel_tblseq = 'mytbl4' order by rel_time_range;
+select rel_schema, rel_tblseq, rel_time_range, rel_group, rel_kind
+  from emaj.emaj_relation where rel_schema = 'phil''s schema3' and rel_tblseq = 'mytbl4' order by rel_time_range;
 
 -----------------------------
 -- test a remove operation to fix the case of a deleted application table or sequence
@@ -843,7 +846,7 @@ select emaj.emaj_stop_group('grp_tmp');
 select emaj.emaj_drop_group('grp_tmp');
 
 select * from emaj.emaj_rel_hist order by 1,2,3;
-select * from emaj.emaj_relation where rel_schema in ('phil''s schema3','myschema4');
+select count(*) from emaj.emaj_relation where rel_schema in ('phil''s schema3','myschema4');
 
 -----------------------------
 -- test end: check, reset history and force sequences id
