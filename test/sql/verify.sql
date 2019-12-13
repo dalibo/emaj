@@ -1,0 +1,414 @@
+-- verify.sql : test emaj_verify_all(), event_trigger management functions
+--              as well as recovery from user errors
+--
+
+-- set sequence restart value
+alter sequence emaj.emaj_hist_hist_id_seq restart 5800;
+
+-- disable event triggers 
+-- this is done to allow tests with missing or renamed or altered components
+select emaj.emaj_disable_protection_by_event_triggers();
+
+-----------------------------
+-- emaj_verify_all() test
+-----------------------------
+-- should be OK
+select * from emaj.emaj_verify_all();
+
+--
+-- log schemas content errors tests
+--
+
+-- detection of unattended tables in E-Maj schemas
+begin;
+  create table emaj.dummy1_log (col1 int);
+  create table emaj.dummy2 (col1 int);
+  create table emaj_myschema1.emaj_dummy (col1 int);
+  create table emaj.emaj_dummy (col1 int);               -- this one is not detected
+  select * from emaj.emaj_verify_all() t(msg) where msg like 'Error%';
+rollback;
+-- detection of unattended functions in E-Maj schemas
+begin;
+  create function emaj.dummy1_log_fnct () returns int language sql as $$ select 0 $$;
+  create function emaj_myschema1.dummy2_rlbk_fnct () returns int language sql as $$ select 0 $$;
+  create function emaj_myschema1.dummy3_fnct () returns int language sql as $$ select 0 $$;
+  create function emaj._dummy4_fnct () returns int language sql as $$ select 0 $$;      -- this one is not detected
+  create function emaj.emaj_dummy5_fnct () returns int language sql as $$ select 0 $$;  -- this one is not detected
+  select * from emaj.emaj_verify_all() t(msg) where msg like 'Error%';
+rollback;
+-- detection of unattended sequences in E-Maj schemas
+begin;
+  create table emaj.dummy1_log (col1 serial);
+  create sequence emaj_myschema1.dummy2_seq;
+  create sequence emaj_myschema1.dummy3_log_seq;
+  create sequence emaj.emaj_dummy4_seq;                  -- this one is not detected
+  select * from emaj.emaj_verify_all() t(msg) where msg like 'Error%';
+rollback;
+-- detection of unattended types in E-Maj schemas
+begin;
+  create type emaj.dummy1_type as (col1 int);
+  create type emaj_myschema1.dummy2_type as (col1 int);
+  create type emaj_myschema1.dummy3_type as (col1 int);
+  create type emaj.emaj_dummy4_type as (col1 int);       -- this one is not detected
+  select * from emaj.emaj_verify_all() t(msg) where msg like 'Error%';
+rollback;
+-- detection of unattended views in E-Maj schemas
+begin;
+  create view emaj.dummy1_view as select hist_id, hist_function, hist_event, hist_object from emaj.emaj_hist;
+  create view emaj.dummy2_view as select hist_id, hist_function, hist_event, hist_object from emaj.emaj_hist;
+  select * from emaj.emaj_verify_all() t(msg) where msg like 'Error%';
+rollback;
+-- detection of unattended foreign tables in E-Maj schemas
+begin;
+  create extension file_fdw;
+  create foreign data wrapper file handler file_fdw_handler;
+  create server file_server foreign data wrapper file;
+  create foreign table emaj.dummy1_ftbl (ligne TEXT) server file_server options(filename '/tmp/emaj_test/log_snaps/_INFO');
+  create foreign table emaj.dummy2_ftbl (ligne TEXT) server file_server options(filename '/tmp/emaj_test/log_snaps/_INFO');
+  select * from emaj.emaj_verify_all() t(msg) where msg like 'Error%';
+rollback;
+-- detection of unattended domains in E-Maj schemas
+begin;
+  create domain emaj_myschema1.dummy1_domain as int check (VALUE > 0);
+  create domain emaj_myschema1.dummy2_domain as int check (VALUE > 0);
+  select * from emaj.emaj_verify_all() t(msg) where msg like 'Error%';
+rollback;
+
+--
+-- tests on groups errors
+--
+
+-- detection of too old group
+begin;
+  update emaj.emaj_group set group_pg_version = '8.0.0' where group_name = 'myGroup1';
+  select * from emaj.emaj_verify_all() t(msg) where msg like 'Error%';
+rollback;
+-- detection of a missing application schema
+begin;
+  drop schema myschema1 cascade;
+  select * from emaj.emaj_verify_all() t(msg) where msg like 'Error%';
+  select group_has_waiting_changes from emaj.emaj_group where group_name = 'myGroup1';
+rollback;
+-- detection of a missing application relation
+begin;
+  drop table myschema1.mytbl4;
+  select * from emaj.emaj_verify_all() t(msg) where msg like 'Error%';
+rollback;
+-- detection of relation type change (a table is now a sequence!)
+begin;
+  update emaj.emaj_relation set rel_kind = 'S' where rel_schema = 'myschema1' and rel_tblseq = 'mytbl1' and upper_inf(rel_time_range);
+  select * from emaj.emaj_verify_all() t(msg) where msg like 'Error%';
+rollback;
+-- detection of a missing E-Maj log schema
+begin;
+  drop schema emaj_myschema1 cascade;
+  select * from emaj.emaj_verify_all() t(msg) where msg like 'Error%';
+rollback;
+-- detection of a missing log trigger
+begin;
+  drop trigger emaj_log_trg on myschema1.mytbl1;
+  select * from emaj.emaj_verify_all() t(msg) where msg like 'Error%';
+rollback;
+-- detection of a missing log function (and trigger)
+begin;
+  drop function emaj_myschema1.mytbl1_log_fnct() cascade;
+  select * from emaj.emaj_verify_all() t(msg) where msg like 'Error%';
+rollback;
+-- detection of a missing truncate trigger
+begin;
+  drop trigger emaj_trunc_trg on myschema1.mytbl1;
+  select * from emaj.emaj_verify_all() t(msg) where msg like 'Error%';
+rollback;
+-- detection of a missing log table
+begin;
+  drop table emaj_myschema1.mytbl1_log;
+  select * from emaj.emaj_verify_all() t(msg) where msg like 'Error%';
+rollback;
+-- detection of a missing log sequence
+begin;
+  drop sequence emaj_myschema1.mytbl1_log_seq;
+  select * from emaj.emaj_verify_all() t(msg) where msg like 'Error%';
+rollback;
+-- detection of a change in the application table structure (new column)
+begin;
+  alter table myschema1.mytbl1 add column newcol int;
+  alter table myschema1.mytbl1 add column othernewcol text;
+  alter table myschema1.mytbl2 add column newcol int;
+  select * from emaj.emaj_verify_all() t(msg) where msg like 'Error%';
+rollback;
+-- detection of a change in the application table structure (column type change)
+begin;
+  alter table myschema1.mytbl4 drop column col42;
+  alter table myschema1.mytbl4 alter column col45 type varchar(15);
+  select * from emaj.emaj_verify_all() t(msg) where msg like 'Error%';
+rollback;
+-- detection of missing primary key on tables belonging to a rollbackable group
+begin;
+  alter table myschema1.mytbl4 drop constraint mytbl4_pkey;                   -- table from a rollbackable group
+  alter table "phil's schema3".mytbl4 drop constraint mytbl4_pkey cascade;    -- table from an audit_only group
+  select * from emaj.emaj_verify_all() t(msg) where msg like 'Error%';
+rollback;
+-- detection of tables altered as UNLOGGED
+begin;                                                                        -- needs 9.5+
+  alter table myschema1.mytbl4 set unlogged;                                  -- table from a rollbackable group
+  alter table "phil's schema3"."myTbl2\" set unlogged;                        -- table from an audit_only group
+  select * from emaj.emaj_verify_all() t(msg) where msg like 'Error%';
+rollback;
+-- detection of tables altered as WITH OIDS (PG12+ generates an error)
+begin;
+  alter table myschema1.mytbl4 set with oids;                                 -- table from a rollbackable group
+  alter table "phil's schema3"."myTbl2\" set with oids;                       -- table from an audit_only group
+  select * from emaj.emaj_verify_all() t(msg) where msg like 'Error%';
+rollback;
+-- detection of modified primary key
+begin;
+  alter table myschema1.mytbl4 drop constraint mytbl4_pkey;
+  alter table myschema1.mytbl4 add primary key (col41, col42);
+  select * from emaj.emaj_verify_all() t(msg) where msg like 'Error%';
+rollback;
+-- detection of a corrupted log table (missing some technical columns)
+begin;
+  alter table emaj_myschema1.mytbl1_log drop column emaj_verb, drop column emaj_tuple;
+  alter table emaj_myschema1.mytbl4_log drop column emaj_gid, drop column emaj_user;
+  select * from emaj.emaj_verify_all() t(msg) where msg like 'Error%';
+rollback;
+
+-- almost all in 1
+begin;
+  create table emaj.dummy_log (col1 int);
+  create function emaj.dummy_log_fnct () returns int language sql as $$ select 0 $$;
+  create function emaj.dummy_rlbk_fnct () returns int language sql as $$ select 0 $$;
+  update emaj.emaj_group set group_pg_version = '8.0.0' where group_name = 'myGroup1';
+  drop trigger emaj_log_trg on myschema1.mytbl1;
+  drop function emaj_myschema1.mytbl1_log_fnct() cascade;
+  drop table emaj_myschema1.mytbl1_log;
+  alter table myschema1.mytbl1 add column newcol int;
+  update emaj.emaj_relation set rel_kind = 'S' where rel_schema = 'myschema2' and rel_tblseq = 'mytbl1' and upper_inf(rel_time_range);
+  alter table myschema1.mytbl4 drop constraint mytbl4_pkey;
+  select * from emaj.emaj_verify_all() t(msg) where msg like 'Error%';
+rollback;
+
+--
+-- other tests
+--
+
+-- bad triggers in emaj_ignored_app_trigger
+begin;
+-- simulate a discrepancy between the emaj_ignored_app_trigger table content and the existing triggers
+  insert into emaj.emaj_ignored_app_trigger values ('dummy','mytbl1','mytrg');         -- dropped schema
+  insert into emaj.emaj_ignored_app_trigger values ('myschema1','dummy','mytrg');      -- dropped table
+  insert into emaj.emaj_ignored_app_trigger values ('myschema1','mytbl1','dummy');     -- dropped trigger
+-- check
+  select * from emaj.emaj_verify_all() t(msg) where msg like 'Error%';
+-- and fix
+  select emaj.emaj_ignore_app_trigger('REMOVE','dummy','mytbl1','%');
+  select emaj.emaj_ignore_app_trigger('REMOVE','myschema1','dummy','%');
+  select emaj.emaj_ignore_app_trigger('REMOVE','myschema1','mytbl1','dummy');
+  select * from emaj.emaj_verify_all() t(msg) where msg like 'Error%';
+rollback;
+
+--------------------------------
+-- User errors and recovery tests 
+--------------------------------
+SET client_min_messages TO WARNING;
+
+-- cases when an application table is altered
+begin;
+  alter table myschema2.mytbl4 add column newcol int;
+-- setting a mark or rollbacking fails
+  savepoint sp1;
+    select emaj.emaj_set_mark_group('myGroup2','dummyMark');
+  rollback to savepoint sp1;
+    select emaj.emaj_rollback_group('myGroup2','EMAJ_LAST_MARK');
+  rollback to savepoint sp1;
+-- but it is possible to stop, drop and recreate the group
+  select emaj.emaj_stop_group('myGroup2');
+  savepoint sp2;
+    select emaj.emaj_drop_group('myGroup2');
+    select emaj.emaj_create_group('myGroup2');
+  rollback to savepoint sp2;
+-- or stop and alter the group
+  select emaj.emaj_alter_group('myGroup2');
+rollback;
+
+-- cases when an application table is dropped
+begin;
+  drop table myschema2.mytbl4;
+-- stopping group fails
+  savepoint sp1;
+    select emaj.emaj_stop_group('myGroup2');
+  rollback to savepoint sp1;
+-- the only solution is to change the emaj_group_def table, force the group's stop and recreate or alter the group
+  delete from emaj.emaj_group_def where grpdef_schema = 'myschema2' and grpdef_tblseq = 'mytbl4';
+  select emaj.emaj_force_stop_group('myGroup2');
+  select emaj.emaj_drop_group('myGroup2');
+  select emaj.emaj_create_group('myGroup2');
+-- and everything is clean...
+  select * from emaj.emaj_verify_all();
+rollback;
+
+-- cases when a log trigger on an application table is dropped
+begin;
+  drop trigger emaj_log_trg on myschema2.mytbl4;
+-- stopping group fails
+  savepoint sp1;
+    select emaj.emaj_stop_group('myGroup2');
+  rollback to savepoint sp1;
+-- the only solution is to change the emaj_group_def table, force the group's stop and recreate or alter the group
+  delete from emaj.emaj_group_def where grpdef_schema = 'myschema2' and grpdef_tblseq = 'mytbl4';
+  select emaj.emaj_force_stop_group('myGroup2');
+  select emaj.emaj_alter_group('myGroup2');
+-- and everything is clean...
+  select * from emaj.emaj_verify_all();
+rollback;
+
+-- cases when a truncate trigger on an application table is dropped
+begin;
+  drop trigger emaj_trunc_trg on myschema2.mytbl4;
+-- stopping group fails
+  savepoint sp1;
+    select emaj.emaj_stop_group('myGroup2');
+  rollback to savepoint sp1;
+-- the only solution is to change the emaj_group_def table, force the group's stop and recreate or alter the group
+  delete from emaj.emaj_group_def where grpdef_schema = 'myschema2' and grpdef_tblseq = 'mytbl4';
+  select emaj.emaj_force_stop_group('myGroup2');
+  select emaj.emaj_alter_group('myGroup2');
+-- and everything is clean...
+  select * from emaj.emaj_verify_all();
+rollback;
+
+-- cases when an application sequence is dropped
+begin;
+  drop sequence myschema2.mySeq1;
+-- setting a mark or stopping the group fails
+-- the only solution is to change the emaj_group_def table, force the group's stop and recreate or alter the group
+  delete from emaj.emaj_group_def where grpdef_schema = 'myschema2' and grpdef_tblseq = 'myseq1';
+  select emaj.emaj_force_stop_group('myGroup2');
+  select emaj.emaj_alter_group('myGroup2');
+-- and everything is clean...
+  select * from emaj.emaj_verify_all();
+rollback;
+
+-- cases when an application schema is dropped
+begin;
+  drop schema myschema2 cascade;
+-- stopping group fails
+  savepoint sp1;
+    select emaj.emaj_stop_group('myGroup2');
+  rollback to savepoint sp1;
+-- the only solution is to force the group's stop and drop the group
+  select emaj.emaj_force_stop_group('myGroup2');
+  select emaj.emaj_drop_group('myGroup2');
+-- and everything is clean...
+  select * from emaj.emaj_verify_all();
+rollback;
+
+-- cases when non E-Maj related objects are stored in emaj log schemas
+begin;
+  select emaj.emaj_stop_group('myGroup1');
+  create sequence emaj_myschema1.dummySeq;
+  savepoint sp1;
+-- dropping group fails at log schema drop step
+    select emaj.emaj_drop_group('myGroup1');
+  rollback to savepoint sp1;
+-- use emaj_verify_all() to understand the problem
+  select * from emaj.emaj_verify_all();
+-- use emaj_force_drop_group to solve the problem
+  select emaj.emaj_force_drop_group('myGroup1');
+-- and everything is clean...
+  select * from emaj.emaj_verify_all();
+rollback;
+
+-----------------------------
+-- test event triggers
+-----------------------------
+-- disable twice event trigger (already disabled at the beginning of the createDrop.sql script)
+select emaj.emaj_disable_protection_by_event_triggers();
+
+-- enable twice
+select emaj.emaj_enable_protection_by_event_triggers();
+select emaj.emaj_enable_protection_by_event_triggers();
+
+-- drop or alter various E-Maj components
+--
+-- drop application components (the related tables group is currently in logging state)
+begin;
+  drop table myschema1.mytbl1 cascade;
+rollback;
+begin;
+  drop sequence myschema2.mySeq1;
+rollback;
+begin;
+  drop schema myschema1 cascade;
+rollback;
+
+-- drop emaj components
+begin;
+  drop table emaj_myschema1."myTbl3_log";
+rollback;
+begin;
+  drop sequence emaj_myschema1.mytbl1_log_seq;
+rollback;
+begin;
+  drop function emaj_myschema1."myTbl3_log_fnct"() cascade;
+rollback;
+begin;
+  drop trigger emaj_log_trg on myschema1.mytbl1;
+rollback;
+begin;
+  drop schema emaj cascade;
+rollback;
+begin;
+  drop schema emaj_myschema1 cascade;
+rollback;
+-- dropping the extension in tested by the install sql script because it depends on the way the extension is created
+
+-- change a table structure that leads to a table rewrite
+begin;
+  alter table myschema1.mytbl1 alter column col13 type varchar(10);
+rollback;
+begin;
+  alter table emaj_myschema1.mytbl1_log alter column col13 type varchar(10);
+rollback;
+
+-- rename a table and/or change its schema (not covered by event triggers in pg9.6-)
+begin;
+  alter table myschema1.mytbl1 rename to mytbl1_new_name;
+  alter table myschema1.mytbl1_new_name set schema public;
+  alter schema myschema1 rename to renamed_myschema1;
+rollback;
+-- change a table structure that doesn't lead to a table rewrite (not covered by event triggers in pg9.6-)
+begin;
+  alter table myschema1.mytbl1 add column another_newcol boolean;
+rollback;
+
+-- perform changes on application components with the related tables group stopped (the event triggers should accept)
+begin;
+  select emaj.emaj_stop_groups(array['myGroup1','myGroup2']);
+  alter table myschema1.mytbl1 alter column col13 type varchar(10);
+  drop table myschema1.mytbl1 cascade;
+  drop sequence myschema2.mySeq1;
+rollback;
+
+-- missing event triggers
+begin;
+  drop event trigger emaj_protection_trg;
+  select emaj.emaj_verify_all();
+rollback;
+
+-- a non emaj user should be able to create, alter and drop a table without being disturbed by E-Maj event triggers
+set role emaj_regression_tests_anonym_user;
+
+create schema anonym_user_schema;
+create table anonym_user_schema.anonym_user_table (col1 int);
+alter table anonym_user_schema.anonym_user_table add column col2 text;
+drop table anonym_user_schema.anonym_user_table;
+drop schema anonym_user_schema;
+
+reset role;
+
+-----------------------------
+-- test end: check, reset history and force sequences id
+-----------------------------
+select hist_id, hist_function, hist_event, hist_object, regexp_replace(regexp_replace(hist_wording,E'\\d\\d\.\\d\\d\\.\\d\\d\\.\\d\\d\\d\\d','%','g'),E'\\[.+\\]','(timestamp)','g'), hist_user from 
+  (select * from emaj.emaj_hist where hist_id >= 5800 order by hist_id) as t;

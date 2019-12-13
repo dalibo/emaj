@@ -5,6 +5,7 @@
 -- set sequence restart value
 alter sequence emaj.emaj_hist_hist_id_seq restart 2000;
 alter sequence emaj.emaj_time_stamp_time_id_seq restart 2000;
+alter sequence emaj.emaj_global_seq restart 20000;
 select emaj.emaj_start_group('myGroup1','Mark1');
  emaj_start_group 
 ------------------
@@ -226,22 +227,22 @@ select mark_group, regexp_replace(mark_name,E'\\d\\d\.\\d\\d\\.\\d\\d\\.\\d\\d\\
 select time_id, time_last_emaj_gid, time_event from emaj.emaj_time_stamp where time_id >= 2000 order by time_id;
  time_id | time_last_emaj_gid | time_event 
 ---------+--------------------+------------
-    2000 |                  2 | M
-    2001 |                  2 | M
-    2002 |                  2 | M
-    2003 |                  2 | M
-    2004 |                  2 | M
-    2005 |                  2 | M
-    2006 |                  2 | M
-    2007 |                  2 | M
-    2008 |                  2 | M
-    2009 |                  2 | M
-    2010 |                  2 | M
-    2011 |                  2 | M
-    2012 |                  2 | M
-    2013 |                  2 | M
-    2014 |                  2 | M
-    2015 |                  2 | M
+    2000 |              19999 | M
+    2001 |              19999 | M
+    2002 |              19999 | M
+    2003 |              19999 | M
+    2004 |              19999 | M
+    2005 |              19999 | M
+    2006 |              19999 | M
+    2007 |              19999 | M
+    2008 |              19999 | M
+    2009 |              19999 | M
+    2010 |              19999 | M
+    2011 |              19999 | M
+    2012 |              19999 | M
+    2013 |              19999 | M
+    2014 |              19999 | M
+    2015 |              19999 | M
 (16 rows)
 
 select sequ_schema, sequ_name, sequ_time_id, sequ_last_val, sequ_is_called from emaj.emaj_sequence order by sequ_time_id, sequ_schema, sequ_name;
@@ -1175,27 +1176,27 @@ select sequ_schema, sequ_name, sequ_time_id, sequ_last_val, sequ_is_called from 
 select time_id, time_last_emaj_gid, time_event from emaj.emaj_time_stamp where time_id >= 2000 order by time_id;
  time_id | time_last_emaj_gid | time_event 
 ---------+--------------------+------------
-    2000 |                  2 | M
-    2001 |                  2 | M
-    2002 |                  2 | M
-    2003 |                  2 | M
-    2004 |                  2 | M
-    2005 |                  2 | M
-    2006 |                  2 | M
-    2007 |                  2 | M
-    2008 |                  2 | M
-    2009 |                  2 | M
-    2010 |                  2 | M
-    2011 |                  2 | M
-    2012 |                  2 | M
-    2013 |                  2 | M
-    2014 |                  2 | M
-    2015 |                  2 | M
-    2016 |                  2 | M
-    2017 |                  2 | M
-    2018 |                  2 | M
-    2019 |                  2 | M
-    2020 |                  2 | M
+    2000 |              19999 | M
+    2001 |              19999 | M
+    2002 |              19999 | M
+    2003 |              19999 | M
+    2004 |              19999 | M
+    2005 |              19999 | M
+    2006 |              19999 | M
+    2007 |              19999 | M
+    2008 |              19999 | M
+    2009 |              19999 | M
+    2010 |              19999 | M
+    2011 |              19999 | M
+    2012 |              19999 | M
+    2013 |              19999 | M
+    2014 |              19999 | M
+    2015 |              19999 | M
+    2016 |              19999 | M
+    2017 |              19999 | M
+    2018 |              19999 | M
+    2019 |              19999 | M
+    2020 |              19999 | M
 (21 rows)
 
 select hist_id, hist_function, hist_event, regexp_replace(hist_object,E'\\d\\d\.\\d\\d\\.\\d\\d\\.\\d\\d\\d\\d','%','g'), regexp_replace(regexp_replace(hist_wording,E'\\d\\d\.\\d\\d\\.\\d\\d\\.\\d\\d\\d\\d','%','g'),E'\\[.+\\]','(timestamp)','g'), hist_user from 
@@ -1305,7 +1306,7 @@ select hist_id, hist_function, hist_event, regexp_replace(hist_object,E'\\d\\d\.
     2150 | LOCK_GROUP               | END        | phil's group#3",  | 2 tables locked, 0 deadlock(s)                  | postgres
     2151 | SET_MARK_GROUP           | END        | phil's group#3",  | Mark4                                           | postgres
     2152 | DELETE_BEFORE_MARK_GROUP | BEGIN      | phil's group#3",  | Mark4                                           | postgres
-    2153 | PURGE_HISTORY            |            |                   | 209 emaj_hist rows deleted                      | postgres
+    2153 | PURGE_HISTORY            |            |                   | 210 emaj_hist rows deleted                      | postgres
     2154 | DELETE_BEFORE_MARK_GROUP | END        | phil's group#3",  | 1 marks deleted ; Mark4 is now the initial mark | postgres
     2155 | PROTECT_MARK_GROUP       |            | myGroup1          | Mark SM3 ; status 1                             | postgres
     2156 | PROTECT_MARK_GROUP       |            | emptyGroup        | Mark EGM4 ; status 1                            | postgres

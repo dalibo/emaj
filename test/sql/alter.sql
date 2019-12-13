@@ -2,10 +2,12 @@
 --                  emaj_move_table(), emaj_move_tables(), emaj_move_sequence(), emaj_move_sequences()
 --                  emaj_modify_table() and emaj_modify_tables() functions
 --
+
 -- set sequence restart value
 alter sequence emaj.emaj_hist_hist_id_seq restart 6000;
 alter sequence emaj.emaj_time_stamp_time_id_seq restart 6000;
 alter sequence emaj.emaj_rlbk_rlbk_id_seq restart 6000;
+alter sequence emaj.emaj_global_seq restart 60000;
 
 -----------------------------
 -- stop, reset and drop groups

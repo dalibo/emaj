@@ -7,11 +7,15 @@
 -- set sequence restart value
 alter sequence emaj.emaj_hist_hist_id_seq restart 3000;
 alter sequence emaj.emaj_time_stamp_time_id_seq restart 3000;
+alter sequence emaj.emaj_global_seq restart 30000;
 
 -- set the triggers state
 select emaj.emaj_ignore_app_trigger('REMOVE','myschema1','mytbl2','mytbl2%');
 ALTER TABLE mySchema1.myTbl2 ENABLE TRIGGER myTbl2trg2;
 select emaj.emaj_ignore_app_trigger('ADD','myschema1','mytbl2','mytbl2trg2');
+
+-- disable event triggers to test cases with missing components
+select emaj.emaj_disable_protection_by_event_triggers();
 
 -----------------------------
 -- rollback nothing tests
@@ -593,6 +597,7 @@ select rlbt_step, rlbt_schema, rlbt_table, rlbt_object, rlbt_rlbk_id, rlbt_quant
 -----------------------------
 -- test end: reset history and force sequences id
 -----------------------------
+select emaj.emaj_enable_protection_by_event_triggers();
 select time_id, time_last_emaj_gid, time_event from emaj.emaj_time_stamp where time_id >= 3000 order by time_id;
 select hist_id, hist_function, hist_event, hist_object, regexp_replace(regexp_replace(hist_wording,E'\\d\\d\.\\d\\d\\.\\d\\d\\.\\d\\d\\d\\d','%','g'),E'\\[.+\\]','(timestamp)','g'), hist_user from 
   (select * from emaj.emaj_hist where hist_id >= 3000 order by hist_id) as t;

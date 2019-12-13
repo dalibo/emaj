@@ -6,6 +6,8 @@
 -- set sequence restart value
 alter sequence emaj.emaj_hist_hist_id_seq restart 2000;
 alter sequence emaj.emaj_time_stamp_time_id_seq restart 2000;
+alter sequence emaj.emaj_global_seq restart 20000;
+
 select emaj.emaj_start_group('myGroup1','Mark1');
 select emaj.emaj_start_group('myGroup2','Mark2');
 select emaj.emaj_start_group('emptyGroup','MarkInit');

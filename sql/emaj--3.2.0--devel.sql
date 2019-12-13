@@ -1097,18 +1097,8 @@ $_move_seq$
     UPDATE emaj.emaj_relation
       SET rel_time_range = int8range(lower(rel_time_range),v_timeId,'[)')
       WHERE rel_schema = v_schema AND rel_tblseq = v_sequence AND upper_inf(rel_time_range);
-    INSERT INTO emaj.emaj_relation (rel_schema, rel_tblseq, rel_time_range, rel_group, rel_kind, rel_priority, rel_log_schema,
-                                    rel_log_table, rel_log_dat_tsp, rel_log_index, rel_log_idx_tsp, rel_log_sequence, rel_log_function,
-                                    rel_emaj_verb_attnum, rel_has_always_ident_col,
-                                    rel_sql_rlbk_columns, rel_sql_rlbk_pk_columns, rel_sql_rlbk_pk_conditions,
-                                    rel_sql_gen_ins_col, rel_sql_gen_ins_val, rel_sql_gen_upd_set, rel_sql_gen_pk_conditions,
-                                    rel_log_seq_last_value)
-      SELECT rel_schema, rel_tblseq, int8range(v_timeId, NULL, '[)'), v_newGroup, rel_kind, rel_priority, rel_log_schema,
-             rel_log_table, rel_log_dat_tsp, rel_log_index, rel_log_idx_tsp, rel_log_sequence, rel_log_function,
-             rel_emaj_verb_attnum, rel_has_always_ident_col,
-             rel_sql_rlbk_columns, rel_sql_rlbk_pk_columns, rel_sql_rlbk_pk_conditions,
-             rel_sql_gen_ins_col, rel_sql_gen_ins_val, rel_sql_gen_upd_set, rel_sql_gen_pk_conditions,
-             rel_log_seq_last_value
+    INSERT INTO emaj.emaj_relation (rel_schema, rel_tblseq, rel_time_range, rel_group, rel_kind)
+      SELECT rel_schema, rel_tblseq, int8range(v_timeId, NULL, '[)'), v_newGroup, rel_kind
         FROM emaj.emaj_relation
         WHERE rel_schema = v_schema AND rel_tblseq = v_sequence AND upper(rel_time_range) = v_timeId;
 -- insert an entry into the emaj_hist table

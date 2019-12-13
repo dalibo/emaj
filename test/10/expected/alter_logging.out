@@ -936,13 +936,13 @@ begin;
     from emaj._log_stat_groups('{"myGroup2"}',false,'ADD_TBL test',NULL);
  stat_group | stat_schema | stat_table | stat_first_mark | stat_first_mark_gid | stat_last_mark | stat_last_mark_gid | stat_rows 
 ------------+-------------+------------+-----------------+---------------------+----------------+--------------------+-----------
- myGroup2   | myschema2   | myTbl3     | ADD_TBL test    |               11875 |                |                    |         0
- myGroup2   | myschema2   | mytbl1     | ADD_TBL test    |               11875 |                |                    |         0
- myGroup2   | myschema2   | mytbl2     | ADD_TBL test    |               11875 |                |                    |         0
- myGroup2   | myschema2   | mytbl4     | ADD_TBL test    |               11875 |                |                    |         0
- myGroup2   | myschema2   | mytbl5     | ADD_TBL test    |               11875 |                |                    |         0
- myGroup2   | myschema2   | mytbl6     | ADD_TBL test    |               11875 |                |                    |         0
- myGroup2   | myschema2   | mytbl7     | [deleted mark]  |               11875 |                |                    |         0
+ myGroup2   | myschema2   | myTbl3     | ADD_TBL test    |               60001 |                |                    |         0
+ myGroup2   | myschema2   | mytbl1     | ADD_TBL test    |               60001 |                |                    |         0
+ myGroup2   | myschema2   | mytbl2     | ADD_TBL test    |               60001 |                |                    |         0
+ myGroup2   | myschema2   | mytbl4     | ADD_TBL test    |               60001 |                |                    |         0
+ myGroup2   | myschema2   | mytbl5     | ADD_TBL test    |               60001 |                |                    |         0
+ myGroup2   | myschema2   | mytbl6     | ADD_TBL test    |               60001 |                |                    |         0
+ myGroup2   | myschema2   | mytbl7     | [deleted mark]  |               60001 |                |                    |         0
 (7 rows)
 
 rollback;
@@ -1076,14 +1076,14 @@ select stat_group, stat_schema, stat_table, stat_log_schema, stat_log_table,
   from emaj._log_stat_groups('{"myGroup2"}',false,'ADD_TBL test',NULL);
  stat_group | stat_schema | stat_table | stat_log_schema | stat_log_table |    stat_first_mark     | stat_first_mark_gid |     stat_last_mark     | stat_last_mark_gid | stat_rows 
 ------------+-------------+------------+-----------------+----------------+------------------------+---------------------+------------------------+--------------------+-----------
- myGroup2   | myschema2   | myTbl3     | emaj_myschema2  | myTbl3_log     | ADD_TBL test           |               11875 |                        |                    |         0
- myGroup2   | myschema2   | mytbl1     | emaj_myschema2  | mytbl1_log     | ADD_TBL test           |               11875 |                        |                    |         0
- myGroup2   | myschema2   | mytbl2     | emaj_myschema2  | mytbl2_log     | ADD_TBL test           |               11875 |                        |                    |         0
- myGroup2   | myschema2   | mytbl4     | emaj_myschema2  | mytbl4_log     | ADD_TBL test           |               11875 |                        |                    |         0
- myGroup2   | myschema2   | mytbl5     | emaj_myschema2  | mytbl5_log     | ADD_TBL test           |               11875 |                        |                    |         0
- myGroup2   | myschema2   | mytbl6     | emaj_myschema2  | mytbl6_log     | ADD_TBL test           |               11875 |                        |                    |         0
- myGroup2   | myschema2   | mytbl7     | emaj_myschema2  | mytbl7_log_1   | [deleted mark]         |               11875 | Alter to remove mytbl7 |              11885 |         3
- myGroup2   | myschema2   | mytbl7     | emaj_myschema2  | mytbl7_log     | Alter to re-add mytbl7 |               11885 |                        |                    |         1
+ myGroup2   | myschema2   | myTbl3     | emaj_myschema2  | myTbl3_log     | ADD_TBL test           |               60001 |                        |                    |         0
+ myGroup2   | myschema2   | mytbl1     | emaj_myschema2  | mytbl1_log     | ADD_TBL test           |               60001 |                        |                    |         0
+ myGroup2   | myschema2   | mytbl2     | emaj_myschema2  | mytbl2_log     | ADD_TBL test           |               60001 |                        |                    |         0
+ myGroup2   | myschema2   | mytbl4     | emaj_myschema2  | mytbl4_log     | ADD_TBL test           |               60001 |                        |                    |         0
+ myGroup2   | myschema2   | mytbl5     | emaj_myschema2  | mytbl5_log     | ADD_TBL test           |               60001 |                        |                    |         0
+ myGroup2   | myschema2   | mytbl6     | emaj_myschema2  | mytbl6_log     | ADD_TBL test           |               60001 |                        |                    |         0
+ myGroup2   | myschema2   | mytbl7     | emaj_myschema2  | mytbl7_log_1   | [deleted mark]         |               60001 | Alter to remove mytbl7 |              60011 |         3
+ myGroup2   | myschema2   | mytbl7     | emaj_myschema2  | mytbl7_log     | Alter to re-add mytbl7 |               60011 |                        |                    |         1
 (8 rows)
 
 select stat_group, stat_schema, stat_table, stat_log_schema, stat_log_table,
@@ -1091,8 +1091,8 @@ select stat_group, stat_schema, stat_table, stat_log_schema, stat_log_table,
   from emaj._detailed_log_stat_groups('{"myGroup2"}',false,'ADD_TBL test',NULL);
  stat_group | stat_schema | stat_table | stat_log_schema | stat_log_table |    stat_first_mark     | stat_first_mark_gid |     stat_last_mark     | stat_last_mark_gid | stat_role | stat_verb | stat_rows 
 ------------+-------------+------------+-----------------+----------------+------------------------+---------------------+------------------------+--------------------+-----------+-----------+-----------
- myGroup2   | myschema2   | mytbl7     | emaj_myschema2  | mytbl7_log_1   | [deleted mark]         |               11875 | Alter to remove mytbl7 |              11885 | postgres  | INSERT    |         3
- myGroup2   | myschema2   | mytbl7     | emaj_myschema2  | mytbl7_log     | Alter to re-add mytbl7 |               11885 |                        |                    | postgres  | DELETE    |         1
+ myGroup2   | myschema2   | mytbl7     | emaj_myschema2  | mytbl7_log_1   | [deleted mark]         |               60001 | Alter to remove mytbl7 |              60011 | postgres  | INSERT    |         3
+ myGroup2   | myschema2   | mytbl7     | emaj_myschema2  | mytbl7_log     | Alter to re-add mytbl7 |               60011 |                        |                    | postgres  | DELETE    |         1
 (2 rows)
 
 -- snap the logs
@@ -1240,18 +1240,18 @@ select stat_group, stat_schema, stat_table, stat_first_mark, stat_first_mark_gid
   from emaj._log_stat_groups('{"myGroup1"}',false,NULL,NULL);
  stat_group | stat_schema | stat_table | stat_first_mark | stat_first_mark_gid |         stat_last_mark         | stat_last_mark_gid | stat_rows 
 ------------+-------------+------------+-----------------+---------------------+--------------------------------+--------------------+-----------
- myGroup1   | myschema1   | myTbl3     | Mk1             |               11873 | 2 tables removed from myGroup1 |              11888 |         2
- myGroup1   | myschema1   | mytbl1     | Mk1             |               11873 |                                |                    |         0
- myGroup1   | myschema1   | mytbl2     | Mk1             |               11873 |                                |                    |         0
- myGroup1   | myschema1   | mytbl2b    | Mk1             |               11873 | 2 tables removed from myGroup1 |              11888 |         0
- myGroup1   | myschema1   | mytbl4     | Mk1             |               11873 |                                |                    |         0
+ myGroup1   | myschema1   | myTbl3     | Mk1             |               59999 | 2 tables removed from myGroup1 |              60014 |         2
+ myGroup1   | myschema1   | mytbl1     | Mk1             |               59999 |                                |                    |         0
+ myGroup1   | myschema1   | mytbl2     | Mk1             |               59999 |                                |                    |         0
+ myGroup1   | myschema1   | mytbl2b    | Mk1             |               59999 | 2 tables removed from myGroup1 |              60014 |         0
+ myGroup1   | myschema1   | mytbl4     | Mk1             |               59999 |                                |                    |         0
 (5 rows)
 
 select stat_group, stat_schema, stat_table, stat_first_mark, stat_first_mark_gid, stat_last_mark, stat_last_mark_gid, stat_role, stat_verb, stat_rows 
   from emaj._detailed_log_stat_groups('{"myGroup1"}',false,NULL,NULL);
  stat_group | stat_schema | stat_table | stat_first_mark | stat_first_mark_gid |         stat_last_mark         | stat_last_mark_gid | stat_role | stat_verb | stat_rows 
 ------------+-------------+------------+-----------------+---------------------+--------------------------------+--------------------+-----------+-----------+-----------
- myGroup1   | myschema1   | myTbl3     | Mk1             |               11873 | 2 tables removed from myGroup1 |              11888 | postgres  | INSERT    |         2
+ myGroup1   | myschema1   | myTbl3     | Mk1             |               59999 | 2 tables removed from myGroup1 |              60014 | postgres  | INSERT    |         2
 (1 row)
 
 --testing snap and sql generation
@@ -2636,9 +2636,9 @@ select hist_function, hist_event, hist_object,
  DBLINK_OPEN_CNX         |                              | rlbk#1                       | Status = 1                                                                                                             | postgres
  LOCK_GROUP              | BEGIN                        | myGroup1,myGroup2            | Rollback session #1                                                                                                    | postgres
  LOCK_GROUP              | END                          | myGroup1,myGroup2            | Rollback session #1: 11 tables locked, 0 deadlock(s)                                                                   | postgres
- ROLLBACK_TABLE          | BEGIN                        | myschema1."myTbl3"           | All log rows with emaj_gid > 11873 and <= 11875                                                                        | postgres
+ ROLLBACK_TABLE          | BEGIN                        | myschema1."myTbl3"           | All log rows with emaj_gid > 59999 and <= 60001                                                                        | postgres
  ROLLBACK_TABLE          | END                          | myschema1."myTbl3"           | 1 rolled back primary keys                                                                                             | postgres
- ROLLBACK_TABLE          | BEGIN                        | myschema2."myTbl3"           | All log rows with emaj_gid > 11873 and <= 11875                                                                        | postgres
+ ROLLBACK_TABLE          | BEGIN                        | myschema2."myTbl3"           | All log rows with emaj_gid > 59999 and <= 60001                                                                        | postgres
  ROLLBACK_TABLE          | END                          | myschema2."myTbl3"           | 1 rolled back primary keys                                                                                             | postgres
  ROLLBACK_SEQUENCE       |                              | myschema1."myTbl3_col31_seq" |                                                                                                                        | postgres
  ROLLBACK_SEQUENCE       |                              | myschema1.mytbl2b_col20_seq  |                                                                                                                        | postgres
@@ -2817,7 +2817,7 @@ select hist_function, hist_event, hist_object,
  LOCK_GROUP              | END                          | myGroup2                     | Rollback session #1: 7 tables locked, 0 deadlock(s)                                                                    | postgres
  SET_MARK_GROUP          | BEGIN                        | myGroup2                     | RLBK_Before ADD_TBL_%_START                                                                                            | postgres
  SET_MARK_GROUP          | END                          | myGroup2                     | RLBK_Before ADD_TBL_%_START                                                                                            | postgres
- ROLLBACK_TABLE          | BEGIN                        | myschema2.mytbl7             | All log rows with emaj_gid > 11875 and <= 11878                                                                        | postgres
+ ROLLBACK_TABLE          | BEGIN                        | myschema2.mytbl7             | All log rows with emaj_gid > 60001 and <= 60004                                                                        | postgres
  ROLLBACK_TABLE          | END                          | myschema2.mytbl7             | 4 rolled back primary keys                                                                                             | postgres
  ROLLBACK_SEQUENCE       |                              | myschema2."myTbl3_col31_seq" |                                                                                                                        | postgres
  ROLLBACK_SEQUENCE       |                              | myschema2.myseq1             |                                                                                                                        | postgres
@@ -2905,7 +2905,7 @@ select hist_function, hist_event, hist_object,
  LOCK_GROUP              | END                          | myGroup1                     | Rollback session #1: 3 tables locked, 0 deadlock(s)                                                                    | postgres
  SET_MARK_GROUP          | BEGIN                        | myGroup1                     | RLBK_Mk2b_%_START                                                                                                      | postgres
  SET_MARK_GROUP          | END                          | myGroup1                     | RLBK_Mk2b_%_START                                                                                                      | postgres
- ROLLBACK_TABLE          | BEGIN                        | myschema1.mytbl1             | All log rows with emaj_gid > 11875 and <= 11889                                                                        | postgres
+ ROLLBACK_TABLE          | BEGIN                        | myschema1.mytbl1             | All log rows with emaj_gid > 60001 and <= 60015                                                                        | postgres
  ROLLBACK_TABLE          | END                          | myschema1.mytbl1             | 1 rolled back primary keys                                                                                             | postgres
  ROLLBACK_SEQUENCE       |                              | myschema1."myTbl3_col31_seq" | RESTART 11                                                                                                             | postgres
  ROLLBACK_SEQUENCE       |                              | myschema1.mytbl2b_col20_seq  |                                                                                                                        | postgres
@@ -3101,7 +3101,7 @@ select hist_function, hist_event, hist_object,
  LOCK_GROUP              | END                          | myGroup1,myGroup2            | Rollback session #1: 11 tables locked, 0 deadlock(s)                                                                   | postgres
  SET_MARK_GROUPS         | BEGIN                        | myGroup1,myGroup2            | RLBK_after move_%_START                                                                                                | postgres
  SET_MARK_GROUPS         | END                          | myGroup1,myGroup2            | RLBK_after move_%_START                                                                                                | postgres
- ROLLBACK_TABLE          | BEGIN                        | myschema2."myTbl3"           | All log rows with emaj_gid > 11893 and <= 11895                                                                        | postgres
+ ROLLBACK_TABLE          | BEGIN                        | myschema2."myTbl3"           | All log rows with emaj_gid > 60019 and <= 60021                                                                        | postgres
  ROLLBACK_TABLE          | END                          | myschema2."myTbl3"           | 2 rolled back primary keys                                                                                             | postgres
  ROLLBACK_SEQUENCE       |                              | myschema1."myTbl3_col31_seq" |                                                                                                                        | postgres
  ROLLBACK_SEQUENCE       |                              | myschema1.mytbl2b_col20_seq  |                                                                                                                        | postgres
@@ -3117,7 +3117,7 @@ select hist_function, hist_event, hist_object,
  DBLINK_OPEN_CNX         |                              | rlbk#1                       | Status = 1                                                                                                             | postgres
  LOCK_GROUP              | BEGIN                        | myGroup1,myGroup2            | Rollback session #1                                                                                                    | postgres
  LOCK_GROUP              | END                          | myGroup1,myGroup2            | Rollback session #1: 11 tables locked, 0 deadlock(s)                                                                   | postgres
- ROLLBACK_TABLE          | BEGIN                        | myschema2."myTbl3"           | All log rows with emaj_gid > 11893 and <= 11899                                                                        | postgres
+ ROLLBACK_TABLE          | BEGIN                        | myschema2."myTbl3"           | All log rows with emaj_gid > 60019 and <= 60025                                                                        | postgres
  ROLLBACK_TABLE          | END                          | myschema2."myTbl3"           | 2 rolled back primary keys                                                                                             | postgres
  ROLLBACK_GROUPS         | MARK DELETED                 | myGroup1                     | mark move to myGroup1 is deleted                                                                                       | postgres
  ROLLBACK_GROUPS         | MARK DELETED                 | myGroup2                     | mark move to myGroup1 is deleted                                                                                       | postgres
@@ -3407,159 +3407,159 @@ select hist_function, hist_event, hist_object,
 select time_id, time_last_emaj_gid, time_event from emaj.emaj_time_stamp where time_id > 6000 order by time_id;
  time_id | time_last_emaj_gid | time_event 
 ---------+--------------------+------------
-    6001 |              11873 | D
-    6002 |              11873 | D
-    6003 |              11873 | M
-    6004 |              11873 | D
-    6005 |              11873 | D
-    6006 |              11873 | D
-    6007 |              11873 | C
-    6008 |              11873 | C
-    6009 |              11873 | C
-    6010 |              11873 | C
-    6013 |              11873 | A
-    6014 |              11873 | A
-    6015 |              11873 | A
-    6016 |              11873 | A
-    6017 |              11873 | A
-    6018 |              11873 | A
-    6019 |              11873 | A
-    6020 |              11873 | A
-    6021 |              11873 | A
-    6022 |              11873 | A
-    6023 |              11873 | A
-    6024 |              11873 | A
-    6025 |              11873 | A
-    6026 |              11873 | A
-    6027 |              11873 | A
-    6028 |              11873 | A
-    6029 |              11873 | A
-    6030 |              11873 | A
-    6031 |              11873 | A
-    6032 |              11873 | A
-    6033 |              11873 | A
-    6034 |              11873 | A
-    6035 |              11873 | A
-    6036 |              11873 | A
-    6037 |              11873 | A
-    6038 |              11873 | A
-    6041 |              11873 | A
-    6042 |              11873 | A
-    6043 |              11873 | A
-    6044 |              11873 | A
-    6045 |              11873 | A
-    6046 |              11873 | A
-    6049 |              11873 | A
-    6050 |              11873 | A
-    6051 |              11873 | A
-    6052 |              11873 | A
-    6053 |              11873 | A
-    6054 |              11873 | A
-    6055 |              11873 | A
-    6056 |              11873 | A
-    6057 |              11873 | A
-    6058 |              11873 | A
-    6059 |              11873 | A
-    6060 |              11873 | A
-    6061 |              11873 | A
-    6062 |              11873 | A
-    6063 |              11873 | A
-    6064 |              11873 | A
-    6065 |              11873 | M
-    6066 |              11873 | A
-    6067 |              11873 | A
-    6068 |              11873 | M
-    6069 |              11875 | R
-    6070 |              11875 | A
-    6071 |              11875 | A
-    6072 |              11875 | M
-    6073 |              11875 | M
-    6074 |              11875 | A
-    6075 |              11875 | M
-    6077 |              11875 | R
-    6078 |              11875 | M
-    6079 |              11875 | A
-    6080 |              11875 | A
-    6081 |              11875 | A
-    6082 |              11875 | R
-    6083 |              11875 | M
-    6084 |              11875 | M
-    6085 |              11875 | A
-    6086 |              11875 | S
-    6087 |              11875 | M
-    6088 |              11875 | R
-    6090 |              11875 | R
-    6093 |              11875 | A
-    6094 |              11875 | M
-    6095 |              11875 | M
-    6096 |              11875 | A
-    6098 |              11877 | M
-    6099 |              11878 | M
-    6101 |              11878 | R
-    6102 |              11882 | M
-    6103 |              11885 | A
-    6104 |              11885 | A
-    6105 |              11886 | S
-    6106 |              11886 | A
-    6107 |              11886 | R
-    6108 |              11887 | M
-    6109 |              11888 | A
-    6110 |              11888 | A
-    6112 |              11888 | S
-    6114 |              11889 | R
-    6115 |              11890 | M
-    6116 |              11890 | A
-    6117 |              11890 | R
-    6122 |              11890 | A
-    6123 |              11890 | M
-    6124 |              11890 | R
-    6125 |              11890 | R
-    6126 |              11890 | M
-    6127 |              11890 | R
-    6128 |              11890 | R
-    6129 |              11890 | R
-    6130 |              11890 | M
-    6131 |              11890 | R
-    6136 |              11890 | M
-    6137 |              11893 | A
-    6138 |              11893 | M
-    6139 |              11895 | R
-    6140 |              11899 | M
-    6141 |              11899 | R
-    6142 |              11899 | M
-    6143 |              11899 | A
-    6144 |              11899 | M
-    6145 |              11900 | A
-    6146 |              11900 | A
-    6147 |              11900 | A
-    6148 |              11900 | A
-    6149 |              11901 | A
-    6150 |              11901 | A
-    6151 |              11901 | A
-    6152 |              11901 | A
-    6153 |              11901 | A
-    6154 |              11901 | A
-    6155 |              11901 | A
-    6156 |              11901 | A
-    6157 |              11901 | A
-    6158 |              11901 | A
-    6159 |              11901 | A
-    6160 |              11901 | A
-    6161 |              11901 | A
-    6162 |              11901 | A
-    6163 |              11901 | A
-    6164 |              11901 | A
-    6165 |              11901 | A
-    6166 |              11901 | A
-    6167 |              11901 | A
-    6168 |              11901 | A
-    6169 |              11901 | A
-    6170 |              11901 | A
-    6171 |              11901 | M
-    6172 |              11901 | D
-    6173 |              11901 | M
-    6174 |              11901 | D
-    6175 |              11901 | D
+    6001 |              59999 | D
+    6002 |              59999 | D
+    6003 |              59999 | M
+    6004 |              59999 | D
+    6005 |              59999 | D
+    6006 |              59999 | D
+    6007 |              59999 | C
+    6008 |              59999 | C
+    6009 |              59999 | C
+    6010 |              59999 | C
+    6013 |              59999 | A
+    6014 |              59999 | A
+    6015 |              59999 | A
+    6016 |              59999 | A
+    6017 |              59999 | A
+    6018 |              59999 | A
+    6019 |              59999 | A
+    6020 |              59999 | A
+    6021 |              59999 | A
+    6022 |              59999 | A
+    6023 |              59999 | A
+    6024 |              59999 | A
+    6025 |              59999 | A
+    6026 |              59999 | A
+    6027 |              59999 | A
+    6028 |              59999 | A
+    6029 |              59999 | A
+    6030 |              59999 | A
+    6031 |              59999 | A
+    6032 |              59999 | A
+    6033 |              59999 | A
+    6034 |              59999 | A
+    6035 |              59999 | A
+    6036 |              59999 | A
+    6037 |              59999 | A
+    6038 |              59999 | A
+    6041 |              59999 | A
+    6042 |              59999 | A
+    6043 |              59999 | A
+    6044 |              59999 | A
+    6045 |              59999 | A
+    6046 |              59999 | A
+    6049 |              59999 | A
+    6050 |              59999 | A
+    6051 |              59999 | A
+    6052 |              59999 | A
+    6053 |              59999 | A
+    6054 |              59999 | A
+    6055 |              59999 | A
+    6056 |              59999 | A
+    6057 |              59999 | A
+    6058 |              59999 | A
+    6059 |              59999 | A
+    6060 |              59999 | A
+    6061 |              59999 | A
+    6062 |              59999 | A
+    6063 |              59999 | A
+    6064 |              59999 | A
+    6065 |              59999 | M
+    6066 |              59999 | A
+    6067 |              59999 | A
+    6068 |              59999 | M
+    6069 |              60001 | R
+    6070 |              60001 | A
+    6071 |              60001 | A
+    6072 |              60001 | M
+    6073 |              60001 | M
+    6074 |              60001 | A
+    6075 |              60001 | M
+    6077 |              60001 | R
+    6078 |              60001 | M
+    6079 |              60001 | A
+    6080 |              60001 | A
+    6081 |              60001 | A
+    6082 |              60001 | R
+    6083 |              60001 | M
+    6084 |              60001 | M
+    6085 |              60001 | A
+    6086 |              60001 | S
+    6087 |              60001 | M
+    6088 |              60001 | R
+    6090 |              60001 | R
+    6093 |              60001 | A
+    6094 |              60001 | M
+    6095 |              60001 | M
+    6096 |              60001 | A
+    6098 |              60003 | M
+    6099 |              60004 | M
+    6101 |              60004 | R
+    6102 |              60008 | M
+    6103 |              60011 | A
+    6104 |              60011 | A
+    6105 |              60012 | S
+    6106 |              60012 | A
+    6107 |              60012 | R
+    6108 |              60013 | M
+    6109 |              60014 | A
+    6110 |              60014 | A
+    6112 |              60014 | S
+    6114 |              60015 | R
+    6115 |              60016 | M
+    6116 |              60016 | A
+    6117 |              60016 | R
+    6122 |              60016 | A
+    6123 |              60016 | M
+    6124 |              60016 | R
+    6125 |              60016 | R
+    6126 |              60016 | M
+    6127 |              60016 | R
+    6128 |              60016 | R
+    6129 |              60016 | R
+    6130 |              60016 | M
+    6131 |              60016 | R
+    6136 |              60016 | M
+    6137 |              60019 | A
+    6138 |              60019 | M
+    6139 |              60021 | R
+    6140 |              60025 | M
+    6141 |              60025 | R
+    6142 |              60025 | M
+    6143 |              60025 | A
+    6144 |              60025 | M
+    6145 |              60026 | A
+    6146 |              60026 | A
+    6147 |              60026 | A
+    6148 |              60026 | A
+    6149 |              60027 | A
+    6150 |              60027 | A
+    6151 |              60027 | A
+    6152 |              60027 | A
+    6153 |              60027 | A
+    6154 |              60027 | A
+    6155 |              60027 | A
+    6156 |              60027 | A
+    6157 |              60027 | A
+    6158 |              60027 | A
+    6159 |              60027 | A
+    6160 |              60027 | A
+    6161 |              60027 | A
+    6162 |              60027 | A
+    6163 |              60027 | A
+    6164 |              60027 | A
+    6165 |              60027 | A
+    6166 |              60027 | A
+    6167 |              60027 | A
+    6168 |              60027 | A
+    6169 |              60027 | A
+    6170 |              60027 | A
+    6171 |              60027 | M
+    6172 |              60027 | D
+    6173 |              60027 | M
+    6174 |              60027 | D
+    6175 |              60027 | D
 (153 rows)
 
 select * from emaj.emaj_alter_plan order by 1,2,3,4,5;

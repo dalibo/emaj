@@ -1,5 +1,6 @@
 -- viewer.sql : test use of functions by an emaj_viewer role
 --
+
 -----------------------------
 -- grant emaj_viewer role
 -----------------------------

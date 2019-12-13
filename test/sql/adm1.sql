@@ -1,5 +1,4 @@
--- adm1.sql : complex scenario executed by an emaj_adm role
---            playing with both myGroup1 and myGroup2 tables groups
+-- adm1.sql : complex scenarios executed by an emaj_adm role
 --
 SET datestyle TO ymd;
 

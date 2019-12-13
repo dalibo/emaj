@@ -21,13 +21,13 @@
 # EMAJ_REGTEST_MIXED_PGVER         : Contains the PostgreSQL versions on which the "mixed with E-Maj upgrade" regression test can be run
 # EMAJ_REGTEST_MENU_ACTIONS        : Contains the functions to be executed according to the regression test and the PostgreSQL version (do not fill this array)
 # EMAJ_REGTEST_MENU                : Contains the menu's entries (do not fill this array)
-typeset -r EMAJ_REGTEST_STANDART=('install' 'setup' 'create_drop' 'start_stop' 'mark' 'rollback' 'misc' 'alter' 'alter_logging' 'viewer' 'adm1' 'adm2' 'client' 'check' 'cleanup')
+typeset -r EMAJ_REGTEST_STANDART=('install' 'setup' 'create_drop' 'start_stop' 'mark' 'rollback' 'misc' 'verify' 'alter' 'alter_logging' 'viewer' 'adm1' 'adm2' 'adm3' 'client' 'check' 'cleanup')
 typeset -r EMAJ_REGTEST_STANDART_PGVER=${EMAJ_SUPPORTED_PGVER[@]}
 typeset -r EMAJ_REGTEST_DUMP_RESTORE_PGVER=('9.3!9.6' '9.5!11')
-typeset -r EMAJ_REGTEST_PSQL=('install_psql' 'setup' 'create_drop' 'start_stop' 'mark' 'rollback' 'misc' 'alter' 'alter_logging' 'viewer' 'adm1' 'adm2' 'client' 'check' 'cleanup')
+typeset -r EMAJ_REGTEST_PSQL=('install_psql' 'setup' 'create_drop' 'start_stop' 'mark' 'rollback' 'misc' 'verify' 'alter' 'alter_logging' 'viewer' 'adm1' 'adm2' 'adm3' 'client' 'check' 'cleanup')
 typeset -r EMAJ_REGTEST_PSQL_PGVER=(11)
 typeset -r EMAJ_REGTEST_PGUPGRADE_PGVER='9.5!11'
-typeset -r EMAJ_REGTEST_UPGRADE=('install_upgrade' 'setup' 'create_drop' 'start_stop' 'mark' 'rollback' 'misc' 'alter' 'alter_logging' 'viewer' 'adm1' 'adm2' 'client' 'check' 'cleanup')
+typeset -r EMAJ_REGTEST_UPGRADE=('install_upgrade' 'setup' 'create_drop' 'start_stop' 'mark' 'rollback' 'misc' 'verify' 'alter' 'alter_logging' 'viewer' 'adm1' 'adm2' 'adm3' 'client' 'check' 'cleanup')
 typeset -r EMAJ_REGTEST_UPGRADE_PGVER=${EMAJ_SUPPORTED_PGVER[@]}
 typeset -r EMAJ_REGTEST_MIXED=('install_previous' 'setup' 'before_upg_while_logging' 'upgrade_while_logging' 'after_upg_while_logging' 'cleanup')
 typeset -r EMAJ_REGTEST_MIXED_PGVER=(9.5 10 12)
@@ -425,6 +425,7 @@ for KEY in "${!EMAJ_REGTEST_MENU_ACTIONS[@]}"; do
         IFS="${oIFS}"
         ;;
       *) # RUNNING A SPECIFIC TEST FOR ONE PG VERSION
+echo `date +%T`
         ${EMAJ_REGTEST_MENU_ACTIONS[$KEY]}
         ;;
     esac

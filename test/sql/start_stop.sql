@@ -13,11 +13,8 @@ select emaj.emaj_create_group('myGroup1');
 select emaj.emaj_create_group('myGroup2');
 select emaj.emaj_create_group('emptyGroup',true,true);
 
------------------------------
 -- disable event triggers 
------------------------------
 -- this is done to allow tests with missing or renamed or altered components
--- triggers will be re-enabled in misc.sql
 select emaj.emaj_disable_protection_by_event_triggers();
 
 -----------------------------
@@ -381,7 +378,10 @@ select group_is_logging, group_is_rlbk_protected from emaj.emaj_group where grou
 select emaj.emaj_stop_groups(array['myGroup1','emptyGroup']);
 select group_is_logging, group_is_rlbk_protected from emaj.emaj_group where group_name = 'myGroup1';
 
+-----------------------------
 -- test end: (groups are stopped) reset history and force sequences id
+-----------------------------
+select emaj.emaj_enable_protection_by_event_triggers();
 select hist_id, hist_function, hist_event, hist_object, 
   regexp_replace(regexp_replace(hist_wording,E'\\d\\d\.\\d\\d\\.\\d\\d\\.\\d\\d\\d\\d','%','g'),E'\\[.+\\]','(timestamp)','g'),
   hist_user from emaj.emaj_hist order by hist_id;
