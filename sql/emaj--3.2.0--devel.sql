@@ -2726,7 +2726,7 @@ $_adjust_group_properties$
                       ))
               -- the tables or sequences that change their group ownership
                OR (rel_group <> grpdef_group)
-              -- the relation that change their priority level
+              -- the tables that change their priority level
                OR (rel_priority IS NULL AND grpdef_priority IS NOT NULL) OR
                   (rel_priority IS NOT NULL AND grpdef_priority IS NULL) OR
                   (rel_priority <> grpdef_priority)

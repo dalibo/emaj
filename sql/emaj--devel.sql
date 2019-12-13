@@ -74,7 +74,7 @@ CREATE TYPE emaj._alter_step_enum AS ENUM (
   'CHANGE_TBL_LOG_INDEX_TSP',-- change the log index tablespace for a table
   'MOVE_TBL',                -- move a table from one group to another
   'MOVE_SEQ',                -- move a sequence from one group to another
-  'CHANGE_REL_PRIORITY',     -- change the priority level for a table or a sequence
+  'CHANGE_REL_PRIORITY',     -- change the priority level for a table
   'ADD_TBL',                 -- add a table to a group
   'ADD_SEQ'                  -- add a sequence to a group
   );
@@ -9640,7 +9640,7 @@ $_adjust_group_properties$
                       ))
               -- the tables or sequences that change their group ownership
                OR (rel_group <> grpdef_group)
-              -- the relation that change their priority level
+              -- the tables that change their priority level
                OR (rel_priority IS NULL AND grpdef_priority IS NOT NULL) OR
                   (rel_priority IS NOT NULL AND grpdef_priority IS NULL) OR
                   (rel_priority <> grpdef_priority)
