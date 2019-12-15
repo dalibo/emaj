@@ -150,14 +150,14 @@ INSERT INTO emaj.emaj_relation (
 DO
 $do$
   DECLARE
-    v_genColList             TEXT = '';
-    v_isColListNeeded        BOOLEAN = FALSE;
+    v_genColList             TEXT;
+    v_isColListNeeded        BOOLEAN;
     v_unquotedType           TEXT[] = array['smallint','integer','bigint','numeric','decimal',
                                              'int2','int4','int8','serial','bigserial',
                                              'real','double precision','float','float4','float8','oid'];
-    v_genValList             TEXT = '';
-    v_genSetList             TEXT = '';
-    v_genPkConditions        TEXT = '';
+    v_genValList             TEXT;
+    v_genSetList             TEXT;
+    v_genPkConditions        TEXT;
     r_col                    RECORD;
     r_rel                    RECORD;
   BEGIN
@@ -206,6 +206,13 @@ $do$
         FROM emaj.emaj_relation
         WHERE upper_inf(rel_time_range) AND rel_kind = 'r'
       LOOP
+-- reset variables
+        v_genColList = '';
+        v_isColListNeeded = FALSE;
+        v_genValList = '';
+        v_genSetList = '';
+        v_genPkConditions = '';
+-- get each column and their attributes
         FOR r_col IN EXECUTE format(
           ' SELECT attname, format_type(atttypid,atttypmod), %s AS attidentity, %s AS attgenerated'
           ' FROM pg_catalog.pg_attribute'
@@ -275,15 +282,20 @@ $do$
                                                   || quote_ident(r_col.attname) || ') || '' AND ';
           END IF;
         END LOOP;
--- suppress the final separator, if the table has PK
+-- if the table has PK,
         IF v_genPkConditions <> '' THEN
+-- ... suppress the final separator and update the emaj_relation row
           v_genPkConditions = substring(v_genPkConditions FROM 1 FOR char_length(v_genPkConditions) - 5);
+          UPDATE emaj.emaj_relation
+            SET rel_sql_gen_ins_col = v_genColList, rel_sql_gen_ins_val = v_genValList,
+                rel_sql_gen_upd_set = v_genSetList, rel_sql_gen_pk_conditions = v_genPkConditions
+            WHERE rel_schema = r_rel.rel_schema AND rel_tblseq = r_rel.rel_tblseq;     -- update all time ranges of this relation
+        ELSE
+-- ... otherwise, set all pieces of sql to NULL
+          UPDATE emaj.emaj_relation
+            SET rel_sql_rlbk_columns = NULL, rel_sql_rlbk_pk_columns = NULL, rel_sql_rlbk_pk_conditions = NULL
+            WHERE rel_schema = r_rel.rel_schema AND rel_tblseq = r_rel.rel_tblseq;     -- update all time ranges of this relation
         END IF;
--- update the emaj_relation row 
-        UPDATE emaj.emaj_relation
-          SET rel_sql_gen_ins_col = v_genColList, rel_sql_gen_ins_val = v_genValList,
-              rel_sql_gen_upd_set = v_genSetList, rel_sql_gen_pk_conditions = v_genPkConditions
-          WHERE rel_schema = r_rel.rel_schema AND rel_tblseq = r_rel.rel_tblseq;     -- update all time ranges of this relation
     END LOOP;
   END;
 $do$;
@@ -320,6 +332,7 @@ SELECT pg_catalog.pg_extension_config_dump('emaj_relation','');
 ------------------------------------------------------------------
 -- drop obsolete functions or functions with modified interface --
 ------------------------------------------------------------------
+DROP FUNCTION IF EXISTS emaj._create_log_trigger(V_FULLTABLENAME TEXT,V_LOGTABLENAME TEXT,V_SEQUENCENAME TEXT,V_LOGFNCTNAME TEXT);
 
 ------------------------------------------------------------------
 -- create new or modified functions                             --
@@ -620,21 +633,16 @@ $_create_tbl$
     v_idxTblSpace            TEXT;
     v_rlbkColList            TEXT;
     v_rlbkPkColList          TEXT;
-    v_genColList             TEXT;
-    v_nbGenAlwaysIdentCol    INTEGER;
-    v_nbGenAlwaysExprCol     INTEGER;
-    v_unquotedType           TEXT[] = array['smallint','integer','bigint','numeric','decimal',
-                                             'int2','int4','int8','serial','bigserial',
-                                             'real','double precision','float','float4','float8','oid'];
-    v_genValList             TEXT = '';
-    v_genSetList             TEXT = '';
     v_rlbkPkConditions       TEXT;
+    v_genColList             TEXT;
+    v_genValList             TEXT;
+    v_genSetList             TEXT;
     v_genPkConditions        TEXT;
+    v_nbGenAlwaysIdentCol    INTEGER;
     v_attnum                 SMALLINT;
     v_alter_log_table_param  TEXT;
     v_stmt                   TEXT;
     v_triggerList            TEXT;
-    r_col                    RECORD;
   BEGIN
 -- the checks on the table properties are performed by the calling functions
 -- build the prefix of all emaj object to create
@@ -714,7 +722,7 @@ $_create_tbl$
     EXECUTE format('CREATE SEQUENCE %s',
                    v_sequenceName);
 -- create the log function and the log trigger
-    PERFORM emaj._create_log_trigger(v_fullTableName, v_logTableName, v_sequenceName, v_logFnctName);
+    PERFORM emaj._create_log_trigger_tbl(v_fullTableName, v_logTableName, v_sequenceName, v_logFnctName);
 -- If the group is idle, deactivate the log trigger (it will be enabled at emaj_start_group time)
     IF NOT v_groupIsLogging THEN
       EXECUTE format('ALTER TABLE %s DISABLE TRIGGER emaj_log_trg',
@@ -750,94 +758,11 @@ $_create_tbl$
                    v_sequenceName);
     EXECUTE format('GRANT ALL PRIVILEGES ON SEQUENCE %s TO emaj_adm',
                    v_sequenceName);
---
 -- Build some pieces of SQL statements that will be needed at table rollback and gen_sql times
---
-    v_stmt = 'SELECT string_agg(''tbl.'' || quote_ident(attname), '','') FILTER (WHERE attgenerated = ''''),'
---                           the columns list for rollback, excluding the GENERATED ALWAYS AS (expression) columns
-             '       string_agg(quote_ident(replace(attname,'''''''','''''''''''')), '', '') FILTER (WHERE attgenerated = ''''),'
---                           the INSERT columns list for sql generation, excluding the GENERATED ALWAYS AS (expression) columns
-             '       count(*) FILTER (WHERE attidentity = ''a''),'
---                           the number of GENERATED ALWAYS AS IDENTITY columns
-             '       count(*) FILTER (WHERE attgenerated <> '''')'
---                           the number of GENERATED ALWAYS AS (expression) columns
-             '  FROM ('
-             '  SELECT attname, %s AS attidentity, %s AS attgenerated'
-             '    FROM pg_catalog.pg_attribute'
-             '    WHERE attrelid = %s::regclass'
-             '      AND attnum > 0 AND NOT attisdropped'
-             '  ORDER BY attnum) AS t';
-    EXECUTE format(v_stmt,
-                   CASE WHEN emaj._pg_version_num() >= 100000 THEN 'attidentity' ELSE '''''::TEXT' END,
-                   CASE WHEN emaj._pg_version_num() >= 120000 THEN 'attgenerated' ELSE '''''::TEXT' END,
-                   quote_literal(v_fullTableName))
-      INTO v_rlbkColList, v_genColList, v_nbGenAlwaysIdentCol, v_nbGenAlwaysExprCol;
-    IF v_nbGenAlwaysExprCol = 0 THEN
--- if the table doesn't contain any generated columns, the is no need for the columns list in the INSERT clause
-      v_genColList = '';
-    END IF;
---
--- retrieve from pg_attribute all columns of the application table and build :
--- - the VALUES list used in the INSERT statements
--- - the SET list used in the UPDATE statements
--- the logic is too complex to be build with aggregate functions. So loop on all columns.
-    FOR r_col IN EXECUTE format(
-      ' SELECT attname, format_type(atttypid,atttypmod) AS format_type, %s AS attidentity, %s AS attgenerated'
-      ' FROM pg_catalog.pg_attribute'
-      ' WHERE attrelid = %s::regclass'
-      '   AND attnum > 0 AND NOT attisdropped'
-      ' ORDER BY attnum',
-      CASE WHEN emaj._pg_version_num() >= 100000 THEN 'attidentity' ELSE '''''::TEXT' END,
-      CASE WHEN emaj._pg_version_num() >= 120000 THEN 'attgenerated' ELSE '''''::TEXT' END,
-      quote_literal(v_fullTableName))
-    LOOP
--- test if the column format (up to the parenthesis) belongs to the list of formats that do not require any quotation (like numeric
--- data types)
-      IF regexp_replace(r_col.format_type,E'\\(.*$','') = ANY(v_unquotedType) THEN
--- literal for this column can remain as is
-        IF r_col.attgenerated = '' THEN                                     -- GENERATED ALWAYS AS (expression) columns are not inserted
-          v_genValList = v_genValList || ''' || coalesce(o.' || quote_ident(r_col.attname) || '::TEXT,''NULL'') || '', ';
-        END IF;
-        IF r_col.attidentity <> 'a' AND r_col.attgenerated = '' THEN        -- GENERATED ALWAYS columns are not updated
-          v_genSetList = v_genSetList || quote_ident(replace(r_col.attname,'''','''''')) || ' = '' || coalesce(n.'
-                                      || quote_ident(r_col.attname) || ' ::TEXT,''NULL'') || '', ';
-        END IF;
-      ELSE
--- literal for this column must be quoted
-        IF r_col.attgenerated = '' THEN                                     -- GENERATED ALWAYS AS (expression) columns are not inserted
-          v_genValList = v_genValList || ''' || quote_nullable(o.' || quote_ident(r_col.attname) || ') || '', ';
-        END IF;
-        IF r_col.attidentity <> 'a' AND r_col.attgenerated = '' THEN        -- GENERATED ALWAYS columns are not updated
-          v_genSetList = v_genSetList || quote_ident(replace(r_col.attname,'''','''''')) || ' = '' || quote_nullable(n.'
-                                      || quote_ident(r_col.attname) || ') || '', ';
-        END IF;
-      END IF;
-    END LOOP;
--- suppress the final separators
-    v_genValList = substring(v_genValList FROM 1 FOR char_length(v_genValList) - 2);
-    v_genSetList = substring(v_genSetList FROM 1 FOR char_length(v_genSetList) - 2);
---
---   build the pkey columns list and the "equality on the primary key" conditions for the rollback function
---     and for the UPDATE and DELETE statements of the sql generation function
---     (it takes column names in pg_attribute from the table's definition instead of index definition is mandatory
---     starting from pg9.0, joining tables with indkey instead of indexrelid)
-    SELECT string_agg(quote_ident(attname), ','),
-           string_agg('tbl.' || quote_ident(attname) || ' = keys.' || quote_ident(attname), ' AND '),
-           string_agg(
-             CASE WHEN format_type = ANY(v_unquotedType) THEN
-               quote_ident(replace(attname,'''','''''')) || ' = '' || o.' || quote_ident(attname) || ' || '''
-                  ELSE
-               quote_ident(replace(attname,'''','''''')) || ' = '' || quote_literal(o.' || quote_ident(attname) || ') || '''
-             END, ' AND ')
-      INTO v_rlbkPkColList, v_rlbkPkConditions, v_genPkConditions
-      FROM (
-        SELECT attname, regexp_replace(format_type(atttypid,atttypmod),E'\\(.*$','') AS format_type
-          FROM pg_catalog.pg_attribute, pg_catalog.pg_index
-          WHERE pg_attribute.attrelid = pg_index.indrelid
-            AND attnum = ANY (indkey)
-            AND indrelid = v_fullTableName::regclass AND indisprimary
-            AND attnum > 0 AND attisdropped = FALSE
-          ORDER BY attnum) AS t;
+--   left NULL if the table hos no pkey
+    SELECT * FROM emaj._build_sql_tbl(v_fullTableName)
+      INTO v_rlbkColList, v_rlbkPkColList, v_rlbkPkConditions, v_genColList,
+           v_genValList, v_genSetList, v_genPkConditions, v_nbGenAlwaysIdentCol;
 -- register the table into emaj_relation
     INSERT INTO emaj.emaj_relation
                (rel_schema, rel_tblseq, rel_time_range, rel_group, rel_priority,
@@ -865,6 +790,166 @@ $_create_tbl$
     RETURN;
   END;
 $_create_tbl$;
+
+CREATE OR REPLACE FUNCTION emaj._create_log_trigger_tbl(v_fullTableName TEXT, v_logTableName TEXT, v_sequenceName TEXT, v_logFnctName TEXT)
+RETURNS VOID LANGUAGE plpgsql
+SECURITY DEFINER SET search_path = pg_catalog, pg_temp AS
+$_create_log_trigger_tbl$
+-- The function creates the log function and the associated log trigger for an application table.
+-- It is called by several functions.
+-- Inputs: the full name of the application table, the log table, the log sequence and the log function
+-- The function is defined as SECURITY DEFINER so that emaj_adm role can manage the trigger on the application table.
+  DECLARE
+  BEGIN
+-- drop the log trigger if it exists
+    EXECUTE format('DROP TRIGGER IF EXISTS emaj_log_trg ON %s',
+                   v_fullTableName);
+-- create the log fonction that will be mapped to the log trigger just after
+--   the new row is logged for each INSERT, the old row is logged for each DELETE
+--   and the old and the new rows are logged for each UPDATE.
+    EXECUTE 'CREATE OR REPLACE FUNCTION ' || v_logFnctName || '() RETURNS TRIGGER AS $logfnct$'
+         || 'BEGIN'
+-- The sequence associated to the log table is incremented at the beginning of the function ...
+         || '  PERFORM NEXTVAL(' || quote_literal(v_sequenceName) || ');'
+-- ... and the global id sequence is incremented by the first/only INSERT into the log table.
+         || '  IF (TG_OP = ''DELETE'') THEN'
+         || '    INSERT INTO ' || v_logTableName || ' SELECT OLD.*, ''DEL'', ''OLD'';'
+         || '    RETURN OLD;'
+         || '  ELSIF (TG_OP = ''UPDATE'') THEN'
+         || '    INSERT INTO ' || v_logTableName || ' SELECT OLD.*, ''UPD'', ''OLD'';'
+         || '    INSERT INTO ' || v_logTableName || ' SELECT NEW.*, ''UPD'', ''NEW'', lastval();'
+         || '    RETURN NEW;'
+         || '  ELSIF (TG_OP = ''INSERT'') THEN'
+         || '    INSERT INTO ' || v_logTableName || ' SELECT NEW.*, ''INS'', ''NEW'';'
+         || '    RETURN NEW;'
+         || '  END IF;'
+         || '  RETURN NULL;'
+         || 'END;'
+         || '$logfnct$ LANGUAGE plpgsql SECURITY DEFINER SET search_path = pg_catalog, pg_temp;';
+-- create the log trigger on the application table, using the previously created log function
+    EXECUTE format('CREATE TRIGGER emaj_log_trg'
+                   ' AFTER INSERT OR UPDATE OR DELETE ON %s'
+                   '  FOR EACH ROW EXECUTE PROCEDURE %s()',
+                   v_fullTableName, v_logFnctName);
+    RETURN;
+  END;
+$_create_log_trigger_tbl$;
+
+CREATE OR REPLACE FUNCTION emaj._build_sql_tbl(v_fullTableName TEXT, OUT v_rlbkColList TEXT, OUT v_rlbkPkColList TEXT,
+                                               OUT v_rlbkPkConditions TEXT, OUT v_genColList TEXT, OUT v_genValList TEXT,
+                                               OUT v_genSetList TEXT, OUT v_genPkConditions TEXT, OUT v_nbGenAlwaysIdentCol INT)
+LANGUAGE plpgsql AS
+$_build_sql_tbl$
+-- This function creates all pieces of SQL that will be recorded into the emaj_relation table, for one application table.
+-- They will later be used at rollback or SQL script generation time.
+-- All SQL pieces are left empty if the table has no pkey, neither rollback nor sql script generation operations being possible
+--   in this case
+-- The Insert columns list remains empty if it is not needed to have a specific list (i.e. when the application table does not contain
+--   any generated column)
+-- Input: the full application table name
+-- Output: 7 pieces of SQL, and the number of columns declared GENERATED ALWAYS AS IDENTITY
+  DECLARE
+    v_stmt                   TEXT;
+    v_nbGenAlwaysExprCol     INTEGER;
+    v_unquotedType           TEXT[] = array['smallint','integer','bigint','numeric','decimal',
+                                             'int2','int4','int8','serial','bigserial',
+                                             'real','double precision','float','float4','float8','oid'];
+    r_col                    RECORD;
+  BEGIN
+--   build the pkey columns list and the "equality on the primary key" conditions for the rollback function
+--     and for the UPDATE and DELETE statements of the sql generation function
+--     (it takes column names in pg_attribute from the table's definition instead of index definition is mandatory
+--     starting from pg9.0, joining tables with indkey instead of indexrelid)
+    SELECT string_agg(quote_ident(attname), ','),
+           string_agg('tbl.' || quote_ident(attname) || ' = keys.' || quote_ident(attname), ' AND '),
+           string_agg(
+             CASE WHEN format_type = ANY(v_unquotedType) THEN
+               quote_ident(replace(attname,'''','''''')) || ' = '' || o.' || quote_ident(attname) || ' || '''
+                  ELSE
+               quote_ident(replace(attname,'''','''''')) || ' = '' || quote_literal(o.' || quote_ident(attname) || ') || '''
+             END, ' AND ')
+      INTO v_rlbkPkColList, v_rlbkPkConditions, v_genPkConditions
+      FROM (
+        SELECT attname, regexp_replace(format_type(atttypid,atttypmod),E'\\(.*$','') AS format_type
+          FROM pg_catalog.pg_attribute, pg_catalog.pg_index
+          WHERE pg_attribute.attrelid = pg_index.indrelid
+            AND attnum = ANY (indkey)
+            AND indrelid = v_fullTableName::regclass AND indisprimary
+            AND attnum > 0 AND attisdropped = FALSE
+          ORDER BY attnum) AS t;
+--
+-- retrieve from pg_attribute simple columns list and indicators
+-- if the table has no pkey, keep all the sql pieces to NULL (rollback or sql script generation operations being impossible)
+    IF v_rlbkPkColList IS NOT NULL THEN
+      v_stmt = 'SELECT string_agg(''tbl.'' || quote_ident(attname), '','') FILTER (WHERE attgenerated = ''''),'
+--                             the columns list for rollback, excluding the GENERATED ALWAYS AS (expression) columns
+               '       string_agg(quote_ident(replace(attname,'''''''','''''''''''')), '', '') FILTER (WHERE attgenerated = ''''),'
+--                             the INSERT columns list for sql generation, excluding the GENERATED ALWAYS AS (expression) columns
+               '       count(*) FILTER (WHERE attidentity = ''a''),'
+--                             the number of GENERATED ALWAYS AS IDENTITY columns
+               '       count(*) FILTER (WHERE attgenerated <> '''')'
+--                             the number of GENERATED ALWAYS AS (expression) columns
+               '  FROM ('
+               '  SELECT attname, %s AS attidentity, %s AS attgenerated'
+               '    FROM pg_catalog.pg_attribute'
+               '    WHERE attrelid = %s::regclass'
+               '      AND attnum > 0 AND NOT attisdropped'
+               '  ORDER BY attnum) AS t';
+      EXECUTE format(v_stmt,
+                     CASE WHEN emaj._pg_version_num() >= 100000 THEN 'attidentity' ELSE '''''::TEXT' END,
+                     CASE WHEN emaj._pg_version_num() >= 120000 THEN 'attgenerated' ELSE '''''::TEXT' END,
+                     quote_literal(v_fullTableName))
+        INTO v_rlbkColList, v_genColList, v_nbGenAlwaysIdentCol, v_nbGenAlwaysExprCol;
+      IF v_nbGenAlwaysExprCol = 0 THEN
+-- if the table doesn't contain any generated columns, the is no need for the columns list in the INSERT clause
+        v_genColList = '';
+      END IF;
+--
+-- retrieve from pg_attribute all columns of the application table and build :
+-- - the VALUES list used in the INSERT statements
+-- - the SET list used in the UPDATE statements
+-- the logic is too complex to be build with aggregate functions. So loop on all columns.
+      v_genValList = '';
+      v_genSetList = '';
+      FOR r_col IN EXECUTE format(
+        ' SELECT attname, format_type(atttypid,atttypmod) AS format_type, %s AS attidentity, %s AS attgenerated'
+        ' FROM pg_catalog.pg_attribute'
+        ' WHERE attrelid = %s::regclass'
+        '   AND attnum > 0 AND NOT attisdropped'
+        ' ORDER BY attnum',
+        CASE WHEN emaj._pg_version_num() >= 100000 THEN 'attidentity' ELSE '''''::TEXT' END,
+        CASE WHEN emaj._pg_version_num() >= 120000 THEN 'attgenerated' ELSE '''''::TEXT' END,
+        quote_literal(v_fullTableName))
+      LOOP
+-- test if the column format (up to the parenthesis) belongs to the list of formats that do not require any quotation (like numeric
+-- data types)
+        IF regexp_replace(r_col.format_type,E'\\(.*$','') = ANY(v_unquotedType) THEN
+-- literal for this column can remain as is
+          IF r_col.attgenerated = '' THEN                                     -- GENERATED ALWAYS AS (expression) columns are not inserted
+            v_genValList = v_genValList || ''' || coalesce(o.' || quote_ident(r_col.attname) || '::TEXT,''NULL'') || '', ';
+          END IF;
+          IF r_col.attidentity <> 'a' AND r_col.attgenerated = '' THEN        -- GENERATED ALWAYS columns are not updated
+            v_genSetList = v_genSetList || quote_ident(replace(r_col.attname,'''','''''')) || ' = '' || coalesce(n.'
+                                        || quote_ident(r_col.attname) || ' ::TEXT,''NULL'') || '', ';
+          END IF;
+        ELSE
+-- literal for this column must be quoted
+          IF r_col.attgenerated = '' THEN                                     -- GENERATED ALWAYS AS (expression) columns are not inserted
+            v_genValList = v_genValList || ''' || quote_nullable(o.' || quote_ident(r_col.attname) || ') || '', ';
+          END IF;
+          IF r_col.attidentity <> 'a' AND r_col.attgenerated = '' THEN        -- GENERATED ALWAYS columns are not updated
+            v_genSetList = v_genSetList || quote_ident(replace(r_col.attname,'''','''''')) || ' = '' || quote_nullable(n.'
+                                        || quote_ident(r_col.attname) || ') || '', ';
+          END IF;
+        END IF;
+      END LOOP;
+-- suppress the final separators
+      v_genValList = substring(v_genValList FROM 1 FOR char_length(v_genValList) - 2);
+      v_genSetList = substring(v_genSetList FROM 1 FOR char_length(v_genSetList) - 2);
+    END IF;
+    RETURN;
+  END;
+$_build_sql_tbl$;
 
 CREATE OR REPLACE FUNCTION emaj._remove_tbl(v_schema TEXT, v_table TEXT, v_group TEXT, v_groupIsLogging BOOLEAN,
                                             v_timeId BIGINT, v_function TEXT)

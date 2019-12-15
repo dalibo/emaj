@@ -170,7 +170,27 @@ select * from emaj.emaj_logged_rollback_group('myGroup1','M4',false) order by 1,
 (2 rows)
 
 -----------------------------
--- Step 7 : for myGroup1, update tables, rename a mark, then delete 2 marks then delete all before a mark 
+-- Step 7 : for myGroup1, generate a sql script on the whole time frame
+-----------------------------
+select emaj.emaj_gen_sql_group('myGroup1','M1',NULL,'/dev/null',array['myschema1.mytbl1','myschema1.mytbl2','myschema1.mytbl4']);
+NOTICE:  table "emaj_temp_script" does not exist, skipping
+ emaj_gen_sql_group 
+--------------------
+                 36
+(1 row)
+
+select emaj.emaj_gen_sql_group('myGroup1','M1',NULL,'/dev/null',array['myschema1.myTbl3']);
+NOTICE:  table "emaj_temp_script" does not exist, skipping
+ERROR:  syntax error at or near "WHEN"
+LINE 1: ..._txid, CASE     WHEN o.emaj_verb = 'INS' THEN     WHEN o.ema...
+                                                             ^
+QUERY:  INSERT INTO emaj_temp_script SELECT o.emaj_gid, 0, o.emaj_txid, CASE     WHEN o.emaj_verb = 'INS' THEN     WHEN o.emaj_verb = 'UPD' AND o.emaj_tuple = 'OLD' THEN     WHEN o.emaj_verb = 'DEL' THEN     WHEN o.emaj_verb = 'TRU' THEN 'TRUNCATE myschema1."myTbl3";'  END   FROM emaj_myschema1."myTbl3_log_1" o       LEFT OUTER JOIN emaj_myschema1."myTbl3_log_1" n ON n.emaj_gid = o.emaj_gid                          AND (n.emaj_verb = 'UPD' AND n.emaj_tuple = 'NEW')  WHERE NOT (o.emaj_verb = 'UPD' AND o.emaj_tuple = 'NEW') AND o.emaj_gid > 0 AND o.emaj_gid <= 84
+CONTEXT:  PL/pgSQL function emaj._gen_sql_tbl(emaj.emaj_relation,bigint,bigint) line 48 at EXECUTE
+SQL statement "SELECT emaj._gen_sql_tbl(r_rel, v_firstEmajGid, v_lastEmajGid)"
+PL/pgSQL function emaj._gen_sql_groups(text[],boolean,text,text,text,text[]) line 163 at SQL statement
+PL/pgSQL function emaj.emaj_gen_sql_group(text,text,text,text,text[]) line 14 at RETURN
+-----------------------------
+-- Step 8 : for myGroup1, update tables, rename a mark, then delete 2 marks then delete all before a mark 
 -----------------------------
 set search_path=myschema1;
 --
@@ -203,7 +223,7 @@ select emaj.emaj_delete_before_mark_group('myGroup1','M4');
 (1 row)
 
 -----------------------------
--- Step 8 : for myGroup6, perform a table change and verify that no log trigger has been called
+-- Step 9 : for myGroup6, perform a table change and verify that no log trigger has been called
 --          and finaly drop the group
 -----------------------------
 insert into mySchema6.table_with_51_characters_long_name_____0_________0a values (1),(2);
@@ -537,6 +557,8 @@ select hist_function, hist_event, hist_object,
  ROLLBACK_GROUP           | NOTICE             | Rollback id 10                                                    | 2 / 4 tables effectively processed.                                                           | postgres
  ROLLBACK_GROUP           | NOTICE             | Rollback id 10                                                    | 1 sequences processed.                                                                        | postgres
  ROLLBACK_GROUP           | END                | myGroup1                                                          | Rollback_id 10, 2 tables and 1 sequences effectively processed                                | postgres
+ GEN_SQL_GROUP            | BEGIN              | myGroup1                                                          | From mark M1 to current situation with tables/sequences filtering                             | postgres
+ GEN_SQL_GROUP            | END                | myGroup1                                                          | 36 generated statements - script exported into /dev/null                                      | postgres
  RENAME_MARK_GROUP        | BEGIN              | myGroup1                                                          | RLBK_M4_%_START                                                                               | postgres
  RENAME_MARK_GROUP        | END                | myGroup1                                                          | RLBK_M4_%_START renamed Before logged rollback to M4                                          | postgres
  DELETE_MARK_GROUP        | BEGIN              | myGroup1                                                          | RLBK_M4_%_DONE                                                                                | postgres
@@ -568,7 +590,7 @@ select hist_function, hist_event, hist_object,
  DROP_GROUP               | BEGIN              | myGroup6                                                          |                                                                                               | postgres
  DROP_GROUP               | LOG_SCHEMA DROPPED | emaj_myschema6                                                    |                                                                                               | postgres
  DROP_GROUP               | END                | myGroup6                                                          | 3 tables/sequences processed                                                                  | postgres
-(265 rows)
+(267 rows)
 
 --
 reset role;

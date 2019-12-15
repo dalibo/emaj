@@ -60,20 +60,25 @@ insert into emaj.emaj_group_def values ('dummyGrp3','myschema2','mytbl2');
 -- invalid group names
 select emaj.emaj_create_group(NULL);
 select emaj.emaj_create_group('',false);
+
 -- group is unknown in emaj_group_def
 select emaj.emaj_create_group('unknownGroup');
 select emaj.emaj_create_group('unknownGroup',false);
+
 -- an emtpy group to create is known in emaj_group_def
 begin;
   select emaj.emaj_create_group('myGroup1',true,true);
 rollback;
+
 -- unknown schema or table in emaj_group_def
 select emaj.emaj_create_group('dummyGrp1');
+
 -- group with a partitionned table (in PG 10+) (abort for lack of PRIMARY KEY with prior PG versions)
 begin;
   insert into emaj.emaj_group_def values ('myGroup4','myschema4','mytblp');
   select emaj.emaj_create_group('myGroup4');
 rollback;
+
 -- group with a temp table
 begin;
   CREATE TEMPORARY TABLE myTempTbl (
@@ -85,24 +90,29 @@ begin;
       where relnamespace = pg_namespace.oid and relname = 'mytemptbl';
   select emaj.emaj_create_group('myGroup5');
 rollback;
+
 -- group with an unlogged table and a WITH OIDS table
 begin;
   select emaj.emaj_create_group('myGroup5',true);
 rollback;
+
 -- table without pkey for a rollbackable group
 select emaj.emaj_create_group('phil''s group#3",',true);
+
 -- sequence with tablespaces and priority defined in the emaj_group_def table
 begin;
   update emaj.emaj_group_def set grpdef_log_dat_tsp = 'something', grpdef_log_idx_tsp = 'something', grpdef_priority = 1
     where grpdef_group = 'myGroup1' and grpdef_schema = 'myschema1' and grpdef_tblseq = 'myTbl3_col31_seq';
   select emaj.emaj_create_group('myGroup1');
 rollback;
+
 -- table with invalid tablespaces
 begin;
   update emaj.emaj_group_def set grpdef_log_dat_tsp = 'dummyTablespace', grpdef_log_idx_tsp = 'dummyTablespace'
     where grpdef_group = 'myGroup1' and grpdef_schema = 'myschema1' and grpdef_tblseq = 'mytbl1';
   select emaj.emaj_create_group('myGroup1');
 rollback;
+
 -- already existing log schema
 begin;
   create schema emaj_myschema1;

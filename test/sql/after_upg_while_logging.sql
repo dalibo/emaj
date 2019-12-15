@@ -78,7 +78,13 @@ copy myTbl4 from stdin;
 select * from emaj.emaj_logged_rollback_group('myGroup1','M4',false) order by 1,2;
 
 -----------------------------
--- Step 7 : for myGroup1, update tables, rename a mark, then delete 2 marks then delete all before a mark 
+-- Step 7 : for myGroup1, generate a sql script on the whole time frame
+-----------------------------
+select emaj.emaj_gen_sql_group('myGroup1','M1',NULL,'/dev/null',array['myschema1.mytbl1','myschema1.mytbl2','myschema1.mytbl4']);
+select emaj.emaj_gen_sql_group('myGroup1','M1',NULL,'/dev/null',array['myschema1.myTbl3']);
+
+-----------------------------
+-- Step 8 : for myGroup1, update tables, rename a mark, then delete 2 marks then delete all before a mark 
 -----------------------------
 set search_path=myschema1;
 --
@@ -92,7 +98,7 @@ select emaj.emaj_delete_mark_group('myGroup1','M1');
 select emaj.emaj_delete_before_mark_group('myGroup1','M4');
 
 -----------------------------
--- Step 8 : for myGroup6, perform a table change and verify that no log trigger has been called
+-- Step 9 : for myGroup6, perform a table change and verify that no log trigger has been called
 --          and finaly drop the group
 -----------------------------
 insert into mySchema6.table_with_51_characters_long_name_____0_________0a values (1),(2);

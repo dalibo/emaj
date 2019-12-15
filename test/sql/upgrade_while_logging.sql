@@ -59,7 +59,7 @@ select * from "emaj_phil's schema3"."myTbl2\_log_seq";
 -- emaj tables and sequences
 
 -- technical tables
-select * from emaj.emaj_group_def order by 1,2,3;
+select * from emaj.emaj_relation where rel_kind = 'r';
 --   the next statement shouldn't return any row
 select * from emaj.emaj_relation where rel_kind = 'S' and rel_priority is not null;
 
