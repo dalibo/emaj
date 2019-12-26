@@ -19,6 +19,8 @@ E-Maj - Change log
     reset time or at delete oldest marks time.
   * When a table structure has changed, the sql script generation on a time
     range prior the structure change produced incorrect statements.
+  * It was not possible to generate a sql script for a subset of tables from
+    a tables group having some other tables without pkey.
 
 
 3.2.0 (2019-Oct-15)

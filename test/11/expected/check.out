@@ -105,9 +105,9 @@ select funcname, calls from pg_stat_user_functions
  _change_priority_tbl                      |    21
  _check_conf_groups                        |   120
  _check_fk_groups                          |   160
- _check_group_names                        |  1095
- _check_mark_name                          |   368
- _check_marks_range                        |   118
+ _check_group_names                        |  1094
+ _check_mark_name                          |   369
+ _check_marks_range                        |   119
  _check_new_mark                           |   386
  _cleanup_rollback_state                   |   355
  _create_log_schemas                       |   102
@@ -130,12 +130,12 @@ select funcname, calls from pg_stat_user_functions
  _emaj_group_def_change_fnct               |   315
  _enable_event_triggers                    |   339
  _estimate_rollback_groups                 |    13
- _event_trigger_sql_drop_fnct              |   140
+ _event_trigger_sql_drop_fnct              |   143
  _event_trigger_table_rewrite_fnct         |   119
  _export_sql_script                        |    46
  _gen_sql_groups                           |    27
  _gen_sql_seq                              |    41
- _gen_sql_tbl                              |    51
+ _gen_sql_tbl                              |    50
  _get_current_sequence_state               |  2799
  _get_default_tablespace                   |    18
  _get_previous_mark_group                  |    37

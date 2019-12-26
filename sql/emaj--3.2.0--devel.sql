@@ -2262,6 +2262,207 @@ $_reset_groups$
   END;
 $_reset_groups$;
 
+CREATE OR REPLACE FUNCTION emaj._gen_sql_groups(v_groupNames TEXT[], v_multiGroup BOOLEAN, v_firstMark TEXT, v_lastMark TEXT,
+                                                v_location TEXT, v_tblseqs TEXT[])
+RETURNS BIGINT LANGUAGE plpgsql
+SET DateStyle = 'ISO, YMD' AS
+$_gen_sql_groups$
+-- This function generates a SQL script representing all updates performed on a tables groups array between 2 marks
+-- or beetween a mark and the current situation. The result is stored into an external file.
+-- The function can process groups that are in LOGGING state or not.
+-- The sql statements are placed between a BEGIN TRANSACTION and a COMMIT statements.
+-- The output file can be reused as input file to a psql command to replay the updates scenario. Just '\\'
+-- character strings (double antislash), if any, must be replaced by '\' (single antislash) before feeding
+-- the psql command.
+-- Input: - tables groups array
+--        - start mark, NULL representing the first mark
+--        - end mark, NULL representing the current situation, and 'EMAJ_LAST_MARK' the last set mark for the group
+--        - absolute pathname describing the file that will hold the result
+--          (may be NULL if the caller reads the temporary table that will hold the script after the function execution)
+--        - optional array of schema qualified table and sequence names to only process those tables and sequences
+-- Output: number of generated SQL statements (non counting comments and transaction management)
+  DECLARE
+    v_firstMarkTimeId        BIGINT;
+    v_firstEmajGid           BIGINT;
+    v_lastMarkTimeId         BIGINT;
+    v_lastEmajGid            BIGINT;
+    v_tblseqErr              TEXT;
+    v_count                  INT;
+    v_nbSQL                  BIGINT;
+    v_nbSeq                  INT;
+    v_cumNbSQL               BIGINT = 0;
+    v_endComment             TEXT;
+    v_dateStyle              TEXT;
+    r_rel                    emaj.emaj_relation%ROWTYPE;
+  BEGIN
+-- insert begin in the history
+    INSERT INTO emaj.emaj_hist (hist_function, hist_event, hist_object, hist_wording)
+      VALUES (CASE WHEN v_multiGroup THEN 'GEN_SQL_GROUPS' ELSE 'GEN_SQL_GROUP' END, 'BEGIN', array_to_string(v_groupNames,','),
+       CASE WHEN v_firstMark IS NULL OR v_firstMark = '' THEN 'From initial mark' ELSE 'From mark ' || v_firstMark END ||
+       CASE WHEN v_lastMark IS NULL OR v_lastMark = '' THEN ' to current situation' ELSE ' to mark ' || v_lastMark END ||
+       CASE WHEN v_tblseqs IS NOT NULL THEN ' with tables/sequences filtering' ELSE '' END );
+-- check the group name
+    SELECT emaj._check_group_names(v_groupNames := v_groupNames, v_mayBeNull := v_multiGroup, v_lockGroups := FALSE, v_checkList := '')
+      INTO v_groupNames;
+-- if there is at least 1 group to process, go on
+    IF v_groupNames IS NOT NULL THEN
+-- check the marks range
+      SELECT * FROM emaj._check_marks_range(v_groupNames, v_firstMark, v_lastMark)
+        INTO v_firstMark, v_lastMark, v_firstMarkTimeId, v_lastMarkTimeId;
+-- if table/sequence names are supplied, check them
+      IF v_tblseqs IS NOT NULL THEN
+-- remove duplicates values, NULL and empty strings from the supplied tables/sequences names array
+        SELECT array_agg(DISTINCT table_seq_name) INTO v_tblseqs FROM unnest(v_tblseqs) AS table_seq_name
+          WHERE table_seq_name IS NOT NULL AND table_seq_name <> '';
+        IF v_tblseqs IS NULL THEN
+          RAISE EXCEPTION '_gen_sql_groups: The filtered table/sequence names array cannot be empty.';
+        END IF;
+      END IF;
+-- check the array of tables and sequences to filter, if supplied.
+-- each table/sequence of the filter must be known in emaj_relation and be owned by one of the supplied table groups
+      IF v_tblseqs IS NOT NULL THEN
+        SELECT string_agg(t,', ' ORDER BY t), count(*)
+          INTO v_tblseqErr, v_count FROM (
+            SELECT t FROM unnest(v_tblseqs) AS t
+              EXCEPT
+            SELECT rel_schema || '.' || rel_tblseq FROM emaj.emaj_relation
+              WHERE rel_time_range @> v_firstMarkTimeId AND rel_group = ANY (v_groupNames)  -- tables/sequences that belong to their group
+                                                                                            -- at the start mark time
+            ) AS t2;
+        IF v_tblseqErr IS NOT NULL THEN
+          RAISE EXCEPTION '_gen_sql_groups: % tables/sequences (%) did not belong to any of the selected tables groups at % mark time.',
+            v_count, v_tblseqErr, v_firstMark;
+        END IF;
+      END IF;
+-- check that all tables had pk at start mark time
+--   verifying the emaj_relation.rel_sql_gen_pk_conditions column
+      SELECT string_agg(rel_schema || '.' || rel_tblseq, ', ' ORDER BY rel_schema, rel_tblseq), count(*)
+        INTO v_tblseqErr, v_count FROM (
+          SELECT * FROM emaj.emaj_relation
+            WHERE rel_group = ANY (v_groupNames) AND rel_kind = 'r'                               -- tables belonging to the groups
+              AND rel_time_range @> v_firstMarkTimeId                                             --   at the first mark time
+              AND (v_tblseqs IS NULL OR rel_schema || '.' || rel_tblseq = ANY (v_tblseqs))        -- filtered or not by the user
+              AND rel_sql_gen_pk_conditions IS NULL                                               -- no pk at assignment time
+          ) as t;
+      IF v_tblseqErr IS NOT NULL THEN
+        RAISE EXCEPTION '_gen_sql_groups: % tables/sequences (%) had no pkey at % mark time.',
+          v_count, v_tblseqErr, v_firstMark;
+      END IF;
+-- create a temporary table to hold the generated script
+      DROP TABLE IF EXISTS emaj_temp_script CASCADE;
+      CREATE TEMP TABLE emaj_temp_script (
+        scr_emaj_gid           BIGINT,              -- the emaj_gid of the corresponding log row,
+                                                    --   0 for initial technical statements,
+                                                    --   NULL for final technical statements
+        scr_subid              INT,                 -- used to distinguish several generated sql per log row
+        scr_emaj_txid          BIGINT,              -- for future use, to insert commit statement at each txid change
+        scr_sql                TEXT                 -- the generated sql text
+      );
+      GRANT SELECT ON emaj_temp_script TO PUBLIC;
+-- test the supplied output file name by inserting a temporary line
+      IF v_location IS NOT NULL THEN
+        INSERT INTO emaj_temp_script SELECT 0, 1, 0, '-- SQL script generation in progress - started at ' || statement_timestamp();
+        BEGIN
+          PERFORM emaj._export_sql_script(v_location);
+        EXCEPTION
+          WHEN OTHERS THEN
+            RAISE EXCEPTION '_gen_sql_groups: The file "%" cannot be used as script output file.', v_location;
+        END;
+        DELETE FROM emaj_temp_script;
+      END IF;
+-- end of checks
+-- if there is no first mark for all groups, return quickly with a warning message
+      IF v_firstMark IS NULL THEN
+        RAISE WARNING '_gen_sql_groups: No mark exists for the group(s) "%".', array_to_string(v_groupNames,', ');
+        INSERT INTO emaj.emaj_hist (hist_function, hist_event, hist_object, hist_wording)
+          VALUES (CASE WHEN v_multiGroup THEN 'GEN_SQL_GROUPS' ELSE 'GEN_SQL_GROUP' END, 'END',
+                  array_to_string(v_groupNames,','), 'No mark in the group(s) => no file has been generated');
+        RETURN 0;
+      END IF;
+-- retrieve the global sequence value of the supplied first mark
+      SELECT time_last_emaj_gid INTO v_firstEmajGid
+        FROM emaj.emaj_time_stamp WHERE time_id = v_firstMarkTimeId;
+-- if last mark is NULL or empty, there is no timestamp to register
+      IF v_lastMark IS NULL OR v_lastMark = '' THEN
+        v_lastEmajGid = NULL;
+      ELSE
+-- else, retrieve the global sequence value of the supplied end mark
+        SELECT time_last_emaj_gid INTO v_lastEmajGid
+          FROM emaj.emaj_time_stamp WHERE time_id = v_lastMarkTimeId;
+      END IF;
+-- insert initial comments, define some session parameters:
+--    - the standard_conforming_strings option to properly handle special characters,
+--    - the DateStyle mode used at export time
+-- and a transaction start
+      IF v_lastMarkTimeId IS NOT NULL THEN
+        v_endComment = ' and mark ' || v_lastMark;
+      ELSE
+        v_endComment = ' and the current situation';
+      END IF;
+      INSERT INTO emaj_temp_script SELECT 0, 1, 0, '-- SQL script generated by E-Maj at ' || statement_timestamp();
+      INSERT INTO emaj_temp_script SELECT 0, 2, 0, '--    for tables group(s): ' || array_to_string(v_groupNames,',');
+      INSERT INTO emaj_temp_script SELECT 0, 3, 0, '--    processing logs between mark ' || v_firstMark || v_endComment;
+      IF v_tblseqs IS NOT NULL THEN
+        INSERT INTO emaj_temp_script SELECT 0, 4, 0, '--    only for the following tables/sequences: ' || array_to_string(v_tblseqs,',');
+      END IF;
+      SELECT setting INTO v_dateStyle FROM pg_settings WHERE name = 'DateStyle';
+      INSERT INTO emaj_temp_script SELECT 0, 10, 0, 'SET standard_conforming_strings = OFF;';
+      INSERT INTO emaj_temp_script SELECT 0, 11, 0, 'SET escape_string_warning = OFF;';
+      INSERT INTO emaj_temp_script SELECT 0, 12, 0, 'SET datestyle = ' || quote_literal(v_dateStyle) || ';';
+      INSERT INTO emaj_temp_script SELECT 0, 20, 0, 'BEGIN TRANSACTION;';
+-- process tables
+      FOR r_rel IN
+          SELECT * FROM emaj.emaj_relation
+            WHERE rel_group = ANY (v_groupNames) AND rel_kind = 'r'                               -- tables belonging to the groups
+              AND rel_time_range @> v_firstMarkTimeId                                             --   at the first mark time
+              AND (v_tblseqs IS NULL OR rel_schema || '.' || rel_tblseq = ANY (v_tblseqs))        -- filtered or not by the user
+              AND emaj._log_stat_tbl(emaj_relation, v_firstMarkTimeId,                            -- only tables having updates to process
+                                    least(v_lastMarkTimeId, upper(rel_time_range))) > 0
+            ORDER BY rel_priority, rel_schema, rel_tblseq
+      LOOP
+-- for each application table referenced in the emaj_relation table, process the related log table, by calling the _gen_sql_tbl() function
+        SELECT emaj._gen_sql_tbl(r_rel, v_firstEmajGid, v_lastEmajGid) INTO v_nbSQL;
+        v_cumNbSQL = v_cumNbSQL + v_nbSQL;
+      END LOOP;
+-- process sequences
+      v_nbSeq = 0;
+      FOR r_rel IN
+          SELECT * FROM emaj.emaj_relation
+            WHERE rel_group = ANY (v_groupNames) AND rel_kind = 'S'
+              AND rel_time_range @> v_firstMarkTimeId                                -- sequences belonging to the groups at the start mark
+              AND (v_tblseqs IS NULL OR rel_schema || '.' || rel_tblseq = ANY (v_tblseqs))         -- filtered or not by the user
+            ORDER BY rel_schema DESC, rel_tblseq DESC
+      LOOP
+-- process each sequence and increment the sequence counter
+        v_nbSeq = v_nbSeq + emaj._gen_sql_seq(r_rel, v_firstMarkTimeId, v_lastMarkTimeId, v_nbSeq);
+      END LOOP;
+-- add command to committhe transaction and reset the modified session parameters
+      INSERT INTO emaj_temp_script SELECT NULL, 1, txid_current(), 'COMMIT;';
+      INSERT INTO emaj_temp_script SELECT NULL, 10, txid_current(), 'RESET standard_conforming_strings;';
+      INSERT INTO emaj_temp_script SELECT NULL, 11, txid_current(), 'RESET escape_string_warning;';
+      INSERT INTO emaj_temp_script SELECT NULL, 11, txid_current(), 'RESET datestyle;';
+-- if an output file is supplied, write the SQL script on the external file and drop the temporary table
+      IF v_location IS NOT NULL THEN
+        PERFORM emaj._export_sql_script(v_location);
+        DROP TABLE IF EXISTS emaj_temp_script;
+      ELSE
+-- otherwise create a view to ease the generation script export
+        CREATE TEMPORARY VIEW emaj_sql_script AS
+          SELECT scr_sql FROM emaj_temp_script ORDER BY scr_emaj_gid NULLS LAST, scr_subid;
+        GRANT SELECT ON emaj_sql_script TO PUBLIC;
+      END IF;
+-- return the number of sql verbs generated into the output file
+      v_cumNbSQL = v_cumNbSQL + v_nbSeq;
+    END IF;
+-- insert end in the history and return
+    INSERT INTO emaj.emaj_hist (hist_function, hist_event, hist_object, hist_wording)
+      VALUES (CASE WHEN v_multiGroup THEN 'GEN_SQL_GROUPS' ELSE 'GEN_SQL_GROUP' END, 'END',
+              array_to_string(v_groupNames,','), v_cumNbSQL || ' generated statements' ||
+                CASE WHEN v_location IS NOT NULL THEN ' - script exported into ' || v_location ELSE ' - script not exported' END );
+    RETURN v_cumNbSQL;
+  END;
+$_gen_sql_groups$;
+
 CREATE OR REPLACE FUNCTION emaj._verify_all_groups()
 RETURNS SETOF TEXT LANGUAGE plpgsql AS
 $_verify_all_groups$

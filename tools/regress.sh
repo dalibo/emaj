@@ -425,7 +425,6 @@ for KEY in "${!EMAJ_REGTEST_MENU_ACTIONS[@]}"; do
         IFS="${oIFS}"
         ;;
       *) # RUNNING A SPECIFIC TEST FOR ONE PG VERSION
-echo `date +%T`
         ${EMAJ_REGTEST_MENU_ACTIONS[$KEY]}
         ;;
     esac

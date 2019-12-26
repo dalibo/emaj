@@ -173,7 +173,7 @@ select * from emaj.emaj_logged_rollback_group('myGroup1','M4',false) order by 1,
 select emaj.emaj_gen_sql_group('myGroup1','M1',NULL,'/dev/null',array['myschema1.mytbl1','myschema1.mytbl2','myschema1.mytbl4']);
 NOTICE:  table "emaj_temp_script" does not exist, skipping
 CONTEXT:  SQL statement "DROP TABLE IF EXISTS emaj_temp_script CASCADE"
-PL/pgSQL function emaj._gen_sql_groups(text[],boolean,text,text,text,text[]) line 110 at SQL statement
+PL/pgSQL function emaj._gen_sql_groups(text[],boolean,text,text,text,text[]) line 84 at SQL statement
 PL/pgSQL function emaj.emaj_gen_sql_group(text,text,text,text,text[]) line 14 at RETURN
  emaj_gen_sql_group 
 --------------------
@@ -181,18 +181,8 @@ PL/pgSQL function emaj.emaj_gen_sql_group(text,text,text,text,text[]) line 14 at
 (1 row)
 
 select emaj.emaj_gen_sql_group('myGroup1','M1',NULL,'/dev/null',array['myschema1.myTbl3']);
-NOTICE:  table "emaj_temp_script" does not exist, skipping
-CONTEXT:  SQL statement "DROP TABLE IF EXISTS emaj_temp_script CASCADE"
-PL/pgSQL function emaj._gen_sql_groups(text[],boolean,text,text,text,text[]) line 110 at SQL statement
-PL/pgSQL function emaj.emaj_gen_sql_group(text,text,text,text,text[]) line 14 at RETURN
-ERROR:  syntax error at or near "WHEN"
-LINE 1: ..._txid, CASE     WHEN o.emaj_verb = 'INS' THEN     WHEN o.ema...
-                                                             ^
-QUERY:  INSERT INTO emaj_temp_script SELECT o.emaj_gid, 0, o.emaj_txid, CASE     WHEN o.emaj_verb = 'INS' THEN     WHEN o.emaj_verb = 'UPD' AND o.emaj_tuple = 'OLD' THEN     WHEN o.emaj_verb = 'DEL' THEN     WHEN o.emaj_verb = 'TRU' THEN 'TRUNCATE myschema1."myTbl3";'  END   FROM emaj_myschema1."myTbl3_log_1" o       LEFT OUTER JOIN emaj_myschema1."myTbl3_log_1" n ON n.emaj_gid = o.emaj_gid                          AND (n.emaj_verb = 'UPD' AND n.emaj_tuple = 'NEW')  WHERE NOT (o.emaj_verb = 'UPD' AND o.emaj_tuple = 'NEW') AND o.emaj_gid > 0 AND o.emaj_gid <= 84
-CONTEXT:  PL/pgSQL function emaj._gen_sql_tbl(emaj.emaj_relation,bigint,bigint) line 48 at EXECUTE
-SQL statement "SELECT emaj._gen_sql_tbl(r_rel, v_firstEmajGid, v_lastEmajGid)"
-PL/pgSQL function emaj._gen_sql_groups(text[],boolean,text,text,text,text[]) line 163 at SQL statement
-PL/pgSQL function emaj.emaj_gen_sql_group(text,text,text,text,text[]) line 14 at RETURN
+ERROR:  _gen_sql_groups: 1 tables/sequences (myschema1.myTbl3) had no pkey at M1 mark time.
+CONTEXT:  PL/pgSQL function emaj.emaj_gen_sql_group(text,text,text,text,text[]) line 14 at RETURN
 -----------------------------
 -- Step 8 : for myGroup1, update tables, rename a mark, then delete 2 marks then delete all before a mark 
 -----------------------------

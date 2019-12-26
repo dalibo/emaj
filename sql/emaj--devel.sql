@@ -8912,13 +8912,12 @@ $_gen_sql_groups$
 --        - optional array of schema qualified table and sequence names to only process those tables and sequences
 -- Output: number of generated SQL statements (non counting comments and transaction management)
   DECLARE
-    v_tblList                TEXT;
-    v_count                  INT;
     v_firstMarkTimeId        BIGINT;
     v_firstEmajGid           BIGINT;
     v_lastMarkTimeId         BIGINT;
     v_lastEmajGid            BIGINT;
     v_tblseqErr              TEXT;
+    v_count                  INT;
     v_nbSQL                  BIGINT;
     v_nbSeq                  INT;
     v_cumNbSQL               BIGINT = 0;
@@ -8937,22 +8936,6 @@ $_gen_sql_groups$
       INTO v_groupNames;
 -- if there is at least 1 group to process, go on
     IF v_groupNames IS NOT NULL THEN
--- check that there is no tables without pkey
-      SELECT string_agg(rel_schema || '.' || rel_tblseq,', ' ORDER BY rel_schema || '.' || rel_tblseq), count(*) INTO v_tblList, v_count
-        FROM pg_catalog.pg_class, pg_catalog.pg_namespace, emaj.emaj_relation
-        WHERE relnamespace = pg_namespace.oid
-          AND nspname = rel_schema AND relname = rel_tblseq
-          AND rel_group = ANY (v_groupNames) AND rel_kind = 'r'
-          AND NOT EXISTS (SELECT 1 FROM pg_catalog.pg_class, pg_catalog.pg_namespace, pg_catalog.pg_constraint
-                            WHERE relnamespace = pg_namespace.oid AND connamespace = pg_namespace.oid AND conrelid = pg_class.oid
-                            AND contype = 'p' AND nspname = rel_schema AND relname = rel_tblseq);
-      IF v_count > 0 THEN
-        IF v_count = 1 THEN
-          RAISE EXCEPTION '_gen_sql_groups: % table of the group(s) has no pkey (%).', v_count, v_tblList;
-        ELSE
-          RAISE EXCEPTION '_gen_sql_groups: % tables of the group(s) have no pkey (%).', v_count, v_tblList;
-        END IF;
-      END IF;
 -- check the marks range
       SELECT * FROM emaj._check_marks_range(v_groupNames, v_firstMark, v_lastMark)
         INTO v_firstMark, v_lastMark, v_firstMarkTimeId, v_lastMarkTimeId;
@@ -8965,44 +8948,35 @@ $_gen_sql_groups$
           RAISE EXCEPTION '_gen_sql_groups: The filtered table/sequence names array cannot be empty.';
         END IF;
       END IF;
--- retrieve the global sequence value of the supplied first mark
-      SELECT time_last_emaj_gid INTO v_firstEmajGid
-        FROM emaj.emaj_time_stamp WHERE time_id = v_firstMarkTimeId;
--- if last mark is NULL or empty, there is no timestamp to register
-      IF v_lastMark IS NULL OR v_lastMark = '' THEN
-        v_lastEmajGid = NULL;
-      ELSE
--- else, retrieve the global sequence value of the supplied end mark
-        SELECT time_last_emaj_gid INTO v_lastEmajGid
-          FROM emaj.emaj_time_stamp WHERE time_id = v_lastMarkTimeId;
-      END IF;
 -- check the array of tables and sequences to filter, if supplied.
 -- each table/sequence of the filter must be known in emaj_relation and be owned by one of the supplied table groups
       IF v_tblseqs IS NOT NULL THEN
-        SELECT string_agg(t,', ' ORDER BY t), count(*) INTO v_tblseqErr, v_count FROM (
-          SELECT t FROM unnest(v_tblseqs) AS t
-            EXCEPT
-          SELECT rel_schema || '.' || rel_tblseq FROM emaj.emaj_relation
-            WHERE rel_time_range @> v_firstMarkTimeId AND rel_group = ANY (v_groupNames)    -- tables/sequences that belong to their group
+        SELECT string_agg(t,', ' ORDER BY t), count(*)
+          INTO v_tblseqErr, v_count FROM (
+            SELECT t FROM unnest(v_tblseqs) AS t
+              EXCEPT
+            SELECT rel_schema || '.' || rel_tblseq FROM emaj.emaj_relation
+              WHERE rel_time_range @> v_firstMarkTimeId AND rel_group = ANY (v_groupNames)  -- tables/sequences that belong to their group
                                                                                             -- at the start mark time
-          ) AS t2;
-        IF v_count > 0 THEN
-          IF v_count = 1 THEN
-            RAISE EXCEPTION '_gen_sql_groups: 1 table/sequence (%) did not belong to any of the selected tables groups at % mark time.',
-              v_tblseqErr, v_firstMark;
-          ELSE
-            RAISE EXCEPTION '_gen_sql_groups: % tables/sequences (%) did not belong to any of the selected tables groups at % mark time.',
-              v_count, v_tblseqErr, v_firstMark;
-          END IF;
+            ) AS t2;
+        IF v_tblseqErr IS NOT NULL THEN
+          RAISE EXCEPTION '_gen_sql_groups: % tables/sequences (%) did not belong to any of the selected tables groups at % mark time.',
+            v_count, v_tblseqErr, v_firstMark;
         END IF;
       END IF;
--- if there is no first mark for all groups, return quickly with a warning message
-      IF v_firstMark IS NULL THEN
-        RAISE WARNING '_gen_sql_groups: No mark exists for the group(s) "%".', array_to_string(v_groupNames,', ');
-        INSERT INTO emaj.emaj_hist (hist_function, hist_event, hist_object, hist_wording)
-          VALUES (CASE WHEN v_multiGroup THEN 'GEN_SQL_GROUPS' ELSE 'GEN_SQL_GROUP' END, 'END',
-                  array_to_string(v_groupNames,','), 'No mark in the group(s) => no file has been generated');
-        RETURN 0;
+-- check that all tables had pk at start mark time
+--   verifying the emaj_relation.rel_sql_gen_pk_conditions column
+      SELECT string_agg(rel_schema || '.' || rel_tblseq, ', ' ORDER BY rel_schema, rel_tblseq), count(*)
+        INTO v_tblseqErr, v_count FROM (
+          SELECT * FROM emaj.emaj_relation
+            WHERE rel_group = ANY (v_groupNames) AND rel_kind = 'r'                               -- tables belonging to the groups
+              AND rel_time_range @> v_firstMarkTimeId                                             --   at the first mark time
+              AND (v_tblseqs IS NULL OR rel_schema || '.' || rel_tblseq = ANY (v_tblseqs))        -- filtered or not by the user
+              AND rel_sql_gen_pk_conditions IS NULL                                               -- no pk at assignment time
+          ) as t;
+      IF v_tblseqErr IS NOT NULL THEN
+        RAISE EXCEPTION '_gen_sql_groups: % tables/sequences (%) had no pkey at % mark time.',
+          v_count, v_tblseqErr, v_firstMark;
       END IF;
 -- create a temporary table to hold the generated script
       DROP TABLE IF EXISTS emaj_temp_script CASCADE;
@@ -9027,6 +9001,25 @@ $_gen_sql_groups$
         DELETE FROM emaj_temp_script;
       END IF;
 -- end of checks
+-- if there is no first mark for all groups, return quickly with a warning message
+      IF v_firstMark IS NULL THEN
+        RAISE WARNING '_gen_sql_groups: No mark exists for the group(s) "%".', array_to_string(v_groupNames,', ');
+        INSERT INTO emaj.emaj_hist (hist_function, hist_event, hist_object, hist_wording)
+          VALUES (CASE WHEN v_multiGroup THEN 'GEN_SQL_GROUPS' ELSE 'GEN_SQL_GROUP' END, 'END',
+                  array_to_string(v_groupNames,','), 'No mark in the group(s) => no file has been generated');
+        RETURN 0;
+      END IF;
+-- retrieve the global sequence value of the supplied first mark
+      SELECT time_last_emaj_gid INTO v_firstEmajGid
+        FROM emaj.emaj_time_stamp WHERE time_id = v_firstMarkTimeId;
+-- if last mark is NULL or empty, there is no timestamp to register
+      IF v_lastMark IS NULL OR v_lastMark = '' THEN
+        v_lastEmajGid = NULL;
+      ELSE
+-- else, retrieve the global sequence value of the supplied end mark
+        SELECT time_last_emaj_gid INTO v_lastEmajGid
+          FROM emaj.emaj_time_stamp WHERE time_id = v_lastMarkTimeId;
+      END IF;
 -- insert initial comments, define some session parameters:
 --    - the standard_conforming_strings option to properly handle special characters,
 --    - the DateStyle mode used at export time
