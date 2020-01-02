@@ -42,9 +42,8 @@ Exemple de requête SQL permettant de spécifier une durée de rétention des li
 
    INSERT INTO emaj.emaj_param (param_key, param_value_interval) VALUES ('history_retention','3 months'::interval);
 
-Il est également possible de gérer la valeur des paramètres par des outils graphiques tels que *PgAdmin* ou *phpPgAdmin*.
+Toute modification de la table *emaj_param* est tracée dans la table :ref:`emaj_hist<emaj_hist>`.
 
 Seuls les super-utilisateurs et les utilisateurs ayant acquis les droits *emaj_adm* ont accès à la table *emaj_param*.
 
 Les utilisateurs ayant acquis les droits *emaj_viewer* n'ont accès qu'à une partie de la table *emaj_param*. au travers de la vue *emaj.emaj_visible_param*. Cette vue masque simplement le contenu réel de la colonne *param_value_text* pour la clé *'dblink_user_password'*.
-

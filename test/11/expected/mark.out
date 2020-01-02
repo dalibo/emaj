@@ -1234,134 +1234,136 @@ select time_id, time_last_emaj_gid, time_event from emaj.emaj_time_stamp where t
 
 select hist_id, hist_function, hist_event, regexp_replace(hist_object,E'\\d\\d\.\\d\\d\\.\\d\\d\\.\\d\\d\\d\\d','%','g'), regexp_replace(regexp_replace(hist_wording,E'\\d\\d\.\\d\\d\\.\\d\\d\\.\\d\\d\\d\\d','%','g'),E'\\[.+\\]','(timestamp)','g'), hist_user from 
   (select * from emaj.emaj_hist order by hist_id) as t;
- hist_id |      hist_function       | hist_event |  regexp_replace   |                 regexp_replace                  | hist_user 
----------+--------------------------+------------+-------------------+-------------------------------------------------+-----------
-    2033 | SET_MARK_GROUP           | BEGIN      | emptyGroup        |                                                 | postgres
-    2034 | LOCK_GROUP               | BEGIN      | emptyGroup        |                                                 | postgres
-    2035 | LOCK_GROUP               | END        | emptyGroup        | 0 tables locked, 0 deadlock(s)                  | postgres
-    2036 | SET_MARK_GROUP           | END        | emptyGroup        | SM1                                             | postgres
-    2038 | SET_MARK_GROUP           | BEGIN      | myGroup1          |                                                 | postgres
-    2039 | LOCK_GROUP               | BEGIN      | myGroup1          |                                                 | postgres
-    2040 | LOCK_GROUP               | END        | myGroup1          | 5 tables locked, 0 deadlock(s)                  | postgres
-    2041 | SET_MARK_GROUP           | END        | myGroup1          | MARK_%                                          | postgres
-    2042 | SET_MARK_GROUP           | BEGIN      | myGroup2          |                                                 | postgres
-    2043 | LOCK_GROUP               | BEGIN      | myGroup2          |                                                 | postgres
-    2044 | LOCK_GROUP               | END        | myGroup2          | 6 tables locked, 0 deadlock(s)                  | postgres
-    2045 | SET_MARK_GROUP           | END        | myGroup2          | MARK_%                                          | postgres
-    2046 | SET_MARK_GROUP           | BEGIN      | myGroup2          |                                                 | postgres
-    2047 | LOCK_GROUP               | BEGIN      | myGroup2          |                                                 | postgres
-    2048 | LOCK_GROUP               | END        | myGroup2          | 6 tables locked, 0 deadlock(s)                  | postgres
-    2049 | SET_MARK_GROUP           | END        | myGroup2          | MARK_%                                          | postgres
-    2050 | SET_MARK_GROUP           | BEGIN      | myGroup1          |                                                 | postgres
-    2051 | LOCK_GROUP               | BEGIN      | myGroup1          |                                                 | postgres
-    2052 | LOCK_GROUP               | END        | myGroup1          | 5 tables locked, 0 deadlock(s)                  | postgres
-    2053 | SET_MARK_GROUP           | END        | myGroup1          | Foo%Bar                                         | postgres
-    2054 | SET_MARK_GROUPS          | BEGIN      |                   |                                                 | postgres
-    2055 | SET_MARK_GROUPS          | END        |                   |                                                 | postgres
-    2058 | SET_MARK_GROUPS          | BEGIN      | myGroup1,myGroup2 | SM3                                             | postgres
-    2059 | LOCK_GROUPS              | BEGIN      | myGroup1,myGroup2 |                                                 | postgres
-    2060 | LOCK_GROUPS              | END        | myGroup1,myGroup2 | 11 tables locked, 0 deadlock(s)                 | postgres
-    2061 | SET_MARK_GROUPS          | END        | myGroup1,myGroup2 | SM3                                             | postgres
-    2063 | SET_MARK_GROUPS          | BEGIN      | myGroup1,myGroup2 |                                                 | postgres
-    2064 | LOCK_GROUPS              | BEGIN      | myGroup1,myGroup2 |                                                 | postgres
-    2065 | LOCK_GROUPS              | END        | myGroup1,myGroup2 | 11 tables locked, 0 deadlock(s)                 | postgres
-    2066 | SET_MARK_GROUPS          | END        | myGroup1,myGroup2 |                                                 | postgres
-    2067 | SET_MARK_GROUPS          | BEGIN      | myGroup1,myGroup2 |                                                 | postgres
-    2068 | LOCK_GROUPS              | BEGIN      | myGroup1,myGroup2 |                                                 | postgres
-    2069 | LOCK_GROUPS              | END        | myGroup1,myGroup2 | 11 tables locked, 0 deadlock(s)                 | postgres
-    2070 | SET_MARK_GROUPS          | END        | myGroup1,myGroup2 |                                                 | postgres
-    2071 | SET_MARK_GROUPS          | BEGIN      | myGroup1,myGroup2 |                                                 | postgres
-    2072 | LOCK_GROUPS              | BEGIN      | myGroup1,myGroup2 |                                                 | postgres
-    2073 | LOCK_GROUPS              | END        | myGroup1,myGroup2 | 11 tables locked, 0 deadlock(s)                 | postgres
-    2074 | SET_MARK_GROUPS          | END        | myGroup1,myGroup2 |                                                 | postgres
-    2075 | SET_MARK_GROUPS          | BEGIN      | myGroup1,myGroup2 | Bar%Foo                                         | postgres
-    2076 | LOCK_GROUPS              | BEGIN      | myGroup1,myGroup2 |                                                 | postgres
-    2077 | LOCK_GROUPS              | END        | myGroup1,myGroup2 | 11 tables locked, 0 deadlock(s)                 | postgres
-    2078 | SET_MARK_GROUPS          | END        | myGroup1,myGroup2 | Bar%Foo                                         | postgres
-    2079 | COMMENT_MARK_GROUP       |            | myGroup1          | Mark SM1                                        | postgres
-    2080 | COMMENT_MARK_GROUP       |            | myGroup1          | Mark SM1                                        | postgres
-    2081 | COMMENT_MARK_GROUP       |            | myGroup2          | Mark SM1                                        | postgres
-    2082 | COMMENT_MARK_GROUP       |            | myGroup2          | Mark SM1                                        | postgres
-    2083 | COMMENT_MARK_GROUP       |            | myGroup2          | Mark Bar%Foo                                    | postgres
-    2084 | COMMENT_MARK_GROUP       |            | myGroup2          | Mark phil's mark #1                             | postgres
-    2085 | COMMENT_MARK_GROUP       |            | emptyGroup        | Mark SM1                                        | postgres
-    2091 | RENAME_MARK_GROUP        | BEGIN      | myGroup1          | EMAJ_LAST_MARK                                  | postgres
-    2092 | RENAME_MARK_GROUP        | END        | myGroup1          | Bar%Foo renamed MARK_%                          | postgres
-    2093 | RENAME_MARK_GROUP        | BEGIN      | myGroup1          | EMAJ_LAST_MARK                                  | postgres
-    2094 | RENAME_MARK_GROUP        | END        | myGroup1          | MARK_% renamed SM2                              | postgres
-    2095 | RENAME_MARK_GROUP        | BEGIN      | myGroup2          | EMAJ_LAST_MARK                                  | postgres
-    2096 | RENAME_MARK_GROUP        | END        | myGroup2          | Bar%Foo renamed SM2                             | postgres
-    2097 | RENAME_MARK_GROUP        | BEGIN      | myGroup2          | phil's mark #1                                  | postgres
-    2098 | RENAME_MARK_GROUP        | END        | myGroup2          | phil's mark #1 renamed john's mark #1           | postgres
-    2099 | RENAME_MARK_GROUP        | BEGIN      | emptyGroup        | EMAJ_LAST_MARK                                  | postgres
-    2100 | RENAME_MARK_GROUP        | END        | emptyGroup        | SM1 renamed SM2                                 | postgres
-    2101 | RENAME_MARK_GROUP        | BEGIN      | myGroup1          | Mark1                                           | postgres
-    2102 | RENAME_MARK_GROUP        | END        | myGroup1          | Mark1 renamed First Mark                        | postgres
-    2107 | DELETE_MARK_GROUP        | BEGIN      | myGroup1          | EMAJ_LAST_MARK                                  | postgres
-    2108 | DELETE_MARK_GROUP        | END        | myGroup1          | SM2                                             | postgres
-    2109 | DELETE_MARK_GROUP        | BEGIN      | myGroup1          | SM1                                             | postgres
-    2110 | DELETE_MARK_GROUP        | END        | myGroup1          | SM1                                             | postgres
-    2111 | DELETE_MARK_GROUP        | BEGIN      | emptyGroup        | MarkInit                                        | postgres
-    2112 | DELETE_MARK_GROUP        | END        | emptyGroup        | MarkInit                                        | postgres
-    2113 | DELETE_MARK_GROUP        | BEGIN      | myGroup1          | First Mark                                      | postgres
-    2114 | DELETE_MARK_GROUP        | END        | myGroup1          | First Mark                                      | postgres
-    2115 | DELETE_MARK_GROUP        | BEGIN      | myGroup1          | MARK_%                                          | postgres
-    2116 | DELETE_MARK_GROUP        | END        | myGroup1          | MARK_%                                          | postgres
-    2117 | DELETE_MARK_GROUP        | BEGIN      | myGroup1          | Foo%Bar                                         | postgres
-    2118 | DELETE_MARK_GROUP        | END        | myGroup1          | Foo%Bar                                         | postgres
-    2119 | DELETE_MARK_GROUP        | BEGIN      | myGroup1          | MARK_%                                          | postgres
-    2120 | DELETE_MARK_GROUP        | END        | myGroup1          | MARK_%                                          | postgres
-    2121 | DELETE_MARK_GROUP        | BEGIN      | myGroup1          | MARK_%                                          | postgres
-    2122 | DELETE_MARK_GROUP        | END        | myGroup1          | MARK_%                                          | postgres
-    2123 | DELETE_MARK_GROUP        | BEGIN      | myGroup1          | MARK_%                                          | postgres
-    2124 | DELETE_MARK_GROUP        | END        | myGroup1          | MARK_%                                          | postgres
-    2125 | DELETE_MARK_GROUP        | BEGIN      | myGroup2          | john's mark #1                                  | postgres
-    2126 | DELETE_MARK_GROUP        | END        | myGroup2          | john's mark #1                                  | postgres
-    2131 | DELETE_BEFORE_MARK_GROUP | BEGIN      | myGroup2          |                                                 | postgres
-    2132 | DELETE_BEFORE_MARK_GROUP | BEGIN      | myGroup1          | SM3                                             | postgres
-    2133 | DELETE_BEFORE_MARK_GROUP | END        | myGroup1          | 0 marks deleted ; SM3 is now the initial mark   | postgres
-    2134 | DELETE_BEFORE_MARK_GROUP | BEGIN      | myGroup1          | EMAJ_LAST_MARK                                  | postgres
-    2135 | DELETE_BEFORE_MARK_GROUP | END        | myGroup1          | 0 marks deleted ; SM3 is now the initial mark   | postgres
-    2136 | SET_MARK_GROUP           | BEGIN      | emptyGroup        |                                                 | postgres
-    2137 | LOCK_GROUP               | BEGIN      | emptyGroup        |                                                 | postgres
-    2138 | LOCK_GROUP               | END        | emptyGroup        | 0 tables locked, 0 deadlock(s)                  | postgres
-    2139 | SET_MARK_GROUP           | END        | emptyGroup        | EGM3                                            | postgres
-    2140 | SET_MARK_GROUP           | BEGIN      | emptyGroup        |                                                 | postgres
-    2141 | LOCK_GROUP               | BEGIN      | emptyGroup        |                                                 | postgres
-    2142 | LOCK_GROUP               | END        | emptyGroup        | 0 tables locked, 0 deadlock(s)                  | postgres
-    2143 | SET_MARK_GROUP           | END        | emptyGroup        | EGM4                                            | postgres
-    2144 | DELETE_BEFORE_MARK_GROUP | BEGIN      | emptyGroup        | SM2                                             | postgres
-    2145 | DELETE_BEFORE_MARK_GROUP | END        | emptyGroup        | 0 marks deleted ; SM2 is now the initial mark   | postgres
-    2146 | DELETE_BEFORE_MARK_GROUP | BEGIN      | myGroup2          | SM2                                             | postgres
-    2147 | DELETE_BEFORE_MARK_GROUP | END        | myGroup2          | 8 marks deleted ; SM2 is now the initial mark   | postgres
-    2148 | SET_MARK_GROUP           | BEGIN      | phil's group#3",  |                                                 | postgres
-    2149 | LOCK_GROUP               | BEGIN      | phil's group#3",  |                                                 | postgres
-    2150 | LOCK_GROUP               | END        | phil's group#3",  | 2 tables locked, 0 deadlock(s)                  | postgres
-    2151 | SET_MARK_GROUP           | END        | phil's group#3",  | Mark4                                           | postgres
-    2152 | DELETE_BEFORE_MARK_GROUP | BEGIN      | phil's group#3",  | Mark4                                           | postgres
-    2153 | PURGE_HISTORY            |            |                   | 210 emaj_hist rows deleted                      | postgres
-    2154 | DELETE_BEFORE_MARK_GROUP | END        | phil's group#3",  | 1 marks deleted ; Mark4 is now the initial mark | postgres
-    2155 | PROTECT_MARK_GROUP       |            | myGroup1          | Mark SM3 ; status 1                             | postgres
-    2156 | PROTECT_MARK_GROUP       |            | emptyGroup        | Mark EGM4 ; status 1                            | postgres
-    2157 | PROTECT_MARK_GROUP       |            | myGroup1          | Mark SM3 ; status 0                             | postgres
-    2158 | UNPROTECT_MARK_GROUP     |            | myGroup1          | Mark SM3 ; status 1                             | postgres
-    2159 | UNPROTECT_MARK_GROUP     |            | emptyGroup        | Mark EGM4 ; status 1                            | postgres
-    2160 | UNPROTECT_MARK_GROUP     |            | myGroup1          | Mark SM3 ; status 0                             | postgres
-    2161 | PROTECT_MARK_GROUP       |            | myGroup1          | Mark SM3 ; status 1                             | postgres
-    2162 | STOP_GROUP               | BEGIN      | myGroup1          |                                                 | postgres
-    2163 | LOCK_GROUP               | BEGIN      | myGroup1          |                                                 | postgres
-    2164 | LOCK_GROUP               | END        | myGroup1          | 5 tables locked, 0 deadlock(s)                  | postgres
-    2165 | SET_MARK_GROUP           | BEGIN      | myGroup1          | STOP_%                                          | postgres
-    2166 | SET_MARK_GROUP           | END        | myGroup1          | STOP_%                                          | postgres
-    2167 | STOP_GROUP               | END        | myGroup1          | 7 tables/sequences processed                    | postgres
-    2168 | STOP_GROUP               | BEGIN      | myGroup2          |                                                 | postgres
-    2169 | LOCK_GROUP               | BEGIN      | myGroup2          |                                                 | postgres
-    2170 | LOCK_GROUP               | END        | myGroup2          | 6 tables locked, 0 deadlock(s)                  | postgres
-    2171 | SET_MARK_GROUP           | BEGIN      | myGroup2          | STOP_%                                          | postgres
-    2172 | SET_MARK_GROUP           | END        | myGroup2          | STOP_%                                          | postgres
-    2173 | STOP_GROUP               | END        | myGroup2          | 8 tables/sequences processed                    | postgres
-    2176 | RENAME_MARK_GROUP        | BEGIN      | myGroup1          | EMAJ_LAST_MARK                                  | postgres
-    2177 | RENAME_MARK_GROUP        | END        | myGroup1          | STOP_% renamed RENAMED                          | postgres
-    2178 | UNPROTECT_MARK_GROUP     |            | myGroup1          | Mark RENAMED ; status 0                         | postgres
-(127 rows)
+ hist_id |      hist_function       |     hist_event     |  regexp_replace   |                 regexp_replace                  | hist_user 
+---------+--------------------------+--------------------+-------------------+-------------------------------------------------+-----------
+    2033 | SET_MARK_GROUP           | BEGIN              | emptyGroup        |                                                 | postgres
+    2034 | LOCK_GROUP               | BEGIN              | emptyGroup        |                                                 | postgres
+    2035 | LOCK_GROUP               | END                | emptyGroup        | 0 tables locked, 0 deadlock(s)                  | postgres
+    2036 | SET_MARK_GROUP           | END                | emptyGroup        | SM1                                             | postgres
+    2038 | SET_MARK_GROUP           | BEGIN              | myGroup1          |                                                 | postgres
+    2039 | LOCK_GROUP               | BEGIN              | myGroup1          |                                                 | postgres
+    2040 | LOCK_GROUP               | END                | myGroup1          | 5 tables locked, 0 deadlock(s)                  | postgres
+    2041 | SET_MARK_GROUP           | END                | myGroup1          | MARK_%                                          | postgres
+    2042 | SET_MARK_GROUP           | BEGIN              | myGroup2          |                                                 | postgres
+    2043 | LOCK_GROUP               | BEGIN              | myGroup2          |                                                 | postgres
+    2044 | LOCK_GROUP               | END                | myGroup2          | 6 tables locked, 0 deadlock(s)                  | postgres
+    2045 | SET_MARK_GROUP           | END                | myGroup2          | MARK_%                                          | postgres
+    2046 | SET_MARK_GROUP           | BEGIN              | myGroup2          |                                                 | postgres
+    2047 | LOCK_GROUP               | BEGIN              | myGroup2          |                                                 | postgres
+    2048 | LOCK_GROUP               | END                | myGroup2          | 6 tables locked, 0 deadlock(s)                  | postgres
+    2049 | SET_MARK_GROUP           | END                | myGroup2          | MARK_%                                          | postgres
+    2050 | SET_MARK_GROUP           | BEGIN              | myGroup1          |                                                 | postgres
+    2051 | LOCK_GROUP               | BEGIN              | myGroup1          |                                                 | postgres
+    2052 | LOCK_GROUP               | END                | myGroup1          | 5 tables locked, 0 deadlock(s)                  | postgres
+    2053 | SET_MARK_GROUP           | END                | myGroup1          | Foo%Bar                                         | postgres
+    2054 | SET_MARK_GROUPS          | BEGIN              |                   |                                                 | postgres
+    2055 | SET_MARK_GROUPS          | END                |                   |                                                 | postgres
+    2058 | SET_MARK_GROUPS          | BEGIN              | myGroup1,myGroup2 | SM3                                             | postgres
+    2059 | LOCK_GROUPS              | BEGIN              | myGroup1,myGroup2 |                                                 | postgres
+    2060 | LOCK_GROUPS              | END                | myGroup1,myGroup2 | 11 tables locked, 0 deadlock(s)                 | postgres
+    2061 | SET_MARK_GROUPS          | END                | myGroup1,myGroup2 | SM3                                             | postgres
+    2063 | SET_MARK_GROUPS          | BEGIN              | myGroup1,myGroup2 |                                                 | postgres
+    2064 | LOCK_GROUPS              | BEGIN              | myGroup1,myGroup2 |                                                 | postgres
+    2065 | LOCK_GROUPS              | END                | myGroup1,myGroup2 | 11 tables locked, 0 deadlock(s)                 | postgres
+    2066 | SET_MARK_GROUPS          | END                | myGroup1,myGroup2 |                                                 | postgres
+    2067 | SET_MARK_GROUPS          | BEGIN              | myGroup1,myGroup2 |                                                 | postgres
+    2068 | LOCK_GROUPS              | BEGIN              | myGroup1,myGroup2 |                                                 | postgres
+    2069 | LOCK_GROUPS              | END                | myGroup1,myGroup2 | 11 tables locked, 0 deadlock(s)                 | postgres
+    2070 | SET_MARK_GROUPS          | END                | myGroup1,myGroup2 |                                                 | postgres
+    2071 | SET_MARK_GROUPS          | BEGIN              | myGroup1,myGroup2 |                                                 | postgres
+    2072 | LOCK_GROUPS              | BEGIN              | myGroup1,myGroup2 |                                                 | postgres
+    2073 | LOCK_GROUPS              | END                | myGroup1,myGroup2 | 11 tables locked, 0 deadlock(s)                 | postgres
+    2074 | SET_MARK_GROUPS          | END                | myGroup1,myGroup2 |                                                 | postgres
+    2075 | SET_MARK_GROUPS          | BEGIN              | myGroup1,myGroup2 | Bar%Foo                                         | postgres
+    2076 | LOCK_GROUPS              | BEGIN              | myGroup1,myGroup2 |                                                 | postgres
+    2077 | LOCK_GROUPS              | END                | myGroup1,myGroup2 | 11 tables locked, 0 deadlock(s)                 | postgres
+    2078 | SET_MARK_GROUPS          | END                | myGroup1,myGroup2 | Bar%Foo                                         | postgres
+    2079 | COMMENT_MARK_GROUP       |                    | myGroup1          | Mark SM1                                        | postgres
+    2080 | COMMENT_MARK_GROUP       |                    | myGroup1          | Mark SM1                                        | postgres
+    2081 | COMMENT_MARK_GROUP       |                    | myGroup2          | Mark SM1                                        | postgres
+    2082 | COMMENT_MARK_GROUP       |                    | myGroup2          | Mark SM1                                        | postgres
+    2083 | COMMENT_MARK_GROUP       |                    | myGroup2          | Mark Bar%Foo                                    | postgres
+    2084 | COMMENT_MARK_GROUP       |                    | myGroup2          | Mark phil's mark #1                             | postgres
+    2085 | COMMENT_MARK_GROUP       |                    | emptyGroup        | Mark SM1                                        | postgres
+    2091 | RENAME_MARK_GROUP        | BEGIN              | myGroup1          | EMAJ_LAST_MARK                                  | postgres
+    2092 | RENAME_MARK_GROUP        | END                | myGroup1          | Bar%Foo renamed MARK_%                          | postgres
+    2093 | RENAME_MARK_GROUP        | BEGIN              | myGroup1          | EMAJ_LAST_MARK                                  | postgres
+    2094 | RENAME_MARK_GROUP        | END                | myGroup1          | MARK_% renamed SM2                              | postgres
+    2095 | RENAME_MARK_GROUP        | BEGIN              | myGroup2          | EMAJ_LAST_MARK                                  | postgres
+    2096 | RENAME_MARK_GROUP        | END                | myGroup2          | Bar%Foo renamed SM2                             | postgres
+    2097 | RENAME_MARK_GROUP        | BEGIN              | myGroup2          | phil's mark #1                                  | postgres
+    2098 | RENAME_MARK_GROUP        | END                | myGroup2          | phil's mark #1 renamed john's mark #1           | postgres
+    2099 | RENAME_MARK_GROUP        | BEGIN              | emptyGroup        | EMAJ_LAST_MARK                                  | postgres
+    2100 | RENAME_MARK_GROUP        | END                | emptyGroup        | SM1 renamed SM2                                 | postgres
+    2101 | RENAME_MARK_GROUP        | BEGIN              | myGroup1          | Mark1                                           | postgres
+    2102 | RENAME_MARK_GROUP        | END                | myGroup1          | Mark1 renamed First Mark                        | postgres
+    2107 | DELETE_MARK_GROUP        | BEGIN              | myGroup1          | EMAJ_LAST_MARK                                  | postgres
+    2108 | DELETE_MARK_GROUP        | END                | myGroup1          | SM2                                             | postgres
+    2109 | DELETE_MARK_GROUP        | BEGIN              | myGroup1          | SM1                                             | postgres
+    2110 | DELETE_MARK_GROUP        | END                | myGroup1          | SM1                                             | postgres
+    2111 | DELETE_MARK_GROUP        | BEGIN              | emptyGroup        | MarkInit                                        | postgres
+    2112 | DELETE_MARK_GROUP        | END                | emptyGroup        | MarkInit                                        | postgres
+    2113 | DELETE_MARK_GROUP        | BEGIN              | myGroup1          | First Mark                                      | postgres
+    2114 | DELETE_MARK_GROUP        | END                | myGroup1          | First Mark                                      | postgres
+    2115 | DELETE_MARK_GROUP        | BEGIN              | myGroup1          | MARK_%                                          | postgres
+    2116 | DELETE_MARK_GROUP        | END                | myGroup1          | MARK_%                                          | postgres
+    2117 | DELETE_MARK_GROUP        | BEGIN              | myGroup1          | Foo%Bar                                         | postgres
+    2118 | DELETE_MARK_GROUP        | END                | myGroup1          | Foo%Bar                                         | postgres
+    2119 | DELETE_MARK_GROUP        | BEGIN              | myGroup1          | MARK_%                                          | postgres
+    2120 | DELETE_MARK_GROUP        | END                | myGroup1          | MARK_%                                          | postgres
+    2121 | DELETE_MARK_GROUP        | BEGIN              | myGroup1          | MARK_%                                          | postgres
+    2122 | DELETE_MARK_GROUP        | END                | myGroup1          | MARK_%                                          | postgres
+    2123 | DELETE_MARK_GROUP        | BEGIN              | myGroup1          | MARK_%                                          | postgres
+    2124 | DELETE_MARK_GROUP        | END                | myGroup1          | MARK_%                                          | postgres
+    2125 | DELETE_MARK_GROUP        | BEGIN              | myGroup2          | john's mark #1                                  | postgres
+    2126 | DELETE_MARK_GROUP        | END                | myGroup2          | john's mark #1                                  | postgres
+    2131 | DELETE_BEFORE_MARK_GROUP | BEGIN              | myGroup2          |                                                 | postgres
+    2132 | DELETE_BEFORE_MARK_GROUP | BEGIN              | myGroup1          | SM3                                             | postgres
+    2133 | DELETE_BEFORE_MARK_GROUP | END                | myGroup1          | 0 marks deleted ; SM3 is now the initial mark   | postgres
+    2134 | DELETE_BEFORE_MARK_GROUP | BEGIN              | myGroup1          | EMAJ_LAST_MARK                                  | postgres
+    2135 | DELETE_BEFORE_MARK_GROUP | END                | myGroup1          | 0 marks deleted ; SM3 is now the initial mark   | postgres
+    2136 | SET_MARK_GROUP           | BEGIN              | emptyGroup        |                                                 | postgres
+    2137 | LOCK_GROUP               | BEGIN              | emptyGroup        |                                                 | postgres
+    2138 | LOCK_GROUP               | END                | emptyGroup        | 0 tables locked, 0 deadlock(s)                  | postgres
+    2139 | SET_MARK_GROUP           | END                | emptyGroup        | EGM3                                            | postgres
+    2140 | SET_MARK_GROUP           | BEGIN              | emptyGroup        |                                                 | postgres
+    2141 | LOCK_GROUP               | BEGIN              | emptyGroup        |                                                 | postgres
+    2142 | LOCK_GROUP               | END                | emptyGroup        | 0 tables locked, 0 deadlock(s)                  | postgres
+    2143 | SET_MARK_GROUP           | END                | emptyGroup        | EGM4                                            | postgres
+    2144 | DELETE_BEFORE_MARK_GROUP | BEGIN              | emptyGroup        | SM2                                             | postgres
+    2145 | DELETE_BEFORE_MARK_GROUP | END                | emptyGroup        | 0 marks deleted ; SM2 is now the initial mark   | postgres
+    2146 | DELETE_BEFORE_MARK_GROUP | BEGIN              | myGroup2          | SM2                                             | postgres
+    2147 | DELETE_BEFORE_MARK_GROUP | END                | myGroup2          | 8 marks deleted ; SM2 is now the initial mark   | postgres
+    2148 |                          | INSERTED PARAMETER | history_retention | @ 0                                             | postgres
+    2149 | SET_MARK_GROUP           | BEGIN              | phil's group#3",  |                                                 | postgres
+    2150 | LOCK_GROUP               | BEGIN              | phil's group#3",  |                                                 | postgres
+    2151 | LOCK_GROUP               | END                | phil's group#3",  | 2 tables locked, 0 deadlock(s)                  | postgres
+    2152 | SET_MARK_GROUP           | END                | phil's group#3",  | Mark4                                           | postgres
+    2153 | DELETE_BEFORE_MARK_GROUP | BEGIN              | phil's group#3",  | Mark4                                           | postgres
+    2154 | PURGE_HISTORY            |                    |                   | 211 emaj_hist rows deleted                      | postgres
+    2155 | DELETE_BEFORE_MARK_GROUP | END                | phil's group#3",  | 1 marks deleted ; Mark4 is now the initial mark | postgres
+    2156 |                          | DELETED PARAMETER  | history_retention |                                                 | postgres
+    2157 | PROTECT_MARK_GROUP       |                    | myGroup1          | Mark SM3 ; status 1                             | postgres
+    2158 | PROTECT_MARK_GROUP       |                    | emptyGroup        | Mark EGM4 ; status 1                            | postgres
+    2159 | PROTECT_MARK_GROUP       |                    | myGroup1          | Mark SM3 ; status 0                             | postgres
+    2160 | UNPROTECT_MARK_GROUP     |                    | myGroup1          | Mark SM3 ; status 1                             | postgres
+    2161 | UNPROTECT_MARK_GROUP     |                    | emptyGroup        | Mark EGM4 ; status 1                            | postgres
+    2162 | UNPROTECT_MARK_GROUP     |                    | myGroup1          | Mark SM3 ; status 0                             | postgres
+    2163 | PROTECT_MARK_GROUP       |                    | myGroup1          | Mark SM3 ; status 1                             | postgres
+    2164 | STOP_GROUP               | BEGIN              | myGroup1          |                                                 | postgres
+    2165 | LOCK_GROUP               | BEGIN              | myGroup1          |                                                 | postgres
+    2166 | LOCK_GROUP               | END                | myGroup1          | 5 tables locked, 0 deadlock(s)                  | postgres
+    2167 | SET_MARK_GROUP           | BEGIN              | myGroup1          | STOP_%                                          | postgres
+    2168 | SET_MARK_GROUP           | END                | myGroup1          | STOP_%                                          | postgres
+    2169 | STOP_GROUP               | END                | myGroup1          | 7 tables/sequences processed                    | postgres
+    2170 | STOP_GROUP               | BEGIN              | myGroup2          |                                                 | postgres
+    2171 | LOCK_GROUP               | BEGIN              | myGroup2          |                                                 | postgres
+    2172 | LOCK_GROUP               | END                | myGroup2          | 6 tables locked, 0 deadlock(s)                  | postgres
+    2173 | SET_MARK_GROUP           | BEGIN              | myGroup2          | STOP_%                                          | postgres
+    2174 | SET_MARK_GROUP           | END                | myGroup2          | STOP_%                                          | postgres
+    2175 | STOP_GROUP               | END                | myGroup2          | 8 tables/sequences processed                    | postgres
+    2178 | RENAME_MARK_GROUP        | BEGIN              | myGroup1          | EMAJ_LAST_MARK                                  | postgres
+    2179 | RENAME_MARK_GROUP        | END                | myGroup1          | STOP_% renamed RENAMED                          | postgres
+    2180 | UNPROTECT_MARK_GROUP     |                    | myGroup1          | Mark RENAMED ; status 0                         | postgres
+(129 rows)
 

@@ -7,6 +7,7 @@ E-Maj - Change log
     columns which related tables are not in the same tables group.
   * The emaj_verify_all() function now warns about tables linked by foreign
     keys and that are not all in the same table group.
+  * Protect and trace the changes in the emaj_param table.
 
 ###Bug fixes:###
   * For tables having columns defined as GENERATED ALWAYS AS IDENTITY (pg10+)

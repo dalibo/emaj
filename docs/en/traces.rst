@@ -152,6 +152,8 @@ The *hist_event* column can take the following values:
 +==============================+=========================================================+
 | BEGIN                        |                                                         |
 +------------------------------+---------------------------------------------------------+
+| DELETED PARAMETER            | parameter deleted from *emaj_param*                     |
++------------------------------+---------------------------------------------------------+
 | EMAJ_GROUP_DEF SYNCHRONIZED  | tables group synchronized in the *emaj_group_def* table |
 +------------------------------+---------------------------------------------------------+
 | END                          |                                                         |
@@ -159,6 +161,8 @@ The *hist_event* column can take the following values:
 | EVENT TRIGGERS DISABLED      |                                                         |
 +------------------------------+---------------------------------------------------------+
 | EVENT TRIGGERS ENABLED       |                                                         |
++------------------------------+---------------------------------------------------------+
+| INSERTED PARAMETER           | parameter inserted into *emaj_param*                    |
 +------------------------------+---------------------------------------------------------+
 | LOG DATA TABLESPACE CHANGED  | tablespace for the log table modified                   |
 +------------------------------+---------------------------------------------------------+
@@ -187,6 +191,8 @@ The *hist_event* column can take the following values:
 | TABLE MOVED                  | table moved from one group to another                   |
 +------------------------------+---------------------------------------------------------+
 | TABLE REMOVED                | table removed from a logging tables group               |
++------------------------------+---------------------------------------------------------+
+| UPDATED PARAMETER            | parameter updated in *emaj_param*                       |
 +------------------------------+---------------------------------------------------------+
 | WARNING                      | warning message issued by a rollback                    |
 +------------------------------+---------------------------------------------------------+

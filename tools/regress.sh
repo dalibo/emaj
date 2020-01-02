@@ -121,8 +121,9 @@ migrat_test()
     return 1
   fi
   echo "Dump the regression database from ${1} (using pg_dump ${2})"
-  ${newPGBIN}/pg_dump -p ${oldPGPORT} -U ${oldPGUSER} regression -f ${EMAJ_DIR}/test/${1}/results/regression.dump
+  ${newPGBIN}/pg_dump -p ${oldPGPORT} -U ${oldPGUSER} regression --schema-only -f ${EMAJ_DIR}/test/${1}/results/regression_schema.dump
   if [ $? -eq 0 ]; then
+    ${newPGBIN}/pg_dump -p ${oldPGPORT} -U ${oldPGUSER} regression --data-only --disable-triggers -f ${EMAJ_DIR}/test/${1}/results/regression_data.dump
     echo "Reload the ${2} regression database from the ${1} dump"
     ${newPGBIN}/dropdb -p ${newPGPORT} -U ${newPGUSER} regression
     ${newPGBIN}/createdb -p ${newPGPORT} -U ${newPGUSER} regression
@@ -130,7 +131,8 @@ migrat_test()
       mkdir "${EMAJ_DIR}/test/${2}/results"
     fi
     echo "  --> check the db restore"
-    ${newPGBIN}/psql -p ${newPGPORT} -U ${newPGUSER} regression <${EMAJ_DIR}/test/${1}/results/regression.dump >${EMAJ_DIR}/test/${2}/results/restore.out 2>&1
+    ${newPGBIN}/psql -p ${newPGPORT} -U ${newPGUSER} regression <${EMAJ_DIR}/test/${1}/results/regression_schema.dump >${EMAJ_DIR}/test/${2}/results/restore.out 2>&1
+    ${newPGBIN}/psql -p ${newPGPORT} -U ${newPGUSER} regression <${EMAJ_DIR}/test/${1}/results/regression_data.dump >>${EMAJ_DIR}/test/${2}/results/restore.out 2>&1
     diff ${EMAJ_DIR}/test/${2}/expected/restore.out ${EMAJ_DIR}/test/${2}/results/restore.out
     echo "  --> use the restored db and check" 
     ${newPGBIN}/psql -p ${newPGPORT} -U ${newPGUSER} -a regression <${EMAJ_DIR}/test/${1}/sql/after_restore.sql >${EMAJ_DIR}/test/${2}/results/after_restore.out 2>&1

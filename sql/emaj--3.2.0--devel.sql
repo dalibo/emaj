@@ -322,6 +322,56 @@ SELECT pg_catalog.pg_extension_config_dump('emaj_relation','');
 
 ------------------------------------
 --                                --
+-- emaj triggers                  --
+--                                --
+------------------------------------
+-- Triggers for changes and truncate on the emaj_param table.
+
+CREATE OR REPLACE FUNCTION emaj._emaj_param_change_fnct()
+RETURNS TRIGGER LANGUAGE plpgsql AS
+$_emaj_param_change_fnct$
+  BEGIN
+    IF (TG_OP = 'DELETE' AND OLD.param_key = 'emaj_version') OR
+       ((TG_OP = 'UPDATE' OR TG_OP = 'INSERT') AND NEW.param_key = 'emaj_version') THEN
+      RAISE EXCEPTION '_emaj_param_change_fnct: modifying the emaj_version key is not allowed.';
+    END IF;
+    IF TG_OP = 'DELETE' THEN
+      INSERT INTO emaj.emaj_hist (hist_function, hist_event, hist_object)
+        VALUES ('', 'DELETED PARAMETER', OLD.param_key);
+      RETURN OLD;
+    ELSIF TG_OP = 'UPDATE' THEN
+      INSERT INTO emaj.emaj_hist (hist_function, hist_event, hist_object, hist_wording)
+        VALUES ('', 'UPDATED PARAMETER', NEW.param_key,
+                CASE WHEN NEW.param_key = 'dblink_user_password' THEN '<masked data>'
+                     ELSE coalesce(NEW.param_value_text, NEW.param_value_numeric::TEXT,
+                          NEW.param_value_boolean::TEXT, NEW.param_value_interval::TEXT)
+                END);
+      RETURN NEW;
+    ELSIF TG_OP = 'INSERT' THEN
+      INSERT INTO emaj.emaj_hist (hist_function, hist_event, hist_object, hist_wording)
+        VALUES ('', 'INSERTED PARAMETER', NEW.param_key,
+                CASE WHEN NEW.param_key = 'dblink_user_password' THEN '<masked data>'
+                     ELSE coalesce(NEW.param_value_text, NEW.param_value_numeric::TEXT,
+                          NEW.param_value_boolean::TEXT, NEW.param_value_interval::TEXT)
+                END);
+      RETURN NEW;
+    ELSIF TG_OP = 'TRUNCATE' THEN
+      RAISE EXCEPTION '_emaj_param_change_fnct: TRUNCATE the emaj_param table is not allowed.';
+    END IF;
+    RETURN NULL;
+  END;
+$_emaj_param_change_fnct$;
+
+CREATE TRIGGER emaj_param_change_trg
+  AFTER INSERT OR UPDATE OR DELETE  ON emaj.emaj_param
+  FOR EACH ROW EXECUTE PROCEDURE emaj._emaj_param_change_fnct();
+
+CREATE TRIGGER emaj_param_truncate_trg
+  BEFORE TRUNCATE ON emaj.emaj_param
+  FOR EACH STATEMENT EXECUTE PROCEDURE emaj._emaj_param_change_fnct();
+
+------------------------------------
+--                                --
 -- emaj functions                 --
 --                                --
 ------------------------------------
@@ -337,6 +387,69 @@ DROP FUNCTION IF EXISTS emaj._create_log_trigger(V_FULLTABLENAME TEXT,V_LOGTABLE
 ------------------------------------------------------------------
 -- create new or modified functions                             --
 ------------------------------------------------------------------
+CREATE OR REPLACE FUNCTION emaj._emaj_group_def_change_fnct()
+RETURNS TRIGGER LANGUAGE plpgsql AS
+$_emaj_group_def_change_fnct$
+-- This function is associated to the emaj_emaj_group_def_change_trg trigger set on the emaj_group_def table.
+-- It sets the group_has_waiting_changes boolean column of the emaj_group table to TRUE when a change is recorded into the emaj_group_def
+--   table.
+-- If the group doesn't exists (yet), the update statements will silently not update any row
+  BEGIN
+    IF TG_OP = 'DELETE' THEN
+      UPDATE emaj.emaj_group SET group_has_waiting_changes = TRUE
+        WHERE group_name = OLD.grpdef_group;
+      RETURN OLD;
+    ELSIF TG_OP = 'UPDATE' THEN
+      UPDATE emaj.emaj_group SET group_has_waiting_changes = TRUE
+        WHERE group_name = OLD.grpdef_group OR group_name = NEW.grpdef_group;
+      RETURN NEW;
+    ELSIF TG_OP = 'INSERT' THEN
+      UPDATE emaj.emaj_group SET group_has_waiting_changes = TRUE
+        WHERE group_name = NEW.grpdef_group;
+      RETURN NEW;
+    ELSIF TG_OP = 'TRUNCATE' THEN
+      UPDATE emaj.emaj_group SET group_has_waiting_changes = TRUE;
+      RETURN NULL;
+    END IF;
+    RETURN NULL;
+  END;
+$_emaj_group_def_change_fnct$;
+
+CREATE OR REPLACE FUNCTION emaj._emaj_param_change_fnct()
+RETURNS TRIGGER LANGUAGE plpgsql AS
+$_emaj_param_change_fnct$
+  BEGIN
+    IF (TG_OP = 'DELETE' AND OLD.param_key = 'emaj_version') OR
+       ((TG_OP = 'UPDATE' OR TG_OP = 'INSERT') AND NEW.param_key = 'emaj_version') THEN
+      RAISE EXCEPTION '_emaj_param_change_fnct: modifying the emaj_version key is not allowed.';
+    END IF;
+    IF TG_OP = 'DELETE' THEN
+      INSERT INTO emaj.emaj_hist (hist_function, hist_event, hist_object)
+        VALUES ('', 'DELETED PARAMETER', OLD.param_key);
+      RETURN OLD;
+    ELSIF TG_OP = 'UPDATE' THEN
+      INSERT INTO emaj.emaj_hist (hist_function, hist_event, hist_object, hist_wording)
+        VALUES ('', 'UPDATED PARAMETER', NEW.param_key,
+                CASE WHEN NEW.param_key = 'dblink_user_password' THEN '<masked data>'
+                     ELSE coalesce(NEW.param_value_text, NEW.param_value_numeric::TEXT,
+                          NEW.param_value_boolean::TEXT, NEW.param_value_interval::TEXT)
+                END);
+      RETURN NEW;
+    ELSIF TG_OP = 'INSERT' THEN
+      INSERT INTO emaj.emaj_hist (hist_function, hist_event, hist_object, hist_wording)
+        VALUES ('', 'INSERTED PARAMETER', NEW.param_key,
+                CASE WHEN NEW.param_key = 'dblink_user_password' THEN '<masked data>'
+                     ELSE coalesce(NEW.param_value_text, NEW.param_value_numeric::TEXT,
+                          NEW.param_value_boolean::TEXT, NEW.param_value_interval::TEXT)
+                END);
+      RETURN NEW;
+    ELSIF TG_OP = 'TRUNCATE' THEN
+      RAISE EXCEPTION '_emaj_param_change_fnct: TRUNCATE the emaj_param table is not allowed.';
+    END IF;
+    RETURN NULL;
+  END;
+$_emaj_param_change_fnct$;
+
 CREATE OR REPLACE FUNCTION emaj._assign_tables(v_schema TEXT, v_tables TEXT[], v_group TEXT, v_properties JSONB, v_mark TEXT,
                                                v_multiTable BOOLEAN, v_arrayFromRegex BOOLEAN)
 RETURNS INTEGER LANGUAGE plpgsql
@@ -3122,7 +3235,9 @@ INSERT INTO pg_catalog.pg_description (objoid, classoid, objsubid, description)
        );
 
 -- update the version id in the emaj_param table
+ALTER TABLE emaj.emaj_param DISABLE TRIGGER emaj_param_change_trg;
 UPDATE emaj.emaj_param SET param_value_text = '<devel>' WHERE param_key = 'emaj_version';
+ALTER TABLE emaj.emaj_param ENABLE TRIGGER emaj_param_change_trg;
 
 -- insert the upgrade end record in the operation history
 INSERT INTO emaj.emaj_hist (hist_function, hist_event, hist_object, hist_wording)

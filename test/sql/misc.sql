@@ -572,6 +572,12 @@ cluster emaj_myschema1.mytbl1_log;
 vacuum full emaj_myschema1.mytbl1_log;
 
 -----------------------------
+-- try forbiden actions on emaj_param
+-----------------------------
+truncate emaj.emaj_param;
+delete from emaj.emaj_param where param_key = 'emaj_version';
+
+-----------------------------
 -- test end: check, reset history and force sequences id
 -----------------------------
 select hist_id, hist_function, hist_event, hist_object, regexp_replace(regexp_replace(hist_wording,E'\\d\\d\.\\d\\d\\.\\d\\d\\.\\d\\d\\d\\d','%','g'),E'\\[.+\\]','(timestamp)','g'), hist_user from 

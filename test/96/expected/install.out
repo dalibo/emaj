@@ -358,6 +358,9 @@ primary key, btree, for table "emaj.emaj_mark"
  param_value_interval | interval | 
 Indexes:
     "emaj_param_pkey" PRIMARY KEY, btree (param_key)
+Triggers:
+    emaj_param_change_trg AFTER INSERT OR DELETE OR UPDATE ON emaj.emaj_param FOR EACH ROW EXECUTE PROCEDURE emaj._emaj_param_change_fnct()
+    emaj_param_truncate_trg BEFORE TRUNCATE ON emaj.emaj_param FOR EACH STATEMENT EXECUTE PROCEDURE emaj._emaj_param_change_fnct()
 
  Index "emaj.emaj_param_pkey"
   Column   | Type | Definition 

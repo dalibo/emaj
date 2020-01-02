@@ -42,7 +42,7 @@ Below is an example of a SQL statement that defines a retention delay of history
 
    INSERT INTO emaj.emaj_param (param_key, param_value_interval) VALUES ('history_retention','3 months'::interval);
 
-It is also possible to manage parameter values using any graphic tool such as *PgAdmin* or *phpPgAdmin*.
+Any change in the *emaj-param* table’s content is logged into the :ref:`emaj_hist<emaj_hist>` table.
 
 Only *superuser* and roles having *emaj_adm* rights can access the *emaj_param* table.
 

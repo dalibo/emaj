@@ -212,179 +212,6 @@ ALTER TABLE
 ALTER TABLE
 ALTER TABLE
 ALTER TABLE
-COPY 487
-COPY 60
-COPY 3
-COPY 37
-COPY 120
-COPY 1
-COPY 16
-COPY 3
-COPY 15
-COPY 28
-COPY 57
-COPY 2
-COPY 15
-COPY 80
-COPY 416
-COPY 43
-COPY 329
-COPY 12
-COPY 122
-COPY 45
-COPY 2
-COPY 0
-COPY 0
-COPY 4
-COPY 60
-COPY 64
-COPY 16
-COPY 12
-COPY 12
-COPY 70
-COPY 5
-COPY 20
-COPY 3
-COPY 3
-COPY 0
-COPY 10
-COPY 10
-COPY 2
-COPY 2
-COPY 1
-COPY 6
-COPY 101
-COPY 1
-COPY 0
-COPY 0
-COPY 0
-COPY 6
-COPY 0
-COPY 5
-COPY 2
-COPY 2
-COPY 0
-COPY 0
-COPY 0
-COPY 0
-COPY 6
-COPY 8
-COPY 19
- setval 
---------
- 101010
-(1 row)
-
- setval 
---------
-  20321
-(1 row)
-
- setval 
---------
-  20202
-(1 row)
-
- setval 
---------
-  20205
-(1 row)
-
- setval 
---------
-    115
-(1 row)
-
- setval 
---------
-    284
-(1 row)
-
- setval 
---------
-     36
-(1 row)
-
- setval 
---------
-     61
-(1 row)
-
- setval 
---------
-     23
-(1 row)
-
- setval 
---------
-     70
-(1 row)
-
- setval 
---------
-     81
-(1 row)
-
- setval 
---------
-     20
-(1 row)
-
- setval 
---------
-     22
-(1 row)
-
- setval 
---------
-     21
-(1 row)
-
- setval 
---------
-    101
-(1 row)
-
- setval 
---------
-     21
-(1 row)
-
- setval 
---------
-      6
-(1 row)
-
- setval 
---------
-     20
-(1 row)
-
- setval 
---------
-   1004
-(1 row)
-
- setval 
---------
-      3
-(1 row)
-
- setval 
---------
-      8
-(1 row)
-
- setval 
---------
-      6
-(1 row)
-
- setval 
---------
-   1003
-(1 row)
-
 ALTER TABLE
 ALTER TABLE
 ALTER TABLE
@@ -728,3 +555,307 @@ GRANT
 REVOKE
 REVOKE
 GRANT
+SET
+SET
+SET
+SET
+SET
+ set_config 
+------------
+ 
+(1 row)
+
+SET
+SET
+SET
+SET
+SET
+ALTER TABLE
+COPY 487
+ALTER TABLE
+ALTER TABLE
+COPY 60
+ALTER TABLE
+ALTER TABLE
+COPY 3
+ALTER TABLE
+ALTER TABLE
+COPY 37
+ALTER TABLE
+ALTER TABLE
+COPY 122
+ALTER TABLE
+ALTER TABLE
+COPY 1
+ALTER TABLE
+ALTER TABLE
+COPY 16
+ALTER TABLE
+ALTER TABLE
+COPY 3
+ALTER TABLE
+ALTER TABLE
+COPY 15
+ALTER TABLE
+ALTER TABLE
+COPY 28
+ALTER TABLE
+ALTER TABLE
+COPY 57
+ALTER TABLE
+ALTER TABLE
+COPY 2
+ALTER TABLE
+ALTER TABLE
+COPY 15
+ALTER TABLE
+ALTER TABLE
+COPY 80
+ALTER TABLE
+ALTER TABLE
+COPY 416
+ALTER TABLE
+ALTER TABLE
+COPY 43
+ALTER TABLE
+ALTER TABLE
+COPY 329
+ALTER TABLE
+ALTER TABLE
+COPY 12
+ALTER TABLE
+ALTER TABLE
+COPY 122
+ALTER TABLE
+ALTER TABLE
+COPY 45
+ALTER TABLE
+ALTER TABLE
+COPY 2
+ALTER TABLE
+ALTER TABLE
+COPY 0
+ALTER TABLE
+ALTER TABLE
+COPY 0
+ALTER TABLE
+ALTER TABLE
+COPY 4
+ALTER TABLE
+ALTER TABLE
+COPY 60
+ALTER TABLE
+ALTER TABLE
+COPY 64
+ALTER TABLE
+ALTER TABLE
+COPY 16
+ALTER TABLE
+ALTER TABLE
+COPY 12
+ALTER TABLE
+ALTER TABLE
+COPY 12
+ALTER TABLE
+ALTER TABLE
+COPY 70
+ALTER TABLE
+ALTER TABLE
+COPY 5
+ALTER TABLE
+ALTER TABLE
+COPY 20
+ALTER TABLE
+ALTER TABLE
+COPY 3
+ALTER TABLE
+ALTER TABLE
+COPY 3
+ALTER TABLE
+ALTER TABLE
+COPY 0
+ALTER TABLE
+ALTER TABLE
+COPY 10
+ALTER TABLE
+ALTER TABLE
+COPY 10
+ALTER TABLE
+ALTER TABLE
+COPY 2
+ALTER TABLE
+ALTER TABLE
+COPY 2
+ALTER TABLE
+ALTER TABLE
+COPY 1
+ALTER TABLE
+ALTER TABLE
+COPY 101
+ALTER TABLE
+ALTER TABLE
+COPY 6
+ALTER TABLE
+ALTER TABLE
+COPY 1
+ALTER TABLE
+ALTER TABLE
+COPY 0
+ALTER TABLE
+ALTER TABLE
+COPY 0
+ALTER TABLE
+ALTER TABLE
+COPY 0
+ALTER TABLE
+ALTER TABLE
+COPY 6
+ALTER TABLE
+ALTER TABLE
+COPY 0
+ALTER TABLE
+ALTER TABLE
+COPY 5
+ALTER TABLE
+ALTER TABLE
+COPY 2
+ALTER TABLE
+ALTER TABLE
+COPY 2
+ALTER TABLE
+ALTER TABLE
+COPY 0
+ALTER TABLE
+ALTER TABLE
+COPY 0
+ALTER TABLE
+ALTER TABLE
+COPY 0
+ALTER TABLE
+ALTER TABLE
+COPY 0
+ALTER TABLE
+ALTER TABLE
+COPY 19
+ALTER TABLE
+ALTER TABLE
+COPY 8
+ALTER TABLE
+ALTER TABLE
+COPY 6
+ALTER TABLE
+ setval 
+--------
+ 101010
+(1 row)
+
+ setval 
+--------
+  20323
+(1 row)
+
+ setval 
+--------
+  20202
+(1 row)
+
+ setval 
+--------
+  20205
+(1 row)
+
+ setval 
+--------
+    115
+(1 row)
+
+ setval 
+--------
+    284
+(1 row)
+
+ setval 
+--------
+     36
+(1 row)
+
+ setval 
+--------
+     61
+(1 row)
+
+ setval 
+--------
+     23
+(1 row)
+
+ setval 
+--------
+     70
+(1 row)
+
+ setval 
+--------
+     81
+(1 row)
+
+ setval 
+--------
+     20
+(1 row)
+
+ setval 
+--------
+     22
+(1 row)
+
+ setval 
+--------
+     21
+(1 row)
+
+ setval 
+--------
+    101
+(1 row)
+
+ setval 
+--------
+     21
+(1 row)
+
+ setval 
+--------
+      6
+(1 row)
+
+ setval 
+--------
+     20
+(1 row)
+
+ setval 
+--------
+   1004
+(1 row)
+
+ setval 
+--------
+      3
+(1 row)
+
+ setval 
+--------
+      8
+(1 row)
+
+ setval 
+--------
+      6
+(1 row)
+
+ setval 
+--------
+   1003
+(1 row)
+

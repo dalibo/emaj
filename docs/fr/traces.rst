@@ -152,6 +152,8 @@ La colonne *hist_event* peut prendre les valeurs suivantes.
 +==============================+====================================================+
 | BEGIN                        | début                                              |
 +------------------------------+----------------------------------------------------+
+| DELETED PARAMETER            | paramètre supprimé dans *emaj_param*               |
++------------------------------+----------------------------------------------------+
 | EMAJ_GROUP_DEF SYNCHRONIZED  | groupe de tables synchronisé dans *emaj_group_def* |
 +------------------------------+----------------------------------------------------+
 | END                          | fin                                                |
@@ -159,6 +161,8 @@ La colonne *hist_event* peut prendre les valeurs suivantes.
 | EVENT TRIGGERS DISABLED      | triggers sur événements désactivés                 |
 +------------------------------+----------------------------------------------------+
 | EVENT TRIGGERS ENABLED       | triggers sur événements activés                    |
++------------------------------+----------------------------------------------------+
+| INSERTED PARAMETER           | paramètre inséré dans *emaj_param*                 |
 +------------------------------+----------------------------------------------------+
 | LOG DATA TABLESPACE CHANGED  | tablespace pour la table de log modifié            |
 +------------------------------+----------------------------------------------------+
@@ -185,6 +189,8 @@ La colonne *hist_event* peut prendre les valeurs suivantes.
 | TABLE MOVED                  | table déplacée d’un groupe à un autre              |
 +------------------------------+----------------------------------------------------+
 | TABLE REMOVED                | table supprimée d’un groupe de tables actif        |
++------------------------------+----------------------------------------------------+
+| UPDATED PARAMETER            | paramètre modifié dans *emaj_param*                |
 +------------------------------+----------------------------------------------------+
 | WARNING                      | message d’avertissement issu d’un rollback         |
 +------------------------------+----------------------------------------------------+
