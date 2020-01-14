@@ -2,6 +2,10 @@
 --            Follows adm1.sql, and includes more specific test cases
 --
 set role emaj_regression_tests_adm_user;
+
+-- before going on, save and reload parameters
+select emaj.emaj_import_parameters_configuration(emaj.emaj_export_parameters_configuration());
+
 -----------------------------
 -- Step 8 : use of multi-group functions, start_group(s) without log reset and use deleted marks
 -----------------------------

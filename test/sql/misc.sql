@@ -578,6 +578,45 @@ truncate emaj.emaj_param;
 delete from emaj.emaj_param where param_key = 'emaj_version';
 
 -----------------------------
+-- test parameters export and import functions
+-----------------------------
+-- direct export
+--   ok
+select json_array_length(emaj.emaj_export_parameters_configuration()->'parameters');
+
+-- export in file
+--   error
+select emaj.emaj_export_parameters_configuration('/tmp/dummy/location/file');
+--   ok
+select emaj.emaj_export_parameters_configuration('/tmp/orig_param_config');
+\! wc -l /tmp/orig_param_config
+
+-- direct import
+--   error
+select emaj.emaj_import_parameters_configuration('{ "dummy_json": null }'::json);
+--   ok
+select emaj.emaj_import_parameters_configuration('{ "parameters": [ { "key": "history_retention", "value": "1 day"} ] }'::json);
+select json_array_length(emaj.emaj_export_parameters_configuration()->'parameters');
+
+-- import from file
+--   error
+select emaj.emaj_import_parameters_configuration('/tmp/dummy/location/file');
+\! echo 'not a json content' >/tmp/bad_param_config
+select emaj.emaj_import_parameters_configuration('/tmp/bad_param_config');
+\! echo '{ "dummy_json": null }' >/tmp/bad_param_config
+select emaj.emaj_import_parameters_configuration('/tmp/bad_param_config');
+\! echo '{ "parameters": [ { "key": "bad_key", "value": null} ] }' >/tmp/bad_param_config
+select emaj.emaj_import_parameters_configuration('/tmp/bad_param_config');
+
+--   ok
+select emaj.emaj_import_parameters_configuration('/tmp/orig_param_config', true);
+select json_array_length(emaj.emaj_export_parameters_configuration()->'parameters');
+
+select emaj.emaj_import_parameters_configuration('/tmp/orig_param_config', false);
+
+\! rm /tmp/orig_param_config /tmp/bad_param_config
+
+-----------------------------
 -- test end: check, reset history and force sequences id
 -----------------------------
 select hist_id, hist_function, hist_event, hist_object, regexp_replace(regexp_replace(hist_wording,E'\\d\\d\.\\d\\d\\.\\d\\d\\.\\d\\d\\d\\d','%','g'),E'\\[.+\\]','(timestamp)','g'), hist_user from 

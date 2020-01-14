@@ -1482,6 +1482,96 @@ delete from emaj.emaj_param where param_key = 'emaj_version';
 ERROR:  _emaj_param_change_fnct: modifying the emaj_version key is not allowed.
 CONTEXT:  PL/pgSQL function emaj._emaj_param_change_fnct() line 5 at RAISE
 -----------------------------
+-- test parameters export and import functions
+-----------------------------
+-- direct export
+--   ok
+select json_array_length(emaj.emaj_export_parameters_configuration()->'parameters');
+ json_array_length 
+-------------------
+                 2
+(1 row)
+
+-- export in file
+--   error
+select emaj.emaj_export_parameters_configuration('/tmp/dummy/location/file');
+ERROR:  emaj_export_parameters_configuration: Unable to write to the /tmp/dummy/location/file file.
+CONTEXT:  PL/pgSQL function emaj.emaj_export_parameters_configuration(text) line 18 at RAISE
+--   ok
+select emaj.emaj_export_parameters_configuration('/tmp/orig_param_config');
+ emaj_export_parameters_configuration 
+--------------------------------------
+                                    2
+(1 row)
+
+\! wc -l /tmp/orig_param_config
+14 /tmp/orig_param_config
+-- direct import
+--   error
+select emaj.emaj_import_parameters_configuration('{ "dummy_json": null }'::json);
+WARNING:  _import_param_conf: The "parameters" JSON sub-structure has not been found in the supplied structure
+ emaj_import_parameters_configuration 
+--------------------------------------
+                                     
+(1 row)
+
+--   ok
+select emaj.emaj_import_parameters_configuration('{ "parameters": [ { "key": "history_retention", "value": "1 day"} ] }'::json);
+ emaj_import_parameters_configuration 
+--------------------------------------
+                                    1
+(1 row)
+
+select json_array_length(emaj.emaj_export_parameters_configuration()->'parameters');
+ json_array_length 
+-------------------
+                 3
+(1 row)
+
+-- import from file
+--   error
+select emaj.emaj_import_parameters_configuration('/tmp/dummy/location/file');
+ERROR:  emaj_import_parameters_configuration: Unable to read the /tmp/dummy/location/file file.
+CONTEXT:  PL/pgSQL function emaj.emaj_import_parameters_configuration(text,boolean) line 23 at RAISE
+\! echo 'not a json content' >/tmp/bad_param_config
+select emaj.emaj_import_parameters_configuration('/tmp/bad_param_config');
+ERROR:  emaj_import_parameters_configuration: The file content is not a valid JSON content.
+CONTEXT:  PL/pgSQL function emaj.emaj_import_parameters_configuration(text,boolean) line 32 at RAISE
+\! echo '{ "dummy_json": null }' >/tmp/bad_param_config
+select emaj.emaj_import_parameters_configuration('/tmp/bad_param_config');
+WARNING:  _import_param_conf: The "parameters" JSON sub-structure has not been found in the supplied structure
+ emaj_import_parameters_configuration 
+--------------------------------------
+                                     
+(1 row)
+
+\! echo '{ "parameters": [ { "key": "bad_key", "value": null} ] }' >/tmp/bad_param_config
+select emaj.emaj_import_parameters_configuration('/tmp/bad_param_config');
+ERROR:  _import_param_conf: "bad_key" is not a known E-Maj parameter.
+CONTEXT:  PL/pgSQL function emaj._import_param_conf(json,boolean) line 44 at RAISE
+SQL statement "SELECT emaj._import_param_conf(v_paramsJson, v_deleteCurrentConf)"
+PL/pgSQL function emaj.emaj_import_parameters_configuration(text,boolean) line 35 at SQL statement
+--   ok
+select emaj.emaj_import_parameters_configuration('/tmp/orig_param_config', true);
+ emaj_import_parameters_configuration 
+--------------------------------------
+                                    2
+(1 row)
+
+select json_array_length(emaj.emaj_export_parameters_configuration()->'parameters');
+ json_array_length 
+-------------------
+                 2
+(1 row)
+
+select emaj.emaj_import_parameters_configuration('/tmp/orig_param_config', false);
+ emaj_import_parameters_configuration 
+--------------------------------------
+                                    2
+(1 row)
+
+\! rm /tmp/orig_param_config /tmp/bad_param_config
+-----------------------------
 -- test end: check, reset history and force sequences id
 -----------------------------
 select hist_id, hist_function, hist_event, hist_object, regexp_replace(regexp_replace(hist_wording,E'\\d\\d\.\\d\\d\\.\\d\\d\\.\\d\\d\\d\\d','%','g'),E'\\[.+\\]','(timestamp)','g'), hist_user from 
@@ -1581,5 +1671,23 @@ select hist_id, hist_function, hist_event, hist_object, regexp_replace(regexp_re
     5177 | GEN_SQL_GROUP     | END                | phil's group#3",             | 0 generated statements - script exported into /tmp/emaj_test/sql_scripts/myFile     | postgres
     5178 | GEN_SQL_GROUPS    | BEGIN              | myGroup1,myGroup2            | From mark Multi-1 to mark Multi-3 with tables/sequences filtering                   | postgres
     5179 | GEN_SQL_GROUPS    | END                | myGroup1,myGroup2            | 100 generated statements - script exported into /tmp/emaj_test/sql_scripts/myFile   | postgres
-(93 rows)
+    5193 | IMPORT_PARAMETERS | BEGIN              |                              |                                                                                     | postgres
+    5194 | IMPORT_PARAMETERS | END                |                              |                                                                                     | postgres
+    5195 | IMPORT_PARAMETERS | BEGIN              |                              |                                                                                     | postgres
+    5196 |                   | INSERTED PARAMETER | history_retention            | @ 1 day                                                                             | postgres
+    5197 | IMPORT_PARAMETERS | END                |                              | 1 parameters imported                                                               | postgres
+    5200 | IMPORT_PARAMETERS | BEGIN              |                              | Input file: '/tmp/bad_param_config'                                                 | postgres
+    5201 | IMPORT_PARAMETERS | END                |                              |                                                                                     | postgres
+    5203 | IMPORT_PARAMETERS | BEGIN              |                              | Input file: '/tmp/orig_param_config'                                                | postgres
+    5204 |                   | DELETED PARAMETER  | dblink_user_password         |                                                                                     | postgres
+    5205 |                   | DELETED PARAMETER  | fixed_step_rollback_duration |                                                                                     | postgres
+    5206 |                   | DELETED PARAMETER  | history_retention            |                                                                                     | postgres
+    5207 |                   | INSERTED PARAMETER | dblink_user_password         | <masked data>                                                                       | postgres
+    5208 |                   | INSERTED PARAMETER | fixed_step_rollback_duration | @ 0.0025 secs                                                                       | postgres
+    5209 | IMPORT_PARAMETERS | END                |                              | 2 parameters imported                                                               | postgres
+    5210 | IMPORT_PARAMETERS | BEGIN              |                              | Input file: '/tmp/orig_param_config'                                                | postgres
+    5211 |                   | UPDATED PARAMETER  | dblink_user_password         | <masked data>                                                                       | postgres
+    5212 |                   | UPDATED PARAMETER  | fixed_step_rollback_duration | @ 0.0025 secs                                                                       | postgres
+    5213 | IMPORT_PARAMETERS | END                |                              | 2 parameters imported                                                               | postgres
+(111 rows)
 

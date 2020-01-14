@@ -312,8 +312,20 @@ General purpose functions
 | :ref:`emaj_enable_protection_by_event_triggers   |                               | #.triggers INT                        |
 | <emaj_enable_protection_by_event_triggers>`      |                               |                                       |
 +--------------------------------------------------+-------------------------------+---------------------------------------+
+| :ref:`emaj_export_parameters_configuration       |                               | parameters JSON                       |
+| <export_param_conf>`                             |                               |                                       |
++--------------------------------------------------+-------------------------------+---------------------------------------+
+| :ref:`emaj_export_parameters_configuration       | file.path TEXT                | #.parameters INT                      |
+| <export_param_conf>`                             |                               |                                       |
++--------------------------------------------------+-------------------------------+---------------------------------------+
 | :ref:`emaj_get_consolidable_rollbacks            |                               | SETOF emaj_consolidable_rollback_type |
 | <emaj_get_consolidable_rollbacks>` (V)           |                               |                                       |
++--------------------------------------------------+-------------------------------+---------------------------------------+
+| :ref:`emaj_import_parameters_configuration       | | parameters JSON,            | #.parameters INT                      |
+| <import_param_conf>`                             | | [delete.conf BOOLEAN)]      |                                       |
++--------------------------------------------------+-------------------------------+---------------------------------------+
+| :ref:`emaj_import_parameters_configuration       | | file.path TEXT,             | #.parameters INT                      |
+| <import_param_conf>`                             | | [delete.conf BOOLEAN)]      |                                       |
 +--------------------------------------------------+-------------------------------+---------------------------------------+
 | :ref:`emaj_rollback_activity                     |                               | SETOF emaj_rollback_activity_type     |
 | <emaj_rollback_activity>` (V)                    |                               |                                       |

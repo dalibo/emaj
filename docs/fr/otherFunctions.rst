@@ -30,6 +30,80 @@ La fonction *emaj_verify_all()* peut être exécutée par les rôles membres de 
 
 Si des anomalies sont détectées, par exemple suite à la suppression d'une table applicative référencée dans un groupe, les mesures appropriées doivent être prises. Typiquement, les éventuelles tables de log ou fonctions orphelines doivent être supprimées manuellement.
 
+.. _export_import_param_conf:
+
+Exporter et importer des configurations de paramètres
+-----------------------------------------------------
+
+Deux jeux de fonctions permettent de respectivement exporter et importer des jeux de paramètres. Elles peuvent être utiles pour déployer un jeu standardisé de paramètres sur plusieurs bases de données ou lors de :doc:`changements de version E-Maj<upgrade>` par désinstallation et réinstallation complète de l’extension.
+
+.. _export_param_conf:
+
+Export d’une configuration de paramètres
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+Deux versions de la fonction *emaj_export_parameters_configuration()* exportent sous forme de structure JSON l’ensemble des paramètres de la configuration présents dans la table *emaj_param*, à l’exception du paramètre de clé *"emaj_version"*, lié à l’extension *emaj* elle-même et qui n’est pas à proprement parler un paramètre de configuration.
+
+On peut écrire dans un fichier les données de paramétrage par ::
+
+   SELECT emaj_export_parameters_configuration('<chemin.fichier>');
+
+Le chemin du fichier doit être accessible en écriture par l’instance PostgreSQL.
+
+La fonction retourne le nombre de paramètres exportés.
+
+Si le chemin du fichier n’est pas renseigné, la fonction retourne directement la structure JSON contenant les valeurs de paramètres. Cette structure ressemble à ceci ::
+
+   {
+     "comment": "E-Maj parameters, generated from the database <db> with E-Maj version <version> at <date_heure>",
+     "parameters": [
+       {
+          "key": "...",
+          "value": "..."
+       },
+       {
+          ...
+       }
+     ]
+   }
+
+.. _import_param_conf:
+
+Import d’une configuration de paramètres
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+Deux versions de la fonction *emaj_import_parameters_configuration()* importent des paramètres sous forme de structure JSON dans la table *emaj_param*.
+
+On peut lire dans un fichier des paramètres à charger par ::
+
+   SELECT emaj_import_parameters_configuration('<chemin.fichier>', <suppression.configuration.courante>);
+
+Le chemin du fichier doit être accessible par l’instance PostgreSQL.
+
+Le fichier doit contenir une structure JSON ayant un attribut nommé *"parameters"* de type tableau, et contenant des sous-structures avec les attributs *"key"* et *"value"* ::
+
+   {"parameters": [
+     {
+       "key": "...",
+       "value": "..."
+     },
+     {
+   	   ...
+     }
+   ]}
+
+La fonction peut directement charger un fichier généré par la fonction *emaj_export_parameters_configuration()*.
+
+S’il est présent, le paramètre de clé *"emaj_version"* n’est pas traité.
+
+Le second paramètre, de type booléen, est optionnel. Il indique si l’ensemble de la configuration présente doit être supprimée avant le chargement. Par défaut, sa valeur *FALSE* indique que les clés présentes dans la table *emaj_param* mais absentes de la structure JSON sont conservées (chargement en mode différentiel). Si la valeur du second paramètre est positionnée à *TRUE*, la fonction effectue un remplacement complet de la configuration de paramétrage (chargement en mode complet).
+
+La fonction retourne le nombre de paramètres importés.
+
+Dans une variante de la fonction, le premier paramètre en entrée contient directement la structure JSON des valeurs à charger ::
+
+   SELECT emaj_import_parameters_configuration('<structure.JSON>', <suppression.configuration.courante>);
+
 .. _emaj_get_current_log_table:
 
 Obtenir l’identité de la table de log courante associée à une table applicative

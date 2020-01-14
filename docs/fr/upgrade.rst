@@ -37,13 +37,17 @@ Il peut en effet être utile de sauvegarder le contenu de la table *emaj_group_d
    SELECT group_name, emaj.emaj_sync_def_group(group_name) FROM emaj.emaj_group;
    CREATE TABLE public.sav_group_def AS SELECT * FROM emaj.emaj_group_def;
 
-De la même manière, si l'administrateur E-Maj a modifié des paramètres dans la table *emaj_param*, il peut être souhaitable d'en conserver les valeurs, avec par exemple ::
-
-   CREATE TABLE public.sav_param AS SELECT * FROM emaj.emaj_param WHERE param_key <> 'emaj_version';
-
 Si la version E-Maj installée est une version 3.1.0 ou supérieure, et si l’administrateur E-Maj a enregistré des triggers applicatifs comme "ne devant pas être automatiquement désactivés lors des opérations de rollback E-Maj", il est souhaitable de conserver cette liste, avec par exemple ::
 
    CREATE TABLE public.sav_ignored_app_trigger AS SELECT * FROM emaj.emaj_ignored_app_trigger;
+
+De la même manière, si l'administrateur E-Maj a modifié des paramètres dans la table *emaj_param*, il peut être souhaitable d'en conserver les valeurs, avec ::
+
+   SELECT emaj.emaj_export_parameters_configuration('<chemin.fichier>');
+
+Si la version E-Maj installée est antérieure à <devel>, on peut aussi exécuter ::
+
+   CREATE TABLE public.sav_param AS SELECT * FROM emaj.emaj_param WHERE param_key <> 'emaj_version';
 
 
 Suppression et réinstallation d'E-Maj
@@ -61,7 +65,7 @@ NB : à partir de la version 2.0.0, le script de désinstallation se nomme *ema
 Restauration des données utilisateurs
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Les données sauvegardées au préalable peuvent alors être restaurées dans les deux tables techniques d’E-Maj, par exemple avec des requêtes de type *INSERT SELECT*. ::
+Les données sauvegardées au préalable peuvent alors être restaurées dans les tables techniques d’E-Maj, par exemple avec des requêtes de type *INSERT SELECT*. ::
 
    INSERT INTO emaj.emaj_group_def
 		SELECT grpdef_group, grpdef_schema, grpdef_tblseq,
@@ -73,6 +77,10 @@ Les données sauvegardées au préalable peuvent alors être restaurées dans le
    INSERT INTO emaj.emaj_ignored_app_trigger SELECT * FROM public.sav_ignored_app_trigger;
 
 Une fois les données copiées, les tables ou fichiers temporaires peuvent être supprimés.
+
+Si la configuration des paramètres a été exportée dans un fichier avec la fonction *emaj_export_parameters_configuration()*, cette configuration peut être rechargée par ::
+
+   SELECT emaj.emaj_import_parameters_configuration('<chemin.fichier>', TRUE);
 
 
 Mise à jour à partir d’une version E-Maj comprise entre 0.11.0 et 1.3.1

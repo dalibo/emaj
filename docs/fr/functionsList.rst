@@ -312,8 +312,20 @@ Fonctions de niveau général
 | :ref:`emaj_enable_protection_by_event_triggers   |                               | nb.triggers INT                       |
 | <emaj_enable_protection_by_event_triggers>`      |                               |                                       |
 +--------------------------------------------------+-------------------------------+---------------------------------------+
+| :ref:`emaj_export_parameters_configuration       |                               | paramètres JSON                       |
+| <export_param_conf>`                             |                               |                                       |
++--------------------------------------------------+-------------------------------+---------------------------------------+
+| :ref:`emaj_export_parameters_configuration       | fichier TEXT                  | nb.paramètres INT                     |
+| <export_param_conf>`                             |                               |                                       |
++--------------------------------------------------+-------------------------------+---------------------------------------+
 | :ref:`emaj_get_consolidable_rollbacks            |                               | SETOF emaj_consolidable_rollback_type |
 | <emaj_get_consolidable_rollbacks>` (V)           |                               |                                       |
++--------------------------------------------------+-------------------------------+---------------------------------------+
+| :ref:`emaj_import_parameters_configuration       | | paramètres JSON,            | nb.paramètres INT                     |
+| <import_param_conf>`                             | | [suppression.conf BOOLEAN)] |                                       |
++--------------------------------------------------+-------------------------------+---------------------------------------+
+| :ref:`emaj_import_parameters_configuration       | | fichier TEXT,               | nb.paramètres INT                     |
+| <import_param_conf>`                             | | [suppression.conf BOOLEAN)] |                                       |
 +--------------------------------------------------+-------------------------------+---------------------------------------+
 | :ref:`emaj_rollback_activity                     |                               | SETOF emaj_rollback_activity_type     |
 | <emaj_rollback_activity>` (V)                    |                               |                                       |

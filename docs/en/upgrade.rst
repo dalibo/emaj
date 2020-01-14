@@ -37,13 +37,17 @@ It may be useful to save the content of the *emaj_group_def* table in order to b
    SELECT group_name, emaj.emaj_sync_def_group(group_name) FROM emaj.emaj_group;
    CREATE TABLE public.sav_group_def AS SELECT * FROM emaj.emaj_group_def;
 
-The same way, if the E-Maj administrator had changed parameters value into the *emaj_param* table, it may also be useful to keep a trace of these changes, for instance with::
-
-   CREATE TABLE public.sav_param AS SELECT * FROM emaj.emaj_param WHERE param_key <> 'emaj_version';
-
 If the installed E-Maj version is 3.1.0 or higher, and if the E-Maj administrator has registered application triggers as “not to be automatically disabled at E-Maj rollback time”, it is advisable to save this triggers list, for instance with::
 
    CREATE TABLE public.sav_ignored_app_trigger AS SELECT * FROM emaj.emaj_ignored_app_trigger;
+
+The same way, if the E-Maj administrator had changed parameters value into the *emaj_param* table, it may also be useful to keep a trace of these changes with::
+
+   SELECT emaj.emaj_export_parameters_configuration('<file.path>');
+
+If the installed version is prior <devel>, it is possible to execute something like::
+
+   CREATE TABLE public.sav_param AS SELECT * FROM emaj.emaj_param WHERE param_key <> 'emaj_version';
 
 
 E-Maj deletion and re-installation
@@ -66,11 +70,16 @@ Data previously saved can now be restored into E-Maj both technical tables, for 
 			grpdef_priority, grpdef_log_dat_tsp, grpdef_log_idx_tsp
 		FROM public.sav_group_def;
 
-   INSERT INTO emaj.emaj_param SELECT * FROM public.sav_param;
-
    INSERT INTO emaj.emaj_ignored_app_trigger SELECT * FROM public.sav_ignored_app_trigger;
 
+   INSERT INTO emaj.emaj_param SELECT * FROM public.sav_param;
+
 Once data are copied, temporary tables or files can be deleted.
+
+If the parameters configuration has been exported on a file with the *emaj_export_parameters_configuration()* function, this configuration can be reloaded with::
+
+   SELECT emaj.emaj_import_parameters_configuration('<file.path>', TRUE);
+
 
 Upgrade from an E-Maj version between 0.11.0 to 1.3.1
 -----------------------------------------------------

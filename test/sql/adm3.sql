@@ -5,6 +5,11 @@
 set role emaj_regression_tests_adm_user;
 set search_path=public,myschema1;
 
+-- before going on, save parameters on a file and reload them
+select emaj.emaj_export_parameters_configuration('/tmp/param_config');
+select emaj.emaj_import_parameters_configuration('/tmp/param_config', true);
+\! rm /tmp/param_config
+
 -----------------------------
 -- Step 16 : test transactions with several emaj operations
 -----------------------------

@@ -113,5 +113,10 @@ select emaj.emaj_gen_sql_group('myGroup1',NULL,NULL,'/tmp/dummy');
 select emaj.emaj_gen_sql_group('myGroup1',NULL,NULL,'/tmp/dummy',array['']);
 select emaj.emaj_gen_sql_groups(array['myGroup1'],NULL,NULL,'/tmp/dummy');
 select emaj.emaj_gen_sql_groups(array['myGroup1'],NULL,NULL,'/tmp/dummy',array['']);
+select emaj.emaj_export_parameters_configuration();
+select emaj.emaj_export_parameters_configuration('/tmp/dummy/location/file');
+select emaj.emaj_import_parameters_configuration('{}'::json);
+select emaj.emaj_import_parameters_configuration('/tmp/dummy/location/file');
+
 --
 reset role;

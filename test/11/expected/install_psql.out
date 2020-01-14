@@ -8971,6 +8971,241 @@ $_export_sql_script$;
 -- Global purpose functions       --
 --                                --
 ------------------------------------
+CREATE OR REPLACE FUNCTION emaj._export_param_conf()
+RETURNS JSON LANGUAGE plpgsql AS
+$_export_param_conf$
+-- This function generates a JSON formatted structure representing the parameters registered in the emaj_param table.
+-- All parameters are extracted, except the "emaj_version" key that is directly linked to the extension and thus is not updatable.
+-- The E-Maj version is already displayed in the generated comment at the beginning of the structure.
+-- Output: the parameters content in JSON format
+  DECLARE
+    v_params                 TEXT;
+    v_paramsJson             JSON;
+    r_param                  RECORD;
+  BEGIN
+-- build the header of the JSON structure
+    v_params = E'{\n  "_comment": "Generated on database ' || current_database() || ' with emaj version ' ||
+                           (SELECT param_value_text FROM emaj.emaj_param WHERE param_key = 'emaj_version') ||
+                           ', at ' || current_timestamp || E'",\n';
+-- build the parameters description
+    v_params = v_params || E'  "parameters": [\n';
+    FOR r_param IN
+        SELECT param_key AS key,
+               coalesce(to_json(param_value_text),
+                        to_json(param_value_interval),
+                        to_json(param_value_boolean),
+                        to_json(param_value_numeric),
+                        'null') as value
+          FROM emaj.emaj_param
+               JOIN (VALUES (1::INT, 'emaj_version'), (2,'dblink_user_password'),
+                            (3, 'history_retention'), (4, 'alter_log_table'),
+                            (5, 'avg_row_rollback_duration'), (5, 'avg_row_delete_log_duration'),
+                            (7, 'avg_fkey_check_duration'), (8, 'fixed_step_rollback_duration'),
+                            (9, 'fixed_table_rollback_duration'), (10, 'fixed_dblink_rollback_duration')
+                    ) AS p(rank,key) ON (p.key = param_key)
+          WHERE param_key <> 'emaj_version'
+          ORDER BY rank
+    LOOP
+      v_params = v_params || E'    {\n'
+                          ||  '      "key": ' || to_json(r_param.key) || E',\n'
+                          ||  '      "value": ' || r_param.value || E'\n'
+                          || E'    },\n';
+    END LOOP;
+    v_params = v_params || E'  ]\n';
+-- build the trailer and remove illicite commas at the end of arrays and attributes lists
+    v_params = v_params || E'}\n';
+    v_params = regexp_replace(v_params, E',(\n *(\]|}))', '\1', 'g');
+-- test the JSON format by casting the text structure to json and report a warning in case of problem
+--   (this should not fail, unless the function code is bogus)
+    BEGIN
+      v_paramsJson = v_params::JSON;
+      EXCEPTION WHEN OTHERS THEN
+        RAISE WARNING '_export_param_conf: The generated JSON structure is not properly formatted. '
+                      'Please report the bug to the E-Maj project.';
+    END;
+--
+    RETURN v_paramsJson;
+  END;
+$_export_param_conf$;
+CREATE OR REPLACE FUNCTION emaj.emaj_export_parameters_configuration()
+RETURNS JSON LANGUAGE plpgsql AS
+$emaj_export_parameters_configuration$
+-- This function returns a JSON formatted structure representing all the parameters registered in the emaj_param table.
+-- The function can be called by clients like emaj_web.
+-- This is just a wrapper of the internal _export_param_conf() function.
+-- Output: the parameters content in JSON format
+  BEGIN
+    RETURN emaj._export_param_conf();
+  END;
+$emaj_export_parameters_configuration$;
+COMMENT ON FUNCTION emaj.emaj_export_parameters_configuration() IS
+$$Generates a json structure describing the E-Maj parameters.$$;
+CREATE OR REPLACE FUNCTION emaj.emaj_export_parameters_configuration(v_location TEXT)
+RETURNS INT LANGUAGE plpgsql
+SECURITY DEFINER SET search_path = pg_catalog, pg_temp AS
+$emaj_export_parameters_configuration$
+-- This function stores the parameters configuration into a file on the server.
+-- The JSON structure is built by the _export_param_conf() function.
+-- Output: the number of parameters of the recorded JSON structure.
+  DECLARE
+    v_paramsJson             JSON;
+  BEGIN
+-- get the json structure
+    SELECT emaj._export_param_conf() INTO v_paramsJson;
+-- store the structure into the provided file name
+    CREATE TEMP TABLE t (params TEXT);
+    INSERT INTO t
+      SELECT line FROM regexp_split_to_table(v_paramsJson::TEXT, '\n') AS line;
+    BEGIN
+      EXECUTE format ('COPY t TO %s',
+                      quote_literal(v_location));
+    EXCEPTION WHEN OTHERS THEN
+      RAISE EXCEPTION 'emaj_export_parameters_configuration: Unable to write to the % file.', v_location;
+    END;
+    DROP TABLE t;
+-- return the number of recorded parameters
+    RETURN json_array_length(v_paramsJson->'parameters');
+  END;
+$emaj_export_parameters_configuration$;
+COMMENT ON FUNCTION emaj.emaj_export_parameters_configuration(TEXT) IS
+$$Generates and stores in a file a json structure describing the E-Maj parameters.$$;
+CREATE OR REPLACE FUNCTION emaj._import_param_conf(v_paramsJson JSON, v_deleteCurrentConf BOOLEAN)
+RETURNS INT LANGUAGE plpgsql AS
+$_import_param_conf$
+-- This function processes a JSON formatted structure representing the E-Maj parameters to load.
+-- This structure can have been generated by the emaj_export_parameters_configuration() functions and may have been adapted by the user.
+-- If a parameter key is referenced several times, the last entry is the final value recorded into emaj_param.
+-- The "emaj_version" parameter key is always left unchanged because it is a constant linked to the extension itself.
+-- The expected JSON structure must contain an array like:
+-- { "parameters": [
+--      { "key": "...", "value": "..." },
+--      { ... }
+--    ] }
+-- Input: - the parameter configuration structure in JSON format
+--        - an optional boolean indicating whether the current parameters configuration must be deleted before loading the new parameters
+-- Output: the number of inserted or updated parameter keys
+  DECLARE
+    v_parameters             JSON;
+    v_nbParam                INT;
+    v_key                    TEXT;
+    v_value                  TEXT;
+    r_param                  RECORD;
+  BEGIN
+-- look for the "parameters" json path
+    v_parameters = v_paramsJson #> '{"parameters"}';
+    IF v_parameters IS NULL THEN
+      RAISE WARNING '_import_param_conf: The "parameters" JSON sub-structure has not been found in the supplied structure';
+    ELSE
+      IF v_deleteCurrentConf THEN
+-- if requested, delete the existing parameters, except the 'emaj_version'
+--   (the trigger on emaj_param records the deletions into emaj_hist)
+        DELETE FROM emaj.emaj_param WHERE param_key <> 'emaj_version';
+      END IF;
+-- process each parameter
+      v_nbParam = 0;
+      FOR r_param IN
+          SELECT param FROM json_array_elements(v_parameters) AS t(param)
+            WHERE param ->> 'key' <> 'emaj_version'
+        LOOP
+-- get each parameter from the list
+          v_key = r_param.param ->> 'key';
+          v_value = r_param.param ->> 'value';
+-- check the key is valid.
+          IF v_key NOT IN ('dblink_user_password', 'history_retention', 'alter_log_table',
+                           'avg_row_rollback_duration', 'avg_row_delete_log_duration', 'avg_fkey_check_duration',
+                           'fixed_step_rollback_duration', 'fixed_table_rollback_duration', 'fixed_dblink_rollback_duration') THEN
+            RAISE EXCEPTION '_import_param_conf: "%" is not a known E-Maj parameter.', v_key;
+          END IF;
+          v_nbParam = v_nbParam + 1;
+-- insert or update the parameter in the emaj_param table, selecting the right parameter value column type depending on the key
+          IF v_key IN ('dblink_user_password', 'alter_log_table') THEN
+            INSERT INTO emaj.emaj_param (param_key, param_value_text) VALUES (v_key, v_value)
+              ON CONFLICT (param_key) DO
+                UPDATE SET param_value_text = v_value WHERE EXCLUDED.param_key = v_key;
+          ELSIF v_key IN ('history_retention', 'avg_row_rollback_duration', 'avg_row_delete_log_duration', 'avg_fkey_check_duration',
+                         'fixed_step_rollback_duration', 'fixed_table_rollback_duration', 'fixed_dblink_rollback_duration') THEN
+            INSERT INTO emaj.emaj_param (param_key, param_value_interval) VALUES (v_key, v_value::INTERVAL)
+              ON CONFLICT (param_key) DO
+                UPDATE SET param_value_interval = v_value::INTERVAL WHERE EXCLUDED.param_key = v_key;
+          END IF;
+      END LOOP;
+    END IF;
+    RETURN v_nbParam;
+  END;
+$_import_param_conf$;
+CREATE OR REPLACE FUNCTION emaj.emaj_import_parameters_configuration(v_paramsJson JSON, v_deleteCurrentConf BOOLEAN DEFAULT FALSE)
+RETURNS INT LANGUAGE plpgsql AS
+$emaj_import_parameters_configuration$
+-- This function import a supplied JSON formatted structure representing E-Maj parameters to load.
+-- This structure can have been generated by the emaj_export_parameters_configuration() functions and may have been adapted by the user.
+-- The function can be called by clients like emaj_web.
+-- It calls the _import_param_conf() function to perform the emaj_param table changes.
+-- Input: - the parameter configuration structure in JSON format
+--        - an optional boolean indicating whether the current parameters configuration must be deleted before loading the new parameters
+--          (by default, the parameter keys not referenced in the input json structure are kept unchanged)
+-- Output: the number of inserted or updated parameter keys
+  DECLARE
+    v_nbParam                INT;
+  BEGIN
+-- insert begin event in history
+    INSERT INTO emaj.emaj_hist (hist_function, hist_event)
+      VALUES ('IMPORT_PARAMETERS', 'BEGIN');
+-- load the parameters
+    SELECT emaj._import_param_conf(v_paramsJson, v_deleteCurrentConf) INTO v_nbParam;
+-- insert end event in history
+    INSERT INTO emaj.emaj_hist (hist_function, hist_event, hist_wording)
+      VALUES ('IMPORT_PARAMETERS', 'END', v_nbParam || ' parameters imported');
+    RETURN v_nbParam;
+  END;
+$emaj_import_parameters_configuration$;
+COMMENT ON FUNCTION emaj.emaj_import_parameters_configuration(JSON,BOOLEAN) IS
+$$Import a json structure describing E-Maj parameters to load.$$;
+CREATE OR REPLACE FUNCTION emaj.emaj_import_parameters_configuration(v_location TEXT, v_deleteCurrentConf BOOLEAN DEFAULT FALSE)
+RETURNS INT LANGUAGE plpgsql
+SECURITY DEFINER SET search_path = pg_catalog, pg_temp AS
+$emaj_import_parameters_configuration$
+-- This function imports a file containing a  JSON formatted structure representing E-Maj parameters to load.
+-- This structure can have been generated by the emaj_export_parameters_configuration() functions and may have been adapted by the user.
+-- It calls the _import_param_conf() function to perform the emaj_param table changes.
+-- Input: - input file location
+--        - an optional boolean indicating whether the current parameters configuration must be deleted before loading the new parameters
+--          (by default, the parameter keys not referenced in the input json structure are kept unchanged)
+-- Output: the number of inserted or updated parameter keys
+  DECLARE
+    v_paramsText             TEXT;
+    v_paramsJson             JSON;
+    v_nbParam                INT;
+  BEGIN
+-- insert begin event in history
+    INSERT INTO emaj.emaj_hist (hist_function, hist_event, hist_wording)
+      VALUES ('IMPORT_PARAMETERS', 'BEGIN', 'Input file: ' || quote_literal(v_location));
+-- read the input file and put its content into a temporary table
+    CREATE TEMP TABLE t (params TEXT);
+    BEGIN
+      EXECUTE format ('COPY t FROM %s',
+                      quote_literal(v_location));
+    EXCEPTION WHEN OTHERS THEN
+      RAISE EXCEPTION 'emaj_import_parameters_configuration: Unable to read the % file.', v_location;
+    END;
+-- aggregate the lines into a single text variable
+    SELECT string_agg(params, E'\n') INTO v_paramsText FROM t;
+    DROP TABLE t;
+-- verify that the file content is a valid json structure
+    BEGIN
+      v_paramsJson = v_paramsText::JSON;
+    EXCEPTION WHEN OTHERS THEN
+      RAISE EXCEPTION 'emaj_import_parameters_configuration: The file content is not a valid JSON content.';
+    END;
+-- load the parameters
+    SELECT emaj._import_param_conf(v_paramsJson, v_deleteCurrentConf) INTO v_nbParam;
+-- insert end event in history
+    INSERT INTO emaj.emaj_hist (hist_function, hist_event, hist_wording)
+      VALUES ('IMPORT_PARAMETERS', 'END', v_nbParam || ' parameters imported');
+    RETURN v_nbParam;
+  END;
+$emaj_import_parameters_configuration$;
+COMMENT ON FUNCTION emaj.emaj_import_parameters_configuration(TEXT,BOOLEAN) IS
+$$Import E-Maj parameters from a JSON formatted file.$$;
 CREATE OR REPLACE FUNCTION emaj._verify_all_groups()
 RETURNS SETOF TEXT LANGUAGE plpgsql AS
 $_verify_all_groups$
@@ -9976,7 +10211,7 @@ $do$
     RETURN;
   END;
 $do$;
-psql:sql/emaj-devel.sql:10203: NOTICE:  E-Maj installation: E-Maj successfully installed.
+psql:sql/emaj-devel.sql:10444: NOTICE:  E-Maj installation: E-Maj successfully installed.
 COMMIT;
 -----------------------------
 -- check installation

@@ -3,6 +3,10 @@ E-Maj - Change log
 <devel>
 ------
 ###Enhancements:###
+  * Two new emaj_export_parameters_configuration() functions allow to export
+    the E-Maj parameters as a JSON structure, either directly or into a file.
+  * Two new emaj_import_parameters_configuration() functions allow to import
+    E-Maj parameters as a JSON structure, either directly or from a file.
   * The emaj_verify_all() function now warns about sequences linked to serial
     columns which related tables are not in the same tables group.
   * The emaj_verify_all() function now warns about tables linked by foreign

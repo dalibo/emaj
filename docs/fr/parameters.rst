@@ -47,3 +47,5 @@ Toute modification de la table *emaj_param* est tracée dans la table :ref:`emaj
 Seuls les super-utilisateurs et les utilisateurs ayant acquis les droits *emaj_adm* ont accès à la table *emaj_param*.
 
 Les utilisateurs ayant acquis les droits *emaj_viewer* n'ont accès qu'à une partie de la table *emaj_param*. au travers de la vue *emaj.emaj_visible_param*. Cette vue masque simplement le contenu réel de la colonne *param_value_text* pour la clé *'dblink_user_password'*.
+
+Des fonctions :ref:`emaj_export_parameters_configuration()<export_param_conf>` et :ref:`emaj_import_parameters_configuration()<import_param_conf>` permettent de sauver les valeurs de paramètres et de les restaurer.

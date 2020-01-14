@@ -367,5 +367,13 @@ select emaj.emaj_gen_sql_groups(array['myGroup1'],NULL,NULL,'/tmp/dummy');
 ERROR:  permission denied for function emaj_gen_sql_groups
 select emaj.emaj_gen_sql_groups(array['myGroup1'],NULL,NULL,'/tmp/dummy',array['']);
 ERROR:  permission denied for function emaj_gen_sql_groups
+select emaj.emaj_export_parameters_configuration();
+ERROR:  permission denied for function emaj_export_parameters_configuration
+select emaj.emaj_export_parameters_configuration('/tmp/dummy/location/file');
+ERROR:  permission denied for function emaj_export_parameters_configuration
+select emaj.emaj_import_parameters_configuration('{}'::json);
+ERROR:  permission denied for function emaj_import_parameters_configuration
+select emaj.emaj_import_parameters_configuration('/tmp/dummy/location/file');
+ERROR:  permission denied for function emaj_import_parameters_configuration
 --
 reset role;

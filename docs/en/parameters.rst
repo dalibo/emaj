@@ -48,3 +48,4 @@ Only *superuser* and roles having *emaj_adm* rights can access the *emaj_param* 
 
 Roles having *emaj_viewer* rights can only access a part of the *emaj_param* table, through the *emaj.emaj_visible_param* view. This view just masks the real value of the *param_value_text* column for the *'dblink_user_password'* key.
 
+The :ref:`emaj_export_parameters_configuration()<export_param_conf>` and :ref:`emaj_import_parameters_configuration()<import_param_conf>` functions allow to save the parameters values and restore them.
