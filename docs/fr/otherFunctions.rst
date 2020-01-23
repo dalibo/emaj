@@ -55,7 +55,7 @@ La fonction retourne le nombre de paramètres exportés.
 Si le chemin du fichier n’est pas renseigné, la fonction retourne directement la structure JSON contenant les valeurs de paramètres. Cette structure ressemble à ceci ::
 
    {
-     "comment": "E-Maj parameters, generated from the database <db> with E-Maj version <version> at <date_heure>",
+     "_comment": "E-Maj parameters, generated from the database <db> with E-Maj version <version> at <date_heure>",
      "parameters": [
        {
           "key": "...",

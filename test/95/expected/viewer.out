@@ -810,6 +810,10 @@ select emaj.emaj_force_drop_group('myGroup1');
 ERROR:  permission denied for function emaj_force_drop_group
 select emaj.emaj_alter_group('myGroup1');
 ERROR:  permission denied for function emaj_alter_group
+select emaj.emaj_sync_def_group('myGroup1');
+ERROR:  permission denied for function emaj_sync_def_group
+select emaj.emaj_export_groups_configuration();
+ERROR:  permission denied for function emaj_export_groups_configuration
 select emaj.emaj_start_group('myGroup1','mark');
 ERROR:  permission denied for function emaj_start_group
 select emaj.emaj_start_groups(array['myGroup1'],'mark');

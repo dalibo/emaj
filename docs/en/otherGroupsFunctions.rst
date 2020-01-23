@@ -168,3 +168,65 @@ Using this function, it is easy to consolidate at once all “*consolidable*” 
 
 The *emaj_get_consolidable_rollbacks()* function may be used by *emaj_adm* and *emaj_viewer* roles.
 
+Exporting tables groups configurations
+--------------------------------------
+
+A set of functions allow to export tables groups configurations.
+
+.. _export_groups_conf:
+
+Export a tables groups configuration
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+Two versions of the *emaj_export_groups_configuration()* function export a description of one or several tables groups as a JSON structure.
+
+A tables groups configuration can be written to a file with::
+
+   SELECT emaj_export_groups_configuration('<file.path>', <groups.names.array>);
+
+The file path must be accessible in write mode by the PostgreSQL instance.
+
+The second parameter is optional. It lists in an array the tables groups names to processed. If the parameter is not supplied or is set to NULL, the configuration of all tables groups is exported.
+
+The function returns the number of exported tables groups.
+
+If the file path is not supplied (i.e. is set to NULL), the function directly returns the JSON structure containing the configuration. This structure looks like this::
+
+   {
+   	"_comment": "Generated on database <db> with E-Maj version <version> at <date_heure>",
+   	"tables_groups": [
+   		{
+   		"group": "...",
+   		"is_rollbackable": ...,
+   		"comment": "...",
+   		"tables": [
+   			{
+   			"schema": "...",
+   			"table": "...",
+   			"priority": ...,
+   			"log_data_tablespace": "...",
+   			"log_index_tablespace": "...",
+   			"ignored_triggers": [
+   				{
+   				"trigger": "...",
+   				...
+   				 },
+   			]
+   			},
+   			{
+   			...
+   			}
+   		],
+   		"sequences": [
+   			{
+   			"schema": "myschema1",
+   			"sequence": "mytbl1",
+   			},
+   			{
+   			...
+   			}
+   		],
+   		},
+   		...
+   	]
+   }

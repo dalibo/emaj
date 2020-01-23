@@ -144,7 +144,8 @@ use warnings; use strict;
                             # internal errors (errors that should never appear and that would due to coding error)
        && $msgs{$fnctId} ne 'EXCEPTION:_drop_log_schemas: Internal error (the schema "%" does not exist).'
        && $msgs{$fnctId} ne 'EXCEPTION:emaj_reset_group: Internal error (group "%" is empty).'
-       && $msgs{$fnctId} ne 'WARNING:_export_param_conf: The generated JSON structure is not properly formatted. '
+       && $msgs{$fnctId} ne 'EXCEPTION:_export_groups_conf: The generated JSON structure is not properly formatted. '
+       && $msgs{$fnctId} ne 'EXCEPTION:_export_param_conf: The generated JSON structure is not properly formatted. '
                             # error messages that can in fact not be encountered in the current version
        && $msgs{$fnctId} ne 'EXCEPTION:_check_mark_name: The groups "%" have no mark.'
        && $msgs{$fnctId} ne 'EXCEPTION:alter_exec: Internal error, trying to repair a sequence (%.%) is abnormal.'

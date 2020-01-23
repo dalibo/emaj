@@ -5352,6 +5352,193 @@ $emaj_sync_def_group$;
 COMMENT ON FUNCTION emaj.emaj_sync_def_group(TEXT) IS
 $$Re-synchronize the content of the emaj_group_def table for one tables group based on its current content.$$;
 
+CREATE OR REPLACE FUNCTION emaj._export_groups_conf(v_groups TEXT[] DEFAULT NULL)
+RETURNS JSON LANGUAGE plpgsql AS
+$_export_groups_conf$
+-- This function generates a JSON formatted structure representing the current configuration of some or all tables groups.
+-- Input: an optional array of goup's names, NULL means all tables groups
+-- Output: the tables groups configuration in JSON format
+  DECLARE
+    v_groupsText             TEXT;
+    v_unknownGroupsList      TEXT;
+    v_groupsJson             JSON;
+    r_group                  RECORD;
+    r_table                  RECORD;
+    r_trigger                RECORD;
+    r_sequence               RECORD;
+  BEGIN
+-- build the header of the JSON structure
+    v_groupsText = E'{\n  "_comment": "Generated on database ' || current_database() || ' with emaj version ' ||
+                           (SELECT param_value_text FROM emaj.emaj_param WHERE param_key = 'emaj_version') ||
+                           ', at ' || current_timestamp || E'",\n';
+-- check the group names array, if supplied. All the listed groups must exist.
+    IF v_groups IS NOT NULL THEN
+      SELECT string_agg(group_name, ', ') INTO v_unknownGroupsList FROM (
+        SELECT * FROM unnest(v_groups) AS grp(group_name)
+          WHERE NOT EXISTS (SELECT group_name FROM emaj.emaj_group WHERE emaj_group.group_name = grp.group_name)
+        ) AS t;
+      IF v_unknownGroupsList IS NOT NULL THEN
+        RAISE EXCEPTION '_export_groups_conf: The tables groups % are unknown.', v_unknownGroupsList;
+      END IF;
+    END IF;
+-- build the tables groups description
+    v_groupsText = v_groupsText
+                || E'  "tables_groups": [\n';
+    FOR r_group IN
+        SELECT group_name, group_is_rollbackable, group_comment, group_nb_table, group_nb_sequence
+          FROM emaj.emaj_group
+          WHERE (v_groups IS NULL OR group_name = ANY(v_groups))
+          ORDER BY group_name
+    LOOP
+      v_groupsText = v_groupsText
+                  || E'    {\n'
+                  ||  '      "group": ' || to_json(r_group.group_name) || E',\n'
+                  ||  '      "is_rollbackable": ' || to_json(r_group.group_is_rollbackable) || E',\n';
+      IF r_group.group_comment IS NOT NULL THEN
+        v_groupsText = v_groupsText
+                  ||  '      "comment": ' || to_json(r_group.group_comment) || E',\n';
+      END IF;
+      IF r_group.group_nb_table > 0 THEN
+-- build the tables list, if any
+        v_groupsText = v_groupsText
+                    || E'      "tables": [\n';
+        FOR r_table IN
+            SELECT rel_schema, rel_tblseq, rel_priority, rel_log_dat_tsp, rel_log_idx_tsp,
+                   (SELECT count(*) FROM emaj.emaj_ignored_app_trigger
+                    WHERE trg_schema = rel_schema AND trg_table = rel_tblseq) AS nb_trigger
+              FROM emaj.emaj_relation
+              WHERE rel_kind = 'r' AND upper_inf(rel_time_range)
+                AND rel_group = r_group.group_name
+              ORDER BY rel_schema, rel_tblseq
+        LOOP
+          v_groupsText = v_groupsText
+                      || E'        {\n'
+                      ||  '          "schema": ' || to_json(r_table.rel_schema) || E',\n'
+                      ||  '          "table": ' || to_json(r_table.rel_tblseq) || E',\n';
+          IF r_table.rel_priority IS NOT NULL THEN
+            v_groupsText = v_groupsText
+                        || E'          "priority": '|| to_json(r_table.rel_priority) || E',\n';
+          END IF;
+          IF r_table.rel_log_dat_tsp IS NOT NULL THEN
+            v_groupsText = v_groupsText
+                        || E'          "log_data_tablespace": '|| to_json(r_table.rel_log_dat_tsp) || E',\n';
+          END IF;
+          IF r_table.rel_log_idx_tsp IS NOT NULL THEN
+            v_groupsText = v_groupsText
+                        || E'          "log_index_tablespace": '|| to_json(r_table.rel_log_idx_tsp) || E',\n';
+          END IF;
+          IF r_table.nb_trigger > 0 THEN
+-- build the triggers to ignore for the table, if any
+            v_groupsText = v_groupsText
+                        || E'          "ignored_triggers": [\n';
+            FOR r_trigger IN
+                SELECT trg_name
+                  FROM emaj.emaj_ignored_app_trigger
+                  WHERE trg_schema = r_table.rel_schema AND trg_table = r_table.rel_tblseq
+                  ORDER BY trg_name
+            LOOP
+              v_groupsText = v_groupsText
+                          || E'            {\n'
+                          ||  '              "trigger": ' || to_json(r_trigger.trg_name) || E',\n'
+                          || E'            },\n';
+            END LOOP;
+            v_groupsText = v_groupsText
+                        || E'          ],\n';
+          END IF;
+          v_groupsText = v_groupsText
+                      || E'        },\n';
+        END LOOP;
+        v_groupsText = v_groupsText
+                    || E'      ],\n';
+      END IF;
+      IF r_group.group_nb_sequence > 0 THEN
+-- build the sequences list, if any
+        v_groupsText = v_groupsText
+                    || E'      "sequences": [\n';
+        FOR r_sequence IN
+            SELECT rel_schema, rel_tblseq
+              FROM emaj.emaj_relation
+              WHERE rel_kind = 'S' AND upper_inf(rel_time_range)
+                AND rel_group = r_group.group_name
+              ORDER BY rel_schema, rel_tblseq
+        LOOP
+          v_groupsText = v_groupsText
+                      || E'        {\n'
+                      ||  '          "schema": ' || to_json(r_sequence.rel_schema) || E',\n'
+                      ||  '          "sequence": ' || to_json(r_sequence.rel_tblseq) || E',\n'
+                      || E'        },\n';
+        END LOOP;
+        v_groupsText = v_groupsText
+                    || E'      ],\n';
+      END IF;
+      v_groupsText = v_groupsText
+                  || E'    },\n';
+    END LOOP;
+    v_groupsText = v_groupsText
+                || E'  ]\n';
+-- build the trailer and remove illicite commas at the end of arrays and attributes lists
+    v_groupsText = v_groupsText
+                || E'}\n';
+    v_groupsText = regexp_replace(v_groupsText, E',(\n *(\]|}))', '\1', 'g');
+-- test the JSON format by casting the text structure to json and report a warning in case of problem
+--   (this should not fail, unless the function code is bogus)
+    BEGIN
+      v_groupsJson = v_groupsText::JSON;
+      EXCEPTION WHEN OTHERS THEN
+        RAISE EXCEPTION '_export_groups_conf: The generated JSON structure is not properly formatted. '
+                        'Please report the bug to the E-Maj project.';
+    END;
+--
+    RETURN v_groupsJson;
+  END;
+$_export_groups_conf$;
+
+CREATE OR REPLACE FUNCTION emaj.emaj_export_groups_configuration(v_groups TEXT[] DEFAULT NULL)
+RETURNS JSON LANGUAGE plpgsql AS
+$emaj_export_groups_configuration$
+-- This function returns a JSON formatted structure representing some or all configured tables groups
+-- The function can be called by clients like emaj_web.
+-- This is just a wrapper of the internal _export_groups_conf() function.
+-- Input: an optional array of goup's names, NULL means all tables groups
+-- Output: the tables groups content in JSON format
+  BEGIN
+    RETURN emaj._export_groups_conf(v_groups);
+  END;
+$emaj_export_groups_configuration$;
+COMMENT ON FUNCTION emaj.emaj_export_groups_configuration(TEXT[]) IS
+$$Generates a json structure describing configured tables groups.$$;
+
+CREATE OR REPLACE FUNCTION emaj.emaj_export_groups_configuration(v_location TEXT, v_groups TEXT[] DEFAULT NULL)
+RETURNS INT LANGUAGE plpgsql
+SECURITY DEFINER SET search_path = pg_catalog, pg_temp AS
+$emaj_export_groups_configuration$
+-- This function stores some or all configured tables groups configuration into a file on the server.
+-- The JSON structure is built by the _export_groups_conf() function.
+-- Input: an optional array of goup's names, NULL means all tables groups
+-- Output: the number of tables groups recorded in the file.
+  DECLARE
+    v_groupsJson             JSON;
+  BEGIN
+-- get the json structure
+    SELECT emaj._export_groups_conf(v_groups) INTO v_groupsJson;
+-- store the structure into the provided file name
+    CREATE TEMP TABLE t (groups TEXT);
+    INSERT INTO t
+      SELECT line FROM regexp_split_to_table(v_groupsJson::TEXT, '\n') AS line;
+    BEGIN
+      EXECUTE format ('COPY t TO %s',
+                      quote_literal(v_location));
+    EXCEPTION WHEN OTHERS THEN
+      RAISE EXCEPTION 'emaj_export_groups_configuration: Unable to write to the % file.', v_location;
+    END;
+    DROP TABLE t;
+-- return the number of recorded tables groups
+    RETURN json_array_length(v_groupsJson->'tables_groups');
+  END;
+$emaj_export_groups_configuration$;
+COMMENT ON FUNCTION emaj.emaj_export_groups_configuration(TEXT, TEXT[]) IS
+$$Generates and stores in a file a json structure describing configured tables groups.$$;
+
 CREATE OR REPLACE FUNCTION emaj.emaj_start_group(v_groupName TEXT, v_mark TEXT DEFAULT 'START_%', v_resetLog BOOLEAN DEFAULT TRUE)
 RETURNS INT LANGUAGE plpgsql AS
 $emaj_start_group$
@@ -9213,8 +9400,8 @@ $_export_param_conf$
     BEGIN
       v_paramsJson = v_params::JSON;
       EXCEPTION WHEN OTHERS THEN
-        RAISE WARNING '_export_param_conf: The generated JSON structure is not properly formatted. '
-                      'Please report the bug to the E-Maj project.';
+        RAISE EXCEPTION '_export_param_conf: The generated JSON structure is not properly formatted. '
+                        'Please report the bug to the E-Maj project.';
     END;
 --
     RETURN v_paramsJson;
@@ -9290,7 +9477,7 @@ $_import_param_conf$
 -- look for the "parameters" json path
     v_parameters = v_paramsJson #> '{"parameters"}';
     IF v_parameters IS NULL THEN
-      RAISE WARNING '_import_param_conf: The "parameters" JSON sub-structure has not been found in the supplied structure';
+      RAISE EXCEPTION '_import_param_conf: The "parameters" JSON sub-structure has not been found in the supplied structure';
     ELSE
       IF v_deleteCurrentConf THEN
 -- if requested, delete the existing parameters, except the 'emaj_version'
@@ -9362,7 +9549,7 @@ CREATE OR REPLACE FUNCTION emaj.emaj_import_parameters_configuration(v_location 
 RETURNS INT LANGUAGE plpgsql
 SECURITY DEFINER SET search_path = pg_catalog, pg_temp AS
 $emaj_import_parameters_configuration$
--- This function imports a file containing a  JSON formatted structure representing E-Maj parameters to load.
+-- This function imports a file containing a JSON formatted structure representing E-Maj parameters to load.
 -- This structure can have been generated by the emaj_export_parameters_configuration() functions and may have been adapted by the user.
 -- It calls the _import_param_conf() function to perform the emaj_param table changes.
 -- Input: - input file location

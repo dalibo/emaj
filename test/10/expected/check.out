@@ -8,14 +8,14 @@ select count(*) from pg_proc, pg_namespace
   where pg_namespace.oid=pronamespace and nspname = 'emaj' and (proname like E'emaj\\_%' or proname like E'\\_%');
  count 
 -------
-   167
+   170
 (1 row)
 
 select count(*) from pg_proc, pg_namespace 
   where pg_namespace.oid=pronamespace and nspname = 'emaj' and proname like E'emaj\\_%';
  count 
 -------
-    77
+    79
 (1 row)
 
 -----------------------------
@@ -131,8 +131,9 @@ select funcname, calls from pg_stat_user_functions
  _emaj_param_change_fnct                   |    41
  _enable_event_triggers                    |   339
  _estimate_rollback_groups                 |    13
- _event_trigger_sql_drop_fnct              |   149
+ _event_trigger_sql_drop_fnct              |   152
  _event_trigger_table_rewrite_fnct         |   147
+ _export_groups_conf                       |     6
  _export_param_conf                        |     7
  _export_sql_script                        |    46
  _gen_sql_groups                           |    27
@@ -141,7 +142,7 @@ select funcname, calls from pg_stat_user_functions
  _get_current_sequence_state               |  2799
  _get_default_tablespace                   |    18
  _get_previous_mark_group                  |    37
- _import_param_conf                        |     7
+ _import_param_conf                        |     5
  _lock_groups                              |   293
  _log_stat_groups                          |    33
  _log_truncate_fnct                        |     2
@@ -197,6 +198,8 @@ select funcname, calls from pg_stat_user_functions
  emaj_enable_protection_by_event_triggers  |    13
  emaj_estimate_rollback_group              |     9
  emaj_estimate_rollback_groups             |     4
+ emaj_export_groups_configuration          |     2
+ emaj_export_groups_configuration          |     3
  emaj_export_parameters_configuration      |     4
  emaj_export_parameters_configuration      |     2
  emaj_force_drop_group                     |     6
@@ -208,8 +211,8 @@ select funcname, calls from pg_stat_user_functions
  emaj_get_previous_mark_group              |    11
  emaj_get_previous_mark_group              |     9
  emaj_ignore_app_trigger                   |    15
+ emaj_import_parameters_configuration      |     2
  emaj_import_parameters_configuration      |     3
- emaj_import_parameters_configuration      |     4
  emaj_log_stat_group                       |    23
  emaj_log_stat_groups                      |     7
  emaj_logged_rollback_group                |     7
@@ -252,13 +255,13 @@ select funcname, calls from pg_stat_user_functions
  emaj_unprotect_group                      |     8
  emaj_unprotect_mark_group                 |     6
  emaj_verify_all                           |    48
-(162 rows)
+(165 rows)
 
 -- count the total number of user-callable function calls (those who failed are not counted)
 select sum(calls) from pg_stat_user_functions where funcname like E'emaj\\_%';
  sum 
 -----
- 995
+ 998
 (1 row)
 
 -----------------------------

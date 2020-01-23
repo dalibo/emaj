@@ -167,3 +167,65 @@ A l'aide de cette fonction, il est ainsi facile de consolider tous les rollbacks
 
 La fonction *emaj_get_consolidable_rollbacks()* est utilisable par les rôles *emaj_adm* et *emaj_viewer*.
 
+Exporter des configurations de groupes de tables
+------------------------------------------------
+
+Un jeu de fonctions permet d’exporter des configurations de groupes de tables.
+
+.. _export_groups_conf:
+
+Export d’une configuration de groupes de tables
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+Deux versions de la fonction *emaj_export_groups_configuration()* exportent sous forme de structure JSON une description d’un ou plusieurs groupes de tables.
+
+On peut écrire dans un fichier une configuration de groupes de tables par ::
+
+	SELECT emaj_export_groups_configuration('<chemin.fichier>', <tableau.noms.groupes>);
+
+Le chemin du fichier doit être accessible en écriture par l’instance PostgreSQL.
+
+Le seconde paramètre, optionnel, liste sous forme d’un tableau les groupes de tables dont on souhaite exporter la configuration. Si le paramètre est absent ou valorisé à NULL, tous les groupes de tables existants sont exportés.
+
+La fonction retourne le nombre de groupes de tables exportés.
+
+Si le chemin du fichier n’est pas renseigné (i.e. est valorisé à NULL), la fonction retourne directement la structure JSON contenant la configuration des groupes de tables. Cette structure ressemble à ceci ::
+
+   {
+   	"_comment": "Generated on database <db> with E-Maj version <version> at <date_heure>",
+   	"tables_groups": [
+   		{
+   		"group": "...",
+   		"is_rollbackable": ...,
+   		"comment": "...",
+   		"tables": [
+   			{
+   			"schema": "...",
+   			"table": "...",
+   			"priority": ...,
+   			"log_data_tablespace": "...",
+   			"log_index_tablespace": "...",
+   			"ignored_triggers": [
+   				{
+   				"trigger": "...",
+   				...
+   				 },
+   			]
+   			},
+   			{
+   			...
+   			}
+   		],
+   		"sequences": [
+   			{
+   			"schema": "myschema1",
+   			"sequence": "mytbl1",
+   			},
+   			{
+   			...
+   			}
+   		],
+   		},
+   		...
+   	]
+   }

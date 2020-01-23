@@ -2,7 +2,8 @@
 -- emaj_sync_def_group()
 -- emaj_assign_table(), emaj_assign_tables(), emaj_remove_table(), emaj_remove_tables(),
 -- emaj_assign_sequence(), emaj_assign_sequences(), emaj_remove_sequence(), emaj_remove_sequences(),
--- emaj_ignore_app_trigger(), emaj_drop_group() and emaj_force_drop_group() functions
+-- emaj_ignore_app_trigger(), emaj_export_groups_configuration(),
+-- emaj_drop_group() and emaj_force_drop_group() functions
 --
 SET client_min_messages TO WARNING;
 -----------------------------
@@ -515,6 +516,27 @@ select * from emaj.emaj_ignored_app_trigger order by trg_schema, trg_table, trg_
 -- remove several triggers
 select emaj.emaj_ignore_app_trigger('REMOVE','myschema1','mytbl2','%');
 select * from emaj.emaj_ignored_app_trigger order by trg_schema, trg_table, trg_name;
+
+-----------------------------
+-- emaj_export_groups_configuration() and emaj_import_groups_configuration() tests
+-----------------------------
+
+-- direct export
+--   bad selected groups array
+select emaj.emaj_export_groups_configuration(array['myGroup1','unknown1','unknown2']);
+
+-- ok
+select json_array_length(emaj.emaj_export_groups_configuration()->'tables_groups');
+select json_array_length(emaj.emaj_export_groups_configuration(array['myGroup1','myGroup2'])->'tables_groups');
+
+-- export in file
+--   error
+select emaj.emaj_export_groups_configuration('/tmp/dummy/location/file');
+
+--   ok
+select emaj.emaj_export_groups_configuration('/tmp/orig_groups_config_all');
+select emaj.emaj_export_groups_configuration('/tmp/orig_groups_config_partial', array['myGroup1','myGroup2']);
+\! wc -l /tmp/orig_groups_config*
 
 -----------------------------
 -- emaj_drop_group() tests

@@ -4,19 +4,26 @@
 set role emaj_regression_tests_adm_user;
 set search_path=public,myschema1;
 -- before going on, save parameters on a file and reload them
-select emaj.emaj_export_parameters_configuration('/tmp/param_config');
+select emaj.emaj_export_parameters_configuration('/tmp/param_config.json');
  emaj_export_parameters_configuration 
 --------------------------------------
                                     3
 (1 row)
 
-select emaj.emaj_import_parameters_configuration('/tmp/param_config', true);
+select emaj.emaj_import_parameters_configuration('/tmp/param_config.json', true);
  emaj_import_parameters_configuration 
 --------------------------------------
                                     3
 (1 row)
 
-\! rm /tmp/param_config
+-- also save the groups configuration on a file
+select emaj.emaj_export_groups_configuration('/tmp/groups_config.json');
+ emaj_export_groups_configuration 
+----------------------------------
+                                3
+(1 row)
+
+\! rm /tmp/param_config.json /tmp/groups_config.json
 -----------------------------
 -- Step 16 : test transactions with several emaj operations
 -----------------------------
@@ -2654,7 +2661,7 @@ select hist_id, hist_function, hist_event, hist_object,
    10829 | ROLLBACK_GROUP           | NOTICE                       | Rollback id 10026                                                                | 2 sequences processed.                                                                                                                 | postgres
    10830 | DBLINK_CLOSE_CNX         |                              | rlbk#1                                                                           |                                                                                                                                        | postgres
    10831 | ROLLBACK_GROUP           | END                          | myGroup1                                                                         | Rollback_id 10026, 3 tables and 2 sequences effectively processed                                                                      | postgres
-   10832 | IMPORT_PARAMETERS        | BEGIN                        |                                                                                  | Input file: '/tmp/param_config'                                                                                                        | postgres
+   10832 | IMPORT_PARAMETERS        | BEGIN                        |                                                                                  | Input file: '/tmp/param_config.json'                                                                                                   | postgres
    10833 |                          | DELETED PARAMETER            | dblink_user_password                                                             |                                                                                                                                        | postgres
    10834 |                          | DELETED PARAMETER            | alter_log_table                                                                  |                                                                                                                                        | postgres
    10835 |                          | DELETED PARAMETER            | fixed_step_rollback_duration                                                     |                                                                                                                                        | postgres

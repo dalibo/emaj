@@ -312,6 +312,12 @@ Fonctions de niveau général
 | :ref:`emaj_enable_protection_by_event_triggers   |                               | nb.triggers INT                       |
 | <emaj_enable_protection_by_event_triggers>`      |                               |                                       |
 +--------------------------------------------------+-------------------------------+---------------------------------------+
+| :ref:`emaj_export_groups_configuration           | | NULL,                       | configuration JSON                    |
+| <export_groups_conf>`                            | | [tableau.groupes TEXT[]]    |                                       |
++--------------------------------------------------+-------------------------------+---------------------------------------+
+| :ref:`emaj_export_groups_configuration           | | fichier TEXT,               | nb.groupes INT                        |
+| <export_groups_conf>`                            | | [tableau.groupes TEXT[]]    |                                       |
++--------------------------------------------------+-------------------------------+---------------------------------------+
 | :ref:`emaj_export_parameters_configuration       |                               | paramètres JSON                       |
 | <export_param_conf>`                             |                               |                                       |
 +--------------------------------------------------+-------------------------------+---------------------------------------+

@@ -312,6 +312,12 @@ General purpose functions
 | :ref:`emaj_enable_protection_by_event_triggers   |                               | #.triggers INT                        |
 | <emaj_enable_protection_by_event_triggers>`      |                               |                                       |
 +--------------------------------------------------+-------------------------------+---------------------------------------+
+| :ref:`emaj_export_groups_configuration           | | NULL,                       | configuration JSON                    |
+| <export_groups_conf>`                            | | [groups.array TEXT[]]       |                                       |
++--------------------------------------------------+-------------------------------+---------------------------------------+
+| :ref:`emaj_export_groups_configuration           | | file.path TEXT,             | #.groups INT                          |
+| <export_groups_conf>`                            | | [groups.array TEXT[]]       |                                       |
++--------------------------------------------------+-------------------------------+---------------------------------------+
 | :ref:`emaj_export_parameters_configuration       |                               | parameters JSON                       |
 | <export_param_conf>`                             |                               |                                       |
 +--------------------------------------------------+-------------------------------+---------------------------------------+

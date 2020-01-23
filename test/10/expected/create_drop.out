@@ -2,7 +2,8 @@
 -- emaj_sync_def_group()
 -- emaj_assign_table(), emaj_assign_tables(), emaj_remove_table(), emaj_remove_tables(),
 -- emaj_assign_sequence(), emaj_assign_sequences(), emaj_remove_sequence(), emaj_remove_sequences(),
--- emaj_ignore_app_trigger(), emaj_drop_group() and emaj_force_drop_group() functions
+-- emaj_ignore_app_trigger(), emaj_export_groups_configuration(),
+-- emaj_drop_group() and emaj_force_drop_group() functions
 --
 SET client_min_messages TO WARNING;
 -----------------------------
@@ -1217,6 +1218,51 @@ select * from emaj.emaj_ignored_app_trigger order by trg_schema, trg_table, trg_
 ------------+-----------+----------
 (0 rows)
 
+-----------------------------
+-- emaj_export_groups_configuration() and emaj_import_groups_configuration() tests
+-----------------------------
+-- direct export
+--   bad selected groups array
+select emaj.emaj_export_groups_configuration(array['myGroup1','unknown1','unknown2']);
+ERROR:  _export_groups_conf: The tables groups unknown1, unknown2 are unknown.
+CONTEXT:  PL/pgSQL function emaj._export_groups_conf(text[]) line 25 at RAISE
+PL/pgSQL function emaj.emaj_export_groups_configuration(text[]) line 8 at RETURN
+-- ok
+select json_array_length(emaj.emaj_export_groups_configuration()->'tables_groups');
+ json_array_length 
+-------------------
+                 7
+(1 row)
+
+select json_array_length(emaj.emaj_export_groups_configuration(array['myGroup1','myGroup2'])->'tables_groups');
+ json_array_length 
+-------------------
+                 2
+(1 row)
+
+-- export in file
+--   error
+select emaj.emaj_export_groups_configuration('/tmp/dummy/location/file');
+ERROR:  emaj_export_groups_configuration: Unable to write to the /tmp/dummy/location/file file.
+CONTEXT:  PL/pgSQL function emaj.emaj_export_groups_configuration(text,text[]) line 19 at RAISE
+--   ok
+select emaj.emaj_export_groups_configuration('/tmp/orig_groups_config_all');
+ emaj_export_groups_configuration 
+----------------------------------
+                                7
+(1 row)
+
+select emaj.emaj_export_groups_configuration('/tmp/orig_groups_config_partial', array['myGroup1','myGroup2']);
+ emaj_export_groups_configuration 
+----------------------------------
+                                2
+(1 row)
+
+\! wc -l /tmp/orig_groups_config*
+ 183 /tmp/orig_groups_config_all
+  92 /tmp/orig_groups_config_partial
+  11 /tmp/orig_groups_config_test
+ 286 total
 -----------------------------
 -- emaj_drop_group() tests
 -----------------------------
