@@ -1802,8 +1802,9 @@ select emaj.emaj_alter_group('myGroup1', 'move to myGroup1');
 WARNING:  _alter_groups: in the group "myGroup1", the table or sequence myschema2."myTbl3" already belongs to the group "myGroup2".
 WARNING:  _alter_groups: in the group "myGroup1", the table or sequence myschema2."myTbl3_col31_seq" already belongs to the group "myGroup2".
 ERROR:  _alter_groups: One or several errors have been detected in the emaj_group_def table content.
-CONTEXT:  PL/pgSQL function emaj._alter_groups(text[],boolean,text) line 31 at RAISE
-PL/pgSQL function emaj.emaj_alter_group(text,text) line 6 at RETURN
+CONTEXT:  PL/pgSQL function emaj._alter_groups(text[],boolean,text,text,bigint) line 31 at RAISE
+SQL statement "SELECT *                              FROM emaj._alter_groups(ARRAY[v_groupName], FALSE, v_mark, 'ALTER_GROUP'::TEXT, NULL)"
+PL/pgSQL function emaj.emaj_alter_group(text,text) line 14 at SQL statement
 -- should be OK
 -- generates updates before the group change
 select emaj.emaj_set_mark_groups('{"myGroup1","myGroup2"}','before move');

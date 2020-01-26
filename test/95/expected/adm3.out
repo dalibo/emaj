@@ -389,8 +389,9 @@ SQL statement "SELECT emaj._add_tbl(r_plan.altr_schema, r_plan.altr_tblseq, r_pl
             WHERE grpdef_group = r_plan.altr_group AND grpdef_schema = r_plan.altr_schema AND grpdef_tblseq = r_plan.altr_tblseq"
 PL/pgSQL function emaj._alter_exec(bigint,boolean) line 102 at PERFORM
 SQL statement "SELECT emaj._alter_exec(v_timeId, v_multiGroup)"
-PL/pgSQL function emaj._alter_groups(text[],boolean,text) line 58 at PERFORM
-PL/pgSQL function emaj.emaj_alter_group(text,text) line 6 at RETURN
+PL/pgSQL function emaj._alter_groups(text[],boolean,text,text,bigint) line 60 at PERFORM
+SQL statement "SELECT *                              FROM emaj._alter_groups(ARRAY[v_groupName], FALSE, v_mark, 'ALTER_GROUP'::TEXT, NULL)"
+PL/pgSQL function emaj.emaj_alter_group(text,text) line 14 at SQL statement
 NOTICE:  trigger "emaj_log_trg" for relation "myschema4.mypartp3" does not exist, skipping
 CONTEXT:  SQL statement "DROP TRIGGER IF EXISTS emaj_log_trg ON myschema4.mypartp3"
 PL/pgSQL function emaj._create_log_trigger_tbl(text,text,text,text) line 9 at EXECUTE
@@ -405,8 +406,9 @@ SQL statement "SELECT emaj._add_tbl(r_plan.altr_schema, r_plan.altr_tblseq, r_pl
             WHERE grpdef_group = r_plan.altr_group AND grpdef_schema = r_plan.altr_schema AND grpdef_tblseq = r_plan.altr_tblseq"
 PL/pgSQL function emaj._alter_exec(bigint,boolean) line 102 at PERFORM
 SQL statement "SELECT emaj._alter_exec(v_timeId, v_multiGroup)"
-PL/pgSQL function emaj._alter_groups(text[],boolean,text) line 58 at PERFORM
-PL/pgSQL function emaj.emaj_alter_group(text,text) line 6 at RETURN
+PL/pgSQL function emaj._alter_groups(text[],boolean,text,text,bigint) line 60 at PERFORM
+SQL statement "SELECT *                              FROM emaj._alter_groups(ARRAY[v_groupName], FALSE, v_mark, 'ALTER_GROUP'::TEXT, NULL)"
+PL/pgSQL function emaj.emaj_alter_group(text,text) line 14 at SQL statement
 NOTICE:  trigger "emaj_trunc_trg" for relation "myschema4.mypartp3" does not exist, skipping
 CONTEXT:  SQL statement "DROP TRIGGER IF EXISTS emaj_trunc_trg ON myschema4.mypartp3"
 PL/pgSQL function emaj._create_tbl(text,text,text,integer,text,text,bigint,boolean,boolean) line 123 at EXECUTE
@@ -419,8 +421,9 @@ SQL statement "SELECT emaj._add_tbl(r_plan.altr_schema, r_plan.altr_tblseq, r_pl
             WHERE grpdef_group = r_plan.altr_group AND grpdef_schema = r_plan.altr_schema AND grpdef_tblseq = r_plan.altr_tblseq"
 PL/pgSQL function emaj._alter_exec(bigint,boolean) line 102 at PERFORM
 SQL statement "SELECT emaj._alter_exec(v_timeId, v_multiGroup)"
-PL/pgSQL function emaj._alter_groups(text[],boolean,text) line 58 at PERFORM
-PL/pgSQL function emaj.emaj_alter_group(text,text) line 6 at RETURN
+PL/pgSQL function emaj._alter_groups(text[],boolean,text,text,bigint) line 60 at PERFORM
+SQL statement "SELECT *                              FROM emaj._alter_groups(ARRAY[v_groupName], FALSE, v_mark, 'ALTER_GROUP'::TEXT, NULL)"
+PL/pgSQL function emaj.emaj_alter_group(text,text) line 14 at SQL statement
  emaj_alter_group 
 ------------------
                 7
@@ -864,8 +867,9 @@ SQL statement "SELECT emaj._add_tbl(r_plan.altr_schema, r_plan.altr_tblseq, r_pl
             WHERE grpdef_group = r_plan.altr_group AND grpdef_schema = r_plan.altr_schema AND grpdef_tblseq = r_plan.altr_tblseq"
 PL/pgSQL function emaj._alter_exec(bigint,boolean) line 102 at PERFORM
 SQL statement "SELECT emaj._alter_exec(v_timeId, v_multiGroup)"
-PL/pgSQL function emaj._alter_groups(text[],boolean,text) line 58 at PERFORM
-PL/pgSQL function emaj.emaj_alter_group(text,text) line 6 at RETURN
+PL/pgSQL function emaj._alter_groups(text[],boolean,text,text,bigint) line 60 at PERFORM
+SQL statement "SELECT *                              FROM emaj._alter_groups(ARRAY[v_groupName], FALSE, v_mark, 'ALTER_GROUP'::TEXT, NULL)"
+PL/pgSQL function emaj.emaj_alter_group(text,text) line 14 at SQL statement
 NOTICE:  trigger "emaj_log_trg" for relation "phil's schema3.mytbl4" does not exist, skipping
 CONTEXT:  SQL statement "DROP TRIGGER IF EXISTS emaj_log_trg ON "phil's schema3".mytbl4"
 PL/pgSQL function emaj._create_log_trigger_tbl(text,text,text,text) line 9 at EXECUTE
@@ -880,8 +884,9 @@ SQL statement "SELECT emaj._add_tbl(r_plan.altr_schema, r_plan.altr_tblseq, r_pl
             WHERE grpdef_group = r_plan.altr_group AND grpdef_schema = r_plan.altr_schema AND grpdef_tblseq = r_plan.altr_tblseq"
 PL/pgSQL function emaj._alter_exec(bigint,boolean) line 102 at PERFORM
 SQL statement "SELECT emaj._alter_exec(v_timeId, v_multiGroup)"
-PL/pgSQL function emaj._alter_groups(text[],boolean,text) line 58 at PERFORM
-PL/pgSQL function emaj.emaj_alter_group(text,text) line 6 at RETURN
+PL/pgSQL function emaj._alter_groups(text[],boolean,text,text,bigint) line 60 at PERFORM
+SQL statement "SELECT *                              FROM emaj._alter_groups(ARRAY[v_groupName], FALSE, v_mark, 'ALTER_GROUP'::TEXT, NULL)"
+PL/pgSQL function emaj.emaj_alter_group(text,text) line 14 at SQL statement
 NOTICE:  trigger "emaj_trunc_trg" for relation "phil's schema3.mytbl4" does not exist, skipping
 CONTEXT:  SQL statement "DROP TRIGGER IF EXISTS emaj_trunc_trg ON "phil's schema3".mytbl4"
 PL/pgSQL function emaj._create_tbl(text,text,text,integer,text,text,bigint,boolean,boolean) line 123 at EXECUTE
@@ -894,8 +899,9 @@ SQL statement "SELECT emaj._add_tbl(r_plan.altr_schema, r_plan.altr_tblseq, r_pl
             WHERE grpdef_group = r_plan.altr_group AND grpdef_schema = r_plan.altr_schema AND grpdef_tblseq = r_plan.altr_tblseq"
 PL/pgSQL function emaj._alter_exec(bigint,boolean) line 102 at PERFORM
 SQL statement "SELECT emaj._alter_exec(v_timeId, v_multiGroup)"
-PL/pgSQL function emaj._alter_groups(text[],boolean,text) line 58 at PERFORM
-PL/pgSQL function emaj.emaj_alter_group(text,text) line 6 at RETURN
+PL/pgSQL function emaj._alter_groups(text[],boolean,text,text,bigint) line 60 at PERFORM
+SQL statement "SELECT *                              FROM emaj._alter_groups(ARRAY[v_groupName], FALSE, v_mark, 'ALTER_GROUP'::TEXT, NULL)"
+PL/pgSQL function emaj.emaj_alter_group(text,text) line 14 at SQL statement
  emaj_alter_group 
 ------------------
                 7
@@ -932,8 +938,9 @@ SQL statement "SELECT emaj._remove_tbl(r_plan.altr_schema, r_plan.altr_tblseq, r
                                    v_timeId, v_function)"
 PL/pgSQL function emaj._alter_exec(bigint,boolean) line 24 at PERFORM
 SQL statement "SELECT emaj._alter_exec(v_timeId, v_multiGroup)"
-PL/pgSQL function emaj._alter_groups(text[],boolean,text) line 58 at PERFORM
-PL/pgSQL function emaj.emaj_alter_group(text,text) line 6 at RETURN
+PL/pgSQL function emaj._alter_groups(text[],boolean,text,text,bigint) line 60 at PERFORM
+SQL statement "SELECT *                              FROM emaj._alter_groups(ARRAY[v_groupName], FALSE, v_mark, 'ALTER_GROUP'::TEXT, NULL)"
+PL/pgSQL function emaj.emaj_alter_group(text,text) line 14 at SQL statement
 NOTICE:  relation "mytbl4_log_idx" does not exist, skipping
 CONTEXT:  SQL statement "ALTER INDEX IF EXISTS "emaj_phil's schema3".mytbl4_log_idx RENAME TO mytbl4_log_idx_2"
 PL/pgSQL function emaj._remove_tbl(text,text,text,boolean,bigint,text) line 44 at EXECUTE
@@ -941,8 +948,9 @@ SQL statement "SELECT emaj._remove_tbl(r_plan.altr_schema, r_plan.altr_tblseq, r
                                    v_timeId, v_function)"
 PL/pgSQL function emaj._alter_exec(bigint,boolean) line 24 at PERFORM
 SQL statement "SELECT emaj._alter_exec(v_timeId, v_multiGroup)"
-PL/pgSQL function emaj._alter_groups(text[],boolean,text) line 58 at PERFORM
-PL/pgSQL function emaj.emaj_alter_group(text,text) line 6 at RETURN
+PL/pgSQL function emaj._alter_groups(text[],boolean,text,text,bigint) line 60 at PERFORM
+SQL statement "SELECT *                              FROM emaj._alter_groups(ARRAY[v_groupName], FALSE, v_mark, 'ALTER_GROUP'::TEXT, NULL)"
+PL/pgSQL function emaj.emaj_alter_group(text,text) line 14 at SQL statement
  emaj_alter_group 
 ------------------
                 6
@@ -962,8 +970,9 @@ SQL statement "SELECT emaj._add_tbl(r_plan.altr_schema, r_plan.altr_tblseq, r_pl
             WHERE grpdef_group = r_plan.altr_group AND grpdef_schema = r_plan.altr_schema AND grpdef_tblseq = r_plan.altr_tblseq"
 PL/pgSQL function emaj._alter_exec(bigint,boolean) line 102 at PERFORM
 SQL statement "SELECT emaj._alter_exec(v_timeId, v_multiGroup)"
-PL/pgSQL function emaj._alter_groups(text[],boolean,text) line 58 at PERFORM
-PL/pgSQL function emaj.emaj_alter_group(text,text) line 6 at RETURN
+PL/pgSQL function emaj._alter_groups(text[],boolean,text,text,bigint) line 60 at PERFORM
+SQL statement "SELECT *                              FROM emaj._alter_groups(ARRAY[v_groupName], FALSE, v_mark, 'ALTER_GROUP'::TEXT, NULL)"
+PL/pgSQL function emaj.emaj_alter_group(text,text) line 14 at SQL statement
 NOTICE:  trigger "emaj_log_trg" for relation "phil's schema3.mytbl4" does not exist, skipping
 CONTEXT:  SQL statement "DROP TRIGGER IF EXISTS emaj_log_trg ON "phil's schema3".mytbl4"
 PL/pgSQL function emaj._create_log_trigger_tbl(text,text,text,text) line 9 at EXECUTE
@@ -978,8 +987,9 @@ SQL statement "SELECT emaj._add_tbl(r_plan.altr_schema, r_plan.altr_tblseq, r_pl
             WHERE grpdef_group = r_plan.altr_group AND grpdef_schema = r_plan.altr_schema AND grpdef_tblseq = r_plan.altr_tblseq"
 PL/pgSQL function emaj._alter_exec(bigint,boolean) line 102 at PERFORM
 SQL statement "SELECT emaj._alter_exec(v_timeId, v_multiGroup)"
-PL/pgSQL function emaj._alter_groups(text[],boolean,text) line 58 at PERFORM
-PL/pgSQL function emaj.emaj_alter_group(text,text) line 6 at RETURN
+PL/pgSQL function emaj._alter_groups(text[],boolean,text,text,bigint) line 60 at PERFORM
+SQL statement "SELECT *                              FROM emaj._alter_groups(ARRAY[v_groupName], FALSE, v_mark, 'ALTER_GROUP'::TEXT, NULL)"
+PL/pgSQL function emaj.emaj_alter_group(text,text) line 14 at SQL statement
 NOTICE:  trigger "emaj_trunc_trg" for relation "phil's schema3.mytbl4" does not exist, skipping
 CONTEXT:  SQL statement "DROP TRIGGER IF EXISTS emaj_trunc_trg ON "phil's schema3".mytbl4"
 PL/pgSQL function emaj._create_tbl(text,text,text,integer,text,text,bigint,boolean,boolean) line 123 at EXECUTE
@@ -992,8 +1002,9 @@ SQL statement "SELECT emaj._add_tbl(r_plan.altr_schema, r_plan.altr_tblseq, r_pl
             WHERE grpdef_group = r_plan.altr_group AND grpdef_schema = r_plan.altr_schema AND grpdef_tblseq = r_plan.altr_tblseq"
 PL/pgSQL function emaj._alter_exec(bigint,boolean) line 102 at PERFORM
 SQL statement "SELECT emaj._alter_exec(v_timeId, v_multiGroup)"
-PL/pgSQL function emaj._alter_groups(text[],boolean,text) line 58 at PERFORM
-PL/pgSQL function emaj.emaj_alter_group(text,text) line 6 at RETURN
+PL/pgSQL function emaj._alter_groups(text[],boolean,text,text,bigint) line 60 at PERFORM
+SQL statement "SELECT *                              FROM emaj._alter_groups(ARRAY[v_groupName], FALSE, v_mark, 'ALTER_GROUP'::TEXT, NULL)"
+PL/pgSQL function emaj.emaj_alter_group(text,text) line 14 at SQL statement
  emaj_alter_group 
 ------------------
                 7
@@ -1026,11 +1037,14 @@ rollback;
 begin;
   select emaj.emaj_alter_group('phil''s group#3",','should also fails');
 WARNING:  _alter_groups: in the group "phil's group#3"",", the table or sequence "phil's schema3".mytbl4 does not exist.
-CONTEXT:  PL/pgSQL function emaj.emaj_alter_group(text,text) line 6 at RETURN
+CONTEXT:  SQL statement "SELECT *                              FROM emaj._alter_groups(ARRAY[v_groupName], FALSE, v_mark, 'ALTER_GROUP'::TEXT, NULL)"
+PL/pgSQL function emaj.emaj_alter_group(text,text) line 14 at SQL statement
 WARNING:  _alter_groups: in the group "phil's group#3"",", the table or sequence "phil's schema3"."phil's seq\1" does not exist.
-CONTEXT:  PL/pgSQL function emaj.emaj_alter_group(text,text) line 6 at RETURN
+CONTEXT:  SQL statement "SELECT *                              FROM emaj._alter_groups(ARRAY[v_groupName], FALSE, v_mark, 'ALTER_GROUP'::TEXT, NULL)"
+PL/pgSQL function emaj.emaj_alter_group(text,text) line 14 at SQL statement
 ERROR:  _alter_groups: One or several errors have been detected in the emaj_group_def table content.
-CONTEXT:  PL/pgSQL function emaj.emaj_alter_group(text,text) line 6 at RETURN
+CONTEXT:  SQL statement "SELECT *                              FROM emaj._alter_groups(ARRAY[v_groupName], FALSE, v_mark, 'ALTER_GROUP'::TEXT, NULL)"
+PL/pgSQL function emaj.emaj_alter_group(text,text) line 14 at SQL statement
 rollback;
 delete from emaj.emaj_group_def where grpdef_schema = 'phil''s schema3' and grpdef_tblseq = 'mytbl4';
 delete from emaj.emaj_group_def where grpdef_schema = 'phil''s schema3' and grpdef_tblseq = 'phil''s seq\1';
@@ -1042,8 +1056,9 @@ SQL statement "SELECT emaj._remove_tbl(r_plan.altr_schema, r_plan.altr_tblseq, r
                                    v_timeId, v_function)"
 PL/pgSQL function emaj._alter_exec(bigint,boolean) line 24 at PERFORM
 SQL statement "SELECT emaj._alter_exec(v_timeId, v_multiGroup)"
-PL/pgSQL function emaj._alter_groups(text[],boolean,text) line 58 at PERFORM
-PL/pgSQL function emaj.emaj_alter_group(text,text) line 6 at RETURN
+PL/pgSQL function emaj._alter_groups(text[],boolean,text,text,bigint) line 60 at PERFORM
+SQL statement "SELECT *                              FROM emaj._alter_groups(ARRAY[v_groupName], FALSE, v_mark, 'ALTER_GROUP'::TEXT, NULL)"
+PL/pgSQL function emaj.emaj_alter_group(text,text) line 14 at SQL statement
  emaj_alter_group 
 ------------------
                 5
@@ -1074,8 +1089,9 @@ SQL statement "SELECT emaj._add_tbl(r_plan.altr_schema, r_plan.altr_tblseq, r_pl
             WHERE grpdef_group = r_plan.altr_group AND grpdef_schema = r_plan.altr_schema AND grpdef_tblseq = r_plan.altr_tblseq"
 PL/pgSQL function emaj._alter_exec(bigint,boolean) line 102 at PERFORM
 SQL statement "SELECT emaj._alter_exec(v_timeId, v_multiGroup)"
-PL/pgSQL function emaj._alter_groups(text[],boolean,text) line 58 at PERFORM
-PL/pgSQL function emaj.emaj_alter_group(text,text) line 6 at RETURN
+PL/pgSQL function emaj._alter_groups(text[],boolean,text,text,bigint) line 60 at PERFORM
+SQL statement "SELECT *                              FROM emaj._alter_groups(ARRAY[v_groupName], FALSE, v_mark, 'ALTER_GROUP'::TEXT, NULL)"
+PL/pgSQL function emaj.emaj_alter_group(text,text) line 14 at SQL statement
 NOTICE:  trigger "emaj_log_trg" for relation "phil's schema3.mytbl4" does not exist, skipping
 CONTEXT:  SQL statement "DROP TRIGGER IF EXISTS emaj_log_trg ON "phil's schema3".mytbl4"
 PL/pgSQL function emaj._create_log_trigger_tbl(text,text,text,text) line 9 at EXECUTE
@@ -1090,8 +1106,9 @@ SQL statement "SELECT emaj._add_tbl(r_plan.altr_schema, r_plan.altr_tblseq, r_pl
             WHERE grpdef_group = r_plan.altr_group AND grpdef_schema = r_plan.altr_schema AND grpdef_tblseq = r_plan.altr_tblseq"
 PL/pgSQL function emaj._alter_exec(bigint,boolean) line 102 at PERFORM
 SQL statement "SELECT emaj._alter_exec(v_timeId, v_multiGroup)"
-PL/pgSQL function emaj._alter_groups(text[],boolean,text) line 58 at PERFORM
-PL/pgSQL function emaj.emaj_alter_group(text,text) line 6 at RETURN
+PL/pgSQL function emaj._alter_groups(text[],boolean,text,text,bigint) line 60 at PERFORM
+SQL statement "SELECT *                              FROM emaj._alter_groups(ARRAY[v_groupName], FALSE, v_mark, 'ALTER_GROUP'::TEXT, NULL)"
+PL/pgSQL function emaj.emaj_alter_group(text,text) line 14 at SQL statement
  emaj_alter_group 
 ------------------
                 7
@@ -3130,7 +3147,7 @@ select hist_id, hist_function, hist_event, hist_object,
    10371 | ALTER_GROUPS             | LOG INDEX TABLESPACE CHANGED | "phil's schema3"."myTbl2\"                                                       | tsplog1 => Default tablespace                                                                                                          | postgres
    10372 | ALTER_GROUPS             | PRIORITY CHANGED             | myschema4.mytblm                                                                 | NULL => 9                                                                                                                              | postgres
    10373 | ALTER_GROUPS             | PRIORITY CHANGED             | "phil's schema3"."myTbl2\"                                                       | 1 => NULL                                                                                                                              | postgres
-   10374 | ALTER_GROUPS             | END                          | myGroup4,phil's group#3",                                                        | Timestamp Id : 10045                                                                                                                   | postgres
+   10374 | ALTER_GROUPS             | END                          | phil's group#3",,myGroup4                                                        | Timestamp Id : 10045                                                                                                                   | postgres
    10375 | DROP_GROUP               | BEGIN                        | phil's group#3",                                                                 |                                                                                                                                        | postgres
    10376 | DROP_GROUP               | LOG_SCHEMA DROPPED           | "emaj_phil's schema3"                                                            |                                                                                                                                        | postgres
    10377 | DROP_GROUP               | END                          | phil's group#3",                                                                 | 4 tables/sequences processed                                                                                                           | postgres

@@ -4978,9 +4978,22 @@ RETURNS INT LANGUAGE plpgsql AS
 $emaj_alter_group$
 -- This function alters a tables group.
 -- Input: group name
+--        an optional mark name, used with groups in logging state
 -- Output: number of tables and sequences belonging to the group after the operation
+  DECLARE
+    v_timeId                 BIGINT;
+    v_nbRel                  INT;
   BEGIN
-    RETURN emaj._alter_groups(ARRAY[v_groupName], FALSE, v_mark);
+-- insert begin in the history
+    INSERT INTO emaj.emaj_hist (hist_function, hist_event, hist_object)
+      VALUES ('ALTER_GROUP', 'BEGIN', v_groupName);
+-- alter the group
+    SELECT * INTO v_timeId, v_nbRel
+      FROM emaj._alter_groups(ARRAY[v_groupName], FALSE, v_mark, 'ALTER_GROUP'::TEXT, NULL);
+-- insert end in the history
+    INSERT INTO emaj.emaj_hist (hist_function, hist_event, hist_object, hist_wording)
+      VALUES ('ALTER_GROUP', 'END', v_groupName, 'Timestamp Id : ' || v_timeId );
+    RETURN v_nbRel;
   END;
 $emaj_alter_group$;
 COMMENT ON FUNCTION emaj.emaj_alter_group(TEXT, TEXT) IS
@@ -4991,31 +5004,45 @@ RETURNS INT LANGUAGE plpgsql AS
 $emaj_alter_groups$
 -- This function alters several tables groups.
 -- Input: group names array
+--        an optional mark name, used with groups in logging state
 -- Output: number of tables and sequences belonging to the groups after the operation
+  DECLARE
+    v_timeId                 BIGINT;
+    v_nbRel                  INT;
   BEGIN
-    RETURN emaj._alter_groups(v_groupNames, TRUE, v_mark);
+-- insert begin in the history
+    INSERT INTO emaj.emaj_hist (hist_function, hist_event, hist_object)
+      VALUES ('ALTER_GROUPS', 'BEGIN', array_to_string(v_groupNames,','));
+-- alter the group
+    SELECT * INTO v_timeId, v_nbRel
+      FROM emaj._alter_groups(v_groupNames, TRUE, v_mark, 'ALTER_GROUPS'::TEXT, NULL);
+-- insert end in the history
+    INSERT INTO emaj.emaj_hist (hist_function, hist_event, hist_object, hist_wording)
+      VALUES ('ALTER_GROUPS', 'END', array_to_string(v_groupNames,','), 'Timestamp Id : ' || v_timeId );
+    RETURN v_nbRel;
   END;
 $emaj_alter_groups$;
 COMMENT ON FUNCTION emaj.emaj_alter_groups(TEXT[], TEXT) IS
 $$Alter several E-Maj groups.$$;
 
-CREATE OR REPLACE FUNCTION emaj._alter_groups(v_groupNames TEXT[], v_multiGroup BOOLEAN, v_mark TEXT)
-RETURNS INT LANGUAGE plpgsql AS
+CREATE OR REPLACE FUNCTION emaj._alter_groups(v_groupNames TEXT[], v_multiGroup BOOLEAN, v_mark TEXT, v_callingFunction TEXT,
+                                              INOUT v_timeId BIGINT, OUT v_nbRel INT)
+RETURNS RECORD LANGUAGE plpgsql AS
 $_alter_groups$
 -- This function effectively alters a tables groups array.
 -- It takes into account the changes recorded in the emaj_group_def table since the groups have been created.
--- Input: group names array, flag indicating whether the function is called by the multi-group function or not
+-- Input: group names array,
+--        flag indicating whether the function is called by the multi-group function or not
+--        a mark name to set on groups in logging state
+--        the calling function
+--        an optional timestamp id (used for groups configuration import)
 -- Output: number of tables and sequences belonging to the groups after the operation
   DECLARE
     v_loggingGroups          TEXT[];
     v_markName               TEXT;
-    v_timeId                 BIGINT;
     v_eventTriggers          TEXT[];
     r                        RECORD;
   BEGIN
--- insert begin in the history
-    INSERT INTO emaj.emaj_hist (hist_function, hist_event, hist_object)
-      VALUES (CASE WHEN v_multiGroup THEN 'ALTER_GROUPS' ELSE 'ALTER_GROUP' END, 'BEGIN', array_to_string(v_groupNames,','));
 -- check the group names
     SELECT emaj._check_group_names(v_groupNames := v_groupNames, v_mayBeNull := v_multiGroup, v_lockGroups := TRUE, v_checkList := '')
       INTO v_groupNames;
@@ -5041,8 +5068,10 @@ $_alter_groups$
         SELECT emaj._check_new_mark(v_groupNames, v_mark) INTO v_markName;
       END IF;
 -- OK
--- get the time stamp of the operation
-      SELECT emaj._set_time_stamp('A') INTO v_timeId;
+-- get the time stamp of the operation, if not supplied by the caller
+      IF v_timeId IS NULL THEN
+        SELECT emaj._set_time_stamp('A') INTO v_timeId;
+      END IF;
 -- for LOGGING groups, lock all tables to get a stable point
       IF v_loggingGroups IS NOT NULL THEN
 -- use a ROW EXCLUSIVE lock mode, preventing for a transaction currently updating data, but not conflicting with simple read access or
@@ -5056,11 +5085,11 @@ $_alter_groups$
 -- we can now plan all the steps needed to perform the operation
       PERFORM emaj._alter_plan(v_groupNames, v_timeId);
 -- create the needed log schemas
-      PERFORM emaj._create_log_schemas(CASE WHEN v_multiGroup THEN 'ALTER_GROUPS' ELSE 'ALTER_GROUP' END, v_groupNames);
+      PERFORM emaj._create_log_schemas(v_callingFunction, v_groupNames);
 -- execute the plan
       PERFORM emaj._alter_exec(v_timeId, v_multiGroup);
 -- drop the E-Maj log schemas that are now useless (i.e. not used by any created group)
-      PERFORM emaj._drop_log_schemas(CASE WHEN v_multiGroup THEN 'ALTER_GROUPS' ELSE 'ALTER_GROUP' END, FALSE);
+      PERFORM emaj._drop_log_schemas(v_callingFunction, FALSE);
 -- update some attributes in the emaj_group table
       UPDATE emaj.emaj_group
         SET group_last_alter_time_id = v_timeId, group_has_waiting_changes = FALSE,
@@ -5074,12 +5103,10 @@ $_alter_groups$
 -- check foreign keys with tables outside the groups in logging state
       PERFORM emaj._check_fk_groups(v_loggingGroups);
     END IF;
--- insert end in the history
-    INSERT INTO emaj.emaj_hist (hist_function, hist_event, hist_object, hist_wording)
-      VALUES (CASE WHEN v_multiGroup THEN 'ALTER_GROUPS' ELSE 'ALTER_GROUP' END, 'END', array_to_string(v_groupNames,','),
-              'Timestamp Id : ' || v_timeId );
 -- and return
-    RETURN sum(group_nb_table) + sum(group_nb_sequence) FROM emaj.emaj_group WHERE group_name = ANY (v_groupNames);
+    SELECT sum(group_nb_table) + sum(group_nb_sequence) INTO v_nbRel
+      FROM emaj.emaj_group WHERE group_name = ANY (v_groupNames);
+    RETURN;
   END;
 $_alter_groups$;
 

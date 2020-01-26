@@ -154,14 +154,16 @@ select emaj.emaj_alter_group(NULL);
 ERROR:  _check_group_names: No group to process.
 CONTEXT:  PL/pgSQL function emaj._check_group_names(text[],boolean,boolean,text) line 28 at RAISE
 SQL statement "SELECT emaj._check_group_names(v_groupNames := v_groupNames, v_mayBeNull := v_multiGroup, v_lockGroups := TRUE, v_checkList := '')"
-PL/pgSQL function emaj._alter_groups(text[],boolean,text) line 17 at SQL statement
-PL/pgSQL function emaj.emaj_alter_group(text,text) line 6 at RETURN
+PL/pgSQL function emaj._alter_groups(text[],boolean,text,text,bigint) line 17 at SQL statement
+SQL statement "SELECT *                              FROM emaj._alter_groups(ARRAY[v_groupName], FALSE, v_mark, 'ALTER_GROUP'::TEXT, NULL)"
+PL/pgSQL function emaj.emaj_alter_group(text,text) line 14 at SQL statement
 select emaj.emaj_alter_group('unknownGroup');
 ERROR:  _check_group_names: The group "unknownGroup" does not exist.
 CONTEXT:  PL/pgSQL function emaj._check_group_names(text[],boolean,boolean,text) line 36 at RAISE
 SQL statement "SELECT emaj._check_group_names(v_groupNames := v_groupNames, v_mayBeNull := v_multiGroup, v_lockGroups := TRUE, v_checkList := '')"
-PL/pgSQL function emaj._alter_groups(text[],boolean,text) line 17 at SQL statement
-PL/pgSQL function emaj.emaj_alter_group(text,text) line 6 at RETURN
+PL/pgSQL function emaj._alter_groups(text[],boolean,text,text,bigint) line 17 at SQL statement
+SQL statement "SELECT *                              FROM emaj._alter_groups(ARRAY[v_groupName], FALSE, v_mark, 'ALTER_GROUP'::TEXT, NULL)"
+PL/pgSQL function emaj.emaj_alter_group(text,text) line 14 at SQL statement
 -- group in logging state (2 tables need to be repaired)
 begin;
   select emaj.emaj_start_group('myGroup1','');
@@ -188,8 +190,9 @@ begin;
 ERROR:  alter_exec: Cannot repair the table myschema1.mytbl1. Its group myGroup1 is in LOGGING state.
 CONTEXT:  PL/pgSQL function emaj._alter_exec(bigint,boolean) line 38 at RAISE
 SQL statement "SELECT emaj._alter_exec(v_timeId, v_multiGroup)"
-PL/pgSQL function emaj._alter_groups(text[],boolean,text) line 58 at PERFORM
-PL/pgSQL function emaj.emaj_alter_group(text,text) line 6 at RETURN
+PL/pgSQL function emaj._alter_groups(text[],boolean,text,text,bigint) line 60 at PERFORM
+SQL statement "SELECT *                              FROM emaj._alter_groups(ARRAY[v_groupName], FALSE, v_mark, 'ALTER_GROUP'::TEXT, NULL)"
+PL/pgSQL function emaj.emaj_alter_group(text,text) line 14 at SQL statement
 rollback;
 -- alter a group with a table now already belonging to another group
 begin;
@@ -197,8 +200,9 @@ begin;
   select emaj.emaj_alter_group('myGroup1');
 WARNING:  _alter_groups: in the group "myGroup1", the table or sequence myschema2.mytbl1 already belongs to the group "myGroup2".
 ERROR:  _alter_groups: One or several errors have been detected in the emaj_group_def table content.
-CONTEXT:  PL/pgSQL function emaj._alter_groups(text[],boolean,text) line 31 at RAISE
-PL/pgSQL function emaj.emaj_alter_group(text,text) line 6 at RETURN
+CONTEXT:  PL/pgSQL function emaj._alter_groups(text[],boolean,text,text,bigint) line 31 at RAISE
+SQL statement "SELECT *                              FROM emaj._alter_groups(ARRAY[v_groupName], FALSE, v_mark, 'ALTER_GROUP'::TEXT, NULL)"
+PL/pgSQL function emaj.emaj_alter_group(text,text) line 14 at SQL statement
 rollback;
 -- log tablespace cannot be changed for sequence
 begin;
@@ -206,16 +210,18 @@ begin;
   select emaj.emaj_alter_group('myGroup1');
 WARNING:  _alter_groups: in the group "myGroup1", for the sequence myschema1."myTbl3_col31_seq", the data log tablespace is not NULL.
 ERROR:  _alter_groups: One or several errors have been detected in the emaj_group_def table content.
-CONTEXT:  PL/pgSQL function emaj._alter_groups(text[],boolean,text) line 31 at RAISE
-PL/pgSQL function emaj.emaj_alter_group(text,text) line 6 at RETURN
+CONTEXT:  PL/pgSQL function emaj._alter_groups(text[],boolean,text,text,bigint) line 31 at RAISE
+SQL statement "SELECT *                              FROM emaj._alter_groups(ARRAY[v_groupName], FALSE, v_mark, 'ALTER_GROUP'::TEXT, NULL)"
+PL/pgSQL function emaj.emaj_alter_group(text,text) line 14 at SQL statement
 rollback;
 begin;
   update emaj.emaj_group_def set grpdef_log_idx_tsp = 'b' where grpdef_schema = 'myschema1' and grpdef_tblseq = 'myTbl3_col31_seq';
   select emaj.emaj_alter_group('myGroup1');
 WARNING:  _alter_groups: in the group "myGroup1", for the sequence myschema1."myTbl3_col31_seq", the index log tablespace is not NULL.
 ERROR:  _alter_groups: One or several errors have been detected in the emaj_group_def table content.
-CONTEXT:  PL/pgSQL function emaj._alter_groups(text[],boolean,text) line 31 at RAISE
-PL/pgSQL function emaj.emaj_alter_group(text,text) line 6 at RETURN
+CONTEXT:  PL/pgSQL function emaj._alter_groups(text[],boolean,text,text,bigint) line 31 at RAISE
+SQL statement "SELECT *                              FROM emaj._alter_groups(ARRAY[v_groupName], FALSE, v_mark, 'ALTER_GROUP'::TEXT, NULL)"
+PL/pgSQL function emaj.emaj_alter_group(text,text) line 14 at SQL statement
 rollback;
 -- dropped application table
 begin;
@@ -236,8 +242,9 @@ begin;
 WARNING:  _alter_groups: in the group "myGroup1", the table or sequence myschema1.mytbl2b does not exist.
 WARNING:  _alter_groups: in the group "myGroup1", the table or sequence myschema1.mytbl2b_col20_seq does not exist.
 ERROR:  _alter_groups: One or several errors have been detected in the emaj_group_def table content.
-CONTEXT:  PL/pgSQL function emaj._alter_groups(text[],boolean,text) line 31 at RAISE
-PL/pgSQL function emaj.emaj_alter_group(text,text) line 6 at RETURN
+CONTEXT:  PL/pgSQL function emaj._alter_groups(text[],boolean,text,text,bigint) line 31 at RAISE
+SQL statement "SELECT *                              FROM emaj._alter_groups(ARRAY[v_groupName], FALSE, v_mark, 'ALTER_GROUP'::TEXT, NULL)"
+PL/pgSQL function emaj.emaj_alter_group(text,text) line 14 at SQL statement
 rollback;
 -- should be OK
 -- nothing to change
@@ -626,8 +633,9 @@ select emaj.emaj_alter_groups('{"myGroup1","unknownGroup"}');
 ERROR:  _check_group_names: The group "unknownGroup" does not exist.
 CONTEXT:  PL/pgSQL function emaj._check_group_names(text[],boolean,boolean,text) line 36 at RAISE
 SQL statement "SELECT emaj._check_group_names(v_groupNames := v_groupNames, v_mayBeNull := v_multiGroup, v_lockGroups := TRUE, v_checkList := '')"
-PL/pgSQL function emaj._alter_groups(text[],boolean,text) line 17 at SQL statement
-PL/pgSQL function emaj.emaj_alter_groups(text[],text) line 6 at RETURN
+PL/pgSQL function emaj._alter_groups(text[],boolean,text,text,bigint) line 17 at SQL statement
+SQL statement "SELECT *                              FROM emaj._alter_groups(v_groupNames, TRUE, v_mark, 'ALTER_GROUPS'::TEXT, NULL)"
+PL/pgSQL function emaj.emaj_alter_groups(text[],text) line 14 at SQL statement
 -- no group at all
 select emaj.emaj_alter_groups('{NULL,""}');
 WARNING:  _check_group_names: No group to process.
@@ -664,8 +672,9 @@ WARNING:  _check_fk_groups: The table "myschema2.mytbl6" is referenced by the fo
 ERROR:  alter_exec: Cannot repair the table myschema1.mytbl1. Its group myGroup1 is in LOGGING state.
 CONTEXT:  PL/pgSQL function emaj._alter_exec(bigint,boolean) line 38 at RAISE
 SQL statement "SELECT emaj._alter_exec(v_timeId, v_multiGroup)"
-PL/pgSQL function emaj._alter_groups(text[],boolean,text) line 58 at PERFORM
-PL/pgSQL function emaj.emaj_alter_groups(text[],text) line 6 at RETURN
+PL/pgSQL function emaj._alter_groups(text[],boolean,text,text,bigint) line 60 at PERFORM
+SQL statement "SELECT *                              FROM emaj._alter_groups(v_groupNames, TRUE, v_mark, 'ALTER_GROUPS'::TEXT, NULL)"
+PL/pgSQL function emaj.emaj_alter_groups(text[],text) line 14 at SQL statement
 rollback;
 -- alter groups with a table now already belonging to another group
 begin;
@@ -673,8 +682,9 @@ begin;
   select emaj.emaj_alter_groups('{"myGroup1","myGroup2"}');
 WARNING:  _alter_groups: the table myschema2.mytbl1 is assigned several times.
 ERROR:  _alter_groups: One or several errors have been detected in the emaj_group_def table content.
-CONTEXT:  PL/pgSQL function emaj._alter_groups(text[],boolean,text) line 31 at RAISE
-PL/pgSQL function emaj.emaj_alter_groups(text[],text) line 6 at RETURN
+CONTEXT:  PL/pgSQL function emaj._alter_groups(text[],boolean,text,text,bigint) line 31 at RAISE
+SQL statement "SELECT *                              FROM emaj._alter_groups(v_groupNames, TRUE, v_mark, 'ALTER_GROUPS'::TEXT, NULL)"
+PL/pgSQL function emaj.emaj_alter_groups(text[],text) line 14 at SQL statement
 rollback;
 -- a PRIMARY KEY is missing
 begin;
@@ -682,8 +692,9 @@ begin;
   select emaj.emaj_alter_groups('{"myGroup1","myGroup2"}');
 WARNING:  _alter_groups: in the group "myGroup1", the table myschema1.mytbl4 has no PRIMARY KEY.
 ERROR:  _alter_groups: One or several errors have been detected in the emaj_group_def table content.
-CONTEXT:  PL/pgSQL function emaj._alter_groups(text[],boolean,text) line 31 at RAISE
-PL/pgSQL function emaj.emaj_alter_groups(text[],text) line 6 at RETURN
+CONTEXT:  PL/pgSQL function emaj._alter_groups(text[],boolean,text,text,bigint) line 31 at RAISE
+SQL statement "SELECT *                              FROM emaj._alter_groups(v_groupNames, TRUE, v_mark, 'ALTER_GROUPS'::TEXT, NULL)"
+PL/pgSQL function emaj.emaj_alter_groups(text[],text) line 14 at SQL statement
 rollback;
 -- should be OK
 -- 3 tables and 1 sequence to remove

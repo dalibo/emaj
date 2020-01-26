@@ -443,8 +443,9 @@ begin;
 WARNING:  _alter_groups: in the group "phil's group#3"",", the table or sequence "phil's schema3".mytbl4 does not exist.
 WARNING:  _alter_groups: in the group "phil's group#3"",", the table or sequence "phil's schema3"."phil's seq\1" does not exist.
 ERROR:  _alter_groups: One or several errors have been detected in the emaj_group_def table content.
-CONTEXT:  PL/pgSQL function emaj._alter_groups(text[],boolean,text) line 31 at RAISE
-PL/pgSQL function emaj.emaj_alter_group(text,text) line 6 at RETURN
+CONTEXT:  PL/pgSQL function emaj._alter_groups(text[],boolean,text,text,bigint) line 31 at RAISE
+SQL statement "SELECT *                              FROM emaj._alter_groups(ARRAY[v_groupName], FALSE, v_mark, 'ALTER_GROUP'::TEXT, NULL)"
+PL/pgSQL function emaj.emaj_alter_group(text,text) line 14 at SQL statement
 rollback;
 delete from emaj.emaj_group_def where grpdef_schema = 'phil''s schema3' and grpdef_tblseq = 'mytbl4';
 delete from emaj.emaj_group_def where grpdef_schema = 'phil''s schema3' and grpdef_tblseq = 'phil''s seq\1';
@@ -2247,7 +2248,7 @@ select hist_id, hist_function, hist_event, hist_object,
    10371 | ALTER_GROUPS             | LOG INDEX TABLESPACE CHANGED | "phil's schema3"."myTbl2\"                                                       | tsplog1 => Default tablespace                                                                                                          | postgres
    10372 | ALTER_GROUPS             | PRIORITY CHANGED             | myschema4.mytblm                                                                 | NULL => 9                                                                                                                              | postgres
    10373 | ALTER_GROUPS             | PRIORITY CHANGED             | "phil's schema3"."myTbl2\"                                                       | 1 => NULL                                                                                                                              | postgres
-   10374 | ALTER_GROUPS             | END                          | myGroup4,phil's group#3",                                                        | Timestamp Id : 10045                                                                                                                   | postgres
+   10374 | ALTER_GROUPS             | END                          | phil's group#3",,myGroup4                                                        | Timestamp Id : 10045                                                                                                                   | postgres
    10375 | DROP_GROUP               | BEGIN                        | phil's group#3",                                                                 |                                                                                                                                        | postgres
    10376 | DROP_GROUP               | LOG_SCHEMA DROPPED           | "emaj_phil's schema3"                                                            |                                                                                                                                        | postgres
    10377 | DROP_GROUP               | END                          | phil's group#3",                                                                 | 4 tables/sequences processed                                                                                                           | postgres
