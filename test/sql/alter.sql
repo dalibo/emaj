@@ -254,10 +254,14 @@ select emaj.emaj_alter_groups('{"myGroup1","myGroup2"}');
 select group_name, group_last_alter_time_id, group_has_waiting_changes, group_nb_table, group_nb_sequence
   from emaj.emaj_group where group_name IN ('myGroup1','myGroup2') order by group_name;
 select rel_group, count(*) from emaj.emaj_relation where rel_group like 'myGroup%' and upper_inf(rel_time_range) group by 1 order by 1;
+
+-- move them back to their original group
 update emaj.emaj_group_def set grpdef_group = 'myGroup2' where grpdef_schema = 'myschema2' and grpdef_tblseq = 'myTbl3';
 update emaj.emaj_group_def set grpdef_group = 'myGroup2' where grpdef_schema = 'myschema2' and grpdef_tblseq = 'myTbl3_col31_seq';
 -- the next call gives a useless mark name parameter (the group is in idle state)
 select emaj.emaj_alter_groups('{"myGroup1","myGroup2"}','useless_mark_name_%');
+select rel_time_range, rel_group, rel_log_schema, rel_log_table, rel_log_index
+  from emaj.emaj_relation where rel_schema = 'myschema2' and rel_tblseq = 'myTbl3' order by rel_time_range;
 select rel_group, count(*) from emaj.emaj_relation where rel_group like 'myGroup%' and upper_inf(rel_time_range) group by 1 order by 1;
 
 -- empty idle groups

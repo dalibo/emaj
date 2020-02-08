@@ -1156,15 +1156,58 @@ $_remove_tbl$;
 
 CREATE OR REPLACE FUNCTION emaj._move_tbl(v_schema TEXT, v_table TEXT, v_oldGroup TEXT, v_oldGroupIsLogging BOOLEAN, v_newGroup TEXT,
                                           v_newGroupIsLogging BOOLEAN, v_timeId BIGINT, v_function TEXT)
-RETURNS VOID LANGUAGE plpgsql AS
+RETURNS VOID LANGUAGE plpgsql
+SECURITY DEFINER SET search_path = pg_catalog, pg_temp AS
 $_move_tbl$
--- The function change the group ownership of a table. It is called during an alter group or a dynamic assignment operation.
+-- The function changes the group ownership of a table. It is called during an alter group or a dynamic assignment operation.
 -- Required inputs: schema and table to move, old and new group names and their logging state,
 --                  time stamp id of the operation, main calling function.
   DECLARE
     v_logSchema              TEXT;
     v_logSequence            TEXT;
+    v_currentLogTable        TEXT;
+    v_currentLogIndex        TEXT;
+    v_dataTblSpace           TEXT;
+    v_idxTblSpace            TEXT;
+    v_namesSuffix            TEXT;
   BEGIN
+-- get the current relation characteristics
+    SELECT rel_log_schema, rel_log_table, rel_log_index, rel_log_sequence,
+           coalesce('TABLESPACE ' || quote_ident(rel_log_dat_tsp),''), coalesce('TABLESPACE ' || quote_ident(rel_log_idx_tsp),'')
+      INTO v_logSchema, v_currentLogTable, v_currentLogIndex, v_logSequence,
+           v_dataTblSpace, v_idxTblSpace
+      FROM emaj.emaj_relation
+      WHERE rel_schema = v_schema AND rel_tblseq = v_table AND upper_inf(rel_time_range);
+-- compute the suffix to add to the log table and index names (_1, _2, ...), by looking at the existing names
+    SELECT '_' || coalesce(max(suffix) + 1, 1)::TEXT INTO v_namesSuffix
+      FROM
+        (SELECT unnest(regexp_matches(rel_log_table,'_(\d+)$'))::INT AS suffix
+           FROM emaj.emaj_relation
+           WHERE rel_schema = v_schema AND rel_tblseq = v_table
+        ) AS t;
+-- rename the log table and its index (they may have been dropped)
+    EXECUTE format('ALTER TABLE IF EXISTS %I.%I RENAME TO %I',
+                   v_logSchema, v_currentLogTable, v_currentLogTable || v_namesSuffix);
+    EXECUTE format('ALTER INDEX IF EXISTS %I.%I RENAME TO %I',
+                   v_logSchema, v_currentLogIndex, v_currentLogIndex || v_namesSuffix);
+-- update emaj_relation to reflect the log table and index rename for all concerned rows
+    UPDATE emaj.emaj_relation
+      SET rel_log_table = v_currentLogTable || v_namesSuffix , rel_log_index = v_currentLogIndex || v_namesSuffix
+      WHERE rel_schema = v_schema AND rel_tblseq = v_table AND rel_log_table = v_currentLogTable;
+-- create the new log table, by copying the just renamed table structure
+    EXECUTE format('CREATE TABLE %I.%I (LIKE %I.%I INCLUDING DEFAULTS) %s',
+                    v_logSchema, v_currentLogTable, v_logSchema, v_currentLogTable || v_namesSuffix, v_dataTblSpace);
+-- create the index on the new log table
+    EXECUTE format('CREATE UNIQUE INDEX %I ON %I.%I(emaj_gid, emaj_tuple) %s',
+                    v_currentLogIndex, v_logSchema, v_currentLogTable, v_idxTblSpace);
+-- set the index associated to the primary key as cluster index. It may be useful for CLUSTER command.
+    EXECUTE format('ALTER TABLE ONLY %I.%I CLUSTER ON %I',
+                   v_logSchema, v_currentLogTable, v_currentLogIndex);
+-- grant appropriate rights to both emaj roles
+    EXECUTE format('GRANT SELECT ON TABLE %I.%I TO emaj_viewer',
+                   v_logSchema, v_currentLogTable);
+    EXECUTE format('GRANT ALL PRIVILEGES ON TABLE %I.%I TO emaj_adm',
+                   v_logSchema, v_currentLogTable);
 -- register the end of the previous relation time frame and create a new relation time frame with the new group
     UPDATE emaj.emaj_relation
       SET rel_time_range = int8range(lower(rel_time_range),v_timeId,'[)')
@@ -1176,14 +1219,14 @@ $_move_tbl$
                                     rel_sql_gen_ins_col, rel_sql_gen_ins_val, rel_sql_gen_upd_set, rel_sql_gen_pk_conditions,
                                     rel_log_seq_last_value)
       SELECT rel_schema, rel_tblseq, int8range(v_timeId, NULL, '[)'), v_newGroup, rel_kind, rel_priority, rel_log_schema,
-             rel_log_table, rel_log_dat_tsp, rel_log_index, rel_log_idx_tsp, rel_log_sequence, rel_log_function,
+             v_currentLogTable, rel_log_dat_tsp, v_currentLogIndex, rel_log_idx_tsp, rel_log_sequence, rel_log_function,
              rel_emaj_verb_attnum, rel_has_always_ident_col,
              rel_sql_rlbk_columns, rel_sql_rlbk_pk_columns, rel_sql_rlbk_pk_conditions,
              rel_sql_gen_ins_col, rel_sql_gen_ins_val, rel_sql_gen_upd_set, rel_sql_gen_pk_conditions,
              rel_log_seq_last_value
         FROM emaj.emaj_relation
         WHERE rel_schema = v_schema AND rel_tblseq = v_table AND upper(rel_time_range) = v_timeId;
--- if the table enters in a group in logging state,
+-- if the table is moved from an idle group to a group in logging state,
     IF NOT v_oldGroupIsLogging AND v_newGroupIsLogging THEN
 -- ... get the log schema and sequence for the new relation
       SELECT rel_log_schema, rel_log_sequence INTO v_logSchema, v_logSequence

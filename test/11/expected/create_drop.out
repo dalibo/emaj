@@ -1259,10 +1259,11 @@ select emaj.emaj_export_groups_configuration('/tmp/orig_groups_config_partial', 
 (1 row)
 
 \! wc -l /tmp/orig_groups_config*
- 183 /tmp/orig_groups_config_all
-  92 /tmp/orig_groups_config_partial
-  11 /tmp/orig_groups_config_test
- 286 total
+  183 /tmp/orig_groups_config_all
+  183 /tmp/orig_groups_config_all.json
+   92 /tmp/orig_groups_config_partial
+   92 /tmp/orig_groups_config_partial.json
+  550 total
 -----------------------------
 -- emaj_drop_group() tests
 -----------------------------
