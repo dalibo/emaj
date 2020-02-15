@@ -549,8 +549,8 @@ SQL statement "SELECT emaj._create_tbl(grpdef_schema, grpdef_tblseq, grpdef_grou
               FROM emaj.emaj_group_def
               WHERE grpdef_group = coalesce (r_plan.altr_new_group, r_plan.altr_group)
                 AND grpdef_schema = r_plan.altr_schema AND grpdef_tblseq = r_plan.altr_tblseq"
-PL/pgSQL function emaj._alter_exec(bigint,boolean) line 48 at PERFORM
-SQL statement "SELECT emaj._alter_exec(v_timeId, v_multiGroup)"
+PL/pgSQL function emaj._alter_exec(bigint,text) line 47 at PERFORM
+SQL statement "SELECT emaj._alter_exec(v_timeId, v_callingFunction)"
 PL/pgSQL function emaj._alter_groups(text[],boolean,text,text,bigint) line 60 at PERFORM
 SQL statement "SELECT *                              FROM emaj._alter_groups(ARRAY[v_groupName], FALSE, v_mark, 'ALTER_GROUP'::TEXT, NULL)"
 PL/pgSQL function emaj.emaj_alter_group(text,text) line 14 at SQL statement
@@ -564,8 +564,8 @@ SQL statement "SELECT emaj._create_tbl(grpdef_schema, grpdef_tblseq, grpdef_grou
               FROM emaj.emaj_group_def
               WHERE grpdef_group = coalesce (r_plan.altr_new_group, r_plan.altr_group)
                 AND grpdef_schema = r_plan.altr_schema AND grpdef_tblseq = r_plan.altr_tblseq"
-PL/pgSQL function emaj._alter_exec(bigint,boolean) line 48 at PERFORM
-SQL statement "SELECT emaj._alter_exec(v_timeId, v_multiGroup)"
+PL/pgSQL function emaj._alter_exec(bigint,text) line 47 at PERFORM
+SQL statement "SELECT emaj._alter_exec(v_timeId, v_callingFunction)"
 PL/pgSQL function emaj._alter_groups(text[],boolean,text,text,bigint) line 60 at PERFORM
 SQL statement "SELECT *                              FROM emaj._alter_groups(ARRAY[v_groupName], FALSE, v_mark, 'ALTER_GROUP'::TEXT, NULL)"
 PL/pgSQL function emaj.emaj_alter_group(text,text) line 14 at SQL statement
@@ -577,8 +577,8 @@ SQL statement "SELECT emaj._create_tbl(grpdef_schema, grpdef_tblseq, grpdef_grou
               FROM emaj.emaj_group_def
               WHERE grpdef_group = coalesce (r_plan.altr_new_group, r_plan.altr_group)
                 AND grpdef_schema = r_plan.altr_schema AND grpdef_tblseq = r_plan.altr_tblseq"
-PL/pgSQL function emaj._alter_exec(bigint,boolean) line 48 at PERFORM
-SQL statement "SELECT emaj._alter_exec(v_timeId, v_multiGroup)"
+PL/pgSQL function emaj._alter_exec(bigint,text) line 47 at PERFORM
+SQL statement "SELECT emaj._alter_exec(v_timeId, v_callingFunction)"
 PL/pgSQL function emaj._alter_groups(text[],boolean,text,text,bigint) line 60 at PERFORM
 SQL statement "SELECT *                              FROM emaj._alter_groups(ARRAY[v_groupName], FALSE, v_mark, 'ALTER_GROUP'::TEXT, NULL)"
 PL/pgSQL function emaj.emaj_alter_group(text,text) line 14 at SQL statement
@@ -875,8 +875,8 @@ SQL statement "SELECT emaj._create_tbl(grpdef_schema, grpdef_tblseq, grpdef_grou
               FROM emaj.emaj_group_def
               WHERE grpdef_group = coalesce (r_plan.altr_new_group, r_plan.altr_group)
                 AND grpdef_schema = r_plan.altr_schema AND grpdef_tblseq = r_plan.altr_tblseq"
-PL/pgSQL function emaj._alter_exec(bigint,boolean) line 48 at PERFORM
-SQL statement "SELECT emaj._alter_exec(v_timeId, v_multiGroup)"
+PL/pgSQL function emaj._alter_exec(bigint,text) line 47 at PERFORM
+SQL statement "SELECT emaj._alter_exec(v_timeId, v_callingFunction)"
 PL/pgSQL function emaj._alter_groups(text[],boolean,text,text,bigint) line 60 at PERFORM
 SQL statement "SELECT *                              FROM emaj._alter_groups(v_groupNames, TRUE, v_mark, 'ALTER_GROUPS'::TEXT, NULL)"
 PL/pgSQL function emaj.emaj_alter_groups(text[],text) line 14 at SQL statement
@@ -890,8 +890,8 @@ SQL statement "SELECT emaj._create_tbl(grpdef_schema, grpdef_tblseq, grpdef_grou
               FROM emaj.emaj_group_def
               WHERE grpdef_group = coalesce (r_plan.altr_new_group, r_plan.altr_group)
                 AND grpdef_schema = r_plan.altr_schema AND grpdef_tblseq = r_plan.altr_tblseq"
-PL/pgSQL function emaj._alter_exec(bigint,boolean) line 48 at PERFORM
-SQL statement "SELECT emaj._alter_exec(v_timeId, v_multiGroup)"
+PL/pgSQL function emaj._alter_exec(bigint,text) line 47 at PERFORM
+SQL statement "SELECT emaj._alter_exec(v_timeId, v_callingFunction)"
 PL/pgSQL function emaj._alter_groups(text[],boolean,text,text,bigint) line 60 at PERFORM
 SQL statement "SELECT *                              FROM emaj._alter_groups(v_groupNames, TRUE, v_mark, 'ALTER_GROUPS'::TEXT, NULL)"
 PL/pgSQL function emaj.emaj_alter_groups(text[],text) line 14 at SQL statement
@@ -903,8 +903,8 @@ SQL statement "SELECT emaj._create_tbl(grpdef_schema, grpdef_tblseq, grpdef_grou
               FROM emaj.emaj_group_def
               WHERE grpdef_group = coalesce (r_plan.altr_new_group, r_plan.altr_group)
                 AND grpdef_schema = r_plan.altr_schema AND grpdef_tblseq = r_plan.altr_tblseq"
-PL/pgSQL function emaj._alter_exec(bigint,boolean) line 48 at PERFORM
-SQL statement "SELECT emaj._alter_exec(v_timeId, v_multiGroup)"
+PL/pgSQL function emaj._alter_exec(bigint,text) line 47 at PERFORM
+SQL statement "SELECT emaj._alter_exec(v_timeId, v_callingFunction)"
 PL/pgSQL function emaj._alter_groups(text[],boolean,text,text,bigint) line 60 at PERFORM
 SQL statement "SELECT *                              FROM emaj._alter_groups(v_groupNames, TRUE, v_mark, 'ALTER_GROUPS'::TEXT, NULL)"
 PL/pgSQL function emaj.emaj_alter_groups(text[],text) line 14 at SQL statement
@@ -2004,9 +2004,9 @@ SQL statement "SELECT emaj._drop_tbl(emaj.emaj_relation.*, v_timeId) FROM emaj.e
         WHERE rel_schema = v_schema AND rel_tblseq = v_table AND upper_inf(rel_time_range)"
 PL/pgSQL function emaj._remove_tbl(text,text,text,boolean,bigint,text) line 21 at PERFORM
 SQL statement "SELECT emaj._remove_tbl(r_plan.altr_schema, r_plan.altr_tblseq, r_plan.altr_group, r_plan.altr_group_is_logging,
-                                   v_timeId, v_function)"
-PL/pgSQL function emaj._alter_exec(bigint,boolean) line 24 at PERFORM
-SQL statement "SELECT emaj._alter_exec(v_timeId, v_multiGroup)"
+                                   v_timeId, v_callingFunction)"
+PL/pgSQL function emaj._alter_exec(bigint,text) line 23 at PERFORM
+SQL statement "SELECT emaj._alter_exec(v_timeId, v_callingFunction)"
 PL/pgSQL function emaj._alter_groups(text[],boolean,text,text,bigint) line 60 at PERFORM
 SQL statement "SELECT *                              FROM emaj._alter_groups(ARRAY[v_groupName], FALSE, v_mark, 'ALTER_GROUP'::TEXT, NULL)"
 PL/pgSQL function emaj.emaj_alter_group(text,text) line 14 at SQL statement
@@ -2017,11 +2017,11 @@ SQL statement "SELECT emaj._create_tbl(v_schema, v_table, v_group, v_priority, v
                              v_timeId, v_groupIsRollbackable, v_groupIsLogging)"
 PL/pgSQL function emaj._add_tbl(text,text,text,integer,text,text,boolean,bigint,text) line 19 at PERFORM
 SQL statement "SELECT emaj._add_tbl(r_plan.altr_schema, r_plan.altr_tblseq, r_plan.altr_group, grpdef_priority, grpdef_log_dat_tsp,
-                                grpdef_log_idx_tsp, r_plan.altr_group_is_logging, v_timeId, v_function)
+                                grpdef_log_idx_tsp, r_plan.altr_group_is_logging, v_timeId, v_callingFunction)
             FROM emaj.emaj_group_def
             WHERE grpdef_group = r_plan.altr_group AND grpdef_schema = r_plan.altr_schema AND grpdef_tblseq = r_plan.altr_tblseq"
-PL/pgSQL function emaj._alter_exec(bigint,boolean) line 102 at PERFORM
-SQL statement "SELECT emaj._alter_exec(v_timeId, v_multiGroup)"
+PL/pgSQL function emaj._alter_exec(bigint,text) line 102 at PERFORM
+SQL statement "SELECT emaj._alter_exec(v_timeId, v_callingFunction)"
 PL/pgSQL function emaj._alter_groups(text[],boolean,text,text,bigint) line 60 at PERFORM
 SQL statement "SELECT *                              FROM emaj._alter_groups(ARRAY[v_groupName], FALSE, v_mark, 'ALTER_GROUP'::TEXT, NULL)"
 PL/pgSQL function emaj.emaj_alter_group(text,text) line 14 at SQL statement
@@ -2034,11 +2034,11 @@ SQL statement "SELECT emaj._create_tbl(v_schema, v_table, v_group, v_priority, v
                              v_timeId, v_groupIsRollbackable, v_groupIsLogging)"
 PL/pgSQL function emaj._add_tbl(text,text,text,integer,text,text,boolean,bigint,text) line 19 at PERFORM
 SQL statement "SELECT emaj._add_tbl(r_plan.altr_schema, r_plan.altr_tblseq, r_plan.altr_group, grpdef_priority, grpdef_log_dat_tsp,
-                                grpdef_log_idx_tsp, r_plan.altr_group_is_logging, v_timeId, v_function)
+                                grpdef_log_idx_tsp, r_plan.altr_group_is_logging, v_timeId, v_callingFunction)
             FROM emaj.emaj_group_def
             WHERE grpdef_group = r_plan.altr_group AND grpdef_schema = r_plan.altr_schema AND grpdef_tblseq = r_plan.altr_tblseq"
-PL/pgSQL function emaj._alter_exec(bigint,boolean) line 102 at PERFORM
-SQL statement "SELECT emaj._alter_exec(v_timeId, v_multiGroup)"
+PL/pgSQL function emaj._alter_exec(bigint,text) line 102 at PERFORM
+SQL statement "SELECT emaj._alter_exec(v_timeId, v_callingFunction)"
 PL/pgSQL function emaj._alter_groups(text[],boolean,text,text,bigint) line 60 at PERFORM
 SQL statement "SELECT *                              FROM emaj._alter_groups(ARRAY[v_groupName], FALSE, v_mark, 'ALTER_GROUP'::TEXT, NULL)"
 PL/pgSQL function emaj.emaj_alter_group(text,text) line 14 at SQL statement

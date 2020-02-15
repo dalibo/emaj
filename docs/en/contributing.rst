@@ -215,6 +215,7 @@ Here is an example of the display issued by the test tool (in this case with the
 	test viewer                   ... ok
 	test adm1                     ... ok
 	test adm2                     ... ok
+	test adm3                     ... ok
 	test client                   ... ok
 	test check                    ... FAILED
 	test cleanup                  ... ok

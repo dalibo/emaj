@@ -200,6 +200,8 @@ The administrator can populate this table by any usual mean: *INSERT* SQL verb, 
 
 The content of the *emaj_group_def* table is case sensitive. Schema names, table names and sequence names must reflect the way PostgreSQL registers them in its catalogue. These names are mostly in lower case. But if a name is encapsulated by double quotes in SQL statements because it contains any upper case characters or spaces, then it must be registered into the *emaj_group_def* table with the same upper case characters or spaces.
 
+Caution: the *emaj_group_def* table content is modified by the *emaj_import_groups_configuration()* functions.
+
 **Creating the tables group**
 
 Once the content of the tables group is defined, E-Maj can create the group. To do this, there is only one SQL statement to execute::

@@ -167,10 +167,10 @@ A l'aide de cette fonction, il est ainsi facile de consolider tous les rollbacks
 
 La fonction *emaj_get_consolidable_rollbacks()* est utilisable par les rôles *emaj_adm* et *emaj_viewer*.
 
-Exporter des configurations de groupes de tables
-------------------------------------------------
+Exporter et importer des configurations de groupes de tables
+------------------------------------------------------------
 
-Un jeu de fonctions permet d’exporter des configurations de groupes de tables.
+Un jeu de fonctions permet d’exporter et d’importer des configurations de groupes de tables. Elles peuvent être utiles pour déployer un jeu standardisé de configuration de groupes de tables sur plusieurs bases de données ou lors de changements de version E-Maj par :ref:`désinstallation et réinstallation complète de l’extension<uninstall_reinstall>`.
 
 .. _export_groups_conf:
 
@@ -229,3 +229,34 @@ Si le chemin du fichier n’est pas renseigné (i.e. est valorisé à NULL), la 
    		...
    	]
    }
+
+.. _import_groups_conf:
+
+Import d’une configuration de groupes de tables
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+Deux versions de la fonction *emaj_import_groups_configuration()* importent des groupes de tables décrits sous la forme de structure JSON.
+
+On peut charger une configuration de groupes de tables à partir d'un fichier par ::
+
+   SELECT emaj_import_groups_configuration('<chemin.fichier>', <tableau.noms.groupes>, <modifier.groupes.démarrés>);
+
+Le fichier doit être accessible par l’instance PostgreSQL.
+
+Le fichier doit contenir une structure JSON ayant un attribut nommé "tables-groups" de type tableau, et contenant des sous-structures décrivant chaque groupe de tables, tels que décrits ci-dessus pour l’exportation de configurations de groupes de tables.
+
+La fonction peut directement charger un fichier généré par la fonction *emaj_export_groups_configuration()*.
+
+Le second paramètre est de type tableau et est optionnel. Il indique la liste des groupes de tables que l’on veut importer. Par défaut, tous les groupes de tables décrits dans le fichier sont importés.
+
+Si un groupe de tables à importer n’existe pas, il est créé et ses tables et séquences lui sont assignées.
+
+Si un groupe de tables à importer existe déjà, sa configuration est ajustée pour refléter la configuration cible. Des tables et séquences peuvent être ajoutées ou retirées, et des attributs peuvent être modifiés. Dans le cas où le groupe de tables est démarré, l’ajustement de sa configuration n’est possible que si le troisième paramètre, de type booléen, est explicitement positionné à TRUE.
+
+La fonction retourne le nombre de groupes de tables importés.
+
+Notons que l’importation d’un groupe de tables écrase l’éventuelle configuration précédente du groupe dans la table technique *emaj_group_def*.
+
+Dans une variante de la fonction, le premier paramètre en entrée contient directement la structure JSON des groupes de tables à charger ::
+
+   SELECT emaj_import_parameters_configuration('<structure.JSON>', <tableau.noms.groupes>, <modification.groupes.démarrés>);

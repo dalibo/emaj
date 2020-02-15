@@ -478,7 +478,7 @@ select emaj.emaj_create_group('myGroup1');
 select emaj.emaj_create_group('myGroup2');
 
 -----------------------------------
--- emaj_ignore_app_trigger
+-- emaj_ignore_app_trigger: ADD action (the REMOVE action tests are postpone after the groups configuration export/import tests)
 -----------------------------------
 
 -- unknown action
@@ -509,14 +509,6 @@ select * from emaj.emaj_ignored_app_trigger order by trg_schema, trg_table, trg_
 select emaj.emaj_ignore_app_trigger('ADD','myschema1','mytbl2','%');
 select * from emaj.emaj_ignored_app_trigger order by trg_schema, trg_table, trg_name;
 
--- remove one trigger
-select emaj.emaj_ignore_app_trigger('REMOVE','myschema1','mytbl2','mytbl2trg1');
-select * from emaj.emaj_ignored_app_trigger order by trg_schema, trg_table, trg_name;
-
--- remove several triggers
-select emaj.emaj_ignore_app_trigger('REMOVE','myschema1','mytbl2','%');
-select * from emaj.emaj_ignored_app_trigger order by trg_schema, trg_table, trg_name;
-
 -----------------------------
 -- emaj_export_groups_configuration() and emaj_import_groups_configuration() tests
 -----------------------------
@@ -534,9 +526,121 @@ select json_array_length(emaj.emaj_export_groups_configuration(array['myGroup1',
 select emaj.emaj_export_groups_configuration('/tmp/dummy/location/file');
 
 --   ok
-select emaj.emaj_export_groups_configuration('/tmp/orig_groups_config_all');
-select emaj.emaj_export_groups_configuration('/tmp/orig_groups_config_partial', array['myGroup1','myGroup2']);
+select emaj.emaj_export_groups_configuration('/tmp/orig_groups_config_all.json');
+select emaj.emaj_export_groups_configuration('/tmp/orig_groups_config_partial.json', array['myGroup1','myGroup2']);
 \! wc -l /tmp/orig_groups_config*
+
+-- direct import
+--   bad content
+select emaj.emaj_import_groups_configuration('{ "dummy_json": null }'::json);
+--   duplicate group in json
+select emaj.emaj_import_groups_configuration('{ "tables_groups": [ { "group": "grp1" }, { "group": "grp1" } ]}'::json);
+--   missing "group" attribute
+select emaj.emaj_import_groups_configuration('{ "tables_groups": [ { "name": "grp1" } ]}'::json);
+--   unknown group level attributes
+select emaj.emaj_import_groups_configuration('{ "tables_groups": [ { "group": "grp1", "unknown_attr1": null, "unknown_attr2": null } ]}'::json);
+--   is_rollbackable not boolean
+select emaj.emaj_import_groups_configuration('{ "tables_groups": [ { "group": "grp1", "is_rollbackable": "absolutely true"} ]}'::json);
+--   unknown table level attributes
+select emaj.emaj_import_groups_configuration('{ "tables_groups": [ { "group": "grp1", "tables": [ { "unknown_attr": null }] } ]}'::json);
+--   priority not numeric
+select emaj.emaj_import_groups_configuration('{ "tables_groups": [ { "group": "grp1", "tables": [ { "schema": "a_schema", "table": "a_table", "priority": "high" }] } ]}'::json);
+--   unknown trigger level attributes
+select emaj.emaj_import_groups_configuration('{ "tables_groups": [ { "group": "grp1", "tables": [ { "ignored_triggers": [ { "unknown_attr": null } ] }] } ]}'::json);
+--   unknown sequence level attributes
+select emaj.emaj_import_groups_configuration('{ "tables_groups": [ { "group": "grp1", "sequences": [ { "unknown_attr": null }] } ]}'::json);
+--   unknown group in array
+select emaj.emaj_import_groups_configuration('/tmp/orig_groups_config_all.json', array['myGroup1','myGroup2','unknownGroup']);
+--   group already created
+select emaj.emaj_import_groups_configuration('{ "tables_groups": [ { "group": "myGroup1" }, { "group": "myGroup2" } ] }'::json, null, false);
+--   bad type for existing groups
+select emaj.emaj_import_groups_configuration('{ "tables_groups": [ { "group": "myGroup1", "is_rollbackable": false }, { "group": "myGroup2", "is_rollbackable": false } ] }'::json, null, true);
+
+--   ok
+-- a new group with a comment, then changed and finaly deleted
+select emaj.emaj_import_groups_configuration('{ "tables_groups": [ 
+   { "group": "new_grp", "comment": "a nice comment for new_grp" }
+  ]}'::json);
+select group_name, group_is_rollbackable, group_is_logging, group_comment
+  from emaj.emaj_group where group_name = 'new_grp';
+ 
+select emaj.emaj_import_groups_configuration('{ "tables_groups": [ 
+   { "group": "new_grp", "comment": "changed comment for new_grp" }
+  ]}'::json, null, true);
+select group_comment from emaj.emaj_group where group_name = 'new_grp';
+
+select emaj.emaj_import_groups_configuration('{ "tables_groups": [ 
+   { "group": "new_grp" }
+  ]}'::json, null, true);
+select coalesce(group_comment,'NULL') from emaj.emaj_group where group_name = 'new_grp';
+
+select emaj.emaj_drop_group('new_grp');
+
+-- import from file
+--   error
+select emaj.emaj_import_groups_configuration('/tmp/dummy/location/file');
+\! echo 'not a json content' >/tmp/bad_groups_config.json
+select emaj.emaj_import_groups_configuration('/tmp/bad_groups_config.json');
+\! rm /tmp/bad_groups_config.json
+
+--   ok
+-- only 2 from the original groups
+select emaj.emaj_import_groups_configuration('/tmp/orig_groups_config_all.json', array['emptyGroup','myGroup5'], true);
+-- change the attributes for a table
+\! sed -e 's/"mypartp1"/"mypartp1", "priority": 20, "log_data_tablespace": "tsplog1", "log_index_tablespace": "tsplog1"/' /tmp/orig_groups_config_all.json >/tmp/modified_groups_config_1.json
+select emaj.emaj_import_groups_configuration('/tmp/modified_groups_config_1.json', array['myGroup4'], true);
+
+-- move a table and a sequence to another group
+-- the table myschema2.mytbl5 and the sequence myschema2.myseq1 are moved from myGroup2 to myGroup4
+\! sed -n -e '1,82p' /tmp/modified_groups_config_1.json >/tmp/modified_groups_config_2.json
+--     remove the table and the sequence from myGroup2
+\! sed -n -e '87,95p' /tmp/modified_groups_config_1.json >>/tmp/modified_groups_config_2.json
+\! sed -n -e '100,106p' /tmp/modified_groups_config_1.json >>/tmp/modified_groups_config_2.json
+--     copy the moved table
+\! sed -n -e '83,86p' /tmp/modified_groups_config_1.json >>/tmp/modified_groups_config_2.json
+--     copy the other tables
+\! sed -n -e '107,126p' /tmp/modified_groups_config_1.json >>/tmp/modified_groups_config_2.json
+--     copy the sequences keyword
+\! sed -n -e '91,92p' /tmp/modified_groups_config_1.json >>/tmp/modified_groups_config_2.json
+--     copy the moved sequence
+\! sed -n -e '97,100p' /tmp/modified_groups_config_1.json >>/tmp/modified_groups_config_2.json
+--     copy the remaining json structure
+\! sed -n -e '127,$p' /tmp/modified_groups_config_1.json >>/tmp/modified_groups_config_2.json
+select emaj.emaj_import_groups_configuration('/tmp/modified_groups_config_2.json', array['myGroup2','myGroup4'], true);
+
+-- remove a table and a sequence from a group
+-- the table myschema2.mytbl5 and the sequence myschema2.myseq1 are removed from myGroup4
+\! sed -n -e '1,98p' /tmp/modified_groups_config_2.json >/tmp/modified_groups_config_3.json
+\! sed -n -e '103,122p' /tmp/modified_groups_config_2.json >>/tmp/modified_groups_config_3.json
+\! sed -n -e '129,$p' /tmp/modified_groups_config_2.json >>/tmp/modified_groups_config_3.json
+select emaj.emaj_import_groups_configuration('/tmp/modified_groups_config_3.json', array['myGroup4'], true);
+
+-- register an unknown trigger
+\! sed -e 's/"mytbl2trg1"/"unknowntrigger"/' /tmp/modified_groups_config_1.json >/tmp/modified_groups_config_2.json
+select emaj.emaj_import_groups_configuration('/tmp/modified_groups_config_2.json', null, true);
+
+-- register an emaj trigger
+\! sed -e 's/"mytbl2trg1"/"emaj_trunc_trg"/' /tmp/modified_groups_config_1.json >/tmp/modified_groups_config_3.json
+select emaj.emaj_import_groups_configuration('/tmp/modified_groups_config_3.json', null, true);
+select * from emaj.emaj_ignored_app_trigger order by 1,2,3;
+
+-- rebuild all original groups
+-- this will assign the just removed table ans sequence
+select emaj.emaj_import_groups_configuration('/tmp/orig_groups_config_all.json', null, true);
+select * from emaj.emaj_ignored_app_trigger order by 1,2,3;
+
+\! rm /tmp/orig_groups_config* /tmp/modified_groups_config*
+
+-----------------------------------
+-- emaj_ignore_app_trigger: REMOVE action
+-----------------------------------
+-- remove one trigger
+select emaj.emaj_ignore_app_trigger('REMOVE','myschema1','mytbl2','mytbl2trg1');
+select * from emaj.emaj_ignored_app_trigger order by trg_schema, trg_table, trg_name;
+
+-- remove several triggers
+select emaj.emaj_ignore_app_trigger('REMOVE','myschema1','mytbl2','%');
+select * from emaj.emaj_ignored_app_trigger order by trg_schema, trg_table, trg_name;
 
 -----------------------------
 -- emaj_drop_group() tests

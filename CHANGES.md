@@ -6,6 +6,9 @@ E-Maj - Change log
   * Two new emaj_export_groups_configuration() functions allow to export
     tables groups configurations as a JSON structure, either directly or into
     a file.
+  * Two new emaj_import_groups_configuration() functions allow to import
+    tables groups configurations as a JSON structure, either directly or from
+    a file.
   * Two new emaj_export_parameters_configuration() functions allow to export
     the E-Maj parameters as a JSON structure, either directly or into a file.
   * Two new emaj_import_parameters_configuration() functions allow to import

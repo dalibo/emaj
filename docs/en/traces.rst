@@ -70,6 +70,10 @@ The *hist_function* column can take the following values:
 +----------------------------------+----------------------------------------------------------------------------+
 | ENABLE_EVENT_TRIGGERS            | activate event triggers                                                    |
 +----------------------------------+----------------------------------------------------------------------------+
+| EXPORT_GROUPS                    | export a tables groups configuration                                       |
++----------------------------------+----------------------------------------------------------------------------+
+| EXPORT_PARAMETERS                | export an E-maj parameters configuration                                   |
++----------------------------------+----------------------------------------------------------------------------+
 | FORCE_DROP_GROUP                 | tables group forced suppression                                            |
 +----------------------------------+----------------------------------------------------------------------------+
 | FORCE_STOP_GROUP                 | tables group forced stop                                                   |
@@ -77,6 +81,10 @@ The *hist_function* column can take the following values:
 | GEN_SQL_GROUP                    | generation of a psql script to replay updates for a tables group           |
 +----------------------------------+----------------------------------------------------------------------------+
 | GEN_SQL_GROUPS                   | generation of a psql script to replay updates for several tables groups    |
++----------------------------------+----------------------------------------------------------------------------+
+| IMPORT_GROUPS                    | import a tables groups configuration                                       |
++----------------------------------+----------------------------------------------------------------------------+
+| IMPORT_PARAMETERS                | import an E-maj parameters configuration                                   |
 +----------------------------------+----------------------------------------------------------------------------+
 | LOCK_GROUP                       | lock set on tables of a group                                              |
 +----------------------------------+----------------------------------------------------------------------------+
@@ -161,6 +169,8 @@ The *hist_event* column can take the following values:
 | EVENT TRIGGERS DISABLED      |                                                         |
 +------------------------------+---------------------------------------------------------+
 | EVENT TRIGGERS ENABLED       |                                                         |
++------------------------------+---------------------------------------------------------+
+| GROUP_CREATED                | new tables group created                                |
 +------------------------------+---------------------------------------------------------+
 | INSERTED PARAMETER           | parameter inserted into *emaj_param*                    |
 +------------------------------+---------------------------------------------------------+

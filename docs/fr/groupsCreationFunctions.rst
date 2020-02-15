@@ -200,6 +200,8 @@ L'administrateur peut alimenter cette table par tout moyen usuel : verbe SQL *I
 
 Le contenu de la table *emaj_group_def* est sensible à la casse. Les noms de schéma, de table, de séquence et de tablespace doivent correspondre à la façon dont PostgreSQL les enregistre dans son catalogue. Ces noms sont le plus souvent en minuscule. Mais si un nom est encadré par des double-guillemets dans les requêtes SQL, car contenant des majuscules ou des espaces, alors il doit être enregistré dans la table *emaj_group_def* avec ces mêmes majuscules et espaces.
 
+Attention, le contenu de la table *emaj_group_def* est altéré par les fonctions *emaj_import_groups_configuration()*.
+
 **Création du groupe de tables**
 
 Une fois la constitution d'un groupe de tables définie, E-Maj peut créer ce groupe. Pour ce faire, il suffit d'exécuter la requête SQL suivante ::

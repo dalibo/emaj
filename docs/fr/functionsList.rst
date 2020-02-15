@@ -327,6 +327,16 @@ Fonctions de niveau général
 | :ref:`emaj_get_consolidable_rollbacks            |                               | SETOF emaj_consolidable_rollback_type |
 | <emaj_get_consolidable_rollbacks>` (V)           |                               |                                       |
 +--------------------------------------------------+-------------------------------+---------------------------------------+
+| :ref:`emaj_import_groups_configuration           | | groupes JSON,               | nb.groupes INT                        |
+| <import_groups_conf>`                            | | [tableau.groupes TEXT[]]    |                                       |
+|                                                  | | [traiter.groupes.démarrés   |                                       |
+|                                                  | |  BOOLEAN ]                  |                                       |
++--------------------------------------------------+-------------------------------+---------------------------------------+
+| :ref:`emaj_import_groups_configuration           | | fichier TEXT,               | nb.groupes INT                        |
+| <import_groups_conf>`                            | | [tableau.groupes TEXT[]]    |                                       |
+|                                                  | | [traiter.groupes.démarrés   |                                       |
+|                                                  | |  BOOLEAN ]                  |                                       |
++--------------------------------------------------+-------------------------------+---------------------------------------+
 | :ref:`emaj_import_parameters_configuration       | | paramètres JSON,            | nb.paramètres INT                     |
 | <import_param_conf>`                             | | [suppression.conf BOOLEAN)] |                                       |
 +--------------------------------------------------+-------------------------------+---------------------------------------+

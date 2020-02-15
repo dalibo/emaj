@@ -216,6 +216,9 @@ commit;
 select emaj.emaj_start_group('grp_tmp_3','Start');
 select emaj.emaj_set_mark_groups('{"grp_tmp_3","grp_tmp_4","grp_tmp"}','Mk1');
 
+-- export the initial groups configuration
+select emaj.emaj_export_groups_configuration('/tmp/step19_groups_config.json', array['grp_tmp','grp_tmp_3','grp_tmp_4']);
+
 -- perform some changes and set marks
 insert into "phil's schema3".mytbl4 (col41)
   select i from generate_series(3,8) i;
@@ -344,6 +347,9 @@ select emaj.emaj_assign_table('phil''s schema3','mytbl4','grp_tmp');
 select * from emaj.emaj_verify_all();
 select emaj.emaj_start_group('grp_tmp','Group restart');
 
+-- import the groups configuration
+select emaj.emaj_import_groups_configuration('/tmp/step19_groups_config.json', null, true);
+
 -- reset groups at their initial state
 select emaj.emaj_stop_group('grp_tmp_3');
 select emaj.emaj_drop_group('grp_tmp_3');
@@ -354,6 +360,8 @@ select emaj.emaj_drop_group('grp_tmp');
 
 select * from emaj.emaj_rel_hist order by 1,2,3;
 select count(*) from emaj.emaj_relation where rel_schema in ('phil''s schema3','myschema4');
+
+\! rm /tmp/step19_groups_config.json
 
 -----------------------------
 -- test end: check, reset history and force sequences id

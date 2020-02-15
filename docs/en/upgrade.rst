@@ -18,6 +18,7 @@ For installed E-Maj version 0.11.0 and later, it is possible to perform an upgra
 
    Starting from version 2.2.0, E-Maj no longer supports PostgreSQL versions prior 9.2. Starting from version 3.0.0, E-Maj no longer supports PostgreSQL versions prior 9.5. If an older PostgreSQL version is used, it must be updated before migrating E-Maj to a higher version.
 
+.. _uninstall_reinstall:
 
 Upgrade by deletion and re-installation
 ---------------------------------------
@@ -32,23 +33,25 @@ If some tables groups are in *LOGGING* state, they must be stopped, using the :r
 Save user data
 ^^^^^^^^^^^^^^
 
-It may be useful to save the content of the *emaj_group_def* table in order to be able to easily reload it after the version update, by copying it outside the cluster with a *\copy* command, or by duplicating the table outside the *emaj* schema. Il the current E-Maj version contains the *emaj_sync_def_group()* function (3.2+), it is recommended to previously synchronize the *emaj_group_def* table with the current groups structure::
+The full existing tables groups configuration, as well as E-Maj parameters, can be saved on flat files, using::
 
-   SELECT group_name, emaj.emaj_sync_def_group(group_name) FROM emaj.emaj_group;
-   CREATE TABLE public.sav_group_def AS SELECT * FROM emaj.emaj_group_def;
+   SELECT emaj.emaj_export_groups_configuration('<file.path.1>');
 
-If the installed E-Maj version is 3.1.0 or higher, and if the E-Maj administrator has registered application triggers as “not to be automatically disabled at E-Maj rollback time”, it is advisable to save this triggers list, for instance with::
+   SELECT emaj.emaj_export_parameters_configuration('<file.path.2>');
 
-   CREATE TABLE public.sav_ignored_app_trigger AS SELECT * FROM emaj.emaj_ignored_app_trigger;
+If the installed E-Maj version is prior <devel>, these functions are not available. Thus, the *emaj_group_def* and *emaj_param* terchnical tables must be manually saved. For instance, one can download each table on file with a copy command, or duplicate them ouside the *emaj*  schema.
 
-The same way, if the E-Maj administrator had changed parameters value into the *emaj_param* table, it may also be useful to keep a trace of these changes with::
+Il the current E-Maj version contains the *emaj_sync_def_group()* function (3.2+), it is recommended to use it to previously synchronize the *emaj_group_def* table with the current groups structure.
 
-   SELECT emaj.emaj_export_parameters_configuration('<file.path>');
+If the installed E-Maj version is 3.1.0 or higher, and if the E-Maj administrator has registered application triggers as "not to be automatically disabled at E-Maj rollback time", the *emaj_ignored_app_trigger* table must also be saved.::
 
-If the installed version is prior <devel>, it is possible to execute something like::
+  SELECT group_name, emaj.emaj_sync_def_group(group_name) FROM emaj.emaj_group;
 
-   CREATE TABLE public.sav_param AS SELECT * FROM emaj.emaj_param WHERE param_key <> 'emaj_version';
+  CREATE TABLE public.sav_group_def AS SELECT * FROM emaj.emaj_group_def;
 
+  CREATE TABLE public.sav_ignored_app_trigger AS SELECT * FROM emaj.emaj_ignored_app_trigger;
+
+  CREATE TABLE public.sav_param AS SELECT * FROM emaj.emaj_param WHERE param_key <> 'emaj_version';
 
 E-Maj deletion and re-installation
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -63,7 +66,14 @@ NB: starting from E-Maj 2.0.0, the uninstall script is named *emaj_uninstall.sql
 
 Restore user data
 ^^^^^^^^^^^^^^^^^
-Data previously saved can now be restored into E-Maj both technical tables, for instance with *INSERT … SELECT* statements. ::
+
+If the tables groups and the parameters configurations have been exported into files using the *emaj_export_parameters_configuration()* and *emaj_export_groups_configuration()* functions, they can be reloaded with::
+
+   SELECT emaj.emaj_import_parameters_configuration('<file.path.2>', TRUE);
+
+   SELECT emaj.emaj_import_groups_configuration('<file.path.1>');
+
+It the configurations have been previously saved by downloading or copying the technical tables, they can be reloaded for instance with *INSERT ... SELECT* statements::
 
    INSERT INTO emaj.emaj_group_def
 		SELECT grpdef_group, grpdef_schema, grpdef_tblseq,
@@ -75,11 +85,6 @@ Data previously saved can now be restored into E-Maj both technical tables, for 
    INSERT INTO emaj.emaj_param SELECT * FROM public.sav_param;
 
 Once data are copied, temporary tables or files can be deleted.
-
-If the parameters configuration has been exported on a file with the *emaj_export_parameters_configuration()* function, this configuration can be reloaded with::
-
-   SELECT emaj.emaj_import_parameters_configuration('<file.path>', TRUE);
-
 
 Upgrade from an E-Maj version between 0.11.0 to 1.3.1
 -----------------------------------------------------

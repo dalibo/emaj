@@ -218,6 +218,7 @@ Voici un exemple d’affichage du déroulement d’un test (ici le scénario ave
 	test viewer                   ... ok
 	test adm1                     ... ok
 	test adm2                     ... ok
+	test adm3                     ... ok
 	test client                   ... ok
 	test check                    ... FAILED
 	test cleanup                  ... ok
