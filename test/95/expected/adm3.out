@@ -1961,7 +1961,7 @@ PL/pgSQL function emaj._alter_exec(bigint,text) line 102 at PERFORM
 SQL statement "SELECT emaj._alter_exec(v_timeId, v_callingFunction)"
 PL/pgSQL function emaj._alter_groups(text[],boolean,text,text,bigint) line 60 at PERFORM
 SQL statement "SELECT v_nbRel FROM emaj._alter_groups(v_groups, TRUE, 'IMPORT_%', 'IMPORT_GROUPS', v_timeId)"
-PL/pgSQL function emaj._import_groups_conf(json,text[],boolean) line 242 at PERFORM
+PL/pgSQL function emaj._import_groups_conf(json,text[],boolean) line 173 at PERFORM
 SQL statement "SELECT emaj._import_groups_conf(v_groupsJson, v_groups, v_allowGroupsUpdate)"
 PL/pgSQL function emaj.emaj_import_groups_configuration(text,text[],boolean) line 35 at SQL statement
 NOTICE:  trigger "emaj_log_trg" for relation "myschema4.mytblc1" does not exist, skipping
@@ -1980,7 +1980,7 @@ PL/pgSQL function emaj._alter_exec(bigint,text) line 102 at PERFORM
 SQL statement "SELECT emaj._alter_exec(v_timeId, v_callingFunction)"
 PL/pgSQL function emaj._alter_groups(text[],boolean,text,text,bigint) line 60 at PERFORM
 SQL statement "SELECT v_nbRel FROM emaj._alter_groups(v_groups, TRUE, 'IMPORT_%', 'IMPORT_GROUPS', v_timeId)"
-PL/pgSQL function emaj._import_groups_conf(json,text[],boolean) line 242 at PERFORM
+PL/pgSQL function emaj._import_groups_conf(json,text[],boolean) line 173 at PERFORM
 SQL statement "SELECT emaj._import_groups_conf(v_groupsJson, v_groups, v_allowGroupsUpdate)"
 PL/pgSQL function emaj.emaj_import_groups_configuration(text,text[],boolean) line 35 at SQL statement
 NOTICE:  trigger "emaj_trunc_trg" for relation "myschema4.mytblc1" does not exist, skipping
@@ -1997,7 +1997,7 @@ PL/pgSQL function emaj._alter_exec(bigint,text) line 102 at PERFORM
 SQL statement "SELECT emaj._alter_exec(v_timeId, v_callingFunction)"
 PL/pgSQL function emaj._alter_groups(text[],boolean,text,text,bigint) line 60 at PERFORM
 SQL statement "SELECT v_nbRel FROM emaj._alter_groups(v_groups, TRUE, 'IMPORT_%', 'IMPORT_GROUPS', v_timeId)"
-PL/pgSQL function emaj._import_groups_conf(json,text[],boolean) line 242 at PERFORM
+PL/pgSQL function emaj._import_groups_conf(json,text[],boolean) line 173 at PERFORM
 SQL statement "SELECT emaj._import_groups_conf(v_groupsJson, v_groups, v_allowGroupsUpdate)"
 PL/pgSQL function emaj.emaj_import_groups_configuration(text,text[],boolean) line 35 at SQL statement
  emaj_import_groups_configuration 

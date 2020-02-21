@@ -73,7 +73,7 @@ select hist_id, hist_function, hist_event, hist_object, hist_wording, hist_user 
 delete from emaj.emaj_hist;
 -- check table list
 \d emaj.*
-       Composite type "emaj._check_conf_groups_type"
+       Composite type "emaj._check_groups_conf_type"
      Column     |  Type   | Collation | Nullable | Default 
 ----------------+---------+-----------+----------+---------
  chk_msg_type   | integer |           |          | 

@@ -532,23 +532,34 @@ select emaj.emaj_export_groups_configuration('/tmp/orig_groups_config_partial.js
 
 -- direct import
 --   bad content
-select emaj.emaj_import_groups_configuration('{ "dummy_json": null }'::json);
---   duplicate group in json
-select emaj.emaj_import_groups_configuration('{ "tables_groups": [ { "group": "grp1" }, { "group": "grp1" } ]}'::json);
+select * from emaj.emaj_import_groups_configuration('{ "dummy_json": null }'::json);
 --   missing "group" attribute
-select emaj.emaj_import_groups_configuration('{ "tables_groups": [ { "name": "grp1" } ]}'::json);
+select * from emaj.emaj_import_groups_configuration('{ "tables_groups": [ { "name": "grp1" } ]}'::json);
 --   unknown group level attributes
-select emaj.emaj_import_groups_configuration('{ "tables_groups": [ { "group": "grp1", "unknown_attr1": null, "unknown_attr2": null } ]}'::json);
+select * from emaj.emaj_import_groups_configuration('{ "tables_groups": [ { "group": "grp1", "unknown_attr1": null, "unknown_attr2": null } ]}'::json);
 --   is_rollbackable not boolean
-select emaj.emaj_import_groups_configuration('{ "tables_groups": [ { "group": "grp1", "is_rollbackable": "absolutely true"} ]}'::json);
+select * from emaj.emaj_import_groups_configuration('{ "tables_groups": [ { "group": "grp1", "is_rollbackable": "absolutely true"} ]}'::json);
+--   missing "schema" attribute in tables array
+select * from emaj.emaj_import_groups_configuration('{ "tables_groups": [ { "group": "grp1", "tables": [ { }] } ]}'::json);
+--   missing "table" attribute in tables array
+select * from emaj.emaj_import_groups_configuration('{ "tables_groups": [ { "group": "grp1", "tables": [ { "schema": "s1" }] } ]}'::json);
 --   unknown table level attributes
-select emaj.emaj_import_groups_configuration('{ "tables_groups": [ { "group": "grp1", "tables": [ { "unknown_attr": null }] } ]}'::json);
+select * from emaj.emaj_import_groups_configuration('{ "tables_groups": [ { "group": "grp1", "tables": [ { "schema": "s1", "table": "t1", "unknown_attr": null }] } ]}'::json);
 --   priority not numeric
-select emaj.emaj_import_groups_configuration('{ "tables_groups": [ { "group": "grp1", "tables": [ { "schema": "a_schema", "table": "a_table", "priority": "high" }] } ]}'::json);
+select * from emaj.emaj_import_groups_configuration('{ "tables_groups": [ { "group": "grp1", "tables": [ { "schema": "a_schema", "table": "a_table", "priority": "high" }] } ]}'::json);
+--   missing "trigger" attribute
+select * from emaj.emaj_import_groups_configuration('{ "tables_groups": [ { "group": "grp1", "tables": [ { "schema": "s1", "table": "t1", "ignored_triggers": [ { } ] }] } ]}'::json);
 --   unknown trigger level attributes
-select emaj.emaj_import_groups_configuration('{ "tables_groups": [ { "group": "grp1", "tables": [ { "ignored_triggers": [ { "unknown_attr": null } ] }] } ]}'::json);
+select * from emaj.emaj_import_groups_configuration('{ "tables_groups": [ { "group": "grp1", "tables": [ { "schema": "s1", "table": "t1", "ignored_triggers": [ { "trigger": "trg1", "unknown_attr": null } ] }] } ]}'::json);
+--   missing "schema" attribute in sequences array
+select * from emaj.emaj_import_groups_configuration('{ "tables_groups": [ { "group": "grp1", "sequences": [ { }] } ]}'::json);
+--   missing "sequence" attribute in sequences array
+select * from emaj.emaj_import_groups_configuration('{ "tables_groups": [ { "group": "grp1", "sequences": [ { "schema": "s1" }] } ]}'::json);
 --   unknown sequence level attributes
-select emaj.emaj_import_groups_configuration('{ "tables_groups": [ { "group": "grp1", "sequences": [ { "unknown_attr": null }] } ]}'::json);
+select * from emaj.emaj_import_groups_configuration('{ "tables_groups": [ { "group": "grp1", "sequences": [ { "schema": "s1", "sequence": "s1",  "unknown_attr": null }] } ]}'::json);
+--   duplicate group in json
+select * from emaj.emaj_import_groups_configuration('{ "tables_groups": [ { "group": "grp1" }, { "group": "grp1" } ]}'::json);
+
 --   unknown group in array
 select emaj.emaj_import_groups_configuration('/tmp/orig_groups_config_all.json', array['myGroup1','myGroup2','unknownGroup']);
 --   group already created

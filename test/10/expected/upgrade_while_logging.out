@@ -103,7 +103,7 @@ SELECT param_value_text FROM emaj.emaj_param WHERE param_key = 'emaj_version';
 
 -- check tables list
 \d emaj*.*
-       Composite type "emaj._check_conf_groups_type"
+       Composite type "emaj._check_groups_conf_type"
      Column     |  Type   | Collation | Nullable | Default 
 ----------------+---------+-----------+----------+---------
  chk_msg_type   | integer |           |          | 

@@ -1264,48 +1264,118 @@ select emaj.emaj_export_groups_configuration('/tmp/orig_groups_config_partial.js
  291 total
 -- direct import
 --   bad content
-select emaj.emaj_import_groups_configuration('{ "dummy_json": null }'::json);
-ERROR:  _import_groups_conf: The "tables_groups" JSON sub-structure has not been found in the supplied structure
+select * from emaj.emaj_import_groups_configuration('{ "dummy_json": null }'::json);
+WARNING:  _import_groups_conf: The JSON structure does not contain any "tables_groups" array.
 CONTEXT:  SQL statement "SELECT emaj._import_groups_conf(v_groupsJson, v_groups, v_allowGroupsUpdate)"
 PL/pgSQL function emaj.emaj_import_groups_configuration(json,text[],boolean) line 17 at SQL statement
---   duplicate group in json
-select emaj.emaj_import_groups_configuration('{ "tables_groups": [ { "group": "grp1" }, { "group": "grp1" } ]}'::json);
-ERROR:  _import_groups_conf: The JSON structure references several times the tables groups "grp1".
+ERROR:  _import_groups_conf: One or several errors have been detected in the JSON groups configuration.
 CONTEXT:  SQL statement "SELECT emaj._import_groups_conf(v_groupsJson, v_groups, v_allowGroupsUpdate)"
 PL/pgSQL function emaj.emaj_import_groups_configuration(json,text[],boolean) line 17 at SQL statement
 --   missing "group" attribute
-select emaj.emaj_import_groups_configuration('{ "tables_groups": [ { "name": "grp1" } ]}'::json);
-ERROR:  _import_groups_conf: At least one tables group has no "group" attribute
+select * from emaj.emaj_import_groups_configuration('{ "tables_groups": [ { "name": "grp1" } ]}'::json);
+WARNING:  _import_groups_conf: The tables group #1 has no "group" attribute.
+CONTEXT:  SQL statement "SELECT emaj._import_groups_conf(v_groupsJson, v_groups, v_allowGroupsUpdate)"
+PL/pgSQL function emaj.emaj_import_groups_configuration(json,text[],boolean) line 17 at SQL statement
+ERROR:  _import_groups_conf: One or several errors have been detected in the JSON groups configuration.
 CONTEXT:  SQL statement "SELECT emaj._import_groups_conf(v_groupsJson, v_groups, v_allowGroupsUpdate)"
 PL/pgSQL function emaj.emaj_import_groups_configuration(json,text[],boolean) line 17 at SQL statement
 --   unknown group level attributes
-select emaj.emaj_import_groups_configuration('{ "tables_groups": [ { "group": "grp1", "unknown_attr1": null, "unknown_attr2": null } ]}'::json);
-ERROR:  _import_groups_conf: for the tables group "grp1", the keywords "unknown_attr1", "unknown_attr2" are unknown.
+select * from emaj.emaj_import_groups_configuration('{ "tables_groups": [ { "group": "grp1", "unknown_attr1": null, "unknown_attr2": null } ]}'::json);
+WARNING:  _import_groups_conf: For the tables group "grp1", the keyword "unknown_attr1" is unknown.
+CONTEXT:  SQL statement "SELECT emaj._import_groups_conf(v_groupsJson, v_groups, v_allowGroupsUpdate)"
+PL/pgSQL function emaj.emaj_import_groups_configuration(json,text[],boolean) line 17 at SQL statement
+WARNING:  _import_groups_conf: For the tables group "grp1", the keyword "unknown_attr2" is unknown.
+CONTEXT:  SQL statement "SELECT emaj._import_groups_conf(v_groupsJson, v_groups, v_allowGroupsUpdate)"
+PL/pgSQL function emaj.emaj_import_groups_configuration(json,text[],boolean) line 17 at SQL statement
+ERROR:  _import_groups_conf: One or several errors have been detected in the JSON groups configuration.
 CONTEXT:  SQL statement "SELECT emaj._import_groups_conf(v_groupsJson, v_groups, v_allowGroupsUpdate)"
 PL/pgSQL function emaj.emaj_import_groups_configuration(json,text[],boolean) line 17 at SQL statement
 --   is_rollbackable not boolean
-select emaj.emaj_import_groups_configuration('{ "tables_groups": [ { "group": "grp1", "is_rollbackable": "absolutely true"} ]}'::json);
-ERROR:  _import_groups_conf: for the tables group "grp1", the "is_rollbackable" attribute is not a boolean.
+select * from emaj.emaj_import_groups_configuration('{ "tables_groups": [ { "group": "grp1", "is_rollbackable": "absolutely true"} ]}'::json);
+WARNING:  _import_groups_conf: For the tables group "grp1", the "is_rollbackable" attribute is not a boolean.
+CONTEXT:  SQL statement "SELECT emaj._import_groups_conf(v_groupsJson, v_groups, v_allowGroupsUpdate)"
+PL/pgSQL function emaj.emaj_import_groups_configuration(json,text[],boolean) line 17 at SQL statement
+ERROR:  _import_groups_conf: One or several errors have been detected in the JSON groups configuration.
+CONTEXT:  SQL statement "SELECT emaj._import_groups_conf(v_groupsJson, v_groups, v_allowGroupsUpdate)"
+PL/pgSQL function emaj.emaj_import_groups_configuration(json,text[],boolean) line 17 at SQL statement
+--   missing "schema" attribute in tables array
+select * from emaj.emaj_import_groups_configuration('{ "tables_groups": [ { "group": "grp1", "tables": [ { }] } ]}'::json);
+WARNING:  _import_groups_conf: In the tables group "grp1", the table #1 has no "schema" attribute.
+CONTEXT:  SQL statement "SELECT emaj._import_groups_conf(v_groupsJson, v_groups, v_allowGroupsUpdate)"
+PL/pgSQL function emaj.emaj_import_groups_configuration(json,text[],boolean) line 17 at SQL statement
+ERROR:  _import_groups_conf: One or several errors have been detected in the JSON groups configuration.
+CONTEXT:  SQL statement "SELECT emaj._import_groups_conf(v_groupsJson, v_groups, v_allowGroupsUpdate)"
+PL/pgSQL function emaj.emaj_import_groups_configuration(json,text[],boolean) line 17 at SQL statement
+--   missing "table" attribute in tables array
+select * from emaj.emaj_import_groups_configuration('{ "tables_groups": [ { "group": "grp1", "tables": [ { "schema": "s1" }] } ]}'::json);
+WARNING:  _import_groups_conf: In the tables group "grp1", the table #1 has no "table" attribute.
+CONTEXT:  SQL statement "SELECT emaj._import_groups_conf(v_groupsJson, v_groups, v_allowGroupsUpdate)"
+PL/pgSQL function emaj.emaj_import_groups_configuration(json,text[],boolean) line 17 at SQL statement
+ERROR:  _import_groups_conf: One or several errors have been detected in the JSON groups configuration.
 CONTEXT:  SQL statement "SELECT emaj._import_groups_conf(v_groupsJson, v_groups, v_allowGroupsUpdate)"
 PL/pgSQL function emaj.emaj_import_groups_configuration(json,text[],boolean) line 17 at SQL statement
 --   unknown table level attributes
-select emaj.emaj_import_groups_configuration('{ "tables_groups": [ { "group": "grp1", "tables": [ { "unknown_attr": null }] } ]}'::json);
-ERROR:  _import_groups_conf: for one table of the tables group "grp1", the keywords "unknown_attr" are unknown.
+select * from emaj.emaj_import_groups_configuration('{ "tables_groups": [ { "group": "grp1", "tables": [ { "schema": "s1", "table": "t1", "unknown_attr": null }] } ]}'::json);
+WARNING:  _import_groups_conf: In the tables group "grp1" and for the table s1.t1, the keyword "unknown_attr" is unknown.
+CONTEXT:  SQL statement "SELECT emaj._import_groups_conf(v_groupsJson, v_groups, v_allowGroupsUpdate)"
+PL/pgSQL function emaj.emaj_import_groups_configuration(json,text[],boolean) line 17 at SQL statement
+ERROR:  _import_groups_conf: One or several errors have been detected in the JSON groups configuration.
 CONTEXT:  SQL statement "SELECT emaj._import_groups_conf(v_groupsJson, v_groups, v_allowGroupsUpdate)"
 PL/pgSQL function emaj.emaj_import_groups_configuration(json,text[],boolean) line 17 at SQL statement
 --   priority not numeric
-select emaj.emaj_import_groups_configuration('{ "tables_groups": [ { "group": "grp1", "tables": [ { "schema": "a_schema", "table": "a_table", "priority": "high" }] } ]}'::json);
-ERROR:  _import_groups_conf: in the tables group "grp1" and for the table "a_schema.a_table", the "priority" attribute is not a number.
+select * from emaj.emaj_import_groups_configuration('{ "tables_groups": [ { "group": "grp1", "tables": [ { "schema": "a_schema", "table": "a_table", "priority": "high" }] } ]}'::json);
+WARNING:  _import_groups_conf: In the tables group "grp1" and for the table a_schema.a_table, the "priority" attribute is not a number.
+CONTEXT:  SQL statement "SELECT emaj._import_groups_conf(v_groupsJson, v_groups, v_allowGroupsUpdate)"
+PL/pgSQL function emaj.emaj_import_groups_configuration(json,text[],boolean) line 17 at SQL statement
+ERROR:  _import_groups_conf: One or several errors have been detected in the JSON groups configuration.
+CONTEXT:  SQL statement "SELECT emaj._import_groups_conf(v_groupsJson, v_groups, v_allowGroupsUpdate)"
+PL/pgSQL function emaj.emaj_import_groups_configuration(json,text[],boolean) line 17 at SQL statement
+--   missing "trigger" attribute
+select * from emaj.emaj_import_groups_configuration('{ "tables_groups": [ { "group": "grp1", "tables": [ { "schema": "s1", "table": "t1", "ignored_triggers": [ { } ] }] } ]}'::json);
+WARNING:  _import_groups_conf: In the tables group "grp1" and for the table s1.t1, the trigger #1 has no "trigger" attribute.
+CONTEXT:  SQL statement "SELECT emaj._import_groups_conf(v_groupsJson, v_groups, v_allowGroupsUpdate)"
+PL/pgSQL function emaj.emaj_import_groups_configuration(json,text[],boolean) line 17 at SQL statement
+ERROR:  _import_groups_conf: One or several errors have been detected in the JSON groups configuration.
 CONTEXT:  SQL statement "SELECT emaj._import_groups_conf(v_groupsJson, v_groups, v_allowGroupsUpdate)"
 PL/pgSQL function emaj.emaj_import_groups_configuration(json,text[],boolean) line 17 at SQL statement
 --   unknown trigger level attributes
-select emaj.emaj_import_groups_configuration('{ "tables_groups": [ { "group": "grp1", "tables": [ { "ignored_triggers": [ { "unknown_attr": null } ] }] } ]}'::json);
-ERROR:  _import_groups_conf: for triggers of one table of the tables group "grp1", the keywords "unknown_attr" are unknown.
+select * from emaj.emaj_import_groups_configuration('{ "tables_groups": [ { "group": "grp1", "tables": [ { "schema": "s1", "table": "t1", "ignored_triggers": [ { "trigger": "trg1", "unknown_attr": null } ] }] } ]}'::json);
+WARNING:  _import_groups_conf: In the tables group "grp1" and for a trigger of the table s1.t1, the keyword "unknown_attr" is unknown.
+CONTEXT:  SQL statement "SELECT emaj._import_groups_conf(v_groupsJson, v_groups, v_allowGroupsUpdate)"
+PL/pgSQL function emaj.emaj_import_groups_configuration(json,text[],boolean) line 17 at SQL statement
+ERROR:  _import_groups_conf: One or several errors have been detected in the JSON groups configuration.
+CONTEXT:  SQL statement "SELECT emaj._import_groups_conf(v_groupsJson, v_groups, v_allowGroupsUpdate)"
+PL/pgSQL function emaj.emaj_import_groups_configuration(json,text[],boolean) line 17 at SQL statement
+--   missing "schema" attribute in sequences array
+select * from emaj.emaj_import_groups_configuration('{ "tables_groups": [ { "group": "grp1", "sequences": [ { }] } ]}'::json);
+WARNING:  _import_groups_conf: In the tables group "grp1", the sequence #1 has no "schema" attribute.
+CONTEXT:  SQL statement "SELECT emaj._import_groups_conf(v_groupsJson, v_groups, v_allowGroupsUpdate)"
+PL/pgSQL function emaj.emaj_import_groups_configuration(json,text[],boolean) line 17 at SQL statement
+ERROR:  _import_groups_conf: One or several errors have been detected in the JSON groups configuration.
+CONTEXT:  SQL statement "SELECT emaj._import_groups_conf(v_groupsJson, v_groups, v_allowGroupsUpdate)"
+PL/pgSQL function emaj.emaj_import_groups_configuration(json,text[],boolean) line 17 at SQL statement
+--   missing "sequence" attribute in sequences array
+select * from emaj.emaj_import_groups_configuration('{ "tables_groups": [ { "group": "grp1", "sequences": [ { "schema": "s1" }] } ]}'::json);
+WARNING:  _import_groups_conf: In the tables group "grp1", the sequence #1 has no "sequence" attribute.
+CONTEXT:  SQL statement "SELECT emaj._import_groups_conf(v_groupsJson, v_groups, v_allowGroupsUpdate)"
+PL/pgSQL function emaj.emaj_import_groups_configuration(json,text[],boolean) line 17 at SQL statement
+ERROR:  _import_groups_conf: One or several errors have been detected in the JSON groups configuration.
 CONTEXT:  SQL statement "SELECT emaj._import_groups_conf(v_groupsJson, v_groups, v_allowGroupsUpdate)"
 PL/pgSQL function emaj.emaj_import_groups_configuration(json,text[],boolean) line 17 at SQL statement
 --   unknown sequence level attributes
-select emaj.emaj_import_groups_configuration('{ "tables_groups": [ { "group": "grp1", "sequences": [ { "unknown_attr": null }] } ]}'::json);
-ERROR:  _import_groups_conf: for one sequence of the tables group "grp1", the keywords "unknown_attr" are unknown.
+select * from emaj.emaj_import_groups_configuration('{ "tables_groups": [ { "group": "grp1", "sequences": [ { "schema": "s1", "sequence": "s1",  "unknown_attr": null }] } ]}'::json);
+WARNING:  _import_groups_conf: In the tables group "grp1" and for the sequence s1.s1, the keyword "unknown_attr" is unknown.
+CONTEXT:  SQL statement "SELECT emaj._import_groups_conf(v_groupsJson, v_groups, v_allowGroupsUpdate)"
+PL/pgSQL function emaj.emaj_import_groups_configuration(json,text[],boolean) line 17 at SQL statement
+ERROR:  _import_groups_conf: One or several errors have been detected in the JSON groups configuration.
+CONTEXT:  SQL statement "SELECT emaj._import_groups_conf(v_groupsJson, v_groups, v_allowGroupsUpdate)"
+PL/pgSQL function emaj.emaj_import_groups_configuration(json,text[],boolean) line 17 at SQL statement
+--   duplicate group in json
+select * from emaj.emaj_import_groups_configuration('{ "tables_groups": [ { "group": "grp1" }, { "group": "grp1" } ]}'::json);
+WARNING:  _import_groups_conf: The JSON structure references several times the tables groups "grp1".
+CONTEXT:  SQL statement "SELECT emaj._import_groups_conf(v_groupsJson, v_groups, v_allowGroupsUpdate)"
+PL/pgSQL function emaj.emaj_import_groups_configuration(json,text[],boolean) line 17 at SQL statement
+ERROR:  _import_groups_conf: One or several errors have been detected in the JSON groups configuration.
 CONTEXT:  SQL statement "SELECT emaj._import_groups_conf(v_groupsJson, v_groups, v_allowGroupsUpdate)"
 PL/pgSQL function emaj.emaj_import_groups_configuration(json,text[],boolean) line 17 at SQL statement
 --   unknown group in array
