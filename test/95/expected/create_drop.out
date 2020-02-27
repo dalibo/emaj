@@ -1265,134 +1265,157 @@ select emaj.emaj_export_groups_configuration('/tmp/orig_groups_config_partial.js
 -- direct import
 --   bad content
 select * from emaj.emaj_import_groups_configuration('{ "dummy_json": null }'::json);
-WARNING:  _import_groups_conf: The JSON structure does not contain any "tables_groups" array.
-CONTEXT:  SQL statement "SELECT emaj._import_groups_conf(v_groupsJson, v_groups, v_allowGroupsUpdate)"
-PL/pgSQL function emaj.emaj_import_groups_configuration(json,text[],boolean) line 17 at SQL statement
-ERROR:  _import_groups_conf: One or several errors have been detected in the JSON groups configuration.
-CONTEXT:  SQL statement "SELECT emaj._import_groups_conf(v_groupsJson, v_groups, v_allowGroupsUpdate)"
-PL/pgSQL function emaj.emaj_import_groups_configuration(json,text[],boolean) line 17 at SQL statement
+WARNING:  _import_groups_conf (1): The JSON structure does not contain any "tables_groups" array.
+CONTEXT:  SQL statement "SELECT emaj._import_groups_conf(v_json, v_groups, v_allowGroupsUpdate)"
+PL/pgSQL function emaj.emaj_import_groups_configuration(json,text[],boolean) line 13 at SQL statement
+ERROR:  _import_groups_conf: One or several errors have been detected in the supplied JSON structure.
+CONTEXT:  SQL statement "SELECT emaj._import_groups_conf(v_json, v_groups, v_allowGroupsUpdate)"
+PL/pgSQL function emaj.emaj_import_groups_configuration(json,text[],boolean) line 13 at SQL statement
 --   missing "group" attribute
 select * from emaj.emaj_import_groups_configuration('{ "tables_groups": [ { "name": "grp1" } ]}'::json);
-WARNING:  _import_groups_conf: The tables group #1 has no "group" attribute.
-CONTEXT:  SQL statement "SELECT emaj._import_groups_conf(v_groupsJson, v_groups, v_allowGroupsUpdate)"
-PL/pgSQL function emaj.emaj_import_groups_configuration(json,text[],boolean) line 17 at SQL statement
-ERROR:  _import_groups_conf: One or several errors have been detected in the JSON groups configuration.
-CONTEXT:  SQL statement "SELECT emaj._import_groups_conf(v_groupsJson, v_groups, v_allowGroupsUpdate)"
-PL/pgSQL function emaj.emaj_import_groups_configuration(json,text[],boolean) line 17 at SQL statement
+WARNING:  _import_groups_conf (1): The tables group #1 has no "group" attribute.
+CONTEXT:  SQL statement "SELECT emaj._import_groups_conf(v_json, v_groups, v_allowGroupsUpdate)"
+PL/pgSQL function emaj.emaj_import_groups_configuration(json,text[],boolean) line 13 at SQL statement
+ERROR:  _import_groups_conf: One or several errors have been detected in the supplied JSON structure.
+CONTEXT:  SQL statement "SELECT emaj._import_groups_conf(v_json, v_groups, v_allowGroupsUpdate)"
+PL/pgSQL function emaj.emaj_import_groups_configuration(json,text[],boolean) line 13 at SQL statement
 --   unknown group level attributes
 select * from emaj.emaj_import_groups_configuration('{ "tables_groups": [ { "group": "grp1", "unknown_attr1": null, "unknown_attr2": null } ]}'::json);
-WARNING:  _import_groups_conf: For the tables group "grp1", the keyword "unknown_attr1" is unknown.
-CONTEXT:  SQL statement "SELECT emaj._import_groups_conf(v_groupsJson, v_groups, v_allowGroupsUpdate)"
-PL/pgSQL function emaj.emaj_import_groups_configuration(json,text[],boolean) line 17 at SQL statement
-WARNING:  _import_groups_conf: For the tables group "grp1", the keyword "unknown_attr2" is unknown.
-CONTEXT:  SQL statement "SELECT emaj._import_groups_conf(v_groupsJson, v_groups, v_allowGroupsUpdate)"
-PL/pgSQL function emaj.emaj_import_groups_configuration(json,text[],boolean) line 17 at SQL statement
-ERROR:  _import_groups_conf: One or several errors have been detected in the JSON groups configuration.
-CONTEXT:  SQL statement "SELECT emaj._import_groups_conf(v_groupsJson, v_groups, v_allowGroupsUpdate)"
-PL/pgSQL function emaj.emaj_import_groups_configuration(json,text[],boolean) line 17 at SQL statement
+WARNING:  _import_groups_conf (1): For the tables group "grp1", the keyword "unknown_attr1" is unknown.
+CONTEXT:  SQL statement "SELECT emaj._import_groups_conf(v_json, v_groups, v_allowGroupsUpdate)"
+PL/pgSQL function emaj.emaj_import_groups_configuration(json,text[],boolean) line 13 at SQL statement
+WARNING:  _import_groups_conf (1): For the tables group "grp1", the keyword "unknown_attr2" is unknown.
+CONTEXT:  SQL statement "SELECT emaj._import_groups_conf(v_json, v_groups, v_allowGroupsUpdate)"
+PL/pgSQL function emaj.emaj_import_groups_configuration(json,text[],boolean) line 13 at SQL statement
+ERROR:  _import_groups_conf: One or several errors have been detected in the supplied JSON structure.
+CONTEXT:  SQL statement "SELECT emaj._import_groups_conf(v_json, v_groups, v_allowGroupsUpdate)"
+PL/pgSQL function emaj.emaj_import_groups_configuration(json,text[],boolean) line 13 at SQL statement
 --   is_rollbackable not boolean
 select * from emaj.emaj_import_groups_configuration('{ "tables_groups": [ { "group": "grp1", "is_rollbackable": "absolutely true"} ]}'::json);
-WARNING:  _import_groups_conf: For the tables group "grp1", the "is_rollbackable" attribute is not a boolean.
-CONTEXT:  SQL statement "SELECT emaj._import_groups_conf(v_groupsJson, v_groups, v_allowGroupsUpdate)"
-PL/pgSQL function emaj.emaj_import_groups_configuration(json,text[],boolean) line 17 at SQL statement
-ERROR:  _import_groups_conf: One or several errors have been detected in the JSON groups configuration.
-CONTEXT:  SQL statement "SELECT emaj._import_groups_conf(v_groupsJson, v_groups, v_allowGroupsUpdate)"
-PL/pgSQL function emaj.emaj_import_groups_configuration(json,text[],boolean) line 17 at SQL statement
+WARNING:  _import_groups_conf (1): For the tables group "grp1", the "is_rollbackable" attribute is not a boolean.
+CONTEXT:  SQL statement "SELECT emaj._import_groups_conf(v_json, v_groups, v_allowGroupsUpdate)"
+PL/pgSQL function emaj.emaj_import_groups_configuration(json,text[],boolean) line 13 at SQL statement
+ERROR:  _import_groups_conf: One or several errors have been detected in the supplied JSON structure.
+CONTEXT:  SQL statement "SELECT emaj._import_groups_conf(v_json, v_groups, v_allowGroupsUpdate)"
+PL/pgSQL function emaj.emaj_import_groups_configuration(json,text[],boolean) line 13 at SQL statement
 --   missing "schema" attribute in tables array
 select * from emaj.emaj_import_groups_configuration('{ "tables_groups": [ { "group": "grp1", "tables": [ { }] } ]}'::json);
-WARNING:  _import_groups_conf: In the tables group "grp1", the table #1 has no "schema" attribute.
-CONTEXT:  SQL statement "SELECT emaj._import_groups_conf(v_groupsJson, v_groups, v_allowGroupsUpdate)"
-PL/pgSQL function emaj.emaj_import_groups_configuration(json,text[],boolean) line 17 at SQL statement
-ERROR:  _import_groups_conf: One or several errors have been detected in the JSON groups configuration.
-CONTEXT:  SQL statement "SELECT emaj._import_groups_conf(v_groupsJson, v_groups, v_allowGroupsUpdate)"
-PL/pgSQL function emaj.emaj_import_groups_configuration(json,text[],boolean) line 17 at SQL statement
+WARNING:  _import_groups_conf (1): In the tables group "grp1", the table #1 has no "schema" attribute.
+CONTEXT:  SQL statement "SELECT emaj._import_groups_conf(v_json, v_groups, v_allowGroupsUpdate)"
+PL/pgSQL function emaj.emaj_import_groups_configuration(json,text[],boolean) line 13 at SQL statement
+ERROR:  _import_groups_conf: One or several errors have been detected in the supplied JSON structure.
+CONTEXT:  SQL statement "SELECT emaj._import_groups_conf(v_json, v_groups, v_allowGroupsUpdate)"
+PL/pgSQL function emaj.emaj_import_groups_configuration(json,text[],boolean) line 13 at SQL statement
 --   missing "table" attribute in tables array
 select * from emaj.emaj_import_groups_configuration('{ "tables_groups": [ { "group": "grp1", "tables": [ { "schema": "s1" }] } ]}'::json);
-WARNING:  _import_groups_conf: In the tables group "grp1", the table #1 has no "table" attribute.
-CONTEXT:  SQL statement "SELECT emaj._import_groups_conf(v_groupsJson, v_groups, v_allowGroupsUpdate)"
-PL/pgSQL function emaj.emaj_import_groups_configuration(json,text[],boolean) line 17 at SQL statement
-ERROR:  _import_groups_conf: One or several errors have been detected in the JSON groups configuration.
-CONTEXT:  SQL statement "SELECT emaj._import_groups_conf(v_groupsJson, v_groups, v_allowGroupsUpdate)"
-PL/pgSQL function emaj.emaj_import_groups_configuration(json,text[],boolean) line 17 at SQL statement
+WARNING:  _import_groups_conf (1): In the tables group "grp1", the table #1 has no "table" attribute.
+CONTEXT:  SQL statement "SELECT emaj._import_groups_conf(v_json, v_groups, v_allowGroupsUpdate)"
+PL/pgSQL function emaj.emaj_import_groups_configuration(json,text[],boolean) line 13 at SQL statement
+ERROR:  _import_groups_conf: One or several errors have been detected in the supplied JSON structure.
+CONTEXT:  SQL statement "SELECT emaj._import_groups_conf(v_json, v_groups, v_allowGroupsUpdate)"
+PL/pgSQL function emaj.emaj_import_groups_configuration(json,text[],boolean) line 13 at SQL statement
 --   unknown table level attributes
 select * from emaj.emaj_import_groups_configuration('{ "tables_groups": [ { "group": "grp1", "tables": [ { "schema": "s1", "table": "t1", "unknown_attr": null }] } ]}'::json);
-WARNING:  _import_groups_conf: In the tables group "grp1" and for the table s1.t1, the keyword "unknown_attr" is unknown.
-CONTEXT:  SQL statement "SELECT emaj._import_groups_conf(v_groupsJson, v_groups, v_allowGroupsUpdate)"
-PL/pgSQL function emaj.emaj_import_groups_configuration(json,text[],boolean) line 17 at SQL statement
-ERROR:  _import_groups_conf: One or several errors have been detected in the JSON groups configuration.
-CONTEXT:  SQL statement "SELECT emaj._import_groups_conf(v_groupsJson, v_groups, v_allowGroupsUpdate)"
-PL/pgSQL function emaj.emaj_import_groups_configuration(json,text[],boolean) line 17 at SQL statement
+WARNING:  _import_groups_conf (1): In the tables group "grp1" and for the table s1.t1, the keyword "unknown_attr" is unknown.
+CONTEXT:  SQL statement "SELECT emaj._import_groups_conf(v_json, v_groups, v_allowGroupsUpdate)"
+PL/pgSQL function emaj.emaj_import_groups_configuration(json,text[],boolean) line 13 at SQL statement
+ERROR:  _import_groups_conf: One or several errors have been detected in the supplied JSON structure.
+CONTEXT:  SQL statement "SELECT emaj._import_groups_conf(v_json, v_groups, v_allowGroupsUpdate)"
+PL/pgSQL function emaj.emaj_import_groups_configuration(json,text[],boolean) line 13 at SQL statement
 --   priority not numeric
 select * from emaj.emaj_import_groups_configuration('{ "tables_groups": [ { "group": "grp1", "tables": [ { "schema": "a_schema", "table": "a_table", "priority": "high" }] } ]}'::json);
-WARNING:  _import_groups_conf: In the tables group "grp1" and for the table a_schema.a_table, the "priority" attribute is not a number.
-CONTEXT:  SQL statement "SELECT emaj._import_groups_conf(v_groupsJson, v_groups, v_allowGroupsUpdate)"
-PL/pgSQL function emaj.emaj_import_groups_configuration(json,text[],boolean) line 17 at SQL statement
-ERROR:  _import_groups_conf: One or several errors have been detected in the JSON groups configuration.
-CONTEXT:  SQL statement "SELECT emaj._import_groups_conf(v_groupsJson, v_groups, v_allowGroupsUpdate)"
-PL/pgSQL function emaj.emaj_import_groups_configuration(json,text[],boolean) line 17 at SQL statement
+WARNING:  _import_groups_conf (1): In the tables group "grp1" and for the table a_schema.a_table, the "priority" attribute is not a number.
+CONTEXT:  SQL statement "SELECT emaj._import_groups_conf(v_json, v_groups, v_allowGroupsUpdate)"
+PL/pgSQL function emaj.emaj_import_groups_configuration(json,text[],boolean) line 13 at SQL statement
+ERROR:  _import_groups_conf: One or several errors have been detected in the supplied JSON structure.
+CONTEXT:  SQL statement "SELECT emaj._import_groups_conf(v_json, v_groups, v_allowGroupsUpdate)"
+PL/pgSQL function emaj.emaj_import_groups_configuration(json,text[],boolean) line 13 at SQL statement
 --   missing "trigger" attribute
 select * from emaj.emaj_import_groups_configuration('{ "tables_groups": [ { "group": "grp1", "tables": [ { "schema": "s1", "table": "t1", "ignored_triggers": [ { } ] }] } ]}'::json);
-WARNING:  _import_groups_conf: In the tables group "grp1" and for the table s1.t1, the trigger #1 has no "trigger" attribute.
-CONTEXT:  SQL statement "SELECT emaj._import_groups_conf(v_groupsJson, v_groups, v_allowGroupsUpdate)"
-PL/pgSQL function emaj.emaj_import_groups_configuration(json,text[],boolean) line 17 at SQL statement
-ERROR:  _import_groups_conf: One or several errors have been detected in the JSON groups configuration.
-CONTEXT:  SQL statement "SELECT emaj._import_groups_conf(v_groupsJson, v_groups, v_allowGroupsUpdate)"
-PL/pgSQL function emaj.emaj_import_groups_configuration(json,text[],boolean) line 17 at SQL statement
+WARNING:  _import_groups_conf (1): In the tables group "grp1" and for the table s1.t1, the trigger #1 has no "trigger" attribute.
+CONTEXT:  SQL statement "SELECT emaj._import_groups_conf(v_json, v_groups, v_allowGroupsUpdate)"
+PL/pgSQL function emaj.emaj_import_groups_configuration(json,text[],boolean) line 13 at SQL statement
+ERROR:  _import_groups_conf: One or several errors have been detected in the supplied JSON structure.
+CONTEXT:  SQL statement "SELECT emaj._import_groups_conf(v_json, v_groups, v_allowGroupsUpdate)"
+PL/pgSQL function emaj.emaj_import_groups_configuration(json,text[],boolean) line 13 at SQL statement
 --   unknown trigger level attributes
 select * from emaj.emaj_import_groups_configuration('{ "tables_groups": [ { "group": "grp1", "tables": [ { "schema": "s1", "table": "t1", "ignored_triggers": [ { "trigger": "trg1", "unknown_attr": null } ] }] } ]}'::json);
-WARNING:  _import_groups_conf: In the tables group "grp1" and for a trigger of the table s1.t1, the keyword "unknown_attr" is unknown.
-CONTEXT:  SQL statement "SELECT emaj._import_groups_conf(v_groupsJson, v_groups, v_allowGroupsUpdate)"
-PL/pgSQL function emaj.emaj_import_groups_configuration(json,text[],boolean) line 17 at SQL statement
-ERROR:  _import_groups_conf: One or several errors have been detected in the JSON groups configuration.
-CONTEXT:  SQL statement "SELECT emaj._import_groups_conf(v_groupsJson, v_groups, v_allowGroupsUpdate)"
-PL/pgSQL function emaj.emaj_import_groups_configuration(json,text[],boolean) line 17 at SQL statement
+WARNING:  _import_groups_conf (1): In the tables group "grp1" and for a trigger of the table s1.t1, the keyword "unknown_attr" is unknown.
+CONTEXT:  SQL statement "SELECT emaj._import_groups_conf(v_json, v_groups, v_allowGroupsUpdate)"
+PL/pgSQL function emaj.emaj_import_groups_configuration(json,text[],boolean) line 13 at SQL statement
+ERROR:  _import_groups_conf: One or several errors have been detected in the supplied JSON structure.
+CONTEXT:  SQL statement "SELECT emaj._import_groups_conf(v_json, v_groups, v_allowGroupsUpdate)"
+PL/pgSQL function emaj.emaj_import_groups_configuration(json,text[],boolean) line 13 at SQL statement
 --   missing "schema" attribute in sequences array
 select * from emaj.emaj_import_groups_configuration('{ "tables_groups": [ { "group": "grp1", "sequences": [ { }] } ]}'::json);
-WARNING:  _import_groups_conf: In the tables group "grp1", the sequence #1 has no "schema" attribute.
-CONTEXT:  SQL statement "SELECT emaj._import_groups_conf(v_groupsJson, v_groups, v_allowGroupsUpdate)"
-PL/pgSQL function emaj.emaj_import_groups_configuration(json,text[],boolean) line 17 at SQL statement
-ERROR:  _import_groups_conf: One or several errors have been detected in the JSON groups configuration.
-CONTEXT:  SQL statement "SELECT emaj._import_groups_conf(v_groupsJson, v_groups, v_allowGroupsUpdate)"
-PL/pgSQL function emaj.emaj_import_groups_configuration(json,text[],boolean) line 17 at SQL statement
+WARNING:  _import_groups_conf (1): In the tables group "grp1", the sequence #1 has no "schema" attribute.
+CONTEXT:  SQL statement "SELECT emaj._import_groups_conf(v_json, v_groups, v_allowGroupsUpdate)"
+PL/pgSQL function emaj.emaj_import_groups_configuration(json,text[],boolean) line 13 at SQL statement
+ERROR:  _import_groups_conf: One or several errors have been detected in the supplied JSON structure.
+CONTEXT:  SQL statement "SELECT emaj._import_groups_conf(v_json, v_groups, v_allowGroupsUpdate)"
+PL/pgSQL function emaj.emaj_import_groups_configuration(json,text[],boolean) line 13 at SQL statement
 --   missing "sequence" attribute in sequences array
 select * from emaj.emaj_import_groups_configuration('{ "tables_groups": [ { "group": "grp1", "sequences": [ { "schema": "s1" }] } ]}'::json);
-WARNING:  _import_groups_conf: In the tables group "grp1", the sequence #1 has no "sequence" attribute.
-CONTEXT:  SQL statement "SELECT emaj._import_groups_conf(v_groupsJson, v_groups, v_allowGroupsUpdate)"
-PL/pgSQL function emaj.emaj_import_groups_configuration(json,text[],boolean) line 17 at SQL statement
-ERROR:  _import_groups_conf: One or several errors have been detected in the JSON groups configuration.
-CONTEXT:  SQL statement "SELECT emaj._import_groups_conf(v_groupsJson, v_groups, v_allowGroupsUpdate)"
-PL/pgSQL function emaj.emaj_import_groups_configuration(json,text[],boolean) line 17 at SQL statement
+WARNING:  _import_groups_conf (1): In the tables group "grp1", the sequence #1 has no "sequence" attribute.
+CONTEXT:  SQL statement "SELECT emaj._import_groups_conf(v_json, v_groups, v_allowGroupsUpdate)"
+PL/pgSQL function emaj.emaj_import_groups_configuration(json,text[],boolean) line 13 at SQL statement
+ERROR:  _import_groups_conf: One or several errors have been detected in the supplied JSON structure.
+CONTEXT:  SQL statement "SELECT emaj._import_groups_conf(v_json, v_groups, v_allowGroupsUpdate)"
+PL/pgSQL function emaj.emaj_import_groups_configuration(json,text[],boolean) line 13 at SQL statement
 --   unknown sequence level attributes
 select * from emaj.emaj_import_groups_configuration('{ "tables_groups": [ { "group": "grp1", "sequences": [ { "schema": "s1", "sequence": "s1",  "unknown_attr": null }] } ]}'::json);
-WARNING:  _import_groups_conf: In the tables group "grp1" and for the sequence s1.s1, the keyword "unknown_attr" is unknown.
-CONTEXT:  SQL statement "SELECT emaj._import_groups_conf(v_groupsJson, v_groups, v_allowGroupsUpdate)"
-PL/pgSQL function emaj.emaj_import_groups_configuration(json,text[],boolean) line 17 at SQL statement
-ERROR:  _import_groups_conf: One or several errors have been detected in the JSON groups configuration.
-CONTEXT:  SQL statement "SELECT emaj._import_groups_conf(v_groupsJson, v_groups, v_allowGroupsUpdate)"
-PL/pgSQL function emaj.emaj_import_groups_configuration(json,text[],boolean) line 17 at SQL statement
+WARNING:  _import_groups_conf (1): In the tables group "grp1" and for the sequence s1.s1, the keyword "unknown_attr" is unknown.
+CONTEXT:  SQL statement "SELECT emaj._import_groups_conf(v_json, v_groups, v_allowGroupsUpdate)"
+PL/pgSQL function emaj.emaj_import_groups_configuration(json,text[],boolean) line 13 at SQL statement
+ERROR:  _import_groups_conf: One or several errors have been detected in the supplied JSON structure.
+CONTEXT:  SQL statement "SELECT emaj._import_groups_conf(v_json, v_groups, v_allowGroupsUpdate)"
+PL/pgSQL function emaj.emaj_import_groups_configuration(json,text[],boolean) line 13 at SQL statement
 --   duplicate group in json
 select * from emaj.emaj_import_groups_configuration('{ "tables_groups": [ { "group": "grp1" }, { "group": "grp1" } ]}'::json);
-WARNING:  _import_groups_conf: The JSON structure references several times the tables groups "grp1".
-CONTEXT:  SQL statement "SELECT emaj._import_groups_conf(v_groupsJson, v_groups, v_allowGroupsUpdate)"
-PL/pgSQL function emaj.emaj_import_groups_configuration(json,text[],boolean) line 17 at SQL statement
-ERROR:  _import_groups_conf: One or several errors have been detected in the JSON groups configuration.
-CONTEXT:  SQL statement "SELECT emaj._import_groups_conf(v_groupsJson, v_groups, v_allowGroupsUpdate)"
-PL/pgSQL function emaj.emaj_import_groups_configuration(json,text[],boolean) line 17 at SQL statement
+WARNING:  _import_groups_conf (1): The JSON structure references several times the tables group "grp1".
+CONTEXT:  SQL statement "SELECT emaj._import_groups_conf(v_json, v_groups, v_allowGroupsUpdate)"
+PL/pgSQL function emaj.emaj_import_groups_configuration(json,text[],boolean) line 13 at SQL statement
+ERROR:  _import_groups_conf: One or several errors have been detected in the supplied JSON structure.
+CONTEXT:  SQL statement "SELECT emaj._import_groups_conf(v_json, v_groups, v_allowGroupsUpdate)"
+PL/pgSQL function emaj.emaj_import_groups_configuration(json,text[],boolean) line 13 at SQL statement
 --   unknown group in array
 select emaj.emaj_import_groups_configuration('/tmp/orig_groups_config_all.json', array['myGroup1','myGroup2','unknownGroup']);
-ERROR:  _import_groups_conf: The tables groups "unknownGroup" to import are not referenced in the JSON structure.
-CONTEXT:  SQL statement "SELECT emaj._import_groups_conf(v_groupsJson, v_groups, v_allowGroupsUpdate)"
-PL/pgSQL function emaj.emaj_import_groups_configuration(text,text[],boolean) line 35 at SQL statement
+WARNING:  _import_groups_conf (2): The tables group "unknownGroup" to import is not referenced in the JSON structure.
+CONTEXT:  SQL statement "SELECT emaj._import_groups_conf(v_json, v_groups, v_allowGroupsUpdate, v_location)"
+PL/pgSQL function emaj.emaj_import_groups_configuration(text,text[],boolean) line 32 at SQL statement
+ERROR:  _import_groups_conf: One or several errors have been detected in the JSON groups configuration.
+CONTEXT:  SQL statement "SELECT emaj._import_groups_conf(v_json, v_groups, v_allowGroupsUpdate, v_location)"
+PL/pgSQL function emaj.emaj_import_groups_configuration(text,text[],boolean) line 32 at SQL statement
 --   group already created
 select emaj.emaj_import_groups_configuration('{ "tables_groups": [ { "group": "myGroup1" }, { "group": "myGroup2" } ] }'::json, null, false);
-ERROR:  _import_groups_conf: The tables groups "myGroup1", "myGroup2" already exist.
-CONTEXT:  SQL statement "SELECT emaj._import_groups_conf(v_groupsJson, v_groups, v_allowGroupsUpdate)"
-PL/pgSQL function emaj.emaj_import_groups_configuration(json,text[],boolean) line 17 at SQL statement
+WARNING:  _import_groups_conf (2): The tables group "myGroup1" already exists.
+CONTEXT:  SQL statement "SELECT emaj._import_groups_conf(v_json, v_groups, v_allowGroupsUpdate)"
+PL/pgSQL function emaj.emaj_import_groups_configuration(json,text[],boolean) line 13 at SQL statement
+WARNING:  _import_groups_conf (2): The tables group "myGroup2" already exists.
+CONTEXT:  SQL statement "SELECT emaj._import_groups_conf(v_json, v_groups, v_allowGroupsUpdate)"
+PL/pgSQL function emaj.emaj_import_groups_configuration(json,text[],boolean) line 13 at SQL statement
+ERROR:  _import_groups_conf: One or several errors have been detected in the JSON groups configuration.
+CONTEXT:  SQL statement "SELECT emaj._import_groups_conf(v_json, v_groups, v_allowGroupsUpdate)"
+PL/pgSQL function emaj.emaj_import_groups_configuration(json,text[],boolean) line 13 at SQL statement
 --   bad type for existing groups
 select emaj.emaj_import_groups_configuration('{ "tables_groups": [ { "group": "myGroup1", "is_rollbackable": false }, { "group": "myGroup2", "is_rollbackable": false } ] }'::json, null, true);
-ERROR:  _import_groups_conf: Changing tables group's type for "myGroup1", "myGroup2" is not allowed.
-CONTEXT:  SQL statement "SELECT emaj._import_groups_conf(v_groupsJson, v_groups, v_allowGroupsUpdate)"
-PL/pgSQL function emaj.emaj_import_groups_configuration(json,text[],boolean) line 17 at SQL statement
+WARNING:  _import_groups_conf (2): Changing the type of the tables group "myGroup1" is not allowed.
+CONTEXT:  SQL statement "SELECT emaj._import_groups_conf(v_json, v_groups, v_allowGroupsUpdate)"
+PL/pgSQL function emaj.emaj_import_groups_configuration(json,text[],boolean) line 13 at SQL statement
+WARNING:  _import_groups_conf (2): Changing the type of the tables group "myGroup2" is not allowed.
+CONTEXT:  SQL statement "SELECT emaj._import_groups_conf(v_json, v_groups, v_allowGroupsUpdate)"
+PL/pgSQL function emaj.emaj_import_groups_configuration(json,text[],boolean) line 13 at SQL statement
+ERROR:  _import_groups_conf: One or several errors have been detected in the JSON groups configuration.
+CONTEXT:  SQL statement "SELECT emaj._import_groups_conf(v_json, v_groups, v_allowGroupsUpdate)"
+PL/pgSQL function emaj.emaj_import_groups_configuration(json,text[],boolean) line 13 at SQL statement
+--   unknown schema and table
+select * from emaj.emaj_import_groups_configuration('{ "tables_groups": [ { "group": "grp1", "tables": [ { "schema": "s1", "table": "t1" }] } ]}'::json);
+WARNING:  _import_groups_conf (2): in the group grp1, the table or sequence s1.t1 does not exist.
+CONTEXT:  SQL statement "SELECT emaj._import_groups_conf(v_json, v_groups, v_allowGroupsUpdate)"
+PL/pgSQL function emaj.emaj_import_groups_configuration(json,text[],boolean) line 13 at SQL statement
+ERROR:  _import_groups_conf: One or several errors have been detected in the JSON groups configuration.
+CONTEXT:  SQL statement "SELECT emaj._import_groups_conf(v_json, v_groups, v_allowGroupsUpdate)"
+PL/pgSQL function emaj.emaj_import_groups_configuration(json,text[],boolean) line 13 at SQL statement
 --   ok
 -- a new group with a comment, then changed and finaly deleted
 select emaj.emaj_import_groups_configuration('{ "tables_groups": [ 
@@ -1502,18 +1525,22 @@ select emaj.emaj_import_groups_configuration('/tmp/modified_groups_config_3.json
                                 1
 (1 row)
 
--- register an unknown trigger
-\! sed -e 's/"mytbl2trg1"/"unknowntrigger"/' /tmp/modified_groups_config_1.json >/tmp/modified_groups_config_2.json
+-- register an unknown trigger and an emaj trigger
+\! sed -e 's/"mytbl2trg1"/"unknowntrigger"/' -e 's/"mytbl2trg2"/"emaj_trunc_trg"/' /tmp/modified_groups_config_1.json >/tmp/modified_groups_config_2.json
 select emaj.emaj_import_groups_configuration('/tmp/modified_groups_config_2.json', null, true);
-ERROR:  emaj_import_groups_configuration: for the table "myschema1.mytbl2", the trigger "unknowntrigger" does not exist.
-CONTEXT:  SQL statement "SELECT emaj._import_groups_conf(v_groupsJson, v_groups, v_allowGroupsUpdate)"
-PL/pgSQL function emaj.emaj_import_groups_configuration(text,text[],boolean) line 35 at SQL statement
--- register an emaj trigger
-\! sed -e 's/"mytbl2trg1"/"emaj_trunc_trg"/' /tmp/modified_groups_config_1.json >/tmp/modified_groups_config_3.json
+WARNING:  _import_groups_conf (2): In the group "myGroup1" and for the table myschema1.mytbl2, the trigger unknowntrigger does not exist.
+CONTEXT:  SQL statement "SELECT emaj._import_groups_conf(v_json, v_groups, v_allowGroupsUpdate, v_location)"
+PL/pgSQL function emaj.emaj_import_groups_configuration(text,text[],boolean) line 32 at SQL statement
+WARNING:  _import_groups_conf (2): In the group "myGroup1" and for the table myschema1.mytbl2, the trigger emaj_trunc_trg is an E-Maj trigger.
+CONTEXT:  SQL statement "SELECT emaj._import_groups_conf(v_json, v_groups, v_allowGroupsUpdate, v_location)"
+PL/pgSQL function emaj.emaj_import_groups_configuration(text,text[],boolean) line 32 at SQL statement
+ERROR:  _import_groups_conf: One or several errors have been detected in the JSON groups configuration.
+CONTEXT:  SQL statement "SELECT emaj._import_groups_conf(v_json, v_groups, v_allowGroupsUpdate, v_location)"
+PL/pgSQL function emaj.emaj_import_groups_configuration(text,text[],boolean) line 32 at SQL statement
+-- suppress 1 trigger
+\! sed -n -e '1,29p' /tmp/modified_groups_config_1.json >/tmp/modified_groups_config_3.json
+\! sed -n -e '33,$p' /tmp/modified_groups_config_1.json >>/tmp/modified_groups_config_3.json
 select emaj.emaj_import_groups_configuration('/tmp/modified_groups_config_3.json', null, true);
-WARNING:  emaj_import_groups_configuration: for the table myschema1.mytbl2, the E-Maj trigger emaj_trunc_trg is not recorded.
-CONTEXT:  SQL statement "SELECT emaj._import_groups_conf(v_groupsJson, v_groups, v_allowGroupsUpdate)"
-PL/pgSQL function emaj.emaj_import_groups_configuration(text,text[],boolean) line 35 at SQL statement
  emaj_import_groups_configuration 
 ----------------------------------
                                 7
@@ -1735,304 +1762,304 @@ select * from emaj.emaj_rel_hist order by 1,2,3;
 -------------+---------------------------------------------------------+-----------------+------------+-----------
  myschema1   | myTbl3                                                  | [4,12)          | myGroup1   | r
  myschema1   | myTbl3                                                  | [17,20)         | myGroup1b  | r
- myschema1   | myTbl3                                                  | [31,47)         | myGroup1   | r
- myschema1   | myTbl3                                                  | [52,54)         | myGroup1   | r
+ myschema1   | myTbl3                                                  | [31,46)         | myGroup1   | r
+ myschema1   | myTbl3                                                  | [51,53)         | myGroup1   | r
  myschema1   | myTbl3_col31_seq                                        | [4,12)          | myGroup1   | S
- myschema1   | myTbl3_col31_seq                                        | [31,47)         | myGroup1   | S
- myschema1   | myTbl3_col31_seq                                        | [52,54)         | myGroup1   | S
+ myschema1   | myTbl3_col31_seq                                        | [31,46)         | myGroup1   | S
+ myschema1   | myTbl3_col31_seq                                        | [51,53)         | myGroup1   | S
  myschema1   | mytbl1                                                  | [4,12)          | myGroup1   | r
  myschema1   | mytbl1                                                  | [15,18)         | myGroup1b  | r
- myschema1   | mytbl1                                                  | [31,47)         | myGroup1   | r
- myschema1   | mytbl1                                                  | [52,54)         | myGroup1   | r
+ myschema1   | mytbl1                                                  | [31,46)         | myGroup1   | r
+ myschema1   | mytbl1                                                  | [51,53)         | myGroup1   | r
  myschema1   | mytbl2                                                  | [4,12)          | myGroup1   | r
  myschema1   | mytbl2                                                  | [16,19)         | myGroup1b  | r
- myschema1   | mytbl2                                                  | [31,47)         | myGroup1   | r
- myschema1   | mytbl2                                                  | [52,54)         | myGroup1   | r
+ myschema1   | mytbl2                                                  | [31,46)         | myGroup1   | r
+ myschema1   | mytbl2                                                  | [51,53)         | myGroup1   | r
  myschema1   | mytbl2b                                                 | [4,12)          | myGroup1   | r
  myschema1   | mytbl2b                                                 | [16,19)         | myGroup1b  | r
- myschema1   | mytbl2b                                                 | [31,47)         | myGroup1   | r
- myschema1   | mytbl2b                                                 | [52,54)         | myGroup1   | r
+ myschema1   | mytbl2b                                                 | [31,46)         | myGroup1   | r
+ myschema1   | mytbl2b                                                 | [51,53)         | myGroup1   | r
  myschema1   | mytbl2b_col20_seq                                       | [4,12)          | myGroup1   | S
- myschema1   | mytbl2b_col20_seq                                       | [31,47)         | myGroup1   | S
- myschema1   | mytbl2b_col20_seq                                       | [52,54)         | myGroup1   | S
+ myschema1   | mytbl2b_col20_seq                                       | [31,46)         | myGroup1   | S
+ myschema1   | mytbl2b_col20_seq                                       | [51,53)         | myGroup1   | S
  myschema1   | mytbl4                                                  | [4,12)          | myGroup1   | r
  myschema1   | mytbl4                                                  | [17,20)         | myGroup1b  | r
- myschema1   | mytbl4                                                  | [31,47)         | myGroup1   | r
- myschema1   | mytbl4                                                  | [52,54)         | myGroup1   | r
+ myschema1   | mytbl4                                                  | [31,46)         | myGroup1   | r
+ myschema1   | mytbl4                                                  | [51,53)         | myGroup1   | r
  myschema2   | myTbl3                                                  | [6,21)          | myGroup2   | r
- myschema2   | myTbl3                                                  | [32,48)         | myGroup2   | r
- myschema2   | myTbl3                                                  | [55,56)         | myGroup2   | r
+ myschema2   | myTbl3                                                  | [32,47)         | myGroup2   | r
+ myschema2   | myTbl3                                                  | [54,55)         | myGroup2   | r
  myschema2   | myTbl3_col31_seq                                        | [6,21)          | myGroup2   | S
  myschema2   | myTbl3_col31_seq                                        | [25,28)         | myGroup2b  | S
- myschema2   | myTbl3_col31_seq                                        | [32,48)         | myGroup2   | S
- myschema2   | myTbl3_col31_seq                                        | [55,56)         | myGroup2   | S
+ myschema2   | myTbl3_col31_seq                                        | [32,47)         | myGroup2   | S
+ myschema2   | myTbl3_col31_seq                                        | [54,55)         | myGroup2   | S
  myschema2   | myseq1                                                  | [6,21)          | myGroup2   | S
  myschema2   | myseq1                                                  | [23,26)         | myGroup2b  | S
  myschema2   | myseq1                                                  | [32,39)         | myGroup2   | S
  myschema2   | myseq1                                                  | [39,40)         | myGroup4   | S
- myschema2   | myseq1                                                  | [42,48)         | myGroup2   | S
- myschema2   | myseq1                                                  | [55,56)         | myGroup2   | S
+ myschema2   | myseq1                                                  | [41,47)         | myGroup2   | S
+ myschema2   | myseq1                                                  | [54,55)         | myGroup2   | S
  myschema2   | myseq2                                                  | [24,27)         | myGroup2b  | S
  myschema2   | mytbl1                                                  | [6,21)          | myGroup2   | r
- myschema2   | mytbl1                                                  | [32,48)         | myGroup2   | r
- myschema2   | mytbl1                                                  | [55,56)         | myGroup2   | r
+ myschema2   | mytbl1                                                  | [32,47)         | myGroup2   | r
+ myschema2   | mytbl1                                                  | [54,55)         | myGroup2   | r
  myschema2   | mytbl2                                                  | [6,21)          | myGroup2   | r
- myschema2   | mytbl2                                                  | [32,48)         | myGroup2   | r
- myschema2   | mytbl2                                                  | [55,56)         | myGroup2   | r
+ myschema2   | mytbl2                                                  | [32,47)         | myGroup2   | r
+ myschema2   | mytbl2                                                  | [54,55)         | myGroup2   | r
  myschema2   | mytbl4                                                  | [6,21)          | myGroup2   | r
- myschema2   | mytbl4                                                  | [32,48)         | myGroup2   | r
- myschema2   | mytbl4                                                  | [55,56)         | myGroup2   | r
+ myschema2   | mytbl4                                                  | [32,47)         | myGroup2   | r
+ myschema2   | mytbl4                                                  | [54,55)         | myGroup2   | r
  myschema2   | mytbl5                                                  | [6,21)          | myGroup2   | r
  myschema2   | mytbl5                                                  | [32,39)         | myGroup2   | r
  myschema2   | mytbl5                                                  | [39,40)         | myGroup4   | r
- myschema2   | mytbl5                                                  | [42,48)         | myGroup2   | r
- myschema2   | mytbl5                                                  | [55,56)         | myGroup2   | r
+ myschema2   | mytbl5                                                  | [41,47)         | myGroup2   | r
+ myschema2   | mytbl5                                                  | [54,55)         | myGroup2   | r
  myschema2   | mytbl6                                                  | [6,21)          | myGroup2   | r
- myschema2   | mytbl6                                                  | [32,48)         | myGroup2   | r
- myschema2   | mytbl6                                                  | [55,56)         | myGroup2   | r
- myschema5   | myoidstbl                                               | [10,50)         | myGroup5   | r
- myschema5   | myunloggedtbl                                           | [10,50)         | myGroup5   | r
- myschema6   | table_with_50_characters_long_name_____0_________0      | [11,51)         | myGroup6   | r
- myschema6   | table_with_51_characters_long_name_____0_________0a     | [11,51)         | myGroup6   | r
- myschema6   | table_with_55_characters_long_name_____0_________0abcde | [11,51)         | myGroup6   | r
- myschema6   | table_with_55_characters_long_name_____0_________0fghij | [11,51)         | myGroup6   | r
+ myschema2   | mytbl6                                                  | [32,47)         | myGroup2   | r
+ myschema2   | mytbl6                                                  | [54,55)         | myGroup2   | r
+ myschema5   | myoidstbl                                               | [10,49)         | myGroup5   | r
+ myschema5   | myunloggedtbl                                           | [10,49)         | myGroup5   | r
+ myschema6   | table_with_50_characters_long_name_____0_________0      | [11,50)         | myGroup6   | r
+ myschema6   | table_with_51_characters_long_name_____0_________0a     | [11,50)         | myGroup6   | r
+ myschema6   | table_with_55_characters_long_name_____0_________0abcde | [11,50)         | myGroup6   | r
+ myschema6   | table_with_55_characters_long_name_____0_________0fghij | [11,50)         | myGroup6   | r
 (63 rows)
 
 select hist_function, hist_event, hist_object, 
        regexp_replace(regexp_replace(hist_wording,E'\\d\\d\.\\d\\d\\.\\d\\d\\.\\d\\d\\d\\d','%','g'),E'\\[.+\\]','(timestamp)','g'), 
        hist_user 
   from emaj.emaj_hist order by hist_id;
-  hist_function   |          hist_event          |         hist_object          |                     regexp_replace                      | hist_user 
-------------------+------------------------------+------------------------------+---------------------------------------------------------+-----------
- CREATE_GROUP     | BEGIN                        | myGroup1                     | rollbackable                                            | postgres
- CREATE_GROUP     | LOG_SCHEMA CREATED           | emaj_myschema1               |                                                         | postgres
- CREATE_GROUP     | END                          | myGroup1                     | 7 tables/sequences processed                            | postgres
- CREATE_GROUP     | BEGIN                        | emptyGroup                   | audit_only                                              | postgres
- CREATE_GROUP     | END                          | emptyGroup                   | 0 tables/sequences processed                            | postgres
- CREATE_GROUP     | BEGIN                        | myGroup2                     | rollbackable                                            | postgres
- CREATE_GROUP     | LOG_SCHEMA CREATED           | emaj_myschema2               |                                                         | postgres
- CREATE_GROUP     | END                          | myGroup2                     | 8 tables/sequences processed                            | postgres
- CREATE_GROUP     | BEGIN                        | phil's group#3",             | audit_only                                              | postgres
- CREATE_GROUP     | LOG_SCHEMA CREATED           | "emaj_phil's schema3"        |                                                         | postgres
- CREATE_GROUP     | END                          | phil's group#3",             | 4 tables/sequences processed                            | postgres
- CREATE_GROUP     | BEGIN                        | myGroup4                     | rollbackable                                            | postgres
- CREATE_GROUP     | LOG_SCHEMA CREATED           | emaj_myschema4               |                                                         | postgres
- CREATE_GROUP     | END                          | myGroup4                     | 5 tables/sequences processed                            | postgres
- CREATE_GROUP     | BEGIN                        | myGroup5                     | audit_only                                              | postgres
- CREATE_GROUP     | LOG_SCHEMA CREATED           | emaj_myschema5               |                                                         | postgres
- CREATE_GROUP     | END                          | myGroup5                     | 2 tables/sequences processed                            | postgres
- CREATE_GROUP     | BEGIN                        | myGroup6                     | rollbackable                                            | postgres
- CREATE_GROUP     | LOG_SCHEMA CREATED           | emaj_myschema6               |                                                         | postgres
- CREATE_GROUP     | END                          | myGroup6                     | 4 tables/sequences processed                            | postgres
- COMMENT_GROUP    |                              | myGroup1                     |                                                         | postgres
- COMMENT_GROUP    |                              | myGroup1                     |                                                         | postgres
- COMMENT_GROUP    |                              | emptyGroup                   |                                                         | postgres
- COMMENT_GROUP    |                              | myGroup1                     |                                                         | postgres
- SYNC_DEF_GROUP   | EMAJ_GROUP_DEF SYNCHRONIZED  | myGroup1                     |                                                         | postgres
- SYNC_DEF_GROUP   | EMAJ_GROUP_DEF SYNCHRONIZED  | myGroup2                     |                                                         | postgres
- SYNC_DEF_GROUP   | EMAJ_GROUP_DEF SYNCHRONIZED  | phil's group#3",             |                                                         | postgres
- SYNC_DEF_GROUP   | EMAJ_GROUP_DEF SYNCHRONIZED  | myGroup4                     |                                                         | postgres
- SYNC_DEF_GROUP   | EMAJ_GROUP_DEF SYNCHRONIZED  | myGroup5                     |                                                         | postgres
- SYNC_DEF_GROUP   | EMAJ_GROUP_DEF SYNCHRONIZED  | myGroup6                     |                                                         | postgres
- SYNC_DEF_GROUP   | EMAJ_GROUP_DEF SYNCHRONIZED  | emptyGroup                   |                                                         | postgres
- SYNC_DEF_GROUP   | EMAJ_GROUP_DEF SYNCHRONIZED  | myGroup1                     |                                                         | postgres
- DROP_GROUP       | BEGIN                        | myGroup1                     |                                                         | postgres
- DROP_GROUP       | LOG_SCHEMA DROPPED           | emaj_myschema1               |                                                         | postgres
- DROP_GROUP       | END                          | myGroup1                     | 7 tables/sequences processed                            | postgres
- CREATE_GROUP     | BEGIN                        | myGroup1b                    | rollbackable                                            | postgres
- CREATE_GROUP     | END                          | myGroup1b                    | 0 tables/sequences processed                            | postgres
- ASSIGN_TABLE     | BEGIN                        |                              |                                                         | postgres
- ASSIGN_TABLE     | LOG_SCHEMA CREATED           | emaj_myschema1               |                                                         | postgres
- ASSIGN_TABLE     | TABLE ADDED                  | myschema1.mytbl1             | To the idle group myGroup1b                             | postgres
- ASSIGN_TABLE     | END                          |                              | 1 tables assigned to the group myGroup1b                | postgres
- ASSIGN_TABLES    | BEGIN                        |                              |                                                         | postgres
- ASSIGN_TABLES    | END                          |                              | 0 tables assigned to the group myGroup1b                | postgres
- ASSIGN_TABLES    | BEGIN                        |                              |                                                         | postgres
- ASSIGN_TABLES    | END                          |                              | 0 tables assigned to the group myGroup1b                | postgres
- ASSIGN_TABLES    | BEGIN                        |                              |                                                         | postgres
- ASSIGN_TABLES    | END                          |                              | 0 tables assigned to the group myGroup1b                | postgres
- ASSIGN_TABLES    | BEGIN                        |                              |                                                         | postgres
- ASSIGN_TABLES    | TABLE ADDED                  | myschema1.mytbl2             | To the idle group myGroup1b                             | postgres
- ASSIGN_TABLES    | TABLE ADDED                  | myschema1.mytbl2b            | To the idle group myGroup1b                             | postgres
- ASSIGN_TABLES    | END                          |                              | 2 tables assigned to the group myGroup1b                | postgres
- ASSIGN_TABLES    | BEGIN                        |                              |                                                         | postgres
- ASSIGN_TABLES    | END                          |                              | 0 tables assigned to the group myGroup1b                | postgres
- ASSIGN_TABLES    | BEGIN                        |                              |                                                         | postgres
- ASSIGN_TABLES    | END                          |                              | 0 tables assigned to the group myGroup1b                | postgres
- ASSIGN_TABLES    | BEGIN                        |                              |                                                         | postgres
- ASSIGN_TABLES    | END                          |                              | 0 tables assigned to the group myGroup1b                | postgres
- ASSIGN_TABLES    | BEGIN                        |                              |                                                         | postgres
- ASSIGN_TABLES    | END                          |                              | 0 tables assigned to the group myGroup1b                | postgres
- ASSIGN_TABLES    | BEGIN                        |                              |                                                         | postgres
- ASSIGN_TABLES    | END                          |                              | 0 tables assigned to the group myGroup1b                | postgres
- ASSIGN_TABLES    | BEGIN                        |                              |                                                         | postgres
- ASSIGN_TABLES    | END                          |                              | 0 tables assigned to the group myGroup1b                | postgres
- ASSIGN_TABLES    | BEGIN                        |                              |                                                         | postgres
- ASSIGN_TABLES    | END                          |                              | 0 tables assigned to the group myGroup1b                | postgres
- ASSIGN_TABLES    | BEGIN                        |                              |                                                         | postgres
- ASSIGN_TABLES    | TABLE ADDED                  | myschema1."myTbl3"           | To the idle group myGroup1b                             | postgres
- ASSIGN_TABLES    | TABLE ADDED                  | myschema1.mytbl4             | To the idle group myGroup1b                             | postgres
- ASSIGN_TABLES    | END                          |                              | 2 tables assigned to the group myGroup1b                | postgres
- REMOVE_TABLE     | BEGIN                        |                              |                                                         | postgres
- REMOVE_TABLE     | TABLE REMOVED                | myschema1.mytbl1             | From the idle group myGroup1b                           | postgres
- REMOVE_TABLE     | END                          |                              | 1 tables removed from their groups                      | postgres
- REMOVE_TABLES    | BEGIN                        |                              |                                                         | postgres
- REMOVE_TABLES    | END                          |                              | 0 tables removed from their groups                      | postgres
- REMOVE_TABLES    | BEGIN                        |                              |                                                         | postgres
- REMOVE_TABLES    | END                          |                              | 0 tables removed from their groups                      | postgres
- REMOVE_TABLES    | BEGIN                        |                              |                                                         | postgres
- REMOVE_TABLES    | END                          |                              | 0 tables removed from their groups                      | postgres
- REMOVE_TABLES    | BEGIN                        |                              |                                                         | postgres
- REMOVE_TABLES    | TABLE REMOVED                | myschema1.mytbl2             | From the idle group myGroup1b                           | postgres
- REMOVE_TABLES    | TABLE REMOVED                | myschema1.mytbl2b            | From the idle group myGroup1b                           | postgres
- REMOVE_TABLES    | END                          |                              | 2 tables removed from their groups                      | postgres
- REMOVE_TABLES    | BEGIN                        |                              |                                                         | postgres
- REMOVE_TABLES    | END                          |                              | 0 tables removed from their groups                      | postgres
- REMOVE_TABLES    | BEGIN                        |                              |                                                         | postgres
- REMOVE_TABLES    | END                          |                              | 0 tables removed from their groups                      | postgres
- REMOVE_TABLES    | BEGIN                        |                              |                                                         | postgres
- REMOVE_TABLES    | END                          |                              | 0 tables removed from their groups                      | postgres
- REMOVE_TABLES    | BEGIN                        |                              |                                                         | postgres
- REMOVE_TABLES    | TABLE REMOVED                | myschema1."myTbl3"           | From the idle group myGroup1b                           | postgres
- REMOVE_TABLES    | TABLE REMOVED                | myschema1.mytbl4             | From the idle group myGroup1b                           | postgres
- REMOVE_TABLES    | LOG_SCHEMA DROPPED           | emaj_myschema1               |                                                         | postgres
- REMOVE_TABLES    | END                          |                              | 2 tables removed from their groups                      | postgres
- DROP_GROUP       | BEGIN                        | myGroup2                     |                                                         | postgres
- DROP_GROUP       | LOG_SCHEMA DROPPED           | emaj_myschema2               |                                                         | postgres
- DROP_GROUP       | END                          | myGroup2                     | 8 tables/sequences processed                            | postgres
- CREATE_GROUP     | BEGIN                        | myGroup2b                    | rollbackable                                            | postgres
- CREATE_GROUP     | END                          | myGroup2b                    | 0 tables/sequences processed                            | postgres
- ASSIGN_SEQUENCE  | BEGIN                        |                              |                                                         | postgres
- ASSIGN_SEQUENCE  | SEQUENCE ADDED               | myschema2.myseq1             | To the idle group myGroup2b                             | postgres
- ASSIGN_SEQUENCE  | END                          |                              | 1 sequences assigned to the group myGroup2b             | postgres
- ASSIGN_SEQUENCES | BEGIN                        |                              |                                                         | postgres
- ASSIGN_SEQUENCES | END                          |                              | 0 sequences assigned to the group myGroup2b             | postgres
- ASSIGN_SEQUENCES | BEGIN                        |                              |                                                         | postgres
- ASSIGN_SEQUENCES | END                          |                              | 0 sequences assigned to the group myGroup2b             | postgres
- ASSIGN_SEQUENCES | BEGIN                        |                              |                                                         | postgres
- ASSIGN_SEQUENCES | END                          |                              | 0 sequences assigned to the group myGroup2b             | postgres
- ASSIGN_SEQUENCES | BEGIN                        |                              |                                                         | postgres
- ASSIGN_SEQUENCES | SEQUENCE ADDED               | myschema2.myseq2             | To the idle group myGroup2b                             | postgres
- ASSIGN_SEQUENCES | END                          |                              | 1 sequences assigned to the group myGroup2b             | postgres
- ASSIGN_SEQUENCES | BEGIN                        |                              |                                                         | postgres
- ASSIGN_SEQUENCES | END                          |                              | 0 sequences assigned to the group myGroup2b             | postgres
- ASSIGN_SEQUENCES | BEGIN                        |                              |                                                         | postgres
- ASSIGN_SEQUENCES | END                          |                              | 0 sequences assigned to the group myGroup2b             | postgres
- ASSIGN_SEQUENCES | BEGIN                        |                              |                                                         | postgres
- ASSIGN_SEQUENCES | END                          |                              | 0 sequences assigned to the group myGroup2b             | postgres
- ASSIGN_SEQUENCES | BEGIN                        |                              |                                                         | postgres
- ASSIGN_SEQUENCES | END                          |                              | 0 sequences assigned to the group myGroup2b             | postgres
- ASSIGN_SEQUENCES | BEGIN                        |                              |                                                         | postgres
- ASSIGN_SEQUENCES | SEQUENCE ADDED               | myschema2."myTbl3_col31_seq" | To the idle group myGroup2b                             | postgres
- ASSIGN_SEQUENCES | END                          |                              | 1 sequences assigned to the group myGroup2b             | postgres
- REMOVE_SEQUENCE  | BEGIN                        |                              |                                                         | postgres
- REMOVE_SEQUENCE  | SEQUENCE REMOVED             | myschema2.myseq1             | From the idle group myGroup2b                           | postgres
- REMOVE_SEQUENCE  | END                          |                              | 1 sequences removed from their groups                   | postgres
- REMOVE_SEQUENCES | BEGIN                        |                              |                                                         | postgres
- REMOVE_SEQUENCES | END                          |                              | 0 sequences removed from their groups                   | postgres
- REMOVE_SEQUENCES | BEGIN                        |                              |                                                         | postgres
- REMOVE_SEQUENCES | END                          |                              | 0 sequences removed from their groups                   | postgres
- REMOVE_SEQUENCES | BEGIN                        |                              |                                                         | postgres
- REMOVE_SEQUENCES | END                          |                              | 0 sequences removed from their groups                   | postgres
- REMOVE_SEQUENCES | BEGIN                        |                              |                                                         | postgres
- REMOVE_SEQUENCES | SEQUENCE REMOVED             | myschema2.myseq2             | From the idle group myGroup2b                           | postgres
- REMOVE_SEQUENCES | END                          |                              | 1 sequences removed from their groups                   | postgres
- REMOVE_SEQUENCES | BEGIN                        |                              |                                                         | postgres
- REMOVE_SEQUENCES | END                          |                              | 0 sequences removed from their groups                   | postgres
- REMOVE_SEQUENCES | BEGIN                        |                              |                                                         | postgres
- REMOVE_SEQUENCES | END                          |                              | 0 sequences removed from their groups                   | postgres
- REMOVE_SEQUENCES | BEGIN                        |                              |                                                         | postgres
- REMOVE_SEQUENCES | END                          |                              | 0 sequences removed from their groups                   | postgres
- REMOVE_SEQUENCES | BEGIN                        |                              |                                                         | postgres
- REMOVE_SEQUENCES | SEQUENCE REMOVED             | myschema2."myTbl3_col31_seq" | From the idle group myGroup2b                           | postgres
- REMOVE_SEQUENCES | END                          |                              | 1 sequences removed from their groups                   | postgres
- DROP_GROUP       | BEGIN                        | myGroup1b                    |                                                         | postgres
- DROP_GROUP       | END                          | myGroup1b                    | 0 tables/sequences processed                            | postgres
- DROP_GROUP       | BEGIN                        | myGroup2b                    |                                                         | postgres
- DROP_GROUP       | END                          | myGroup2b                    | 0 tables/sequences processed                            | postgres
- CREATE_GROUP     | BEGIN                        | myGroup1                     | rollbackable                                            | postgres
- CREATE_GROUP     | LOG_SCHEMA CREATED           | emaj_myschema1               |                                                         | postgres
- CREATE_GROUP     | END                          | myGroup1                     | 7 tables/sequences processed                            | postgres
- CREATE_GROUP     | BEGIN                        | myGroup2                     | rollbackable                                            | postgres
- CREATE_GROUP     | LOG_SCHEMA CREATED           | emaj_myschema2               |                                                         | postgres
- CREATE_GROUP     | END                          | myGroup2                     | 8 tables/sequences processed                            | postgres
- IMPORT_GROUPS    | BEGIN                        | <all>                        |                                                         | postgres
- IMPORT_GROUPS    | GROUP CREATED                | new_grp                      | rollbackable                                            | postgres
- IMPORT_GROUPS    | END                          |                              | 1 created or altered tables groups                      | postgres
- IMPORT_GROUPS    | BEGIN                        | <all>                        |                                                         | postgres
- IMPORT_GROUPS    | END                          |                              | 1 created or altered tables groups                      | postgres
- IMPORT_GROUPS    | BEGIN                        | <all>                        |                                                         | postgres
- IMPORT_GROUPS    | END                          |                              | 1 created or altered tables groups                      | postgres
- DROP_GROUP       | BEGIN                        | new_grp                      |                                                         | postgres
- DROP_GROUP       | END                          | new_grp                      | 0 tables/sequences processed                            | postgres
- IMPORT_GROUPS    | BEGIN                        | emptyGroup, myGroup5         | Input file: '/tmp/orig_groups_config_all.json'          | postgres
- IMPORT_GROUPS    | END                          |                              | 2 created or altered tables groups                      | postgres
- IMPORT_GROUPS    | BEGIN                        | myGroup4                     | Input file: '/tmp/modified_groups_config_1.json'        | postgres
- IMPORT_GROUPS    | LOG DATA TABLESPACE CHANGED  | myschema4.mypartp1           | Default tablespace => tsplog1                           | postgres
- IMPORT_GROUPS    | LOG INDEX TABLESPACE CHANGED | myschema4.mypartp1           | Default tablespace => tsplog1                           | postgres
- IMPORT_GROUPS    | PRIORITY CHANGED             | myschema4.mypartp1           | NULL => 2                                               | postgres
- IMPORT_GROUPS    | END                          |                              | 1 created or altered tables groups                      | postgres
- IMPORT_GROUPS    | BEGIN                        | myGroup2, myGroup4           | Input file: '/tmp/modified_groups_config_2.json'        | postgres
- IMPORT_GROUPS    | TABLE MOVED                  | myschema2.mytbl5             | From the idle group myGroup2 to the idle group myGroup4 | postgres
- IMPORT_GROUPS    | SEQUENCE MOVED               | myschema2.myseq1             | From the idle group myGroup2 to the idle group myGroup4 | postgres
- IMPORT_GROUPS    | END                          |                              | 2 created or altered tables groups                      | postgres
- IMPORT_GROUPS    | BEGIN                        | myGroup4                     | Input file: '/tmp/modified_groups_config_3.json'        | postgres
- IMPORT_GROUPS    | TABLE REMOVED                | myschema2.mytbl5             | From the idle group myGroup4                            | postgres
- IMPORT_GROUPS    | SEQUENCE REMOVED             | myschema2.myseq1             | From the idle group myGroup4                            | postgres
- IMPORT_GROUPS    | END                          |                              | 1 created or altered tables groups                      | postgres
- IMPORT_GROUPS    | BEGIN                        | <all>                        | Input file: '/tmp/modified_groups_config_3.json'        | postgres
- IMPORT_GROUPS    | TABLE ADDED                  | myschema2.mytbl5             | To the idle group myGroup2                              | postgres
- IMPORT_GROUPS    | SEQUENCE ADDED               | myschema2.myseq1             | To the idle group myGroup2                              | postgres
- IMPORT_GROUPS    | END                          |                              | 7 created or altered tables groups                      | postgres
- IMPORT_GROUPS    | BEGIN                        | <all>                        | Input file: '/tmp/orig_groups_config_all.json'          | postgres
- IMPORT_GROUPS    | LOG DATA TABLESPACE CHANGED  | myschema4.mypartp1           | tsplog1 => Default tablespace                           | postgres
- IMPORT_GROUPS    | LOG INDEX TABLESPACE CHANGED | myschema4.mypartp1           | tsplog1 => Default tablespace                           | postgres
- IMPORT_GROUPS    | PRIORITY CHANGED             | myschema4.mypartp1           | 2 => NULL                                               | postgres
- IMPORT_GROUPS    | END                          |                              | 7 created or altered tables groups                      | postgres
- START_GROUP      | BEGIN                        | myGroup1                     | With log reset                                          | postgres
- LOCK_GROUP       | BEGIN                        | myGroup1                     |                                                         | postgres
- LOCK_GROUP       | END                          | myGroup1                     | 5 tables locked, 0 deadlock(s)                          | postgres
- SET_MARK_GROUP   | BEGIN                        | myGroup1                     | START_%                                                 | postgres
- SET_MARK_GROUP   | END                          | myGroup1                     | START_%                                                 | postgres
- START_GROUP      | END                          | myGroup1                     | 7 tables/sequences processed                            | postgres
- STOP_GROUP       | BEGIN                        | myGroup1                     |                                                         | postgres
- LOCK_GROUP       | BEGIN                        | myGroup1                     |                                                         | postgres
- LOCK_GROUP       | END                          | myGroup1                     | 5 tables locked, 0 deadlock(s)                          | postgres
- SET_MARK_GROUP   | BEGIN                        | myGroup1                     | STOP_%                                                  | postgres
- SET_MARK_GROUP   | END                          | myGroup1                     | STOP_%                                                  | postgres
- STOP_GROUP       | END                          | myGroup1                     | 7 tables/sequences processed                            | postgres
- DROP_GROUP       | BEGIN                        | myGroup1                     |                                                         | postgres
- DROP_GROUP       | LOG_SCHEMA DROPPED           | emaj_myschema1               |                                                         | postgres
- DROP_GROUP       | END                          | myGroup1                     | 7 tables/sequences processed                            | postgres
- DROP_GROUP       | BEGIN                        | myGroup2                     |                                                         | postgres
- DROP_GROUP       | LOG_SCHEMA DROPPED           | emaj_myschema2               |                                                         | postgres
- DROP_GROUP       | END                          | myGroup2                     | 8 tables/sequences processed                            | postgres
- DROP_GROUP       | BEGIN                        | emptyGroup                   |                                                         | postgres
- DROP_GROUP       | END                          | emptyGroup                   | 0 tables/sequences processed                            | postgres
- DROP_GROUP       | BEGIN                        | myGroup5                     |                                                         | postgres
- DROP_GROUP       | LOG_SCHEMA DROPPED           | emaj_myschema5               |                                                         | postgres
- DROP_GROUP       | END                          | myGroup5                     | 2 tables/sequences processed                            | postgres
- DROP_GROUP       | BEGIN                        | myGroup6                     |                                                         | postgres
- DROP_GROUP       | LOG_SCHEMA DROPPED           | emaj_myschema6               |                                                         | postgres
- DROP_GROUP       | END                          | myGroup6                     | 4 tables/sequences processed                            | postgres
- CREATE_GROUP     | BEGIN                        | myGroup1                     | audit_only                                              | postgres
- CREATE_GROUP     | LOG_SCHEMA CREATED           | emaj_myschema1               |                                                         | postgres
- CREATE_GROUP     | END                          | myGroup1                     | 7 tables/sequences processed                            | postgres
- START_GROUP      | BEGIN                        | myGroup1                     | With log reset                                          | postgres
- LOCK_GROUP       | BEGIN                        | myGroup1                     |                                                         | postgres
- LOCK_GROUP       | END                          | myGroup1                     | 5 tables locked, 0 deadlock(s)                          | postgres
- SET_MARK_GROUP   | BEGIN                        | myGroup1                     | START_%                                                 | postgres
- SET_MARK_GROUP   | END                          | myGroup1                     | START_%                                                 | postgres
- START_GROUP      | END                          | myGroup1                     | 7 tables/sequences processed                            | postgres
- FORCE_DROP_GROUP | BEGIN                        | myGroup1                     |                                                         | postgres
- FORCE_DROP_GROUP | LOG_SCHEMA DROPPED           | emaj_myschema1               |                                                         | postgres
- FORCE_DROP_GROUP | END                          | myGroup1                     | 7 tables/sequences processed                            | postgres
- CREATE_GROUP     | BEGIN                        | myGroup2                     | rollbackable                                            | postgres
- CREATE_GROUP     | LOG_SCHEMA CREATED           | emaj_myschema2               |                                                         | postgres
- CREATE_GROUP     | END                          | myGroup2                     | 8 tables/sequences processed                            | postgres
- FORCE_DROP_GROUP | BEGIN                        | myGroup2                     |                                                         | postgres
- FORCE_DROP_GROUP | LOG_SCHEMA DROPPED           | emaj_myschema2               |                                                         | postgres
- FORCE_DROP_GROUP | END                          | myGroup2                     | 8 tables/sequences processed                            | postgres
+  hist_function   |          hist_event          |                                  hist_object                                   |                     regexp_replace                      | hist_user 
+------------------+------------------------------+--------------------------------------------------------------------------------+---------------------------------------------------------+-----------
+ CREATE_GROUP     | BEGIN                        | myGroup1                                                                       | rollbackable                                            | postgres
+ CREATE_GROUP     | LOG_SCHEMA CREATED           | emaj_myschema1                                                                 |                                                         | postgres
+ CREATE_GROUP     | END                          | myGroup1                                                                       | 7 tables/sequences processed                            | postgres
+ CREATE_GROUP     | BEGIN                        | emptyGroup                                                                     | audit_only                                              | postgres
+ CREATE_GROUP     | END                          | emptyGroup                                                                     | 0 tables/sequences processed                            | postgres
+ CREATE_GROUP     | BEGIN                        | myGroup2                                                                       | rollbackable                                            | postgres
+ CREATE_GROUP     | LOG_SCHEMA CREATED           | emaj_myschema2                                                                 |                                                         | postgres
+ CREATE_GROUP     | END                          | myGroup2                                                                       | 8 tables/sequences processed                            | postgres
+ CREATE_GROUP     | BEGIN                        | phil's group#3",                                                               | audit_only                                              | postgres
+ CREATE_GROUP     | LOG_SCHEMA CREATED           | "emaj_phil's schema3"                                                          |                                                         | postgres
+ CREATE_GROUP     | END                          | phil's group#3",                                                               | 4 tables/sequences processed                            | postgres
+ CREATE_GROUP     | BEGIN                        | myGroup4                                                                       | rollbackable                                            | postgres
+ CREATE_GROUP     | LOG_SCHEMA CREATED           | emaj_myschema4                                                                 |                                                         | postgres
+ CREATE_GROUP     | END                          | myGroup4                                                                       | 5 tables/sequences processed                            | postgres
+ CREATE_GROUP     | BEGIN                        | myGroup5                                                                       | audit_only                                              | postgres
+ CREATE_GROUP     | LOG_SCHEMA CREATED           | emaj_myschema5                                                                 |                                                         | postgres
+ CREATE_GROUP     | END                          | myGroup5                                                                       | 2 tables/sequences processed                            | postgres
+ CREATE_GROUP     | BEGIN                        | myGroup6                                                                       | rollbackable                                            | postgres
+ CREATE_GROUP     | LOG_SCHEMA CREATED           | emaj_myschema6                                                                 |                                                         | postgres
+ CREATE_GROUP     | END                          | myGroup6                                                                       | 4 tables/sequences processed                            | postgres
+ COMMENT_GROUP    |                              | myGroup1                                                                       |                                                         | postgres
+ COMMENT_GROUP    |                              | myGroup1                                                                       |                                                         | postgres
+ COMMENT_GROUP    |                              | emptyGroup                                                                     |                                                         | postgres
+ COMMENT_GROUP    |                              | myGroup1                                                                       |                                                         | postgres
+ SYNC_DEF_GROUP   | EMAJ_GROUP_DEF SYNCHRONIZED  | myGroup1                                                                       |                                                         | postgres
+ SYNC_DEF_GROUP   | EMAJ_GROUP_DEF SYNCHRONIZED  | myGroup2                                                                       |                                                         | postgres
+ SYNC_DEF_GROUP   | EMAJ_GROUP_DEF SYNCHRONIZED  | phil's group#3",                                                               |                                                         | postgres
+ SYNC_DEF_GROUP   | EMAJ_GROUP_DEF SYNCHRONIZED  | myGroup4                                                                       |                                                         | postgres
+ SYNC_DEF_GROUP   | EMAJ_GROUP_DEF SYNCHRONIZED  | myGroup5                                                                       |                                                         | postgres
+ SYNC_DEF_GROUP   | EMAJ_GROUP_DEF SYNCHRONIZED  | myGroup6                                                                       |                                                         | postgres
+ SYNC_DEF_GROUP   | EMAJ_GROUP_DEF SYNCHRONIZED  | emptyGroup                                                                     |                                                         | postgres
+ SYNC_DEF_GROUP   | EMAJ_GROUP_DEF SYNCHRONIZED  | myGroup1                                                                       |                                                         | postgres
+ DROP_GROUP       | BEGIN                        | myGroup1                                                                       |                                                         | postgres
+ DROP_GROUP       | LOG_SCHEMA DROPPED           | emaj_myschema1                                                                 |                                                         | postgres
+ DROP_GROUP       | END                          | myGroup1                                                                       | 7 tables/sequences processed                            | postgres
+ CREATE_GROUP     | BEGIN                        | myGroup1b                                                                      | rollbackable                                            | postgres
+ CREATE_GROUP     | END                          | myGroup1b                                                                      | 0 tables/sequences processed                            | postgres
+ ASSIGN_TABLE     | BEGIN                        |                                                                                |                                                         | postgres
+ ASSIGN_TABLE     | LOG_SCHEMA CREATED           | emaj_myschema1                                                                 |                                                         | postgres
+ ASSIGN_TABLE     | TABLE ADDED                  | myschema1.mytbl1                                                               | To the idle group myGroup1b                             | postgres
+ ASSIGN_TABLE     | END                          |                                                                                | 1 tables assigned to the group myGroup1b                | postgres
+ ASSIGN_TABLES    | BEGIN                        |                                                                                |                                                         | postgres
+ ASSIGN_TABLES    | END                          |                                                                                | 0 tables assigned to the group myGroup1b                | postgres
+ ASSIGN_TABLES    | BEGIN                        |                                                                                |                                                         | postgres
+ ASSIGN_TABLES    | END                          |                                                                                | 0 tables assigned to the group myGroup1b                | postgres
+ ASSIGN_TABLES    | BEGIN                        |                                                                                |                                                         | postgres
+ ASSIGN_TABLES    | END                          |                                                                                | 0 tables assigned to the group myGroup1b                | postgres
+ ASSIGN_TABLES    | BEGIN                        |                                                                                |                                                         | postgres
+ ASSIGN_TABLES    | TABLE ADDED                  | myschema1.mytbl2                                                               | To the idle group myGroup1b                             | postgres
+ ASSIGN_TABLES    | TABLE ADDED                  | myschema1.mytbl2b                                                              | To the idle group myGroup1b                             | postgres
+ ASSIGN_TABLES    | END                          |                                                                                | 2 tables assigned to the group myGroup1b                | postgres
+ ASSIGN_TABLES    | BEGIN                        |                                                                                |                                                         | postgres
+ ASSIGN_TABLES    | END                          |                                                                                | 0 tables assigned to the group myGroup1b                | postgres
+ ASSIGN_TABLES    | BEGIN                        |                                                                                |                                                         | postgres
+ ASSIGN_TABLES    | END                          |                                                                                | 0 tables assigned to the group myGroup1b                | postgres
+ ASSIGN_TABLES    | BEGIN                        |                                                                                |                                                         | postgres
+ ASSIGN_TABLES    | END                          |                                                                                | 0 tables assigned to the group myGroup1b                | postgres
+ ASSIGN_TABLES    | BEGIN                        |                                                                                |                                                         | postgres
+ ASSIGN_TABLES    | END                          |                                                                                | 0 tables assigned to the group myGroup1b                | postgres
+ ASSIGN_TABLES    | BEGIN                        |                                                                                |                                                         | postgres
+ ASSIGN_TABLES    | END                          |                                                                                | 0 tables assigned to the group myGroup1b                | postgres
+ ASSIGN_TABLES    | BEGIN                        |                                                                                |                                                         | postgres
+ ASSIGN_TABLES    | END                          |                                                                                | 0 tables assigned to the group myGroup1b                | postgres
+ ASSIGN_TABLES    | BEGIN                        |                                                                                |                                                         | postgres
+ ASSIGN_TABLES    | END                          |                                                                                | 0 tables assigned to the group myGroup1b                | postgres
+ ASSIGN_TABLES    | BEGIN                        |                                                                                |                                                         | postgres
+ ASSIGN_TABLES    | TABLE ADDED                  | myschema1."myTbl3"                                                             | To the idle group myGroup1b                             | postgres
+ ASSIGN_TABLES    | TABLE ADDED                  | myschema1.mytbl4                                                               | To the idle group myGroup1b                             | postgres
+ ASSIGN_TABLES    | END                          |                                                                                | 2 tables assigned to the group myGroup1b                | postgres
+ REMOVE_TABLE     | BEGIN                        |                                                                                |                                                         | postgres
+ REMOVE_TABLE     | TABLE REMOVED                | myschema1.mytbl1                                                               | From the idle group myGroup1b                           | postgres
+ REMOVE_TABLE     | END                          |                                                                                | 1 tables removed from their groups                      | postgres
+ REMOVE_TABLES    | BEGIN                        |                                                                                |                                                         | postgres
+ REMOVE_TABLES    | END                          |                                                                                | 0 tables removed from their groups                      | postgres
+ REMOVE_TABLES    | BEGIN                        |                                                                                |                                                         | postgres
+ REMOVE_TABLES    | END                          |                                                                                | 0 tables removed from their groups                      | postgres
+ REMOVE_TABLES    | BEGIN                        |                                                                                |                                                         | postgres
+ REMOVE_TABLES    | END                          |                                                                                | 0 tables removed from their groups                      | postgres
+ REMOVE_TABLES    | BEGIN                        |                                                                                |                                                         | postgres
+ REMOVE_TABLES    | TABLE REMOVED                | myschema1.mytbl2                                                               | From the idle group myGroup1b                           | postgres
+ REMOVE_TABLES    | TABLE REMOVED                | myschema1.mytbl2b                                                              | From the idle group myGroup1b                           | postgres
+ REMOVE_TABLES    | END                          |                                                                                | 2 tables removed from their groups                      | postgres
+ REMOVE_TABLES    | BEGIN                        |                                                                                |                                                         | postgres
+ REMOVE_TABLES    | END                          |                                                                                | 0 tables removed from their groups                      | postgres
+ REMOVE_TABLES    | BEGIN                        |                                                                                |                                                         | postgres
+ REMOVE_TABLES    | END                          |                                                                                | 0 tables removed from their groups                      | postgres
+ REMOVE_TABLES    | BEGIN                        |                                                                                |                                                         | postgres
+ REMOVE_TABLES    | END                          |                                                                                | 0 tables removed from their groups                      | postgres
+ REMOVE_TABLES    | BEGIN                        |                                                                                |                                                         | postgres
+ REMOVE_TABLES    | TABLE REMOVED                | myschema1."myTbl3"                                                             | From the idle group myGroup1b                           | postgres
+ REMOVE_TABLES    | TABLE REMOVED                | myschema1.mytbl4                                                               | From the idle group myGroup1b                           | postgres
+ REMOVE_TABLES    | LOG_SCHEMA DROPPED           | emaj_myschema1                                                                 |                                                         | postgres
+ REMOVE_TABLES    | END                          |                                                                                | 2 tables removed from their groups                      | postgres
+ DROP_GROUP       | BEGIN                        | myGroup2                                                                       |                                                         | postgres
+ DROP_GROUP       | LOG_SCHEMA DROPPED           | emaj_myschema2                                                                 |                                                         | postgres
+ DROP_GROUP       | END                          | myGroup2                                                                       | 8 tables/sequences processed                            | postgres
+ CREATE_GROUP     | BEGIN                        | myGroup2b                                                                      | rollbackable                                            | postgres
+ CREATE_GROUP     | END                          | myGroup2b                                                                      | 0 tables/sequences processed                            | postgres
+ ASSIGN_SEQUENCE  | BEGIN                        |                                                                                |                                                         | postgres
+ ASSIGN_SEQUENCE  | SEQUENCE ADDED               | myschema2.myseq1                                                               | To the idle group myGroup2b                             | postgres
+ ASSIGN_SEQUENCE  | END                          |                                                                                | 1 sequences assigned to the group myGroup2b             | postgres
+ ASSIGN_SEQUENCES | BEGIN                        |                                                                                |                                                         | postgres
+ ASSIGN_SEQUENCES | END                          |                                                                                | 0 sequences assigned to the group myGroup2b             | postgres
+ ASSIGN_SEQUENCES | BEGIN                        |                                                                                |                                                         | postgres
+ ASSIGN_SEQUENCES | END                          |                                                                                | 0 sequences assigned to the group myGroup2b             | postgres
+ ASSIGN_SEQUENCES | BEGIN                        |                                                                                |                                                         | postgres
+ ASSIGN_SEQUENCES | END                          |                                                                                | 0 sequences assigned to the group myGroup2b             | postgres
+ ASSIGN_SEQUENCES | BEGIN                        |                                                                                |                                                         | postgres
+ ASSIGN_SEQUENCES | SEQUENCE ADDED               | myschema2.myseq2                                                               | To the idle group myGroup2b                             | postgres
+ ASSIGN_SEQUENCES | END                          |                                                                                | 1 sequences assigned to the group myGroup2b             | postgres
+ ASSIGN_SEQUENCES | BEGIN                        |                                                                                |                                                         | postgres
+ ASSIGN_SEQUENCES | END                          |                                                                                | 0 sequences assigned to the group myGroup2b             | postgres
+ ASSIGN_SEQUENCES | BEGIN                        |                                                                                |                                                         | postgres
+ ASSIGN_SEQUENCES | END                          |                                                                                | 0 sequences assigned to the group myGroup2b             | postgres
+ ASSIGN_SEQUENCES | BEGIN                        |                                                                                |                                                         | postgres
+ ASSIGN_SEQUENCES | END                          |                                                                                | 0 sequences assigned to the group myGroup2b             | postgres
+ ASSIGN_SEQUENCES | BEGIN                        |                                                                                |                                                         | postgres
+ ASSIGN_SEQUENCES | END                          |                                                                                | 0 sequences assigned to the group myGroup2b             | postgres
+ ASSIGN_SEQUENCES | BEGIN                        |                                                                                |                                                         | postgres
+ ASSIGN_SEQUENCES | SEQUENCE ADDED               | myschema2."myTbl3_col31_seq"                                                   | To the idle group myGroup2b                             | postgres
+ ASSIGN_SEQUENCES | END                          |                                                                                | 1 sequences assigned to the group myGroup2b             | postgres
+ REMOVE_SEQUENCE  | BEGIN                        |                                                                                |                                                         | postgres
+ REMOVE_SEQUENCE  | SEQUENCE REMOVED             | myschema2.myseq1                                                               | From the idle group myGroup2b                           | postgres
+ REMOVE_SEQUENCE  | END                          |                                                                                | 1 sequences removed from their groups                   | postgres
+ REMOVE_SEQUENCES | BEGIN                        |                                                                                |                                                         | postgres
+ REMOVE_SEQUENCES | END                          |                                                                                | 0 sequences removed from their groups                   | postgres
+ REMOVE_SEQUENCES | BEGIN                        |                                                                                |                                                         | postgres
+ REMOVE_SEQUENCES | END                          |                                                                                | 0 sequences removed from their groups                   | postgres
+ REMOVE_SEQUENCES | BEGIN                        |                                                                                |                                                         | postgres
+ REMOVE_SEQUENCES | END                          |                                                                                | 0 sequences removed from their groups                   | postgres
+ REMOVE_SEQUENCES | BEGIN                        |                                                                                |                                                         | postgres
+ REMOVE_SEQUENCES | SEQUENCE REMOVED             | myschema2.myseq2                                                               | From the idle group myGroup2b                           | postgres
+ REMOVE_SEQUENCES | END                          |                                                                                | 1 sequences removed from their groups                   | postgres
+ REMOVE_SEQUENCES | BEGIN                        |                                                                                |                                                         | postgres
+ REMOVE_SEQUENCES | END                          |                                                                                | 0 sequences removed from their groups                   | postgres
+ REMOVE_SEQUENCES | BEGIN                        |                                                                                |                                                         | postgres
+ REMOVE_SEQUENCES | END                          |                                                                                | 0 sequences removed from their groups                   | postgres
+ REMOVE_SEQUENCES | BEGIN                        |                                                                                |                                                         | postgres
+ REMOVE_SEQUENCES | END                          |                                                                                | 0 sequences removed from their groups                   | postgres
+ REMOVE_SEQUENCES | BEGIN                        |                                                                                |                                                         | postgres
+ REMOVE_SEQUENCES | SEQUENCE REMOVED             | myschema2."myTbl3_col31_seq"                                                   | From the idle group myGroup2b                           | postgres
+ REMOVE_SEQUENCES | END                          |                                                                                | 1 sequences removed from their groups                   | postgres
+ DROP_GROUP       | BEGIN                        | myGroup1b                                                                      |                                                         | postgres
+ DROP_GROUP       | END                          | myGroup1b                                                                      | 0 tables/sequences processed                            | postgres
+ DROP_GROUP       | BEGIN                        | myGroup2b                                                                      |                                                         | postgres
+ DROP_GROUP       | END                          | myGroup2b                                                                      | 0 tables/sequences processed                            | postgres
+ CREATE_GROUP     | BEGIN                        | myGroup1                                                                       | rollbackable                                            | postgres
+ CREATE_GROUP     | LOG_SCHEMA CREATED           | emaj_myschema1                                                                 |                                                         | postgres
+ CREATE_GROUP     | END                          | myGroup1                                                                       | 7 tables/sequences processed                            | postgres
+ CREATE_GROUP     | BEGIN                        | myGroup2                                                                       | rollbackable                                            | postgres
+ CREATE_GROUP     | LOG_SCHEMA CREATED           | emaj_myschema2                                                                 |                                                         | postgres
+ CREATE_GROUP     | END                          | myGroup2                                                                       | 8 tables/sequences processed                            | postgres
+ IMPORT_GROUPS    | BEGIN                        | new_grp                                                                        |                                                         | postgres
+ IMPORT_GROUPS    | GROUP CREATED                | new_grp                                                                        | rollbackable                                            | postgres
+ IMPORT_GROUPS    | END                          |                                                                                | 1 created or altered tables groups                      | postgres
+ IMPORT_GROUPS    | BEGIN                        | new_grp                                                                        |                                                         | postgres
+ IMPORT_GROUPS    | END                          |                                                                                | 1 created or altered tables groups                      | postgres
+ IMPORT_GROUPS    | BEGIN                        | new_grp                                                                        |                                                         | postgres
+ IMPORT_GROUPS    | END                          |                                                                                | 1 created or altered tables groups                      | postgres
+ DROP_GROUP       | BEGIN                        | new_grp                                                                        |                                                         | postgres
+ DROP_GROUP       | END                          | new_grp                                                                        | 0 tables/sequences processed                            | postgres
+ IMPORT_GROUPS    | BEGIN                        | emptyGroup, myGroup5                                                           | Input file: '/tmp/orig_groups_config_all.json'          | postgres
+ IMPORT_GROUPS    | END                          |                                                                                | 2 created or altered tables groups                      | postgres
+ IMPORT_GROUPS    | BEGIN                        | myGroup4                                                                       | Input file: '/tmp/modified_groups_config_1.json'        | postgres
+ IMPORT_GROUPS    | LOG DATA TABLESPACE CHANGED  | myschema4.mypartp1                                                             | Default tablespace => tsplog1                           | postgres
+ IMPORT_GROUPS    | LOG INDEX TABLESPACE CHANGED | myschema4.mypartp1                                                             | Default tablespace => tsplog1                           | postgres
+ IMPORT_GROUPS    | PRIORITY CHANGED             | myschema4.mypartp1                                                             | NULL => 2                                               | postgres
+ IMPORT_GROUPS    | END                          |                                                                                | 1 created or altered tables groups                      | postgres
+ IMPORT_GROUPS    | BEGIN                        | myGroup2, myGroup4                                                             | Input file: '/tmp/modified_groups_config_2.json'        | postgres
+ IMPORT_GROUPS    | TABLE MOVED                  | myschema2.mytbl5                                                               | From the idle group myGroup2 to the idle group myGroup4 | postgres
+ IMPORT_GROUPS    | SEQUENCE MOVED               | myschema2.myseq1                                                               | From the idle group myGroup2 to the idle group myGroup4 | postgres
+ IMPORT_GROUPS    | END                          |                                                                                | 2 created or altered tables groups                      | postgres
+ IMPORT_GROUPS    | BEGIN                        | myGroup4                                                                       | Input file: '/tmp/modified_groups_config_3.json'        | postgres
+ IMPORT_GROUPS    | TABLE REMOVED                | myschema2.mytbl5                                                               | From the idle group myGroup4                            | postgres
+ IMPORT_GROUPS    | SEQUENCE REMOVED             | myschema2.myseq1                                                               | From the idle group myGroup4                            | postgres
+ IMPORT_GROUPS    | END                          |                                                                                | 1 created or altered tables groups                      | postgres
+ IMPORT_GROUPS    | BEGIN                        | emptyGroup, myGroup1, myGroup2, myGroup4, myGroup5, myGroup6, phil's group#3", | Input file: '/tmp/modified_groups_config_3.json'        | postgres
+ IMPORT_GROUPS    | TABLE ADDED                  | myschema2.mytbl5                                                               | To the idle group myGroup2                              | postgres
+ IMPORT_GROUPS    | SEQUENCE ADDED               | myschema2.myseq1                                                               | To the idle group myGroup2                              | postgres
+ IMPORT_GROUPS    | END                          |                                                                                | 7 created or altered tables groups                      | postgres
+ IMPORT_GROUPS    | BEGIN                        | emptyGroup, myGroup1, myGroup2, myGroup4, myGroup5, myGroup6, phil's group#3", | Input file: '/tmp/orig_groups_config_all.json'          | postgres
+ IMPORT_GROUPS    | LOG DATA TABLESPACE CHANGED  | myschema4.mypartp1                                                             | tsplog1 => Default tablespace                           | postgres
+ IMPORT_GROUPS    | LOG INDEX TABLESPACE CHANGED | myschema4.mypartp1                                                             | tsplog1 => Default tablespace                           | postgres
+ IMPORT_GROUPS    | PRIORITY CHANGED             | myschema4.mypartp1                                                             | 2 => NULL                                               | postgres
+ IMPORT_GROUPS    | END                          |                                                                                | 7 created or altered tables groups                      | postgres
+ START_GROUP      | BEGIN                        | myGroup1                                                                       | With log reset                                          | postgres
+ LOCK_GROUP       | BEGIN                        | myGroup1                                                                       |                                                         | postgres
+ LOCK_GROUP       | END                          | myGroup1                                                                       | 5 tables locked, 0 deadlock(s)                          | postgres
+ SET_MARK_GROUP   | BEGIN                        | myGroup1                                                                       | START_%                                                 | postgres
+ SET_MARK_GROUP   | END                          | myGroup1                                                                       | START_%                                                 | postgres
+ START_GROUP      | END                          | myGroup1                                                                       | 7 tables/sequences processed                            | postgres
+ STOP_GROUP       | BEGIN                        | myGroup1                                                                       |                                                         | postgres
+ LOCK_GROUP       | BEGIN                        | myGroup1                                                                       |                                                         | postgres
+ LOCK_GROUP       | END                          | myGroup1                                                                       | 5 tables locked, 0 deadlock(s)                          | postgres
+ SET_MARK_GROUP   | BEGIN                        | myGroup1                                                                       | STOP_%                                                  | postgres
+ SET_MARK_GROUP   | END                          | myGroup1                                                                       | STOP_%                                                  | postgres
+ STOP_GROUP       | END                          | myGroup1                                                                       | 7 tables/sequences processed                            | postgres
+ DROP_GROUP       | BEGIN                        | myGroup1                                                                       |                                                         | postgres
+ DROP_GROUP       | LOG_SCHEMA DROPPED           | emaj_myschema1                                                                 |                                                         | postgres
+ DROP_GROUP       | END                          | myGroup1                                                                       | 7 tables/sequences processed                            | postgres
+ DROP_GROUP       | BEGIN                        | myGroup2                                                                       |                                                         | postgres
+ DROP_GROUP       | LOG_SCHEMA DROPPED           | emaj_myschema2                                                                 |                                                         | postgres
+ DROP_GROUP       | END                          | myGroup2                                                                       | 8 tables/sequences processed                            | postgres
+ DROP_GROUP       | BEGIN                        | emptyGroup                                                                     |                                                         | postgres
+ DROP_GROUP       | END                          | emptyGroup                                                                     | 0 tables/sequences processed                            | postgres
+ DROP_GROUP       | BEGIN                        | myGroup5                                                                       |                                                         | postgres
+ DROP_GROUP       | LOG_SCHEMA DROPPED           | emaj_myschema5                                                                 |                                                         | postgres
+ DROP_GROUP       | END                          | myGroup5                                                                       | 2 tables/sequences processed                            | postgres
+ DROP_GROUP       | BEGIN                        | myGroup6                                                                       |                                                         | postgres
+ DROP_GROUP       | LOG_SCHEMA DROPPED           | emaj_myschema6                                                                 |                                                         | postgres
+ DROP_GROUP       | END                          | myGroup6                                                                       | 4 tables/sequences processed                            | postgres
+ CREATE_GROUP     | BEGIN                        | myGroup1                                                                       | audit_only                                              | postgres
+ CREATE_GROUP     | LOG_SCHEMA CREATED           | emaj_myschema1                                                                 |                                                         | postgres
+ CREATE_GROUP     | END                          | myGroup1                                                                       | 7 tables/sequences processed                            | postgres
+ START_GROUP      | BEGIN                        | myGroup1                                                                       | With log reset                                          | postgres
+ LOCK_GROUP       | BEGIN                        | myGroup1                                                                       |                                                         | postgres
+ LOCK_GROUP       | END                          | myGroup1                                                                       | 5 tables locked, 0 deadlock(s)                          | postgres
+ SET_MARK_GROUP   | BEGIN                        | myGroup1                                                                       | START_%                                                 | postgres
+ SET_MARK_GROUP   | END                          | myGroup1                                                                       | START_%                                                 | postgres
+ START_GROUP      | END                          | myGroup1                                                                       | 7 tables/sequences processed                            | postgres
+ FORCE_DROP_GROUP | BEGIN                        | myGroup1                                                                       |                                                         | postgres
+ FORCE_DROP_GROUP | LOG_SCHEMA DROPPED           | emaj_myschema1                                                                 |                                                         | postgres
+ FORCE_DROP_GROUP | END                          | myGroup1                                                                       | 7 tables/sequences processed                            | postgres
+ CREATE_GROUP     | BEGIN                        | myGroup2                                                                       | rollbackable                                            | postgres
+ CREATE_GROUP     | LOG_SCHEMA CREATED           | emaj_myschema2                                                                 |                                                         | postgres
+ CREATE_GROUP     | END                          | myGroup2                                                                       | 8 tables/sequences processed                            | postgres
+ FORCE_DROP_GROUP | BEGIN                        | myGroup2                                                                       |                                                         | postgres
+ FORCE_DROP_GROUP | LOG_SCHEMA DROPPED           | emaj_myschema2                                                                 |                                                         | postgres
+ FORCE_DROP_GROUP | END                          | myGroup2                                                                       | 8 tables/sequences processed                            | postgres
 (229 rows)
 
 select time_id, time_last_emaj_gid, time_event from emaj.emaj_time_stamp order by time_id;
@@ -2073,19 +2100,19 @@ select time_id, time_last_emaj_gid, time_event from emaj.emaj_time_stamp order b
       38 |                  0 | I
       39 |                  0 | I
       40 |                  0 | I
+      41 |                  0 | I
       42 |                  0 | I
-      43 |                  0 | I
+      43 |                  0 | M
       44 |                  0 | M
-      45 |                  0 | M
+      46 |                  0 | D
       47 |                  0 | D
       48 |                  0 | D
       49 |                  0 | D
       50 |                  0 | D
-      51 |                  0 | D
-      52 |                  0 | C
-      53 |                  0 | M
-      54 |                  0 | D
-      55 |                  0 | C
-      56 |                  0 | D
+      51 |                  0 | C
+      52 |                  0 | M
+      53 |                  0 | D
+      54 |                  0 | C
+      55 |                  0 | D
 (49 rows)
 

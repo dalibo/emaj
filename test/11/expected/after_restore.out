@@ -488,20 +488,20 @@ select time_id, time_last_emaj_gid, time_event from emaj.emaj_time_stamp order b
       38 |                  0 | I
       39 |                  0 | I
       40 |                  0 | I
+      41 |                  0 | I
       42 |                  0 | I
-      43 |                  0 | I
+      43 |                  0 | M
       44 |                  0 | M
-      45 |                  0 | M
+      46 |                  0 | D
       47 |                  0 | D
       48 |                  0 | D
       49 |                  0 | D
       50 |                  0 | D
-      51 |                  0 | D
-      52 |                  0 | C
-      53 |                  0 | M
-      54 |                  0 | D
-      55 |                  0 | C
-      56 |                  0 | D
+      51 |                  0 | C
+      52 |                  0 | M
+      53 |                  0 | D
+      54 |                  0 | C
+      55 |                  0 | D
     1000 |                  0 | C
     1001 |                  0 | C
     1002 |                  0 | C

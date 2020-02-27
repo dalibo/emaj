@@ -1961,9 +1961,10 @@ PL/pgSQL function emaj._alter_exec(bigint,text) line 102 at PERFORM
 SQL statement "SELECT emaj._alter_exec(v_timeId, v_callingFunction)"
 PL/pgSQL function emaj._alter_groups(text[],boolean,text,text,bigint) line 60 at PERFORM
 SQL statement "SELECT v_nbRel FROM emaj._alter_groups(v_groups, TRUE, 'IMPORT_%', 'IMPORT_GROUPS', v_timeId)"
-PL/pgSQL function emaj._import_groups_conf(json,text[],boolean) line 173 at PERFORM
-SQL statement "SELECT emaj._import_groups_conf(v_groupsJson, v_groups, v_allowGroupsUpdate)"
-PL/pgSQL function emaj.emaj_import_groups_configuration(text,text[],boolean) line 35 at SQL statement
+PL/pgSQL function emaj._import_groups_conf_exec(json,text[]) line 55 at PERFORM
+PL/pgSQL function emaj._import_groups_conf(json,text[],boolean,text) line 79 at RETURN
+SQL statement "SELECT emaj._import_groups_conf(v_json, v_groups, v_allowGroupsUpdate, v_location)"
+PL/pgSQL function emaj.emaj_import_groups_configuration(text,text[],boolean) line 32 at SQL statement
 NOTICE:  trigger "emaj_log_trg" for relation "myschema4.mytblc1" does not exist, skipping
 CONTEXT:  SQL statement "DROP TRIGGER IF EXISTS emaj_log_trg ON myschema4.mytblc1"
 PL/pgSQL function emaj._create_log_trigger_tbl(text,text,text,text) line 9 at EXECUTE
@@ -1980,9 +1981,10 @@ PL/pgSQL function emaj._alter_exec(bigint,text) line 102 at PERFORM
 SQL statement "SELECT emaj._alter_exec(v_timeId, v_callingFunction)"
 PL/pgSQL function emaj._alter_groups(text[],boolean,text,text,bigint) line 60 at PERFORM
 SQL statement "SELECT v_nbRel FROM emaj._alter_groups(v_groups, TRUE, 'IMPORT_%', 'IMPORT_GROUPS', v_timeId)"
-PL/pgSQL function emaj._import_groups_conf(json,text[],boolean) line 173 at PERFORM
-SQL statement "SELECT emaj._import_groups_conf(v_groupsJson, v_groups, v_allowGroupsUpdate)"
-PL/pgSQL function emaj.emaj_import_groups_configuration(text,text[],boolean) line 35 at SQL statement
+PL/pgSQL function emaj._import_groups_conf_exec(json,text[]) line 55 at PERFORM
+PL/pgSQL function emaj._import_groups_conf(json,text[],boolean,text) line 79 at RETURN
+SQL statement "SELECT emaj._import_groups_conf(v_json, v_groups, v_allowGroupsUpdate, v_location)"
+PL/pgSQL function emaj.emaj_import_groups_configuration(text,text[],boolean) line 32 at SQL statement
 NOTICE:  trigger "emaj_trunc_trg" for relation "myschema4.mytblc1" does not exist, skipping
 CONTEXT:  SQL statement "DROP TRIGGER IF EXISTS emaj_trunc_trg ON myschema4.mytblc1"
 PL/pgSQL function emaj._create_tbl(text,text,text,integer,text,text,bigint,boolean,boolean) line 123 at EXECUTE
@@ -1997,9 +1999,10 @@ PL/pgSQL function emaj._alter_exec(bigint,text) line 102 at PERFORM
 SQL statement "SELECT emaj._alter_exec(v_timeId, v_callingFunction)"
 PL/pgSQL function emaj._alter_groups(text[],boolean,text,text,bigint) line 60 at PERFORM
 SQL statement "SELECT v_nbRel FROM emaj._alter_groups(v_groups, TRUE, 'IMPORT_%', 'IMPORT_GROUPS', v_timeId)"
-PL/pgSQL function emaj._import_groups_conf(json,text[],boolean) line 173 at PERFORM
-SQL statement "SELECT emaj._import_groups_conf(v_groupsJson, v_groups, v_allowGroupsUpdate)"
-PL/pgSQL function emaj.emaj_import_groups_configuration(text,text[],boolean) line 35 at SQL statement
+PL/pgSQL function emaj._import_groups_conf_exec(json,text[]) line 55 at PERFORM
+PL/pgSQL function emaj._import_groups_conf(json,text[],boolean,text) line 79 at RETURN
+SQL statement "SELECT emaj._import_groups_conf(v_json, v_groups, v_allowGroupsUpdate, v_location)"
+PL/pgSQL function emaj.emaj_import_groups_configuration(text,text[],boolean) line 32 at SQL statement
  emaj_import_groups_configuration 
 ----------------------------------
                                 3
@@ -4105,7 +4108,7 @@ select hist_id, hist_function, hist_event, hist_object,
    11299 | CLEANUP_RLBK_STATE       |                              | Rollback id 10031                                                                | set to COMMITTED                                                                                                                       | postgres
    11300 | SET_MARK_GROUP           | END                          | grp_tmp                                                                          | Group restart                                                                                                                          | postgres
    11301 | START_GROUP              | END                          | grp_tmp                                                                          | 9 tables/sequences processed                                                                                                           | postgres
-   11302 | IMPORT_GROUPS            | BEGIN                        | <all>                                                                            | Input file: '/tmp/step19_groups_config.json'                                                                                           | postgres
+   11302 | IMPORT_GROUPS            | BEGIN                        | grp_tmp, grp_tmp_3, grp_tmp_4                                                    | Input file: '/tmp/step19_groups_config.json'                                                                                           | postgres
    11303 | LOCK_GROUPS              | BEGIN                        | grp_tmp,grp_tmp_3,grp_tmp_4                                                      |                                                                                                                                        | postgres
    11304 | LOCK_GROUPS              | END                          | grp_tmp,grp_tmp_3,grp_tmp_4                                                      | 7 tables locked, 0 deadlock(s)                                                                                                         | postgres
    11305 | SET_MARK_GROUPS          | BEGIN                        | grp_tmp,grp_tmp_3,grp_tmp_4                                                      | IMPORT_%                                                                                                                               | postgres

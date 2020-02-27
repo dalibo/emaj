@@ -567,6 +567,9 @@ select emaj.emaj_import_groups_configuration('{ "tables_groups": [ { "group": "m
 --   bad type for existing groups
 select emaj.emaj_import_groups_configuration('{ "tables_groups": [ { "group": "myGroup1", "is_rollbackable": false }, { "group": "myGroup2", "is_rollbackable": false } ] }'::json, null, true);
 
+--   unknown schema and table
+select * from emaj.emaj_import_groups_configuration('{ "tables_groups": [ { "group": "grp1", "tables": [ { "schema": "s1", "table": "t1" }] } ]}'::json);
+
 --   ok
 -- a new group with a comment, then changed and finaly deleted
 select emaj.emaj_import_groups_configuration('{ "tables_groups": [ 
@@ -626,12 +629,13 @@ select emaj.emaj_import_groups_configuration('/tmp/modified_groups_config_2.json
 \! sed -n -e '129,$p' /tmp/modified_groups_config_2.json >>/tmp/modified_groups_config_3.json
 select emaj.emaj_import_groups_configuration('/tmp/modified_groups_config_3.json', array['myGroup4'], true);
 
--- register an unknown trigger
-\! sed -e 's/"mytbl2trg1"/"unknowntrigger"/' /tmp/modified_groups_config_1.json >/tmp/modified_groups_config_2.json
+-- register an unknown trigger and an emaj trigger
+\! sed -e 's/"mytbl2trg1"/"unknowntrigger"/' -e 's/"mytbl2trg2"/"emaj_trunc_trg"/' /tmp/modified_groups_config_1.json >/tmp/modified_groups_config_2.json
 select emaj.emaj_import_groups_configuration('/tmp/modified_groups_config_2.json', null, true);
 
--- register an emaj trigger
-\! sed -e 's/"mytbl2trg1"/"emaj_trunc_trg"/' /tmp/modified_groups_config_1.json >/tmp/modified_groups_config_3.json
+-- suppress 1 trigger
+\! sed -n -e '1,29p' /tmp/modified_groups_config_1.json >/tmp/modified_groups_config_3.json
+\! sed -n -e '33,$p' /tmp/modified_groups_config_1.json >>/tmp/modified_groups_config_3.json
 select emaj.emaj_import_groups_configuration('/tmp/modified_groups_config_3.json', null, true);
 select * from emaj.emaj_ignored_app_trigger order by 1,2,3;
 
