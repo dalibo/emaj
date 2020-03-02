@@ -32,7 +32,8 @@ E-Maj - Change log
     range prior the structure change produced incorrect statements.
   * It was not possible to generate a sql script for a subset of tables from
     a tables group having some other tables without pkey.
-
+  * Let the emaj_uninstall.sql script work, even if a log schema has been
+    inadvertently dropped.
 
 3.2.0 (2019-Oct-15)
 ------

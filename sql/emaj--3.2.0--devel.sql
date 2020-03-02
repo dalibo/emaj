@@ -788,6 +788,55 @@ $_check_conf_groups$
   END;
 $_check_conf_groups$;
 
+CREATE OR REPLACE FUNCTION emaj._drop_log_schemas(v_function TEXT, v_isForced BOOLEAN)
+RETURNS VOID LANGUAGE plpgsql
+SECURITY DEFINER SET search_path = pg_catalog, pg_temp AS
+$_drop_log_schemas$
+-- The function looks for log schemas to drop. Drop them if any.
+-- Input: calling function to record into the emaj_hist table,
+--        boolean telling whether the schema to drop may contain residual objects
+-- The function is created as SECURITY DEFINER so that log schemas can be dropped in any case.
+  DECLARE
+    r_schema                 RECORD;
+  BEGIN
+-- For each log schema to drop,
+    FOR r_schema IN
+        SELECT sch_name AS log_schema FROM emaj.emaj_schema                           -- the existing schemas
+          WHERE sch_name <> 'emaj'
+          EXCEPT
+        SELECT DISTINCT rel_log_schema FROM emaj.emaj_relation                        -- the currently needed schemas (after tables drop)
+          WHERE rel_kind = 'r' AND rel_log_schema <> 'emaj'
+        ORDER BY 1
+    LOOP
+      IF v_isForced THEN
+-- drop cascade when called by emaj_force_xxx_group()
+        EXECUTE format('DROP SCHEMA IF EXISTS %I CASCADE',
+                       r_schema.log_schema);
+      ELSE
+-- otherwise, drop restrict with a trap on the potential error
+        BEGIN
+          EXECUTE format('DROP SCHEMA %I',
+                         r_schema.log_schema);
+          EXCEPTION
+-- trap the 3F000 exception to process case when the schema does not exist anymore
+            WHEN INVALID_SCHEMA_NAME THEN                   -- SQLSTATE '3F000'
+              RAISE EXCEPTION '_drop_log_schemas: Internal error (the schema "%" does not exist).',r_schema.log_schema;
+-- trap the 2BP01 exception to generate a more understandable error message
+            WHEN DEPENDENT_OBJECTS_STILL_EXIST THEN         -- SQLSTATE '2BP01'
+              RAISE EXCEPTION '_drop_log_schemas: Cannot drop the schema "%". It probably owns unattended objects.'
+                              ' Use the emaj_verify_all() function to get details.', r_schema.log_schema;
+        END;
+      END IF;
+-- remove the schema from the emaj_schema table
+      DELETE FROM emaj.emaj_schema WHERE sch_name = r_schema.log_schema;
+-- record the schema drop in emaj_hist table
+      INSERT INTO emaj.emaj_hist (hist_function, hist_event, hist_object)
+        VALUES (v_function,'LOG_SCHEMA DROPPED',quote_ident(r_schema.log_schema));
+    END LOOP;
+    RETURN;
+  END;
+$_drop_log_schemas$;
+
 CREATE OR REPLACE FUNCTION emaj._assign_tables(v_schema TEXT, v_tables TEXT[], v_group TEXT, v_properties JSONB, v_mark TEXT,
                                                v_multiTable BOOLEAN, v_arrayFromRegex BOOLEAN)
 RETURNS INTEGER LANGUAGE plpgsql

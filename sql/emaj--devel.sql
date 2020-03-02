@@ -1699,14 +1699,9 @@ $_drop_log_schemas$
           WHERE rel_kind = 'r' AND rel_log_schema <> 'emaj'
         ORDER BY 1
     LOOP
--- check that the schema really exists
-      PERFORM 0 FROM pg_catalog.pg_namespace WHERE nspname = r_schema.log_schema;
-      IF NOT FOUND THEN
-        RAISE EXCEPTION '_drop_log_schemas: Internal error (the schema "%" does not exist).',r_schema.log_schema;
-      END IF;
       IF v_isForced THEN
 -- drop cascade when called by emaj_force_xxx_group()
-        EXECUTE format('DROP SCHEMA %I CASCADE',
+        EXECUTE format('DROP SCHEMA IF EXISTS %I CASCADE',
                        r_schema.log_schema);
       ELSE
 -- otherwise, drop restrict with a trap on the potential error
@@ -1714,6 +1709,9 @@ $_drop_log_schemas$
           EXECUTE format('DROP SCHEMA %I',
                          r_schema.log_schema);
           EXCEPTION
+-- trap the 3F000 exception to process case when the schema does not exist anymore
+            WHEN INVALID_SCHEMA_NAME THEN                   -- SQLSTATE '3F000'
+              RAISE EXCEPTION '_drop_log_schemas: Internal error (the schema "%" does not exist).',r_schema.log_schema;
 -- trap the 2BP01 exception to generate a more understandable error message
             WHEN DEPENDENT_OBJECTS_STILL_EXIST THEN         -- SQLSTATE '2BP01'
               RAISE EXCEPTION '_drop_log_schemas: Cannot drop the schema "%". It probably owns unattended objects.'

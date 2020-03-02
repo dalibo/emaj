@@ -1581,7 +1581,7 @@ begin;
   create table emaj_myschema1.dummy_log (col1 int);
   select emaj.emaj_drop_group('myGroup1');
 ERROR:  _drop_log_schemas: Cannot drop the schema "emaj_myschema1". It probably owns unattended objects. Use the emaj_verify_all() function to get details.
-CONTEXT:  PL/pgSQL function emaj._drop_log_schemas(text,boolean) line 35 at RAISE
+CONTEXT:  PL/pgSQL function emaj._drop_log_schemas(text,boolean) line 33 at RAISE
 SQL statement "SELECT emaj._drop_log_schemas(CASE WHEN v_isForced THEN 'FORCE_DROP_GROUP' ELSE 'DROP_GROUP' END, v_isForced)"
 PL/pgSQL function emaj._drop_group(text,boolean) line 27 at PERFORM
 SQL statement "SELECT emaj._drop_group(v_groupName, FALSE)"

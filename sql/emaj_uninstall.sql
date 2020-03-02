@@ -58,9 +58,9 @@ $emaj_uninstall$
     v_nbObject = 0;
     FOR r_object IN 
       SELECT msg FROM emaj._verify_all_schemas() msg 
-        WHERE msg NOT LIKE 'emaj_uninstall: The E-Maj schema % does not exist any more.'
+        WHERE msg NOT LIKE 'Error: The E-Maj schema % does not exist any more.'
       LOOP
--- a secondary schema contains objects that do not belong to E-Maj
+-- an E-Maj schema contains objects that do not belong to the extension
       RAISE WARNING '%',r_object.msg;
       v_nbObject = v_nbObject + 1;
     END LOOP;
