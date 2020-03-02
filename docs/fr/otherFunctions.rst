@@ -92,6 +92,8 @@ Le fichier doit contenir une structure JSON ayant un attribut nommé *"parameter
      }
    ]}
 
+Si un paramètre n’a pas d’attribut *"value"* ou si cet attribut est valorisé à *NULL*, le paramètre n’est pas inséré dans la table *emaj_param*, et est supprimé s’il existait déjà dans la table. En conséquence, la valeur par défaut du paramètre sera utilisée par l’extension *emaj*.
+
 La fonction peut directement charger un fichier généré par la fonction *emaj_export_parameters_configuration()*.
 
 S’il est présent, le paramètre de clé *"emaj_version"* n’est pas traité.

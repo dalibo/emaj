@@ -146,7 +146,7 @@ select funcname, calls from pg_stat_user_functions
  _import_groups_conf                       |    10
  _import_groups_conf_exec                  |    10
  _import_groups_conf_prepare               |    15
- _import_param_conf                        |     5
+ _import_param_conf                        |     7
  _lock_groups                              |   294
  _log_stat_groups                          |    33
  _log_truncate_fnct                        |     2
@@ -217,7 +217,7 @@ select funcname, calls from pg_stat_user_functions
  emaj_ignore_app_trigger                   |    15
  emaj_import_groups_configuration          |     3
  emaj_import_groups_configuration          |     7
- emaj_import_parameters_configuration      |     2
+ emaj_import_parameters_configuration      |     4
  emaj_import_parameters_configuration      |     3
  emaj_log_stat_group                       |    23
  emaj_log_stat_groups                      |     7
@@ -267,7 +267,7 @@ select funcname, calls from pg_stat_user_functions
 select sum(calls) from pg_stat_user_functions where funcname like E'emaj\\_%';
  sum  
 ------
- 1009
+ 1011
 (1 row)
 
 -----------------------------

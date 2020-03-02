@@ -593,9 +593,20 @@ select emaj.emaj_export_parameters_configuration('/tmp/orig_param_config');
 
 -- direct import
 --   error
+--     no "parameters" array
 select emaj.emaj_import_parameters_configuration('{ "dummy_json": null }'::json);
+--     unknown attributes
+select emaj.emaj_import_parameters_configuration('{ "parameters": [ { "key": "emaj_version", "unknown_attribute_1": null, "unknown_attribute_2": null} ] }'::json);
+--     missing or null "key" attributes
+select emaj.emaj_import_parameters_configuration('{ "parameters": [ { "value": "no_key"} ] }'::json);
+select emaj.emaj_import_parameters_configuration('{ "parameters": [ { "key": null} ] }'::json);
+
 --   ok
 select emaj.emaj_import_parameters_configuration('{ "parameters": [ { "key": "history_retention", "value": "1 day"} ] }'::json);
+--     "null" "value" attribute
+select emaj.emaj_import_parameters_configuration('{ "parameters": [ { "key": "history_retention", "value": null} ] }'::json);
+--     missing "value" attribute
+select emaj.emaj_import_parameters_configuration('{ "parameters": [ { "key": "history_retention"} ] }'::json);
 select json_array_length(emaj.emaj_export_parameters_configuration()->'parameters');
 
 -- import from file

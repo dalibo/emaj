@@ -1509,8 +1509,23 @@ select emaj.emaj_export_parameters_configuration('/tmp/orig_param_config');
 14 /tmp/orig_param_config
 -- direct import
 --   error
+--     no "parameters" array
 select emaj.emaj_import_parameters_configuration('{ "dummy_json": null }'::json);
 ERROR:  _import_param_conf: The "parameters" JSON sub-structure has not been found in the supplied structure
+CONTEXT:  SQL statement "SELECT emaj._import_param_conf(v_paramsJson, v_deleteCurrentConf)"
+PL/pgSQL function emaj.emaj_import_parameters_configuration(json,boolean) line 17 at SQL statement
+--     unknown attributes
+select emaj.emaj_import_parameters_configuration('{ "parameters": [ { "key": "emaj_version", "unknown_attribute_1": null, "unknown_attribute_2": null} ] }'::json);
+ERROR:  _import_param_conf: attributes unknown_attribute_1, unknown_attribute_2 are not allowed.
+CONTEXT:  SQL statement "SELECT emaj._import_param_conf(v_paramsJson, v_deleteCurrentConf)"
+PL/pgSQL function emaj.emaj_import_parameters_configuration(json,boolean) line 17 at SQL statement
+--     missing or null "key" attributes
+select emaj.emaj_import_parameters_configuration('{ "parameters": [ { "value": "no_key"} ] }'::json);
+ERROR:  _import_param_conf: the #1 parameter has no "key" attribute or a "key" set to null.
+CONTEXT:  SQL statement "SELECT emaj._import_param_conf(v_paramsJson, v_deleteCurrentConf)"
+PL/pgSQL function emaj.emaj_import_parameters_configuration(json,boolean) line 17 at SQL statement
+select emaj.emaj_import_parameters_configuration('{ "parameters": [ { "key": null} ] }'::json);
+ERROR:  _import_param_conf: the #1 parameter has no "key" attribute or a "key" set to null.
 CONTEXT:  SQL statement "SELECT emaj._import_param_conf(v_paramsJson, v_deleteCurrentConf)"
 PL/pgSQL function emaj.emaj_import_parameters_configuration(json,boolean) line 17 at SQL statement
 --   ok
@@ -1520,10 +1535,24 @@ select emaj.emaj_import_parameters_configuration('{ "parameters": [ { "key": "hi
                                     1
 (1 row)
 
+--     "null" "value" attribute
+select emaj.emaj_import_parameters_configuration('{ "parameters": [ { "key": "history_retention", "value": null} ] }'::json);
+ emaj_import_parameters_configuration 
+--------------------------------------
+                                    1
+(1 row)
+
+--     missing "value" attribute
+select emaj.emaj_import_parameters_configuration('{ "parameters": [ { "key": "history_retention"} ] }'::json);
+ emaj_import_parameters_configuration 
+--------------------------------------
+                                    1
+(1 row)
+
 select json_array_length(emaj.emaj_export_parameters_configuration()->'parameters');
  json_array_length 
 -------------------
-                 3
+                 2
 (1 row)
 
 -- import from file
@@ -1663,19 +1692,23 @@ select hist_id, hist_function, hist_event, hist_object, regexp_replace(regexp_re
     5177 | GEN_SQL_GROUP     | END                | phil's group#3",             | 0 generated statements - script exported into /tmp/emaj_test/sql_scripts/myFile     | postgres
     5178 | GEN_SQL_GROUPS    | BEGIN              | myGroup1,myGroup2            | From mark Multi-1 to mark Multi-3 with tables/sequences filtering                   | postgres
     5179 | GEN_SQL_GROUPS    | END                | myGroup1,myGroup2            | 100 generated statements - script exported into /tmp/emaj_test/sql_scripts/myFile   | postgres
-    5194 | IMPORT_PARAMETERS | BEGIN              |                              |                                                                                     | postgres
-    5195 |                   | INSERTED PARAMETER | history_retention            | @ 1 day                                                                             | postgres
-    5196 | IMPORT_PARAMETERS | END                |                              | 1 parameters imported                                                               | postgres
-    5201 | IMPORT_PARAMETERS | BEGIN              |                              | Input file: '/tmp/orig_param_config'                                                | postgres
-    5202 |                   | DELETED PARAMETER  | dblink_user_password         |                                                                                     | postgres
-    5203 |                   | DELETED PARAMETER  | fixed_step_rollback_duration |                                                                                     | postgres
-    5204 |                   | DELETED PARAMETER  | history_retention            |                                                                                     | postgres
-    5205 |                   | INSERTED PARAMETER | dblink_user_password         | <masked data>                                                                       | postgres
-    5206 |                   | INSERTED PARAMETER | fixed_step_rollback_duration | @ 0.0025 secs                                                                       | postgres
-    5207 | IMPORT_PARAMETERS | END                |                              | 2 parameters imported                                                               | postgres
-    5208 | IMPORT_PARAMETERS | BEGIN              |                              | Input file: '/tmp/orig_param_config'                                                | postgres
-    5209 |                   | UPDATED PARAMETER  | dblink_user_password         | <masked data>                                                                       | postgres
-    5210 |                   | UPDATED PARAMETER  | fixed_step_rollback_duration | @ 0.0025 secs                                                                       | postgres
-    5211 | IMPORT_PARAMETERS | END                |                              | 2 parameters imported                                                               | postgres
-(107 rows)
+    5197 | IMPORT_PARAMETERS | BEGIN              |                              |                                                                                     | postgres
+    5198 |                   | INSERTED PARAMETER | history_retention            | @ 1 day                                                                             | postgres
+    5199 | IMPORT_PARAMETERS | END                |                              | 1 parameters imported                                                               | postgres
+    5200 | IMPORT_PARAMETERS | BEGIN              |                              |                                                                                     | postgres
+    5201 |                   | DELETED PARAMETER  | history_retention            |                                                                                     | postgres
+    5202 | IMPORT_PARAMETERS | END                |                              | 1 parameters imported                                                               | postgres
+    5203 | IMPORT_PARAMETERS | BEGIN              |                              |                                                                                     | postgres
+    5204 | IMPORT_PARAMETERS | END                |                              | 1 parameters imported                                                               | postgres
+    5209 | IMPORT_PARAMETERS | BEGIN              |                              | Input file: '/tmp/orig_param_config'                                                | postgres
+    5210 |                   | DELETED PARAMETER  | dblink_user_password         |                                                                                     | postgres
+    5211 |                   | DELETED PARAMETER  | fixed_step_rollback_duration |                                                                                     | postgres
+    5212 |                   | INSERTED PARAMETER | dblink_user_password         | <masked data>                                                                       | postgres
+    5213 |                   | INSERTED PARAMETER | fixed_step_rollback_duration | @ 0.0025 secs                                                                       | postgres
+    5214 | IMPORT_PARAMETERS | END                |                              | 2 parameters imported                                                               | postgres
+    5215 | IMPORT_PARAMETERS | BEGIN              |                              | Input file: '/tmp/orig_param_config'                                                | postgres
+    5216 |                   | UPDATED PARAMETER  | dblink_user_password         | <masked data>                                                                       | postgres
+    5217 |                   | UPDATED PARAMETER  | fixed_step_rollback_duration | @ 0.0025 secs                                                                       | postgres
+    5218 | IMPORT_PARAMETERS | END                |                              | 2 parameters imported                                                               | postgres
+(111 rows)
 
