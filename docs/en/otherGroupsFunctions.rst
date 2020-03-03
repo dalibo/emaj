@@ -260,4 +260,4 @@ Note that importing a tables group overrides the previous group’s configuratio
 
 In a variation of the function, the first input parameter directly contains the JSON description of the groups to load::
 
-   SELECT emaj_import_parameters_configuration('<JSON.structure>, <groups.names.array>, <alter_started_groups>);
+   SELECT emaj_import_groups_configuration('<JSON.structure>, <groups.names.array>, <alter_started_groups>);

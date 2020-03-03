@@ -259,4 +259,4 @@ Notons que l’importation d’un groupe de tables écrase l’éventuelle confi
 
 Dans une variante de la fonction, le premier paramètre en entrée contient directement la structure JSON des groupes de tables à charger ::
 
-   SELECT emaj_import_parameters_configuration('<structure.JSON>', <tableau.noms.groupes>, <modification.groupes.démarrés>);
+   SELECT emaj_import_groups_configuration('<structure.JSON>', <tableau.noms.groupes>, <modification.groupes.démarrés>);

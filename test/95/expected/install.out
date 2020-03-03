@@ -72,17 +72,6 @@ select hist_id, hist_function, hist_event, hist_object, hist_wording, hist_user 
 delete from emaj.emaj_hist;
 -- check table list
 \d emaj.*
-Composite type "emaj._check_groups_conf_type"
-     Column     |  Type   | Modifiers 
-----------------+---------+-----------
- chk_msg_type   | integer | 
- chk_severity   | integer | 
- chk_group      | text    | 
- chk_schema     | text    | 
- chk_tblseq     | text    | 
- chk_extra_data | text    | 
- chk_message    | text    | 
-
 Composite type "emaj._check_message_type"
      Column     |  Type   | Modifiers 
 ----------------+---------+-----------

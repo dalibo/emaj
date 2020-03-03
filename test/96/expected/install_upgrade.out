@@ -285,6 +285,8 @@ drop cascades to function _rlbk_seq(emaj_relation,bigint)
 drop cascades to function _log_stat_tbl(emaj_relation,bigint,bigint)
 drop cascades to function _gen_sql_tbl(emaj_relation,bigint,bigint)
 drop cascades to function _gen_sql_seq(emaj_relation,bigint,bigint,bigint)
+NOTICE:  drop cascades to function _check_conf_groups(text[])
+NOTICE:  function emaj._check_conf_groups(text[]) does not exist, skipping
 -----------------------------------------------------------
 -- check installation
 -----------------------------------------------------------
