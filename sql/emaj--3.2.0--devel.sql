@@ -321,6 +321,18 @@ SELECT pg_catalog.pg_extension_config_dump('emaj_relation','');
 -- emaj types                     --
 --                                --
 ------------------------------------
+CREATE TYPE emaj._check_message_type AS (
+  chk_msg_type                 INT,                        -- message number
+  chk_severity                 INT,                        -- severity level
+  chk_text_var_1               TEXT,                       -- textual variable #1
+  chk_text_var_2               TEXT,                       -- textual variable #2
+  chk_text_var_3               TEXT,                       -- textual variable #3
+  chk_text_var_4               TEXT,                       -- textual variable #4
+  chk_int_var_1                INT,                        -- integer variable #1
+  chk_message                  TEXT                        -- the english formatted error message
+  );
+COMMENT ON TYPE emaj._check_message_type IS
+$$Represents a generic warning or error message structure that can be translated by external clients.$$;
 
 ------------------------------------
 --                                --
@@ -787,6 +799,82 @@ $_check_conf_groups$
     RETURN;
   END;
 $_check_conf_groups$;
+
+CREATE OR REPLACE FUNCTION emaj._check_json_param_conf(v_paramsJson JSON)
+RETURNS SETOF emaj._check_message_type LANGUAGE plpgsql AS
+$_check_json_param_conf$
+-- This function verifies that the JSON structure that contains a parameter configuration is correct.
+-- Any detected issue is reported as a message row. The caller defines what to do with them.
+-- It is called by the _import_param_conf() function.
+-- The function is also directly called by Emaj_web.
+-- This function checks that:
+--   - the "parameters" attribute exists
+--   - "key" attribute are defined and are known parameters
+--   - no unknow attribute are listed
+--   - parameters are not described several times
+-- Input: the JSON structure to check
+-- Output: set of error messages
+  DECLARE
+    v_parameters             JSON;
+    v_paramNumber            INT;
+    v_key                    TEXT;
+    r_param                  RECORD;
+  BEGIN
+-- extract the "parameters" json path and check that the attribute exists
+    v_parameters = v_paramsJson #> '{"parameters"}';
+    IF v_parameters IS NULL THEN
+      RETURN QUERY
+        VALUES (1, 1, NULL::TEXT, NULL::TEXT, NULL::TEXT, NULL::TEXT, NULL::INT,
+                'The JSON structure does not contain any "parameters" array.');
+    ELSE
+-- check that all keywords of the "parameters" structure are valid
+      v_paramNumber = 0;
+      FOR r_param IN
+        SELECT param FROM json_array_elements(v_parameters) AS t(param)
+      LOOP
+        v_paramNumber = v_paramNumber + 1;
+-- check the "key" attribute exists in the json structure
+        v_key = r_param.param ->> 'key';
+        IF v_key IS NULL THEN
+          RETURN QUERY
+            VALUES (2, 1, NULL::TEXT, NULL::TEXT, NULL::TEXT, NULL::TEXT, v_paramNumber,
+                    format('The #%s parameter has no "key" attribute or a "key" set to null.',
+                           v_paramNumber::TEXT));
+        END IF;
+-- check that the structure only contains "key" and "value" attributes
+        RETURN QUERY
+          SELECT 3, 1, v_key, attr, NULL::TEXT, NULL::TEXT, NULL::INT,
+               format('For the parameter "%s", the attribute "%s" is unknown.',
+                      v_key, attr)
+            FROM (
+              SELECT attr FROM json_object_keys(r_param.param) AS x(attr)
+                WHERE attr NOT IN ('key', 'value')
+              ) AS t;
+-- check the key is valid.
+        IF v_key NOT IN ('emaj_version', 'dblink_user_password', 'history_retention', 'alter_log_table',
+                         'avg_row_rollback_duration', 'avg_row_delete_log_duration', 'avg_fkey_check_duration',
+                         'fixed_step_rollback_duration', 'fixed_table_rollback_duration', 'fixed_dblink_rollback_duration') THEN
+          RETURN QUERY
+            VALUES (4, 1, v_key, NULL::TEXT, NULL::TEXT, NULL::TEXT, NULL::INT,
+                 format('"%s" is not a known E-Maj parameter.',
+                        v_key));
+        END IF;
+      END LOOP;
+-- check that parameters are not configured more than once in the JSON structure
+      RETURN QUERY
+        SELECT 5, 1, "key", NULL::TEXT, NULL::TEXT, NULL::TEXT, NULL::INT,
+             format('The JSON structure references several times the parameter "%s".',
+                    "key")
+          FROM (
+            SELECT "key", count(*)
+              FROM json_to_recordset(v_parameters) AS x("key" TEXT)
+              GROUP BY "key" HAVING count(*) > 1
+            ) AS t;
+    END IF;
+--
+    RETURN;
+  END;
+$_check_json_param_conf$;
 
 CREATE OR REPLACE FUNCTION emaj._drop_log_schemas(v_function TEXT, v_isForced BOOLEAN)
 RETURNS VOID LANGUAGE plpgsql
@@ -4067,87 +4155,76 @@ $emaj_import_parameters_configuration$;
 COMMENT ON FUNCTION emaj.emaj_import_parameters_configuration(TEXT,BOOLEAN) IS
 $$Import E-Maj parameters from a JSON formatted file.$$;
 
-CREATE OR REPLACE FUNCTION emaj._import_param_conf(v_paramsJson JSON, v_deleteCurrentConf BOOLEAN)
+CREATE OR REPLACE FUNCTION emaj._import_param_conf(v_json JSON, v_deleteCurrentConf BOOLEAN)
 RETURNS INT LANGUAGE plpgsql AS
 $_import_param_conf$
 -- This function processes a JSON formatted structure representing the E-Maj parameters to load.
 -- This structure can have been generated by the emaj_export_parameters_configuration() functions and may have been adapted by the user.
--- If a parameter key is referenced several times, the last entry is the final value recorded into emaj_param.
 -- The "emaj_version" parameter key is always left unchanged because it is a constant linked to the extension itself.
 -- The expected JSON structure must contain an array like:
 -- { "parameters": [
 --      { "key": "...", "value": "..." },
 --      { ... }
 --    ] }
+-- If the "value" attribute is missing or null, the parameter is removed from the emaj_param table, and the parameter will be set at
+--   its default value
 -- Input: - the parameter configuration structure in JSON format
 --        - an optional boolean indicating whether the current parameters configuration must be deleted before loading the new parameters
 -- Output: the number of inserted or updated parameter keys
   DECLARE
     v_parameters             JSON;
-    v_errorList              TEXT;
     v_nbParam                INT;
     v_key                    TEXT;
     v_value                  TEXT;
+    r_msg                    RECORD;
     r_param                  RECORD;
   BEGIN
--- look for the "parameters" json path
-    v_parameters = v_paramsJson #> '{"parameters"}';
-    IF v_parameters IS NULL THEN
-      RAISE EXCEPTION '_import_param_conf: The "parameters" JSON sub-structure has not been found in the supplied structure';
-    ELSE
-      IF v_deleteCurrentConf THEN
+-- performs various checks on the parameters content described in the supplied JSON structure
+    FOR r_msg IN
+      SELECT chk_message FROM emaj._check_json_param_conf(v_json)
+        ORDER BY chk_msg_type, chk_text_var_1, chk_text_var_2, chk_int_var_1
+    LOOP
+      RAISE WARNING '_import_param_conf : %', r_msg.chk_message;
+    END LOOP;
+    IF FOUND THEN
+      RAISE EXCEPTION '_import_param_conf: One or several errors have been detected in the supplied JSON structure.';
+    END IF;
+-- ok
+    v_parameters = v_json #> '{"parameters"}';
 -- if requested, delete the existing parameters, except the 'emaj_version'
 --   (the trigger on emaj_param records the deletions into emaj_hist)
-        DELETE FROM emaj.emaj_param WHERE param_key <> 'emaj_version';
-      END IF;
+    IF v_deleteCurrentConf THEN
+      DELETE FROM emaj.emaj_param WHERE param_key <> 'emaj_version';
+    END IF;
 -- process each parameter
-      v_nbParam = 0;
-      FOR r_param IN
-          SELECT param FROM json_array_elements(v_parameters) AS t(param)
-        LOOP
+    v_nbParam = 0;
+    FOR r_param IN
+        SELECT param FROM json_array_elements(v_parameters) AS t(param)
+      LOOP
 -- get each parameter from the list
-          v_key = r_param.param ->> 'key';
-          v_value = r_param.param ->> 'value';
-          v_nbParam = v_nbParam + 1;
--- check the "key" attribute exists in the json structure
-          IF v_key IS NULL THEN
-            RAISE EXCEPTION '_import_param_conf: the #% parameter has no "key" attribute or a "key" set to null.', v_nbParam;
-          END IF;
--- check that the structure only contains "key" and "value" attributes
-          SELECT string_agg(key, ', ') INTO v_errorList FROM (
-            SELECT key FROM json_object_keys(r_param.param) AS x(key)
-              WHERE key NOT IN ('key', 'value')
-            ) AS t;
-          IF v_errorList IS NOT NULL THEN
-            RAISE EXCEPTION '_import_param_conf: attributes % are not allowed.', v_errorList;
-          END IF;
--- check the key is valid.
-          IF v_key NOT IN ('emaj_version', 'dblink_user_password', 'history_retention', 'alter_log_table',
-                           'avg_row_rollback_duration', 'avg_row_delete_log_duration', 'avg_fkey_check_duration',
-                           'fixed_step_rollback_duration', 'fixed_table_rollback_duration', 'fixed_dblink_rollback_duration') THEN
-            RAISE EXCEPTION '_import_param_conf: "%" is not a known E-Maj parameter.', v_key;
-          END IF;
+        v_key = r_param.param ->> 'key';
+        v_value = r_param.param ->> 'value';
 -- exclude the 'emaj_version' entry that cannot be changed
-          IF v_key <> 'emaj_version' THEN
+        IF v_key <> 'emaj_version' THEN
+          v_nbParam = v_nbParam + 1;
 -- if there is no value to set, deleted the parameter, if it exists
-            IF v_value IS NULL THEN
-              DELETE FROM emaj.emaj_param WHERE param_key = v_key;
-            ELSE
+          IF v_value IS NULL THEN
+            DELETE FROM emaj.emaj_param WHERE param_key = v_key;
+          ELSE
 -- insert or update the parameter in the emaj_param table, selecting the right parameter value column type depending on the key
-              IF v_key IN ('dblink_user_password', 'alter_log_table') THEN
-                INSERT INTO emaj.emaj_param (param_key, param_value_text) VALUES (v_key, v_value)
-                  ON CONFLICT (param_key) DO
-                    UPDATE SET param_value_text = v_value WHERE EXCLUDED.param_key = v_key;
-              ELSIF v_key IN ('history_retention', 'avg_row_rollback_duration', 'avg_row_delete_log_duration', 'avg_fkey_check_duration',
-                             'fixed_step_rollback_duration', 'fixed_table_rollback_duration', 'fixed_dblink_rollback_duration') THEN
-                INSERT INTO emaj.emaj_param (param_key, param_value_interval) VALUES (v_key, v_value::INTERVAL)
-                  ON CONFLICT (param_key) DO
-                    UPDATE SET param_value_interval = v_value::INTERVAL WHERE EXCLUDED.param_key = v_key;
-              END IF;
+            IF v_key IN ('dblink_user_password', 'alter_log_table') THEN
+              INSERT INTO emaj.emaj_param (param_key, param_value_text) VALUES (v_key, v_value)
+                ON CONFLICT (param_key) DO
+                  UPDATE SET param_value_text = v_value WHERE EXCLUDED.param_key = v_key;
+            ELSIF v_key IN ('history_retention', 'avg_row_rollback_duration', 'avg_row_delete_log_duration', 'avg_fkey_check_duration',
+                           'fixed_step_rollback_duration', 'fixed_table_rollback_duration', 'fixed_dblink_rollback_duration') THEN
+              INSERT INTO emaj.emaj_param (param_key, param_value_interval) VALUES (v_key, v_value::INTERVAL)
+                ON CONFLICT (param_key) DO
+                  UPDATE SET param_value_interval = v_value::INTERVAL WHERE EXCLUDED.param_key = v_key;
             END IF;
           END IF;
+        END IF;
       END LOOP;
-    END IF;
     RETURN v_nbParam;
   END;
 $_import_param_conf$;

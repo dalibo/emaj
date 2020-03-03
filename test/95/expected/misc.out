@@ -1511,21 +1511,52 @@ select emaj.emaj_export_parameters_configuration('/tmp/orig_param_config');
 --   error
 --     no "parameters" array
 select emaj.emaj_import_parameters_configuration('{ "dummy_json": null }'::json);
-ERROR:  _import_param_conf: The "parameters" JSON sub-structure has not been found in the supplied structure
+WARNING:  _import_param_conf : The JSON structure does not contain any "parameters" array.
+CONTEXT:  SQL statement "SELECT emaj._import_param_conf(v_paramsJson, v_deleteCurrentConf)"
+PL/pgSQL function emaj.emaj_import_parameters_configuration(json,boolean) line 17 at SQL statement
+ERROR:  _import_param_conf: One or several errors have been detected in the supplied JSON structure.
 CONTEXT:  SQL statement "SELECT emaj._import_param_conf(v_paramsJson, v_deleteCurrentConf)"
 PL/pgSQL function emaj.emaj_import_parameters_configuration(json,boolean) line 17 at SQL statement
 --     unknown attributes
 select emaj.emaj_import_parameters_configuration('{ "parameters": [ { "key": "emaj_version", "unknown_attribute_1": null, "unknown_attribute_2": null} ] }'::json);
-ERROR:  _import_param_conf: attributes unknown_attribute_1, unknown_attribute_2 are not allowed.
+WARNING:  _import_param_conf : For the parameter "emaj_version", the attribute "unknown_attribute_1" is unknown.
+CONTEXT:  SQL statement "SELECT emaj._import_param_conf(v_paramsJson, v_deleteCurrentConf)"
+PL/pgSQL function emaj.emaj_import_parameters_configuration(json,boolean) line 17 at SQL statement
+WARNING:  _import_param_conf : For the parameter "emaj_version", the attribute "unknown_attribute_2" is unknown.
+CONTEXT:  SQL statement "SELECT emaj._import_param_conf(v_paramsJson, v_deleteCurrentConf)"
+PL/pgSQL function emaj.emaj_import_parameters_configuration(json,boolean) line 17 at SQL statement
+ERROR:  _import_param_conf: One or several errors have been detected in the supplied JSON structure.
 CONTEXT:  SQL statement "SELECT emaj._import_param_conf(v_paramsJson, v_deleteCurrentConf)"
 PL/pgSQL function emaj.emaj_import_parameters_configuration(json,boolean) line 17 at SQL statement
 --     missing or null "key" attributes
 select emaj.emaj_import_parameters_configuration('{ "parameters": [ { "value": "no_key"} ] }'::json);
-ERROR:  _import_param_conf: the #1 parameter has no "key" attribute or a "key" set to null.
+WARNING:  _import_param_conf : The #1 parameter has no "key" attribute or a "key" set to null.
+CONTEXT:  SQL statement "SELECT emaj._import_param_conf(v_paramsJson, v_deleteCurrentConf)"
+PL/pgSQL function emaj.emaj_import_parameters_configuration(json,boolean) line 17 at SQL statement
+ERROR:  _import_param_conf: One or several errors have been detected in the supplied JSON structure.
 CONTEXT:  SQL statement "SELECT emaj._import_param_conf(v_paramsJson, v_deleteCurrentConf)"
 PL/pgSQL function emaj.emaj_import_parameters_configuration(json,boolean) line 17 at SQL statement
 select emaj.emaj_import_parameters_configuration('{ "parameters": [ { "key": null} ] }'::json);
-ERROR:  _import_param_conf: the #1 parameter has no "key" attribute or a "key" set to null.
+WARNING:  _import_param_conf : The #1 parameter has no "key" attribute or a "key" set to null.
+CONTEXT:  SQL statement "SELECT emaj._import_param_conf(v_paramsJson, v_deleteCurrentConf)"
+PL/pgSQL function emaj.emaj_import_parameters_configuration(json,boolean) line 17 at SQL statement
+ERROR:  _import_param_conf: One or several errors have been detected in the supplied JSON structure.
+CONTEXT:  SQL statement "SELECT emaj._import_param_conf(v_paramsJson, v_deleteCurrentConf)"
+PL/pgSQL function emaj.emaj_import_parameters_configuration(json,boolean) line 17 at SQL statement
+--     invalid key
+select emaj.emaj_import_parameters_configuration('{ "parameters": [ { "key": "unknown_param" } ] }'::json);
+WARNING:  _import_param_conf : "unknown_param" is not a known E-Maj parameter.
+CONTEXT:  SQL statement "SELECT emaj._import_param_conf(v_paramsJson, v_deleteCurrentConf)"
+PL/pgSQL function emaj.emaj_import_parameters_configuration(json,boolean) line 17 at SQL statement
+ERROR:  _import_param_conf: One or several errors have been detected in the supplied JSON structure.
+CONTEXT:  SQL statement "SELECT emaj._import_param_conf(v_paramsJson, v_deleteCurrentConf)"
+PL/pgSQL function emaj.emaj_import_parameters_configuration(json,boolean) line 17 at SQL statement
+--     duplicate key
+select emaj.emaj_import_parameters_configuration('{ "parameters": [ { "key": "history_retention" }, { "key": "history_retention" } ] }'::json);
+WARNING:  _import_param_conf : The JSON structure references several times the parameter "history_retention".
+CONTEXT:  SQL statement "SELECT emaj._import_param_conf(v_paramsJson, v_deleteCurrentConf)"
+PL/pgSQL function emaj.emaj_import_parameters_configuration(json,boolean) line 17 at SQL statement
+ERROR:  _import_param_conf: One or several errors have been detected in the supplied JSON structure.
 CONTEXT:  SQL statement "SELECT emaj._import_param_conf(v_paramsJson, v_deleteCurrentConf)"
 PL/pgSQL function emaj.emaj_import_parameters_configuration(json,boolean) line 17 at SQL statement
 --   ok
@@ -1564,12 +1595,18 @@ select emaj.emaj_import_parameters_configuration('/tmp/bad_param_config');
 ERROR:  emaj_import_parameters_configuration: The file content is not a valid JSON content.
 \! echo '{ "dummy_json": null }' >/tmp/bad_param_config
 select emaj.emaj_import_parameters_configuration('/tmp/bad_param_config');
-ERROR:  _import_param_conf: The "parameters" JSON sub-structure has not been found in the supplied structure
+WARNING:  _import_param_conf : The JSON structure does not contain any "parameters" array.
+CONTEXT:  SQL statement "SELECT emaj._import_param_conf(v_paramsJson, v_deleteCurrentConf)"
+PL/pgSQL function emaj.emaj_import_parameters_configuration(text,boolean) line 35 at SQL statement
+ERROR:  _import_param_conf: One or several errors have been detected in the supplied JSON structure.
 CONTEXT:  SQL statement "SELECT emaj._import_param_conf(v_paramsJson, v_deleteCurrentConf)"
 PL/pgSQL function emaj.emaj_import_parameters_configuration(text,boolean) line 35 at SQL statement
 \! echo '{ "parameters": [ { "key": "bad_key", "value": null} ] }' >/tmp/bad_param_config
 select emaj.emaj_import_parameters_configuration('/tmp/bad_param_config');
-ERROR:  _import_param_conf: "bad_key" is not a known E-Maj parameter.
+WARNING:  _import_param_conf : "bad_key" is not a known E-Maj parameter.
+CONTEXT:  SQL statement "SELECT emaj._import_param_conf(v_paramsJson, v_deleteCurrentConf)"
+PL/pgSQL function emaj.emaj_import_parameters_configuration(text,boolean) line 35 at SQL statement
+ERROR:  _import_param_conf: One or several errors have been detected in the supplied JSON structure.
 CONTEXT:  SQL statement "SELECT emaj._import_param_conf(v_paramsJson, v_deleteCurrentConf)"
 PL/pgSQL function emaj.emaj_import_parameters_configuration(text,boolean) line 35 at SQL statement
 --   ok
@@ -1692,23 +1729,23 @@ select hist_id, hist_function, hist_event, hist_object, regexp_replace(regexp_re
     5177 | GEN_SQL_GROUP     | END                | phil's group#3",             | 0 generated statements - script exported into /tmp/emaj_test/sql_scripts/myFile     | postgres
     5178 | GEN_SQL_GROUPS    | BEGIN              | myGroup1,myGroup2            | From mark Multi-1 to mark Multi-3 with tables/sequences filtering                   | postgres
     5179 | GEN_SQL_GROUPS    | END                | myGroup1,myGroup2            | 100 generated statements - script exported into /tmp/emaj_test/sql_scripts/myFile   | postgres
-    5197 | IMPORT_PARAMETERS | BEGIN              |                              |                                                                                     | postgres
-    5198 |                   | INSERTED PARAMETER | history_retention            | @ 1 day                                                                             | postgres
-    5199 | IMPORT_PARAMETERS | END                |                              | 1 parameters imported                                                               | postgres
-    5200 | IMPORT_PARAMETERS | BEGIN              |                              |                                                                                     | postgres
-    5201 |                   | DELETED PARAMETER  | history_retention            |                                                                                     | postgres
-    5202 | IMPORT_PARAMETERS | END                |                              | 1 parameters imported                                                               | postgres
-    5203 | IMPORT_PARAMETERS | BEGIN              |                              |                                                                                     | postgres
+    5199 | IMPORT_PARAMETERS | BEGIN              |                              |                                                                                     | postgres
+    5200 |                   | INSERTED PARAMETER | history_retention            | @ 1 day                                                                             | postgres
+    5201 | IMPORT_PARAMETERS | END                |                              | 1 parameters imported                                                               | postgres
+    5202 | IMPORT_PARAMETERS | BEGIN              |                              |                                                                                     | postgres
+    5203 |                   | DELETED PARAMETER  | history_retention            |                                                                                     | postgres
     5204 | IMPORT_PARAMETERS | END                |                              | 1 parameters imported                                                               | postgres
-    5209 | IMPORT_PARAMETERS | BEGIN              |                              | Input file: '/tmp/orig_param_config'                                                | postgres
-    5210 |                   | DELETED PARAMETER  | dblink_user_password         |                                                                                     | postgres
-    5211 |                   | DELETED PARAMETER  | fixed_step_rollback_duration |                                                                                     | postgres
-    5212 |                   | INSERTED PARAMETER | dblink_user_password         | <masked data>                                                                       | postgres
-    5213 |                   | INSERTED PARAMETER | fixed_step_rollback_duration | @ 0.0025 secs                                                                       | postgres
-    5214 | IMPORT_PARAMETERS | END                |                              | 2 parameters imported                                                               | postgres
-    5215 | IMPORT_PARAMETERS | BEGIN              |                              | Input file: '/tmp/orig_param_config'                                                | postgres
-    5216 |                   | UPDATED PARAMETER  | dblink_user_password         | <masked data>                                                                       | postgres
-    5217 |                   | UPDATED PARAMETER  | fixed_step_rollback_duration | @ 0.0025 secs                                                                       | postgres
-    5218 | IMPORT_PARAMETERS | END                |                              | 2 parameters imported                                                               | postgres
+    5205 | IMPORT_PARAMETERS | BEGIN              |                              |                                                                                     | postgres
+    5206 | IMPORT_PARAMETERS | END                |                              | 1 parameters imported                                                               | postgres
+    5211 | IMPORT_PARAMETERS | BEGIN              |                              | Input file: '/tmp/orig_param_config'                                                | postgres
+    5212 |                   | DELETED PARAMETER  | dblink_user_password         |                                                                                     | postgres
+    5213 |                   | DELETED PARAMETER  | fixed_step_rollback_duration |                                                                                     | postgres
+    5214 |                   | INSERTED PARAMETER | dblink_user_password         | <masked data>                                                                       | postgres
+    5215 |                   | INSERTED PARAMETER | fixed_step_rollback_duration | @ 0.0025 secs                                                                       | postgres
+    5216 | IMPORT_PARAMETERS | END                |                              | 2 parameters imported                                                               | postgres
+    5217 | IMPORT_PARAMETERS | BEGIN              |                              | Input file: '/tmp/orig_param_config'                                                | postgres
+    5218 |                   | UPDATED PARAMETER  | dblink_user_password         | <masked data>                                                                       | postgres
+    5219 |                   | UPDATED PARAMETER  | fixed_step_rollback_duration | @ 0.0025 secs                                                                       | postgres
+    5220 | IMPORT_PARAMETERS | END                |                              | 2 parameters imported                                                               | postgres
 (111 rows)
 

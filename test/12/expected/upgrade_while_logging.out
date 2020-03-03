@@ -114,6 +114,18 @@ SELECT param_value_text FROM emaj.emaj_param WHERE param_key = 'emaj_version';
  chk_extra_data | text    |           |          | 
  chk_message    | text    |           |          | 
 
+         Composite type "emaj._check_message_type"
+     Column     |  Type   | Collation | Nullable | Default 
+----------------+---------+-----------+----------+---------
+ chk_msg_type   | integer |           |          | 
+ chk_severity   | integer |           |          | 
+ chk_text_var_1 | text    |           |          | 
+ chk_text_var_2 | text    |           |          | 
+ chk_text_var_3 | text    |           |          | 
+ chk_text_var_4 | text    |           |          | 
+ chk_int_var_1  | integer |           |          | 
+ chk_message    | text    |           |          | 
+
                     Composite type "emaj._detailed_log_stat_type"
           Column          |           Type           | Collation | Nullable | Default 
 --------------------------+--------------------------+-----------+----------+---------

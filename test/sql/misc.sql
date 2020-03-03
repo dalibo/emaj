@@ -600,6 +600,10 @@ select emaj.emaj_import_parameters_configuration('{ "parameters": [ { "key": "em
 --     missing or null "key" attributes
 select emaj.emaj_import_parameters_configuration('{ "parameters": [ { "value": "no_key"} ] }'::json);
 select emaj.emaj_import_parameters_configuration('{ "parameters": [ { "key": null} ] }'::json);
+--     invalid key
+select emaj.emaj_import_parameters_configuration('{ "parameters": [ { "key": "unknown_param" } ] }'::json);
+--     duplicate key
+select emaj.emaj_import_parameters_configuration('{ "parameters": [ { "key": "history_retention" }, { "key": "history_retention" } ] }'::json);
 
 --   ok
 select emaj.emaj_import_parameters_configuration('{ "parameters": [ { "key": "history_retention", "value": "1 day"} ] }'::json);
