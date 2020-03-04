@@ -6,7 +6,7 @@
 # To get a base measurement without E-Maj, comment the emaj_start_group() function call
 
 export PGHOST=localhost
-export PGPORT=5410
+export PGPORT=5412
 export PGUSER=postgres
 export PGDATABASE=regression
 
@@ -24,10 +24,8 @@ CREATE EXTENSION dblink;
 CREATE EXTENSION emaj;
 
 -- create the tables group
-INSERT INTO emaj.emaj_group_def (grpdef_group, grpdef_schema, grpdef_tblseq)
-  SELECT 'bench', table_schema, table_name FROM information_schema.tables 
-    WHERE table_schema = 'public';
-SELECT emaj.emaj_create_group('bench', false);     -- the group is created in AUDIT_ONLY mode because pgbench_history has no PK
+SELECT emaj.emaj_create_group('bench', false, true);     -- the group is created in AUDIT_ONLY mode because pgbench_history has no PK
+SELECT emaj.emaj_assign_tables('public','.*','','bench');
 
 -- start the tables group
 SELECT emaj.emaj_start_group('bench','start');

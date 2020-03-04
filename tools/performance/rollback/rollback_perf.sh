@@ -8,7 +8,7 @@
 export SCALEFACTOR=100       # each step creates 1000 * SCALEFACTOR rows
 
 export PGHOST=localhost
-export PGPORT=5410
+export PGPORT=5412
 export PGUSER=postgres
 export PGDATABASE=regression
 
@@ -27,9 +27,7 @@ SET client_min_messages TO WARNING;
 -- Create structures
 -----------------------------------
 -- install the E-Maj extension
-CREATE EXTENSION btree_gist;
-CREATE EXTENSION dblink;
-CREATE EXTENSION emaj;
+CREATE EXTENSION emaj CASCADE;
 
 create schema perfschema;
 set search_path = 'perfschema';
@@ -57,12 +55,12 @@ primary key (c1)
 );
 create index on perf2(c2);
 
-delete from emaj.emaj_group_def where grpdef_group like 'perf%';
-insert into emaj.emaj_group_def (grpdef_group,grpdef_schema,grpdef_tblseq) values
-   ('perf1','perfschema','perf1'),
-   ('perf2','perfschema','perf2');
-select emaj.emaj_create_group('perf1');
-select emaj.emaj_create_group('perf2');
+select emaj.emaj_create_group('perf1',true,true);
+select emaj.emaj_create_group('perf2',true,true);
+
+select emaj.emaj_assign_table('perfschema','perf1','perf1');
+select emaj.emaj_assign_table('perfschema','perf2','perf2');
+
 select emaj.emaj_start_group(group_name,'init') from emaj.emaj_group where group_name like 'perf%';
 
 vacuum analyze;
@@ -79,7 +77,7 @@ insert into perf1 select i, 2, 3, 4, 5, 6, 7, 8 from generate_series (1, 1000*:p
 select emaj.emaj_start_group('perf1','init');
 insert into perf1 select c1, 0, c3, c4, c5, c6, c7, c8 from perf1 where c1 % 10 = 0;
 vacuum analyze perf1;
-vacuum analyze emaj.perfschema_perf1_log;
+vacuum analyze emaj_perfschema.perf1_log;
 select emaj.emaj_rollback_group('perf1','init');
 
 --> logged rollback on insert only
@@ -89,7 +87,7 @@ insert into perf1 select i, 2, 3, 4, 5, 6, 7, 8 from generate_series (1, 1000*:p
 select emaj.emaj_start_group('perf1','init');
 insert into perf1 select c1, 0, c3, c4, c5, c6, c7, c8 from perf1 where c1 % 10 = 0;
 vacuum analyze perf1;
-vacuum analyze emaj.perfschema_perf1_log;
+vacuum analyze emaj_perfschema.perf1_log;
 select emaj.emaj_logged_rollback_group('perf1','init');
 
 --> rollback on update only
@@ -99,7 +97,7 @@ insert into perf1 select i, 2, 3, 4, 5, 6, 7, 8 from generate_series (1, 1000*:p
 select emaj.emaj_start_group('perf1','init');
 update perf1 set c2 = 0 where c1 % 10 = 1;
 vacuum analyze perf1;
-vacuum analyze emaj.perfschema_perf1_log;
+vacuum analyze emaj_perfschema.perf1_log;
 select emaj.emaj_rollback_group('perf1','init');
 
 --> logged rollback on update only
@@ -109,7 +107,7 @@ insert into perf1 select i, 2, 3, 4, 5, 6, 7, 8 from generate_series (1, 1000*:p
 select emaj.emaj_start_group('perf1','init');
 update perf1 set c2 = 0 where c1 % 10 = 1;
 vacuum analyze perf1;
-vacuum analyze emaj.perfschema_perf1_log;
+vacuum analyze emaj_perfschema.perf1_log;
 select emaj.emaj_logged_rollback_group('perf1','init');
 
 --> rollback on delete only
@@ -119,7 +117,7 @@ insert into perf1 select i, 2, 3, 4, 5, 6, 7, 8 from generate_series (1, 1000*:p
 select emaj.emaj_start_group('perf1','init');
 delete from perf1 where c1 % 10 = 2;
 vacuum analyze perf1;
-vacuum analyze emaj.perfschema_perf1_log;
+vacuum analyze emaj_perfschema.perf1_log;
 select emaj.emaj_rollback_group('perf1','init');
 
 --> logged rollback on delete only
@@ -129,7 +127,7 @@ insert into perf1 select i, 2, 3, 4, 5, 6, 7, 8 from generate_series (1, 1000*:p
 select emaj.emaj_start_group('perf1','init');
 delete from perf1 where c1 % 10 = 2;
 vacuum analyze perf1;
-vacuum analyze emaj.perfschema_perf1_log;
+vacuum analyze emaj_perfschema.perf1_log;
 select emaj.emaj_logged_rollback_group('perf1','init');
 
 --> rollback on insert/update/delete mix
@@ -141,7 +139,7 @@ insert into perf1 select c1, 0, c3, c4, c5, c6, c7, c8 from perf1 where c1 % 10 
 update perf1 set c2 = 0 where c1 % 10 = 1;
 delete from perf1 where c1 % 10 = 2;
 vacuum analyze perf1;
-vacuum analyze emaj.perfschema_perf1_log;
+vacuum analyze emaj_perfschema.perf1_log;
 select emaj.emaj_rollback_group('perf1','init');
 
 --> logged rollback on delete only
@@ -153,7 +151,7 @@ insert into perf1 select c1, 0, c3, c4, c5, c6, c7, c8 from perf1 where c1 % 10 
 update perf1 set c2 = 0 where c1 % 10 = 1;
 delete from perf1 where c1 % 10 = 2;
 vacuum analyze perf1;
-vacuum analyze emaj.perfschema_perf1_log;
+vacuum analyze emaj_perfschema.perf1_log;
 select emaj.emaj_logged_rollback_group('perf1','init');
 
 -----------------------------------
@@ -167,7 +165,7 @@ insert into perf2 select i, rpad('2',300), rpad('3',300), rpad('4',300) from gen
 select emaj.emaj_start_group('perf2','init');
 insert into perf2 select -c1, c2, c3, c4 from perf2 where c1 % 10 = 0;
 vacuum analyze perf2;
-vacuum analyze emaj.perfschema_perf2_log;
+vacuum analyze emaj_perfschema.perf2_log;
 select emaj.emaj_rollback_group('perf2','init');
 
 --> logged rollback on insert only
@@ -177,7 +175,7 @@ insert into perf2 select i, rpad('2',300), rpad('3',300), rpad('4',300) from gen
 select emaj.emaj_start_group('perf2','init');
 insert into perf2 select -c1, c2, c3, c4 from perf2 where c1 % 10 = 0;
 vacuum analyze perf2;
-vacuum analyze emaj.perfschema_perf2_log;
+vacuum analyze emaj_perfschema.perf2_log;
 select emaj.emaj_logged_rollback_group('perf2','init');
 
 --> rollback on update only
@@ -187,7 +185,7 @@ insert into perf2 select i, rpad('2',300), rpad('3',300), rpad('4',300) from gen
 select emaj.emaj_start_group('perf2','init');
 update perf2 set c2 = '' where c1 % 10 = 1;
 vacuum analyze perf2;
-vacuum analyze emaj.perfschema_perf2_log;
+vacuum analyze emaj_perfschema.perf2_log;
 select emaj.emaj_rollback_group('perf2','init');
 
 --> logged rollback on update only
@@ -197,7 +195,7 @@ insert into perf2 select i, rpad('2',300), rpad('3',300), rpad('4',300) from gen
 select emaj.emaj_start_group('perf2','init');
 update perf2 set c2 = '' where c1 % 10 = 1;
 vacuum analyze perf2;
-vacuum analyze emaj.perfschema_perf2_log;
+vacuum analyze emaj_perfschema.perf2_log;
 select emaj.emaj_logged_rollback_group('perf2','init');
 
 --> rollback on delete only
@@ -207,7 +205,7 @@ insert into perf2 select i, rpad('2',300), rpad('3',300), rpad('4',300) from gen
 select emaj.emaj_start_group('perf2','init');
 delete from perf2 where c1 % 10 = 2;
 vacuum analyze perf2;
-vacuum analyze emaj.perfschema_perf2_log;
+vacuum analyze emaj_perfschema.perf2_log;
 select emaj.emaj_rollback_group('perf2','init');
 
 --> logged rollback on delete only
@@ -217,7 +215,7 @@ insert into perf2 select i, rpad('2',300), rpad('3',300), rpad('4',300) from gen
 select emaj.emaj_start_group('perf2','init');
 delete from perf2 where c1 % 10 = 2;
 vacuum analyze perf2;
-vacuum analyze emaj.perfschema_perf2_log;
+vacuum analyze emaj_perfschema.perf2_log;
 select emaj.emaj_logged_rollback_group('perf2','init');
 
 --> rollback on insert/update/delete mix
@@ -229,7 +227,7 @@ insert into perf2 select -c1, c2, c3, c4 from perf2 where c1 % 10 = 0;
 update perf2 set c2 = '' where c1 % 10 = 1;
 delete from perf2 where c1 % 10 = 2;
 vacuum analyze perf2;
-vacuum analyze emaj.perfschema_perf2_log;
+vacuum analyze emaj_perfschema.perf2_log;
 select emaj.emaj_rollback_group('perf2','init');
 
 --> logged rollback on delete only
@@ -241,7 +239,7 @@ insert into perf2 select -c1, c2, c3, c4 from perf2 where c1 % 10 = 0;
 update perf2 set c2 = '' where c1 % 10 = 1;
 delete from perf2 where c1 % 10 = 2;
 vacuum analyze perf2;
-vacuum analyze emaj.perfschema_perf2_log;
+vacuum analyze emaj_perfschema.perf2_log;
 select emaj.emaj_logged_rollback_group('perf2','init');
 
 **PSQL1**

@@ -7,7 +7,7 @@
 export SCALEFACTOR=1000       # number of tables for the group
 
 export PGHOST=localhost
-export PGPORT=5410
+export PGPORT=5412
 export PGUSER=postgres
 export PGDATABASE=regression
 
@@ -63,13 +63,12 @@ create function update_tbl(v_nb_tbl int) returns void language plpgsql as
 
 select create_tbl(:p_scaleFactor);
 
-delete from emaj.emaj_group_def;
-insert into emaj.emaj_group_def (grpdef_group,grpdef_schema,grpdef_tblseq) 
-  select 'large_group','large_schema', 't' || to_char(i,'000000FM') from generate_series(1, :p_scaleFactor) i;
-
 checkpoint;
 
-select emaj.emaj_create_group('large_group');
+select emaj.emaj_create_group('large_group',true,true);
+
+select emaj.emaj_assign_tables('large_schema','.*','','large_group');
+
 select emaj.emaj_start_group('large_group','mark1');
 
 select update_tbl(:p_scaleFactor);
