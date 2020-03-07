@@ -39,7 +39,7 @@ The full existing tables groups configuration, as well as E-Maj parameters, can 
 
    SELECT emaj.emaj_export_parameters_configuration('<file.path.2>');
 
-If the installed E-Maj version is prior <devel>, these functions are not available. Thus, the *emaj_group_def* and *emaj_param* terchnical tables must be manually saved. For instance, one can download each table on file with a copy command, or duplicate them ouside the *emaj*  schema.
+If the installed E-Maj version is prior 3.3.0, these functions are not available. Thus, the *emaj_group_def* and *emaj_param* terchnical tables must be manually saved. For instance, one can download each table on file with a copy command, or duplicate them ouside the *emaj*  schema.
 
 Il the current E-Maj version contains the *emaj_sync_def_group()* function (3.2+), it is recommended to use it to previously synchronize the *emaj_group_def* table with the current groups structure.
 

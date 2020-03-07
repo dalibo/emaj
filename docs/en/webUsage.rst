@@ -43,6 +43,7 @@ For each created tables group, the following attributes are displayed:
 
 For each tables group, several buttons are available so that the user can perform any possible action, depending on the group state.
 
+At the bottom of the page, three buttons allow to create a new tables group, to export or import a tables groups configuration to or from a local file.
 
 Some details about the user interface
 -------------------------------------
@@ -211,6 +212,8 @@ First, some items are displayed:
 Then, the environment integrity is checked; the result of the :ref:`emaj_verify_all() <emaj_verify_all>` function execution is displayed.
 
 The page ends with a list of the extension parameters value, be they present in the *emaj_param table* or set to their default value.
+
+Two buttons allow to export and import parameters configurations to or from a local file.
 
 .. figure:: images/emajweb_emaj.png
    :align: center

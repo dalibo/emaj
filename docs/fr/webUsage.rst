@@ -43,6 +43,8 @@ Pour chaque groupe de tables créé, sont affichés les attributs suivants :
 
 Pour chaque groupe également, plusieurs boutons sont proposés afin de pouvoir effectuer les actions que son état autorise.
 
+Trois boutons en bas de page permettent de créer un nouveau groupe de tables, d’exporter ou d’importer une configuration de groupes de tables vers ou à partir d’un fichier local.
+
 
 Quelques détails de l'interface utilisateur
 -------------------------------------------
@@ -210,6 +212,8 @@ Sont d'abord restitués :
 Puis l'intégrité de l'environnement est testé ; le résultat de l'exécution de la fonction :ref:`emaj_verify_all() <emaj_verify_all>` est affiché.
 
 Enfin sont listés les paramètres de fonctionnement de l’extension emaj, qu’ils soient présents dans la table *emaj_param* ou valorisés par défaut.
+
+Deux boutons en bas de page permettent d’exporter ou d’importer une configuration de paramètres vers ou à partir d’un fichier local.
 
 .. figure:: images/emajweb_emaj.png
    :align: center
