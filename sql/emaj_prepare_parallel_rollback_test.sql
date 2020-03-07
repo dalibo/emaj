@@ -78,8 +78,6 @@ $emaj_parallel_rollback_test_cleanup$
       WHERE group_name = 'emaj parallel rollback test group' AND group_is_logging;
     PERFORM emaj.emaj_drop_group(group_name) FROM emaj.emaj_group
       WHERE group_name = 'emaj parallel rollback test group';
--- remove test group definition from the emaj_group_def table
-    DELETE FROM emaj.emaj_group_def WHERE grpdef_group = 'emaj parallel rollback test group';
 -- drop the demo app schema and its content
     DROP SCHEMA IF EXISTS emaj_parallel_rollback_test_app_schema CASCADE;
 -- the function drops itself before exiting
@@ -161,23 +159,22 @@ CREATE TRIGGER myTbl2trg
   AFTER INSERT OR UPDATE OR DELETE ON myTbl2
   FOR EACH ROW EXECUTE PROCEDURE myTbl2trgfct ();
 
--- populate group table
-\echo '---'
-\echo '--- Now the E-Maj administrator populates the emaj_group_def table'
-\echo '---'
-DELETE FROM emaj.emaj_group_def WHERE grpdef_group = 'emaj parallel rollback test group';
-INSERT INTO emaj.emaj_group_def VALUES ('emaj parallel rollback test group','emaj_parallel_rollback_test_app_schema','mytbl1');
-INSERT INTO emaj.emaj_group_def VALUES ('emaj parallel rollback test group','emaj_parallel_rollback_test_app_schema','mytbl2');
-INSERT INTO emaj.emaj_group_def VALUES ('emaj parallel rollback test group','emaj_parallel_rollback_test_app_schema','myTbl3_col31_seq');
-INSERT INTO emaj.emaj_group_def VALUES ('emaj parallel rollback test group','emaj_parallel_rollback_test_app_schema','myTbl3');
-INSERT INTO emaj.emaj_group_def VALUES ('emaj parallel rollback test group','emaj_parallel_rollback_test_app_schema','mytbl2b');
-INSERT INTO emaj.emaj_group_def VALUES ('emaj parallel rollback test group','emaj_parallel_rollback_test_app_schema','mytbl4');
-
 -- create E-Maj objects
 \echo '---'
 \echo '--- Create E-Maj objects'
 \echo '---'
-SELECT emaj.emaj_create_group('emaj parallel rollback test group');
+SELECT emaj.emaj_create_group('emaj parallel rollback test group', true, true);
+
+-- populate tables groups
+\echo '---'
+\echo '--- Now the E-Maj administrator populates the tables groups'
+\echo '---'
+SELECT emaj.emaj_assign_table('emaj_parallel_rollback_test_app_schema', 'mytbl1', 'emaj parallel rollback test group');
+SELECT emaj.emaj_assign_table('emaj_parallel_rollback_test_app_schema', 'mytbl2', 'emaj parallel rollback test group');
+SELECT emaj.emaj_assign_table('emaj_parallel_rollback_test_app_schema', 'myTbl3', 'emaj parallel rollback test group');
+SELECT emaj.emaj_assign_table('emaj_parallel_rollback_test_app_schema', 'mytbl2b', 'emaj parallel rollback test group');
+SELECT emaj.emaj_assign_table('emaj_parallel_rollback_test_app_schema', 'mytbl4', 'emaj parallel rollback test group');
+SELECT emaj.emaj_assign_sequence('emaj_parallel_rollback_test_app_schema', 'myTbl3_col31_seq', 'emaj parallel rollback test group');
 
 -- activate log trigger to simulate the begining of the application processing
 \echo '---'

@@ -187,35 +187,30 @@ grant all on sequence mySchema2.mySeq1 to emaj_regression_tests_adm_user;
 grant all on sequence "phil's schema3".mySeq1 to emaj_regression_tests_adm_user;
 
 -----------------------------
--- prepare and create groups
+-- create and populate groups
 -----------------------------
+select emaj.emaj_create_group('myGroup1',true,true);
+select emaj.emaj_create_group('myGroup2',true,true);
+select emaj.emaj_create_group('phil''s group#3',false,true);
+select emaj.emaj_comment_group('myGroup1','Useless comment!');
+
+SELECT emaj.emaj_assign_tables('myschema1', '{"mytbl1", "mytbl2", "mytbl2b", "myTbl3", "mytbl4"}', 'myGroup1');
+SELECT emaj.emaj_assign_sequence('myschema1', 'myTbl3_col31_seq', 'myGroup1');
+SELECT emaj.emaj_modify_table('myschema1', 'mytbl1', '{ "priority" : 20}');
+SELECT emaj.emaj_modify_table('myschema1', 'myTbl3', '{ "priority" : 10}');
+SELECT emaj.emaj_modify_table('myschema1', 'mytbl4', '{ "priority" : 20}');
+
+SELECT emaj.emaj_assign_tables('myschema2', '{"mytbl1", "mytbl2", "myTbl3", "mytbl4"}', 'myGroup2');
+SELECT emaj.emaj_assign_sequences('myschema2', '{"myTbl3_col31_seq", "myseq1"}', 'myGroup2');
+
+SELECT emaj.emaj_assign_tables('phil''s schema3', '{"mytbl1", "mytbl2"}', 'phil''s group#3');
+SELECT emaj.emaj_assign_sequence('phil''s schema3', 'myseq1', 'phil''s group#3');
+
 delete from emaj.emaj_group_def;
-insert into emaj.emaj_group_def values ('myGroup1','myschema1','mytbl1',20);
-insert into emaj.emaj_group_def values ('myGroup1','myschema1','mytbl2',NULL);
-insert into emaj.emaj_group_def values ('myGroup1','myschema1','mytbl2b',NULL);
-insert into emaj.emaj_group_def values ('myGroup1','myschema1','myTbl3_col31_seq');
-insert into emaj.emaj_group_def values ('myGroup1','myschema1','myTbl3',10);
-insert into emaj.emaj_group_def values ('myGroup1','myschema1','mytbl4',20);
-insert into emaj.emaj_group_def values ('myGroup2','myschema2','mytbl1');
-insert into emaj.emaj_group_def values ('myGroup2','myschema2','mytbl2');
-insert into emaj.emaj_group_def values ('myGroup2','myschema2','myTbl3_col31_seq');
-insert into emaj.emaj_group_def values ('myGroup2','myschema2','myTbl3');
-insert into emaj.emaj_group_def values ('myGroup2','myschema2','mytbl4');
-insert into emaj.emaj_group_def values ('myGroup2','myschema2','myseq1');
--- The third group name contains space, comma # and '
-insert into emaj.emaj_group_def values ('phil''s group#3','phil''s schema3','mytbl1');
-insert into emaj.emaj_group_def values ('phil''s group#3','phil''s schema3','mytbl2');
-insert into emaj.emaj_group_def values ('phil''s group#3','phil''s schema3','myseq1');
 insert into emaj.emaj_group_def values ('dummyGrp1','dummySchema','mytbl4');
 insert into emaj.emaj_group_def values ('dummyGrp2','myschema1','dummyTable');
 insert into emaj.emaj_group_def values ('dummyGrp3','myschema1','mytbl1');
 insert into emaj.emaj_group_def values ('dummyGrp3','myschema2','mytbl2');
-
-
-select emaj.emaj_create_group('myGroup1',true);
-select emaj.emaj_create_group('myGroup2',true);
-select emaj.emaj_create_group('phil''s group#3',false);
-select emaj.emaj_comment_group('myGroup1','Useless comment!');
 
 -----------------------------
 -- start 2 groups with a mark MARK1
