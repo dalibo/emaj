@@ -321,18 +321,26 @@ SELECT pg_catalog.pg_extension_config_dump('emaj_relation','');
 ------------------------------------
 DROP TYPE emaj._check_conf_groups_type CASCADE;
 
-CREATE TYPE emaj._check_message_type AS (
-  chk_msg_type                 INT,                        -- message number
-  chk_severity                 INT,                        -- severity level
-  chk_text_var_1               TEXT,                       -- textual variable #1
-  chk_text_var_2               TEXT,                       -- textual variable #2
-  chk_text_var_3               TEXT,                       -- textual variable #3
-  chk_text_var_4               TEXT,                       -- textual variable #4
-  chk_int_var_1                INT,                        -- integer variable #1
-  chk_message                  TEXT                        -- the english formatted error message
+CREATE TYPE emaj._report_message_type AS (
+  rpt_msg_type                 INT,                        -- message number
+                                                           -- range 1 - 33 used by _check_conf_groups
+                                                           -- range 101 - 105 used by _check_json_param_conf
+                                                           -- range 201 - 232 used by _check_json_groups_conf
+                                                           -- range 250 - 261 used by _import_groups_conf_prepare
+  rpt_severity                 INT,                        -- severity level
+                                                           -- 0 : notice
+                                                           -- 1 : blocking error
+                                                           -- 2 : error not blocking an audit_only group creation
+                                                           -- 3 : warning
+  rpt_text_var_1               TEXT,                       -- textual variable #1
+  rpt_text_var_2               TEXT,                       -- textual variable #2
+  rpt_text_var_3               TEXT,                       -- textual variable #3
+  rpt_text_var_4               TEXT,                       -- textual variable #4
+  rpt_int_var_1                INT,                        -- integer variable #1
+  rpt_message                  TEXT                        -- the english formatted error message
   );
-COMMENT ON TYPE emaj._check_message_type IS
-$$Represents a generic warning or error message structure that can be translated by external clients.$$;
+COMMENT ON TYPE emaj._report_message_type IS
+$$Represents a generic notice, warning or error message structure that can be translated by external clients.$$;
 
 ------------------------------------
 --                                --
@@ -468,7 +476,7 @@ $_emaj_param_change_fnct$
 $_emaj_param_change_fnct$;
 
 CREATE OR REPLACE FUNCTION emaj._check_json_groups_conf(v_groupsJson JSON)
-RETURNS SETOF emaj._check_message_type LANGUAGE plpgsql AS
+RETURNS SETOF emaj._report_message_type LANGUAGE plpgsql AS
 $_check_json_groups_conf$
 -- This function verifies that the JSON structure that contains a tables groups configuration is correct.
 -- Any detected issue is reported as a message row. The caller defines what to do with them.
@@ -482,7 +490,7 @@ $_check_json_groups_conf$
 --   - the "priority" attributes are numeric
 --   - groups are not described several times
 -- Input: the JSON structure to check
--- Output: _check_message_type records representing diagnostic messages
+-- Output: _report_message_type records representing diagnostic messages
   DECLARE
     v_groupNumber            INT;
     v_group                  TEXT;
@@ -500,7 +508,7 @@ $_check_json_groups_conf$
     v_groupsJson = v_groupsJson #> '{"tables_groups"}';
     IF v_groupsJson IS NULL THEN
       RETURN QUERY
-        VALUES (1, 1, NULL::TEXT, NULL::TEXT, NULL::TEXT, NULL::TEXT, NULL::INT,
+        VALUES (201, 1, NULL::TEXT, NULL::TEXT, NULL::TEXT, NULL::TEXT, NULL::INT,
                 'The JSON structure does not contain any "tables_groups" array.');
     ELSE
 -- check that all keywords of the JSON structure are valid
@@ -514,13 +522,13 @@ $_check_json_groups_conf$
         v_group = r_group.groupJson ->> 'group';
         IF v_group IS NULL OR v_group = '' THEN
           RETURN QUERY
-            VALUES (10, 1, NULL::TEXT, NULL::TEXT, NULL::TEXT, NULL::TEXT, v_groupNumber,
+            VALUES (210, 1, NULL::TEXT, NULL::TEXT, NULL::TEXT, NULL::TEXT, v_groupNumber,
                     format('The tables group #%s has no "group" attribute.',
                            v_groupNumber::TEXT));
         ELSE
 --   other attributes of the group level must be known
           RETURN QUERY
-            SELECT 11, 1, v_group, NULL::TEXT, NULL::TEXT, key, NULL::INT,
+            SELECT 211, 1, v_group, NULL::TEXT, NULL::TEXT, key, NULL::INT,
                  format('For the tables group "%s", the keyword "%s" is unknown.',
                         v_group, key)
               FROM (
@@ -531,7 +539,7 @@ $_check_json_groups_conf$
           IF r_group.groupJson -> 'is_rollbackable' IS NOT NULL AND
              json_typeof(r_group.groupJson -> 'is_rollbackable') <> 'boolean' THEN
             RETURN QUERY
-              VALUES (12, 1, v_group, NULL::TEXT, NULL::TEXT, NULL::TEXT, NULL::INT,
+              VALUES (212, 1, v_group, NULL::TEXT, NULL::TEXT, NULL::TEXT, NULL::INT,
                       format('For the tables group "%s", the "is_rollbackable" attribute is not a boolean.',
                              v_group));
           END IF;
@@ -546,18 +554,18 @@ $_check_json_groups_conf$
 --   the schema and table attributes must exists
             IF v_schema IS NULL OR v_schema = '' THEN
               RETURN QUERY
-                VALUES (20, 1, v_group, NULL::TEXT, NULL::TEXT, NULL::TEXT, v_tblseqNumber,
+                VALUES (220, 1, v_group, NULL::TEXT, NULL::TEXT, NULL::TEXT, v_tblseqNumber,
                         format('In the tables group "%s", the table #%s has no "schema" attribute.',
                                v_group, v_tblseqNumber::TEXT));
             ELSIF v_tblseq IS NULL OR v_tblseq = '' THEN
               RETURN QUERY
-                VALUES (21, 1, v_group, NULL::TEXT, NULL::TEXT, NULL::TEXT, v_tblseqNumber,
+                VALUES (221, 1, v_group, NULL::TEXT, NULL::TEXT, NULL::TEXT, v_tblseqNumber,
                         format('In the tables group "%s", the table #%s has no "table" attribute.',
                                v_group, v_tblseqNumber::TEXT));
             ELSE
 --   attributes of the tables level must exist
               RETURN QUERY
-                SELECT 22, 1, v_group, v_schema, v_tblseq, key, NULL::INT,
+                SELECT 222, 1, v_group, v_schema, v_tblseq, key, NULL::INT,
                      format('In the tables group "%s" and for the table %I.%I, the keyword "%s" is unknown.',
                             v_group, quote_ident(v_schema), quote_ident(v_tblseq), key)
                   FROM (
@@ -569,7 +577,7 @@ $_check_json_groups_conf$
               IF r_table.tableJson -> 'priority' IS NOT NULL AND
                  json_typeof(r_table.tableJson -> 'priority') <> 'number' THEN
                 RETURN QUERY
-                  VALUES (23, 1, v_group, v_schema, v_tblseq, NULL::TEXT, NULL::INT,
+                  VALUES (223, 1, v_group, v_schema, v_tblseq, NULL::TEXT, NULL::INT,
                           format('In the tables group "%s" and for the table %I.%I, the "priority" attribute is not a number.',
                                  v_group, quote_ident(v_schema), quote_ident(v_tblseq)));
               END IF;
@@ -583,13 +591,13 @@ $_check_json_groups_conf$
 --   the "trigger" attribute must exists
                 IF v_trigger IS NULL OR v_trigger = '' THEN
                   RETURN QUERY
-                    VALUES (24, 1, v_group, v_schema, v_tblseq, NULL::TEXT, v_triggerNumber,
+                    VALUES (224, 1, v_group, v_schema, v_tblseq, NULL::TEXT, v_triggerNumber,
                             format('In the tables group "%s" and for the table %I.%I, the trigger #%s has no "trigger" attribute.',
                                    v_group, quote_ident(v_schema), quote_ident(v_tblseq), v_triggerNumber));
                 ELSE
 --   attributes of the ignored_triggers level must exist
                   RETURN QUERY
-                    SELECT 25, 1, v_group, v_schema, v_tblseq, key, NULL::INT,
+                    SELECT 225, 1, v_group, v_schema, v_tblseq, key, NULL::INT,
                          format('In the tables group "%s" and for a trigger of the table %I.%I, the keyword "%s" is unknown.',
                                 v_group, quote_ident(v_schema), quote_ident(v_tblseq), key)
                       FROM (
@@ -611,18 +619,18 @@ $_check_json_groups_conf$
 --   the schema and table attributes must exists
             IF v_schema IS NULL OR v_schema = '' THEN
               RETURN QUERY
-                VALUES (30, 1, v_group, NULL::TEXT, NULL::TEXT, NULL::TEXT, v_tblseqNumber,
+                VALUES (230, 1, v_group, NULL::TEXT, NULL::TEXT, NULL::TEXT, v_tblseqNumber,
                         format('In the tables group "%s", the sequence #%s has no "schema" attribute.',
                                v_group, v_tblseqNumber::TEXT));
             ELSIF v_tblseq IS NULL OR v_tblseq = '' THEN
               RETURN QUERY
-                VALUES (31, 1, v_group, NULL::TEXT, NULL::TEXT, NULL::TEXT, v_tblseqNumber,
+                VALUES (231, 1, v_group, NULL::TEXT, NULL::TEXT, NULL::TEXT, v_tblseqNumber,
                         format('In the tables group "%s", the sequence #%s has no "sequence" attribute.',
                                v_group, v_tblseqNumber::TEXT));
             ELSE
 --   no other attributes of the sequences level must exist
               RETURN QUERY
-                SELECT 32, 1, v_group, v_schema, v_tblseq, key, NULL::INT,
+                SELECT 232, 1, v_group, v_schema, v_tblseq, key, NULL::INT,
                      format('In the tables group "%s" and for the sequence %I.%I, the keyword "%s" is unknown.',
                             v_group, quote_ident(v_schema), quote_ident(v_tblseq), key)
                   FROM (
@@ -635,7 +643,7 @@ $_check_json_groups_conf$
       END LOOP;
 -- check that tables groups are not configured more than once in the JSON structure
       RETURN QUERY
-        SELECT 2, 1, "group", NULL::TEXT, NULL::TEXT, NULL::TEXT, NULL::INT,
+        SELECT 202, 1, "group", NULL::TEXT, NULL::TEXT, NULL::TEXT, NULL::INT,
              format('The JSON structure references several times the tables group "%s".',
                     "group")
           FROM (
@@ -650,7 +658,7 @@ $_check_json_groups_conf$
 $_check_json_groups_conf$;
 
 CREATE OR REPLACE FUNCTION emaj._check_conf_groups(v_groupNames TEXT[])
-RETURNS SETOF emaj._check_message_type LANGUAGE plpgsql AS
+RETURNS SETOF emaj._report_message_type LANGUAGE plpgsql AS
 $_check_conf_groups$
 -- This function verifies that the content of tables group as defined into the emaj_group_def table is correct.
 -- Any detected issue is reported as a message row. The caller defines what to do with them, depending on the tables group type.
@@ -668,8 +676,8 @@ $_check_conf_groups$
 --  - for tables, configured tablespaces exist
 -- The function is directly called by Emaj_web.
 -- Input: name array of the tables groups to check
--- Output: _check_message_type records representing diagnostic messages
---         the chk_severity is set to 1 if the error blocks any type group creation or alter,
+-- Output: _report_message_type records representing diagnostic messages
+--         the rpt_severity is set to 1 if the error blocks any type group creation or alter,
 --                                 or 2 if the error only blocks ROLLBACKABLE groups creation
   BEGIN
 -- check that all application tables and sequences listed for the group really exist
@@ -805,7 +813,7 @@ $_check_conf_groups$
 $_check_conf_groups$;
 
 CREATE OR REPLACE FUNCTION emaj._check_json_param_conf(v_paramsJson JSON)
-RETURNS SETOF emaj._check_message_type LANGUAGE plpgsql AS
+RETURNS SETOF emaj._report_message_type LANGUAGE plpgsql AS
 $_check_json_param_conf$
 -- This function verifies that the JSON structure that contains a parameter configuration is correct.
 -- Any detected issue is reported as a message row. The caller defines what to do with them.
@@ -828,7 +836,7 @@ $_check_json_param_conf$
     v_parameters = v_paramsJson #> '{"parameters"}';
     IF v_parameters IS NULL THEN
       RETURN QUERY
-        VALUES (1, 1, NULL::TEXT, NULL::TEXT, NULL::TEXT, NULL::TEXT, NULL::INT,
+        VALUES (101, 1, NULL::TEXT, NULL::TEXT, NULL::TEXT, NULL::TEXT, NULL::INT,
                 'The JSON structure does not contain any "parameters" array.');
     ELSE
 -- check that all keywords of the "parameters" structure are valid
@@ -841,13 +849,13 @@ $_check_json_param_conf$
         v_key = r_param.param ->> 'key';
         IF v_key IS NULL THEN
           RETURN QUERY
-            VALUES (2, 1, NULL::TEXT, NULL::TEXT, NULL::TEXT, NULL::TEXT, v_paramNumber,
+            VALUES (102, 1, NULL::TEXT, NULL::TEXT, NULL::TEXT, NULL::TEXT, v_paramNumber,
                     format('The #%s parameter has no "key" attribute or a "key" set to null.',
                            v_paramNumber::TEXT));
         END IF;
 -- check that the structure only contains "key" and "value" attributes
         RETURN QUERY
-          SELECT 3, 1, v_key, attr, NULL::TEXT, NULL::TEXT, NULL::INT,
+          SELECT 103, 1, v_key, attr, NULL::TEXT, NULL::TEXT, NULL::INT,
                format('For the parameter "%s", the attribute "%s" is unknown.',
                       v_key, attr)
             FROM (
@@ -859,14 +867,14 @@ $_check_json_param_conf$
                          'avg_row_rollback_duration', 'avg_row_delete_log_duration', 'avg_fkey_check_duration',
                          'fixed_step_rollback_duration', 'fixed_table_rollback_duration', 'fixed_dblink_rollback_duration') THEN
           RETURN QUERY
-            VALUES (4, 1, v_key, NULL::TEXT, NULL::TEXT, NULL::TEXT, NULL::INT,
+            VALUES (104, 1, v_key, NULL::TEXT, NULL::TEXT, NULL::TEXT, NULL::INT,
                  format('"%s" is not a known E-Maj parameter.',
                         v_key));
         END IF;
       END LOOP;
 -- check that parameters are not configured more than once in the JSON structure
       RETURN QUERY
-        SELECT 5, 1, "key", NULL::TEXT, NULL::TEXT, NULL::TEXT, NULL::INT,
+        SELECT 105, 1, "key", NULL::TEXT, NULL::TEXT, NULL::TEXT, NULL::INT,
              format('The JSON structure references several times the parameter "%s".',
                     "key")
           FROM (
@@ -2629,12 +2637,12 @@ $emaj_create_group$
 -- performs various checks on the group's content described in the emaj_group_def table
     IF NOT v_is_empty THEN
       FOR r IN
-        SELECT chk_message FROM emaj._check_conf_groups(ARRAY[v_groupName])
-          WHERE (v_isRollbackable AND chk_severity <= 2)
-             OR (NOT v_isRollbackable AND chk_severity <= 1)
-          ORDER BY chk_msg_type, chk_text_var_1, chk_text_var_2, chk_text_var_3
+        SELECT rpt_message FROM emaj._check_conf_groups(ARRAY[v_groupName])
+          WHERE (v_isRollbackable AND rpt_severity <= 2)
+             OR (NOT v_isRollbackable AND rpt_severity <= 1)
+          ORDER BY rpt_msg_type, rpt_text_var_1, rpt_text_var_2, rpt_text_var_3
       LOOP
-        RAISE WARNING 'emaj_create_group: error, %', r.chk_message;
+        RAISE WARNING 'emaj_create_group: error, %', r.rpt_message;
       END LOOP;
       IF FOUND THEN
         RAISE EXCEPTION 'emaj_create_group: One or several errors have been detected in the emaj_group_def table content.';
@@ -2772,13 +2780,13 @@ $_alter_groups$
     IF v_groupNames IS NOT NULL THEN
 -- performs various checks on the groups content described in the emaj_group_def table
       FOR r IN
-        SELECT chk_message FROM emaj._check_conf_groups(v_groupNames), emaj.emaj_group
-          WHERE chk_text_var_1 = group_name
-            AND ((group_is_rollbackable AND chk_severity <= 2)
-              OR (NOT group_is_rollbackable AND chk_severity <= 1))
-          ORDER BY chk_msg_type, chk_text_var_1, chk_text_var_2, chk_text_var_3
+        SELECT rpt_message FROM emaj._check_conf_groups(v_groupNames), emaj.emaj_group
+          WHERE rpt_text_var_1 = group_name
+            AND ((group_is_rollbackable AND rpt_severity <= 2)
+              OR (NOT group_is_rollbackable AND rpt_severity <= 1))
+          ORDER BY rpt_msg_type, rpt_text_var_1, rpt_text_var_2, rpt_text_var_3
       LOOP
-        RAISE WARNING '_alter_groups: %', r.chk_message;
+        RAISE WARNING '_alter_groups: %', r.rpt_message;
       END LOOP;
       IF FOUND THEN
         RAISE EXCEPTION '_alter_groups: One or several errors have been detected in the emaj_group_def table content.';
@@ -3258,10 +3266,10 @@ $_import_groups_conf$
   BEGIN
 -- performs various checks on the groups content described in the supplied JSON structure
     FOR r_msg IN
-      SELECT chk_message FROM emaj._check_json_groups_conf(v_json)
-        ORDER BY chk_msg_type, chk_text_var_1, chk_text_var_2, chk_text_var_3, chk_int_var_1
+      SELECT rpt_message FROM emaj._check_json_groups_conf(v_json)
+        ORDER BY rpt_msg_type, rpt_text_var_1, rpt_text_var_2, rpt_text_var_3, rpt_int_var_1
     LOOP
-      RAISE WARNING '_import_groups_conf (1): %', r_msg.chk_message;
+      RAISE WARNING '_import_groups_conf (1): %', r_msg.rpt_message;
     END LOOP;
     IF FOUND THEN
       RAISE EXCEPTION '_import_groups_conf: One or several errors have been detected in the supplied JSON structure.';
@@ -3275,10 +3283,10 @@ $_import_groups_conf$
     END IF;
 -- prepare the groups configuration import. This may report some other issues with the groups content
     FOR r_msg IN
-      SELECT chk_message FROM emaj._import_groups_conf_prepare(v_json, v_groups, v_allowGroupsUpdate, v_location)
-        ORDER BY chk_msg_type, chk_text_var_1, chk_text_var_2, chk_text_var_3
+      SELECT rpt_message FROM emaj._import_groups_conf_prepare(v_json, v_groups, v_allowGroupsUpdate, v_location)
+        ORDER BY rpt_msg_type, rpt_text_var_1, rpt_text_var_2, rpt_text_var_3
     LOOP
-      RAISE WARNING '_import_groups_conf (2): %', r_msg.chk_message;
+      RAISE WARNING '_import_groups_conf (2): %', r_msg.rpt_message;
     END LOOP;
     IF FOUND THEN
       RAISE EXCEPTION '_import_groups_conf: One or several errors have been detected in the JSON groups configuration.';
@@ -3290,7 +3298,7 @@ $_import_groups_conf$;
 
 CREATE OR REPLACE FUNCTION emaj._import_groups_conf_prepare(v_groupsJson JSON, v_groups TEXT[],
                                                     v_allowGroupsUpdate BOOLEAN, v_location TEXT)
-RETURNS SETOF emaj._check_message_type LANGUAGE plpgsql AS
+RETURNS SETOF emaj._report_message_type LANGUAGE plpgsql AS
 $_import_groups_conf_prepare$
 -- This function prepare the effective tables groups configuration import.
 -- It is called by _import_groups_conf() and by emaj_web
@@ -3315,7 +3323,7 @@ $_import_groups_conf_prepare$
     v_groupsJson = v_groupsJson #> '{"tables_groups"}';
 -- check that all tables groups listed in the v_groups array exist in the JSON structure
     RETURN QUERY
-      SELECT 100, 1, group_name, NULL::TEXT, NULL::TEXT, NULL::TEXT, NULL::INT,
+      SELECT 250, 1, group_name, NULL::TEXT, NULL::TEXT, NULL::TEXT, NULL::INT,
                    format('The tables group "%s" to import is not referenced in the JSON structure.',
                           group_name)
         FROM (
@@ -3329,7 +3337,7 @@ $_import_groups_conf_prepare$
 -- if the v_allowGroupsUpdate flag is FALSE, check that no tables group already exists
     IF NOT v_allowGroupsUpdate THEN
       RETURN QUERY
-        SELECT 101, 1, group_name, NULL::TEXT, NULL::TEXT, NULL::TEXT, NULL::INT,
+        SELECT 251, 1, group_name, NULL::TEXT, NULL::TEXT, NULL::TEXT, NULL::INT,
                      format('The tables group "%s" already exists.',
                             group_name)
           FROM (
@@ -3343,7 +3351,7 @@ $_import_groups_conf_prepare$
     ELSE
 -- if the v_allowGroupsUpdate flag is TRUE, check that existing tables groups have the same type than in the JSON structure
       RETURN QUERY
-        SELECT 102, 1, group_name, NULL::TEXT, NULL::TEXT, NULL::TEXT, NULL::INT,
+        SELECT 252, 1, group_name, NULL::TEXT, NULL::TEXT, NULL::TEXT, NULL::INT,
                      format('Changing the type of the tables group "%s" is not allowed.',
                             group_name)
           FROM (
@@ -3403,12 +3411,12 @@ $_import_groups_conf_prepare$
 -- check the just imported emaj_group_def content is ok for the groups
     RETURN QUERY
       SELECT * FROM emaj._check_conf_groups(v_groups)
-        WHERE ((chk_text_var_1 = ANY (v_groups) AND chk_severity = 1)
-            OR (chk_text_var_1 = ANY (v_rollbackableGroups) AND chk_severity = 2))
-        ORDER BY chk_msg_type, chk_text_var_1, chk_text_var_2, chk_text_var_3;
+        WHERE ((rpt_text_var_1 = ANY (v_groups) AND rpt_severity = 1)
+            OR (rpt_text_var_1 = ANY (v_rollbackableGroups) AND rpt_severity = 2))
+        ORDER BY rpt_msg_type, rpt_text_var_1, rpt_text_var_2, rpt_text_var_3;
 -- check that all listed triggers exist
     RETURN QUERY
-      SELECT 110, 1, tmp_group, tmp_schema, tmp_table, tmp_trigger, NULL::INT,
+      SELECT 260, 1, tmp_group, tmp_schema, tmp_table, tmp_trigger, NULL::INT,
                    format('In the group "%s" and for the table %I.%I, the trigger %s does not exist.',
                           tmp_group, quote_ident(tmp_schema), quote_ident(tmp_table), quote_ident(tmp_trigger))
         FROM (
@@ -3422,7 +3430,7 @@ $_import_groups_conf_prepare$
              ) AS t;
 -- ... and are not emaj triggers
     RETURN QUERY
-      SELECT 111, 1, tmp_group, tmp_schema, tmp_table, tmp_trigger, NULL::INT,
+      SELECT 261, 1, tmp_group, tmp_schema, tmp_table, tmp_trigger, NULL::INT,
                    format('In the group "%s" and for the table %I.%I, the trigger %I is an E-Maj trigger.',
                           tmp_group, quote_ident(tmp_schema), quote_ident(tmp_table), quote_ident(tmp_trigger))
         FROM (
@@ -4293,10 +4301,10 @@ $_import_param_conf$
   BEGIN
 -- performs various checks on the parameters content described in the supplied JSON structure
     FOR r_msg IN
-      SELECT chk_message FROM emaj._check_json_param_conf(v_json)
-        ORDER BY chk_msg_type, chk_text_var_1, chk_text_var_2, chk_int_var_1
+      SELECT rpt_message FROM emaj._check_json_param_conf(v_json)
+        ORDER BY rpt_msg_type, rpt_text_var_1, rpt_text_var_2, rpt_int_var_1
     LOOP
-      RAISE WARNING '_import_param_conf : %', r_msg.chk_message;
+      RAISE WARNING '_import_param_conf : %', r_msg.rpt_message;
     END LOOP;
     IF FOUND THEN
       RAISE EXCEPTION '_import_param_conf: One or several errors have been detected in the supplied JSON structure.';

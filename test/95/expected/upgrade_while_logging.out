@@ -105,18 +105,6 @@ SELECT param_value_text FROM emaj.emaj_param WHERE param_key = 'emaj_version';
 
 -- check tables list
 \d emaj*.*
-Composite type "emaj._check_message_type"
-     Column     |  Type   | Modifiers 
-----------------+---------+-----------
- chk_msg_type   | integer | 
- chk_severity   | integer | 
- chk_text_var_1 | text    | 
- chk_text_var_2 | text    | 
- chk_text_var_3 | text    | 
- chk_text_var_4 | text    | 
- chk_int_var_1  | integer | 
- chk_message    | text    | 
-
           Composite type "emaj._detailed_log_stat_type"
           Column          |           Type           | Modifiers 
 --------------------------+--------------------------+-----------
@@ -150,6 +138,18 @@ Composite type "emaj._check_message_type"
  stat_last_mark_datetime  | timestamp with time zone | 
  stat_last_mark_gid       | bigint                   | 
  stat_rows                | bigint                   | 
+
+Composite type "emaj._report_message_type"
+     Column     |  Type   | Modifiers 
+----------------+---------+-----------
+ rpt_msg_type   | integer | 
+ rpt_severity   | integer | 
+ rpt_text_var_1 | text    | 
+ rpt_text_var_2 | text    | 
+ rpt_text_var_3 | text    | 
+ rpt_text_var_4 | text    | 
+ rpt_int_var_1  | integer | 
+ rpt_message    | text    | 
 
 Composite type "emaj._verify_groups_type"
    Column   | Type | Modifiers 
