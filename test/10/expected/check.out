@@ -117,7 +117,7 @@ select funcname, calls from pg_stat_user_functions
  _create_seq                               |    62
  _create_tbl                               |   181
  _dblink_close_cnx                         |    72
- _dblink_open_cnx                          |    87
+ _dblink_open_cnx                          |    89
  _dblink_sql_exec                          |  2177
  _delete_before_mark_group                 |    23
  _delete_between_marks_group               |    14

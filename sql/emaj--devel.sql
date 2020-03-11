@@ -7425,7 +7425,25 @@ $_rlbk_async$
 -- It is only called by the Emaj_web client, in an asynchronous way, so that the rollback can be then monitored by the client.
 -- Input: rollback identifier, and a boolean saying if the rollback is a logged rollback
 -- Output: a set of records building the execution report, with a severity level (N-otice or W-arning) and a text message
+  DECLARE
+    v_isDblinkUsed           BOOLEAN;
+    v_dbLinkCnxStatus        INT;
   BEGIN
+-- get the rollback characteristics from the emaj_rlbk table
+    SELECT rlbk_is_dblink_used INTO v_isDblinkUsed
+      FROM emaj.emaj_rlbk WHERE rlbk_id = v_rlbkId;
+-- if dblink is used (which should always be true), try to open the first session connection (no error is issued if it is already opened)
+    IF v_isDblinkUsed THEN
+      SELECT v_status INTO v_dbLinkCnxStatus
+        FROM emaj._dblink_open_cnx('rlbk#1');
+      IF v_dbLinkCnxStatus < 0 THEN
+        RAISE EXCEPTION '_rlbk_async: Error while opening the dblink session #1 (Status of the dblink connection attempt = %'
+                        ' - see E-Maj documentation).',
+          v_dbLinkCnxStatus;
+      END IF;
+    ELSE
+      RAISE EXCEPTION '_rlbk_async: The function is called but dblink cannot be used. This is an error from the client side.';
+    END IF;
 -- simply chain the internal functions
     PERFORM emaj._rlbk_session_lock(v_rlbkId, 1);
     PERFORM emaj._rlbk_start_mark(v_rlbkId, v_multiGroup);

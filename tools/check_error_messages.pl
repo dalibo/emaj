@@ -141,11 +141,13 @@ use warnings; use strict;
        && $msgs{$fnctId} ne 'EXCEPTION:E-Maj installation: The current postgres version (%) is too old for this E-Maj version. It should be at least 9.5.'
        && $msgs{$fnctId} ne 'WARNING:E-Maj installation: As the max_prepared_transactions parameter value (%) on this cluster is too low, no parallel'
        && $msgs{$fnctId} ne 'EXCEPTION:_verify_groups: The current postgres version (%) is not compatible with this E-Maj version.'
-                            # internal errors (errors that should never appear and that would due to coding error)
+                            # internal errors (errors that should never appear and that would be due to coding error)
        && $msgs{$fnctId} ne 'EXCEPTION:_drop_log_schemas: Internal error (the schema "%" does not exist).'
        && $msgs{$fnctId} ne 'EXCEPTION:emaj_reset_group: Internal error (group "%" is empty).'
        && $msgs{$fnctId} ne 'EXCEPTION:_export_groups_conf: The generated JSON structure is not properly formatted. '
        && $msgs{$fnctId} ne 'EXCEPTION:_export_param_conf: The generated JSON structure is not properly formatted. '
+       && $msgs{$fnctId} ne 'EXCEPTION:_rlbk_async: Error while opening the dblink session #1 (Status of the dblink connection attempt = %'
+       && $msgs{$fnctId} ne 'EXCEPTION:_rlbk_async: The function is called but dblink cannot be used. This is an error from the client side.'
                             # error messages that can in fact not be encountered in the current version
        && $msgs{$fnctId} ne 'EXCEPTION:_check_mark_name: The groups "%" have no mark.'
        && $msgs{$fnctId} ne 'EXCEPTION:alter_exec: Internal error, trying to repair a sequence (%.%) is abnormal.'

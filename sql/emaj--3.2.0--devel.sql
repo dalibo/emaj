@@ -3727,6 +3727,40 @@ $_delete_before_mark_group$
   END;
 $_delete_before_mark_group$;
 
+CREATE OR REPLACE FUNCTION emaj._rlbk_async(v_rlbkId INT, v_multiGroup BOOLEAN, OUT rlbk_severity TEXT, OUT rlbk_message TEXT)
+RETURNS SETOF RECORD LANGUAGE plpgsql AS
+$_rlbk_async$
+-- The function calls the main rollback functions following the initialisation phase.
+-- It is only called by the Emaj_web client, in an asynchronous way, so that the rollback can be then monitored by the client.
+-- Input: rollback identifier, and a boolean saying if the rollback is a logged rollback
+-- Output: a set of records building the execution report, with a severity level (N-otice or W-arning) and a text message
+  DECLARE
+    v_isDblinkUsed           BOOLEAN;
+    v_dbLinkCnxStatus        INT;
+  BEGIN
+-- get the rollback characteristics from the emaj_rlbk table
+    SELECT rlbk_is_dblink_used INTO v_isDblinkUsed
+      FROM emaj.emaj_rlbk WHERE rlbk_id = v_rlbkId;
+-- if dblink is used (which should always be true), try to open the first session connection (no error is issued if it is already opened)
+    IF v_isDblinkUsed THEN
+      SELECT v_status INTO v_dbLinkCnxStatus
+        FROM emaj._dblink_open_cnx('rlbk#1');
+      IF v_dbLinkCnxStatus < 0 THEN
+        RAISE EXCEPTION '_rlbk_async: Error while opening the dblink session #1 (Status of the dblink connection attempt = %'
+                        ' - see E-Maj documentation).',
+          v_dbLinkCnxStatus;
+      END IF;
+    ELSE
+      RAISE EXCEPTION '_rlbk_async: The function is called but dblink cannot be used. This is an error from the client side.';
+    END IF;
+-- simply chain the internal functions
+    PERFORM emaj._rlbk_session_lock(v_rlbkId, 1);
+    PERFORM emaj._rlbk_start_mark(v_rlbkId, v_multiGroup);
+    PERFORM emaj._rlbk_session_exec(v_rlbkId, 1);
+    RETURN QUERY SELECT * FROM emaj._rlbk_end(v_rlbkId, v_multiGroup);
+  END;
+$_rlbk_async$;
+
 CREATE OR REPLACE FUNCTION emaj._rlbk_init(v_groupNames TEXT[], v_mark TEXT, v_isLoggedRlbk BOOLEAN, v_nbSession INT, v_multiGroup BOOLEAN,
                                            v_isAlterGroupAllowed BOOLEAN DEFAULT FALSE)
 RETURNS INT LANGUAGE plpgsql AS

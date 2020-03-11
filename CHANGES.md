@@ -34,6 +34,7 @@ E-Maj - Change log
     a tables group having some other tables without pkey.
   * Let the emaj_uninstall.sql script work, even if a log schema has been
     inadvertently dropped.
+  * Fix a bug in the asynchronous rollback procedure used by Emaj_web.
 
 3.2.0 (2019-Oct-15)
 ------
