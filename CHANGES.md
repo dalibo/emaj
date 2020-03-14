@@ -3,6 +3,15 @@ E-Maj - Change log
 <devel>
 ------
 ###Enhancements:###
+
+
+###Bug fixes:###
+
+
+
+3.3.0 (2020-Mar-14)
+------
+###Enhancements:###
   * Two new emaj_export_groups_configuration() functions allow to export
     tables groups configurations as a JSON structure, either directly or into
     a file.
