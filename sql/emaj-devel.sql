@@ -931,7 +931,7 @@ RETURNS VOID LANGUAGE plpgsql AS
 $_purge_hist$
 -- This function purges the emaj history by deleting all rows prior the 'history_retention' parameter, but
 --   not deleting event traces neither after the oldest active mark or after the oldest not committed or aborted rollback operation.
--- It also purges oldest rows from the maj_exec_plan, emaj_rlbk_session and emaj_rlbk_plan tables, using the same rules.
+-- It also purges oldest rows from the emaj_exec_plan, emaj_rlbk_session and emaj_rlbk_plan tables, using the same rules.
 -- The function is called at start group time and when oldest marks are deleted.
   DECLARE
     v_datetimeLimit          TIMESTAMPTZ;

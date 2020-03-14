@@ -475,6 +475,83 @@ $_emaj_param_change_fnct$
   END;
 $_emaj_param_change_fnct$;
 
+CREATE OR REPLACE FUNCTION emaj._purge_hist()
+RETURNS VOID LANGUAGE plpgsql AS
+$_purge_hist$
+-- This function purges the emaj history by deleting all rows prior the 'history_retention' parameter, but
+--   not deleting event traces neither after the oldest active mark or after the oldest not committed or aborted rollback operation.
+-- It also purges oldest rows from the emaj_exec_plan, emaj_rlbk_session and emaj_rlbk_plan tables, using the same rules.
+-- The function is called at start group time and when oldest marks are deleted.
+  DECLARE
+    v_datetimeLimit          TIMESTAMPTZ;
+    v_maxTimeId              BIGINT;
+    v_maxRlbkId              BIGINT;
+    v_nbPurgedHist           BIGINT;
+    v_nbPurgedRelHist        BIGINT;
+    v_nbPurgedRlbk           BIGINT;
+    v_nbPurgedAlter          BIGINT;
+    v_wording                TEXT = '';
+  BEGIN
+-- compute the timestamp limit
+    SELECT min(datetime) INTO v_datetimeLimit FROM
+      (                                           -- compute the timestamp limit from the history_retention parameter
+        (SELECT current_timestamp -
+           coalesce((SELECT param_value_interval FROM emaj.emaj_param WHERE param_key = 'history_retention'),'1 YEAR'))
+      UNION ALL                                   -- get the transaction timestamp of the oldest non deleted mark for all groups
+        (SELECT min(time_tx_timestamp) FROM emaj.emaj_time_stamp, emaj.emaj_mark
+           WHERE time_id = mark_time_id AND NOT mark_is_deleted)
+      UNION ALL                                   -- get the transaction timestamp of the oldest non committed or aborted rollback
+        (SELECT min(time_tx_timestamp) FROM emaj.emaj_time_stamp, emaj.emaj_rlbk
+           WHERE time_id = rlbk_time_id AND rlbk_status IN ('PLANNING', 'LOCKING', 'EXECUTING', 'COMPLETED'))
+      ) AS t(datetime);
+-- get the greatest timestamp identifier corresponding to the timeframe to purge, if any
+    SELECT max(time_id) INTO v_maxTimeId FROM emaj.emaj_time_stamp
+      WHERE time_tx_timestamp < v_datetimeLimit;
+-- delete oldest rows from emaj_hist
+    DELETE FROM emaj.emaj_hist WHERE hist_datetime < v_datetimeLimit;
+    GET DIAGNOSTICS v_nbPurgedHist = ROW_COUNT;
+    IF v_nbPurgedHist > 0 THEN
+      v_wording = v_nbPurgedHist || ' emaj_hist rows deleted';
+    END IF;
+-- delete oldest rows from emaj_rel_hist
+    DELETE FROM emaj.emaj_rel_hist WHERE upper(relh_time_range) < v_maxTimeId;
+    GET DIAGNOSTICS v_nbPurgedRelHist = ROW_COUNT;
+    IF v_nbPurgedRelHist > 0 THEN
+      v_wording = v_wording || ' ; ' || v_nbPurgedRelHist || ' relation history rows deleted';
+    END IF;
+-- purge the emaj_alter_plan table
+    WITH deleted_alter AS (
+      DELETE FROM emaj.emaj_alter_plan
+        WHERE altr_time_id <= v_maxTimeId
+        RETURNING altr_time_id
+      )
+      SELECT COUNT (DISTINCT altr_time_id) INTO v_nbPurgedAlter FROM deleted_alter;
+    IF v_nbPurgedAlter > 0 THEN
+      v_wording = v_wording || ' ; ' || v_nbPurgedAlter || ' alter groups events deleted';
+    END IF;
+-- get the greatest rollback identifier to purge
+    SELECT max(rlbk_id) INTO v_maxRlbkId FROM emaj.emaj_rlbk
+      WHERE rlbk_time_id <= v_maxTimeId;
+-- and purge the emaj_rlbk_plan and emaj_rlbk_session tables
+    IF v_maxRlbkId IS NOT NULL THEN
+      DELETE FROM emaj.emaj_rlbk_plan WHERE rlbp_rlbk_id <= v_maxRlbkId;
+      WITH deleted_rlbk AS (
+        DELETE FROM emaj.emaj_rlbk_session
+          WHERE rlbs_rlbk_id <= v_maxRlbkId
+          RETURNING rlbs_rlbk_id
+        )
+        SELECT COUNT (DISTINCT rlbs_rlbk_id) INTO v_nbPurgedRlbk FROM deleted_rlbk;
+      v_wording = v_wording || ' ; ' || v_nbPurgedRlbk || ' rollback events deleted';
+    END IF;
+-- record the purge into the history if there are significant data
+    IF v_wording <> '' THEN
+      INSERT INTO emaj.emaj_hist (hist_function, hist_wording)
+        VALUES ('PURGE_HISTORY', v_wording);
+    END IF;
+    RETURN;
+  END;
+$_purge_hist$;
+
 CREATE OR REPLACE FUNCTION emaj._check_json_groups_conf(v_groupsJson JSON)
 RETURNS SETOF emaj._report_message_type LANGUAGE plpgsql AS
 $_check_json_groups_conf$
