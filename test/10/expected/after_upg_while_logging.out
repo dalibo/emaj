@@ -180,9 +180,12 @@ NOTICE:  table "emaj_temp_script" does not exist, skipping
 (1 row)
 
 select emaj.emaj_gen_sql_group('myGroup1','M1',NULL,'/dev/null',array['myschema1.myTbl3']);
-ERROR:  _gen_sql_groups: 1 tables/sequences (myschema1.myTbl3) had no pkey at M1 mark time.
-CONTEXT:  PL/pgSQL function emaj._gen_sql_groups(text[],boolean,text,text,text,text[]) line 80 at RAISE
-PL/pgSQL function emaj.emaj_gen_sql_group(text,text,text,text,text[]) line 14 at RETURN
+NOTICE:  table "emaj_temp_script" does not exist, skipping
+ emaj_gen_sql_group 
+--------------------
+                 10
+(1 row)
+
 -----------------------------
 -- Step 8 : for myGroup1, update tables, rename a mark, then delete 2 marks then delete all before a mark 
 -----------------------------
@@ -318,7 +321,7 @@ select hist_function, hist_event, hist_object,
   order by hist_id;
       hist_function       |     hist_event     |                            hist_object                            |                                        regexp_replace                                         | hist_user 
 --------------------------+--------------------+-------------------------------------------------------------------+-----------------------------------------------------------------------------------------------+-----------
- EMAJ_INSTALL             |                    | E-Maj 3.2.0                                                       | Initialisation completed                                                                      | postgres
+ EMAJ_INSTALL             |                    | E-Maj 3.3.0                                                       | Initialisation completed                                                                      | postgres
  CREATE_GROUP             | BEGIN              | myGroup1                                                          | rollbackable                                                                                  | postgres
  CREATE_GROUP             | LOG_SCHEMA CREATED | emaj_myschema1                                                    |                                                                                               | postgres
  CREATE_GROUP             | END                | myGroup1                                                          | 6 tables/sequences processed                                                                  | postgres
@@ -452,8 +455,8 @@ select hist_function, hist_event, hist_object,
  SET_MARK_GROUP           | BEGIN              | myGroup6                                                          | STOP_%                                                                                        | postgres
  SET_MARK_GROUP           | END                | myGroup6                                                          | STOP_%                                                                                        | postgres
  STOP_GROUP               | END                | myGroup6                                                          | 3 tables/sequences processed                                                                  | postgres
- EMAJ_INSTALL             | BEGIN              | E-Maj <devel>                                                     | Upgrade from 3.2.0 started                                                                    | postgres
- EMAJ_INSTALL             | END                | E-Maj <devel>                                                     | Upgrade from 3.2.0 completed                                                                  | postgres
+ EMAJ_INSTALL             | BEGIN              | E-Maj <devel>                                                     | Upgrade from 3.3.0 started                                                                    | postgres
+ EMAJ_INSTALL             | END                | E-Maj <devel>                                                     | Upgrade from 3.3.0 completed                                                                  | postgres
  UNPROTECT_GROUP          |                    | myGroup1                                                          | Status 1                                                                                      | postgres
  ROLLBACK_GROUPS          | BEGIN              | myGroup1,myGroup2                                                 | Unlogged rollback to mark Common (timestamp)                                                  | postgres
  DBLINK_OPEN_CNX          |                    | rlbk#1                                                            | Status = -5                                                                                   | postgres
@@ -564,6 +567,8 @@ select hist_function, hist_event, hist_object,
  ROLLBACK_GROUP           | END                | myGroup1                                                          | Rollback_id 10, 2 tables and 1 sequences effectively processed                                | postgres
  GEN_SQL_GROUP            | BEGIN              | myGroup1                                                          | From mark M1 to current situation with tables/sequences filtering                             | postgres
  GEN_SQL_GROUP            | END                | myGroup1                                                          | 36 generated statements - script exported into /dev/null                                      | postgres
+ GEN_SQL_GROUP            | BEGIN              | myGroup1                                                          | From mark M1 to current situation with tables/sequences filtering                             | postgres
+ GEN_SQL_GROUP            | END                | myGroup1                                                          | 10 generated statements - script exported into /dev/null                                      | postgres
  RENAME_MARK_GROUP        | BEGIN              | myGroup1                                                          | RLBK_M4_%_START                                                                               | postgres
  RENAME_MARK_GROUP        | END                | myGroup1                                                          | RLBK_M4_%_START renamed Before logged rollback to M4                                          | postgres
  DELETE_MARK_GROUP        | BEGIN              | myGroup1                                                          | RLBK_M4_%_DONE                                                                                | postgres
@@ -595,7 +600,7 @@ select hist_function, hist_event, hist_object,
  DROP_GROUP               | BEGIN              | myGroup6                                                          |                                                                                               | postgres
  DROP_GROUP               | LOG_SCHEMA DROPPED | emaj_myschema6                                                    |                                                                                               | postgres
  DROP_GROUP               | END                | myGroup6                                                          | 3 tables/sequences processed                                                                  | postgres
-(277 rows)
+(279 rows)
 
 --
 reset role;

@@ -91,7 +91,13 @@ SELECT emaj._disable_event_triggers();
 
 
 --<begin_functions>                              pattern used by the tool that extracts and insert the functions definition
+------------------------------------------------------------------
+-- drop obsolete functions or functions with modified interface --
+------------------------------------------------------------------
 
+------------------------------------------------------------------
+-- create new or modified functions                             --
+------------------------------------------------------------------
 --<end_functions>                                pattern used by the tool that extracts and insert the functions definition
 ------------------------------------------
 --                                      --
@@ -153,7 +159,9 @@ INSERT INTO pg_catalog.pg_description (objoid, classoid, objsubid, description)
        );
 
 -- update the version id in the emaj_param table
+ALTER TABLE emaj.emaj_param DISABLE TRIGGER emaj_param_change_trg;
 UPDATE emaj.emaj_param SET param_value_text = '<devel>' WHERE param_key = 'emaj_version';
+ALTER TABLE emaj.emaj_param ENABLE TRIGGER emaj_param_change_trg;
 
 -- insert the upgrade end record in the operation history
 INSERT INTO emaj.emaj_hist (hist_function, hist_event, hist_object, hist_wording)

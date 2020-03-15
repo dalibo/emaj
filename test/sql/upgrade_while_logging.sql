@@ -59,9 +59,6 @@ select * from "emaj_phil's schema3"."myTbl2\_log_seq";
 -- emaj tables and sequences
 
 -- technical tables
-select * from emaj.emaj_relation where rel_kind = 'r';
---   the next statement shouldn't return any row
-select * from emaj.emaj_relation where rel_kind = 'S' and rel_priority is not null;
 
 -- log tables
 select col11, col12, col13, emaj_verb, emaj_tuple, emaj_gid from emaj_mySchema1.myTbl1_log order by emaj_gid, emaj_tuple desc;
