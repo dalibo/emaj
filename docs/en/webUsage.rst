@@ -198,6 +198,21 @@ For each consolidable rollback, a button allows to effectively consolidate the o
 
    Figure 12 – Rollback operations monitoring.
 
+Clicking on a rollback identifier in one of these tables displays a page that shows information details about the selected in progress or completed operation.
+
+More precisely, are displayed:
+
+* the rollback identification,
+* its progress,
+* the final report returned to the user, when the operation is completed,
+* its main technical characteristics,
+* the launched session or sessions,
+* and the detail of the operation plan, showing each elementary step, with its duration and optionaly estimates computed by E-Maj at the operation initialisation.
+
+.. figure:: images/emajweb_rollbackdetails.png
+   :align: center
+
+   Figure 13 – Details of a Rollback operation.
 
 E-Maj environment state
 -----------------------
@@ -218,4 +233,4 @@ Two buttons allow to export and import parameters configurations to or from a lo
 .. figure:: images/emajweb_emaj.png
    :align: center
 
-   Figure 13 – The E-Maj environment state.
+   Figure 14 – The E-Maj environment state.

@@ -198,6 +198,21 @@ Pour chaque rollback tracé consolidable listé, un bouton permet d’exécuter 
 
    Figure 12 – Suivi des opérations de rollback.
 
+En cliquant sur un identifiant de rollback dans l’un de ces tableaux, on accède à une page présentant des informations détaillées sur le déroulement en cours ou passé de l’opération sélectionnée.
+
+On y trouve plus précisément des données concernant :
+
+* l’identification du rollback,
+* sa progression,
+* le rapport final restitué à l’utilisateur, quand l’opération est terminée,
+* ses principales caractéristiques techniques,
+* la ou les sessions lancées,
+* et le détail de la planification de l’opération, montrant chaque étape élémentaire, avec notamment sa durée, et optionnellement les estimations initiales calculées par E-Maj.
+
+.. figure:: images/emajweb_rollbackdetails.png
+   :align: center
+
+   Figure 13 – Détails d’une opération de rollback.
 
 État de l'environnement E-Maj
 -----------------------------
@@ -218,5 +233,4 @@ Deux boutons en bas de page permettent d’exporter ou d’importer une configur
 .. figure:: images/emajweb_emaj.png
    :align: center
 
-   Figure 13 – État de l'environnement E-Maj 
-
+   Figure 14 – État de l'environnement E-Maj 

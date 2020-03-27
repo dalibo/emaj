@@ -455,6 +455,7 @@ begin;
   select rlbk_id, rlbk_status, rlbk_remaining, rlbk_completion_pct from emaj._rollback_activity();
   select 1.0 - ((20.0 - 19.0)) / (124.1 + (20.0 - 19.0));  -- the completion % should be 99%
 rollback;
+
 begin;
 -- 1 rollback operation in LOCKING state and without step other than LOCK_TABLE
   insert into emaj.emaj_time_stamp (time_id, time_tx_timestamp) values (-1, now()-'2 minutes'::interval);
@@ -557,7 +558,6 @@ begin;
   select emaj.emaj_consolidate_rollback_group('emptyGroup','end_rlbk_mark');
   select * from emaj.emaj_mark where mark_group = 'emptyGroup' order by mark_time_id, mark_group;
 rollback;
-
 
 -- check that dropping the group deletes rows from emaj_sequence and emaj_seq_hole
 begin;
