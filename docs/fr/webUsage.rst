@@ -224,6 +224,8 @@ Sont d'abord restitués :
 * les versions de PostgreSQL et d'E-Maj installées,
 * la place disque occupée par E-Maj (tables de log, tables techniques et index associés) et la part que cela représente dans la taille globale de la base de données.
 
+Lorsque l’utilisateur est connecté avec un rôle "*superuser*", des boutons permettent, en fonction du contexte, de créer, mettre à jour ou supprimer l’extension *emaj*.
+
 Puis l'intégrité de l'environnement est testé ; le résultat de l'exécution de la fonction :ref:`emaj_verify_all() <emaj_verify_all>` est affiché.
 
 Enfin sont listés les paramètres de fonctionnement de l’extension emaj, qu’ils soient présents dans la table *emaj_param* ou valorisés par défaut.

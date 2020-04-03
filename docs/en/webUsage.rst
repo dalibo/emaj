@@ -224,6 +224,8 @@ First, some items are displayed:
 * the installed PostgreSQL and E-Maj versions,
 * the disk space used by E-Maj (log tables, technical tables and their indexes), and the part of the global database space it represents.
 
+If the user is connected with a "*superuser*" role, some buttons allow to create, update or drop the *emaj* extension, depending on the context.
+
 Then, the environment integrity is checked; the result of the :ref:`emaj_verify_all() <emaj_verify_all>` function execution is displayed.
 
 The page ends with a list of the extension parameters value, be they present in the *emaj_param table* or set to their default value.
