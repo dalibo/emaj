@@ -158,6 +158,9 @@ CREATE INDEX emaj_relation_idx2 ON emaj.emaj_relation (rel_log_schema);
 -- recreate the foreign keys that point on this table
 --   there is no fkey for this table
 
+-- and finaly drop the temporary table
+DROP TABLE emaj_relation_old;
+
 --
 -- process the emaj_rlbk table
 --
@@ -222,6 +225,9 @@ ALTER TABLE emaj.emaj_rlbk_stat ADD FOREIGN KEY (rlbt_rlbk_id) REFERENCES emaj.e
 SELECT CASE WHEN EXISTS (SELECT 1 FROM emaj.emaj_rlbk)
               THEN setval('emaj.emaj_rlbk_rlbk_id_seq', (SELECT max(rlbk_id) FROM emaj.emaj_rlbk))
        END;
+
+-- and finaly drop the temporary table
+DROP TABLE emaj_rlbk_old;
 
 --
 -- process the emaj_alter_plan table

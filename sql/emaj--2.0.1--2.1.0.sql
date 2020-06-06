@@ -182,6 +182,9 @@ SELECT CASE WHEN EXISTS (SELECT 1 FROM emaj.emaj_rlbk)
               THEN setval('emaj.emaj_rlbk_rlbk_id_seq', (SELECT max(rlbk_id) FROM emaj.emaj_rlbk))
        END;
 
+-- and finaly drop the temporary table
+DROP TABLE emaj_rlbk_old;
+
 --
 -- add created or recreated tables and sequences to the list of content to save by pg_dump
 --

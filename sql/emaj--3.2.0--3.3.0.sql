@@ -309,6 +309,9 @@ CREATE INDEX emaj_relation_idx2 ON emaj.emaj_relation (rel_log_schema);
 -- recreate the foreign keys that point on this table
 --   there is no fkey for this table
 
+-- and finaly drop the temporary table
+DROP TABLE emaj_relation_old;
+
 --
 -- add created or recreated tables and sequences to the list of content to save by pg_dump
 --

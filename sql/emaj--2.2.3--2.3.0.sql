@@ -135,6 +135,9 @@ INSERT INTO emaj.emaj_alter_plan
 -- recreate the foreign keys that point on this table
 -- set the last value for the sequence associated to the serial column
 
+-- and finaly drop the temporary table
+DROP TABLE emaj_alter_plan_old;
+
 --
 -- add created or recreated tables and sequences to the list of content to save by pg_dump
 --
@@ -209,6 +212,9 @@ INSERT INTO emaj.emaj_rlbk_plan (
 -- create indexes
 -- recreate the foreign keys that point on this table
 -- set the last value for the sequence associated to the serial column
+
+-- and finaly drop the temporary table
+DROP TABLE emaj_rlbk_plan_old;
 
 --
 -- add created or recreated tables and sequences to the list of content to save by pg_dump
