@@ -145,6 +145,8 @@ The PostgreSQL extension manager determines the scripts to execute depending on 
 
 But this upgrade is not able to process cases when at least one tables group has been created with a PostgreSQL version prior 8.4. In such a case, these old tables groups must be dropped before the upgrade and recreated after.
 
+This upgrade is also not possible with PostgreSQL version 13 and higher. For these PostgreSQL versions, E-Maj must be uninstalled and re-installed in its latest version.
+
 .. _extension_upgrade:
 
 Upgrade an E-Maj version already installed as an extension

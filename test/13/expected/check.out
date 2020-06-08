@@ -1,0 +1,277 @@
+-- check.sql: Perform various checks on the installed E-Maj components.
+--            Also appreciate the regression test coverage.
+--
+-----------------------------
+-- count all functions in emaj schema and functions callable by users (emaj_xxx)
+-----------------------------
+select count(*) from pg_proc, pg_namespace 
+  where pg_namespace.oid=pronamespace and nspname = 'emaj' and (proname like E'emaj\\_%' or proname like E'\\_%');
+ count 
+-------
+   177
+(1 row)
+
+select count(*) from pg_proc, pg_namespace 
+  where pg_namespace.oid=pronamespace and nspname = 'emaj' and proname like E'emaj\\_%';
+ count 
+-------
+    81
+(1 row)
+
+-----------------------------
+-- check that no function has kept its default rights to public
+-----------------------------
+-- should return no row
+select proname, proacl from pg_proc, pg_namespace 
+  where pg_namespace.oid=pronamespace
+    and nspname = 'emaj' and proname not like '%_log_fnct'
+    and proacl is null;
+ proname | proacl 
+---------+--------
+(0 rows)
+
+-----------------------------
+-- check that no user function has the default comment
+-----------------------------
+-- should return no row
+select pg_proc.proname
+  from pg_proc
+    join pg_namespace on (pronamespace=pg_namespace.oid)
+    left outer join pg_description on (pg_description.objoid = pg_proc.oid 
+                     and classoid = (select oid from pg_class where relname = 'pg_proc')
+                     and objsubid=0)
+  where nspname = 'emaj' and proname like E'emaj\\_%' and 
+        pg_description.description = 'E-Maj internal function';
+ proname 
+---------
+(0 rows)
+
+-----------------------------
+-- perform various consistency checks on technical tables
+-----------------------------
+-- no row in emaj_schema not linked to a relation assigned to a group (to complement the fkey between emaj_relation and emaj_schema)
+select sch_name from emaj.emaj_schema where sch_name not in (select distinct rel_log_schema from emaj.emaj_relation);
+ sch_name 
+----------
+(0 rows)
+
+-----------------------------
+-- get test coverage data just before cleanup
+-----------------------------
+-- wait to let the statistics collector aggregate the latest stats
+select pg_sleep(1.5);
+ pg_sleep 
+----------
+ 
+(1 row)
+
+-- display the functions that are not called by any regression test script
+--   (_forbid_truncate_fnct is actualy executed but not counted in statistics)
+--   (_rlbk_error is not executed in regression tests - rare cases difficult to simulate)
+select nspname, proname from pg_proc, pg_namespace
+  where pronamespace = pg_namespace.oid
+    and nspname = 'emaj' and (proname like E'emaj\\_%' or proname like E'\\_%')
+except
+select schemaname, funcname from pg_stat_user_functions
+  where schemaname = 'emaj' and (funcname like E'emaj\\_%' or funcname like E'\\_%')
+order by 1,2;
+ nspname |        proname        
+---------+-----------------------
+ emaj    | _forbid_truncate_fnct
+ emaj    | _rlbk_error
+(2 rows)
+
+-- display the number of calls for each emaj function (
+--   (_pg_version_num() is excluded as it is an sql immutable function that may thus be inlined and not always counted in statistics
+--    _verify_groups() and _log_stat_tbl() are also excluded as their number of calls is not stable)
+select funcname, calls from pg_stat_user_functions
+  where schemaname = 'emaj' and (funcname like E'emaj\\_%' or funcname like E'\\_%')
+    and funcname <> '_pg_version_num' and funcname <> '_verify_groups'  and funcname <> '_log_stat_tbl'
+  order by funcname, funcid;
+                 funcname                  | calls 
+-------------------------------------------+-------
+ _add_seq                                  |    22
+ _add_tbl                                  |    47
+ _adjust_group_properties                  |    51
+ _alter_exec                               |    83
+ _alter_groups                             |    84
+ _alter_plan                               |    85
+ _assign_sequences                         |    16
+ _assign_tables                            |    23
+ _build_alter_seq                          |   223
+ _build_sql_tbl                            |   181
+ _change_log_data_tsp_tbl                  |    31
+ _change_log_index_tsp_tbl                 |    17
+ _change_priority_tbl                      |    23
+ _check_conf_groups                        |   142
+ _check_fk_groups                          |   170
+ _check_group_names                        |  1104
+ _check_json_groups_conf                   |    29
+ _check_json_param_conf                    |    15
+ _check_mark_name                          |   369
+ _check_marks_range                        |   119
+ _check_new_mark                           |   387
+ _cleanup_rollback_state                   |   356
+ _create_log_schemas                       |   112
+ _create_log_trigger_tbl                   |   181
+ _create_seq                               |    62
+ _create_tbl                               |   181
+ _dblink_close_cnx                         |    72
+ _dblink_open_cnx                          |    89
+ _dblink_sql_exec                          |  2181
+ _delete_before_mark_group                 |    23
+ _delete_between_marks_group               |    14
+ _delete_intermediate_mark_group           |    23
+ _delete_log_tbl                           |    55
+ _detailed_log_stat_groups                 |    33
+ _disable_event_triggers                   |   377
+ _drop_group                               |    37
+ _drop_log_schemas                         |   199
+ _drop_seq                                 |    83
+ _drop_tbl                                 |   237
+ _emaj_group_def_change_fnct               |   555
+ _emaj_param_change_fnct                   |    41
+ _enable_event_triggers                    |   373
+ _estimate_rollback_groups                 |    13
+ _event_trigger_sql_drop_fnct              |   175
+ _event_trigger_table_rewrite_fnct         |   119
+ _export_groups_conf                       |     7
+ _export_param_conf                        |     7
+ _export_sql_script                        |    46
+ _gen_sql_groups                           |    27
+ _gen_sql_seq                              |    41
+ _gen_sql_tbl                              |    50
+ _get_current_sequence_state               |  2812
+ _get_default_tablespace                   |    20
+ _get_previous_mark_group                  |    37
+ _import_groups_conf                       |    10
+ _import_groups_conf_exec                  |    10
+ _import_groups_conf_prepare               |    15
+ _import_param_conf                        |     7
+ _lock_groups                              |   294
+ _log_stat_groups                          |    33
+ _log_truncate_fnct                        |     2
+ _modify_tables                            |    21
+ _move_seq                                 |    23
+ _move_sequences                           |    15
+ _move_tables                              |    18
+ _move_tbl                                 |    44
+ _purge_hist                               |    78
+ _remove_seq                               |    25
+ _remove_sequences                         |    13
+ _remove_tables                            |    17
+ _remove_tbl                               |    60
+ _reset_groups                             |   131
+ _rlbk_async                               |     2
+ _rlbk_check                               |    99
+ _rlbk_end                                 |    78
+ _rlbk_groups                              |    73
+ _rlbk_init                                |    79
+ _rlbk_planning                            |    92
+ _rlbk_seq                                 |   182
+ _rlbk_session_exec                        |    85
+ _rlbk_session_lock                        |    85
+ _rlbk_set_batch_number                    |   211
+ _rlbk_start_mark                          |    79
+ _rlbk_tbl                                 |   139
+ _rollback_activity                        |    17
+ _set_mark_groups                          |   340
+ _set_time_stamp                           |   555
+ _start_groups                             |    54
+ _stop_groups                              |    70
+ _verify_all_groups                        |    47
+ _verify_all_schemas                       |    47
+ emaj_alter_group                          |    56
+ emaj_alter_groups                         |    18
+ emaj_assign_sequence                      |     2
+ emaj_assign_sequences                     |     6
+ emaj_assign_sequences                     |     8
+ emaj_assign_table                         |     5
+ emaj_assign_tables                        |     6
+ emaj_assign_tables                        |    12
+ emaj_cleanup_rollback_state               |    10
+ emaj_comment_group                        |     5
+ emaj_comment_mark_group                   |    10
+ emaj_consolidate_rollback_group           |    14
+ emaj_create_group                         |    38
+ emaj_delete_before_mark_group             |    19
+ emaj_delete_mark_group                    |    28
+ emaj_detailed_log_stat_group              |    26
+ emaj_detailed_log_stat_groups             |     5
+ emaj_disable_protection_by_event_triggers |    13
+ emaj_drop_group                           |    31
+ emaj_enable_protection_by_event_triggers  |    13
+ emaj_estimate_rollback_group              |     9
+ emaj_estimate_rollback_groups             |     4
+ emaj_export_groups_configuration          |     2
+ emaj_export_groups_configuration          |     4
+ emaj_export_parameters_configuration      |     4
+ emaj_export_parameters_configuration      |     2
+ emaj_force_drop_group                     |     6
+ emaj_force_stop_group                     |    16
+ emaj_gen_sql_group                        |    20
+ emaj_gen_sql_groups                       |     7
+ emaj_get_consolidable_rollbacks           |    11
+ emaj_get_current_log_table                |     4
+ emaj_get_previous_mark_group              |    11
+ emaj_get_previous_mark_group              |     9
+ emaj_ignore_app_trigger                   |    15
+ emaj_import_groups_configuration          |     3
+ emaj_import_groups_configuration          |     7
+ emaj_import_parameters_configuration      |     4
+ emaj_import_parameters_configuration      |     3
+ emaj_log_stat_group                       |    23
+ emaj_log_stat_groups                      |     7
+ emaj_logged_rollback_group                |     7
+ emaj_logged_rollback_group                |    16
+ emaj_logged_rollback_groups               |     4
+ emaj_logged_rollback_groups               |     4
+ emaj_modify_table                         |     7
+ emaj_modify_tables                        |     6
+ emaj_modify_tables                        |     8
+ emaj_move_sequence                        |     2
+ emaj_move_sequences                       |     4
+ emaj_move_sequences                       |     9
+ emaj_move_table                           |     4
+ emaj_move_tables                          |     4
+ emaj_move_tables                          |    10
+ emaj_protect_group                        |     8
+ emaj_protect_mark_group                   |    11
+ emaj_remove_sequence                      |     4
+ emaj_remove_sequences                     |     5
+ emaj_remove_sequences                     |     4
+ emaj_remove_table                         |     6
+ emaj_remove_tables                        |     6
+ emaj_remove_tables                        |     5
+ emaj_rename_mark_group                    |    25
+ emaj_reset_group                          |     8
+ emaj_rollback_activity                    |     6
+ emaj_rollback_group                       |    10
+ emaj_rollback_group                       |    19
+ emaj_rollback_groups                      |     5
+ emaj_rollback_groups                      |     8
+ emaj_set_mark_group                       |    72
+ emaj_set_mark_groups                      |    25
+ emaj_snap_group                           |    13
+ emaj_snap_log_group                       |    12
+ emaj_start_group                          |    41
+ emaj_start_groups                         |    13
+ emaj_stop_group                           |    43
+ emaj_stop_groups                          |    11
+ emaj_sync_def_group                       |     9
+ emaj_unprotect_group                      |     8
+ emaj_unprotect_mark_group                 |     6
+ emaj_verify_all                           |    47
+(172 rows)
+
+-- count the total number of user-callable function calls (those who failed are not counted)
+select sum(calls) from pg_stat_user_functions where funcname like E'emaj\\_%';
+ sum  
+------
+ 1011
+(1 row)
+
+-----------------------------
+-- execute the perl script that checks the code
+-----------------------------
+\! perl ${EMAJ_DIR}/tools/check_code.pl | grep -P '^WARNING:|^ERROR:'

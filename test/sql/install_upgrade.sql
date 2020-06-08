@@ -14,7 +14,7 @@ CREATE EXTENSION IF NOT EXISTS btree_gist;
 -----------------------------
 
 -- check the extension is available in the right version 
-select * from pg_available_extension_versions where name = 'emaj';
+select * from pg_available_extension_versions where name = 'emaj' order by version desc limit 2;
 
 -- look at all available update paths
 select * from pg_extension_update_paths('emaj') order by 1,2;;

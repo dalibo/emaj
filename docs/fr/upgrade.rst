@@ -146,6 +146,8 @@ C’est le gestionnaire d’extension de PostgreSQL qui détermine le ou les scr
 
 Cette mise à jour ne peut néanmoins pas traiter le cas où au moins un groupe de tables a été créé avec une version de PostgreSQL antérieure à 8.4. Dans ce cas le ou les groupes de tables concernés doivent être supprimés au préalable puis recréés par la suite.
 
+Cette mise à jour n’est pas non plus possible avec les versions PostgreSQL 13 et suivantes. Pour ces versions de PostgreSQL, E-Maj doit être désinstallé puis réinstallé dans sa dernière version.
+
 .. _extension_upgrade:
 
 Mise à jour d’une version déjà installée comme extension

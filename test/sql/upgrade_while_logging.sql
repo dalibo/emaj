@@ -10,7 +10,7 @@ SET default_tablespace TO tspemaj;
 -----------------------------
 
 -- check the extension is available
-select * from pg_available_extension_versions where name = 'emaj';
+select * from pg_available_extension_versions where name = 'emaj' order by version desc limit 2;
 select relname from pg_catalog.pg_class, 
                     (select unnest(extconfig) as oid from pg_catalog.pg_extension where extname = 'emaj') as t 
   where t.oid = pg_class.oid
