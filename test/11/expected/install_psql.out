@@ -2766,16 +2766,15 @@ $_create_tbl$
 -- create the log table: it looks like the application table, with some additional technical columns
     EXECUTE format('DROP TABLE IF EXISTS %s',
                    v_logTableName);
-    EXECUTE format('CREATE TABLE %s (LIKE %s) %s',
+    EXECUTE format('CREATE TABLE %s (LIKE %s,'
+                   '    emaj_verb      VARCHAR(3),'
+                   '    emaj_tuple     VARCHAR(3),'
+                   '    emaj_gid       BIGINT      NOT NULL   DEFAULT nextval(''emaj.emaj_global_seq''),'
+                   '    emaj_changed   TIMESTAMPTZ DEFAULT clock_timestamp(),'
+                   '    emaj_txid      BIGINT      DEFAULT txid_current(),'
+                   '    emaj_user      VARCHAR(32) DEFAULT session_user'
+                   '    ) %s',
                     v_logTableName, v_fullTableName, v_dataTblSpace);
-    EXECUTE format('ALTER TABLE %s'
-                   ' ADD COLUMN emaj_verb      VARCHAR(3),'
-                   ' ADD COLUMN emaj_tuple     VARCHAR(3),'
-                   ' ADD COLUMN emaj_gid       BIGINT      NOT NULL   DEFAULT nextval(''emaj.emaj_global_seq''),'
-                   ' ADD COLUMN emaj_changed   TIMESTAMPTZ DEFAULT clock_timestamp(),'
-                   ' ADD COLUMN emaj_txid      BIGINT      DEFAULT txid_current(),'
-                   ' ADD COLUMN emaj_user      VARCHAR(32) DEFAULT session_user',
-                   v_logTableName);
 -- get the attnum of the emaj_verb column
     SELECT attnum INTO STRICT v_attnum
       FROM pg_catalog.pg_attribute, pg_catalog.pg_class, pg_catalog.pg_namespace
@@ -11133,7 +11132,7 @@ $do$
     RETURN;
   END;
 $do$;
-psql:sql/emaj-devel.sql:11376: NOTICE:  E-Maj installation: E-Maj successfully installed.
+psql:sql/emaj-devel.sql:11375: NOTICE:  E-Maj installation: E-Maj successfully installed.
 COMMIT;
 -----------------------------
 -- check installation
