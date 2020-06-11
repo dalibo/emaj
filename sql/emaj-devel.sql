@@ -9644,7 +9644,7 @@ $emaj_snap_group$
           IF emaj._pg_version_num() >= 100000 THEN
             v_stmt = 'COPY (SELECT sequencename, rel.last_value, start_value, increment_by, max_value, '
                   || 'min_value, cache_size, cycle, rel.is_called '
-                  || 'FROM ' || v_fullTableName || ' rel, pg_sequences '
+                  || 'FROM ' || v_fullTableName || ' rel, pg_catalog.pg_sequences '
                   || 'WHERE schemaname = '|| quote_literal(r_tblsq.rel_schema) || ' AND sequencename = '
                   || quote_literal(r_tblsq.rel_tblseq) ||') TO ' || quote_literal(v_fileName) || ' ' || coalesce (v_copyOptions, '');
           ELSE

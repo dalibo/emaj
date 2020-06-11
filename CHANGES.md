@@ -3,7 +3,8 @@ E-Maj - Change log
 <devel>
 ------
 ###Enhancements:###
-
+  * E-Maj is compatible with PostgreSQL V13.
+  * Minor coding changes
 
 ###Bug fixes:###
   * Fix some missing temporary table drops in several old extension upgrade

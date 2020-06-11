@@ -98,6 +98,112 @@ SELECT emaj._disable_event_triggers();
 ------------------------------------------------------------------
 -- create new or modified functions                             --
 ------------------------------------------------------------------
+CREATE OR REPLACE FUNCTION emaj.emaj_snap_group(v_groupName TEXT, v_dir TEXT, v_copyOptions TEXT)
+RETURNS INT LANGUAGE plpgsql
+SECURITY DEFINER SET search_path = pg_catalog, pg_temp AS
+$emaj_snap_group$
+-- This function creates a file for each table and sequence belonging to the group.
+-- For tables, these files contain all rows sorted on primary key.
+-- For sequences, they contain a single row describing the sequence.
+-- To do its job, the function performs COPY TO statement, with all default parameters.
+-- For table without primary key, rows are sorted on all columns.
+-- There is no need for the group not to be logging.
+-- As all COPY statements are executed inside a single transaction:
+--   - the function can be called while other transactions are running,
+--   - the snap files will present a coherent state of tables.
+-- It's users responsability:
+--   - to create the directory (with proper permissions allowing the cluster to write into) before the emaj_snap_group function call, and
+--   - maintain its content outside E-maj.
+-- Input: group name,
+--        the absolute pathname of the directory where the files are to be created and the options to used in the COPY TO statements
+-- Output: number of processed tables and sequences
+-- The function is defined as SECURITY DEFINER so that emaj_adm role can use.
+  DECLARE
+    v_nbTb                   INT = 0;
+    r_tblsq                  RECORD;
+    v_fullTableName          TEXT;
+    v_colList                TEXT;
+    v_fileName               TEXT;
+    v_stmt                   TEXT;
+  BEGIN
+-- insert begin in the history
+    INSERT INTO emaj.emaj_hist (hist_function, hist_event, hist_object, hist_wording)
+      VALUES ('SNAP_GROUP', 'BEGIN', v_groupName, v_dir);
+-- check the group name
+    PERFORM emaj._check_group_names(v_groupNames := ARRAY[v_groupName], v_mayBeNull := FALSE, v_lockGroups := FALSE, v_checkList := '');
+-- check the supplied directory is not null
+    IF v_dir IS NULL THEN
+      RAISE EXCEPTION 'emaj_snap_group: The directory parameter cannot be NULL.';
+    END IF;
+-- check the copy options parameter doesn't contain unquoted ; that could be used for sql injection
+    IF regexp_replace(v_copyOptions,'''.*''','') LIKE '%;%' THEN
+      RAISE EXCEPTION 'emaj_snap_group: The COPY options parameter format is invalid.';
+    END IF;
+-- for each table/sequence of the emaj_relation table
+    FOR r_tblsq IN
+        SELECT rel_priority, rel_schema, rel_tblseq, rel_kind FROM emaj.emaj_relation
+          WHERE upper_inf(rel_time_range) AND rel_group = v_groupName
+          ORDER BY rel_priority, rel_schema, rel_tblseq
+    LOOP
+      v_fileName = v_dir || '/' || translate(r_tblsq.rel_schema || '_' || r_tblsq.rel_tblseq || '.snap', E' /\\$<>*', '_______');
+      v_fullTableName = quote_ident(r_tblsq.rel_schema) || '.' || quote_ident(r_tblsq.rel_tblseq);
+      CASE r_tblsq.rel_kind
+        WHEN 'r' THEN
+-- if it is a table,
+--   first build the order by column list
+          PERFORM 0 FROM pg_catalog.pg_class, pg_catalog.pg_namespace, pg_catalog.pg_constraint
+            WHERE relnamespace = pg_namespace.oid AND connamespace = pg_namespace.oid AND conrelid = pg_class.oid AND
+                  contype = 'p' AND nspname = r_tblsq.rel_schema AND relname = r_tblsq.rel_tblseq;
+          IF FOUND THEN
+--   the table has a pkey,
+            SELECT string_agg(quote_ident(attname), ',') INTO v_colList FROM (
+              SELECT attname FROM pg_catalog.pg_attribute, pg_catalog.pg_index
+                WHERE pg_attribute.attrelid = pg_index.indrelid
+                  AND attnum = ANY (indkey)
+                  AND indrelid = v_fullTableName::regclass AND indisprimary
+                  AND attnum > 0 AND attisdropped = FALSE) AS t;
+          ELSE
+--   the table has no pkey
+            SELECT string_agg(quote_ident(attname), ',') INTO v_colList FROM (
+              SELECT attname FROM pg_catalog.pg_attribute
+                WHERE attrelid = v_fullTableName::regclass
+                  AND attnum > 0  AND attisdropped = FALSE) AS t;
+          END IF;
+--   prepare the COPY statement
+          v_stmt= 'COPY (SELECT * FROM ' || v_fullTableName || ' ORDER BY ' || v_colList || ') TO ' ||
+                  quote_literal(v_fileName) || ' ' || coalesce (v_copyOptions, '');
+        WHEN 'S' THEN
+-- if it is a sequence, the statement has no order by
+          IF emaj._pg_version_num() >= 100000 THEN
+            v_stmt = 'COPY (SELECT sequencename, rel.last_value, start_value, increment_by, max_value, '
+                  || 'min_value, cache_size, cycle, rel.is_called '
+                  || 'FROM ' || v_fullTableName || ' rel, pg_catalog.pg_sequences '
+                  || 'WHERE schemaname = '|| quote_literal(r_tblsq.rel_schema) || ' AND sequencename = '
+                  || quote_literal(r_tblsq.rel_tblseq) ||') TO ' || quote_literal(v_fileName) || ' ' || coalesce (v_copyOptions, '');
+          ELSE
+            v_stmt = 'COPY (SELECT sequence_name, last_value, start_value, increment_by, max_value, '
+                  || 'min_value, cache_value, is_cycled, is_called FROM ' || v_fullTableName
+                  || ') TO ' || quote_literal(v_fileName) || ' ' || coalesce (v_copyOptions, '');
+          END IF;
+      END CASE;
+-- and finaly perform the COPY
+      EXECUTE v_stmt;
+      v_nbTb = v_nbTb + 1;
+    END LOOP;
+-- create the _INFO file to keep general information about the snap operation
+    EXECUTE 'COPY (SELECT ' ||
+            quote_literal('E-Maj snap of tables group ' || v_groupName ||
+            ' at ' || transaction_timestamp()) ||
+            ') TO ' || quote_literal(v_dir || '/_INFO');
+-- insert end in the history
+    INSERT INTO emaj.emaj_hist (hist_function, hist_event, hist_object, hist_wording)
+      VALUES ('SNAP_GROUP', 'END', v_groupName, v_nbTb || ' tables/sequences processed');
+    RETURN v_nbTb;
+  END;
+$emaj_snap_group$;
+COMMENT ON FUNCTION emaj.emaj_snap_group(TEXT,TEXT,TEXT) IS
+$$Snaps all application tables and sequences of an E-Maj group into a given directory.$$;
+
 --<end_functions>                                pattern used by the tool that extracts and insert the functions definition
 ------------------------------------------
 --                                      --
