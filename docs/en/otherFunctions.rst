@@ -252,6 +252,17 @@ If the E-Maj administrator wishes to check the status of recently executed rollb
 
 The function returns the number of modified rollback operations.
 
+.. _emaj_purge_histories:
+
+History data purge
+------------------
+
+E-Maj keeps some historical data: traces of elementary operations, E-Maj rollback details, tables groups structure changes (:ref:`more  details...<emaj_hist>`). Oldest traces are automaticaly purged by the extension. But it is also possible to purge these obsolete traces on demand using::
+
+   SELECT emaj.emaj_purge_histories('<retention.delay>');
+
+The *<retention.delay>* parameter is of type *INTERVAL*. It overloads the *'history_retention'* parameter of the *emaj_param* table.
+
 .. _emaj_disable_protection_by_event_triggers:
 .. _emaj_enable_protection_by_event_triggers:
 
@@ -271,4 +282,3 @@ To reactivate existing event triggers::
    SELECT emaj.emaj_enable_protection_by_event_triggers();
 
 The function returns the number of reactivated event triggers.
-

@@ -1630,6 +1630,21 @@ select emaj.emaj_import_parameters_configuration('/tmp/orig_param_config', false
 
 \! rm /tmp/orig_param_config /tmp/bad_param_config
 -----------------------------
+-- emaj_purge_histories() test
+-----------------------------
+select emaj.emaj_purge_histories(NULL);
+ emaj_purge_histories 
+----------------------
+ 
+(1 row)
+
+select emaj.emaj_purge_histories('0 SECOND');
+ emaj_purge_histories 
+----------------------
+ 
+(1 row)
+
+-----------------------------
 -- test end: check, reset history and force sequences id
 -----------------------------
 select hist_id, hist_function, hist_event, hist_object, regexp_replace(regexp_replace(hist_wording,E'\\d\\d\.\\d\\d\\.\\d\\d\\.\\d\\d\\d\\d','%','g'),E'\\[.+\\]','(timestamp)','g'), hist_user from 
@@ -1747,5 +1762,9 @@ select hist_id, hist_function, hist_event, hist_object, regexp_replace(regexp_re
     5218 |                   | UPDATED PARAMETER  | dblink_user_password         | <masked data>                                                                       | postgres
     5219 |                   | UPDATED PARAMETER  | fixed_step_rollback_duration | @ 0.0025 secs                                                                       | postgres
     5220 | IMPORT_PARAMETERS | END                |                              | 2 parameters imported                                                               | postgres
-(111 rows)
+    5221 | PURGE_HISTORIES   | BEGIN              |                              |                                                                                     | postgres
+    5222 | PURGE_HISTORIES   | END                |                              |                                                                                     | postgres
+    5223 | PURGE_HISTORIES   | BEGIN              |                              | Retention delay @ 0                                                                 | postgres
+    5224 | PURGE_HISTORIES   | END                |                              |                                                                                     | postgres
+(115 rows)
 

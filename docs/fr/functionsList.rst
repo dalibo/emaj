@@ -343,6 +343,9 @@ Fonctions de niveau général
 | :ref:`emaj_import_parameters_configuration       | | fichier TEXT,               | nb.paramètres INT                     |
 | <import_param_conf>`                             | | [suppression.conf BOOLEAN)] |                                       |
 +--------------------------------------------------+-------------------------------+---------------------------------------+
+| :ref:`emaj_purge_histories                       | délai.rétention INTERVAL      |                                       |
+| <emaj_purge_histories>`                          |                               |                                       |
++--------------------------------------------------+-------------------------------+---------------------------------------+
 | :ref:`emaj_rollback_activity                     |                               | SETOF emaj_rollback_activity_type     |
 | <emaj_rollback_activity>` (V)                    |                               |                                       |
 +--------------------------------------------------+-------------------------------+---------------------------------------+

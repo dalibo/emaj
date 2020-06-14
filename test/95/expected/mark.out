@@ -1307,7 +1307,7 @@ select hist_id, hist_function, hist_event, regexp_replace(hist_object,E'\\d\\d\.
     2151 | LOCK_GROUP               | END                | phil's group#3",  | 2 tables locked, 0 deadlock(s)                  | postgres
     2152 | SET_MARK_GROUP           | END                | phil's group#3",  | Mark4                                           | postgres
     2153 | DELETE_BEFORE_MARK_GROUP | BEGIN              | phil's group#3",  | Mark4                                           | postgres
-    2154 | PURGE_HISTORY            |                    |                   | 211 emaj_hist rows deleted                      | postgres
+    2154 | PURGE_HISTORIES          |                    |                   | 212 emaj_hist rows deleted                      | postgres
     2155 | DELETE_BEFORE_MARK_GROUP | END                | phil's group#3",  | 1 marks deleted ; Mark4 is now the initial mark | postgres
     2156 |                          | DELETED PARAMETER  | history_retention |                                                 | postgres
     2157 | PROTECT_MARK_GROUP       |                    | myGroup1          | Mark SM3 ; status 1                             | postgres

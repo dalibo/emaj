@@ -36,7 +36,7 @@ Les valeurs de clé des paramètres sont, par ordre alphabétique :
 * **fixed_dblink_rollback_duration** : (intervalle) valeur par défaut = 4 ms ; définit un coût additionnel pour chaque étape de rollback quand une connexion dblink est utilisée ; peut être modifiée pour mieux représenter la performance du serveur qui héberge la base de données à l'exécution d'une fonction :ref:`emaj_estimate_rollback_group() <emaj_estimate_rollback_group>`.
 * **fixed_table_rollback_duration** : (intervalle) valeur par défaut = 1 ms ; définit un coût fixe de rollback de toute table ou séquence appartenant à un groupe ; peut être modifiée pour mieux représenter la performance du serveur qui héberge la base de données à l'exécution d'une fonction :ref:`emaj_estimate_rollback_group() <emaj_estimate_rollback_group>`.
 * **fixed_step_rollback_duration** : (intervalle) valeur par défaut = 2,5 ms ; définit un coût fixe pour chaque étape de rollback ; peut être modifiée pour mieux représenter la performance du serveur qui héberge la base de données à l'exécution d'une fonction :ref:`emaj_estimate_rollback_group() <emaj_estimate_rollback_group>`.
-* **history_retention**	(intervalle) valeur par défaut = 1 an ; elle peut être ajustée pour changer la durée de rétention des lignes dans la table historique d'E-Maj, :ref:`emaj_hist <emaj_hist>`,
+* **history_retention**	(intervalle) valeur par défaut = 1 an ; elle peut être ajustée pour changer la durée de rétention des lignes dans la table historique d'E-Maj, :ref:`emaj_hist <emaj_hist>` et dans quelques autres tables techniques ; une valeur supérieure ou égale à 100 ans équivaut à un délai infini.
 
 Exemple de requête SQL permettant de spécifier une durée de rétention des lignes dans l'historique de 3 mois ::
 

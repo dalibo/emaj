@@ -36,7 +36,7 @@ Presented in alphabetic order, the existing key values are:
 * **fixed_dblink_rollback_duration** : (interval) default value = 4 ms ; defines an additional cost for each rollback step when a dblink connection is used ; can be modified to better represent the performance of the server that hosts the database when using the :ref:`emaj_estimate_rollback_group() <emaj_estimate_rollback_group>` function.
 * **fixed_table_rollback_duration** : (interval) default value = 1 ms ; defines a fixed rollback cost for any table belonging to a group ; can be modified to better represent the performance of the server that hosts the database when using the :ref:`emaj_estimate_rollback_group() <emaj_estimate_rollback_group>` function.
 * **fixed_step_rollback_duration** : (interval) default value = 2,5 ms ; defines a fixed cost for each rollback step ; can be modified to better represent the performance of the server that hosts the database when using the :ref:`emaj_estimate_rollback_group() <emaj_estimate_rollback_group>` function.
-* **history_retention** : (interval) default value = 1 year ; it can be adjusted to change the retention delay of rows in the :ref:`emaj_hist <emaj_hist>` history table,
+* **history_retention** : (interval) default value = 1 year ; it can be adjusted to change the retention delay of rows in the :ref:`emaj_hist <emaj_hist>` history table and some other technical tables ; a value greater or equal to 100 years is equivalent to infinity.
 
 Below is an example of a SQL statement that defines a retention delay of history table's rows equal to 3 months::
 

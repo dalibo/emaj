@@ -3,6 +3,9 @@ Traces of operations
 
 .. _emaj_hist:
 
+The emaj_hist table
+-------------------
+
 All operations performed by E-Maj, and that impact in any way a tables group, are traced into a table named *emaj_hist*.
  
 The **emaj_hist** table structure is the following:
@@ -108,7 +111,7 @@ The *hist_function* column can take the following values:
 +----------------------------------+----------------------------------------------------------------------------+
 | PROTECT_MARK_GROUP               | set a protection against rollbacks on a mark for a group                   |
 +----------------------------------+----------------------------------------------------------------------------+
-| PURGE_HISTORY                    | delete from the *emaj_hist* table the events prior the retention delay     |
+| PURGE_HISTORIES                  | delete from the historical tables the events prior the retention delay     |
 +----------------------------------+----------------------------------------------------------------------------+
 | REMOVE_SEQUENCE                  | sequence removed from its tables group                                     |
 +----------------------------------+----------------------------------------------------------------------------+
@@ -209,10 +212,22 @@ The *hist_event* column can take the following values:
 
 The *emaj_hist* content can be viewed by anyone who has the proper access rights on this table (*superuser*, *emaj_adm* or *emaj_viewer* roles).
 
+Other trace data
+----------------
+
 Two other internal tables keep traces of groups alter or rollback operations:
 
 * *emaj_alter_plan* lists the elementary steps performed during the execution of :doc:`emaj_alter_group() <alterGroups>` and related functions,
 * *emaj_rlbk_plan* lists the elementary steps performed during the execution of :ref:`emaj_rollback_group() <emaj_rollback_group>` and related functions.
 
+Purge obsolete traces
+---------------------
+
 When a tables group is started, using the :ref:`emaj_start_group() <emaj_start_group>` function, or when old marks are deleted, using the :ref:`emaj_delete_before_mark_group() <emaj_delete_before_mark_group>` function, the oldest events are deleted from *emaj_hist* tables. The events kept are those not older than a parametrised retention delay and not older than the oldest active mark and not older than the oldest uncompleted rollback operation. By default, the retention delay for events equals 1 year. But this value can be modified at any time by inserting the *history_retention* parameter into the :ref:`emaj_param <emaj_param>` table with a SQL statement. The same retention applies to the tables that log elementary steps of tables groups alter or rollback operations.
 
+The obsolete traces purge can also be initiated by explicitely calling the :ref:`emaj_purge_histories() <emaj_purge_histories>` function. The input parameter of the function defines a retention delay that overloads the *history_retention* parameter of the *emaj_param* table.
+
+In order to schedule purges periodicaly, it is possible to:
+
+* set the *history_retention* parameter to a very high value (for instance '100 YEARS'), so that tables groups starts and oldest marks deletions do not perform any purge, and
+* schedule by any means (*crontab*, *pgAgent*, *pgTimeTable* or any other tool) purge operations.

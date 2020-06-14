@@ -4,6 +4,8 @@ E-Maj - Change log
 ------
 ###Enhancements:###
   * E-Maj is compatible with PostgreSQL V13.
+  * A new emaj_purge_histories() function is callable by external scheduler
+    tool to purge various emaj history tables, based on a retention delay.
   * Minor coding changes
 
 ###Bug fixes:###

@@ -632,6 +632,12 @@ select emaj.emaj_import_parameters_configuration('/tmp/orig_param_config', false
 \! rm /tmp/orig_param_config /tmp/bad_param_config
 
 -----------------------------
+-- emaj_purge_histories() test
+-----------------------------
+select emaj.emaj_purge_histories(NULL);
+select emaj.emaj_purge_histories('0 SECOND');
+
+-----------------------------
 -- test end: check, reset history and force sequences id
 -----------------------------
 select hist_id, hist_function, hist_event, hist_object, regexp_replace(regexp_replace(hist_wording,E'\\d\\d\.\\d\\d\\.\\d\\d\\.\\d\\d\\d\\d','%','g'),E'\\[.+\\]','(timestamp)','g'), hist_user from 

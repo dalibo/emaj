@@ -117,9 +117,12 @@ select hist_function, hist_event, hist_object,
        regexp_replace(regexp_replace(hist_wording,E'\\d\\d\.\\d\\d\\.\\d\\d\\.\\d\\d\\d\\d','%','g'),E'\\[.+\\]','(timestamp)','g'),
        hist_user
   from emaj.emaj_hist order by hist_id;
-delete from emaj.emaj_param where param_key = 'history_retention';
 
+-- test the smallest history_retention value that means infinity
+update emaj.emaj_param set param_value_interval = '100 years'::interval where param_key = 'history_retention';
 select emaj.emaj_start_group('myGroup2','Mark2',true);
+
+delete from emaj.emaj_param where param_key = 'history_retention';
 select emaj.emaj_start_group('phil''s group#3",','Mark3',false);
 select emaj.emaj_start_group('emptyGroup','Mark1');
 

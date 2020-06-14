@@ -83,6 +83,13 @@ truncate mySchema4.myTblP, mySchema4.myPartP1, mySchema4.myPartP2;
 set role emaj_regression_tests_adm_user;
 
 -----------------------------
+-- explicitely purge the histories
+-----------------------------
+select emaj.emaj_purge_histories('0 SECOND');
+select hist_function, hist_event, hist_wording
+  from emaj.emaj_hist order by hist_id;
+
+-----------------------------
 -- recreate and start groups
 -----------------------------
 -- set the parameter to drop the emaj_user_port column and add an 'extra_col_appname' column

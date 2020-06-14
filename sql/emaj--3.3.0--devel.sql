@@ -94,6 +94,7 @@ SELECT emaj._disable_event_triggers();
 ------------------------------------------------------------------
 -- drop obsolete functions or functions with modified interface --
 ------------------------------------------------------------------
+DROP FUNCTION IF EXISTS emaj._purge_hist();
 
 ------------------------------------------------------------------
 -- create new or modified functions                             --
@@ -284,6 +285,206 @@ $_create_tbl$
   END;
 $_create_tbl$;
 
+CREATE OR REPLACE FUNCTION emaj._start_groups(v_groupNames TEXT[], v_mark TEXT, v_multiGroup BOOLEAN, v_resetLog BOOLEAN)
+RETURNS INT LANGUAGE plpgsql
+SECURITY DEFINER SET search_path = pg_catalog, pg_temp AS
+$_start_groups$
+-- This function activates the log triggers of all the tables for one or several groups and set a first mark.
+-- It also delete oldest rows in emaj_hist table.
+-- Input: array of group names, name of the mark to set, boolean indicating whether the function is called by a multi group function,
+--        boolean indicating whether the function must reset the group at start time
+-- Output: number of processed tables
+-- The function is defined as SECURITY DEFINER so that emaj_adm role can use it even if he is not the owner of application tables and
+-- sequences.
+  DECLARE
+    v_nbTblSeq               INT = 0;
+    v_markName               TEXT;
+    v_eventTriggers          TEXT[];
+    r_tblsq                  RECORD;
+  BEGIN
+-- insert begin in the history
+    INSERT INTO emaj.emaj_hist (hist_function, hist_event, hist_object, hist_wording)
+      VALUES (CASE WHEN v_multiGroup THEN 'START_GROUPS' ELSE 'START_GROUP' END, 'BEGIN', array_to_string(v_groupNames,','),
+              CASE WHEN v_resetLog THEN 'With log reset' ELSE 'Without log reset' END);
+-- check the group names
+    SELECT emaj._check_group_names(v_groupNames := v_groupNames, v_mayBeNull := v_multiGroup, v_lockGroups := TRUE, v_checkList := 'IDLE')
+      INTO v_groupNames;
+    IF v_groupNames IS NOT NULL THEN
+-- if there is at least 1 group to process, go on
+-- check that no group is damaged
+      PERFORM 0 FROM emaj._verify_groups(v_groupNames, TRUE);
+-- check foreign keys with tables outside the group
+      PERFORM emaj._check_fk_groups(v_groupNames);
+-- purge the history tables, if needed
+      PERFORM emaj._purge_histories();
+-- if requested by the user, call the emaj_reset_groups() function to erase remaining traces from previous logs
+      IF v_resetLog THEN
+        PERFORM emaj._reset_groups(v_groupNames);
+--    drop the log schemas that would have been emptied by the _reset_groups() call
+        SELECT emaj._disable_event_triggers() INTO v_eventTriggers;
+        PERFORM emaj._drop_log_schemas(CASE WHEN v_multiGroup THEN 'START_GROUPS' ELSE 'START_GROUP' END, FALSE);
+        PERFORM emaj._enable_event_triggers(v_eventTriggers);
+      END IF;
+-- check the supplied mark name (the check must be performed after the _reset_groups() call to allow to reuse an old mark name that is
+-- being deleted
+      IF v_mark IS NULL OR v_mark = '' THEN
+        v_mark = 'START_%';
+      END IF;
+      SELECT emaj._check_new_mark(v_groupNames, v_mark) INTO v_markName;
+-- OK, lock all tables to get a stable point
+--   one sets the locks at the beginning of the operation (rather than let the ALTER TABLE statements set their own locks) to decrease the
+--   risk of deadlock.
+      PERFORM emaj._lock_groups(v_groupNames,'SHARE ROW EXCLUSIVE',v_multiGroup);
+-- enable all log triggers for the groups
+-- for each relation currently belonging to the group,
+      FOR r_tblsq IN
+         SELECT rel_kind, quote_ident(rel_schema) || '.' || quote_ident(rel_tblseq) AS full_relation_name FROM emaj.emaj_relation
+           WHERE upper_inf(rel_time_range) AND rel_group = ANY (v_groupNames) ORDER BY rel_priority, rel_schema, rel_tblseq
+      LOOP
+        IF r_tblsq.rel_kind = 'r' THEN
+-- if it is a table, enable the emaj log and truncate triggers
+          EXECUTE format('ALTER TABLE %s ENABLE TRIGGER emaj_log_trg, ENABLE TRIGGER emaj_trunc_trg',
+                           r_tblsq.full_relation_name);
+        END IF;
+        v_nbTblSeq = v_nbTblSeq + 1;
+      END LOOP;
+-- update the state of the group row from the emaj_group table
+      UPDATE emaj.emaj_group SET group_is_logging = TRUE WHERE group_name = ANY (v_groupNames);
+-- Set the first mark for each group
+      PERFORM emaj._set_mark_groups(v_groupNames, v_markName, v_multiGroup, TRUE);
+    END IF;
+-- insert end in the history
+    INSERT INTO emaj.emaj_hist (hist_function, hist_event, hist_object, hist_wording)
+      VALUES (CASE WHEN v_multiGroup THEN 'START_GROUPS' ELSE 'START_GROUP' END, 'END', array_to_string(v_groupNames,','),
+              v_nbTblSeq || ' tables/sequences processed');
+--
+    RETURN v_nbTblSeq;
+  END;
+$_start_groups$;
+
+CREATE OR REPLACE FUNCTION emaj._delete_before_mark_group(v_groupName TEXT, v_mark TEXT)
+RETURNS INT LANGUAGE plpgsql
+SECURITY DEFINER SET search_path = pg_catalog, pg_temp AS
+$_delete_before_mark_group$
+-- This function deletes all logs and marks set before a given mark.
+-- The function is called by the emaj_delete_before_mark_group(), emaj_delete_mark_group() functions.
+-- It deletes rows corresponding to the marks to delete from emaj_mark and emaj_sequence.
+-- It deletes rows from emaj_relation corresponding to old versions that become unreacheable.
+-- It deletes rows from all concerned log tables.
+-- To complete, the function deletes oldest rows from emaj_hist.
+-- Input: group name, name of the new first mark.
+-- Output: number of deleted marks, number of tables effectively processed (for which at least one log row has been deleted)
+  DECLARE
+    v_eventTriggers          TEXT[];
+    v_markGlobalSeq          BIGINT;
+    v_markTimeId             BIGINT;
+    v_nbMark                 INT;
+    r_rel                    RECORD;
+  BEGIN
+-- disable event triggers that protect emaj components and keep in memory these triggers name
+    SELECT emaj._disable_event_triggers() INTO v_eventTriggers;
+-- retrieve the timestamp and the emaj_gid value and the time stamp id of the target new first mark
+    SELECT time_last_emaj_gid, mark_time_id INTO v_markGlobalSeq, v_markTimeId
+      FROM emaj.emaj_mark, emaj.emaj_time_stamp
+      WHERE mark_time_id = time_id AND mark_group = v_groupName AND mark_name = v_mark;
+--
+-- first process all obsolete time ranges for the group
+--
+-- drop obsolete old log tables
+    FOR r_rel IN
+          -- log tables for the group, whose end time stamp is older than the new first mark time stamp
+          SELECT DISTINCT rel_log_schema, rel_log_table FROM emaj.emaj_relation
+            WHERE rel_kind = 'r' AND rel_group = v_groupName AND upper(rel_time_range) <= v_markTimeId
+        EXCEPT
+          -- unless they are also used for more recent time range, or are also linked to other groups
+          SELECT rel_log_schema, rel_log_table FROM emaj.emaj_relation
+            WHERE rel_kind = 'r'
+              AND (upper(rel_time_range) > v_markTimeId OR upper_inf(rel_time_range) OR rel_group <> v_groupName)
+          ORDER BY 1,2
+    LOOP
+      EXECUTE format('DROP TABLE IF EXISTS %I.%I CASCADE',
+                     r_rel.rel_log_schema, r_rel.rel_log_table);
+    END LOOP;
+-- delete emaj_sequence rows corresponding to obsolete relation time range that will be deleted just later
+-- (the related emaj_seq_hole rows will be deleted just later ; they are not directly linked to an emaj_relation row)
+    DELETE FROM emaj.emaj_sequence USING emaj.emaj_relation r1
+      WHERE rel_group = v_groupName AND rel_kind = 'r'
+        AND sequ_schema = rel_log_schema AND sequ_name = rel_log_sequence AND upper(rel_time_range) <= v_markTimeId
+        AND (sequ_time_id < v_markTimeId                  -- all sequences prior the mark time
+          OR (sequ_time_id = v_markTimeId                 -- and the sequence of the mark time
+              AND NOT EXISTS (                            --   if it is not the lower bound of an adjacent time range
+                SELECT 1 FROM emaj.emaj_relation r2
+                  WHERE r2.rel_schema = r1.rel_log_schema AND r2.rel_tblseq = r1.rel_log_sequence
+                    AND lower(r2.rel_time_range) = v_marktimeid)));
+-- keep a trace of the relation group ownership history
+--   and finaly delete from the emaj_relation table the relation that ended before the new first mark
+    WITH deleted AS (
+      DELETE FROM emaj.emaj_relation
+        WHERE rel_group = v_groupName AND upper(rel_time_range) <= v_markTimeId
+        RETURNING rel_schema, rel_tblseq, rel_time_range, rel_group, rel_kind
+      )
+    INSERT INTO emaj.emaj_rel_hist
+             (relh_schema, relh_tblseq, relh_time_range, relh_group, relh_kind)
+      SELECT rel_schema, rel_tblseq, rel_time_range, rel_group, rel_kind
+        FROM deleted;
+-- drop the E-Maj log schemas that are now useless (i.e. not used by any created group)
+    PERFORM emaj._drop_log_schemas('DELETE_BEFORE_MARK_GROUP', FALSE);
+--
+-- then process the current relation time range for the group
+--
+-- delete rows from all log tables
+    FOR r_rel IN
+        SELECT quote_ident(rel_log_schema) || '.' || quote_ident(rel_log_table) AS log_table_name FROM emaj.emaj_relation
+          WHERE rel_group = v_groupName AND rel_kind = 'r'
+            AND (upper_inf(rel_time_range) OR upper(rel_time_range) > v_markTimeId)
+          ORDER BY rel_priority, rel_schema, rel_tblseq
+    LOOP
+-- delete log rows prior to the new first mark
+      EXECUTE format('DELETE FROM %s WHERE emaj_gid <= $1',
+                     r_rel.log_table_name)
+        USING v_markGlobalSeq;
+    END LOOP;
+-- process emaj_seq_hole content
+-- delete all existing holes, if any, before the mark
+-- (it may delete holes for timeranges that do not belong to the group, if a table has been moved to another group,
+--  but is safe enough for rollbacks)
+    DELETE FROM emaj.emaj_seq_hole USING emaj.emaj_relation
+      WHERE rel_group = v_groupName AND rel_kind = 'r'
+        AND rel_schema = sqhl_schema AND rel_tblseq = sqhl_table
+        AND sqhl_begin_time_id < v_markTimeId;
+-- now the sequences related to the mark to delete can be suppressed
+--   delete first application sequences related data for the group
+--   the sequence state at time range bounds are kept (if the mark comes from a logging group alter operation)
+    DELETE FROM emaj.emaj_sequence USING emaj.emaj_relation
+      WHERE sequ_schema = rel_schema AND sequ_name = rel_tblseq AND rel_time_range @> sequ_time_id
+        AND rel_group = v_groupName AND rel_kind = 'S'
+        AND sequ_time_id < v_markTimeId
+        AND lower(rel_time_range) <> sequ_time_id;
+--   delete then emaj sequences related data for the group
+--   the sequence state at time range bounds are kept
+    DELETE FROM emaj.emaj_sequence USING emaj.emaj_relation
+      WHERE sequ_schema = rel_log_schema AND sequ_name = rel_log_sequence AND rel_time_range @> sequ_time_id
+        AND rel_group = v_groupName AND rel_kind = 'r'
+        AND sequ_time_id < v_markTimeId
+        AND lower(rel_time_range) <> sequ_time_id;
+--    and that may have one of the deleted marks as target mark from a previous logged rollback operation
+    UPDATE emaj.emaj_mark SET mark_logged_rlbk_target_mark = NULL
+      WHERE mark_group = v_groupName AND mark_time_id >= v_markTimeId
+        AND mark_logged_rlbk_target_mark IN (
+            SELECT mark_name FROM emaj.emaj_mark
+              WHERE mark_group = v_groupName AND mark_time_id < v_markTimeId
+            );
+-- delete oldest marks
+    DELETE FROM emaj.emaj_mark WHERE mark_group = v_groupName AND mark_time_id < v_markTimeId;
+    GET DIAGNOSTICS v_nbMark = ROW_COUNT;
+-- enable previously disabled event triggers
+    PERFORM emaj._enable_event_triggers(v_eventTriggers);
+-- purge the history tables, if needed (even if no mark as been really dropped)
+    PERFORM emaj._purge_histories();
+    RETURN v_nbMark;
+  END;
+$_delete_before_mark_group$;
+
 CREATE OR REPLACE FUNCTION emaj.emaj_snap_group(v_groupName TEXT, v_dir TEXT, v_copyOptions TEXT)
 RETURNS INT LANGUAGE plpgsql
 SECURITY DEFINER SET search_path = pg_catalog, pg_temp AS
@@ -389,6 +590,115 @@ $emaj_snap_group$
 $emaj_snap_group$;
 COMMENT ON FUNCTION emaj.emaj_snap_group(TEXT,TEXT,TEXT) IS
 $$Snaps all application tables and sequences of an E-Maj group into a given directory.$$;
+
+CREATE OR REPLACE FUNCTION emaj.emaj_purge_histories(v_retentionDelay INTERVAL)
+RETURNS VOID LANGUAGE plpgsql AS
+$emaj_purge_histories$
+-- This function purges the emaj histories
+-- The function is called by an emaj_adm user, typically an external scheduler.
+-- It calls the _purge_histories() function.
+-- Input: retention delay
+  BEGIN
+-- insert begin in the history
+    INSERT INTO emaj.emaj_hist (hist_function, hist_event, hist_wording)
+      VALUES ('PURGE_HISTORIES', 'BEGIN', 'Retention delay ' || v_retentionDelay);
+-- effectively perform the purge
+    PERFORM emaj._purge_histories(v_retentionDelay);
+-- insert end in the history
+    INSERT INTO emaj.emaj_hist (hist_function, hist_event)
+      VALUES ('PURGE_HISTORIES', 'END');
+    RETURN;
+  END;
+$emaj_purge_histories$;
+COMMENT ON FUNCTION emaj.emaj_purge_histories(INTERVAL) IS
+$$Purges obsolete data from emaj history tables.$$;
+
+CREATE OR REPLACE FUNCTION emaj._purge_histories(v_retentionDelay INTERVAL DEFAULT NULL)
+RETURNS VOID LANGUAGE plpgsql AS
+$_purge_histories$
+-- This function purges the emaj history by deleting all rows prior the 'history_retention' parameter, but
+--   without deleting event traces neither after the oldest active mark or after the oldest not committed or aborted rollback operation.
+-- It also purges oldest rows from the emaj_exec_plan, emaj_rlbk_session and emaj_rlbk_plan tables, using the same rules.
+-- The function is called at start group time and when oldest marks are deleted.
+-- It is also called by the emaj_purge_histories() function.
+-- A retention delay >= 100 years means infinite.
+-- Input: retention delay ; if supplied, it overloads the history_retention parameter from the emaj_param table.
+  DECLARE
+    v_delay                  INTERVAL;
+    v_datetimeLimit          TIMESTAMPTZ;
+    v_maxTimeId              BIGINT;
+    v_maxRlbkId              BIGINT;
+    v_nbPurgedHist           BIGINT;
+    v_nbPurgedRelHist        BIGINT;
+    v_nbPurgedRlbk           BIGINT;
+    v_nbPurgedAlter          BIGINT;
+    v_wording                TEXT = '';
+  BEGIN
+-- compute the retention delay to use
+    SELECT coalesce(v_retentionDelay, (SELECT param_value_interval FROM emaj.emaj_param WHERE param_key = 'history_retention'),'1 YEAR')
+      INTO v_delay;
+-- immediately exit if the delay is infinity
+    IF v_delay >= INTERVAL '100 years' THEN
+      RETURN;
+    END IF;
+-- compute the timestamp limit
+    SELECT least(
+                                         -- compute the timestamp limit from the retention delay value
+        (SELECT current_timestamp - v_delay),
+                                         -- get the transaction timestamp of the oldest non deleted mark for all groups
+        (SELECT min(time_tx_timestamp) FROM emaj.emaj_time_stamp, emaj.emaj_mark
+           WHERE time_id = mark_time_id AND NOT mark_is_deleted),
+                                         -- get the transaction timestamp of the oldest non committed or aborted rollback
+        (SELECT min(time_tx_timestamp) FROM emaj.emaj_time_stamp, emaj.emaj_rlbk
+           WHERE time_id = rlbk_time_id AND rlbk_status IN ('PLANNING', 'LOCKING', 'EXECUTING', 'COMPLETED')))
+     INTO v_datetimeLimit;
+-- get the greatest timestamp identifier corresponding to the timeframe to purge, if any
+    SELECT max(time_id) INTO v_maxTimeId FROM emaj.emaj_time_stamp
+      WHERE time_tx_timestamp < v_datetimeLimit;
+-- delete oldest rows from emaj_hist
+    DELETE FROM emaj.emaj_hist WHERE hist_datetime < v_datetimeLimit;
+    GET DIAGNOSTICS v_nbPurgedHist = ROW_COUNT;
+    IF v_nbPurgedHist > 0 THEN
+      v_wording = v_nbPurgedHist || ' emaj_hist rows deleted';
+    END IF;
+-- delete oldest rows from emaj_rel_hist
+    DELETE FROM emaj.emaj_rel_hist WHERE upper(relh_time_range) < v_maxTimeId;
+    GET DIAGNOSTICS v_nbPurgedRelHist = ROW_COUNT;
+    IF v_nbPurgedRelHist > 0 THEN
+      v_wording = v_wording || ' ; ' || v_nbPurgedRelHist || ' relation history rows deleted';
+    END IF;
+-- purge the emaj_alter_plan table
+    WITH deleted_alter AS (
+      DELETE FROM emaj.emaj_alter_plan
+        WHERE altr_time_id <= v_maxTimeId
+        RETURNING altr_time_id
+      )
+      SELECT COUNT (DISTINCT altr_time_id) INTO v_nbPurgedAlter FROM deleted_alter;
+    IF v_nbPurgedAlter > 0 THEN
+      v_wording = v_wording || ' ; ' || v_nbPurgedAlter || ' alter groups events deleted';
+    END IF;
+-- get the greatest rollback identifier to purge
+    SELECT max(rlbk_id) INTO v_maxRlbkId FROM emaj.emaj_rlbk
+      WHERE rlbk_time_id <= v_maxTimeId;
+-- and purge the emaj_rlbk_plan and emaj_rlbk_session tables
+    IF v_maxRlbkId IS NOT NULL THEN
+      DELETE FROM emaj.emaj_rlbk_plan WHERE rlbp_rlbk_id <= v_maxRlbkId;
+      WITH deleted_rlbk AS (
+        DELETE FROM emaj.emaj_rlbk_session
+          WHERE rlbs_rlbk_id <= v_maxRlbkId
+          RETURNING rlbs_rlbk_id
+        )
+        SELECT COUNT (DISTINCT rlbs_rlbk_id) INTO v_nbPurgedRlbk FROM deleted_rlbk;
+      v_wording = v_wording || ' ; ' || v_nbPurgedRlbk || ' rollback events deleted';
+    END IF;
+-- record the purge into the history if there are significant data
+    IF v_wording <> '' THEN
+      INSERT INTO emaj.emaj_hist (hist_function, hist_wording)
+        VALUES ('PURGE_HISTORIES', v_wording);
+    END IF;
+    RETURN;
+  END;
+$_purge_histories$;
 
 --<end_functions>                                pattern used by the tool that extracts and insert the functions definition
 ------------------------------------------

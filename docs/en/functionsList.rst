@@ -343,6 +343,9 @@ General purpose functions
 | :ref:`emaj_import_parameters_configuration       | | file.path TEXT,             | #.parameters INT                      |
 | <import_param_conf>`                             | | [delete.conf BOOLEAN)]      |                                       |
 +--------------------------------------------------+-------------------------------+---------------------------------------+
+| :ref:`emaj_purge_histories                       | retention.delay INTERVAL      |                                       |
+| <emaj_purge_histories>`                          |                               |                                       |
++--------------------------------------------------+-------------------------------+---------------------------------------+
 | :ref:`emaj_rollback_activity                     |                               | SETOF emaj_rollback_activity_type     |
 | <emaj_rollback_activity>` (V)                    |                               |                                       |
 +--------------------------------------------------+-------------------------------+---------------------------------------+

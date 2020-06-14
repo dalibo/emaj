@@ -108,8 +108,8 @@ Dans une variante de la fonction, le premier paramètre en entrée contient dire
 
 .. _emaj_get_current_log_table:
 
-Obtenir l’identité de la table de log courante associée à une table applicative
---------------------------------------------------------------------------------
+Identité de la table de log courante associée à une table applicative
+---------------------------------------------------------------------
 
 La fonction *emaj_get_current_log_table()* permet d’obtenir le schéma et le nom de la table de log courante associée à une table applicative. ::
 
@@ -251,6 +251,17 @@ Si l'administrateur E-Maj souhaite de lui-même procéder à la mise à jour de 
    SELECT emaj.emaj_cleanup_rollback_state();
 
 La fonction retourne le nombre d'opérations de rollback dont l'état a été modifié.
+
+.. _emaj_purge_histories:
+
+Purge des historiques
+---------------------
+
+E-Maj historise certaines données : traces globales de fonctionnement, détail des rollbacks E-Maj, évolutions de structures de groupes de tables (:ref:`plus de détails...<emaj_hist>`), Les traces les plus anciennes sont automatiquement purgées par l’extension. Mais une fonction permet également de déclencher la purge de manière manuelle ::
+
+   SELECT emaj.emaj_purge_histories('<délai.rétention>');
+
+La paramètre <délai.rétention> est de type *INTERVAL*. Il surcharge le paramètre *'history_retention'* de la table *emaj_param*.
 
 .. _emaj_disable_protection_by_event_triggers:
 .. _emaj_enable_protection_by_event_triggers:

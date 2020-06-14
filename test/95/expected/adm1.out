@@ -249,6 +249,24 @@ truncate mySchema4.myTblM, mySchema4.myTblC1, mySchema4.myTblC2;
 truncate mySchema4.myTblP, mySchema4.myPartP1, mySchema4.myPartP2;
 set role emaj_regression_tests_adm_user;
 -----------------------------
+-- explicitely purge the histories
+-----------------------------
+select emaj.emaj_purge_histories('0 SECOND');
+ emaj_purge_histories 
+----------------------
+ 
+(1 row)
+
+select hist_function, hist_event, hist_wording
+  from emaj.emaj_hist order by hist_id;
+  hist_function  | hist_event |                                                        hist_wording                                                         
+-----------------+------------+-----------------------------------------------------------------------------------------------------------------------------
+ PURGE_HISTORIES | BEGIN      | Retention delay @ 0
+ PURGE_HISTORIES |            | 20 emaj_hist rows deleted ; 140 relation history rows deleted ; 91 alter groups events deleted ; 37 rollback events deleted
+ PURGE_HISTORIES | END        | 
+(3 rows)
+
+-----------------------------
 -- recreate and start groups
 -----------------------------
 -- set the parameter to drop the emaj_user_port column and add an 'extra_col_appname' column
@@ -2269,7 +2287,7 @@ select rlbk_id, rlbk_groups, rlbk_mark, rlbk_mark_time_id, rlbk_time_id, rlbk_is
  from emaj.emaj_rlbk order by rlbk_id desc limit 1;
  rlbk_id | rlbk_groups | rlbk_mark | rlbk_mark_time_id | rlbk_time_id | rlbk_is_logged | rlbk_is_alter_group_allowed | rlbk_nb_session | rlbk_nb_table | rlbk_nb_sequence | rlbk_eff_nb_table | rlbk_status | rlbk_begin_hist_id | rlbk_dblink_schema | rlbk_is_dblink_used |                                  rlbk_messages                                   
 ---------+-------------+-----------+-------------------+--------------+----------------+-----------------------------+-----------------+---------------+------------------+-------------------+-------------+--------------------+--------------------+---------------------+----------------------------------------------------------------------------------
-   10006 | {myGroup1}  | M4        |             10018 |        10025 | t              | t                           |               1 |             5 |                2 |                 3 | COMPLETED   |              10188 | public             | t                   | {"Notice: 3 / 5 tables effectively processed.","Notice: 2 sequences processed."}
+   10006 | {myGroup1}  | M4        |             10018 |        10025 | t              | t                           |               1 |             5 |                2 |                 3 | COMPLETED   |              10191 | public             | t                   | {"Notice: 3 / 5 tables effectively processed.","Notice: 2 sequences processed."}
 (1 row)
 
 -----------------------------
