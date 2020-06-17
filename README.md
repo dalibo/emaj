@@ -25,7 +25,7 @@ In development environments, it brings a good help in testing application, provi
 In production environments, it brings a good solution to:
 
  * keep an history of updates performed on tables to examine them in case of problem
- * set inter-batch savepoints on group of tables,
+ * set inter-batch savepoints on groups of tables,
  * easily "restore" this group of tables at a stable state, without being obliged to stop the cluster,
  * handle several savepoints during batch windows, each of them been usable at any time as "restore point".
 
@@ -43,15 +43,15 @@ E-Maj is available via the PGXN platform (https://pgxn.org/dist/e-maj/). It is a
 Documentation
 -------------
 
-A detailed documentation can be found here, in [English](http://emaj.readthedocs.io/en/latest/) and in [French](http://emaj.readthedocs.io/fr/latest/).
+A detailed documentation can be found here, in [English](https://emaj.readthedocs.io/en/latest/) and in [French](https://emaj.readthedocs.io/fr/latest/).
 
 
 How to install and use E-Maj
 ----------------------------
 
-E-Maj can be installed using the usual method for postgres extensions (ie. CREATE EXTENSION emaj;).
+E-Maj can be installed using the usual method for postgres extensions (ie. CREATE EXTENSION emaj CASCADE;).
 
-The documentation contains all the [detailled information](http://emaj.readthedocs.io/en/latest/install.html) needed to install and use E-Maj.
+The documentation contains all the [detailled information](https://emaj.readthedocs.io/en/latest/install.html) needed to install and use E-Maj.
 
 
 Emaj_web GUI
@@ -61,13 +61,13 @@ Emaj_web GUI
 
 The Emaj_web client is available on [github](https://github.com/dalibo/emaj_web).
 
-Its installation and usage are also described in the [documentation](http://emaj.readthedocs.io/en/latest/webOverview.html).
+Its installation and its usage are also described in the [documentation](https://emaj.readthedocs.io/en/latest/webOverview.html).
 
 
 Contributing
 ------------
 
-Any contribution on the project is welcome. A part of the documentation deals with [how to contribute](http://emaj.readthedocs.io/en/latest/contributing.html).
+Any contribution on the project is welcome. A part of the documentation deals with [how to contribute](https://emaj.readthedocs.io/en/latest/contributing.html).
 
 
 Support
