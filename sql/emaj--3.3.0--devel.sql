@@ -700,6 +700,67 @@ $_purge_histories$
   END;
 $_purge_histories$;
 
+CREATE OR REPLACE FUNCTION emaj._export_param_conf()
+RETURNS JSON LANGUAGE plpgsql AS
+$_export_param_conf$
+-- This function generates a JSON formatted structure representing the parameters registered in the emaj_param table.
+-- All parameters are extracted, except the "emaj_version" key that is directly linked to the extension and thus is not updatable.
+-- The E-Maj version is already displayed in the generated comment at the beginning of the structure.
+-- Output: the parameters content in JSON format
+  DECLARE
+    v_params                 TEXT;
+    v_paramsJson             JSON;
+    r_param                  RECORD;
+  BEGIN
+-- build the header of the JSON structure
+    v_params = E'{\n  "_comment": "Generated on database ' || current_database() || ' with emaj version ' ||
+                           (SELECT param_value_text FROM emaj.emaj_param WHERE param_key = 'emaj_version') ||
+                           ', at ' || current_timestamp || E'",\n' ||
+               E'  "_comment": "Known parameter keys: dblink_user_password, history_retention (default = 1 year), alter_log_table, '
+                'avg_row_rollback_duration (default = 00:00:00.0001), avg_row_delete_log_duration (default = 00:00:00.00001), '
+                'avg_fkey_check_duration (default = 00:00:00.00002), fixed_step_rollback_duration (default = 00:00:00.0025), '
+                'fixed_table_rollback_duration (default = 00:00:00.001) and fixed_dblink_rollback_duration (default = 00:00:00.004).",\n';
+-- build the parameters description
+    v_params = v_params || E'  "parameters": [\n';
+    FOR r_param IN
+        SELECT param_key AS key,
+               coalesce(to_json(param_value_text),
+                        to_json(param_value_interval),
+                        to_json(param_value_boolean),
+                        to_json(param_value_numeric),
+                        'null') as value
+          FROM emaj.emaj_param
+               JOIN (VALUES (1::INT, 'emaj_version'), (2,'dblink_user_password'),
+                            (3, 'history_retention'), (4, 'alter_log_table'),
+                            (5, 'avg_row_rollback_duration'), (5, 'avg_row_delete_log_duration'),
+                            (7, 'avg_fkey_check_duration'), (8, 'fixed_step_rollback_duration'),
+                            (9, 'fixed_table_rollback_duration'), (10, 'fixed_dblink_rollback_duration')
+                    ) AS p(rank,key) ON (p.key = param_key)
+          WHERE param_key <> 'emaj_version'
+          ORDER BY rank
+    LOOP
+      v_params = v_params || E'    {\n'
+                          ||  '      "key": ' || to_json(r_param.key) || E',\n'
+                          ||  '      "value": ' || r_param.value || E'\n'
+                          || E'    },\n';
+    END LOOP;
+    v_params = v_params || E'  ]\n';
+-- build the trailer and remove illicite commas at the end of arrays and attributes lists
+    v_params = v_params || E'}\n';
+    v_params = regexp_replace(v_params, E',(\n *(\]|}))', '\1', 'g');
+-- test the JSON format by casting the text structure to json and report a warning in case of problem
+--   (this should not fail, unless the function code is bogus)
+    BEGIN
+      v_paramsJson = v_params::JSON;
+      EXCEPTION WHEN OTHERS THEN
+        RAISE EXCEPTION '_export_param_conf: The generated JSON structure is not properly formatted. '
+                        'Please report the bug to the E-Maj project.';
+    END;
+--
+    RETURN v_paramsJson;
+  END;
+$_export_param_conf$;
+
 --<end_functions>                                pattern used by the tool that extracts and insert the functions definition
 ------------------------------------------
 --                                      --

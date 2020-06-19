@@ -10176,7 +10176,11 @@ $_export_param_conf$
 -- build the header of the JSON structure
     v_params = E'{\n  "_comment": "Generated on database ' || current_database() || ' with emaj version ' ||
                            (SELECT param_value_text FROM emaj.emaj_param WHERE param_key = 'emaj_version') ||
-                           ', at ' || current_timestamp || E'",\n';
+                           ', at ' || current_timestamp || E'",\n' ||
+               E'  "_comment": "Known parameter keys: dblink_user_password, history_retention (default = 1 year), alter_log_table, '
+                'avg_row_rollback_duration (default = 00:00:00.0001), avg_row_delete_log_duration (default = 00:00:00.00001), '
+                'avg_fkey_check_duration (default = 00:00:00.00002), fixed_step_rollback_duration (default = 00:00:00.0025), '
+                'fixed_table_rollback_duration (default = 00:00:00.001) and fixed_dblink_rollback_duration (default = 00:00:00.004).",\n';
 -- build the parameters description
     v_params = v_params || E'  "parameters": [\n';
     FOR r_param IN

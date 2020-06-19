@@ -1505,7 +1505,7 @@ select emaj.emaj_export_parameters_configuration('/tmp/orig_param_config');
 (1 row)
 
 \! wc -l /tmp/orig_param_config
-14 /tmp/orig_param_config
+15 /tmp/orig_param_config
 -- direct import
 --   error
 --     no "parameters" array
