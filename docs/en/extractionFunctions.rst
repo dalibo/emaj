@@ -130,11 +130,9 @@ In order to generate the script, all tables must have an explicit *PRIMARY KEY*.
 
    If a tables and sequences list is specified to limit the *emaj_gen_sql_group()* function's work, it is the user's responsibility to take into account the possible presence of foreign keys, in order to let the function produce a viable SQL script.
 
-All statements, *INSERT*, *UPDATE*, *DELETE* and *TRUNCATE* (for *AUDIT_ONLY* tables groups), are generated in the order of their initial execution.
+Statements are generated in the order of their initial execution.
 
 The statements are inserted into a single transaction. They are surrounded by a *BEGIN TRANSACTION;* statement and a *COMMIT;* statement. An initial comment specifies the characteristics of the script generation: generation date and time, related tables group and used marks. 
-
-*TRUNCATE* statements recorded for *AUDIT_ONLY* tables groups are also included into the script.
 
 At the end of the script, sequences belonging to the tables group are set to their final state.
 

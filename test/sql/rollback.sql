@@ -370,7 +370,7 @@ insert into myschema4.myTblM values ('2001-09-11',0,'abc'),('2011-09-11',10,'def
 insert into myschema4.myTblP values (-1,'abc'),(0,'def'),(1,'ghi');
 
 select emaj.emaj_set_mark_group('myGroup4','mark1');
-delete from myschema4.myTblM;
+truncate myschema4.myTblM;
 update myschema4.myTblP set col2 = 'DEF' where col1 = 0;
 
 select emaj.emaj_logged_rollback_group('myGroup4','mark1');

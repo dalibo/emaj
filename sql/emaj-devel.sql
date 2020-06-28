@@ -630,12 +630,18 @@ INSERT INTO emaj.emaj_param (param_key, param_value_text) VALUES ('emaj_version'
 
 -- Other parameters are optional. They may be set by E-Maj administrators if needed.
 
--- The dblink_user_password parameter defines the role and its associated password, if any, to establish a dblink
+-- The 'dblink_user_password' parameter defines the role and its associated password, if any, to establish a dblink
 -- connection for the monitoring of rollback operations.
 --   INSERT INTO emaj.emaj_param (param_key, param_value_text) VALUES ('dblink_user_password','user=<user> password=<password>');
 
--- The history_retention parameter defines the time interval when a row remains in the emaj history and rollback tables - default = 1 year.
+-- The 'history_retention' parameter defines the time interval when a row remains in the emaj history and rollback tables
+--   default = 1 year.
 --   INSERT INTO emaj.emaj_param (param_key, param_value_interval) VALUES ('history_retention','1 year'::INTERVAL);
+
+-- The 'alter_log_table' parameter allows to adjust the log tables content by adding extra information column.
+--   INSERT INTO emaj.emaj_param (param_key, param_value_text) VALUES ('alter_log_table',
+--     'ADD COLUMN emaj_user_ip INET DEFAULT inet_client_addr(),
+--      ADD COLUMN emaj_appname TEXT DEFAULT current_setting(''application_name'')');
 
 -- 6 parameters are used by the emaj_estimate_rollback_group(s) and the rollback functions as default values to compute the approximate
 -- duration of a rollback operation.
@@ -651,11 +657,6 @@ INSERT INTO emaj.emaj_param (param_key, param_value_text) VALUES ('emaj_version'
 --   INSERT INTO emaj.emaj_param (param_key, param_value_interval) VALUES ('fixed_table_rollback_duration','1 millisecond'::INTERVAL);
 -- The fixed_dblink_rollback_duration parameter defines the fixed cost of dblink use for any rollback step.
 --   INSERT INTO emaj.emaj_param (param_key, param_value_interval) VALUES ('fixed_dblink_rollback_duration','4 millisecond'::INTERVAL);
-
--- A parameter allowing to adjust the log tables content by adding extra information column.
---   INSERT INTO emaj.emaj_param (param_key, param_value_text) VALUES ('alter_log_table',
---     'ADD COLUMN emaj_user_ip INET DEFAULT inet_client_addr(),
---      ADD COLUMN emaj_appname TEXT DEFAULT current_setting(''application_name'')');
 
 -- view readable by emaj_viewer role. It hides the 'dblink_user_password' parameter's value
 CREATE VIEW emaj.emaj_visible_param WITH (security_barrier) AS
@@ -1622,38 +1623,46 @@ $_check_marks_range$
   END;
 $_check_marks_range$;
 
-CREATE OR REPLACE FUNCTION emaj._forbid_truncate_fnct()
+CREATE OR REPLACE FUNCTION emaj._truncate_trigger_fnct()
 RETURNS TRIGGER LANGUAGE plpgsql
 SECURITY DEFINER SET search_path = pg_catalog, pg_temp AS
-$_forbid_truncate_fnct$
--- The function is triggered by the execution of TRUNCATE SQL verb on tables of a rollbackable group
--- in logging mode.
--- It can only be called with postgresql in a version greater or equal 8.4.
-  BEGIN
-    IF (TG_OP = 'TRUNCATE') THEN
-      RAISE EXCEPTION 'emaj._forbid_truncate_fnct: TRUNCATE is not allowed while updates on this table (%.%) are currently protected'
-                      ' by E-Maj. Consider stopping the group before issuing a TRUNCATE.', TG_TABLE_SCHEMA, TG_TABLE_NAME;
-    END IF;
-    RETURN NULL;
-  END;
-$_forbid_truncate_fnct$;
-
-CREATE OR REPLACE FUNCTION emaj._log_truncate_fnct()
-RETURNS TRIGGER  LANGUAGE plpgsql SECURITY DEFINER AS
-$_log_truncate_fnct$
--- The function is triggered by the execution of TRUNCATE SQL verb on tables of an audit_only group in logging mode.
+$_truncate_trigger_fnct$
+-- The function is triggered by the execution of TRUNCATE SQL verb on tables.
+-- Before effetively truncating the table, keep a trace of the event in the log table.
+-- First, a generic TRU event is recorded (it will be used by the functions that generate SQL script to replay).
+-- Then, the content of the table to truncate is copied into the log table, with a 'TRU' emaj_verb and an 'OLD' emaj_tuple (it will be
+-- used by the rollback functions)
+-- And add the number of recorded rows to the log sequence (to get accurate statistics)
   DECLARE
     v_fullLogTableName       TEXT;
+    v_fullLogSequenceName    TEXT;
+    v_nbRows                 BIGINT;
   BEGIN
     IF (TG_OP = 'TRUNCATE') THEN
-      SELECT quote_ident(rel_log_schema)  || '.' || quote_ident(rel_log_table) INTO v_fullLogTableName FROM emaj.emaj_relation
+-- get some log object names for the truncated table
+      SELECT quote_ident(rel_log_schema) || '.' || quote_ident(rel_log_table),
+             quote_ident(rel_log_schema) || '.' || quote_ident(rel_log_sequence)
+             INTO v_fullLogTableName, v_fullLogSequenceName
+        FROM emaj.emaj_relation
         WHERE rel_schema = TG_TABLE_SCHEMA AND rel_tblseq = TG_TABLE_NAME AND upper_inf(rel_time_range);
+-- log the TRU event into the log table (with emaj_tuple set to NULL)
       EXECUTE format('INSERT INTO %s (emaj_verb) VALUES (''TRU'')',
-                    v_fullLogTableName);
+                     v_fullLogTableName);
+-- log all rows from the table
+      EXECUTE format('INSERT INTO %s SELECT *, ''TRU'', ''OLD'' FROM ONLY %I.%I ',
+                     v_fullLogTableName, TG_TABLE_SCHEMA, TG_TABLE_NAME);
+      GET DIAGNOSTICS v_nbRows = ROW_COUNT;
+      IF v_nbRows > 0 THEN
+-- adjust the log sequence value for the table
+        EXECUTE format('SELECT setval(%L,'
+                       '  (SELECT CASE WHEN is_called THEN last_value + %s ELSE last_value + %s - 1 END FROM %s))',
+                       v_fullLogSequenceName, v_nbRows, v_nbRows, v_fullLogSequenceName);
+      END IF;
     END IF;
+-- and effectively TRUNCATE the table
     RETURN NULL;
   END;
-$_log_truncate_fnct$;
+$_truncate_trigger_fnct$;
 
 CREATE OR REPLACE FUNCTION emaj._create_log_schemas(v_function TEXT, v_groupNames TEXT[])
 RETURNS VOID LANGUAGE plpgsql
@@ -2820,19 +2829,10 @@ $_create_tbl$
 -- But the trigger is not immediately activated (it will be at emaj_start_group time)
     EXECUTE format('DROP TRIGGER IF EXISTS emaj_trunc_trg ON %s',
                    v_fullTableName);
-    IF v_groupIsRollbackable THEN
--- For rollbackable groups, use the common _forbid_truncate_fnct() function that blocks the operation
-      EXECUTE format('CREATE TRIGGER emaj_trunc_trg'
-                     '  BEFORE TRUNCATE ON %s'
-                     '  FOR EACH STATEMENT EXECUTE PROCEDURE emaj._forbid_truncate_fnct()',
-                     v_fullTableName);
-    ELSE
--- For audit_only groups, use the common _log_truncate_fnct() function that records the operation into the log table
-      EXECUTE format('CREATE TRIGGER emaj_trunc_trg'
-                     '  BEFORE TRUNCATE ON %s'
-                     '  FOR EACH STATEMENT EXECUTE PROCEDURE emaj._log_truncate_fnct()',
-                     v_fullTableName);
-    END IF;
+    EXECUTE format('CREATE TRIGGER emaj_trunc_trg'
+                   '  BEFORE TRUNCATE ON %s'
+                   '  FOR EACH STATEMENT EXECUTE PROCEDURE emaj._truncate_trigger_fnct()',
+                   v_fullTableName);
     IF NOT v_groupIsLogging THEN
       EXECUTE format('ALTER TABLE %s DISABLE TRIGGER emaj_trunc_trg',
                      v_fullTableName);
@@ -4452,7 +4452,7 @@ $_gen_sql_tbl$
               || ' SET ' || r_rel.rel_sql_gen_upd_set || ' WHERE ' || r_rel.rel_sql_gen_pk_conditions || ';''';
     v_rqDelete = '''DELETE FROM ONLY ' || replace(v_fullTableName,'''','''''')
               || ' WHERE ' || r_rel.rel_sql_gen_pk_conditions || ';''';
-    v_rqTruncate = '''TRUNCATE ' || replace(v_fullTableName,'''','''''') || ';''';
+    v_rqTruncate = '''TRUNCATE ONLY ' || replace(v_fullTableName,'''','''''') || ' CASCADE;''';
 -- build the restriction conditions on emaj_gid, depending on supplied marks range and the relation time range upper bound
     v_conditions = 'o.emaj_gid > ' || v_firstEmajGid;
 --   get the EmajGid of the relation time range upper bound, if any
@@ -4480,7 +4480,8 @@ $_gen_sql_tbl$
                    '       LEFT OUTER JOIN %s n ON n.emaj_gid = o.emaj_gid'
                    '                          AND (n.emaj_verb = ''UPD'' AND n.emaj_tuple = ''NEW'') '
                    ' WHERE NOT (o.emaj_verb = ''UPD'' AND o.emaj_tuple = ''NEW'')'
-                   ' AND %s',
+                   '   AND NOT (o.emaj_verb = ''TRU'' AND o.emaj_tuple IS NOT NULL)'
+                   '   AND %s',
                    v_rqInsert, v_rqUpdate, v_rqDelete, v_rqTruncate, v_logTableName, v_logTableName, v_conditions);
     GET DIAGNOSTICS v_nbSQL = ROW_COUNT;
     RETURN v_nbSQL;

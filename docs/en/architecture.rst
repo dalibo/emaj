@@ -28,8 +28,7 @@ The recorded update operations concerns the following SQL verbs:
 
 For statements that process several rows, each creation, update or deletion is individually recorded. For instance, if a *DELETE FROM <table>* is performed against a table having 1 million rows, 1 million row deletion events are recorded.
 
-The case of *TRUNCATE* SQL verbs is specific. As no *FOR EACH ROW* trigger can be fired for this verb, the consequences of a *TRUNCATE* cannot be cancelled by E-Maj. Therefore, its execution is forbidden for *ROLLBACKABLE* tables groups in *LOGGING* state. In contrast, *TRUNCATE* is always permitted for *AUDIT_ONLY* tables groups. In such a case, only its execution is recorded.
-
+At *TRUNCATE* SQL execution time, the whole table content is recorded before its effective deletion.
 
 Created objects
 ***************
@@ -38,7 +37,7 @@ For each application table, the following objects are created:
 
 * a dedicated **log table**, containing data corresponding to the updates applied on the application table,
 * a **trigger** and a specific **function**, that, for each row creation (*INSERT*, *COPY*), change (*UPDATE*) or suppression (*DELETE*), record into the log table all data needed to potentially cancel later this elementary action,
-* another **trigger**, that either blocks any execution of a *TRUNCATE* SQL verb for *ROLLBACKABLE* tables groups or records the execution of a *TRUNCATE* SQL verb for *AUDIT_ONLY* tables groups,
+* another **trigger**, that processes TRUNCATE SQL statements,
 * a **sequence** used to quickly count the number of updates recorded in log tables between 2 marks.
 
 .. image:: images/created_objects.png

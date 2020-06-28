@@ -339,23 +339,7 @@ ERROR:  _check_group_names: The group "myGroup2" is not in IDLE state.
 CONTEXT:  SQL statement "SELECT emaj._check_group_names(v_groupNames := v_groupNames, v_mayBeNull := v_multiGroup, v_lockGroups := TRUE, v_checkList := 'IDLE')"
 PL/pgSQL function emaj._start_groups(text[],text,boolean,boolean) line 20 at SQL statement
 PL/pgSQL function emaj.emaj_start_group(text,text,boolean) line 12 at RETURN
--- check how truncate reacts  - tables are empty anyway
--- ... for a rollbackable group (must be blocked)
 SET client_min_messages TO NOTICE;
-truncate myschema1.mytbl1 cascade;
-NOTICE:  truncate cascades to table "mytbl4"
-ERROR:  emaj._forbid_truncate_fnct: TRUNCATE is not allowed while updates on this table (myschema1.mytbl1) are currently protected by E-Maj. Consider stopping the group before issuing a TRUNCATE.
--- ... for an audit_only group (must be logged)
-truncate "phil's schema3"."phil's tbl1" cascade;
-NOTICE:  truncate cascades to table "mytbl4"
-NOTICE:  truncate cascades to table "myTbl2\"
-select "phil's col11", "phil's col12", "phil\s col13", emaj_verb, emaj_tuple, emaj_gid, emaj_user
-  from "emaj_phil's schema3"."phil's tbl1_log";
- phil's col11 | phil's col12 | phil\s col13 | emaj_verb | emaj_tuple | emaj_gid | emaj_user 
---------------+--------------+--------------+-----------+------------+----------+-----------
-              |              |              | TRU       |            |        1 | postgres
-(1 row)
-
 -- use of % in start mark name
 select emaj.emaj_start_group('myGroup1','Foo%Bar');
 ERROR:  _check_group_names: The group "myGroup1" is not in IDLE state.
@@ -513,8 +497,8 @@ select time_id, time_last_emaj_gid, time_event from emaj.emaj_time_stamp where t
     1008 |                  0 | M
     1010 |                  0 | M
     1011 |                  0 | M
-    1012 |                  2 | M
-    1013 |                  2 | M
+    1012 |                  0 | M
+    1013 |                  0 | M
 (13 rows)
 
 -- should be OK
@@ -749,16 +733,16 @@ select time_id, time_last_emaj_gid, time_event from emaj.emaj_time_stamp where t
     1008 |                  0 | M
     1010 |                  0 | M
     1011 |                  0 | M
-    1012 |                  2 | M
-    1013 |                  2 | M
-    1014 |                  2 | M
-    1015 |                  2 | M
-    1016 |                  2 | M
-    1017 |                  2 | M
-    1018 |                  2 | M
-    1019 |                  2 | M
-    1020 |                  2 | M
-    1022 |                  2 | M
+    1012 |                  0 | M
+    1013 |                  0 | M
+    1014 |                  0 | M
+    1015 |                  0 | M
+    1016 |                  0 | M
+    1017 |                  0 | M
+    1018 |                  0 | M
+    1019 |                  0 | M
+    1020 |                  0 | M
+    1022 |                  0 | M
 (21 rows)
 
 -----------------------------
@@ -977,18 +961,18 @@ select time_id, time_last_emaj_gid, time_event from emaj.emaj_time_stamp where t
     1008 |                  0 | M
     1010 |                  0 | M
     1011 |                  0 | M
-    1012 |                  2 | M
-    1013 |                  2 | M
-    1014 |                  2 | M
-    1015 |                  2 | M
-    1016 |                  2 | M
-    1017 |                  2 | M
-    1018 |                  2 | M
-    1019 |                  2 | M
-    1020 |                  2 | M
-    1022 |                  2 | M
-    1023 |                  2 | M
-    1024 |                  2 | M
+    1012 |                  0 | M
+    1013 |                  0 | M
+    1014 |                  0 | M
+    1015 |                  0 | M
+    1016 |                  0 | M
+    1017 |                  0 | M
+    1018 |                  0 | M
+    1019 |                  0 | M
+    1020 |                  0 | M
+    1022 |                  0 | M
+    1023 |                  0 | M
+    1024 |                  0 | M
 (23 rows)
 
 -----------------------------

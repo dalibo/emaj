@@ -66,6 +66,7 @@ set search_path=myschema1;
 insert into myTbl1 values (1, 'Step 6', E'\\000'::bytea);
 insert into myTbl4 values (11,'FK...',1,1,'Step 6');
 insert into myTbl4 values (12,'FK...',1,1,'Step 6');
+truncate myTbl2 cascade;
 --
 select * from emaj.emaj_rollback_group('myGroup1','M5',false) order by 1,2;
 --

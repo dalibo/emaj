@@ -1835,7 +1835,7 @@ select emaj.emaj_set_mark_group('myGroup4','mark1');
                    5
 (1 row)
 
-delete from myschema4.myTblM;
+truncate myschema4.myTblM;
 update myschema4.myTblP set col2 = 'DEF' where col1 = 0;
 select emaj.emaj_logged_rollback_group('myGroup4','mark1');
  emaj_logged_rollback_group 
@@ -1847,25 +1847,28 @@ select col1, col2, col3, emaj_verb, emaj_tuple, emaj_gid from emaj_myschema4.myt
     col1    | col2 | col3 | emaj_verb | emaj_tuple | emaj_gid 
 ------------+------+------+-----------+------------+----------
  09-11-2021 |   20 | ghi  | INS       | NEW        |    30096
- 09-11-2021 |   20 | ghi  | DEL       | OLD        |    30100
- 09-11-2021 |   20 | ghi  | INS       | NEW        |    30108
-(3 rows)
+            |      |      | TRU       |            |    30100
+ 09-11-2021 |   20 | ghi  | TRU       | OLD        |    30101
+ 09-11-2021 |   20 | ghi  | INS       | NEW        |    30111
+(4 rows)
 
 select col1, col2, col3, emaj_verb, emaj_tuple, emaj_gid from emaj_myschema4.mytblc1_log;
     col1    | col2 | col3 | emaj_verb | emaj_tuple | emaj_gid 
 ------------+------+------+-----------+------------+----------
  09-11-2001 |    0 | abc  | INS       | NEW        |    30094
- 09-11-2001 |    0 | abc  | DEL       | OLD        |    30101
- 09-11-2001 |    0 | abc  | INS       | NEW        |    30106
-(3 rows)
+            |      |      | TRU       |            |    30102
+ 09-11-2001 |    0 | abc  | TRU       | OLD        |    30103
+ 09-11-2001 |    0 | abc  | INS       | NEW        |    30109
+(4 rows)
 
 select col1, col2, col3, emaj_verb, emaj_tuple, emaj_gid from emaj_myschema4.mytblc2_log;
     col1    | col2 | col3 | emaj_verb | emaj_tuple | emaj_gid 
 ------------+------+------+-----------+------------+----------
  09-11-2011 |   10 | def  | INS       | NEW        |    30095
- 09-11-2011 |   10 | def  | DEL       | OLD        |    30102
- 09-11-2011 |   10 | def  | INS       | NEW        |    30107
-(3 rows)
+            |      |      | TRU       |            |    30104
+ 09-11-2011 |   10 | def  | TRU       | OLD        |    30105
+ 09-11-2011 |   10 | def  | INS       | NEW        |    30110
+(4 rows)
 
 select col1, col2, emaj_verb, emaj_tuple, emaj_gid from emaj_myschema4.mypartp1_log;          -- empty in pg 9.6-
  col1 | col2 | emaj_verb | emaj_tuple | emaj_gid 
@@ -1878,10 +1881,10 @@ select col1, col2, emaj_verb, emaj_tuple, emaj_gid from emaj_myschema4.mypartp2_
 ------+------+-----------+------------+----------
     0 | def  | INS       | NEW        |    30098
     1 | ghi  | INS       | NEW        |    30099
-    0 | def  | UPD       | OLD        |    30103
-    0 | DEF  | UPD       | NEW        |    30103
-    0 | DEF  | DEL       | OLD        |    30104
-    0 | def  | INS       | NEW        |    30105
+    0 | def  | UPD       | OLD        |    30106
+    0 | DEF  | UPD       | NEW        |    30106
+    0 | DEF  | DEL       | OLD        |    30107
+    0 | def  | INS       | NEW        |    30108
 (6 rows)
 
 -- use the functions dedicated to emaj_web
@@ -2528,9 +2531,9 @@ select rlbp_rlbk_id, rlbp_step, rlbp_schema, rlbp_table, rlbp_object, rlbp_targe
            14 | CTRL+DBLINK |             |            |                       |                     |                   |              |                                                                                                                                         |                      24 |                    2 |              
            17 | DIS_APP_TRG | myschema4   | mytblm     | mytblm_insert_trigger |                     |                 4 |            1 |                                                                                                                                         |                         |                    2 |              
            17 | RLBK_TABLE  | myschema4   | mypartp2   |                       |                3046 |                 1 |            1 |                                                                                                                                         |                       1 |                    3 |             1
-           17 | RLBK_TABLE  | myschema4   | mytblc1    |                       |                3046 |                 2 |            1 |                                                                                                                                         |                       1 |                    3 |             1
-           17 | RLBK_TABLE  | myschema4   | mytblc2    |                       |                3046 |                 3 |            1 |                                                                                                                                         |                       1 |                    3 |             1
-           17 | RLBK_TABLE  | myschema4   | mytblm     |                       |                3046 |                 4 |            1 |                                                                                                                                         |                       1 |                    3 |             1
+           17 | RLBK_TABLE  | myschema4   | mytblc1    |                       |                3046 |                 2 |            1 |                                                                                                                                         |                       1 |                    3 |             2
+           17 | RLBK_TABLE  | myschema4   | mytblc2    |                       |                3046 |                 3 |            1 |                                                                                                                                         |                       1 |                    3 |             2
+           17 | RLBK_TABLE  | myschema4   | mytblm     |                       |                3046 |                 4 |            1 |                                                                                                                                         |                       1 |                    3 |             2
            17 | ENA_APP_TRG | myschema4   | mytblm     | mytblm_insert_trigger |                     |                 4 |            1 |                                                                                                                                         |                         |                    2 |              
            17 | CTRL+DBLINK |             |            |                       |                     |                   |              |                                                                                                                                         |                       6 |                    2 |              
            18 | DIS_APP_TRG | myschema4   | mytblm     | mytblm_insert_trigger |                     |                 4 |            1 |                                                                                                                                         |                         |                    2 |              
@@ -2541,14 +2544,14 @@ select rlbp_rlbk_id, rlbp_step, rlbp_schema, rlbp_table, rlbp_object, rlbp_targe
            18 | DIS_LOG_TRG | myschema4   | mytblm     |                       |                     |                 4 |            1 |                                                                                                                                         |                         |                    2 |              
            18 | RLBK_TABLE  | myschema4   | mypartp1   |                       |                3045 |                 5 |            1 |                                                                                                                                         |                       1 |                    3 |             1
            18 | RLBK_TABLE  | myschema4   | mypartp2   |                       |                3045 |                 1 |            1 |                                                                                                                                         |                       5 |                    1 |             2
-           18 | RLBK_TABLE  | myschema4   | mytblc1    |                       |                3045 |                 2 |            1 |                                                                                                                                         |                       3 |                    1 |             1
-           18 | RLBK_TABLE  | myschema4   | mytblc2    |                       |                3045 |                 3 |            1 |                                                                                                                                         |                       3 |                    1 |             1
-           18 | RLBK_TABLE  | myschema4   | mytblm     |                       |                3045 |                 4 |            1 |                                                                                                                                         |                       3 |                    1 |             1
+           18 | RLBK_TABLE  | myschema4   | mytblc1    |                       |                3045 |                 2 |            1 |                                                                                                                                         |                       3 |                    1 |             2
+           18 | RLBK_TABLE  | myschema4   | mytblc2    |                       |                3045 |                 3 |            1 |                                                                                                                                         |                       3 |                    1 |             2
+           18 | RLBK_TABLE  | myschema4   | mytblm     |                       |                3045 |                 4 |            1 |                                                                                                                                         |                       3 |                    1 |             2
            18 | DELETE_LOG  | myschema4   | mypartp1   |                       |                3045 |                 5 |            1 |                                                                                                                                         |                       1 |                    3 |             1
            18 | DELETE_LOG  | myschema4   | mypartp2   |                       |                3045 |                 1 |            1 |                                                                                                                                         |                       5 |                    3 |             6
-           18 | DELETE_LOG  | myschema4   | mytblc1    |                       |                3045 |                 2 |            1 |                                                                                                                                         |                       3 |                    3 |             3
-           18 | DELETE_LOG  | myschema4   | mytblc2    |                       |                3045 |                 3 |            1 |                                                                                                                                         |                       3 |                    3 |             3
-           18 | DELETE_LOG  | myschema4   | mytblm     |                       |                3045 |                 4 |            1 |                                                                                                                                         |                       3 |                    3 |             3
+           18 | DELETE_LOG  | myschema4   | mytblc1    |                       |                3045 |                 2 |            1 |                                                                                                                                         |                       3 |                    3 |             4
+           18 | DELETE_LOG  | myschema4   | mytblc2    |                       |                3045 |                 3 |            1 |                                                                                                                                         |                       3 |                    3 |             4
+           18 | DELETE_LOG  | myschema4   | mytblm     |                       |                3045 |                 4 |            1 |                                                                                                                                         |                       3 |                    3 |             4
            18 | ENA_APP_TRG | myschema4   | mytblm     | mytblm_insert_trigger |                     |                 4 |            1 |                                                                                                                                         |                         |                    2 |              
            18 | ENA_LOG_TRG | myschema4   | mypartp1   |                       |                     |                 5 |            1 |                                                                                                                                         |                         |                    2 |              
            18 | ENA_LOG_TRG | myschema4   | mypartp2   |                       |                     |                 1 |            1 |                                                                                                                                         |                         |                    2 |              
@@ -2733,18 +2736,18 @@ select time_id, time_last_emaj_gid, time_event from emaj.emaj_time_stamp where t
     3044 |              30093 | M
     3045 |              30093 | M
     3046 |              30099 | M
-    3047 |              30103 | R
-    3048 |              30108 | M
-    3049 |              30108 | R
-    3050 |              30108 | M
-    3051 |              30108 | R
-    3052 |              30108 | M
-    3053 |              30108 | M
-    3054 |              30123 | M
-    3055 |              30125 | R
-    3056 |              30140 | M
-    3057 |              30142 | R
-    3061 |              30143 | R
+    3047 |              30106 | R
+    3048 |              30111 | M
+    3049 |              30111 | R
+    3050 |              30111 | M
+    3051 |              30111 | R
+    3052 |              30111 | M
+    3053 |              30111 | M
+    3054 |              30126 | M
+    3055 |              30128 | R
+    3056 |              30143 | M
+    3057 |              30145 | R
+    3061 |              30146 | R
 (49 rows)
 
 select hist_id, hist_function, hist_event, hist_object, regexp_replace(regexp_replace(hist_wording,E'\\d\\d\.\\d\\d\\.\\d\\d\\.\\d\\d\\d\\d','%','g'),E'\\[.+\\]','(timestamp)','g'), hist_user from 
@@ -3053,14 +3056,14 @@ select hist_id, hist_function, hist_event, hist_object, regexp_replace(regexp_re
     3361 | LOCK_GROUP             | END                     | myGroup4                     | Rollback session #1: 5 tables locked, 0 deadlock(s)            | postgres
     3362 | SET_MARK_GROUP         | BEGIN                   | myGroup4                     | RLBK_mark1_%_START                                             | postgres
     3363 | SET_MARK_GROUP         | END                     | myGroup4                     | RLBK_mark1_%_START                                             | postgres
-    3364 | ROLLBACK_TABLE         | BEGIN                   | myschema4.mypartp2           | All log rows with emaj_gid > 30099 and <= 30103                | postgres
+    3364 | ROLLBACK_TABLE         | BEGIN                   | myschema4.mypartp2           | All log rows with emaj_gid > 30099 and <= 30106                | postgres
     3365 | ROLLBACK_TABLE         | END                     | myschema4.mypartp2           | 1 rolled back primary keys                                     | postgres
-    3366 | ROLLBACK_TABLE         | BEGIN                   | myschema4.mytblc1            | All log rows with emaj_gid > 30099 and <= 30103                | postgres
-    3367 | ROLLBACK_TABLE         | END                     | myschema4.mytblc1            | 1 rolled back primary keys                                     | postgres
-    3368 | ROLLBACK_TABLE         | BEGIN                   | myschema4.mytblc2            | All log rows with emaj_gid > 30099 and <= 30103                | postgres
-    3369 | ROLLBACK_TABLE         | END                     | myschema4.mytblc2            | 1 rolled back primary keys                                     | postgres
-    3370 | ROLLBACK_TABLE         | BEGIN                   | myschema4.mytblm             | All log rows with emaj_gid > 30099 and <= 30103                | postgres
-    3371 | ROLLBACK_TABLE         | END                     | myschema4.mytblm             | 1 rolled back primary keys                                     | postgres
+    3366 | ROLLBACK_TABLE         | BEGIN                   | myschema4.mytblc1            | All log rows with emaj_gid > 30099 and <= 30106                | postgres
+    3367 | ROLLBACK_TABLE         | END                     | myschema4.mytblc1            | 2 rolled back primary keys                                     | postgres
+    3368 | ROLLBACK_TABLE         | BEGIN                   | myschema4.mytblc2            | All log rows with emaj_gid > 30099 and <= 30106                | postgres
+    3369 | ROLLBACK_TABLE         | END                     | myschema4.mytblc2            | 2 rolled back primary keys                                     | postgres
+    3370 | ROLLBACK_TABLE         | BEGIN                   | myschema4.mytblm             | All log rows with emaj_gid > 30099 and <= 30106                | postgres
+    3371 | ROLLBACK_TABLE         | END                     | myschema4.mytblm             | 2 rolled back primary keys                                     | postgres
     3372 | SET_MARK_GROUP         | BEGIN                   | myGroup4                     | RLBK_mark1_%_DONE                                              | postgres
     3373 | SET_MARK_GROUP         | END                     | myGroup4                     | RLBK_mark1_%_DONE                                              | postgres
     3374 | ROLLBACK_GROUP         | NOTICE                  | Rollback id 17               | 4 / 5 tables effectively processed.                            | postgres
@@ -3071,15 +3074,15 @@ select hist_id, hist_function, hist_event, hist_object, regexp_replace(regexp_re
     3379 | DBLINK_OPEN_CNX        |                         | rlbk#1                       | Status = 0                                                     | postgres
     3380 | LOCK_GROUP             | BEGIN                   | myGroup4                     | Rollback session #1                                            | postgres
     3381 | LOCK_GROUP             | END                     | myGroup4                     | Rollback session #1: 5 tables locked, 0 deadlock(s)            | postgres
-    3382 | ROLLBACK_TABLE         | BEGIN                   | myschema4.mypartp2           | All log rows with emaj_gid > 30093 and <= 30108                | postgres
+    3382 | ROLLBACK_TABLE         | BEGIN                   | myschema4.mypartp2           | All log rows with emaj_gid > 30093 and <= 30111                | postgres
     3383 | ROLLBACK_TABLE         | END                     | myschema4.mypartp2           | 2 rolled back primary keys                                     | postgres
-    3384 | ROLLBACK_TABLE         | BEGIN                   | myschema4.mytblc1            | All log rows with emaj_gid > 30093 and <= 30108                | postgres
-    3385 | ROLLBACK_TABLE         | END                     | myschema4.mytblc1            | 1 rolled back primary keys                                     | postgres
-    3386 | ROLLBACK_TABLE         | BEGIN                   | myschema4.mytblc2            | All log rows with emaj_gid > 30093 and <= 30108                | postgres
-    3387 | ROLLBACK_TABLE         | END                     | myschema4.mytblc2            | 1 rolled back primary keys                                     | postgres
-    3388 | ROLLBACK_TABLE         | BEGIN                   | myschema4.mytblm             | All log rows with emaj_gid > 30093 and <= 30108                | postgres
-    3389 | ROLLBACK_TABLE         | END                     | myschema4.mytblm             | 1 rolled back primary keys                                     | postgres
-    3390 | ROLLBACK_TABLE         | BEGIN                   | myschema4.mypartp1           | All log rows with emaj_gid > 30093 and <= 30108                | postgres
+    3384 | ROLLBACK_TABLE         | BEGIN                   | myschema4.mytblc1            | All log rows with emaj_gid > 30093 and <= 30111                | postgres
+    3385 | ROLLBACK_TABLE         | END                     | myschema4.mytblc1            | 2 rolled back primary keys                                     | postgres
+    3386 | ROLLBACK_TABLE         | BEGIN                   | myschema4.mytblc2            | All log rows with emaj_gid > 30093 and <= 30111                | postgres
+    3387 | ROLLBACK_TABLE         | END                     | myschema4.mytblc2            | 2 rolled back primary keys                                     | postgres
+    3388 | ROLLBACK_TABLE         | BEGIN                   | myschema4.mytblm             | All log rows with emaj_gid > 30093 and <= 30111                | postgres
+    3389 | ROLLBACK_TABLE         | END                     | myschema4.mytblm             | 2 rolled back primary keys                                     | postgres
+    3390 | ROLLBACK_TABLE         | BEGIN                   | myschema4.mypartp1           | All log rows with emaj_gid > 30093 and <= 30111                | postgres
     3391 | ROLLBACK_TABLE         | END                     | myschema4.mypartp1           | 1 rolled back primary keys                                     | postgres
     3392 | ROLLBACK_GROUP         | MARK DELETED            | myGroup4                     | mark mark1 is deleted                                          | postgres
     3393 | ROLLBACK_GROUP         | MARK DELETED            | myGroup4                     | mark RLBK_mark1_%_START is deleted                             | postgres
@@ -3124,11 +3127,11 @@ select hist_id, hist_function, hist_event, hist_object, regexp_replace(regexp_re
     3433 | LOCK_GROUP             | END                     | myGroup1                     | Rollback session #1: 5 tables locked, 0 deadlock(s)            | postgres
     3434 | SET_MARK_GROUP         | BEGIN                   | myGroup1                     | RLBK_Conso_M2_%_START                                          | postgres
     3435 | SET_MARK_GROUP         | END                     | myGroup1                     | RLBK_Conso_M2_%_START                                          | postgres
-    3436 | ROLLBACK_TABLE         | BEGIN                   | myschema1.mytbl1             | All log rows with emaj_gid > 30108 and <= 30125                | postgres
+    3436 | ROLLBACK_TABLE         | BEGIN                   | myschema1.mytbl1             | All log rows with emaj_gid > 30111 and <= 30128                | postgres
     3437 | ROLLBACK_TABLE         | END                     | myschema1.mytbl1             | 12 rolled back primary keys                                    | postgres
-    3438 | ROLLBACK_TABLE         | BEGIN                   | myschema1.mytbl2             | All log rows with emaj_gid > 30108 and <= 30125                | postgres
+    3438 | ROLLBACK_TABLE         | BEGIN                   | myschema1.mytbl2             | All log rows with emaj_gid > 30111 and <= 30128                | postgres
     3439 | ROLLBACK_TABLE         | END                     | myschema1.mytbl2             | 1 rolled back primary keys                                     | postgres
-    3440 | ROLLBACK_TABLE         | BEGIN                   | myschema1.mytbl2b            | All log rows with emaj_gid > 30108 and <= 30125                | postgres
+    3440 | ROLLBACK_TABLE         | BEGIN                   | myschema1.mytbl2b            | All log rows with emaj_gid > 30111 and <= 30128                | postgres
     3441 | ROLLBACK_TABLE         | END                     | myschema1.mytbl2b            | 2 rolled back primary keys                                     | postgres
     3442 | ROLLBACK_SEQUENCE      |                         | myschema1."myTbl3_col31_seq" |                                                                | postgres
     3443 | ROLLBACK_SEQUENCE      |                         | myschema1.mytbl2b_col20_seq  | RESTART 3                                                      | postgres
@@ -3150,9 +3153,9 @@ select hist_id, hist_function, hist_event, hist_object, regexp_replace(regexp_re
     3459 | DBLINK_OPEN_CNX        |                         | rlbk#1                       | Status = 1                                                     | postgres
     3460 | LOCK_GROUP             | BEGIN                   | myGroup1                     | Rollback session #1                                            | postgres
     3461 | LOCK_GROUP             | END                     | myGroup1                     | Rollback session #1: 5 tables locked, 0 deadlock(s)            | postgres
-    3462 | ROLLBACK_TABLE         | BEGIN                   | myschema1.mytbl2             | All log rows with emaj_gid > 30108 and <= 30142                | postgres
+    3462 | ROLLBACK_TABLE         | BEGIN                   | myschema1.mytbl2             | All log rows with emaj_gid > 30111 and <= 30145                | postgres
     3463 | ROLLBACK_TABLE         | END                     | myschema1.mytbl2             | 1 rolled back primary keys                                     | postgres
-    3464 | ROLLBACK_TABLE         | BEGIN                   | myschema1.mytbl2b            | All log rows with emaj_gid > 30108 and <= 30142                | postgres
+    3464 | ROLLBACK_TABLE         | BEGIN                   | myschema1.mytbl2b            | All log rows with emaj_gid > 30111 and <= 30145                | postgres
     3465 | ROLLBACK_TABLE         | END                     | myschema1.mytbl2b            | 1 rolled back primary keys                                     | postgres
     3466 | ROLLBACK_GROUP         | MARK DELETED            | myGroup1                     | mark RLBK_Conso_M1_%_DONE is deleted                           | postgres
     3467 | ROLLBACK_GROUP         | MARK DELETED            | myGroup1                     | mark Renamed_conso_M2 is deleted                               | postgres

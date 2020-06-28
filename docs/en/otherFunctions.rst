@@ -144,7 +144,7 @@ The trigger name may contain ‘%’ and ‘_’ wildcard characters. These char
 
 The function returns the number of triggers effectively added or removed.
 
-The function does not process E-Maj triggers (log triggers or triggers protecting against *TRUNCATE*).
+The function does not process E-Maj triggers (log or *TRUNCATE* triggers).
 
 The triggers referenced as “not to be automatically disabled during E-Maj rollbacks” are registered into the *emaj.emaj_ignored_app_trigger* table. This table contains 3 columns:
 

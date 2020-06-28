@@ -162,7 +162,7 @@ For all these functions, an exclusive lock is set on each table of the concerned
 
 All these functions return the number of assigned tables or sequences.
 
-The tables assignment functions create all the needed log tables, the log functions and triggers, as well as the triggers that blocks the execution of *TRUNCATE* SQL statements. They also create the log schemas if needed.
+The tables assignment functions create all the needed log tables, the log functions and triggers, as well as the triggers that process the execution of *TRUNCATE* SQL statements. They also create the log schemas if needed.
 
 The "configuration table" method
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -216,7 +216,7 @@ The second parameter, of type boolean, indicates whether the group is a *ROLLBAC
 
 The function returns the number of tables and sequences contained by the group.
 
-For each table of the group, this function creates the associated log table, the log function and trigger, as well as the trigger that blocks the execution of *TRUNCATE* SQL statements.
+For each table of the group, this function creates the associated log table, the log function and trigger, as well as the trigger that processes the execution of *TRUNCATE* SQL statements.
 
 The function also creates the log schemas if needed.
 

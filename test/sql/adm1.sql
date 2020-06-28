@@ -119,9 +119,7 @@ select emaj.emaj_start_group('myGroup2','M1');
 -----------------------------
 -- Step 1 : for myGroup1, update tables and set 2 marks
 -----------------------------
--- check how truncate reacts (must be blocked in pg 8.4+) - tables are empty anyway
-truncate myschema1.mytbl1 cascade;
--- 
+--
 set search_path=public,myschema1;
 insert into myTbl1 select i, 'ABC', E'\\014'::bytea from generate_series (1,11) as i;
 update myTbl1 set col13=E'\\034'::bytea where col11 <= 3;

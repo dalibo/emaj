@@ -8,12 +8,14 @@ Standart structure
 
 The structure of log tables is directly derived from the structure of the related application  tables. The log tables contain the same columns with the same type. But they also have some additional technical columns:
 
-* emaj_verb : type of the SQL verb that generated the update (*INS*, *UPD*, *DEL*) 
-* emaj_tuple : row version (*OLD* for *DEL* and *UPD*, *NEW* for *INS* and *UPD*)
+* emaj_verb : type of the SQL verb that generated the update (*INS*, *UPD*, *DEL*, *TRU*) 
+* emaj_tuple : row version (*OLD* for *DEL*, *UPD* and *TRU* ; *NEW* for *INS* and *UPD* ; NULL for *TRUNCATE* events)
 * emaj_gid : log row identifier
 * emaj_changed : log row insertion timestamp 
 * emaj_txid : transaction id (the PostgreSQL *txid*) that performed the update
 * emaj_user : connection role that performed the update
+
+When a *TRUNCATE* statement is executed for a table, each row of this table is recorded (with *emaj_verb = TRU* and *emaj_tuple = OLD*). A row is added, with *emaj_verb = TRU*, the other columns and *emaj_tuple* being set to NULL. This row is used by the sql scripts generation.
 
 .. _addLogColumns:
 

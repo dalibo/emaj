@@ -162,7 +162,7 @@ Pour toutes les fonctions, un verrou exclusif est posé sur chaque table du ou d
 
 Toutes ces fonctions retournent le nombre de tables ou séquences ajoutées au groupe de tables.
 
-Les fonctions d’assignation de tables dans un groupe de tables créent les tables de log, les fonctions et triggers de log, ainsi que les triggers bloquant les exécutions de requêtes SQL *TRUNCATE*. Elles créent également les éventuels schémas de log nécessaires.
+Les fonctions d’assignation de tables dans un groupe de tables créent les tables de log, les fonctions et triggers de log, ainsi que les triggers traitant les exécutions de requêtes SQL *TRUNCATE*. Elles créent également les éventuels schémas de log nécessaires.
 
 Méthode « table de configuration »
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -216,7 +216,7 @@ Le second paramètre, de type booléen, indique si le groupe est de type *ROLLBA
 
 La fonction retourne le nombre de tables et de séquences contenues dans le groupe.
 
-Pour chaque table du groupe, cette fonction crée la table de log associée, la fonction et le trigger de log, ainsi que le trigger bloquant les exécutions de requêtes SQL *TRUNCATE*.
+Pour chaque table du groupe, cette fonction crée la table de log associée, la fonction et le trigger de log, ainsi que le trigger traitant les exécutions de requêtes SQL *TRUNCATE*.
 
 La fonction crée également les schémas de log nécessaires.
 

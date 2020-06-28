@@ -880,11 +880,7 @@ PL/pgSQL function emaj.emaj_start_group(text,text,boolean) line 12 at RETURN
 -----------------------------
 -- Step 1 : for myGroup1, update tables and set 2 marks
 -----------------------------
--- check how truncate reacts (must be blocked in pg 8.4+) - tables are empty anyway
-truncate myschema1.mytbl1 cascade;
-NOTICE:  truncate cascades to table "mytbl4"
-ERROR:  emaj._forbid_truncate_fnct: TRUNCATE is not allowed while updates on this table (myschema1.mytbl1) are currently protected by E-Maj. Consider stopping the group before issuing a TRUNCATE.
--- 
+--
 set search_path=public,myschema1;
 insert into myTbl1 select i, 'ABC', E'\\014'::bytea from generate_series (1,11) as i;
 update myTbl1 set col13=E'\\034'::bytea where col11 <= 3;

@@ -144,15 +144,7 @@ select emaj.emaj_start_group('myGroup2','',false);
 -- group already started
 select emaj.emaj_start_group('myGroup2','Mark3');
 
--- check how truncate reacts  - tables are empty anyway
--- ... for a rollbackable group (must be blocked)
 SET client_min_messages TO NOTICE;
-
-truncate myschema1.mytbl1 cascade;
--- ... for an audit_only group (must be logged)
-truncate "phil's schema3"."phil's tbl1" cascade;
-select "phil's col11", "phil's col12", "phil\s col13", emaj_verb, emaj_tuple, emaj_gid, emaj_user
-  from "emaj_phil's schema3"."phil's tbl1_log";
 
 -- use of % in start mark name
 select emaj.emaj_start_group('myGroup1','Foo%Bar');

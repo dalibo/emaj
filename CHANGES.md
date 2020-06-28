@@ -4,6 +4,10 @@ E-Maj - Change log
 ------
 ###Enhancements:###
   * E-Maj is compatible with PostgreSQL V13.
+  * For tables belonging to rollbackable tables groups, TRUNCATEs are not
+    blocked anymore. Just before truncating a table, its content is recorded
+    into its log table, so that E-Maj rollbacks and SQL script generation can
+    handle these TRUNCATE statements.
   * A new emaj_purge_histories() function is callable by external scheduler
     tool to purge various emaj history tables, based on a retention delay.
   * Minor coding changes.

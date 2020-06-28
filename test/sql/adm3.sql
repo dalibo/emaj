@@ -312,7 +312,7 @@ select mark_time_id, regexp_replace(mark_name,E'\\d\\d\.\\d\\d\\.\\d\\d\\.\\d\\d
 \! mkdir /tmp/emaj_test/sql_scripts
 select emaj.emaj_gen_sql_groups('{"grp_tmp_3","grp_tmp_4","grp_tmp"}','Mk1',null,'/tmp/emaj_test/sql_scripts/allGroups.sql');
 --  \! grep -iP '(insert|update|delete|alter)' /tmp/emaj_test/sql_scripts/allGroups.sql
-\! rm -Rf /tmp/emaj_test/sql_scripts
+\! rm -Rf /tmp/emaj_test/sql_scripts/*
 
 -- revert the priority and log tablespaces changes
 select emaj.emaj_modify_tables('phil''s schema3','.*tbl1','','{"priority":null,"log_data_tablespace":null}'::jsonb,'revert changes for 1 table');
@@ -362,6 +362,52 @@ select * from emaj.emaj_rel_hist order by 1,2,3;
 select count(*) from emaj.emaj_relation where rel_schema in ('phil''s schema3','myschema4');
 
 \! rm /tmp/step19_groups_config.json
+
+-----------------------------
+-- Step 20 : test TRUNCATE (log, statistics, rollback, sql generation and replay)
+-----------------------------
+
+SET client_min_messages TO WARNING;
+select emaj.emaj_create_group('truncateTestGroup',true,true);
+select emaj.emaj_assign_tables('phil''s schema3','.*','','truncateTestGroup');
+select emaj.emaj_assign_tables('myschema4','.*','','truncateTestGroup');
+RESET client_min_messages;
+select emaj.emaj_start_group('truncateTestGroup','M1');
+
+truncate "phil's schema3"."phil's tbl1" cascade;
+truncate myschema4.myTblC2;
+truncate myschema4.myPartP3;
+
+select count(*) from "phil's schema3"."phil's tbl1";
+select count(*) from "emaj_phil's schema3"."phil's tbl1_log";
+select is_called, last_value from "emaj_phil's schema3"."phil's tbl1_log_seq";
+
+select emaj.emaj_set_mark_group('truncateTestGroup','M2');
+
+select stat_group, stat_schema, stat_table, stat_first_mark, stat_last_mark, stat_rows
+  from emaj.emaj_log_stat_group('truncateTestGroup','M1',null) where stat_rows > 0 order by 1,2,3,4;
+
+select * from emaj.emaj_logged_rollback_group('truncateTestGroup','M1', false);
+
+select stat_group, stat_schema, stat_table, stat_first_mark, stat_last_mark, stat_rows
+  from emaj.emaj_log_stat_group('truncateTestGroup','M1',null) where stat_rows > 0 order by 1,2,3,4;
+
+select emaj.emaj_gen_sql_group('truncateTestGroup','M1','M2','/tmp/emaj_test/sql_scripts/step20_gensql.sql');
+-- TODO: replace the previous statement by the next one, once the issue with the emaj_logged_rollback_group() and emaj_gen_sql_groups() functions will be fixed
+--select emaj.emaj_gen_sql_group('truncateTestGroup','M1',null,'/tmp/emaj_test/sql_scripts/step20_gensql.sql');
+
+select * from emaj.emaj_rollback_group('truncateTestGroup','M1', false);
+
+\! sed -i -s 's/at .*$/at [ts]$/' /tmp/emaj_test/sql_scripts/step20_gensql.sql
+\! sed -i -s 's/\\\\/\\/g' /tmp/emaj_test/sql_scripts/step20_gensql.sql
+\! sed -i -s 's/^COMMIT/ROLLBACK/' /tmp/emaj_test/sql_scripts/step20_gensql.sql
+
+\i /tmp/emaj_test/sql_scripts/step20_gensql.sql
+
+\! rm /tmp/emaj_test/sql_scripts/step20_gensql.sql
+
+select emaj.emaj_stop_group('truncateTestGroup');
+select emaj.emaj_drop_group('truncateTestGroup');
 
 -----------------------------
 -- test end: check, reset history and force sequences id

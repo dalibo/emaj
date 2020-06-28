@@ -143,7 +143,7 @@ Le nom du trigger peut contenir des caractères génériques ‘%’ et ‘_’,
 
 La fonction retourne le nombre de triggers effectivement ajoutés ou supprimés.
 
-La fonction ne traite pas les triggers E-Maj (trigger de log ou de protection contre les *TRUNCATE*).
+La fonction ne traite pas les triggers E-Maj (trigger de log ou de traitement des *TRUNCATEs*).
 
 Les triggers ainsi référencés comme "ne devant pas être automatiquement désactivés lors des rollbacks E-Maj" sont enregistrés dans la table *emaj.emaj_ignored_app_trigger*. Cette table comprend 3 colonnes :
 

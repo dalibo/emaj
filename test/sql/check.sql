@@ -46,7 +46,6 @@ select sch_name from emaj.emaj_schema where sch_name not in (select distinct rel
 select pg_sleep(1.5);
 
 -- display the functions that are not called by any regression test script
---   (_forbid_truncate_fnct is actualy executed but not counted in statistics)
 --   (_rlbk_error is not executed in regression tests - rare cases difficult to simulate)
 select nspname, proname from pg_proc, pg_namespace
   where pronamespace = pg_namespace.oid

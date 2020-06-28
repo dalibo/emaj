@@ -84,6 +84,51 @@ SELECT emaj._disable_event_triggers();
 
 ------------------------------------
 --                                --
+-- emaj triggers                  --
+--                                --
+------------------------------------
+-- Recreate the emaj_trunc_trg triggers to use the new _truncate_trigger_fnct() function
+
+-- First create an empty _truncate_trigger_fnct() function. The true function content is set later in the script
+CREATE OR REPLACE FUNCTION emaj._truncate_trigger_fnct()
+RETURNS TRIGGER LANGUAGE plpgsql
+SECURITY DEFINER SET search_path = pg_catalog, pg_temp AS
+$_truncate_trigger_fnct$
+  BEGIN
+    RETURN NULL;
+  END;
+$_truncate_trigger_fnct$;
+
+DO
+$do$
+  DECLARE
+    r_tbl                    RECORD;
+  BEGIN
+-- process each table currently belonging to a tables group
+    FOR r_tbl IN
+      SELECT quote_ident(rel_schema) || '.' || quote_ident(rel_tblseq) AS full_table_name, group_is_logging
+        FROM emaj.emaj_relation, emaj.emaj_group
+        WHERE rel_group = group_name
+          AND upper_inf(rel_time_range) AND rel_kind = 'r'
+      LOOP
+-- drop and recreate the truncate trigger
+      EXECUTE format('DROP TRIGGER IF EXISTS emaj_trunc_trg ON %s',
+                     r_tbl.full_table_name);
+      EXECUTE format('CREATE TRIGGER emaj_trunc_trg'
+                     '  BEFORE TRUNCATE ON %s'
+                     '  FOR EACH STATEMENT EXECUTE PROCEDURE emaj._truncate_trigger_fnct()',
+                     r_tbl.full_table_name);
+-- disable it if the group is stopped
+      IF NOT r_tbl.group_is_logging THEN
+        EXECUTE format('ALTER TABLE %s DISABLE TRIGGER emaj_trunc_trg',
+                       r_tbl.full_table_name);
+      END IF;
+    END LOOP;
+  END;
+$do$;
+
+------------------------------------
+--                                --
 -- emaj functions                 --
 --                                --
 ------------------------------------
@@ -95,10 +140,53 @@ SELECT emaj._disable_event_triggers();
 -- drop obsolete functions or functions with modified interface --
 ------------------------------------------------------------------
 DROP FUNCTION IF EXISTS emaj._purge_hist();
+DROP FUNCTION IF EXISTS emaj._forbid_truncate_fnct();
+DROP FUNCTION IF EXISTS emaj._log_truncate_fnct();
 
 ------------------------------------------------------------------
 -- create new or modified functions                             --
 ------------------------------------------------------------------
+CREATE OR REPLACE FUNCTION emaj._truncate_trigger_fnct()
+RETURNS TRIGGER LANGUAGE plpgsql
+SECURITY DEFINER SET search_path = pg_catalog, pg_temp AS
+$_truncate_trigger_fnct$
+-- The function is triggered by the execution of TRUNCATE SQL verb on tables.
+-- Before effetively truncating the table, keep a trace of the event in the log table.
+-- First, a generic TRU event is recorded (it will be used by the functions that generate SQL script to replay).
+-- Then, the content of the table to truncate is copied into the log table, with a 'TRU' emaj_verb and an 'OLD' emaj_tuple (it will be
+-- used by the rollback functions)
+-- And add the number of recorded rows to the log sequence (to get accurate statistics)
+  DECLARE
+    v_fullLogTableName       TEXT;
+    v_fullLogSequenceName    TEXT;
+    v_nbRows                 BIGINT;
+  BEGIN
+    IF (TG_OP = 'TRUNCATE') THEN
+-- get some log object names for the truncated table
+      SELECT quote_ident(rel_log_schema) || '.' || quote_ident(rel_log_table),
+             quote_ident(rel_log_schema) || '.' || quote_ident(rel_log_sequence)
+             INTO v_fullLogTableName, v_fullLogSequenceName
+        FROM emaj.emaj_relation
+        WHERE rel_schema = TG_TABLE_SCHEMA AND rel_tblseq = TG_TABLE_NAME AND upper_inf(rel_time_range);
+-- log the TRU event into the log table (with emaj_tuple set to NULL)
+      EXECUTE format('INSERT INTO %s (emaj_verb) VALUES (''TRU'')',
+                     v_fullLogTableName);
+-- log all rows from the table
+      EXECUTE format('INSERT INTO %s SELECT *, ''TRU'', ''OLD'' FROM ONLY %I.%I ',
+                     v_fullLogTableName, TG_TABLE_SCHEMA, TG_TABLE_NAME);
+      GET DIAGNOSTICS v_nbRows = ROW_COUNT;
+      IF v_nbRows > 0 THEN
+-- adjust the log sequence value for the table
+        EXECUTE format('SELECT setval(%L,'
+                       '  (SELECT CASE WHEN is_called THEN last_value + %s ELSE last_value + %s - 1 END FROM %s))',
+                       v_fullLogSequenceName, v_nbRows, v_nbRows, v_fullLogSequenceName);
+      END IF;
+    END IF;
+-- and effectively TRUNCATE the table
+    RETURN NULL;
+  END;
+$_truncate_trigger_fnct$;
+
 CREATE OR REPLACE FUNCTION emaj._create_tbl(v_schema TEXT, v_tbl TEXT, v_groupName TEXT, v_priority INT, v_logDatTsp TEXT,
                                             v_logIdxTsp TEXT, v_timeId BIGINT, v_groupIsRollbackable BOOLEAN, v_groupIsLogging BOOLEAN)
 RETURNS VOID LANGUAGE plpgsql
@@ -226,19 +314,10 @@ $_create_tbl$
 -- But the trigger is not immediately activated (it will be at emaj_start_group time)
     EXECUTE format('DROP TRIGGER IF EXISTS emaj_trunc_trg ON %s',
                    v_fullTableName);
-    IF v_groupIsRollbackable THEN
--- For rollbackable groups, use the common _forbid_truncate_fnct() function that blocks the operation
-      EXECUTE format('CREATE TRIGGER emaj_trunc_trg'
-                     '  BEFORE TRUNCATE ON %s'
-                     '  FOR EACH STATEMENT EXECUTE PROCEDURE emaj._forbid_truncate_fnct()',
-                     v_fullTableName);
-    ELSE
--- For audit_only groups, use the common _log_truncate_fnct() function that records the operation into the log table
-      EXECUTE format('CREATE TRIGGER emaj_trunc_trg'
-                     '  BEFORE TRUNCATE ON %s'
-                     '  FOR EACH STATEMENT EXECUTE PROCEDURE emaj._log_truncate_fnct()',
-                     v_fullTableName);
-    END IF;
+    EXECUTE format('CREATE TRIGGER emaj_trunc_trg'
+                   '  BEFORE TRUNCATE ON %s'
+                   '  FOR EACH STATEMENT EXECUTE PROCEDURE emaj._truncate_trigger_fnct()',
+                   v_fullTableName);
     IF NOT v_groupIsLogging THEN
       EXECUTE format('ALTER TABLE %s DISABLE TRIGGER emaj_trunc_trg',
                      v_fullTableName);
@@ -284,6 +363,75 @@ $_create_tbl$
     RETURN;
   END;
 $_create_tbl$;
+
+CREATE OR REPLACE FUNCTION emaj._gen_sql_tbl(r_rel emaj.emaj_relation, v_firstEmajGid BIGINT, v_lastEmajGid BIGINT)
+RETURNS BIGINT LANGUAGE plpgsql
+SECURITY DEFINER SET standard_conforming_strings = ON AS
+$_gen_sql_tbl$
+-- This function generates SQL commands representing all updates performed on a table between 2 marks
+-- or beetween a mark and the current situation.
+-- These commands are stored into a temporary table created by the _gen_sql_groups() calling function.
+-- Input: row from emaj_relation corresponding to the appplication table to proccess,
+--        the global sequence value at requested start and end marks
+-- Output: number of generated SQL statements
+  DECLARE
+    v_fullTableName          TEXT;
+    v_logTableName           TEXT;
+    v_rqInsert               TEXT;
+    v_rqUpdate               TEXT;
+    v_rqDelete               TEXT;
+    v_rqTruncate             TEXT;
+    v_conditions             TEXT;
+    v_lastEmajGidRel         BIGINT;
+    v_nbSQL                  BIGINT;
+  BEGIN
+-- build schema specified table name and log table name
+    v_fullTableName = quote_ident(r_rel.rel_schema) || '.' || quote_ident(r_rel.rel_tblseq);
+    v_logTableName = quote_ident(r_rel.rel_log_schema) || '.' || quote_ident(r_rel.rel_log_table);
+-- prepare sql skeletons for each statement type, using the pieces of sql recorded in the emaj_relation row at table assignment time
+    v_rqInsert = '''INSERT INTO ' || replace(v_fullTableName,'''','''''')
+              || CASE WHEN r_rel.rel_sql_gen_ins_col <> '' THEN ' (' || r_rel.rel_sql_gen_ins_col || ')' ELSE '' END
+              || CASE WHEN r_rel.rel_has_always_ident_col THEN ' OVERRIDING SYSTEM VALUE' ELSE '' END
+              || ' VALUES (' || r_rel.rel_sql_gen_ins_val || ');''';
+    v_rqUpdate = '''UPDATE ONLY ' || replace(v_fullTableName,'''','''''')
+              || ' SET ' || r_rel.rel_sql_gen_upd_set || ' WHERE ' || r_rel.rel_sql_gen_pk_conditions || ';''';
+    v_rqDelete = '''DELETE FROM ONLY ' || replace(v_fullTableName,'''','''''')
+              || ' WHERE ' || r_rel.rel_sql_gen_pk_conditions || ';''';
+    v_rqTruncate = '''TRUNCATE ONLY ' || replace(v_fullTableName,'''','''''') || ' CASCADE;''';
+-- build the restriction conditions on emaj_gid, depending on supplied marks range and the relation time range upper bound
+    v_conditions = 'o.emaj_gid > ' || v_firstEmajGid;
+--   get the EmajGid of the relation time range upper bound, if any
+    IF NOT upper_inf(r_rel.rel_time_range) THEN
+      SELECT time_last_emaj_gid INTO v_lastEmajGidRel FROM emaj.emaj_time_stamp WHERE time_id = upper(r_rel.rel_time_range);
+    END IF;
+--   if the relation time range upper bound is before the requested end mark, restrict the EmajGid upper limit
+    IF v_lastEmajGidRel IS NOT NULL AND
+       (v_lastEmajGid IS NULL OR (v_lastEmajGid IS NOT NULL AND v_lastEmajGidRel < v_lastEmajGid)) THEN
+      v_lastEmajGid = v_lastEmajGidRel;
+    END IF;
+--   complete the restriction conditions
+    IF v_lastEmajGid IS NOT NULL THEN
+      v_conditions = v_conditions || ' AND o.emaj_gid <= ' || v_lastEmajGid;
+    END IF;
+-- now scan the log table to process all statement types at once
+    EXECUTE format('INSERT INTO emaj_temp_script '
+                   'SELECT o.emaj_gid, 0, o.emaj_txid, CASE '
+                   '    WHEN o.emaj_verb = ''INS'' THEN %s'
+                   '    WHEN o.emaj_verb = ''UPD'' AND o.emaj_tuple = ''OLD'' THEN %s'
+                   '    WHEN o.emaj_verb = ''DEL'' THEN %s'
+                   '    WHEN o.emaj_verb = ''TRU'' THEN %s'
+                   '  END '
+                   '  FROM %s o'
+                   '       LEFT OUTER JOIN %s n ON n.emaj_gid = o.emaj_gid'
+                   '                          AND (n.emaj_verb = ''UPD'' AND n.emaj_tuple = ''NEW'') '
+                   ' WHERE NOT (o.emaj_verb = ''UPD'' AND o.emaj_tuple = ''NEW'')'
+                   '   AND NOT (o.emaj_verb = ''TRU'' AND o.emaj_tuple IS NOT NULL)'
+                   '   AND %s',
+                   v_rqInsert, v_rqUpdate, v_rqDelete, v_rqTruncate, v_logTableName, v_logTableName, v_conditions);
+    GET DIAGNOSTICS v_nbSQL = ROW_COUNT;
+    RETURN v_nbSQL;
+  END;
+$_gen_sql_tbl$;
 
 CREATE OR REPLACE FUNCTION emaj._start_groups(v_groupNames TEXT[], v_mark TEXT, v_multiGroup BOOLEAN, v_resetLog BOOLEAN)
 RETURNS INT LANGUAGE plpgsql

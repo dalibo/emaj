@@ -129,11 +129,9 @@ Pour que le script puisse être généré, toutes les tables doivent avoir une c
 
    Si une liste de tables et séquences est spécifiée pour restreindre le champ d'application de la fonction *emaj_gen_sql_group()*, il est de la responsabilité de l'utilisateur de prendre en compte l'existence éventuelle de clés étrangères (*foreign keys*) pour la validité du script SQL généré par la fonction.
 
-Toutes les requêtes, *INSERT*, *UPDATE*, *DELETE* et *TRUNCATE* (pour les groupes de tables de type *audit_only*), sont générées dans l'ordre d'exécution initial.
+Les requêtes sont générées dans l'ordre d'exécution initial.
 
 Elles sont insérées dans une transaction. Elles sont entourées d'une requête *BEGIN TRANSACTION;* et d'une requête *COMMIT;*. Un commentaire initial rappelle les caractéristiques de la génération du script : la date et l'heure de génération, le groupe de tables concerné et les marques utilisées. 
-
-Les requêtes de type *TRUNCATE* enregistrées pour des groupes de tables de type *audit_only* sont également insérées dans le script.
 
 Enfin, les séquences appartenant au groupe de tables sont repositionnées à leurs caractéristiques finales en fin de script.
 

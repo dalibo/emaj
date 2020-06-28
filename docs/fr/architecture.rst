@@ -28,8 +28,7 @@ Les opérations de mises à jour enregistrées concernent les verbes SQL suivant
 
 Pour les requêtes qui traitent plusieurs lignes, chaque création, modification ou suppression est enregistrée individuellement. Ainsi par exemple, une requête *DELETE FROM <table>* portant sur une table d'1 million de lignes générera l'enregistrement d'1 million de suppressions de ligne.
 
-Le cas des verbes SQL *TRUNCATE* est spécifique. Comme aucun trigger de niveau ligne (*FOR EACH ROW*) n'est activable pour ce verbe, les conséquences d'un *TRUNCATE* ne peuvent pas être annulées par E-Maj. C'est pourquoi son exécution est interdite pour les groupes de tables de type « *ROLLBACKABLE* » à l'état « *actif* ». Son exécution est en revanche toujours autorisée pour les groupes de tables créés en mode « *AUTID_ONLY* ». Dans ce cas, seule l'exécution du verbe est enregistrée.
-
+Lors de l’exécution d’un verbe SQL *TRUNCATE*, l’ensemble du contenu de la table est enregistré juste avant son effacement effectif.
 
 Les objects créés
 *****************
@@ -38,7 +37,7 @@ Pour chaque table applicative sont créés :
 
 * une **table de log** dédiée, qui contient les données correspondant aux mises à jour effectuées,
 * un **trigger** et une **fonction** spécifique, permettant, lors de chaque création (*INSERT*, *COPY*), mise à jour (*UPDATE*) ou suppression (*DELETE*) de ligne, d'enregistrer dans la table de log toutes les informations nécessaires à l'annulation ultérieure de l'action élémentaire,
-* un autre **trigger** permettant soit de bloquer toute exécution d'un verbe SQL *TRUNCATE* pour les groupes de type « *ROLLBACKABLE* », soit de tracer l'exécution des verbes SQL *TRUNCATE* pour les groupes de tables de type « *AUDIT_ONLY* »,
+* un autre **trigger** permettant de tracer l'exécution des verbes SQL *TRUNCATE*,
 * une **séquence** qui permet de dénombrer très rapidement le nombre de mises à jour enregistrées dans les tables de log entre 2 marques.
 
 .. image:: images/created_objects.png
