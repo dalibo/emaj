@@ -106,8 +106,8 @@ begin;
   create extension file_fdw;
   create foreign data wrapper file handler file_fdw_handler;
   create server file_server foreign data wrapper file;
-  create foreign table emaj.dummy1_ftbl (ligne TEXT) server file_server options(filename '/tmp/emaj_test/log_snaps/_INFO');
-  create foreign table emaj.dummy2_ftbl (ligne TEXT) server file_server options(filename '/tmp/emaj_test/log_snaps/_INFO');
+  create foreign table emaj.dummy1_ftbl (ligne TEXT) server file_server options(filename '/dev/null');
+  create foreign table emaj.dummy2_ftbl (ligne TEXT) server file_server options(filename '/dev/null');
   select * from emaj.emaj_verify_all() t(msg) where msg like 'Error%';
                                               msg                                               
 ------------------------------------------------------------------------------------------------

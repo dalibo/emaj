@@ -7,6 +7,11 @@ alter sequence emaj.emaj_time_stamp_time_id_seq restart 5000;
 alter sequence emaj.emaj_rlbk_rlbk_id_seq restart 5000;
 alter sequence emaj.emaj_global_seq restart 50000;
 
+-- define and create the temp file directory to be used by the script
+\setenv EMAJTESTTMPDIR '/tmp/emaj_'`echo $PGVER`'/misc'
+\set EMAJTESTTMPDIR `echo $EMAJTESTTMPDIR`
+\! mkdir -p $EMAJTESTTMPDIR
+
 -----------------------------
 -- emaj_reset_group() test
 -----------------------------
@@ -321,10 +326,6 @@ alter table emaj.emaj_rlbk_stat add FOREIGN KEY (rlbt_rlbk_id) REFERENCES emaj.e
 -----------------------------
 -- emaj_snap_group() test
 -----------------------------
--- set/reset directory for snaps
-\! mkdir -p /tmp/emaj_test/snaps
-\! rm -R /tmp/emaj_test/snaps
-\! mkdir /tmp/emaj_test/snaps
 
 -- group is unknown in emaj_group_def
 select emaj.emaj_snap_group(NULL,NULL,NULL);
@@ -336,25 +337,22 @@ select emaj.emaj_snap_group('myGroup1','unknown_directory',NULL);
 select emaj.emaj_snap_group('myGroup1','/unknown_directory',NULL);
 
 -- invalid COPY TO options
-select emaj.emaj_snap_group('myGroup1','/tmp/emaj_test/snaps','dummy_option');
+select emaj.emaj_snap_group('myGroup1',:'EMAJTESTTMPDIR','dummy_option');
 
 -- SQL injection attempt
-select emaj.emaj_snap_group('myGroup1','/tmp/emaj_test/snaps','; CREATE ROLE fake LOGIN PASSWORD '''' SUPERUSER');
+select emaj.emaj_snap_group('myGroup1',:'EMAJTESTTMPDIR','; CREATE ROLE fake LOGIN PASSWORD '''' SUPERUSER');
 
 -- should be OK (even when executed twice, files being overwriten)
-select emaj.emaj_snap_group('emptyGroup','/tmp/emaj_test/snaps','');
-\! ls /tmp/emaj_test/snaps
-select emaj.emaj_snap_group('myGroup1','/tmp/emaj_test/snaps','');
-select emaj.emaj_snap_group('myGroup1','/tmp/emaj_test/snaps','CSV HEADER DELIMITER '';'' ');
-\! ls /tmp/emaj_test/snaps
+select emaj.emaj_snap_group('emptyGroup',:'EMAJTESTTMPDIR','');
+\! ls $EMAJTESTTMPDIR
+select emaj.emaj_snap_group('myGroup1',:'EMAJTESTTMPDIR','');
+select emaj.emaj_snap_group('myGroup1',:'EMAJTESTTMPDIR','CSV HEADER DELIMITER '';'' ');
+\! ls $EMAJTESTTMPDIR
+\! rm $EMAJTESTTMPDIR/*
 
 -----------------------------
 -- emaj_snap_log_group() test
 -----------------------------
--- set/reset directory for log snaps
-\! mkdir -p /tmp/emaj_test/log_snaps
-\! rm -R /tmp/emaj_test/log_snaps
-\! mkdir /tmp/emaj_test/log_snaps
 
 -- group is unknown in emaj_group_def
 select emaj.emaj_snap_log_group(NULL,NULL,NULL,NULL,NULL);
@@ -366,18 +364,18 @@ select emaj.emaj_snap_log_group('myGroup2',NULL,'EMAJ_LAST_MARK','unknown_direct
 select emaj.emaj_snap_log_group('myGroup2',NULL,'EMAJ_LAST_MARK','/unknown_directory',NULL);
 
 -- invalid start mark
-select emaj.emaj_snap_log_group('myGroup2','unknownMark','EMAJ_LAST_MARK','/tmp/emaj_test/log_snaps',NULL);
+select emaj.emaj_snap_log_group('myGroup2','unknownMark','EMAJ_LAST_MARK',:'EMAJTESTTMPDIR',NULL);
 
 -- invalid end mark
-select emaj.emaj_snap_log_group('myGroup2','','unknownMark','/tmp/emaj_test/log_snaps',NULL);
+select emaj.emaj_snap_log_group('myGroup2','','unknownMark',:'EMAJTESTTMPDIR',NULL);
 
 -- start mark > end mark
 -- just check the error is trapped, because the error message contents timestamps
-create function test_snap_log(v_groupName TEXT, v_firstMark TEXT, v_lastMark TEXT) returns void language plpgsql as 
+create function test_snap_log(v_groupName TEXT, v_firstMark TEXT, v_lastMark TEXT, v_location TEXT) returns void language plpgsql as 
 $$
 begin
   begin
-    perform emaj.emaj_snap_log_group(v_groupName,v_firstMark,v_lastMark,'/tmp/emaj_test/log_snaps',NULL);
+    perform emaj.emaj_snap_log_group(v_groupName,v_firstMark,v_lastMark,v_location,NULL);
     return;
   exception when raise_exception then
     raise notice 'Error trapped on emaj_snap_log_group() call';
@@ -385,34 +383,36 @@ begin
   return;
 end;
 $$;
-select test_snap_log('myGroup2','Mark23','Mark21');
-select test_snap_log('myGroup2','EMAJ_LAST_MARK','Mark22');
+select test_snap_log('myGroup2','Mark23','Mark21',:'EMAJTESTTMPDIR');
+select test_snap_log('myGroup2','EMAJ_LAST_MARK','Mark22',:'EMAJTESTTMPDIR');
 drop function test_snap_log(text,text,text);
 
 -- invalid COPY TO options
-select emaj.emaj_snap_log_group('myGroup2',NULL,'EMAJ_LAST_MARK','/tmp/emaj_test/log_snaps', 'dummy_option');
+select emaj.emaj_snap_log_group('myGroup2',NULL,'EMAJ_LAST_MARK',:'EMAJTESTTMPDIR', 'dummy_option');
 
 -- SQL injection attempt
-select emaj.emaj_snap_log_group('myGroup2',NULL,'EMAJ_LAST_MARK','/tmp/emaj_test/log_snaps','; CREATE ROLE fake LOGIN PASSWORD '''' SUPERUSER');
+select emaj.emaj_snap_log_group('myGroup2',NULL,'EMAJ_LAST_MARK',:'EMAJTESTTMPDIR','; CREATE ROLE fake LOGIN PASSWORD '''' SUPERUSER');
 
 -- should be ok
-select emaj.emaj_snap_log_group('emptyGroup','EGM3','EGM4','/tmp/emaj_test/log_snaps',NULL);
-\! ls /tmp/emaj_test/log_snaps
-\! cat /tmp/emaj_test/log_snaps/emptyGroup_sequences_at_EGM3
-\! rm /tmp/emaj_test/log_snaps/*
+select emaj.emaj_snap_log_group('emptyGroup','EGM3','EGM4',:'EMAJTESTTMPDIR',NULL);
+\! ls $EMAJTESTTMPDIR
+\! cat $EMAJTESTTMPDIR/emptyGroup_sequences_at_EGM3
+\! rm $EMAJTESTTMPDIR/*
 
-select emaj.emaj_snap_log_group('myGroup2',NULL,'EMAJ_LAST_MARK','/tmp/emaj_test/log_snaps',NULL);
-select emaj.emaj_snap_log_group('myGroup2','','','/tmp/emaj_test/log_snaps','CSV');
-select emaj.emaj_snap_log_group('myGroup2','Mark21',NULL,'/tmp/emaj_test/log_snaps','CSV HEADER');
-select emaj.emaj_snap_log_group('myGroup2','Mark21','Mark21','/tmp/emaj_test/log_snaps','CSV');
-select emaj.emaj_snap_log_group('myGroup2','Mark21','Mark23','/tmp/emaj_test/log_snaps',NULL);
+select emaj.emaj_snap_log_group('myGroup2',NULL,'EMAJ_LAST_MARK',:'EMAJTESTTMPDIR',NULL);
+select emaj.emaj_snap_log_group('myGroup2','','',:'EMAJTESTTMPDIR','CSV');
+select emaj.emaj_snap_log_group('myGroup2','Mark21',NULL,:'EMAJTESTTMPDIR','CSV HEADER');
+select emaj.emaj_snap_log_group('myGroup2','Mark21','Mark21',:'EMAJTESTTMPDIR','CSV');
+select emaj.emaj_snap_log_group('myGroup2','Mark21','Mark23',:'EMAJTESTTMPDIR',NULL);
 
 -- mark name with special characters
 select emaj.emaj_set_mark_group('myGroup2',E'/<*crazy mark$>\\');
-select emaj.emaj_snap_log_group('myGroup2','Mark21',E'/<*crazy mark$>\\','/tmp/emaj_test/log_snaps',NULL);
+select emaj.emaj_snap_log_group('myGroup2','Mark21',E'/<*crazy mark$>\\',:'EMAJTESTTMPDIR',NULL);
 
-\! ls /tmp/emaj_test/log_snaps |sed s/[0-9][0-9].[0-9][0-9].[0-9][0-9].[0-9][0-9][0-9]/\[timestamp_mask\]/g
+\! ls $EMAJTESTTMPDIR |sed s/[0-9][0-9].[0-9][0-9].[0-9][0-9].[0-9][0-9][0-9]/\[timestamp_mask\]/g
 select emaj.emaj_delete_mark_group('myGroup2',E'/<*crazy mark$>\\');
+
+\! rm $EMAJTESTTMPDIR/*
 
 -----------------------------
 -- emaj_get_current_log_table() test
@@ -427,10 +427,6 @@ select 'select count(*) from ' || quote_ident(log_schema) || '.' || quote_ident(
 -----------------------------
 -- emaj_gen_sql_group() and emaj_gen_sql_groups() test
 -----------------------------
--- set/reset directory for snaps
-\! mkdir -p /tmp/emaj_test/sql_scripts
-\! rm -R /tmp/emaj_test/sql_scripts
-\! mkdir /tmp/emaj_test/sql_scripts
 
 -- group is unknown in emaj_group_def
 select emaj.emaj_gen_sql_group(NULL, NULL, NULL, NULL);
@@ -484,17 +480,17 @@ rollback;
   select emaj.emaj_gen_sql_groups(array['myGroup1','myGroup2'], 'Multi-1', 'Mark21', NULL);
 
 -- empty table/sequence names array
-select emaj.emaj_gen_sql_group('myGroup2', NULL, 'EMAJ_LAST_MARK', '/tmp/emaj_test/sql_scripts/myFile', array['']);
+select emaj.emaj_gen_sql_group('myGroup2', NULL, 'EMAJ_LAST_MARK', :'EMAJTESTTMPDIR' || '/myFile', array['']);
 
 -- unknown table/sequence names in the tables filter
-select emaj.emaj_gen_sql_group('myGroup2', NULL, NULL, '/tmp/emaj_test/sql_scripts/myFile', array['foo']);
-select emaj.emaj_gen_sql_group('myGroup2', NULL, NULL, '/tmp/emaj_test/sql_scripts/myFile', array[
+select emaj.emaj_gen_sql_group('myGroup2', NULL, NULL, :'EMAJTESTTMPDIR' || '/myFile', array['foo']);
+select emaj.emaj_gen_sql_group('myGroup2', NULL, NULL, :'EMAJTESTTMPDIR' || '/myFile', array[
      'myschema1.mytbl1','myschema2.myTbl3_col31_seq','phil''s schema3.phil''s tbl1']);
-select emaj.emaj_gen_sql_groups(array['myGroup1','myGroup2'], 'Multi-1', NULL, '/tmp/emaj_test/sql_scripts/myFile', array[
+select emaj.emaj_gen_sql_groups(array['myGroup1','myGroup2'], 'Multi-1', NULL, :'EMAJTESTTMPDIR' || '/myFile', array[
      'myschema1.mytbl1','foo','myschema2.myTbl3_col31_seq','phil''s schema3.phil''s tbl1']);
 
 -- the tables group contains a table without pkey
-select emaj.emaj_gen_sql_group('phil''s group#3",', NULL, 'EMAJ_LAST_MARK', '/tmp/emaj_test/sql_scripts/Group3');
+select emaj.emaj_gen_sql_group('phil''s group#3",', NULL, 'EMAJ_LAST_MARK', :'EMAJTESTTMPDIR' || '/Group3');
 
 -- invalid location path name
 select emaj.emaj_gen_sql_group('myGroup1', NULL, NULL, '/tmp/unknownDirectory/myFile');
@@ -504,16 +500,16 @@ select emaj.emaj_gen_sql_groups(array['myGroup1','myGroup2'], 'Multi-1', NULL, '
 -- generated files content is checked later in adm2.sql scenario
 -- getting counters from detailed log statistics + the number of sequences included in the group allows a comparison
 --   with the result of the emaj_gen_sql_group() function
-select emaj.emaj_gen_sql_group('emptyGroup', NULL, NULL, '/tmp/emaj_test/sql_scripts/myFile');
-select emaj.emaj_gen_sql_group('myGroup2', NULL, NULL, '/tmp/emaj_test/sql_scripts/myFile');
+select emaj.emaj_gen_sql_group('emptyGroup', NULL, NULL, :'EMAJTESTTMPDIR' || '/myFile');
+select emaj.emaj_gen_sql_group('myGroup2', NULL, NULL, :'EMAJTESTTMPDIR' || '/myFile');
 select sum(stat_rows)+2 as check from emaj.emaj_detailed_log_stat_group('myGroup2',NULL,NULL);
-select emaj.emaj_gen_sql_group('myGroup2', 'Mark21', NULL, '/tmp/emaj_test/sql_scripts/myFile');
+select emaj.emaj_gen_sql_group('myGroup2', 'Mark21', NULL, :'EMAJTESTTMPDIR' || '/myFile');
 select sum(stat_rows)+2 as check from emaj.emaj_detailed_log_stat_group('myGroup2','Mark21',NULL);
-select emaj.emaj_gen_sql_group('myGroup2', NULL, 'Mark22', '/tmp/emaj_test/sql_scripts/myFile');
+select emaj.emaj_gen_sql_group('myGroup2', NULL, 'Mark22', :'EMAJTESTTMPDIR' || '/myFile');
 select sum(stat_rows)+2 as check from emaj.emaj_detailed_log_stat_group('myGroup2',NULL,'Mark22');
-select emaj.emaj_gen_sql_groups(array['myGroup1','myGroup2'], 'Multi-1', NULL, '/tmp/emaj_test/sql_scripts/myFile');
-select emaj.emaj_gen_sql_groups(array['myGroup1','myGroup2'], 'Multi-2', 'Multi-3', '/tmp/emaj_test/sql_scripts/myFile');
-select emaj.emaj_gen_sql_group('myGroup2', NULL, 'EMAJ_LAST_MARK', '/tmp/emaj_test/sql_scripts/myFile');
+select emaj.emaj_gen_sql_groups(array['myGroup1','myGroup2'], 'Multi-1', NULL, :'EMAJTESTTMPDIR' || 'myFile');
+select emaj.emaj_gen_sql_groups(array['myGroup1','myGroup2'], 'Multi-2', 'Multi-3', :'EMAJTESTTMPDIR' || '/myFile');
+select emaj.emaj_gen_sql_group('myGroup2', NULL, 'EMAJ_LAST_MARK', :'EMAJTESTTMPDIR' || '/myFile');
 select sum(stat_rows)+2 as check from emaj.emaj_detailed_log_stat_group('myGroup2',NULL,'EMAJ_LAST_MARK');
 
 -- should be ok with no output file supplied
@@ -525,27 +521,27 @@ drop table emaj_temp_script cascade;
 select stat_group, stat_schema, stat_table, stat_first_mark, stat_last_mark, stat_role, stat_verb, stat_rows
   from emaj.emaj_detailed_log_stat_group('myGroup2',NULL,'EMAJ_LAST_MARK');
 -- all tables and sequences
-select emaj.emaj_gen_sql_group('myGroup2', NULL, 'EMAJ_LAST_MARK', '/tmp/emaj_test/sql_scripts/myFile', array[
+select emaj.emaj_gen_sql_group('myGroup2', NULL, 'EMAJ_LAST_MARK', :'EMAJTESTTMPDIR' || '/myFile', array[
      'myschema2.mytbl1','myschema2.mytbl2','myschema2.myTbl3','myschema2.mytbl4',
      'myschema2.mytbl5','myschema2.mytbl6','myschema2.myseq1','myschema2.myTbl3_col31_seq']);
 -- minus 1 sequence
-select emaj.emaj_gen_sql_group('myGroup2', NULL, 'EMAJ_LAST_MARK', '/tmp/emaj_test/sql_scripts/myFile', array[
+select emaj.emaj_gen_sql_group('myGroup2', NULL, 'EMAJ_LAST_MARK', :'EMAJTESTTMPDIR' || '/myFile', array[
      'myschema2.mytbl1','myschema2.mytbl2','myschema2.myTbl3','myschema2.mytbl4',
      'myschema2.mytbl5','myschema2.mytbl6','myschema2.myseq1']);
 -- minus 1 table
-select emaj.emaj_gen_sql_group('myGroup2', NULL, 'EMAJ_LAST_MARK', '/tmp/emaj_test/sql_scripts/myFile', array[
+select emaj.emaj_gen_sql_group('myGroup2', NULL, 'EMAJ_LAST_MARK', :'EMAJTESTTMPDIR' || '/myFile', array[
      'myschema2.mytbl1','myschema2.mytbl2','myschema2.myTbl3',
      'myschema2.mytbl5','myschema2.mytbl6','myschema2.myseq1']);
 -- only 1 sequence
-select emaj.emaj_gen_sql_group('myGroup2', NULL, 'EMAJ_LAST_MARK', '/tmp/emaj_test/sql_scripts/myFile', array[
+select emaj.emaj_gen_sql_group('myGroup2', NULL, 'EMAJ_LAST_MARK', :'EMAJTESTTMPDIR' || '/myFile', array[
      'myschema2.myTbl3_col31_seq']);
 -- only 1 table (with a strange name and belonging to a group having another table without pkey)
-select emaj.emaj_gen_sql_group('phil''s group#3",', NULL, 'EMAJ_LAST_MARK', '/tmp/emaj_test/sql_scripts/myFile', array[
+select emaj.emaj_gen_sql_group('phil''s group#3",', NULL, 'EMAJ_LAST_MARK', :'EMAJTESTTMPDIR' || '/myFile', array[
      'phil''s schema3.phil''s tbl1']);
 -- several groups and 1 table of each, with redondancy in the tables array
-select emaj.emaj_gen_sql_groups(array['myGroup1','myGroup2'], 'Multi-1', 'Multi-3', '/tmp/emaj_test/sql_scripts/myFile', array[
+select emaj.emaj_gen_sql_groups(array['myGroup1','myGroup2'], 'Multi-1', 'Multi-3', :'EMAJTESTTMPDIR' || '/myFile', array[
      'myschema1.mytbl4','myschema2.mytbl4','myschema1.mytbl4','myschema2.mytbl4']);
-\! grep 'only for' /tmp/emaj_test/sql_scripts/myFile
+\! grep 'only for' $EMAJTESTTMPDIR/myFile
 
 -- generate a sql script after a table structure change but on a time frame prior the change
 begin;
@@ -555,15 +551,18 @@ begin;
   delete from mySchema2.myTbl2 where col21 = 1000;
   select emaj.emaj_remove_table('myschema2', 'mytbl2','Before ALTER mytbl2');
   alter table mySchema2.myTbl2 rename column col21 to id;
-  select emaj.emaj_gen_sql_group('myGroup2', 'Test sql generation', 'Before ALTER mytbl2','/tmp/emaj_test/sql_scripts/altered_tbl.sql');
+  select emaj.emaj_gen_sql_group('myGroup2', 'Test sql generation', 'Before ALTER mytbl2', :'EMAJTESTTMPDIR' || '/altered_tbl.sql');
 rollback;
 -- comment transaction commands and mask the timestamp in the initial comment for the need of the current test
-\! find /tmp/emaj_test/sql_scripts -name '*.sql' -type f -print0 | xargs -0 sed -i -s 's/^BEGIN/--BEGIN/;s/^COMMIT/--COMMIT/'
-\! find /tmp/emaj_test/sql_scripts -name '*.sql' -type f -print0 | xargs -0 sed -i -s 's/at .*$/at [ts]$/'
+\! find $EMAJTESTTMPDIR -name '*.sql' -type f -print0 | xargs -0 sed -i -s 's/^BEGIN/--BEGIN/;s/^COMMIT/--COMMIT/'
+\! find $EMAJTESTTMPDIR -name '*.sql' -type f -print0 | xargs -0 sed -i -s 's/at .*$/at [ts]$/'
 -- and execute the generated script
+\set SQLSCRIPT :EMAJTESTTMPDIR '/altered_tbl.sql'
 begin;
-  \i /tmp/emaj_test/sql_scripts/altered_tbl.sql
+  \i :SQLSCRIPT
 rollback;
+
+\! rm $EMAJTESTTMPDIR/*
 
 -----------------------------
 -- test a table reclustering (it will use the pkey index as clustered index) and a vacuum full
@@ -588,8 +587,8 @@ select json_array_length(emaj.emaj_export_parameters_configuration()->'parameter
 --   error
 select emaj.emaj_export_parameters_configuration('/tmp/dummy/location/file');
 --   ok
-select emaj.emaj_export_parameters_configuration('/tmp/orig_param_config');
-\! wc -l /tmp/orig_param_config
+select emaj.emaj_export_parameters_configuration(:'EMAJTESTTMPDIR' || '/orig_param_config');
+\! wc -l $EMAJTESTTMPDIR/orig_param_config
 
 -- direct import
 --   error
@@ -616,20 +615,18 @@ select json_array_length(emaj.emaj_export_parameters_configuration()->'parameter
 -- import from file
 --   error
 select emaj.emaj_import_parameters_configuration('/tmp/dummy/location/file');
-\! echo 'not a json content' >/tmp/bad_param_config
-select emaj.emaj_import_parameters_configuration('/tmp/bad_param_config');
-\! echo '{ "dummy_json": null }' >/tmp/bad_param_config
-select emaj.emaj_import_parameters_configuration('/tmp/bad_param_config');
-\! echo '{ "parameters": [ { "key": "bad_key", "value": null} ] }' >/tmp/bad_param_config
-select emaj.emaj_import_parameters_configuration('/tmp/bad_param_config');
+\! echo 'not a json content' >$EMAJTESTTMPDIR/bad_param_config
+select emaj.emaj_import_parameters_configuration(:'EMAJTESTTMPDIR' || '/bad_param_config');
+\! echo '{ "dummy_json": null }' >$EMAJTESTTMPDIR/bad_param_config
+select emaj.emaj_import_parameters_configuration(:'EMAJTESTTMPDIR' || '/bad_param_config');
+\! echo '{ "parameters": [ { "key": "bad_key", "value": null} ] }' >$EMAJTESTTMPDIR/bad_param_config
+select emaj.emaj_import_parameters_configuration(:'EMAJTESTTMPDIR' || '/bad_param_config');
 
 --   ok
-select emaj.emaj_import_parameters_configuration('/tmp/orig_param_config', true);
+select emaj.emaj_import_parameters_configuration(:'EMAJTESTTMPDIR' || '/orig_param_config', true);
 select json_array_length(emaj.emaj_export_parameters_configuration()->'parameters');
 
-select emaj.emaj_import_parameters_configuration('/tmp/orig_param_config', false);
-
-\! rm /tmp/orig_param_config /tmp/bad_param_config
+select emaj.emaj_import_parameters_configuration(:'EMAJTESTTMPDIR' || '/orig_param_config', false);
 
 -----------------------------
 -- emaj_purge_histories() test
@@ -640,5 +637,9 @@ select emaj.emaj_purge_histories('0 SECOND');
 -----------------------------
 -- test end: check, reset history and force sequences id
 -----------------------------
-select hist_id, hist_function, hist_event, hist_object, regexp_replace(regexp_replace(hist_wording,E'\\d\\d\.\\d\\d\\.\\d\\d\\.\\d\\d\\d\\d','%','g'),E'\\[.+\\]','(timestamp)','g'), hist_user from 
-  (select * from emaj.emaj_hist where hist_id >= 5000 order by hist_id) as t;
+select hist_id, hist_function, hist_event, hist_object, 
+       regexp_replace(regexp_replace(hist_wording,E'\\d\\d\.\\d\\d\\.\\d\\d\\.\\d\\d\\d\\d','%','g'),E'\\[.+\\]','(timestamp)','g'), hist_user
+  from (select * from emaj.emaj_hist where hist_id >= 5000 order by hist_id) as t;
+
+-- remove the temp directory
+\! rm -R $EMAJTESTTMPDIR

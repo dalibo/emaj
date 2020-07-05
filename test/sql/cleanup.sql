@@ -1,7 +1,9 @@
 -- cleanup.sql: Clean up the regression test environment, in particular roles 
 --              (all components inside the regression database will be deleted with the regression database)
 
-\! rm -Rf /tmp/emaj_test
+-- cleanup the temporary files structure
+\setenv EMAJTESTTMPDIR '/tmp/emaj_'`echo $PGVER`
+\! rm -Rf $EMAJTESTTMPDIR
 
 -----------------------------
 -- drop emaj_regression_tests_adm_user role

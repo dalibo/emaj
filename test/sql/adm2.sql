@@ -1,6 +1,12 @@
 -- adm2.sql : complex scenario executed by an emaj_adm role. 
 --            Follows adm1.sql, and includes more specific test cases
 --
+
+-- define and create the temp file directory to be used by the script
+\setenv EMAJTESTTMPDIR '/tmp/emaj_'`echo $PGVER`'/adm2'
+\set EMAJTESTTMPDIR `echo $EMAJTESTTMPDIR`
+\! mkdir -p $EMAJTESTTMPDIR
+
 set role emaj_regression_tests_adm_user;
 
 -- before going on, save and reload parameters
@@ -251,49 +257,45 @@ reset role;
 alter sequence myschema2.myseq1 minvalue 1 maxvalue 100 increment 10 start 21 restart 11 cache 2 cycle;
 set role emaj_regression_tests_adm_user;
 
--- reset directory for snaps
-\! rm -Rf /tmp/emaj_test/snaps
-\! mkdir -p /tmp/emaj_test/snaps
+-- create the directory for the first snaps set
+\! mkdir -p $EMAJTESTTMPDIR/snaps1
 -- ... and snap the all groups
-select emaj.emaj_snap_group('myGroup1','/tmp/emaj_test/snaps','CSV HEADER');
-select emaj.emaj_snap_group('myGroup2','/tmp/emaj_test/snaps','CSV HEADER');
-select emaj.emaj_snap_group('phil''s group#3",','/tmp/emaj_test/snaps','CSV HEADER');
+select emaj.emaj_snap_group('myGroup1',:'EMAJTESTTMPDIR' || '/snaps1','CSV HEADER');
+select emaj.emaj_snap_group('myGroup2',:'EMAJTESTTMPDIR' || '/snaps1','CSV HEADER');
+select emaj.emaj_snap_group('phil''s group#3",',:'EMAJTESTTMPDIR' || '/snaps1','CSV HEADER');
 
-\! ls /tmp/emaj_test/snaps
-
--- reset directory for emaj_gen_sql_group tests
-\! rm -Rf /tmp/emaj_test/sql_scripts
-\! mkdir /tmp/emaj_test/sql_scripts
+\! ls $EMAJTESTTMPDIR/snaps1
 
 -- generate a sql script for each active group (and check the result with detailed log statistics + number of sequences)
-select emaj.emaj_gen_sql_group('myGroup1', 'Multi-1', NULL, '/tmp/emaj_test/sql_scripts/myGroup1.sql');
+select emaj.emaj_gen_sql_group('myGroup1', 'Multi-1', NULL, :'EMAJTESTTMPDIR' || '/myGroup1.sql');
 select coalesce(sum(stat_rows),0) + 2 as check from emaj.emaj_detailed_log_stat_group('myGroup1', 'Multi-1', NULL);
-select emaj.emaj_gen_sql_group('myGroup2', 'Multi-1', NULL, '/tmp/emaj_test/sql_scripts/myGroup2.sql', array[
+select emaj.emaj_gen_sql_group('myGroup2', 'Multi-1', NULL, :'EMAJTESTTMPDIR' || '/myGroup2.sql', array[
      'myschema2.mytbl1','myschema2.mytbl2','myschema2.myTbl3','myschema2.mytbl4',
      'myschema2.mytbl5','myschema2.mytbl6','myschema2.myseq1','myschema2.myTbl3_col31_seq']);
 select sum(stat_rows) + 2 as check from emaj.emaj_detailed_log_stat_group('myGroup2', 'Multi-1', NULL);
-select emaj.emaj_gen_sql_group('phil''s group#3",', 'M1_rollbackable', NULL, '/tmp/emaj_test/sql_scripts/Group3.sql');
+select emaj.emaj_gen_sql_group('phil''s group#3",', 'M1_rollbackable', NULL, :'EMAJTESTTMPDIR' || '/Group3.sql');
 select sum(stat_rows) + 2 as check from emaj.emaj_detailed_log_stat_group('phil''s group#3",', 'M1_rollbackable', NULL);
 
 -- generate another sql script for myGroup1 but with a manual export and check both scripts are the same
 select emaj.emaj_gen_sql_group('myGroup1', 'Multi-1', NULL, NULL);
-\copy (select * from emaj_sql_script) to '/tmp/emaj_test/sql_scripts/myGroup1_2.sql'
+\setenv FILE1 :EMAJTESTTMPDIR'/myGroup1_2.sql'
+\copy (select * from emaj_sql_script) to program 'cat >$FILE1'
+
 -- mask timestamp in initial comment and compare
-\! find /tmp/emaj_test/sql_scripts -name '*.sql' -type f -print0 | xargs -0 sed -i -s 's/at .*$/at [ts]$/'
-\! diff /tmp/emaj_test/sql_scripts/myGroup1.sql /tmp/emaj_test/sql_scripts/myGroup1_2.sql
+\! find $EMAJTESTTMPDIR -name '*.sql' -type f -print0 | xargs -0 sed -i -s 's/at .*$/at [ts]$/'
+\! diff $EMAJTESTTMPDIR/myGroup1.sql $EMAJTESTTMPDIR/myGroup1_2.sql
 
 -- process \\ characters in script files
-\! find /tmp/emaj_test/sql_scripts -name '*.sql' -type f -print0 | xargs -0 sed -i_s -s 's/\\\\/\\/g'
+\! find $EMAJTESTTMPDIR -name '*.sql' -type f -print0 | xargs -0 sed -i_s -s 's/\\\\/\\/g'
 -- comment transaction commands for the need of the current test
-\! find /tmp/emaj_test/sql_scripts -name '*.sql' -type f -print0 | xargs -0 sed -i -s 's/^BEGIN/--BEGIN/;s/^COMMIT/--COMMIT/'
+\! find $EMAJTESTTMPDIR -name '*.sql' -type f -print0 | xargs -0 sed -i -s 's/^BEGIN/--BEGIN/;s/^COMMIT/--COMMIT/'
 -- mask timestamp in initial comment
-\! find /tmp/emaj_test/sql_scripts -name '*.sql' -type f -print0 | xargs -0 sed -i -s 's/at .*$/at [ts]$/'
+\! find $EMAJTESTTMPDIR -name '*.sql' -type f -print0 | xargs -0 sed -i -s 's/at .*$/at [ts]$/'
 
-\! ls /tmp/emaj_test/sql_scripts
+\! ls $EMAJTESTTMPDIR
 
--- reset directory for second set of snaps
-\! rm -Rf /tmp/emaj_test/snaps2
-\! mkdir /tmp/emaj_test/snaps2
+-- create the directory for the second snaps set
+\! mkdir $EMAJTESTTMPDIR/snaps2
 -- in a single transaction and as superuser:
 --   rollback groups, replay updates with generated scripts, snap groups again and cancel the transaction
 reset role;
@@ -302,23 +304,26 @@ begin;
   select * from emaj.emaj_rollback_group('myGroup2','Multi-1',false) order by 1,2;
   select * from emaj.emaj_rollback_group('phil''s group#3",','M1_rollbackable',false) order by 1,2;
 
-  \! cat /tmp/emaj_test/sql_scripts/myGroup1.sql
-\i /tmp/emaj_test/sql_scripts/myGroup1.sql
-\i /tmp/emaj_test/sql_scripts/myGroup2.sql
-\i /tmp/emaj_test/sql_scripts/Group3.sql
+  \! cat $EMAJTESTTMPDIR/myGroup1.sql
+\set FILE1 :EMAJTESTTMPDIR '/myGroup1.sql'
+\i :FILE1
+\set FILE2 :EMAJTESTTMPDIR '/myGroup2.sql'
+\i :FILE2
+\set FILE3 :EMAJTESTTMPDIR '/Group3.sql'
+\i :FILE3
 
-  select emaj.emaj_snap_group('myGroup1','/tmp/emaj_test/snaps2','CSV HEADER');
-  select emaj.emaj_snap_group('myGroup2','/tmp/emaj_test/snaps2','CSV HEADER');
-  select emaj.emaj_snap_group('phil''s group#3",','/tmp/emaj_test/snaps2','CSV HEADER');
+  select emaj.emaj_snap_group('myGroup1',:'EMAJTESTTMPDIR' || '/snaps2','CSV HEADER');
+  select emaj.emaj_snap_group('myGroup2',:'EMAJTESTTMPDIR' || '/snaps2','CSV HEADER');
+  select emaj.emaj_snap_group('phil''s group#3",',:'EMAJTESTTMPDIR' || '/snaps2','CSV HEADER');
 rollback;
 
 -- mask timestamp in _INFO files
-\! sed -i_s -s 's/at .*/at [ts]/' /tmp/emaj_test/snaps/_INFO /tmp/emaj_test/snaps2/_INFO
+\! sed -i_s -s 's/at .*/at [ts]/' $EMAJTESTTMPDIR/snaps1/_INFO $EMAJTESTTMPDIR/snaps2/_INFO
 -- and compare both snaps sets
 -- sequences are detected as different because of :
 -- - the effect of RESTART on is_called and next_val attributes
 -- - internal log_cnt value being reset
-\! diff --exclude _INFO_s /tmp/emaj_test/snaps /tmp/emaj_test/snaps2
+\! diff --exclude _INFO_s $EMAJTESTTMPDIR/snaps1 $EMAJTESTTMPDIR/snaps2
 
 -- reset the sequence myschema2.myseq1 to its previous characteristics
 reset role;
@@ -510,3 +515,6 @@ select sequ_schema, sequ_name, sequ_time_id, sequ_last_val, sequ_is_called from 
 select sqhl_schema, sqhl_table, sqhl_begin_time_id, sqhl_end_time_id, sqhl_hole_size from emaj.emaj_seq_hole where sqhl_schema = 'myschema1' order by 1,2,3;
 
 select * from emaj.emaj_rollback_group('myGroup1','Multi-1',false) order by 1,2;
+
+-- remove the temp directory
+\! rm -R $EMAJTESTTMPDIR

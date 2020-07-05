@@ -1,31 +1,38 @@
 -- adm3.sql : complex scenario executed by an emaj_adm role. 
 --            Follows adm1.sql and adm2.sql
 --
+-- define and create the temp file directory to be used by the script
+\setenv EMAJTESTTMPDIR '/tmp/emaj_'`echo $PGVER`'/adm3'
+\set EMAJTESTTMPDIR `echo $EMAJTESTTMPDIR`
+\! mkdir -p $EMAJTESTTMPDIR
 set role emaj_regression_tests_adm_user;
 set search_path=public,myschema1;
--- before going on, save parameters on a file and reload them
-select emaj.emaj_export_parameters_configuration('/tmp/param_config.json');
+-----------------------------
+-- Step 16 : export / import configurations
+-----------------------------
+-- save parameters on a file and reload them
+select emaj.emaj_export_parameters_configuration(:'EMAJTESTTMPDIR' || '/param_config.json');
  emaj_export_parameters_configuration 
 --------------------------------------
                                     3
 (1 row)
 
-select emaj.emaj_import_parameters_configuration('/tmp/param_config.json', true);
+select emaj.emaj_import_parameters_configuration(:'EMAJTESTTMPDIR' || '/param_config.json', true);
  emaj_import_parameters_configuration 
 --------------------------------------
                                     3
 (1 row)
 
 -- also save the groups configuration on a file
-select emaj.emaj_export_groups_configuration('/tmp/groups_config.json');
+select emaj.emaj_export_groups_configuration(:'EMAJTESTTMPDIR' || '/groups_config.json');
  emaj_export_groups_configuration 
 ----------------------------------
                                 3
 (1 row)
 
-\! rm /tmp/param_config.json /tmp/groups_config.json
+\! rm $EMAJTESTTMPDIR/*
 -----------------------------
--- Step 16 : test transactions with several emaj operations
+-- Step 17 : test transactions with several emaj operations
 -----------------------------
 select emaj.emaj_create_group('myGroup4');
 NOTICE:  table "mytblm_log" does not exist, skipping
@@ -114,7 +121,7 @@ select * from emaj.emaj_mark where mark_group = 'myGroup4' order by mark_time_id
 (8 rows)
 
 -----------------------------
--- Step 17 : test partition attach and detach
+-- Step 18 : test partition attach and detach
 -----------------------------
 -- Needs postgres 10+
 set role emaj_regression_tests_adm_user;
@@ -266,7 +273,7 @@ select emaj.emaj_drop_group('myGroup4');
 (1 row)
 
 -----------------------------
--- Step 18 : test defect with application table or sequence
+-- Step 19 : test defect with application table or sequence
 --           also test some changes on the unlogged and the with oids tables
 -----------------------------
 update emaj.emaj_group_def set grpdef_group = 'phil''s group#3",' where grpdef_schema = 'myschema5';
@@ -494,7 +501,7 @@ NOTICE:  table "mytbl4_log_2" does not exist, skipping
 (1 row)
 
 -----------------------------
--- Step 19 : test use of dynamic tables group management (assign, move, remove, change)
+-- Step 20 : test use of dynamic tables group management (assign, move, remove, change)
 -----------------------------
 -- create, start and populate groups
 -- grp_tmp is empty, grp_tmp_3 and grp_tmp_4 contains tables and sequences frop respectively phil''s schema3 and myschema4
@@ -594,7 +601,7 @@ select emaj.emaj_set_mark_groups('{"grp_tmp_3","grp_tmp_4","grp_tmp"}','Mk1');
 (1 row)
 
 -- export the initial groups configuration
-select emaj.emaj_export_groups_configuration('/tmp/step19_groups_config.json', array['grp_tmp','grp_tmp_3','grp_tmp_4']);
+select emaj.emaj_export_groups_configuration(:'EMAJTESTTMPDIR' || '/groups_config.json', array['grp_tmp','grp_tmp_3','grp_tmp_4']);
  emaj_export_groups_configuration 
 ----------------------------------
                                 3
@@ -847,17 +854,14 @@ select mark_time_id, regexp_replace(mark_name,E'\\d\\d\.\\d\\d\\.\\d\\d\\.\\d\\d
 (39 rows)
 
 -- generate sql script
-\! rm -Rf /tmp/emaj_test/sql_scripts
-\! mkdir /tmp/emaj_test/sql_scripts
-select emaj.emaj_gen_sql_groups('{"grp_tmp_3","grp_tmp_4","grp_tmp"}','Mk1',null,'/tmp/emaj_test/sql_scripts/allGroups.sql');
+select emaj.emaj_gen_sql_groups('{"grp_tmp_3","grp_tmp_4","grp_tmp"}','Mk1',null,:'EMAJTESTTMPDIR' || '/allGroups.sql');
 NOTICE:  table "emaj_temp_script" does not exist, skipping
  emaj_gen_sql_groups 
 ---------------------
                   26
 (1 row)
 
---  \! grep -iP '(insert|update|delete|alter)' /tmp/emaj_test/sql_scripts/allGroups.sql
-\! rm -Rf /tmp/emaj_test/sql_scripts/*
+--  \! grep -iP '(insert|update|delete|alter)' $EMAJTESTTMPDIR/allGroups.sql
 -- revert the priority and log tablespaces changes
 select emaj.emaj_modify_tables('phil''s schema3','.*tbl1','','{"priority":null,"log_data_tablespace":null}'::jsonb,'revert changes for 1 table');
  emaj_modify_tables 
@@ -1018,7 +1022,7 @@ select emaj.emaj_start_group('grp_tmp','Group restart');
 (1 row)
 
 -- import the groups configuration
-select emaj.emaj_import_groups_configuration('/tmp/step19_groups_config.json', null, true);
+select emaj.emaj_import_groups_configuration(:'EMAJTESTTMPDIR' || '/groups_config.json', null, true);
 NOTICE:  table "mytblc1_log" does not exist, skipping
 NOTICE:  trigger "emaj_log_trg" for relation "myschema4.mytblc1" does not exist, skipping
 NOTICE:  trigger "emaj_trunc_trg" for relation "myschema4.mytblc1" does not exist, skipping
@@ -1143,9 +1147,9 @@ select count(*) from emaj.emaj_relation where rel_schema in ('phil''s schema3','
      0
 (1 row)
 
-\! rm /tmp/step19_groups_config.json
+\! rm $EMAJTESTTMPDIR/*
 -----------------------------
--- Step 20 : test TRUNCATE (log, statistics, rollback, sql generation and replay)
+-- Step 21 : test TRUNCATE (log, statistics, rollback, sql generation and replay)
 -----------------------------
 SET client_min_messages TO WARNING;
 select emaj.emaj_create_group('truncateTestGroup',true,true);
@@ -1230,7 +1234,7 @@ select stat_group, stat_schema, stat_table, stat_first_mark, stat_last_mark, sta
  truncateTestGroup | phil's schema3 | phil's tbl1 | M1              |                |        38
 (4 rows)
 
-select emaj.emaj_gen_sql_group('truncateTestGroup','M1','M2','/tmp/emaj_test/sql_scripts/step20_gensql.sql');
+select emaj.emaj_gen_sql_group('truncateTestGroup','M1','M2',:'EMAJTESTTMPDIR' || '/gensql.sql');
 NOTICE:  table "emaj_temp_script" does not exist, skipping
  emaj_gen_sql_group 
 --------------------
@@ -1238,17 +1242,18 @@ NOTICE:  table "emaj_temp_script" does not exist, skipping
 (1 row)
 
 -- TODO: replace the previous statement by the next one, once the issue with the emaj_logged_rollback_group() and emaj_gen_sql_groups() functions will be fixed
---select emaj.emaj_gen_sql_group('truncateTestGroup','M1',null,'/tmp/emaj_test/sql_scripts/step20_gensql.sql');
+--select emaj.emaj_gen_sql_group('truncateTestGroup','M1',null,:'EMAJTESTTMPDIR' || '/gensql.sql');
 select * from emaj.emaj_rollback_group('truncateTestGroup','M1', false);
  rlbk_severity |            rlbk_message             
 ---------------+-------------------------------------
  Notice        | 4 / 8 tables effectively processed.
 (1 row)
 
-\! sed -i -s 's/at .*$/at [ts]$/' /tmp/emaj_test/sql_scripts/step20_gensql.sql
-\! sed -i -s 's/\\\\/\\/g' /tmp/emaj_test/sql_scripts/step20_gensql.sql
-\! sed -i -s 's/^COMMIT/ROLLBACK/' /tmp/emaj_test/sql_scripts/step20_gensql.sql
-\i /tmp/emaj_test/sql_scripts/step20_gensql.sql
+\! sed -i -s 's/at .*$/at [ts]$/' $EMAJTESTTMPDIR/gensql.sql
+\! sed -i -s 's/\\\\/\\/g' $EMAJTESTTMPDIR/gensql.sql
+\! sed -i -s 's/^COMMIT/ROLLBACK/' $EMAJTESTTMPDIR/gensql.sql
+\set FILE1 :EMAJTESTTMPDIR '/gensql.sql'
+\i :FILE1
 -- SQL script generated by E-Maj at [ts]$
 --    for tables group(s): truncateTestGroup
 --    processing logs between mark M1 and mark M2
@@ -1257,17 +1262,17 @@ SET escape_string_warning = OFF;
 SET datestyle = 'ISO, YMD';
 BEGIN TRANSACTION;
 TRUNCATE ONLY "phil's schema3"."phil's tbl1" CASCADE;
-psql:/tmp/emaj_test/sql_scripts/step20_gensql.sql:8: NOTICE:  truncate cascades to table "mytbl4"
-psql:/tmp/emaj_test/sql_scripts/step20_gensql.sql:8: NOTICE:  truncate cascades to table "myTbl2\"
+psql:/tmp/emaj_96/adm3/gensql.sql:8: NOTICE:  truncate cascades to table "mytbl4"
+psql:/tmp/emaj_96/adm3/gensql.sql:8: NOTICE:  truncate cascades to table "myTbl2\"
 TRUNCATE ONLY "phil's schema3".mytbl4 CASCADE;
-psql:/tmp/emaj_test/sql_scripts/step20_gensql.sql:9: NOTICE:  truncate cascades to table "myTbl2\"
+psql:/tmp/emaj_96/adm3/gensql.sql:9: NOTICE:  truncate cascades to table "myTbl2\"
 TRUNCATE ONLY "phil's schema3"."myTbl2\" CASCADE;
 TRUNCATE ONLY myschema4.mytblc2 CASCADE;
 ROLLBACK;
 RESET standard_conforming_strings;
 RESET escape_string_warning;
 RESET datestyle;
-\! rm /tmp/emaj_test/sql_scripts/step20_gensql.sql
+\! rm $EMAJTESTTMPDIR/*
 select emaj.emaj_stop_group('truncateTestGroup');
  emaj_stop_group 
 -----------------
@@ -2533,18 +2538,18 @@ select hist_function, hist_event, hist_object,
  ROLLBACK_GROUP           | NOTICE                       | Rollback id 10013                                                                | 2 sequences processed.                                                                                                                 | postgres
  DBLINK_CLOSE_CNX         |                              | rlbk#1                                                                           |                                                                                                                                        | postgres
  ROLLBACK_GROUP           | END                          | myGroup1                                                                         | Rollback_id 10013, 1 tables and 2 sequences effectively processed                                                                      | postgres
- SNAP_GROUP               | BEGIN                        | myGroup1                                                                         | /tmp/emaj_test/snaps                                                                                                                   | postgres
+ SNAP_GROUP               | BEGIN                        | myGroup1                                                                         | /tmp/emaj_96/adm2/snaps1                                                                                                               | postgres
  SNAP_GROUP               | END                          | myGroup1                                                                         | 7 tables/sequences processed                                                                                                           | postgres
- SNAP_GROUP               | BEGIN                        | myGroup2                                                                         | /tmp/emaj_test/snaps                                                                                                                   | postgres
+ SNAP_GROUP               | BEGIN                        | myGroup2                                                                         | /tmp/emaj_96/adm2/snaps1                                                                                                               | postgres
  SNAP_GROUP               | END                          | myGroup2                                                                         | 8 tables/sequences processed                                                                                                           | postgres
- SNAP_GROUP               | BEGIN                        | phil's group#3",                                                                 | /tmp/emaj_test/snaps                                                                                                                   | postgres
+ SNAP_GROUP               | BEGIN                        | phil's group#3",                                                                 | /tmp/emaj_96/adm2/snaps1                                                                                                               | postgres
  SNAP_GROUP               | END                          | phil's group#3",                                                                 | 4 tables/sequences processed                                                                                                           | postgres
  GEN_SQL_GROUP            | BEGIN                        | myGroup1                                                                         | From mark Multi-1 to current situation                                                                                                 | postgres
- GEN_SQL_GROUP            | END                          | myGroup1                                                                         | 6 generated statements - script exported into /tmp/emaj_test/sql_scripts/myGroup1.sql                                                  | postgres
+ GEN_SQL_GROUP            | END                          | myGroup1                                                                         | 6 generated statements - script exported into /tmp/emaj_96/adm2/myGroup1.sql                                                           | postgres
  GEN_SQL_GROUP            | BEGIN                        | myGroup2                                                                         | From mark Multi-1 to current situation with tables/sequences filtering                                                                 | postgres
- GEN_SQL_GROUP            | END                          | myGroup2                                                                         | 26 generated statements - script exported into /tmp/emaj_test/sql_scripts/myGroup2.sql                                                 | postgres
+ GEN_SQL_GROUP            | END                          | myGroup2                                                                         | 26 generated statements - script exported into /tmp/emaj_96/adm2/myGroup2.sql                                                          | postgres
  GEN_SQL_GROUP            | BEGIN                        | phil's group#3",                                                                 | From mark M1_rollbackable to current situation                                                                                         | postgres
- GEN_SQL_GROUP            | END                          | phil's group#3",                                                                 | 56 generated statements - script exported into /tmp/emaj_test/sql_scripts/Group3.sql                                                   | postgres
+ GEN_SQL_GROUP            | END                          | phil's group#3",                                                                 | 56 generated statements - script exported into /tmp/emaj_96/adm2/Group3.sql                                                            | postgres
  GEN_SQL_GROUP            | BEGIN                        | myGroup1                                                                         | From mark Multi-1 to current situation                                                                                                 | postgres
  GEN_SQL_GROUP            | END                          | myGroup1                                                                         | 6 generated statements - script not exported                                                                                           | postgres
  STOP_GROUP               | BEGIN                        | phil's group#3",                                                                 |                                                                                                                                        | postgres
@@ -2868,7 +2873,7 @@ select hist_function, hist_event, hist_object,
  ROLLBACK_GROUP           | NOTICE                       | Rollback id 10026                                                                | 2 sequences processed.                                                                                                                 | postgres
  DBLINK_CLOSE_CNX         |                              | rlbk#1                                                                           |                                                                                                                                        | postgres
  ROLLBACK_GROUP           | END                          | myGroup1                                                                         | Rollback_id 10026, 3 tables and 2 sequences effectively processed                                                                      | postgres
- IMPORT_PARAMETERS        | BEGIN                        |                                                                                  | Input file: '/tmp/param_config.json'                                                                                                   | postgres
+ IMPORT_PARAMETERS        | BEGIN                        |                                                                                  | Input file: '/tmp/emaj_96/adm3/param_config.json'                                                                                      | postgres
                           | DELETED PARAMETER            | dblink_user_password                                                             |                                                                                                                                        | postgres
                           | DELETED PARAMETER            | alter_log_table                                                                  |                                                                                                                                        | postgres
                           | DELETED PARAMETER            | fixed_step_rollback_duration                                                     |                                                                                                                                        | postgres
@@ -3239,7 +3244,7 @@ select hist_function, hist_event, hist_object,
  CONSOLIDATE_RLBK_GROUP   | BEGIN                        | grp_tmp                                                                          | Erase all between marks Mk5 and End_logged_rollback                                                                                    | postgres
  CONSOLIDATE_RLBK_GROUP   | END                          | grp_tmp                                                                          | 2 tables and 2 sequences processed ; 4 marks deleted                                                                                   | postgres
  GEN_SQL_GROUPS           | BEGIN                        | grp_tmp_3,grp_tmp_4,grp_tmp                                                      | From mark Mk1 to current situation                                                                                                     | postgres
- GEN_SQL_GROUPS           | END                          | grp_tmp,grp_tmp_3,grp_tmp_4                                                      | 26 generated statements - script exported into /tmp/emaj_test/sql_scripts/allGroups.sql                                                | postgres
+ GEN_SQL_GROUPS           | END                          | grp_tmp,grp_tmp_3,grp_tmp_4                                                      | 26 generated statements - script exported into /tmp/emaj_96/adm3/allGroups.sql                                                         | postgres
  MODIFY_TABLES            | BEGIN                        |                                                                                  |                                                                                                                                        | postgres
  LOCK_GROUP               | BEGIN                        | grp_tmp                                                                          |                                                                                                                                        | postgres
  LOCK_GROUP               | END                          | grp_tmp                                                                          | 7 tables locked, 0 deadlock(s)                                                                                                         | postgres
@@ -3330,7 +3335,7 @@ select hist_function, hist_event, hist_object,
  CLEANUP_RLBK_STATE       |                              | Rollback id 10031                                                                | set to COMMITTED                                                                                                                       | postgres
  SET_MARK_GROUP           | END                          | grp_tmp                                                                          | Group restart                                                                                                                          | postgres
  START_GROUP              | END                          | grp_tmp                                                                          | 9 tables/sequences processed                                                                                                           | postgres
- IMPORT_GROUPS            | BEGIN                        | grp_tmp, grp_tmp_3, grp_tmp_4                                                    | Input file: '/tmp/step19_groups_config.json'                                                                                           | postgres
+ IMPORT_GROUPS            | BEGIN                        | grp_tmp, grp_tmp_3, grp_tmp_4                                                    | Input file: '/tmp/emaj_96/adm3/groups_config.json'                                                                                     | postgres
  LOCK_GROUPS              | BEGIN                        | grp_tmp,grp_tmp_3,grp_tmp_4                                                      |                                                                                                                                        | postgres
  LOCK_GROUPS              | END                          | grp_tmp,grp_tmp_3,grp_tmp_4                                                      | 7 tables locked, 0 deadlock(s)                                                                                                         | postgres
  SET_MARK_GROUPS          | BEGIN                        | grp_tmp,grp_tmp_3,grp_tmp_4                                                      | IMPORT_%                                                                                                                               | postgres
@@ -3417,7 +3422,7 @@ select hist_function, hist_event, hist_object,
  DBLINK_CLOSE_CNX         |                              | rlbk#1                                                                           |                                                                                                                                        | postgres
  ROLLBACK_GROUP           | END                          | truncateTestGroup                                                                | Rollback_id 10032, 4 tables and 0 sequences effectively processed                                                                      | postgres
  GEN_SQL_GROUP            | BEGIN                        | truncateTestGroup                                                                | From mark M1 to mark M2                                                                                                                | postgres
- GEN_SQL_GROUP            | END                          | truncateTestGroup                                                                | 4 generated statements - script exported into /tmp/emaj_test/sql_scripts/step20_gensql.sql                                             | postgres
+ GEN_SQL_GROUP            | END                          | truncateTestGroup                                                                | 4 generated statements - script exported into /tmp/emaj_96/adm3/gensql.sql                                                             | postgres
  ROLLBACK_GROUP           | BEGIN                        | truncateTestGroup                                                                | Unlogged rollback to mark M1 (timestamp)                                                                                               | postgres
  DBLINK_OPEN_CNX          |                              | rlbk#1                                                                           | Status = 1                                                                                                                             | postgres
  LOCK_GROUP               | BEGIN                        | truncateTestGroup                                                                | Rollback session #1                                                                                                                    | postgres
@@ -3519,3 +3524,5 @@ select count(*) from mySchema2.myTbl6;
     14
 (1 row)
 
+-- remove the temp directory
+\! rm -R $EMAJTESTTMPDIR

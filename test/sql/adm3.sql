@@ -2,20 +2,28 @@
 --            Follows adm1.sql and adm2.sql
 --
 
+-- define and create the temp file directory to be used by the script
+\setenv EMAJTESTTMPDIR '/tmp/emaj_'`echo $PGVER`'/adm3'
+\set EMAJTESTTMPDIR `echo $EMAJTESTTMPDIR`
+\! mkdir -p $EMAJTESTTMPDIR
+
 set role emaj_regression_tests_adm_user;
 set search_path=public,myschema1;
 
--- before going on, save parameters on a file and reload them
-select emaj.emaj_export_parameters_configuration('/tmp/param_config.json');
-select emaj.emaj_import_parameters_configuration('/tmp/param_config.json', true);
+-----------------------------
+-- Step 16 : export / import configurations
+-----------------------------
+-- save parameters on a file and reload them
+select emaj.emaj_export_parameters_configuration(:'EMAJTESTTMPDIR' || '/param_config.json');
+select emaj.emaj_import_parameters_configuration(:'EMAJTESTTMPDIR' || '/param_config.json', true);
 
 -- also save the groups configuration on a file
-select emaj.emaj_export_groups_configuration('/tmp/groups_config.json');
+select emaj.emaj_export_groups_configuration(:'EMAJTESTTMPDIR' || '/groups_config.json');
 
-\! rm /tmp/param_config.json /tmp/groups_config.json
+\! rm $EMAJTESTTMPDIR/*
 
 -----------------------------
--- Step 16 : test transactions with several emaj operations
+-- Step 17 : test transactions with several emaj operations
 -----------------------------
 select emaj.emaj_create_group('myGroup4');
 
@@ -33,7 +41,7 @@ commit;
 select * from emaj.emaj_mark where mark_group = 'myGroup4' order by mark_time_id, mark_group;
 
 -----------------------------
--- Step 17 : test partition attach and detach
+-- Step 18 : test partition attach and detach
 -----------------------------
 -- Needs postgres 10+
 
@@ -96,7 +104,7 @@ select emaj.emaj_stop_group('myGroup4');
 select emaj.emaj_drop_group('myGroup4');
 
 -----------------------------
--- Step 18 : test defect with application table or sequence
+-- Step 19 : test defect with application table or sequence
 --           also test some changes on the unlogged and the with oids tables
 -----------------------------
 update emaj.emaj_group_def set grpdef_group = 'phil''s group#3",' where grpdef_schema = 'myschema5';
@@ -196,7 +204,7 @@ select emaj.emaj_stop_group('phil''s group#3",');
 select emaj.emaj_drop_group('phil''s group#3",');
 
 -----------------------------
--- Step 19 : test use of dynamic tables group management (assign, move, remove, change)
+-- Step 20 : test use of dynamic tables group management (assign, move, remove, change)
 -----------------------------
 
 -- create, start and populate groups
@@ -217,7 +225,7 @@ select emaj.emaj_start_group('grp_tmp_3','Start');
 select emaj.emaj_set_mark_groups('{"grp_tmp_3","grp_tmp_4","grp_tmp"}','Mk1');
 
 -- export the initial groups configuration
-select emaj.emaj_export_groups_configuration('/tmp/step19_groups_config.json', array['grp_tmp','grp_tmp_3','grp_tmp_4']);
+select emaj.emaj_export_groups_configuration(:'EMAJTESTTMPDIR' || '/groups_config.json', array['grp_tmp','grp_tmp_3','grp_tmp_4']);
 
 -- perform some changes and set marks
 insert into "phil's schema3".mytbl4 (col41)
@@ -308,11 +316,8 @@ select mark_time_id, regexp_replace(mark_name,E'\\d\\d\.\\d\\d\\.\\d\\d\\.\\d\\d
   order by 1,2,3;
 
 -- generate sql script
-\! rm -Rf /tmp/emaj_test/sql_scripts
-\! mkdir /tmp/emaj_test/sql_scripts
-select emaj.emaj_gen_sql_groups('{"grp_tmp_3","grp_tmp_4","grp_tmp"}','Mk1',null,'/tmp/emaj_test/sql_scripts/allGroups.sql');
---  \! grep -iP '(insert|update|delete|alter)' /tmp/emaj_test/sql_scripts/allGroups.sql
-\! rm -Rf /tmp/emaj_test/sql_scripts/*
+select emaj.emaj_gen_sql_groups('{"grp_tmp_3","grp_tmp_4","grp_tmp"}','Mk1',null,:'EMAJTESTTMPDIR' || '/allGroups.sql');
+--  \! grep -iP '(insert|update|delete|alter)' $EMAJTESTTMPDIR/allGroups.sql
 
 -- revert the priority and log tablespaces changes
 select emaj.emaj_modify_tables('phil''s schema3','.*tbl1','','{"priority":null,"log_data_tablespace":null}'::jsonb,'revert changes for 1 table');
@@ -348,7 +353,7 @@ select * from emaj.emaj_verify_all();
 select emaj.emaj_start_group('grp_tmp','Group restart');
 
 -- import the groups configuration
-select emaj.emaj_import_groups_configuration('/tmp/step19_groups_config.json', null, true);
+select emaj.emaj_import_groups_configuration(:'EMAJTESTTMPDIR' || '/groups_config.json', null, true);
 
 -- reset groups at their initial state
 select emaj.emaj_stop_group('grp_tmp_3');
@@ -361,10 +366,10 @@ select emaj.emaj_drop_group('grp_tmp');
 select * from emaj.emaj_rel_hist order by 1,2,3;
 select count(*) from emaj.emaj_relation where rel_schema in ('phil''s schema3','myschema4');
 
-\! rm /tmp/step19_groups_config.json
+\! rm $EMAJTESTTMPDIR/*
 
 -----------------------------
--- Step 20 : test TRUNCATE (log, statistics, rollback, sql generation and replay)
+-- Step 21 : test TRUNCATE (log, statistics, rollback, sql generation and replay)
 -----------------------------
 
 SET client_min_messages TO WARNING;
@@ -392,19 +397,20 @@ select * from emaj.emaj_logged_rollback_group('truncateTestGroup','M1', false);
 select stat_group, stat_schema, stat_table, stat_first_mark, stat_last_mark, stat_rows
   from emaj.emaj_log_stat_group('truncateTestGroup','M1',null) where stat_rows > 0 order by 1,2,3,4;
 
-select emaj.emaj_gen_sql_group('truncateTestGroup','M1','M2','/tmp/emaj_test/sql_scripts/step20_gensql.sql');
+select emaj.emaj_gen_sql_group('truncateTestGroup','M1','M2',:'EMAJTESTTMPDIR' || '/gensql.sql');
 -- TODO: replace the previous statement by the next one, once the issue with the emaj_logged_rollback_group() and emaj_gen_sql_groups() functions will be fixed
---select emaj.emaj_gen_sql_group('truncateTestGroup','M1',null,'/tmp/emaj_test/sql_scripts/step20_gensql.sql');
+--select emaj.emaj_gen_sql_group('truncateTestGroup','M1',null,:'EMAJTESTTMPDIR' || '/gensql.sql');
 
 select * from emaj.emaj_rollback_group('truncateTestGroup','M1', false);
 
-\! sed -i -s 's/at .*$/at [ts]$/' /tmp/emaj_test/sql_scripts/step20_gensql.sql
-\! sed -i -s 's/\\\\/\\/g' /tmp/emaj_test/sql_scripts/step20_gensql.sql
-\! sed -i -s 's/^COMMIT/ROLLBACK/' /tmp/emaj_test/sql_scripts/step20_gensql.sql
+\! sed -i -s 's/at .*$/at [ts]$/' $EMAJTESTTMPDIR/gensql.sql
+\! sed -i -s 's/\\\\/\\/g' $EMAJTESTTMPDIR/gensql.sql
+\! sed -i -s 's/^COMMIT/ROLLBACK/' $EMAJTESTTMPDIR/gensql.sql
 
-\i /tmp/emaj_test/sql_scripts/step20_gensql.sql
+\set FILE1 :EMAJTESTTMPDIR '/gensql.sql'
+\i :FILE1
 
-\! rm /tmp/emaj_test/sql_scripts/step20_gensql.sql
+\! rm $EMAJTESTTMPDIR/*
 
 select emaj.emaj_stop_group('truncateTestGroup');
 select emaj.emaj_drop_group('truncateTestGroup');
@@ -453,3 +459,6 @@ select count(*) from mySchema2.myTbl2;
 select count(*) from mySchema2."myTbl3";
 select count(*) from mySchema2.myTbl5;
 select count(*) from mySchema2.myTbl6;
+
+-- remove the temp directory
+\! rm -R $EMAJTESTTMPDIR

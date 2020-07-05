@@ -6,6 +6,12 @@
 -- emaj_drop_group() and emaj_force_drop_group() functions
 --
 SET client_min_messages TO WARNING;
+
+-- define and create the temp file directory to be used by the script
+\setenv EMAJTESTTMPDIR '/tmp/emaj_'`echo $PGVER`'/create_drop'
+\set EMAJTESTTMPDIR `echo $EMAJTESTTMPDIR`
+\! mkdir -p $EMAJTESTTMPDIR
+
 -----------------------------
 -- prepare groups
 -----------------------------
@@ -198,24 +204,21 @@ select emaj.emaj_sync_def_group('dummyGroup');
 select emaj.emaj_sync_def_group('myGroup1');
 
 -- resync all and check the result
---   set/reset directory for exports
-\! mkdir -p /tmp/emaj_test/group_def
-\! rm -R /tmp/emaj_test/group_def
-\! mkdir /tmp/emaj_test/group_def
 
 --   export the current emaj_group_def content
-copy (select * from emaj.emaj_group_def order by grpdef_group, grpdef_schema, grpdef_tblseq) to '/tmp/emaj_test/group_def/before_image';
+\set FILE1 :EMAJTESTTMPDIR '/file1'
+copy (select * from emaj.emaj_group_def order by grpdef_group, grpdef_schema, grpdef_tblseq) to :'FILE1';
 
 --   resync all created groups
 select group_name, group_nb_table + group_nb_sequence as table_and_sequence, emaj.emaj_sync_def_group(group_name) as function_result 
   from emaj.emaj_group order by group_name;
 
 --   export the modified emaj_group_def content
-copy (select * from emaj.emaj_group_def order by grpdef_group, grpdef_schema, grpdef_tblseq) to '/tmp/emaj_test/group_def/after_image';
+\set FILE2 :EMAJTESTTMPDIR '/file2'
+copy (select * from emaj.emaj_group_def order by grpdef_group, grpdef_schema, grpdef_tblseq) to :'FILE2';
 
 --   there should not be any differences
-\! diff /tmp/emaj_test/group_def/before_image /tmp/emaj_test/group_def/after_image
-\! rm -R /tmp/emaj_test/group_def
+\! diff $EMAJTESTTMPDIR/file1 $EMAJTESTTMPDIR/file2
 
 -----------------------------------
 -- emaj_assign_table
@@ -526,9 +529,9 @@ select json_array_length(emaj.emaj_export_groups_configuration(array['myGroup1',
 select emaj.emaj_export_groups_configuration('/tmp/dummy/location/file');
 
 --   ok
-select emaj.emaj_export_groups_configuration('/tmp/orig_groups_config_all.json');
-select emaj.emaj_export_groups_configuration('/tmp/orig_groups_config_partial.json', array['myGroup1','myGroup2']);
-\! wc -l /tmp/orig_groups_config*
+select emaj.emaj_export_groups_configuration(:'EMAJTESTTMPDIR' || '/orig_groups_config_all.json');
+select emaj.emaj_export_groups_configuration(:'EMAJTESTTMPDIR' || '/orig_groups_config_partial.json', array['myGroup1','myGroup2']);
+\! wc -l $EMAJTESTTMPDIR/orig_groups_config*
 
 -- direct import
 --   bad content
@@ -561,7 +564,7 @@ select * from emaj.emaj_import_groups_configuration('{ "tables_groups": [ { "gro
 select * from emaj.emaj_import_groups_configuration('{ "tables_groups": [ { "group": "grp1" }, { "group": "grp1" } ]}'::json);
 
 --   unknown group in array
-select emaj.emaj_import_groups_configuration('/tmp/orig_groups_config_all.json', array['myGroup1','myGroup2','unknownGroup']);
+select emaj.emaj_import_groups_configuration(:'EMAJTESTTMPDIR' || '/orig_groups_config_all.json', array['myGroup1','myGroup2','unknownGroup']);
 --   group already created
 select emaj.emaj_import_groups_configuration('{ "tables_groups": [ { "group": "myGroup1" }, { "group": "myGroup2" } ] }'::json, null, false);
 --   bad type for existing groups
@@ -599,52 +602,50 @@ select emaj.emaj_import_groups_configuration('/tmp/bad_groups_config.json');
 
 --   ok
 -- only 2 from the original groups
-select emaj.emaj_import_groups_configuration('/tmp/orig_groups_config_all.json', array['emptyGroup','myGroup5'], true);
+select emaj.emaj_import_groups_configuration(:'EMAJTESTTMPDIR' || '/orig_groups_config_all.json', array['emptyGroup','myGroup5'], true);
 -- change the attributes for a table
-\! sed -e 's/"mypartp1"/"mypartp1", "priority": 20, "log_data_tablespace": "tsplog1", "log_index_tablespace": "tsplog1"/' /tmp/orig_groups_config_all.json >/tmp/modified_groups_config_1.json
-select emaj.emaj_import_groups_configuration('/tmp/modified_groups_config_1.json', array['myGroup4'], true);
+\! sed -e 's/"mypartp1"/"mypartp1", "priority": 20, "log_data_tablespace": "tsplog1", "log_index_tablespace": "tsplog1"/' $EMAJTESTTMPDIR/orig_groups_config_all.json >$EMAJTESTTMPDIR/modified_groups_config_1.json
+select emaj.emaj_import_groups_configuration(:'EMAJTESTTMPDIR' || '/modified_groups_config_1.json', array['myGroup4'], true);
 
 -- move a table and a sequence to another group
 -- the table myschema2.mytbl5 and the sequence myschema2.myseq1 are moved from myGroup2 to myGroup4
-\! sed -n -e '1,82p' /tmp/modified_groups_config_1.json >/tmp/modified_groups_config_2.json
+\! sed -n -e '1,82p' $EMAJTESTTMPDIR/modified_groups_config_1.json >$EMAJTESTTMPDIR/modified_groups_config_2.json
 --     remove the table and the sequence from myGroup2
-\! sed -n -e '87,95p' /tmp/modified_groups_config_1.json >>/tmp/modified_groups_config_2.json
-\! sed -n -e '100,106p' /tmp/modified_groups_config_1.json >>/tmp/modified_groups_config_2.json
+\! sed -n -e '87,95p' $EMAJTESTTMPDIR/modified_groups_config_1.json >>$EMAJTESTTMPDIR/modified_groups_config_2.json
+\! sed -n -e '100,106p' $EMAJTESTTMPDIR/modified_groups_config_1.json >>$EMAJTESTTMPDIR/modified_groups_config_2.json
 --     copy the moved table
-\! sed -n -e '83,86p' /tmp/modified_groups_config_1.json >>/tmp/modified_groups_config_2.json
+\! sed -n -e '83,86p' $EMAJTESTTMPDIR/modified_groups_config_1.json >>$EMAJTESTTMPDIR/modified_groups_config_2.json
 --     copy the other tables
-\! sed -n -e '107,126p' /tmp/modified_groups_config_1.json >>/tmp/modified_groups_config_2.json
+\! sed -n -e '107,126p' $EMAJTESTTMPDIR/modified_groups_config_1.json >>$EMAJTESTTMPDIR/modified_groups_config_2.json
 --     copy the sequences keyword
-\! sed -n -e '91,92p' /tmp/modified_groups_config_1.json >>/tmp/modified_groups_config_2.json
+\! sed -n -e '91,92p' $EMAJTESTTMPDIR/modified_groups_config_1.json >>$EMAJTESTTMPDIR/modified_groups_config_2.json
 --     copy the moved sequence
-\! sed -n -e '97,100p' /tmp/modified_groups_config_1.json >>/tmp/modified_groups_config_2.json
+\! sed -n -e '97,100p' $EMAJTESTTMPDIR/modified_groups_config_1.json >>$EMAJTESTTMPDIR/modified_groups_config_2.json
 --     copy the remaining json structure
-\! sed -n -e '127,$p' /tmp/modified_groups_config_1.json >>/tmp/modified_groups_config_2.json
-select emaj.emaj_import_groups_configuration('/tmp/modified_groups_config_2.json', array['myGroup2','myGroup4'], true);
+\! sed -n -e '127,$p' $EMAJTESTTMPDIR/modified_groups_config_1.json >>$EMAJTESTTMPDIR/modified_groups_config_2.json
+select emaj.emaj_import_groups_configuration(:'EMAJTESTTMPDIR' || '/modified_groups_config_2.json', array['myGroup2','myGroup4'], true);
 
 -- remove a table and a sequence from a group
 -- the table myschema2.mytbl5 and the sequence myschema2.myseq1 are removed from myGroup4
-\! sed -n -e '1,98p' /tmp/modified_groups_config_2.json >/tmp/modified_groups_config_3.json
-\! sed -n -e '103,122p' /tmp/modified_groups_config_2.json >>/tmp/modified_groups_config_3.json
-\! sed -n -e '129,$p' /tmp/modified_groups_config_2.json >>/tmp/modified_groups_config_3.json
-select emaj.emaj_import_groups_configuration('/tmp/modified_groups_config_3.json', array['myGroup4'], true);
+\! sed -n -e '1,98p' $EMAJTESTTMPDIR/modified_groups_config_2.json >$EMAJTESTTMPDIR/modified_groups_config_3.json
+\! sed -n -e '103,122p' $EMAJTESTTMPDIR/modified_groups_config_2.json >>$EMAJTESTTMPDIR/modified_groups_config_3.json
+\! sed -n -e '129,$p' $EMAJTESTTMPDIR/modified_groups_config_2.json >>$EMAJTESTTMPDIR/modified_groups_config_3.json
+select emaj.emaj_import_groups_configuration(:'EMAJTESTTMPDIR' || '/modified_groups_config_3.json', array['myGroup4'], true);
 
 -- register an unknown trigger and an emaj trigger
-\! sed -e 's/"mytbl2trg1"/"unknowntrigger"/' -e 's/"mytbl2trg2"/"emaj_trunc_trg"/' /tmp/modified_groups_config_1.json >/tmp/modified_groups_config_2.json
-select emaj.emaj_import_groups_configuration('/tmp/modified_groups_config_2.json', null, true);
+\! sed -e 's/"mytbl2trg1"/"unknowntrigger"/' -e 's/"mytbl2trg2"/"emaj_trunc_trg"/' $EMAJTESTTMPDIR/modified_groups_config_1.json >$EMAJTESTTMPDIR/modified_groups_config_2.json
+select emaj.emaj_import_groups_configuration(:'EMAJTESTTMPDIR' || '/modified_groups_config_2.json', null, true);
 
 -- suppress 1 trigger
-\! sed -n -e '1,29p' /tmp/modified_groups_config_1.json >/tmp/modified_groups_config_3.json
-\! sed -n -e '33,$p' /tmp/modified_groups_config_1.json >>/tmp/modified_groups_config_3.json
-select emaj.emaj_import_groups_configuration('/tmp/modified_groups_config_3.json', null, true);
+\! sed -n -e '1,29p' $EMAJTESTTMPDIR/modified_groups_config_1.json >$EMAJTESTTMPDIR/modified_groups_config_3.json
+\! sed -n -e '33,$p' $EMAJTESTTMPDIR/modified_groups_config_1.json >>$EMAJTESTTMPDIR/modified_groups_config_3.json
+select emaj.emaj_import_groups_configuration(:'EMAJTESTTMPDIR' || '/modified_groups_config_3.json', null, true);
 select * from emaj.emaj_ignored_app_trigger order by 1,2,3;
 
 -- rebuild all original groups
 -- this will assign the just removed table ans sequence
-select emaj.emaj_import_groups_configuration('/tmp/orig_groups_config_all.json', null, true);
+select emaj.emaj_import_groups_configuration(:'EMAJTESTTMPDIR' || '/orig_groups_config_all.json', null, true);
 select * from emaj.emaj_ignored_app_trigger order by 1,2,3;
-
-\! rm /tmp/orig_groups_config* /tmp/modified_groups_config*
 
 -----------------------------------
 -- emaj_ignore_app_trigger: REMOVE action
@@ -711,3 +712,6 @@ select hist_function, hist_event, hist_object,
        hist_user 
   from emaj.emaj_hist order by hist_id;
 select time_id, time_last_emaj_gid, time_event from emaj.emaj_time_stamp order by time_id;
+
+-- remove the temp directory
+\! rm -R $EMAJTESTTMPDIR
