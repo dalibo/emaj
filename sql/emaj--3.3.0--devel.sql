@@ -633,6 +633,61 @@ $_delete_before_mark_group$
   END;
 $_delete_before_mark_group$;
 
+CREATE OR REPLACE FUNCTION emaj._cleanup_rollback_state()
+RETURNS INT LANGUAGE plpgsql
+SECURITY DEFINER SET search_path = pg_catalog, pg_temp AS
+$_cleanup_rollback_state$
+-- This function effectively cleans the rollback states up. It is called by the emaj_cleanup_rollback_state()
+-- and by other emaj functions.
+-- The rollbacks whose transaction(s) is/are active are left as is.
+-- Among the others, those which are also visible in the emaj_hist table are set "COMMITTED",
+--   while those which are not visible in the emaj_hist table are set "ABORTED".
+-- Input: no parameter
+-- Output: number of updated rollback events
+  DECLARE
+    v_nbRlbk                 INT = 0;
+    v_newStatus              emaj._rlbk_status_enum;
+    r_rlbk                   RECORD;
+  BEGIN
+-- scan all pending rollback events having all their session transactions completed (either committed or rolled back)
+    FOR r_rlbk IN
+      SELECT rlbk_id, rlbk_status, rlbk_begin_hist_id, rlbk_nb_session, count(rlbs_txid) AS nbVisibleTx
+        FROM emaj.emaj_rlbk
+             LEFT OUTER JOIN emaj.emaj_rlbk_session ON
+               (    rlbk_id = rlbs_rlbk_id                                      -- main join condition
+                AND txid_visible_in_snapshot(rlbs_txid,txid_current_snapshot()) -- only visible tx
+                AND rlbs_txid <> txid_current()                                 -- exclude the current tx
+               )
+        WHERE rlbk_status IN ('PLANNING', 'LOCKING', 'EXECUTING', 'COMPLETED')  -- only pending rollback events
+        GROUP BY rlbk_id, rlbk_status, rlbk_begin_hist_id, rlbk_nb_session
+        HAVING count(rlbs_txid) = rlbk_nb_session                               -- all sessions tx must be visible
+        ORDER BY rlbk_id
+    LOOP
+-- try to lock the current rlbk_id, but skip it if it is not immediately possible to avoid deadlocks in rare cases
+      PERFORM 0 FROM emaj.emaj_rlbk
+        WHERE rlbk_id = r_rlbk.rlbk_id
+        FOR UPDATE SKIP LOCKED;
+      IF FOUND THEN
+-- look at the emaj_hist to find the trace of the rollback begin event
+        PERFORM 0 FROM emaj.emaj_hist WHERE hist_id = r_rlbk.rlbk_begin_hist_id;
+        IF FOUND THEN
+-- if the emaj_hist rollback_begin event is visible, the rollback transaction has been committed.
+-- then set the rollback event in emaj_rlbk as "COMMITTED"
+          v_newStatus = 'COMMITTED';
+        ELSE
+-- otherwise, set the rollback event in emaj_rlbk as "ABORTED"
+          v_newStatus = 'ABORTED';
+        END IF;
+        UPDATE emaj.emaj_rlbk SET rlbk_status = v_newStatus WHERE rlbk_id = r_rlbk.rlbk_id;
+        INSERT INTO emaj.emaj_hist (hist_function, hist_object, hist_wording)
+          VALUES ('CLEANUP_RLBK_STATE', 'Rollback id ' || r_rlbk.rlbk_id, 'set to ' || v_newStatus);
+        v_nbRlbk = v_nbRlbk + 1;
+      END IF;
+    END LOOP;
+    RETURN v_nbRlbk;
+  END;
+$_cleanup_rollback_state$;
+
 CREATE OR REPLACE FUNCTION emaj.emaj_snap_group(v_groupName TEXT, v_dir TEXT, v_copyOptions TEXT)
 RETURNS INT LANGUAGE plpgsql
 SECURITY DEFINER SET search_path = pg_catalog, pg_temp AS

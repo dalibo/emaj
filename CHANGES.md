@@ -15,6 +15,8 @@ E-Maj - Change log
 ###Bug fixes:###
   * Fix some missing temporary table drops in several old extension upgrade
     scripts.
+  * Fix a rare case of deadlock with the emaj_logged_rollback_group() function
+    when the "dblink_user_password" parameter is set.
 
 3.3.0 (2020-Mar-14)
 ------

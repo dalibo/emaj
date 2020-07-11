@@ -8665,20 +8665,26 @@ $_cleanup_rollback_state$
         HAVING count(rlbs_txid) = rlbk_nb_session                               -- all sessions tx must be visible
         ORDER BY rlbk_id
     LOOP
--- look at the emaj_hist to find the trace of the rollback begin event
-      PERFORM 0 FROM emaj.emaj_hist WHERE hist_id = r_rlbk.rlbk_begin_hist_id;
+-- try to lock the current rlbk_id, but skip it if it is not immediately possible to avoid deadlocks in rare cases
+      PERFORM 0 FROM emaj.emaj_rlbk
+        WHERE rlbk_id = r_rlbk.rlbk_id
+        FOR UPDATE SKIP LOCKED;
       IF FOUND THEN
+-- look at the emaj_hist to find the trace of the rollback begin event
+        PERFORM 0 FROM emaj.emaj_hist WHERE hist_id = r_rlbk.rlbk_begin_hist_id;
+        IF FOUND THEN
 -- if the emaj_hist rollback_begin event is visible, the rollback transaction has been committed.
 -- then set the rollback event in emaj_rlbk as "COMMITTED"
-        v_newStatus = 'COMMITTED';
-      ELSE
+          v_newStatus = 'COMMITTED';
+        ELSE
 -- otherwise, set the rollback event in emaj_rlbk as "ABORTED"
-        v_newStatus = 'ABORTED';
+          v_newStatus = 'ABORTED';
+        END IF;
+        UPDATE emaj.emaj_rlbk SET rlbk_status = v_newStatus WHERE rlbk_id = r_rlbk.rlbk_id;
+        INSERT INTO emaj.emaj_hist (hist_function, hist_object, hist_wording)
+          VALUES ('CLEANUP_RLBK_STATE', 'Rollback id ' || r_rlbk.rlbk_id, 'set to ' || v_newStatus);
+        v_nbRlbk = v_nbRlbk + 1;
       END IF;
-      UPDATE emaj.emaj_rlbk SET rlbk_status = v_newStatus WHERE rlbk_id = r_rlbk.rlbk_id;
-      INSERT INTO emaj.emaj_hist (hist_function, hist_object, hist_wording)
-        VALUES ('CLEANUP_RLBK_STATE', 'Rollback id ' || r_rlbk.rlbk_id, 'set to ' || v_newStatus);
-      v_nbRlbk = v_nbRlbk + 1;
     END LOOP;
     RETURN v_nbRlbk;
   END;
