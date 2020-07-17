@@ -305,14 +305,16 @@ begin;
   -- testing delete all marks up to a mark set after the alter_group
   select emaj.emaj_delete_before_mark_group('myGroup2','EMAJ_LAST_MARK');
   select * from emaj.emaj_mark where mark_group = 'myGroup2';
-  select * from emaj.emaj_sequence where sequ_name = 'mytbl7_log_seq' order by sequ_time_id;
+  select tbl_schema, tbl_name, tbl_time_id, tbl_log_seq_last_val from emaj.emaj_table
+    where tbl_name = 'mytbl7' order by tbl_time_id;
 rollback;
 
 begin;
   -- testing the alter_group mark deletion
   select mark_time_id from emaj.emaj_mark where mark_group = 'myGroup2' and mark_name = 'Alter to add mytbl7';
   select emaj.emaj_delete_mark_group('myGroup2','Alter to add mytbl7');
-  select * from emaj.emaj_sequence where sequ_name = 'mytbl7_log_seq' order by sequ_time_id limit 1;
+  select tbl_schema, tbl_name, tbl_time_id, tbl_log_seq_last_val from emaj.emaj_table
+    where tbl_name = 'mytbl7' order by tbl_time_id limit 1;
 rollback;
 
 -- test sequences and holes at bounds following a rollback targeting a mark set before an ADD_TBL
@@ -321,7 +323,8 @@ begin;
   select mark_time_id from emaj.emaj_mark where mark_group = 'myGroup2' and mark_name = 'Alter to add mytbl7';
   select rlbk_severity, regexp_replace(rlbk_message,E'\\d\\d\\d\\d/\\d\\d\\/\\d\\d\\ \\d\\d\\:\\d\\d:\\d\\d .*?\\)','<timestamp>)','g')
     from emaj.emaj_rollback_group('myGroup2','Before ADD_TBL',true);
-  select * from emaj.emaj_sequence where sequ_schema = 'emaj_myschema2' and sequ_name = 'mytbl7_log_seq' order by sequ_time_id;
+  select tbl_schema, tbl_name, tbl_time_id, tbl_log_seq_last_val from emaj.emaj_table
+    where tbl_schema = 'myschema2' and tbl_name = 'mytbl7' order by tbl_time_id;
   select * from emaj.emaj_seq_hole where sqhl_schema = 'myschema2' and sqhl_table = 'mytbl7';
   select stat_group, stat_schema, stat_table, stat_first_mark, stat_first_mark_gid, stat_last_mark, stat_last_mark_gid, stat_rows 
     from emaj._log_stat_groups('{"myGroup2"}',false,'ADD_TBL test',NULL);
@@ -339,7 +342,8 @@ select emaj.emaj_rename_mark_group('myGroup2','EMAJ_LAST_MARK','Logged_Rlbk_End'
 select mark_time_id from emaj.emaj_mark where mark_group = 'myGroup2' and mark_name = 'Alter to add mytbl7';
 select * from emaj.emaj_get_consolidable_rollbacks() where cons_group = 'myGroup2'; -- should report 1 row to consolidate
 select * from emaj.emaj_consolidate_rollback_group('myGroup2', 'Logged_Rlbk_End');
-select * from emaj.emaj_sequence where sequ_schema = 'emaj_myschema2' and sequ_name = 'mytbl7_log_seq' order by sequ_time_id;
+select tbl_schema, tbl_name, tbl_time_id, tbl_log_seq_last_val from emaj.emaj_table
+  where tbl_schema = 'myschema2' and tbl_name = 'mytbl7' order by tbl_time_id;
 
 -- perform some other updates
 insert into myschema2.myTbl7 values (7),(8),(9);
@@ -461,8 +465,8 @@ begin;
   select emaj.emaj_delete_mark_group('myGroup1','2 tables removed from myGroup1');
   select rel_schema, rel_tblseq, rel_time_range, rel_group, rel_kind, rel_log_schema, rel_log_table, rel_log_seq_last_value
     from emaj.emaj_relation where rel_schema = 'myschema1' and (rel_tblseq = 'myTbl3' or rel_tblseq = 'mytbl2b') order by rel_tblseq;
-  select * from emaj.emaj_sequence where 
-    sequ_name in ('mytbl2b_log_seq', 'myTbl3_log_seq') order by sequ_time_id desc, sequ_name limit 2;
+  select tbl_schema, tbl_name, tbl_time_id, tbl_log_seq_last_val from emaj.emaj_table
+    where tbl_name in ('mytbl2b', 'myTbl3') order by tbl_time_id desc, tbl_name limit 2;
   select * from emaj.emaj_mark where mark_group = 'myGroup1' and mark_name = '2 tables removed from myGroup1';
 rollback;
 
@@ -687,9 +691,9 @@ select rel_schema, rel_tblseq, rel_time_range, rel_group, rel_kind, rel_log_sche
   from emaj.emaj_relation where rel_schema = 'myschema2' and rel_tblseq in ('mytbl1','mytbl2','myTbl3','myseq1','myseq2')
   order by rel_schema, rel_tblseq, rel_time_range;
 select sequ_schema, sequ_name, sequ_time_id, sequ_last_val, sequ_is_called from emaj.emaj_sequence
-  where sequ_schema = 'emaj_myschema2' and sequ_name = 'mytbl1_log_seq' order by sequ_name, sequ_time_id;
-select sequ_schema, sequ_name, sequ_time_id, sequ_last_val, sequ_is_called from emaj.emaj_sequence
   where sequ_schema = 'myschema2' and sequ_name like 'myseq%' order by sequ_name, sequ_time_id;
+select tbl_schema, tbl_name, tbl_time_id, tbl_log_seq_last_val from emaj.emaj_table
+  where tbl_schema = 'myschema2' and tbl_name = 'mytbl1' order by tbl_time_id;
 
 -----------------------------
 -- change group ownership for some tables and sequences without updating emaj_group_def

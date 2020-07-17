@@ -626,7 +626,13 @@ select count(*) from emaj.emaj_mark;
 select count(*) from emaj.emaj_sequence;
  count 
 -------
-     7
+     2
+(1 row)
+
+select count(*) from emaj.emaj_table;
+ count 
+-------
+     5
 (1 row)
 
 select count(*) from emaj.emaj_seq_hole;
@@ -779,6 +785,8 @@ delete from emaj.emaj_mark;
 ERROR:  permission denied for relation emaj_mark
 delete from emaj.emaj_sequence;
 ERROR:  permission denied for relation emaj_sequence
+delete from emaj.emaj_table;
+ERROR:  permission denied for relation emaj_table
 delete from emaj.emaj_seq_hole;
 ERROR:  permission denied for relation emaj_seq_hole
 delete from emaj.emaj_rlbk;

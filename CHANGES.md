@@ -10,6 +10,8 @@ E-Maj - Change log
     handle these TRUNCATE statements.
   * A new emaj_purge_histories() function is callable by external scheduler
     tool to purge various emaj history tables, based on a retention delay.
+  * Change the internal way to register log sequence states. This has no
+    impact for users.
   * Minor coding changes.
 
 ###Bug fixes:###

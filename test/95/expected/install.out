@@ -51,9 +51,10 @@ select relname from pg_catalog.pg_class,
  emaj_schema
  emaj_seq_hole
  emaj_sequence
+ emaj_table
  emaj_time_stamp
  emaj_time_stamp_time_id_seq
-(21 rows)
+(22 rows)
 
 -- check the emaj_param content
 SELECT param_value_text FROM emaj.emaj_param WHERE param_key = 'emaj_version';
@@ -689,6 +690,28 @@ Foreign-key constraints:
  sequ_time_id | bigint | sequ_time_id
 primary key, btree, for table "emaj.emaj_sequence"
 
+               Table "emaj.emaj_table"
+        Column        |       Type       | Modifiers 
+----------------------+------------------+-----------
+ tbl_schema           | text             | not null
+ tbl_name             | text             | not null
+ tbl_time_id          | bigint           | not null
+ tbl_pages            | integer          | 
+ tbl_tuples           | double precision | 
+ tbl_log_seq_last_val | bigint           | not null
+Indexes:
+    "emaj_table_pkey" PRIMARY KEY, btree (tbl_schema, tbl_name, tbl_time_id)
+Foreign-key constraints:
+    "emaj_table_tbl_time_id_fkey" FOREIGN KEY (tbl_time_id) REFERENCES emaj.emaj_time_stamp(time_id)
+
+    Index "emaj.emaj_table_pkey"
+   Column    |  Type  | Definition  
+-------------+--------+-------------
+ tbl_schema  | text   | tbl_schema
+ tbl_name    | text   | tbl_name
+ tbl_time_id | bigint | tbl_time_id
+primary key, btree, for table "emaj.emaj_table"
+
                                                Table "emaj.emaj_time_stamp"
         Column        |           Type           |                               Modifiers                                
 ----------------------+--------------------------+------------------------------------------------------------------------
@@ -711,6 +734,7 @@ Referenced by:
     TABLE "emaj.emaj_seq_hole" CONSTRAINT "emaj_seq_hole_sqhl_begin_time_id_fkey" FOREIGN KEY (sqhl_begin_time_id) REFERENCES emaj.emaj_time_stamp(time_id)
     TABLE "emaj.emaj_seq_hole" CONSTRAINT "emaj_seq_hole_sqhl_end_time_id_fkey" FOREIGN KEY (sqhl_end_time_id) REFERENCES emaj.emaj_time_stamp(time_id)
     TABLE "emaj.emaj_sequence" CONSTRAINT "emaj_sequence_sequ_time_id_fkey" FOREIGN KEY (sequ_time_id) REFERENCES emaj.emaj_time_stamp(time_id)
+    TABLE "emaj.emaj_table" CONSTRAINT "emaj_table_tbl_time_id_fkey" FOREIGN KEY (tbl_time_id) REFERENCES emaj.emaj_time_stamp(time_id)
 
 Index "emaj.emaj_time_stamp_pkey"
  Column  |  Type  | Definition 

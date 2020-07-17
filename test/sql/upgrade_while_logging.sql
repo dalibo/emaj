@@ -59,6 +59,8 @@ select * from "emaj_phil's schema3"."myTbl2\_log_seq";
 -- emaj tables and sequences
 
 -- technical tables
+select * from emaj.emaj_sequence order by sequ_schema, sequ_name, sequ_time_id;
+select * from emaj.emaj_table order by tbl_schema, tbl_name, tbl_time_id;
 
 -- log tables
 select col11, col12, col13, emaj_verb, emaj_tuple, emaj_gid from emaj_mySchema1.myTbl1_log order by emaj_gid, emaj_tuple desc;

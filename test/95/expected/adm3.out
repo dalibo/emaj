@@ -1853,10 +1853,10 @@ select * from emaj.emaj_verify_all();
 --     a removal while the group is LOGGING fails
 select emaj.emaj_remove_table('phil''s schema3','mytbl4');
 ERROR:  relation "emaj_phil's schema3.mytbl4_log_seq" does not exist
-LINE 1: ...ast_value ELSE last_value - increment_by END FROM "emaj_phil...
+LINE 1: ...lled THEN last_value ELSE last_value - 1 END FROM "emaj_phil...
                                                              ^
-QUERY:  SELECT CASE WHEN is_called THEN last_value ELSE last_value - increment_by END FROM "emaj_phil's schema3".mytbl4_log_seq
-CONTEXT:  PL/pgSQL function emaj._log_stat_tbl(emaj.emaj_relation,bigint,bigint) line 29 at EXECUTE
+QUERY:  SELECT CASE WHEN is_called THEN last_value ELSE last_value - 1 END FROM "emaj_phil's schema3".mytbl4_log_seq
+CONTEXT:  PL/pgSQL function emaj._log_stat_tbl(emaj.emaj_relation,bigint,bigint) line 20 at EXECUTE
 SQL statement "WITH stat_group1 AS (                             -- for each group, time id of the last active mark
       SELECT mark_group, max(mark_time_id) AS last_mark_time_id
         FROM emaj.emaj_mark

@@ -115,139 +115,144 @@ select mark_group, regexp_replace(mark_name,E'\\d\\d\.\\d\\d\\.\\d\\d\\.\\d\\d\\
 (17 rows)
 
 select sequ_schema, sequ_name, sequ_time_id, sequ_last_val, sequ_is_called from emaj.emaj_sequence order by sequ_time_id, sequ_schema, sequ_name;
-  sequ_schema   |     sequ_name     | sequ_time_id | sequ_last_val | sequ_is_called 
-----------------+-------------------+--------------+---------------+----------------
- emaj_myschema2 | mytbl1_log_seq    |        10012 |            15 | t
- emaj_myschema2 | mytbl2_log_seq    |        10012 |             2 | t
- emaj_myschema2 | myTbl3_log_seq    |        10012 |            10 | t
- emaj_myschema2 | mytbl4_log_seq    |        10012 |             4 | t
- emaj_myschema2 | mytbl5_log_seq    |        10012 |             4 | t
- emaj_myschema2 | mytbl6_log_seq    |        10012 |            14 | t
- myschema2      | myseq1            |        10012 |          1003 | t
- myschema2      | myTbl3_col31_seq  |        10012 |            20 | t
- emaj_myschema1 | mytbl1_log_seq    |        10018 |            30 | t
- emaj_myschema1 | mytbl2b_log_seq   |        10018 |             3 | t
- emaj_myschema1 | mytbl2_log_seq    |        10018 |             3 | t
- emaj_myschema1 | myTbl3_log_seq    |        10018 |            10 | t
- emaj_myschema1 | mytbl4_log_seq    |        10018 |             8 | t
- myschema1      | mytbl2b_col20_seq |        10018 |             5 | t
- myschema1      | myTbl3_col31_seq  |        10018 |            20 | t
- emaj_myschema1 | mytbl1_log_seq    |        10019 |            30 | t
- emaj_myschema1 | mytbl2b_log_seq   |        10019 |             3 | t
- emaj_myschema1 | mytbl2_log_seq    |        10019 |             3 | t
- emaj_myschema1 | myTbl3_log_seq    |        10019 |            20 | t
- emaj_myschema1 | mytbl4_log_seq    |        10019 |             8 | t
- myschema1      | mytbl2b_col20_seq |        10019 |             5 | t
- myschema1      | myTbl3_col31_seq  |        10019 |            20 | t
- emaj_myschema1 | mytbl1_log_seq    |        10025 |            32 | t
- emaj_myschema1 | mytbl2b_log_seq   |        10025 |             3 | t
- emaj_myschema1 | mytbl2_log_seq    |        10025 |             3 | t
- emaj_myschema1 | myTbl3_log_seq    |        10025 |            20 | t
- emaj_myschema1 | mytbl4_log_seq    |        10025 |            12 | t
- myschema1      | mytbl2b_col20_seq |        10025 |             5 | t
- myschema1      | myTbl3_col31_seq  |        10025 |            20 | t
- emaj_myschema1 | mytbl1_log_seq    |        10027 |            33 | t
- emaj_myschema1 | mytbl2b_log_seq   |        10027 |             3 | t
- emaj_myschema1 | mytbl2_log_seq    |        10027 |             3 | t
- emaj_myschema1 | myTbl3_log_seq    |        10027 |            45 | t
- emaj_myschema1 | mytbl4_log_seq    |        10027 |            14 | t
- emaj_myschema2 | mytbl1_log_seq    |        10027 |            15 | t
- emaj_myschema2 | mytbl2_log_seq    |        10027 |             2 | t
- emaj_myschema2 | myTbl3_log_seq    |        10027 |            10 | t
- emaj_myschema2 | mytbl4_log_seq    |        10027 |            10 | t
- emaj_myschema2 | mytbl5_log_seq    |        10027 |             7 | t
- emaj_myschema2 | mytbl6_log_seq    |        10027 |            23 | t
- myschema1      | mytbl2b_col20_seq |        10027 |             5 | t
- myschema1      | myTbl3_col31_seq  |        10027 |            20 | t
- myschema2      | myseq1            |        10027 |          1004 | f
- myschema2      | myTbl3_col31_seq  |        10027 |            20 | t
- emaj_myschema1 | mytbl1_log_seq    |        10034 |            33 | t
- emaj_myschema1 | mytbl2b_log_seq   |        10034 |             3 | t
- emaj_myschema1 | mytbl2_log_seq    |        10034 |             3 | t
- emaj_myschema1 | myTbl3_log_seq    |        10034 |            45 | t
- emaj_myschema1 | mytbl4_log_seq    |        10034 |            14 | t
- emaj_myschema2 | mytbl1_log_seq    |        10034 |            15 | t
- emaj_myschema2 | mytbl2_log_seq    |        10034 |             2 | t
- emaj_myschema2 | myTbl3_log_seq    |        10034 |            10 | t
- emaj_myschema2 | mytbl4_log_seq    |        10034 |            10 | t
- emaj_myschema2 | mytbl5_log_seq    |        10034 |             7 | t
- emaj_myschema2 | mytbl6_log_seq    |        10034 |            23 | t
- myschema1      | mytbl2b_col20_seq |        10034 |             5 | t
- myschema1      | myTbl3_col31_seq  |        10034 |            20 | t
- myschema2      | myseq1            |        10034 |          1004 | f
- myschema2      | myTbl3_col31_seq  |        10034 |            20 | t
- emaj_myschema1 | mytbl1_log_seq    |        10035 |            33 | t
- emaj_myschema1 | mytbl2b_log_seq   |        10035 |             3 | t
- emaj_myschema1 | mytbl2_log_seq    |        10035 |             3 | t
- emaj_myschema1 | myTbl3_log_seq    |        10035 |            45 | t
- emaj_myschema1 | mytbl4_log_seq    |        10035 |            14 | t
- emaj_myschema2 | mytbl1_log_seq    |        10035 |            15 | t
- emaj_myschema2 | mytbl2_log_seq    |        10035 |             2 | t
- emaj_myschema2 | myTbl3_log_seq    |        10035 |            10 | t
- emaj_myschema2 | mytbl4_log_seq    |        10035 |            10 | t
- emaj_myschema2 | mytbl5_log_seq    |        10035 |             7 | t
- emaj_myschema2 | mytbl6_log_seq    |        10035 |            23 | t
- myschema1      | mytbl2b_col20_seq |        10035 |             5 | t
- myschema1      | myTbl3_col31_seq  |        10035 |            20 | t
- myschema2      | myseq1            |        10035 |          1004 | f
- myschema2      | myTbl3_col31_seq  |        10035 |            20 | t
- emaj_myschema2 | mytbl1_log_seq    |        20001 |            31 | t
- emaj_myschema2 | mytbl2_log_seq    |        20001 |            10 | t
- emaj_myschema2 | myTbl3_log_seq    |        20001 |            20 | t
- emaj_myschema2 | mytbl4_log_seq    |        20001 |            12 | t
- emaj_myschema2 | mytbl5_log_seq    |        20001 |            16 | t
- emaj_myschema2 | mytbl6_log_seq    |        20001 |            70 | t
- myschema2      | myseq1            |        20001 |          9999 | f
- myschema2      | myTbl3_col31_seq  |        20001 |            20 | t
- emaj_myschema2 | mytbl1_log_seq    |        20002 |            41 | t
- emaj_myschema2 | mytbl2_log_seq    |        20002 |            12 | t
- emaj_myschema2 | myTbl3_log_seq    |        20002 |            30 | t
- emaj_myschema2 | mytbl4_log_seq    |        20002 |            14 | t
- emaj_myschema2 | mytbl5_log_seq    |        20002 |            17 | t
- emaj_myschema2 | mytbl6_log_seq    |        20002 |            77 | t
- myschema2      | myseq1            |        20002 |          1004 | f
- myschema2      | myTbl3_col31_seq  |        20002 |            20 | t
- emaj_myschema2 | mytbl1_log_seq    |        20201 |            51 | t
- emaj_myschema2 | mytbl2_log_seq    |        20201 |            14 | t
- emaj_myschema2 | myTbl3_log_seq    |        20201 |            40 | t
- emaj_myschema2 | mytbl4_log_seq    |        20201 |            16 | t
- emaj_myschema2 | mytbl5_log_seq    |        20201 |            18 | t
- emaj_myschema2 | mytbl6_log_seq    |        20201 |            82 | t
- myschema2      | myseq1            |        20201 |          9999 | f
- myschema2      | myTbl3_col31_seq  |        20201 |            20 | t
- emaj_myschema2 | mytbl1_log_seq    |        20202 |            61 | t
- emaj_myschema2 | mytbl2_log_seq    |        20202 |            16 | t
- emaj_myschema2 | myTbl3_log_seq    |        20202 |            50 | t
- emaj_myschema2 | mytbl4_log_seq    |        20202 |            18 | t
- emaj_myschema2 | mytbl5_log_seq    |        20202 |            19 | t
- emaj_myschema2 | mytbl6_log_seq    |        20202 |            89 | t
- myschema2      | myseq1            |        20202 |          1004 | f
- myschema2      | myTbl3_col31_seq  |        20202 |            20 | t
- emaj_myschema2 | mytbl1_log_seq    |        20203 |            61 | t
- emaj_myschema2 | mytbl2_log_seq    |        20203 |            16 | t
- emaj_myschema2 | myTbl3_log_seq    |        20203 |            50 | t
- emaj_myschema2 | mytbl4_log_seq    |        20203 |            18 | t
- emaj_myschema2 | mytbl5_log_seq    |        20203 |            19 | t
- emaj_myschema2 | mytbl6_log_seq    |        20203 |            89 | t
- myschema2      | myseq1            |        20203 |          1004 | f
- myschema2      | myTbl3_col31_seq  |        20203 |            20 | t
- emaj_myschema2 | mytbl1_log_seq    |        20204 |            81 | t
- emaj_myschema2 | mytbl2_log_seq    |        20204 |            20 | t
- emaj_myschema2 | myTbl3_log_seq    |        20204 |            70 | t
- emaj_myschema2 | mytbl4_log_seq    |        20204 |            22 | t
- emaj_myschema2 | mytbl5_log_seq    |        20204 |            21 | t
- emaj_myschema2 | mytbl6_log_seq    |        20204 |           101 | t
- myschema2      | myseq1            |        20204 |          1004 | f
- myschema2      | myTbl3_col31_seq  |        20204 |            20 | t
- emaj_myschema2 | mytbl1_log_seq    |        20206 |            99 | t
- emaj_myschema2 | mytbl2_log_seq    |        20206 |            21 | t
- emaj_myschema2 | myTbl3_log_seq    |        20206 |            70 | t
- emaj_myschema2 | mytbl4_log_seq    |        20206 |            22 | t
- emaj_myschema2 | mytbl5_log_seq    |        20206 |            21 | t
- emaj_myschema2 | mytbl6_log_seq    |        20206 |           101 | t
- myschema2      | myseq1            |        20206 |          1004 | t
- myschema2      | myTbl3_col31_seq  |        20206 |            20 | t
-(130 rows)
+ sequ_schema |     sequ_name     | sequ_time_id | sequ_last_val | sequ_is_called 
+-------------+-------------------+--------------+---------------+----------------
+ myschema2   | myseq1            |        10012 |          1003 | t
+ myschema2   | myTbl3_col31_seq  |        10012 |            20 | t
+ myschema1   | mytbl2b_col20_seq |        10018 |             5 | t
+ myschema1   | myTbl3_col31_seq  |        10018 |            20 | t
+ myschema1   | mytbl2b_col20_seq |        10019 |             5 | t
+ myschema1   | myTbl3_col31_seq  |        10019 |            20 | t
+ myschema1   | mytbl2b_col20_seq |        10025 |             5 | t
+ myschema1   | myTbl3_col31_seq  |        10025 |            20 | t
+ myschema1   | mytbl2b_col20_seq |        10027 |             5 | t
+ myschema1   | myTbl3_col31_seq  |        10027 |            20 | t
+ myschema2   | myseq1            |        10027 |          1004 | f
+ myschema2   | myTbl3_col31_seq  |        10027 |            20 | t
+ myschema1   | mytbl2b_col20_seq |        10034 |             5 | t
+ myschema1   | myTbl3_col31_seq  |        10034 |            20 | t
+ myschema2   | myseq1            |        10034 |          1004 | f
+ myschema2   | myTbl3_col31_seq  |        10034 |            20 | t
+ myschema1   | mytbl2b_col20_seq |        10035 |             5 | t
+ myschema1   | myTbl3_col31_seq  |        10035 |            20 | t
+ myschema2   | myseq1            |        10035 |          1004 | f
+ myschema2   | myTbl3_col31_seq  |        10035 |            20 | t
+ myschema2   | myseq1            |        20001 |          9999 | f
+ myschema2   | myTbl3_col31_seq  |        20001 |            20 | t
+ myschema2   | myseq1            |        20002 |          1004 | f
+ myschema2   | myTbl3_col31_seq  |        20002 |            20 | t
+ myschema2   | myseq1            |        20201 |          9999 | f
+ myschema2   | myTbl3_col31_seq  |        20201 |            20 | t
+ myschema2   | myseq1            |        20202 |          1004 | f
+ myschema2   | myTbl3_col31_seq  |        20202 |            20 | t
+ myschema2   | myseq1            |        20203 |          1004 | f
+ myschema2   | myTbl3_col31_seq  |        20203 |            20 | t
+ myschema2   | myseq1            |        20204 |          1004 | f
+ myschema2   | myTbl3_col31_seq  |        20204 |            20 | t
+ myschema2   | myseq1            |        20206 |          1004 | t
+ myschema2   | myTbl3_col31_seq  |        20206 |            20 | t
+(34 rows)
+
+select tbl_schema, tbl_name, tbl_time_id, tbl_log_seq_last_val from emaj.emaj_table order by tbl_time_id, tbl_schema, tbl_name;
+ tbl_schema | tbl_name | tbl_time_id | tbl_log_seq_last_val 
+------------+----------+-------------+----------------------
+ myschema2  | mytbl1   |       10012 |                   15
+ myschema2  | mytbl2   |       10012 |                    2
+ myschema2  | myTbl3   |       10012 |                   10
+ myschema2  | mytbl4   |       10012 |                    4
+ myschema2  | mytbl5   |       10012 |                    4
+ myschema2  | mytbl6   |       10012 |                   14
+ myschema1  | mytbl1   |       10018 |                   30
+ myschema1  | mytbl2   |       10018 |                    3
+ myschema1  | mytbl2b  |       10018 |                    3
+ myschema1  | myTbl3   |       10018 |                   10
+ myschema1  | mytbl4   |       10018 |                    8
+ myschema1  | mytbl1   |       10019 |                   30
+ myschema1  | mytbl2   |       10019 |                    3
+ myschema1  | mytbl2b  |       10019 |                    3
+ myschema1  | myTbl3   |       10019 |                   20
+ myschema1  | mytbl4   |       10019 |                    8
+ myschema1  | mytbl1   |       10025 |                   32
+ myschema1  | mytbl2   |       10025 |                    3
+ myschema1  | mytbl2b  |       10025 |                    3
+ myschema1  | myTbl3   |       10025 |                   20
+ myschema1  | mytbl4   |       10025 |                   12
+ myschema1  | mytbl1   |       10027 |                   33
+ myschema1  | mytbl2   |       10027 |                    3
+ myschema1  | mytbl2b  |       10027 |                    3
+ myschema1  | myTbl3   |       10027 |                   45
+ myschema1  | mytbl4   |       10027 |                   14
+ myschema2  | mytbl1   |       10027 |                   15
+ myschema2  | mytbl2   |       10027 |                    2
+ myschema2  | myTbl3   |       10027 |                   10
+ myschema2  | mytbl4   |       10027 |                   10
+ myschema2  | mytbl5   |       10027 |                    7
+ myschema2  | mytbl6   |       10027 |                   23
+ myschema1  | mytbl1   |       10034 |                   33
+ myschema1  | mytbl2   |       10034 |                    3
+ myschema1  | mytbl2b  |       10034 |                    3
+ myschema1  | myTbl3   |       10034 |                   45
+ myschema1  | mytbl4   |       10034 |                   14
+ myschema2  | mytbl1   |       10034 |                   15
+ myschema2  | mytbl2   |       10034 |                    2
+ myschema2  | myTbl3   |       10034 |                   10
+ myschema2  | mytbl4   |       10034 |                   10
+ myschema2  | mytbl5   |       10034 |                    7
+ myschema2  | mytbl6   |       10034 |                   23
+ myschema1  | mytbl1   |       10035 |                   33
+ myschema1  | mytbl2   |       10035 |                    3
+ myschema1  | mytbl2b  |       10035 |                    3
+ myschema1  | myTbl3   |       10035 |                   45
+ myschema1  | mytbl4   |       10035 |                   14
+ myschema2  | mytbl1   |       10035 |                   15
+ myschema2  | mytbl2   |       10035 |                    2
+ myschema2  | myTbl3   |       10035 |                   10
+ myschema2  | mytbl4   |       10035 |                   10
+ myschema2  | mytbl5   |       10035 |                    7
+ myschema2  | mytbl6   |       10035 |                   23
+ myschema2  | mytbl1   |       20001 |                   31
+ myschema2  | mytbl2   |       20001 |                   10
+ myschema2  | myTbl3   |       20001 |                   20
+ myschema2  | mytbl4   |       20001 |                   12
+ myschema2  | mytbl5   |       20001 |                   16
+ myschema2  | mytbl6   |       20001 |                   70
+ myschema2  | mytbl1   |       20002 |                   41
+ myschema2  | mytbl2   |       20002 |                   12
+ myschema2  | myTbl3   |       20002 |                   30
+ myschema2  | mytbl4   |       20002 |                   14
+ myschema2  | mytbl5   |       20002 |                   17
+ myschema2  | mytbl6   |       20002 |                   77
+ myschema2  | mytbl1   |       20201 |                   51
+ myschema2  | mytbl2   |       20201 |                   14
+ myschema2  | myTbl3   |       20201 |                   40
+ myschema2  | mytbl4   |       20201 |                   16
+ myschema2  | mytbl5   |       20201 |                   18
+ myschema2  | mytbl6   |       20201 |                   82
+ myschema2  | mytbl1   |       20202 |                   61
+ myschema2  | mytbl2   |       20202 |                   16
+ myschema2  | myTbl3   |       20202 |                   50
+ myschema2  | mytbl4   |       20202 |                   18
+ myschema2  | mytbl5   |       20202 |                   19
+ myschema2  | mytbl6   |       20202 |                   89
+ myschema2  | mytbl1   |       20203 |                   61
+ myschema2  | mytbl2   |       20203 |                   16
+ myschema2  | myTbl3   |       20203 |                   50
+ myschema2  | mytbl4   |       20203 |                   18
+ myschema2  | mytbl5   |       20203 |                   19
+ myschema2  | mytbl6   |       20203 |                   89
+ myschema2  | mytbl1   |       20204 |                   81
+ myschema2  | mytbl2   |       20204 |                   20
+ myschema2  | myTbl3   |       20204 |                   70
+ myschema2  | mytbl4   |       20204 |                   22
+ myschema2  | mytbl5   |       20204 |                   21
+ myschema2  | mytbl6   |       20204 |                  101
+ myschema2  | mytbl1   |       20206 |                   99
+ myschema2  | mytbl2   |       20206 |                   21
+ myschema2  | myTbl3   |       20206 |                   70
+ myschema2  | mytbl4   |       20206 |                   22
+ myschema2  | mytbl5   |       20206 |                   21
+ myschema2  | mytbl6   |       20206 |                  101
+(96 rows)
 
 -- user tables
 select * from mySchema2.myTbl1 order by col11,col12;
@@ -362,85 +367,6 @@ select mark_group, regexp_replace(mark_name,E'\\d\\d\.\\d\\d\\.\\d\\d\\.\\d\\d\\
  myGroup1   | Multi-1                      |        10035 | f               | f                      |                      |                         0 | 
  myGroup2   | Multi-1                      |        10035 | f               | f                      |                      |                           | 
 (10 rows)
-
-select sequ_schema, sequ_name, sequ_time_id, sequ_last_val, sequ_is_called from emaj.emaj_sequence order by sequ_time_id, sequ_schema, sequ_name;
-  sequ_schema   |     sequ_name     | sequ_time_id | sequ_last_val | sequ_is_called 
-----------------+-------------------+--------------+---------------+----------------
- emaj_myschema2 | mytbl1_log_seq    |        10012 |            15 | t
- emaj_myschema2 | mytbl2_log_seq    |        10012 |             2 | t
- emaj_myschema2 | myTbl3_log_seq    |        10012 |            10 | t
- emaj_myschema2 | mytbl4_log_seq    |        10012 |             4 | t
- emaj_myschema2 | mytbl5_log_seq    |        10012 |             4 | t
- emaj_myschema2 | mytbl6_log_seq    |        10012 |            14 | t
- myschema2      | myseq1            |        10012 |          1003 | t
- myschema2      | myTbl3_col31_seq  |        10012 |            20 | t
- emaj_myschema1 | mytbl1_log_seq    |        10018 |            30 | t
- emaj_myschema1 | mytbl2b_log_seq   |        10018 |             3 | t
- emaj_myschema1 | mytbl2_log_seq    |        10018 |             3 | t
- emaj_myschema1 | myTbl3_log_seq    |        10018 |            10 | t
- emaj_myschema1 | mytbl4_log_seq    |        10018 |             8 | t
- myschema1      | mytbl2b_col20_seq |        10018 |             5 | t
- myschema1      | myTbl3_col31_seq  |        10018 |            20 | t
- emaj_myschema1 | mytbl1_log_seq    |        10019 |            30 | t
- emaj_myschema1 | mytbl2b_log_seq   |        10019 |             3 | t
- emaj_myschema1 | mytbl2_log_seq    |        10019 |             3 | t
- emaj_myschema1 | myTbl3_log_seq    |        10019 |            20 | t
- emaj_myschema1 | mytbl4_log_seq    |        10019 |             8 | t
- myschema1      | mytbl2b_col20_seq |        10019 |             5 | t
- myschema1      | myTbl3_col31_seq  |        10019 |            20 | t
- emaj_myschema1 | mytbl1_log_seq    |        10025 |            32 | t
- emaj_myschema1 | mytbl2b_log_seq   |        10025 |             3 | t
- emaj_myschema1 | mytbl2_log_seq    |        10025 |             3 | t
- emaj_myschema1 | myTbl3_log_seq    |        10025 |            20 | t
- emaj_myschema1 | mytbl4_log_seq    |        10025 |            12 | t
- myschema1      | mytbl2b_col20_seq |        10025 |             5 | t
- myschema1      | myTbl3_col31_seq  |        10025 |            20 | t
- emaj_myschema1 | mytbl1_log_seq    |        10027 |            33 | t
- emaj_myschema1 | mytbl2b_log_seq   |        10027 |             3 | t
- emaj_myschema1 | mytbl2_log_seq    |        10027 |             3 | t
- emaj_myschema1 | myTbl3_log_seq    |        10027 |            45 | t
- emaj_myschema1 | mytbl4_log_seq    |        10027 |            14 | t
- emaj_myschema2 | mytbl1_log_seq    |        10027 |            15 | t
- emaj_myschema2 | mytbl2_log_seq    |        10027 |             2 | t
- emaj_myschema2 | myTbl3_log_seq    |        10027 |            10 | t
- emaj_myschema2 | mytbl4_log_seq    |        10027 |            10 | t
- emaj_myschema2 | mytbl5_log_seq    |        10027 |             7 | t
- emaj_myschema2 | mytbl6_log_seq    |        10027 |            23 | t
- myschema1      | mytbl2b_col20_seq |        10027 |             5 | t
- myschema1      | myTbl3_col31_seq  |        10027 |            20 | t
- myschema2      | myseq1            |        10027 |          1004 | f
- myschema2      | myTbl3_col31_seq  |        10027 |            20 | t
- emaj_myschema1 | mytbl1_log_seq    |        10034 |            33 | t
- emaj_myschema1 | mytbl2b_log_seq   |        10034 |             3 | t
- emaj_myschema1 | mytbl2_log_seq    |        10034 |             3 | t
- emaj_myschema1 | myTbl3_log_seq    |        10034 |            45 | t
- emaj_myschema1 | mytbl4_log_seq    |        10034 |            14 | t
- emaj_myschema2 | mytbl1_log_seq    |        10034 |            15 | t
- emaj_myschema2 | mytbl2_log_seq    |        10034 |             2 | t
- emaj_myschema2 | myTbl3_log_seq    |        10034 |            10 | t
- emaj_myschema2 | mytbl4_log_seq    |        10034 |            10 | t
- emaj_myschema2 | mytbl5_log_seq    |        10034 |             7 | t
- emaj_myschema2 | mytbl6_log_seq    |        10034 |            23 | t
- myschema1      | mytbl2b_col20_seq |        10034 |             5 | t
- myschema1      | myTbl3_col31_seq  |        10034 |            20 | t
- myschema2      | myseq1            |        10034 |          1004 | f
- myschema2      | myTbl3_col31_seq  |        10034 |            20 | t
- emaj_myschema1 | mytbl1_log_seq    |        10035 |            33 | t
- emaj_myschema1 | mytbl2b_log_seq   |        10035 |             3 | t
- emaj_myschema1 | mytbl2_log_seq    |        10035 |             3 | t
- emaj_myschema1 | myTbl3_log_seq    |        10035 |            45 | t
- emaj_myschema1 | mytbl4_log_seq    |        10035 |            14 | t
- emaj_myschema2 | mytbl1_log_seq    |        10035 |            15 | t
- emaj_myschema2 | mytbl2_log_seq    |        10035 |             2 | t
- emaj_myschema2 | myTbl3_log_seq    |        10035 |            10 | t
- emaj_myschema2 | mytbl4_log_seq    |        10035 |            10 | t
- emaj_myschema2 | mytbl5_log_seq    |        10035 |             7 | t
- emaj_myschema2 | mytbl6_log_seq    |        10035 |            23 | t
- myschema1      | mytbl2b_col20_seq |        10035 |             5 | t
- myschema1      | myTbl3_col31_seq  |        10035 |            20 | t
- myschema2      | myseq1            |        10035 |          1004 | f
- myschema2      | myTbl3_col31_seq  |        10035 |            20 | t
-(74 rows)
 
 select time_id, time_last_emaj_gid, time_event from emaj.emaj_time_stamp order by time_id;
  time_id | time_last_emaj_gid | time_event 
@@ -956,6 +882,90 @@ select time_id, time_last_emaj_gid, time_event from emaj.emaj_time_stamp order b
    20206 |             101158 | M
    20207 |             101158 | R
 (510 rows)
+
+select sequ_schema, sequ_name, sequ_time_id, sequ_last_val, sequ_is_called from emaj.emaj_sequence order by sequ_time_id, sequ_schema, sequ_name;
+ sequ_schema |     sequ_name     | sequ_time_id | sequ_last_val | sequ_is_called 
+-------------+-------------------+--------------+---------------+----------------
+ myschema2   | myseq1            |        10012 |          1003 | t
+ myschema2   | myTbl3_col31_seq  |        10012 |            20 | t
+ myschema1   | mytbl2b_col20_seq |        10018 |             5 | t
+ myschema1   | myTbl3_col31_seq  |        10018 |            20 | t
+ myschema1   | mytbl2b_col20_seq |        10019 |             5 | t
+ myschema1   | myTbl3_col31_seq  |        10019 |            20 | t
+ myschema1   | mytbl2b_col20_seq |        10025 |             5 | t
+ myschema1   | myTbl3_col31_seq  |        10025 |            20 | t
+ myschema1   | mytbl2b_col20_seq |        10027 |             5 | t
+ myschema1   | myTbl3_col31_seq  |        10027 |            20 | t
+ myschema2   | myseq1            |        10027 |          1004 | f
+ myschema2   | myTbl3_col31_seq  |        10027 |            20 | t
+ myschema1   | mytbl2b_col20_seq |        10034 |             5 | t
+ myschema1   | myTbl3_col31_seq  |        10034 |            20 | t
+ myschema2   | myseq1            |        10034 |          1004 | f
+ myschema2   | myTbl3_col31_seq  |        10034 |            20 | t
+ myschema1   | mytbl2b_col20_seq |        10035 |             5 | t
+ myschema1   | myTbl3_col31_seq  |        10035 |            20 | t
+ myschema2   | myseq1            |        10035 |          1004 | f
+ myschema2   | myTbl3_col31_seq  |        10035 |            20 | t
+(20 rows)
+
+select tbl_schema, tbl_name, tbl_time_id, tbl_log_seq_last_val from emaj.emaj_table order by tbl_time_id, tbl_schema, tbl_name;
+ tbl_schema | tbl_name | tbl_time_id | tbl_log_seq_last_val 
+------------+----------+-------------+----------------------
+ myschema2  | mytbl1   |       10012 |                   15
+ myschema2  | mytbl2   |       10012 |                    2
+ myschema2  | myTbl3   |       10012 |                   10
+ myschema2  | mytbl4   |       10012 |                    4
+ myschema2  | mytbl5   |       10012 |                    4
+ myschema2  | mytbl6   |       10012 |                   14
+ myschema1  | mytbl1   |       10018 |                   30
+ myschema1  | mytbl2   |       10018 |                    3
+ myschema1  | mytbl2b  |       10018 |                    3
+ myschema1  | myTbl3   |       10018 |                   10
+ myschema1  | mytbl4   |       10018 |                    8
+ myschema1  | mytbl1   |       10019 |                   30
+ myschema1  | mytbl2   |       10019 |                    3
+ myschema1  | mytbl2b  |       10019 |                    3
+ myschema1  | myTbl3   |       10019 |                   20
+ myschema1  | mytbl4   |       10019 |                    8
+ myschema1  | mytbl1   |       10025 |                   32
+ myschema1  | mytbl2   |       10025 |                    3
+ myschema1  | mytbl2b  |       10025 |                    3
+ myschema1  | myTbl3   |       10025 |                   20
+ myschema1  | mytbl4   |       10025 |                   12
+ myschema1  | mytbl1   |       10027 |                   33
+ myschema1  | mytbl2   |       10027 |                    3
+ myschema1  | mytbl2b  |       10027 |                    3
+ myschema1  | myTbl3   |       10027 |                   45
+ myschema1  | mytbl4   |       10027 |                   14
+ myschema2  | mytbl1   |       10027 |                   15
+ myschema2  | mytbl2   |       10027 |                    2
+ myschema2  | myTbl3   |       10027 |                   10
+ myschema2  | mytbl4   |       10027 |                   10
+ myschema2  | mytbl5   |       10027 |                    7
+ myschema2  | mytbl6   |       10027 |                   23
+ myschema1  | mytbl1   |       10034 |                   33
+ myschema1  | mytbl2   |       10034 |                    3
+ myschema1  | mytbl2b  |       10034 |                    3
+ myschema1  | myTbl3   |       10034 |                   45
+ myschema1  | mytbl4   |       10034 |                   14
+ myschema2  | mytbl1   |       10034 |                   15
+ myschema2  | mytbl2   |       10034 |                    2
+ myschema2  | myTbl3   |       10034 |                   10
+ myschema2  | mytbl4   |       10034 |                   10
+ myschema2  | mytbl5   |       10034 |                    7
+ myschema2  | mytbl6   |       10034 |                   23
+ myschema1  | mytbl1   |       10035 |                   33
+ myschema1  | mytbl2   |       10035 |                    3
+ myschema1  | mytbl2b  |       10035 |                    3
+ myschema1  | myTbl3   |       10035 |                   45
+ myschema1  | mytbl4   |       10035 |                   14
+ myschema2  | mytbl1   |       10035 |                   15
+ myschema2  | mytbl2   |       10035 |                    2
+ myschema2  | myTbl3   |       10035 |                   10
+ myschema2  | mytbl4   |       10035 |                   10
+ myschema2  | mytbl5   |       10035 |                    7
+ myschema2  | mytbl6   |       10035 |                   23
+(54 rows)
 
 -- user tables
 select * from mySchema2.myTbl1 order by col11,col12;
