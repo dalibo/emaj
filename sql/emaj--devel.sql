@@ -7881,8 +7881,8 @@ $_rlbk_planning$
         WHERE rlbp_rlbk_id = v_rlbkId AND rlbp_step = 'ADD_FK'
     LOOP
       IF r_fk.rlbp_estimated_quantity = 0 THEN
--- empty table (or table not analyzed) => duration = 0
-        v_estimDuration = '0 SECONDS'::INTERVAL;
+-- empty table (or table not yet analyzed)
+        v_estimDuration = v_fixed_step_rlbk;
         v_estimMethod = 3;
       ELSE
 -- non empty table and statistics (with at least one row) are available
