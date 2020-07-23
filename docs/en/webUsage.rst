@@ -17,6 +17,7 @@ On the left, the browser tree shows all the configured instances, that may be sp
 
 	Figure 1 – The browser tree.
 
+Both icons located at the bottom-right allow to adjust the browser width.
 
 Tables groups list
 ------------------
@@ -54,7 +55,7 @@ The page headers contain:
 * 3 links to reach the SQL statements editor, the history of submitted statements and to logout the current connection,
 * a combo box to select the language used by the user interface,
 * a breadcrumb trail,
-* and a button allowing to directly go to the page bottom.
+* and a button to directly go to the page bottom.
 
 The user can navigate in Emaj_web functions using two icon bars: one for the general purpose functions and the other for the functions concerning a single tables group.
 
@@ -81,6 +82,9 @@ On some tables too, an icon located at the left of the header row, let show or h
 
 Some tables allow to perform actions on several objects at once. In this case, the user selects the objects with the checkboxes on the first column of the table and choose the action to perform among the available buttons under the table.
 
+Columns containing comments have a limited size. But the full comment content is visible in tooltip when the mouse goes over the cell.
+
+Cells containing event timestamps or durations show a full data content in tooltip.
 
 Tables group details
 --------------------
@@ -120,8 +124,6 @@ Two types of statistics can be produced:
 * some estimates about the number of updates per table, recorded between two marks or between one mark and the current situation,
 * a precise numbering of updates per tables, per statement type (*INSERT/UPDATE/DELETE/TRUNCATE*) and role.
 
-If the end of the range corresponds to the current situation, a check box allows one to request a rollback simulation to the selected mark in order to quickly get an approximate duration of this operation.
-
 The figure below shows an example of detailed statistics.
 
 .. figure:: images/emajweb_groupstat.png
@@ -133,13 +135,6 @@ The displayed page contains a first line returning global counters.
 
 On each line of the statistics table, the user can click on a “*SQL*” button to easily look at the log tables content. A click on this button opens the SQL editor window and proposes the statement displaying the content of the log table that corresponds to the selection (table, time frame, role, statement type). The user can modify this suggested statement before executing it to better fit his needs.
 
-.. figure:: images/emajweb_rollbacksim.png
-   :align: center
-
-   Figure 8 – Result of the rollback simulation, with the estimated number of updates for each table. 
-
-The displayed page contains a first part indicating the number of tables and sequences concerned by the rollback operation to this mark, and an estimate of the operation duration.
-
 Tables group content
 --------------------
 
@@ -150,7 +145,7 @@ For each table and sequence belonging to the group, the displayed table shows th
 .. figure:: images/emajweb_groupcontent.png
    :align: center
 
-   Figure 9 – A tables group's content.
+   Figure 8 – A tables group's content.
 
 
 Schemas and tables groups configuration
@@ -165,7 +160,7 @@ For both lists, the E-Maj properties and some general properties of each object 
 .. figure:: images/emajweb_schemas.png
    :align: center
 
-   Figure 10 – Schema content and tables groups configuration.
+   Figure 9 – Schema content and tables groups configuration.
 
 
 Triggers
@@ -178,7 +173,7 @@ A button allows to switch their de-activation mode at E-Maj rollback time.
 .. figure:: images/emajweb_triggers.png
    :align: center
 
-   Figure 11 – Application triggers list.
+   Figure 10 – Application triggers list.
 
 Monitoring rollback operations
 ------------------------------
@@ -186,17 +181,15 @@ Monitoring rollback operations
 Using the “*Rollback operations*” tab of the main bar, users can monitor the rollback operations. Three different lists are displayed:
 
 * in progress rollback operations, with the characteristics of the rollback operations and estimates of the percentage of the operation already done and of the remaining duration,
-* the latest completed operations,
+* the completed operations,
 * logged rollback operations that are consolidable.
-
-For completed operations, the user can filter on a more or less deep history.
 
 For each consolidable rollback, a button allows to effectively consolidate the operation.
 
 .. figure:: images/emajweb_rollbacks.png
    :align: center
 
-   Figure 12 – Rollback operations monitoring.
+   Figure 11 – Rollback operations monitoring.
 
 Clicking on a rollback identifier in one of these tables displays a page that shows information details about the selected in progress or completed operation.
 
@@ -212,7 +205,7 @@ More precisely, are displayed:
 .. figure:: images/emajweb_rollbackdetails.png
    :align: center
 
-   Figure 13 – Details of a Rollback operation.
+   Figure 12 – Details of a Rollback operation.
 
 E-Maj environment state
 -----------------------
@@ -235,4 +228,4 @@ Two buttons allow to export and import parameters configurations to or from a lo
 .. figure:: images/emajweb_emaj.png
    :align: center
 
-   Figure 14 – The E-Maj environment state.
+   Figure 13 – The E-Maj environment state.

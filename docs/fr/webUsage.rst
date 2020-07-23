@@ -17,6 +17,7 @@ Située à gauche, l'arborescence de navigation offre la visibilité de toutes l
 
 	Figure 1 – Arborescence de navigation.
 
+Les deux icônes en bas et à droite permettent d’ajuster la largeur du l’arborescence de navigation.
 
 Liste des groupes de tables
 ---------------------------
@@ -55,7 +56,7 @@ Les entêtes de page contiennent :
 * 3 liens pour accéder à l’éditeur de requête SQL, à l’historique des requêtes exécutées et pour se déconnecter de l’instance courante,
 * une liste déroulante pour choisir la langue utilisée dans l’interface utilisateur,
 * un fil d’ariane permettant de se repérer dans l’arborescence,
-* et un bouton permettant d’aller directement en bas de page.
+* et un bouton pour aller directement en bas de page.
 
 Deux barres d'icônes permettent de naviguer dans les différentes fonctions d'Emaj_web : l'une regroupe les fonctions globales de l'interface, et l'autre les fonctions associées à un groupe de tables particulier.
 
@@ -81,6 +82,10 @@ Sur certains tableaux également, une icône à gauche de la ligne de titre fait
    Figure 5 – Filtrage des groupes de tables démarrés. Ne sont affichés ici que les groupes de tables dont le nom comprend « *my* » et contenant plus de 2 marques, cette liste étant triée par ordre décroissant du nombre de tables.
 
 Certains tableaux permettent d’exécuter des actions pour plusieurs objets simultanément. Dans ce cas, l’utilisateur sélectionne les objets à l’aide des cases à cocher dans la première colonne du tableau et choisit l’action à exécuter parmi les boutons accessibles sous le tableau.
+
+Les colonnes contenant des commentaires ont une taille limitée. Mais le contenu complet des commentaires est visible en infobulle lorsque la souris passe au dessus de la cellule.
+
+Les cellules contenant des horodatages d’événement ou des durées affichent en infobulle la valeur complète de la donnée.
 
 
 Détail d'un groupe de tables
@@ -120,8 +125,6 @@ Deux types de statistiques peuvent être obtenues :
 * des estimations du nombre de mises à jour par table, enregistrées entre 2 marques ou entre une marque et la situation présente,
 * un dénombrement précis du nombre de mises à jour par table, type de requête (*INSERT/UPDATE/DELETE/TRUNCATE*) et rôle.
 
-Si la borne de fin correspond à la situation courante, une case à cocher permet de demander en même temps une simulation de rollback à la première marque sélectionnée afin d'obtenir rapidement une durée approximative d'exécution de cet éventuel rollback.
-
 La figure suivante montre un exemple de statistiques détaillées.
 
 .. figure:: images/emajweb_groupstat.png
@@ -133,13 +136,6 @@ La page restituée contient une première ligne contenant des compteurs globaux.
 
 Sur chacune des lignes du tableau de statistiques, un bouton « *SQL* » permet à l'utilisateur de visualiser facilement le contenu des mises à jour enregistrées dans les tables de log. Un clic sur ce bouton ouvre l'éditeur de requêtes SQL et propose la requête visualisant le contenu de la table de log correspondant à la sélection (table, tranche de temps, rôle, type de requête). L'utilisateur peut la modifier à sa convenance avant de l'exécuter, afin, par exemple, de cibler davantage les lignes qui l'intéressent.
 
-.. figure:: images/emajweb_rollbacksim.png
-   :align: center
-
-   Figure 8 – Résultat de la simulation d'un rollback avec estimation du nombre de mises à jour par table.
-
-La page restituée contient une première partie indiquant le nombre de tables et de mises à jour concernées par un éventuel rollback à cette marque et une estimation du temps nécessaire à ce rollback.
-
 Contenu d'un groupe de tables
 -----------------------------
 
@@ -150,7 +146,7 @@ Le tableau affiché reprend, pour chaque table et séquence du groupe, les carac
 .. figure:: images/emajweb_groupcontent.png
    :align: center
 
-   Figure 9 – Contenu d'un groupe de tables.
+   Figure 8 – Contenu d'un groupe de tables.
 
 
 Schémas et configuration des groupes de tables
@@ -165,7 +161,7 @@ Pour chaque liste, on trouve les propriétés E-Maj et quelques caractéristique
 .. figure:: images/emajweb_schemas.png
    :align: center
 
-   Figure 10 – Contenu des schémas et configuration des groupes de tables.
+   Figure 9 – Contenu des schémas et configuration des groupes de tables.
 
 Triggers
 --------
@@ -177,7 +173,7 @@ Un bouton permet de changer le mode de désactivation lors des rollbacks E-Maj.
 .. figure:: images/emajweb_triggers.png
    :align: center
 
-   Figure 11 – Liste des triggers applicatifs
+   Figure 10 – Liste des triggers applicatifs
 
 
 Suivi des opérations de rollback
@@ -186,17 +182,15 @@ Suivi des opérations de rollback
 Une page, accessible par l'icône « *Rollbacks* » de la barre globale, permet de suivre les opérations de rollback. Trois listes distinctes sont affichées :
 
 * les opérations de rollback en cours, avec le rappel des caractéristiques de l'opération et une estimation de la part de l'opération déjà effectuée et de la durée restante,
-* les dernières opérations de rollback terminées,
+* les opérations de rollback terminées,
 * les opérations de rollback tracés susceptibles d’être consolidées.
-
-L'utilisateur peut filtrer la liste des rollbacks terminés sur une profondeur d'historique plus ou moins grande.
 
 Pour chaque rollback tracé consolidable listé, un bouton permet d’exécuter la consolidation.
 
 .. figure:: images/emajweb_rollbacks.png
    :align: center
 
-   Figure 12 – Suivi des opérations de rollback.
+   Figure 11 – Suivi des opérations de rollback.
 
 En cliquant sur un identifiant de rollback dans l’un de ces tableaux, on accède à une page présentant des informations détaillées sur le déroulement en cours ou passé de l’opération sélectionnée.
 
@@ -212,7 +206,7 @@ On y trouve plus précisément des données concernant :
 .. figure:: images/emajweb_rollbackdetails.png
    :align: center
 
-   Figure 13 – Détails d’une opération de rollback.
+   Figure 12 – Détails d’une opération de rollback.
 
 État de l'environnement E-Maj
 -----------------------------
@@ -235,4 +229,4 @@ Deux boutons en bas de page permettent d’exporter ou d’importer une configur
 .. figure:: images/emajweb_emaj.png
    :align: center
 
-   Figure 14 – État de l'environnement E-Maj 
+   Figure 13 – État de l'environnement E-Maj 
