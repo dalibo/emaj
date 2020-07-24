@@ -3,6 +3,15 @@ E-Maj - Change log
 <devel>
 ------
 ###Enhancements:###
+
+
+###Bug fixes:###
+
+
+
+3.4.0 (2020-Jul-24)
+------
+###Enhancements:###
   * E-Maj is compatible with PostgreSQL V13.
   * For tables belonging to rollbackable tables groups, TRUNCATEs are not
     blocked anymore. Just before truncating a table, its content is recorded
