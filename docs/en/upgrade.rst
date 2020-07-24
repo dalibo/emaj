@@ -58,11 +58,11 @@ E-Maj deletion and re-installation
 
 Once connected as super-user, just chain the execution of the *uninstall.sql* script, of the current version and then the extension creation. ::
 
-   \i <old_emaj_directory>/sql/uninstall.sql
+   \i <old_emaj_directory>/sql/emaj_uninstall.sql
 
    CREATE EXTENSION emaj;
 
-NB: starting from E-Maj 2.0.0, the uninstall script is named *emaj_uninstall.sql*.
+NB: before E-Maj 2.0.0, the uninstall script was named *uninstall.sql*.
 
 Restore user data
 ^^^^^^^^^^^^^^^^^
