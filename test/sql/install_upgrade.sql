@@ -22,7 +22,7 @@ select * from pg_extension_update_paths('emaj') order by 1,2;;
 -----------------------------------------------------------
 -- emaj update to next_version
 -----------------------------------------------------------
-CREATE EXTENSION emaj VERSION '3.3.0';
+CREATE EXTENSION emaj VERSION '3.4.0';
 
 -- check impact in catalog
 select extname, extversion from pg_extension where extname = 'emaj';

@@ -153,7 +153,9 @@ INSERT INTO pg_catalog.pg_description (objoid, classoid, objsubid, description)
        );
 
 -- update the version id in the emaj_param table
+ALTER TABLE emaj.emaj_param DISABLE TRIGGER emaj_param_change_trg;
 UPDATE emaj.emaj_param SET param_value_text = '<devel>' WHERE param_key = 'emaj_version';
+ALTER TABLE emaj.emaj_param ENABLE TRIGGER emaj_param_change_trg;
 
 -- insert the upgrade end record in the operation history
 INSERT INTO emaj.emaj_hist (hist_function, hist_event, hist_object, hist_wording)

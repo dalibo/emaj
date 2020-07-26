@@ -164,6 +164,9 @@ select mark_group, regexp_replace(mark_name,E'\\d\\d\.\\d\\d\\.\\d\\d\\.\\d\\d\\
 select sequ_schema, sequ_name, sequ_time_id, sequ_last_val, sequ_is_called
   from emaj.emaj_sequence order by sequ_time_id, sequ_schema, sequ_name;
 
+select tbl_schema, tbl_name, tbl_time_id, tbl_tuples, tbl_pages, tbl_log_seq_last_val
+  from emaj.emaj_table order by tbl_time_id, tbl_schema, tbl_name;
+
 select sqhl_schema, sqhl_table, sqhl_begin_time_id, sqhl_end_time_id, sqhl_hole_size
   from emaj.emaj_seq_hole order by 1,2,3;
 
