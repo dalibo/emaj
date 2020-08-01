@@ -97,7 +97,7 @@ select col41, col42, col43, col44, col45, emaj_verb, emaj_tuple from emaj.mySche
 -- Step 2 : for myGroup2, rollback to mark Multi-1 (set before dump/restore) 
 -----------------------------
 select stat_group, stat_schema, stat_table, stat_first_mark, stat_last_mark, stat_rows from emaj.emaj_log_stat_group('myGroup2','Multi-1',NULL);
-select emaj.emaj_rollback_group('myGroup2','Multi-1');
+select * from emaj.emaj_rollback_group('myGroup2','Multi-1');
 --
 -----------------------------
 -- Checking step 2

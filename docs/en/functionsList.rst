@@ -227,13 +227,13 @@ Groups level functions
 +--------------------------------------------------+-------------------------------+---------------------------------------+
 | :ref:`emaj_logged_rollback_group                 | | group TEXT,                 | SETOF (severity TEXT, message TEXT)   |
 | <emaj_logged_rollback_group>`                    | | mark TEXT,                  |                                       |
-|                                                  | | is.alter.group.allowed      |                                       |
-|                                                  | |  BOOLEAN                    |                                       |
+|                                                  | | [is.alter.group.allowed     |                                       |
+|                                                  | |  BOOLEAN]                   |                                       |
 +--------------------------------------------------+-------------------------------+---------------------------------------+
 | :doc:`emaj_logged_rollback_groups                | | groups.array TEXT[],        | SETOF (severity TEXT, message TEXT)   |
 | <multiGroupsFunctions>`                          | | mark TEXT,                  |                                       |
-|                                                  | | is.alter.group.allowed      |                                       |
-|                                                  | |  BOOLEAN                    |                                       |
+|                                                  | | [is.alter.group.allowed     |                                       |
+|                                                  | |  BOOLEAN]                   |                                       |
 +--------------------------------------------------+-------------------------------+---------------------------------------+
 | :ref:`emaj_protect_group                         | | group TEXT                  | 0/1 INT                               |
 | <emaj_protect_group>`                            |                               |                                       |
@@ -250,13 +250,13 @@ Groups level functions
 +--------------------------------------------------+-------------------------------+---------------------------------------+
 | :ref:`emaj_rollback_group                        | | group TEXT,                 | SETOF (severity TEXT, message TEXT)   |
 | <emaj_rollback_group>`                           | | mark TEXT,                  |                                       |
-|                                                  | | is_alter_group_allowed      |                                       |
-|                                                  | |  BOOLEAN                    |                                       |
+|                                                  | | [is_alter_group_allowed     |                                       |
+|                                                  | |  BOOLEAN]                   |                                       |
 +--------------------------------------------------+-------------------------------+---------------------------------------+
 | :doc:`emaj_rollback_groups                       | | groups.array TEXT[],        | SETOF (severity TEXT, message TEXT)   |
 | <multiGroupsFunctions>`                          | | mark TEXT,                  |                                       |
-|                                                  | | is_alter_group_allowed      |                                       |
-|                                                  | |  BOOLEAN                    |                                       |
+|                                                  | | [is_alter_group_allowed     |                                       |
+|                                                  | |  BOOLEAN]                   |                                       |
 +--------------------------------------------------+-------------------------------+---------------------------------------+
 | :ref:`emaj_set_mark_group                        | | group TEXT,                 | #.tables.and.seq INT                  |
 | <emaj_set_mark_group>`                           | | [mark TEXT]                 |                                       |

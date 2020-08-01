@@ -7029,67 +7029,7 @@ $emaj_unprotect_mark_group$
 $emaj_unprotect_mark_group$;
 COMMENT ON FUNCTION emaj.emaj_unprotect_mark_group(TEXT,TEXT) IS
 $$Unsets a protection against a rollback on a mark of an E-Maj group.$$;
-CREATE OR REPLACE FUNCTION emaj.emaj_rollback_group(v_groupName TEXT, v_mark TEXT)
-RETURNS INT LANGUAGE plpgsql AS
-$emaj_rollback_group$
--- The function rollbacks all tables and sequences of a group up to a mark in the history.
--- Input: group name, mark to rollback to
--- Output: number of processed tables and sequences
-  BEGIN
--- just (unlogged) rollback the group (with boolean: isLoggedRlbk = false, multiGroup = false, v_isAlterGroupAllowed = null)
-    RETURN rlbk_message::INT FROM emaj._rlbk_groups(array[v_groupName], v_mark, FALSE, FALSE, NULL) WHERE rlbk_severity = 'Notice';
-  END;
-$emaj_rollback_group$;
-COMMENT ON FUNCTION emaj.emaj_rollback_group(TEXT,TEXT) IS
-$$Rollbacks an E-Maj group to a given mark (deprecated).$$;
-CREATE OR REPLACE FUNCTION emaj.emaj_rollback_groups(v_groupNames TEXT[], v_mark TEXT)
-RETURNS INT LANGUAGE plpgsql AS
-$emaj_rollback_groups$
--- The function rollbacks all tables and sequences of a group array up to a mark in the history.
--- Input: array of group names, mark to rollback to
--- Output: number of processed tables and sequences
-  BEGIN
--- just (unlogged) rollback the groups (with boolean: isLoggedRlbk = false, multiGroup = true, v_isAlterGroupAllowed = null)
-    RETURN rlbk_message::INT FROM emaj._rlbk_groups(v_groupNames, v_mark, FALSE, TRUE, NULL) WHERE rlbk_severity = 'Notice';
-  END;
-$emaj_rollback_groups$;
-COMMENT ON FUNCTION emaj.emaj_rollback_groups(TEXT[],TEXT) IS
-$$Rollbacks an set of E-Maj groups to a given mark (deprecated).$$;
-CREATE OR REPLACE FUNCTION emaj.emaj_logged_rollback_group(v_groupName TEXT, v_mark TEXT)
-RETURNS INT LANGUAGE plpgsql AS
-$emaj_logged_rollback_group$
--- The function performs a logged rollback of all tables and sequences of a group up to a mark in the history.
--- A logged rollback is a rollback which can be later rolled back! To achieve this:
--- - log triggers are not disabled at rollback time,
--- - a mark is automatically set at the beginning and at the end of the rollback operation,
--- - rolled back log rows and any marks inside the rollback time frame are kept.
--- Input: group name, mark to rollback to
--- Output: number of processed tables and sequences
-  BEGIN
--- just "logged-rollback" the group (with boolean: isLoggedRlbk = true, multiGroup = false, v_isAlterGroupAllowed = null)
-    RETURN rlbk_message::INT FROM emaj._rlbk_groups(array[v_groupName], v_mark, TRUE, FALSE, NULL) WHERE rlbk_severity = 'Notice';
-  END;
-$emaj_logged_rollback_group$;
-COMMENT ON FUNCTION emaj.emaj_logged_rollback_group(TEXT,TEXT) IS
-$$Performs a logged (cancellable) rollbacks of an E-Maj group to a given mark (deprecated).$$;
-CREATE OR REPLACE FUNCTION emaj.emaj_logged_rollback_groups(v_groupNames TEXT[], v_mark TEXT)
-RETURNS INT LANGUAGE plpgsql AS
-$emaj_logged_rollback_groups$
--- The function performs a logged rollback of all tables and sequences of a groups array up to a mark in the history.
--- A logged rollback is a rollback which can be later rolled back! To achieve this:
--- - log triggers are not disabled at rollback time,
--- - a mark is automatically set at the beginning and at the end of the rollback operation,
--- - rolled back log rows and any marks inside the rollback time frame are kept.
--- Input: array of group names, mark to rollback to
--- Output: number of processed tables and sequences
-  BEGIN
--- just "logged-rollback" the groups (with boolean: isLoggedRlbk = true, multiGroup = true, v_isAlterGroupAllowed = null)
-    RETURN rlbk_message::INT FROM emaj._rlbk_groups(v_groupNames, v_mark, TRUE, TRUE, NULL) WHERE rlbk_severity = 'Notice';
-  END;
-$emaj_logged_rollback_groups$;
-COMMENT ON FUNCTION emaj.emaj_logged_rollback_groups(TEXT[],TEXT) IS
-$$Performs a logged (cancellable) rollbacks for a set of E-Maj groups to a given mark (deprecated).$$;
-CREATE OR REPLACE FUNCTION emaj.emaj_rollback_group(v_groupName TEXT, v_mark TEXT, v_isAlterGroupAllowed BOOLEAN,
+CREATE OR REPLACE FUNCTION emaj.emaj_rollback_group(v_groupName TEXT, v_mark TEXT, v_isAlterGroupAllowed BOOLEAN DEFAULT FALSE,
                                                     OUT rlbk_severity TEXT, OUT rlbk_message TEXT)
 RETURNS SETOF RECORD LANGUAGE plpgsql AS
 $emaj_rollback_group$
@@ -7103,7 +7043,7 @@ $emaj_rollback_group$
 $emaj_rollback_group$;
 COMMENT ON FUNCTION emaj.emaj_rollback_group(TEXT,TEXT,BOOLEAN) IS
 $$Rollbacks an E-Maj group to a given mark.$$;
-CREATE OR REPLACE FUNCTION emaj.emaj_rollback_groups(v_groupNames TEXT[], v_mark TEXT, v_isAlterGroupAllowed BOOLEAN,
+CREATE OR REPLACE FUNCTION emaj.emaj_rollback_groups(v_groupNames TEXT[], v_mark TEXT, v_isAlterGroupAllowed BOOLEAN DEFAULT FALSE,
                                                      OUT rlbk_severity TEXT, OUT rlbk_message TEXT)
 RETURNS SETOF RECORD LANGUAGE plpgsql AS
 $emaj_rollback_groups$
@@ -7118,7 +7058,7 @@ $emaj_rollback_groups$
 $emaj_rollback_groups$;
 COMMENT ON FUNCTION emaj.emaj_rollback_groups(TEXT[],TEXT,BOOLEAN) IS
 $$Rollbacks an set of E-Maj groups to a given mark.$$;
-CREATE OR REPLACE FUNCTION emaj.emaj_logged_rollback_group(v_groupName TEXT, v_mark TEXT, v_isAlterGroupAllowed BOOLEAN,
+CREATE OR REPLACE FUNCTION emaj.emaj_logged_rollback_group(v_groupName TEXT, v_mark TEXT, v_isAlterGroupAllowed BOOLEAN DEFAULT FALSE,
                                                            OUT rlbk_severity TEXT, OUT rlbk_message TEXT)
 RETURNS SETOF RECORD LANGUAGE plpgsql AS
 $emaj_logged_rollback_group$
@@ -7136,7 +7076,7 @@ $emaj_logged_rollback_group$
 $emaj_logged_rollback_group$;
 COMMENT ON FUNCTION emaj.emaj_logged_rollback_group(TEXT,TEXT,BOOLEAN) IS
 $$Performs a logged (cancellable) rollbacks of an E-Maj group to a given mark.$$;
-CREATE OR REPLACE FUNCTION emaj.emaj_logged_rollback_groups(v_groupNames TEXT[], v_mark TEXT, v_isAlterGroupAllowed BOOLEAN,
+CREATE OR REPLACE FUNCTION emaj.emaj_logged_rollback_groups(v_groupNames TEXT[], v_mark TEXT, v_isAlterGroupAllowed BOOLEAN DEFAULT FALSE,
                                                             OUT rlbk_severity TEXT, OUT rlbk_message TEXT)
 RETURNS SETOF RECORD LANGUAGE plpgsql AS
 $emaj_logged_rollback_groups$
@@ -7160,13 +7100,14 @@ CREATE OR REPLACE FUNCTION emaj._rlbk_groups(v_groupNames TEXT[], v_mark TEXT, v
 RETURNS SETOF RECORD LANGUAGE plpgsql AS
 $_rlbk_groups$
 -- The function rollbacks all tables and sequences of a groups array up to a mark in the history.
--- It is called by emaj_rollback_group.
--- It effectively manages the rollback operation for each table or sequence, deleting rows from log tables
--- only when asked by the calling functions.
+-- It is called by emaj_rollback_group(), emaj_rollback_groups(), emaj_logged_rollback_group() and emaj_logged_rollback_group().
+-- It effectively manages the rollback operation for each table or sequence.
 -- Its activity is split into smaller functions that are also called by the parallel restore php function.
--- Input: group name, mark to rollback to, a boolean indicating whether the rollback is a logged rollback, a boolean indicating whether
---          the function
---        is a multi_group function and a boolean saying whether the rollback may return to a mark set before an alter group operation
+-- Input: group name,
+--        mark to rollback to,
+--        a boolean indicating whether the rollback is a logged rollback, a boolean indicating whether the function is a multi_group
+--          function
+--        a boolean saying whether the rollback may return to a mark set before an alter group operation
 -- Output: a set of records building the execution report, with a severity level (N-otice or W-arning) and a text message
   DECLARE
     v_rlbkId                 INT;
@@ -7175,7 +7116,7 @@ $_rlbk_groups$
 -- application)
     SELECT emaj._check_group_names(v_groupNames := v_groupNames, v_mayBeNull := v_multiGroup, v_lockGroups := FALSE, v_checkList := '')
       INTO v_groupNames;
--- if the group names array is null, immediately return 0
+-- if the group names array is null, immediately return
     IF v_groupNames IS NULL THEN
        rlbk_severity = 'Notice'; rlbk_message = 0;
        RETURN NEXT;
@@ -11188,7 +11129,7 @@ $do$
     RETURN;
   END;
 $do$;
-psql:sql/emaj-devel.sql:11432: NOTICE:  E-Maj installation: E-Maj successfully installed.
+psql:sql/emaj-devel.sql:11369: NOTICE:  E-Maj installation: E-Maj successfully installed.
 COMMIT;
 -----------------------------
 -- check installation

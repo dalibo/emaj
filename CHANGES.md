@@ -3,7 +3,8 @@ E-Maj - Change log
 <devel>
 ------
 ###Enhancements:###
-
+  * Remove the old deprecated versions of E-Maj rollback functions that only
+    returned an integer.
 
 ###Bug fixes:###
 

@@ -497,9 +497,8 @@ ERROR:  _rlbk_check: This rollback operation would cross some previously execute
 CONTEXT:  SQL statement "SELECT emaj._rlbk_check(v_groupNames, v_mark, v_isAlterGroupAllowed, FALSE)"
 PL/pgSQL function emaj._rlbk_init(text[],text,boolean,integer,boolean,boolean) line 23 at SQL statement
 SQL statement "SELECT emaj._rlbk_init(v_groupNames, v_mark, v_isLoggedRlbk, 1, v_multiGroup, v_isAlterGroupAllowed)"
-PL/pgSQL function emaj._rlbk_groups(text[],text,boolean,boolean,boolean) line 25 at SQL statement
-SQL statement "SELECT rlbk_message::INT FROM emaj._rlbk_groups(array[v_groupName], v_mark, FALSE, FALSE, NULL) WHERE rlbk_severity = 'Notice'"
-PL/pgSQL function emaj.emaj_rollback_group(text,text) line 7 at RETURN
+PL/pgSQL function emaj._rlbk_groups(text[],text,boolean,boolean,boolean) line 26 at SQL statement
+PL/pgSQL function emaj.emaj_rollback_group(text,text,boolean) line 7 at RETURN QUERY
 select rlbk_severity, regexp_replace(rlbk_message,E'\\d\\d\\d\\d/\\d\\d\\/\\d\\d\\ \\d\\d\\:\\d\\d:\\d\\d .*?\\)','<timestamp>)','g')
   from emaj.emaj_rollback_group('myGroup4','Start',true);
  rlbk_severity |                                             regexp_replace                                              
@@ -519,10 +518,10 @@ select emaj.emaj_set_mark_group('myGroup4','Before update');
 (1 row)
 
 update mySchema4.myTblP set col1 = 12 where col1=1;
-select emaj.emaj_logged_rollback_group('myGroup4','Before update');
- emaj_logged_rollback_group 
-----------------------------
-                          0
+select * from emaj.emaj_logged_rollback_group('myGroup4','Before update');
+ rlbk_severity |            rlbk_message             
+---------------+-------------------------------------
+ Notice        | 0 / 5 tables effectively processed.
 (1 row)
 
 select col1, col2, col3, emaj_verb, emaj_tuple, emaj_gid from emaj_myschema4.mypartP2_log;
@@ -1530,11 +1529,12 @@ delete from myschema4.mytblm
 update myschema4.mytblm set col3 = 'After Mk2 and updated after Mk3'
   where col1 > '2013-01-01';
 -- rollback to the previous mark (old syntax)
-select emaj.emaj_rollback_groups('{"grp_tmp_3","grp_tmp_4","grp_tmp"}','Mk3');
- emaj_rollback_groups 
-----------------------
-                    5
-(1 row)
+select * from emaj.emaj_rollback_groups('{"grp_tmp_3","grp_tmp_4","grp_tmp"}','Mk3');
+ rlbk_severity |            rlbk_message             
+---------------+-------------------------------------
+ Notice        | 2 / 8 tables effectively processed.
+ Notice        | 3 sequences processed.
+(2 rows)
 
 -- change some priority and log tablespaces
 select emaj.emaj_modify_tables('phil''s schema3','.*tbl1','','{"priority":-1,"log_data_tablespace":"tsp log''2"}'::jsonb,'Modify 1 table');
@@ -1768,7 +1768,7 @@ ERROR:  _rlbk_check: This rollback operation would cross some previously execute
 CONTEXT:  SQL statement "SELECT emaj._rlbk_check(v_groupNames, v_mark, v_isAlterGroupAllowed, FALSE)"
 PL/pgSQL function emaj._rlbk_init(text[],text,boolean,integer,boolean,boolean) line 23 at SQL statement
 SQL statement "SELECT emaj._rlbk_init(v_groupNames, v_mark, v_isLoggedRlbk, 1, v_multiGroup, v_isAlterGroupAllowed)"
-PL/pgSQL function emaj._rlbk_groups(text[],text,boolean,boolean,boolean) line 25 at SQL statement
+PL/pgSQL function emaj._rlbk_groups(text[],text,boolean,boolean,boolean) line 26 at SQL statement
 PL/pgSQL function emaj.emaj_rollback_groups(text[],text,boolean) line 8 at RETURN QUERY
 select rlbk_severity, regexp_replace(rlbk_message,E'\\d\\d\\d\\d/\\d\\d\\/\\d\\d\\ \\d\\d\\:\\d\\d:\\d\\d .*?\\)','<timestamp>)','g')
   from emaj.emaj_rollback_groups('{"grp_tmp_3","grp_tmp_4","grp_tmp"}','Mk3',true);
@@ -2323,8 +2323,8 @@ select rlbk_id, rlbk_groups, rlbk_mark, rlbk_time_id, rlbk_is_logged, rlbk_is_al
    10025 | {myGroup1}                    | MC16                 |        10096 | t              | f                           |               1 |             5 |                2 |                 3 | COMMITTED   |              10785 | public             | t                   | [ts]         | Notice: 3 / 5 tables effectively processed.#Notice: 2 sequences processed.
    10026 | {myGroup1}                    | Multi-1              |        10098 | f              | f                           |               1 |             5 |                2 |                 3 | COMMITTED   |              10807 | public             | t                   | [ts]         | Notice: 3 / 5 tables effectively processed.#Notice: 2 sequences processed.
    10027 | {myGroup4}                    | Start                |        10112 | f              | t                           |               1 |             5 |                0 |                 0 | COMMITTED   |              10921 | public             | t                   | [ts]         | Notice: 0 / 5 tables effectively processed.#Warning: The table myschema4.mypartp3 has only been rolled back to its latest group attachment (<timestamp>)#Warning: The table myschema4.mypartp1 has been left unchanged (not in group anymore since <timestamp>)#Warning: The sequence myschema4.mytblp_col3_seq has been left unchanged (not in group anymore since <timestamp>)
-   10028 | {myGroup4}                    | Before update        |        10114 | t              |                             |               1 |             5 |                0 |                 0 | COMMITTED   |              10939 | public             | t                   | [ts]         | Notice: 0 / 5 tables effectively processed.
-   10029 | {grp_tmp,grp_tmp_3,grp_tmp_4} | Mk3                  |        10140 | f              |                             |               1 |             8 |                3 |                 2 | COMMITTED   |              11089 | public             | t                   | [ts]         | Notice: 2 / 8 tables effectively processed.#Notice: 3 sequences processed.
+   10028 | {myGroup4}                    | Before update        |        10114 | t              | f                           |               1 |             5 |                0 |                 0 | COMMITTED   |              10939 | public             | t                   | [ts]         | Notice: 0 / 5 tables effectively processed.
+   10029 | {grp_tmp,grp_tmp_3,grp_tmp_4} | Mk3                  |        10140 | f              | f                           |               1 |             8 |                3 |                 2 | COMMITTED   |              11089 | public             | t                   | [ts]         | Notice: 2 / 8 tables effectively processed.#Notice: 3 sequences processed.
    10030 | {grp_tmp,grp_tmp_3,grp_tmp_4} | Mk5                  |        10151 | t              | t                           |               1 |             7 |                2 |                 2 | COMMITTED   |              11177 | public             | t                   | [ts]         | Notice: 2 / 7 tables effectively processed.#Notice: 2 sequences processed.#Warning: The table myschema4.mytblc1 has been left unchanged (not in group anymore since <timestamp>)#Warning: The sequence "phil's schema3"."phil's seq\1" has been left unchanged (not in group anymore since <timestamp>)
    10031 | {grp_tmp,grp_tmp_3,grp_tmp_4} | Mk3                  |        10155 | f              | t                           |               1 |             7 |                2 |                 3 | COMMITTED   |              11220 | public             | t                   | [ts]         | Notice: 3 / 7 tables effectively processed.#Notice: 2 sequences processed.#Warning: The table "phil's schema3"."myTbl2\" has only been rolled back to its latest group attachment (<timestamp>)#Warning: The table "phil's schema3".mytbl4 has only been rolled back to its latest group attachment (<timestamp>)#Warning: The table "phil's schema3"."phil's tbl1" has only been rolled back to its latest group attachment (<timestamp>)#Warning: The sequence "phil's schema3"."myTbl2\_col21_seq" has only been rolled back to its latest group attachment state (<timestamp>)#Warning: The sequence "phil's schema3"."phil's seq\1" has only been rolled back to its latest group attachment state (<timestamp>)#Warning: The table myschema4.mypartp2 has only been rolled back to its latest group attachment (<timestamp>)#Warning: The table myschema4.mypartp3 has only been rolled back to its latest group attachment (<timestamp>)#Warning: The table myschema4.mytblc1 has only been rolled back to its latest group attachment (<timestamp>)#Warning: The table myschema4.mytblc2 has only been rolled back to its latest group attachment (<timestamp>)#Warning: The table myschema4.mytblm has only been rolled back to its latest group attachment (<timestamp>)#Warning: The sequence myschema4.mytblp_col3_seq has only been rolled back to its latest group attachment state (<timestamp>)#Warning: Tables group change not rolled back: log data tablespace for "phil's schema3"."phil's tbl1"#Warning: Tables group change not rolled back: E-Maj priority for "phil's schema3"."phil's tbl1"
    10032 | {truncateTestGroup}           | M1                   |        10172 | t              | f                           |               1 |             8 |                0 |                 4 | COMMITTED   |              11373 | public             | t                   | [ts]         | Notice: 4 / 8 tables effectively processed.

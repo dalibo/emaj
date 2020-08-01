@@ -226,13 +226,13 @@ Fonctions de niveau groupe de tables
 +--------------------------------------------------+-------------------------------+---------------------------------------+
 | :ref:`emaj_logged_rollback_group                 | | groupe TEXT,                | SETOF (sévérité TEXT, message TEXT)   |
 | <emaj_logged_rollback_group>`                    | | marque TEXT,                |                                       |
-|                                                  | | est.modif.groupe.autorisée  |                                       |
-|                                                  | |  BOOLEAN                    |                                       |
+|                                                  | | [est.modif.groupe.autorisée |                                       |
+|                                                  | |  BOOLEAN]                   |                                       |
 +--------------------------------------------------+-------------------------------+---------------------------------------+
 | :doc:`emaj_logged_rollback_groups                | | tableau.groupes TEXT[],     | SETOF (sévérité TEXT, message TEXT)   |
 | <multiGroupsFunctions>`                          | | marque TEXT,                |                                       |
-|                                                  | | est.modif.groupe.autorisée  |                                       |
-|                                                  | |  BOOLEAN                    |                                       |
+|                                                  | | [est.modif.groupe.autorisée |                                       |
+|                                                  | |  BOOLEAN]                   |                                       |
 +--------------------------------------------------+-------------------------------+---------------------------------------+
 | :ref:`emaj_protect_group                         | | groupe TEXT                 | 0/1 INT                               |
 | <emaj_protect_group>`                            |                               |                                       |
@@ -249,13 +249,13 @@ Fonctions de niveau groupe de tables
 +--------------------------------------------------+-------------------------------+---------------------------------------+
 | :ref:`emaj_rollback_group                        | | groupe TEXT,                | SETOF (sévérité TEXT, message TEXT)   |
 | <emaj_rollback_group>`                           | | marque TEXT,                |                                       |
-|                                                  | | est_modif_groupe_autorisé   |                                       |
-|                                                  | |  BOOLEAN                    |                                       |
+|                                                  | | [est_modif_groupe_autorisé  |                                       |
+|                                                  | |  BOOLEAN]                   |                                       |
 +--------------------------------------------------+-------------------------------+---------------------------------------+
 | :doc:`emaj_rollback_groups                       | | tableau.groupes TEXT[],     | SETOF (sévérité TEXT, message TEXT)   |
 | <multiGroupsFunctions>`                          | | marque TEXT,                |                                       |
-|                                                  | | est_modif_groupe_autorisé   |                                       |
-|                                                  | |  BOOLEAN                    |                                       |
+|                                                  | | [est_modif_groupe_autorisé  |                                       |
+|                                                  | |  BOOLEAN]                   |                                       |
 +--------------------------------------------------+-------------------------------+---------------------------------------+
 | :ref:`emaj_set_mark_group                        | | groupe TEXT,                | nb.tables.et.seq INT                  |
 | <emaj_set_mark_group>`                           | | [marque TEXT]               |                                       |
@@ -352,4 +352,3 @@ Fonctions de niveau général
 | :ref:`emaj_verify_all                            |                               | SETOF TEXT                            |
 | <emaj_verify_all>` (V)                           |                               |                                       |
 +--------------------------------------------------+-------------------------------+---------------------------------------+
-

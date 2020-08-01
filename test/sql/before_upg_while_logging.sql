@@ -81,10 +81,10 @@ select emaj.emaj_set_mark_group('myGroup1','M3');
 select emaj.emaj_comment_mark_group('myGroup1','M3','Third mark set');
 --
 delete from myTbl1 where col11 > 3;
-select emaj.emaj_rollback_group('myGroup1','M3');
+select * from emaj.emaj_rollback_group('myGroup1','M3');
 insert into myTbl2 values (3,'GHI',NULL);
 update myTbl4 set col43 = 3 where col41 = 2;
-select emaj.emaj_rollback_group('myGroup1','M3');
+select * from emaj.emaj_rollback_group('myGroup1','M3');
 --
 select emaj.emaj_protect_mark_group('myGroup1','M3');
 select emaj.emaj_protect_group('myGroup1');
@@ -120,8 +120,8 @@ select emaj.emaj_set_mark_group('myGroup2','M3');
 -----------------------------
 -- Step 3 : for myGroup2, double logged rollback
 -----------------------------
-select emaj.emaj_logged_rollback_group('myGroup2','M2');
-select emaj.emaj_logged_rollback_group('myGroup2','M3');
+select * from emaj.emaj_logged_rollback_group('myGroup2','M2');
+select * from emaj.emaj_logged_rollback_group('myGroup2','M3');
 
 -----------------------------
 -- Step 4 : for both myGroup1 and myGroup2, set a common mark

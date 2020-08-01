@@ -40,7 +40,7 @@ reset default_tablespace;
 select emaj.emaj_set_mark_groups('{"myGroup1","myGroup2"}','Mk2');
 insert into myschema1."myTbl3" values (11, now(), 11.0);
 update myschema2."myTbl3" set col33 = 11.0 where col31 = 10;
-select emaj.emaj_rollback_groups('{"myGroup1","myGroup2"}','Mk2');
+select * from emaj.emaj_rollback_groups('{"myGroup1","myGroup2"}','Mk2');
 
 -- change the priority back
 update emaj.emaj_group_def set grpdef_priority = 20 where grpdef_schema = 'myschema1' and grpdef_tblseq = 'mytbl1';
@@ -546,7 +546,7 @@ select emaj.emaj_estimate_rollback_groups('{"myGroup1","myGroup2"}','Mk1',false)
 select * from emaj.emaj_rollback_groups('{"myGroup1","myGroup2"}','Mk3',false) order by 1,2;
 
 -- execute rollbacks crossing alter group operations
-select emaj.emaj_logged_rollback_groups('{"myGroup1","myGroup2"}','Mk2');
+select * from emaj.emaj_logged_rollback_groups('{"myGroup1","myGroup2"}','Mk2');
 select * from emaj.emaj_logged_rollback_groups('{"myGroup1","myGroup2"}','Mk2',false) order by 1,2;
 select rlbk_severity, regexp_replace(rlbk_message,E'\\d\\d\\d\\d/\\d\\d\\/\\d\\d\\ \\d\\d\\:\\d\\d:\\d\\d .*?\\)','<timestamp>)','g')
   from emaj.emaj_logged_rollback_groups('{"myGroup1","myGroup2"}','Mk2',true) order by 1,2;

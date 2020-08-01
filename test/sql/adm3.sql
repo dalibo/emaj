@@ -96,7 +96,7 @@ select rlbk_severity, regexp_replace(rlbk_message,E'\\d\\d\\d\\d/\\d\\d\\/\\d\\d
 insert into mySchema4.myTblP values (1,'Initialy stored in partition 2'), (11,'Stored in partition 3');
 select emaj.emaj_set_mark_group('myGroup4','Before update');
 update mySchema4.myTblP set col1 = 12 where col1=1;
-select emaj.emaj_logged_rollback_group('myGroup4','Before update');
+select * from emaj.emaj_logged_rollback_group('myGroup4','Before update');
 select col1, col2, col3, emaj_verb, emaj_tuple, emaj_gid from emaj_myschema4.mypartP2_log;
 select col1, col2, col3, emaj_verb, emaj_tuple, emaj_gid from emaj_myschema4.mypartP3_log;
 
@@ -251,7 +251,7 @@ update myschema4.mytblm set col3 = 'After Mk2 and updated after Mk3'
   where col1 > '2013-01-01';
 
 -- rollback to the previous mark (old syntax)
-select emaj.emaj_rollback_groups('{"grp_tmp_3","grp_tmp_4","grp_tmp"}','Mk3');
+select * from emaj.emaj_rollback_groups('{"grp_tmp_3","grp_tmp_4","grp_tmp"}','Mk3');
 
 -- change some priority and log tablespaces
 select emaj.emaj_modify_tables('phil''s schema3','.*tbl1','','{"priority":-1,"log_data_tablespace":"tsp log''2"}'::jsonb,'Modify 1 table');

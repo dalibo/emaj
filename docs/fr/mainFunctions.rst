@@ -84,7 +84,7 @@ Rollback simple d'un groupe de tables
 
 S'il est nécessaire de remettre les tables et séquences d'un groupe dans l'état dans lequel elles se trouvaient lors de la prise d'une marque, il faut procéder à un rollback. Pour un rollback simple (« *unlogged* » ou « *non tracé* »), il suffit d'exécuter la requête SQL suivante ::
 
-   SELECT * FROM emaj.emaj_rollback_group('<nom.du.groupe>', '<nom.de.marque>', <est_altération_groupe_permise>);
+   SELECT * FROM emaj.emaj_rollback_group('<nom.du.groupe>', '<nom.de.marque>' [, <est_altération_groupe_permise>]);
 
 Le groupe de tables doit être à l'état actif et la marque indiquée doit être toujours « active », c'est à dire qu'elle ne doit pas être marquée comme logiquement supprimée.
 
@@ -117,20 +117,11 @@ Il est alors possible de poursuivre les traitements de mises à jour, de poser e
 
 Plusieurs groupes de tables peuvent être « rollbackés » en même temps, en utilisant la fonction *emaj_rollback_groups()* ::
 
-   SELECT * FROM emaj.emaj_rollback_groups('<tableau.des.groupes>', '<nom.de.marque>', <est_altération_groupe_permise>);
+   SELECT * FROM emaj.emaj_rollback_groups('<tableau.des.groupes>', '<nom.de.marque>' [, <est_altération_groupe_permise>]);
 
 La marque indiquée doit strictement correspondre à un même moment dans le temps pour chacun des groupes listés. En d'autres termes, cette marque doit avoir été posée par l'appel d'une même fonction :ref:`emaj_set_mark_groups() <emaj_set_mark_group>`.
 
 Plus d'information sur les :doc:`fonctions multi-groupes <multiGroupsFunctions>`.
-
-Une ancienne version de ces fonctions ne comportait pas de troisième paramètre et retournait un simple entier correspondant au nombre de tables et séquences effectivement traitées::
-
-   SELECT emaj.emaj_rollback_group('<nom.du.groupe>', '<nom.de.marque>');
-
-   SELECT emaj.emaj_rollback_groups('<tableau.des.groupes>', '<nom.de.marque>');
-
-Ces 2 fonctions sont dépréciées et sont amenées à être supprimées dans une prochaine version.
-
 
 .. _emaj_logged_rollback_group:
 
@@ -141,7 +132,7 @@ Une autre fonction permet d'exécuter un rollback de type « *logged* », Dans
 
 Pour exécuter un « *logged rollback* » sur un groupe de tables, il suffit d'exécuter la requête SQL suivante::
 
-   SELECT * FROM emaj.emaj_logged_rollback_group('<nom.du.groupe>', '<nom.de.marque>', <est_altération_groupe_permise>);
+   SELECT * FROM emaj.emaj_logged_rollback_group('<nom.du.groupe>', '<nom.de.marque>' [, <est_altération_groupe_permise>]);
 
 Les règles d'utilisation sont les mêmes que pour la fonction *emaj_rollback_group()*, 
 
@@ -189,20 +180,11 @@ Une :ref:`fonction de « consolidation »<emaj_consolidate_rollback_group>` de
 
 Plusieurs groupes de tables peuvent être « rollbackés » en même temps, en utilisant la fonction *emaj_logged_rollback_groups()* ::
 
-   SELECT * FROM emaj.emaj_logged_rollback_groups ('<tableau.des.groupes>', '<nom.de.marque>', <est_altération_groupe_permise>);
+   SELECT * FROM emaj.emaj_logged_rollback_groups ('<tableau.des.groupes>', '<nom.de.marque>' [, <est_altération_groupe_permise>]);
 
 La marque indiquée doit strictement correspondre à un même moment dans le temps pour chacun des groupes listés. En d'autres termes, cette marque doit avoir été posée par l'appel d'une même fonction :ref:`emaj_set_mark_groups() <emaj_set_mark_group>`.
 
 Plus d'information sur les :doc:`fonctions multi-groupes <multiGroupsFunctions>`. 
-
-Une ancienne version de ces fonctions ne comportait pas de troisième paramètre et retournait un simple entier correspondant au nombre de tables et séquences effectivement traitées::
-
-   SELECT emaj.emaj_logged_rollback_group('<nom.du.groupe>', '<nom.de.marque>');
-
-   SELECT emaj.emaj_logged_rollback_groups('<tableau.des.groupes>', '<nom.de.marque>');
-
-Ces 2 fonctions sont dépréciées et sont amenées à être supprimées dans une prochaine version.
-
 
 .. _emaj_stop_group:
 

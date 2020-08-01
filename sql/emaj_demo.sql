@@ -267,7 +267,7 @@ select sum(stat_rows) from emaj.emaj_log_stat_group('emaj demo group 1',NULL,NUL
 \echo '---'
 \echo '--- (unlogged) rollback to MARK2.'
 \echo '---'
-select emaj.emaj_rollback_group('emaj demo group 1','MARK2');
+select * from emaj.emaj_rollback_group('emaj demo group 1','MARK2');
 
 \echo '---'
 \echo '--- Look at the known marks for our group 1. MARK 3 has disappeared.'
@@ -323,7 +323,7 @@ select * from myTbl4 where col43 is NULL;
 \echo '---'
 \echo '--- Perform a logged rollback to MARK2.'
 \echo '---'
-select emaj.emaj_logged_rollback_group('emaj demo group 1','MARK4');
+select * from emaj.emaj_logged_rollback_group('emaj demo group 1','MARK4');
 
 \echo '---'
 \echo '--- Check the resulting tables content.'
@@ -375,7 +375,7 @@ select emaj.emaj_get_previous_mark_group('emaj demo group 1',current_timestamp -
 \echo '---'
 \echo '--- (unlogged) rollback to MARK5.'
 \echo '---'
-select emaj.emaj_rollback_group('emaj demo group 1','MARK5');
+select * from emaj.emaj_rollback_group('emaj demo group 1','MARK5');
 
 \echo '---'
 \echo '--- ... and look at the result in the emaj_mark table.'
@@ -453,7 +453,7 @@ select * from emaj.emaj_mark where mark_group in ('emaj demo group 1','emaj demo
 \echo '--- Try first to rollback to MARK1 (each group has one MARK1 mark, but they do not represent the same point in time).'
 \echo '---'
 begin;
-  select emaj.emaj_rollback_groups(array['emaj demo group 1','emaj demo group 2'],'MARK1');
+  select * from emaj.emaj_rollback_groups(array['emaj demo group 1','emaj demo group 2'],'MARK1');
 rollback;
 
 \set ON_ERROR_STOP
@@ -461,7 +461,7 @@ rollback;
 \echo '---'
 \echo '--- So now let us use the real common mark.'
 \echo '---'
-select emaj.emaj_rollback_groups(array['emaj demo group 1','emaj demo group 2'],'COMMON_MARK2');
+select * from emaj.emaj_rollback_groups(array['emaj demo group 1','emaj demo group 2'],'COMMON_MARK2');
 
 \echo '---'
 \echo '--- Look at the mySeq1 sequence table to see the result of the rollback.'

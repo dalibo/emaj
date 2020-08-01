@@ -357,13 +357,13 @@ select emaj.emaj_protect_mark_group('myGroup1','EMAJ_LAST_MARK');
 ERROR:  permission denied for function emaj_protect_mark_group
 select emaj.emaj_unprotect_mark_group('myGroup1','EMAJ_LAST_MARK');
 ERROR:  permission denied for function emaj_unprotect_mark_group
-select emaj.emaj_rollback_group('myGroup1','mark'); 
+select * from emaj.emaj_rollback_group('myGroup1','mark'); 
 ERROR:  permission denied for function emaj_rollback_group
-select emaj.emaj_rollback_groups(array['myGroup1'],'mark'); 
+select * from emaj.emaj_rollback_groups(array['myGroup1'],'mark'); 
 ERROR:  permission denied for function emaj_rollback_groups
-select emaj.emaj_logged_rollback_group('myGroup1','mark');
+select * from emaj.emaj_logged_rollback_group('myGroup1','mark');
 ERROR:  permission denied for function emaj_logged_rollback_group
-select emaj.emaj_logged_rollback_groups(array['myGroup1'],'mark');
+select * from emaj.emaj_logged_rollback_groups(array['myGroup1'],'mark');
 ERROR:  permission denied for function emaj_logged_rollback_groups
 select emaj.emaj_consolidate_rollback_group('myGroup1','mark');
 ERROR:  permission denied for function emaj_consolidate_rollback_group

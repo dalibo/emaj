@@ -342,11 +342,12 @@ select stat_group, stat_schema, stat_table, stat_first_mark, stat_last_mark, sta
  myGroup2   | myschema2   | mytbl6     | Multi-1         |                |        78
 (6 rows)
 
-select emaj.emaj_rollback_group('myGroup2','Multi-1');
- emaj_rollback_group 
----------------------
-                   8
-(1 row)
+select * from emaj.emaj_rollback_group('myGroup2','Multi-1');
+ rlbk_severity |            rlbk_message             
+---------------+-------------------------------------
+ Notice        | 6 / 6 tables effectively processed.
+ Notice        | 2 sequences processed.
+(2 rows)
 
 --
 -----------------------------

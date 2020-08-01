@@ -110,7 +110,7 @@ insert into mySchema6.table_with_51_characters_long_name_____0_________0a values
 delete from mySchema6.table_with_51_characters_long_name_____0_________0a;
 select stat_group, stat_schema, stat_table, stat_first_mark, stat_last_mark, stat_rows
   from emaj.emaj_log_stat_group('myGroup6','Start G6',NULL) order by 1,2,3,4;
-select emaj.emaj_rollback_group('myGroup6', 'Start G6');
+select * from emaj.emaj_rollback_group('myGroup6', 'Start G6');
 select emaj.emaj_stop_group('myGroup6');
 select emaj.emaj_drop_group('myGroup6');
 
