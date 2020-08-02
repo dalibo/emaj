@@ -16,10 +16,10 @@ select emaj.emaj_disable_protection_by_event_triggers();
 -----------------------------
 -- should be OK
 select * from emaj.emaj_verify_all();
-                                                                                        emaj_verify_all                                                                                         
-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+                                                                                      emaj_verify_all                                                                                       
+--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
  Warning: In the group "myGroup2", the foreign key "mytbl6_col61_fkey" on the table "myschema2"."mytbl6" references the table "myschema2"."mytbl7" that does not belong to any group.
- Warning: In the group "myGroup2", the table "myschema2"."mytbl6" is referenced by the the foreign key "mytbl8_col81_fkey" of the table "myschema2"."mytbl8" that does not belong to any group.
+ Warning: In the group "myGroup2", the table "myschema2"."mytbl6" is referenced by the foreign key "mytbl8_col81_fkey" of the table "myschema2"."mytbl8" that does not belong to any group.
  Warning: Some E-Maj event triggers exist but are disabled. You may enable them using the emaj_enable_protection_by_event_triggers() function.
  No error detected
 (4 rows)
@@ -453,8 +453,8 @@ SET client_min_messages TO WARNING;
 -- cases when an application table is altered
 begin;
   alter table myschema2.mytbl4 add column newcol int;
--- setting a mark or rollbacking fails
   savepoint sp1;
+-- setting a mark or rollbacking fails
     select emaj.emaj_set_mark_group('myGroup2','dummyMark');
 ERROR:  _verify_groups (6): In group "myGroup2", the structure of the application table "myschema2"."mytbl4" is not coherent with its log table ("emaj_myschema2"."mytbl4_log"). You may use "SELECT * FROM emaj.emaj_verify_all()" to look for other issues.
 CONTEXT:  PL/pgSQL function emaj._verify_groups(text[],boolean) line 146 at RAISE
@@ -493,11 +493,11 @@ WARNING:  _check_fk_groups: The table "myschema2.mytbl6" is referenced by the fo
 (1 row)
 
   rollback to savepoint sp2;
--- or stop and alter the group
-  select emaj.emaj_alter_group('myGroup2');
- emaj_alter_group 
-------------------
-                8
+-- or stop and export/import the groups configuration
+  select emaj.emaj_import_groups_configuration(emaj.emaj_export_groups_configuration(),array['myGroup2'],true);
+ emaj_import_groups_configuration 
+----------------------------------
+                                1
 (1 row)
 
 rollback;
@@ -511,35 +511,19 @@ ERROR:  _stop_groups: The table "myschema2.mytbl4" does not exist any more.
 CONTEXT:  PL/pgSQL function emaj._stop_groups(text[],text,boolean,boolean) line 77 at RAISE
 PL/pgSQL function emaj.emaj_stop_group(text,text) line 10 at RETURN
   rollback to savepoint sp1;
--- the only solution is to change the emaj_group_def table, force the group's stop and recreate or alter the group
-  delete from emaj.emaj_group_def where grpdef_schema = 'myschema2' and grpdef_tblseq = 'mytbl4';
-  select emaj.emaj_force_stop_group('myGroup2');
-WARNING:  _stop_groups: The table "myschema2.mytbl4" does not exist any more.
- emaj_force_stop_group 
------------------------
-                     8
-(1 row)
-
-  select emaj.emaj_drop_group('myGroup2');
- emaj_drop_group 
------------------
-               8
-(1 row)
-
-  select emaj.emaj_create_group('myGroup2');
-WARNING:  _check_fk_groups: The foreign key "mytbl6_col61_fkey" on the table "myschema2.mytbl6" references the table "myschema2.mytbl7" that is outside the groups (myGroup2).
-WARNING:  _check_fk_groups: The table "myschema2.mytbl6" is referenced by the foreign key "mytbl8_col81_fkey" on the table "myschema2.mytbl8" that is outside the groups (myGroup2).
- emaj_create_group 
+-- just removing the table solves the issue
+  select emaj.emaj_remove_table('myschema2','mytbl4');
+ emaj_remove_table 
 -------------------
-                 7
+                 1
 (1 row)
 
 -- and everything is clean...
   select * from emaj.emaj_verify_all();
-                                                                                        emaj_verify_all                                                                                         
-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+                                                                                      emaj_verify_all                                                                                       
+--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
  Warning: In the group "myGroup2", the foreign key "mytbl6_col61_fkey" on the table "myschema2"."mytbl6" references the table "myschema2"."mytbl7" that does not belong to any group.
- Warning: In the group "myGroup2", the table "myschema2"."mytbl6" is referenced by the the foreign key "mytbl8_col81_fkey" of the table "myschema2"."mytbl8" that does not belong to any group.
+ Warning: In the group "myGroup2", the table "myschema2"."mytbl6" is referenced by the foreign key "mytbl8_col81_fkey" of the table "myschema2"."mytbl8" that does not belong to any group.
  Warning: Some E-Maj event triggers exist but are disabled. You may enable them using the emaj_enable_protection_by_event_triggers() function.
  No error detected
 (4 rows)
@@ -555,32 +539,42 @@ ERROR:  _stop_groups: The log trigger "emaj_log_trg" on table "myschema2.mytbl4"
 CONTEXT:  PL/pgSQL function emaj._stop_groups(text[],text,boolean,boolean) line 92 at RAISE
 PL/pgSQL function emaj.emaj_stop_group(text,text) line 10 at RETURN
   rollback to savepoint sp1;
--- the only solution is to change the emaj_group_def table, force the group's stop and recreate or alter the group
-  delete from emaj.emaj_group_def where grpdef_schema = 'myschema2' and grpdef_tblseq = 'mytbl4';
-  select emaj.emaj_force_stop_group('myGroup2');
-WARNING:  _stop_groups: The log trigger "emaj_log_trg" on table "myschema2.mytbl4" does not exist any more.
- emaj_force_stop_group 
------------------------
-                     8
+-- reimporting the group configuration fails if the group is in logging state
+    select emaj.emaj_import_groups_configuration(emaj.emaj_export_groups_configuration(),array['myGroup2'],true);
+ERROR:  alter_exec: Cannot repair the table myschema2.mytbl4. Its group myGroup2 is in LOGGING state.
+CONTEXT:  PL/pgSQL function emaj._alter_exec(bigint,text) line 37 at RAISE
+SQL statement "SELECT emaj._alter_exec(v_timeId, v_callingFunction)"
+PL/pgSQL function emaj._alter_groups(text[],boolean,text,text,bigint) line 60 at PERFORM
+SQL statement "SELECT v_nbRel FROM emaj._alter_groups(v_groups, TRUE, 'IMPORT_%', 'IMPORT_GROUPS', v_timeId)"
+PL/pgSQL function emaj._import_groups_conf_exec(json,text[]) line 55 at PERFORM
+PL/pgSQL function emaj._import_groups_conf(json,text[],boolean,text) line 79 at RETURN
+SQL statement "SELECT emaj._import_groups_conf(v_json, v_groups, v_allowGroupsUpdate)"
+PL/pgSQL function emaj.emaj_import_groups_configuration(json,text[],boolean) line 13 at SQL statement
+  rollback to savepoint sp1;
+-- removing and re-assigning the table solves the issue 
+  select emaj.emaj_remove_table('myschema2','mytbl4');
+ emaj_remove_table 
+-------------------
+                 1
 (1 row)
 
-  select emaj.emaj_alter_group('myGroup2');
- emaj_alter_group 
-------------------
-                7
+  select emaj.emaj_assign_table('myschema2','mytbl4','myGroup2');
+WARNING:  _check_fk_groups: The foreign key "mytbl6_col61_fkey" on the table "myschema2.mytbl6" references the table "myschema2.mytbl7" that is outside the groups (myGroup2).
+WARNING:  _check_fk_groups: The table "myschema2.mytbl6" is referenced by the foreign key "mytbl8_col81_fkey" on the table "myschema2.mytbl8" that is outside the groups (myGroup2).
+ emaj_assign_table 
+-------------------
+                 1
 (1 row)
 
 -- and everything is clean...
   select * from emaj.emaj_verify_all();
-                                                                                        emaj_verify_all                                                                                         
-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
- Warning: In the group "myGroup2", the table "myschema2"."mytbl1" is referenced by the the foreign key "mytbl4_col44_fkey" of the table "myschema2"."mytbl4" that does not belong to any group.
- Warning: In the group "myGroup2", the table "myschema2"."mytbl2" is referenced by the the foreign key "mytbl4_col43_fkey" of the table "myschema2"."mytbl4" that does not belong to any group.
+                                                                                      emaj_verify_all                                                                                       
+--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
  Warning: In the group "myGroup2", the foreign key "mytbl6_col61_fkey" on the table "myschema2"."mytbl6" references the table "myschema2"."mytbl7" that does not belong to any group.
- Warning: In the group "myGroup2", the table "myschema2"."mytbl6" is referenced by the the foreign key "mytbl8_col81_fkey" of the table "myschema2"."mytbl8" that does not belong to any group.
+ Warning: In the group "myGroup2", the table "myschema2"."mytbl6" is referenced by the foreign key "mytbl8_col81_fkey" of the table "myschema2"."mytbl8" that does not belong to any group.
  Warning: Some E-Maj event triggers exist but are disabled. You may enable them using the emaj_enable_protection_by_event_triggers() function.
  No error detected
-(6 rows)
+(4 rows)
 
 rollback;
 -- cases when a truncate trigger on an application table is dropped
@@ -593,58 +587,135 @@ ERROR:  _stop_groups: The truncate trigger "emaj_trunc_trg" on table "myschema2.
 CONTEXT:  PL/pgSQL function emaj._stop_groups(text[],text,boolean,boolean) line 105 at RAISE
 PL/pgSQL function emaj.emaj_stop_group(text,text) line 10 at RETURN
   rollback to savepoint sp1;
--- the only solution is to change the emaj_group_def table, force the group's stop and recreate or alter the group
-  delete from emaj.emaj_group_def where grpdef_schema = 'myschema2' and grpdef_tblseq = 'mytbl4';
+-- removing and re-assigning the table solves the issue 
+  select emaj.emaj_remove_table('myschema2','mytbl4');
+ emaj_remove_table 
+-------------------
+                 1
+(1 row)
+
+  select emaj.emaj_assign_table('myschema2','mytbl4','myGroup2');
+WARNING:  _check_fk_groups: The foreign key "mytbl6_col61_fkey" on the table "myschema2.mytbl6" references the table "myschema2.mytbl7" that is outside the groups (myGroup2).
+WARNING:  _check_fk_groups: The table "myschema2.mytbl6" is referenced by the foreign key "mytbl8_col81_fkey" on the table "myschema2.mytbl8" that is outside the groups (myGroup2).
+ emaj_assign_table 
+-------------------
+                 1
+(1 row)
+
+-- and everything is clean...
+  select * from emaj.emaj_verify_all();
+                                                                                      emaj_verify_all                                                                                       
+--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+ Warning: In the group "myGroup2", the foreign key "mytbl6_col61_fkey" on the table "myschema2"."mytbl6" references the table "myschema2"."mytbl7" that does not belong to any group.
+ Warning: In the group "myGroup2", the table "myschema2"."mytbl6" is referenced by the foreign key "mytbl8_col81_fkey" of the table "myschema2"."mytbl8" that does not belong to any group.
+ Warning: Some E-Maj event triggers exist but are disabled. You may enable them using the emaj_enable_protection_by_event_triggers() function.
+ No error detected
+(4 rows)
+
+rollback;
+-- cases when a log sequence is dropped
+begin;
+  drop sequence emaj_myschema2.mytbl4_log_seq;
+-- stopping group fails
+  savepoint sp1;
+    select emaj.emaj_stop_group('myGroup2');
+ERROR:  relation "emaj_myschema2.mytbl4_log_seq" does not exist
+LINE 1: ...lled THEN last_value ELSE last_value - 1 END FROM emaj_mysch...
+                                                             ^
+QUERY:  SELECT CASE WHEN is_called THEN last_value ELSE last_value - 1 END FROM emaj_myschema2.mytbl4_log_seq
+CONTEXT:  PL/pgSQL function emaj._log_stat_tbl(emaj.emaj_relation,bigint,bigint) line 20 at EXECUTE
+SQL statement "WITH stat_group1 AS (                             -- for each group, time id of the last active mark
+      SELECT mark_group, max(mark_time_id) AS last_mark_time_id
+        FROM emaj.emaj_mark
+        WHERE NOT mark_is_deleted
+        GROUP BY mark_group),
+         stat_group2 AS (                             -- compute the number of log rows for all tables currently belonging to these groups
+      SELECT mark_group, last_mark_time_id, coalesce(
+          (SELECT sum(emaj._log_stat_tbl(emaj_relation, greatest(last_mark_time_id, lower(rel_time_range)),NULL))
+             FROM emaj.emaj_relation
+             WHERE rel_group = mark_group AND rel_kind = 'r' AND upper_inf(rel_time_range)), 0) AS mark_stat
+        FROM stat_group1 )
+    UPDATE emaj.emaj_mark m SET mark_log_rows_before_next = mark_stat
+      FROM stat_group2 s
+      WHERE s.mark_group = m.mark_group AND s.last_mark_time_id = m.mark_time_id"
+PL/pgSQL function emaj._set_mark_groups(text[],text,boolean,boolean,text,bigint,text) line 46 at SQL statement
+SQL statement "SELECT emaj._set_mark_groups(v_groupNames, v_markName, v_multiGroup, TRUE)"
+PL/pgSQL function emaj._stop_groups(text[],text,boolean,boolean) line 115 at PERFORM
+PL/pgSQL function emaj.emaj_stop_group(text,text) line 10 at RETURN
+  rollback to savepoint sp1;
+-- removing the table fails also
+  select emaj.emaj_remove_table('myschema2','mytbl4');
+ERROR:  relation "emaj_myschema2.mytbl4_log_seq" does not exist
+LINE 1: ...lled THEN last_value ELSE last_value - 1 END FROM emaj_mysch...
+                                                             ^
+QUERY:  SELECT CASE WHEN is_called THEN last_value ELSE last_value - 1 END FROM emaj_myschema2.mytbl4_log_seq
+CONTEXT:  PL/pgSQL function emaj._log_stat_tbl(emaj.emaj_relation,bigint,bigint) line 20 at EXECUTE
+SQL statement "WITH stat_group1 AS (                             -- for each group, time id of the last active mark
+      SELECT mark_group, max(mark_time_id) AS last_mark_time_id
+        FROM emaj.emaj_mark
+        WHERE NOT mark_is_deleted
+        GROUP BY mark_group),
+         stat_group2 AS (                             -- compute the number of log rows for all tables currently belonging to these groups
+      SELECT mark_group, last_mark_time_id, coalesce(
+          (SELECT sum(emaj._log_stat_tbl(emaj_relation, greatest(last_mark_time_id, lower(rel_time_range)),NULL))
+             FROM emaj.emaj_relation
+             WHERE rel_group = mark_group AND rel_kind = 'r' AND upper_inf(rel_time_range)), 0) AS mark_stat
+        FROM stat_group1 )
+    UPDATE emaj.emaj_mark m SET mark_log_rows_before_next = mark_stat
+      FROM stat_group2 s
+      WHERE s.mark_group = m.mark_group AND s.last_mark_time_id = m.mark_time_id"
+PL/pgSQL function emaj._set_mark_groups(text[],text,boolean,boolean,text,bigint,text) line 46 at SQL statement
+SQL statement "SELECT emaj._set_mark_groups(v_loggingGroups, v_markName, FALSE, TRUE, NULL, v_timeId)"
+PL/pgSQL function emaj._remove_tables(text,text[],text,boolean,boolean) line 74 at PERFORM
+PL/pgSQL function emaj.emaj_remove_table(text,text,text) line 6 at RETURN
+  rollback to savepoint sp1;
+-- the only solution is to force the group's stop before removing/reassigning the table
   select emaj.emaj_force_stop_group('myGroup2');
-WARNING:  _stop_groups: The truncate trigger "emaj_trunc_trg" on table "myschema2.mytbl4" does not exist any more.
  emaj_force_stop_group 
 -----------------------
                      8
 (1 row)
 
-  select emaj.emaj_alter_group('myGroup2');
- emaj_alter_group 
-------------------
-                7
+  select emaj.emaj_remove_table('myschema2','mytbl4');
+ emaj_remove_table 
+-------------------
+                 1
+(1 row)
+
+  select emaj.emaj_assign_table('myschema2','mytbl4','myGroup2');
+ emaj_assign_table 
+-------------------
+                 1
 (1 row)
 
 -- and everything is clean...
   select * from emaj.emaj_verify_all();
-                                                                                        emaj_verify_all                                                                                         
-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
- Warning: In the group "myGroup2", the table "myschema2"."mytbl1" is referenced by the the foreign key "mytbl4_col44_fkey" of the table "myschema2"."mytbl4" that does not belong to any group.
- Warning: In the group "myGroup2", the table "myschema2"."mytbl2" is referenced by the the foreign key "mytbl4_col43_fkey" of the table "myschema2"."mytbl4" that does not belong to any group.
+                                                                                      emaj_verify_all                                                                                       
+--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
  Warning: In the group "myGroup2", the foreign key "mytbl6_col61_fkey" on the table "myschema2"."mytbl6" references the table "myschema2"."mytbl7" that does not belong to any group.
- Warning: In the group "myGroup2", the table "myschema2"."mytbl6" is referenced by the the foreign key "mytbl8_col81_fkey" of the table "myschema2"."mytbl8" that does not belong to any group.
+ Warning: In the group "myGroup2", the table "myschema2"."mytbl6" is referenced by the foreign key "mytbl8_col81_fkey" of the table "myschema2"."mytbl8" that does not belong to any group.
  Warning: Some E-Maj event triggers exist but are disabled. You may enable them using the emaj_enable_protection_by_event_triggers() function.
  No error detected
-(6 rows)
+(4 rows)
 
 rollback;
 -- cases when an application sequence is dropped
 begin;
   drop sequence myschema2.mySeq1;
 -- setting a mark or stopping the group fails
--- the only solution is to change the emaj_group_def table, force the group's stop and recreate or alter the group
-  delete from emaj.emaj_group_def where grpdef_schema = 'myschema2' and grpdef_tblseq = 'myseq1';
-  select emaj.emaj_force_stop_group('myGroup2');
- emaj_force_stop_group 
------------------------
-                     8
-(1 row)
-
-  select emaj.emaj_alter_group('myGroup2');
- emaj_alter_group 
-------------------
-                7
+-- just removing the sequence solves the issue
+  select emaj.emaj_remove_sequence('myschema2','myseq1');
+ emaj_remove_sequence 
+----------------------
+                    1
 (1 row)
 
 -- and everything is clean...
   select * from emaj.emaj_verify_all();
-                                                                                        emaj_verify_all                                                                                         
-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+                                                                                      emaj_verify_all                                                                                       
+--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
  Warning: In the group "myGroup2", the foreign key "mytbl6_col61_fkey" on the table "myschema2"."mytbl6" references the table "myschema2"."mytbl7" that does not belong to any group.
- Warning: In the group "myGroup2", the table "myschema2"."mytbl6" is referenced by the the foreign key "mytbl8_col81_fkey" of the table "myschema2"."mytbl8" that does not belong to any group.
+ Warning: In the group "myGroup2", the table "myschema2"."mytbl6" is referenced by the foreign key "mytbl8_col81_fkey" of the table "myschema2"."mytbl8" that does not belong to any group.
  Warning: Some E-Maj event triggers exist but are disabled. You may enable them using the emaj_enable_protection_by_event_triggers() function.
  No error detected
 (4 rows)
@@ -710,11 +781,11 @@ PL/pgSQL function emaj.emaj_drop_group(text) line 14 at SQL statement
   rollback to savepoint sp1;
 -- use emaj_verify_all() to understand the problem
   select * from emaj.emaj_verify_all();
-                                                                                        emaj_verify_all                                                                                         
-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+                                                                                      emaj_verify_all                                                                                       
+--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
  Error: In the schema "emaj_myschema1", the sequence "emaj_myschema1"."dummyseq" is not linked to any created tables group.
  Warning: In the group "myGroup2", the foreign key "mytbl6_col61_fkey" on the table "myschema2"."mytbl6" references the table "myschema2"."mytbl7" that does not belong to any group.
- Warning: In the group "myGroup2", the table "myschema2"."mytbl6" is referenced by the the foreign key "mytbl8_col81_fkey" of the table "myschema2"."mytbl8" that does not belong to any group.
+ Warning: In the group "myGroup2", the table "myschema2"."mytbl6" is referenced by the foreign key "mytbl8_col81_fkey" of the table "myschema2"."mytbl8" that does not belong to any group.
  Warning: Some E-Maj event triggers exist but are disabled. You may enable them using the emaj_enable_protection_by_event_triggers() function.
 (4 rows)
 
@@ -727,10 +798,10 @@ PL/pgSQL function emaj.emaj_drop_group(text) line 14 at SQL statement
 
 -- and everything is clean...
   select * from emaj.emaj_verify_all();
-                                                                                        emaj_verify_all                                                                                         
-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+                                                                                      emaj_verify_all                                                                                       
+--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
  Warning: In the group "myGroup2", the foreign key "mytbl6_col61_fkey" on the table "myschema2"."mytbl6" references the table "myschema2"."mytbl7" that does not belong to any group.
- Warning: In the group "myGroup2", the table "myschema2"."mytbl6" is referenced by the the foreign key "mytbl8_col81_fkey" of the table "myschema2"."mytbl8" that does not belong to any group.
+ Warning: In the group "myGroup2", the table "myschema2"."mytbl6" is referenced by the foreign key "mytbl8_col81_fkey" of the table "myschema2"."mytbl8" that does not belong to any group.
  Warning: Some E-Maj event triggers exist but are disabled. You may enable them using the emaj_enable_protection_by_event_triggers() function.
  No error detected
 (4 rows)
@@ -846,10 +917,10 @@ rollback;
 begin;
   drop event trigger emaj_protection_trg;
   select emaj.emaj_verify_all();
-                                                                                        emaj_verify_all                                                                                         
-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+                                                                                      emaj_verify_all                                                                                       
+--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
  Warning: In the group "myGroup2", the foreign key "mytbl6_col61_fkey" on the table "myschema2"."mytbl6" references the table "myschema2"."mytbl7" that does not belong to any group.
- Warning: In the group "myGroup2", the table "myschema2"."mytbl6" is referenced by the the foreign key "mytbl8_col81_fkey" of the table "myschema2"."mytbl8" that does not belong to any group.
+ Warning: In the group "myGroup2", the table "myschema2"."mytbl6" is referenced by the foreign key "mytbl8_col81_fkey" of the table "myschema2"."mytbl8" that does not belong to any group.
  Warning: Some E-Maj event triggers are missing. Your database administrator may (re)create them using the emaj_upgrade_after_postgres_upgrade.sql script.
  No error detected
 (4 rows)
@@ -871,8 +942,8 @@ select hist_id, hist_function, hist_event, hist_object, regexp_replace(regexp_re
  hist_id |   hist_function    |       hist_event        | hist_object |                         regexp_replace                         | hist_user 
 ---------+--------------------+-------------------------+-------------+----------------------------------------------------------------+-----------
     5800 | DISABLE_PROTECTION | EVENT TRIGGERS DISABLED |             | emaj_protection_trg, emaj_sql_drop_trg, emaj_table_rewrite_trg | postgres
-    5893 | DISABLE_PROTECTION | EVENT TRIGGERS DISABLED |             | <none>                                                         | postgres
-    5894 | ENABLE_PROTECTION  | EVENT TRIGGERS ENABLED  |             | emaj_protection_trg, emaj_sql_drop_trg, emaj_table_rewrite_trg | postgres
-    5895 | ENABLE_PROTECTION  | EVENT TRIGGERS ENABLED  |             | <none>                                                         | postgres
+    5927 | DISABLE_PROTECTION | EVENT TRIGGERS DISABLED |             | <none>                                                         | postgres
+    5928 | ENABLE_PROTECTION  | EVENT TRIGGERS ENABLED  |             | emaj_protection_trg, emaj_sql_drop_trg, emaj_table_rewrite_trg | postgres
+    5929 | ENABLE_PROTECTION  | EVENT TRIGGERS ENABLED  |             | <none>                                                         | postgres
 (4 rows)
 

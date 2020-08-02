@@ -215,8 +215,8 @@ SET client_min_messages TO WARNING;
 -- cases when an application table is altered
 begin;
   alter table myschema2.mytbl4 add column newcol int;
--- setting a mark or rollbacking fails
   savepoint sp1;
+-- setting a mark or rollbacking fails
     select emaj.emaj_set_mark_group('myGroup2','dummyMark');
   rollback to savepoint sp1;
     select * from emaj.emaj_rollback_group('myGroup2','EMAJ_LAST_MARK');
@@ -227,8 +227,8 @@ begin;
     select emaj.emaj_drop_group('myGroup2');
     select emaj.emaj_create_group('myGroup2');
   rollback to savepoint sp2;
--- or stop and alter the group
-  select emaj.emaj_alter_group('myGroup2');
+-- or stop and export/import the groups configuration
+  select emaj.emaj_import_groups_configuration(emaj.emaj_export_groups_configuration(),array['myGroup2'],true);
 rollback;
 
 -- cases when an application table is dropped
@@ -238,11 +238,8 @@ begin;
   savepoint sp1;
     select emaj.emaj_stop_group('myGroup2');
   rollback to savepoint sp1;
--- the only solution is to change the emaj_group_def table, force the group's stop and recreate or alter the group
-  delete from emaj.emaj_group_def where grpdef_schema = 'myschema2' and grpdef_tblseq = 'mytbl4';
-  select emaj.emaj_force_stop_group('myGroup2');
-  select emaj.emaj_drop_group('myGroup2');
-  select emaj.emaj_create_group('myGroup2');
+-- just removing the table solves the issue
+  select emaj.emaj_remove_table('myschema2','mytbl4');
 -- and everything is clean...
   select * from emaj.emaj_verify_all();
 rollback;
@@ -254,10 +251,12 @@ begin;
   savepoint sp1;
     select emaj.emaj_stop_group('myGroup2');
   rollback to savepoint sp1;
--- the only solution is to change the emaj_group_def table, force the group's stop and recreate or alter the group
-  delete from emaj.emaj_group_def where grpdef_schema = 'myschema2' and grpdef_tblseq = 'mytbl4';
-  select emaj.emaj_force_stop_group('myGroup2');
-  select emaj.emaj_alter_group('myGroup2');
+-- reimporting the group configuration fails if the group is in logging state
+    select emaj.emaj_import_groups_configuration(emaj.emaj_export_groups_configuration(),array['myGroup2'],true);
+  rollback to savepoint sp1;
+-- removing and re-assigning the table solves the issue 
+  select emaj.emaj_remove_table('myschema2','mytbl4');
+  select emaj.emaj_assign_table('myschema2','mytbl4','myGroup2');
 -- and everything is clean...
   select * from emaj.emaj_verify_all();
 rollback;
@@ -269,10 +268,27 @@ begin;
   savepoint sp1;
     select emaj.emaj_stop_group('myGroup2');
   rollback to savepoint sp1;
--- the only solution is to change the emaj_group_def table, force the group's stop and recreate or alter the group
-  delete from emaj.emaj_group_def where grpdef_schema = 'myschema2' and grpdef_tblseq = 'mytbl4';
+-- removing and re-assigning the table solves the issue 
+  select emaj.emaj_remove_table('myschema2','mytbl4');
+  select emaj.emaj_assign_table('myschema2','mytbl4','myGroup2');
+-- and everything is clean...
+  select * from emaj.emaj_verify_all();
+rollback;
+
+-- cases when a log sequence is dropped
+begin;
+  drop sequence emaj_myschema2.mytbl4_log_seq;
+-- stopping group fails
+  savepoint sp1;
+    select emaj.emaj_stop_group('myGroup2');
+  rollback to savepoint sp1;
+-- removing the table fails also
+  select emaj.emaj_remove_table('myschema2','mytbl4');
+  rollback to savepoint sp1;
+-- the only solution is to force the group's stop before removing/reassigning the table
   select emaj.emaj_force_stop_group('myGroup2');
-  select emaj.emaj_alter_group('myGroup2');
+  select emaj.emaj_remove_table('myschema2','mytbl4');
+  select emaj.emaj_assign_table('myschema2','mytbl4','myGroup2');
 -- and everything is clean...
   select * from emaj.emaj_verify_all();
 rollback;
@@ -281,10 +297,8 @@ rollback;
 begin;
   drop sequence myschema2.mySeq1;
 -- setting a mark or stopping the group fails
--- the only solution is to change the emaj_group_def table, force the group's stop and recreate or alter the group
-  delete from emaj.emaj_group_def where grpdef_schema = 'myschema2' and grpdef_tblseq = 'myseq1';
-  select emaj.emaj_force_stop_group('myGroup2');
-  select emaj.emaj_alter_group('myGroup2');
+-- just removing the sequence solves the issue
+  select emaj.emaj_remove_sequence('myschema2','myseq1');
 -- and everything is clean...
   select * from emaj.emaj_verify_all();
 rollback;

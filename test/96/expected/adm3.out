@@ -349,11 +349,11 @@ reset role;
 alter table "phil's schema3".mytbl4 alter column col45 type char(11);
 set role emaj_regression_tests_adm_user;
 select * from emaj.emaj_verify_all();
-                                                                                        emaj_verify_all                                                                                         
-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+                                                                                      emaj_verify_all                                                                                       
+--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
  Error: In the group "phil's group#3",", the structure of the application table "phil's schema3"."mytbl4" is not coherent with its log table ("emaj_phil's schema3"."mytbl4_log").
  Warning: In the group "myGroup2", the foreign key "mytbl6_col61_fkey" on the table "myschema2"."mytbl6" references the table "myschema2"."mytbl7" that does not belong to any group.
- Warning: In the group "myGroup2", the table "myschema2"."mytbl6" is referenced by the the foreign key "mytbl8_col81_fkey" of the table "myschema2"."mytbl8" that does not belong to any group.
+ Warning: In the group "myGroup2", the table "myschema2"."mytbl6" is referenced by the foreign key "mytbl8_col81_fkey" of the table "myschema2"."mytbl8" that does not belong to any group.
  Warning: Some E-Maj event triggers exist but are disabled. You may enable them using the emaj_enable_protection_by_event_triggers() function.
 (4 rows)
 
@@ -388,11 +388,11 @@ reset role;
 drop table "emaj_phil's schema3".mytbl4_log;
 set role emaj_regression_tests_adm_user;
 select * from emaj.emaj_verify_all();
-                                                                                        emaj_verify_all                                                                                         
-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+                                                                                      emaj_verify_all                                                                                       
+--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
  Error: In the group "phil's group#3",", the log table "emaj_phil's schema3"."mytbl4_log" is not found.
  Warning: In the group "myGroup2", the foreign key "mytbl6_col61_fkey" on the table "myschema2"."mytbl6" references the table "myschema2"."mytbl7" that does not belong to any group.
- Warning: In the group "myGroup2", the table "myschema2"."mytbl6" is referenced by the the foreign key "mytbl8_col81_fkey" of the table "myschema2"."mytbl8" that does not belong to any group.
+ Warning: In the group "myGroup2", the table "myschema2"."mytbl6" is referenced by the foreign key "mytbl8_col81_fkey" of the table "myschema2"."mytbl8" that does not belong to any group.
  Warning: Some E-Maj event triggers exist but are disabled. You may enable them using the emaj_enable_protection_by_event_triggers() function.
 (4 rows)
 
@@ -667,7 +667,7 @@ select * from emaj.emaj_verify_all();
  Warning: In the group "grp_tmp_4", the sequence "myschema4"."mytblp_col3_seq" is linked to the table "myschema4"."mytblp" but this table does not belong to any tables group.
  Warning: In the group "grp_tmp_3", the sequence "phil's schema3"."myTbl2\_col21_seq" is linked to the table "phil's schema3"."myTbl2\" but this table belongs to another tables group (grp_tmp).
  Warning: In the group "myGroup2", the foreign key "mytbl6_col61_fkey" on the table "myschema2"."mytbl6" references the table "myschema2"."mytbl7" that does not belong to any group.
- Warning: In the group "myGroup2", the table "myschema2"."mytbl6" is referenced by the the foreign key "mytbl8_col81_fkey" of the table "myschema2"."mytbl8" that does not belong to any group.
+ Warning: In the group "myGroup2", the table "myschema2"."mytbl6" is referenced by the foreign key "mytbl8_col81_fkey" of the table "myschema2"."mytbl8" that does not belong to any group.
  No error detected
 (5 rows)
 
@@ -951,12 +951,12 @@ select emaj.emaj_enable_protection_by_event_triggers();
 
 -- note that the warning about the mytblp_col3_seq sequence is normal
 select * from emaj.emaj_verify_all();
-                                                                                        emaj_verify_all                                                                                         
-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+                                                                                      emaj_verify_all                                                                                       
+--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
  Error: In the group "grp_tmp", the log sequence "emaj_phil's schema3"."mytbl4_log_seq" is not found.
  Warning: In the group "grp_tmp", the sequence "myschema4"."mytblp_col3_seq" is linked to the table "myschema4"."mytblp" but this table does not belong to any tables group.
  Warning: In the group "myGroup2", the foreign key "mytbl6_col61_fkey" on the table "myschema2"."mytbl6" references the table "myschema2"."mytbl7" that does not belong to any group.
- Warning: In the group "myGroup2", the table "myschema2"."mytbl6" is referenced by the the foreign key "mytbl8_col81_fkey" of the table "myschema2"."mytbl8" that does not belong to any group.
+ Warning: In the group "myGroup2", the table "myschema2"."mytbl6" is referenced by the foreign key "mytbl8_col81_fkey" of the table "myschema2"."mytbl8" that does not belong to any group.
 (4 rows)
 
 --     a removal while the group is LOGGING fails
@@ -1007,11 +1007,11 @@ NOTICE:  trigger "emaj_trunc_trg" for relation "phil's schema3.mytbl4" does not 
 (1 row)
 
 select * from emaj.emaj_verify_all();
-                                                                                        emaj_verify_all                                                                                         
-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+                                                                                      emaj_verify_all                                                                                       
+--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
  Warning: In the group "grp_tmp", the sequence "myschema4"."mytblp_col3_seq" is linked to the table "myschema4"."mytblp" but this table does not belong to any tables group.
  Warning: In the group "myGroup2", the foreign key "mytbl6_col61_fkey" on the table "myschema2"."mytbl6" references the table "myschema2"."mytbl7" that does not belong to any group.
- Warning: In the group "myGroup2", the table "myschema2"."mytbl6" is referenced by the the foreign key "mytbl8_col81_fkey" of the table "myschema2"."mytbl8" that does not belong to any group.
+ Warning: In the group "myGroup2", the table "myschema2"."mytbl6" is referenced by the foreign key "mytbl8_col81_fkey" of the table "myschema2"."mytbl8" that does not belong to any group.
  No error detected
 (4 rows)
 

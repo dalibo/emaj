@@ -7586,7 +7586,7 @@ $_rlbk_planning$
           FROM emaj.emaj_rlbk_plan
           WHERE rlbp_rlbk_id = v_rlbkId AND rlbp_step = 'RLBK_TABLE';
 -- insert all DELETE_LOG steps. But the duration estimates will be computed later
--- the estimated number of log rows to delete is set to the the estimated number of updates. This is underestimated
+-- the estimated number of log rows to delete is set to the estimated number of updates. This is underestimated
 --   in particular when SQL UPDATES are logged. But the collected statistics used for duration estimates are also
 --   based on the estimated number of updates.
       INSERT INTO emaj.emaj_rlbk_plan (
@@ -9347,7 +9347,7 @@ $_estimate_rollback_groups$
     SELECT coalesce ((SELECT param_value_interval FROM emaj.emaj_param
                         WHERE param_key = 'fixed_table_rollback_duration'),'1 millisecond'::INTERVAL)
            INTO v_fixed_table_rlbk;
--- get the the number of tables to lock and sequences to rollback
+-- get the number of tables to lock and sequences to rollback
     SELECT sum(group_nb_table)+sum(group_nb_sequence) INTO v_nbTblseq
       FROM emaj.emaj_group
       WHERE group_name = ANY(v_groupNames);
@@ -10644,7 +10644,7 @@ $_verify_all_groups$
         UNION ALL
         SELECT tbl_schema, tbl_name,
                'Warning: In the group "' || reftbl_group || '", the table "' || reftbl_schema || '"."' || reftbl_name ||
-               '" is referenced by the the foreign key "' || conname ||
+               '" is referenced by the foreign key "' || conname ||
                '" of the table "' || tbl_schema || '"."' || tbl_name || '" that does not belong to any group.' AS msg
           FROM fk_dependencies
           WHERE reftbl_group IS NOT NULL AND reftbl_group_is_rollbackable
