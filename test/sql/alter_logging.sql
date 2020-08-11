@@ -1,4 +1,4 @@
--- alterLogging.sql : test emaj_alter_group() and emaj_alter_groups() functions with groups in LOGGING state
+-- alterLogging.sql : test groups structure changes with groups in LOGGING state
 --
 -- It follows alter.sql that tests the same functions but with groups in IDLE state.
 -- It uses the same tables and groups, and the same sequences range
@@ -11,29 +11,23 @@
 
 select emaj.emaj_start_groups('{"myGroup1","myGroup2"}','Mk1');
 
+-- Save the groups configuration
+select emaj.emaj_export_groups_configuration(:'EMAJTESTTMPDIR' || '/all_groups_conf.json');
+
 -----------------------------
--- change attributes in emaj_group_def
+-- change attributes
 -----------------------------
+
+-- bad mark (duplicate name)
+select emaj.emaj_modify_table('myschema1','mytbl1','{"priority":30}'::jsonb,emaj.emaj_get_previous_mark_group('myGroup1',now()));
 
 -- change the priority
-update emaj.emaj_group_def set grpdef_priority = 30 where grpdef_schema = 'myschema1' and grpdef_tblseq = 'mytbl1';
-  -- also test the internal _adjust_group_properties() function, by simulating wrong values for group_has_waiting_changes
-update emaj.emaj_group set group_has_waiting_changes = true where group_name = 'emptyGroup';
-update emaj.emaj_group set group_has_waiting_changes = false where group_name = 'myGroup1';
-select emaj._adjust_group_properties();
-select group_name, group_has_waiting_changes from emaj.emaj_group where group_name = 'myGroup1' or group_name = 'emptyGroup' order by 1;
-
-select emaj.emaj_alter_group('myGroup1','Priority Changed');
+select emaj.emaj_modify_table('myschema1','mytbl1','{"priority":30}'::jsonb,'Priority Changed');
 
 -- change the log data tablespace and the log index tablespace for different tables
-update emaj.emaj_group_def set grpdef_log_dat_tsp = NULL where grpdef_schema = 'myschema1' and grpdef_tblseq = 'mytbl2b';
-update emaj.emaj_group_def set grpdef_log_idx_tsp = 'tsplog1' where grpdef_schema = 'myschema2' and grpdef_tblseq = 'mytbl6';
 set default_tablespace = tspemaj_renamed;
-update emaj.emaj_group set group_has_waiting_changes = false where group_name = 'myGroup1';
-select emaj._adjust_group_properties();
-select group_has_waiting_changes from emaj.emaj_group where group_name = 'myGroup1';
-
-select emaj.emaj_alter_groups('{"myGroup1","myGroup2"}','Attributes_changed');
+select emaj.emaj_modify_table('myschema1','mytbl2b','{"log_data_tablespace":null}'::jsonb,'Attributes_changed_1');
+select emaj.emaj_modify_table('myschema2','mytbl6','{"log_index_tablespace":"tsplog1"}'::jsonb,'Attributes_changed_2');
 reset default_tablespace;
 
 -- perform some operations: set an intermediate mark, update myTbl3 and rollback
@@ -42,14 +36,8 @@ insert into myschema1."myTbl3" values (11, now(), 11.0);
 update myschema2."myTbl3" set col33 = 11.0 where col31 = 10;
 select * from emaj.emaj_rollback_groups('{"myGroup1","myGroup2"}','Mk2');
 
--- change the priority back
-update emaj.emaj_group_def set grpdef_priority = 20 where grpdef_schema = 'myschema1' and grpdef_tblseq = 'mytbl1';
-select emaj.emaj_alter_groups(array['myGroup1','myGroup2']);
-
--- change the other attributes back
-update emaj.emaj_group_def set grpdef_log_dat_tsp = 'tsp log''2' where grpdef_schema = 'myschema1' and grpdef_tblseq = 'mytbl2b';
-update emaj.emaj_group_def set grpdef_log_idx_tsp = NULL where grpdef_schema = 'myschema2' and grpdef_tblseq = 'mytbl6';
-select emaj.emaj_alter_groups('{"myGroup1","myGroup2"}');
+-- revert the properties changes
+select emaj.emaj_import_groups_configuration(:'EMAJTESTTMPDIR' || '/all_groups_conf.json', '{"myGroup1","myGroup2"}', true);
 
 -----------------------------
 -- add sequences
@@ -63,15 +51,7 @@ select emaj.emaj_set_mark_group('myGroup2','Before ADD_SEQ');
 select nextval('myschema2.myseq2');
 
 -- then add the sequence to the group
-insert into emaj.emaj_group_def values ('myGroup2','myschema2','myseq2');
-
-update emaj.emaj_group set group_has_waiting_changes = false where group_name = 'myGroup2';
-select emaj._adjust_group_properties();
-
-select group_name, group_last_alter_time_id, group_has_waiting_changes, group_nb_table, group_nb_sequence
-  from emaj.emaj_group where group_name = 'myGroup2';
---select emaj.emaj_alter_group('myGroup2', 'Alter to add myseq2');
-select emaj.emaj_assign_sequence('myschema2', 'myseq2', 'myGroup2', 'Alter to add myseq2');
+select emaj.emaj_assign_sequence('myschema2', 'myseq2', 'myGroup2', 'Add myseq2');
 
 select group_name, group_last_alter_time_id, group_has_waiting_changes, group_nb_table, group_nb_sequence
   from emaj.emaj_group where group_name = 'myGroup2';
@@ -86,19 +66,20 @@ select nextval('myschema2.myseq2');
 select nextval('myschema2.myseq2');
 
 --testing snap and sql generation
-select emaj.emaj_snap_group('myGroup2',:'EMAJTESTTMPDIR','');
-\! cat $EMAJTESTTMPDIR/myschema2_myseq2.snap
-\! rm $EMAJTESTTMPDIR/*
+\! mkdir $EMAJTESTTMPDIR/snap
+select emaj.emaj_snap_group('myGroup2',:'EMAJTESTTMPDIR' || '/snap','');
+\! cat $EMAJTESTTMPDIR/snap/myschema2_myseq2.snap
+\! rm $EMAJTESTTMPDIR/snap/*
 
-select emaj.emaj_snap_log_group('myGroup2',NULL,'After ADD_SEQ',:'EMAJTESTTMPDIR',NULL);
-\! grep myseq2 $EMAJTESTTMPDIR/myGroup2_sequences_at_Mk1
-\! grep myseq2 $EMAJTESTTMPDIR/myGroup2_sequences_at_After_ADD_SEQ
-\! rm $EMAJTESTTMPDIR/*
+select emaj.emaj_snap_log_group('myGroup2',NULL,'After ADD_SEQ',:'EMAJTESTTMPDIR' || '/snap',NULL);
+\! grep myseq2 $EMAJTESTTMPDIR/snap/myGroup2_sequences_at_Mk1
+\! grep myseq2 $EMAJTESTTMPDIR/snap/myGroup2_sequences_at_After_ADD_SEQ
+\! rm $EMAJTESTTMPDIR/snap/*
 
 select emaj.emaj_gen_sql_group('myGroup2', 'Before ADD_SEQ', NULL, :'EMAJTESTTMPDIR' || '/myFile');
 \! grep myseq2 $EMAJTESTTMPDIR/myFile
 select emaj.emaj_gen_sql_group('myGroup2', 'Before ADD_SEQ', NULL, :'EMAJTESTTMPDIR' || '/myFile',array['myschema2.myseq2']);
-\! rm $EMAJTESTTMPDIR/*
+\! rm $EMAJTESTTMPDIR/myFile
 
 -- testing mark deletions
 begin;
@@ -113,15 +94,15 @@ rollback;
 
 begin;
   -- testing the alter_group mark deletion
-  select mark_time_id from emaj.emaj_mark where mark_group = 'myGroup2' and mark_name = 'Alter to add myseq2';
-  select emaj.emaj_delete_mark_group('myGroup2','Alter to add myseq2');
+  select mark_time_id from emaj.emaj_mark where mark_group = 'myGroup2' and mark_name = 'Add myseq2';
+  select emaj.emaj_delete_mark_group('myGroup2','Add myseq2');
   select * from emaj.emaj_sequence where sequ_name = 'myseq2' order by sequ_time_id limit 1;
 rollback;
 
 -- test sequences at bounds following a rollback targeting a mark set before an ADD_SEQ
 begin;
   delete from emaj.emaj_param where param_key = 'dblink_user_password';
-  select mark_time_id from emaj.emaj_mark where mark_group = 'myGroup2' and mark_name = 'Alter to add myseq2';
+  select mark_time_id from emaj.emaj_mark where mark_group = 'myGroup2' and mark_name = 'Add myseq2';
 -- beware, the sequence changes generated by the E-Maj rollback will not be rollback by the transaction rollback
   select rlbk_severity, regexp_replace(rlbk_message,E'\\d\\d\\d\\d/\\d\\d\\/\\d\\d\\ \\d\\d\\:\\d\\d:\\d\\d .*?\\)','<timestamp>)','g')
     from emaj.emaj_rollback_group('myGroup2','Before ADD_SEQ',true);
@@ -137,23 +118,20 @@ select * from emaj.emaj_sequence where sequ_name = 'myseq2' order by sequ_time_i
 
 -- consolidate this logged rollback
 select emaj.emaj_rename_mark_group('myGroup2','EMAJ_LAST_MARK','Logged_Rlbk_End');
-select mark_time_id from emaj.emaj_mark where mark_group = 'myGroup2' and mark_name = 'Alter to add myseq2';
+select mark_time_id from emaj.emaj_mark where mark_group = 'myGroup2' and mark_name = 'Add myseq2';
 select * from emaj.emaj_get_consolidable_rollbacks() where cons_group = 'myGroup2'; -- should report 1 row to consolidate
 select * from emaj.emaj_consolidate_rollback_group('myGroup2', 'Logged_Rlbk_End');
 select * from emaj.emaj_sequence where sequ_schema = 'myschema2' and sequ_name = 'myseq2' order by sequ_schema, sequ_name, sequ_time_id;
 
 -- remove mySeq2 from the group, then re-add it
-delete from emaj.emaj_group_def where grpdef_schema = 'myschema2' and grpdef_tblseq = 'myseq2';
-select emaj.emaj_alter_group('myGroup2', 'Alter to remove myseq2');
+select emaj.emaj_remove_sequence('myschema2', 'myseq2', 'Remove myseq2');
+select emaj.emaj_assign_sequence('myschema2', 'myseq2', 'myGroup2', 'Re-add myseq2');
 
-insert into emaj.emaj_group_def values ('myGroup2','myschema2','myseq2');
-select emaj.emaj_alter_group('myGroup2', 'Alter to re-add myseq2');
 select rel_schema, rel_tblseq, rel_time_range, rel_group, rel_kind
   from emaj.emaj_relation where rel_schema = 'myschema2' and rel_tblseq = 'myseq2' order by rel_time_range;
 
 -- finaly remove mySeq2 from the group
-delete from emaj.emaj_group_def where grpdef_schema = 'myschema2' and grpdef_tblseq = 'myseq2';
-select emaj.emaj_alter_group('myGroup2', 'Alter to really remove myseq2');
+select emaj.emaj_remove_sequence('myschema2', 'myseq2', 'Really remove myseq2');
 
 -- and perform a full rollback (that do not process mySeq2)
 select rlbk_severity, regexp_replace(rlbk_message,E'\\d\\d\\d\\d/\\d\\d\\/\\d\\d\\ \\d\\d\\:\\d\\d:\\d\\d .*?\\)','<timestamp>)','g')
@@ -173,7 +151,6 @@ select * from emaj.emaj_sequence where sequ_schema = 'myschema2' and sequ_name =
 select emaj.emaj_set_mark_group('myGroup1','Mk2b');
 select emaj.emaj_set_mark_group('myGroup1','Before_remove');
 
-update emaj.emaj_group_def set grpdef_group = 'temporarily_removed' where grpdef_schema = 'myschema1' and grpdef_tblseq = 'myTbl3_col31_seq';
 select group_name, group_last_alter_time_id, group_has_waiting_changes, group_nb_table, group_nb_sequence
   from emaj.emaj_group where group_name = 'myGroup1';
 select emaj.emaj_remove_sequence('myschema1', 'myTbl3_col31_seq', 'Sequence_removed');
@@ -184,22 +161,23 @@ select rel_schema, rel_tblseq, rel_time_range, rel_group, rel_kind
 select * from emaj.emaj_verify_all();
 
 --testing snap and sql generation
-select emaj.emaj_snap_group('myGroup1',:'EMAJTESTTMPDIR','');
-\! ls $EMAJTESTTMPDIR
-\! rm -R $EMAJTESTTMPDIR/*
+select emaj.emaj_snap_group('myGroup1',:'EMAJTESTTMPDIR' || '/snap','');
+\! ls $EMAJTESTTMPDIR/snap
+\! rm -R $EMAJTESTTMPDIR/snap/*
 
-select emaj.emaj_snap_log_group('myGroup1','Mk1',NULL,:'EMAJTESTTMPDIR',NULL);
+select emaj.emaj_snap_log_group('myGroup1','Mk1',NULL,:'EMAJTESTTMPDIR' || '/snap',NULL);
 -- sequences at begin bound
-\! cat $EMAJTESTTMPDIR/myGroup1_sequences_at_Mk1
+\! cat $EMAJTESTTMPDIR/snap/myGroup1_sequences_at_Mk1
 -- sequences at end bound
-\! find $EMAJTESTTMPDIR -regex '.*/myGroup1_sequences_at_[0123456789].*' | xargs cat
+\! find $EMAJTESTTMPDIR/snap -regex '.*/myGroup1_sequences_at_[0123456789].*' | xargs cat
+\! rm $EMAJTESTTMPDIR/snap/*
 
 select emaj.emaj_set_mark_group('myGroup1','After_remove');
 
 -- testing sql script generation
 select emaj.emaj_gen_sql_group('myGroup1', NULL, 'EMAJ_LAST_MARK', :'EMAJTESTTMPDIR' || '/script.sql',array['myschema1.myTbl3_col31_seq']);
 \! grep -v 'generated by E-Maj at' $EMAJTESTTMPDIR/script.sql
-\! rm $EMAJTESTTMPDIR/*
+\! rm $EMAJTESTTMPDIR/script.sql
 
 begin;
   -- testing the alter_group mark deletion
@@ -239,9 +217,8 @@ begin;
   drop sequence mySchema1."myTbl3_col31_seq" cascade;
 rollback;
 
--- re-add the removed sequence
-update emaj.emaj_group_def set grpdef_group = 'myGroup1' where grpdef_group = 'temporarily_removed';
-select emaj.emaj_alter_group('myGroup1', 'sequence re-added to myGroup1');
+-- revert the changes
+select emaj.emaj_import_groups_configuration(:'EMAJTESTTMPDIR' || '/all_groups_conf.json', '{"myGroup1"}', true);
 
 select emaj.emaj_cleanup_rollback_state();
 
@@ -257,9 +234,7 @@ select emaj.emaj_set_mark_group('myGroup2','Before ADD_TBL');
 delete from myschema2.mytbl7 where col71 = 3;
 
 -- then add the table to the group
-insert into emaj.emaj_group_def values ('myGroup2','myschema2','mytbl7');
---select emaj.emaj_alter_group('myGroup2', 'Alter to add mytbl7');
-select emaj.emaj_assign_table('myschema2', 'mytbl7', 'myGroup2', null, 'Alter to add mytbl7');
+select emaj.emaj_assign_table('myschema2', 'mytbl7', 'myGroup2', null, 'Add mytbl7');
 
 select group_name, group_last_alter_time_id, group_has_waiting_changes, group_nb_table, group_nb_sequence
   from emaj.emaj_group where group_name = 'myGroup2';
@@ -270,7 +245,7 @@ insert into myschema2.mytbl7 values (4),(5);
 
 -- remove the alter group mark just after the alter operation and then get statistics and set a mark
 begin;
-  select emaj.emaj_delete_mark_group('myGroup2','Alter to add mytbl7');
+  select emaj.emaj_delete_mark_group('myGroup2','Add mytbl7');
   select stat_group, stat_schema, stat_table, stat_first_mark, stat_last_mark, stat_rows 
     from emaj.emaj_log_stat_group('myGroup2','Before ADD_TBL',NULL);
   select emaj.emaj_set_mark_group('myGroup2','Just after ADD_TBL');
@@ -288,14 +263,14 @@ select stat_group, stat_schema, stat_table, stat_first_mark, stat_last_mark, sta
   from emaj.emaj_detailed_log_stat_group('myGroup2','ADD_TBL test','After ADD_TBL');
 
 --testing snap and sql generation
-select emaj.emaj_snap_group('myGroup2',:'EMAJTESTTMPDIR','');
-\! ls $EMAJTESTTMPDIR
-\! rm $EMAJTESTTMPDIR/*
-select emaj.emaj_snap_log_group('myGroup2',NULL,'After ADD_TBL',:'EMAJTESTTMPDIR',NULL);
-\! ls $EMAJTESTTMPDIR/myschema2*
+select emaj.emaj_snap_group('myGroup2',:'EMAJTESTTMPDIR' || '/snap','');
+\! ls $EMAJTESTTMPDIR/snap
+\! rm $EMAJTESTTMPDIR/snap/*
+select emaj.emaj_snap_log_group('myGroup2',NULL,'After ADD_TBL',:'EMAJTESTTMPDIR' || '/snap',NULL);
+\! ls $EMAJTESTTMPDIR/snap/myschema2*
 
 select emaj.emaj_gen_sql_group('myGroup2', 'Before ADD_TBL', NULL, :'EMAJTESTTMPDIR' || '/script.sql',array['myschema2.mytbl7']);
-\! rm $EMAJTESTTMPDIR/*
+\! rm $EMAJTESTTMPDIR/script.sql
 
 -- testing mark deletions
 begin;
@@ -310,9 +285,9 @@ begin;
 rollback;
 
 begin;
-  -- testing the alter_group mark deletion
-  select mark_time_id from emaj.emaj_mark where mark_group = 'myGroup2' and mark_name = 'Alter to add mytbl7';
-  select emaj.emaj_delete_mark_group('myGroup2','Alter to add mytbl7');
+  -- testing the add table mark deletion
+  select mark_time_id from emaj.emaj_mark where mark_group = 'myGroup2' and mark_name = 'Add mytbl7';
+  select emaj.emaj_delete_mark_group('myGroup2','Add mytbl7');
   select tbl_schema, tbl_name, tbl_time_id, tbl_log_seq_last_val from emaj.emaj_table
     where tbl_name = 'mytbl7' order by tbl_time_id limit 1;
 rollback;
@@ -320,7 +295,7 @@ rollback;
 -- test sequences and holes at bounds following a rollback targeting a mark set before an ADD_TBL
 begin;
   delete from emaj.emaj_param where param_key = 'dblink_user_password';
-  select mark_time_id from emaj.emaj_mark where mark_group = 'myGroup2' and mark_name = 'Alter to add mytbl7';
+  select mark_time_id from emaj.emaj_mark where mark_group = 'myGroup2' and mark_name = 'Add mytbl7';
   select rlbk_severity, regexp_replace(rlbk_message,E'\\d\\d\\d\\d/\\d\\d\\/\\d\\d\\ \\d\\d\\:\\d\\d:\\d\\d .*?\\)','<timestamp>)','g')
     from emaj.emaj_rollback_group('myGroup2','Before ADD_TBL',true);
   select tbl_schema, tbl_name, tbl_time_id, tbl_log_seq_last_val from emaj.emaj_table
@@ -339,7 +314,7 @@ select * from myschema2.mytbl7 order by col71;
 
 -- consolidate this logged rollback
 select emaj.emaj_rename_mark_group('myGroup2','EMAJ_LAST_MARK','Logged_Rlbk_End');
-select mark_time_id from emaj.emaj_mark where mark_group = 'myGroup2' and mark_name = 'Alter to add mytbl7';
+select mark_time_id from emaj.emaj_mark where mark_group = 'myGroup2' and mark_name = 'Add mytbl7';
 select * from emaj.emaj_get_consolidable_rollbacks() where cons_group = 'myGroup2'; -- should report 1 row to consolidate
 select * from emaj.emaj_consolidate_rollback_group('myGroup2', 'Logged_Rlbk_End');
 select tbl_schema, tbl_name, tbl_time_id, tbl_log_seq_last_val from emaj.emaj_table
@@ -357,11 +332,9 @@ begin;
 rollback;
 
 -- remove myTbl7 from the group, then re-add it
-delete from emaj.emaj_group_def where grpdef_schema = 'myschema2' and grpdef_tblseq = 'mytbl7';
-select emaj.emaj_alter_group('myGroup2', 'Alter to remove mytbl7');
+select emaj.emaj_remove_table('myschema2', 'mytbl7', 'Remove mytbl7');
+select emaj.emaj_assign_table('myschema2', 'mytbl7', 'myGroup2', null, 'Re-add mytbl7');
 
-insert into emaj.emaj_group_def values ('myGroup2','myschema2','mytbl7');
-select emaj.emaj_alter_group('myGroup2', 'Alter to re-add mytbl7');
 select rel_schema, rel_tblseq, rel_time_range, rel_group, rel_kind, rel_log_schema, rel_log_table, rel_log_seq_last_value
   from emaj.emaj_relation where rel_schema = 'myschema2' and rel_tblseq = 'mytbl7' order by rel_time_range;
 delete from myschema2.myTbl7 where col71 = 9;
@@ -375,13 +348,12 @@ select stat_group, stat_schema, stat_table, stat_log_schema, stat_log_table,
   from emaj._detailed_log_stat_groups('{"myGroup2"}',false,'ADD_TBL test',NULL);
 
 -- snap the logs
-select emaj.emaj_snap_log_group('myGroup2',NULL,NULL,:'EMAJTESTTMPDIR',NULL);
-\! ls $EMAJTESTTMPDIR/myschema2_mytbl7_log*
-\! rm $EMAJTESTTMPDIR/*
+select emaj.emaj_snap_log_group('myGroup2',NULL,NULL,:'EMAJTESTTMPDIR' || '/snap',NULL);
+\! ls $EMAJTESTTMPDIR/snap/myschema2_mytbl7_log*
+\! rm $EMAJTESTTMPDIR/snap/*
 
--- and finaly remove myTbl7 from the group
-delete from emaj.emaj_group_def where grpdef_schema = 'myschema2' and grpdef_tblseq = 'mytbl7';
-select emaj.emaj_alter_group('myGroup2', 'Alter to really remove mytbl7');
+-- and finaly revert the group configuration changes
+select emaj.emaj_import_groups_configuration(:'EMAJTESTTMPDIR' || '/all_groups_conf.json', '{"myGroup2"}', true);
 
 -- and perform a full rollback (that do not process myTbl7)
 select rlbk_severity, regexp_replace(rlbk_message,E'\\d\\d\\d\\d/\\d\\d\\/\\d\\d\\ \\d\\d\\:\\d\\d:\\d\\d .*?\\)','<timestamp>)','g')
@@ -395,18 +367,7 @@ insert into myschema1."myTbl3" (col33) values (1.);
 select emaj.emaj_set_mark_group('myGroup1','Mk2c');
 insert into myschema1."myTbl3" (col33) values (1.);
 
-update emaj.emaj_group_def set grpdef_group = 'temporarily_removed'
-  where grpdef_group = 'myGroup1' and grpdef_schema = 'myschema1' and (grpdef_tblseq = 'myTbl3' or grpdef_tblseq = 'mytbl2b');
-
-update emaj.emaj_group set group_has_waiting_changes = false where group_name = 'myGroup1';
-select emaj._adjust_group_properties();
-select group_has_waiting_changes from emaj.emaj_group where group_name = 'myGroup1';
-
 select emaj.emaj_remove_tables('myschema1', '^(myTbl3|mytbl2b)$', null, '2 tables removed from myGroup1');
-
--- sync emaj_group_def and try to alter the group: there should not be any change
-select emaj.emaj_sync_def_group('myGroup1');
-select emaj.emaj_alter_group('myGroup1', 'useless ALTER');
 
 select group_name, group_last_alter_time_id, group_has_waiting_changes, group_nb_table, group_nb_sequence
   from emaj.emaj_group where group_name = 'myGroup1';
@@ -433,15 +394,15 @@ select stat_group, stat_schema, stat_table, stat_first_mark, stat_first_mark_gid
   from emaj._detailed_log_stat_groups('{"myGroup1"}',false,NULL,NULL);
 
 --testing snap and sql generation
-select emaj.emaj_snap_group('myGroup1',:'EMAJTESTTMPDIR','');
-\! ls $EMAJTESTTMPDIR
-\! rm $EMAJTESTTMPDIR/*
+select emaj.emaj_snap_group('myGroup1',:'EMAJTESTTMPDIR' || '/snap','');
+\! ls $EMAJTESTTMPDIR/snap
+\! rm $EMAJTESTTMPDIR/snap/*
 
-select emaj.emaj_snap_log_group('myGroup1',NULL,NULL,:'EMAJTESTTMPDIR',NULL);
-\! ls $EMAJTESTTMPDIR/myschema1*
+select emaj.emaj_snap_log_group('myGroup1',NULL,NULL,:'EMAJTESTTMPDIR' || '/snap',NULL);
+\! ls $EMAJTESTTMPDIR/snap/myschema1*
 
 select emaj.emaj_gen_sql_group('myGroup1', NULL, NULL, :'EMAJTESTTMPDIR' || '/script.sql',array['myschema1.myTbl3']);
-\! rm $EMAJTESTTMPDIR/*
+\! rm $EMAJTESTTMPDIR/script.sql
 
 -- test marks deletions
 begin;
@@ -457,11 +418,7 @@ begin;
 rollback;
 
 begin;
--- testing the alter_group mark deletion
-  select mark_group, mark_name, mark_time_id, mark_is_deleted, mark_is_rlbk_protected, mark_comment, mark_log_rows_before_next,
-         mark_logged_rlbk_target_mark
-    from emaj.emaj_mark where mark_group = 'myGroup1' order by mark_time_id desc limit 2;
-    
+-- testing the alter group mark deletion
   select emaj.emaj_delete_mark_group('myGroup1','2 tables removed from myGroup1');
   select rel_schema, rel_tblseq, rel_time_range, rel_group, rel_kind, rel_log_schema, rel_log_table, rel_log_seq_last_value
     from emaj.emaj_relation where rel_schema = 'myschema1' and (rel_tblseq = 'myTbl3' or rel_tblseq = 'mytbl2b') order by rel_tblseq;
@@ -489,9 +446,8 @@ insert into myschema1.mytbl1 values (100, 'Alter_logg', E'\\000'::bytea);
 select rlbk_severity, regexp_replace(rlbk_message,E'\\d\\d\\d\\d/\\d\\d\\/\\d\\d\\ \\d\\d\\:\\d\\d:\\d\\d .*?\\)','<timestamp>)','g')
   from emaj.emaj_logged_rollback_group('myGroup1','Mk2b',true) order by 1,2;
 select emaj.emaj_rename_mark_group('myGroup1','EMAJ_LAST_MARK','Logged_Rlbk_End');
-update emaj.emaj_group_def set grpdef_group = 'temporarily_removed'
-  where grpdef_group = 'myGroup1' and grpdef_schema = 'myschema1' and grpdef_tblseq = 'mytbl1';
-select emaj.emaj_alter_group('myGroup1','2nd remove_tbl');
+select emaj.emaj_remove_table('myschema1', 'mytbl1','2nd remove_tbl');
+
 select * from emaj.emaj_get_consolidable_rollbacks() where cons_group = 'myGroup1';
 select * from emaj.emaj_consolidate_rollback_group('myGroup1', 'Logged_Rlbk_End');
 select count(*) from emaj_myschema1.mytbl1_log_1;   -- the log table should be empty
@@ -516,8 +472,7 @@ rollback;
 
 -- testing the table drop (remove first the sequence linked to the table, otherwise an event triger fires)
 begin;
-  delete from emaj.emaj_group_def where grpdef_schema = 'myschema1' and grpdef_tblseq = 'myTbl3_col31_seq';
-  select emaj.emaj_alter_group('myGroup1','alter_before_drop_mytbl3');
+  select emaj.emaj_remove_sequence('myschema1', 'myTbl3_col31_seq','remove_seq_before_drop_mytbl3');
   drop table mySchema1."myTbl3";
 rollback;
 
@@ -527,8 +482,7 @@ begin;
 rollback;
 
 -- re-add all removed tables
-update emaj.emaj_group_def set grpdef_group = 'myGroup1' where grpdef_group = 'temporarily_removed';
-select emaj.emaj_alter_group('myGroup1', 'tables re-added to myGroup1');
+select emaj.emaj_import_groups_configuration(:'EMAJTESTTMPDIR' || '/all_groups_conf.json', array['myGroup1'], true);
 
 select emaj.emaj_cleanup_rollback_state();
 
@@ -557,51 +511,28 @@ select * from emaj.emaj_rollback_groups('{"myGroup1","myGroup2"}','Mk1',true) or
 select * from emaj.emaj_logged_rollback_groups('{"myGroup1","myGroup2"}','Mk1',false) order by 1,2;
 select * from emaj.emaj_rollback_groups('{"myGroup1","myGroup2"}','Mk1',false) order by 1,2;
 
--- empty logging groups
-begin;
-  delete from emaj.emaj_group_def where grpdef_group IN ('myGroup1','myGroup2');
-  select emaj.emaj_alter_groups('{"myGroup1","myGroup2"}','empty groups');
-  select rel_schema, rel_tblseq, rel_time_range, rel_group, rel_kind, rel_log_schema, rel_log_table, rel_log_seq_last_value
-    from emaj.emaj_relation where rel_group IN ('myGroup1','myGroup2') order by rel_schema, rel_tblseq, rel_time_range;
--- add one table and sequence to the empty groups
-  insert into emaj.emaj_group_def values ('myGroup1','myschema1','mytbl1',20);
--- TODO: uncomment the next line once it will be possible to add a sequence to a logging group
---  insert into emaj.emaj_group_def values ('myGroup2','myschema2','myseq1');
-  select emaj.emaj_alter_groups('{"myGroup1","myGroup2"}','add a single table');
-  select rel_schema, rel_tblseq, rel_time_range, rel_group, rel_kind, rel_log_schema, rel_log_table, rel_log_seq_last_value
-    from emaj.emaj_relation
-    where (rel_schema = 'myschema1' and rel_tblseq = 'mytbl1') or (rel_schema = 'myschema2' and rel_tblseq = 'myseq1')
-    order by rel_schema, rel_tblseq, rel_time_range;
-rollback;
-
 -----------------------------
 -- change the group ownership of a table and a sequence (and some other attributes)
 -----------------------------
 
-update emaj.emaj_group_def set grpdef_group = 'myGroup1'
-  where grpdef_group = 'myGroup2' and grpdef_schema = 'myschema2' and grpdef_tblseq = 'myTbl3_col31_seq';
-update emaj.emaj_group_def set grpdef_group = 'myGroup1', grpdef_log_dat_tsp = 'tsplog1', grpdef_log_idx_tsp = 'tsplog1'
-  where grpdef_group = 'myGroup2' and grpdef_schema = 'myschema2' and grpdef_tblseq = 'myTbl3';
-
 -- case when the source group is idle and the destination group is logging
 begin;
   select emaj.emaj_stop_group('myGroup2');
-  select emaj.emaj_alter_groups('{"myGroup1","myGroup2"}', 'move to myGroup1 while logging');
-  select * from emaj.emaj_alter_plan where altr_time_id = (select max(altr_time_id) from emaj.emaj_alter_plan) order by 1,2,3,4,5;
+  select emaj.emaj_move_table('myschema2', 'myTbl3', 'myGroup1', 'move table to myGroup1 while logging');
+  select emaj.emaj_move_sequence('myschema2', 'myTbl3_col31_seq', 'myGroup1', 'move seq to myGroup1 while logging');
+  select emaj.emaj_modify_table('myschema2', 'myTbl3', '{"log_data_tablespace":"tsplog1", "log_index_tablespace":"tsplog1"}'::jsonb, 'modify table to myGroup1 while logging');
   select hist_function, hist_event, hist_object, hist_wording from emaj.emaj_hist 
-    where hist_function = 'ALTER_GROUPS' order by hist_id desc limit 8;
+    where hist_function like 'MO%' order by hist_id desc limit 10;
 rollback;
 
 -- case when both groups are logging
--- should not work, because myGroup2 is missing in the groups list and both groups are in LOGGING state
-select emaj.emaj_alter_group('myGroup1', 'move to myGroup1');
-
--- should be OK
 -- generates updates before the group change
 select emaj.emaj_set_mark_groups('{"myGroup1","myGroup2"}','before move');
 update myschema2."myTbl3" set col32 = col32 + '1 day' where col31 >= 8;
 
-select emaj.emaj_alter_groups('{"myGroup1","myGroup2"}', 'move to myGroup1');
+select emaj.emaj_move_table('myschema2', 'myTbl3', 'myGroup1', 'move table to myGroup1');
+select emaj.emaj_move_sequence('myschema2', 'myTbl3_col31_seq', 'myGroup1', 'move seq to myGroup1');
+select emaj.emaj_modify_table('myschema2', 'myTbl3', '{"log_data_tablespace":"tsplog1", "log_index_tablespace":"tsplog1", "priority":100}'::jsonb, 'modify table');
 select * from emaj.emaj_relation where rel_schema = 'myschema2' and (rel_tblseq = 'myTbl3' or rel_tblseq = 'myTbl3_col31_seq') order by 1,2,3,4;
 
 -- perform various tasks on the groups
@@ -630,19 +561,17 @@ select emaj.emaj_gen_sql_group('myGroup1', 'before move', NULL, :'EMAJTESTTMPDIR
 select emaj.emaj_gen_sql_groups('{"myGroup1","myGroup2"}', 'before move', NULL, :'EMAJTESTTMPDIR' || '/script3.sql',
   array['myschema2.myTbl3','myschema2.myTbl3_col31_seq']);
 
-\! rm $EMAJTESTTMPDIR/*
+\! rm $EMAJTESTTMPDIR/script*
 
 -- revert the emaj_group_def change and apply with a destination group in idle state
-update emaj.emaj_group_def set grpdef_group = 'myGroup2'
-  where grpdef_group = 'myGroup1' and grpdef_schema = 'myschema2' and grpdef_tblseq = 'myTbl3_col31_seq';
-update emaj.emaj_group_def set grpdef_group = 'myGroup2', grpdef_log_dat_tsp = NULL, grpdef_log_idx_tsp = NULL
-  where grpdef_group = 'myGroup1' and grpdef_schema = 'myschema2' and grpdef_tblseq = 'myTbl3';
 
 select emaj.emaj_stop_group('myGroup2');
-select emaj.emaj_alter_groups('{"myGroup1","myGroup2"}', 'back to idle myGroup2');
+-- This first import try fails because a myGroup1 is missing
+select emaj.emaj_import_groups_configuration(:'EMAJTESTTMPDIR' || '/all_groups_conf.json', array['myGroup2'], true);
+select emaj.emaj_import_groups_configuration(:'EMAJTESTTMPDIR' || '/all_groups_conf.json', '{"myGroup1","myGroup2"}', true);
 
 -----------------------------
--- remove and add tables and sequences without updating emaj_group_def
+-- some extra tests with tables and sequences removal and addition
 -----------------------------
 select emaj.emaj_start_group('myGroup2','Start');
 insert into myschema2.mytbl1 values (100, 'Started', E'\\000'::bytea);
@@ -696,7 +625,7 @@ select tbl_schema, tbl_name, tbl_time_id, tbl_log_seq_last_val from emaj.emaj_ta
   where tbl_schema = 'myschema2' and tbl_name = 'mytbl1' order by tbl_time_id;
 
 -----------------------------
--- change group ownership for some tables and sequences without updating emaj_group_def
+-- some extra tests with group ownership change for some tables and sequences
 -----------------------------
 -- from an idle to a logging group
 select emaj.emaj_move_tables('myschema4','.*','','myGroup1','MOVE_TBL_idle_to_logging');
@@ -728,28 +657,19 @@ select emaj.emaj_move_table('myschema2','mytbl2','myGroup1','Move a table with f
 select * from emaj.emaj_verify_all();
 select emaj.emaj_move_table('myschema2','mytbl2','myGroup2','Move a table with fkey back');
 
------------------------------
--- change priority and tablespaces attributes without updating emaj_group_def
------------------------------
+-- rename a table and/or change its schema
+alter table myschema1.mytbl1 rename to mytbl1_new_name;
+select emaj.emaj_remove_table('myschema1','mytbl1');
+select emaj.emaj_assign_table('myschema1','mytbl1_new_name','myGroup1');
 
--- bad mark
-select emaj.emaj_modify_table('myschema1','mytbl1','{"priority":31}'::jsonb,emaj.emaj_get_previous_mark_group('myGroup1',now()));
+alter table myschema1.mytbl1_new_name set schema public;
+select emaj.emaj_remove_table('myschema1','mytbl1_new_name');
+select emaj.emaj_assign_table('public','mytbl1_new_name','myGroup1');
 
--- change the priority
-select emaj.emaj_modify_table('myschema1','mytbl1','{"priority":31}'::jsonb,'Priority dynamically changed');
-
--- change the log data tablespace and the log index tablespace for different tables
-set default_tablespace = tspemaj_renamed;
-select emaj.emaj_modify_tables('myschema1','{"mytbl2b"}','{"log_data_tablespace":null}'::jsonb,'Log data tablespace dynamically changed');
-select emaj.emaj_modify_tables('myschema2','.*6','','{"log_index_tablespace":"tsplog1"}'::jsonb,'Log index tablespace dynamically changed');
-reset default_tablespace;
-
--- change the priority back
-select emaj.emaj_modify_table('myschema1','mytbl1','{"priority":20}'::jsonb);
-
--- change the tablespaces back
-select emaj.emaj_modify_tables('myschema1','{"mytbl2b"}','{"log_data_tablespace":"tsp log''2"}'::jsonb);
-select emaj.emaj_modify_tables('myschema2','.*6','','{"log_index_tablespace":null}'::jsonb);
+alter table public.mytbl1_new_name rename to mytbl1;
+alter table public.mytbl1 set schema myschema1;
+select emaj.emaj_remove_table('public','mytbl1_new_name');
+select emaj.emaj_assign_table('myschema1','mytbl1','myGroup1');
 
 -----------------------------
 -- test end: check

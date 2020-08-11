@@ -10,51 +10,39 @@ Several event types may lead to alter a tables group:
 
 When the modification concerns a tables group in *LOGGING* state, it may be necessary to temporarily remove the table or sequence from its tables group, with some impacts on potential future E-Maj rollback operations.
 
-In most cases, depending whether the :ref:`emaj_group_def configuration table<emaj_group_def>` is used of not, the changes can be performed:
+Here are the possible actions.
 
-* either dynamically, with dedicated functions,
-* or by adjusting the *emaj_group_def* table and by executing an *emaj_alter_group()* function.
-
-Here are the possible actions, depending on the choosen method.
-
-+------------------------------------------------------+-------------------------+---------------------------+
-| Actions                                              | Dynamic Adjustment      | emaj_group_def adjustment |
-+======================================================+=========================+===========================+
-| Add a table/sequence to a group                      | Dedicated functions     | emaj_alter_group()        |
-+------------------------------------------------------+-------------------------+---------------------------+
-| Remove a table/sequence from a group                 | Dedicated functions     | emaj_alter_group()        |
-+------------------------------------------------------+-------------------------+---------------------------+
-| Move a table/sequence to another group               | Dedicated functions     | emaj_alter_group()        |
-+------------------------------------------------------+-------------------------+---------------------------+
-| Change the log data or index tablespace for a table  | Dedicated functions     | emaj_alter_group()        |
-+------------------------------------------------------+-------------------------+---------------------------+
-| Change the E-Maj priority for a table                | Dedicated functions     | emaj_alter_group()        |
-+------------------------------------------------------+-------------------------+---------------------------+
-| Repair a table                                       | Remove from the group + | emaj_alter_group()        |
-|                                                      | add to the group        |                           |
-+------------------------------------------------------+-------------------------+---------------------------+
-| Rename a table                                       | Remove from the group + | Remove from the group +   |
-|                                                      | ALTER TABLE + Add       | ALTER TABLE + Add         |
-+------------------------------------------------------+-------------------------+---------------------------+
-| Rename a sequence                                    | Remove from the group + | Remove from the group +   |
-|                                                      | ALTER SEQUENCE + Add    | ALTER SEQUENCE + Add      |
-+------------------------------------------------------+-------------------------+---------------------------+
-| Change the schema of a table                         | Remove from the group + | Remove from the group +   |
-|                                                      | ALTER TABLE + Add       | ALTER TABLE + Add         |
-+------------------------------------------------------+-------------------------+---------------------------+
-| Change the schema of a sequence                      | Remove from the group + | Remove from the group +   |
-|                                                      | ALTER SEQUENCE + Add    | ALTER SEQUENCE + Add      |
-+------------------------------------------------------+-------------------------+---------------------------+
-| Rename a table’s column                              | Remove from the group + | Remove from the group +   |
-|                                                      | ALTER TABLE + Add       | ALTER TABLE + Add         |
-+------------------------------------------------------+-------------------------+---------------------------+
-| Change a table’s structure                           | Remove from the group + | Remove from the group +   |
-|                                                      | ALTER TABLE + Add       | ALTER TABLE + Add         |
-+------------------------------------------------------+-------------------------+---------------------------+
-| Other forms of ALTER TABLE                           | No E-Maj impact                                     |
-+------------------------------------------------------+-------------------------+---------------------------+
-| Other forms of ALTER SEQUENCE                        | No E-Maj impact                                     |
-+------------------------------------------------------+-------------------------+---------------------------+
++------------------------------------------------------+----------------------------------------------+
+| Actions                                              | Method                                       |
++======================================================+==============================================+
+| Add a table/sequence to a group                      | Tables/sequences assignment functions        |
++------------------------------------------------------+----------------------------------------------+
+| Remove a table/sequence from a group                 | Tables/sequences removal functions           |
++------------------------------------------------------+----------------------------------------------+
+| Move a table/sequence to another group               | Tables/sequences move functions              |
++------------------------------------------------------+----------------------------------------------+
+| Change the log data or index tablespace for a table  | Tables properties modification functions     |
++------------------------------------------------------+----------------------------------------------+
+| Change the E-Maj priority for a table                | Tables properties modification functions     |
++------------------------------------------------------+----------------------------------------------+
+| Repair a table                                       | Remove from the group + add to the group     |
++------------------------------------------------------+----------------------------------------------+
+| Rename a table                                       | Remove from the group + ALTER TABLE + Add    |
++------------------------------------------------------+----------------------------------------------+
+| Rename a sequence                                    | Remove from the group + ALTER SEQUENCE + Add |
++------------------------------------------------------+----------------------------------------------+
+| Change the schema of a table                         | Remove from the group + ALTER TABLE + Add    |
++------------------------------------------------------+----------------------------------------------+
+| Change the schema of a sequence                      | Remove from the group + ALTER SEQUENCE + Add |
++------------------------------------------------------+----------------------------------------------+
+| Rename a table’s column                              | Remove from the group + ALTER TABLE + Add    |
++------------------------------------------------------+----------------------------------------------+
+| Change a table’s structure                           | Remove from the group + ALTER TABLE + Add    |
++------------------------------------------------------+----------------------------------------------+
+| Other forms of ALTER TABLE                           | No E-Maj impact                              |
++------------------------------------------------------+----------------------------------------------+
+| Other forms of ALTER SEQUENCE                        | No E-Maj impact                              |
++------------------------------------------------------+----------------------------------------------+
 
 Adjusting the structure of in *LOGGING* state groups may have consequences on E-Maj rollback or SQL script generation (see below).
 
@@ -62,13 +50,8 @@ Even if the tables group is in *LOGGING* state, an E-Maj rollback operation targ
 
 .. _dynamic_ajustment:
 
-The “Dynamic adjustment” method
--------------------------------
-
-Some functions allow to dynamically adjust the tables groups content without modifying the *emaj_group_def* table.
-
 Add tables or sequences to a tables group
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+-----------------------------------------
 
 The functions that :ref:`assign one or several tables or sequences<assign_table_sequence>` into a tables group that are used at group’s creation time are also usable during the whole group’s life.
 
@@ -81,7 +64,7 @@ When the tables group is in *LOGGING* state, a mark is set. Its name is defined 
 .. _remove_table_sequence:
 
 Remove tables from their tables group
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+-------------------------------------
 
 The 3 following functions allow to remove one or several tables from their tables group::
 
@@ -102,7 +85,7 @@ When several tables are removed, they do not necessarily belongs to the same gro
 When the tables group or groups are in *LOGGING* state and no mark is supplied in parameters, the mark is generated with a *REMOVE* prefix.
 
 Remove sequences from their tables group
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+----------------------------------------
 
 The 3 following functions allow to remove one or several sequences from their tables group::
 
@@ -123,7 +106,7 @@ When the tables group is in *LOGGING* state and no mark is supplied in parameter
 .. _move_table_sequence:
 
 Move tables to another tables group
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+-----------------------------------
 
 3 functions allow to move one or several tables to another tables group::
 
@@ -142,7 +125,7 @@ When serveral tables are moved to another tables group, they do not necessarily 
 When the tables group is in *LOGGING* state and no mark is supplied in parameters, the mark is generated with a *MOVE* prefix,
 
 Move sequences to another tables group
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+--------------------------------------
 
 3 functions allow to move one or several sequences to another tables group::
 
@@ -163,7 +146,7 @@ When the tables group is in *LOGGING* state and no mark is supplied in parameter
 .. _modify_table:
 
 Modify tables properties
-^^^^^^^^^^^^^^^^^^^^^^^^
+------------------------
 
 3 functions allow to modify the properties of one or several tables from a single schema::
 
@@ -182,40 +165,6 @@ The <modified.properties> parameter is of type JSONB. Its elementary fields are 
 The functions return the number of tables that have effectively changed at least one property.
 
 When the tables group is in *LOGGING* state and no mark is supplied in parameters, the mark is generated with a *MODIFY* prefix,
-
-.. _emaj_alter_group:
-
-The "emaj_group_def update" method
-------------------------------------
-
-To avoid to be obliged to drop and recreate the tables groups when the *emaj_group_def* table is modified, a function allows to only take into account the configuration changes::
-
-   SELECT emaj.emaj_alter_group('<group.name>' [,’<mark>’]);
-
-The function returns the number of tables and sequences that now belong to the tables group.
-
-The *emaj_alter_group()* function also recreates E-Maj objects that may be missing (log tables, functions, ...). It also creates and drops the log schemas when needed.
-
-If the group is in *IDLE* state, its log tables become empty.
-
-If the tables group is in *LOGGING* state, the function:
-
-* sets a *ROW EXCLUSIVE* lock on all application tables of the tables group,
-* sets a mark, whose name can be supplied as parameter.
-
-If the parameter representing the mark is not specified, or is empty or *NULL*, a name is automatically generated: *ALTER_%*, where the '%' character represents the current time with a "hh.mn.ss.mmmm" pattern.
-
-All actions that are chained by the *emaj_alter_group()* function are executed on behalf of a unique transaction. As a consequence, if an error occurs during the operation, the tables group remains in its previous state.
-
-It is possible to update the *emaj_group_def* table, when the tables group is in *LOGGING* state. However it will have no effect until the group is altered (or dropped and re-created).
-
-Using the *emaj_alter_groups()* function, several groups can be modified at once::
-
-   SELECT emaj.emaj_alter_groups('<group.names.array>' [,’<mark>’]);
-
-This function especially allows to move a table or a sequence from one tables group to another in a single operation.
-
-More detail about the way to describe a group names array :doc:`here<multiGroupsFunctions>`.
 
 Incidence of tables or sequences addition or removal in a group in LOGGING state
 --------------------------------------------------------------------------------
@@ -286,10 +235,7 @@ Of course, once the table is removed from its group, the content of the associat
 
 However, if the log sequence is missing (which should never be the case) and the tables group is in *LOGGING* state, it is necessary to  :ref:`force the group’s stop<emaj_force_stop_group>` before removing and re-assigning the table.
 
-It may also happen that an application table or sequence has been accidentaly dropped. In this case, the table of sequence can be simply a posteriori removed from its group, by:
-
-* either execute the appropriate *emaj_remove_table()* or *emaj_remove_sequence()* function,
-* or by chaining the deletion of the row corresponding to the application table or sequence from the *emaj_group_def* table, and the call of the *emaj_alter_group()* function for the related tables group.
+It may also happen that an application table or sequence has been accidentaly dropped. In this case, the table of sequence can be simply a posteriori removed from its group, by executing the appropriate *emaj_remove_table()* or *emaj_remove_sequence()* function.
 
 .. _emaj_sync_def_group:
 

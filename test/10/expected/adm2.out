@@ -437,145 +437,8 @@ select col61, col62, col63, col64, col65, col66, emaj_verb, emaj_tuple, emaj_gid
 (0 rows)
 
 -----------------------------
--- Step 9 : test the emaj_alter_group() and emaj_alter_groups() functions with the audit-only phil's group#3, group and a mix of rollbackable and audit-only groups
+-- Step 9 : delete step
 -----------------------------
--- create the audit-only group empty and then populate it with tables and sequences
-select emaj.emaj_create_group('phil''s group#3",',false,true);
-WARNING:  emaj_create_group: Although the group "phil's group#3"," is referenced into the emaj_group_def table, it is left empty.
- emaj_create_group 
--------------------
-                 0
-(1 row)
-
-select emaj.emaj_assign_tables('phil''s schema3', '.*', 'mytbl4', 'phil''s group#3",');
-NOTICE:  table "myTbl2\_log" does not exist, skipping
-NOTICE:  trigger "emaj_log_trg" for relation "phil's schema3.myTbl2\" does not exist, skipping
-NOTICE:  trigger "emaj_trunc_trg" for relation "phil's schema3.myTbl2\" does not exist, skipping
-NOTICE:  table "phil's tbl1_log" does not exist, skipping
-NOTICE:  trigger "emaj_log_trg" for relation "phil's schema3.phil's tbl1" does not exist, skipping
-NOTICE:  trigger "emaj_trunc_trg" for relation "phil's schema3.phil's tbl1" does not exist, skipping
- emaj_assign_tables 
---------------------
-                  2
-(1 row)
-
-select emaj.emaj_assign_sequences('phil''s schema3', '.*', '', 'phil''s group#3",');
- emaj_assign_sequences 
------------------------
-                     2
-(1 row)
-
--- disable event triggers for this step to allow an application table structure change
-select emaj.emaj_disable_protection_by_event_triggers();
- emaj_disable_protection_by_event_triggers 
--------------------------------------------
-                                         3
-(1 row)
-
-reset role;
-alter table "phil's schema3"."phil's tbl1" alter column "phil's col12" type char(11);
-set role emaj_regression_tests_adm_user;
-update emaj.emaj_group_def set grpdef_priority = 1, grpdef_log_idx_tsp = 'tsplog1'
-  where grpdef_schema = 'phil''s schema3' and grpdef_tblseq = E'myTbl2\\';
-select emaj.emaj_alter_group('phil''s group#3",');
-NOTICE:  table "phil's tbl1_log" does not exist, skipping
-NOTICE:  trigger "emaj_log_trg" for relation "phil's schema3.phil's tbl1" does not exist, skipping
-NOTICE:  trigger "emaj_trunc_trg" for relation "phil's schema3.phil's tbl1" does not exist, skipping
- emaj_alter_group 
-------------------
-                4
-(1 row)
-
-select emaj.emaj_start_group('phil''s group#3",','M1_after_alter_group');
- emaj_start_group 
-------------------
-                4
-(1 row)
-
-select emaj.emaj_stop_group('phil''s group#3",');
- emaj_stop_group 
------------------
-               4
-(1 row)
-
-reset role;
-alter table "phil's schema3"."phil's tbl1" alter column "phil's col12" type char(10);
-set role emaj_regression_tests_adm_user;
-select emaj.emaj_enable_protection_by_event_triggers();
- emaj_enable_protection_by_event_triggers 
-------------------------------------------
-                                        3
-(1 row)
-
-select emaj.emaj_create_group('myGroup4');
-NOTICE:  table "mypartp1_log" does not exist, skipping
-NOTICE:  trigger "emaj_log_trg" for relation "myschema4.mypartp1" does not exist, skipping
-NOTICE:  trigger "emaj_trunc_trg" for relation "myschema4.mypartp1" does not exist, skipping
-NOTICE:  table "mypartp2_log" does not exist, skipping
-NOTICE:  trigger "emaj_log_trg" for relation "myschema4.mypartp2" does not exist, skipping
-NOTICE:  trigger "emaj_trunc_trg" for relation "myschema4.mypartp2" does not exist, skipping
-NOTICE:  table "mytblc1_log" does not exist, skipping
-NOTICE:  trigger "emaj_log_trg" for relation "myschema4.mytblc1" does not exist, skipping
-NOTICE:  trigger "emaj_trunc_trg" for relation "myschema4.mytblc1" does not exist, skipping
-NOTICE:  table "mytblc2_log" does not exist, skipping
-NOTICE:  trigger "emaj_log_trg" for relation "myschema4.mytblc2" does not exist, skipping
-NOTICE:  trigger "emaj_trunc_trg" for relation "myschema4.mytblc2" does not exist, skipping
-NOTICE:  table "mytblm_log" does not exist, skipping
-NOTICE:  trigger "emaj_log_trg" for relation "myschema4.mytblm" does not exist, skipping
-NOTICE:  trigger "emaj_trunc_trg" for relation "myschema4.mytblm" does not exist, skipping
-WARNING:  _create_tbl: The table "myschema4.mytblm" has triggers (mytblm_insert_trigger). They will be automatically disabled during E-Maj rollback operations, unless they have been recorded into the list of triggers that may be kept enabled, with the emaj_ignore_app_trigger() function.
- emaj_create_group 
--------------------
-                 5
-(1 row)
-
-update emaj.emaj_group_def set grpdef_priority = NULL, grpdef_log_idx_tsp = NULL
-  where grpdef_schema = 'phil''s schema3' and grpdef_tblseq = E'myTbl2\\';
-update emaj.emaj_group_def set grpdef_priority = 999
-  where grpdef_schema = 'myschema4' and grpdef_tblseq = 'mytblm';
-select emaj.emaj_alter_groups('{"phil''s group#3\",","myGroup4"}');
-NOTICE:  table "phil's tbl1_log" does not exist, skipping
-NOTICE:  trigger "emaj_log_trg" for relation "phil's schema3.phil's tbl1" does not exist, skipping
-NOTICE:  trigger "emaj_trunc_trg" for relation "phil's schema3.phil's tbl1" does not exist, skipping
- emaj_alter_groups 
--------------------
-                 9
-(1 row)
-
-select emaj.emaj_drop_group('phil''s group#3",');
- emaj_drop_group 
------------------
-               4
-(1 row)
-
-select emaj.emaj_drop_group('myGroup4');
- emaj_drop_group 
------------------
-               5
-(1 row)
-
------------------------------
--- Checking step 9
------------------------------
-select * from emaj.emaj_alter_plan where altr_time_id > 10000 order by 1,2,3,4,5;
- altr_time_id |        altr_step         |  altr_schema   |    altr_tblseq    |    altr_group    | altr_priority | altr_group_is_logging | altr_new_group | altr_new_group_is_logging | altr_rlbk_id 
---------------+--------------------------+----------------+-------------------+------------------+---------------+-----------------------+----------------+---------------------------+--------------
-        10039 | ADD_TBL                  | phil's schema3 | myTbl2\           | phil's group#3", |               | f                     |                |                           |             
-        10039 | ADD_TBL                  | phil's schema3 | phil's tbl1       | phil's group#3", |               | f                     |                |                           |             
-        10040 | ADD_SEQ                  | phil's schema3 | myTbl2\_col21_seq | phil's group#3", |               | f                     |                |                           |             
-        10040 | ADD_SEQ                  | phil's schema3 | phil's seq\1      | phil's group#3", |               | f                     |                |                           |             
-        10041 | REPAIR_TBL               | phil's schema3 | phil's tbl1       | phil's group#3", |               | f                     |                |                           |             
-        10041 | RESET_GROUP              |                |                   | phil's group#3", |               | f                     |                |                           |             
-        10041 | CHANGE_TBL_LOG_INDEX_TSP | phil's schema3 | myTbl2\           | phil's group#3", |             1 | f                     |                |                           |             
-        10041 | CHANGE_REL_PRIORITY      | phil's schema3 | myTbl2\           | phil's group#3", |             1 | f                     |                |                           |             
-        10045 | REPAIR_TBL               | phil's schema3 | phil's tbl1       | phil's group#3", |               | f                     |                |                           |             
-        10045 | RESET_GROUP              |                |                   | myGroup4         |               | f                     |                |                           |             
-        10045 | RESET_GROUP              |                |                   | phil's group#3", |               | f                     |                |                           |             
-        10045 | CHANGE_TBL_LOG_INDEX_TSP | phil's schema3 | myTbl2\           | phil's group#3", |               | f                     |                |                           |             
-        10045 | CHANGE_REL_PRIORITY      | myschema4      | mytblm            | myGroup4         |           999 | f                     |                |                           |             
-        10045 | CHANGE_REL_PRIORITY      | phil's schema3 | myTbl2\           | phil's group#3", |               | f                     |                |                           |             
-(14 rows)
-
 -----------------------------
 -- Step 10 : for phil''s group#3", recreate the group as rollbackable, update tables, 
 --           rename a mark, then delete 2 marks then delete all before a mark 
@@ -719,9 +582,9 @@ select mark_group, regexp_replace(mark_name,E'\\d\\d\.\\d\\d\\.\\d\\d\\.\\d\\d\\
  myGroup2         | Stop after rollback          |        10034 | t               | f                      |                      |                         0 | 
  myGroup1         | Multi-1                      |        10035 | f               | f                      |                      |                         0 | 
  myGroup2         | Multi-1                      |        10035 | f               | f                      |                      |                         0 | 
- phil's group#3", | M1_rollbackable              |        10049 | f               | f                      |                      |                        52 | 
- phil's group#3", | M2_rollbackable              |        10050 | f               | f                      |                      |                         3 | 
- phil's group#3", | phil's mark #3               |        10052 | f               | f                      | Third mark set       |                           | 
+ phil's group#3", | M1_rollbackable              |        10039 | f               | f                      |                      |                        52 | 
+ phil's group#3", | M2_rollbackable              |        10040 | f               | f                      |                      |                         3 | 
+ phil's group#3", | phil's mark #3               |        10042 | f               | f                      | Third mark set       |                           | 
 (13 rows)
 
 select sequ_schema, sequ_name, sequ_time_id, sequ_last_val, sequ_is_called from emaj.emaj_sequence order by sequ_time_id, sequ_schema, sequ_name;
@@ -747,12 +610,12 @@ select sequ_schema, sequ_name, sequ_time_id, sequ_last_val, sequ_is_called from 
  myschema1      | mytbl2b_col20_seq |        10035 |             5 | t
  myschema2      | myTbl3_col31_seq  |        10035 |            20 | t
  myschema2      | myseq1            |        10035 |          1004 | f
- phil's schema3 | myTbl2\_col21_seq |        10049 |             1 | f
- phil's schema3 | phil's seq\1      |        10049 |          1000 | f
- phil's schema3 | myTbl2\_col21_seq |        10050 |             1 | f
- phil's schema3 | phil's seq\1      |        10050 |          1000 | t
- phil's schema3 | myTbl2\_col21_seq |        10052 |             1 | f
- phil's schema3 | phil's seq\1      |        10052 |          1001 | t
+ phil's schema3 | myTbl2\_col21_seq |        10039 |             1 | f
+ phil's schema3 | phil's seq\1      |        10039 |          1000 | f
+ phil's schema3 | myTbl2\_col21_seq |        10040 |             1 | f
+ phil's schema3 | phil's seq\1      |        10040 |          1000 | t
+ phil's schema3 | myTbl2\_col21_seq |        10042 |             1 | f
+ phil's schema3 | phil's seq\1      |        10042 |          1001 | t
 (26 rows)
 
 select tbl_schema, tbl_name, tbl_time_id, tbl_log_seq_last_val from emaj.emaj_table order by tbl_time_id, tbl_schema, tbl_name;
@@ -812,12 +675,12 @@ select tbl_schema, tbl_name, tbl_time_id, tbl_log_seq_last_val from emaj.emaj_ta
  myschema2      | mytbl4      |       10035 |                   10
  myschema2      | mytbl5      |       10035 |                    7
  myschema2      | mytbl6      |       10035 |                   23
- phil's schema3 | myTbl2\     |       10049 |                    0
- phil's schema3 | phil's tbl1 |       10049 |                    0
- phil's schema3 | myTbl2\     |       10050 |                    2
- phil's schema3 | phil's tbl1 |       10050 |                   50
- phil's schema3 | myTbl2\     |       10052 |                    2
- phil's schema3 | phil's tbl1 |       10052 |                   53
+ phil's schema3 | myTbl2\     |       10039 |                    0
+ phil's schema3 | phil's tbl1 |       10039 |                    0
+ phil's schema3 | myTbl2\     |       10040 |                    2
+ phil's schema3 | phil's tbl1 |       10040 |                   50
+ phil's schema3 | myTbl2\     |       10042 |                    2
+ phil's schema3 | phil's tbl1 |       10042 |                   53
 (60 rows)
 
 select sqhl_schema, sqhl_table, sqhl_begin_time_id, sqhl_end_time_id, sqhl_hole_size from emaj.emaj_seq_hole order by 1,2,3;
@@ -1051,7 +914,7 @@ select sqhl_schema, sqhl_table, sqhl_begin_time_id, sqhl_end_time_id, sqhl_hole_
  sqhl_schema | sqhl_table | sqhl_begin_time_id | sqhl_end_time_id | sqhl_hole_size 
 -------------+------------+--------------------+------------------+----------------
  myschema1   | mytbl1     |              10019 |            10024 |              1
- myschema1   | mytbl1     |              10035 |            10056 |             20
+ myschema1   | mytbl1     |              10035 |            10046 |             20
  myschema1   | mytbl4     |              10019 |            10024 |              2
  myschema2   | mytbl4     |              10012 |            10023 |              6
  myschema2   | mytbl5     |              10012 |            10023 |              3
@@ -1514,23 +1377,27 @@ select emaj.emaj_stop_group('phil''s group#3",');
                4
 (1 row)
 
--- rename the "phil's tbl1" table and alter its group
+-- remove the "phil's tbl1" table, rename it and reassign it to its group
+select emaj.emaj_remove_table('phil''s schema3','phil''s tbl1');
+ emaj_remove_table 
+-------------------
+                 1
+(1 row)
+
 reset role;
 alter table "phil's schema3"."phil's tbl1" rename to table_with_very_looooooooooooooooooooooooooooooooooooooong_name;
 set role emaj_regression_tests_adm_user;
-update emaj.emaj_group_def set grpdef_tblseq = 'table_with_very_looooooooooooooooooooooooooooooooooooooong_name'
-  where grpdef_schema = 'phil''s schema3' and grpdef_tblseq = 'phil''s tbl1';
-select emaj.emaj_alter_group('phil''s group#3",');
-NOTICE:  drop cascades to trigger emaj_log_trg on table "phil's schema3".table_with_very_looooooooooooooooooooooooooooooooooooooong_name
+select emaj.emaj_assign_table('phil''s schema3', 'table_with_very_looooooooooooooooooooooooooooooooooooooong_name', 'phil''s group#3",');
 NOTICE:  table "table_with_very_looooooooooooooooooooooooooooooooo#1_log" does not exist, skipping
 NOTICE:  trigger "emaj_log_trg" for relation "phil's schema3.table_with_very_looooooooooooooooooooooooooooooooooooooong_name" does not exist, skipping
- emaj_alter_group 
-------------------
-                4
+NOTICE:  trigger "emaj_trunc_trg" for relation "phil's schema3.table_with_very_looooooooooooooooooooooooooooooooooooooong_name" does not exist, skipping
+ emaj_assign_table 
+-------------------
+                 1
 (1 row)
 
 -- use the table and its group
-select emaj.emaj_start_group('phil''s group#3",','M1_after_alter_group');
+select emaj.emaj_start_group('phil''s group#3",','M1_after_table_rename');
 WARNING:  _check_fk_groups: The foreign key "mytbl2_col21_fkey" on the table "phil's schema3.myTbl2\" references the table "phil's schema3.mytbl4" that is outside the groups (phil's group#3",).
 WARNING:  _check_fk_groups: The table "phil's schema3.table_with_very_looooooooooooooooooooooooooooooooooooooong_name" is referenced by the foreign key "mytbl4_col44_fkey" on the table "phil's schema3.mytbl4" that is outside the groups (phil's group#3",).
  emaj_start_group 
@@ -1546,7 +1413,7 @@ select emaj.emaj_set_mark_group('phil''s group#3",','M2');
 (1 row)
 
 delete from "phil's schema3".table_with_very_looooooooooooooooooooooooooooooooooooooong_name where "phil's col11" > 18;
-select * from emaj.emaj_rollback_group('phil''s group#3",','M1_after_alter_group',false) order by 1,2;
+select * from emaj.emaj_rollback_group('phil''s group#3",','M1_after_table_rename',false) order by 1,2;
  rlbk_severity |            rlbk_message             
 ---------------+-------------------------------------
  Notice        | 1 / 2 tables effectively processed.
@@ -1568,8 +1435,6 @@ select emaj.emaj_drop_group('phil''s group#3",');
 --
 reset role;
 alter table "phil's schema3".table_with_very_looooooooooooooooooooooooooooooooooooooong_name rename to "phil's tbl1";
-update emaj.emaj_group_def set grpdef_tblseq = 'phil''s tbl1'
-  where grpdef_schema = 'phil''s schema3' and grpdef_tblseq = 'table_with_very_looooooooooooooooooooooooooooooooooooooong_name';
 -----------------------------
 -- Step 14 : test use of groups or marks protection
 -----------------------------
@@ -1703,8 +1568,8 @@ select cons_group, regexp_replace(cons_end_rlbk_mark_name,E'\\d\\d\.\\d\\d\\.\\d
   from emaj.emaj_get_consolidable_rollbacks();
  cons_group | regexp_replace  | cons_target_rlbk_mark_name | cons_end_rlbk_mark_time_id | cons_target_rlbk_mark_time_id | cons_rows | cons_marks | cons_marks 
 ------------+-----------------+----------------------------+----------------------------+-------------------------------+-----------+------------+------------
- myGroup1   | RLBK_MC1_DONE   | MC1                        |                      10071 |                         10068 |        33 |          2 |          2
- myGroup1   | RLBK_MC3_%_DONE | MC3                        |                      10076 |                         10072 |        23 |          3 |          3
+ myGroup1   | RLBK_MC1_DONE   | MC1                        |                      10062 |                         10059 |        33 |          2 |          2
+ myGroup1   | RLBK_MC3_%_DONE | MC3                        |                      10067 |                         10063 |        23 |          3 |          3
 (2 rows)
 
   
@@ -1723,8 +1588,8 @@ select cons_group, regexp_replace(cons_end_rlbk_mark_name,E'\\d\\d\.\\d\\d\\.\\d
   from emaj.emaj_get_consolidable_rollbacks();
  cons_group | regexp_replace  | cons_target_rlbk_mark_name | cons_end_rlbk_mark_time_id | cons_target_rlbk_mark_time_id | cons_rows | cons_marks 
 ------------+-----------------+----------------------------+----------------------------+-------------------------------+-----------+------------
- myGroup1   | RLBK_MC1_DONE   | MC1                        |                      10071 |                         10068 |         0 |          0
- myGroup1   | RLBK_MC3_%_DONE | MC3                        |                      10076 |                         10072 |         0 |          0
+ myGroup1   | RLBK_MC1_DONE   | MC1                        |                      10062 |                         10059 |         0 |          0
+ myGroup1   | RLBK_MC3_%_DONE | MC3                        |                      10067 |                         10063 |         0 |          0
 (2 rows)
 
 select stat_group, stat_schema, stat_table, stat_first_mark, stat_last_mark, stat_role, stat_verb, stat_rows
@@ -1984,19 +1849,19 @@ select mark_group, regexp_replace(mark_name,E'\\d\\d\.\\d\\d\\.\\d\\d\\.\\d\\d\\
  myGroup1   | STOP_%                       |        10027 | t               | f                      |              |                         0 | 
  myGroup1   | Stop after rollback          |        10034 | t               | f                      |              |                         0 | 
  myGroup1   | Multi-1                      |        10035 | f               | f                      |              |                        10 | 
- myGroup1   | MC1                          |        10068 | f               | f                      |              |                         0 | 
- myGroup1   | RLBK_MC1_DONE                |        10071 | f               | f                      |              |                         2 | MC1
- myGroup1   | MC3                          |        10072 | f               | f                      |              |                         0 | 
- myGroup1   | RLBK_MC3_%_DONE              |        10076 | f               | f                      |              |                         0 | MC3
- myGroup1   | MC6                          |        10077 | f               | f                      |              |                         0 | 
- myGroup1   | RLBK_MC6_%_DONE              |        10084 | f               | f                      |              |                         0 | MC6
- myGroup1   | MC10                         |        10085 | f               | f                      |              |                         0 | 
- myGroup1   | RLBK_MC10_%_DONE             |        10090 | f               | f                      |              |                         0 | MC10
- myGroup1   | MC15                         |        10091 | f               | f                      |              |                         0 | 
- myGroup1   | RLBK_MC15_DONE               |        10094 | f               | f                      |              |                         0 | MC15
- myGroup1   | MC17                         |        10095 | f               | f                      |              |                         2 | 
- myGroup1   | RLBK_MC16_%_START            |        10096 | f               | f                      |              |                        15 | 
- myGroup1   | RLBK_MC16_%_DONE             |        10097 | f               | f                      |              |                           | 
+ myGroup1   | MC1                          |        10059 | f               | f                      |              |                         0 | 
+ myGroup1   | RLBK_MC1_DONE                |        10062 | f               | f                      |              |                         2 | MC1
+ myGroup1   | MC3                          |        10063 | f               | f                      |              |                         0 | 
+ myGroup1   | RLBK_MC3_%_DONE              |        10067 | f               | f                      |              |                         0 | MC3
+ myGroup1   | MC6                          |        10068 | f               | f                      |              |                         0 | 
+ myGroup1   | RLBK_MC6_%_DONE              |        10075 | f               | f                      |              |                         0 | MC6
+ myGroup1   | MC10                         |        10076 | f               | f                      |              |                         0 | 
+ myGroup1   | RLBK_MC10_%_DONE             |        10081 | f               | f                      |              |                         0 | MC10
+ myGroup1   | MC15                         |        10082 | f               | f                      |              |                         0 | 
+ myGroup1   | RLBK_MC15_DONE               |        10085 | f               | f                      |              |                         0 | MC15
+ myGroup1   | MC17                         |        10086 | f               | f                      |              |                         2 | 
+ myGroup1   | RLBK_MC16_%_START            |        10087 | f               | f                      |              |                        15 | 
+ myGroup1   | RLBK_MC16_%_DONE             |        10088 | f               | f                      |              |                           | 
 (19 rows)
 
 select sequ_schema, sequ_name, sequ_time_id, sequ_last_val, sequ_is_called from emaj.emaj_sequence where sequ_schema = 'emaj_myschema1' order by sequ_time_id, sequ_schema, sequ_name;
@@ -2037,94 +1902,94 @@ select tbl_schema, tbl_name, tbl_time_id, tbl_log_seq_last_val from emaj.emaj_ta
  myschema1  | mytbl2   |       10035 |                    3
  myschema1  | mytbl2b  |       10035 |                    3
  myschema1  | mytbl4   |       10035 |                   14
- myschema1  | myTbl3   |       10068 |                   45
- myschema1  | mytbl1   |       10068 |                   53
- myschema1  | mytbl2   |       10068 |                    3
- myschema1  | mytbl2b  |       10068 |                   13
- myschema1  | mytbl4   |       10068 |                   14
- myschema1  | myTbl3   |       10071 |                   45
- myschema1  | mytbl1   |       10071 |                   79
- myschema1  | mytbl2   |       10071 |                    6
- myschema1  | mytbl2b  |       10071 |                   17
- myschema1  | mytbl4   |       10071 |                   14
- myschema1  | myTbl3   |       10072 |                   45
- myschema1  | mytbl1   |       10072 |                   79
- myschema1  | mytbl2   |       10072 |                    7
- myschema1  | mytbl2b  |       10072 |                   18
- myschema1  | mytbl4   |       10072 |                   14
- myschema1  | myTbl3   |       10076 |                   65
- myschema1  | mytbl1   |       10076 |                   79
- myschema1  | mytbl2   |       10076 |                    7
- myschema1  | mytbl2b  |       10076 |                   18
- myschema1  | mytbl4   |       10076 |                   17
- myschema1  | myTbl3   |       10077 |                   65
- myschema1  | mytbl1   |       10077 |                   79
- myschema1  | mytbl2   |       10077 |                    7
- myschema1  | mytbl2b  |       10077 |                   18
- myschema1  | mytbl4   |       10077 |                   17
- myschema1  | myTbl3   |       10084 |                   85
- myschema1  | mytbl1   |       10084 |                  105
- myschema1  | mytbl2   |       10084 |                   12
- myschema1  | mytbl2b  |       10084 |                   24
- myschema1  | mytbl4   |       10084 |                   20
+ myschema1  | myTbl3   |       10059 |                   45
+ myschema1  | mytbl1   |       10059 |                   53
+ myschema1  | mytbl2   |       10059 |                    3
+ myschema1  | mytbl2b  |       10059 |                   13
+ myschema1  | mytbl4   |       10059 |                   14
+ myschema1  | myTbl3   |       10062 |                   45
+ myschema1  | mytbl1   |       10062 |                   79
+ myschema1  | mytbl2   |       10062 |                    6
+ myschema1  | mytbl2b  |       10062 |                   17
+ myschema1  | mytbl4   |       10062 |                   14
+ myschema1  | myTbl3   |       10063 |                   45
+ myschema1  | mytbl1   |       10063 |                   79
+ myschema1  | mytbl2   |       10063 |                    7
+ myschema1  | mytbl2b  |       10063 |                   18
+ myschema1  | mytbl4   |       10063 |                   14
+ myschema1  | myTbl3   |       10067 |                   65
+ myschema1  | mytbl1   |       10067 |                   79
+ myschema1  | mytbl2   |       10067 |                    7
+ myschema1  | mytbl2b  |       10067 |                   18
+ myschema1  | mytbl4   |       10067 |                   17
+ myschema1  | myTbl3   |       10068 |                   65
+ myschema1  | mytbl1   |       10068 |                   79
+ myschema1  | mytbl2   |       10068 |                    7
+ myschema1  | mytbl2b  |       10068 |                   18
+ myschema1  | mytbl4   |       10068 |                   17
+ myschema1  | myTbl3   |       10075 |                   85
+ myschema1  | mytbl1   |       10075 |                  105
+ myschema1  | mytbl2   |       10075 |                   12
+ myschema1  | mytbl2b  |       10075 |                   24
+ myschema1  | mytbl4   |       10075 |                   20
+ myschema1  | myTbl3   |       10076 |                   85
+ myschema1  | mytbl1   |       10076 |                  105
+ myschema1  | mytbl2   |       10076 |                   12
+ myschema1  | mytbl2b  |       10076 |                   24
+ myschema1  | mytbl4   |       10076 |                   20
+ myschema1  | myTbl3   |       10081 |                   85
+ myschema1  | mytbl1   |       10081 |                  127
+ myschema1  | mytbl2   |       10081 |                   12
+ myschema1  | mytbl2b  |       10081 |                   24
+ myschema1  | mytbl4   |       10081 |                   23
+ myschema1  | myTbl3   |       10082 |                   85
+ myschema1  | mytbl1   |       10082 |                  127
+ myschema1  | mytbl2   |       10082 |                   12
+ myschema1  | mytbl2b  |       10082 |                   24
+ myschema1  | mytbl4   |       10082 |                   23
  myschema1  | myTbl3   |       10085 |                   85
- myschema1  | mytbl1   |       10085 |                  105
- myschema1  | mytbl2   |       10085 |                   12
- myschema1  | mytbl2b  |       10085 |                   24
- myschema1  | mytbl4   |       10085 |                   20
- myschema1  | myTbl3   |       10090 |                   85
- myschema1  | mytbl1   |       10090 |                  127
- myschema1  | mytbl2   |       10090 |                   12
- myschema1  | mytbl2b  |       10090 |                   24
- myschema1  | mytbl4   |       10090 |                   23
- myschema1  | myTbl3   |       10091 |                   85
- myschema1  | mytbl1   |       10091 |                  127
- myschema1  | mytbl2   |       10091 |                   12
- myschema1  | mytbl2b  |       10091 |                   24
- myschema1  | mytbl4   |       10091 |                   23
- myschema1  | myTbl3   |       10094 |                   85
- myschema1  | mytbl1   |       10094 |                  153
- myschema1  | mytbl2   |       10094 |                   15
- myschema1  | mytbl2b  |       10094 |                   28
- myschema1  | mytbl4   |       10094 |                   23
- myschema1  | myTbl3   |       10095 |                   85
- myschema1  | mytbl1   |       10095 |                  153
- myschema1  | mytbl2   |       10095 |                   15
- myschema1  | mytbl2b  |       10095 |                   28
- myschema1  | mytbl4   |       10095 |                   23
- myschema1  | myTbl3   |       10096 |                   85
- myschema1  | mytbl1   |       10096 |                  153
- myschema1  | mytbl2   |       10096 |                   16
- myschema1  | mytbl2b  |       10096 |                   29
- myschema1  | mytbl4   |       10096 |                   23
- myschema1  | myTbl3   |       10097 |                   85
- myschema1  | mytbl1   |       10097 |                  164
- myschema1  | mytbl2   |       10097 |                   18
- myschema1  | mytbl2b  |       10097 |                   31
- myschema1  | mytbl4   |       10097 |                   23
+ myschema1  | mytbl1   |       10085 |                  153
+ myschema1  | mytbl2   |       10085 |                   15
+ myschema1  | mytbl2b  |       10085 |                   28
+ myschema1  | mytbl4   |       10085 |                   23
+ myschema1  | myTbl3   |       10086 |                   85
+ myschema1  | mytbl1   |       10086 |                  153
+ myschema1  | mytbl2   |       10086 |                   15
+ myschema1  | mytbl2b  |       10086 |                   28
+ myschema1  | mytbl4   |       10086 |                   23
+ myschema1  | myTbl3   |       10087 |                   85
+ myschema1  | mytbl1   |       10087 |                  153
+ myschema1  | mytbl2   |       10087 |                   16
+ myschema1  | mytbl2b  |       10087 |                   29
+ myschema1  | mytbl4   |       10087 |                   23
+ myschema1  | myTbl3   |       10088 |                   85
+ myschema1  | mytbl1   |       10088 |                  164
+ myschema1  | mytbl2   |       10088 |                   18
+ myschema1  | mytbl2b  |       10088 |                   31
+ myschema1  | mytbl4   |       10088 |                   23
 (95 rows)
 
 select sqhl_schema, sqhl_table, sqhl_begin_time_id, sqhl_end_time_id, sqhl_hole_size from emaj.emaj_seq_hole where sqhl_schema = 'myschema1' order by 1,2,3;
  sqhl_schema | sqhl_table | sqhl_begin_time_id | sqhl_end_time_id | sqhl_hole_size 
 -------------+------------+--------------------+------------------+----------------
- myschema1   | myTbl3     |              10072 |            10076 |             20
- myschema1   | myTbl3     |              10077 |            10084 |             20
+ myschema1   | myTbl3     |              10063 |            10067 |             20
+ myschema1   | myTbl3     |              10068 |            10075 |             20
  myschema1   | mytbl1     |              10019 |            10024 |              1
- myschema1   | mytbl1     |              10035 |            10056 |             20
- myschema1   | mytbl1     |              10068 |            10071 |             26
- myschema1   | mytbl1     |              10077 |            10084 |             26
- myschema1   | mytbl1     |              10085 |            10090 |             22
- myschema1   | mytbl1     |              10091 |            10094 |             26
- myschema1   | mytbl2     |              10068 |            10071 |              3
- myschema1   | mytbl2     |              10077 |            10084 |              5
- myschema1   | mytbl2     |              10091 |            10094 |              3
- myschema1   | mytbl2b    |              10068 |            10071 |              4
- myschema1   | mytbl2b    |              10077 |            10084 |              6
- myschema1   | mytbl2b    |              10091 |            10094 |              4
+ myschema1   | mytbl1     |              10035 |            10046 |             20
+ myschema1   | mytbl1     |              10059 |            10062 |             26
+ myschema1   | mytbl1     |              10068 |            10075 |             26
+ myschema1   | mytbl1     |              10076 |            10081 |             22
+ myschema1   | mytbl1     |              10082 |            10085 |             26
+ myschema1   | mytbl2     |              10059 |            10062 |              3
+ myschema1   | mytbl2     |              10068 |            10075 |              5
+ myschema1   | mytbl2     |              10082 |            10085 |              3
+ myschema1   | mytbl2b    |              10059 |            10062 |              4
+ myschema1   | mytbl2b    |              10068 |            10075 |              6
+ myschema1   | mytbl2b    |              10082 |            10085 |              4
  myschema1   | mytbl4     |              10019 |            10024 |              2
- myschema1   | mytbl4     |              10072 |            10076 |              3
- myschema1   | mytbl4     |              10077 |            10084 |              3
- myschema1   | mytbl4     |              10085 |            10090 |              3
+ myschema1   | mytbl4     |              10063 |            10067 |              3
+ myschema1   | mytbl4     |              10068 |            10075 |              3
+ myschema1   | mytbl4     |              10076 |            10081 |              3
 (18 rows)
 
 select * from emaj.emaj_rollback_group('myGroup1','Multi-1',false) order by 1,2;

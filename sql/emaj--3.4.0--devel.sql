@@ -94,6 +94,8 @@ SELECT emaj._disable_event_triggers();
 ------------------------------------------------------------------
 -- drop obsolete functions or functions with modified interface --
 ------------------------------------------------------------------
+DROP FUNCTION IF EXISTS emaj.emaj_alter_group(V_GROUPNAME TEXT,V_MARK TEXT);
+DROP FUNCTION IF EXISTS emaj.emaj_alter_groups(V_GROUPNAMES TEXT[],V_MARK TEXT);
 DROP FUNCTION IF EXISTS emaj.emaj_rollback_group(V_GROUPNAME TEXT,V_MARK TEXT);
 DROP FUNCTION IF EXISTS emaj.emaj_rollback_groups(V_GROUPNAMES TEXT[],V_MARK TEXT);
 DROP FUNCTION IF EXISTS emaj.emaj_logged_rollback_group(V_GROUPNAME TEXT,V_MARK TEXT);
@@ -102,6 +104,309 @@ DROP FUNCTION IF EXISTS emaj.emaj_logged_rollback_groups(V_GROUPNAMES TEXT[],V_M
 ------------------------------------------------------------------
 -- create new or modified functions                             --
 ------------------------------------------------------------------
+CREATE OR REPLACE FUNCTION emaj._alter_groups(v_groupNames TEXT[], v_multiGroup BOOLEAN, v_mark TEXT, v_callingFunction TEXT,
+                                              INOUT v_timeId BIGINT, OUT v_nbRel INT)
+RETURNS RECORD LANGUAGE plpgsql AS
+$_alter_groups$
+-- This function effectively alters a tables groups array.
+-- It takes into account the changes recorded in the emaj_group_def table since the groups have been created.
+-- Input: group names array,
+--        flag indicating whether the function is called by the multi-group function or not
+--        a mark name to set on groups in logging state
+--        the calling function
+--        an optional timestamp id (used for groups configuration import)
+-- Output: number of tables and sequences belonging to the groups after the operation
+  DECLARE
+    v_loggingGroups          TEXT[];
+    v_markName               TEXT;
+    v_eventTriggers          TEXT[];
+    r                        RECORD;
+  BEGIN
+-- check the group names
+    SELECT emaj._check_group_names(v_groupNames := v_groupNames, v_mayBeNull := v_multiGroup, v_lockGroups := TRUE, v_checkList := '')
+      INTO v_groupNames;
+    IF v_groupNames IS NOT NULL THEN
+-- build the list of groups that are in logging state
+      SELECT array_agg(group_name ORDER BY group_name) INTO v_loggingGroups FROM emaj.emaj_group
+        WHERE group_name = ANY(v_groupNames) AND group_is_logging;
+-- check and process the supplied mark name, if it is worth to be done
+      IF v_loggingGroups IS NOT NULL THEN
+        SELECT emaj._check_new_mark(v_groupNames, v_mark) INTO v_markName;
+      END IF;
+-- OK
+-- get the time stamp of the operation, if not supplied by the caller
+      IF v_timeId IS NULL THEN
+        SELECT emaj._set_time_stamp('A') INTO v_timeId;
+      END IF;
+-- for LOGGING groups, lock all tables to get a stable point
+      IF v_loggingGroups IS NOT NULL THEN
+-- use a ROW EXCLUSIVE lock mode, preventing for a transaction currently updating data, but not conflicting with simple read access or
+--  vacuum operation.
+        PERFORM emaj._lock_groups(v_loggingGroups, 'ROW EXCLUSIVE', v_multiGroup);
+-- and set the mark, using the same time identifier
+        PERFORM emaj._set_mark_groups(v_loggingGroups, v_markName, v_multiGroup, TRUE, NULL, v_timeId);
+      END IF;
+-- disable event triggers that protect emaj components and keep in memory these triggers name
+      SELECT emaj._disable_event_triggers() INTO v_eventTriggers;
+-- we can now plan all the steps needed to perform the operation
+      PERFORM emaj._alter_plan(v_groupNames, v_timeId);
+-- create the needed log schemas
+      PERFORM emaj._create_log_schemas(v_callingFunction, v_groupNames);
+-- execute the plan
+      PERFORM emaj._alter_exec(v_timeId, v_callingFunction);
+-- drop the E-Maj log schemas that are now useless (i.e. not used by any created group)
+      PERFORM emaj._drop_log_schemas(v_callingFunction, FALSE);
+-- update some attributes in the emaj_group table
+      UPDATE emaj.emaj_group
+        SET group_last_alter_time_id = v_timeId, group_has_waiting_changes = FALSE,
+            group_nb_table = (SELECT count(*) FROM emaj.emaj_relation
+                                WHERE rel_group = group_name AND upper_inf(rel_time_range) AND rel_kind = 'r'),
+            group_nb_sequence = (SELECT count(*) FROM emaj.emaj_relation
+                                   WHERE rel_group = group_name AND upper_inf(rel_time_range) AND rel_kind = 'S')
+        WHERE group_name = ANY (v_groupNames);
+-- enable previously disabled event triggers
+      PERFORM emaj._enable_event_triggers(v_eventTriggers);
+-- check foreign keys with tables outside the groups in logging state
+      PERFORM emaj._check_fk_groups(v_loggingGroups);
+    END IF;
+-- and return
+    SELECT sum(group_nb_table) + sum(group_nb_sequence) INTO v_nbRel
+      FROM emaj.emaj_group WHERE group_name = ANY (v_groupNames);
+    RETURN;
+  END;
+$_alter_groups$;
+
+CREATE OR REPLACE FUNCTION emaj._import_groups_conf_prepare(v_groupsJson JSON, v_groups TEXT[],
+                                                    v_allowGroupsUpdate BOOLEAN, v_location TEXT)
+RETURNS SETOF emaj._report_message_type LANGUAGE plpgsql AS
+$_import_groups_conf_prepare$
+-- This function prepares the effective tables groups configuration import.
+-- It is called by _import_groups_conf() and by emaj_web
+-- At the end of the function, the emaj_group_def table is updated with the new configuration of groups
+--   and a temporary table is created to prepare the application triggers management
+-- Input: - the tables groups configuration structure in JSON format
+--        - an optional array of group names to process (a NULL value process all tables groups described in the JSON structure)
+--        - an optional boolean indicating whether tables groups to import may already exist (FALSE by default)
+--            (if TRUE, existing groups are altered, even if they are in logging state)
+--        - the input file name, if any, to record in the emaj_hist table
+-- Output: diagnostic records
+  DECLARE
+    v_rollbackableGroups     TEXT[];
+    r_group                  RECORD;
+    r_table                  RECORD;
+    r_sequence               RECORD;
+  BEGIN
+-- insert begin event in history
+    INSERT INTO emaj.emaj_hist (hist_function, hist_event, hist_object, hist_wording)
+      VALUES ('IMPORT_GROUPS', 'BEGIN', array_to_string(v_groups, ', '), 'Input file: ' || quote_literal(v_location));
+-- extract the "tables_groups" json path
+    v_groupsJson = v_groupsJson #> '{"tables_groups"}';
+-- check that all tables groups listed in the v_groups array exist in the JSON structure
+    RETURN QUERY
+      SELECT 250, 1, group_name, NULL::TEXT, NULL::TEXT, NULL::TEXT, NULL::INT,
+                   format('The tables group "%s" to import is not referenced in the JSON structure.',
+                          group_name)
+        FROM (
+          SELECT group_name FROM unnest(v_groups) AS g(group_name)
+            EXCEPT
+          SELECT "group" FROM json_to_recordset(v_groupsJson) AS x("group" TEXT)
+          ) AS t;
+    IF FOUND THEN
+      RETURN;
+    END IF;
+-- if the v_allowGroupsUpdate flag is FALSE, check that no tables group already exists
+    IF NOT v_allowGroupsUpdate THEN
+      RETURN QUERY
+        SELECT 251, 1, group_name, NULL::TEXT, NULL::TEXT, NULL::TEXT, NULL::INT,
+                     format('The tables group "%s" already exists.',
+                            group_name)
+          FROM (
+            SELECT "group" AS group_name FROM json_to_recordset(v_groupsJson) AS x("group" TEXT), emaj.emaj_group
+              WHERE group_name = "group"
+                AND "group" = ANY (v_groups)
+               ) AS t;
+      IF FOUND THEN
+        RETURN;
+      END IF;
+    ELSE
+-- if the v_allowGroupsUpdate flag is TRUE, check that existing tables groups have the same type than in the JSON structure
+      RETURN QUERY
+        SELECT 252, 1, group_name, NULL::TEXT, NULL::TEXT, NULL::TEXT, NULL::INT,
+                     format('Changing the type of the tables group "%s" is not allowed.',
+                            group_name)
+          FROM (
+            SELECT "group" AS group_name
+              FROM json_to_recordset(v_groupsJson) AS x("group" TEXT, "is_rollbackable" BOOLEAN), emaj.emaj_group
+              WHERE group_name = "group"
+                AND "group" = ANY (v_groups)
+                AND group_is_rollbackable <> coalesce(is_rollbackable, true)
+               ) AS t;
+      IF FOUND THEN
+        RETURN;
+      END IF;
+    END IF;
+-- Create a temporary table to hold the application triggers referenced in the JSON structure
+    CREATE TEMP TABLE tmp_app_trigger (
+      tmp_group    TEXT,
+      tmp_schema   TEXT,
+      tmp_table    TEXT,
+      tmp_trigger  TEXT
+    );
+-- In a second pass over the JSON structure:
+--   - replace the emaj_group_def content by the JSON content for the imported tables groups
+--   - populate the emaj_group_def table and the tmp_app_trigger temporary table
+    v_rollbackableGroups = '{}';
+    FOR r_group IN
+      SELECT value AS groupJson FROM json_array_elements(v_groupsJson)
+        WHERE value ->> 'group' = ANY (v_groups)
+    LOOP
+--   build the array of rollbackable groups
+      IF coalesce((r_group.groupJson ->> 'is_rollbackable')::BOOLEAN, TRUE) THEN
+        v_rollbackableGroups = array_append(v_rollbackableGroups, r_group.groupJson ->> 'group');
+      END IF;
+--   delete the emaj_group_def rows for that group
+      DELETE FROM emaj.emaj_group_def
+        WHERE grpdef_group = r_group.groupJson ->> 'group';
+--   insert tables into emaj_group_def, and application triggers into the tmp_app_trigger temporary table
+      FOR r_table IN
+        SELECT value AS tableJson FROM json_array_elements(r_group.groupJson -> 'tables')
+      LOOP
+        INSERT INTO emaj.emaj_group_def(grpdef_group, grpdef_schema, grpdef_tblseq,
+                                        grpdef_priority, grpdef_log_dat_tsp, grpdef_log_idx_tsp)
+          VALUES (r_group.groupJson ->> 'group', r_table.tableJson ->> 'schema', r_table.tableJson ->> 'table',
+                  (r_table.tableJson ->> 'priority')::INT, r_table.tableJson ->> 'log_data_tablespace',
+                  r_table.tableJson ->> 'log_index_tablespace');
+        INSERT INTO tmp_app_trigger
+          SELECT r_group.groupJson ->> 'group', r_table.tableJson ->> 'schema', r_table.tableJson ->> 'table', "trigger"
+            FROM json_to_recordset(r_table.tableJson -> 'ignored_triggers') AS x("trigger" TEXT);
+      END LOOP;
+--   insert sequences into emaj_group_def
+      FOR r_sequence IN
+        SELECT value AS sequenceJson FROM json_array_elements(r_group.groupJson -> 'sequences')
+      LOOP
+        INSERT INTO emaj.emaj_group_def(grpdef_group, grpdef_schema, grpdef_tblseq)
+          VALUES (r_group.groupJson ->> 'group', r_sequence.sequenceJson ->> 'schema', r_sequence.sequenceJson ->> 'sequence');
+      END LOOP;
+    END LOOP;
+-- check the just imported emaj_group_def content is ok for the groups
+    RETURN QUERY
+      SELECT * FROM emaj._check_conf_groups(v_groups)
+        WHERE ((rpt_text_var_1 = ANY (v_groups) AND rpt_severity = 1)
+            OR (rpt_text_var_1 = ANY (v_rollbackableGroups) AND rpt_severity = 2))
+        ORDER BY rpt_msg_type, rpt_text_var_1, rpt_text_var_2, rpt_text_var_3;
+-- check that all listed triggers exist
+    RETURN QUERY
+      SELECT 260, 1, tmp_group, tmp_schema, tmp_table, tmp_trigger, NULL::INT,
+                   format('In the group "%s" and for the table %I.%I, the trigger %s does not exist.',
+                          tmp_group, quote_ident(tmp_schema), quote_ident(tmp_table), quote_ident(tmp_trigger))
+        FROM (
+          SELECT tmp_group, tmp_schema, tmp_table, tmp_trigger
+            FROM tmp_app_trigger
+            WHERE NOT EXISTS ( SELECT 1 FROM pg_catalog.pg_class, pg_catalog.pg_namespace, pg_catalog.pg_trigger
+                                 WHERE relnamespace = pg_namespace.oid
+                                   AND tgrelid = pg_class.oid
+                                   AND nspname = tmp_schema AND relname = tmp_table AND tgname = tmp_trigger
+                                   AND NOT tgisinternal )
+             ) AS t;
+-- ... and are not emaj triggers
+    RETURN QUERY
+      SELECT 261, 1, tmp_group, tmp_schema, tmp_table, tmp_trigger, NULL::INT,
+                   format('In the group "%s" and for the table %I.%I, the trigger %I is an E-Maj trigger.',
+                          tmp_group, quote_ident(tmp_schema), quote_ident(tmp_table), quote_ident(tmp_trigger))
+        FROM (
+          SELECT tmp_group, tmp_schema, tmp_table, tmp_trigger
+            FROM tmp_app_trigger
+            WHERE tmp_trigger IN ('emaj_trunc_trg', 'emaj_log_trg')
+             ) AS t;
+    RETURN;
+  END;
+$_import_groups_conf_prepare$;
+
+CREATE OR REPLACE FUNCTION emaj._import_groups_conf_exec(v_json JSON, v_groups TEXT[])
+RETURNS INT LANGUAGE plpgsql AS
+$_import_groups_conf_exec$
+-- This function completes a tables groups configuration import.
+-- It is called by _import_groups_conf() and by emaj_web
+-- Non existing groups are created empty.
+-- The _alter_groups() function is used to process the assignement, the move, the removal or the attributes change for tables and
+-- sequences.
+-- Input: - the tables groups configuration structure in JSON format
+--        - the array of group names to process
+--        - a boolean indicating whether tables groups to import may already exist
+-- Output: the number of created or altered tables groups
+  DECLARE
+    v_timeId                 BIGINT;
+    v_groupsJson             JSON;
+    v_nbGroup                INT;
+    v_comment                TEXT;
+    v_isRollbackable         BOOLEAN;
+--    r_msg                    RECORD;
+    r_group                  RECORD;
+  BEGIN
+-- Get a time stamp id of type 'I' for the operation
+    SELECT emaj._set_time_stamp('I') INTO v_timeId;
+-- extract the "tables_groups" json path
+    v_groupsJson = v_json #> '{"tables_groups"}';
+-- In a third pass over the JSON structure:
+--   - create empty groups for those which does not exist yet
+--   - adjust the comment on the groups, if needed
+    v_nbGroup = 0;
+    FOR r_group IN
+      SELECT value AS groupJson FROM json_array_elements(v_groupsJson)
+        WHERE value ->> 'group' = ANY (v_groups)
+    LOOP
+      v_nbGroup = v_nbGroup + 1;
+--   create the tables group if it does not exist yet
+      SELECT group_comment INTO v_comment
+        FROM emaj.emaj_group
+        WHERE group_name = r_group.groupJson ->> 'group';
+      IF NOT FOUND THEN
+        v_isRollbackable = coalesce((r_group.groupJson ->> 'is_rollbackable')::BOOLEAN, TRUE);
+        INSERT INTO emaj.emaj_group (group_name, group_is_rollbackable, group_creation_time_id, group_has_waiting_changes,
+                                     group_is_logging, group_is_rlbk_protected, group_nb_table, group_nb_sequence, group_comment)
+          VALUES (r_group.groupJson ->> 'group', v_isRollbackable, v_timeId, FALSE,
+                                     FALSE, NOT v_isRollbackable, 0, 0, r_group.groupJson ->> 'comment');
+        INSERT INTO emaj.emaj_hist (hist_function, hist_event, hist_object, hist_wording)
+          VALUES ('IMPORT_GROUPS', 'GROUP CREATED', r_group.groupJson ->> 'group',
+                  CASE WHEN v_isRollbackable THEN 'rollbackable' ELSE 'audit_only' END);
+      ELSE
+--   if the group exists, adjust the comment if needed
+        IF coalesce(v_comment, '') <> coalesce(r_group.groupJson ->> 'comment', '') THEN
+          UPDATE emaj.emaj_group SET group_comment = r_group.groupJson ->> 'comment'
+            WHERE group_name = r_group.groupJson ->> 'group';
+        END IF;
+      END IF;
+    END LOOP;
+-- process the emaj_group_def content change, if any, by calling the _alter_groups() function
+    PERFORM v_nbRel FROM emaj._alter_groups(v_groups, TRUE, 'IMPORT_%', 'IMPORT_GROUPS', v_timeId);
+-- adjust the application triggers that need to be set as "not automatically disabled at rollback time"
+--   delete from the emaj_ignored_app_trigger table triggers that are not listed anymore
+    DELETE FROM emaj.emaj_ignored_app_trigger
+      USING emaj.emaj_group_def
+      WHERE trg_schema = grpdef_schema
+        AND trg_table = grpdef_tblseq
+        AND grpdef_group = ANY (v_groups)
+        AND NOT EXISTS (
+          SELECT 1 FROM tmp_app_trigger
+            WHERE tmp_schema = trg_schema
+              AND tmp_table = trg_table
+              AND tmp_trigger = trg_name);
+--   insert into the emaj_ignored_app_trigger table the missing triggers
+    INSERT INTO emaj.emaj_ignored_app_trigger
+      SELECT tmp_schema, tmp_table, tmp_trigger
+        FROM tmp_app_trigger
+        WHERE tmp_trigger NOT IN ('emaj_trunc_trg', 'emaj_log_trg')
+      ON CONFLICT DO NOTHING;
+-- the temporary table is not needed anymore
+    DROP TABLE tmp_app_trigger;
+-- insert end event in history
+    INSERT INTO emaj.emaj_hist (hist_function, hist_event, hist_wording)
+      VALUES ('IMPORT_GROUPS', 'END', v_nbGroup || ' created or altered tables groups');
+--
+    RETURN v_nbGroup;
+  END;
+$_import_groups_conf_exec$;
+
 CREATE OR REPLACE FUNCTION emaj.emaj_rollback_group(v_groupName TEXT, v_mark TEXT, v_isAlterGroupAllowed BOOLEAN DEFAULT FALSE,
                                                     OUT rlbk_severity TEXT, OUT rlbk_message TEXT)
 RETURNS SETOF RECORD LANGUAGE plpgsql AS

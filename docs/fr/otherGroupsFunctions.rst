@@ -79,7 +79,7 @@ Cette fonction *emaj_force_stop_group()* effectue le même traitement que la fon
 * elle gère les éventuelles absences des tables et triggers E-Maj à désactiver, des messages de type « *Warning* » étant générés dans ces cas,
 * elle ne pose PAS de marque d'arrêt.
 
-Une fois la fonction exécutée, le groupe de tables est en état « *IDLE* ». Il peut alors être supprimé ou modifié avec les fonctions :ref:`emaj_alter_group() <emaj_alter_group>` ou :ref:`emaj_drop_group() <emaj_drop_group>`.
+Une fois la fonction exécutée, le groupe de tables est en état « *IDLE* ». Il peut alors être supprimé avec la fonction :ref:`emaj_drop_group() <emaj_drop_group>`.
 
 Il est recommandé de n'utiliser cette fonction qu'en cas de réel besoin.
 

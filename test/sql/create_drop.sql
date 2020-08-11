@@ -580,7 +580,7 @@ select emaj.emaj_import_groups_configuration('{ "tables_groups": [
   ]}'::json);
 select group_name, group_is_rollbackable, group_is_logging, group_comment
   from emaj.emaj_group where group_name = 'new_grp';
- 
+
 select emaj.emaj_import_groups_configuration('{ "tables_groups": [ 
    { "group": "new_grp", "comment": "changed comment for new_grp" }
   ]}'::json, null, true);

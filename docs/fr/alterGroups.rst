@@ -13,51 +13,39 @@ Plusieurs types d'événements peuvent rendre nécessaire la modification d'un g
 
 Lorsque la modification touche un groupe de tables en état *LOGGING*, il peut être nécessaire de sortir temporairement la table ou séquence concernée de son groupe de tables, avec des impacts sur les éventuelles opérations postérieures de rollback E-Maj.
 
-Le plus souvent, en fonction de l’utilisation ou non de la :ref:`table de configuration emaj_group_def<emaj_group_def>`, les modifications peuvent être réalisées :
+Le tableau suivant liste les actions possibles.
 
-* soit en dynamique, au travers de fonctions dédiées,
-* soit en modifiant le contenu de la table *emaj_group_def* , puis en exécutant une fonction *emaj_alter_group()*,
-
-Le tableau suivant liste les actions possibles, en fonction de la méthode choisie.
-
-+--------------------------------------------------------+------------------------+-------------------------------+
-| Actions                                                | Ajustement dynamique   | Ajustement par emaj_group_def |
-+========================================================+========================+===============================+
-| Ajouter une table/séquence à un groupe                 | Fonctions dédiées      | emaj_alter_group()            |
-+--------------------------------------------------------+------------------------+-------------------------------+
-| Supprimer une table/séquence d’un groupe               | Fonctions dédiées      | emaj_alter_group()            |
-+--------------------------------------------------------+------------------------+-------------------------------+
-| Déplacer une table/séquence vers un autre groupe       | Fonctions dédiées      | emaj_alter_group()            |
-+--------------------------------------------------------+------------------------+-------------------------------+
-| Changer le tablespace de la table ou de l'index de log | Fonctions dédiées      | emaj_alter_group()            |
-+--------------------------------------------------------+------------------------+-------------------------------+
-| Changer la priorité E-Maj d'une table                  | Fonctions dédiées      | emaj_alter_group()            |
-+--------------------------------------------------------+------------------------+-------------------------------+
-| Réparer une table                                      | Sortie du groupe +     | emaj_alter_group()            |
-|                                                        | Ajout dans le groupe   |                               |
-+--------------------------------------------------------+------------------------+-------------------------------+
-| Renommer une table                                     | Sortie du groupe +     | Sortie du groupe +            |
-|                                                        | ALTER TABLE + Ajout    | ALTER TABLE + Ajout           |
-+--------------------------------------------------------+------------------------+-------------------------------+
-| Renommer une séquence                                  | Sortie du groupe +     | Sortie du groupe +            |
-|                                                        | ALTER SEQUENCE + Ajout | ALTER SEQUENCE + Ajout        |
-+--------------------------------------------------------+------------------------+-------------------------------+
-| Changer le schéma d’une table                          | Sortie du groupe +     | Sortie du groupe +            |
-|                                                        | ALTER TABLE + Ajout    | ALTER TABLE + Ajout           |
-+--------------------------------------------------------+------------------------+-------------------------------+
-| Changer le schéma d’une séquence                       | Sortie du groupe +     | Sortie du groupe +            |
-|                                                        | ALTER SEQUENCE + Ajout | ALTER SEQUENCE + Ajout        |
-+--------------------------------------------------------+------------------------+-------------------------------+
-| Renommer une colonne d’une table                       | Sortie du groupe +     | Sortie du groupe +            |
-|                                                        | ALTER TABLE + Ajout    | ALTER TABLE + Ajout           |
-+--------------------------------------------------------+------------------------+-------------------------------+
-| Changer la structure d’une table                       | Sortie du groupe +     | Sortie du groupe +            |
-|                                                        | ALTER TABLE + Ajout    | ALTER TABLE + Ajout           |
-+--------------------------------------------------------+------------------------+-------------------------------+
-| Autres formes d’ALTER TABLE                            | Sans impact E-Maj                                      |
-+--------------------------------------------------------+------------------------+-------------------------------+
-| Autres formes d’ALTER SEQUENCE                         | Sans impact E-Maj                                      |
-+--------------------------------------------------------+------------------------+-------------------------------+
++--------------------------------------------------------+---------------------------------------------------+
+| Actions                                                | Méthode                                           | 
++========================================================+===================================================+
+| Ajouter une table/séquence à un groupe                 | Fonctions d’ajout de tables/séquence              |
++--------------------------------------------------------+---------------------------------------------------+
+| Supprimer une table/séquence d’un groupe               | Fonctions de suppression de tables/séquences      |
++--------------------------------------------------------+---------------------------------------------------+
+| Déplacer une table/séquence vers un autre groupe       | Fonctions de déplacement de tables/séquences      |
++--------------------------------------------------------+---------------------------------------------------+
+| Changer le tablespace de la table ou de l'index de log | Fonctions de modification de propriétés de tables |
++--------------------------------------------------------+---------------------------------------------------+
+| Changer la priorité E-Maj d'une table                  | Fonctions de modification de propriétés de tables |
++--------------------------------------------------------+---------------------------------------------------+
+| Réparer une table                                      | Sortie du groupe + Ajout dans le groupe           |
++--------------------------------------------------------+---------------------------------------------------+
+| Renommer une table                                     | Sortie du groupe + ALTER TABLE + Ajout            |
++--------------------------------------------------------+---------------------------------------------------+
+| Renommer une séquence                                  | Sortie du groupe + ALTER SEQUENCE + Ajout         |
++--------------------------------------------------------+---------------------------------------------------+
+| Changer le schéma d’une table                          | Sortie du groupe + ALTER TABLE + Ajout            |
++--------------------------------------------------------+---------------------------------------------------+
+| Changer le schéma d’une séquence                       | Sortie du groupe + ALTER SEQUENCE + Ajout         |
++--------------------------------------------------------+---------------------------------------------------+
+| Renommer une colonne d’une table                       | Sortie du groupe + ALTER TABLE + Ajout            |
++--------------------------------------------------------+---------------------------------------------------+
+| Changer la structure d’une table                       | Sortie du groupe + ALTER TABLE + Ajout            |
++--------------------------------------------------------+---------------------------------------------------+
+| Autres formes d’ALTER TABLE                            | Sans impact E-Maj                                 |
++--------------------------------------------------------+---------------------------------------------------+
+| Autres formes d’ALTER SEQUENCE                         | Sans impact E-Maj                                 |
++--------------------------------------------------------+---------------------------------------------------+
 
 Les modifications de composition de groupes de tables en état *LOGGING* peuvent avoir des conséquences sur les opérations de rollback E-Maj ou de génération de scripts SQL (voir plus bas).
 
@@ -65,13 +53,8 @@ D’une manière générale, même si le groupe de tables est en état *LOGGING*
 
 .. _dynamic_ajustment:
 
-Méthode « Ajustement dynamique »
---------------------------------
-
-Quelques fonctions permettent d’ajuster dynamiquement le contenu des groupes de tables sans modification de la table *emaj_group_def*.
-
 Ajouter des tables ou des séquences à un groupe
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+-----------------------------------------------
 
 Les fonctions d’:ref:`assignation d’une ou plusieurs tables ou séquences<assign_table_sequence>` à un groupe de tables, utilisées pour la création des groupes, sont utilisables également au cours de la vie du groupe.
 
@@ -84,7 +67,7 @@ Lorsque le groupe de table est actif, une marque est également posée. Son nom 
 .. _remove_table_sequence:
 
 Retirer des tables de leur groupe de tables
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+-------------------------------------------
 
 Les 3 fonctions suivantes permettent de retirer une ou plusieurs tables de leur groupe de tables ::
 
@@ -105,7 +88,8 @@ Quand plusieurs tables sont sorties, celles-ci ne proviennent pas nécessairemen
 Lorsque le ou les groupes de tables d’origine sont actifs et que la marque n’est pas fournie en paramètre, le nom de la marque posée est généré avec un préfixe *REMOVE*.
 
 Retirer des séquences de leur groupe de tables
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+----------------------------------------------
+
 
 Les 3 fonctions suivantes permettent de retirer une ou plusieurs séquences de leur groupe de tables ::
 
@@ -128,7 +112,7 @@ Lorsque le groupe de tables est actif et que la marque n’est pas fournie en pa
 .. _move_table_sequence:
 
 Déplacer des tables vers un autre groupe de tables
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+--------------------------------------------------
 
 3 fonctions permettent de déplacer une ou plusieurs tables vers un autre groupe de tables ::
 
@@ -147,7 +131,7 @@ Quand plusieurs tables sont déplacées, celles-ci ne proviennent pas nécessair
 Lorsque le ou les groupes de tables d’origine sont actifs et que la marque n’est pas fournie en paramètre, le nom de la marque posée est généré avec un préfixe *MOVE*.
 
 Déplacer des séquences vers un autre groupe de tables
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+-----------------------------------------------------
 
 3 fonctions permettent de déplacer une ou plusieurs séquences vers un autre groupe de tables ::
 
@@ -168,7 +152,7 @@ Lorsque le groupe de tables est actif et que la marque n’est pas fournie en pa
 .. _modify_table:
 
 Modifier les  propriétés de tables
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+----------------------------------
 
 3 fonctions permettent de modifier les propriétés d’une table ou de plusieurs tables d’un même schéma ::
 
@@ -187,40 +171,6 @@ Le paramètre <propriétés.modifiées> est de type JSONB. Ses champs élémenta
 Les fonctions retournent le nombre de tables ayant subi au moins une modification de propriété.
 
 Lorsque le groupe de tables est actif et que la marque n’est pas fournie en paramètre, le nom de la marque posée est généré avec un préfixe *MODIFY*.
-
-.. _emaj_alter_group:
-
-Modification par ajustement de la table emaj_group_def
-------------------------------------------------------
-
-Pour éviter de devoir supprimer puis recréer complètement un ou plusieurs groupes de tables après modification de la table *emaj_group_def*, une fonction permet de traiter  uniquement les impacts de ces modifications ::
-
-   SELECT emaj.emaj_alter_group('<nom.du.groupe>' [,'<marque>']);
-
-La fonction retourne le nombre de tables et de séquences dorénavant contenues dans le groupe de tables.
-
-La fonction *emaj_alter_group()* recrée également les objets E-Maj qui pourraient manquer (table de log, fonction, …). Elle supprime et/ou crée les schémas de log, en fonction des besoins.
-
-Si le groupe de table est en état *IDLE*, le contenu de ses tables de log est purgé.
-
-Si le groupe de table est en état *LOGGING*, la fonction :
-
-* pose un verrou de type ROW EXCLUSIVE sur chaque table applicative du groupe de tables,
-* pose une marque dont le nom peut être fourni en paramètre.
-
-Si le paramètre représentant la marque n'est pas spécifié, ou s'il est vide ou *NULL*, un nom est automatiquement généré : *ALTER_%*, où le caractère '%' représente l'heure courante, au format "hh.mn.ss.mmmm".
-
-Toutes les actions enchaînées par la fonction *emaj_alter_group()* sont exécutées au sein d'une unique transaction. En conséquence, si une erreur survient durant l'opération, le groupe de tables se retrouve dans son état initial.
-
-Il est possible d'anticiper la mise à jour de la table *emaj_group_def*, alors que le groupe de tables est encore actif. Cette mise à jour ne prendra bien sûr effet qu'à l'issue de l'exécution de la fonction *emaj_alter_group()*. 
-
-Plusieurs groupes de tables peuvent être modifiés en même temps, en utilisant la fonction *emaj_alter_groups()* ::
-
-   SELECT emaj.emaj_alter_groups('<tableau.des.groupes>' [,'<marque>']);
-
-Cette fonction permet notamment de déplacer une table ou une séquence d’un groupe de tables à un autre dans une même opération.
-
-La syntaxe de représentation des tableaux de groupes de tables est présentée :doc:`ici<multiGroupsFunctions>`.
 
 Incidence des ajouts ou suppressions de tables et séquences dans un groupe en état *LOGGING*
 --------------------------------------------------------------------------------------------
@@ -291,10 +241,7 @@ Naturellement, une fois la table sortie de son groupe, le contenu des logs assoc
 
 Néanmoins, si la séquence de log est absente (cas de figure hautement improbable) et que le groupe de tables est en état *LOGGING*, la réparation nécessite de :ref:`forcer l'arrêt du groupe<emaj_force_stop_group>` avant de sortir puis réassigner la table.
 
-Il peut arriver également qu’une table ou séquence applicative soit supprimée accidentellement avant d’avoir été sortie de son groupe de tables. Dans ce cas, on pourra sortir à posteriori cette table ou cette séquence de son groupe de tables, même si celui-ci est actif
-
-* soit en exécutant uniquement la fonction *emaj_remove_table()* ou *emaj_remove_sequence()* appropriée,
-* soit en enchaînant les 2 étapes de suppression de la ligne correspondant à la table/séquence dans la table *emaj_group_def*, et d'appel de la fonction *emaj_alter_group()* pour le groupe de tables concerné.
+Il peut arriver également qu’une table ou séquence applicative soit supprimée accidentellement avant d’avoir été sortie de son groupe de tables. Dans ce cas, on pourra sortir à posteriori cette table ou cette séquence de son groupe de tables, même si celui-ci est actif en exécutant uniquement la fonction *emaj_remove_table()* ou *emaj_remove_sequence()* appropriée.
 
 .. _emaj_sync_def_group:
 

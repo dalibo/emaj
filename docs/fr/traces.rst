@@ -37,10 +37,6 @@ La colonne *hist_function* peut prendre les valeurs suivantes.
 +==================================+=======================================================================================+
 | ADJUST_GROUP_PROPERTIES          | ajustement du contenu de la colonne group_has_waiting_changes de la table emaj_group  |
 +----------------------------------+---------------------------------------------------------------------------------------+
-| ALTER_GROUP                      | modification d'un groupe de tables                                                    |
-+----------------------------------+---------------------------------------------------------------------------------------+
-| ALTER_GROUPS                     | modification de plusieurs groupes de tables                                           |
-+----------------------------------+---------------------------------------------------------------------------------------+
 | ASSIGN_SEQUENCE                  | affectation d’une séquence à un groupe de tables                                      |
 +----------------------------------+---------------------------------------------------------------------------------------+
 | ASSIGN_SEQUENCES                 | affectation de séquences à un groupe de tables                                        |

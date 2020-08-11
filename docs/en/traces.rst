@@ -37,10 +37,6 @@ The *hist_function* column can take the following values:
 +==================================+============================================================================+
 | ADJUST_GROUP_PROPERTIES          | ajust the group_has_waiting_changes column content of the emaj_group table |
 +----------------------------------+----------------------------------------------------------------------------+
-| ALTER_GROUP                      | tables group change                                                        |
-+----------------------------------+----------------------------------------------------------------------------+
-| ALTER_GROUPS                     | tables groups change                                                       |
-+----------------------------------+----------------------------------------------------------------------------+
 | ASSIGN_SEQUENCE                  | sequence assigned to a tables group                                        |
 +----------------------------------+----------------------------------------------------------------------------+
 | ASSIGN_SEQUENCES                 | sequences assigned to a tables group                                       |
@@ -217,7 +213,7 @@ Other trace data
 
 Two other internal tables keep traces of groups alter or rollback operations:
 
-* *emaj_alter_plan* lists the elementary steps performed during the execution of :doc:`emaj_alter_group() <alterGroups>` and related functions,
+* *emaj_alter_plan* lists the elementary steps performed during the execution of :doc:`tables groups structure changes <alterGroups>`,
 * *emaj_rlbk_plan* lists the elementary steps performed during the execution of :ref:`emaj_rollback_group() <emaj_rollback_group>` and related functions.
 
 Purge obsolete traces

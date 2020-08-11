@@ -546,7 +546,7 @@ PL/pgSQL function emaj.emaj_stop_group(text,text) line 10 at RETURN
 ERROR:  alter_exec: Cannot repair the table myschema2.mytbl4. Its group myGroup2 is in LOGGING state.
 CONTEXT:  PL/pgSQL function emaj._alter_exec(bigint,text) line 37 at RAISE
 SQL statement "SELECT emaj._alter_exec(v_timeId, v_callingFunction)"
-PL/pgSQL function emaj._alter_groups(text[],boolean,text,text,bigint) line 60 at PERFORM
+PL/pgSQL function emaj._alter_groups(text[],boolean,text,text,bigint) line 47 at PERFORM
 SQL statement "SELECT v_nbRel FROM emaj._alter_groups(v_groups, TRUE, 'IMPORT_%', 'IMPORT_GROUPS', v_timeId)"
 PL/pgSQL function emaj._import_groups_conf_exec(json,text[]) line 55 at PERFORM
 PL/pgSQL function emaj._import_groups_conf(json,text[],boolean,text) line 79 at RETURN

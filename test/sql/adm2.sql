@@ -104,47 +104,8 @@ select col51, col52, col53, col54, emaj_verb, emaj_tuple, emaj_gid from emaj_mys
 select col61, col62, col63, col64, col65, col66, emaj_verb, emaj_tuple, emaj_gid from emaj_mySchema2.myTbl6_log order by emaj_gid, emaj_tuple desc;
 
 -----------------------------
--- Step 9 : test the emaj_alter_group() and emaj_alter_groups() functions with the audit-only phil's group#3, group and a mix of rollbackable and audit-only groups
+-- Step 9 : delete step
 -----------------------------
--- create the audit-only group empty and then populate it with tables and sequences
-select emaj.emaj_create_group('phil''s group#3",',false,true);
-select emaj.emaj_assign_tables('phil''s schema3', '.*', 'mytbl4', 'phil''s group#3",');
-select emaj.emaj_assign_sequences('phil''s schema3', '.*', '', 'phil''s group#3",');
-
--- disable event triggers for this step to allow an application table structure change
-select emaj.emaj_disable_protection_by_event_triggers();
-
-reset role;
-alter table "phil's schema3"."phil's tbl1" alter column "phil's col12" type char(11);
-
-set role emaj_regression_tests_adm_user;
-update emaj.emaj_group_def set grpdef_priority = 1, grpdef_log_idx_tsp = 'tsplog1'
-  where grpdef_schema = 'phil''s schema3' and grpdef_tblseq = E'myTbl2\\';
-select emaj.emaj_alter_group('phil''s group#3",');
-select emaj.emaj_start_group('phil''s group#3",','M1_after_alter_group');
-select emaj.emaj_stop_group('phil''s group#3",');
-
-reset role;
-alter table "phil's schema3"."phil's tbl1" alter column "phil's col12" type char(10);
-
-set role emaj_regression_tests_adm_user;
-
-select emaj.emaj_enable_protection_by_event_triggers();
-select emaj.emaj_create_group('myGroup4');
-
-update emaj.emaj_group_def set grpdef_priority = NULL, grpdef_log_idx_tsp = NULL
-  where grpdef_schema = 'phil''s schema3' and grpdef_tblseq = E'myTbl2\\';
-update emaj.emaj_group_def set grpdef_priority = 999
-  where grpdef_schema = 'myschema4' and grpdef_tblseq = 'mytblm';
-
-select emaj.emaj_alter_groups('{"phil''s group#3\",","myGroup4"}');
-
-select emaj.emaj_drop_group('phil''s group#3",');
-select emaj.emaj_drop_group('myGroup4');
------------------------------
--- Checking step 9
------------------------------
-select * from emaj.emaj_alter_plan where altr_time_id > 10000 order by 1,2,3,4,5;
 
 -----------------------------
 -- Step 10 : for phil''s group#3", recreate the group as rollbackable, update tables, 
@@ -338,31 +299,29 @@ set role emaj_regression_tests_adm_user;
 -----------------------------
 select emaj.emaj_stop_group('phil''s group#3",');
 
--- rename the "phil's tbl1" table and alter its group
+-- remove the "phil's tbl1" table, rename it and reassign it to its group
+select emaj.emaj_remove_table('phil''s schema3','phil''s tbl1');
+
 reset role;
 alter table "phil's schema3"."phil's tbl1" rename to table_with_very_looooooooooooooooooooooooooooooooooooooong_name;
 
 set role emaj_regression_tests_adm_user;
-update emaj.emaj_group_def set grpdef_tblseq = 'table_with_very_looooooooooooooooooooooooooooooooooooooong_name'
-  where grpdef_schema = 'phil''s schema3' and grpdef_tblseq = 'phil''s tbl1';
-select emaj.emaj_alter_group('phil''s group#3",');
+select emaj.emaj_assign_table('phil''s schema3', 'table_with_very_looooooooooooooooooooooooooooooooooooooong_name', 'phil''s group#3",');
 
 -- use the table and its group
-select emaj.emaj_start_group('phil''s group#3",','M1_after_alter_group');
+select emaj.emaj_start_group('phil''s group#3",','M1_after_table_rename');
 
 update "phil's schema3".table_with_very_looooooooooooooooooooooooooooooooooooooong_name set "phil's col12" = 'GHI' where "phil's col11" between 6 and 9;
 select emaj.emaj_set_mark_group('phil''s group#3",','M2');
 delete from "phil's schema3".table_with_very_looooooooooooooooooooooooooooooooooooooong_name where "phil's col11" > 18;
 
-select * from emaj.emaj_rollback_group('phil''s group#3",','M1_after_alter_group',false) order by 1,2;
+select * from emaj.emaj_rollback_group('phil''s group#3",','M1_after_table_rename',false) order by 1,2;
 select emaj.emaj_stop_group('phil''s group#3",');
 select emaj.emaj_drop_group('phil''s group#3",');
 
 --
 reset role;
 alter table "phil's schema3".table_with_very_looooooooooooooooooooooooooooooooooooooong_name rename to "phil's tbl1";
-update emaj.emaj_group_def set grpdef_tblseq = 'phil''s tbl1'
-  where grpdef_schema = 'phil''s schema3' and grpdef_tblseq = 'table_with_very_looooooooooooooooooooooooooooooooooooooong_name';
 
 -----------------------------
 -- Step 14 : test use of groups or marks protection

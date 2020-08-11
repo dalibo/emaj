@@ -61,7 +61,7 @@ select count(*) from emaj.emaj_relation;
 select count(*) from emaj.emaj_rel_hist;
  count 
 -------
-   125
+   106
 (1 row)
 
 select count(*) from emaj.emaj_mark;
@@ -275,7 +275,7 @@ select hist_function, hist_event, hist_wording
   hist_function  | hist_event |                                                        hist_wording                                                         
 -----------------+------------+-----------------------------------------------------------------------------------------------------------------------------
  PURGE_HISTORIES | BEGIN      | Retention delay @ 0
- PURGE_HISTORIES |            | 20 emaj_hist rows deleted ; 140 relation history rows deleted ; 91 alter groups events deleted ; 37 rollback events deleted
+ PURGE_HISTORIES |            | 20 emaj_hist rows deleted ; 121 relation history rows deleted ; 61 alter groups events deleted ; 37 rollback events deleted
  PURGE_HISTORIES | END        | 
 (3 rows)
 

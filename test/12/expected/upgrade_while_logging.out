@@ -1229,7 +1229,7 @@ select * from emaj.emaj_global_seq;
 select * from emaj.emaj_hist_hist_id_seq;
  last_value | log_cnt | is_called 
 ------------+---------+-----------
-        136 |      29 | t
+        138 |      27 | t
 (1 row)
 
 select * from emaj.emaj_time_stamp_time_id_seq;

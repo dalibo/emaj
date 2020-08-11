@@ -230,13 +230,11 @@ Une forme particulière de la fonction permet de créer un groupe de tables vide
 
    SELECT emaj.emaj_create_group('<nom.du.groupe>', <est.rollbackable>, <est.vide>);
 
-Le troisième paramètre prend la valeur *faux* par défaut. Si le paramètre est valorisé à *vrai*, le groupe peut être référencé dans la table *emaj_group_def*. Mais dans ce cas, le contenu de la table *emaj_group_def* est ignoré. Une fois créé, un groupe vide peut ensuite être peuplé, à l’aide de la fonction :doc:`emaj_alter_group() <alterGroups>` ou des fonctions d’:ref:`ajustement dynamique des groupes de tables <dynamic_ajustment>`.
+Le troisième paramètre prend la valeur *faux* par défaut. Si le paramètre est valorisé à *vrai*, le groupe peut être référencé dans la table *emaj_group_def*. Mais dans ce cas, le contenu de la table *emaj_group_def* est ignoré. Une fois créé, un groupe vide peut ensuite être peuplé, à l’aide des fonctions d’:ref:`ajustement dynamique des groupes de tables <dynamic_ajustment>`.
 
 Toutes les actions enchaînées par la fonction *emaj_create_group()* sont exécutées au sein d'une unique transaction. En conséquence, si une erreur survient durant l'opération, toutes les tables, fonctions et triggers déjà créés par la fonction sont annulées.
 
 En enregistrant la composition du groupe dans une autre table interne (*emaj_relation*), la fonction *emaj_create_group()* en fige sa définition pour les autres fonctions E-Maj, même si le contenu de la table *emaj_group_def* est modifié entre temps.
-
-Un groupe créé peut être modifié par la fonction :doc:`emaj_alter_group() <alterGroups>`.
 
 
 .. _emaj_drop_group:

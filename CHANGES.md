@@ -5,6 +5,7 @@ E-Maj - Change log
 ###Enhancements:###
   * Remove the old deprecated versions of E-Maj rollback functions that only
     returned an integer.
+  * Remove the emaj_alter_group() and emaj_alter_groups() functions.
 
 ###Bug fixes:###
 

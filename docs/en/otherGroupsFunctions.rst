@@ -79,7 +79,7 @@ The *emaj_force_stop_group()* function performs the same actions as the :ref:`em
 * it supports the lack of table or E-Maj trigger to deactivate, generating a “warning” message in such a case,
 * it does NOT set a stop mark.
 
-Once the function is completed, the tables group is in *IDLE* state. It may then be altered or dropped, using the :ref:`emaj_alter_group() <emaj_alter_group>` or :ref:`emaj_drop_group() <emaj_drop_group>` functions.
+Once the function is completed, the tables group is in *IDLE* state. It may then be dropped, using the :ref:`emaj_drop_group() <emaj_drop_group>` functions.
 
 It is recommended to only use this function if it is really needed.
 

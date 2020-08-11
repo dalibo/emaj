@@ -32,11 +32,9 @@ begin;
   select emaj.emaj_start_group('myGroup4','M1');
   select emaj.emaj_set_mark_group('myGroup4','M2');
   select emaj.emaj_set_mark_group('myGroup4','M3');
-  select emaj.emaj_alter_group('myGroup4','M4');
-  select emaj.emaj_alter_group('myGroup4','M5');
+  select emaj.emaj_stop_group('myGroup4','M4');
+  select emaj.emaj_start_group('myGroup4','M5',false);
   select emaj.emaj_stop_group('myGroup4','M6');
-  select emaj.emaj_start_group('myGroup4','M7',false);
-  select emaj.emaj_stop_group('myGroup4','M8');
 commit;
 select * from emaj.emaj_mark where mark_group = 'myGroup4' order by mark_time_id, mark_group;
 
@@ -59,15 +57,13 @@ CREATE TABLE IF NOT EXISTS mySchema4.myPartP3 (PRIMARY KEY (col1)) INHERITS (myS
 grant all on mySchema4.myPartP3 to emaj_regression_tests_adm_user;
 
 set role emaj_regression_tests_adm_user;
-insert into emaj.emaj_group_def values ('myGroup4','myschema4','mypartp3');
-insert into emaj.emaj_group_def values ('myGroup4','myschema4','mytblp_col3_seq');
-select emaj.emaj_alter_group('myGroup4','Add partition 3');
+select emaj.emaj_assign_table('myschema4','mypartp3','myGroup4',null,'Add partition 3');
+select emaj.emaj_assign_sequence('myschema4','mytblp_col3_seq','myGroup4','Add partition 3_seq');
 insert into mySchema4.myTblP values (11,'Stored in partition 3');
 
--- remove an obsolete partition ; in passing also remove the sequence linke to the serial column of the mother table
-delete from emaj.emaj_group_def where grpdef_schema = 'myschema4' and grpdef_tblseq = 'mypartp1';
-delete from emaj.emaj_group_def where grpdef_schema = 'myschema4' and grpdef_tblseq = 'mytblp_col3_seq';
-select emaj.emaj_alter_group('myGroup4','Remove partition 1');
+-- remove an obsolete partition ; in passing also remove the sequence linked to the serial column of the mother table
+select emaj.emaj_remove_table('myschema4','mypartp1','Remove partition 1');
+select emaj.emaj_remove_sequence('myschema4','mytblp_col3_seq','Remove partition 1_seq');
 
 reset role;
 drop table mySchema4.myPartP1;
@@ -138,11 +134,9 @@ set role emaj_regression_tests_adm_user;
 
 select * from emaj.emaj_verify_all();
 
-delete from emaj.emaj_group_def where grpdef_schema = 'phil''s schema3' and grpdef_tblseq = 'mytbl4';
-select emaj.emaj_alter_group('phil''s group#3",','remove_the_damaged_table');
+select emaj.emaj_remove_table('phil''s schema3','mytbl4','remove_the_damaged_table');
 
-insert into emaj.emaj_group_def values ('phil''s group#3",','phil''s schema3','mytbl4');
-select emaj.emaj_alter_group('phil''s group#3",','re_add_the_table');
+select emaj.emaj_assign_table('phil''s schema3', 'mytbl4', 'phil''s group#3",', null, 're_add_the_table');
 
 select * from emaj.emaj_relation where rel_schema = 'phil''s schema3' and rel_tblseq = 'mytbl4' order by rel_time_range;
 
@@ -154,11 +148,9 @@ drop table "emaj_phil's schema3".mytbl4_log;
 set role emaj_regression_tests_adm_user;
 select * from emaj.emaj_verify_all();
 
-delete from emaj.emaj_group_def where grpdef_schema = 'phil''s schema3' and grpdef_tblseq = 'mytbl4';
-select emaj.emaj_alter_group('phil''s group#3",','remove_the_damaged_table_2');
+select emaj.emaj_remove_table('phil''s schema3','mytbl4','remove_the_damaged_table_2');
 
-insert into emaj.emaj_group_def values ('phil''s group#3",','phil''s schema3','mytbl4');
-select emaj.emaj_alter_group('phil''s group#3",','re_add_the_table_2');
+select emaj.emaj_assign_table('phil''s schema3', 'mytbl4', 'phil''s group#3",', null, 're_add_the_table_2');
 
 select rel_schema, rel_tblseq, rel_time_range, rel_group, rel_kind
   from emaj.emaj_relation where rel_schema = 'phil''s schema3' and rel_tblseq = 'mytbl4' order by rel_time_range;
@@ -173,29 +165,24 @@ alter sequence "phil's schema3"."phil's seq\1" rename to "phil's seq\1_sav";
 
 set role emaj_regression_tests_adm_user;
 
--- try to set a mark or alter the group
+-- try to set a mark
 begin;
   select emaj.emaj_set_mark_group('phil''s group#3",','should fails');
 rollback;
-begin;
-  select emaj.emaj_alter_group('phil''s group#3",','should also fails');
-rollback;
 
-delete from emaj.emaj_group_def where grpdef_schema = 'phil''s schema3' and grpdef_tblseq = 'mytbl4';
-delete from emaj.emaj_group_def where grpdef_schema = 'phil''s schema3' and grpdef_tblseq = 'phil''s seq\1';
-select emaj.emaj_alter_group('phil''s group#3",','remove_the_dropped_table_and_seq');
+select emaj.emaj_remove_table('phil''s schema3','mytbl4','remove_the_dropped_table');
+select emaj.emaj_remove_sequence('phil''s schema3','phil''s seq\1','remove_the_dropped_seq');
 
 -- check that the log table does not exist anymore
-select count(*) from emaj."phil's schema3_mytbl4_log";
+select count(*) from "emaj_phil's schema3".mytbl4_log;
 
 -- revert the changes
-insert into emaj.emaj_group_def values ('phil''s group#3",','phil''s schema3','mytbl4');
-insert into emaj.emaj_group_def values ('phil''s group#3",','phil''s schema3','phil''s seq\1');
 reset role;
 alter table "phil's schema3".mytbl4_sav rename to mytbl4;
 alter table "phil's schema3".mytbl4 alter column col45 type char(10);
 alter sequence "phil's schema3"."phil's seq\1_sav" rename to "phil's seq\1";
-select emaj.emaj_alter_group('phil''s group#3",','revert_last_changes');
+select emaj.emaj_assign_table('phil''s schema3','mytbl4','phil''s group#3",',null,'revert_last_changes_tbl');
+select emaj.emaj_assign_sequence('phil''s schema3','phil''s seq\1','phil''s group#3",','revert_last_changes_seq');
 
 -- ree-nable the event triggers and drop the group
 set role emaj_regression_tests_adm_user;

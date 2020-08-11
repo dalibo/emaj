@@ -131,19 +131,15 @@ select emaj.emaj_set_mark_groups('{"myGroup1","myGroup2"}','Common');
 -----------------------------
 -- Step 5 : alter group myGroup1 by removing a table
 -----------------------------
-delete from emaj.emaj_group_def where grpdef_schema = 'myschema1' and grpdef_tblseq = 'myTbl3';
 
-reset role;
-select emaj.emaj_alter_group('myGroup1');
-set role emaj_regression_tests_adm_user;
+select emaj.emaj_remove_table('myschema1', 'myTbl3');
 
 -----------------------------
 -- Step 6 : managing a group with long name tables
 -----------------------------
 select emaj.emaj_create_group('myGroup6');
 select emaj.emaj_start_group('myGroup6', 'Start G6');
-delete from emaj.emaj_group_def where grpdef_schema = 'myschema6' and grpdef_tblseq = 'table_with_55_characters_long_name_____0_________0abcde';
-select emaj.emaj_alter_group('myGroup6');
+select emaj.emaj_remove_table('myschema6', 'table_with_55_characters_long_name_____0_________0abcde');
 select emaj.emaj_stop_group('myGroup6');
 
 -----------------------------

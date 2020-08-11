@@ -266,15 +266,12 @@ select emaj.emaj_set_mark_groups('{"myGroup1","myGroup2"}','Common');
 -----------------------------
 -- Step 5 : alter group myGroup1 by removing a table
 -----------------------------
-delete from emaj.emaj_group_def where grpdef_schema = 'myschema1' and grpdef_tblseq = 'myTbl3';
-reset role;
-select emaj.emaj_alter_group('myGroup1');
- emaj_alter_group 
-------------------
-                5
+select emaj.emaj_remove_table('myschema1', 'myTbl3');
+ emaj_remove_table 
+-------------------
+                 1
 (1 row)
 
-set role emaj_regression_tests_adm_user;
 -----------------------------
 -- Step 6 : managing a group with long name tables
 -----------------------------
@@ -302,11 +299,10 @@ select emaj.emaj_start_group('myGroup6', 'Start G6');
                 4
 (1 row)
 
-delete from emaj.emaj_group_def where grpdef_schema = 'myschema6' and grpdef_tblseq = 'table_with_55_characters_long_name_____0_________0abcde';
-select emaj.emaj_alter_group('myGroup6');
- emaj_alter_group 
-------------------
-                3
+select emaj.emaj_remove_table('myschema6', 'table_with_55_characters_long_name_____0_________0abcde');
+ emaj_remove_table 
+-------------------
+                 1
 (1 row)
 
 select emaj.emaj_stop_group('myGroup6');
@@ -376,9 +372,9 @@ select mark_group, regexp_replace(mark_name,E'\\d\\d\.\\d\\d\\.\\d\\d\\.\\d\\d\\
  myGroup2         | RLBK_M3_%_DONE  |           16 | f               | f                      |                |                         0 | M3
  myGroup1         | Common          |           17 | f               | f                      |                |                         0 | 
  myGroup2         | Common          |           17 | f               | f                      |                |                         0 | 
- myGroup1         | ALTER_%         |           18 | f               | f                      |                |                         0 | 
+ myGroup1         | REMOVE_%        |           18 | f               | f                      |                |                         0 | 
  myGroup6         | Start G6        |           20 | t               | f                      |                |                         0 | 
- myGroup6         | ALTER_%         |           21 | t               | f                      |                |                         0 | 
+ myGroup6         | REMOVE_%        |           21 | t               | f                      |                |                         0 | 
  myGroup6         | STOP_%          |           22 | t               | f                      |                |                         0 | 
 (17 rows)
 
@@ -499,7 +495,7 @@ select sqhl_schema, sqhl_table, sqhl_begin_time_id, sqhl_end_time_id, sqhl_hole_
 select * from emaj.emaj_alter_plan order by 1,2,3,4,5;
  altr_time_id | altr_step  | altr_schema |                       altr_tblseq                       | altr_group | altr_priority | altr_group_is_logging | altr_new_group | altr_new_group_is_logging | altr_rlbk_id 
 --------------+------------+-------------+---------------------------------------------------------+------------+---------------+-----------------------+----------------+---------------------------+--------------
-           18 | REMOVE_TBL | myschema1   | myTbl3                                                  | myGroup1   |            10 | t                     |                |                           |             
+           18 | REMOVE_TBL | myschema1   | myTbl3                                                  | myGroup1   |               | t                     |                |                           |             
            21 | REMOVE_TBL | myschema6   | table_with_55_characters_long_name_____0_________0abcde | myGroup6   |               | t                     |                |                           |             
 (2 rows)
 

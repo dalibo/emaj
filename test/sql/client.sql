@@ -37,9 +37,8 @@ delete from emaj.emaj_param where param_key = 'dblink_user_password';
 insert into emaj.emaj_param (param_key, param_value_text) 
   values ('dblink_user_password','user=postgres password=postgres');
 
--- unlogged rollback for 2 groups in strict mode, after having performed an alter group operation
-update emaj.emaj_group_def set grpdef_priority = 1 where grpdef_schema = 'myschema1' and grpdef_tblseq = 'mytbl1';
-select emaj.emaj_alter_group('myGroup1');
+-- unlogged rollback for 2 groups in strict mode, after having performed a group configuration change
+select emaj.emaj_modify_table('myschema1', 'mytbl1', '{"priority": 2}'::jsonb);
 \! ${EMAJ_DIR}/client/emajParallelRollback.php -h localhost -d regression -g "myGroup1,myGroup2" -m Multi-1 -s 3 -l
 
 -- unlogged rollback for 2 groups in unstrict mode
@@ -137,9 +136,8 @@ delete from emaj.emaj_param where param_key = 'dblink_user_password';
 insert into emaj.emaj_param (param_key, param_value_text) 
   values ('dblink_user_password','user=postgres password=postgres');
 
--- unlogged rollback for 2 groups in strict mode, after having performed an alter group operation
-update emaj.emaj_group_def set grpdef_priority = 1 where grpdef_schema = 'myschema1' and grpdef_tblseq = 'mytbl1';
-select emaj.emaj_alter_group('myGroup1');
+-- unlogged rollback for 2 groups in strict mode, after having performed a group configuration change
+select emaj.emaj_modify_table('myschema1', 'mytbl1', '{"priority": 1}'::jsonb);
 \! ${EMAJ_DIR}/client/emajParallelRollback.pl -h localhost -d regression -g "myGroup1,myGroup2" -m Multi-1 -s 3 -l
 
 -- unlogged rollback for 2 groups in unstrict mode

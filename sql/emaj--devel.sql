@@ -5210,58 +5210,6 @@ $_drop_group$
   END;
 $_drop_group$;
 
-CREATE OR REPLACE FUNCTION emaj.emaj_alter_group(v_groupName TEXT, v_mark TEXT DEFAULT 'ALTER_%')
-RETURNS INT LANGUAGE plpgsql AS
-$emaj_alter_group$
--- This function alters a tables group.
--- Input: group name
---        an optional mark name, used with groups in logging state
--- Output: number of tables and sequences belonging to the group after the operation
-  DECLARE
-    v_timeId                 BIGINT;
-    v_nbRel                  INT;
-  BEGIN
--- insert begin in the history
-    INSERT INTO emaj.emaj_hist (hist_function, hist_event, hist_object)
-      VALUES ('ALTER_GROUP', 'BEGIN', v_groupName);
--- alter the group
-    SELECT * INTO v_timeId, v_nbRel
-      FROM emaj._alter_groups(ARRAY[v_groupName], FALSE, v_mark, 'ALTER_GROUP'::TEXT, NULL);
--- insert end in the history
-    INSERT INTO emaj.emaj_hist (hist_function, hist_event, hist_object, hist_wording)
-      VALUES ('ALTER_GROUP', 'END', v_groupName, 'Timestamp Id : ' || v_timeId );
-    RETURN v_nbRel;
-  END;
-$emaj_alter_group$;
-COMMENT ON FUNCTION emaj.emaj_alter_group(TEXT, TEXT) IS
-$$Alter an E-Maj group.$$;
-
-CREATE OR REPLACE FUNCTION emaj.emaj_alter_groups(v_groupNames TEXT[], v_mark TEXT DEFAULT 'ALTER_%')
-RETURNS INT LANGUAGE plpgsql AS
-$emaj_alter_groups$
--- This function alters several tables groups.
--- Input: group names array
---        an optional mark name, used with groups in logging state
--- Output: number of tables and sequences belonging to the groups after the operation
-  DECLARE
-    v_timeId                 BIGINT;
-    v_nbRel                  INT;
-  BEGIN
--- insert begin in the history
-    INSERT INTO emaj.emaj_hist (hist_function, hist_event, hist_object)
-      VALUES ('ALTER_GROUPS', 'BEGIN', array_to_string(v_groupNames,','));
--- alter the group
-    SELECT * INTO v_timeId, v_nbRel
-      FROM emaj._alter_groups(v_groupNames, TRUE, v_mark, 'ALTER_GROUPS'::TEXT, NULL);
--- insert end in the history
-    INSERT INTO emaj.emaj_hist (hist_function, hist_event, hist_object, hist_wording)
-      VALUES ('ALTER_GROUPS', 'END', array_to_string(v_groupNames,','), 'Timestamp Id : ' || v_timeId );
-    RETURN v_nbRel;
-  END;
-$emaj_alter_groups$;
-COMMENT ON FUNCTION emaj.emaj_alter_groups(TEXT[], TEXT) IS
-$$Alter several E-Maj groups.$$;
-
 CREATE OR REPLACE FUNCTION emaj._alter_groups(v_groupNames TEXT[], v_multiGroup BOOLEAN, v_mark TEXT, v_callingFunction TEXT,
                                               INOUT v_timeId BIGINT, OUT v_nbRel INT)
 RETURNS RECORD LANGUAGE plpgsql AS
@@ -5284,19 +5232,6 @@ $_alter_groups$
     SELECT emaj._check_group_names(v_groupNames := v_groupNames, v_mayBeNull := v_multiGroup, v_lockGroups := TRUE, v_checkList := '')
       INTO v_groupNames;
     IF v_groupNames IS NOT NULL THEN
--- performs various checks on the groups content described in the emaj_group_def table
-      FOR r IN
-        SELECT rpt_message FROM emaj._check_conf_groups(v_groupNames), emaj.emaj_group
-          WHERE rpt_text_var_1 = group_name
-            AND ((group_is_rollbackable AND rpt_severity <= 2)
-              OR (NOT group_is_rollbackable AND rpt_severity <= 1))
-          ORDER BY rpt_msg_type, rpt_text_var_1, rpt_text_var_2, rpt_text_var_3
-      LOOP
-        RAISE WARNING '_alter_groups: %', r.rpt_message;
-      END LOOP;
-      IF FOUND THEN
-        RAISE EXCEPTION '_alter_groups: One or several errors have been detected in the emaj_group_def table content.';
-      END IF;
 -- build the list of groups that are in logging state
       SELECT array_agg(group_name ORDER BY group_name) INTO v_loggingGroups FROM emaj.emaj_group
         WHERE group_name = ANY(v_groupNames) AND group_is_logging;
@@ -5956,7 +5891,7 @@ CREATE OR REPLACE FUNCTION emaj._import_groups_conf_prepare(v_groupsJson JSON, v
                                                     v_allowGroupsUpdate BOOLEAN, v_location TEXT)
 RETURNS SETOF emaj._report_message_type LANGUAGE plpgsql AS
 $_import_groups_conf_prepare$
--- This function prepare the effective tables groups configuration import.
+-- This function prepares the effective tables groups configuration import.
 -- It is called by _import_groups_conf() and by emaj_web
 -- At the end of the function, the emaj_group_def table is updated with the new configuration of groups
 --   and a temporary table is created to prepare the application triggers management
@@ -6101,7 +6036,7 @@ $_import_groups_conf_prepare$;
 CREATE OR REPLACE FUNCTION emaj._import_groups_conf_exec(v_json JSON, v_groups TEXT[])
 RETURNS INT LANGUAGE plpgsql AS
 $_import_groups_conf_exec$
--- This function complete a tables groups configuration import.
+-- This function completes a tables groups configuration import.
 -- It is called by _import_groups_conf() and by emaj_web
 -- Non existing groups are created empty.
 -- The _alter_groups() function is used to process the assignement, the move, the removal or the attributes change for tables and

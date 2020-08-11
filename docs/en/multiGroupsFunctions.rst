@@ -21,8 +21,6 @@ The following table lists the multi-groups functions, with their relative mono-g
 +------------------------------------------+---------------------------------------------------------------------------+
 | Multi-groups functions                   | Relative mono-group function                                              |
 +==========================================+===========================================================================+
-| **emaj.emaj_alter_groups()**             | :ref:`emaj.emaj_alter_group() <emaj_alter_group>`                         |
-+------------------------------------------+---------------------------------------------------------------------------+
 | **emaj.emaj_start_groups()**             | :ref:`emaj.emaj_start_group() <emaj_start_group>`                         |
 +------------------------------------------+---------------------------------------------------------------------------+
 | **emaj.emaj_stop_groups()**              | :ref:`emaj.emaj_stop_group() <emaj_stop_group>`                           |

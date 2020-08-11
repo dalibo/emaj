@@ -614,7 +614,7 @@ select count(*) from emaj.emaj_relation;
 select count(*) from emaj.emaj_rel_hist;
  count 
 -------
-   125
+   106
 (1 row)
 
 select count(*) from emaj.emaj_mark;
@@ -816,8 +816,6 @@ select emaj.emaj_drop_group('myGroup1');
 ERROR:  permission denied for function emaj_drop_group
 select emaj.emaj_force_drop_group('myGroup1');
 ERROR:  permission denied for function emaj_force_drop_group
-select emaj.emaj_alter_group('myGroup1');
-ERROR:  permission denied for function emaj_alter_group
 select emaj.emaj_sync_def_group('myGroup1');
 ERROR:  permission denied for function emaj_sync_def_group
 select emaj.emaj_export_groups_configuration();

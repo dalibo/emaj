@@ -21,8 +21,6 @@ Le tableau suivant liste les fonctions multi-groupes existantes et leur fonction
 +------------------------------------------+---------------------------------------------------------------------------+
 | Fonctions multi-groups                   | Fonctions mono-groupe jumelles                                            |
 +==========================================+===========================================================================+
-| **emaj.emaj_alter_groups()**             | :ref:`emaj.emaj_alter_group() <emaj_alter_group>`                         |
-+------------------------------------------+---------------------------------------------------------------------------+
 | **emaj.emaj_start_groups()**             | :ref:`emaj.emaj_start_group() <emaj_start_group>`                         |
 +------------------------------------------+---------------------------------------------------------------------------+
 | **emaj.emaj_stop_groups()**              | :ref:`emaj.emaj_stop_group() <emaj_stop_group>`                           |

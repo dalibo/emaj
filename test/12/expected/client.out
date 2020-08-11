@@ -37,12 +37,11 @@ CONTEXT:  PL/pgSQL function emaj._rlbk_init(text[],text,boolean,integer,boolean,
 Call of _rlbk_init() function failed 
 insert into emaj.emaj_param (param_key, param_value_text) 
   values ('dblink_user_password','user=postgres password=postgres');
--- unlogged rollback for 2 groups in strict mode, after having performed an alter group operation
-update emaj.emaj_group_def set grpdef_priority = 1 where grpdef_schema = 'myschema1' and grpdef_tblseq = 'mytbl1';
-select emaj.emaj_alter_group('myGroup1');
- emaj_alter_group 
-------------------
-                7
+-- unlogged rollback for 2 groups in strict mode, after having performed a group configuration change
+select emaj.emaj_modify_table('myschema1', 'mytbl1', '{"priority": 2}'::jsonb);
+ emaj_modify_table 
+-------------------
+                 1
 (1 row)
 
 \! ${EMAJ_DIR}/client/emajParallelRollback.php -h localhost -d regression -g "myGroup1,myGroup2" -m Multi-1 -s 3 -l
@@ -199,21 +198,20 @@ CONTEXT:  PL/pgSQL function emaj._rlbk_init(text[],text,boolean,integer,boolean,
 -----------------------------------------------------------
 insert into emaj.emaj_param (param_key, param_value_text) 
   values ('dblink_user_password','user=postgres password=postgres');
--- unlogged rollback for 2 groups in strict mode, after having performed an alter group operation
-update emaj.emaj_group_def set grpdef_priority = 1 where grpdef_schema = 'myschema1' and grpdef_tblseq = 'mytbl1';
-select emaj.emaj_alter_group('myGroup1');
- emaj_alter_group 
-------------------
-                7
+-- unlogged rollback for 2 groups in strict mode, after having performed a group configuration change
+select emaj.emaj_modify_table('myschema1', 'mytbl1', '{"priority": 1}'::jsonb);
+ emaj_modify_table 
+-------------------
+                 1
 (1 row)
 
 \! ${EMAJ_DIR}/client/emajParallelRollback.pl -h localhost -d regression -g "myGroup1,myGroup2" -m Multi-1 -s 3 -l
+DBD::Pg::st execute failed: ERROR:  _rlbk_check: This rollback operation would cross some previously executed alter group operations, which is not allowed by the current function parameters.
+CONTEXT:  PL/pgSQL function emaj._rlbk_check(text[],text,boolean,boolean) line 47 at RAISE
+SQL statement "SELECT emaj._rlbk_check(v_groupNames, v_mark, v_isAlterGroupAllowed, FALSE)"
+PL/pgSQL function emaj._rlbk_init(text[],text,boolean,integer,boolean,boolean) line 23 at SQL statement at /home/postgres/proj/emaj/client/emajParallelRollback.pl line 135.
  E-Maj (version <devel>) - launching parallel rollbacks
 -----------------------------------------------------------
-==> Logged rollback to mark 'Multi-1' is now in progress with 3 sessions...
-==> Logged rollback completed.
-    Notice: 10 / 11 tables effectively processed.
-    Notice: 4 sequences processed.
 -- unlogged rollback for 2 groups in unstrict mode
 \! ${EMAJ_DIR}/client/emajParallelRollback.pl -h localhost -d regression -g "myGroup1,myGroup2" -m Multi-1 -s 3 -l -a
  E-Maj (version <devel>) - launching parallel rollbacks
@@ -222,6 +220,7 @@ select emaj.emaj_alter_group('myGroup1');
 ==> Logged rollback completed.
     Notice: 10 / 11 tables effectively processed.
     Notice: 4 sequences processed.
+    Warning: Tables group change not rolled back: E-Maj priority for myschema1.mytbl1
 -- logged rollback for a single group and a single session
 \! ${EMAJ_DIR}/client/emajParallelRollback.pl -h localhost -d regression -g myGroup1 -m Multi-1 -s 1 -a
  E-Maj (version <devel>) - launching parallel rollbacks
@@ -280,11 +279,11 @@ insert into emaj.emaj_rlbk (rlbk_id, rlbk_groups, rlbk_mark, rlbk_mark_time_id, 
  E-Maj (version <devel>) - Monitoring rollbacks activity
 -----------------------------------------------------------
 [current date and time]
-** rollback 20201 started at [rollback start time] for groups {myGroup1,myGroup2}
+** rollback 20200 started at [rollback start time] for groups {myGroup1,myGroup2}
    status: COMMITTED ; ended at [rollback end time]
    rollback to mark: "Multi-1" set at [mark time]
    3 session(s) to process 10 table(s) and 4 sequence(s)
-** rollback 20202 started at [rollback start time] for groups {myGroup1}
+** rollback 20201 started at [rollback start time] for groups {myGroup1}
    status: COMMITTED ; ended at [rollback end time]
    rollback to mark: "Multi-1" set at [mark time]
    1 session(s) to process 4 table(s) and 2 sequence(s)
@@ -313,11 +312,11 @@ insert into emaj.emaj_rlbk (rlbk_id, rlbk_groups, rlbk_mark, rlbk_mark_time_id, 
    rollback to mark: mark20303 set at [mark time]
    1 session(s) to process 3 table(s) and 4 sequence(s)
 [current date and time]
-** rollback 20201 started at [rollback start time] for groups {myGroup1,myGroup2}
+** rollback 20200 started at [rollback start time] for groups {myGroup1,myGroup2}
    status: COMMITTED ; ended at [rollback end time]
    rollback to mark: "Multi-1" set at [mark time]
    3 session(s) to process 10 table(s) and 4 sequence(s)
-** rollback 20202 started at [rollback start time] for groups {myGroup1}
+** rollback 20201 started at [rollback start time] for groups {myGroup1}
    status: COMMITTED ; ended at [rollback end time]
    rollback to mark: "Multi-1" set at [mark time]
    1 session(s) to process 4 table(s) and 2 sequence(s)
