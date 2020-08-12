@@ -1015,15 +1015,15 @@ select time_id, time_last_emaj_gid, time_event from emaj.emaj_time_stamp order b
 (22 rows)
 
 select group_name, group_is_rollbackable, group_creation_time_id,
-       group_last_alter_time_id, group_has_waiting_changes, group_is_logging, 
+       group_last_alter_time_id, group_is_logging, 
        group_is_rlbk_protected, group_nb_table, group_nb_sequence, group_comment
   from emaj.emaj_group order by group_name;
-    group_name    | group_is_rollbackable | group_creation_time_id | group_last_alter_time_id | group_has_waiting_changes | group_is_logging | group_is_rlbk_protected | group_nb_table | group_nb_sequence | group_comment 
-------------------+-----------------------+------------------------+--------------------------+---------------------------+------------------+-------------------------+----------------+-------------------+---------------
- myGroup1         | t                     |                      1 |                       18 | f                         | t                | t                       |              4 |                 1 | 
- myGroup2         | t                     |                      2 |                          | f                         | t                | f                       |              4 |                 2 | 
- myGroup6         | t                     |                     19 |                       21 | f                         | f                | f                       |              3 |                 0 | 
- phil's group#3", | f                     |                      3 |                          | f                         | t                | t                       |              2 |                 1 | 
+    group_name    | group_is_rollbackable | group_creation_time_id | group_last_alter_time_id | group_is_logging | group_is_rlbk_protected | group_nb_table | group_nb_sequence | group_comment 
+------------------+-----------------------+------------------------+--------------------------+------------------+-------------------------+----------------+-------------------+---------------
+ myGroup1         | t                     |                      1 |                       18 | t                | t                       |              4 |                 1 | 
+ myGroup2         | t                     |                      2 |                          | t                | f                       |              4 |                 2 | 
+ myGroup6         | t                     |                     19 |                       21 | f                | f                       |              3 |                 0 | 
+ phil's group#3", | f                     |                      3 |                          | t                | t                       |              2 |                 1 | 
 (4 rows)
 
 select mark_group, regexp_replace(mark_name,E'\\d\\d\.\\d\\d\\.\\d\\d\\.\\d\\d\\d\\d','%','g'), mark_time_id, 

@@ -242,23 +242,3 @@ Naturellement, une fois la table sortie de son groupe, le contenu des logs assoc
 Néanmoins, si la séquence de log est absente (cas de figure hautement improbable) et que le groupe de tables est en état *LOGGING*, la réparation nécessite de :ref:`forcer l'arrêt du groupe<emaj_force_stop_group>` avant de sortir puis réassigner la table.
 
 Il peut arriver également qu’une table ou séquence applicative soit supprimée accidentellement avant d’avoir été sortie de son groupe de tables. Dans ce cas, on pourra sortir à posteriori cette table ou cette séquence de son groupe de tables, même si celui-ci est actif en exécutant uniquement la fonction *emaj_remove_table()* ou *emaj_remove_sequence()* appropriée.
-
-.. _emaj_sync_def_group:
-
-Combiner gestion dynamique des groupes de tables et configuration par emaj_group_def
-------------------------------------------------------------------------------------
-
-En principe, il faut choisir une fois pour toute la méthode de gestion du contenu des groupes de tables : gestion dynamique ou par la table de configuration *emaj_group_def*. Il est néanmoins possible de mixer les 2 méthodes.
-
-La difficulté réside alors dans le fait qu’une fois effectuées des modifications en dynamique du contenu des groupes de tables, la table *emaj_group_def* ne reflète plus la configuration courante des groupes.
-
-Pour éviter de reporter manuellement les modifications apportées en dynamique dans la table *emaj_group_def*, sans garantie de fiabilité, l’administrateur E-Maj peut, pour un groupe de tables donné, synchroniser le contenu de la table *emaj_group_def* à partir de la situation courante. Pour cela, il peut exécuter ::
-
-   SELECT emaj.emaj_sync_def_group('<groupe>');
-
-La fonction retourne le nombre de tables et séquences contenues dans le groupe de tables traité.
-
-Le schéma suivant représente les flux de modifications possibles :
-
-.. image:: images/alter_group_methods.png
-   :align: center

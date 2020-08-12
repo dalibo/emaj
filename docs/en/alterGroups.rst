@@ -236,24 +236,3 @@ Of course, once the table is removed from its group, the content of the associat
 However, if the log sequence is missing (which should never be the case) and the tables group is in *LOGGING* state, it is necessary to  :ref:`force the group’s stop<emaj_force_stop_group>` before removing and re-assigning the table.
 
 It may also happen that an application table or sequence has been accidentaly dropped. In this case, the table of sequence can be simply a posteriori removed from its group, by executing the appropriate *emaj_remove_table()* or *emaj_remove_sequence()* function.
-
-.. _emaj_sync_def_group:
-
-Combining dynamic tables groups management and configuration with emaj_group_def
---------------------------------------------------------------------------------
-
-Normally, the tables group mangement method has to be choosen first: dynamic management or use of the *emaj_group_def* configuration table. However, it is possible to mix both methods.
-
-The difficulty comes when, once dynamic changes performed on tables groups content, the *emaj_group_def* table does not reflect the configuration of the tables groups anymore.
-
-To avoid to manually report the configuration changes into the *emaj_group_def* table, with errors risk, the E-Maj administrator can synchronize the *emaj_group_def* table with the actual groups configuration, for a given tables group. To achive this, he can execute::
-
-   SELECT emaj.emaj_sync_def_group('<group>');
-
-The function returns the number of tables and sequences contained in the tables group.
-
-The schema below shows the possible change flows.
-
-.. image:: images/alter_group_methods.png
-   :align: center
-

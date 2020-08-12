@@ -1,5 +1,4 @@
 -- create_drop.sql : prepare groups content and test emaj_create_group(), emaj_comment_group(),
--- emaj_sync_def_group()
 -- emaj_assign_table(), emaj_assign_tables(), emaj_remove_table(), emaj_remove_tables(),
 -- emaj_assign_sequence(), emaj_assign_sequences(), emaj_remove_sequence(), emaj_remove_sequences(),
 -- emaj_ignore_app_trigger(), emaj_export_groups_configuration(),
@@ -170,7 +169,7 @@ select emaj.emaj_create_group('myGroup2');
 select nspname from pg_namespace where nspname like 'emaj%' order by nspname;
 
 select group_name, group_is_rollbackable, group_creation_time_id,
-       group_last_alter_time_id, group_has_waiting_changes, group_is_logging, 
+       group_last_alter_time_id, group_is_logging, 
        group_is_rlbk_protected, group_nb_table, group_nb_sequence, group_comment
   from emaj.emaj_group order by group_name;
 select * from emaj.emaj_relation order by rel_group, rel_priority, rel_schema, rel_tblseq, rel_time_range;
@@ -192,33 +191,6 @@ select emaj.emaj_comment_group('emptyGroup','an empty group');
 select group_name, group_comment from emaj.emaj_group where group_name = 'myGroup1';
 select emaj.emaj_comment_group('myGroup1',NULL);
 select group_name, group_comment from emaj.emaj_group where group_name = 'myGroup1';
-
------------------------------------
--- emaj_sync_def_group
------------------------------------
--- bad group name
-select emaj.emaj_sync_def_group(null);
-select emaj.emaj_sync_def_group('dummyGroup');
-
--- ok
-select emaj.emaj_sync_def_group('myGroup1');
-
--- resync all and check the result
-
---   export the current emaj_group_def content
-\set FILE1 :EMAJTESTTMPDIR '/file1'
-copy (select * from emaj.emaj_group_def order by grpdef_group, grpdef_schema, grpdef_tblseq) to :'FILE1';
-
---   resync all created groups
-select group_name, group_nb_table + group_nb_sequence as table_and_sequence, emaj.emaj_sync_def_group(group_name) as function_result 
-  from emaj.emaj_group order by group_name;
-
---   export the modified emaj_group_def content
-\set FILE2 :EMAJTESTTMPDIR '/file2'
-copy (select * from emaj.emaj_group_def order by grpdef_group, grpdef_schema, grpdef_tblseq) to :'FILE2';
-
---   there should not be any differences
-\! diff $EMAJTESTTMPDIR/file1 $EMAJTESTTMPDIR/file2
 
 -----------------------------------
 -- emaj_assign_table

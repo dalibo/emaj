@@ -71,6 +71,12 @@ SELECT emaj._disable_event_triggers();
 --                                          --
 ----------------------------------------------
 
+-- drop the triggers on the emaj_group_def table
+DROP TRIGGER emaj_group_def_change_trg ON emaj.emaj_group_def;
+DROP TRIGGER emaj_group_def_truncate_trg ON emaj.emaj_group_def;
+
+-- drop the group_has_waiting_changes column of the emaj_group table
+ALTER TABLE emaj.emaj_group DROP COLUMN group_has_waiting_changes;
 
 --
 -- add created or recreated tables and sequences to the list of content to save by pg_dump
@@ -94,16 +100,127 @@ SELECT emaj._disable_event_triggers();
 ------------------------------------------------------------------
 -- drop obsolete functions or functions with modified interface --
 ------------------------------------------------------------------
+DROP FUNCTION IF EXISTS emaj._emaj_group_def_change_fnct();
 DROP FUNCTION IF EXISTS emaj.emaj_alter_group(V_GROUPNAME TEXT,V_MARK TEXT);
 DROP FUNCTION IF EXISTS emaj.emaj_alter_groups(V_GROUPNAMES TEXT[],V_MARK TEXT);
+DROP FUNCTION IF EXISTS emaj.emaj_sync_def_group(V_GROUP TEXT);
 DROP FUNCTION IF EXISTS emaj.emaj_rollback_group(V_GROUPNAME TEXT,V_MARK TEXT);
 DROP FUNCTION IF EXISTS emaj.emaj_rollback_groups(V_GROUPNAMES TEXT[],V_MARK TEXT);
 DROP FUNCTION IF EXISTS emaj.emaj_logged_rollback_group(V_GROUPNAME TEXT,V_MARK TEXT);
 DROP FUNCTION IF EXISTS emaj.emaj_logged_rollback_groups(V_GROUPNAMES TEXT[],V_MARK TEXT);
+DROP FUNCTION IF EXISTS emaj._adjust_group_properties();
 
 ------------------------------------------------------------------
 -- create new or modified functions                             --
 ------------------------------------------------------------------
+CREATE OR REPLACE FUNCTION emaj.emaj_create_group(v_groupName TEXT, v_isRollbackable BOOLEAN DEFAULT TRUE,
+                                                  v_is_empty BOOLEAN DEFAULT FALSE)
+RETURNS INT LANGUAGE plpgsql AS
+$emaj_create_group$
+-- This function creates emaj objects for all tables of a group.
+-- It also creates the log E-Maj schemas when needed.
+-- Input: group name,
+--        boolean indicating whether the group is rollbackable or not (true by default),
+--        boolean explicitely indicating whether the group is empty or not
+-- Output: number of processed tables and sequences
+  DECLARE
+    v_timeId                 BIGINT;
+    v_nbTbl                  INT = 0;
+    v_nbSeq                  INT = 0;
+    r                        RECORD;
+  BEGIN
+-- insert begin in the history
+    INSERT INTO emaj.emaj_hist (hist_function, hist_event, hist_object, hist_wording)
+      VALUES ('CREATE_GROUP', 'BEGIN', v_groupName, CASE WHEN v_isRollbackable THEN 'rollbackable' ELSE 'audit_only' END);
+-- check that the group name is valid
+    IF v_groupName IS NULL OR v_groupName = '' THEN
+      RAISE EXCEPTION 'emaj_create_group: The group name can''t be NULL or empty.';
+    END IF;
+-- check that the group is not yet recorded in emaj_group table
+    PERFORM 0 FROM emaj.emaj_group WHERE group_name = v_groupName;
+    IF FOUND THEN
+      RAISE EXCEPTION 'emaj_create_group: The group "%" already exists.', v_groupName;
+    END IF;
+-- check the consistency between the emaj_group_def table content and the v_is_empty input parameter
+    PERFORM 0 FROM emaj.emaj_group_def WHERE grpdef_group = v_groupName LIMIT 1;
+    IF NOT v_is_empty AND NOT FOUND THEN
+       RAISE EXCEPTION 'emaj_create_group: The group "%" is unknown in the emaj_group_def table. To create an empty group,'
+                       ' explicitely set the third parameter to true.', v_groupName;
+    END IF;
+    IF v_is_empty AND FOUND THEN
+       RAISE WARNING 'emaj_create_group: Although the group "%" is referenced into the emaj_group_def table, it is left empty.',
+                     v_groupName;
+    END IF;
+-- performs various checks on the group's content described in the emaj_group_def table
+    IF NOT v_is_empty THEN
+      FOR r IN
+        SELECT rpt_message FROM emaj._check_conf_groups(ARRAY[v_groupName])
+          WHERE (v_isRollbackable AND rpt_severity <= 2)
+             OR (NOT v_isRollbackable AND rpt_severity <= 1)
+          ORDER BY rpt_msg_type, rpt_text_var_1, rpt_text_var_2, rpt_text_var_3
+      LOOP
+        RAISE WARNING 'emaj_create_group: error, %', r.rpt_message;
+      END LOOP;
+      IF FOUND THEN
+        RAISE EXCEPTION 'emaj_create_group: One or several errors have been detected in the emaj_group_def table content.';
+      END IF;
+    END IF;
+-- OK
+-- get the time stamp of the operation
+    SELECT emaj._set_time_stamp('C') INTO v_timeId;
+-- insert the row describing the group into the emaj_group table
+-- (The group_is_rlbk_protected boolean column is always initialized as not group_is_rollbackable)
+    INSERT INTO emaj.emaj_group (group_name, group_is_rollbackable, group_creation_time_id,
+                                 group_is_logging, group_is_rlbk_protected, group_nb_table, group_nb_sequence)
+      VALUES (v_groupName, v_isRollbackable, v_timeId, FALSE, NOT v_isRollbackable, 0, 0);
+-- populate the group
+    IF NOT v_is_empty THEN
+-- create new E-Maj log schemas, if needed
+      PERFORM emaj._create_log_schemas('CREATE_GROUP', ARRAY[v_groupName]);
+-- get and process all tables of the group (in priority order, NULLS being processed last)
+      PERFORM emaj._create_tbl(grpdef_schema, grpdef_tblseq, grpdef_group, grpdef_priority, grpdef_log_dat_tsp, grpdef_log_idx_tsp,
+                               v_timeId, v_isRollbackable, FALSE)
+        FROM (
+          SELECT grpdef_schema, grpdef_tblseq, grpdef_group, grpdef_priority, grpdef_log_dat_tsp, grpdef_log_idx_tsp
+            FROM emaj.emaj_group_def, pg_catalog.pg_class, pg_catalog.pg_namespace
+            WHERE grpdef_group = v_groupName
+              AND relnamespace = pg_namespace.oid
+              AND nspname = grpdef_schema AND relname = grpdef_tblseq
+              AND relkind = 'r'
+            ORDER BY grpdef_priority, grpdef_schema, grpdef_tblseq
+             ) AS t;
+      SELECT count(*) INTO v_nbTbl
+        FROM emaj.emaj_relation
+        WHERE rel_group = v_groupName AND rel_kind = 'r' AND upper_inf(rel_time_range);
+-- get and process all sequences of the group (in alphabetical order)
+      PERFORM emaj._create_seq(grpdef_schema, grpdef_tblseq, grpdef_group, v_timeId)
+        FROM (
+          SELECT grpdef_schema, grpdef_tblseq, grpdef_group, grpdef_priority
+            FROM emaj.emaj_group_def, pg_catalog.pg_class, pg_catalog.pg_namespace
+            WHERE grpdef_group = v_groupName
+              AND relnamespace = pg_namespace.oid
+              AND nspname = grpdef_schema AND relname = grpdef_tblseq
+              AND relkind = 'S'
+            ORDER BY grpdef_schema, grpdef_tblseq
+             ) AS t;
+      SELECT count(*) INTO v_nbSeq
+        FROM emaj.emaj_relation
+        WHERE rel_group = v_groupName AND rel_kind = 'S' AND upper_inf(rel_time_range);
+-- update tables and sequences counters in the emaj_group table
+      UPDATE emaj.emaj_group SET group_nb_table = v_nbTbl, group_nb_sequence = v_nbSeq
+        WHERE group_name = v_groupName;
+-- check foreign keys with tables outside the group
+      PERFORM emaj._check_fk_groups(array[v_groupName]);
+    END IF;
+-- insert end in the history
+    INSERT INTO emaj.emaj_hist (hist_function, hist_event, hist_object, hist_wording)
+      VALUES ('CREATE_GROUP', 'END', v_groupName, v_nbTbl + v_nbSeq || ' tables/sequences processed');
+    RETURN v_nbTbl + v_nbSeq;
+  END;
+$emaj_create_group$;
+COMMENT ON FUNCTION emaj.emaj_create_group(TEXT,BOOLEAN,BOOLEAN) IS
+$$Creates an E-Maj group.$$;
+
 CREATE OR REPLACE FUNCTION emaj._alter_groups(v_groupNames TEXT[], v_multiGroup BOOLEAN, v_mark TEXT, v_callingFunction TEXT,
                                               INOUT v_timeId BIGINT, OUT v_nbRel INT)
 RETURNS RECORD LANGUAGE plpgsql AS
@@ -158,7 +275,7 @@ $_alter_groups$
       PERFORM emaj._drop_log_schemas(v_callingFunction, FALSE);
 -- update some attributes in the emaj_group table
       UPDATE emaj.emaj_group
-        SET group_last_alter_time_id = v_timeId, group_has_waiting_changes = FALSE,
+        SET group_last_alter_time_id = v_timeId,
             group_nb_table = (SELECT count(*) FROM emaj.emaj_relation
                                 WHERE rel_group = group_name AND upper_inf(rel_time_range) AND rel_kind = 'r'),
             group_nb_sequence = (SELECT count(*) FROM emaj.emaj_relation
@@ -362,9 +479,9 @@ $_import_groups_conf_exec$
         WHERE group_name = r_group.groupJson ->> 'group';
       IF NOT FOUND THEN
         v_isRollbackable = coalesce((r_group.groupJson ->> 'is_rollbackable')::BOOLEAN, TRUE);
-        INSERT INTO emaj.emaj_group (group_name, group_is_rollbackable, group_creation_time_id, group_has_waiting_changes,
+        INSERT INTO emaj.emaj_group (group_name, group_is_rollbackable, group_creation_time_id,
                                      group_is_logging, group_is_rlbk_protected, group_nb_table, group_nb_sequence, group_comment)
-          VALUES (r_group.groupJson ->> 'group', v_isRollbackable, v_timeId, FALSE,
+          VALUES (r_group.groupJson ->> 'group', v_isRollbackable, v_timeId,
                                      FALSE, NOT v_isRollbackable, 0, 0, r_group.groupJson ->> 'comment');
         INSERT INTO emaj.emaj_hist (hist_function, hist_event, hist_object, hist_wording)
           VALUES ('IMPORT_GROUPS', 'GROUP CREATED', r_group.groupJson ->> 'group',
@@ -1389,6 +1506,83 @@ $_verify_all_groups$
     RETURN;
   END;
 $_verify_all_groups$;
+
+CREATE OR REPLACE FUNCTION emaj.emaj_verify_all()
+RETURNS SETOF TEXT LANGUAGE plpgsql AS
+$emaj_verify_all$
+-- The function verifies the consistency between all emaj objects present inside emaj schema and
+-- emaj objects related to tables and sequences referenced in the emaj_relation table.
+-- It returns a set of warning messages for discovered discrepancies. If no error is detected, a single row is returned.
+  DECLARE
+    v_errorFound             BOOLEAN = FALSE;
+    v_nbMissingEventTrigger  INT;
+    r_object                 RECORD;
+  BEGIN
+-- Global checks
+-- detect if the current postgres version is at least 9.5
+    IF emaj._pg_version_num() < 90500 THEN
+      RETURN NEXT 'Error: The current postgres version (' || version()
+               || ') is not compatible with this E-Maj version. It should be at least 9.5.';
+      v_errorFound = TRUE;
+    END IF;
+-- check all E-Maj schemas
+    FOR r_object IN
+      SELECT msg FROM emaj._verify_all_schemas() msg
+    LOOP
+      RETURN NEXT r_object.msg;
+      IF r_object.msg LIKE 'Error%' THEN
+        v_errorFound = TRUE;
+      END IF;
+    END LOOP;
+-- check all groups components
+    FOR r_object IN
+      SELECT msg FROM emaj._verify_all_groups() msg
+    LOOP
+      RETURN NEXT r_object.msg;
+      IF r_object.msg LIKE 'Error%' THEN
+        v_errorFound = TRUE;
+      END IF;
+    END LOOP;
+-- check the emaj_ignored_app_trigger table content
+    FOR r_object IN
+      SELECT 'Error: No trigger "' || trg_name || '" found for table "' || trg_schema || '"."' || trg_table
+          || '". Use the emaj_ignore_app_trigger() function to adjust the list of application triggers that should not be'
+          || ' automatically disabled at rollback time.'
+             AS msg
+        FROM (
+          SELECT trg_schema, trg_table, trg_name FROM emaj.emaj_ignored_app_trigger
+            EXCEPT
+          SELECT nspname, relname, tgname
+            FROM pg_catalog.pg_namespace, pg_catalog.pg_class, pg_catalog.pg_trigger
+            WHERE relnamespace = pg_namespace.oid AND tgrelid = pg_class.oid
+        ) AS t
+    LOOP
+      RETURN NEXT r_object.msg;
+      v_errorFound = TRUE;
+    END LOOP;
+-- report a warning if some E-Maj event triggers are missing
+    SELECT 3 - count(*)
+      INTO v_nbMissingEventTrigger FROM pg_catalog.pg_event_trigger
+      WHERE evtname IN ('emaj_protection_trg','emaj_sql_drop_trg','emaj_table_rewrite_trg');
+    IF v_nbMissingEventTrigger > 0 THEN
+      RETURN NEXT 'Warning: Some E-Maj event triggers are missing. Your database administrator may (re)create them using the'
+               || ' emaj_upgrade_after_postgres_upgrade.sql script.';
+    END IF;
+-- report a warning if some E-Maj event triggers exist but are not enabled
+    PERFORM 1 FROM pg_catalog.pg_event_trigger WHERE evtname LIKE 'emaj%' AND evtenabled = 'D';
+    IF FOUND THEN
+      RETURN NEXT 'Warning: Some E-Maj event triggers exist but are disabled. You may enable them using the'
+               || ' emaj_enable_protection_by_event_triggers() function.';
+    END IF;
+-- final message if no error has been yet detected
+    IF NOT v_errorFound THEN
+      RETURN NEXT 'No error detected';
+    END IF;
+    RETURN;
+  END;
+$emaj_verify_all$;
+COMMENT ON FUNCTION emaj.emaj_verify_all() IS
+$$Verifies the consistency between existing E-Maj and application objects.$$;
 
 --<end_functions>                                pattern used by the tool that extracts and insert the functions definition
 ------------------------------------------

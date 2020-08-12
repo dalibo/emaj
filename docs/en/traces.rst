@@ -145,8 +145,6 @@ The *hist_function* column can take the following values:
 +----------------------------------+----------------------------------------------------------------------------+
 | STOP_GROUPS                      | tables groups stop                                                         |
 +----------------------------------+----------------------------------------------------------------------------+
-| SYNC_DEF_GROUP                   | *emaj_group_def* table synchronization                                     |
-+----------------------------------+----------------------------------------------------------------------------+
 | UNPROTECT_GROUP                  | remove a protection against rollbacks on a group                           |
 +----------------------------------+----------------------------------------------------------------------------+
 | UNPROTECT_MARK_GROUP             | remove a protection against rollbacks on a mark for a group                |
@@ -160,8 +158,6 @@ The *hist_event* column can take the following values:
 | BEGIN                        |                                                         |
 +------------------------------+---------------------------------------------------------+
 | DELETED PARAMETER            | parameter deleted from *emaj_param*                     |
-+------------------------------+---------------------------------------------------------+
-| EMAJ_GROUP_DEF SYNCHRONIZED  | tables group synchronized in the *emaj_group_def* table |
 +------------------------------+---------------------------------------------------------+
 | END                          |                                                         |
 +------------------------------+---------------------------------------------------------+

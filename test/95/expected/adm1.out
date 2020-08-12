@@ -125,28 +125,6 @@ select count(*) from emaj_mySchema1.myTbl1_log;
 (1 row)
 
 -----------------------------
--- test the emaj_group_def table truncate with existing groups
------------------------------
-select group_name, group_has_waiting_changes from emaj.emaj_group order by 1;
- group_name | group_has_waiting_changes 
-------------+---------------------------
- emptyGroup | f
- myGroup1   | f
- myGroup2   | f
-(3 rows)
-
-create temp table emaj_group_def_save as select * from emaj.emaj_group_def;
-truncate emaj.emaj_group_def;
-select group_name, group_has_waiting_changes from emaj.emaj_group order by 1;
- group_name | group_has_waiting_changes 
-------------+---------------------------
- emptyGroup | t
- myGroup1   | t
- myGroup2   | t
-(3 rows)
-
-insert into emaj.emaj_group_def select * from emaj_group_def_save;
------------------------------
 -- stop, reset and drop existing groups
 -----------------------------
 select emaj.emaj_stop_group('myGroup1','Simple stop mark');
@@ -187,8 +165,8 @@ select emaj.emaj_drop_group('emptyGroup');
 
 -- emaj tables
 select * from emaj.emaj_group;
- group_name | group_is_rollbackable | group_creation_time_id | group_pg_version | group_last_alter_time_id | group_has_waiting_changes | group_is_logging | group_is_rlbk_protected | group_nb_table | group_nb_sequence | group_comment 
-------------+-----------------------+------------------------+------------------+--------------------------+---------------------------+------------------+-------------------------+----------------+-------------------+---------------
+ group_name | group_is_rollbackable | group_creation_time_id | group_pg_version | group_last_alter_time_id | group_is_logging | group_is_rlbk_protected | group_nb_table | group_nb_sequence | group_comment 
+------------+-----------------------+------------------------+------------------+--------------------------+------------------+-------------------------+----------------+-------------------+---------------
 (0 rows)
 
 select sch_name from emaj.emaj_schema;
@@ -935,14 +913,13 @@ select emaj.emaj_comment_mark_group('myGroup1','M3','Third mark set');
 -----------------------------
 -- emaj tables
 select group_name, group_is_rollbackable, group_creation_time_id,
-       group_last_alter_time_id, group_has_waiting_changes, group_is_logging, 
-       group_is_rlbk_protected, group_nb_table, group_nb_sequence, group_comment
+       group_last_alter_time_id, group_is_logging, group_is_rlbk_protected, group_nb_table, group_nb_sequence, group_comment
   from emaj.emaj_group order by group_name;
- group_name | group_is_rollbackable | group_creation_time_id | group_last_alter_time_id | group_has_waiting_changes | group_is_logging | group_is_rlbk_protected | group_nb_table | group_nb_sequence |  group_comment   
-------------+-----------------------+------------------------+--------------------------+---------------------------+------------------+-------------------------+----------------+-------------------+------------------
- emptyGroup | t                     |                  10006 |                          | f                         | f                | f                       |              0 |                 0 | 
- myGroup1   | t                     |                  10004 |                          | f                         | t                | f                       |              5 |                 2 | This is group #1
- myGroup2   | t                     |                  10005 |                          | f                         | t                | f                       |              6 |                 2 | 
+ group_name | group_is_rollbackable | group_creation_time_id | group_last_alter_time_id | group_is_logging | group_is_rlbk_protected | group_nb_table | group_nb_sequence |  group_comment   
+------------+-----------------------+------------------------+--------------------------+------------------+-------------------------+----------------+-------------------+------------------
+ emptyGroup | t                     |                  10006 |                          | f                | f                       |              0 |                 0 | 
+ myGroup1   | t                     |                  10004 |                          | t                | f                       |              5 |                 2 | This is group #1
+ myGroup2   | t                     |                  10005 |                          | t                | f                       |              6 |                 2 | 
 (3 rows)
 
 select mark_group, regexp_replace(mark_name,E'\\d\\d\.\\d\\d\\.\\d\\d\\.\\d\\d\\d\\d','%','g'), mark_time_id, mark_is_deleted, mark_is_rlbk_protected, mark_is_rlbk_protected, mark_comment, mark_log_rows_before_next, mark_logged_rlbk_target_mark from emaj.emaj_mark order by mark_time_id, mark_group;

@@ -53,7 +53,7 @@ select nextval('myschema2.myseq2');
 -- then add the sequence to the group
 select emaj.emaj_assign_sequence('myschema2', 'myseq2', 'myGroup2', 'Add myseq2');
 
-select group_name, group_last_alter_time_id, group_has_waiting_changes, group_nb_table, group_nb_sequence
+select group_name, group_last_alter_time_id, group_nb_table, group_nb_sequence
   from emaj.emaj_group where group_name = 'myGroup2';
 select rel_schema, rel_tblseq, rel_time_range, rel_group, rel_kind
   from emaj.emaj_relation where rel_schema = 'myschema2' and rel_tblseq = 'myseq2' order by rel_time_range;
@@ -151,10 +151,10 @@ select * from emaj.emaj_sequence where sequ_schema = 'myschema2' and sequ_name =
 select emaj.emaj_set_mark_group('myGroup1','Mk2b');
 select emaj.emaj_set_mark_group('myGroup1','Before_remove');
 
-select group_name, group_last_alter_time_id, group_has_waiting_changes, group_nb_table, group_nb_sequence
+select group_name, group_last_alter_time_id, group_nb_table, group_nb_sequence
   from emaj.emaj_group where group_name = 'myGroup1';
 select emaj.emaj_remove_sequence('myschema1', 'myTbl3_col31_seq', 'Sequence_removed');
-select group_name, group_last_alter_time_id, group_has_waiting_changes, group_nb_table, group_nb_sequence
+select group_name, group_last_alter_time_id, group_nb_table, group_nb_sequence
   from emaj.emaj_group where group_name = 'myGroup1';
 select rel_schema, rel_tblseq, rel_time_range, rel_group, rel_kind
   from emaj.emaj_relation where rel_schema = 'myschema1' and rel_tblseq = 'myTbl3_col31_seq' order by rel_time_range;
@@ -236,7 +236,7 @@ delete from myschema2.mytbl7 where col71 = 3;
 -- then add the table to the group
 select emaj.emaj_assign_table('myschema2', 'mytbl7', 'myGroup2', null, 'Add mytbl7');
 
-select group_name, group_last_alter_time_id, group_has_waiting_changes, group_nb_table, group_nb_sequence
+select group_name, group_last_alter_time_id, group_nb_table, group_nb_sequence
   from emaj.emaj_group where group_name = 'myGroup2';
 select rel_schema, rel_tblseq, rel_time_range, rel_group, rel_kind, rel_log_schema, rel_log_table
   from emaj.emaj_relation where rel_schema = 'myschema2' and rel_tblseq = 'mytbl7' order by rel_time_range;
@@ -369,7 +369,7 @@ insert into myschema1."myTbl3" (col33) values (1.);
 
 select emaj.emaj_remove_tables('myschema1', '^(myTbl3|mytbl2b)$', null, '2 tables removed from myGroup1');
 
-select group_name, group_last_alter_time_id, group_has_waiting_changes, group_nb_table, group_nb_sequence
+select group_name, group_last_alter_time_id, group_nb_table, group_nb_sequence
   from emaj.emaj_group where group_name = 'myGroup1';
 select rel_schema, rel_tblseq, rel_time_range, rel_group, rel_kind, rel_log_schema, rel_log_table, rel_log_seq_last_value
   from emaj.emaj_relation where rel_schema = 'myschema1' and (rel_tblseq = 'myTbl3' or rel_tblseq = 'mytbl2b') order by 1,2,3;

@@ -202,7 +202,6 @@ CREATE TABLE emaj.emaj_group (
                                DEFAULT substring (version() FROM E'PostgreSQL\\s([.,0-9,A-Z,a-z]*)'),
   group_last_alter_time_id     BIGINT,                     -- time stamp of the last group structure change
                                                            --   set to NULL at emaj_create_group() time
-  group_has_waiting_changes    BOOLEAN     NOT NULL,       -- are there recent changes in emaj_group_def not yet applied in emaj_group ?
   group_is_logging             BOOLEAN     NOT NULL,       -- are log triggers activated ?
                                                            -- true between emaj_start_group(s) and emaj_stop_group(s)
                                                            -- false in other cases
@@ -686,44 +685,6 @@ CREATE VIEW emaj.emaj_visible_param WITH (security_barrier) AS
 -- Triggers on internal tables    --
 --                                --
 ------------------------------------
-
--- Triggers for changes and truncate on the emaj_group_def table.
-
-CREATE OR REPLACE FUNCTION emaj._emaj_group_def_change_fnct()
-RETURNS TRIGGER LANGUAGE plpgsql AS
-$_emaj_group_def_change_fnct$
--- This function is associated to the emaj_emaj_group_def_change_trg trigger set on the emaj_group_def table.
--- It sets the group_has_waiting_changes boolean column of the emaj_group table to TRUE when a change is recorded into the emaj_group_def
---   table.
--- If the group doesn't exists (yet), the update statements will silently not update any row
-  BEGIN
-    IF TG_OP = 'DELETE' THEN
-      UPDATE emaj.emaj_group SET group_has_waiting_changes = TRUE
-        WHERE group_name = OLD.grpdef_group;
-      RETURN OLD;
-    ELSIF TG_OP = 'UPDATE' THEN
-      UPDATE emaj.emaj_group SET group_has_waiting_changes = TRUE
-        WHERE group_name = OLD.grpdef_group OR group_name = NEW.grpdef_group;
-      RETURN NEW;
-    ELSIF TG_OP = 'INSERT' THEN
-      UPDATE emaj.emaj_group SET group_has_waiting_changes = TRUE
-        WHERE group_name = NEW.grpdef_group;
-      RETURN NEW;
-    ELSIF TG_OP = 'TRUNCATE' THEN
-      UPDATE emaj.emaj_group SET group_has_waiting_changes = TRUE;
-      RETURN NULL;
-    END IF;
-    RETURN NULL;
-  END;
-$_emaj_group_def_change_fnct$;
-
-CREATE TRIGGER emaj_group_def_change_trg
-  AFTER INSERT OR UPDATE OR DELETE  ON emaj.emaj_group_def
-  FOR EACH ROW EXECUTE PROCEDURE emaj._emaj_group_def_change_fnct();
-
-CREATE TRIGGER emaj_group_def_truncate_trg
-  AFTER TRUNCATE ON emaj.emaj_group_def
-  FOR EACH STATEMENT EXECUTE PROCEDURE emaj._emaj_group_def_change_fnct();
 
 -- Triggers for changes and truncate on the emaj_param table.
 
@@ -5051,9 +5012,9 @@ $emaj_create_group$
     SELECT emaj._set_time_stamp('C') INTO v_timeId;
 -- insert the row describing the group into the emaj_group table
 -- (The group_is_rlbk_protected boolean column is always initialized as not group_is_rollbackable)
-    INSERT INTO emaj.emaj_group (group_name, group_is_rollbackable, group_creation_time_id, group_has_waiting_changes,
+    INSERT INTO emaj.emaj_group (group_name, group_is_rollbackable, group_creation_time_id,
                                  group_is_logging, group_is_rlbk_protected, group_nb_table, group_nb_sequence)
-      VALUES (v_groupName, v_isRollbackable, v_timeId, FALSE, FALSE, NOT v_isRollbackable, 0, 0);
+      VALUES (v_groupName, v_isRollbackable, v_timeId, FALSE, NOT v_isRollbackable, 0, 0);
 -- populate the group
     IF NOT v_is_empty THEN
 -- create new E-Maj log schemas, if needed
@@ -5271,7 +5232,7 @@ $_alter_groups$
       PERFORM emaj._drop_log_schemas(v_callingFunction, FALSE);
 -- update some attributes in the emaj_group table
       UPDATE emaj.emaj_group
-        SET group_last_alter_time_id = v_timeId, group_has_waiting_changes = FALSE,
+        SET group_last_alter_time_id = v_timeId,
             group_nb_table = (SELECT count(*) FROM emaj.emaj_relation
                                 WHERE rel_group = group_name AND upper_inf(rel_time_range) AND rel_kind = 'r'),
             group_nb_sequence = (SELECT count(*) FROM emaj.emaj_relation
@@ -5526,37 +5487,6 @@ $_alter_exec$
     RETURN;
   END;
 $_alter_exec$;
-
-CREATE OR REPLACE FUNCTION emaj.emaj_sync_def_group(v_group TEXT)
-RETURNS INTEGER LANGUAGE plpgsql AS
-$emaj_sync_def_group$
--- The function re-synchronizes the content of the emaj_group_def table for one tables group
---   based on the current groups content.
--- Inputs: group name
--- Outputs: number of tables and sequences of the tables group
-  DECLARE
-    v_nbTblSeq               INT;
-  BEGIN
--- check that the group exists
-    PERFORM emaj._check_group_names(v_groupNames := ARRAY[v_group], v_mayBeNull := FALSE, v_lockGroups := FALSE, v_checkList := '');
--- in emaj_group_def, delete existing rows for the group
-    DELETE FROM emaj.emaj_group_def WHERE grpdef_group = v_group;
--- ... and insert the rows describing the current group content
-    INSERT INTO emaj.emaj_group_def (grpdef_group, grpdef_schema, grpdef_tblseq, grpdef_priority, grpdef_log_dat_tsp, grpdef_log_idx_tsp)
-      SELECT rel_group, rel_schema, rel_tblseq, rel_priority, rel_log_dat_tsp, rel_log_idx_tsp
-        FROM emaj.emaj_relation
-        WHERE rel_group = v_group AND upper_inf(rel_time_range);
-    GET DIAGNOSTICS v_nbTblSeq = ROW_COUNT;
--- reset the group_has_waiting_changes flag
-    UPDATE emaj.emaj_group SET group_has_waiting_changes = FALSE WHERE group_name = v_group;
--- take a trace in the emaj_hist table
-    INSERT INTO emaj.emaj_hist (hist_function, hist_event, hist_object)
-      VALUES ('SYNC_DEF_GROUP', 'EMAJ_GROUP_DEF SYNCHRONIZED', v_group);
-    RETURN v_nbTblSeq;
-  END;
-$emaj_sync_def_group$;
-COMMENT ON FUNCTION emaj.emaj_sync_def_group(TEXT) IS
-$$Re-synchronize the content of the emaj_group_def table for one tables group based on its current content.$$;
 
 CREATE OR REPLACE FUNCTION emaj.emaj_export_groups_configuration(v_groups TEXT[] DEFAULT NULL)
 RETURNS JSON LANGUAGE plpgsql AS
@@ -6080,9 +6010,9 @@ $_import_groups_conf_exec$
         WHERE group_name = r_group.groupJson ->> 'group';
       IF NOT FOUND THEN
         v_isRollbackable = coalesce((r_group.groupJson ->> 'is_rollbackable')::BOOLEAN, TRUE);
-        INSERT INTO emaj.emaj_group (group_name, group_is_rollbackable, group_creation_time_id, group_has_waiting_changes,
+        INSERT INTO emaj.emaj_group (group_name, group_is_rollbackable, group_creation_time_id,
                                      group_is_logging, group_is_rlbk_protected, group_nb_table, group_nb_sequence, group_comment)
-          VALUES (r_group.groupJson ->> 'group', v_isRollbackable, v_timeId, FALSE,
+          VALUES (r_group.groupJson ->> 'group', v_isRollbackable, v_timeId,
                                      FALSE, NOT v_isRollbackable, 0, 0, r_group.groupJson ->> 'comment');
         INSERT INTO emaj.emaj_hist (hist_function, hist_event, hist_object, hist_wording)
           VALUES ('IMPORT_GROUPS', 'GROUP CREATED', r_group.groupJson ->> 'group',
@@ -10768,97 +10698,11 @@ $emaj_verify_all$
     IF NOT v_errorFound THEN
       RETURN NEXT 'No error detected';
     END IF;
--- check the value of the group_has_waiting_changes column of the emaj_group table, and reset it at the right value if needed
-    PERFORM emaj._adjust_group_properties();
     RETURN;
   END;
 $emaj_verify_all$;
 COMMENT ON FUNCTION emaj.emaj_verify_all() IS
 $$Verifies the consistency between existing E-Maj and application objects.$$;
-
-CREATE OR REPLACE FUNCTION emaj._adjust_group_properties()
-RETURNS INTEGER LANGUAGE plpgsql
-SECURITY DEFINER SET search_path = pg_catalog, pg_temp AS
-$_adjust_group_properties$
--- The function adjusts the content of the emaj_group table.
--- It actualy only adjusts the group_has_waiting_changes column.
--- This group_has_waiting_changes column is normally set by a trigger on emaj_group_def.
--- But in some cases, its value may not correspond to the real situation. This function sets its value to the proper value.
--- It mainly joins the content of the emaj_group_def and the emaj_relation table to detect differences.
--- It also calls the _verify_groups() function to detect potential corrupted groups that would need to be altered.
--- If needed, the emaj_group table is updated.
--- The function is declared SECURITY DEFINER so that emaj_viewer roles can execute it when calling the emaj_verify_all() function
--- It returns the number of groups that have been updated.
-  DECLARE
-    v_nbAdjustedGroups       INT = 0;
-  BEGIN
--- process the group_has_waiting_changes column using one big SQL statement
-    WITH
-      tblseq_with_changes AS (
-        -- tables and sequences modified or deleted from emaj_group_def
-        SELECT rel_group, rel_schema, rel_tblseq
-          FROM emaj.emaj_relation
-               LEFT OUTER JOIN emaj.emaj_group_def ON (rel_schema = grpdef_schema AND rel_tblseq = grpdef_tblseq
-                                                       AND rel_group = grpdef_group)
-          WHERE upper_inf(rel_time_range)
-            AND (
-              -- the relations that do not belong to the groups anymore
-                  grpdef_group IS NULL
-              -- the tables whose log data tablespace in emaj_group_def has changed
-              --         or whose log index tablespace in emaj_group_def has changed
-               OR (rel_kind = 'r'
-                  AND (coalesce(rel_log_dat_tsp,'') <> coalesce(grpdef_log_dat_tsp,'')
-                    OR coalesce(rel_log_idx_tsp,'') <> coalesce(grpdef_log_idx_tsp,'')
-                      ))
-              -- the tables or sequences that change their group ownership
-               OR (rel_group <> grpdef_group)
-              -- the tables that change their priority level
-               OR (rel_priority IS NULL AND grpdef_priority IS NOT NULL) OR
-                  (rel_priority IS NOT NULL AND grpdef_priority IS NULL) OR
-                  (rel_priority <> grpdef_priority)
-                )
-      UNION
-        -- new tables or sequences in emaj_group_def
-        SELECT grpdef_group, grpdef_schema, grpdef_tblseq
-          FROM emaj.emaj_group_def, pg_catalog.pg_class, pg_catalog.pg_namespace, emaj.emaj_group
-          WHERE NOT EXISTS (
-                SELECT NULL FROM emaj.emaj_relation
-                  WHERE rel_schema = grpdef_schema AND rel_tblseq = grpdef_tblseq AND upper_inf(rel_time_range))
-            AND relnamespace = pg_namespace.oid AND nspname = grpdef_schema AND relname = grpdef_tblseq
-            AND group_name = grpdef_group
-      UNION
-        -- dammaged tables
-        SELECT ver_group, ver_schema, ver_tblseq
-          FROM emaj._verify_groups(
-                 (SELECT array_agg(group_name) FROM emaj.emaj_group)
-                 , false)
-          WHERE ver_group IS NOT NULL
-      ),
-      -- get the list of groups that would need to be altered
-      group_with_changes AS (
-        SELECT DISTINCT rel_group AS group_name
-          FROM tblseq_with_changes
-      ),
-      -- adjust the group_has_waiting_changes column, only when needed
-      modified_group AS (
-        UPDATE emaj.emaj_group SET group_has_waiting_changes = NOT group_has_waiting_changes
-          WHERE (group_has_waiting_changes = FALSE
-                 AND group_name IN (SELECT group_name FROM group_with_changes))
-             OR (group_has_waiting_changes = TRUE
-                 AND NOT EXISTS (SELECT 0 FROM group_with_changes WHERE group_with_changes.group_name = emaj_group.group_name))
-          RETURNING group_name, group_has_waiting_changes
-      ),
-      -- insert a row in the history for each flag change
-      hist_insert AS (
-        INSERT INTO emaj.emaj_hist (hist_function, hist_object, hist_wording)
-          SELECT 'ADJUST_GROUP_PROPERTIES', group_name, 'Set the group_has_waiting_changes column to ' || group_has_waiting_changes
-            FROM modified_group
-            ORDER BY group_name
-      )
-      SELECT count(*) INTO v_nbAdjustedGroups FROM modified_group;
-    RETURN v_nbAdjustedGroups;
-  END;
-$_adjust_group_properties$;
 
 ------------------------------------------
 --                                      --
@@ -11245,7 +11089,6 @@ GRANT EXECUTE ON FUNCTION emaj.emaj_get_consolidable_rollbacks() TO emaj_viewer;
 GRANT EXECUTE ON FUNCTION emaj._verify_all_groups() TO emaj_viewer;
 GRANT EXECUTE ON FUNCTION emaj._verify_all_schemas() TO emaj_viewer;
 GRANT EXECUTE ON FUNCTION emaj.emaj_verify_all() TO emaj_viewer;
-GRANT EXECUTE ON FUNCTION emaj._adjust_group_properties() TO emaj_viewer;
 
 ----------------------------------------
 --                                    --

@@ -210,20 +210,19 @@ Tablespace: "tspemaj"
 --------+-------+---------+---------------------+-----------+---------+-------
  bigint |     1 |       1 | 9223372036854775807 |         1 | no      |     1
 
-                                                   Table "emaj.emaj_group"
-          Column           |  Type   | Collation | Nullable |                            Default                             
----------------------------+---------+-----------+----------+----------------------------------------------------------------
- group_name                | text    |           | not null | 
- group_is_rollbackable     | boolean |           | not null | 
- group_creation_time_id    | bigint  |           | not null | 
- group_pg_version          | text    |           | not null | "substring"(version(), 'PostgreSQL\s([.,0-9,A-Z,a-z]*)'::text)
- group_last_alter_time_id  | bigint  |           |          | 
- group_has_waiting_changes | boolean |           | not null | 
- group_is_logging          | boolean |           | not null | 
- group_is_rlbk_protected   | boolean |           | not null | 
- group_nb_table            | integer |           |          | 
- group_nb_sequence         | integer |           |          | 
- group_comment             | text    |           |          | 
+                                                  Table "emaj.emaj_group"
+          Column          |  Type   | Collation | Nullable |                            Default                             
+--------------------------+---------+-----------+----------+----------------------------------------------------------------
+ group_name               | text    |           | not null | 
+ group_is_rollbackable    | boolean |           | not null | 
+ group_creation_time_id   | bigint  |           | not null | 
+ group_pg_version         | text    |           | not null | "substring"(version(), 'PostgreSQL\s([.,0-9,A-Z,a-z]*)'::text)
+ group_last_alter_time_id | bigint  |           |          | 
+ group_is_logging         | boolean |           | not null | 
+ group_is_rlbk_protected  | boolean |           | not null | 
+ group_nb_table           | integer |           |          | 
+ group_nb_sequence        | integer |           |          | 
+ group_comment            | text    |           |          | 
 Indexes:
     "emaj_group_pkey" PRIMARY KEY, btree (group_name), tablespace "tspemaj"
 Foreign-key constraints:
@@ -246,9 +245,6 @@ Tablespace: "tspemaj"
 Indexes:
     "emaj_group_def_pkey" PRIMARY KEY, btree (grpdef_group, grpdef_schema, grpdef_tblseq), tablespace "tspemaj"
     "emaj_group_def_idx1" btree (grpdef_schema, grpdef_tblseq), tablespace "tspemaj"
-Triggers:
-    emaj_group_def_change_trg AFTER INSERT OR DELETE OR UPDATE ON emaj.emaj_group_def FOR EACH ROW EXECUTE PROCEDURE emaj._emaj_group_def_change_fnct()
-    emaj_group_def_truncate_trg AFTER TRUNCATE ON emaj.emaj_group_def FOR EACH STATEMENT EXECUTE PROCEDURE emaj._emaj_group_def_change_fnct()
 Tablespace: "tspemaj"
 
    Index "emaj.emaj_group_def_idx1"

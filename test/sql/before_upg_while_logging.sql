@@ -149,7 +149,7 @@ select emaj.emaj_stop_group('myGroup6');
 select time_id, time_last_emaj_gid, time_event from emaj.emaj_time_stamp order by time_id;
 
 select group_name, group_is_rollbackable, group_creation_time_id,
-       group_last_alter_time_id, group_has_waiting_changes, group_is_logging, 
+       group_last_alter_time_id, group_is_logging, 
        group_is_rlbk_protected, group_nb_table, group_nb_sequence, group_comment
   from emaj.emaj_group order by group_name;
 

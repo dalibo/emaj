@@ -87,7 +87,6 @@ rollback;
 begin;
   drop schema myschema1 cascade;
   select * from emaj.emaj_verify_all() t(msg) where msg like 'Error%';
-  select group_has_waiting_changes from emaj.emaj_group where group_name = 'myGroup1';
 rollback;
 -- detection of a missing application relation
 begin;

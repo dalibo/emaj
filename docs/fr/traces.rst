@@ -145,8 +145,6 @@ La colonne *hist_function* peut prendre les valeurs suivantes.
 +----------------------------------+---------------------------------------------------------------------------------------+
 | STOP_GROUPS                      | arrêt de plusieurs groupes de tables                                                  |
 +----------------------------------+---------------------------------------------------------------------------------------+
-| SYNC_DEF_GROUP                   | synchronisation de la table *emaj_group_def*                                          |
-+----------------------------------+---------------------------------------------------------------------------------------+
 | UNPROTECT_GROUP                  | suppression d'une protection contre les rollbacks sur un groupe                       |
 +----------------------------------+---------------------------------------------------------------------------------------+
 | UNPROTECT_MARK_GROUP             | suppression d'une protection contre les rollbacks sur une marque d'un groupe          |
@@ -160,8 +158,6 @@ La colonne *hist_event* peut prendre les valeurs suivantes.
 | BEGIN                        | début                                              |
 +------------------------------+----------------------------------------------------+
 | DELETED PARAMETER            | paramètre supprimé dans *emaj_param*               |
-+------------------------------+----------------------------------------------------+
-| EMAJ_GROUP_DEF SYNCHRONIZED  | groupe de tables synchronisé dans *emaj_group_def* |
 +------------------------------+----------------------------------------------------+
 | END                          | fin                                                |
 +------------------------------+----------------------------------------------------+

@@ -282,9 +282,6 @@ Groups level functions
 | :doc:`emaj_stop_groups                           | | groups.array TEXT[],        | #.tables.and.seq INT                  |
 | <multiGroupsFunctions>`                          | | [mark TEXT]                 |                                       |
 +--------------------------------------------------+-------------------------------+---------------------------------------+
-| :ref:`emaj_sync_def_group                        | | group TEXT                  | #.tables.and.seq INT                  |
-| <emaj_sync_def_group>`                           |                               |                                       |
-+--------------------------------------------------+-------------------------------+---------------------------------------+
 | :ref:`emaj_unprotect_group                       | | group TEXT                  | 0/1 INT                               |
 | <emaj_unprotect_group>`                          |                               |                                       |
 +--------------------------------------------------+-------------------------------+---------------------------------------+

@@ -86,7 +86,6 @@ select emaj.emaj_create_group('myGroup1');
 select emaj.emaj_create_group('myGroup1',true);
 select emaj.emaj_drop_group('myGroup1');
 select emaj.emaj_force_drop_group('myGroup1');
-select emaj.emaj_sync_def_group('myGroup1');
 select emaj.emaj_export_groups_configuration();
 select emaj.emaj_import_groups_configuration('{}'::json);
 select emaj.emaj_start_group('myGroup1','mark');
