@@ -160,9 +160,8 @@ Groups level functions
 | :ref:`emaj_consolidate_rollback_group            | | group TEXT,                 | #.tables.and.seq INT                  |
 | <emaj_consolidate_rollback_group>`               | | end.rollback.mark TEXT      |                                       |
 +--------------------------------------------------+-------------------------------+---------------------------------------+
-| :ref:`emaj_create_group                          | | group TEXT,                 | #.tables.and.seq INT                  |
-| <emaj_create_group>`                             | | [is.rollbackable BOOLEAN],  |                                       |
-|                                                  | | [is.empty BOOLEAN]          |                                       |
+| :ref:`emaj_create_group                          | | group TEXT,                 | 1 INT                                 |
+| <emaj_create_group>`                             | | [is.rollbackable BOOLEAN]   |                                       |
 +--------------------------------------------------+-------------------------------+---------------------------------------+
 | :ref:`emaj_delete_before_mark_group              | | group TEXT,                 | #.deleted.marks INT                   |
 | <emaj_delete_before_mark_group>`                 | | mark TEXT                   |                                       |

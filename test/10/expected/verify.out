@@ -190,18 +190,10 @@ rollback;
 begin;
   drop schema emaj_myschema1 cascade;
 NOTICE:  drop cascades to 20 other objects
-DETAIL:  drop cascades to table emaj_myschema1."myTbl3_log"
-drop cascades to sequence emaj_myschema1."myTbl3_log_seq"
-drop cascades to function emaj_myschema1."myTbl3_log_fnct"()
-drop cascades to trigger emaj_log_trg on table myschema1."myTbl3"
-drop cascades to table emaj_myschema1.mytbl1_log
+DETAIL:  drop cascades to table emaj_myschema1.mytbl1_log
 drop cascades to sequence emaj_myschema1.mytbl1_log_seq
 drop cascades to function emaj_myschema1.mytbl1_log_fnct()
 drop cascades to trigger emaj_log_trg on table myschema1.mytbl1
-drop cascades to table emaj_myschema1.mytbl4_log
-drop cascades to sequence emaj_myschema1.mytbl4_log_seq
-drop cascades to function emaj_myschema1.mytbl4_log_fnct()
-drop cascades to trigger emaj_log_trg on table myschema1.mytbl4
 drop cascades to table emaj_myschema1.mytbl2_log
 drop cascades to sequence emaj_myschema1.mytbl2_log_seq
 drop cascades to function emaj_myschema1.mytbl2_log_fnct()
@@ -210,6 +202,14 @@ drop cascades to table emaj_myschema1.mytbl2b_log
 drop cascades to sequence emaj_myschema1.mytbl2b_log_seq
 drop cascades to function emaj_myschema1.mytbl2b_log_fnct()
 drop cascades to trigger emaj_log_trg on table myschema1.mytbl2b
+drop cascades to table emaj_myschema1."myTbl3_log"
+drop cascades to sequence emaj_myschema1."myTbl3_log_seq"
+drop cascades to function emaj_myschema1."myTbl3_log_fnct"()
+drop cascades to trigger emaj_log_trg on table myschema1."myTbl3"
+drop cascades to table emaj_myschema1.mytbl4_log
+drop cascades to sequence emaj_myschema1.mytbl4_log_seq
+drop cascades to function emaj_myschema1.mytbl4_log_fnct()
+drop cascades to trigger emaj_log_trg on table myschema1.mytbl4
   select * from emaj.emaj_verify_all() t(msg) where msg like 'Error%';
                                                      msg                                                     
 -------------------------------------------------------------------------------------------------------------
@@ -479,11 +479,15 @@ PL/pgSQL function emaj.emaj_rollback_group(text,text,boolean) line 7 at RETURN Q
 (1 row)
 
     select emaj.emaj_create_group('myGroup2');
-WARNING:  _check_fk_groups: The foreign key "mytbl6_col61_fkey" on the table "myschema2.mytbl6" references the table "myschema2.mytbl7" that is outside the groups (myGroup2).
-WARNING:  _check_fk_groups: The table "myschema2.mytbl6" is referenced by the foreign key "mytbl8_col81_fkey" on the table "myschema2.mytbl8" that is outside the groups (myGroup2).
  emaj_create_group 
 -------------------
-                 8
+                 1
+(1 row)
+
+    select emaj.emaj_assign_table('myschema2','mytbl4','myGroup2');
+ emaj_assign_table 
+-------------------
+                 1
 (1 row)
 
   rollback to savepoint sp2;
@@ -936,8 +940,8 @@ select hist_id, hist_function, hist_event, hist_object, regexp_replace(regexp_re
  hist_id |   hist_function    |       hist_event        | hist_object |                         regexp_replace                         | hist_user 
 ---------+--------------------+-------------------------+-------------+----------------------------------------------------------------+-----------
     5800 | DISABLE_PROTECTION | EVENT TRIGGERS DISABLED |             | emaj_protection_trg, emaj_sql_drop_trg, emaj_table_rewrite_trg | postgres
-    5910 | DISABLE_PROTECTION | EVENT TRIGGERS DISABLED |             | <none>                                                         | postgres
-    5911 | ENABLE_PROTECTION  | EVENT TRIGGERS ENABLED  |             | emaj_protection_trg, emaj_sql_drop_trg, emaj_table_rewrite_trg | postgres
-    5912 | ENABLE_PROTECTION  | EVENT TRIGGERS ENABLED  |             | <none>                                                         | postgres
+    5913 | DISABLE_PROTECTION | EVENT TRIGGERS DISABLED |             | <none>                                                         | postgres
+    5914 | ENABLE_PROTECTION  | EVENT TRIGGERS ENABLED  |             | emaj_protection_trg, emaj_sql_drop_trg, emaj_table_rewrite_trg | postgres
+    5915 | ENABLE_PROTECTION  | EVENT TRIGGERS ENABLED  |             | <none>                                                         | postgres
 (4 rows)
 

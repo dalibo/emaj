@@ -189,9 +189,9 @@ grant all on sequence "phil's schema3".mySeq1 to emaj_regression_tests_adm_user;
 -----------------------------
 -- create and populate groups
 -----------------------------
-select emaj.emaj_create_group('myGroup1',true,true);
-select emaj.emaj_create_group('myGroup2',true,true);
-select emaj.emaj_create_group('phil''s group#3',false,true);
+select emaj.emaj_create_group('myGroup1');
+select emaj.emaj_create_group('myGroup2');
+select emaj.emaj_create_group('phil''s group#3',false);
 select emaj.emaj_comment_group('myGroup1','Useless comment!');
 
 SELECT emaj.emaj_assign_tables('myschema1', '{"mytbl1", "mytbl2", "mytbl2b", "myTbl3", "mytbl4"}', 'myGroup1');

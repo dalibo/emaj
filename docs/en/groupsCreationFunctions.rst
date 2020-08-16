@@ -58,42 +58,25 @@ To optimize performances of E-Maj installations having a large number of tables,
 
 By default, these properties have a *NULL* value, meaning that the default tablespace of the current session at tables group creation is used.
 
-Tables group creation
----------------------
-
-There are two main ways to handle the structure of tables groups:
-
-* dynamically manage the tables and sequences assignment into tables groups, using dedicated functions,
-* describe the list of tables groups and the tables and sequences they contain into the *emaj_group_def* configuration table.
-
-Eventhough these methods are very different, they can be :ref:`combined<emaj_sync_def_group>`.
-
-The “dynamic configuration” method
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-
-Creating a tables group requires several steps. The first one consists in creating an empty tables group. Then one populates it with tables and sequences.
-
 .. _emaj_create_group:
 
-**Creating the empty tables group**
+Create a tables group
+---------------------
 
-To create en empty tables group, just execute the following SQL statement::
+To create a tables group, just execute the following SQL statement::
 
-   SELECT emaj.emaj_create_group('<group.name>',<is_rollbackable>, <is_empty>);
+   SELECT emaj.emaj_create_group('<group.name>',<is_rollbackable>);
 
 The second parameter, of type boolean, indicates whether the group's type is *ROLLBACKABLE* (with value *TRUE*) or *AUDIT_ONLY* (with value *FALSE*). If this second parameter is not supplied, the group is considered *ROLLBACKABLE*.
 
-Note that the third parameter must be explicitely set to *TRUE*.
-
-If the group is also referenced into the *emaj_group_def* table, the *emaj_group_def* table’s content is simply ignored.
-
-The function returns the number of tables and sequences contained by the group.
+The function returns the number of created groups, i.e. 1.
 
 .. _assign_table_sequence:
 
-**Assigning tables and sequences into the tables group**
+Assign tables and sequences into a tables group
+-----------------------------------------------
 
-Six functions allow to dynamically assign one or several tables or sequences to a group.
+Six functions allow to assign one or several tables or sequences to a group.
 
 To add one or several tables into a tables group::
 
@@ -164,78 +147,6 @@ All these functions return the number of assigned tables or sequences.
 
 The tables assignment functions create all the needed log tables, the log functions and triggers, as well as the triggers that process the execution of *TRUNCATE* SQL statements. They also create the log schemas if needed.
 
-The "configuration table" method
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-
-This is the method that was initialy available with E-Maj.
-
-Creating a tables group needs 2 steps:
-
-* register the groups configuration into the *emaj_group_def* table,
-* create the tables group by itself.
-
-.. _emaj_group_def:
-
-**Populating the emaj_group_def table**
-
-The content of tables groups to create has to be defined by populating the *emaj.emaj_group_def* table. One row has to be inserted into this table for each application table or sequence to include into a tables group. This *emaj.emaj_group_def* table has the following structure:
-
-+--------------------------+------+--------------------------------------------------------------------------+
-| Column                   | Type | Description                                                              |
-+==========================+======+==========================================================================+
-| grpdef_group             | TEXT | tables group name                                                        |
-+--------------------------+------+--------------------------------------------------------------------------+
-| grpdef_schema            | TEXT | name of the schema containing the application table or sequence          |
-+--------------------------+------+--------------------------------------------------------------------------+
-| grpdef_tblseq            | TEXT | application table or sequence name                                       |
-+--------------------------+------+--------------------------------------------------------------------------+
-| grpdef_priority          | INT  | priority level for the table in E-Maj processing (optional)              |
-+--------------------------+------+--------------------------------------------------------------------------+
-| grpdef_log_dat_tsp       | TEXT | name of the tablespace containing the log table (optional)               |
-+--------------------------+------+--------------------------------------------------------------------------+
-| grpdef_log_idx_tsp       | TEXT | name of the tablespace containing the index of the log table (optional)  |
-+--------------------------+------+--------------------------------------------------------------------------+
-
-The administrator can populate this table by any usual mean: *INSERT* SQL verb, *COPY* SQL verb, *\\copy psql* command, graphic tool, etc.
-
-The content of the *emaj_group_def* table is case sensitive. Schema names, table names and sequence names must reflect the way PostgreSQL registers them in its catalogue. These names are mostly in lower case. But if a name is encapsulated by double quotes in SQL statements because it contains any upper case characters or spaces, then it must be registered into the *emaj_group_def* table with the same upper case characters or spaces.
-
-Caution: the *emaj_group_def* table content is modified by the *emaj_import_groups_configuration()* functions.
-
-**Creating the tables group**
-
-Once the content of the tables group is defined, E-Maj can create the group. To do this, there is only one SQL statement to execute::
-
-   SELECT emaj.emaj_create_group('<group.name>',<is_rollbackable>);
-
-or in an abbreviated form::
-
-   SELECT emaj.emaj_create_group('<group.name>');
-
-The second parameter, of type boolean, indicates whether the group is a *ROLLBACKABLE* (with value *TRUE*) or an *AUDIT_ONLY* (with value *FALSE*) group. If this second parameter is not supplied, the group is considered *ROLLBACKABLE*.
-
-The function returns the number of tables and sequences contained by the group.
-
-For each table of the group, this function creates the associated log table, the log function and trigger, as well as the trigger that processes the execution of *TRUNCATE* SQL statements.
-
-The function also creates the log schemas if needed.
-
-On the contrary, if specific tablespaces are referenced for any log table or log index, these tablespaces must exist before the function's execution.
-
-The *emaj_create_group()* function also checks the existence of application triggers on any tables of the group. If a trigger exists on a table of the group, a message is returned, suggesting the user to check the impact of this trigger on E-Maj rollbacks.
-
-If a sequence of the group is associated either to a *SERIAL* or *BIGSERIAL* column or to a column created with a *GENERATED AS IDENTITY* clause, and the table that owns this column does not belong to the same tables group, the function also issues a *WARNING* message.
-
-A specific version of the function allows to create an empty tables group, i.e. without any table or sequence at creation time::
-
-   SELECT emaj.emaj_create_group('<group.name>',<is_rollbackable>, <is_empty>);
-
-The third parameter is *FALSE* by default. If it is set to *TRUE* and the group is referenced in the *emaj_group_def* table, the *emaj_group_def* table’s content is ignored. Once created, an empty group can be then populated using the :ref:`dynamic tables groups adjustment <dynamic_ajustment>` functions.
-
-All actions that are chained by the *emaj_create_group()* function are executed on behalf of a unique transaction. As a consequence, if an error occurs during the operation, all tables, functions and triggers already created by the function are cancelled.
-
-By registering the group composition in an internal table (*emaj_relation*), the *emaj_create_group()* function freezes its definition for the other E-Maj functions, even if the content of the *emaj_group_def* table is modified later.
-
 .. _emaj_drop_group:
 
 Drop a tables group
@@ -249,9 +160,8 @@ Then, just execute the SQL command::
 
 The function returns the number of tables and sequences contained in the group.
 
-For this tables group, the *emaj_drop_group()* function drops all the objects that have been created by the assignment functions or by the :ref:`emaj_create_group() <emaj_create_group>` function: log tables, sequences, functions and triggers.
+For this tables group, the *emaj_drop_group()* function drops all the objects that have been created by the assignment functions: log tables, sequences, functions and triggers.
 
 The function also drops all log schemas that are now useless.
 
 The locks set by this operation can lead to deadlock. If the deadlock processing impacts the execution of the E-Maj function, the error is trapped and the lock operation is repeated, with a maximum of 5 attempts.
-

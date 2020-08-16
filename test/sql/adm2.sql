@@ -104,7 +104,7 @@ select col51, col52, col53, col54, emaj_verb, emaj_tuple, emaj_gid from emaj_mys
 select col61, col62, col63, col64, col65, col66, emaj_verb, emaj_tuple, emaj_gid from emaj_mySchema2.myTbl6_log order by emaj_gid, emaj_tuple desc;
 
 -----------------------------
--- Step 9 : delete step
+-- Step 9 : deleted step
 -----------------------------
 
 -----------------------------
@@ -116,7 +116,10 @@ select col61, col62, col63, col64, col65, col66, emaj_verb, emaj_tuple, emaj_gid
 reset role;
 alter table "phil's schema3"."myTbl2\" add primary key (col21);
 set role emaj_regression_tests_adm_user;
-select emaj.emaj_create_group('phil''s group#3",',true);
+select emaj.emaj_create_group('phil''s group#3",');
+select emaj.emaj_assign_tables('phil''s schema3','.*','mytbl4','phil''s group#3",');
+select emaj.emaj_assign_sequences('phil''s schema3','.*',null,'phil''s group#3",');
+
 select emaj.emaj_start_group('phil''s group#3",','M1_rollbackable');
 --
 set search_path=public,"phil's schema3";

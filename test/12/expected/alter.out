@@ -70,28 +70,70 @@ select emaj.emaj_drop_group('emptyGroup');
 (1 row)
 
 select emaj.emaj_create_group('myGroup1');
-NOTICE:  table "myTbl3_log" does not exist, skipping
-NOTICE:  trigger "emaj_log_trg" for relation "myschema1.myTbl3" does not exist, skipping
-NOTICE:  trigger "emaj_trunc_trg" for relation "myschema1.myTbl3" does not exist, skipping
+ emaj_create_group 
+-------------------
+                 1
+(1 row)
+
+select emaj.emaj_assign_table('myschema1','mytbl1','myGroup1','{"priority":20}'::jsonb);
 NOTICE:  table "mytbl1_log" does not exist, skipping
 NOTICE:  trigger "emaj_log_trg" for relation "myschema1.mytbl1" does not exist, skipping
 NOTICE:  trigger "emaj_trunc_trg" for relation "myschema1.mytbl1" does not exist, skipping
-NOTICE:  table "mytbl4_log" does not exist, skipping
-NOTICE:  trigger "emaj_log_trg" for relation "myschema1.mytbl4" does not exist, skipping
-NOTICE:  trigger "emaj_trunc_trg" for relation "myschema1.mytbl4" does not exist, skipping
+ emaj_assign_table 
+-------------------
+                 1
+(1 row)
+
+select emaj.emaj_assign_table('myschema1','mytbl2','myGroup1','{"log_data_tablespace":"tsplog1","log_index_tablespace":"tsplog1"}'::jsonb);
 NOTICE:  table "mytbl2_log" does not exist, skipping
 NOTICE:  trigger "emaj_log_trg" for relation "myschema1.mytbl2" does not exist, skipping
 NOTICE:  trigger "emaj_trunc_trg" for relation "myschema1.mytbl2" does not exist, skipping
 WARNING:  _create_tbl: The table "myschema1.mytbl2" has triggers (mytbl2trg1, mytbl2trg2). They will be automatically disabled during E-Maj rollback operations, unless they have been recorded into the list of triggers that may be kept enabled, with the emaj_ignore_app_trigger() function.
+ emaj_assign_table 
+-------------------
+                 1
+(1 row)
+
+select emaj.emaj_assign_table('myschema1','mytbl2b','myGroup1','{"log_data_tablespace":"tsp log''2","log_index_tablespace":"tsp log''2"}'::jsonb);
 NOTICE:  table "mytbl2b_log" does not exist, skipping
 NOTICE:  trigger "emaj_log_trg" for relation "myschema1.mytbl2b" does not exist, skipping
 NOTICE:  trigger "emaj_trunc_trg" for relation "myschema1.mytbl2b" does not exist, skipping
- emaj_create_group 
+ emaj_assign_table 
 -------------------
-                 7
+                 1
+(1 row)
+
+select emaj.emaj_assign_table('myschema1','myTbl3','myGroup1','{"priority":10,"log_data_tablespace":"tsplog1"}'::jsonb);
+NOTICE:  table "myTbl3_log" does not exist, skipping
+NOTICE:  trigger "emaj_log_trg" for relation "myschema1.myTbl3" does not exist, skipping
+NOTICE:  trigger "emaj_trunc_trg" for relation "myschema1.myTbl3" does not exist, skipping
+ emaj_assign_table 
+-------------------
+                 1
+(1 row)
+
+select emaj.emaj_assign_table('myschema1','mytbl4','myGroup1','{"priority":20,"log_data_tablespace":"tsplog1","log_index_tablespace":"tsp log''2"}'::jsonb);
+NOTICE:  table "mytbl4_log" does not exist, skipping
+NOTICE:  trigger "emaj_log_trg" for relation "myschema1.mytbl4" does not exist, skipping
+NOTICE:  trigger "emaj_trunc_trg" for relation "myschema1.mytbl4" does not exist, skipping
+ emaj_assign_table 
+-------------------
+                 1
+(1 row)
+
+select emaj.emaj_assign_sequences('myschema1','.*',null,'myGroup1');
+ emaj_assign_sequences 
+-----------------------
+                     2
 (1 row)
 
 select emaj.emaj_create_group('myGroup2');
+ emaj_create_group 
+-------------------
+                 1
+(1 row)
+
+select emaj.emaj_assign_tables('myschema2','.*','mytbl[7,8]','myGroup2');
 NOTICE:  table "myTbl3_log" does not exist, skipping
 NOTICE:  trigger "emaj_log_trg" for relation "myschema2.myTbl3" does not exist, skipping
 NOTICE:  trigger "emaj_trunc_trg" for relation "myschema2.myTbl3" does not exist, skipping
@@ -110,39 +152,50 @@ NOTICE:  trigger "emaj_trunc_trg" for relation "myschema2.mytbl5" does not exist
 NOTICE:  table "mytbl6_log" does not exist, skipping
 NOTICE:  trigger "emaj_log_trg" for relation "myschema2.mytbl6" does not exist, skipping
 NOTICE:  trigger "emaj_trunc_trg" for relation "myschema2.mytbl6" does not exist, skipping
-WARNING:  _check_fk_groups: The foreign key "mytbl6_col61_fkey" on the table "myschema2.mytbl6" references the table "myschema2.mytbl7" that is outside the groups (myGroup2).
-WARNING:  _check_fk_groups: The table "myschema2.mytbl6" is referenced by the foreign key "mytbl8_col81_fkey" on the table "myschema2.mytbl8" that is outside the groups (myGroup2).
- emaj_create_group 
--------------------
-                 8
+ emaj_assign_tables 
+--------------------
+                  6
 (1 row)
 
-select emaj.emaj_create_group('emptyGroup',true,true);
+select emaj.emaj_assign_sequences('myschema2','.*','myseq2','myGroup2');
+ emaj_assign_sequences 
+-----------------------
+                     2
+(1 row)
+
+select emaj.emaj_create_group('emptyGroup');
  emaj_create_group 
 -------------------
-                 0
+                 1
 (1 row)
 
 select emaj.emaj_create_group('myGroup4');
-NOTICE:  table "mypartp1_log" does not exist, skipping
-NOTICE:  trigger "emaj_log_trg" for relation "myschema4.mypartp1" does not exist, skipping
-NOTICE:  trigger "emaj_trunc_trg" for relation "myschema4.mypartp1" does not exist, skipping
+ emaj_create_group 
+-------------------
+                 1
+(1 row)
+
+select emaj.emaj_assign_tables('myschema4','.*',null,'myGroup4');
+WARNING:  _assign_tables: Some partitionned tables (mytblp) are not selected.
+NOTICE:  table "mytblm_log" does not exist, skipping
+NOTICE:  trigger "emaj_log_trg" for relation "myschema4.mytblm" does not exist, skipping
+NOTICE:  trigger "emaj_trunc_trg" for relation "myschema4.mytblm" does not exist, skipping
+WARNING:  _create_tbl: The table "myschema4.mytblm" has triggers (mytblm_insert_trigger). They will be automatically disabled during E-Maj rollback operations, unless they have been recorded into the list of triggers that may be kept enabled, with the emaj_ignore_app_trigger() function.
+NOTICE:  table "mytblc2_log" does not exist, skipping
+NOTICE:  trigger "emaj_log_trg" for relation "myschema4.mytblc2" does not exist, skipping
+NOTICE:  trigger "emaj_trunc_trg" for relation "myschema4.mytblc2" does not exist, skipping
 NOTICE:  table "mypartp2_log" does not exist, skipping
 NOTICE:  trigger "emaj_log_trg" for relation "myschema4.mypartp2" does not exist, skipping
 NOTICE:  trigger "emaj_trunc_trg" for relation "myschema4.mypartp2" does not exist, skipping
 NOTICE:  table "mytblc1_log" does not exist, skipping
 NOTICE:  trigger "emaj_log_trg" for relation "myschema4.mytblc1" does not exist, skipping
 NOTICE:  trigger "emaj_trunc_trg" for relation "myschema4.mytblc1" does not exist, skipping
-NOTICE:  table "mytblc2_log" does not exist, skipping
-NOTICE:  trigger "emaj_log_trg" for relation "myschema4.mytblc2" does not exist, skipping
-NOTICE:  trigger "emaj_trunc_trg" for relation "myschema4.mytblc2" does not exist, skipping
-NOTICE:  table "mytblm_log" does not exist, skipping
-NOTICE:  trigger "emaj_log_trg" for relation "myschema4.mytblm" does not exist, skipping
-NOTICE:  trigger "emaj_trunc_trg" for relation "myschema4.mytblm" does not exist, skipping
-WARNING:  _create_tbl: The table "myschema4.mytblm" has triggers (mytblm_insert_trigger). They will be automatically disabled during E-Maj rollback operations, unless they have been recorded into the list of triggers that may be kept enabled, with the emaj_ignore_app_trigger() function.
- emaj_create_group 
--------------------
-                 5
+NOTICE:  table "mypartp1_log" does not exist, skipping
+NOTICE:  trigger "emaj_log_trg" for relation "myschema4.mypartp1" does not exist, skipping
+NOTICE:  trigger "emaj_trunc_trg" for relation "myschema4.mypartp1" does not exist, skipping
+ emaj_assign_tables 
+--------------------
+                  5
 (1 row)
 
 -----------------------------------
@@ -280,20 +333,20 @@ select altr_time_id, altr_step, altr_schema, altr_tblseq, altr_group, altr_prior
   order by 1 desc, 2,3,4 limit 6;
  altr_time_id | altr_step | altr_schema | altr_tblseq | altr_group | altr_priority | altr_group_is_logging | altr_new_group | altr_new_group_is_logging 
 --------------+-----------+-------------+-------------+------------+---------------+-----------------------+----------------+---------------------------
-         6015 | MOVE_TBL  | myschema1   | mytbl2      | myGroup2   |               | f                     | myGroup1       | f
-         6014 | MOVE_TBL  | myschema1   | mytbl1      | myGroup2   |               | f                     | myGroup1       | f
-         6014 | MOVE_TBL  | myschema1   | mytbl2b     | myGroup2   |               | f                     | myGroup1       | f
-         6013 | MOVE_TBL  | myschema1   | mytbl2      | myGroup1   |               | f                     | myGroup2       | f
-         6013 | MOVE_TBL  | myschema1   | mytbl2b     | myGroup1   |               | f                     | myGroup2       | f
-         6012 | MOVE_TBL  | myschema1   | mytbl1      | myGroup1   |               | f                     | myGroup2       | f
+         6024 | MOVE_TBL  | myschema1   | mytbl2      | myGroup2   |               | f                     | myGroup1       | f
+         6023 | MOVE_TBL  | myschema1   | mytbl1      | myGroup2   |               | f                     | myGroup1       | f
+         6023 | MOVE_TBL  | myschema1   | mytbl2b     | myGroup2   |               | f                     | myGroup1       | f
+         6022 | MOVE_TBL  | myschema1   | mytbl2      | myGroup1   |               | f                     | myGroup2       | f
+         6022 | MOVE_TBL  | myschema1   | mytbl2b     | myGroup1   |               | f                     | myGroup2       | f
+         6021 | MOVE_TBL  | myschema1   | mytbl1      | myGroup1   |               | f                     | myGroup2       | f
 (6 rows)
 
 select group_last_alter_time_id, group_nb_table, group_nb_sequence from emaj.emaj_group 
   where group_name in ('myGroup1','myGroup2') order by 1 desc ,2,3;
  group_last_alter_time_id | group_nb_table | group_nb_sequence 
 --------------------------+----------------+-------------------
-                     6015 |              5 |                 2
-                     6015 |              6 |                 2
+                     6024 |              5 |                 2
+                     6024 |              6 |                 2
 (2 rows)
 
 -----------------------------------
@@ -422,18 +475,18 @@ select altr_time_id, altr_step, altr_schema, altr_tblseq, altr_group, altr_prior
   order by 1 desc, 2,3,4 limit 3;
  altr_time_id | altr_step | altr_schema | altr_tblseq | altr_group | altr_priority | altr_group_is_logging | altr_new_group | altr_new_group_is_logging 
 --------------+-----------+-------------+-------------+------------+---------------+-----------------------+----------------+---------------------------
-         6019 | MOVE_SEQ  | myschema2   | myseq1      | myGroup4   |               | f                     | myGroup2       | f
-         6018 | MOVE_SEQ  | myschema2   | myseq1      | myGroup1   |               | f                     | myGroup4       | f
-         6017 | MOVE_SEQ  | myschema2   | myseq1      | myGroup2   |               | f                     | myGroup1       | f
+         6028 | MOVE_SEQ  | myschema2   | myseq1      | myGroup4   |               | f                     | myGroup2       | f
+         6027 | MOVE_SEQ  | myschema2   | myseq1      | myGroup1   |               | f                     | myGroup4       | f
+         6026 | MOVE_SEQ  | myschema2   | myseq1      | myGroup2   |               | f                     | myGroup1       | f
 (3 rows)
 
 select group_last_alter_time_id, group_nb_table, group_nb_sequence from emaj.emaj_group 
   where group_name in ('myGroup1','myGroup2','myGroup4') order by 1 desc ,2,3;
  group_last_alter_time_id | group_nb_table | group_nb_sequence 
 --------------------------+----------------+-------------------
-                     6019 |              5 |                 0
-                     6019 |              6 |                 2
-                     6018 |              5 |                 2
+                     6028 |              5 |                 0
+                     6028 |              6 |                 2
+                     6027 |              5 |                 2
 (3 rows)
 
 -----------------------------------
@@ -501,16 +554,16 @@ select rel_schema, rel_tblseq, rel_time_range, rel_priority from emaj.emaj_relat
   where rel_schema = 'myschema1' and rel_tblseq = 'mytbl2' order by 3 desc ,1,2 limit 2;
  rel_schema | rel_tblseq | rel_time_range | rel_priority 
 ------------+------------+----------------+--------------
- myschema1  | mytbl2     | [6015,)        |            1
- myschema1  | mytbl2     | [6013,6015)    |             
+ myschema1  | mytbl2     | [6024,)        |            1
+ myschema1  | mytbl2     | [6022,6024)    |             
 (2 rows)
 
 select rel_schema, rel_tblseq, rel_time_range, rel_log_dat_tsp, rel_log_idx_tsp from emaj.emaj_relation
   where rel_schema = 'myschema1' and rel_tblseq = 'mytbl1' order by 3 desc ,1,2 limit 2;
  rel_schema | rel_tblseq | rel_time_range | rel_log_dat_tsp | rel_log_idx_tsp 
 ------------+------------+----------------+-----------------+-----------------
- myschema1  | mytbl1     | [6014,)        | tsp log'2       | tsp log'2
- myschema1  | mytbl1     | [6012,6014)    |                 | 
+ myschema1  | mytbl1     | [6023,)        | tsp log'2       | tsp log'2
+ myschema1  | mytbl1     | [6021,6023)    |                 | 
 (2 rows)
 
 -- revert changes
@@ -530,16 +583,16 @@ select rel_schema, rel_tblseq, rel_time_range, rel_priority from emaj.emaj_relat
   where rel_schema = 'myschema1' and rel_tblseq = 'mytbl2' order by 3 desc ,1,2 limit 2;
  rel_schema | rel_tblseq | rel_time_range | rel_priority 
 ------------+------------+----------------+--------------
- myschema1  | mytbl2     | [6015,)        |             
- myschema1  | mytbl2     | [6013,6015)    |             
+ myschema1  | mytbl2     | [6024,)        |             
+ myschema1  | mytbl2     | [6022,6024)    |             
 (2 rows)
 
 select rel_schema, rel_tblseq, rel_time_range, rel_log_dat_tsp, rel_log_idx_tsp from emaj.emaj_relation
   where rel_schema = 'myschema1' and rel_tblseq = 'mytbl1' order by 3 desc ,1,2 limit 2;
  rel_schema | rel_tblseq | rel_time_range | rel_log_dat_tsp | rel_log_idx_tsp 
 ------------+------------+----------------+-----------------+-----------------
- myschema1  | mytbl1     | [6014,)        |                 | 
- myschema1  | mytbl1     | [6012,6014)    |                 | 
+ myschema1  | mytbl1     | [6023,)        |                 | 
+ myschema1  | mytbl1     | [6021,6023)    |                 | 
 (2 rows)
 
 -------------------------------------
@@ -584,8 +637,8 @@ select rel_schema, rel_tblseq, rel_time_range, rel_priority, rel_log_dat_tsp fro
   where rel_schema = 'myschema2' and rel_tblseq in ('mytbl1','mytbl2') order by 1,2,3;
  rel_schema | rel_tblseq | rel_time_range | rel_priority | rel_log_dat_tsp 
 ------------+------------+----------------+--------------+-----------------
- myschema2  | mytbl1     | [6008,)        |           10 | tsplog1
- myschema2  | mytbl2     | [6008,)        |           10 | tsplog1
+ myschema2  | mytbl1     | [6015,)        |           10 | tsplog1
+ myschema2  | mytbl2     | [6015,)        |           10 | tsplog1
 (2 rows)
 
 -----------------------------------
@@ -624,11 +677,11 @@ select rel_schema, rel_tblseq, rel_time_range, rel_priority, rel_log_dat_tsp, re
   where rel_schema = 'myschema2' and rel_tblseq like 'mytbl%' order by 1,2,3;
  rel_schema | rel_tblseq | rel_time_range | rel_priority | rel_log_dat_tsp | rel_log_idx_tsp 
 ------------+------------+----------------+--------------+-----------------+-----------------
- myschema2  | mytbl1     | [6008,)        |              |                 | 
- myschema2  | mytbl2     | [6008,)        |              |                 | 
- myschema2  | mytbl4     | [6008,)        |              |                 | 
- myschema2  | mytbl5     | [6008,)        |              |                 | 
- myschema2  | mytbl6     | [6008,)        |              |                 | 
+ myschema2  | mytbl1     | [6015,)        |              |                 | 
+ myschema2  | mytbl2     | [6015,)        |              |                 | 
+ myschema2  | mytbl4     | [6015,)        |              |                 | 
+ myschema2  | mytbl5     | [6015,)        |              |                 | 
+ myschema2  | mytbl6     | [6015,)        |              |                 | 
 (5 rows)
 
 select altr_time_id, altr_step, altr_schema, altr_tblseq, altr_group, altr_priority, altr_group_is_logging,
@@ -636,20 +689,20 @@ select altr_time_id, altr_step, altr_schema, altr_tblseq, altr_group, altr_prior
   order by 1 desc, 2,3,4 limit 14;
  altr_time_id |        altr_step         | altr_schema | altr_tblseq | altr_group | altr_priority | altr_group_is_logging | altr_new_group | altr_new_group_is_logging 
 --------------+--------------------------+-------------+-------------+------------+---------------+-----------------------+----------------+---------------------------
-         6026 | CHANGE_TBL_LOG_DATA_TSP  | myschema2   | mytbl1      | myGroup2   |               | f                     |                | 
-         6026 | CHANGE_TBL_LOG_DATA_TSP  | myschema2   | mytbl2      | myGroup2   |               | f                     |                | 
-         6026 | CHANGE_REL_PRIORITY      | myschema2   | mytbl1      | myGroup2   |               | f                     |                | 
-         6026 | CHANGE_REL_PRIORITY      | myschema2   | mytbl2      | myGroup2   |               | f                     |                | 
-         6025 | CHANGE_TBL_LOG_DATA_TSP  | myschema2   | mytbl1      | myGroup2   |               | f                     |                | 
-         6025 | CHANGE_TBL_LOG_DATA_TSP  | myschema2   | mytbl2      | myGroup2   |               | f                     |                | 
-         6025 | CHANGE_REL_PRIORITY      | myschema2   | mytbl1      | myGroup2   |            10 | f                     |                | 
-         6025 | CHANGE_REL_PRIORITY      | myschema2   | mytbl2      | myGroup2   |            10 | f                     |                | 
-         6024 | CHANGE_TBL_LOG_DATA_TSP  | myschema1   | mytbl1      | myGroup1   |               | f                     |                | 
-         6024 | CHANGE_TBL_LOG_INDEX_TSP | myschema1   | mytbl1      | myGroup1   |               | f                     |                | 
-         6023 | CHANGE_REL_PRIORITY      | myschema1   | mytbl2      | myGroup1   |               | f                     |                | 
-         6022 | CHANGE_TBL_LOG_INDEX_TSP | myschema1   | mytbl1      | myGroup1   |               | f                     |                | 
-         6021 | CHANGE_TBL_LOG_DATA_TSP  | myschema1   | mytbl1      | myGroup1   |               | f                     |                | 
-         6020 | CHANGE_REL_PRIORITY      | myschema1   | mytbl2      | myGroup1   |             1 | f                     |                | 
+         6035 | CHANGE_TBL_LOG_DATA_TSP  | myschema2   | mytbl1      | myGroup2   |               | f                     |                | 
+         6035 | CHANGE_TBL_LOG_DATA_TSP  | myschema2   | mytbl2      | myGroup2   |               | f                     |                | 
+         6035 | CHANGE_REL_PRIORITY      | myschema2   | mytbl1      | myGroup2   |               | f                     |                | 
+         6035 | CHANGE_REL_PRIORITY      | myschema2   | mytbl2      | myGroup2   |               | f                     |                | 
+         6034 | CHANGE_TBL_LOG_DATA_TSP  | myschema2   | mytbl1      | myGroup2   |               | f                     |                | 
+         6034 | CHANGE_TBL_LOG_DATA_TSP  | myschema2   | mytbl2      | myGroup2   |               | f                     |                | 
+         6034 | CHANGE_REL_PRIORITY      | myschema2   | mytbl1      | myGroup2   |            10 | f                     |                | 
+         6034 | CHANGE_REL_PRIORITY      | myschema2   | mytbl2      | myGroup2   |            10 | f                     |                | 
+         6033 | CHANGE_TBL_LOG_DATA_TSP  | myschema1   | mytbl1      | myGroup1   |               | f                     |                | 
+         6033 | CHANGE_TBL_LOG_INDEX_TSP | myschema1   | mytbl1      | myGroup1   |               | f                     |                | 
+         6032 | CHANGE_REL_PRIORITY      | myschema1   | mytbl2      | myGroup1   |               | f                     |                | 
+         6031 | CHANGE_TBL_LOG_INDEX_TSP | myschema1   | mytbl1      | myGroup1   |               | f                     |                | 
+         6030 | CHANGE_TBL_LOG_DATA_TSP  | myschema1   | mytbl1      | myGroup1   |               | f                     |                | 
+         6029 | CHANGE_REL_PRIORITY      | myschema1   | mytbl2      | myGroup1   |             1 | f                     |                | 
 (14 rows)
 
 -- checks are performed by the alterLogging.sql script

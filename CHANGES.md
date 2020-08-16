@@ -3,6 +3,10 @@ E-Maj - Change log
 <devel>
 ------
 ###Enhancements:###
+  * The emaj_create_group() function does not use the emaj_group_def table
+    anymore. To populate the groups, use the emaj_assign_table() and
+    emaj_assign_sequence() functions families. The optional third parameter of
+    the emaj_create_group() function is removed.
   * Remove the old deprecated versions of E-Maj rollback functions that only
     returned an integer.
   * Remove the emaj_alter_group(), emaj_alter_groups() and

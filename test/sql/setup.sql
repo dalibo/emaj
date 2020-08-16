@@ -181,19 +181,22 @@ CREATE TABLE myTbl6 (
   PRIMARY KEY (col61)
 );
 
--- This table will remain outside table groups and a foreign key will be created later in createDrop.sql
+-- This table will remain outside table groups
 DROP TABLE IF EXISTS myTbl7 ;
 CREATE TABLE myTbl7 (
   col71       INT              NOT NULL,
   PRIMARY KEY (col71)
 );
 
--- This table will remain outside table groups and a foreign key will be created later in createDrop.sql
+-- This table will remain outside table groups
 DROP TABLE IF EXISTS myTbl8 ;
 CREATE TABLE myTbl8 (
   col81       INT              NOT NULL,
   PRIMARY KEY (col81)
 );
+
+ALTER TABLE myschema2.myTbl6 ADD FOREIGN KEY (col61) REFERENCES myschema2.myTbl7 (col71) DEFERRABLE INITIALLY IMMEDIATE;
+ALTER TABLE myschema2.myTbl8 ADD FOREIGN KEY (col81) REFERENCES myschema2.myTbl6 (col61) DEFERRABLE;
 
 CREATE SEQUENCE mySeq1 MINVALUE 1000 MAXVALUE 2000 CYCLE;
 

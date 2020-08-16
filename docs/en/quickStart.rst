@@ -40,7 +40,7 @@ You can now log on the database with the role having the E-Maj administration ri
 
 Then, an empty (here *ROLLBACKABLE*) tables group must be created::
 
-   SELECT emaj.emaj_create_group('my_group', true, true);
+   SELECT emaj.emaj_create_group('my_group', true);
 
 The tables group can now be populated with tables and sequences, using statements like::
 

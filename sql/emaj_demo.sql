@@ -131,8 +131,8 @@ CREATE SEQUENCE mySeq1 MINVALUE 1000 MAXVALUE 2000 CYCLE;
 \echo '---'
 \echo '--- Create both table groups.'
 \echo '---'
-select emaj.emaj_create_group('emaj demo group 1',true,true);
-select emaj.emaj_create_group('emaj demo group 2',true,true);
+select emaj.emaj_create_group('emaj demo group 1');
+select emaj.emaj_create_group('emaj demo group 2');
 
 \echo '---'
 \echo '--- Populate both groups.'

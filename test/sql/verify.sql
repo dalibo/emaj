@@ -225,6 +225,7 @@ begin;
   savepoint sp2;
     select emaj.emaj_drop_group('myGroup2');
     select emaj.emaj_create_group('myGroup2');
+    select emaj.emaj_assign_table('myschema2','mytbl4','myGroup2');
   rollback to savepoint sp2;
 -- or stop and export/import the groups configuration
   select emaj.emaj_import_groups_configuration(emaj.emaj_export_groups_configuration(),array['myGroup2'],true);

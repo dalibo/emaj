@@ -10,8 +10,14 @@ grant emaj_viewer to emaj_regression_tests_viewer_user;
 -- prepare groups for the test
 -----------------------------
 select emaj.emaj_create_group('myGroup1');
+select emaj.emaj_assign_tables('myschema1','.*',null,'myGroup1');
+select emaj.emaj_assign_sequences('myschema1','.*',null,'myGroup1');
 select emaj.emaj_start_group('myGroup1','Start');
+
 select emaj.emaj_create_group('myGroup2');
+select emaj.emaj_assign_tables('myschema2','.*','mytbl[7,8]','myGroup2');
+select emaj.emaj_assign_sequences('myschema2','.*','myseq2','myGroup2');
+
 select emaj.emaj_create_group('emptyGroup');
 select emaj.emaj_start_group('emptyGroup');
 
@@ -83,7 +89,6 @@ delete from emaj_mySchema1.myTbl1_log;
 -----------------------------
 select emaj.emaj_ignore_app_trigger('ADD','myschema1','mytbl1','%');
 select emaj.emaj_create_group('myGroup1');
-select emaj.emaj_create_group('myGroup1',true);
 select emaj.emaj_drop_group('myGroup1');
 select emaj.emaj_force_drop_group('myGroup1');
 select emaj.emaj_export_groups_configuration();

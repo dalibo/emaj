@@ -93,8 +93,18 @@ insert into emaj.emaj_param (param_key, param_value_text) values ('alter_log_tab
 
 select emaj.emaj_create_group('myGroup1');
 select emaj.emaj_comment_group('myGroup1','This is group #1');
-select emaj.emaj_create_group('myGroup2',true);
-select emaj.emaj_create_group('emptyGroup',true,true);
+select emaj.emaj_assign_table('myschema1','mytbl1','myGroup1','{"priority":20}'::jsonb);
+select emaj.emaj_assign_table('myschema1','mytbl2','myGroup1','{"log_data_tablespace":"tsplog1","log_index_tablespace":"tsplog1"}'::jsonb);
+select emaj.emaj_assign_table('myschema1','mytbl2b','myGroup1','{"log_data_tablespace":"tsp log''2","log_index_tablespace":"tsp log''2"}'::jsonb);
+select emaj.emaj_assign_table('myschema1','myTbl3','myGroup1','{"priority":10,"log_data_tablespace":"tsplog1"}'::jsonb);
+select emaj.emaj_assign_table('myschema1','mytbl4','myGroup1','{"priority":20,"log_data_tablespace":"tsplog1","log_index_tablespace":"tsp log''2"}'::jsonb);
+select emaj.emaj_assign_sequences('myschema1','.*',null,'myGroup1');
+
+select emaj.emaj_create_group('myGroup2');
+select emaj.emaj_assign_tables('myschema2','.*','mytbl[7,8]','myGroup2');
+select emaj.emaj_assign_sequences('myschema2','.*','myseq2','myGroup2');
+
+select emaj.emaj_create_group('emptyGroup');
 
 -- try to rename the last mark for a group that has no mark
 select emaj.emaj_rename_mark_group('myGroup2','EMAJ_LAST_MARK','new_mark_name');
@@ -426,7 +436,7 @@ select col41, col42, col43, col44, col45, emaj_verb, emaj_tuple, emaj_gid from e
 -- check grants on other functions to emaj_adm role
 -----------------------------
 select * from emaj.emaj_verify_all();
-select emaj.emaj_create_group('dummyGroup');
+select emaj.emaj_create_group('');
 select emaj.emaj_drop_group('dummyGroup');
 select emaj.emaj_force_drop_group('dummyGroup');
 select emaj.emaj_get_previous_mark_group('dummyGroup', '2010-01-01');

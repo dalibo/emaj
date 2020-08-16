@@ -22,9 +22,18 @@ select emaj.emaj_drop_group('myGroup4');
 select emaj.emaj_force_stop_group('emptyGroup');
 select emaj.emaj_drop_group('emptyGroup');
 select emaj.emaj_create_group('myGroup1');
+select emaj.emaj_assign_table('myschema1','mytbl1','myGroup1','{"priority":20}'::jsonb);
+select emaj.emaj_assign_table('myschema1','mytbl2','myGroup1','{"log_data_tablespace":"tsplog1","log_index_tablespace":"tsplog1"}'::jsonb);
+select emaj.emaj_assign_table('myschema1','mytbl2b','myGroup1','{"log_data_tablespace":"tsp log''2","log_index_tablespace":"tsp log''2"}'::jsonb);
+select emaj.emaj_assign_table('myschema1','myTbl3','myGroup1','{"priority":10,"log_data_tablespace":"tsplog1"}'::jsonb);
+select emaj.emaj_assign_table('myschema1','mytbl4','myGroup1','{"priority":20,"log_data_tablespace":"tsplog1","log_index_tablespace":"tsp log''2"}'::jsonb);
+select emaj.emaj_assign_sequences('myschema1','.*',null,'myGroup1');
 select emaj.emaj_create_group('myGroup2');
-select emaj.emaj_create_group('emptyGroup',true,true);
+select emaj.emaj_assign_tables('myschema2','.*','mytbl[7,8]','myGroup2');
+select emaj.emaj_assign_sequences('myschema2','.*','myseq2','myGroup2');
+select emaj.emaj_create_group('emptyGroup');
 select emaj.emaj_create_group('myGroup4');
+select emaj.emaj_assign_tables('myschema4','.*',null,'myGroup4');
 
 -----------------------------------
 -- emaj_move_table

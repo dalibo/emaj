@@ -26,6 +26,7 @@ select emaj.emaj_export_groups_configuration(:'EMAJTESTTMPDIR' || '/groups_confi
 -- Step 17 : test transactions with several emaj operations
 -----------------------------
 select emaj.emaj_create_group('myGroup4');
+select emaj.emaj_assign_tables('myschema4','.*',null,'myGroup4');
 
 -- several similar operations in a single transaction, using different mark names
 begin;
@@ -103,9 +104,11 @@ select emaj.emaj_drop_group('myGroup4');
 -- Step 19 : test defect with application table or sequence
 --           also test some changes on the unlogged and the with oids tables
 -----------------------------
-update emaj.emaj_group_def set grpdef_group = 'phil''s group#3",' where grpdef_schema = 'myschema5';
-insert into emaj.emaj_group_def values ('phil''s group#3",','phil''s schema3','mytbl4');
 select emaj.emaj_create_group('phil''s group#3",',false);
+select emaj.emaj_assign_tables('phil''s schema3','.*',null,'phil''s group#3",');
+select emaj.emaj_assign_sequences('phil''s schema3','.*',null,'phil''s group#3",');
+select emaj.emaj_assign_tables('myschema5','.*',null,'phil''s group#3",');
+
 select emaj.emaj_start_group('phil''s group#3",','start');
 
 -----------------------------
@@ -197,9 +200,9 @@ select emaj.emaj_drop_group('phil''s group#3",');
 -- create, start and populate groups
 -- grp_tmp is empty, grp_tmp_3 and grp_tmp_4 contains tables and sequences frop respectively phil''s schema3 and myschema4
 -- grp_tmp_4 is started before being populated
-select emaj.emaj_create_group('grp_tmp',true,true);
-select emaj.emaj_create_group('grp_tmp_3',true,true);
-select emaj.emaj_create_group('grp_tmp_4',true,true);
+select emaj.emaj_create_group('grp_tmp');
+select emaj.emaj_create_group('grp_tmp_3');
+select emaj.emaj_create_group('grp_tmp_4');
 select emaj.emaj_start_groups('{"grp_tmp","grp_tmp_4"}','Start');
 begin;
   select emaj.emaj_assign_tables('phil''s schema3','.*','','grp_tmp_3');
@@ -360,7 +363,7 @@ select count(*) from emaj.emaj_relation where rel_schema in ('phil''s schema3','
 -----------------------------
 
 SET client_min_messages TO WARNING;
-select emaj.emaj_create_group('truncateTestGroup',true,true);
+select emaj.emaj_create_group('truncateTestGroup');
 select emaj.emaj_assign_tables('phil''s schema3','.*','','truncateTestGroup');
 select emaj.emaj_assign_tables('myschema4','.*','','truncateTestGroup');
 RESET client_min_messages;

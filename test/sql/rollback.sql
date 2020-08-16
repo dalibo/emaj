@@ -98,7 +98,7 @@ select * from emaj.emaj_rollback_groups('{"myGroup1","myGroup2"}','Different_Mar
 select * from emaj.emaj_rollback_groups('{"myGroup1","myGroup2"}','EMAJ_LAST_MARK');
 
 -- attempt to rollback 'audit_only' groups
-select emaj.emaj_create_group('auditOnlyEmptyGroup',false,true);
+select emaj.emaj_create_group('auditOnlyEmptyGroup',false);
 select * from emaj.emaj_rollback_group('phil''s group#3",','EMAJ_LAST_MARK');
 select * from emaj.emaj_logged_rollback_groups(array['phil''s group#3",','auditOnlyEmptyGroup'],'M1_audit_only');
 select emaj.emaj_drop_group('auditOnlyEmptyGroup');

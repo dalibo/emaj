@@ -58,42 +58,25 @@ Pour optimiser les performances des installations E-Maj comportant un très gran
 
 Par défaut, ces propriétés prennent la valeur *NULL*, indiquant l’utilisation du tablespace par défaut de la session courante.
 
+.. _emaj_create_group:
+
 Création des groupes de tables
 ------------------------------
 
-Il existe deux grandes façons de gérer la structure des groupes de tables :
+Pour créer un groupe de tables, il suffit d'exécuter la requête SQL suivante ::
 
-* gérer l’affectation des tables et séquences dans les groupes de manière dynamique, au travers des fonctions dédiées à cet effet,
-* décrire la liste des groupes, avec les tables et séquences qu’ils contiennent, dans une table de configuration, *emaj_group_def*.
-
-Bien que très différentes, les deux méthodes sont :ref:`combinables entre elles<emaj_sync_def_group>`.
-
-Méthode « constitution dynamique »
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-
-La création d’un groupe de tables s’opère en plusieurs étapes. Dans un premier temps, on crée un groupe de tables vide. Puis on va y assigner des tables et des séquences.
-
-.. _emaj_create_group:
-
-**Création d'un groupe de tables vide**
-
-Pour créer un groupe de tables vide, il suffit d'exécuter la requête SQL suivante ::
-
-   SELECT emaj.emaj_create_group('<nom.du.groupe>', <est.rollbackable>, <est.vide>);
+   SELECT emaj.emaj_create_group('<nom.du.groupe>', <est.rollbackable>);
 
 Le second paramètre, de type booléen, indique si le groupe est de type *ROLLBACKABLE* avec la valeur vrai ou de type *AUDIT_ONLY* avec la valeur fausse. Si le second paramètre n'est pas fourni, le groupe à créer est considéré comme étant de type *ROLLBACKABLE*.
 
-Notez que le troisième paramètre doit être explicitement valorisé à « vrai ».
-
-Le groupe peut être référencé dans la table *emaj_group_def*. Mais dans ce cas, le contenu de la table emaj_group_def est simplement ignoré.
-
-La fonction retourne le nombre de tables et de séquences contenues dans le groupe.
+La fonction retourne le nombre de groupes créés, c’est à dire 1.
 
 .. _assign_table_sequence:
 
-**Assignation de tables et séquences dans un groupe de tables**
+Assignation de tables et séquences dans un groupe de tables
+-----------------------------------------------------------
 
-Six fonctions permettent d’ajouter dynamiquement des tables ou des séquences dans un groupe de tables.
+Six fonctions permettent d’ajouter des tables ou des séquences dans un groupe de tables.
 
 Pour **ajouter une ou plusieurs tables** dans un groupe de tables ::
 
@@ -164,79 +147,6 @@ Toutes ces fonctions retournent le nombre de tables ou séquences ajoutées au g
 
 Les fonctions d’assignation de tables dans un groupe de tables créent les tables de log, les fonctions et triggers de log, ainsi que les triggers traitant les exécutions de requêtes SQL *TRUNCATE*. Elles créent également les éventuels schémas de log nécessaires.
 
-Méthode « table de configuration »
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-
-Il s’agit de la méthode initialement disponible avec E-Maj.
-
-La création d’un groupe de tables s’opère en 2 temps :
-
-* définition de la configuration du groupe dans la table *emaj.emaj_group_def*,
-* création proprement dite du groupe de tables.
-
-.. _emaj_group_def:
-
-**Alimentation de la table emaj_group_def**
-
-Le contenu du ou des groupes de tables à créer se définit en garnissant la table **emaj.emaj_group_def**. Il faut insérer dans cette table une ligne par table ou séquence applicative à intégrer dans un groupe. Cette table *emaj_group_def* a la structure suivante :
-
-+--------------------------+------+-------------------------------------------------------------------------+
-| Colonne                  | Type | Description                                                             |
-+==========================+======+=========================================================================+
-| grpdef_group             | TEXT | nom du groupe de tables                                                 |
-+--------------------------+------+-------------------------------------------------------------------------+
-| grpdef_schema            | TEXT | nom du schéma contenant la table ou la séquence applicative             |
-+--------------------------+------+-------------------------------------------------------------------------+
-| grpdef_tblseq            | TEXT | nom de la table ou de la séquence applicative                           |
-+--------------------------+------+-------------------------------------------------------------------------+
-| grpdef_priority          | INT  | niveau de priorité de la table dans les traitements E-Maj (optionnel)   |
-+--------------------------+------+-------------------------------------------------------------------------+
-| grpdef_log_dat_tsp       | TEXT | nom du tablespace hébergeant la table de log (optionnel)                |
-+--------------------------+------+-------------------------------------------------------------------------+
-| grpdef_log_idx_tsp       | TEXT | nom du tablespace hébergeant l'index de la table de log (optionnel)     |
-+--------------------------+------+-------------------------------------------------------------------------+
-
-L'administrateur peut alimenter cette table par tout moyen usuel : verbe SQL *INSERT*, verbe SQL *COPY*, commande *psql \\copy*, outil graphique, etc.
-
-Le contenu de la table *emaj_group_def* est sensible à la casse. Les noms de schéma, de table, de séquence et de tablespace doivent correspondre à la façon dont PostgreSQL les enregistre dans son catalogue. Ces noms sont le plus souvent en minuscule. Mais si un nom est encadré par des double-guillemets dans les requêtes SQL, car contenant des majuscules ou des espaces, alors il doit être enregistré dans la table *emaj_group_def* avec ces mêmes majuscules et espaces.
-
-Attention, le contenu de la table *emaj_group_def* est altéré par les fonctions *emaj_import_groups_configuration()*.
-
-**Création du groupe de tables**
-
-Une fois la constitution d'un groupe de tables définie, E-Maj peut créer ce groupe. Pour ce faire, il suffit d'exécuter la requête SQL suivante ::
-
-   SELECT emaj.emaj_create_group('<nom.du.groupe>', <est.rollbackable>);
-
-ou encore, dans sa forme abrégée ::
-
-   SELECT emaj.emaj_create_group('<nom.du.groupe>');
-
-Le second paramètre, de type booléen, indique si le groupe est de type *ROLLBACKABLE* avec la valeur vrai ou de type *AUDIT_ONLY* avec la valeur fausse. Si le second paramètre n'est pas fourni, le groupe à créer est considéré comme étant de type *ROLLBACKABLE*.
-
-La fonction retourne le nombre de tables et de séquences contenues dans le groupe.
-
-Pour chaque table du groupe, cette fonction crée la table de log associée, la fonction et le trigger de log, ainsi que le trigger traitant les exécutions de requêtes SQL *TRUNCATE*.
-
-La fonction crée également les schémas de log nécessaires.
-
-En revanche, si des tablespaces pour les tables de log ou pour leurs index sont référencés, ceux-ci doivent déjà exister avant l'exécution de la fonction.
-
-La fonction *emaj_create_group()* contrôle également l'existence de « triggers applicatifs » sur les tables du groupe. Si un trigger existe sur une table du groupe, un message est retourné incitant l'utilisateur à vérifier l’impact du trigger lors des éventuels rollbacks E-Maj.
-
-Si une séquence du groupe est associée à une colonne soit de type *SERIAL* ou *BIGSERIAL* soit définie avec une clause *GENERATED AS IDENTITY*, et que sa table d'appartenance ne fait pas partie du groupe, la fonction génère également un message de type *WARNING*. 
-
-Une forme particulière de la fonction permet de créer un groupe de tables vide, c’est à dire ne contenant à sa création aucune table ni séquence ::
-
-   SELECT emaj.emaj_create_group('<nom.du.groupe>', <est.rollbackable>, <est.vide>);
-
-Le troisième paramètre prend la valeur *faux* par défaut. Si le paramètre est valorisé à *vrai*, le groupe peut être référencé dans la table *emaj_group_def*. Mais dans ce cas, le contenu de la table *emaj_group_def* est ignoré. Une fois créé, un groupe vide peut ensuite être peuplé, à l’aide des fonctions d’:ref:`ajustement dynamique des groupes de tables <dynamic_ajustment>`.
-
-Toutes les actions enchaînées par la fonction *emaj_create_group()* sont exécutées au sein d'une unique transaction. En conséquence, si une erreur survient durant l'opération, toutes les tables, fonctions et triggers déjà créés par la fonction sont annulées.
-
-En enregistrant la composition du groupe dans une autre table interne (*emaj_relation*), la fonction *emaj_create_group()* en fige sa définition pour les autres fonctions E-Maj, même si le contenu de la table *emaj_group_def* est modifié entre temps.
-
-
 .. _emaj_drop_group:
 
 Suppression d'un groupe de tables
@@ -250,7 +160,7 @@ Ensuite, il suffit d'exécuter la commande SQL ::
 
 La fonction retourne le nombre de tables et de séquences contenues dans le groupe.
 
-Pour ce groupe de tables, la fonction *emaj_drop_group()* supprime tous les objets qui ont été créés par les fonctions d’assignation ou par la fonction :ref:`emaj_create_group() <emaj_create_group>` : tables, séquences, fonctions et triggers de log.
+Pour ce groupe de tables, la fonction *emaj_drop_group()* supprime tous les objets qui ont été créés par les fonctions d’assignation : tables, séquences, fonctions et triggers de log.
 
 Les éventuels schémas de log qui deviennent inutilisés sont également supprimés.
 

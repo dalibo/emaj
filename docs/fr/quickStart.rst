@@ -38,7 +38,7 @@ Vous pouvez maintenant vous connecter à la base de données avec le rôle qui p
 
 Il faut tout d’abord créer un groupe de tables vide (ici de type *ROLLBACKABLE*) ::
 
-   SELECT emaj.emaj_create_group('mon_groupe', true, true);
+   SELECT emaj.emaj_create_group('mon_groupe', true);
 
 On peut alors le garnir de tables et séquences avec des requêtes du type ::
 

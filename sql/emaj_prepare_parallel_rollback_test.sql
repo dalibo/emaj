@@ -163,7 +163,7 @@ CREATE TRIGGER myTbl2trg
 \echo '---'
 \echo '--- Create E-Maj objects'
 \echo '---'
-SELECT emaj.emaj_create_group('emaj parallel rollback test group', true, true);
+SELECT emaj.emaj_create_group('emaj parallel rollback test group');
 
 -- populate tables groups
 \echo '---'
