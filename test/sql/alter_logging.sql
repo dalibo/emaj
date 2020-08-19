@@ -563,7 +563,7 @@ select emaj.emaj_gen_sql_groups('{"myGroup1","myGroup2"}', 'before move', NULL, 
 
 \! rm $EMAJTESTTMPDIR/script*
 
--- revert the emaj_group_def change and apply with a destination group in idle state
+-- revert the changes and apply with a destination group in idle state
 
 select emaj.emaj_stop_group('myGroup2');
 -- This first import try fails because a myGroup1 is missing

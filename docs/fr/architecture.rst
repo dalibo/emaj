@@ -57,7 +57,7 @@ Pour le bon fonctionnement d'E-Maj, un certain nombre d'**objets techniques** so
 * 2 rôles de type groupe (sans possibilité de connexion) : *emaj_adm* pour administrer les composants E-Maj, et *emaj_viewer* pour uniquement consulter les composants E-Maj,
 * 3 triggers sur événement.
 
-Quelques tables techniques dont il peut être utile de connaître la structure sont décrites en détail :  :ref:`emaj_group_def <emaj_group_def>`, :ref:`emaj_param <emaj_param>` et :ref:`emaj_hist <emaj_hist>`.
+Quelques tables techniques dont il peut être utile de connaître la structure sont décrites en détail : :ref:`emaj_param <emaj_param>` et :ref:`emaj_hist <emaj_hist>`.
 
 
 Les schémas créés
@@ -106,5 +106,5 @@ Les tablespaces utilisés
 
 Lors de l'installation de l'extension, les tables techniques E-Maj sont stockées dans le tablespace par défaut, positionné au niveau de l’instance ou de la database ou explicitement défini pour la session courante.
 
-Il en est de même pour les tables de log et leur index. Mais au travers du :ref:`paramétrage des groupes de tables <emaj_group_def>`, il est aussi possible de créer les tables de log et leur index dans des tablespaces spécifiques.
+Il en est de même pour les tables de log et leur index. Mais au travers du :ref:`paramétrage des groupes de tables <table_emaj_properties>`, il est aussi possible de créer les tables de log et leur index dans des tablespaces spécifiques.
 

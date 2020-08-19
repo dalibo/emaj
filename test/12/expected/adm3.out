@@ -1041,6 +1041,8 @@ select emaj.emaj_start_group('grp_tmp','Group restart');
 
 -- import the groups configuration
 select emaj.emaj_import_groups_configuration(:'EMAJTESTTMPDIR' || '/groups_config.json', null, true);
+NOTICE:  table "tmp_group_def" does not exist, skipping
+NOTICE:  table "tmp_app_trigger" does not exist, skipping
 NOTICE:  table "mytblc1_log" does not exist, skipping
 NOTICE:  trigger "emaj_log_trg" for relation "myschema4.mytblc1" does not exist, skipping
 NOTICE:  trigger "emaj_trunc_trg" for relation "myschema4.mytblc1" does not exist, skipping

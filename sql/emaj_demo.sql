@@ -61,8 +61,6 @@ $emaj_demo_cleanup$
       WHERE group_name IN ('emaj demo group 1','emaj demo group 2') AND group_is_logging;
     PERFORM emaj.emaj_drop_group(group_name) FROM emaj.emaj_group
       WHERE group_name IN ('emaj demo group 1','emaj demo group 2');
--- remove demo groups definition from the emaj_group_def table
-    DELETE FROM emaj.emaj_group_def WHERE grpdef_group IN ('emaj demo group 1','emaj demo group 2');
 -- drop the demo app schema and its content
     DROP SCHEMA IF EXISTS emaj_demo_app_schema CASCADE;
 -- the function drops itself before exiting

@@ -435,12 +435,6 @@ select count(*) from emaj.emaj_hist;
     41
 (1 row)
 
-select count(*) from emaj.emaj_group_def;
- count 
--------
-    36
-(1 row)
-
 select count(*) from emaj.emaj_group;
  count 
 -------
@@ -621,8 +615,6 @@ delete from emaj.emaj_param;
 ERROR:  permission denied for relation emaj_param
 delete from emaj.emaj_hist;
 ERROR:  permission denied for relation emaj_hist
-delete from emaj.emaj_group_def;
-ERROR:  permission denied for relation emaj_group_def
 delete from emaj.emaj_group;
 ERROR:  permission denied for relation emaj_group
 delete from emaj.emaj_relation;

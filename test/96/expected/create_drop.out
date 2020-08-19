@@ -1,4 +1,4 @@
--- create_drop.sql : prepare groups content and test emaj_create_group(), emaj_comment_group(),
+-- create_drop.sql : test emaj_create_group(), emaj_comment_group(),
 -- emaj_assign_table(), emaj_assign_tables(), emaj_remove_table(), emaj_remove_tables(),
 -- emaj_assign_sequence(), emaj_assign_sequences(), emaj_remove_sequence(), emaj_remove_sequences(),
 -- emaj_ignore_app_trigger(), emaj_export_groups_configuration(),
@@ -9,48 +9,6 @@ SET client_min_messages TO WARNING;
 \setenv EMAJTESTTMPDIR '/tmp/emaj_'`echo $PGVER`'/create_drop'
 \set EMAJTESTTMPDIR `echo $EMAJTESTTMPDIR`
 \! mkdir -p $EMAJTESTTMPDIR
------------------------------
--- prepare groups
------------------------------
-truncate emaj.emaj_group_def;
-insert into emaj.emaj_group_def values ('myGroup1','myschema1','mytbl1',20);
-insert into emaj.emaj_group_def values ('myGroup1','myschema1','mytbl2',NULL,'tsplog1','tsplog1');
-insert into emaj.emaj_group_def values ('myGroup1','myschema1','mytbl2b',NULL,'tsp log''2','tsp log''2');
-insert into emaj.emaj_group_def values ('myGroup1','myschema1','myTbl3_col31_seq');
-insert into emaj.emaj_group_def values ('myGroup1','myschema1','myTbl3',10,'tsplog1');
-insert into emaj.emaj_group_def values ('myGroup1','myschema1','mytbl4',20,'tsplog1','tsp log''2');
-insert into emaj.emaj_group_def values ('myGroup1','myschema1','mytbl2b_col20_seq');
-insert into emaj.emaj_group_def values ('myGroup2','myschema2','mytbl1');
-insert into emaj.emaj_group_def values ('myGroup2','myschema2','mytbl2');
-insert into emaj.emaj_group_def values ('myGroup2','myschema2','myTbl3_col31_seq');
-insert into emaj.emaj_group_def values ('myGroup2','myschema2','myTbl3');
-insert into emaj.emaj_group_def values ('myGroup2','myschema2','mytbl4');
-insert into emaj.emaj_group_def values ('myGroup2','myschema2','mytbl5');
-insert into emaj.emaj_group_def values ('myGroup2','myschema2','mytbl6');
-insert into emaj.emaj_group_def values ('myGroup2','myschema2','myseq1');
--- The third group name contains space, comma # and '
--- (note myTbl4 from "phil's schema3" remains outside phil's group#3", group)
-insert into emaj.emaj_group_def values ('phil''s group#3",','phil''s schema3','phil''s tbl1');
-insert into emaj.emaj_group_def values ('phil''s group#3",','phil''s schema3',E'myTbl2\\');
-insert into emaj.emaj_group_def values ('phil''s group#3",','phil''s schema3',E'myTbl2\\_col21_seq');
-insert into emaj.emaj_group_def values ('phil''s group#3",','phil''s schema3',E'phil''s seq\\1');
-insert into emaj.emaj_group_def values ('myGroup4','myschema4','mytblm');
-insert into emaj.emaj_group_def values ('myGroup4','myschema4','mytblc1');
-insert into emaj.emaj_group_def values ('myGroup4','myschema4','mytblc2');
-insert into emaj.emaj_group_def values ('myGroup4','myschema4','mypartp1');
-insert into emaj.emaj_group_def values ('myGroup4','myschema4','mypartp2');
-insert into emaj.emaj_group_def values ('myGroup5','myschema5','myunloggedtbl');
-insert into emaj.emaj_group_def values ('myGroup5','myschema5','myoidstbl');
-insert into emaj.emaj_group_def values ('myGroup6','myschema6','table_with_50_characters_long_name_____0_________0');
-insert into emaj.emaj_group_def values ('myGroup6','myschema6','table_with_51_characters_long_name_____0_________0a');
-insert into emaj.emaj_group_def values ('myGroup6','myschema6','table_with_55_characters_long_name_____0_________0abcde');
-insert into emaj.emaj_group_def values ('myGroup6','myschema6','table_with_55_characters_long_name_____0_________0fghij');
-insert into emaj.emaj_group_def values ('dummyGrp1','dummySchema','mytbl4');
-insert into emaj.emaj_group_def values ('dummyGrp1','myschema1','dummyTable');
-insert into emaj.emaj_group_def values ('dummyGrp2','emaj','emaj_param');
-insert into emaj.emaj_group_def values ('dummyGrp2','emaj_myschema1','myTbl3_log');
-insert into emaj.emaj_group_def values ('dummyGrp3','myschema1','mytbl1');
-insert into emaj.emaj_group_def values ('dummyGrp3','myschema2','mytbl2');
 -----------------------------
 -- emaj_create_group() tests
 -----------------------------

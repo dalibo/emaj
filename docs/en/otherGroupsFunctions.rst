@@ -256,8 +256,6 @@ If a tables group to import already exists, its configuration is adjusted to ref
 
 The function returns the number of imported tables groups.
 
-Note that importing a tables group overrides the previous group’s configuration, if any, in the *emaj_group_def* technical table.
-
 In a variation of the function, the first input parameter directly contains the JSON description of the groups to load::
 
    SELECT emaj_import_groups_configuration('<JSON.structure>, <groups.names.array>, <alter_started_groups>);

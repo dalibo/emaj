@@ -237,7 +237,7 @@ select emaj.emaj_stop_group('myGroup1',NULL);
 -- NULL group names array
 select emaj.emaj_start_groups(NULL,NULL,NULL);
 
--- at least one group is unknown in emaj_group_def
+-- at least one group is unknown
 select emaj.emaj_start_groups('{""}',NULL);
 select emaj.emaj_start_groups('{"unknownGroup",""}',NULL,true);
 select emaj.emaj_start_groups('{"myGroup1","unknownGroup"}',NULL,false);
@@ -277,7 +277,7 @@ select time_id, time_last_emaj_gid, time_event from emaj.emaj_time_stamp where t
 -- NULL group names array
 select emaj.emaj_stop_groups(NULL);
 
--- at least one group is unknown in emaj_group_def
+-- at least one group is unknown
 select emaj.emaj_stop_groups('{""}');
 select emaj.emaj_stop_groups('{"unknownGroup",""}');
 select emaj.emaj_stop_groups('{"myGroup1","unknownGroup"}');

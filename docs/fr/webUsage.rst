@@ -141,7 +141,7 @@ Contenu d'un groupe de tables
 
 L'onglet « *Contenu* » de la barre des groupes permet d'obtenir une vision synthétique du contenu d'un groupe de tables.
 
-Le tableau affiché reprend, pour chaque table et séquence du groupe, les caractéristiques configurées dans la table :ref:`emaj_group_def <emaj_group_def>`, ainsi que la place prise par la table de log et son index.
+Pour chaque table du groupe, le tableau affiché reprend ses propriétés E-Maj, ainsi que la place prise par ses table et index de log.
 
 .. figure:: images/emajweb_groupcontent.png
    :align: center

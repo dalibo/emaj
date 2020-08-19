@@ -36,8 +36,7 @@ Positionner des tables sur des tablespaces permet de mieux maîtriser leur impla
 
 En positionnant un tablespace par défaut pour sa session courante avant la création des groupes de tables, les tables de log seront créées par défaut dans ce tablespace, sans autre paramétrage.
 
-Mais, au travers de paramètres positionnés dans la table :ref:`emaj_group_def <emaj_group_def>`, il est également possible de spécifier, pour chaque table et index de log, un tablespace à utiliser.
-
+Mais, au travers de paramètres passées aux fonctions :ref:`emaj_assign_table(), emaj_assign_tables()<assign_table_sequence>` et :ref:`emaj_modify_table()<modify_table>`, il est également possible de spécifier, pour chaque table et index de log, un tablespace à utiliser.
 
 Déclarer les clés étrangères DEFERRABLE
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^

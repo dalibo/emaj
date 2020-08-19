@@ -34,12 +34,6 @@ select count(*) from emaj.emaj_hist;
      0
 (1 row)
 
-select count(*) from emaj.emaj_group_def;
- count 
--------
-    36
-(1 row)
-
 select count(*) from emaj.emaj_group;
  count 
 -------

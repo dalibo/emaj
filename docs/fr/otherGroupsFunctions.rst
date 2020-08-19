@@ -255,8 +255,6 @@ Si un groupe de tables à importer existe déjà, sa configuration est ajustée 
 
 La fonction retourne le nombre de groupes de tables importés.
 
-Notons que l’importation d’un groupe de tables écrase l’éventuelle configuration précédente du groupe dans la table technique *emaj_group_def*.
-
 Dans une variante de la fonction, le premier paramètre en entrée contient directement la structure JSON des groupes de tables à charger ::
 
    SELECT emaj_import_groups_configuration('<structure.JSON>', <tableau.noms.groupes>, <modification.groupes.démarrés>);

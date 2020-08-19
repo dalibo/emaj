@@ -206,12 +206,6 @@ SELECT emaj.emaj_assign_sequences('myschema2', '{"myTbl3_col31_seq", "myseq1"}',
 SELECT emaj.emaj_assign_tables('phil''s schema3', '{"mytbl1", "mytbl2"}', 'phil''s group#3');
 SELECT emaj.emaj_assign_sequence('phil''s schema3', 'myseq1', 'phil''s group#3');
 
-delete from emaj.emaj_group_def;
-insert into emaj.emaj_group_def values ('dummyGrp1','dummySchema','mytbl4');
-insert into emaj.emaj_group_def values ('dummyGrp2','myschema1','dummyTable');
-insert into emaj.emaj_group_def values ('dummyGrp3','myschema1','mytbl1');
-insert into emaj.emaj_group_def values ('dummyGrp3','myschema2','mytbl2');
-
 -----------------------------
 -- start 2 groups with a mark MARK1
 -----------------------------

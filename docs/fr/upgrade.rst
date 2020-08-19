@@ -33,21 +33,25 @@ Si certains groupes de tables sont encore actifs, il faut au préalable les arr�
 Sauvegarde des données utilisateurs
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+La procédure dépend de la version E-Maj installée.
+
+**Version installée ≥ 3.3**
+
 La configuration complète des groupes de tables existants ainsi que les paramètres E-Maj peuvent être sauvegardés sur un fichier par ::
 
    SELECT emaj.emaj_export_groups_configuration('<chemin.fichier.1>');
    
    SELECT emaj.emaj_export_parameters_configuration('<chemin.fichier.2>');
 
-Si la version E-Maj installée est antérieure à 3.3.0, ces fonctions ne sont pas disponibles. Il faut alors sauvegarder manuellement le contenu des tables techniques *emaj_group_def* et *emaj_param*. On peut par exemple décharger chacune de ces tables sur des fichiers par des commandes *copy*. On peut aussi les dupliquer en dehors du schéma *emaj*.
+**Version installée < 3.3**
 
-Si la version courante d’E-Maj contient la fonction *emaj_sync_def_group()* (3.2+), il est prudent d'utiliser cette fonction pour synchroniser d’abord la table *emaj_group_def* avec la configuration actuelle des groupes créés.
+Si la version E-Maj installée est antérieure à 3.3.0, ces fonctions d’exportation ne sont pas disponibles. 
 
-Si la version E-Maj installée est une version 3.1.0 ou supérieure, et si l’administrateur E-Maj a enregistré des triggers applicatifs comme "ne devant pas être automatiquement désactivés lors des opérations de rollback E-Maj", il faut également sauver la table  *emaj_ignored_app_trigger*. ::
+Comme à partir de E-Maj 4.0, la configuration des groupes de tables n’utilise plus l’ancienne table *emaj_group_def*,  la reconstruction des groupes de tables après mise à jour de la version E-Maj nécessitera soit la constitution manuelle d’un fichier JSON de configuration des groupes de tables, soit l’utilisation des fonctions d’assignation des tables et séquences.
 
-   SELECT group_name, emaj.emaj_sync_def_group(group_name) FROM emaj.emaj_group;
+Si la table *emaj_param* contient des paramètres spécifiques, elle peut être sauvegardée sur un fichier par une commande *copy*. On peut aussi la dupliquer en dehors du schéma *emaj*.
 
-   CREATE TABLE public.sav_group_def AS SELECT * FROM emaj.emaj_group_def;
+Si la version E-Maj installée est une version 3.1.0 ou supérieure, et si l’administrateur E-Maj a enregistré des triggers applicatifs comme "ne devant pas être automatiquement désactivés lors des opérations de rollback E-Maj", on peut également sauver la table  *emaj_ignored_app_trigger*. ::
 
    CREATE TABLE public.sav_ignored_app_trigger AS SELECT * FROM emaj.emaj_ignored_app_trigger;
 
@@ -68,24 +72,25 @@ NB : avant la version 2.0.0, le script de désinstallation se nommait *uninstal
 Restauration des données utilisateurs
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Si les configurations de groupes de tables et de paramètres ont été exportées dans des fichiers avec les fonctions *emaj_export_parameters_configuration()* et *emaj_export_groups_configuration()*, ces configurations peuvent être rechargées par ::
+**Version précédente installée ≥ 3.3**
+
+Les configurations de groupes de tables et de paramètres exportées peuvent être rechargées par ::
 
    SELECT emaj.emaj_import_parameters_configuration('<chemin.fichier.2>', TRUE);
 
    SELECT emaj.emaj_import_groups_configuration('<chemin.fichier.1>');
 
-Si les configurations ont été sauvegardées au préalable par déchargement ou copie de tables, ces tables techniques d’E-Maj peuvent être par exemple rechargées avec des requêtes de type INSERT SELECT. ::
+**Version précédente installée < 3.3**
 
-   INSERT INTO emaj.emaj_group_def
-		SELECT grpdef_group, grpdef_schema, grpdef_tblseq,
-			grpdef_priority, grpdef_log_dat_tsp, grpdef_log_idx_tsp
-		FROM public.sav_group_def;
+Les éventuelles configurations de paramètres et de triggers applicatifs sauvegardées peuvent être par exemple rechargées avec des requêtes de type INSERT SELECT. ::
 
    INSERT INTO emaj.emaj_ignored_app_trigger SELECT * FROM public.sav_ignored_app_trigger;
 
    INSERT INTO emaj.emaj_param SELECT * FROM public.sav_param;
 
-Une fois les données copiées, les tables ou fichiers temporaires peuvent être supprimés.
+Les groupes de tables doivent également être recréés par les :doc:`moyens disponibles<groupsCreationFunctions>` dans la nouvelle version.
+
+Les tables ou fichiers temporaires peuvent alors être supprimés.
 
 
 Mise à jour à partir d’une version E-Maj comprise entre 0.11.0 et 1.3.1
@@ -165,8 +170,6 @@ L’opération est très rapide et ne touche pas aux groupes de tables. Ceux-ci 
 * et donc qu'après le changement de version, un *rollback* à une marque posée avant ce changement de version est possible.
 
 Spécificités liées aux versions :
-
-* La procédure de mise à jour d’une version 2.0.1 en version 2.1.0 peut modifier la table :ref:`emaj_group_def <emaj_group_def>` pour refléter le fait que le tablespace tspemaj n’est plus automatiquement considéré comme un tablespace par défaut. Si *tspemaj* est effectivement utilisé comme tablespace par défaut pour des groupes de tables créés, le contenu des colonnes *grpdef_log_dat_tsp* et *grpdef_log_idx_tsp* de la table *emaj_group_def* est automatiquement ajusté afin qu’une future opération de suppression puis recréation d’un groupe de tables puisse stocker les tables et index de log dans les mêmes tablespaces. L’administrateur peut revoir ces changements pour être sûr qu’ils correspondent bien à ses souhaits.
 
 * La procédure de mise à jour d’une version 2.2.2 en version 2.2.3 vérifie les valeurs des séquences de log enregistrées. Dans certains cas, elle peut demander une ré-initialisation préalable de certains groupes de tables.
 

@@ -40,6 +40,8 @@ If a sequence is associated to an application table, it is advisable to assign i
 
 E-Maj log tables and sequences should NOT be assigned in a tables group.
 
+.. _table_emaj_properties:
+
 Specific tables properties
 ^^^^^^^^^^^^^^^^^^^^^^^^^^
 

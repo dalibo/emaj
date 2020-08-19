@@ -33,5 +33,4 @@ Internal E-Maj table or sequence change
 With the rights they have been granted, *emaj_adm* roles and *superusers* can update any E-Maj internal table.
 
 .. caution::
-   But in practice, only two tables may be updated by these users: *emaj_group_def* and *emaj_param*. Any other internal table or sequence update my lead to data corruption during rollback operations.
-
+   But in practice, only the *emaj_param* table may be updated by these users. Any other internal table or sequence update my lead to data corruption.

@@ -28,7 +28,7 @@ select * from emaj.emaj_logged_rollback_group(NULL,NULL);
 select * from emaj.emaj_rollback_groups(NULL,NULL);
 select * from emaj.emaj_logged_rollback_groups(NULL,NULL);
 
--- group is unknown in emaj_group_def
+-- group is unknown
 select * from emaj.emaj_rollback_group('unknownGroup',NULL);
 select * from emaj.emaj_logged_rollback_group('unknownGroup',NULL);
 

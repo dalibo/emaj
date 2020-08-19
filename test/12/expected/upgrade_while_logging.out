@@ -66,7 +66,6 @@ select relname from pg_catalog.pg_class,
  emaj_alter_plan
  emaj_global_seq
  emaj_group
- emaj_group_def
  emaj_hist
  emaj_hist_hist_id_seq
  emaj_ignored_app_trigger
@@ -85,7 +84,7 @@ select relname from pg_catalog.pg_class,
  emaj_table
  emaj_time_stamp
  emaj_time_stamp_time_id_seq
-(22 rows)
+(21 rows)
 
 -- check the emaj_param content
 SELECT param_value_text FROM emaj.emaj_param WHERE param_key = 'emaj_version';
@@ -231,37 +230,6 @@ Foreign-key constraints:
 Referenced by:
     TABLE "emaj.emaj_mark" CONSTRAINT "emaj_mark_mark_group_fkey" FOREIGN KEY (mark_group) REFERENCES emaj.emaj_group(group_name) ON DELETE CASCADE
     TABLE "emaj.emaj_relation" CONSTRAINT "emaj_relation_rel_group_fkey" FOREIGN KEY (rel_group) REFERENCES emaj.emaj_group(group_name)
-Tablespace: "tspemaj"
-
-                  Table "emaj.emaj_group_def"
-       Column       |  Type   | Collation | Nullable | Default 
---------------------+---------+-----------+----------+---------
- grpdef_group       | text    |           | not null | 
- grpdef_schema      | text    |           | not null | 
- grpdef_tblseq      | text    |           | not null | 
- grpdef_priority    | integer |           |          | 
- grpdef_log_dat_tsp | text    |           |          | 
- grpdef_log_idx_tsp | text    |           |          | 
-Indexes:
-    "emaj_group_def_pkey" PRIMARY KEY, btree (grpdef_group, grpdef_schema, grpdef_tblseq), tablespace "tspemaj"
-    "emaj_group_def_idx1" btree (grpdef_schema, grpdef_tblseq), tablespace "tspemaj"
-Tablespace: "tspemaj"
-
-      Index "emaj.emaj_group_def_idx1"
-    Column     | Type | Key? |  Definition   
----------------+------+------+---------------
- grpdef_schema | text | yes  | grpdef_schema
- grpdef_tblseq | text | yes  | grpdef_tblseq
-btree, for table "emaj.emaj_group_def"
-Tablespace: "tspemaj"
-
-      Index "emaj.emaj_group_def_pkey"
-    Column     | Type | Key? |  Definition   
----------------+------+------+---------------
- grpdef_group  | text | yes  | grpdef_group
- grpdef_schema | text | yes  | grpdef_schema
- grpdef_tblseq | text | yes  | grpdef_tblseq
-primary key, btree, for table "emaj.emaj_group_def"
 Tablespace: "tspemaj"
 
      Index "emaj.emaj_group_pkey"

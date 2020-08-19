@@ -14,7 +14,7 @@ select emaj.emaj_start_group('emptyGroup','MarkInit');
 -----------------------------
 -- emaj_set_mark_group() tests
 -----------------------------
--- group is unknown in emaj_group_def
+-- group is unknown
 select emaj.emaj_set_mark_group(NULL,NULL);
 select emaj.emaj_set_mark_group('unknownGroup',NULL);
 
@@ -57,7 +57,7 @@ select emaj.emaj_set_mark_group('myGroup1','Foo%Bar');
 -- NULL group names array
 select emaj.emaj_set_mark_groups(NULL,NULL);
 
--- groups array is unknown in emaj_group_def
+-- groups array is unknown
 select emaj.emaj_set_mark_groups('{"unknownGroup",""}',NULL);
 
 -- reserved mark name
@@ -88,7 +88,7 @@ select tbl_schema, tbl_name, tbl_time_id, tbl_tuples, tbl_pages, tbl_log_seq_las
 -----------------------------
 -- emaj_comment_mark_group() tests
 -----------------------------
--- group is unknown in emaj_group_def
+-- group is unknown
 select emaj.emaj_comment_mark_group(NULL,NULL,NULL);
 select emaj.emaj_comment_mark_group('unknownGroup',NULL,NULL);
 
@@ -107,7 +107,7 @@ select emaj.emaj_comment_mark_group('emptyGroup','SM1','a comment on a mark for 
 -----------------------------
 -- emaj_get_previous_mark_group()
 -----------------------------
--- group is unknown in both emaj_group_def version
+-- group is unknown
 select emaj.emaj_get_previous_mark_group(NULL,NULL::timestamptz);
 select emaj.emaj_get_previous_mark_group('unknownGroup',NULL::timestamptz);
 select emaj.emaj_get_previous_mark_group(NULL,NULL::text);
@@ -129,7 +129,7 @@ select emaj.emaj_get_previous_mark_group('myGroup2',(select emaj.emaj_get_previo
 -----------------------------
 -- emaj_rename_mark_group() tests
 -----------------------------
--- group is unknown in emaj_group_def
+-- group is unknown
 select emaj.emaj_rename_mark_group(NULL,NULL,NULL);
 select emaj.emaj_rename_mark_group('unknownGroup',NULL,NULL);
 
@@ -161,7 +161,7 @@ select tbl_schema, tbl_name, tbl_time_id, tbl_log_seq_last_val from emaj.emaj_ta
 -----------------------------
 -- emaj_delete_mark_group() tests
 -----------------------------
--- group is unknown in emaj_group_def
+-- group is unknown
 select emaj.emaj_delete_mark_group(NULL,NULL);
 select emaj.emaj_delete_mark_group('unknownGroup',NULL);
 
@@ -194,7 +194,7 @@ select emaj.emaj_delete_mark_group('myGroup1','SM3');
 -----------------------------
 -- emaj_delete_before_mark_group() tests
 -----------------------------
--- group is unknown in emaj_group_def
+-- group is unknown
 select emaj.emaj_delete_before_mark_group(NULL,NULL);
 select emaj.emaj_delete_before_mark_group('unknownGroup',NULL);
 

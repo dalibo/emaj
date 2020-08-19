@@ -29,7 +29,6 @@ set role emaj_regression_tests_viewer_user;
 -----------------------------
 select count(*) from emaj.emaj_visible_param;
 select count(*) from emaj.emaj_hist;
-select count(*) from emaj.emaj_group_def;
 select count(*) from emaj.emaj_group;
 select count(*) from emaj.emaj_schema;
 select count(*) from emaj.emaj_relation;
@@ -69,7 +68,6 @@ select substr(pg_size_pretty(pg_database_size(current_database())),1,0);
 select count(*) from emaj.emaj_param;
 delete from emaj.emaj_param;
 delete from emaj.emaj_hist;
-delete from emaj.emaj_group_def;
 delete from emaj.emaj_group;
 delete from emaj.emaj_relation;
 delete from emaj.emaj_rel_hist;

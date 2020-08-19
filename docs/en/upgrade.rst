@@ -33,21 +33,25 @@ If some tables groups are in *LOGGING* state, they must be stopped, using the :r
 Save user data
 ^^^^^^^^^^^^^^
 
+The procedure depends on the installed E-Maj version.
+
+**Installed version >= 3.3**
+
 The full existing tables groups configuration, as well as E-Maj parameters, can be saved on flat files, using::
 
    SELECT emaj.emaj_export_groups_configuration('<file.path.1>');
 
    SELECT emaj.emaj_export_parameters_configuration('<file.path.2>');
 
-If the installed E-Maj version is prior 3.3.0, these functions are not available. Thus, the *emaj_group_def* and *emaj_param* terchnical tables must be manually saved. For instance, one can download each table on file with a copy command, or duplicate them ouside the *emaj*  schema.
+**Installed version < 3.3**
 
-Il the current E-Maj version contains the *emaj_sync_def_group()* function (3.2+), it is recommended to use it to previously synchronize the *emaj_group_def* table with the current groups structure.
+If the installed E-Maj version is prior 3.3.0, these export functions are not available.
 
-If the installed E-Maj version is 3.1.0 or higher, and if the E-Maj administrator has registered application triggers as "not to be automatically disabled at E-Maj rollback time", the *emaj_ignored_app_trigger* table must also be saved.::
+As starting from E-Maj 4.0 the tables groups configuration doesn’t use the *emaj_group_def* table anymore, rebuilding the tables groups after the E-Maj version upgrade will need either to edit a JSON configuration file to import or to execute a set of tables/sequences assignment functions.
 
-  SELECT group_name, emaj.emaj_sync_def_group(group_name) FROM emaj.emaj_group;
+If the emaj_param tables contains specific parameters, it can be saved on file with a *copy* command, or duplicated ouside the *emaj* schema.
 
-  CREATE TABLE public.sav_group_def AS SELECT * FROM emaj.emaj_group_def;
+If the installed E-Maj version is 3.1.0 or higher, and if the E-Maj administrator has registered application triggers as "not to be automatically disabled at E-Maj rollback time", the *emaj_ignored_app_trigger* table can also be saved::
 
   CREATE TABLE public.sav_ignored_app_trigger AS SELECT * FROM emaj.emaj_ignored_app_trigger;
 
@@ -67,24 +71,25 @@ NB: before E-Maj 2.0.0, the uninstall script was named *uninstall.sql*.
 Restore user data
 ^^^^^^^^^^^^^^^^^
 
-If the tables groups and the parameters configurations have been exported into files using the *emaj_export_parameters_configuration()* and *emaj_export_groups_configuration()* functions, they can be reloaded with::
+**Previous version >= 3.3**
+
+The exported tables groups and parameters configurations can be reloaded with::
 
    SELECT emaj.emaj_import_parameters_configuration('<file.path.2>', TRUE);
 
    SELECT emaj.emaj_import_groups_configuration('<file.path.1>');
 
-It the configurations have been previously saved by downloading or copying the technical tables, they can be reloaded for instance with *INSERT ... SELECT* statements::
+**Previous version < 3.3**
 
-   INSERT INTO emaj.emaj_group_def
-		SELECT grpdef_group, grpdef_schema, grpdef_tblseq,
-			grpdef_priority, grpdef_log_dat_tsp, grpdef_log_idx_tsp
-		FROM public.sav_group_def;
+The saved parameters and application triggers configurations can be reloaded for instance with *INSERT SELECT* statements::
 
    INSERT INTO emaj.emaj_ignored_app_trigger SELECT * FROM public.sav_ignored_app_trigger;
 
    INSERT INTO emaj.emaj_param SELECT * FROM public.sav_param;
 
-Once data are copied, temporary tables or files can be deleted.
+The tables groups need to be rebuilt using the :doc:`standard methods<groupsCreationFunctions>` of the new version.
+
+Then, temporary tables or files can be deleted.
 
 Upgrade from an E-Maj version between 0.11.0 to 1.3.1
 -----------------------------------------------------
@@ -164,8 +169,6 @@ The operation is very quick et does not alter tables groups. They may remain in 
 * a *rollback* on a mark set before the version change can also be performed after the migration.
 
 Version specific details:
-
-* The procedure that upgrades a version 2.0.1 into 2.1.0, may modify the :ref:`emaj_group_def <emaj_group_def>` table in order to reflect the fact that the *tspemaj* tablespace is not automatically considered as a default tablespace anymore. If *tspemaj* was effectively used as default tablespace for created tables groups, the related *grpdef_log_dat_tsp* and *grpdef_log_idx_tsp* columns content of the *emaj_group_def* table is automatically adjusted so that a future drop and recreate operation would store the log tables and indexes in the same tablespace. The administrator may review these changes to be sure they correspond to his expectations.
 
 * The  procedure that upgrades a version 2.2.2 into 2.2.3 checks the recorded log sequences values. In some cases, it may ask for a preliminary reset of some tables groups.
 

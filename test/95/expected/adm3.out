@@ -1739,16 +1739,28 @@ select emaj.emaj_start_group('grp_tmp','Group restart');
 
 -- import the groups configuration
 select emaj.emaj_import_groups_configuration(:'EMAJTESTTMPDIR' || '/groups_config.json', null, true);
+NOTICE:  table "tmp_group_def" does not exist, skipping
+CONTEXT:  SQL statement "DROP TABLE IF EXISTS tmp_group_def, tmp_app_trigger"
+PL/pgSQL function emaj._import_groups_conf_prepare(json,text[],boolean,text) line 68 at SQL statement
+PL/pgSQL function emaj._import_groups_conf(json,text[],boolean,text) line 69 at FOR over SELECT rows
+SQL statement "SELECT emaj._import_groups_conf(v_json, v_groups, v_allowGroupsUpdate, v_location)"
+PL/pgSQL function emaj.emaj_import_groups_configuration(text,text[],boolean) line 32 at SQL statement
+NOTICE:  table "tmp_app_trigger" does not exist, skipping
+CONTEXT:  SQL statement "DROP TABLE IF EXISTS tmp_group_def, tmp_app_trigger"
+PL/pgSQL function emaj._import_groups_conf_prepare(json,text[],boolean,text) line 68 at SQL statement
+PL/pgSQL function emaj._import_groups_conf(json,text[],boolean,text) line 69 at FOR over SELECT rows
+SQL statement "SELECT emaj._import_groups_conf(v_json, v_groups, v_allowGroupsUpdate, v_location)"
+PL/pgSQL function emaj.emaj_import_groups_configuration(text,text[],boolean) line 32 at SQL statement
 NOTICE:  table "mytblc1_log" does not exist, skipping
 CONTEXT:  SQL statement "DROP TABLE IF EXISTS emaj_myschema4.mytblc1_log"
 PL/pgSQL function emaj._create_tbl(text,text,text,integer,text,text,bigint,boolean,boolean) line 68 at EXECUTE
 SQL statement "SELECT emaj._create_tbl(v_schema, v_table, v_group, v_priority, v_logDatTsp, v_logIdxTsp,
                              v_timeId, v_groupIsRollbackable, v_groupIsLogging)"
 PL/pgSQL function emaj._add_tbl(text,text,text,integer,text,text,boolean,bigint,text) line 19 at PERFORM
-SQL statement "SELECT emaj._add_tbl(r_plan.altr_schema, r_plan.altr_tblseq, r_plan.altr_group, grpdef_priority, grpdef_log_dat_tsp,
-                                grpdef_log_idx_tsp, r_plan.altr_group_is_logging, v_timeId, v_callingFunction)
-            FROM emaj.emaj_group_def
-            WHERE grpdef_group = r_plan.altr_group AND grpdef_schema = r_plan.altr_schema AND grpdef_tblseq = r_plan.altr_tblseq"
+SQL statement "SELECT emaj._add_tbl(r_plan.altr_schema, r_plan.altr_tblseq, r_plan.altr_group, tmp_priority, tmp_log_dat_tsp,
+                                tmp_log_idx_tsp, r_plan.altr_group_is_logging, v_timeId, v_callingFunction)
+            FROM tmp_group_def
+            WHERE tmp_group = r_plan.altr_group AND tmp_schema = r_plan.altr_schema AND tmp_tblseq = r_plan.altr_tblseq"
 PL/pgSQL function emaj._alter_exec(bigint,text) line 102 at PERFORM
 SQL statement "SELECT emaj._alter_exec(v_timeId, v_callingFunction)"
 PL/pgSQL function emaj._alter_groups(text[],boolean,text,text,bigint) line 47 at PERFORM
@@ -1765,10 +1777,10 @@ PL/pgSQL function emaj._create_tbl(text,text,text,integer,text,text,bigint,boole
 SQL statement "SELECT emaj._create_tbl(v_schema, v_table, v_group, v_priority, v_logDatTsp, v_logIdxTsp,
                              v_timeId, v_groupIsRollbackable, v_groupIsLogging)"
 PL/pgSQL function emaj._add_tbl(text,text,text,integer,text,text,boolean,bigint,text) line 19 at PERFORM
-SQL statement "SELECT emaj._add_tbl(r_plan.altr_schema, r_plan.altr_tblseq, r_plan.altr_group, grpdef_priority, grpdef_log_dat_tsp,
-                                grpdef_log_idx_tsp, r_plan.altr_group_is_logging, v_timeId, v_callingFunction)
-            FROM emaj.emaj_group_def
-            WHERE grpdef_group = r_plan.altr_group AND grpdef_schema = r_plan.altr_schema AND grpdef_tblseq = r_plan.altr_tblseq"
+SQL statement "SELECT emaj._add_tbl(r_plan.altr_schema, r_plan.altr_tblseq, r_plan.altr_group, tmp_priority, tmp_log_dat_tsp,
+                                tmp_log_idx_tsp, r_plan.altr_group_is_logging, v_timeId, v_callingFunction)
+            FROM tmp_group_def
+            WHERE tmp_group = r_plan.altr_group AND tmp_schema = r_plan.altr_schema AND tmp_tblseq = r_plan.altr_tblseq"
 PL/pgSQL function emaj._alter_exec(bigint,text) line 102 at PERFORM
 SQL statement "SELECT emaj._alter_exec(v_timeId, v_callingFunction)"
 PL/pgSQL function emaj._alter_groups(text[],boolean,text,text,bigint) line 47 at PERFORM
@@ -1783,10 +1795,10 @@ PL/pgSQL function emaj._create_tbl(text,text,text,integer,text,text,bigint,boole
 SQL statement "SELECT emaj._create_tbl(v_schema, v_table, v_group, v_priority, v_logDatTsp, v_logIdxTsp,
                              v_timeId, v_groupIsRollbackable, v_groupIsLogging)"
 PL/pgSQL function emaj._add_tbl(text,text,text,integer,text,text,boolean,bigint,text) line 19 at PERFORM
-SQL statement "SELECT emaj._add_tbl(r_plan.altr_schema, r_plan.altr_tblseq, r_plan.altr_group, grpdef_priority, grpdef_log_dat_tsp,
-                                grpdef_log_idx_tsp, r_plan.altr_group_is_logging, v_timeId, v_callingFunction)
-            FROM emaj.emaj_group_def
-            WHERE grpdef_group = r_plan.altr_group AND grpdef_schema = r_plan.altr_schema AND grpdef_tblseq = r_plan.altr_tblseq"
+SQL statement "SELECT emaj._add_tbl(r_plan.altr_schema, r_plan.altr_tblseq, r_plan.altr_group, tmp_priority, tmp_log_dat_tsp,
+                                tmp_log_idx_tsp, r_plan.altr_group_is_logging, v_timeId, v_callingFunction)
+            FROM tmp_group_def
+            WHERE tmp_group = r_plan.altr_group AND tmp_schema = r_plan.altr_schema AND tmp_tblseq = r_plan.altr_tblseq"
 PL/pgSQL function emaj._alter_exec(bigint,text) line 102 at PERFORM
 SQL statement "SELECT emaj._alter_exec(v_timeId, v_callingFunction)"
 PL/pgSQL function emaj._alter_groups(text[],boolean,text,text,bigint) line 47 at PERFORM

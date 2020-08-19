@@ -394,29 +394,30 @@ select time_id, time_last_emaj_gid, time_event from emaj.emaj_time_stamp order b
       32 |                  0 | I
       33 |                  0 | I
       34 |                  0 | I
-      35 |                  0 | I
-      36 |                  0 | A
-      37 |                  0 | A
+      35 |                  0 | D
+      37 |                  0 | I
       38 |                  0 | A
       39 |                  0 | A
       40 |                  0 | A
       41 |                  0 | A
       42 |                  0 | A
-      43 |                  0 | M
-      44 |                  0 | M
-      46 |                  0 | D
-      47 |                  0 | D
+      43 |                  0 | A
+      44 |                  0 | A
+      45 |                  0 | M
+      46 |                  0 | M
       48 |                  0 | D
       49 |                  0 | D
       50 |                  0 | D
-      51 |                  0 | C
-      52 |                  0 | A
-      53 |                  0 | M
-      54 |                  0 | D
-      55 |                  0 | C
-      56 |                  0 | A
-      57 |                  0 | M
-      58 |                  0 | D
+      51 |                  0 | D
+      52 |                  0 | D
+      53 |                  0 | C
+      54 |                  0 | A
+      55 |                  0 | M
+      56 |                  0 | D
+      57 |                  0 | C
+      58 |                  0 | A
+      59 |                  0 | M
+      60 |                  0 | D
     1000 |                  0 | C
     1001 |                  0 | A
     1002 |                  0 | A
@@ -865,7 +866,7 @@ select time_id, time_last_emaj_gid, time_event from emaj.emaj_time_stamp order b
    20203 |             101015 | R
    20204 |             101034 | M
    20205 |             101034 | R
-(511 rows)
+(512 rows)
 
 select sequ_schema, sequ_name, sequ_time_id, sequ_last_val, sequ_is_called from emaj.emaj_sequence order by sequ_time_id, sequ_schema, sequ_name;
  sequ_schema |     sequ_name     | sequ_time_id | sequ_last_val | sequ_is_called 

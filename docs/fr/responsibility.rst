@@ -37,5 +37,5 @@ Modification des tables et séquences internes d'E-Maj
 De par les droits qui leurs sont attribués, les super-utilisateurs et les rôles détenant les droits *emaj_adm* peuvent mettre à jour toutes les tables internes d'E-Maj.
 
 .. caution::
-   Mais en pratique, seules les tables *emaj_group_def* et *emaj_param* ne doivent être modifiées par ces utilisateurs. Toute modification du contenu des autres tables ou des séquences internes  peut induire des corruptions de données lors d'éventuelles opérations de rollback.
+   Mais en pratique, seule la table *emaj_param* ne doit être modifiée par ces utilisateurs. Toute modification du contenu des autres tables ou des séquences internes  peut induire des corruptions de données.
 

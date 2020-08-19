@@ -140,7 +140,7 @@ Tables group content
 
 Using the “*Content*” tab of the group's bar, it is possible to get a summary of a tables group content.
 
-For each table and sequence belonging to the group, the displayed table shows the characteristics configured into the :ref:`emaj_group_def <emaj_group_def>` table, as well as the disk space used by the log table and its index.
+For each table belonging to the group, the displayed sheet shows its E-Maj characteristics, as well as the disk space used by its log table and index.
 
 .. figure:: images/emajweb_groupcontent.png
    :align: center

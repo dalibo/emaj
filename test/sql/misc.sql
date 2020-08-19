@@ -16,7 +16,7 @@ alter sequence emaj.emaj_global_seq restart 50000;
 -- emaj_reset_group() test
 -----------------------------
 
--- group is unknown in emaj_group_def
+-- group is unknown
 select emaj.emaj_reset_group(NULL);
 select emaj.emaj_reset_group('unknownGroup');
 
@@ -76,7 +76,7 @@ select emaj.emaj_set_mark_groups(array['myGroup1','myGroup2'],'Multi-3');
 -----------------------------
 -- emaj_log_stat_group(), emaj_log_stat_groups(), emaj_detailled_log_stat_group() and emaj_detailled_log_stat_groups() test
 -----------------------------
--- group is unknown in emaj_group_def
+-- group is unknown
 select * from emaj.emaj_log_stat_group(NULL,NULL,NULL);
 select * from emaj.emaj_log_stat_groups(array['unknownGroup'],NULL,NULL);
 select * from emaj.emaj_detailed_log_stat_group(NULL,NULL,NULL);
@@ -194,7 +194,7 @@ rollback;
 -- emaj_estimate_rollback_group() and emaj_estimate_rollback_groups() tests
 -----------------------------
 
--- group is unknown in emaj_group_def
+-- group is unknown
 select emaj.emaj_estimate_rollback_group(NULL,NULL,FALSE);
 select emaj.emaj_estimate_rollback_group('unknownGroup',NULL,TRUE);
 select emaj.emaj_estimate_rollback_groups('{"myGroup2","unknownGroup"}',NULL,TRUE);
@@ -327,7 +327,7 @@ alter table emaj.emaj_rlbk_stat add FOREIGN KEY (rlbt_rlbk_id) REFERENCES emaj.e
 -- emaj_snap_group() test
 -----------------------------
 
--- group is unknown in emaj_group_def
+-- group is unknown
 select emaj.emaj_snap_group(NULL,NULL,NULL);
 select emaj.emaj_snap_group('unknownGroup',NULL,NULL);
 
@@ -354,7 +354,7 @@ select emaj.emaj_snap_group('myGroup1',:'EMAJTESTTMPDIR','CSV HEADER DELIMITER '
 -- emaj_snap_log_group() test
 -----------------------------
 
--- group is unknown in emaj_group_def
+-- group is unknown
 select emaj.emaj_snap_log_group(NULL,NULL,NULL,NULL,NULL);
 select emaj.emaj_snap_log_group('unknownGroup',NULL,NULL,NULL,NULL);
 
@@ -428,7 +428,7 @@ select 'select count(*) from ' || quote_ident(log_schema) || '.' || quote_ident(
 -- emaj_gen_sql_group() and emaj_gen_sql_groups() test
 -----------------------------
 
--- group is unknown in emaj_group_def
+-- group is unknown
 select emaj.emaj_gen_sql_group(NULL, NULL, NULL, NULL);
 select emaj.emaj_gen_sql_group('unknownGroup', NULL, NULL, NULL, NULL);
 

@@ -40,6 +40,8 @@ Si une séquence est associée à une table applicative, il est recommandé de l
 
 Les tables de log E-Maj et leur séquence NE doivent PAS être référencées dans un groupe de tables.
 
+.. _table_emaj_properties:
+
 Propriétés spécifiques aux tables
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 

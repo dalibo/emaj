@@ -58,7 +58,7 @@ WARNING:  _check_group_names: No group to process.
  Notice        | 0
 (1 row)
 
--- group is unknown in emaj_group_def
+-- group is unknown
 select * from emaj.emaj_rollback_group('unknownGroup',NULL);
 ERROR:  _check_group_names: The group "unknownGroup" does not exist.
 CONTEXT:  PL/pgSQL function emaj._check_group_names(text[],boolean,boolean,text) line 36 at RAISE

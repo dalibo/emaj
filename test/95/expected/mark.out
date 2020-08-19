@@ -35,7 +35,7 @@ select emaj.emaj_start_group('emptyGroup','MarkInit');
 -----------------------------
 -- emaj_set_mark_group() tests
 -----------------------------
--- group is unknown in emaj_group_def
+-- group is unknown
 select emaj.emaj_set_mark_group(NULL,NULL);
 ERROR:  _check_group_names: No group to process.
 CONTEXT:  SQL statement "SELECT emaj._check_group_names(v_groupNames := ARRAY[v_groupName], v_mayBeNull := FALSE, v_lockGroups := TRUE,
@@ -136,7 +136,7 @@ PL/pgSQL function emaj.emaj_set_mark_groups(text[],text) line 15 at SQL statemen
                     0
 (1 row)
 
--- groups array is unknown in emaj_group_def
+-- groups array is unknown
 select emaj.emaj_set_mark_groups('{"unknownGroup",""}',NULL);
 ERROR:  _check_group_names: The group "unknownGroup" does not exist.
 CONTEXT:  SQL statement "SELECT emaj._check_group_names(v_groupNames := v_groupNames, v_mayBeNull := TRUE, v_lockGroups := TRUE, v_checkList := 'LOGGING')"
@@ -405,7 +405,7 @@ select tbl_schema, tbl_name, tbl_time_id, tbl_tuples, tbl_pages, tbl_log_seq_las
 -----------------------------
 -- emaj_comment_mark_group() tests
 -----------------------------
--- group is unknown in emaj_group_def
+-- group is unknown
 select emaj.emaj_comment_mark_group(NULL,NULL,NULL);
 ERROR:  _check_group_names: No group to process.
 CONTEXT:  SQL statement "SELECT emaj._check_group_names(v_groupNames := ARRAY[v_groupName], v_mayBeNull := FALSE, v_lockGroups := TRUE, v_checkList := '')"
@@ -465,7 +465,7 @@ select emaj.emaj_comment_mark_group('emptyGroup','SM1','a comment on a mark for 
 -----------------------------
 -- emaj_get_previous_mark_group()
 -----------------------------
--- group is unknown in both emaj_group_def version
+-- group is unknown
 select emaj.emaj_get_previous_mark_group(NULL,NULL::timestamptz);
 ERROR:  _check_group_names: No group to process.
 CONTEXT:  SQL statement "SELECT emaj._check_group_names(v_groupNames := ARRAY[v_groupName], v_mayBeNull := FALSE, v_lockGroups := FALSE, v_checkList := '')"
@@ -533,7 +533,7 @@ select emaj.emaj_get_previous_mark_group('myGroup2',(select emaj.emaj_get_previo
 -----------------------------
 -- emaj_rename_mark_group() tests
 -----------------------------
--- group is unknown in emaj_group_def
+-- group is unknown
 select emaj.emaj_rename_mark_group(NULL,NULL,NULL);
 ERROR:  _check_group_names: No group to process.
 CONTEXT:  SQL statement "SELECT emaj._check_group_names(v_groupNames := ARRAY[v_groupName], v_mayBeNull := FALSE, v_lockGroups := TRUE, v_checkList := '')"
@@ -784,7 +784,7 @@ select tbl_schema, tbl_name, tbl_time_id, tbl_log_seq_last_val from emaj.emaj_ta
 -----------------------------
 -- emaj_delete_mark_group() tests
 -----------------------------
--- group is unknown in emaj_group_def
+-- group is unknown
 select emaj.emaj_delete_mark_group(NULL,NULL);
 ERROR:  _check_group_names: No group to process.
 CONTEXT:  SQL statement "SELECT emaj._check_group_names(v_groupNames := ARRAY[v_groupName], v_mayBeNull := FALSE, v_lockGroups := TRUE, v_checkList := '')"
@@ -857,7 +857,7 @@ ERROR:  emaj_delete_mark_group: "SM3" is the only mark of the group. It cannot b
 -----------------------------
 -- emaj_delete_before_mark_group() tests
 -----------------------------
--- group is unknown in emaj_group_def
+-- group is unknown
 select emaj.emaj_delete_before_mark_group(NULL,NULL);
 ERROR:  _check_group_names: No group to process.
 CONTEXT:  SQL statement "SELECT emaj._check_group_names(v_groupNames := ARRAY[v_groupName], v_mayBeNull := FALSE, v_lockGroups := TRUE, v_checkList := '')"

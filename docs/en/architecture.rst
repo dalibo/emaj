@@ -57,7 +57,7 @@ To let E-Maj work, some **other technical objects** are also created at extensio
 * 2 roles acting as groups (NOLOGIN): *emaj_adm* to manage E-Maj components, and *emaj_viewer* to only look at E-Maj components
 * 3 event triggers.
 
-Some technical tables, whose structure is interesting to know, are described in details: :ref:`emaj_group_def <emaj_group_def>`, :ref:`emaj_param <emaj_param>` and :ref:`emaj_hist <emaj_hist>`.
+Some technical tables, whose structure is interesting to know, are described in details: :ref:`emaj_param <emaj_param>` and :ref:`emaj_hist <emaj_hist>`.
 
 
 Schemas
@@ -106,4 +106,4 @@ Tablespaces
 
 When the extension is installed, the E-Maj technical tables are stored into the default tablespace set at instance or database level or explicitely set for the current session.
 
-The same rule applies for log tables and index. But using :ref:`tables group parameters <emaj_group_def>`, it is also possible to store log tables and/or their index into specific tablespaces.
+The same rule applies for log tables and index. But using :ref:`tables group parameters<table_emaj_properties>`, it is also possible to store log tables and/or their index into specific tablespaces.
