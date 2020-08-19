@@ -102,7 +102,7 @@ select funcname, calls from pg_stat_user_functions
  _change_priority_tbl                      |    16
  _check_fk_groups                          |    86
  _check_group_names                        |  1091
- _check_json_groups_conf                   |    38
+ _check_json_groups_conf                   |    39
  _check_json_param_conf                    |    15
  _check_mark_name                          |   375
  _check_marks_range                        |   122
@@ -128,7 +128,7 @@ select funcname, calls from pg_stat_user_functions
  _emaj_param_change_fnct                   |    42
  _enable_event_triggers                    |   314
  _estimate_rollback_groups                 |    13
- _event_trigger_sql_drop_fnct              |   201
+ _event_trigger_sql_drop_fnct              |   216
  _event_trigger_table_rewrite_fnct         |     4
  _export_groups_conf                       |    10
  _export_param_conf                        |     7
@@ -141,9 +141,9 @@ select funcname, calls from pg_stat_user_functions
  _get_log_sequence_last_value              |  2082
  _get_previous_mark_group                  |    37
  _import_groups_conf                       |    16
- _import_groups_conf_check                 |    21
+ _import_groups_conf_check                 |    22
  _import_groups_conf_exec                  |    16
- _import_groups_conf_prepare               |    24
+ _import_groups_conf_prepare               |    25
  _import_param_conf                        |     7
  _lock_groups                              |   301
  _log_stat_groups                          |    35

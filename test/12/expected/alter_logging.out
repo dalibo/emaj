@@ -72,7 +72,8 @@ select * from emaj.emaj_rollback_groups('{"myGroup1","myGroup2"}','Mk2');
 
 -- revert the properties changes
 select emaj.emaj_import_groups_configuration(:'EMAJTESTTMPDIR' || '/all_groups_conf.json', '{"myGroup1","myGroup2"}', true);
-NOTICE:  table "tmp_group_def" does not exist, skipping
+NOTICE:  table "tmp_app_table" does not exist, skipping
+NOTICE:  table "tmp_app_sequence" does not exist, skipping
 NOTICE:  table "tmp_app_trigger" does not exist, skipping
 WARNING:  _check_fk_groups: The foreign key "mytbl6_col61_fkey" on the table "myschema2.mytbl6" references the table "myschema2.mytbl7" that is outside the groups (myGroup1,myGroup2).
 WARNING:  _check_fk_groups: The table "myschema2.mytbl6" is referenced by the foreign key "mytbl8_col81_fkey" on the table "myschema2.mytbl8" that is outside the groups (myGroup1,myGroup2).
@@ -622,7 +623,8 @@ ERROR:  current transaction is aborted, commands ignored until end of transactio
 rollback;
 -- revert the changes
 select emaj.emaj_import_groups_configuration(:'EMAJTESTTMPDIR' || '/all_groups_conf.json', '{"myGroup1"}', true);
-NOTICE:  table "tmp_group_def" does not exist, skipping
+NOTICE:  table "tmp_app_table" does not exist, skipping
+NOTICE:  table "tmp_app_sequence" does not exist, skipping
 NOTICE:  table "tmp_app_trigger" does not exist, skipping
  emaj_import_groups_configuration 
 ----------------------------------
@@ -1060,7 +1062,8 @@ select emaj.emaj_snap_log_group('myGroup2',NULL,NULL,:'EMAJTESTTMPDIR' || '/snap
 \! rm $EMAJTESTTMPDIR/snap/*
 -- and finaly revert the group configuration changes
 select emaj.emaj_import_groups_configuration(:'EMAJTESTTMPDIR' || '/all_groups_conf.json', '{"myGroup2"}', true);
-NOTICE:  table "tmp_group_def" does not exist, skipping
+NOTICE:  table "tmp_app_table" does not exist, skipping
+NOTICE:  table "tmp_app_sequence" does not exist, skipping
 NOTICE:  table "tmp_app_trigger" does not exist, skipping
 WARNING:  _check_fk_groups: The foreign key "mytbl6_col61_fkey" on the table "myschema2.mytbl6" references the table "myschema2.mytbl7" that is outside the groups (myGroup2).
 WARNING:  _check_fk_groups: The table "myschema2.mytbl6" is referenced by the foreign key "mytbl8_col81_fkey" on the table "myschema2.mytbl8" that is outside the groups (myGroup2).
@@ -1453,7 +1456,8 @@ begin;
 rollback;
 -- re-add all removed tables
 select emaj.emaj_import_groups_configuration(:'EMAJTESTTMPDIR' || '/all_groups_conf.json', array['myGroup1'], true);
-NOTICE:  table "tmp_group_def" does not exist, skipping
+NOTICE:  table "tmp_app_table" does not exist, skipping
+NOTICE:  table "tmp_app_sequence" does not exist, skipping
 NOTICE:  table "tmp_app_trigger" does not exist, skipping
 NOTICE:  table "myTbl3_log" does not exist, skipping
 NOTICE:  trigger "emaj_log_trg" for relation "myschema1.myTbl3" does not exist, skipping
@@ -1745,16 +1749,18 @@ select emaj.emaj_stop_group('myGroup2');
 
 -- This first import try fails because a myGroup1 is missing
 select emaj.emaj_import_groups_configuration(:'EMAJTESTTMPDIR' || '/all_groups_conf.json', array['myGroup2'], true);
-NOTICE:  table "tmp_group_def" does not exist, skipping
+NOTICE:  table "tmp_app_table" does not exist, skipping
+NOTICE:  table "tmp_app_sequence" does not exist, skipping
 NOTICE:  table "tmp_app_trigger" does not exist, skipping
-WARNING:  _import_groups_conf (2): in the group "myGroup2", the table or sequence myschema2."myTbl3" already belongs to the group "myGroup1".
-WARNING:  _import_groups_conf (2): in the group "myGroup2", the table or sequence myschema2."myTbl3_col31_seq" already belongs to the group "myGroup1".
+WARNING:  _import_groups_conf (2): in the group "myGroup2", the table myschema2."myTbl3" already belongs to the group "myGroup1".
+WARNING:  _import_groups_conf (2): in the group "myGroup2", the sequence myschema2."myTbl3_col31_seq" already belongs to the group "myGroup1".
 ERROR:  _import_groups_conf: One or several errors have been detected in the JSON groups configuration.
 CONTEXT:  PL/pgSQL function emaj._import_groups_conf(json,text[],boolean,text) line 76 at RAISE
 SQL statement "SELECT emaj._import_groups_conf(v_json, v_groups, v_allowGroupsUpdate, v_location)"
 PL/pgSQL function emaj.emaj_import_groups_configuration(text,text[],boolean) line 32 at SQL statement
 select emaj.emaj_import_groups_configuration(:'EMAJTESTTMPDIR' || '/all_groups_conf.json', '{"myGroup1","myGroup2"}', true);
-NOTICE:  table "tmp_group_def" does not exist, skipping
+NOTICE:  table "tmp_app_table" does not exist, skipping
+NOTICE:  table "tmp_app_sequence" does not exist, skipping
 NOTICE:  table "tmp_app_trigger" does not exist, skipping
  emaj_import_groups_configuration 
 ----------------------------------

@@ -77,14 +77,20 @@ select * from emaj.emaj_rollback_groups('{"myGroup1","myGroup2"}','Mk2');
 
 -- revert the properties changes
 select emaj.emaj_import_groups_configuration(:'EMAJTESTTMPDIR' || '/all_groups_conf.json', '{"myGroup1","myGroup2"}', true);
-NOTICE:  table "tmp_group_def" does not exist, skipping
-CONTEXT:  SQL statement "DROP TABLE IF EXISTS tmp_group_def, tmp_app_trigger"
+NOTICE:  table "tmp_app_table" does not exist, skipping
+CONTEXT:  SQL statement "DROP TABLE IF EXISTS tmp_app_table, tmp_app_sequence, tmp_app_trigger"
+PL/pgSQL function emaj._import_groups_conf_prepare(json,text[],boolean,text) line 68 at SQL statement
+PL/pgSQL function emaj._import_groups_conf(json,text[],boolean,text) line 69 at FOR over SELECT rows
+SQL statement "SELECT emaj._import_groups_conf(v_json, v_groups, v_allowGroupsUpdate, v_location)"
+PL/pgSQL function emaj.emaj_import_groups_configuration(text,text[],boolean) line 32 at SQL statement
+NOTICE:  table "tmp_app_sequence" does not exist, skipping
+CONTEXT:  SQL statement "DROP TABLE IF EXISTS tmp_app_table, tmp_app_sequence, tmp_app_trigger"
 PL/pgSQL function emaj._import_groups_conf_prepare(json,text[],boolean,text) line 68 at SQL statement
 PL/pgSQL function emaj._import_groups_conf(json,text[],boolean,text) line 69 at FOR over SELECT rows
 SQL statement "SELECT emaj._import_groups_conf(v_json, v_groups, v_allowGroupsUpdate, v_location)"
 PL/pgSQL function emaj.emaj_import_groups_configuration(text,text[],boolean) line 32 at SQL statement
 NOTICE:  table "tmp_app_trigger" does not exist, skipping
-CONTEXT:  SQL statement "DROP TABLE IF EXISTS tmp_group_def, tmp_app_trigger"
+CONTEXT:  SQL statement "DROP TABLE IF EXISTS tmp_app_table, tmp_app_sequence, tmp_app_trigger"
 PL/pgSQL function emaj._import_groups_conf_prepare(json,text[],boolean,text) line 68 at SQL statement
 PL/pgSQL function emaj._import_groups_conf(json,text[],boolean,text) line 69 at FOR over SELECT rows
 SQL statement "SELECT emaj._import_groups_conf(v_json, v_groups, v_allowGroupsUpdate, v_location)"
@@ -656,14 +662,20 @@ ERROR:  current transaction is aborted, commands ignored until end of transactio
 rollback;
 -- revert the changes
 select emaj.emaj_import_groups_configuration(:'EMAJTESTTMPDIR' || '/all_groups_conf.json', '{"myGroup1"}', true);
-NOTICE:  table "tmp_group_def" does not exist, skipping
-CONTEXT:  SQL statement "DROP TABLE IF EXISTS tmp_group_def, tmp_app_trigger"
+NOTICE:  table "tmp_app_table" does not exist, skipping
+CONTEXT:  SQL statement "DROP TABLE IF EXISTS tmp_app_table, tmp_app_sequence, tmp_app_trigger"
+PL/pgSQL function emaj._import_groups_conf_prepare(json,text[],boolean,text) line 68 at SQL statement
+PL/pgSQL function emaj._import_groups_conf(json,text[],boolean,text) line 69 at FOR over SELECT rows
+SQL statement "SELECT emaj._import_groups_conf(v_json, v_groups, v_allowGroupsUpdate, v_location)"
+PL/pgSQL function emaj.emaj_import_groups_configuration(text,text[],boolean) line 32 at SQL statement
+NOTICE:  table "tmp_app_sequence" does not exist, skipping
+CONTEXT:  SQL statement "DROP TABLE IF EXISTS tmp_app_table, tmp_app_sequence, tmp_app_trigger"
 PL/pgSQL function emaj._import_groups_conf_prepare(json,text[],boolean,text) line 68 at SQL statement
 PL/pgSQL function emaj._import_groups_conf(json,text[],boolean,text) line 69 at FOR over SELECT rows
 SQL statement "SELECT emaj._import_groups_conf(v_json, v_groups, v_allowGroupsUpdate, v_location)"
 PL/pgSQL function emaj.emaj_import_groups_configuration(text,text[],boolean) line 32 at SQL statement
 NOTICE:  table "tmp_app_trigger" does not exist, skipping
-CONTEXT:  SQL statement "DROP TABLE IF EXISTS tmp_group_def, tmp_app_trigger"
+CONTEXT:  SQL statement "DROP TABLE IF EXISTS tmp_app_table, tmp_app_sequence, tmp_app_trigger"
 PL/pgSQL function emaj._import_groups_conf_prepare(json,text[],boolean,text) line 68 at SQL statement
 PL/pgSQL function emaj._import_groups_conf(json,text[],boolean,text) line 69 at FOR over SELECT rows
 SQL statement "SELECT emaj._import_groups_conf(v_json, v_groups, v_allowGroupsUpdate, v_location)"
@@ -1167,14 +1179,20 @@ select emaj.emaj_snap_log_group('myGroup2',NULL,NULL,:'EMAJTESTTMPDIR' || '/snap
 \! rm $EMAJTESTTMPDIR/snap/*
 -- and finaly revert the group configuration changes
 select emaj.emaj_import_groups_configuration(:'EMAJTESTTMPDIR' || '/all_groups_conf.json', '{"myGroup2"}', true);
-NOTICE:  table "tmp_group_def" does not exist, skipping
-CONTEXT:  SQL statement "DROP TABLE IF EXISTS tmp_group_def, tmp_app_trigger"
+NOTICE:  table "tmp_app_table" does not exist, skipping
+CONTEXT:  SQL statement "DROP TABLE IF EXISTS tmp_app_table, tmp_app_sequence, tmp_app_trigger"
+PL/pgSQL function emaj._import_groups_conf_prepare(json,text[],boolean,text) line 68 at SQL statement
+PL/pgSQL function emaj._import_groups_conf(json,text[],boolean,text) line 69 at FOR over SELECT rows
+SQL statement "SELECT emaj._import_groups_conf(v_json, v_groups, v_allowGroupsUpdate, v_location)"
+PL/pgSQL function emaj.emaj_import_groups_configuration(text,text[],boolean) line 32 at SQL statement
+NOTICE:  table "tmp_app_sequence" does not exist, skipping
+CONTEXT:  SQL statement "DROP TABLE IF EXISTS tmp_app_table, tmp_app_sequence, tmp_app_trigger"
 PL/pgSQL function emaj._import_groups_conf_prepare(json,text[],boolean,text) line 68 at SQL statement
 PL/pgSQL function emaj._import_groups_conf(json,text[],boolean,text) line 69 at FOR over SELECT rows
 SQL statement "SELECT emaj._import_groups_conf(v_json, v_groups, v_allowGroupsUpdate, v_location)"
 PL/pgSQL function emaj.emaj_import_groups_configuration(text,text[],boolean) line 32 at SQL statement
 NOTICE:  table "tmp_app_trigger" does not exist, skipping
-CONTEXT:  SQL statement "DROP TABLE IF EXISTS tmp_group_def, tmp_app_trigger"
+CONTEXT:  SQL statement "DROP TABLE IF EXISTS tmp_app_table, tmp_app_sequence, tmp_app_trigger"
 PL/pgSQL function emaj._import_groups_conf_prepare(json,text[],boolean,text) line 68 at SQL statement
 PL/pgSQL function emaj._import_groups_conf(json,text[],boolean,text) line 69 at FOR over SELECT rows
 SQL statement "SELECT emaj._import_groups_conf(v_json, v_groups, v_allowGroupsUpdate, v_location)"
@@ -1590,14 +1608,20 @@ begin;
 rollback;
 -- re-add all removed tables
 select emaj.emaj_import_groups_configuration(:'EMAJTESTTMPDIR' || '/all_groups_conf.json', array['myGroup1'], true);
-NOTICE:  table "tmp_group_def" does not exist, skipping
-CONTEXT:  SQL statement "DROP TABLE IF EXISTS tmp_group_def, tmp_app_trigger"
+NOTICE:  table "tmp_app_table" does not exist, skipping
+CONTEXT:  SQL statement "DROP TABLE IF EXISTS tmp_app_table, tmp_app_sequence, tmp_app_trigger"
+PL/pgSQL function emaj._import_groups_conf_prepare(json,text[],boolean,text) line 68 at SQL statement
+PL/pgSQL function emaj._import_groups_conf(json,text[],boolean,text) line 69 at FOR over SELECT rows
+SQL statement "SELECT emaj._import_groups_conf(v_json, v_groups, v_allowGroupsUpdate, v_location)"
+PL/pgSQL function emaj.emaj_import_groups_configuration(text,text[],boolean) line 32 at SQL statement
+NOTICE:  table "tmp_app_sequence" does not exist, skipping
+CONTEXT:  SQL statement "DROP TABLE IF EXISTS tmp_app_table, tmp_app_sequence, tmp_app_trigger"
 PL/pgSQL function emaj._import_groups_conf_prepare(json,text[],boolean,text) line 68 at SQL statement
 PL/pgSQL function emaj._import_groups_conf(json,text[],boolean,text) line 69 at FOR over SELECT rows
 SQL statement "SELECT emaj._import_groups_conf(v_json, v_groups, v_allowGroupsUpdate, v_location)"
 PL/pgSQL function emaj.emaj_import_groups_configuration(text,text[],boolean) line 32 at SQL statement
 NOTICE:  table "tmp_app_trigger" does not exist, skipping
-CONTEXT:  SQL statement "DROP TABLE IF EXISTS tmp_group_def, tmp_app_trigger"
+CONTEXT:  SQL statement "DROP TABLE IF EXISTS tmp_app_table, tmp_app_sequence, tmp_app_trigger"
 PL/pgSQL function emaj._import_groups_conf_prepare(json,text[],boolean,text) line 68 at SQL statement
 PL/pgSQL function emaj._import_groups_conf(json,text[],boolean,text) line 69 at FOR over SELECT rows
 SQL statement "SELECT emaj._import_groups_conf(v_json, v_groups, v_allowGroupsUpdate, v_location)"
@@ -1610,8 +1634,8 @@ SQL statement "SELECT emaj._create_tbl(v_schema, v_table, v_group, v_priority, v
 PL/pgSQL function emaj._add_tbl(text,text,text,integer,text,text,boolean,bigint,text) line 19 at PERFORM
 SQL statement "SELECT emaj._add_tbl(r_plan.altr_schema, r_plan.altr_tblseq, r_plan.altr_group, tmp_priority, tmp_log_dat_tsp,
                                 tmp_log_idx_tsp, r_plan.altr_group_is_logging, v_timeId, v_callingFunction)
-            FROM tmp_group_def
-            WHERE tmp_group = r_plan.altr_group AND tmp_schema = r_plan.altr_schema AND tmp_tblseq = r_plan.altr_tblseq"
+            FROM tmp_app_table
+            WHERE tmp_group = r_plan.altr_group AND tmp_schema = r_plan.altr_schema AND tmp_tbl_name = r_plan.altr_tblseq"
 PL/pgSQL function emaj._alter_exec(bigint,text) line 102 at PERFORM
 SQL statement "SELECT emaj._alter_exec(v_timeId, v_callingFunction)"
 PL/pgSQL function emaj._alter_groups(text[],boolean,text,text,bigint) line 47 at PERFORM
@@ -1630,8 +1654,8 @@ SQL statement "SELECT emaj._create_tbl(v_schema, v_table, v_group, v_priority, v
 PL/pgSQL function emaj._add_tbl(text,text,text,integer,text,text,boolean,bigint,text) line 19 at PERFORM
 SQL statement "SELECT emaj._add_tbl(r_plan.altr_schema, r_plan.altr_tblseq, r_plan.altr_group, tmp_priority, tmp_log_dat_tsp,
                                 tmp_log_idx_tsp, r_plan.altr_group_is_logging, v_timeId, v_callingFunction)
-            FROM tmp_group_def
-            WHERE tmp_group = r_plan.altr_group AND tmp_schema = r_plan.altr_schema AND tmp_tblseq = r_plan.altr_tblseq"
+            FROM tmp_app_table
+            WHERE tmp_group = r_plan.altr_group AND tmp_schema = r_plan.altr_schema AND tmp_tbl_name = r_plan.altr_tblseq"
 PL/pgSQL function emaj._alter_exec(bigint,text) line 102 at PERFORM
 SQL statement "SELECT emaj._alter_exec(v_timeId, v_callingFunction)"
 PL/pgSQL function emaj._alter_groups(text[],boolean,text,text,bigint) line 47 at PERFORM
@@ -1648,8 +1672,8 @@ SQL statement "SELECT emaj._create_tbl(v_schema, v_table, v_group, v_priority, v
 PL/pgSQL function emaj._add_tbl(text,text,text,integer,text,text,boolean,bigint,text) line 19 at PERFORM
 SQL statement "SELECT emaj._add_tbl(r_plan.altr_schema, r_plan.altr_tblseq, r_plan.altr_group, tmp_priority, tmp_log_dat_tsp,
                                 tmp_log_idx_tsp, r_plan.altr_group_is_logging, v_timeId, v_callingFunction)
-            FROM tmp_group_def
-            WHERE tmp_group = r_plan.altr_group AND tmp_schema = r_plan.altr_schema AND tmp_tblseq = r_plan.altr_tblseq"
+            FROM tmp_app_table
+            WHERE tmp_group = r_plan.altr_group AND tmp_schema = r_plan.altr_schema AND tmp_tbl_name = r_plan.altr_tblseq"
 PL/pgSQL function emaj._alter_exec(bigint,text) line 102 at PERFORM
 SQL statement "SELECT emaj._alter_exec(v_timeId, v_callingFunction)"
 PL/pgSQL function emaj._alter_groups(text[],boolean,text,text,bigint) line 47 at PERFORM
@@ -1666,8 +1690,8 @@ SQL statement "SELECT emaj._create_tbl(v_schema, v_table, v_group, v_priority, v
 PL/pgSQL function emaj._add_tbl(text,text,text,integer,text,text,boolean,bigint,text) line 19 at PERFORM
 SQL statement "SELECT emaj._add_tbl(r_plan.altr_schema, r_plan.altr_tblseq, r_plan.altr_group, tmp_priority, tmp_log_dat_tsp,
                                 tmp_log_idx_tsp, r_plan.altr_group_is_logging, v_timeId, v_callingFunction)
-            FROM tmp_group_def
-            WHERE tmp_group = r_plan.altr_group AND tmp_schema = r_plan.altr_schema AND tmp_tblseq = r_plan.altr_tblseq"
+            FROM tmp_app_table
+            WHERE tmp_group = r_plan.altr_group AND tmp_schema = r_plan.altr_schema AND tmp_tbl_name = r_plan.altr_tblseq"
 PL/pgSQL function emaj._alter_exec(bigint,text) line 102 at PERFORM
 SQL statement "SELECT emaj._alter_exec(v_timeId, v_callingFunction)"
 PL/pgSQL function emaj._alter_groups(text[],boolean,text,text,bigint) line 47 at PERFORM
@@ -1686,8 +1710,8 @@ SQL statement "SELECT emaj._create_tbl(v_schema, v_table, v_group, v_priority, v
 PL/pgSQL function emaj._add_tbl(text,text,text,integer,text,text,boolean,bigint,text) line 19 at PERFORM
 SQL statement "SELECT emaj._add_tbl(r_plan.altr_schema, r_plan.altr_tblseq, r_plan.altr_group, tmp_priority, tmp_log_dat_tsp,
                                 tmp_log_idx_tsp, r_plan.altr_group_is_logging, v_timeId, v_callingFunction)
-            FROM tmp_group_def
-            WHERE tmp_group = r_plan.altr_group AND tmp_schema = r_plan.altr_schema AND tmp_tblseq = r_plan.altr_tblseq"
+            FROM tmp_app_table
+            WHERE tmp_group = r_plan.altr_group AND tmp_schema = r_plan.altr_schema AND tmp_tbl_name = r_plan.altr_tblseq"
 PL/pgSQL function emaj._alter_exec(bigint,text) line 102 at PERFORM
 SQL statement "SELECT emaj._alter_exec(v_timeId, v_callingFunction)"
 PL/pgSQL function emaj._alter_groups(text[],boolean,text,text,bigint) line 47 at PERFORM
@@ -1704,8 +1728,8 @@ SQL statement "SELECT emaj._create_tbl(v_schema, v_table, v_group, v_priority, v
 PL/pgSQL function emaj._add_tbl(text,text,text,integer,text,text,boolean,bigint,text) line 19 at PERFORM
 SQL statement "SELECT emaj._add_tbl(r_plan.altr_schema, r_plan.altr_tblseq, r_plan.altr_group, tmp_priority, tmp_log_dat_tsp,
                                 tmp_log_idx_tsp, r_plan.altr_group_is_logging, v_timeId, v_callingFunction)
-            FROM tmp_group_def
-            WHERE tmp_group = r_plan.altr_group AND tmp_schema = r_plan.altr_schema AND tmp_tblseq = r_plan.altr_tblseq"
+            FROM tmp_app_table
+            WHERE tmp_group = r_plan.altr_group AND tmp_schema = r_plan.altr_schema AND tmp_tbl_name = r_plan.altr_tblseq"
 PL/pgSQL function emaj._alter_exec(bigint,text) line 102 at PERFORM
 SQL statement "SELECT emaj._alter_exec(v_timeId, v_callingFunction)"
 PL/pgSQL function emaj._alter_groups(text[],boolean,text,text,bigint) line 47 at PERFORM
@@ -1722,8 +1746,8 @@ SQL statement "SELECT emaj._create_tbl(v_schema, v_table, v_group, v_priority, v
 PL/pgSQL function emaj._add_tbl(text,text,text,integer,text,text,boolean,bigint,text) line 19 at PERFORM
 SQL statement "SELECT emaj._add_tbl(r_plan.altr_schema, r_plan.altr_tblseq, r_plan.altr_group, tmp_priority, tmp_log_dat_tsp,
                                 tmp_log_idx_tsp, r_plan.altr_group_is_logging, v_timeId, v_callingFunction)
-            FROM tmp_group_def
-            WHERE tmp_group = r_plan.altr_group AND tmp_schema = r_plan.altr_schema AND tmp_tblseq = r_plan.altr_tblseq"
+            FROM tmp_app_table
+            WHERE tmp_group = r_plan.altr_group AND tmp_schema = r_plan.altr_schema AND tmp_tbl_name = r_plan.altr_tblseq"
 PL/pgSQL function emaj._alter_exec(bigint,text) line 102 at PERFORM
 SQL statement "SELECT emaj._alter_exec(v_timeId, v_callingFunction)"
 PL/pgSQL function emaj._alter_groups(text[],boolean,text,text,bigint) line 47 at PERFORM
@@ -1742,8 +1766,8 @@ SQL statement "SELECT emaj._create_tbl(v_schema, v_table, v_group, v_priority, v
 PL/pgSQL function emaj._add_tbl(text,text,text,integer,text,text,boolean,bigint,text) line 19 at PERFORM
 SQL statement "SELECT emaj._add_tbl(r_plan.altr_schema, r_plan.altr_tblseq, r_plan.altr_group, tmp_priority, tmp_log_dat_tsp,
                                 tmp_log_idx_tsp, r_plan.altr_group_is_logging, v_timeId, v_callingFunction)
-            FROM tmp_group_def
-            WHERE tmp_group = r_plan.altr_group AND tmp_schema = r_plan.altr_schema AND tmp_tblseq = r_plan.altr_tblseq"
+            FROM tmp_app_table
+            WHERE tmp_group = r_plan.altr_group AND tmp_schema = r_plan.altr_schema AND tmp_tbl_name = r_plan.altr_tblseq"
 PL/pgSQL function emaj._alter_exec(bigint,text) line 102 at PERFORM
 SQL statement "SELECT emaj._alter_exec(v_timeId, v_callingFunction)"
 PL/pgSQL function emaj._alter_groups(text[],boolean,text,text,bigint) line 47 at PERFORM
@@ -1760,8 +1784,8 @@ SQL statement "SELECT emaj._create_tbl(v_schema, v_table, v_group, v_priority, v
 PL/pgSQL function emaj._add_tbl(text,text,text,integer,text,text,boolean,bigint,text) line 19 at PERFORM
 SQL statement "SELECT emaj._add_tbl(r_plan.altr_schema, r_plan.altr_tblseq, r_plan.altr_group, tmp_priority, tmp_log_dat_tsp,
                                 tmp_log_idx_tsp, r_plan.altr_group_is_logging, v_timeId, v_callingFunction)
-            FROM tmp_group_def
-            WHERE tmp_group = r_plan.altr_group AND tmp_schema = r_plan.altr_schema AND tmp_tblseq = r_plan.altr_tblseq"
+            FROM tmp_app_table
+            WHERE tmp_group = r_plan.altr_group AND tmp_schema = r_plan.altr_schema AND tmp_tbl_name = r_plan.altr_tblseq"
 PL/pgSQL function emaj._alter_exec(bigint,text) line 102 at PERFORM
 SQL statement "SELECT emaj._alter_exec(v_timeId, v_callingFunction)"
 PL/pgSQL function emaj._alter_groups(text[],boolean,text,text,bigint) line 47 at PERFORM
@@ -2054,36 +2078,48 @@ select emaj.emaj_stop_group('myGroup2');
 
 -- This first import try fails because a myGroup1 is missing
 select emaj.emaj_import_groups_configuration(:'EMAJTESTTMPDIR' || '/all_groups_conf.json', array['myGroup2'], true);
-NOTICE:  table "tmp_group_def" does not exist, skipping
-CONTEXT:  SQL statement "DROP TABLE IF EXISTS tmp_group_def, tmp_app_trigger"
+NOTICE:  table "tmp_app_table" does not exist, skipping
+CONTEXT:  SQL statement "DROP TABLE IF EXISTS tmp_app_table, tmp_app_sequence, tmp_app_trigger"
+PL/pgSQL function emaj._import_groups_conf_prepare(json,text[],boolean,text) line 68 at SQL statement
+PL/pgSQL function emaj._import_groups_conf(json,text[],boolean,text) line 69 at FOR over SELECT rows
+SQL statement "SELECT emaj._import_groups_conf(v_json, v_groups, v_allowGroupsUpdate, v_location)"
+PL/pgSQL function emaj.emaj_import_groups_configuration(text,text[],boolean) line 32 at SQL statement
+NOTICE:  table "tmp_app_sequence" does not exist, skipping
+CONTEXT:  SQL statement "DROP TABLE IF EXISTS tmp_app_table, tmp_app_sequence, tmp_app_trigger"
 PL/pgSQL function emaj._import_groups_conf_prepare(json,text[],boolean,text) line 68 at SQL statement
 PL/pgSQL function emaj._import_groups_conf(json,text[],boolean,text) line 69 at FOR over SELECT rows
 SQL statement "SELECT emaj._import_groups_conf(v_json, v_groups, v_allowGroupsUpdate, v_location)"
 PL/pgSQL function emaj.emaj_import_groups_configuration(text,text[],boolean) line 32 at SQL statement
 NOTICE:  table "tmp_app_trigger" does not exist, skipping
-CONTEXT:  SQL statement "DROP TABLE IF EXISTS tmp_group_def, tmp_app_trigger"
+CONTEXT:  SQL statement "DROP TABLE IF EXISTS tmp_app_table, tmp_app_sequence, tmp_app_trigger"
 PL/pgSQL function emaj._import_groups_conf_prepare(json,text[],boolean,text) line 68 at SQL statement
 PL/pgSQL function emaj._import_groups_conf(json,text[],boolean,text) line 69 at FOR over SELECT rows
 SQL statement "SELECT emaj._import_groups_conf(v_json, v_groups, v_allowGroupsUpdate, v_location)"
 PL/pgSQL function emaj.emaj_import_groups_configuration(text,text[],boolean) line 32 at SQL statement
-WARNING:  _import_groups_conf (2): in the group "myGroup2", the table or sequence myschema2."myTbl3" already belongs to the group "myGroup1".
+WARNING:  _import_groups_conf (2): in the group "myGroup2", the table myschema2."myTbl3" already belongs to the group "myGroup1".
 CONTEXT:  SQL statement "SELECT emaj._import_groups_conf(v_json, v_groups, v_allowGroupsUpdate, v_location)"
 PL/pgSQL function emaj.emaj_import_groups_configuration(text,text[],boolean) line 32 at SQL statement
-WARNING:  _import_groups_conf (2): in the group "myGroup2", the table or sequence myschema2."myTbl3_col31_seq" already belongs to the group "myGroup1".
+WARNING:  _import_groups_conf (2): in the group "myGroup2", the sequence myschema2."myTbl3_col31_seq" already belongs to the group "myGroup1".
 CONTEXT:  SQL statement "SELECT emaj._import_groups_conf(v_json, v_groups, v_allowGroupsUpdate, v_location)"
 PL/pgSQL function emaj.emaj_import_groups_configuration(text,text[],boolean) line 32 at SQL statement
 ERROR:  _import_groups_conf: One or several errors have been detected in the JSON groups configuration.
 CONTEXT:  SQL statement "SELECT emaj._import_groups_conf(v_json, v_groups, v_allowGroupsUpdate, v_location)"
 PL/pgSQL function emaj.emaj_import_groups_configuration(text,text[],boolean) line 32 at SQL statement
 select emaj.emaj_import_groups_configuration(:'EMAJTESTTMPDIR' || '/all_groups_conf.json', '{"myGroup1","myGroup2"}', true);
-NOTICE:  table "tmp_group_def" does not exist, skipping
-CONTEXT:  SQL statement "DROP TABLE IF EXISTS tmp_group_def, tmp_app_trigger"
+NOTICE:  table "tmp_app_table" does not exist, skipping
+CONTEXT:  SQL statement "DROP TABLE IF EXISTS tmp_app_table, tmp_app_sequence, tmp_app_trigger"
+PL/pgSQL function emaj._import_groups_conf_prepare(json,text[],boolean,text) line 68 at SQL statement
+PL/pgSQL function emaj._import_groups_conf(json,text[],boolean,text) line 69 at FOR over SELECT rows
+SQL statement "SELECT emaj._import_groups_conf(v_json, v_groups, v_allowGroupsUpdate, v_location)"
+PL/pgSQL function emaj.emaj_import_groups_configuration(text,text[],boolean) line 32 at SQL statement
+NOTICE:  table "tmp_app_sequence" does not exist, skipping
+CONTEXT:  SQL statement "DROP TABLE IF EXISTS tmp_app_table, tmp_app_sequence, tmp_app_trigger"
 PL/pgSQL function emaj._import_groups_conf_prepare(json,text[],boolean,text) line 68 at SQL statement
 PL/pgSQL function emaj._import_groups_conf(json,text[],boolean,text) line 69 at FOR over SELECT rows
 SQL statement "SELECT emaj._import_groups_conf(v_json, v_groups, v_allowGroupsUpdate, v_location)"
 PL/pgSQL function emaj.emaj_import_groups_configuration(text,text[],boolean) line 32 at SQL statement
 NOTICE:  table "tmp_app_trigger" does not exist, skipping
-CONTEXT:  SQL statement "DROP TABLE IF EXISTS tmp_group_def, tmp_app_trigger"
+CONTEXT:  SQL statement "DROP TABLE IF EXISTS tmp_app_table, tmp_app_sequence, tmp_app_trigger"
 PL/pgSQL function emaj._import_groups_conf_prepare(json,text[],boolean,text) line 68 at SQL statement
 PL/pgSQL function emaj._import_groups_conf(json,text[],boolean,text) line 69 at FOR over SELECT rows
 SQL statement "SELECT emaj._import_groups_conf(v_json, v_groups, v_allowGroupsUpdate, v_location)"

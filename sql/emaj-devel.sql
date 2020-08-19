@@ -1468,23 +1468,22 @@ $_truncate_trigger_fnct$
   END;
 $_truncate_trigger_fnct$;
 
-CREATE OR REPLACE FUNCTION emaj._create_log_schemas(v_function TEXT, v_groupNames TEXT[])
+CREATE OR REPLACE FUNCTION emaj._create_log_schemas(v_function TEXT)
 RETURNS VOID LANGUAGE plpgsql
 SECURITY DEFINER SET search_path = pg_catalog, pg_temp AS
 $_create_log_schemas$
 -- The function creates all log schemas that will be needed to create new log tables. It gives the appropriate rights to emaj users on
 -- these schemas.
--- Input: calling function to record into the emaj_hist table,
---        array of group names
+-- The function is called at tables groups configuration import.
+-- Input: calling function to record into the emaj_hist table
 -- The function is created as SECURITY DEFINER so that log schemas can be owned by superuser
   DECLARE
     v_schemaPrefix           TEXT = 'emaj_';
     r_schema                 RECORD;
   BEGIN
     FOR r_schema IN
-        SELECT DISTINCT v_schemaPrefix || tmp_schema AS log_schema FROM tmp_group_def
-          WHERE tmp_group = ANY (v_groupNames)
-            AND NOT EXISTS                                                                -- minus those already created
+        SELECT DISTINCT v_schemaPrefix || tmp_schema AS log_schema FROM tmp_app_table
+          WHERE NOT EXISTS                                                                -- minus those already created
               (SELECT 0 FROM emaj.emaj_schema WHERE sch_name = v_schemaPrefix || tmp_schema)
         ORDER BY 1
     LOOP
@@ -4984,7 +4983,7 @@ $_alter_groups$
 -- we can now plan all the steps needed to perform the operation
       PERFORM emaj._alter_plan(v_groupNames, v_timeId);
 -- create the needed log schemas
-      PERFORM emaj._create_log_schemas(v_callingFunction, v_groupNames);
+      PERFORM emaj._create_log_schemas(v_callingFunction);
 -- execute the plan
       PERFORM emaj._alter_exec(v_timeId, v_callingFunction);
 -- drop the E-Maj log schemas that are now useless (i.e. not used by any created group)
@@ -5013,21 +5012,31 @@ CREATE OR REPLACE FUNCTION emaj._alter_plan(v_groupNames TEXT[], v_timeId BIGINT
 RETURNS VOID LANGUAGE plpgsql AS
 $_alter_plan$
 -- This function build the elementary steps that will be needed to perform an alter_groups operation.
--- Looking at emaj_relation and tmp_group_def tables, it populates the emaj_alter_plan table that will be used by the _alter_exec()
+-- Looking at emaj_relation and tmp_app_table tables, it populates the emaj_alter_plan table that will be used by the _alter_exec()
 -- function.
 -- Input: group names array, timestamp id of the operation (it will be used to identify rows in the emaj_alter_plan table)
   BEGIN
 -- the plan is built using the same steps order than the coming execution
--- determine the relations that do not belong to the groups anymore
+-- determine the tables that do not belong to the groups anymore
     INSERT INTO emaj.emaj_alter_plan (altr_time_id, altr_step, altr_schema, altr_tblseq, altr_group, altr_priority)
-      SELECT v_timeId, CAST(CASE WHEN rel_kind = 'r' THEN 'REMOVE_TBL' ELSE 'REMOVE_SEQ' END AS emaj._alter_step_enum),
+      SELECT v_timeId, CAST('REMOVE_TBL' AS emaj._alter_step_enum),
              rel_schema, rel_tblseq, rel_group, rel_priority
         FROM emaj.emaj_relation
         WHERE rel_group = ANY (v_groupNames) AND upper_inf(rel_time_range)
+          AND rel_kind = 'r'
           AND NOT EXISTS (
-              SELECT NULL FROM tmp_group_def
-                WHERE tmp_schema = rel_schema AND tmp_tblseq = rel_tblseq
-                  AND tmp_group = ANY (v_groupNames));
+              SELECT NULL FROM tmp_app_table
+                WHERE tmp_schema = rel_schema AND tmp_tbl_name = rel_tblseq);
+-- determine the sequences that do not belong to the groups anymore
+    INSERT INTO emaj.emaj_alter_plan (altr_time_id, altr_step, altr_schema, altr_tblseq, altr_group)
+      SELECT v_timeId, CAST('REMOVE_SEQ' AS emaj._alter_step_enum),
+             rel_schema, rel_tblseq, rel_group
+        FROM emaj.emaj_relation
+        WHERE rel_group = ANY (v_groupNames) AND upper_inf(rel_time_range)
+          AND rel_kind = 'S'
+          AND NOT EXISTS (
+              SELECT NULL FROM tmp_app_sequence
+                WHERE tmp_schema = rel_schema AND tmp_seq_name = rel_tblseq);
 -- determine the tables that need to be "repaired" (damaged or out of sync E-Maj components)
 -- (normally, there should not be any REPAIR_SEQ - if any, the _alter_exec() function will produce an exception)
     INSERT INTO emaj.emaj_alter_plan (altr_time_id, altr_step, altr_schema, altr_tblseq, altr_group, altr_priority, altr_new_group)
@@ -5036,11 +5045,10 @@ $_alter_plan$
              CASE WHEN rel_group <> tmp_group THEN tmp_group ELSE NULL END
         FROM (                                   -- all damaged or out of sync tables
           SELECT DISTINCT ver_schema, ver_tblseq FROM emaj._verify_groups(v_groupNames, FALSE)
-             ) AS t, emaj.emaj_relation, tmp_group_def
+             ) AS t, emaj.emaj_relation, tmp_app_table
         WHERE rel_schema = ver_schema AND rel_tblseq = ver_tblseq AND upper_inf(rel_time_range)
-          AND rel_schema = tmp_schema AND rel_tblseq = tmp_tblseq
+          AND rel_schema = tmp_schema AND rel_tblseq = tmp_tbl_name
           AND rel_group = ANY (v_groupNames)
-          AND tmp_group = ANY (v_groupNames)
 --   exclude relations that will have been removed in a previous step
           AND NOT EXISTS (
             SELECT 0 FROM emaj.emaj_alter_plan
@@ -5052,14 +5060,13 @@ $_alter_plan$
         FROM emaj.emaj_group
         WHERE group_name = ANY (v_groupNames)
           AND NOT group_is_logging;
--- determine the tables whose log data tablespace in tmp_group_def has changed
+-- determine the tables whose log data tablespace in tmp_app_table has changed
     INSERT INTO emaj.emaj_alter_plan (altr_time_id, altr_step, altr_schema, altr_tblseq, altr_group, altr_priority, altr_new_group)
       SELECT v_timeId, 'CHANGE_TBL_LOG_DATA_TSP', rel_schema, rel_tblseq, rel_group, tmp_priority,
              CASE WHEN rel_group <> tmp_group THEN tmp_group ELSE NULL END
-        FROM emaj.emaj_relation, tmp_group_def
-        WHERE rel_schema = tmp_schema AND rel_tblseq = tmp_tblseq AND upper_inf(rel_time_range)
+        FROM emaj.emaj_relation, tmp_app_table
+        WHERE rel_schema = tmp_schema AND rel_tblseq = tmp_tbl_name AND upper_inf(rel_time_range)
           AND rel_group = ANY (v_groupNames)
-          AND tmp_group = ANY (v_groupNames)
           AND rel_kind = 'r'
           AND coalesce(rel_log_dat_tsp,'') <> coalesce(tmp_log_dat_tsp,'')
 --   exclude tables that will have been repaired in a previous step
@@ -5067,14 +5074,13 @@ $_alter_plan$
             SELECT 0 FROM emaj.emaj_alter_plan
               WHERE altr_schema = rel_schema AND altr_tblseq = rel_tblseq
                 AND altr_time_id = v_timeId AND altr_step = 'REPAIR_TBL');
--- determine the tables whose log data tablespace in tmp_group_def has changed
+-- determine the tables whose log data tablespace in tmp_app_table has changed
     INSERT INTO emaj.emaj_alter_plan (altr_time_id, altr_step, altr_schema, altr_tblseq, altr_group, altr_priority, altr_new_group)
       SELECT v_timeId, 'CHANGE_TBL_LOG_INDEX_TSP', rel_schema, rel_tblseq, rel_group, tmp_priority,
              CASE WHEN rel_group <> tmp_group THEN tmp_group ELSE NULL END
-        FROM emaj.emaj_relation, tmp_group_def
-        WHERE rel_schema = tmp_schema AND rel_tblseq = tmp_tblseq AND upper_inf(rel_time_range)
+        FROM emaj.emaj_relation, tmp_app_table
+        WHERE rel_schema = tmp_schema AND rel_tblseq = tmp_tbl_name AND upper_inf(rel_time_range)
           AND rel_group = ANY (v_groupNames)
-          AND tmp_group = ANY (v_groupNames)
           AND rel_kind = 'r'
           AND coalesce(rel_log_idx_tsp,'') <> coalesce(tmp_log_idx_tsp,'')
 --   exclude tables that will have been repaired in a previous step
@@ -5082,37 +5088,56 @@ $_alter_plan$
             SELECT 0 FROM emaj.emaj_alter_plan
               WHERE altr_schema = rel_schema AND altr_tblseq = rel_tblseq
                 AND altr_time_id = v_timeId AND altr_step = 'REPAIR_TBL');
--- determine the tables or sequences that change their group ownership
+-- determine the tables that change their group ownership
     INSERT INTO emaj.emaj_alter_plan (altr_time_id, altr_step, altr_schema, altr_tblseq, altr_group, altr_priority, altr_new_group)
-      SELECT v_timeId, CAST(CASE WHEN rel_kind = 'r' THEN 'MOVE_TBL' ELSE 'MOVE_SEQ' END AS emaj._alter_step_enum),
+      SELECT v_timeId, CAST('MOVE_TBL' AS emaj._alter_step_enum),
              rel_schema, rel_tblseq, rel_group, tmp_priority, tmp_group
-      FROM emaj.emaj_relation, tmp_group_def
-      WHERE rel_schema = tmp_schema AND rel_tblseq = tmp_tblseq AND upper_inf(rel_time_range)
+      FROM emaj.emaj_relation, tmp_app_table
+      WHERE rel_schema = tmp_schema AND rel_tblseq = tmp_tbl_name AND upper_inf(rel_time_range)
+        AND rel_kind = 'r'
         AND rel_group = ANY (v_groupNames)
-        AND tmp_group = ANY (v_groupNames)
+        AND rel_group <> tmp_group;
+-- determine the sequences that change their group ownership
+    INSERT INTO emaj.emaj_alter_plan (altr_time_id, altr_step, altr_schema, altr_tblseq, altr_group, altr_new_group)
+      SELECT v_timeId, CAST('MOVE_SEQ' AS emaj._alter_step_enum),
+             rel_schema, rel_tblseq, rel_group, tmp_group
+      FROM emaj.emaj_relation, tmp_app_sequence
+      WHERE rel_schema = tmp_schema AND rel_tblseq = tmp_seq_name AND upper_inf(rel_time_range)
+        AND rel_kind = 'S'
+        AND rel_group = ANY (v_groupNames)
         AND rel_group <> tmp_group;
 -- determine the tables that change their priority level
     INSERT INTO emaj.emaj_alter_plan (altr_time_id, altr_step, altr_schema, altr_tblseq, altr_group, altr_priority)
       SELECT v_timeId, 'CHANGE_REL_PRIORITY', rel_schema, rel_tblseq, rel_group, tmp_priority
-      FROM emaj.emaj_relation, tmp_group_def
-      WHERE rel_schema = tmp_schema AND rel_tblseq = tmp_tblseq AND upper_inf(rel_time_range)
+      FROM emaj.emaj_relation, tmp_app_table
+      WHERE rel_schema = tmp_schema AND rel_tblseq = tmp_tbl_name AND upper_inf(rel_time_range)
         AND rel_kind = 'r'
         AND rel_group = ANY (v_groupNames)
-        AND tmp_group = ANY (v_groupNames)
         AND ( (rel_priority IS NULL AND tmp_priority IS NOT NULL) OR
               (rel_priority IS NOT NULL AND tmp_priority IS NULL) OR
               (rel_priority <> tmp_priority) );
--- determine the relations to add to the groups
+-- determine the tables to add to the groups
     INSERT INTO emaj.emaj_alter_plan (altr_time_id, altr_step, altr_schema, altr_tblseq, altr_group, altr_priority)
       SELECT v_timeId, CAST(CASE WHEN relkind = 'r' THEN 'ADD_TBL' ELSE 'ADD_SEQ' END AS emaj._alter_step_enum),
-             tmp_schema, tmp_tblseq, tmp_group, tmp_priority
-        FROM tmp_group_def, pg_catalog.pg_class, pg_catalog.pg_namespace
-        WHERE tmp_group = ANY (v_groupNames)
+             tmp_schema, tmp_tbl_name, tmp_group, tmp_priority
+        FROM tmp_app_table, pg_catalog.pg_class, pg_catalog.pg_namespace
+        WHERE relnamespace = pg_namespace.oid AND nspname = tmp_schema AND relname = tmp_tbl_name
           AND NOT EXISTS (
               SELECT NULL FROM emaj.emaj_relation
-                WHERE rel_schema = tmp_schema AND rel_tblseq = tmp_tblseq AND upper_inf(rel_time_range)
+                WHERE rel_schema = tmp_schema AND rel_tblseq = tmp_tbl_name AND upper_inf(rel_time_range)
+                  AND rel_kind = 'r'
+                  AND rel_group = ANY (v_groupNames));
+-- determine the sequences to add to the groups
+    INSERT INTO emaj.emaj_alter_plan (altr_time_id, altr_step, altr_schema, altr_tblseq, altr_group)
+      SELECT v_timeId, CAST('ADD_SEQ' AS emaj._alter_step_enum),
+             tmp_schema, tmp_seq_name, tmp_group
+        FROM tmp_app_sequence, pg_catalog.pg_class, pg_catalog.pg_namespace
+        WHERE NOT EXISTS (
+              SELECT NULL FROM emaj.emaj_relation
+                WHERE rel_schema = tmp_schema AND rel_tblseq = tmp_seq_name AND upper_inf(rel_time_range)
+                  AND rel_kind = 'S'
                   AND rel_group = ANY (v_groupNames))
-          AND relnamespace = pg_namespace.oid AND nspname = tmp_schema AND relname = tmp_tblseq;
+          AND relnamespace = pg_namespace.oid AND nspname = tmp_schema AND relname = tmp_seq_name;
 -- set the altr_group_is_logging column value
     UPDATE emaj.emaj_alter_plan SET altr_group_is_logging = group_is_logging
       FROM emaj.emaj_group
@@ -5176,11 +5201,11 @@ $_alter_exec$
             SELECT group_is_rollbackable INTO v_isRollbackable
               FROM emaj.emaj_group WHERE group_name = r_plan.altr_group;
 -- and recreate it
-            PERFORM emaj._create_tbl(tmp_schema, tmp_tblseq, tmp_group, tmp_priority, tmp_log_dat_tsp, tmp_log_idx_tsp,
+            PERFORM emaj._create_tbl(tmp_schema, tmp_tbl_name, tmp_group, tmp_priority, tmp_log_dat_tsp, tmp_log_idx_tsp,
                                      v_timeId, v_isRollbackable, r_plan.altr_group_is_logging)
-              FROM tmp_group_def
+              FROM tmp_app_table
               WHERE tmp_group = coalesce (r_plan.altr_new_group, r_plan.altr_group)
-                AND tmp_schema = r_plan.altr_schema AND tmp_tblseq = r_plan.altr_tblseq;
+                AND tmp_schema = r_plan.altr_schema AND tmp_tbl_name = r_plan.altr_tblseq;
           END IF;
 --
         WHEN 'REPAIR_SEQ' THEN
@@ -5191,10 +5216,10 @@ $_alter_exec$
 -- get the table description from emaj_relation
           SELECT * INTO r_rel FROM emaj.emaj_relation
             WHERE rel_schema = r_plan.altr_schema AND rel_tblseq = r_plan.altr_tblseq AND upper_inf(rel_time_range);
--- get the table description from tmp_group_def
-          SELECT tmp_log_dat_tsp INTO v_logDatTsp FROM tmp_group_def
+-- get the table description from tmp_app_table
+          SELECT tmp_log_dat_tsp INTO v_logDatTsp FROM tmp_app_table
             WHERE tmp_group = coalesce (r_plan.altr_new_group, r_plan.altr_group)
-              AND tmp_schema = r_plan.altr_schema AND tmp_tblseq = r_plan.altr_tblseq;
+              AND tmp_schema = r_plan.altr_schema AND tmp_tbl_name = r_plan.altr_tblseq;
 -- then alter the relation, depending on the changes
           PERFORM emaj._change_log_data_tsp_tbl(r_rel.rel_schema, r_rel.rel_tblseq, r_rel.rel_log_schema, r_rel.rel_log_table,
                                                 r_rel.rel_log_dat_tsp, v_logDatTsp, v_callingFunction);
@@ -5203,10 +5228,10 @@ $_alter_exec$
 -- get the table description from emaj_relation
           SELECT * INTO r_rel FROM emaj.emaj_relation
             WHERE rel_schema = r_plan.altr_schema AND rel_tblseq = r_plan.altr_tblseq AND upper_inf(rel_time_range);
--- get the table description from tmp_group_def
-          SELECT tmp_log_idx_tsp INTO v_logIdxTsp FROM tmp_group_def
+-- get the table description from tmp_app_table
+          SELECT tmp_log_idx_tsp INTO v_logIdxTsp FROM tmp_app_table
             WHERE tmp_group = coalesce (r_plan.altr_new_group, r_plan.altr_group)
-              AND tmp_schema = r_plan.altr_schema AND tmp_tblseq = r_plan.altr_tblseq;
+              AND tmp_schema = r_plan.altr_schema AND tmp_tbl_name = r_plan.altr_tblseq;
 -- then alter the relation, depending on the changes
           PERFORM emaj._change_log_index_tsp_tbl(r_rel.rel_schema, r_rel.rel_tblseq, r_rel.rel_log_schema, r_rel.rel_log_index,
                                                  r_rel.rel_log_idx_tsp, v_logIdxTsp, v_callingFunction);
@@ -5233,8 +5258,8 @@ $_alter_exec$
 -- add a table to a group
           PERFORM emaj._add_tbl(r_plan.altr_schema, r_plan.altr_tblseq, r_plan.altr_group, tmp_priority, tmp_log_dat_tsp,
                                 tmp_log_idx_tsp, r_plan.altr_group_is_logging, v_timeId, v_callingFunction)
-            FROM tmp_group_def
-            WHERE tmp_group = r_plan.altr_group AND tmp_schema = r_plan.altr_schema AND tmp_tblseq = r_plan.altr_tblseq;
+            FROM tmp_app_table
+            WHERE tmp_group = r_plan.altr_group AND tmp_schema = r_plan.altr_schema AND tmp_tbl_name = r_plan.altr_tblseq;
 --
         WHEN 'ADD_SEQ' THEN
 -- add a sequence to a group
@@ -5537,7 +5562,7 @@ $_import_groups_conf$
 -- For tables, "priority", "log_data_tablespace" and "log_index_tablespace" attributes are optional.
 -- A tables group may have no "tables" or "sequences" arrays.
 -- A table may have no "ignored_triggers" array.
--- The function replaces the content of the tmp_group_def table for the imported tables groups by the content of the JSON configuration.
+-- The function replaces the content of the tmp_app_table table for the imported tables groups by the content of the JSON configuration.
 -- Non existing groups are created empty.
 -- The _alter_groups() function is used to process the assignement, the move, the removal or the attributes change for tables and
 -- sequences.
@@ -5589,7 +5614,7 @@ RETURNS SETOF emaj._report_message_type LANGUAGE plpgsql AS
 $_import_groups_conf_prepare$
 -- This function prepares the effective tables groups configuration import.
 -- It is called by _import_groups_conf() and by emaj_web
--- At the end of the function, the tmp_group_def table is updated with the new configuration of groups
+-- At the end of the function, the tmp_app_table table is updated with the new configuration of groups
 --   and a temporary table is created to prepare the application triggers management
 -- Input: - the tables groups configuration structure in JSON format
 --        - an optional array of group names to process (a NULL value process all tables groups described in the JSON structure)
@@ -5653,16 +5678,23 @@ $_import_groups_conf_prepare$
       END IF;
     END IF;
 -- Drop temporary tables in case of...
-    DROP TABLE IF EXISTS tmp_group_def, tmp_app_trigger;
+    DROP TABLE IF EXISTS tmp_app_table, tmp_app_sequence, tmp_app_trigger;
 -- Create the temporary table that will hold the groups configuration
-    CREATE TEMP TABLE tmp_group_def (
+    CREATE TEMP TABLE tmp_app_table (
       tmp_group          TEXT NOT NULL,
       tmp_schema         TEXT NOT NULL,
-      tmp_tblseq         TEXT NOT NULL,
+      tmp_tbl_name       TEXT NOT NULL,
       tmp_priority       INTEGER,
       tmp_log_dat_tsp    TEXT,
       tmp_log_idx_tsp    TEXT,
-      PRIMARY KEY (tmp_schema, tmp_tblseq)
+      PRIMARY KEY (tmp_schema, tmp_tbl_name)
+      );
+-- Create the temporary table that will hold the application sequences configured in groups
+    CREATE TEMP TABLE tmp_app_sequence (
+      tmp_schema         TEXT NOT NULL,
+      tmp_seq_name       TEXT NOT NULL,
+      tmp_group          TEXT,
+      PRIMARY KEY (tmp_schema, tmp_seq_name)
       );
 -- Create a temporary table to hold the application triggers referenced in the JSON structure
     CREATE TEMP TABLE tmp_app_trigger (
@@ -5671,9 +5703,7 @@ $_import_groups_conf_prepare$
       tmp_table          TEXT,
       tmp_trigger        TEXT
     );
--- In a second pass over the JSON structure:
---   - replace the tmp_group_def content by the JSON content for the imported tables groups
---   - populate the tmp_group_def table and the tmp_app_trigger temporary table
+-- In a second pass over the JSON structure, populate the tmp_app_table, tmp_app_sequence and tmp_app_trigger temporary tables
     v_rollbackableGroups = '{}';
     FOR r_group IN
       SELECT value AS groupJson FROM json_array_elements(v_groupsJson)
@@ -5683,14 +5713,11 @@ $_import_groups_conf_prepare$
       IF coalesce((r_group.groupJson ->> 'is_rollbackable')::BOOLEAN, TRUE) THEN
         v_rollbackableGroups = array_append(v_rollbackableGroups, r_group.groupJson ->> 'group');
       END IF;
---   delete the tmp_group_def rows for that group
-      DELETE FROM tmp_group_def
-        WHERE tmp_group = r_group.groupJson ->> 'group';
---   insert tables into tmp_group_def, and application triggers into the tmp_app_trigger temporary table
+--   insert tables into tmp_app_table, and application triggers into the tmp_app_trigger temporary table
       FOR r_table IN
         SELECT value AS tableJson FROM json_array_elements(r_group.groupJson -> 'tables')
       LOOP
-        INSERT INTO tmp_group_def(tmp_group, tmp_schema, tmp_tblseq,
+        INSERT INTO tmp_app_table(tmp_group, tmp_schema, tmp_tbl_name,
                                         tmp_priority, tmp_log_dat_tsp, tmp_log_idx_tsp)
           VALUES (r_group.groupJson ->> 'group', r_table.tableJson ->> 'schema', r_table.tableJson ->> 'table',
                   (r_table.tableJson ->> 'priority')::INT, r_table.tableJson ->> 'log_data_tablespace',
@@ -5699,15 +5726,15 @@ $_import_groups_conf_prepare$
           SELECT r_group.groupJson ->> 'group', r_table.tableJson ->> 'schema', r_table.tableJson ->> 'table', "trigger"
             FROM json_to_recordset(r_table.tableJson -> 'ignored_triggers') AS x("trigger" TEXT);
       END LOOP;
---   insert sequences into tmp_group_def
+--   insert sequences into tmp_app_table
       FOR r_sequence IN
         SELECT value AS sequenceJson FROM json_array_elements(r_group.groupJson -> 'sequences')
       LOOP
-        INSERT INTO tmp_group_def(tmp_group, tmp_schema, tmp_tblseq)
-          VALUES (r_group.groupJson ->> 'group', r_sequence.sequenceJson ->> 'schema', r_sequence.sequenceJson ->> 'sequence');
+        INSERT INTO tmp_app_sequence(tmp_schema, tmp_seq_name, tmp_group)
+          VALUES (r_sequence.sequenceJson ->> 'schema', r_sequence.sequenceJson ->> 'sequence', r_group.groupJson ->> 'group');
       END LOOP;
     END LOOP;
--- check the just imported tmp_group_def content is ok for the groups
+-- check the just imported tmp_app_table content is ok for the groups
     RETURN QUERY
       SELECT * FROM emaj._import_groups_conf_check(v_groups)
         WHERE ((rpt_text_var_1 = ANY (v_groups) AND rpt_severity = 1)
@@ -5744,152 +5771,131 @@ $_import_groups_conf_prepare$;
 CREATE OR REPLACE FUNCTION emaj._import_groups_conf_check(v_groupNames TEXT[])
 RETURNS SETOF emaj._report_message_type LANGUAGE plpgsql AS
 $_import_groups_conf_check$
--- This function verifies that the content of tables group as defined into the tmp_group_def table is correct.
+-- This function verifies that the content of tables group as defined into the tmp_app_table table is correct.
 -- Any detected issue is reported as a message row. The caller defines what to do with them, depending on the tables group type.
 -- It is called by the _import_groups_conf_prepare() function.
 -- This function checks that the referenced application tables and sequences:
 --  - exist,
---  - is not located into an E-Maj schema (to protect against an E-Maj recursive use),
+--  - are not located into an E-Maj schema (to protect against an E-Maj recursive use),
 --  - do not already belong to another tables group,
---  - will not generate conflicts on emaj objects to create (when emaj names prefix is not the default one)
 -- It also checks that:
 --  - tables are not TEMPORARY
 --  - for rollbackable groups, tables are not UNLOGGED or WITH OIDS
 --  - for rollbackable groups, all tables have a PRIMARY KEY
---  - for sequences, the tablespaces and emaj priority are all set to NULL
 --  - for tables, configured tablespaces exist
 -- Input: name array of the tables groups to check
 -- Output: _report_message_type records representing diagnostic messages
 --         the rpt_severity is set to 1 if the error blocks any type group creation or alter,
 --                                 or 2 if the error only blocks ROLLBACKABLE groups creation
   BEGIN
--- check that all application tables and sequences listed for the group really exist
+-- check that all application tables listed for the group really exist
     RETURN QUERY
-      SELECT 1, 1, tmp_group, tmp_schema, tmp_tblseq, NULL::TEXT, NULL::INT,
-             format('in the group %s, the table or sequence %s.%s does not exist.',
-                    quote_ident(tmp_group), quote_ident(tmp_schema), quote_ident(tmp_tblseq))
-        FROM tmp_group_def
-        WHERE tmp_group = ANY(v_groupNames)
-          AND NOT EXISTS (
+      SELECT 1, 1, tmp_group, tmp_schema, tmp_tbl_name, NULL::TEXT, NULL::INT,
+             format('in the group %s, the table %s.%s does not exist.',
+                    quote_ident(tmp_group), quote_ident(tmp_schema), quote_ident(tmp_tbl_name))
+        FROM tmp_app_table
+        WHERE NOT EXISTS (
             SELECT 0 FROM pg_catalog.pg_class, pg_catalog.pg_namespace
               WHERE relnamespace = pg_namespace.oid
-                AND tmp_schema = nspname AND tmp_tblseq = relname
-                AND relkind IN ('r','S','p'));
+                AND tmp_schema = nspname AND tmp_tbl_name = relname
+                AND relkind IN ('r','p'));
 ---- check that no application table is a partitioned table (only elementary partitions can be managed by E-Maj)
     RETURN QUERY
-      SELECT 2, 1, tmp_group, tmp_schema, tmp_tblseq, NULL::TEXT, NULL::INT,
+      SELECT 2, 1, tmp_group, tmp_schema, tmp_tbl_name, NULL::TEXT, NULL::INT,
              format('in the group %s, the table %s.%s is a partitionned table (only elementary partitions are supported by E-Maj).',
-                    quote_ident(tmp_group), quote_ident(tmp_schema), quote_ident(tmp_tblseq))
-        FROM tmp_group_def, pg_catalog.pg_class, pg_catalog.pg_namespace
-        WHERE relnamespace = pg_namespace.oid AND nspname = tmp_schema AND relname = tmp_tblseq
-          AND tmp_group = ANY(v_groupNames)
+                    quote_ident(tmp_group), quote_ident(tmp_schema), quote_ident(tmp_tbl_name))
+        FROM tmp_app_table, pg_catalog.pg_class, pg_catalog.pg_namespace
+        WHERE relnamespace = pg_namespace.oid AND nspname = tmp_schema AND relname = tmp_tbl_name
           AND relkind = 'p';
----- check no application schema listed for the group in the tmp_group_def table is an E-Maj schema
+---- check no application schema listed for the group in the tmp_app_table table is an E-Maj schema
     RETURN QUERY
-      SELECT 3, 1, tmp_group, tmp_schema, tmp_tblseq, NULL::TEXT, NULL::INT,
+      SELECT 3, 1, tmp_group, tmp_schema, tmp_tbl_name, NULL::TEXT, NULL::INT,
              format('in the group %s, the table or sequence %s.%s belongs to an E-Maj schema.',
-                    quote_ident(tmp_group), quote_ident(tmp_schema), quote_ident(tmp_tblseq))
-        FROM tmp_group_def, emaj.emaj_schema
-        WHERE tmp_group = ANY(v_groupNames)
-          AND tmp_schema = sch_name;
----- check that no table or sequence of the checked groups already belongs to other created groups
+                    quote_ident(tmp_group), quote_ident(tmp_schema), quote_ident(tmp_tbl_name))
+        FROM tmp_app_table, emaj.emaj_schema
+        WHERE tmp_schema = sch_name;
+---- check that no table of the checked groups already belongs to other created groups
     RETURN QUERY
-      SELECT 4, 1, tmp_group, tmp_schema, tmp_tblseq, rel_group, NULL::INT,
-             format('in the group %s, the table or sequence %s.%s already belongs to the group %s.',
-                    quote_ident(tmp_group), quote_ident(tmp_schema), quote_ident(tmp_tblseq), quote_ident(rel_group))
-        FROM tmp_group_def, emaj.emaj_relation
-        WHERE tmp_schema = rel_schema AND tmp_tblseq = rel_tblseq
-          AND upper_inf(rel_time_range) AND tmp_group = ANY (v_groupNames) AND NOT rel_group = ANY (v_groupNames);
+      SELECT 4, 1, tmp_group, tmp_schema, tmp_tbl_name, rel_group, NULL::INT,
+             format('in the group %s, the table %s.%s already belongs to the group %s.',
+                    quote_ident(tmp_group), quote_ident(tmp_schema), quote_ident(tmp_tbl_name), quote_ident(rel_group))
+        FROM tmp_app_table, emaj.emaj_relation
+        WHERE tmp_schema = rel_schema AND tmp_tbl_name = rel_tblseq
+          AND upper_inf(rel_time_range) AND NOT rel_group = ANY (v_groupNames);
 ---- check no table is a TEMP table
     RETURN QUERY
-      SELECT 5, 1, tmp_group, tmp_schema, tmp_tblseq, NULL::TEXT, NULL::INT,
+      SELECT 5, 1, tmp_group, tmp_schema, tmp_tbl_name, NULL::TEXT, NULL::INT,
              format('in the group %s, the table %s.%s is a TEMPORARY table.',
-                    quote_ident(tmp_group), quote_ident(tmp_schema), quote_ident(tmp_tblseq))
-        FROM tmp_group_def, pg_catalog.pg_class, pg_catalog.pg_namespace
-        WHERE tmp_schema = nspname AND tmp_tblseq = relname AND relnamespace = pg_namespace.oid
-          AND tmp_group = ANY (v_groupNames) AND relkind = 'r' AND relpersistence = 't';
----- check that a table is not assigned several time in the groups
-    RETURN QUERY
-      WITH dupl AS (
-        SELECT tmp_schema, tmp_tblseq, count(*)
-          FROM tmp_group_def
-          WHERE tmp_group = ANY (v_groupNames)
-          GROUP BY 1,2 HAVING count(*) > 1)
-      SELECT 10, 1, v_groupNames[1], tmp_schema, tmp_tblseq, NULL::TEXT, NULL::INT,
-             format('the table %s.%s is assigned several times.',
-                    quote_ident(tmp_schema), quote_ident(tmp_tblseq))
-        FROM dupl;
+                    quote_ident(tmp_group), quote_ident(tmp_schema), quote_ident(tmp_tbl_name))
+        FROM tmp_app_table, pg_catalog.pg_class, pg_catalog.pg_namespace
+        WHERE tmp_schema = nspname AND tmp_tbl_name = relname AND relnamespace = pg_namespace.oid
+          AND relkind = 'r' AND relpersistence = 't';
 ---- check that the log data tablespaces for tables exist
     RETURN QUERY
-      SELECT 12, 1, tmp_group, tmp_schema, tmp_tblseq, tmp_log_dat_tsp, NULL::INT,
+      SELECT 12, 1, tmp_group, tmp_schema, tmp_tbl_name, tmp_log_dat_tsp, NULL::INT,
              format('in the group %s, for the table %s.%s, the data log tablespace %s does not exist.',
-                    quote_ident(tmp_group), quote_ident(tmp_schema), quote_ident(tmp_tblseq), quote_ident(tmp_log_dat_tsp))
-        FROM tmp_group_def, pg_catalog.pg_class, pg_catalog.pg_namespace
-        WHERE tmp_schema = nspname AND tmp_tblseq = relname AND relnamespace = pg_namespace.oid
-          AND tmp_group = ANY (v_groupNames) AND relkind = 'r' AND tmp_log_dat_tsp IS NOT NULL
+                    quote_ident(tmp_group), quote_ident(tmp_schema), quote_ident(tmp_tbl_name), quote_ident(tmp_log_dat_tsp))
+        FROM tmp_app_table, pg_catalog.pg_class, pg_catalog.pg_namespace
+        WHERE tmp_schema = nspname AND tmp_tbl_name = relname AND relnamespace = pg_namespace.oid
+          AND relkind = 'r' AND tmp_log_dat_tsp IS NOT NULL
           AND NOT EXISTS (SELECT 1 FROM pg_catalog.pg_tablespace WHERE spcname = tmp_log_dat_tsp);
 ---- check that the log index tablespaces for tables exist
     RETURN QUERY
-      SELECT 13, 1, tmp_group, tmp_schema, tmp_tblseq, tmp_log_idx_tsp, NULL::INT,
+      SELECT 13, 1, tmp_group, tmp_schema, tmp_tbl_name, tmp_log_idx_tsp, NULL::INT,
              format('in the group %s, for the table %s.%s, the index log tablespace %s does not exist.',
-                    quote_ident(tmp_group), quote_ident(tmp_schema), quote_ident(tmp_tblseq), quote_ident(tmp_log_idx_tsp))
-        FROM tmp_group_def, pg_catalog.pg_class, pg_catalog.pg_namespace
-        WHERE tmp_schema = nspname AND tmp_tblseq = relname AND relnamespace = pg_namespace.oid
-          AND tmp_group = ANY (v_groupNames) AND relkind = 'r' AND tmp_log_idx_tsp IS NOT NULL
+                    quote_ident(tmp_group), quote_ident(tmp_schema), quote_ident(tmp_tbl_name), quote_ident(tmp_log_idx_tsp))
+        FROM tmp_app_table, pg_catalog.pg_class, pg_catalog.pg_namespace
+        WHERE tmp_schema = nspname AND tmp_tbl_name = relname AND relnamespace = pg_namespace.oid
+          AND relkind = 'r' AND tmp_log_idx_tsp IS NOT NULL
           AND NOT EXISTS (SELECT 1 FROM pg_catalog.pg_tablespace WHERE spcname = tmp_log_idx_tsp);
 ---- check no table is an unlogged table (blocking rollbackable groups only)
     RETURN QUERY
-      SELECT 20, 2, tmp_group, tmp_schema, tmp_tblseq, NULL::TEXT, NULL::INT,
+      SELECT 20, 2, tmp_group, tmp_schema, tmp_tbl_name, NULL::TEXT, NULL::INT,
              format('in the group %s, the table %s.%s is an UNLOGGED table.',
-                    quote_ident(tmp_group), quote_ident(tmp_schema), quote_ident(tmp_tblseq))
-        FROM tmp_group_def, pg_catalog.pg_class, pg_catalog.pg_namespace
-        WHERE tmp_schema = nspname AND tmp_tblseq = relname AND relnamespace = pg_namespace.oid
-          AND tmp_group = ANY (v_groupNames) AND relkind = 'r' AND relpersistence = 'u';
+                    quote_ident(tmp_group), quote_ident(tmp_schema), quote_ident(tmp_tbl_name))
+        FROM tmp_app_table, pg_catalog.pg_class, pg_catalog.pg_namespace
+        WHERE tmp_schema = nspname AND tmp_tbl_name = relname AND relnamespace = pg_namespace.oid
+          AND relkind = 'r' AND relpersistence = 'u';
 ---- with PG11- check no table is a WITH OIDS table (blocking rollbackable groups only)
     IF emaj._pg_version_num() < 120000 THEN
       RETURN QUERY
-        SELECT 21, 2, tmp_group, tmp_schema, tmp_tblseq, NULL::TEXT, NULL::INT,
+        SELECT 21, 2, tmp_group, tmp_schema, tmp_tbl_name, NULL::TEXT, NULL::INT,
                format('in the group %s, the table %s.%s is declared WITH OIDS.',
-                      quote_ident(tmp_group), quote_ident(tmp_schema), quote_ident(tmp_tblseq))
-          FROM tmp_group_def, pg_catalog.pg_class, pg_catalog.pg_namespace
-          WHERE tmp_schema = nspname AND tmp_tblseq = relname AND relnamespace = pg_namespace.oid
-            AND tmp_group = ANY (v_groupNames) AND relkind = 'r' AND relhasoids;
+                      quote_ident(tmp_group), quote_ident(tmp_schema), quote_ident(tmp_tbl_name))
+          FROM tmp_app_table, pg_catalog.pg_class, pg_catalog.pg_namespace
+          WHERE tmp_schema = nspname AND tmp_tbl_name = relname AND relnamespace = pg_namespace.oid
+            AND relkind = 'r' AND relhasoids;
     END IF;
 ---- check every table has a primary key (blocking rollbackable groups only)
     RETURN QUERY
-      SELECT 22, 2, tmp_group, tmp_schema, tmp_tblseq, NULL::TEXT, NULL::INT,
+      SELECT 22, 2, tmp_group, tmp_schema, tmp_tbl_name, NULL::TEXT, NULL::INT,
              format('in the group %s, the table %s.%s has no PRIMARY KEY.',
-                    quote_ident(tmp_group), quote_ident(tmp_schema), quote_ident(tmp_tblseq))
-        FROM tmp_group_def, pg_catalog.pg_class, pg_catalog.pg_namespace
-        WHERE tmp_schema = nspname AND tmp_tblseq = relname AND relnamespace = pg_namespace.oid
-          AND tmp_group = ANY (v_groupNames) AND relkind = 'r'
+                    quote_ident(tmp_group), quote_ident(tmp_schema), quote_ident(tmp_tbl_name))
+        FROM tmp_app_table, pg_catalog.pg_class, pg_catalog.pg_namespace
+        WHERE tmp_schema = nspname AND tmp_tbl_name = relname AND relnamespace = pg_namespace.oid
+          AND relkind = 'r'
           AND NOT EXISTS (SELECT 1 FROM pg_catalog.pg_class, pg_catalog.pg_namespace, pg_catalog.pg_constraint
                             WHERE relnamespace = pg_namespace.oid AND connamespace = pg_namespace.oid AND conrelid = pg_class.oid
-                            AND contype = 'p' AND nspname = tmp_schema AND relname = tmp_tblseq);
----- all sequences described in tmp_group_def have their priority attribute set to NULL
+                            AND contype = 'p' AND nspname = tmp_schema AND relname = tmp_tbl_name);
+-- check that all application sequences listed for the group really exist
     RETURN QUERY
-      SELECT 31, 1, tmp_group, tmp_schema, tmp_tblseq, NULL::TEXT, NULL::INT,
-             format('in the group %s, for the sequence %s.%s, the priority is not NULL.',
-                    quote_ident(tmp_group), quote_ident(tmp_schema), quote_ident(tmp_tblseq))
-        FROM tmp_group_def, pg_catalog.pg_class, pg_catalog.pg_namespace
-        WHERE tmp_schema = nspname AND tmp_tblseq = relname AND relnamespace = pg_namespace.oid
-          AND tmp_group = ANY (v_groupNames) AND relkind = 'S' AND tmp_priority IS NOT NULL;
----- all sequences described in tmp_group_def have their data log tablespace attribute set to NULL
+      SELECT 31, 1, tmp_group, tmp_schema, tmp_seq_name, NULL::TEXT, NULL::INT,
+             format('in the group %s, the sequence %s.%s does not exist.',
+                    quote_ident(tmp_group), quote_ident(tmp_schema), quote_ident(tmp_seq_name))
+        FROM tmp_app_sequence
+        WHERE NOT EXISTS (
+            SELECT 0 FROM pg_catalog.pg_class, pg_catalog.pg_namespace
+              WHERE relnamespace = pg_namespace.oid
+                AND tmp_schema = nspname AND tmp_seq_name = relname
+                AND relkind = 'S');
+---- check that no sequence of the checked groups already belongs to other created groups
     RETURN QUERY
-      SELECT 32, 1, tmp_group, tmp_schema, tmp_tblseq, NULL::TEXT, NULL::INT,
-             format('in the group %s, for the sequence %s.%s, the data log tablespace is not NULL.',
-                    quote_ident(tmp_group), quote_ident(tmp_schema), quote_ident(tmp_tblseq))
-        FROM tmp_group_def, pg_catalog.pg_class, pg_catalog.pg_namespace
-        WHERE tmp_schema = nspname AND tmp_tblseq = relname AND relnamespace = pg_namespace.oid
-          AND tmp_group = ANY (v_groupNames) AND relkind = 'S' AND tmp_log_dat_tsp IS NOT NULL;
----- all sequences described in tmp_group_def have their index log tablespace attribute set to NULL
-    RETURN QUERY
-      SELECT 33, 1, tmp_group, tmp_schema, tmp_tblseq, NULL::TEXT, NULL::INT,
-             format('in the group %s, for the sequence %s.%s, the index log tablespace is not NULL.',
-                    quote_ident(tmp_group), quote_ident(tmp_schema), quote_ident(tmp_tblseq))
-        FROM tmp_group_def, pg_catalog.pg_class, pg_catalog.pg_namespace
-        WHERE tmp_schema = nspname AND tmp_tblseq = relname AND relnamespace = pg_namespace.oid
-          AND tmp_group = ANY (v_groupNames) AND relkind = 'S' AND tmp_log_idx_tsp IS NOT NULL;
+      SELECT 32, 1, tmp_group, tmp_schema, tmp_seq_name, rel_group, NULL::INT,
+             format('in the group %s, the sequence %s.%s already belongs to the group %s.',
+                    quote_ident(tmp_group), quote_ident(tmp_schema), quote_ident(tmp_seq_name), quote_ident(rel_group))
+        FROM tmp_app_sequence, emaj.emaj_relation
+        WHERE tmp_schema = rel_schema AND tmp_seq_name = rel_tblseq
+          AND upper_inf(rel_time_range) AND NOT rel_group = ANY (v_groupNames);
 --
     RETURN;
   END;
@@ -5950,15 +5956,14 @@ $_import_groups_conf_exec$
         END IF;
       END IF;
     END LOOP;
--- process the tmp_group_def content change, if any, by calling the _alter_groups() function
+-- process the tmp_app_table content change, if any, by calling the _alter_groups() function
     PERFORM v_nbRel FROM emaj._alter_groups(v_groups, TRUE, 'IMPORT_%', 'IMPORT_GROUPS', v_timeId);
 -- adjust the application triggers that need to be set as "not automatically disabled at rollback time"
 --   delete from the emaj_ignored_app_trigger table triggers that are not listed anymore
     DELETE FROM emaj.emaj_ignored_app_trigger
-      USING tmp_group_def
+      USING tmp_app_table
       WHERE trg_schema = tmp_schema
-        AND trg_table = tmp_tblseq
-        AND tmp_group = ANY (v_groups)
+        AND trg_table = tmp_tbl_name
         AND NOT EXISTS (
           SELECT 1 FROM tmp_app_trigger
             WHERE tmp_schema = trg_schema
@@ -5971,7 +5976,8 @@ $_import_groups_conf_exec$
         WHERE tmp_trigger NOT IN ('emaj_trunc_trg', 'emaj_log_trg')
       ON CONFLICT DO NOTHING;
 -- the temporary tables are not needed anymore
-    DROP TABLE tmp_group_def;
+    DROP TABLE tmp_app_table;
+    DROP TABLE tmp_app_sequence;
     DROP TABLE tmp_app_trigger;
 -- insert end event in history
     INSERT INTO emaj.emaj_hist (hist_function, hist_event, hist_wording)

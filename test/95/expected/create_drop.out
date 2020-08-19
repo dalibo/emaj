@@ -962,9 +962,16 @@ PL/pgSQL function emaj.emaj_import_groups_configuration(json,text[],boolean) lin
 ERROR:  _import_groups_conf: One or several errors have been detected in the JSON groups configuration.
 CONTEXT:  SQL statement "SELECT emaj._import_groups_conf(v_json, v_groups, v_allowGroupsUpdate)"
 PL/pgSQL function emaj.emaj_import_groups_configuration(json,text[],boolean) line 13 at SQL statement
---   unknown schema and table
+--   unknown table and sequence
 select * from emaj.emaj_import_groups_configuration('{ "tables_groups": [ { "group": "grp1", "tables": [ { "schema": "s1", "table": "t1" }] } ]}'::json);
-WARNING:  _import_groups_conf (2): in the group grp1, the table or sequence s1.t1 does not exist.
+WARNING:  _import_groups_conf (2): in the group grp1, the table s1.t1 does not exist.
+CONTEXT:  SQL statement "SELECT emaj._import_groups_conf(v_json, v_groups, v_allowGroupsUpdate)"
+PL/pgSQL function emaj.emaj_import_groups_configuration(json,text[],boolean) line 13 at SQL statement
+ERROR:  _import_groups_conf: One or several errors have been detected in the JSON groups configuration.
+CONTEXT:  SQL statement "SELECT emaj._import_groups_conf(v_json, v_groups, v_allowGroupsUpdate)"
+PL/pgSQL function emaj.emaj_import_groups_configuration(json,text[],boolean) line 13 at SQL statement
+select * from emaj.emaj_import_groups_configuration('{ "tables_groups": [ { "group": "grp1", "sequences": [ { "schema": "s1", "sequence": "sq1" }] } ]}'::json);
+WARNING:  _import_groups_conf (2): in the group grp1, the sequence s1.sq1 does not exist.
 CONTEXT:  SQL statement "SELECT emaj._import_groups_conf(v_json, v_groups, v_allowGroupsUpdate)"
 PL/pgSQL function emaj.emaj_import_groups_configuration(json,text[],boolean) line 13 at SQL statement
 ERROR:  _import_groups_conf: One or several errors have been detected in the JSON groups configuration.
@@ -1116,7 +1123,7 @@ begin;
   create schema emaj_myschema1;
   select emaj.emaj_import_groups_configuration(:'EMAJTESTTMPDIR' || '/orig_groups_config_all.json', null, true);
 ERROR:  _create_log_schemas: The schema "emaj_myschema1" should not exist. Drop it manually.
-CONTEXT:  SQL statement "SELECT emaj._create_log_schemas(v_callingFunction, v_groupNames)"
+CONTEXT:  SQL statement "SELECT emaj._create_log_schemas(v_callingFunction)"
 PL/pgSQL function emaj._alter_groups(text[],boolean,text,text,bigint) line 45 at PERFORM
 SQL statement "SELECT v_nbRel FROM emaj._alter_groups(v_groups, TRUE, 'IMPORT_%', 'IMPORT_GROUPS', v_timeId)"
 PL/pgSQL function emaj._import_groups_conf_exec(json,text[]) line 55 at PERFORM
@@ -1133,8 +1140,8 @@ CONTEXT:  SQL statement "SELECT emaj._create_tbl(v_schema, v_table, v_group, v_p
 PL/pgSQL function emaj._add_tbl(text,text,text,integer,text,text,boolean,bigint,text) line 19 at PERFORM
 SQL statement "SELECT emaj._add_tbl(r_plan.altr_schema, r_plan.altr_tblseq, r_plan.altr_group, tmp_priority, tmp_log_dat_tsp,
                                 tmp_log_idx_tsp, r_plan.altr_group_is_logging, v_timeId, v_callingFunction)
-            FROM tmp_group_def
-            WHERE tmp_group = r_plan.altr_group AND tmp_schema = r_plan.altr_schema AND tmp_tblseq = r_plan.altr_tblseq"
+            FROM tmp_app_table
+            WHERE tmp_group = r_plan.altr_group AND tmp_schema = r_plan.altr_schema AND tmp_tbl_name = r_plan.altr_tblseq"
 PL/pgSQL function emaj._alter_exec(bigint,text) line 102 at PERFORM
 SQL statement "SELECT emaj._alter_exec(v_timeId, v_callingFunction)"
 PL/pgSQL function emaj._alter_groups(text[],boolean,text,text,bigint) line 47 at PERFORM
