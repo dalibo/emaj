@@ -1394,12 +1394,23 @@ begin;
 ----------
 (0 rows)
 
-  select count(*) from emaj.emaj_relation where rel_schema = 'myschema1' and rel_tblseq in ('myTbl3','mytbl2b') order by rel_time_range;
-ERROR:  column "emaj_relation.rel_time_range" must appear in the GROUP BY clause or be used in an aggregate function
-LINE 1: ...' and rel_tblseq in ('myTbl3','mytbl2b') order by rel_time_r...
-                                                             ^
+  select count(*) from emaj.emaj_relation where rel_schema = 'myschema1' and rel_tblseq in ('myTbl3','mytbl2b');
+ count 
+-------
+     0
+(1 row)
+
   select * from emaj.emaj_rel_hist where relh_schema = 'myschema1' and relh_tblseq in ('myTbl3','mytbl2b') order by 1,2,3;
-ERROR:  current transaction is aborted, commands ignored until end of transaction block
+ relh_schema | relh_tblseq | relh_time_range | relh_group | relh_kind 
+-------------+-------------+-----------------+------------+-----------
+ myschema1   | myTbl3      | [1004,6001)     | myGroup1   | r
+ myschema1   | myTbl3      | [6011,6080)     | myGroup1   | r
+ myschema1   | mytbl2b     | [1003,6001)     | myGroup1   | r
+ myschema1   | mytbl2b     | [6010,6022)     | myGroup1   | r
+ myschema1   | mytbl2b     | [6022,6023)     | myGroup2   | r
+ myschema1   | mytbl2b     | [6023,6080)     | myGroup1   | r
+(6 rows)
+
 rollback;
 begin;
 -- testing the alter group mark deletion
