@@ -218,7 +218,7 @@ begin;
 rollback;
 
 -- revert the changes
-select emaj.emaj_import_groups_configuration(:'EMAJTESTTMPDIR' || '/all_groups_conf.json', '{"myGroup1"}', true);
+select emaj.emaj_import_groups_configuration(:'EMAJTESTTMPDIR' || '/all_groups_conf.json', '{"myGroup1"}', true, 'Revert_sequences_removal');
 
 select emaj.emaj_cleanup_rollback_state();
 
@@ -482,7 +482,7 @@ begin;
 rollback;
 
 -- re-add all removed tables
-select emaj.emaj_import_groups_configuration(:'EMAJTESTTMPDIR' || '/all_groups_conf.json', array['myGroup1'], true);
+select emaj.emaj_import_groups_configuration(:'EMAJTESTTMPDIR' || '/all_groups_conf.json', array['myGroup1'], true, 'Revert_tables_removal');
 
 select emaj.emaj_cleanup_rollback_state();
 

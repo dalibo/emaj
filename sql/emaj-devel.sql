@@ -5460,7 +5460,7 @@ $_export_groups_conf$
 $_export_groups_conf$;
 
 CREATE OR REPLACE FUNCTION emaj.emaj_import_groups_configuration(v_json JSON, v_groups TEXT[] DEFAULT NULL,
-                                                                 v_allowGroupsUpdate BOOLEAN DEFAULT FALSE)
+                                                                 v_allowGroupsUpdate BOOLEAN DEFAULT FALSE, v_mark TEXT DEFAULT 'IMPORT_%')
 RETURNS INT LANGUAGE plpgsql AS
 $emaj_import_groups_configuration$
 -- This function import a supplied JSON formatted structure representing tables groups to create or update.
@@ -5469,20 +5469,21 @@ $emaj_import_groups_configuration$
 -- Input: - the tables groups configuration structure in JSON format
 --        - an optional array of group names to process (a NULL value process all tables groups described in the JSON structure)
 --        - an optional boolean indicating whether tables groups to import may already exist (FALSE by default)
+--        - an optional mark name to set for tables groups in logging state (IMPORT_% by default)
 -- Output: the number of created or altered tables groups
   DECLARE
     v_nbGroup                INT;
   BEGIN
 -- just process the tables groups
-    SELECT emaj._import_groups_conf(v_json, v_groups, v_allowGroupsUpdate) INTO v_nbGroup;
+    SELECT emaj._import_groups_conf(v_json, v_groups, v_allowGroupsUpdate, NULL, v_mark) INTO v_nbGroup;
     RETURN v_nbGroup;
   END;
 $emaj_import_groups_configuration$;
-COMMENT ON FUNCTION emaj.emaj_import_groups_configuration(JSON,TEXT[],BOOLEAN) IS
+COMMENT ON FUNCTION emaj.emaj_import_groups_configuration(JSON,TEXT[],BOOLEAN, TEXT) IS
 $$Import a json structure describing tables groups to create or alter.$$;
 
 CREATE OR REPLACE FUNCTION emaj.emaj_import_groups_configuration(v_location TEXT, v_groups TEXT[] DEFAULT NULL,
-                                                                 v_allowGroupsUpdate BOOLEAN DEFAULT FALSE)
+                                                                 v_allowGroupsUpdate BOOLEAN DEFAULT FALSE, v_mark TEXT DEFAULT 'IMPORT_%')
 RETURNS INT LANGUAGE plpgsql
 SECURITY DEFINER SET search_path = pg_catalog, pg_temp AS
 $emaj_import_groups_configuration$
@@ -5492,6 +5493,7 @@ $emaj_import_groups_configuration$
 -- Input: - input file location
 --        - an optional array of group names to process (a NULL value process all tables groups described in the JSON structure)
 --        - an optional boolean indicating whether tables groups to import may already exist (FALSE by default)
+--        - an optional mark name to set for tables groups in logging state (IMPORT_% by default)
 -- Output: the number of created or altered tables groups
   DECLARE
     v_groupsText             TEXT;
@@ -5516,15 +5518,15 @@ $emaj_import_groups_configuration$
       RAISE EXCEPTION 'emaj_import_groups_configuration: The file content is not a valid JSON content.';
     END;
 -- proccess the tables groups
-    SELECT emaj._import_groups_conf(v_json, v_groups, v_allowGroupsUpdate, v_location) INTO v_nbGroup;
+    SELECT emaj._import_groups_conf(v_json, v_groups, v_allowGroupsUpdate, v_location, v_mark) INTO v_nbGroup;
     RETURN v_nbGroup;
   END;
 $emaj_import_groups_configuration$;
-COMMENT ON FUNCTION emaj.emaj_import_groups_configuration(TEXT,TEXT[],BOOLEAN) IS
+COMMENT ON FUNCTION emaj.emaj_import_groups_configuration(TEXT,TEXT[],BOOLEAN, TEXT) IS
 $$Create or alter tables groups configuration from a JSON formatted file.$$;
 
 CREATE OR REPLACE FUNCTION emaj._import_groups_conf(v_json JSON, v_groups TEXT[], v_allowGroupsUpdate BOOLEAN,
-                                                    v_location TEXT DEFAULT NULL)
+                                                    v_location TEXT, v_mark TEXT)
 RETURNS INT LANGUAGE plpgsql AS
 $_import_groups_conf$
 -- This function processes a JSON formatted structure representing the tables groups to create or update.
@@ -5567,10 +5569,10 @@ $_import_groups_conf$
 -- The _alter_groups() function is used to process the assignement, the move, the removal or the attributes change for tables and
 -- sequences.
 -- Input: - the tables groups configuration structure in JSON format
---        - an optional array of group names to process (a NULL value process all tables groups described in the JSON structure)
---        - an optional boolean indicating whether tables groups to import may already exist (FALSE by default)
---            (if TRUE, existing groups are altered, even if they are in logging state)
---        - the input file name, if any, to record in the emaj_hist table
+--        - the array of group names to process (a NULL value process all tables groups described in the JSON structure)
+--        - a boolean indicating whether tables groups to import may already exist
+--        - the input file name, if any, to record in the emaj_hist table (NULL if direct import)
+--        - the mark name to set for tables groups in logging state
 -- Output: the number of created or altered tables groups
   DECLARE
     v_groupsJson             JSON;
@@ -5604,7 +5606,7 @@ $_import_groups_conf$
       RAISE EXCEPTION '_import_groups_conf: One or several errors have been detected in the JSON groups configuration.';
     END IF;
 -- Ok
-    RETURN emaj._import_groups_conf_exec(v_json, v_groups);
+    RETURN emaj._import_groups_conf_exec(v_json, v_groups, v_mark);
  END;
 $_import_groups_conf$;
 
@@ -5901,7 +5903,7 @@ $_import_groups_conf_check$
   END;
 $_import_groups_conf_check$;
 
-CREATE OR REPLACE FUNCTION emaj._import_groups_conf_exec(v_json JSON, v_groups TEXT[])
+CREATE OR REPLACE FUNCTION emaj._import_groups_conf_exec(v_json JSON, v_groups TEXT[], v_mark TEXT)
 RETURNS INT LANGUAGE plpgsql AS
 $_import_groups_conf_exec$
 -- This function completes a tables groups configuration import.
@@ -5912,6 +5914,7 @@ $_import_groups_conf_exec$
 -- Input: - the tables groups configuration structure in JSON format
 --        - the array of group names to process
 --        - a boolean indicating whether tables groups to import may already exist
+--        - the mark name to set for tables groups in logging state
 -- Output: the number of created or altered tables groups
   DECLARE
     v_timeId                 BIGINT;
@@ -5919,7 +5922,6 @@ $_import_groups_conf_exec$
     v_nbGroup                INT;
     v_comment                TEXT;
     v_isRollbackable         BOOLEAN;
---    r_msg                    RECORD;
     r_group                  RECORD;
   BEGIN
 -- Get a time stamp id of type 'I' for the operation
@@ -5957,7 +5959,7 @@ $_import_groups_conf_exec$
       END IF;
     END LOOP;
 -- process the tmp_app_table content change, if any, by calling the _alter_groups() function
-    PERFORM v_nbRel FROM emaj._alter_groups(v_groups, TRUE, 'IMPORT_%', 'IMPORT_GROUPS', v_timeId);
+    PERFORM v_nbRel FROM emaj._alter_groups(v_groups, TRUE, v_mark, 'IMPORT_GROUPS', v_timeId);
 -- adjust the application triggers that need to be set as "not automatically disabled at rollback time"
 --   delete from the emaj_ignored_app_trigger table triggers that are not listed anymore
     DELETE FROM emaj.emaj_ignored_app_trigger

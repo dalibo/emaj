@@ -318,14 +318,16 @@ General purpose functions
 | <emaj_get_consolidable_rollbacks>` (V)           |                               |                                       |
 +--------------------------------------------------+-------------------------------+---------------------------------------+
 | :ref:`emaj_import_groups_configuration           | | groups JSON,                | #.groups INT                          |
-| <import_groups_conf>`                            | | [groups.array TEXT[]]       |                                       |
+| <import_groups_conf>`                            | | [groups.array TEXT[]],      |                                       |
 |                                                  | | [alter.logging.groups       |                                       |
-|                                                  | |  BOOLEAN ]                  |                                       |
+|                                                  | |  BOOLEAN],                  |                                       |
+|                                                  | | [mark TEXT]                 |                                       |
 +--------------------------------------------------+-------------------------------+---------------------------------------+
 | :ref:`emaj_import_groups_configuration           | | file.path TEXT,             | #.groups INT                          |
-| <import_groups_conf>`                            | | [groups.array TEXT[]]       |                                       |
+| <import_groups_conf>`                            | | [groups.array TEXT[]],      |                                       |
 |                                                  | | [alter.logging.groups       |                                       |
-|                                                  | |  BOOLEAN ]                  |                                       |
+|                                                  | |  BOOLEAN],                  |                                       |
+|                                                  | | [mark TEXT]                 |                                       |
 +--------------------------------------------------+-------------------------------+---------------------------------------+
 | :ref:`emaj_import_parameters_configuration       | | parameters JSON,            | #.parameters INT                      |
 | <import_param_conf>`                             | | [delete.conf BOOLEAN)]      |                                       |

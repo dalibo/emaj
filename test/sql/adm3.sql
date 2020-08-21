@@ -343,7 +343,7 @@ select * from emaj.emaj_verify_all();
 select emaj.emaj_start_group('grp_tmp','Group restart');
 
 -- import the groups configuration
-select emaj.emaj_import_groups_configuration(:'EMAJTESTTMPDIR' || '/groups_config.json', null, true);
+select emaj.emaj_import_groups_configuration(:'EMAJTESTTMPDIR' || '/groups_config.json', null, true, 'REVERT_CHANGES');
 
 -- reset groups at their initial state
 select emaj.emaj_stop_group('grp_tmp_3');

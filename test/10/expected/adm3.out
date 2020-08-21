@@ -1038,7 +1038,7 @@ select emaj.emaj_start_group('grp_tmp','Group restart');
 (1 row)
 
 -- import the groups configuration
-select emaj.emaj_import_groups_configuration(:'EMAJTESTTMPDIR' || '/groups_config.json', null, true);
+select emaj.emaj_import_groups_configuration(:'EMAJTESTTMPDIR' || '/groups_config.json', null, true, 'REVERT_CHANGES');
 NOTICE:  table "tmp_app_table" does not exist, skipping
 NOTICE:  table "tmp_app_sequence" does not exist, skipping
 NOTICE:  table "tmp_app_trigger" does not exist, skipping
@@ -3378,8 +3378,8 @@ select hist_function, hist_event, hist_object,
  IMPORT_GROUPS            | BEGIN                       | grp_tmp, grp_tmp_3, grp_tmp_4                                                    | Input file: '/tmp/emaj_10/adm3/groups_config.json'                                                                                     | postgres
  LOCK_GROUPS              | BEGIN                       | grp_tmp,grp_tmp_3,grp_tmp_4                                                      |                                                                                                                                        | postgres
  LOCK_GROUPS              | END                         | grp_tmp,grp_tmp_3,grp_tmp_4                                                      | 7 tables locked, 0 deadlock(s)                                                                                                         | postgres
- SET_MARK_GROUPS          | BEGIN                       | grp_tmp,grp_tmp_3,grp_tmp_4                                                      | IMPORT_%                                                                                                                               | postgres
- SET_MARK_GROUPS          | END                         | grp_tmp,grp_tmp_3,grp_tmp_4                                                      | IMPORT_%                                                                                                                               | postgres
+ SET_MARK_GROUPS          | BEGIN                       | grp_tmp,grp_tmp_3,grp_tmp_4                                                      | REVERT_CHANGES                                                                                                                         | postgres
+ SET_MARK_GROUPS          | END                         | grp_tmp,grp_tmp_3,grp_tmp_4                                                      | REVERT_CHANGES                                                                                                                         | postgres
  IMPORT_GROUPS            | TABLE MOVED                 | myschema4.mypartp2                                                               | From the logging group grp_tmp to the logging group grp_tmp_4                                                                          | postgres
  IMPORT_GROUPS            | TABLE MOVED                 | myschema4.mypartp3                                                               | From the logging group grp_tmp to the logging group grp_tmp_4                                                                          | postgres
  IMPORT_GROUPS            | TABLE MOVED                 | myschema4.mytblc2                                                                | From the logging group grp_tmp to the logging group grp_tmp_4                                                                          | postgres

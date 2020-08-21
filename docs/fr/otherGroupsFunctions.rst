@@ -239,7 +239,7 @@ Deux versions de la fonction *emaj_import_groups_configuration()* importent des 
 
 On peut charger une configuration de groupes de tables à partir d'un fichier par ::
 
-   SELECT emaj_import_groups_configuration('<chemin.fichier>', <tableau.noms.groupes>, <modifier.groupes.démarrés>);
+   SELECT emaj_import_groups_configuration('<chemin.fichier>' [,<tableau.noms.groupes> [,<modifier.groupes.démarrés> [,<marque> ]]]);
 
 Le fichier doit être accessible par l’instance PostgreSQL.
 
@@ -253,8 +253,10 @@ Si un groupe de tables à importer n’existe pas, il est créé et ses tables e
 
 Si un groupe de tables à importer existe déjà, sa configuration est ajustée pour refléter la configuration cible. Des tables et séquences peuvent être ajoutées ou retirées, et des attributs peuvent être modifiés. Dans le cas où le groupe de tables est démarré, l’ajustement de sa configuration n’est possible que si le troisième paramètre, de type booléen, est explicitement positionné à TRUE.
 
+Le quatrième paramètre définit la marque à poser sur les groupes de tables actifs. Par défaut la marque générée est "IMPORT_%", où le caractère '%' représente l'heure courante, au format "hh.mn.ss.mmmm".
+
 La fonction retourne le nombre de groupes de tables importés.
 
 Dans une variante de la fonction, le premier paramètre en entrée contient directement la structure JSON des groupes de tables à charger ::
 
-   SELECT emaj_import_groups_configuration('<structure.JSON>', <tableau.noms.groupes>, <modification.groupes.démarrés>);
+   SELECT emaj_import_groups_configuration('<structure.JSON>'[,<tableau.noms.groupes> [,<modifier.groupes.démarrés> [,<marque> ]]]);

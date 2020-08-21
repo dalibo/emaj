@@ -622,7 +622,7 @@ LINE 1: ...'myGroup1' and not upper_inf(rel_time_range) order by 1,2,3;
 ERROR:  current transaction is aborted, commands ignored until end of transaction block
 rollback;
 -- revert the changes
-select emaj.emaj_import_groups_configuration(:'EMAJTESTTMPDIR' || '/all_groups_conf.json', '{"myGroup1"}', true);
+select emaj.emaj_import_groups_configuration(:'EMAJTESTTMPDIR' || '/all_groups_conf.json', '{"myGroup1"}', true, 'Revert_sequences_removal');
 NOTICE:  table "tmp_app_table" does not exist, skipping
 NOTICE:  table "tmp_app_sequence" does not exist, skipping
 NOTICE:  table "tmp_app_trigger" does not exist, skipping
@@ -1455,7 +1455,7 @@ begin;
   alter table mySchema1."myTbl3" alter column col33 type decimal (10,1);
 rollback;
 -- re-add all removed tables
-select emaj.emaj_import_groups_configuration(:'EMAJTESTTMPDIR' || '/all_groups_conf.json', array['myGroup1'], true);
+select emaj.emaj_import_groups_configuration(:'EMAJTESTTMPDIR' || '/all_groups_conf.json', array['myGroup1'], true, 'Revert_tables_removal');
 NOTICE:  table "tmp_app_table" does not exist, skipping
 NOTICE:  table "tmp_app_sequence" does not exist, skipping
 NOTICE:  table "tmp_app_trigger" does not exist, skipping
@@ -1489,23 +1489,23 @@ select emaj.emaj_set_mark_groups('{"myGroup1","myGroup2"}','Mk3');
 select mark_group, regexp_replace(mark_name,E'\\d\\d\.\\d\\d\\.\\d\\d\\.\\d\\d\\d\\d','%','g'), mark_time_id, mark_is_deleted,
        mark_is_rlbk_protected, mark_comment, mark_log_rows_before_next, mark_logged_rlbk_target_mark
   from emaj.emaj_mark order by mark_time_id, mark_group;
- mark_group |    regexp_replace    | mark_time_id | mark_is_deleted | mark_is_rlbk_protected | mark_comment | mark_log_rows_before_next | mark_logged_rlbk_target_mark 
-------------+----------------------+--------------+-----------------+------------------------+--------------+---------------------------+------------------------------
- myGroup1   | Mk1                  |         6036 | f               | f                      |              |                         0 | 
- myGroup2   | Mk1                  |         6036 | f               | f                      |              |                         0 | 
- myGroup1   | Priority Changed     |         6037 | f               | f                      |              |                         0 | 
- myGroup1   | Attributes_changed_1 |         6038 | f               | f                      |              |                         0 | 
- myGroup2   | Attributes_changed_2 |         6039 | f               | f                      |              |                         0 | 
- myGroup1   | Mk2                  |         6040 | f               | f                      |              |                         0 | 
- myGroup2   | Mk2                  |         6040 | f               | f                      |              |                         0 | 
- myGroup1   | IMPORT_%             |         6042 | f               | f                      |              |                         0 | 
- myGroup2   | IMPORT_%             |         6042 | f               | f                      |              |                         0 | 
- myGroup2   | ADD_SEQ test         |         6043 | f               | f                      |              |                         0 | 
- myGroup1   | Mk2b                 |         6054 | f               | f                      |              |                         0 | 
- myGroup2   | ADD_TBL test         |         6065 | f               | f                      |              |                         0 | 
- myGroup1   | IMPORT_%             |         6092 | f               | f                      |              |                         0 | 
- myGroup1   | Mk3                  |         6093 | f               | f                      |              |                           | 
- myGroup2   | Mk3                  |         6093 | f               | f                      |              |                           | 
+ mark_group |    regexp_replace     | mark_time_id | mark_is_deleted | mark_is_rlbk_protected | mark_comment | mark_log_rows_before_next | mark_logged_rlbk_target_mark 
+------------+-----------------------+--------------+-----------------+------------------------+--------------+---------------------------+------------------------------
+ myGroup1   | Mk1                   |         6036 | f               | f                      |              |                         0 | 
+ myGroup2   | Mk1                   |         6036 | f               | f                      |              |                         0 | 
+ myGroup1   | Priority Changed      |         6037 | f               | f                      |              |                         0 | 
+ myGroup1   | Attributes_changed_1  |         6038 | f               | f                      |              |                         0 | 
+ myGroup2   | Attributes_changed_2  |         6039 | f               | f                      |              |                         0 | 
+ myGroup1   | Mk2                   |         6040 | f               | f                      |              |                         0 | 
+ myGroup2   | Mk2                   |         6040 | f               | f                      |              |                         0 | 
+ myGroup1   | IMPORT_%              |         6042 | f               | f                      |              |                         0 | 
+ myGroup2   | IMPORT_%              |         6042 | f               | f                      |              |                         0 | 
+ myGroup2   | ADD_SEQ test          |         6043 | f               | f                      |              |                         0 | 
+ myGroup1   | Mk2b                  |         6054 | f               | f                      |              |                         0 | 
+ myGroup2   | ADD_TBL test          |         6065 | f               | f                      |              |                         0 | 
+ myGroup1   | Revert_tables_removal |         6092 | f               | f                      |              |                         0 | 
+ myGroup1   | Mk3                   |         6093 | f               | f                      |              |                           | 
+ myGroup2   | Mk3                   |         6093 | f               | f                      |              |                           | 
 (15 rows)
 
 -- estimate a rollback crossing alter group operations
@@ -1755,9 +1755,9 @@ NOTICE:  table "tmp_app_trigger" does not exist, skipping
 WARNING:  _import_groups_conf (2): in the group "myGroup2", the table myschema2."myTbl3" already belongs to the group "myGroup1".
 WARNING:  _import_groups_conf (2): in the group "myGroup2", the sequence myschema2."myTbl3_col31_seq" already belongs to the group "myGroup1".
 ERROR:  _import_groups_conf: One or several errors have been detected in the JSON groups configuration.
-CONTEXT:  PL/pgSQL function emaj._import_groups_conf(json,text[],boolean,text) line 76 at RAISE
-SQL statement "SELECT emaj._import_groups_conf(v_json, v_groups, v_allowGroupsUpdate, v_location)"
-PL/pgSQL function emaj.emaj_import_groups_configuration(text,text[],boolean) line 32 at SQL statement
+CONTEXT:  PL/pgSQL function emaj._import_groups_conf(json,text[],boolean,text,text) line 76 at RAISE
+SQL statement "SELECT emaj._import_groups_conf(v_json, v_groups, v_allowGroupsUpdate, v_location, v_mark)"
+PL/pgSQL function emaj.emaj_import_groups_configuration(text,text[],boolean,text) line 33 at SQL statement
 select emaj.emaj_import_groups_configuration(:'EMAJTESTTMPDIR' || '/all_groups_conf.json', '{"myGroup1","myGroup2"}', true);
 NOTICE:  table "tmp_app_table" does not exist, skipping
 NOTICE:  table "tmp_app_sequence" does not exist, skipping
@@ -2540,10 +2540,10 @@ select hist_function, hist_event, hist_object,
  IMPORT_GROUPS          | BEGIN                        | myGroup1                     | Input file: '/tmp/emaj_13/alter_logging/all_groups_conf.json'                                                          | postgres
  LOCK_GROUPS            | BEGIN                        | myGroup1                     |                                                                                                                        | postgres
  LOCK_GROUPS            | END                          | myGroup1                     | 5 tables locked, 0 deadlock(s)                                                                                         | postgres
- SET_MARK_GROUPS        | BEGIN                        | myGroup1                     | IMPORT_%                                                                                                               | postgres
+ SET_MARK_GROUPS        | BEGIN                        | myGroup1                     | Revert_sequences_removal                                                                                               | postgres
  CLEANUP_RLBK_STATE     |                              | Rollback id 6004             | set to ABORTED                                                                                                         | postgres
  CLEANUP_RLBK_STATE     |                              | Rollback id 6005             | set to ABORTED                                                                                                         | postgres
- SET_MARK_GROUPS        | END                          | myGroup1                     | IMPORT_%                                                                                                               | postgres
+ SET_MARK_GROUPS        | END                          | myGroup1                     | Revert_sequences_removal                                                                                               | postgres
  IMPORT_GROUPS          | SEQUENCE ADDED               | myschema1."myTbl3_col31_seq" | To the logging group myGroup1                                                                                          | postgres
  IMPORT_GROUPS          | END                          |                              | 1 created or altered tables groups                                                                                     | postgres
  SET_MARK_GROUP         | BEGIN                        | myGroup2                     |                                                                                                                        | postgres
@@ -2700,9 +2700,9 @@ select hist_function, hist_event, hist_object,
  IMPORT_GROUPS          | BEGIN                        | myGroup1                     | Input file: '/tmp/emaj_13/alter_logging/all_groups_conf.json'                                                          | postgres
  LOCK_GROUPS            | BEGIN                        | myGroup1                     |                                                                                                                        | postgres
  LOCK_GROUPS            | END                          | myGroup1                     | 2 tables locked, 0 deadlock(s)                                                                                         | postgres
- SET_MARK_GROUPS        | BEGIN                        | myGroup1                     | IMPORT_%                                                                                                               | postgres
+ SET_MARK_GROUPS        | BEGIN                        | myGroup1                     | Revert_tables_removal                                                                                                  | postgres
  CLEANUP_RLBK_STATE     |                              | Rollback id 6011             | set to COMMITTED                                                                                                       | postgres
- SET_MARK_GROUPS        | END                          | myGroup1                     | IMPORT_%                                                                                                               | postgres
+ SET_MARK_GROUPS        | END                          | myGroup1                     | Revert_tables_removal                                                                                                  | postgres
  IMPORT_GROUPS          | TABLE ADDED                  | myschema1."myTbl3"           | To the logging group myGroup1                                                                                          | postgres
  IMPORT_GROUPS          | TABLE ADDED                  | myschema1.mytbl1             | To the logging group myGroup1                                                                                          | postgres
  IMPORT_GROUPS          | TABLE ADDED                  | myschema1.mytbl2b            | To the logging group myGroup1                                                                                          | postgres
@@ -2755,7 +2755,7 @@ select hist_function, hist_event, hist_object,
  ROLLBACK_GROUPS        | MARK DELETED                 | myGroup2                     | mark ADD_SEQ test is deleted                                                                                           | postgres
  ROLLBACK_GROUPS        | MARK DELETED                 | myGroup1                     | mark Mk2b is deleted                                                                                                   | postgres
  ROLLBACK_GROUPS        | MARK DELETED                 | myGroup2                     | mark ADD_TBL test is deleted                                                                                           | postgres
- ROLLBACK_GROUPS        | MARK DELETED                 | myGroup1                     | mark IMPORT_% is deleted                                                                                               | postgres
+ ROLLBACK_GROUPS        | MARK DELETED                 | myGroup1                     | mark Revert_tables_removal is deleted                                                                                  | postgres
  ROLLBACK_GROUPS        | MARK DELETED                 | myGroup1                     | mark Mk3 is deleted                                                                                                    | postgres
  ROLLBACK_GROUPS        | MARK DELETED                 | myGroup2                     | mark Mk3 is deleted                                                                                                    | postgres
  ROLLBACK_GROUPS        | MARK DELETED                 | myGroup1                     | mark RLBK_Mk2_%_START is deleted                                                                                       | postgres
