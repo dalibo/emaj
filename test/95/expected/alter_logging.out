@@ -10,11 +10,11 @@
 select emaj.emaj_start_groups('{"myGroup1","myGroup2"}','Mk1');
 WARNING:  _check_fk_groups: The foreign key "mytbl6_col61_fkey" on the table "myschema2.mytbl6" references the table "myschema2.mytbl7" that is outside the groups (myGroup1,myGroup2).
 CONTEXT:  SQL statement "SELECT emaj._check_fk_groups(v_groupNames)"
-PL/pgSQL function emaj._start_groups(text[],text,boolean,boolean) line 27 at PERFORM
+PL/pgSQL function emaj._start_groups(text[],text,boolean,boolean) line 28 at PERFORM
 PL/pgSQL function emaj.emaj_start_groups(text[],text,boolean) line 11 at RETURN
 WARNING:  _check_fk_groups: The table "myschema2.mytbl6" is referenced by the foreign key "mytbl8_col81_fkey" on the table "myschema2.mytbl8" that is outside the groups (myGroup1,myGroup2).
 CONTEXT:  SQL statement "SELECT emaj._check_fk_groups(v_groupNames)"
-PL/pgSQL function emaj._start_groups(text[],text,boolean,boolean) line 27 at PERFORM
+PL/pgSQL function emaj._start_groups(text[],text,boolean,boolean) line 28 at PERFORM
 PL/pgSQL function emaj.emaj_start_groups(text[],text,boolean) line 11 at RETURN
  emaj_start_groups 
 -------------------
@@ -35,7 +35,7 @@ select emaj.emaj_export_groups_configuration(:'EMAJTESTTMPDIR' || '/all_groups_c
 select emaj.emaj_modify_table('myschema1','mytbl1','{"priority":30}'::jsonb,emaj.emaj_get_previous_mark_group('myGroup1',now()));
 ERROR:  _check_new_mark: The group "myGroup1" already contains a mark named "Mk1".
 CONTEXT:  SQL statement "SELECT emaj._check_new_mark(v_loggingGroups, v_mark)"
-PL/pgSQL function emaj._modify_tables(text,text[],jsonb,text,boolean,boolean) line 98 at SQL statement
+PL/pgSQL function emaj._modify_tables(text,text[],jsonb,text,boolean,boolean) line 120 at SQL statement
 PL/pgSQL function emaj.emaj_modify_table(text,text,jsonb,text) line 7 at RETURN
 -- change the priority
 select emaj.emaj_modify_table('myschema1','mytbl1','{"priority":30}'::jsonb,'Priority Changed');
@@ -79,38 +79,38 @@ select * from emaj.emaj_rollback_groups('{"myGroup1","myGroup2"}','Mk2');
 select emaj.emaj_import_groups_configuration(:'EMAJTESTTMPDIR' || '/all_groups_conf.json', '{"myGroup1","myGroup2"}', true);
 NOTICE:  table "tmp_app_table" does not exist, skipping
 CONTEXT:  SQL statement "DROP TABLE IF EXISTS tmp_app_table, tmp_app_sequence, tmp_app_trigger"
-PL/pgSQL function emaj._import_groups_conf_prepare(json,text[],boolean,text) line 68 at SQL statement
-PL/pgSQL function emaj._import_groups_conf(json,text[],boolean,text,text) line 69 at FOR over SELECT rows
+PL/pgSQL function emaj._import_groups_conf_prepare(json,text[],boolean,text) line 71 at SQL statement
+PL/pgSQL function emaj._import_groups_conf(json,text[],boolean,text,text) line 70 at FOR over SELECT rows
 SQL statement "SELECT emaj._import_groups_conf(v_json, v_groups, v_allowGroupsUpdate, v_location, v_mark)"
-PL/pgSQL function emaj.emaj_import_groups_configuration(text,text[],boolean,text) line 33 at SQL statement
+PL/pgSQL function emaj.emaj_import_groups_configuration(text,text[],boolean,text) line 34 at SQL statement
 NOTICE:  table "tmp_app_sequence" does not exist, skipping
 CONTEXT:  SQL statement "DROP TABLE IF EXISTS tmp_app_table, tmp_app_sequence, tmp_app_trigger"
-PL/pgSQL function emaj._import_groups_conf_prepare(json,text[],boolean,text) line 68 at SQL statement
-PL/pgSQL function emaj._import_groups_conf(json,text[],boolean,text,text) line 69 at FOR over SELECT rows
+PL/pgSQL function emaj._import_groups_conf_prepare(json,text[],boolean,text) line 71 at SQL statement
+PL/pgSQL function emaj._import_groups_conf(json,text[],boolean,text,text) line 70 at FOR over SELECT rows
 SQL statement "SELECT emaj._import_groups_conf(v_json, v_groups, v_allowGroupsUpdate, v_location, v_mark)"
-PL/pgSQL function emaj.emaj_import_groups_configuration(text,text[],boolean,text) line 33 at SQL statement
+PL/pgSQL function emaj.emaj_import_groups_configuration(text,text[],boolean,text) line 34 at SQL statement
 NOTICE:  table "tmp_app_trigger" does not exist, skipping
 CONTEXT:  SQL statement "DROP TABLE IF EXISTS tmp_app_table, tmp_app_sequence, tmp_app_trigger"
-PL/pgSQL function emaj._import_groups_conf_prepare(json,text[],boolean,text) line 68 at SQL statement
-PL/pgSQL function emaj._import_groups_conf(json,text[],boolean,text,text) line 69 at FOR over SELECT rows
+PL/pgSQL function emaj._import_groups_conf_prepare(json,text[],boolean,text) line 71 at SQL statement
+PL/pgSQL function emaj._import_groups_conf(json,text[],boolean,text,text) line 70 at FOR over SELECT rows
 SQL statement "SELECT emaj._import_groups_conf(v_json, v_groups, v_allowGroupsUpdate, v_location, v_mark)"
-PL/pgSQL function emaj.emaj_import_groups_configuration(text,text[],boolean,text) line 33 at SQL statement
+PL/pgSQL function emaj.emaj_import_groups_configuration(text,text[],boolean,text) line 34 at SQL statement
 WARNING:  _check_fk_groups: The foreign key "mytbl6_col61_fkey" on the table "myschema2.mytbl6" references the table "myschema2.mytbl7" that is outside the groups (myGroup1,myGroup2).
 CONTEXT:  SQL statement "SELECT emaj._check_fk_groups(v_loggingGroups)"
-PL/pgSQL function emaj._alter_groups(text[],boolean,text,text,bigint) line 61 at PERFORM
+PL/pgSQL function emaj._alter_groups(text[],boolean,text,text,bigint) line 73 at PERFORM
 SQL statement "SELECT v_nbRel FROM emaj._alter_groups(v_groups, TRUE, v_mark, 'IMPORT_GROUPS', v_timeId)"
-PL/pgSQL function emaj._import_groups_conf_exec(json,text[],text) line 55 at PERFORM
-PL/pgSQL function emaj._import_groups_conf(json,text[],boolean,text,text) line 79 at RETURN
+PL/pgSQL function emaj._import_groups_conf_exec(json,text[],text) line 57 at PERFORM
+PL/pgSQL function emaj._import_groups_conf(json,text[],boolean,text,text) line 81 at RETURN
 SQL statement "SELECT emaj._import_groups_conf(v_json, v_groups, v_allowGroupsUpdate, v_location, v_mark)"
-PL/pgSQL function emaj.emaj_import_groups_configuration(text,text[],boolean,text) line 33 at SQL statement
+PL/pgSQL function emaj.emaj_import_groups_configuration(text,text[],boolean,text) line 34 at SQL statement
 WARNING:  _check_fk_groups: The table "myschema2.mytbl6" is referenced by the foreign key "mytbl8_col81_fkey" on the table "myschema2.mytbl8" that is outside the groups (myGroup1,myGroup2).
 CONTEXT:  SQL statement "SELECT emaj._check_fk_groups(v_loggingGroups)"
-PL/pgSQL function emaj._alter_groups(text[],boolean,text,text,bigint) line 61 at PERFORM
+PL/pgSQL function emaj._alter_groups(text[],boolean,text,text,bigint) line 73 at PERFORM
 SQL statement "SELECT v_nbRel FROM emaj._alter_groups(v_groups, TRUE, v_mark, 'IMPORT_GROUPS', v_timeId)"
-PL/pgSQL function emaj._import_groups_conf_exec(json,text[],text) line 55 at PERFORM
-PL/pgSQL function emaj._import_groups_conf(json,text[],boolean,text,text) line 79 at RETURN
+PL/pgSQL function emaj._import_groups_conf_exec(json,text[],text) line 57 at PERFORM
+PL/pgSQL function emaj._import_groups_conf(json,text[],boolean,text,text) line 81 at RETURN
 SQL statement "SELECT emaj._import_groups_conf(v_json, v_groups, v_allowGroupsUpdate, v_location, v_mark)"
-PL/pgSQL function emaj.emaj_import_groups_configuration(text,text[],boolean,text) line 33 at SQL statement
+PL/pgSQL function emaj.emaj_import_groups_configuration(text,text[],boolean,text) line 34 at SQL statement
  emaj_import_groups_configuration 
 ----------------------------------
                                 2
@@ -221,7 +221,7 @@ myschema2	myseq2	6046	3	1	1	9223372036854775807	1	1	f	t
 select emaj.emaj_gen_sql_group('myGroup2', 'Before ADD_SEQ', NULL, :'EMAJTESTTMPDIR' || '/myFile');
 NOTICE:  table "emaj_temp_script" does not exist, skipping
 CONTEXT:  SQL statement "DROP TABLE IF EXISTS emaj_temp_script CASCADE"
-PL/pgSQL function emaj._gen_sql_groups(text[],boolean,text,text,text,text[]) line 84 at SQL statement
+PL/pgSQL function emaj._gen_sql_groups(text[],boolean,text,text,text,text[]) line 91 at SQL statement
 PL/pgSQL function emaj.emaj_gen_sql_group(text,text,text,text,text[]) line 14 at RETURN
  emaj_gen_sql_group 
 --------------------
@@ -524,7 +524,7 @@ select emaj.emaj_set_mark_group('myGroup1','After_remove');
 select emaj.emaj_gen_sql_group('myGroup1', NULL, 'EMAJ_LAST_MARK', :'EMAJTESTTMPDIR' || '/script.sql',array['myschema1.myTbl3_col31_seq']);
 NOTICE:  table "emaj_temp_script" does not exist, skipping
 CONTEXT:  SQL statement "DROP TABLE IF EXISTS emaj_temp_script CASCADE"
-PL/pgSQL function emaj._gen_sql_groups(text[],boolean,text,text,text,text[]) line 84 at SQL statement
+PL/pgSQL function emaj._gen_sql_groups(text[],boolean,text,text,text,text[]) line 91 at SQL statement
 PL/pgSQL function emaj.emaj_gen_sql_group(text,text,text,text,text[]) line 14 at RETURN
  emaj_gen_sql_group 
 --------------------
@@ -664,22 +664,22 @@ rollback;
 select emaj.emaj_import_groups_configuration(:'EMAJTESTTMPDIR' || '/all_groups_conf.json', '{"myGroup1"}', true, 'Revert_sequences_removal');
 NOTICE:  table "tmp_app_table" does not exist, skipping
 CONTEXT:  SQL statement "DROP TABLE IF EXISTS tmp_app_table, tmp_app_sequence, tmp_app_trigger"
-PL/pgSQL function emaj._import_groups_conf_prepare(json,text[],boolean,text) line 68 at SQL statement
-PL/pgSQL function emaj._import_groups_conf(json,text[],boolean,text,text) line 69 at FOR over SELECT rows
+PL/pgSQL function emaj._import_groups_conf_prepare(json,text[],boolean,text) line 71 at SQL statement
+PL/pgSQL function emaj._import_groups_conf(json,text[],boolean,text,text) line 70 at FOR over SELECT rows
 SQL statement "SELECT emaj._import_groups_conf(v_json, v_groups, v_allowGroupsUpdate, v_location, v_mark)"
-PL/pgSQL function emaj.emaj_import_groups_configuration(text,text[],boolean,text) line 33 at SQL statement
+PL/pgSQL function emaj.emaj_import_groups_configuration(text,text[],boolean,text) line 34 at SQL statement
 NOTICE:  table "tmp_app_sequence" does not exist, skipping
 CONTEXT:  SQL statement "DROP TABLE IF EXISTS tmp_app_table, tmp_app_sequence, tmp_app_trigger"
-PL/pgSQL function emaj._import_groups_conf_prepare(json,text[],boolean,text) line 68 at SQL statement
-PL/pgSQL function emaj._import_groups_conf(json,text[],boolean,text,text) line 69 at FOR over SELECT rows
+PL/pgSQL function emaj._import_groups_conf_prepare(json,text[],boolean,text) line 71 at SQL statement
+PL/pgSQL function emaj._import_groups_conf(json,text[],boolean,text,text) line 70 at FOR over SELECT rows
 SQL statement "SELECT emaj._import_groups_conf(v_json, v_groups, v_allowGroupsUpdate, v_location, v_mark)"
-PL/pgSQL function emaj.emaj_import_groups_configuration(text,text[],boolean,text) line 33 at SQL statement
+PL/pgSQL function emaj.emaj_import_groups_configuration(text,text[],boolean,text) line 34 at SQL statement
 NOTICE:  table "tmp_app_trigger" does not exist, skipping
 CONTEXT:  SQL statement "DROP TABLE IF EXISTS tmp_app_table, tmp_app_sequence, tmp_app_trigger"
-PL/pgSQL function emaj._import_groups_conf_prepare(json,text[],boolean,text) line 68 at SQL statement
-PL/pgSQL function emaj._import_groups_conf(json,text[],boolean,text,text) line 69 at FOR over SELECT rows
+PL/pgSQL function emaj._import_groups_conf_prepare(json,text[],boolean,text) line 71 at SQL statement
+PL/pgSQL function emaj._import_groups_conf(json,text[],boolean,text,text) line 70 at FOR over SELECT rows
 SQL statement "SELECT emaj._import_groups_conf(v_json, v_groups, v_allowGroupsUpdate, v_location, v_mark)"
-PL/pgSQL function emaj.emaj_import_groups_configuration(text,text[],boolean,text) line 33 at SQL statement
+PL/pgSQL function emaj.emaj_import_groups_configuration(text,text[],boolean,text) line 34 at SQL statement
  emaj_import_groups_configuration 
 ----------------------------------
                                 1
@@ -714,39 +714,39 @@ delete from myschema2.mytbl7 where col71 = 3;
 select emaj.emaj_assign_table('myschema2', 'mytbl7', 'myGroup2', null, 'Add mytbl7');
 NOTICE:  table "mytbl7_log" does not exist, skipping
 CONTEXT:  SQL statement "DROP TABLE IF EXISTS emaj_myschema2.mytbl7_log"
-PL/pgSQL function emaj._create_tbl(text,text,text,integer,text,text,bigint,boolean,boolean) line 68 at EXECUTE
+PL/pgSQL function emaj._create_tbl(text,text,text,integer,text,text,bigint,boolean,boolean) line 67 at EXECUTE
 SQL statement "SELECT emaj._create_tbl(v_schema, v_table, v_group, v_priority, v_logDatTsp, v_logIdxTsp,
                              v_timeId, v_groupIsRollbackable, v_groupIsLogging)"
-PL/pgSQL function emaj._add_tbl(text,text,text,integer,text,text,boolean,bigint,text) line 19 at PERFORM
+PL/pgSQL function emaj._add_tbl(text,text,text,integer,text,text,boolean,bigint,text) line 20 at PERFORM
 SQL statement "SELECT emaj._add_tbl(v_schema, v_oneTable, v_group, v_priority, v_logDatTsp, v_logIdxTsp, v_groupIsLogging,
                               v_timeId, v_function)"
-PL/pgSQL function emaj._assign_tables(text,text[],text,jsonb,text,boolean,boolean) line 237 at PERFORM
+PL/pgSQL function emaj._assign_tables(text,text[],text,jsonb,text,boolean,boolean) line 301 at PERFORM
 PL/pgSQL function emaj.emaj_assign_table(text,text,text,jsonb,text) line 7 at RETURN
 NOTICE:  trigger "emaj_log_trg" for relation "myschema2.mytbl7" does not exist, skipping
 CONTEXT:  SQL statement "DROP TRIGGER IF EXISTS emaj_log_trg ON myschema2.mytbl7"
-PL/pgSQL function emaj._create_log_trigger_tbl(text,text,text,text) line 9 at EXECUTE
+PL/pgSQL function emaj._create_log_trigger_tbl(text,text,text,text) line 8 at EXECUTE
 SQL statement "SELECT emaj._create_log_trigger_tbl(v_fullTableName, v_logTableName, v_sequenceName, v_logFnctName)"
-PL/pgSQL function emaj._create_tbl(text,text,text,integer,text,text,bigint,boolean,boolean) line 114 at PERFORM
+PL/pgSQL function emaj._create_tbl(text,text,text,integer,text,text,bigint,boolean,boolean) line 123 at PERFORM
 SQL statement "SELECT emaj._create_tbl(v_schema, v_table, v_group, v_priority, v_logDatTsp, v_logIdxTsp,
                              v_timeId, v_groupIsRollbackable, v_groupIsLogging)"
-PL/pgSQL function emaj._add_tbl(text,text,text,integer,text,text,boolean,bigint,text) line 19 at PERFORM
+PL/pgSQL function emaj._add_tbl(text,text,text,integer,text,text,boolean,bigint,text) line 20 at PERFORM
 SQL statement "SELECT emaj._add_tbl(v_schema, v_oneTable, v_group, v_priority, v_logDatTsp, v_logIdxTsp, v_groupIsLogging,
                               v_timeId, v_function)"
-PL/pgSQL function emaj._assign_tables(text,text[],text,jsonb,text,boolean,boolean) line 237 at PERFORM
+PL/pgSQL function emaj._assign_tables(text,text[],text,jsonb,text,boolean,boolean) line 301 at PERFORM
 PL/pgSQL function emaj.emaj_assign_table(text,text,text,jsonb,text) line 7 at RETURN
 NOTICE:  trigger "emaj_trunc_trg" for relation "myschema2.mytbl7" does not exist, skipping
 CONTEXT:  SQL statement "DROP TRIGGER IF EXISTS emaj_trunc_trg ON myschema2.mytbl7"
-PL/pgSQL function emaj._create_tbl(text,text,text,integer,text,text,bigint,boolean,boolean) line 122 at EXECUTE
+PL/pgSQL function emaj._create_tbl(text,text,text,integer,text,text,bigint,boolean,boolean) line 131 at EXECUTE
 SQL statement "SELECT emaj._create_tbl(v_schema, v_table, v_group, v_priority, v_logDatTsp, v_logIdxTsp,
                              v_timeId, v_groupIsRollbackable, v_groupIsLogging)"
-PL/pgSQL function emaj._add_tbl(text,text,text,integer,text,text,boolean,bigint,text) line 19 at PERFORM
+PL/pgSQL function emaj._add_tbl(text,text,text,integer,text,text,boolean,bigint,text) line 20 at PERFORM
 SQL statement "SELECT emaj._add_tbl(v_schema, v_oneTable, v_group, v_priority, v_logDatTsp, v_logIdxTsp, v_groupIsLogging,
                               v_timeId, v_function)"
-PL/pgSQL function emaj._assign_tables(text,text[],text,jsonb,text,boolean,boolean) line 237 at PERFORM
+PL/pgSQL function emaj._assign_tables(text,text[],text,jsonb,text,boolean,boolean) line 301 at PERFORM
 PL/pgSQL function emaj.emaj_assign_table(text,text,text,jsonb,text) line 7 at RETURN
 WARNING:  _check_fk_groups: The table "myschema2.mytbl6" is referenced by the foreign key "mytbl8_col81_fkey" on the table "myschema2.mytbl8" that is outside the groups (myGroup2).
 CONTEXT:  SQL statement "SELECT emaj._check_fk_groups(array[v_group])"
-PL/pgSQL function emaj._assign_tables(text,text[],text,jsonb,text,boolean,boolean) line 254 at PERFORM
+PL/pgSQL function emaj._assign_tables(text,text[],text,jsonb,text,boolean,boolean) line 323 at PERFORM
 PL/pgSQL function emaj.emaj_assign_table(text,text,text,jsonb,text) line 7 at RETURN
  emaj_assign_table 
 -------------------
@@ -1093,39 +1093,39 @@ select emaj.emaj_remove_table('myschema2', 'mytbl7', 'Remove mytbl7');
 select emaj.emaj_assign_table('myschema2', 'mytbl7', 'myGroup2', null, 'Re-add mytbl7');
 NOTICE:  table "mytbl7_log" does not exist, skipping
 CONTEXT:  SQL statement "DROP TABLE IF EXISTS emaj_myschema2.mytbl7_log"
-PL/pgSQL function emaj._create_tbl(text,text,text,integer,text,text,bigint,boolean,boolean) line 68 at EXECUTE
+PL/pgSQL function emaj._create_tbl(text,text,text,integer,text,text,bigint,boolean,boolean) line 67 at EXECUTE
 SQL statement "SELECT emaj._create_tbl(v_schema, v_table, v_group, v_priority, v_logDatTsp, v_logIdxTsp,
                              v_timeId, v_groupIsRollbackable, v_groupIsLogging)"
-PL/pgSQL function emaj._add_tbl(text,text,text,integer,text,text,boolean,bigint,text) line 19 at PERFORM
+PL/pgSQL function emaj._add_tbl(text,text,text,integer,text,text,boolean,bigint,text) line 20 at PERFORM
 SQL statement "SELECT emaj._add_tbl(v_schema, v_oneTable, v_group, v_priority, v_logDatTsp, v_logIdxTsp, v_groupIsLogging,
                               v_timeId, v_function)"
-PL/pgSQL function emaj._assign_tables(text,text[],text,jsonb,text,boolean,boolean) line 237 at PERFORM
+PL/pgSQL function emaj._assign_tables(text,text[],text,jsonb,text,boolean,boolean) line 301 at PERFORM
 PL/pgSQL function emaj.emaj_assign_table(text,text,text,jsonb,text) line 7 at RETURN
 NOTICE:  trigger "emaj_log_trg" for relation "myschema2.mytbl7" does not exist, skipping
 CONTEXT:  SQL statement "DROP TRIGGER IF EXISTS emaj_log_trg ON myschema2.mytbl7"
-PL/pgSQL function emaj._create_log_trigger_tbl(text,text,text,text) line 9 at EXECUTE
+PL/pgSQL function emaj._create_log_trigger_tbl(text,text,text,text) line 8 at EXECUTE
 SQL statement "SELECT emaj._create_log_trigger_tbl(v_fullTableName, v_logTableName, v_sequenceName, v_logFnctName)"
-PL/pgSQL function emaj._create_tbl(text,text,text,integer,text,text,bigint,boolean,boolean) line 114 at PERFORM
+PL/pgSQL function emaj._create_tbl(text,text,text,integer,text,text,bigint,boolean,boolean) line 123 at PERFORM
 SQL statement "SELECT emaj._create_tbl(v_schema, v_table, v_group, v_priority, v_logDatTsp, v_logIdxTsp,
                              v_timeId, v_groupIsRollbackable, v_groupIsLogging)"
-PL/pgSQL function emaj._add_tbl(text,text,text,integer,text,text,boolean,bigint,text) line 19 at PERFORM
+PL/pgSQL function emaj._add_tbl(text,text,text,integer,text,text,boolean,bigint,text) line 20 at PERFORM
 SQL statement "SELECT emaj._add_tbl(v_schema, v_oneTable, v_group, v_priority, v_logDatTsp, v_logIdxTsp, v_groupIsLogging,
                               v_timeId, v_function)"
-PL/pgSQL function emaj._assign_tables(text,text[],text,jsonb,text,boolean,boolean) line 237 at PERFORM
+PL/pgSQL function emaj._assign_tables(text,text[],text,jsonb,text,boolean,boolean) line 301 at PERFORM
 PL/pgSQL function emaj.emaj_assign_table(text,text,text,jsonb,text) line 7 at RETURN
 NOTICE:  trigger "emaj_trunc_trg" for relation "myschema2.mytbl7" does not exist, skipping
 CONTEXT:  SQL statement "DROP TRIGGER IF EXISTS emaj_trunc_trg ON myschema2.mytbl7"
-PL/pgSQL function emaj._create_tbl(text,text,text,integer,text,text,bigint,boolean,boolean) line 122 at EXECUTE
+PL/pgSQL function emaj._create_tbl(text,text,text,integer,text,text,bigint,boolean,boolean) line 131 at EXECUTE
 SQL statement "SELECT emaj._create_tbl(v_schema, v_table, v_group, v_priority, v_logDatTsp, v_logIdxTsp,
                              v_timeId, v_groupIsRollbackable, v_groupIsLogging)"
-PL/pgSQL function emaj._add_tbl(text,text,text,integer,text,text,boolean,bigint,text) line 19 at PERFORM
+PL/pgSQL function emaj._add_tbl(text,text,text,integer,text,text,boolean,bigint,text) line 20 at PERFORM
 SQL statement "SELECT emaj._add_tbl(v_schema, v_oneTable, v_group, v_priority, v_logDatTsp, v_logIdxTsp, v_groupIsLogging,
                               v_timeId, v_function)"
-PL/pgSQL function emaj._assign_tables(text,text[],text,jsonb,text,boolean,boolean) line 237 at PERFORM
+PL/pgSQL function emaj._assign_tables(text,text[],text,jsonb,text,boolean,boolean) line 301 at PERFORM
 PL/pgSQL function emaj.emaj_assign_table(text,text,text,jsonb,text) line 7 at RETURN
 WARNING:  _check_fk_groups: The table "myschema2.mytbl6" is referenced by the foreign key "mytbl8_col81_fkey" on the table "myschema2.mytbl8" that is outside the groups (myGroup2).
 CONTEXT:  SQL statement "SELECT emaj._check_fk_groups(array[v_group])"
-PL/pgSQL function emaj._assign_tables(text,text[],text,jsonb,text,boolean,boolean) line 254 at PERFORM
+PL/pgSQL function emaj._assign_tables(text,text[],text,jsonb,text,boolean,boolean) line 323 at PERFORM
 PL/pgSQL function emaj.emaj_assign_table(text,text,text,jsonb,text) line 7 at RETURN
  emaj_assign_table 
 -------------------
@@ -1181,38 +1181,38 @@ select emaj.emaj_snap_log_group('myGroup2',NULL,NULL,:'EMAJTESTTMPDIR' || '/snap
 select emaj.emaj_import_groups_configuration(:'EMAJTESTTMPDIR' || '/all_groups_conf.json', '{"myGroup2"}', true);
 NOTICE:  table "tmp_app_table" does not exist, skipping
 CONTEXT:  SQL statement "DROP TABLE IF EXISTS tmp_app_table, tmp_app_sequence, tmp_app_trigger"
-PL/pgSQL function emaj._import_groups_conf_prepare(json,text[],boolean,text) line 68 at SQL statement
-PL/pgSQL function emaj._import_groups_conf(json,text[],boolean,text,text) line 69 at FOR over SELECT rows
+PL/pgSQL function emaj._import_groups_conf_prepare(json,text[],boolean,text) line 71 at SQL statement
+PL/pgSQL function emaj._import_groups_conf(json,text[],boolean,text,text) line 70 at FOR over SELECT rows
 SQL statement "SELECT emaj._import_groups_conf(v_json, v_groups, v_allowGroupsUpdate, v_location, v_mark)"
-PL/pgSQL function emaj.emaj_import_groups_configuration(text,text[],boolean,text) line 33 at SQL statement
+PL/pgSQL function emaj.emaj_import_groups_configuration(text,text[],boolean,text) line 34 at SQL statement
 NOTICE:  table "tmp_app_sequence" does not exist, skipping
 CONTEXT:  SQL statement "DROP TABLE IF EXISTS tmp_app_table, tmp_app_sequence, tmp_app_trigger"
-PL/pgSQL function emaj._import_groups_conf_prepare(json,text[],boolean,text) line 68 at SQL statement
-PL/pgSQL function emaj._import_groups_conf(json,text[],boolean,text,text) line 69 at FOR over SELECT rows
+PL/pgSQL function emaj._import_groups_conf_prepare(json,text[],boolean,text) line 71 at SQL statement
+PL/pgSQL function emaj._import_groups_conf(json,text[],boolean,text,text) line 70 at FOR over SELECT rows
 SQL statement "SELECT emaj._import_groups_conf(v_json, v_groups, v_allowGroupsUpdate, v_location, v_mark)"
-PL/pgSQL function emaj.emaj_import_groups_configuration(text,text[],boolean,text) line 33 at SQL statement
+PL/pgSQL function emaj.emaj_import_groups_configuration(text,text[],boolean,text) line 34 at SQL statement
 NOTICE:  table "tmp_app_trigger" does not exist, skipping
 CONTEXT:  SQL statement "DROP TABLE IF EXISTS tmp_app_table, tmp_app_sequence, tmp_app_trigger"
-PL/pgSQL function emaj._import_groups_conf_prepare(json,text[],boolean,text) line 68 at SQL statement
-PL/pgSQL function emaj._import_groups_conf(json,text[],boolean,text,text) line 69 at FOR over SELECT rows
+PL/pgSQL function emaj._import_groups_conf_prepare(json,text[],boolean,text) line 71 at SQL statement
+PL/pgSQL function emaj._import_groups_conf(json,text[],boolean,text,text) line 70 at FOR over SELECT rows
 SQL statement "SELECT emaj._import_groups_conf(v_json, v_groups, v_allowGroupsUpdate, v_location, v_mark)"
-PL/pgSQL function emaj.emaj_import_groups_configuration(text,text[],boolean,text) line 33 at SQL statement
+PL/pgSQL function emaj.emaj_import_groups_configuration(text,text[],boolean,text) line 34 at SQL statement
 WARNING:  _check_fk_groups: The foreign key "mytbl6_col61_fkey" on the table "myschema2.mytbl6" references the table "myschema2.mytbl7" that is outside the groups (myGroup2).
 CONTEXT:  SQL statement "SELECT emaj._check_fk_groups(v_loggingGroups)"
-PL/pgSQL function emaj._alter_groups(text[],boolean,text,text,bigint) line 61 at PERFORM
+PL/pgSQL function emaj._alter_groups(text[],boolean,text,text,bigint) line 73 at PERFORM
 SQL statement "SELECT v_nbRel FROM emaj._alter_groups(v_groups, TRUE, v_mark, 'IMPORT_GROUPS', v_timeId)"
-PL/pgSQL function emaj._import_groups_conf_exec(json,text[],text) line 55 at PERFORM
-PL/pgSQL function emaj._import_groups_conf(json,text[],boolean,text,text) line 79 at RETURN
+PL/pgSQL function emaj._import_groups_conf_exec(json,text[],text) line 57 at PERFORM
+PL/pgSQL function emaj._import_groups_conf(json,text[],boolean,text,text) line 81 at RETURN
 SQL statement "SELECT emaj._import_groups_conf(v_json, v_groups, v_allowGroupsUpdate, v_location, v_mark)"
-PL/pgSQL function emaj.emaj_import_groups_configuration(text,text[],boolean,text) line 33 at SQL statement
+PL/pgSQL function emaj.emaj_import_groups_configuration(text,text[],boolean,text) line 34 at SQL statement
 WARNING:  _check_fk_groups: The table "myschema2.mytbl6" is referenced by the foreign key "mytbl8_col81_fkey" on the table "myschema2.mytbl8" that is outside the groups (myGroup2).
 CONTEXT:  SQL statement "SELECT emaj._check_fk_groups(v_loggingGroups)"
-PL/pgSQL function emaj._alter_groups(text[],boolean,text,text,bigint) line 61 at PERFORM
+PL/pgSQL function emaj._alter_groups(text[],boolean,text,text,bigint) line 73 at PERFORM
 SQL statement "SELECT v_nbRel FROM emaj._alter_groups(v_groups, TRUE, v_mark, 'IMPORT_GROUPS', v_timeId)"
-PL/pgSQL function emaj._import_groups_conf_exec(json,text[],text) line 55 at PERFORM
-PL/pgSQL function emaj._import_groups_conf(json,text[],boolean,text,text) line 79 at RETURN
+PL/pgSQL function emaj._import_groups_conf_exec(json,text[],text) line 57 at PERFORM
+PL/pgSQL function emaj._import_groups_conf(json,text[],boolean,text,text) line 81 at RETURN
 SQL statement "SELECT emaj._import_groups_conf(v_json, v_groups, v_allowGroupsUpdate, v_location, v_mark)"
-PL/pgSQL function emaj.emaj_import_groups_configuration(text,text[],boolean,text) line 33 at SQL statement
+PL/pgSQL function emaj.emaj_import_groups_configuration(text,text[],boolean,text) line 34 at SQL statement
  emaj_import_groups_configuration 
 ----------------------------------
                                 1
@@ -1279,10 +1279,12 @@ select count(*) from emaj_myschema1."myTbl3_log_1";
 select * from emaj.emaj_verify_all();
                                                                                       emaj_verify_all                                                                                       
 --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+ Warning: In the group "myGroup1", the sequence "myschema1"."myTbl3_col31_seq" is linked to the table "myschema1"."myTbl3" but this table does not belong to any tables group.
+ Warning: In the group "myGroup1", the sequence "myschema1"."mytbl2b_col20_seq" is linked to the table "myschema1"."mytbl2b" but this table does not belong to any tables group.
  Warning: In the group "myGroup2", the foreign key "mytbl6_col61_fkey" on the table "myschema2"."mytbl6" references the table "myschema2"."mytbl7" that does not belong to any group.
  Warning: In the group "myGroup2", the table "myschema2"."mytbl6" is referenced by the foreign key "mytbl8_col81_fkey" of the table "myschema2"."mytbl8" that does not belong to any group.
  No error detected
-(3 rows)
+(5 rows)
 
 -- test statistics following a rollback targeting a mark set before a REMOVE_TBL
 begin;
@@ -1358,7 +1360,7 @@ select emaj.emaj_snap_log_group('myGroup1',NULL,NULL,:'EMAJTESTTMPDIR' || '/snap
 select emaj.emaj_gen_sql_group('myGroup1', NULL, NULL, :'EMAJTESTTMPDIR' || '/script.sql',array['myschema1.myTbl3']);
 NOTICE:  table "emaj_temp_script" does not exist, skipping
 CONTEXT:  SQL statement "DROP TABLE IF EXISTS emaj_temp_script CASCADE"
-PL/pgSQL function emaj._gen_sql_groups(text[],boolean,text,text,text,text[]) line 84 at SQL statement
+PL/pgSQL function emaj._gen_sql_groups(text[],boolean,text,text,text,text[]) line 91 at SQL statement
 PL/pgSQL function emaj.emaj_gen_sql_group(text,text,text,text,text[]) line 14 at RETURN
  emaj_gen_sql_group 
 --------------------
@@ -1584,7 +1586,7 @@ begin;
   select emaj.emaj_start_group('myGroup1');
 WARNING:  _check_fk_groups: The foreign key "mytbl4_col44_fkey" on the table "myschema1.mytbl4" references the table "myschema1.mytbl1" that is outside the groups (myGroup1).
 CONTEXT:  SQL statement "SELECT emaj._check_fk_groups(v_groupNames)"
-PL/pgSQL function emaj._start_groups(text[],text,boolean,boolean) line 27 at PERFORM
+PL/pgSQL function emaj._start_groups(text[],text,boolean,boolean) line 28 at PERFORM
 PL/pgSQL function emaj.emaj_start_group(text,text,boolean) line 12 at RETURN
  emaj_start_group 
 ------------------
@@ -1621,190 +1623,208 @@ rollback;
 select emaj.emaj_import_groups_configuration(:'EMAJTESTTMPDIR' || '/all_groups_conf.json', array['myGroup1'], true, 'Revert_tables_removal');
 NOTICE:  table "tmp_app_table" does not exist, skipping
 CONTEXT:  SQL statement "DROP TABLE IF EXISTS tmp_app_table, tmp_app_sequence, tmp_app_trigger"
-PL/pgSQL function emaj._import_groups_conf_prepare(json,text[],boolean,text) line 68 at SQL statement
-PL/pgSQL function emaj._import_groups_conf(json,text[],boolean,text,text) line 69 at FOR over SELECT rows
+PL/pgSQL function emaj._import_groups_conf_prepare(json,text[],boolean,text) line 71 at SQL statement
+PL/pgSQL function emaj._import_groups_conf(json,text[],boolean,text,text) line 70 at FOR over SELECT rows
 SQL statement "SELECT emaj._import_groups_conf(v_json, v_groups, v_allowGroupsUpdate, v_location, v_mark)"
-PL/pgSQL function emaj.emaj_import_groups_configuration(text,text[],boolean,text) line 33 at SQL statement
+PL/pgSQL function emaj.emaj_import_groups_configuration(text,text[],boolean,text) line 34 at SQL statement
 NOTICE:  table "tmp_app_sequence" does not exist, skipping
 CONTEXT:  SQL statement "DROP TABLE IF EXISTS tmp_app_table, tmp_app_sequence, tmp_app_trigger"
-PL/pgSQL function emaj._import_groups_conf_prepare(json,text[],boolean,text) line 68 at SQL statement
-PL/pgSQL function emaj._import_groups_conf(json,text[],boolean,text,text) line 69 at FOR over SELECT rows
+PL/pgSQL function emaj._import_groups_conf_prepare(json,text[],boolean,text) line 71 at SQL statement
+PL/pgSQL function emaj._import_groups_conf(json,text[],boolean,text,text) line 70 at FOR over SELECT rows
 SQL statement "SELECT emaj._import_groups_conf(v_json, v_groups, v_allowGroupsUpdate, v_location, v_mark)"
-PL/pgSQL function emaj.emaj_import_groups_configuration(text,text[],boolean,text) line 33 at SQL statement
+PL/pgSQL function emaj.emaj_import_groups_configuration(text,text[],boolean,text) line 34 at SQL statement
 NOTICE:  table "tmp_app_trigger" does not exist, skipping
 CONTEXT:  SQL statement "DROP TABLE IF EXISTS tmp_app_table, tmp_app_sequence, tmp_app_trigger"
-PL/pgSQL function emaj._import_groups_conf_prepare(json,text[],boolean,text) line 68 at SQL statement
-PL/pgSQL function emaj._import_groups_conf(json,text[],boolean,text,text) line 69 at FOR over SELECT rows
+PL/pgSQL function emaj._import_groups_conf_prepare(json,text[],boolean,text) line 71 at SQL statement
+PL/pgSQL function emaj._import_groups_conf(json,text[],boolean,text,text) line 70 at FOR over SELECT rows
 SQL statement "SELECT emaj._import_groups_conf(v_json, v_groups, v_allowGroupsUpdate, v_location, v_mark)"
-PL/pgSQL function emaj.emaj_import_groups_configuration(text,text[],boolean,text) line 33 at SQL statement
+PL/pgSQL function emaj.emaj_import_groups_configuration(text,text[],boolean,text) line 34 at SQL statement
 NOTICE:  table "myTbl3_log" does not exist, skipping
 CONTEXT:  SQL statement "DROP TABLE IF EXISTS emaj_myschema1."myTbl3_log""
-PL/pgSQL function emaj._create_tbl(text,text,text,integer,text,text,bigint,boolean,boolean) line 68 at EXECUTE
+PL/pgSQL function emaj._create_tbl(text,text,text,integer,text,text,bigint,boolean,boolean) line 67 at EXECUTE
 SQL statement "SELECT emaj._create_tbl(v_schema, v_table, v_group, v_priority, v_logDatTsp, v_logIdxTsp,
                              v_timeId, v_groupIsRollbackable, v_groupIsLogging)"
-PL/pgSQL function emaj._add_tbl(text,text,text,integer,text,text,boolean,bigint,text) line 19 at PERFORM
+PL/pgSQL function emaj._add_tbl(text,text,text,integer,text,text,boolean,bigint,text) line 20 at PERFORM
 SQL statement "SELECT emaj._add_tbl(r_plan.altr_schema, r_plan.altr_tblseq, r_plan.altr_group, tmp_priority, tmp_log_dat_tsp,
                                 tmp_log_idx_tsp, r_plan.altr_group_is_logging, v_timeId, v_callingFunction)
             FROM tmp_app_table
-            WHERE tmp_group = r_plan.altr_group AND tmp_schema = r_plan.altr_schema AND tmp_tbl_name = r_plan.altr_tblseq"
-PL/pgSQL function emaj._alter_exec(bigint,text) line 102 at PERFORM
+            WHERE tmp_group = r_plan.altr_group
+              AND tmp_schema = r_plan.altr_schema
+              AND tmp_tbl_name = r_plan.altr_tblseq"
+PL/pgSQL function emaj._alter_exec(bigint,text) line 120 at PERFORM
 SQL statement "SELECT emaj._alter_exec(v_timeId, v_callingFunction)"
-PL/pgSQL function emaj._alter_groups(text[],boolean,text,text,bigint) line 47 at PERFORM
+PL/pgSQL function emaj._alter_groups(text[],boolean,text,text,bigint) line 49 at PERFORM
 SQL statement "SELECT v_nbRel FROM emaj._alter_groups(v_groups, TRUE, v_mark, 'IMPORT_GROUPS', v_timeId)"
-PL/pgSQL function emaj._import_groups_conf_exec(json,text[],text) line 55 at PERFORM
-PL/pgSQL function emaj._import_groups_conf(json,text[],boolean,text,text) line 79 at RETURN
+PL/pgSQL function emaj._import_groups_conf_exec(json,text[],text) line 57 at PERFORM
+PL/pgSQL function emaj._import_groups_conf(json,text[],boolean,text,text) line 81 at RETURN
 SQL statement "SELECT emaj._import_groups_conf(v_json, v_groups, v_allowGroupsUpdate, v_location, v_mark)"
-PL/pgSQL function emaj.emaj_import_groups_configuration(text,text[],boolean,text) line 33 at SQL statement
+PL/pgSQL function emaj.emaj_import_groups_configuration(text,text[],boolean,text) line 34 at SQL statement
 NOTICE:  trigger "emaj_log_trg" for relation "myschema1.myTbl3" does not exist, skipping
 CONTEXT:  SQL statement "DROP TRIGGER IF EXISTS emaj_log_trg ON myschema1."myTbl3""
-PL/pgSQL function emaj._create_log_trigger_tbl(text,text,text,text) line 9 at EXECUTE
+PL/pgSQL function emaj._create_log_trigger_tbl(text,text,text,text) line 8 at EXECUTE
 SQL statement "SELECT emaj._create_log_trigger_tbl(v_fullTableName, v_logTableName, v_sequenceName, v_logFnctName)"
-PL/pgSQL function emaj._create_tbl(text,text,text,integer,text,text,bigint,boolean,boolean) line 114 at PERFORM
+PL/pgSQL function emaj._create_tbl(text,text,text,integer,text,text,bigint,boolean,boolean) line 123 at PERFORM
 SQL statement "SELECT emaj._create_tbl(v_schema, v_table, v_group, v_priority, v_logDatTsp, v_logIdxTsp,
                              v_timeId, v_groupIsRollbackable, v_groupIsLogging)"
-PL/pgSQL function emaj._add_tbl(text,text,text,integer,text,text,boolean,bigint,text) line 19 at PERFORM
+PL/pgSQL function emaj._add_tbl(text,text,text,integer,text,text,boolean,bigint,text) line 20 at PERFORM
 SQL statement "SELECT emaj._add_tbl(r_plan.altr_schema, r_plan.altr_tblseq, r_plan.altr_group, tmp_priority, tmp_log_dat_tsp,
                                 tmp_log_idx_tsp, r_plan.altr_group_is_logging, v_timeId, v_callingFunction)
             FROM tmp_app_table
-            WHERE tmp_group = r_plan.altr_group AND tmp_schema = r_plan.altr_schema AND tmp_tbl_name = r_plan.altr_tblseq"
-PL/pgSQL function emaj._alter_exec(bigint,text) line 102 at PERFORM
+            WHERE tmp_group = r_plan.altr_group
+              AND tmp_schema = r_plan.altr_schema
+              AND tmp_tbl_name = r_plan.altr_tblseq"
+PL/pgSQL function emaj._alter_exec(bigint,text) line 120 at PERFORM
 SQL statement "SELECT emaj._alter_exec(v_timeId, v_callingFunction)"
-PL/pgSQL function emaj._alter_groups(text[],boolean,text,text,bigint) line 47 at PERFORM
+PL/pgSQL function emaj._alter_groups(text[],boolean,text,text,bigint) line 49 at PERFORM
 SQL statement "SELECT v_nbRel FROM emaj._alter_groups(v_groups, TRUE, v_mark, 'IMPORT_GROUPS', v_timeId)"
-PL/pgSQL function emaj._import_groups_conf_exec(json,text[],text) line 55 at PERFORM
-PL/pgSQL function emaj._import_groups_conf(json,text[],boolean,text,text) line 79 at RETURN
+PL/pgSQL function emaj._import_groups_conf_exec(json,text[],text) line 57 at PERFORM
+PL/pgSQL function emaj._import_groups_conf(json,text[],boolean,text,text) line 81 at RETURN
 SQL statement "SELECT emaj._import_groups_conf(v_json, v_groups, v_allowGroupsUpdate, v_location, v_mark)"
-PL/pgSQL function emaj.emaj_import_groups_configuration(text,text[],boolean,text) line 33 at SQL statement
+PL/pgSQL function emaj.emaj_import_groups_configuration(text,text[],boolean,text) line 34 at SQL statement
 NOTICE:  trigger "emaj_trunc_trg" for relation "myschema1.myTbl3" does not exist, skipping
 CONTEXT:  SQL statement "DROP TRIGGER IF EXISTS emaj_trunc_trg ON myschema1."myTbl3""
-PL/pgSQL function emaj._create_tbl(text,text,text,integer,text,text,bigint,boolean,boolean) line 122 at EXECUTE
+PL/pgSQL function emaj._create_tbl(text,text,text,integer,text,text,bigint,boolean,boolean) line 131 at EXECUTE
 SQL statement "SELECT emaj._create_tbl(v_schema, v_table, v_group, v_priority, v_logDatTsp, v_logIdxTsp,
                              v_timeId, v_groupIsRollbackable, v_groupIsLogging)"
-PL/pgSQL function emaj._add_tbl(text,text,text,integer,text,text,boolean,bigint,text) line 19 at PERFORM
+PL/pgSQL function emaj._add_tbl(text,text,text,integer,text,text,boolean,bigint,text) line 20 at PERFORM
 SQL statement "SELECT emaj._add_tbl(r_plan.altr_schema, r_plan.altr_tblseq, r_plan.altr_group, tmp_priority, tmp_log_dat_tsp,
                                 tmp_log_idx_tsp, r_plan.altr_group_is_logging, v_timeId, v_callingFunction)
             FROM tmp_app_table
-            WHERE tmp_group = r_plan.altr_group AND tmp_schema = r_plan.altr_schema AND tmp_tbl_name = r_plan.altr_tblseq"
-PL/pgSQL function emaj._alter_exec(bigint,text) line 102 at PERFORM
+            WHERE tmp_group = r_plan.altr_group
+              AND tmp_schema = r_plan.altr_schema
+              AND tmp_tbl_name = r_plan.altr_tblseq"
+PL/pgSQL function emaj._alter_exec(bigint,text) line 120 at PERFORM
 SQL statement "SELECT emaj._alter_exec(v_timeId, v_callingFunction)"
-PL/pgSQL function emaj._alter_groups(text[],boolean,text,text,bigint) line 47 at PERFORM
+PL/pgSQL function emaj._alter_groups(text[],boolean,text,text,bigint) line 49 at PERFORM
 SQL statement "SELECT v_nbRel FROM emaj._alter_groups(v_groups, TRUE, v_mark, 'IMPORT_GROUPS', v_timeId)"
-PL/pgSQL function emaj._import_groups_conf_exec(json,text[],text) line 55 at PERFORM
-PL/pgSQL function emaj._import_groups_conf(json,text[],boolean,text,text) line 79 at RETURN
+PL/pgSQL function emaj._import_groups_conf_exec(json,text[],text) line 57 at PERFORM
+PL/pgSQL function emaj._import_groups_conf(json,text[],boolean,text,text) line 81 at RETURN
 SQL statement "SELECT emaj._import_groups_conf(v_json, v_groups, v_allowGroupsUpdate, v_location, v_mark)"
-PL/pgSQL function emaj.emaj_import_groups_configuration(text,text[],boolean,text) line 33 at SQL statement
+PL/pgSQL function emaj.emaj_import_groups_configuration(text,text[],boolean,text) line 34 at SQL statement
 NOTICE:  table "mytbl1_log" does not exist, skipping
 CONTEXT:  SQL statement "DROP TABLE IF EXISTS emaj_myschema1.mytbl1_log"
-PL/pgSQL function emaj._create_tbl(text,text,text,integer,text,text,bigint,boolean,boolean) line 68 at EXECUTE
+PL/pgSQL function emaj._create_tbl(text,text,text,integer,text,text,bigint,boolean,boolean) line 67 at EXECUTE
 SQL statement "SELECT emaj._create_tbl(v_schema, v_table, v_group, v_priority, v_logDatTsp, v_logIdxTsp,
                              v_timeId, v_groupIsRollbackable, v_groupIsLogging)"
-PL/pgSQL function emaj._add_tbl(text,text,text,integer,text,text,boolean,bigint,text) line 19 at PERFORM
+PL/pgSQL function emaj._add_tbl(text,text,text,integer,text,text,boolean,bigint,text) line 20 at PERFORM
 SQL statement "SELECT emaj._add_tbl(r_plan.altr_schema, r_plan.altr_tblseq, r_plan.altr_group, tmp_priority, tmp_log_dat_tsp,
                                 tmp_log_idx_tsp, r_plan.altr_group_is_logging, v_timeId, v_callingFunction)
             FROM tmp_app_table
-            WHERE tmp_group = r_plan.altr_group AND tmp_schema = r_plan.altr_schema AND tmp_tbl_name = r_plan.altr_tblseq"
-PL/pgSQL function emaj._alter_exec(bigint,text) line 102 at PERFORM
+            WHERE tmp_group = r_plan.altr_group
+              AND tmp_schema = r_plan.altr_schema
+              AND tmp_tbl_name = r_plan.altr_tblseq"
+PL/pgSQL function emaj._alter_exec(bigint,text) line 120 at PERFORM
 SQL statement "SELECT emaj._alter_exec(v_timeId, v_callingFunction)"
-PL/pgSQL function emaj._alter_groups(text[],boolean,text,text,bigint) line 47 at PERFORM
+PL/pgSQL function emaj._alter_groups(text[],boolean,text,text,bigint) line 49 at PERFORM
 SQL statement "SELECT v_nbRel FROM emaj._alter_groups(v_groups, TRUE, v_mark, 'IMPORT_GROUPS', v_timeId)"
-PL/pgSQL function emaj._import_groups_conf_exec(json,text[],text) line 55 at PERFORM
-PL/pgSQL function emaj._import_groups_conf(json,text[],boolean,text,text) line 79 at RETURN
+PL/pgSQL function emaj._import_groups_conf_exec(json,text[],text) line 57 at PERFORM
+PL/pgSQL function emaj._import_groups_conf(json,text[],boolean,text,text) line 81 at RETURN
 SQL statement "SELECT emaj._import_groups_conf(v_json, v_groups, v_allowGroupsUpdate, v_location, v_mark)"
-PL/pgSQL function emaj.emaj_import_groups_configuration(text,text[],boolean,text) line 33 at SQL statement
+PL/pgSQL function emaj.emaj_import_groups_configuration(text,text[],boolean,text) line 34 at SQL statement
 NOTICE:  trigger "emaj_log_trg" for relation "myschema1.mytbl1" does not exist, skipping
 CONTEXT:  SQL statement "DROP TRIGGER IF EXISTS emaj_log_trg ON myschema1.mytbl1"
-PL/pgSQL function emaj._create_log_trigger_tbl(text,text,text,text) line 9 at EXECUTE
+PL/pgSQL function emaj._create_log_trigger_tbl(text,text,text,text) line 8 at EXECUTE
 SQL statement "SELECT emaj._create_log_trigger_tbl(v_fullTableName, v_logTableName, v_sequenceName, v_logFnctName)"
-PL/pgSQL function emaj._create_tbl(text,text,text,integer,text,text,bigint,boolean,boolean) line 114 at PERFORM
+PL/pgSQL function emaj._create_tbl(text,text,text,integer,text,text,bigint,boolean,boolean) line 123 at PERFORM
 SQL statement "SELECT emaj._create_tbl(v_schema, v_table, v_group, v_priority, v_logDatTsp, v_logIdxTsp,
                              v_timeId, v_groupIsRollbackable, v_groupIsLogging)"
-PL/pgSQL function emaj._add_tbl(text,text,text,integer,text,text,boolean,bigint,text) line 19 at PERFORM
+PL/pgSQL function emaj._add_tbl(text,text,text,integer,text,text,boolean,bigint,text) line 20 at PERFORM
 SQL statement "SELECT emaj._add_tbl(r_plan.altr_schema, r_plan.altr_tblseq, r_plan.altr_group, tmp_priority, tmp_log_dat_tsp,
                                 tmp_log_idx_tsp, r_plan.altr_group_is_logging, v_timeId, v_callingFunction)
             FROM tmp_app_table
-            WHERE tmp_group = r_plan.altr_group AND tmp_schema = r_plan.altr_schema AND tmp_tbl_name = r_plan.altr_tblseq"
-PL/pgSQL function emaj._alter_exec(bigint,text) line 102 at PERFORM
+            WHERE tmp_group = r_plan.altr_group
+              AND tmp_schema = r_plan.altr_schema
+              AND tmp_tbl_name = r_plan.altr_tblseq"
+PL/pgSQL function emaj._alter_exec(bigint,text) line 120 at PERFORM
 SQL statement "SELECT emaj._alter_exec(v_timeId, v_callingFunction)"
-PL/pgSQL function emaj._alter_groups(text[],boolean,text,text,bigint) line 47 at PERFORM
+PL/pgSQL function emaj._alter_groups(text[],boolean,text,text,bigint) line 49 at PERFORM
 SQL statement "SELECT v_nbRel FROM emaj._alter_groups(v_groups, TRUE, v_mark, 'IMPORT_GROUPS', v_timeId)"
-PL/pgSQL function emaj._import_groups_conf_exec(json,text[],text) line 55 at PERFORM
-PL/pgSQL function emaj._import_groups_conf(json,text[],boolean,text,text) line 79 at RETURN
+PL/pgSQL function emaj._import_groups_conf_exec(json,text[],text) line 57 at PERFORM
+PL/pgSQL function emaj._import_groups_conf(json,text[],boolean,text,text) line 81 at RETURN
 SQL statement "SELECT emaj._import_groups_conf(v_json, v_groups, v_allowGroupsUpdate, v_location, v_mark)"
-PL/pgSQL function emaj.emaj_import_groups_configuration(text,text[],boolean,text) line 33 at SQL statement
+PL/pgSQL function emaj.emaj_import_groups_configuration(text,text[],boolean,text) line 34 at SQL statement
 NOTICE:  trigger "emaj_trunc_trg" for relation "myschema1.mytbl1" does not exist, skipping
 CONTEXT:  SQL statement "DROP TRIGGER IF EXISTS emaj_trunc_trg ON myschema1.mytbl1"
-PL/pgSQL function emaj._create_tbl(text,text,text,integer,text,text,bigint,boolean,boolean) line 122 at EXECUTE
+PL/pgSQL function emaj._create_tbl(text,text,text,integer,text,text,bigint,boolean,boolean) line 131 at EXECUTE
 SQL statement "SELECT emaj._create_tbl(v_schema, v_table, v_group, v_priority, v_logDatTsp, v_logIdxTsp,
                              v_timeId, v_groupIsRollbackable, v_groupIsLogging)"
-PL/pgSQL function emaj._add_tbl(text,text,text,integer,text,text,boolean,bigint,text) line 19 at PERFORM
+PL/pgSQL function emaj._add_tbl(text,text,text,integer,text,text,boolean,bigint,text) line 20 at PERFORM
 SQL statement "SELECT emaj._add_tbl(r_plan.altr_schema, r_plan.altr_tblseq, r_plan.altr_group, tmp_priority, tmp_log_dat_tsp,
                                 tmp_log_idx_tsp, r_plan.altr_group_is_logging, v_timeId, v_callingFunction)
             FROM tmp_app_table
-            WHERE tmp_group = r_plan.altr_group AND tmp_schema = r_plan.altr_schema AND tmp_tbl_name = r_plan.altr_tblseq"
-PL/pgSQL function emaj._alter_exec(bigint,text) line 102 at PERFORM
+            WHERE tmp_group = r_plan.altr_group
+              AND tmp_schema = r_plan.altr_schema
+              AND tmp_tbl_name = r_plan.altr_tblseq"
+PL/pgSQL function emaj._alter_exec(bigint,text) line 120 at PERFORM
 SQL statement "SELECT emaj._alter_exec(v_timeId, v_callingFunction)"
-PL/pgSQL function emaj._alter_groups(text[],boolean,text,text,bigint) line 47 at PERFORM
+PL/pgSQL function emaj._alter_groups(text[],boolean,text,text,bigint) line 49 at PERFORM
 SQL statement "SELECT v_nbRel FROM emaj._alter_groups(v_groups, TRUE, v_mark, 'IMPORT_GROUPS', v_timeId)"
-PL/pgSQL function emaj._import_groups_conf_exec(json,text[],text) line 55 at PERFORM
-PL/pgSQL function emaj._import_groups_conf(json,text[],boolean,text,text) line 79 at RETURN
+PL/pgSQL function emaj._import_groups_conf_exec(json,text[],text) line 57 at PERFORM
+PL/pgSQL function emaj._import_groups_conf(json,text[],boolean,text,text) line 81 at RETURN
 SQL statement "SELECT emaj._import_groups_conf(v_json, v_groups, v_allowGroupsUpdate, v_location, v_mark)"
-PL/pgSQL function emaj.emaj_import_groups_configuration(text,text[],boolean,text) line 33 at SQL statement
+PL/pgSQL function emaj.emaj_import_groups_configuration(text,text[],boolean,text) line 34 at SQL statement
 NOTICE:  table "mytbl2b_log" does not exist, skipping
 CONTEXT:  SQL statement "DROP TABLE IF EXISTS emaj_myschema1.mytbl2b_log"
-PL/pgSQL function emaj._create_tbl(text,text,text,integer,text,text,bigint,boolean,boolean) line 68 at EXECUTE
+PL/pgSQL function emaj._create_tbl(text,text,text,integer,text,text,bigint,boolean,boolean) line 67 at EXECUTE
 SQL statement "SELECT emaj._create_tbl(v_schema, v_table, v_group, v_priority, v_logDatTsp, v_logIdxTsp,
                              v_timeId, v_groupIsRollbackable, v_groupIsLogging)"
-PL/pgSQL function emaj._add_tbl(text,text,text,integer,text,text,boolean,bigint,text) line 19 at PERFORM
+PL/pgSQL function emaj._add_tbl(text,text,text,integer,text,text,boolean,bigint,text) line 20 at PERFORM
 SQL statement "SELECT emaj._add_tbl(r_plan.altr_schema, r_plan.altr_tblseq, r_plan.altr_group, tmp_priority, tmp_log_dat_tsp,
                                 tmp_log_idx_tsp, r_plan.altr_group_is_logging, v_timeId, v_callingFunction)
             FROM tmp_app_table
-            WHERE tmp_group = r_plan.altr_group AND tmp_schema = r_plan.altr_schema AND tmp_tbl_name = r_plan.altr_tblseq"
-PL/pgSQL function emaj._alter_exec(bigint,text) line 102 at PERFORM
+            WHERE tmp_group = r_plan.altr_group
+              AND tmp_schema = r_plan.altr_schema
+              AND tmp_tbl_name = r_plan.altr_tblseq"
+PL/pgSQL function emaj._alter_exec(bigint,text) line 120 at PERFORM
 SQL statement "SELECT emaj._alter_exec(v_timeId, v_callingFunction)"
-PL/pgSQL function emaj._alter_groups(text[],boolean,text,text,bigint) line 47 at PERFORM
+PL/pgSQL function emaj._alter_groups(text[],boolean,text,text,bigint) line 49 at PERFORM
 SQL statement "SELECT v_nbRel FROM emaj._alter_groups(v_groups, TRUE, v_mark, 'IMPORT_GROUPS', v_timeId)"
-PL/pgSQL function emaj._import_groups_conf_exec(json,text[],text) line 55 at PERFORM
-PL/pgSQL function emaj._import_groups_conf(json,text[],boolean,text,text) line 79 at RETURN
+PL/pgSQL function emaj._import_groups_conf_exec(json,text[],text) line 57 at PERFORM
+PL/pgSQL function emaj._import_groups_conf(json,text[],boolean,text,text) line 81 at RETURN
 SQL statement "SELECT emaj._import_groups_conf(v_json, v_groups, v_allowGroupsUpdate, v_location, v_mark)"
-PL/pgSQL function emaj.emaj_import_groups_configuration(text,text[],boolean,text) line 33 at SQL statement
+PL/pgSQL function emaj.emaj_import_groups_configuration(text,text[],boolean,text) line 34 at SQL statement
 NOTICE:  trigger "emaj_log_trg" for relation "myschema1.mytbl2b" does not exist, skipping
 CONTEXT:  SQL statement "DROP TRIGGER IF EXISTS emaj_log_trg ON myschema1.mytbl2b"
-PL/pgSQL function emaj._create_log_trigger_tbl(text,text,text,text) line 9 at EXECUTE
+PL/pgSQL function emaj._create_log_trigger_tbl(text,text,text,text) line 8 at EXECUTE
 SQL statement "SELECT emaj._create_log_trigger_tbl(v_fullTableName, v_logTableName, v_sequenceName, v_logFnctName)"
-PL/pgSQL function emaj._create_tbl(text,text,text,integer,text,text,bigint,boolean,boolean) line 114 at PERFORM
+PL/pgSQL function emaj._create_tbl(text,text,text,integer,text,text,bigint,boolean,boolean) line 123 at PERFORM
 SQL statement "SELECT emaj._create_tbl(v_schema, v_table, v_group, v_priority, v_logDatTsp, v_logIdxTsp,
                              v_timeId, v_groupIsRollbackable, v_groupIsLogging)"
-PL/pgSQL function emaj._add_tbl(text,text,text,integer,text,text,boolean,bigint,text) line 19 at PERFORM
+PL/pgSQL function emaj._add_tbl(text,text,text,integer,text,text,boolean,bigint,text) line 20 at PERFORM
 SQL statement "SELECT emaj._add_tbl(r_plan.altr_schema, r_plan.altr_tblseq, r_plan.altr_group, tmp_priority, tmp_log_dat_tsp,
                                 tmp_log_idx_tsp, r_plan.altr_group_is_logging, v_timeId, v_callingFunction)
             FROM tmp_app_table
-            WHERE tmp_group = r_plan.altr_group AND tmp_schema = r_plan.altr_schema AND tmp_tbl_name = r_plan.altr_tblseq"
-PL/pgSQL function emaj._alter_exec(bigint,text) line 102 at PERFORM
+            WHERE tmp_group = r_plan.altr_group
+              AND tmp_schema = r_plan.altr_schema
+              AND tmp_tbl_name = r_plan.altr_tblseq"
+PL/pgSQL function emaj._alter_exec(bigint,text) line 120 at PERFORM
 SQL statement "SELECT emaj._alter_exec(v_timeId, v_callingFunction)"
-PL/pgSQL function emaj._alter_groups(text[],boolean,text,text,bigint) line 47 at PERFORM
+PL/pgSQL function emaj._alter_groups(text[],boolean,text,text,bigint) line 49 at PERFORM
 SQL statement "SELECT v_nbRel FROM emaj._alter_groups(v_groups, TRUE, v_mark, 'IMPORT_GROUPS', v_timeId)"
-PL/pgSQL function emaj._import_groups_conf_exec(json,text[],text) line 55 at PERFORM
-PL/pgSQL function emaj._import_groups_conf(json,text[],boolean,text,text) line 79 at RETURN
+PL/pgSQL function emaj._import_groups_conf_exec(json,text[],text) line 57 at PERFORM
+PL/pgSQL function emaj._import_groups_conf(json,text[],boolean,text,text) line 81 at RETURN
 SQL statement "SELECT emaj._import_groups_conf(v_json, v_groups, v_allowGroupsUpdate, v_location, v_mark)"
-PL/pgSQL function emaj.emaj_import_groups_configuration(text,text[],boolean,text) line 33 at SQL statement
+PL/pgSQL function emaj.emaj_import_groups_configuration(text,text[],boolean,text) line 34 at SQL statement
 NOTICE:  trigger "emaj_trunc_trg" for relation "myschema1.mytbl2b" does not exist, skipping
 CONTEXT:  SQL statement "DROP TRIGGER IF EXISTS emaj_trunc_trg ON myschema1.mytbl2b"
-PL/pgSQL function emaj._create_tbl(text,text,text,integer,text,text,bigint,boolean,boolean) line 122 at EXECUTE
+PL/pgSQL function emaj._create_tbl(text,text,text,integer,text,text,bigint,boolean,boolean) line 131 at EXECUTE
 SQL statement "SELECT emaj._create_tbl(v_schema, v_table, v_group, v_priority, v_logDatTsp, v_logIdxTsp,
                              v_timeId, v_groupIsRollbackable, v_groupIsLogging)"
-PL/pgSQL function emaj._add_tbl(text,text,text,integer,text,text,boolean,bigint,text) line 19 at PERFORM
+PL/pgSQL function emaj._add_tbl(text,text,text,integer,text,text,boolean,bigint,text) line 20 at PERFORM
 SQL statement "SELECT emaj._add_tbl(r_plan.altr_schema, r_plan.altr_tblseq, r_plan.altr_group, tmp_priority, tmp_log_dat_tsp,
                                 tmp_log_idx_tsp, r_plan.altr_group_is_logging, v_timeId, v_callingFunction)
             FROM tmp_app_table
-            WHERE tmp_group = r_plan.altr_group AND tmp_schema = r_plan.altr_schema AND tmp_tbl_name = r_plan.altr_tblseq"
-PL/pgSQL function emaj._alter_exec(bigint,text) line 102 at PERFORM
+            WHERE tmp_group = r_plan.altr_group
+              AND tmp_schema = r_plan.altr_schema
+              AND tmp_tbl_name = r_plan.altr_tblseq"
+PL/pgSQL function emaj._alter_exec(bigint,text) line 120 at PERFORM
 SQL statement "SELECT emaj._alter_exec(v_timeId, v_callingFunction)"
-PL/pgSQL function emaj._alter_groups(text[],boolean,text,text,bigint) line 47 at PERFORM
+PL/pgSQL function emaj._alter_groups(text[],boolean,text,text,bigint) line 49 at PERFORM
 SQL statement "SELECT v_nbRel FROM emaj._alter_groups(v_groups, TRUE, v_mark, 'IMPORT_GROUPS', v_timeId)"
-PL/pgSQL function emaj._import_groups_conf_exec(json,text[],text) line 55 at PERFORM
-PL/pgSQL function emaj._import_groups_conf(json,text[],boolean,text,text) line 79 at RETURN
+PL/pgSQL function emaj._import_groups_conf_exec(json,text[],text) line 57 at PERFORM
+PL/pgSQL function emaj._import_groups_conf(json,text[],boolean,text,text) line 81 at RETURN
 SQL statement "SELECT emaj._import_groups_conf(v_json, v_groups, v_allowGroupsUpdate, v_location, v_mark)"
-PL/pgSQL function emaj.emaj_import_groups_configuration(text,text[],boolean,text) line 33 at SQL statement
+PL/pgSQL function emaj.emaj_import_groups_configuration(text,text[],boolean,text) line 34 at SQL statement
  emaj_import_groups_configuration 
 ----------------------------------
                                 1
@@ -2034,7 +2054,7 @@ select emaj.emaj_gen_sql_groups('{"myGroup1","myGroup2"}', 'before move', NULL, 
   array['myschema2.myTbl3','myschema2.myTbl3_col31_seq']);
 NOTICE:  table "emaj_temp_script" does not exist, skipping
 CONTEXT:  SQL statement "DROP TABLE IF EXISTS emaj_temp_script CASCADE"
-PL/pgSQL function emaj._gen_sql_groups(text[],boolean,text,text,text,text[]) line 84 at SQL statement
+PL/pgSQL function emaj._gen_sql_groups(text[],boolean,text,text,text,text[]) line 91 at SQL statement
 PL/pgSQL function emaj.emaj_gen_sql_groups(text[],text,text,text,text[]) line 14 at RETURN
  emaj_gen_sql_groups 
 ---------------------
@@ -2072,7 +2092,7 @@ select emaj.emaj_gen_sql_groups('{"myGroup1","myGroup2"}', 'before move', NULL, 
   array['myschema2.myTbl3','myschema2.myTbl3_col31_seq']);
 NOTICE:  table "emaj_temp_script" does not exist, skipping
 CONTEXT:  SQL statement "DROP TABLE IF EXISTS emaj_temp_script CASCADE"
-PL/pgSQL function emaj._gen_sql_groups(text[],boolean,text,text,text,text[]) line 84 at SQL statement
+PL/pgSQL function emaj._gen_sql_groups(text[],boolean,text,text,text,text[]) line 91 at SQL statement
 PL/pgSQL function emaj.emaj_gen_sql_groups(text[],text,text,text,text[]) line 14 at RETURN
  emaj_gen_sql_groups 
 ---------------------
@@ -2091,50 +2111,50 @@ select emaj.emaj_stop_group('myGroup2');
 select emaj.emaj_import_groups_configuration(:'EMAJTESTTMPDIR' || '/all_groups_conf.json', array['myGroup2'], true);
 NOTICE:  table "tmp_app_table" does not exist, skipping
 CONTEXT:  SQL statement "DROP TABLE IF EXISTS tmp_app_table, tmp_app_sequence, tmp_app_trigger"
-PL/pgSQL function emaj._import_groups_conf_prepare(json,text[],boolean,text) line 68 at SQL statement
-PL/pgSQL function emaj._import_groups_conf(json,text[],boolean,text,text) line 69 at FOR over SELECT rows
+PL/pgSQL function emaj._import_groups_conf_prepare(json,text[],boolean,text) line 71 at SQL statement
+PL/pgSQL function emaj._import_groups_conf(json,text[],boolean,text,text) line 70 at FOR over SELECT rows
 SQL statement "SELECT emaj._import_groups_conf(v_json, v_groups, v_allowGroupsUpdate, v_location, v_mark)"
-PL/pgSQL function emaj.emaj_import_groups_configuration(text,text[],boolean,text) line 33 at SQL statement
+PL/pgSQL function emaj.emaj_import_groups_configuration(text,text[],boolean,text) line 34 at SQL statement
 NOTICE:  table "tmp_app_sequence" does not exist, skipping
 CONTEXT:  SQL statement "DROP TABLE IF EXISTS tmp_app_table, tmp_app_sequence, tmp_app_trigger"
-PL/pgSQL function emaj._import_groups_conf_prepare(json,text[],boolean,text) line 68 at SQL statement
-PL/pgSQL function emaj._import_groups_conf(json,text[],boolean,text,text) line 69 at FOR over SELECT rows
+PL/pgSQL function emaj._import_groups_conf_prepare(json,text[],boolean,text) line 71 at SQL statement
+PL/pgSQL function emaj._import_groups_conf(json,text[],boolean,text,text) line 70 at FOR over SELECT rows
 SQL statement "SELECT emaj._import_groups_conf(v_json, v_groups, v_allowGroupsUpdate, v_location, v_mark)"
-PL/pgSQL function emaj.emaj_import_groups_configuration(text,text[],boolean,text) line 33 at SQL statement
+PL/pgSQL function emaj.emaj_import_groups_configuration(text,text[],boolean,text) line 34 at SQL statement
 NOTICE:  table "tmp_app_trigger" does not exist, skipping
 CONTEXT:  SQL statement "DROP TABLE IF EXISTS tmp_app_table, tmp_app_sequence, tmp_app_trigger"
-PL/pgSQL function emaj._import_groups_conf_prepare(json,text[],boolean,text) line 68 at SQL statement
-PL/pgSQL function emaj._import_groups_conf(json,text[],boolean,text,text) line 69 at FOR over SELECT rows
+PL/pgSQL function emaj._import_groups_conf_prepare(json,text[],boolean,text) line 71 at SQL statement
+PL/pgSQL function emaj._import_groups_conf(json,text[],boolean,text,text) line 70 at FOR over SELECT rows
 SQL statement "SELECT emaj._import_groups_conf(v_json, v_groups, v_allowGroupsUpdate, v_location, v_mark)"
-PL/pgSQL function emaj.emaj_import_groups_configuration(text,text[],boolean,text) line 33 at SQL statement
+PL/pgSQL function emaj.emaj_import_groups_configuration(text,text[],boolean,text) line 34 at SQL statement
 WARNING:  _import_groups_conf (2): in the group "myGroup2", the table myschema2."myTbl3" already belongs to the group "myGroup1".
 CONTEXT:  SQL statement "SELECT emaj._import_groups_conf(v_json, v_groups, v_allowGroupsUpdate, v_location, v_mark)"
-PL/pgSQL function emaj.emaj_import_groups_configuration(text,text[],boolean,text) line 33 at SQL statement
+PL/pgSQL function emaj.emaj_import_groups_configuration(text,text[],boolean,text) line 34 at SQL statement
 WARNING:  _import_groups_conf (2): in the group "myGroup2", the sequence myschema2."myTbl3_col31_seq" already belongs to the group "myGroup1".
 CONTEXT:  SQL statement "SELECT emaj._import_groups_conf(v_json, v_groups, v_allowGroupsUpdate, v_location, v_mark)"
-PL/pgSQL function emaj.emaj_import_groups_configuration(text,text[],boolean,text) line 33 at SQL statement
+PL/pgSQL function emaj.emaj_import_groups_configuration(text,text[],boolean,text) line 34 at SQL statement
 ERROR:  _import_groups_conf: One or several errors have been detected in the JSON groups configuration.
 CONTEXT:  SQL statement "SELECT emaj._import_groups_conf(v_json, v_groups, v_allowGroupsUpdate, v_location, v_mark)"
-PL/pgSQL function emaj.emaj_import_groups_configuration(text,text[],boolean,text) line 33 at SQL statement
+PL/pgSQL function emaj.emaj_import_groups_configuration(text,text[],boolean,text) line 34 at SQL statement
 select emaj.emaj_import_groups_configuration(:'EMAJTESTTMPDIR' || '/all_groups_conf.json', '{"myGroup1","myGroup2"}', true);
 NOTICE:  table "tmp_app_table" does not exist, skipping
 CONTEXT:  SQL statement "DROP TABLE IF EXISTS tmp_app_table, tmp_app_sequence, tmp_app_trigger"
-PL/pgSQL function emaj._import_groups_conf_prepare(json,text[],boolean,text) line 68 at SQL statement
-PL/pgSQL function emaj._import_groups_conf(json,text[],boolean,text,text) line 69 at FOR over SELECT rows
+PL/pgSQL function emaj._import_groups_conf_prepare(json,text[],boolean,text) line 71 at SQL statement
+PL/pgSQL function emaj._import_groups_conf(json,text[],boolean,text,text) line 70 at FOR over SELECT rows
 SQL statement "SELECT emaj._import_groups_conf(v_json, v_groups, v_allowGroupsUpdate, v_location, v_mark)"
-PL/pgSQL function emaj.emaj_import_groups_configuration(text,text[],boolean,text) line 33 at SQL statement
+PL/pgSQL function emaj.emaj_import_groups_configuration(text,text[],boolean,text) line 34 at SQL statement
 NOTICE:  table "tmp_app_sequence" does not exist, skipping
 CONTEXT:  SQL statement "DROP TABLE IF EXISTS tmp_app_table, tmp_app_sequence, tmp_app_trigger"
-PL/pgSQL function emaj._import_groups_conf_prepare(json,text[],boolean,text) line 68 at SQL statement
-PL/pgSQL function emaj._import_groups_conf(json,text[],boolean,text,text) line 69 at FOR over SELECT rows
+PL/pgSQL function emaj._import_groups_conf_prepare(json,text[],boolean,text) line 71 at SQL statement
+PL/pgSQL function emaj._import_groups_conf(json,text[],boolean,text,text) line 70 at FOR over SELECT rows
 SQL statement "SELECT emaj._import_groups_conf(v_json, v_groups, v_allowGroupsUpdate, v_location, v_mark)"
-PL/pgSQL function emaj.emaj_import_groups_configuration(text,text[],boolean,text) line 33 at SQL statement
+PL/pgSQL function emaj.emaj_import_groups_configuration(text,text[],boolean,text) line 34 at SQL statement
 NOTICE:  table "tmp_app_trigger" does not exist, skipping
 CONTEXT:  SQL statement "DROP TABLE IF EXISTS tmp_app_table, tmp_app_sequence, tmp_app_trigger"
-PL/pgSQL function emaj._import_groups_conf_prepare(json,text[],boolean,text) line 68 at SQL statement
-PL/pgSQL function emaj._import_groups_conf(json,text[],boolean,text,text) line 69 at FOR over SELECT rows
+PL/pgSQL function emaj._import_groups_conf_prepare(json,text[],boolean,text) line 71 at SQL statement
+PL/pgSQL function emaj._import_groups_conf(json,text[],boolean,text,text) line 70 at FOR over SELECT rows
 SQL statement "SELECT emaj._import_groups_conf(v_json, v_groups, v_allowGroupsUpdate, v_location, v_mark)"
-PL/pgSQL function emaj.emaj_import_groups_configuration(text,text[],boolean,text) line 33 at SQL statement
+PL/pgSQL function emaj.emaj_import_groups_configuration(text,text[],boolean,text) line 34 at SQL statement
  emaj_import_groups_configuration 
 ----------------------------------
                                 2
@@ -2146,11 +2166,11 @@ PL/pgSQL function emaj.emaj_import_groups_configuration(text,text[],boolean,text
 select emaj.emaj_start_group('myGroup2','Start');
 WARNING:  _check_fk_groups: The foreign key "mytbl6_col61_fkey" on the table "myschema2.mytbl6" references the table "myschema2.mytbl7" that is outside the groups (myGroup2).
 CONTEXT:  SQL statement "SELECT emaj._check_fk_groups(v_groupNames)"
-PL/pgSQL function emaj._start_groups(text[],text,boolean,boolean) line 27 at PERFORM
+PL/pgSQL function emaj._start_groups(text[],text,boolean,boolean) line 28 at PERFORM
 PL/pgSQL function emaj.emaj_start_group(text,text,boolean) line 12 at RETURN
 WARNING:  _check_fk_groups: The table "myschema2.mytbl6" is referenced by the foreign key "mytbl8_col81_fkey" on the table "myschema2.mytbl8" that is outside the groups (myGroup2).
 CONTEXT:  SQL statement "SELECT emaj._check_fk_groups(v_groupNames)"
-PL/pgSQL function emaj._start_groups(text[],text,boolean,boolean) line 27 at PERFORM
+PL/pgSQL function emaj._start_groups(text[],text,boolean,boolean) line 28 at PERFORM
 PL/pgSQL function emaj.emaj_start_group(text,text,boolean) line 12 at RETURN
  emaj_start_group 
 ------------------
@@ -2181,107 +2201,107 @@ begin;
   select emaj.emaj_assign_tables('myschema2','{"mytbl1","mytbl2","myTbl3"}'::text[],'myGroup2',null,'ASSIGN_3_TABLES');
 NOTICE:  table "myTbl3_log" does not exist, skipping
 CONTEXT:  SQL statement "DROP TABLE IF EXISTS emaj_myschema2."myTbl3_log""
-PL/pgSQL function emaj._create_tbl(text,text,text,integer,text,text,bigint,boolean,boolean) line 68 at EXECUTE
+PL/pgSQL function emaj._create_tbl(text,text,text,integer,text,text,bigint,boolean,boolean) line 67 at EXECUTE
 SQL statement "SELECT emaj._create_tbl(v_schema, v_table, v_group, v_priority, v_logDatTsp, v_logIdxTsp,
                              v_timeId, v_groupIsRollbackable, v_groupIsLogging)"
-PL/pgSQL function emaj._add_tbl(text,text,text,integer,text,text,boolean,bigint,text) line 19 at PERFORM
+PL/pgSQL function emaj._add_tbl(text,text,text,integer,text,text,boolean,bigint,text) line 20 at PERFORM
 SQL statement "SELECT emaj._add_tbl(v_schema, v_oneTable, v_group, v_priority, v_logDatTsp, v_logIdxTsp, v_groupIsLogging,
                               v_timeId, v_function)"
-PL/pgSQL function emaj._assign_tables(text,text[],text,jsonb,text,boolean,boolean) line 237 at PERFORM
+PL/pgSQL function emaj._assign_tables(text,text[],text,jsonb,text,boolean,boolean) line 301 at PERFORM
 PL/pgSQL function emaj.emaj_assign_tables(text,text[],text,jsonb,text) line 7 at RETURN
 NOTICE:  trigger "emaj_log_trg" for relation "myschema2.myTbl3" does not exist, skipping
 CONTEXT:  SQL statement "DROP TRIGGER IF EXISTS emaj_log_trg ON myschema2."myTbl3""
-PL/pgSQL function emaj._create_log_trigger_tbl(text,text,text,text) line 9 at EXECUTE
+PL/pgSQL function emaj._create_log_trigger_tbl(text,text,text,text) line 8 at EXECUTE
 SQL statement "SELECT emaj._create_log_trigger_tbl(v_fullTableName, v_logTableName, v_sequenceName, v_logFnctName)"
-PL/pgSQL function emaj._create_tbl(text,text,text,integer,text,text,bigint,boolean,boolean) line 114 at PERFORM
+PL/pgSQL function emaj._create_tbl(text,text,text,integer,text,text,bigint,boolean,boolean) line 123 at PERFORM
 SQL statement "SELECT emaj._create_tbl(v_schema, v_table, v_group, v_priority, v_logDatTsp, v_logIdxTsp,
                              v_timeId, v_groupIsRollbackable, v_groupIsLogging)"
-PL/pgSQL function emaj._add_tbl(text,text,text,integer,text,text,boolean,bigint,text) line 19 at PERFORM
+PL/pgSQL function emaj._add_tbl(text,text,text,integer,text,text,boolean,bigint,text) line 20 at PERFORM
 SQL statement "SELECT emaj._add_tbl(v_schema, v_oneTable, v_group, v_priority, v_logDatTsp, v_logIdxTsp, v_groupIsLogging,
                               v_timeId, v_function)"
-PL/pgSQL function emaj._assign_tables(text,text[],text,jsonb,text,boolean,boolean) line 237 at PERFORM
+PL/pgSQL function emaj._assign_tables(text,text[],text,jsonb,text,boolean,boolean) line 301 at PERFORM
 PL/pgSQL function emaj.emaj_assign_tables(text,text[],text,jsonb,text) line 7 at RETURN
 NOTICE:  trigger "emaj_trunc_trg" for relation "myschema2.myTbl3" does not exist, skipping
 CONTEXT:  SQL statement "DROP TRIGGER IF EXISTS emaj_trunc_trg ON myschema2."myTbl3""
-PL/pgSQL function emaj._create_tbl(text,text,text,integer,text,text,bigint,boolean,boolean) line 122 at EXECUTE
+PL/pgSQL function emaj._create_tbl(text,text,text,integer,text,text,bigint,boolean,boolean) line 131 at EXECUTE
 SQL statement "SELECT emaj._create_tbl(v_schema, v_table, v_group, v_priority, v_logDatTsp, v_logIdxTsp,
                              v_timeId, v_groupIsRollbackable, v_groupIsLogging)"
-PL/pgSQL function emaj._add_tbl(text,text,text,integer,text,text,boolean,bigint,text) line 19 at PERFORM
+PL/pgSQL function emaj._add_tbl(text,text,text,integer,text,text,boolean,bigint,text) line 20 at PERFORM
 SQL statement "SELECT emaj._add_tbl(v_schema, v_oneTable, v_group, v_priority, v_logDatTsp, v_logIdxTsp, v_groupIsLogging,
                               v_timeId, v_function)"
-PL/pgSQL function emaj._assign_tables(text,text[],text,jsonb,text,boolean,boolean) line 237 at PERFORM
+PL/pgSQL function emaj._assign_tables(text,text[],text,jsonb,text,boolean,boolean) line 301 at PERFORM
 PL/pgSQL function emaj.emaj_assign_tables(text,text[],text,jsonb,text) line 7 at RETURN
 NOTICE:  table "mytbl1_log" does not exist, skipping
 CONTEXT:  SQL statement "DROP TABLE IF EXISTS emaj_myschema2.mytbl1_log"
-PL/pgSQL function emaj._create_tbl(text,text,text,integer,text,text,bigint,boolean,boolean) line 68 at EXECUTE
+PL/pgSQL function emaj._create_tbl(text,text,text,integer,text,text,bigint,boolean,boolean) line 67 at EXECUTE
 SQL statement "SELECT emaj._create_tbl(v_schema, v_table, v_group, v_priority, v_logDatTsp, v_logIdxTsp,
                              v_timeId, v_groupIsRollbackable, v_groupIsLogging)"
-PL/pgSQL function emaj._add_tbl(text,text,text,integer,text,text,boolean,bigint,text) line 19 at PERFORM
+PL/pgSQL function emaj._add_tbl(text,text,text,integer,text,text,boolean,bigint,text) line 20 at PERFORM
 SQL statement "SELECT emaj._add_tbl(v_schema, v_oneTable, v_group, v_priority, v_logDatTsp, v_logIdxTsp, v_groupIsLogging,
                               v_timeId, v_function)"
-PL/pgSQL function emaj._assign_tables(text,text[],text,jsonb,text,boolean,boolean) line 237 at PERFORM
+PL/pgSQL function emaj._assign_tables(text,text[],text,jsonb,text,boolean,boolean) line 301 at PERFORM
 PL/pgSQL function emaj.emaj_assign_tables(text,text[],text,jsonb,text) line 7 at RETURN
 NOTICE:  trigger "emaj_log_trg" for relation "myschema2.mytbl1" does not exist, skipping
 CONTEXT:  SQL statement "DROP TRIGGER IF EXISTS emaj_log_trg ON myschema2.mytbl1"
-PL/pgSQL function emaj._create_log_trigger_tbl(text,text,text,text) line 9 at EXECUTE
+PL/pgSQL function emaj._create_log_trigger_tbl(text,text,text,text) line 8 at EXECUTE
 SQL statement "SELECT emaj._create_log_trigger_tbl(v_fullTableName, v_logTableName, v_sequenceName, v_logFnctName)"
-PL/pgSQL function emaj._create_tbl(text,text,text,integer,text,text,bigint,boolean,boolean) line 114 at PERFORM
+PL/pgSQL function emaj._create_tbl(text,text,text,integer,text,text,bigint,boolean,boolean) line 123 at PERFORM
 SQL statement "SELECT emaj._create_tbl(v_schema, v_table, v_group, v_priority, v_logDatTsp, v_logIdxTsp,
                              v_timeId, v_groupIsRollbackable, v_groupIsLogging)"
-PL/pgSQL function emaj._add_tbl(text,text,text,integer,text,text,boolean,bigint,text) line 19 at PERFORM
+PL/pgSQL function emaj._add_tbl(text,text,text,integer,text,text,boolean,bigint,text) line 20 at PERFORM
 SQL statement "SELECT emaj._add_tbl(v_schema, v_oneTable, v_group, v_priority, v_logDatTsp, v_logIdxTsp, v_groupIsLogging,
                               v_timeId, v_function)"
-PL/pgSQL function emaj._assign_tables(text,text[],text,jsonb,text,boolean,boolean) line 237 at PERFORM
+PL/pgSQL function emaj._assign_tables(text,text[],text,jsonb,text,boolean,boolean) line 301 at PERFORM
 PL/pgSQL function emaj.emaj_assign_tables(text,text[],text,jsonb,text) line 7 at RETURN
 NOTICE:  trigger "emaj_trunc_trg" for relation "myschema2.mytbl1" does not exist, skipping
 CONTEXT:  SQL statement "DROP TRIGGER IF EXISTS emaj_trunc_trg ON myschema2.mytbl1"
-PL/pgSQL function emaj._create_tbl(text,text,text,integer,text,text,bigint,boolean,boolean) line 122 at EXECUTE
+PL/pgSQL function emaj._create_tbl(text,text,text,integer,text,text,bigint,boolean,boolean) line 131 at EXECUTE
 SQL statement "SELECT emaj._create_tbl(v_schema, v_table, v_group, v_priority, v_logDatTsp, v_logIdxTsp,
                              v_timeId, v_groupIsRollbackable, v_groupIsLogging)"
-PL/pgSQL function emaj._add_tbl(text,text,text,integer,text,text,boolean,bigint,text) line 19 at PERFORM
+PL/pgSQL function emaj._add_tbl(text,text,text,integer,text,text,boolean,bigint,text) line 20 at PERFORM
 SQL statement "SELECT emaj._add_tbl(v_schema, v_oneTable, v_group, v_priority, v_logDatTsp, v_logIdxTsp, v_groupIsLogging,
                               v_timeId, v_function)"
-PL/pgSQL function emaj._assign_tables(text,text[],text,jsonb,text,boolean,boolean) line 237 at PERFORM
+PL/pgSQL function emaj._assign_tables(text,text[],text,jsonb,text,boolean,boolean) line 301 at PERFORM
 PL/pgSQL function emaj.emaj_assign_tables(text,text[],text,jsonb,text) line 7 at RETURN
 NOTICE:  table "mytbl2_log" does not exist, skipping
 CONTEXT:  SQL statement "DROP TABLE IF EXISTS emaj_myschema2.mytbl2_log"
-PL/pgSQL function emaj._create_tbl(text,text,text,integer,text,text,bigint,boolean,boolean) line 68 at EXECUTE
+PL/pgSQL function emaj._create_tbl(text,text,text,integer,text,text,bigint,boolean,boolean) line 67 at EXECUTE
 SQL statement "SELECT emaj._create_tbl(v_schema, v_table, v_group, v_priority, v_logDatTsp, v_logIdxTsp,
                              v_timeId, v_groupIsRollbackable, v_groupIsLogging)"
-PL/pgSQL function emaj._add_tbl(text,text,text,integer,text,text,boolean,bigint,text) line 19 at PERFORM
+PL/pgSQL function emaj._add_tbl(text,text,text,integer,text,text,boolean,bigint,text) line 20 at PERFORM
 SQL statement "SELECT emaj._add_tbl(v_schema, v_oneTable, v_group, v_priority, v_logDatTsp, v_logIdxTsp, v_groupIsLogging,
                               v_timeId, v_function)"
-PL/pgSQL function emaj._assign_tables(text,text[],text,jsonb,text,boolean,boolean) line 237 at PERFORM
+PL/pgSQL function emaj._assign_tables(text,text[],text,jsonb,text,boolean,boolean) line 301 at PERFORM
 PL/pgSQL function emaj.emaj_assign_tables(text,text[],text,jsonb,text) line 7 at RETURN
 NOTICE:  trigger "emaj_log_trg" for relation "myschema2.mytbl2" does not exist, skipping
 CONTEXT:  SQL statement "DROP TRIGGER IF EXISTS emaj_log_trg ON myschema2.mytbl2"
-PL/pgSQL function emaj._create_log_trigger_tbl(text,text,text,text) line 9 at EXECUTE
+PL/pgSQL function emaj._create_log_trigger_tbl(text,text,text,text) line 8 at EXECUTE
 SQL statement "SELECT emaj._create_log_trigger_tbl(v_fullTableName, v_logTableName, v_sequenceName, v_logFnctName)"
-PL/pgSQL function emaj._create_tbl(text,text,text,integer,text,text,bigint,boolean,boolean) line 114 at PERFORM
+PL/pgSQL function emaj._create_tbl(text,text,text,integer,text,text,bigint,boolean,boolean) line 123 at PERFORM
 SQL statement "SELECT emaj._create_tbl(v_schema, v_table, v_group, v_priority, v_logDatTsp, v_logIdxTsp,
                              v_timeId, v_groupIsRollbackable, v_groupIsLogging)"
-PL/pgSQL function emaj._add_tbl(text,text,text,integer,text,text,boolean,bigint,text) line 19 at PERFORM
+PL/pgSQL function emaj._add_tbl(text,text,text,integer,text,text,boolean,bigint,text) line 20 at PERFORM
 SQL statement "SELECT emaj._add_tbl(v_schema, v_oneTable, v_group, v_priority, v_logDatTsp, v_logIdxTsp, v_groupIsLogging,
                               v_timeId, v_function)"
-PL/pgSQL function emaj._assign_tables(text,text[],text,jsonb,text,boolean,boolean) line 237 at PERFORM
+PL/pgSQL function emaj._assign_tables(text,text[],text,jsonb,text,boolean,boolean) line 301 at PERFORM
 PL/pgSQL function emaj.emaj_assign_tables(text,text[],text,jsonb,text) line 7 at RETURN
 NOTICE:  trigger "emaj_trunc_trg" for relation "myschema2.mytbl2" does not exist, skipping
 CONTEXT:  SQL statement "DROP TRIGGER IF EXISTS emaj_trunc_trg ON myschema2.mytbl2"
-PL/pgSQL function emaj._create_tbl(text,text,text,integer,text,text,bigint,boolean,boolean) line 122 at EXECUTE
+PL/pgSQL function emaj._create_tbl(text,text,text,integer,text,text,bigint,boolean,boolean) line 131 at EXECUTE
 SQL statement "SELECT emaj._create_tbl(v_schema, v_table, v_group, v_priority, v_logDatTsp, v_logIdxTsp,
                              v_timeId, v_groupIsRollbackable, v_groupIsLogging)"
-PL/pgSQL function emaj._add_tbl(text,text,text,integer,text,text,boolean,bigint,text) line 19 at PERFORM
+PL/pgSQL function emaj._add_tbl(text,text,text,integer,text,text,boolean,bigint,text) line 20 at PERFORM
 SQL statement "SELECT emaj._add_tbl(v_schema, v_oneTable, v_group, v_priority, v_logDatTsp, v_logIdxTsp, v_groupIsLogging,
                               v_timeId, v_function)"
-PL/pgSQL function emaj._assign_tables(text,text[],text,jsonb,text,boolean,boolean) line 237 at PERFORM
+PL/pgSQL function emaj._assign_tables(text,text[],text,jsonb,text,boolean,boolean) line 301 at PERFORM
 PL/pgSQL function emaj.emaj_assign_tables(text,text[],text,jsonb,text) line 7 at RETURN
 WARNING:  _check_fk_groups: The foreign key "mytbl6_col61_fkey" on the table "myschema2.mytbl6" references the table "myschema2.mytbl7" that is outside the groups (myGroup2).
 CONTEXT:  SQL statement "SELECT emaj._check_fk_groups(array[v_group])"
-PL/pgSQL function emaj._assign_tables(text,text[],text,jsonb,text,boolean,boolean) line 254 at PERFORM
+PL/pgSQL function emaj._assign_tables(text,text[],text,jsonb,text,boolean,boolean) line 323 at PERFORM
 PL/pgSQL function emaj.emaj_assign_tables(text,text[],text,jsonb,text) line 7 at RETURN
 WARNING:  _check_fk_groups: The table "myschema2.mytbl6" is referenced by the foreign key "mytbl8_col81_fkey" on the table "myschema2.mytbl8" that is outside the groups (myGroup2).
 CONTEXT:  SQL statement "SELECT emaj._check_fk_groups(array[v_group])"
-PL/pgSQL function emaj._assign_tables(text,text[],text,jsonb,text,boolean,boolean) line 254 at PERFORM
+PL/pgSQL function emaj._assign_tables(text,text[],text,jsonb,text,boolean,boolean) line 323 at PERFORM
 PL/pgSQL function emaj.emaj_assign_tables(text,text[],text,jsonb,text) line 7 at RETURN
  emaj_assign_tables 
 --------------------
@@ -2320,27 +2340,27 @@ NOTICE:  drop cascades to trigger emaj_log_trg on table myschema2.mytbl1
   select emaj.emaj_remove_tables('myschema2','{"mytbl1","mytbl2","myTbl3"}');
 NOTICE:  relation "mytbl1_log" does not exist, skipping
 CONTEXT:  SQL statement "ALTER TABLE IF EXISTS emaj_myschema2.mytbl1_log RENAME TO mytbl1_log_2"
-PL/pgSQL function emaj._remove_tbl(text,text,text,boolean,bigint,text) line 42 at EXECUTE
+PL/pgSQL function emaj._remove_tbl(text,text,text,boolean,bigint,text) line 50 at EXECUTE
 SQL statement "SELECT emaj._remove_tbl(v_schema, v_oneTable, v_groupName, v_groupIsLogging, v_timeId, v_function)"
-PL/pgSQL function emaj._remove_tables(text,text[],text,boolean,boolean) line 87 at PERFORM
+PL/pgSQL function emaj._remove_tables(text,text[],text,boolean,boolean) line 101 at PERFORM
 PL/pgSQL function emaj.emaj_remove_tables(text,text[],text) line 6 at RETURN
 NOTICE:  relation "mytbl1_log_idx" does not exist, skipping
 CONTEXT:  SQL statement "ALTER INDEX IF EXISTS emaj_myschema2.mytbl1_log_idx RENAME TO mytbl1_log_idx_2"
-PL/pgSQL function emaj._remove_tbl(text,text,text,boolean,bigint,text) line 44 at EXECUTE
+PL/pgSQL function emaj._remove_tbl(text,text,text,boolean,bigint,text) line 52 at EXECUTE
 SQL statement "SELECT emaj._remove_tbl(v_schema, v_oneTable, v_groupName, v_groupIsLogging, v_timeId, v_function)"
-PL/pgSQL function emaj._remove_tables(text,text[],text,boolean,boolean) line 87 at PERFORM
+PL/pgSQL function emaj._remove_tables(text,text[],text,boolean,boolean) line 101 at PERFORM
 PL/pgSQL function emaj.emaj_remove_tables(text,text[],text) line 6 at RETURN
 NOTICE:  trigger "emaj_log_trg" for relation "myschema2.mytbl1" does not exist, skipping
 CONTEXT:  SQL statement "DROP TRIGGER IF EXISTS emaj_log_trg ON myschema2.mytbl1"
-PL/pgSQL function emaj._remove_tbl(text,text,text,boolean,bigint,text) line 53 at EXECUTE
+PL/pgSQL function emaj._remove_tbl(text,text,text,boolean,bigint,text) line 65 at EXECUTE
 SQL statement "SELECT emaj._remove_tbl(v_schema, v_oneTable, v_groupName, v_groupIsLogging, v_timeId, v_function)"
-PL/pgSQL function emaj._remove_tables(text,text[],text,boolean,boolean) line 87 at PERFORM
+PL/pgSQL function emaj._remove_tables(text,text[],text,boolean,boolean) line 101 at PERFORM
 PL/pgSQL function emaj.emaj_remove_tables(text,text[],text) line 6 at RETURN
 NOTICE:  function emaj_myschema2.mytbl1_log_fnct() does not exist, skipping
 CONTEXT:  SQL statement "DROP FUNCTION IF EXISTS emaj_myschema2.mytbl1_log_fnct() CASCADE"
-PL/pgSQL function emaj._remove_tbl(text,text,text,boolean,bigint,text) line 60 at EXECUTE
+PL/pgSQL function emaj._remove_tbl(text,text,text,boolean,bigint,text) line 72 at EXECUTE
 SQL statement "SELECT emaj._remove_tbl(v_schema, v_oneTable, v_groupName, v_groupIsLogging, v_timeId, v_function)"
-PL/pgSQL function emaj._remove_tables(text,text[],text,boolean,boolean) line 87 at PERFORM
+PL/pgSQL function emaj._remove_tables(text,text[],text,boolean,boolean) line 101 at PERFORM
 PL/pgSQL function emaj.emaj_remove_tables(text,text[],text) line 6 at RETURN
  emaj_remove_tables 
 --------------------
@@ -2357,107 +2377,107 @@ PL/pgSQL function emaj.emaj_remove_tables(text,text[],text) line 6 at RETURN
                                  '{"priority":1, "log_data_tablespace":"tsplog1", "log_index_tablespace":"tsplog1"}'::jsonb);
 NOTICE:  table "myTbl3_log" does not exist, skipping
 CONTEXT:  SQL statement "DROP TABLE IF EXISTS emaj_myschema2."myTbl3_log""
-PL/pgSQL function emaj._create_tbl(text,text,text,integer,text,text,bigint,boolean,boolean) line 68 at EXECUTE
+PL/pgSQL function emaj._create_tbl(text,text,text,integer,text,text,bigint,boolean,boolean) line 67 at EXECUTE
 SQL statement "SELECT emaj._create_tbl(v_schema, v_table, v_group, v_priority, v_logDatTsp, v_logIdxTsp,
                              v_timeId, v_groupIsRollbackable, v_groupIsLogging)"
-PL/pgSQL function emaj._add_tbl(text,text,text,integer,text,text,boolean,bigint,text) line 19 at PERFORM
+PL/pgSQL function emaj._add_tbl(text,text,text,integer,text,text,boolean,bigint,text) line 20 at PERFORM
 SQL statement "SELECT emaj._add_tbl(v_schema, v_oneTable, v_group, v_priority, v_logDatTsp, v_logIdxTsp, v_groupIsLogging,
                               v_timeId, v_function)"
-PL/pgSQL function emaj._assign_tables(text,text[],text,jsonb,text,boolean,boolean) line 237 at PERFORM
+PL/pgSQL function emaj._assign_tables(text,text[],text,jsonb,text,boolean,boolean) line 301 at PERFORM
 PL/pgSQL function emaj.emaj_assign_tables(text,text[],text,jsonb,text) line 7 at RETURN
 NOTICE:  trigger "emaj_log_trg" for relation "myschema2.myTbl3" does not exist, skipping
 CONTEXT:  SQL statement "DROP TRIGGER IF EXISTS emaj_log_trg ON myschema2."myTbl3""
-PL/pgSQL function emaj._create_log_trigger_tbl(text,text,text,text) line 9 at EXECUTE
+PL/pgSQL function emaj._create_log_trigger_tbl(text,text,text,text) line 8 at EXECUTE
 SQL statement "SELECT emaj._create_log_trigger_tbl(v_fullTableName, v_logTableName, v_sequenceName, v_logFnctName)"
-PL/pgSQL function emaj._create_tbl(text,text,text,integer,text,text,bigint,boolean,boolean) line 114 at PERFORM
+PL/pgSQL function emaj._create_tbl(text,text,text,integer,text,text,bigint,boolean,boolean) line 123 at PERFORM
 SQL statement "SELECT emaj._create_tbl(v_schema, v_table, v_group, v_priority, v_logDatTsp, v_logIdxTsp,
                              v_timeId, v_groupIsRollbackable, v_groupIsLogging)"
-PL/pgSQL function emaj._add_tbl(text,text,text,integer,text,text,boolean,bigint,text) line 19 at PERFORM
+PL/pgSQL function emaj._add_tbl(text,text,text,integer,text,text,boolean,bigint,text) line 20 at PERFORM
 SQL statement "SELECT emaj._add_tbl(v_schema, v_oneTable, v_group, v_priority, v_logDatTsp, v_logIdxTsp, v_groupIsLogging,
                               v_timeId, v_function)"
-PL/pgSQL function emaj._assign_tables(text,text[],text,jsonb,text,boolean,boolean) line 237 at PERFORM
+PL/pgSQL function emaj._assign_tables(text,text[],text,jsonb,text,boolean,boolean) line 301 at PERFORM
 PL/pgSQL function emaj.emaj_assign_tables(text,text[],text,jsonb,text) line 7 at RETURN
 NOTICE:  trigger "emaj_trunc_trg" for relation "myschema2.myTbl3" does not exist, skipping
 CONTEXT:  SQL statement "DROP TRIGGER IF EXISTS emaj_trunc_trg ON myschema2."myTbl3""
-PL/pgSQL function emaj._create_tbl(text,text,text,integer,text,text,bigint,boolean,boolean) line 122 at EXECUTE
+PL/pgSQL function emaj._create_tbl(text,text,text,integer,text,text,bigint,boolean,boolean) line 131 at EXECUTE
 SQL statement "SELECT emaj._create_tbl(v_schema, v_table, v_group, v_priority, v_logDatTsp, v_logIdxTsp,
                              v_timeId, v_groupIsRollbackable, v_groupIsLogging)"
-PL/pgSQL function emaj._add_tbl(text,text,text,integer,text,text,boolean,bigint,text) line 19 at PERFORM
+PL/pgSQL function emaj._add_tbl(text,text,text,integer,text,text,boolean,bigint,text) line 20 at PERFORM
 SQL statement "SELECT emaj._add_tbl(v_schema, v_oneTable, v_group, v_priority, v_logDatTsp, v_logIdxTsp, v_groupIsLogging,
                               v_timeId, v_function)"
-PL/pgSQL function emaj._assign_tables(text,text[],text,jsonb,text,boolean,boolean) line 237 at PERFORM
+PL/pgSQL function emaj._assign_tables(text,text[],text,jsonb,text,boolean,boolean) line 301 at PERFORM
 PL/pgSQL function emaj.emaj_assign_tables(text,text[],text,jsonb,text) line 7 at RETURN
 NOTICE:  table "mytbl1_log" does not exist, skipping
 CONTEXT:  SQL statement "DROP TABLE IF EXISTS emaj_myschema2.mytbl1_log"
-PL/pgSQL function emaj._create_tbl(text,text,text,integer,text,text,bigint,boolean,boolean) line 68 at EXECUTE
+PL/pgSQL function emaj._create_tbl(text,text,text,integer,text,text,bigint,boolean,boolean) line 67 at EXECUTE
 SQL statement "SELECT emaj._create_tbl(v_schema, v_table, v_group, v_priority, v_logDatTsp, v_logIdxTsp,
                              v_timeId, v_groupIsRollbackable, v_groupIsLogging)"
-PL/pgSQL function emaj._add_tbl(text,text,text,integer,text,text,boolean,bigint,text) line 19 at PERFORM
+PL/pgSQL function emaj._add_tbl(text,text,text,integer,text,text,boolean,bigint,text) line 20 at PERFORM
 SQL statement "SELECT emaj._add_tbl(v_schema, v_oneTable, v_group, v_priority, v_logDatTsp, v_logIdxTsp, v_groupIsLogging,
                               v_timeId, v_function)"
-PL/pgSQL function emaj._assign_tables(text,text[],text,jsonb,text,boolean,boolean) line 237 at PERFORM
+PL/pgSQL function emaj._assign_tables(text,text[],text,jsonb,text,boolean,boolean) line 301 at PERFORM
 PL/pgSQL function emaj.emaj_assign_tables(text,text[],text,jsonb,text) line 7 at RETURN
 NOTICE:  trigger "emaj_log_trg" for relation "myschema2.mytbl1" does not exist, skipping
 CONTEXT:  SQL statement "DROP TRIGGER IF EXISTS emaj_log_trg ON myschema2.mytbl1"
-PL/pgSQL function emaj._create_log_trigger_tbl(text,text,text,text) line 9 at EXECUTE
+PL/pgSQL function emaj._create_log_trigger_tbl(text,text,text,text) line 8 at EXECUTE
 SQL statement "SELECT emaj._create_log_trigger_tbl(v_fullTableName, v_logTableName, v_sequenceName, v_logFnctName)"
-PL/pgSQL function emaj._create_tbl(text,text,text,integer,text,text,bigint,boolean,boolean) line 114 at PERFORM
+PL/pgSQL function emaj._create_tbl(text,text,text,integer,text,text,bigint,boolean,boolean) line 123 at PERFORM
 SQL statement "SELECT emaj._create_tbl(v_schema, v_table, v_group, v_priority, v_logDatTsp, v_logIdxTsp,
                              v_timeId, v_groupIsRollbackable, v_groupIsLogging)"
-PL/pgSQL function emaj._add_tbl(text,text,text,integer,text,text,boolean,bigint,text) line 19 at PERFORM
+PL/pgSQL function emaj._add_tbl(text,text,text,integer,text,text,boolean,bigint,text) line 20 at PERFORM
 SQL statement "SELECT emaj._add_tbl(v_schema, v_oneTable, v_group, v_priority, v_logDatTsp, v_logIdxTsp, v_groupIsLogging,
                               v_timeId, v_function)"
-PL/pgSQL function emaj._assign_tables(text,text[],text,jsonb,text,boolean,boolean) line 237 at PERFORM
+PL/pgSQL function emaj._assign_tables(text,text[],text,jsonb,text,boolean,boolean) line 301 at PERFORM
 PL/pgSQL function emaj.emaj_assign_tables(text,text[],text,jsonb,text) line 7 at RETURN
 NOTICE:  trigger "emaj_trunc_trg" for relation "myschema2.mytbl1" does not exist, skipping
 CONTEXT:  SQL statement "DROP TRIGGER IF EXISTS emaj_trunc_trg ON myschema2.mytbl1"
-PL/pgSQL function emaj._create_tbl(text,text,text,integer,text,text,bigint,boolean,boolean) line 122 at EXECUTE
+PL/pgSQL function emaj._create_tbl(text,text,text,integer,text,text,bigint,boolean,boolean) line 131 at EXECUTE
 SQL statement "SELECT emaj._create_tbl(v_schema, v_table, v_group, v_priority, v_logDatTsp, v_logIdxTsp,
                              v_timeId, v_groupIsRollbackable, v_groupIsLogging)"
-PL/pgSQL function emaj._add_tbl(text,text,text,integer,text,text,boolean,bigint,text) line 19 at PERFORM
+PL/pgSQL function emaj._add_tbl(text,text,text,integer,text,text,boolean,bigint,text) line 20 at PERFORM
 SQL statement "SELECT emaj._add_tbl(v_schema, v_oneTable, v_group, v_priority, v_logDatTsp, v_logIdxTsp, v_groupIsLogging,
                               v_timeId, v_function)"
-PL/pgSQL function emaj._assign_tables(text,text[],text,jsonb,text,boolean,boolean) line 237 at PERFORM
+PL/pgSQL function emaj._assign_tables(text,text[],text,jsonb,text,boolean,boolean) line 301 at PERFORM
 PL/pgSQL function emaj.emaj_assign_tables(text,text[],text,jsonb,text) line 7 at RETURN
 NOTICE:  table "mytbl2_log" does not exist, skipping
 CONTEXT:  SQL statement "DROP TABLE IF EXISTS emaj_myschema2.mytbl2_log"
-PL/pgSQL function emaj._create_tbl(text,text,text,integer,text,text,bigint,boolean,boolean) line 68 at EXECUTE
+PL/pgSQL function emaj._create_tbl(text,text,text,integer,text,text,bigint,boolean,boolean) line 67 at EXECUTE
 SQL statement "SELECT emaj._create_tbl(v_schema, v_table, v_group, v_priority, v_logDatTsp, v_logIdxTsp,
                              v_timeId, v_groupIsRollbackable, v_groupIsLogging)"
-PL/pgSQL function emaj._add_tbl(text,text,text,integer,text,text,boolean,bigint,text) line 19 at PERFORM
+PL/pgSQL function emaj._add_tbl(text,text,text,integer,text,text,boolean,bigint,text) line 20 at PERFORM
 SQL statement "SELECT emaj._add_tbl(v_schema, v_oneTable, v_group, v_priority, v_logDatTsp, v_logIdxTsp, v_groupIsLogging,
                               v_timeId, v_function)"
-PL/pgSQL function emaj._assign_tables(text,text[],text,jsonb,text,boolean,boolean) line 237 at PERFORM
+PL/pgSQL function emaj._assign_tables(text,text[],text,jsonb,text,boolean,boolean) line 301 at PERFORM
 PL/pgSQL function emaj.emaj_assign_tables(text,text[],text,jsonb,text) line 7 at RETURN
 NOTICE:  trigger "emaj_log_trg" for relation "myschema2.mytbl2" does not exist, skipping
 CONTEXT:  SQL statement "DROP TRIGGER IF EXISTS emaj_log_trg ON myschema2.mytbl2"
-PL/pgSQL function emaj._create_log_trigger_tbl(text,text,text,text) line 9 at EXECUTE
+PL/pgSQL function emaj._create_log_trigger_tbl(text,text,text,text) line 8 at EXECUTE
 SQL statement "SELECT emaj._create_log_trigger_tbl(v_fullTableName, v_logTableName, v_sequenceName, v_logFnctName)"
-PL/pgSQL function emaj._create_tbl(text,text,text,integer,text,text,bigint,boolean,boolean) line 114 at PERFORM
+PL/pgSQL function emaj._create_tbl(text,text,text,integer,text,text,bigint,boolean,boolean) line 123 at PERFORM
 SQL statement "SELECT emaj._create_tbl(v_schema, v_table, v_group, v_priority, v_logDatTsp, v_logIdxTsp,
                              v_timeId, v_groupIsRollbackable, v_groupIsLogging)"
-PL/pgSQL function emaj._add_tbl(text,text,text,integer,text,text,boolean,bigint,text) line 19 at PERFORM
+PL/pgSQL function emaj._add_tbl(text,text,text,integer,text,text,boolean,bigint,text) line 20 at PERFORM
 SQL statement "SELECT emaj._add_tbl(v_schema, v_oneTable, v_group, v_priority, v_logDatTsp, v_logIdxTsp, v_groupIsLogging,
                               v_timeId, v_function)"
-PL/pgSQL function emaj._assign_tables(text,text[],text,jsonb,text,boolean,boolean) line 237 at PERFORM
+PL/pgSQL function emaj._assign_tables(text,text[],text,jsonb,text,boolean,boolean) line 301 at PERFORM
 PL/pgSQL function emaj.emaj_assign_tables(text,text[],text,jsonb,text) line 7 at RETURN
 NOTICE:  trigger "emaj_trunc_trg" for relation "myschema2.mytbl2" does not exist, skipping
 CONTEXT:  SQL statement "DROP TRIGGER IF EXISTS emaj_trunc_trg ON myschema2.mytbl2"
-PL/pgSQL function emaj._create_tbl(text,text,text,integer,text,text,bigint,boolean,boolean) line 122 at EXECUTE
+PL/pgSQL function emaj._create_tbl(text,text,text,integer,text,text,bigint,boolean,boolean) line 131 at EXECUTE
 SQL statement "SELECT emaj._create_tbl(v_schema, v_table, v_group, v_priority, v_logDatTsp, v_logIdxTsp,
                              v_timeId, v_groupIsRollbackable, v_groupIsLogging)"
-PL/pgSQL function emaj._add_tbl(text,text,text,integer,text,text,boolean,bigint,text) line 19 at PERFORM
+PL/pgSQL function emaj._add_tbl(text,text,text,integer,text,text,boolean,bigint,text) line 20 at PERFORM
 SQL statement "SELECT emaj._add_tbl(v_schema, v_oneTable, v_group, v_priority, v_logDatTsp, v_logIdxTsp, v_groupIsLogging,
                               v_timeId, v_function)"
-PL/pgSQL function emaj._assign_tables(text,text[],text,jsonb,text,boolean,boolean) line 237 at PERFORM
+PL/pgSQL function emaj._assign_tables(text,text[],text,jsonb,text,boolean,boolean) line 301 at PERFORM
 PL/pgSQL function emaj.emaj_assign_tables(text,text[],text,jsonb,text) line 7 at RETURN
 WARNING:  _check_fk_groups: The foreign key "mytbl6_col61_fkey" on the table "myschema2.mytbl6" references the table "myschema2.mytbl7" that is outside the groups (myGroup2).
 CONTEXT:  SQL statement "SELECT emaj._check_fk_groups(array[v_group])"
-PL/pgSQL function emaj._assign_tables(text,text[],text,jsonb,text,boolean,boolean) line 254 at PERFORM
+PL/pgSQL function emaj._assign_tables(text,text[],text,jsonb,text,boolean,boolean) line 323 at PERFORM
 PL/pgSQL function emaj.emaj_assign_tables(text,text[],text,jsonb,text) line 7 at RETURN
 WARNING:  _check_fk_groups: The table "myschema2.mytbl6" is referenced by the foreign key "mytbl8_col81_fkey" on the table "myschema2.mytbl8" that is outside the groups (myGroup2).
 CONTEXT:  SQL statement "SELECT emaj._check_fk_groups(array[v_group])"
-PL/pgSQL function emaj._assign_tables(text,text[],text,jsonb,text,boolean,boolean) line 254 at PERFORM
+PL/pgSQL function emaj._assign_tables(text,text[],text,jsonb,text,boolean,boolean) line 323 at PERFORM
 PL/pgSQL function emaj.emaj_assign_tables(text,text[],text,jsonb,text) line 7 at RETURN
  emaj_assign_tables 
 --------------------
@@ -2475,12 +2495,12 @@ commit;
 select emaj.emaj_remove_table('myschema2','mytbl1','Mark_assign_sequences');
 ERROR:  _check_new_mark: The group "myGroup2" already contains a mark named "Mark_assign_sequences".
 CONTEXT:  SQL statement "SELECT emaj._check_new_mark(v_loggingGroups, v_mark)"
-PL/pgSQL function emaj._remove_tables(text,text[],text,boolean,boolean) line 59 at SQL statement
+PL/pgSQL function emaj._remove_tables(text,text[],text,boolean,boolean) line 71 at SQL statement
 PL/pgSQL function emaj.emaj_remove_table(text,text,text) line 6 at RETURN
 select emaj.emaj_remove_sequence('myschema2','myseq1','Mark_assign_sequences');
 ERROR:  _check_new_mark: The group "myGroup2" already contains a mark named "Mark_assign_sequences".
 CONTEXT:  SQL statement "SELECT emaj._check_new_mark(v_loggingGroups, v_mark)"
-PL/pgSQL function emaj._remove_sequences(text,text[],text,boolean,boolean) line 56 at SQL statement
+PL/pgSQL function emaj._remove_sequences(text,text[],text,boolean,boolean) line 73 at SQL statement
 PL/pgSQL function emaj.emaj_remove_sequence(text,text,text) line 6 at RETURN
 -- alter a table in a logging group
 select emaj.emaj_remove_table('myschema1','mytbl4');
@@ -2493,35 +2513,35 @@ alter table myschema1.mytbl4 alter column col45 type varchar(15);
 select emaj.emaj_assign_table('myschema1','mytbl4','myGroup1');
 NOTICE:  table "mytbl4_log" does not exist, skipping
 CONTEXT:  SQL statement "DROP TABLE IF EXISTS emaj_myschema1.mytbl4_log"
-PL/pgSQL function emaj._create_tbl(text,text,text,integer,text,text,bigint,boolean,boolean) line 68 at EXECUTE
+PL/pgSQL function emaj._create_tbl(text,text,text,integer,text,text,bigint,boolean,boolean) line 67 at EXECUTE
 SQL statement "SELECT emaj._create_tbl(v_schema, v_table, v_group, v_priority, v_logDatTsp, v_logIdxTsp,
                              v_timeId, v_groupIsRollbackable, v_groupIsLogging)"
-PL/pgSQL function emaj._add_tbl(text,text,text,integer,text,text,boolean,bigint,text) line 19 at PERFORM
+PL/pgSQL function emaj._add_tbl(text,text,text,integer,text,text,boolean,bigint,text) line 20 at PERFORM
 SQL statement "SELECT emaj._add_tbl(v_schema, v_oneTable, v_group, v_priority, v_logDatTsp, v_logIdxTsp, v_groupIsLogging,
                               v_timeId, v_function)"
-PL/pgSQL function emaj._assign_tables(text,text[],text,jsonb,text,boolean,boolean) line 237 at PERFORM
+PL/pgSQL function emaj._assign_tables(text,text[],text,jsonb,text,boolean,boolean) line 301 at PERFORM
 PL/pgSQL function emaj.emaj_assign_table(text,text,text,jsonb,text) line 7 at RETURN
 NOTICE:  trigger "emaj_log_trg" for relation "myschema1.mytbl4" does not exist, skipping
 CONTEXT:  SQL statement "DROP TRIGGER IF EXISTS emaj_log_trg ON myschema1.mytbl4"
-PL/pgSQL function emaj._create_log_trigger_tbl(text,text,text,text) line 9 at EXECUTE
+PL/pgSQL function emaj._create_log_trigger_tbl(text,text,text,text) line 8 at EXECUTE
 SQL statement "SELECT emaj._create_log_trigger_tbl(v_fullTableName, v_logTableName, v_sequenceName, v_logFnctName)"
-PL/pgSQL function emaj._create_tbl(text,text,text,integer,text,text,bigint,boolean,boolean) line 114 at PERFORM
+PL/pgSQL function emaj._create_tbl(text,text,text,integer,text,text,bigint,boolean,boolean) line 123 at PERFORM
 SQL statement "SELECT emaj._create_tbl(v_schema, v_table, v_group, v_priority, v_logDatTsp, v_logIdxTsp,
                              v_timeId, v_groupIsRollbackable, v_groupIsLogging)"
-PL/pgSQL function emaj._add_tbl(text,text,text,integer,text,text,boolean,bigint,text) line 19 at PERFORM
+PL/pgSQL function emaj._add_tbl(text,text,text,integer,text,text,boolean,bigint,text) line 20 at PERFORM
 SQL statement "SELECT emaj._add_tbl(v_schema, v_oneTable, v_group, v_priority, v_logDatTsp, v_logIdxTsp, v_groupIsLogging,
                               v_timeId, v_function)"
-PL/pgSQL function emaj._assign_tables(text,text[],text,jsonb,text,boolean,boolean) line 237 at PERFORM
+PL/pgSQL function emaj._assign_tables(text,text[],text,jsonb,text,boolean,boolean) line 301 at PERFORM
 PL/pgSQL function emaj.emaj_assign_table(text,text,text,jsonb,text) line 7 at RETURN
 NOTICE:  trigger "emaj_trunc_trg" for relation "myschema1.mytbl4" does not exist, skipping
 CONTEXT:  SQL statement "DROP TRIGGER IF EXISTS emaj_trunc_trg ON myschema1.mytbl4"
-PL/pgSQL function emaj._create_tbl(text,text,text,integer,text,text,bigint,boolean,boolean) line 122 at EXECUTE
+PL/pgSQL function emaj._create_tbl(text,text,text,integer,text,text,bigint,boolean,boolean) line 131 at EXECUTE
 SQL statement "SELECT emaj._create_tbl(v_schema, v_table, v_group, v_priority, v_logDatTsp, v_logIdxTsp,
                              v_timeId, v_groupIsRollbackable, v_groupIsLogging)"
-PL/pgSQL function emaj._add_tbl(text,text,text,integer,text,text,boolean,bigint,text) line 19 at PERFORM
+PL/pgSQL function emaj._add_tbl(text,text,text,integer,text,text,boolean,bigint,text) line 20 at PERFORM
 SQL statement "SELECT emaj._add_tbl(v_schema, v_oneTable, v_group, v_priority, v_logDatTsp, v_logIdxTsp, v_groupIsLogging,
                               v_timeId, v_function)"
-PL/pgSQL function emaj._assign_tables(text,text[],text,jsonb,text,boolean,boolean) line 237 at PERFORM
+PL/pgSQL function emaj._assign_tables(text,text[],text,jsonb,text,boolean,boolean) line 301 at PERFORM
 PL/pgSQL function emaj.emaj_assign_table(text,text,text,jsonb,text) line 7 at RETURN
  emaj_assign_table 
 -------------------
@@ -2539,35 +2559,35 @@ begin;
   select emaj.emaj_assign_table('myschema1','mytbl4','myGroup1');
 NOTICE:  table "mytbl4_log" does not exist, skipping
 CONTEXT:  SQL statement "DROP TABLE IF EXISTS emaj_myschema1.mytbl4_log"
-PL/pgSQL function emaj._create_tbl(text,text,text,integer,text,text,bigint,boolean,boolean) line 68 at EXECUTE
+PL/pgSQL function emaj._create_tbl(text,text,text,integer,text,text,bigint,boolean,boolean) line 67 at EXECUTE
 SQL statement "SELECT emaj._create_tbl(v_schema, v_table, v_group, v_priority, v_logDatTsp, v_logIdxTsp,
                              v_timeId, v_groupIsRollbackable, v_groupIsLogging)"
-PL/pgSQL function emaj._add_tbl(text,text,text,integer,text,text,boolean,bigint,text) line 19 at PERFORM
+PL/pgSQL function emaj._add_tbl(text,text,text,integer,text,text,boolean,bigint,text) line 20 at PERFORM
 SQL statement "SELECT emaj._add_tbl(v_schema, v_oneTable, v_group, v_priority, v_logDatTsp, v_logIdxTsp, v_groupIsLogging,
                               v_timeId, v_function)"
-PL/pgSQL function emaj._assign_tables(text,text[],text,jsonb,text,boolean,boolean) line 237 at PERFORM
+PL/pgSQL function emaj._assign_tables(text,text[],text,jsonb,text,boolean,boolean) line 301 at PERFORM
 PL/pgSQL function emaj.emaj_assign_table(text,text,text,jsonb,text) line 7 at RETURN
 NOTICE:  trigger "emaj_log_trg" for relation "myschema1.mytbl4" does not exist, skipping
 CONTEXT:  SQL statement "DROP TRIGGER IF EXISTS emaj_log_trg ON myschema1.mytbl4"
-PL/pgSQL function emaj._create_log_trigger_tbl(text,text,text,text) line 9 at EXECUTE
+PL/pgSQL function emaj._create_log_trigger_tbl(text,text,text,text) line 8 at EXECUTE
 SQL statement "SELECT emaj._create_log_trigger_tbl(v_fullTableName, v_logTableName, v_sequenceName, v_logFnctName)"
-PL/pgSQL function emaj._create_tbl(text,text,text,integer,text,text,bigint,boolean,boolean) line 114 at PERFORM
+PL/pgSQL function emaj._create_tbl(text,text,text,integer,text,text,bigint,boolean,boolean) line 123 at PERFORM
 SQL statement "SELECT emaj._create_tbl(v_schema, v_table, v_group, v_priority, v_logDatTsp, v_logIdxTsp,
                              v_timeId, v_groupIsRollbackable, v_groupIsLogging)"
-PL/pgSQL function emaj._add_tbl(text,text,text,integer,text,text,boolean,bigint,text) line 19 at PERFORM
+PL/pgSQL function emaj._add_tbl(text,text,text,integer,text,text,boolean,bigint,text) line 20 at PERFORM
 SQL statement "SELECT emaj._add_tbl(v_schema, v_oneTable, v_group, v_priority, v_logDatTsp, v_logIdxTsp, v_groupIsLogging,
                               v_timeId, v_function)"
-PL/pgSQL function emaj._assign_tables(text,text[],text,jsonb,text,boolean,boolean) line 237 at PERFORM
+PL/pgSQL function emaj._assign_tables(text,text[],text,jsonb,text,boolean,boolean) line 301 at PERFORM
 PL/pgSQL function emaj.emaj_assign_table(text,text,text,jsonb,text) line 7 at RETURN
 NOTICE:  trigger "emaj_trunc_trg" for relation "myschema1.mytbl4" does not exist, skipping
 CONTEXT:  SQL statement "DROP TRIGGER IF EXISTS emaj_trunc_trg ON myschema1.mytbl4"
-PL/pgSQL function emaj._create_tbl(text,text,text,integer,text,text,bigint,boolean,boolean) line 122 at EXECUTE
+PL/pgSQL function emaj._create_tbl(text,text,text,integer,text,text,bigint,boolean,boolean) line 131 at EXECUTE
 SQL statement "SELECT emaj._create_tbl(v_schema, v_table, v_group, v_priority, v_logDatTsp, v_logIdxTsp,
                              v_timeId, v_groupIsRollbackable, v_groupIsLogging)"
-PL/pgSQL function emaj._add_tbl(text,text,text,integer,text,text,boolean,bigint,text) line 19 at PERFORM
+PL/pgSQL function emaj._add_tbl(text,text,text,integer,text,text,boolean,bigint,text) line 20 at PERFORM
 SQL statement "SELECT emaj._add_tbl(v_schema, v_oneTable, v_group, v_priority, v_logDatTsp, v_logIdxTsp, v_groupIsLogging,
                               v_timeId, v_function)"
-PL/pgSQL function emaj._assign_tables(text,text[],text,jsonb,text,boolean,boolean) line 237 at PERFORM
+PL/pgSQL function emaj._assign_tables(text,text[],text,jsonb,text,boolean,boolean) line 301 at PERFORM
 PL/pgSQL function emaj.emaj_assign_table(text,text,text,jsonb,text) line 7 at RETURN
  emaj_assign_table 
 -------------------
@@ -2655,13 +2675,13 @@ select emaj.emaj_move_sequences('myschema2','.*','','myGroup1','MOVE_SEQ_idle_to
 select emaj.emaj_move_tables('myschema4','.*','','myGroup2',emaj.emaj_get_previous_mark_group('myGroup1',now()));
 ERROR:  _check_new_mark: The groups "myGroup1, myGroup2" already contain a mark named "MOVE_SEQ_idle_to_logging".
 CONTEXT:  SQL statement "SELECT emaj._check_new_mark(v_loggingGroups, v_mark)"
-PL/pgSQL function emaj._move_tables(text,text[],text,text,boolean,boolean) line 76 at SQL statement
-PL/pgSQL function emaj.emaj_move_tables(text,text,text,text,text) line 23 at RETURN
+PL/pgSQL function emaj._move_tables(text,text[],text,text,boolean,boolean) line 90 at SQL statement
+PL/pgSQL function emaj.emaj_move_tables(text,text,text,text,text) line 27 at RETURN
 select emaj.emaj_move_sequences('myschema2','.*','','myGroup2',emaj.emaj_get_previous_mark_group('myGroup1',now()));
 ERROR:  _check_new_mark: The groups "myGroup1, myGroup2" already contain a mark named "MOVE_SEQ_idle_to_logging".
 CONTEXT:  SQL statement "SELECT emaj._check_new_mark(v_loggingGroups, v_mark)"
-PL/pgSQL function emaj._move_sequences(text,text[],text,text,boolean,boolean) line 75 at SQL statement
-PL/pgSQL function emaj.emaj_move_sequences(text,text,text,text,text) line 23 at RETURN
+PL/pgSQL function emaj._move_sequences(text,text[],text,text,boolean,boolean) line 92 at SQL statement
+PL/pgSQL function emaj.emaj_move_sequences(text,text,text,text,text) line 27 at RETURN
 -- from a logging group to another logging group
 select emaj.emaj_move_tables('myschema4','.*','','myGroup2','MOVE_TBL_logging_to_logging');
  emaj_move_tables 
@@ -2735,9 +2755,9 @@ alter table myschema1.mytbl1 rename to mytbl1_new_name;
 select emaj.emaj_remove_table('myschema1','mytbl1');
 NOTICE:  drop cascades to trigger emaj_log_trg on table myschema1.mytbl1_new_name
 CONTEXT:  SQL statement "DROP FUNCTION IF EXISTS emaj_myschema1.mytbl1_log_fnct() CASCADE"
-PL/pgSQL function emaj._remove_tbl(text,text,text,boolean,bigint,text) line 60 at EXECUTE
+PL/pgSQL function emaj._remove_tbl(text,text,text,boolean,bigint,text) line 72 at EXECUTE
 SQL statement "SELECT emaj._remove_tbl(v_schema, v_oneTable, v_groupName, v_groupIsLogging, v_timeId, v_function)"
-PL/pgSQL function emaj._remove_tables(text,text[],text,boolean,boolean) line 87 at PERFORM
+PL/pgSQL function emaj._remove_tables(text,text[],text,boolean,boolean) line 101 at PERFORM
 PL/pgSQL function emaj.emaj_remove_table(text,text,text) line 6 at RETURN
  emaj_remove_table 
 -------------------
@@ -2747,25 +2767,25 @@ PL/pgSQL function emaj.emaj_remove_table(text,text,text) line 6 at RETURN
 select emaj.emaj_assign_table('myschema1','mytbl1_new_name','myGroup1');
 NOTICE:  table "mytbl1_new_name_log" does not exist, skipping
 CONTEXT:  SQL statement "DROP TABLE IF EXISTS emaj_myschema1.mytbl1_new_name_log"
-PL/pgSQL function emaj._create_tbl(text,text,text,integer,text,text,bigint,boolean,boolean) line 68 at EXECUTE
+PL/pgSQL function emaj._create_tbl(text,text,text,integer,text,text,bigint,boolean,boolean) line 67 at EXECUTE
 SQL statement "SELECT emaj._create_tbl(v_schema, v_table, v_group, v_priority, v_logDatTsp, v_logIdxTsp,
                              v_timeId, v_groupIsRollbackable, v_groupIsLogging)"
-PL/pgSQL function emaj._add_tbl(text,text,text,integer,text,text,boolean,bigint,text) line 19 at PERFORM
+PL/pgSQL function emaj._add_tbl(text,text,text,integer,text,text,boolean,bigint,text) line 20 at PERFORM
 SQL statement "SELECT emaj._add_tbl(v_schema, v_oneTable, v_group, v_priority, v_logDatTsp, v_logIdxTsp, v_groupIsLogging,
                               v_timeId, v_function)"
-PL/pgSQL function emaj._assign_tables(text,text[],text,jsonb,text,boolean,boolean) line 237 at PERFORM
+PL/pgSQL function emaj._assign_tables(text,text[],text,jsonb,text,boolean,boolean) line 301 at PERFORM
 PL/pgSQL function emaj.emaj_assign_table(text,text,text,jsonb,text) line 7 at RETURN
 NOTICE:  trigger "emaj_log_trg" for relation "myschema1.mytbl1_new_name" does not exist, skipping
 CONTEXT:  SQL statement "DROP TRIGGER IF EXISTS emaj_log_trg ON myschema1.mytbl1_new_name"
-PL/pgSQL function emaj._create_log_trigger_tbl(text,text,text,text) line 9 at EXECUTE
+PL/pgSQL function emaj._create_log_trigger_tbl(text,text,text,text) line 8 at EXECUTE
 SQL statement "SELECT emaj._create_log_trigger_tbl(v_fullTableName, v_logTableName, v_sequenceName, v_logFnctName)"
-PL/pgSQL function emaj._create_tbl(text,text,text,integer,text,text,bigint,boolean,boolean) line 114 at PERFORM
+PL/pgSQL function emaj._create_tbl(text,text,text,integer,text,text,bigint,boolean,boolean) line 123 at PERFORM
 SQL statement "SELECT emaj._create_tbl(v_schema, v_table, v_group, v_priority, v_logDatTsp, v_logIdxTsp,
                              v_timeId, v_groupIsRollbackable, v_groupIsLogging)"
-PL/pgSQL function emaj._add_tbl(text,text,text,integer,text,text,boolean,bigint,text) line 19 at PERFORM
+PL/pgSQL function emaj._add_tbl(text,text,text,integer,text,text,boolean,bigint,text) line 20 at PERFORM
 SQL statement "SELECT emaj._add_tbl(v_schema, v_oneTable, v_group, v_priority, v_logDatTsp, v_logIdxTsp, v_groupIsLogging,
                               v_timeId, v_function)"
-PL/pgSQL function emaj._assign_tables(text,text[],text,jsonb,text,boolean,boolean) line 237 at PERFORM
+PL/pgSQL function emaj._assign_tables(text,text[],text,jsonb,text,boolean,boolean) line 301 at PERFORM
 PL/pgSQL function emaj.emaj_assign_table(text,text,text,jsonb,text) line 7 at RETURN
  emaj_assign_table 
 -------------------
@@ -2776,9 +2796,9 @@ alter table myschema1.mytbl1_new_name set schema public;
 select emaj.emaj_remove_table('myschema1','mytbl1_new_name');
 NOTICE:  drop cascades to trigger emaj_log_trg on table public.mytbl1_new_name
 CONTEXT:  SQL statement "DROP FUNCTION IF EXISTS emaj_myschema1.mytbl1_new_name_log_fnct() CASCADE"
-PL/pgSQL function emaj._remove_tbl(text,text,text,boolean,bigint,text) line 60 at EXECUTE
+PL/pgSQL function emaj._remove_tbl(text,text,text,boolean,bigint,text) line 72 at EXECUTE
 SQL statement "SELECT emaj._remove_tbl(v_schema, v_oneTable, v_groupName, v_groupIsLogging, v_timeId, v_function)"
-PL/pgSQL function emaj._remove_tables(text,text[],text,boolean,boolean) line 87 at PERFORM
+PL/pgSQL function emaj._remove_tables(text,text[],text,boolean,boolean) line 101 at PERFORM
 PL/pgSQL function emaj.emaj_remove_table(text,text,text) line 6 at RETURN
  emaj_remove_table 
 -------------------
@@ -2788,25 +2808,25 @@ PL/pgSQL function emaj.emaj_remove_table(text,text,text) line 6 at RETURN
 select emaj.emaj_assign_table('public','mytbl1_new_name','myGroup1');
 NOTICE:  table "mytbl1_new_name_log" does not exist, skipping
 CONTEXT:  SQL statement "DROP TABLE IF EXISTS emaj_public.mytbl1_new_name_log"
-PL/pgSQL function emaj._create_tbl(text,text,text,integer,text,text,bigint,boolean,boolean) line 68 at EXECUTE
+PL/pgSQL function emaj._create_tbl(text,text,text,integer,text,text,bigint,boolean,boolean) line 67 at EXECUTE
 SQL statement "SELECT emaj._create_tbl(v_schema, v_table, v_group, v_priority, v_logDatTsp, v_logIdxTsp,
                              v_timeId, v_groupIsRollbackable, v_groupIsLogging)"
-PL/pgSQL function emaj._add_tbl(text,text,text,integer,text,text,boolean,bigint,text) line 19 at PERFORM
+PL/pgSQL function emaj._add_tbl(text,text,text,integer,text,text,boolean,bigint,text) line 20 at PERFORM
 SQL statement "SELECT emaj._add_tbl(v_schema, v_oneTable, v_group, v_priority, v_logDatTsp, v_logIdxTsp, v_groupIsLogging,
                               v_timeId, v_function)"
-PL/pgSQL function emaj._assign_tables(text,text[],text,jsonb,text,boolean,boolean) line 237 at PERFORM
+PL/pgSQL function emaj._assign_tables(text,text[],text,jsonb,text,boolean,boolean) line 301 at PERFORM
 PL/pgSQL function emaj.emaj_assign_table(text,text,text,jsonb,text) line 7 at RETURN
 NOTICE:  trigger "emaj_log_trg" for relation "public.mytbl1_new_name" does not exist, skipping
 CONTEXT:  SQL statement "DROP TRIGGER IF EXISTS emaj_log_trg ON public.mytbl1_new_name"
-PL/pgSQL function emaj._create_log_trigger_tbl(text,text,text,text) line 9 at EXECUTE
+PL/pgSQL function emaj._create_log_trigger_tbl(text,text,text,text) line 8 at EXECUTE
 SQL statement "SELECT emaj._create_log_trigger_tbl(v_fullTableName, v_logTableName, v_sequenceName, v_logFnctName)"
-PL/pgSQL function emaj._create_tbl(text,text,text,integer,text,text,bigint,boolean,boolean) line 114 at PERFORM
+PL/pgSQL function emaj._create_tbl(text,text,text,integer,text,text,bigint,boolean,boolean) line 123 at PERFORM
 SQL statement "SELECT emaj._create_tbl(v_schema, v_table, v_group, v_priority, v_logDatTsp, v_logIdxTsp,
                              v_timeId, v_groupIsRollbackable, v_groupIsLogging)"
-PL/pgSQL function emaj._add_tbl(text,text,text,integer,text,text,boolean,bigint,text) line 19 at PERFORM
+PL/pgSQL function emaj._add_tbl(text,text,text,integer,text,text,boolean,bigint,text) line 20 at PERFORM
 SQL statement "SELECT emaj._add_tbl(v_schema, v_oneTable, v_group, v_priority, v_logDatTsp, v_logIdxTsp, v_groupIsLogging,
                               v_timeId, v_function)"
-PL/pgSQL function emaj._assign_tables(text,text[],text,jsonb,text,boolean,boolean) line 237 at PERFORM
+PL/pgSQL function emaj._assign_tables(text,text[],text,jsonb,text,boolean,boolean) line 301 at PERFORM
 PL/pgSQL function emaj.emaj_assign_table(text,text,text,jsonb,text) line 7 at RETURN
  emaj_assign_table 
 -------------------
@@ -2818,9 +2838,9 @@ alter table public.mytbl1 set schema myschema1;
 select emaj.emaj_remove_table('public','mytbl1_new_name');
 NOTICE:  drop cascades to trigger emaj_log_trg on table myschema1.mytbl1
 CONTEXT:  SQL statement "DROP FUNCTION IF EXISTS emaj_public.mytbl1_new_name_log_fnct() CASCADE"
-PL/pgSQL function emaj._remove_tbl(text,text,text,boolean,bigint,text) line 60 at EXECUTE
+PL/pgSQL function emaj._remove_tbl(text,text,text,boolean,bigint,text) line 72 at EXECUTE
 SQL statement "SELECT emaj._remove_tbl(v_schema, v_oneTable, v_groupName, v_groupIsLogging, v_timeId, v_function)"
-PL/pgSQL function emaj._remove_tables(text,text[],text,boolean,boolean) line 87 at PERFORM
+PL/pgSQL function emaj._remove_tables(text,text[],text,boolean,boolean) line 101 at PERFORM
 PL/pgSQL function emaj.emaj_remove_table(text,text,text) line 6 at RETURN
  emaj_remove_table 
 -------------------
@@ -2830,25 +2850,25 @@ PL/pgSQL function emaj.emaj_remove_table(text,text,text) line 6 at RETURN
 select emaj.emaj_assign_table('myschema1','mytbl1','myGroup1');
 NOTICE:  table "mytbl1_log" does not exist, skipping
 CONTEXT:  SQL statement "DROP TABLE IF EXISTS emaj_myschema1.mytbl1_log"
-PL/pgSQL function emaj._create_tbl(text,text,text,integer,text,text,bigint,boolean,boolean) line 68 at EXECUTE
+PL/pgSQL function emaj._create_tbl(text,text,text,integer,text,text,bigint,boolean,boolean) line 67 at EXECUTE
 SQL statement "SELECT emaj._create_tbl(v_schema, v_table, v_group, v_priority, v_logDatTsp, v_logIdxTsp,
                              v_timeId, v_groupIsRollbackable, v_groupIsLogging)"
-PL/pgSQL function emaj._add_tbl(text,text,text,integer,text,text,boolean,bigint,text) line 19 at PERFORM
+PL/pgSQL function emaj._add_tbl(text,text,text,integer,text,text,boolean,bigint,text) line 20 at PERFORM
 SQL statement "SELECT emaj._add_tbl(v_schema, v_oneTable, v_group, v_priority, v_logDatTsp, v_logIdxTsp, v_groupIsLogging,
                               v_timeId, v_function)"
-PL/pgSQL function emaj._assign_tables(text,text[],text,jsonb,text,boolean,boolean) line 237 at PERFORM
+PL/pgSQL function emaj._assign_tables(text,text[],text,jsonb,text,boolean,boolean) line 301 at PERFORM
 PL/pgSQL function emaj.emaj_assign_table(text,text,text,jsonb,text) line 7 at RETURN
 NOTICE:  trigger "emaj_log_trg" for relation "myschema1.mytbl1" does not exist, skipping
 CONTEXT:  SQL statement "DROP TRIGGER IF EXISTS emaj_log_trg ON myschema1.mytbl1"
-PL/pgSQL function emaj._create_log_trigger_tbl(text,text,text,text) line 9 at EXECUTE
+PL/pgSQL function emaj._create_log_trigger_tbl(text,text,text,text) line 8 at EXECUTE
 SQL statement "SELECT emaj._create_log_trigger_tbl(v_fullTableName, v_logTableName, v_sequenceName, v_logFnctName)"
-PL/pgSQL function emaj._create_tbl(text,text,text,integer,text,text,bigint,boolean,boolean) line 114 at PERFORM
+PL/pgSQL function emaj._create_tbl(text,text,text,integer,text,text,bigint,boolean,boolean) line 123 at PERFORM
 SQL statement "SELECT emaj._create_tbl(v_schema, v_table, v_group, v_priority, v_logDatTsp, v_logIdxTsp,
                              v_timeId, v_groupIsRollbackable, v_groupIsLogging)"
-PL/pgSQL function emaj._add_tbl(text,text,text,integer,text,text,boolean,bigint,text) line 19 at PERFORM
+PL/pgSQL function emaj._add_tbl(text,text,text,integer,text,text,boolean,bigint,text) line 20 at PERFORM
 SQL statement "SELECT emaj._add_tbl(v_schema, v_oneTable, v_group, v_priority, v_logDatTsp, v_logIdxTsp, v_groupIsLogging,
                               v_timeId, v_function)"
-PL/pgSQL function emaj._assign_tables(text,text[],text,jsonb,text,boolean,boolean) line 237 at PERFORM
+PL/pgSQL function emaj._assign_tables(text,text[],text,jsonb,text,boolean,boolean) line 301 at PERFORM
 PL/pgSQL function emaj.emaj_assign_table(text,text,text,jsonb,text) line 7 at RETURN
  emaj_assign_table 
 -------------------
@@ -2879,10 +2899,10 @@ select emaj.emaj_stop_group('myGroup2');
 select emaj.emaj_drop_group('myGroup2');
 NOTICE:  table "mytbl1_log_2" does not exist, skipping
 CONTEXT:  SQL statement "DROP TABLE IF EXISTS emaj_myschema2.mytbl1_log_2 CASCADE"
-PL/pgSQL function emaj._drop_tbl(emaj.emaj_relation,bigint) line 35 at EXECUTE
+PL/pgSQL function emaj._drop_tbl(emaj.emaj_relation,bigint) line 43 at EXECUTE
 SQL statement "SELECT CASE WHEN r_rel.rel_kind = 'r' THEN emaj._drop_tbl(r_rel, v_timeId)
                      WHEN r_rel.rel_kind = 'S' THEN emaj._drop_seq(r_rel, v_timeId) END"
-PL/pgSQL function emaj._drop_group(text,boolean) line 23 at PERFORM
+PL/pgSQL function emaj._drop_group(text,boolean) line 24 at PERFORM
 SQL statement "SELECT emaj._drop_group(v_groupName, FALSE)"
 PL/pgSQL function emaj.emaj_drop_group(text) line 14 at SQL statement
  emaj_drop_group 

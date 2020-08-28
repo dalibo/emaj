@@ -27,11 +27,11 @@ select emaj.emaj_stop_groups(array['myGroup1','myGroup2']);
 select emaj.emaj_start_groups(array['myGroup1','myGroup2'],'Multi-1', false);
 WARNING:  _check_fk_groups: The foreign key "mytbl6_col61_fkey" on the table "myschema2.mytbl6" references the table "myschema2.mytbl7" that is outside the groups (myGroup1,myGroup2).
 CONTEXT:  SQL statement "SELECT emaj._check_fk_groups(v_groupNames)"
-PL/pgSQL function emaj._start_groups(text[],text,boolean,boolean) line 27 at PERFORM
+PL/pgSQL function emaj._start_groups(text[],text,boolean,boolean) line 28 at PERFORM
 PL/pgSQL function emaj.emaj_start_groups(text[],text,boolean) line 11 at RETURN
 WARNING:  _check_fk_groups: The table "myschema2.mytbl6" is referenced by the foreign key "mytbl8_col81_fkey" on the table "myschema2.mytbl8" that is outside the groups (myGroup1,myGroup2).
 CONTEXT:  SQL statement "SELECT emaj._check_fk_groups(v_groupNames)"
-PL/pgSQL function emaj._start_groups(text[],text,boolean,boolean) line 27 at PERFORM
+PL/pgSQL function emaj._start_groups(text[],text,boolean,boolean) line 28 at PERFORM
 PL/pgSQL function emaj.emaj_start_groups(text[],text,boolean) line 11 at RETURN
  emaj_start_groups 
 -------------------
@@ -79,25 +79,25 @@ select emaj.emaj_stop_groups(array['myGroup1','myGroup2'],'Stop after rollback')
 select emaj.emaj_start_groups(array['myGroup1','myGroup2'],'Multi-1', false);
 WARNING:  _check_fk_groups: The foreign key "mytbl6_col61_fkey" on the table "myschema2.mytbl6" references the table "myschema2.mytbl7" that is outside the groups (myGroup1,myGroup2).
 CONTEXT:  SQL statement "SELECT emaj._check_fk_groups(v_groupNames)"
-PL/pgSQL function emaj._start_groups(text[],text,boolean,boolean) line 27 at PERFORM
+PL/pgSQL function emaj._start_groups(text[],text,boolean,boolean) line 28 at PERFORM
 PL/pgSQL function emaj.emaj_start_groups(text[],text,boolean) line 11 at RETURN
 WARNING:  _check_fk_groups: The table "myschema2.mytbl6" is referenced by the foreign key "mytbl8_col81_fkey" on the table "myschema2.mytbl8" that is outside the groups (myGroup1,myGroup2).
 CONTEXT:  SQL statement "SELECT emaj._check_fk_groups(v_groupNames)"
-PL/pgSQL function emaj._start_groups(text[],text,boolean,boolean) line 27 at PERFORM
+PL/pgSQL function emaj._start_groups(text[],text,boolean,boolean) line 28 at PERFORM
 PL/pgSQL function emaj.emaj_start_groups(text[],text,boolean) line 11 at RETURN
 ERROR:  _check_new_mark: The groups "myGroup1, myGroup2" already contain a mark named "Multi-1".
 CONTEXT:  SQL statement "SELECT emaj._check_new_mark(v_groupNames, v_mark)"
-PL/pgSQL function emaj._start_groups(text[],text,boolean,boolean) line 43 at SQL statement
+PL/pgSQL function emaj._start_groups(text[],text,boolean,boolean) line 44 at SQL statement
 PL/pgSQL function emaj.emaj_start_groups(text[],text,boolean) line 11 at RETURN
 -- really start both groups
 select emaj.emaj_start_groups(array['myGroup1','myGroup2'],'Multi-1b', false);
 WARNING:  _check_fk_groups: The foreign key "mytbl6_col61_fkey" on the table "myschema2.mytbl6" references the table "myschema2.mytbl7" that is outside the groups (myGroup1,myGroup2).
 CONTEXT:  SQL statement "SELECT emaj._check_fk_groups(v_groupNames)"
-PL/pgSQL function emaj._start_groups(text[],text,boolean,boolean) line 27 at PERFORM
+PL/pgSQL function emaj._start_groups(text[],text,boolean,boolean) line 28 at PERFORM
 PL/pgSQL function emaj.emaj_start_groups(text[],text,boolean) line 11 at RETURN
 WARNING:  _check_fk_groups: The table "myschema2.mytbl6" is referenced by the foreign key "mytbl8_col81_fkey" on the table "myschema2.mytbl8" that is outside the groups (myGroup1,myGroup2).
 CONTEXT:  SQL statement "SELECT emaj._check_fk_groups(v_groupNames)"
-PL/pgSQL function emaj._start_groups(text[],text,boolean,boolean) line 27 at PERFORM
+PL/pgSQL function emaj._start_groups(text[],text,boolean,boolean) line 28 at PERFORM
 PL/pgSQL function emaj.emaj_start_groups(text[],text,boolean) line 11 at RETURN
  emaj_start_groups 
 -------------------
@@ -471,68 +471,68 @@ select emaj.emaj_create_group('phil''s group#3",');
 select emaj.emaj_assign_tables('phil''s schema3','.*','mytbl4','phil''s group#3",');
 NOTICE:  table "myTbl2\_log" does not exist, skipping
 CONTEXT:  SQL statement "DROP TABLE IF EXISTS "emaj_phil's schema3"."myTbl2\_log""
-PL/pgSQL function emaj._create_tbl(text,text,text,integer,text,text,bigint,boolean,boolean) line 68 at EXECUTE
+PL/pgSQL function emaj._create_tbl(text,text,text,integer,text,text,bigint,boolean,boolean) line 67 at EXECUTE
 SQL statement "SELECT emaj._create_tbl(v_schema, v_table, v_group, v_priority, v_logDatTsp, v_logIdxTsp,
                              v_timeId, v_groupIsRollbackable, v_groupIsLogging)"
-PL/pgSQL function emaj._add_tbl(text,text,text,integer,text,text,boolean,bigint,text) line 19 at PERFORM
+PL/pgSQL function emaj._add_tbl(text,text,text,integer,text,text,boolean,bigint,text) line 20 at PERFORM
 SQL statement "SELECT emaj._add_tbl(v_schema, v_oneTable, v_group, v_priority, v_logDatTsp, v_logIdxTsp, v_groupIsLogging,
                               v_timeId, v_function)"
-PL/pgSQL function emaj._assign_tables(text,text[],text,jsonb,text,boolean,boolean) line 237 at PERFORM
-PL/pgSQL function emaj.emaj_assign_tables(text,text,text,text,jsonb,text) line 23 at RETURN
+PL/pgSQL function emaj._assign_tables(text,text[],text,jsonb,text,boolean,boolean) line 301 at PERFORM
+PL/pgSQL function emaj.emaj_assign_tables(text,text,text,text,jsonb,text) line 26 at RETURN
 NOTICE:  trigger "emaj_log_trg" for relation "phil's schema3.myTbl2\" does not exist, skipping
 CONTEXT:  SQL statement "DROP TRIGGER IF EXISTS emaj_log_trg ON "phil's schema3"."myTbl2\""
-PL/pgSQL function emaj._create_log_trigger_tbl(text,text,text,text) line 9 at EXECUTE
+PL/pgSQL function emaj._create_log_trigger_tbl(text,text,text,text) line 8 at EXECUTE
 SQL statement "SELECT emaj._create_log_trigger_tbl(v_fullTableName, v_logTableName, v_sequenceName, v_logFnctName)"
-PL/pgSQL function emaj._create_tbl(text,text,text,integer,text,text,bigint,boolean,boolean) line 114 at PERFORM
+PL/pgSQL function emaj._create_tbl(text,text,text,integer,text,text,bigint,boolean,boolean) line 123 at PERFORM
 SQL statement "SELECT emaj._create_tbl(v_schema, v_table, v_group, v_priority, v_logDatTsp, v_logIdxTsp,
                              v_timeId, v_groupIsRollbackable, v_groupIsLogging)"
-PL/pgSQL function emaj._add_tbl(text,text,text,integer,text,text,boolean,bigint,text) line 19 at PERFORM
+PL/pgSQL function emaj._add_tbl(text,text,text,integer,text,text,boolean,bigint,text) line 20 at PERFORM
 SQL statement "SELECT emaj._add_tbl(v_schema, v_oneTable, v_group, v_priority, v_logDatTsp, v_logIdxTsp, v_groupIsLogging,
                               v_timeId, v_function)"
-PL/pgSQL function emaj._assign_tables(text,text[],text,jsonb,text,boolean,boolean) line 237 at PERFORM
-PL/pgSQL function emaj.emaj_assign_tables(text,text,text,text,jsonb,text) line 23 at RETURN
+PL/pgSQL function emaj._assign_tables(text,text[],text,jsonb,text,boolean,boolean) line 301 at PERFORM
+PL/pgSQL function emaj.emaj_assign_tables(text,text,text,text,jsonb,text) line 26 at RETURN
 NOTICE:  trigger "emaj_trunc_trg" for relation "phil's schema3.myTbl2\" does not exist, skipping
 CONTEXT:  SQL statement "DROP TRIGGER IF EXISTS emaj_trunc_trg ON "phil's schema3"."myTbl2\""
-PL/pgSQL function emaj._create_tbl(text,text,text,integer,text,text,bigint,boolean,boolean) line 122 at EXECUTE
+PL/pgSQL function emaj._create_tbl(text,text,text,integer,text,text,bigint,boolean,boolean) line 131 at EXECUTE
 SQL statement "SELECT emaj._create_tbl(v_schema, v_table, v_group, v_priority, v_logDatTsp, v_logIdxTsp,
                              v_timeId, v_groupIsRollbackable, v_groupIsLogging)"
-PL/pgSQL function emaj._add_tbl(text,text,text,integer,text,text,boolean,bigint,text) line 19 at PERFORM
+PL/pgSQL function emaj._add_tbl(text,text,text,integer,text,text,boolean,bigint,text) line 20 at PERFORM
 SQL statement "SELECT emaj._add_tbl(v_schema, v_oneTable, v_group, v_priority, v_logDatTsp, v_logIdxTsp, v_groupIsLogging,
                               v_timeId, v_function)"
-PL/pgSQL function emaj._assign_tables(text,text[],text,jsonb,text,boolean,boolean) line 237 at PERFORM
-PL/pgSQL function emaj.emaj_assign_tables(text,text,text,text,jsonb,text) line 23 at RETURN
+PL/pgSQL function emaj._assign_tables(text,text[],text,jsonb,text,boolean,boolean) line 301 at PERFORM
+PL/pgSQL function emaj.emaj_assign_tables(text,text,text,text,jsonb,text) line 26 at RETURN
 NOTICE:  table "phil's tbl1_log" does not exist, skipping
 CONTEXT:  SQL statement "DROP TABLE IF EXISTS "emaj_phil's schema3"."phil's tbl1_log""
-PL/pgSQL function emaj._create_tbl(text,text,text,integer,text,text,bigint,boolean,boolean) line 68 at EXECUTE
+PL/pgSQL function emaj._create_tbl(text,text,text,integer,text,text,bigint,boolean,boolean) line 67 at EXECUTE
 SQL statement "SELECT emaj._create_tbl(v_schema, v_table, v_group, v_priority, v_logDatTsp, v_logIdxTsp,
                              v_timeId, v_groupIsRollbackable, v_groupIsLogging)"
-PL/pgSQL function emaj._add_tbl(text,text,text,integer,text,text,boolean,bigint,text) line 19 at PERFORM
+PL/pgSQL function emaj._add_tbl(text,text,text,integer,text,text,boolean,bigint,text) line 20 at PERFORM
 SQL statement "SELECT emaj._add_tbl(v_schema, v_oneTable, v_group, v_priority, v_logDatTsp, v_logIdxTsp, v_groupIsLogging,
                               v_timeId, v_function)"
-PL/pgSQL function emaj._assign_tables(text,text[],text,jsonb,text,boolean,boolean) line 237 at PERFORM
-PL/pgSQL function emaj.emaj_assign_tables(text,text,text,text,jsonb,text) line 23 at RETURN
+PL/pgSQL function emaj._assign_tables(text,text[],text,jsonb,text,boolean,boolean) line 301 at PERFORM
+PL/pgSQL function emaj.emaj_assign_tables(text,text,text,text,jsonb,text) line 26 at RETURN
 NOTICE:  trigger "emaj_log_trg" for relation "phil's schema3.phil's tbl1" does not exist, skipping
 CONTEXT:  SQL statement "DROP TRIGGER IF EXISTS emaj_log_trg ON "phil's schema3"."phil's tbl1""
-PL/pgSQL function emaj._create_log_trigger_tbl(text,text,text,text) line 9 at EXECUTE
+PL/pgSQL function emaj._create_log_trigger_tbl(text,text,text,text) line 8 at EXECUTE
 SQL statement "SELECT emaj._create_log_trigger_tbl(v_fullTableName, v_logTableName, v_sequenceName, v_logFnctName)"
-PL/pgSQL function emaj._create_tbl(text,text,text,integer,text,text,bigint,boolean,boolean) line 114 at PERFORM
+PL/pgSQL function emaj._create_tbl(text,text,text,integer,text,text,bigint,boolean,boolean) line 123 at PERFORM
 SQL statement "SELECT emaj._create_tbl(v_schema, v_table, v_group, v_priority, v_logDatTsp, v_logIdxTsp,
                              v_timeId, v_groupIsRollbackable, v_groupIsLogging)"
-PL/pgSQL function emaj._add_tbl(text,text,text,integer,text,text,boolean,bigint,text) line 19 at PERFORM
+PL/pgSQL function emaj._add_tbl(text,text,text,integer,text,text,boolean,bigint,text) line 20 at PERFORM
 SQL statement "SELECT emaj._add_tbl(v_schema, v_oneTable, v_group, v_priority, v_logDatTsp, v_logIdxTsp, v_groupIsLogging,
                               v_timeId, v_function)"
-PL/pgSQL function emaj._assign_tables(text,text[],text,jsonb,text,boolean,boolean) line 237 at PERFORM
-PL/pgSQL function emaj.emaj_assign_tables(text,text,text,text,jsonb,text) line 23 at RETURN
+PL/pgSQL function emaj._assign_tables(text,text[],text,jsonb,text,boolean,boolean) line 301 at PERFORM
+PL/pgSQL function emaj.emaj_assign_tables(text,text,text,text,jsonb,text) line 26 at RETURN
 NOTICE:  trigger "emaj_trunc_trg" for relation "phil's schema3.phil's tbl1" does not exist, skipping
 CONTEXT:  SQL statement "DROP TRIGGER IF EXISTS emaj_trunc_trg ON "phil's schema3"."phil's tbl1""
-PL/pgSQL function emaj._create_tbl(text,text,text,integer,text,text,bigint,boolean,boolean) line 122 at EXECUTE
+PL/pgSQL function emaj._create_tbl(text,text,text,integer,text,text,bigint,boolean,boolean) line 131 at EXECUTE
 SQL statement "SELECT emaj._create_tbl(v_schema, v_table, v_group, v_priority, v_logDatTsp, v_logIdxTsp,
                              v_timeId, v_groupIsRollbackable, v_groupIsLogging)"
-PL/pgSQL function emaj._add_tbl(text,text,text,integer,text,text,boolean,bigint,text) line 19 at PERFORM
+PL/pgSQL function emaj._add_tbl(text,text,text,integer,text,text,boolean,bigint,text) line 20 at PERFORM
 SQL statement "SELECT emaj._add_tbl(v_schema, v_oneTable, v_group, v_priority, v_logDatTsp, v_logIdxTsp, v_groupIsLogging,
                               v_timeId, v_function)"
-PL/pgSQL function emaj._assign_tables(text,text[],text,jsonb,text,boolean,boolean) line 237 at PERFORM
-PL/pgSQL function emaj.emaj_assign_tables(text,text,text,text,jsonb,text) line 23 at RETURN
+PL/pgSQL function emaj._assign_tables(text,text[],text,jsonb,text,boolean,boolean) line 301 at PERFORM
+PL/pgSQL function emaj.emaj_assign_tables(text,text,text,text,jsonb,text) line 26 at RETURN
  emaj_assign_tables 
 --------------------
                   2
@@ -547,11 +547,11 @@ select emaj.emaj_assign_sequences('phil''s schema3','.*',null,'phil''s group#3",
 select emaj.emaj_start_group('phil''s group#3",','M1_rollbackable');
 WARNING:  _check_fk_groups: The foreign key "mytbl2_col21_fkey" on the table "phil's schema3.myTbl2\" references the table "phil's schema3.mytbl4" that is outside the groups (phil's group#3",).
 CONTEXT:  SQL statement "SELECT emaj._check_fk_groups(v_groupNames)"
-PL/pgSQL function emaj._start_groups(text[],text,boolean,boolean) line 27 at PERFORM
+PL/pgSQL function emaj._start_groups(text[],text,boolean,boolean) line 28 at PERFORM
 PL/pgSQL function emaj.emaj_start_group(text,text,boolean) line 12 at RETURN
 WARNING:  _check_fk_groups: The table "phil's schema3.phil's tbl1" is referenced by the foreign key "mytbl4_col44_fkey" on the table "phil's schema3.mytbl4" that is outside the groups (phil's group#3",).
 CONTEXT:  SQL statement "SELECT emaj._check_fk_groups(v_groupNames)"
-PL/pgSQL function emaj._start_groups(text[],text,boolean,boolean) line 27 at PERFORM
+PL/pgSQL function emaj._start_groups(text[],text,boolean,boolean) line 28 at PERFORM
 PL/pgSQL function emaj.emaj_start_group(text,text,boolean) line 12 at RETURN
  emaj_start_group 
 ------------------
@@ -1176,7 +1176,7 @@ phil's_schema3_phil's_tbl1.snap
 select emaj.emaj_gen_sql_group('myGroup1', 'Multi-1', NULL, :'EMAJTESTTMPDIR' || '/myGroup1.sql');
 NOTICE:  table "emaj_temp_script" does not exist, skipping
 CONTEXT:  SQL statement "DROP TABLE IF EXISTS emaj_temp_script CASCADE"
-PL/pgSQL function emaj._gen_sql_groups(text[],boolean,text,text,text,text[]) line 84 at SQL statement
+PL/pgSQL function emaj._gen_sql_groups(text[],boolean,text,text,text,text[]) line 91 at SQL statement
 PL/pgSQL function emaj.emaj_gen_sql_group(text,text,text,text,text[]) line 14 at RETURN
  emaj_gen_sql_group 
 --------------------
@@ -1194,7 +1194,7 @@ select emaj.emaj_gen_sql_group('myGroup2', 'Multi-1', NULL, :'EMAJTESTTMPDIR' ||
      'myschema2.mytbl5','myschema2.mytbl6','myschema2.myseq1','myschema2.myTbl3_col31_seq']);
 NOTICE:  table "emaj_temp_script" does not exist, skipping
 CONTEXT:  SQL statement "DROP TABLE IF EXISTS emaj_temp_script CASCADE"
-PL/pgSQL function emaj._gen_sql_groups(text[],boolean,text,text,text,text[]) line 84 at SQL statement
+PL/pgSQL function emaj._gen_sql_groups(text[],boolean,text,text,text,text[]) line 91 at SQL statement
 PL/pgSQL function emaj.emaj_gen_sql_group(text,text,text,text,text[]) line 14 at RETURN
  emaj_gen_sql_group 
 --------------------
@@ -1210,7 +1210,7 @@ select sum(stat_rows) + 2 as check from emaj.emaj_detailed_log_stat_group('myGro
 select emaj.emaj_gen_sql_group('phil''s group#3",', 'M1_rollbackable', NULL, :'EMAJTESTTMPDIR' || '/Group3.sql');
 NOTICE:  table "emaj_temp_script" does not exist, skipping
 CONTEXT:  SQL statement "DROP TABLE IF EXISTS emaj_temp_script CASCADE"
-PL/pgSQL function emaj._gen_sql_groups(text[],boolean,text,text,text,text[]) line 84 at SQL statement
+PL/pgSQL function emaj._gen_sql_groups(text[],boolean,text,text,text,text[]) line 91 at SQL statement
 PL/pgSQL function emaj.emaj_gen_sql_group(text,text,text,text,text[]) line 14 at RETURN
  emaj_gen_sql_group 
 --------------------
@@ -1227,7 +1227,7 @@ select sum(stat_rows) + 2 as check from emaj.emaj_detailed_log_stat_group('phil'
 select emaj.emaj_gen_sql_group('myGroup1', 'Multi-1', NULL, NULL);
 NOTICE:  table "emaj_temp_script" does not exist, skipping
 CONTEXT:  SQL statement "DROP TABLE IF EXISTS emaj_temp_script CASCADE"
-PL/pgSQL function emaj._gen_sql_groups(text[],boolean,text,text,text,text[]) line 84 at SQL statement
+PL/pgSQL function emaj._gen_sql_groups(text[],boolean,text,text,text,text[]) line 91 at SQL statement
 PL/pgSQL function emaj.emaj_gen_sql_group(text,text,text,text,text[]) line 14 at RETURN
  emaj_gen_sql_group 
 --------------------
@@ -1490,35 +1490,35 @@ set role emaj_regression_tests_adm_user;
 select emaj.emaj_assign_table('phil''s schema3', 'table_with_very_looooooooooooooooooooooooooooooooooooooong_name', 'phil''s group#3",');
 NOTICE:  table "table_with_very_looooooooooooooooooooooooooooooooo#1_log" does not exist, skipping
 CONTEXT:  SQL statement "DROP TABLE IF EXISTS "emaj_phil's schema3"."table_with_very_looooooooooooooooooooooooooooooooo#1_log""
-PL/pgSQL function emaj._create_tbl(text,text,text,integer,text,text,bigint,boolean,boolean) line 68 at EXECUTE
+PL/pgSQL function emaj._create_tbl(text,text,text,integer,text,text,bigint,boolean,boolean) line 67 at EXECUTE
 SQL statement "SELECT emaj._create_tbl(v_schema, v_table, v_group, v_priority, v_logDatTsp, v_logIdxTsp,
                              v_timeId, v_groupIsRollbackable, v_groupIsLogging)"
-PL/pgSQL function emaj._add_tbl(text,text,text,integer,text,text,boolean,bigint,text) line 19 at PERFORM
+PL/pgSQL function emaj._add_tbl(text,text,text,integer,text,text,boolean,bigint,text) line 20 at PERFORM
 SQL statement "SELECT emaj._add_tbl(v_schema, v_oneTable, v_group, v_priority, v_logDatTsp, v_logIdxTsp, v_groupIsLogging,
                               v_timeId, v_function)"
-PL/pgSQL function emaj._assign_tables(text,text[],text,jsonb,text,boolean,boolean) line 237 at PERFORM
+PL/pgSQL function emaj._assign_tables(text,text[],text,jsonb,text,boolean,boolean) line 301 at PERFORM
 PL/pgSQL function emaj.emaj_assign_table(text,text,text,jsonb,text) line 7 at RETURN
 NOTICE:  trigger "emaj_log_trg" for relation "phil's schema3.table_with_very_looooooooooooooooooooooooooooooooooooooong_name" does not exist, skipping
 CONTEXT:  SQL statement "DROP TRIGGER IF EXISTS emaj_log_trg ON "phil's schema3".table_with_very_looooooooooooooooooooooooooooooooooooooong_name"
-PL/pgSQL function emaj._create_log_trigger_tbl(text,text,text,text) line 9 at EXECUTE
+PL/pgSQL function emaj._create_log_trigger_tbl(text,text,text,text) line 8 at EXECUTE
 SQL statement "SELECT emaj._create_log_trigger_tbl(v_fullTableName, v_logTableName, v_sequenceName, v_logFnctName)"
-PL/pgSQL function emaj._create_tbl(text,text,text,integer,text,text,bigint,boolean,boolean) line 114 at PERFORM
+PL/pgSQL function emaj._create_tbl(text,text,text,integer,text,text,bigint,boolean,boolean) line 123 at PERFORM
 SQL statement "SELECT emaj._create_tbl(v_schema, v_table, v_group, v_priority, v_logDatTsp, v_logIdxTsp,
                              v_timeId, v_groupIsRollbackable, v_groupIsLogging)"
-PL/pgSQL function emaj._add_tbl(text,text,text,integer,text,text,boolean,bigint,text) line 19 at PERFORM
+PL/pgSQL function emaj._add_tbl(text,text,text,integer,text,text,boolean,bigint,text) line 20 at PERFORM
 SQL statement "SELECT emaj._add_tbl(v_schema, v_oneTable, v_group, v_priority, v_logDatTsp, v_logIdxTsp, v_groupIsLogging,
                               v_timeId, v_function)"
-PL/pgSQL function emaj._assign_tables(text,text[],text,jsonb,text,boolean,boolean) line 237 at PERFORM
+PL/pgSQL function emaj._assign_tables(text,text[],text,jsonb,text,boolean,boolean) line 301 at PERFORM
 PL/pgSQL function emaj.emaj_assign_table(text,text,text,jsonb,text) line 7 at RETURN
 NOTICE:  trigger "emaj_trunc_trg" for relation "phil's schema3.table_with_very_looooooooooooooooooooooooooooooooooooooong_name" does not exist, skipping
 CONTEXT:  SQL statement "DROP TRIGGER IF EXISTS emaj_trunc_trg ON "phil's schema3".table_with_very_looooooooooooooooooooooooooooooooooooooong_name"
-PL/pgSQL function emaj._create_tbl(text,text,text,integer,text,text,bigint,boolean,boolean) line 122 at EXECUTE
+PL/pgSQL function emaj._create_tbl(text,text,text,integer,text,text,bigint,boolean,boolean) line 131 at EXECUTE
 SQL statement "SELECT emaj._create_tbl(v_schema, v_table, v_group, v_priority, v_logDatTsp, v_logIdxTsp,
                              v_timeId, v_groupIsRollbackable, v_groupIsLogging)"
-PL/pgSQL function emaj._add_tbl(text,text,text,integer,text,text,boolean,bigint,text) line 19 at PERFORM
+PL/pgSQL function emaj._add_tbl(text,text,text,integer,text,text,boolean,bigint,text) line 20 at PERFORM
 SQL statement "SELECT emaj._add_tbl(v_schema, v_oneTable, v_group, v_priority, v_logDatTsp, v_logIdxTsp, v_groupIsLogging,
                               v_timeId, v_function)"
-PL/pgSQL function emaj._assign_tables(text,text[],text,jsonb,text,boolean,boolean) line 237 at PERFORM
+PL/pgSQL function emaj._assign_tables(text,text[],text,jsonb,text,boolean,boolean) line 301 at PERFORM
 PL/pgSQL function emaj.emaj_assign_table(text,text,text,jsonb,text) line 7 at RETURN
  emaj_assign_table 
 -------------------
@@ -1529,11 +1529,11 @@ PL/pgSQL function emaj.emaj_assign_table(text,text,text,jsonb,text) line 7 at RE
 select emaj.emaj_start_group('phil''s group#3",','M1_after_table_rename');
 WARNING:  _check_fk_groups: The foreign key "mytbl2_col21_fkey" on the table "phil's schema3.myTbl2\" references the table "phil's schema3.mytbl4" that is outside the groups (phil's group#3",).
 CONTEXT:  SQL statement "SELECT emaj._check_fk_groups(v_groupNames)"
-PL/pgSQL function emaj._start_groups(text[],text,boolean,boolean) line 27 at PERFORM
+PL/pgSQL function emaj._start_groups(text[],text,boolean,boolean) line 28 at PERFORM
 PL/pgSQL function emaj.emaj_start_group(text,text,boolean) line 12 at RETURN
 WARNING:  _check_fk_groups: The table "phil's schema3.table_with_very_looooooooooooooooooooooooooooooooooooooong_name" is referenced by the foreign key "mytbl4_col44_fkey" on the table "phil's schema3.mytbl4" that is outside the groups (phil's group#3",).
 CONTEXT:  SQL statement "SELECT emaj._check_fk_groups(v_groupNames)"
-PL/pgSQL function emaj._start_groups(text[],text,boolean,boolean) line 27 at PERFORM
+PL/pgSQL function emaj._start_groups(text[],text,boolean,boolean) line 28 at PERFORM
 PL/pgSQL function emaj.emaj_start_group(text,text,boolean) line 12 at RETURN
  emaj_start_group 
 ------------------

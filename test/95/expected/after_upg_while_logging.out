@@ -6,10 +6,11 @@
 -- Step 1 : check the E-Maj installation
 -----------------------------
 select * from emaj.emaj_verify_all();
-  emaj_verify_all  
--------------------
+                                                                                emaj_verify_all                                                                                
+-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+ Warning: In the group "myGroup1", the sequence "myschema1"."myTbl3_col31_seq" is linked to the table "myschema1"."myTbl3" but this table does not belong to any tables group.
  No error detected
-(1 row)
+(2 rows)
 
 select group_name, group_is_rollbackable, group_creation_time_id,
        group_last_alter_time_id, group_is_logging, 
@@ -175,7 +176,7 @@ select * from emaj.emaj_logged_rollback_group('myGroup1','M4',false) order by 1,
 select emaj.emaj_gen_sql_group('myGroup1','M1',NULL,'/dev/null',array['myschema1.mytbl1','myschema1.mytbl2','myschema1.mytbl4']);
 NOTICE:  table "emaj_temp_script" does not exist, skipping
 CONTEXT:  SQL statement "DROP TABLE IF EXISTS emaj_temp_script CASCADE"
-PL/pgSQL function emaj._gen_sql_groups(text[],boolean,text,text,text,text[]) line 84 at SQL statement
+PL/pgSQL function emaj._gen_sql_groups(text[],boolean,text,text,text,text[]) line 91 at SQL statement
 PL/pgSQL function emaj.emaj_gen_sql_group(text,text,text,text,text[]) line 14 at RETURN
  emaj_gen_sql_group 
 --------------------
@@ -185,7 +186,7 @@ PL/pgSQL function emaj.emaj_gen_sql_group(text,text,text,text,text[]) line 14 at
 select emaj.emaj_gen_sql_group('myGroup1','M1',NULL,'/dev/null',array['myschema1.myTbl3']);
 NOTICE:  table "emaj_temp_script" does not exist, skipping
 CONTEXT:  SQL statement "DROP TABLE IF EXISTS emaj_temp_script CASCADE"
-PL/pgSQL function emaj._gen_sql_groups(text[],boolean,text,text,text,text[]) line 84 at SQL statement
+PL/pgSQL function emaj._gen_sql_groups(text[],boolean,text,text,text,text[]) line 91 at SQL statement
 PL/pgSQL function emaj.emaj_gen_sql_group(text,text,text,text,text[]) line 14 at RETURN
  emaj_gen_sql_group 
 --------------------

@@ -15,6 +15,7 @@ E-Maj - Change log
   * A fourth parameter in the emaj_import_groups_configuration() functions
     allows to specify a non default mark name when in LOGGING state groups
     are imported.
+  * Coding style improvements.
 
 ###Bug fixes:###
 

@@ -53,11 +53,27 @@ use warnings; use strict;
     }
 # Comment the test on the SUPERUSER role
     if ($status == 4) {
-      if ($line =~ /^  (  PERFORM 0 FROM pg_catalog.pg_roles WHERE rolname = current_user AND rolsuper;)/) {
+      if ($line =~ /^  (  IF NOT EXISTS)/) {
         print FICOT "--$1\n";
         next;
       }
-      if ($line =~ /^  (  IF NOT FOUND THEN)/) {
+      if ($line =~ /^  (      \(SELECT 0)/) {
+        print FICOT "--$1\n";
+        next;
+      }
+      if ($line =~ /^  (         FROM pg_catalog.pg_roles)/) {
+        print FICOT "--$1\n";
+        next;
+      }
+      if ($line =~ /^  (         WHERE rolname = current_user)/) {
+        print FICOT "--$1\n";
+        next;
+      }
+      if ($line =~ /^  (           AND rolsuper)/) {
+        print FICOT "--$1\n";
+        next;
+      }
+      if ($line =~ /^  (      \) THEN)/) {
         print FICOT "--$1\n";
         next;
       }
@@ -110,7 +126,7 @@ use warnings; use strict;
     }
 # Remove the comment setting for internal functions. This curiously fails in Amazon-RDS environment.
     if ($status == 8 && $line =~ /^-- Set comments for all internal functions,/) {
-      for (my $i = 0; $i <= 15; $i++) { $line = <FICIN>; }
+      for (my $i = 0; $i <= 22; $i++) { $line = <FICIN>; }
       $status++;
 	}
 

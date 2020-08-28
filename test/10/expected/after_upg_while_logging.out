@@ -6,10 +6,11 @@
 -- Step 1 : check the E-Maj installation
 -----------------------------
 select * from emaj.emaj_verify_all();
-  emaj_verify_all  
--------------------
+                                                                                emaj_verify_all                                                                                
+-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+ Warning: In the group "myGroup1", the sequence "myschema1"."myTbl3_col31_seq" is linked to the table "myschema1"."myTbl3" but this table does not belong to any tables group.
  No error detected
-(1 row)
+(2 rows)
 
 select group_name, group_is_rollbackable, group_creation_time_id,
        group_last_alter_time_id, group_is_logging, 
@@ -28,7 +29,7 @@ select group_name, group_is_rollbackable, group_creation_time_id,
 -----------------------------
 select * from emaj.emaj_rollback_groups('{"myGroup1","myGroup2"}','Common',false) order by 1,2;
 ERROR:  _check_group_names: The group "myGroup1" is currently protected against rollback operations.
-CONTEXT:  PL/pgSQL function emaj._check_group_names(text[],boolean,boolean,text) line 83 at RAISE
+CONTEXT:  PL/pgSQL function emaj._check_group_names(text[],boolean,boolean,text) line 100 at RAISE
 SQL statement "SELECT emaj._check_group_names(v_groupNames := v_groupNames, v_mayBeNull := FALSE, v_lockGroups := TRUE,
                                      v_checkList := 'LOGGING,ROLLBACKABLE,UNPROTECTED')"
 PL/pgSQL function emaj._rlbk_check(text[],text,boolean,boolean) line 16 at SQL statement
@@ -61,7 +62,7 @@ update "myTbl3" set col33 = col33 / 2;
 --
 select * from emaj.emaj_rollback_group('myGroup1','M2',false) order by 1,2;
 ERROR:  _rlbk_check: Protected marks (M3) for the group "myGroup1" block the rollback to the mark "M2".
-CONTEXT:  PL/pgSQL function emaj._rlbk_check(text[],text,boolean,boolean) line 34 at RAISE
+CONTEXT:  PL/pgSQL function emaj._rlbk_check(text[],text,boolean,boolean) line 41 at RAISE
 SQL statement "SELECT emaj._rlbk_check(v_groupNames, v_mark, v_isAlterGroupAllowed, FALSE)"
 PL/pgSQL function emaj._rlbk_init(text[],text,boolean,integer,boolean,boolean) line 23 at SQL statement
 SQL statement "SELECT emaj._rlbk_init(v_groupNames, v_mark, v_isLoggedRlbk, 1, v_multiGroup, v_isAlterGroupAllowed)"

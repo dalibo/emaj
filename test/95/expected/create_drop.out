@@ -121,7 +121,7 @@ select group_name, group_comment from emaj.emaj_group where group_name = 'myGrou
 select emaj.emaj_assign_table('myschema1','mytbl1','dummyGroup');
 ERROR:  _check_group_names: The group "dummyGroup" does not exist.
 CONTEXT:  SQL statement "SELECT emaj._check_group_names(v_groupNames := ARRAY[v_group], v_mayBeNull := FALSE, v_lockGroups := TRUE, v_checkList := '')"
-PL/pgSQL function emaj._assign_tables(text,text[],text,jsonb,text,boolean,boolean) line 34 at PERFORM
+PL/pgSQL function emaj._assign_tables(text,text[],text,jsonb,text,boolean,boolean) line 33 at PERFORM
 PL/pgSQL function emaj.emaj_assign_table(text,text,text,jsonb,text) line 7 at RETURN
 -- bad schema
 select emaj.emaj_assign_table('dummySchema','mytbl1','myGroup1');
@@ -184,7 +184,7 @@ CONTEXT:  PL/pgSQL function emaj.emaj_assign_table(text,text,text,jsonb,text) li
 select emaj.emaj_assign_table('myschema1','mytbl1','myGroup1',null,'EMAJ_LAST_MARK');
 ERROR:  _check_new_mark: "EMAJ_LAST_MARK" is not an allowed name for a new mark.
 CONTEXT:  SQL statement "SELECT emaj._check_new_mark(array[v_group], v_mark)"
-PL/pgSQL function emaj._assign_tables(text,text[],text,jsonb,text,boolean,boolean) line 195 at SQL statement
+PL/pgSQL function emaj._assign_tables(text,text[],text,jsonb,text,boolean,boolean) line 252 at SQL statement
 PL/pgSQL function emaj.emaj_assign_table(text,text,text,jsonb,text) line 7 at RETURN
 -- erroneously existing log schema
 begin;
@@ -201,13 +201,13 @@ ERROR:  syntax error at or near "dummmy"
 LINE 1: ALTER TABLE emaj_myschema1.mytbl1_log dummmy content
                                               ^
 QUERY:  ALTER TABLE emaj_myschema1.mytbl1_log dummmy content
-CONTEXT:  PL/pgSQL function emaj._create_tbl(text,text,text,integer,text,text,bigint,boolean,boolean) line 89 at EXECUTE
+CONTEXT:  PL/pgSQL function emaj._create_tbl(text,text,text,integer,text,text,bigint,boolean,boolean) line 91 at EXECUTE
 SQL statement "SELECT emaj._create_tbl(v_schema, v_table, v_group, v_priority, v_logDatTsp, v_logIdxTsp,
                              v_timeId, v_groupIsRollbackable, v_groupIsLogging)"
-PL/pgSQL function emaj._add_tbl(text,text,text,integer,text,text,boolean,bigint,text) line 19 at PERFORM
+PL/pgSQL function emaj._add_tbl(text,text,text,integer,text,text,boolean,bigint,text) line 20 at PERFORM
 SQL statement "SELECT emaj._add_tbl(v_schema, v_oneTable, v_group, v_priority, v_logDatTsp, v_logIdxTsp, v_groupIsLogging,
                               v_timeId, v_function)"
-PL/pgSQL function emaj._assign_tables(text,text[],text,jsonb,text,boolean,boolean) line 237 at PERFORM
+PL/pgSQL function emaj._assign_tables(text,text[],text,jsonb,text,boolean,boolean) line 301 at PERFORM
 PL/pgSQL function emaj.emaj_assign_table(text,text,text,jsonb,text) line 7 at RETURN
 rollback;
 -- attempting to assign emaj objects: referencing an emaj schema
@@ -228,10 +228,10 @@ select emaj.emaj_assign_table('myschema1','mytbl2','myGroup1','{"log_data_tables
 WARNING:  _create_tbl: The table "myschema1.mytbl2" has triggers (mytbl2trg1, mytbl2trg2). They will be automatically disabled during E-Maj rollback operations, unless they have been recorded into the list of triggers that may be kept enabled, with the emaj_ignore_app_trigger() function.
 CONTEXT:  SQL statement "SELECT emaj._create_tbl(v_schema, v_table, v_group, v_priority, v_logDatTsp, v_logIdxTsp,
                              v_timeId, v_groupIsRollbackable, v_groupIsLogging)"
-PL/pgSQL function emaj._add_tbl(text,text,text,integer,text,text,boolean,bigint,text) line 19 at PERFORM
+PL/pgSQL function emaj._add_tbl(text,text,text,integer,text,text,boolean,bigint,text) line 20 at PERFORM
 SQL statement "SELECT emaj._add_tbl(v_schema, v_oneTable, v_group, v_priority, v_logDatTsp, v_logIdxTsp, v_groupIsLogging,
                               v_timeId, v_function)"
-PL/pgSQL function emaj._assign_tables(text,text[],text,jsonb,text,boolean,boolean) line 237 at PERFORM
+PL/pgSQL function emaj._assign_tables(text,text[],text,jsonb,text,boolean,boolean) line 301 at PERFORM
 PL/pgSQL function emaj.emaj_assign_table(text,text,text,jsonb,text) line 7 at RETURN
  emaj_assign_table 
 -------------------
@@ -268,7 +268,7 @@ CONTEXT:  PL/pgSQL function emaj.emaj_assign_table(text,text,text,jsonb,text) li
 select emaj.emaj_assign_tables('dummySchema',array['dummyTable'],'dummyGroup');
 ERROR:  _check_group_names: The group "dummyGroup" does not exist.
 CONTEXT:  SQL statement "SELECT emaj._check_group_names(v_groupNames := ARRAY[v_group], v_mayBeNull := FALSE, v_lockGroups := TRUE, v_checkList := '')"
-PL/pgSQL function emaj._assign_tables(text,text[],text,jsonb,text,boolean,boolean) line 34 at PERFORM
+PL/pgSQL function emaj._assign_tables(text,text[],text,jsonb,text,boolean,boolean) line 33 at PERFORM
 PL/pgSQL function emaj.emaj_assign_tables(text,text[],text,jsonb,text) line 7 at RETURN
 -- bad tables
 select emaj.emaj_assign_tables('myschema1',array['dummytbl1','dummytbl2'],'phil''s group#3",');
@@ -314,19 +314,19 @@ select emaj.emaj_assign_tables('phil''s schema3',array['phil''s tbl1',E'myTbl2\\
 select emaj.emaj_assign_tables('dummySchema','dummyIncludeFilter','dummyExcludeFilter','dummyGroup');
 ERROR:  _check_group_names: The group "dummyGroup" does not exist.
 CONTEXT:  SQL statement "SELECT emaj._check_group_names(v_groupNames := ARRAY[v_group], v_mayBeNull := FALSE, v_lockGroups := TRUE, v_checkList := '')"
-PL/pgSQL function emaj._assign_tables(text,text[],text,jsonb,text,boolean,boolean) line 34 at PERFORM
-PL/pgSQL function emaj.emaj_assign_tables(text,text,text,text,jsonb,text) line 23 at RETURN
+PL/pgSQL function emaj._assign_tables(text,text[],text,jsonb,text,boolean,boolean) line 33 at PERFORM
+PL/pgSQL function emaj.emaj_assign_tables(text,text,text,text,jsonb,text) line 26 at RETURN
 -- bad schema
 select emaj.emaj_assign_tables('dummySchema','dummyIncludeFilter','dummyExcludeFilter','myGroup2');
 ERROR:  _assign_tables: The schema "dummySchema" does not exist.
-CONTEXT:  PL/pgSQL function emaj.emaj_assign_tables(text,text,text,text,jsonb,text) line 23 at RETURN
+CONTEXT:  PL/pgSQL function emaj.emaj_assign_tables(text,text,text,text,jsonb,text) line 26 at RETURN
 select emaj.emaj_assign_tables('emaj','dummyIncludeFilter','dummyExcludeFilter','myGroup2');
 ERROR:  _assign_tables: The schema "emaj" is an E-Maj schema.
-CONTEXT:  PL/pgSQL function emaj.emaj_assign_tables(text,text,text,text,jsonb,text) line 23 at RETURN
+CONTEXT:  PL/pgSQL function emaj.emaj_assign_tables(text,text,text,text,jsonb,text) line 26 at RETURN
 -- empty tables array
 select emaj.emaj_assign_tables('myschema2',null,null,'myGroup2');
 WARNING:  _assign_tables: No table to process.
-CONTEXT:  PL/pgSQL function emaj.emaj_assign_tables(text,text,text,text,jsonb,text) line 23 at RETURN
+CONTEXT:  PL/pgSQL function emaj.emaj_assign_tables(text,text,text,text,jsonb,text) line 26 at RETURN
  emaj_assign_tables 
 --------------------
                   0
@@ -334,7 +334,7 @@ CONTEXT:  PL/pgSQL function emaj.emaj_assign_tables(text,text,text,text,jsonb,te
 
 select emaj.emaj_assign_tables('myschema2','','','myGroup2');
 WARNING:  _assign_tables: No table to process.
-CONTEXT:  PL/pgSQL function emaj.emaj_assign_tables(text,text,text,text,jsonb,text) line 23 at RETURN
+CONTEXT:  PL/pgSQL function emaj.emaj_assign_tables(text,text,text,text,jsonb,text) line 26 at RETURN
  emaj_assign_tables 
 --------------------
                   0
@@ -342,7 +342,7 @@ CONTEXT:  PL/pgSQL function emaj.emaj_assign_tables(text,text,text,text,jsonb,te
 
 select emaj.emaj_assign_tables('myschema2','mytbl1','mytbl1','myGroup2');
 WARNING:  _assign_tables: No table to process.
-CONTEXT:  PL/pgSQL function emaj.emaj_assign_tables(text,text,text,text,jsonb,text) line 23 at RETURN
+CONTEXT:  PL/pgSQL function emaj.emaj_assign_tables(text,text,text,text,jsonb,text) line 26 at RETURN
  emaj_assign_tables 
 --------------------
                   0
@@ -352,9 +352,9 @@ CONTEXT:  PL/pgSQL function emaj.emaj_assign_tables(text,text,text,text,jsonb,te
 -- bad types
 select emaj.emaj_assign_tables('myschema4','mytblp$','','myGroup2');
 WARNING:  _assign_tables: Some tables without PRIMARY KEY (mytblp) are not selected.
-CONTEXT:  PL/pgSQL function emaj.emaj_assign_tables(text,text,text,text,jsonb,text) line 23 at RETURN
+CONTEXT:  PL/pgSQL function emaj.emaj_assign_tables(text,text,text,text,jsonb,text) line 26 at RETURN
 WARNING:  _assign_tables: No table to process.
-CONTEXT:  PL/pgSQL function emaj.emaj_assign_tables(text,text,text,text,jsonb,text) line 23 at RETURN
+CONTEXT:  PL/pgSQL function emaj.emaj_assign_tables(text,text,text,text,jsonb,text) line 26 at RETURN
  emaj_assign_tables 
 --------------------
                   0
@@ -362,11 +362,11 @@ CONTEXT:  PL/pgSQL function emaj.emaj_assign_tables(text,text,text,text,jsonb,te
 
 select emaj.emaj_assign_tables('myschema5','unlogged|oids','','myGroup2');
 WARNING:  _assign_tables: Some UNLOGGED tables (myunloggedtbl) are not selected.
-CONTEXT:  PL/pgSQL function emaj.emaj_assign_tables(text,text,text,text,jsonb,text) line 23 at RETURN
+CONTEXT:  PL/pgSQL function emaj.emaj_assign_tables(text,text,text,text,jsonb,text) line 26 at RETURN
 WARNING:  _assign_tables: Some WITH OIDS tables (myoidstbl) are not selected.
-CONTEXT:  PL/pgSQL function emaj.emaj_assign_tables(text,text,text,text,jsonb,text) line 23 at RETURN
+CONTEXT:  PL/pgSQL function emaj.emaj_assign_tables(text,text,text,text,jsonb,text) line 26 at RETURN
 WARNING:  _assign_tables: No table to process.
-CONTEXT:  PL/pgSQL function emaj.emaj_assign_tables(text,text,text,text,jsonb,text) line 23 at RETURN
+CONTEXT:  PL/pgSQL function emaj.emaj_assign_tables(text,text,text,text,jsonb,text) line 26 at RETURN
  emaj_assign_tables 
 --------------------
                   0
@@ -385,9 +385,9 @@ begin;
   select emaj.emaj_assign_tables(nspname,'mytemptbl','','myGroup2') from pg_class, pg_namespace
     where relnamespace = pg_namespace.oid and relname = 'mytemptbl';
 WARNING:  _assign_tables: Some TEMP tables (mytemptbl) are not selected.
-CONTEXT:  PL/pgSQL function emaj.emaj_assign_tables(text,text,text,text,jsonb,text) line 23 at RETURN
+CONTEXT:  PL/pgSQL function emaj.emaj_assign_tables(text,text,text,text,jsonb,text) line 26 at RETURN
 WARNING:  _assign_tables: No table to process.
-CONTEXT:  PL/pgSQL function emaj.emaj_assign_tables(text,text,text,text,jsonb,text) line 23 at RETURN
+CONTEXT:  PL/pgSQL function emaj.emaj_assign_tables(text,text,text,text,jsonb,text) line 26 at RETURN
  emaj_assign_tables 
 --------------------
                   0
@@ -397,9 +397,9 @@ rollback;
 -- table without pkey for a rollbackable group
 select emaj.emaj_assign_tables('phil''s schema3','myTbl2\\','','myGroup2');
 WARNING:  _assign_tables: Some tables without PRIMARY KEY ("myTbl2\") are not selected.
-CONTEXT:  PL/pgSQL function emaj.emaj_assign_tables(text,text,text,text,jsonb,text) line 23 at RETURN
+CONTEXT:  PL/pgSQL function emaj.emaj_assign_tables(text,text,text,text,jsonb,text) line 26 at RETURN
 WARNING:  _assign_tables: No table to process.
-CONTEXT:  PL/pgSQL function emaj.emaj_assign_tables(text,text,text,text,jsonb,text) line 23 at RETURN
+CONTEXT:  PL/pgSQL function emaj.emaj_assign_tables(text,text,text,text,jsonb,text) line 26 at RETURN
  emaj_assign_tables 
 --------------------
                   0
@@ -427,9 +427,9 @@ select emaj.emaj_assign_tables('myschema2','mytbl(5|6)$','','myGroup2');
 -- already assigned
 select emaj.emaj_assign_tables('myschema2','mytbl(5|6)$','','myGroup2');
 WARNING:  _assign_tables: Some tables already belonging to a group (mytbl5, mytbl6) are not selected.
-CONTEXT:  PL/pgSQL function emaj.emaj_assign_tables(text,text,text,text,jsonb,text) line 23 at RETURN
+CONTEXT:  PL/pgSQL function emaj.emaj_assign_tables(text,text,text,text,jsonb,text) line 26 at RETURN
 WARNING:  _assign_tables: No table to process.
-CONTEXT:  PL/pgSQL function emaj.emaj_assign_tables(text,text,text,text,jsonb,text) line 23 at RETURN
+CONTEXT:  PL/pgSQL function emaj.emaj_assign_tables(text,text,text,text,jsonb,text) line 26 at RETURN
  emaj_assign_tables 
 --------------------
                   0
@@ -438,15 +438,15 @@ CONTEXT:  PL/pgSQL function emaj.emaj_assign_tables(text,text,text,text,jsonb,te
 -- assign partitions
 select emaj.emaj_assign_tables('myschema4','.*',null,'myGroup4');
 WARNING:  _assign_tables: Some tables without PRIMARY KEY (mytblp) are not selected.
-CONTEXT:  PL/pgSQL function emaj.emaj_assign_tables(text,text,text,text,jsonb,text) line 23 at RETURN
+CONTEXT:  PL/pgSQL function emaj.emaj_assign_tables(text,text,text,text,jsonb,text) line 26 at RETURN
 WARNING:  _create_tbl: The table "myschema4.mytblm" has triggers (mytblm_insert_trigger). They will be automatically disabled during E-Maj rollback operations, unless they have been recorded into the list of triggers that may be kept enabled, with the emaj_ignore_app_trigger() function.
 CONTEXT:  SQL statement "SELECT emaj._create_tbl(v_schema, v_table, v_group, v_priority, v_logDatTsp, v_logIdxTsp,
                              v_timeId, v_groupIsRollbackable, v_groupIsLogging)"
-PL/pgSQL function emaj._add_tbl(text,text,text,integer,text,text,boolean,bigint,text) line 19 at PERFORM
+PL/pgSQL function emaj._add_tbl(text,text,text,integer,text,text,boolean,bigint,text) line 20 at PERFORM
 SQL statement "SELECT emaj._add_tbl(v_schema, v_oneTable, v_group, v_priority, v_logDatTsp, v_logIdxTsp, v_groupIsLogging,
                               v_timeId, v_function)"
-PL/pgSQL function emaj._assign_tables(text,text[],text,jsonb,text,boolean,boolean) line 237 at PERFORM
-PL/pgSQL function emaj.emaj_assign_tables(text,text,text,text,jsonb,text) line 23 at RETURN
+PL/pgSQL function emaj._assign_tables(text,text[],text,jsonb,text,boolean,boolean) line 301 at PERFORM
+PL/pgSQL function emaj.emaj_assign_tables(text,text,text,text,jsonb,text) line 26 at RETURN
  emaj_assign_tables 
 --------------------
                   5
@@ -491,7 +491,7 @@ CONTEXT:  PL/pgSQL function emaj.emaj_assign_sequence(text,text,text,text) line 
 select emaj.emaj_assign_sequence('myschema2','myseq1','myGroup2','EMAJ_LAST_MARK');
 ERROR:  _check_new_mark: "EMAJ_LAST_MARK" is not an allowed name for a new mark.
 CONTEXT:  SQL statement "SELECT emaj._check_new_mark(array[v_group], v_mark)"
-PL/pgSQL function emaj._assign_sequences(text,text[],text,text,boolean,boolean) line 74 at SQL statement
+PL/pgSQL function emaj._assign_sequences(text,text[],text,text,boolean,boolean) line 89 at SQL statement
 PL/pgSQL function emaj.emaj_assign_sequence(text,text,text,text) line 6 at RETURN
 -- ok
 select emaj.emaj_assign_sequence('myschema2','myseq1','myGroup2');
@@ -566,18 +566,18 @@ select emaj.emaj_assign_sequences('dummySchema','dummyIncludeFilter','dummyExclu
 ERROR:  _check_group_names: The group "dummyGroup" does not exist.
 CONTEXT:  SQL statement "SELECT emaj._check_group_names(v_groupNames := ARRAY[v_group], v_mayBeNull := FALSE, v_lockGroups := TRUE, v_checkList := '')"
 PL/pgSQL function emaj._assign_sequences(text,text[],text,text,boolean,boolean) line 24 at PERFORM
-PL/pgSQL function emaj.emaj_assign_sequences(text,text,text,text,text) line 23 at RETURN
+PL/pgSQL function emaj.emaj_assign_sequences(text,text,text,text,text) line 26 at RETURN
 -- bad schema
 select emaj.emaj_assign_sequences('dummySchema','dummyIncludeFilter','dummyExcludeFilter','myGroup1');
 ERROR:  _assign_sequences: The schema "dummySchema" does not exist.
-CONTEXT:  PL/pgSQL function emaj.emaj_assign_sequences(text,text,text,text,text) line 23 at RETURN
+CONTEXT:  PL/pgSQL function emaj.emaj_assign_sequences(text,text,text,text,text) line 26 at RETURN
 select emaj.emaj_assign_sequences('emaj','dummyIncludeFilter','dummyExcludeFilter','myGroup1');
 ERROR:  _assign_sequences: The schema "emaj" is an E-Maj schema.
-CONTEXT:  PL/pgSQL function emaj.emaj_assign_sequences(text,text,text,text,text) line 23 at RETURN
+CONTEXT:  PL/pgSQL function emaj.emaj_assign_sequences(text,text,text,text,text) line 26 at RETURN
 -- empty sequences array
 select emaj.emaj_assign_sequences('myschema1',null,null,'myGroup1');
 WARNING:  _assign_sequences: No sequence to process.
-CONTEXT:  PL/pgSQL function emaj.emaj_assign_sequences(text,text,text,text,text) line 23 at RETURN
+CONTEXT:  PL/pgSQL function emaj.emaj_assign_sequences(text,text,text,text,text) line 26 at RETURN
  emaj_assign_sequences 
 -----------------------
                      0
@@ -585,7 +585,7 @@ CONTEXT:  PL/pgSQL function emaj.emaj_assign_sequences(text,text,text,text,text)
 
 select emaj.emaj_assign_sequences('myschema1','','','myGroup1');
 WARNING:  _assign_sequences: No sequence to process.
-CONTEXT:  PL/pgSQL function emaj.emaj_assign_sequences(text,text,text,text,text) line 23 at RETURN
+CONTEXT:  PL/pgSQL function emaj.emaj_assign_sequences(text,text,text,text,text) line 26 at RETURN
  emaj_assign_sequences 
 -----------------------
                      0
@@ -593,7 +593,7 @@ CONTEXT:  PL/pgSQL function emaj.emaj_assign_sequences(text,text,text,text,text)
 
 select emaj.emaj_assign_sequences('myschema1','myTbl3_col31_seq','myTbl3_col31_seq','myGroup1');
 WARNING:  _assign_sequences: No sequence to process.
-CONTEXT:  PL/pgSQL function emaj.emaj_assign_sequences(text,text,text,text,text) line 23 at RETURN
+CONTEXT:  PL/pgSQL function emaj.emaj_assign_sequences(text,text,text,text,text) line 26 at RETURN
  emaj_assign_sequences 
 -----------------------
                      0
@@ -602,9 +602,9 @@ CONTEXT:  PL/pgSQL function emaj.emaj_assign_sequences(text,text,text,text,text)
 -- already assigned
 select emaj.emaj_assign_sequences('myschema2','myseq1.*','','myGroup2');
 WARNING:  _assign_sequences: Some sequences already belonging to a group (myseq1) are not selected.
-CONTEXT:  PL/pgSQL function emaj.emaj_assign_sequences(text,text,text,text,text) line 23 at RETURN
+CONTEXT:  PL/pgSQL function emaj.emaj_assign_sequences(text,text,text,text,text) line 26 at RETURN
 WARNING:  _assign_sequences: No sequence to process.
-CONTEXT:  PL/pgSQL function emaj.emaj_assign_sequences(text,text,text,text,text) line 23 at RETURN
+CONTEXT:  PL/pgSQL function emaj.emaj_assign_sequences(text,text,text,text,text) line 26 at RETURN
  emaj_assign_sequences 
 -----------------------
                      0
@@ -936,10 +936,10 @@ PL/pgSQL function emaj.emaj_import_groups_configuration(json,text[],boolean,text
 select emaj.emaj_import_groups_configuration(:'EMAJTESTTMPDIR' || '/orig_groups_config_all.json', array['myGroup1','myGroup2','unknownGroup']);
 WARNING:  _import_groups_conf (2): The tables group "unknownGroup" to import is not referenced in the JSON structure.
 CONTEXT:  SQL statement "SELECT emaj._import_groups_conf(v_json, v_groups, v_allowGroupsUpdate, v_location, v_mark)"
-PL/pgSQL function emaj.emaj_import_groups_configuration(text,text[],boolean,text) line 33 at SQL statement
+PL/pgSQL function emaj.emaj_import_groups_configuration(text,text[],boolean,text) line 34 at SQL statement
 ERROR:  _import_groups_conf: One or several errors have been detected in the JSON groups configuration.
 CONTEXT:  SQL statement "SELECT emaj._import_groups_conf(v_json, v_groups, v_allowGroupsUpdate, v_location, v_mark)"
-PL/pgSQL function emaj.emaj_import_groups_configuration(text,text[],boolean,text) line 33 at SQL statement
+PL/pgSQL function emaj.emaj_import_groups_configuration(text,text[],boolean,text) line 34 at SQL statement
 --   group already created
 select emaj.emaj_import_groups_configuration('{ "tables_groups": [ { "group": "myGroup1" }, { "group": "myGroup2" } ] }'::json, null, false);
 WARNING:  _import_groups_conf (2): The tables group "myGroup1" already exists.
@@ -1090,13 +1090,13 @@ select emaj.emaj_import_groups_configuration(:'EMAJTESTTMPDIR' || '/modified_gro
 select emaj.emaj_import_groups_configuration(:'EMAJTESTTMPDIR' || '/modified_groups_config_2.json', null, true);
 WARNING:  _import_groups_conf (2): In the group "myGroup1" and for the table myschema1.mytbl2, the trigger unknowntrigger does not exist.
 CONTEXT:  SQL statement "SELECT emaj._import_groups_conf(v_json, v_groups, v_allowGroupsUpdate, v_location, v_mark)"
-PL/pgSQL function emaj.emaj_import_groups_configuration(text,text[],boolean,text) line 33 at SQL statement
+PL/pgSQL function emaj.emaj_import_groups_configuration(text,text[],boolean,text) line 34 at SQL statement
 WARNING:  _import_groups_conf (2): In the group "myGroup1" and for the table myschema1.mytbl2, the trigger emaj_trunc_trg is an E-Maj trigger.
 CONTEXT:  SQL statement "SELECT emaj._import_groups_conf(v_json, v_groups, v_allowGroupsUpdate, v_location, v_mark)"
-PL/pgSQL function emaj.emaj_import_groups_configuration(text,text[],boolean,text) line 33 at SQL statement
+PL/pgSQL function emaj.emaj_import_groups_configuration(text,text[],boolean,text) line 34 at SQL statement
 ERROR:  _import_groups_conf: One or several errors have been detected in the JSON groups configuration.
 CONTEXT:  SQL statement "SELECT emaj._import_groups_conf(v_json, v_groups, v_allowGroupsUpdate, v_location, v_mark)"
-PL/pgSQL function emaj.emaj_import_groups_configuration(text,text[],boolean,text) line 33 at SQL statement
+PL/pgSQL function emaj.emaj_import_groups_configuration(text,text[],boolean,text) line 34 at SQL statement
 -- suppress 1 trigger
 \! sed -n -e '1,29p' $EMAJTESTTMPDIR/modified_groups_config_1.json >$EMAJTESTTMPDIR/modified_groups_config_3.json
 \! sed -n -e '33,$p' $EMAJTESTTMPDIR/modified_groups_config_1.json >>$EMAJTESTTMPDIR/modified_groups_config_3.json
@@ -1124,12 +1124,12 @@ begin;
   select emaj.emaj_import_groups_configuration(:'EMAJTESTTMPDIR' || '/orig_groups_config_all.json', null, true);
 ERROR:  _create_log_schemas: The schema "emaj_myschema1" should not exist. Drop it manually.
 CONTEXT:  SQL statement "SELECT emaj._create_log_schemas(v_callingFunction)"
-PL/pgSQL function emaj._alter_groups(text[],boolean,text,text,bigint) line 45 at PERFORM
+PL/pgSQL function emaj._alter_groups(text[],boolean,text,text,bigint) line 47 at PERFORM
 SQL statement "SELECT v_nbRel FROM emaj._alter_groups(v_groups, TRUE, v_mark, 'IMPORT_GROUPS', v_timeId)"
-PL/pgSQL function emaj._import_groups_conf_exec(json,text[],text) line 55 at PERFORM
-PL/pgSQL function emaj._import_groups_conf(json,text[],boolean,text,text) line 79 at RETURN
+PL/pgSQL function emaj._import_groups_conf_exec(json,text[],text) line 57 at PERFORM
+PL/pgSQL function emaj._import_groups_conf(json,text[],boolean,text,text) line 81 at RETURN
 SQL statement "SELECT emaj._import_groups_conf(v_json, v_groups, v_allowGroupsUpdate, v_location, v_mark)"
-PL/pgSQL function emaj.emaj_import_groups_configuration(text,text[],boolean,text) line 33 at SQL statement
+PL/pgSQL function emaj.emaj_import_groups_configuration(text,text[],boolean,text) line 34 at SQL statement
 rollback;
 -- rebuild all original groups
 -- this will assign the just removed table ans sequence
@@ -1137,19 +1137,21 @@ select emaj.emaj_import_groups_configuration(:'EMAJTESTTMPDIR' || '/orig_groups_
 WARNING:  _create_tbl: The table "myschema1.mytbl2" has triggers (mytbl2trg1, mytbl2trg2). They will be automatically disabled during E-Maj rollback operations, unless they have been recorded into the list of triggers that may be kept enabled, with the emaj_ignore_app_trigger() function.
 CONTEXT:  SQL statement "SELECT emaj._create_tbl(v_schema, v_table, v_group, v_priority, v_logDatTsp, v_logIdxTsp,
                              v_timeId, v_groupIsRollbackable, v_groupIsLogging)"
-PL/pgSQL function emaj._add_tbl(text,text,text,integer,text,text,boolean,bigint,text) line 19 at PERFORM
+PL/pgSQL function emaj._add_tbl(text,text,text,integer,text,text,boolean,bigint,text) line 20 at PERFORM
 SQL statement "SELECT emaj._add_tbl(r_plan.altr_schema, r_plan.altr_tblseq, r_plan.altr_group, tmp_priority, tmp_log_dat_tsp,
                                 tmp_log_idx_tsp, r_plan.altr_group_is_logging, v_timeId, v_callingFunction)
             FROM tmp_app_table
-            WHERE tmp_group = r_plan.altr_group AND tmp_schema = r_plan.altr_schema AND tmp_tbl_name = r_plan.altr_tblseq"
-PL/pgSQL function emaj._alter_exec(bigint,text) line 102 at PERFORM
+            WHERE tmp_group = r_plan.altr_group
+              AND tmp_schema = r_plan.altr_schema
+              AND tmp_tbl_name = r_plan.altr_tblseq"
+PL/pgSQL function emaj._alter_exec(bigint,text) line 120 at PERFORM
 SQL statement "SELECT emaj._alter_exec(v_timeId, v_callingFunction)"
-PL/pgSQL function emaj._alter_groups(text[],boolean,text,text,bigint) line 47 at PERFORM
+PL/pgSQL function emaj._alter_groups(text[],boolean,text,text,bigint) line 49 at PERFORM
 SQL statement "SELECT v_nbRel FROM emaj._alter_groups(v_groups, TRUE, v_mark, 'IMPORT_GROUPS', v_timeId)"
-PL/pgSQL function emaj._import_groups_conf_exec(json,text[],text) line 55 at PERFORM
-PL/pgSQL function emaj._import_groups_conf(json,text[],boolean,text,text) line 79 at RETURN
+PL/pgSQL function emaj._import_groups_conf_exec(json,text[],text) line 57 at PERFORM
+PL/pgSQL function emaj._import_groups_conf(json,text[],boolean,text,text) line 81 at RETURN
 SQL statement "SELECT emaj._import_groups_conf(v_json, v_groups, v_allowGroupsUpdate, v_location, v_mark)"
-PL/pgSQL function emaj.emaj_import_groups_configuration(text,text[],boolean,text) line 33 at SQL statement
+PL/pgSQL function emaj.emaj_import_groups_configuration(text,text[],boolean,text) line 34 at SQL statement
  emaj_import_groups_configuration 
 ----------------------------------
                                 7
@@ -1205,7 +1207,7 @@ CONTEXT:  PL/pgSQL function emaj.emaj_remove_table(text,text,text) line 6 at RET
 select emaj.emaj_remove_table('myschema1','mytbl1','EMAJ_LAST_MARK');
 ERROR:  _check_new_mark: "EMAJ_LAST_MARK" is not an allowed name for a new mark.
 CONTEXT:  SQL statement "SELECT emaj._check_new_mark(v_loggingGroups, v_mark)"
-PL/pgSQL function emaj._remove_tables(text,text[],text,boolean,boolean) line 59 at SQL statement
+PL/pgSQL function emaj._remove_tables(text,text[],text,boolean,boolean) line 71 at SQL statement
 PL/pgSQL function emaj.emaj_remove_table(text,text,text) line 6 at RETURN
 -- ok
 select emaj.emaj_remove_table('myschema1','mytbl1');
@@ -1260,7 +1262,7 @@ select emaj.emaj_remove_tables('myschema1',array['mytbl2','mytbl2b','mytbl2']);
 -- empty tables array
 select emaj.emaj_remove_tables('myschema1',null,null);
 WARNING:  _remove_tables: No table to process.
-CONTEXT:  PL/pgSQL function emaj.emaj_remove_tables(text,text,text,text) line 22 at RETURN
+CONTEXT:  PL/pgSQL function emaj.emaj_remove_tables(text,text,text,text) line 26 at RETURN
  emaj_remove_tables 
 --------------------
                   0
@@ -1268,7 +1270,7 @@ CONTEXT:  PL/pgSQL function emaj.emaj_remove_tables(text,text,text,text) line 22
 
 select emaj.emaj_remove_tables('myschema1','','');
 WARNING:  _remove_tables: No table to process.
-CONTEXT:  PL/pgSQL function emaj.emaj_remove_tables(text,text,text,text) line 22 at RETURN
+CONTEXT:  PL/pgSQL function emaj.emaj_remove_tables(text,text,text,text) line 26 at RETURN
  emaj_remove_tables 
 --------------------
                   0
@@ -1276,7 +1278,7 @@ CONTEXT:  PL/pgSQL function emaj.emaj_remove_tables(text,text,text,text) line 22
 
 select emaj.emaj_remove_tables('myschema1','mytbl1','mytbl1');
 WARNING:  _remove_tables: No table to process.
-CONTEXT:  PL/pgSQL function emaj.emaj_remove_tables(text,text,text,text) line 22 at RETURN
+CONTEXT:  PL/pgSQL function emaj.emaj_remove_tables(text,text,text,text) line 26 at RETURN
  emaj_remove_tables 
 --------------------
                   0
@@ -1310,7 +1312,7 @@ CONTEXT:  PL/pgSQL function emaj.emaj_remove_sequence(text,text,text) line 6 at 
 select emaj.emaj_remove_sequence('myschema2','myseq1','EMAJ_LAST_MARK');
 ERROR:  _check_new_mark: "EMAJ_LAST_MARK" is not an allowed name for a new mark.
 CONTEXT:  SQL statement "SELECT emaj._check_new_mark(v_loggingGroups, v_mark)"
-PL/pgSQL function emaj._remove_sequences(text,text[],text,boolean,boolean) line 56 at SQL statement
+PL/pgSQL function emaj._remove_sequences(text,text[],text,boolean,boolean) line 73 at SQL statement
 PL/pgSQL function emaj.emaj_remove_sequence(text,text,text) line 6 at RETURN
 -- ok
 select emaj.emaj_remove_sequence('myschema2','myseq1');
@@ -1371,7 +1373,7 @@ select emaj.emaj_remove_sequences('myschema2',array['myseq2','myseq2']);
 -- empty tables array
 select emaj.emaj_remove_sequences('myschema2',null,null);
 WARNING:  _remove_sequences: No sequence to process.
-CONTEXT:  PL/pgSQL function emaj.emaj_remove_sequences(text,text,text,text) line 22 at RETURN
+CONTEXT:  PL/pgSQL function emaj.emaj_remove_sequences(text,text,text,text) line 26 at RETURN
  emaj_remove_sequences 
 -----------------------
                      0
@@ -1379,7 +1381,7 @@ CONTEXT:  PL/pgSQL function emaj.emaj_remove_sequences(text,text,text,text) line
 
 select emaj.emaj_remove_sequences('myschema2','','');
 WARNING:  _remove_sequences: No sequence to process.
-CONTEXT:  PL/pgSQL function emaj.emaj_remove_sequences(text,text,text,text) line 22 at RETURN
+CONTEXT:  PL/pgSQL function emaj.emaj_remove_sequences(text,text,text,text) line 26 at RETURN
  emaj_remove_sequences 
 -----------------------
                      0
@@ -1387,7 +1389,7 @@ CONTEXT:  PL/pgSQL function emaj.emaj_remove_sequences(text,text,text,text) line
 
 select emaj.emaj_remove_sequences('myschema2','myseq1','myseq1');
 WARNING:  _remove_sequences: No sequence to process.
-CONTEXT:  PL/pgSQL function emaj.emaj_remove_sequences(text,text,text,text) line 22 at RETURN
+CONTEXT:  PL/pgSQL function emaj.emaj_remove_sequences(text,text,text,text) line 26 at RETURN
  emaj_remove_sequences 
 -----------------------
                      0
@@ -1441,7 +1443,7 @@ begin;
   select emaj.emaj_drop_group('myGroup2');
 ERROR:  _drop_log_schemas: Cannot drop the schema "emaj_myschema2". It probably owns unattended objects. Use the emaj_verify_all() function to get details.
 CONTEXT:  SQL statement "SELECT emaj._drop_log_schemas(CASE WHEN v_isForced THEN 'FORCE_DROP_GROUP' ELSE 'DROP_GROUP' END, v_isForced)"
-PL/pgSQL function emaj._drop_group(text,boolean) line 27 at PERFORM
+PL/pgSQL function emaj._drop_group(text,boolean) line 28 at PERFORM
 SQL statement "SELECT emaj._drop_group(v_groupName, FALSE)"
 PL/pgSQL function emaj.emaj_drop_group(text) line 14 at SQL statement
 rollback;
@@ -1538,7 +1540,7 @@ select emaj.emaj_assign_table('myschema1','mytbl1','myGroup1');
 select emaj.emaj_start_group('myGroup1','');
 WARNING:  _check_fk_groups: The table "myschema1.mytbl1" is referenced by the foreign key "mytbl4_col44_fkey" on the table "myschema1.mytbl4" that is outside the groups (myGroup1).
 CONTEXT:  SQL statement "SELECT emaj._check_fk_groups(v_groupNames)"
-PL/pgSQL function emaj._start_groups(text[],text,boolean,boolean) line 27 at PERFORM
+PL/pgSQL function emaj._start_groups(text[],text,boolean,boolean) line 28 at PERFORM
 PL/pgSQL function emaj.emaj_start_group(text,text,boolean) line 12 at RETURN
  emaj_start_group 
 ------------------

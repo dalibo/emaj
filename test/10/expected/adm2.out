@@ -74,9 +74,9 @@ select emaj.emaj_start_groups(array['myGroup1','myGroup2'],'Multi-1', false);
 WARNING:  _check_fk_groups: The foreign key "mytbl6_col61_fkey" on the table "myschema2.mytbl6" references the table "myschema2.mytbl7" that is outside the groups (myGroup1,myGroup2).
 WARNING:  _check_fk_groups: The table "myschema2.mytbl6" is referenced by the foreign key "mytbl8_col81_fkey" on the table "myschema2.mytbl8" that is outside the groups (myGroup1,myGroup2).
 ERROR:  _check_new_mark: The groups "myGroup1, myGroup2" already contain a mark named "Multi-1".
-CONTEXT:  PL/pgSQL function emaj._check_new_mark(text[],text) line 29 at RAISE
+CONTEXT:  PL/pgSQL function emaj._check_new_mark(text[],text) line 31 at RAISE
 SQL statement "SELECT emaj._check_new_mark(v_groupNames, v_mark)"
-PL/pgSQL function emaj._start_groups(text[],text,boolean,boolean) line 43 at SQL statement
+PL/pgSQL function emaj._start_groups(text[],text,boolean,boolean) line 44 at SQL statement
 PL/pgSQL function emaj.emaj_start_groups(text[],text,boolean) line 11 at RETURN
 -- really start both groups
 select emaj.emaj_start_groups(array['myGroup1','myGroup2'],'Multi-1b', false);
@@ -90,7 +90,7 @@ WARNING:  _check_fk_groups: The table "myschema2.mytbl6" is referenced by the fo
 -- try to rollback several groups to a deleted common mark
 select * from emaj.emaj_rollback_groups(array['myGroup1','myGroup2'],'Multi-1', false);
 ERROR:  _check_mark_name: For the groups "myGroup1, myGroup2", the mark "Multi-1" is DELETED.
-CONTEXT:  PL/pgSQL function emaj._check_mark_name(text[],text,text) line 61 at RAISE
+CONTEXT:  PL/pgSQL function emaj._check_mark_name(text[],text,text) line 84 at RAISE
 SQL statement "SELECT emaj._check_mark_name(v_groupNames := v_groupNames, v_mark := v_mark, v_checkList := 'ACTIVE')"
 PL/pgSQL function emaj._rlbk_check(text[],text,boolean,boolean) line 21 at SQL statement
 SQL statement "SELECT emaj._rlbk_check(v_groupNames, v_mark, v_isAlterGroupAllowed, FALSE)"
@@ -199,7 +199,7 @@ select emaj.emaj_comment_mark_group('myGroup2','M3','This mark is deleted');
 -- try to get a rollback duration estimate on a deleted mark
 select emaj.emaj_estimate_rollback_group('myGroup2','M3',TRUE);
 ERROR:  _check_mark_name: For the group "myGroup2", the mark "M3" is DELETED.
-CONTEXT:  PL/pgSQL function emaj._check_mark_name(text[],text,text) line 58 at RAISE
+CONTEXT:  PL/pgSQL function emaj._check_mark_name(text[],text,text) line 81 at RAISE
 SQL statement "SELECT emaj._check_mark_name(v_groupNames := v_groupNames, v_mark := v_mark, v_checkList := 'ACTIVE')"
 PL/pgSQL function emaj._rlbk_check(text[],text,boolean,boolean) line 21 at SQL statement
 SQL statement "SELECT emaj._rlbk_check(v_groupNames, v_mark, TRUE, TRUE)"
@@ -208,7 +208,7 @@ PL/pgSQL function emaj.emaj_estimate_rollback_group(text,text,boolean) line 7 at
 -- try to rollback on a deleted mark
 select * from emaj.emaj_rollback_group('myGroup2','M3',false) order by 1,2;
 ERROR:  _check_mark_name: For the group "myGroup2", the mark "M3" is DELETED.
-CONTEXT:  PL/pgSQL function emaj._check_mark_name(text[],text,text) line 58 at RAISE
+CONTEXT:  PL/pgSQL function emaj._check_mark_name(text[],text,text) line 81 at RAISE
 SQL statement "SELECT emaj._check_mark_name(v_groupNames := v_groupNames, v_mark := v_mark, v_checkList := 'ACTIVE')"
 PL/pgSQL function emaj._rlbk_check(text[],text,boolean,boolean) line 21 at SQL statement
 SQL statement "SELECT emaj._rlbk_check(v_groupNames, v_mark, v_isAlterGroupAllowed, FALSE)"
@@ -1458,7 +1458,7 @@ select emaj.emaj_protect_group('myGroup2');
 
 select * from emaj.emaj_rollback_group('myGroup2','M3',false) order by 1,2;
 ERROR:  _check_group_names: The group "myGroup2" is currently protected against rollback operations.
-CONTEXT:  PL/pgSQL function emaj._check_group_names(text[],boolean,boolean,text) line 83 at RAISE
+CONTEXT:  PL/pgSQL function emaj._check_group_names(text[],boolean,boolean,text) line 100 at RAISE
 SQL statement "SELECT emaj._check_group_names(v_groupNames := v_groupNames, v_mayBeNull := FALSE, v_lockGroups := TRUE,
                                      v_checkList := 'LOGGING,ROLLBACKABLE,UNPROTECTED')"
 PL/pgSQL function emaj._rlbk_check(text[],text,boolean,boolean) line 16 at SQL statement
@@ -1488,7 +1488,7 @@ select emaj.emaj_protect_mark_group('myGroup1','Mark_to_protect');
 
 select * from emaj.emaj_rollback_group('myGroup1','Multi-1',false) order by 1,2;
 ERROR:  _rlbk_check: Protected marks (Mark_to_protect) for the group "myGroup1" block the rollback to the mark "Multi-1".
-CONTEXT:  PL/pgSQL function emaj._rlbk_check(text[],text,boolean,boolean) line 34 at RAISE
+CONTEXT:  PL/pgSQL function emaj._rlbk_check(text[],text,boolean,boolean) line 41 at RAISE
 SQL statement "SELECT emaj._rlbk_check(v_groupNames, v_mark, v_isAlterGroupAllowed, FALSE)"
 PL/pgSQL function emaj._rlbk_init(text[],text,boolean,integer,boolean,boolean) line 23 at SQL statement
 SQL statement "SELECT emaj._rlbk_init(v_groupNames, v_mark, v_isLoggedRlbk, 1, v_multiGroup, v_isAlterGroupAllowed)"

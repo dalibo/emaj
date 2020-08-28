@@ -451,12 +451,14 @@ begin;
 -- setting a mark or rollbacking fails
     select emaj.emaj_set_mark_group('myGroup2','dummyMark');
 ERROR:  _verify_groups (6): In group "myGroup2", the structure of the application table "myschema2"."mytbl4" is not coherent with its log table ("emaj_myschema2"."mytbl4_log"). You may use "SELECT * FROM emaj.emaj_verify_all()" to look for other issues.
-CONTEXT:  SQL statement "SELECT 0 FROM emaj._verify_groups(array[v_groupName], TRUE)"
+CONTEXT:  SQL statement "SELECT 0
+      FROM emaj._verify_groups(array[v_groupName], TRUE)"
 PL/pgSQL function emaj.emaj_set_mark_group(text,text) line 18 at PERFORM
   rollback to savepoint sp1;
     select * from emaj.emaj_rollback_group('myGroup2','EMAJ_LAST_MARK');
 ERROR:  _verify_groups (6): In group "myGroup2", the structure of the application table "myschema2"."mytbl4" is not coherent with its log table ("emaj_myschema2"."mytbl4_log"). You may use "SELECT * FROM emaj.emaj_verify_all()" to look for other issues.
-CONTEXT:  SQL statement "SELECT 0 FROM emaj._verify_groups(v_groupNames, TRUE)"
+CONTEXT:  SQL statement "SELECT 0
+        FROM emaj._verify_groups(v_groupNames, TRUE)"
 PL/pgSQL function emaj._rlbk_init(text[],text,boolean,integer,boolean,boolean) line 26 at PERFORM
 SQL statement "SELECT emaj._rlbk_init(v_groupNames, v_mark, v_isLoggedRlbk, 1, v_multiGroup, v_isAlterGroupAllowed)"
 PL/pgSQL function emaj._rlbk_groups(text[],text,boolean,boolean,boolean) line 26 at SQL statement
@@ -537,10 +539,10 @@ CONTEXT:  PL/pgSQL function emaj.emaj_stop_group(text,text) line 10 at RETURN
     select emaj.emaj_import_groups_configuration(emaj.emaj_export_groups_configuration(),array['myGroup2'],true);
 ERROR:  alter_exec: Cannot repair the table myschema2.mytbl4. Its group myGroup2 is in LOGGING state.
 CONTEXT:  SQL statement "SELECT emaj._alter_exec(v_timeId, v_callingFunction)"
-PL/pgSQL function emaj._alter_groups(text[],boolean,text,text,bigint) line 47 at PERFORM
+PL/pgSQL function emaj._alter_groups(text[],boolean,text,text,bigint) line 49 at PERFORM
 SQL statement "SELECT v_nbRel FROM emaj._alter_groups(v_groups, TRUE, v_mark, 'IMPORT_GROUPS', v_timeId)"
-PL/pgSQL function emaj._import_groups_conf_exec(json,text[],text) line 55 at PERFORM
-PL/pgSQL function emaj._import_groups_conf(json,text[],boolean,text,text) line 79 at RETURN
+PL/pgSQL function emaj._import_groups_conf_exec(json,text[],text) line 57 at PERFORM
+PL/pgSQL function emaj._import_groups_conf(json,text[],boolean,text,text) line 81 at RETURN
 SQL statement "SELECT emaj._import_groups_conf(v_json, v_groups, v_allowGroupsUpdate, NULL, v_mark)"
 PL/pgSQL function emaj.emaj_import_groups_configuration(json,text[],boolean,text) line 14 at SQL statement
   rollback to savepoint sp1;
@@ -554,11 +556,11 @@ PL/pgSQL function emaj.emaj_import_groups_configuration(json,text[],boolean,text
   select emaj.emaj_assign_table('myschema2','mytbl4','myGroup2');
 WARNING:  _check_fk_groups: The foreign key "mytbl6_col61_fkey" on the table "myschema2.mytbl6" references the table "myschema2.mytbl7" that is outside the groups (myGroup2).
 CONTEXT:  SQL statement "SELECT emaj._check_fk_groups(array[v_group])"
-PL/pgSQL function emaj._assign_tables(text,text[],text,jsonb,text,boolean,boolean) line 254 at PERFORM
+PL/pgSQL function emaj._assign_tables(text,text[],text,jsonb,text,boolean,boolean) line 323 at PERFORM
 PL/pgSQL function emaj.emaj_assign_table(text,text,text,jsonb,text) line 7 at RETURN
 WARNING:  _check_fk_groups: The table "myschema2.mytbl6" is referenced by the foreign key "mytbl8_col81_fkey" on the table "myschema2.mytbl8" that is outside the groups (myGroup2).
 CONTEXT:  SQL statement "SELECT emaj._check_fk_groups(array[v_group])"
-PL/pgSQL function emaj._assign_tables(text,text[],text,jsonb,text,boolean,boolean) line 254 at PERFORM
+PL/pgSQL function emaj._assign_tables(text,text[],text,jsonb,text,boolean,boolean) line 323 at PERFORM
 PL/pgSQL function emaj.emaj_assign_table(text,text,text,jsonb,text) line 7 at RETURN
  emaj_assign_table 
 -------------------
@@ -595,11 +597,11 @@ CONTEXT:  PL/pgSQL function emaj.emaj_stop_group(text,text) line 10 at RETURN
   select emaj.emaj_assign_table('myschema2','mytbl4','myGroup2');
 WARNING:  _check_fk_groups: The foreign key "mytbl6_col61_fkey" on the table "myschema2.mytbl6" references the table "myschema2.mytbl7" that is outside the groups (myGroup2).
 CONTEXT:  SQL statement "SELECT emaj._check_fk_groups(array[v_group])"
-PL/pgSQL function emaj._assign_tables(text,text[],text,jsonb,text,boolean,boolean) line 254 at PERFORM
+PL/pgSQL function emaj._assign_tables(text,text[],text,jsonb,text,boolean,boolean) line 323 at PERFORM
 PL/pgSQL function emaj.emaj_assign_table(text,text,text,jsonb,text) line 7 at RETURN
 WARNING:  _check_fk_groups: The table "myschema2.mytbl6" is referenced by the foreign key "mytbl8_col81_fkey" on the table "myschema2.mytbl8" that is outside the groups (myGroup2).
 CONTEXT:  SQL statement "SELECT emaj._check_fk_groups(array[v_group])"
-PL/pgSQL function emaj._assign_tables(text,text[],text,jsonb,text,boolean,boolean) line 254 at PERFORM
+PL/pgSQL function emaj._assign_tables(text,text[],text,jsonb,text,boolean,boolean) line 323 at PERFORM
 PL/pgSQL function emaj.emaj_assign_table(text,text,text,jsonb,text) line 7 at RETURN
  emaj_assign_table 
 -------------------
@@ -627,24 +629,31 @@ ERROR:  relation "emaj_myschema2.mytbl4_log_seq" does not exist
 LINE 1: ...lled THEN last_value ELSE last_value - 1 END FROM emaj_mysch...
                                                              ^
 QUERY:  SELECT CASE WHEN is_called THEN last_value ELSE last_value - 1 END FROM emaj_myschema2.mytbl4_log_seq
-CONTEXT:  PL/pgSQL function emaj._log_stat_tbl(emaj.emaj_relation,bigint,bigint) line 20 at EXECUTE
-SQL statement "WITH stat_group1 AS (                             -- for each group, time id of the last active mark
-      SELECT mark_group, max(mark_time_id) AS last_mark_time_id
-        FROM emaj.emaj_mark
-        WHERE NOT mark_is_deleted
-        GROUP BY mark_group),
-         stat_group2 AS (                             -- compute the number of log rows for all tables currently belonging to these groups
-      SELECT mark_group, last_mark_time_id, coalesce(
-          (SELECT sum(emaj._log_stat_tbl(emaj_relation, greatest(last_mark_time_id, lower(rel_time_range)),NULL))
-             FROM emaj.emaj_relation
-             WHERE rel_group = mark_group AND rel_kind = 'r' AND upper_inf(rel_time_range)), 0) AS mark_stat
-        FROM stat_group1 )
-    UPDATE emaj.emaj_mark m SET mark_log_rows_before_next = mark_stat
+CONTEXT:  PL/pgSQL function emaj._log_stat_tbl(emaj.emaj_relation,bigint,bigint) line 22 at EXECUTE
+SQL statement "WITH stat_group1 AS                               -- for each group, time id of the last active mark
+      (SELECT mark_group, max(mark_time_id) AS last_mark_time_id
+         FROM emaj.emaj_mark
+         WHERE NOT mark_is_deleted
+         GROUP BY mark_group
+      ),
+         stat_group2 AS                               -- compute the number of log rows for all tables currently belonging to these groups
+      (SELECT mark_group, last_mark_time_id, coalesce(
+                (SELECT sum(emaj._log_stat_tbl(emaj_relation, greatest(last_mark_time_id, lower(rel_time_range)),NULL))
+                   FROM emaj.emaj_relation
+                   WHERE rel_group = mark_group
+                     AND rel_kind = 'r'
+                     AND upper_inf(rel_time_range)
+                ), 0) AS mark_stat
+        FROM stat_group1
+      )
+    UPDATE emaj.emaj_mark m
+      SET mark_log_rows_before_next = mark_stat
       FROM stat_group2 s
-      WHERE s.mark_group = m.mark_group AND s.last_mark_time_id = m.mark_time_id"
-PL/pgSQL function emaj._set_mark_groups(text[],text,boolean,boolean,text,bigint,text) line 46 at SQL statement
+      WHERE s.mark_group = m.mark_group
+        AND s.last_mark_time_id = m.mark_time_id"
+PL/pgSQL function emaj._set_mark_groups(text[],text,boolean,boolean,text,bigint,text) line 49 at SQL statement
 SQL statement "SELECT emaj._set_mark_groups(v_groupNames, v_markName, v_multiGroup, TRUE)"
-PL/pgSQL function emaj._stop_groups(text[],text,boolean,boolean) line 115 at PERFORM
+PL/pgSQL function emaj._stop_groups(text[],text,boolean,boolean) line 131 at PERFORM
 PL/pgSQL function emaj.emaj_stop_group(text,text) line 10 at RETURN
   rollback to savepoint sp1;
 -- removing the table fails also
@@ -653,24 +662,31 @@ ERROR:  relation "emaj_myschema2.mytbl4_log_seq" does not exist
 LINE 1: ...lled THEN last_value ELSE last_value - 1 END FROM emaj_mysch...
                                                              ^
 QUERY:  SELECT CASE WHEN is_called THEN last_value ELSE last_value - 1 END FROM emaj_myschema2.mytbl4_log_seq
-CONTEXT:  PL/pgSQL function emaj._log_stat_tbl(emaj.emaj_relation,bigint,bigint) line 20 at EXECUTE
-SQL statement "WITH stat_group1 AS (                             -- for each group, time id of the last active mark
-      SELECT mark_group, max(mark_time_id) AS last_mark_time_id
-        FROM emaj.emaj_mark
-        WHERE NOT mark_is_deleted
-        GROUP BY mark_group),
-         stat_group2 AS (                             -- compute the number of log rows for all tables currently belonging to these groups
-      SELECT mark_group, last_mark_time_id, coalesce(
-          (SELECT sum(emaj._log_stat_tbl(emaj_relation, greatest(last_mark_time_id, lower(rel_time_range)),NULL))
-             FROM emaj.emaj_relation
-             WHERE rel_group = mark_group AND rel_kind = 'r' AND upper_inf(rel_time_range)), 0) AS mark_stat
-        FROM stat_group1 )
-    UPDATE emaj.emaj_mark m SET mark_log_rows_before_next = mark_stat
+CONTEXT:  PL/pgSQL function emaj._log_stat_tbl(emaj.emaj_relation,bigint,bigint) line 22 at EXECUTE
+SQL statement "WITH stat_group1 AS                               -- for each group, time id of the last active mark
+      (SELECT mark_group, max(mark_time_id) AS last_mark_time_id
+         FROM emaj.emaj_mark
+         WHERE NOT mark_is_deleted
+         GROUP BY mark_group
+      ),
+         stat_group2 AS                               -- compute the number of log rows for all tables currently belonging to these groups
+      (SELECT mark_group, last_mark_time_id, coalesce(
+                (SELECT sum(emaj._log_stat_tbl(emaj_relation, greatest(last_mark_time_id, lower(rel_time_range)),NULL))
+                   FROM emaj.emaj_relation
+                   WHERE rel_group = mark_group
+                     AND rel_kind = 'r'
+                     AND upper_inf(rel_time_range)
+                ), 0) AS mark_stat
+        FROM stat_group1
+      )
+    UPDATE emaj.emaj_mark m
+      SET mark_log_rows_before_next = mark_stat
       FROM stat_group2 s
-      WHERE s.mark_group = m.mark_group AND s.last_mark_time_id = m.mark_time_id"
-PL/pgSQL function emaj._set_mark_groups(text[],text,boolean,boolean,text,bigint,text) line 46 at SQL statement
+      WHERE s.mark_group = m.mark_group
+        AND s.last_mark_time_id = m.mark_time_id"
+PL/pgSQL function emaj._set_mark_groups(text[],text,boolean,boolean,text,bigint,text) line 49 at SQL statement
 SQL statement "SELECT emaj._set_mark_groups(v_loggingGroups, v_markName, FALSE, TRUE, NULL, v_timeId)"
-PL/pgSQL function emaj._remove_tables(text,text[],text,boolean,boolean) line 74 at PERFORM
+PL/pgSQL function emaj._remove_tables(text,text[],text,boolean,boolean) line 86 at PERFORM
 PL/pgSQL function emaj.emaj_remove_table(text,text,text) line 6 at RETURN
   rollback to savepoint sp1;
 -- the only solution is to force the group's stop before removing/reassigning the table
@@ -784,7 +800,7 @@ begin;
     select emaj.emaj_drop_group('myGroup1');
 ERROR:  _drop_log_schemas: Cannot drop the schema "emaj_myschema1". It probably owns unattended objects. Use the emaj_verify_all() function to get details.
 CONTEXT:  SQL statement "SELECT emaj._drop_log_schemas(CASE WHEN v_isForced THEN 'FORCE_DROP_GROUP' ELSE 'DROP_GROUP' END, v_isForced)"
-PL/pgSQL function emaj._drop_group(text,boolean) line 27 at PERFORM
+PL/pgSQL function emaj._drop_group(text,boolean) line 28 at PERFORM
 SQL statement "SELECT emaj._drop_group(v_groupName, FALSE)"
 PL/pgSQL function emaj.emaj_drop_group(text) line 14 at SQL statement
   rollback to savepoint sp1;

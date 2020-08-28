@@ -205,16 +205,16 @@ NOTICE:  trigger "emaj_trunc_trg" for relation "myschema4.mypartp1" does not exi
 -- table not in a group
 select emaj.emaj_move_table('dummySchema','mytbl1','myGroup2');
 ERROR:  _move_tables: some tables ("dummySchema".mytbl1) do not currently belong to any tables group.
-CONTEXT:  PL/pgSQL function emaj._move_tables(text,text[],text,text,boolean,boolean) line 47 at RAISE
+CONTEXT:  PL/pgSQL function emaj._move_tables(text,text[],text,text,boolean,boolean) line 56 at RAISE
 PL/pgSQL function emaj.emaj_move_table(text,text,text,text) line 6 at RETURN
 select emaj.emaj_move_table('myschema1','dummyTable','myGroup2');
 ERROR:  _move_tables: some tables (myschema1."dummyTable") do not currently belong to any tables group.
-CONTEXT:  PL/pgSQL function emaj._move_tables(text,text[],text,text,boolean,boolean) line 47 at RAISE
+CONTEXT:  PL/pgSQL function emaj._move_tables(text,text[],text,text,boolean,boolean) line 56 at RAISE
 PL/pgSQL function emaj.emaj_move_table(text,text,text,text) line 6 at RETURN
 -- bad new group
 select emaj.emaj_move_table('myschema1','mytbl1','dummyGroup');
 ERROR:  _check_group_names: The group "dummyGroup" does not exist.
-CONTEXT:  PL/pgSQL function emaj._check_group_names(text[],boolean,boolean,text) line 36 at RAISE
+CONTEXT:  PL/pgSQL function emaj._check_group_names(text[],boolean,boolean,text) line 42 at RAISE
 SQL statement "SELECT emaj._check_group_names(v_groupNames := ARRAY[v_newGroup], v_mayBeNull := FALSE, v_lockGroups := TRUE, v_checkList := '')"
 PL/pgSQL function emaj._move_tables(text,text[],text,text,boolean,boolean) line 27 at PERFORM
 PL/pgSQL function emaj.emaj_move_table(text,text,text,text) line 6 at RETURN
@@ -223,7 +223,7 @@ select emaj.emaj_move_table('myschema1','mytbl1','myGroup2','EMAJ_LAST_MARK');
 ERROR:  _check_new_mark: "EMAJ_LAST_MARK" is not an allowed name for a new mark.
 CONTEXT:  PL/pgSQL function emaj._check_new_mark(text[],text) line 14 at RAISE
 SQL statement "SELECT emaj._check_new_mark(v_loggingGroups, v_mark)"
-PL/pgSQL function emaj._move_tables(text,text[],text,text,boolean,boolean) line 76 at SQL statement
+PL/pgSQL function emaj._move_tables(text,text[],text,text,boolean,boolean) line 90 at SQL statement
 PL/pgSQL function emaj.emaj_move_table(text,text,text,text) line 6 at RETURN
 -- move to the same group
 select emaj.emaj_move_table('myschema1','mytbl1','myGroup1');
@@ -247,7 +247,7 @@ select emaj.emaj_move_table('myschema1','mytbl1','myGroup2');
 -- table not in a group
 select emaj.emaj_move_tables('myschema1',array['dummyTable','mytbl1','mytbl2'],'myGroup1');
 ERROR:  _move_tables: some tables (myschema1."dummyTable") do not currently belong to any tables group.
-CONTEXT:  PL/pgSQL function emaj._move_tables(text,text[],text,text,boolean,boolean) line 47 at RAISE
+CONTEXT:  PL/pgSQL function emaj._move_tables(text,text[],text,text,boolean,boolean) line 56 at RAISE
 PL/pgSQL function emaj.emaj_move_tables(text,text[],text,text) line 6 at RETURN
 -- empty tables array
 select emaj.emaj_move_tables('myschema1',array[]::text[],'myGroup1');
@@ -356,16 +356,16 @@ select group_last_alter_time_id, group_nb_table, group_nb_sequence from emaj.ema
 -- sequence not in a group
 select emaj.emaj_move_sequence('dummySchema','myseq1','myGroup1');
 ERROR:  _move_sequences: some sequences ("dummySchema".myseq1) do not currently belong to any tables group.
-CONTEXT:  PL/pgSQL function emaj._move_sequences(text,text[],text,text,boolean,boolean) line 46 at RAISE
+CONTEXT:  PL/pgSQL function emaj._move_sequences(text,text[],text,text,boolean,boolean) line 56 at RAISE
 PL/pgSQL function emaj.emaj_move_sequence(text,text,text,text) line 6 at RETURN
 select emaj.emaj_move_sequence('myschema2','dummySequence','myGroup1');
 ERROR:  _move_sequences: some sequences (myschema2."dummySequence") do not currently belong to any tables group.
-CONTEXT:  PL/pgSQL function emaj._move_sequences(text,text[],text,text,boolean,boolean) line 46 at RAISE
+CONTEXT:  PL/pgSQL function emaj._move_sequences(text,text[],text,text,boolean,boolean) line 56 at RAISE
 PL/pgSQL function emaj.emaj_move_sequence(text,text,text,text) line 6 at RETURN
 -- bad new group
 select emaj.emaj_move_sequence('myschema2','myseq1','dummyGroup');
 ERROR:  _check_group_names: The group "dummyGroup" does not exist.
-CONTEXT:  PL/pgSQL function emaj._check_group_names(text[],boolean,boolean,text) line 36 at RAISE
+CONTEXT:  PL/pgSQL function emaj._check_group_names(text[],boolean,boolean,text) line 42 at RAISE
 SQL statement "SELECT emaj._check_group_names(v_groupNames := ARRAY[v_newGroup], v_mayBeNull := FALSE, v_lockGroups := TRUE, v_checkList := '')"
 PL/pgSQL function emaj._move_sequences(text,text[],text,text,boolean,boolean) line 26 at PERFORM
 PL/pgSQL function emaj.emaj_move_sequence(text,text,text,text) line 6 at RETURN
@@ -374,7 +374,7 @@ select emaj.emaj_move_sequence('myschema2','myseq1','myGroup1','EMAJ_LAST_MARK')
 ERROR:  _check_new_mark: "EMAJ_LAST_MARK" is not an allowed name for a new mark.
 CONTEXT:  PL/pgSQL function emaj._check_new_mark(text[],text) line 14 at RAISE
 SQL statement "SELECT emaj._check_new_mark(v_loggingGroups, v_mark)"
-PL/pgSQL function emaj._move_sequences(text,text[],text,text,boolean,boolean) line 75 at SQL statement
+PL/pgSQL function emaj._move_sequences(text,text[],text,text,boolean,boolean) line 92 at SQL statement
 PL/pgSQL function emaj.emaj_move_sequence(text,text,text,text) line 6 at RETURN
 -- move to the same group
 select emaj.emaj_move_sequence('myschema2','myseq1','myGroup2');
@@ -398,7 +398,7 @@ select emaj.emaj_move_sequence('myschema2','myseq1','myGroup1');
 -- sequence not in a group
 select emaj.emaj_move_sequences('myschema2',array['dummySequence','myseq1'],'myGroup1');
 ERROR:  _move_sequences: some sequences (myschema2."dummySequence") do not currently belong to any tables group.
-CONTEXT:  PL/pgSQL function emaj._move_sequences(text,text[],text,text,boolean,boolean) line 46 at RAISE
+CONTEXT:  PL/pgSQL function emaj._move_sequences(text,text[],text,text,boolean,boolean) line 56 at RAISE
 PL/pgSQL function emaj.emaj_move_sequences(text,text[],text,text) line 6 at RETURN
 -- empty tables array
 select emaj.emaj_move_sequences('myschema2',array[]::text[],'myGroup1');
@@ -496,37 +496,37 @@ select group_last_alter_time_id, group_nb_table, group_nb_sequence from emaj.ema
 -- table not in a group
 select emaj.emaj_modify_table('dummySchema','mytbl1',null);
 ERROR:  _modify_tables: some tables ("dummySchema".mytbl1) do not currently belong to any tables group.
-CONTEXT:  PL/pgSQL function emaj._modify_tables(text,text[],jsonb,text,boolean,boolean) line 50 at RAISE
+CONTEXT:  PL/pgSQL function emaj._modify_tables(text,text[],jsonb,text,boolean,boolean) line 57 at RAISE
 PL/pgSQL function emaj.emaj_modify_table(text,text,jsonb,text) line 7 at RETURN
 select emaj.emaj_modify_table('myschema1','dummyTable',null);
 ERROR:  _modify_tables: some tables (myschema1."dummyTable") do not currently belong to any tables group.
-CONTEXT:  PL/pgSQL function emaj._modify_tables(text,text[],jsonb,text,boolean,boolean) line 50 at RAISE
+CONTEXT:  PL/pgSQL function emaj._modify_tables(text,text[],jsonb,text,boolean,boolean) line 57 at RAISE
 PL/pgSQL function emaj.emaj_modify_table(text,text,jsonb,text) line 7 at RETURN
 -- invalid priority
 select emaj.emaj_modify_table('myschema1','mytbl1','{"priority":"not_numeric"}'::jsonb);
 ERROR:  _modify_tables: the "priority" property is not numeric.
-CONTEXT:  PL/pgSQL function emaj._modify_tables(text,text[],jsonb,text,boolean,boolean) line 59 at RAISE
+CONTEXT:  PL/pgSQL function emaj._modify_tables(text,text[],jsonb,text,boolean,boolean) line 66 at RAISE
 PL/pgSQL function emaj.emaj_modify_table(text,text,jsonb,text) line 7 at RETURN
 -- invalid tablespace
 select emaj.emaj_modify_table('myschema1','mytbl1','{"log_data_tablespace":"dummytsp"}'::jsonb);
 ERROR:  _modify_tables: the log data tablespace "dummytsp" does not exists.
-CONTEXT:  PL/pgSQL function emaj._modify_tables(text,text[],jsonb,text,boolean,boolean) line 67 at RAISE
+CONTEXT:  PL/pgSQL function emaj._modify_tables(text,text[],jsonb,text,boolean,boolean) line 79 at RAISE
 PL/pgSQL function emaj.emaj_modify_table(text,text,jsonb,text) line 7 at RETURN
 select emaj.emaj_modify_table('myschema1','mytbl1','{"log_index_tablespace":"dummytsp"}'::jsonb);
 ERROR:  _modify_tables: the log index tablespace "dummytsp" does not exists.
-CONTEXT:  PL/pgSQL function emaj._modify_tables(text,text[],jsonb,text,boolean,boolean) line 74 at RAISE
+CONTEXT:  PL/pgSQL function emaj._modify_tables(text,text[],jsonb,text,boolean,boolean) line 91 at RAISE
 PL/pgSQL function emaj.emaj_modify_table(text,text,jsonb,text) line 7 at RETURN
 -- unknown property
 select emaj.emaj_modify_table('myschema1','mytbl1','{"unknown_property":null}'::jsonb);
 ERROR:  _modify_tables: properties "{"unknown_property": null}" are unknown.
-CONTEXT:  PL/pgSQL function emaj._modify_tables(text,text[],jsonb,text,boolean,boolean) line 81 at RAISE
+CONTEXT:  PL/pgSQL function emaj._modify_tables(text,text[],jsonb,text,boolean,boolean) line 98 at RAISE
 PL/pgSQL function emaj.emaj_modify_table(text,text,jsonb,text) line 7 at RETURN
 -- bad mark
 select emaj.emaj_modify_table('myschema1','mytbl1',null,'EMAJ_LAST_MARK');
 ERROR:  _check_new_mark: "EMAJ_LAST_MARK" is not an allowed name for a new mark.
 CONTEXT:  PL/pgSQL function emaj._check_new_mark(text[],text) line 14 at RAISE
 SQL statement "SELECT emaj._check_new_mark(v_loggingGroups, v_mark)"
-PL/pgSQL function emaj._modify_tables(text,text[],jsonb,text,boolean,boolean) line 98 at SQL statement
+PL/pgSQL function emaj._modify_tables(text,text[],jsonb,text,boolean,boolean) line 120 at SQL statement
 PL/pgSQL function emaj.emaj_modify_table(text,text,jsonb,text) line 7 at RETURN
 -- ok
 -- change a priority
@@ -602,7 +602,7 @@ select rel_schema, rel_tblseq, rel_time_range, rel_log_dat_tsp, rel_log_idx_tsp 
 -- table not in a group
 select emaj.emaj_modify_tables('myschema2',array['dummyTable','mytbl1','mytbl2'],null);
 ERROR:  _modify_tables: some tables (myschema2."dummyTable") do not currently belong to any tables group.
-CONTEXT:  PL/pgSQL function emaj._modify_tables(text,text[],jsonb,text,boolean,boolean) line 50 at RAISE
+CONTEXT:  PL/pgSQL function emaj._modify_tables(text,text[],jsonb,text,boolean,boolean) line 57 at RAISE
 PL/pgSQL function emaj.emaj_modify_tables(text,text[],jsonb,text) line 7 at RETURN
 -- empty tables array
 select emaj.emaj_modify_tables('myschema2',array[]::text[],null);

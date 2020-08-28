@@ -1667,8 +1667,9 @@ select col41, col42, col43, col44, col45, emaj_verb, emaj_tuple, emaj_gid from e
 
 -- check the environment integrity
 select * from emaj.emaj_verify_all();
-  emaj_verify_all  
--------------------
+                                                                                emaj_verify_all                                                                                
+-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+ Warning: In the group "myGroup1", the sequence "myschema1"."myTbl3_col31_seq" is linked to the table "myschema1"."myTbl3" but this table does not belong to any tables group.
  No error detected
-(1 row)
+(2 rows)
 
