@@ -1,12 +1,16 @@
--- alter.sql : test emaj_move_table(), emaj_move_tables(), emaj_move_sequence(), emaj_move_sequences()
---                  emaj_modify_table() and emaj_modify_tables() functions
+-- alter.sql : tests groups structure changes with groups in IDLE state
+-- test emaj_remove_table(), emaj_remove_tables(), emaj_remove_sequence(), emaj_remove_sequences(),
+--      emaj_move_table(), emaj_move_tables(), emaj_move_sequence(), emaj_move_sequences(),
+--      emaj_modify_table() and emaj_modify_tables() functions
 --
 
+-- define the temp file directory to be used by the script
+\setenv EMAJTESTTMPDIR '/tmp/emaj_'`echo $PGVER`'/alter'
+\set EMAJTESTTMPDIR `echo $EMAJTESTTMPDIR`
+\! mkdir -p $EMAJTESTTMPDIR
+
 -- set sequence restart value
-alter sequence emaj.emaj_hist_hist_id_seq restart 6000;
-alter sequence emaj.emaj_time_stamp_time_id_seq restart 6000;
-alter sequence emaj.emaj_rlbk_rlbk_id_seq restart 6000;
-alter sequence emaj.emaj_global_seq restart 60000;
+select public.handle_emaj_sequences(8000);
 
 -----------------------------
 -- stop, reset and drop and recreate groups
@@ -22,18 +26,113 @@ select emaj.emaj_drop_group('myGroup4');
 select emaj.emaj_force_stop_group('emptyGroup');
 select emaj.emaj_drop_group('emptyGroup');
 select emaj.emaj_create_group('myGroup1');
-select emaj.emaj_assign_table('myschema1','mytbl1','myGroup1','{"priority":20}'::jsonb);
-select emaj.emaj_assign_table('myschema1','mytbl2','myGroup1','{"log_data_tablespace":"tsplog1","log_index_tablespace":"tsplog1"}'::jsonb);
-select emaj.emaj_assign_table('myschema1','mytbl2b','myGroup1','{"log_data_tablespace":"tsp log''2","log_index_tablespace":"tsp log''2"}'::jsonb);
-select emaj.emaj_assign_table('myschema1','myTbl3','myGroup1','{"priority":10,"log_data_tablespace":"tsplog1"}'::jsonb);
-select emaj.emaj_assign_table('myschema1','mytbl4','myGroup1','{"priority":20,"log_data_tablespace":"tsplog1","log_index_tablespace":"tsp log''2"}'::jsonb);
-select emaj.emaj_assign_sequences('myschema1','.*',null,'myGroup1');
-select emaj.emaj_create_group('myGroup2');
-select emaj.emaj_assign_tables('myschema2','.*','mytbl[7,8]','myGroup2');
-select emaj.emaj_assign_sequences('myschema2','.*','myseq2','myGroup2');
-select emaj.emaj_create_group('emptyGroup');
-select emaj.emaj_create_group('myGroup4');
-select emaj.emaj_assign_tables('myschema4','.*',null,'myGroup4');
+
+-- rebuild all original groups
+SET client_min_messages TO WARNING;
+select emaj.emaj_import_groups_configuration(:'EMAJTESTTMPDIR' || '/../all_groups_config.json', array['myGroup1','myGroup2','emptyGroup','myGroup4'], true);
+RESET client_min_messages;
+
+-----------------------------------
+-- emaj_remove_table
+-----------------------------------
+
+-- error cases
+-- table not in a group
+select emaj.emaj_remove_table('dummySchema','mytbl1');
+select emaj.emaj_remove_table('myschema1','dummyTable');
+-- bad mark
+select emaj.emaj_remove_table('myschema1','mytbl1','EMAJ_LAST_MARK');
+
+-- ok
+select emaj.emaj_remove_table('myschema1','mytbl1');
+
+-----------------------------------
+-- emaj_remove_tables with array
+-----------------------------------
+-- error cases
+-- empty tables array
+select emaj.emaj_remove_tables('myschema1',array[]::text[]);
+select emaj.emaj_remove_tables('myschema1',null);
+select emaj.emaj_remove_tables('myschema1',array['']);
+-- table not in a group
+select emaj.emaj_remove_tables('myschema1',array['dummyTable','mytbl1','mytbl2']);
+
+-- ok (with a duplicate table name)
+select emaj.emaj_remove_tables('myschema1',array['mytbl2','mytbl2b','mytbl2']);
+
+-----------------------------------
+-- emaj_remove_tables with filters
+-----------------------------------
+-- empty tables array
+select emaj.emaj_remove_tables('myschema1',null,null);
+select emaj.emaj_remove_tables('myschema1','','');
+select emaj.emaj_remove_tables('myschema1','mytbl1','mytbl1');
+
+-- ok
+select emaj.emaj_remove_tables('myschema1','my(t|T)bl\d$','mytbl2');
+
+select group_last_alter_time_id, group_nb_table, group_nb_sequence from emaj.emaj_group where group_name = 'myGroup1';
+
+-----------------------------------
+-- emaj_remove_sequence
+-----------------------------------
+
+-- error cases
+-- sequence not in a group
+select emaj.emaj_remove_sequence('dummySchema','myseq1');
+select emaj.emaj_remove_sequence('myschema2','dummySequence');
+-- bad mark
+select emaj.emaj_remove_sequence('myschema2','myseq1','EMAJ_LAST_MARK');
+
+-- ok
+select emaj.emaj_remove_sequence('myschema2','myseq1');
+
+-----------------------------------
+-- emaj_remove_sequences with array
+-----------------------------------
+-- error cases
+-- empty sequences array
+select emaj.emaj_remove_sequences('myschema2',array[]::text[]);
+select emaj.emaj_remove_sequences('myschema2',null);
+select emaj.emaj_remove_sequences('myschema2',array['']);
+-- sequence not in a group
+select emaj.emaj_remove_sequences('myschema2',array['dummyTable','myseq2']);
+
+-- ok (with a duplicate sequence name)
+select emaj.emaj_assign_sequence('myschema2','myseq2','myGroup2');
+select emaj.emaj_remove_sequences('myschema2',array['myseq2','myseq2']);
+
+-----------------------------------
+-- emaj_remove_sequences with filters
+-----------------------------------
+-- empty tables array
+select emaj.emaj_remove_sequences('myschema2',null,null);
+select emaj.emaj_remove_sequences('myschema2','','');
+select emaj.emaj_remove_sequences('myschema2','myseq1','myseq1');
+
+-- ok
+select emaj.emaj_remove_sequences('myschema2','.*','');
+
+select group_last_alter_time_id, group_nb_table, group_nb_sequence from emaj.emaj_group where group_name = 'myGroup2';
+
+-- rebuild all original groups
+SET client_min_messages TO WARNING;
+select emaj.emaj_import_groups_configuration(:'EMAJTESTTMPDIR' || '/../all_groups_config.json', array['myGroup1','myGroup2','emptyGroup','myGroup4'], true);
+RESET client_min_messages;
+
+-- check for emaj_remove_table() and emaj_remove_sequence() functions family
+select * from emaj.emaj_alter_plan where altr_time_id > 8000 order by 1,2,3,4,5;
+select time_id, time_last_emaj_gid, time_event from emaj.emaj_time_stamp where time_id > 8000 order by time_id;
+select hist_function, hist_event, hist_object,
+       regexp_replace(regexp_replace(regexp_replace(hist_wording,
+            E'\\d\\d\.\\d\\d\\.\\d\\d\\.\\d\\d\\d\\d','%','g'),
+            E'\\d\\d\\d\\d/\\d\\d\\/\\d\\d\\ \\d\\d\\:\\d\\d:\\d\\d .*?\\)','<timestamp>)','g'),
+            E'\\[.+\\]','(timestamp)','g'), 
+       hist_user 
+  from emaj.emaj_hist where hist_id > 8000 order by hist_id;
+
+-- set sequence restart value
+select public.handle_emaj_sequences(8200);
 
 -----------------------------------
 -- emaj_move_table
@@ -144,6 +243,20 @@ select altr_time_id, altr_step, altr_schema, altr_tblseq, altr_group, altr_prior
 select group_last_alter_time_id, group_nb_table, group_nb_sequence from emaj.emaj_group 
   where group_name in ('myGroup1','myGroup2','myGroup4') order by 1 desc ,2,3;
 
+-- check for emaj_move_table() and emaj_move_sequence() functions family
+select * from emaj.emaj_alter_plan where altr_time_id > 8200 order by 1,2,3,4,5;
+select time_id, time_last_emaj_gid, time_event from emaj.emaj_time_stamp where time_id > 8200 order by time_id;
+select hist_function, hist_event, hist_object,
+       regexp_replace(regexp_replace(regexp_replace(hist_wording,
+            E'\\d\\d\.\\d\\d\\.\\d\\d\\.\\d\\d\\d\\d','%','g'),
+            E'\\d\\d\\d\\d/\\d\\d\\/\\d\\d\\ \\d\\d\\:\\d\\d:\\d\\d .*?\\)','<timestamp>)','g'),
+            E'\\[.+\\]','(timestamp)','g'), 
+       hist_user 
+  from emaj.emaj_hist where hist_id > 8200 order by hist_id;
+
+-- set sequence restart value
+select public.handle_emaj_sequences(8400);
+
 -----------------------------------
 -- emaj_modify_table
 -----------------------------------
@@ -220,4 +333,16 @@ select altr_time_id, altr_step, altr_schema, altr_tblseq, altr_group, altr_prior
        altr_new_group, altr_new_group_is_logging from emaj.emaj_alter_plan
   order by 1 desc, 2,3,4 limit 14;
 
--- checks are performed by the alterLogging.sql script
+-- check for emaj_modify_table() functions family
+select * from emaj.emaj_alter_plan where altr_time_id > 8400 order by 1,2,3,4,5;
+select time_id, time_last_emaj_gid, time_event from emaj.emaj_time_stamp where time_id > 8400 order by time_id;
+select hist_function, hist_event, hist_object,
+       regexp_replace(regexp_replace(regexp_replace(hist_wording,
+            E'\\d\\d\.\\d\\d\\.\\d\\d\\.\\d\\d\\d\\d','%','g'),
+            E'\\d\\d\\d\\d/\\d\\d\\/\\d\\d\\ \\d\\d\\:\\d\\d:\\d\\d .*?\\)','<timestamp>)','g'),
+            E'\\[.+\\]','(timestamp)','g'), 
+       hist_user 
+  from emaj.emaj_hist where hist_id > 8400 order by hist_id;
+
+-- remove the temp directory
+\! rm -R $EMAJTESTTMPDIR

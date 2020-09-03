@@ -5,21 +5,15 @@
 SET client_min_messages TO WARNING;
 
 -- set sequence restart value
-alter sequence emaj.emaj_hist_hist_id_seq restart 1000;
-alter sequence emaj.emaj_time_stamp_time_id_seq restart 1000;
+-- define and create the temp file directory to be used by the script
+\setenv EMAJTESTTMPDIR '/tmp/emaj_'`echo $PGVER`'/create_drop'
+\set EMAJTESTTMPDIR `echo $EMAJTESTTMPDIR`
+\! mkdir -p $EMAJTESTTMPDIR
 
--- prepare groups
-select emaj.emaj_create_group('myGroup1');
-select emaj.emaj_assign_table('myschema1','mytbl1','myGroup1','{"priority":20}'::jsonb);
-select emaj.emaj_assign_table('myschema1','mytbl2','myGroup1','{"log_data_tablespace":"tsplog1","log_index_tablespace":"tsplog1"}'::jsonb);
-select emaj.emaj_assign_table('myschema1','mytbl2b','myGroup1','{"log_data_tablespace":"tsp log''2","log_index_tablespace":"tsp log''2"}'::jsonb);
-select emaj.emaj_assign_table('myschema1','myTbl3','myGroup1','{"priority":10,"log_data_tablespace":"tsplog1"}'::jsonb);
-select emaj.emaj_assign_table('myschema1','mytbl4','myGroup1','{"priority":20,"log_data_tablespace":"tsplog1","log_index_tablespace":"tsp log''2"}'::jsonb);
-select emaj.emaj_assign_sequences('myschema1','.*',null,'myGroup1');
-select emaj.emaj_create_group('myGroup2');
-select emaj.emaj_assign_tables('myschema2','.*','mytbl[7,8]','myGroup2');
-select emaj.emaj_assign_sequences('myschema2','.*','myseq2','myGroup2');
-select emaj.emaj_create_group('emptyGroup');
+select public.handle_emaj_sequences(2000);
+
+-- build original groups
+select emaj.emaj_import_groups_configuration(:'EMAJTESTTMPDIR' || '/../all_groups_config.json', array['myGroup1','myGroup2','emptyGroup'], true);
 
 -- disable event triggers 
 -- this is done to allow tests with missing or renamed or altered components
@@ -168,10 +162,16 @@ select mark_group, regexp_replace(mark_name,E'\\d\\d\.\\d\\d\\.\\d\\d\\.\\d\\d\\
 
 SET client_min_messages TO WARNING;
 
--- impact of started group
+-- check for emaj_start_group()
 select group_name, group_is_logging, group_is_rlbk_protected from emaj.emaj_group order by group_name;
-select mark_group, regexp_replace(mark_name,E'\\d\\d\.\\d\\d\\.\\d\\d\\.\\d\\d\\d\\d','%','g'), mark_time_id, mark_is_deleted, mark_is_rlbk_protected, mark_comment, mark_log_rows_before_next, mark_logged_rlbk_target_mark from emaj.emaj_mark order by mark_time_id, mark_group;
-select time_id, time_last_emaj_gid, time_event from emaj.emaj_time_stamp where time_id >= 1000 order by time_id;
+select mark_group, regexp_replace(mark_name,E'\\d\\d\.\\d\\d\\.\\d\\d\\.\\d\\d\\d\\d','%','g'), mark_time_id, mark_is_deleted, mark_is_rlbk_protected, mark_comment, mark_log_rows_before_next, mark_logged_rlbk_target_mark
+  from emaj.emaj_mark where mark_time_id >= 2000 order by mark_time_id, mark_group;
+select time_id, time_last_emaj_gid, time_event from emaj.emaj_time_stamp where time_id >= 2000 order by time_id;
+select hist_id, hist_function, hist_event, hist_object, 
+  regexp_replace(regexp_replace(hist_wording,E'\\d\\d\.\\d\\d\\.\\d\\d\\.\\d\\d\\d\\d','%','g'),E'\\[.+\\]','(timestamp)','g'),
+  hist_user from emaj.emaj_hist where hist_id >= 2000 order by hist_id;
+
+select public.handle_emaj_sequences(2200);
 
 
 -----------------------------
@@ -196,13 +196,7 @@ rollback;
 select emaj.emaj_stop_group('myGroup1');
 select emaj.emaj_stop_group('emptyGroup');
 
--- impact of stopped group
-select group_name, group_is_logging, group_is_rlbk_protected from emaj.emaj_group order by group_name;
-select mark_group, regexp_replace(mark_name,E'\\d\\d\.\\d\\d\\.\\d\\d\\.\\d\\d\\d\\d','%','g'), mark_time_id, mark_is_deleted, mark_is_rlbk_protected, mark_comment, mark_log_rows_before_next, mark_logged_rlbk_target_mark from emaj.emaj_mark order by mark_time_id, mark_group;
-
-select time_id, time_last_emaj_gid, time_event from emaj.emaj_time_stamp where time_id >= 1000 order by time_id;
-
--- should be OK
+-- should be OK with a stop mark
 select emaj.emaj_stop_group('myGroup2','Stop mark');
 
 -- warning, already stopped
@@ -229,6 +223,17 @@ commit;
 --  select emaj.emaj_start_group('myGroup4','another_start_mark',false);
 --  select emaj.emaj_stop_group('myGroup4','%');
 --rollback;
+
+-- check for emaj_stop_group()
+select group_name, group_is_logging, group_is_rlbk_protected from emaj.emaj_group order by group_name;
+select mark_group, regexp_replace(mark_name,E'\\d\\d\.\\d\\d\\.\\d\\d\\.\\d\\d\\d\\d','%','g'), mark_time_id, mark_is_deleted, mark_is_rlbk_protected, mark_comment, mark_log_rows_before_next, mark_logged_rlbk_target_mark
+  from emaj.emaj_mark where mark_time_id >= 2200 order by mark_time_id, mark_group;
+select time_id, time_last_emaj_gid, time_event from emaj.emaj_time_stamp where time_id >= 2200 order by time_id;
+select hist_id, hist_function, hist_event, hist_object, 
+  regexp_replace(regexp_replace(hist_wording,E'\\d\\d\.\\d\\d\\.\\d\\d\\.\\d\\d\\d\\d','%','g'),E'\\[.+\\]','(timestamp)','g'),
+  hist_user from emaj.emaj_hist where hist_id >= 2200 order by hist_id;
+
+select public.handle_emaj_sequences(2400);
 
 -----------------------------
 -- emaj_start_groups() tests
@@ -264,12 +269,17 @@ begin;
   select emaj.emaj_start_groups(array['myGroup1',NULL,'myGroup2','','myGroup2','myGroup2','myGroup1'],'Mark1');
 rollback;
 
--- impact of started groups
+-- check for emaj_start_groups()
 select emaj.emaj_start_groups(array['myGroup1','myGroup2'],'Mark1',true);
 select group_name, group_is_logging, group_is_rlbk_protected from emaj.emaj_group order by group_name;
-select mark_group, regexp_replace(mark_name,E'\\d\\d\.\\d\\d\\.\\d\\d\\.\\d\\d\\d\\d','%','g'), mark_time_id, mark_is_deleted, mark_is_rlbk_protected, mark_comment, mark_log_rows_before_next, mark_logged_rlbk_target_mark from emaj.emaj_mark order by mark_time_id, mark_group;
+select mark_group, regexp_replace(mark_name,E'\\d\\d\.\\d\\d\\.\\d\\d\\.\\d\\d\\d\\d','%','g'), mark_time_id, mark_is_deleted, mark_is_rlbk_protected, mark_comment, mark_log_rows_before_next, mark_logged_rlbk_target_mark
+  from emaj.emaj_mark where mark_time_id >= 2400 order by mark_time_id, mark_group;
+select time_id, time_last_emaj_gid, time_event from emaj.emaj_time_stamp where time_id >= 2400 order by time_id;
+select hist_id, hist_function, hist_event, hist_object, 
+  regexp_replace(regexp_replace(hist_wording,E'\\d\\d\.\\d\\d\\.\\d\\d\\.\\d\\d\\d\\d','%','g'),E'\\[.+\\]','(timestamp)','g'),
+  hist_user from emaj.emaj_hist where hist_id >= 2400 order by hist_id;
 
-select time_id, time_last_emaj_gid, time_event from emaj.emaj_time_stamp where time_id >= 1000 order by time_id;
+select public.handle_emaj_sequences(2500);
 
 -----------------------------
 -- emaj_stop_groups() tests
@@ -332,10 +342,17 @@ select emaj.emaj_force_stop_group('myGroup1');
 -- warning, already stopped
 select emaj.emaj_force_stop_group('myGroup2');
 
+-- check for emaj_stop_groups() and emaj_force_stop_group()
 -- impact of stopped groups
 select group_name, group_is_logging, group_is_rlbk_protected from emaj.emaj_group order by group_name;
-select mark_group, regexp_replace(mark_name,E'\\d\\d\.\\d\\d\\.\\d\\d\\.\\d\\d\\d\\d','%','g'), mark_time_id, mark_is_deleted, mark_is_rlbk_protected, mark_comment, mark_log_rows_before_next, mark_logged_rlbk_target_mark from emaj.emaj_mark order by mark_time_id, mark_group;
-select time_id, time_last_emaj_gid, time_event from emaj.emaj_time_stamp where time_id >= 1000 order by time_id;
+select mark_group, regexp_replace(mark_name,E'\\d\\d\.\\d\\d\\.\\d\\d\\.\\d\\d\\d\\d','%','g'), mark_time_id, mark_is_deleted, mark_is_rlbk_protected, mark_comment, mark_log_rows_before_next, mark_logged_rlbk_target_mark
+  from emaj.emaj_mark where mark_time_id >= 2500 order by mark_time_id, mark_group;
+select time_id, time_last_emaj_gid, time_event from emaj.emaj_time_stamp where time_id >= 2500 order by time_id;
+select hist_id, hist_function, hist_event, hist_object, 
+  regexp_replace(regexp_replace(hist_wording,E'\\d\\d\.\\d\\d\\.\\d\\d\\.\\d\\d\\d\\d','%','g'),E'\\[.+\\]','(timestamp)','g'),
+  hist_user from emaj.emaj_hist where hist_id >= 2500 order by hist_id;
+
+select public.handle_emaj_sequences(2600);
 
 -----------------------------
 -- emaj_protect_group() tests
@@ -348,10 +365,9 @@ select emaj.emaj_protect_group('phil''s group#3",');
 -- group is not in logging state
 select emaj.emaj_protect_group('myGroup1');
 -- should be ok
-select emaj.emaj_start_groups(array['myGroup1','emptyGroup'],'M1');
+select emaj.emaj_start_group('myGroup1','M1');
 select emaj.emaj_protect_group('myGroup1');
-select emaj.emaj_protect_group('emptyGroup');
-select group_is_logging, group_is_rlbk_protected from emaj.emaj_group where group_name in ('myGroup1','emptyGroup');
+select group_is_logging, group_is_rlbk_protected from emaj.emaj_group where group_name = 'myGroup1';
 -- protect an already protected group
 select emaj.emaj_protect_group('myGroup1');
 select group_is_logging, group_is_rlbk_protected from emaj.emaj_group where group_name = 'myGroup1';
@@ -373,18 +389,19 @@ select emaj.emaj_unprotect_group('myGroup1');
 select emaj.emaj_start_group('myGroup1','M1');
 select emaj.emaj_protect_group('myGroup1');
 select emaj.emaj_unprotect_group('myGroup1');
-select emaj.emaj_unprotect_group('emptyGroup');
-select group_is_logging, group_is_rlbk_protected from emaj.emaj_group where group_name in ('myGroup1','emptyGroup');
+select group_is_logging, group_is_rlbk_protected from emaj.emaj_group where group_name = 'myGroup1';
 -- unprotect an already unprotected group
 select emaj.emaj_unprotect_group('myGroup1');
 select group_is_logging, group_is_rlbk_protected from emaj.emaj_group where group_name = 'myGroup1';
-select emaj.emaj_stop_groups(array['myGroup1','emptyGroup']);
+select emaj.emaj_stop_group('myGroup1');
 select group_is_logging, group_is_rlbk_protected from emaj.emaj_group where group_name = 'myGroup1';
 
------------------------------
--- test end: (groups are stopped) reset history and force sequences id
------------------------------
 select emaj.emaj_enable_protection_by_event_triggers();
+-- check for emaj_protect_group() and emaj_unprotect_group()
+select time_id, time_last_emaj_gid, time_event from emaj.emaj_time_stamp where time_id >= 2600 order by time_id;
 select hist_id, hist_function, hist_event, hist_object, 
   regexp_replace(regexp_replace(hist_wording,E'\\d\\d\.\\d\\d\\.\\d\\d\\.\\d\\d\\d\\d','%','g'),E'\\[.+\\]','(timestamp)','g'),
-  hist_user from emaj.emaj_hist order by hist_id;
+  hist_user from emaj.emaj_hist where hist_id >= 2600 order by hist_id;
+
+-- remove the temp directory
+\! rm -R $EMAJTESTTMPDIR

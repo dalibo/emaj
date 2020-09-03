@@ -3,7 +3,7 @@
 --
 
 -- set sequence restart value
-alter sequence emaj.emaj_hist_hist_id_seq restart 5800;
+select public.handle_emaj_sequences(7000);
 
 -- disable event triggers 
 -- this is done to allow tests with missing or renamed or altered components
@@ -422,7 +422,7 @@ drop schema anonym_user_schema;
 reset role;
 
 -----------------------------
--- test end: check, reset history and force sequences id
+-- test end: check
 -----------------------------
 select hist_id, hist_function, hist_event, hist_object, regexp_replace(regexp_replace(hist_wording,E'\\d\\d\.\\d\\d\\.\\d\\d\\.\\d\\d\\d\\d','%','g'),E'\\[.+\\]','(timestamp)','g'), hist_user from 
-  (select * from emaj.emaj_hist where hist_id >= 5800 order by hist_id) as t;
+  (select * from emaj.emaj_hist where hist_id >= 7000 order by hist_id) as t;

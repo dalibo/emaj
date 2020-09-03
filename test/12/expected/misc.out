@@ -1,14 +1,17 @@
 -- misc.sql : test miscellaneous functions
 --
 -- set sequence restart value
-alter sequence emaj.emaj_hist_hist_id_seq restart 5000;
-alter sequence emaj.emaj_time_stamp_time_id_seq restart 5000;
-alter sequence emaj.emaj_rlbk_rlbk_id_seq restart 5000;
-alter sequence emaj.emaj_global_seq restart 50000;
+select public.handle_emaj_sequences(5000);
+ handle_emaj_sequences 
+-----------------------
+ 
+(1 row)
+
 -- define and create the temp file directory to be used by the script
 \setenv EMAJTESTTMPDIR '/tmp/emaj_'`echo $PGVER`'/misc'
 \set EMAJTESTTMPDIR `echo $EMAJTESTTMPDIR`
 \! mkdir -p $EMAJTESTTMPDIR
+   
 -----------------------------
 -- emaj_reset_group() test
 -----------------------------
@@ -143,7 +146,7 @@ set search_path=public,myschema2;
 select emaj.emaj_set_mark_groups(array['myGroup1','myGroup2'],'Multi-1');
  emaj_set_mark_groups 
 ----------------------
-                   15
+                   17
 (1 row)
 
 -- inserts/updates/deletes in myTbl1, myTbl2 and myTbl2b (via trigger)
@@ -155,13 +158,13 @@ insert into myTbl2 select i, 'DEF', current_date from generate_series (1,900) as
 select emaj.emaj_set_mark_group('myGroup2','Mark22');
  emaj_set_mark_group 
 ---------------------
-                   8
+                  10
 (1 row)
 
 select emaj.emaj_set_mark_groups(array['myGroup1','myGroup2'],'Multi-2');
  emaj_set_mark_groups 
 ----------------------
-                   15
+                   17
 (1 row)
 
 -- inserts/updates/deletes in myTbl3 and myTbl4
@@ -171,13 +174,13 @@ insert into myTbl4 select i,'FK...',i,1,'ABC' from generate_series (1,100) as i;
 select emaj.emaj_set_mark_group('myGroup2','Mark23');
  emaj_set_mark_group 
 ---------------------
-                   8
+                  10
 (1 row)
 
 select emaj.emaj_set_mark_groups(array['myGroup1','myGroup2'],'Multi-3');
  emaj_set_mark_groups 
 ----------------------
-                   15
+                   17
 (1 row)
 
 -----------------------------
@@ -320,7 +323,9 @@ select stat_group, stat_schema, stat_table, stat_first_mark, stat_last_mark, sta
  myGroup2   | myschema2   | mytbl4     | Mark21          |                |       100
  myGroup2   | myschema2   | mytbl5     | Mark21          |                |         0
  myGroup2   | myschema2   | mytbl6     | Mark21          |                |         0
-(6 rows)
+ myGroup2   | myschema2   | mytbl7     | Mark21          |                |         0
+ myGroup2   | myschema2   | mytbl8     | Mark21          |                |         0
+(8 rows)
 
 select stat_group, stat_schema, stat_table, stat_first_mark, stat_last_mark, stat_rows from emaj.emaj_log_stat_group('myGroup2','','')
   order by stat_group, stat_schema, stat_table;
@@ -332,7 +337,9 @@ select stat_group, stat_schema, stat_table, stat_first_mark, stat_last_mark, sta
  myGroup2   | myschema2   | mytbl4     | Mark21          |                |       100
  myGroup2   | myschema2   | mytbl5     | Mark21          |                |         0
  myGroup2   | myschema2   | mytbl6     | Mark21          |                |         0
-(6 rows)
+ myGroup2   | myschema2   | mytbl7     | Mark21          |                |         0
+ myGroup2   | myschema2   | mytbl8     | Mark21          |                |         0
+(8 rows)
 
 select stat_group, stat_schema, stat_table, stat_first_mark, stat_last_mark, stat_rows from emaj.emaj_log_stat_group('myGroup2','Mark21',NULL)
   order by stat_group, stat_schema, stat_table;
@@ -344,7 +351,9 @@ select stat_group, stat_schema, stat_table, stat_first_mark, stat_last_mark, sta
  myGroup2   | myschema2   | mytbl4     | Mark21          |                |       100
  myGroup2   | myschema2   | mytbl5     | Mark21          |                |         0
  myGroup2   | myschema2   | mytbl6     | Mark21          |                |         0
-(6 rows)
+ myGroup2   | myschema2   | mytbl7     | Mark21          |                |         0
+ myGroup2   | myschema2   | mytbl8     | Mark21          |                |         0
+(8 rows)
 
 select stat_group, stat_schema, stat_table, stat_first_mark, stat_last_mark, stat_rows from emaj.emaj_log_stat_group('myGroup2','Mark21','EMAJ_LAST_MARK')
   order by stat_group, stat_schema, stat_table;
@@ -356,7 +365,9 @@ select stat_group, stat_schema, stat_table, stat_first_mark, stat_last_mark, sta
  myGroup2   | myschema2   | mytbl4     | Mark21          | Multi-3        |       100
  myGroup2   | myschema2   | mytbl5     | Mark21          | Multi-3        |         0
  myGroup2   | myschema2   | mytbl6     | Mark21          | Multi-3        |         0
-(6 rows)
+ myGroup2   | myschema2   | mytbl7     | Mark21          | Multi-3        |         0
+ myGroup2   | myschema2   | mytbl8     | Mark21          | Multi-3        |         0
+(8 rows)
 
 select stat_group, stat_schema, stat_table, stat_first_mark, stat_last_mark, stat_rows from emaj.emaj_log_stat_group('myGroup2',NULL,'Mark22')
   order by stat_group, stat_schema, stat_table;
@@ -368,7 +379,9 @@ select stat_group, stat_schema, stat_table, stat_first_mark, stat_last_mark, sta
  myGroup2   | myschema2   | mytbl4     | Mark21          | Mark22         |         0
  myGroup2   | myschema2   | mytbl5     | Mark21          | Mark22         |         0
  myGroup2   | myschema2   | mytbl6     | Mark21          | Mark22         |         0
-(6 rows)
+ myGroup2   | myschema2   | mytbl7     | Mark21          | Mark22         |         0
+ myGroup2   | myschema2   | mytbl8     | Mark21          | Mark22         |         0
+(8 rows)
 
 select stat_group, stat_schema, stat_table, stat_first_mark, stat_last_mark, stat_rows from emaj.emaj_log_stat_group('myGroup2','Mark22','Mark22')
   order by stat_group, stat_schema, stat_table;
@@ -380,7 +393,9 @@ select stat_group, stat_schema, stat_table, stat_first_mark, stat_last_mark, sta
  myGroup2   | myschema2   | mytbl4     | Mark22          | Mark22         |         0
  myGroup2   | myschema2   | mytbl5     | Mark22          | Mark22         |         0
  myGroup2   | myschema2   | mytbl6     | Mark22          | Mark22         |         0
-(6 rows)
+ myGroup2   | myschema2   | mytbl7     | Mark22          | Mark22         |         0
+ myGroup2   | myschema2   | mytbl8     | Mark22          | Mark22         |         0
+(8 rows)
 
 select stat_group, stat_schema, stat_table, stat_first_mark, stat_last_mark, stat_rows from emaj.emaj_log_stat_group('myGroup2','Mark22','Mark23')
   order by stat_group, stat_schema, stat_table;
@@ -392,7 +407,9 @@ select stat_group, stat_schema, stat_table, stat_first_mark, stat_last_mark, sta
  myGroup2   | myschema2   | mytbl4     | Mark22          | Mark23         |       100
  myGroup2   | myschema2   | mytbl5     | Mark22          | Mark23         |         0
  myGroup2   | myschema2   | mytbl6     | Mark22          | Mark23         |         0
-(6 rows)
+ myGroup2   | myschema2   | mytbl7     | Mark22          | Mark23         |         0
+ myGroup2   | myschema2   | mytbl8     | Mark22          | Mark23         |         0
+(8 rows)
 
 select stat_group, stat_schema, stat_table, stat_first_mark, stat_last_mark, stat_rows from emaj.emaj_log_stat_group('myGroup2','EMAJ_LAST_MARK','')
   order by stat_group, stat_schema, stat_table;
@@ -404,7 +421,9 @@ select stat_group, stat_schema, stat_table, stat_first_mark, stat_last_mark, sta
  myGroup2   | myschema2   | mytbl4     | Multi-3         |                |         0
  myGroup2   | myschema2   | mytbl5     | Multi-3         |                |         0
  myGroup2   | myschema2   | mytbl6     | Multi-3         |                |         0
-(6 rows)
+ myGroup2   | myschema2   | mytbl7     | Multi-3         |                |         0
+ myGroup2   | myschema2   | mytbl8     | Multi-3         |                |         0
+(8 rows)
 
 select stat_group, stat_schema, stat_table, stat_first_mark, stat_last_mark, stat_rows
   from emaj.emaj_log_stat_groups(array['myGroup1','myGroup2'],'Multi-1',NULL)
@@ -422,7 +441,9 @@ select stat_group, stat_schema, stat_table, stat_first_mark, stat_last_mark, sta
  myGroup2   | myschema2   | mytbl4     | Multi-1         |                |       100
  myGroup2   | myschema2   | mytbl5     | Multi-1         |                |         0
  myGroup2   | myschema2   | mytbl6     | Multi-1         |                |         0
-(11 rows)
+ myGroup2   | myschema2   | mytbl7     | Multi-1         |                |         0
+ myGroup2   | myschema2   | mytbl8     | Multi-1         |                |         0
+(13 rows)
 
 select stat_group, stat_schema, stat_table, stat_first_mark, stat_last_mark, stat_rows
   from emaj.emaj_log_stat_groups(array['myGroup1','myGroup2'],'Multi-1','Multi-3')
@@ -440,7 +461,9 @@ select stat_group, stat_schema, stat_table, stat_first_mark, stat_last_mark, sta
  myGroup2   | myschema2   | mytbl4     | Multi-1         | Multi-3        |       100
  myGroup2   | myschema2   | mytbl5     | Multi-1         | Multi-3        |         0
  myGroup2   | myschema2   | mytbl6     | Multi-1         | Multi-3        |         0
-(11 rows)
+ myGroup2   | myschema2   | mytbl7     | Multi-1         | Multi-3        |         0
+ myGroup2   | myschema2   | mytbl8     | Multi-1         | Multi-3        |         0
+(13 rows)
 
 select stat_group, stat_schema, stat_table, stat_first_mark, stat_last_mark, stat_role, stat_verb, stat_rows
   from emaj.emaj_detailed_log_stat_group('myGroup2',NULL,NULL)
@@ -595,6 +618,57 @@ begin;
 (0 rows)
 
 rollback;
+-- check for emaj_reset_group() and emaj_log_stat_groups() and emaj_detailed_log_stat_group()
+select hist_id, hist_function, hist_event, hist_object, 
+       regexp_replace(regexp_replace(hist_wording,E'\\d\\d\.\\d\\d\\.\\d\\d\\.\\d\\d\\d\\d','%','g'),E'\\[.+\\]','(timestamp)','g'), hist_user
+  from (select * from emaj.emaj_hist where hist_id >= 5000 order by hist_id) as t;
+ hist_id |  hist_function  | hist_event |    hist_object    |                    regexp_replace                     | hist_user 
+---------+-----------------+------------+-------------------+-------------------------------------------------------+-----------
+    5003 | STOP_GROUP      | BEGIN      | myGroup1          |                                                       | postgres
+    5004 | LOCK_GROUP      | BEGIN      | myGroup1          |                                                       | postgres
+    5005 | LOCK_GROUP      | END        | myGroup1          | 5 tables locked, 0 deadlock(s)                        | postgres
+    5006 | SET_MARK_GROUP  | BEGIN      | myGroup1          | STOP_%                                                | postgres
+    5007 | SET_MARK_GROUP  | END        | myGroup1          | STOP_%                                                | postgres
+    5008 | STOP_GROUP      | END        | myGroup1          | 7 tables/sequences processed                          | postgres
+    5009 | RESET_GROUP     | BEGIN      | myGroup1          |                                                       | postgres
+    5010 | RESET_GROUP     | END        | myGroup1          | 7 tables/sequences processed                          | postgres
+    5019 | GEN_SQL_GROUP   | BEGIN      | myGroup1          | From initial mark to current situation                | postgres
+    5020 | GEN_SQL_GROUP   | END        | myGroup1          | No mark in the group(s) => no file has been generated | postgres
+    5021 | START_GROUP     | BEGIN      | myGroup1          | With log reset                                        | postgres
+    5022 | LOCK_GROUP      | BEGIN      | myGroup1          |                                                       | postgres
+    5023 | LOCK_GROUP      | END        | myGroup1          | 5 tables locked, 0 deadlock(s)                        | postgres
+    5024 | SET_MARK_GROUP  | BEGIN      | myGroup1          | Mark21                                                | postgres
+    5025 | SET_MARK_GROUP  | END        | myGroup1          | Mark21                                                | postgres
+    5026 | START_GROUP     | END        | myGroup1          | 7 tables/sequences processed                          | postgres
+    5027 | SET_MARK_GROUPS | BEGIN      | myGroup1,myGroup2 | Multi-1                                               | postgres
+    5028 | LOCK_GROUPS     | BEGIN      | myGroup1,myGroup2 |                                                       | postgres
+    5029 | LOCK_GROUPS     | END        | myGroup1,myGroup2 | 13 tables locked, 0 deadlock(s)                       | postgres
+    5030 | SET_MARK_GROUPS | END        | myGroup1,myGroup2 | Multi-1                                               | postgres
+    5031 | SET_MARK_GROUP  | BEGIN      | myGroup2          |                                                       | postgres
+    5032 | LOCK_GROUP      | BEGIN      | myGroup2          |                                                       | postgres
+    5033 | LOCK_GROUP      | END        | myGroup2          | 8 tables locked, 0 deadlock(s)                        | postgres
+    5034 | SET_MARK_GROUP  | END        | myGroup2          | Mark22                                                | postgres
+    5035 | SET_MARK_GROUPS | BEGIN      | myGroup1,myGroup2 | Multi-2                                               | postgres
+    5036 | LOCK_GROUPS     | BEGIN      | myGroup1,myGroup2 |                                                       | postgres
+    5037 | LOCK_GROUPS     | END        | myGroup1,myGroup2 | 13 tables locked, 0 deadlock(s)                       | postgres
+    5038 | SET_MARK_GROUPS | END        | myGroup1,myGroup2 | Multi-2                                               | postgres
+    5039 | SET_MARK_GROUP  | BEGIN      | myGroup2          |                                                       | postgres
+    5040 | LOCK_GROUP      | BEGIN      | myGroup2          |                                                       | postgres
+    5041 | LOCK_GROUP      | END        | myGroup2          | 8 tables locked, 0 deadlock(s)                        | postgres
+    5042 | SET_MARK_GROUP  | END        | myGroup2          | Mark23                                                | postgres
+    5043 | SET_MARK_GROUPS | BEGIN      | myGroup1,myGroup2 | Multi-3                                               | postgres
+    5044 | LOCK_GROUPS     | BEGIN      | myGroup1,myGroup2 |                                                       | postgres
+    5045 | LOCK_GROUPS     | END        | myGroup1,myGroup2 | 13 tables locked, 0 deadlock(s)                       | postgres
+    5046 | SET_MARK_GROUPS | END        | myGroup1,myGroup2 | Multi-3                                               | postgres
+(36 rows)
+
+-- set sequence restart value
+select public.handle_emaj_sequences(5200);
+ handle_emaj_sequences 
+-----------------------
+ 
+(1 row)
+
 -----------------------------
 -- emaj_estimate_rollback_group() and emaj_estimate_rollback_groups() tests
 -----------------------------
@@ -690,10 +764,10 @@ begin;
   select emaj.emaj_estimate_rollback_group('myGroup2','EMAJ_LAST_MARK',FALSE);
  emaj_estimate_rollback_group 
 ------------------------------
- @ 0.0112 secs
+ @ 0.014 secs
 (1 row)
 
--- should return 0.011200 sec
+-- should return 0.014 sec
   select emaj.emaj_unprotect_mark_group('myGroup2','EMAJ_LAST_MARK');
  emaj_unprotect_mark_group 
 ---------------------------
@@ -710,10 +784,10 @@ rollback;
 select emaj.emaj_estimate_rollback_group('myGroup2','Mark21',FALSE);
  emaj_estimate_rollback_group 
 ------------------------------
- @ 1.4251 secs
+ @ 1.4271 secs
 (1 row)
 
--- should return 1.425100 sec
+-- should return 1.4271 sec
 -- estimates with empty rollback statistics but temporarily modified parameters
 begin;
   INSERT INTO emaj.emaj_param (param_key, param_value_interval) VALUES ('avg_row_rollback_duration','150 microsecond'::interval);
@@ -724,10 +798,10 @@ begin;
   select emaj.emaj_estimate_rollback_groups('{"myGroup2"}','Mark21',TRUE);
  emaj_estimate_rollback_groups 
 -------------------------------
- @ 1.8607 secs
+ @ 1.8627 secs
 (1 row)
 
--- should return 1.860700 sec
+-- should return 1.8627 sec
 rollback;
 -- estimate with added rollback statistics about fkey drops, recreations and checks
 --   drop the foreign key on emaj_rlbk_stat to easily temporarily insert dummy rows
@@ -747,10 +821,10 @@ insert into emaj.emaj_rlbk_stat values
 select emaj.emaj_estimate_rollback_group('myGroup2','Mark21',FALSE);
  emaj_estimate_rollback_group 
 ------------------------------
- @ 1.440962 secs
+ @ 1.442962 secs
 (1 row)
 
--- should return 1.440962 sec
+-- should return 1.442962 sec
 -- estimate with added statistics about tables rollbacks
 insert into emaj.emaj_rlbk_stat values
   ('RLBK_TABLE','myschema2','mytbl1','',1,5350,'1.000 SECONDS'::interval);
@@ -769,10 +843,10 @@ insert into emaj.emaj_rlbk_stat values
 select emaj.emaj_estimate_rollback_group('myGroup2','Mark21',FALSE);
  emaj_estimate_rollback_group 
 ------------------------------
- @ 2.309566 secs
+ @ 2.311566 secs
 (1 row)
 
--- should return 2.309566 sec
+-- should return 2.311566 sec
 -- estimate with added statistics about log deletes and CTRLxDBLINK pseudo steps
 insert into emaj.emaj_rlbk_stat values
   ('DELETE_LOG','myschema2','mytbl1','',1,5350,'0.250 SECONDS'::interval);
@@ -797,10 +871,10 @@ insert into emaj.emaj_rlbk_stat values
 select emaj.emaj_estimate_rollback_group('myGroup2','Mark21',FALSE);
  emaj_estimate_rollback_group 
 ------------------------------
- @ 2.675653 secs
+ @ 2.677653 secs
 (1 row)
 
--- should return 2.675653 sec
+-- should return 2.677653 sec
 -- estimate with 2 groups and a SET_FK_DEF step
 vacuum analyze myschema1.mytbl4;
 select reltuples from pg_class, pg_namespace where relnamespace=pg_namespace.oid and relname = 'mytbl4' and nspname = 'myschema1';
@@ -815,15 +889,31 @@ begin;
   select emaj.emaj_estimate_rollback_groups('{"myGroup1","myGroup2"}','Multi-1',FALSE);
  emaj_estimate_rollback_groups 
 -------------------------------
- @ 2.729023 secs
+ @ 2.731023 secs
 (1 row)
 
--- should return 2.729023 sec
+-- should return 2.731023 sec
 rollback;
 -- delete all manualy inserted rollback statistics, cleanup the statistics table and recreate its foreign key
 delete from emaj.emaj_rlbk_stat;
 vacuum emaj.emaj_rlbk_stat;
 alter table emaj.emaj_rlbk_stat add FOREIGN KEY (rlbt_rlbk_id) REFERENCES emaj.emaj_rlbk (rlbk_id);
+-- check for emaj_estimate_rollback_group()
+select hist_id, hist_function, hist_event, hist_object, 
+       regexp_replace(regexp_replace(hist_wording,E'\\d\\d\.\\d\\d\\.\\d\\d\\.\\d\\d\\d\\d','%','g'),E'\\[.+\\]','(timestamp)','g'), hist_user
+  from (select * from emaj.emaj_hist where hist_id >= 5200 order by hist_id) as t;
+ hist_id | hist_function |     hist_event     |         hist_object          | regexp_replace | hist_user 
+---------+---------------+--------------------+------------------------------+----------------+-----------
+    5206 |               | INSERTED PARAMETER | fixed_step_rollback_duration | @ 0.0025 secs  | postgres
+(1 row)
+
+-- set sequence restart value
+select public.handle_emaj_sequences(5300);
+ handle_emaj_sequences 
+-----------------------
+ 
+(1 row)
+
 -----------------------------
 -- emaj_snap_group() test
 -----------------------------
@@ -913,12 +1003,12 @@ ERROR:  emaj_snap_log_group: The directory parameter cannot be NULL.
 CONTEXT:  PL/pgSQL function emaj.emaj_snap_log_group(text,text,text,text,text) line 53 at RAISE
 select emaj.emaj_snap_log_group('myGroup2',NULL,'EMAJ_LAST_MARK','unknown_directory',NULL);
 ERROR:  relative path not allowed for COPY to file
-CONTEXT:  SQL statement "COPY (SELECT * FROM emaj_myschema2."myTbl3_log" WHERE TRUE AND emaj_gid <= 61709 ORDER BY emaj_gid ASC) TO 'unknown_directory/myschema2_myTbl3_log.snap' "
+CONTEXT:  SQL statement "COPY (SELECT * FROM emaj_myschema2."myTbl3_log" WHERE TRUE AND emaj_gid <= 5011710 ORDER BY emaj_gid ASC) TO 'unknown_directory/myschema2_myTbl3_log.snap' "
 PL/pgSQL function emaj.emaj_snap_log_group(text,text,text,text,text) line 102 at EXECUTE
 select emaj.emaj_snap_log_group('myGroup2',NULL,'EMAJ_LAST_MARK','/unknown_directory',NULL);
 ERROR:  could not open file "/unknown_directory/myschema2_myTbl3_log.snap" for writing: No such file or directory
 HINT:  COPY TO instructs the PostgreSQL server process to write a file. You may want a client-side facility such as psql's \copy.
-CONTEXT:  SQL statement "COPY (SELECT * FROM emaj_myschema2."myTbl3_log" WHERE TRUE AND emaj_gid <= 61709 ORDER BY emaj_gid ASC) TO '/unknown_directory/myschema2_myTbl3_log.snap' "
+CONTEXT:  SQL statement "COPY (SELECT * FROM emaj_myschema2."myTbl3_log" WHERE TRUE AND emaj_gid <= 5011710 ORDER BY emaj_gid ASC) TO '/unknown_directory/myschema2_myTbl3_log.snap' "
 PL/pgSQL function emaj.emaj_snap_log_group(text,text,text,text,text) line 102 at EXECUTE
 -- invalid start mark
 select emaj.emaj_snap_log_group('myGroup2','unknownMark','EMAJ_LAST_MARK',:'EMAJTESTTMPDIR',NULL);
@@ -971,7 +1061,7 @@ select emaj.emaj_snap_log_group('myGroup2',NULL,'EMAJ_LAST_MARK',:'EMAJTESTTMPDI
 ERROR:  syntax error at or near "dummy_option"
 LINE 1: ... TO '/tmp/emaj_12/misc/myschema2_myTbl3_log.snap' dummy_opti...
                                                              ^
-QUERY:  COPY (SELECT * FROM emaj_myschema2."myTbl3_log" WHERE TRUE AND emaj_gid <= 61709 ORDER BY emaj_gid ASC) TO '/tmp/emaj_12/misc/myschema2_myTbl3_log.snap' dummy_option
+QUERY:  COPY (SELECT * FROM emaj_myschema2."myTbl3_log" WHERE TRUE AND emaj_gid <= 5011710 ORDER BY emaj_gid ASC) TO '/tmp/emaj_12/misc/myschema2_myTbl3_log.snap' dummy_option
 CONTEXT:  PL/pgSQL function emaj.emaj_snap_log_group(text,text,text,text,text) line 102 at EXECUTE
 -- SQL injection attempt
 select emaj.emaj_snap_log_group('myGroup2',NULL,'EMAJ_LAST_MARK',:'EMAJTESTTMPDIR','; CREATE ROLE fake LOGIN PASSWORD '''' SUPERUSER');
@@ -993,19 +1083,19 @@ emptyGroup_sequences_at_EGM4
 select emaj.emaj_snap_log_group('myGroup2',NULL,'EMAJ_LAST_MARK',:'EMAJTESTTMPDIR',NULL);
  emaj_snap_log_group 
 ---------------------
-                   9
+                  11
 (1 row)
 
 select emaj.emaj_snap_log_group('myGroup2','','',:'EMAJTESTTMPDIR','CSV');
  emaj_snap_log_group 
 ---------------------
-                   9
+                  11
 (1 row)
 
 select emaj.emaj_snap_log_group('myGroup2','Mark21',NULL,:'EMAJTESTTMPDIR','CSV HEADER');
  emaj_snap_log_group 
 ---------------------
-                   9
+                  11
 (1 row)
 
 select emaj.emaj_snap_log_group('myGroup2','Mark21','Mark21',:'EMAJTESTTMPDIR','CSV');
@@ -1017,20 +1107,20 @@ select emaj.emaj_snap_log_group('myGroup2','Mark21','Mark21',:'EMAJTESTTMPDIR','
 select emaj.emaj_snap_log_group('myGroup2','Mark21','Mark23',:'EMAJTESTTMPDIR',NULL);
  emaj_snap_log_group 
 ---------------------
-                   9
+                  11
 (1 row)
 
 -- mark name with special characters
 select emaj.emaj_set_mark_group('myGroup2',E'/<*crazy mark$>\\');
  emaj_set_mark_group 
 ---------------------
-                   8
+                  10
 (1 row)
 
 select emaj.emaj_snap_log_group('myGroup2','Mark21',E'/<*crazy mark$>\\',:'EMAJTESTTMPDIR',NULL);
  emaj_snap_log_group 
 ---------------------
-                   9
+                  11
 (1 row)
 
 \! ls $EMAJTESTTMPDIR |sed s/[0-9][0-9].[0-9][0-9].[0-9][0-9].[0-9][0-9][0-9]/\[timestamp_mask\]/g
@@ -1047,6 +1137,8 @@ myschema2_mytbl2_log.snap
 myschema2_mytbl4_log.snap
 myschema2_mytbl5_log.snap
 myschema2_mytbl6_log.snap
+myschema2_mytbl7_log.snap
+myschema2_mytbl8_log.snap
 select emaj.emaj_delete_mark_group('myGroup2',E'/<*crazy mark$>\\');
  emaj_delete_mark_group 
 ------------------------
@@ -1076,6 +1168,47 @@ select 'select count(*) from ' || quote_ident(log_schema) || '.' || quote_ident(
                     ?column?                    
 ------------------------------------------------
  select count(*) from emaj_myschema1.mytbl1_log
+(1 row)
+
+-- check for emaj_snap_group() and emaj_snap_log_group()
+select hist_id, hist_function, hist_event, hist_object, 
+       regexp_replace(regexp_replace(hist_wording,E'\\d\\d\.\\d\\d\\.\\d\\d\\.\\d\\d\\d\\d','%','g'),E'\\[.+\\]','(timestamp)','g'), hist_user
+  from (select * from emaj.emaj_hist where hist_id >= 5300 order by hist_id) as t;
+ hist_id |   hist_function   | hist_event | hist_object |                           regexp_replace                            | hist_user 
+---------+-------------------+------------+-------------+---------------------------------------------------------------------+-----------
+    5307 | SNAP_GROUP        | BEGIN      | emptyGroup  | /tmp/emaj_12/misc                                                   | postgres
+    5308 | SNAP_GROUP        | END        | emptyGroup  | 0 tables/sequences processed                                        | postgres
+    5309 | SNAP_GROUP        | BEGIN      | myGroup1    | /tmp/emaj_12/misc                                                   | postgres
+    5310 | SNAP_GROUP        | END        | myGroup1    | 7 tables/sequences processed                                        | postgres
+    5311 | SNAP_GROUP        | BEGIN      | myGroup1    | /tmp/emaj_12/misc                                                   | postgres
+    5312 | SNAP_GROUP        | END        | myGroup1    | 7 tables/sequences processed                                        | postgres
+    5324 | SNAP_LOG_GROUP    | BEGIN      | emptyGroup  | From mark EGM3 to mark EGM4 towards /tmp/emaj_12/misc               | postgres
+    5325 | SNAP_LOG_GROUP    | END        | emptyGroup  | 3 generated files                                                   | postgres
+    5326 | SNAP_LOG_GROUP    | BEGIN      | myGroup2    | From initial mark to mark EMAJ_LAST_MARK towards /tmp/emaj_12/misc  | postgres
+    5327 | SNAP_LOG_GROUP    | END        | myGroup2    | 11 generated files                                                  | postgres
+    5328 | SNAP_LOG_GROUP    | BEGIN      | myGroup2    | From initial mark to current situation towards /tmp/emaj_12/misc    | postgres
+    5329 | SNAP_LOG_GROUP    | END        | myGroup2    | 11 generated files                                                  | postgres
+    5330 | SNAP_LOG_GROUP    | BEGIN      | myGroup2    | From mark Mark21 to current situation towards /tmp/emaj_12/misc     | postgres
+    5331 | SNAP_LOG_GROUP    | END        | myGroup2    | 11 generated files                                                  | postgres
+    5332 | SNAP_LOG_GROUP    | BEGIN      | myGroup2    | From mark Mark21 to mark Mark21 towards /tmp/emaj_12/misc           | postgres
+    5333 | SNAP_LOG_GROUP    | END        | myGroup2    | 3 generated files                                                   | postgres
+    5334 | SNAP_LOG_GROUP    | BEGIN      | myGroup2    | From mark Mark21 to mark Mark23 towards /tmp/emaj_12/misc           | postgres
+    5335 | SNAP_LOG_GROUP    | END        | myGroup2    | 11 generated files                                                  | postgres
+    5336 | SET_MARK_GROUP    | BEGIN      | myGroup2    |                                                                     | postgres
+    5337 | LOCK_GROUP        | BEGIN      | myGroup2    |                                                                     | postgres
+    5338 | LOCK_GROUP        | END        | myGroup2    | 8 tables locked, 0 deadlock(s)                                      | postgres
+    5339 | SET_MARK_GROUP    | END        | myGroup2    | /<*crazy mark$>\                                                    | postgres
+    5340 | SNAP_LOG_GROUP    | BEGIN      | myGroup2    | From mark Mark21 to mark /<*crazy mark$>\ towards /tmp/emaj_12/misc | postgres
+    5341 | SNAP_LOG_GROUP    | END        | myGroup2    | 11 generated files                                                  | postgres
+    5342 | DELETE_MARK_GROUP | BEGIN      | myGroup2    | /<*crazy mark$>\                                                    | postgres
+    5343 | DELETE_MARK_GROUP | END        | myGroup2    | /<*crazy mark$>\                                                    | postgres
+(26 rows)
+
+-- set sequence restart value
+select public.handle_emaj_sequences(5400);
+ handle_emaj_sequences 
+-----------------------
+ 
 (1 row)
 
 -----------------------------
@@ -1191,15 +1324,13 @@ begin;
   select emaj.emaj_stop_groups(array['myGroup1','myGroup2']);
  emaj_stop_groups 
 ------------------
-               15
+               17
 (1 row)
 
   select emaj.emaj_start_groups(array['myGroup1','myGroup2'],'Common_mark_name');
-WARNING:  _check_fk_groups: The foreign key "mytbl6_col61_fkey" on the table "myschema2.mytbl6" references the table "myschema2.mytbl7" that is outside the groups (myGroup1,myGroup2).
-WARNING:  _check_fk_groups: The table "myschema2.mytbl6" is referenced by the foreign key "mytbl8_col81_fkey" on the table "myschema2.mytbl8" that is outside the groups (myGroup1,myGroup2).
  emaj_start_groups 
 -------------------
-                15
+                17
 (1 row)
 
   select emaj.emaj_rename_mark_group('myGroup1', 'Common_mark_name', 'Renamed');
@@ -1307,7 +1438,7 @@ select sum(stat_rows)+2 as check from emaj.emaj_detailed_log_stat_group('myGroup
  11602
 (1 row)
 
-select emaj.emaj_gen_sql_groups(array['myGroup1','myGroup2'], 'Multi-1', NULL, :'EMAJTESTTMPDIR' || 'myFile');
+select emaj.emaj_gen_sql_groups(array['myGroup1','myGroup2'], 'Multi-1', NULL, :'EMAJTESTTMPDIR' || '/myFile');
 NOTICE:  table "emaj_temp_script" does not exist, skipping
  emaj_gen_sql_groups 
 ---------------------
@@ -1422,7 +1553,7 @@ begin;
   select emaj.emaj_set_mark_group('myGroup2','Test sql generation');
  emaj_set_mark_group 
 ---------------------
-                   8
+                  10
 (1 row)
 
   insert into mySchema2.myTbl2 values(1000,'Text','01/01/2000');
@@ -1466,6 +1597,51 @@ RESET escape_string_warning;
 RESET datestyle;
 rollback;
 \! rm $EMAJTESTTMPDIR/*
+-- check for emaj_gen_sql_group()
+select hist_id, hist_function, hist_event, hist_object, 
+       regexp_replace(regexp_replace(hist_wording,E'\\d\\d\.\\d\\d\\.\\d\\d\\.\\d\\d\\d\\d','%','g'),E'\\[.+\\]','(timestamp)','g'), hist_user
+  from (select * from emaj.emaj_hist where hist_id >= 5400 order by hist_id) as t;
+ hist_id | hist_function  | hist_event |    hist_object    |                               regexp_replace                               | hist_user 
+---------+----------------+------------+-------------------+----------------------------------------------------------------------------+-----------
+    5402 | GEN_SQL_GROUPS | BEGIN      |                   | From initial mark to current situation                                     | postgres
+    5403 | GEN_SQL_GROUPS | END        |                   | 0 generated statements - script not exported                               | postgres
+    5436 | GEN_SQL_GROUP  | BEGIN      | emptyGroup        | From initial mark to current situation                                     | postgres
+    5437 | GEN_SQL_GROUP  | END        | emptyGroup        | 0 generated statements - script exported into /tmp/emaj_12/misc/myFile     | postgres
+    5438 | GEN_SQL_GROUP  | BEGIN      | myGroup2          | From initial mark to current situation                                     | postgres
+    5439 | GEN_SQL_GROUP  | END        | myGroup2          | 11711 generated statements - script exported into /tmp/emaj_12/misc/myFile | postgres
+    5440 | GEN_SQL_GROUP  | BEGIN      | myGroup2          | From mark Mark21 to current situation                                      | postgres
+    5441 | GEN_SQL_GROUP  | END        | myGroup2          | 11711 generated statements - script exported into /tmp/emaj_12/misc/myFile | postgres
+    5442 | GEN_SQL_GROUP  | BEGIN      | myGroup2          | From initial mark to mark Mark22                                           | postgres
+    5443 | GEN_SQL_GROUP  | END        | myGroup2          | 11600 generated statements - script exported into /tmp/emaj_12/misc/myFile | postgres
+    5444 | GEN_SQL_GROUPS | BEGIN      | myGroup1,myGroup2 | From mark Multi-1 to current situation                                     | postgres
+    5445 | GEN_SQL_GROUPS | END        | myGroup1,myGroup2 | 11711 generated statements - script exported into /tmp/emaj_12/misc/myFile | postgres
+    5446 | GEN_SQL_GROUPS | BEGIN      | myGroup1,myGroup2 | From mark Multi-2 to mark Multi-3                                          | postgres
+    5447 | GEN_SQL_GROUPS | END        | myGroup1,myGroup2 | 111 generated statements - script exported into /tmp/emaj_12/misc/myFile   | postgres
+    5448 | GEN_SQL_GROUP  | BEGIN      | myGroup2          | From initial mark to mark EMAJ_LAST_MARK                                   | postgres
+    5449 | GEN_SQL_GROUP  | END        | myGroup2          | 11711 generated statements - script exported into /tmp/emaj_12/misc/myFile | postgres
+    5450 | GEN_SQL_GROUP  | BEGIN      | myGroup1          | From initial mark to current situation                                     | postgres
+    5451 | GEN_SQL_GROUP  | END        | myGroup1          | 0 generated statements - script not exported                               | postgres
+    5452 | GEN_SQL_GROUP  | BEGIN      | myGroup2          | From initial mark to mark EMAJ_LAST_MARK with tables/sequences filtering   | postgres
+    5453 | GEN_SQL_GROUP  | END        | myGroup2          | 11711 generated statements - script exported into /tmp/emaj_12/misc/myFile | postgres
+    5454 | GEN_SQL_GROUP  | BEGIN      | myGroup2          | From initial mark to mark EMAJ_LAST_MARK with tables/sequences filtering   | postgres
+    5455 | GEN_SQL_GROUP  | END        | myGroup2          | 11710 generated statements - script exported into /tmp/emaj_12/misc/myFile | postgres
+    5456 | GEN_SQL_GROUP  | BEGIN      | myGroup2          | From initial mark to mark EMAJ_LAST_MARK with tables/sequences filtering   | postgres
+    5457 | GEN_SQL_GROUP  | END        | myGroup2          | 11610 generated statements - script exported into /tmp/emaj_12/misc/myFile | postgres
+    5458 | GEN_SQL_GROUP  | BEGIN      | myGroup2          | From initial mark to mark EMAJ_LAST_MARK with tables/sequences filtering   | postgres
+    5459 | GEN_SQL_GROUP  | END        | myGroup2          | 1 generated statements - script exported into /tmp/emaj_12/misc/myFile     | postgres
+    5460 | GEN_SQL_GROUP  | BEGIN      | phil's group#3",  | From initial mark to mark EMAJ_LAST_MARK with tables/sequences filtering   | postgres
+    5461 | GEN_SQL_GROUP  | END        | phil's group#3",  | 0 generated statements - script exported into /tmp/emaj_12/misc/myFile     | postgres
+    5462 | GEN_SQL_GROUPS | BEGIN      | myGroup1,myGroup2 | From mark Multi-1 to mark Multi-3 with tables/sequences filtering          | postgres
+    5463 | GEN_SQL_GROUPS | END        | myGroup1,myGroup2 | 100 generated statements - script exported into /tmp/emaj_12/misc/myFile   | postgres
+(30 rows)
+
+-- set sequence restart value
+select public.handle_emaj_sequences(5600);
+ handle_emaj_sequences 
+-----------------------
+ 
+(1 row)
+
 -----------------------------
 -- test a table reclustering (it will use the pkey index as clustered index) and a vacuum full
 -----------------------------
@@ -1633,130 +1809,35 @@ select emaj.emaj_purge_histories('0 SECOND');
  
 (1 row)
 
------------------------------
--- test end: check, reset history and force sequences id
------------------------------
+-- check for emaj_import_parameters_configuration() and emaj_purge_histories()
 select hist_id, hist_function, hist_event, hist_object, 
        regexp_replace(regexp_replace(hist_wording,E'\\d\\d\.\\d\\d\\.\\d\\d\\.\\d\\d\\d\\d','%','g'),E'\\[.+\\]','(timestamp)','g'), hist_user
-  from (select * from emaj.emaj_hist where hist_id >= 5000 order by hist_id) as t;
- hist_id |   hist_function   |     hist_event     |         hist_object          |                               regexp_replace                               | hist_user 
----------+-------------------+--------------------+------------------------------+----------------------------------------------------------------------------+-----------
-    5003 | STOP_GROUP        | BEGIN              | myGroup1                     |                                                                            | postgres
-    5004 | LOCK_GROUP        | BEGIN              | myGroup1                     |                                                                            | postgres
-    5005 | LOCK_GROUP        | END                | myGroup1                     | 5 tables locked, 0 deadlock(s)                                             | postgres
-    5006 | SET_MARK_GROUP    | BEGIN              | myGroup1                     | STOP_%                                                                     | postgres
-    5007 | SET_MARK_GROUP    | END                | myGroup1                     | STOP_%                                                                     | postgres
-    5008 | STOP_GROUP        | END                | myGroup1                     | 7 tables/sequences processed                                               | postgres
-    5009 | RESET_GROUP       | BEGIN              | myGroup1                     |                                                                            | postgres
-    5010 | RESET_GROUP       | END                | myGroup1                     | 7 tables/sequences processed                                               | postgres
-    5019 | GEN_SQL_GROUP     | BEGIN              | myGroup1                     | From initial mark to current situation                                     | postgres
-    5020 | GEN_SQL_GROUP     | END                | myGroup1                     | No mark in the group(s) => no file has been generated                      | postgres
-    5021 | START_GROUP       | BEGIN              | myGroup1                     | With log reset                                                             | postgres
-    5022 | LOCK_GROUP        | BEGIN              | myGroup1                     |                                                                            | postgres
-    5023 | LOCK_GROUP        | END                | myGroup1                     | 5 tables locked, 0 deadlock(s)                                             | postgres
-    5024 | SET_MARK_GROUP    | BEGIN              | myGroup1                     | Mark21                                                                     | postgres
-    5025 | SET_MARK_GROUP    | END                | myGroup1                     | Mark21                                                                     | postgres
-    5026 | START_GROUP       | END                | myGroup1                     | 7 tables/sequences processed                                               | postgres
-    5027 | SET_MARK_GROUPS   | BEGIN              | myGroup1,myGroup2            | Multi-1                                                                    | postgres
-    5028 | LOCK_GROUPS       | BEGIN              | myGroup1,myGroup2            |                                                                            | postgres
-    5029 | LOCK_GROUPS       | END                | myGroup1,myGroup2            | 11 tables locked, 0 deadlock(s)                                            | postgres
-    5030 | SET_MARK_GROUPS   | END                | myGroup1,myGroup2            | Multi-1                                                                    | postgres
-    5031 | SET_MARK_GROUP    | BEGIN              | myGroup2                     |                                                                            | postgres
-    5032 | LOCK_GROUP        | BEGIN              | myGroup2                     |                                                                            | postgres
-    5033 | LOCK_GROUP        | END                | myGroup2                     | 6 tables locked, 0 deadlock(s)                                             | postgres
-    5034 | SET_MARK_GROUP    | END                | myGroup2                     | Mark22                                                                     | postgres
-    5035 | SET_MARK_GROUPS   | BEGIN              | myGroup1,myGroup2            | Multi-2                                                                    | postgres
-    5036 | LOCK_GROUPS       | BEGIN              | myGroup1,myGroup2            |                                                                            | postgres
-    5037 | LOCK_GROUPS       | END                | myGroup1,myGroup2            | 11 tables locked, 0 deadlock(s)                                            | postgres
-    5038 | SET_MARK_GROUPS   | END                | myGroup1,myGroup2            | Multi-2                                                                    | postgres
-    5039 | SET_MARK_GROUP    | BEGIN              | myGroup2                     |                                                                            | postgres
-    5040 | LOCK_GROUP        | BEGIN              | myGroup2                     |                                                                            | postgres
-    5041 | LOCK_GROUP        | END                | myGroup2                     | 6 tables locked, 0 deadlock(s)                                             | postgres
-    5042 | SET_MARK_GROUP    | END                | myGroup2                     | Mark23                                                                     | postgres
-    5043 | SET_MARK_GROUPS   | BEGIN              | myGroup1,myGroup2            | Multi-3                                                                    | postgres
-    5044 | LOCK_GROUPS       | BEGIN              | myGroup1,myGroup2            |                                                                            | postgres
-    5045 | LOCK_GROUPS       | END                | myGroup1,myGroup2            | 11 tables locked, 0 deadlock(s)                                            | postgres
-    5046 | SET_MARK_GROUPS   | END                | myGroup1,myGroup2            | Multi-3                                                                    | postgres
-    5061 |                   | INSERTED PARAMETER | fixed_step_rollback_duration | @ 0.0025 secs                                                              | postgres
-    5079 | SNAP_GROUP        | BEGIN              | emptyGroup                   | /tmp/emaj_12/misc                                                          | postgres
-    5080 | SNAP_GROUP        | END                | emptyGroup                   | 0 tables/sequences processed                                               | postgres
-    5081 | SNAP_GROUP        | BEGIN              | myGroup1                     | /tmp/emaj_12/misc                                                          | postgres
-    5082 | SNAP_GROUP        | END                | myGroup1                     | 7 tables/sequences processed                                               | postgres
-    5083 | SNAP_GROUP        | BEGIN              | myGroup1                     | /tmp/emaj_12/misc                                                          | postgres
-    5084 | SNAP_GROUP        | END                | myGroup1                     | 7 tables/sequences processed                                               | postgres
-    5096 | SNAP_LOG_GROUP    | BEGIN              | emptyGroup                   | From mark EGM3 to mark EGM4 towards /tmp/emaj_12/misc                      | postgres
-    5097 | SNAP_LOG_GROUP    | END                | emptyGroup                   | 3 generated files                                                          | postgres
-    5098 | SNAP_LOG_GROUP    | BEGIN              | myGroup2                     | From initial mark to mark EMAJ_LAST_MARK towards /tmp/emaj_12/misc         | postgres
-    5099 | SNAP_LOG_GROUP    | END                | myGroup2                     | 9 generated files                                                          | postgres
-    5100 | SNAP_LOG_GROUP    | BEGIN              | myGroup2                     | From initial mark to current situation towards /tmp/emaj_12/misc           | postgres
-    5101 | SNAP_LOG_GROUP    | END                | myGroup2                     | 9 generated files                                                          | postgres
-    5102 | SNAP_LOG_GROUP    | BEGIN              | myGroup2                     | From mark Mark21 to current situation towards /tmp/emaj_12/misc            | postgres
-    5103 | SNAP_LOG_GROUP    | END                | myGroup2                     | 9 generated files                                                          | postgres
-    5104 | SNAP_LOG_GROUP    | BEGIN              | myGroup2                     | From mark Mark21 to mark Mark21 towards /tmp/emaj_12/misc                  | postgres
-    5105 | SNAP_LOG_GROUP    | END                | myGroup2                     | 3 generated files                                                          | postgres
-    5106 | SNAP_LOG_GROUP    | BEGIN              | myGroup2                     | From mark Mark21 to mark Mark23 towards /tmp/emaj_12/misc                  | postgres
-    5107 | SNAP_LOG_GROUP    | END                | myGroup2                     | 9 generated files                                                          | postgres
-    5108 | SET_MARK_GROUP    | BEGIN              | myGroup2                     |                                                                            | postgres
-    5109 | LOCK_GROUP        | BEGIN              | myGroup2                     |                                                                            | postgres
-    5110 | LOCK_GROUP        | END                | myGroup2                     | 6 tables locked, 0 deadlock(s)                                             | postgres
-    5111 | SET_MARK_GROUP    | END                | myGroup2                     | /<*crazy mark$>\                                                           | postgres
-    5112 | SNAP_LOG_GROUP    | BEGIN              | myGroup2                     | From mark Mark21 to mark /<*crazy mark$>\ towards /tmp/emaj_12/misc        | postgres
-    5113 | SNAP_LOG_GROUP    | END                | myGroup2                     | 9 generated files                                                          | postgres
-    5114 | DELETE_MARK_GROUP | BEGIN              | myGroup2                     | /<*crazy mark$>\                                                           | postgres
-    5115 | DELETE_MARK_GROUP | END                | myGroup2                     | /<*crazy mark$>\                                                           | postgres
-    5118 | GEN_SQL_GROUPS    | BEGIN              |                              | From initial mark to current situation                                     | postgres
-    5119 | GEN_SQL_GROUPS    | END                |                              | 0 generated statements - script not exported                               | postgres
-    5152 | GEN_SQL_GROUP     | BEGIN              | emptyGroup                   | From initial mark to current situation                                     | postgres
-    5153 | GEN_SQL_GROUP     | END                | emptyGroup                   | 0 generated statements - script exported into /tmp/emaj_12/misc/myFile     | postgres
-    5154 | GEN_SQL_GROUP     | BEGIN              | myGroup2                     | From initial mark to current situation                                     | postgres
-    5155 | GEN_SQL_GROUP     | END                | myGroup2                     | 11711 generated statements - script exported into /tmp/emaj_12/misc/myFile | postgres
-    5156 | GEN_SQL_GROUP     | BEGIN              | myGroup2                     | From mark Mark21 to current situation                                      | postgres
-    5157 | GEN_SQL_GROUP     | END                | myGroup2                     | 11711 generated statements - script exported into /tmp/emaj_12/misc/myFile | postgres
-    5158 | GEN_SQL_GROUP     | BEGIN              | myGroup2                     | From initial mark to mark Mark22                                           | postgres
-    5159 | GEN_SQL_GROUP     | END                | myGroup2                     | 11600 generated statements - script exported into /tmp/emaj_12/misc/myFile | postgres
-    5160 | GEN_SQL_GROUPS    | BEGIN              | myGroup1,myGroup2            | From mark Multi-1 to current situation                                     | postgres
-    5161 | GEN_SQL_GROUPS    | END                | myGroup1,myGroup2            | 11711 generated statements - script exported into /tmp/emaj_12/miscmyFile  | postgres
-    5162 | GEN_SQL_GROUPS    | BEGIN              | myGroup1,myGroup2            | From mark Multi-2 to mark Multi-3                                          | postgres
-    5163 | GEN_SQL_GROUPS    | END                | myGroup1,myGroup2            | 111 generated statements - script exported into /tmp/emaj_12/misc/myFile   | postgres
-    5164 | GEN_SQL_GROUP     | BEGIN              | myGroup2                     | From initial mark to mark EMAJ_LAST_MARK                                   | postgres
-    5165 | GEN_SQL_GROUP     | END                | myGroup2                     | 11711 generated statements - script exported into /tmp/emaj_12/misc/myFile | postgres
-    5166 | GEN_SQL_GROUP     | BEGIN              | myGroup1                     | From initial mark to current situation                                     | postgres
-    5167 | GEN_SQL_GROUP     | END                | myGroup1                     | 0 generated statements - script not exported                               | postgres
-    5168 | GEN_SQL_GROUP     | BEGIN              | myGroup2                     | From initial mark to mark EMAJ_LAST_MARK with tables/sequences filtering   | postgres
-    5169 | GEN_SQL_GROUP     | END                | myGroup2                     | 11711 generated statements - script exported into /tmp/emaj_12/misc/myFile | postgres
-    5170 | GEN_SQL_GROUP     | BEGIN              | myGroup2                     | From initial mark to mark EMAJ_LAST_MARK with tables/sequences filtering   | postgres
-    5171 | GEN_SQL_GROUP     | END                | myGroup2                     | 11710 generated statements - script exported into /tmp/emaj_12/misc/myFile | postgres
-    5172 | GEN_SQL_GROUP     | BEGIN              | myGroup2                     | From initial mark to mark EMAJ_LAST_MARK with tables/sequences filtering   | postgres
-    5173 | GEN_SQL_GROUP     | END                | myGroup2                     | 11610 generated statements - script exported into /tmp/emaj_12/misc/myFile | postgres
-    5174 | GEN_SQL_GROUP     | BEGIN              | myGroup2                     | From initial mark to mark EMAJ_LAST_MARK with tables/sequences filtering   | postgres
-    5175 | GEN_SQL_GROUP     | END                | myGroup2                     | 1 generated statements - script exported into /tmp/emaj_12/misc/myFile     | postgres
-    5176 | GEN_SQL_GROUP     | BEGIN              | phil's group#3",             | From initial mark to mark EMAJ_LAST_MARK with tables/sequences filtering   | postgres
-    5177 | GEN_SQL_GROUP     | END                | phil's group#3",             | 0 generated statements - script exported into /tmp/emaj_12/misc/myFile     | postgres
-    5178 | GEN_SQL_GROUPS    | BEGIN              | myGroup1,myGroup2            | From mark Multi-1 to mark Multi-3 with tables/sequences filtering          | postgres
-    5179 | GEN_SQL_GROUPS    | END                | myGroup1,myGroup2            | 100 generated statements - script exported into /tmp/emaj_12/misc/myFile   | postgres
-    5199 | IMPORT_PARAMETERS | BEGIN              |                              |                                                                            | postgres
-    5200 |                   | INSERTED PARAMETER | history_retention            | @ 1 day                                                                    | postgres
-    5201 | IMPORT_PARAMETERS | END                |                              | 1 parameters imported                                                      | postgres
-    5202 | IMPORT_PARAMETERS | BEGIN              |                              |                                                                            | postgres
-    5203 |                   | DELETED PARAMETER  | history_retention            |                                                                            | postgres
-    5204 | IMPORT_PARAMETERS | END                |                              | 1 parameters imported                                                      | postgres
-    5205 | IMPORT_PARAMETERS | BEGIN              |                              |                                                                            | postgres
-    5206 | IMPORT_PARAMETERS | END                |                              | 1 parameters imported                                                      | postgres
-    5211 | IMPORT_PARAMETERS | BEGIN              |                              | Input file: '/tmp/emaj_12/misc/orig_param_config'                          | postgres
-    5212 |                   | DELETED PARAMETER  | dblink_user_password         |                                                                            | postgres
-    5213 |                   | DELETED PARAMETER  | fixed_step_rollback_duration |                                                                            | postgres
-    5214 |                   | INSERTED PARAMETER | dblink_user_password         | <masked data>                                                              | postgres
-    5215 |                   | INSERTED PARAMETER | fixed_step_rollback_duration | @ 0.0025 secs                                                              | postgres
-    5216 | IMPORT_PARAMETERS | END                |                              | 2 parameters imported                                                      | postgres
-    5217 | IMPORT_PARAMETERS | BEGIN              |                              | Input file: '/tmp/emaj_12/misc/orig_param_config'                          | postgres
-    5218 |                   | UPDATED PARAMETER  | dblink_user_password         | <masked data>                                                              | postgres
-    5219 |                   | UPDATED PARAMETER  | fixed_step_rollback_duration | @ 0.0025 secs                                                              | postgres
-    5220 | IMPORT_PARAMETERS | END                |                              | 2 parameters imported                                                      | postgres
-    5221 | PURGE_HISTORIES   | BEGIN              |                              |                                                                            | postgres
-    5222 | PURGE_HISTORIES   | END                |                              |                                                                            | postgres
-    5223 | PURGE_HISTORIES   | BEGIN              |                              | Retention delay @ 0                                                        | postgres
-    5224 | PURGE_HISTORIES   | END                |                              |                                                                            | postgres
-(115 rows)
+  from (select * from emaj.emaj_hist where hist_id >= 5600 order by hist_id) as t;
+ hist_id |   hist_function   |     hist_event     |         hist_object          |                  regexp_replace                   | hist_user 
+---------+-------------------+--------------------+------------------------------+---------------------------------------------------+-----------
+    5606 | IMPORT_PARAMETERS | BEGIN              |                              |                                                   | postgres
+    5607 |                   | INSERTED PARAMETER | history_retention            | @ 1 day                                           | postgres
+    5608 | IMPORT_PARAMETERS | END                |                              | 1 parameters imported                             | postgres
+    5609 | IMPORT_PARAMETERS | BEGIN              |                              |                                                   | postgres
+    5610 |                   | DELETED PARAMETER  | history_retention            |                                                   | postgres
+    5611 | IMPORT_PARAMETERS | END                |                              | 1 parameters imported                             | postgres
+    5612 | IMPORT_PARAMETERS | BEGIN              |                              |                                                   | postgres
+    5613 | IMPORT_PARAMETERS | END                |                              | 1 parameters imported                             | postgres
+    5618 | IMPORT_PARAMETERS | BEGIN              |                              | Input file: '/tmp/emaj_12/misc/orig_param_config' | postgres
+    5619 |                   | DELETED PARAMETER  | dblink_user_password         |                                                   | postgres
+    5620 |                   | DELETED PARAMETER  | fixed_step_rollback_duration |                                                   | postgres
+    5621 |                   | INSERTED PARAMETER | dblink_user_password         | <masked data>                                     | postgres
+    5622 |                   | INSERTED PARAMETER | fixed_step_rollback_duration | @ 0.0025 secs                                     | postgres
+    5623 | IMPORT_PARAMETERS | END                |                              | 2 parameters imported                             | postgres
+    5624 | IMPORT_PARAMETERS | BEGIN              |                              | Input file: '/tmp/emaj_12/misc/orig_param_config' | postgres
+    5625 |                   | UPDATED PARAMETER  | dblink_user_password         | <masked data>                                     | postgres
+    5626 |                   | UPDATED PARAMETER  | fixed_step_rollback_duration | @ 0.0025 secs                                     | postgres
+    5627 | IMPORT_PARAMETERS | END                |                              | 2 parameters imported                             | postgres
+    5628 | PURGE_HISTORIES   | BEGIN              |                              |                                                   | postgres
+    5629 | PURGE_HISTORIES   | END                |                              |                                                   | postgres
+    5630 | PURGE_HISTORIES   | BEGIN              |                              | Retention delay @ 0                               | postgres
+    5631 | PURGE_HISTORIES   | END                |                              |                                                   | postgres
+(22 rows)
 
 -- remove the temp directory
 \! rm -R $EMAJTESTTMPDIR

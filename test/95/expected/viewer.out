@@ -1,5 +1,12 @@
 -- viewer.sql : test use of functions by an emaj_viewer role
 --
+-- set sequence restart value
+select public.handle_emaj_sequences(11000);
+ handle_emaj_sequences 
+-----------------------
+ 
+(1 row)
+
 -----------------------------
 -- grant emaj_viewer role
 -----------------------------
@@ -423,100 +430,106 @@ set role emaj_regression_tests_viewer_user;
 -----------------------------
 -- authorized table or view accesses
 -----------------------------
-select count(*) from emaj.emaj_visible_param;
- count 
--------
-     3
+select 'select ok' as result from (select count(*) from emaj.emaj_visible_param) as t;
+  result   
+-----------
+ select ok
 (1 row)
 
-select count(*) from emaj.emaj_hist;
- count 
--------
-    41
+select 'select ok' as result from (select count(*) from emaj.emaj_hist) as t;
+  result   
+-----------
+ select ok
 (1 row)
 
-select count(*) from emaj.emaj_group;
- count 
--------
-     3
+select 'select ok' as result from (select count(*) from emaj.emaj_time_stamp) as t;
+  result   
+-----------
+ select ok
 (1 row)
 
-select count(*) from emaj.emaj_schema;
- count 
--------
-     3
+select 'select ok' as result from (select count(*) from emaj.emaj_group) as t;
+  result   
+-----------
+ select ok
 (1 row)
 
-select count(*) from emaj.emaj_relation;
- count 
--------
-    15
+select 'select ok' as result from (select count(*) from emaj.emaj_schema) as t;
+  result   
+-----------
+ select ok
 (1 row)
 
-select count(*) from emaj.emaj_rel_hist;
- count 
--------
-   106
+select 'select ok' as result from (select count(*) from emaj.emaj_relation) as t;
+  result   
+-----------
+ select ok
 (1 row)
 
-select count(*) from emaj.emaj_mark;
- count 
--------
-     2
+select 'select ok' as result from (select count(*) from emaj.emaj_rel_hist) as t;
+  result   
+-----------
+ select ok
 (1 row)
 
-select count(*) from emaj.emaj_sequence;
- count 
--------
-     2
+select 'select ok' as result from (select count(*) from emaj.emaj_mark) as t;
+  result   
+-----------
+ select ok
 (1 row)
 
-select count(*) from emaj.emaj_table;
- count 
--------
-     5
+select 'select ok' as result from (select count(*) from emaj.emaj_sequence) as t;
+  result   
+-----------
+ select ok
 (1 row)
 
-select count(*) from emaj.emaj_seq_hole;
- count 
--------
-     0
+select 'select ok' as result from (select count(*) from emaj.emaj_table) as t;
+  result   
+-----------
+ select ok
 (1 row)
 
-select count(*) from emaj.emaj_rlbk;
- count 
--------
-    37
+select 'select ok' as result from (select count(*) from emaj.emaj_seq_hole) as t;
+  result   
+-----------
+ select ok
 (1 row)
 
-select count(*) from emaj.emaj_rlbk_session;
- count 
--------
-    37
+select 'select ok' as result from (select count(*) from emaj.emaj_rlbk) as t;
+  result   
+-----------
+ select ok
 (1 row)
 
-select count(*) from emaj.emaj_rlbk_plan;
- count 
--------
-   140
+select 'select ok' as result from (select count(*) from emaj.emaj_rlbk_session) as t;
+  result   
+-----------
+ select ok
 (1 row)
 
-select count(*) from emaj.emaj_rlbk_stat;
- count 
--------
-     7
+select 'select ok' as result from (select count(*) from emaj.emaj_rlbk_plan) as t;
+  result   
+-----------
+ select ok
 (1 row)
 
-select count(*) from emaj.emaj_ignored_app_trigger;
- count 
--------
-     0
+select 'select ok' as result from (select count(*) from emaj.emaj_rlbk_stat) as t;
+  result   
+-----------
+ select ok
 (1 row)
 
-select count(*) from emaj_mySchema1.myTbl1_log;
- count 
--------
-     0
+select 'select ok' as result from (select count(*) from emaj.emaj_ignored_app_trigger) as t;
+  result   
+-----------
+ select ok
+(1 row)
+
+select 'select ok' as result from (select count(*) from emaj_mySchema1.myTbl1_log) as t;
+  result   
+-----------
+ select ok
 (1 row)
 
 -----------------------------

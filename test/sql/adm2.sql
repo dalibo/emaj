@@ -2,6 +2,9 @@
 --            Follows adm1.sql, and includes more specific test cases
 --
 
+-- set sequence restart value
+select public.handle_emaj_sequences(14000);
+
 -- define and create the temp file directory to be used by the script
 \setenv EMAJTESTTMPDIR '/tmp/emaj_'`echo $PGVER`'/adm2'
 \set EMAJTESTTMPDIR `echo $EMAJTESTTMPDIR`
@@ -90,6 +93,15 @@ select mark_group, regexp_replace(mark_name,E'\\d\\d\.\\d\\d\\.\\d\\d\\.\\d\\d\\
 select sequ_schema, sequ_name, sequ_time_id, sequ_last_val, sequ_is_called from emaj.emaj_sequence order by sequ_time_id, sequ_schema, sequ_name;
 select tbl_schema, tbl_name, tbl_time_id, tbl_tuples, tbl_pages, tbl_log_seq_last_val from emaj.emaj_table order by tbl_time_id, tbl_schema, tbl_name;
 select sqhl_schema, sqhl_table, sqhl_begin_time_id, sqhl_end_time_id, sqhl_hole_size from emaj.emaj_seq_hole order by 1,2,3;
+select time_id, time_last_emaj_gid, time_event from emaj.emaj_time_stamp where time_id >= 14000 order by time_id;
+select hist_function, hist_event, hist_object,
+       regexp_replace(regexp_replace(regexp_replace(hist_wording,
+            E'\\d\\d\.\\d\\d\\.\\d\\d\\.\\d\\d\\d\\d','%','g'),
+            E'\\d\\d\\d\\d/\\d\\d\\/\\d\\d\\ \\d\\d\\:\\d\\d:\\d\\d .*?\\)','<timestamp>)','g'),
+            E'\\[.+\\]','(timestamp)','g'), 
+       hist_user
+  from emaj.emaj_hist where hist_id >= 14000 order by hist_id;
+
 -- log tables
 select col11, col12, col13, emaj_verb, emaj_tuple, emaj_gid from emaj_mySchema1.myTbl1_log order by emaj_gid, emaj_tuple desc;
 select col21, col22, col23, emaj_verb, emaj_tuple, emaj_gid from emaj_mySchema1.myTbl2_log order by emaj_gid, emaj_tuple desc;
@@ -103,13 +115,12 @@ select col41, col42, col43, col44, col45, emaj_verb, emaj_tuple, emaj_gid from e
 select col51, col52, col53, col54, emaj_verb, emaj_tuple, emaj_gid from emaj_myschema2.mytbl5_log order by emaj_gid, emaj_tuple desc;
 select col61, col62, col63, col64, col65, col66, emaj_verb, emaj_tuple, emaj_gid from emaj_mySchema2.myTbl6_log order by emaj_gid, emaj_tuple desc;
 
------------------------------
--- Step 9 : deleted step
------------------------------
+-- set sequence restart value
+select public.handle_emaj_sequences(14200);
 
 -----------------------------
--- Step 10 : for phil''s group#3", recreate the group as rollbackable, update tables, 
---           rename a mark, then delete 2 marks then delete all before a mark 
+-- Step 9 : for phil''s group#3", recreate the group as rollbackable, update tables, 
+--          rename a mark, then delete 2 marks then delete all before a mark 
 -----------------------------
 -- prepare phil's group#3, group
 --
@@ -157,7 +168,7 @@ select * from emaj.emaj_logged_rollback_group('phil''s group#3",','phil''s mark 
 select * from emaj.emaj_rollback_group('phil''s group#3",','phil''s mark #3',false) order by 1,2;
 
 -----------------------------
--- Checking step 10
+-- Checking step 9
 -----------------------------
 -- emaj tables
 select mark_group, regexp_replace(mark_name,E'\\d\\d\.\\d\\d\\.\\d\\d\\.\\d\\d\\d\\d','%','g'), mark_time_id, mark_is_deleted, mark_is_rlbk_protected, mark_comment, mark_log_rows_before_next, mark_logged_rlbk_target_mark from emaj.emaj_mark order by mark_time_id, mark_group;
@@ -166,6 +177,15 @@ select tbl_schema, tbl_name, tbl_time_id, tbl_log_seq_last_val from emaj.emaj_ta
 select sqhl_schema, sqhl_table, sqhl_begin_time_id, sqhl_end_time_id, sqhl_hole_size from emaj.emaj_seq_hole order by 1,2,3;
 select rlbt_rlbk_id, rlbt_step, rlbt_schema, rlbt_table, rlbt_object, rlbt_quantity from emaj.emaj_rlbk_stat
   order by rlbt_rlbk_id, rlbt_step, rlbt_schema, rlbt_table, rlbt_object;
+select time_id, time_last_emaj_gid, time_event from emaj.emaj_time_stamp where time_id >= 14200 order by time_id;
+select hist_function, hist_event, hist_object,
+       regexp_replace(regexp_replace(regexp_replace(hist_wording,
+            E'\\d\\d\.\\d\\d\\.\\d\\d\\.\\d\\d\\d\\d','%','g'),
+            E'\\d\\d\\d\\d/\\d\\d\\/\\d\\d\\ \\d\\d\\:\\d\\d:\\d\\d .*?\\)','<timestamp>)','g'),
+            E'\\[.+\\]','(timestamp)','g'), 
+       hist_user
+  from emaj.emaj_hist where hist_id >= 14200 order by hist_id;
+
 -- user tables
 select * from "phil's schema3"."phil's tbl1" order by "phil's col11","phil's col12";
 select * from "phil's schema3"."myTbl2\" order by col21;
@@ -173,8 +193,11 @@ select * from "phil's schema3"."myTbl2\" order by col21;
 select "phil's col11", "phil's col12", "phil\s col13", emaj_verb, emaj_tuple, emaj_gid from "emaj_phil's schema3"."phil's tbl1_log" order by emaj_gid, emaj_tuple desc;
 select col21, col22, col23, emaj_verb, emaj_tuple, emaj_gid from "emaj_phil's schema3"."myTbl2\_log" order by emaj_gid, emaj_tuple desc;
 
+-- set sequence restart value
+select public.handle_emaj_sequences(14300);
+
 -----------------------------
--- Step 11 : for myGroup1, in a transaction, update tables and rollback the transaction, 
+-- Step 10 : for myGroup1, in a transaction, update tables and rollback the transaction, 
 --           then rollback to previous mark 
 -----------------------------
 set search_path=public,myschema1;
@@ -186,15 +209,26 @@ rollback;
 select * from emaj.emaj_rollback_group('myGroup1','EMAJ_LAST_MARK',false) order by 1,2;
 
 -----------------------------
--- Checking step 11
+-- Checking step 10
 -----------------------------
 -- emaj tables
 select sqhl_schema, sqhl_table, sqhl_begin_time_id, sqhl_end_time_id, sqhl_hole_size from emaj.emaj_seq_hole order by 1,2,3;
 select rlbt_rlbk_id, rlbt_step, rlbt_schema, rlbt_table, rlbt_object, rlbt_quantity from emaj.emaj_rlbk_stat
   order by rlbt_rlbk_id, rlbt_step, rlbt_schema, rlbt_table, rlbt_object;
+select time_id, time_last_emaj_gid, time_event from emaj.emaj_time_stamp where time_id >= 14300 order by time_id;
+select hist_function, hist_event, hist_object,
+       regexp_replace(regexp_replace(regexp_replace(hist_wording,
+            E'\\d\\d\.\\d\\d\\.\\d\\d\\.\\d\\d\\d\\d','%','g'),
+            E'\\d\\d\\d\\d/\\d\\d\\/\\d\\d\\ \\d\\d\\:\\d\\d:\\d\\d .*?\\)','<timestamp>)','g'),
+            E'\\[.+\\]','(timestamp)','g'), 
+       hist_user
+  from emaj.emaj_hist where hist_id >= 14300 order by hist_id;
+
+-- set sequence restart value
+select public.handle_emaj_sequences(14400);
 
 -----------------------------
--- Step 12 : tests snaps and script generation functions
+-- Step 11 : tests snaps and script generation functions
 -----------------------------
 -- first perform changes in a table with generated columns
 set search_path=public,myschema1;
@@ -298,7 +332,22 @@ alter sequence myschema2.myseq1 restart 1004 start 1000 increment 1 maxvalue 922
 set role emaj_regression_tests_adm_user;
 
 -----------------------------
--- Step 13 : test use of a table with a very long name (63 characters long)
+-- Checking step 11
+-----------------------------
+select time_id, time_last_emaj_gid, time_event from emaj.emaj_time_stamp where time_id >= 14400 order by time_id;
+select hist_function, hist_event, hist_object,
+       regexp_replace(regexp_replace(regexp_replace(hist_wording,
+            E'\\d\\d\.\\d\\d\\.\\d\\d\\.\\d\\d\\d\\d','%','g'),
+            E'\\d\\d\\d\\d/\\d\\d\\/\\d\\d\\ \\d\\d\\:\\d\\d:\\d\\d .*?\\)','<timestamp>)','g'),
+            E'\\[.+\\]','(timestamp)','g'), 
+       hist_user
+  from emaj.emaj_hist where hist_id >= 14400 order by hist_id;
+
+-- set sequence restart value
+select public.handle_emaj_sequences(14500);
+
+-----------------------------
+-- Step 12 : test use of a table with a very long name (63 characters long)
 -----------------------------
 select emaj.emaj_stop_group('phil''s group#3",');
 
@@ -327,7 +376,22 @@ reset role;
 alter table "phil's schema3".table_with_very_looooooooooooooooooooooooooooooooooooooong_name rename to "phil's tbl1";
 
 -----------------------------
--- Step 14 : test use of groups or marks protection
+-- Checking step 12
+-----------------------------
+select time_id, time_last_emaj_gid, time_event from emaj.emaj_time_stamp where time_id >= 14500 order by time_id;
+select hist_function, hist_event, hist_object,
+       regexp_replace(regexp_replace(regexp_replace(hist_wording,
+            E'\\d\\d\.\\d\\d\\.\\d\\d\\.\\d\\d\\d\\d','%','g'),
+            E'\\d\\d\\d\\d/\\d\\d\\/\\d\\d\\ \\d\\d\\:\\d\\d:\\d\\d .*?\\)','<timestamp>)','g'),
+            E'\\[.+\\]','(timestamp)','g'), 
+       hist_user
+  from emaj.emaj_hist where hist_id >= 14500 order by hist_id;
+
+-- set sequence restart value
+select public.handle_emaj_sequences(14600);
+
+-----------------------------
+-- Step 13 : test use of groups or marks protection
 -----------------------------
 set role emaj_regression_tests_adm_user;
 -- try to rollback a protected group
@@ -343,7 +407,22 @@ select emaj.emaj_unprotect_mark_group('myGroup1','Mark_to_protect');
 select emaj.emaj_delete_mark_group('myGroup1','Mark_to_protect');
 
 -----------------------------
--- Step 15 : test complex use of rollbacks consolidations
+-- Checking step 13
+-----------------------------
+select time_id, time_last_emaj_gid, time_event from emaj.emaj_time_stamp where time_id >= 14600 order by time_id;
+select hist_function, hist_event, hist_object,
+       regexp_replace(regexp_replace(regexp_replace(hist_wording,
+            E'\\d\\d\.\\d\\d\\.\\d\\d\\.\\d\\d\\d\\d','%','g'),
+            E'\\d\\d\\d\\d/\\d\\d\\/\\d\\d\\ \\d\\d\\:\\d\\d:\\d\\d .*?\\)','<timestamp>)','g'),
+            E'\\[.+\\]','(timestamp)','g'), 
+       hist_user
+  from emaj.emaj_hist where hist_id >= 14600 order by hist_id;
+
+-- set sequence restart value
+select public.handle_emaj_sequences(14700);
+
+-----------------------------
+-- Step 14 : test complex use of rollbacks consolidations
 -----------------------------
 set search_path=public,myschema1;
 
@@ -474,10 +553,23 @@ select stat_group, stat_schema, stat_table, stat_first_mark, stat_last_mark, sta
 select * from myTbl1 order by col11;
 select * from myTbl2 order by col21;
 
+-----------------------------
+-- Checking step 14
+-----------------------------
+
 select mark_group, regexp_replace(mark_name,E'\\d\\d\.\\d\\d\\.\\d\\d\\.\\d\\d\\d\\d','%','g'), mark_time_id, mark_is_deleted, mark_is_rlbk_protected, mark_comment, mark_log_rows_before_next, mark_logged_rlbk_target_mark from emaj.emaj_mark where mark_group = 'myGroup1' order by mark_time_id, mark_group;
 select sequ_schema, sequ_name, sequ_time_id, sequ_last_val, sequ_is_called from emaj.emaj_sequence where sequ_schema = 'emaj_myschema1' order by sequ_time_id, sequ_schema, sequ_name;
 select tbl_schema, tbl_name, tbl_time_id, tbl_log_seq_last_val from emaj.emaj_table where tbl_schema = 'myschema1' order by tbl_time_id, tbl_schema, tbl_name;
 select sqhl_schema, sqhl_table, sqhl_begin_time_id, sqhl_end_time_id, sqhl_hole_size from emaj.emaj_seq_hole where sqhl_schema = 'myschema1' order by 1,2,3;
+select time_id, time_last_emaj_gid, time_event from emaj.emaj_time_stamp where time_id >= 14700 order by time_id;
+select hist_function, hist_event, hist_object,
+       regexp_replace(regexp_replace(regexp_replace(hist_wording,
+            E'\\d\\d\.\\d\\d\\.\\d\\d\\.\\d\\d\\d\\d','%','g'),
+            E'\\d\\d\\d\\d/\\d\\d\\/\\d\\d\\ \\d\\d\\:\\d\\d:\\d\\d .*?\\)','<timestamp>)','g'),
+            E'\\[.+\\]','(timestamp)','g'), 
+       hist_user
+  from emaj.emaj_hist where hist_id >= 14700 order by hist_id;
+
 
 select * from emaj.emaj_rollback_group('myGroup1','Multi-1',false) order by 1,2;
 

@@ -2,16 +2,13 @@
 --
 
 -- set sequence restart value
-alter sequence emaj.emaj_hist_hist_id_seq restart 5000;
-alter sequence emaj.emaj_time_stamp_time_id_seq restart 5000;
-alter sequence emaj.emaj_rlbk_rlbk_id_seq restart 5000;
-alter sequence emaj.emaj_global_seq restart 50000;
+select public.handle_emaj_sequences(5000);
 
 -- define and create the temp file directory to be used by the script
 \setenv EMAJTESTTMPDIR '/tmp/emaj_'`echo $PGVER`'/misc'
 \set EMAJTESTTMPDIR `echo $EMAJTESTTMPDIR`
 \! mkdir -p $EMAJTESTTMPDIR
-
+   
 -----------------------------
 -- emaj_reset_group() test
 -----------------------------
@@ -190,6 +187,14 @@ begin;
   select * from emaj.emaj_detailed_log_stat_groups(array['myGroup1'],NULL,NULL);
 rollback;
 
+-- check for emaj_reset_group() and emaj_log_stat_groups() and emaj_detailed_log_stat_group()
+select hist_id, hist_function, hist_event, hist_object, 
+       regexp_replace(regexp_replace(hist_wording,E'\\d\\d\.\\d\\d\\.\\d\\d\\.\\d\\d\\d\\d','%','g'),E'\\[.+\\]','(timestamp)','g'), hist_user
+  from (select * from emaj.emaj_hist where hist_id >= 5000 order by hist_id) as t;
+
+-- set sequence restart value
+select public.handle_emaj_sequences(5200);
+
 -----------------------------
 -- emaj_estimate_rollback_group() and emaj_estimate_rollback_groups() tests
 -----------------------------
@@ -229,13 +234,13 @@ begin;
   select emaj.emaj_protect_mark_group('myGroup2','EMAJ_LAST_MARK');
   INSERT INTO emaj.emaj_param (param_key, param_value_interval) VALUES ('fixed_table_rollback_duration','1.4 millisecond'::interval);
   select emaj.emaj_estimate_rollback_group('myGroup2','EMAJ_LAST_MARK',FALSE);
--- should return 0.011200 sec
+-- should return 0.014 sec
   select emaj.emaj_unprotect_mark_group('myGroup2','EMAJ_LAST_MARK');
   select emaj.emaj_unprotect_group('myGroup2');
 rollback;
 
 select emaj.emaj_estimate_rollback_group('myGroup2','Mark21',FALSE);
--- should return 1.425100 sec
+-- should return 1.4271 sec
 
 -- estimates with empty rollback statistics but temporarily modified parameters
 begin;
@@ -245,7 +250,7 @@ begin;
   UPDATE emaj.emaj_param SET param_value_interval = '7 millisecond'::interval WHERE param_key = 'fixed_step_rollback_duration';
   INSERT INTO emaj.emaj_param (param_key, param_value_interval) VALUES ('fixed_dblink_rollback_duration','2.5 millisecond'::interval);
   select emaj.emaj_estimate_rollback_groups('{"myGroup2"}','Mark21',TRUE);
--- should return 1.860700 sec
+-- should return 1.8627 sec
 rollback;
 
 -- estimate with added rollback statistics about fkey drops, recreations and checks
@@ -264,7 +269,7 @@ insert into emaj.emaj_rlbk_stat values
 insert into emaj.emaj_rlbk_stat values
   ('SET_FK_IMM','myschema2','mytbl4','mytbl4_col43_fkey',2,1200,'0.015 SECONDS'::interval);
 select emaj.emaj_estimate_rollback_group('myGroup2','Mark21',FALSE);
--- should return 1.440962 sec
+-- should return 1.442962 sec
 
 -- estimate with added statistics about tables rollbacks
 insert into emaj.emaj_rlbk_stat values
@@ -282,7 +287,7 @@ insert into emaj.emaj_rlbk_stat values
 insert into emaj.emaj_rlbk_stat values
   ('RLBK_TABLE','myschema2','mytbl4','',1,50000,'3.600 SECONDS'::interval);
 select emaj.emaj_estimate_rollback_group('myGroup2','Mark21',FALSE);
--- should return 2.309566 sec
+-- should return 2.311566 sec
 
 -- estimate with added statistics about log deletes and CTRLxDBLINK pseudo steps
 insert into emaj.emaj_rlbk_stat values
@@ -306,7 +311,7 @@ insert into emaj.emaj_rlbk_stat values
 insert into emaj.emaj_rlbk_stat values
   ('CTRL-DBLINK','','','',3,10,'0.025 SECONDS'::interval);
 select emaj.emaj_estimate_rollback_group('myGroup2','Mark21',FALSE);
--- should return 2.675653 sec
+-- should return 2.677653 sec
 
 -- estimate with 2 groups and a SET_FK_DEF step
 vacuum analyze myschema1.mytbl4;
@@ -315,13 +320,21 @@ begin;
 -- temporarily insert new rows into myTbl4 of myschema1
   insert into myschema1.myTbl4 select i,'FK...',2,1,'ABC' from generate_series (10,20) as i;
   select emaj.emaj_estimate_rollback_groups('{"myGroup1","myGroup2"}','Multi-1',FALSE);
--- should return 2.729023 sec
+-- should return 2.731023 sec
 rollback;
 
 -- delete all manualy inserted rollback statistics, cleanup the statistics table and recreate its foreign key
 delete from emaj.emaj_rlbk_stat;
 vacuum emaj.emaj_rlbk_stat;
 alter table emaj.emaj_rlbk_stat add FOREIGN KEY (rlbt_rlbk_id) REFERENCES emaj.emaj_rlbk (rlbk_id);
+
+-- check for emaj_estimate_rollback_group()
+select hist_id, hist_function, hist_event, hist_object, 
+       regexp_replace(regexp_replace(hist_wording,E'\\d\\d\.\\d\\d\\.\\d\\d\\.\\d\\d\\d\\d','%','g'),E'\\[.+\\]','(timestamp)','g'), hist_user
+  from (select * from emaj.emaj_hist where hist_id >= 5200 order by hist_id) as t;
+
+-- set sequence restart value
+select public.handle_emaj_sequences(5300);
 
 -----------------------------
 -- emaj_snap_group() test
@@ -424,6 +437,14 @@ select * from emaj.emaj_get_current_log_table('myschema1', 'mytbl1');
 select 'select count(*) from ' || quote_ident(log_schema) || '.' || quote_ident(log_table)
   from emaj.emaj_get_current_log_table('myschema1','mytbl1');
 
+-- check for emaj_snap_group() and emaj_snap_log_group()
+select hist_id, hist_function, hist_event, hist_object, 
+       regexp_replace(regexp_replace(hist_wording,E'\\d\\d\.\\d\\d\\.\\d\\d\\.\\d\\d\\d\\d','%','g'),E'\\[.+\\]','(timestamp)','g'), hist_user
+  from (select * from emaj.emaj_hist where hist_id >= 5300 order by hist_id) as t;
+
+-- set sequence restart value
+select public.handle_emaj_sequences(5400);
+
 -----------------------------
 -- emaj_gen_sql_group() and emaj_gen_sql_groups() test
 -----------------------------
@@ -507,7 +528,7 @@ select emaj.emaj_gen_sql_group('myGroup2', 'Mark21', NULL, :'EMAJTESTTMPDIR' || 
 select sum(stat_rows)+2 as check from emaj.emaj_detailed_log_stat_group('myGroup2','Mark21',NULL);
 select emaj.emaj_gen_sql_group('myGroup2', NULL, 'Mark22', :'EMAJTESTTMPDIR' || '/myFile');
 select sum(stat_rows)+2 as check from emaj.emaj_detailed_log_stat_group('myGroup2',NULL,'Mark22');
-select emaj.emaj_gen_sql_groups(array['myGroup1','myGroup2'], 'Multi-1', NULL, :'EMAJTESTTMPDIR' || 'myFile');
+select emaj.emaj_gen_sql_groups(array['myGroup1','myGroup2'], 'Multi-1', NULL, :'EMAJTESTTMPDIR' || '/myFile');
 select emaj.emaj_gen_sql_groups(array['myGroup1','myGroup2'], 'Multi-2', 'Multi-3', :'EMAJTESTTMPDIR' || '/myFile');
 select emaj.emaj_gen_sql_group('myGroup2', NULL, 'EMAJ_LAST_MARK', :'EMAJTESTTMPDIR' || '/myFile');
 select sum(stat_rows)+2 as check from emaj.emaj_detailed_log_stat_group('myGroup2',NULL,'EMAJ_LAST_MARK');
@@ -563,6 +584,14 @@ begin;
 rollback;
 
 \! rm $EMAJTESTTMPDIR/*
+
+-- check for emaj_gen_sql_group()
+select hist_id, hist_function, hist_event, hist_object, 
+       regexp_replace(regexp_replace(hist_wording,E'\\d\\d\.\\d\\d\\.\\d\\d\\.\\d\\d\\d\\d','%','g'),E'\\[.+\\]','(timestamp)','g'), hist_user
+  from (select * from emaj.emaj_hist where hist_id >= 5400 order by hist_id) as t;
+
+-- set sequence restart value
+select public.handle_emaj_sequences(5600);
 
 -----------------------------
 -- test a table reclustering (it will use the pkey index as clustered index) and a vacuum full
@@ -634,12 +663,10 @@ select emaj.emaj_import_parameters_configuration(:'EMAJTESTTMPDIR' || '/orig_par
 select emaj.emaj_purge_histories(NULL);
 select emaj.emaj_purge_histories('0 SECOND');
 
------------------------------
--- test end: check, reset history and force sequences id
------------------------------
+-- check for emaj_import_parameters_configuration() and emaj_purge_histories()
 select hist_id, hist_function, hist_event, hist_object, 
        regexp_replace(regexp_replace(hist_wording,E'\\d\\d\.\\d\\d\\.\\d\\d\\.\\d\\d\\d\\d','%','g'),E'\\[.+\\]','(timestamp)','g'), hist_user
-  from (select * from emaj.emaj_hist where hist_id >= 5000 order by hist_id) as t;
+  from (select * from emaj.emaj_hist where hist_id >= 5600 order by hist_id) as t;
 
 -- remove the temp directory
 \! rm -R $EMAJTESTTMPDIR

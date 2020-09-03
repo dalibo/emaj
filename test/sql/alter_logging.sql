@@ -4,11 +4,15 @@
 -- It uses the same tables and groups, and the same sequences range
 -- It includes the final checks for both alter.sql and alterLogging.sql scenarios
 
+-- set sequence restart value
+select public.handle_emaj_sequences(9000);
+
 -- define and create the temp file directory to be used by the script
 \setenv EMAJTESTTMPDIR '/tmp/emaj_'`echo $PGVER`'/alter_logging'
 \set EMAJTESTTMPDIR `echo $EMAJTESTTMPDIR`
 \! mkdir -p $EMAJTESTTMPDIR
 
+select emaj.emaj_remove_tables('myschema2', array['mytbl7','mytbl8']);
 select emaj.emaj_start_groups('{"myGroup1","myGroup2"}','Mk1');
 
 -- Save the groups configuration
@@ -38,6 +42,20 @@ select * from emaj.emaj_rollback_groups('{"myGroup1","myGroup2"}','Mk2');
 
 -- revert the properties changes
 select emaj.emaj_import_groups_configuration(:'EMAJTESTTMPDIR' || '/all_groups_conf.json', '{"myGroup1","myGroup2"}', true);
+
+-- checks for attributes changes
+select * from emaj.emaj_alter_plan where altr_time_id >= 9000 order by 1,2,3,4,5;
+select time_id, time_last_emaj_gid, time_event from emaj.emaj_time_stamp where time_id >= 9000 order by time_id;
+select hist_function, hist_event, hist_object,
+       regexp_replace(regexp_replace(regexp_replace(hist_wording,
+            E'\\d\\d\.\\d\\d\\.\\d\\d\\.\\d\\d\\d\\d','%','g'),
+            E'\\d\\d\\d\\d/\\d\\d\\/\\d\\d\\ \\d\\d\\:\\d\\d:\\d\\d .*?\\)','<timestamp>)','g'),
+            E'\\[.+\\]','(timestamp)','g'), 
+       hist_user 
+  from emaj.emaj_hist where hist_id >= 9000 order by hist_id;
+
+-- set sequence restart value
+select public.handle_emaj_sequences(9100);
 
 -----------------------------
 -- add sequences
@@ -144,6 +162,20 @@ select * from emaj.emaj_sequence where sequ_schema = 'myschema2' and sequ_name =
    select upper(rel_time_range) from emaj.emaj_relation where rel_schema = 'myschema2' and rel_tblseq = 'myseq2')
   order by sequ_time_id;
 
+-- checks for add sequences test
+select * from emaj.emaj_alter_plan where altr_time_id >= 9100 order by 1,2,3,4,5;
+select time_id, time_last_emaj_gid, time_event from emaj.emaj_time_stamp where time_id >= 9100 order by time_id;
+select hist_function, hist_event, hist_object,
+       regexp_replace(regexp_replace(regexp_replace(hist_wording,
+            E'\\d\\d\.\\d\\d\\.\\d\\d\\.\\d\\d\\d\\d','%','g'),
+            E'\\d\\d\\d\\d/\\d\\d\\/\\d\\d\\ \\d\\d\\:\\d\\d:\\d\\d .*?\\)','<timestamp>)','g'),
+            E'\\[.+\\]','(timestamp)','g'), 
+       hist_user 
+  from emaj.emaj_hist where hist_id >= 9100 order by hist_id;
+
+-- set sequence restart value
+select public.handle_emaj_sequences(9300);
+
 -----------------------------
 -- remove sequences
 -----------------------------
@@ -221,6 +253,20 @@ rollback;
 select emaj.emaj_import_groups_configuration(:'EMAJTESTTMPDIR' || '/all_groups_conf.json', '{"myGroup1"}', true, 'Revert_sequences_removal');
 
 select emaj.emaj_cleanup_rollback_state();
+
+-- checks for remove sequences test
+select * from emaj.emaj_alter_plan where altr_time_id >= 9300 order by 1,2,3,4,5;
+select time_id, time_last_emaj_gid, time_event from emaj.emaj_time_stamp where time_id >= 9300 order by time_id;
+select hist_function, hist_event, hist_object,
+       regexp_replace(regexp_replace(regexp_replace(hist_wording,
+            E'\\d\\d\.\\d\\d\\.\\d\\d\\.\\d\\d\\d\\d','%','g'),
+            E'\\d\\d\\d\\d/\\d\\d\\/\\d\\d\\ \\d\\d\\:\\d\\d:\\d\\d .*?\\)','<timestamp>)','g'),
+            E'\\[.+\\]','(timestamp)','g'), 
+       hist_user 
+  from emaj.emaj_hist where hist_id >= 9300 order by hist_id;
+
+-- set sequence restart value
+select public.handle_emaj_sequences(9500);
 
 -----------------------------
 -- add tables
@@ -359,6 +405,20 @@ select emaj.emaj_import_groups_configuration(:'EMAJTESTTMPDIR' || '/all_groups_c
 select rlbk_severity, regexp_replace(rlbk_message,E'\\d\\d\\d\\d/\\d\\d\\/\\d\\d\\ \\d\\d\\:\\d\\d:\\d\\d .*?\\)','<timestamp>)','g')
   from emaj.emaj_rollback_group('myGroup2', 'ADD_TBL test',true);
 select * from myschema2.mytbl7 order by col71;
+
+-- checks for add tables tests
+select * from emaj.emaj_alter_plan where altr_time_id >= 9500 order by 1,2,3,4,5;
+select time_id, time_last_emaj_gid, time_event from emaj.emaj_time_stamp where time_id >= 9500 order by time_id;
+select hist_function, hist_event, hist_object,
+       regexp_replace(regexp_replace(regexp_replace(hist_wording,
+            E'\\d\\d\.\\d\\d\\.\\d\\d\\.\\d\\d\\d\\d','%','g'),
+            E'\\d\\d\\d\\d/\\d\\d\\/\\d\\d\\ \\d\\d\\:\\d\\d:\\d\\d .*?\\)','<timestamp>)','g'),
+            E'\\[.+\\]','(timestamp)','g'), 
+       hist_user 
+  from emaj.emaj_hist where hist_id >= 9500 order by hist_id;
+
+-- set sequence restart value
+select public.handle_emaj_sequences(9700);
 
 -----------------------------
 -- remove tables
@@ -510,6 +570,20 @@ select * from emaj.emaj_rollback_groups('{"myGroup1","myGroup2"}','Mk1',true) or
 -- execute additional rollback not crossing alter operations anymore
 select * from emaj.emaj_logged_rollback_groups('{"myGroup1","myGroup2"}','Mk1',false) order by 1,2;
 select * from emaj.emaj_rollback_groups('{"myGroup1","myGroup2"}','Mk1',false) order by 1,2;
+
+-- checks for remove tables tests
+select * from emaj.emaj_alter_plan where altr_time_id >= 9700 order by 1,2,3,4,5;
+select time_id, time_last_emaj_gid, time_event from emaj.emaj_time_stamp where time_id >= 9700 order by time_id;
+select hist_function, hist_event, hist_object,
+       regexp_replace(regexp_replace(regexp_replace(hist_wording,
+            E'\\d\\d\.\\d\\d\\.\\d\\d\\.\\d\\d\\d\\d','%','g'),
+            E'\\d\\d\\d\\d/\\d\\d\\/\\d\\d\\ \\d\\d\\:\\d\\d:\\d\\d .*?\\)','<timestamp>)','g'),
+            E'\\[.+\\]','(timestamp)','g'), 
+       hist_user 
+  from emaj.emaj_hist where hist_id >= 9700 order by hist_id;
+
+-- set sequence restart value
+select public.handle_emaj_sequences(10000);
 
 -----------------------------
 -- change the group ownership of a table and a sequence (and some other attributes)
@@ -682,17 +756,19 @@ select emaj.emaj_drop_group('myGroup2');
 
 select emaj.emaj_drop_group('myGroup4');
 
-select nspname from pg_namespace where nspname like 'emaj%' order by nspname;
-select sch_name from emaj.emaj_schema order by 1;
+-- checks for group ownership change tests
+select * from emaj.emaj_alter_plan where altr_time_id >= 10000 order by 1,2,3,4,5;
+select time_id, time_last_emaj_gid, time_event from emaj.emaj_time_stamp where time_id >= 10000 order by time_id;
 select hist_function, hist_event, hist_object,
        regexp_replace(regexp_replace(regexp_replace(hist_wording,
             E'\\d\\d\.\\d\\d\\.\\d\\d\\.\\d\\d\\d\\d','%','g'),
             E'\\d\\d\\d\\d/\\d\\d\\/\\d\\d\\ \\d\\d\\:\\d\\d:\\d\\d .*?\\)','<timestamp>)','g'),
             E'\\[.+\\]','(timestamp)','g'), 
        hist_user 
-  from emaj.emaj_hist where hist_id > 6000 order by hist_id;
-select time_id, time_last_emaj_gid, time_event from emaj.emaj_time_stamp where time_id > 6000 order by time_id;
-select * from emaj.emaj_alter_plan order by 1,2,3,4,5;
+  from emaj.emaj_hist where hist_id >= 10000 order by hist_id;
+
+select nspname from pg_namespace where nspname like 'emaj%' order by nspname;
+select sch_name from emaj.emaj_schema order by 1;
 select * from emaj.emaj_rel_hist order by 1,2,3;
 
 truncate emaj.emaj_hist;

@@ -2,6 +2,9 @@
 --            Follows adm1.sql and adm2.sql
 --
 
+-- set sequence restart value
+select public.handle_emaj_sequences(17000);
+
 -- define and create the temp file directory to be used by the script
 \setenv EMAJTESTTMPDIR '/tmp/emaj_'`echo $PGVER`'/adm3'
 \set EMAJTESTTMPDIR `echo $EMAJTESTTMPDIR`
@@ -11,7 +14,7 @@ set role emaj_regression_tests_adm_user;
 set search_path=public,myschema1;
 
 -----------------------------
--- Step 16 : export / import configurations
+-- Step 15 : export / import configurations
 -----------------------------
 -- save parameters on a file and reload them
 select emaj.emaj_export_parameters_configuration(:'EMAJTESTTMPDIR' || '/param_config.json');
@@ -20,10 +23,26 @@ select emaj.emaj_import_parameters_configuration(:'EMAJTESTTMPDIR' || '/param_co
 -- also save the groups configuration on a file
 select emaj.emaj_export_groups_configuration(:'EMAJTESTTMPDIR' || '/groups_config.json');
 
+-----------------------------
+-- Checking step 15
+-----------------------------
+-- emaj tables
+select time_id, time_last_emaj_gid, time_event from emaj.emaj_time_stamp where time_id >= 17000 order by time_id;
+select hist_function, hist_event, hist_object,
+       regexp_replace(regexp_replace(regexp_replace(hist_wording,
+            E'\\d\\d\.\\d\\d\\.\\d\\d\\.\\d\\d\\d\\d','%','g'),
+            E'\\d\\d\\d\\d/\\d\\d\\/\\d\\d\\ \\d\\d\\:\\d\\d:\\d\\d .*?\\)','<timestamp>)','g'),
+            E'\\[.+\\]','(timestamp)','g'), 
+       hist_user
+  from emaj.emaj_hist where hist_id >= 17000 order by hist_id;
+
+-- set sequence restart value
+select public.handle_emaj_sequences(17100);
+
 \! rm $EMAJTESTTMPDIR/*
 
 -----------------------------
--- Step 17 : test transactions with several emaj operations
+-- Step 16 : test transactions with several emaj operations
 -----------------------------
 select emaj.emaj_create_group('myGroup4');
 select emaj.emaj_assign_tables('myschema4','.*',null,'myGroup4');
@@ -37,10 +56,26 @@ begin;
   select emaj.emaj_start_group('myGroup4','M5',false);
   select emaj.emaj_stop_group('myGroup4','M6');
 commit;
-select * from emaj.emaj_mark where mark_group = 'myGroup4' order by mark_time_id, mark_group;
 
 -----------------------------
--- Step 18 : test partition attach and detach
+-- Checking step 16
+-----------------------------
+-- emaj tables
+select * from emaj.emaj_mark where mark_group = 'myGroup4' order by mark_time_id, mark_group;
+select time_id, time_last_emaj_gid, time_event from emaj.emaj_time_stamp where time_id >= 17100 order by time_id;
+select hist_function, hist_event, hist_object,
+       regexp_replace(regexp_replace(regexp_replace(hist_wording,
+            E'\\d\\d\.\\d\\d\\.\\d\\d\\.\\d\\d\\d\\d','%','g'),
+            E'\\d\\d\\d\\d/\\d\\d\\/\\d\\d\\ \\d\\d\\:\\d\\d:\\d\\d .*?\\)','<timestamp>)','g'),
+            E'\\[.+\\]','(timestamp)','g'), 
+       hist_user
+  from emaj.emaj_hist where hist_id >= 17100 order by hist_id;
+
+-- set sequence restart value
+select public.handle_emaj_sequences(17200);
+
+-----------------------------
+-- Step 17 : test partition attach and detach
 -----------------------------
 -- Needs postgres 10+
 
@@ -101,7 +136,23 @@ select emaj.emaj_stop_group('myGroup4');
 select emaj.emaj_drop_group('myGroup4');
 
 -----------------------------
--- Step 19 : test defect with application table or sequence
+-- Checking step 17
+-----------------------------
+-- emaj tables
+select time_id, time_last_emaj_gid, time_event from emaj.emaj_time_stamp where time_id >= 17200 order by time_id;
+select hist_function, hist_event, hist_object,
+       regexp_replace(regexp_replace(regexp_replace(hist_wording,
+            E'\\d\\d\.\\d\\d\\.\\d\\d\\.\\d\\d\\d\\d','%','g'),
+            E'\\d\\d\\d\\d/\\d\\d\\/\\d\\d\\ \\d\\d\\:\\d\\d:\\d\\d .*?\\)','<timestamp>)','g'),
+            E'\\[.+\\]','(timestamp)','g'), 
+       hist_user
+  from emaj.emaj_hist where hist_id >= 17200 order by hist_id;
+
+-- set sequence restart value
+select public.handle_emaj_sequences(17400);
+
+-----------------------------
+-- Step 18 : test defect with application table or sequence
 --           also test some changes on the unlogged and the with oids tables
 -----------------------------
 select emaj.emaj_create_group('phil''s group#3",',false);
@@ -194,7 +245,23 @@ select emaj.emaj_stop_group('phil''s group#3",');
 select emaj.emaj_drop_group('phil''s group#3",');
 
 -----------------------------
--- Step 20 : test use of dynamic tables group management (assign, move, remove, change)
+-- Checking step 18
+-----------------------------
+-- emaj tables
+select time_id, time_last_emaj_gid, time_event from emaj.emaj_time_stamp where time_id >= 17400 order by time_id;
+select hist_function, hist_event, hist_object,
+       regexp_replace(regexp_replace(regexp_replace(hist_wording,
+            E'\\d\\d\.\\d\\d\\.\\d\\d\\.\\d\\d\\d\\d','%','g'),
+            E'\\d\\d\\d\\d/\\d\\d\\/\\d\\d\\ \\d\\d\\:\\d\\d:\\d\\d .*?\\)','<timestamp>)','g'),
+            E'\\[.+\\]','(timestamp)','g'), 
+       hist_user
+  from emaj.emaj_hist where hist_id >= 17400 order by hist_id;
+
+-- set sequence restart value
+select public.handle_emaj_sequences(17600);
+
+-----------------------------
+-- Step 19 : test use of dynamic tables group management (assign, move, remove, change)
 -----------------------------
 
 -- create, start and populate groups
@@ -356,10 +423,26 @@ select emaj.emaj_drop_group('grp_tmp');
 select * from emaj.emaj_rel_hist order by 1,2,3;
 select count(*) from emaj.emaj_relation where rel_schema in ('phil''s schema3','myschema4');
 
+-----------------------------
+-- Checking step 19
+-----------------------------
+-- emaj tables
+select time_id, time_last_emaj_gid, time_event from emaj.emaj_time_stamp where time_id >= 17600 order by time_id;
+select hist_function, hist_event, hist_object,
+       regexp_replace(regexp_replace(regexp_replace(hist_wording,
+            E'\\d\\d\.\\d\\d\\.\\d\\d\\.\\d\\d\\d\\d','%','g'),
+            E'\\d\\d\\d\\d/\\d\\d\\/\\d\\d\\ \\d\\d\\:\\d\\d:\\d\\d .*?\\)','<timestamp>)','g'),
+            E'\\[.+\\]','(timestamp)','g'), 
+       hist_user
+  from emaj.emaj_hist where hist_id >= 17600 order by hist_id;
+
+-- set sequence restart value
+select public.handle_emaj_sequences(18000);
+
 \! rm $EMAJTESTTMPDIR/*
 
 -----------------------------
--- Step 21 : test TRUNCATE (log, statistics, rollback, sql generation and replay)
+-- Step 20 : test TRUNCATE (log, statistics, rollback, sql generation and replay)
 -----------------------------
 
 SET client_min_messages TO WARNING;
@@ -405,13 +488,13 @@ select * from emaj.emaj_rollback_group('truncateTestGroup','M1', false);
 select emaj.emaj_stop_group('truncateTestGroup');
 select emaj.emaj_drop_group('truncateTestGroup');
 
------------------------------
--- test end: check, reset history and force sequences id
------------------------------
 -- first set all rollback events state
 select emaj.emaj_cleanup_rollback_state();
 
--- check rollback related tables
+-----------------------------
+-- Checking step 20
+-----------------------------
+-- emaj tables
 select rlbk_id, rlbk_groups, rlbk_mark, rlbk_time_id, rlbk_is_logged, rlbk_is_alter_group_allowed, rlbk_nb_session, rlbk_nb_table,
        rlbk_nb_sequence, rlbk_eff_nb_table, rlbk_status, rlbk_begin_hist_id, rlbk_dblink_schema, rlbk_is_dblink_used,
        case when rlbk_end_datetime is null then 'null' else '[ts]' end as "end_datetime",
@@ -426,14 +509,15 @@ select rlbp_rlbk_id, rlbp_step, rlbp_schema, rlbp_table, rlbp_object, rlbp_targe
 select rlbt_step, rlbt_schema, rlbt_table, rlbt_object, rlbt_rlbk_id, rlbt_quantity
   from emaj.emaj_rlbk_stat where rlbt_rlbk_id >= 10000 order by rlbt_rlbk_id, rlbt_step, rlbt_schema, rlbt_table, rlbt_object;
 
-select time_id, time_last_emaj_gid, time_event from emaj.emaj_time_stamp where time_id >= 10000 order by time_id;
+select time_id, time_last_emaj_gid, time_event from emaj.emaj_time_stamp where time_id >= 18000 order by time_id;
 select hist_function, hist_event, hist_object,
        regexp_replace(regexp_replace(regexp_replace(hist_wording,
             E'\\d\\d\.\\d\\d\\.\\d\\d\\.\\d\\d\\d\\d','%','g'),
             E'\\d\\d\\d\\d/\\d\\d\\/\\d\\d\\ \\d\\d\\:\\d\\d:\\d\\d .*?\\)','<timestamp>)','g'),
             E'\\[.+\\]','(timestamp)','g'), 
        hist_user
-  from emaj.emaj_hist order by hist_id;
+  from emaj.emaj_hist where hist_id >= 18000 order by hist_id;
+
 --
 reset role;
 

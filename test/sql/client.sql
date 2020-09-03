@@ -8,9 +8,7 @@
 
 -- set sequence restart value
 truncate emaj.emaj_hist;
-alter sequence emaj.emaj_hist_hist_id_seq restart 20000;
-alter sequence emaj.emaj_time_stamp_time_id_seq restart 20000;
-alter sequence emaj.emaj_rlbk_rlbk_id_seq restart 20000;
+select public.handle_emaj_sequences(20000);
 
 --------------------------------------------
 -- Prepare data for emajParallelRollback.php

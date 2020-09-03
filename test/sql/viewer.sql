@@ -1,6 +1,9 @@
 -- viewer.sql : test use of functions by an emaj_viewer role
 --
 
+-- set sequence restart value
+select public.handle_emaj_sequences(11000);
+
 -----------------------------
 -- grant emaj_viewer role
 -----------------------------
@@ -27,22 +30,23 @@ set role emaj_regression_tests_viewer_user;
 -----------------------------
 -- authorized table or view accesses
 -----------------------------
-select count(*) from emaj.emaj_visible_param;
-select count(*) from emaj.emaj_hist;
-select count(*) from emaj.emaj_group;
-select count(*) from emaj.emaj_schema;
-select count(*) from emaj.emaj_relation;
-select count(*) from emaj.emaj_rel_hist;
-select count(*) from emaj.emaj_mark;
-select count(*) from emaj.emaj_sequence;
-select count(*) from emaj.emaj_table;
-select count(*) from emaj.emaj_seq_hole;
-select count(*) from emaj.emaj_rlbk;
-select count(*) from emaj.emaj_rlbk_session;
-select count(*) from emaj.emaj_rlbk_plan;
-select count(*) from emaj.emaj_rlbk_stat;
-select count(*) from emaj.emaj_ignored_app_trigger;
-select count(*) from emaj_mySchema1.myTbl1_log;
+select 'select ok' as result from (select count(*) from emaj.emaj_visible_param) as t;
+select 'select ok' as result from (select count(*) from emaj.emaj_hist) as t;
+select 'select ok' as result from (select count(*) from emaj.emaj_time_stamp) as t;
+select 'select ok' as result from (select count(*) from emaj.emaj_group) as t;
+select 'select ok' as result from (select count(*) from emaj.emaj_schema) as t;
+select 'select ok' as result from (select count(*) from emaj.emaj_relation) as t;
+select 'select ok' as result from (select count(*) from emaj.emaj_rel_hist) as t;
+select 'select ok' as result from (select count(*) from emaj.emaj_mark) as t;
+select 'select ok' as result from (select count(*) from emaj.emaj_sequence) as t;
+select 'select ok' as result from (select count(*) from emaj.emaj_table) as t;
+select 'select ok' as result from (select count(*) from emaj.emaj_seq_hole) as t;
+select 'select ok' as result from (select count(*) from emaj.emaj_rlbk) as t;
+select 'select ok' as result from (select count(*) from emaj.emaj_rlbk_session) as t;
+select 'select ok' as result from (select count(*) from emaj.emaj_rlbk_plan) as t;
+select 'select ok' as result from (select count(*) from emaj.emaj_rlbk_stat) as t;
+select 'select ok' as result from (select count(*) from emaj.emaj_ignored_app_trigger) as t;
+select 'select ok' as result from (select count(*) from emaj_mySchema1.myTbl1_log) as t;
 
 -----------------------------
 -- authorized functions

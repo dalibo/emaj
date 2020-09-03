@@ -4,13 +4,12 @@
 --
 
 -- set sequence restart value
-alter sequence emaj.emaj_hist_hist_id_seq restart 2000;
-alter sequence emaj.emaj_time_stamp_time_id_seq restart 2000;
-alter sequence emaj.emaj_global_seq restart 20000;
+select public.handle_emaj_sequences(3000);
 
 select emaj.emaj_start_group('myGroup1','Mark1');
 select emaj.emaj_start_group('myGroup2','Mark2');
 select emaj.emaj_start_group('emptyGroup','MarkInit');
+
 -----------------------------
 -- emaj_set_mark_group() tests
 -----------------------------
@@ -79,11 +78,16 @@ select emaj.emaj_set_mark_groups('{"myGroup1","myGroup2"}');
 -- use of % in mark name
 select emaj.emaj_set_mark_groups('{"myGroup1","myGroup2"}','Bar%Foo');
 
--- impact of mark set
+-- check for emaj_set_mark_group() and emaj_set_mark_groups()
 select mark_group, regexp_replace(mark_name,E'\\d\\d\.\\d\\d\\.\\d\\d\\.\\d\\d\\d\\d','%','g'), mark_time_id, mark_is_deleted, mark_is_rlbk_protected, mark_comment, mark_log_rows_before_next, mark_logged_rlbk_target_mark from emaj.emaj_mark order by mark_time_id, mark_group;
-select time_id, time_last_emaj_gid, time_event from emaj.emaj_time_stamp where time_id >= 2000 order by time_id;
+select time_id, time_last_emaj_gid, time_event from emaj.emaj_time_stamp where time_id >= 3000 order by time_id;
 select sequ_schema, sequ_name, sequ_time_id, sequ_last_val, sequ_is_called from emaj.emaj_sequence order by sequ_time_id, sequ_schema, sequ_name;
 select tbl_schema, tbl_name, tbl_time_id, tbl_tuples, tbl_pages, tbl_log_seq_last_val from emaj.emaj_table order by tbl_time_id, tbl_schema, tbl_name;
+select hist_id, hist_function, hist_event, hist_object, 
+  regexp_replace(regexp_replace(hist_wording,E'\\d\\d\.\\d\\d\\.\\d\\d\\.\\d\\d\\d\\d','%','g'),E'\\[.+\\]','(timestamp)','g'),
+  hist_user from emaj.emaj_hist where hist_id >= 3000 order by hist_id;
+
+select public.handle_emaj_sequences(3200);
 
 -----------------------------
 -- emaj_comment_mark_group() tests
@@ -153,10 +157,16 @@ select emaj.emaj_rename_mark_group('emptyGroup','EMAJ_LAST_MARK','SM2');
 update emaj.emaj_mark set mark_logged_rlbk_target_mark = 'Mark1' where mark_name = 'SM2';
 select emaj.emaj_rename_mark_group('myGroup1','Mark1','First Mark');
 
--- impact of mark rename
+-- check for emaj_comment_mark_group() and emaj_rename_mark_group()
 select mark_group, regexp_replace(mark_name,E'\\d\\d\.\\d\\d\\.\\d\\d\\.\\d\\d\\d\\d','%','g'), mark_time_id, mark_is_deleted, mark_is_rlbk_protected, mark_comment, mark_log_rows_before_next, mark_logged_rlbk_target_mark from emaj.emaj_mark order by mark_time_id, mark_group;
 select sequ_schema, sequ_name, sequ_time_id, sequ_last_val, sequ_is_called from emaj.emaj_sequence order by sequ_time_id, sequ_schema, sequ_name;
 select tbl_schema, tbl_name, tbl_time_id, tbl_log_seq_last_val from emaj.emaj_table order by tbl_time_id, tbl_schema, tbl_name;
+select time_id, time_last_emaj_gid, time_event from emaj.emaj_time_stamp where time_id >= 3200 order by time_id;
+select hist_id, hist_function, hist_event, hist_object, 
+  regexp_replace(regexp_replace(hist_wording,E'\\d\\d\.\\d\\d\\.\\d\\d\\.\\d\\d\\d\\d','%','g'),E'\\[.+\\]','(timestamp)','g'),
+  hist_user from emaj.emaj_hist where hist_id >= 3200 order by hist_id;
+
+select public.handle_emaj_sequences(3400);
 
 -----------------------------
 -- emaj_delete_mark_group() tests
@@ -224,6 +234,14 @@ insert into emaj.emaj_param (param_key, param_value_interval) values ('history_r
 select emaj.emaj_set_mark_group('phil''s group#3",','Mark4');
 select emaj.emaj_delete_before_mark_group('phil''s group#3",','Mark4');
 delete from emaj.emaj_param where param_key = 'history_retention';
+
+-- check for emaj_delete_mark_group() and emaj_delete_before_mark_group()
+select time_id, time_last_emaj_gid, time_event from emaj.emaj_time_stamp where time_id >= 3400 order by time_id;
+select hist_id, hist_function, hist_event, hist_object, 
+  regexp_replace(regexp_replace(hist_wording,E'\\d\\d\.\\d\\d\\.\\d\\d\\.\\d\\d\\d\\d','%','g'),E'\\[.+\\]','(timestamp)','g'),
+  hist_user from emaj.emaj_hist where hist_id >= 3400 order by hist_id;
+
+select public.handle_emaj_sequences(3600);
 
 -----------------------------
 -- emaj_protect_mark_group() tests
@@ -293,9 +311,8 @@ select sequ_schema, sequ_name, sequ_time_id, sequ_last_val, sequ_is_called from 
 select tbl_schema, tbl_name, tbl_time_id, tbl_log_seq_last_val from emaj.emaj_table order by tbl_time_id, tbl_schema, tbl_name;
 
 -----------------------------
--- test end: check, reset history and force sequences id
+-- test end: check
 -----------------------------
-select time_id, time_last_emaj_gid, time_event from emaj.emaj_time_stamp where time_id >= 2000 order by time_id;
+select time_id, time_last_emaj_gid, time_event from emaj.emaj_time_stamp where time_id >= 3600 order by time_id;
 select hist_id, hist_function, hist_event, regexp_replace(hist_object,E'\\d\\d\.\\d\\d\\.\\d\\d\\.\\d\\d\\d\\d','%','g'), regexp_replace(regexp_replace(hist_wording,E'\\d\\d\.\\d\\d\\.\\d\\d\\.\\d\\d\\d\\d','%','g'),E'\\[.+\\]','(timestamp)','g'), hist_user from 
-  (select * from emaj.emaj_hist order by hist_id) as t;
-
+  (select * from emaj.emaj_hist where hist_id >= 3600 order by hist_id) as t;

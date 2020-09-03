@@ -337,3 +337,51 @@ grant all on all sequences in schema mySchema1, mySchema2, "phil's schema3", myS
   to emaj_regression_tests_adm_user;
 --
 grant all on database regression to emaj_regression_tests_anonym_user;
+-----------------------------
+-- create the function that will check and set the last_value of emaj technical sequences
+-----------------------------
+CREATE OR REPLACE FUNCTION public.handle_emaj_sequences(v_restart INT) RETURNS void LANGUAGE plpgsql SECURITY DEFINER AS
+$handle_emaj_sequences$
+DECLARE
+  v_lastval     INT;
+BEGIN
+-- checks current last_value to be sure there will not be any sequence values overlay
+--   emaj_hist_hist_id_seq
+  SELECT last_value INTO v_lastval
+    FROM emaj.emaj_hist_hist_id_seq;
+--  RAISE WARNING 'handle_emaj_sequences: the current emaj_hist_hist_id_seq last_value = %',v_lastval;
+  IF v_lastval > v_restart THEN
+    RAISE EXCEPTION 'handle_emaj_sequences: the current emaj_hist_hist_id_seq last_value (%) is too high to be set to %',
+      v_lastval, v_restart;
+  END IF;
+--   emaj_time_stamp_time_id_seq
+  SELECT last_value INTO v_lastval
+    FROM emaj.emaj_time_stamp_time_id_seq;
+--  RAISE WARNING 'handle_emaj_sequences: the current emaj_time_stamp_time_id_seq last_value = %',v_lastval;
+  IF v_lastval > v_restart THEN
+    RAISE EXCEPTION 'handle_emaj_sequences: the current emaj_time_stamp_time_id_seq last_value (%) is too high to be set to %',
+      v_lastval, v_restart;
+  END IF;
+--   emaj_rlbk_rlbk_id_seq
+  SELECT last_value INTO v_lastval
+    FROM emaj.emaj_rlbk_rlbk_id_seq;
+--  RAISE WARNING 'handle_emaj_sequences: the current emaj_rlbk_rlbk_id_seq last_value = %',v_lastval;
+  IF v_lastval > v_restart THEN
+    RAISE EXCEPTION 'handle_emaj_sequences: the current emaj_rlbk_rlbk_id_seq last_value (%) is too high to be set to %',
+      v_lastval, v_restart;
+  END IF;
+--   emaj_global_seq
+  SELECT last_value INTO v_lastval
+    FROM emaj.emaj_global_seq;
+--  RAISE WARNING 'handle_emaj_sequences: the current emaj_global_seq last_value = %',v_lastval;
+  IF v_lastval > v_restart * 1000 THEN
+    RAISE EXCEPTION 'handle_emaj_sequences: the current emaj_global_seq last_value (%) is too high to be set to %',
+      v_lastval, v_restart * 1000;
+  END IF;
+-- OK, let's set the sequences values
+  EXECUTE 'ALTER SEQUENCE emaj.emaj_hist_hist_id_seq RESTART ' || v_restart;
+  EXECUTE 'ALTER SEQUENCE emaj.emaj_time_stamp_time_id_seq RESTART ' || v_restart;
+  EXECUTE 'ALTER SEQUENCE emaj.emaj_rlbk_rlbk_id_seq RESTART ' || v_restart;
+  EXECUTE 'ALTER SEQUENCE emaj.emaj_global_seq RESTART ' || v_restart * 1000 + 1;
+END;
+$handle_emaj_sequences$;

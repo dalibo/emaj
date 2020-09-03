@@ -1,6 +1,5 @@
 -- create_drop.sql : test emaj_create_group(), emaj_comment_group(),
--- emaj_assign_table(), emaj_assign_tables(), emaj_remove_table(), emaj_remove_tables(),
--- emaj_assign_sequence(), emaj_assign_sequences(), emaj_remove_sequence(), emaj_remove_sequences(),
+-- emaj_assign_table(), emaj_assign_tables(), emaj_assign_sequence(), emaj_assign_sequences(),
 -- emaj_ignore_app_trigger(), emaj_export_groups_configuration(),
 -- emaj_drop_group() and emaj_force_drop_group() functions
 --
@@ -11,6 +10,9 @@ SET client_min_messages TO WARNING;
 \set EMAJTESTTMPDIR `echo $EMAJTESTTMPDIR`
 \! mkdir -p $EMAJTESTTMPDIR
 
+-- set sequence restart value
+select public.handle_emaj_sequences(1000);
+
 -----------------------------
 -- emaj_create_group() tests
 -----------------------------
@@ -20,9 +22,7 @@ select emaj.emaj_create_group(NULL);
 select emaj.emaj_create_group('',false);
 
 -- should be OK
--- create an empty group in audit_only mode
-select emaj.emaj_create_group('emptyGroup',false);
-
+select emaj.emaj_create_group('emptyGroup');
 select emaj.emaj_create_group('myGroup1');
 select emaj.emaj_create_group('myGroup2');
 select emaj.emaj_create_group('phil''s group#3",',false);
@@ -308,7 +308,7 @@ select emaj.emaj_export_groups_configuration('/tmp/dummy/location/file');
 --   ok
 select emaj.emaj_export_groups_configuration(:'EMAJTESTTMPDIR' || '/orig_groups_config_all.json');
 select emaj.emaj_export_groups_configuration(:'EMAJTESTTMPDIR' || '/orig_groups_config_partial.json', array['myGroup1','myGroup2']);
-\! wc -l $EMAJTESTTMPDIR/orig_groups_config*
+\! wc -l $EMAJTESTTMPDIR/*.json
 
 -- direct import
 --   bad content
@@ -443,88 +443,8 @@ select * from emaj.emaj_ignored_app_trigger order by trg_schema, trg_table, trg_
 select emaj.emaj_ignore_app_trigger('REMOVE','myschema1','mytbl2','%');
 select * from emaj.emaj_ignored_app_trigger order by trg_schema, trg_table, trg_name;
 
------------------------------------
--- emaj_remove_table
------------------------------------
-
--- error cases
--- table not in a group
-select emaj.emaj_remove_table('dummySchema','mytbl1');
-select emaj.emaj_remove_table('myschema1','dummyTable');
--- bad mark
-select emaj.emaj_remove_table('myschema1','mytbl1','EMAJ_LAST_MARK');
-
--- ok
-select emaj.emaj_remove_table('myschema1','mytbl1');
-
------------------------------------
--- emaj_remove_tables with array
------------------------------------
--- error cases
--- empty tables array
-select emaj.emaj_remove_tables('myschema1',array[]::text[]);
-select emaj.emaj_remove_tables('myschema1',null);
-select emaj.emaj_remove_tables('myschema1',array['']);
--- table not in a group
-select emaj.emaj_remove_tables('myschema1',array['dummyTable','mytbl1','mytbl2']);
-
--- ok (with a duplicate table name)
-select emaj.emaj_remove_tables('myschema1',array['mytbl2','mytbl2b','mytbl2']);
-
------------------------------------
--- emaj_remove_tables with filters
------------------------------------
--- empty tables array
-select emaj.emaj_remove_tables('myschema1',null,null);
-select emaj.emaj_remove_tables('myschema1','','');
-select emaj.emaj_remove_tables('myschema1','mytbl1','mytbl1');
-
--- ok
-select emaj.emaj_remove_tables('myschema1','my(t|T)bl\d$','mytbl2');
-
-select group_last_alter_time_id, group_nb_table, group_nb_sequence from emaj.emaj_group where group_name = 'myGroup1';
-
------------------------------------
--- emaj_remove_sequence
------------------------------------
-
--- error cases
--- sequence not in a group
-select emaj.emaj_remove_sequence('dummySchema','myseq1');
-select emaj.emaj_remove_sequence('myschema2','dummySequence');
--- bad mark
-select emaj.emaj_remove_sequence('myschema2','myseq1','EMAJ_LAST_MARK');
-
--- ok
-select emaj.emaj_remove_sequence('myschema2','myseq1');
-
------------------------------------
--- emaj_remove_sequences with array
------------------------------------
--- error cases
--- empty sequences array
-select emaj.emaj_remove_sequences('myschema2',array[]::text[]);
-select emaj.emaj_remove_sequences('myschema2',null);
-select emaj.emaj_remove_sequences('myschema2',array['']);
--- sequence not in a group
-select emaj.emaj_remove_sequences('myschema2',array['dummyTable','myseq2']);
-
--- ok (with a duplicate sequence name)
-select emaj.emaj_assign_sequence('myschema2','myseq2','myGroup2');
-select emaj.emaj_remove_sequences('myschema2',array['myseq2','myseq2']);
-
------------------------------------
--- emaj_remove_sequences with filters
------------------------------------
--- empty tables array
-select emaj.emaj_remove_sequences('myschema2',null,null);
-select emaj.emaj_remove_sequences('myschema2','','');
-select emaj.emaj_remove_sequences('myschema2','myseq1','myseq1');
-
--- ok
-select emaj.emaj_remove_sequences('myschema2','.*','');
-
-select group_last_alter_time_id, group_nb_table, group_nb_sequence from emaj.emaj_group where group_name = 'myGroup2';
+-- keep the current tables groups definition as reference for further tests
+select emaj.emaj_export_groups_configuration(:'EMAJTESTTMPDIR' || '/../all_groups_config.json');
 
 -----------------------------
 -- emaj_drop_group() tests
@@ -573,7 +493,7 @@ select emaj.emaj_start_group('myGroup1','');
 select emaj.emaj_force_drop_group('myGroup1');
 
 -----------------------------
--- test end: check and force sequences id
+-- test end: global check
 -----------------------------
 select nspname from pg_namespace where nspname like 'emaj%' order by nspname;
 select sch_name from emaj.emaj_schema order by 1;
