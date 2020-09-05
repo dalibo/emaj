@@ -3391,7 +3391,7 @@ select emaj.emaj_move_sequences('myschema2','.*','','myGroup1','MOVE_SEQ_idle_to
 select emaj.emaj_move_tables('myschema4','.*','','myGroup2',emaj.emaj_get_previous_mark_group('myGroup1',now()));
 ERROR:  _check_new_mark: The groups "myGroup1, myGroup2" already contain a mark named "MOVE_SEQ_idle_to_logging".
 CONTEXT:  SQL statement "SELECT emaj._check_new_mark(v_loggingGroups, v_mark)"
-PL/pgSQL function emaj._move_tables(text,text[],text,text,boolean,boolean) line 90 at SQL statement
+PL/pgSQL function emaj._move_tables(text,text[],text,text,boolean,boolean) line 89 at SQL statement
 PL/pgSQL function emaj.emaj_move_tables(text,text,text,text,text) line 27 at RETURN
 select emaj.emaj_move_sequences('myschema2','.*','','myGroup2',emaj.emaj_get_previous_mark_group('myGroup1',now()));
 ERROR:  _check_new_mark: The groups "myGroup1, myGroup2" already contain a mark named "MOVE_SEQ_idle_to_logging".
@@ -3618,7 +3618,7 @@ CONTEXT:  SQL statement "DROP TABLE IF EXISTS emaj_myschema2.mytbl1_log_2 CASCAD
 PL/pgSQL function emaj._drop_tbl(emaj.emaj_relation,bigint) line 43 at EXECUTE
 SQL statement "SELECT CASE WHEN r_rel.rel_kind = 'r' THEN emaj._drop_tbl(r_rel, v_timeId)
                      WHEN r_rel.rel_kind = 'S' THEN emaj._drop_seq(r_rel, v_timeId) END"
-PL/pgSQL function emaj._drop_group(text,boolean) line 24 at PERFORM
+PL/pgSQL function emaj._drop_group(text,boolean) line 23 at PERFORM
 SQL statement "SELECT emaj._drop_group(v_groupName, FALSE)"
 PL/pgSQL function emaj.emaj_drop_group(text) line 14 at SQL statement
  emaj_drop_group 

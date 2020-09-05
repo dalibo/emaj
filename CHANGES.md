@@ -16,6 +16,7 @@ E-Maj - Change log
     allows to specify a non default mark name when in LOGGING state groups
     are imported.
   * Coding style improvements.
+  * Minor code improvements.
 
 ###Bug fixes:###
 

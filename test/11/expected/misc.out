@@ -20,18 +20,18 @@ select emaj.emaj_reset_group(NULL);
 ERROR:  _check_group_names: No group to process.
 CONTEXT:  PL/pgSQL function emaj._check_group_names(text[],boolean,boolean,text) line 30 at RAISE
 SQL statement "SELECT emaj._check_group_names(v_groupNames := ARRAY[v_groupName], v_mayBeNull := FALSE, v_lockGroups := TRUE, v_checkList := 'IDLE')"
-PL/pgSQL function emaj.emaj_reset_group(text) line 15 at PERFORM
+PL/pgSQL function emaj.emaj_reset_group(text) line 14 at PERFORM
 select emaj.emaj_reset_group('unknownGroup');
 ERROR:  _check_group_names: The group "unknownGroup" does not exist.
 CONTEXT:  PL/pgSQL function emaj._check_group_names(text[],boolean,boolean,text) line 42 at RAISE
 SQL statement "SELECT emaj._check_group_names(v_groupNames := ARRAY[v_groupName], v_mayBeNull := FALSE, v_lockGroups := TRUE, v_checkList := 'IDLE')"
-PL/pgSQL function emaj.emaj_reset_group(text) line 15 at PERFORM
+PL/pgSQL function emaj.emaj_reset_group(text) line 14 at PERFORM
 -- group not in logging state
 select emaj.emaj_reset_group('myGroup1');
 ERROR:  _check_group_names: The group "myGroup1" is not in IDLE state.
 CONTEXT:  PL/pgSQL function emaj._check_group_names(text[],boolean,boolean,text) line 74 at RAISE
 SQL statement "SELECT emaj._check_group_names(v_groupNames := ARRAY[v_groupName], v_mayBeNull := FALSE, v_lockGroups := TRUE, v_checkList := 'IDLE')"
-PL/pgSQL function emaj.emaj_reset_group(text) line 15 at PERFORM
+PL/pgSQL function emaj.emaj_reset_group(text) line 14 at PERFORM
 -- stop group
 select emaj.emaj_stop_group('myGroup1');
  emaj_stop_group 

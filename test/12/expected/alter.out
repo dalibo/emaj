@@ -539,25 +539,25 @@ select public.handle_emaj_sequences(8200);
 -- table not in a group
 select emaj.emaj_move_table('dummySchema','mytbl1','myGroup2');
 ERROR:  _move_tables: some tables ("dummySchema".mytbl1) do not currently belong to any tables group.
-CONTEXT:  PL/pgSQL function emaj._move_tables(text,text[],text,text,boolean,boolean) line 56 at RAISE
+CONTEXT:  PL/pgSQL function emaj._move_tables(text,text[],text,text,boolean,boolean) line 55 at RAISE
 PL/pgSQL function emaj.emaj_move_table(text,text,text,text) line 6 at RETURN
 select emaj.emaj_move_table('myschema1','dummyTable','myGroup2');
 ERROR:  _move_tables: some tables (myschema1."dummyTable") do not currently belong to any tables group.
-CONTEXT:  PL/pgSQL function emaj._move_tables(text,text[],text,text,boolean,boolean) line 56 at RAISE
+CONTEXT:  PL/pgSQL function emaj._move_tables(text,text[],text,text,boolean,boolean) line 55 at RAISE
 PL/pgSQL function emaj.emaj_move_table(text,text,text,text) line 6 at RETURN
 -- bad new group
 select emaj.emaj_move_table('myschema1','mytbl1','dummyGroup');
 ERROR:  _check_group_names: The group "dummyGroup" does not exist.
 CONTEXT:  PL/pgSQL function emaj._check_group_names(text[],boolean,boolean,text) line 42 at RAISE
 SQL statement "SELECT emaj._check_group_names(v_groupNames := ARRAY[v_newGroup], v_mayBeNull := FALSE, v_lockGroups := TRUE, v_checkList := '')"
-PL/pgSQL function emaj._move_tables(text,text[],text,text,boolean,boolean) line 27 at PERFORM
+PL/pgSQL function emaj._move_tables(text,text[],text,text,boolean,boolean) line 26 at PERFORM
 PL/pgSQL function emaj.emaj_move_table(text,text,text,text) line 6 at RETURN
 -- bad mark
 select emaj.emaj_move_table('myschema1','mytbl1','myGroup2','EMAJ_LAST_MARK');
 ERROR:  _check_new_mark: "EMAJ_LAST_MARK" is not an allowed name for a new mark.
 CONTEXT:  PL/pgSQL function emaj._check_new_mark(text[],text) line 14 at RAISE
 SQL statement "SELECT emaj._check_new_mark(v_loggingGroups, v_mark)"
-PL/pgSQL function emaj._move_tables(text,text[],text,text,boolean,boolean) line 90 at SQL statement
+PL/pgSQL function emaj._move_tables(text,text[],text,text,boolean,boolean) line 89 at SQL statement
 PL/pgSQL function emaj.emaj_move_table(text,text,text,text) line 6 at RETURN
 -- move to the same group
 select emaj.emaj_move_table('myschema1','mytbl1','myGroup1');
@@ -581,7 +581,7 @@ select emaj.emaj_move_table('myschema1','mytbl1','myGroup2');
 -- table not in a group
 select emaj.emaj_move_tables('myschema1',array['dummyTable','mytbl1','mytbl2'],'myGroup1');
 ERROR:  _move_tables: some tables (myschema1."dummyTable") do not currently belong to any tables group.
-CONTEXT:  PL/pgSQL function emaj._move_tables(text,text[],text,text,boolean,boolean) line 56 at RAISE
+CONTEXT:  PL/pgSQL function emaj._move_tables(text,text[],text,text,boolean,boolean) line 55 at RAISE
 PL/pgSQL function emaj.emaj_move_tables(text,text[],text,text) line 6 at RETURN
 -- empty tables array
 select emaj.emaj_move_tables('myschema1',array[]::text[],'myGroup1');

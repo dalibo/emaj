@@ -2328,7 +2328,6 @@ $_move_tables$
 --         boolean to indicate whether several tables need to be processed,
 --         a boolean indicating whether the tables array has been built from regex filters
 -- Outputs: number of tables effectively moved to the tables group
--- The function is created as SECURITY DEFINER so that log schemas can be dropped
   DECLARE
     v_function               TEXT;
     v_newGroupIsLogging      BOOLEAN;
@@ -4641,8 +4640,7 @@ $_log_stat_tbl$
 $_log_stat_tbl$;
 
 CREATE OR REPLACE FUNCTION emaj._gen_sql_tbl(r_rel emaj.emaj_relation, v_firstEmajGid BIGINT, v_lastEmajGid BIGINT)
-RETURNS BIGINT LANGUAGE plpgsql
-SECURITY DEFINER SET standard_conforming_strings = ON AS
+RETURNS BIGINT LANGUAGE plpgsql AS
 $_gen_sql_tbl$
 -- This function generates SQL commands representing all updates performed on a table between 2 marks
 -- or beetween a mark and the current situation.
@@ -5421,14 +5419,12 @@ COMMENT ON FUNCTION emaj.emaj_force_drop_group(TEXT) IS
 $$Drops an E-Maj group, even in LOGGING state.$$;
 
 CREATE OR REPLACE FUNCTION emaj._drop_group(v_groupName TEXT, v_isForced BOOLEAN)
-RETURNS INT LANGUAGE plpgsql
-SECURITY DEFINER SET search_path = pg_catalog, pg_temp AS
+RETURNS INT LANGUAGE plpgsql AS
 $_drop_group$
 -- This function effectively deletes the emaj objects for all tables of a group.
 -- It also drops log schemas that are not useful any more.
 -- Input: group name, and a boolean indicating whether the group's state has to be checked
 -- Output: number of processed tables and sequences
--- The function is defined as SECURITY DEFINER so that log schemas can be dropped.
   DECLARE
     v_eventTriggers          TEXT[];
     v_timeId                 BIGINT;
@@ -8113,7 +8109,7 @@ $_rlbk_planning$
 -- It stores the result into the emaj_rlbk_plan table.
 -- The function returns the effective number of tables to process.
 -- It is called in an autonomous dblink transaction, if possible.
--- The function is defined as SECURITY DEFINER so that emaj_viwer role can write into rollback tables without having specific privileges
+-- The function is defined as SECURITY DEFINER so that emaj_viewer role can write into rollback tables without having specific privileges
 -- to do it.
   DECLARE
     v_groupNames             TEXT[];
@@ -9414,6 +9410,7 @@ $_cleanup_rollback_state$
 --   while those which are not visible in the emaj_hist table are set "ABORTED".
 -- Input: no parameter
 -- Output: number of updated rollback events
+-- The function is defined as SECURITY DEFINER so that emaj_viewer role can update emaj_rlbk and emajçhist tables.
   DECLARE
     v_nbRlbk                 INT = 0;
     v_newStatus              emaj._rlbk_status_enum;
@@ -9464,8 +9461,7 @@ $_cleanup_rollback_state$
 $_cleanup_rollback_state$;
 
 CREATE OR REPLACE FUNCTION emaj.emaj_consolidate_rollback_group(v_groupName TEXT, v_endRlbkMark TEXT)
-RETURNS BIGINT LANGUAGE plpgsql
-SECURITY DEFINER SET search_path = pg_catalog, pg_temp AS
+RETURNS BIGINT LANGUAGE plpgsql AS
 $emaj_consolidate_rollback_group$
 -- This function "consolidates" a rollback for a group. It transforms an already completed logged rollback into an unlogged rollback.
 -- All marks and update logs between a mark used as reference by an unlogged rollback operation and the final mark set by this rollback
@@ -9718,14 +9714,12 @@ COMMENT ON FUNCTION emaj.emaj_get_consolidable_rollbacks() IS
 $$Returns the list of logged rollback operations that can be consolidated.$$;
 
 CREATE OR REPLACE FUNCTION emaj.emaj_reset_group(v_groupName TEXT)
-RETURNS INT LANGUAGE plpgsql
-SECURITY DEFINER SET search_path = pg_catalog, pg_temp AS
+RETURNS INT LANGUAGE plpgsql AS
 $emaj_reset_group$
 -- This function empties the log tables for all tables of a group and deletes the sequences saves.
 -- It calls the emaj_rst_group function to do the job.
 -- Input: group name
 -- Output: number of processed tables
--- The function is defined as SECURITY DEFINER so that emaj_adm role can use it even if he is not the owner of application tables.
   DECLARE
     v_nbTb                   INT = 0;
     v_eventTriggers          TEXT[];
@@ -9759,7 +9753,7 @@ $_reset_groups$
 -- Input: group names array
 -- Output: number of processed tables and sequences
 -- There is no check of the groups state (this is done by callers).
--- The function is defined as SECURITY DEFINER so that an emaj_adm role can truncate log tables.
+-- The function is defined as SECURITY DEFINER so that an emaj_adm role can drop log tables.
   DECLARE
     v_eventTriggers          TEXT[];
     r_rel                    RECORD;
@@ -10672,7 +10666,7 @@ $$Snaps all application tables and sequences of an E-Maj group into a given dire
 CREATE OR REPLACE FUNCTION emaj.emaj_gen_sql_group(v_groupName TEXT, v_firstMark TEXT, v_lastMark TEXT, v_location TEXT,
                                                    v_tblseqs TEXT[] DEFAULT NULL)
 RETURNS BIGINT LANGUAGE plpgsql
-SECURITY DEFINER SET standard_conforming_strings = ON SET search_path = pg_catalog, pg_temp AS
+SET standard_conforming_strings = ON AS
 $emaj_gen_sql_group$
 -- This function generates a SQL script representing all updates performed on a tables group between 2 marks.
 -- or beetween a mark and the current situation. The result is stored into an external file.
@@ -10695,7 +10689,7 @@ $$Generates a sql script corresponding to all updates performed on a tables grou
 CREATE OR REPLACE FUNCTION emaj.emaj_gen_sql_groups(v_groupNames TEXT[], v_firstMark TEXT, v_lastMark TEXT, v_location TEXT,
                                                     v_tblseqs TEXT[] DEFAULT NULL)
 RETURNS BIGINT LANGUAGE plpgsql
-SECURITY DEFINER SET standard_conforming_strings = ON SET search_path = pg_catalog, pg_temp AS
+SET standard_conforming_strings = ON AS
 $emaj_gen_sql_groups$
 -- This function generates a SQL script representing all updates performed on a set of tables groups between 2 marks
 -- or beetween a mark and the current situation. The result is stored into an external file.

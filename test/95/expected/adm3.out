@@ -1168,7 +1168,7 @@ CONTEXT:  SQL statement "DROP TABLE IF EXISTS "emaj_phil's schema3".mytbl4_log_2
 PL/pgSQL function emaj._drop_tbl(emaj.emaj_relation,bigint) line 43 at EXECUTE
 SQL statement "SELECT CASE WHEN r_rel.rel_kind = 'r' THEN emaj._drop_tbl(r_rel, v_timeId)
                      WHEN r_rel.rel_kind = 'S' THEN emaj._drop_seq(r_rel, v_timeId) END"
-PL/pgSQL function emaj._drop_group(text,boolean) line 24 at PERFORM
+PL/pgSQL function emaj._drop_group(text,boolean) line 23 at PERFORM
 SQL statement "SELECT emaj._drop_group(v_groupName, FALSE)"
 PL/pgSQL function emaj.emaj_drop_group(text) line 14 at SQL statement
  emaj_drop_group 
