@@ -51,44 +51,8 @@ use warnings; use strict;
       $status++;
       next;
     }
-# Comment the test on the SUPERUSER role
-    if ($status == 4) {
-      if ($line =~ /^  (  IF NOT EXISTS)/) {
-        print FICOT "--$1\n";
-        next;
-      }
-      if ($line =~ /^  (      \(SELECT 0)/) {
-        print FICOT "--$1\n";
-        next;
-      }
-      if ($line =~ /^  (         FROM pg_catalog.pg_roles)/) {
-        print FICOT "--$1\n";
-        next;
-      }
-      if ($line =~ /^  (         WHERE rolname = current_user)/) {
-        print FICOT "--$1\n";
-        next;
-      }
-      if ($line =~ /^  (           AND rolsuper)/) {
-        print FICOT "--$1\n";
-        next;
-      }
-      if ($line =~ /^  (      \) THEN)/) {
-        print FICOT "--$1\n";
-        next;
-      }
-      if ($line =~ /^  (    RAISE EXCEPTION 'E-Maj installation: The current user \(%\) is not a superuser.', current_user;)/) {
-        print FICOT "--$1\n";
-        next;
-      }
-      if ($line =~ /^  (  END IF;)/) {
-        print FICOT "--$1\n";
-        $status++;
-        next;
-      }
-    }
 # Add a BEGIN TRANSACTION statement and recreate the emaj schema
-    if ($status == 5 && $line =~ /^COMMENT ON SCHEMA emaj IS/) {
+    if ($status == 4 && $line =~ /^COMMENT ON SCHEMA emaj IS/) {
       print FICOT "BEGIN TRANSACTION;\n";
       print FICOT "\n";
       print FICOT "DROP SCHEMA IF EXISTS emaj CASCADE;\n";
@@ -98,7 +62,7 @@ use warnings; use strict;
       print FICOT "CREATE EXTENSION IF NOT EXISTS btree_gist;\n";
       $status++;
     }
-    if ($status == 6) {
+    if ($status == 5) {
 # Comment the ALTER EXTENSION verbs
       if ($line =~ /^ALTER EXTENSION/) {
         print FICOT "--$line";
@@ -115,7 +79,7 @@ use warnings; use strict;
       }
     }
 # Comment the calls to the pg_extension_config_dump() function
-    if ($status == 7) {
+    if ($status == 6) {
       if ($line =~ /^SELECT pg_catalog\.pg_extension_config_dump/) {
         print FICOT "--$line";
         next;
@@ -125,13 +89,13 @@ use warnings; use strict;
       }
     }
 # Remove the comment setting for internal functions. This curiously fails in Amazon-RDS environment.
-    if ($status == 8 && $line =~ /^-- Set comments for all internal functions,/) {
+    if ($status == 7 && $line =~ /^-- Set comments for all internal functions,/) {
       for (my $i = 0; $i <= 22; $i++) { $line = <FICIN>; }
       $status++;
 	}
 
 # Add final checks and messages
-    if ($status == 9 && $line =~ /^-- check the max_prepared_transactions/) {
+    if ($status == 8 && $line =~ /^-- check the max_prepared_transactions/) {
       print FICOT "    RAISE NOTICE 'E-Maj installation: E-Maj successfully installed.';\n";
       print FICOT "-- check if the role is superuser\n";
       print FICOT "    PERFORM 0 FROM pg_catalog.pg_roles WHERE rolname = current_user AND rolsuper;\n";
@@ -147,7 +111,7 @@ use warnings; use strict;
 # Add a final COMMIT
   print FICOT "COMMIT;\n";
 
-  if ($status != 10) { die "Error while processing emaj--devel.sql: the status ($status) is expected to be 10."; }
+  if ($status != 9) { die "Error while processing emaj--devel.sql: the status ($status) is expected to be 9."; }
 
 # Close files
   close FICIN;

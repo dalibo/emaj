@@ -24,11 +24,6 @@ $do$
     v_emajVersion            TEXT;
     v_groupList              TEXT;
   BEGIN
--- check the current role is a superuser
-    PERFORM 0 FROM pg_roles WHERE rolname = current_user AND rolsuper;
-    IF NOT FOUND THEN
-      RAISE EXCEPTION 'E-Maj upgrade: the current user (%) is not a superuser.', current_user;
-    END IF;
 -- the emaj version registered in emaj_param must be '3.4.0'
     SELECT param_value_text INTO v_emajVersion FROM emaj.emaj_param WHERE param_key = 'emaj_version';
     IF v_emajVersion <> '3.4.0' THEN

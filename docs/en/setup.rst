@@ -28,9 +28,7 @@ The E-Maj extension can now be created into the database, by executing the SQL c
 
    CREATE EXTENSION emaj CASCADE;
 
-To start with, the script verifies that the PostgreSQL version is at least 9.5, and that the current user has the *superuser* attribute.
-
-Then the script creates the *emaj* schema with its technical tables, types and functions. 
+After having verified that the PostgreSQL version is at least 9.5, the script creates the *emaj* schema and populate it with technical tables, functions and some other objects.
 
 .. caution::
 

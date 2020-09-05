@@ -19,15 +19,6 @@
 DO LANGUAGE plpgsql
 $do$
   BEGIN
--- check the current role is a superuser
-    IF NOT EXISTS
-        (SELECT 0
-           FROM pg_catalog.pg_roles
-           WHERE rolname = current_user
-             AND rolsuper
-        ) THEN
-      RAISE EXCEPTION 'E-Maj installation: The current user (%) is not a superuser.', current_user;
-    END IF;
 -- check postgres version is >= 9.5
     IF current_setting('server_version_num')::INT < 90500 THEN
       RAISE EXCEPTION 'E-Maj installation: The current postgres version (%) is too old for this E-Maj version. It should be at least 9.5.',
