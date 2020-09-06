@@ -6,8 +6,8 @@ SET datestyle TO ymd;
 -----------------------------
 -- grant emaj_adm role 
 -----------------------------
-grant emaj_adm to emaj_regression_tests_adm_user;
-set role emaj_regression_tests_adm_user;
+grant emaj_adm to emaj_regression_tests_adm_user1;
+set role emaj_regression_tests_adm_user1;
 -----------------------------
 -- prepare groups
 -----------------------------
@@ -227,7 +227,7 @@ select nextval('myschema2.myseq1');
 --
 reset role;
 alter sequence mySeq1 NO MAXVALUE NO CYCLE;
-set role emaj_regression_tests_adm_user;
+set role emaj_regression_tests_adm_user1;
 --
 insert into myTbl4 values (1,'FK...',1,1,'ABC');
 insert into myTbl4 values (2,'FK...',1,1,'ABC');

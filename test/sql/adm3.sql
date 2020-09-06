@@ -10,7 +10,7 @@ select public.handle_emaj_sequences(17000);
 \set EMAJTESTTMPDIR `echo $EMAJTESTTMPDIR`
 \! mkdir -p $EMAJTESTTMPDIR
 
-set role emaj_regression_tests_adm_user;
+set role emaj_regression_tests_adm_user1;
 set search_path=public,myschema1;
 
 -----------------------------
@@ -79,7 +79,7 @@ select public.handle_emaj_sequences(17200);
 -----------------------------
 -- Needs postgres 10+
 
-set role emaj_regression_tests_adm_user;
+set role emaj_regression_tests_adm_user2;
 select emaj.emaj_start_group('myGroup4','Start');
 insert into mySchema4.myTblP values (-1,'Stored in partition 1'), (1,'Stored in partition 2');
 select emaj.emaj_set_mark_group('myGroup4','M1');
@@ -90,9 +90,9 @@ reset role;
 CREATE TABLE mySchema4.myPartP3 PARTITION OF mySchema4.myTblP (PRIMARY KEY (col1)) FOR VALUES FROM (10) TO (19);
 -- create the table with PG 9.6- so that next scripts do not abort
 CREATE TABLE IF NOT EXISTS mySchema4.myPartP3 (PRIMARY KEY (col1)) INHERITS (mySchema4.myTblP);
-grant all on mySchema4.myPartP3 to emaj_regression_tests_adm_user;
+grant all on mySchema4.myPartP3 to emaj_regression_tests_adm_user1, emaj_regression_tests_adm_user2;
 
-set role emaj_regression_tests_adm_user;
+set role emaj_regression_tests_adm_user1;
 select emaj.emaj_assign_table('myschema4','mypartp3','myGroup4',null,'Add partition 3');
 select emaj.emaj_assign_sequence('myschema4','mytblp_col3_seq','myGroup4','Add partition 3_seq');
 insert into mySchema4.myTblP values (11,'Stored in partition 3');
@@ -103,7 +103,7 @@ select emaj.emaj_remove_sequence('myschema4','mytblp_col3_seq','Remove partition
 
 reset role;
 drop table mySchema4.myPartP1;
-set role emaj_regression_tests_adm_user;
+set role emaj_regression_tests_adm_user2;
 
 -- verify that emaj_adm has the proper grants to delete old marks leading to an old log table drop
 begin transaction;
@@ -184,7 +184,7 @@ select emaj.emaj_disable_protection_by_event_triggers();
 -----------------------------
 reset role;
 alter table "phil's schema3".mytbl4 alter column col45 type char(11);
-set role emaj_regression_tests_adm_user;
+set role emaj_regression_tests_adm_user1;
 
 select * from emaj.emaj_verify_all();
 
@@ -199,7 +199,7 @@ select * from emaj.emaj_relation where rel_schema = 'phil''s schema3' and rel_tb
 -----------------------------
 reset role;
 drop table "emaj_phil's schema3".mytbl4_log;
-set role emaj_regression_tests_adm_user;
+set role emaj_regression_tests_adm_user1;
 select * from emaj.emaj_verify_all();
 
 select emaj.emaj_remove_table('phil''s schema3','mytbl4','remove_the_damaged_table_2');
@@ -217,7 +217,7 @@ reset role;
 alter table "phil's schema3".mytbl4 rename to mytbl4_sav;
 alter sequence "phil's schema3"."phil's seq\1" rename to "phil's seq\1_sav";
 
-set role emaj_regression_tests_adm_user;
+set role emaj_regression_tests_adm_user2;
 
 -- try to set a mark
 begin;
@@ -239,7 +239,7 @@ select emaj.emaj_assign_table('phil''s schema3','mytbl4','phil''s group#3",',nul
 select emaj.emaj_assign_sequence('phil''s schema3','phil''s seq\1','phil''s group#3",','revert_last_changes_seq');
 
 -- ree-nable the event triggers and drop the group
-set role emaj_regression_tests_adm_user;
+set role emaj_regression_tests_adm_user1;
 select emaj.emaj_enable_protection_by_event_triggers();
 select emaj.emaj_stop_group('phil''s group#3",');
 select emaj.emaj_drop_group('phil''s group#3",');
@@ -397,7 +397,7 @@ select emaj.emaj_delete_before_mark_group(group_name,'Mk3')
 select emaj.emaj_disable_protection_by_event_triggers();
 reset role;
 drop sequence "emaj_phil's schema3".mytbl4_log_seq;
-set role emaj_regression_tests_adm_user;
+set role emaj_regression_tests_adm_user2;
 select emaj.emaj_enable_protection_by_event_triggers();
 -- note that the warning about the mytblp_col3_seq sequence is normal
 select * from emaj.emaj_verify_all();

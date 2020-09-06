@@ -10,7 +10,7 @@ select public.handle_emaj_sequences(14000);
 \set EMAJTESTTMPDIR `echo $EMAJTESTTMPDIR`
 \! mkdir -p $EMAJTESTTMPDIR
 
-set role emaj_regression_tests_adm_user;
+set role emaj_regression_tests_adm_user1;
 
 -- before going on, save and reload parameters
 select emaj.emaj_import_parameters_configuration(emaj.emaj_export_parameters_configuration());
@@ -126,7 +126,7 @@ select public.handle_emaj_sequences(14200);
 --
 reset role;
 alter table "phil's schema3"."myTbl2\" add primary key (col21);
-set role emaj_regression_tests_adm_user;
+set role emaj_regression_tests_adm_user2;
 select emaj.emaj_create_group('phil''s group#3",');
 select emaj.emaj_assign_tables('phil''s schema3','.*','mytbl4','phil''s group#3",');
 select emaj.emaj_assign_sequences('phil''s schema3','.*',null,'phil''s group#3",');
@@ -255,7 +255,7 @@ delete from mytbl1 where col13 = E'A\\000B'::BYTEA;
 -- also apply some changes in sequence characteristics
 reset role;
 alter sequence myschema2.myseq1 minvalue 1 maxvalue 100 increment 10 start 21 restart 11 cache 2 cycle;
-set role emaj_regression_tests_adm_user;
+set role emaj_regression_tests_adm_user1;
 
 -- create the directory for the first snaps set
 \! mkdir -p $EMAJTESTTMPDIR/snaps1
@@ -329,7 +329,7 @@ rollback;
 reset role;
 alter sequence myschema2.myseq1 restart 1004 start 1000 increment 1 maxvalue 9223372036854775807 minvalue 1000 cache 1 no cycle;
 
-set role emaj_regression_tests_adm_user;
+set role emaj_regression_tests_adm_user2;
 
 -----------------------------
 -- Checking step 11
@@ -357,7 +357,7 @@ select emaj.emaj_remove_table('phil''s schema3','phil''s tbl1');
 reset role;
 alter table "phil's schema3"."phil's tbl1" rename to table_with_very_looooooooooooooooooooooooooooooooooooooong_name;
 
-set role emaj_regression_tests_adm_user;
+set role emaj_regression_tests_adm_user1;
 select emaj.emaj_assign_table('phil''s schema3', 'table_with_very_looooooooooooooooooooooooooooooooooooooong_name', 'phil''s group#3",');
 
 -- use the table and its group
@@ -393,7 +393,7 @@ select public.handle_emaj_sequences(14600);
 -----------------------------
 -- Step 13 : test use of groups or marks protection
 -----------------------------
-set role emaj_regression_tests_adm_user;
+set role emaj_regression_tests_adm_user2;
 -- try to rollback a protected group
 select emaj.emaj_protect_group('myGroup2');
 select * from emaj.emaj_rollback_group('myGroup2','M3',false) order by 1,2;

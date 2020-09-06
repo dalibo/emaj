@@ -10,9 +10,9 @@ truncate emaj.emaj_hist;
 -----------------------------
 -- grant emaj_adm role 
 -----------------------------
-grant emaj_adm to emaj_regression_tests_adm_user;
+grant emaj_adm to emaj_regression_tests_adm_user1, emaj_regression_tests_adm_user2;
 --
-set role emaj_regression_tests_adm_user;
+set role emaj_regression_tests_adm_user1;
 -----------------------------
 -- authorized table accesses
 -----------------------------
@@ -73,7 +73,7 @@ truncate mySchema4.myTblP, mySchema4.myPartP1, mySchema4.myPartP2;
 -- analyze to get some statistics
 analyze;
 
-set role emaj_regression_tests_adm_user;
+set role emaj_regression_tests_adm_user2;
 
 -----------------------------
 -- explicitely purge the histories
@@ -214,7 +214,7 @@ select nextval('myschema2.myseq1');
 --
 reset role;
 alter sequence mySeq1 NO MAXVALUE NO CYCLE;
-set role emaj_regression_tests_adm_user;
+set role emaj_regression_tests_adm_user1;
 --
 insert into myTbl4 values (1,'FK...',1,1,'ABC');
 insert into myTbl4 values (2,'FK...',1,1,'ABC');
@@ -264,12 +264,12 @@ reset role;
 analyze mytbl4;
 -- rollback with dblink_connect_u not granted
 revoke execute on function dblink_connect_u(text,text) from emaj_adm;
-set role emaj_regression_tests_adm_user;
+set role emaj_regression_tests_adm_user2;
 select * from emaj.emaj_logged_rollback_group('myGroup2','M2',false) order by 1,2;
 select * from emaj.emaj_logged_rollback_group('myGroup2','M3',false) order by 1,2;
 reset role;
 grant execute on function dblink_connect_u(text,text) to emaj_adm;
-set role emaj_regression_tests_adm_user;
+set role emaj_regression_tests_adm_user1;
 -----------------------------
 -- Checking step 3
 -----------------------------

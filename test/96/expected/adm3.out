@@ -12,7 +12,7 @@ select public.handle_emaj_sequences(17000);
 \setenv EMAJTESTTMPDIR '/tmp/emaj_'`echo $PGVER`'/adm3'
 \set EMAJTESTTMPDIR `echo $EMAJTESTTMPDIR`
 \! mkdir -p $EMAJTESTTMPDIR
-set role emaj_regression_tests_adm_user;
+set role emaj_regression_tests_adm_user1;
 set search_path=public,myschema1;
 -----------------------------
 -- Step 15 : export / import configurations
@@ -238,7 +238,7 @@ select public.handle_emaj_sequences(17200);
 -- Step 17 : test partition attach and detach
 -----------------------------
 -- Needs postgres 10+
-set role emaj_regression_tests_adm_user;
+set role emaj_regression_tests_adm_user2;
 select emaj.emaj_start_group('myGroup4','Start');
  emaj_start_group 
 ------------------
@@ -261,8 +261,8 @@ LINE 1: CREATE TABLE mySchema4.myPartP3 PARTITION OF mySchema4.myTbl...
                                         ^
 -- create the table with PG 9.6- so that next scripts do not abort
 CREATE TABLE IF NOT EXISTS mySchema4.myPartP3 (PRIMARY KEY (col1)) INHERITS (mySchema4.myTblP);
-grant all on mySchema4.myPartP3 to emaj_regression_tests_adm_user;
-set role emaj_regression_tests_adm_user;
+grant all on mySchema4.myPartP3 to emaj_regression_tests_adm_user1, emaj_regression_tests_adm_user2;
+set role emaj_regression_tests_adm_user1;
 select emaj.emaj_assign_table('myschema4','mypartp3','myGroup4',null,'Add partition 3');
 NOTICE:  table "mypartp3_log" does not exist, skipping
 NOTICE:  trigger "emaj_log_trg" for relation "myschema4.mypartp3" does not exist, skipping
@@ -294,7 +294,7 @@ select emaj.emaj_remove_sequence('myschema4','mytblp_col3_seq','Remove partition
 
 reset role;
 drop table mySchema4.myPartP1;
-set role emaj_regression_tests_adm_user;
+set role emaj_regression_tests_adm_user2;
 -- verify that emaj_adm has the proper grants to delete old marks leading to an old log table drop
 begin transaction;
   select emaj.emaj_delete_before_mark_group('myGroup4','EMAJ_LAST_MARK');
@@ -603,7 +603,7 @@ select emaj.emaj_disable_protection_by_event_triggers();
 -----------------------------
 reset role;
 alter table "phil's schema3".mytbl4 alter column col45 type char(11);
-set role emaj_regression_tests_adm_user;
+set role emaj_regression_tests_adm_user1;
 select * from emaj.emaj_verify_all();
                                                                                       emaj_verify_all                                                                                       
 --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
@@ -640,7 +640,7 @@ select * from emaj.emaj_relation where rel_schema = 'phil''s schema3' and rel_tb
 -----------------------------
 reset role;
 drop table "emaj_phil's schema3".mytbl4_log;
-set role emaj_regression_tests_adm_user;
+set role emaj_regression_tests_adm_user1;
 select * from emaj.emaj_verify_all();
                                                                                       emaj_verify_all                                                                                       
 --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
@@ -683,7 +683,7 @@ select rel_schema, rel_tblseq, rel_time_range, rel_group, rel_kind
 reset role;
 alter table "phil's schema3".mytbl4 rename to mytbl4_sav;
 alter sequence "phil's schema3"."phil's seq\1" rename to "phil's seq\1_sav";
-set role emaj_regression_tests_adm_user;
+set role emaj_regression_tests_adm_user2;
 -- try to set a mark
 begin;
   select emaj.emaj_set_mark_group('phil''s group#3",','should fails');
@@ -731,7 +731,7 @@ select emaj.emaj_assign_sequence('phil''s schema3','phil''s seq\1','phil''s grou
 (1 row)
 
 -- ree-nable the event triggers and drop the group
-set role emaj_regression_tests_adm_user;
+set role emaj_regression_tests_adm_user1;
 select emaj.emaj_enable_protection_by_event_triggers();
  emaj_enable_protection_by_event_triggers 
 ------------------------------------------
@@ -1327,7 +1327,7 @@ select emaj.emaj_disable_protection_by_event_triggers();
 
 reset role;
 drop sequence "emaj_phil's schema3".mytbl4_log_seq;
-set role emaj_regression_tests_adm_user;
+set role emaj_regression_tests_adm_user2;
 select emaj.emaj_enable_protection_by_event_triggers();
  emaj_enable_protection_by_event_triggers 
 ------------------------------------------
