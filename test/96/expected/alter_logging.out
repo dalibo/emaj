@@ -2620,7 +2620,7 @@ select emaj.emaj_remove_table('myschema2','mytbl1','Mark_assign_sequences');
 ERROR:  _check_new_mark: The group "myGroup2" already contains a mark named "Mark_assign_sequences".
 CONTEXT:  PL/pgSQL function emaj._check_new_mark(text[],text) line 29 at RAISE
 SQL statement "SELECT emaj._check_new_mark(v_loggingGroups, v_mark)"
-PL/pgSQL function emaj._remove_tables(text,text[],text,boolean,boolean) line 71 at SQL statement
+PL/pgSQL function emaj._remove_tables(text,text[],text,boolean,boolean) line 70 at SQL statement
 PL/pgSQL function emaj.emaj_remove_table(text,text,text) line 6 at RETURN
 select emaj.emaj_remove_sequence('myschema2','myseq1','Mark_assign_sequences');
 ERROR:  _check_new_mark: The group "myGroup2" already contains a mark named "Mark_assign_sequences".
@@ -2839,7 +2839,7 @@ NOTICE:  trigger "emaj_log_trg" for relation "myschema1.mytbl1_new_name" does no
 
 alter table myschema1.mytbl1_new_name set schema public;
 select emaj.emaj_remove_table('myschema1','mytbl1_new_name');
-NOTICE:  drop cascades to trigger emaj_log_trg on table public.mytbl1_new_name
+NOTICE:  drop cascades to trigger emaj_log_trg on table mytbl1_new_name
  emaj_remove_table 
 -------------------
                  1

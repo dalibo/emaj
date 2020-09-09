@@ -43,7 +43,6 @@ $do$
       COMMENT ON ROLE emaj_viewer IS
         $$This role may be granted to other roles allowed to view E-Maj objects content.$$;
     END IF;
---
     RETURN;
   END;
 $do$;
@@ -1548,14 +1547,11 @@ $_truncate_trigger_fnct$
 $_truncate_trigger_fnct$;
 
 CREATE OR REPLACE FUNCTION emaj._create_log_schemas(v_function TEXT)
-RETURNS VOID LANGUAGE plpgsql
-SECURITY DEFINER SET search_path = pg_catalog, pg_temp AS
+RETURNS VOID LANGUAGE plpgsql AS
 $_create_log_schemas$
--- The function creates all log schemas that will be needed to create new log tables. It gives the appropriate rights to emaj users on
--- these schemas.
+-- The function creates all log schemas that will be needed to create new log tables.
 -- The function is called at tables groups configuration import.
 -- Input: calling function to record into the emaj_hist table
--- The function is created as SECURITY DEFINER so that log schemas can be owned by superuser
   DECLARE
     r_schema                 RECORD;
   BEGIN
@@ -1576,31 +1572,53 @@ $_create_log_schemas$
            ) THEN
         RAISE EXCEPTION '_create_log_schemas: The schema "%" should not exist. Drop it manually.',r_schema.log_schema;
       END IF;
--- create the schema and give the appropriate rights
-      EXECUTE format('CREATE SCHEMA %I',
-                     r_schema.log_schema);
-      EXECUTE format('GRANT ALL ON SCHEMA %I TO emaj_adm',
-                     r_schema.log_schema);
-      EXECUTE format('GRANT USAGE ON SCHEMA %I TO emaj_viewer',
-                     r_schema.log_schema);
--- and record the schema creation into the emaj_schema and the emaj_hist tables
-      INSERT INTO emaj.emaj_schema (sch_name)
-        VALUES (r_schema.log_schema);
-      INSERT INTO emaj.emaj_hist (hist_function, hist_event, hist_object)
-        VALUES (v_function, 'LOG_SCHEMA CREATED', quote_ident(r_schema.log_schema));
+-- create the schema
+      PERFORM emaj._create_log_schema(r_schema.log_schema, v_function);
     END LOOP;
     RETURN;
   END;
 $_create_log_schemas$;
 
-CREATE OR REPLACE FUNCTION emaj._drop_log_schemas(v_function TEXT, v_isForced BOOLEAN)
+CREATE OR REPLACE FUNCTION emaj._create_log_schema(v_schema TEXT, v_function TEXT)
 RETURNS VOID LANGUAGE plpgsql
 SECURITY DEFINER SET search_path = pg_catalog, pg_temp AS
+$_create_log_schema$
+-- The function creates one log schema. It gives the appropriate rights to emaj users on the schema.
+-- Input: schema to create
+--        calling function to record into the emaj_hist table
+-- The function is defined as SECURITY DEFINER so that emaj_adm role can use it even if he has not been granted the CREATE privilege on
+--   the current database.
+  DECLARE
+    v_stack                  TEXT;
+  BEGIN
+-- check that the caller is allowed to do that.
+-- this prevents against an emaj_adm role without CREATE privilege on the current database who would use the function to create any other
+--   schema.
+    GET DIAGNOSTICS v_stack = PG_CONTEXT;
+    IF v_stack NOT LIKE '%emaj._create_log_schemas(text)%' AND
+       v_stack NOT LIKE '%emaj._assign_tables(text,text[],text,jsonb,text,boolean,boolean)%' THEN
+      RAISE EXCEPTION '_create_log_schema: the calling function is not allowed to reach this sensitive function.';
+    END IF;
+-- create the schema and give the appropriate rights
+    EXECUTE format('CREATE SCHEMA %I AUTHORIZATION emaj_adm',
+                   v_schema);
+    EXECUTE format('GRANT USAGE ON SCHEMA %I TO emaj_viewer',
+                   v_schema);
+-- and record the schema creation into the emaj_schema and the emaj_hist tables
+    INSERT INTO emaj.emaj_schema (sch_name)
+      VALUES (v_schema);
+    INSERT INTO emaj.emaj_hist (hist_function, hist_event, hist_object)
+      VALUES (v_function, 'LOG_SCHEMA CREATED', quote_ident(v_schema));
+    RETURN;
+  END;
+$_create_log_schema$;
+
+CREATE OR REPLACE FUNCTION emaj._drop_log_schemas(v_function TEXT, v_isForced BOOLEAN)
+RETURNS VOID LANGUAGE plpgsql AS
 $_drop_log_schemas$
 -- The function looks for log schemas to drop. Drop them if any.
 -- Input: calling function to record into the emaj_hist table,
 --        boolean telling whether the schema to drop may contain residual objects
--- The function is created as SECURITY DEFINER so that log schemas can be dropped in any case.
   DECLARE
     r_schema                 RECORD;
   BEGIN
@@ -1718,8 +1736,7 @@ $$Assign tables on name patterns into a tables group.$$;
 
 CREATE OR REPLACE FUNCTION emaj._assign_tables(v_schema TEXT, v_tables TEXT[], v_group TEXT, v_properties JSONB, v_mark TEXT,
                                                v_multiTable BOOLEAN, v_arrayFromRegex BOOLEAN)
-RETURNS INTEGER LANGUAGE plpgsql
-SECURITY DEFINER SET search_path = pg_catalog, pg_temp AS
+RETURNS INTEGER LANGUAGE plpgsql AS
 $_assign_tables$
 -- The function effectively assigns tables into a tables group.
 -- Inputs: schema, array of table names, group name, properties as JSON structure
@@ -1728,7 +1745,6 @@ $_assign_tables$
 -- Outputs: number of tables effectively assigned to the tables group
 -- The JSONB v_properties parameter has the following structure '{"priority":..., "log_data_tablespace":..., "log_index_tablespace":...}'
 --   each properties being NULL by default
--- The function is created as SECURITY DEFINER so that log schemas can be owned by superuser
   DECLARE
     v_function               TEXT;
     v_groupIsRollbackable    BOOLEAN;
@@ -2002,17 +2018,8 @@ $_assign_tables$
              ) THEN
           RAISE EXCEPTION '_assign_tables: The schema "%" should not exist. Drop it manually.',v_logSchema;
         END IF;
--- create the schema and give the appropriate rights
-        EXECUTE format('CREATE SCHEMA %I',
-                       v_logSchema);
-        EXECUTE format('GRANT ALL ON SCHEMA %I TO emaj_adm',
-                       v_logSchema);
-        EXECUTE format('GRANT USAGE ON SCHEMA %I TO emaj_viewer',
-                       v_logSchema);
--- and record the schema creation into the emaj_schema and the emaj_hist tables
-        INSERT INTO emaj.emaj_schema (sch_name) VALUES (v_logSchema);
-        INSERT INTO emaj.emaj_hist (hist_function, hist_event, hist_object)
-          VALUES (CASE WHEN v_multiTable THEN 'ASSIGN_TABLES' ELSE 'ASSIGN_TABLE' END, 'LOG_SCHEMA CREATED', quote_ident(v_logSchema));
+-- create the schema
+        PERFORM emaj._create_log_schema(v_logSchema, CASE WHEN v_multiTable THEN 'ASSIGN_TABLES' ELSE 'ASSIGN_TABLE' END);
       END IF;
 -- disable event triggers that protect emaj components and keep in memory these triggers name
       SELECT emaj._disable_event_triggers() INTO v_eventTriggers;
@@ -2114,15 +2121,13 @@ $$Remove several tables on name patterns from their tables group.$$;
 
 CREATE OR REPLACE FUNCTION emaj._remove_tables(v_schema TEXT, v_tables TEXT[], v_mark TEXT, v_multiTable BOOLEAN,
                                                v_arrayFromRegex BOOLEAN)
-RETURNS INTEGER LANGUAGE plpgsql
-SECURITY DEFINER SET search_path = pg_catalog, pg_temp AS
+RETURNS INTEGER LANGUAGE plpgsql AS
 $_remove_tables$
 -- The function effectively removes tables from their tables group.
 -- Inputs: schema, array of table names, mark to set if for logging groups,
 --         boolean to indicate whether several tables need to be processed,
 --         a boolean indicating whether the tables array has been built from regex filters
 -- Outputs: number of tables effectively removed to the tables group
--- The function is created as SECURITY DEFINER so that log schemas can be dropped
   DECLARE
     v_function               TEXT;
     v_list                   TEXT;
@@ -2758,7 +2763,7 @@ $_create_tbl$
 -- The objects created in the log schema:
 --    - the associated log table, with its own sequence
 --    - the function that logs the tables updates, defined as a trigger
--- The function is defined as SECURITY DEFINER so that emaj_adm role can use it even if he is not the owner of the application table.
+-- The function is defined as SECURITY DEFINER so that log tables can be created on tablespaces for which emaj_adm has no explicit rights
   DECLARE
     v_emajNamesPrefix        TEXT;
     v_baseLogTableName       TEXT;
@@ -2847,7 +2852,7 @@ $_create_tbl$
 -- create the index on the log table
     EXECUTE format('CREATE UNIQUE INDEX %s ON %s(emaj_gid, emaj_tuple)',
                     v_logIdxName, v_logTableName, v_idxTblSpace);
--- set the index associated to the primary key as cluster index. It may be useful for CLUSTER command.
+-- set the index associated to the primary key as cluster index (It may be useful for CLUSTER command)
     EXECUTE format('ALTER TABLE ONLY %s CLUSTER ON %s',
                    v_logTableName, v_logIdxName);
 -- remove the NOT NULL constraints of application columns.
@@ -2872,33 +2877,46 @@ $_create_tbl$
 -- create the sequence associated to the log table
     EXECUTE format('CREATE SEQUENCE %s',
                    v_sequenceName);
--- create the log function and the log trigger
-    PERFORM emaj._create_log_trigger_tbl(v_fullTableName, v_logTableName, v_sequenceName, v_logFnctName);
--- If the group is idle, deactivate the log trigger (it will be enabled at emaj_start_group time)
+-- create the log function
+--   the new row is logged for each INSERT, the old row is logged for each DELETE
+--   and the old and the new rows are logged for each UPDATE.
+    EXECUTE 'CREATE OR REPLACE FUNCTION ' || v_logFnctName || '() RETURNS TRIGGER AS $logfnct$'
+         || 'BEGIN'
+-- The sequence associated to the log table is incremented at the beginning of the function ...
+         || '  PERFORM NEXTVAL(' || quote_literal(v_sequenceName) || ');'
+-- ... and the global id sequence is incremented by the first/only INSERT into the log table.
+         || '  IF (TG_OP = ''DELETE'') THEN'
+         || '    INSERT INTO ' || v_logTableName || ' SELECT OLD.*, ''DEL'', ''OLD'';'
+         || '    RETURN OLD;'
+         || '  ELSIF (TG_OP = ''UPDATE'') THEN'
+         || '    INSERT INTO ' || v_logTableName || ' SELECT OLD.*, ''UPD'', ''OLD'';'
+         || '    INSERT INTO ' || v_logTableName || ' SELECT NEW.*, ''UPD'', ''NEW'', lastval();'
+         || '    RETURN NEW;'
+         || '  ELSIF (TG_OP = ''INSERT'') THEN'
+         || '    INSERT INTO ' || v_logTableName || ' SELECT NEW.*, ''INS'', ''NEW'';'
+         || '    RETURN NEW;'
+         || '  END IF;'
+         || '  RETURN NULL;'
+         || 'END;'
+         || '$logfnct$ LANGUAGE plpgsql SECURITY DEFINER SET search_path = pg_catalog, pg_temp;';
+-- create the log and truncate triggers
+    PERFORM emaj._create_emaj_triggers_tbl(v_fullTableName, v_logFnctName);
+-- If the group is idle, deactivate the triggers (they will be enabled at emaj_start_group time)
     IF NOT v_groupIsLogging THEN
-      EXECUTE format('ALTER TABLE %s DISABLE TRIGGER emaj_log_trg',
-                     v_fullTableName);
+      PERFORM emaj._handle_trigger_tbl('DISABLE', v_fullTableName, 'emaj_log_trg');
+      PERFORM emaj._handle_trigger_tbl('DISABLE', v_fullTableName, 'emaj_trunc_trg');
     END IF;
--- creation of the trigger that manage any TRUNCATE on the application table
--- But the trigger is not immediately activated (it will be at emaj_start_group time)
-    EXECUTE format('DROP TRIGGER IF EXISTS emaj_trunc_trg ON %s',
-                   v_fullTableName);
-    EXECUTE format('CREATE TRIGGER emaj_trunc_trg'
-                   '  BEFORE TRUNCATE ON %s'
-                   '  FOR EACH STATEMENT EXECUTE PROCEDURE emaj._truncate_trigger_fnct()',
-                   v_fullTableName);
-    IF NOT v_groupIsLogging THEN
-      EXECUTE format('ALTER TABLE %s DISABLE TRIGGER emaj_trunc_trg',
-                     v_fullTableName);
-    END IF;
--- grant appropriate rights to both emaj roles
+-- set emaj_adm as owner of log objects
+    EXECUTE format('ALTER TABLE %s OWNER TO emaj_adm',
+                   v_logTableName);
+    EXECUTE format('ALTER SEQUENCE %s OWNER TO emaj_adm',
+                   v_sequenceName);
+    EXECUTE format('ALTER FUNCTION %s () OWNER TO emaj_adm',
+                   v_logFnctName);
+-- grant appropriate rights to the emaj_viewer role
     EXECUTE format('GRANT SELECT ON TABLE %s TO emaj_viewer',
                    v_logTableName);
-    EXECUTE format('GRANT ALL PRIVILEGES ON TABLE %s TO emaj_adm',
-                   v_logTableName);
     EXECUTE format('GRANT SELECT ON SEQUENCE %s TO emaj_viewer',
-                   v_sequenceName);
-    EXECUTE format('GRANT ALL PRIVILEGES ON SEQUENCE %s TO emaj_adm',
                    v_sequenceName);
 -- Build some pieces of SQL statements that will be needed at table rollback and gen_sql times
 --   left NULL if the table hos no pkey
@@ -2938,48 +2956,74 @@ $_create_tbl$
   END;
 $_create_tbl$;
 
-CREATE OR REPLACE FUNCTION emaj._create_log_trigger_tbl(v_fullTableName TEXT, v_logTableName TEXT, v_sequenceName TEXT, v_logFnctName TEXT)
+CREATE OR REPLACE FUNCTION emaj._create_emaj_triggers_tbl(v_fullTableName TEXT, v_logFnctName TEXT)
 RETURNS VOID LANGUAGE plpgsql
 SECURITY DEFINER SET search_path = pg_catalog, pg_temp AS
-$_create_log_trigger_tbl$
--- The function creates the log function and the associated log trigger for an application table.
--- It is called by several functions.
--- Inputs: the full name of the application table, the log table, the log sequence and the log function
--- The function is defined as SECURITY DEFINER so that emaj_adm role can manage the trigger on the application table.
+$_create_emaj_triggers_tbl$
+-- The function creates the log and truncate triggers for an application table.
+-- Inputs: the full name of the application table
+--         the log function name
+-- The function is defined as SECURITY DEFINER so that emaj_adm role can create the trigger on the application table.
+  DECLARE
+    v_stack                  TEXT;
   BEGIN
+-- check that the caller is allowed to do that.
+    GET DIAGNOSTICS v_stack = PG_CONTEXT;
+    IF v_stack NOT LIKE '%emaj._create_tbl(text,text,text,integer,text,text,bigint,boolean,boolean)%' THEN
+      RAISE EXCEPTION '_create_emaj_triggers_tbl: the calling function is not allowed to reach this sensitive function.';
+    END IF;
 -- drop the log trigger if it exists
     EXECUTE format('DROP TRIGGER IF EXISTS emaj_log_trg ON %s',
                    v_fullTableName);
--- create the log fonction that will be mapped to the log trigger just after
---   the new row is logged for each INSERT, the old row is logged for each DELETE
---   and the old and the new rows are logged for each UPDATE.
-    EXECUTE 'CREATE OR REPLACE FUNCTION ' || v_logFnctName || '() RETURNS TRIGGER AS $logfnct$'
-         || 'BEGIN'
--- The sequence associated to the log table is incremented at the beginning of the function ...
-         || '  PERFORM NEXTVAL(' || quote_literal(v_sequenceName) || ');'
--- ... and the global id sequence is incremented by the first/only INSERT into the log table.
-         || '  IF (TG_OP = ''DELETE'') THEN'
-         || '    INSERT INTO ' || v_logTableName || ' SELECT OLD.*, ''DEL'', ''OLD'';'
-         || '    RETURN OLD;'
-         || '  ELSIF (TG_OP = ''UPDATE'') THEN'
-         || '    INSERT INTO ' || v_logTableName || ' SELECT OLD.*, ''UPD'', ''OLD'';'
-         || '    INSERT INTO ' || v_logTableName || ' SELECT NEW.*, ''UPD'', ''NEW'', lastval();'
-         || '    RETURN NEW;'
-         || '  ELSIF (TG_OP = ''INSERT'') THEN'
-         || '    INSERT INTO ' || v_logTableName || ' SELECT NEW.*, ''INS'', ''NEW'';'
-         || '    RETURN NEW;'
-         || '  END IF;'
-         || '  RETURN NULL;'
-         || 'END;'
-         || '$logfnct$ LANGUAGE plpgsql SECURITY DEFINER SET search_path = pg_catalog, pg_temp;';
 -- create the log trigger on the application table, using the previously created log function
     EXECUTE format('CREATE TRIGGER emaj_log_trg'
                    ' AFTER INSERT OR UPDATE OR DELETE ON %s'
                    '  FOR EACH ROW EXECUTE PROCEDURE %s()',
                    v_fullTableName, v_logFnctName);
+-- create the trigger that manage any TRUNCATE on the application table
+    EXECUTE format('DROP TRIGGER IF EXISTS emaj_trunc_trg ON %s',
+                   v_fullTableName);
+    EXECUTE format('CREATE TRIGGER emaj_trunc_trg'
+                   '  BEFORE TRUNCATE ON %s'
+                   '  FOR EACH STATEMENT EXECUTE PROCEDURE emaj._truncate_trigger_fnct()',
+                   v_fullTableName);
     RETURN;
   END;
-$_create_log_trigger_tbl$;
+$_create_emaj_triggers_tbl$;
+
+CREATE OR REPLACE FUNCTION emaj._handle_trigger_tbl(v_action TEXT, v_fullTableName TEXT, v_triggerName TEXT)
+RETURNS VOID LANGUAGE plpgsql
+SECURITY DEFINER SET search_path = pg_catalog, pg_temp AS
+$_handle_trigger_tbl$
+-- The function performs an elementary action for a trigger on an application table.
+-- Inputs: the action to perform: ENABLE/DISABLE/DROP
+--         the full name of the application table
+--         the trigger name
+-- The function is defined as SECURITY DEFINER so that emaj_adm role can perform the action on any application table.
+  DECLARE
+    v_stack                  TEXT;
+  BEGIN
+-- check that the caller is allowed to do that.
+    GET DIAGNOSTICS v_stack = PG_CONTEXT;
+    IF v_stack NOT LIKE '%emaj._create_tbl(text,text,text,integer,text,text,bigint,boolean,boolean)%' AND
+       v_stack NOT LIKE '%emaj._remove_tbl(text,text,text,boolean,bigint,text)%' AND
+       v_stack NOT LIKE '%emaj._drop_tbl(emaj.emaj_relation,bigint)%' AND
+       v_stack NOT LIKE '%emaj._start_groups(text[],text,boolean,boolean)%' AND
+       v_stack NOT LIKE '%emaj._stop_groups(text[],text,boolean,boolean)%' AND
+       v_stack NOT LIKE '%emaj._rlbk_session_exec(integer,integer)%' THEN
+      RAISE EXCEPTION '_handle_trigger_tbl: the calling function is not allowed to reach this sensitive function.';
+    END IF;
+-- perform the action
+    IF v_action = 'DISABLE' OR v_action = 'ENABLE' THEN
+      EXECUTE format('ALTER TABLE %s %s TRIGGER %I',
+                     v_fullTableName, v_action, quote_ident(v_triggerName));
+    ELSIF v_action = 'DROP' THEN
+      EXECUTE format('DROP TRIGGER IF EXISTS %I ON %s',
+                     quote_ident(v_triggerName), v_fullTableName);
+    END IF;
+    RETURN;
+  END;
+$_handle_trigger_tbl$;
 
 CREATE OR REPLACE FUNCTION emaj._build_sql_tbl(v_fullTableName TEXT, OUT v_rlbkColList TEXT, OUT v_rlbkPkColList TEXT,
                                                OUT v_rlbkPkConditions TEXT, OUT v_genColList TEXT, OUT v_genValList TEXT,
@@ -3102,8 +3146,7 @@ $_build_sql_tbl$;
 
 CREATE OR REPLACE FUNCTION emaj._add_tbl(v_schema TEXT, v_table TEXT, v_group TEXT, v_priority INT, v_logDatTsp TEXT, v_logIdxTsp TEXT,
                                          v_groupIsLogging BOOLEAN, v_timeId BIGINT, v_function TEXT)
-RETURNS VOID LANGUAGE plpgsql
-SECURITY DEFINER SET search_path = pg_catalog, pg_temp AS
+RETURNS VOID LANGUAGE plpgsql AS
 $_add_tbl$
 -- The function adds a table to a group. It is called during an alter group or a dynamic assignment operation.
 -- If the group is in idle state, it simply calls the _create_tbl() function.
@@ -3111,7 +3154,6 @@ $_add_tbl$
 --    sets a restart value for the log sequence if a previous range exists for the relation.
 -- Required inputs: schema and table to add, group name, priority, log data and index tablespace, the group's logging state,
 --                  the time stamp id of the operation, main calling function.
--- The function is defined as SECURITY DEFINER so that emaj_adm role can enable triggers on application tables.
   DECLARE
     v_groupIsRollbackable    BOOLEAN;
     v_logSchema              TEXT;
@@ -3255,8 +3297,7 @@ $_change_log_index_tsp_tbl$;
 
 CREATE OR REPLACE FUNCTION emaj._remove_tbl(v_schema TEXT, v_table TEXT, v_group TEXT, v_groupIsLogging BOOLEAN,
                                             v_timeId BIGINT, v_function TEXT)
-RETURNS VOID LANGUAGE plpgsql
-SECURITY DEFINER SET search_path = pg_catalog, pg_temp AS
+RETURNS VOID LANGUAGE plpgsql AS
 $_remove_tbl$
 -- The function removes a table from a group. It is called during an alter group or a dynamic removal operation.
 -- If the group is in idle state, it simply calls the _drop_tbl() function.
@@ -3321,10 +3362,8 @@ $_remove_tbl$
                 AND relname = v_table
                 AND relkind = 'r'
            ) THEN
-        EXECUTE format('DROP TRIGGER IF EXISTS emaj_log_trg ON %s',
-                       v_fullTableName);
-        EXECUTE format('DROP TRIGGER IF EXISTS emaj_trunc_trg ON %s',
-                       v_fullTableName);
+        PERFORM emaj._handle_trigger_tbl('DROP', v_fullTableName, 'emaj_log_trg');
+        PERFORM emaj._handle_trigger_tbl('DROP', v_fullTableName, 'emaj_trunc_trg');
       END IF;
 -- ... drop the log function and the log sequence
 -- (but we keep the sequence related data in the emaj_table and the emaj_seq_hole tables)
@@ -3413,9 +3452,9 @@ $_move_tbl$
     EXECUTE format('ALTER TABLE ONLY %I.%I CLUSTER ON %I',
                    v_logSchema, v_currentLogTable, v_currentLogIndex);
 -- grant appropriate rights to both emaj roles
-    EXECUTE format('GRANT SELECT ON TABLE %I.%I TO emaj_viewer',
+    EXECUTE format('ALTER TABLE %I.%I OWNER TO emaj_adm',
                    v_logSchema, v_currentLogTable);
-    EXECUTE format('GRANT ALL PRIVILEGES ON TABLE %I.%I TO emaj_adm',
+    EXECUTE format('GRANT SELECT ON TABLE %I.%I TO emaj_viewer',
                    v_logSchema, v_currentLogTable);
 -- register the end of the previous relation time frame and create a new relation time frame with the new group
     UPDATE emaj.emaj_relation
@@ -3466,8 +3505,7 @@ $_move_tbl$
 $_move_tbl$;
 
 CREATE OR REPLACE FUNCTION emaj._drop_tbl(r_rel emaj.emaj_relation, v_timeId BIGINT)
-RETURNS VOID LANGUAGE plpgsql
-SECURITY DEFINER SET search_path = pg_catalog, pg_temp AS
+RETURNS VOID LANGUAGE plpgsql AS
 $_drop_tbl$
 -- The function deletes a timerange for a table. This centralizes the deletion of all what has been created by _create_tbl() function.
 -- Required inputs: row from emaj_relation corresponding to the appplication table to proccess, time id.
@@ -3488,10 +3526,8 @@ $_drop_tbl$
                 AND relkind = 'r'
            ) THEN
 -- drop the log and truncate triggers on the application table
-        EXECUTE format('DROP TRIGGER IF EXISTS emaj_log_trg ON %s',
-                       v_fullTableName);
-        EXECUTE format('DROP TRIGGER IF EXISTS emaj_trunc_trg ON %s',
-                       v_fullTableName);
+        PERFORM emaj._handle_trigger_tbl('DROP', v_fullTableName, 'emaj_log_trg');
+        PERFORM emaj._handle_trigger_tbl('DROP', v_fullTableName, 'emaj_trunc_trg');
       END IF;
 -- drop the log function
       IF r_rel.rel_log_function IS NOT NULL THEN
@@ -6676,8 +6712,7 @@ COMMENT ON FUNCTION emaj.emaj_start_groups(TEXT[],TEXT, BOOLEAN) IS
 $$Starts several E-Maj groups.$$;
 
 CREATE OR REPLACE FUNCTION emaj._start_groups(v_groupNames TEXT[], v_mark TEXT, v_multiGroup BOOLEAN, v_resetLog BOOLEAN)
-RETURNS INT LANGUAGE plpgsql
-SECURITY DEFINER SET search_path = pg_catalog, pg_temp AS
+RETURNS INT LANGUAGE plpgsql AS
 $_start_groups$
 -- This function activates the log triggers of all the tables for one or several groups and set a first mark.
 -- It also delete oldest rows in emaj_hist table.
@@ -6737,8 +6772,8 @@ $_start_groups$
       LOOP
         IF r_tblsq.rel_kind = 'r' THEN
 -- if it is a table, enable the emaj log and truncate triggers
-          EXECUTE format('ALTER TABLE %s ENABLE TRIGGER emaj_log_trg, ENABLE TRIGGER emaj_trunc_trg',
-                           r_tblsq.full_relation_name);
+          PERFORM emaj._handle_trigger_tbl('ENABLE', r_tblsq.full_relation_name, 'emaj_log_trg');
+          PERFORM emaj._handle_trigger_tbl('ENABLE', r_tblsq.full_relation_name, 'emaj_trunc_trg');
         END IF;
         v_nbTblSeq = v_nbTblSeq + 1;
       END LOOP;
@@ -6806,8 +6841,7 @@ COMMENT ON FUNCTION emaj.emaj_force_stop_group(TEXT) IS
 $$Forces an E-Maj group stop.$$;
 
 CREATE OR REPLACE FUNCTION emaj._stop_groups(v_groupNames TEXT[], v_mark TEXT, v_multiGroup BOOLEAN, v_isForced BOOLEAN)
-RETURNS INT LANGUAGE plpgsql
-SECURITY DEFINER SET search_path = pg_catalog, pg_temp AS
+RETURNS INT LANGUAGE plpgsql AS
 $_stop_groups$
 -- This function effectively de-activates the log triggers of all the tables for a group.
 -- Input: array of group names, a mark name to set, and a boolean indicating if the function is called by a multi group function
@@ -6907,8 +6941,7 @@ $_stop_groups$
 --     errors are captured so that emaj_force_stop_group() can be silently executed
             v_fullTableName  = quote_ident(r_tblsq.rel_schema) || '.' || quote_ident(r_tblsq.rel_tblseq);
             BEGIN
-              EXECUTE format('ALTER TABLE %s DISABLE TRIGGER emaj_log_trg',
-                             v_fullTableName);
+              PERFORM emaj._handle_trigger_tbl('DISABLE', v_fullTableName, 'emaj_log_trg');
             EXCEPTION
               WHEN undefined_object THEN
                 IF v_isForced THEN
@@ -6920,8 +6953,7 @@ $_stop_groups$
                 END IF;
             END;
             BEGIN
-              EXECUTE format('ALTER TABLE %s DISABLE TRIGGER emaj_trunc_trg',
-                             v_fullTableName);
+              PERFORM emaj._handle_trigger_tbl('DISABLE', v_fullTableName, 'emaj_trunc_trg');
             EXCEPTION
               WHEN undefined_object THEN
                 IF v_isForced THEN
@@ -7451,8 +7483,7 @@ COMMENT ON FUNCTION emaj.emaj_delete_before_mark_group(TEXT,TEXT) IS
 $$Deletes all marks preceeding a given mark for an E-Maj group.$$;
 
 CREATE OR REPLACE FUNCTION emaj._delete_before_mark_group(v_groupName TEXT, v_mark TEXT)
-RETURNS INT LANGUAGE plpgsql
-SECURITY DEFINER SET search_path = pg_catalog, pg_temp AS
+RETURNS INT LANGUAGE plpgsql AS
 $_delete_before_mark_group$
 -- This function deletes all logs and marks set before a given mark.
 -- The function is called by the emaj_delete_before_mark_group(), emaj_delete_mark_group() functions.
@@ -8919,6 +8950,7 @@ $_rlbk_session_exec$
     v_nbSession              INT;
     v_maxGlobalSeq           BIGINT;
     v_lastGlobalSeq          BIGINT;
+    v_fullTableName          TEXT;
     v_nbRows                 BIGINT;
     r_step                   RECORD;
   BEGIN
@@ -8957,16 +8989,15 @@ $_rlbk_session_exec$
                ' AND rlbp_table = ' || quote_literal(r_step.rlbp_table) ||
                ' AND rlbp_object = ' || quote_literal(r_step.rlbp_object) || ' RETURNING 1';
       PERFORM emaj._dblink_sql_exec('rlbk#'||v_session, v_stmt, v_dblinkSchema);
+      v_fullTableName = quote_ident(r_step.rlbp_schema) || '.' || quote_ident(r_step.rlbp_table);
 -- process the step depending on its type
       CASE r_step.rlbp_step
         WHEN 'DIS_APP_TRG' THEN
 -- process an application trigger disable
-          EXECUTE format('ALTER TABLE %I.%I DISABLE TRIGGER %I',
-                         r_step.rlbp_schema, r_step.rlbp_table, r_step.rlbp_object);
+          PERFORM emaj._handle_trigger_tbl('DISABLE', v_fullTableName, r_step.rlbp_object);
         WHEN 'DIS_LOG_TRG' THEN
 -- process a log trigger disable
-          EXECUTE format('ALTER TABLE %I.%I DISABLE TRIGGER emaj_log_trg',
-                         r_step.rlbp_schema, r_step.rlbp_table);
+          PERFORM emaj._handle_trigger_tbl('DISABLE', v_fullTableName, 'emaj_log_trg');
         WHEN 'DROP_FK' THEN
 -- process a foreign key deletion
           EXECUTE format('ALTER TABLE %I.%I DROP CONSTRAINT %I',
@@ -9009,12 +9040,10 @@ $_rlbk_session_exec$
                          r_step.rlbp_schema, r_step.rlbp_table, r_step.rlbp_object, r_step.rlbp_object_def);
         WHEN 'ENA_APP_TRG' THEN
 -- process an application trigger enable
-          EXECUTE format('ALTER TABLE %I.%I ENABLE %s TRIGGER %I',
-                         r_step.rlbp_schema, r_step.rlbp_table, r_step.rlbp_object_def, r_step.rlbp_object);
+          PERFORM emaj._handle_trigger_tbl('ENABLE', v_fullTableName, r_step.rlbp_object);
         WHEN 'ENA_LOG_TRG' THEN
 -- process a log trigger enable
-          EXECUTE format('ALTER TABLE %I.%I ENABLE TRIGGER emaj_log_trg',
-                         r_step.rlbp_schema, r_step.rlbp_table);
+          PERFORM emaj._handle_trigger_tbl('ENABLE', v_fullTableName, 'emaj_log_trg');
       END CASE;
 -- update the emaj_rlbk_plan table to set the step duration
 -- NB: the computed duration does not include the time needed to update the emaj_rlbk_plan table
@@ -9745,15 +9774,13 @@ COMMENT ON FUNCTION emaj.emaj_reset_group(TEXT) IS
 $$Resets all log tables content of a stopped E-Maj group.$$;
 
 CREATE OR REPLACE FUNCTION emaj._reset_groups(v_groupNames TEXT[])
-RETURNS INT LANGUAGE plpgsql
-SECURITY DEFINER SET search_path = pg_catalog, pg_temp AS
+RETURNS INT LANGUAGE plpgsql AS
 $_reset_groups$
 -- This function empties the log tables for all tables of a group, using a TRUNCATE, and deletes the sequences images.
 -- It is called by emaj_reset_group(), emaj_start_group() and emaj_alter_group() functions.
 -- Input: group names array
 -- Output: number of processed tables and sequences
 -- There is no check of the groups state (this is done by callers).
--- The function is defined as SECURITY DEFINER so that an emaj_adm role can drop log tables.
   DECLARE
     v_eventTriggers          TEXT[];
     r_rel                    RECORD;

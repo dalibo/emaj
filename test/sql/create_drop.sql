@@ -256,6 +256,10 @@ select group_name, group_is_rollbackable, group_creation_time_id,
   from emaj.emaj_group order by group_name;
 select * from emaj.emaj_relation order by rel_group, rel_priority, rel_schema, rel_tblseq, rel_time_range;
 select schemaname, tablename, tableowner, tablespace from pg_tables where schemaname like 'emaj\_%' order by schemaname, tablename;
+select nspname, relname, rolname from pg_class, pg_namespace, pg_authid 
+  where relnamespace = pg_namespace.oid and relowner = pg_authid.oid and relkind = 'S' and nspname like 'emaj\_%' order by nspname, relname;
+select nspname, proname, rolname from pg_proc, pg_namespace, pg_authid
+  where pronamespace = pg_namespace.oid and proowner = pg_authid.oid and nspname like 'emaj\_%' order by nspname, proname;
 
 -----------------------------------
 -- emaj_ignore_app_trigger: ADD action (the REMOVE action tests are postpone after the groups configuration export/import tests)

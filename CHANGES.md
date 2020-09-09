@@ -15,6 +15,8 @@ E-Maj - Change log
   * A fourth parameter in the emaj_import_groups_configuration() functions
     allows to specify a non default mark name when in LOGGING state groups
     are imported.
+  * All E-Maj log objects are now owned by the emaj_adm role (instead of a
+    superuser).
   * Coding style improvements.
   * Minor code improvements.
 

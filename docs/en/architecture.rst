@@ -59,6 +59,7 @@ To let E-Maj work, some **other technical objects** are also created at extensio
 
 Some technical tables, whose structure is interesting to know, are described in details: :ref:`emaj_param <emaj_param>` and :ref:`emaj_hist <emaj_hist>`.
 
+The *emaj_adm* role is the owner of all log schemas, tables, sequences and functions.
 
 Schemas
 *******

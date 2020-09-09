@@ -59,6 +59,7 @@ Pour le bon fonctionnement d'E-Maj, un certain nombre d'**objets techniques** so
 
 Quelques tables techniques dont il peut être utile de connaître la structure sont décrites en détail : :ref:`emaj_param <emaj_param>` et :ref:`emaj_hist <emaj_hist>`.
 
+Le rôle *emaj_adm* est le propriétaire de tous les schémas, tables, séquences et fonctions de log.
 
 Les schémas créés
 *****************

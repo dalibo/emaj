@@ -537,7 +537,7 @@ begin;
   savepoint sp1;
     select emaj.emaj_stop_group('myGroup2');
 ERROR:  _stop_groups: The log trigger "emaj_log_trg" on table "myschema2.mytbl4" does not exist any more.
-CONTEXT:  PL/pgSQL function emaj._stop_groups(text[],text,boolean,boolean) line 108 at RAISE
+CONTEXT:  PL/pgSQL function emaj._stop_groups(text[],text,boolean,boolean) line 107 at RAISE
 PL/pgSQL function emaj.emaj_stop_group(text,text) line 10 at RETURN
   rollback to savepoint sp1;
 -- reimporting the group configuration fails if the group is in logging state
@@ -581,7 +581,7 @@ begin;
   savepoint sp1;
     select emaj.emaj_stop_group('myGroup2');
 ERROR:  _stop_groups: The truncate trigger "emaj_trunc_trg" on table "myschema2.mytbl4" does not exist any more.
-CONTEXT:  PL/pgSQL function emaj._stop_groups(text[],text,boolean,boolean) line 121 at RAISE
+CONTEXT:  PL/pgSQL function emaj._stop_groups(text[],text,boolean,boolean) line 119 at RAISE
 PL/pgSQL function emaj.emaj_stop_group(text,text) line 10 at RETURN
   rollback to savepoint sp1;
 -- removing and re-assigning the table solves the issue 
@@ -640,7 +640,7 @@ SQL statement "WITH stat_group1 AS                               -- for each gro
         AND s.last_mark_time_id = m.mark_time_id"
 PL/pgSQL function emaj._set_mark_groups(text[],text,boolean,boolean,text,bigint,text) line 49 at SQL statement
 SQL statement "SELECT emaj._set_mark_groups(v_groupNames, v_markName, v_multiGroup, TRUE)"
-PL/pgSQL function emaj._stop_groups(text[],text,boolean,boolean) line 131 at PERFORM
+PL/pgSQL function emaj._stop_groups(text[],text,boolean,boolean) line 129 at PERFORM
 PL/pgSQL function emaj.emaj_stop_group(text,text) line 10 at RETURN
   rollback to savepoint sp1;
 -- removing the table fails also
@@ -673,7 +673,7 @@ SQL statement "WITH stat_group1 AS                               -- for each gro
         AND s.last_mark_time_id = m.mark_time_id"
 PL/pgSQL function emaj._set_mark_groups(text[],text,boolean,boolean,text,bigint,text) line 49 at SQL statement
 SQL statement "SELECT emaj._set_mark_groups(v_loggingGroups, v_markName, FALSE, TRUE, NULL, v_timeId)"
-PL/pgSQL function emaj._remove_tables(text,text[],text,boolean,boolean) line 86 at PERFORM
+PL/pgSQL function emaj._remove_tables(text,text[],text,boolean,boolean) line 85 at PERFORM
 PL/pgSQL function emaj.emaj_remove_table(text,text,text) line 6 at RETURN
   rollback to savepoint sp1;
 -- the only solution is to force the group's stop before removing/reassigning the table
@@ -778,7 +778,7 @@ begin;
 -- dropping group fails at log schema drop step
     select emaj.emaj_drop_group('myGroup1');
 ERROR:  _drop_log_schemas: Cannot drop the schema "emaj_myschema1". It probably owns unattended objects. Use the emaj_verify_all() function to get details.
-CONTEXT:  PL/pgSQL function emaj._drop_log_schemas(text,boolean) line 36 at RAISE
+CONTEXT:  PL/pgSQL function emaj._drop_log_schemas(text,boolean) line 35 at RAISE
 SQL statement "SELECT emaj._drop_log_schemas(CASE WHEN v_isForced THEN 'FORCE_DROP_GROUP' ELSE 'DROP_GROUP' END, v_isForced)"
 PL/pgSQL function emaj._drop_group(text,boolean) line 27 at PERFORM
 SQL statement "SELECT emaj._drop_group(v_groupName, FALSE)"

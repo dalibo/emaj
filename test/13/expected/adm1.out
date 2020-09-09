@@ -127,6 +127,18 @@ select 'select ok' as result from (select count(*) from emaj_mySchema1.myTbl1_lo
 (1 row)
 
 -----------------------------
+-- forbiden direct call of SECURITY DEFINER functions
+-----------------------------
+select emaj._create_log_schema('illegal_schema','dummy');
+ERROR:  _create_log_schema: the calling function is not allowed to reach this sensitive function.
+CONTEXT:  PL/pgSQL function emaj._create_log_schema(text,text) line 16 at RAISE
+select emaj._create_emaj_triggers_tbl('illegal_table', 'dummy');
+ERROR:  _create_emaj_triggers_tbl: the calling function is not allowed to reach this sensitive function.
+CONTEXT:  PL/pgSQL function emaj._create_emaj_triggers_tbl(text,text) line 12 at RAISE
+select emaj._handle_trigger_tbl('illegal function', 'illegal_table', 'dummy');
+ERROR:  _handle_trigger_tbl: the calling function is not allowed to reach this sensitive function.
+CONTEXT:  PL/pgSQL function emaj._handle_trigger_tbl(text,text,text) line 18 at RAISE
+-----------------------------
 -- stop, reset and drop existing groups
 -----------------------------
 select emaj.emaj_stop_group('myGroup1','Simple stop mark');

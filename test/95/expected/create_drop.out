@@ -126,7 +126,7 @@ select group_name, group_comment from emaj.emaj_group where group_name = 'myGrou
 select emaj.emaj_assign_table('myschema1','mytbl1','dummyGroup');
 ERROR:  _check_group_names: The group "dummyGroup" does not exist.
 CONTEXT:  SQL statement "SELECT emaj._check_group_names(v_groupNames := ARRAY[v_group], v_mayBeNull := FALSE, v_lockGroups := TRUE, v_checkList := '')"
-PL/pgSQL function emaj._assign_tables(text,text[],text,jsonb,text,boolean,boolean) line 33 at PERFORM
+PL/pgSQL function emaj._assign_tables(text,text[],text,jsonb,text,boolean,boolean) line 32 at PERFORM
 PL/pgSQL function emaj.emaj_assign_table(text,text,text,jsonb,text) line 7 at RETURN
 -- bad schema
 select emaj.emaj_assign_table('dummySchema','mytbl1','myGroup1');
@@ -189,7 +189,7 @@ CONTEXT:  PL/pgSQL function emaj.emaj_assign_table(text,text,text,jsonb,text) li
 select emaj.emaj_assign_table('myschema1','mytbl1','myGroup1',null,'EMAJ_LAST_MARK');
 ERROR:  _check_new_mark: "EMAJ_LAST_MARK" is not an allowed name for a new mark.
 CONTEXT:  SQL statement "SELECT emaj._check_new_mark(array[v_group], v_mark)"
-PL/pgSQL function emaj._assign_tables(text,text[],text,jsonb,text,boolean,boolean) line 252 at SQL statement
+PL/pgSQL function emaj._assign_tables(text,text[],text,jsonb,text,boolean,boolean) line 251 at SQL statement
 PL/pgSQL function emaj.emaj_assign_table(text,text,text,jsonb,text) line 7 at RETURN
 -- erroneously existing log schema
 begin;
@@ -209,10 +209,10 @@ QUERY:  ALTER TABLE emaj_myschema1.mytbl1_log dummmy content
 CONTEXT:  PL/pgSQL function emaj._create_tbl(text,text,text,integer,text,text,bigint,boolean,boolean) line 91 at EXECUTE
 SQL statement "SELECT emaj._create_tbl(v_schema, v_table, v_group, v_priority, v_logDatTsp, v_logIdxTsp,
                              v_timeId, v_groupIsRollbackable, v_groupIsLogging)"
-PL/pgSQL function emaj._add_tbl(text,text,text,integer,text,text,boolean,bigint,text) line 20 at PERFORM
+PL/pgSQL function emaj._add_tbl(text,text,text,integer,text,text,boolean,bigint,text) line 19 at PERFORM
 SQL statement "SELECT emaj._add_tbl(v_schema, v_oneTable, v_group, v_priority, v_logDatTsp, v_logIdxTsp, v_groupIsLogging,
                               v_timeId, v_function)"
-PL/pgSQL function emaj._assign_tables(text,text[],text,jsonb,text,boolean,boolean) line 301 at PERFORM
+PL/pgSQL function emaj._assign_tables(text,text[],text,jsonb,text,boolean,boolean) line 291 at PERFORM
 PL/pgSQL function emaj.emaj_assign_table(text,text,text,jsonb,text) line 7 at RETURN
 rollback;
 -- attempting to assign emaj objects: referencing an emaj schema
@@ -233,10 +233,10 @@ select emaj.emaj_assign_table('myschema1','mytbl2','myGroup1','{"log_data_tables
 WARNING:  _create_tbl: The table "myschema1.mytbl2" has triggers (mytbl2trg1, mytbl2trg2). They will be automatically disabled during E-Maj rollback operations, unless they have been recorded into the list of triggers that may be kept enabled, with the emaj_ignore_app_trigger() function.
 CONTEXT:  SQL statement "SELECT emaj._create_tbl(v_schema, v_table, v_group, v_priority, v_logDatTsp, v_logIdxTsp,
                              v_timeId, v_groupIsRollbackable, v_groupIsLogging)"
-PL/pgSQL function emaj._add_tbl(text,text,text,integer,text,text,boolean,bigint,text) line 20 at PERFORM
+PL/pgSQL function emaj._add_tbl(text,text,text,integer,text,text,boolean,bigint,text) line 19 at PERFORM
 SQL statement "SELECT emaj._add_tbl(v_schema, v_oneTable, v_group, v_priority, v_logDatTsp, v_logIdxTsp, v_groupIsLogging,
                               v_timeId, v_function)"
-PL/pgSQL function emaj._assign_tables(text,text[],text,jsonb,text,boolean,boolean) line 301 at PERFORM
+PL/pgSQL function emaj._assign_tables(text,text[],text,jsonb,text,boolean,boolean) line 291 at PERFORM
 PL/pgSQL function emaj.emaj_assign_table(text,text,text,jsonb,text) line 7 at RETURN
  emaj_assign_table 
 -------------------
@@ -273,7 +273,7 @@ CONTEXT:  PL/pgSQL function emaj.emaj_assign_table(text,text,text,jsonb,text) li
 select emaj.emaj_assign_tables('dummySchema',array['dummyTable'],'dummyGroup');
 ERROR:  _check_group_names: The group "dummyGroup" does not exist.
 CONTEXT:  SQL statement "SELECT emaj._check_group_names(v_groupNames := ARRAY[v_group], v_mayBeNull := FALSE, v_lockGroups := TRUE, v_checkList := '')"
-PL/pgSQL function emaj._assign_tables(text,text[],text,jsonb,text,boolean,boolean) line 33 at PERFORM
+PL/pgSQL function emaj._assign_tables(text,text[],text,jsonb,text,boolean,boolean) line 32 at PERFORM
 PL/pgSQL function emaj.emaj_assign_tables(text,text[],text,jsonb,text) line 7 at RETURN
 -- bad tables
 select emaj.emaj_assign_tables('myschema1',array['dummytbl1','dummytbl2'],'phil''s group#3",');
@@ -319,7 +319,7 @@ select emaj.emaj_assign_tables('phil''s schema3',array['phil''s tbl1',E'myTbl2\\
 select emaj.emaj_assign_tables('dummySchema','dummyIncludeFilter','dummyExcludeFilter','dummyGroup');
 ERROR:  _check_group_names: The group "dummyGroup" does not exist.
 CONTEXT:  SQL statement "SELECT emaj._check_group_names(v_groupNames := ARRAY[v_group], v_mayBeNull := FALSE, v_lockGroups := TRUE, v_checkList := '')"
-PL/pgSQL function emaj._assign_tables(text,text[],text,jsonb,text,boolean,boolean) line 33 at PERFORM
+PL/pgSQL function emaj._assign_tables(text,text[],text,jsonb,text,boolean,boolean) line 32 at PERFORM
 PL/pgSQL function emaj.emaj_assign_tables(text,text,text,text,jsonb,text) line 26 at RETURN
 -- bad schema
 select emaj.emaj_assign_tables('dummySchema','dummyIncludeFilter','dummyExcludeFilter','myGroup2');
@@ -447,10 +447,10 @@ CONTEXT:  PL/pgSQL function emaj.emaj_assign_tables(text,text,text,text,jsonb,te
 WARNING:  _create_tbl: The table "myschema4.mytblm" has triggers (mytblm_insert_trigger). They will be automatically disabled during E-Maj rollback operations, unless they have been recorded into the list of triggers that may be kept enabled, with the emaj_ignore_app_trigger() function.
 CONTEXT:  SQL statement "SELECT emaj._create_tbl(v_schema, v_table, v_group, v_priority, v_logDatTsp, v_logIdxTsp,
                              v_timeId, v_groupIsRollbackable, v_groupIsLogging)"
-PL/pgSQL function emaj._add_tbl(text,text,text,integer,text,text,boolean,bigint,text) line 20 at PERFORM
+PL/pgSQL function emaj._add_tbl(text,text,text,integer,text,text,boolean,bigint,text) line 19 at PERFORM
 SQL statement "SELECT emaj._add_tbl(v_schema, v_oneTable, v_group, v_priority, v_logDatTsp, v_logIdxTsp, v_groupIsLogging,
                               v_timeId, v_function)"
-PL/pgSQL function emaj._assign_tables(text,text[],text,jsonb,text,boolean,boolean) line 301 at PERFORM
+PL/pgSQL function emaj._assign_tables(text,text[],text,jsonb,text,boolean,boolean) line 291 at PERFORM
 PL/pgSQL function emaj.emaj_assign_tables(text,text,text,text,jsonb,text) line 26 at RETURN
  emaj_assign_tables 
 --------------------
@@ -680,32 +680,96 @@ select * from emaj.emaj_relation order by rel_group, rel_priority, rel_schema, r
 select schemaname, tablename, tableowner, tablespace from pg_tables where schemaname like 'emaj\_%' order by schemaname, tablename;
      schemaname      |                        tablename                         | tableowner | tablespace 
 ---------------------+----------------------------------------------------------+------------+------------
- emaj_myschema1      | myTbl3_log                                               | postgres   | tsplog1
- emaj_myschema1      | mytbl1_log                                               | postgres   | 
- emaj_myschema1      | mytbl2_log                                               | postgres   | tsplog1
- emaj_myschema1      | mytbl2b_log                                              | postgres   | tsp log'2
- emaj_myschema1      | mytbl4_log                                               | postgres   | tsplog1
- emaj_myschema2      | myTbl3_log                                               | postgres   | 
- emaj_myschema2      | mytbl1_log                                               | postgres   | 
- emaj_myschema2      | mytbl2_log                                               | postgres   | 
- emaj_myschema2      | mytbl4_log                                               | postgres   | 
- emaj_myschema2      | mytbl5_log                                               | postgres   | 
- emaj_myschema2      | mytbl6_log                                               | postgres   | 
- emaj_myschema2      | mytbl7_log                                               | postgres   | 
- emaj_myschema2      | mytbl8_log                                               | postgres   | 
- emaj_myschema4      | mypartp1_log                                             | postgres   | 
- emaj_myschema4      | mypartp2_log                                             | postgres   | 
- emaj_myschema4      | mytblc1_log                                              | postgres   | 
- emaj_myschema4      | mytblc2_log                                              | postgres   | 
- emaj_myschema4      | mytblm_log                                               | postgres   | 
- emaj_myschema5      | myoidstbl_log                                            | postgres   | 
- emaj_myschema5      | myunloggedtbl_log                                        | postgres   | 
- emaj_myschema6      | table_with_50_characters_long_name_____0_________0_log   | postgres   | 
- emaj_myschema6      | table_with_51_characters_long_name_____0_________0#1_log | postgres   | 
- emaj_myschema6      | table_with_55_characters_long_name_____0_________0#1_log | postgres   | 
- emaj_myschema6      | table_with_55_characters_long_name_____0_________0#2_log | postgres   | 
- emaj_phil's schema3 | myTbl2\_log                                              | postgres   | 
- emaj_phil's schema3 | phil's tbl1_log                                          | postgres   | 
+ emaj_myschema1      | myTbl3_log                                               | emaj_adm   | tsplog1
+ emaj_myschema1      | mytbl1_log                                               | emaj_adm   | 
+ emaj_myschema1      | mytbl2_log                                               | emaj_adm   | tsplog1
+ emaj_myschema1      | mytbl2b_log                                              | emaj_adm   | tsp log'2
+ emaj_myschema1      | mytbl4_log                                               | emaj_adm   | tsplog1
+ emaj_myschema2      | myTbl3_log                                               | emaj_adm   | 
+ emaj_myschema2      | mytbl1_log                                               | emaj_adm   | 
+ emaj_myschema2      | mytbl2_log                                               | emaj_adm   | 
+ emaj_myschema2      | mytbl4_log                                               | emaj_adm   | 
+ emaj_myschema2      | mytbl5_log                                               | emaj_adm   | 
+ emaj_myschema2      | mytbl6_log                                               | emaj_adm   | 
+ emaj_myschema2      | mytbl7_log                                               | emaj_adm   | 
+ emaj_myschema2      | mytbl8_log                                               | emaj_adm   | 
+ emaj_myschema4      | mypartp1_log                                             | emaj_adm   | 
+ emaj_myschema4      | mypartp2_log                                             | emaj_adm   | 
+ emaj_myschema4      | mytblc1_log                                              | emaj_adm   | 
+ emaj_myschema4      | mytblc2_log                                              | emaj_adm   | 
+ emaj_myschema4      | mytblm_log                                               | emaj_adm   | 
+ emaj_myschema5      | myoidstbl_log                                            | emaj_adm   | 
+ emaj_myschema5      | myunloggedtbl_log                                        | emaj_adm   | 
+ emaj_myschema6      | table_with_50_characters_long_name_____0_________0_log   | emaj_adm   | 
+ emaj_myschema6      | table_with_51_characters_long_name_____0_________0#1_log | emaj_adm   | 
+ emaj_myschema6      | table_with_55_characters_long_name_____0_________0#1_log | emaj_adm   | 
+ emaj_myschema6      | table_with_55_characters_long_name_____0_________0#2_log | emaj_adm   | 
+ emaj_phil's schema3 | myTbl2\_log                                              | emaj_adm   | 
+ emaj_phil's schema3 | phil's tbl1_log                                          | emaj_adm   | 
+(26 rows)
+
+select nspname, relname, rolname from pg_class, pg_namespace, pg_authid 
+  where relnamespace = pg_namespace.oid and relowner = pg_authid.oid and relkind = 'S' and nspname like 'emaj\_%' order by nspname, relname;
+       nspname       |                           relname                            | rolname  
+---------------------+--------------------------------------------------------------+----------
+ emaj_myschema1      | myTbl3_log_seq                                               | emaj_adm
+ emaj_myschema1      | mytbl1_log_seq                                               | emaj_adm
+ emaj_myschema1      | mytbl2_log_seq                                               | emaj_adm
+ emaj_myschema1      | mytbl2b_log_seq                                              | emaj_adm
+ emaj_myschema1      | mytbl4_log_seq                                               | emaj_adm
+ emaj_myschema2      | myTbl3_log_seq                                               | emaj_adm
+ emaj_myschema2      | mytbl1_log_seq                                               | emaj_adm
+ emaj_myschema2      | mytbl2_log_seq                                               | emaj_adm
+ emaj_myschema2      | mytbl4_log_seq                                               | emaj_adm
+ emaj_myschema2      | mytbl5_log_seq                                               | emaj_adm
+ emaj_myschema2      | mytbl6_log_seq                                               | emaj_adm
+ emaj_myschema2      | mytbl7_log_seq                                               | emaj_adm
+ emaj_myschema2      | mytbl8_log_seq                                               | emaj_adm
+ emaj_myschema4      | mypartp1_log_seq                                             | emaj_adm
+ emaj_myschema4      | mypartp2_log_seq                                             | emaj_adm
+ emaj_myschema4      | mytblc1_log_seq                                              | emaj_adm
+ emaj_myschema4      | mytblc2_log_seq                                              | emaj_adm
+ emaj_myschema4      | mytblm_log_seq                                               | emaj_adm
+ emaj_myschema5      | myoidstbl_log_seq                                            | emaj_adm
+ emaj_myschema5      | myunloggedtbl_log_seq                                        | emaj_adm
+ emaj_myschema6      | table_with_50_characters_long_name_____0_________0_log_seq   | emaj_adm
+ emaj_myschema6      | table_with_51_characters_long_name_____0_________0#1_log_seq | emaj_adm
+ emaj_myschema6      | table_with_55_characters_long_name_____0_________0#1_log_seq | emaj_adm
+ emaj_myschema6      | table_with_55_characters_long_name_____0_________0#2_log_seq | emaj_adm
+ emaj_phil's schema3 | myTbl2\_log_seq                                              | emaj_adm
+ emaj_phil's schema3 | phil's tbl1_log_seq                                          | emaj_adm
+(26 rows)
+
+select nspname, proname, rolname from pg_proc, pg_namespace, pg_authid
+  where pronamespace = pg_namespace.oid and proowner = pg_authid.oid and nspname like 'emaj\_%' order by nspname, proname;
+       nspname       |                            proname                            | rolname  
+---------------------+---------------------------------------------------------------+----------
+ emaj_myschema1      | myTbl3_log_fnct                                               | emaj_adm
+ emaj_myschema1      | mytbl1_log_fnct                                               | emaj_adm
+ emaj_myschema1      | mytbl2_log_fnct                                               | emaj_adm
+ emaj_myschema1      | mytbl2b_log_fnct                                              | emaj_adm
+ emaj_myschema1      | mytbl4_log_fnct                                               | emaj_adm
+ emaj_myschema2      | myTbl3_log_fnct                                               | emaj_adm
+ emaj_myschema2      | mytbl1_log_fnct                                               | emaj_adm
+ emaj_myschema2      | mytbl2_log_fnct                                               | emaj_adm
+ emaj_myschema2      | mytbl4_log_fnct                                               | emaj_adm
+ emaj_myschema2      | mytbl5_log_fnct                                               | emaj_adm
+ emaj_myschema2      | mytbl6_log_fnct                                               | emaj_adm
+ emaj_myschema2      | mytbl7_log_fnct                                               | emaj_adm
+ emaj_myschema2      | mytbl8_log_fnct                                               | emaj_adm
+ emaj_myschema4      | mypartp1_log_fnct                                             | emaj_adm
+ emaj_myschema4      | mypartp2_log_fnct                                             | emaj_adm
+ emaj_myschema4      | mytblc1_log_fnct                                              | emaj_adm
+ emaj_myschema4      | mytblc2_log_fnct                                              | emaj_adm
+ emaj_myschema4      | mytblm_log_fnct                                               | emaj_adm
+ emaj_myschema5      | myoidstbl_log_fnct                                            | emaj_adm
+ emaj_myschema5      | myunloggedtbl_log_fnct                                        | emaj_adm
+ emaj_myschema6      | table_with_50_characters_long_name_____0_________0_log_fnct   | emaj_adm
+ emaj_myschema6      | table_with_51_characters_long_name_____0_________0#1_log_fnct | emaj_adm
+ emaj_myschema6      | table_with_55_characters_long_name_____0_________0#1_log_fnct | emaj_adm
+ emaj_myschema6      | table_with_55_characters_long_name_____0_________0#2_log_fnct | emaj_adm
+ emaj_phil's schema3 | myTbl2\_log_fnct                                              | emaj_adm
+ emaj_phil's schema3 | phil's tbl1_log_fnct                                          | emaj_adm
 (26 rows)
 
 -----------------------------------
@@ -1142,7 +1206,7 @@ select emaj.emaj_import_groups_configuration(:'EMAJTESTTMPDIR' || '/orig_groups_
 WARNING:  _create_tbl: The table "myschema1.mytbl2" has triggers (mytbl2trg1, mytbl2trg2). They will be automatically disabled during E-Maj rollback operations, unless they have been recorded into the list of triggers that may be kept enabled, with the emaj_ignore_app_trigger() function.
 CONTEXT:  SQL statement "SELECT emaj._create_tbl(v_schema, v_table, v_group, v_priority, v_logDatTsp, v_logIdxTsp,
                              v_timeId, v_groupIsRollbackable, v_groupIsLogging)"
-PL/pgSQL function emaj._add_tbl(text,text,text,integer,text,text,boolean,bigint,text) line 20 at PERFORM
+PL/pgSQL function emaj._add_tbl(text,text,text,integer,text,text,boolean,bigint,text) line 19 at PERFORM
 SQL statement "SELECT emaj._add_tbl(r_plan.altr_schema, r_plan.altr_tblseq, r_plan.altr_group, tmp_priority, tmp_log_dat_tsp,
                                 tmp_log_idx_tsp, r_plan.altr_group_is_logging, v_timeId, v_callingFunction)
             FROM tmp_app_table

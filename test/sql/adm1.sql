@@ -13,6 +13,7 @@ truncate emaj.emaj_hist;
 grant emaj_adm to emaj_regression_tests_adm_user1, emaj_regression_tests_adm_user2;
 --
 set role emaj_regression_tests_adm_user1;
+
 -----------------------------
 -- authorized table accesses
 -----------------------------
@@ -34,6 +35,13 @@ select 'select ok' as result from (select count(*) from emaj.emaj_rlbk_plan) as 
 select 'select ok' as result from (select count(*) from emaj.emaj_rlbk_stat) as t;
 select 'select ok' as result from (select count(*) from emaj.emaj_ignored_app_trigger) as t;
 select 'select ok' as result from (select count(*) from emaj_mySchema1.myTbl1_log) as t;
+
+-----------------------------
+-- forbiden direct call of SECURITY DEFINER functions
+-----------------------------
+select emaj._create_log_schema('illegal_schema','dummy');
+select emaj._create_emaj_triggers_tbl('illegal_table', 'dummy');
+select emaj._handle_trigger_tbl('illegal function', 'illegal_table', 'dummy');
 
 -----------------------------
 -- stop, reset and drop existing groups

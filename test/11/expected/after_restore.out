@@ -95,16 +95,16 @@ select emaj.emaj_set_mark_group('myGroup2','After restore mark');
 select mark_group, regexp_replace(mark_name,E'\\d\\d\.\\d\\d\\.\\d\\d\\.\\d\\d\\d\\d','%','g'), mark_time_id, mark_is_deleted, mark_is_rlbk_protected, mark_comment, mark_log_rows_before_next, mark_logged_rlbk_target_mark from emaj.emaj_mark order by mark_time_id, mark_group;
  mark_group |        regexp_replace        | mark_time_id | mark_is_deleted | mark_is_rlbk_protected |     mark_comment     | mark_log_rows_before_next | mark_logged_rlbk_target_mark 
 ------------+------------------------------+--------------+-----------------+------------------------+----------------------+---------------------------+------------------------------
- myGroup2   | M3                           |        10020 | t               | f                      | This mark is deleted |                         0 | 
- myGroup1   | M4                           |        10026 | t               | f                      |                      |                        10 | 
- myGroup1   | M5                           |        10027 | t               | f                      |                      |                         3 | 
- myGroup1   | Before logged rollback to M4 |        10033 | t               | f                      |                      |                        28 | 
- myGroup1   | STOP_%                       |        10035 | t               | f                      |                      |                         0 | 
- myGroup2   | STOP_%                       |        10035 | t               | f                      |                      |                         0 | 
- myGroup1   | Stop after rollback          |        10042 | t               | f                      |                      |                         0 | 
- myGroup2   | Stop after rollback          |        10042 | t               | f                      |                      |                         0 | 
- myGroup1   | Multi-1                      |        10043 | f               | f                      |                      |                         0 | 
- myGroup2   | Multi-1                      |        10043 | f               | f                      |                      |                        92 | 
+ myGroup2   | M3                           |        12201 | t               | f                      | This mark is deleted |                         0 | 
+ myGroup1   | M4                           |        12401 | t               | f                      |                      |                        10 | 
+ myGroup1   | M5                           |        12402 | t               | f                      |                      |                         3 | 
+ myGroup1   | Before logged rollback to M4 |        12601 | t               | f                      |                      |                        28 | 
+ myGroup1   | STOP_%                       |        14000 | t               | f                      |                      |                         0 | 
+ myGroup2   | STOP_%                       |        14000 | t               | f                      |                      |                         0 | 
+ myGroup1   | Stop after rollback          |        14007 | t               | f                      |                      |                         0 | 
+ myGroup2   | Stop after rollback          |        14007 | t               | f                      |                      |                         0 | 
+ myGroup1   | Multi-1                      |        14008 | f               | f                      |                      |                         0 | 
+ myGroup2   | Multi-1                      |        14008 | f               | f                      |                      |                        92 | 
  myGroup2   | RLBK_Multi-1_%_START         |        20001 | f               | f                      |                      |                        32 | 
  myGroup2   | RLBK_Multi-1_%_DONE          |        20002 | f               | f                      |                      |                        30 | Multi-1
  myGroup2   | RLBK_Multi-1_%_START         |        20201 | f               | f                      |                      |                        32 | 
@@ -115,26 +115,26 @@ select mark_group, regexp_replace(mark_name,E'\\d\\d\.\\d\\d\\.\\d\\d\\.\\d\\d\\
 select sequ_schema, sequ_name, sequ_time_id, sequ_last_val, sequ_is_called from emaj.emaj_sequence order by sequ_time_id, sequ_schema, sequ_name;
  sequ_schema |     sequ_name     | sequ_time_id | sequ_last_val | sequ_is_called 
 -------------+-------------------+--------------+---------------+----------------
- myschema2   | myseq1            |        10020 |          1003 | t
- myschema2   | myTbl3_col31_seq  |        10020 |            20 | t
- myschema1   | mytbl2b_col20_seq |        10026 |             5 | t
- myschema1   | myTbl3_col31_seq  |        10026 |            20 | t
- myschema1   | mytbl2b_col20_seq |        10027 |             5 | t
- myschema1   | myTbl3_col31_seq  |        10027 |            20 | t
- myschema1   | mytbl2b_col20_seq |        10033 |             5 | t
- myschema1   | myTbl3_col31_seq  |        10033 |            20 | t
- myschema1   | mytbl2b_col20_seq |        10035 |             5 | t
- myschema1   | myTbl3_col31_seq  |        10035 |            20 | t
- myschema2   | myseq1            |        10035 |          1004 | f
- myschema2   | myTbl3_col31_seq  |        10035 |            20 | t
- myschema1   | mytbl2b_col20_seq |        10042 |             5 | t
- myschema1   | myTbl3_col31_seq  |        10042 |            20 | t
- myschema2   | myseq1            |        10042 |          1004 | f
- myschema2   | myTbl3_col31_seq  |        10042 |            20 | t
- myschema1   | mytbl2b_col20_seq |        10043 |             5 | t
- myschema1   | myTbl3_col31_seq  |        10043 |            20 | t
- myschema2   | myseq1            |        10043 |          1004 | f
- myschema2   | myTbl3_col31_seq  |        10043 |            20 | t
+ myschema2   | myseq1            |        12201 |          1003 | t
+ myschema2   | myTbl3_col31_seq  |        12201 |            20 | t
+ myschema1   | mytbl2b_col20_seq |        12401 |             5 | t
+ myschema1   | myTbl3_col31_seq  |        12401 |            20 | t
+ myschema1   | mytbl2b_col20_seq |        12402 |             5 | t
+ myschema1   | myTbl3_col31_seq  |        12402 |            20 | t
+ myschema1   | mytbl2b_col20_seq |        12601 |             5 | t
+ myschema1   | myTbl3_col31_seq  |        12601 |            20 | t
+ myschema1   | mytbl2b_col20_seq |        14000 |             5 | t
+ myschema1   | myTbl3_col31_seq  |        14000 |            20 | t
+ myschema2   | myseq1            |        14000 |          1004 | f
+ myschema2   | myTbl3_col31_seq  |        14000 |            20 | t
+ myschema1   | mytbl2b_col20_seq |        14007 |             5 | t
+ myschema1   | myTbl3_col31_seq  |        14007 |            20 | t
+ myschema2   | myseq1            |        14007 |          1004 | f
+ myschema2   | myTbl3_col31_seq  |        14007 |            20 | t
+ myschema1   | mytbl2b_col20_seq |        14008 |             5 | t
+ myschema1   | myTbl3_col31_seq  |        14008 |            20 | t
+ myschema2   | myseq1            |        14008 |          1004 | f
+ myschema2   | myTbl3_col31_seq  |        14008 |            20 | t
  myschema2   | myseq1            |        20001 |          9999 | f
  myschema2   | myTbl3_col31_seq  |        20001 |            20 | t
  myschema2   | myseq1            |        20002 |          1004 | f
@@ -150,60 +150,60 @@ select sequ_schema, sequ_name, sequ_time_id, sequ_last_val, sequ_is_called from 
 select tbl_schema, tbl_name, tbl_time_id, tbl_log_seq_last_val from emaj.emaj_table order by tbl_time_id, tbl_schema, tbl_name;
  tbl_schema | tbl_name | tbl_time_id | tbl_log_seq_last_val 
 ------------+----------+-------------+----------------------
- myschema2  | mytbl1   |       10020 |                   15
- myschema2  | mytbl2   |       10020 |                    2
- myschema2  | myTbl3   |       10020 |                   10
- myschema2  | mytbl4   |       10020 |                    4
- myschema2  | mytbl5   |       10020 |                    4
- myschema2  | mytbl6   |       10020 |                   14
- myschema1  | mytbl1   |       10026 |                   30
- myschema1  | mytbl2   |       10026 |                    3
- myschema1  | mytbl2b  |       10026 |                    3
- myschema1  | myTbl3   |       10026 |                   10
- myschema1  | mytbl4   |       10026 |                    8
- myschema1  | mytbl1   |       10027 |                   30
- myschema1  | mytbl2   |       10027 |                    3
- myschema1  | mytbl2b  |       10027 |                    3
- myschema1  | myTbl3   |       10027 |                   20
- myschema1  | mytbl4   |       10027 |                    8
- myschema1  | mytbl1   |       10033 |                   32
- myschema1  | mytbl2   |       10033 |                    3
- myschema1  | mytbl2b  |       10033 |                    3
- myschema1  | myTbl3   |       10033 |                   20
- myschema1  | mytbl4   |       10033 |                   12
- myschema1  | mytbl1   |       10035 |                   33
- myschema1  | mytbl2   |       10035 |                    3
- myschema1  | mytbl2b  |       10035 |                    3
- myschema1  | myTbl3   |       10035 |                   45
- myschema1  | mytbl4   |       10035 |                   14
- myschema2  | mytbl1   |       10035 |                   15
- myschema2  | mytbl2   |       10035 |                    2
- myschema2  | myTbl3   |       10035 |                   10
- myschema2  | mytbl4   |       10035 |                   10
- myschema2  | mytbl5   |       10035 |                    7
- myschema2  | mytbl6   |       10035 |                   23
- myschema1  | mytbl1   |       10042 |                   33
- myschema1  | mytbl2   |       10042 |                    3
- myschema1  | mytbl2b  |       10042 |                    3
- myschema1  | myTbl3   |       10042 |                   45
- myschema1  | mytbl4   |       10042 |                   14
- myschema2  | mytbl1   |       10042 |                   15
- myschema2  | mytbl2   |       10042 |                    2
- myschema2  | myTbl3   |       10042 |                   10
- myschema2  | mytbl4   |       10042 |                   10
- myschema2  | mytbl5   |       10042 |                    7
- myschema2  | mytbl6   |       10042 |                   23
- myschema1  | mytbl1   |       10043 |                   33
- myschema1  | mytbl2   |       10043 |                    3
- myschema1  | mytbl2b  |       10043 |                    3
- myschema1  | myTbl3   |       10043 |                   45
- myschema1  | mytbl4   |       10043 |                   14
- myschema2  | mytbl1   |       10043 |                   15
- myschema2  | mytbl2   |       10043 |                    2
- myschema2  | myTbl3   |       10043 |                   10
- myschema2  | mytbl4   |       10043 |                   10
- myschema2  | mytbl5   |       10043 |                    7
- myschema2  | mytbl6   |       10043 |                   23
+ myschema2  | mytbl1   |       12201 |                   15
+ myschema2  | mytbl2   |       12201 |                    2
+ myschema2  | myTbl3   |       12201 |                   10
+ myschema2  | mytbl4   |       12201 |                    4
+ myschema2  | mytbl5   |       12201 |                    4
+ myschema2  | mytbl6   |       12201 |                   14
+ myschema1  | mytbl1   |       12401 |                   30
+ myschema1  | mytbl2   |       12401 |                    3
+ myschema1  | mytbl2b  |       12401 |                    3
+ myschema1  | myTbl3   |       12401 |                   10
+ myschema1  | mytbl4   |       12401 |                    8
+ myschema1  | mytbl1   |       12402 |                   30
+ myschema1  | mytbl2   |       12402 |                    3
+ myschema1  | mytbl2b  |       12402 |                    3
+ myschema1  | myTbl3   |       12402 |                   20
+ myschema1  | mytbl4   |       12402 |                    8
+ myschema1  | mytbl1   |       12601 |                   32
+ myschema1  | mytbl2   |       12601 |                    3
+ myschema1  | mytbl2b  |       12601 |                    3
+ myschema1  | myTbl3   |       12601 |                   20
+ myschema1  | mytbl4   |       12601 |                   12
+ myschema1  | mytbl1   |       14000 |                   33
+ myschema1  | mytbl2   |       14000 |                    3
+ myschema1  | mytbl2b  |       14000 |                    3
+ myschema1  | myTbl3   |       14000 |                   45
+ myschema1  | mytbl4   |       14000 |                   14
+ myschema2  | mytbl1   |       14000 |                   15
+ myschema2  | mytbl2   |       14000 |                    2
+ myschema2  | myTbl3   |       14000 |                   10
+ myschema2  | mytbl4   |       14000 |                   10
+ myschema2  | mytbl5   |       14000 |                    7
+ myschema2  | mytbl6   |       14000 |                   23
+ myschema1  | mytbl1   |       14007 |                   33
+ myschema1  | mytbl2   |       14007 |                    3
+ myschema1  | mytbl2b  |       14007 |                    3
+ myschema1  | myTbl3   |       14007 |                   45
+ myschema1  | mytbl4   |       14007 |                   14
+ myschema2  | mytbl1   |       14007 |                   15
+ myschema2  | mytbl2   |       14007 |                    2
+ myschema2  | myTbl3   |       14007 |                   10
+ myschema2  | mytbl4   |       14007 |                   10
+ myschema2  | mytbl5   |       14007 |                    7
+ myschema2  | mytbl6   |       14007 |                   23
+ myschema1  | mytbl1   |       14008 |                   33
+ myschema1  | mytbl2   |       14008 |                    3
+ myschema1  | mytbl2b  |       14008 |                    3
+ myschema1  | myTbl3   |       14008 |                   45
+ myschema1  | mytbl4   |       14008 |                   14
+ myschema2  | mytbl1   |       14008 |                   15
+ myschema2  | mytbl2   |       14008 |                    2
+ myschema2  | myTbl3   |       14008 |                   10
+ myschema2  | mytbl4   |       14008 |                   10
+ myschema2  | mytbl5   |       14008 |                    7
+ myschema2  | mytbl6   |       14008 |                   23
  myschema2  | mytbl1   |       20001 |                   31
  myschema2  | mytbl2   |       20001 |                   10
  myschema2  | myTbl3   |       20001 |                   20
@@ -339,16 +339,16 @@ select * from emaj.emaj_rollback_group('myGroup2','Multi-1');
 select mark_group, regexp_replace(mark_name,E'\\d\\d\.\\d\\d\\.\\d\\d\\.\\d\\d\\d\\d','%','g'), mark_time_id, mark_is_deleted, mark_is_rlbk_protected, mark_comment, mark_log_rows_before_next, mark_logged_rlbk_target_mark from emaj.emaj_mark order by mark_time_id, mark_group;
  mark_group |        regexp_replace        | mark_time_id | mark_is_deleted | mark_is_rlbk_protected |     mark_comment     | mark_log_rows_before_next | mark_logged_rlbk_target_mark 
 ------------+------------------------------+--------------+-----------------+------------------------+----------------------+---------------------------+------------------------------
- myGroup2   | M3                           |        10020 | t               | f                      | This mark is deleted |                         0 | 
- myGroup1   | M4                           |        10026 | t               | f                      |                      |                        10 | 
- myGroup1   | M5                           |        10027 | t               | f                      |                      |                         3 | 
- myGroup1   | Before logged rollback to M4 |        10033 | t               | f                      |                      |                        28 | 
- myGroup1   | STOP_%                       |        10035 | t               | f                      |                      |                         0 | 
- myGroup2   | STOP_%                       |        10035 | t               | f                      |                      |                         0 | 
- myGroup1   | Stop after rollback          |        10042 | t               | f                      |                      |                         0 | 
- myGroup2   | Stop after rollback          |        10042 | t               | f                      |                      |                         0 | 
- myGroup1   | Multi-1                      |        10043 | f               | f                      |                      |                         0 | 
- myGroup2   | Multi-1                      |        10043 | f               | f                      |                      |                           | 
+ myGroup2   | M3                           |        12201 | t               | f                      | This mark is deleted |                         0 | 
+ myGroup1   | M4                           |        12401 | t               | f                      |                      |                        10 | 
+ myGroup1   | M5                           |        12402 | t               | f                      |                      |                         3 | 
+ myGroup1   | Before logged rollback to M4 |        12601 | t               | f                      |                      |                        28 | 
+ myGroup1   | STOP_%                       |        14000 | t               | f                      |                      |                         0 | 
+ myGroup2   | STOP_%                       |        14000 | t               | f                      |                      |                         0 | 
+ myGroup1   | Stop after rollback          |        14007 | t               | f                      |                      |                         0 | 
+ myGroup2   | Stop after rollback          |        14007 | t               | f                      |                      |                         0 | 
+ myGroup1   | Multi-1                      |        14008 | f               | f                      |                      |                         0 | 
+ myGroup2   | Multi-1                      |        14008 | f               | f                      |                      |                           | 
 (10 rows)
 
 select time_id, time_last_emaj_gid, time_event from emaj.emaj_time_stamp order by time_id;
@@ -362,594 +362,575 @@ select time_id, time_last_emaj_gid, time_event from emaj.emaj_time_stamp order b
       -3 |                    | 
       -2 |                    | 
       -1 |                    | 
-       1 |                  0 | C
-       2 |                  0 | C
-       3 |                  0 | C
-       4 |                  0 | C
-       5 |                  0 | C
-       6 |                  0 | C
-       7 |                  0 | C
-      10 |                  0 | A
-      11 |                  0 | A
-      12 |                  0 | A
-      13 |                  0 | A
-      14 |                  0 | A
-      15 |                  0 | A
-      16 |                  0 | A
-      17 |                  0 | A
-      18 |                  0 | A
-      19 |                  0 | A
-      20 |                  0 | A
-      21 |                  0 | A
-      22 |                  0 | A
-      23 |                  0 | A
-      24 |                  0 | A
-      25 |                  0 | A
-      26 |                  0 | I
-      27 |                  0 | I
-      28 |                  0 | I
-      29 |                  0 | D
-      30 |                  0 | I
-      31 |                  0 | I
-      32 |                  0 | I
-      33 |                  0 | I
-      34 |                  0 | I
-      35 |                  0 | D
-      37 |                  0 | I
-      38 |                  0 | A
-      39 |                  0 | A
-      40 |                  0 | A
-      41 |                  0 | A
-      42 |                  0 | A
-      43 |                  0 | A
-      44 |                  0 | A
-      45 |                  0 | M
-      46 |                  0 | M
-      48 |                  0 | D
-      49 |                  0 | D
-      50 |                  0 | D
-      51 |                  0 | D
-      52 |                  0 | D
-      53 |                  0 | C
-      54 |                  0 | A
-      55 |                  0 | M
-      56 |                  0 | D
-      57 |                  0 | C
-      58 |                  0 | A
-      59 |                  0 | M
-      60 |                  0 | D
-    1000 |                  0 | C
-    1001 |                  0 | A
-    1002 |                  0 | A
-    1003 |                  0 | A
-    1004 |                  0 | A
-    1005 |                  0 | A
-    1006 |                  0 | A
-    1007 |                  0 | C
-    1008 |                  0 | A
-    1009 |                  0 | A
-    1010 |                  0 | C
-    1011 |                  0 | M
-    1012 |                  0 | M
-    1013 |                  0 | M
-    1014 |                  0 | M
-    1015 |                  0 | M
-    1016 |                  0 | M
-    1018 |                  0 | M
-    1019 |                  0 | M
-    1020 |                  0 | M
-    1021 |                  0 | M
-    1022 |                  0 | M
-    1023 |                  0 | M
-    1024 |                  0 | M
-    1025 |                  0 | M
-    1026 |                  0 | M
-    1027 |                  0 | M
-    1028 |                  0 | M
-    1030 |                  0 | M
-    1031 |                  0 | M
-    1032 |                  0 | M
-    1033 |                  0 | M
-    1034 |                  0 | M
-    1035 |                  0 | M
-    1036 |                  0 | M
-    2000 |              19999 | M
-    2001 |              19999 | M
-    2002 |              19999 | M
-    2003 |              19999 | M
-    2004 |              19999 | M
-    2005 |              19999 | M
-    2006 |              19999 | M
-    2007 |              19999 | M
-    2008 |              19999 | M
-    2009 |              19999 | M
-    2010 |              19999 | M
-    2011 |              19999 | M
-    2012 |              19999 | M
-    2013 |              19999 | M
-    2014 |              19999 | M
-    2015 |              19999 | M
-    2016 |              19999 | M
-    2017 |              19999 | M
-    2018 |              19999 | M
-    2019 |              19999 | M
-    2020 |              19999 | M
-    3002 |              29999 | M
-    3003 |              29999 | M
-    3004 |              29999 | M
-    3005 |              29999 | M
-    3006 |              29999 | R
-    3007 |              29999 | C
-    3008 |              29999 | D
-    3017 |              29999 | R
-    3018 |              29999 | R
-    3019 |              29999 | M
-    3020 |              29999 | R
-    3021 |              29999 | R
-    3022 |              29999 | R
-    3023 |              29999 | M
-    3024 |              29999 | R
-    3025 |              29999 | M
-    3026 |              29999 | M
-    3027 |              29999 | M
-    3028 |              29999 | M
-    3029 |              30026 | M
-    3030 |              30038 | M
-    3031 |              30038 | R
-    3032 |              30038 | R
-    3033 |              30038 | M
-    3034 |              30038 | M
-    3035 |              30057 | M
-    3036 |              30068 | M
-    3037 |              30068 | R
-    3038 |              30079 | M
-    3039 |              30079 | R
-    3040 |              30093 | M
-    3041 |              30093 | R
-    3042 |              30093 | R
-    3043 |              30093 | R
-    3044 |              30093 | M
-    3045 |              30093 | M
-    3046 |              30096 | M
-    3047 |              30102 | R
-    3048 |              30105 | M
-    3049 |              30105 | R
-    3050 |              30105 | M
-    3051 |              30105 | R
-    3052 |              30105 | M
-    3053 |              30105 | M
-    3054 |              30120 | M
-    3055 |              30122 | R
-    3056 |              30137 | M
-    3057 |              30139 | R
-    3061 |              30140 | R
-    5000 |              49999 | M
-    5002 |              49999 | M
-    5003 |              49999 | M
-    5004 |              61599 | M
-    5005 |              61599 | M
-    5006 |              61709 | M
-    5007 |              61709 | M
-    5010 |              61720 | S
-    5011 |              61720 | S
-    5012 |              61720 | M
-    6000 |              59999 | M
-    6001 |              59999 | D
-    6002 |              59999 | D
-    6003 |              59999 | M
-    6004 |              59999 | D
-    6005 |              59999 | D
-    6006 |              59999 | D
-    6007 |              59999 | C
-    6008 |              59999 | A
-    6009 |              59999 | A
-    6010 |              59999 | A
-    6011 |              59999 | A
-    6012 |              59999 | A
-    6013 |              59999 | A
-    6014 |              59999 | C
-    6015 |              59999 | A
-    6016 |              59999 | A
-    6017 |              59999 | C
-    6018 |              59999 | C
-    6019 |              59999 | A
-    6020 |              59999 | A
-    6021 |              59999 | A
-    6022 |              59999 | A
-    6023 |              59999 | A
-    6024 |              59999 | A
-    6025 |              59999 | A
-    6026 |              59999 | A
-    6027 |              59999 | A
-    6028 |              59999 | A
-    6029 |              59999 | A
-    6030 |              59999 | A
-    6031 |              59999 | A
-    6032 |              59999 | A
-    6033 |              59999 | A
-    6034 |              59999 | A
-    6035 |              59999 | A
-    6036 |              59999 | M
-    6037 |              59999 | A
-    6038 |              59999 | A
-    6039 |              59999 | A
-    6040 |              59999 | M
-    6041 |              60001 | R
-    6042 |              60001 | I
-    6043 |              60001 | M
-    6044 |              60001 | M
-    6045 |              60001 | A
-    6046 |              60001 | M
-    6048 |              60001 | R
-    6049 |              60001 | M
-    6050 |              60001 | A
-    6051 |              60001 | A
-    6052 |              60001 | A
-    6053 |              60001 | R
-    6054 |              60001 | M
-    6055 |              60001 | M
-    6056 |              60001 | A
-    6057 |              60001 | S
-    6058 |              60001 | M
-    6059 |              60001 | R
-    6061 |              60001 | R
-    6064 |              60001 | I
-    6065 |              60001 | M
-    6066 |              60001 | M
-    6067 |              60001 | A
-    6069 |              60003 | M
-    6070 |              60004 | M
-    6072 |              60004 | R
-    6073 |              60008 | M
-    6074 |              60011 | A
-    6075 |              60011 | A
-    6076 |              60012 | S
-    6077 |              60012 | I
-    6078 |              60012 | R
-    6079 |              60013 | M
-    6080 |              60014 | A
-    6082 |              60014 | S
-    6084 |              60015 | R
-    6085 |              60016 | M
-    6086 |              60016 | A
-    6087 |              60016 | R
-    6092 |              60016 | I
-    6093 |              60016 | M
-    6094 |              60016 | R
-    6095 |              60016 | R
-    6096 |              60016 | M
-    6097 |              60016 | R
-    6098 |              60016 | R
-    6099 |              60016 | R
-    6100 |              60016 | M
-    6101 |              60016 | R
-    6106 |              60016 | M
-    6107 |              60019 | A
-    6108 |              60019 | A
-    6109 |              60019 | A
-    6110 |              60019 | M
-    6111 |              60021 | R
-    6112 |              60025 | M
-    6113 |              60025 | R
-    6114 |              60025 | M
-    6115 |              60025 | I
-    6116 |              60025 | M
-    6117 |              60026 | A
-    6118 |              60026 | A
-    6119 |              60026 | A
-    6120 |              60026 | A
-    6121 |              60027 | A
-    6122 |              60027 | A
-    6123 |              60027 | A
-    6124 |              60027 | A
-    6125 |              60027 | A
-    6126 |              60027 | A
-    6127 |              60027 | A
-    6128 |              60027 | A
-    6129 |              60027 | A
-    6130 |              60027 | A
-    6131 |              60027 | A
-    6132 |              60027 | A
-    6133 |              60027 | A
-    6134 |              60027 | A
-    6135 |              60027 | A
-    6136 |              60027 | A
-    6137 |              60027 | A
-    6138 |              60027 | A
-    6139 |              60027 | A
-    6140 |              60027 | A
-    6141 |              60027 | A
-    6142 |              60027 | A
-    6143 |              60027 | M
-    6144 |              60027 | D
-    6145 |              60027 | M
-    6146 |              60027 | D
-    6147 |              60027 | D
-    6148 |              60027 | C
-    6149 |              60027 | A
-    6150 |              60027 | A
-    6151 |              60027 | M
-    6152 |              60027 | C
-    6153 |              60027 | A
-    6154 |              60027 | A
-    6155 |              60027 | M
-   10000 |              99999 | M
-   10001 |              99999 | D
-   10002 |              99999 | D
-   10003 |              99999 | D
-   10004 |              99999 | C
-   10005 |              99999 | A
-   10006 |              99999 | A
-   10007 |              99999 | A
-   10008 |              99999 | A
-   10009 |              99999 | A
-   10010 |              99999 | A
-   10011 |              99999 | C
-   10012 |              99999 | A
-   10013 |              99999 | A
-   10014 |              99999 | C
-   10015 |              99999 | M
-   10016 |              99999 | M
-   10017 |             100028 | M
-   10018 |             100039 | M
-   10019 |             100080 | M
-   10020 |             100088 | M
-   10021 |             100088 | R
-   10022 |             100094 | M
-   10023 |             100094 | R
-   10024 |             100100 | M
-   10025 |             100100 | R
-   10026 |             100114 | M
-   10027 |             100124 | M
-   10028 |             100124 | M
-   10029 |             100124 | R
-   10030 |             100130 | M
-   10031 |             100130 | R
-   10032 |             100133 | R
-   10033 |             100136 | R
-   10034 |             100159 | M
-   10035 |             100164 | M
-   10036 |             100164 | M
-   10037 |             100164 | M
-   10038 |             100164 | R
-   10039 |             100164 | M
-   10040 |             100164 | R
-   10041 |             100164 | R
-   10042 |             100164 | M
-   10043 |             100164 | M
-   10044 |             100164 | M
-   10045 |             100164 | R
-   10046 |             100164 | C
-   10047 |             100164 | A
-   10048 |             100164 | A
-   10049 |             100164 | M
-   10050 |             100216 | M
-   10051 |             100216 | M
-   10052 |             100219 | M
-   10053 |             100219 | R
-   10054 |             100219 | M
-   10055 |             100219 | R
-   10056 |             100239 | R
-   10057 |             100269 | R
-   10058 |             100269 | R
-   10059 |             100269 | R
-   10060 |             100354 | M
-   10061 |             100354 | A
-   10062 |             100354 | A
-   10063 |             100354 | M
-   10064 |             100358 | M
-   10065 |             100360 | R
-   10066 |             100360 | M
-   10067 |             100360 | D
-   10068 |             100360 | M
-   10069 |             100360 | M
-   10070 |             100377 | M
-   10071 |             100379 | R
-   10072 |             100393 | M
-   10073 |             100395 | M
-   10074 |             100407 | M
-   10075 |             100407 | M
-   10076 |             100407 | R
-   10077 |             100418 | M
-   10078 |             100418 | M
-   10079 |             100435 | M
-   10080 |             100437 | M
-   10081 |             100439 | R
-   10082 |             100441 | M
-   10083 |             100441 | M
-   10084 |             100453 | R
-   10085 |             100478 | M
-   10086 |             100478 | M
-   10087 |             100494 | R
-   10088 |             100500 | M
-   10089 |             100500 | M
-   10090 |             100502 | R
-   10091 |             100503 | M
-   10092 |             100503 | M
-   10093 |             100520 | M
-   10094 |             100522 | R
-   10095 |             100536 | M
-   10096 |             100536 | M
-   10097 |             100538 | R
-   10098 |             100553 | M
-   10099 |             100553 | R
-   10100 |             100553 | C
-   10101 |             100553 | A
-   10102 |             100553 | M
-   10103 |             100553 | M
-   10104 |             100553 | M
-   10105 |             100553 | M
-   10106 |             100553 | M
-   10107 |             100553 | M
-   10108 |             100553 | M
-   10109 |             100553 | M
-   10110 |             100553 | A
-   10111 |             100553 | A
-   10112 |             100553 | A
-   10113 |             100553 | A
-   10114 |             100553 | R
-   10115 |             100553 | M
-   10116 |             100553 | R
-   10117 |             100553 | M
-   10118 |             100553 | M
-   10119 |             100553 | D
-   10120 |             100553 | C
-   10121 |             100553 | A
-   10122 |             100553 | A
-   10123 |             100553 | A
-   10124 |             100553 | M
-   10125 |             100563 | A
-   10126 |             100563 | A
-   10127 |             100563 | A
-   10128 |             100563 | A
-   10129 |             100563 | A
-   10130 |             100563 | A
-   10131 |             100563 | A
-   10132 |             100563 | A
-   10133 |             100563 | M
-   10134 |             100563 | D
-   10135 |             100563 | C
-   10136 |             100563 | C
-   10137 |             100563 | C
-   10138 |             100563 | M
-   10139 |             100563 | A
-   10140 |             100563 | A
-   10141 |             100563 | A
-   10142 |             100563 | A
-   10143 |             100563 | M
-   10144 |             100563 | M
-   10145 |             100574 | M
-   10146 |             100587 | M
-   10147 |             100591 | R
-   10148 |             100591 | A
-   10149 |             100591 | A
-   10150 |             100591 | A
-   10151 |             100591 | A
-   10152 |             100591 | A
-   10153 |             100591 | M
-   10154 |             100596 | M
-   10155 |             100600 | M
-   10156 |             100604 | A
-   10157 |             100604 | A
-   10158 |             100604 | R
-   10159 |             100608 | M
-   10160 |             100608 | M
-   10161 |             100614 | A
-   10162 |             100614 | R
-   10164 |             100614 | A
-   10165 |             100614 | A
-   10166 |             100614 | M
-   10167 |             100614 | I
-   10168 |             100614 | M
-   10169 |             100614 | D
-   10170 |             100614 | M
-   10171 |             100614 | D
-   10172 |             100614 | M
-   10173 |             100614 | D
-   10174 |             100614 | C
-   10175 |             100614 | A
-   10176 |             100614 | A
-   10177 |             100614 | M
-   10178 |             100658 | M
-   10179 |             100658 | R
-   10180 |             100697 | M
-   10181 |             100697 | R
-   10182 |             100743 | M
-   10183 |             100743 | D
-   20000 |             100822 | A
-   20001 |             100822 | R
-   20002 |             100885 | M
-   20003 |             100885 | R
-   20200 |             100952 | A
-   20201 |             100952 | R
-   20202 |             101015 | M
-   20203 |             101015 | R
-   20204 |             101034 | M
-   20205 |             101034 | R
-(512 rows)
+    1000 |            1000000 | C
+    1001 |            1000000 | C
+    1002 |            1000000 | C
+    1003 |            1000000 | C
+    1004 |            1000000 | C
+    1005 |            1000000 | C
+    1006 |            1000000 | C
+    1009 |            1000000 | A
+    1010 |            1000000 | A
+    1011 |            1000000 | A
+    1012 |            1000000 | A
+    1013 |            1000000 | A
+    1014 |            1000000 | A
+    1015 |            1000000 | A
+    1016 |            1000000 | A
+    1017 |            1000000 | A
+    1018 |            1000000 | A
+    1019 |            1000000 | A
+    1020 |            1000000 | A
+    1021 |            1000000 | A
+    1022 |            1000000 | A
+    1023 |            1000000 | A
+    1024 |            1000000 | A
+    1025 |            1000000 | I
+    1026 |            1000000 | I
+    1027 |            1000000 | I
+    1028 |            1000000 | D
+    1029 |            1000000 | I
+    1030 |            1000000 | I
+    1031 |            1000000 | I
+    1032 |            1000000 | I
+    1033 |            1000000 | I
+    1034 |            1000000 | D
+    1036 |            1000000 | I
+    1037 |            1000000 | M
+    1038 |            1000000 | M
+    1040 |            1000000 | D
+    1041 |            1000000 | D
+    1042 |            1000000 | D
+    1043 |            1000000 | D
+    1044 |            1000000 | D
+    1045 |            1000000 | C
+    1046 |            1000000 | A
+    1047 |            1000000 | M
+    1048 |            1000000 | D
+    1049 |            1000000 | C
+    1050 |            1000000 | A
+    1051 |            1000000 | M
+    1052 |            1000000 | D
+    2000 |            2000000 | I
+    2001 |            2000000 | M
+    2002 |            2000000 | M
+    2003 |            2000000 | M
+    2004 |            2000000 | M
+    2005 |            2000000 | M
+    2006 |            2000000 | M
+    2008 |            2000000 | M
+    2009 |            2000000 | M
+    2200 |            2200000 | M
+    2201 |            2200000 | M
+    2202 |            2200000 | M
+    2203 |            2200000 | M
+    2204 |            2200000 | M
+    2205 |            2200000 | M
+    2206 |            2200000 | M
+    2400 |            2400000 | M
+    2401 |            2400000 | M
+    2403 |            2400000 | M
+    2500 |            2500000 | M
+    2501 |            2500000 | M
+    2600 |            2600000 | M
+    2601 |            2600000 | M
+    2602 |            2600000 | M
+    2603 |            2600000 | M
+    3000 |            3000000 | M
+    3001 |            3000000 | M
+    3002 |            3000000 | M
+    3003 |            3000000 | M
+    3004 |            3000000 | M
+    3005 |            3000000 | M
+    3006 |            3000000 | M
+    3007 |            3000000 | M
+    3008 |            3000000 | M
+    3009 |            3000000 | M
+    3010 |            3000000 | M
+    3011 |            3000000 | M
+    3012 |            3000000 | M
+    3013 |            3000000 | M
+    3014 |            3000000 | M
+    3015 |            3000000 | M
+    3400 |            3400000 | M
+    3401 |            3400000 | M
+    3402 |            3400000 | M
+    3600 |            3600000 | M
+    3601 |            3600000 | M
+    4002 |            4000000 | M
+    4003 |            4000000 | M
+    4004 |            4000000 | M
+    4005 |            4000000 | M
+    4006 |            4000000 | R
+    4007 |            4000000 | C
+    4008 |            4000000 | D
+    4017 |            4000000 | R
+    4018 |            4000000 | R
+    4019 |            4000000 | M
+    4020 |            4000000 | R
+    4021 |            4000000 | R
+    4022 |            4000000 | R
+    4023 |            4000000 | M
+    4024 |            4000000 | R
+    4025 |            4000000 | M
+    4026 |            4000000 | M
+    4027 |            4000000 | M
+    4028 |            4000000 | M
+    4029 |            4000027 | M
+    4030 |            4000039 | M
+    4031 |            4000039 | R
+    4032 |            4000039 | R
+    4033 |            4000039 | M
+    4034 |            4000039 | M
+    4035 |            4000058 | M
+    4036 |            4000069 | M
+    4037 |            4000069 | R
+    4038 |            4000080 | M
+    4039 |            4000080 | R
+    4040 |            4000094 | M
+    4041 |            4000094 | R
+    4042 |            4000094 | R
+    4043 |            4000094 | R
+    4044 |            4000094 | M
+    4045 |            4000094 | M
+    4046 |            4000097 | M
+    4047 |            4000103 | R
+    4048 |            4000106 | M
+    4049 |            4000106 | R
+    4050 |            4000106 | M
+    4051 |            4000106 | R
+    4052 |            4000106 | M
+    4053 |            4000106 | M
+    4054 |            4000121 | M
+    4055 |            4000123 | R
+    4056 |            4000138 | M
+    4057 |            4000140 | R
+    4061 |            4000141 | R
+    5000 |            5000000 | M
+    5002 |            5000000 | M
+    5003 |            5000000 | M
+    5004 |            5011600 | M
+    5005 |            5011600 | M
+    5006 |            5011710 | M
+    5007 |            5011710 | M
+    5300 |            5300000 | S
+    5301 |            5300000 | S
+    5302 |            5300000 | M
+    8000 |            8000000 | M
+    8001 |            8000000 | D
+    8002 |            8000000 | D
+    8003 |            8000000 | M
+    8004 |            8000000 | D
+    8005 |            8000000 | D
+    8006 |            8000000 | D
+    8007 |            8000000 | C
+    8008 |            8000000 | I
+    8009 |            8000000 | A
+    8010 |            8000000 | A
+    8011 |            8000000 | A
+    8012 |            8000000 | A
+    8013 |            8000000 | A
+    8014 |            8000000 | A
+    8015 |            8000000 | A
+    8016 |            8000000 | I
+    8200 |            8200000 | A
+    8201 |            8200000 | A
+    8202 |            8200000 | A
+    8203 |            8200000 | A
+    8204 |            8200000 | A
+    8205 |            8200000 | A
+    8206 |            8200000 | A
+    8207 |            8200000 | A
+    8208 |            8200000 | A
+    8400 |            8400000 | A
+    8401 |            8400000 | A
+    8402 |            8400000 | A
+    8403 |            8400000 | A
+    8404 |            8400000 | A
+    8405 |            8400000 | A
+    8406 |            8400000 | A
+    9000 |            9000000 | A
+    9001 |            9000000 | M
+    9002 |            9000000 | A
+    9003 |            9000000 | A
+    9004 |            9000000 | A
+    9005 |            9000000 | M
+    9006 |            9000002 | R
+    9007 |            9000002 | I
+    9100 |            9100000 | M
+    9101 |            9100000 | M
+    9102 |            9100000 | A
+    9103 |            9100000 | M
+    9105 |            9100000 | R
+    9106 |            9100000 | M
+    9107 |            9100000 | A
+    9108 |            9100000 | A
+    9109 |            9100000 | A
+    9110 |            9100000 | R
+    9300 |            9300000 | M
+    9301 |            9300000 | M
+    9302 |            9300000 | A
+    9303 |            9300000 | S
+    9304 |            9300000 | M
+    9305 |            9300000 | R
+    9307 |            9300000 | R
+    9310 |            9300000 | I
+    9500 |            9500000 | M
+    9501 |            9500000 | M
+    9502 |            9500000 | A
+    9504 |            9500002 | M
+    9505 |            9500003 | M
+    9507 |            9500003 | R
+    9508 |            9500007 | M
+    9509 |            9500010 | A
+    9510 |            9500010 | A
+    9511 |            9500011 | S
+    9512 |            9500011 | I
+    9513 |            9500011 | R
+    9700 |            9700001 | M
+    9701 |            9700002 | A
+    9703 |            9700002 | S
+    9705 |            9700003 | R
+    9706 |            9700004 | M
+    9707 |            9700004 | A
+    9708 |            9700004 | R
+    9713 |            9700004 | I
+    9714 |            9700004 | M
+    9715 |            9700004 | R
+    9716 |            9700004 | R
+    9717 |            9700004 | M
+    9718 |            9700004 | R
+    9719 |            9700004 | R
+    9720 |            9700004 | R
+    9721 |            9700004 | M
+    9722 |            9700004 | R
+   10004 |           10000000 | M
+   10005 |           10000003 | A
+   10006 |           10000003 | A
+   10007 |           10000003 | A
+   10008 |           10000003 | M
+   10009 |           10000005 | R
+   10010 |           10000009 | M
+   10011 |           10000009 | R
+   10012 |           10000009 | M
+   10013 |           10000009 | I
+   10014 |           10000009 | M
+   10015 |           10000010 | A
+   10016 |           10000010 | A
+   10017 |           10000010 | A
+   10018 |           10000010 | A
+   10019 |           10000011 | A
+   10020 |           10000011 | A
+   10021 |           10000011 | A
+   10022 |           10000011 | A
+   10023 |           10000011 | A
+   10024 |           10000011 | A
+   10025 |           10000011 | A
+   10026 |           10000011 | A
+   10027 |           10000011 | A
+   10028 |           10000011 | A
+   10029 |           10000011 | A
+   10030 |           10000011 | A
+   10031 |           10000011 | A
+   10032 |           10000011 | A
+   10033 |           10000011 | A
+   10034 |           10000011 | A
+   10035 |           10000011 | A
+   10036 |           10000011 | A
+   10037 |           10000011 | A
+   10038 |           10000011 | A
+   10039 |           10000011 | A
+   10040 |           10000011 | A
+   10041 |           10000011 | M
+   10042 |           10000011 | D
+   10043 |           10000011 | M
+   10044 |           10000011 | D
+   10045 |           10000011 | D
+   11000 |           11000000 | C
+   11001 |           11000000 | A
+   11002 |           11000000 | A
+   11003 |           11000000 | M
+   11004 |           11000000 | C
+   11005 |           11000000 | A
+   11006 |           11000000 | A
+   11007 |           11000000 | M
+   12000 |           12000000 | M
+   12001 |           12000000 | D
+   12002 |           12000000 | D
+   12003 |           12000000 | D
+   12004 |           12000000 | C
+   12005 |           12000000 | A
+   12006 |           12000000 | A
+   12007 |           12000000 | A
+   12008 |           12000000 | A
+   12009 |           12000000 | A
+   12010 |           12000000 | A
+   12011 |           12000000 | C
+   12012 |           12000000 | A
+   12013 |           12000000 | A
+   12014 |           12000000 | C
+   12015 |           12000000 | M
+   12016 |           12000000 | M
+   12100 |           12100029 | M
+   12101 |           12100040 | M
+   12200 |           12200041 | M
+   12201 |           12200049 | M
+   12300 |           12300000 | R
+   12301 |           12300006 | M
+   12302 |           12300006 | R
+   12303 |           12300012 | M
+   12400 |           12400000 | R
+   12401 |           12400014 | M
+   12402 |           12400024 | M
+   12403 |           12400024 | M
+   12500 |           12500000 | R
+   12501 |           12500006 | M
+   12502 |           12500006 | R
+   12600 |           12600003 | R
+   12601 |           12600006 | R
+   12602 |           12600029 | M
+   14000 |           14000000 | M
+   14001 |           14000000 | M
+   14002 |           14000000 | M
+   14003 |           14000000 | R
+   14004 |           14000000 | M
+   14005 |           14000000 | R
+   14006 |           14000000 | R
+   14007 |           14000000 | M
+   14008 |           14000000 | M
+   14009 |           14000000 | M
+   14010 |           14000000 | R
+   14200 |           14200000 | C
+   14201 |           14200000 | A
+   14202 |           14200000 | A
+   14203 |           14200000 | M
+   14204 |           14200052 | M
+   14205 |           14200052 | M
+   14206 |           14200055 | M
+   14207 |           14200055 | R
+   14208 |           14200055 | M
+   14209 |           14200055 | R
+   14300 |           14300020 | R
+   14400 |           14400030 | R
+   14401 |           14400030 | R
+   14402 |           14400030 | R
+   14500 |           14500000 | M
+   14501 |           14500000 | A
+   14502 |           14500000 | A
+   14503 |           14500000 | M
+   14504 |           14500004 | M
+   14505 |           14500006 | R
+   14506 |           14500006 | M
+   14507 |           14500006 | D
+   14600 |           14600000 | M
+   14700 |           14700000 | M
+   14701 |           14700017 | M
+   14702 |           14700019 | R
+   14703 |           14700033 | M
+   14704 |           14700035 | M
+   14705 |           14700047 | M
+   14706 |           14700047 | M
+   14707 |           14700047 | R
+   14708 |           14700058 | M
+   14709 |           14700058 | M
+   14710 |           14700075 | M
+   14711 |           14700077 | M
+   14712 |           14700079 | R
+   14713 |           14700081 | M
+   14714 |           14700081 | M
+   14715 |           14700093 | R
+   14716 |           14700118 | M
+   14717 |           14700118 | M
+   14718 |           14700134 | R
+   14719 |           14700140 | M
+   14720 |           14700140 | M
+   14721 |           14700142 | R
+   14722 |           14700143 | M
+   14723 |           14700143 | M
+   14724 |           14700160 | M
+   14725 |           14700162 | R
+   14726 |           14700176 | M
+   14727 |           14700176 | M
+   14728 |           14700178 | R
+   14729 |           14700193 | M
+   14730 |           14700193 | R
+   17100 |           17100000 | C
+   17101 |           17100000 | A
+   17102 |           17100000 | M
+   17103 |           17100000 | M
+   17104 |           17100000 | M
+   17105 |           17100000 | M
+   17106 |           17100000 | M
+   17107 |           17100000 | M
+   17200 |           17200000 | M
+   17201 |           17200000 | M
+   17202 |           17200000 | A
+   17203 |           17200000 | A
+   17204 |           17200000 | A
+   17205 |           17200000 | A
+   17206 |           17200000 | R
+   17207 |           17200000 | M
+   17208 |           17200000 | R
+   17209 |           17200000 | M
+   17210 |           17200000 | M
+   17211 |           17200000 | D
+   17400 |           17400000 | C
+   17401 |           17400000 | A
+   17402 |           17400000 | A
+   17403 |           17400000 | A
+   17404 |           17400000 | M
+   17405 |           17400010 | A
+   17406 |           17400010 | A
+   17407 |           17400010 | A
+   17408 |           17400010 | A
+   17409 |           17400010 | A
+   17410 |           17400010 | A
+   17411 |           17400010 | A
+   17412 |           17400010 | A
+   17413 |           17400010 | M
+   17414 |           17400010 | D
+   17600 |           17600000 | C
+   17601 |           17600000 | C
+   17602 |           17600000 | C
+   17603 |           17600000 | M
+   17604 |           17600000 | A
+   17605 |           17600000 | A
+   17606 |           17600000 | A
+   17607 |           17600000 | A
+   17608 |           17600000 | M
+   17609 |           17600000 | M
+   17610 |           17600011 | M
+   17611 |           17600024 | M
+   17612 |           17600028 | R
+   17613 |           17600028 | A
+   17614 |           17600028 | A
+   17615 |           17600028 | A
+   17616 |           17600028 | A
+   17617 |           17600028 | A
+   17618 |           17600028 | M
+   17619 |           17600033 | M
+   17620 |           17600037 | M
+   17621 |           17600041 | A
+   17622 |           17600041 | A
+   17623 |           17600041 | R
+   17624 |           17600045 | M
+   17625 |           17600045 | M
+   17626 |           17600051 | A
+   17627 |           17600051 | R
+   17629 |           17600051 | A
+   17630 |           17600051 | A
+   17631 |           17600051 | M
+   17632 |           17600051 | I
+   17633 |           17600051 | M
+   17634 |           17600051 | D
+   17635 |           17600051 | M
+   17636 |           17600051 | D
+   17637 |           17600051 | M
+   17638 |           17600051 | D
+   18000 |           18000000 | C
+   18001 |           18000000 | A
+   18002 |           18000000 | A
+   18003 |           18000000 | M
+   18004 |           18000044 | M
+   18005 |           18000044 | R
+   18006 |           18000083 | M
+   18007 |           18000083 | R
+   18008 |           18000129 | M
+   18009 |           18000129 | D
+   20000 |           20000079 | A
+   20001 |           20000079 | R
+   20002 |           20000142 | M
+   20003 |           20000142 | R
+   20200 |           20000209 | A
+   20201 |           20000209 | R
+   20202 |           20000272 | M
+   20203 |           20000272 | R
+   20204 |           20000291 | M
+   20205 |           20000291 | R
+(493 rows)
 
 select sequ_schema, sequ_name, sequ_time_id, sequ_last_val, sequ_is_called from emaj.emaj_sequence order by sequ_time_id, sequ_schema, sequ_name;
  sequ_schema |     sequ_name     | sequ_time_id | sequ_last_val | sequ_is_called 
 -------------+-------------------+--------------+---------------+----------------
- myschema2   | myseq1            |        10020 |          1003 | t
- myschema2   | myTbl3_col31_seq  |        10020 |            20 | t
- myschema1   | mytbl2b_col20_seq |        10026 |             5 | t
- myschema1   | myTbl3_col31_seq  |        10026 |            20 | t
- myschema1   | mytbl2b_col20_seq |        10027 |             5 | t
- myschema1   | myTbl3_col31_seq  |        10027 |            20 | t
- myschema1   | mytbl2b_col20_seq |        10033 |             5 | t
- myschema1   | myTbl3_col31_seq  |        10033 |            20 | t
- myschema1   | mytbl2b_col20_seq |        10035 |             5 | t
- myschema1   | myTbl3_col31_seq  |        10035 |            20 | t
- myschema2   | myseq1            |        10035 |          1004 | f
- myschema2   | myTbl3_col31_seq  |        10035 |            20 | t
- myschema1   | mytbl2b_col20_seq |        10042 |             5 | t
- myschema1   | myTbl3_col31_seq  |        10042 |            20 | t
- myschema2   | myseq1            |        10042 |          1004 | f
- myschema2   | myTbl3_col31_seq  |        10042 |            20 | t
- myschema1   | mytbl2b_col20_seq |        10043 |             5 | t
- myschema1   | myTbl3_col31_seq  |        10043 |            20 | t
- myschema2   | myseq1            |        10043 |          1004 | f
- myschema2   | myTbl3_col31_seq  |        10043 |            20 | t
+ myschema2   | myseq1            |        12201 |          1003 | t
+ myschema2   | myTbl3_col31_seq  |        12201 |            20 | t
+ myschema1   | mytbl2b_col20_seq |        12401 |             5 | t
+ myschema1   | myTbl3_col31_seq  |        12401 |            20 | t
+ myschema1   | mytbl2b_col20_seq |        12402 |             5 | t
+ myschema1   | myTbl3_col31_seq  |        12402 |            20 | t
+ myschema1   | mytbl2b_col20_seq |        12601 |             5 | t
+ myschema1   | myTbl3_col31_seq  |        12601 |            20 | t
+ myschema1   | mytbl2b_col20_seq |        14000 |             5 | t
+ myschema1   | myTbl3_col31_seq  |        14000 |            20 | t
+ myschema2   | myseq1            |        14000 |          1004 | f
+ myschema2   | myTbl3_col31_seq  |        14000 |            20 | t
+ myschema1   | mytbl2b_col20_seq |        14007 |             5 | t
+ myschema1   | myTbl3_col31_seq  |        14007 |            20 | t
+ myschema2   | myseq1            |        14007 |          1004 | f
+ myschema2   | myTbl3_col31_seq  |        14007 |            20 | t
+ myschema1   | mytbl2b_col20_seq |        14008 |             5 | t
+ myschema1   | myTbl3_col31_seq  |        14008 |            20 | t
+ myschema2   | myseq1            |        14008 |          1004 | f
+ myschema2   | myTbl3_col31_seq  |        14008 |            20 | t
 (20 rows)
 
 select tbl_schema, tbl_name, tbl_time_id, tbl_log_seq_last_val from emaj.emaj_table order by tbl_time_id, tbl_schema, tbl_name;
  tbl_schema | tbl_name | tbl_time_id | tbl_log_seq_last_val 
 ------------+----------+-------------+----------------------
- myschema2  | mytbl1   |       10020 |                   15
- myschema2  | mytbl2   |       10020 |                    2
- myschema2  | myTbl3   |       10020 |                   10
- myschema2  | mytbl4   |       10020 |                    4
- myschema2  | mytbl5   |       10020 |                    4
- myschema2  | mytbl6   |       10020 |                   14
- myschema1  | mytbl1   |       10026 |                   30
- myschema1  | mytbl2   |       10026 |                    3
- myschema1  | mytbl2b  |       10026 |                    3
- myschema1  | myTbl3   |       10026 |                   10
- myschema1  | mytbl4   |       10026 |                    8
- myschema1  | mytbl1   |       10027 |                   30
- myschema1  | mytbl2   |       10027 |                    3
- myschema1  | mytbl2b  |       10027 |                    3
- myschema1  | myTbl3   |       10027 |                   20
- myschema1  | mytbl4   |       10027 |                    8
- myschema1  | mytbl1   |       10033 |                   32
- myschema1  | mytbl2   |       10033 |                    3
- myschema1  | mytbl2b  |       10033 |                    3
- myschema1  | myTbl3   |       10033 |                   20
- myschema1  | mytbl4   |       10033 |                   12
- myschema1  | mytbl1   |       10035 |                   33
- myschema1  | mytbl2   |       10035 |                    3
- myschema1  | mytbl2b  |       10035 |                    3
- myschema1  | myTbl3   |       10035 |                   45
- myschema1  | mytbl4   |       10035 |                   14
- myschema2  | mytbl1   |       10035 |                   15
- myschema2  | mytbl2   |       10035 |                    2
- myschema2  | myTbl3   |       10035 |                   10
- myschema2  | mytbl4   |       10035 |                   10
- myschema2  | mytbl5   |       10035 |                    7
- myschema2  | mytbl6   |       10035 |                   23
- myschema1  | mytbl1   |       10042 |                   33
- myschema1  | mytbl2   |       10042 |                    3
- myschema1  | mytbl2b  |       10042 |                    3
- myschema1  | myTbl3   |       10042 |                   45
- myschema1  | mytbl4   |       10042 |                   14
- myschema2  | mytbl1   |       10042 |                   15
- myschema2  | mytbl2   |       10042 |                    2
- myschema2  | myTbl3   |       10042 |                   10
- myschema2  | mytbl4   |       10042 |                   10
- myschema2  | mytbl5   |       10042 |                    7
- myschema2  | mytbl6   |       10042 |                   23
- myschema1  | mytbl1   |       10043 |                   33
- myschema1  | mytbl2   |       10043 |                    3
- myschema1  | mytbl2b  |       10043 |                    3
- myschema1  | myTbl3   |       10043 |                   45
- myschema1  | mytbl4   |       10043 |                   14
- myschema2  | mytbl1   |       10043 |                   15
- myschema2  | mytbl2   |       10043 |                    2
- myschema2  | myTbl3   |       10043 |                   10
- myschema2  | mytbl4   |       10043 |                   10
- myschema2  | mytbl5   |       10043 |                    7
- myschema2  | mytbl6   |       10043 |                   23
+ myschema2  | mytbl1   |       12201 |                   15
+ myschema2  | mytbl2   |       12201 |                    2
+ myschema2  | myTbl3   |       12201 |                   10
+ myschema2  | mytbl4   |       12201 |                    4
+ myschema2  | mytbl5   |       12201 |                    4
+ myschema2  | mytbl6   |       12201 |                   14
+ myschema1  | mytbl1   |       12401 |                   30
+ myschema1  | mytbl2   |       12401 |                    3
+ myschema1  | mytbl2b  |       12401 |                    3
+ myschema1  | myTbl3   |       12401 |                   10
+ myschema1  | mytbl4   |       12401 |                    8
+ myschema1  | mytbl1   |       12402 |                   30
+ myschema1  | mytbl2   |       12402 |                    3
+ myschema1  | mytbl2b  |       12402 |                    3
+ myschema1  | myTbl3   |       12402 |                   20
+ myschema1  | mytbl4   |       12402 |                    8
+ myschema1  | mytbl1   |       12601 |                   32
+ myschema1  | mytbl2   |       12601 |                    3
+ myschema1  | mytbl2b  |       12601 |                    3
+ myschema1  | myTbl3   |       12601 |                   20
+ myschema1  | mytbl4   |       12601 |                   12
+ myschema1  | mytbl1   |       14000 |                   33
+ myschema1  | mytbl2   |       14000 |                    3
+ myschema1  | mytbl2b  |       14000 |                    3
+ myschema1  | myTbl3   |       14000 |                   45
+ myschema1  | mytbl4   |       14000 |                   14
+ myschema2  | mytbl1   |       14000 |                   15
+ myschema2  | mytbl2   |       14000 |                    2
+ myschema2  | myTbl3   |       14000 |                   10
+ myschema2  | mytbl4   |       14000 |                   10
+ myschema2  | mytbl5   |       14000 |                    7
+ myschema2  | mytbl6   |       14000 |                   23
+ myschema1  | mytbl1   |       14007 |                   33
+ myschema1  | mytbl2   |       14007 |                    3
+ myschema1  | mytbl2b  |       14007 |                    3
+ myschema1  | myTbl3   |       14007 |                   45
+ myschema1  | mytbl4   |       14007 |                   14
+ myschema2  | mytbl1   |       14007 |                   15
+ myschema2  | mytbl2   |       14007 |                    2
+ myschema2  | myTbl3   |       14007 |                   10
+ myschema2  | mytbl4   |       14007 |                   10
+ myschema2  | mytbl5   |       14007 |                    7
+ myschema2  | mytbl6   |       14007 |                   23
+ myschema1  | mytbl1   |       14008 |                   33
+ myschema1  | mytbl2   |       14008 |                    3
+ myschema1  | mytbl2b  |       14008 |                    3
+ myschema1  | myTbl3   |       14008 |                   45
+ myschema1  | mytbl4   |       14008 |                   14
+ myschema2  | mytbl1   |       14008 |                   15
+ myschema2  | mytbl2   |       14008 |                    2
+ myschema2  | myTbl3   |       14008 |                   10
+ myschema2  | mytbl4   |       14008 |                   10
+ myschema2  | mytbl5   |       14008 |                    7
+ myschema2  | mytbl6   |       14008 |                   23
 (54 rows)
 
 -- user tables

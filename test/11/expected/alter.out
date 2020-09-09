@@ -101,18 +101,18 @@ RESET client_min_messages;
 -- table not in a group
 select emaj.emaj_remove_table('dummySchema','mytbl1');
 ERROR:  _remove_tables: some tables ("dummySchema".mytbl1) do not currently belong to any tables group.
-CONTEXT:  PL/pgSQL function emaj._remove_tables(text,text[],text,boolean,boolean) line 50 at RAISE
+CONTEXT:  PL/pgSQL function emaj._remove_tables(text,text[],text,boolean,boolean) line 49 at RAISE
 PL/pgSQL function emaj.emaj_remove_table(text,text,text) line 6 at RETURN
 select emaj.emaj_remove_table('myschema1','dummyTable');
 ERROR:  _remove_tables: some tables (myschema1."dummyTable") do not currently belong to any tables group.
-CONTEXT:  PL/pgSQL function emaj._remove_tables(text,text[],text,boolean,boolean) line 50 at RAISE
+CONTEXT:  PL/pgSQL function emaj._remove_tables(text,text[],text,boolean,boolean) line 49 at RAISE
 PL/pgSQL function emaj.emaj_remove_table(text,text,text) line 6 at RETURN
 -- bad mark
 select emaj.emaj_remove_table('myschema1','mytbl1','EMAJ_LAST_MARK');
 ERROR:  _check_new_mark: "EMAJ_LAST_MARK" is not an allowed name for a new mark.
 CONTEXT:  PL/pgSQL function emaj._check_new_mark(text[],text) line 14 at RAISE
 SQL statement "SELECT emaj._check_new_mark(v_loggingGroups, v_mark)"
-PL/pgSQL function emaj._remove_tables(text,text[],text,boolean,boolean) line 71 at SQL statement
+PL/pgSQL function emaj._remove_tables(text,text[],text,boolean,boolean) line 70 at SQL statement
 PL/pgSQL function emaj.emaj_remove_table(text,text,text) line 6 at RETURN
 -- ok
 select emaj.emaj_remove_table('myschema1','mytbl1');
@@ -150,7 +150,7 @@ WARNING:  _remove_tables: No table to process.
 -- table not in a group
 select emaj.emaj_remove_tables('myschema1',array['dummyTable','mytbl1','mytbl2']);
 ERROR:  _remove_tables: some tables (myschema1.mytbl1, myschema1."dummyTable") do not currently belong to any tables group.
-CONTEXT:  PL/pgSQL function emaj._remove_tables(text,text[],text,boolean,boolean) line 50 at RAISE
+CONTEXT:  PL/pgSQL function emaj._remove_tables(text,text[],text,boolean,boolean) line 49 at RAISE
 PL/pgSQL function emaj.emaj_remove_tables(text,text[],text) line 6 at RETURN
 -- ok (with a duplicate table name)
 select emaj.emaj_remove_tables('myschema1',array['mytbl2','mytbl2b','mytbl2']);
