@@ -135,6 +135,10 @@ select emaj._create_emaj_triggers_tbl('illegal_table', 'dummy');
 ERROR:  _create_emaj_triggers_tbl: the calling function is not allowed to reach this sensitive function.
 select emaj._handle_trigger_tbl('illegal function', 'illegal_table', 'dummy');
 ERROR:  _handle_trigger_tbl: the calling function is not allowed to reach this sensitive function.
+select emaj._copy_from_file('illegal_table', 'dummy_location');
+ERROR:  _copy_from_file: the calling function is not allowed to reach this sensitive function.
+select emaj._copy_to_file('illegal_table', 'dummy_location', NULL);
+ERROR:  _copy_to_file: the calling function is not allowed to reach this sensitive function.
 -----------------------------
 -- stop, reset and drop existing groups
 -----------------------------

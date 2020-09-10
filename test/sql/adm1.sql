@@ -42,6 +42,8 @@ select 'select ok' as result from (select count(*) from emaj_mySchema1.myTbl1_lo
 select emaj._create_log_schema('illegal_schema','dummy');
 select emaj._create_emaj_triggers_tbl('illegal_table', 'dummy');
 select emaj._handle_trigger_tbl('illegal function', 'illegal_table', 'dummy');
+select emaj._copy_from_file('illegal_table', 'dummy_location');
+select emaj._copy_to_file('illegal_table', 'dummy_location', NULL);
 
 -----------------------------
 -- stop, reset and drop existing groups

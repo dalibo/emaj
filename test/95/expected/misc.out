@@ -904,29 +904,35 @@ select public.handle_emaj_sequences(5300);
 select emaj.emaj_snap_group(NULL,NULL,NULL);
 ERROR:  _check_group_names: No group to process.
 CONTEXT:  SQL statement "SELECT emaj._check_group_names(v_groupNames := ARRAY[v_groupName], v_mayBeNull := FALSE, v_lockGroups := FALSE, v_checkList := '')"
-PL/pgSQL function emaj.emaj_snap_group(text,text,text) line 30 at PERFORM
+PL/pgSQL function emaj.emaj_snap_group(text,text,text) line 29 at PERFORM
 select emaj.emaj_snap_group('unknownGroup',NULL,NULL);
 ERROR:  _check_group_names: The group "unknownGroup" does not exist.
 CONTEXT:  SQL statement "SELECT emaj._check_group_names(v_groupNames := ARRAY[v_groupName], v_mayBeNull := FALSE, v_lockGroups := FALSE, v_checkList := '')"
-PL/pgSQL function emaj.emaj_snap_group(text,text,text) line 30 at PERFORM
+PL/pgSQL function emaj.emaj_snap_group(text,text,text) line 29 at PERFORM
 -- invalid directory
 select emaj.emaj_snap_group('myGroup1',NULL,NULL);
 ERROR:  emaj_snap_group: The directory parameter cannot be NULL.
 select emaj.emaj_snap_group('myGroup1','unknown_directory',NULL);
 ERROR:  relative path not allowed for COPY to file
 CONTEXT:  SQL statement "COPY (SELECT * FROM myschema1."myTbl3" ORDER BY col31) TO 'unknown_directory/myschema1_myTbl3.snap' "
-PL/pgSQL function emaj.emaj_snap_group(text,text,text) line 103 at EXECUTE
+PL/pgSQL function emaj._copy_to_file(text,text,text) line 20 at EXECUTE
+SQL statement "SELECT emaj._copy_to_file(v_stmt, v_fileName, v_copyOptions)"
+PL/pgSQL function emaj.emaj_snap_group(text,text,text) line 86 at PERFORM
 select emaj.emaj_snap_group('myGroup1','/unknown_directory',NULL);
 ERROR:  could not open file "/unknown_directory/myschema1_myTbl3.snap" for writing: No such file or directory
 CONTEXT:  SQL statement "COPY (SELECT * FROM myschema1."myTbl3" ORDER BY col31) TO '/unknown_directory/myschema1_myTbl3.snap' "
-PL/pgSQL function emaj.emaj_snap_group(text,text,text) line 103 at EXECUTE
+PL/pgSQL function emaj._copy_to_file(text,text,text) line 20 at EXECUTE
+SQL statement "SELECT emaj._copy_to_file(v_stmt, v_fileName, v_copyOptions)"
+PL/pgSQL function emaj.emaj_snap_group(text,text,text) line 86 at PERFORM
 -- invalid COPY TO options
 select emaj.emaj_snap_group('myGroup1',:'EMAJTESTTMPDIR','dummy_option');
 ERROR:  syntax error at or near "dummy_option"
 LINE 1: ...l31) TO '/tmp/emaj_95/misc/myschema1_myTbl3.snap' dummy_opti...
                                                              ^
 QUERY:  COPY (SELECT * FROM myschema1."myTbl3" ORDER BY col31) TO '/tmp/emaj_95/misc/myschema1_myTbl3.snap' dummy_option
-CONTEXT:  PL/pgSQL function emaj.emaj_snap_group(text,text,text) line 103 at EXECUTE
+CONTEXT:  PL/pgSQL function emaj._copy_to_file(text,text,text) line 20 at EXECUTE
+SQL statement "SELECT emaj._copy_to_file(v_stmt, v_fileName, v_copyOptions)"
+PL/pgSQL function emaj.emaj_snap_group(text,text,text) line 86 at PERFORM
 -- SQL injection attempt
 select emaj.emaj_snap_group('myGroup1',:'EMAJTESTTMPDIR','; CREATE ROLE fake LOGIN PASSWORD '''' SUPERUSER');
 ERROR:  emaj_snap_group: The COPY options parameter format is invalid.
@@ -968,36 +974,40 @@ myschema1_mytbl4.snap
 select emaj.emaj_snap_log_group(NULL,NULL,NULL,NULL,NULL);
 ERROR:  _check_group_names: No group to process.
 CONTEXT:  SQL statement "SELECT emaj._check_group_names(v_groupNames := ARRAY[v_groupName], v_mayBeNull := FALSE, v_lockGroups := FALSE, v_checkList := '')"
-PL/pgSQL function emaj.emaj_snap_log_group(text,text,text,text,text) line 46 at PERFORM
+PL/pgSQL function emaj.emaj_snap_log_group(text,text,text,text,text) line 45 at PERFORM
 select emaj.emaj_snap_log_group('unknownGroup',NULL,NULL,NULL,NULL);
 ERROR:  _check_group_names: The group "unknownGroup" does not exist.
 CONTEXT:  SQL statement "SELECT emaj._check_group_names(v_groupNames := ARRAY[v_groupName], v_mayBeNull := FALSE, v_lockGroups := FALSE, v_checkList := '')"
-PL/pgSQL function emaj.emaj_snap_log_group(text,text,text,text,text) line 46 at PERFORM
+PL/pgSQL function emaj.emaj_snap_log_group(text,text,text,text,text) line 45 at PERFORM
 -- invalid directory
 select emaj.emaj_snap_log_group('myGroup2',NULL,'EMAJ_LAST_MARK',NULL,NULL);
 ERROR:  emaj_snap_log_group: The directory parameter cannot be NULL.
 select emaj.emaj_snap_log_group('myGroup2',NULL,'EMAJ_LAST_MARK','unknown_directory',NULL);
 ERROR:  relative path not allowed for COPY to file
 CONTEXT:  SQL statement "COPY (SELECT * FROM emaj_myschema2."myTbl3_log" WHERE TRUE AND emaj_gid <= 5011710 ORDER BY emaj_gid ASC) TO 'unknown_directory/myschema2_myTbl3_log.snap' "
-PL/pgSQL function emaj.emaj_snap_log_group(text,text,text,text,text) line 102 at EXECUTE
+PL/pgSQL function emaj._copy_to_file(text,text,text) line 20 at EXECUTE
+SQL statement "SELECT emaj._copy_to_file(v_stmt, v_fileName, v_copyOptions)"
+PL/pgSQL function emaj.emaj_snap_log_group(text,text,text,text,text) line 99 at PERFORM
 select emaj.emaj_snap_log_group('myGroup2',NULL,'EMAJ_LAST_MARK','/unknown_directory',NULL);
 ERROR:  could not open file "/unknown_directory/myschema2_myTbl3_log.snap" for writing: No such file or directory
 CONTEXT:  SQL statement "COPY (SELECT * FROM emaj_myschema2."myTbl3_log" WHERE TRUE AND emaj_gid <= 5011710 ORDER BY emaj_gid ASC) TO '/unknown_directory/myschema2_myTbl3_log.snap' "
-PL/pgSQL function emaj.emaj_snap_log_group(text,text,text,text,text) line 102 at EXECUTE
+PL/pgSQL function emaj._copy_to_file(text,text,text) line 20 at EXECUTE
+SQL statement "SELECT emaj._copy_to_file(v_stmt, v_fileName, v_copyOptions)"
+PL/pgSQL function emaj.emaj_snap_log_group(text,text,text,text,text) line 99 at PERFORM
 -- invalid start mark
 select emaj.emaj_snap_log_group('myGroup2','unknownMark','EMAJ_LAST_MARK',:'EMAJTESTTMPDIR',NULL);
 ERROR:  _check_mark_name: The mark "unknownMark" does not exist for the group "myGroup2".
 CONTEXT:  SQL statement "SELECT emaj._check_mark_name (v_groupNames := v_groupNames, v_mark := v_firstMark, v_checkList := '')"
 PL/pgSQL function emaj._check_marks_range(text[],text,text) line 71 at SQL statement
 SQL statement "SELECT *                                                                         FROM emaj._check_marks_range(ARRAY[v_groupName], v_firstMark, v_lastMark)"
-PL/pgSQL function emaj.emaj_snap_log_group(text,text,text,text,text) line 49 at SQL statement
+PL/pgSQL function emaj.emaj_snap_log_group(text,text,text,text,text) line 48 at SQL statement
 -- invalid end mark
 select emaj.emaj_snap_log_group('myGroup2','','unknownMark',:'EMAJTESTTMPDIR',NULL);
 ERROR:  _check_mark_name: The mark "unknownMark" does not exist for the group "myGroup2".
 CONTEXT:  SQL statement "SELECT emaj._check_mark_name (v_groupNames := v_groupNames, v_mark := v_lastMark, v_checkList := '')"
 PL/pgSQL function emaj._check_marks_range(text[],text,text) line 82 at SQL statement
 SQL statement "SELECT *                                                                         FROM emaj._check_marks_range(ARRAY[v_groupName], v_firstMark, v_lastMark)"
-PL/pgSQL function emaj.emaj_snap_log_group(text,text,text,text,text) line 49 at SQL statement
+PL/pgSQL function emaj.emaj_snap_log_group(text,text,text,text,text) line 48 at SQL statement
 -- start mark > end mark
 -- just check the error is trapped, because the error message contents timestamps
 create function test_snap_log(v_groupName TEXT, v_firstMark TEXT, v_lastMark TEXT, v_location TEXT) returns void language plpgsql as 
@@ -1034,7 +1044,9 @@ ERROR:  syntax error at or near "dummy_option"
 LINE 1: ... TO '/tmp/emaj_95/misc/myschema2_myTbl3_log.snap' dummy_opti...
                                                              ^
 QUERY:  COPY (SELECT * FROM emaj_myschema2."myTbl3_log" WHERE TRUE AND emaj_gid <= 5011710 ORDER BY emaj_gid ASC) TO '/tmp/emaj_95/misc/myschema2_myTbl3_log.snap' dummy_option
-CONTEXT:  PL/pgSQL function emaj.emaj_snap_log_group(text,text,text,text,text) line 102 at EXECUTE
+CONTEXT:  PL/pgSQL function emaj._copy_to_file(text,text,text) line 20 at EXECUTE
+SQL statement "SELECT emaj._copy_to_file(v_stmt, v_fileName, v_copyOptions)"
+PL/pgSQL function emaj.emaj_snap_log_group(text,text,text,text,text) line 99 at PERFORM
 -- SQL injection attempt
 select emaj.emaj_snap_log_group('myGroup2',NULL,'EMAJ_LAST_MARK',:'EMAJTESTTMPDIR','; CREATE ROLE fake LOGIN PASSWORD '''' SUPERUSER');
 ERROR:  emaj_snap_log_group: The COPY options parameter format is invalid.
@@ -1338,11 +1350,19 @@ ERROR:  _gen_sql_groups: 1 tables/sequences (phil's schema3.myTbl2\) had no pkey
 CONTEXT:  PL/pgSQL function emaj.emaj_gen_sql_group(text,text,text,text,text[]) line 14 at RETURN
 -- invalid location path name
 select emaj.emaj_gen_sql_group('myGroup1', NULL, NULL, '/tmp/unknownDirectory/myFile');
-ERROR:  _gen_sql_groups: The file "/tmp/unknownDirectory/myFile" cannot be used as script output file.
-CONTEXT:  PL/pgSQL function emaj.emaj_gen_sql_group(text,text,text,text,text[]) line 14 at RETURN
+ERROR:  could not open file "/tmp/unknownDirectory/myFile" for writing: No such file or directory
+CONTEXT:  SQL statement "COPY (SELECT 0) TO '/tmp/unknownDirectory/myFile' "
+PL/pgSQL function emaj._copy_to_file(text,text,text) line 20 at EXECUTE
+SQL statement "SELECT emaj._copy_to_file('(SELECT 0)', v_location, NULL)"
+PL/pgSQL function emaj._gen_sql_groups(text[],boolean,text,text,text,text[]) line 103 at PERFORM
+PL/pgSQL function emaj.emaj_gen_sql_group(text,text,text,text,text[]) line 14 at RETURN
 select emaj.emaj_gen_sql_groups(array['myGroup1','myGroup2'], 'Multi-1', NULL, '/tmp/unknownDirectory/myFile');
-ERROR:  _gen_sql_groups: The file "/tmp/unknownDirectory/myFile" cannot be used as script output file.
-CONTEXT:  PL/pgSQL function emaj.emaj_gen_sql_groups(text[],text,text,text,text[]) line 14 at RETURN
+ERROR:  could not open file "/tmp/unknownDirectory/myFile" for writing: No such file or directory
+CONTEXT:  SQL statement "COPY (SELECT 0) TO '/tmp/unknownDirectory/myFile' "
+PL/pgSQL function emaj._copy_to_file(text,text,text) line 20 at EXECUTE
+SQL statement "SELECT emaj._copy_to_file('(SELECT 0)', v_location, NULL)"
+PL/pgSQL function emaj._gen_sql_groups(text[],boolean,text,text,text,text[]) line 103 at PERFORM
+PL/pgSQL function emaj.emaj_gen_sql_groups(text[],text,text,text,text[]) line 14 at RETURN
 -- should be ok
 -- generated files content is checked later in adm2.sql scenario
 -- getting counters from detailed log statistics + the number of sequences included in the group allows a comparison
@@ -1664,7 +1684,11 @@ select json_array_length(emaj.emaj_export_parameters_configuration()->'parameter
 -- export in file
 --   error
 select emaj.emaj_export_parameters_configuration('/tmp/dummy/location/file');
-ERROR:  emaj_export_parameters_configuration: Unable to write to the /tmp/dummy/location/file file.
+ERROR:  could not open file "/tmp/dummy/location/file" for writing: No such file or directory
+CONTEXT:  SQL statement "COPY t TO '/tmp/dummy/location/file' "
+PL/pgSQL function emaj._copy_to_file(text,text,text) line 20 at EXECUTE
+SQL statement "SELECT emaj._copy_to_file('t', v_location, NULL)"
+PL/pgSQL function emaj.emaj_export_parameters_configuration(text) line 15 at PERFORM
 --   ok
 select emaj.emaj_export_parameters_configuration(:'EMAJTESTTMPDIR' || '/orig_param_config');
  emaj_export_parameters_configuration 
@@ -1756,7 +1780,11 @@ select json_array_length(emaj.emaj_export_parameters_configuration()->'parameter
 -- import from file
 --   error
 select emaj.emaj_import_parameters_configuration('/tmp/dummy/location/file');
-ERROR:  emaj_import_parameters_configuration: Unable to read the /tmp/dummy/location/file file.
+ERROR:  could not open file "/tmp/dummy/location/file" for reading: No such file or directory
+CONTEXT:  SQL statement "COPY t FROM '/tmp/dummy/location/file'"
+PL/pgSQL function emaj._copy_from_file(text,text) line 16 at EXECUTE
+SQL statement "SELECT emaj._copy_from_file('t', v_location)"
+PL/pgSQL function emaj.emaj_import_parameters_configuration(text,boolean) line 19 at PERFORM
 \! echo 'not a json content' >$EMAJTESTTMPDIR/bad_param_config
 select emaj.emaj_import_parameters_configuration(:'EMAJTESTTMPDIR' || '/bad_param_config');
 ERROR:  emaj_import_parameters_configuration: The file content is not a valid JSON content.
@@ -1764,18 +1792,18 @@ ERROR:  emaj_import_parameters_configuration: The file content is not a valid JS
 select emaj.emaj_import_parameters_configuration(:'EMAJTESTTMPDIR' || '/bad_param_config');
 WARNING:  _import_param_conf : The JSON structure does not contain any "parameters" array.
 CONTEXT:  SQL statement "SELECT emaj._import_param_conf(v_paramsJson, v_deleteCurrentConf)"
-PL/pgSQL function emaj.emaj_import_parameters_configuration(text,boolean) line 36 at SQL statement
+PL/pgSQL function emaj.emaj_import_parameters_configuration(text,boolean) line 31 at SQL statement
 ERROR:  _import_param_conf: One or several errors have been detected in the supplied JSON structure.
 CONTEXT:  SQL statement "SELECT emaj._import_param_conf(v_paramsJson, v_deleteCurrentConf)"
-PL/pgSQL function emaj.emaj_import_parameters_configuration(text,boolean) line 36 at SQL statement
+PL/pgSQL function emaj.emaj_import_parameters_configuration(text,boolean) line 31 at SQL statement
 \! echo '{ "parameters": [ { "key": "bad_key", "value": null} ] }' >$EMAJTESTTMPDIR/bad_param_config
 select emaj.emaj_import_parameters_configuration(:'EMAJTESTTMPDIR' || '/bad_param_config');
 WARNING:  _import_param_conf : "bad_key" is not a known E-Maj parameter.
 CONTEXT:  SQL statement "SELECT emaj._import_param_conf(v_paramsJson, v_deleteCurrentConf)"
-PL/pgSQL function emaj.emaj_import_parameters_configuration(text,boolean) line 36 at SQL statement
+PL/pgSQL function emaj.emaj_import_parameters_configuration(text,boolean) line 31 at SQL statement
 ERROR:  _import_param_conf: One or several errors have been detected in the supplied JSON structure.
 CONTEXT:  SQL statement "SELECT emaj._import_param_conf(v_paramsJson, v_deleteCurrentConf)"
-PL/pgSQL function emaj.emaj_import_parameters_configuration(text,boolean) line 36 at SQL statement
+PL/pgSQL function emaj.emaj_import_parameters_configuration(text,boolean) line 31 at SQL statement
 --   ok
 select emaj.emaj_import_parameters_configuration(:'EMAJTESTTMPDIR' || '/orig_param_config', true);
  emaj_import_parameters_configuration 

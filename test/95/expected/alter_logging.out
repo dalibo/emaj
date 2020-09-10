@@ -95,19 +95,19 @@ CONTEXT:  SQL statement "DROP TABLE IF EXISTS tmp_app_table, tmp_app_sequence, t
 PL/pgSQL function emaj._import_groups_conf_prepare(json,text[],boolean,text) line 71 at SQL statement
 PL/pgSQL function emaj._import_groups_conf(json,text[],boolean,text,text) line 70 at FOR over SELECT rows
 SQL statement "SELECT emaj._import_groups_conf(v_json, v_groups, v_allowGroupsUpdate, v_location, v_mark)"
-PL/pgSQL function emaj.emaj_import_groups_configuration(text,text[],boolean,text) line 34 at SQL statement
+PL/pgSQL function emaj.emaj_import_groups_configuration(text,text[],boolean,text) line 29 at SQL statement
 NOTICE:  table "tmp_app_sequence" does not exist, skipping
 CONTEXT:  SQL statement "DROP TABLE IF EXISTS tmp_app_table, tmp_app_sequence, tmp_app_trigger"
 PL/pgSQL function emaj._import_groups_conf_prepare(json,text[],boolean,text) line 71 at SQL statement
 PL/pgSQL function emaj._import_groups_conf(json,text[],boolean,text,text) line 70 at FOR over SELECT rows
 SQL statement "SELECT emaj._import_groups_conf(v_json, v_groups, v_allowGroupsUpdate, v_location, v_mark)"
-PL/pgSQL function emaj.emaj_import_groups_configuration(text,text[],boolean,text) line 34 at SQL statement
+PL/pgSQL function emaj.emaj_import_groups_configuration(text,text[],boolean,text) line 29 at SQL statement
 NOTICE:  table "tmp_app_trigger" does not exist, skipping
 CONTEXT:  SQL statement "DROP TABLE IF EXISTS tmp_app_table, tmp_app_sequence, tmp_app_trigger"
 PL/pgSQL function emaj._import_groups_conf_prepare(json,text[],boolean,text) line 71 at SQL statement
 PL/pgSQL function emaj._import_groups_conf(json,text[],boolean,text,text) line 70 at FOR over SELECT rows
 SQL statement "SELECT emaj._import_groups_conf(v_json, v_groups, v_allowGroupsUpdate, v_location, v_mark)"
-PL/pgSQL function emaj.emaj_import_groups_configuration(text,text[],boolean,text) line 34 at SQL statement
+PL/pgSQL function emaj.emaj_import_groups_configuration(text,text[],boolean,text) line 29 at SQL statement
 WARNING:  _check_fk_groups: The foreign key "mytbl6_col61_fkey" on the table "myschema2.mytbl6" references the table "myschema2.mytbl7" that is outside the groups (myGroup1,myGroup2).
 CONTEXT:  SQL statement "SELECT emaj._check_fk_groups(v_loggingGroups)"
 PL/pgSQL function emaj._alter_groups(text[],boolean,text,text,bigint) line 73 at PERFORM
@@ -115,7 +115,7 @@ SQL statement "SELECT v_nbRel FROM emaj._alter_groups(v_groups, TRUE, v_mark, 'I
 PL/pgSQL function emaj._import_groups_conf_exec(json,text[],text) line 57 at PERFORM
 PL/pgSQL function emaj._import_groups_conf(json,text[],boolean,text,text) line 81 at RETURN
 SQL statement "SELECT emaj._import_groups_conf(v_json, v_groups, v_allowGroupsUpdate, v_location, v_mark)"
-PL/pgSQL function emaj.emaj_import_groups_configuration(text,text[],boolean,text) line 34 at SQL statement
+PL/pgSQL function emaj.emaj_import_groups_configuration(text,text[],boolean,text) line 29 at SQL statement
 WARNING:  _check_fk_groups: The table "myschema2.mytbl6" is referenced by the foreign key "mytbl8_col81_fkey" on the table "myschema2.mytbl8" that is outside the groups (myGroup1,myGroup2).
 CONTEXT:  SQL statement "SELECT emaj._check_fk_groups(v_loggingGroups)"
 PL/pgSQL function emaj._alter_groups(text[],boolean,text,text,bigint) line 73 at PERFORM
@@ -123,7 +123,7 @@ SQL statement "SELECT v_nbRel FROM emaj._alter_groups(v_groups, TRUE, v_mark, 'I
 PL/pgSQL function emaj._import_groups_conf_exec(json,text[],text) line 57 at PERFORM
 PL/pgSQL function emaj._import_groups_conf(json,text[],boolean,text,text) line 81 at RETURN
 SQL statement "SELECT emaj._import_groups_conf(v_json, v_groups, v_allowGroupsUpdate, v_location, v_mark)"
-PL/pgSQL function emaj.emaj_import_groups_configuration(text,text[],boolean,text) line 34 at SQL statement
+PL/pgSQL function emaj.emaj_import_groups_configuration(text,text[],boolean,text) line 29 at SQL statement
  emaj_import_groups_configuration 
 ----------------------------------
                                 2
@@ -912,19 +912,19 @@ CONTEXT:  SQL statement "DROP TABLE IF EXISTS tmp_app_table, tmp_app_sequence, t
 PL/pgSQL function emaj._import_groups_conf_prepare(json,text[],boolean,text) line 71 at SQL statement
 PL/pgSQL function emaj._import_groups_conf(json,text[],boolean,text,text) line 70 at FOR over SELECT rows
 SQL statement "SELECT emaj._import_groups_conf(v_json, v_groups, v_allowGroupsUpdate, v_location, v_mark)"
-PL/pgSQL function emaj.emaj_import_groups_configuration(text,text[],boolean,text) line 34 at SQL statement
+PL/pgSQL function emaj.emaj_import_groups_configuration(text,text[],boolean,text) line 29 at SQL statement
 NOTICE:  table "tmp_app_sequence" does not exist, skipping
 CONTEXT:  SQL statement "DROP TABLE IF EXISTS tmp_app_table, tmp_app_sequence, tmp_app_trigger"
 PL/pgSQL function emaj._import_groups_conf_prepare(json,text[],boolean,text) line 71 at SQL statement
 PL/pgSQL function emaj._import_groups_conf(json,text[],boolean,text,text) line 70 at FOR over SELECT rows
 SQL statement "SELECT emaj._import_groups_conf(v_json, v_groups, v_allowGroupsUpdate, v_location, v_mark)"
-PL/pgSQL function emaj.emaj_import_groups_configuration(text,text[],boolean,text) line 34 at SQL statement
+PL/pgSQL function emaj.emaj_import_groups_configuration(text,text[],boolean,text) line 29 at SQL statement
 NOTICE:  table "tmp_app_trigger" does not exist, skipping
 CONTEXT:  SQL statement "DROP TABLE IF EXISTS tmp_app_table, tmp_app_sequence, tmp_app_trigger"
 PL/pgSQL function emaj._import_groups_conf_prepare(json,text[],boolean,text) line 71 at SQL statement
 PL/pgSQL function emaj._import_groups_conf(json,text[],boolean,text,text) line 70 at FOR over SELECT rows
 SQL statement "SELECT emaj._import_groups_conf(v_json, v_groups, v_allowGroupsUpdate, v_location, v_mark)"
-PL/pgSQL function emaj.emaj_import_groups_configuration(text,text[],boolean,text) line 34 at SQL statement
+PL/pgSQL function emaj.emaj_import_groups_configuration(text,text[],boolean,text) line 29 at SQL statement
  emaj_import_groups_configuration 
 ----------------------------------
                                 1
@@ -1507,19 +1507,19 @@ CONTEXT:  SQL statement "DROP TABLE IF EXISTS tmp_app_table, tmp_app_sequence, t
 PL/pgSQL function emaj._import_groups_conf_prepare(json,text[],boolean,text) line 71 at SQL statement
 PL/pgSQL function emaj._import_groups_conf(json,text[],boolean,text,text) line 70 at FOR over SELECT rows
 SQL statement "SELECT emaj._import_groups_conf(v_json, v_groups, v_allowGroupsUpdate, v_location, v_mark)"
-PL/pgSQL function emaj.emaj_import_groups_configuration(text,text[],boolean,text) line 34 at SQL statement
+PL/pgSQL function emaj.emaj_import_groups_configuration(text,text[],boolean,text) line 29 at SQL statement
 NOTICE:  table "tmp_app_sequence" does not exist, skipping
 CONTEXT:  SQL statement "DROP TABLE IF EXISTS tmp_app_table, tmp_app_sequence, tmp_app_trigger"
 PL/pgSQL function emaj._import_groups_conf_prepare(json,text[],boolean,text) line 71 at SQL statement
 PL/pgSQL function emaj._import_groups_conf(json,text[],boolean,text,text) line 70 at FOR over SELECT rows
 SQL statement "SELECT emaj._import_groups_conf(v_json, v_groups, v_allowGroupsUpdate, v_location, v_mark)"
-PL/pgSQL function emaj.emaj_import_groups_configuration(text,text[],boolean,text) line 34 at SQL statement
+PL/pgSQL function emaj.emaj_import_groups_configuration(text,text[],boolean,text) line 29 at SQL statement
 NOTICE:  table "tmp_app_trigger" does not exist, skipping
 CONTEXT:  SQL statement "DROP TABLE IF EXISTS tmp_app_table, tmp_app_sequence, tmp_app_trigger"
 PL/pgSQL function emaj._import_groups_conf_prepare(json,text[],boolean,text) line 71 at SQL statement
 PL/pgSQL function emaj._import_groups_conf(json,text[],boolean,text,text) line 70 at FOR over SELECT rows
 SQL statement "SELECT emaj._import_groups_conf(v_json, v_groups, v_allowGroupsUpdate, v_location, v_mark)"
-PL/pgSQL function emaj.emaj_import_groups_configuration(text,text[],boolean,text) line 34 at SQL statement
+PL/pgSQL function emaj.emaj_import_groups_configuration(text,text[],boolean,text) line 29 at SQL statement
 WARNING:  _check_fk_groups: The foreign key "mytbl6_col61_fkey" on the table "myschema2.mytbl6" references the table "myschema2.mytbl7" that is outside the groups (myGroup2).
 CONTEXT:  SQL statement "SELECT emaj._check_fk_groups(v_loggingGroups)"
 PL/pgSQL function emaj._alter_groups(text[],boolean,text,text,bigint) line 73 at PERFORM
@@ -1527,7 +1527,7 @@ SQL statement "SELECT v_nbRel FROM emaj._alter_groups(v_groups, TRUE, v_mark, 'I
 PL/pgSQL function emaj._import_groups_conf_exec(json,text[],text) line 57 at PERFORM
 PL/pgSQL function emaj._import_groups_conf(json,text[],boolean,text,text) line 81 at RETURN
 SQL statement "SELECT emaj._import_groups_conf(v_json, v_groups, v_allowGroupsUpdate, v_location, v_mark)"
-PL/pgSQL function emaj.emaj_import_groups_configuration(text,text[],boolean,text) line 34 at SQL statement
+PL/pgSQL function emaj.emaj_import_groups_configuration(text,text[],boolean,text) line 29 at SQL statement
 WARNING:  _check_fk_groups: The table "myschema2.mytbl6" is referenced by the foreign key "mytbl8_col81_fkey" on the table "myschema2.mytbl8" that is outside the groups (myGroup2).
 CONTEXT:  SQL statement "SELECT emaj._check_fk_groups(v_loggingGroups)"
 PL/pgSQL function emaj._alter_groups(text[],boolean,text,text,bigint) line 73 at PERFORM
@@ -1535,7 +1535,7 @@ SQL statement "SELECT v_nbRel FROM emaj._alter_groups(v_groups, TRUE, v_mark, 'I
 PL/pgSQL function emaj._import_groups_conf_exec(json,text[],text) line 57 at PERFORM
 PL/pgSQL function emaj._import_groups_conf(json,text[],boolean,text,text) line 81 at RETURN
 SQL statement "SELECT emaj._import_groups_conf(v_json, v_groups, v_allowGroupsUpdate, v_location, v_mark)"
-PL/pgSQL function emaj.emaj_import_groups_configuration(text,text[],boolean,text) line 34 at SQL statement
+PL/pgSQL function emaj.emaj_import_groups_configuration(text,text[],boolean,text) line 29 at SQL statement
  emaj_import_groups_configuration 
 ----------------------------------
                                 1
@@ -2103,19 +2103,19 @@ CONTEXT:  SQL statement "DROP TABLE IF EXISTS tmp_app_table, tmp_app_sequence, t
 PL/pgSQL function emaj._import_groups_conf_prepare(json,text[],boolean,text) line 71 at SQL statement
 PL/pgSQL function emaj._import_groups_conf(json,text[],boolean,text,text) line 70 at FOR over SELECT rows
 SQL statement "SELECT emaj._import_groups_conf(v_json, v_groups, v_allowGroupsUpdate, v_location, v_mark)"
-PL/pgSQL function emaj.emaj_import_groups_configuration(text,text[],boolean,text) line 34 at SQL statement
+PL/pgSQL function emaj.emaj_import_groups_configuration(text,text[],boolean,text) line 29 at SQL statement
 NOTICE:  table "tmp_app_sequence" does not exist, skipping
 CONTEXT:  SQL statement "DROP TABLE IF EXISTS tmp_app_table, tmp_app_sequence, tmp_app_trigger"
 PL/pgSQL function emaj._import_groups_conf_prepare(json,text[],boolean,text) line 71 at SQL statement
 PL/pgSQL function emaj._import_groups_conf(json,text[],boolean,text,text) line 70 at FOR over SELECT rows
 SQL statement "SELECT emaj._import_groups_conf(v_json, v_groups, v_allowGroupsUpdate, v_location, v_mark)"
-PL/pgSQL function emaj.emaj_import_groups_configuration(text,text[],boolean,text) line 34 at SQL statement
+PL/pgSQL function emaj.emaj_import_groups_configuration(text,text[],boolean,text) line 29 at SQL statement
 NOTICE:  table "tmp_app_trigger" does not exist, skipping
 CONTEXT:  SQL statement "DROP TABLE IF EXISTS tmp_app_table, tmp_app_sequence, tmp_app_trigger"
 PL/pgSQL function emaj._import_groups_conf_prepare(json,text[],boolean,text) line 71 at SQL statement
 PL/pgSQL function emaj._import_groups_conf(json,text[],boolean,text,text) line 70 at FOR over SELECT rows
 SQL statement "SELECT emaj._import_groups_conf(v_json, v_groups, v_allowGroupsUpdate, v_location, v_mark)"
-PL/pgSQL function emaj.emaj_import_groups_configuration(text,text[],boolean,text) line 34 at SQL statement
+PL/pgSQL function emaj.emaj_import_groups_configuration(text,text[],boolean,text) line 29 at SQL statement
 NOTICE:  table "myTbl3_log" does not exist, skipping
 CONTEXT:  SQL statement "DROP TABLE IF EXISTS emaj_myschema1."myTbl3_log""
 PL/pgSQL function emaj._create_tbl(text,text,text,integer,text,text,bigint,boolean,boolean) line 67 at EXECUTE
@@ -2135,7 +2135,7 @@ SQL statement "SELECT v_nbRel FROM emaj._alter_groups(v_groups, TRUE, v_mark, 'I
 PL/pgSQL function emaj._import_groups_conf_exec(json,text[],text) line 57 at PERFORM
 PL/pgSQL function emaj._import_groups_conf(json,text[],boolean,text,text) line 81 at RETURN
 SQL statement "SELECT emaj._import_groups_conf(v_json, v_groups, v_allowGroupsUpdate, v_location, v_mark)"
-PL/pgSQL function emaj.emaj_import_groups_configuration(text,text[],boolean,text) line 34 at SQL statement
+PL/pgSQL function emaj.emaj_import_groups_configuration(text,text[],boolean,text) line 29 at SQL statement
 NOTICE:  trigger "emaj_log_trg" for relation "myschema1.myTbl3" does not exist, skipping
 CONTEXT:  SQL statement "DROP TRIGGER IF EXISTS emaj_log_trg ON myschema1."myTbl3""
 PL/pgSQL function emaj._create_emaj_triggers_tbl(text,text) line 15 at EXECUTE
@@ -2157,7 +2157,7 @@ SQL statement "SELECT v_nbRel FROM emaj._alter_groups(v_groups, TRUE, v_mark, 'I
 PL/pgSQL function emaj._import_groups_conf_exec(json,text[],text) line 57 at PERFORM
 PL/pgSQL function emaj._import_groups_conf(json,text[],boolean,text,text) line 81 at RETURN
 SQL statement "SELECT emaj._import_groups_conf(v_json, v_groups, v_allowGroupsUpdate, v_location, v_mark)"
-PL/pgSQL function emaj.emaj_import_groups_configuration(text,text[],boolean,text) line 34 at SQL statement
+PL/pgSQL function emaj.emaj_import_groups_configuration(text,text[],boolean,text) line 29 at SQL statement
 NOTICE:  trigger "emaj_trunc_trg" for relation "myschema1.myTbl3" does not exist, skipping
 CONTEXT:  SQL statement "DROP TRIGGER IF EXISTS emaj_trunc_trg ON myschema1."myTbl3""
 PL/pgSQL function emaj._create_emaj_triggers_tbl(text,text) line 23 at EXECUTE
@@ -2179,7 +2179,7 @@ SQL statement "SELECT v_nbRel FROM emaj._alter_groups(v_groups, TRUE, v_mark, 'I
 PL/pgSQL function emaj._import_groups_conf_exec(json,text[],text) line 57 at PERFORM
 PL/pgSQL function emaj._import_groups_conf(json,text[],boolean,text,text) line 81 at RETURN
 SQL statement "SELECT emaj._import_groups_conf(v_json, v_groups, v_allowGroupsUpdate, v_location, v_mark)"
-PL/pgSQL function emaj.emaj_import_groups_configuration(text,text[],boolean,text) line 34 at SQL statement
+PL/pgSQL function emaj.emaj_import_groups_configuration(text,text[],boolean,text) line 29 at SQL statement
 NOTICE:  table "mytbl1_log" does not exist, skipping
 CONTEXT:  SQL statement "DROP TABLE IF EXISTS emaj_myschema1.mytbl1_log"
 PL/pgSQL function emaj._create_tbl(text,text,text,integer,text,text,bigint,boolean,boolean) line 67 at EXECUTE
@@ -2199,7 +2199,7 @@ SQL statement "SELECT v_nbRel FROM emaj._alter_groups(v_groups, TRUE, v_mark, 'I
 PL/pgSQL function emaj._import_groups_conf_exec(json,text[],text) line 57 at PERFORM
 PL/pgSQL function emaj._import_groups_conf(json,text[],boolean,text,text) line 81 at RETURN
 SQL statement "SELECT emaj._import_groups_conf(v_json, v_groups, v_allowGroupsUpdate, v_location, v_mark)"
-PL/pgSQL function emaj.emaj_import_groups_configuration(text,text[],boolean,text) line 34 at SQL statement
+PL/pgSQL function emaj.emaj_import_groups_configuration(text,text[],boolean,text) line 29 at SQL statement
 NOTICE:  trigger "emaj_log_trg" for relation "myschema1.mytbl1" does not exist, skipping
 CONTEXT:  SQL statement "DROP TRIGGER IF EXISTS emaj_log_trg ON myschema1.mytbl1"
 PL/pgSQL function emaj._create_emaj_triggers_tbl(text,text) line 15 at EXECUTE
@@ -2221,7 +2221,7 @@ SQL statement "SELECT v_nbRel FROM emaj._alter_groups(v_groups, TRUE, v_mark, 'I
 PL/pgSQL function emaj._import_groups_conf_exec(json,text[],text) line 57 at PERFORM
 PL/pgSQL function emaj._import_groups_conf(json,text[],boolean,text,text) line 81 at RETURN
 SQL statement "SELECT emaj._import_groups_conf(v_json, v_groups, v_allowGroupsUpdate, v_location, v_mark)"
-PL/pgSQL function emaj.emaj_import_groups_configuration(text,text[],boolean,text) line 34 at SQL statement
+PL/pgSQL function emaj.emaj_import_groups_configuration(text,text[],boolean,text) line 29 at SQL statement
 NOTICE:  trigger "emaj_trunc_trg" for relation "myschema1.mytbl1" does not exist, skipping
 CONTEXT:  SQL statement "DROP TRIGGER IF EXISTS emaj_trunc_trg ON myschema1.mytbl1"
 PL/pgSQL function emaj._create_emaj_triggers_tbl(text,text) line 23 at EXECUTE
@@ -2243,7 +2243,7 @@ SQL statement "SELECT v_nbRel FROM emaj._alter_groups(v_groups, TRUE, v_mark, 'I
 PL/pgSQL function emaj._import_groups_conf_exec(json,text[],text) line 57 at PERFORM
 PL/pgSQL function emaj._import_groups_conf(json,text[],boolean,text,text) line 81 at RETURN
 SQL statement "SELECT emaj._import_groups_conf(v_json, v_groups, v_allowGroupsUpdate, v_location, v_mark)"
-PL/pgSQL function emaj.emaj_import_groups_configuration(text,text[],boolean,text) line 34 at SQL statement
+PL/pgSQL function emaj.emaj_import_groups_configuration(text,text[],boolean,text) line 29 at SQL statement
 NOTICE:  table "mytbl2b_log" does not exist, skipping
 CONTEXT:  SQL statement "DROP TABLE IF EXISTS emaj_myschema1.mytbl2b_log"
 PL/pgSQL function emaj._create_tbl(text,text,text,integer,text,text,bigint,boolean,boolean) line 67 at EXECUTE
@@ -2263,7 +2263,7 @@ SQL statement "SELECT v_nbRel FROM emaj._alter_groups(v_groups, TRUE, v_mark, 'I
 PL/pgSQL function emaj._import_groups_conf_exec(json,text[],text) line 57 at PERFORM
 PL/pgSQL function emaj._import_groups_conf(json,text[],boolean,text,text) line 81 at RETURN
 SQL statement "SELECT emaj._import_groups_conf(v_json, v_groups, v_allowGroupsUpdate, v_location, v_mark)"
-PL/pgSQL function emaj.emaj_import_groups_configuration(text,text[],boolean,text) line 34 at SQL statement
+PL/pgSQL function emaj.emaj_import_groups_configuration(text,text[],boolean,text) line 29 at SQL statement
 NOTICE:  trigger "emaj_log_trg" for relation "myschema1.mytbl2b" does not exist, skipping
 CONTEXT:  SQL statement "DROP TRIGGER IF EXISTS emaj_log_trg ON myschema1.mytbl2b"
 PL/pgSQL function emaj._create_emaj_triggers_tbl(text,text) line 15 at EXECUTE
@@ -2285,7 +2285,7 @@ SQL statement "SELECT v_nbRel FROM emaj._alter_groups(v_groups, TRUE, v_mark, 'I
 PL/pgSQL function emaj._import_groups_conf_exec(json,text[],text) line 57 at PERFORM
 PL/pgSQL function emaj._import_groups_conf(json,text[],boolean,text,text) line 81 at RETURN
 SQL statement "SELECT emaj._import_groups_conf(v_json, v_groups, v_allowGroupsUpdate, v_location, v_mark)"
-PL/pgSQL function emaj.emaj_import_groups_configuration(text,text[],boolean,text) line 34 at SQL statement
+PL/pgSQL function emaj.emaj_import_groups_configuration(text,text[],boolean,text) line 29 at SQL statement
 NOTICE:  trigger "emaj_trunc_trg" for relation "myschema1.mytbl2b" does not exist, skipping
 CONTEXT:  SQL statement "DROP TRIGGER IF EXISTS emaj_trunc_trg ON myschema1.mytbl2b"
 PL/pgSQL function emaj._create_emaj_triggers_tbl(text,text) line 23 at EXECUTE
@@ -2307,7 +2307,7 @@ SQL statement "SELECT v_nbRel FROM emaj._alter_groups(v_groups, TRUE, v_mark, 'I
 PL/pgSQL function emaj._import_groups_conf_exec(json,text[],text) line 57 at PERFORM
 PL/pgSQL function emaj._import_groups_conf(json,text[],boolean,text,text) line 81 at RETURN
 SQL statement "SELECT emaj._import_groups_conf(v_json, v_groups, v_allowGroupsUpdate, v_location, v_mark)"
-PL/pgSQL function emaj.emaj_import_groups_configuration(text,text[],boolean,text) line 34 at SQL statement
+PL/pgSQL function emaj.emaj_import_groups_configuration(text,text[],boolean,text) line 29 at SQL statement
  emaj_import_groups_configuration 
 ----------------------------------
                                 1
@@ -2840,47 +2840,47 @@ CONTEXT:  SQL statement "DROP TABLE IF EXISTS tmp_app_table, tmp_app_sequence, t
 PL/pgSQL function emaj._import_groups_conf_prepare(json,text[],boolean,text) line 71 at SQL statement
 PL/pgSQL function emaj._import_groups_conf(json,text[],boolean,text,text) line 70 at FOR over SELECT rows
 SQL statement "SELECT emaj._import_groups_conf(v_json, v_groups, v_allowGroupsUpdate, v_location, v_mark)"
-PL/pgSQL function emaj.emaj_import_groups_configuration(text,text[],boolean,text) line 34 at SQL statement
+PL/pgSQL function emaj.emaj_import_groups_configuration(text,text[],boolean,text) line 29 at SQL statement
 NOTICE:  table "tmp_app_sequence" does not exist, skipping
 CONTEXT:  SQL statement "DROP TABLE IF EXISTS tmp_app_table, tmp_app_sequence, tmp_app_trigger"
 PL/pgSQL function emaj._import_groups_conf_prepare(json,text[],boolean,text) line 71 at SQL statement
 PL/pgSQL function emaj._import_groups_conf(json,text[],boolean,text,text) line 70 at FOR over SELECT rows
 SQL statement "SELECT emaj._import_groups_conf(v_json, v_groups, v_allowGroupsUpdate, v_location, v_mark)"
-PL/pgSQL function emaj.emaj_import_groups_configuration(text,text[],boolean,text) line 34 at SQL statement
+PL/pgSQL function emaj.emaj_import_groups_configuration(text,text[],boolean,text) line 29 at SQL statement
 NOTICE:  table "tmp_app_trigger" does not exist, skipping
 CONTEXT:  SQL statement "DROP TABLE IF EXISTS tmp_app_table, tmp_app_sequence, tmp_app_trigger"
 PL/pgSQL function emaj._import_groups_conf_prepare(json,text[],boolean,text) line 71 at SQL statement
 PL/pgSQL function emaj._import_groups_conf(json,text[],boolean,text,text) line 70 at FOR over SELECT rows
 SQL statement "SELECT emaj._import_groups_conf(v_json, v_groups, v_allowGroupsUpdate, v_location, v_mark)"
-PL/pgSQL function emaj.emaj_import_groups_configuration(text,text[],boolean,text) line 34 at SQL statement
+PL/pgSQL function emaj.emaj_import_groups_configuration(text,text[],boolean,text) line 29 at SQL statement
 WARNING:  _import_groups_conf (2): in the group "myGroup2", the table myschema2."myTbl3" already belongs to the group "myGroup1".
 CONTEXT:  SQL statement "SELECT emaj._import_groups_conf(v_json, v_groups, v_allowGroupsUpdate, v_location, v_mark)"
-PL/pgSQL function emaj.emaj_import_groups_configuration(text,text[],boolean,text) line 34 at SQL statement
+PL/pgSQL function emaj.emaj_import_groups_configuration(text,text[],boolean,text) line 29 at SQL statement
 WARNING:  _import_groups_conf (2): in the group "myGroup2", the sequence myschema2."myTbl3_col31_seq" already belongs to the group "myGroup1".
 CONTEXT:  SQL statement "SELECT emaj._import_groups_conf(v_json, v_groups, v_allowGroupsUpdate, v_location, v_mark)"
-PL/pgSQL function emaj.emaj_import_groups_configuration(text,text[],boolean,text) line 34 at SQL statement
+PL/pgSQL function emaj.emaj_import_groups_configuration(text,text[],boolean,text) line 29 at SQL statement
 ERROR:  _import_groups_conf: One or several errors have been detected in the JSON groups configuration.
 CONTEXT:  SQL statement "SELECT emaj._import_groups_conf(v_json, v_groups, v_allowGroupsUpdate, v_location, v_mark)"
-PL/pgSQL function emaj.emaj_import_groups_configuration(text,text[],boolean,text) line 34 at SQL statement
+PL/pgSQL function emaj.emaj_import_groups_configuration(text,text[],boolean,text) line 29 at SQL statement
 select emaj.emaj_import_groups_configuration(:'EMAJTESTTMPDIR' || '/all_groups_conf.json', '{"myGroup1","myGroup2"}', true);
 NOTICE:  table "tmp_app_table" does not exist, skipping
 CONTEXT:  SQL statement "DROP TABLE IF EXISTS tmp_app_table, tmp_app_sequence, tmp_app_trigger"
 PL/pgSQL function emaj._import_groups_conf_prepare(json,text[],boolean,text) line 71 at SQL statement
 PL/pgSQL function emaj._import_groups_conf(json,text[],boolean,text,text) line 70 at FOR over SELECT rows
 SQL statement "SELECT emaj._import_groups_conf(v_json, v_groups, v_allowGroupsUpdate, v_location, v_mark)"
-PL/pgSQL function emaj.emaj_import_groups_configuration(text,text[],boolean,text) line 34 at SQL statement
+PL/pgSQL function emaj.emaj_import_groups_configuration(text,text[],boolean,text) line 29 at SQL statement
 NOTICE:  table "tmp_app_sequence" does not exist, skipping
 CONTEXT:  SQL statement "DROP TABLE IF EXISTS tmp_app_table, tmp_app_sequence, tmp_app_trigger"
 PL/pgSQL function emaj._import_groups_conf_prepare(json,text[],boolean,text) line 71 at SQL statement
 PL/pgSQL function emaj._import_groups_conf(json,text[],boolean,text,text) line 70 at FOR over SELECT rows
 SQL statement "SELECT emaj._import_groups_conf(v_json, v_groups, v_allowGroupsUpdate, v_location, v_mark)"
-PL/pgSQL function emaj.emaj_import_groups_configuration(text,text[],boolean,text) line 34 at SQL statement
+PL/pgSQL function emaj.emaj_import_groups_configuration(text,text[],boolean,text) line 29 at SQL statement
 NOTICE:  table "tmp_app_trigger" does not exist, skipping
 CONTEXT:  SQL statement "DROP TABLE IF EXISTS tmp_app_table, tmp_app_sequence, tmp_app_trigger"
 PL/pgSQL function emaj._import_groups_conf_prepare(json,text[],boolean,text) line 71 at SQL statement
 PL/pgSQL function emaj._import_groups_conf(json,text[],boolean,text,text) line 70 at FOR over SELECT rows
 SQL statement "SELECT emaj._import_groups_conf(v_json, v_groups, v_allowGroupsUpdate, v_location, v_mark)"
-PL/pgSQL function emaj.emaj_import_groups_configuration(text,text[],boolean,text) line 34 at SQL statement
+PL/pgSQL function emaj.emaj_import_groups_configuration(text,text[],boolean,text) line 29 at SQL statement
  emaj_import_groups_configuration 
 ----------------------------------
                                 2

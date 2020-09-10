@@ -1657,6 +1657,92 @@ $_drop_log_schemas$
   END;
 $_drop_log_schemas$;
 
+CREATE OR REPLACE FUNCTION emaj._handle_trigger_tbl(v_action TEXT, v_fullTableName TEXT, v_triggerName TEXT)
+RETURNS VOID LANGUAGE plpgsql
+SECURITY DEFINER SET search_path = pg_catalog, pg_temp AS
+$_handle_trigger_tbl$
+-- The function performs an elementary action for a trigger on an application table.
+-- Inputs: the action to perform: ENABLE/DISABLE/DROP
+--         the full name of the application table
+--         the trigger name
+-- The function is defined as SECURITY DEFINER so that emaj_adm role can perform the action on any application table.
+  DECLARE
+    v_stack                  TEXT;
+  BEGIN
+-- check that the caller is allowed to do that.
+    GET DIAGNOSTICS v_stack = PG_CONTEXT;
+    IF v_stack NOT LIKE '%emaj._create_tbl(text,text,text,integer,text,text,bigint,boolean,boolean)%' AND
+       v_stack NOT LIKE '%emaj._remove_tbl(text,text,text,boolean,bigint,text)%' AND
+       v_stack NOT LIKE '%emaj._drop_tbl(emaj.emaj_relation,bigint)%' AND
+       v_stack NOT LIKE '%emaj._start_groups(text[],text,boolean,boolean)%' AND
+       v_stack NOT LIKE '%emaj._stop_groups(text[],text,boolean,boolean)%' AND
+       v_stack NOT LIKE '%emaj._rlbk_session_exec(integer,integer)%' THEN
+      RAISE EXCEPTION '_handle_trigger_tbl: the calling function is not allowed to reach this sensitive function.';
+    END IF;
+-- perform the action
+    IF v_action = 'DISABLE' OR v_action = 'ENABLE' THEN
+      EXECUTE format('ALTER TABLE %s %s TRIGGER %I',
+                     v_fullTableName, v_action, quote_ident(v_triggerName));
+    ELSIF v_action = 'DROP' THEN
+      EXECUTE format('DROP TRIGGER IF EXISTS %I ON %s',
+                     quote_ident(v_triggerName), v_fullTableName);
+    END IF;
+    RETURN;
+  END;
+$_handle_trigger_tbl$;
+
+CREATE OR REPLACE FUNCTION emaj._copy_from_file(v_destination_table TEXT, v_location TEXT)
+RETURNS VOID LANGUAGE plpgsql
+SECURITY DEFINER SET search_path = pg_catalog, pg_temp AS
+$_copy_from_file$
+-- The function performs an elementary COPY FROM to load a file into a table.
+-- Inputs: the schema qualified table to load (should be already double_quoted if needed)
+--         the file to read
+-- The function is defined as SECURITY DEFINER so that emaj roles can perform the COPY statement.
+  DECLARE
+    v_stack                  TEXT;
+  BEGIN
+-- check that the caller is allowed to do that.
+    GET DIAGNOSTICS v_stack = PG_CONTEXT;
+    IF v_stack NOT LIKE '%emaj.emaj_import_groups_configuration(text,text[],boolean,text)%' AND
+       v_stack NOT LIKE '%emaj.emaj_import_parameters_configuration(text,boolean)%' THEN
+      RAISE EXCEPTION '_copy_from_file: the calling function is not allowed to reach this sensitive function.';
+    END IF;
+-- perform the action
+    EXECUTE format ('COPY %I FROM %L',
+                    v_destination_table, v_location);
+    RETURN;
+  END;
+$_copy_from_file$;
+
+CREATE OR REPLACE FUNCTION emaj._copy_to_file(v_source TEXT, v_location TEXT, v_copyOptions TEXT)
+RETURNS VOID LANGUAGE plpgsql
+SECURITY DEFINER SET search_path = pg_catalog, pg_temp AS
+$_copy_to_file$
+-- The function performs an elementary COPY TO to unload a table on a file.
+-- Inputs: the schema qualified table to unload or the SQL statement executed as data source (should be already double_quoted if needed)
+--         the file to write
+--         the options for the COPY statement
+-- The function is defined as SECURITY DEFINER so that emaj roles can perform the COPY statement.
+  DECLARE
+    v_stack                  TEXT;
+  BEGIN
+-- check that the caller is allowed to do that.
+    GET DIAGNOSTICS v_stack = PG_CONTEXT;
+    IF v_stack NOT LIKE '%emaj.emaj_export_groups_configuration(text,text[])%' AND
+       v_stack NOT LIKE '%emaj.emaj_snap_group(text,text,text)%' AND
+       v_stack NOT LIKE '%emaj.emaj_snap_log_group(text,text,text,text,text)%' AND
+       v_stack NOT LIKE '%emaj._gen_sql_groups(text[],boolean,text,text,text,text[])%' AND
+       v_stack NOT LIKE '%emaj.emaj_export_parameters_configuration(text)%' THEN
+      RAISE EXCEPTION '_copy_to_file: the calling function is not allowed to reach this sensitive function.';
+    END IF;
+-- perform the action
+    EXECUTE format ('COPY %s TO %L %s',
+                    v_source, v_location, coalesce (v_copyOptions, ''));
+    RETURN;
+  END;
+$_copy_to_file$;
+
 ---------------------------------------------------
 --                                               --
 -- Elementary functions for tables and sequences --
@@ -2983,40 +3069,6 @@ $_create_emaj_triggers_tbl$
     RETURN;
   END;
 $_create_emaj_triggers_tbl$;
-
-CREATE OR REPLACE FUNCTION emaj._handle_trigger_tbl(v_action TEXT, v_fullTableName TEXT, v_triggerName TEXT)
-RETURNS VOID LANGUAGE plpgsql
-SECURITY DEFINER SET search_path = pg_catalog, pg_temp AS
-$_handle_trigger_tbl$
--- The function performs an elementary action for a trigger on an application table.
--- Inputs: the action to perform: ENABLE/DISABLE/DROP
---         the full name of the application table
---         the trigger name
--- The function is defined as SECURITY DEFINER so that emaj_adm role can perform the action on any application table.
-  DECLARE
-    v_stack                  TEXT;
-  BEGIN
--- check that the caller is allowed to do that.
-    GET DIAGNOSTICS v_stack = PG_CONTEXT;
-    IF v_stack NOT LIKE '%emaj._create_tbl(text,text,text,integer,text,text,bigint,boolean,boolean)%' AND
-       v_stack NOT LIKE '%emaj._remove_tbl(text,text,text,boolean,bigint,text)%' AND
-       v_stack NOT LIKE '%emaj._drop_tbl(emaj.emaj_relation,bigint)%' AND
-       v_stack NOT LIKE '%emaj._start_groups(text[],text,boolean,boolean)%' AND
-       v_stack NOT LIKE '%emaj._stop_groups(text[],text,boolean,boolean)%' AND
-       v_stack NOT LIKE '%emaj._rlbk_session_exec(integer,integer)%' THEN
-      RAISE EXCEPTION '_handle_trigger_tbl: the calling function is not allowed to reach this sensitive function.';
-    END IF;
--- perform the action
-    IF v_action = 'DISABLE' OR v_action = 'ENABLE' THEN
-      EXECUTE format('ALTER TABLE %s %s TRIGGER %I',
-                     v_fullTableName, v_action, quote_ident(v_triggerName));
-    ELSIF v_action = 'DROP' THEN
-      EXECUTE format('DROP TRIGGER IF EXISTS %I ON %s',
-                     quote_ident(v_triggerName), v_fullTableName);
-    END IF;
-    RETURN;
-  END;
-$_handle_trigger_tbl$;
 
 CREATE OR REPLACE FUNCTION emaj._build_sql_tbl(v_fullTableName TEXT, OUT v_rlbkColList TEXT, OUT v_rlbkPkColList TEXT,
                                                OUT v_rlbkPkConditions TEXT, OUT v_genColList TEXT, OUT v_genValList TEXT,
@@ -5909,8 +5961,7 @@ COMMENT ON FUNCTION emaj.emaj_export_groups_configuration(TEXT[]) IS
 $$Generates a json structure describing configured tables groups.$$;
 
 CREATE OR REPLACE FUNCTION emaj.emaj_export_groups_configuration(v_location TEXT, v_groups TEXT[] DEFAULT NULL)
-RETURNS INT LANGUAGE plpgsql
-SECURITY DEFINER SET search_path = pg_catalog, pg_temp AS
+RETURNS INT LANGUAGE plpgsql AS
 $emaj_export_groups_configuration$
 -- This function stores some or all configured tables groups configuration into a file on the server.
 -- The JSON structure is built by the _export_groups_conf() function.
@@ -5926,12 +5977,7 @@ $emaj_export_groups_configuration$
     INSERT INTO t
       SELECT line
         FROM regexp_split_to_table(v_groupsJson::TEXT, '\n') AS line;
-    BEGIN
-      EXECUTE format ('COPY t TO %s',
-                      quote_literal(v_location));
-    EXCEPTION WHEN OTHERS THEN
-      RAISE EXCEPTION 'emaj_export_groups_configuration: Unable to write to the % file.', v_location;
-    END;
+    PERFORM emaj._copy_to_file('t', v_location, NULL);
     DROP TABLE t;
 -- return the number of recorded tables groups
     RETURN json_array_length(v_groupsJson->'tables_groups');
@@ -6118,8 +6164,7 @@ $$Import a json structure describing tables groups to create or alter.$$;
 
 CREATE OR REPLACE FUNCTION emaj.emaj_import_groups_configuration(v_location TEXT, v_groups TEXT[] DEFAULT NULL,
                                                                  v_allowGroupsUpdate BOOLEAN DEFAULT FALSE, v_mark TEXT DEFAULT 'IMPORT_%')
-RETURNS INT LANGUAGE plpgsql
-SECURITY DEFINER SET search_path = pg_catalog, pg_temp AS
+RETURNS INT LANGUAGE plpgsql AS
 $emaj_import_groups_configuration$
 -- This function imports a file containing a JSON formatted structure representing tables groups to create or update.
 -- This structure can have been generated by the emaj_export_groups_configuration() functions and may have been adapted by the user.
@@ -6136,12 +6181,7 @@ $emaj_import_groups_configuration$
   BEGIN
 -- read the input file and put its content into a temporary table
     CREATE TEMP TABLE t (groups TEXT);
-    BEGIN
-      EXECUTE format ('COPY t FROM %s',
-                      quote_literal(v_location));
-    EXCEPTION WHEN OTHERS THEN
-      RAISE EXCEPTION 'emaj_import_groups_configuration: Unable to read the % file.', v_location;
-    END;
+    PERFORM emaj._copy_from_file('t', v_location);
 -- aggregate the lines into a single text variable
     SELECT string_agg(groups, E'\n') INTO v_groupsText
       FROM t;
@@ -10407,8 +10447,7 @@ $_rollback_activity$
 $_rollback_activity$;
 
 CREATE OR REPLACE FUNCTION emaj.emaj_snap_group(v_groupName TEXT, v_dir TEXT, v_copyOptions TEXT)
-RETURNS INT LANGUAGE plpgsql
-SECURITY DEFINER SET search_path = pg_catalog, pg_temp AS
+RETURNS INT LANGUAGE plpgsql AS
 $emaj_snap_group$
 -- This function creates a file for each table and sequence belonging to the group.
 -- For tables, these files contain all rows sorted on primary key.
@@ -10425,7 +10464,6 @@ $emaj_snap_group$
 -- Input: group name,
 --        the absolute pathname of the directory where the files are to be created and the options to used in the COPY TO statements
 -- Output: number of processed tables and sequences
--- The function is defined as SECURITY DEFINER so that emaj_adm role can use.
   DECLARE
     v_nbTb                   INT = 0;
     r_tblsq                  RECORD;
@@ -10493,32 +10531,30 @@ $emaj_snap_group$
                      AND attisdropped = FALSE
                 ) AS t;
           END IF;
---   prepare the COPY statement
-          v_stmt= 'COPY (SELECT * FROM ' || v_fullTableName || ' ORDER BY ' || v_colList || ') TO ' ||
-                  quote_literal(v_fileName) || ' ' || coalesce (v_copyOptions, '');
+--   dump the table
+          v_stmt= '(SELECT * FROM ' || v_fullTableName || ' ORDER BY ' || v_colList || ')';
+          PERFORM emaj._copy_to_file(v_stmt, v_fileName, v_copyOptions);
         WHEN 'S' THEN
 -- if it is a sequence, the statement has no order by
           IF emaj._pg_version_num() >= 100000 THEN
-            v_stmt = 'COPY (SELECT sequencename, rel.last_value, start_value, increment_by, max_value, '
+            v_stmt = '(SELECT sequencename, rel.last_value, start_value, increment_by, max_value, '
                   || 'min_value, cache_size, cycle, rel.is_called '
                   || 'FROM ' || v_fullTableName || ' rel, pg_catalog.pg_sequences '
                   || 'WHERE schemaname = '|| quote_literal(r_tblsq.rel_schema) || ' AND sequencename = '
-                  || quote_literal(r_tblsq.rel_tblseq) ||') TO ' || quote_literal(v_fileName) || ' ' || coalesce (v_copyOptions, '');
+                  || quote_literal(r_tblsq.rel_tblseq) ||')';
           ELSE
-            v_stmt = 'COPY (SELECT sequence_name, last_value, start_value, increment_by, max_value, '
+            v_stmt = '(SELECT sequence_name, last_value, start_value, increment_by, max_value, '
                   || 'min_value, cache_value, is_cycled, is_called FROM ' || v_fullTableName
-                  || ') TO ' || quote_literal(v_fileName) || ' ' || coalesce (v_copyOptions, '');
+                  || ')';
           END IF;
+--    dump the sequence properties
+          PERFORM emaj._copy_to_file(v_stmt, v_fileName, v_copyOptions);
       END CASE;
--- and finaly perform the COPY
-      EXECUTE v_stmt;
       v_nbTb = v_nbTb + 1;
     END LOOP;
 -- create the _INFO file to keep general information about the snap operation
-    EXECUTE 'COPY (SELECT ' ||
-            quote_literal('E-Maj snap of tables group ' || v_groupName ||
-            ' at ' || transaction_timestamp()) ||
-            ') TO ' || quote_literal(v_dir || '/_INFO');
+    v_stmt = '(SELECT ' || quote_literal('E-Maj snap of tables group ' || v_groupName || ' at ' || transaction_timestamp()) || ')';
+    PERFORM emaj._copy_to_file(v_stmt, v_dir || '/_INFO', NULL);
 -- insert end in the history
     INSERT INTO emaj.emaj_hist (hist_function, hist_event, hist_object, hist_wording)
       VALUES ('SNAP_GROUP', 'END', v_groupName, v_nbTb || ' tables/sequences processed');
@@ -10529,8 +10565,7 @@ COMMENT ON FUNCTION emaj.emaj_snap_group(TEXT,TEXT,TEXT) IS
 $$Snaps all application tables and sequences of an E-Maj group into a given directory.$$;
 
 CREATE OR REPLACE FUNCTION emaj.emaj_snap_log_group(v_groupName TEXT, v_firstMark TEXT, v_lastMark TEXT, v_dir TEXT, v_copyOptions TEXT)
-RETURNS INT LANGUAGE plpgsql
-SECURITY DEFINER SET search_path = pg_catalog, pg_temp AS
+RETURNS INT LANGUAGE plpgsql AS
 $emaj_snap_log_group$
 -- This function creates a file for each log table belonging to the group.
 -- It also creates 2 files containing the state of sequences respectively at start mark and end mark.
@@ -10553,7 +10588,6 @@ $emaj_snap_log_group$
 --   a NULL value or an empty string can be used as last_mark indicating the current state
 --   The keyword 'EMAJ_LAST_MARK' can be used as first or last mark to specify the last set mark.
 -- Output: number of generated files (for tables and sequences, including the _INFO file)
--- The function is defined as SECURITY DEFINER so that emaj_adm role can use it.
   DECLARE
     v_nbFile                 INT = 3;        -- start with 3 = 2 files for sequences + _INFO
     v_noSuppliedLastMark     BOOLEAN;
@@ -10628,52 +10662,48 @@ $emaj_snap_log_group$
 --   build names
       v_fileName = v_dir || '/' || translate(r_tblsq.rel_schema || '_' || r_tblsq.rel_log_table || '.snap', E' /\\$<>*', '_______');
       v_logTableName = quote_ident(r_tblsq.rel_log_schema) || '.' || quote_ident(r_tblsq.rel_log_table);
---   prepare the execute the COPY statement
-      v_stmt= 'COPY (SELECT * FROM ' || v_logTableName || ' WHERE ' || v_conditions
-           || ' ORDER BY emaj_gid ASC) TO ' || quote_literal(v_fileName)
-           || ' ' || coalesce (v_copyOptions, '');
-      EXECUTE v_stmt;
+--   dump the log table
+      v_stmt= '(SELECT * FROM ' || v_logTableName || ' WHERE ' || v_conditions || ' ORDER BY emaj_gid ASC)';
+      PERFORM emaj._copy_to_file(v_stmt, v_fileName, v_copyOptions);
       v_nbFile = v_nbFile + 1;
     END LOOP;
 -- generate the file for sequences state at start mark
     v_fileName = v_dir || '/' || translate(v_groupName || '_sequences_at_' || v_firstMark, E' /\\$<>*', '_______');
--- and execute the COPY statement
-    v_stmt = 'COPY (SELECT emaj_sequence.*' ||
+-- dump the sequences state at start mark time
+    v_stmt = '(SELECT emaj_sequence.*' ||
              ' FROM emaj.emaj_sequence, emaj.emaj_relation' ||
              ' WHERE sequ_time_id = ' || v_firstMarkTimeId ||
              '   AND rel_kind = ''S'' AND rel_group = ' || quote_literal(v_groupName) ||
              '   AND rel_time_range @> ' || v_firstMarkTimeId || '::BIGINT' ||
              '   AND sequ_schema = rel_schema AND sequ_name = rel_tblseq' ||
-             ' ORDER BY sequ_schema, sequ_name) TO ' || quote_literal(v_fileName) || ' ' ||
-             coalesce (v_copyOptions, '');
-    EXECUTE v_stmt;
--- prepare the file for sequences state at end mark
--- generate the full file name and the COPY statement
+             ' ORDER BY sequ_schema, sequ_name)';
+    PERFORM emaj._copy_to_file(v_stmt, v_fileName, v_copyOptions);
     IF v_noSuppliedLastMark THEN
+-- dump the sequences state at the current time
       v_fileName = v_dir || '/' || translate(v_groupName || '_sequences_at_'
                 || to_char(v_lastMarkTs,'HH24.MI.SS.MS'), E' /\\$<>*', '_______');
-      v_stmt = 'SELECT seq.* FROM emaj.emaj_relation, LATERAL emaj._get_current_sequence_state(rel_schema, rel_tblseq, ' ||
+      v_stmt = '(SELECT seq.* FROM emaj.emaj_relation, LATERAL emaj._get_current_sequence_state(rel_schema, rel_tblseq, ' ||
                                                                                                v_lastMarkTimeId || ') AS seq' ||
-               '  WHERE upper_inf(rel_time_range) AND rel_group = ' || quote_literal(v_groupName) || ' AND rel_kind = ''S''';
+               '  WHERE upper_inf(rel_time_range) AND rel_group = ' || quote_literal(v_groupName) || ' AND rel_kind = ''S'')';
+      PERFORM emaj._copy_to_file(v_stmt, v_fileName, v_copyOptions);
     ELSE
+-- dump the sequences state at end mark time
       v_fileName = v_dir || '/' || translate(v_groupName || '_sequences_at_' || v_lastMark, E' /\\$<>*', '_______');
-      v_stmt = 'SELECT emaj_sequence.*'
+      v_stmt = '(SELECT emaj_sequence.*'
             || ' FROM emaj.emaj_sequence, emaj.emaj_relation'
             || ' WHERE sequ_time_id = ' || v_lastMarkTimeId
             || '   AND rel_kind = ''S'' AND rel_group = ' || quote_literal(v_groupName)
             || '   AND (rel_time_range @> ' || v_lastMarkTimeId || '::BIGINT'
             || '        OR upper(rel_time_range) = ' || v_lastMarkTimeId || '::BIGINT)'
             || '   AND sequ_schema = rel_schema AND sequ_name = rel_tblseq'
-            || ' ORDER BY sequ_schema, sequ_name';
+            || ' ORDER BY sequ_schema, sequ_name)';
+      PERFORM emaj._copy_to_file(v_stmt, v_fileName, v_copyOptions);
     END IF;
--- and create the file
-    EXECUTE format('COPY (%s) TO %L %s',
-                   v_stmt, v_fileName, coalesce (v_copyOptions, ''));
 -- create the _INFO file to keep general information about the snap operation
-    EXECUTE format('COPY (SELECT %L) TO %L %s',
-                  'E-Maj log tables snap of group ' || v_groupName || ' between marks ' || v_firstMark || ' and ' ||
-                    CASE WHEN v_noSuppliedLastMark THEN 'current state' ELSE v_lastMark END || ' at ' || statement_timestamp(),
-                  v_dir || '/_INFO', coalesce (v_copyOptions, ''));
+    v_stmt = '(SELECT ' || quote_literal('E-Maj log tables snap of group ' || v_groupName || ' between marks ' || v_firstMark ||
+                                         ' and ' || CASE WHEN v_noSuppliedLastMark THEN 'current state' ELSE v_lastMark END ||
+                                         ' at ' || statement_timestamp()) || ')';
+    PERFORM emaj._copy_to_file(v_stmt, v_dir || '/_INFO', v_copyOptions);
 -- insert end in the history
     INSERT INTO emaj.emaj_hist (hist_function, hist_event, hist_object, hist_wording)
       VALUES ('SNAP_LOG_GROUP', 'END', v_groupName, v_nbFile || ' generated files');
@@ -10732,7 +10762,7 @@ $$Generates a sql script replaying all updates performed on a tables groups set 
 CREATE OR REPLACE FUNCTION emaj._gen_sql_groups(v_groupNames TEXT[], v_multiGroup BOOLEAN, v_firstMark TEXT, v_lastMark TEXT,
                                                 v_location TEXT, v_tblseqs TEXT[])
 RETURNS BIGINT LANGUAGE plpgsql
-SET DateStyle = 'ISO, YMD' AS
+SET DateStyle = 'ISO, YMD' SET standard_conforming_strings = ON AS
 $_gen_sql_groups$
 -- This function generates a SQL script representing all updates performed on a tables groups array between 2 marks
 -- or beetween a mark and the current situation. The result is stored into an external file.
@@ -10833,17 +10863,9 @@ $_gen_sql_groups$
         scr_sql                TEXT                 -- the generated sql text
       );
       GRANT SELECT ON emaj_temp_script TO PUBLIC;
--- test the supplied output file name by inserting a temporary line
+-- test the supplied output file to avoid to discover a bad file name after having spent a lot of time to build the script
       IF v_location IS NOT NULL THEN
-        INSERT INTO emaj_temp_script
-          SELECT 0, 1, 0, '-- SQL script generation in progress - started at ' || statement_timestamp();
-        BEGIN
-          PERFORM emaj._export_sql_script(v_location);
-        EXCEPTION
-          WHEN OTHERS THEN
-            RAISE EXCEPTION '_gen_sql_groups: The file "%" cannot be used as script output file.', v_location;
-        END;
-        DELETE FROM emaj_temp_script;
+        PERFORM emaj._copy_to_file('(SELECT 0)', v_location, NULL);
       END IF;
 -- end of checks
 -- if there is no first mark for all groups, return quickly with a warning message
@@ -10938,7 +10960,7 @@ $_gen_sql_groups$
         SELECT NULL, 11, txid_current(), 'RESET datestyle;';
 -- if an output file is supplied, write the SQL script on the external file and drop the temporary table
       IF v_location IS NOT NULL THEN
-        PERFORM emaj._export_sql_script(v_location);
+        PERFORM emaj._copy_to_file('(SELECT scr_sql FROM emaj_temp_script ORDER BY scr_emaj_gid NULLS LAST, scr_subid)', v_location, NULL);
         DROP TABLE IF EXISTS emaj_temp_script;
       ELSE
 -- otherwise create a view to ease the generation script export
@@ -10946,7 +10968,6 @@ $_gen_sql_groups$
           SELECT scr_sql
             FROM emaj_temp_script
             ORDER BY scr_emaj_gid NULLS LAST, scr_subid;
-        GRANT SELECT ON emaj_sql_script TO PUBLIC;
       END IF;
 -- return the number of sql verbs generated into the output file
       v_cumNbSQL = v_cumNbSQL + v_nbSeq;
@@ -10959,19 +10980,6 @@ $_gen_sql_groups$
     RETURN v_cumNbSQL;
   END;
 $_gen_sql_groups$;
-
-CREATE OR REPLACE FUNCTION emaj._export_sql_script(v_location TEXT)
-RETURNS VOID LANGUAGE plpgsql
-SECURITY DEFINER SET standard_conforming_strings = ON SET search_path = pg_catalog, pg_temp AS
-$_export_sql_script$
--- This function export a sql script generated by the _gen_sql_groups() function into a file
--- Input: - absolute pathname describing the file that will hold the result (NOT NULL)
--- The function is declared as SECURITY DEFINER to allow the use of the COPY SQL statement
-  BEGIN
-    EXECUTE format('COPY (SELECT scr_sql FROM emaj_temp_script ORDER BY scr_emaj_gid NULLS LAST, scr_subid ) TO %L',
-                       v_location);
-  END;
-$_export_sql_script$;
 
 ------------------------------------
 --                                --
@@ -11117,8 +11125,7 @@ COMMENT ON FUNCTION emaj.emaj_export_parameters_configuration() IS
 $$Generates a json structure describing the E-Maj parameters.$$;
 
 CREATE OR REPLACE FUNCTION emaj.emaj_export_parameters_configuration(v_location TEXT)
-RETURNS INT LANGUAGE plpgsql
-SECURITY DEFINER SET search_path = pg_catalog, pg_temp AS
+RETURNS INT LANGUAGE plpgsql AS
 $emaj_export_parameters_configuration$
 -- This function stores the parameters configuration into a file on the server.
 -- The JSON structure is built by the _export_param_conf() function.
@@ -11133,12 +11140,7 @@ $emaj_export_parameters_configuration$
     INSERT INTO t
       SELECT line
         FROM regexp_split_to_table(v_paramsJson::TEXT, '\n') AS line;
-    BEGIN
-      EXECUTE format ('COPY t TO %s',
-                      quote_literal(v_location));
-    EXCEPTION WHEN OTHERS THEN
-      RAISE EXCEPTION 'emaj_export_parameters_configuration: Unable to write to the % file.', v_location;
-    END;
+    PERFORM emaj._copy_to_file('t', v_location, NULL);
     DROP TABLE t;
 -- return the number of recorded parameters
     RETURN json_array_length(v_paramsJson->'parameters');
@@ -11237,8 +11239,7 @@ COMMENT ON FUNCTION emaj.emaj_import_parameters_configuration(JSON,BOOLEAN) IS
 $$Import a json structure describing E-Maj parameters to load.$$;
 
 CREATE OR REPLACE FUNCTION emaj.emaj_import_parameters_configuration(v_location TEXT, v_deleteCurrentConf BOOLEAN DEFAULT FALSE)
-RETURNS INT LANGUAGE plpgsql
-SECURITY DEFINER SET search_path = pg_catalog, pg_temp AS
+RETURNS INT LANGUAGE plpgsql AS
 $emaj_import_parameters_configuration$
 -- This function imports a file containing a JSON formatted structure representing E-Maj parameters to load.
 -- This structure can have been generated by the emaj_export_parameters_configuration() functions and may have been adapted by the user.
@@ -11257,12 +11258,7 @@ $emaj_import_parameters_configuration$
       VALUES ('IMPORT_PARAMETERS', 'BEGIN', 'Input file: ' || quote_literal(v_location));
 -- read the input file and put its content into a temporary table
     CREATE TEMP TABLE t (params TEXT);
-    BEGIN
-      EXECUTE format ('COPY t FROM %s',
-                      quote_literal(v_location));
-    EXCEPTION WHEN OTHERS THEN
-      RAISE EXCEPTION 'emaj_import_parameters_configuration: Unable to read the % file.', v_location;
-    END;
+    PERFORM emaj._copy_from_file('t', v_location);
 -- aggregate the lines into a single text variable
     SELECT string_agg(params, E'\n') INTO v_paramsText
       FROM t;

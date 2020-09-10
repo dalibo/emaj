@@ -877,8 +877,12 @@ select json_array_length(emaj.emaj_export_groups_configuration(array['myGroup1',
 -- export in file
 --   error
 select emaj.emaj_export_groups_configuration('/tmp/dummy/location/file');
-ERROR:  emaj_export_groups_configuration: Unable to write to the /tmp/dummy/location/file file.
-CONTEXT:  PL/pgSQL function emaj.emaj_export_groups_configuration(text,text[]) line 20 at RAISE
+ERROR:  could not open file "/tmp/dummy/location/file" for writing: No such file or directory
+HINT:  COPY TO instructs the PostgreSQL server process to write a file. You may want a client-side facility such as psql's \copy.
+CONTEXT:  SQL statement "COPY t TO '/tmp/dummy/location/file' "
+PL/pgSQL function emaj._copy_to_file(text,text,text) line 20 at EXECUTE
+SQL statement "SELECT emaj._copy_to_file('t', v_location, NULL)"
+PL/pgSQL function emaj.emaj_export_groups_configuration(text,text[]) line 16 at PERFORM
 --   ok
 select emaj.emaj_export_groups_configuration(:'EMAJTESTTMPDIR' || '/orig_groups_config_all.json');
  emaj_export_groups_configuration 
@@ -1002,7 +1006,7 @@ WARNING:  _import_groups_conf (2): The tables group "unknownGroup" to import is 
 ERROR:  _import_groups_conf: One or several errors have been detected in the JSON groups configuration.
 CONTEXT:  PL/pgSQL function emaj._import_groups_conf(json,text[],boolean,text,text) line 78 at RAISE
 SQL statement "SELECT emaj._import_groups_conf(v_json, v_groups, v_allowGroupsUpdate, v_location, v_mark)"
-PL/pgSQL function emaj.emaj_import_groups_configuration(text,text[],boolean,text) line 34 at SQL statement
+PL/pgSQL function emaj.emaj_import_groups_configuration(text,text[],boolean,text) line 29 at SQL statement
 --   group already created
 select emaj.emaj_import_groups_configuration('{ "tables_groups": [ { "group": "myGroup1" }, { "group": "myGroup2" } ] }'::json, null, false);
 WARNING:  _import_groups_conf (2): The tables group "myGroup1" already exists.
@@ -1086,12 +1090,16 @@ select emaj.emaj_drop_group('new_grp');
 -- import from file
 --   error
 select emaj.emaj_import_groups_configuration('/tmp/dummy/location/file');
-ERROR:  emaj_import_groups_configuration: Unable to read the /tmp/dummy/location/file file.
-CONTEXT:  PL/pgSQL function emaj.emaj_import_groups_configuration(text,text[],boolean,text) line 21 at RAISE
+ERROR:  could not open file "/tmp/dummy/location/file" for reading: No such file or directory
+HINT:  COPY FROM instructs the PostgreSQL server process to read a file. You may want a client-side facility such as psql's \copy.
+CONTEXT:  SQL statement "COPY t FROM '/tmp/dummy/location/file'"
+PL/pgSQL function emaj._copy_from_file(text,text) line 16 at EXECUTE
+SQL statement "SELECT emaj._copy_from_file('t', v_location)"
+PL/pgSQL function emaj.emaj_import_groups_configuration(text,text[],boolean,text) line 17 at PERFORM
 \! echo 'not a json content' >/tmp/bad_groups_config.json
 select emaj.emaj_import_groups_configuration('/tmp/bad_groups_config.json');
 ERROR:  emaj_import_groups_configuration: The file content is not a valid JSON content.
-CONTEXT:  PL/pgSQL function emaj.emaj_import_groups_configuration(text,text[],boolean,text) line 31 at RAISE
+CONTEXT:  PL/pgSQL function emaj.emaj_import_groups_configuration(text,text[],boolean,text) line 26 at RAISE
 \! rm /tmp/bad_groups_config.json
 --   ok
 -- only 2 from the original groups
@@ -1150,7 +1158,7 @@ WARNING:  _import_groups_conf (2): In the group "myGroup1" and for the table mys
 ERROR:  _import_groups_conf: One or several errors have been detected in the JSON groups configuration.
 CONTEXT:  PL/pgSQL function emaj._import_groups_conf(json,text[],boolean,text,text) line 78 at RAISE
 SQL statement "SELECT emaj._import_groups_conf(v_json, v_groups, v_allowGroupsUpdate, v_location, v_mark)"
-PL/pgSQL function emaj.emaj_import_groups_configuration(text,text[],boolean,text) line 34 at SQL statement
+PL/pgSQL function emaj.emaj_import_groups_configuration(text,text[],boolean,text) line 29 at SQL statement
 -- suppress 1 trigger
 \! sed -n -e '1,29p' $EMAJTESTTMPDIR/modified_groups_config_1.json >$EMAJTESTTMPDIR/modified_groups_config_3.json
 \! sed -n -e '33,$p' $EMAJTESTTMPDIR/modified_groups_config_1.json >>$EMAJTESTTMPDIR/modified_groups_config_3.json
@@ -1184,7 +1192,7 @@ SQL statement "SELECT v_nbRel FROM emaj._alter_groups(v_groups, TRUE, v_mark, 'I
 PL/pgSQL function emaj._import_groups_conf_exec(json,text[],text) line 57 at PERFORM
 PL/pgSQL function emaj._import_groups_conf(json,text[],boolean,text,text) line 81 at RETURN
 SQL statement "SELECT emaj._import_groups_conf(v_json, v_groups, v_allowGroupsUpdate, v_location, v_mark)"
-PL/pgSQL function emaj.emaj_import_groups_configuration(text,text[],boolean,text) line 34 at SQL statement
+PL/pgSQL function emaj.emaj_import_groups_configuration(text,text[],boolean,text) line 29 at SQL statement
 rollback;
 -- rebuild all original groups
 -- this will assign the just removed table ans sequence

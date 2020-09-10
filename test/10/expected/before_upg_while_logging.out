@@ -6,7 +6,7 @@ SET datestyle TO ymd;
 -----------------------------
 -- grant emaj_adm role 
 -----------------------------
-grant emaj_adm to emaj_regression_tests_adm_user1;
+grant emaj_adm to emaj_regression_tests_adm_user1, emaj_regression_tests_adm_user2;
 set role emaj_regression_tests_adm_user1;
 -----------------------------
 -- prepare groups
