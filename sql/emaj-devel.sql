@@ -1664,14 +1664,16 @@ $_drop_log_schemas$
   END;
 $_drop_log_schemas$;
 
-CREATE OR REPLACE FUNCTION emaj._handle_trigger_tbl(v_action TEXT, v_fullTableName TEXT, v_triggerName TEXT)
+CREATE OR REPLACE FUNCTION emaj._handle_trigger_fk_tbl(v_action TEXT, v_fullTableName TEXT, v_objectName TEXT,
+                                                       v_objectDef TEXT DEFAULT NULL)
 RETURNS VOID LANGUAGE plpgsql
 SECURITY DEFINER SET search_path = pg_catalog, pg_temp AS
-$_handle_trigger_tbl$
--- The function performs an elementary action for a trigger on an application table.
--- Inputs: the action to perform: ENABLE/DISABLE/DROP
---         the full name of the application table
---         the trigger name
+$_handle_trigger_fk_tbl$
+-- The function performs an elementary action for a trigger or a foreign key on an application table.
+-- Inputs: the action to perform: ENABLE_TRIGGER/DISABLE_TRIGGER/ADD_TRIGGER/DROP_TRIGGER/ADD_FK/DROP_FK
+--         the full name of the application table (schema qualified and quoted if needed)
+--         the trigger or constraint name
+--         the object definition for foreign keys
 -- The function is defined as SECURITY DEFINER so that emaj_adm role can perform the action on any application table.
   DECLARE
     v_stack                  TEXT;
@@ -1684,19 +1686,38 @@ $_handle_trigger_tbl$
        v_stack NOT LIKE '%emaj._start_groups(text[],text,boolean,boolean)%' AND
        v_stack NOT LIKE '%emaj._stop_groups(text[],text,boolean,boolean)%' AND
        v_stack NOT LIKE '%emaj._rlbk_session_exec(integer,integer)%' THEN
-      RAISE EXCEPTION '_handle_trigger_tbl: the calling function is not allowed to reach this sensitive function.';
+      RAISE EXCEPTION '_handle_trigger_fk_tbl: the calling function is not allowed to reach this sensitive function.';
     END IF;
 -- perform the action
-    IF v_action = 'DISABLE' OR v_action = 'ENABLE' THEN
-      EXECUTE format('ALTER TABLE %s %s TRIGGER %I',
-                     v_fullTableName, v_action, quote_ident(v_triggerName));
-    ELSIF v_action = 'DROP' THEN
+    IF v_action = 'DISABLE_TRIGGER' THEN
+      EXECUTE format('ALTER TABLE %s DISABLE TRIGGER %I',
+                     v_fullTableName, v_objectName);
+    ELSIF v_action = 'ENABLE_TRIGGER' THEN
+      EXECUTE format('ALTER TABLE %s ENABLE TRIGGER %I',
+                     v_fullTableName, v_objectName);
+    ELSIF v_action = 'ADD_TRIGGER' AND v_objectName = 'emaj_log_trg' THEN
+      EXECUTE format('CREATE TRIGGER emaj_log_trg'
+                     ' AFTER INSERT OR UPDATE OR DELETE ON %s'
+                     '  FOR EACH ROW EXECUTE PROCEDURE %s()',
+                     v_fullTableName, v_objectDef);
+    ELSIF v_action = 'ADD_TRIGGER' AND v_objectName = 'emaj_trunc_trg' THEN
+      EXECUTE format('CREATE TRIGGER emaj_trunc_trg'
+                     '  BEFORE TRUNCATE ON %s'
+                     '  FOR EACH STATEMENT EXECUTE PROCEDURE emaj._truncate_trigger_fnct()',
+                     v_fullTableName);
+    ELSIF v_action = 'DROP_TRIGGER' THEN
       EXECUTE format('DROP TRIGGER IF EXISTS %I ON %s',
-                     quote_ident(v_triggerName), v_fullTableName);
+                     v_objectName, v_fullTableName);
+    ELSIF v_action = 'ADD_FK' THEN
+      EXECUTE format('ALTER TABLE %s ADD CONSTRAINT %I %s',
+                     v_fullTableName, v_objectName, v_objectDef);
+    ELSIF v_action = 'DROP_FK' THEN
+      EXECUTE format('ALTER TABLE %s DROP CONSTRAINT %I',
+                     v_fullTableName, v_objectName);
     END IF;
     RETURN;
   END;
-$_handle_trigger_tbl$;
+$_handle_trigger_fk_tbl$;
 
 CREATE OR REPLACE FUNCTION emaj._copy_from_file(v_destination_table TEXT, v_location TEXT)
 RETURNS VOID LANGUAGE plpgsql
@@ -2986,11 +3007,14 @@ $_create_tbl$
          || 'END;'
          || '$logfnct$ LANGUAGE plpgsql SECURITY DEFINER SET search_path = pg_catalog, pg_temp;';
 -- create the log and truncate triggers
-    PERFORM emaj._create_emaj_triggers_tbl(v_fullTableName, v_logFnctName);
+    PERFORM emaj._handle_trigger_fk_tbl('DROP_TRIGGER', v_fullTableName, 'emaj_log_trg');
+    PERFORM emaj._handle_trigger_fk_tbl('ADD_TRIGGER', v_fullTableName, 'emaj_log_trg', v_logFnctName);
+    PERFORM emaj._handle_trigger_fk_tbl('DROP_TRIGGER', v_fullTableName, 'emaj_trunc_trg');
+    PERFORM emaj._handle_trigger_fk_tbl('ADD_TRIGGER', v_fullTableName, 'emaj_trunc_trg');
 -- If the group is idle, deactivate the triggers (they will be enabled at emaj_start_group time)
     IF NOT v_groupIsLogging THEN
-      PERFORM emaj._handle_trigger_tbl('DISABLE', v_fullTableName, 'emaj_log_trg');
-      PERFORM emaj._handle_trigger_tbl('DISABLE', v_fullTableName, 'emaj_trunc_trg');
+      PERFORM emaj._handle_trigger_fk_tbl('DISABLE_TRIGGER', v_fullTableName, 'emaj_log_trg');
+      PERFORM emaj._handle_trigger_fk_tbl('DISABLE_TRIGGER', v_fullTableName, 'emaj_trunc_trg');
     END IF;
 -- set emaj_adm as owner of log objects
     EXECUTE format('ALTER TABLE %s OWNER TO emaj_adm',
@@ -3041,41 +3065,6 @@ $_create_tbl$
     RETURN;
   END;
 $_create_tbl$;
-
-CREATE OR REPLACE FUNCTION emaj._create_emaj_triggers_tbl(v_fullTableName TEXT, v_logFnctName TEXT)
-RETURNS VOID LANGUAGE plpgsql
-SECURITY DEFINER SET search_path = pg_catalog, pg_temp AS
-$_create_emaj_triggers_tbl$
--- The function creates the log and truncate triggers for an application table.
--- Inputs: the full name of the application table
---         the log function name
--- The function is defined as SECURITY DEFINER so that emaj_adm role can create the trigger on the application table.
-  DECLARE
-    v_stack                  TEXT;
-  BEGIN
--- check that the caller is allowed to do that.
-    GET DIAGNOSTICS v_stack = PG_CONTEXT;
-    IF v_stack NOT LIKE '%emaj._create_tbl(text,text,text,integer,text,text,bigint,boolean,boolean)%' THEN
-      RAISE EXCEPTION '_create_emaj_triggers_tbl: the calling function is not allowed to reach this sensitive function.';
-    END IF;
--- drop the log trigger if it exists
-    EXECUTE format('DROP TRIGGER IF EXISTS emaj_log_trg ON %s',
-                   v_fullTableName);
--- create the log trigger on the application table, using the previously created log function
-    EXECUTE format('CREATE TRIGGER emaj_log_trg'
-                   ' AFTER INSERT OR UPDATE OR DELETE ON %s'
-                   '  FOR EACH ROW EXECUTE PROCEDURE %s()',
-                   v_fullTableName, v_logFnctName);
--- create the trigger that manage any TRUNCATE on the application table
-    EXECUTE format('DROP TRIGGER IF EXISTS emaj_trunc_trg ON %s',
-                   v_fullTableName);
-    EXECUTE format('CREATE TRIGGER emaj_trunc_trg'
-                   '  BEFORE TRUNCATE ON %s'
-                   '  FOR EACH STATEMENT EXECUTE PROCEDURE emaj._truncate_trigger_fnct()',
-                   v_fullTableName);
-    RETURN;
-  END;
-$_create_emaj_triggers_tbl$;
 
 CREATE OR REPLACE FUNCTION emaj._build_sql_tbl(v_fullTableName TEXT, OUT v_rlbkColList TEXT, OUT v_rlbkPkColList TEXT,
                                                OUT v_rlbkPkConditions TEXT, OUT v_genColList TEXT, OUT v_genValList TEXT,
@@ -3414,8 +3403,8 @@ $_remove_tbl$
                 AND relname = v_table
                 AND relkind = 'r'
            ) THEN
-        PERFORM emaj._handle_trigger_tbl('DROP', v_fullTableName, 'emaj_log_trg');
-        PERFORM emaj._handle_trigger_tbl('DROP', v_fullTableName, 'emaj_trunc_trg');
+        PERFORM emaj._handle_trigger_fk_tbl('DROP_TRIGGER', v_fullTableName, 'emaj_log_trg');
+        PERFORM emaj._handle_trigger_fk_tbl('DROP_TRIGGER', v_fullTableName, 'emaj_trunc_trg');
       END IF;
 -- ... drop the log function and the log sequence
 -- (but we keep the sequence related data in the emaj_table and the emaj_seq_hole tables)
@@ -3578,8 +3567,8 @@ $_drop_tbl$
                 AND relkind = 'r'
            ) THEN
 -- drop the log and truncate triggers on the application table
-        PERFORM emaj._handle_trigger_tbl('DROP', v_fullTableName, 'emaj_log_trg');
-        PERFORM emaj._handle_trigger_tbl('DROP', v_fullTableName, 'emaj_trunc_trg');
+        PERFORM emaj._handle_trigger_fk_tbl('DROP_TRIGGER', v_fullTableName, 'emaj_log_trg');
+        PERFORM emaj._handle_trigger_fk_tbl('DROP_TRIGGER', v_fullTableName, 'emaj_trunc_trg');
       END IF;
 -- drop the log function
       IF r_rel.rel_log_function IS NOT NULL THEN
@@ -6812,8 +6801,8 @@ $_start_groups$
       LOOP
         IF r_tblsq.rel_kind = 'r' THEN
 -- if it is a table, enable the emaj log and truncate triggers
-          PERFORM emaj._handle_trigger_tbl('ENABLE', r_tblsq.full_relation_name, 'emaj_log_trg');
-          PERFORM emaj._handle_trigger_tbl('ENABLE', r_tblsq.full_relation_name, 'emaj_trunc_trg');
+          PERFORM emaj._handle_trigger_fk_tbl('ENABLE_TRIGGER', r_tblsq.full_relation_name, 'emaj_log_trg');
+          PERFORM emaj._handle_trigger_fk_tbl('ENABLE_TRIGGER', r_tblsq.full_relation_name, 'emaj_trunc_trg');
         END IF;
         v_nbTblSeq = v_nbTblSeq + 1;
       END LOOP;
@@ -6981,7 +6970,7 @@ $_stop_groups$
 --     errors are captured so that emaj_force_stop_group() can be silently executed
             v_fullTableName  = quote_ident(r_tblsq.rel_schema) || '.' || quote_ident(r_tblsq.rel_tblseq);
             BEGIN
-              PERFORM emaj._handle_trigger_tbl('DISABLE', v_fullTableName, 'emaj_log_trg');
+              PERFORM emaj._handle_trigger_fk_tbl('DISABLE_TRIGGER', v_fullTableName, 'emaj_log_trg');
             EXCEPTION
               WHEN undefined_object THEN
                 IF v_isForced THEN
@@ -6993,7 +6982,7 @@ $_stop_groups$
                 END IF;
             END;
             BEGIN
-              PERFORM emaj._handle_trigger_tbl('DISABLE', v_fullTableName, 'emaj_trunc_trg');
+              PERFORM emaj._handle_trigger_fk_tbl('DISABLE_TRIGGER', v_fullTableName, 'emaj_trunc_trg');
             EXCEPTION
               WHEN undefined_object THEN
                 IF v_isForced THEN
@@ -8971,13 +8960,11 @@ $_rlbk_start_mark$
 $_rlbk_start_mark$;
 
 CREATE OR REPLACE FUNCTION emaj._rlbk_session_exec(v_rlbkId INT, v_session INT)
-RETURNS VOID LANGUAGE plpgsql
-SECURITY DEFINER SET search_path = pg_catalog, pg_temp AS
+RETURNS VOID LANGUAGE plpgsql AS
 $_rlbk_session_exec$
 -- This function executes the main part of a rollback operation.
 -- It executes the steps identified by _rlbk_planning() and stored into emaj_rlbk_plan, for one session.
 -- It updates the emaj_rlbk_plan table, using dblink connection if possible, giving a visibility of the rollback progress.
--- The function is defined as SECURITY DEFINER so that emaj_adm role can use it even if it doesn't own the application tables.
   DECLARE
     v_stmt                   TEXT;
     v_dblinkSchema           TEXT;
@@ -9034,14 +9021,13 @@ $_rlbk_session_exec$
       CASE r_step.rlbp_step
         WHEN 'DIS_APP_TRG' THEN
 -- process an application trigger disable
-          PERFORM emaj._handle_trigger_tbl('DISABLE', v_fullTableName, r_step.rlbp_object);
+          PERFORM emaj._handle_trigger_fk_tbl('DISABLE_TRIGGER', v_fullTableName, r_step.rlbp_object);
         WHEN 'DIS_LOG_TRG' THEN
 -- process a log trigger disable
-          PERFORM emaj._handle_trigger_tbl('DISABLE', v_fullTableName, 'emaj_log_trg');
+          PERFORM emaj._handle_trigger_fk_tbl('DISABLE_TRIGGER', v_fullTableName, 'emaj_log_trg');
         WHEN 'DROP_FK' THEN
 -- process a foreign key deletion
-          EXECUTE format('ALTER TABLE %I.%I DROP CONSTRAINT %I',
-                         r_step.rlbp_schema, r_step.rlbp_table, r_step.rlbp_object);
+          PERFORM emaj._handle_trigger_fk_tbl('DROP_FK', v_fullTableName, r_step.rlbp_object);
         WHEN 'SET_FK_DEF' THEN
 -- set a foreign key deferred
           EXECUTE format('SET CONSTRAINTS %I.%I DEFERRED',
@@ -9076,14 +9062,13 @@ $_rlbk_session_exec$
                          r_step.rlbp_schema, r_step.rlbp_object);
         WHEN 'ADD_FK' THEN
 -- process a foreign key creation
-          EXECUTE format('ALTER TABLE %I.%I ADD CONSTRAINT %I %s',
-                         r_step.rlbp_schema, r_step.rlbp_table, r_step.rlbp_object, r_step.rlbp_object_def);
+          PERFORM emaj._handle_trigger_fk_tbl('ADD_FK', v_fullTableName, r_step.rlbp_object, r_step.rlbp_object_def);
         WHEN 'ENA_APP_TRG' THEN
 -- process an application trigger enable
-          PERFORM emaj._handle_trigger_tbl('ENABLE', v_fullTableName, r_step.rlbp_object);
+          PERFORM emaj._handle_trigger_fk_tbl('ENABLE_TRIGGER', v_fullTableName, r_step.rlbp_object);
         WHEN 'ENA_LOG_TRG' THEN
 -- process a log trigger enable
-          PERFORM emaj._handle_trigger_tbl('ENABLE', v_fullTableName, 'emaj_log_trg');
+          PERFORM emaj._handle_trigger_fk_tbl('ENABLE_TRIGGER', v_fullTableName, 'emaj_log_trg');
       END CASE;
 -- update the emaj_rlbk_plan table to set the step duration
 -- NB: the computed duration does not include the time needed to update the emaj_rlbk_plan table
