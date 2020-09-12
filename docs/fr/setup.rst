@@ -12,7 +12,7 @@ Pour les environnements pour lesquels il n’est pas possible de procéder ainsi
 Opération préliminaire facultative
 ----------------------------------
 
-Les tables techniques de l’extension sont créés dans le tablespace par défaut. Si l’administrateur E-Maj veut stocker les tables techniques dans un tablespace dédié, il peut le créer si besoin et le définir comme tablespace par défaut pour la session ::
+Les tables techniques de l’extension sont créées dans le tablespace par défaut. Si l’administrateur E-Maj veut stocker les tables techniques dans un tablespace dédié, il peut le créer si besoin et le définir comme tablespace par défaut pour la session ::
 
 	SET default_tablespace = <nom.tablespace>;
 
@@ -96,4 +96,3 @@ L'examen des messages affichés par l'exécution du script permet de découvrir 
    SELECT emaj.emaj_demo_cleanup();
 
 Ceci supprime le schéma *emaj_demo_app_schema* et les deux groupes de tables *emaj demo group 1* et *emaj demo group 2*.
-

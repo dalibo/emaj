@@ -21,8 +21,8 @@ E-Maj - Change log
   * Minor code improvements.
 
 ###Bug fixes:###
-
-
+  * Administrator were able to use tablespaces to store log tables and/or
+    indexes, without being granted any CREATE privilege on these tablespaces.
 
 3.4.0 (2020-Jul-24)
 ------

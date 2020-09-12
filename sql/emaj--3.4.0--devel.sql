@@ -2089,8 +2089,7 @@ $$Retrieve the current log table of a given application table.$$;
 
 CREATE OR REPLACE FUNCTION emaj._create_tbl(v_schema TEXT, v_tbl TEXT, v_groupName TEXT, v_priority INT, v_logDatTsp TEXT,
                                             v_logIdxTsp TEXT, v_timeId BIGINT, v_groupIsRollbackable BOOLEAN, v_groupIsLogging BOOLEAN)
-RETURNS VOID LANGUAGE plpgsql
-SECURITY DEFINER SET search_path = pg_catalog, pg_temp AS
+RETURNS VOID LANGUAGE plpgsql AS
 $_create_tbl$
 -- This function creates all what is needed to manage the log and rollback operations for an application table.
 -- Input: the application table to process, the group to add it into, the priority and tablespaces attributes, the time id of the
@@ -2098,7 +2097,6 @@ $_create_tbl$
 -- The objects created in the log schema:
 --    - the associated log table, with its own sequence
 --    - the function that logs the tables updates, defined as a trigger
--- The function is defined as SECURITY DEFINER so that log tables can be created on tablespaces for which emaj_adm has no explicit rights
   DECLARE
     v_emajNamesPrefix        TEXT;
     v_baseLogTableName       TEXT;
@@ -2498,12 +2496,10 @@ $_change_priority_tbl$;
 
 CREATE OR REPLACE FUNCTION emaj._change_log_data_tsp_tbl(v_schema TEXT, v_table TEXT, v_logSchema TEXT, v_currentLogTable TEXT,
                                                          v_currentLogDatTsp TEXT, v_newLogDatTsp TEXT, v_function TEXT)
-RETURNS VOID LANGUAGE plpgsql
-SECURITY DEFINER SET search_path = pg_catalog, pg_temp AS
+RETURNS VOID LANGUAGE plpgsql AS
 $_change_log_data_tsp_tbl$
 -- This function changes the log data tablespace for an application table.
 -- Input: the existing emaj_relation characteristics for the table, the new log data tablespace and the calling function.
--- The function is defined as SECURITY DEFINER so that emaj_adm role can use it even if he is not the owner of the application table.
   DECLARE
     v_newTsp                 TEXT;
   BEGIN
@@ -2532,12 +2528,10 @@ $_change_log_data_tsp_tbl$;
 
 CREATE OR REPLACE FUNCTION emaj._change_log_index_tsp_tbl(v_schema TEXT, v_table TEXT, v_logSchema TEXT, v_currentLogIndex TEXT,
                                                          v_currentLogIdxTsp TEXT, v_newLogIdxTsp TEXT, v_function TEXT)
-RETURNS VOID LANGUAGE plpgsql
-SECURITY DEFINER SET search_path = pg_catalog, pg_temp AS
+RETURNS VOID LANGUAGE plpgsql AS
 $_change_log_index_tsp_tbl$
 -- This function changes the log index tablespace for an application table.
 -- Input: the existing emaj_relation characteristics for the table, the new log index tablespace and the calling function.
--- The function is defined as SECURITY DEFINER so that emaj_adm role can use it even if he is not the owner of the application table.
   DECLARE
     v_newTsp                 TEXT;
   BEGIN

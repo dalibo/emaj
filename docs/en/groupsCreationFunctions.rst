@@ -141,7 +141,7 @@ where:
 
 If one of these properties is not set, its value is considered *NULL*.
 
-If specific tablespaces are referenced for any log table or log index, these tablespaces must exist before the function's execution.
+If specific tablespaces are referenced for any log table or log index, these tablespaces must exist before the function's execution and the user must have been granted the *CREATE* privilege on them.
 
 For all these functions, an exclusive lock is set on each table of the concerned table groups, so that the groups stability can be guaranted during these operations.
 

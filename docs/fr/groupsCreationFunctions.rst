@@ -141,7 +141,7 @@ où :
 
 Si une des propriétés n’est pas valorisée dans le paramètre *JSONB*, sa valeur est considérée comme *NULL*.
 
-Si des tablespaces spécifiques pour les tables de log ou pour leurs index sont référencés, ceux-ci doivent exister au préalable.
+Si des tablespaces spécifiques pour les tables de log ou pour leurs index sont référencés, ceux-ci doivent exister au préalable et l’utilisateur (ou le rôle *emaj_adm*) doit avoir les droits *CREATE* sur ces tablespaces.
 
 Pour toutes les fonctions, un verrou exclusif est posé sur chaque table du ou des groupes de tables concernés, afin de garantir la stabilité des groupes durant ces opérations.
 

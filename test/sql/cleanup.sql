@@ -13,6 +13,19 @@
 DROP FUNCTION public.handle_emaj_sequences(INT);
 
 -----------------------------
+-- rename the tspemaj tablespace if it exists
+-----------------------------
+DO LANGUAGE plpgsql
+$$
+  BEGIN
+    PERFORM 0 FROM pg_catalog.pg_tablespace WHERE spcname = 'tspemaj';
+    IF FOUND THEN
+      ALTER TABLESPACE tspemaj RENAME TO tspemaj_renamed;
+    END IF;
+  END;
+$$;
+
+-----------------------------
 -- drop emaj_adm roles
 -----------------------------
 revoke emaj_adm from emaj_regression_tests_adm_user1, emaj_regression_tests_adm_user2;
@@ -22,6 +35,9 @@ revoke all on all tables in schema mySchema1, mySchema2, "phil's schema3", mySch
   from emaj_regression_tests_adm_user1, emaj_regression_tests_adm_user2;
 revoke all on all sequences in schema mySchema1, mySchema2, "phil's schema3", mySchema4, mySchema5, mySchema6
   from emaj_regression_tests_adm_user1, emaj_regression_tests_adm_user2;
+revoke all on tablespace tsplog1, "tsp log'2", tspemaj_renamed
+  from emaj_regression_tests_adm_user1, emaj_regression_tests_adm_user2;
+
 drop role emaj_regression_tests_adm_user1, emaj_regression_tests_adm_user2;
 
 -----------------------------
@@ -37,19 +53,6 @@ drop role emaj_regression_tests_viewer_user;
 -----------------------------
 revoke all on database regression from emaj_regression_tests_anonym_user;
 drop role emaj_regression_tests_anonym_user;
-
------------------------------
--- rename the tspemaj tablespace if it exists
------------------------------
-DO LANGUAGE plpgsql
-$$
-  BEGIN
-    PERFORM 0 FROM pg_catalog.pg_tablespace WHERE spcname = 'tspemaj';
-    IF FOUND THEN
-      ALTER TABLESPACE tspemaj RENAME TO tspemaj_renamed;
-    END IF;
-  END;
-$$;
 
 --------------------------------------------
 -- Dump the regression database (once the test roles have been dropped)
