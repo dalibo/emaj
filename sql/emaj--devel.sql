@@ -1506,6 +1506,8 @@ $_truncate_trigger_fnct$
 -- Then, the content of the table to truncate is copied into the log table, with a 'TRU' emaj_verb and an 'OLD' emaj_tuple (it will be
 -- used by the rollback functions)
 -- And add the number of recorded rows to the log sequence (to get accurate statistics)
+-- The function is declared as SECURITY DEFINER so that any role performing a TRUNCATE on an application table can log the event into
+--   E-Maj tables.
   DECLARE
     v_fullLogTableName       TEXT;
     v_fullLogSequenceName    TEXT;
@@ -8155,9 +8157,10 @@ $_rlbk_planning$
 -- This function builds the rollback steps for a rollback operation.
 -- It stores the result into the emaj_rlbk_plan table.
 -- The function returns the effective number of tables to process.
+-- It is called to perform a rollback operation. It is also called to simulate a rollback operation and get its duration estime.
 -- It is called in an autonomous dblink transaction, if possible.
--- The function is defined as SECURITY DEFINER so that emaj_viewer role can write into rollback tables without having specific privileges
--- to do it.
+-- The function is defined as SECURITY DEFINER so that emaj_viewer role can write into rollback tables, when estimating the rollback
+--   duration, without having specific privileges on them to do it.
   DECLARE
     v_groupNames             TEXT[];
     v_mark                   TEXT;
@@ -9451,7 +9454,7 @@ $_cleanup_rollback_state$
 --   while those which are not visible in the emaj_hist table are set "ABORTED".
 -- Input: no parameter
 -- Output: number of updated rollback events
--- The function is defined as SECURITY DEFINER so that emaj_viewer role can update emaj_rlbk and emajçhist tables.
+-- The function is defined as SECURITY DEFINER so that emaj_viewer role can update emaj_rlbk and emaj_hist tables.
   DECLARE
     v_nbRlbk                 INT = 0;
     v_newStatus              emaj._rlbk_status_enum;
@@ -12234,6 +12237,7 @@ $_disable_event_triggers$
 --   _drop_group(), _alter_groups(), _delete_before_mark_group() and _reset_groups().
 -- It is also called by the user emaj_disable_event_triggers_protection() function.
 -- Output: array of effectively disabled event trigger names. It can be reused as input when calling _enable_event_triggers().
+-- The function is declared as SECURITY DEFINER because only superusers can alter an event trigger
   DECLARE
     v_eventTrigger           TEXT;
     v_eventTriggers          TEXT[] = ARRAY[]::TEXT[];
@@ -12265,6 +12269,7 @@ $_enable_event_triggers$
 -- It is also called by the user emaj_enable_event_triggers_protection() function.
 -- Input: array of event trigger names to enable.
 -- Output: same array.
+-- The function is declared as SECURITY DEFINER because only superusers can alter an event trigger
   DECLARE
     v_eventTrigger           TEXT;
   BEGIN
