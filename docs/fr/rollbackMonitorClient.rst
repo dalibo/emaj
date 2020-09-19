@@ -12,6 +12,8 @@ Deux outils équivalents sont en fait proposés, l’un codé en *php*, l’autr
 * pour le client *php*, le logiciel **php** et son interface PostgreSQL
 * pour le client *perl*, le logiciel **perl** avec les modules *DBI* et *DBD::Pg*
 
+Pour disposer d’informations précises sur l’avancement des opérations de rollback en cours, il est nécessaire de valoriser le paramètre :doc:`dblink_user_password<parameters>`.
+
 
 Syntaxe
 -------

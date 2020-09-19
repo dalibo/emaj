@@ -12,7 +12,8 @@ E-Maj and its add-ons are also available on the **github.org** Internet site:
 * documentation (https://github.com/beaud76/emaj_doc)
 * Emaj_web GUI (https://github.com/dalibo/emaj_web)
 
-For the records, an old repository (https://github.com/beaud76/emaj_ppa_plugin) contains a plugin for phpPgAdmin. It is not maintained since E-Maj 3.0.
+.. caution::
+   Installing the extension from the *github.org* repository creates the extension in its development version ("devel"). In this case, no future extension update is possible. For a stable E-Maj use, it is highly recommended to use the packets available from *PGXN*.
 
 Standart installation on Linux
 ******************************

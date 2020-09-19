@@ -65,7 +65,7 @@ To allow the rollback operation to work, the tables group or groups must be in *
 
 The *'EMAJ_LAST_MARK'* keyword can be used as mark name, meaning the last set mark.
 
-It is possible to monitor the multi-session rollback operations with the same tools as for mono-session rollbacks.
+It is possible to monitor the multi-session rollback operations with the same tools as for mono-session rollbacks: :ref:`emaj_rollback_activity()<emaj_rollback_activity>` function, the :doc:`emajRollbackMonitor<rollbackMonitorClient>` command or the Emaj_web rollback monitor page. As for mono-session rollbacks, the :doc:`dblink_user_password<parameters>` parameter must be set in order to get detailed status of the operations progress.
 
 In order to test both *emajParallelRollback* commands, the E-Maj extension supplies a test script, *emaj_prepare_parallel_rollback_test.sql*. It prepares an environment with two tables groups containing some tables and sequences, on which some updates have been performed, with intermediate marks. Once this script has been executed under *psql*, the command displayed at the end of the script can be simply run.
 

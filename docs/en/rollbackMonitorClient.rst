@@ -11,6 +11,8 @@ Two equivalent tools are actually provided, one coded in *php* and the other in 
 * for the *php* client, the **php** software and its PostgreSQL interface,
 * for the *perl* client, the **perl** software with the *DBI* and *DBD::Pg* modules.
 
+In order to get detailed information about the in-progress rollback operations, it is necessary to set the :doc:`dblink_user_password<parameters>` parameter.
+
 Syntax
 ------
 
