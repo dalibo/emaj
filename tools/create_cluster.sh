@@ -46,9 +46,10 @@ fi
 cat <<-EOF1 >${PGDATA}/specif.conf
 	listen_addresses = '*'
 	port = ${PGPORT}
-	max_prepared_transactions = 5	# pg 8.4+
+	max_prepared_transactions = 5
 	logging_collector = on
-	track_functions = all           # pg 8.4+
+	track_functions = all
+	plpgsql.extra_warnings = all
 	EOF1
 echo "include 'specif.conf'" >> ${PGDATA}/postgresql.conf
 
