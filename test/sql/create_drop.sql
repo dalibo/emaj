@@ -283,15 +283,15 @@ select emaj.emaj_ignore_app_trigger('ADD','myschema1','mytbl2','emaj_%_trg');
 
 -- add one trigger
 select emaj.emaj_ignore_app_trigger('ADD','myschema1','mytbl2','mytbl2trg1');
-select * from emaj.emaj_ignored_app_trigger order by trg_schema, trg_table, trg_name;
+select rel_schema, rel_tblseq, rel_time_range, rel_ignored_triggers from emaj.emaj_relation where rel_ignored_triggers is not null order by 1,2,3;
 
 -- add the same
 select emaj.emaj_ignore_app_trigger('ADD','myschema1','mytbl2','mytbl2trg1');
-select * from emaj.emaj_ignored_app_trigger order by trg_schema, trg_table, trg_name;
+select rel_schema, rel_tblseq, rel_time_range, rel_ignored_triggers from emaj.emaj_relation where rel_ignored_triggers is not null order by 1,2,3;
 
 -- add all triggers for a table
 select emaj.emaj_ignore_app_trigger('ADD','myschema1','mytbl2','%');
-select * from emaj.emaj_ignored_app_trigger order by trg_schema, trg_table, trg_name;
+select rel_schema, rel_tblseq, rel_time_range, rel_ignored_triggers from emaj.emaj_relation where rel_ignored_triggers is not null order by 1,2,3;
 
 -----------------------------
 -- emaj_export_groups_configuration() and emaj_import_groups_configuration() tests
@@ -422,7 +422,7 @@ select emaj.emaj_import_groups_configuration(:'EMAJTESTTMPDIR' || '/modified_gro
 \! sed -n -e '1,29p' $EMAJTESTTMPDIR/modified_groups_config_1.json >$EMAJTESTTMPDIR/modified_groups_config_3.json
 \! sed -n -e '33,$p' $EMAJTESTTMPDIR/modified_groups_config_1.json >>$EMAJTESTTMPDIR/modified_groups_config_3.json
 select emaj.emaj_import_groups_configuration(:'EMAJTESTTMPDIR' || '/modified_groups_config_3.json', null, true);
-select * from emaj.emaj_ignored_app_trigger order by 1,2,3;
+select rel_schema, rel_tblseq, rel_time_range, rel_ignored_triggers from emaj.emaj_relation where rel_ignored_triggers is not null order by 1,2,3;
 
 -- erroneously existing log schema
 select emaj.emaj_drop_group('myGroup1');
@@ -432,20 +432,21 @@ begin;
 rollback;
 
 -- rebuild all original groups
--- this will assign the just removed table ans sequence
+-- this will assign the just removed table and sequence
 select emaj.emaj_import_groups_configuration(:'EMAJTESTTMPDIR' || '/orig_groups_config_all.json', null, true);
-select * from emaj.emaj_ignored_app_trigger order by 1,2,3;
+select emaj.emaj_ignore_app_trigger('ADD','myschema1','mytbl2','%');
+select rel_schema, rel_tblseq, rel_time_range, rel_ignored_triggers from emaj.emaj_relation where rel_ignored_triggers is not null order by 1,2,3;
 
 -----------------------------------
 -- emaj_ignore_app_trigger: REMOVE action
 -----------------------------------
 -- remove one trigger
 select emaj.emaj_ignore_app_trigger('REMOVE','myschema1','mytbl2','mytbl2trg1');
-select * from emaj.emaj_ignored_app_trigger order by trg_schema, trg_table, trg_name;
+select rel_schema, rel_tblseq, rel_time_range, rel_ignored_triggers from emaj.emaj_relation where rel_ignored_triggers is not null order by 1,2,3;
 
 -- remove several triggers
 select emaj.emaj_ignore_app_trigger('REMOVE','myschema1','mytbl2','%');
-select * from emaj.emaj_ignored_app_trigger order by trg_schema, trg_table, trg_name;
+select rel_schema, rel_tblseq, rel_time_range, rel_ignored_triggers from emaj.emaj_relation where rel_ignored_triggers is not null order by 1,2,3;
 
 -- keep the current tables groups definition as reference for further tests
 select emaj.emaj_export_groups_configuration(:'EMAJTESTTMPDIR' || '/../all_groups_config.json');

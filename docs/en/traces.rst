@@ -7,7 +7,9 @@ The emaj_hist table
 -------------------
 
 All operations performed by E-Maj, and that impact in any way a tables group, are traced into a table named *emaj_hist*.
- 
+
+Any user having *emaj_adm* or *emaj_viewer* rights may look at the *emaj_hist* content.
+
 The **emaj_hist** table structure is the following:
 
 +--------------+-------------+------------------------------------------------------------+
@@ -152,64 +154,64 @@ The *hist_function* column can take the following values:
 
 The *hist_event* column can take the following values:
 
-+------------------------------+---------------------------------------------------------+
-| Value                        | Meaning                                                 |
-+==============================+=========================================================+
-| BEGIN                        |                                                         |
-+------------------------------+---------------------------------------------------------+
-| DELETED PARAMETER            | parameter deleted from *emaj_param*                     |
-+------------------------------+---------------------------------------------------------+
-| END                          |                                                         |
-+------------------------------+---------------------------------------------------------+
-| EVENT TRIGGERS DISABLED      |                                                         |
-+------------------------------+---------------------------------------------------------+
-| EVENT TRIGGERS ENABLED       |                                                         |
-+------------------------------+---------------------------------------------------------+
-| GROUP_CREATED                | new tables group created                                |
-+------------------------------+---------------------------------------------------------+
-| INSERTED PARAMETER           | parameter inserted into *emaj_param*                    |
-+------------------------------+---------------------------------------------------------+
-| LOG DATA TABLESPACE CHANGED  | tablespace for the log table modified                   |
-+------------------------------+---------------------------------------------------------+
-| LOG INDEX TABLESPACE CHANGED | tablespace for the log index modified                   |
-+------------------------------+---------------------------------------------------------+
-| LOG_SCHEMA CREATED           | secondary schema created                                |
-+------------------------------+---------------------------------------------------------+
-| LOG_SCHEMA DROPPED           | secondary schema dropped                                |
-+------------------------------+---------------------------------------------------------+
-| MARK DELETED                 |                                                         |
-+------------------------------+---------------------------------------------------------+
-| NAMES PREFIX CHANGED         | E-Maj names prefix modified                             |
-+------------------------------+---------------------------------------------------------+
-| NOTICE                       | warning message issued by a rollback                    |
-+------------------------------+---------------------------------------------------------+
-| PRIORITY CHANGED             | priority level modified                                 |
-+------------------------------+---------------------------------------------------------+
-| SEQUENCE ADDED               | sequence added to a logging tables group                |
-+------------------------------+---------------------------------------------------------+
-| SEQUENCE MOVED               | sequence moved from one group to another                |
-+------------------------------+---------------------------------------------------------+
-| SEQUENCE REMOVED             | sequence removed from a logging tables group            |
-+------------------------------+---------------------------------------------------------+
-| TABLE ADDED                  | table  added to a logging tables group                  |
-+------------------------------+---------------------------------------------------------+
-| TABLE MOVED                  | table moved from one group to another                   |
-+------------------------------+---------------------------------------------------------+
-| TABLE REMOVED                | table removed from a logging tables group               |
-+------------------------------+---------------------------------------------------------+
-| UPDATED PARAMETER            | parameter updated in *emaj_param*                       |
-+------------------------------+---------------------------------------------------------+
-| WARNING                      | warning message issued by a rollback                    |
-+------------------------------+---------------------------------------------------------+
-
-The *emaj_hist* content can be viewed by anyone who has the proper access rights on this table (*superuser*, *emaj_adm* or *emaj_viewer* roles).
++------------------------------+----------------------------------------------------------------+
+| Value                        | Meaning                                                        |
++==============================+================================================================+
+| BEGIN                        |                                                                |
++------------------------------+----------------------------------------------------------------+
+| DELETED PARAMETER            | parameter deleted from *emaj_param*                            |
++------------------------------+----------------------------------------------------------------+
+| END                          |                                                                |
++------------------------------+----------------------------------------------------------------+
+| EVENT TRIGGERS DISABLED      |                                                                |
++------------------------------+----------------------------------------------------------------+
+| EVENT TRIGGERS ENABLED       |                                                                |
++------------------------------+----------------------------------------------------------------+
+| GROUP_CREATED                | new tables group created                                       |
++------------------------------+----------------------------------------------------------------+
+| INSERTED PARAMETER           | parameter inserted into *emaj_param*                           |
++------------------------------+----------------------------------------------------------------+
+| LOG DATA TABLESPACE CHANGED  | tablespace for the log table modified                          |
++------------------------------+----------------------------------------------------------------+
+| LOG INDEX TABLESPACE CHANGED | tablespace for the log index modified                          |
++------------------------------+----------------------------------------------------------------+
+| LOG_SCHEMA CREATED           | secondary schema created                                       |
++------------------------------+----------------------------------------------------------------+
+| LOG_SCHEMA DROPPED           | secondary schema dropped                                       |
++------------------------------+----------------------------------------------------------------+
+| MARK DELETED                 |                                                                |
++------------------------------+----------------------------------------------------------------+
+| NAMES PREFIX CHANGED         | E-Maj names prefix modified                                    |
++------------------------------+----------------------------------------------------------------+
+| NOTICE                       | warning message issued by a rollback                           |
++------------------------------+----------------------------------------------------------------+
+| PRIORITY CHANGED             | priority level modified                                        |
++------------------------------+----------------------------------------------------------------+
+| SEQUENCE ADDED               | sequence added to a logging tables group                       |
++------------------------------+----------------------------------------------------------------+
+| SEQUENCE MOVED               | sequence moved from one group to another                       |
++------------------------------+----------------------------------------------------------------+
+| SEQUENCE REMOVED             | sequence removed from a logging tables group                   |
++------------------------------+----------------------------------------------------------------+
+| TABLE ADDED                  | table  added to a logging tables group                         |
++------------------------------+----------------------------------------------------------------+
+| TABLE MOVED                  | table moved from one group to another                          |
++------------------------------+----------------------------------------------------------------+
+| TABLE REMOVED                | table removed from a logging tables group                      |
++------------------------------+----------------------------------------------------------------+
+| TRIGGERS TO IGNORE CHANGED   | set of application triggers to ignore at rollback time changed |
++------------------------------+----------------------------------------------------------------+
+| UPDATED PARAMETER            | parameter updated in *emaj_param*                              |
++------------------------------+----------------------------------------------------------------+
+| WARNING                      | warning message issued by a rollback                           |
++------------------------------+----------------------------------------------------------------+
 
 Other trace data
 ----------------
 
 Two other internal tables keep traces of groups alter or rollback operations:
 
-* *emaj_alter_plan* lists the elementary steps performed during the execution of :doc:`tables groups structure changes <alterGroups>`,
+* *emaj_alter_plan* lists the elementary steps performed during :doc:`tables groups structure changes <alterGroups>`,
 * *emaj_rlbk_plan* lists the elementary steps performed during the execution of :ref:`emaj_rollback_group() <emaj_rollback_group>` and related functions.
 
 Purge obsolete traces
@@ -219,7 +221,7 @@ When a tables group is started, using the :ref:`emaj_start_group() <emaj_start_g
 
 The obsolete traces purge can also be initiated by explicitely calling the :ref:`emaj_purge_histories() <emaj_purge_histories>` function. The input parameter of the function defines a retention delay that overloads the *history_retention* parameter of the *emaj_param* table.
 
-In order to schedule purges periodicaly, it is possible to:
+In order to schedule purges periodically, it is possible to:
 
 * set the *history_retention* parameter to a very high value (for instance '100 YEARS'), so that tables groups starts and oldest marks deletions do not perform any purge, and
-* schedule by any means (*crontab*, *pgAgent*, *pgTimeTable* or any other tool) purge operations.
+* schedule purge operations by any means (*crontab*, *pgAgent*, *pgTimeTable* or any other tool).

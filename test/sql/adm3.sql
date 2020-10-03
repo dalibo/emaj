@@ -307,7 +307,7 @@ delete from myschema4.mytblm
 update myschema4.mytblm set col3 = 'After Mk2 and updated after Mk3'
   where col1 > '2013-01-01';
 
--- rollback to the previous mark (old syntax)
+-- rollback to the previous mark
 select * from emaj.emaj_rollback_groups('{"grp_tmp_3","grp_tmp_4","grp_tmp"}','Mk3');
 
 -- change some priority and log tablespaces

@@ -403,45 +403,25 @@ rollback;
 --
 -- other tests
 --
--- bad triggers in emaj_ignored_app_trigger
+-- bad triggers in a "triggers to ignore at rollback time" array
 begin;
--- simulate a discrepancy between the emaj_ignored_app_trigger table content and the existing triggers
-  insert into emaj.emaj_ignored_app_trigger values ('dummy','mytbl1','mytrg');         -- dropped schema
-  insert into emaj.emaj_ignored_app_trigger values ('myschema1','dummy','mytrg');      -- dropped table
-  insert into emaj.emaj_ignored_app_trigger values ('myschema1','mytbl1','dummy');     -- dropped trigger
+-- simulate a discrepancy between the emaj_relation table content and the existing triggers
+  update emaj.emaj_relation set rel_ignored_triggers = '{"dummy1","dummy2"}'
+    where rel_schema = 'myschema1' and rel_tblseq = 'mytbl1' and upper_inf(rel_time_range);
 -- check
   select * from emaj.emaj_verify_all() t(msg) where msg like 'Error%';
-                                                                                                        msg                                                                                                        
--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
- Error: No trigger "mytrg" found for table "dummy"."mytbl1". Use the emaj_ignore_app_trigger() function to adjust the list of application triggers that should not be automatically disabled at rollback time.
- Error: No trigger "mytrg" found for table "myschema1"."dummy". Use the emaj_ignore_app_trigger() function to adjust the list of application triggers that should not be automatically disabled at rollback time.
- Error: No trigger "dummy" found for table "myschema1"."mytbl1". Use the emaj_ignore_app_trigger() function to adjust the list of application triggers that should not be automatically disabled at rollback time.
-(3 rows)
+                                                                                                                              msg                                                                                                                               
+----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+ Error: In the rollbackable group "myGroup1", the trigger "dummy1" for table "myschema1"."mytbl1" is missing. Use the emaj_ignore_app_trigger() function to adjust the list of application triggers that should not be automatically disabled at rollback time.
+ Error: In the rollbackable group "myGroup1", the trigger "dummy2" for table "myschema1"."mytbl1" is missing. Use the emaj_ignore_app_trigger() function to adjust the list of application triggers that should not be automatically disabled at rollback time.
+(2 rows)
 
 -- and fix
-  select emaj.emaj_ignore_app_trigger('REMOVE','dummy','mytbl1','%');
- emaj_ignore_app_trigger 
--------------------------
-                       1
-(1 row)
-
-  select emaj.emaj_ignore_app_trigger('REMOVE','myschema1','dummy','%');
- emaj_ignore_app_trigger 
--------------------------
-                       1
-(1 row)
-
-  select emaj.emaj_ignore_app_trigger('REMOVE','myschema1','mytbl1','dummy');
- emaj_ignore_app_trigger 
--------------------------
-                       1
-(1 row)
-
-  select * from emaj.emaj_verify_all() t(msg) where msg like 'Error%';
- msg 
------
-(0 rows)
-
+--TODO: switch to an emaj_modify_table() function call to fix the issue
+----  select emaj.emaj_ignore_app_trigger('REMOVE','dummy','mytbl1','%');
+----  select emaj.emaj_ignore_app_trigger('REMOVE','myschema1','dummy','%');
+----  select emaj.emaj_ignore_app_trigger('REMOVE','myschema1','mytbl1','dummy');
+----  select * from emaj.emaj_verify_all() t(msg) where msg like 'Error%';
 rollback;
 --------------------------------
 -- User errors and recovery tests 
@@ -543,7 +523,7 @@ PL/pgSQL function emaj.emaj_stop_group(text,text) line 10 at RETURN
 -- reimporting the group configuration fails if the group is in logging state
     select emaj.emaj_import_groups_configuration(emaj.emaj_export_groups_configuration(),array['myGroup2'],true);
 ERROR:  alter_exec: Cannot repair the table myschema2.mytbl4. Its group myGroup2 is in LOGGING state.
-CONTEXT:  PL/pgSQL function emaj._alter_exec(bigint,text) line 37 at RAISE
+CONTEXT:  PL/pgSQL function emaj._alter_exec(bigint,text) line 34 at RAISE
 SQL statement "SELECT emaj._alter_exec(v_timeId, v_callingFunction)"
 PL/pgSQL function emaj._alter_groups(text[],boolean,text,text,bigint) line 49 at PERFORM
 SQL statement "SELECT v_nbRel FROM emaj._alter_groups(v_groups, TRUE, v_mark, 'IMPORT_GROUPS', v_timeId)"

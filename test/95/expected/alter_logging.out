@@ -91,20 +91,14 @@ select * from emaj.emaj_rollback_groups('{"myGroup1","myGroup2"}','Mk2');
 -- revert the properties changes
 select emaj.emaj_import_groups_configuration(:'EMAJTESTTMPDIR' || '/all_groups_conf.json', '{"myGroup1","myGroup2"}', true);
 NOTICE:  table "tmp_app_table" does not exist, skipping
-CONTEXT:  SQL statement "DROP TABLE IF EXISTS tmp_app_table, tmp_app_sequence, tmp_app_trigger"
-PL/pgSQL function emaj._import_groups_conf_prepare(json,text[],boolean,text) line 71 at SQL statement
+CONTEXT:  SQL statement "DROP TABLE IF EXISTS tmp_app_table, tmp_app_sequence"
+PL/pgSQL function emaj._import_groups_conf_prepare(json,text[],boolean,text) line 72 at SQL statement
 PL/pgSQL function emaj._import_groups_conf(json,text[],boolean,text,text) line 70 at FOR over SELECT rows
 SQL statement "SELECT emaj._import_groups_conf(v_json, v_groups, v_allowGroupsUpdate, v_location, v_mark)"
 PL/pgSQL function emaj.emaj_import_groups_configuration(text,text[],boolean,text) line 29 at SQL statement
 NOTICE:  table "tmp_app_sequence" does not exist, skipping
-CONTEXT:  SQL statement "DROP TABLE IF EXISTS tmp_app_table, tmp_app_sequence, tmp_app_trigger"
-PL/pgSQL function emaj._import_groups_conf_prepare(json,text[],boolean,text) line 71 at SQL statement
-PL/pgSQL function emaj._import_groups_conf(json,text[],boolean,text,text) line 70 at FOR over SELECT rows
-SQL statement "SELECT emaj._import_groups_conf(v_json, v_groups, v_allowGroupsUpdate, v_location, v_mark)"
-PL/pgSQL function emaj.emaj_import_groups_configuration(text,text[],boolean,text) line 29 at SQL statement
-NOTICE:  table "tmp_app_trigger" does not exist, skipping
-CONTEXT:  SQL statement "DROP TABLE IF EXISTS tmp_app_table, tmp_app_sequence, tmp_app_trigger"
-PL/pgSQL function emaj._import_groups_conf_prepare(json,text[],boolean,text) line 71 at SQL statement
+CONTEXT:  SQL statement "DROP TABLE IF EXISTS tmp_app_table, tmp_app_sequence"
+PL/pgSQL function emaj._import_groups_conf_prepare(json,text[],boolean,text) line 72 at SQL statement
 PL/pgSQL function emaj._import_groups_conf(json,text[],boolean,text,text) line 70 at FOR over SELECT rows
 SQL statement "SELECT emaj._import_groups_conf(v_json, v_groups, v_allowGroupsUpdate, v_location, v_mark)"
 PL/pgSQL function emaj.emaj_import_groups_configuration(text,text[],boolean,text) line 29 at SQL statement
@@ -180,7 +174,7 @@ select hist_function, hist_event, hist_object,
  LOCK_GROUP         | END                          | myGroup1                     | 5 tables locked, 0 deadlock(s)                                   | postgres
  SET_MARK_GROUPS    | BEGIN                        | myGroup1                     | Priority Changed                                                 | postgres
  SET_MARK_GROUPS    | END                          | myGroup1                     | Priority Changed                                                 | postgres
- MODIFY_TABLE       | PRIORITY CHANGED             | myschema1.mytbl1             | 2 => 3                                                           | postgres
+ MODIFY_TABLE       | PRIORITY CHANGED             | myschema1.mytbl1             | 20 => 30                                                         | postgres
  MODIFY_TABLE       | END                          |                              | 1 tables effectively modified                                    | postgres
  MODIFY_TABLE       | BEGIN                        |                              |                                                                  | postgres
  LOCK_GROUP         | BEGIN                        | myGroup1                     |                                                                  | postgres
@@ -224,7 +218,7 @@ select hist_function, hist_event, hist_object,
  SET_MARK_GROUPS    | END                          | myGroup1,myGroup2            | IMPORT_%                                                         | postgres
  IMPORT_GROUPS      | LOG DATA TABLESPACE CHANGED  | myschema1.mytbl2b            | Default tablespace => tsp log'2                                  | postgres
  IMPORT_GROUPS      | LOG INDEX TABLESPACE CHANGED | myschema2.mytbl6             | tsplog1 => Default tablespace                                    | postgres
- IMPORT_GROUPS      | PRIORITY CHANGED             | myschema1.mytbl1             | 3 => 2                                                           | postgres
+ IMPORT_GROUPS      | PRIORITY CHANGED             | myschema1.mytbl1             | 30 => 20                                                         | postgres
  IMPORT_GROUPS      | END                          |                              | 2 created or altered tables groups                               | postgres
 (61 rows)
 
@@ -908,20 +902,14 @@ rollback;
 -- revert the changes
 select emaj.emaj_import_groups_configuration(:'EMAJTESTTMPDIR' || '/all_groups_conf.json', '{"myGroup1"}', true, 'Revert_sequences_removal');
 NOTICE:  table "tmp_app_table" does not exist, skipping
-CONTEXT:  SQL statement "DROP TABLE IF EXISTS tmp_app_table, tmp_app_sequence, tmp_app_trigger"
-PL/pgSQL function emaj._import_groups_conf_prepare(json,text[],boolean,text) line 71 at SQL statement
+CONTEXT:  SQL statement "DROP TABLE IF EXISTS tmp_app_table, tmp_app_sequence"
+PL/pgSQL function emaj._import_groups_conf_prepare(json,text[],boolean,text) line 72 at SQL statement
 PL/pgSQL function emaj._import_groups_conf(json,text[],boolean,text,text) line 70 at FOR over SELECT rows
 SQL statement "SELECT emaj._import_groups_conf(v_json, v_groups, v_allowGroupsUpdate, v_location, v_mark)"
 PL/pgSQL function emaj.emaj_import_groups_configuration(text,text[],boolean,text) line 29 at SQL statement
 NOTICE:  table "tmp_app_sequence" does not exist, skipping
-CONTEXT:  SQL statement "DROP TABLE IF EXISTS tmp_app_table, tmp_app_sequence, tmp_app_trigger"
-PL/pgSQL function emaj._import_groups_conf_prepare(json,text[],boolean,text) line 71 at SQL statement
-PL/pgSQL function emaj._import_groups_conf(json,text[],boolean,text,text) line 70 at FOR over SELECT rows
-SQL statement "SELECT emaj._import_groups_conf(v_json, v_groups, v_allowGroupsUpdate, v_location, v_mark)"
-PL/pgSQL function emaj.emaj_import_groups_configuration(text,text[],boolean,text) line 29 at SQL statement
-NOTICE:  table "tmp_app_trigger" does not exist, skipping
-CONTEXT:  SQL statement "DROP TABLE IF EXISTS tmp_app_table, tmp_app_sequence, tmp_app_trigger"
-PL/pgSQL function emaj._import_groups_conf_prepare(json,text[],boolean,text) line 71 at SQL statement
+CONTEXT:  SQL statement "DROP TABLE IF EXISTS tmp_app_table, tmp_app_sequence"
+PL/pgSQL function emaj._import_groups_conf_prepare(json,text[],boolean,text) line 72 at SQL statement
 PL/pgSQL function emaj._import_groups_conf(json,text[],boolean,text,text) line 70 at FOR over SELECT rows
 SQL statement "SELECT emaj._import_groups_conf(v_json, v_groups, v_allowGroupsUpdate, v_location, v_mark)"
 PL/pgSQL function emaj.emaj_import_groups_configuration(text,text[],boolean,text) line 29 at SQL statement
@@ -1503,20 +1491,14 @@ select emaj.emaj_snap_log_group('myGroup2',NULL,NULL,:'EMAJTESTTMPDIR' || '/snap
 -- and finaly revert the group configuration changes
 select emaj.emaj_import_groups_configuration(:'EMAJTESTTMPDIR' || '/all_groups_conf.json', '{"myGroup2"}', true);
 NOTICE:  table "tmp_app_table" does not exist, skipping
-CONTEXT:  SQL statement "DROP TABLE IF EXISTS tmp_app_table, tmp_app_sequence, tmp_app_trigger"
-PL/pgSQL function emaj._import_groups_conf_prepare(json,text[],boolean,text) line 71 at SQL statement
+CONTEXT:  SQL statement "DROP TABLE IF EXISTS tmp_app_table, tmp_app_sequence"
+PL/pgSQL function emaj._import_groups_conf_prepare(json,text[],boolean,text) line 72 at SQL statement
 PL/pgSQL function emaj._import_groups_conf(json,text[],boolean,text,text) line 70 at FOR over SELECT rows
 SQL statement "SELECT emaj._import_groups_conf(v_json, v_groups, v_allowGroupsUpdate, v_location, v_mark)"
 PL/pgSQL function emaj.emaj_import_groups_configuration(text,text[],boolean,text) line 29 at SQL statement
 NOTICE:  table "tmp_app_sequence" does not exist, skipping
-CONTEXT:  SQL statement "DROP TABLE IF EXISTS tmp_app_table, tmp_app_sequence, tmp_app_trigger"
-PL/pgSQL function emaj._import_groups_conf_prepare(json,text[],boolean,text) line 71 at SQL statement
-PL/pgSQL function emaj._import_groups_conf(json,text[],boolean,text,text) line 70 at FOR over SELECT rows
-SQL statement "SELECT emaj._import_groups_conf(v_json, v_groups, v_allowGroupsUpdate, v_location, v_mark)"
-PL/pgSQL function emaj.emaj_import_groups_configuration(text,text[],boolean,text) line 29 at SQL statement
-NOTICE:  table "tmp_app_trigger" does not exist, skipping
-CONTEXT:  SQL statement "DROP TABLE IF EXISTS tmp_app_table, tmp_app_sequence, tmp_app_trigger"
-PL/pgSQL function emaj._import_groups_conf_prepare(json,text[],boolean,text) line 71 at SQL statement
+CONTEXT:  SQL statement "DROP TABLE IF EXISTS tmp_app_table, tmp_app_sequence"
+PL/pgSQL function emaj._import_groups_conf_prepare(json,text[],boolean,text) line 72 at SQL statement
 PL/pgSQL function emaj._import_groups_conf(json,text[],boolean,text,text) line 70 at FOR over SELECT rows
 SQL statement "SELECT emaj._import_groups_conf(v_json, v_groups, v_allowGroupsUpdate, v_location, v_mark)"
 PL/pgSQL function emaj.emaj_import_groups_configuration(text,text[],boolean,text) line 29 at SQL statement
@@ -2099,20 +2081,14 @@ rollback;
 -- re-add all removed tables
 select emaj.emaj_import_groups_configuration(:'EMAJTESTTMPDIR' || '/all_groups_conf.json', array['myGroup1'], true, 'Revert_tables_removal');
 NOTICE:  table "tmp_app_table" does not exist, skipping
-CONTEXT:  SQL statement "DROP TABLE IF EXISTS tmp_app_table, tmp_app_sequence, tmp_app_trigger"
-PL/pgSQL function emaj._import_groups_conf_prepare(json,text[],boolean,text) line 71 at SQL statement
+CONTEXT:  SQL statement "DROP TABLE IF EXISTS tmp_app_table, tmp_app_sequence"
+PL/pgSQL function emaj._import_groups_conf_prepare(json,text[],boolean,text) line 72 at SQL statement
 PL/pgSQL function emaj._import_groups_conf(json,text[],boolean,text,text) line 70 at FOR over SELECT rows
 SQL statement "SELECT emaj._import_groups_conf(v_json, v_groups, v_allowGroupsUpdate, v_location, v_mark)"
 PL/pgSQL function emaj.emaj_import_groups_configuration(text,text[],boolean,text) line 29 at SQL statement
 NOTICE:  table "tmp_app_sequence" does not exist, skipping
-CONTEXT:  SQL statement "DROP TABLE IF EXISTS tmp_app_table, tmp_app_sequence, tmp_app_trigger"
-PL/pgSQL function emaj._import_groups_conf_prepare(json,text[],boolean,text) line 71 at SQL statement
-PL/pgSQL function emaj._import_groups_conf(json,text[],boolean,text,text) line 70 at FOR over SELECT rows
-SQL statement "SELECT emaj._import_groups_conf(v_json, v_groups, v_allowGroupsUpdate, v_location, v_mark)"
-PL/pgSQL function emaj.emaj_import_groups_configuration(text,text[],boolean,text) line 29 at SQL statement
-NOTICE:  table "tmp_app_trigger" does not exist, skipping
-CONTEXT:  SQL statement "DROP TABLE IF EXISTS tmp_app_table, tmp_app_sequence, tmp_app_trigger"
-PL/pgSQL function emaj._import_groups_conf_prepare(json,text[],boolean,text) line 71 at SQL statement
+CONTEXT:  SQL statement "DROP TABLE IF EXISTS tmp_app_table, tmp_app_sequence"
+PL/pgSQL function emaj._import_groups_conf_prepare(json,text[],boolean,text) line 72 at SQL statement
 PL/pgSQL function emaj._import_groups_conf(json,text[],boolean,text,text) line 70 at FOR over SELECT rows
 SQL statement "SELECT emaj._import_groups_conf(v_json, v_groups, v_allowGroupsUpdate, v_location, v_mark)"
 PL/pgSQL function emaj.emaj_import_groups_configuration(text,text[],boolean,text) line 29 at SQL statement
@@ -2128,7 +2104,7 @@ SQL statement "SELECT emaj._add_tbl(r_plan.altr_schema, r_plan.altr_tblseq, r_pl
             WHERE tmp_group = r_plan.altr_group
               AND tmp_schema = r_plan.altr_schema
               AND tmp_tbl_name = r_plan.altr_tblseq"
-PL/pgSQL function emaj._alter_exec(bigint,text) line 120 at PERFORM
+PL/pgSQL function emaj._alter_exec(bigint,text) line 138 at PERFORM
 SQL statement "SELECT emaj._alter_exec(v_timeId, v_callingFunction)"
 PL/pgSQL function emaj._alter_groups(text[],boolean,text,text,bigint) line 49 at PERFORM
 SQL statement "SELECT v_nbRel FROM emaj._alter_groups(v_groups, TRUE, v_mark, 'IMPORT_GROUPS', v_timeId)"
@@ -2150,7 +2126,7 @@ SQL statement "SELECT emaj._add_tbl(r_plan.altr_schema, r_plan.altr_tblseq, r_pl
             WHERE tmp_group = r_plan.altr_group
               AND tmp_schema = r_plan.altr_schema
               AND tmp_tbl_name = r_plan.altr_tblseq"
-PL/pgSQL function emaj._alter_exec(bigint,text) line 120 at PERFORM
+PL/pgSQL function emaj._alter_exec(bigint,text) line 138 at PERFORM
 SQL statement "SELECT emaj._alter_exec(v_timeId, v_callingFunction)"
 PL/pgSQL function emaj._alter_groups(text[],boolean,text,text,bigint) line 49 at PERFORM
 SQL statement "SELECT v_nbRel FROM emaj._alter_groups(v_groups, TRUE, v_mark, 'IMPORT_GROUPS', v_timeId)"
@@ -2172,7 +2148,7 @@ SQL statement "SELECT emaj._add_tbl(r_plan.altr_schema, r_plan.altr_tblseq, r_pl
             WHERE tmp_group = r_plan.altr_group
               AND tmp_schema = r_plan.altr_schema
               AND tmp_tbl_name = r_plan.altr_tblseq"
-PL/pgSQL function emaj._alter_exec(bigint,text) line 120 at PERFORM
+PL/pgSQL function emaj._alter_exec(bigint,text) line 138 at PERFORM
 SQL statement "SELECT emaj._alter_exec(v_timeId, v_callingFunction)"
 PL/pgSQL function emaj._alter_groups(text[],boolean,text,text,bigint) line 49 at PERFORM
 SQL statement "SELECT v_nbRel FROM emaj._alter_groups(v_groups, TRUE, v_mark, 'IMPORT_GROUPS', v_timeId)"
@@ -2192,7 +2168,7 @@ SQL statement "SELECT emaj._add_tbl(r_plan.altr_schema, r_plan.altr_tblseq, r_pl
             WHERE tmp_group = r_plan.altr_group
               AND tmp_schema = r_plan.altr_schema
               AND tmp_tbl_name = r_plan.altr_tblseq"
-PL/pgSQL function emaj._alter_exec(bigint,text) line 120 at PERFORM
+PL/pgSQL function emaj._alter_exec(bigint,text) line 138 at PERFORM
 SQL statement "SELECT emaj._alter_exec(v_timeId, v_callingFunction)"
 PL/pgSQL function emaj._alter_groups(text[],boolean,text,text,bigint) line 49 at PERFORM
 SQL statement "SELECT v_nbRel FROM emaj._alter_groups(v_groups, TRUE, v_mark, 'IMPORT_GROUPS', v_timeId)"
@@ -2214,7 +2190,7 @@ SQL statement "SELECT emaj._add_tbl(r_plan.altr_schema, r_plan.altr_tblseq, r_pl
             WHERE tmp_group = r_plan.altr_group
               AND tmp_schema = r_plan.altr_schema
               AND tmp_tbl_name = r_plan.altr_tblseq"
-PL/pgSQL function emaj._alter_exec(bigint,text) line 120 at PERFORM
+PL/pgSQL function emaj._alter_exec(bigint,text) line 138 at PERFORM
 SQL statement "SELECT emaj._alter_exec(v_timeId, v_callingFunction)"
 PL/pgSQL function emaj._alter_groups(text[],boolean,text,text,bigint) line 49 at PERFORM
 SQL statement "SELECT v_nbRel FROM emaj._alter_groups(v_groups, TRUE, v_mark, 'IMPORT_GROUPS', v_timeId)"
@@ -2236,7 +2212,7 @@ SQL statement "SELECT emaj._add_tbl(r_plan.altr_schema, r_plan.altr_tblseq, r_pl
             WHERE tmp_group = r_plan.altr_group
               AND tmp_schema = r_plan.altr_schema
               AND tmp_tbl_name = r_plan.altr_tblseq"
-PL/pgSQL function emaj._alter_exec(bigint,text) line 120 at PERFORM
+PL/pgSQL function emaj._alter_exec(bigint,text) line 138 at PERFORM
 SQL statement "SELECT emaj._alter_exec(v_timeId, v_callingFunction)"
 PL/pgSQL function emaj._alter_groups(text[],boolean,text,text,bigint) line 49 at PERFORM
 SQL statement "SELECT v_nbRel FROM emaj._alter_groups(v_groups, TRUE, v_mark, 'IMPORT_GROUPS', v_timeId)"
@@ -2256,7 +2232,7 @@ SQL statement "SELECT emaj._add_tbl(r_plan.altr_schema, r_plan.altr_tblseq, r_pl
             WHERE tmp_group = r_plan.altr_group
               AND tmp_schema = r_plan.altr_schema
               AND tmp_tbl_name = r_plan.altr_tblseq"
-PL/pgSQL function emaj._alter_exec(bigint,text) line 120 at PERFORM
+PL/pgSQL function emaj._alter_exec(bigint,text) line 138 at PERFORM
 SQL statement "SELECT emaj._alter_exec(v_timeId, v_callingFunction)"
 PL/pgSQL function emaj._alter_groups(text[],boolean,text,text,bigint) line 49 at PERFORM
 SQL statement "SELECT v_nbRel FROM emaj._alter_groups(v_groups, TRUE, v_mark, 'IMPORT_GROUPS', v_timeId)"
@@ -2278,7 +2254,7 @@ SQL statement "SELECT emaj._add_tbl(r_plan.altr_schema, r_plan.altr_tblseq, r_pl
             WHERE tmp_group = r_plan.altr_group
               AND tmp_schema = r_plan.altr_schema
               AND tmp_tbl_name = r_plan.altr_tblseq"
-PL/pgSQL function emaj._alter_exec(bigint,text) line 120 at PERFORM
+PL/pgSQL function emaj._alter_exec(bigint,text) line 138 at PERFORM
 SQL statement "SELECT emaj._alter_exec(v_timeId, v_callingFunction)"
 PL/pgSQL function emaj._alter_groups(text[],boolean,text,text,bigint) line 49 at PERFORM
 SQL statement "SELECT v_nbRel FROM emaj._alter_groups(v_groups, TRUE, v_mark, 'IMPORT_GROUPS', v_timeId)"
@@ -2300,7 +2276,7 @@ SQL statement "SELECT emaj._add_tbl(r_plan.altr_schema, r_plan.altr_tblseq, r_pl
             WHERE tmp_group = r_plan.altr_group
               AND tmp_schema = r_plan.altr_schema
               AND tmp_tbl_name = r_plan.altr_tblseq"
-PL/pgSQL function emaj._alter_exec(bigint,text) line 120 at PERFORM
+PL/pgSQL function emaj._alter_exec(bigint,text) line 138 at PERFORM
 SQL statement "SELECT emaj._alter_exec(v_timeId, v_callingFunction)"
 PL/pgSQL function emaj._alter_groups(text[],boolean,text,text,bigint) line 49 at PERFORM
 SQL statement "SELECT v_nbRel FROM emaj._alter_groups(v_groups, TRUE, v_mark, 'IMPORT_GROUPS', v_timeId)"
@@ -2742,12 +2718,12 @@ select emaj.emaj_modify_table('myschema2', 'myTbl3', '{"log_data_tablespace":"ts
 (1 row)
 
 select * from emaj.emaj_relation where rel_schema = 'myschema2' and (rel_tblseq = 'myTbl3' or rel_tblseq = 'myTbl3_col31_seq') order by 1,2,3,4;
- rel_schema |    rel_tblseq    | rel_time_range | rel_group | rel_kind | rel_priority | rel_log_schema | rel_log_table | rel_log_dat_tsp |  rel_log_index   | rel_log_idx_tsp | rel_log_sequence | rel_log_function | rel_emaj_verb_attnum | rel_has_always_ident_col |     rel_sql_rlbk_columns      | rel_sql_rlbk_pk_columns | rel_sql_rlbk_pk_conditions | rel_sql_gen_ins_col |                                                  rel_sql_gen_ins_val                                                  |                                                               rel_sql_gen_upd_set                                                               | rel_sql_gen_pk_conditions | rel_log_seq_last_value 
-------------+------------------+----------------+-----------+----------+--------------+----------------+---------------+-----------------+------------------+-----------------+------------------+------------------+----------------------+--------------------------+-------------------------------+-------------------------+----------------------------+---------------------+-----------------------------------------------------------------------------------------------------------------------+-------------------------------------------------------------------------------------------------------------------------------------------------+---------------------------+------------------------
- myschema2  | myTbl3           | [8008,10005)   | myGroup2  | r        |              | emaj_myschema2 | myTbl3_log_1  |                 | myTbl3_log_idx_1 |                 | myTbl3_log_seq   | myTbl3_log_fnct  |                    4 | f                        | tbl.col31,tbl.col32,tbl.col33 | col31                   | tbl.col31 = keys.col31     |                     | ' || coalesce(o.col31::TEXT,'NULL') || ', ' || quote_nullable(o.col32) || ', ' || coalesce(o.col33::TEXT,'NULL') || ' | col31 = ' || coalesce(n.col31 ::TEXT,'NULL') || ', col32 = ' || quote_nullable(n.col32) || ', col33 = ' || coalesce(n.col33 ::TEXT,'NULL') || ' | col31 = ' || o.col31 || ' |                       
- myschema2  | myTbl3           | [10005,)       | myGroup1  | r        |          100 | emaj_myschema2 | myTbl3_log    | tsplog1         | myTbl3_log_idx   | tsplog1         | myTbl3_log_seq   | myTbl3_log_fnct  |                    4 | f                        | tbl.col31,tbl.col32,tbl.col33 | col31                   | tbl.col31 = keys.col31     |                     | ' || coalesce(o.col31::TEXT,'NULL') || ', ' || quote_nullable(o.col32) || ', ' || coalesce(o.col33::TEXT,'NULL') || ' | col31 = ' || coalesce(n.col31 ::TEXT,'NULL') || ', col32 = ' || quote_nullable(n.col32) || ', col33 = ' || coalesce(n.col33 ::TEXT,'NULL') || ' | col31 = ' || o.col31 || ' |                       
- myschema2  | myTbl3_col31_seq | [8016,10006)   | myGroup2  | S        |              |                |               |                 |                  |                 |                  |                  |                      |                          |                               |                         |                            |                     |                                                                                                                       |                                                                                                                                                 |                           |                       
- myschema2  | myTbl3_col31_seq | [10006,)       | myGroup1  | S        |              |                |               |                 |                  |                 |                  |                  |                      |                          |                               |                         |                            |                     |                                                                                                                       |                                                                                                                                                 |                           |                       
+ rel_schema |    rel_tblseq    | rel_time_range | rel_group | rel_kind | rel_priority | rel_log_schema | rel_log_table | rel_log_dat_tsp |  rel_log_index   | rel_log_idx_tsp | rel_log_sequence | rel_log_function | rel_ignored_triggers | rel_emaj_verb_attnum | rel_has_always_ident_col |     rel_sql_rlbk_columns      | rel_sql_rlbk_pk_columns | rel_sql_rlbk_pk_conditions | rel_sql_gen_ins_col |                                                  rel_sql_gen_ins_val                                                  |                                                               rel_sql_gen_upd_set                                                               | rel_sql_gen_pk_conditions | rel_log_seq_last_value 
+------------+------------------+----------------+-----------+----------+--------------+----------------+---------------+-----------------+------------------+-----------------+------------------+------------------+----------------------+----------------------+--------------------------+-------------------------------+-------------------------+----------------------------+---------------------+-----------------------------------------------------------------------------------------------------------------------+-------------------------------------------------------------------------------------------------------------------------------------------------+---------------------------+------------------------
+ myschema2  | myTbl3           | [8008,10005)   | myGroup2  | r        |              | emaj_myschema2 | myTbl3_log_1  |                 | myTbl3_log_idx_1 |                 | myTbl3_log_seq   | myTbl3_log_fnct  |                      |                    4 | f                        | tbl.col31,tbl.col32,tbl.col33 | col31                   | tbl.col31 = keys.col31     |                     | ' || coalesce(o.col31::TEXT,'NULL') || ', ' || quote_nullable(o.col32) || ', ' || coalesce(o.col33::TEXT,'NULL') || ' | col31 = ' || coalesce(n.col31 ::TEXT,'NULL') || ', col32 = ' || quote_nullable(n.col32) || ', col33 = ' || coalesce(n.col33 ::TEXT,'NULL') || ' | col31 = ' || o.col31 || ' |                       
+ myschema2  | myTbl3           | [10005,)       | myGroup1  | r        |          100 | emaj_myschema2 | myTbl3_log    | tsplog1         | myTbl3_log_idx   | tsplog1         | myTbl3_log_seq   | myTbl3_log_fnct  |                      |                    4 | f                        | tbl.col31,tbl.col32,tbl.col33 | col31                   | tbl.col31 = keys.col31     |                     | ' || coalesce(o.col31::TEXT,'NULL') || ', ' || quote_nullable(o.col32) || ', ' || coalesce(o.col33::TEXT,'NULL') || ' | col31 = ' || coalesce(n.col31 ::TEXT,'NULL') || ', col32 = ' || quote_nullable(n.col32) || ', col33 = ' || coalesce(n.col33 ::TEXT,'NULL') || ' | col31 = ' || o.col31 || ' |                       
+ myschema2  | myTbl3_col31_seq | [8016,10006)   | myGroup2  | S        |              |                |               |                 |                  |                 |                  |                  |                      |                      |                          |                               |                         |                            |                     |                                                                                                                       |                                                                                                                                                 |                           |                       
+ myschema2  | myTbl3_col31_seq | [10006,)       | myGroup1  | S        |              |                |               |                 |                  |                 |                  |                  |                      |                      |                          |                               |                         |                            |                     |                                                                                                                       |                                                                                                                                                 |                           |                       
 (4 rows)
 
 -- perform various tasks on the groups
@@ -2836,27 +2812,21 @@ select emaj.emaj_stop_group('myGroup2');
 -- This first import try fails because a myGroup1 is missing
 select emaj.emaj_import_groups_configuration(:'EMAJTESTTMPDIR' || '/all_groups_conf.json', array['myGroup2'], true);
 NOTICE:  table "tmp_app_table" does not exist, skipping
-CONTEXT:  SQL statement "DROP TABLE IF EXISTS tmp_app_table, tmp_app_sequence, tmp_app_trigger"
-PL/pgSQL function emaj._import_groups_conf_prepare(json,text[],boolean,text) line 71 at SQL statement
+CONTEXT:  SQL statement "DROP TABLE IF EXISTS tmp_app_table, tmp_app_sequence"
+PL/pgSQL function emaj._import_groups_conf_prepare(json,text[],boolean,text) line 72 at SQL statement
 PL/pgSQL function emaj._import_groups_conf(json,text[],boolean,text,text) line 70 at FOR over SELECT rows
 SQL statement "SELECT emaj._import_groups_conf(v_json, v_groups, v_allowGroupsUpdate, v_location, v_mark)"
 PL/pgSQL function emaj.emaj_import_groups_configuration(text,text[],boolean,text) line 29 at SQL statement
 NOTICE:  table "tmp_app_sequence" does not exist, skipping
-CONTEXT:  SQL statement "DROP TABLE IF EXISTS tmp_app_table, tmp_app_sequence, tmp_app_trigger"
-PL/pgSQL function emaj._import_groups_conf_prepare(json,text[],boolean,text) line 71 at SQL statement
+CONTEXT:  SQL statement "DROP TABLE IF EXISTS tmp_app_table, tmp_app_sequence"
+PL/pgSQL function emaj._import_groups_conf_prepare(json,text[],boolean,text) line 72 at SQL statement
 PL/pgSQL function emaj._import_groups_conf(json,text[],boolean,text,text) line 70 at FOR over SELECT rows
 SQL statement "SELECT emaj._import_groups_conf(v_json, v_groups, v_allowGroupsUpdate, v_location, v_mark)"
 PL/pgSQL function emaj.emaj_import_groups_configuration(text,text[],boolean,text) line 29 at SQL statement
-NOTICE:  table "tmp_app_trigger" does not exist, skipping
-CONTEXT:  SQL statement "DROP TABLE IF EXISTS tmp_app_table, tmp_app_sequence, tmp_app_trigger"
-PL/pgSQL function emaj._import_groups_conf_prepare(json,text[],boolean,text) line 71 at SQL statement
-PL/pgSQL function emaj._import_groups_conf(json,text[],boolean,text,text) line 70 at FOR over SELECT rows
-SQL statement "SELECT emaj._import_groups_conf(v_json, v_groups, v_allowGroupsUpdate, v_location, v_mark)"
-PL/pgSQL function emaj.emaj_import_groups_configuration(text,text[],boolean,text) line 29 at SQL statement
-WARNING:  _import_groups_conf (2): in the group "myGroup2", the table myschema2."myTbl3" already belongs to the group "myGroup1".
+WARNING:  _import_groups_conf (2): in the group myGroup2, the table myschema2."myTbl3" already belongs to the group "myGroup1".
 CONTEXT:  SQL statement "SELECT emaj._import_groups_conf(v_json, v_groups, v_allowGroupsUpdate, v_location, v_mark)"
 PL/pgSQL function emaj.emaj_import_groups_configuration(text,text[],boolean,text) line 29 at SQL statement
-WARNING:  _import_groups_conf (2): in the group "myGroup2", the sequence myschema2."myTbl3_col31_seq" already belongs to the group "myGroup1".
+WARNING:  _import_groups_conf (2): in the group myGroup2, the sequence myschema2."myTbl3_col31_seq" already belongs to the group "myGroup1".
 CONTEXT:  SQL statement "SELECT emaj._import_groups_conf(v_json, v_groups, v_allowGroupsUpdate, v_location, v_mark)"
 PL/pgSQL function emaj.emaj_import_groups_configuration(text,text[],boolean,text) line 29 at SQL statement
 ERROR:  _import_groups_conf: One or several errors have been detected in the JSON groups configuration.
@@ -2864,20 +2834,14 @@ CONTEXT:  SQL statement "SELECT emaj._import_groups_conf(v_json, v_groups, v_all
 PL/pgSQL function emaj.emaj_import_groups_configuration(text,text[],boolean,text) line 29 at SQL statement
 select emaj.emaj_import_groups_configuration(:'EMAJTESTTMPDIR' || '/all_groups_conf.json', '{"myGroup1","myGroup2"}', true);
 NOTICE:  table "tmp_app_table" does not exist, skipping
-CONTEXT:  SQL statement "DROP TABLE IF EXISTS tmp_app_table, tmp_app_sequence, tmp_app_trigger"
-PL/pgSQL function emaj._import_groups_conf_prepare(json,text[],boolean,text) line 71 at SQL statement
+CONTEXT:  SQL statement "DROP TABLE IF EXISTS tmp_app_table, tmp_app_sequence"
+PL/pgSQL function emaj._import_groups_conf_prepare(json,text[],boolean,text) line 72 at SQL statement
 PL/pgSQL function emaj._import_groups_conf(json,text[],boolean,text,text) line 70 at FOR over SELECT rows
 SQL statement "SELECT emaj._import_groups_conf(v_json, v_groups, v_allowGroupsUpdate, v_location, v_mark)"
 PL/pgSQL function emaj.emaj_import_groups_configuration(text,text[],boolean,text) line 29 at SQL statement
 NOTICE:  table "tmp_app_sequence" does not exist, skipping
-CONTEXT:  SQL statement "DROP TABLE IF EXISTS tmp_app_table, tmp_app_sequence, tmp_app_trigger"
-PL/pgSQL function emaj._import_groups_conf_prepare(json,text[],boolean,text) line 71 at SQL statement
-PL/pgSQL function emaj._import_groups_conf(json,text[],boolean,text,text) line 70 at FOR over SELECT rows
-SQL statement "SELECT emaj._import_groups_conf(v_json, v_groups, v_allowGroupsUpdate, v_location, v_mark)"
-PL/pgSQL function emaj.emaj_import_groups_configuration(text,text[],boolean,text) line 29 at SQL statement
-NOTICE:  table "tmp_app_trigger" does not exist, skipping
-CONTEXT:  SQL statement "DROP TABLE IF EXISTS tmp_app_table, tmp_app_sequence, tmp_app_trigger"
-PL/pgSQL function emaj._import_groups_conf_prepare(json,text[],boolean,text) line 71 at SQL statement
+CONTEXT:  SQL statement "DROP TABLE IF EXISTS tmp_app_table, tmp_app_sequence"
+PL/pgSQL function emaj._import_groups_conf_prepare(json,text[],boolean,text) line 72 at SQL statement
 PL/pgSQL function emaj._import_groups_conf(json,text[],boolean,text,text) line 70 at FOR over SELECT rows
 SQL statement "SELECT emaj._import_groups_conf(v_json, v_groups, v_allowGroupsUpdate, v_location, v_mark)"
 PL/pgSQL function emaj.emaj_import_groups_configuration(text,text[],boolean,text) line 29 at SQL statement
@@ -3813,7 +3777,7 @@ select hist_function, hist_event, hist_object,
  LOCK_GROUP         | END                          | myGroup1                     | 6 tables locked, 0 deadlock(s)                                                                                         | postgres
  SET_MARK_GROUPS    | BEGIN                        | myGroup1                     | modify table                                                                                                           | postgres
  SET_MARK_GROUPS    | END                          | myGroup1                     | modify table                                                                                                           | postgres
- MODIFY_TABLE       | PRIORITY CHANGED             | myschema2."myTbl3"           | NULL => 1                                                                                                              | postgres
+ MODIFY_TABLE       | PRIORITY CHANGED             | myschema2."myTbl3"           | NULL => 100                                                                                                            | postgres
  MODIFY_TABLE       | LOG DATA TABLESPACE CHANGED  | myschema2."myTbl3"           | Default tablespace => tsplog1                                                                                          | postgres
  MODIFY_TABLE       | LOG INDEX TABLESPACE CHANGED | myschema2."myTbl3"           | Default tablespace => tsplog1                                                                                          | postgres
  MODIFY_TABLE       | END                          |                              | 1 tables effectively modified                                                                                          | postgres
@@ -3890,7 +3854,7 @@ select hist_function, hist_event, hist_object,
  IMPORT_GROUPS      | LOG INDEX TABLESPACE CHANGED | myschema2."myTbl3"           | tsplog1 => Default tablespace                                                                                          | postgres
  IMPORT_GROUPS      | TABLE MOVED                  | myschema2."myTbl3"           | From the logging group myGroup1 to the idle group myGroup2                                                             | postgres
  IMPORT_GROUPS      | SEQUENCE MOVED               | myschema2."myTbl3_col31_seq" | From the logging group myGroup1 to the idle group myGroup2                                                             | postgres
- IMPORT_GROUPS      | PRIORITY CHANGED             | myschema2."myTbl3"           | 1 => NULL                                                                                                              | postgres
+ IMPORT_GROUPS      | PRIORITY CHANGED             | myschema2."myTbl3"           | 100 => NULL                                                                                                            | postgres
  IMPORT_GROUPS      | END                          |                              | 2 created or altered tables groups                                                                                     | postgres
  START_GROUP        | BEGIN                        | myGroup2                     | With log reset                                                                                                         | postgres
  LOCK_GROUP         | BEGIN                        | myGroup2                     |                                                                                                                        | postgres

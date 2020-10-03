@@ -191,19 +191,19 @@ rollback;
 -- other tests
 --
 
--- bad triggers in emaj_ignored_app_trigger
+-- bad triggers in a "triggers to ignore at rollback time" array
 begin;
--- simulate a discrepancy between the emaj_ignored_app_trigger table content and the existing triggers
-  insert into emaj.emaj_ignored_app_trigger values ('dummy','mytbl1','mytrg');         -- dropped schema
-  insert into emaj.emaj_ignored_app_trigger values ('myschema1','dummy','mytrg');      -- dropped table
-  insert into emaj.emaj_ignored_app_trigger values ('myschema1','mytbl1','dummy');     -- dropped trigger
+-- simulate a discrepancy between the emaj_relation table content and the existing triggers
+  update emaj.emaj_relation set rel_ignored_triggers = '{"dummy1","dummy2"}'
+    where rel_schema = 'myschema1' and rel_tblseq = 'mytbl1' and upper_inf(rel_time_range);
 -- check
   select * from emaj.emaj_verify_all() t(msg) where msg like 'Error%';
 -- and fix
-  select emaj.emaj_ignore_app_trigger('REMOVE','dummy','mytbl1','%');
-  select emaj.emaj_ignore_app_trigger('REMOVE','myschema1','dummy','%');
-  select emaj.emaj_ignore_app_trigger('REMOVE','myschema1','mytbl1','dummy');
-  select * from emaj.emaj_verify_all() t(msg) where msg like 'Error%';
+--TODO: switch to an emaj_modify_table() function call to fix the issue
+----  select emaj.emaj_ignore_app_trigger('REMOVE','dummy','mytbl1','%');
+----  select emaj.emaj_ignore_app_trigger('REMOVE','myschema1','dummy','%');
+----  select emaj.emaj_ignore_app_trigger('REMOVE','myschema1','mytbl1','dummy');
+----  select * from emaj.emaj_verify_all() t(msg) where msg like 'Error%';
 rollback;
 
 --------------------------------

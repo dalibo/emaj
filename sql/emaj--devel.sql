@@ -71,6 +71,7 @@ CREATE TYPE emaj._alter_step_enum AS ENUM (
   'MOVE_TBL',                -- move a table from one group to another
   'MOVE_SEQ',                -- move a sequence from one group to another
   'CHANGE_REL_PRIORITY',     -- change the priority level for a table
+  'CHANGE_IGNORED_TRIGGERS', -- change the set of application triggers to ignore at rollback time for a table
   'ADD_TBL',                 -- add a table to a group
   'ADD_SEQ'                  -- add a sequence to a group
   );
@@ -217,6 +218,7 @@ CREATE TABLE emaj.emaj_relation (
   rel_log_sequence             TEXT,                       -- name of the log sequence
   rel_log_function             TEXT,                       -- name of the function associated to the log trigger
                                                            -- created on the application table
+  rel_ignored_triggers         TEXT[],                     -- names array of application trigger to ignore at rollback time
   rel_emaj_verb_attnum         SMALLINT,                   -- column number (attnum) of the log table's emaj_verb column in the
                                                            --  pg_attribute table
   rel_has_always_ident_col     BOOLEAN,                    -- are there any "generated always as identity" column ?
@@ -458,18 +460,6 @@ CREATE TABLE emaj.emaj_rlbk_stat (
   );
 COMMENT ON TABLE emaj.emaj_rlbk_stat IS
 $$Contains statistics about previous E-Maj rollback durations.$$;
-
--- Table containing the list of appliction triggers on tables that should not be automatically disabled when launching a rollback
--- operation.
--- It is the administrator's responsibility to setup its content, using the emaj_ignore_app_trigger function.
-CREATE TABLE emaj.emaj_ignored_app_trigger (
-  trg_schema                   TEXT        NOT NULL,       -- application schema
-  trg_table                    TEXT        NOT NULL,       -- application table
-  trg_name                     TEXT        NOT NULL,       -- trigger name
-  PRIMARY KEY (trg_schema, trg_table, trg_name)
-  );
-COMMENT ON TABLE emaj.emaj_ignored_app_trigger IS
-$$Contains the triggers on application tables that do not need to be disabled when rollbacking.$$;
 
 ------------------------------------
 --                                --
@@ -2775,7 +2765,7 @@ $_modify_tables$
 -- process the changes for each table, if any
       FOR r_rel IN
         SELECT rel_tblseq, rel_time_range, rel_log_schema, rel_priority, rel_log_table, rel_log_index, rel_log_dat_tsp,
-               rel_log_idx_tsp, rel_group, group_is_logging
+               rel_log_idx_tsp, rel_ignored_triggers, rel_group, group_is_logging
           FROM emaj.emaj_relation
                JOIN emaj.emaj_group ON (group_name = rel_group)
           WHERE rel_schema = v_schema
@@ -3256,7 +3246,7 @@ $_change_priority_tbl$
     INSERT INTO emaj.emaj_hist (hist_function, hist_event, hist_object, hist_wording)
       VALUES (v_function, 'PRIORITY CHANGED',
               quote_ident(v_schema) || '.' || quote_ident(v_table),
-              coalesce(v_currentPriority::char, 'NULL') || ' => ' || coalesce(v_newPriority::char, 'NULL'));
+              coalesce(v_currentPriority::text, 'NULL') || ' => ' || coalesce(v_newPriority::text, 'NULL'));
     RETURN;
   END;
 $_change_priority_tbl$;
@@ -3324,6 +3314,30 @@ $_change_log_index_tsp_tbl$
     RETURN;
   END;
 $_change_log_index_tsp_tbl$;
+
+CREATE OR REPLACE FUNCTION emaj._change_ignored_triggers_tbl(v_schema TEXT, v_table TEXT, v_currentIgnored_triggers TEXT[],
+                                                             v_newIgnored_triggers TEXT[], v_function TEXT)
+RETURNS VOID LANGUAGE plpgsql AS
+$_change_ignored_triggers_tbl$
+-- This function changes the set of appliaction triggers to ignore at rollback time.
+-- Input: the table identity, the old and new arrays of triggers to ignore and the calling function.
+  BEGIN
+-- update the emaj_relation row for the table
+    UPDATE emaj.emaj_relation
+      SET rel_ignored_triggers = v_newIgnored_triggers
+      FROM emaj.emaj_group
+      WHERE rel_group = group_name
+        AND rel_schema = v_schema
+        AND rel_tblseq = v_table
+        AND upper_inf(rel_time_range);
+-- insert an entry into the emaj_hist table
+    INSERT INTO emaj.emaj_hist (hist_function, hist_event, hist_object, hist_wording)
+      VALUES (v_function, 'TRIGGERS TO IGNORE CHANGED',
+              quote_ident(v_schema) || '.' || quote_ident(v_table),
+              coalesce(v_currentIgnored_triggers::text, 'none') || ' => ' || coalesce(v_newIgnored_triggers::text, 'none'));
+    RETURN;
+  END;
+$_change_ignored_triggers_tbl$;
 
 CREATE OR REPLACE FUNCTION emaj._remove_tbl(v_schema TEXT, v_table TEXT, v_group TEXT, v_groupIsLogging BOOLEAN,
                                             v_timeId BIGINT, v_function TEXT)
@@ -3494,13 +3508,13 @@ $_move_tbl$
         AND upper_inf(rel_time_range);
     INSERT INTO emaj.emaj_relation (rel_schema, rel_tblseq, rel_time_range, rel_group, rel_kind, rel_priority, rel_log_schema,
                                     rel_log_table, rel_log_dat_tsp, rel_log_index, rel_log_idx_tsp, rel_log_sequence, rel_log_function,
-                                    rel_emaj_verb_attnum, rel_has_always_ident_col,
+                                    rel_ignored_triggers, rel_emaj_verb_attnum, rel_has_always_ident_col,
                                     rel_sql_rlbk_columns, rel_sql_rlbk_pk_columns, rel_sql_rlbk_pk_conditions,
                                     rel_sql_gen_ins_col, rel_sql_gen_ins_val, rel_sql_gen_upd_set, rel_sql_gen_pk_conditions,
                                     rel_log_seq_last_value)
       SELECT rel_schema, rel_tblseq, int8range(v_timeId, NULL, '[)'), v_newGroup, rel_kind, rel_priority, rel_log_schema,
              v_currentLogTable, rel_log_dat_tsp, v_currentLogIndex, rel_log_idx_tsp, rel_log_sequence, rel_log_function,
-             rel_emaj_verb_attnum, rel_has_always_ident_col,
+             rel_ignored_triggers, rel_emaj_verb_attnum, rel_has_always_ident_col,
              rel_sql_rlbk_columns, rel_sql_rlbk_pk_columns, rel_sql_rlbk_pk_conditions,
              rel_sql_gen_ins_col, rel_sql_gen_ins_val, rel_sql_gen_upd_set, rel_sql_gen_pk_conditions,
              rel_log_seq_last_value
@@ -4359,7 +4373,8 @@ $_rlbk_tbl$
 -- The function is called by emaj._rlbk_session_exec().
 -- Input: row from emaj_relation corresponding to the appplication table to proccess
 --        global sequence (non inclusive) lower and (inclusive) upper limits covering the rollback time frame
---        number of sessions and a boolean indicating whether the rollback is logged
+--        number of sessions
+--        a boolean indicating whether the rollback is logged
 -- Output: number of rolled back primary keys
 -- For unlogged rollback, the log triggers have been disabled previously and will be enabled later.
 -- The function is defined as SECURITY DEFINER so that emaj_adm role can use it even if he is not the owner of the application table.
@@ -4470,12 +4485,13 @@ $emaj_ignore_app_trigger$
 -- operation.
 -- Input: the action to perform, either 'ADD' or 'REMOVE',
 --        the schema and table names of the table that owns the trigger
---        and the trigger to record into or remove from the emaj_ignored_app_trigger table
+--        and the trigger to record into or remove from the triggers list for the table
 -- Output: number of recorded or removed triggers
 -- A trigger to add must exist. E-Maj triggers are not processed.
 -- The trigger parameter may contain '%' and/or '_' characters, these characters having the same meaning as in LIKE clauses.
   DECLARE
-    v_nbRows                 INT;
+    v_oldIgnoredTriggers     TEXT[];
+    v_newIgnoredTriggers     TEXT[];
     v_tableOid               OID;
     v_trgList                TEXT;
   BEGIN
@@ -4485,12 +4501,23 @@ $emaj_ignore_app_trigger$
     END IF;
 -- process the REMOVE action
     IF upper(v_action) = 'REMOVE' THEN
-      DELETE FROM emaj.emaj_ignored_app_trigger
-        WHERE trg_schema = v_schema
-          AND trg_table = v_table
-          AND trg_name LIKE v_trigger;
-      GET DIAGNOSTICS v_nbRows = ROW_COUNT;
-      RETURN v_nbRows;
+-- get the old rel_ignored_triggers array content
+      SELECT rel_ignored_triggers INTO v_oldIgnoredTriggers
+        FROM emaj.emaj_relation
+        WHERE rel_schema = v_schema AND rel_tblseq = v_table AND upper_inf(rel_time_range);
+-- compute the new rel_ignored_triggers array content
+      SELECT array_agg(trg_name ORDER BY trg_name) INTO v_newIgnoredTriggers
+        FROM
+          (SELECT trg_name
+             FROM unnest(v_oldIgnoredTriggers) AS trg_name
+           WHERE trg_name NOT LIKE v_trigger
+          ) AS t;
+-- and update
+      UPDATE emaj.emaj_relation
+        SET rel_ignored_triggers = v_newIgnoredTriggers
+        WHERE rel_schema = v_schema AND rel_tblseq = v_table AND upper_inf(rel_time_range);
+-- return the number of removed triggers
+      RETURN coalesce(array_length(v_oldIgnoredTriggers, 1), 0) - coalesce(array_length(v_newIgnoredTriggers, 1), 0);
     END IF;
 -- process the ADD action
 -- check that the supplied schema qualified table name exists
@@ -4523,18 +4550,29 @@ $emaj_ignore_app_trigger$
     IF v_trgList IS NOT NULL THEN
       RAISE WARNING 'emaj_ignore_app_trigger: the triggers "%" are E-Maj triggers and are not processed by the function.', v_trgList;
     END IF;
--- insert into the emaj_ignored_app_trigger table the not yet recorded triggers
-    INSERT INTO emaj.emaj_ignored_app_trigger
-      SELECT v_schema, v_table, tgname
-        FROM pg_catalog.pg_trigger
-        WHERE tgrelid = v_tableOid
-          AND tgname LIKE v_trigger
-          AND NOT tgisinternal
-          AND tgname NOT IN ('emaj_trunc_trg', 'emaj_log_trg')
-      ON CONFLICT DO NOTHING;
+-- get the old rel_ignored_triggers array content
+    SELECT rel_ignored_triggers INTO v_oldIgnoredTriggers
+      FROM emaj.emaj_relation
+      WHERE rel_schema = v_schema AND rel_tblseq = v_table AND upper_inf(rel_time_range);
+-- compute the new rel_ignored_triggers array content
+    SELECT array_agg(trg_name ORDER BY trg_name) INTO v_newIgnoredTriggers
+      FROM
+        (  SELECT trg_name
+             FROM unnest(v_oldIgnoredTriggers) AS trg_name
+         UNION
+           SELECT tgname
+             FROM pg_catalog.pg_trigger
+             WHERE tgrelid = v_tableOid
+               AND tgname LIKE v_trigger
+               AND NOT tgisinternal
+               AND tgname NOT IN ('emaj_trunc_trg', 'emaj_log_trg')
+        ) AS t;
+-- and update
+    UPDATE emaj.emaj_relation
+      SET rel_ignored_triggers = v_newIgnoredTriggers
+      WHERE rel_schema = v_schema AND rel_tblseq = v_table AND upper_inf(rel_time_range);
 -- return the number of effectively added triggers
-    GET DIAGNOSTICS v_nbRows = ROW_COUNT;
-    RETURN v_nbRows;
+    RETURN coalesce(array_length(v_newIgnoredTriggers, 1), 0) - coalesce(array_length(v_oldIgnoredTriggers, 1), 0); ----v_nbRows;
   END;
 $emaj_ignore_app_trigger$;
 COMMENT ON FUNCTION emaj.emaj_ignore_app_trigger(TEXT,TEXT,TEXT,TEXT) IS
@@ -5691,7 +5729,7 @@ $_alter_plan$
                      AND altr_time_id = v_timeId
                      AND altr_step = 'REPAIR_TBL'
                 );
--- determine the tables whose log data tablespace in tmp_app_table has changed
+-- determine the tables whose log index tablespace in tmp_app_table has changed
     INSERT INTO emaj.emaj_alter_plan (altr_time_id, altr_step, altr_schema, altr_tblseq, altr_group, altr_priority, altr_new_group)
       SELECT v_timeId, 'CHANGE_TBL_LOG_INDEX_TSP', rel_schema, rel_tblseq, rel_group, tmp_priority,
              CASE WHEN rel_group <> tmp_group THEN tmp_group ELSE NULL END
@@ -5740,6 +5778,17 @@ $_alter_plan$
           AND ( (rel_priority IS NULL AND tmp_priority IS NOT NULL) OR
                 (rel_priority IS NOT NULL AND tmp_priority IS NULL) OR
                 (rel_priority <> tmp_priority) );
+-- determine the tables that change their triggers to ignore at rollback time
+    INSERT INTO emaj.emaj_alter_plan (altr_time_id, altr_step, altr_schema, altr_tblseq, altr_group, altr_priority)
+      SELECT v_timeId, 'CHANGE_IGNORED_TRIGGERS', rel_schema, rel_tblseq, rel_group, tmp_priority
+        FROM emaj.emaj_relation
+             JOIN tmp_app_table ON (tmp_schema = rel_schema AND tmp_tbl_name = rel_tblseq)
+        WHERE upper_inf(rel_time_range)
+          AND rel_kind = 'r'
+          AND rel_group = ANY (v_groupNames)
+          AND ( (rel_ignored_triggers IS NULL AND tmp_ignored_triggers IS NOT NULL) OR
+                (rel_ignored_triggers IS NOT NULL AND tmp_ignored_triggers IS NULL) OR
+                (rel_ignored_triggers <> tmp_ignored_triggers) );
 -- determine the tables to add to the groups
     INSERT INTO emaj.emaj_alter_plan (altr_time_id, altr_step, altr_schema, altr_tblseq, altr_group, altr_priority)
       SELECT v_timeId, CAST(CASE WHEN relkind = 'r' THEN 'ADD_TBL' ELSE 'ADD_SEQ' END AS emaj._alter_step_enum),
@@ -5801,6 +5850,7 @@ $_alter_exec$
   DECLARE
     v_logDatTsp              TEXT;
     v_logIdxTsp              TEXT;
+    v_ignoredTriggers        TEXT[];
     v_isRollbackable         BOOLEAN;
     r_plan                   emaj.emaj_alter_plan%ROWTYPE;
     r_rel                    emaj.emaj_relation%ROWTYPE;
@@ -5822,10 +5872,6 @@ $_alter_exec$
 -- remove a sequence from its group
           PERFORM emaj._remove_seq(r_plan.altr_schema, r_plan.altr_tblseq, r_plan.altr_group, r_plan.altr_group_is_logging,
                                    v_timeId, v_callingFunction);
---
-        WHEN 'RESET_GROUP' THEN
--- reset a group
-          PERFORM emaj._reset_groups(ARRAY[r_plan.altr_group]);
 --
         WHEN 'REPAIR_TBL' THEN
           IF r_plan.altr_group_is_logging THEN
@@ -5854,6 +5900,10 @@ $_alter_exec$
         WHEN 'REPAIR_SEQ' THEN
           RAISE EXCEPTION 'alter_exec: Internal error, trying to repair a sequence (%.%) is abnormal.',
             r_plan.altr_schema, r_plan.altr_tblseq;
+--
+        WHEN 'RESET_GROUP' THEN
+-- reset a group
+          PERFORM emaj._reset_groups(ARRAY[r_plan.altr_group]);
 --
         WHEN 'CHANGE_TBL_LOG_DATA_TSP' THEN
 -- get the table description from emaj_relation
@@ -5909,6 +5959,23 @@ $_alter_exec$
 -- update the emaj_relation table to report the priority change
           PERFORM emaj._change_priority_tbl(r_plan.altr_schema, r_plan.altr_tblseq, r_rel.rel_priority, r_plan.altr_priority,
                                             v_callingFunction);
+--
+        WHEN 'CHANGE_IGNORED_TRIGGERS' THEN
+-- get the table description from emaj_relation
+          SELECT * INTO r_rel
+            FROM emaj.emaj_relation
+            WHERE rel_schema = r_plan.altr_schema
+              AND rel_tblseq = r_plan.altr_tblseq
+              AND upper_inf(rel_time_range);
+-- get the table description from tmp_app_table
+          SELECT tmp_ignored_triggers INTO v_ignoredTriggers
+            FROM tmp_app_table
+            WHERE tmp_group = coalesce (r_plan.altr_new_group, r_plan.altr_group)
+              AND tmp_schema = r_plan.altr_schema
+              AND tmp_tbl_name = r_plan.altr_tblseq;
+-- update the emaj_relation table to report the triggers array change
+          PERFORM emaj._change_ignored_triggers_tbl(r_plan.altr_schema, r_plan.altr_tblseq, r_rel.rel_ignored_triggers, v_ignoredTriggers,
+                                                    v_callingFunction);
 --
         WHEN 'ADD_TBL' THEN
 -- add a table to a group
@@ -5981,9 +6048,9 @@ $_export_groups_conf$
     v_groupsText             TEXT;
     v_unknownGroupsList      TEXT;
     v_groupsJson             JSON;
+    v_trg_name               TEXT;
     r_group                  RECORD;
     r_table                  RECORD;
-    r_trigger                RECORD;
     r_sequence               RECORD;
   BEGIN
 -- build the header of the JSON structure
@@ -6028,12 +6095,7 @@ $_export_groups_conf$
         v_groupsText = v_groupsText
                     || E'      "tables": [\n';
         FOR r_table IN
-          SELECT rel_schema, rel_tblseq, rel_priority, rel_log_dat_tsp, rel_log_idx_tsp,
-                 (SELECT count(*)
-                    FROM emaj.emaj_ignored_app_trigger
-                    WHERE trg_schema = rel_schema
-                      AND trg_table = rel_tblseq
-                 ) AS nb_trigger
+          SELECT rel_schema, rel_tblseq, rel_priority, rel_log_dat_tsp, rel_log_idx_tsp, rel_ignored_triggers
             FROM emaj.emaj_relation
             WHERE rel_kind = 'r'
               AND upper_inf(rel_time_range)
@@ -6056,20 +6118,15 @@ $_export_groups_conf$
             v_groupsText = v_groupsText
                         || E'          "log_index_tablespace": '|| to_json(r_table.rel_log_idx_tsp) || E',\n';
           END IF;
-          IF r_table.nb_trigger > 0 THEN
+          IF r_table.rel_ignored_triggers IS NOT NULL THEN
 -- build the triggers to ignore for the table, if any
             v_groupsText = v_groupsText
                         || E'          "ignored_triggers": [\n';
-            FOR r_trigger IN
-              SELECT trg_name
-                FROM emaj.emaj_ignored_app_trigger
-                WHERE trg_schema = r_table.rel_schema
-                  AND trg_table = r_table.rel_tblseq
-                ORDER BY trg_name
+            FOREACH v_trg_name IN ARRAY r_table.rel_ignored_triggers
             LOOP
               v_groupsText = v_groupsText
                           || E'            {\n'
-                          ||  '              "trigger": ' || to_json(r_trigger.trg_name) || E',\n'
+                          ||  '              "trigger": ' || to_json(v_trg_name) || E',\n'
                           || E'            },\n';
             END LOOP;
             v_groupsText = v_groupsText
@@ -6288,6 +6345,7 @@ $_import_groups_conf_prepare$
 -- Output: diagnostic records
   DECLARE
     v_rollbackableGroups     TEXT[];
+    v_ignoredTriggers        TEXT[];
     r_group                  RECORD;
     r_table                  RECORD;
     r_sequence               RECORD;
@@ -6345,32 +6403,26 @@ $_import_groups_conf_prepare$
       END IF;
     END IF;
 -- Drop temporary tables in case of...
-    DROP TABLE IF EXISTS tmp_app_table, tmp_app_sequence, tmp_app_trigger;
--- Create the temporary table that will hold the groups configuration
+    DROP TABLE IF EXISTS tmp_app_table, tmp_app_sequence;
+-- Create the temporary table that will hold the application tables configured in groups
     CREATE TEMP TABLE tmp_app_table (
-      tmp_group          TEXT NOT NULL,
-      tmp_schema         TEXT NOT NULL,
-      tmp_tbl_name       TEXT NOT NULL,
-      tmp_priority       INTEGER,
-      tmp_log_dat_tsp    TEXT,
-      tmp_log_idx_tsp    TEXT,
+      tmp_group            TEXT NOT NULL,
+      tmp_schema           TEXT NOT NULL,
+      tmp_tbl_name         TEXT NOT NULL,
+      tmp_priority         INTEGER,
+      tmp_log_dat_tsp      TEXT,
+      tmp_log_idx_tsp      TEXT,
+      tmp_ignored_triggers TEXT[],
       PRIMARY KEY (tmp_schema, tmp_tbl_name)
       );
 -- Create the temporary table that will hold the application sequences configured in groups
     CREATE TEMP TABLE tmp_app_sequence (
-      tmp_schema         TEXT NOT NULL,
-      tmp_seq_name       TEXT NOT NULL,
-      tmp_group          TEXT,
+      tmp_schema           TEXT NOT NULL,
+      tmp_seq_name         TEXT NOT NULL,
+      tmp_group            TEXT,
       PRIMARY KEY (tmp_schema, tmp_seq_name)
       );
--- Create a temporary table to hold the application triggers referenced in the JSON structure
-    CREATE TEMP TABLE tmp_app_trigger (
-      tmp_group          TEXT,
-      tmp_schema         TEXT,
-      tmp_table          TEXT,
-      tmp_trigger        TEXT
-    );
--- In a second pass over the JSON structure, populate the tmp_app_table, tmp_app_sequence and tmp_app_trigger temporary tables
+-- In a second pass over the JSON structure, populate the tmp_app_table and tmp_app_sequence temporary tables
     v_rollbackableGroups = '{}';
     FOR r_group IN
       SELECT value AS groupJson
@@ -6381,19 +6433,20 @@ $_import_groups_conf_prepare$
       IF coalesce((r_group.groupJson ->> 'is_rollbackable')::BOOLEAN, TRUE) THEN
         v_rollbackableGroups = array_append(v_rollbackableGroups, r_group.groupJson ->> 'group');
       END IF;
---   insert tables into tmp_app_table, and application triggers into the tmp_app_trigger temporary table
+--   insert tables into tmp_app_table
       FOR r_table IN
         SELECT value AS tableJson
           FROM json_array_elements(r_group.groupJson -> 'tables')
       LOOP
+--     prepare the array of trigger names for the table
+        SELECT array_agg("trigger" ORDER BY "trigger") INTO v_ignoredTriggers
+          FROM json_to_recordset(r_table.tableJson -> 'ignored_triggers') AS x("trigger" TEXT);
+--     ... and insert
         INSERT INTO tmp_app_table(tmp_group, tmp_schema, tmp_tbl_name,
-                                        tmp_priority, tmp_log_dat_tsp, tmp_log_idx_tsp)
+                                  tmp_priority, tmp_log_dat_tsp, tmp_log_idx_tsp, tmp_ignored_triggers)
           VALUES (r_group.groupJson ->> 'group', r_table.tableJson ->> 'schema', r_table.tableJson ->> 'table',
                   (r_table.tableJson ->> 'priority')::INT, r_table.tableJson ->> 'log_data_tablespace',
-                  r_table.tableJson ->> 'log_index_tablespace');
-        INSERT INTO tmp_app_trigger
-          SELECT r_group.groupJson ->> 'group', r_table.tableJson ->> 'schema', r_table.tableJson ->> 'table', "trigger"
-            FROM json_to_recordset(r_table.tableJson -> 'ignored_triggers') AS x("trigger" TEXT);
+                  r_table.tableJson ->> 'log_index_tablespace', v_ignoredTriggers);
       END LOOP;
 --   insert sequences into tmp_app_table
       FOR r_sequence IN
@@ -6411,33 +6464,6 @@ $_import_groups_conf_prepare$
         WHERE ((rpt_text_var_1 = ANY (v_groups) AND rpt_severity = 1)
             OR (rpt_text_var_1 = ANY (v_rollbackableGroups) AND rpt_severity = 2))
         ORDER BY rpt_msg_type, rpt_text_var_1, rpt_text_var_2, rpt_text_var_3;
--- check that all listed triggers exist
-    RETURN QUERY
-      SELECT 260, 1, tmp_group, tmp_schema, tmp_table, tmp_trigger, NULL::INT,
-                   format('In the group "%s" and for the table %I.%I, the trigger %s does not exist.',
-                          tmp_group, quote_ident(tmp_schema), quote_ident(tmp_table), quote_ident(tmp_trigger))
-        FROM
-          (SELECT tmp_group, tmp_schema, tmp_table, tmp_trigger
-             FROM tmp_app_trigger
-             WHERE NOT EXISTS
-                     (SELECT 1
-                        FROM pg_catalog.pg_class
-                             JOIN pg_catalog.pg_namespace ON (pg_namespace.oid = relnamespace)
-                             JOIN pg_catalog.pg_trigger ON (tgrelid = pg_class.oid)
-                        WHERE nspname = tmp_schema AND relname = tmp_table AND tgname = tmp_trigger
-                          AND NOT tgisinternal
-                     )
-          ) AS t;
--- ... and are not emaj triggers
-    RETURN QUERY
-      SELECT 261, 1, tmp_group, tmp_schema, tmp_table, tmp_trigger, NULL::INT,
-                   format('In the group "%s" and for the table %I.%I, the trigger %I is an E-Maj trigger.',
-                          tmp_group, quote_ident(tmp_schema), quote_ident(tmp_table), quote_ident(tmp_trigger))
-        FROM
-          (SELECT tmp_group, tmp_schema, tmp_table, tmp_trigger
-             FROM tmp_app_trigger
-             WHERE tmp_trigger IN ('emaj_trunc_trg', 'emaj_log_trg')
-          ) AS t;
     RETURN;
   END;
 $_import_groups_conf_prepare$;
@@ -6466,7 +6492,7 @@ $_import_groups_conf_check$
     RETURN QUERY
       SELECT 1, 1, tmp_group, tmp_schema, tmp_tbl_name, NULL::TEXT, NULL::INT,
              format('in the group %s, the table %s.%s does not exist.',
-                    quote_ident(tmp_group), quote_ident(tmp_schema), quote_ident(tmp_tbl_name))
+                    tmp_group, quote_ident(tmp_schema), quote_ident(tmp_tbl_name))
         FROM tmp_app_table
         WHERE NOT EXISTS
                 (SELECT 0
@@ -6479,7 +6505,7 @@ $_import_groups_conf_check$
     RETURN QUERY
       SELECT 2, 1, tmp_group, tmp_schema, tmp_tbl_name, NULL::TEXT, NULL::INT,
              format('in the group %s, the table %s.%s is a partitionned table (only elementary partitions are supported by E-Maj).',
-                    quote_ident(tmp_group), quote_ident(tmp_schema), quote_ident(tmp_tbl_name))
+                    tmp_group, quote_ident(tmp_schema), quote_ident(tmp_tbl_name))
         FROM tmp_app_table
              JOIN pg_catalog.pg_class ON (relname = tmp_tbl_name)
              JOIN pg_catalog.pg_namespace ON (pg_namespace.oid = relnamespace AND nspname = tmp_schema)
@@ -6488,14 +6514,14 @@ $_import_groups_conf_check$
     RETURN QUERY
       SELECT 3, 1, tmp_group, tmp_schema, tmp_tbl_name, NULL::TEXT, NULL::INT,
              format('in the group %s, the table or sequence %s.%s belongs to an E-Maj schema.',
-                    quote_ident(tmp_group), quote_ident(tmp_schema), quote_ident(tmp_tbl_name))
+                    tmp_group, quote_ident(tmp_schema), quote_ident(tmp_tbl_name))
         FROM tmp_app_table
              JOIN emaj.emaj_schema ON (sch_name = tmp_schema);
 ---- check that no table of the checked groups already belongs to other created groups
     RETURN QUERY
       SELECT 4, 1, tmp_group, tmp_schema, tmp_tbl_name, rel_group, NULL::INT,
              format('in the group %s, the table %s.%s already belongs to the group %s.',
-                    quote_ident(tmp_group), quote_ident(tmp_schema), quote_ident(tmp_tbl_name), quote_ident(rel_group))
+                    tmp_group, quote_ident(tmp_schema), quote_ident(tmp_tbl_name), quote_ident(rel_group))
         FROM tmp_app_table
              JOIN emaj.emaj_relation ON (rel_schema = tmp_schema AND rel_tblseq = tmp_tbl_name AND upper_inf(rel_time_range))
         WHERE NOT rel_group = ANY (v_groupNames);
@@ -6503,7 +6529,7 @@ $_import_groups_conf_check$
     RETURN QUERY
       SELECT 5, 1, tmp_group, tmp_schema, tmp_tbl_name, NULL::TEXT, NULL::INT,
              format('in the group %s, the table %s.%s is a TEMPORARY table.',
-                    quote_ident(tmp_group), quote_ident(tmp_schema), quote_ident(tmp_tbl_name))
+                    tmp_group, quote_ident(tmp_schema), quote_ident(tmp_tbl_name))
         FROM tmp_app_table
              JOIN pg_catalog.pg_class ON (relname = tmp_tbl_name)
              JOIN pg_catalog.pg_namespace ON (pg_namespace.oid = relnamespace AND nspname = tmp_schema)
@@ -6512,7 +6538,7 @@ $_import_groups_conf_check$
     RETURN QUERY
       SELECT 12, 1, tmp_group, tmp_schema, tmp_tbl_name, tmp_log_dat_tsp, NULL::INT,
              format('in the group %s, for the table %s.%s, the data log tablespace %s does not exist.',
-                    quote_ident(tmp_group), quote_ident(tmp_schema), quote_ident(tmp_tbl_name), quote_ident(tmp_log_dat_tsp))
+                    tmp_group, quote_ident(tmp_schema), quote_ident(tmp_tbl_name), quote_ident(tmp_log_dat_tsp))
         FROM tmp_app_table
              JOIN pg_catalog.pg_class ON (relname = tmp_tbl_name)
              JOIN pg_catalog.pg_namespace ON (pg_namespace.oid = relnamespace AND nspname = tmp_schema)
@@ -6527,7 +6553,7 @@ $_import_groups_conf_check$
     RETURN QUERY
       SELECT 13, 1, tmp_group, tmp_schema, tmp_tbl_name, tmp_log_idx_tsp, NULL::INT,
              format('in the group %s, for the table %s.%s, the index log tablespace %s does not exist.',
-                    quote_ident(tmp_group), quote_ident(tmp_schema), quote_ident(tmp_tbl_name), quote_ident(tmp_log_idx_tsp))
+                    tmp_group, quote_ident(tmp_schema), quote_ident(tmp_tbl_name), quote_ident(tmp_log_idx_tsp))
         FROM tmp_app_table
              JOIN pg_catalog.pg_class ON (relname = tmp_tbl_name)
              JOIN pg_catalog.pg_namespace ON (pg_namespace.oid = relnamespace AND nspname = tmp_schema)
@@ -6538,11 +6564,38 @@ $_import_groups_conf_check$
                    FROM pg_catalog.pg_tablespace
                    WHERE spcname = tmp_log_idx_tsp
                 );
+-- check that all listed triggers exist
+    RETURN QUERY
+      SELECT 15, 1, tmp_group, tmp_schema, tmp_tbl_name, tmp_trigger, NULL::INT,
+             format('In the group "%s" and for the table %I.%I, the trigger %s does not exist.',
+                    tmp_group, quote_ident(tmp_schema), quote_ident(tmp_tbl_name), quote_ident(tmp_trigger))
+        FROM
+          (SELECT tmp_group, tmp_schema, tmp_tbl_name, unnest(tmp_ignored_triggers) AS tmp_trigger
+             FROM tmp_app_table
+          ) AS t
+        WHERE NOT EXISTS
+                (SELECT 1
+                   FROM pg_catalog.pg_class
+                        JOIN pg_catalog.pg_namespace ON (pg_namespace.oid = relnamespace)
+                        JOIN pg_catalog.pg_trigger ON (tgrelid = pg_class.oid)
+                   WHERE nspname = tmp_schema AND relname = tmp_tbl_name AND tgname = tmp_trigger
+                     AND NOT tgisinternal
+                );
+-- ... and are not emaj triggers
+    RETURN QUERY
+      SELECT 16, 1, tmp_group, tmp_schema, tmp_tbl_name, tmp_trigger, NULL::INT,
+             format('In the group "%s" and for the table %I.%I, the trigger %I is an E-Maj trigger.',
+                    tmp_group, quote_ident(tmp_schema), quote_ident(tmp_tbl_name), quote_ident(tmp_trigger))
+        FROM
+          (SELECT tmp_group, tmp_schema, tmp_tbl_name, unnest(tmp_ignored_triggers) AS tmp_trigger
+             FROM tmp_app_table
+          ) AS t
+        WHERE tmp_trigger IN ('emaj_trunc_trg', 'emaj_log_trg');
 ---- check no table is an unlogged table (blocking rollbackable groups only)
     RETURN QUERY
       SELECT 20, 2, tmp_group, tmp_schema, tmp_tbl_name, NULL::TEXT, NULL::INT,
              format('in the group %s, the table %s.%s is an UNLOGGED table.',
-                    quote_ident(tmp_group), quote_ident(tmp_schema), quote_ident(tmp_tbl_name))
+                    tmp_group, quote_ident(tmp_schema), quote_ident(tmp_tbl_name))
         FROM tmp_app_table
              JOIN pg_catalog.pg_class ON (relname = tmp_tbl_name)
              JOIN pg_catalog.pg_namespace ON (pg_namespace.oid = relnamespace AND nspname = tmp_schema)
@@ -6553,7 +6606,7 @@ $_import_groups_conf_check$
       RETURN QUERY
         SELECT 21, 2, tmp_group, tmp_schema, tmp_tbl_name, NULL::TEXT, NULL::INT,
                format('in the group %s, the table %s.%s is declared WITH OIDS.',
-                      quote_ident(tmp_group), quote_ident(tmp_schema), quote_ident(tmp_tbl_name))
+                      tmp_group, quote_ident(tmp_schema), quote_ident(tmp_tbl_name))
           FROM tmp_app_table
                JOIN pg_catalog.pg_class ON (relname = tmp_tbl_name)
                JOIN pg_catalog.pg_namespace ON (pg_namespace.oid = relnamespace AND nspname = tmp_schema)
@@ -6563,7 +6616,7 @@ $_import_groups_conf_check$
     RETURN QUERY
       SELECT 22, 2, tmp_group, tmp_schema, tmp_tbl_name, NULL::TEXT, NULL::INT,
              format('in the group %s, the table %s.%s has no PRIMARY KEY.',
-                    quote_ident(tmp_group), quote_ident(tmp_schema), quote_ident(tmp_tbl_name))
+                    tmp_group, quote_ident(tmp_schema), quote_ident(tmp_tbl_name))
         FROM tmp_app_table
              JOIN pg_catalog.pg_class ON (relname = tmp_tbl_name)
              JOIN pg_catalog.pg_namespace ON (pg_namespace.oid = relnamespace AND nspname = tmp_schema)
@@ -6579,7 +6632,7 @@ $_import_groups_conf_check$
     RETURN QUERY
       SELECT 31, 1, tmp_group, tmp_schema, tmp_seq_name, NULL::TEXT, NULL::INT,
              format('in the group %s, the sequence %s.%s does not exist.',
-                    quote_ident(tmp_group), quote_ident(tmp_schema), quote_ident(tmp_seq_name))
+                    tmp_group, quote_ident(tmp_schema), quote_ident(tmp_seq_name))
         FROM tmp_app_sequence
         WHERE NOT EXISTS
                 (SELECT 0
@@ -6593,7 +6646,7 @@ $_import_groups_conf_check$
     RETURN QUERY
       SELECT 32, 1, tmp_group, tmp_schema, tmp_seq_name, rel_group, NULL::INT,
              format('in the group %s, the sequence %s.%s already belongs to the group %s.',
-                    quote_ident(tmp_group), quote_ident(tmp_schema), quote_ident(tmp_seq_name), quote_ident(rel_group))
+                    tmp_group, quote_ident(tmp_schema), quote_ident(tmp_seq_name), quote_ident(rel_group))
         FROM tmp_app_sequence
              JOIN emaj.emaj_relation ON (rel_schema = tmp_schema AND rel_tblseq = tmp_seq_name AND upper_inf(rel_time_range))
         WHERE NOT rel_group = ANY (v_groupNames);
@@ -6661,29 +6714,9 @@ $_import_groups_conf_exec$
     END LOOP;
 -- process the tmp_app_table content change, if any, by calling the _alter_groups() function
     PERFORM v_nbRel FROM emaj._alter_groups(v_groups, TRUE, v_mark, 'IMPORT_GROUPS', v_timeId);
--- adjust the application triggers that need to be set as "not automatically disabled at rollback time"
---   delete from the emaj_ignored_app_trigger table triggers that are not listed anymore
-    DELETE FROM emaj.emaj_ignored_app_trigger
-      USING tmp_app_table
-      WHERE trg_schema = tmp_schema
-        AND trg_table = tmp_tbl_name
-        AND NOT EXISTS
-              (SELECT 1
-                 FROM tmp_app_trigger
-                 WHERE tmp_schema = trg_schema
-                   AND tmp_table = trg_table
-                   AND tmp_trigger = trg_name
-              );
---   insert into the emaj_ignored_app_trigger table the missing triggers
-    INSERT INTO emaj.emaj_ignored_app_trigger
-      SELECT tmp_schema, tmp_table, tmp_trigger
-        FROM tmp_app_trigger
-        WHERE tmp_trigger NOT IN ('emaj_trunc_trg', 'emaj_log_trg')
-      ON CONFLICT DO NOTHING;
 -- the temporary tables are not needed anymore
     DROP TABLE tmp_app_table;
     DROP TABLE tmp_app_sequence;
-    DROP TABLE tmp_app_trigger;
 -- insert end event in history
     INSERT INTO emaj.emaj_hist (hist_function, hist_event, hist_wording)
       VALUES ('IMPORT_GROUPS', 'END', v_nbGroup || ' created or altered tables groups');
@@ -8346,11 +8379,13 @@ $_rlbk_planning$
           AND NOT tgenabled = 'D'
           AND tgname NOT IN ('emaj_trunc_trg','emaj_log_trg')
           AND NOT EXISTS
-               (SELECT trg_name
-                  FROM emaj.emaj_ignored_app_trigger
-                  WHERE trg_schema = rlbp_schema
-                    AND trg_table = rlbp_table
-                    AND trg_name = tgname);
+                (SELECT 0
+                   FROM emaj.emaj_relation
+                   WHERE rel_schema = rlbp_schema
+                     AND rel_tblseq = rlbp_table
+                     AND upper_inf(rel_time_range)
+                     AND tgname = ANY (rel_ignored_triggers)
+                );
 -- compute the cost for each ENA_APP_TRG step
 --   if ENA_APP_TRG statistics are available, compute an average cost
     SELECT sum(rlbt_duration) / sum(rlbt_quantity) INTO v_estimDuration
@@ -11630,6 +11665,29 @@ $_verify_all_groups$
           ) AS t
         WHERE rel_sql_rlbk_pk_columns <> current_pk_columns
         ORDER BY rel_schema, rel_tblseq, 1;
+-- check the array of triggers to ignore at rollback time only contains existing triggers
+    RETURN QUERY
+      SELECT 'Error: In the rollbackable group "' || rel_group || '", the trigger "' || trg_name || '" for table "'
+          || rel_schema || '"."' || rel_tblseq || '" is missing. '
+          || 'Use the emaj_ignore_app_trigger() function to adjust the list of application triggers that should not be'
+          || ' automatically disabled at rollback time.'
+             AS msg
+        FROM
+          (SELECT rel_group, rel_schema, rel_tblseq, unnest(rel_ignored_triggers) AS trg_name
+             FROM emaj.emaj_relation
+             WHERE upper_inf(rel_time_range)
+               AND rel_ignored_triggers IS NOT NULL
+          ) AS t
+        WHERE NOT EXISTS
+                 (SELECT NULL
+                    FROM pg_catalog.pg_trigger
+                         JOIN pg_catalog.pg_class ON (pg_class.oid = tgrelid)
+                         JOIN pg_catalog.pg_namespace ON (pg_namespace.oid = relnamespace)
+                    WHERE nspname = rel_schema
+                      AND relname = rel_tblseq
+                      AND tgname = trg_name
+                 )
+        ORDER BY rel_schema, rel_tblseq, 1;
 -- check all log tables have the 6 required technical columns.
     RETURN QUERY
       SELECT msg FROM
@@ -11927,25 +11985,6 @@ $emaj_verify_all$
       IF r_object.msg LIKE 'Error%' THEN
         v_errorFound = TRUE;
       END IF;
-    END LOOP;
--- check the emaj_ignored_app_trigger table content
-    FOR r_object IN
-      SELECT 'Error: No trigger "' || trg_name || '" found for table "' || trg_schema || '"."' || trg_table
-          || '". Use the emaj_ignore_app_trigger() function to adjust the list of application triggers that should not be'
-          || ' automatically disabled at rollback time.'
-             AS msg
-        FROM
-          (  SELECT trg_schema, trg_table, trg_name
-               FROM emaj.emaj_ignored_app_trigger
-           EXCEPT
-             SELECT nspname, relname, tgname
-               FROM pg_catalog.pg_trigger
-                    JOIN pg_catalog.pg_class ON (pg_class.oid = tgrelid)
-                    JOIN pg_catalog.pg_namespace ON (pg_namespace.oid = relnamespace)
-          ) AS t
-    LOOP
-      RETURN NEXT r_object.msg;
-      v_errorFound = TRUE;
     END LOOP;
 -- report a warning if some E-Maj event triggers are missing
     SELECT 3 - count(*) INTO v_nbMissingEventTrigger
@@ -12419,7 +12458,6 @@ SELECT pg_catalog.pg_extension_config_dump('emaj_rlbk','');
 SELECT pg_catalog.pg_extension_config_dump('emaj_rlbk_session','');
 SELECT pg_catalog.pg_extension_config_dump('emaj_rlbk_plan','');
 SELECT pg_catalog.pg_extension_config_dump('emaj_rlbk_stat','');
-SELECT pg_catalog.pg_extension_config_dump('emaj_ignored_app_trigger','');
 
 -- register emaj sequences values as candidate for pg_dump
 SELECT pg_catalog.pg_extension_config_dump('emaj_global_seq','');

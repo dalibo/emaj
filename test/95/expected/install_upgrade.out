@@ -339,6 +339,15 @@ select relname from pg_catalog.pg_class,
 
 -- process the extension upgrade
 ALTER EXTENSION emaj UPDATE TO 'devel';
+NOTICE:  drop cascades to 8 other objects
+DETAIL:  drop cascades to function _drop_tbl(emaj_relation,bigint)
+drop cascades to function _drop_seq(emaj_relation,bigint)
+drop cascades to function _rlbk_tbl(emaj_relation,bigint,bigint,integer,boolean)
+drop cascades to function _delete_log_tbl(emaj_relation,bigint,bigint,bigint)
+drop cascades to function _rlbk_seq(emaj_relation,bigint)
+drop cascades to function _log_stat_tbl(emaj_relation,bigint,bigint)
+drop cascades to function _gen_sql_tbl(emaj_relation,bigint,bigint)
+drop cascades to function _gen_sql_seq(emaj_relation,bigint,bigint,bigint)
 -----------------------------------------------------------
 -- check installation
 -----------------------------------------------------------
@@ -360,7 +369,6 @@ select relname from pg_catalog.pg_class,
  emaj_group
  emaj_hist
  emaj_hist_hist_id_seq
- emaj_ignored_app_trigger
  emaj_mark
  emaj_param
  emaj_rel_hist
@@ -376,7 +384,7 @@ select relname from pg_catalog.pg_class,
  emaj_table
  emaj_time_stamp
  emaj_time_stamp_time_id_seq
-(21 rows)
+(20 rows)
 
 -- check the emaj_param content
 SELECT param_value_text FROM emaj.emaj_param WHERE param_key = 'emaj_version';

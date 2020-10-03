@@ -45,7 +45,6 @@ select 'select ok' as result from (select count(*) from emaj.emaj_rlbk) as t;
 select 'select ok' as result from (select count(*) from emaj.emaj_rlbk_session) as t;
 select 'select ok' as result from (select count(*) from emaj.emaj_rlbk_plan) as t;
 select 'select ok' as result from (select count(*) from emaj.emaj_rlbk_stat) as t;
-select 'select ok' as result from (select count(*) from emaj.emaj_ignored_app_trigger) as t;
 select 'select ok' as result from (select count(*) from emaj_mySchema1.myTbl1_log) as t;
 
 -----------------------------
@@ -83,7 +82,6 @@ delete from emaj.emaj_rlbk;
 delete from emaj.emaj_rlbk_session;
 delete from emaj.emaj_rlbk_plan;
 delete from emaj.emaj_rlbk_stat;
-delete from emaj_ignored_app_trigger;
 delete from emaj_mySchema1.myTbl1_log;
 
 -----------------------------

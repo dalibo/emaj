@@ -1200,9 +1200,9 @@ select hist_function, hist_event, hist_object,
  MODIFY_TABLES | BEGIN                        |                  |                                 | postgres
  MODIFY_TABLES | END                          |                  | 0 tables effectively modified   | postgres
  MODIFY_TABLES | BEGIN                        |                  |                                 | postgres
- MODIFY_TABLES | PRIORITY CHANGED             | myschema2.mytbl1 | NULL => 1                       | postgres
+ MODIFY_TABLES | PRIORITY CHANGED             | myschema2.mytbl1 | NULL => 10                      | postgres
  MODIFY_TABLES | LOG DATA TABLESPACE CHANGED  | myschema2.mytbl1 | Default tablespace => tsplog1   | postgres
- MODIFY_TABLES | PRIORITY CHANGED             | myschema2.mytbl2 | NULL => 1                       | postgres
+ MODIFY_TABLES | PRIORITY CHANGED             | myschema2.mytbl2 | NULL => 10                      | postgres
  MODIFY_TABLES | LOG DATA TABLESPACE CHANGED  | myschema2.mytbl2 | Default tablespace => tsplog1   | postgres
  MODIFY_TABLES | END                          |                  | 2 tables effectively modified   | postgres
  MODIFY_TABLES | BEGIN                        |                  |                                 | postgres
@@ -1212,9 +1212,9 @@ select hist_function, hist_event, hist_object,
  MODIFY_TABLES | BEGIN                        |                  |                                 | postgres
  MODIFY_TABLES | END                          |                  | 0 tables effectively modified   | postgres
  MODIFY_TABLES | BEGIN                        |                  |                                 | postgres
- MODIFY_TABLES | PRIORITY CHANGED             | myschema2.mytbl1 | 1 => NULL                       | postgres
+ MODIFY_TABLES | PRIORITY CHANGED             | myschema2.mytbl1 | 10 => NULL                      | postgres
  MODIFY_TABLES | LOG DATA TABLESPACE CHANGED  | myschema2.mytbl1 | tsplog1 => Default tablespace   | postgres
- MODIFY_TABLES | PRIORITY CHANGED             | myschema2.mytbl2 | 1 => NULL                       | postgres
+ MODIFY_TABLES | PRIORITY CHANGED             | myschema2.mytbl2 | 10 => NULL                      | postgres
  MODIFY_TABLES | LOG DATA TABLESPACE CHANGED  | myschema2.mytbl2 | tsplog1 => Default tablespace   | postgres
  MODIFY_TABLES | END                          |                  | 2 tables effectively modified   | postgres
 (40 rows)

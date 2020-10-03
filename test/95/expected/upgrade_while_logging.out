@@ -47,6 +47,15 @@ select relname from pg_catalog.pg_class,
 
 -- process the extension upgrade
 ALTER EXTENSION emaj UPDATE TO 'devel';
+NOTICE:  drop cascades to 8 other objects
+DETAIL:  drop cascades to function _drop_tbl(emaj_relation,bigint)
+drop cascades to function _drop_seq(emaj_relation,bigint)
+drop cascades to function _rlbk_tbl(emaj_relation,bigint,bigint,integer,boolean)
+drop cascades to function _delete_log_tbl(emaj_relation,bigint,bigint,bigint)
+drop cascades to function _rlbk_seq(emaj_relation,bigint)
+drop cascades to function _log_stat_tbl(emaj_relation,bigint,bigint)
+drop cascades to function _gen_sql_tbl(emaj_relation,bigint,bigint)
+drop cascades to function _gen_sql_seq(emaj_relation,bigint,bigint,bigint)
 -----------------------------
 -- check installation
 -----------------------------
@@ -68,7 +77,6 @@ select relname from pg_catalog.pg_class,
  emaj_group
  emaj_hist
  emaj_hist_hist_id_seq
- emaj_ignored_app_trigger
  emaj_mark
  emaj_param
  emaj_rel_hist
@@ -84,7 +92,7 @@ select relname from pg_catalog.pg_class,
  emaj_table
  emaj_time_stamp
  emaj_time_stamp_time_id_seq
-(21 rows)
+(20 rows)
 
 -- check the emaj_param content
 SELECT param_value_text FROM emaj.emaj_param WHERE param_key = 'emaj_version';
@@ -285,25 +293,6 @@ Owned by: emaj.emaj_hist.hist_id
 primary key, btree, for table "emaj.emaj_hist"
 Tablespace: "tspemaj"
 
-Table "emaj.emaj_ignored_app_trigger"
-   Column   | Type | Modifiers 
-------------+------+-----------
- trg_schema | text | not null
- trg_table  | text | not null
- trg_name   | text | not null
-Indexes:
-    "emaj_ignored_app_trigger_pkey" PRIMARY KEY, btree (trg_schema, trg_table, trg_name), tablespace "tspemaj"
-Tablespace: "tspemaj"
-
-Index "emaj.emaj_ignored_app_trigger_pkey"
-   Column   | Type | Definition 
-------------+------+------------
- trg_schema | text | trg_schema
- trg_table  | text | trg_table
- trg_name   | text | trg_name
-primary key, btree, for table "emaj.emaj_ignored_app_trigger"
-Tablespace: "tspemaj"
-
             Composite type "emaj.emaj_log_stat_type"
           Column          |           Type           | Modifiers 
 --------------------------+--------------------------+-----------
@@ -429,6 +418,7 @@ Tablespace: "tspemaj"
  rel_log_idx_tsp            | text      | 
  rel_log_sequence           | text      | 
  rel_log_function           | text      | 
+ rel_ignored_triggers       | text[]    | 
  rel_emaj_verb_attnum       | smallint  | 
  rel_has_always_ident_col   | boolean   | 
  rel_sql_rlbk_columns       | text      | 

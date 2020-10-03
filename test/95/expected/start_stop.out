@@ -26,7 +26,7 @@ SQL statement "SELECT emaj._add_tbl(r_plan.altr_schema, r_plan.altr_tblseq, r_pl
             WHERE tmp_group = r_plan.altr_group
               AND tmp_schema = r_plan.altr_schema
               AND tmp_tbl_name = r_plan.altr_tblseq"
-PL/pgSQL function emaj._alter_exec(bigint,text) line 120 at PERFORM
+PL/pgSQL function emaj._alter_exec(bigint,text) line 138 at PERFORM
 SQL statement "SELECT emaj._alter_exec(v_timeId, v_callingFunction)"
 PL/pgSQL function emaj._alter_groups(text[],boolean,text,text,bigint) line 49 at PERFORM
 SQL statement "SELECT v_nbRel FROM emaj._alter_groups(v_groups, TRUE, v_mark, 'IMPORT_GROUPS', v_timeId)"
@@ -249,7 +249,7 @@ select hist_function, hist_event, hist_object,
   hist_function  | hist_event | hist_object |                                         regexp_replace                                         | hist_user 
 -----------------+------------+-------------+------------------------------------------------------------------------------------------------+-----------
  START_GROUP     | BEGIN      | myGroup1    | With log reset                                                                                 | postgres
- PURGE_HISTORIES |            |             | 249 emaj_hist rows deleted ; 36 relation history rows deleted ; 28 alter groups events deleted | postgres
+ PURGE_HISTORIES |            |             | 250 emaj_hist rows deleted ; 36 relation history rows deleted ; 28 alter groups events deleted | postgres
  LOCK_GROUP      | BEGIN      | myGroup1    |                                                                                                | postgres
  LOCK_GROUP      | END        | myGroup1    | 5 tables locked, 0 deadlock(s)                                                                 | postgres
  SET_MARK_GROUP  | BEGIN      | myGroup1    | Mark1                                                                                          | postgres
@@ -394,7 +394,7 @@ select hist_id, hist_function, hist_event, hist_object,
  hist_id |  hist_function  |    hist_event     |    hist_object    |                                         regexp_replace                                         | hist_user 
 ---------+-----------------+-------------------+-------------------+------------------------------------------------------------------------------------------------+-----------
     2045 | START_GROUP     | BEGIN             | myGroup1          | With log reset                                                                                 | postgres
-    2046 | PURGE_HISTORIES |                   |                   | 249 emaj_hist rows deleted ; 36 relation history rows deleted ; 28 alter groups events deleted | postgres
+    2046 | PURGE_HISTORIES |                   |                   | 250 emaj_hist rows deleted ; 36 relation history rows deleted ; 28 alter groups events deleted | postgres
     2047 | LOCK_GROUP      | BEGIN             | myGroup1          |                                                                                                | postgres
     2048 | LOCK_GROUP      | END               | myGroup1          | 5 tables locked, 0 deadlock(s)                                                                 | postgres
     2049 | SET_MARK_GROUP  | BEGIN             | myGroup1          | Mark1                                                                                          | postgres
