@@ -115,7 +115,7 @@ migrat_test()
 # Get vars (and prefixed with 'new') for the target database
   pg_getvars ${2} 'new'
   echo "Create the control tables in the ${1} regression database"
-  ${oldPGBIN}/psql -p ${oldPGPORT} -U ${oldPGUSER} regression  <${EMAJ_DIR}/test/${1}/sql/before_dump.sql
+  ${oldPGBIN}/psql -p ${oldPGPORT} -U ${oldPGUSER} regression -q <${EMAJ_DIR}/test/${1}/sql/before_dump.sql
   if [ $? -ne 0 ]; then
     echo "  Error: can't create control tables before dump of regression database from ${1}"
     return 1
@@ -139,6 +139,12 @@ migrat_test()
     diff ${EMAJ_DIR}/test/${2}/expected/after_restore.out ${EMAJ_DIR}/test/${2}/results/after_restore.out #| tee ${EMAJ_DIR}/test/${2}/after_restore.diff
   else
     echo "  Error: can't dump the regression database from ${1}"
+    return 1
+  fi
+  echo "Drop the control tables in the ${1} regression database"
+  ${oldPGBIN}/psql -p ${oldPGPORT} -U ${oldPGUSER} regression -q -c "DROP TABLE emaj.emaj_regtest_dump_tbl;" -c "DROP TABLE emaj.emaj_regtest_dump_seq;"
+  if [ $? -ne 0 ]; then
+    echo "  Error: can't drop control tables from the ${1} regression databasa"
     return 1
   fi
   return 0
