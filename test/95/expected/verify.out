@@ -518,8 +518,11 @@ CONTEXT:  PL/pgSQL function emaj.emaj_stop_group(text,text) line 10 at RETURN
   rollback to savepoint sp1;
 -- reimporting the group configuration fails if the group is in logging state
     select emaj.emaj_import_groups_configuration(emaj.emaj_export_groups_configuration(),array['myGroup2'],true);
-ERROR:  alter_exec: Cannot repair the table myschema2.mytbl4. Its group myGroup2 is in LOGGING state.
-CONTEXT:  SQL statement "SELECT emaj._alter_exec(v_timeId, v_callingFunction)"
+ERROR:  _repair_tbl: Cannot repair the table myschema2.mytbl4. Its group myGroup2 is in LOGGING state. Remove first the table from its group.
+CONTEXT:  SQL statement "SELECT emaj._repair_tbl(r_plan.altr_schema, r_plan.altr_tblseq, coalesce(r_plan.altr_new_group, r_plan.altr_group),
+                                   r_plan.altr_group_is_logging, v_timeId, v_callingFunction)"
+PL/pgSQL function emaj._alter_exec(bigint,text) line 33 at PERFORM
+SQL statement "SELECT emaj._alter_exec(v_timeId, v_callingFunction)"
 PL/pgSQL function emaj._alter_groups(text[],boolean,text,text,bigint) line 49 at PERFORM
 SQL statement "SELECT v_nbRel FROM emaj._alter_groups(v_groups, TRUE, v_mark, 'IMPORT_GROUPS', v_timeId)"
 PL/pgSQL function emaj._import_groups_conf_exec(json,text[],text) line 57 at PERFORM
@@ -911,8 +914,8 @@ select hist_id, hist_function, hist_event, hist_object, regexp_replace(regexp_re
  hist_id |   hist_function    |       hist_event        | hist_object |                         regexp_replace                         | hist_user 
 ---------+--------------------+-------------------------+-------------+----------------------------------------------------------------+-----------
     7000 | DISABLE_PROTECTION | EVENT TRIGGERS DISABLED |             | emaj_protection_trg, emaj_sql_drop_trg, emaj_table_rewrite_trg | postgres
-    7113 | DISABLE_PROTECTION | EVENT TRIGGERS DISABLED |             | <none>                                                         | postgres
-    7114 | ENABLE_PROTECTION  | EVENT TRIGGERS ENABLED  |             | emaj_protection_trg, emaj_sql_drop_trg, emaj_table_rewrite_trg | postgres
-    7115 | ENABLE_PROTECTION  | EVENT TRIGGERS ENABLED  |             | <none>                                                         | postgres
+    7114 | DISABLE_PROTECTION | EVENT TRIGGERS DISABLED |             | <none>                                                         | postgres
+    7115 | ENABLE_PROTECTION  | EVENT TRIGGERS ENABLED  |             | emaj_protection_trg, emaj_sql_drop_trg, emaj_table_rewrite_trg | postgres
+    7116 | ENABLE_PROTECTION  | EVENT TRIGGERS ENABLED  |             | <none>                                                         | postgres
 (4 rows)
 

@@ -3564,6 +3564,45 @@ $_drop_tbl$
     RETURN;
   END;
 $_drop_tbl$;
+CREATE OR REPLACE FUNCTION emaj._repair_tbl(v_schema TEXT, v_table TEXT, v_group TEXT, v_groupIsLogging BOOLEAN,
+                                            v_timeId BIGINT, v_function TEXT)
+RETURNS VOID LANGUAGE plpgsql AS
+$_repair_tbl$
+-- The function repairs a table detected as corrupted, i.e. with any trouble detected by the emaj_verify_all() and similar functions.
+-- Inputs: the schema and table names to repair
+--         the group that currently owns the table, and its state
+--         the time_id of the operation
+--         the calling function name
+  DECLARE
+    v_isRollbackable         BOOLEAN;
+  BEGIN
+    IF v_groupIsLogging THEN
+      RAISE EXCEPTION '_repair_tbl: Cannot repair the table %.%. Its group % is in LOGGING state. Remove first the table from its group.',
+        v_schema, v_table, v_group;
+    ELSE
+-- remove the table from its group
+      PERFORM emaj._drop_tbl(emaj.emaj_relation.*, v_timeId)
+        FROM emaj.emaj_relation
+        WHERE rel_schema = v_schema
+          AND rel_tblseq = v_table
+          AND upper_inf(rel_time_range);
+-- get the is_rollbackable status of the related group
+      SELECT group_is_rollbackable INTO v_isRollbackable
+        FROM emaj.emaj_group
+        WHERE group_name = v_group;
+-- and recreate it
+      PERFORM emaj._create_tbl(v_schema, v_table, v_group, tmp_priority, tmp_log_dat_tsp, tmp_log_idx_tsp,
+                               tmp_ignored_triggers, v_timeId, v_isRollbackable, v_groupIsLogging)
+        FROM tmp_app_table
+        WHERE tmp_group = v_group
+          AND tmp_schema = v_schema
+          AND tmp_tbl_name = v_table;
+      INSERT INTO emaj.emaj_hist(hist_function, hist_event, hist_object, hist_wording)
+        VALUES (v_function, 'TABLE REPAIRED', quote_ident(v_schema) || '.' || quote_ident(v_table), 'In group ' || v_group);
+    END IF;
+    RETURN;
+  END;
+$_repair_tbl$;
 CREATE OR REPLACE FUNCTION emaj.emaj_assign_sequence(v_schema TEXT, v_sequence TEXT, v_group TEXT, v_mark TEXT DEFAULT 'ASSIGN_%')
 RETURNS INTEGER LANGUAGE plpgsql AS
 $emaj_assign_sequence$
@@ -5746,7 +5785,6 @@ $_alter_exec$
     v_logDatTsp              TEXT;
     v_logIdxTsp              TEXT;
     v_ignoredTriggers        TEXT[];
-    v_isRollbackable         BOOLEAN;
     r_plan                   emaj.emaj_alter_plan%ROWTYPE;
     r_rel                    emaj.emaj_relation%ROWTYPE;
   BEGIN
@@ -5769,28 +5807,9 @@ $_alter_exec$
                                    v_timeId, v_callingFunction);
 --
         WHEN 'REPAIR_TBL' THEN
-          IF r_plan.altr_group_is_logging THEN
-            RAISE EXCEPTION 'alter_exec: Cannot repair the table %.%. Its group % is in LOGGING state.',
-              r_plan.altr_schema, r_plan.altr_tblseq, r_plan.altr_group;
-          ELSE
--- remove the table from its group
-            PERFORM emaj._drop_tbl(emaj.emaj_relation.*, v_timeId)
-              FROM emaj.emaj_relation
-              WHERE rel_schema = r_plan.altr_schema
-                AND rel_tblseq = r_plan.altr_tblseq
-                AND upper_inf(rel_time_range);
--- get the is_rollbackable status of the related group
-            SELECT group_is_rollbackable INTO v_isRollbackable
-              FROM emaj.emaj_group
-              WHERE group_name = r_plan.altr_group;
--- and recreate it
-            PERFORM emaj._create_tbl(tmp_schema, tmp_tbl_name, tmp_group, tmp_priority, tmp_log_dat_tsp, tmp_log_idx_tsp,
-                                     tmp_ignored_triggers, v_timeId, v_isRollbackable, r_plan.altr_group_is_logging)
-              FROM tmp_app_table
-              WHERE tmp_group = coalesce (r_plan.altr_new_group, r_plan.altr_group)
-                AND tmp_schema = r_plan.altr_schema
-                AND tmp_tbl_name = r_plan.altr_tblseq;
-          END IF;
+-- repair a table
+          PERFORM emaj._repair_tbl(r_plan.altr_schema, r_plan.altr_tblseq, coalesce(r_plan.altr_new_group, r_plan.altr_group),
+                                   r_plan.altr_group_is_logging, v_timeId, v_callingFunction);
 --
         WHEN 'REPAIR_SEQ' THEN
           RAISE EXCEPTION 'alter_exec: Internal error, trying to repair a sequence (%.%) is abnormal.',
@@ -12274,7 +12293,7 @@ $do$
     RETURN;
   END;
 $do$;
-psql:sql/emaj-devel.sql:12506: NOTICE:  E-Maj installation: E-Maj successfully installed.
+psql:sql/emaj-devel.sql:12526: NOTICE:  E-Maj installation: E-Maj successfully installed.
 COMMIT;
 -----------------------------
 -- check installation

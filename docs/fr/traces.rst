@@ -197,6 +197,8 @@ La colonne *hist_event* peut prendre les valeurs suivantes.
 +------------------------------+------------------------------------------------------------------------+
 | TABLE REMOVED                | table supprimée d’un groupe de tables actif                            |
 +------------------------------+------------------------------------------------------------------------+
+| TABLE REPAIRED               | table réparée pour E-Maj                                               |
++------------------------------+------------------------------------------------------------------------+
 | TRIGGERS TO IGNORE CHANGED   | ensemble des triggers applicatifs à ignorer lors des rollbacks modifié |
 +------------------------------+------------------------------------------------------------------------+
 | UPDATED PARAMETER            | paramètre modifié dans *emaj_param*                                    |

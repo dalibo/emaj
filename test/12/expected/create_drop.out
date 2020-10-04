@@ -1666,6 +1666,7 @@ select hist_function, hist_event, hist_object,
  DISABLE_PROTECTION | EVENT TRIGGERS DISABLED      |                                                                                | emaj_protection_trg, emaj_sql_drop_trg, emaj_table_rewrite_trg       | postgres
  ENABLE_PROTECTION  | EVENT TRIGGERS ENABLED       |                                                                                | emaj_protection_trg, emaj_sql_drop_trg, emaj_table_rewrite_trg       | postgres
  IMPORT_GROUPS      | BEGIN                        | emptyGroup, myGroup1, myGroup2, myGroup4, myGroup5, myGroup6, phil's group#3", | Input file: '/tmp/emaj_12/create_drop/orig_groups_config_all.json'   | postgres
+ IMPORT_GROUPS      | TABLE REPAIRED               | myschema1.mytbl2                                                               | In group myGroup1                                                    | postgres
  IMPORT_GROUPS      | END                          |                                                                                | 7 created or altered tables groups                                   | postgres
  START_GROUP        | BEGIN                        | myGroup1                                                                       | With log reset                                                       | postgres
  LOCK_GROUP         | BEGIN                        | myGroup1                                                                       |                                                                      | postgres
@@ -1723,7 +1724,7 @@ select hist_function, hist_event, hist_object,
  FORCE_DROP_GROUP   | BEGIN                        | myGroup1                                                                       |                                                                      | postgres
  FORCE_DROP_GROUP   | LOG_SCHEMA DROPPED           | emaj_myschema1                                                                 |                                                                      | postgres
  FORCE_DROP_GROUP   | END                          | myGroup1                                                                       | 1 tables/sequences processed                                         | postgres
-(242 rows)
+(243 rows)
 
 select time_id, time_last_emaj_gid, time_event from emaj.emaj_time_stamp order by time_id;
  time_id | time_last_emaj_gid | time_event 

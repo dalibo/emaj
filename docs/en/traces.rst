@@ -199,6 +199,8 @@ The *hist_event* column can take the following values:
 +------------------------------+----------------------------------------------------------------+
 | TABLE REMOVED                | table removed from a logging tables group                      |
 +------------------------------+----------------------------------------------------------------+
+| TABLE REPAIRED               | table repaired for E-Maj                                       |
++------------------------------+----------------------------------------------------------------+
 | TRIGGERS TO IGNORE CHANGED   | set of application triggers to ignore at rollback time changed |
 +------------------------------+----------------------------------------------------------------+
 | UPDATED PARAMETER            | parameter updated in *emaj_param*                              |
