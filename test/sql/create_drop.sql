@@ -434,7 +434,12 @@ rollback;
 -- rebuild all original groups
 -- this will assign the just removed table and sequence
 select emaj.emaj_import_groups_configuration(:'EMAJTESTTMPDIR' || '/orig_groups_config_all.json', null, true);
-select emaj.emaj_ignore_app_trigger('ADD','myschema1','mytbl2','%');
+
+-- test a table repair with the groups configuration import, with a table having triggers to ignored_triggers
+select emaj.emaj_disable_protection_by_event_triggers();
+drop trigger emaj_log_trg on myschema1.mytbl2;
+select emaj.emaj_enable_protection_by_event_triggers();
+select emaj.emaj_import_groups_configuration(:'EMAJTESTTMPDIR' || '/orig_groups_config_all.json', null, true);
 select rel_schema, rel_tblseq, rel_time_range, rel_ignored_triggers from emaj.emaj_relation where rel_ignored_triggers is not null order by 1,2,3;
 
 -----------------------------------

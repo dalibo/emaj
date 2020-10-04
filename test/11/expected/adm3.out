@@ -87,7 +87,7 @@ WARNING:  _assign_tables: Some partitionned tables (mytblp) are not selected.
 NOTICE:  table "mytblm_log" does not exist, skipping
 NOTICE:  trigger "emaj_log_trg" for relation "myschema4.mytblm" does not exist, skipping
 NOTICE:  trigger "emaj_trunc_trg" for relation "myschema4.mytblm" does not exist, skipping
-WARNING:  _create_tbl: The table "myschema4.mytblm" has triggers (mytblm_insert_trigger). They will be automatically disabled during E-Maj rollback operations, unless they have been recorded into the list of triggers that may be kept enabled, with the emaj_ignore_app_trigger() function.
+WARNING:  _create_tbl: The table "myschema4.mytblm" has triggers that will be automatically disabled during E-Maj rollback operations (mytblm_insert_trigger). Use the emaj_ignore_app_trigger() function to change this behaviour.
 NOTICE:  table "mytblc2_log" does not exist, skipping
 NOTICE:  trigger "emaj_log_trg" for relation "myschema4.mytblc2" does not exist, skipping
 NOTICE:  trigger "emaj_trunc_trg" for relation "myschema4.mytblc2" does not exist, skipping
@@ -958,7 +958,7 @@ NOTICE:  trigger "emaj_trunc_trg" for relation "myschema4.mypartp3" does not exi
 NOTICE:  table "mytblm_log" does not exist, skipping
 NOTICE:  trigger "emaj_log_trg" for relation "myschema4.mytblm" does not exist, skipping
 NOTICE:  trigger "emaj_trunc_trg" for relation "myschema4.mytblm" does not exist, skipping
-WARNING:  _create_tbl: The table "myschema4.mytblm" has triggers (mytblm_insert_trigger). They will be automatically disabled during E-Maj rollback operations, unless they have been recorded into the list of triggers that may be kept enabled, with the emaj_ignore_app_trigger() function.
+WARNING:  _create_tbl: The table "myschema4.mytblm" has triggers that will be automatically disabled during E-Maj rollback operations (mytblm_insert_trigger). Use the emaj_ignore_app_trigger() function to change this behaviour.
 NOTICE:  table "mytblc2_log" does not exist, skipping
 NOTICE:  trigger "emaj_log_trg" for relation "myschema4.mytblc2" does not exist, skipping
 NOTICE:  trigger "emaj_trunc_trg" for relation "myschema4.mytblc2" does not exist, skipping
@@ -1936,7 +1936,7 @@ select emaj.emaj_assign_tables('phil''s schema3','.*','','truncateTestGroup');
 
 select emaj.emaj_assign_tables('myschema4','.*','','truncateTestGroup');
 WARNING:  _assign_tables: Some partitionned tables (mytblp) are not selected.
-WARNING:  _create_tbl: The table "myschema4.mytblm" has triggers (mytblm_insert_trigger). They will be automatically disabled during E-Maj rollback operations, unless they have been recorded into the list of triggers that may be kept enabled, with the emaj_ignore_app_trigger() function.
+WARNING:  _create_tbl: The table "myschema4.mytblm" has triggers that will be automatically disabled during E-Maj rollback operations (mytblm_insert_trigger). Use the emaj_ignore_app_trigger() function to change this behaviour.
  emaj_assign_tables 
 --------------------
                   5

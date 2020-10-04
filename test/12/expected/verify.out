@@ -525,7 +525,7 @@ PL/pgSQL function emaj.emaj_stop_group(text,text) line 10 at RETURN
 -- reimporting the group configuration fails if the group is in logging state
     select emaj.emaj_import_groups_configuration(emaj.emaj_export_groups_configuration(),array['myGroup2'],true);
 ERROR:  alter_exec: Cannot repair the table myschema2.mytbl4. Its group myGroup2 is in LOGGING state.
-CONTEXT:  PL/pgSQL function emaj._alter_exec(bigint,text) line 38 at RAISE
+CONTEXT:  PL/pgSQL function emaj._alter_exec(bigint,text) line 34 at RAISE
 SQL statement "SELECT emaj._alter_exec(v_timeId, v_callingFunction)"
 PL/pgSQL function emaj._alter_groups(text[],boolean,text,text,bigint) line 49 at PERFORM
 SQL statement "SELECT v_nbRel FROM emaj._alter_groups(v_groups, TRUE, v_mark, 'IMPORT_GROUPS', v_timeId)"

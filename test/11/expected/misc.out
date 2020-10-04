@@ -55,7 +55,7 @@ select count(*) from emaj_myschema1.mytbl2_log;
 select count(*) from emaj_myschema1.mytbl2b_log;
  count 
 -------
-     3
+     2
 (1 row)
 
 select count(*) from emaj_myschema1."myTbl3_log";

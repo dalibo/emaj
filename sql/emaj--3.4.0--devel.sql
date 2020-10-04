@@ -231,7 +231,9 @@ SELECT pg_catalog.pg_extension_config_dump('emaj_relation','');
 DROP FUNCTION IF EXISTS emaj._emaj_group_def_change_fnct();
 DROP FUNCTION IF EXISTS emaj._check_conf_groups(V_GROUPNAMES TEXT[]);
 DROP FUNCTION IF EXISTS emaj._create_log_schemas(V_FUNCTION TEXT,V_GROUPNAMES TEXT[]);
+DROP FUNCTION IF EXISTS emaj._create_tbl(V_SCHEMA TEXT,V_TBL TEXT,V_GROUPNAME TEXT,V_PRIORITY INT,V_LOGDATTSP TEXT,V_LOGIDXTSP TEXT,V_TIMEID BIGINT,V_GROUPISROLLBACKABLE BOOLEAN,V_GROUPISLOGGING BOOLEAN);
 DROP FUNCTION IF EXISTS emaj._create_log_trigger_tbl(V_FULLTABLENAME TEXT,V_LOGTABLENAME TEXT,V_SEQUENCENAME TEXT,V_LOGFNCTNAME TEXT);
+DROP FUNCTION IF EXISTS emaj._add_tbl(V_SCHEMA TEXT,V_TABLE TEXT,V_GROUP TEXT,V_PRIORITY INT,V_LOGDATTSP TEXT,V_LOGIDXTSP TEXT,V_GROUPISLOGGING BOOLEAN,V_TIMEID BIGINT,V_FUNCTION TEXT);
 DROP FUNCTION IF EXISTS emaj.emaj_create_group(V_GROUPNAME TEXT,V_ISROLLBACKABLE BOOLEAN,V_IS_EMPTY BOOLEAN);
 DROP FUNCTION IF EXISTS emaj.emaj_alter_group(V_GROUPNAME TEXT,V_MARK TEXT);
 DROP FUNCTION IF EXISTS emaj.emaj_alter_groups(V_GROUPNAMES TEXT[],V_MARK TEXT);
@@ -1158,7 +1160,7 @@ $_handle_trigger_fk_tbl$
   BEGIN
 -- check that the caller is allowed to do that.
     GET DIAGNOSTICS v_stack = PG_CONTEXT;
-    IF v_stack NOT LIKE '%emaj._create_tbl(text,text,text,integer,text,text,bigint,boolean,boolean)%' AND
+    IF v_stack NOT LIKE '%emaj._create_tbl(text,text,text,integer,text,text,text[],bigint,boolean,boolean)%' AND
        v_stack NOT LIKE '%emaj._remove_tbl(text,text,text,boolean,bigint,text)%' AND
        v_stack NOT LIKE '%emaj._drop_tbl(emaj.emaj_relation,bigint)%' AND
        v_stack NOT LIKE '%emaj._start_groups(text[],text,boolean,boolean)%' AND
@@ -1576,8 +1578,8 @@ $_assign_tables$
       FOREACH v_oneTable IN ARRAY v_tables
       LOOP
 -- create the table
-        PERFORM emaj._add_tbl(v_schema, v_oneTable, v_group, v_priority, v_logDatTsp, v_logIdxTsp, v_groupIsLogging,
-                              v_timeId, v_function);
+        PERFORM emaj._add_tbl(v_schema, v_oneTable, v_group, v_priority, v_logDatTsp, v_logIdxTsp, NULL,
+                              v_groupIsLogging, v_timeId, v_function);
 -- insert an entry into the emaj_alter_plan table (so that future rollback may see the change)
         INSERT INTO emaj.emaj_alter_plan (altr_time_id, altr_step, altr_schema, altr_tblseq, altr_group, altr_group_is_logging)
           VALUES (v_timeId, 'ADD_TBL', v_schema, v_oneTable, v_group, v_groupIsLogging);
@@ -2220,12 +2222,16 @@ COMMENT ON FUNCTION emaj.emaj_get_current_log_table(TEXT,TEXT) IS
 $$Retrieve the current log table of a given application table.$$;
 
 CREATE OR REPLACE FUNCTION emaj._create_tbl(v_schema TEXT, v_tbl TEXT, v_groupName TEXT, v_priority INT, v_logDatTsp TEXT,
-                                            v_logIdxTsp TEXT, v_timeId BIGINT, v_groupIsRollbackable BOOLEAN, v_groupIsLogging BOOLEAN)
+                                            v_logIdxTsp TEXT, v_ignoredTriggers TEXT[], v_timeId BIGINT,
+                                            v_groupIsRollbackable BOOLEAN, v_groupIsLogging BOOLEAN)
 RETURNS VOID LANGUAGE plpgsql AS
 $_create_tbl$
 -- This function creates all what is needed to manage the log and rollback operations for an application table.
--- Input: the application table to process, the group to add it into, the priority and tablespaces attributes, the time id of the
---        operation, 2 booleans indicating whether the group is rollbackable and whether the group is currently in logging state.
+-- Input: the application table to process,
+--        the group to add it into,
+--        the table properties: priority, tablespaces attributes and triggers to ignore at rollback time
+--        the time id of the operation,
+--        2 booleans indicating whether the group is rollbackable and whether the group is currently in logging state.
 -- The objects created in the log schema:
 --    - the associated log table, with its own sequence
 --    - the function that logs the tables updates, defined as a trigger
@@ -2395,16 +2401,17 @@ $_create_tbl$
     INSERT INTO emaj.emaj_relation
                (rel_schema, rel_tblseq, rel_time_range, rel_group, rel_priority,
                 rel_log_schema, rel_log_dat_tsp, rel_log_idx_tsp, rel_kind, rel_log_table,
-                rel_log_index, rel_log_sequence, rel_log_function, rel_emaj_verb_attnum, rel_has_always_ident_col,
-                rel_sql_rlbk_columns, rel_sql_rlbk_pk_columns, rel_sql_rlbk_pk_conditions,
+                rel_log_index, rel_log_sequence, rel_log_function, rel_ignored_triggers, rel_emaj_verb_attnum,
+                rel_has_always_ident_col, rel_sql_rlbk_columns, rel_sql_rlbk_pk_columns, rel_sql_rlbk_pk_conditions,
                 rel_sql_gen_ins_col, rel_sql_gen_ins_val, rel_sql_gen_upd_set, rel_sql_gen_pk_conditions)
         VALUES (v_schema, v_tbl, int8range(v_timeId, NULL, '[)'), v_groupName, v_priority,
                 v_logSchema, v_logDatTsp, v_logIdxTsp, 'r', v_baseLogTableName,
-                v_baseLogIdxName, v_baseSequenceName, v_baseLogFnctName, v_attnum, v_nbGenAlwaysIdentCol > 0,
-                v_rlbkColList, v_rlbkPkColList, v_rlbkPkConditions,
+                v_baseLogIdxName, v_baseSequenceName, v_baseLogFnctName, v_ignoredTriggers, v_attnum,
+                v_nbGenAlwaysIdentCol > 0, v_rlbkColList, v_rlbkPkColList, v_rlbkPkConditions,
                 v_genColList, v_genValList, v_genSetList, v_genPkConditions);
 --
--- check if the table has (neither internal - ie. created for fk - nor previously created by emaj) trigger
+-- check if the table has application (neither internal - ie. created for fk - nor previously created by emaj) triggers not already
+--   declared as 'to be ignored at rollback time'
     SELECT string_agg(tgname, ', ' ORDER BY tgname) INTO v_triggerList
       FROM
         (SELECT tgname
@@ -2412,13 +2419,13 @@ $_create_tbl$
            WHERE tgrelid = v_fullTableName::regclass
              AND tgconstraint = 0
              AND tgname NOT LIKE E'emaj\\_%\\_trg'
+             AND NOT tgname = ANY(coalesce(v_ignoredTriggers, '{}'))
         ) AS t;
 -- if yes, issue a warning
 --   (if a trigger updates another table in the same table group or outside) it could generate problem at rollback time)
     IF v_triggerList IS NOT NULL THEN
-      RAISE WARNING '_create_tbl: The table "%" has triggers (%). They will be automatically disabled during E-Maj rollback operations,'
-                    ' unless they have been recorded into the list of triggers that may be kept enabled, with the'
-                    ' emaj_ignore_app_trigger() function.', v_fullTableName, v_triggerList;
+      RAISE WARNING '_create_tbl: The table "%" has triggers that will be automatically disabled during E-Maj rollback operations (%).'
+                    ' Use the emaj_ignore_app_trigger() function to change this behaviour.', v_fullTableName, v_triggerList;
     END IF;
     RETURN;
   END;
@@ -2544,15 +2551,19 @@ $_build_sql_tbl$
 $_build_sql_tbl$;
 
 CREATE OR REPLACE FUNCTION emaj._add_tbl(v_schema TEXT, v_table TEXT, v_group TEXT, v_priority INT, v_logDatTsp TEXT, v_logIdxTsp TEXT,
-                                         v_groupIsLogging BOOLEAN, v_timeId BIGINT, v_function TEXT)
+                                         v_ignoredTriggers TEXT[], v_groupIsLogging BOOLEAN, v_timeId BIGINT, v_function TEXT)
 RETURNS VOID LANGUAGE plpgsql AS
 $_add_tbl$
 -- The function adds a table to a group. It is called during an alter group or a dynamic assignment operation.
 -- If the group is in idle state, it simply calls the _create_tbl() function.
 -- Otherwise, it calls the _create_tbl() function, activates the log trigger and
 --    sets a restart value for the log sequence if a previous range exists for the relation.
--- Required inputs: schema and table to add, group name, priority, log data and index tablespace, the group's logging state,
---                  the time stamp id of the operation, main calling function.
+-- Required inputs: the schema and table to add
+--                  the group name
+--                  the table properties: priority, log data and index tablespace, triggers to ignore at rollback time
+--                  the group's logging state
+--                  the time stamp id of the operation
+--                  the main calling function
   DECLARE
     v_groupIsRollbackable    BOOLEAN;
     v_logSchema              TEXT;
@@ -2564,7 +2575,7 @@ $_add_tbl$
       FROM emaj.emaj_group
       WHERE group_name = v_group;
 -- create the table
-    PERFORM emaj._create_tbl(v_schema, v_table, v_group, v_priority, v_logDatTsp, v_logIdxTsp,
+    PERFORM emaj._create_tbl(v_schema, v_table, v_group, v_priority, v_logDatTsp, v_logIdxTsp, v_ignoredTriggers,
                              v_timeId, v_groupIsRollbackable, v_groupIsLogging);
 -- if the group is in logging state, perform additional tasks
     IF v_groupIsLogging THEN
@@ -2690,16 +2701,16 @@ $_change_log_index_tsp_tbl$
   END;
 $_change_log_index_tsp_tbl$;
 
-CREATE OR REPLACE FUNCTION emaj._change_ignored_triggers_tbl(v_schema TEXT, v_table TEXT, v_currentIgnored_triggers TEXT[],
-                                                             v_newIgnored_triggers TEXT[], v_function TEXT)
+CREATE OR REPLACE FUNCTION emaj._change_ignored_triggers_tbl(v_schema TEXT, v_table TEXT, v_currentIgnoredTriggers TEXT[],
+                                                             v_newIgnoredTriggers TEXT[], v_function TEXT)
 RETURNS VOID LANGUAGE plpgsql AS
 $_change_ignored_triggers_tbl$
--- This function changes the set of appliaction triggers to ignore at rollback time.
+-- This function changes the set of application triggers to ignore at rollback time.
 -- Input: the table identity, the old and new arrays of triggers to ignore and the calling function.
   BEGIN
 -- update the emaj_relation row for the table
     UPDATE emaj.emaj_relation
-      SET rel_ignored_triggers = v_newIgnored_triggers
+      SET rel_ignored_triggers = v_newIgnoredTriggers
       FROM emaj.emaj_group
       WHERE rel_group = group_name
         AND rel_schema = v_schema
@@ -2709,7 +2720,7 @@ $_change_ignored_triggers_tbl$
     INSERT INTO emaj.emaj_hist (hist_function, hist_event, hist_object, hist_wording)
       VALUES (v_function, 'TRIGGERS TO IGNORE CHANGED',
               quote_ident(v_schema) || '.' || quote_ident(v_table),
-              coalesce(v_currentIgnored_triggers::text, 'none') || ' => ' || coalesce(v_newIgnored_triggers::text, 'none'));
+              coalesce(v_currentIgnoredTriggers::text, 'none') || ' => ' || coalesce(v_newIgnoredTriggers::text, 'none'));
     RETURN;
   END;
 $_change_ignored_triggers_tbl$;
@@ -4999,7 +5010,7 @@ $_alter_exec$
               WHERE group_name = r_plan.altr_group;
 -- and recreate it
             PERFORM emaj._create_tbl(tmp_schema, tmp_tbl_name, tmp_group, tmp_priority, tmp_log_dat_tsp, tmp_log_idx_tsp,
-                                     v_timeId, v_isRollbackable, r_plan.altr_group_is_logging)
+                                     tmp_ignored_triggers, v_timeId, v_isRollbackable, r_plan.altr_group_is_logging)
               FROM tmp_app_table
               WHERE tmp_group = coalesce (r_plan.altr_new_group, r_plan.altr_group)
                 AND tmp_schema = r_plan.altr_schema
@@ -5089,7 +5100,7 @@ $_alter_exec$
         WHEN 'ADD_TBL' THEN
 -- add a table to a group
           PERFORM emaj._add_tbl(r_plan.altr_schema, r_plan.altr_tblseq, r_plan.altr_group, tmp_priority, tmp_log_dat_tsp,
-                                tmp_log_idx_tsp, r_plan.altr_group_is_logging, v_timeId, v_callingFunction)
+                                tmp_log_idx_tsp, tmp_ignored_triggers, r_plan.altr_group_is_logging, v_timeId, v_callingFunction)
             FROM tmp_app_table
             WHERE tmp_group = r_plan.altr_group
               AND tmp_schema = r_plan.altr_schema
