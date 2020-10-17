@@ -34,6 +34,10 @@ select emaj.emaj_modify_table('myschema1','mytbl2b','{"log_data_tablespace":null
 select emaj.emaj_modify_table('myschema2','mytbl6','{"log_index_tablespace":"tsplog1"}'::jsonb,'Attributes_changed_2');
 reset default_tablespace;
 
+-- change the triggers to ignore at rollback time
+select emaj.emaj_modify_table('myschema1','mytbl2','{"ignored_triggers_profiles":["trg1", "trg2"]}');
+select rel_schema, rel_tblseq, rel_time_range, rel_ignored_triggers from emaj.emaj_relation where rel_ignored_triggers is not null order by 1,2,3;
+
 -- perform some operations: set an intermediate mark, update myTbl3 and rollback
 select emaj.emaj_set_mark_groups('{"myGroup1","myGroup2"}','Mk2');
 insert into myschema1."myTbl3" values (11, now(), 11.0);

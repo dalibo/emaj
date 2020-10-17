@@ -264,7 +264,7 @@ select hist_function, hist_event, hist_wording
   hist_function  | hist_event |                                                        hist_wording                                                         
 -----------------+------------+-----------------------------------------------------------------------------------------------------------------------------
  PURGE_HISTORIES | BEGIN      | Retention delay @ 0
- PURGE_HISTORIES |            | 20 emaj_hist rows deleted ; 133 relation history rows deleted ; 75 alter groups events deleted ; 37 rollback events deleted
+ PURGE_HISTORIES |            | 20 emaj_hist rows deleted ; 133 relation history rows deleted ; 79 alter groups events deleted ; 37 rollback events deleted
  PURGE_HISTORIES | END        | 
 (3 rows)
 

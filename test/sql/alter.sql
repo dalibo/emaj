@@ -278,6 +278,10 @@ select emaj.emaj_modify_table('myschema1','mytbl1','{"unknown_property":null}'::
 select emaj.emaj_modify_table('myschema1','mytbl1',null,'EMAJ_LAST_MARK');
 
 -- ok
+-- no property
+select emaj.emaj_modify_table('myschema1','mytbl2',NULL);
+select emaj.emaj_modify_table('myschema1','mytbl2','{ }');
+
 -- change a priority
 select emaj.emaj_modify_table('myschema1','mytbl2','{"priority":1}');
 
@@ -285,6 +289,15 @@ select emaj.emaj_modify_table('myschema1','mytbl2','{"priority":1}');
 select emaj.emaj_modify_table('myschema1','mytbl1','{"log_data_tablespace":"tsp log''2"}');
 -- change a log index tablespace
 select emaj.emaj_modify_table('myschema1','mytbl1','{"log_index_tablespace":"tsp log''2"}');
+
+-- change a triggers list, by adding 1 trigger
+select emaj.emaj_modify_table('myschema1','mytbl2','{"ignored_triggers":["mytbl2trg1"]}');
+select rel_schema, rel_tblseq, rel_time_range, rel_ignored_triggers from emaj.emaj_relation where rel_ignored_triggers is not null order by 1,2,3;
+-- add the same
+select emaj.emaj_modify_table('myschema1','mytbl2','{"ignored_triggers":["mytbl2trg1"]}');
+-- add all triggers for a table
+select emaj.emaj_modify_table('myschema1','mytbl2','{"ignored_triggers_profiles":[".*"]}');
+select rel_schema, rel_tblseq, rel_time_range, rel_ignored_triggers from emaj.emaj_relation where rel_ignored_triggers is not null order by 1,2,3;
 
 select rel_schema, rel_tblseq, rel_time_range, rel_priority from emaj.emaj_relation
   where rel_schema = 'myschema1' and rel_tblseq = 'mytbl2' order by 3 desc ,1,2 limit 2;
@@ -294,6 +307,7 @@ select rel_schema, rel_tblseq, rel_time_range, rel_log_dat_tsp, rel_log_idx_tsp 
 -- revert changes
 select emaj.emaj_modify_table('myschema1','mytbl2','{"priority":null}');
 select emaj.emaj_modify_table('myschema1','mytbl1','{"log_data_tablespace":null, "log_index_tablespace":null}');
+select emaj.emaj_modify_table('myschema1','mytbl2','{"ignored_triggers":null}');
 
 select rel_schema, rel_tblseq, rel_time_range, rel_priority from emaj.emaj_relation
   where rel_schema = 'myschema1' and rel_tblseq = 'mytbl2' order by 3 desc ,1,2 limit 2;
@@ -328,10 +342,6 @@ select emaj.emaj_modify_tables('myschema2','mytbl1','mytbl1',null::jsonb);
 select emaj.emaj_modify_tables('myschema2','mytbl.*','','{"priority":null,"log_data_tablespace":null}'::jsonb);
 select rel_schema, rel_tblseq, rel_time_range, rel_priority, rel_log_dat_tsp, rel_log_idx_tsp from emaj.emaj_relation
   where rel_schema = 'myschema2' and rel_tblseq like 'mytbl%' order by 1,2,3;
-
-select altr_time_id, altr_step, altr_schema, altr_tblseq, altr_group, altr_priority, altr_group_is_logging,
-       altr_new_group, altr_new_group_is_logging from emaj.emaj_alter_plan
-  order by 1 desc, 2,3,4 limit 14;
 
 -- check for emaj_modify_table() functions family
 select * from emaj.emaj_alter_plan where altr_time_id > 8400 order by 1,2,3,4,5;

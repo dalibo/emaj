@@ -11,7 +11,8 @@ E-Maj - Change log
     The optional third parameter of the emaj_create_group() function is
     removed.
   * The application triggers to ignore at rollback time can be defined using
-    the emaj_assign_table() or emaj_assign_tables() functions.
+    the emaj_assign_table(), emaj_assign_tables(), emaj_modify_table() or
+    emaj_modify_tables()functions.
   * Remove the old deprecated versions of E-Maj rollback functions that only
     returned an integer.
   * A fourth parameter in the emaj_import_groups_configuration() functions

@@ -927,39 +927,62 @@ select public.handle_emaj_sequences(8400);
 -- table not in a group
 select emaj.emaj_modify_table('dummySchema','mytbl1',null);
 ERROR:  _modify_tables: some tables ("dummySchema".mytbl1) do not currently belong to any tables group.
-CONTEXT:  PL/pgSQL function emaj._modify_tables(text,text[],jsonb,text,boolean,boolean) line 57 at RAISE
+CONTEXT:  PL/pgSQL function emaj._modify_tables(text,text[],jsonb,text,boolean,boolean) line 61 at RAISE
 PL/pgSQL function emaj.emaj_modify_table(text,text,jsonb,text) line 7 at RETURN
 select emaj.emaj_modify_table('myschema1','dummyTable',null);
 ERROR:  _modify_tables: some tables (myschema1."dummyTable") do not currently belong to any tables group.
-CONTEXT:  PL/pgSQL function emaj._modify_tables(text,text[],jsonb,text,boolean,boolean) line 57 at RAISE
+CONTEXT:  PL/pgSQL function emaj._modify_tables(text,text[],jsonb,text,boolean,boolean) line 61 at RAISE
 PL/pgSQL function emaj.emaj_modify_table(text,text,jsonb,text) line 7 at RETURN
 -- invalid priority
 select emaj.emaj_modify_table('myschema1','mytbl1','{"priority":"not_numeric"}'::jsonb);
-ERROR:  _modify_tables: the "priority" property is not numeric.
-CONTEXT:  PL/pgSQL function emaj._modify_tables(text,text[],jsonb,text,boolean,boolean) line 66 at RAISE
+ERROR:  _check_json_table_properties: the "priority" property must be numeric.
+CONTEXT:  PL/pgSQL function emaj._check_json_table_properties(jsonb) line 18 at RAISE
+SQL statement "SELECT *                                                                                                     FROM emaj._check_json_table_properties(v_changedProperties)"
+PL/pgSQL function emaj._modify_tables(text,text[],jsonb,text,boolean,boolean) line 71 at SQL statement
 PL/pgSQL function emaj.emaj_modify_table(text,text,jsonb,text) line 7 at RETURN
 -- invalid tablespace
 select emaj.emaj_modify_table('myschema1','mytbl1','{"log_data_tablespace":"dummytsp"}'::jsonb);
-ERROR:  _modify_tables: the log data tablespace "dummytsp" does not exists.
-CONTEXT:  PL/pgSQL function emaj._modify_tables(text,text[],jsonb,text,boolean,boolean) line 79 at RAISE
+ERROR:  _check_json_table_properties: the log data tablespace "dummytsp" does not exists.
+CONTEXT:  PL/pgSQL function emaj._check_json_table_properties(jsonb) line 30 at RAISE
+SQL statement "SELECT *                                                                                                     FROM emaj._check_json_table_properties(v_changedProperties)"
+PL/pgSQL function emaj._modify_tables(text,text[],jsonb,text,boolean,boolean) line 71 at SQL statement
 PL/pgSQL function emaj.emaj_modify_table(text,text,jsonb,text) line 7 at RETURN
 select emaj.emaj_modify_table('myschema1','mytbl1','{"log_index_tablespace":"dummytsp"}'::jsonb);
-ERROR:  _modify_tables: the log index tablespace "dummytsp" does not exists.
-CONTEXT:  PL/pgSQL function emaj._modify_tables(text,text[],jsonb,text,boolean,boolean) line 91 at RAISE
+ERROR:  _check_json_table_properties: the log index tablespace "dummytsp" does not exists.
+CONTEXT:  PL/pgSQL function emaj._check_json_table_properties(jsonb) line 44 at RAISE
+SQL statement "SELECT *                                                                                                     FROM emaj._check_json_table_properties(v_changedProperties)"
+PL/pgSQL function emaj._modify_tables(text,text[],jsonb,text,boolean,boolean) line 71 at SQL statement
 PL/pgSQL function emaj.emaj_modify_table(text,text,jsonb,text) line 7 at RETURN
 -- unknown property
 select emaj.emaj_modify_table('myschema1','mytbl1','{"unknown_property":null}'::jsonb);
-ERROR:  _modify_tables: properties "{"unknown_property": null}" are unknown.
-CONTEXT:  PL/pgSQL function emaj._modify_tables(text,text[],jsonb,text,boolean,boolean) line 98 at RAISE
+ERROR:  _check_json_table_properties: properties "{"unknown_property": null}" are unknown.
+CONTEXT:  PL/pgSQL function emaj._check_json_table_properties(jsonb) line 92 at RAISE
+SQL statement "SELECT *                                                                                                     FROM emaj._check_json_table_properties(v_changedProperties)"
+PL/pgSQL function emaj._modify_tables(text,text[],jsonb,text,boolean,boolean) line 71 at SQL statement
 PL/pgSQL function emaj.emaj_modify_table(text,text,jsonb,text) line 7 at RETURN
 -- bad mark
 select emaj.emaj_modify_table('myschema1','mytbl1',null,'EMAJ_LAST_MARK');
 ERROR:  _check_new_mark: "EMAJ_LAST_MARK" is not an allowed name for a new mark.
 CONTEXT:  PL/pgSQL function emaj._check_new_mark(text[],text) line 14 at RAISE
 SQL statement "SELECT emaj._check_new_mark(v_loggingGroups, v_mark)"
-PL/pgSQL function emaj._modify_tables(text,text[],jsonb,text,boolean,boolean) line 120 at SQL statement
+PL/pgSQL function emaj._modify_tables(text,text[],jsonb,text,boolean,boolean) line 94 at SQL statement
 PL/pgSQL function emaj.emaj_modify_table(text,text,jsonb,text) line 7 at RETURN
 -- ok
+-- no property
+select emaj.emaj_modify_table('myschema1','mytbl2',NULL);
+WARNING:  _modified_tables: No property change to process.
+ emaj_modify_table 
+-------------------
+                 0
+(1 row)
+
+select emaj.emaj_modify_table('myschema1','mytbl2','{ }');
+WARNING:  _modified_tables: No property change to process.
+ emaj_modify_table 
+-------------------
+                 0
+(1 row)
+
 -- change a priority
 select emaj.emaj_modify_table('myschema1','mytbl2','{"priority":1}');
  emaj_modify_table 
@@ -979,6 +1002,39 @@ select emaj.emaj_modify_table('myschema1','mytbl1','{"log_index_tablespace":"tsp
  emaj_modify_table 
 -------------------
                  1
+(1 row)
+
+-- change a triggers list, by adding 1 trigger
+select emaj.emaj_modify_table('myschema1','mytbl2','{"ignored_triggers":["mytbl2trg1"]}');
+ emaj_modify_table 
+-------------------
+                 1
+(1 row)
+
+select rel_schema, rel_tblseq, rel_time_range, rel_ignored_triggers from emaj.emaj_relation where rel_ignored_triggers is not null order by 1,2,3;
+ rel_schema | rel_tblseq | rel_time_range | rel_ignored_triggers 
+------------+------------+----------------+----------------------
+ myschema1  | mytbl2     | [8204,)        | {mytbl2trg1}
+(1 row)
+
+-- add the same
+select emaj.emaj_modify_table('myschema1','mytbl2','{"ignored_triggers":["mytbl2trg1"]}');
+ emaj_modify_table 
+-------------------
+                 0
+(1 row)
+
+-- add all triggers for a table
+select emaj.emaj_modify_table('myschema1','mytbl2','{"ignored_triggers_profiles":[".*"]}');
+ emaj_modify_table 
+-------------------
+                 1
+(1 row)
+
+select rel_schema, rel_tblseq, rel_time_range, rel_ignored_triggers from emaj.emaj_relation where rel_ignored_triggers is not null order by 1,2,3;
+ rel_schema | rel_tblseq | rel_time_range |  rel_ignored_triggers   
+------------+------------+----------------+-------------------------
+ myschema1  | mytbl2     | [8204,)        | {mytbl2trg1,mytbl2trg2}
 (1 row)
 
 select rel_schema, rel_tblseq, rel_time_range, rel_priority from emaj.emaj_relation
@@ -1010,6 +1066,12 @@ select emaj.emaj_modify_table('myschema1','mytbl1','{"log_data_tablespace":null,
                  1
 (1 row)
 
+select emaj.emaj_modify_table('myschema1','mytbl2','{"ignored_triggers":null}');
+ emaj_modify_table 
+-------------------
+                 1
+(1 row)
+
 select rel_schema, rel_tblseq, rel_time_range, rel_priority from emaj.emaj_relation
   where rel_schema = 'myschema1' and rel_tblseq = 'mytbl2' order by 3 desc ,1,2 limit 2;
  rel_schema | rel_tblseq | rel_time_range | rel_priority 
@@ -1033,7 +1095,7 @@ select rel_schema, rel_tblseq, rel_time_range, rel_log_dat_tsp, rel_log_idx_tsp 
 -- table not in a group
 select emaj.emaj_modify_tables('myschema2',array['dummyTable','mytbl1','mytbl2'],null);
 ERROR:  _modify_tables: some tables (myschema2."dummyTable") do not currently belong to any tables group.
-CONTEXT:  PL/pgSQL function emaj._modify_tables(text,text[],jsonb,text,boolean,boolean) line 57 at RAISE
+CONTEXT:  PL/pgSQL function emaj._modify_tables(text,text[],jsonb,text,boolean,boolean) line 61 at RAISE
 PL/pgSQL function emaj.emaj_modify_tables(text,text[],jsonb,text) line 7 at RETURN
 -- empty tables array
 select emaj.emaj_modify_tables('myschema2',array[]::text[],null);
@@ -1117,45 +1179,27 @@ select rel_schema, rel_tblseq, rel_time_range, rel_priority, rel_log_dat_tsp, re
  myschema2  | mytbl8     | [8008,)        |              |                 | 
 (7 rows)
 
-select altr_time_id, altr_step, altr_schema, altr_tblseq, altr_group, altr_priority, altr_group_is_logging,
-       altr_new_group, altr_new_group_is_logging from emaj.emaj_alter_plan
-  order by 1 desc, 2,3,4 limit 14;
- altr_time_id |        altr_step         | altr_schema | altr_tblseq | altr_group | altr_priority | altr_group_is_logging | altr_new_group | altr_new_group_is_logging 
---------------+--------------------------+-------------+-------------+------------+---------------+-----------------------+----------------+---------------------------
-         8406 | CHANGE_TBL_LOG_DATA_TSP  | myschema2   | mytbl1      | myGroup2   |               | f                     |                | 
-         8406 | CHANGE_TBL_LOG_DATA_TSP  | myschema2   | mytbl2      | myGroup2   |               | f                     |                | 
-         8406 | CHANGE_REL_PRIORITY      | myschema2   | mytbl1      | myGroup2   |               | f                     |                | 
-         8406 | CHANGE_REL_PRIORITY      | myschema2   | mytbl2      | myGroup2   |               | f                     |                | 
-         8405 | CHANGE_TBL_LOG_DATA_TSP  | myschema2   | mytbl1      | myGroup2   |               | f                     |                | 
-         8405 | CHANGE_TBL_LOG_DATA_TSP  | myschema2   | mytbl2      | myGroup2   |               | f                     |                | 
-         8405 | CHANGE_REL_PRIORITY      | myschema2   | mytbl1      | myGroup2   |            10 | f                     |                | 
-         8405 | CHANGE_REL_PRIORITY      | myschema2   | mytbl2      | myGroup2   |            10 | f                     |                | 
-         8404 | CHANGE_TBL_LOG_DATA_TSP  | myschema1   | mytbl1      | myGroup1   |               | f                     |                | 
-         8404 | CHANGE_TBL_LOG_INDEX_TSP | myschema1   | mytbl1      | myGroup1   |               | f                     |                | 
-         8403 | CHANGE_REL_PRIORITY      | myschema1   | mytbl2      | myGroup1   |               | f                     |                | 
-         8402 | CHANGE_TBL_LOG_INDEX_TSP | myschema1   | mytbl1      | myGroup1   |               | f                     |                | 
-         8401 | CHANGE_TBL_LOG_DATA_TSP  | myschema1   | mytbl1      | myGroup1   |               | f                     |                | 
-         8400 | CHANGE_REL_PRIORITY      | myschema1   | mytbl2      | myGroup1   |             1 | f                     |                | 
-(14 rows)
-
 -- check for emaj_modify_table() functions family
 select * from emaj.emaj_alter_plan where altr_time_id > 8400 order by 1,2,3,4,5;
  altr_time_id |        altr_step         | altr_schema | altr_tblseq | altr_group | altr_priority | altr_group_is_logging | altr_new_group | altr_new_group_is_logging | altr_rlbk_id 
 --------------+--------------------------+-------------+-------------+------------+---------------+-----------------------+----------------+---------------------------+--------------
          8401 | CHANGE_TBL_LOG_DATA_TSP  | myschema1   | mytbl1      | myGroup1   |               | f                     |                |                           |             
          8402 | CHANGE_TBL_LOG_INDEX_TSP | myschema1   | mytbl1      | myGroup1   |               | f                     |                |                           |             
-         8403 | CHANGE_REL_PRIORITY      | myschema1   | mytbl2      | myGroup1   |               | f                     |                |                           |             
-         8404 | CHANGE_TBL_LOG_DATA_TSP  | myschema1   | mytbl1      | myGroup1   |               | f                     |                |                           |             
-         8404 | CHANGE_TBL_LOG_INDEX_TSP | myschema1   | mytbl1      | myGroup1   |               | f                     |                |                           |             
-         8405 | CHANGE_TBL_LOG_DATA_TSP  | myschema2   | mytbl1      | myGroup2   |               | f                     |                |                           |             
-         8405 | CHANGE_TBL_LOG_DATA_TSP  | myschema2   | mytbl2      | myGroup2   |               | f                     |                |                           |             
-         8405 | CHANGE_REL_PRIORITY      | myschema2   | mytbl1      | myGroup2   |            10 | f                     |                |                           |             
-         8405 | CHANGE_REL_PRIORITY      | myschema2   | mytbl2      | myGroup2   |            10 | f                     |                |                           |             
-         8406 | CHANGE_TBL_LOG_DATA_TSP  | myschema2   | mytbl1      | myGroup2   |               | f                     |                |                           |             
-         8406 | CHANGE_TBL_LOG_DATA_TSP  | myschema2   | mytbl2      | myGroup2   |               | f                     |                |                           |             
-         8406 | CHANGE_REL_PRIORITY      | myschema2   | mytbl1      | myGroup2   |               | f                     |                |                           |             
-         8406 | CHANGE_REL_PRIORITY      | myschema2   | mytbl2      | myGroup2   |               | f                     |                |                           |             
-(13 rows)
+         8403 | CHANGE_IGNORED_TRIGGERS  | myschema1   | mytbl2      | myGroup1   |               | f                     |                |                           |             
+         8405 | CHANGE_IGNORED_TRIGGERS  | myschema1   | mytbl2      | myGroup1   |               | f                     |                |                           |             
+         8406 | CHANGE_REL_PRIORITY      | myschema1   | mytbl2      | myGroup1   |               | f                     |                |                           |             
+         8407 | CHANGE_TBL_LOG_DATA_TSP  | myschema1   | mytbl1      | myGroup1   |               | f                     |                |                           |             
+         8407 | CHANGE_TBL_LOG_INDEX_TSP | myschema1   | mytbl1      | myGroup1   |               | f                     |                |                           |             
+         8408 | CHANGE_IGNORED_TRIGGERS  | myschema1   | mytbl2      | myGroup1   |               | f                     |                |                           |             
+         8409 | CHANGE_TBL_LOG_DATA_TSP  | myschema2   | mytbl1      | myGroup2   |               | f                     |                |                           |             
+         8409 | CHANGE_TBL_LOG_DATA_TSP  | myschema2   | mytbl2      | myGroup2   |               | f                     |                |                           |             
+         8409 | CHANGE_REL_PRIORITY      | myschema2   | mytbl1      | myGroup2   |            10 | f                     |                |                           |             
+         8409 | CHANGE_REL_PRIORITY      | myschema2   | mytbl2      | myGroup2   |            10 | f                     |                |                           |             
+         8410 | CHANGE_TBL_LOG_DATA_TSP  | myschema2   | mytbl1      | myGroup2   |               | f                     |                |                           |             
+         8410 | CHANGE_TBL_LOG_DATA_TSP  | myschema2   | mytbl2      | myGroup2   |               | f                     |                |                           |             
+         8410 | CHANGE_REL_PRIORITY      | myschema2   | mytbl1      | myGroup2   |               | f                     |                |                           |             
+         8410 | CHANGE_REL_PRIORITY      | myschema2   | mytbl2      | myGroup2   |               | f                     |                |                           |             
+(16 rows)
 
 select time_id, time_last_emaj_gid, time_event from emaj.emaj_time_stamp where time_id > 8400 order by time_id;
  time_id | time_last_emaj_gid | time_event 
@@ -1166,7 +1210,11 @@ select time_id, time_last_emaj_gid, time_event from emaj.emaj_time_stamp where t
     8404 |            8400000 | A
     8405 |            8400000 | A
     8406 |            8400000 | A
-(6 rows)
+    8407 |            8400000 | A
+    8408 |            8400000 | A
+    8409 |            8400000 | A
+    8410 |            8400000 | A
+(10 rows)
 
 select hist_function, hist_event, hist_object,
        regexp_replace(regexp_replace(regexp_replace(hist_wording,
@@ -1175,49 +1223,64 @@ select hist_function, hist_event, hist_object,
             E'\\[.+\\]','(timestamp)','g'), 
        hist_user 
   from emaj.emaj_hist where hist_id > 8400 order by hist_id;
- hist_function |          hist_event          |   hist_object    |         regexp_replace          | hist_user 
----------------+------------------------------+------------------+---------------------------------+-----------
- MODIFY_TABLE  | BEGIN                        |                  |                                 | postgres
- MODIFY_TABLE  | PRIORITY CHANGED             | myschema1.mytbl2 | NULL => 1                       | postgres
- MODIFY_TABLE  | END                          |                  | 1 tables effectively modified   | postgres
- MODIFY_TABLE  | BEGIN                        |                  |                                 | postgres
- MODIFY_TABLE  | LOG DATA TABLESPACE CHANGED  | myschema1.mytbl1 | Default tablespace => tsp log'2 | postgres
- MODIFY_TABLE  | END                          |                  | 1 tables effectively modified   | postgres
- MODIFY_TABLE  | BEGIN                        |                  |                                 | postgres
- MODIFY_TABLE  | LOG INDEX TABLESPACE CHANGED | myschema1.mytbl1 | Default tablespace => tsp log'2 | postgres
- MODIFY_TABLE  | END                          |                  | 1 tables effectively modified   | postgres
- MODIFY_TABLE  | BEGIN                        |                  |                                 | postgres
- MODIFY_TABLE  | PRIORITY CHANGED             | myschema1.mytbl2 | 1 => NULL                       | postgres
- MODIFY_TABLE  | END                          |                  | 1 tables effectively modified   | postgres
- MODIFY_TABLE  | BEGIN                        |                  |                                 | postgres
- MODIFY_TABLE  | LOG DATA TABLESPACE CHANGED  | myschema1.mytbl1 | tsp log'2 => Default tablespace | postgres
- MODIFY_TABLE  | LOG INDEX TABLESPACE CHANGED | myschema1.mytbl1 | tsp log'2 => Default tablespace | postgres
- MODIFY_TABLE  | END                          |                  | 1 tables effectively modified   | postgres
- MODIFY_TABLES | BEGIN                        |                  |                                 | postgres
- MODIFY_TABLES | END                          |                  | 0 tables effectively modified   | postgres
- MODIFY_TABLES | BEGIN                        |                  |                                 | postgres
- MODIFY_TABLES | END                          |                  | 0 tables effectively modified   | postgres
- MODIFY_TABLES | BEGIN                        |                  |                                 | postgres
- MODIFY_TABLES | END                          |                  | 0 tables effectively modified   | postgres
- MODIFY_TABLES | BEGIN                        |                  |                                 | postgres
- MODIFY_TABLES | PRIORITY CHANGED             | myschema2.mytbl1 | NULL => 10                      | postgres
- MODIFY_TABLES | LOG DATA TABLESPACE CHANGED  | myschema2.mytbl1 | Default tablespace => tsplog1   | postgres
- MODIFY_TABLES | PRIORITY CHANGED             | myschema2.mytbl2 | NULL => 10                      | postgres
- MODIFY_TABLES | LOG DATA TABLESPACE CHANGED  | myschema2.mytbl2 | Default tablespace => tsplog1   | postgres
- MODIFY_TABLES | END                          |                  | 2 tables effectively modified   | postgres
- MODIFY_TABLES | BEGIN                        |                  |                                 | postgres
- MODIFY_TABLES | END                          |                  | 0 tables effectively modified   | postgres
- MODIFY_TABLES | BEGIN                        |                  |                                 | postgres
- MODIFY_TABLES | END                          |                  | 0 tables effectively modified   | postgres
- MODIFY_TABLES | BEGIN                        |                  |                                 | postgres
- MODIFY_TABLES | END                          |                  | 0 tables effectively modified   | postgres
- MODIFY_TABLES | BEGIN                        |                  |                                 | postgres
- MODIFY_TABLES | PRIORITY CHANGED             | myschema2.mytbl1 | 10 => NULL                      | postgres
- MODIFY_TABLES | LOG DATA TABLESPACE CHANGED  | myschema2.mytbl1 | tsplog1 => Default tablespace   | postgres
- MODIFY_TABLES | PRIORITY CHANGED             | myschema2.mytbl2 | 10 => NULL                      | postgres
- MODIFY_TABLES | LOG DATA TABLESPACE CHANGED  | myschema2.mytbl2 | tsplog1 => Default tablespace   | postgres
- MODIFY_TABLES | END                          |                  | 2 tables effectively modified   | postgres
-(40 rows)
+ hist_function |          hist_event          |   hist_object    |             regexp_replace              | hist_user 
+---------------+------------------------------+------------------+-----------------------------------------+-----------
+ MODIFY_TABLE  | BEGIN                        |                  |                                         | postgres
+ MODIFY_TABLE  | END                          |                  | 0 tables effectively modified           | postgres
+ MODIFY_TABLE  | BEGIN                        |                  |                                         | postgres
+ MODIFY_TABLE  | END                          |                  | 0 tables effectively modified           | postgres
+ MODIFY_TABLE  | BEGIN                        |                  |                                         | postgres
+ MODIFY_TABLE  | PRIORITY CHANGED             | myschema1.mytbl2 | NULL => 1                               | postgres
+ MODIFY_TABLE  | END                          |                  | 1 tables effectively modified           | postgres
+ MODIFY_TABLE  | BEGIN                        |                  |                                         | postgres
+ MODIFY_TABLE  | LOG DATA TABLESPACE CHANGED  | myschema1.mytbl1 | Default tablespace => tsp log'2         | postgres
+ MODIFY_TABLE  | END                          |                  | 1 tables effectively modified           | postgres
+ MODIFY_TABLE  | BEGIN                        |                  |                                         | postgres
+ MODIFY_TABLE  | LOG INDEX TABLESPACE CHANGED | myschema1.mytbl1 | Default tablespace => tsp log'2         | postgres
+ MODIFY_TABLE  | END                          |                  | 1 tables effectively modified           | postgres
+ MODIFY_TABLE  | BEGIN                        |                  |                                         | postgres
+ MODIFY_TABLE  | TRIGGERS TO IGNORE CHANGED   | myschema1.mytbl2 | none => {mytbl2trg1}                    | postgres
+ MODIFY_TABLE  | END                          |                  | 1 tables effectively modified           | postgres
+ MODIFY_TABLE  | BEGIN                        |                  |                                         | postgres
+ MODIFY_TABLE  | END                          |                  | 0 tables effectively modified           | postgres
+ MODIFY_TABLE  | BEGIN                        |                  |                                         | postgres
+ MODIFY_TABLE  | TRIGGERS TO IGNORE CHANGED   | myschema1.mytbl2 | {mytbl2trg1} => {mytbl2trg1,mytbl2trg2} | postgres
+ MODIFY_TABLE  | END                          |                  | 1 tables effectively modified           | postgres
+ MODIFY_TABLE  | BEGIN                        |                  |                                         | postgres
+ MODIFY_TABLE  | PRIORITY CHANGED             | myschema1.mytbl2 | 1 => NULL                               | postgres
+ MODIFY_TABLE  | END                          |                  | 1 tables effectively modified           | postgres
+ MODIFY_TABLE  | BEGIN                        |                  |                                         | postgres
+ MODIFY_TABLE  | LOG DATA TABLESPACE CHANGED  | myschema1.mytbl1 | tsp log'2 => Default tablespace         | postgres
+ MODIFY_TABLE  | LOG INDEX TABLESPACE CHANGED | myschema1.mytbl1 | tsp log'2 => Default tablespace         | postgres
+ MODIFY_TABLE  | END                          |                  | 1 tables effectively modified           | postgres
+ MODIFY_TABLE  | BEGIN                        |                  |                                         | postgres
+ MODIFY_TABLE  | TRIGGERS TO IGNORE CHANGED   | myschema1.mytbl2 | {mytbl2trg1,mytbl2trg2} => none         | postgres
+ MODIFY_TABLE  | END                          |                  | 1 tables effectively modified           | postgres
+ MODIFY_TABLES | BEGIN                        |                  |                                         | postgres
+ MODIFY_TABLES | END                          |                  | 0 tables effectively modified           | postgres
+ MODIFY_TABLES | BEGIN                        |                  |                                         | postgres
+ MODIFY_TABLES | END                          |                  | 0 tables effectively modified           | postgres
+ MODIFY_TABLES | BEGIN                        |                  |                                         | postgres
+ MODIFY_TABLES | END                          |                  | 0 tables effectively modified           | postgres
+ MODIFY_TABLES | BEGIN                        |                  |                                         | postgres
+ MODIFY_TABLES | PRIORITY CHANGED             | myschema2.mytbl1 | NULL => 10                              | postgres
+ MODIFY_TABLES | LOG DATA TABLESPACE CHANGED  | myschema2.mytbl1 | Default tablespace => tsplog1           | postgres
+ MODIFY_TABLES | PRIORITY CHANGED             | myschema2.mytbl2 | NULL => 10                              | postgres
+ MODIFY_TABLES | LOG DATA TABLESPACE CHANGED  | myschema2.mytbl2 | Default tablespace => tsplog1           | postgres
+ MODIFY_TABLES | END                          |                  | 2 tables effectively modified           | postgres
+ MODIFY_TABLES | BEGIN                        |                  |                                         | postgres
+ MODIFY_TABLES | END                          |                  | 0 tables effectively modified           | postgres
+ MODIFY_TABLES | BEGIN                        |                  |                                         | postgres
+ MODIFY_TABLES | END                          |                  | 0 tables effectively modified           | postgres
+ MODIFY_TABLES | BEGIN                        |                  |                                         | postgres
+ MODIFY_TABLES | END                          |                  | 0 tables effectively modified           | postgres
+ MODIFY_TABLES | BEGIN                        |                  |                                         | postgres
+ MODIFY_TABLES | PRIORITY CHANGED             | myschema2.mytbl1 | 10 => NULL                              | postgres
+ MODIFY_TABLES | LOG DATA TABLESPACE CHANGED  | myschema2.mytbl1 | tsplog1 => Default tablespace           | postgres
+ MODIFY_TABLES | PRIORITY CHANGED             | myschema2.mytbl2 | 10 => NULL                              | postgres
+ MODIFY_TABLES | LOG DATA TABLESPACE CHANGED  | myschema2.mytbl2 | tsplog1 => Default tablespace           | postgres
+ MODIFY_TABLES | END                          |                  | 2 tables effectively modified           | postgres
+(55 rows)
 
 -- remove the temp directory
 \! rm -R $EMAJTESTTMPDIR

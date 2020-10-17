@@ -2153,7 +2153,7 @@ $_assign_tables$
             ) AS t(remaining_table);
       END IF;
     END IF;
--- check the tables JSON properties
+-- check and extract the tables JSON properties
     IF v_properties IS NOT NULL THEN
       SELECT * INTO v_priority, v_logDatTsp, v_logIdxTsp, v_ignoredTriggers, v_ignoredTrgProfiles
         FROM emaj._check_json_table_properties(v_properties);
@@ -2769,20 +2769,24 @@ $_modify_tables$
 --   each properties can be set to NULL to delete a previously set value
   DECLARE
     v_function               TEXT;
-    v_priorityChanged        BOOLEAN = FALSE;
+    v_priorityChanged        BOOLEAN;
+    v_logDatTspChanged       BOOLEAN;
+    v_logIdxTspChanged       BOOLEAN;
+    v_ignoredTrgChanged      BOOLEAN;
     v_newPriority            INT;
-    v_logDatTspChanged       BOOLEAN = FALSE;
     v_newLogDatTsp           TEXT;
-    v_logIdxTspChanged       BOOLEAN = FALSE;
     v_newLogIdxTsp           TEXT;
-    v_extraProperties        JSONB;
+    v_ignoredTriggers        TEXT[];
+    v_ignoredTrgProfiles     TEXT[];
     v_list                   TEXT;
     v_array                  TEXT[];
     v_groups                 TEXT[];
     v_loggingGroups          TEXT[];
     v_timeId                 BIGINT;
     v_markName               TEXT;
+    v_selectConditions       TEXT;
     v_isTableChanged         BOOLEAN;
+    v_newIgnoredTriggers     TEXT[];
     v_nbChangedTbl           INT = 0;
     r_rel                    RECORD;
   BEGIN
@@ -2818,45 +2822,15 @@ $_modify_tables$
         RAISE EXCEPTION '_modify_tables: some tables (%) do not currently belong to any tables group.', v_list;
       END IF;
     END IF;
--- get the new priority, if supplied, and check the priority is numeric
-    IF v_changedProperties ? 'priority' THEN
-      BEGIN
-        v_newPriority = (v_changedProperties->>'priority')::INT;
-      EXCEPTION
-        WHEN invalid_text_representation THEN
-          RAISE EXCEPTION '_modify_tables: the "priority" property is not numeric.';
-      END;
-      v_priorityChanged = TRUE;
-    END IF;
--- get the new tablespaces if supplied and check that the tablespaces exist
-    IF v_changedProperties ? 'log_data_tablespace' THEN
-      v_newLogDatTsp = v_changedProperties->>'log_data_tablespace';
-      IF v_newLogDatTsp IS NOT NULL
-         AND NOT EXISTS
-               (SELECT 0
-                  FROM pg_catalog.pg_tablespace
-                  WHERE spcname = v_newLogDatTsp
-               ) THEN
-        RAISE EXCEPTION '_modify_tables: the log data tablespace "%" does not exists.', v_newLogDatTsp;
-      END IF;
-      v_logDatTspChanged = TRUE;
-    END IF;
-    IF v_changedProperties ? 'log_index_tablespace' THEN
-      v_newLogIdxTsp = v_changedProperties->>'log_index_tablespace';
-      IF v_newLogIdxTsp IS NOT NULL
-        AND NOT EXISTS
-          (SELECT 0
-             FROM pg_catalog.pg_tablespace
-             WHERE spcname = v_newLogIdxTsp
-          ) THEN
-        RAISE EXCEPTION '_modify_tables: the log index tablespace "%" does not exists.', v_newLogIdxTsp;
-      END IF;
-      v_logIdxTspChanged = TRUE;
-    END IF;
--- check no properties are unknown
-    v_extraProperties = v_changedProperties - 'priority' - 'log_data_tablespace' - 'log_index_tablespace';
-    IF v_extraProperties IS NOT NULL AND v_extraProperties <> '{}' THEN
-      RAISE EXCEPTION '_modify_tables: properties "%" are unknown.', v_extraProperties;
+-- determine which properties are listed in the json parameter
+    v_priorityChanged = v_changedProperties ? 'priority';
+    v_logDatTspChanged = v_changedProperties ? 'log_data_tablespace';
+    v_logIdxTspChanged = v_changedProperties ? 'log_index_tablespace';
+    v_ignoredTrgChanged = v_changedProperties ? 'ignored_triggers' OR v_changedProperties ? 'ignored_triggers_profiles';
+-- check and extract the tables JSON properties
+    IF v_changedProperties IS NOT NULL THEN
+      SELECT * INTO v_newPriority, v_newLogDatTsp, v_newLogIdxTsp, v_ignoredTriggers, v_ignoredTrgProfiles
+        FROM emaj._check_json_table_properties(v_changedProperties);
     END IF;
 -- get the lists of groups and logging groups holding these tables, if any.
 -- The FOR UPDATE clause locks the tables groups so that no other operation simultaneously occurs on these groups
@@ -2883,6 +2857,8 @@ $_modify_tables$
     IF v_tables IS NULL OR v_tables = '{}' THEN
 -- when no tables are finaly selected, just warn
       RAISE WARNING '_modified_tables: No table to process.';
+    ELSIF v_changedProperties IS NULL OR v_changedProperties = '{}' THEN
+      RAISE WARNING '_modified_tables: No property change to process.';
     ELSE
 -- get the time stamp of the operation
       SELECT emaj._set_time_stamp('A') INTO v_timeId;
@@ -2893,6 +2869,23 @@ $_modify_tables$
         PERFORM emaj._lock_groups(v_loggingGroups, 'ROW EXCLUSIVE', FALSE);
 -- and set the mark, using the same time identifier
         PERFORM emaj._set_mark_groups(v_loggingGroups, v_markName, TRUE, TRUE, NULL, v_timeId);
+      END IF;
+--   build the SQL conditions to use in order to build the array of "triggers to ignore at rollback time" for each table
+      IF v_ignoredTriggers IS NOT NULL OR v_ignoredTrgProfiles IS NOT NULL THEN
+--     build the condition on trigger names using the ignored_triggers parameters
+        IF v_ignoredTriggers IS NOT NULL THEN
+          v_selectConditions = 'tgname = ANY (' || quote_literal(v_ignoredTriggers) || ') OR ';
+        ELSE
+          v_selectConditions = '';
+        END IF;
+--     build the regexp conditions on trigger names using the ignored_triggers_profile parameters
+        IF v_ignoredTrgProfiles IS NOT NULL THEN
+          SELECT v_selectConditions || string_agg('tgname ~ ' || quote_literal(profile), ' OR ')
+            INTO v_selectConditions
+            FROM unnest(v_ignoredTrgProfiles) AS profile;
+        ELSE
+          v_selectConditions = v_selectConditions || 'FALSE';
+        END IF;
       END IF;
 -- process the changes for each table, if any
       FOR r_rel IN
@@ -2939,6 +2932,36 @@ $_modify_tables$
           INSERT INTO emaj.emaj_alter_plan (altr_time_id, altr_step, altr_schema, altr_tblseq, altr_group, altr_group_is_logging)
             VALUES (v_timeId, 'CHANGE_TBL_LOG_INDEX_TSP', v_schema, r_rel.rel_tblseq, r_rel.rel_group, r_rel.group_is_logging);
         END IF;
+-- change the ignored_trigger array if needed
+        IF v_ignoredTrgChanged THEN
+--   compute the new list of "triggers to ignore at rollback time"
+          IF v_selectConditions IS NOT NULL THEN
+            EXECUTE format(
+              $$SELECT array_agg(tgname)
+                  FROM pg_catalog.pg_trigger
+                       JOIN pg_catalog.pg_class ON (tgrelid = pg_class.oid)
+                       JOIN pg_catalog.pg_namespace ON (relnamespace = pg_namespace.oid)
+                  WHERE nspname = %L
+                    AND relname = %L
+                    AND tgconstraint = 0
+                    AND tgname NOT IN ('emaj_log_trg','emaj_trunc_trg')
+                    AND (%s)
+              $$, v_schema, r_rel.rel_tblseq, v_selectConditions)
+              INTO v_newIgnoredTriggers;
+          END IF;
+          IF (r_rel.rel_ignored_triggers <> v_newIgnoredTriggers
+             OR (r_rel.rel_ignored_triggers IS NULL AND v_newIgnoredTriggers IS NOT NULL)
+             OR (r_rel.rel_ignored_triggers IS NOT NULL AND v_newIgnoredTriggers IS NULL)) THEN
+            v_isTableChanged = TRUE;
+--   if changes must be recorded, call the dedicated function
+            PERFORM emaj._change_ignored_triggers_tbl(v_schema, r_rel.rel_tblseq, r_rel.rel_ignored_triggers, v_newIgnoredTriggers,
+                                                      v_function);
+--     and insert an entry into the emaj_alter_plan table (so that future rollback may see the change)
+            INSERT INTO emaj.emaj_alter_plan (altr_time_id, altr_step, altr_schema, altr_tblseq, altr_group, altr_group_is_logging)
+              VALUES (v_timeId, 'CHANGE_IGNORED_TRIGGERS', v_schema, r_rel.rel_tblseq, r_rel.rel_group, r_rel.group_is_logging);
+          END IF;
+        END IF;
+--
         IF v_isTableChanged THEN
           v_nbChangedTbl = v_nbChangedTbl + 1;
         END IF;
@@ -9537,6 +9560,9 @@ $_rlbk_end$
                         || quote_ident(altr_schema) || '.' || quote_ident(altr_tblseq)
                       WHEN 'CHANGE_TBL_LOG_INDEX_TSP' THEN
                         'Tables group change not rolled back: log index tablespace for '
+                        || quote_ident(altr_schema) || '.' || quote_ident(altr_tblseq)
+                      WHEN 'CHANGE_IGNORED_TRIGGERS' THEN
+                        'Tables group change not rolled back: ignored triggers list for '
                         || quote_ident(altr_schema) || '.' || quote_ident(altr_tblseq)
                       ELSE altr_step::TEXT || ' / ' || quote_ident(altr_schema) || '.' || quote_ident(altr_tblseq)
                       END)::TEXT AS message
