@@ -1174,6 +1174,107 @@ $_check_json_groups_conf$
   END;
 $_check_json_groups_conf$;
 
+CREATE OR REPLACE FUNCTION emaj._check_json_table_properties(v_properties JSONB,
+                                                             OUT v_priority INT, OUT v_logDatTsp TEXT, OUT v_logIdxTsp TEXT,
+                                                             OUT v_ignoredTriggers TEXT[], OUT v_ignoredTriggersProfiles TEXT[])
+LANGUAGE plpgsql AS
+$_check_json_table_properties$
+-- This function verifies that the JSON structure that contains tables properties set at tables assign or modify functions is correct.
+-- This function returns the elementary fields
+-- Input: the JSON structure to check
+-- Output: priority level
+--         log data and index tablespaces
+--         names array of triggers to ignore at rollback time
+--         array of names profiles (i.e. regular expressions) for triggers to ignore at rollback time
+  DECLARE
+    v_emajTriggers           TEXT[];
+    v_extraProperties        JSONB;
+  BEGIN
+-- check the priority is numeric
+    IF v_properties ? 'priority' AND jsonb_typeof(v_properties->'priority') <> 'null' THEN
+      IF jsonb_typeof(v_properties->'priority') = 'number' THEN
+        v_priority = v_properties->>'priority';
+      ELSE
+        RAISE EXCEPTION '_check_json_table_properties: the "priority" property must be numeric.';
+      END IF;
+    END IF;
+-- check that the tablespaces exist, if supplied
+    IF v_properties ? 'log_data_tablespace' AND jsonb_typeof(v_properties->'log_data_tablespace') <> 'null' THEN
+      IF jsonb_typeof(v_properties->'log_data_tablespace') = 'string' THEN
+        v_logDatTsp = v_properties->>'log_data_tablespace';
+        IF NOT EXISTS
+                (SELECT 0
+                   FROM pg_catalog.pg_tablespace
+                   WHERE spcname = v_logDatTsp
+                ) THEN
+          RAISE EXCEPTION '_check_json_table_properties: the log data tablespace "%" does not exists.', v_logDatTsp;
+        END IF;
+      ELSE
+        RAISE EXCEPTION '_check_json_table_properties: the log data tablespace must be a string.';
+      END IF;
+    END IF;
+    IF v_properties ? 'log_index_tablespace' AND jsonb_typeof(v_properties->'log_index_tablespace') <> 'null' THEN
+      IF jsonb_typeof(v_properties->'log_index_tablespace') = 'string' THEN
+        v_logIdxTsp = v_properties->>'log_index_tablespace';
+        IF NOT EXISTS
+                (SELECT 0
+                   FROM pg_catalog.pg_tablespace
+                   WHERE spcname = v_logIdxTsp
+                ) THEN
+          RAISE EXCEPTION '_check_json_table_properties: the log index tablespace "%" does not exists.', v_logIdxTsp;
+        END IF;
+      ELSE
+        RAISE EXCEPTION '_check_json_table_properties: the log index tablespace must be a string.';
+      END IF;
+    END IF;
+-- check the ignored_triggers property
+    IF v_properties ? 'ignored_triggers' AND jsonb_typeof(v_properties->'ignored_triggers') <> 'null' THEN
+      IF jsonb_typeof(v_properties->'ignored_triggers') = 'string' THEN
+--   the property is a string
+        v_ignoredTriggers = ARRAY[v_properties->>'ignored_triggers'];
+        IF v_properties->>'ignored_triggers' IN ('emaj_log_trg', 'emaj_trunc_trg') THEN
+          v_emajTriggers = v_ignoredTriggers;
+        END IF;
+      ELSIF jsonb_typeof(v_properties->'ignored_triggers') = 'array' THEN
+--   the property is an array, transform the json array into a native arrays to process
+        WITH trigger AS (
+          SELECT trigger_name FROM jsonb_array_elements_text(v_properties->'ignored_triggers') AS trigger_name
+          )
+        SELECT array_agg(trigger_name),
+               array_agg(trigger_name) FILTER (WHERE trigger_name IN ('emaj_log_trg', 'emaj_trunc_trg'))
+          INTO v_ignoredTriggers, v_emajTriggers
+          FROM trigger;
+      ELSE
+        RAISE EXCEPTION '_check_json_table_properties: the "ignored_triggers" property must be an array or a string.';
+      END IF;
+--   check that triggers listed in the ignored_triggers property are not emaj triggers
+      IF v_emajTriggers IS NOT NULL THEN
+        RAISE EXCEPTION '_check_json_table_properties: E-Maj triggers are not allowed in the "ignored_triggers" property.';
+      END IF;
+    END IF;
+-- check the ignored_triggers_profiles property
+    IF v_properties ? 'ignored_triggers_profiles' AND jsonb_typeof(v_properties->'ignored_triggers_profiles') <> 'null' THEN
+      IF jsonb_typeof(v_properties->'ignored_triggers_profiles') = 'string' THEN
+--   the property is a string
+        v_ignoredTriggersProfiles = ARRAY[v_properties->>'ignored_triggers_profiles'];
+      ELSIF jsonb_typeof(v_properties->'ignored_triggers_profiles') = 'array' THEN
+--   the property is an array, transform the json array into a native arrays to process
+        SELECT array_agg(triggers_profile) INTO v_ignoredTriggersProfiles
+          FROM jsonb_array_elements_text(v_properties->'ignored_triggers_profiles') AS triggers_profile;
+      ELSE
+        RAISE EXCEPTION '_check_json_table_properties: the "ignored_triggers_profiles" property must be an array or a string.';
+      END IF;
+    END IF;
+-- check no properties are unknown
+    v_extraProperties = v_properties - 'priority' - 'log_data_tablespace' - 'log_index_tablespace'
+                                     - 'ignored_triggers' - 'ignored_triggers_profiles';
+    IF v_extraProperties IS NOT NULL AND v_extraProperties <> '{}' THEN
+      RAISE EXCEPTION '_check_json_table_properties: properties "%" are unknown.', v_extraProperties;
+    END IF;
+    RETURN;
+  END;
+$_check_json_table_properties$;
+
 CREATE OR REPLACE FUNCTION emaj._check_json_param_conf(v_paramsJson JSON)
 RETURNS SETOF emaj._report_message_type LANGUAGE plpgsql AS
 $_check_json_param_conf$
@@ -1844,12 +1945,15 @@ $_assign_tables$
     v_priority               INT;
     v_logDatTsp              TEXT;
     v_logIdxTsp              TEXT;
-    v_extraProperties        JSONB;
+    v_ignoredTriggers        TEXT[];
+    v_ignoredTrgProfiles     TEXT[];
     v_list                   TEXT;
     v_array                  TEXT[];
     v_timeId                 BIGINT;
     v_markName               TEXT;
     v_logSchema              TEXT;
+    v_selectedIgnoredTrgs    TEXT[];
+    v_selectConditions       TEXT;
     v_eventTriggers          TEXT[];
     v_oneTable               TEXT;
     v_nbAssignedTbl          INT = 0;
@@ -2049,34 +2153,10 @@ $_assign_tables$
             ) AS t(remaining_table);
       END IF;
     END IF;
--- check the priority is numeric
-    BEGIN
-      v_priority = (v_properties->>'priority')::INT;
-    EXCEPTION
-      WHEN invalid_text_representation THEN
-        RAISE EXCEPTION '_assign_tables: the "priority" property is not numeric.';
-    END;
--- check that the tablespaces exist, if supplied
-    v_logDatTsp = v_properties->>'log_data_tablespace';
-    IF v_logDatTsp IS NOT NULL AND NOT EXISTS
-                                     (SELECT 0
-                                        FROM pg_catalog.pg_tablespace
-                                        WHERE spcname = v_logDatTsp
-                                     ) THEN
-      RAISE EXCEPTION '_assign_tables: the log data tablespace "%" does not exists.', v_logDatTsp;
-    END IF;
-    v_logIdxTsp = v_properties->>'log_index_tablespace';
-    IF v_logIdxTsp IS NOT NULL AND NOT EXISTS
-                                     (SELECT 0
-                                        FROM pg_catalog.pg_tablespace
-                                        WHERE spcname = v_logIdxTsp
-                                     ) THEN
-      RAISE EXCEPTION '_assign_tables: the log index tablespace "%" does not exists.', v_logIdxTsp;
-    END IF;
--- check no properties are unknown
-    v_extraProperties = v_properties - 'priority' - 'log_data_tablespace' - 'log_index_tablespace';
-    IF v_extraProperties IS NOT NULL AND v_extraProperties <> '{}' THEN
-      RAISE EXCEPTION '_assign_tables: properties "%" are unknown.', v_extraProperties;
+-- check the tables JSON properties
+    IF v_properties IS NOT NULL THEN
+      SELECT * INTO v_priority, v_logDatTsp, v_logIdxTsp, v_ignoredTriggers, v_ignoredTrgProfiles
+        FROM emaj._check_json_table_properties(v_properties);
     END IF;
 -- check the supplied mark
     SELECT emaj._check_new_mark(array[v_group], v_mark) INTO v_markName;
@@ -2116,10 +2196,62 @@ $_assign_tables$
 -- disable event triggers that protect emaj components and keep in memory these triggers name
       SELECT emaj._disable_event_triggers() INTO v_eventTriggers;
 -- effectively create the log components for each table
+--   build the SQL conditions to use in order to build the array of "triggers to ignore at rollback time" for each table
+      IF v_ignoredTriggers IS NOT NULL OR v_ignoredTrgProfiles IS NOT NULL THEN
+--     build the condition on trigger names using the ignored_triggers parameters
+        IF v_ignoredTriggers IS NOT NULL THEN
+          v_selectConditions = 'tgname = ANY (' || quote_literal(v_ignoredTriggers) || ') OR ';
+        ELSE
+          v_selectConditions = '';
+        END IF;
+--     build the regexp conditions on trigger names using the ignored_triggers_profile parameters
+        IF v_ignoredTrgProfiles IS NOT NULL THEN
+          SELECT v_selectConditions || string_agg('tgname ~ ' || quote_literal(profile), ' OR ')
+            INTO v_selectConditions
+            FROM unnest(v_ignoredTrgProfiles) AS profile;
+        ELSE
+          v_selectConditions = v_selectConditions || 'FALSE';
+        END IF;
+      END IF;
+-- process each table
       FOREACH v_oneTable IN ARRAY v_tables
       LOOP
+-- check that the triggers listed in ignored_triggers property exists for the table
+        SELECT string_agg(quote_ident(trigger_name), ', ') INTO v_list
+          FROM
+            (  SELECT trigger_name
+                 FROM unnest(v_ignoredTriggers) AS trigger_name
+             EXCEPT
+               SELECT tgname
+                 FROM pg_catalog.pg_trigger
+                      JOIN pg_catalog.pg_class ON (tgrelid = pg_class.oid)
+                      JOIN pg_catalog.pg_namespace ON (relnamespace = pg_namespace.oid)
+                 WHERE nspname = v_schema
+                   AND relname = v_oneTable
+                   AND tgconstraint = 0
+                   AND tgname NOT IN ('emaj_log_trg','emaj_trunc_trg')
+            ) AS t;
+        IF v_list IS NOT NULL THEN
+          RAISE EXCEPTION '_assign_tables: some triggers (%) have not been found in the table %.%.',
+                          v_list, quote_ident(v_schema), quote_ident(v_oneTable);
+        END IF;
+-- build the array of "triggers to ignore at rollback time"
+        IF v_selectConditions IS NOT NULL THEN
+          EXECUTE format(
+            $$SELECT array_agg(tgname)
+                FROM pg_catalog.pg_trigger
+                     JOIN pg_catalog.pg_class ON (tgrelid = pg_class.oid)
+                     JOIN pg_catalog.pg_namespace ON (relnamespace = pg_namespace.oid)
+                WHERE nspname = %L
+                  AND relname = %L
+                  AND tgconstraint = 0
+                  AND tgname NOT IN ('emaj_log_trg','emaj_trunc_trg')
+                  AND (%s)
+            $$, v_schema, v_oneTable, v_selectConditions)
+            INTO v_selectedIgnoredTrgs;
+        END IF;
 -- create the table
-        PERFORM emaj._add_tbl(v_schema, v_oneTable, v_group, v_priority, v_logDatTsp, v_logIdxTsp, NULL,
+        PERFORM emaj._add_tbl(v_schema, v_oneTable, v_group, v_priority, v_logDatTsp, v_logIdxTsp, v_selectedIgnoredTrgs,
                               v_groupIsLogging, v_timeId, v_function);
 -- insert an entry into the emaj_alter_plan table (so that future rollback may see the change)
         INSERT INTO emaj.emaj_alter_plan (altr_time_id, altr_step, altr_schema, altr_tblseq, altr_group, altr_group_is_logging)

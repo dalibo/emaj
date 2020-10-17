@@ -45,11 +45,12 @@ Les tables de log E-Maj et leur séquence NE doivent PAS être référencées da
 Propriétés spécifiques aux tables
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Il existe 3 propriétés spécifiques aux tables affectées à un groupe de tables :
+Il existe 4 propriétés spécifiques aux tables affectées à un groupe de tables :
 
-* niveau de priorité,
-* tablespace pour les données des tables de log,
-* tablespace pour les index des tables de log.
+* le niveau de priorité,
+* le tablespace pour les données des tables de log,
+* le tablespace pour les index des tables de log,
+* la liste des triggers dont l’état (ENABLED/DISABLED) doit rester inchangé lors des opérations de rollback E-Maj.
 
 Le niveau de **priorité** est un entier (INTEGER). Par défaut, il prend la valeur NULL, Il correspond à l'ordre dans lequel les tables seront traitées par les principales fonctions d'E-Maj. Ceci peut-être en particulier utile pour faciliter la pose des verrous. En effet, en posant les verrous sur les tables dans le même ordre que les accès applicatifs typiques, on peut limiter le risque de deadlock. Les fonctions E-Maj traitent les tables dans l'ordre croissant de priorité, les valeurs *NULL* étant traitées en dernier. Pour un même niveau de priorité, les tables sont traitées dans l'ordre alphabétique de nom de schéma puis de nom de table.
 
@@ -59,6 +60,8 @@ Pour optimiser les performances des installations E-Maj comportant un très gran
 * un nom de **tablespace** à utiliser pour l'**index** de la table de log.
 
 Par défaut, ces propriétés prennent la valeur *NULL*, indiquant l’utilisation du tablespace par défaut de la session courante.
+
+Lors du rollback E-Maj d’un groupe de tables, les triggers actifs (ENABLED) de chacune des tables concernées sont désactivés puis réactivés pour qu’ils ne soient pas déclenchés par les changements apportés au contenu des tables. Mais ce comportement par défaut peut être modifié. Notez que ceci ne concerne pas les triggers E-Maj ou système.
 
 .. _emaj_create_group:
 
@@ -131,17 +134,31 @@ Les fonctions d’assignation à un groupe de tables construisant leur sélectio
 
 Le paramètre *<propriétés>* des fonctions d’ajout de tables à un groupe de tables est optionnel. Il permet de préciser les propriétés spécifiques pour la ou les tables. De type JSONB. on peut le valoriser ainsi ::
 
-	'{ "priority" : <n> , "log_data_tablespace" : "<xxx>" , "log_index_tablespace" : "<yyy>" }'
+	'{ "priority" : <n> , 
+	   "log_data_tablespace" : "<ldt>" ,
+	   "log_index_tablespace" : "<lit>" ,
+	   "ignored_triggers" : ["<tg1>" , "<tg2>" , ...] ,
+	   "ignored_triggers_profiles" : ["<regexp1>" , "<regexp2>" , ...] }'
 
 où :
 
 * <n> est le niveau de priorité pour la ou les tables
-* <xxx> est le nom du tablespace pour les tables de log
-* <yyy> est le nom du tablespace pour les index de log
+* <ldt> est le nom du tablespace pour les tables de log
+* <lit> est le nom du tablespace pour les index de log
+* <tg1> et <tg2> sont des noms de trigger
+* <regexp1> et <regexp2> sont des expressions rationnelles permettant de sélectionner des noms de triggers parmi ceux existant pour la ou les tables à assigner dans le groupe
 
 Si une des propriétés n’est pas valorisée dans le paramètre *JSONB*, sa valeur est considérée comme *NULL*.
 
 Si des tablespaces spécifiques pour les tables de log ou pour leurs index sont référencés, ceux-ci doivent exister au préalable et l’utilisateur (ou le rôle *emaj_adm*) doit avoir les droits *CREATE* sur ces tablespaces.
+
+Les deux propriétés "ignored_triggers" et "ignored_triggers_profiles" définissent les triggers dont l’état doit rester inchangé lors des opérations de rollback E-Maj. Les deux propriétés sont de type tableau (array). "ignored_triggers" peut être une simple chaîne (string) s’il ne doit contenir qu’un seul trigger. 
+
+Les triggers listés dans la propriété "ignored_triggers" doivent exister pour la table ou les tables référencées dans l’appel de la fonction. Les triggers créés par E-Maj (emaj_log_trg  et emaj_trunc_trg) ne doivent pas être listés.
+
+Si plusieurs expressions rationnelles sont listées dans la propriété "ignored_triggers_profiles", celles-ci agissent comme autant de filtres sélectionnant des triggers. 
+
+Les deux propriétés "ignored_triggers" et "ignored_triggers_profiles" peuvent être utilisées conjointement. Dans ce cas, les triggers sélectionnés correspondront à l'union de l'ensemble des triggers listés par la première et des ensembles de triggers sélectionnés par les expressions rationnelles de la seconde.
 
 Pour toutes les fonctions, un verrou exclusif est posé sur chaque table du ou des groupes de tables concernés, afin de garantir la stabilité des groupes durant ces opérations.
 

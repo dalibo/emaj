@@ -87,8 +87,19 @@ select emaj.emaj_assign_table('phil''s schema3','myTbl2\','myGroup1');
 select emaj.emaj_assign_table('myschema1','mytbl1','myGroup1','{"priority":"not_numeric"}'::jsonb);
 
 -- invalid tablespace
+select emaj.emaj_assign_table('myschema1','mytbl1','myGroup1','{"log_data_tablespace":1}'::jsonb);
 select emaj.emaj_assign_table('myschema1','mytbl1','myGroup1','{"log_data_tablespace":"dummytsp"}'::jsonb);
+select emaj.emaj_assign_table('myschema1','mytbl1','myGroup1','{"log_index_tablespace":1}'::jsonb);
 select emaj.emaj_assign_table('myschema1','mytbl1','myGroup1','{"log_index_tablespace":"dummytsp"}'::jsonb);
+
+-- invalid ignored_triggers
+select emaj.emaj_assign_table('myschema1','mytbl1','myGroup1','{"ignored_triggers":1}'::jsonb);
+select emaj.emaj_assign_table('myschema1','mytbl1','myGroup1','{"ignored_triggers":"emaj_log_trg"}'::jsonb);
+select emaj.emaj_assign_table('myschema1','mytbl1','myGroup1','{"ignored_triggers":["emaj_trunc_trg"]}'::jsonb);
+select emaj.emaj_assign_table('myschema1','mytbl1','myGroup1','{"ignored_triggers":["dummy"]}'::jsonb);
+
+-- invalid ignored_triggers_profiles
+select emaj.emaj_assign_table('myschema1','mytbl1','myGroup1','{"ignored_triggers_profiles":1}'::jsonb);
 
 -- unknown property
 select emaj.emaj_assign_table('myschema1','mytbl1','myGroup1','{"unknown_property":null}'::jsonb);
@@ -113,11 +124,29 @@ select emaj.emaj_assign_table('emaj','emaj_param','myGroup1');
 select emaj.emaj_assign_table('emaj_myschema1','mytbl1_log','myGroup1');
 
 -- ok
-select emaj.emaj_assign_table('myschema1','mytbl1','myGroup1','{"priority":20}'::jsonb);
-select emaj.emaj_assign_table('myschema1','mytbl2','myGroup1','{"log_data_tablespace":"tsplog1","log_index_tablespace":"tsplog1"}'::jsonb);
-select emaj.emaj_assign_table('myschema1','mytbl2b','myGroup1','{"log_data_tablespace":"tsp log''2","log_index_tablespace":"tsp log''2"}'::jsonb);
-select emaj.emaj_assign_table('myschema1','myTbl3','myGroup1','{"priority":10,"log_data_tablespace":"tsplog1"}'::jsonb);
-select emaj.emaj_assign_table('myschema1','mytbl4','myGroup1','{"priority":20,"log_data_tablespace":"tsplog1","log_index_tablespace":"tsp log''2"}'::jsonb);
+--   various way to specify the triggers to ignore at rollback time
+begin;
+  select emaj.emaj_assign_table('myschema1','mytbl2','myGroup1','{"ignored_triggers":"mytbl2trg1"}'::jsonb);
+  select rel_ignored_triggers from emaj.emaj_relation where rel_schema = 'myschema1' and rel_tblseq = 'mytbl2';
+rollback;
+begin;
+  select emaj.emaj_assign_table('myschema1','mytbl2','myGroup1','{"ignored_triggers_profiles":["mytbl2trg\\d"]}'::jsonb);
+  select rel_ignored_triggers from emaj.emaj_relation where rel_schema = 'myschema1' and rel_tblseq = 'mytbl2';
+rollback;
+begin;
+  select emaj.emaj_assign_tables('myschema1','.*', null, 'myGroup1','{"ignored_triggers_profiles":["trg1$", "trg2$"]}'::jsonb);
+  select rel_tblseq, rel_ignored_triggers from emaj.emaj_relation where rel_schema = 'myschema1';
+rollback;
+begin;
+  select emaj.emaj_assign_tables('myschema1','{"mytbl2"}','myGroup1','{"ignored_triggers":"mytbl2trg1", "ignored_triggers_profiles":["trg2$"]}'::jsonb);
+  select rel_ignored_triggers from emaj.emaj_relation where rel_schema = 'myschema1' and rel_tblseq = 'mytbl2';
+rollback;
+
+select emaj.emaj_assign_table('myschema1','mytbl1','myGroup1','{"priority":20, "ignored_triggers":null}'::jsonb);
+select emaj.emaj_assign_table('myschema1','mytbl2','myGroup1','{"log_data_tablespace":"tsplog1", "log_index_tablespace":"tsplog1", "ignored_triggers":["mytbl2trg1", "mytbl2trg2"]}'::jsonb);
+select emaj.emaj_assign_table('myschema1','mytbl2b','myGroup1','{"log_data_tablespace":"tsp log''2", "log_index_tablespace":"tsp log''2"}'::jsonb);
+select emaj.emaj_assign_table('myschema1','myTbl3','myGroup1','{"priority":10, "log_data_tablespace":"tsplog1", "log_index_tablespace":null}'::jsonb);
+select emaj.emaj_assign_table('myschema1','mytbl4','myGroup1','{"priority":20, "log_data_tablespace":"tsplog1", "log_index_tablespace":"tsp log''2"}'::jsonb);
 
 -- already assigned table in the same group
 select emaj.emaj_assign_table('myschema1','mytbl1','myGroup1');
