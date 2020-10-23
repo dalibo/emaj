@@ -264,7 +264,7 @@ select hist_function, hist_event, hist_wording
   hist_function  | hist_event |                                                        hist_wording                                                         
 -----------------+------------+-----------------------------------------------------------------------------------------------------------------------------
  PURGE_HISTORIES | BEGIN      | Retention delay @ 0
- PURGE_HISTORIES |            | 20 emaj_hist rows deleted ; 133 relation history rows deleted ; 79 alter groups events deleted ; 37 rollback events deleted
+ PURGE_HISTORIES |            | 20 emaj_hist rows deleted ; 133 relation history rows deleted ; 82 alter groups events deleted ; 37 rollback events deleted
  PURGE_HISTORIES | END        | 
 (3 rows)
 
@@ -299,7 +299,7 @@ select emaj.emaj_assign_table('myschema1','mytbl2','myGroup1','{"log_data_tables
 NOTICE:  table "mytbl2_log" does not exist, skipping
 NOTICE:  trigger "emaj_log_trg" for relation "myschema1.mytbl2" does not exist, skipping
 NOTICE:  trigger "emaj_trunc_trg" for relation "myschema1.mytbl2" does not exist, skipping
-WARNING:  _create_tbl: The table "myschema1.mytbl2" has triggers that will be automatically disabled during E-Maj rollback operations (mytbl2trg1, mytbl2trg2). Use the emaj_ignore_app_trigger() function to change this behaviour.
+WARNING:  _create_tbl: The table "myschema1.mytbl2" has triggers that will be automatically disabled during E-Maj rollback operations (mytbl2trg1, mytbl2trg2). Use the emaj_modify_table() function to change this behaviour.
  emaj_assign_table 
 -------------------
                  1

@@ -16,7 +16,7 @@ select public.handle_emaj_sequences(2000);
 
 -- build original groups
 select emaj.emaj_import_groups_configuration(:'EMAJTESTTMPDIR' || '/../all_groups_config.json', array['myGroup1','myGroup2','emptyGroup'], true);
-WARNING:  _create_tbl: The table "myschema1.mytbl2" has triggers that will be automatically disabled during E-Maj rollback operations (mytbl2trg1, mytbl2trg2). Use the emaj_ignore_app_trigger() function to change this behaviour.
+WARNING:  _create_tbl: The table "myschema1.mytbl2" has triggers that will be automatically disabled during E-Maj rollback operations (mytbl2trg1, mytbl2trg2). Use the emaj_modify_table() function to change this behaviour.
  emaj_import_groups_configuration 
 ----------------------------------
                                 3
@@ -249,7 +249,7 @@ select hist_function, hist_event, hist_object,
   hist_function  | hist_event | hist_object |                                         regexp_replace                                         | hist_user 
 -----------------+------------+-------------+------------------------------------------------------------------------------------------------+-----------
  START_GROUP     | BEGIN      | myGroup1    | With log reset                                                                                 | postgres
- PURGE_HISTORIES |            |             | 269 emaj_hist rows deleted ; 39 relation history rows deleted ; 33 alter groups events deleted | postgres
+ PURGE_HISTORIES |            |             | 272 emaj_hist rows deleted ; 39 relation history rows deleted ; 34 alter groups events deleted | postgres
  LOCK_GROUP      | BEGIN      | myGroup1    |                                                                                                | postgres
  LOCK_GROUP      | END        | myGroup1    | 5 tables locked, 0 deadlock(s)                                                                 | postgres
  SET_MARK_GROUP  | BEGIN      | myGroup1    | Mark1                                                                                          | postgres
@@ -393,7 +393,7 @@ select hist_id, hist_function, hist_event, hist_object,
  hist_id |  hist_function  |    hist_event     |    hist_object    |                                         regexp_replace                                         | hist_user 
 ---------+-----------------+-------------------+-------------------+------------------------------------------------------------------------------------------------+-----------
     2044 | START_GROUP     | BEGIN             | myGroup1          | With log reset                                                                                 | postgres
-    2045 | PURGE_HISTORIES |                   |                   | 269 emaj_hist rows deleted ; 39 relation history rows deleted ; 33 alter groups events deleted | postgres
+    2045 | PURGE_HISTORIES |                   |                   | 272 emaj_hist rows deleted ; 39 relation history rows deleted ; 34 alter groups events deleted | postgres
     2046 | LOCK_GROUP      | BEGIN             | myGroup1          |                                                                                                | postgres
     2047 | LOCK_GROUP      | END               | myGroup1          | 5 tables locked, 0 deadlock(s)                                                                 | postgres
     2048 | SET_MARK_GROUP  | BEGIN             | myGroup1          | Mark1                                                                                          | postgres

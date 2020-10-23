@@ -87,7 +87,6 @@ delete from emaj_mySchema1.myTbl1_log;
 -----------------------------
 -- forbiden functions
 -----------------------------
-select emaj.emaj_ignore_app_trigger('ADD','myschema1','mytbl1','%');
 select emaj.emaj_create_group('myGroup1');
 select emaj.emaj_drop_group('myGroup1');
 select emaj.emaj_force_drop_group('myGroup1');

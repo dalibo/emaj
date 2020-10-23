@@ -2245,7 +2245,7 @@ $_assign_tables$
 -- build the array of "triggers to ignore at rollback time"
         IF v_selectConditions IS NOT NULL THEN
           EXECUTE format(
-            $$SELECT array_agg(tgname)
+            $$SELECT array_agg(tgname ORDER BY tgname)
                 FROM pg_catalog.pg_trigger
                      JOIN pg_catalog.pg_class ON (tgrelid = pg_class.oid)
                      JOIN pg_catalog.pg_namespace ON (relnamespace = pg_namespace.oid)
@@ -2944,7 +2944,7 @@ $_modify_tables$
 --   compute the new list of "triggers to ignore at rollback time"
           IF v_selectConditions IS NOT NULL THEN
             EXECUTE format(
-              $$SELECT array_agg(tgname)
+              $$SELECT array_agg(tgname ORDER BY tgname)
                   FROM pg_catalog.pg_trigger
                        JOIN pg_catalog.pg_class ON (tgrelid = pg_class.oid)
                        JOIN pg_catalog.pg_namespace ON (relnamespace = pg_namespace.oid)
@@ -3210,7 +3210,7 @@ $_create_tbl$
 --   (if a trigger updates another table in the same table group or outside) it could generate problem at rollback time)
     IF v_triggerList IS NOT NULL THEN
       RAISE WARNING '_create_tbl: The table "%" has triggers that will be automatically disabled during E-Maj rollback operations (%).'
-                    ' Use the emaj_ignore_app_trigger() function to change this behaviour.', v_fullTableName, v_triggerList;
+                    ' Use the emaj_modify_table() function to change this behaviour.', v_fullTableName, v_triggerList;
     END IF;
     RETURN;
   END;
@@ -4688,106 +4688,6 @@ $_delete_log_tbl$
     RETURN v_nbRows;
   END;
 $_delete_log_tbl$;
-
-CREATE OR REPLACE FUNCTION emaj.emaj_ignore_app_trigger(v_action TEXT, v_schema TEXT, v_table TEXT, v_trigger TEXT)
-RETURNS INT LANGUAGE plpgsql AS
-$emaj_ignore_app_trigger$
--- This function records the list of application table triggers that must not be automatically disabled when launching a rollback
--- operation.
--- Input: the action to perform, either 'ADD' or 'REMOVE',
---        the schema and table names of the table that owns the trigger
---        and the trigger to record into or remove from the triggers list for the table
--- Output: number of recorded or removed triggers
--- A trigger to add must exist. E-Maj triggers are not processed.
--- The trigger parameter may contain '%' and/or '_' characters, these characters having the same meaning as in LIKE clauses.
-  DECLARE
-    v_oldIgnoredTriggers     TEXT[];
-    v_newIgnoredTriggers     TEXT[];
-    v_tableOid               OID;
-    v_trgList                TEXT;
-  BEGIN
--- check the action parameter
-    IF upper(v_action) NOT IN ('ADD','REMOVE') THEN
-      RAISE EXCEPTION 'emaj_ignore_app_trigger: the action "%" must be either ''ADD'' or ''REMOVE''.', v_action;
-    END IF;
--- process the REMOVE action
-    IF upper(v_action) = 'REMOVE' THEN
--- get the old rel_ignored_triggers array content
-      SELECT rel_ignored_triggers INTO v_oldIgnoredTriggers
-        FROM emaj.emaj_relation
-        WHERE rel_schema = v_schema AND rel_tblseq = v_table AND upper_inf(rel_time_range);
--- compute the new rel_ignored_triggers array content
-      SELECT array_agg(trg_name ORDER BY trg_name) INTO v_newIgnoredTriggers
-        FROM
-          (SELECT trg_name
-             FROM unnest(v_oldIgnoredTriggers) AS trg_name
-           WHERE trg_name NOT LIKE v_trigger
-          ) AS t;
--- and update
-      UPDATE emaj.emaj_relation
-        SET rel_ignored_triggers = v_newIgnoredTriggers
-        WHERE rel_schema = v_schema AND rel_tblseq = v_table AND upper_inf(rel_time_range);
--- return the number of removed triggers
-      RETURN coalesce(array_length(v_oldIgnoredTriggers, 1), 0) - coalesce(array_length(v_newIgnoredTriggers, 1), 0);
-    END IF;
--- process the ADD action
--- check that the supplied schema qualified table name exists
-    SELECT pg_class.oid INTO v_tableOid
-      FROM pg_catalog.pg_class
-           JOIN pg_catalog.pg_namespace ON (pg_namespace.oid = relnamespace)
-      WHERE nspname = v_schema
-        AND relname = v_table
-        AND relkind = 'r';
-    IF NOT FOUND THEN
-      RAISE EXCEPTION 'emaj_ignore_app_trigger: the table "%.%" does not exist.', v_schema, v_table;
-    END IF;
--- check that the trigger pattern effectively filter at least one trigger for the table
-    IF NOT EXISTS
-         (SELECT 0
-            FROM pg_catalog.pg_trigger
-            WHERE tgrelid = v_tableOid
-              AND tgname LIKE v_trigger
-              AND NOT tgisinternal
-         ) THEN
-      RAISE EXCEPTION 'emaj_ignore_app_trigger: no trigger like "%" found for the table "%.%".', v_trigger, v_schema, v_table;
-    END IF;
--- issue a warning if there is at least 1 emaj trigger selected
-    SELECT string_agg(tgname,', ') INTO v_trgList
-      FROM pg_catalog.pg_trigger
-      WHERE tgrelid = v_tableOid
-        AND tgname LIKE v_trigger
-        AND NOT tgisinternal
-        AND tgname IN ('emaj_trunc_trg', 'emaj_log_trg');
-    IF v_trgList IS NOT NULL THEN
-      RAISE WARNING 'emaj_ignore_app_trigger: the triggers "%" are E-Maj triggers and are not processed by the function.', v_trgList;
-    END IF;
--- get the old rel_ignored_triggers array content
-    SELECT rel_ignored_triggers INTO v_oldIgnoredTriggers
-      FROM emaj.emaj_relation
-      WHERE rel_schema = v_schema AND rel_tblseq = v_table AND upper_inf(rel_time_range);
--- compute the new rel_ignored_triggers array content
-    SELECT array_agg(trg_name ORDER BY trg_name) INTO v_newIgnoredTriggers
-      FROM
-        (  SELECT trg_name
-             FROM unnest(v_oldIgnoredTriggers) AS trg_name
-         UNION
-           SELECT tgname
-             FROM pg_catalog.pg_trigger
-             WHERE tgrelid = v_tableOid
-               AND tgname LIKE v_trigger
-               AND NOT tgisinternal
-               AND tgname NOT IN ('emaj_trunc_trg', 'emaj_log_trg')
-        ) AS t;
--- and update
-    UPDATE emaj.emaj_relation
-      SET rel_ignored_triggers = v_newIgnoredTriggers
-      WHERE rel_schema = v_schema AND rel_tblseq = v_table AND upper_inf(rel_time_range);
--- return the number of effectively added triggers
-    RETURN coalesce(array_length(v_newIgnoredTriggers, 1), 0) - coalesce(array_length(v_oldIgnoredTriggers, 1), 0); ----v_nbRows;
-  END;
-$emaj_ignore_app_trigger$;
-COMMENT ON FUNCTION emaj.emaj_ignore_app_trigger(TEXT,TEXT,TEXT,TEXT) IS
-$$Records application tables triggers that are not automatically disabled at rollback time.$$;
 
 CREATE OR REPLACE FUNCTION emaj._rlbk_seq(r_rel emaj.emaj_relation, v_timeId BIGINT)
 RETURNS VOID LANGUAGE plpgsql
@@ -11863,7 +11763,7 @@ $_verify_all_groups$
     RETURN QUERY
       SELECT 'Error: In the rollbackable group "' || rel_group || '", the trigger "' || trg_name || '" for table "'
           || rel_schema || '"."' || rel_tblseq || '" is missing. '
-          || 'Use the emaj_ignore_app_trigger() function to adjust the list of application triggers that should not be'
+          || 'Use the emaj_modify_table() function to adjust the list of application triggers that should not be'
           || ' automatically disabled at rollback time.'
              AS msg
         FROM

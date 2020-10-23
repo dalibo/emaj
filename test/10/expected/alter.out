@@ -86,8 +86,8 @@ select emaj.emaj_create_group('myGroup1');
 -- rebuild all original groups
 SET client_min_messages TO WARNING;
 select emaj.emaj_import_groups_configuration(:'EMAJTESTTMPDIR' || '/../all_groups_config.json', array['myGroup1','myGroup2','emptyGroup','myGroup4'], true);
-WARNING:  _create_tbl: The table "myschema1.mytbl2" has triggers that will be automatically disabled during E-Maj rollback operations (mytbl2trg1, mytbl2trg2). Use the emaj_ignore_app_trigger() function to change this behaviour.
-WARNING:  _create_tbl: The table "myschema4.mytblm" has triggers that will be automatically disabled during E-Maj rollback operations (mytblm_insert_trigger). Use the emaj_ignore_app_trigger() function to change this behaviour.
+WARNING:  _create_tbl: The table "myschema1.mytbl2" has triggers that will be automatically disabled during E-Maj rollback operations (mytbl2trg1, mytbl2trg2). Use the emaj_modify_table() function to change this behaviour.
+WARNING:  _create_tbl: The table "myschema4.mytblm" has triggers that will be automatically disabled during E-Maj rollback operations (mytblm_insert_trigger). Use the emaj_modify_table() function to change this behaviour.
  emaj_import_groups_configuration 
 ----------------------------------
                                 4
@@ -309,7 +309,7 @@ select group_last_alter_time_id, group_nb_table, group_nb_sequence from emaj.ema
 -- rebuild all original groups
 SET client_min_messages TO WARNING;
 select emaj.emaj_import_groups_configuration(:'EMAJTESTTMPDIR' || '/../all_groups_config.json', array['myGroup1','myGroup2','emptyGroup','myGroup4'], true);
-WARNING:  _create_tbl: The table "myschema1.mytbl2" has triggers that will be automatically disabled during E-Maj rollback operations (mytbl2trg1, mytbl2trg2). Use the emaj_ignore_app_trigger() function to change this behaviour.
+WARNING:  _create_tbl: The table "myschema1.mytbl2" has triggers that will be automatically disabled during E-Maj rollback operations (mytbl2trg1, mytbl2trg2). Use the emaj_modify_table() function to change this behaviour.
  emaj_import_groups_configuration 
 ----------------------------------
                                 4
@@ -1034,7 +1034,7 @@ select emaj.emaj_modify_table('myschema1','mytbl2','{"ignored_triggers_profiles"
 select rel_schema, rel_tblseq, rel_time_range, rel_ignored_triggers from emaj.emaj_relation where rel_ignored_triggers is not null order by 1,2,3;
  rel_schema | rel_tblseq | rel_time_range |  rel_ignored_triggers   
 ------------+------------+----------------+-------------------------
- myschema1  | mytbl2     | [8204,)        | {mytbl2trg2,mytbl2trg1}
+ myschema1  | mytbl2     | [8204,)        | {mytbl2trg1,mytbl2trg2}
 (1 row)
 
 select rel_schema, rel_tblseq, rel_time_range, rel_priority from emaj.emaj_relation
@@ -1244,7 +1244,7 @@ select hist_function, hist_event, hist_object,
  MODIFY_TABLE  | BEGIN                        |                  |                                         | postgres
  MODIFY_TABLE  | END                          |                  | 0 tables effectively modified           | postgres
  MODIFY_TABLE  | BEGIN                        |                  |                                         | postgres
- MODIFY_TABLE  | TRIGGERS TO IGNORE CHANGED   | myschema1.mytbl2 | {mytbl2trg1} => {mytbl2trg2,mytbl2trg1} | postgres
+ MODIFY_TABLE  | TRIGGERS TO IGNORE CHANGED   | myschema1.mytbl2 | {mytbl2trg1} => {mytbl2trg1,mytbl2trg2} | postgres
  MODIFY_TABLE  | END                          |                  | 1 tables effectively modified           | postgres
  MODIFY_TABLE  | BEGIN                        |                  |                                         | postgres
  MODIFY_TABLE  | PRIORITY CHANGED             | myschema1.mytbl2 | 1 => NULL                               | postgres
@@ -1254,7 +1254,7 @@ select hist_function, hist_event, hist_object,
  MODIFY_TABLE  | LOG INDEX TABLESPACE CHANGED | myschema1.mytbl1 | tsp log'2 => Default tablespace         | postgres
  MODIFY_TABLE  | END                          |                  | 1 tables effectively modified           | postgres
  MODIFY_TABLE  | BEGIN                        |                  |                                         | postgres
- MODIFY_TABLE  | TRIGGERS TO IGNORE CHANGED   | myschema1.mytbl2 | {mytbl2trg2,mytbl2trg1} => none         | postgres
+ MODIFY_TABLE  | TRIGGERS TO IGNORE CHANGED   | myschema1.mytbl2 | {mytbl2trg1,mytbl2trg2} => none         | postgres
  MODIFY_TABLE  | END                          |                  | 1 tables effectively modified           | postgres
  MODIFY_TABLES | BEGIN                        |                  |                                         | postgres
  MODIFY_TABLES | END                          |                  | 0 tables effectively modified           | postgres

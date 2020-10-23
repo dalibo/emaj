@@ -260,7 +260,7 @@ select hist_function, hist_event, hist_wording
   hist_function  | hist_event |                                                        hist_wording                                                         
 -----------------+------------+-----------------------------------------------------------------------------------------------------------------------------
  PURGE_HISTORIES | BEGIN      | Retention delay @ 0
- PURGE_HISTORIES |            | 20 emaj_hist rows deleted ; 133 relation history rows deleted ; 79 alter groups events deleted ; 37 rollback events deleted
+ PURGE_HISTORIES |            | 20 emaj_hist rows deleted ; 133 relation history rows deleted ; 82 alter groups events deleted ; 37 rollback events deleted
  PURGE_HISTORIES | END        | 
 (3 rows)
 
@@ -357,7 +357,7 @@ SQL statement "SELECT emaj._add_tbl(v_schema, v_oneTable, v_group, v_priority, v
                               v_groupIsLogging, v_timeId, v_function)"
 PL/pgSQL function emaj._assign_tables(text,text[],text,jsonb,text,boolean,boolean) line 322 at PERFORM
 PL/pgSQL function emaj.emaj_assign_table(text,text,text,jsonb,text) line 7 at RETURN
-WARNING:  _create_tbl: The table "myschema1.mytbl2" has triggers that will be automatically disabled during E-Maj rollback operations (mytbl2trg1, mytbl2trg2). Use the emaj_ignore_app_trigger() function to change this behaviour.
+WARNING:  _create_tbl: The table "myschema1.mytbl2" has triggers that will be automatically disabled during E-Maj rollback operations (mytbl2trg1, mytbl2trg2). Use the emaj_modify_table() function to change this behaviour.
 CONTEXT:  SQL statement "SELECT emaj._create_tbl(v_schema, v_table, v_group, v_priority, v_logDatTsp, v_logIdxTsp, v_ignoredTriggers,
                              v_timeId, v_groupIsRollbackable, v_groupIsLogging)"
 PL/pgSQL function emaj._add_tbl(text,text,text,integer,text,text,text[],boolean,bigint,text) line 23 at PERFORM

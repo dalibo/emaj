@@ -8,9 +8,8 @@
 select public.handle_emaj_sequences(4000);
 
 -- set the triggers state
-select emaj.emaj_ignore_app_trigger('REMOVE','myschema1','mytbl2','mytbl2%');
 ALTER TABLE mySchema1.myTbl2 ENABLE TRIGGER myTbl2trg2;
-select emaj.emaj_ignore_app_trigger('ADD','myschema1','mytbl2','mytbl2trg2');
+select emaj.emaj_modify_table('myschema1','mytbl2','{"ignored_triggers":"mytbl2trg2"}'::jsonb);
 
 -- disable event triggers to test cases with missing components
 select emaj.emaj_disable_protection_by_event_triggers();
@@ -516,7 +515,7 @@ rollback;
 
 -- should be ok
 set search_path=public,myschema1;
-select emaj.emaj_ignore_app_trigger('ADD', 'myschema1', 'mytbl2', 'mytbl2trg%');
+select emaj.emaj_modify_table('myschema1','mytbl2','{"ignored_triggers_profiles":["^mytbl2trg"]}'::jsonb);
 
 -- rollback without log rows to delete
 select emaj.emaj_set_mark_group('myGroup1','Conso_M1');
@@ -555,7 +554,7 @@ select tbl_schema, tbl_name, tbl_time_id, tbl_log_seq_last_val from emaj.emaj_ta
 select sqhl_schema, sqhl_table, sqhl_begin_time_id, sqhl_end_time_id, sqhl_hole_size from emaj.emaj_seq_hole where sqhl_schema = 'myschema1' order by 1,2,3;
 
 select * from emaj.emaj_rollback_group('myGroup1','Conso_M1');
-select emaj.emaj_ignore_app_trigger('REMOVE', 'myschema1', 'mytbl2', '%');
+select emaj.emaj_modify_table('myschema1','mytbl2','{"ignored_triggers":null}'::jsonb);
 
 -- consolidate a stopped (and empty) group
 begin;

@@ -53,11 +53,6 @@ Tables or sequences level functions
 | :ref:`emaj_get_current_log_table                 | | schema TEXT,                | (log.schema TEXT, log.table TEXT)     |
 | <emaj_get_current_log_table>` (V)                | | table TEXT                  |                                       |
 +--------------------------------------------------+-------------------------------+---------------------------------------+
-| :ref:`emaj_ignore_app_trigger                    | | action TEXT,                | #.triggers INT                        |
-| <emaj_ignore_app_trigger>`                       | | schema TEXT,                |                                       |
-|                                                  | | table TEXT,                 |                                       |
-|                                                  | | trigger TEXT                |                                       |
-+--------------------------------------------------+-------------------------------+---------------------------------------+
 | :ref:`emaj_modify_table                          | | schema TEXT,                | #.tables INT                          |
 | <modify_table>`                                  | | table TEXT,                 |                                       |
 |                                                  | | properties JSONB,           |                                       |

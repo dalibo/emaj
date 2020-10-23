@@ -1,6 +1,6 @@
 -- create_drop.sql : test emaj_create_group(), emaj_comment_group(),
 -- emaj_assign_table(), emaj_assign_tables(), emaj_assign_sequence(), emaj_assign_sequences(),
--- emaj_ignore_app_trigger(), emaj_export_groups_configuration(),
+-- emaj_export_groups_configuration(), emaj_import_groups_configuration(),
 -- emaj_drop_group() and emaj_force_drop_group() functions
 --
 SET client_min_messages TO WARNING;
@@ -290,38 +290,6 @@ select nspname, relname, rolname from pg_class, pg_namespace, pg_authid
 select nspname, proname, rolname from pg_proc, pg_namespace, pg_authid
   where pronamespace = pg_namespace.oid and proowner = pg_authid.oid and nspname like 'emaj\_%' order by nspname, proname;
 
------------------------------------
--- emaj_ignore_app_trigger: ADD action (the REMOVE action tests are postpone after the groups configuration export/import tests)
------------------------------------
-
--- unknown action
-select emaj.emaj_ignore_app_trigger('dummy','dummy','dummy','dummy');
-
--- unknown schema
-select emaj.emaj_ignore_app_trigger('ADD','dummy','mytbl2','dummy');
-
--- unknown table, and empty or NULL triggers array
-select emaj.emaj_ignore_app_trigger('ADD','myschema1','dummy','dummy');
-
--- unknown triggers
-select emaj.emaj_ignore_app_trigger('ADD','myschema1','mytbl2','dummy');
-
--- emaj triggers
-select emaj.emaj_ignore_app_trigger('ADD','myschema1','mytbl2','emaj_trunc_trg');
-select emaj.emaj_ignore_app_trigger('ADD','myschema1','mytbl2','emaj_%_trg');
-
--- add one trigger
-select emaj.emaj_ignore_app_trigger('ADD','myschema1','mytbl2','mytbl2trg1');
-select rel_schema, rel_tblseq, rel_time_range, rel_ignored_triggers from emaj.emaj_relation where rel_ignored_triggers is not null order by 1,2,3;
-
--- add the same
-select emaj.emaj_ignore_app_trigger('ADD','myschema1','mytbl2','mytbl2trg1');
-select rel_schema, rel_tblseq, rel_time_range, rel_ignored_triggers from emaj.emaj_relation where rel_ignored_triggers is not null order by 1,2,3;
-
--- add all triggers for a table
-select emaj.emaj_ignore_app_trigger('ADD','myschema1','mytbl2','%');
-select rel_schema, rel_tblseq, rel_time_range, rel_ignored_triggers from emaj.emaj_relation where rel_ignored_triggers is not null order by 1,2,3;
-
 -----------------------------
 -- emaj_export_groups_configuration() and emaj_import_groups_configuration() tests
 -----------------------------
@@ -471,18 +439,8 @@ select emaj.emaj_enable_protection_by_event_triggers();
 select emaj.emaj_import_groups_configuration(:'EMAJTESTTMPDIR' || '/orig_groups_config_all.json', null, true);
 select rel_schema, rel_tblseq, rel_time_range, rel_ignored_triggers from emaj.emaj_relation where rel_ignored_triggers is not null order by 1,2,3;
 
------------------------------------
--- emaj_ignore_app_trigger: REMOVE action
------------------------------------
--- remove one trigger
-select emaj.emaj_ignore_app_trigger('REMOVE','myschema1','mytbl2','mytbl2trg1');
-select rel_schema, rel_tblseq, rel_time_range, rel_ignored_triggers from emaj.emaj_relation where rel_ignored_triggers is not null order by 1,2,3;
-
--- remove several triggers
-select emaj.emaj_ignore_app_trigger('REMOVE','myschema1','mytbl2','%');
-select rel_schema, rel_tblseq, rel_time_range, rel_ignored_triggers from emaj.emaj_relation where rel_ignored_triggers is not null order by 1,2,3;
-
--- keep the current tables groups definition as reference for further tests
+-- keep the current tables groups definition as reference for further tests, once all ignored_triggers configurations reset
+select emaj.emaj_modify_table('myschema1','mytbl2','{"ignored_triggers":null}'::jsonb);
 select emaj.emaj_export_groups_configuration(:'EMAJTESTTMPDIR' || '/../all_groups_config.json');
 
 -----------------------------

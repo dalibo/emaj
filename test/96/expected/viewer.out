@@ -30,7 +30,7 @@ NOTICE:  trigger "emaj_trunc_trg" for relation "myschema1.mytbl1" does not exist
 NOTICE:  table "mytbl2_log" does not exist, skipping
 NOTICE:  trigger "emaj_log_trg" for relation "myschema1.mytbl2" does not exist, skipping
 NOTICE:  trigger "emaj_trunc_trg" for relation "myschema1.mytbl2" does not exist, skipping
-WARNING:  _create_tbl: The table "myschema1.mytbl2" has triggers that will be automatically disabled during E-Maj rollback operations (mytbl2trg1, mytbl2trg2). Use the emaj_ignore_app_trigger() function to change this behaviour.
+WARNING:  _create_tbl: The table "myschema1.mytbl2" has triggers that will be automatically disabled during E-Maj rollback operations (mytbl2trg1, mytbl2trg2). Use the emaj_modify_table() function to change this behaviour.
 NOTICE:  table "mytbl2b_log" does not exist, skipping
 NOTICE:  trigger "emaj_log_trg" for relation "myschema1.mytbl2b" does not exist, skipping
 NOTICE:  trigger "emaj_trunc_trg" for relation "myschema1.mytbl2b" does not exist, skipping
@@ -324,8 +324,6 @@ ERROR:  permission denied for relation mytbl1_log
 -----------------------------
 -- forbiden functions
 -----------------------------
-select emaj.emaj_ignore_app_trigger('ADD','myschema1','mytbl1','%');
-ERROR:  permission denied for function emaj_ignore_app_trigger
 select emaj.emaj_create_group('myGroup1');
 ERROR:  permission denied for function emaj_create_group
 select emaj.emaj_drop_group('myGroup1');

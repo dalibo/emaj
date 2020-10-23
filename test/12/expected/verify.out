@@ -412,18 +412,24 @@ begin;
     where rel_schema = 'myschema1' and rel_tblseq = 'mytbl1' and upper_inf(rel_time_range);
 -- check
   select * from emaj.emaj_verify_all() t(msg) where msg like 'Error%';
-                                                                                                                              msg                                                                                                                               
-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
- Error: In the rollbackable group "myGroup1", the trigger "dummy1" for table "myschema1"."mytbl1" is missing. Use the emaj_ignore_app_trigger() function to adjust the list of application triggers that should not be automatically disabled at rollback time.
- Error: In the rollbackable group "myGroup1", the trigger "dummy2" for table "myschema1"."mytbl1" is missing. Use the emaj_ignore_app_trigger() function to adjust the list of application triggers that should not be automatically disabled at rollback time.
+                                                                                                                           msg                                                                                                                            
+----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+ Error: In the rollbackable group "myGroup1", the trigger "dummy1" for table "myschema1"."mytbl1" is missing. Use the emaj_modify_table() function to adjust the list of application triggers that should not be automatically disabled at rollback time.
+ Error: In the rollbackable group "myGroup1", the trigger "dummy2" for table "myschema1"."mytbl1" is missing. Use the emaj_modify_table() function to adjust the list of application triggers that should not be automatically disabled at rollback time.
 (2 rows)
 
 -- and fix
---TODO: switch to an emaj_modify_table() function call to fix the issue
-----  select emaj.emaj_ignore_app_trigger('REMOVE','dummy','mytbl1','%');
-----  select emaj.emaj_ignore_app_trigger('REMOVE','myschema1','dummy','%');
-----  select emaj.emaj_ignore_app_trigger('REMOVE','myschema1','mytbl1','dummy');
-----  select * from emaj.emaj_verify_all() t(msg) where msg like 'Error%';
+  select emaj.emaj_modify_table('myschema1','mytbl1','{"ignored_triggers":null}'::jsonb);
+ emaj_modify_table 
+-------------------
+                 1
+(1 row)
+
+  select * from emaj.emaj_verify_all() t(msg) where msg like 'Error%';
+ msg 
+-----
+(0 rows)
+
 rollback;
 --------------------------------
 -- User errors and recovery tests 
@@ -926,8 +932,8 @@ select hist_id, hist_function, hist_event, hist_object, regexp_replace(regexp_re
  hist_id |   hist_function    |       hist_event        | hist_object |                         regexp_replace                         | hist_user 
 ---------+--------------------+-------------------------+-------------+----------------------------------------------------------------+-----------
     7000 | DISABLE_PROTECTION | EVENT TRIGGERS DISABLED |             | emaj_protection_trg, emaj_sql_drop_trg, emaj_table_rewrite_trg | postgres
-    7114 | DISABLE_PROTECTION | EVENT TRIGGERS DISABLED |             | <none>                                                         | postgres
-    7115 | ENABLE_PROTECTION  | EVENT TRIGGERS ENABLED  |             | emaj_protection_trg, emaj_sql_drop_trg, emaj_table_rewrite_trg | postgres
-    7116 | ENABLE_PROTECTION  | EVENT TRIGGERS ENABLED  |             | <none>                                                         | postgres
+    7121 | DISABLE_PROTECTION | EVENT TRIGGERS DISABLED |             | <none>                                                         | postgres
+    7122 | ENABLE_PROTECTION  | EVENT TRIGGERS ENABLED  |             | emaj_protection_trg, emaj_sql_drop_trg, emaj_table_rewrite_trg | postgres
+    7123 | ENABLE_PROTECTION  | EVENT TRIGGERS ENABLED  |             | <none>                                                         | postgres
 (4 rows)
 

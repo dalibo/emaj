@@ -77,7 +77,7 @@ select emaj.emaj_modify_table('myschema1','mytbl2','{"ignored_triggers_profiles"
 select rel_schema, rel_tblseq, rel_time_range, rel_ignored_triggers from emaj.emaj_relation where rel_ignored_triggers is not null order by 1,2,3;
  rel_schema | rel_tblseq | rel_time_range |  rel_ignored_triggers   
 ------------+------------+----------------+-------------------------
- myschema1  | mytbl2     | [8204,)        | {mytbl2trg2,mytbl2trg1}
+ myschema1  | mytbl2     | [8204,)        | {mytbl2trg1,mytbl2trg2}
 (1 row)
 
 -- perform some operations: set an intermediate mark, update myTbl3 and rollback
@@ -182,7 +182,7 @@ select hist_function, hist_event, hist_object,
  LOCK_GROUP         | END                          | myGroup1                     | 5 tables locked, 0 deadlock(s)                                   | postgres
  SET_MARK_GROUPS    | BEGIN                        | myGroup1                     | MODIFY_%                                                         | postgres
  SET_MARK_GROUPS    | END                          | myGroup1                     | MODIFY_%                                                         | postgres
- MODIFY_TABLE       | TRIGGERS TO IGNORE CHANGED   | myschema1.mytbl2             | none => {mytbl2trg2,mytbl2trg1}                                  | postgres
+ MODIFY_TABLE       | TRIGGERS TO IGNORE CHANGED   | myschema1.mytbl2             | none => {mytbl2trg1,mytbl2trg2}                                  | postgres
  MODIFY_TABLE       | END                          |                              | 1 tables effectively modified                                    | postgres
  SET_MARK_GROUPS    | BEGIN                        | myGroup1,myGroup2            | Mk2                                                              | postgres
  LOCK_GROUPS        | BEGIN                        | myGroup1,myGroup2            |                                                                  | postgres
@@ -213,7 +213,7 @@ select hist_function, hist_event, hist_object,
  IMPORT_GROUPS      | LOG DATA TABLESPACE CHANGED  | myschema1.mytbl2b            | Default tablespace => tsp log'2                                  | postgres
  IMPORT_GROUPS      | LOG INDEX TABLESPACE CHANGED | myschema2.mytbl6             | tsplog1 => Default tablespace                                    | postgres
  IMPORT_GROUPS      | PRIORITY CHANGED             | myschema1.mytbl1             | 30 => 20                                                         | postgres
- IMPORT_GROUPS      | TRIGGERS TO IGNORE CHANGED   | myschema1.mytbl2             | {mytbl2trg2,mytbl2trg1} => none                                  | postgres
+ IMPORT_GROUPS      | TRIGGERS TO IGNORE CHANGED   | myschema1.mytbl2             | {mytbl2trg1,mytbl2trg2} => none                                  | postgres
  IMPORT_GROUPS      | END                          |                              | 2 created or altered tables groups                               | postgres
 (69 rows)
 

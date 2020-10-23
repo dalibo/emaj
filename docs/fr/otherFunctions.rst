@@ -126,34 +126,6 @@ Il est ainsi possible de construire une requête accédant à une table de log. 
 		|| quote_ident(log_schema) || '.' || quote_ident(log_table)
 		FROM emaj.emaj_get_current_log_table('monschema','matable');
 
-.. _emaj_ignore_app_trigger:
-
-Non désactivation de triggers applicatifs lors des Rollbacks E-Maj
-------------------------------------------------------------------
-
-Les triggers applicatifs sont automatiquement désactivés pendant les opérations de rollback E-Maj. Dans certains cas, il peut être souhaitable de les conserver activés (plus de détails :ref:`ici <application_triggers>`). Pour ce faire, on peut utiliser la fonction *emaj_ignore_app_trigger()*. Elle permet de gérer l’ajout ou la suppression de triggers dans une liste de triggers ne devant pas être désactivés lors des opérations de rollback. ::
-
-	SELECT emaj.emaj_ignore_app_trigger(<action>, <nom.schéma>, <nom.table>, <trigger>);
-
-Le paramètre <action> peut prendre les valeurs *‘ADD’* pour ajouter un trigger à la liste ou *‘REMOVE’* pour supprimer un trigger de la liste.
-
-L’identité du trigger est définie par les 3 composantes nom de schéma, nom de table et nom du trigger.
-
-Le nom du trigger peut contenir des caractères génériques ‘%’ et ‘_’, dont la signification est identique à ceux présents dans les clauses *LIKE* du langage SQL. On peut ainsi traiter plusieurs triggers d’une même table en un seul appel de la fonction.
-
-La fonction retourne le nombre de triggers effectivement ajoutés ou supprimés.
-
-La fonction ne traite pas les triggers E-Maj (trigger de log ou de traitement des *TRUNCATEs*).
-
-Les triggers ainsi référencés comme "ne devant pas être automatiquement désactivés lors des rollbacks E-Maj" sont enregistrés dans la table *emaj.emaj_ignored_app_trigger*. Cette table comprend 3 colonnes :
-
-* trg_schema : schéma de la table portant le trigger
-* trg_table : table portant le trigger
-* trg_name : nom du trigger
-
-Pour connaître la liste des triggers enregistrés, il suffit de lister le contenu de la table.
-
-
 .. _emaj_rollback_activity:
 
 Suivi des opérations de rollback en cours

@@ -87,7 +87,7 @@ WARNING:  _assign_tables: Some partitionned tables (mytblp) are not selected.
 NOTICE:  table "mytblm_log" does not exist, skipping
 NOTICE:  trigger "emaj_log_trg" for relation "myschema4.mytblm" does not exist, skipping
 NOTICE:  trigger "emaj_trunc_trg" for relation "myschema4.mytblm" does not exist, skipping
-WARNING:  _create_tbl: The table "myschema4.mytblm" has triggers that will be automatically disabled during E-Maj rollback operations (mytblm_insert_trigger). Use the emaj_ignore_app_trigger() function to change this behaviour.
+WARNING:  _create_tbl: The table "myschema4.mytblm" has triggers that will be automatically disabled during E-Maj rollback operations (mytblm_insert_trigger). Use the emaj_modify_table() function to change this behaviour.
 NOTICE:  table "mytblc2_log" does not exist, skipping
 NOTICE:  trigger "emaj_log_trg" for relation "myschema4.mytblc2" does not exist, skipping
 NOTICE:  trigger "emaj_trunc_trg" for relation "myschema4.mytblc2" does not exist, skipping
@@ -952,7 +952,7 @@ NOTICE:  trigger "emaj_trunc_trg" for relation "myschema4.mypartp3" does not exi
 NOTICE:  table "mytblm_log" does not exist, skipping
 NOTICE:  trigger "emaj_log_trg" for relation "myschema4.mytblm" does not exist, skipping
 NOTICE:  trigger "emaj_trunc_trg" for relation "myschema4.mytblm" does not exist, skipping
-WARNING:  _create_tbl: The table "myschema4.mytblm" has triggers that will be automatically disabled during E-Maj rollback operations (mytblm_insert_trigger). Use the emaj_ignore_app_trigger() function to change this behaviour.
+WARNING:  _create_tbl: The table "myschema4.mytblm" has triggers that will be automatically disabled during E-Maj rollback operations (mytblm_insert_trigger). Use the emaj_modify_table() function to change this behaviour.
 NOTICE:  table "mytblc2_log" does not exist, skipping
 NOTICE:  trigger "emaj_log_trg" for relation "myschema4.mytblc2" does not exist, skipping
 NOTICE:  trigger "emaj_trunc_trg" for relation "myschema4.mytblc2" does not exist, skipping
@@ -973,10 +973,10 @@ NOTICE:  trigger "emaj_trunc_trg" for relation "myschema4.mypartp2" does not exi
                      1
 (1 row)
 
-  select emaj.emaj_ignore_app_trigger('ADD','myschema4','mytblm','mytblm_insert_trigger');
- emaj_ignore_app_trigger 
--------------------------
-                       1
+  select emaj.emaj_modify_table('myschema4','mytblm','{"ignored_triggers": "mytblm_insert_trigger"}'::jsonb);
+ emaj_modify_table 
+-------------------
+                 1
 (1 row)
 
 commit;
@@ -1165,9 +1165,9 @@ delete from mySchema4.mytblm;
 select * from emaj.emaj_get_consolidable_rollbacks() order by 1,2;
  cons_group | cons_target_rlbk_mark_name | cons_target_rlbk_mark_time_id | cons_end_rlbk_mark_name | cons_end_rlbk_mark_time_id | cons_rows | cons_marks 
 ------------+----------------------------+-------------------------------+-------------------------+----------------------------+-----------+------------
- grp_tmp    | Mk5                        |                         17619 | End_logged_rollback     |                      17624 |        12 |          4
- grp_tmp_3  | Mk5                        |                         17619 | End_logged_rollback     |                      17624 |         0 |          2
- grp_tmp_4  | Mk5                        |                         17619 | End_logged_rollback     |                      17624 |         0 |          2
+ grp_tmp    | Mk5                        |                         17620 | End_logged_rollback     |                      17625 |        12 |          4
+ grp_tmp_3  | Mk5                        |                         17620 | End_logged_rollback     |                      17625 |         0 |          2
+ grp_tmp_4  | Mk5                        |                         17620 | End_logged_rollback     |                      17625 |         0 |          2
 (3 rows)
 
 select emaj.emaj_consolidate_rollback_group('grp_tmp','End_logged_rollback');
@@ -1209,42 +1209,43 @@ select mark_time_id, regexp_replace(mark_name,E'\\d\\d\.\\d\\d\\.\\d\\d\\.\\d\\d
         17603 | Start               | grp_tmp_4  | f               |                         0
         17606 | ASSIGN_%            | grp_tmp_4  | f               |                         0
         17607 | ASSIGN_%            | grp_tmp_4  | f               |                         0
-        17608 | Start               | grp_tmp_3  | f               |                         0
-        17609 | Mk1                 | grp_tmp    | f               |                         0
-        17609 | Mk1                 | grp_tmp_3  | f               |                        11
-        17609 | Mk1                 | grp_tmp_4  | f               |                         0
-        17610 | Mk2                 | grp_tmp    | f               |                         0
-        17610 | Mk2                 | grp_tmp_3  | f               |                         3
-        17610 | Mk2                 | grp_tmp_4  | f               |                        10
-        17611 | Mk3                 | grp_tmp    | f               |                         0
-        17611 | Mk3                 | grp_tmp_3  | f               |                         0
-        17611 | Mk3                 | grp_tmp_4  | f               |                         0
-        17613 | Modify 1 table      | grp_tmp_3  | f               |                         0
-        17614 | Move_tbl_3_to_tmp   | grp_tmp    | f               |                         0
-        17614 | Move_tbl_3_to_tmp   | grp_tmp_3  | f               |                         0
-        17615 | Move_seq_3_to_tmp   | grp_tmp    | f               |                         0
-        17615 | Move_seq_3_to_tmp   | grp_tmp_3  | f               |                         0
-        17616 | Move_tbl_4_to_tmp   | grp_tmp    | f               |                         0
-        17616 | Move_tbl_4_to_tmp   | grp_tmp_4  | f               |                         0
-        17617 | Move_seq_4_to_tmp   | grp_tmp    | f               |                         0
-        17617 | Move_seq_4_to_tmp   | grp_tmp_4  | f               |                         0
-        17618 | Mk4                 | grp_tmp    | f               |                         5
-        17618 | Mk4                 | grp_tmp_3  | f               |                         0
-        17618 | Mk4                 | grp_tmp_4  | f               |                         0
-        17619 | Mk5                 | grp_tmp    | f               |                         0
-        17619 | Mk5                 | grp_tmp_3  | f               |                         0
-        17619 | Mk5                 | grp_tmp_4  | f               |                         0
-        17620 | Mk6                 | grp_tmp_3  | f               |                         0
-        17620 | Mk6                 | grp_tmp_4  | f               |                         0
-        17623 | RLBK_Mk5_%_START    | grp_tmp_3  | f               |                         0
-        17623 | RLBK_Mk5_%_START    | grp_tmp_4  | f               |                         0
-        17624 | End_logged_rollback | grp_tmp    | f               |                         0
-        17624 | End_logged_rollback | grp_tmp_3  | f               |                         0
-        17624 | End_logged_rollback | grp_tmp_4  | f               |                         0
-        17625 | Mk7                 | grp_tmp    | f               |                          
-        17625 | Mk7                 | grp_tmp_3  | f               |                          
-        17625 | Mk7                 | grp_tmp_4  | f               |                          
-(39 rows)
+        17608 | MODIFY_%            | grp_tmp_4  | f               |                         0
+        17609 | Start               | grp_tmp_3  | f               |                         0
+        17610 | Mk1                 | grp_tmp    | f               |                         0
+        17610 | Mk1                 | grp_tmp_3  | f               |                        11
+        17610 | Mk1                 | grp_tmp_4  | f               |                         0
+        17611 | Mk2                 | grp_tmp    | f               |                         0
+        17611 | Mk2                 | grp_tmp_3  | f               |                         3
+        17611 | Mk2                 | grp_tmp_4  | f               |                        10
+        17612 | Mk3                 | grp_tmp    | f               |                         0
+        17612 | Mk3                 | grp_tmp_3  | f               |                         0
+        17612 | Mk3                 | grp_tmp_4  | f               |                         0
+        17614 | Modify 1 table      | grp_tmp_3  | f               |                         0
+        17615 | Move_tbl_3_to_tmp   | grp_tmp    | f               |                         0
+        17615 | Move_tbl_3_to_tmp   | grp_tmp_3  | f               |                         0
+        17616 | Move_seq_3_to_tmp   | grp_tmp    | f               |                         0
+        17616 | Move_seq_3_to_tmp   | grp_tmp_3  | f               |                         0
+        17617 | Move_tbl_4_to_tmp   | grp_tmp    | f               |                         0
+        17617 | Move_tbl_4_to_tmp   | grp_tmp_4  | f               |                         0
+        17618 | Move_seq_4_to_tmp   | grp_tmp    | f               |                         0
+        17618 | Move_seq_4_to_tmp   | grp_tmp_4  | f               |                         0
+        17619 | Mk4                 | grp_tmp    | f               |                         5
+        17619 | Mk4                 | grp_tmp_3  | f               |                         0
+        17619 | Mk4                 | grp_tmp_4  | f               |                         0
+        17620 | Mk5                 | grp_tmp    | f               |                         0
+        17620 | Mk5                 | grp_tmp_3  | f               |                         0
+        17620 | Mk5                 | grp_tmp_4  | f               |                         0
+        17621 | Mk6                 | grp_tmp_3  | f               |                         0
+        17621 | Mk6                 | grp_tmp_4  | f               |                         0
+        17624 | RLBK_Mk5_%_START    | grp_tmp_3  | f               |                         0
+        17624 | RLBK_Mk5_%_START    | grp_tmp_4  | f               |                         0
+        17625 | End_logged_rollback | grp_tmp    | f               |                         0
+        17625 | End_logged_rollback | grp_tmp_3  | f               |                         0
+        17625 | End_logged_rollback | grp_tmp_4  | f               |                         0
+        17626 | Mk7                 | grp_tmp    | f               |                          
+        17626 | Mk7                 | grp_tmp_3  | f               |                          
+        17626 | Mk7                 | grp_tmp_4  | f               |                          
+(40 rows)
 
 -- generate sql script
 select emaj.emaj_gen_sql_groups('{"grp_tmp_3","grp_tmp_4","grp_tmp"}','Mk1',null,:'EMAJTESTTMPDIR' || '/allGroups.sql');
@@ -1322,7 +1323,7 @@ select emaj.emaj_delete_before_mark_group(group_name,'Mk3')
  emaj_delete_before_mark_group 
 -------------------------------
                              3
-                             5
+                             6
                              3
 (3 rows)
 
@@ -1475,60 +1476,60 @@ select * from emaj.emaj_rel_hist order by 1,2,3;
 ----------------+-----------------------------------------------------------------+-----------------+------------------+-----------
  myschema4      | mypartp1                                                        | [17101,17204)   | myGroup4         | r
  myschema4      | mypartp2                                                        | [17101,17211)   | myGroup4         | r
- myschema4      | mypartp2                                                        | [17606,17616)   | grp_tmp_4        | r
- myschema4      | mypartp2                                                        | [17616,17632)   | grp_tmp          | r
- myschema4      | mypartp2                                                        | [17632,17636)   | grp_tmp_4        | r
+ myschema4      | mypartp2                                                        | [17606,17617)   | grp_tmp_4        | r
+ myschema4      | mypartp2                                                        | [17617,17633)   | grp_tmp          | r
+ myschema4      | mypartp2                                                        | [17633,17637)   | grp_tmp_4        | r
  myschema4      | mypartp3                                                        | [17202,17211)   | myGroup4         | r
- myschema4      | mypartp3                                                        | [17606,17616)   | grp_tmp_4        | r
- myschema4      | mypartp3                                                        | [17616,17632)   | grp_tmp          | r
- myschema4      | mypartp3                                                        | [17632,17636)   | grp_tmp_4        | r
+ myschema4      | mypartp3                                                        | [17606,17617)   | grp_tmp_4        | r
+ myschema4      | mypartp3                                                        | [17617,17633)   | grp_tmp          | r
+ myschema4      | mypartp3                                                        | [17633,17637)   | grp_tmp_4        | r
  myschema4      | mytblc1                                                         | [17101,17211)   | myGroup4         | r
- myschema4      | mytblc1                                                         | [17606,17616)   | grp_tmp_4        | r
- myschema4      | mytblc1                                                         | [17616,17621)   | grp_tmp          | r
- myschema4      | mytblc1                                                         | [17632,17636)   | grp_tmp_4        | r
+ myschema4      | mytblc1                                                         | [17606,17617)   | grp_tmp_4        | r
+ myschema4      | mytblc1                                                         | [17617,17622)   | grp_tmp          | r
+ myschema4      | mytblc1                                                         | [17633,17637)   | grp_tmp_4        | r
  myschema4      | mytblc2                                                         | [17101,17211)   | myGroup4         | r
- myschema4      | mytblc2                                                         | [17606,17616)   | grp_tmp_4        | r
- myschema4      | mytblc2                                                         | [17616,17632)   | grp_tmp          | r
- myschema4      | mytblc2                                                         | [17632,17636)   | grp_tmp_4        | r
+ myschema4      | mytblc2                                                         | [17606,17617)   | grp_tmp_4        | r
+ myschema4      | mytblc2                                                         | [17617,17633)   | grp_tmp          | r
+ myschema4      | mytblc2                                                         | [17633,17637)   | grp_tmp_4        | r
  myschema4      | mytblm                                                          | [17101,17211)   | myGroup4         | r
- myschema4      | mytblm                                                          | [17606,17616)   | grp_tmp_4        | r
- myschema4      | mytblm                                                          | [17616,17632)   | grp_tmp          | r
- myschema4      | mytblm                                                          | [17632,17636)   | grp_tmp_4        | r
+ myschema4      | mytblm                                                          | [17606,17617)   | grp_tmp_4        | r
+ myschema4      | mytblm                                                          | [17617,17633)   | grp_tmp          | r
+ myschema4      | mytblm                                                          | [17633,17637)   | grp_tmp_4        | r
  myschema4      | mytblp_col3_seq                                                 | [17203,17205)   | myGroup4         | S
- myschema4      | mytblp_col3_seq                                                 | [17607,17617)   | grp_tmp_4        | S
- myschema4      | mytblp_col3_seq                                                 | [17617,17632)   | grp_tmp          | S
- myschema4      | mytblp_col3_seq                                                 | [17632,17636)   | grp_tmp_4        | S
+ myschema4      | mytblp_col3_seq                                                 | [17607,17618)   | grp_tmp_4        | S
+ myschema4      | mytblp_col3_seq                                                 | [17618,17633)   | grp_tmp          | S
+ myschema4      | mytblp_col3_seq                                                 | [17633,17637)   | grp_tmp_4        | S
  myschema5      | myoidstbl                                                       | [17403,17414)   | phil's group#3", | r
  myschema5      | myunloggedtbl                                                   | [17403,17414)   | phil's group#3", | r
  phil's schema3 | myTbl2\                                                         | [14201,14507)   | phil's group#3", | r
  phil's schema3 | myTbl2\                                                         | [17401,17414)   | phil's group#3", | r
- phil's schema3 | myTbl2\                                                         | [17604,17614)   | grp_tmp_3        | r
- phil's schema3 | myTbl2\                                                         | [17614,17632)   | grp_tmp          | r
- phil's schema3 | myTbl2\                                                         | [17632,17634)   | grp_tmp_3        | r
+ phil's schema3 | myTbl2\                                                         | [17604,17615)   | grp_tmp_3        | r
+ phil's schema3 | myTbl2\                                                         | [17615,17633)   | grp_tmp          | r
+ phil's schema3 | myTbl2\                                                         | [17633,17635)   | grp_tmp_3        | r
  phil's schema3 | myTbl2\_col21_seq                                               | [14202,14507)   | phil's group#3", | S
  phil's schema3 | myTbl2\_col21_seq                                               | [17402,17414)   | phil's group#3", | S
- phil's schema3 | myTbl2\_col21_seq                                               | [17605,17615)   | grp_tmp_3        | S
- phil's schema3 | myTbl2\_col21_seq                                               | [17615,17632)   | grp_tmp          | S
- phil's schema3 | myTbl2\_col21_seq                                               | [17632,17634)   | grp_tmp_3        | S
+ phil's schema3 | myTbl2\_col21_seq                                               | [17605,17616)   | grp_tmp_3        | S
+ phil's schema3 | myTbl2\_col21_seq                                               | [17616,17633)   | grp_tmp          | S
+ phil's schema3 | myTbl2\_col21_seq                                               | [17633,17635)   | grp_tmp_3        | S
  phil's schema3 | mytbl4                                                          | [17401,17405)   | phil's group#3", | r
  phil's schema3 | mytbl4                                                          | [17406,17407)   | phil's group#3", | r
  phil's schema3 | mytbl4                                                          | [17408,17409)   | phil's group#3", | r
  phil's schema3 | mytbl4                                                          | [17411,17414)   | phil's group#3", | r
- phil's schema3 | mytbl4                                                          | [17604,17614)   | grp_tmp_3        | r
- phil's schema3 | mytbl4                                                          | [17614,17629)   | grp_tmp          | r
- phil's schema3 | mytbl4                                                          | [17630,17632)   | grp_tmp          | r
- phil's schema3 | mytbl4                                                          | [17632,17634)   | grp_tmp_3        | r
+ phil's schema3 | mytbl4                                                          | [17604,17615)   | grp_tmp_3        | r
+ phil's schema3 | mytbl4                                                          | [17615,17630)   | grp_tmp          | r
+ phil's schema3 | mytbl4                                                          | [17631,17633)   | grp_tmp          | r
+ phil's schema3 | mytbl4                                                          | [17633,17635)   | grp_tmp_3        | r
  phil's schema3 | phil's seq\1                                                    | [14202,14507)   | phil's group#3", | S
  phil's schema3 | phil's seq\1                                                    | [17402,17410)   | phil's group#3", | S
  phil's schema3 | phil's seq\1                                                    | [17412,17414)   | phil's group#3", | S
- phil's schema3 | phil's seq\1                                                    | [17605,17615)   | grp_tmp_3        | S
- phil's schema3 | phil's seq\1                                                    | [17615,17622)   | grp_tmp          | S
- phil's schema3 | phil's seq\1                                                    | [17632,17634)   | grp_tmp_3        | S
+ phil's schema3 | phil's seq\1                                                    | [17605,17616)   | grp_tmp_3        | S
+ phil's schema3 | phil's seq\1                                                    | [17616,17623)   | grp_tmp          | S
+ phil's schema3 | phil's seq\1                                                    | [17633,17635)   | grp_tmp_3        | S
  phil's schema3 | phil's tbl1                                                     | [14201,14501)   | phil's group#3", | r
  phil's schema3 | phil's tbl1                                                     | [17401,17414)   | phil's group#3", | r
- phil's schema3 | phil's tbl1                                                     | [17604,17614)   | grp_tmp_3        | r
- phil's schema3 | phil's tbl1                                                     | [17614,17632)   | grp_tmp          | r
- phil's schema3 | phil's tbl1                                                     | [17632,17634)   | grp_tmp_3        | r
+ phil's schema3 | phil's tbl1                                                     | [17604,17615)   | grp_tmp_3        | r
+ phil's schema3 | phil's tbl1                                                     | [17615,17633)   | grp_tmp          | r
+ phil's schema3 | phil's tbl1                                                     | [17633,17635)   | grp_tmp_3        | r
  phil's schema3 | table_with_very_looooooooooooooooooooooooooooooooooooooong_name | [14502,14507)   | phil's group#3", | r
 (57 rows)
 
@@ -1553,37 +1554,38 @@ select time_id, time_last_emaj_gid, time_event from emaj.emaj_time_stamp where t
    17605 |           17600000 | A
    17606 |           17600000 | A
    17607 |           17600000 | A
-   17608 |           17600000 | M
+   17608 |           17600000 | A
    17609 |           17600000 | M
-   17610 |           17600011 | M
-   17611 |           17600024 | M
-   17612 |           17600028 | R
-   17613 |           17600028 | A
+   17610 |           17600000 | M
+   17611 |           17600011 | M
+   17612 |           17600024 | M
+   17613 |           17600028 | R
    17614 |           17600028 | A
    17615 |           17600028 | A
    17616 |           17600028 | A
    17617 |           17600028 | A
-   17618 |           17600028 | M
-   17619 |           17600033 | M
-   17620 |           17600037 | M
-   17621 |           17600041 | A
+   17618 |           17600028 | A
+   17619 |           17600028 | M
+   17620 |           17600033 | M
+   17621 |           17600037 | M
    17622 |           17600041 | A
-   17623 |           17600041 | R
-   17624 |           17600045 | M
+   17623 |           17600041 | A
+   17624 |           17600041 | R
    17625 |           17600045 | M
-   17626 |           17600051 | A
-   17627 |           17600051 | R
-   17629 |           17600051 | A
+   17626 |           17600045 | M
+   17627 |           17600051 | A
+   17628 |           17600051 | R
    17630 |           17600051 | A
-   17631 |           17600051 | M
-   17632 |           17600051 | I
-   17633 |           17600051 | M
-   17634 |           17600051 | D
-   17635 |           17600051 | M
-   17636 |           17600051 | D
-   17637 |           17600051 | M
-   17638 |           17600051 | D
-(38 rows)
+   17631 |           17600051 | A
+   17632 |           17600051 | M
+   17633 |           17600051 | I
+   17634 |           17600051 | M
+   17635 |           17600051 | D
+   17636 |           17600051 | M
+   17637 |           17600051 | D
+   17638 |           17600051 | M
+   17639 |           17600051 | D
+(39 rows)
 
 select hist_function, hist_event, hist_object,
        regexp_replace(regexp_replace(regexp_replace(hist_wording,
@@ -1635,6 +1637,13 @@ select hist_function, hist_event, hist_object,
  SET_MARK_GROUP           | END                         | grp_tmp_4                            | ASSIGN_%                                                                                                                       | postgres
  ASSIGN_SEQUENCES         | SEQUENCE ADDED              | myschema4.mytblp_col3_seq            | To the logging group grp_tmp_4                                                                                                 | postgres
  ASSIGN_SEQUENCES         | END                         |                                      | 1 sequences assigned to the group grp_tmp_4                                                                                    | postgres
+ MODIFY_TABLE             | BEGIN                       |                                      |                                                                                                                                | postgres
+ LOCK_GROUP               | BEGIN                       | grp_tmp_4                            |                                                                                                                                | postgres
+ LOCK_GROUP               | END                         | grp_tmp_4                            | 5 tables locked, 0 deadlock(s)                                                                                                 | postgres
+ SET_MARK_GROUPS          | BEGIN                       | grp_tmp_4                            | MODIFY_%                                                                                                                       | postgres
+ SET_MARK_GROUPS          | END                         | grp_tmp_4                            | MODIFY_%                                                                                                                       | postgres
+ MODIFY_TABLE             | TRIGGERS TO IGNORE CHANGED  | myschema4.mytblm                     | none => {mytblm_insert_trigger}                                                                                                | postgres
+ MODIFY_TABLE             | END                         |                                      | 1 tables effectively modified                                                                                                  | postgres
  START_GROUP              | BEGIN                       | grp_tmp_3                            | With log reset                                                                                                                 | postgres
  LOCK_GROUP               | BEGIN                       | grp_tmp_3                            |                                                                                                                                | postgres
  LOCK_GROUP               | END                         | grp_tmp_3                            | 3 tables locked, 0 deadlock(s)                                                                                                 | postgres
@@ -1839,7 +1848,7 @@ select hist_function, hist_event, hist_object,
  DELETE_BEFORE_MARK_GROUP | BEGIN                       | grp_tmp_3                            | Mk3                                                                                                                            | postgres
  DELETE_BEFORE_MARK_GROUP | END                         | grp_tmp_3                            | 3 marks deleted ; Mk3 is now the initial mark                                                                                  | postgres
  DELETE_BEFORE_MARK_GROUP | BEGIN                       | grp_tmp_4                            | Mk3                                                                                                                            | postgres
- DELETE_BEFORE_MARK_GROUP | END                         | grp_tmp_4                            | 5 marks deleted ; Mk3 is now the initial mark                                                                                  | postgres
+ DELETE_BEFORE_MARK_GROUP | END                         | grp_tmp_4                            | 6 marks deleted ; Mk3 is now the initial mark                                                                                  | postgres
  DELETE_BEFORE_MARK_GROUP | BEGIN                       | grp_tmp                              | Mk3                                                                                                                            | postgres
  DELETE_BEFORE_MARK_GROUP | END                         | grp_tmp                              | 3 marks deleted ; Mk3 is now the initial mark                                                                                  | postgres
  DISABLE_PROTECTION       | EVENT TRIGGERS DISABLED     |                                      | emaj_protection_trg, emaj_sql_drop_trg, emaj_table_rewrite_trg                                                                 | postgres
@@ -1902,7 +1911,7 @@ select hist_function, hist_event, hist_object,
  DROP_GROUP               | LOG_SCHEMA DROPPED          | emaj_myschema4                       |                                                                                                                                | postgres
  DROP_GROUP               | LOG_SCHEMA DROPPED          | "emaj_phil's schema3"                |                                                                                                                                | postgres
  DROP_GROUP               | END                         | grp_tmp                              | 0 tables/sequences processed                                                                                                   | postgres
-(308 rows)
+(315 rows)
 
 -- set sequence restart value
 select public.handle_emaj_sequences(18000);
@@ -1930,7 +1939,7 @@ select emaj.emaj_assign_tables('phil''s schema3','.*','','truncateTestGroup');
 
 select emaj.emaj_assign_tables('myschema4','.*','','truncateTestGroup');
 WARNING:  _assign_tables: Some partitionned tables (mytblp) are not selected.
-WARNING:  _create_tbl: The table "myschema4.mytblm" has triggers that will be automatically disabled during E-Maj rollback operations (mytblm_insert_trigger). Use the emaj_ignore_app_trigger() function to change this behaviour.
+WARNING:  _create_tbl: The table "myschema4.mytblm" has triggers that will be automatically disabled during E-Maj rollback operations (mytblm_insert_trigger). Use the emaj_modify_table() function to change this behaviour.
  emaj_assign_tables 
 --------------------
                   5
@@ -2101,9 +2110,9 @@ select rlbk_id, rlbk_groups, rlbk_mark, rlbk_time_id, rlbk_is_logged, rlbk_is_al
    14708 | {myGroup1}                    | Multi-1               |        14730 | f              | f                           |               1 |             5 |                2 |                 3 | COMMITTED   |              14933 | public             | t                   | [ts]         | Notice: 3 / 5 tables effectively processed.#Notice: 2 sequences processed.
    17200 | {myGroup4}                    | Start                 |        17206 | f              | t                           |               1 |             5 |                0 |                 2 | COMMITTED   |              17240 | public             | t                   | [ts]         | Notice: 2 / 5 tables effectively processed.#Warning: The table myschema4.mypartp3 has only been rolled back to its latest group attachment (<timestamp>)#Warning: The table myschema4.mypartp1 has been left unchanged (not in group anymore since <timestamp>)#Warning: The sequence myschema4.mytblp_col3_seq has been left unchanged (not in group anymore since <timestamp>)
    17201 | {myGroup4}                    | Before update         |        17208 | t              | f                           |               1 |             5 |                0 |                 0 | COMMITTED   |              17264 | public             | t                   | [ts]         | Notice: 0 / 5 tables effectively processed.
-   17600 | {grp_tmp,grp_tmp_3,grp_tmp_4} | Mk3                   |        17612 | f              | f                           |               1 |             8 |                3 |                 2 | COMMITTED   |              17659 | public             | t                   | [ts]         | Notice: 2 / 8 tables effectively processed.#Notice: 3 sequences processed.
-   17601 | {grp_tmp,grp_tmp_3,grp_tmp_4} | Mk5                   |        17623 | t              | t                           |               1 |             7 |                2 |                 2 | COMMITTED   |              17744 | public             | t                   | [ts]         | Notice: 2 / 7 tables effectively processed.#Notice: 2 sequences processed.#Warning: The table myschema4.mytblc1 has been left unchanged (not in group anymore since <timestamp>)#Warning: The sequence "phil's schema3"."phil's seq\1" has been left unchanged (not in group anymore since <timestamp>)
-   17602 | {grp_tmp,grp_tmp_3,grp_tmp_4} | Mk3                   |        17627 | f              | t                           |               1 |             7 |                2 |                 3 | COMMITTED   |              17787 | public             | t                   | [ts]         | Notice: 3 / 7 tables effectively processed.#Notice: 2 sequences processed.#Warning: The table "phil's schema3"."myTbl2\" has only been rolled back to its latest group attachment (<timestamp>)#Warning: The table "phil's schema3".mytbl4 has only been rolled back to its latest group attachment (<timestamp>)#Warning: The table "phil's schema3"."phil's tbl1" has only been rolled back to its latest group attachment (<timestamp>)#Warning: The sequence "phil's schema3"."myTbl2\_col21_seq" has only been rolled back to its latest group attachment state (<timestamp>)#Warning: The sequence "phil's schema3"."phil's seq\1" has only been rolled back to its latest group attachment state (<timestamp>)#Warning: The table myschema4.mypartp2 has only been rolled back to its latest group attachment (<timestamp>)#Warning: The table myschema4.mypartp3 has only been rolled back to its latest group attachment (<timestamp>)#Warning: The table myschema4.mytblc1 has only been rolled back to its latest group attachment (<timestamp>)#Warning: The table myschema4.mytblc2 has only been rolled back to its latest group attachment (<timestamp>)#Warning: The table myschema4.mytblm has only been rolled back to its latest group attachment (<timestamp>)#Warning: The sequence myschema4.mytblp_col3_seq has only been rolled back to its latest group attachment state (<timestamp>)#Warning: Tables group change not rolled back: log data tablespace for "phil's schema3"."phil's tbl1"#Warning: Tables group change not rolled back: E-Maj priority for "phil's schema3"."phil's tbl1"
+   17600 | {grp_tmp,grp_tmp_3,grp_tmp_4} | Mk3                   |        17613 | f              | f                           |               1 |             8 |                3 |                 2 | COMMITTED   |              17666 | public             | t                   | [ts]         | Notice: 2 / 8 tables effectively processed.#Notice: 3 sequences processed.
+   17601 | {grp_tmp,grp_tmp_3,grp_tmp_4} | Mk5                   |        17624 | t              | t                           |               1 |             7 |                2 |                 2 | COMMITTED   |              17751 | public             | t                   | [ts]         | Notice: 2 / 7 tables effectively processed.#Notice: 2 sequences processed.#Warning: The table myschema4.mytblc1 has been left unchanged (not in group anymore since <timestamp>)#Warning: The sequence "phil's schema3"."phil's seq\1" has been left unchanged (not in group anymore since <timestamp>)
+   17602 | {grp_tmp,grp_tmp_3,grp_tmp_4} | Mk3                   |        17628 | f              | t                           |               1 |             7 |                2 |                 3 | COMMITTED   |              17794 | public             | t                   | [ts]         | Notice: 3 / 7 tables effectively processed.#Notice: 2 sequences processed.#Warning: The table "phil's schema3"."myTbl2\" has only been rolled back to its latest group attachment (<timestamp>)#Warning: The table "phil's schema3".mytbl4 has only been rolled back to its latest group attachment (<timestamp>)#Warning: The table "phil's schema3"."phil's tbl1" has only been rolled back to its latest group attachment (<timestamp>)#Warning: The sequence "phil's schema3"."myTbl2\_col21_seq" has only been rolled back to its latest group attachment state (<timestamp>)#Warning: The sequence "phil's schema3"."phil's seq\1" has only been rolled back to its latest group attachment state (<timestamp>)#Warning: The table myschema4.mypartp2 has only been rolled back to its latest group attachment (<timestamp>)#Warning: The table myschema4.mypartp3 has only been rolled back to its latest group attachment (<timestamp>)#Warning: The table myschema4.mytblc1 has only been rolled back to its latest group attachment (<timestamp>)#Warning: The table myschema4.mytblc2 has only been rolled back to its latest group attachment (<timestamp>)#Warning: The table myschema4.mytblm has only been rolled back to its latest group attachment (<timestamp>)#Warning: The sequence myschema4.mytblp_col3_seq has only been rolled back to its latest group attachment state (<timestamp>)#Warning: Tables group change not rolled back: log data tablespace for "phil's schema3"."phil's tbl1"#Warning: Tables group change not rolled back: E-Maj priority for "phil's schema3"."phil's tbl1"
    18000 | {truncateTestGroup}           | M1                    |        18005 | t              | f                           |               1 |             8 |                0 |                 5 | COMMITTED   |              18026 | public             | t                   | [ts]         | Notice: 5 / 8 tables effectively processed.
    18001 | {truncateTestGroup}           | M1                    |        18007 | f              | f                           |               1 |             8 |                0 |                 5 | COMMITTED   |              18049 | public             | t                   | [ts]         | Notice: 5 / 8 tables effectively processed.
 (36 rows)
@@ -2406,27 +2415,27 @@ select rlbp_rlbk_id, rlbp_step, rlbp_schema, rlbp_table, rlbp_object, rlbp_targe
         17200 | CTRL+DBLINK |                |                                                                 |                   |                     |                   |              |                                                                                                                                                                                             |                       8 |                    2 |              
         17600 | DIS_LOG_TRG | myschema4      | mytblc1                                                         |                   |                     |                 2 |            1 |                                                                                                                                                                                             |                         |                    2 |              
         17600 | DIS_LOG_TRG | myschema4      | mytblc2                                                         |                   |                     |                 1 |            1 |                                                                                                                                                                                             |                         |                    2 |              
-        17600 | RLBK_TABLE  | myschema4      | mytblc1                                                         |                   |               17611 |                 2 |            1 |                                                                                                                                                                                             |                       1 |                    3 |             1
-        17600 | RLBK_TABLE  | myschema4      | mytblc2                                                         |                   |               17611 |                 1 |            1 |                                                                                                                                                                                             |                       3 |                    3 |             3
-        17600 | DELETE_LOG  | myschema4      | mytblc1                                                         |                   |               17611 |                 2 |            1 |                                                                                                                                                                                             |                       1 |                    3 |             1
-        17600 | DELETE_LOG  | myschema4      | mytblc2                                                         |                   |               17611 |                 1 |            1 |                                                                                                                                                                                             |                       3 |                    3 |             6
+        17600 | RLBK_TABLE  | myschema4      | mytblc1                                                         |                   |               17612 |                 2 |            1 |                                                                                                                                                                                             |                       1 |                    3 |             1
+        17600 | RLBK_TABLE  | myschema4      | mytblc2                                                         |                   |               17612 |                 1 |            1 |                                                                                                                                                                                             |                       3 |                    3 |             3
+        17600 | DELETE_LOG  | myschema4      | mytblc1                                                         |                   |               17612 |                 2 |            1 |                                                                                                                                                                                             |                       1 |                    3 |             1
+        17600 | DELETE_LOG  | myschema4      | mytblc2                                                         |                   |               17612 |                 1 |            1 |                                                                                                                                                                                             |                       3 |                    3 |             6
         17600 | ENA_LOG_TRG | myschema4      | mytblc1                                                         |                   |                     |                 2 |            1 |                                                                                                                                                                                             |                         |                    2 |              
         17600 | ENA_LOG_TRG | myschema4      | mytblc2                                                         |                   |                     |                 1 |            1 |                                                                                                                                                                                             |                         |                    2 |              
         17600 | CTRL+DBLINK |                |                                                                 |                   |                     |                   |              |                                                                                                                                                                                             |                       8 |                    2 |              
-        17601 | RLBK_TABLE  | myschema4      | mytblc2                                                         |                   |               17619 |                 1 |            1 |                                                                                                                                                                                             |                       6 |                    1 |             3
-        17601 | RLBK_TABLE  | myschema4      | mytblm                                                          |                   |               17619 |                 2 |            1 |                                                                                                                                                                                             |                       2 |                    3 |             1
+        17601 | RLBK_TABLE  | myschema4      | mytblc2                                                         |                   |               17620 |                 1 |            1 |                                                                                                                                                                                             |                       6 |                    1 |             3
+        17601 | RLBK_TABLE  | myschema4      | mytblm                                                          |                   |               17620 |                 2 |            1 |                                                                                                                                                                                             |                       2 |                    3 |             1
         17601 | CTRL+DBLINK |                |                                                                 |                   |                     |                   |              |                                                                                                                                                                                             |                       2 |                    2 |              
         17602 | DIS_LOG_TRG | myschema4      | mytblc2                                                         |                   |                     |                 1 |            1 |                                                                                                                                                                                             |                         |                    2 |              
         17602 | DIS_LOG_TRG | phil's schema3 | myTbl2\                                                         |                   |                     |                 2 |            1 |                                                                                                                                                                                             |                         |                    2 |              
         17602 | DIS_LOG_TRG | phil's schema3 | mytbl4                                                          |                   |                     |                 2 |            1 |                                                                                                                                                                                             |                         |                    2 |              
         17602 | DROP_FK     | phil's schema3 | myTbl2\                                                         | mytbl2_col21_fkey |                     |                 2 |            1 |                                                                                                                                                                                             |                         |                    2 |              
         17602 | DROP_FK     | phil's schema3 | mytbl4                                                          | mytbl4_col44_fkey |                     |                 2 |            1 |                                                                                                                                                                                             |                         |                    2 |              
-        17602 | RLBK_TABLE  | myschema4      | mytblc2                                                         |                   |               17616 |                 1 |            1 |                                                                                                                                                                                             |                       6 |                    1 |             6
-        17602 | RLBK_TABLE  | phil's schema3 | myTbl2\                                                         |                   |               17614 |                 2 |            1 |                                                                                                                                                                                             |                       1 |                    1 |             1
-        17602 | RLBK_TABLE  | phil's schema3 | mytbl4                                                          |                   |               17614 |                 2 |            1 |                                                                                                                                                                                             |                       4 |                    3 |             4
-        17602 | DELETE_LOG  | myschema4      | mytblc2                                                         |                   |               17616 |                 1 |            1 |                                                                                                                                                                                             |                       6 |                    1 |             6
-        17602 | DELETE_LOG  | phil's schema3 | myTbl2\                                                         |                   |               17614 |                 2 |            1 |                                                                                                                                                                                             |                       1 |                    1 |             1
-        17602 | DELETE_LOG  | phil's schema3 | mytbl4                                                          |                   |               17614 |                 2 |            1 |                                                                                                                                                                                             |                       4 |                    3 |             7
+        17602 | RLBK_TABLE  | myschema4      | mytblc2                                                         |                   |               17617 |                 1 |            1 |                                                                                                                                                                                             |                       6 |                    1 |             6
+        17602 | RLBK_TABLE  | phil's schema3 | myTbl2\                                                         |                   |               17615 |                 2 |            1 |                                                                                                                                                                                             |                       1 |                    1 |             1
+        17602 | RLBK_TABLE  | phil's schema3 | mytbl4                                                          |                   |               17615 |                 2 |            1 |                                                                                                                                                                                             |                       4 |                    3 |             4
+        17602 | DELETE_LOG  | myschema4      | mytblc2                                                         |                   |               17617 |                 1 |            1 |                                                                                                                                                                                             |                       6 |                    1 |             6
+        17602 | DELETE_LOG  | phil's schema3 | myTbl2\                                                         |                   |               17615 |                 2 |            1 |                                                                                                                                                                                             |                       1 |                    1 |             1
+        17602 | DELETE_LOG  | phil's schema3 | mytbl4                                                          |                   |               17615 |                 2 |            1 |                                                                                                                                                                                             |                       4 |                    3 |             7
         17602 | ADD_FK      | phil's schema3 | myTbl2\                                                         | mytbl2_col21_fkey |                     |                 2 |            1 | FOREIGN KEY (col21) REFERENCES "phil's schema3".mytbl4(col41)                                                                                                                               |                       0 |                    3 |              
         17602 | ADD_FK      | phil's schema3 | mytbl4                                                          | mytbl4_col44_fkey |                     |                 2 |            1 | FOREIGN KEY (col44, col45) REFERENCES "phil's schema3"."phil's tbl1"("phil's col11", "phil's col12") ON UPDATE SET NULL ON DELETE CASCADE                                                   |                       2 |                    2 |              
         17602 | ENA_LOG_TRG | myschema4      | mytblc2                                                         |                   |                     |                 1 |            1 |                                                                                                                                                                                             |                         |                    2 |              

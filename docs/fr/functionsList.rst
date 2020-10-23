@@ -53,11 +53,6 @@ Fonctions de niveau tables et séquences
 | :ref:`emaj_get_current_log_table                 | | schéma TEXT,                | (schéma.log TEXT, table.log TEXT)     |
 | <emaj_get_current_log_table>` (V)                | | table TEXT                  |                                       |
 +--------------------------------------------------+-------------------------------+---------------------------------------+
-| :ref:`emaj_ignore_app_trigger                    | | action TEXT,                | nb.triggers INT                       |
-| <emaj_ignore_app_trigger>`                       | | schéma TEXT,                |                                       |
-|                                                  | | table TEXT,                 |                                       |
-|                                                  | | trigger TEXT                |                                       |
-+--------------------------------------------------+-------------------------------+---------------------------------------+
 | :ref:`emaj_modify_table                          | | schéma TEXT,                | nb.tables INT                         |
 | <modify_table>`                                  | | table TEXT,                 |                                       |
 |                                                  | | propriétés JSONB,           |                                       |

@@ -160,6 +160,8 @@ Si plusieurs expressions rationnelles sont listées dans la propriété "ignored
 
 Les deux propriétés "ignored_triggers" et "ignored_triggers_profiles" peuvent être utilisées conjointement. Dans ce cas, les triggers sélectionnés correspondront à l'union de l'ensemble des triggers listés par la première et des ensembles de triggers sélectionnés par les expressions rationnelles de la seconde.
 
+Davantage d'information sur la :ref:`gestion des triggers applicatifs<application_triggers>`.
+
 Pour toutes les fonctions, un verrou exclusif est posé sur chaque table du ou des groupes de tables concernés, afin de garantir la stabilité des groupes durant ces opérations.
 
 Toutes ces fonctions retournent le nombre de tables ou séquences ajoutées au groupe de tables.

@@ -160,6 +160,8 @@ If several regular expressions are listed in the "ignored_triggers_profiles" pro
 
 Both "ignored_triggers" and "ignored_triggers_profiles" properties can be used jointly. In this case, the selected triggers set is the union of those listed by the "ignored_triggers" property and those selected by each regular expression of the "ignored_triggers_profiles" property.
 
+More details about the :ref:`management of application triggers<application_triggers>`.
+
 For all these functions, an exclusive lock is set on each table of the concerned table groups, so that the groups stability can be guaranted during these operations.
 
 All these functions return the number of assigned tables or sequences.

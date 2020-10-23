@@ -276,7 +276,7 @@ begin;
   select emaj.emaj_assign_sequences('phil''s schema3','.*','','grp_tmp_3');
   select emaj.emaj_assign_tables('myschema4','.*','','grp_tmp_4');
   select emaj.emaj_assign_sequences('myschema4','.*','','grp_tmp_4');
-  select emaj.emaj_ignore_app_trigger('ADD','myschema4','mytblm','mytblm_insert_trigger');
+  select emaj.emaj_modify_table('myschema4','mytblm','{"ignored_triggers": "mytblm_insert_trigger"}'::jsonb);
 commit;
 select emaj.emaj_start_group('grp_tmp_3','Start');
 select emaj.emaj_set_mark_groups('{"grp_tmp_3","grp_tmp_4","grp_tmp"}','Mk1');

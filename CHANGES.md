@@ -12,7 +12,8 @@ E-Maj - Change log
     removed.
   * The application triggers to ignore at rollback time can be defined using
     the emaj_assign_table(), emaj_assign_tables(), emaj_modify_table() or
-    emaj_modify_tables()functions.
+    emaj_modify_tables()functions. This replaces the now dropped
+    emaj_ignore_app_trigger() function.
   * Remove the old deprecated versions of E-Maj rollback functions that only
     returned an integer.
   * A fourth parameter in the emaj_import_groups_configuration() functions

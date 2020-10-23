@@ -123,7 +123,7 @@ SQL statement "SELECT emaj._add_tbl(v_schema, v_oneTable, v_group, v_priority, v
                               v_groupIsLogging, v_timeId, v_function)"
 PL/pgSQL function emaj._assign_tables(text,text[],text,jsonb,text,boolean,boolean) line 322 at PERFORM
 PL/pgSQL function emaj.emaj_assign_tables(text,text,text,text,jsonb,text) line 26 at RETURN
-WARNING:  _create_tbl: The table "myschema1.mytbl2" has triggers that will be automatically disabled during E-Maj rollback operations (mytbl2trg1, mytbl2trg2). Use the emaj_ignore_app_trigger() function to change this behaviour.
+WARNING:  _create_tbl: The table "myschema1.mytbl2" has triggers that will be automatically disabled during E-Maj rollback operations (mytbl2trg1, mytbl2trg2). Use the emaj_modify_table() function to change this behaviour.
 CONTEXT:  SQL statement "SELECT emaj._create_tbl(v_schema, v_table, v_group, v_priority, v_logDatTsp, v_logIdxTsp, v_ignoredTriggers,
                              v_timeId, v_groupIsRollbackable, v_groupIsLogging)"
 PL/pgSQL function emaj._add_tbl(text,text,text,integer,text,text,text[],boolean,bigint,text) line 23 at PERFORM
@@ -671,8 +671,6 @@ ERROR:  permission denied for relation mytbl1_log
 -----------------------------
 -- forbiden functions
 -----------------------------
-select emaj.emaj_ignore_app_trigger('ADD','myschema1','mytbl1','%');
-ERROR:  permission denied for function emaj_ignore_app_trigger
 select emaj.emaj_create_group('myGroup1');
 ERROR:  permission denied for function emaj_create_group
 select emaj.emaj_drop_group('myGroup1');

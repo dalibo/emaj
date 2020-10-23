@@ -199,11 +199,8 @@ begin;
 -- check
   select * from emaj.emaj_verify_all() t(msg) where msg like 'Error%';
 -- and fix
---TODO: switch to an emaj_modify_table() function call to fix the issue
-----  select emaj.emaj_ignore_app_trigger('REMOVE','dummy','mytbl1','%');
-----  select emaj.emaj_ignore_app_trigger('REMOVE','myschema1','dummy','%');
-----  select emaj.emaj_ignore_app_trigger('REMOVE','myschema1','mytbl1','dummy');
-----  select * from emaj.emaj_verify_all() t(msg) where msg like 'Error%';
+  select emaj.emaj_modify_table('myschema1','mytbl1','{"ignored_triggers":null}'::jsonb);
+  select * from emaj.emaj_verify_all() t(msg) where msg like 'Error%';
 rollback;
 
 --------------------------------

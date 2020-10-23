@@ -1,6 +1,6 @@
 -- create_drop.sql : test emaj_create_group(), emaj_comment_group(),
 -- emaj_assign_table(), emaj_assign_tables(), emaj_assign_sequence(), emaj_assign_sequences(),
--- emaj_ignore_app_trigger(), emaj_export_groups_configuration(),
+-- emaj_export_groups_configuration(), emaj_import_groups_configuration(),
 -- emaj_drop_group() and emaj_force_drop_group() functions
 --
 SET client_min_messages TO WARNING;
@@ -303,7 +303,7 @@ PL/pgSQL function emaj.emaj_assign_table(text,text,text,jsonb,text) line 7 at RE
 --   various way to specify the triggers to ignore at rollback time
 begin;
   select emaj.emaj_assign_table('myschema1','mytbl2','myGroup1','{"ignored_triggers":"mytbl2trg1"}'::jsonb);
-WARNING:  _create_tbl: The table "myschema1.mytbl2" has triggers that will be automatically disabled during E-Maj rollback operations (mytbl2trg2). Use the emaj_ignore_app_trigger() function to change this behaviour.
+WARNING:  _create_tbl: The table "myschema1.mytbl2" has triggers that will be automatically disabled during E-Maj rollback operations (mytbl2trg2). Use the emaj_modify_table() function to change this behaviour.
  emaj_assign_table 
 -------------------
                  1
@@ -564,7 +564,7 @@ WARNING:  _assign_tables: No table to process.
 -- assign partitions
 select emaj.emaj_assign_tables('myschema4','.*',null,'myGroup4');
 WARNING:  _assign_tables: Some partitionned tables (mytblp) are not selected.
-WARNING:  _create_tbl: The table "myschema4.mytblm" has triggers that will be automatically disabled during E-Maj rollback operations (mytblm_insert_trigger). Use the emaj_ignore_app_trigger() function to change this behaviour.
+WARNING:  _create_tbl: The table "myschema4.mytblm" has triggers that will be automatically disabled during E-Maj rollback operations (mytblm_insert_trigger). Use the emaj_modify_table() function to change this behaviour.
  emaj_assign_tables 
 --------------------
                   5
@@ -887,80 +887,6 @@ select nspname, proname, rolname from pg_proc, pg_namespace, pg_authid
  emaj_phil's schema3 | myTbl2\_log_fnct                                              | emaj_adm
  emaj_phil's schema3 | phil's tbl1_log_fnct                                          | emaj_adm
 (26 rows)
-
------------------------------------
--- emaj_ignore_app_trigger: ADD action (the REMOVE action tests are postpone after the groups configuration export/import tests)
------------------------------------
--- unknown action
-select emaj.emaj_ignore_app_trigger('dummy','dummy','dummy','dummy');
-ERROR:  emaj_ignore_app_trigger: the action "dummy" must be either 'ADD' or 'REMOVE'.
-CONTEXT:  PL/pgSQL function emaj.emaj_ignore_app_trigger(text,text,text,text) line 18 at RAISE
--- unknown schema
-select emaj.emaj_ignore_app_trigger('ADD','dummy','mytbl2','dummy');
-ERROR:  emaj_ignore_app_trigger: the table "dummy.mytbl2" does not exist.
-CONTEXT:  PL/pgSQL function emaj.emaj_ignore_app_trigger(text,text,text,text) line 49 at RAISE
--- unknown table, and empty or NULL triggers array
-select emaj.emaj_ignore_app_trigger('ADD','myschema1','dummy','dummy');
-ERROR:  emaj_ignore_app_trigger: the table "myschema1.dummy" does not exist.
-CONTEXT:  PL/pgSQL function emaj.emaj_ignore_app_trigger(text,text,text,text) line 49 at RAISE
--- unknown triggers
-select emaj.emaj_ignore_app_trigger('ADD','myschema1','mytbl2','dummy');
-ERROR:  emaj_ignore_app_trigger: no trigger like "dummy" found for the table "myschema1.mytbl2".
-CONTEXT:  PL/pgSQL function emaj.emaj_ignore_app_trigger(text,text,text,text) line 59 at RAISE
--- emaj triggers
-select emaj.emaj_ignore_app_trigger('ADD','myschema1','mytbl2','emaj_trunc_trg');
-WARNING:  emaj_ignore_app_trigger: the triggers "emaj_trunc_trg" are E-Maj triggers and are not processed by the function.
- emaj_ignore_app_trigger 
--------------------------
-                       0
-(1 row)
-
-select emaj.emaj_ignore_app_trigger('ADD','myschema1','mytbl2','emaj_%_trg');
-WARNING:  emaj_ignore_app_trigger: the triggers "emaj_log_trg, emaj_trunc_trg" are E-Maj triggers and are not processed by the function.
- emaj_ignore_app_trigger 
--------------------------
-                       0
-(1 row)
-
--- add one trigger
-select emaj.emaj_ignore_app_trigger('ADD','myschema1','mytbl2','mytbl2trg1');
- emaj_ignore_app_trigger 
--------------------------
-                       0
-(1 row)
-
-select rel_schema, rel_tblseq, rel_time_range, rel_ignored_triggers from emaj.emaj_relation where rel_ignored_triggers is not null order by 1,2,3;
- rel_schema | rel_tblseq | rel_time_range |  rel_ignored_triggers   
-------------+------------+----------------+-------------------------
- myschema1  | mytbl2     | [1017,)        | {mytbl2trg1,mytbl2trg2}
-(1 row)
-
--- add the same
-select emaj.emaj_ignore_app_trigger('ADD','myschema1','mytbl2','mytbl2trg1');
- emaj_ignore_app_trigger 
--------------------------
-                       0
-(1 row)
-
-select rel_schema, rel_tblseq, rel_time_range, rel_ignored_triggers from emaj.emaj_relation where rel_ignored_triggers is not null order by 1,2,3;
- rel_schema | rel_tblseq | rel_time_range |  rel_ignored_triggers   
-------------+------------+----------------+-------------------------
- myschema1  | mytbl2     | [1017,)        | {mytbl2trg1,mytbl2trg2}
-(1 row)
-
--- add all triggers for a table
-select emaj.emaj_ignore_app_trigger('ADD','myschema1','mytbl2','%');
-WARNING:  emaj_ignore_app_trigger: the triggers "emaj_log_trg, emaj_trunc_trg" are E-Maj triggers and are not processed by the function.
- emaj_ignore_app_trigger 
--------------------------
-                       0
-(1 row)
-
-select rel_schema, rel_tblseq, rel_time_range, rel_ignored_triggers from emaj.emaj_relation where rel_ignored_triggers is not null order by 1,2,3;
- rel_schema | rel_tblseq | rel_time_range |  rel_ignored_triggers   
-------------+------------+----------------+-------------------------
- myschema1  | mytbl2     | [1017,)        | {mytbl2trg1,mytbl2trg2}
-(1 row)
 
 -----------------------------
 -- emaj_export_groups_configuration() and emaj_import_groups_configuration() tests
@@ -1338,35 +1264,13 @@ select rel_schema, rel_tblseq, rel_time_range, rel_ignored_triggers from emaj.em
  myschema1  | mytbl2     | [1046,)        | {mytbl2trg1,mytbl2trg2}
 (1 row)
 
------------------------------------
--- emaj_ignore_app_trigger: REMOVE action
------------------------------------
--- remove one trigger
-select emaj.emaj_ignore_app_trigger('REMOVE','myschema1','mytbl2','mytbl2trg1');
- emaj_ignore_app_trigger 
--------------------------
-                       1
+-- keep the current tables groups definition as reference for further tests, once all ignored_triggers configurations reset
+select emaj.emaj_modify_table('myschema1','mytbl2','{"ignored_triggers":null}'::jsonb);
+ emaj_modify_table 
+-------------------
+                 1
 (1 row)
 
-select rel_schema, rel_tblseq, rel_time_range, rel_ignored_triggers from emaj.emaj_relation where rel_ignored_triggers is not null order by 1,2,3;
- rel_schema | rel_tblseq | rel_time_range | rel_ignored_triggers 
-------------+------------+----------------+----------------------
- myschema1  | mytbl2     | [1046,)        | {mytbl2trg2}
-(1 row)
-
--- remove several triggers
-select emaj.emaj_ignore_app_trigger('REMOVE','myschema1','mytbl2','%');
- emaj_ignore_app_trigger 
--------------------------
-                       1
-(1 row)
-
-select rel_schema, rel_tblseq, rel_time_range, rel_ignored_triggers from emaj.emaj_relation where rel_ignored_triggers is not null order by 1,2,3;
- rel_schema | rel_tblseq | rel_time_range | rel_ignored_triggers 
-------------+------------+----------------+----------------------
-(0 rows)
-
--- keep the current tables groups definition as reference for further tests
 select emaj.emaj_export_groups_configuration(:'EMAJTESTTMPDIR' || '/../all_groups_config.json');
  emaj_export_groups_configuration 
 ----------------------------------
@@ -1546,44 +1450,44 @@ select * from emaj.emaj_rel_hist order by 1,2,3;
  relh_schema |                       relh_tblseq                       | relh_time_range | relh_group | relh_kind 
 -------------+---------------------------------------------------------+-----------------+------------+-----------
  myschema1   | myTbl3                                                  | [1019,1043)     | myGroup1   | r
- myschema1   | myTbl3                                                  | [1045,1050)     | myGroup1   | r
+ myschema1   | myTbl3                                                  | [1045,1051)     | myGroup1   | r
  myschema1   | myTbl3_col31_seq                                        | [1033,1043)     | myGroup1   | S
- myschema1   | myTbl3_col31_seq                                        | [1045,1050)     | myGroup1   | S
+ myschema1   | myTbl3_col31_seq                                        | [1045,1051)     | myGroup1   | S
  myschema1   | mytbl1                                                  | [1016,1043)     | myGroup1   | r
- myschema1   | mytbl1                                                  | [1045,1050)     | myGroup1   | r
- myschema1   | mytbl1                                                  | [1056,1058)     | myGroup1   | r
- myschema1   | mytbl1                                                  | [1060,1062)     | myGroup1   | r
+ myschema1   | mytbl1                                                  | [1045,1051)     | myGroup1   | r
+ myschema1   | mytbl1                                                  | [1057,1059)     | myGroup1   | r
+ myschema1   | mytbl1                                                  | [1061,1063)     | myGroup1   | r
  myschema1   | mytbl2                                                  | [1017,1043)     | myGroup1   | r
  myschema1   | mytbl2                                                  | [1045,1046)     | myGroup1   | r
- myschema1   | mytbl2                                                  | [1046,1050)     | myGroup1   | r
+ myschema1   | mytbl2                                                  | [1046,1051)     | myGroup1   | r
  myschema1   | mytbl2b                                                 | [1018,1043)     | myGroup1   | r
- myschema1   | mytbl2b                                                 | [1045,1050)     | myGroup1   | r
+ myschema1   | mytbl2b                                                 | [1045,1051)     | myGroup1   | r
  myschema1   | mytbl2b_col20_seq                                       | [1033,1043)     | myGroup1   | S
- myschema1   | mytbl2b_col20_seq                                       | [1045,1050)     | myGroup1   | S
+ myschema1   | mytbl2b_col20_seq                                       | [1045,1051)     | myGroup1   | S
  myschema1   | mytbl4                                                  | [1020,1043)     | myGroup1   | r
- myschema1   | mytbl4                                                  | [1045,1050)     | myGroup1   | r
- myschema2   | myTbl3                                                  | [1025,1051)     | myGroup2   | r
- myschema2   | myTbl3_col31_seq                                        | [1031,1051)     | myGroup2   | S
+ myschema1   | mytbl4                                                  | [1045,1051)     | myGroup1   | r
+ myschema2   | myTbl3                                                  | [1025,1052)     | myGroup2   | r
+ myschema2   | myTbl3_col31_seq                                        | [1031,1052)     | myGroup2   | S
  myschema2   | myseq1                                                  | [1030,1040)     | myGroup2   | S
  myschema2   | myseq1                                                  | [1040,1041)     | myGroup4   | S
- myschema2   | myseq1                                                  | [1042,1051)     | myGroup2   | S
- myschema2   | mytbl1                                                  | [1024,1051)     | myGroup2   | r
- myschema2   | mytbl2                                                  | [1024,1051)     | myGroup2   | r
- myschema2   | mytbl4                                                  | [1024,1051)     | myGroup2   | r
+ myschema2   | myseq1                                                  | [1042,1052)     | myGroup2   | S
+ myschema2   | mytbl1                                                  | [1024,1052)     | myGroup2   | r
+ myschema2   | mytbl2                                                  | [1024,1052)     | myGroup2   | r
+ myschema2   | mytbl4                                                  | [1024,1052)     | myGroup2   | r
  myschema2   | mytbl5                                                  | [1026,1040)     | myGroup2   | r
  myschema2   | mytbl5                                                  | [1040,1041)     | myGroup4   | r
- myschema2   | mytbl5                                                  | [1042,1051)     | myGroup2   | r
- myschema2   | mytbl6                                                  | [1026,1051)     | myGroup2   | r
- myschema2   | mytbl7                                                  | [1024,1051)     | myGroup2   | r
- myschema2   | mytbl8                                                  | [1024,1051)     | myGroup2   | r
+ myschema2   | mytbl5                                                  | [1042,1052)     | myGroup2   | r
+ myschema2   | mytbl6                                                  | [1026,1052)     | myGroup2   | r
+ myschema2   | mytbl7                                                  | [1024,1052)     | myGroup2   | r
+ myschema2   | mytbl8                                                  | [1024,1052)     | myGroup2   | r
  myschema5   | myoidstbl                                               | [1007,1008)     | myGroup1   | r
  myschema5   | myoidstbl                                               | [1022,1023)     | myGroup2   | r
- myschema5   | myoidstbl                                               | [1028,1053)     | myGroup5   | r
- myschema5   | myunloggedtbl                                           | [1028,1053)     | myGroup5   | r
- myschema6   | table_with_50_characters_long_name_____0_________0      | [1029,1054)     | myGroup6   | r
- myschema6   | table_with_51_characters_long_name_____0_________0a     | [1029,1054)     | myGroup6   | r
- myschema6   | table_with_55_characters_long_name_____0_________0abcde | [1029,1054)     | myGroup6   | r
- myschema6   | table_with_55_characters_long_name_____0_________0fghij | [1029,1054)     | myGroup6   | r
+ myschema5   | myoidstbl                                               | [1028,1054)     | myGroup5   | r
+ myschema5   | myunloggedtbl                                           | [1028,1054)     | myGroup5   | r
+ myschema6   | table_with_50_characters_long_name_____0_________0      | [1029,1055)     | myGroup6   | r
+ myschema6   | table_with_51_characters_long_name_____0_________0a     | [1029,1055)     | myGroup6   | r
+ myschema6   | table_with_55_characters_long_name_____0_________0abcde | [1029,1055)     | myGroup6   | r
+ myschema6   | table_with_55_characters_long_name_____0_________0fghij | [1029,1055)     | myGroup6   | r
 (39 rows)
 
 select hist_function, hist_event, hist_object, 
@@ -1779,6 +1683,9 @@ select hist_function, hist_event, hist_object,
  IMPORT_GROUPS      | BEGIN                        | emptyGroup, myGroup1, myGroup2, myGroup4, myGroup5, myGroup6, phil's group#3", | Input file: '/tmp/emaj_12/create_drop/orig_groups_config_all.json'   | postgres
  IMPORT_GROUPS      | TABLE REPAIRED               | myschema1.mytbl2                                                               | In group myGroup1                                                    | postgres
  IMPORT_GROUPS      | END                          |                                                                                | 7 created or altered tables groups                                   | postgres
+ MODIFY_TABLE       | BEGIN                        |                                                                                |                                                                      | postgres
+ MODIFY_TABLE       | TRIGGERS TO IGNORE CHANGED   | myschema1.mytbl2                                                               | {mytbl2trg1,mytbl2trg2} => none                                      | postgres
+ MODIFY_TABLE       | END                          |                                                                                | 1 tables effectively modified                                        | postgres
  START_GROUP        | BEGIN                        | myGroup1                                                                       | With log reset                                                       | postgres
  LOCK_GROUP         | BEGIN                        | myGroup1                                                                       |                                                                      | postgres
  LOCK_GROUP         | END                          | myGroup1                                                                       | 5 tables locked, 0 deadlock(s)                                       | postgres
@@ -1835,7 +1742,7 @@ select hist_function, hist_event, hist_object,
  FORCE_DROP_GROUP   | BEGIN                        | myGroup1                                                                       |                                                                      | postgres
  FORCE_DROP_GROUP   | LOG_SCHEMA DROPPED           | emaj_myschema1                                                                 |                                                                      | postgres
  FORCE_DROP_GROUP   | END                          | myGroup1                                                                       | 1 tables/sequences processed                                         | postgres
-(243 rows)
+(246 rows)
 
 select time_id, time_last_emaj_gid, time_event from emaj.emaj_time_stamp order by time_id;
  time_id | time_last_emaj_gid | time_event 
@@ -1879,22 +1786,23 @@ select time_id, time_last_emaj_gid, time_event from emaj.emaj_time_stamp order b
     1043 |            1000000 | D
     1045 |            1000000 | I
     1046 |            1000000 | I
-    1047 |            1000000 | M
+    1047 |            1000000 | A
     1048 |            1000000 | M
-    1050 |            1000000 | D
+    1049 |            1000000 | M
     1051 |            1000000 | D
     1052 |            1000000 | D
     1053 |            1000000 | D
     1054 |            1000000 | D
-    1055 |            1000000 | C
-    1056 |            1000000 | A
-    1057 |            1000000 | M
-    1058 |            1000000 | D
-    1059 |            1000000 | C
-    1060 |            1000000 | A
-    1061 |            1000000 | M
-    1062 |            1000000 | D
-(54 rows)
+    1055 |            1000000 | D
+    1056 |            1000000 | C
+    1057 |            1000000 | A
+    1058 |            1000000 | M
+    1059 |            1000000 | D
+    1060 |            1000000 | C
+    1061 |            1000000 | A
+    1062 |            1000000 | M
+    1063 |            1000000 | D
+(55 rows)
 
 -- remove the temp directory
 \! rm -R $EMAJTESTTMPDIR

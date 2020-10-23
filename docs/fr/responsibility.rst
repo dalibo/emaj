@@ -21,12 +21,14 @@ Gestion des triggers applicatifs
 
 Des triggers peuvent avoir été créés sur des tables applicatives. Il n'est pas rare que ces triggers génèrent une ou des mises à jour sur d'autres tables. Il est alors de la responsabilité de l'administrateur E-Maj de comprendre l'impact des opérations de rollback E-Maj sur les tables concernées par des triggers et de prendre le cas échéant les mesures appropriées.
 
-Si le trigger ajuste simplement le contenu de la ligne à insérer ou modifier, c'est la valeur finale des colonnes qui sera enregistrée dans la table de log. Ainsi en cas de rollback E-Maj, la table de log contiendra les bonnes valeurs de colonne. Et comme le trigger sera par défaut désactivé automatiquement, il ne pourra pas perturber lui même le traitement de rollback.
+Par défaut, les fonctions de rollback E-Maj désactivent automatiquement les triggers applicatifs en début d’opération et les remettent dans leur état précédent en fin d’opération. Mais l’administrateur E-Maj peut modifier ce comportement à l’aide des propriétés *"ignored_triggers"* et *"ignored_triggers_profiles"* des fonctions :ref:`emaj_assign_table(), emaj_assign_tables()<assign_table_sequence>`, :ref:`emaj_modify_table() et emaj_modify_tables()<modify_table>`.
+
+Si le trigger ajuste simplement le contenu de la ligne à insérer ou modifier, c'est la valeur finale des colonnes qui est enregistrée dans la table de log. Ainsi en cas de rollback E-Maj, la table de log contient déjà les bonnes valeurs de colonne à réappliquer. Pour ne pas perturber le traitement du rollback, le trigger doit donc être désactivé (comportement par défaut).
 
 Si le trigger met à jour une autre table, deux cas sont à considérer :
 
-* si la table modifiée par le trigger fait partie du même groupe de tables, la désactivation automatique du trigger et le traitement des deux tables par le rollback vont repositionner ces deux tables dans l’état attendu,
-* si la table modifiée par le trigger ne fait pas partie du même groupe de tables, il est essentiel d'analyser les conséquences du rollback de la table possédant le trigger sur la table modifiée par ce trigger, afin d'éviter que le rollback ne provoque un déphasage entre les 2 tables. Le cas échéant, il peut être nécessaire de faire en sorte de ne pas désactiver le trigger. On utilisera alors la fonction :ref:`emaj_ignore_app_trigger()<emaj_ignore_app_trigger>`. Mais la désactivation du trigger pendant l'opération de rollback peut ne pas être suffisante et d’autres actions peuvent donc être requises.
+* si la table modifiée par le trigger fait partie du même groupe de tables, la désactivation automatique du trigger et le traitement des deux tables par le rollback repositionnent ces deux tables dans l’état attendu,
+* si la table modifiée par le trigger ne fait pas partie du même groupe de tables, il est essentiel d'analyser les conséquences du rollback de la table possédant le trigger sur la table modifiée par ce trigger, afin d'éviter que le rollback ne provoque un déphasage entre les 2 tables. Le cas échéant, il peut être nécessaire de ne pas désactiver le trigger. Mais d’autres actions complémentaires  peuvent aussi être requises.
 
 Pour des triggers plus complexes, il est indispensable de bien comprendre les impacts d’un rollback et de prendre éventuellement les mesures complémentaires appropriées lors des rollbacks E-Maj.
 
