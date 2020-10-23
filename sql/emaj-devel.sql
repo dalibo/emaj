@@ -8372,7 +8372,7 @@ $_rlbk_planning$
         FROM emaj.emaj_rlbk_plan
         WHERE rlbp_rlbk_id = v_rlbkId
           AND rlbp_step = 'RLBK_TABLE'
-        ORDER BY rlbp_estimated_quantity DESC
+        ORDER BY rlbp_estimated_quantity DESC, rlbp_schema, rlbp_table
     LOOP
 --   if the table is not already allocated to a batch number (it may have been already allocated because of a fkey link)
       IF EXISTS
