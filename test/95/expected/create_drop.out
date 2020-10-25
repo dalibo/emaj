@@ -919,9 +919,9 @@ select emaj.emaj_export_groups_configuration(:'EMAJTESTTMPDIR' || '/orig_groups_
 (1 row)
 
 \! wc -l $EMAJTESTTMPDIR/*.json
- 199 /tmp/emaj_95/create_drop/orig_groups_config_all.json
- 108 /tmp/emaj_95/create_drop/orig_groups_config_partial.json
- 307 total
+ 192 /tmp/emaj_95/create_drop/orig_groups_config_all.json
+ 101 /tmp/emaj_95/create_drop/orig_groups_config_partial.json
+ 293 total
 -- direct import
 --   bad content
 select * from emaj.emaj_import_groups_configuration('{ "dummy_json": null }'::json);
@@ -990,17 +990,20 @@ PL/pgSQL function emaj.emaj_import_groups_configuration(json,text[],boolean,text
 ERROR:  _import_groups_conf: One or several errors have been detected in the supplied JSON structure.
 CONTEXT:  SQL statement "SELECT emaj._import_groups_conf(v_json, v_groups, v_allowGroupsUpdate, NULL, v_mark)"
 PL/pgSQL function emaj.emaj_import_groups_configuration(json,text[],boolean,text) line 14 at SQL statement
---   missing "trigger" attribute
-select * from emaj.emaj_import_groups_configuration('{ "tables_groups": [ { "group": "grp1", "tables": [ { "schema": "s1", "table": "t1", "ignored_triggers": [ { } ] }] } ]}'::json);
-WARNING:  _import_groups_conf (1): In the tables group "grp1" and for the table s1.t1, the trigger #1 has no "trigger" attribute.
+--   ignored_triggers not an array
+select * from emaj.emaj_import_groups_configuration('{ "tables_groups": [ { "group": "grp1", "tables": [ { "schema": "s1", "table": "t1", "ignored_triggers": "dummy" }] } ]}'::json);
+WARNING:  _import_groups_conf (1): In the tables group "grp1" and for the table s1.t1, the "ignored_triggers" attribute is not an array.
 CONTEXT:  SQL statement "SELECT emaj._import_groups_conf(v_json, v_groups, v_allowGroupsUpdate, NULL, v_mark)"
 PL/pgSQL function emaj.emaj_import_groups_configuration(json,text[],boolean,text) line 14 at SQL statement
 ERROR:  _import_groups_conf: One or several errors have been detected in the supplied JSON structure.
 CONTEXT:  SQL statement "SELECT emaj._import_groups_conf(v_json, v_groups, v_allowGroupsUpdate, NULL, v_mark)"
 PL/pgSQL function emaj.emaj_import_groups_configuration(json,text[],boolean,text) line 14 at SQL statement
---   unknown trigger level attributes
-select * from emaj.emaj_import_groups_configuration('{ "tables_groups": [ { "group": "grp1", "tables": [ { "schema": "s1", "table": "t1", "ignored_triggers": [ { "trigger": "trg1", "unknown_attr": null } ] }] } ]}'::json);
-WARNING:  _import_groups_conf (1): In the tables group "grp1" and for a trigger of the table s1.t1, the keyword "unknown_attr" is unknown.
+--     not strings
+select * from emaj.emaj_import_groups_configuration('{ "tables_groups": [ { "group": "grp1", "tables": [ { "schema": "s1", "table": "t1", "ignored_triggers": [ "trg1", 1234, null] }] } ]}'::json);
+WARNING:  _import_groups_conf (1): In the tables group "grp1" and for the table s1.t1, the trigger #2 is not a string. This is required since E-Maj 4.0.
+CONTEXT:  SQL statement "SELECT emaj._import_groups_conf(v_json, v_groups, v_allowGroupsUpdate, NULL, v_mark)"
+PL/pgSQL function emaj.emaj_import_groups_configuration(json,text[],boolean,text) line 14 at SQL statement
+WARNING:  _import_groups_conf (1): In the tables group "grp1" and for the table s1.t1, the trigger #3 is not a string. This is required since E-Maj 4.0.
 CONTEXT:  SQL statement "SELECT emaj._import_groups_conf(v_json, v_groups, v_allowGroupsUpdate, NULL, v_mark)"
 PL/pgSQL function emaj.emaj_import_groups_configuration(json,text[],boolean,text) line 14 at SQL statement
 ERROR:  _import_groups_conf: One or several errors have been detected in the supplied JSON structure.
@@ -1164,20 +1167,20 @@ select emaj.emaj_import_groups_configuration(:'EMAJTESTTMPDIR' || '/modified_gro
 
 -- move a table and a sequence to another group
 -- the table myschema2.mytbl5 and the sequence myschema2.myseq1 are moved from myGroup2 to myGroup4
-\! sed -n -e '1,82p' $EMAJTESTTMPDIR/modified_groups_config_1.json >$EMAJTESTTMPDIR/modified_groups_config_2.json
+\! sed -n -e '1,75p' $EMAJTESTTMPDIR/modified_groups_config_1.json >$EMAJTESTTMPDIR/modified_groups_config_2.json
 --     remove the table and the sequence from myGroup2
-\! sed -n -e '87,103p' $EMAJTESTTMPDIR/modified_groups_config_1.json >>$EMAJTESTTMPDIR/modified_groups_config_2.json
-\! sed -n -e '108,114p' $EMAJTESTTMPDIR/modified_groups_config_1.json >>$EMAJTESTTMPDIR/modified_groups_config_2.json
+\! sed -n -e '80,96p' $EMAJTESTTMPDIR/modified_groups_config_1.json >>$EMAJTESTTMPDIR/modified_groups_config_2.json
+\! sed -n -e '101,107p' $EMAJTESTTMPDIR/modified_groups_config_1.json >>$EMAJTESTTMPDIR/modified_groups_config_2.json
 --     copy the moved table
-\! sed -n -e '83,86p' $EMAJTESTTMPDIR/modified_groups_config_1.json >>$EMAJTESTTMPDIR/modified_groups_config_2.json
+\! sed -n -e '76,79p' $EMAJTESTTMPDIR/modified_groups_config_1.json >>$EMAJTESTTMPDIR/modified_groups_config_2.json
 --     copy the other tables
-\! sed -n -e '115,134p' $EMAJTESTTMPDIR/modified_groups_config_1.json >>$EMAJTESTTMPDIR/modified_groups_config_2.json
+\! sed -n -e '108,127p' $EMAJTESTTMPDIR/modified_groups_config_1.json >>$EMAJTESTTMPDIR/modified_groups_config_2.json
 --     copy the sequences keyword
-\! sed -n -e '99,100p' $EMAJTESTTMPDIR/modified_groups_config_1.json >>$EMAJTESTTMPDIR/modified_groups_config_2.json
+\! sed -n -e '92,93p' $EMAJTESTTMPDIR/modified_groups_config_1.json >>$EMAJTESTTMPDIR/modified_groups_config_2.json
 --     copy the moved sequence
-\! sed -n -e '105,108p' $EMAJTESTTMPDIR/modified_groups_config_1.json >>$EMAJTESTTMPDIR/modified_groups_config_2.json
+\! sed -n -e '98,101p' $EMAJTESTTMPDIR/modified_groups_config_1.json >>$EMAJTESTTMPDIR/modified_groups_config_2.json
 --     copy the remaining json structure
-\! sed -n -e '135,$p' $EMAJTESTTMPDIR/modified_groups_config_1.json >>$EMAJTESTTMPDIR/modified_groups_config_2.json
+\! sed -n -e '128,$p' $EMAJTESTTMPDIR/modified_groups_config_1.json >>$EMAJTESTTMPDIR/modified_groups_config_2.json
 select emaj.emaj_import_groups_configuration(:'EMAJTESTTMPDIR' || '/modified_groups_config_2.json', array['myGroup2','myGroup4'], true);
  emaj_import_groups_configuration 
 ----------------------------------
@@ -1186,9 +1189,9 @@ select emaj.emaj_import_groups_configuration(:'EMAJTESTTMPDIR' || '/modified_gro
 
 -- remove a table and a sequence from a group
 -- the table myschema2.mytbl5 and the sequence myschema2.myseq1 are removed from myGroup4
-\! sed -n -e '1,106p' $EMAJTESTTMPDIR/modified_groups_config_2.json >$EMAJTESTTMPDIR/modified_groups_config_3.json
-\! sed -n -e '111,130p' $EMAJTESTTMPDIR/modified_groups_config_2.json >>$EMAJTESTTMPDIR/modified_groups_config_3.json
-\! sed -n -e '137,$p' $EMAJTESTTMPDIR/modified_groups_config_2.json >>$EMAJTESTTMPDIR/modified_groups_config_3.json
+\! sed -n -e '1,99p' $EMAJTESTTMPDIR/modified_groups_config_2.json >$EMAJTESTTMPDIR/modified_groups_config_3.json
+\! sed -n -e '104,123p' $EMAJTESTTMPDIR/modified_groups_config_2.json >>$EMAJTESTTMPDIR/modified_groups_config_3.json
+\! sed -n -e '130,$p' $EMAJTESTTMPDIR/modified_groups_config_2.json >>$EMAJTESTTMPDIR/modified_groups_config_3.json
 select emaj.emaj_import_groups_configuration(:'EMAJTESTTMPDIR' || '/modified_groups_config_3.json', array['myGroup4'], true);
  emaj_import_groups_configuration 
 ----------------------------------
@@ -1196,7 +1199,7 @@ select emaj.emaj_import_groups_configuration(:'EMAJTESTTMPDIR' || '/modified_gro
 (1 row)
 
 -- register an unknown trigger and an emaj trigger
-\! sed -e 's/"mytbl2trg1"/"unknowntrigger"/' -e 's/"mytbl2trg2"/"emaj_trunc_trg"/' $EMAJTESTTMPDIR/modified_groups_config_1.json >$EMAJTESTTMPDIR/modified_groups_config_2.json
+\! sed -e 's/"mytbl2trg1","mytbl2trg2"/"unknowntrigger","emaj_trunc_trg"/' $EMAJTESTTMPDIR/modified_groups_config_1.json >$EMAJTESTTMPDIR/modified_groups_config_2.json
 select emaj.emaj_import_groups_configuration(:'EMAJTESTTMPDIR' || '/modified_groups_config_2.json', null, true);
 WARNING:  _import_groups_conf (2): In the group "myGroup1" and for the table myschema1.mytbl2, the trigger unknowntrigger does not exist.
 CONTEXT:  SQL statement "SELECT emaj._import_groups_conf(v_json, v_groups, v_allowGroupsUpdate, v_location, v_mark)"
@@ -1208,8 +1211,7 @@ ERROR:  _import_groups_conf: One or several errors have been detected in the JSO
 CONTEXT:  SQL statement "SELECT emaj._import_groups_conf(v_json, v_groups, v_allowGroupsUpdate, v_location, v_mark)"
 PL/pgSQL function emaj.emaj_import_groups_configuration(text,text[],boolean,text) line 29 at SQL statement
 -- suppress 1 trigger
-\! sed -n -e '1,29p' $EMAJTESTTMPDIR/modified_groups_config_1.json >$EMAJTESTTMPDIR/modified_groups_config_3.json
-\! sed -n -e '33,$p' $EMAJTESTTMPDIR/modified_groups_config_1.json >>$EMAJTESTTMPDIR/modified_groups_config_3.json
+\! sed -e 's/"mytbl2trg1",//' $EMAJTESTTMPDIR/modified_groups_config_1.json >$EMAJTESTTMPDIR/modified_groups_config_3.json
 select emaj.emaj_import_groups_configuration(:'EMAJTESTTMPDIR' || '/modified_groups_config_3.json', null, true);
  emaj_import_groups_configuration 
 ----------------------------------

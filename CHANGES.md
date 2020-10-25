@@ -14,6 +14,9 @@ E-Maj - Change log
     the emaj_assign_table(), emaj_assign_tables(), emaj_modify_table() or
     emaj_modify_tables()functions. This replaces the now dropped
     emaj_ignore_app_trigger() function.
+  * In tables groups configuration import and export functions, symplify the
+    JSON formatting for the "ignored_triggers" property, by using a simple
+    string array.
   * Remove the old deprecated versions of E-Maj rollback functions that only
     returned an integer.
   * A fourth parameter in the emaj_import_groups_configuration() functions

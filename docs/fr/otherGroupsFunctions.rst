@@ -195,22 +195,17 @@ Si le chemin du fichier n’est pas renseigné (i.e. est valorisé à NULL), la 
    	"_comment": "Generated on database <db> with E-Maj version <version> at <date_heure>",
    	"tables_groups": [
    		{
-   		"group": "...",
-   		"is_rollbackable": ...,
-   		"comment": "...",
+   		"group": "ggg",
+   		"is_rollbackable": true|false,
+   		"comment": "ccc",
    		"tables": [
    			{
-   			"schema": "...",
-   			"table": "...",
-   			"priority": ...,
-   			"log_data_tablespace": "...",
-   			"log_index_tablespace": "...",
-   			"ignored_triggers": [
-   				{
-   				"trigger": "...",
-   				...
-   				 },
-   			]
+   			"schema": "sss",
+   			"table": "ttt",
+   			"priority": ppp,
+   			"log_data_tablespace": "lll",
+   			"log_index_tablespace": "lll",
+   			"ignored_triggers": [ "tg1", "tg2", ... ]
    			},
    			{
    			...
@@ -218,8 +213,8 @@ Si le chemin du fichier n’est pas renseigné (i.e. est valorisé à NULL), la 
    		],
    		"sequences": [
    			{
-   			"schema": "myschema1",
-   			"sequence": "mytbl1",
+   			"schema": "sss",
+   			"sequence": "sss",
    			},
    			{
    			...

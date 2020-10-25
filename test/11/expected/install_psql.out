@@ -1059,32 +1059,29 @@ $_check_json_groups_conf$
                                  v_group, quote_ident(v_schema), quote_ident(v_tblseq)));
               END IF;
 -- process triggers attributes
-              v_triggerNumber = 0;
-              FOR r_trigger IN
-                SELECT value AS triggerJson
-                  FROM json_array_elements(r_table.tableJson -> 'ignored_triggers')
-              LOOP
-                v_triggerNumber = v_triggerNumber + 1;
-                v_trigger = r_trigger.triggerJson ->> 'trigger';
---   the "trigger" attribute must exists
-                IF v_trigger IS NULL OR v_trigger = '' THEN
-                  RETURN QUERY
-                    VALUES (224, 1, v_group, v_schema, v_tblseq, NULL::TEXT, v_triggerNumber,
-                            format('In the tables group "%s" and for the table %I.%I, the trigger #%s has no "trigger" attribute.',
-                                   v_group, quote_ident(v_schema), quote_ident(v_tblseq), v_triggerNumber));
+              IF r_table.tableJson -> 'ignored_triggers' IS NOT NULL THEN
+                IF json_typeof(r_table.tableJson -> 'ignored_triggers') = 'array' THEN
+                  v_triggerNumber = 0;
+                  FOR r_trigger IN
+                    SELECT value AS triggerJson
+                      FROM json_array_elements(r_table.tableJson -> 'ignored_triggers')
+                  LOOP
+                    v_triggerNumber = v_triggerNumber + 1;
+                    IF json_typeof(r_trigger.triggerJson) <> 'string' THEN
+                      RETURN QUERY
+                        VALUES (226, 1, v_group, v_schema, v_tblseq, NULL::TEXT, v_triggerNumber,
+                                format('In the tables group "%s" and for the table %I.%I, the trigger #%s is not a string. '
+                                       'This is required since E-Maj 4.0.',
+                                       v_group, quote_ident(v_schema), quote_ident(v_tblseq), v_triggerNumber));
+                    END IF;
+                  END LOOP;
                 ELSE
---   attributes of the ignored_triggers level must exist
                   RETURN QUERY
-                    SELECT 225, 1, v_group, v_schema, v_tblseq, key, NULL::INT,
-                         format('In the tables group "%s" and for a trigger of the table %I.%I, the keyword "%s" is unknown.',
-                                v_group, quote_ident(v_schema), quote_ident(v_tblseq), key)
-                      FROM (
-                        SELECT key
-                          FROM json_object_keys(r_trigger.triggerJson) AS x(key)
-                          WHERE key NOT IN ('trigger')
-                        ) AS t;
+                    VALUES (227, 1, v_group, v_schema, v_tblseq, NULL::TEXT, NULL::INT,
+                            format('In the tables group "%s" and for the table %I.%I, the "ignored_triggers" attribute is not an array.',
+                                   v_group, quote_ident(v_schema), quote_ident(v_tblseq)));
                 END IF;
-              END LOOP;
+              END IF;
             END IF;
           END LOOP;
 -- process sequences attributes
@@ -6014,7 +6011,6 @@ $_export_groups_conf$
     v_groupsText             TEXT;
     v_unknownGroupsList      TEXT;
     v_groupsJson             JSON;
-    v_trg_name               TEXT;
     r_group                  RECORD;
     r_table                  RECORD;
     r_sequence               RECORD;
@@ -6071,34 +6067,11 @@ $_export_groups_conf$
           v_groupsText = v_groupsText
                       || E'        {\n'
                       ||  '          "schema": ' || to_json(r_table.rel_schema) || E',\n'
-                      ||  '          "table": ' || to_json(r_table.rel_tblseq) || E',\n';
-          IF r_table.rel_priority IS NOT NULL THEN
-            v_groupsText = v_groupsText
-                        || E'          "priority": '|| to_json(r_table.rel_priority) || E',\n';
-          END IF;
-          IF r_table.rel_log_dat_tsp IS NOT NULL THEN
-            v_groupsText = v_groupsText
-                        || E'          "log_data_tablespace": '|| to_json(r_table.rel_log_dat_tsp) || E',\n';
-          END IF;
-          IF r_table.rel_log_idx_tsp IS NOT NULL THEN
-            v_groupsText = v_groupsText
-                        || E'          "log_index_tablespace": '|| to_json(r_table.rel_log_idx_tsp) || E',\n';
-          END IF;
-          IF r_table.rel_ignored_triggers IS NOT NULL THEN
--- build the triggers to ignore for the table, if any
-            v_groupsText = v_groupsText
-                        || E'          "ignored_triggers": [\n';
-            FOREACH v_trg_name IN ARRAY r_table.rel_ignored_triggers
-            LOOP
-              v_groupsText = v_groupsText
-                          || E'            {\n'
-                          ||  '              "trigger": ' || to_json(v_trg_name) || E',\n'
-                          || E'            },\n';
-            END LOOP;
-            v_groupsText = v_groupsText
-                        || E'          ],\n';
-          END IF;
-          v_groupsText = v_groupsText
+                      ||  '          "table": ' || to_json(r_table.rel_tblseq) || E',\n'
+                      || coalesce('          "priority": '|| to_json(r_table.rel_priority) || E',\n', '')
+                      || coalesce('          "log_data_tablespace": '|| to_json(r_table.rel_log_dat_tsp) || E',\n', '')
+                      || coalesce('          "log_index_tablespace": '|| to_json(r_table.rel_log_idx_tsp) || E',\n', '')
+                      || coalesce('          "ignored_triggers": ' || array_to_json(r_table.rel_ignored_triggers) || E',\n', '')
                       || E'        },\n';
         END LOOP;
         v_groupsText = v_groupsText
@@ -6401,8 +6374,8 @@ $_import_groups_conf_prepare$
           FROM json_array_elements(r_group.groupJson -> 'tables')
       LOOP
 --     prepare the array of trigger names for the table
-        SELECT array_agg("trigger" ORDER BY "trigger") INTO v_ignoredTriggers
-          FROM json_to_recordset(r_table.tableJson -> 'ignored_triggers') AS x("trigger" TEXT);
+        SELECT array_agg("value" ORDER BY "value") INTO v_ignoredTriggers
+          FROM json_array_elements_text(r_table.tableJson -> 'ignored_triggers') AS t;
 --     ... and insert
         INSERT INTO tmp_app_table(tmp_group, tmp_schema, tmp_tbl_name,
                                   tmp_priority, tmp_log_dat_tsp, tmp_log_idx_tsp, tmp_ignored_triggers)
@@ -12351,7 +12324,7 @@ $do$
     RETURN;
   END;
 $do$;
-psql:sql/emaj-devel.sql:12584: NOTICE:  E-Maj installation: E-Maj successfully installed.
+psql:sql/emaj-devel.sql:12557: NOTICE:  E-Maj installation: E-Maj successfully installed.
 COMMIT;
 -----------------------------
 -- check installation
