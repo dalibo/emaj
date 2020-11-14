@@ -11,6 +11,8 @@ select group_name, group_is_rollbackable, group_creation_time_id,
        group_last_alter_time_id, group_is_logging, 
        group_is_rlbk_protected, group_nb_table, group_nb_sequence, group_comment
   from emaj.emaj_group order by group_name;
+select * from emaj.emaj_relation_change order by 1,2,3,4;
+
 
 -----------------------------
 -- Step 2 : for both groups, rollback to the common mark just set before the upgrade, after having unprotected the first group

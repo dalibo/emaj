@@ -41,6 +41,7 @@ select relname from pg_catalog.pg_class,
  emaj_param
  emaj_rel_hist
  emaj_relation
+ emaj_relation_change
  emaj_rlbk
  emaj_rlbk_plan
  emaj_rlbk_rlbk_id_seq
@@ -52,7 +53,7 @@ select relname from pg_catalog.pg_class,
  emaj_table
  emaj_time_stamp
  emaj_time_stamp_time_id_seq
-(20 rows)
+(21 rows)
 
 -- check the emaj_param content
 SELECT param_value_text FROM emaj.emaj_param WHERE param_key = 'emaj_version';
@@ -391,6 +392,40 @@ Foreign-key constraints:
     "emaj_relation_rel_group_fkey" FOREIGN KEY (rel_group) REFERENCES emaj.emaj_group(group_name)
     "emaj_relation_rel_log_schema_fkey" FOREIGN KEY (rel_log_schema) REFERENCES emaj.emaj_schema(sch_name)
 
+                    Table "emaj.emaj_relation_change"
+           Column           |              Type               | Modifiers 
+----------------------------+---------------------------------+-----------
+ rlchg_time_id              | bigint                          | not null
+ rlchg_schema               | text                            | not null
+ rlchg_tblseq               | text                            | not null
+ rlchg_change_kind          | emaj._relation_change_kind_enum | not null
+ rlchg_group                | text                            | not null
+ rlchg_new_schema           | text                            | 
+ rlchg_new_tblseq           | text                            | 
+ rlchg_new_group            | text                            | 
+ rlchg_priority             | integer                         | 
+ rlchg_new_priority         | integer                         | 
+ rlchg_log_data_tsp         | text                            | 
+ rlchg_new_log_data_tsp     | text                            | 
+ rlchg_log_index_tsp        | text                            | 
+ rlchg_new_log_index_tsp    | text                            | 
+ rlchg_ignored_triggers     | text[]                          | 
+ rlchg_new_ignored_triggers | text[]                          | 
+ rlchg_rlbk_id              | bigint                          | 
+Indexes:
+    "emaj_relation_change_pkey" PRIMARY KEY, btree (rlchg_time_id, rlchg_schema, rlchg_tblseq, rlchg_change_kind)
+Foreign-key constraints:
+    "emaj_relation_change_rlchg_time_id_fkey" FOREIGN KEY (rlchg_time_id) REFERENCES emaj.emaj_time_stamp(time_id)
+
+                 Index "emaj.emaj_relation_change_pkey"
+      Column       |              Type               |    Definition     
+-------------------+---------------------------------+-------------------
+ rlchg_time_id     | bigint                          | rlchg_time_id
+ rlchg_schema      | text                            | rlchg_schema
+ rlchg_tblseq      | text                            | rlchg_tblseq
+ rlchg_change_kind | emaj._relation_change_kind_enum | rlchg_change_kind
+primary key, btree, for table "emaj.emaj_relation_change"
+
 Index "emaj.emaj_relation_idx1"
   Column   | Type | Definition 
 -----------+------+------------
@@ -679,6 +714,7 @@ Referenced by:
     TABLE "emaj.emaj_group" CONSTRAINT "emaj_group_group_creation_time_id_fkey" FOREIGN KEY (group_creation_time_id) REFERENCES emaj.emaj_time_stamp(time_id)
     TABLE "emaj.emaj_group" CONSTRAINT "emaj_group_group_last_alter_time_id_fkey" FOREIGN KEY (group_last_alter_time_id) REFERENCES emaj.emaj_time_stamp(time_id)
     TABLE "emaj.emaj_mark" CONSTRAINT "emaj_mark_mark_time_id_fkey" FOREIGN KEY (mark_time_id) REFERENCES emaj.emaj_time_stamp(time_id)
+    TABLE "emaj.emaj_relation_change" CONSTRAINT "emaj_relation_change_rlchg_time_id_fkey" FOREIGN KEY (rlchg_time_id) REFERENCES emaj.emaj_time_stamp(time_id)
     TABLE "emaj.emaj_rlbk" CONSTRAINT "emaj_rlbk_rlbk_mark_time_id_fkey" FOREIGN KEY (rlbk_mark_time_id) REFERENCES emaj.emaj_time_stamp(time_id)
     TABLE "emaj.emaj_rlbk" CONSTRAINT "emaj_rlbk_rlbk_time_id_fkey" FOREIGN KEY (rlbk_time_id) REFERENCES emaj.emaj_time_stamp(time_id)
     TABLE "emaj.emaj_seq_hole" CONSTRAINT "emaj_seq_hole_sqhl_begin_time_id_fkey" FOREIGN KEY (sqhl_begin_time_id) REFERENCES emaj.emaj_time_stamp(time_id)

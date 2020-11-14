@@ -50,7 +50,7 @@ select emaj.emaj_modify_table('myschema1', 'mytbl1', '{"priority": 2}'::jsonb);
 \! ${EMAJ_DIR}/client/emajParallelRollback.php -h localhost -d regression -g "myGroup1,myGroup2" -m Multi-1 -s 3 -l
  E-Maj (version <devel>) - launching parallel rollbacks
 -----------------------------------------------------------
-PHP Warning:  pg_query(): Query failed: ERROR:  _rlbk_check: This rollback operation would cross some previously executed alter group operations, which is not allowed by the current function parameters.
+PHP Warning:  pg_query(): Query failed: ERROR:  _rlbk_check: This rollback operation would cross some previous structure group change operations, which is not allowed by the current function parameters.
 CONTEXT:  PL/pgSQL function emaj._rlbk_check(text[],text,boolean,boolean) line 60 at RAISE
 SQL statement "SELECT emaj._rlbk_check(v_groupNames, v_mark, v_isAlterGroupAllowed, FALSE)"
 PL/pgSQL function emaj._rlbk_init(text[],text,boolean,integer,boolean,boolean) line 23 at SQL statement in /home/postgres/proj/emaj/client/emajParallelRollback.php on line 141
@@ -209,7 +209,7 @@ select emaj.emaj_modify_table('myschema1', 'mytbl1', '{"priority": 1}'::jsonb);
 (1 row)
 
 \! ${EMAJ_DIR}/client/emajParallelRollback.pl -h localhost -d regression -g "myGroup1,myGroup2" -m Multi-1 -s 3 -l
-DBD::Pg::st execute failed: ERROR:  _rlbk_check: This rollback operation would cross some previously executed alter group operations, which is not allowed by the current function parameters.
+DBD::Pg::st execute failed: ERROR:  _rlbk_check: This rollback operation would cross some previous structure group change operations, which is not allowed by the current function parameters.
 CONTEXT:  PL/pgSQL function emaj._rlbk_check(text[],text,boolean,boolean) line 60 at RAISE
 SQL statement "SELECT emaj._rlbk_check(v_groupNames, v_mark, v_isAlterGroupAllowed, FALSE)"
 PL/pgSQL function emaj._rlbk_init(text[],text,boolean,integer,boolean,boolean) line 23 at SQL statement at /home/postgres/proj/emaj/client/emajParallelRollback.pl line 135.

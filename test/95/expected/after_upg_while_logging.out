@@ -24,6 +24,13 @@ select group_name, group_is_rollbackable, group_creation_time_id,
  phil's group#3", | f                     |                      3 |                          | t                | t                       |              2 |                 1 | 
 (4 rows)
 
+select * from emaj.emaj_relation_change order by 1,2,3,4;
+ rlchg_time_id | rlchg_schema |                      rlchg_tblseq                       | rlchg_change_kind | rlchg_group | rlchg_new_schema | rlchg_new_tblseq | rlchg_new_group | rlchg_priority | rlchg_new_priority | rlchg_log_data_tsp | rlchg_new_log_data_tsp | rlchg_log_index_tsp | rlchg_new_log_index_tsp | rlchg_ignored_triggers | rlchg_new_ignored_triggers | rlchg_rlbk_id 
+---------------+--------------+---------------------------------------------------------+-------------------+-------------+------------------+------------------+-----------------+----------------+--------------------+--------------------+------------------------+---------------------+-------------------------+------------------------+----------------------------+---------------
+            18 | myschema1    | myTbl3                                                  | REMOVE_TABLE      | myGroup1    |                  |                  |                 |                |                    |                    |                        |                     |                         |                        |                            |              
+            21 | myschema6    | table_with_55_characters_long_name_____0_________0abcde | REMOVE_TABLE      | myGroup6    |                  |                  |                 |                |                    |                    |                        |                     |                         |                        |                            |              
+(2 rows)
+
 -----------------------------
 -- Step 2 : for both groups, rollback to the common mark just set before the upgrade, after having unprotected the first group
 -----------------------------

@@ -121,15 +121,15 @@ select emaj.emaj_import_groups_configuration(:'EMAJTESTTMPDIR' || '/../all_group
 RESET client_min_messages;
 
 -- check for emaj_remove_table() and emaj_remove_sequence() functions family
-select * from emaj.emaj_alter_plan where altr_time_id > 8000 order by 1,2,3,4,5;
-select time_id, time_last_emaj_gid, time_event from emaj.emaj_time_stamp where time_id > 8000 order by time_id;
+select * from emaj.emaj_relation_change where rlchg_time_id >= 8000 order by 1,2,3,4;
+select time_id, time_last_emaj_gid, time_event from emaj.emaj_time_stamp where time_id >= 8000 order by time_id;
 select hist_function, hist_event, hist_object,
        regexp_replace(regexp_replace(regexp_replace(hist_wording,
             E'\\d\\d\.\\d\\d\\.\\d\\d\\.\\d\\d\\d\\d','%','g'),
             E'\\d\\d\\d\\d/\\d\\d\\/\\d\\d\\ \\d\\d\\:\\d\\d:\\d\\d .*?\\)','<timestamp>)','g'),
             E'\\[.+\\]','(timestamp)','g'), 
        hist_user 
-  from emaj.emaj_hist where hist_id > 8000 order by hist_id;
+  from emaj.emaj_hist where hist_id >= 8000 order by hist_id;
 
 -- set sequence restart value
 select public.handle_emaj_sequences(8200);
@@ -183,9 +183,7 @@ select emaj.emaj_move_tables('myschema1','mytbl1','mytbl1','myGroup1');
 select emaj.emaj_move_tables('myschema1','my(t|T)bl.*','mytbl2$','myGroup1');
 select emaj.emaj_move_tables('myschema1','.*','','myGroup1');
 
-select altr_time_id, altr_step, altr_schema, altr_tblseq, altr_group, altr_priority, altr_group_is_logging,
-       altr_new_group, altr_new_group_is_logging from emaj.emaj_alter_plan
-  order by 1 desc, 2,3,4 limit 6;
+select * from emaj.emaj_relation_change where rlchg_time_id > 8000 order by 1 desc,2,3,4 limit 6;
 select group_last_alter_time_id, group_nb_table, group_nb_sequence from emaj.emaj_group 
   where group_name in ('myGroup1','myGroup2') order by 1 desc ,2,3;
 
@@ -237,22 +235,20 @@ select emaj.emaj_move_sequences('myschema21','myseq1','myseq1','myGroup2');
 -- ok and go back to myGroup2
 select emaj.emaj_move_sequences('myschema2','.*','','myGroup2');
 
-select altr_time_id, altr_step, altr_schema, altr_tblseq, altr_group, altr_priority, altr_group_is_logging,
-       altr_new_group, altr_new_group_is_logging from emaj.emaj_alter_plan
-  order by 1 desc, 2,3,4 limit 3;
+select * from emaj.emaj_relation_change where rlchg_time_id > 8000 order by 1 desc,2,3,4 limit 3;
 select group_last_alter_time_id, group_nb_table, group_nb_sequence from emaj.emaj_group 
   where group_name in ('myGroup1','myGroup2','myGroup4') order by 1 desc ,2,3;
 
 -- check for emaj_move_table() and emaj_move_sequence() functions family
-select * from emaj.emaj_alter_plan where altr_time_id > 8200 order by 1,2,3,4,5;
-select time_id, time_last_emaj_gid, time_event from emaj.emaj_time_stamp where time_id > 8200 order by time_id;
+select * from emaj.emaj_relation_change where rlchg_time_id >= 8200 order by 1,2,3,4;
+select time_id, time_last_emaj_gid, time_event from emaj.emaj_time_stamp where time_id >= 8200 order by time_id;
 select hist_function, hist_event, hist_object,
        regexp_replace(regexp_replace(regexp_replace(hist_wording,
             E'\\d\\d\.\\d\\d\\.\\d\\d\\.\\d\\d\\d\\d','%','g'),
             E'\\d\\d\\d\\d/\\d\\d\\/\\d\\d\\ \\d\\d\\:\\d\\d:\\d\\d .*?\\)','<timestamp>)','g'),
             E'\\[.+\\]','(timestamp)','g'), 
        hist_user 
-  from emaj.emaj_hist where hist_id > 8200 order by hist_id;
+  from emaj.emaj_hist where hist_id >= 8200 order by hist_id;
 
 -- set sequence restart value
 select public.handle_emaj_sequences(8400);
@@ -344,15 +340,15 @@ select rel_schema, rel_tblseq, rel_time_range, rel_priority, rel_log_dat_tsp, re
   where rel_schema = 'myschema2' and rel_tblseq like 'mytbl%' order by 1,2,3;
 
 -- check for emaj_modify_table() functions family
-select * from emaj.emaj_alter_plan where altr_time_id > 8400 order by 1,2,3,4,5;
-select time_id, time_last_emaj_gid, time_event from emaj.emaj_time_stamp where time_id > 8400 order by time_id;
+select * from emaj.emaj_relation_change where rlchg_time_id >= 8400 order by 1,2,3,4;
+select time_id, time_last_emaj_gid, time_event from emaj.emaj_time_stamp where time_id >= 8400 order by time_id;
 select hist_function, hist_event, hist_object,
        regexp_replace(regexp_replace(regexp_replace(hist_wording,
             E'\\d\\d\.\\d\\d\\.\\d\\d\\.\\d\\d\\d\\d','%','g'),
             E'\\d\\d\\d\\d/\\d\\d\\/\\d\\d\\ \\d\\d\\:\\d\\d:\\d\\d .*?\\)','<timestamp>)','g'),
             E'\\[.+\\]','(timestamp)','g'), 
        hist_user 
-  from emaj.emaj_hist where hist_id > 8400 order by hist_id;
+  from emaj.emaj_hist where hist_id >= 8400 order by hist_id;
 
 -- remove the temp directory
 \! rm -R $EMAJTESTTMPDIR

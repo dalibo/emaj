@@ -78,6 +78,7 @@ delete from emaj.emaj_mark;
 delete from emaj.emaj_sequence;
 delete from emaj.emaj_table;
 delete from emaj.emaj_seq_hole;
+delete from emaj.emaj_relation_change;
 delete from emaj.emaj_rlbk;
 delete from emaj.emaj_rlbk_session;
 delete from emaj.emaj_rlbk_plan;

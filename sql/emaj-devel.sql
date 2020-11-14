@@ -63,6 +63,24 @@ $$Contains all E-Maj related objects.$$;
 --                                            --
 ------------------------------------------------
 
+-- Enum of the possible values for the rlchg_change_kind column of the emaj_relation_change table.
+CREATE TYPE emaj._relation_change_kind_enum AS ENUM (
+  'REMOVE_TABLE',
+  'REMOVE_SEQUENCE',
+  'REPAIR_TABLE',
+  'CHANGE_LOG_DATA_TABLESPACE',
+  'CHANGE_LOG_INDEX_TABLESPACE',
+  'CHANGE_PRIORITY',
+  'CHANGE_IGNORED_TRIGGERS',
+  'MOVE_TABLE',
+  'MOVE_SEQUENCE',
+  'ADD_TABLE',
+  'ADD_SEQUENCE',
+  'RENAME_SCHEMA',
+  'RENAME_TABLE',
+  'RENAME_SEQUENCE'
+  );
+
 -- Enum of the possible values for the alter groups steps.
 -- The order of the values is important: all elementary steps are performed in this order.
 CREATE TYPE emaj._alter_step_enum AS ENUM (
@@ -267,6 +285,35 @@ CREATE TABLE emaj.emaj_rel_hist (
 CREATE INDEX emaj_rel_hist_idx1 ON emaj.emaj_rel_hist ((upper(relh_time_range)));
 COMMENT ON TABLE emaj.emaj_rel_hist IS
 $$Contains the history of groups content.$$;
+
+-- Table containing the relation changes, i.e. the events that lead to changes in the tables groups structure changes
+CREATE TABLE emaj.emaj_relation_change (
+  rlchg_time_id                 BIGINT      NOT NULL,       -- time stamp id of the change operation
+  rlchg_schema                  TEXT        NOT NULL,       -- current or old schema name
+  rlchg_tblseq                  TEXT        NOT NULL,       -- current or old table or sequence name, depending on the step
+  rlchg_change_kind             emaj._relation_change_kind_enum
+                                            NOT NULL,       -- kind of change among the enum list
+  rlchg_group                   TEXT        NOT NULL,       -- current or old group that owns the table or the sequence
+-- Depending on rlchg_change_kind, non concerned columns for current or new values remain NULL.
+-- But concerned columns can also be explicitely set to NULL.
+  rlchg_new_schema              TEXT        ,               -- new schema name, if changed
+  rlchg_new_tblseq              TEXT        ,               -- new table or sequence name, if changed
+  rlchg_new_group               TEXT        ,               -- new group name, if changed
+  rlchg_priority                INT         ,               -- current or old priority level (tables are processed in ascending
+                                                           --    order, with NULL last)
+  rlchg_new_priority            INT         ,               -- new priority level, if changed
+  rlchg_log_data_tsp            TEXT        ,               -- current or old log data tablespace
+  rlchg_new_log_data_tsp        TEXT        ,               -- new log data tablespace, if changed
+  rlchg_log_index_tsp           TEXT        ,               -- current or old log index tablespace
+  rlchg_new_log_index_tsp       TEXT        ,               -- new log index tablespace, if changed
+  rlchg_ignored_triggers        TEXT[]      ,               -- current or old array of triggers to ignore at rollback time
+  rlchg_new_ignored_triggers    TEXT[]      ,               -- new array of triggers to ignore at rollback time, if changed
+  rlchg_rlbk_id                 BIGINT      ,               -- rollback id if a rollback has already crossed over the group change
+  PRIMARY KEY (rlchg_time_id, rlchg_schema, rlchg_tblseq, rlchg_change_kind),
+  FOREIGN KEY (rlchg_time_id) REFERENCES emaj.emaj_time_stamp (time_id)
+  );
+COMMENT ON TABLE emaj.emaj_relation_change IS
+$$Contains the changes in relations registered in tables groups.$$;
 
 -- Table containing the marks.
 CREATE TABLE emaj.emaj_mark (
@@ -2257,9 +2304,6 @@ $_assign_tables$
 -- create the table
         PERFORM emaj._add_tbl(v_schema, v_oneTable, v_group, v_priority, v_logDatTsp, v_logIdxTsp, v_selectedIgnoredTrgs,
                               v_groupIsLogging, v_timeId, v_function);
--- insert an entry into the emaj_alter_plan table (so that future rollback may see the change)
-        INSERT INTO emaj.emaj_alter_plan (altr_time_id, altr_step, altr_schema, altr_tblseq, altr_group, altr_group_is_logging)
-          VALUES (v_timeId, 'ADD_TBL', v_schema, v_oneTable, v_group, v_groupIsLogging);
         v_nbAssignedTbl = v_nbAssignedTbl + 1;
       END LOOP;
 -- enable previously disabled event triggers
@@ -2450,9 +2494,6 @@ $_remove_tables$
             AND upper_inf(rel_time_range);
 -- drop this table
         PERFORM emaj._remove_tbl(v_schema, v_oneTable, v_groupName, v_groupIsLogging, v_timeId, v_function);
--- insert an entry into the emaj_alter_plan table (so that future rollback may see the change)
-        INSERT INTO emaj.emaj_alter_plan (altr_time_id, altr_step, altr_schema, altr_tblseq, altr_group, altr_group_is_logging)
-          VALUES (v_timeId, 'REMOVE_TBL', v_schema, v_oneTable, v_groupName, v_groupIsLogging);
         v_nbRemovedTbl = v_nbRemovedTbl + 1;
       END LOOP;
 -- drop the log schema if it is now useless
@@ -2671,10 +2712,6 @@ $_move_tables$
             AND upper_inf(rel_time_range);
 -- move this table
         PERFORM emaj._move_tbl(v_schema, v_oneTable, v_groupName, v_groupIsLogging, v_newGroup, v_newGroupIsLogging, v_timeId, v_function);
--- insert an entry into the emaj_alter_plan table (so that future rollback may see the change)
-        INSERT INTO emaj.emaj_alter_plan (altr_time_id, altr_step, altr_schema, altr_tblseq, altr_group, altr_group_is_logging,
-                                          altr_new_group, altr_new_group_is_logging)
-          VALUES (v_timeId, 'MOVE_TBL', v_schema, v_oneTable, v_groupName, v_groupIsLogging, v_newGroup, v_newGroupIsLogging);
         v_nbMovedTbl = v_nbMovedTbl + 1;
       END LOOP;
 -- adjust the groups characteristics
@@ -2910,31 +2947,22 @@ $_modify_tables$
             OR (r_rel.rel_priority IS NOT NULL AND v_newPriority IS NULL)) THEN
           v_isTableChanged = TRUE;
 --   call the dedicated function
-          PERFORM emaj._change_priority_tbl(v_schema, r_rel.rel_tblseq, r_rel.rel_priority, v_newPriority, v_function);
---   and insert an entry into the emaj_alter_plan table (so that future rollback may see the change)
-          INSERT INTO emaj.emaj_alter_plan (altr_time_id, altr_step, altr_schema, altr_tblseq, altr_group,
-                                            altr_priority,  altr_group_is_logging)
-            VALUES (v_timeId, 'CHANGE_REL_PRIORITY', v_schema, r_rel.rel_tblseq, r_rel.rel_group, v_newPriority, r_rel.group_is_logging);
+          PERFORM emaj._change_priority_tbl(v_schema, r_rel.rel_tblseq, r_rel.rel_priority, v_newPriority,
+                                            v_timeId, r_rel.rel_group, v_function);
         END IF;
 -- change the log data tablespace, if needed
         IF v_logDatTspChanged AND coalesce(v_newLogDatTsp, '') <> coalesce(r_rel.rel_log_dat_tsp, '') THEN
           v_isTableChanged = TRUE;
 --   call the dedicated function
           PERFORM emaj._change_log_data_tsp_tbl(v_schema, r_rel.rel_tblseq, r_rel.rel_log_schema, r_rel.rel_log_table,
-                                                r_rel.rel_log_dat_tsp, v_newLogDatTsp, v_function);
---   and insert an entry into the emaj_alter_plan table (so that future rollback may see the change)
-          INSERT INTO emaj.emaj_alter_plan (altr_time_id, altr_step, altr_schema, altr_tblseq, altr_group, altr_group_is_logging)
-            VALUES (v_timeId, 'CHANGE_TBL_LOG_DATA_TSP', v_schema, r_rel.rel_tblseq, r_rel.rel_group, r_rel.group_is_logging);
+                                                r_rel.rel_log_dat_tsp, v_newLogDatTsp, v_timeId, r_rel.rel_group, v_function);
         END IF;
 -- change the log index tablespace, if needed
         IF v_logIdxTspChanged AND coalesce(v_newLogIdxTsp, '') <> coalesce(r_rel.rel_log_idx_tsp, '') THEN
           v_isTableChanged = TRUE;
 --   call the dedicated function
           PERFORM emaj._change_log_index_tsp_tbl(v_schema, r_rel.rel_tblseq, r_rel.rel_log_schema, r_rel.rel_log_index,
-                                                 r_rel.rel_log_idx_tsp, v_newLogIdxTsp, v_function);
---   and insert an entry into the emaj_alter_plan table (so that future rollback may see the change)
-          INSERT INTO emaj.emaj_alter_plan (altr_time_id, altr_step, altr_schema, altr_tblseq, altr_group, altr_group_is_logging)
-            VALUES (v_timeId, 'CHANGE_TBL_LOG_INDEX_TSP', v_schema, r_rel.rel_tblseq, r_rel.rel_group, r_rel.group_is_logging);
+                                                 r_rel.rel_log_idx_tsp, v_newLogIdxTsp, v_timeId, r_rel.rel_group, v_function);
         END IF;
 -- change the ignored_trigger array if needed
         IF v_ignoredTrgChanged THEN
@@ -2959,10 +2987,7 @@ $_modify_tables$
             v_isTableChanged = TRUE;
 --   if changes must be recorded, call the dedicated function
             PERFORM emaj._change_ignored_triggers_tbl(v_schema, r_rel.rel_tblseq, r_rel.rel_ignored_triggers, v_newIgnoredTriggers,
-                                                      v_function);
---     and insert an entry into the emaj_alter_plan table (so that future rollback may see the change)
-            INSERT INTO emaj.emaj_alter_plan (altr_time_id, altr_step, altr_schema, altr_tblseq, altr_group, altr_group_is_logging)
-              VALUES (v_timeId, 'CHANGE_IGNORED_TRIGGERS', v_schema, r_rel.rel_tblseq, r_rel.rel_group, r_rel.group_is_logging);
+                                                      v_timeId, r_rel.rel_group, v_function);
           END IF;
         END IF;
 --
@@ -3387,6 +3412,9 @@ $_add_tbl$
           WHERE nspname = v_schema
             AND relname = v_table;
     END IF;
+-- insert an entry into the emaj_relation_change table
+    INSERT INTO emaj.emaj_relation_change (rlchg_time_id, rlchg_schema, rlchg_tblseq, rlchg_change_kind, rlchg_group)
+      VALUES (v_timeId, v_schema, v_table, 'ADD_TABLE', v_group);
 -- insert an entry into the emaj_hist table
     INSERT INTO emaj.emaj_hist (hist_function, hist_event, hist_object, hist_wording)
       VALUES (v_function, 'TABLE ADDED', quote_ident(v_schema) || '.' || quote_ident(v_table),
@@ -3396,11 +3424,11 @@ $_add_tbl$
 $_add_tbl$;
 
 CREATE OR REPLACE FUNCTION emaj._change_priority_tbl(v_schema TEXT, v_table TEXT, v_currentPriority INT, v_newPriority INT,
-                                                     v_function TEXT)
+                                                     v_timeId BIGINT, v_group TEXT, v_function TEXT)
 RETURNS VOID LANGUAGE plpgsql AS
 $_change_priority_tbl$
 -- This function changes the priority for an application table.
--- Input: the table identity, the old and new priorities and the calling function.
+-- Input: the table identity, the old and new priorities, the operation time id and the calling function.
   BEGIN
 -- update the emaj_relation row for the table
     UPDATE emaj.emaj_relation
@@ -3410,6 +3438,10 @@ $_change_priority_tbl$
         AND rel_schema = v_schema
         AND rel_tblseq = v_table
         AND upper_inf(rel_time_range);
+-- insert an entry into the emaj_relation_change table
+      INSERT INTO emaj.emaj_relation_change (rlchg_time_id, rlchg_schema, rlchg_tblseq, rlchg_change_kind, rlchg_group,
+                                             rlchg_priority, rlchg_new_priority)
+        VALUES (v_timeId, v_schema, v_table, 'CHANGE_PRIORITY', v_group, v_currentPriority, v_newPriority);
 -- insert an entry into the emaj_hist table
     INSERT INTO emaj.emaj_hist (hist_function, hist_event, hist_object, hist_wording)
       VALUES (v_function, 'PRIORITY CHANGED',
@@ -3420,11 +3452,13 @@ $_change_priority_tbl$
 $_change_priority_tbl$;
 
 CREATE OR REPLACE FUNCTION emaj._change_log_data_tsp_tbl(v_schema TEXT, v_table TEXT, v_logSchema TEXT, v_currentLogTable TEXT,
-                                                         v_currentLogDatTsp TEXT, v_newLogDatTsp TEXT, v_function TEXT)
+                                                         v_currentLogDatTsp TEXT, v_newLogDatTsp TEXT,
+                                                         v_timeId BIGINT, v_group TEXT, v_function TEXT)
 RETURNS VOID LANGUAGE plpgsql AS
 $_change_log_data_tsp_tbl$
 -- This function changes the log data tablespace for an application table.
--- Input: the existing emaj_relation characteristics for the table, the new log data tablespace and the calling function.
+-- Input: the existing emaj_relation characteristics for the table, the new log data tablespace, the operation time id and the
+--        calling function.
   DECLARE
     v_newTsp                 TEXT;
   BEGIN
@@ -3442,6 +3476,10 @@ $_change_log_data_tsp_tbl$
       WHERE rel_schema = v_schema
         AND rel_tblseq = v_table
         AND upper_inf(rel_time_range);
+-- insert an entry into the emaj_relation_change table
+      INSERT INTO emaj.emaj_relation_change (rlchg_time_id, rlchg_schema, rlchg_tblseq, rlchg_change_kind, rlchg_group,
+                                             rlchg_log_data_tsp, rlchg_new_log_data_tsp)
+        VALUES (v_timeId, v_schema, v_table, 'CHANGE_LOG_DATA_TABLESPACE', v_group, v_currentLogDatTsp, v_newLogDatTsp);
 -- insert an entry into the emaj_hist table
     INSERT INTO emaj.emaj_hist (hist_function, hist_event, hist_object, hist_wording)
       VALUES (v_function, 'LOG DATA TABLESPACE CHANGED',
@@ -3452,11 +3490,13 @@ $_change_log_data_tsp_tbl$
 $_change_log_data_tsp_tbl$;
 
 CREATE OR REPLACE FUNCTION emaj._change_log_index_tsp_tbl(v_schema TEXT, v_table TEXT, v_logSchema TEXT, v_currentLogIndex TEXT,
-                                                         v_currentLogIdxTsp TEXT, v_newLogIdxTsp TEXT, v_function TEXT)
+                                                          v_currentLogIdxTsp TEXT, v_newLogIdxTsp TEXT,
+                                                          v_timeId BIGINT, v_group TEXT, v_function TEXT)
 RETURNS VOID LANGUAGE plpgsql AS
 $_change_log_index_tsp_tbl$
 -- This function changes the log index tablespace for an application table.
--- Input: the existing emaj_relation characteristics for the table, the new log index tablespace and the calling function.
+-- Input: the existing emaj_relation characteristics for the table, the new log index tablespace, the operation time id and the
+--        calling function.
   DECLARE
     v_newTsp                 TEXT;
   BEGIN
@@ -3474,6 +3514,10 @@ $_change_log_index_tsp_tbl$
       WHERE rel_schema = v_schema
         AND rel_tblseq = v_table
         AND upper_inf(rel_time_range);
+-- insert an entry into the emaj_relation_change table
+      INSERT INTO emaj.emaj_relation_change (rlchg_time_id, rlchg_schema, rlchg_tblseq, rlchg_change_kind, rlchg_group,
+                                             rlchg_log_index_tsp, rlchg_new_log_index_tsp)
+        VALUES (v_timeId, v_schema, v_table, 'CHANGE_LOG_INDEX_TABLESPACE', v_group, v_currentLogIdxTsp, v_newLogIdxTsp);
 -- insert an entry into the emaj_hist table
     INSERT INTO emaj.emaj_hist (hist_function, hist_event, hist_object, hist_wording)
       VALUES (v_function, 'LOG INDEX TABLESPACE CHANGED',
@@ -3484,11 +3528,11 @@ $_change_log_index_tsp_tbl$
 $_change_log_index_tsp_tbl$;
 
 CREATE OR REPLACE FUNCTION emaj._change_ignored_triggers_tbl(v_schema TEXT, v_table TEXT, v_currentIgnoredTriggers TEXT[],
-                                                             v_newIgnoredTriggers TEXT[], v_function TEXT)
+                                                             v_newIgnoredTriggers TEXT[], v_timeId BIGINT, v_group TEXT, v_function TEXT)
 RETURNS VOID LANGUAGE plpgsql AS
 $_change_ignored_triggers_tbl$
 -- This function changes the set of application triggers to ignore at rollback time.
--- Input: the table identity, the old and new arrays of triggers to ignore and the calling function.
+-- Input: the table identity, the old and new arrays of triggers to ignore, the operation time id and the calling function.
   BEGIN
 -- update the emaj_relation row for the table
     UPDATE emaj.emaj_relation
@@ -3498,6 +3542,10 @@ $_change_ignored_triggers_tbl$
         AND rel_schema = v_schema
         AND rel_tblseq = v_table
         AND upper_inf(rel_time_range);
+-- insert an entry into the emaj_relation_change table
+      INSERT INTO emaj.emaj_relation_change (rlchg_time_id, rlchg_schema, rlchg_tblseq, rlchg_change_kind, rlchg_group,
+                                             rlchg_ignored_triggers, rlchg_new_ignored_triggers)
+        VALUES (v_timeId, v_schema, v_table, 'CHANGE_IGNORED_TRIGGERS', v_group, v_currentIgnoredTriggers, v_newIgnoredTriggers);
 -- insert an entry into the emaj_hist table
     INSERT INTO emaj.emaj_hist (hist_function, hist_event, hist_object, hist_wording)
       VALUES (v_function, 'TRIGGERS TO IGNORE CHANGED',
@@ -3601,6 +3649,9 @@ $_remove_tbl$
           AND rel_tblseq = v_table
           AND upper_inf(rel_time_range);
     END IF;
+-- insert an entry into the emaj_relation_change table
+    INSERT INTO emaj.emaj_relation_change (rlchg_time_id, rlchg_schema, rlchg_tblseq, rlchg_change_kind, rlchg_group)
+      VALUES (v_timeId, v_schema, v_table, 'REMOVE_TABLE', v_group);
 -- insert an entry into the emaj_hist table
     INSERT INTO emaj.emaj_hist (hist_function, hist_event, hist_object, hist_wording)
       VALUES (v_function, 'TABLE REMOVED', quote_ident(v_schema) || '.' || quote_ident(v_table),
@@ -3707,6 +3758,9 @@ $_move_tbl$
           WHERE nspname = v_schema
             AND relname = v_table;
     END IF;
+-- insert an entry into the emaj_relation_change table
+    INSERT INTO emaj.emaj_relation_change (rlchg_time_id, rlchg_schema, rlchg_tblseq, rlchg_change_kind, rlchg_group, rlchg_new_group)
+      VALUES (v_timeId, v_schema, v_table, 'MOVE_TABLE', v_oldGroup, v_newGroup);
 -- insert an entry into the emaj_hist table
     INSERT INTO emaj.emaj_hist (hist_function, hist_event, hist_object, hist_wording)
       VALUES (v_function, 'TABLE MOVED', quote_ident(v_schema) || '.' || quote_ident(v_table),
@@ -3832,6 +3886,10 @@ $_repair_tbl$
         WHERE tmp_group = v_group
           AND tmp_schema = v_schema
           AND tmp_tbl_name = v_table;
+-- insert an entry into the emaj_relation_change table
+      INSERT INTO emaj.emaj_relation_change (rlchg_time_id, rlchg_schema, rlchg_tblseq, rlchg_change_kind, rlchg_group)
+        VALUES (v_timeId, v_schema, v_table, 'REPAIR_TABLE', v_group);
+-- insert an entry into the emaj_hist table
       INSERT INTO emaj.emaj_hist(hist_function, hist_event, hist_object, hist_wording)
         VALUES (v_function, 'TABLE REPAIRED', quote_ident(v_schema) || '.' || quote_ident(v_table), 'In group ' || v_group);
     END IF;
@@ -4011,9 +4069,6 @@ $_assign_sequences$
       FOREACH v_oneSequence IN ARRAY v_sequences
       LOOP
         PERFORM emaj._add_seq(v_schema, v_oneSequence, v_group, v_groupIsLogging, v_timeId, v_function);
--- insert an entry into the emaj_alter_plan table (so that future rollback may see the change)
-        INSERT INTO emaj.emaj_alter_plan (altr_time_id, altr_step, altr_schema, altr_tblseq, altr_group, altr_group_is_logging)
-          VALUES (v_timeId, 'ADD_SEQ', v_schema, v_oneSequence, v_group, v_groupIsLogging);
         v_nbAssignedSeq = v_nbAssignedSeq + 1;
       END LOOP;
 -- adjust the group characteristics
@@ -4200,9 +4255,6 @@ $_remove_sequences$
             AND upper_inf(rel_time_range);
 -- drop this sequence
         PERFORM emaj._remove_seq(v_schema, v_oneSequence, v_groupName, v_groupIsLogging, v_timeId, v_function);
--- record the change into the emaj_alter_plan table (so that future rollback may see the change)
-        INSERT INTO emaj.emaj_alter_plan (altr_time_id, altr_step, altr_schema, altr_tblseq, altr_group, altr_group_is_logging)
-          VALUES (v_timeId, 'REMOVE_SEQ', v_schema, v_oneSequence, v_groupName, v_groupIsLogging);
         v_nbRemovedSeq = v_nbRemovedSeq + 1;
       END LOOP;
 -- enable previously disabled event triggers
@@ -4410,10 +4462,6 @@ $_move_sequences$
 -- move this sequence
         PERFORM emaj._move_seq(v_schema, v_oneSequence, v_groupName, v_groupIsLogging, v_newGroup, v_newGroupIsLogging, v_timeId,
                                v_function);
--- insert an entry into the emaj_alter_plan table (so that future rollback may see the change)
-        INSERT INTO emaj.emaj_alter_plan (altr_time_id, altr_step, altr_schema, altr_tblseq, altr_group, altr_group_is_logging,
-                                          altr_new_group, altr_new_group_is_logging)
-          VALUES (v_timeId, 'MOVE_SEQ', v_schema, v_oneSequence, v_groupName, v_groupIsLogging, v_newGroup, v_newGroupIsLogging);
         v_nbMovedSeq = v_nbMovedSeq + 1;
       END LOOP;
 -- adjust the groups characteristics
@@ -4468,6 +4516,9 @@ $_add_seq$
         SELECT *
           FROM emaj._get_current_sequence_state(v_schema, v_sequence, v_timeId);
     END IF;
+-- insert an entry into the emaj_relation_change table
+    INSERT INTO emaj.emaj_relation_change (rlchg_time_id, rlchg_schema, rlchg_tblseq, rlchg_change_kind, rlchg_group)
+      VALUES (v_timeId, v_schema, v_sequence, 'ADD_SEQUENCE', v_group);
 -- insert an entry into the emaj_hist table
     INSERT INTO emaj.emaj_hist (hist_function, hist_event, hist_object, hist_wording)
       VALUES (v_function, 'SEQUENCE ADDED', quote_ident(v_schema) || '.' || quote_ident(v_sequence),
@@ -4499,6 +4550,9 @@ $_remove_seq$
           AND rel_tblseq = v_sequence
           AND upper_inf(rel_time_range);
     END IF;
+-- insert an entry into the emaj_relation_change table
+    INSERT INTO emaj.emaj_relation_change (rlchg_time_id, rlchg_schema, rlchg_tblseq, rlchg_change_kind, rlchg_group)
+      VALUES (v_timeId, v_schema, v_sequence, 'REMOVE_SEQUENCE', v_group);
 -- insert an entry into the emaj_hist table
     INSERT INTO emaj.emaj_hist (hist_function, hist_event, hist_object, hist_wording)
       VALUES (v_function, 'SEQUENCE REMOVED', quote_ident(v_schema) || '.' || quote_ident(v_sequence),
@@ -4527,6 +4581,9 @@ $_move_seq$
         WHERE rel_schema = v_schema
           AND rel_tblseq = v_sequence
           AND upper(rel_time_range) = v_timeId;
+-- insert an entry into the emaj_relation_change table
+    INSERT INTO emaj.emaj_relation_change (rlchg_time_id, rlchg_schema, rlchg_tblseq, rlchg_change_kind, rlchg_group, rlchg_new_group)
+      VALUES (v_timeId, v_schema, v_sequence, 'MOVE_SEQUENCE', v_oldGroup, v_newGroup);
 -- insert an entry into the emaj_hist table
     INSERT INTO emaj.emaj_hist (hist_function, hist_event, hist_object, hist_wording)
       VALUES (v_function, 'SEQUENCE MOVED', quote_ident(v_schema) || '.' || quote_ident(v_sequence),
@@ -5645,6 +5702,16 @@ $_drop_group$
   BEGIN
 -- get the time stamp of the operation
     SELECT emaj._set_time_stamp('D') INTO v_timeId;
+-- register into emaj_relation_change the tables and sequences removal from their group, for completeness
+    INSERT INTO emaj.emaj_relation_change (rlchg_time_id, rlchg_schema, rlchg_tblseq, rlchg_change_kind, rlchg_group)
+      SELECT v_timeId, rel_schema, rel_tblseq,
+             CASE WHEN rel_kind = 'r' THEN 'REMOVE_TABLE'::emaj._relation_change_kind_enum
+                                      ELSE 'REMOVE_SEQUENCE'::emaj._relation_change_kind_enum END,
+             v_groupName
+        FROM emaj.emaj_relation
+        WHERE rel_group = v_groupName
+          AND upper_inf(rel_time_range)
+        ORDER BY rel_priority, rel_schema, rel_tblseq, rel_time_range;
 -- disable event triggers that protect emaj components and keep in memory these triggers name
     SELECT emaj._disable_event_triggers() INTO v_eventTriggers;
 -- delete the emaj objects and references for each table and sequences of the group
@@ -6008,7 +6075,7 @@ $_alter_exec$
               AND tmp_tbl_name = r_plan.altr_tblseq;
 -- then alter the relation, depending on the changes
           PERFORM emaj._change_log_data_tsp_tbl(r_rel.rel_schema, r_rel.rel_tblseq, r_rel.rel_log_schema, r_rel.rel_log_table,
-                                                r_rel.rel_log_dat_tsp, v_logDatTsp, v_callingFunction);
+                                                r_rel.rel_log_dat_tsp, v_logDatTsp, v_timeId, r_rel.rel_group, v_callingFunction);
 --
         WHEN 'CHANGE_TBL_LOG_INDEX_TSP' THEN
 -- get the table description from emaj_relation
@@ -6025,7 +6092,7 @@ $_alter_exec$
               AND tmp_tbl_name = r_plan.altr_tblseq;
 -- then alter the relation, depending on the changes
           PERFORM emaj._change_log_index_tsp_tbl(r_rel.rel_schema, r_rel.rel_tblseq, r_rel.rel_log_schema, r_rel.rel_log_index,
-                                                 r_rel.rel_log_idx_tsp, v_logIdxTsp, v_callingFunction);
+                                                 r_rel.rel_log_idx_tsp, v_logIdxTsp, v_timeId, r_rel.rel_group, v_callingFunction);
 --
         WHEN 'MOVE_TBL' THEN
 -- move a table from one group to another group
@@ -6046,7 +6113,7 @@ $_alter_exec$
               AND upper_inf(rel_time_range);
 -- update the emaj_relation table to report the priority change
           PERFORM emaj._change_priority_tbl(r_plan.altr_schema, r_plan.altr_tblseq, r_rel.rel_priority, r_plan.altr_priority,
-                                            v_callingFunction);
+                                            v_timeId, r_rel.rel_group, v_callingFunction);
 --
         WHEN 'CHANGE_IGNORED_TRIGGERS' THEN
 -- get the table description from emaj_relation
@@ -6063,7 +6130,7 @@ $_alter_exec$
               AND tmp_tbl_name = r_plan.altr_tblseq;
 -- update the emaj_relation table to report the triggers array change
           PERFORM emaj._change_ignored_triggers_tbl(r_plan.altr_schema, r_plan.altr_tblseq, r_rel.rel_ignored_triggers, v_ignoredTriggers,
-                                                    v_callingFunction);
+                                                    v_timeId, r_rel.rel_group, v_callingFunction);
 --
         WHEN 'ADD_TBL' THEN
 -- add a table to a group
@@ -8224,7 +8291,7 @@ $_rlbk_check$
           END IF;
         END LOOP;
       END IF;
--- if the isAlterGroupAllowed flag is not explicitely set to true, check that the rollback would not cross any alter group operation for
+-- if the isAlterGroupAllowed flag is not explicitely set to true, check that the rollback would not cross any structure change for
 -- the groups
       IF v_isAlterGroupAllowed IS NULL OR NOT v_isAlterGroupAllowed THEN
         SELECT mark_time_id INTO v_markTimeId
@@ -8233,12 +8300,12 @@ $_rlbk_check$
             AND mark_name = v_markName;
         IF EXISTS
              (SELECT 0
-                FROM emaj.emaj_alter_plan
-                WHERE altr_time_id > v_markTimeId
-                  AND altr_group = ANY (v_groupNames)
-                  AND altr_rlbk_id IS NULL
+                FROM emaj.emaj_relation_change
+                WHERE rlchg_time_id > v_markTimeId
+                  AND rlchg_group = ANY (v_groupNames)
+                  AND rlchg_rlbk_id IS NULL
              ) THEN
-          RAISE EXCEPTION '_rlbk_check: This rollback operation would cross some previously executed alter group operations,'
+          RAISE EXCEPTION '_rlbk_check: This rollback operation would cross some previous structure group change operations,'
                           ' which is not allowed by the current function parameters.';
         END IF;
       END IF;
@@ -9374,94 +9441,91 @@ $_rlbk_end$
         RETURN NEXT;
       END IF;
     END IF;
--- then, for new style calling functions, return the WARNING messages for any elementary action from alter group operations that has not
+-- then, for new style calling functions, return the WARNING messages for any elementary action from group structure change that has not
 -- been rolled back
     IF v_isAlterGroupAllowed IS NOT NULL THEN
       rlbk_severity = 'Warning';
       FOR r_msg IN
 -- steps are splitted into 2 groups to filter them differently
-          SELECT altr_time_id, altr_step, altr_schema, altr_tblseq,
-                 (CASE altr_step
-                    WHEN 'ADD_SEQ' THEN
-                      'The sequence ' || quote_ident(altr_schema) || '.' || quote_ident(altr_tblseq) ||
+          SELECT rlchg_time_id, rlchg_change_kind, rlchg_schema, rlchg_tblseq,
+                 (CASE rlchg_change_kind
+                    WHEN 'ADD_SEQUENCE' THEN
+                      'The sequence ' || quote_ident(rlchg_schema) || '.' || quote_ident(rlchg_tblseq) ||
                       ' has only been rolled back to its latest group attachment state ('
                       || to_char(time_tx_timestamp, 'YYYY/MM/DD HH:MI:SS TZ') || ')'
-                    WHEN 'ADD_TBL' THEN
-                      'The table ' || quote_ident(altr_schema) || '.' || quote_ident(altr_tblseq) ||
+                    WHEN 'ADD_TABLE' THEN
+                      'The table ' || quote_ident(rlchg_schema) || '.' || quote_ident(rlchg_tblseq) ||
                       ' has only been rolled back to its latest group attachment ('
                       || to_char(time_tx_timestamp, 'YYYY/MM/DD HH:MI:SS TZ') || ')'
-                    WHEN 'REMOVE_SEQ' THEN
-                      'The sequence ' || quote_ident(altr_schema) || '.' || quote_ident(altr_tblseq) ||
+                    WHEN 'REMOVE_SEQUENCE' THEN
+                      'The sequence ' || quote_ident(rlchg_schema) || '.' || quote_ident(rlchg_tblseq) ||
                       ' has been left unchanged (not in group anymore since ' ||
                       to_char(time_tx_timestamp, 'YYYY/MM/DD HH:MI:SS TZ') || ')'
-                    WHEN 'REMOVE_TBL' THEN
-                      'The table ' || quote_ident(altr_schema) || '.' || quote_ident(altr_tblseq) ||
+                    WHEN 'REMOVE_TABLE' THEN
+                      'The table ' || quote_ident(rlchg_schema) || '.' || quote_ident(rlchg_tblseq) ||
                       ' has been left unchanged (not in group anymore since '
                       || to_char(time_tx_timestamp, 'YYYY/MM/DD HH:MI:SS TZ') || ')'
-                    WHEN 'MOVE_SEQ' THEN
-                      'The sequence ' || quote_ident(altr_schema) || '.' || quote_ident(altr_tblseq) ||
+                    WHEN 'MOVE_SEQUENCE' THEN
+                      'The sequence ' || quote_ident(rlchg_schema) || '.' || quote_ident(rlchg_tblseq) ||
                       ' has only been rolled back to its latest group attachment state ('
                       || to_char(time_tx_timestamp, 'YYYY/MM/DD HH:MI:SS TZ') || ')'
-                    WHEN 'MOVE_TBL' THEN
-                      'The table ' || quote_ident(altr_schema) || '.' || quote_ident(altr_tblseq) ||
+                    WHEN 'MOVE_TABLE' THEN
+                      'The table ' || quote_ident(rlchg_schema) || '.' || quote_ident(rlchg_tblseq) ||
                       ' has only been rolled back to its latest group attachment ('
                       || to_char(time_tx_timestamp, 'YYYY/MM/DD HH:MI:SS TZ') || ')'
                     END)::TEXT AS message
             FROM
--- suppress duplicate ADD_TBL / REMOVE_TBL or ADD_SEQ / REMOVE_SEQ for same table or sequence, by keeping the most recent step
-              (SELECT altr_schema, altr_tblseq, altr_time_id, altr_step
+-- suppress duplicate ADD_TABLE / MOVE_TABLE / REMOVE_TABLE or ADD_SEQUENCE / MOVE_SEQUENCE / REMOVE_SEQUENCE for same table or sequence,
+--   by keeping the most recent changes
+              (SELECT rlchg_schema, rlchg_tblseq, rlchg_time_id, rlchg_change_kind
                  FROM
-                   (SELECT altr_schema, altr_tblseq, altr_time_id, altr_step,
-                           rank() OVER (PARTITION BY altr_schema, altr_tblseq ORDER BY altr_time_id DESC) AS altr_rank
-                      FROM emaj.emaj_alter_plan
-                      WHERE altr_time_id > v_markTimeId
-                        AND altr_group = ANY (v_groupNames)
-                        AND altr_tblseq <> ''
-                        AND altr_rlbk_id IS NULL
-                        AND altr_step IN ('ADD_TBL','ADD_SEQ','REMOVE_TBL','REMOVE_SEQ','MOVE_TBL','MOVE_SEQ')
+                   (SELECT rlchg_schema, rlchg_tblseq, rlchg_time_id, rlchg_change_kind,
+                           rank() OVER (PARTITION BY rlchg_schema, rlchg_tblseq ORDER BY rlchg_time_id DESC) AS rlchg_rank
+                      FROM emaj.emaj_relation_change
+                      WHERE rlchg_time_id > v_markTimeId
+                        AND rlchg_group = ANY (v_groupNames)
+                        AND rlchg_tblseq <> ''
+                        AND rlchg_rlbk_id IS NULL
+                        AND rlchg_change_kind IN
+                              ('ADD_TABLE','ADD_SEQUENCE','REMOVE_TABLE','REMOVE_SEQUENCE','MOVE_TABLE','MOVE_SEQUENCE')
                     ) AS t1
-                 WHERE altr_rank = 1
+                 WHERE rlchg_rank = 1
               ) AS t2, emaj.emaj_time_stamp
-            WHERE altr_time_id = time_id
-          UNION
-            SELECT altr_time_id, altr_step, altr_schema, altr_tblseq,
-                   (CASE altr_step
-                      WHEN 'CHANGE_REL_PRIORITY' THEN
-                        'Tables group change not rolled back: E-Maj priority for '
-                        || quote_ident(altr_schema) || '.' || quote_ident(altr_tblseq)
-                      WHEN 'CHANGE_TBL_LOG_SCHEMA' THEN
-                        'Tables group change not rolled back: E-Maj log schema for '
-                        || quote_ident(altr_schema) || '.' || quote_ident(altr_tblseq)
-                      WHEN 'CHANGE_TBL_NAMES_PREFIX' THEN
-                        'Tables group change not rolled back: E-Maj names prefix for '
-                        || quote_ident(altr_schema) || '.' || quote_ident(altr_tblseq)
-                      WHEN 'CHANGE_TBL_LOG_DATA_TSP' THEN
-                        'Tables group change not rolled back: log data tablespace for '
-                        || quote_ident(altr_schema) || '.' || quote_ident(altr_tblseq)
-                      WHEN 'CHANGE_TBL_LOG_INDEX_TSP' THEN
-                        'Tables group change not rolled back: log index tablespace for '
-                        || quote_ident(altr_schema) || '.' || quote_ident(altr_tblseq)
-                      WHEN 'CHANGE_IGNORED_TRIGGERS' THEN
-                        'Tables group change not rolled back: ignored triggers list for '
-                        || quote_ident(altr_schema) || '.' || quote_ident(altr_tblseq)
-                      ELSE altr_step::TEXT || ' / ' || quote_ident(altr_schema) || '.' || quote_ident(altr_tblseq)
-                      END)::TEXT AS message
-              FROM
--- suppress duplicates for other steps for each table or sequence
-                (SELECT altr_schema, altr_tblseq, altr_time_id, altr_step
-                   FROM
-                     (SELECT altr_schema, altr_tblseq, altr_time_id, altr_step,
-                             rank() OVER (PARTITION BY altr_schema, altr_tblseq ORDER BY altr_time_id DESC) AS altr_rank
-                        FROM emaj.emaj_alter_plan
-                        WHERE altr_time_id > v_markTimeId
-                          AND altr_group = ANY (v_groupNames)
-                          AND altr_tblseq <> ''
-                          AND altr_rlbk_id IS NULL
-                          AND altr_step NOT IN ('ADD_TBL','ADD_SEQ','REMOVE_TBL','REMOVE_SEQ','MOVE_TBL','MOVE_SEQ')
-                     ) AS t1
-                   WHERE altr_rank = 1
-                ) AS t2
-            ORDER BY altr_time_id, altr_step, altr_schema, altr_tblseq
+            WHERE rlchg_time_id = time_id
+        UNION
+          SELECT rlchg_time_id, rlchg_change_kind, rlchg_schema, rlchg_tblseq,
+                 (CASE rlchg_change_kind
+                    WHEN 'CHANGE_PRIORITY' THEN
+                      'Tables group change not rolled back: E-Maj priority for '
+                      || quote_ident(rlchg_schema) || '.' || quote_ident(rlchg_tblseq)
+                    WHEN 'CHANGE_LOG_DATA_TABLESPACE' THEN
+                      'Tables group change not rolled back: log data tablespace for '
+                      || quote_ident(rlchg_schema) || '.' || quote_ident(rlchg_tblseq)
+                    WHEN 'CHANGE_LOG_INDEX_TABLESPACE' THEN
+                      'Tables group change not rolled back: log index tablespace for '
+                      || quote_ident(rlchg_schema) || '.' || quote_ident(rlchg_tblseq)
+                    WHEN 'CHANGE_IGNORED_TRIGGERS' THEN
+                      'Tables group change not rolled back: ignored triggers list for '
+                      || quote_ident(rlchg_schema) || '.' || quote_ident(rlchg_tblseq)
+                    ELSE rlchg_change_kind::TEXT || ' / ' || quote_ident(rlchg_schema) || '.' || quote_ident(rlchg_tblseq)
+                    END)::TEXT AS message
+            FROM
+-- suppress duplicates for other change kind for each table or sequence
+              (SELECT rlchg_schema, rlchg_tblseq, rlchg_time_id, rlchg_change_kind
+                 FROM
+                   (SELECT rlchg_schema, rlchg_tblseq, rlchg_time_id, rlchg_change_kind,
+                           rank() OVER (PARTITION BY rlchg_schema, rlchg_tblseq ORDER BY rlchg_time_id DESC) AS rlchg_rank
+                      FROM emaj.emaj_relation_change
+                      WHERE rlchg_time_id > v_markTimeId
+                        AND rlchg_group = ANY (v_groupNames)
+                        AND rlchg_tblseq <> ''
+                        AND rlchg_rlbk_id IS NULL
+                        AND rlchg_change_kind NOT IN
+                              ('ADD_TABLE','ADD_SEQUENCE','REMOVE_TABLE','REMOVE_SEQUENCE','MOVE_TABLE','MOVE_SEQUENCE')
+                   ) AS t1
+                 WHERE rlchg_rank = 1
+              ) AS t2
+          ORDER BY rlchg_time_id, rlchg_change_kind, rlchg_schema, rlchg_tblseq
       LOOP
           INSERT INTO emaj.emaj_hist (hist_function, hist_event, hist_object, hist_wording)
             VALUES (CASE WHEN v_multiGroup THEN 'ROLLBACK_GROUPS' ELSE 'ROLLBACK_GROUP' END, 'WARNING', 'Rollback id ' || v_rlbkId,
@@ -9471,12 +9535,12 @@ $_rlbk_end$
           RETURN NEXT;
       END LOOP;
     END IF;
--- update the alter steps that have been covered by the rollback
-    UPDATE emaj.emaj_alter_plan
-      SET altr_rlbk_id = v_rlbkId
-      WHERE altr_time_id > v_markTimeId
-        AND altr_group = ANY (v_groupNames)
-        AND altr_rlbk_id IS NULL;
+-- update the groups structure changes that have been covered by the rollback
+    UPDATE emaj.emaj_relation_change
+      SET rlchg_rlbk_id = v_rlbkId
+      WHERE rlchg_time_id > v_markTimeId
+        AND rlchg_group = ANY (v_groupNames)
+        AND rlchg_rlbk_id IS NULL;
 -- update the emaj_rlbk table to set the real number of tables to process, adjust the rollback status and set the result message
     v_stmt = 'UPDATE emaj.emaj_rlbk SET rlbk_status = '''
           || CASE WHEN v_isDblinkUsed THEN 'COMPLETED' ELSE 'COMMITTED' END
@@ -11110,6 +11174,7 @@ $_purge_histories$
     v_nbPurgedHist           BIGINT;
     v_nbPurgedRelHist        BIGINT;
     v_nbPurgedRlbk           BIGINT;
+    v_nbPurgedRelChanges     BIGINT;
     v_nbPurgedAlter          BIGINT;
     v_wording                TEXT = '';
   BEGIN
@@ -11156,6 +11221,17 @@ $_purge_histories$
     GET DIAGNOSTICS v_nbPurgedRelHist = ROW_COUNT;
     IF v_nbPurgedRelHist > 0 THEN
       v_wording = v_wording || ' ; ' || v_nbPurgedRelHist || ' relation history rows deleted';
+    END IF;
+-- purge the emaj_relation_change table
+    WITH deleted_relation_change AS
+      (DELETE FROM emaj.emaj_relation_change
+         WHERE rlchg_time_id <= v_maxTimeId
+         RETURNING rlchg_time_id
+      )
+      SELECT COUNT (DISTINCT rlchg_time_id) INTO v_nbPurgedRelChanges
+        FROM deleted_relation_change;
+    IF v_nbPurgedRelChanges > 0 THEN
+      v_wording = v_wording || ' ; ' || v_nbPurgedRelChanges || ' relation changes deleted';
     END IF;
 -- purge the emaj_alter_plan table
     WITH deleted_alter AS
@@ -12520,6 +12596,7 @@ GRANT EXECUTE ON FUNCTION emaj.emaj_verify_all() TO emaj_viewer;
 --SELECT pg_catalog.pg_extension_config_dump('emaj_sequence','');
 --SELECT pg_catalog.pg_extension_config_dump('emaj_table','');
 --SELECT pg_catalog.pg_extension_config_dump('emaj_seq_hole','');
+--SELECT pg_catalog.pg_extension_config_dump('emaj_relation_change','');
 --SELECT pg_catalog.pg_extension_config_dump('emaj_alter_plan','');
 --SELECT pg_catalog.pg_extension_config_dump('emaj_rlbk','');
 --SELECT pg_catalog.pg_extension_config_dump('emaj_rlbk_session','');

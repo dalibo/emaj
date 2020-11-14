@@ -48,7 +48,7 @@ select * from emaj.emaj_rollback_groups('{"myGroup1","myGroup2"}','Mk2');
 select emaj.emaj_import_groups_configuration(:'EMAJTESTTMPDIR' || '/all_groups_conf.json', '{"myGroup1","myGroup2"}', true);
 
 -- checks for attributes changes
-select * from emaj.emaj_alter_plan where altr_time_id >= 9000 order by 1,2,3,4,5;
+select * from emaj.emaj_relation_change where rlchg_time_id >= 9000 order by 1,2,3,4;
 select time_id, time_last_emaj_gid, time_event from emaj.emaj_time_stamp where time_id >= 9000 order by time_id;
 select hist_function, hist_event, hist_object,
        regexp_replace(regexp_replace(regexp_replace(hist_wording,
@@ -167,7 +167,7 @@ select * from emaj.emaj_sequence where sequ_schema = 'myschema2' and sequ_name =
   order by sequ_time_id;
 
 -- checks for add sequences test
-select * from emaj.emaj_alter_plan where altr_time_id >= 9100 order by 1,2,3,4,5;
+select * from emaj.emaj_relation_change where rlchg_time_id >= 9100 order by 1,2,3,4;
 select time_id, time_last_emaj_gid, time_event from emaj.emaj_time_stamp where time_id >= 9100 order by time_id;
 select hist_function, hist_event, hist_object,
        regexp_replace(regexp_replace(regexp_replace(hist_wording,
@@ -259,7 +259,7 @@ select emaj.emaj_import_groups_configuration(:'EMAJTESTTMPDIR' || '/all_groups_c
 select emaj.emaj_cleanup_rollback_state();
 
 -- checks for remove sequences test
-select * from emaj.emaj_alter_plan where altr_time_id >= 9300 order by 1,2,3,4,5;
+select * from emaj.emaj_relation_change where rlchg_time_id >= 9300 order by 1,2,3,4;
 select time_id, time_last_emaj_gid, time_event from emaj.emaj_time_stamp where time_id >= 9300 order by time_id;
 select hist_function, hist_event, hist_object,
        regexp_replace(regexp_replace(regexp_replace(hist_wording,
@@ -411,7 +411,7 @@ select rlbk_severity, regexp_replace(rlbk_message,E'\\d\\d\\d\\d/\\d\\d\\/\\d\\d
 select * from myschema2.mytbl7 order by col71;
 
 -- checks for add tables tests
-select * from emaj.emaj_alter_plan where altr_time_id >= 9500 order by 1,2,3,4,5;
+select * from emaj.emaj_relation_change where rlchg_time_id >= 9500 order by 1,2,3,4;
 select time_id, time_last_emaj_gid, time_event from emaj.emaj_time_stamp where time_id >= 9500 order by time_id;
 select hist_function, hist_event, hist_object,
        regexp_replace(regexp_replace(regexp_replace(hist_wording,
@@ -568,6 +568,7 @@ select * from emaj.emaj_logged_rollback_groups('{"myGroup1","myGroup2"}','Mk2');
 select * from emaj.emaj_logged_rollback_groups('{"myGroup1","myGroup2"}','Mk2',false) order by 1,2;
 select rlbk_severity, regexp_replace(rlbk_message,E'\\d\\d\\d\\d/\\d\\d\\/\\d\\d\\ \\d\\d\\:\\d\\d:\\d\\d .*?\\)','<timestamp>)','g')
   from emaj.emaj_logged_rollback_groups('{"myGroup1","myGroup2"}','Mk2',true) order by 1,2;
+
 select * from emaj.emaj_rollback_groups('{"myGroup1","myGroup2"}','Mk2',false) order by 1,2;
 select * from emaj.emaj_rollback_groups('{"myGroup1","myGroup2"}','Mk1',true) order by 1,2;
 
@@ -576,7 +577,7 @@ select * from emaj.emaj_logged_rollback_groups('{"myGroup1","myGroup2"}','Mk1',f
 select * from emaj.emaj_rollback_groups('{"myGroup1","myGroup2"}','Mk1',false) order by 1,2;
 
 -- checks for remove tables tests
-select * from emaj.emaj_alter_plan where altr_time_id >= 9700 order by 1,2,3,4,5;
+select * from emaj.emaj_relation_change where rlchg_time_id >= 9700 order by 1,2,3,4;
 select time_id, time_last_emaj_gid, time_event from emaj.emaj_time_stamp where time_id >= 9700 order by time_id;
 select hist_function, hist_event, hist_object,
        regexp_replace(regexp_replace(regexp_replace(hist_wording,
@@ -761,7 +762,7 @@ select emaj.emaj_drop_group('myGroup2');
 select emaj.emaj_drop_group('myGroup4');
 
 -- checks for group ownership change tests
-select * from emaj.emaj_alter_plan where altr_time_id >= 10000 order by 1,2,3,4,5;
+select * from emaj.emaj_relation_change where rlchg_time_id >= 10000 order by 1,2,3,4;
 select time_id, time_last_emaj_gid, time_event from emaj.emaj_time_stamp where time_id >= 10000 order by time_id;
 select hist_function, hist_event, hist_object,
        regexp_replace(regexp_replace(regexp_replace(hist_wording,

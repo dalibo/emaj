@@ -494,6 +494,7 @@ select emaj.emaj_force_drop_group('myGroup1');
 select nspname from pg_namespace where nspname like 'emaj%' order by nspname;
 select sch_name from emaj.emaj_schema order by 1;
 select * from emaj.emaj_rel_hist order by 1,2,3;
+select * from emaj.emaj_relation_change order by 1,2,3,4;
 select hist_function, hist_event, hist_object, 
        regexp_replace(regexp_replace(hist_wording,E'\\d\\d\.\\d\\d\\.\\d\\d\\.\\d\\d\\d\\d','%','g'),E'\\[.+\\]','(timestamp)','g'), 
        hist_user 
