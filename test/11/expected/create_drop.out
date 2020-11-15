@@ -1219,7 +1219,7 @@ begin;
 ERROR:  _create_log_schemas: The schema "emaj_myschema1" should not exist. Drop it manually.
 CONTEXT:  PL/pgSQL function emaj._create_log_schemas(text) line 23 at RAISE
 SQL statement "SELECT emaj._create_log_schemas(v_callingFunction)"
-PL/pgSQL function emaj._alter_groups(text[],boolean,text,text,bigint) line 47 at PERFORM
+PL/pgSQL function emaj._alter_groups(text[],boolean,text,text,bigint) line 43 at PERFORM
 SQL statement "SELECT v_nbRel FROM emaj._alter_groups(v_groups, TRUE, v_mark, 'IMPORT_GROUPS', v_timeId)"
 PL/pgSQL function emaj._import_groups_conf_exec(json,text[],text) line 57 at PERFORM
 PL/pgSQL function emaj._import_groups_conf(json,text[],boolean,text,text) line 81 at RETURN
@@ -1717,9 +1717,9 @@ select hist_function, hist_event, hist_object,
  IMPORT_GROUPS      | BEGIN                        | emptyGroup, myGroup5                                                           | Input file: '/tmp/emaj_11/create_drop/orig_groups_config_all.json'   | postgres
  IMPORT_GROUPS      | END                          |                                                                                | 2 created or altered tables groups                                   | postgres
  IMPORT_GROUPS      | BEGIN                        | myGroup4                                                                       | Input file: '/tmp/emaj_11/create_drop/modified_groups_config_1.json' | postgres
+ IMPORT_GROUPS      | PRIORITY CHANGED             | myschema4.mypartp1                                                             | NULL => 20                                                           | postgres
  IMPORT_GROUPS      | LOG DATA TABLESPACE CHANGED  | myschema4.mypartp1                                                             | Default tablespace => tsplog1                                        | postgres
  IMPORT_GROUPS      | LOG INDEX TABLESPACE CHANGED | myschema4.mypartp1                                                             | Default tablespace => tsplog1                                        | postgres
- IMPORT_GROUPS      | PRIORITY CHANGED             | myschema4.mypartp1                                                             | NULL => 20                                                           | postgres
  IMPORT_GROUPS      | END                          |                                                                                | 1 created or altered tables groups                                   | postgres
  IMPORT_GROUPS      | BEGIN                        | myGroup2, myGroup4                                                             | Input file: '/tmp/emaj_11/create_drop/modified_groups_config_2.json' | postgres
  IMPORT_GROUPS      | TABLE MOVED                  | myschema2.mytbl5                                                               | From the idle group myGroup2 to the idle group myGroup4              | postgres
@@ -1740,9 +1740,9 @@ select hist_function, hist_event, hist_object,
  IMPORT_GROUPS      | BEGIN                        | emptyGroup, myGroup1, myGroup2, myGroup4, myGroup5, myGroup6, phil's group#3", | Input file: '/tmp/emaj_11/create_drop/orig_groups_config_all.json'   | postgres
  IMPORT_GROUPS      | GROUP CREATED                | myGroup1                                                                       | rollbackable                                                         | postgres
  IMPORT_GROUPS      | LOG_SCHEMA CREATED           | emaj_myschema1                                                                 |                                                                      | postgres
+ IMPORT_GROUPS      | PRIORITY CHANGED             | myschema4.mypartp1                                                             | 20 => NULL                                                           | postgres
  IMPORT_GROUPS      | LOG DATA TABLESPACE CHANGED  | myschema4.mypartp1                                                             | tsplog1 => Default tablespace                                        | postgres
  IMPORT_GROUPS      | LOG INDEX TABLESPACE CHANGED | myschema4.mypartp1                                                             | tsplog1 => Default tablespace                                        | postgres
- IMPORT_GROUPS      | PRIORITY CHANGED             | myschema4.mypartp1                                                             | 20 => NULL                                                           | postgres
  IMPORT_GROUPS      | TABLE ADDED                  | myschema1."myTbl3"                                                             | To the idle group myGroup1                                           | postgres
  IMPORT_GROUPS      | TABLE ADDED                  | myschema1.mytbl1                                                               | To the idle group myGroup1                                           | postgres
  IMPORT_GROUPS      | TABLE ADDED                  | myschema1.mytbl4                                                               | To the idle group myGroup1                                           | postgres

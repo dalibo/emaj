@@ -90,15 +90,27 @@ WARNING:  _create_tbl: The table "myschema1.mytbl2" has triggers that will be au
 CONTEXT:  SQL statement "SELECT emaj._create_tbl(v_schema, v_table, v_group, v_priority, v_logDatTsp, v_logIdxTsp, v_ignoredTriggers,
                              v_timeId, v_groupIsRollbackable, v_groupIsLogging)"
 PL/pgSQL function emaj._add_tbl(text,text,text,integer,text,text,text[],boolean,bigint,text) line 23 at PERFORM
-SQL statement "SELECT emaj._add_tbl(r_plan.altr_schema, r_plan.altr_tblseq, r_plan.altr_group, tmp_priority, tmp_log_dat_tsp,
-                                tmp_log_idx_tsp, tmp_ignored_triggers, r_plan.altr_group_is_logging, v_timeId, v_callingFunction)
-            FROM tmp_app_table
-            WHERE tmp_group = r_plan.altr_group
-              AND tmp_schema = r_plan.altr_schema
-              AND tmp_tbl_name = r_plan.altr_tblseq"
-PL/pgSQL function emaj._alter_exec(bigint,text) line 118 at PERFORM
-SQL statement "SELECT emaj._alter_exec(v_timeId, v_callingFunction)"
-PL/pgSQL function emaj._alter_groups(text[],boolean,text,text,bigint) line 49 at PERFORM
+SQL statement "SELECT emaj._add_tbl(tmp_schema, tmp_tbl_name, tmp_group, tmp_priority, tmp_log_dat_tsp,
+                          tmp_log_idx_tsp, tmp_ignored_triggers, group_is_logging, v_timeId, v_callingFunction)
+      FROM (
+        SELECT tmp_schema, tmp_tbl_name, tmp_group, tmp_priority, tmp_log_dat_tsp, tmp_log_idx_tsp,
+               tmp_ignored_triggers, group_is_logging
+          FROM tmp_app_table
+               JOIN emaj.emaj_group ON (group_name = tmp_group)
+          WHERE NOT EXISTS
+                  (SELECT NULL
+                     FROM emaj.emaj_relation
+                     WHERE rel_schema = tmp_schema
+                       AND rel_tblseq = tmp_tbl_name
+                       AND upper_inf(rel_time_range)
+                       AND rel_kind = 'r'
+                       AND rel_group = ANY (v_groupNames)
+                  )
+          ORDER BY tmp_priority, tmp_schema, tmp_tbl_name
+           ) AS t"
+PL/pgSQL function emaj._alter_exec(text[],bigint,text) line 153 at PERFORM
+SQL statement "SELECT emaj._alter_exec(v_groupNames, v_timeId, v_callingFunction)"
+PL/pgSQL function emaj._alter_groups(text[],boolean,text,text,bigint) line 47 at PERFORM
 SQL statement "SELECT v_nbRel FROM emaj._alter_groups(v_groups, TRUE, v_mark, 'IMPORT_GROUPS', v_timeId)"
 PL/pgSQL function emaj._import_groups_conf_exec(json,text[],text) line 57 at PERFORM
 PL/pgSQL function emaj._import_groups_conf(json,text[],boolean,text,text) line 81 at RETURN
@@ -108,15 +120,27 @@ WARNING:  _create_tbl: The table "myschema4.mytblm" has triggers that will be au
 CONTEXT:  SQL statement "SELECT emaj._create_tbl(v_schema, v_table, v_group, v_priority, v_logDatTsp, v_logIdxTsp, v_ignoredTriggers,
                              v_timeId, v_groupIsRollbackable, v_groupIsLogging)"
 PL/pgSQL function emaj._add_tbl(text,text,text,integer,text,text,text[],boolean,bigint,text) line 23 at PERFORM
-SQL statement "SELECT emaj._add_tbl(r_plan.altr_schema, r_plan.altr_tblseq, r_plan.altr_group, tmp_priority, tmp_log_dat_tsp,
-                                tmp_log_idx_tsp, tmp_ignored_triggers, r_plan.altr_group_is_logging, v_timeId, v_callingFunction)
-            FROM tmp_app_table
-            WHERE tmp_group = r_plan.altr_group
-              AND tmp_schema = r_plan.altr_schema
-              AND tmp_tbl_name = r_plan.altr_tblseq"
-PL/pgSQL function emaj._alter_exec(bigint,text) line 118 at PERFORM
-SQL statement "SELECT emaj._alter_exec(v_timeId, v_callingFunction)"
-PL/pgSQL function emaj._alter_groups(text[],boolean,text,text,bigint) line 49 at PERFORM
+SQL statement "SELECT emaj._add_tbl(tmp_schema, tmp_tbl_name, tmp_group, tmp_priority, tmp_log_dat_tsp,
+                          tmp_log_idx_tsp, tmp_ignored_triggers, group_is_logging, v_timeId, v_callingFunction)
+      FROM (
+        SELECT tmp_schema, tmp_tbl_name, tmp_group, tmp_priority, tmp_log_dat_tsp, tmp_log_idx_tsp,
+               tmp_ignored_triggers, group_is_logging
+          FROM tmp_app_table
+               JOIN emaj.emaj_group ON (group_name = tmp_group)
+          WHERE NOT EXISTS
+                  (SELECT NULL
+                     FROM emaj.emaj_relation
+                     WHERE rel_schema = tmp_schema
+                       AND rel_tblseq = tmp_tbl_name
+                       AND upper_inf(rel_time_range)
+                       AND rel_kind = 'r'
+                       AND rel_group = ANY (v_groupNames)
+                  )
+          ORDER BY tmp_priority, tmp_schema, tmp_tbl_name
+           ) AS t"
+PL/pgSQL function emaj._alter_exec(text[],bigint,text) line 153 at PERFORM
+SQL statement "SELECT emaj._alter_exec(v_groupNames, v_timeId, v_callingFunction)"
+PL/pgSQL function emaj._alter_groups(text[],boolean,text,text,bigint) line 47 at PERFORM
 SQL statement "SELECT v_nbRel FROM emaj._alter_groups(v_groups, TRUE, v_mark, 'IMPORT_GROUPS', v_timeId)"
 PL/pgSQL function emaj._import_groups_conf_exec(json,text[],text) line 57 at PERFORM
 PL/pgSQL function emaj._import_groups_conf(json,text[],boolean,text,text) line 81 at RETURN
@@ -351,15 +375,27 @@ WARNING:  _create_tbl: The table "myschema1.mytbl2" has triggers that will be au
 CONTEXT:  SQL statement "SELECT emaj._create_tbl(v_schema, v_table, v_group, v_priority, v_logDatTsp, v_logIdxTsp, v_ignoredTriggers,
                              v_timeId, v_groupIsRollbackable, v_groupIsLogging)"
 PL/pgSQL function emaj._add_tbl(text,text,text,integer,text,text,text[],boolean,bigint,text) line 23 at PERFORM
-SQL statement "SELECT emaj._add_tbl(r_plan.altr_schema, r_plan.altr_tblseq, r_plan.altr_group, tmp_priority, tmp_log_dat_tsp,
-                                tmp_log_idx_tsp, tmp_ignored_triggers, r_plan.altr_group_is_logging, v_timeId, v_callingFunction)
-            FROM tmp_app_table
-            WHERE tmp_group = r_plan.altr_group
-              AND tmp_schema = r_plan.altr_schema
-              AND tmp_tbl_name = r_plan.altr_tblseq"
-PL/pgSQL function emaj._alter_exec(bigint,text) line 118 at PERFORM
-SQL statement "SELECT emaj._alter_exec(v_timeId, v_callingFunction)"
-PL/pgSQL function emaj._alter_groups(text[],boolean,text,text,bigint) line 49 at PERFORM
+SQL statement "SELECT emaj._add_tbl(tmp_schema, tmp_tbl_name, tmp_group, tmp_priority, tmp_log_dat_tsp,
+                          tmp_log_idx_tsp, tmp_ignored_triggers, group_is_logging, v_timeId, v_callingFunction)
+      FROM (
+        SELECT tmp_schema, tmp_tbl_name, tmp_group, tmp_priority, tmp_log_dat_tsp, tmp_log_idx_tsp,
+               tmp_ignored_triggers, group_is_logging
+          FROM tmp_app_table
+               JOIN emaj.emaj_group ON (group_name = tmp_group)
+          WHERE NOT EXISTS
+                  (SELECT NULL
+                     FROM emaj.emaj_relation
+                     WHERE rel_schema = tmp_schema
+                       AND rel_tblseq = tmp_tbl_name
+                       AND upper_inf(rel_time_range)
+                       AND rel_kind = 'r'
+                       AND rel_group = ANY (v_groupNames)
+                  )
+          ORDER BY tmp_priority, tmp_schema, tmp_tbl_name
+           ) AS t"
+PL/pgSQL function emaj._alter_exec(text[],bigint,text) line 153 at PERFORM
+SQL statement "SELECT emaj._alter_exec(v_groupNames, v_timeId, v_callingFunction)"
+PL/pgSQL function emaj._alter_groups(text[],boolean,text,text,bigint) line 47 at PERFORM
 SQL statement "SELECT v_nbRel FROM emaj._alter_groups(v_groups, TRUE, v_mark, 'IMPORT_GROUPS', v_timeId)"
 PL/pgSQL function emaj._import_groups_conf_exec(json,text[],text) line 57 at PERFORM
 PL/pgSQL function emaj._import_groups_conf(json,text[],boolean,text,text) line 81 at RETURN

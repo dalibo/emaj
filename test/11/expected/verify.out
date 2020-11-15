@@ -530,11 +530,22 @@ PL/pgSQL function emaj.emaj_stop_group(text,text) line 10 at RETURN
     select emaj.emaj_import_groups_configuration(emaj.emaj_export_groups_configuration(),array['myGroup2'],true);
 ERROR:  _repair_tbl: Cannot repair the table myschema2.mytbl4. Its group myGroup2 is in LOGGING state. Remove first the table from its group.
 CONTEXT:  PL/pgSQL function emaj._repair_tbl(text,text,text,boolean,bigint,text) line 11 at RAISE
-SQL statement "SELECT emaj._repair_tbl(r_plan.altr_schema, r_plan.altr_tblseq, coalesce(r_plan.altr_new_group, r_plan.altr_group),
-                                   r_plan.altr_group_is_logging, v_timeId, v_callingFunction)"
-PL/pgSQL function emaj._alter_exec(bigint,text) line 33 at PERFORM
-SQL statement "SELECT emaj._alter_exec(v_timeId, v_callingFunction)"
-PL/pgSQL function emaj._alter_groups(text[],boolean,text,text,bigint) line 49 at PERFORM
+SQL statement "SELECT emaj._repair_tbl(rel_schema, rel_tblseq, rel_group, group_is_logging, v_timeId, v_callingFunction)
+      FROM (
+        SELECT rel_schema, rel_tblseq, rel_group, group_is_logging
+          FROM                                   -- all damaged or out of sync tables
+            (SELECT DISTINCT ver_schema, ver_tblseq
+               FROM emaj._verify_groups(v_groupNames, FALSE)
+            ) AS t
+            JOIN emaj.emaj_relation ON (rel_schema = ver_schema AND rel_tblseq = ver_tblseq AND upper_inf(rel_time_range))
+            JOIN tmp_app_table ON (tmp_schema = rel_schema AND tmp_tbl_name = rel_tblseq)
+            JOIN emaj.emaj_group ON (group_name = rel_group)
+          WHERE rel_group = ANY (v_groupNames)
+          ORDER BY rel_priority, rel_schema, rel_tblseq
+           ) AS t"
+PL/pgSQL function emaj._alter_exec(text[],bigint,text) line 43 at PERFORM
+SQL statement "SELECT emaj._alter_exec(v_groupNames, v_timeId, v_callingFunction)"
+PL/pgSQL function emaj._alter_groups(text[],boolean,text,text,bigint) line 47 at PERFORM
 SQL statement "SELECT v_nbRel FROM emaj._alter_groups(v_groups, TRUE, v_mark, 'IMPORT_GROUPS', v_timeId)"
 PL/pgSQL function emaj._import_groups_conf_exec(json,text[],text) line 57 at PERFORM
 PL/pgSQL function emaj._import_groups_conf(json,text[],boolean,text,text) line 81 at RETURN

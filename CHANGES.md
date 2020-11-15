@@ -16,7 +16,7 @@ E-Maj - Change log
     emaj_ignore_app_trigger() function.
   * In tables groups configuration import and export functions, symplify the
     JSON formatting for the "ignored_triggers" property, by using a simple
-    string array.
+    strings array.
   * Remove the old deprecated versions of E-Maj rollback functions that only
     returned an integer.
   * A fourth parameter in the emaj_import_groups_configuration() functions
