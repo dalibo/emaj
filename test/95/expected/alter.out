@@ -91,7 +91,7 @@ CONTEXT:  SQL statement "SELECT emaj._create_tbl(v_schema, v_table, v_group, v_p
                              v_timeId, v_groupIsRollbackable, v_groupIsLogging)"
 PL/pgSQL function emaj._add_tbl(text,text,text,integer,text,text,text[],boolean,bigint,text) line 23 at PERFORM
 SQL statement "SELECT emaj._add_tbl(tmp_schema, tmp_tbl_name, tmp_group, tmp_priority, tmp_log_dat_tsp,
-                          tmp_log_idx_tsp, tmp_ignored_triggers, group_is_logging, v_timeId, v_callingFunction)
+                          tmp_log_idx_tsp, tmp_ignored_triggers, group_is_logging, v_timeId, 'IMPORT_GROUPS')
       FROM (
         SELECT tmp_schema, tmp_tbl_name, tmp_group, tmp_priority, tmp_log_dat_tsp, tmp_log_idx_tsp,
                tmp_ignored_triggers, group_is_logging
@@ -108,11 +108,9 @@ SQL statement "SELECT emaj._add_tbl(tmp_schema, tmp_tbl_name, tmp_group, tmp_pri
                   )
           ORDER BY tmp_priority, tmp_schema, tmp_tbl_name
            ) AS t"
-PL/pgSQL function emaj._alter_exec(text[],bigint,text) line 153 at PERFORM
-SQL statement "SELECT emaj._alter_exec(v_groupNames, v_timeId, v_callingFunction)"
-PL/pgSQL function emaj._alter_groups(text[],boolean,text,text,bigint) line 47 at PERFORM
-SQL statement "SELECT v_nbRel FROM emaj._alter_groups(v_groups, TRUE, v_mark, 'IMPORT_GROUPS', v_timeId)"
-PL/pgSQL function emaj._import_groups_conf_exec(json,text[],text) line 57 at PERFORM
+PL/pgSQL function emaj._import_groups_conf_alter(text[],text,bigint) line 160 at PERFORM
+SQL statement "SELECT emaj._import_groups_conf_alter(v_groups, v_mark, v_timeId)"
+PL/pgSQL function emaj._import_groups_conf_exec(json,text[],text) line 79 at PERFORM
 PL/pgSQL function emaj._import_groups_conf(json,text[],boolean,text,text) line 81 at RETURN
 SQL statement "SELECT emaj._import_groups_conf(v_json, v_groups, v_allowGroupsUpdate, v_location, v_mark)"
 PL/pgSQL function emaj.emaj_import_groups_configuration(text,text[],boolean,text) line 29 at SQL statement
@@ -121,7 +119,7 @@ CONTEXT:  SQL statement "SELECT emaj._create_tbl(v_schema, v_table, v_group, v_p
                              v_timeId, v_groupIsRollbackable, v_groupIsLogging)"
 PL/pgSQL function emaj._add_tbl(text,text,text,integer,text,text,text[],boolean,bigint,text) line 23 at PERFORM
 SQL statement "SELECT emaj._add_tbl(tmp_schema, tmp_tbl_name, tmp_group, tmp_priority, tmp_log_dat_tsp,
-                          tmp_log_idx_tsp, tmp_ignored_triggers, group_is_logging, v_timeId, v_callingFunction)
+                          tmp_log_idx_tsp, tmp_ignored_triggers, group_is_logging, v_timeId, 'IMPORT_GROUPS')
       FROM (
         SELECT tmp_schema, tmp_tbl_name, tmp_group, tmp_priority, tmp_log_dat_tsp, tmp_log_idx_tsp,
                tmp_ignored_triggers, group_is_logging
@@ -138,11 +136,9 @@ SQL statement "SELECT emaj._add_tbl(tmp_schema, tmp_tbl_name, tmp_group, tmp_pri
                   )
           ORDER BY tmp_priority, tmp_schema, tmp_tbl_name
            ) AS t"
-PL/pgSQL function emaj._alter_exec(text[],bigint,text) line 153 at PERFORM
-SQL statement "SELECT emaj._alter_exec(v_groupNames, v_timeId, v_callingFunction)"
-PL/pgSQL function emaj._alter_groups(text[],boolean,text,text,bigint) line 47 at PERFORM
-SQL statement "SELECT v_nbRel FROM emaj._alter_groups(v_groups, TRUE, v_mark, 'IMPORT_GROUPS', v_timeId)"
-PL/pgSQL function emaj._import_groups_conf_exec(json,text[],text) line 57 at PERFORM
+PL/pgSQL function emaj._import_groups_conf_alter(text[],text,bigint) line 160 at PERFORM
+SQL statement "SELECT emaj._import_groups_conf_alter(v_groups, v_mark, v_timeId)"
+PL/pgSQL function emaj._import_groups_conf_exec(json,text[],text) line 79 at PERFORM
 PL/pgSQL function emaj._import_groups_conf(json,text[],boolean,text,text) line 81 at RETURN
 SQL statement "SELECT emaj._import_groups_conf(v_json, v_groups, v_allowGroupsUpdate, v_location, v_mark)"
 PL/pgSQL function emaj.emaj_import_groups_configuration(text,text[],boolean,text) line 29 at SQL statement
@@ -376,7 +372,7 @@ CONTEXT:  SQL statement "SELECT emaj._create_tbl(v_schema, v_table, v_group, v_p
                              v_timeId, v_groupIsRollbackable, v_groupIsLogging)"
 PL/pgSQL function emaj._add_tbl(text,text,text,integer,text,text,text[],boolean,bigint,text) line 23 at PERFORM
 SQL statement "SELECT emaj._add_tbl(tmp_schema, tmp_tbl_name, tmp_group, tmp_priority, tmp_log_dat_tsp,
-                          tmp_log_idx_tsp, tmp_ignored_triggers, group_is_logging, v_timeId, v_callingFunction)
+                          tmp_log_idx_tsp, tmp_ignored_triggers, group_is_logging, v_timeId, 'IMPORT_GROUPS')
       FROM (
         SELECT tmp_schema, tmp_tbl_name, tmp_group, tmp_priority, tmp_log_dat_tsp, tmp_log_idx_tsp,
                tmp_ignored_triggers, group_is_logging
@@ -393,11 +389,9 @@ SQL statement "SELECT emaj._add_tbl(tmp_schema, tmp_tbl_name, tmp_group, tmp_pri
                   )
           ORDER BY tmp_priority, tmp_schema, tmp_tbl_name
            ) AS t"
-PL/pgSQL function emaj._alter_exec(text[],bigint,text) line 153 at PERFORM
-SQL statement "SELECT emaj._alter_exec(v_groupNames, v_timeId, v_callingFunction)"
-PL/pgSQL function emaj._alter_groups(text[],boolean,text,text,bigint) line 47 at PERFORM
-SQL statement "SELECT v_nbRel FROM emaj._alter_groups(v_groups, TRUE, v_mark, 'IMPORT_GROUPS', v_timeId)"
-PL/pgSQL function emaj._import_groups_conf_exec(json,text[],text) line 57 at PERFORM
+PL/pgSQL function emaj._import_groups_conf_alter(text[],text,bigint) line 160 at PERFORM
+SQL statement "SELECT emaj._import_groups_conf_alter(v_groups, v_mark, v_timeId)"
+PL/pgSQL function emaj._import_groups_conf_exec(json,text[],text) line 79 at PERFORM
 PL/pgSQL function emaj._import_groups_conf(json,text[],boolean,text,text) line 81 at RETURN
 SQL statement "SELECT emaj._import_groups_conf(v_json, v_groups, v_allowGroupsUpdate, v_location, v_mark)"
 PL/pgSQL function emaj.emaj_import_groups_configuration(text,text[],boolean,text) line 29 at SQL statement

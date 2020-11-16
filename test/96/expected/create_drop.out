@@ -1216,10 +1216,10 @@ begin;
   select emaj.emaj_import_groups_configuration(:'EMAJTESTTMPDIR' || '/orig_groups_config_all.json', null, true);
 ERROR:  _create_log_schemas: The schema "emaj_myschema1" should not exist. Drop it manually.
 CONTEXT:  PL/pgSQL function emaj._create_log_schemas(text) line 23 at RAISE
-SQL statement "SELECT emaj._create_log_schemas(v_callingFunction)"
-PL/pgSQL function emaj._alter_groups(text[],boolean,text,text,bigint) line 43 at PERFORM
-SQL statement "SELECT v_nbRel FROM emaj._alter_groups(v_groups, TRUE, v_mark, 'IMPORT_GROUPS', v_timeId)"
-PL/pgSQL function emaj._import_groups_conf_exec(json,text[],text) line 57 at PERFORM
+SQL statement "SELECT emaj._create_log_schemas('IMPORT_GROUPS')"
+PL/pgSQL function emaj._import_groups_conf_alter(text[],text,bigint) line 14 at PERFORM
+SQL statement "SELECT emaj._import_groups_conf_alter(v_groups, v_mark, v_timeId)"
+PL/pgSQL function emaj._import_groups_conf_exec(json,text[],text) line 79 at PERFORM
 PL/pgSQL function emaj._import_groups_conf(json,text[],boolean,text,text) line 81 at RETURN
 SQL statement "SELECT emaj._import_groups_conf(v_json, v_groups, v_allowGroupsUpdate, v_location, v_mark)"
 PL/pgSQL function emaj.emaj_import_groups_configuration(text,text[],boolean,text) line 29 at SQL statement
