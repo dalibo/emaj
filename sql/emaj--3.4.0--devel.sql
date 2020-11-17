@@ -4196,18 +4196,19 @@ $_gen_sql_tbl$
     END IF;
 -- now scan the log table to process all statement types at once
     EXECUTE format('INSERT INTO emaj_temp_script '
-                   'SELECT o.emaj_gid, 0, o.emaj_txid, CASE '
+                   'SELECT o.emaj_gid, 0, o.emaj_txid,'
+                   '  CASE'
                    '    WHEN o.emaj_verb = ''INS'' THEN %s'
                    '    WHEN o.emaj_verb = ''UPD'' AND o.emaj_tuple = ''OLD'' THEN %s'
                    '    WHEN o.emaj_verb = ''DEL'' THEN %s'
                    '    WHEN o.emaj_verb = ''TRU'' THEN %s'
-                   '  END '
+                   '  END'
                    '  FROM %s o'
                    '       LEFT OUTER JOIN %s n ON n.emaj_gid = o.emaj_gid'
-                   '                          AND (n.emaj_verb = ''UPD'' AND n.emaj_tuple = ''NEW'') '
-                   ' WHERE NOT (o.emaj_verb = ''UPD'' AND o.emaj_tuple = ''NEW'')'
-                   '   AND NOT (o.emaj_verb = ''TRU'' AND o.emaj_tuple IS NOT NULL)'
-                   '   AND %s',
+                   '                          AND (n.emaj_verb = ''UPD'' AND n.emaj_tuple = ''NEW'')'
+                   '  WHERE NOT (o.emaj_verb = ''UPD'' AND o.emaj_tuple = ''NEW'')'
+                   '    AND NOT (o.emaj_verb = ''TRU'' AND o.emaj_tuple IS NOT NULL)'
+                   '    AND %s',
                    v_rqInsert, v_rqUpdate, v_rqDelete, v_rqTruncate, v_logTableName, v_logTableName, v_conditions);
     GET DIAGNOSTICS v_nbSQL = ROW_COUNT;
     RETURN v_nbSQL;
@@ -4834,8 +4835,10 @@ $_drop_group$
         WHERE rel_group = v_groupName
         ORDER BY rel_priority, rel_schema, rel_tblseq, rel_time_range
     LOOP
-        PERFORM CASE WHEN r_rel.rel_kind = 'r' THEN emaj._drop_tbl(r_rel, v_timeId)
-                     WHEN r_rel.rel_kind = 'S' THEN emaj._drop_seq(r_rel, v_timeId) END;
+      PERFORM CASE r_rel.rel_kind
+                WHEN 'r' THEN emaj._drop_tbl(r_rel, v_timeId)
+                WHEN 'S' THEN emaj._drop_seq(r_rel, v_timeId)
+              END;
     END LOOP;
 -- drop the E-Maj log schemas that are now useless (i.e. not used by any other created group)
     PERFORM emaj._drop_log_schemas(CASE WHEN v_isForced THEN 'FORCE_DROP_GROUP' ELSE 'DROP_GROUP' END, v_isForced);
@@ -7322,7 +7325,7 @@ $_rlbk_planning$
     INSERT INTO emaj.emaj_rlbk_plan (rlbp_rlbk_id, rlbp_step, rlbp_schema, rlbp_table, rlbp_object, rlbp_object_def, rlbp_batch_number,
                                      rlbp_estimated_duration, rlbp_estimate_method)
       SELECT v_rlbkId, 'ENA_APP_TRG', rlbp_schema, rlbp_table, rlbp_object,
-             CASE WHEN tgenabled = 'A' THEN 'ALWAYS' WHEN tgenabled = 'R' THEN 'REPLICA' ELSE '' END,
+             CASE tgenabled WHEN 'A' THEN 'ALWAYS' WHEN 'R' THEN 'REPLICA' ELSE '' END,
              rlbp_batch_number, v_estimDuration, v_estimMethod
         FROM emaj.emaj_rlbk_plan
              JOIN pg_catalog.pg_class ON (relname = rlbp_table)

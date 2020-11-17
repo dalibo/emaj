@@ -3720,8 +3720,10 @@ select emaj.emaj_drop_group('myGroup2');
 NOTICE:  table "mytbl1_log_2" does not exist, skipping
 CONTEXT:  SQL statement "DROP TABLE IF EXISTS emaj_myschema2.mytbl1_log_2 CASCADE"
 PL/pgSQL function emaj._drop_tbl(emaj.emaj_relation,bigint) line 41 at EXECUTE
-SQL statement "SELECT CASE WHEN r_rel.rel_kind = 'r' THEN emaj._drop_tbl(r_rel, v_timeId)
-                     WHEN r_rel.rel_kind = 'S' THEN emaj._drop_seq(r_rel, v_timeId) END"
+SQL statement "SELECT CASE r_rel.rel_kind
+                WHEN 'r' THEN emaj._drop_tbl(r_rel, v_timeId)
+                WHEN 'S' THEN emaj._drop_seq(r_rel, v_timeId)
+              END"
 PL/pgSQL function emaj._drop_group(text,boolean) line 33 at PERFORM
 SQL statement "SELECT emaj._drop_group(v_groupName, FALSE)"
 PL/pgSQL function emaj.emaj_drop_group(text) line 14 at SQL statement
