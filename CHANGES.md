@@ -24,6 +24,8 @@ E-Maj - Change log
     are imported.
   * All E-Maj log objects are now owned by the emaj_adm role (instead of a
     superuser).
+  * Use "p_" instead of "v_" as prefix for functions parameters names. This
+    may impact user's scripts.
   * Coding style improvements.
   * Minor code improvements.
 

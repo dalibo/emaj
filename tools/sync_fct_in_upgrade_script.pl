@@ -11,7 +11,7 @@
 #     --<begin_functions>
 #     --<end_functions>
 # In the source script, it requires that:
-# - all input variables names used in functions signature start with either v_ or r_
+# - the functions parameters name must start with p_, v_ or r_
 # - the event triggers and related functions must be set at the end of the script.
 
 use warnings; use strict;
@@ -136,11 +136,9 @@ use warnings; use strict;
 #
   print ("Reading the existing upgrade script ($ficUpgrade).\n");
   open (FICUPG,$ficUpgrade) || die ("Error in opening $ficUpgrade file\n");
-
   $status = 0;
   while (<FICUPG>){
     $line = $_;
-
     if ($status == 0) {
       # detect existing tables that are dropped (if functions use their type as parameter, these functions will need to be recreated later)
       if ($line =~ /DROP TABLE (emaj.emaj_.*?)(\s|;)/) {
@@ -149,20 +147,16 @@ use warnings; use strict;
       # aggregate the code for the header part of the script (including the begin_functions pattern)
       $upgradeScriptHeader .= $line;
     }
-
     # detect the beginning of the function definition part
     $status = 1 if ($line =~ /^--<begin_functions>/);
-
     # detect the end of the function definition part
     $status = 2 if ($line =~ /^--<end_functions>/);
-
     # aggregate the code for the footer part of the script (including the end_functions pattern)
     $upgradeScriptFooter .= $line if ($status == 2);
   }
   if ($status != 2) {
     die "Error in pattern detection in the upgrade script (status=$status).\n"
   }
-
   close (FICUPG);
 
 #
@@ -171,10 +165,8 @@ use warnings; use strict;
   print ("Reading the source of the previous version ($ficPrevSrc)\n");
   open (FICPREVSRC,$ficPrevSrc) || die ("Error in opening $ficPrevSrc file\n");
   $status = 0;
-
   while (<FICPREVSRC>){
     $line = $_;
-
     # Stop the analysis of the source at event trigger creation
     # (As the few functions created in this section depends on the postgres version, the processing would be too complex)
     # TODO: remove the next line once event triggers will be supported by all postgres version compatible with E-Maj
@@ -221,7 +213,6 @@ use warnings; use strict;
 
   while (<FICCURRSRC>){
     $line = $_;
-
     # Stop the analysis of the source at event trigger creation
     # (As the few functions created in this section depends on the postgres version, the processing would be too complex)
     # TODO: remove the next line once event triggers will be supported by all postgres version compatible with E-Maj
@@ -323,7 +314,7 @@ use warnings; use strict;
       $nbFctUpgrade++;
       # if a comment also exists, write it
       # remove variable names from the function signature
-      $shortSignature = $fnctSignature; $shortSignature =~ s/(V|R)_\S*\s//g;
+      $shortSignature = $fnctSignature; $shortSignature =~ s/(P|V|R)_\S*\s//g;
       # remove also the output variables (the intermediate ones and then the last of the function signature)
       $shortSignature =~ s/,\s*OUT\s+(.*?),/,/g; $shortSignature =~ s/,\s*OUT\s+(.*)\)/\)/;
 

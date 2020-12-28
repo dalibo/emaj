@@ -87,11 +87,11 @@ select emaj.emaj_create_group('myGroup1');
 SET client_min_messages TO WARNING;
 select emaj.emaj_import_groups_configuration(:'EMAJTESTTMPDIR' || '/../all_groups_config.json', array['myGroup1','myGroup2','emptyGroup','myGroup4'], true);
 WARNING:  _create_tbl: The table "myschema1.mytbl2" has triggers that will be automatically disabled during E-Maj rollback operations (mytbl2trg1, mytbl2trg2). Use the emaj_modify_table() function to change this behaviour.
-CONTEXT:  SQL statement "SELECT emaj._create_tbl(v_schema, v_table, v_group, v_priority, v_logDatTsp, v_logIdxTsp, v_ignoredTriggers,
-                             v_timeId, v_groupIsRollbackable, v_groupIsLogging)"
+CONTEXT:  SQL statement "SELECT emaj._create_tbl(p_schema, p_table, p_group, p_priority, p_logDatTsp, p_logIdxTsp, p_ignoredTriggers,
+                             p_timeId, v_groupIsRollbackable, p_groupIsLogging)"
 PL/pgSQL function emaj._add_tbl(text,text,text,integer,text,text,text[],boolean,bigint,text) line 23 at PERFORM
 SQL statement "SELECT emaj._add_tbl(tmp_schema, tmp_tbl_name, tmp_group, tmp_priority, tmp_log_dat_tsp,
-                          tmp_log_idx_tsp, tmp_ignored_triggers, group_is_logging, v_timeId, 'IMPORT_GROUPS')
+                          tmp_log_idx_tsp, tmp_ignored_triggers, group_is_logging, p_timeId, 'IMPORT_GROUPS')
       FROM (
         SELECT tmp_schema, tmp_tbl_name, tmp_group, tmp_priority, tmp_log_dat_tsp, tmp_log_idx_tsp,
                tmp_ignored_triggers, group_is_logging
@@ -104,22 +104,22 @@ SQL statement "SELECT emaj._add_tbl(tmp_schema, tmp_tbl_name, tmp_group, tmp_pri
                        AND rel_tblseq = tmp_tbl_name
                        AND upper_inf(rel_time_range)
                        AND rel_kind = 'r'
-                       AND rel_group = ANY (v_groupNames)
+                       AND rel_group = ANY (p_groupNames)
                   )
           ORDER BY tmp_priority, tmp_schema, tmp_tbl_name
            ) AS t"
 PL/pgSQL function emaj._import_groups_conf_alter(text[],text,bigint) line 160 at PERFORM
-SQL statement "SELECT emaj._import_groups_conf_alter(v_groups, v_mark, v_timeId)"
+SQL statement "SELECT emaj._import_groups_conf_alter(p_groups, p_mark, v_timeId)"
 PL/pgSQL function emaj._import_groups_conf_exec(json,text[],text) line 79 at PERFORM
 PL/pgSQL function emaj._import_groups_conf(json,text[],boolean,text,text) line 81 at RETURN
-SQL statement "SELECT emaj._import_groups_conf(v_json, v_groups, v_allowGroupsUpdate, v_location, v_mark)"
+SQL statement "SELECT emaj._import_groups_conf(v_json, p_groups, p_allowGroupsUpdate, p_location, p_mark)"
 PL/pgSQL function emaj.emaj_import_groups_configuration(text,text[],boolean,text) line 29 at SQL statement
 WARNING:  _create_tbl: The table "myschema4.mytblm" has triggers that will be automatically disabled during E-Maj rollback operations (mytblm_insert_trigger). Use the emaj_modify_table() function to change this behaviour.
-CONTEXT:  SQL statement "SELECT emaj._create_tbl(v_schema, v_table, v_group, v_priority, v_logDatTsp, v_logIdxTsp, v_ignoredTriggers,
-                             v_timeId, v_groupIsRollbackable, v_groupIsLogging)"
+CONTEXT:  SQL statement "SELECT emaj._create_tbl(p_schema, p_table, p_group, p_priority, p_logDatTsp, p_logIdxTsp, p_ignoredTriggers,
+                             p_timeId, v_groupIsRollbackable, p_groupIsLogging)"
 PL/pgSQL function emaj._add_tbl(text,text,text,integer,text,text,text[],boolean,bigint,text) line 23 at PERFORM
 SQL statement "SELECT emaj._add_tbl(tmp_schema, tmp_tbl_name, tmp_group, tmp_priority, tmp_log_dat_tsp,
-                          tmp_log_idx_tsp, tmp_ignored_triggers, group_is_logging, v_timeId, 'IMPORT_GROUPS')
+                          tmp_log_idx_tsp, tmp_ignored_triggers, group_is_logging, p_timeId, 'IMPORT_GROUPS')
       FROM (
         SELECT tmp_schema, tmp_tbl_name, tmp_group, tmp_priority, tmp_log_dat_tsp, tmp_log_idx_tsp,
                tmp_ignored_triggers, group_is_logging
@@ -132,15 +132,15 @@ SQL statement "SELECT emaj._add_tbl(tmp_schema, tmp_tbl_name, tmp_group, tmp_pri
                        AND rel_tblseq = tmp_tbl_name
                        AND upper_inf(rel_time_range)
                        AND rel_kind = 'r'
-                       AND rel_group = ANY (v_groupNames)
+                       AND rel_group = ANY (p_groupNames)
                   )
           ORDER BY tmp_priority, tmp_schema, tmp_tbl_name
            ) AS t"
 PL/pgSQL function emaj._import_groups_conf_alter(text[],text,bigint) line 160 at PERFORM
-SQL statement "SELECT emaj._import_groups_conf_alter(v_groups, v_mark, v_timeId)"
+SQL statement "SELECT emaj._import_groups_conf_alter(p_groups, p_mark, v_timeId)"
 PL/pgSQL function emaj._import_groups_conf_exec(json,text[],text) line 79 at PERFORM
 PL/pgSQL function emaj._import_groups_conf(json,text[],boolean,text,text) line 81 at RETURN
-SQL statement "SELECT emaj._import_groups_conf(v_json, v_groups, v_allowGroupsUpdate, v_location, v_mark)"
+SQL statement "SELECT emaj._import_groups_conf(v_json, p_groups, p_allowGroupsUpdate, p_location, p_mark)"
 PL/pgSQL function emaj.emaj_import_groups_configuration(text,text[],boolean,text) line 29 at SQL statement
  emaj_import_groups_configuration 
 ----------------------------------
@@ -162,7 +162,7 @@ CONTEXT:  PL/pgSQL function emaj.emaj_remove_table(text,text,text) line 6 at RET
 -- bad mark
 select emaj.emaj_remove_table('myschema1','mytbl1','EMAJ_LAST_MARK');
 ERROR:  _check_new_mark: "EMAJ_LAST_MARK" is not an allowed name for a new mark.
-CONTEXT:  SQL statement "SELECT emaj._check_new_mark(v_loggingGroups, v_mark)"
+CONTEXT:  SQL statement "SELECT emaj._check_new_mark(v_loggingGroups, p_mark)"
 PL/pgSQL function emaj._remove_tables(text,text[],text,boolean,boolean) line 70 at SQL statement
 PL/pgSQL function emaj.emaj_remove_table(text,text,text) line 6 at RETURN
 -- ok
@@ -267,7 +267,7 @@ CONTEXT:  PL/pgSQL function emaj.emaj_remove_sequence(text,text,text) line 6 at 
 -- bad mark
 select emaj.emaj_remove_sequence('myschema2','myseq1','EMAJ_LAST_MARK');
 ERROR:  _check_new_mark: "EMAJ_LAST_MARK" is not an allowed name for a new mark.
-CONTEXT:  SQL statement "SELECT emaj._check_new_mark(v_loggingGroups, v_mark)"
+CONTEXT:  SQL statement "SELECT emaj._check_new_mark(v_loggingGroups, p_mark)"
 PL/pgSQL function emaj._remove_sequences(text,text[],text,boolean,boolean) line 73 at SQL statement
 PL/pgSQL function emaj.emaj_remove_sequence(text,text,text) line 6 at RETURN
 -- ok
@@ -368,11 +368,11 @@ select group_last_alter_time_id, group_nb_table, group_nb_sequence from emaj.ema
 SET client_min_messages TO WARNING;
 select emaj.emaj_import_groups_configuration(:'EMAJTESTTMPDIR' || '/../all_groups_config.json', array['myGroup1','myGroup2','emptyGroup','myGroup4'], true);
 WARNING:  _create_tbl: The table "myschema1.mytbl2" has triggers that will be automatically disabled during E-Maj rollback operations (mytbl2trg1, mytbl2trg2). Use the emaj_modify_table() function to change this behaviour.
-CONTEXT:  SQL statement "SELECT emaj._create_tbl(v_schema, v_table, v_group, v_priority, v_logDatTsp, v_logIdxTsp, v_ignoredTriggers,
-                             v_timeId, v_groupIsRollbackable, v_groupIsLogging)"
+CONTEXT:  SQL statement "SELECT emaj._create_tbl(p_schema, p_table, p_group, p_priority, p_logDatTsp, p_logIdxTsp, p_ignoredTriggers,
+                             p_timeId, v_groupIsRollbackable, p_groupIsLogging)"
 PL/pgSQL function emaj._add_tbl(text,text,text,integer,text,text,text[],boolean,bigint,text) line 23 at PERFORM
 SQL statement "SELECT emaj._add_tbl(tmp_schema, tmp_tbl_name, tmp_group, tmp_priority, tmp_log_dat_tsp,
-                          tmp_log_idx_tsp, tmp_ignored_triggers, group_is_logging, v_timeId, 'IMPORT_GROUPS')
+                          tmp_log_idx_tsp, tmp_ignored_triggers, group_is_logging, p_timeId, 'IMPORT_GROUPS')
       FROM (
         SELECT tmp_schema, tmp_tbl_name, tmp_group, tmp_priority, tmp_log_dat_tsp, tmp_log_idx_tsp,
                tmp_ignored_triggers, group_is_logging
@@ -385,15 +385,15 @@ SQL statement "SELECT emaj._add_tbl(tmp_schema, tmp_tbl_name, tmp_group, tmp_pri
                        AND rel_tblseq = tmp_tbl_name
                        AND upper_inf(rel_time_range)
                        AND rel_kind = 'r'
-                       AND rel_group = ANY (v_groupNames)
+                       AND rel_group = ANY (p_groupNames)
                   )
           ORDER BY tmp_priority, tmp_schema, tmp_tbl_name
            ) AS t"
 PL/pgSQL function emaj._import_groups_conf_alter(text[],text,bigint) line 160 at PERFORM
-SQL statement "SELECT emaj._import_groups_conf_alter(v_groups, v_mark, v_timeId)"
+SQL statement "SELECT emaj._import_groups_conf_alter(p_groups, p_mark, v_timeId)"
 PL/pgSQL function emaj._import_groups_conf_exec(json,text[],text) line 79 at PERFORM
 PL/pgSQL function emaj._import_groups_conf(json,text[],boolean,text,text) line 81 at RETURN
-SQL statement "SELECT emaj._import_groups_conf(v_json, v_groups, v_allowGroupsUpdate, v_location, v_mark)"
+SQL statement "SELECT emaj._import_groups_conf(v_json, p_groups, p_allowGroupsUpdate, p_location, p_mark)"
 PL/pgSQL function emaj.emaj_import_groups_configuration(text,text[],boolean,text) line 29 at SQL statement
  emaj_import_groups_configuration 
 ----------------------------------
@@ -651,13 +651,13 @@ CONTEXT:  PL/pgSQL function emaj.emaj_move_table(text,text,text,text) line 6 at 
 -- bad new group
 select emaj.emaj_move_table('myschema1','mytbl1','dummyGroup');
 ERROR:  _check_group_names: The group "dummyGroup" does not exist.
-CONTEXT:  SQL statement "SELECT emaj._check_group_names(v_groupNames := ARRAY[v_newGroup], v_mayBeNull := FALSE, v_lockGroups := TRUE, v_checkList := '')"
+CONTEXT:  SQL statement "SELECT emaj._check_group_names(p_groupNames := ARRAY[p_newGroup], p_mayBeNull := FALSE, p_lockGroups := TRUE, p_checkList := '')"
 PL/pgSQL function emaj._move_tables(text,text[],text,text,boolean,boolean) line 26 at PERFORM
 PL/pgSQL function emaj.emaj_move_table(text,text,text,text) line 6 at RETURN
 -- bad mark
 select emaj.emaj_move_table('myschema1','mytbl1','myGroup2','EMAJ_LAST_MARK');
 ERROR:  _check_new_mark: "EMAJ_LAST_MARK" is not an allowed name for a new mark.
-CONTEXT:  SQL statement "SELECT emaj._check_new_mark(v_loggingGroups, v_mark)"
+CONTEXT:  SQL statement "SELECT emaj._check_new_mark(v_loggingGroups, p_mark)"
 PL/pgSQL function emaj._move_tables(text,text[],text,text,boolean,boolean) line 89 at SQL statement
 PL/pgSQL function emaj.emaj_move_table(text,text,text,text) line 6 at RETURN
 -- move to the same group
@@ -802,13 +802,13 @@ CONTEXT:  PL/pgSQL function emaj.emaj_move_sequence(text,text,text,text) line 6 
 -- bad new group
 select emaj.emaj_move_sequence('myschema2','myseq1','dummyGroup');
 ERROR:  _check_group_names: The group "dummyGroup" does not exist.
-CONTEXT:  SQL statement "SELECT emaj._check_group_names(v_groupNames := ARRAY[v_newGroup], v_mayBeNull := FALSE, v_lockGroups := TRUE, v_checkList := '')"
+CONTEXT:  SQL statement "SELECT emaj._check_group_names(p_groupNames := ARRAY[p_newGroup], p_mayBeNull := FALSE, p_lockGroups := TRUE, p_checkList := '')"
 PL/pgSQL function emaj._move_sequences(text,text[],text,text,boolean,boolean) line 26 at PERFORM
 PL/pgSQL function emaj.emaj_move_sequence(text,text,text,text) line 6 at RETURN
 -- bad mark
 select emaj.emaj_move_sequence('myschema2','myseq1','myGroup1','EMAJ_LAST_MARK');
 ERROR:  _check_new_mark: "EMAJ_LAST_MARK" is not an allowed name for a new mark.
-CONTEXT:  SQL statement "SELECT emaj._check_new_mark(v_loggingGroups, v_mark)"
+CONTEXT:  SQL statement "SELECT emaj._check_new_mark(v_loggingGroups, p_mark)"
 PL/pgSQL function emaj._move_sequences(text,text[],text,text,boolean,boolean) line 92 at SQL statement
 PL/pgSQL function emaj.emaj_move_sequence(text,text,text,text) line 6 at RETURN
 -- move to the same group
@@ -1040,31 +1040,31 @@ CONTEXT:  PL/pgSQL function emaj.emaj_modify_table(text,text,jsonb,text) line 7 
 -- invalid priority
 select emaj.emaj_modify_table('myschema1','mytbl1','{"priority":"not_numeric"}'::jsonb);
 ERROR:  _check_json_table_properties: the "priority" property must be numeric.
-CONTEXT:  SQL statement "SELECT *                                                                                                     FROM emaj._check_json_table_properties(v_changedProperties)"
-PL/pgSQL function emaj._modify_tables(text,text[],jsonb,text,boolean,boolean) line 71 at SQL statement
+CONTEXT:  SQL statement "SELECT *                                                                                                     FROM emaj._check_json_table_properties(p_changedProperties)"
+PL/pgSQL function emaj._modify_tables(text,text[],jsonb,text,boolean,boolean) line 70 at SQL statement
 PL/pgSQL function emaj.emaj_modify_table(text,text,jsonb,text) line 7 at RETURN
 -- invalid tablespace
 select emaj.emaj_modify_table('myschema1','mytbl1','{"log_data_tablespace":"dummytsp"}'::jsonb);
 ERROR:  _check_json_table_properties: the log data tablespace "dummytsp" does not exists.
-CONTEXT:  SQL statement "SELECT *                                                                                                     FROM emaj._check_json_table_properties(v_changedProperties)"
-PL/pgSQL function emaj._modify_tables(text,text[],jsonb,text,boolean,boolean) line 71 at SQL statement
+CONTEXT:  SQL statement "SELECT *                                                                                                     FROM emaj._check_json_table_properties(p_changedProperties)"
+PL/pgSQL function emaj._modify_tables(text,text[],jsonb,text,boolean,boolean) line 70 at SQL statement
 PL/pgSQL function emaj.emaj_modify_table(text,text,jsonb,text) line 7 at RETURN
 select emaj.emaj_modify_table('myschema1','mytbl1','{"log_index_tablespace":"dummytsp"}'::jsonb);
 ERROR:  _check_json_table_properties: the log index tablespace "dummytsp" does not exists.
-CONTEXT:  SQL statement "SELECT *                                                                                                     FROM emaj._check_json_table_properties(v_changedProperties)"
-PL/pgSQL function emaj._modify_tables(text,text[],jsonb,text,boolean,boolean) line 71 at SQL statement
+CONTEXT:  SQL statement "SELECT *                                                                                                     FROM emaj._check_json_table_properties(p_changedProperties)"
+PL/pgSQL function emaj._modify_tables(text,text[],jsonb,text,boolean,boolean) line 70 at SQL statement
 PL/pgSQL function emaj.emaj_modify_table(text,text,jsonb,text) line 7 at RETURN
 -- unknown property
 select emaj.emaj_modify_table('myschema1','mytbl1','{"unknown_property":null}'::jsonb);
 ERROR:  _check_json_table_properties: properties "{"unknown_property": null}" are unknown.
-CONTEXT:  SQL statement "SELECT *                                                                                                     FROM emaj._check_json_table_properties(v_changedProperties)"
-PL/pgSQL function emaj._modify_tables(text,text[],jsonb,text,boolean,boolean) line 71 at SQL statement
+CONTEXT:  SQL statement "SELECT *                                                                                                     FROM emaj._check_json_table_properties(p_changedProperties)"
+PL/pgSQL function emaj._modify_tables(text,text[],jsonb,text,boolean,boolean) line 70 at SQL statement
 PL/pgSQL function emaj.emaj_modify_table(text,text,jsonb,text) line 7 at RETURN
 -- bad mark
 select emaj.emaj_modify_table('myschema1','mytbl1',null,'EMAJ_LAST_MARK');
 ERROR:  _check_new_mark: "EMAJ_LAST_MARK" is not an allowed name for a new mark.
-CONTEXT:  SQL statement "SELECT emaj._check_new_mark(v_loggingGroups, v_mark)"
-PL/pgSQL function emaj._modify_tables(text,text[],jsonb,text,boolean,boolean) line 94 at SQL statement
+CONTEXT:  SQL statement "SELECT emaj._check_new_mark(v_loggingGroups, p_mark)"
+PL/pgSQL function emaj._modify_tables(text,text[],jsonb,text,boolean,boolean) line 93 at SQL statement
 PL/pgSQL function emaj.emaj_modify_table(text,text,jsonb,text) line 7 at RETURN
 -- ok
 -- no property

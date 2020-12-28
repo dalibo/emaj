@@ -79,8 +79,8 @@ Le codage du script emaj- -devel.sql respecte les règles suivantes :
 * l’indentation est de 2 caractères espace,
 * les lignes ne doivent pas comporter de caractère de tabulation, ne doivent pas dépasser 140 caractères et ne doivent pas se terminer par des espaces,
 * dans la structure des fonctions, les délimiteurs du code doivent reprendre le nom de la fonction entouré par un caractère $ (ou *$do$* pour les blocs de code)
-* les noms de variables sont préfixés par *v_* pour les variables simples ou *r_* pour les variables de type *RECORD*,
-* le code doit être compatible avec toutes les versions de PostgreSQL supportées par la version E-Maj courante. Quand cela s’avére strictement nécessaire, le code peut être différencié en fonction de la version de PostgreSQL.
+* les noms de variables sont préfixés par *v_* pour les variables simples, *p_* pour les paramètres des fonctions ou *r_* pour les variables de type *RECORD*,
+* le code doit être compatible avec toutes les versions de PostgreSQL supportées par la version E-Maj courante. Quand cela s’avère strictement nécessaire, le code peut être différencié en fonction de la version de PostgreSQL.
 
 Un script perl, *tools/check_code.pl* permet d’effectuer quelques contrôles sur le formatage du script de création de l’extension. Il permet aussi de détecter les variables inutilisées. Ce script est appelé directement dans les scénarios de tests de non régression.
 

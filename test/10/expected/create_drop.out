@@ -79,12 +79,12 @@ CONTEXT:  PL/pgSQL function emaj.emaj_create_group(text,boolean) line 22 at RAIS
 select emaj.emaj_comment_group(NULL,NULL);
 ERROR:  _check_group_names: No group to process.
 CONTEXT:  PL/pgSQL function emaj._check_group_names(text[],boolean,boolean,text) line 30 at RAISE
-SQL statement "SELECT emaj._check_group_names(v_groupNames := ARRAY[v_groupName], v_mayBeNull := FALSE, v_lockGroups := TRUE, v_checkList := '')"
+SQL statement "SELECT emaj._check_group_names(p_groupNames := ARRAY[p_groupName], p_mayBeNull := FALSE, p_lockGroups := TRUE, p_checkList := '')"
 PL/pgSQL function emaj.emaj_comment_group(text,text) line 7 at PERFORM
 select emaj.emaj_comment_group('unknownGroup',NULL);
 ERROR:  _check_group_names: The group "unknownGroup" does not exist.
 CONTEXT:  PL/pgSQL function emaj._check_group_names(text[],boolean,boolean,text) line 42 at RAISE
-SQL statement "SELECT emaj._check_group_names(v_groupNames := ARRAY[v_groupName], v_mayBeNull := FALSE, v_lockGroups := TRUE, v_checkList := '')"
+SQL statement "SELECT emaj._check_group_names(p_groupNames := ARRAY[p_groupName], p_mayBeNull := FALSE, p_lockGroups := TRUE, p_checkList := '')"
 PL/pgSQL function emaj.emaj_comment_group(text,text) line 7 at PERFORM
 -- should be OK
 select emaj.emaj_comment_group('myGroup1','a first comment for group #1');
@@ -131,7 +131,7 @@ select group_name, group_comment from emaj.emaj_group where group_name = 'myGrou
 select emaj.emaj_assign_table('myschema1','mytbl1','dummyGroup');
 ERROR:  _check_group_names: The group "dummyGroup" does not exist.
 CONTEXT:  PL/pgSQL function emaj._check_group_names(text[],boolean,boolean,text) line 42 at RAISE
-SQL statement "SELECT emaj._check_group_names(v_groupNames := ARRAY[v_group], v_mayBeNull := FALSE, v_lockGroups := TRUE, v_checkList := '')"
+SQL statement "SELECT emaj._check_group_names(p_groupNames := ARRAY[p_group], p_mayBeNull := FALSE, p_lockGroups := TRUE, p_checkList := '')"
 PL/pgSQL function emaj._assign_tables(text,text[],text,jsonb,text,boolean,boolean) line 35 at PERFORM
 PL/pgSQL function emaj.emaj_assign_table(text,text,text,jsonb,text) line 7 at RETURN
 -- bad schema
@@ -189,51 +189,51 @@ PL/pgSQL function emaj.emaj_assign_table(text,text,text,jsonb,text) line 7 at RE
 select emaj.emaj_assign_table('myschema1','mytbl1','myGroup1','{"priority":"not_numeric"}'::jsonb);
 ERROR:  _check_json_table_properties: the "priority" property must be numeric.
 CONTEXT:  PL/pgSQL function emaj._check_json_table_properties(jsonb) line 18 at RAISE
-SQL statement "SELECT *                                                                                            FROM emaj._check_json_table_properties(v_properties)"
+SQL statement "SELECT *                                                                                            FROM emaj._check_json_table_properties(p_properties)"
 PL/pgSQL function emaj._assign_tables(text,text[],text,jsonb,text,boolean,boolean) line 226 at SQL statement
 PL/pgSQL function emaj.emaj_assign_table(text,text,text,jsonb,text) line 7 at RETURN
 -- invalid tablespace
 select emaj.emaj_assign_table('myschema1','mytbl1','myGroup1','{"log_data_tablespace":1}'::jsonb);
 ERROR:  _check_json_table_properties: the log data tablespace must be a string.
 CONTEXT:  PL/pgSQL function emaj._check_json_table_properties(jsonb) line 33 at RAISE
-SQL statement "SELECT *                                                                                            FROM emaj._check_json_table_properties(v_properties)"
+SQL statement "SELECT *                                                                                            FROM emaj._check_json_table_properties(p_properties)"
 PL/pgSQL function emaj._assign_tables(text,text[],text,jsonb,text,boolean,boolean) line 226 at SQL statement
 PL/pgSQL function emaj.emaj_assign_table(text,text,text,jsonb,text) line 7 at RETURN
 select emaj.emaj_assign_table('myschema1','mytbl1','myGroup1','{"log_data_tablespace":"dummytsp"}'::jsonb);
 ERROR:  _check_json_table_properties: the log data tablespace "dummytsp" does not exists.
 CONTEXT:  PL/pgSQL function emaj._check_json_table_properties(jsonb) line 30 at RAISE
-SQL statement "SELECT *                                                                                            FROM emaj._check_json_table_properties(v_properties)"
+SQL statement "SELECT *                                                                                            FROM emaj._check_json_table_properties(p_properties)"
 PL/pgSQL function emaj._assign_tables(text,text[],text,jsonb,text,boolean,boolean) line 226 at SQL statement
 PL/pgSQL function emaj.emaj_assign_table(text,text,text,jsonb,text) line 7 at RETURN
 select emaj.emaj_assign_table('myschema1','mytbl1','myGroup1','{"log_index_tablespace":1}'::jsonb);
 ERROR:  _check_json_table_properties: the log index tablespace must be a string.
 CONTEXT:  PL/pgSQL function emaj._check_json_table_properties(jsonb) line 47 at RAISE
-SQL statement "SELECT *                                                                                            FROM emaj._check_json_table_properties(v_properties)"
+SQL statement "SELECT *                                                                                            FROM emaj._check_json_table_properties(p_properties)"
 PL/pgSQL function emaj._assign_tables(text,text[],text,jsonb,text,boolean,boolean) line 226 at SQL statement
 PL/pgSQL function emaj.emaj_assign_table(text,text,text,jsonb,text) line 7 at RETURN
 select emaj.emaj_assign_table('myschema1','mytbl1','myGroup1','{"log_index_tablespace":"dummytsp"}'::jsonb);
 ERROR:  _check_json_table_properties: the log index tablespace "dummytsp" does not exists.
 CONTEXT:  PL/pgSQL function emaj._check_json_table_properties(jsonb) line 44 at RAISE
-SQL statement "SELECT *                                                                                            FROM emaj._check_json_table_properties(v_properties)"
+SQL statement "SELECT *                                                                                            FROM emaj._check_json_table_properties(p_properties)"
 PL/pgSQL function emaj._assign_tables(text,text[],text,jsonb,text,boolean,boolean) line 226 at SQL statement
 PL/pgSQL function emaj.emaj_assign_table(text,text,text,jsonb,text) line 7 at RETURN
 -- invalid ignored_triggers
 select emaj.emaj_assign_table('myschema1','mytbl1','myGroup1','{"ignored_triggers":1}'::jsonb);
 ERROR:  _check_json_table_properties: the "ignored_triggers" property must be an array or a string.
 CONTEXT:  PL/pgSQL function emaj._check_json_table_properties(jsonb) line 68 at RAISE
-SQL statement "SELECT *                                                                                            FROM emaj._check_json_table_properties(v_properties)"
+SQL statement "SELECT *                                                                                            FROM emaj._check_json_table_properties(p_properties)"
 PL/pgSQL function emaj._assign_tables(text,text[],text,jsonb,text,boolean,boolean) line 226 at SQL statement
 PL/pgSQL function emaj.emaj_assign_table(text,text,text,jsonb,text) line 7 at RETURN
 select emaj.emaj_assign_table('myschema1','mytbl1','myGroup1','{"ignored_triggers":"emaj_log_trg"}'::jsonb);
 ERROR:  _check_json_table_properties: E-Maj triggers are not allowed in the "ignored_triggers" property.
 CONTEXT:  PL/pgSQL function emaj._check_json_table_properties(jsonb) line 72 at RAISE
-SQL statement "SELECT *                                                                                            FROM emaj._check_json_table_properties(v_properties)"
+SQL statement "SELECT *                                                                                            FROM emaj._check_json_table_properties(p_properties)"
 PL/pgSQL function emaj._assign_tables(text,text[],text,jsonb,text,boolean,boolean) line 226 at SQL statement
 PL/pgSQL function emaj.emaj_assign_table(text,text,text,jsonb,text) line 7 at RETURN
 select emaj.emaj_assign_table('myschema1','mytbl1','myGroup1','{"ignored_triggers":["emaj_trunc_trg"]}'::jsonb);
 ERROR:  _check_json_table_properties: E-Maj triggers are not allowed in the "ignored_triggers" property.
 CONTEXT:  PL/pgSQL function emaj._check_json_table_properties(jsonb) line 72 at RAISE
-SQL statement "SELECT *                                                                                            FROM emaj._check_json_table_properties(v_properties)"
+SQL statement "SELECT *                                                                                            FROM emaj._check_json_table_properties(p_properties)"
 PL/pgSQL function emaj._assign_tables(text,text[],text,jsonb,text,boolean,boolean) line 226 at SQL statement
 PL/pgSQL function emaj.emaj_assign_table(text,text,text,jsonb,text) line 7 at RETURN
 select emaj.emaj_assign_table('myschema1','mytbl1','myGroup1','{"ignored_triggers":["dummy"]}'::jsonb);
@@ -244,21 +244,21 @@ PL/pgSQL function emaj.emaj_assign_table(text,text,text,jsonb,text) line 7 at RE
 select emaj.emaj_assign_table('myschema1','mytbl1','myGroup1','{"ignored_triggers_profiles":1}'::jsonb);
 ERROR:  _check_json_table_properties: the "ignored_triggers_profiles" property must be an array or a string.
 CONTEXT:  PL/pgSQL function emaj._check_json_table_properties(jsonb) line 85 at RAISE
-SQL statement "SELECT *                                                                                            FROM emaj._check_json_table_properties(v_properties)"
+SQL statement "SELECT *                                                                                            FROM emaj._check_json_table_properties(p_properties)"
 PL/pgSQL function emaj._assign_tables(text,text[],text,jsonb,text,boolean,boolean) line 226 at SQL statement
 PL/pgSQL function emaj.emaj_assign_table(text,text,text,jsonb,text) line 7 at RETURN
 -- unknown property
 select emaj.emaj_assign_table('myschema1','mytbl1','myGroup1','{"unknown_property":null}'::jsonb);
 ERROR:  _check_json_table_properties: properties "{"unknown_property": null}" are unknown.
 CONTEXT:  PL/pgSQL function emaj._check_json_table_properties(jsonb) line 92 at RAISE
-SQL statement "SELECT *                                                                                            FROM emaj._check_json_table_properties(v_properties)"
+SQL statement "SELECT *                                                                                            FROM emaj._check_json_table_properties(p_properties)"
 PL/pgSQL function emaj._assign_tables(text,text[],text,jsonb,text,boolean,boolean) line 226 at SQL statement
 PL/pgSQL function emaj.emaj_assign_table(text,text,text,jsonb,text) line 7 at RETURN
 -- bad mark
 select emaj.emaj_assign_table('myschema1','mytbl1','myGroup1',null,'EMAJ_LAST_MARK');
 ERROR:  _check_new_mark: "EMAJ_LAST_MARK" is not an allowed name for a new mark.
 CONTEXT:  PL/pgSQL function emaj._check_new_mark(text[],text) line 14 at RAISE
-SQL statement "SELECT emaj._check_new_mark(array[v_group], v_mark)"
+SQL statement "SELECT emaj._check_new_mark(array[p_group], p_mark)"
 PL/pgSQL function emaj._assign_tables(text,text[],text,jsonb,text,boolean,boolean) line 230 at SQL statement
 PL/pgSQL function emaj.emaj_assign_table(text,text,text,jsonb,text) line 7 at RETURN
 -- erroneously existing log schema
@@ -278,10 +278,10 @@ LINE 1: ALTER TABLE emaj_myschema1.mytbl1_log dummmy content
                                               ^
 QUERY:  ALTER TABLE emaj_myschema1.mytbl1_log dummmy content
 CONTEXT:  PL/pgSQL function emaj._create_tbl(text,text,text,integer,text,text,text[],bigint,boolean,boolean) line 93 at EXECUTE
-SQL statement "SELECT emaj._create_tbl(v_schema, v_table, v_group, v_priority, v_logDatTsp, v_logIdxTsp, v_ignoredTriggers,
-                             v_timeId, v_groupIsRollbackable, v_groupIsLogging)"
+SQL statement "SELECT emaj._create_tbl(p_schema, p_table, p_group, p_priority, p_logDatTsp, p_logIdxTsp, p_ignoredTriggers,
+                             p_timeId, v_groupIsRollbackable, p_groupIsLogging)"
 PL/pgSQL function emaj._add_tbl(text,text,text,integer,text,text,text[],boolean,bigint,text) line 23 at PERFORM
-SQL statement "SELECT emaj._add_tbl(v_schema, v_oneTable, v_group, v_priority, v_logDatTsp, v_logIdxTsp, v_selectedIgnoredTrgs,
+SQL statement "SELECT emaj._add_tbl(p_schema, v_oneTable, p_group, v_priority, v_logDatTsp, v_logIdxTsp, v_selectedIgnoredTrgs,
                               v_groupIsLogging, v_timeId, v_function)"
 PL/pgSQL function emaj._assign_tables(text,text[],text,jsonb,text,boolean,boolean) line 322 at PERFORM
 PL/pgSQL function emaj.emaj_assign_table(text,text,text,jsonb,text) line 7 at RETURN
@@ -401,7 +401,7 @@ PL/pgSQL function emaj.emaj_assign_table(text,text,text,jsonb,text) line 7 at RE
 select emaj.emaj_assign_tables('dummySchema',array['dummyTable'],'dummyGroup');
 ERROR:  _check_group_names: The group "dummyGroup" does not exist.
 CONTEXT:  PL/pgSQL function emaj._check_group_names(text[],boolean,boolean,text) line 42 at RAISE
-SQL statement "SELECT emaj._check_group_names(v_groupNames := ARRAY[v_group], v_mayBeNull := FALSE, v_lockGroups := TRUE, v_checkList := '')"
+SQL statement "SELECT emaj._check_group_names(p_groupNames := ARRAY[p_group], p_mayBeNull := FALSE, p_lockGroups := TRUE, p_checkList := '')"
 PL/pgSQL function emaj._assign_tables(text,text[],text,jsonb,text,boolean,boolean) line 35 at PERFORM
 PL/pgSQL function emaj.emaj_assign_tables(text,text[],text,jsonb,text) line 7 at RETURN
 -- bad tables
@@ -446,7 +446,7 @@ select emaj.emaj_assign_tables('phil''s schema3',array['phil''s tbl1',E'myTbl2\\
 select emaj.emaj_assign_tables('dummySchema','dummyIncludeFilter','dummyExcludeFilter','dummyGroup');
 ERROR:  _check_group_names: The group "dummyGroup" does not exist.
 CONTEXT:  PL/pgSQL function emaj._check_group_names(text[],boolean,boolean,text) line 42 at RAISE
-SQL statement "SELECT emaj._check_group_names(v_groupNames := ARRAY[v_group], v_mayBeNull := FALSE, v_lockGroups := TRUE, v_checkList := '')"
+SQL statement "SELECT emaj._check_group_names(p_groupNames := ARRAY[p_group], p_mayBeNull := FALSE, p_lockGroups := TRUE, p_checkList := '')"
 PL/pgSQL function emaj._assign_tables(text,text[],text,jsonb,text,boolean,boolean) line 35 at PERFORM
 PL/pgSQL function emaj.emaj_assign_tables(text,text,text,text,jsonb,text) line 26 at RETURN
 -- bad schema
@@ -588,7 +588,7 @@ select emaj.emaj_assign_tables('myschema6','table_with_\d\d_characters_long_name
 select emaj.emaj_assign_sequence('myschema2','myseq1','dummyGroup');
 ERROR:  _check_group_names: The group "dummyGroup" does not exist.
 CONTEXT:  PL/pgSQL function emaj._check_group_names(text[],boolean,boolean,text) line 42 at RAISE
-SQL statement "SELECT emaj._check_group_names(v_groupNames := ARRAY[v_group], v_mayBeNull := FALSE, v_lockGroups := TRUE, v_checkList := '')"
+SQL statement "SELECT emaj._check_group_names(p_groupNames := ARRAY[p_group], p_mayBeNull := FALSE, p_lockGroups := TRUE, p_checkList := '')"
 PL/pgSQL function emaj._assign_sequences(text,text[],text,text,boolean,boolean) line 24 at PERFORM
 PL/pgSQL function emaj.emaj_assign_sequence(text,text,text,text) line 6 at RETURN
 -- bad schema
@@ -609,7 +609,7 @@ PL/pgSQL function emaj.emaj_assign_sequence(text,text,text,text) line 6 at RETUR
 select emaj.emaj_assign_sequence('myschema2','myseq1','myGroup2','EMAJ_LAST_MARK');
 ERROR:  _check_new_mark: "EMAJ_LAST_MARK" is not an allowed name for a new mark.
 CONTEXT:  PL/pgSQL function emaj._check_new_mark(text[],text) line 14 at RAISE
-SQL statement "SELECT emaj._check_new_mark(array[v_group], v_mark)"
+SQL statement "SELECT emaj._check_new_mark(array[p_group], p_mark)"
 PL/pgSQL function emaj._assign_sequences(text,text[],text,text,boolean,boolean) line 89 at SQL statement
 PL/pgSQL function emaj.emaj_assign_sequence(text,text,text,text) line 6 at RETURN
 -- ok
@@ -632,7 +632,7 @@ PL/pgSQL function emaj.emaj_assign_sequence(text,text,text,text) line 6 at RETUR
 select emaj.emaj_assign_sequences('dummySchema',array['dummySequence'],'dummyGroup');
 ERROR:  _check_group_names: The group "dummyGroup" does not exist.
 CONTEXT:  PL/pgSQL function emaj._check_group_names(text[],boolean,boolean,text) line 42 at RAISE
-SQL statement "SELECT emaj._check_group_names(v_groupNames := ARRAY[v_group], v_mayBeNull := FALSE, v_lockGroups := TRUE, v_checkList := '')"
+SQL statement "SELECT emaj._check_group_names(p_groupNames := ARRAY[p_group], p_mayBeNull := FALSE, p_lockGroups := TRUE, p_checkList := '')"
 PL/pgSQL function emaj._assign_sequences(text,text[],text,text,boolean,boolean) line 24 at PERFORM
 PL/pgSQL function emaj.emaj_assign_sequences(text,text[],text,text) line 7 at RETURN
 -- bad sequences
@@ -684,7 +684,7 @@ select emaj.emaj_assign_sequences('phil''s schema3',array[E'myTbl2\\_col21_seq',
 select emaj.emaj_assign_sequences('dummySchema','dummyIncludeFilter','dummyExcludeFilter','dummyGroup');
 ERROR:  _check_group_names: The group "dummyGroup" does not exist.
 CONTEXT:  PL/pgSQL function emaj._check_group_names(text[],boolean,boolean,text) line 42 at RAISE
-SQL statement "SELECT emaj._check_group_names(v_groupNames := ARRAY[v_group], v_mayBeNull := FALSE, v_lockGroups := TRUE, v_checkList := '')"
+SQL statement "SELECT emaj._check_group_names(p_groupNames := ARRAY[p_group], p_mayBeNull := FALSE, p_lockGroups := TRUE, p_checkList := '')"
 PL/pgSQL function emaj._assign_sequences(text,text[],text,text,boolean,boolean) line 24 at PERFORM
 PL/pgSQL function emaj.emaj_assign_sequences(text,text,text,text,text) line 26 at RETURN
 -- bad schema
@@ -913,7 +913,7 @@ ERROR:  could not open file "/tmp/dummy/location/file" for writing: No such file
 HINT:  COPY TO instructs the PostgreSQL server process to write a file. You may want a client-side facility such as psql's \copy.
 CONTEXT:  SQL statement "COPY t TO '/tmp/dummy/location/file' "
 PL/pgSQL function emaj._copy_to_file(text,text,text) line 20 at EXECUTE
-SQL statement "SELECT emaj._copy_to_file('t', v_location, NULL)"
+SQL statement "SELECT emaj._copy_to_file('t', p_location, NULL)"
 PL/pgSQL function emaj.emaj_export_groups_configuration(text,text[]) line 16 at PERFORM
 --   ok
 select emaj.emaj_export_groups_configuration(:'EMAJTESTTMPDIR' || '/orig_groups_config_all.json');
@@ -938,14 +938,14 @@ select * from emaj.emaj_import_groups_configuration('{ "dummy_json": null }'::js
 WARNING:  _import_groups_conf (1): The JSON structure does not contain any "tables_groups" array.
 ERROR:  _import_groups_conf: One or several errors have been detected in the supplied JSON structure.
 CONTEXT:  PL/pgSQL function emaj._import_groups_conf(json,text[],boolean,text,text) line 60 at RAISE
-SQL statement "SELECT emaj._import_groups_conf(v_json, v_groups, v_allowGroupsUpdate, NULL, v_mark)"
+SQL statement "SELECT emaj._import_groups_conf(p_json, p_groups, p_allowGroupsUpdate, NULL, p_mark)"
 PL/pgSQL function emaj.emaj_import_groups_configuration(json,text[],boolean,text) line 14 at SQL statement
 --   missing "group" attribute
 select * from emaj.emaj_import_groups_configuration('{ "tables_groups": [ { "name": "grp1" } ]}'::json);
 WARNING:  _import_groups_conf (1): The tables group #1 has no "group" attribute.
 ERROR:  _import_groups_conf: One or several errors have been detected in the supplied JSON structure.
 CONTEXT:  PL/pgSQL function emaj._import_groups_conf(json,text[],boolean,text,text) line 60 at RAISE
-SQL statement "SELECT emaj._import_groups_conf(v_json, v_groups, v_allowGroupsUpdate, NULL, v_mark)"
+SQL statement "SELECT emaj._import_groups_conf(p_json, p_groups, p_allowGroupsUpdate, NULL, p_mark)"
 PL/pgSQL function emaj.emaj_import_groups_configuration(json,text[],boolean,text) line 14 at SQL statement
 --   unknown group level attributes
 select * from emaj.emaj_import_groups_configuration('{ "tables_groups": [ { "group": "grp1", "unknown_attr1": null, "unknown_attr2": null } ]}'::json);
@@ -953,49 +953,49 @@ WARNING:  _import_groups_conf (1): For the tables group "grp1", the keyword "unk
 WARNING:  _import_groups_conf (1): For the tables group "grp1", the keyword "unknown_attr2" is unknown.
 ERROR:  _import_groups_conf: One or several errors have been detected in the supplied JSON structure.
 CONTEXT:  PL/pgSQL function emaj._import_groups_conf(json,text[],boolean,text,text) line 60 at RAISE
-SQL statement "SELECT emaj._import_groups_conf(v_json, v_groups, v_allowGroupsUpdate, NULL, v_mark)"
+SQL statement "SELECT emaj._import_groups_conf(p_json, p_groups, p_allowGroupsUpdate, NULL, p_mark)"
 PL/pgSQL function emaj.emaj_import_groups_configuration(json,text[],boolean,text) line 14 at SQL statement
 --   is_rollbackable not boolean
 select * from emaj.emaj_import_groups_configuration('{ "tables_groups": [ { "group": "grp1", "is_rollbackable": "absolutely true"} ]}'::json);
 WARNING:  _import_groups_conf (1): For the tables group "grp1", the "is_rollbackable" attribute is not a boolean.
 ERROR:  _import_groups_conf: One or several errors have been detected in the supplied JSON structure.
 CONTEXT:  PL/pgSQL function emaj._import_groups_conf(json,text[],boolean,text,text) line 60 at RAISE
-SQL statement "SELECT emaj._import_groups_conf(v_json, v_groups, v_allowGroupsUpdate, NULL, v_mark)"
+SQL statement "SELECT emaj._import_groups_conf(p_json, p_groups, p_allowGroupsUpdate, NULL, p_mark)"
 PL/pgSQL function emaj.emaj_import_groups_configuration(json,text[],boolean,text) line 14 at SQL statement
 --   missing "schema" attribute in tables array
 select * from emaj.emaj_import_groups_configuration('{ "tables_groups": [ { "group": "grp1", "tables": [ { }] } ]}'::json);
 WARNING:  _import_groups_conf (1): In the tables group "grp1", the table #1 has no "schema" attribute.
 ERROR:  _import_groups_conf: One or several errors have been detected in the supplied JSON structure.
 CONTEXT:  PL/pgSQL function emaj._import_groups_conf(json,text[],boolean,text,text) line 60 at RAISE
-SQL statement "SELECT emaj._import_groups_conf(v_json, v_groups, v_allowGroupsUpdate, NULL, v_mark)"
+SQL statement "SELECT emaj._import_groups_conf(p_json, p_groups, p_allowGroupsUpdate, NULL, p_mark)"
 PL/pgSQL function emaj.emaj_import_groups_configuration(json,text[],boolean,text) line 14 at SQL statement
 --   missing "table" attribute in tables array
 select * from emaj.emaj_import_groups_configuration('{ "tables_groups": [ { "group": "grp1", "tables": [ { "schema": "s1" }] } ]}'::json);
 WARNING:  _import_groups_conf (1): In the tables group "grp1", the table #1 has no "table" attribute.
 ERROR:  _import_groups_conf: One or several errors have been detected in the supplied JSON structure.
 CONTEXT:  PL/pgSQL function emaj._import_groups_conf(json,text[],boolean,text,text) line 60 at RAISE
-SQL statement "SELECT emaj._import_groups_conf(v_json, v_groups, v_allowGroupsUpdate, NULL, v_mark)"
+SQL statement "SELECT emaj._import_groups_conf(p_json, p_groups, p_allowGroupsUpdate, NULL, p_mark)"
 PL/pgSQL function emaj.emaj_import_groups_configuration(json,text[],boolean,text) line 14 at SQL statement
 --   unknown table level attributes
 select * from emaj.emaj_import_groups_configuration('{ "tables_groups": [ { "group": "grp1", "tables": [ { "schema": "s1", "table": "t1", "unknown_attr": null }] } ]}'::json);
 WARNING:  _import_groups_conf (1): In the tables group "grp1" and for the table s1.t1, the keyword "unknown_attr" is unknown.
 ERROR:  _import_groups_conf: One or several errors have been detected in the supplied JSON structure.
 CONTEXT:  PL/pgSQL function emaj._import_groups_conf(json,text[],boolean,text,text) line 60 at RAISE
-SQL statement "SELECT emaj._import_groups_conf(v_json, v_groups, v_allowGroupsUpdate, NULL, v_mark)"
+SQL statement "SELECT emaj._import_groups_conf(p_json, p_groups, p_allowGroupsUpdate, NULL, p_mark)"
 PL/pgSQL function emaj.emaj_import_groups_configuration(json,text[],boolean,text) line 14 at SQL statement
 --   priority not numeric
 select * from emaj.emaj_import_groups_configuration('{ "tables_groups": [ { "group": "grp1", "tables": [ { "schema": "a_schema", "table": "a_table", "priority": "high" }] } ]}'::json);
 WARNING:  _import_groups_conf (1): In the tables group "grp1" and for the table a_schema.a_table, the "priority" attribute is not a number.
 ERROR:  _import_groups_conf: One or several errors have been detected in the supplied JSON structure.
 CONTEXT:  PL/pgSQL function emaj._import_groups_conf(json,text[],boolean,text,text) line 60 at RAISE
-SQL statement "SELECT emaj._import_groups_conf(v_json, v_groups, v_allowGroupsUpdate, NULL, v_mark)"
+SQL statement "SELECT emaj._import_groups_conf(p_json, p_groups, p_allowGroupsUpdate, NULL, p_mark)"
 PL/pgSQL function emaj.emaj_import_groups_configuration(json,text[],boolean,text) line 14 at SQL statement
 --   ignored_triggers not an array
 select * from emaj.emaj_import_groups_configuration('{ "tables_groups": [ { "group": "grp1", "tables": [ { "schema": "s1", "table": "t1", "ignored_triggers": "dummy" }] } ]}'::json);
 WARNING:  _import_groups_conf (1): In the tables group "grp1" and for the table s1.t1, the "ignored_triggers" attribute is not an array.
 ERROR:  _import_groups_conf: One or several errors have been detected in the supplied JSON structure.
 CONTEXT:  PL/pgSQL function emaj._import_groups_conf(json,text[],boolean,text,text) line 60 at RAISE
-SQL statement "SELECT emaj._import_groups_conf(v_json, v_groups, v_allowGroupsUpdate, NULL, v_mark)"
+SQL statement "SELECT emaj._import_groups_conf(p_json, p_groups, p_allowGroupsUpdate, NULL, p_mark)"
 PL/pgSQL function emaj.emaj_import_groups_configuration(json,text[],boolean,text) line 14 at SQL statement
 --     not strings
 select * from emaj.emaj_import_groups_configuration('{ "tables_groups": [ { "group": "grp1", "tables": [ { "schema": "s1", "table": "t1", "ignored_triggers": [ "trg1", 1234, null] }] } ]}'::json);
@@ -1003,42 +1003,42 @@ WARNING:  _import_groups_conf (1): In the tables group "grp1" and for the table 
 WARNING:  _import_groups_conf (1): In the tables group "grp1" and for the table s1.t1, the trigger #3 is not a string. This is required since E-Maj 4.0.
 ERROR:  _import_groups_conf: One or several errors have been detected in the supplied JSON structure.
 CONTEXT:  PL/pgSQL function emaj._import_groups_conf(json,text[],boolean,text,text) line 60 at RAISE
-SQL statement "SELECT emaj._import_groups_conf(v_json, v_groups, v_allowGroupsUpdate, NULL, v_mark)"
+SQL statement "SELECT emaj._import_groups_conf(p_json, p_groups, p_allowGroupsUpdate, NULL, p_mark)"
 PL/pgSQL function emaj.emaj_import_groups_configuration(json,text[],boolean,text) line 14 at SQL statement
 --   missing "schema" attribute in sequences array
 select * from emaj.emaj_import_groups_configuration('{ "tables_groups": [ { "group": "grp1", "sequences": [ { }] } ]}'::json);
 WARNING:  _import_groups_conf (1): In the tables group "grp1", the sequence #1 has no "schema" attribute.
 ERROR:  _import_groups_conf: One or several errors have been detected in the supplied JSON structure.
 CONTEXT:  PL/pgSQL function emaj._import_groups_conf(json,text[],boolean,text,text) line 60 at RAISE
-SQL statement "SELECT emaj._import_groups_conf(v_json, v_groups, v_allowGroupsUpdate, NULL, v_mark)"
+SQL statement "SELECT emaj._import_groups_conf(p_json, p_groups, p_allowGroupsUpdate, NULL, p_mark)"
 PL/pgSQL function emaj.emaj_import_groups_configuration(json,text[],boolean,text) line 14 at SQL statement
 --   missing "sequence" attribute in sequences array
 select * from emaj.emaj_import_groups_configuration('{ "tables_groups": [ { "group": "grp1", "sequences": [ { "schema": "s1" }] } ]}'::json);
 WARNING:  _import_groups_conf (1): In the tables group "grp1", the sequence #1 has no "sequence" attribute.
 ERROR:  _import_groups_conf: One or several errors have been detected in the supplied JSON structure.
 CONTEXT:  PL/pgSQL function emaj._import_groups_conf(json,text[],boolean,text,text) line 60 at RAISE
-SQL statement "SELECT emaj._import_groups_conf(v_json, v_groups, v_allowGroupsUpdate, NULL, v_mark)"
+SQL statement "SELECT emaj._import_groups_conf(p_json, p_groups, p_allowGroupsUpdate, NULL, p_mark)"
 PL/pgSQL function emaj.emaj_import_groups_configuration(json,text[],boolean,text) line 14 at SQL statement
 --   unknown sequence level attributes
 select * from emaj.emaj_import_groups_configuration('{ "tables_groups": [ { "group": "grp1", "sequences": [ { "schema": "s1", "sequence": "s1",  "unknown_attr": null }] } ]}'::json);
 WARNING:  _import_groups_conf (1): In the tables group "grp1" and for the sequence s1.s1, the keyword "unknown_attr" is unknown.
 ERROR:  _import_groups_conf: One or several errors have been detected in the supplied JSON structure.
 CONTEXT:  PL/pgSQL function emaj._import_groups_conf(json,text[],boolean,text,text) line 60 at RAISE
-SQL statement "SELECT emaj._import_groups_conf(v_json, v_groups, v_allowGroupsUpdate, NULL, v_mark)"
+SQL statement "SELECT emaj._import_groups_conf(p_json, p_groups, p_allowGroupsUpdate, NULL, p_mark)"
 PL/pgSQL function emaj.emaj_import_groups_configuration(json,text[],boolean,text) line 14 at SQL statement
 --   duplicate group in json
 select * from emaj.emaj_import_groups_configuration('{ "tables_groups": [ { "group": "grp1" }, { "group": "grp1" } ]}'::json);
 WARNING:  _import_groups_conf (1): The JSON structure references several times the tables group "grp1".
 ERROR:  _import_groups_conf: One or several errors have been detected in the supplied JSON structure.
 CONTEXT:  PL/pgSQL function emaj._import_groups_conf(json,text[],boolean,text,text) line 60 at RAISE
-SQL statement "SELECT emaj._import_groups_conf(v_json, v_groups, v_allowGroupsUpdate, NULL, v_mark)"
+SQL statement "SELECT emaj._import_groups_conf(p_json, p_groups, p_allowGroupsUpdate, NULL, p_mark)"
 PL/pgSQL function emaj.emaj_import_groups_configuration(json,text[],boolean,text) line 14 at SQL statement
 --   unknown group in array
 select emaj.emaj_import_groups_configuration(:'EMAJTESTTMPDIR' || '/orig_groups_config_all.json', array['myGroup1','myGroup2','unknownGroup']);
 WARNING:  _import_groups_conf (2): The tables group "unknownGroup" to import is not referenced in the JSON structure.
 ERROR:  _import_groups_conf: One or several errors have been detected in the JSON groups configuration.
 CONTEXT:  PL/pgSQL function emaj._import_groups_conf(json,text[],boolean,text,text) line 78 at RAISE
-SQL statement "SELECT emaj._import_groups_conf(v_json, v_groups, v_allowGroupsUpdate, v_location, v_mark)"
+SQL statement "SELECT emaj._import_groups_conf(v_json, p_groups, p_allowGroupsUpdate, p_location, p_mark)"
 PL/pgSQL function emaj.emaj_import_groups_configuration(text,text[],boolean,text) line 29 at SQL statement
 --   group already created
 select emaj.emaj_import_groups_configuration('{ "tables_groups": [ { "group": "myGroup1" }, { "group": "myGroup2" } ] }'::json, null, false);
@@ -1046,7 +1046,7 @@ WARNING:  _import_groups_conf (2): The tables group "myGroup1" already exists.
 WARNING:  _import_groups_conf (2): The tables group "myGroup2" already exists.
 ERROR:  _import_groups_conf: One or several errors have been detected in the JSON groups configuration.
 CONTEXT:  PL/pgSQL function emaj._import_groups_conf(json,text[],boolean,text,text) line 78 at RAISE
-SQL statement "SELECT emaj._import_groups_conf(v_json, v_groups, v_allowGroupsUpdate, NULL, v_mark)"
+SQL statement "SELECT emaj._import_groups_conf(p_json, p_groups, p_allowGroupsUpdate, NULL, p_mark)"
 PL/pgSQL function emaj.emaj_import_groups_configuration(json,text[],boolean,text) line 14 at SQL statement
 --   bad type for existing groups
 select emaj.emaj_import_groups_configuration('{ "tables_groups": [ { "group": "myGroup1", "is_rollbackable": false }, { "group": "myGroup2", "is_rollbackable": false } ] }'::json, null, true);
@@ -1054,20 +1054,20 @@ WARNING:  _import_groups_conf (2): Changing the type of the tables group "myGrou
 WARNING:  _import_groups_conf (2): Changing the type of the tables group "myGroup2" is not allowed.
 ERROR:  _import_groups_conf: One or several errors have been detected in the JSON groups configuration.
 CONTEXT:  PL/pgSQL function emaj._import_groups_conf(json,text[],boolean,text,text) line 78 at RAISE
-SQL statement "SELECT emaj._import_groups_conf(v_json, v_groups, v_allowGroupsUpdate, NULL, v_mark)"
+SQL statement "SELECT emaj._import_groups_conf(p_json, p_groups, p_allowGroupsUpdate, NULL, p_mark)"
 PL/pgSQL function emaj.emaj_import_groups_configuration(json,text[],boolean,text) line 14 at SQL statement
 --   unknown table and sequence
 select * from emaj.emaj_import_groups_configuration('{ "tables_groups": [ { "group": "grp1", "tables": [ { "schema": "s1", "table": "t1" }] } ]}'::json);
 WARNING:  _import_groups_conf (2): in the group grp1, the table s1.t1 does not exist.
 ERROR:  _import_groups_conf: One or several errors have been detected in the JSON groups configuration.
 CONTEXT:  PL/pgSQL function emaj._import_groups_conf(json,text[],boolean,text,text) line 78 at RAISE
-SQL statement "SELECT emaj._import_groups_conf(v_json, v_groups, v_allowGroupsUpdate, NULL, v_mark)"
+SQL statement "SELECT emaj._import_groups_conf(p_json, p_groups, p_allowGroupsUpdate, NULL, p_mark)"
 PL/pgSQL function emaj.emaj_import_groups_configuration(json,text[],boolean,text) line 14 at SQL statement
 select * from emaj.emaj_import_groups_configuration('{ "tables_groups": [ { "group": "grp1", "sequences": [ { "schema": "s1", "sequence": "sq1" }] } ]}'::json);
 WARNING:  _import_groups_conf (2): in the group grp1, the sequence s1.sq1 does not exist.
 ERROR:  _import_groups_conf: One or several errors have been detected in the JSON groups configuration.
 CONTEXT:  PL/pgSQL function emaj._import_groups_conf(json,text[],boolean,text,text) line 78 at RAISE
-SQL statement "SELECT emaj._import_groups_conf(v_json, v_groups, v_allowGroupsUpdate, NULL, v_mark)"
+SQL statement "SELECT emaj._import_groups_conf(p_json, p_groups, p_allowGroupsUpdate, NULL, p_mark)"
 PL/pgSQL function emaj.emaj_import_groups_configuration(json,text[],boolean,text) line 14 at SQL statement
 --   ok
 -- a new group with a comment, then changed and finaly deleted
@@ -1127,7 +1127,7 @@ ERROR:  could not open file "/tmp/dummy/location/file" for reading: No such file
 HINT:  COPY FROM instructs the PostgreSQL server process to read a file. You may want a client-side facility such as psql's \copy.
 CONTEXT:  SQL statement "COPY t FROM '/tmp/dummy/location/file'"
 PL/pgSQL function emaj._copy_from_file(text,text) line 16 at EXECUTE
-SQL statement "SELECT emaj._copy_from_file('t', v_location)"
+SQL statement "SELECT emaj._copy_from_file('t', p_location)"
 PL/pgSQL function emaj.emaj_import_groups_configuration(text,text[],boolean,text) line 17 at PERFORM
 \! echo 'not a json content' >/tmp/bad_groups_config.json
 select emaj.emaj_import_groups_configuration('/tmp/bad_groups_config.json');
@@ -1190,7 +1190,7 @@ WARNING:  _import_groups_conf (2): In the group "myGroup1" and for the table mys
 WARNING:  _import_groups_conf (2): In the group "myGroup1" and for the table myschema1.mytbl2, the trigger emaj_trunc_trg is an E-Maj trigger.
 ERROR:  _import_groups_conf: One or several errors have been detected in the JSON groups configuration.
 CONTEXT:  PL/pgSQL function emaj._import_groups_conf(json,text[],boolean,text,text) line 78 at RAISE
-SQL statement "SELECT emaj._import_groups_conf(v_json, v_groups, v_allowGroupsUpdate, v_location, v_mark)"
+SQL statement "SELECT emaj._import_groups_conf(v_json, p_groups, p_allowGroupsUpdate, p_location, p_mark)"
 PL/pgSQL function emaj.emaj_import_groups_configuration(text,text[],boolean,text) line 29 at SQL statement
 -- suppress 1 trigger
 \! sed -e 's/"mytbl2trg1",//' $EMAJTESTTMPDIR/modified_groups_config_1.json >$EMAJTESTTMPDIR/modified_groups_config_3.json
@@ -1220,10 +1220,10 @@ ERROR:  _create_log_schemas: The schema "emaj_myschema1" should not exist. Drop 
 CONTEXT:  PL/pgSQL function emaj._create_log_schemas(text) line 23 at RAISE
 SQL statement "SELECT emaj._create_log_schemas('IMPORT_GROUPS')"
 PL/pgSQL function emaj._import_groups_conf_alter(text[],text,bigint) line 14 at PERFORM
-SQL statement "SELECT emaj._import_groups_conf_alter(v_groups, v_mark, v_timeId)"
+SQL statement "SELECT emaj._import_groups_conf_alter(p_groups, p_mark, v_timeId)"
 PL/pgSQL function emaj._import_groups_conf_exec(json,text[],text) line 79 at PERFORM
 PL/pgSQL function emaj._import_groups_conf(json,text[],boolean,text,text) line 81 at RETURN
-SQL statement "SELECT emaj._import_groups_conf(v_json, v_groups, v_allowGroupsUpdate, v_location, v_mark)"
+SQL statement "SELECT emaj._import_groups_conf(v_json, p_groups, p_allowGroupsUpdate, p_location, p_mark)"
 PL/pgSQL function emaj.emaj_import_groups_configuration(text,text[],boolean,text) line 29 at SQL statement
 rollback;
 -- rebuild all original groups
@@ -1280,12 +1280,12 @@ select emaj.emaj_export_groups_configuration(:'EMAJTESTTMPDIR' || '/../all_group
 select emaj.emaj_drop_group(NULL);
 ERROR:  _check_group_names: No group to process.
 CONTEXT:  PL/pgSQL function emaj._check_group_names(text[],boolean,boolean,text) line 30 at RAISE
-SQL statement "SELECT emaj._check_group_names(v_groupNames := ARRAY[v_groupName], v_mayBeNull := FALSE, v_lockGroups := TRUE, v_checkList := 'IDLE')"
+SQL statement "SELECT emaj._check_group_names(p_groupNames := ARRAY[p_groupName], p_mayBeNull := FALSE, p_lockGroups := TRUE, p_checkList := 'IDLE')"
 PL/pgSQL function emaj.emaj_drop_group(text) line 12 at PERFORM
 select emaj.emaj_drop_group('unknownGroup');
 ERROR:  _check_group_names: The group "unknownGroup" does not exist.
 CONTEXT:  PL/pgSQL function emaj._check_group_names(text[],boolean,boolean,text) line 42 at RAISE
-SQL statement "SELECT emaj._check_group_names(v_groupNames := ARRAY[v_groupName], v_mayBeNull := FALSE, v_lockGroups := TRUE, v_checkList := 'IDLE')"
+SQL statement "SELECT emaj._check_group_names(p_groupNames := ARRAY[p_groupName], p_mayBeNull := FALSE, p_lockGroups := TRUE, p_checkList := 'IDLE')"
 PL/pgSQL function emaj.emaj_drop_group(text) line 12 at PERFORM
 -- group in logging state
 select emaj.emaj_start_group('myGroup1','');
@@ -1297,7 +1297,7 @@ select emaj.emaj_start_group('myGroup1','');
 select emaj.emaj_drop_group('myGroup1');
 ERROR:  _check_group_names: The group "myGroup1" is not in IDLE state.
 CONTEXT:  PL/pgSQL function emaj._check_group_names(text[],boolean,boolean,text) line 74 at RAISE
-SQL statement "SELECT emaj._check_group_names(v_groupNames := ARRAY[v_groupName], v_mayBeNull := FALSE, v_lockGroups := TRUE, v_checkList := 'IDLE')"
+SQL statement "SELECT emaj._check_group_names(p_groupNames := ARRAY[p_groupName], p_mayBeNull := FALSE, p_lockGroups := TRUE, p_checkList := 'IDLE')"
 PL/pgSQL function emaj.emaj_drop_group(text) line 12 at PERFORM
 select emaj.emaj_stop_group('myGroup1');
  emaj_stop_group 
@@ -1311,9 +1311,9 @@ begin;
   select emaj.emaj_drop_group('myGroup2');
 ERROR:  _drop_log_schemas: Cannot drop the schema "emaj_myschema2". It probably owns unattended objects. Use the emaj_verify_all() function to get details.
 CONTEXT:  PL/pgSQL function emaj._drop_log_schemas(text,boolean) line 35 at RAISE
-SQL statement "SELECT emaj._drop_log_schemas(CASE WHEN v_isForced THEN 'FORCE_DROP_GROUP' ELSE 'DROP_GROUP' END, v_isForced)"
+SQL statement "SELECT emaj._drop_log_schemas(CASE WHEN p_isForced THEN 'FORCE_DROP_GROUP' ELSE 'DROP_GROUP' END, p_isForced)"
 PL/pgSQL function emaj._drop_group(text,boolean) line 39 at PERFORM
-SQL statement "SELECT emaj._drop_group(v_groupName, FALSE)"
+SQL statement "SELECT emaj._drop_group(p_groupName, FALSE)"
 PL/pgSQL function emaj.emaj_drop_group(text) line 14 at SQL statement
 rollback;
 -- should be OK
@@ -1351,7 +1351,7 @@ select emaj.emaj_drop_group('myGroup6');
 select emaj.emaj_drop_group('myGroup2');
 ERROR:  _check_group_names: The group "myGroup2" does not exist.
 CONTEXT:  PL/pgSQL function emaj._check_group_names(text[],boolean,boolean,text) line 42 at RAISE
-SQL statement "SELECT emaj._check_group_names(v_groupNames := ARRAY[v_groupName], v_mayBeNull := FALSE, v_lockGroups := TRUE, v_checkList := 'IDLE')"
+SQL statement "SELECT emaj._check_group_names(p_groupNames := ARRAY[p_groupName], p_mayBeNull := FALSE, p_lockGroups := TRUE, p_checkList := 'IDLE')"
 PL/pgSQL function emaj.emaj_drop_group(text) line 12 at PERFORM
 -----------------------------
 -- emaj_force_drop_group() tests
@@ -1360,18 +1360,18 @@ PL/pgSQL function emaj.emaj_drop_group(text) line 12 at PERFORM
 select emaj.emaj_force_drop_group(NULL);
 ERROR:  _check_group_names: No group to process.
 CONTEXT:  PL/pgSQL function emaj._check_group_names(text[],boolean,boolean,text) line 30 at RAISE
-SQL statement "SELECT emaj._check_group_names(v_groupNames := ARRAY[v_groupName], v_mayBeNull := FALSE, v_lockGroups := TRUE, v_checkList := '')"
+SQL statement "SELECT emaj._check_group_names(p_groupNames := ARRAY[p_groupName], p_mayBeNull := FALSE, p_lockGroups := TRUE, p_checkList := '')"
 PL/pgSQL function emaj.emaj_force_drop_group(text) line 17 at PERFORM
 select emaj.emaj_force_drop_group('unknownGroup');
 ERROR:  _check_group_names: The group "unknownGroup" does not exist.
 CONTEXT:  PL/pgSQL function emaj._check_group_names(text[],boolean,boolean,text) line 42 at RAISE
-SQL statement "SELECT emaj._check_group_names(v_groupNames := ARRAY[v_groupName], v_mayBeNull := FALSE, v_lockGroups := TRUE, v_checkList := '')"
+SQL statement "SELECT emaj._check_group_names(p_groupNames := ARRAY[p_groupName], p_mayBeNull := FALSE, p_lockGroups := TRUE, p_checkList := '')"
 PL/pgSQL function emaj.emaj_force_drop_group(text) line 17 at PERFORM
 -- already dropped
 select emaj.emaj_force_drop_group('myGroup2');
 ERROR:  _check_group_names: The group "myGroup2" does not exist.
 CONTEXT:  PL/pgSQL function emaj._check_group_names(text[],boolean,boolean,text) line 42 at RAISE
-SQL statement "SELECT emaj._check_group_names(v_groupNames := ARRAY[v_groupName], v_mayBeNull := FALSE, v_lockGroups := TRUE, v_checkList := '')"
+SQL statement "SELECT emaj._check_group_names(p_groupNames := ARRAY[p_groupName], p_mayBeNull := FALSE, p_lockGroups := TRUE, p_checkList := '')"
 PL/pgSQL function emaj.emaj_force_drop_group(text) line 17 at PERFORM
 -- should be OK
 select emaj.emaj_create_group('myGroup1',false);

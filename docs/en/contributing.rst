@@ -76,7 +76,7 @@ Coding the *emaj- -devel.sql* script must follow these rules:
 * the code is indented with 2 space characters,
 * lines must not contain tab characters, must not be longer than 140 characters long and must not end with spaces,
 * in the functions structure, the code delimiters must contain the function name surrounded with a $ character (or *$do$* for code blocks),
-* variables names are prefixed with *v_* for simple variables or *r_* for *RECORD* type variables,
+* variables names are prefixed with *v_* for simple variables, *p_* for functions parameters or *r_* for *RECORD* type variables,
 * the code must be compatible with all PostgreSQL versions supported by the current E-Maj version. When this is striclty necessary, the code may be differenciated depending on the PostgreSQL version.
 
 A *perl* script, *tools/check_code.pl* performs some checks on the code format of the script that creates the extension. It also detects unused variables. This script is directly called in non-regression tests scenarios.

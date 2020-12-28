@@ -348,6 +348,14 @@ drop cascades to function _rlbk_seq(emaj_relation,bigint)
 drop cascades to function _log_stat_tbl(emaj_relation,bigint,bigint)
 drop cascades to function _gen_sql_tbl(emaj_relation,bigint,bigint)
 drop cascades to function _gen_sql_seq(emaj_relation,bigint,bigint,bigint)
+NOTICE:  function emaj._drop_tbl(emaj.emaj_relation,pg_catalog.int8) does not exist, skipping
+NOTICE:  function emaj._drop_seq(emaj.emaj_relation,pg_catalog.int8) does not exist, skipping
+NOTICE:  function emaj._rlbk_tbl(emaj.emaj_relation,pg_catalog.int8,pg_catalog.int8,pg_catalog.int4,pg_catalog.bool) does not exist, skipping
+NOTICE:  function emaj._delete_log_tbl(emaj.emaj_relation,pg_catalog.int8,pg_catalog.int8,pg_catalog.int8) does not exist, skipping
+NOTICE:  function emaj._rlbk_seq(emaj.emaj_relation,pg_catalog.int8) does not exist, skipping
+NOTICE:  function emaj._log_stat_tbl(emaj.emaj_relation,pg_catalog.int8,pg_catalog.int8) does not exist, skipping
+NOTICE:  function emaj._gen_sql_tbl(emaj.emaj_relation,pg_catalog.int8,pg_catalog.int8) does not exist, skipping
+NOTICE:  function emaj._gen_sql_seq(emaj.emaj_relation,pg_catalog.int8,pg_catalog.int8,pg_catalog.int8) does not exist, skipping
 -----------------------------------------------------------
 -- check installation
 -----------------------------------------------------------

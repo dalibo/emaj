@@ -111,7 +111,7 @@ PL/pgSQL function emaj.emaj_remove_table(text,text,text) line 6 at RETURN
 select emaj.emaj_remove_table('myschema1','mytbl1','EMAJ_LAST_MARK');
 ERROR:  _check_new_mark: "EMAJ_LAST_MARK" is not an allowed name for a new mark.
 CONTEXT:  PL/pgSQL function emaj._check_new_mark(text[],text) line 14 at RAISE
-SQL statement "SELECT emaj._check_new_mark(v_loggingGroups, v_mark)"
+SQL statement "SELECT emaj._check_new_mark(v_loggingGroups, p_mark)"
 PL/pgSQL function emaj._remove_tables(text,text[],text,boolean,boolean) line 70 at SQL statement
 PL/pgSQL function emaj.emaj_remove_table(text,text,text) line 6 at RETURN
 -- ok
@@ -214,7 +214,7 @@ PL/pgSQL function emaj.emaj_remove_sequence(text,text,text) line 6 at RETURN
 select emaj.emaj_remove_sequence('myschema2','myseq1','EMAJ_LAST_MARK');
 ERROR:  _check_new_mark: "EMAJ_LAST_MARK" is not an allowed name for a new mark.
 CONTEXT:  PL/pgSQL function emaj._check_new_mark(text[],text) line 14 at RAISE
-SQL statement "SELECT emaj._check_new_mark(v_loggingGroups, v_mark)"
+SQL statement "SELECT emaj._check_new_mark(v_loggingGroups, p_mark)"
 PL/pgSQL function emaj._remove_sequences(text,text[],text,boolean,boolean) line 73 at SQL statement
 PL/pgSQL function emaj.emaj_remove_sequence(text,text,text) line 6 at RETURN
 -- ok
@@ -569,14 +569,14 @@ PL/pgSQL function emaj.emaj_move_table(text,text,text,text) line 6 at RETURN
 select emaj.emaj_move_table('myschema1','mytbl1','dummyGroup');
 ERROR:  _check_group_names: The group "dummyGroup" does not exist.
 CONTEXT:  PL/pgSQL function emaj._check_group_names(text[],boolean,boolean,text) line 42 at RAISE
-SQL statement "SELECT emaj._check_group_names(v_groupNames := ARRAY[v_newGroup], v_mayBeNull := FALSE, v_lockGroups := TRUE, v_checkList := '')"
+SQL statement "SELECT emaj._check_group_names(p_groupNames := ARRAY[p_newGroup], p_mayBeNull := FALSE, p_lockGroups := TRUE, p_checkList := '')"
 PL/pgSQL function emaj._move_tables(text,text[],text,text,boolean,boolean) line 26 at PERFORM
 PL/pgSQL function emaj.emaj_move_table(text,text,text,text) line 6 at RETURN
 -- bad mark
 select emaj.emaj_move_table('myschema1','mytbl1','myGroup2','EMAJ_LAST_MARK');
 ERROR:  _check_new_mark: "EMAJ_LAST_MARK" is not an allowed name for a new mark.
 CONTEXT:  PL/pgSQL function emaj._check_new_mark(text[],text) line 14 at RAISE
-SQL statement "SELECT emaj._check_new_mark(v_loggingGroups, v_mark)"
+SQL statement "SELECT emaj._check_new_mark(v_loggingGroups, p_mark)"
 PL/pgSQL function emaj._move_tables(text,text[],text,text,boolean,boolean) line 89 at SQL statement
 PL/pgSQL function emaj.emaj_move_table(text,text,text,text) line 6 at RETURN
 -- move to the same group
@@ -718,14 +718,14 @@ PL/pgSQL function emaj.emaj_move_sequence(text,text,text,text) line 6 at RETURN
 select emaj.emaj_move_sequence('myschema2','myseq1','dummyGroup');
 ERROR:  _check_group_names: The group "dummyGroup" does not exist.
 CONTEXT:  PL/pgSQL function emaj._check_group_names(text[],boolean,boolean,text) line 42 at RAISE
-SQL statement "SELECT emaj._check_group_names(v_groupNames := ARRAY[v_newGroup], v_mayBeNull := FALSE, v_lockGroups := TRUE, v_checkList := '')"
+SQL statement "SELECT emaj._check_group_names(p_groupNames := ARRAY[p_newGroup], p_mayBeNull := FALSE, p_lockGroups := TRUE, p_checkList := '')"
 PL/pgSQL function emaj._move_sequences(text,text[],text,text,boolean,boolean) line 26 at PERFORM
 PL/pgSQL function emaj.emaj_move_sequence(text,text,text,text) line 6 at RETURN
 -- bad mark
 select emaj.emaj_move_sequence('myschema2','myseq1','myGroup1','EMAJ_LAST_MARK');
 ERROR:  _check_new_mark: "EMAJ_LAST_MARK" is not an allowed name for a new mark.
 CONTEXT:  PL/pgSQL function emaj._check_new_mark(text[],text) line 14 at RAISE
-SQL statement "SELECT emaj._check_new_mark(v_loggingGroups, v_mark)"
+SQL statement "SELECT emaj._check_new_mark(v_loggingGroups, p_mark)"
 PL/pgSQL function emaj._move_sequences(text,text[],text,text,boolean,boolean) line 92 at SQL statement
 PL/pgSQL function emaj.emaj_move_sequence(text,text,text,text) line 6 at RETURN
 -- move to the same group
@@ -944,45 +944,45 @@ select public.handle_emaj_sequences(8400);
 -- table not in a group
 select emaj.emaj_modify_table('dummySchema','mytbl1',null);
 ERROR:  _modify_tables: some tables ("dummySchema".mytbl1) do not currently belong to any tables group.
-CONTEXT:  PL/pgSQL function emaj._modify_tables(text,text[],jsonb,text,boolean,boolean) line 61 at RAISE
+CONTEXT:  PL/pgSQL function emaj._modify_tables(text,text[],jsonb,text,boolean,boolean) line 60 at RAISE
 PL/pgSQL function emaj.emaj_modify_table(text,text,jsonb,text) line 7 at RETURN
 select emaj.emaj_modify_table('myschema1','dummyTable',null);
 ERROR:  _modify_tables: some tables (myschema1."dummyTable") do not currently belong to any tables group.
-CONTEXT:  PL/pgSQL function emaj._modify_tables(text,text[],jsonb,text,boolean,boolean) line 61 at RAISE
+CONTEXT:  PL/pgSQL function emaj._modify_tables(text,text[],jsonb,text,boolean,boolean) line 60 at RAISE
 PL/pgSQL function emaj.emaj_modify_table(text,text,jsonb,text) line 7 at RETURN
 -- invalid priority
 select emaj.emaj_modify_table('myschema1','mytbl1','{"priority":"not_numeric"}'::jsonb);
 ERROR:  _check_json_table_properties: the "priority" property must be numeric.
 CONTEXT:  PL/pgSQL function emaj._check_json_table_properties(jsonb) line 18 at RAISE
-SQL statement "SELECT *                                                                                                     FROM emaj._check_json_table_properties(v_changedProperties)"
-PL/pgSQL function emaj._modify_tables(text,text[],jsonb,text,boolean,boolean) line 71 at SQL statement
+SQL statement "SELECT *                                                                                                     FROM emaj._check_json_table_properties(p_changedProperties)"
+PL/pgSQL function emaj._modify_tables(text,text[],jsonb,text,boolean,boolean) line 70 at SQL statement
 PL/pgSQL function emaj.emaj_modify_table(text,text,jsonb,text) line 7 at RETURN
 -- invalid tablespace
 select emaj.emaj_modify_table('myschema1','mytbl1','{"log_data_tablespace":"dummytsp"}'::jsonb);
 ERROR:  _check_json_table_properties: the log data tablespace "dummytsp" does not exists.
 CONTEXT:  PL/pgSQL function emaj._check_json_table_properties(jsonb) line 30 at RAISE
-SQL statement "SELECT *                                                                                                     FROM emaj._check_json_table_properties(v_changedProperties)"
-PL/pgSQL function emaj._modify_tables(text,text[],jsonb,text,boolean,boolean) line 71 at SQL statement
+SQL statement "SELECT *                                                                                                     FROM emaj._check_json_table_properties(p_changedProperties)"
+PL/pgSQL function emaj._modify_tables(text,text[],jsonb,text,boolean,boolean) line 70 at SQL statement
 PL/pgSQL function emaj.emaj_modify_table(text,text,jsonb,text) line 7 at RETURN
 select emaj.emaj_modify_table('myschema1','mytbl1','{"log_index_tablespace":"dummytsp"}'::jsonb);
 ERROR:  _check_json_table_properties: the log index tablespace "dummytsp" does not exists.
 CONTEXT:  PL/pgSQL function emaj._check_json_table_properties(jsonb) line 44 at RAISE
-SQL statement "SELECT *                                                                                                     FROM emaj._check_json_table_properties(v_changedProperties)"
-PL/pgSQL function emaj._modify_tables(text,text[],jsonb,text,boolean,boolean) line 71 at SQL statement
+SQL statement "SELECT *                                                                                                     FROM emaj._check_json_table_properties(p_changedProperties)"
+PL/pgSQL function emaj._modify_tables(text,text[],jsonb,text,boolean,boolean) line 70 at SQL statement
 PL/pgSQL function emaj.emaj_modify_table(text,text,jsonb,text) line 7 at RETURN
 -- unknown property
 select emaj.emaj_modify_table('myschema1','mytbl1','{"unknown_property":null}'::jsonb);
 ERROR:  _check_json_table_properties: properties "{"unknown_property": null}" are unknown.
 CONTEXT:  PL/pgSQL function emaj._check_json_table_properties(jsonb) line 92 at RAISE
-SQL statement "SELECT *                                                                                                     FROM emaj._check_json_table_properties(v_changedProperties)"
-PL/pgSQL function emaj._modify_tables(text,text[],jsonb,text,boolean,boolean) line 71 at SQL statement
+SQL statement "SELECT *                                                                                                     FROM emaj._check_json_table_properties(p_changedProperties)"
+PL/pgSQL function emaj._modify_tables(text,text[],jsonb,text,boolean,boolean) line 70 at SQL statement
 PL/pgSQL function emaj.emaj_modify_table(text,text,jsonb,text) line 7 at RETURN
 -- bad mark
 select emaj.emaj_modify_table('myschema1','mytbl1',null,'EMAJ_LAST_MARK');
 ERROR:  _check_new_mark: "EMAJ_LAST_MARK" is not an allowed name for a new mark.
 CONTEXT:  PL/pgSQL function emaj._check_new_mark(text[],text) line 14 at RAISE
-SQL statement "SELECT emaj._check_new_mark(v_loggingGroups, v_mark)"
-PL/pgSQL function emaj._modify_tables(text,text[],jsonb,text,boolean,boolean) line 94 at SQL statement
+SQL statement "SELECT emaj._check_new_mark(v_loggingGroups, p_mark)"
+PL/pgSQL function emaj._modify_tables(text,text[],jsonb,text,boolean,boolean) line 93 at SQL statement
 PL/pgSQL function emaj.emaj_modify_table(text,text,jsonb,text) line 7 at RETURN
 -- ok
 -- no property
@@ -1112,7 +1112,7 @@ select rel_schema, rel_tblseq, rel_time_range, rel_log_dat_tsp, rel_log_idx_tsp 
 -- table not in a group
 select emaj.emaj_modify_tables('myschema2',array['dummyTable','mytbl1','mytbl2'],null);
 ERROR:  _modify_tables: some tables (myschema2."dummyTable") do not currently belong to any tables group.
-CONTEXT:  PL/pgSQL function emaj._modify_tables(text,text[],jsonb,text,boolean,boolean) line 61 at RAISE
+CONTEXT:  PL/pgSQL function emaj._modify_tables(text,text[],jsonb,text,boolean,boolean) line 60 at RAISE
 PL/pgSQL function emaj.emaj_modify_tables(text,text[],jsonb,text) line 7 at RETURN
 -- empty tables array
 select emaj.emaj_modify_tables('myschema2',array[]::text[],null);
