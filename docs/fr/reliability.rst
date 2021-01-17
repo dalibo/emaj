@@ -32,6 +32,7 @@ L'installation d'E-Maj inclut la création de 2 triggers sur événements de typ
 
   * de tout objet E-Maj (schéma de log, table de logs, séquence de log, fonction de log et trigger de log),
   * de toute table ou séquence applicatives appartenant à un groupe de tables en état « *LOGGING* »,
+  * de toute *PRIMARY KEY* d’une table appartenant à un groupe de tables « *rollbackable* »,
   * de tout schéma contenant au moins une table ou séquence appartenant à un groupe de tables en état « *LOGGING* ».
 
 * *emaj_protection_trg* bloque la suppression de l'extension *emaj* elle-même et du schéma principal *emaj*.

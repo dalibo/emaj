@@ -830,7 +830,8 @@ select emaj.emaj_enable_protection_by_event_triggers();
                                         0
 (1 row)
 
--- drop or alter various E-Maj components
+--
+-- drop or alter various components
 --
 -- drop application components (the related tables group is currently in logging state)
 begin;
@@ -844,6 +845,16 @@ rollback;
 begin;
   drop schema myschema1 cascade;
 ERROR:  E-Maj event trigger: Attempting to drop the application schema "myschema1". But it belongs to the active tables groups "myGroup1".
+rollback;
+-- drop primary keys
+-- drop a primary key for a table belonging to a rollbackable tables group (should be blocked)
+begin;
+  alter table myschema1.mytbl4 drop constraint mytbl4_pkey;
+ERROR:  E-Maj event trigger: Attempting to drop the primary key for the application table "myschema1.mytbl4". But it belongs to the rollbackable tables group "myGroup1".
+rollback;
+-- drop a primary key for a table belonging to an audit_only tables group (should not fail)
+begin;
+  alter table "phil's schema3"."phil's tbl1" drop constraint "phil's tbl1_pkey" cascade;
 rollback;
 -- drop emaj components
 begin;
@@ -880,13 +891,13 @@ begin;
   alter table emaj_myschema1.mytbl1_log alter column col13 type varchar(10);
 ERROR:  E-Maj event trigger: Attempting to change the log table "emaj_myschema1.mytbl1_log" structure. But the table belongs to the tables group "myGroup1".
 rollback;
--- rename a table and/or change its schema (not covered by event triggers in pg9.6-)
+-- rename a table and/or change its schema (not covered by event triggers)
 begin;
   alter table myschema1.mytbl1 rename to mytbl1_new_name;
   alter table myschema1.mytbl1_new_name set schema public;
   alter schema myschema1 rename to renamed_myschema1;
 rollback;
--- change a table structure that doesn't lead to a table rewrite (not covered by event triggers in pg9.6-)
+-- change a table structure that doesn't lead to a table rewrite (not covered by event triggers)
 begin;
   alter table myschema1.mytbl1 add column another_newcol boolean;
 rollback;

@@ -831,44 +831,56 @@ select emaj.emaj_enable_protection_by_event_triggers();
                                         0
 (1 row)
 
--- drop or alter various E-Maj components
+--
+-- drop or alter various components
 --
 -- drop application components (the related tables group is currently in logging state)
 begin;
   drop table myschema1.mytbl1 cascade;
 ERROR:  E-Maj event trigger: Attempting to drop the application table "myschema1.mytbl1". But it belongs to the active tables group "myGroup1".
-CONTEXT:  PL/pgSQL function emaj._event_trigger_sql_drop_fnct() line 51 at RAISE
+CONTEXT:  PL/pgSQL function emaj._event_trigger_sql_drop_fnct() line 52 at RAISE
 rollback;
 begin;
   drop sequence myschema2.mySeq1;
 ERROR:  E-Maj event trigger: Attempting to drop the application sequence "myschema2.myseq1". But it belongs to the active tables group "myGroup2".
-CONTEXT:  PL/pgSQL function emaj._event_trigger_sql_drop_fnct() line 75 at RAISE
+CONTEXT:  PL/pgSQL function emaj._event_trigger_sql_drop_fnct() line 76 at RAISE
 rollback;
 begin;
   drop schema myschema1 cascade;
 ERROR:  E-Maj event trigger: Attempting to drop the application schema "myschema1". But it belongs to the active tables groups "myGroup1".
-CONTEXT:  PL/pgSQL function emaj._event_trigger_sql_drop_fnct() line 28 at RAISE
+CONTEXT:  PL/pgSQL function emaj._event_trigger_sql_drop_fnct() line 29 at RAISE
+rollback;
+-- drop primary keys
+-- drop a primary key for a table belonging to a rollbackable tables group (should be blocked)
+begin;
+  alter table myschema1.mytbl4 drop constraint mytbl4_pkey;
+ERROR:  E-Maj event trigger: Attempting to drop the primary key for the application table "myschema1.mytbl4". But it belongs to the rollbackable tables group "myGroup1".
+CONTEXT:  PL/pgSQL function emaj._event_trigger_sql_drop_fnct() line 133 at RAISE
+rollback;
+-- drop a primary key for a table belonging to an audit_only tables group (should not fail)
+begin;
+  alter table "phil's schema3"."phil's tbl1" drop constraint "phil's tbl1_pkey" cascade;
 rollback;
 -- drop emaj components
 begin;
   drop table emaj_myschema1."myTbl3_log";
 ERROR:  E-Maj event trigger: Attempting to drop the log table "emaj_myschema1.myTbl3_log". But dropping an E-Maj log table is not allowed.
-CONTEXT:  PL/pgSQL function emaj._event_trigger_sql_drop_fnct() line 61 at RAISE
+CONTEXT:  PL/pgSQL function emaj._event_trigger_sql_drop_fnct() line 62 at RAISE
 rollback;
 begin;
   drop sequence emaj_myschema1.mytbl1_log_seq;
 ERROR:  E-Maj event trigger: Attempting to drop the log sequence "emaj_myschema1.mytbl1_log_seq". But dropping an E-Maj sequence is not allowed.
-CONTEXT:  PL/pgSQL function emaj._event_trigger_sql_drop_fnct() line 85 at RAISE
+CONTEXT:  PL/pgSQL function emaj._event_trigger_sql_drop_fnct() line 86 at RAISE
 rollback;
 begin;
   drop function emaj_myschema1."myTbl3_log_fnct"() cascade;
 ERROR:  E-Maj event trigger: Attempting to drop the log function "emaj_myschema1."myTbl3_log_fnct"()". But dropping an E-Maj log function is not allowed.
-CONTEXT:  PL/pgSQL function emaj._event_trigger_sql_drop_fnct() line 96 at RAISE
+CONTEXT:  PL/pgSQL function emaj._event_trigger_sql_drop_fnct() line 97 at RAISE
 rollback;
 begin;
   drop trigger emaj_log_trg on myschema1.mytbl1;
 ERROR:  E-Maj event trigger: Attempting to drop the "emaj_log_trg on myschema1.mytbl1" E-Maj trigger. But dropping an E-Maj trigger is not allowed.
-CONTEXT:  PL/pgSQL function emaj._event_trigger_sql_drop_fnct() line 105 at RAISE
+CONTEXT:  PL/pgSQL function emaj._event_trigger_sql_drop_fnct() line 106 at RAISE
 rollback;
 begin;
   drop schema emaj cascade;
@@ -878,7 +890,7 @@ rollback;
 begin;
   drop schema emaj_myschema1 cascade;
 ERROR:  E-Maj event trigger: Attempting to drop the schema "emaj_myschema1". But dropping an E-Maj schema is not allowed.
-CONTEXT:  PL/pgSQL function emaj._event_trigger_sql_drop_fnct() line 37 at RAISE
+CONTEXT:  PL/pgSQL function emaj._event_trigger_sql_drop_fnct() line 38 at RAISE
 rollback;
 -- dropping the extension in tested by the install sql script because it depends on the way the extension is created
 -- change a table structure that leads to a table rewrite
@@ -892,13 +904,13 @@ begin;
 ERROR:  E-Maj event trigger: Attempting to change the log table "emaj_myschema1.mytbl1_log" structure. But the table belongs to the tables group "myGroup1".
 CONTEXT:  PL/pgSQL function emaj._event_trigger_table_rewrite_fnct() line 37 at RAISE
 rollback;
--- rename a table and/or change its schema (not covered by event triggers in pg9.6-)
+-- rename a table and/or change its schema (not covered by event triggers)
 begin;
   alter table myschema1.mytbl1 rename to mytbl1_new_name;
   alter table myschema1.mytbl1_new_name set schema public;
   alter schema myschema1 rename to renamed_myschema1;
 rollback;
--- change a table structure that doesn't lead to a table rewrite (not covered by event triggers in pg9.6-)
+-- change a table structure that doesn't lead to a table rewrite (not covered by event triggers)
 begin;
   alter table myschema1.mytbl1 add column another_newcol boolean;
 rollback;

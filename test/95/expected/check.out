@@ -129,7 +129,7 @@ select funcname, calls from pg_stat_user_functions
  _emaj_param_change_fnct                   |    42
  _enable_event_triggers                    |   306
  _estimate_rollback_groups                 |    13
- _event_trigger_sql_drop_fnct              |   210
+ _event_trigger_sql_drop_fnct              |   245
  _event_trigger_table_rewrite_fnct         |     4
  _export_groups_conf                       |    11
  _export_param_conf                        |     7

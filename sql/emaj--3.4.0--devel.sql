@@ -11659,6 +11659,7 @@ $_event_trigger_sql_drop_fnct$
 -- The function is declared SECURITY DEFINER so that non emaj roles can access the emaj internal tables when dropping their objects.
   DECLARE
     v_groupName              TEXT;
+    v_tableName              TEXT;
     r_dropped                RECORD;
   BEGIN
 -- scan all dropped objects
@@ -11756,6 +11757,33 @@ $_event_trigger_sql_drop_fnct$
              (r_dropped.object_identity LIKE 'emaj_log_trg%' OR r_dropped.object_identity LIKE 'emaj_trunc_trg%') THEN
             RAISE EXCEPTION 'E-Maj event trigger: Attempting to drop the "%" E-Maj trigger. But dropping an E-Maj trigger is not allowed.',
               r_dropped.object_identity;
+          END IF;
+        WHEN r_dropped.object_type = 'table constraint' AND tg_tag = 'ALTER TABLE' THEN
+-- the object is a table constraint
+--   it may be primary key or another constraint
+--   verify that if the targeted table belongs to a rollbackable group, its primary key still exists
+--        the table name can be found in the last part of the object_identity variable,
+--          after the '.' that separates the schema and table names, and possibly between double quotes
+          v_tableName = substring(r_dropped.object_identity from '\.(?:"?)(.*)(?:"?)');
+          SELECT rel_group INTO v_groupName
+            FROM emaj.emaj_relation
+                 JOIN emaj.emaj_group ON (group_name = rel_group)
+            WHERE rel_schema = r_dropped.schema_name
+              AND rel_tblseq = v_tableName
+              AND upper_inf(rel_time_range)
+              AND group_is_rollbackable
+              AND NOT EXISTS
+                (SELECT 0
+                   FROM pg_catalog.pg_class c
+                        JOIN pg_catalog.pg_namespace ON (pg_namespace.oid = c.relnamespace)
+                        JOIN pg_catalog.pg_constraint ON (connamespace = pg_namespace.oid AND conrelid = c.oid)
+                             WHERE contype = 'p'
+                               AND nspname = rel_schema
+                               AND c.relname = rel_tblseq
+                );
+          IF FOUND THEN
+            RAISE EXCEPTION 'E-Maj event trigger: Attempting to drop the primary key for the application table "%.%". But it belongs to'
+                            ' the rollbackable tables group "%".', r_dropped.schema_name, v_tableName, v_groupName;
           END IF;
         ELSE
           CONTINUE;
@@ -11900,6 +11928,13 @@ $_enable_event_triggers$;
 -- event triggers and related functions --
 --                                      --
 ------------------------------------------
+DROP EVENT TRIGGER emaj_sql_drop_trg;
+CREATE EVENT TRIGGER emaj_sql_drop_trg
+  ON sql_drop
+  WHEN TAG IN ('DROP FUNCTION','DROP SCHEMA','DROP SEQUENCE','DROP TABLE','ALTER TABLE','DROP TRIGGER')
+  EXECUTE PROCEDURE emaj._event_trigger_sql_drop_fnct();
+COMMENT ON EVENT TRIGGER emaj_sql_drop_trg IS
+$$Controls the removal of E-Maj components.$$;
 
 ALTER EXTENSION emaj DROP FUNCTION public._emaj_protection_event_trigger_fnct();
 

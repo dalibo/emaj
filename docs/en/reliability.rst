@@ -31,8 +31,9 @@ Installing E-Maj adds 2 event triggers of type “*sql_drop*“:
 * *emaj_sql_drop_trg* blocks the drop attempts of:
 
   * any E-Maj object (log schema, log table, log sequence, log function and log trigger),
-  * any application table or sequence belonging to a table group in *LOGGING* state,
-  * any schema containing at least one table or sequence belonging to a table group in *LOGGING* state.
+  * any application table or sequence belonging to a tables group in *LOGGING* state,
+  * any primary key of a table belonging to a *rollbackable* tables group,
+  * any schema containing at least one table or sequence belonging to a tables group in *LOGGING* state.
 
 * *emaj_protection_trg* blocks the drop attempts of the *emaj* extension itself and the main *emaj* schema.
 
@@ -42,5 +43,4 @@ Installing E-Maj also adds an event trigger of type “table_rewrite”:
 
 It is possible to deactivate and reactivate these event triggers thanks to 2 functions: :ref:`emaj_disable_protection_by_event_triggers() <emaj_disable_protection_by_event_triggers>` and :ref:`emaj_enable_protection_by_event_triggers() <emaj_enable_protection_by_event_triggers>`.
 
-However, the protections do not cover all risks. In particular, they do not prevent any tables or sequences renaming or any schema change. And some other DDL statements altering tables structure will not fire any trigger.
-
+However, the protections do not cover all risks. In particular, they do not prevent any tables or sequences renaming or any schema change. And some other DDL statements altering tables structure do not fire any trigger.
