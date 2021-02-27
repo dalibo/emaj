@@ -1767,7 +1767,7 @@ $_handle_trigger_fk_tbl$
 -- Inputs: the action to perform: ENABLE_TRIGGER/DISABLE_TRIGGER/ADD_TRIGGER/DROP_TRIGGER/ADD_FK/DROP_FK
 --         the full name of the application table (schema qualified and quoted if needed)
 --         the trigger or constraint name
---         the object definition for foreign keys
+--         the object definition for foreign keys, or the trigger type (ALWAYS/REPLICA/'') for triggers
 -- The function is defined as SECURITY DEFINER so that emaj_adm role can perform the action on any application table.
   DECLARE
     v_stack                  TEXT;
@@ -1787,8 +1787,8 @@ $_handle_trigger_fk_tbl$
       EXECUTE format('ALTER TABLE %s DISABLE TRIGGER %I',
                      p_fullTableName, p_objectName);
     ELSIF p_action = 'ENABLE_TRIGGER' THEN
-      EXECUTE format('ALTER TABLE %s ENABLE TRIGGER %I',
-                     p_fullTableName, p_objectName);
+      EXECUTE format('ALTER TABLE %s ENABLE %s TRIGGER %I',
+                     p_fullTableName, p_objectDef, p_objectName);
     ELSIF p_action = 'ADD_TRIGGER' AND p_objectName = 'emaj_log_trg' THEN
       EXECUTE format('CREATE TRIGGER emaj_log_trg'
                      ' AFTER INSERT OR UPDATE OR DELETE ON %s'
@@ -9012,10 +9012,10 @@ $_rlbk_session_exec$
           PERFORM emaj._handle_trigger_fk_tbl('ADD_FK', v_fullTableName, r_step.rlbp_object, r_step.rlbp_object_def);
         WHEN 'ENA_APP_TRG' THEN
 -- process an application trigger enable
-          PERFORM emaj._handle_trigger_fk_tbl('ENABLE_TRIGGER', v_fullTableName, r_step.rlbp_object);
+          PERFORM emaj._handle_trigger_fk_tbl('ENABLE_TRIGGER', v_fullTableName, r_step.rlbp_object, r_step.rlbp_object_def);
         WHEN 'ENA_LOG_TRG' THEN
 -- process a log trigger enable
-          PERFORM emaj._handle_trigger_fk_tbl('ENABLE_TRIGGER', v_fullTableName, 'emaj_log_trg');
+          PERFORM emaj._handle_trigger_fk_tbl('ENABLE_TRIGGER', v_fullTableName, 'emaj_log_trg', '');
       END CASE;
 -- update the emaj_rlbk_plan table to set the step duration
 -- NB: the computed duration does not include the time needed to update the emaj_rlbk_plan table

@@ -10,6 +10,8 @@ select public.handle_emaj_sequences(4000);
 -- set the triggers state
 ALTER TABLE mySchema1.myTbl2 ENABLE TRIGGER myTbl2trg2;
 select emaj.emaj_modify_table('myschema1','mytbl2','{"ignored_triggers":"mytbl2trg2"}'::jsonb);
+-- switch the myTbl2trg1 as an ALWAYS trigger
+ALTER TABLE mySchema1.myTbl2 DISABLE TRIGGER myTbl2trg1, ENABLE ALWAYS TRIGGER myTbl2trg1;
 
 -- disable event triggers to test cases with missing components
 select emaj.emaj_disable_protection_by_event_triggers();
@@ -342,6 +344,10 @@ select col20, col21, col22, col23, emaj_verb, emaj_tuple, emaj_gid from emaj_mys
 select col11, col12, col13 from myschema1.myTbl1 order by col11, col12;
 select col21, col22 from myschema1.myTbl2 order by col21;
 select col20, col21 from myschema1.myTbl2b order by col20;
+-- check application triggers state
+select nspname, relname, tgname, tgenabled from pg_trigger, pg_class, pg_namespace
+  where relnamespace = pg_namespace.oid and tgrelid = pg_class.oid and tgname like 'mytbl2trg%'
+  order by 1,2,3;
 
 -----------------------------
 -- unlogged rollback of logged rollbacks #3
@@ -584,6 +590,13 @@ rollback;
 select rlbk_id, rlbk_status, rlbk_begin_hist_id, rlbk_nb_session from emaj.emaj_rlbk
   where rlbk_status in ('PLANNING', 'LOCKING', 'EXECUTING', 'COMPLETED') order by rlbk_id;
 select emaj.emaj_cleanup_rollback_state();
+
+-----------------------------
+-- check application triggers state
+-----------------------------
+select nspname, relname, tgname, tgenabled from pg_trigger, pg_class, pg_namespace
+  where relnamespace = pg_namespace.oid and tgrelid = pg_class.oid and tgname like 'mytbl2trg%'
+  order by 1,2,3;
 
 -----------------------------
 -- check rollback tables
