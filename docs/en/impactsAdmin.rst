@@ -109,12 +109,12 @@ Integrated physical replication
 
 E-Maj is totally compatible with the use of the different PostgreSQL integrated physical replication modes (*WAL* archiving and *PITR*, asynchronous and synchronous *Streaming Replication*). Indeed, all E-Maj objects hosted in the instance are replicated like all other objects of the instance.
 
-However, because of the way PostgreSQL manages sequences, the sequences' current values may be a little forward on slave instances than on the master instance. For E-Maj, this may lightly overestimate the number of log rows in general statistics. But there is no consequence on the data integrity.
+However, because of the way PostgreSQL manages sequences, the sequences' current values may be a little forward on secondary instances than on the primary instance. For E-Maj, this may lightly overestimate the number of log rows in general statistics. But there is no consequence on the data integrity.
 
 Integrated logical replication
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Starting with version 10, PostgreSQL includes logical replication mechanisms. The replication granularity is the table. The *publication* object used in logical replication is quite close to the E-Maj tables group concept, except that a *publication* cannot contain sequences.
+Starting with version 10, PostgreSQL includes logical replication mechanisms. The replication granularity is the table. The *publication* object used with the logical replication is quite close to the E-Maj tables group concept, except that a *publication* cannot contain sequences.
 
 **Replication of application tables managed by E-Maj**
 
@@ -128,14 +128,14 @@ An application table that belongs to a tables group can be replicated. The effec
 .. image:: images/logical_repl2.png
    :align: center
 
-It is possible to include an application table into a tables group, with updates coming from a logical replication flow. But all E-Maj operations (starting/stopping the group, setting marks,…) must of course be executed on the subscriber side. An E-Maj rollback operation can be launched once the replication flow has been stopped (to avoid updates conflicts). But then, tables on both *publisher* and *subscriber* sides are not coherent anymore.
+As of E-Maj 4.0, it is possible to include an application table into a tables group, with updates coming from a logical replication flow. But all E-Maj operations (starting/stopping the group, setting marks,…) must of course be executed on the *subscriber* side. An E-Maj rollback operation can be launched once the replication flow has been stopped (to avoid updates conflicts). But then, tables on both *publisher* and *subscriber* sides are not coherent anymore.
 
 **Replication of E-Maj log tables**
 
 .. image:: images/logical_repl3.png
    :align: center
 
-It is technicaly possible to replicate an E-Maj log table (once found a way to get the DDL that creates the log table – using *pg_dump* for instance). This allows to duplicate or concentrate logs content on another server. But the replicated log table can only be used for log **auditing**. As log sequences or *TRUNCATE* verbs are not replicated, these logs cannot be used for other purposes.
+As of E-Maj 4.0, it is technicaly possible to replicate an E-Maj log table (once found a way to get the DDL that creates the log table – using *pg_dump* for instance). This allows to duplicate or concentrate logs content on another server. But the replicated log table can only be used for log **auditing**. As log sequences are not replicated, these logs cannot be used for other purposes.
 
 **Replication of application tables and E-Maj log tables**
 
@@ -148,4 +148,3 @@ Other replication solutions
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 Using E-Maj with external replication solutions based on triggers like *Slony* or *Londiste*, requires some attention... It is probably advisable to avoid replicating log tables and E-Maj technical tables.
-

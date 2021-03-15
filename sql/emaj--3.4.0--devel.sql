@@ -6457,8 +6457,8 @@ $_start_groups$
       LOOP
         IF r_tblsq.rel_kind = 'r' THEN
 -- if it is a table, enable the emaj log and truncate triggers
-          PERFORM emaj._handle_trigger_fk_tbl('ENABLE_TRIGGER', r_tblsq.full_relation_name, 'emaj_log_trg');
-          PERFORM emaj._handle_trigger_fk_tbl('ENABLE_TRIGGER', r_tblsq.full_relation_name, 'emaj_trunc_trg');
+          PERFORM emaj._handle_trigger_fk_tbl('ENABLE_TRIGGER', r_tblsq.full_relation_name, 'emaj_log_trg', 'ALWAYS');
+          PERFORM emaj._handle_trigger_fk_tbl('ENABLE_TRIGGER', r_tblsq.full_relation_name, 'emaj_trunc_trg', 'ALWAYS');
         END IF;
         v_nbTblSeq = v_nbTblSeq + 1;
       END LOOP;
@@ -8727,7 +8727,7 @@ $_rlbk_session_exec$
           PERFORM emaj._handle_trigger_fk_tbl('ENABLE_TRIGGER', v_fullTableName, r_step.rlbp_object, r_step.rlbp_object_def);
         WHEN 'ENA_LOG_TRG' THEN
 -- process a log trigger enable
-          PERFORM emaj._handle_trigger_fk_tbl('ENABLE_TRIGGER', v_fullTableName, 'emaj_log_trg', '');
+          PERFORM emaj._handle_trigger_fk_tbl('ENABLE_TRIGGER', v_fullTableName, 'emaj_log_trg', 'ALWAYS');
       END CASE;
 -- update the emaj_rlbk_plan table to set the step duration
 -- NB: the computed duration does not include the time needed to update the emaj_rlbk_plan table
@@ -12032,6 +12032,28 @@ $tmp$
     LOOP
       EXECUTE format('ALTER FUNCTION %I.%I() OWNER TO emaj_adm',
                      r_rel.nspname, r_rel.proname);
+    END LOOP;
+  END;
+$tmp$;
+
+--
+-- Set the currently enabled E-Maj log or truncate triggers as ALWAYS triggers (instead of ORIGIN triggers)
+--
+DO 
+$tmp$
+  DECLARE
+    r_trg                    RECORD;
+  BEGIN
+    FOR r_trg IN
+      SELECT rel_schema, rel_tblseq, tgname
+        FROM pg_catalog.pg_trigger
+             JOIN emaj.emaj_relation ON tgrelid = (quote_ident(rel_schema) || '.' || quote_ident(rel_tblseq))::regclass
+        WHERE tgname IN ('emaj_log_trg', 'emaj_trunc_trg')
+          AND tgenabled = 'O'
+        ORDER BY 1,2,3
+    LOOP
+      EXECUTE format('ALTER TABLE %I.%I DISABLE TRIGGER %s, ENABLE ALWAYS TRIGGER %s',
+                     r_trg.rel_schema, r_trg.rel_tblseq, r_trg.tgname, r_trg.tgname);
     END LOOP;
   END;
 $tmp$;

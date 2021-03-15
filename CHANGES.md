@@ -32,6 +32,8 @@ E-Maj - Change log
   * Minor code improvements.
 
 ###Bug fixes:###
+  * Set the E-Maj triggers as ALWAYS TRIGGER so that they can be fired by a
+    logical replication changes stream within a subscription.
   * Administrator were able to use tablespaces to store log tables and/or
     indexes, without being granted any CREATE privilege on these tablespaces.
 

@@ -50,6 +50,7 @@ cat <<-EOF1 >${PGDATA}/specif.conf
 	logging_collector = on
 	track_functions = all
 	plpgsql.extra_warnings = all
+	wal_level = logical
 	EOF1
 echo "include 'specif.conf'" >> ${PGDATA}/postgresql.conf
 
