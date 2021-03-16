@@ -1345,8 +1345,8 @@ $_truncate_trigger_fnct$
         WHERE rel_schema = TG_TABLE_SCHEMA
           AND rel_tblseq = TG_TABLE_NAME
           AND upper_inf(rel_time_range);
--- log the TRU event into the log table (with emaj_tuple set to NULL)
-      EXECUTE format('INSERT INTO %s (emaj_verb) VALUES (''TRU'')',
+-- log the TRU event into the log table (with emaj_tuple set to an empty string)
+      EXECUTE format('INSERT INTO %s (emaj_verb, emaj_tuple) VALUES (''TRU'', '''')',
                      v_fullLogTableName);
 -- log all rows from the table
       EXECUTE format('INSERT INTO %s SELECT *, ''TRU'', ''OLD'' FROM ONLY %I.%I ',
@@ -2772,19 +2772,20 @@ $_create_tbl$
     v_sequenceName     = quote_ident(v_logSchema) || '.' || quote_ident(v_baseSequenceName);
 -- prepare TABLESPACE clauses for data and index
     v_dataTblSpace = coalesce('TABLESPACE ' || quote_ident(p_logDatTsp),'');
-    v_idxTblSpace = coalesce('TABLESPACE ' || quote_ident(p_logIdxTsp),'');
+    v_idxTblSpace = coalesce('USING INDEX TABLESPACE ' || quote_ident(p_logIdxTsp),'');
 -- create the log table: it looks like the application table, with some additional technical columns
     EXECUTE format('DROP TABLE IF EXISTS %s',
                    v_logTableName);
     EXECUTE format('CREATE TABLE %s (LIKE %s,'
-                   '  emaj_verb      VARCHAR(3),'
-                   '  emaj_tuple     VARCHAR(3),'
+                   '  emaj_verb      VARCHAR(3)  NOT NULL,'
+                   '  emaj_tuple     VARCHAR(3)  NOT NULL,'
                    '  emaj_gid       BIGINT      NOT NULL   DEFAULT nextval(''emaj.emaj_global_seq''),'
                    '  emaj_changed   TIMESTAMPTZ DEFAULT clock_timestamp(),'
                    '  emaj_txid      BIGINT      DEFAULT txid_current(),'
-                   '  emaj_user      VARCHAR(32) DEFAULT session_user'
+                   '  emaj_user      VARCHAR(32) DEFAULT session_user,'
+                   '  CONSTRAINT %s PRIMARY KEY (emaj_gid, emaj_tuple) %s'
                    '  ) %s',
-                    v_logTableName, v_fullTableName, v_dataTblSpace);
+                    v_logTableName, v_fullTableName, v_logIdxName, v_idxTblSpace, v_dataTblSpace);
 -- get the attnum of the emaj_verb column
     SELECT attnum INTO STRICT v_attnum
       FROM pg_catalog.pg_attribute
@@ -2801,9 +2802,6 @@ $_create_tbl$
       EXECUTE format('ALTER TABLE %s %s',
                      v_logTableName, v_alter_log_table_param);
     END IF;
--- create the index on the log table
-    EXECUTE format('CREATE UNIQUE INDEX %s ON %s(emaj_gid, emaj_tuple)',
-                    v_logIdxName, v_logTableName, v_idxTblSpace);
 -- set the index associated to the primary key as cluster index (It may be useful for CLUSTER command)
     EXECUTE format('ALTER TABLE ONLY %s CLUSTER ON %s',
                    v_logTableName, v_logIdxName);
@@ -3353,9 +3351,11 @@ $_move_tbl$
   BEGIN
 -- get the current relation characteristics
     SELECT rel_log_schema, rel_log_table, rel_log_index, rel_log_sequence,
-           coalesce('TABLESPACE ' || quote_ident(rel_log_dat_tsp),''), coalesce('TABLESPACE ' || quote_ident(rel_log_idx_tsp),'')
+           coalesce('TABLESPACE ' || quote_ident(rel_log_dat_tsp),''),
+           coalesce('USING INDEX TABLESPACE ' || quote_ident(rel_log_idx_tsp),'')
       INTO v_logSchema, v_currentLogTable, v_currentLogIndex, v_logSequence,
-           v_dataTblSpace, v_idxTblSpace
+           v_dataTblSpace,
+           v_idxTblSpace
       FROM emaj.emaj_relation
       WHERE rel_schema = p_schema
         AND rel_tblseq = p_table
@@ -3382,9 +3382,9 @@ $_move_tbl$
 -- create the new log table, by copying the just renamed table structure
     EXECUTE format('CREATE TABLE %I.%I (LIKE %I.%I INCLUDING DEFAULTS) %s',
                     v_logSchema, v_currentLogTable, v_logSchema, v_currentLogTable || v_namesSuffix, v_dataTblSpace);
--- create the index on the new log table
-    EXECUTE format('CREATE UNIQUE INDEX %I ON %I.%I(emaj_gid, emaj_tuple) %s',
-                    v_currentLogIndex, v_logSchema, v_currentLogTable, v_idxTblSpace);
+-- add the primary key
+    EXECUTE format('ALTER TABLE %I.%I ADD CONSTRAiNT %I PRIMARY KEY (emaj_gid, emaj_tuple) %s',
+                    v_logSchema, v_currentLogTable, v_currentLogIndex, v_idxTblSpace);
 -- set the index associated to the primary key as cluster index. It may be useful for CLUSTER command.
     EXECUTE format('ALTER TABLE ONLY %I.%I CLUSTER ON %I',
                    v_logSchema, v_currentLogTable, v_currentLogIndex);
@@ -4645,7 +4645,7 @@ $_gen_sql_tbl$
                    '       LEFT OUTER JOIN %s n ON n.emaj_gid = o.emaj_gid'
                    '                          AND (n.emaj_verb = ''UPD'' AND n.emaj_tuple = ''NEW'')'
                    '  WHERE NOT (o.emaj_verb = ''UPD'' AND o.emaj_tuple = ''NEW'')'
-                   '    AND NOT (o.emaj_verb = ''TRU'' AND o.emaj_tuple IS NOT NULL)'
+                   '    AND NOT (o.emaj_verb = ''TRU'' AND o.emaj_tuple <> '''')'
                    '    AND %s',
                    v_rqInsert, v_rqUpdate, v_rqDelete, v_rqTruncate, v_logTableName, v_logTableName, v_conditions);
     GET DIAGNOSTICS v_nbSQL = ROW_COUNT;
@@ -12032,6 +12032,30 @@ $tmp$
     LOOP
       EXECUTE format('ALTER FUNCTION %I.%I() OWNER TO emaj_adm',
                      r_rel.nspname, r_rel.proname);
+    END LOOP;
+  END;
+$tmp$;
+
+--
+-- Adjust the log tables content for the TRU recorded verbs (NULL -> '') and transform their index into Primary Key
+--
+DO 
+$tmp$
+  DECLARE
+    r_log                    RECORD;
+  BEGIN
+    FOR r_log IN
+      SELECT rel_log_schema, rel_log_table, rel_log_index
+        FROM emaj.emaj_relation
+        WHERE rel_kind = 'r'
+        ORDER BY 1,2
+    LOOP
+      EXECUTE format('UPDATE %I.%I SET emaj_tuple = '''' WHERE emaj_tuple IS NULL',
+                     r_log.rel_log_schema, r_log.rel_log_table);
+      EXECUTE format('ALTER TABLE %I.%I ALTER COLUMN emaj_tuple SET NOT NULL, ALTER COLUMN emaj_verb SET NOT NULL',
+                     r_log.rel_log_schema, r_log.rel_log_table);
+      EXECUTE format('ALTER TABLE %I.%I ADD PRIMARY KEY USING INDEX %I',
+                     r_log.rel_log_schema, r_log.rel_log_table, r_log.rel_log_index);
     END LOOP;
   END;
 $tmp$;

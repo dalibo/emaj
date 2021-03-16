@@ -34,6 +34,8 @@ E-Maj - Change log
 ###Bug fixes:###
   * Set the E-Maj triggers as ALWAYS TRIGGER so that they can be fired by a
     logical replication changes stream within a subscription.
+  * Transform the unique index on log tables into primary key. This allows
+    E-Maj log tables to be member of logical replication publication.
   * Administrator were able to use tablespaces to store log tables and/or
     indexes, without being granted any CREATE privilege on these tablespaces.
 

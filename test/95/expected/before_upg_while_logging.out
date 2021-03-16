@@ -1310,3 +1310,4 @@ select col41, col42, col43, col44, col45, emaj_verb, emaj_tuple, emaj_gid from e
 -------------------------------
 -- Specific tests for this upgrade
 -------------------------------
+truncate table "phil's schema3"."myTbl2\";

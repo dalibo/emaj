@@ -170,6 +170,7 @@ echo "=============================================="
 echo "Test logical replication of an E-Maj log table"
 echo "=============================================="
 
+echo "Wait a few seconds, to recreate the publication safely"
 sleep 10
 echo "-------------------------------------------------------"
 echo "On the publisher side: Setup tables and E-Maj groups and create the publication"
@@ -199,9 +200,6 @@ create table logrep_schema.logged_table (
 select emaj.emaj_create_group('logrep_group');
 select emaj.emaj_assign_table('logrep_schema','logged_table','logrep_group');
 select emaj.emaj_start_group('logrep_group','PUB');
-
--- This is temporarily needed because the log table has no explicitly defined PK
-alter table emaj_logrep_schema.logged_table_log replica identity full;
 
 -- Create the publication
 
@@ -343,6 +341,11 @@ echo "-------------------------------------------------------"
 
 psql -h $PUBHOST  -p $PUBPORT $PUBDATABASE -a <<EOF
 \set ON_ERROR_STOP
+
+-- Remove the table from its tables group. The log table rename is reported into the publication
+select emaj.emaj_remove_table('logrep_schema','logged_table');
+\dt emaj_logrep_schema.*
+\dRp+
 
 -- Drop the publication
 

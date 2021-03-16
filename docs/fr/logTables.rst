@@ -9,13 +9,13 @@ Structure standard
 Les tables de log ont une structure qui découle directement des tables applicatives dont elles enregistrent les mises à jour. Elles contiennent les mêmes colonnes avec les mêmes types. Mais elles possèdent aussi quelques colonnes techniques complémentaires :
 
 * emaj_verb : type de verbe SQL ayant généré la mise à jour (*INS*, *UPD*, *DEL*, *TRU*)
-* emaj_tuple : version des lignes (*OLD* pour les *DEL*, *UPD* et *TRU* ; *NEW* pour *INS* et *UPD* ; NULL pour les événements *TRUNCATE*)
+* emaj_tuple : version des lignes (*OLD* pour les *DEL*, *UPD* et *TRU* ; *NEW* pour *INS* et *UPD* ; chaîne vide pour les événements *TRUNCATE*)
 * emaj_gid : identifiant de la ligne de log
 * emaj_changed : date et heure de l'insertion de la ligne dans la table de log
 * emaj_txid : identifiant de la transaction à l'origine de la mise à jour (*txid* PostgreSQL)
 * emaj_user : rôle de connexion à l'origine de la mise à jour
 
-Lorsqu’une requête SQL *TRUNCATE* est exécutée sur une table, chaque ligne présente dans la table est enregistrée (avec *emaj_verb = TRU* et *emaj_tuple = OLD*). Une ligne est ajoutée avec *emaj_verb = TRU*, les colonnes de la table source et *emaj_tuple* étant positionnées à NULL. Cette ligne est utilisée pour la génération de scripts SQL.
+Lorsqu’une requête SQL *TRUNCATE* est exécutée sur une table, chaque ligne présente dans la table est enregistrée (avec *emaj_verb = TRU* et *emaj_tuple = OLD*). Une ligne est ajoutée avec *emaj_verb = TRU*, *emaj_tuple = ''*, les colonnes de la table source étant positionnées à NULL. Cette ligne est utilisée pour la génération de scripts SQL.
 
 .. _addLogColumns:
 

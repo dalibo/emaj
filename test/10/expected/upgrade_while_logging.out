@@ -771,14 +771,14 @@ Owned by: emaj.emaj_time_stamp.time_id
  col31        | integer                     |           |          | 
  col32        | timestamp without time zone |           |          | 
  col33        | numeric(12,2)               |           |          | 
- emaj_verb    | character varying(3)        |           |          | 
- emaj_tuple   | character varying(3)        |           |          | 
+ emaj_verb    | character varying(3)        |           | not null | 
+ emaj_tuple   | character varying(3)        |           | not null | 
  emaj_gid     | bigint                      |           | not null | nextval('emaj.emaj_global_seq'::regclass)
  emaj_changed | timestamp with time zone    |           |          | clock_timestamp()
  emaj_txid    | bigint                      |           |          | txid_current()
  emaj_user    | character varying(32)       |           |          | SESSION_USER
 Indexes:
-    "myTbl3_log_idx_1" UNIQUE, btree (emaj_gid, emaj_tuple) CLUSTER, tablespace "tspemaj"
+    "myTbl3_log_idx_1" PRIMARY KEY, btree (emaj_gid, emaj_tuple) CLUSTER, tablespace "tspemaj"
 Tablespace: "tspemaj"
 
     Index "emaj_myschema1.myTbl3_log_idx_1"
@@ -786,7 +786,7 @@ Tablespace: "tspemaj"
 ------------+----------------------+------------
  emaj_gid   | bigint               | emaj_gid
  emaj_tuple | character varying(3) | emaj_tuple
-unique, btree, for table "emaj_myschema1.myTbl3_log_1", clustered
+primary key, btree, for table "emaj_myschema1.myTbl3_log_1", clustered
 Tablespace: "tspemaj"
 
                                      Table "emaj_myschema1.mytbl1_log"
@@ -795,14 +795,14 @@ Tablespace: "tspemaj"
  col11        | numeric(7,0)             |           |          | 
  col12        | character(10)            |           |          | 
  col13        | bytea                    |           |          | 
- emaj_verb    | character varying(3)     |           |          | 
- emaj_tuple   | character varying(3)     |           |          | 
+ emaj_verb    | character varying(3)     |           | not null | 
+ emaj_tuple   | character varying(3)     |           | not null | 
  emaj_gid     | bigint                   |           | not null | nextval('emaj.emaj_global_seq'::regclass)
  emaj_changed | timestamp with time zone |           |          | clock_timestamp()
  emaj_txid    | bigint                   |           |          | txid_current()
  emaj_user    | character varying(32)    |           |          | SESSION_USER
 Indexes:
-    "mytbl1_log_idx" UNIQUE, btree (emaj_gid, emaj_tuple) CLUSTER, tablespace "tspemaj"
+    "mytbl1_log_idx" PRIMARY KEY, btree (emaj_gid, emaj_tuple) CLUSTER, tablespace "tspemaj"
 Tablespace: "tspemaj"
 
      Index "emaj_myschema1.mytbl1_log_idx"
@@ -810,7 +810,7 @@ Tablespace: "tspemaj"
 ------------+----------------------+------------
  emaj_gid   | bigint               | emaj_gid
  emaj_tuple | character varying(3) | emaj_tuple
-unique, btree, for table "emaj_myschema1.mytbl1_log", clustered
+primary key, btree, for table "emaj_myschema1.mytbl1_log", clustered
 Tablespace: "tspemaj"
 
                    Sequence "emaj_myschema1.mytbl1_log_seq"
@@ -824,14 +824,14 @@ Tablespace: "tspemaj"
  col21        | integer                  |           |          | 
  col22        | text                     |           |          | 
  col23        | date                     |           |          | 
- emaj_verb    | character varying(3)     |           |          | 
- emaj_tuple   | character varying(3)     |           |          | 
+ emaj_verb    | character varying(3)     |           | not null | 
+ emaj_tuple   | character varying(3)     |           | not null | 
  emaj_gid     | bigint                   |           | not null | nextval('emaj.emaj_global_seq'::regclass)
  emaj_changed | timestamp with time zone |           |          | clock_timestamp()
  emaj_txid    | bigint                   |           |          | txid_current()
  emaj_user    | character varying(32)    |           |          | SESSION_USER
 Indexes:
-    "mytbl2_log_idx" UNIQUE, btree (emaj_gid, emaj_tuple) CLUSTER, tablespace "tspemaj"
+    "mytbl2_log_idx" PRIMARY KEY, btree (emaj_gid, emaj_tuple) CLUSTER, tablespace "tspemaj"
 Tablespace: "tspemaj"
 
      Index "emaj_myschema1.mytbl2_log_idx"
@@ -839,7 +839,7 @@ Tablespace: "tspemaj"
 ------------+----------------------+------------
  emaj_gid   | bigint               | emaj_gid
  emaj_tuple | character varying(3) | emaj_tuple
-unique, btree, for table "emaj_myschema1.mytbl2_log", clustered
+primary key, btree, for table "emaj_myschema1.mytbl2_log", clustered
 Tablespace: "tspemaj"
 
                    Sequence "emaj_myschema1.mytbl2_log_seq"
@@ -854,14 +854,14 @@ Tablespace: "tspemaj"
  col21        | integer                  |           |          | 
  col22        | double precision         |           |          | 
  col23        | boolean                  |           |          | 
- emaj_verb    | character varying(3)     |           |          | 
- emaj_tuple   | character varying(3)     |           |          | 
+ emaj_verb    | character varying(3)     |           | not null | 
+ emaj_tuple   | character varying(3)     |           | not null | 
  emaj_gid     | bigint                   |           | not null | nextval('emaj.emaj_global_seq'::regclass)
  emaj_changed | timestamp with time zone |           |          | clock_timestamp()
  emaj_txid    | bigint                   |           |          | txid_current()
  emaj_user    | character varying(32)    |           |          | SESSION_USER
 Indexes:
-    "mytbl2b_log_idx" UNIQUE, btree (emaj_gid, emaj_tuple) CLUSTER, tablespace "tspemaj"
+    "mytbl2b_log_idx" PRIMARY KEY, btree (emaj_gid, emaj_tuple) CLUSTER, tablespace "tspemaj"
 Tablespace: "tspemaj"
 
      Index "emaj_myschema1.mytbl2b_log_idx"
@@ -869,7 +869,7 @@ Tablespace: "tspemaj"
 ------------+----------------------+------------
  emaj_gid   | bigint               | emaj_gid
  emaj_tuple | character varying(3) | emaj_tuple
-unique, btree, for table "emaj_myschema1.mytbl2b_log", clustered
+primary key, btree, for table "emaj_myschema1.mytbl2b_log", clustered
 Tablespace: "tspemaj"
 
                   Sequence "emaj_myschema1.mytbl2b_log_seq"
@@ -885,14 +885,14 @@ Tablespace: "tspemaj"
  col43        | integer                  |           |          | 
  col44        | numeric(7,0)             |           |          | 
  col45        | character(10)            |           |          | 
- emaj_verb    | character varying(3)     |           |          | 
- emaj_tuple   | character varying(3)     |           |          | 
+ emaj_verb    | character varying(3)     |           | not null | 
+ emaj_tuple   | character varying(3)     |           | not null | 
  emaj_gid     | bigint                   |           | not null | nextval('emaj.emaj_global_seq'::regclass)
  emaj_changed | timestamp with time zone |           |          | clock_timestamp()
  emaj_txid    | bigint                   |           |          | txid_current()
  emaj_user    | character varying(32)    |           |          | SESSION_USER
 Indexes:
-    "mytbl4_log_idx" UNIQUE, btree (emaj_gid, emaj_tuple) CLUSTER, tablespace "tspemaj"
+    "mytbl4_log_idx" PRIMARY KEY, btree (emaj_gid, emaj_tuple) CLUSTER, tablespace "tspemaj"
 Tablespace: "tspemaj"
 
      Index "emaj_myschema1.mytbl4_log_idx"
@@ -900,7 +900,7 @@ Tablespace: "tspemaj"
 ------------+----------------------+------------
  emaj_gid   | bigint               | emaj_gid
  emaj_tuple | character varying(3) | emaj_tuple
-unique, btree, for table "emaj_myschema1.mytbl4_log", clustered
+primary key, btree, for table "emaj_myschema1.mytbl4_log", clustered
 Tablespace: "tspemaj"
 
                    Sequence "emaj_myschema1.mytbl4_log_seq"
@@ -914,14 +914,14 @@ Tablespace: "tspemaj"
  col31        | integer                     |           |          | 
  col32        | timestamp without time zone |           |          | 
  col33        | numeric(12,2)               |           |          | 
- emaj_verb    | character varying(3)        |           |          | 
- emaj_tuple   | character varying(3)        |           |          | 
+ emaj_verb    | character varying(3)        |           | not null | 
+ emaj_tuple   | character varying(3)        |           | not null | 
  emaj_gid     | bigint                      |           | not null | nextval('emaj.emaj_global_seq'::regclass)
  emaj_changed | timestamp with time zone    |           |          | clock_timestamp()
  emaj_txid    | bigint                      |           |          | txid_current()
  emaj_user    | character varying(32)       |           |          | SESSION_USER
 Indexes:
-    "myTbl3_log_idx" UNIQUE, btree (emaj_gid, emaj_tuple) CLUSTER, tablespace "tspemaj"
+    "myTbl3_log_idx" PRIMARY KEY, btree (emaj_gid, emaj_tuple) CLUSTER, tablespace "tspemaj"
 Tablespace: "tspemaj"
 
      Index "emaj_myschema2.myTbl3_log_idx"
@@ -929,7 +929,7 @@ Tablespace: "tspemaj"
 ------------+----------------------+------------
  emaj_gid   | bigint               | emaj_gid
  emaj_tuple | character varying(3) | emaj_tuple
-unique, btree, for table "emaj_myschema2.myTbl3_log", clustered
+primary key, btree, for table "emaj_myschema2.myTbl3_log", clustered
 Tablespace: "tspemaj"
 
                    Sequence "emaj_myschema2.myTbl3_log_seq"
@@ -943,14 +943,14 @@ Tablespace: "tspemaj"
  col11        | numeric(7,0)             |           |          | 
  col12        | character(10)            |           |          | 
  col13        | bytea                    |           |          | 
- emaj_verb    | character varying(3)     |           |          | 
- emaj_tuple   | character varying(3)     |           |          | 
+ emaj_verb    | character varying(3)     |           | not null | 
+ emaj_tuple   | character varying(3)     |           | not null | 
  emaj_gid     | bigint                   |           | not null | nextval('emaj.emaj_global_seq'::regclass)
  emaj_changed | timestamp with time zone |           |          | clock_timestamp()
  emaj_txid    | bigint                   |           |          | txid_current()
  emaj_user    | character varying(32)    |           |          | SESSION_USER
 Indexes:
-    "mytbl1_log_idx" UNIQUE, btree (emaj_gid, emaj_tuple) CLUSTER, tablespace "tspemaj"
+    "mytbl1_log_idx" PRIMARY KEY, btree (emaj_gid, emaj_tuple) CLUSTER, tablespace "tspemaj"
 Tablespace: "tspemaj"
 
      Index "emaj_myschema2.mytbl1_log_idx"
@@ -958,7 +958,7 @@ Tablespace: "tspemaj"
 ------------+----------------------+------------
  emaj_gid   | bigint               | emaj_gid
  emaj_tuple | character varying(3) | emaj_tuple
-unique, btree, for table "emaj_myschema2.mytbl1_log", clustered
+primary key, btree, for table "emaj_myschema2.mytbl1_log", clustered
 Tablespace: "tspemaj"
 
                    Sequence "emaj_myschema2.mytbl1_log_seq"
@@ -972,14 +972,14 @@ Tablespace: "tspemaj"
  col21        | integer                  |           |          | 
  col22        | text                     |           |          | 
  col23        | date                     |           |          | 
- emaj_verb    | character varying(3)     |           |          | 
- emaj_tuple   | character varying(3)     |           |          | 
+ emaj_verb    | character varying(3)     |           | not null | 
+ emaj_tuple   | character varying(3)     |           | not null | 
  emaj_gid     | bigint                   |           | not null | nextval('emaj.emaj_global_seq'::regclass)
  emaj_changed | timestamp with time zone |           |          | clock_timestamp()
  emaj_txid    | bigint                   |           |          | txid_current()
  emaj_user    | character varying(32)    |           |          | SESSION_USER
 Indexes:
-    "mytbl2_log_idx" UNIQUE, btree (emaj_gid, emaj_tuple) CLUSTER, tablespace "tspemaj"
+    "mytbl2_log_idx" PRIMARY KEY, btree (emaj_gid, emaj_tuple) CLUSTER, tablespace "tspemaj"
 Tablespace: "tspemaj"
 
      Index "emaj_myschema2.mytbl2_log_idx"
@@ -987,7 +987,7 @@ Tablespace: "tspemaj"
 ------------+----------------------+------------
  emaj_gid   | bigint               | emaj_gid
  emaj_tuple | character varying(3) | emaj_tuple
-unique, btree, for table "emaj_myschema2.mytbl2_log", clustered
+primary key, btree, for table "emaj_myschema2.mytbl2_log", clustered
 Tablespace: "tspemaj"
 
                    Sequence "emaj_myschema2.mytbl2_log_seq"
@@ -1003,14 +1003,14 @@ Tablespace: "tspemaj"
  col43        | integer                  |           |          | 
  col44        | numeric(7,0)             |           |          | 
  col45        | character(10)            |           |          | 
- emaj_verb    | character varying(3)     |           |          | 
- emaj_tuple   | character varying(3)     |           |          | 
+ emaj_verb    | character varying(3)     |           | not null | 
+ emaj_tuple   | character varying(3)     |           | not null | 
  emaj_gid     | bigint                   |           | not null | nextval('emaj.emaj_global_seq'::regclass)
  emaj_changed | timestamp with time zone |           |          | clock_timestamp()
  emaj_txid    | bigint                   |           |          | txid_current()
  emaj_user    | character varying(32)    |           |          | SESSION_USER
 Indexes:
-    "mytbl4_log_idx" UNIQUE, btree (emaj_gid, emaj_tuple) CLUSTER, tablespace "tspemaj"
+    "mytbl4_log_idx" PRIMARY KEY, btree (emaj_gid, emaj_tuple) CLUSTER, tablespace "tspemaj"
 Tablespace: "tspemaj"
 
      Index "emaj_myschema2.mytbl4_log_idx"
@@ -1018,7 +1018,7 @@ Tablespace: "tspemaj"
 ------------+----------------------+------------
  emaj_gid   | bigint               | emaj_gid
  emaj_tuple | character varying(3) | emaj_tuple
-unique, btree, for table "emaj_myschema2.mytbl4_log", clustered
+primary key, btree, for table "emaj_myschema2.mytbl4_log", clustered
 Tablespace: "tspemaj"
 
                    Sequence "emaj_myschema2.mytbl4_log_seq"
@@ -1030,14 +1030,14 @@ Tablespace: "tspemaj"
     Column    |           Type           | Collation | Nullable |                  Default                  
 --------------+--------------------------+-----------+----------+-------------------------------------------
  col1         | integer                  |           |          | 
- emaj_verb    | character varying(3)     |           |          | 
- emaj_tuple   | character varying(3)     |           |          | 
+ emaj_verb    | character varying(3)     |           | not null | 
+ emaj_tuple   | character varying(3)     |           | not null | 
  emaj_gid     | bigint                   |           | not null | nextval('emaj.emaj_global_seq'::regclass)
  emaj_changed | timestamp with time zone |           |          | clock_timestamp()
  emaj_txid    | bigint                   |           |          | txid_current()
  emaj_user    | character varying(32)    |           |          | SESSION_USER
 Indexes:
-    "table_with_50_characters_long_name_____0_________0_log_idx" UNIQUE, btree (emaj_gid, emaj_tuple) CLUSTER, tablespace "tspemaj"
+    "table_with_50_characters_long_name_____0_________0_log_idx" PRIMARY KEY, btree (emaj_gid, emaj_tuple) CLUSTER, tablespace "tspemaj"
 Tablespace: "tspemaj"
 
 Index "emaj_myschema6.table_with_50_characters_long_name_____0_________0_log_idx"
@@ -1045,7 +1045,7 @@ Index "emaj_myschema6.table_with_50_characters_long_name_____0_________0_log_idx
 ------------+----------------------+------------
  emaj_gid   | bigint               | emaj_gid
  emaj_tuple | character varying(3) | emaj_tuple
-unique, btree, for table "emaj_myschema6.table_with_50_characters_long_name_____0_________0_log", clustered
+primary key, btree, for table "emaj_myschema6.table_with_50_characters_long_name_____0_________0_log", clustered
 Tablespace: "tspemaj"
 
 Sequence "emaj_myschema6.table_with_50_characters_long_name_____0_________0_log_seq"
@@ -1057,14 +1057,14 @@ Sequence "emaj_myschema6.table_with_50_characters_long_name_____0_________0_log_
     Column    |           Type           | Collation | Nullable |                  Default                  
 --------------+--------------------------+-----------+----------+-------------------------------------------
  col1         | integer                  |           |          | 
- emaj_verb    | character varying(3)     |           |          | 
- emaj_tuple   | character varying(3)     |           |          | 
+ emaj_verb    | character varying(3)     |           | not null | 
+ emaj_tuple   | character varying(3)     |           | not null | 
  emaj_gid     | bigint                   |           | not null | nextval('emaj.emaj_global_seq'::regclass)
  emaj_changed | timestamp with time zone |           |          | clock_timestamp()
  emaj_txid    | bigint                   |           |          | txid_current()
  emaj_user    | character varying(32)    |           |          | SESSION_USER
 Indexes:
-    "table_with_51_characters_long_name_____0_________0#1_log_idx" UNIQUE, btree (emaj_gid, emaj_tuple) CLUSTER, tablespace "tspemaj"
+    "table_with_51_characters_long_name_____0_________0#1_log_idx" PRIMARY KEY, btree (emaj_gid, emaj_tuple) CLUSTER, tablespace "tspemaj"
 Tablespace: "tspemaj"
 
 Index "emaj_myschema6.table_with_51_characters_long_name_____0_________0#1_log_idx"
@@ -1072,7 +1072,7 @@ Index "emaj_myschema6.table_with_51_characters_long_name_____0_________0#1_log_i
 ------------+----------------------+------------
  emaj_gid   | bigint               | emaj_gid
  emaj_tuple | character varying(3) | emaj_tuple
-unique, btree, for table "emaj_myschema6.table_with_51_characters_long_name_____0_________0#1_log", clustered
+primary key, btree, for table "emaj_myschema6.table_with_51_characters_long_name_____0_________0#1_log", clustered
 Tablespace: "tspemaj"
 
 Sequence "emaj_myschema6.table_with_51_characters_long_name_____0_________0#1_log_seq"
@@ -1084,14 +1084,14 @@ Sequence "emaj_myschema6.table_with_51_characters_long_name_____0_________0#1_lo
     Column    |           Type           | Collation | Nullable |                  Default                  
 --------------+--------------------------+-----------+----------+-------------------------------------------
  col1         | integer                  |           |          | 
- emaj_verb    | character varying(3)     |           |          | 
- emaj_tuple   | character varying(3)     |           |          | 
+ emaj_verb    | character varying(3)     |           | not null | 
+ emaj_tuple   | character varying(3)     |           | not null | 
  emaj_gid     | bigint                   |           | not null | nextval('emaj.emaj_global_seq'::regclass)
  emaj_changed | timestamp with time zone |           |          | clock_timestamp()
  emaj_txid    | bigint                   |           |          | txid_current()
  emaj_user    | character varying(32)    |           |          | SESSION_USER
 Indexes:
-    "table_with_55_characters_long_name_____0_________0#1_log_idx_1" UNIQUE, btree (emaj_gid, emaj_tuple) CLUSTER, tablespace "tspemaj"
+    "table_with_55_characters_long_name_____0_________0#1_log_idx_1" PRIMARY KEY, btree (emaj_gid, emaj_tuple) CLUSTER, tablespace "tspemaj"
 Tablespace: "tspemaj"
 
 Index "emaj_myschema6.table_with_55_characters_long_name_____0_________0#1_log_idx_1"
@@ -1099,21 +1099,21 @@ Index "emaj_myschema6.table_with_55_characters_long_name_____0_________0#1_log_i
 ------------+----------------------+------------
  emaj_gid   | bigint               | emaj_gid
  emaj_tuple | character varying(3) | emaj_tuple
-unique, btree, for table "emaj_myschema6.table_with_55_characters_long_name_____0_________0#1_log_1", clustered
+primary key, btree, for table "emaj_myschema6.table_with_55_characters_long_name_____0_________0#1_log_1", clustered
 Tablespace: "tspemaj"
 
               Table "emaj_myschema6.table_with_55_characters_long_name_____0_________0#2_log"
     Column    |           Type           | Collation | Nullable |                  Default                  
 --------------+--------------------------+-----------+----------+-------------------------------------------
  col1         | integer                  |           |          | 
- emaj_verb    | character varying(3)     |           |          | 
- emaj_tuple   | character varying(3)     |           |          | 
+ emaj_verb    | character varying(3)     |           | not null | 
+ emaj_tuple   | character varying(3)     |           | not null | 
  emaj_gid     | bigint                   |           | not null | nextval('emaj.emaj_global_seq'::regclass)
  emaj_changed | timestamp with time zone |           |          | clock_timestamp()
  emaj_txid    | bigint                   |           |          | txid_current()
  emaj_user    | character varying(32)    |           |          | SESSION_USER
 Indexes:
-    "table_with_55_characters_long_name_____0_________0#2_log_idx" UNIQUE, btree (emaj_gid, emaj_tuple) CLUSTER, tablespace "tspemaj"
+    "table_with_55_characters_long_name_____0_________0#2_log_idx" PRIMARY KEY, btree (emaj_gid, emaj_tuple) CLUSTER, tablespace "tspemaj"
 Tablespace: "tspemaj"
 
 Index "emaj_myschema6.table_with_55_characters_long_name_____0_________0#2_log_idx"
@@ -1121,7 +1121,7 @@ Index "emaj_myschema6.table_with_55_characters_long_name_____0_________0#2_log_i
 ------------+----------------------+------------
  emaj_gid   | bigint               | emaj_gid
  emaj_tuple | character varying(3) | emaj_tuple
-unique, btree, for table "emaj_myschema6.table_with_55_characters_long_name_____0_________0#2_log", clustered
+primary key, btree, for table "emaj_myschema6.table_with_55_characters_long_name_____0_________0#2_log", clustered
 Tablespace: "tspemaj"
 
 Sequence "emaj_myschema6.table_with_55_characters_long_name_____0_________0#2_log_seq"
@@ -1135,14 +1135,14 @@ Sequence "emaj_myschema6.table_with_55_characters_long_name_____0_________0#2_lo
  col21        | integer                  |           |          | 
  col22        | text                     |           |          | 
  col23        | date                     |           |          | 
- emaj_verb    | character varying(3)     |           |          | 
- emaj_tuple   | character varying(3)     |           |          | 
+ emaj_verb    | character varying(3)     |           | not null | 
+ emaj_tuple   | character varying(3)     |           | not null | 
  emaj_gid     | bigint                   |           | not null | nextval('emaj.emaj_global_seq'::regclass)
  emaj_changed | timestamp with time zone |           |          | clock_timestamp()
  emaj_txid    | bigint                   |           |          | txid_current()
  emaj_user    | character varying(32)    |           |          | SESSION_USER
 Indexes:
-    "myTbl2\_log_idx" UNIQUE, btree (emaj_gid, emaj_tuple) CLUSTER, tablespace "tspemaj"
+    "myTbl2\_log_idx" PRIMARY KEY, btree (emaj_gid, emaj_tuple) CLUSTER, tablespace "tspemaj"
 Tablespace: "tspemaj"
 
   Index "emaj_phil's schema3.myTbl2\_log_idx"
@@ -1150,7 +1150,7 @@ Tablespace: "tspemaj"
 ------------+----------------------+------------
  emaj_gid   | bigint               | emaj_gid
  emaj_tuple | character varying(3) | emaj_tuple
-unique, btree, for table "emaj_phil's schema3.myTbl2\_log", clustered
+primary key, btree, for table "emaj_phil's schema3.myTbl2\_log", clustered
 Tablespace: "tspemaj"
 
                 Sequence "emaj_phil's schema3.myTbl2\_log_seq"
@@ -1164,14 +1164,14 @@ Tablespace: "tspemaj"
  phil's col11 | numeric(7,0)             |           |          | 
  phil's col12 | character(10)            |           |          | 
  phil\s col13 | bytea                    |           |          | 
- emaj_verb    | character varying(3)     |           |          | 
- emaj_tuple   | character varying(3)     |           |          | 
+ emaj_verb    | character varying(3)     |           | not null | 
+ emaj_tuple   | character varying(3)     |           | not null | 
  emaj_gid     | bigint                   |           | not null | nextval('emaj.emaj_global_seq'::regclass)
  emaj_changed | timestamp with time zone |           |          | clock_timestamp()
  emaj_txid    | bigint                   |           |          | txid_current()
  emaj_user    | character varying(32)    |           |          | SESSION_USER
 Indexes:
-    "phil's tbl1_log_idx" UNIQUE, btree (emaj_gid, emaj_tuple) CLUSTER, tablespace "tspemaj"
+    "phil's tbl1_log_idx" PRIMARY KEY, btree (emaj_gid, emaj_tuple) CLUSTER, tablespace "tspemaj"
 Tablespace: "tspemaj"
 
 Index "emaj_phil's schema3.phil's tbl1_log_idx"
@@ -1179,7 +1179,7 @@ Index "emaj_phil's schema3.phil's tbl1_log_idx"
 ------------+----------------------+------------
  emaj_gid   | bigint               | emaj_gid
  emaj_tuple | character varying(3) | emaj_tuple
-unique, btree, for table "emaj_phil's schema3.phil's tbl1_log", clustered
+primary key, btree, for table "emaj_phil's schema3.phil's tbl1_log", clustered
 Tablespace: "tspemaj"
 
               Sequence "emaj_phil's schema3.phil's tbl1_log_seq"
@@ -1191,7 +1191,7 @@ Tablespace: "tspemaj"
 select * from emaj.emaj_global_seq;
  last_value | log_cnt | is_called 
 ------------+---------+-----------
-         84 |      15 | t
+         85 |      14 | t
 (1 row)
 
 select * from emaj.emaj_hist_hist_id_seq;

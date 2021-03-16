@@ -175,3 +175,5 @@ Version specific details:
 * The  procedure that upgrades a version 2.3.1 into 3.0.0 changes the structure of log tables: both *emaj_client_ip* and *emaj_client_port* columns are not created anymore. Existing log tables are not modified. Only the new log tables are impacted. But the administrator can :ref:`add these columns<addLogColumns>`, by using the *'alter_log_tables'* parameter.
 
 * The procedure that upgrades a version 3.0.0 into 3.1.0 renames existing log objects. This leads to locking the application tables, which may generate conflicts with the parallel use of these tables. This procedure also issues a warning message indicating that the changes in E-Maj rollback functions regarding the application triggers processing may require changes in user’s procedures.
+
+* The procedure that upgrades a version 3.4.0 into 4.0.0 updates the log tables content for TRUNCATE recorded statements. The upgrade duration depends on the global log tables size.
