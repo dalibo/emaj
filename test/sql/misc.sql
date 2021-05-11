@@ -240,7 +240,7 @@ begin;
 rollback;
 
 select emaj.emaj_estimate_rollback_group('myGroup2','Mark21',FALSE);
--- should return 1.4271 sec
+-- should return 1.4021 sec
 
 -- estimates with empty rollback statistics but temporarily modified parameters
 begin;
@@ -250,7 +250,7 @@ begin;
   UPDATE emaj.emaj_param SET param_value_interval = '7 millisecond'::interval WHERE param_key = 'fixed_step_rollback_duration';
   INSERT INTO emaj.emaj_param (param_key, param_value_interval) VALUES ('fixed_dblink_rollback_duration','2.5 millisecond'::interval);
   select emaj.emaj_estimate_rollback_groups('{"myGroup2"}','Mark21',TRUE);
--- should return 1.8627 sec
+-- should return 1.8045 sec
 rollback;
 
 -- estimate with added rollback statistics about fkey drops, recreations and checks
@@ -269,7 +269,7 @@ insert into emaj.emaj_rlbk_stat values
 insert into emaj.emaj_rlbk_stat values
   ('SET_FK_IMM','myschema2','mytbl4','mytbl4_col43_fkey',2,1200,'0.015 SECONDS'::interval);
 select emaj.emaj_estimate_rollback_group('myGroup2','Mark21',FALSE);
--- should return 1.442962 sec
+-- should return 1.4021 sec
 
 -- estimate with added statistics about tables rollbacks
 insert into emaj.emaj_rlbk_stat values
@@ -287,7 +287,7 @@ insert into emaj.emaj_rlbk_stat values
 insert into emaj.emaj_rlbk_stat values
   ('RLBK_TABLE','myschema2','mytbl4','',1,50000,'3.600 SECONDS'::interval);
 select emaj.emaj_estimate_rollback_group('myGroup2','Mark21',FALSE);
--- should return 2.311566 sec
+-- should return 2.270704 sec
 
 -- estimate with added statistics about log deletes and CTRLxDBLINK pseudo steps
 insert into emaj.emaj_rlbk_stat values
@@ -311,7 +311,7 @@ insert into emaj.emaj_rlbk_stat values
 insert into emaj.emaj_rlbk_stat values
   ('CTRL-DBLINK','','','',3,10,'0.025 SECONDS'::interval);
 select emaj.emaj_estimate_rollback_group('myGroup2','Mark21',FALSE);
--- should return 2.677653 sec
+-- should return 2.639791 sec
 
 -- estimate with 2 groups and a SET_FK_DEF step
 vacuum analyze myschema1.mytbl4;
@@ -320,7 +320,7 @@ begin;
 -- temporarily insert new rows into myTbl4 of myschema1
   insert into myschema1.myTbl4 select i,'FK...',2,1,'ABC' from generate_series (10,20) as i;
   select emaj.emaj_estimate_rollback_groups('{"myGroup1","myGroup2"}','Multi-1',FALSE);
--- should return 2.731023 sec
+-- should return 2.670001 sec
 rollback;
 
 -- delete all manualy inserted rollback statistics, cleanup the statistics table and recreate its foreign key

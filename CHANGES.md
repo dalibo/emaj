@@ -28,6 +28,9 @@ E-Maj - Change log
     tables group is now rejected.
   * Use "p_" instead of "v_" as prefix for functions parameters names. This
     may impact user's scripts.
+  * Performance improvement in the rollback processing for tables linked to
+    others by foreign keys when they belong to the same rolled back tables
+    groups.
   * Coding style improvements.
   * Minor code improvements.
 

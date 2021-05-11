@@ -528,7 +528,7 @@ select emaj.emaj_set_mark_group('myGroup1','Conso_M1');
 select * from emaj.emaj_logged_rollback_group('myGroup1','Conso_M1');
 select emaj.emaj_consolidate_rollback_group('myGroup1','EMAJ_LAST_MARK');
 
--- mark Conso_M1, updates, mark Conso_M2, updates, logged rlbk back to Conso_M1, updates, rename both marks, consolidate, check and cancel
+-- mark Conso_M2, updates, mark Conso_M3, updates, logged rlbk back to Conso_M2, updates, rename both marks, consolidate, check and cancel
 select emaj.emaj_set_mark_group('myGroup1','Conso_M2');
 insert into myTbl1 select i, 'Test', 'Conso' from generate_series (1000,1011) as i;
 insert into myTbl2 values (1000,'TC1',NULL);
@@ -609,7 +609,7 @@ select rlbs_rlbk_id, rlbs_session,
        case when rlbs_end_datetime is null then 'null' else '[ts]' end as "end_datetime"
   from emaj.emaj_rlbk_session order by rlbs_rlbk_id, rlbs_session;
 select rlbp_rlbk_id, rlbp_step, rlbp_schema, rlbp_table, rlbp_object, rlbp_target_time_id, rlbp_batch_number, rlbp_session,
-       rlbp_object_def, rlbp_estimated_quantity, rlbp_estimate_method, rlbp_quantity
+       rlbp_object_def, rlbp_app_trg_type, rlbp_is_repl_role_replica, rlbp_estimated_quantity, rlbp_estimate_method, rlbp_quantity
   from emaj.emaj_rlbk_plan order by rlbp_rlbk_id, rlbp_step, rlbp_schema, rlbp_table, rlbp_object;
 select rlbt_step, rlbt_schema, rlbt_table, rlbt_object, rlbt_rlbk_id, rlbt_quantity from emaj.emaj_rlbk_stat
   order by rlbt_rlbk_id, rlbt_step, rlbt_schema, rlbt_table, rlbt_object;

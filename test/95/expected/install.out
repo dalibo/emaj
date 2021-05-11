@@ -469,24 +469,26 @@ btree, for table "emaj.emaj_rlbk", predicate (rlbk_status = ANY (ARRAY['PLANNING
  rlbk_id | integer | rlbk_id
 primary key, btree, for table "emaj.emaj_rlbk"
 
-                  Table "emaj.emaj_rlbk_plan"
-         Column          |           Type           | Modifiers 
--------------------------+--------------------------+-----------
- rlbp_rlbk_id            | integer                  | not null
- rlbp_step               | emaj._rlbk_step_enum     | not null
- rlbp_schema             | text                     | not null
- rlbp_table              | text                     | not null
- rlbp_object             | text                     | not null
- rlbp_batch_number       | integer                  | 
- rlbp_session            | integer                  | 
- rlbp_object_def         | text                     | 
- rlbp_target_time_id     | bigint                   | 
- rlbp_estimated_quantity | bigint                   | 
- rlbp_estimated_duration | interval                 | 
- rlbp_estimate_method    | integer                  | 
- rlbp_start_datetime     | timestamp with time zone | 
- rlbp_quantity           | bigint                   | 
- rlbp_duration           | interval                 | 
+                   Table "emaj.emaj_rlbk_plan"
+          Column           |           Type           | Modifiers 
+---------------------------+--------------------------+-----------
+ rlbp_rlbk_id              | integer                  | not null
+ rlbp_step                 | emaj._rlbk_step_enum     | not null
+ rlbp_schema               | text                     | not null
+ rlbp_table                | text                     | not null
+ rlbp_object               | text                     | not null
+ rlbp_batch_number         | integer                  | 
+ rlbp_session              | integer                  | 
+ rlbp_object_def           | text                     | 
+ rlbp_app_trg_type         | text                     | 
+ rlbp_is_repl_role_replica | boolean                  | 
+ rlbp_target_time_id       | bigint                   | 
+ rlbp_estimated_quantity   | bigint                   | 
+ rlbp_estimated_duration   | interval                 | 
+ rlbp_estimate_method      | integer                  | 
+ rlbp_start_datetime       | timestamp with time zone | 
+ rlbp_quantity             | bigint                   | 
+ rlbp_duration             | interval                 | 
 Indexes:
     "emaj_rlbk_plan_pkey" PRIMARY KEY, btree (rlbp_rlbk_id, rlbp_step, rlbp_schema, rlbp_table, rlbp_object)
 Foreign-key constraints:
