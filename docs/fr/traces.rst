@@ -206,14 +206,6 @@ La colonne *hist_event* peut prendre les valeurs suivantes.
 | WARNING                      | message d’avertissement issu d’un rollback                             |
 +------------------------------+------------------------------------------------------------------------+
 
-Autres données de trace
------------------------
-
-Deux autres tables internes conservent également des traces des opérations effectuées :
-
-* *emaj_alter_plan* liste les actions élémentaires réalisées lors d’opérations de :doc:`modification de groupes de tables <alterGroups>`,
-* *emaj_rlbk_plan* liste les actions élémentaires réalisées lors de l’exécution d’opérations de :ref:`rollback E-Maj <emaj_rollback_group>`.
-
 Purge des traces obsolètes
 --------------------------
 

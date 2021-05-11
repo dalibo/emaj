@@ -40,7 +40,7 @@ But through parameters set when calling the :ref:`emaj_assign_table(), emaj_assi
 Declare foreign keys as *DEFERRABLE* 
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Foreign keys can be explicitly declared as *DEFERRABLE* at creation time. If a foreign key is declared *DEFERRABLE* and no *ON DELETE* or *ON UPDATE* clause is used, this foreign key is not dropped at the beginning and recreated at the end of an E-Maj rollback operation. The foreign key checks of updated rows are just deferred to the end of the rollback function execution, once all log tables are processed. This generally greatly speeds up the rollback operation.
+Foreign keys can be explicitly declared as *DEFERRABLE* at creation time. If a foreign key links two tables belonging to different tables groups or if one of them doesn’t belong to any tables group and if the foreign key has no *ON DELETE* or *ON UPDATE* clause then it is recommended to declare it as *DEFERRABLE*. This will avoid to be dropped and recreated at subsequent E-Maj rollbacks. The foreign key checks of updated rows are just deferred to the end of the rollback function execution, once all log tables are processed. This generally greatly speeds up the rollback operation.
 
 Modify memory parameters
 ^^^^^^^^^^^^^^^^^^^^^^^^

@@ -21,7 +21,7 @@ Gestion des triggers applicatifs
 
 Des triggers peuvent avoir été créés sur des tables applicatives. Il n'est pas rare que ces triggers génèrent une ou des mises à jour sur d'autres tables. Il est alors de la responsabilité de l'administrateur E-Maj de comprendre l'impact des opérations de rollback E-Maj sur les tables concernées par des triggers et de prendre le cas échéant les mesures appropriées.
 
-Par défaut, les fonctions de rollback E-Maj désactivent automatiquement les triggers applicatifs en début d’opération et les remettent dans leur état précédent en fin d’opération. Mais l’administrateur E-Maj peut modifier ce comportement à l’aide des propriétés *"ignored_triggers"* et *"ignored_triggers_profiles"* des fonctions :ref:`emaj_assign_table(), emaj_assign_tables()<assign_table_sequence>`, :ref:`emaj_modify_table() et emaj_modify_tables()<modify_table>`.
+Par défaut, les fonctions de rollback E-Maj neutralisent automatiquement les triggers applicatifs durant l’opération. Mais l’administrateur E-Maj peut modifier ce comportement à l’aide des propriétés *"ignored_triggers"* et *"ignored_triggers_profiles"* des fonctions :ref:`emaj_assign_table(), emaj_assign_tables()<assign_table_sequence>`, :ref:`emaj_modify_table() et emaj_modify_tables()<modify_table>`.
 
 Si le trigger ajuste simplement le contenu de la ligne à insérer ou modifier, c'est la valeur finale des colonnes qui est enregistrée dans la table de log. Ainsi en cas de rollback E-Maj, la table de log contient déjà les bonnes valeurs de colonne à réappliquer. Pour ne pas perturber le traitement du rollback, le trigger doit donc être désactivé (comportement par défaut).
 

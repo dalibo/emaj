@@ -96,9 +96,7 @@ La fonction retourne un ensemble de lignes comportant un niveau de sévérité p
 
 Pour être certain qu'aucune transaction concurrente ne mette à jour une table du groupe pendant toute la durée du rollback, la fonction *emaj_rollback_group()* pose explicitement un verrou de type *EXCLUSIVE* sur chacune des tables du groupe. Si des transactions accédant à ces tables en mise à jour sont en cours, ceci peut se traduire par la survenue d'une étreinte fatale (deadlock). Si la résolution de l'étreinte fatale impacte la fonction E-Maj, le deadlock est intercepté et la pose de verrou est automatiquement réitérée, avec un maximum de 5 tentatives. En revanche, les tables du groupe continuent à être accessibles en lecture pendant l'opération.
 
-Si des tables du groupe à traiter possèdent des *triggers* (déclencheurs), ceux-ci sont, par défaut, temporairement désactivés pendant l’opération. Avec la fonction :ref:`emaj_ignore_app_trigger()<emaj_ignore_app_trigger>`, on peut enregistrer des triggers comme « ne devant pas être automatiquement désactivés lors du rollback » (plus de détails :ref:`ici <application_triggers>`).
-
-Si une table impactée par le rollback possède une clé étrangère (*foreign key*) ou est référencée dans une clé étrangère appartenant à une autre table, alors la présence de cette clé étrangère est prise en compte par l'opération de rollback. Si le contrôle des clés créées ou modifiées par le rollback ne peut être différé en fin d'opération (contrainte non déclarée *DEFERRABLE*), alors cette clé étrangère est supprimée en début de rollback puis recréée en fin de rollback.
+Le rollback E-Maj prend en compte la présence éventuelle de triggers et de clés étrangères sur la table concernée. Plus de détails :doc:`ici <rollbackDetails>`.
 
 Lorsque le volume de mises à jour à annuler est important et que l'opération de rollback est longue, il est possible de suivre l'avancement de l'opération à l'aide de la fonction :ref:`emaj_rollback_activity() <emaj_rollback_activity>` ou du client :doc:`emajRollbackMonitor.php <rollbackMonitorClient>`.
 
@@ -106,8 +104,6 @@ A l'issue de l'opération de rollback, se trouvent effacées :
 
 * les données des tables de log qui concernent les mises à jour annulées,
 * toutes les marques postérieures à la marque référencée dans la commande de rollback.
-
-Les opérations de rollback sont historisées dans la table *emaj_rlbk*. L'état final des opérations de rollback est accessible dans les colonnes *rlbk_status* et *rlbk_msg* de cette table *emaj_rlbk*.
 
 Il est alors possible de poursuivre les traitements de mises à jour, de poser ensuite d'autres marques et éventuellement de procéder à un nouveau rollback sur une marque quelconque.
 
@@ -146,9 +142,7 @@ La fonction retourne un ensemble de lignes comportant un niveau de sévérité p
 
 Pour être certain qu'aucune transaction concurrente ne mette à jour une table du groupe pendant toute la durée du rollback, la fonction *emaj_logged_rollback_group()* pose explicitement un verrou de type *EXCLUSIVE* sur chacune des tables du groupe. Si des transactions accédant à ces tables en mise à jour sont en cours, ceci peut se traduire par la survenue d'une étreinte fatale (*deadlock*). Si la résolution de l'étreinte fatale impacte la fonction E-Maj, le *deadlock* est intercepté et la pose de verrou est automatiquement réitérée, avec un maximum de 5 tentatives. En revanche, les tables du groupe continuent à être accessibles en lecture pendant l'opération.
 
-Si des tables du groupe à traiter possèdent des *triggers* (déclencheurs), ceux-ci sont, par défaut, temporairement désactivés pendant l’opération. Avec la fonction :ref:`emaj_ignore_app_trigger()<emaj_ignore_app_trigger>`, on peut enregistrer des triggers comme « ne devant pas être automatiquement désactivés lors du rollback » (plus de détails :ref:`ici <application_triggers>`).
-
-Si une table impactée par le rollback possède une clé étrangère (*foreign key*) ou est référencée dans une clé étrangère appartenant à une autre table, alors la présence de cette clé étrangère est prise en compte par l'opération de rollback. Si le contrôle des clés créées ou modifiées par le rollback ne peut être différé en fin d'opération (contrainte non déclarée *DEFERRABLE*), alors cette clé étrangère est supprimée en début de rollback puis recréée en fin de rollback.
+Le rollback E-Maj prend en compte la présence éventuelle de triggers et de clés étrangères sur la table concernée. Plus de détails :doc:`ici <rollbackDetails>`.
 
 Contrairement à la fonction *emaj_rollback_group()*, à l'issue de l'opération de rollback, les données des tables de log qui concernent les mises à jour annulées, ainsi que les éventuelles marques postérieures à la marque référencée dans la commande de rollback sont conservées.
 
@@ -160,8 +154,6 @@ De plus, en début et en fin d'opération, la fonction pose automatiquement sur 
 où *<heure_du_rollback>* représente l'heure de début de la transaction effectuant le rollback, exprimée sous la forme « *heures.minutes.secondes.millisecondes* ».
 
 Lorsque le volume de mises à jour à annuler est important et que l'opération de rollback est longue, il est possible de suivre l'avancement de l'opération à l'aide de la fonction :ref:`emaj_rollback_activity() <emaj_rollback_activity>` ou du client :doc:`emajRollbackMonitor.php <rollbackMonitorClient>`.
-
-Les opérations de rollback sont historisées dans la table *emaj_rlbk*. L'état final des opérations de rollback est accessible dans les colonnes *rlbk_status* et *rlbk_msg* de cette table *emaj_rlbk*.
 
 A l'issue du rollback, il est possible de poursuivre les traitements de mises à jour, de poser d'autres marques et éventuellement de procéder à un nouveau rollback sur une marque quelconque, y compris la marque automatiquement posée en début de rollback, pour annuler ce dernier, ou encore une ancienne marque postérieure à la marque utilisée pour le rollback.
 oDes rollbacks de différents types (*logged* / *unlogged*) peuvent être exécutés en séquence. on peut ainsi procéder à l'enchaînement suivant::

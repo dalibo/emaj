@@ -208,14 +208,6 @@ The *hist_event* column can take the following values:
 | WARNING                      | warning message issued by a rollback                           |
 +------------------------------+----------------------------------------------------------------+
 
-Other trace data
-----------------
-
-Two other internal tables keep traces of groups alter or rollback operations:
-
-* *emaj_alter_plan* lists the elementary steps performed during :doc:`tables groups structure changes <alterGroups>`,
-* *emaj_rlbk_plan* lists the elementary steps performed during the execution of :ref:`emaj_rollback_group() <emaj_rollback_group>` and related functions.
-
 Purge obsolete traces
 ---------------------
 

@@ -55,6 +55,7 @@ Bienvenue dans la documentation E-Maj !
    logTables
    reliability
    traces
+   rollbackDetails
    impactsAdmin
    systemTime
    performance

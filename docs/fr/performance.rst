@@ -41,7 +41,7 @@ Mais, au travers de paramètres passées aux fonctions :ref:`emaj_assign_table()
 Déclarer les clés étrangères DEFERRABLE
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Au moment de leur création, les clés étrangères (*foreign key*) peuvent être déclarées *DEFERRABLE*. Si une clé étrangère est déclarée *DEFERRABLE* et qu'aucune clause *ON DELETE* ou *ON UPDATE* n'est utilisée, elle ne sera pas supprimée en début et recréées en fin de rollback E-Maj. Les contrôles des clés étrangères pour les lignes modifiées seront simplement différés en fin de rollback, une fois toutes les tables de log traitées. En règle générale cela accélère sensiblement l'opération de rollback.
+Au moment de leur création, les clés étrangères (*foreign key*) peuvent être déclarées *DEFERRABLE*. Si une clé étrangère relie deux tables appartenant à des groupes de tables différents ou dont l’une des deux tables n’appartient à aucun groupe de tables, et si elle ne porte pas de clause ON DELETE ou ON UPDATE, alors il est recommandé de déclarer cette clé étrangère DEFERRABLE. Ceci évitera des suppressions puis recréations en début et fin de rollback E-Maj. Les contrôles des clés étrangères pour les lignes modifiées seront simplement différés en fin de rollback, une fois toutes les tables de log traitées. En règle générale cela accélère sensiblement l'opération de rollback.
 
 Modifier les paramètres sur la mémoire
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^

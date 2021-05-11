@@ -61,7 +61,7 @@ Pour optimiser les performances des installations E-Maj comportant un très gran
 
 Par défaut, ces propriétés prennent la valeur *NULL*, indiquant l’utilisation du tablespace par défaut de la session courante.
 
-Lors du rollback E-Maj d’un groupe de tables, les triggers actifs (ENABLED) de chacune des tables concernées sont désactivés puis réactivés pour qu’ils ne soient pas déclenchés par les changements apportés au contenu des tables. Mais ce comportement par défaut peut être modifié. Notez que ceci ne concerne pas les triggers E-Maj ou système.
+Lors du rollback E-Maj d’un groupe de tables, les triggers actifs (ENABLED) de chacune des tables concernées sont neutralisés pour qu’ils ne soient pas déclenchés par les changements apportés au contenu des tables. Mais, en cas de besoin, ce comportement par défaut peut être modifié. Notez que ceci ne concerne pas les triggers E-Maj ou système.
 
 .. _emaj_create_group:
 

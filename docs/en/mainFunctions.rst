@@ -96,9 +96,7 @@ The function returns a set of rows with a severity level set to either “*Notic
 
 To be sure that no concurrent transaction updates any table of the group during the rollback operation, the *emaj_rollback_group()* function explicitly sets an *EXCLUSIVE* lock on each table of the group. If transactions updating these tables are running, this can lead to deadlock. If the deadlock processing impacts the execution of the E-Maj function, the error is trapped and the lock operation is repeated, with a maximum of 5 attempts. But tables of the group remain accessible for read only transactions during the operation.
 
-If tables belonging to the group to rollback have triggers, these triggers are by default temporarily disabled during the operation. Using the :ref:`emaj_ignore_app_trigger()<emaj_ignore_app_trigger>` function, it is possible to record triggers as ‘not to be automatically disabled at rollback’ (more details :ref:`here <application_triggers>`).
-
-If a table impacted by the rollback owns a foreign key or is referenced by a foreign key from another table, then this foreign key is taken into account by the rollback operation. If the check of the keys created or modified by the rollback cannot be deferred at the end of the operation (constraint not declared as *DEFERRABLE*), then this foreign key is dropped at the beginning of the rollback and recreated at the end.
+The E-Maj rollback takes into account the existing triggers and foreign keys on the concerned tables. More details :doc:`here<rollbackDetails>`.
 
 When the volume of updates to cancel is high and the rollback operation is therefore long, it is possible to monitor the operation using the :ref:`emaj_rollback_activity() <emaj_rollback_activity>` function or the :doc:`emajRollbackMonitor.php <rollbackMonitorClient>` client.
 
@@ -106,8 +104,6 @@ When the rollback operation is completed, the following are deleted:
 
 * all log tables rows corresponding to the rolled back updates,
 * all marks later than the mark referenced in the rollback operation.
-
-The history of executed rollback operations is maintained into the *emaj_rlbk* table. The final state of the operation is accessible from the *rlbk_status* and *rlbk_msg* columns of this *emaj_rlbk* table.
 
 Then, it is possible to continue updating processes, to set other marks, and if needed, to perform another rollback at any mark.
 
@@ -146,9 +142,7 @@ The function returns a set of rows with a severity level set to either “*Notic
 
 To be sure that no concurrent transaction updates any table of the group during the rollback operation, the *emaj_rollback_group()* function explicitly sets an *EXCLUSIVE* lock on each table of the group. If transactions updating these tables are running, this can lead to deadlock. If the deadlock processing impacts the execution of the E-Maj function, the error is trapped and the lock operation is repeated, with a maximum of 5 attempts. But tables of the group remain accessible for read only transactions during the operation.
 
-If tables belonging to the group to rollback have triggers, these triggers are by default temporarily disabled during the operation. Using the :ref:`emaj_ignore_app_trigger()<emaj_ignore_app_trigger>` function, it is possible to record triggers as ‘not to be automatically disabled at rollback’ (more details :ref:`here <application_triggers>`).
-
-If a table impacted the rollback owns a foreign key or is referenced by a foreign key from another table, then this foreign key is taken into account by the rollback operation. If the check of the keys created or modified by the rollback cannot be deferred at the end of the operation (constraint not declared as *DEFERRABLE*), then this foreign key is dropped at the beginning of the rollback and recreated at the end.
+The E-Maj rollback takes into account the existing triggers and foreign keys on the concerned tables. More details :doc:`here<rollbackDetails>`.
 
 Unlike with :ref:`emaj_rollback_group() <emaj_rollback_group>` function, at the end of the operation, the log tables content as well as the marks following the rollback mark remain.
 At the beginning and at the end of the operation, the function automatically sets on the group two marks named:
@@ -159,8 +153,6 @@ At the beginning and at the end of the operation, the function automatically set
 where rollback.time represents the start time of the transaction performing the rollback, expressed as “hours.minutes.seconds.milliseconds”.
 
 When the volume of updates to cancel is high and the rollback operation is therefore long, it is possible to monitor the operation using the :ref:`emaj_rollback_activity() <emaj_rollback_activity>` function or the :doc:`emajRollbackMonitor.php <rollbackMonitorClient>` client.
-
-The history of executed rollback operations is maintained into the *emaj_rlbk* table. The final state of the operation is accessible from the *rlbk_status* and *rlbk_msg* columns of this *emaj_rlbk* table.
 
 Following the rollback operation, it is possible to resume updating the database, to set other marks, and if needed to perform another rollback at any mark, including the mark set at the beginning of the rollback, to cancel it, or even delete an old mark that was set after the mark used for the rollback.
 

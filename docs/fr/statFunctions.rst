@@ -145,7 +145,7 @@ L'estimation de cette durée n'est qu'approximative. Elle s'appuie sur :
 
 * le nombre de lignes à traiter dans les tables de logs, tel que le retourne la fonction :ref:`emaj_log_stat_group() <emaj_log_stat_group>`,
 * des relevés de temps issus d'opérations de rollback précédentes pour les mêmes tables  
-* 6 :doc:`paramètres <parameters>` génériques qui sont utilisés comme valeurs par défaut, lorsqu'aucune statistique n'a été enregistrée pour les tables à traiter.
+* 6 :doc:`paramètres <parameters>` génériques qui sont utilisés comme valeurs par défaut, lorsque aucune statistique n'a été enregistrée pour les tables à traiter.
 
 Compte tenu de la répartition très variable entre les verbes *INSERT*, *UPDATE* et *DELETE* enregistrés dans les logs, et des conditions non moins variables de charge des serveurs lors des opérations de rollback, la précision du résultat restitué est faible. L'ordre de grandeur obtenu peut néanmoins donner une indication utile sur la capacité de traiter un rollback lorsque le temps imparti est contraint.
 

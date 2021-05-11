@@ -10,11 +10,7 @@ To run a rollback in parallel, E-Maj spreads tables and sequences to process for
 
 However, in order to guarantee the integrity of the global operation, the rollback of all sessions is executed inside a single transaction.
 
-To build the most balanced sessions as possible, E-Maj takes into account:
-
-* the number of sessions specified by the user in its command,
-* statistics about rows to rollback, as reported by the :ref:`emaj_log_stat_group() <emaj_log_stat_group>` function,
-* foreign key constraints that link several tables between them, 2 updated tables linked by a foreign key constraint being affected into the same *session*.
+Tables are assigned to sessions so that the estimated session durations be the most balanced as possible.
 
 Prerequisites
 -------------

@@ -10,11 +10,7 @@ Pour paralléliser un rollback, E-Maj affecte les tables et séquences à traite
 
 Néanmoins, pour garantir l'intégrité de l'opération, le rollback de toutes les sessions s'exécute au sein d'une unique transaction.
 
-Pour obtenir des sessions les plus équilibrées possibles, E-Maj tient compte :
-
-* du nombre de sessions spécifiés par l'utilisateur dans sa commande,
-* des statistiques des lignes à annuler, telles que la fonction :ref:`emaj_log_stat_group() <emaj_log_stat_group>` les restitue,
-* des contraintes de clés étrangères qui relient plusieurs tables entre-elles, 2 tables mises à jour et reliées entre-elles par une clé étrangère étant affectées à une même *session*.
+L’affectation des tables dans les sessions est réalisée de sorte que les durées estimées des sessions soient les plus équilibrés possibles.
 
 Préalables
 ----------
