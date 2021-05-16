@@ -29,6 +29,8 @@ If the trigger updates another table, two cases must be considered:
 
 For more complex triggers, it is essential to perfectly understand their impacts on E-Maj rollbacks and take any appropriate mesure at rollback time.
 
+For parallel rollback operations, a trigger kept enabled that updates other tables from the same tables group, would likely generate a freeze between sessions.
+
 Internal E-Maj table or sequence change
 ---------------------------------------
 

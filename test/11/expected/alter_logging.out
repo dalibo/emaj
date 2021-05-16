@@ -1248,7 +1248,7 @@ rollback;
 select * from emaj.emaj_estimate_rollback_group('myGroup2','Before ADD_TBL',true);
  emaj_estimate_rollback_group 
 ------------------------------
- @ 0.0158 secs
+ @ 0.028815 secs
 (1 row)
 
 select rlbk_severity, regexp_replace(rlbk_message,E'\\d\\d\\d\\d/\\d\\d\\/\\d\\d\\ \\d\\d\\:\\d\\d:\\d\\d .*?\\)','<timestamp>)','g')
@@ -1500,7 +1500,7 @@ select hist_function, hist_event, hist_object,
  LOCK_GROUP             | END           | myGroup2                     | Rollback session #1: 7 tables locked, 0 deadlock(s)                                               | postgres
  SET_MARK_GROUP         | BEGIN         | myGroup2                     | RLBK_Before ADD_TBL_%_START                                                                       | postgres
  SET_MARK_GROUP         | END           | myGroup2                     | RLBK_Before ADD_TBL_%_START                                                                       | postgres
- ROLLBACK_TABLE         | BEGIN         | myschema2.mytbl7             | All log rows where emaj_gid > 9500000 and <= 9500003, in session_replication_role = replica mode  | postgres
+ ROLLBACK_TABLE         | BEGIN         | myschema2.mytbl7             | All log rows where emaj_gid > 9500000 and <= 9500003                                              | postgres
  ROLLBACK_TABLE         | END           | myschema2.mytbl7             | 4 rolled back primary keys                                                                        | postgres
  ROLLBACK_SEQUENCE      |               | myschema2."myTbl3_col31_seq" |                                                                                                   | postgres
  ROLLBACK_SEQUENCE      |               | myschema2.myseq1             |                                                                                                   | postgres
@@ -2164,7 +2164,7 @@ select hist_function, hist_event, hist_object,
  LOCK_GROUP             | END           | myGroup1                     | Rollback session #1: 3 tables locked, 0 deadlock(s)                                                                    | postgres
  SET_MARK_GROUP         | BEGIN         | myGroup1                     | RLBK_Mk2b_%_START                                                                                                      | postgres
  SET_MARK_GROUP         | END           | myGroup1                     | RLBK_Mk2b_%_START                                                                                                      | postgres
- ROLLBACK_TABLE         | BEGIN         | myschema1.mytbl1             | All log rows where emaj_gid > 9300000 and <= 9700003, in session_replication_role = replica mode                       | postgres
+ ROLLBACK_TABLE         | BEGIN         | myschema1.mytbl1             | All log rows where emaj_gid > 9300000 and <= 9700003                                                                   | postgres
  ROLLBACK_TABLE         | END           | myschema1.mytbl1             | 1 rolled back primary keys                                                                                             | postgres
  ROLLBACK_SEQUENCE      |               | myschema1."myTbl3_col31_seq" | RESTART 11                                                                                                             | postgres
  ROLLBACK_SEQUENCE      |               | myschema1.mytbl2b_col20_seq  |                                                                                                                        | postgres

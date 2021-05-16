@@ -7981,10 +7981,16 @@ $_rlbk_planning$
     v_groupNames             TEXT[];
     v_mark                   TEXT;
     v_isLoggedRlbk           BOOLEAN;
-    v_markTimeId             BIGINT;
     v_nbSession              INT;
     v_ctrlStepName           emaj._rlbk_step_enum;
+    v_markTimeId             BIGINT;
+    v_avg_row_rlbk           INTERVAL;
+    v_avg_row_del_log        INTERVAL;
+    v_avg_fkey_check         INTERVAL;
+    v_fixed_step_rlbk        INTERVAL;
+    v_fixed_dblink_rlbk      INTERVAL;
     v_effNbTable             INT;
+    v_isEmajExtension        BOOLEAN;
     v_batchNumber            INT;
     v_checks                 INT;
     v_estimDuration          INTERVAL;
@@ -7993,11 +7999,6 @@ $_rlbk_planning$
     v_estimDropFkMethod      INT;
     v_estimSetFkDefDuration  INTERVAL;
     v_estimSetFkDefMethod    INT;
-    v_avg_row_rlbk           INTERVAL;
-    v_avg_row_del_log        INTERVAL;
-    v_avg_fkey_check         INTERVAL;
-    v_fixed_step_rlbk        INTERVAL;
-    v_fixed_dblink_rlbk      INTERVAL;
     v_sessionLoad            INTERVAL[];
     v_minSession             INT;
     v_minDuration            INTERVAL;
@@ -8031,8 +8032,8 @@ $_rlbk_planning$
                         WHERE param_key = 'fixed_dblink_rollback_duration'),'4 millisecond'::INTERVAL)
            INTO v_avg_row_rlbk, v_avg_row_del_log, v_avg_fkey_check, v_fixed_step_rlbk, v_fixed_dblink_rlbk;
 -- insert into emaj_rlbk_plan a row per table currently belonging to the tables groups to process.
-    INSERT INTO emaj.emaj_rlbk_plan (rlbp_rlbk_id, rlbp_step, rlbp_schema, rlbp_table, rlbp_object)
-      SELECT p_rlbkId, 'LOCK_TABLE', rel_schema, rel_tblseq, ''
+    INSERT INTO emaj.emaj_rlbk_plan (rlbp_rlbk_id, rlbp_step, rlbp_schema, rlbp_table, rlbp_object, rlbp_is_repl_role_replica)
+      SELECT p_rlbkId, 'LOCK_TABLE', rel_schema, rel_tblseq, '', FALSE
         FROM emaj.emaj_relation
         WHERE upper_inf(rel_time_range)
           AND rel_group = ANY(v_groupNames)
@@ -8054,57 +8055,62 @@ $_rlbk_planning$
           ) AS t
         WHERE emaj._log_stat_tbl(t, greatest(v_markTimeId, lower(rel_time_range)), NULL) > 0;
       GET DIAGNOSTICS v_effNbTable = ROW_COUNT;
--- for tables having foreign keys linking tables in the rolled back groups, set the rlbp_is_repl_role_replica flag to TRUE
-      WITH fkeys AS (
-          -- the foreign keys belonging to tables to rollback
-          SELECT rlbp_schema, rlbp_table, c.conname, nf.nspname, tf.relname, rel_group,
-                 rel_group = ANY (v_groupNames) AS are_both_tables_in_groups
-            FROM emaj.emaj_rlbk_plan,
-                 pg_catalog.pg_constraint c
-                 JOIN pg_catalog.pg_class t ON (t.oid = c.conrelid)
-                 JOIN pg_catalog.pg_namespace n ON (n.oid = t.relnamespace)
-                 JOIN pg_catalog.pg_class tf ON (tf.oid = c.confrelid)
-                 JOIN pg_catalog.pg_namespace nf ON (nf.oid = tf.relnamespace)
-                 LEFT OUTER JOIN emaj.emaj_relation ON (rel_schema = nf.nspname AND rel_tblseq = tf.relname
-                                                        AND upper_inf(rel_time_range))
-            WHERE rlbp_rlbk_id = p_rlbkId                               -- The RLBK_TABLE steps for this rollback operation
-              AND rlbp_step = 'RLBK_TABLE'
-              AND contype = 'f'                                         -- FK constraints
-              AND t.relname = rlbp_table
-              AND n.nspname = rlbp_schema
-        UNION
-          -- the foreign keys referencing tables to rollback
-          SELECT rlbp_schema, rlbp_table, c.conname, n.nspname, t.relname, rel_group,
-                 rel_group = ANY (v_groupNames) AS are_both_tables_in_groups
-            FROM emaj.emaj_rlbk_plan,
-                 pg_catalog.pg_constraint c
-                 JOIN pg_catalog.pg_class t ON (t.oid = c.conrelid)
-                 JOIN pg_catalog.pg_namespace n ON (n.oid = t.relnamespace)
-                 JOIN pg_catalog.pg_class tf ON (tf.oid = c.confrelid)
-                 JOIN pg_catalog.pg_namespace nf ON (nf.oid = tf.relnamespace)
-                 LEFT OUTER JOIN emaj.emaj_relation ON (rel_schema = n.nspname AND rel_tblseq = t.relname
-                                                        AND upper_inf(rel_time_range))
-            WHERE rlbp_rlbk_id = p_rlbkId                               -- The RLBK_TABLE steps for this rollback operation
-              AND rlbp_step = 'RLBK_TABLE'
-              AND contype = 'f'                                         -- FK constraints
-              AND tf.relname = rlbp_table
-              AND nf.nspname = rlbp_schema
-      ), fkeys_agg AS (
-        -- aggregated foreign keys by tables to rollback
-        SELECT rlbp_schema, rlbp_table,
-               count(*) AS nb_all_fk, count(*) FILTER (WHERE are_both_tables_in_groups) AS nb_fk_groups_ok
-          FROM fkeys
-          GROUP BY 1,2
-      )
-      UPDATE emaj.emaj_rlbk_plan
-        SET rlbp_is_repl_role_replica = TRUE
-        FROM fkeys_agg
-        WHERE rlbp_rlbk_id = p_rlbkId                                    -- The RLBK_TABLE steps for this rollback operation
-          AND rlbp_step = 'RLBK_TABLE'
-          AND emaj_rlbk_plan.rlbp_table = fkeys_agg.rlbp_table
-          AND emaj_rlbk_plan.rlbp_schema = fkeys_agg.rlbp_schema
-          AND nb_all_fk = nb_fk_groups_ok                                -- if all fkeys are linking tables in the rolled back groups
-      ;
+-- For tables having all foreign keys linking tables in the rolled back groups, set the rlbp_is_repl_role_replica flag to TRUE.
+-- This only concerns emaj installed as an extension because one needs to be sure that the the _rlbk_tbl() function is executed with a
+--   superuser role (this is needed to set the session_replication_role to 'replica')
+      v_isEmajExtension = EXISTS (SELECT 1 FROM pg_catalog.pg_extension WHERE extname = 'emaj');
+      IF v_isEmajExtension AND v_effNbTable > 0 THEN
+        WITH fkeys AS (
+            -- the foreign keys belonging to tables to rollback
+            SELECT rlbp_schema, rlbp_table, c.conname, nf.nspname, tf.relname, rel_group,
+                   rel_group = ANY (v_groupNames) AS are_both_tables_in_groups
+              FROM emaj.emaj_rlbk_plan,
+                   pg_catalog.pg_constraint c
+                   JOIN pg_catalog.pg_class t ON (t.oid = c.conrelid)
+                   JOIN pg_catalog.pg_namespace n ON (n.oid = t.relnamespace)
+                   JOIN pg_catalog.pg_class tf ON (tf.oid = c.confrelid)
+                   JOIN pg_catalog.pg_namespace nf ON (nf.oid = tf.relnamespace)
+                   LEFT OUTER JOIN emaj.emaj_relation ON (rel_schema = nf.nspname AND rel_tblseq = tf.relname
+                                                          AND upper_inf(rel_time_range))
+              WHERE rlbp_rlbk_id = p_rlbkId                               -- The RLBK_TABLE steps for this rollback operation
+                AND rlbp_step = 'RLBK_TABLE'
+                AND contype = 'f'                                         -- FK constraints
+                AND t.relname = rlbp_table
+                AND n.nspname = rlbp_schema
+          UNION
+            -- the foreign keys referencing tables to rollback
+            SELECT rlbp_schema, rlbp_table, c.conname, n.nspname, t.relname, rel_group,
+                   rel_group = ANY (v_groupNames) AS are_both_tables_in_groups
+              FROM emaj.emaj_rlbk_plan,
+                   pg_catalog.pg_constraint c
+                   JOIN pg_catalog.pg_class t ON (t.oid = c.conrelid)
+                   JOIN pg_catalog.pg_namespace n ON (n.oid = t.relnamespace)
+                   JOIN pg_catalog.pg_class tf ON (tf.oid = c.confrelid)
+                   JOIN pg_catalog.pg_namespace nf ON (nf.oid = tf.relnamespace)
+                   LEFT OUTER JOIN emaj.emaj_relation ON (rel_schema = n.nspname AND rel_tblseq = t.relname
+                                                          AND upper_inf(rel_time_range))
+              WHERE rlbp_rlbk_id = p_rlbkId                               -- The RLBK_TABLE steps for this rollback operation
+                AND rlbp_step = 'RLBK_TABLE'
+                AND contype = 'f'                                         -- FK constraints
+                AND tf.relname = rlbp_table
+                AND nf.nspname = rlbp_schema
+        ), fkeys_agg AS (
+          -- aggregated foreign keys by tables to rollback
+          SELECT rlbp_schema, rlbp_table,
+                 count(*) AS nb_all_fk, count(*) FILTER (WHERE are_both_tables_in_groups) AS nb_fk_groups_ok
+            FROM fkeys
+            GROUP BY 1,2
+        )
+        UPDATE emaj.emaj_rlbk_plan
+          SET rlbp_is_repl_role_replica = TRUE
+          FROM fkeys_agg
+          WHERE rlbp_rlbk_id = p_rlbkId                                    -- The RLBK_TABLE steps for this rollback operation
+            AND rlbp_step IN ('RLBK_TABLE', 'LOCK_TABLE')
+            AND emaj_rlbk_plan.rlbp_table = fkeys_agg.rlbp_table
+            AND emaj_rlbk_plan.rlbp_schema = fkeys_agg.rlbp_schema
+            AND nb_all_fk = nb_fk_groups_ok                                -- if all fkeys are linking tables in the rolled back groups
+        ;
+      END IF;
 --
 -- group tables into batchs to process all tables linked by foreign keys as a batch
 --
@@ -8357,7 +8363,7 @@ $_rlbk_planning$
             AND NOT rlbp_is_repl_role_replica                              -- ... not in a session_replication_role = replica
           ORDER BY nspname, relname, conname
     LOOP
--- depending on the foreign key characteristics, record as 'to be dropped' or 'to be set deffered' or 'to just be reset immediate'
+-- depending on the foreign key characteristics, record as 'to be dropped' or 'to be set deferred' or 'to just be reset immediate'
       IF NOT r_fk.condeferrable OR r_fk.confupdtype <> 'a' OR r_fk.confdeltype <> 'a' THEN
 -- non deferrable fkeys and deferrable fkeys with an action for UPDATE or DELETE other than 'no action' need to be dropped
         INSERT INTO emaj.emaj_rlbk_plan (
@@ -8672,7 +8678,7 @@ $_rlbk_set_batch_number$
         SELECT rlbp_schema, rlbp_table, rlbp_is_repl_role_replica
           FROM emaj.emaj_rlbk_plan
           WHERE rlbp_rlbk_id = p_rlbkId
-            AND rlbp_step = 'RLBK_TABLE'
+            AND rlbp_step = 'LOCK_TABLE'
             AND rlbp_batch_number IS NULL            -- not yet allocated
             AND (rlbp_schema, rlbp_table) IN         -- list of (schema,table) linked to the original table by fkeys
               (  SELECT nspname, relname
@@ -8700,7 +8706,8 @@ $_rlbk_set_batch_number$;
 CREATE OR REPLACE FUNCTION emaj._rlbk_session_lock(p_rlbkId INT, p_session INT)
 RETURNS VOID LANGUAGE plpgsql AS
 $_rlbk_session_lock$
--- It creates the session row in the emaj_rlbk_session table and then locks all the application tables for the session.
+-- It opens the session if needed, creates the session row in the emaj_rlbk_session table
+-- and then locks all the application tables for the session.
   DECLARE
     v_isDblinkUsed           BOOLEAN;
     v_dblinkSchema           TEXT;
@@ -12358,7 +12365,7 @@ $do$
     RETURN;
   END;
 $do$;
-psql:sql/emaj-devel.sql:12589: NOTICE:  E-Maj installation: E-Maj successfully installed.
+psql:sql/emaj-devel.sql:12596: NOTICE:  E-Maj installation: E-Maj successfully installed.
 COMMIT;
 -----------------------------
 -- check installation

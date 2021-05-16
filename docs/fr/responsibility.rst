@@ -32,6 +32,7 @@ Si le trigger met à jour une autre table, deux cas sont à considérer :
 
 Pour des triggers plus complexes, il est indispensable de bien comprendre les impacts d’un rollback et de prendre éventuellement les mesures complémentaires appropriées lors des rollbacks E-Maj.
 
+Pour les opérations de rollback parallélisé, un trigger laissé actif qui effectue des mises à jour sur d’autres tables du même groupe de tables, a une forte chance de provoquer un blocage entre sessions.
 
 Modification des tables et séquences internes d'E-Maj
 -----------------------------------------------------

@@ -422,9 +422,10 @@ select hist_function, hist_event, hist_object,
 select public.handle_emaj_sequences(14700);
 
 -----------------------------
--- Step 14 : test complex use of rollbacks consolidations
+-- Step 14 : test complex use of rollbacks consolidations, with an application trigger kept enabled
 -----------------------------
 set search_path=public,myschema1;
+select emaj.emaj_modify_table('myschema1','mytbl2','{"ignored_triggers":["mytbl2trg2"]}');
 
 -- 2 consolidations of 2 logged rollbacks
 -- Multi-1 MC1 MC2 RMC1S RMC1D      MC3 MC4 MC5 RMC3S RMC3D
@@ -571,7 +572,7 @@ select hist_function, hist_event, hist_object,
   from emaj.emaj_hist where hist_id >= 14700 order by hist_id;
 
 
-select * from emaj.emaj_rollback_group('myGroup1','Multi-1',false) order by 1,2;
+select * from emaj.emaj_rollback_group('myGroup1','Multi-1',true) order by 1,2;
 
 -- remove the temp directory
 \! rm -R $EMAJTESTTMPDIR

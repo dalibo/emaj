@@ -784,7 +784,7 @@ rollback;
 select emaj.emaj_estimate_rollback_group('myGroup2','Mark21',FALSE);
  emaj_estimate_rollback_group 
 ------------------------------
- @ 1.4021 secs
+ @ 1.4271 secs
 (1 row)
 
 -- should return 1.4021 sec
@@ -798,7 +798,7 @@ begin;
   select emaj.emaj_estimate_rollback_groups('{"myGroup2"}','Mark21',TRUE);
  emaj_estimate_rollback_groups 
 -------------------------------
- @ 1.8045 secs
+ @ 1.8627 secs
 (1 row)
 
 -- should return 1.8045 sec
@@ -821,7 +821,7 @@ insert into emaj.emaj_rlbk_stat values
 select emaj.emaj_estimate_rollback_group('myGroup2','Mark21',FALSE);
  emaj_estimate_rollback_group 
 ------------------------------
- @ 1.4021 secs
+ @ 1.442962 secs
 (1 row)
 
 -- should return 1.4021 sec
@@ -843,7 +843,7 @@ insert into emaj.emaj_rlbk_stat values
 select emaj.emaj_estimate_rollback_group('myGroup2','Mark21',FALSE);
  emaj_estimate_rollback_group 
 ------------------------------
- @ 2.270704 secs
+ @ 2.311566 secs
 (1 row)
 
 -- should return 2.270704 sec
@@ -871,7 +871,7 @@ insert into emaj.emaj_rlbk_stat values
 select emaj.emaj_estimate_rollback_group('myGroup2','Mark21',FALSE);
  emaj_estimate_rollback_group 
 ------------------------------
- @ 2.639791 secs
+ @ 2.677653 secs
 (1 row)
 
 -- should return 2.639791 sec
@@ -889,7 +889,7 @@ begin;
   select emaj.emaj_estimate_rollback_groups('{"myGroup1","myGroup2"}','Multi-1',FALSE);
  emaj_estimate_rollback_groups 
 -------------------------------
- @ 2.670001 secs
+ @ 2.731023 secs
 (1 row)
 
 -- should return 2.670001 sec

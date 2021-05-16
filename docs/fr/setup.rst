@@ -61,6 +61,8 @@ où <répertoire_emaj> est le répertoire issu de l’:ref:`installation du logi
 
 	Il n’est pas indispensable d’avoir de droit super-utilisateur pour exécuter ce script d’installation. Mais si ce n’est pas le cas, le rôle utilisé devra disposer des droits nécessaires pour créer les triggers sur les tables applicatives des futurs groupes de tables.
 
+Dans ce mode d’installation, toutes les optimisations des rollbacks E-Maj ne sont pas disponibles, conduisant à un niveau de performance dégradé sur ces opérations.
+
 
 Adaptation du fichier de configuration postgresql.conf
 ------------------------------------------------------
