@@ -1012,14 +1012,14 @@ ERROR:  relative path not allowed for COPY to file
 CONTEXT:  SQL statement "COPY (SELECT * FROM emaj_myschema2."myTbl3_log" WHERE TRUE AND emaj_gid <= 5011710 ORDER BY emaj_gid ASC) TO 'unknown_directory/myschema2_myTbl3_log.snap' "
 PL/pgSQL function emaj._copy_to_file(text,text,text) line 20 at EXECUTE
 SQL statement "SELECT emaj._copy_to_file(v_stmt, v_fileName, p_copyOptions)"
-PL/pgSQL function emaj.emaj_snap_log_group(text,text,text,text,text) line 99 at PERFORM
+PL/pgSQL function emaj.emaj_snap_log_group(text,text,text,text,text) line 98 at PERFORM
 select emaj.emaj_snap_log_group('myGroup2',NULL,'EMAJ_LAST_MARK','/unknown_directory',NULL);
 ERROR:  could not open file "/unknown_directory/myschema2_myTbl3_log.snap" for writing: No such file or directory
 HINT:  COPY TO instructs the PostgreSQL server process to write a file. You may want a client-side facility such as psql's \copy.
 CONTEXT:  SQL statement "COPY (SELECT * FROM emaj_myschema2."myTbl3_log" WHERE TRUE AND emaj_gid <= 5011710 ORDER BY emaj_gid ASC) TO '/unknown_directory/myschema2_myTbl3_log.snap' "
 PL/pgSQL function emaj._copy_to_file(text,text,text) line 20 at EXECUTE
 SQL statement "SELECT emaj._copy_to_file(v_stmt, v_fileName, p_copyOptions)"
-PL/pgSQL function emaj.emaj_snap_log_group(text,text,text,text,text) line 99 at PERFORM
+PL/pgSQL function emaj.emaj_snap_log_group(text,text,text,text,text) line 98 at PERFORM
 -- invalid start mark
 select emaj.emaj_snap_log_group('myGroup2','unknownMark','EMAJ_LAST_MARK',:'EMAJTESTTMPDIR',NULL);
 ERROR:  _check_mark_name: The mark "unknownMark" does not exist for the group "myGroup2".
@@ -1074,7 +1074,7 @@ LINE 1: ... TO '/tmp/emaj_10/misc/myschema2_myTbl3_log.snap' dummy_opti...
 QUERY:  COPY (SELECT * FROM emaj_myschema2."myTbl3_log" WHERE TRUE AND emaj_gid <= 5011710 ORDER BY emaj_gid ASC) TO '/tmp/emaj_10/misc/myschema2_myTbl3_log.snap' dummy_option
 CONTEXT:  PL/pgSQL function emaj._copy_to_file(text,text,text) line 20 at EXECUTE
 SQL statement "SELECT emaj._copy_to_file(v_stmt, v_fileName, p_copyOptions)"
-PL/pgSQL function emaj.emaj_snap_log_group(text,text,text,text,text) line 99 at PERFORM
+PL/pgSQL function emaj.emaj_snap_log_group(text,text,text,text,text) line 98 at PERFORM
 -- SQL injection attempt
 select emaj.emaj_snap_log_group('myGroup2',NULL,'EMAJ_LAST_MARK',:'EMAJTESTTMPDIR','; CREATE ROLE fake LOGIN PASSWORD '''' SUPERUSER');
 ERROR:  emaj_snap_log_group: The COPY options parameter format is invalid.
@@ -1390,7 +1390,7 @@ PL/pgSQL function emaj.emaj_gen_sql_groups(text[],text,text,text,text[]) line 14
 -- the tables group contains a table without pkey
 select emaj.emaj_gen_sql_group('phil''s group#3",', NULL, 'EMAJ_LAST_MARK', :'EMAJTESTTMPDIR' || '/Group3');
 ERROR:  _gen_sql_groups: 1 tables/sequences (phil's schema3.myTbl2\) had no pkey at Mark4 mark time.
-CONTEXT:  PL/pgSQL function emaj._gen_sql_groups(text[],boolean,text,text,text,text[]) line 87 at RAISE
+CONTEXT:  PL/pgSQL function emaj._gen_sql_groups(text[],boolean,text,text,text,text[]) line 86 at RAISE
 PL/pgSQL function emaj.emaj_gen_sql_group(text,text,text,text,text[]) line 14 at RETURN
 -- invalid location path name
 select emaj.emaj_gen_sql_group('myGroup1', NULL, NULL, '/tmp/unknownDirectory/myFile');
@@ -1399,7 +1399,7 @@ HINT:  COPY TO instructs the PostgreSQL server process to write a file. You may 
 CONTEXT:  SQL statement "COPY (SELECT 0) TO '/tmp/unknownDirectory/myFile' "
 PL/pgSQL function emaj._copy_to_file(text,text,text) line 20 at EXECUTE
 SQL statement "SELECT emaj._copy_to_file('(SELECT 0)', p_location, NULL)"
-PL/pgSQL function emaj._gen_sql_groups(text[],boolean,text,text,text,text[]) line 103 at PERFORM
+PL/pgSQL function emaj._gen_sql_groups(text[],boolean,text,text,text,text[]) line 102 at PERFORM
 PL/pgSQL function emaj.emaj_gen_sql_group(text,text,text,text,text[]) line 14 at RETURN
 select emaj.emaj_gen_sql_groups(array['myGroup1','myGroup2'], 'Multi-1', NULL, '/tmp/unknownDirectory/myFile');
 ERROR:  could not open file "/tmp/unknownDirectory/myFile" for writing: No such file or directory
@@ -1407,7 +1407,7 @@ HINT:  COPY TO instructs the PostgreSQL server process to write a file. You may 
 CONTEXT:  SQL statement "COPY (SELECT 0) TO '/tmp/unknownDirectory/myFile' "
 PL/pgSQL function emaj._copy_to_file(text,text,text) line 20 at EXECUTE
 SQL statement "SELECT emaj._copy_to_file('(SELECT 0)', p_location, NULL)"
-PL/pgSQL function emaj._gen_sql_groups(text[],boolean,text,text,text,text[]) line 103 at PERFORM
+PL/pgSQL function emaj._gen_sql_groups(text[],boolean,text,text,text,text[]) line 102 at PERFORM
 PL/pgSQL function emaj.emaj_gen_sql_groups(text[],text,text,text,text[]) line 14 at RETURN
 -- should be ok
 -- generated files content is checked later in adm2.sql scenario

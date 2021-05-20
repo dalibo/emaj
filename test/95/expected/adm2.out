@@ -634,7 +634,7 @@ NOTICE:  trigger "emaj_log_trg" for relation "phil's schema3.myTbl2\" does not e
 CONTEXT:  SQL statement "DROP TRIGGER IF EXISTS emaj_log_trg ON "phil's schema3"."myTbl2\""
 PL/pgSQL function emaj._handle_trigger_fk_tbl(text,text,text,text) line 39 at EXECUTE
 SQL statement "SELECT emaj._handle_trigger_fk_tbl('DROP_TRIGGER', v_fullTableName, 'emaj_log_trg')"
-PL/pgSQL function emaj._create_tbl(text,text,text,integer,text,text,text[],bigint,boolean,boolean) line 145 at PERFORM
+PL/pgSQL function emaj._create_tbl(text,text,text,integer,text,text,text[],bigint,boolean,boolean) line 144 at PERFORM
 SQL statement "SELECT emaj._create_tbl(p_schema, p_table, p_group, p_priority, p_logDatTsp, p_logIdxTsp, p_ignoredTriggers,
                              p_timeId, v_groupIsRollbackable, p_groupIsLogging)"
 PL/pgSQL function emaj._add_tbl(text,text,text,integer,text,text,text[],boolean,bigint,text) line 23 at PERFORM
@@ -646,7 +646,7 @@ NOTICE:  trigger "emaj_trunc_trg" for relation "phil's schema3.myTbl2\" does not
 CONTEXT:  SQL statement "DROP TRIGGER IF EXISTS emaj_trunc_trg ON "phil's schema3"."myTbl2\""
 PL/pgSQL function emaj._handle_trigger_fk_tbl(text,text,text,text) line 39 at EXECUTE
 SQL statement "SELECT emaj._handle_trigger_fk_tbl('DROP_TRIGGER', v_fullTableName, 'emaj_trunc_trg')"
-PL/pgSQL function emaj._create_tbl(text,text,text,integer,text,text,text[],bigint,boolean,boolean) line 147 at PERFORM
+PL/pgSQL function emaj._create_tbl(text,text,text,integer,text,text,text[],bigint,boolean,boolean) line 146 at PERFORM
 SQL statement "SELECT emaj._create_tbl(p_schema, p_table, p_group, p_priority, p_logDatTsp, p_logIdxTsp, p_ignoredTriggers,
                              p_timeId, v_groupIsRollbackable, p_groupIsLogging)"
 PL/pgSQL function emaj._add_tbl(text,text,text,integer,text,text,text[],boolean,bigint,text) line 23 at PERFORM
@@ -668,7 +668,7 @@ NOTICE:  trigger "emaj_log_trg" for relation "phil's schema3.phil's tbl1" does n
 CONTEXT:  SQL statement "DROP TRIGGER IF EXISTS emaj_log_trg ON "phil's schema3"."phil's tbl1""
 PL/pgSQL function emaj._handle_trigger_fk_tbl(text,text,text,text) line 39 at EXECUTE
 SQL statement "SELECT emaj._handle_trigger_fk_tbl('DROP_TRIGGER', v_fullTableName, 'emaj_log_trg')"
-PL/pgSQL function emaj._create_tbl(text,text,text,integer,text,text,text[],bigint,boolean,boolean) line 145 at PERFORM
+PL/pgSQL function emaj._create_tbl(text,text,text,integer,text,text,text[],bigint,boolean,boolean) line 144 at PERFORM
 SQL statement "SELECT emaj._create_tbl(p_schema, p_table, p_group, p_priority, p_logDatTsp, p_logIdxTsp, p_ignoredTriggers,
                              p_timeId, v_groupIsRollbackable, p_groupIsLogging)"
 PL/pgSQL function emaj._add_tbl(text,text,text,integer,text,text,text[],boolean,bigint,text) line 23 at PERFORM
@@ -680,7 +680,7 @@ NOTICE:  trigger "emaj_trunc_trg" for relation "phil's schema3.phil's tbl1" does
 CONTEXT:  SQL statement "DROP TRIGGER IF EXISTS emaj_trunc_trg ON "phil's schema3"."phil's tbl1""
 PL/pgSQL function emaj._handle_trigger_fk_tbl(text,text,text,text) line 39 at EXECUTE
 SQL statement "SELECT emaj._handle_trigger_fk_tbl('DROP_TRIGGER', v_fullTableName, 'emaj_trunc_trg')"
-PL/pgSQL function emaj._create_tbl(text,text,text,integer,text,text,text[],bigint,boolean,boolean) line 147 at PERFORM
+PL/pgSQL function emaj._create_tbl(text,text,text,integer,text,text,text[],bigint,boolean,boolean) line 146 at PERFORM
 SQL statement "SELECT emaj._create_tbl(p_schema, p_table, p_group, p_priority, p_logDatTsp, p_logIdxTsp, p_ignoredTriggers,
                              p_timeId, v_groupIsRollbackable, p_groupIsLogging)"
 PL/pgSQL function emaj._add_tbl(text,text,text,integer,text,text,text[],boolean,bigint,text) line 23 at PERFORM
@@ -1411,7 +1411,7 @@ phil's_schema3_phil's_tbl1.snap
 select emaj.emaj_gen_sql_group('myGroup1', 'Multi-1', NULL, :'EMAJTESTTMPDIR' || '/myGroup1.sql');
 NOTICE:  table "emaj_temp_script" does not exist, skipping
 CONTEXT:  SQL statement "DROP TABLE IF EXISTS emaj_temp_script CASCADE"
-PL/pgSQL function emaj._gen_sql_groups(text[],boolean,text,text,text,text[]) line 91 at SQL statement
+PL/pgSQL function emaj._gen_sql_groups(text[],boolean,text,text,text,text[]) line 90 at SQL statement
 PL/pgSQL function emaj.emaj_gen_sql_group(text,text,text,text,text[]) line 14 at RETURN
  emaj_gen_sql_group 
 --------------------
@@ -1429,7 +1429,7 @@ select emaj.emaj_gen_sql_group('myGroup2', 'Multi-1', NULL, :'EMAJTESTTMPDIR' ||
      'myschema2.mytbl5','myschema2.mytbl6','myschema2.myseq1','myschema2.myTbl3_col31_seq']);
 NOTICE:  table "emaj_temp_script" does not exist, skipping
 CONTEXT:  SQL statement "DROP TABLE IF EXISTS emaj_temp_script CASCADE"
-PL/pgSQL function emaj._gen_sql_groups(text[],boolean,text,text,text,text[]) line 91 at SQL statement
+PL/pgSQL function emaj._gen_sql_groups(text[],boolean,text,text,text,text[]) line 90 at SQL statement
 PL/pgSQL function emaj.emaj_gen_sql_group(text,text,text,text,text[]) line 14 at RETURN
  emaj_gen_sql_group 
 --------------------
@@ -1445,7 +1445,7 @@ select sum(stat_rows) + 2 as check from emaj.emaj_detailed_log_stat_group('myGro
 select emaj.emaj_gen_sql_group('phil''s group#3",', 'M1_rollbackable', NULL, :'EMAJTESTTMPDIR' || '/Group3.sql');
 NOTICE:  table "emaj_temp_script" does not exist, skipping
 CONTEXT:  SQL statement "DROP TABLE IF EXISTS emaj_temp_script CASCADE"
-PL/pgSQL function emaj._gen_sql_groups(text[],boolean,text,text,text,text[]) line 91 at SQL statement
+PL/pgSQL function emaj._gen_sql_groups(text[],boolean,text,text,text,text[]) line 90 at SQL statement
 PL/pgSQL function emaj.emaj_gen_sql_group(text,text,text,text,text[]) line 14 at RETURN
  emaj_gen_sql_group 
 --------------------
@@ -1462,7 +1462,7 @@ select sum(stat_rows) + 2 as check from emaj.emaj_detailed_log_stat_group('phil'
 select emaj.emaj_gen_sql_group('myGroup1', 'Multi-1', NULL, NULL);
 NOTICE:  table "emaj_temp_script" does not exist, skipping
 CONTEXT:  SQL statement "DROP TABLE IF EXISTS emaj_temp_script CASCADE"
-PL/pgSQL function emaj._gen_sql_groups(text[],boolean,text,text,text,text[]) line 91 at SQL statement
+PL/pgSQL function emaj._gen_sql_groups(text[],boolean,text,text,text,text[]) line 90 at SQL statement
 PL/pgSQL function emaj.emaj_gen_sql_group(text,text,text,text,text[]) line 14 at RETURN
  emaj_gen_sql_group 
 --------------------
@@ -1780,7 +1780,7 @@ NOTICE:  trigger "emaj_log_trg" for relation "phil's schema3.table_with_very_loo
 CONTEXT:  SQL statement "DROP TRIGGER IF EXISTS emaj_log_trg ON "phil's schema3".table_with_very_looooooooooooooooooooooooooooooooooooooong_name"
 PL/pgSQL function emaj._handle_trigger_fk_tbl(text,text,text,text) line 39 at EXECUTE
 SQL statement "SELECT emaj._handle_trigger_fk_tbl('DROP_TRIGGER', v_fullTableName, 'emaj_log_trg')"
-PL/pgSQL function emaj._create_tbl(text,text,text,integer,text,text,text[],bigint,boolean,boolean) line 145 at PERFORM
+PL/pgSQL function emaj._create_tbl(text,text,text,integer,text,text,text[],bigint,boolean,boolean) line 144 at PERFORM
 SQL statement "SELECT emaj._create_tbl(p_schema, p_table, p_group, p_priority, p_logDatTsp, p_logIdxTsp, p_ignoredTriggers,
                              p_timeId, v_groupIsRollbackable, p_groupIsLogging)"
 PL/pgSQL function emaj._add_tbl(text,text,text,integer,text,text,text[],boolean,bigint,text) line 23 at PERFORM
@@ -1792,7 +1792,7 @@ NOTICE:  trigger "emaj_trunc_trg" for relation "phil's schema3.table_with_very_l
 CONTEXT:  SQL statement "DROP TRIGGER IF EXISTS emaj_trunc_trg ON "phil's schema3".table_with_very_looooooooooooooooooooooooooooooooooooooong_name"
 PL/pgSQL function emaj._handle_trigger_fk_tbl(text,text,text,text) line 39 at EXECUTE
 SQL statement "SELECT emaj._handle_trigger_fk_tbl('DROP_TRIGGER', v_fullTableName, 'emaj_trunc_trg')"
-PL/pgSQL function emaj._create_tbl(text,text,text,integer,text,text,text[],bigint,boolean,boolean) line 147 at PERFORM
+PL/pgSQL function emaj._create_tbl(text,text,text,integer,text,text,text[],bigint,boolean,boolean) line 146 at PERFORM
 SQL statement "SELECT emaj._create_tbl(p_schema, p_table, p_group, p_priority, p_logDatTsp, p_logIdxTsp, p_ignoredTriggers,
                              p_timeId, v_groupIsRollbackable, p_groupIsLogging)"
 PL/pgSQL function emaj._add_tbl(text,text,text,integer,text,text,text[],boolean,bigint,text) line 23 at PERFORM

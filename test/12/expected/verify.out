@@ -855,7 +855,7 @@ rollback;
 begin;
   alter table myschema1.mytbl4 drop constraint mytbl4_pkey;
 ERROR:  E-Maj event trigger: Attempting to drop the primary key for the application table "myschema1.mytbl4". But it belongs to the rollbackable tables group "myGroup1".
-CONTEXT:  PL/pgSQL function emaj._event_trigger_sql_drop_fnct() line 133 at RAISE
+CONTEXT:  PL/pgSQL function emaj._event_trigger_sql_drop_fnct() line 132 at RAISE
 rollback;
 -- drop a primary key for a table belonging to an audit_only tables group (should not fail)
 begin;
