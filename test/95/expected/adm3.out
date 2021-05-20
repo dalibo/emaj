@@ -2173,14 +2173,12 @@ NOTICE:  table "tmp_app_table" does not exist, skipping
 CONTEXT:  SQL statement "DROP TABLE IF EXISTS tmp_app_table, tmp_app_sequence"
 PL/pgSQL function emaj._import_groups_conf_prepare(json,text[],boolean,text) line 72 at SQL statement
 PL/pgSQL function emaj._import_groups_conf(json,text[],boolean,text,text) line 70 at FOR over SELECT rows
-SQL statement "SELECT emaj._import_groups_conf(v_json, p_groups, p_allowGroupsUpdate, p_location, p_mark)"
-PL/pgSQL function emaj.emaj_import_groups_configuration(text,text[],boolean,text) line 29 at SQL statement
+PL/pgSQL function emaj.emaj_import_groups_configuration(text,text[],boolean,text) line 28 at RETURN
 NOTICE:  table "tmp_app_sequence" does not exist, skipping
 CONTEXT:  SQL statement "DROP TABLE IF EXISTS tmp_app_table, tmp_app_sequence"
 PL/pgSQL function emaj._import_groups_conf_prepare(json,text[],boolean,text) line 72 at SQL statement
 PL/pgSQL function emaj._import_groups_conf(json,text[],boolean,text,text) line 70 at FOR over SELECT rows
-SQL statement "SELECT emaj._import_groups_conf(v_json, p_groups, p_allowGroupsUpdate, p_location, p_mark)"
-PL/pgSQL function emaj.emaj_import_groups_configuration(text,text[],boolean,text) line 29 at SQL statement
+PL/pgSQL function emaj.emaj_import_groups_configuration(text,text[],boolean,text) line 28 at RETURN
 NOTICE:  table "mytblc1_log" does not exist, skipping
 CONTEXT:  SQL statement "DROP TABLE IF EXISTS emaj_myschema4.mytblc1_log"
 PL/pgSQL function emaj._create_tbl(text,text,text,integer,text,text,text[],bigint,boolean,boolean) line 69 at EXECUTE
@@ -2209,8 +2207,7 @@ PL/pgSQL function emaj._import_groups_conf_alter(text[],text,bigint) line 160 at
 SQL statement "SELECT emaj._import_groups_conf_alter(p_groups, p_mark, v_timeId)"
 PL/pgSQL function emaj._import_groups_conf_exec(json,text[],text) line 79 at PERFORM
 PL/pgSQL function emaj._import_groups_conf(json,text[],boolean,text,text) line 81 at RETURN
-SQL statement "SELECT emaj._import_groups_conf(v_json, p_groups, p_allowGroupsUpdate, p_location, p_mark)"
-PL/pgSQL function emaj.emaj_import_groups_configuration(text,text[],boolean,text) line 29 at SQL statement
+PL/pgSQL function emaj.emaj_import_groups_configuration(text,text[],boolean,text) line 28 at RETURN
 NOTICE:  trigger "emaj_log_trg" for relation "myschema4.mytblc1" does not exist, skipping
 CONTEXT:  SQL statement "DROP TRIGGER IF EXISTS emaj_log_trg ON myschema4.mytblc1"
 PL/pgSQL function emaj._handle_trigger_fk_tbl(text,text,text,text) line 39 at EXECUTE
@@ -2241,8 +2238,7 @@ PL/pgSQL function emaj._import_groups_conf_alter(text[],text,bigint) line 160 at
 SQL statement "SELECT emaj._import_groups_conf_alter(p_groups, p_mark, v_timeId)"
 PL/pgSQL function emaj._import_groups_conf_exec(json,text[],text) line 79 at PERFORM
 PL/pgSQL function emaj._import_groups_conf(json,text[],boolean,text,text) line 81 at RETURN
-SQL statement "SELECT emaj._import_groups_conf(v_json, p_groups, p_allowGroupsUpdate, p_location, p_mark)"
-PL/pgSQL function emaj.emaj_import_groups_configuration(text,text[],boolean,text) line 29 at SQL statement
+PL/pgSQL function emaj.emaj_import_groups_configuration(text,text[],boolean,text) line 28 at RETURN
 NOTICE:  trigger "emaj_trunc_trg" for relation "myschema4.mytblc1" does not exist, skipping
 CONTEXT:  SQL statement "DROP TRIGGER IF EXISTS emaj_trunc_trg ON myschema4.mytblc1"
 PL/pgSQL function emaj._handle_trigger_fk_tbl(text,text,text,text) line 39 at EXECUTE
@@ -2273,8 +2269,7 @@ PL/pgSQL function emaj._import_groups_conf_alter(text[],text,bigint) line 160 at
 SQL statement "SELECT emaj._import_groups_conf_alter(p_groups, p_mark, v_timeId)"
 PL/pgSQL function emaj._import_groups_conf_exec(json,text[],text) line 79 at PERFORM
 PL/pgSQL function emaj._import_groups_conf(json,text[],boolean,text,text) line 81 at RETURN
-SQL statement "SELECT emaj._import_groups_conf(v_json, p_groups, p_allowGroupsUpdate, p_location, p_mark)"
-PL/pgSQL function emaj.emaj_import_groups_configuration(text,text[],boolean,text) line 29 at SQL statement
+PL/pgSQL function emaj.emaj_import_groups_configuration(text,text[],boolean,text) line 28 at RETURN
  emaj_import_groups_configuration 
 ----------------------------------
                                 3

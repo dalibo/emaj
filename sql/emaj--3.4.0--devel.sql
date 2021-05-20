@@ -5744,12 +5744,9 @@ $emaj_import_groups_configuration$
 --        - an optional boolean indicating whether tables groups to import may already exist (FALSE by default)
 --        - an optional mark name to set for tables groups in logging state (IMPORT_% by default)
 -- Output: the number of created or altered tables groups
-  DECLARE
-    v_nbGroup                INT;
   BEGIN
 -- Just process the tables groups.
-    SELECT emaj._import_groups_conf(p_json, p_groups, p_allowGroupsUpdate, NULL, p_mark) INTO v_nbGroup;
-    RETURN v_nbGroup;
+    RETURN emaj._import_groups_conf(p_json, p_groups, p_allowGroupsUpdate, NULL, p_mark);
   END;
 $emaj_import_groups_configuration$;
 COMMENT ON FUNCTION emaj.emaj_import_groups_configuration(JSON,TEXT[],BOOLEAN, TEXT) IS
@@ -5770,7 +5767,6 @@ $emaj_import_groups_configuration$
   DECLARE
     v_groupsText             TEXT;
     v_json                   JSON;
-    v_nbGroup                INT;
   BEGIN
 -- Read the input file and put its content into a temporary table.
     CREATE TEMP TABLE t (groups TEXT);
@@ -5785,9 +5781,8 @@ $emaj_import_groups_configuration$
     EXCEPTION WHEN OTHERS THEN
       RAISE EXCEPTION 'emaj_import_groups_configuration: The file content is not a valid JSON content.';
     END;
--- Proccess the tables groups.
-    SELECT emaj._import_groups_conf(v_json, p_groups, p_allowGroupsUpdate, p_location, p_mark) INTO v_nbGroup;
-    RETURN v_nbGroup;
+-- Proccess the tables groups and return the result.
+    RETURN emaj._import_groups_conf(v_json, p_groups, p_allowGroupsUpdate, p_location, p_mark);
   END;
 $emaj_import_groups_configuration$;
 COMMENT ON FUNCTION emaj.emaj_import_groups_configuration(TEXT,TEXT[],BOOLEAN, TEXT) IS
@@ -7131,24 +7126,17 @@ $emaj_get_previous_mark_group$
 -- The function can be called by both emaj_adm and emaj_viewer roles.
 -- Input: group name, date and time
 -- Output: mark name, or NULL if there is no mark before the given date and time
-  DECLARE
-    v_markName               TEXT;
   BEGIN
 -- Check the group name.
     PERFORM emaj._check_group_names(p_groupNames := ARRAY[p_groupName], p_mayBeNull := FALSE, p_lockGroups := FALSE, p_checkList := '');
 -- Find the requested mark.
-    SELECT mark_name INTO v_markName
+    RETURN mark_name
       FROM emaj.emaj_mark
            JOIN emaj.emaj_time_stamp ON (time_id = mark_time_id)
       WHERE mark_group = p_groupName
         AND time_clock_timestamp < p_datetime
       ORDER BY time_clock_timestamp DESC
       LIMIT 1;
-    IF NOT FOUND THEN
-      RETURN NULL;
-    ELSE
-      RETURN v_markName;
-    END IF;
   END;
 $emaj_get_previous_mark_group$;
 COMMENT ON FUNCTION emaj.emaj_get_previous_mark_group(TEXT,TIMESTAMPTZ) IS
@@ -7182,11 +7170,9 @@ $_get_previous_mark_group$
 -- Input: group name, mark name
 --   The mark name has already been checked and resolved if the keyword 'EMAJ_LAST_MARK' has been used by the user.
 -- Output: mark name, or NULL if there is no mark before the given mark
-  DECLARE
-    v_markName               TEXT;
   BEGIN
--- Find the requested mark.
-    SELECT mark_name INTO v_markName
+-- Find the requested mark and return.
+    RETURN mark_name
       FROM emaj.emaj_mark
       WHERE mark_group = p_groupName
         AND mark_time_id <
@@ -7197,11 +7183,6 @@ $_get_previous_mark_group$
               )
       ORDER BY mark_time_id DESC
       LIMIT 1;
-    IF NOT FOUND THEN
-      RETURN NULL;
-    ELSE
-      RETURN v_markName;
-    END IF;
   END;
 $_get_previous_mark_group$;
 

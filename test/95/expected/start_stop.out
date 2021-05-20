@@ -42,8 +42,7 @@ PL/pgSQL function emaj._import_groups_conf_alter(text[],text,bigint) line 160 at
 SQL statement "SELECT emaj._import_groups_conf_alter(p_groups, p_mark, v_timeId)"
 PL/pgSQL function emaj._import_groups_conf_exec(json,text[],text) line 79 at PERFORM
 PL/pgSQL function emaj._import_groups_conf(json,text[],boolean,text,text) line 81 at RETURN
-SQL statement "SELECT emaj._import_groups_conf(v_json, p_groups, p_allowGroupsUpdate, p_location, p_mark)"
-PL/pgSQL function emaj.emaj_import_groups_configuration(text,text[],boolean,text) line 29 at SQL statement
+PL/pgSQL function emaj.emaj_import_groups_configuration(text,text[],boolean,text) line 28 at RETURN
  emaj_import_groups_configuration 
 ----------------------------------
                                 3

@@ -112,8 +112,7 @@ PL/pgSQL function emaj._import_groups_conf_alter(text[],text,bigint) line 160 at
 SQL statement "SELECT emaj._import_groups_conf_alter(p_groups, p_mark, v_timeId)"
 PL/pgSQL function emaj._import_groups_conf_exec(json,text[],text) line 79 at PERFORM
 PL/pgSQL function emaj._import_groups_conf(json,text[],boolean,text,text) line 81 at RETURN
-SQL statement "SELECT emaj._import_groups_conf(v_json, p_groups, p_allowGroupsUpdate, p_location, p_mark)"
-PL/pgSQL function emaj.emaj_import_groups_configuration(text,text[],boolean,text) line 29 at SQL statement
+PL/pgSQL function emaj.emaj_import_groups_configuration(text,text[],boolean,text) line 28 at RETURN
 WARNING:  _create_tbl: The table "myschema4.mytblm" has triggers that will be automatically disabled during E-Maj rollback operations (mytblm_insert_trigger). Use the emaj_modify_table() function to change this behaviour.
 CONTEXT:  SQL statement "SELECT emaj._create_tbl(p_schema, p_table, p_group, p_priority, p_logDatTsp, p_logIdxTsp, p_ignoredTriggers,
                              p_timeId, v_groupIsRollbackable, p_groupIsLogging)"
@@ -140,8 +139,7 @@ PL/pgSQL function emaj._import_groups_conf_alter(text[],text,bigint) line 160 at
 SQL statement "SELECT emaj._import_groups_conf_alter(p_groups, p_mark, v_timeId)"
 PL/pgSQL function emaj._import_groups_conf_exec(json,text[],text) line 79 at PERFORM
 PL/pgSQL function emaj._import_groups_conf(json,text[],boolean,text,text) line 81 at RETURN
-SQL statement "SELECT emaj._import_groups_conf(v_json, p_groups, p_allowGroupsUpdate, p_location, p_mark)"
-PL/pgSQL function emaj.emaj_import_groups_configuration(text,text[],boolean,text) line 29 at SQL statement
+PL/pgSQL function emaj.emaj_import_groups_configuration(text,text[],boolean,text) line 28 at RETURN
  emaj_import_groups_configuration 
 ----------------------------------
                                 4
@@ -393,8 +391,7 @@ PL/pgSQL function emaj._import_groups_conf_alter(text[],text,bigint) line 160 at
 SQL statement "SELECT emaj._import_groups_conf_alter(p_groups, p_mark, v_timeId)"
 PL/pgSQL function emaj._import_groups_conf_exec(json,text[],text) line 79 at PERFORM
 PL/pgSQL function emaj._import_groups_conf(json,text[],boolean,text,text) line 81 at RETURN
-SQL statement "SELECT emaj._import_groups_conf(v_json, p_groups, p_allowGroupsUpdate, p_location, p_mark)"
-PL/pgSQL function emaj.emaj_import_groups_configuration(text,text[],boolean,text) line 29 at SQL statement
+PL/pgSQL function emaj.emaj_import_groups_configuration(text,text[],boolean,text) line 28 at RETURN
  emaj_import_groups_configuration 
 ----------------------------------
                                 4

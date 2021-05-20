@@ -542,8 +542,7 @@ PL/pgSQL function emaj._import_groups_conf_alter(text[],text,bigint) line 50 at 
 SQL statement "SELECT emaj._import_groups_conf_alter(p_groups, p_mark, v_timeId)"
 PL/pgSQL function emaj._import_groups_conf_exec(json,text[],text) line 79 at PERFORM
 PL/pgSQL function emaj._import_groups_conf(json,text[],boolean,text,text) line 81 at RETURN
-SQL statement "SELECT emaj._import_groups_conf(p_json, p_groups, p_allowGroupsUpdate, NULL, p_mark)"
-PL/pgSQL function emaj.emaj_import_groups_configuration(json,text[],boolean,text) line 14 at SQL statement
+PL/pgSQL function emaj.emaj_import_groups_configuration(json,text[],boolean,text) line 12 at RETURN
   rollback to savepoint sp1;
 -- removing and re-assigning the table solves the issue 
   select emaj.emaj_remove_table('myschema2','mytbl4');
