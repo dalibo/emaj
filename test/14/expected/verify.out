@@ -1,0 +1,961 @@
+-- verify.sql : test emaj_verify_all(), event_trigger management functions
+--              as well as recovery from user errors
+--
+-- set sequence restart value
+select public.handle_emaj_sequences(7000);
+ handle_emaj_sequences 
+-----------------------
+ 
+(1 row)
+
+-- disable event triggers 
+-- this is done to allow tests with missing or renamed or altered components
+select emaj.emaj_disable_protection_by_event_triggers();
+ emaj_disable_protection_by_event_triggers 
+-------------------------------------------
+                                         3
+(1 row)
+
+-----------------------------
+-- emaj_verify_all() test
+-----------------------------
+-- should be OK
+select * from emaj.emaj_verify_all();
+                                                                emaj_verify_all                                                                
+-----------------------------------------------------------------------------------------------------------------------------------------------
+ Warning: Some E-Maj event triggers exist but are disabled. You may enable them using the emaj_enable_protection_by_event_triggers() function.
+ No error detected
+(2 rows)
+
+--
+-- log schemas content errors tests
+--
+-- detection of unattended tables in E-Maj schemas
+begin;
+  create table emaj.dummy1_log (col1 int);
+  create table emaj.dummy2 (col1 int);
+  create table emaj_myschema1.emaj_dummy (col1 int);
+  create table emaj.emaj_dummy (col1 int);               -- this one is not detected
+  select * from emaj.emaj_verify_all() t(msg) where msg like 'Error%';
+                                                            msg                                                            
+---------------------------------------------------------------------------------------------------------------------------
+ Error: In the schema "emaj", the table "emaj"."dummy1_log" is not linked to any created tables group.
+ Error: In the schema "emaj", the table "emaj"."dummy2" is not linked to any created tables group.
+ Error: In the schema "emaj_myschema1", the table "emaj_myschema1"."emaj_dummy" is not linked to any created tables group.
+(3 rows)
+
+rollback;
+-- detection of unattended functions in E-Maj schemas
+begin;
+  create function emaj.dummy1_log_fnct () returns int language sql as $$ select 0 $$;
+  create function emaj_myschema1.dummy2_rlbk_fnct () returns int language sql as $$ select 0 $$;
+  create function emaj_myschema1.dummy3_fnct () returns int language sql as $$ select 0 $$;
+  create function emaj._dummy4_fnct () returns int language sql as $$ select 0 $$;      -- this one is not detected
+  create function emaj.emaj_dummy5_fnct () returns int language sql as $$ select 0 $$;  -- this one is not detected
+  select * from emaj.emaj_verify_all() t(msg) where msg like 'Error%';
+                                                                msg                                                                 
+------------------------------------------------------------------------------------------------------------------------------------
+ Error: In the schema "emaj", the function "emaj"."dummy1_log_fnct" is not linked to any created tables group.
+ Error: In the schema "emaj_myschema1", the function "emaj_myschema1"."dummy2_rlbk_fnct" is not linked to any created tables group.
+ Error: In the schema "emaj_myschema1", the function "emaj_myschema1"."dummy3_fnct" is not linked to any created tables group.
+(3 rows)
+
+rollback;
+-- detection of unattended sequences in E-Maj schemas
+begin;
+  create table emaj.dummy1_log (col1 serial);
+  create sequence emaj_myschema1.dummy2_seq;
+  create sequence emaj_myschema1.dummy3_log_seq;
+  create sequence emaj.emaj_dummy4_seq;                  -- this one is not detected
+  select * from emaj.emaj_verify_all() t(msg) where msg like 'Error%';
+                                                               msg                                                                
+----------------------------------------------------------------------------------------------------------------------------------
+ Error: In the schema "emaj", the table "emaj"."dummy1_log" is not linked to any created tables group.
+ Error: In the schema "emaj", the sequence "emaj"."dummy1_log_col1_seq" is not linked to any created tables group.
+ Error: In the schema "emaj_myschema1", the sequence "emaj_myschema1"."dummy2_seq" is not linked to any created tables group.
+ Error: In the schema "emaj_myschema1", the sequence "emaj_myschema1"."dummy3_log_seq" is not linked to any created tables group.
+(4 rows)
+
+rollback;
+-- detection of unattended types in E-Maj schemas
+begin;
+  create type emaj.dummy1_type as (col1 int);
+  create type emaj_myschema1.dummy2_type as (col1 int);
+  create type emaj_myschema1.dummy3_type as (col1 int);
+  create type emaj.emaj_dummy4_type as (col1 int);       -- this one is not detected
+  select * from emaj.emaj_verify_all() t(msg) where msg like 'Error%';
+                                                    msg                                                    
+-----------------------------------------------------------------------------------------------------------
+ Error: In the schema "emaj", the type "emaj"."dummy1_type" is not an E-Maj component.
+ Error: In the schema "emaj_myschema1", the type "emaj_myschema1"."dummy2_type" is not an E-Maj component.
+ Error: In the schema "emaj_myschema1", the type "emaj_myschema1"."dummy3_type" is not an E-Maj component.
+(3 rows)
+
+rollback;
+-- detection of unattended views in E-Maj schemas
+begin;
+  create view emaj.dummy1_view as select hist_id, hist_function, hist_event, hist_object from emaj.emaj_hist;
+  create view emaj.dummy2_view as select hist_id, hist_function, hist_event, hist_object from emaj.emaj_hist;
+  select * from emaj.emaj_verify_all() t(msg) where msg like 'Error%';
+                                          msg                                          
+---------------------------------------------------------------------------------------
+ Error: In the schema "emaj", the view "emaj"."dummy1_view" is not an E-Maj component.
+ Error: In the schema "emaj", the view "emaj"."dummy2_view" is not an E-Maj component.
+(2 rows)
+
+rollback;
+-- detection of unattended foreign tables in E-Maj schemas
+begin;
+  create extension file_fdw;
+  create foreign data wrapper file handler file_fdw_handler;
+  create server file_server foreign data wrapper file;
+  create foreign table emaj.dummy1_ftbl (ligne TEXT) server file_server options(filename '/dev/null');
+  create foreign table emaj.dummy2_ftbl (ligne TEXT) server file_server options(filename '/dev/null');
+  select * from emaj.emaj_verify_all() t(msg) where msg like 'Error%';
+                                              msg                                               
+------------------------------------------------------------------------------------------------
+ Error: In the schema "emaj", the foreign table "emaj"."dummy1_ftbl" is not an E-Maj component.
+ Error: In the schema "emaj", the foreign table "emaj"."dummy2_ftbl" is not an E-Maj component.
+(2 rows)
+
+rollback;
+-- detection of unattended domains in E-Maj schemas
+begin;
+  create domain emaj_myschema1.dummy1_domain as int check (VALUE > 0);
+  create domain emaj_myschema1.dummy2_domain as int check (VALUE > 0);
+  select * from emaj.emaj_verify_all() t(msg) where msg like 'Error%';
+                                                      msg                                                      
+---------------------------------------------------------------------------------------------------------------
+ Error: In the schema "emaj_myschema1", the domain "emaj_myschema1"."dummy1_domain" is not an E-Maj component.
+ Error: In the schema "emaj_myschema1", the domain "emaj_myschema1"."dummy2_domain" is not an E-Maj component.
+(2 rows)
+
+rollback;
+--
+-- tests on groups errors
+--
+-- detection of too old group
+begin;
+  update emaj.emaj_group set group_pg_version = '8.0.0' where group_name = 'myGroup1';
+  select * from emaj.emaj_verify_all() t(msg) where msg like 'Error%';
+                                                               msg                                                                
+----------------------------------------------------------------------------------------------------------------------------------
+ Error: The group "myGroup1" has been created with a non compatible postgresql version (8.0.0). It must be dropped and recreated.
+(1 row)
+
+rollback;
+-- detection of a missing application schema
+begin;
+  drop schema myschema1 cascade;
+NOTICE:  drop cascades to 7 other objects
+DETAIL:  drop cascades to table myschema1.mytbl1
+drop cascades to table myschema1.mytbl2
+drop cascades to table myschema1."myTbl3"
+drop cascades to table myschema1.mytbl4
+drop cascades to table myschema1.mytbl2b
+drop cascades to function myschema1.mytbl2trgfct1()
+drop cascades to function myschema1.mytbl2trgfct2()
+  select * from emaj.emaj_verify_all() t(msg) where msg like 'Error%';
+                                                  msg                                                  
+-------------------------------------------------------------------------------------------------------
+ Error: The application schema "myschema1" does not exist any more.
+ Error: In the group "myGroup1", the table "myschema1"."myTbl3" does not exist any more.
+ Error: In the group "myGroup1", the sequence "myschema1"."myTbl3_col31_seq" does not exist any more.
+ Error: In the group "myGroup1", the table "myschema1"."mytbl1" does not exist any more.
+ Error: In the group "myGroup1", the table "myschema1"."mytbl2" does not exist any more.
+ Error: In the group "myGroup1", the table "myschema1"."mytbl2b" does not exist any more.
+ Error: In the group "myGroup1", the sequence "myschema1"."mytbl2b_col20_seq" does not exist any more.
+ Error: In the group "myGroup1", the table "myschema1"."mytbl4" does not exist any more.
+(8 rows)
+
+rollback;
+-- detection of a missing application relation
+begin;
+  drop table myschema1.mytbl4;
+  select * from emaj.emaj_verify_all() t(msg) where msg like 'Error%';
+                                           msg                                           
+-----------------------------------------------------------------------------------------
+ Error: In the group "myGroup1", the table "myschema1"."mytbl4" does not exist any more.
+(1 row)
+
+rollback;
+-- detection of relation type change (a table is now a sequence!)
+begin;
+  update emaj.emaj_relation set rel_kind = 'S' where rel_schema = 'myschema1' and rel_tblseq = 'mytbl1' and upper_inf(rel_time_range);
+  select * from emaj.emaj_verify_all() t(msg) where msg like 'Error%';
+                                            msg                                             
+--------------------------------------------------------------------------------------------
+ Error: In the group "myGroup1", the sequence "myschema1"."mytbl1" does not exist any more.
+(1 row)
+
+rollback;
+-- detection of a missing E-Maj log schema
+begin;
+  drop schema emaj_myschema1 cascade;
+NOTICE:  drop cascades to 20 other objects
+DETAIL:  drop cascades to table emaj_myschema1."myTbl3_log"
+drop cascades to sequence emaj_myschema1."myTbl3_log_seq"
+drop cascades to function emaj_myschema1."myTbl3_log_fnct"()
+drop cascades to trigger emaj_log_trg on table myschema1."myTbl3"
+drop cascades to table emaj_myschema1.mytbl1_log
+drop cascades to sequence emaj_myschema1.mytbl1_log_seq
+drop cascades to function emaj_myschema1.mytbl1_log_fnct()
+drop cascades to trigger emaj_log_trg on table myschema1.mytbl1
+drop cascades to table emaj_myschema1.mytbl4_log
+drop cascades to sequence emaj_myschema1.mytbl4_log_seq
+drop cascades to function emaj_myschema1.mytbl4_log_fnct()
+drop cascades to trigger emaj_log_trg on table myschema1.mytbl4
+drop cascades to table emaj_myschema1.mytbl2_log
+drop cascades to sequence emaj_myschema1.mytbl2_log_seq
+drop cascades to function emaj_myschema1.mytbl2_log_fnct()
+drop cascades to trigger emaj_log_trg on table myschema1.mytbl2
+drop cascades to table emaj_myschema1.mytbl2b_log
+drop cascades to sequence emaj_myschema1.mytbl2b_log_seq
+drop cascades to function emaj_myschema1.mytbl2b_log_fnct()
+drop cascades to trigger emaj_log_trg on table myschema1.mytbl2b
+  select * from emaj.emaj_verify_all() t(msg) where msg like 'Error%';
+                                                     msg                                                     
+-------------------------------------------------------------------------------------------------------------
+ Error: The E-Maj schema "emaj_myschema1" does not exist any more.
+ Error: In the group "myGroup1", the log table "emaj_myschema1"."myTbl3_log" is not found.
+ Error: In the group "myGroup1", the log table "emaj_myschema1"."mytbl1_log" is not found.
+ Error: In the group "myGroup1", the log table "emaj_myschema1"."mytbl2_log" is not found.
+ Error: In the group "myGroup1", the log table "emaj_myschema1"."mytbl2b_log" is not found.
+ Error: In the group "myGroup1", the log table "emaj_myschema1"."mytbl4_log" is not found.
+ Error: In the group "myGroup1", the log sequence "emaj_myschema1"."myTbl3_log_seq" is not found.
+ Error: In the group "myGroup1", the log sequence "emaj_myschema1"."mytbl1_log_seq" is not found.
+ Error: In the group "myGroup1", the log sequence "emaj_myschema1"."mytbl2_log_seq" is not found.
+ Error: In the group "myGroup1", the log sequence "emaj_myschema1"."mytbl2b_log_seq" is not found.
+ Error: In the group "myGroup1", the log sequence "emaj_myschema1"."mytbl4_log_seq" is not found.
+ Error: In the group "myGroup1", the log function "emaj_myschema1"."myTbl3_log_fnct" is not found.
+ Error: In the group "myGroup1", the log function "emaj_myschema1"."mytbl1_log_fnct" is not found.
+ Error: In the group "myGroup1", the log function "emaj_myschema1"."mytbl2_log_fnct" is not found.
+ Error: In the group "myGroup1", the log function "emaj_myschema1"."mytbl2b_log_fnct" is not found.
+ Error: In the group "myGroup1", the log function "emaj_myschema1"."mytbl4_log_fnct" is not found.
+ Error: In the group "myGroup1", the log trigger "emaj_log_trg" on table "myschema1"."myTbl3" is not found.
+ Error: In the group "myGroup1", the log trigger "emaj_log_trg" on table "myschema1"."mytbl1" is not found.
+ Error: In the group "myGroup1", the log trigger "emaj_log_trg" on table "myschema1"."mytbl2" is not found.
+ Error: In the group "myGroup1", the log trigger "emaj_log_trg" on table "myschema1"."mytbl2b" is not found.
+ Error: In the group "myGroup1", the log trigger "emaj_log_trg" on table "myschema1"."mytbl4" is not found.
+(21 rows)
+
+rollback;
+-- detection of a missing log trigger
+begin;
+  drop trigger emaj_log_trg on myschema1.mytbl1;
+  select * from emaj.emaj_verify_all() t(msg) where msg like 'Error%';
+                                                    msg                                                     
+------------------------------------------------------------------------------------------------------------
+ Error: In the group "myGroup1", the log trigger "emaj_log_trg" on table "myschema1"."mytbl1" is not found.
+(1 row)
+
+rollback;
+-- detection of a missing log function (and trigger)
+begin;
+  drop function emaj_myschema1.mytbl1_log_fnct() cascade;
+NOTICE:  drop cascades to trigger emaj_log_trg on table myschema1.mytbl1
+  select * from emaj.emaj_verify_all() t(msg) where msg like 'Error%';
+                                                    msg                                                     
+------------------------------------------------------------------------------------------------------------
+ Error: In the group "myGroup1", the log function "emaj_myschema1"."mytbl1_log_fnct" is not found.
+ Error: In the group "myGroup1", the log trigger "emaj_log_trg" on table "myschema1"."mytbl1" is not found.
+(2 rows)
+
+rollback;
+-- detection of a missing truncate trigger
+begin;
+  drop trigger emaj_trunc_trg on myschema1.mytbl1;
+  select * from emaj.emaj_verify_all() t(msg) where msg like 'Error%';
+                                                        msg                                                        
+-------------------------------------------------------------------------------------------------------------------
+ Error: In the group "myGroup1", the truncate trigger "emaj_trunc_trg" on table "myschema1"."mytbl1" is not found.
+(1 row)
+
+rollback;
+-- detection of a missing log table
+begin;
+  drop table emaj_myschema1.mytbl1_log;
+  select * from emaj.emaj_verify_all() t(msg) where msg like 'Error%';
+                                            msg                                            
+-------------------------------------------------------------------------------------------
+ Error: In the group "myGroup1", the log table "emaj_myschema1"."mytbl1_log" is not found.
+(1 row)
+
+rollback;
+-- detection of a missing log sequence
+begin;
+  drop sequence emaj_myschema1.mytbl1_log_seq;
+  select * from emaj.emaj_verify_all() t(msg) where msg like 'Error%';
+                                               msg                                                
+--------------------------------------------------------------------------------------------------
+ Error: In the group "myGroup1", the log sequence "emaj_myschema1"."mytbl1_log_seq" is not found.
+(1 row)
+
+rollback;
+-- detection of a change in the application table structure (new column)
+begin;
+  alter table myschema1.mytbl1 add column newcol int;
+  alter table myschema1.mytbl1 add column othernewcol text;
+  alter table myschema1.mytbl2 add column newcol int;
+  select * from emaj.emaj_verify_all() t(msg) where msg like 'Error%';
+                                                                               msg                                                                               
+-----------------------------------------------------------------------------------------------------------------------------------------------------------------
+ Error: In the group "myGroup1", the structure of the application table "myschema1"."mytbl1" is not coherent with its log table ("emaj_myschema1"."mytbl1_log").
+ Error: In the group "myGroup1", the structure of the application table "myschema1"."mytbl2" is not coherent with its log table ("emaj_myschema1"."mytbl2_log").
+(2 rows)
+
+rollback;
+-- detection of a change in the application table structure (column type change)
+begin;
+  alter table myschema1.mytbl4 drop column col42;
+  alter table myschema1.mytbl4 alter column col45 type varchar(15);
+  select * from emaj.emaj_verify_all() t(msg) where msg like 'Error%';
+                                                                               msg                                                                               
+-----------------------------------------------------------------------------------------------------------------------------------------------------------------
+ Error: In the group "myGroup1", the structure of the application table "myschema1"."mytbl4" is not coherent with its log table ("emaj_myschema1"."mytbl4_log").
+(1 row)
+
+rollback;
+-- detection of missing primary key on tables belonging to a rollbackable group
+begin;
+  alter table myschema1.mytbl4 drop constraint mytbl4_pkey;                   -- table from a rollbackable group
+  alter table "phil's schema3".mytbl4 drop constraint mytbl4_pkey cascade;    -- table from an audit_only group
+NOTICE:  drop cascades to constraint mytbl2_col21_fkey on table "phil's schema3"."myTbl2\"
+  select * from emaj.emaj_verify_all() t(msg) where msg like 'Error%';
+                                                   msg                                                    
+----------------------------------------------------------------------------------------------------------
+ Error: In the rollbackable group "myGroup1", the table "myschema1"."mytbl4" has no primary key any more.
+(1 row)
+
+rollback;
+-- detection of tables altered as UNLOGGED
+begin;                                                                        -- needs 9.5+
+  alter table myschema1.mytbl4 set unlogged;                                  -- table from a rollbackable group
+  alter table "phil's schema3"."myTbl2\" set unlogged;                        -- table from an audit_only group
+  select * from emaj.emaj_verify_all() t(msg) where msg like 'Error%';
+                                               msg                                                
+--------------------------------------------------------------------------------------------------
+ Error: In the rollbackable group "myGroup1", the table "myschema1"."mytbl4" is UNLOGGED or TEMP.
+(1 row)
+
+rollback;
+-- detection of tables altered as WITH OIDS (PG12+ generates an error)
+begin;
+  alter table myschema1.mytbl4 set with oids;                                 -- table from a rollbackable group
+ERROR:  syntax error at or near "with"
+LINE 1: alter table myschema1.mytbl4 set with oids;
+                                         ^
+  alter table "phil's schema3"."myTbl2\" set with oids;                       -- table from an audit_only group
+ERROR:  syntax error at or near "with"
+LINE 1: alter table "phil's schema3"."myTbl2\" set with oids;
+                                                   ^
+  select * from emaj.emaj_verify_all() t(msg) where msg like 'Error%';
+ERROR:  current transaction is aborted, commands ignored until end of transaction block
+rollback;
+-- detection of modified primary key
+begin;
+  alter table myschema1.mytbl4 drop constraint mytbl4_pkey;
+  alter table myschema1.mytbl4 add primary key (col41, col42);
+  select * from emaj.emaj_verify_all() t(msg) where msg like 'Error%';
+                                                                msg                                                                 
+------------------------------------------------------------------------------------------------------------------------------------
+ Error: In the rollbackable group "myGroup1", the primary key of the table "myschema1"."mytbl4" has changed (col41 => col41,col42).
+(1 row)
+
+rollback;
+-- detection of a corrupted log table (missing some technical columns)
+begin;
+  alter table emaj_myschema1.mytbl1_log drop column emaj_verb, drop column emaj_tuple;
+  alter table emaj_myschema1.mytbl4_log drop column emaj_gid, drop column emaj_user;
+  select * from emaj.emaj_verify_all() t(msg) where msg like 'Error%';
+                                                               msg                                                                
+----------------------------------------------------------------------------------------------------------------------------------
+ Error: In the group "myGroup1", the log table "emaj_myschema1"."mytbl1_log" miss some technical columns (emaj_tuple, emaj_verb).
+ Error: In the group "myGroup1", the log table "emaj_myschema1"."mytbl4_log" miss some technical columns (emaj_user, emaj_gid).
+(2 rows)
+
+rollback;
+-- almost all in 1
+begin;
+  create table emaj.dummy_log (col1 int);
+  create function emaj.dummy_log_fnct () returns int language sql as $$ select 0 $$;
+  create function emaj.dummy_rlbk_fnct () returns int language sql as $$ select 0 $$;
+  update emaj.emaj_group set group_pg_version = '8.0.0' where group_name = 'myGroup1';
+  drop trigger emaj_log_trg on myschema1.mytbl1;
+  drop function emaj_myschema1.mytbl1_log_fnct() cascade;
+  drop table emaj_myschema1.mytbl1_log;
+  alter table myschema1.mytbl1 add column newcol int;
+  update emaj.emaj_relation set rel_kind = 'S' where rel_schema = 'myschema2' and rel_tblseq = 'mytbl1' and upper_inf(rel_time_range);
+  alter table myschema1.mytbl4 drop constraint mytbl4_pkey;
+  select * from emaj.emaj_verify_all() t(msg) where msg like 'Error%';
+                                                               msg                                                                
+----------------------------------------------------------------------------------------------------------------------------------
+ Error: In the schema "emaj", the table "emaj"."dummy_log" is not linked to any created tables group.
+ Error: In the schema "emaj", the function "emaj"."dummy_log_fnct" is not linked to any created tables group.
+ Error: In the schema "emaj", the function "emaj"."dummy_rlbk_fnct" is not linked to any created tables group.
+ Error: The group "myGroup1" has been created with a non compatible postgresql version (8.0.0). It must be dropped and recreated.
+ Error: In the group "myGroup2", the sequence "myschema2"."mytbl1" does not exist any more.
+ Error: In the group "myGroup1", the log table "emaj_myschema1"."mytbl1_log" is not found.
+ Error: In the group "myGroup1", the log function "emaj_myschema1"."mytbl1_log_fnct" is not found.
+ Error: In the group "myGroup1", the log trigger "emaj_log_trg" on table "myschema1"."mytbl1" is not found.
+ Error: In the rollbackable group "myGroup1", the table "myschema1"."mytbl4" has no primary key any more.
+(9 rows)
+
+rollback;
+--
+-- other tests
+--
+-- bad triggers in a "triggers to ignore at rollback time" array
+begin;
+-- simulate a discrepancy between the emaj_relation table content and the existing triggers
+  update emaj.emaj_relation set rel_ignored_triggers = '{"dummy1","dummy2"}'
+    where rel_schema = 'myschema1' and rel_tblseq = 'mytbl1' and upper_inf(rel_time_range);
+-- check
+  select * from emaj.emaj_verify_all() t(msg) where msg like 'Error%';
+                                                                                                                           msg                                                                                                                            
+----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+ Error: In the rollbackable group "myGroup1", the trigger "dummy1" for table "myschema1"."mytbl1" is missing. Use the emaj_modify_table() function to adjust the list of application triggers that should not be automatically disabled at rollback time.
+ Error: In the rollbackable group "myGroup1", the trigger "dummy2" for table "myschema1"."mytbl1" is missing. Use the emaj_modify_table() function to adjust the list of application triggers that should not be automatically disabled at rollback time.
+(2 rows)
+
+-- and fix
+  select emaj.emaj_modify_table('myschema1','mytbl1','{"ignored_triggers":null}'::jsonb);
+ emaj_modify_table 
+-------------------
+                 1
+(1 row)
+
+  select * from emaj.emaj_verify_all() t(msg) where msg like 'Error%';
+ msg 
+-----
+(0 rows)
+
+rollback;
+--------------------------------
+-- User errors and recovery tests 
+--------------------------------
+SET client_min_messages TO WARNING;
+-- cases when an application table is altered
+begin;
+  alter table myschema2.mytbl4 add column newcol int;
+  savepoint sp1;
+-- setting a mark or rollbacking fails
+    select emaj.emaj_set_mark_group('myGroup2','dummyMark');
+ERROR:  _verify_groups (6): In group "myGroup2", the structure of the application table "myschema2"."mytbl4" is not coherent with its log table ("emaj_myschema2"."mytbl4_log"). You may use "SELECT * FROM emaj.emaj_verify_all()" to look for other issues.
+CONTEXT:  PL/pgSQL function emaj._verify_groups(text[],boolean) line 186 at RAISE
+SQL statement "SELECT 0
+      FROM emaj._verify_groups(array[p_groupName], TRUE)"
+PL/pgSQL function emaj.emaj_set_mark_group(text,text) line 18 at PERFORM
+  rollback to savepoint sp1;
+    select * from emaj.emaj_rollback_group('myGroup2','EMAJ_LAST_MARK');
+ERROR:  _verify_groups (6): In group "myGroup2", the structure of the application table "myschema2"."mytbl4" is not coherent with its log table ("emaj_myschema2"."mytbl4_log"). You may use "SELECT * FROM emaj.emaj_verify_all()" to look for other issues.
+CONTEXT:  PL/pgSQL function emaj._verify_groups(text[],boolean) line 186 at RAISE
+SQL statement "SELECT 0
+        FROM emaj._verify_groups(p_groupNames, TRUE)"
+PL/pgSQL function emaj._rlbk_init(text[],text,boolean,integer,boolean,boolean) line 26 at PERFORM
+SQL statement "SELECT emaj._rlbk_init(p_groupNames, p_mark, p_isLoggedRlbk, 1, p_multiGroup, p_isAlterGroupAllowed)"
+PL/pgSQL function emaj._rlbk_groups(text[],text,boolean,boolean,boolean) line 26 at SQL statement
+SQL statement "SELECT *
+        FROM emaj._rlbk_groups(array[p_groupName], p_mark, FALSE, FALSE, coalesce(p_isAlterGroupAllowed, FALSE))"
+PL/pgSQL function emaj.emaj_rollback_group(text,text,boolean) line 7 at RETURN QUERY
+  rollback to savepoint sp1;
+-- but it is possible to stop, drop and recreate the group
+  select emaj.emaj_stop_group('myGroup2');
+ emaj_stop_group 
+-----------------
+              10
+(1 row)
+
+  savepoint sp2;
+    select emaj.emaj_drop_group('myGroup2');
+ emaj_drop_group 
+-----------------
+              10
+(1 row)
+
+    select emaj.emaj_create_group('myGroup2');
+ emaj_create_group 
+-------------------
+                 1
+(1 row)
+
+    select emaj.emaj_assign_table('myschema2','mytbl4','myGroup2');
+ emaj_assign_table 
+-------------------
+                 1
+(1 row)
+
+  rollback to savepoint sp2;
+-- or stop and export/import the groups configuration
+  select emaj.emaj_import_groups_configuration(emaj.emaj_export_groups_configuration(),array['myGroup2'],true);
+ emaj_import_groups_configuration 
+----------------------------------
+                                1
+(1 row)
+
+rollback;
+-- cases when an application table is dropped
+begin;
+  drop table myschema2.mytbl4;
+-- stopping group fails
+  savepoint sp1;
+    select emaj.emaj_stop_group('myGroup2');
+ERROR:  _stop_groups: The table "myschema2.mytbl4" does not exist any more.
+CONTEXT:  PL/pgSQL function emaj._stop_groups(text[],text,boolean,boolean) line 93 at RAISE
+PL/pgSQL function emaj.emaj_stop_group(text,text) line 10 at RETURN
+  rollback to savepoint sp1;
+-- just removing the table solves the issue
+  select emaj.emaj_remove_table('myschema2','mytbl4');
+ emaj_remove_table 
+-------------------
+                 1
+(1 row)
+
+-- and everything is clean...
+  select * from emaj.emaj_verify_all();
+                                                                emaj_verify_all                                                                
+-----------------------------------------------------------------------------------------------------------------------------------------------
+ Warning: Some E-Maj event triggers exist but are disabled. You may enable them using the emaj_enable_protection_by_event_triggers() function.
+ No error detected
+(2 rows)
+
+rollback;
+-- cases when a log trigger on an application table is dropped
+begin;
+  drop trigger emaj_log_trg on myschema2.mytbl4;
+-- stopping group fails
+  savepoint sp1;
+    select emaj.emaj_stop_group('myGroup2');
+ERROR:  _stop_groups: The log trigger "emaj_log_trg" on table "myschema2.mytbl4" does not exist any more.
+CONTEXT:  PL/pgSQL function emaj._stop_groups(text[],text,boolean,boolean) line 107 at RAISE
+PL/pgSQL function emaj.emaj_stop_group(text,text) line 10 at RETURN
+  rollback to savepoint sp1;
+-- reimporting the group configuration fails if the group is in logging state
+    select emaj.emaj_import_groups_configuration(emaj.emaj_export_groups_configuration(),array['myGroup2'],true);
+ERROR:  _repair_tbl: Cannot repair the table myschema2.mytbl4. Its group myGroup2 is in LOGGING state. Remove first the table from its group.
+CONTEXT:  PL/pgSQL function emaj._repair_tbl(text,text,text,boolean,bigint,text) line 11 at RAISE
+SQL statement "SELECT emaj._repair_tbl(rel_schema, rel_tblseq, rel_group, group_is_logging, p_timeId, 'IMPORT_GROUPS')
+      FROM (
+        SELECT rel_schema, rel_tblseq, rel_group, group_is_logging
+          FROM                                   -- all damaged or out of sync tables
+            (SELECT DISTINCT ver_schema, ver_tblseq
+               FROM emaj._verify_groups(p_groupNames, FALSE)
+            ) AS t
+            JOIN emaj.emaj_relation ON (rel_schema = ver_schema AND rel_tblseq = ver_tblseq AND upper_inf(rel_time_range))
+            JOIN tmp_app_table ON (tmp_schema = rel_schema AND tmp_tbl_name = rel_tblseq)
+            JOIN emaj.emaj_group ON (group_name = rel_group)
+          WHERE rel_group = ANY (p_groupNames)
+          ORDER BY rel_priority, rel_schema, rel_tblseq
+           ) AS t"
+PL/pgSQL function emaj._import_groups_conf_alter(text[],text,bigint) line 50 at PERFORM
+SQL statement "SELECT emaj._import_groups_conf_alter(p_groups, p_mark, v_timeId)"
+PL/pgSQL function emaj._import_groups_conf_exec(json,text[],text) line 79 at PERFORM
+PL/pgSQL function emaj._import_groups_conf(json,text[],boolean,text,text) line 81 at RETURN
+PL/pgSQL function emaj.emaj_import_groups_configuration(json,text[],boolean,text) line 12 at RETURN
+  rollback to savepoint sp1;
+-- removing and re-assigning the table solves the issue 
+  select emaj.emaj_remove_table('myschema2','mytbl4');
+ emaj_remove_table 
+-------------------
+                 1
+(1 row)
+
+  select emaj.emaj_assign_table('myschema2','mytbl4','myGroup2');
+ emaj_assign_table 
+-------------------
+                 1
+(1 row)
+
+-- and everything is clean...
+  select * from emaj.emaj_verify_all();
+                                                                emaj_verify_all                                                                
+-----------------------------------------------------------------------------------------------------------------------------------------------
+ Warning: Some E-Maj event triggers exist but are disabled. You may enable them using the emaj_enable_protection_by_event_triggers() function.
+ No error detected
+(2 rows)
+
+rollback;
+-- cases when a truncate trigger on an application table is dropped
+begin;
+  drop trigger emaj_trunc_trg on myschema2.mytbl4;
+-- stopping group fails
+  savepoint sp1;
+    select emaj.emaj_stop_group('myGroup2');
+ERROR:  _stop_groups: The truncate trigger "emaj_trunc_trg" on table "myschema2.mytbl4" does not exist any more.
+CONTEXT:  PL/pgSQL function emaj._stop_groups(text[],text,boolean,boolean) line 119 at RAISE
+PL/pgSQL function emaj.emaj_stop_group(text,text) line 10 at RETURN
+  rollback to savepoint sp1;
+-- removing and re-assigning the table solves the issue 
+  select emaj.emaj_remove_table('myschema2','mytbl4');
+ emaj_remove_table 
+-------------------
+                 1
+(1 row)
+
+  select emaj.emaj_assign_table('myschema2','mytbl4','myGroup2');
+ emaj_assign_table 
+-------------------
+                 1
+(1 row)
+
+-- and everything is clean...
+  select * from emaj.emaj_verify_all();
+                                                                emaj_verify_all                                                                
+-----------------------------------------------------------------------------------------------------------------------------------------------
+ Warning: Some E-Maj event triggers exist but are disabled. You may enable them using the emaj_enable_protection_by_event_triggers() function.
+ No error detected
+(2 rows)
+
+rollback;
+-- cases when a log sequence is dropped
+begin;
+  drop sequence emaj_myschema2.mytbl4_log_seq;
+-- stopping group fails
+  savepoint sp1;
+    select emaj.emaj_stop_group('myGroup2');
+ERROR:  relation "emaj_myschema2.mytbl4_log_seq" does not exist
+LINE 1: ...lled THEN last_value ELSE last_value - 1 END FROM emaj_mysch...
+                                                             ^
+QUERY:  SELECT CASE WHEN is_called THEN last_value ELSE last_value - 1 END FROM emaj_myschema2.mytbl4_log_seq
+CONTEXT:  PL/pgSQL function emaj._log_stat_tbl(emaj.emaj_relation,bigint,bigint) line 22 at EXECUTE
+SQL statement "WITH stat_group1 AS                               -- for each group, time id of the last active mark
+      (SELECT mark_group, max(mark_time_id) AS last_mark_time_id
+         FROM emaj.emaj_mark
+         WHERE NOT mark_is_deleted
+         GROUP BY mark_group
+      ),
+         stat_group2 AS                               -- compute the number of log rows for all tables currently belonging to these groups
+      (SELECT mark_group, last_mark_time_id, coalesce(
+                (SELECT sum(emaj._log_stat_tbl(emaj_relation, greatest(last_mark_time_id, lower(rel_time_range)),NULL))
+                   FROM emaj.emaj_relation
+                   WHERE rel_group = mark_group
+                     AND rel_kind = 'r'
+                     AND upper_inf(rel_time_range)
+                ), 0) AS mark_stat
+        FROM stat_group1
+      )
+    UPDATE emaj.emaj_mark m
+      SET mark_log_rows_before_next = mark_stat
+      FROM stat_group2 s
+      WHERE s.mark_group = m.mark_group
+        AND s.last_mark_time_id = m.mark_time_id"
+PL/pgSQL function emaj._set_mark_groups(text[],text,boolean,boolean,text,bigint,text) line 49 at SQL statement
+SQL statement "SELECT emaj._set_mark_groups(p_groupNames, v_markName, p_multiGroup, TRUE)"
+PL/pgSQL function emaj._stop_groups(text[],text,boolean,boolean) line 129 at PERFORM
+PL/pgSQL function emaj.emaj_stop_group(text,text) line 10 at RETURN
+  rollback to savepoint sp1;
+-- removing the table fails also
+  select emaj.emaj_remove_table('myschema2','mytbl4');
+ERROR:  relation "emaj_myschema2.mytbl4_log_seq" does not exist
+LINE 1: ...lled THEN last_value ELSE last_value - 1 END FROM emaj_mysch...
+                                                             ^
+QUERY:  SELECT CASE WHEN is_called THEN last_value ELSE last_value - 1 END FROM emaj_myschema2.mytbl4_log_seq
+CONTEXT:  PL/pgSQL function emaj._log_stat_tbl(emaj.emaj_relation,bigint,bigint) line 22 at EXECUTE
+SQL statement "WITH stat_group1 AS                               -- for each group, time id of the last active mark
+      (SELECT mark_group, max(mark_time_id) AS last_mark_time_id
+         FROM emaj.emaj_mark
+         WHERE NOT mark_is_deleted
+         GROUP BY mark_group
+      ),
+         stat_group2 AS                               -- compute the number of log rows for all tables currently belonging to these groups
+      (SELECT mark_group, last_mark_time_id, coalesce(
+                (SELECT sum(emaj._log_stat_tbl(emaj_relation, greatest(last_mark_time_id, lower(rel_time_range)),NULL))
+                   FROM emaj.emaj_relation
+                   WHERE rel_group = mark_group
+                     AND rel_kind = 'r'
+                     AND upper_inf(rel_time_range)
+                ), 0) AS mark_stat
+        FROM stat_group1
+      )
+    UPDATE emaj.emaj_mark m
+      SET mark_log_rows_before_next = mark_stat
+      FROM stat_group2 s
+      WHERE s.mark_group = m.mark_group
+        AND s.last_mark_time_id = m.mark_time_id"
+PL/pgSQL function emaj._set_mark_groups(text[],text,boolean,boolean,text,bigint,text) line 49 at SQL statement
+SQL statement "SELECT emaj._set_mark_groups(v_loggingGroups, v_markName, FALSE, TRUE, NULL, v_timeId)"
+PL/pgSQL function emaj._remove_tables(text,text[],text,boolean,boolean) line 85 at PERFORM
+PL/pgSQL function emaj.emaj_remove_table(text,text,text) line 6 at RETURN
+  rollback to savepoint sp1;
+-- the only solution is to force the group's stop before removing/reassigning the table
+  select emaj.emaj_force_stop_group('myGroup2');
+ emaj_force_stop_group 
+-----------------------
+                    10
+(1 row)
+
+  select emaj.emaj_remove_table('myschema2','mytbl4');
+ emaj_remove_table 
+-------------------
+                 1
+(1 row)
+
+  select emaj.emaj_assign_table('myschema2','mytbl4','myGroup2');
+ emaj_assign_table 
+-------------------
+                 1
+(1 row)
+
+-- and everything is clean...
+  select * from emaj.emaj_verify_all();
+                                                                emaj_verify_all                                                                
+-----------------------------------------------------------------------------------------------------------------------------------------------
+ Warning: Some E-Maj event triggers exist but are disabled. You may enable them using the emaj_enable_protection_by_event_triggers() function.
+ No error detected
+(2 rows)
+
+rollback;
+-- cases when an application sequence is dropped
+begin;
+  drop sequence myschema2.mySeq1;
+-- setting a mark or stopping the group fails
+-- just removing the sequence solves the issue
+  select emaj.emaj_remove_sequence('myschema2','myseq1');
+ emaj_remove_sequence 
+----------------------
+                    1
+(1 row)
+
+-- and everything is clean...
+  select * from emaj.emaj_verify_all();
+                                                                emaj_verify_all                                                                
+-----------------------------------------------------------------------------------------------------------------------------------------------
+ Warning: Some E-Maj event triggers exist but are disabled. You may enable them using the emaj_enable_protection_by_event_triggers() function.
+ No error detected
+(2 rows)
+
+rollback;
+-- cases when an application schema is dropped
+begin;
+  drop schema myschema2 cascade;
+-- stopping group fails
+  savepoint sp1;
+    select emaj.emaj_stop_group('myGroup2');
+ERROR:  _stop_groups: The schema "myschema2" does not exist any more.
+CONTEXT:  PL/pgSQL function emaj._stop_groups(text[],text,boolean,boolean) line 70 at RAISE
+PL/pgSQL function emaj.emaj_stop_group(text,text) line 10 at RETURN
+  rollback to savepoint sp1;
+-- the only solution is to force the group's stop and drop the group
+  select emaj.emaj_force_stop_group('myGroup2');
+WARNING:  _stop_groups: The schema "myschema2" does not exist any more.
+WARNING:  _stop_groups: The table "myschema2.myTbl3" does not exist any more.
+WARNING:  _stop_groups: The table "myschema2.mytbl1" does not exist any more.
+WARNING:  _stop_groups: The table "myschema2.mytbl2" does not exist any more.
+WARNING:  _stop_groups: The table "myschema2.mytbl4" does not exist any more.
+WARNING:  _stop_groups: The table "myschema2.mytbl5" does not exist any more.
+WARNING:  _stop_groups: The table "myschema2.mytbl6" does not exist any more.
+WARNING:  _stop_groups: The table "myschema2.mytbl7" does not exist any more.
+WARNING:  _stop_groups: The table "myschema2.mytbl8" does not exist any more.
+ emaj_force_stop_group 
+-----------------------
+                    10
+(1 row)
+
+  select emaj.emaj_drop_group('myGroup2');
+ emaj_drop_group 
+-----------------
+              10
+(1 row)
+
+-- and everything is clean...
+  select * from emaj.emaj_verify_all();
+                                                                emaj_verify_all                                                                
+-----------------------------------------------------------------------------------------------------------------------------------------------
+ Warning: Some E-Maj event triggers exist but are disabled. You may enable them using the emaj_enable_protection_by_event_triggers() function.
+ No error detected
+(2 rows)
+
+rollback;
+-- cases when non E-Maj related objects are stored in emaj log schemas
+begin;
+  select emaj.emaj_stop_group('myGroup1');
+ emaj_stop_group 
+-----------------
+               7
+(1 row)
+
+  create sequence emaj_myschema1.dummySeq;
+  savepoint sp1;
+-- dropping group fails at log schema drop step
+    select emaj.emaj_drop_group('myGroup1');
+ERROR:  _drop_log_schemas: Cannot drop the schema "emaj_myschema1". It probably owns unattended objects. Use the emaj_verify_all() function to get details.
+CONTEXT:  PL/pgSQL function emaj._drop_log_schemas(text,boolean) line 35 at RAISE
+SQL statement "SELECT emaj._drop_log_schemas(CASE WHEN p_isForced THEN 'FORCE_DROP_GROUP' ELSE 'DROP_GROUP' END, p_isForced)"
+PL/pgSQL function emaj._drop_group(text,boolean) line 39 at PERFORM
+SQL statement "SELECT emaj._drop_group(p_groupName, FALSE)"
+PL/pgSQL function emaj.emaj_drop_group(text) line 14 at SQL statement
+  rollback to savepoint sp1;
+-- use emaj_verify_all() to understand the problem
+  select * from emaj.emaj_verify_all();
+                                                                emaj_verify_all                                                                
+-----------------------------------------------------------------------------------------------------------------------------------------------
+ Error: In the schema "emaj_myschema1", the sequence "emaj_myschema1"."dummyseq" is not linked to any created tables group.
+ Warning: Some E-Maj event triggers exist but are disabled. You may enable them using the emaj_enable_protection_by_event_triggers() function.
+(2 rows)
+
+-- use emaj_force_drop_group to solve the problem
+  select emaj.emaj_force_drop_group('myGroup1');
+ emaj_force_drop_group 
+-----------------------
+                     7
+(1 row)
+
+-- and everything is clean...
+  select * from emaj.emaj_verify_all();
+                                                                emaj_verify_all                                                                
+-----------------------------------------------------------------------------------------------------------------------------------------------
+ Warning: Some E-Maj event triggers exist but are disabled. You may enable them using the emaj_enable_protection_by_event_triggers() function.
+ No error detected
+(2 rows)
+
+rollback;
+-----------------------------
+-- test event triggers
+-----------------------------
+-- disable twice event trigger (already disabled at the beginning of the createDrop.sql script)
+select emaj.emaj_disable_protection_by_event_triggers();
+ emaj_disable_protection_by_event_triggers 
+-------------------------------------------
+                                         0
+(1 row)
+
+-- enable twice
+select emaj.emaj_enable_protection_by_event_triggers();
+ emaj_enable_protection_by_event_triggers 
+------------------------------------------
+                                        3
+(1 row)
+
+select emaj.emaj_enable_protection_by_event_triggers();
+ emaj_enable_protection_by_event_triggers 
+------------------------------------------
+                                        0
+(1 row)
+
+--
+-- drop or alter various components
+--
+-- drop application components (the related tables group is currently in logging state)
+begin;
+  drop table myschema1.mytbl1 cascade;
+ERROR:  E-Maj event trigger: Attempting to drop the application table "myschema1.mytbl1". But it belongs to the active tables group "myGroup1".
+CONTEXT:  PL/pgSQL function emaj._event_trigger_sql_drop_fnct() line 52 at RAISE
+rollback;
+begin;
+  drop sequence myschema2.mySeq1;
+ERROR:  E-Maj event trigger: Attempting to drop the application sequence "myschema2.myseq1". But it belongs to the active tables group "myGroup2".
+CONTEXT:  PL/pgSQL function emaj._event_trigger_sql_drop_fnct() line 76 at RAISE
+rollback;
+begin;
+  drop schema myschema1 cascade;
+ERROR:  E-Maj event trigger: Attempting to drop the application schema "myschema1". But it belongs to the active tables groups "myGroup1".
+CONTEXT:  PL/pgSQL function emaj._event_trigger_sql_drop_fnct() line 29 at RAISE
+rollback;
+-- drop primary keys
+-- drop a primary key for a table belonging to a rollbackable tables group (should be blocked)
+begin;
+  alter table myschema1.mytbl4 drop constraint mytbl4_pkey;
+ERROR:  E-Maj event trigger: Attempting to drop the primary key for the application table "myschema1.mytbl4". But it belongs to the rollbackable tables group "myGroup1".
+CONTEXT:  PL/pgSQL function emaj._event_trigger_sql_drop_fnct() line 132 at RAISE
+rollback;
+-- drop a primary key for a table belonging to an audit_only tables group (should not fail)
+begin;
+  alter table "phil's schema3"."phil's tbl1" drop constraint "phil's tbl1_pkey" cascade;
+rollback;
+-- drop emaj components
+begin;
+  drop table emaj_myschema1."myTbl3_log";
+ERROR:  E-Maj event trigger: Attempting to drop the log table "emaj_myschema1.myTbl3_log". But dropping an E-Maj log table is not allowed.
+CONTEXT:  PL/pgSQL function emaj._event_trigger_sql_drop_fnct() line 62 at RAISE
+rollback;
+begin;
+  drop sequence emaj_myschema1.mytbl1_log_seq;
+ERROR:  E-Maj event trigger: Attempting to drop the log sequence "emaj_myschema1.mytbl1_log_seq". But dropping an E-Maj sequence is not allowed.
+CONTEXT:  PL/pgSQL function emaj._event_trigger_sql_drop_fnct() line 86 at RAISE
+rollback;
+begin;
+  drop function emaj_myschema1."myTbl3_log_fnct"() cascade;
+ERROR:  E-Maj event trigger: Attempting to drop the log function "emaj_myschema1."myTbl3_log_fnct"()". But dropping an E-Maj log function is not allowed.
+CONTEXT:  PL/pgSQL function emaj._event_trigger_sql_drop_fnct() line 97 at RAISE
+rollback;
+begin;
+  drop trigger emaj_log_trg on myschema1.mytbl1;
+ERROR:  E-Maj event trigger: Attempting to drop the "emaj_log_trg on myschema1.mytbl1" E-Maj trigger. But dropping an E-Maj trigger is not allowed.
+CONTEXT:  PL/pgSQL function emaj._event_trigger_sql_drop_fnct() line 106 at RAISE
+rollback;
+begin;
+  drop schema emaj cascade;
+ERROR:  E-Maj event trigger: Attempting to drop the schema "emaj". Please use the emaj_uninstall.sql script if you really want to remove all E-Maj components.
+CONTEXT:  PL/pgSQL function _emaj_protection_event_trigger_fnct() line 17 at RAISE
+rollback;
+begin;
+  drop schema emaj_myschema1 cascade;
+ERROR:  E-Maj event trigger: Attempting to drop the schema "emaj_myschema1". But dropping an E-Maj schema is not allowed.
+CONTEXT:  PL/pgSQL function emaj._event_trigger_sql_drop_fnct() line 38 at RAISE
+rollback;
+-- dropping the extension in tested by the install sql script because it depends on the way the extension is created
+-- change a table structure that leads to a table rewrite
+begin;
+  alter table myschema1.mytbl1 alter column col13 type varchar(10);
+ERROR:  E-Maj event trigger: Attempting to change the application table "myschema1.mytbl1" structure. But the table belongs to the active tables group "myGroup1".
+CONTEXT:  PL/pgSQL function emaj._event_trigger_table_rewrite_fnct() line 27 at RAISE
+rollback;
+begin;
+  alter table emaj_myschema1.mytbl1_log alter column col13 type varchar(10);
+ERROR:  E-Maj event trigger: Attempting to change the log table "emaj_myschema1.mytbl1_log" structure. But the table belongs to the tables group "myGroup1".
+CONTEXT:  PL/pgSQL function emaj._event_trigger_table_rewrite_fnct() line 37 at RAISE
+rollback;
+-- rename a table and/or change its schema (not covered by event triggers)
+begin;
+  alter table myschema1.mytbl1 rename to mytbl1_new_name;
+  alter table myschema1.mytbl1_new_name set schema public;
+  alter schema myschema1 rename to renamed_myschema1;
+rollback;
+-- change a table structure that doesn't lead to a table rewrite (not covered by event triggers)
+begin;
+  alter table myschema1.mytbl1 add column another_newcol boolean;
+rollback;
+-- perform changes on application components with the related tables group stopped (the event triggers should accept)
+begin;
+  select emaj.emaj_stop_groups(array['myGroup1','myGroup2']);
+ emaj_stop_groups 
+------------------
+               17
+(1 row)
+
+  alter table myschema1.mytbl1 alter column col13 type varchar(10);
+  drop table myschema1.mytbl1 cascade;
+  drop sequence myschema2.mySeq1;
+rollback;
+-- missing event triggers
+begin;
+  drop event trigger emaj_protection_trg;
+  select emaj.emaj_verify_all();
+                                                                      emaj_verify_all                                                                      
+-----------------------------------------------------------------------------------------------------------------------------------------------------------
+ Warning: Some E-Maj event triggers are missing. Your database administrator may (re)create them using the emaj_upgrade_after_postgres_upgrade.sql script.
+ No error detected
+(2 rows)
+
+rollback;
+-- a non emaj user should be able to create, alter and drop a table without being disturbed by E-Maj event triggers
+set role emaj_regression_tests_anonym_user;
+create schema anonym_user_schema;
+create table anonym_user_schema.anonym_user_table (col1 int);
+alter table anonym_user_schema.anonym_user_table add column col2 text;
+drop table anonym_user_schema.anonym_user_table;
+drop schema anonym_user_schema;
+reset role;
+-----------------------------
+-- test end: check
+-----------------------------
+select hist_id, hist_function, hist_event, hist_object, regexp_replace(regexp_replace(hist_wording,E'\\d\\d\.\\d\\d\\.\\d\\d\\.\\d\\d\\d\\d','%','g'),E'\\[.+\\]','(timestamp)','g'), hist_user from 
+  (select * from emaj.emaj_hist where hist_id >= 7000 order by hist_id) as t;
+ hist_id |   hist_function    |       hist_event        | hist_object |                         regexp_replace                         | hist_user 
+---------+--------------------+-------------------------+-------------+----------------------------------------------------------------+-----------
+    7000 | DISABLE_PROTECTION | EVENT TRIGGERS DISABLED |             | emaj_protection_trg, emaj_sql_drop_trg, emaj_table_rewrite_trg | postgres
+    7121 | DISABLE_PROTECTION | EVENT TRIGGERS DISABLED |             | <none>                                                         | postgres
+    7122 | ENABLE_PROTECTION  | EVENT TRIGGERS ENABLED  |             | emaj_protection_trg, emaj_sql_drop_trg, emaj_table_rewrite_trg | postgres
+    7123 | ENABLE_PROTECTION  | EVENT TRIGGERS ENABLED  |             | <none>                                                         | postgres
+(4 rows)
+

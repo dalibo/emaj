@@ -3,6 +3,7 @@ E-Maj - Change log
 <devel>
 ------
 ###Enhancements:###
+  * E-Maj is compatible with PostgreSQL V14.
   * Remove the emaj_alter_group(), emaj_alter_groups() and
     emaj_sync_def_group() functions.
   * The emaj_create_group() function does not use the emaj_group_def table
