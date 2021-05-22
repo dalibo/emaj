@@ -850,10 +850,12 @@ begin;
                 6
 (1 row)
 
-    select count(*) from emaj.emaj_relation where rel_group = 'myGroup1' and not upper_inf(rel_time_range) order by 1,2,3;
-ERROR:  ORDER BY position 2 is not in select list
-LINE 1: ...'myGroup1' and not upper_inf(rel_time_range) order by 1,2,3;
-                                                                   ^
+    select count(*) from emaj.emaj_relation where rel_group = 'myGroup1' and not upper_inf(rel_time_range);
+ count 
+-------
+     0
+(1 row)
+
   rollback to svp1;
   -- testing marks deletion
   select emaj.emaj_set_mark_group('myGroup1','Mk2d');
@@ -881,13 +883,15 @@ LINE 1: ...'myGroup1' and not upper_inf(rel_time_range) order by 1,2,3;
                              1
 (1 row)
 
-  select count(*) from emaj.emaj_relation where rel_group = 'myGroup1' and not upper_inf(rel_time_range) order by 1,2,3;
-ERROR:  ORDER BY position 2 is not in select list
-LINE 1: ...'myGroup1' and not upper_inf(rel_time_range) order by 1,2,3;
-                                                                   ^
+  select count(*) from emaj.emaj_relation where rel_group = 'myGroup1' and not upper_inf(rel_time_range);
+ count 
+-------
+     0
+(1 row)
+
   -- testing the sequence drop
   drop sequence mySchema1."myTbl3_col31_seq" cascade;
-ERROR:  current transaction is aborted, commands ignored until end of transaction block
+NOTICE:  drop cascades to default for table myschema1."myTbl3" column col31
 rollback;
 -- revert the changes
 select emaj.emaj_import_groups_configuration(:'EMAJTESTTMPDIR' || '/all_groups_conf.json', '{"myGroup1"}', true, 'Revert_sequences_removal');
@@ -1819,12 +1823,22 @@ begin;
 ----------
 (0 rows)
 
-  select count(*) from emaj.emaj_relation where rel_group = 'myGroup1' and not upper_inf(rel_time_range) order by 1,2,3;
-ERROR:  ORDER BY position 2 is not in select list
-LINE 1: ...'myGroup1' and not upper_inf(rel_time_range) order by 1,2,3;
-                                                                   ^
+  select count(*) from emaj.emaj_relation where rel_group = 'myGroup1' and not upper_inf(rel_time_range);
+ count 
+-------
+     0
+(1 row)
+
   select * from emaj.emaj_rel_hist where relh_schema = 'myschema1' and relh_tblseq = 'mytbl2b' order by 1,2,3;
-ERROR:  current transaction is aborted, commands ignored until end of transaction block
+ relh_schema | relh_tblseq | relh_time_range | relh_group | relh_kind 
+-------------+-------------+-----------------+------------+-----------
+ myschema1   | mytbl2b     | [2000,8001)     | myGroup1   | r
+ myschema1   | mytbl2b     | [8008,8010)     | myGroup1   | r
+ myschema1   | mytbl2b     | [8016,8202)     | myGroup1   | r
+ myschema1   | mytbl2b     | [8202,8203)     | myGroup2   | r
+ myschema1   | mytbl2b     | [8203,9701)     | myGroup1   | r
+(5 rows)
+
 rollback;
 -- testing rollback and consolidation
 insert into myschema1.mytbl1 values (100, 'Alter_logg', E'\\000'::bytea);

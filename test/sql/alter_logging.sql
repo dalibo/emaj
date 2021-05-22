@@ -240,7 +240,7 @@ begin;
     select rel_schema, rel_tblseq, rel_time_range, rel_group, rel_kind
       from emaj.emaj_relation where rel_group = 'myGroup1' and not upper_inf(rel_time_range) order by 1,2,3;
     select emaj.emaj_reset_group('myGroup1');
-    select count(*) from emaj.emaj_relation where rel_group = 'myGroup1' and not upper_inf(rel_time_range) order by 1,2,3;
+    select count(*) from emaj.emaj_relation where rel_group = 'myGroup1' and not upper_inf(rel_time_range);
   rollback to svp1;
   -- testing marks deletion
   select emaj.emaj_set_mark_group('myGroup1','Mk2d');
@@ -248,7 +248,7 @@ begin;
   select rel_schema, rel_tblseq, rel_time_range, rel_group, rel_kind
     from emaj.emaj_relation where rel_group = 'myGroup1' and not upper_inf(rel_time_range) order by 1,2,3;
   select emaj.emaj_delete_before_mark_group('myGroup1','Mk2d');
-  select count(*) from emaj.emaj_relation where rel_group = 'myGroup1' and not upper_inf(rel_time_range) order by 1,2,3;
+  select count(*) from emaj.emaj_relation where rel_group = 'myGroup1' and not upper_inf(rel_time_range);
   -- testing the sequence drop
   drop sequence mySchema1."myTbl3_col31_seq" cascade;
 rollback;
@@ -501,7 +501,7 @@ begin;
   select 'found' from pg_class, pg_namespace where relnamespace = pg_namespace.oid and relname = 'mytbl2b_log_1' and nspname = 'emaj_myschema1';
   select emaj.emaj_delete_before_mark_group('myGroup1','Mk2d');
   select 'should not exist' from pg_class, pg_namespace where relnamespace = pg_namespace.oid and relname = 'mytbl2b_log' and nspname = 'emaj_myschema1';
-  select count(*) from emaj.emaj_relation where rel_group = 'myGroup1' and not upper_inf(rel_time_range) order by 1,2,3;
+  select count(*) from emaj.emaj_relation where rel_group = 'myGroup1' and not upper_inf(rel_time_range);
   select * from emaj.emaj_rel_hist where relh_schema = 'myschema1' and relh_tblseq = 'mytbl2b' order by 1,2,3;
 rollback;
 
