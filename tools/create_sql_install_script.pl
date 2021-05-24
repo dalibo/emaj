@@ -95,9 +95,9 @@ use warnings; use strict;
 	}
 
 # Add final checks and messages
-    if ($status == 8 && $line =~ /^-- check the max_prepared_transactions/) {
+    if ($status == 8 && $line =~ /^-- Check the max_prepared_transactions/) {
       print FICOT "    RAISE NOTICE 'E-Maj installation: E-Maj successfully installed.';\n";
-      print FICOT "-- check if the role is superuser\n";
+      print FICOT "-- Check that the role is superuser.\n";
       print FICOT "    PERFORM 0 FROM pg_catalog.pg_roles WHERE rolname = current_user AND rolsuper;\n";
       print FICOT "    IF NOT FOUND THEN\n";
       print FICOT "      RAISE WARNING 'E-Maj installation: The current user (%) is not a superuser. This may lead to permission issues when using E-Maj.', current_user;\n";

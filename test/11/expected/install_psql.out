@@ -341,7 +341,7 @@ CREATE TABLE emaj.emaj_table (
   tbl_time_id                  BIGINT      NOT NULL,       -- time stamp when the table characteristics have been recorded
                                                            --   the same time stamp id as referenced in emaj_mark table
   tbl_pages                    INT,                        -- estimated number of pages
-  tbl_tuples                   FLOAT,                       -- estimated number of rows
+  tbl_tuples                   FLOAT,                      -- estimated number of rows
   tbl_log_seq_last_val         BIGINT      NOT NULL,       -- log sequence last value
   PRIMARY KEY (tbl_schema, tbl_name, tbl_time_id),
   FOREIGN KEY (tbl_time_id) REFERENCES emaj.emaj_time_stamp (time_id)
@@ -8180,16 +8180,8 @@ $_rlbk_planning$
 --
     IF NOT v_isLoggedRlbk THEN
 -- Compute the cost for each DIS_LOG_TRG step.
--- If DIS_LOG_TRG statistics are available, compute an average cost.
-      SELECT sum(rlbt_duration) / sum(rlbt_quantity) INTO v_estimDuration
-        FROM emaj.emaj_rlbk_stat
-        WHERE rlbt_step = 'DIS_LOG_TRG';
-      v_estimMethod = 2;
-      IF v_estimDuration IS NULL THEN
--- Otherwise, use the fixed_step_rollback_duration parameter.
-        v_estimDuration = v_fixed_step_rlbk;
-        v_estimMethod = 3;
-      END IF;
+      SELECT p_estimateMethod, p_estimatedDuration INTO v_estimMethod, v_estimDuration
+        FROM emaj._estimate_rlbk_step_duration('DIS_LOG_TRG', NULL, NULL, NULL, NULL, v_fixed_step_rlbk, NULL);
 -- Insert all DIS_LOG_TRG steps.
       INSERT INTO emaj.emaj_rlbk_plan (rlbp_rlbk_id, rlbp_step, rlbp_schema, rlbp_table, rlbp_object, rlbp_batch_number,
                                        rlbp_estimated_duration, rlbp_estimate_method)
@@ -8208,16 +8200,8 @@ $_rlbk_planning$
           WHERE rlbp_rlbk_id = p_rlbkId
             AND rlbp_step = 'RLBK_TABLE';
 -- Compute the cost for each ENA_LOG_TRG step.
--- If DIS_LOG_TRG statistics are available, compute an average cost.
-      SELECT sum(rlbt_duration) / sum(rlbt_quantity) INTO v_estimDuration
-        FROM emaj.emaj_rlbk_stat
-        WHERE rlbt_step = 'ENA_LOG_TRG';
-      v_estimMethod = 2;
-      IF v_estimDuration IS NULL THEN
--- Otherwise, use the fixed_step_rollback_duration parameter.
-        v_estimDuration = v_fixed_step_rlbk;
-        v_estimMethod = 3;
-      END IF;
+      SELECT p_estimateMethod, p_estimatedDuration INTO v_estimMethod, v_estimDuration
+        FROM emaj._estimate_rlbk_step_duration('ENA_LOG_TRG', NULL, NULL, NULL, NULL, v_fixed_step_rlbk, NULL);
 -- Insert all ENA_LOG_TRG steps.
       INSERT INTO emaj.emaj_rlbk_plan (rlbp_rlbk_id, rlbp_step, rlbp_schema, rlbp_table, rlbp_object, rlbp_batch_number,
                                        rlbp_estimated_duration, rlbp_estimate_method)
@@ -8232,16 +8216,8 @@ $_rlbk_planning$
 -- with session_replication_role = replica.
 --
 -- Compute the cost for each SET_ALWAYS_APP_TRG step.
--- If SET_ALWAYS_APP_TRG statistics are available, compute an average cost.
-    SELECT sum(rlbt_duration) / sum(rlbt_quantity) INTO v_estimDuration
-      FROM emaj.emaj_rlbk_stat
-      WHERE rlbt_step = 'SET_ALWAYS_APP_TRG';
-    v_estimMethod = 2;
-    IF v_estimDuration IS NULL THEN
--- Otherwise, use the fixed_step_rollback_duration parameter.
-      v_estimDuration = v_fixed_step_rlbk;
-      v_estimMethod = 3;
-    END IF;
+    SELECT p_estimateMethod, p_estimatedDuration INTO v_estimMethod, v_estimDuration
+      FROM emaj._estimate_rlbk_step_duration('SET_ALWAYS_APP_TRG', NULL, NULL, NULL, NULL, v_fixed_step_rlbk, NULL);
 -- Insert all SET_ALWAYS_APP_TRG steps.
     INSERT INTO emaj.emaj_rlbk_plan (rlbp_rlbk_id, rlbp_step, rlbp_schema, rlbp_table, rlbp_object, rlbp_batch_number,
                                      rlbp_estimated_duration, rlbp_estimate_method)
@@ -8265,16 +8241,8 @@ $_rlbk_planning$
                      AND tgname = ANY (rel_ignored_triggers)
                 );
 -- Compute the cost for each SET_LOCAL_APP_TRG step.
--- If SET_LOCAL_APP_TRG statistics are available, compute an average cost.
-    SELECT sum(rlbt_duration) / sum(rlbt_quantity) INTO v_estimDuration
-      FROM emaj.emaj_rlbk_stat
-      WHERE rlbt_step = 'SET_LOCAL_APP_TRG';
-    v_estimMethod = 2;
-    IF v_estimDuration IS NULL THEN
--- Otherwise, use the fixed_step_rollback_duration parameter.
-      v_estimDuration = v_fixed_step_rlbk;
-      v_estimMethod = 3;
-    END IF;
+    SELECT p_estimateMethod, p_estimatedDuration INTO v_estimMethod, v_estimDuration
+      FROM emaj._estimate_rlbk_step_duration('SET_LOCAL_APP_TRG', NULL, NULL, NULL, NULL, v_fixed_step_rlbk, NULL);
 -- Insert all SET_LOCAL_APP_TRG steps
     INSERT INTO emaj.emaj_rlbk_plan (rlbp_rlbk_id, rlbp_step, rlbp_schema, rlbp_table, rlbp_object,
                                      rlbp_batch_number, rlbp_estimated_duration, rlbp_estimate_method)
@@ -8289,16 +8257,8 @@ $_rlbk_planning$
 -- with session_replication_role = replica.
 --
 -- Compute the cost for each DIS_APP_TRG step.
--- If DIS_APP_TRG statistics are available, compute an average cost.
-    SELECT sum(rlbt_duration) / sum(rlbt_quantity) INTO v_estimDuration
-      FROM emaj.emaj_rlbk_stat
-      WHERE rlbt_step = 'DIS_APP_TRG';
-    v_estimMethod = 2;
-    IF v_estimDuration IS NULL THEN
--- Otherwise, use the fixed_step_rollback_duration parameter.
-      v_estimDuration = v_fixed_step_rlbk;
-      v_estimMethod = 3;
-    END IF;
+    SELECT p_estimateMethod, p_estimatedDuration INTO v_estimMethod, v_estimDuration
+      FROM emaj._estimate_rlbk_step_duration('DIS_APP_TRG', NULL, NULL, NULL, NULL, v_fixed_step_rlbk, NULL);
 -- Insert all DIS_APP_TRG steps.
     INSERT INTO emaj.emaj_rlbk_plan (rlbp_rlbk_id, rlbp_step, rlbp_schema, rlbp_table, rlbp_object, rlbp_batch_number,
                                      rlbp_estimated_duration, rlbp_estimate_method)
@@ -8323,16 +8283,8 @@ $_rlbk_planning$
                      AND tgname = ANY (rel_ignored_triggers)
                 );
 -- Compute the cost for each ENA_APP_TRG step.
--- If ENA_APP_TRG statistics are available, compute an average cost.
-    SELECT sum(rlbt_duration) / sum(rlbt_quantity) INTO v_estimDuration
-      FROM emaj.emaj_rlbk_stat
-      WHERE rlbt_step = 'ENA_APP_TRG';
-    v_estimMethod = 2;
-    IF v_estimDuration IS NULL THEN
--- Otherwise, use the fixed_step_rollback_duration parameter.
-      v_estimDuration = v_fixed_step_rlbk;
-      v_estimMethod = 3;
-    END IF;
+      SELECT p_estimateMethod, p_estimatedDuration INTO v_estimMethod, v_estimDuration
+        FROM emaj._estimate_rlbk_step_duration('ENA_APP_TRG', NULL, NULL, NULL, NULL, v_fixed_step_rlbk, NULL);
 -- Insert all ENA_APP_TRG steps.
     INSERT INTO emaj.emaj_rlbk_plan (rlbp_rlbk_id, rlbp_step, rlbp_schema, rlbp_table, rlbp_object,
                                      rlbp_app_trg_type,
@@ -8350,26 +8302,10 @@ $_rlbk_planning$
 -- Process foreign key to define which action to perform on them
 --
 -- First compute the fixed duration estimates for each 'DROP_FK' and 'SET_FK_DEF' steps.
--- If DROP_FK statistics are available, compute an average cost.
-    SELECT sum(rlbt_duration) / sum(rlbt_quantity) INTO v_estimDropFkDuration
-      FROM emaj.emaj_rlbk_stat
-      WHERE rlbt_step = 'DROP_FK';
-    v_estimDropFkMethod = 2;
-    IF v_estimDropFkDuration IS NULL THEN
--- If no statistics are available for this step, use the fixed_step_rollback_duration parameter.
-      v_estimDropFkDuration = v_fixed_step_rlbk;
-      v_estimDropFkMethod = 3;
-    END IF;
--- If SET_FK_DEF statistics are available, compute an average cost.
-    SELECT sum(rlbt_duration) / sum(rlbt_quantity) INTO v_estimSetFkDefDuration
-      FROM emaj.emaj_rlbk_stat
-      WHERE rlbt_step = 'SET_FK_DEF';
-    v_estimSetFkDefMethod = 2;
-    IF v_estimSetFkDefDuration IS NULL THEN
--- If no statistics are available for this step, use the fixed_step_rollback_duration parameter.
-      v_estimSetFkDefDuration = v_fixed_step_rlbk;
-      v_estimSetFkDefMethod = 3;
-    END IF;
+    SELECT p_estimateMethod, p_estimatedDuration INTO v_estimDropFkMethod, v_estimDropFkDuration
+      FROM emaj._estimate_rlbk_step_duration('DROP_FK', NULL, NULL, NULL, NULL, v_fixed_step_rlbk, NULL);
+    SELECT p_estimateMethod, p_estimatedDuration INTO v_estimSetFkDefMethod, v_estimSetFkDefDuration
+      FROM emaj._estimate_rlbk_step_duration('SET_FK_DEF', NULL, NULL, NULL, NULL, v_fixed_step_rlbk, NULL);
 -- Select all foreign keys belonging to or referencing the tables to process.
     FOR r_fk IN
         SELECT c.oid AS conoid, c.conname, n.nspname, t.relname, t.reltuples, pg_get_constraintdef(c.oid) AS def, c.condeferrable,
@@ -8457,38 +8393,15 @@ $_rlbk_planning$
 -- Now compute the estimation duration for each complex step ('RLBK_TABLE', 'DELETE_LOG', 'ADD_FK', 'SET_FK_IMM').
 --
 -- Compute the rollback duration estimates for the tables.
--- For each table with content to rollback,
     FOR r_tbl IN
       SELECT *
         FROM emaj.emaj_rlbk_plan
         WHERE rlbp_rlbk_id = p_rlbkId
           AND rlbp_step = 'RLBK_TABLE'
     LOOP
--- First look at the previous rollback durations for the table and with similar rollback volume (same order of magnitude).
-      SELECT sum(rlbt_duration) * r_tbl.rlbp_estimated_quantity / sum(rlbt_quantity) INTO v_estimDuration
-        FROM emaj.emaj_rlbk_stat
-        WHERE rlbt_step = 'RLBK_TABLE'
-          AND rlbt_quantity > 0
-          AND rlbt_schema = r_tbl.rlbp_schema
-          AND rlbt_table = r_tbl.rlbp_table
-          AND rlbt_quantity / r_tbl.rlbp_estimated_quantity < 10
-          AND r_tbl.rlbp_estimated_quantity / rlbt_quantity < 10;
-      v_estimMethod = 1;
-      IF v_estimDuration IS NULL THEN
--- If there is no previous rollback operation with similar volume, take statistics for the table with all available volumes.
-        SELECT sum(rlbt_duration) * r_tbl.rlbp_estimated_quantity / sum(rlbt_quantity) INTO v_estimDuration
-          FROM emaj.emaj_rlbk_stat
-          WHERE rlbt_step = 'RLBK_TABLE'
-            AND rlbt_quantity > 0
-            AND rlbt_schema = r_tbl.rlbp_schema
-            AND rlbt_table = r_tbl.rlbp_table;
-        v_estimMethod = 2;
-        IF v_estimDuration IS NULL THEN
--- If there is no previous rollback operation, use the avg_row_rollback_duration from the emaj_param table.
-          v_estimDuration = v_avg_row_rlbk * r_tbl.rlbp_estimated_quantity + v_fixed_step_rlbk;
-          v_estimMethod = 3;
-        END IF;
-      END IF;
+      SELECT p_estimateMethod, p_estimatedDuration INTO v_estimMethod, v_estimDuration
+        FROM emaj._estimate_rlbk_step_duration('RLBK_TABLE', r_tbl.rlbp_schema, r_tbl.rlbp_table, NULL,
+                                               r_tbl.rlbp_estimated_quantity, v_fixed_step_rlbk, v_avg_row_rlbk);
       UPDATE emaj.emaj_rlbk_plan
         SET rlbp_estimated_duration = v_estimDuration, rlbp_estimate_method = v_estimMethod
         WHERE rlbp_rlbk_id = p_rlbkId
@@ -8496,38 +8409,16 @@ $_rlbk_planning$
           AND rlbp_schema = r_tbl.rlbp_schema
           AND rlbp_table = r_tbl.rlbp_table;
     END LOOP;
--- Compute the log rows delete duration for the tables.
+-- Compute the estimated log rows delete duration.
     FOR r_tbl IN
       SELECT *
         FROM emaj.emaj_rlbk_plan
         WHERE rlbp_rlbk_id = p_rlbkId
           AND rlbp_step = 'DELETE_LOG'
     LOOP
--- First look at the previous rollback durations for the table and with similar rollback volume (same order of magnitude).
-      SELECT sum(rlbt_duration) * r_tbl.rlbp_estimated_quantity / sum(rlbt_quantity) INTO v_estimDuration
-        FROM emaj.emaj_rlbk_stat
-        WHERE rlbt_step = 'DELETE_LOG'
-          AND rlbt_quantity > 0
-          AND rlbt_schema = r_tbl.rlbp_schema
-          AND rlbt_table = r_tbl.rlbp_table
-          AND rlbt_quantity / r_tbl.rlbp_estimated_quantity < 10
-          AND r_tbl.rlbp_estimated_quantity / rlbt_quantity < 10;
-      v_estimMethod = 1;
-      IF v_estimDuration IS NULL THEN
--- If there is no previous rollback operation with similar volume, take statistics for the table with all available volumes.
-        SELECT sum(rlbt_duration) * r_tbl.rlbp_estimated_quantity / sum(rlbt_quantity) INTO v_estimDuration
-          FROM emaj.emaj_rlbk_stat
-          WHERE rlbt_step = 'DELETE_LOG'
-            AND rlbt_quantity > 0
-            AND rlbt_schema = r_tbl.rlbp_schema
-            AND rlbt_table = r_tbl.rlbp_table;
-        v_estimMethod = 2;
-        IF v_estimDuration IS NULL THEN
--- If there is no previous rollback operation, use the avg_row_rollback_duration from the emaj_param table.
-          v_estimDuration = v_avg_row_del_log * r_tbl.rlbp_estimated_quantity + v_fixed_step_rlbk;
-          v_estimMethod = 3;
-        END IF;
-      END IF;
+      SELECT p_estimateMethod, p_estimatedDuration INTO v_estimMethod, v_estimDuration
+        FROM emaj._estimate_rlbk_step_duration('DELETE_LOG', r_tbl.rlbp_schema, r_tbl.rlbp_table, NULL,
+                                               r_tbl.rlbp_estimated_quantity, v_fixed_step_rlbk, v_avg_row_del_log);
       UPDATE emaj.emaj_rlbk_plan
         SET rlbp_estimated_duration = v_estimDuration, rlbp_estimate_method = v_estimMethod
         WHERE rlbp_rlbk_id = p_rlbkId
@@ -8542,44 +8433,9 @@ $_rlbk_planning$
         WHERE rlbp_rlbk_id = p_rlbkId
           AND rlbp_step = 'ADD_FK'
     LOOP
-      IF r_fk.rlbp_estimated_quantity = 0 THEN
--- Empty table (or table not yet analyzed).
-        v_estimDuration = v_fixed_step_rlbk;
-        v_estimMethod = 3;
-      ELSE
--- Non empty table and statistics (with at least one row) are available.
-        SELECT sum(rlbt_duration) * r_fk.rlbp_estimated_quantity / sum(rlbt_quantity) INTO v_estimDuration
-          FROM emaj.emaj_rlbk_stat
-          WHERE rlbt_step = 'ADD_FK'
-            AND rlbt_quantity > 0
-            AND rlbt_schema = r_fk.rlbp_schema
-            AND rlbt_table = r_fk.rlbp_table
-            AND rlbt_object = r_fk.rlbp_object;
-        v_estimMethod = 1;
-        IF v_estimDuration IS NULL THEN
--- Non empty table, but no statistics with at least one row are available => take the last duration for this fkey, if any.
-          SELECT rlbt_duration INTO v_estimDuration
-            FROM emaj.emaj_rlbk_stat
-            WHERE rlbt_step = 'ADD_FK'
-              AND rlbt_schema = r_fk.rlbp_schema
-              AND rlbt_table = r_tbl.rlbp_table
-              AND rlbt_object = r_fk.rlbp_object
-              AND rlbt_rlbk_id =
-                    (SELECT max(rlbt_rlbk_id)
-                       FROM emaj.emaj_rlbk_stat
-                       WHERE rlbt_step = 'ADD_FK'
-                         AND rlbt_schema = r_fk.rlbp_schema
-                         AND rlbt_table = r_fk.rlbp_table
-                         AND rlbt_object = r_fk.rlbp_object
-                    );
-          v_estimMethod = 2;
-          IF v_estimDuration IS NULL THEN
--- Definitely no statistics available, compute with the avg_fkey_check_duration parameter.
-            v_estimDuration = r_fk.rlbp_estimated_quantity * v_avg_fkey_check + v_fixed_step_rlbk;
-            v_estimMethod = 3;
-          END IF;
-        END IF;
-      END IF;
+      SELECT p_estimateMethod, p_estimatedDuration INTO v_estimMethod, v_estimDuration
+        FROM emaj._estimate_rlbk_step_duration('ADD_FK', r_tbl.rlbp_schema, r_tbl.rlbp_table, r_fk.rlbp_object,
+                                               r_tbl.rlbp_estimated_quantity, v_fixed_step_rlbk, v_avg_fkey_check);
       UPDATE emaj.emaj_rlbk_plan
         SET rlbp_estimated_duration = v_estimDuration, rlbp_estimate_method = v_estimMethod
         WHERE rlbp_rlbk_id = p_rlbkId
@@ -8594,20 +8450,9 @@ $_rlbk_planning$
         WHERE rlbp_rlbk_id = p_rlbkId
           AND rlbp_step = 'SET_FK_IMM'
     LOOP
--- If fkey checks statistics are available for this fkey, compute an average cost.
-      SELECT sum(rlbt_duration) * r_fk.rlbp_estimated_quantity / sum(rlbt_quantity) INTO v_estimDuration
-        FROM emaj.emaj_rlbk_stat
-        WHERE rlbt_step = 'SET_FK_IMM'
-          AND rlbt_quantity > 0
-          AND rlbt_schema = r_fk.rlbp_schema
-          AND rlbt_table = r_fk.rlbp_table
-          AND rlbt_object = r_fk.rlbp_object;
-      v_estimMethod = 2;
-      IF v_estimDuration IS NULL THEN
--- If no statistics are available for this fkey, use the avg_fkey_check parameter.
-        v_estimDuration = r_fk.rlbp_estimated_quantity * v_avg_fkey_check + v_fixed_step_rlbk;
-        v_estimMethod = 3;
-      END IF;
+      SELECT p_estimateMethod, p_estimatedDuration INTO v_estimMethod, v_estimDuration
+        FROM emaj._estimate_rlbk_step_duration('SET_FK_IMM', r_tbl.rlbp_schema, r_tbl.rlbp_table, r_fk.rlbp_object,
+                                               r_tbl.rlbp_estimated_quantity, v_fixed_step_rlbk, v_avg_fkey_check);
       UPDATE emaj.emaj_rlbk_plan
         SET rlbp_estimated_duration = v_estimDuration, rlbp_estimate_method = v_estimMethod
         WHERE rlbp_rlbk_id = p_rlbkId
@@ -8734,9 +8579,128 @@ $_rlbk_set_batch_number$
         PERFORM emaj._rlbk_set_batch_number(p_rlbkId, p_batchNumber, r_tbl.rlbp_schema, r_tbl.rlbp_table, r_tbl.rlbp_is_repl_role_replica);
       END LOOP;
     END IF;
+--
     RETURN;
   END;
 $_rlbk_set_batch_number$;
+CREATE OR REPLACE FUNCTION emaj._estimate_rlbk_step_duration(p_step emaj._rlbk_step_enum, p_schema TEXT, p_table TEXT,
+                                                             p_object TEXT, p_estimatedQuantity BIGINT,
+                                                             p_defaultFixedCost INTERVAL, p_defaultVariableCost INTERVAL,
+                                                             OUT p_estimateMethod INT, OUT p_estimatedDuration INTERVAL)
+LANGUAGE plpgsql AS
+$_estimate_rlbk_step_duration$
+-- This function reads the rollback statistics in order to compute the duration estimate for elementary steps.
+-- The function is called by _rlbk_planning().
+-- The cost model depends on the step.
+-- Input: step name, the schema, table and object names when it is relevant, the expected volume for the step,
+--        the default fixed cost and the default variable cost from the emaj parameters
+-- Output: the estimate method (1, 2 or 3), the duration estimate
+  BEGIN
+-- Initialize the output data.
+    p_estimatedDuration = NULL;
+-- Compute the duration estimate depending on the step.
+    CASE
+      WHEN p_step IN ('RLBK_TABLE', 'DELETE_LOG') THEN
+-- For RLBK_TBL and DELETE_LOG, the estimate takes into account the estimated number of log rows to revert.
+-- First look at the previous rollback durations for the table and with similar rollback volume (same order of magnitude).
+        SELECT sum(rlbt_duration) * p_estimatedQuantity / sum(rlbt_quantity), 1
+          INTO p_estimatedDuration, p_estimateMethod
+          FROM emaj.emaj_rlbk_stat
+          WHERE rlbt_step = p_step
+            AND rlbt_quantity > 0
+            AND rlbt_schema = p_schema
+            AND rlbt_table = p_table
+            AND rlbt_quantity / p_estimatedQuantity < 10
+            AND p_estimatedQuantity / rlbt_quantity < 10;
+        IF p_estimatedDuration IS NULL THEN
+-- If there is no previous rollback operation with similar volume, take statistics for the table with all available volumes.
+          SELECT sum(rlbt_duration) * p_estimatedQuantity / sum(rlbt_quantity), 2
+            INTO p_estimatedDuration, p_estimateMethod
+            FROM emaj.emaj_rlbk_stat
+            WHERE rlbt_step = p_step
+              AND rlbt_quantity > 0
+              AND rlbt_schema = p_schema
+              AND rlbt_table = p_table;
+          IF p_estimatedDuration IS NULL THEN
+-- No statistics found for the step, so use supplied E-Maj parameters.
+            p_estimatedDuration = p_defaultVariableCost * p_estimatedQuantity + p_defaultFixedCost;
+            p_estimateMethod = 3;
+          END IF;
+        END IF;
+--
+      WHEN p_step = 'ADD_FK' THEN
+        IF p_estimatedQuantity = 0 THEN
+-- Empty table (or table not yet analyzed).
+          p_estimatedDuration = p_defaultFixedCost;
+          p_estimateMethod = 3;
+        ELSE
+-- Non empty table and statistics (with at least one row) are available.
+          SELECT sum(rlbt_duration) * p_estimatedQuantity / sum(rlbt_quantity), 1
+            INTO p_estimatedDuration, p_estimateMethod
+            FROM emaj.emaj_rlbk_stat
+            WHERE rlbt_step = p_step
+              AND rlbt_quantity > 0
+              AND rlbt_schema = p_schema
+              AND rlbt_table = p_table
+              AND rlbt_object = p_object;
+          IF p_estimatedDuration IS NULL THEN
+-- Non empty table, but no statistic with at least one row is available => take the last duration for this fkey, if any.
+            SELECT rlbt_duration, 2
+              INTO p_estimatedDuration, p_estimateMethod
+              FROM emaj.emaj_rlbk_stat
+              WHERE rlbt_step = p_step
+                AND rlbt_schema = p_schema
+                AND rlbt_table = p_table
+                AND rlbt_object = p_object
+                AND rlbt_rlbk_id =
+                      (SELECT max(rlbt_rlbk_id)
+                         FROM emaj.emaj_rlbk_stat
+                         WHERE rlbt_step = p_step
+                           AND rlbt_schema = p_schema
+                           AND rlbt_table = p_table
+                           AND rlbt_object = p_object
+                      );
+            IF p_estimatedDuration IS NULL THEN
+-- Definitely no statistics available, compute with the supplied default parameters.
+              p_estimatedDuration = p_estimatedQuantity * p_defaultVariableCost + p_defaultFixedCost;
+              p_estimateMethod = 3;
+            END IF;
+          END IF;
+        END IF;
+--
+      WHEN p_step = 'SET_FK_IMM' THEN
+-- If fkey checks statistics are available for this fkey, compute an average cost.
+        SELECT sum(rlbt_duration) * p_estimatedQuantity / sum(rlbt_quantity), 2
+          INTO p_estimatedDuration, p_estimateMethod
+          FROM emaj.emaj_rlbk_stat
+          WHERE rlbt_step = p_step
+            AND rlbt_quantity > 0
+            AND rlbt_schema = p_schema
+            AND rlbt_table = p_table
+            AND rlbt_object = p_object;
+        IF p_estimatedDuration IS NULL THEN
+-- No statistics are available for this fkey, so use the supplied E-Maj parameters.
+          p_estimatedDuration = p_estimatedQuantity * p_defaultVariableCost + p_defaultFixedCost;
+          p_estimateMethod = 3;
+        END IF;
+--
+      ELSE
+-- For other steps, there is no volume to consider.
+-- Read statistics, if any, and compute an average cost.
+        SELECT sum(rlbt_duration) / sum(rlbt_quantity), 2
+          INTO p_estimatedDuration, p_estimateMethod
+          FROM emaj.emaj_rlbk_stat
+          WHERE rlbt_step = p_step;
+        IF p_estimatedDuration IS NULL THEN
+-- No statistics found for the step, so use the supplied E-Maj parameters.
+          p_estimatedDuration = p_defaultFixedCost;
+          p_estimateMethod = 3;
+        END IF;
+    END CASE;
+--
+    RETURN;
+  END;
+$_estimate_rlbk_step_duration$;
 CREATE OR REPLACE FUNCTION emaj._rlbk_session_lock(p_rlbkId INT, p_session INT)
 RETURNS VOID LANGUAGE plpgsql AS
 $_rlbk_session_lock$
@@ -12403,6 +12367,12 @@ INSERT INTO emaj.emaj_schema (sch_name) VALUES ('emaj');
 DO LANGUAGE plpgsql
 $do$
   BEGIN
+    RAISE NOTICE 'E-Maj installation: E-Maj successfully installed.';
+-- Check that the role is superuser.
+    PERFORM 0 FROM pg_catalog.pg_roles WHERE rolname = current_user AND rolsuper;
+    IF NOT FOUND THEN
+      RAISE WARNING 'E-Maj installation: The current user (%) is not a superuser. This may lead to permission issues when using E-Maj.', current_user;
+    END IF;
 -- Check the max_prepared_transactions GUC value and report a warning if its value is too low for parallel rollback.
     IF current_setting('max_prepared_transactions')::INT <= 1 THEN
       RAISE WARNING 'E-Maj installation: As the max_prepared_transactions parameter value (%) on this cluster is too low, no parallel'
@@ -12412,6 +12382,7 @@ $do$
     RETURN;
   END;
 $do$;
+psql:sql/emaj-devel.sql:12614: NOTICE:  E-Maj installation: E-Maj successfully installed.
 COMMIT;
 -----------------------------
 -- check installation
