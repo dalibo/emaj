@@ -4,8 +4,8 @@ emaj-4.0.0/AUTHORS.md
 emaj-4.0.0/LICENSE
 emaj-4.0.0/META.json
 emaj-4.0.0/emaj.control
-emaj-4.0.0/sql/emaj--3.4.0.sql
-emaj-4.0.0/sql/emaj-3.4.0.sql
+emaj-4.0.0/sql/emaj--4.0.0.sql
+emaj-4.0.0/sql/emaj-4.0.0.sql
 emaj-4.0.0/sql/emaj--3.4.0--4.0.0.sql
 emaj-4.0.0/sql/emaj--3.3.0--3.4.0.sql
 emaj-4.0.0/sql/emaj--3.2.0--3.3.0.sql
