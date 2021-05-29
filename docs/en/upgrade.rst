@@ -16,7 +16,7 @@ For installed E-Maj version 0.11.0 and later, it is possible to perform an upgra
 
 .. caution::
 
-   Starting from version 2.2.0, E-Maj no longer supports PostgreSQL versions prior 9.2. Starting from version 3.0.0, E-Maj no longer supports PostgreSQL versions prior 9.5. If an older PostgreSQL version is used, it must be updated before migrating E-Maj to a higher version.
+   Starting from version 2.2.0, E-Maj no longer supports PostgreSQL versions prior 9.2. Starting from version 3.0.0, E-Maj no longer supports PostgreSQL versions prior 9.5. If an older PostgreSQL version is used, it must be updated **before** migrating E-Maj to a higher version.
 
 .. _uninstall_reinstall:
 
@@ -177,3 +177,25 @@ Version specific details:
 * The procedure that upgrades a version 3.0.0 into 3.1.0 renames existing log objects. This leads to locking the application tables, which may generate conflicts with the parallel use of these tables. This procedure also issues a warning message indicating that the changes in E-Maj rollback functions regarding the application triggers processing may require changes in user’s procedures.
 
 * The procedure that upgrades a version 3.4.0 into 4.0.0 updates the log tables content for TRUNCATE recorded statements. The upgrade duration depends on the global log tables size.
+
+Compatibility break
+-------------------
+
+As a general rule, upgrading the E-Maj version does not change the way to use the extension. There is an ascending compatibility between versions. The exceptions to this rule are presented below.
+
+Upgrading towards version 4.0.0
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+The compatibility breaks of the 4.0.0 E-Maj version mainly deal with the way to manage tables groups configurations. The 3.2.0 version brought the ability to dynamicaly manage the assignment of tables and sequences into tables groups. The 3.3.0 version allowed to describe tables groups configuration with JSON structures. Since, these technics have existed beside the historical way to handle tables group using the *emaj_group_def* table. Starting with the 4.0.0 version, this historical way to manage tables groups configurations has disappeared.
+
+More precisely:
+
+* The table *emaj_group_def* does not exist anymore.
+* The :ref:`emaj_create_group()<emaj_create_group>` function only creates empty tables groups, that must be then populated with functions of the :ref:`emaj_assign_table() / emaj_assign_sequence()<assign_table_sequence>` family, or the :ref:`emaj_import_groups_configuration()<import_groups_conf>` function. The third and last parameter of the :ref:`emaj_create_group()<emaj_create_group>` function has disappeared. It allowed to create empty tables groups.
+* The now useless *emaj_alter_group()*, *emaj_alter_groups()* and *emaj_sync_def_group()* functions also disappear.
+
+Furthermore:
+
+* The *emaj_ignore_app_trigger()* function is deleted. The triggers to ignore at E-Maj rollback time can be registered with the functions of the :ref:`emaj_assign_table()<assign_table_sequence>` family.
+* In JSON structures managed by the :ref:`emaj_export_groups_configuration()<export_groups_conf>` and :ref:`emaj_import_groups_configuration()<import_groups_conf>` functions, the format of the "ignored_triggers" property that lists the triggers to ignore at E-Maj rollback time has been simplified. It is now a simple text array.
+* The old family of E-Maj rollback functions that just returned an integer has been deleted. Only the functions returning a set of messages remain.

@@ -16,7 +16,7 @@ Pour les versions d'E-Maj installées 0.11.0 et suivantes, il est possible de pr
 
 .. caution::
 
-   A partir de la version 2.2.0, E-Maj ne supporte plus les versions de PostgreSQL antérieures à 9.2. A partir de la version 3.0.0, E-Maj ne supporte plus les versions de PostgreSQL antérieures à 9.5. Si une version antérieure de PostgreSQL est utilisée, il faut la faire évoluer avant de migrer E-Maj dans une version supérieure.
+   A partir de la version 2.2.0, E-Maj ne supporte plus les versions de PostgreSQL antérieures à 9.2. A partir de la version 3.0.0, E-Maj ne supporte plus les versions de PostgreSQL antérieures à 9.5. Si une version antérieure de PostgreSQL est utilisée, il faut la faire évoluer **avant** de migrer E-Maj dans une version supérieure.
 
 .. _uninstall_reinstall:
 
@@ -178,3 +178,25 @@ Spécificités liées aux versions :
 * La procédure de mise à jour d’une version 3.0.0 en version 3.1.0 renomme les objets de log existants. Ceci conduit à une pose de verrou sur chaque table applicative, qui peut entrer en conflit avec des accès concurrents sur les tables. La procédure de mise à jour génère également un message d’alerte indiquant que les changements dans la gestion des triggers applicatifs par les fonctions de rollback E-Maj peuvent nécessiter des modifications dans les procédures utilisateurs.
 
 * La procédure de mise à jour d’une version 3.4.0 en version 4.0.0 modifie le contenu des tables de log pour les enregistrements des requêtes *TRUNCATE*. La durée de la mise à jour dépend donc de la taille globale des tables de log.
+
+Ruptures de compatibilité
+-------------------------
+
+D’une manière générale, lorsqu’on passe à une version d’E-Maj plus récente, la façon d’utiliser l’extension peut rester inchangée. Il y a donc une compatibilité ascendante entre les versions. Les exceptions à cette règles sont présentées ci-dessous.
+
+Passage en version 4.0.0
+^^^^^^^^^^^^^^^^^^^^^^^^
+
+Les ruptures de compatibilité de la version 4.0.0 d’E-Maj portent essentiellement sur la façon de gérer la configuration des groupes de tables. La version 3.2.0 a apporté la capacité de gérer en dynamique l’assignation des tables et séquences dans les groupes de tables. La version 3.3.0 a permis de décrire les configurations de groupes de tables dans des structures JSON. Depuis, ces techniques ont cohabité avec la gestion historique des groupes de tables au travers de la table *emaj_group_def*. Avec la version 4.0.0, cette gestion historique des configurations de groupes de tables disparaît.
+
+Plus précisément :
+
+* La table *emaj_group_def* n’existe plus.
+* La fonction :ref:`emaj_create_group()<emaj_create_group>` crée uniquement des groupes de tables vides, qu’il faut alimenter ensuite avec les fonctions de la famille d’:ref:`emaj_assign_table() / emaj_assign_sequence()<assign_table_sequence>` ou bien la fonction :ref:`emaj_import_groups_configuration()<import_groups_conf>`. Le 3ème et dernier paramètre de la fonction :ref:`emaj_create_group()<emaj_create_group>`, qui permettait de demander la création d’un groupe de tables vide, disparaît donc.
+* Les fonctions *emaj_alter_group()*, *emaj_alter_groups()* et *emaj_sync_def_group()* disparaissent également.
+
+De plus :
+
+* La fonction *emaj_ignore_app_trigger()* est supprimée. On peut dorénavant spécifier les trigggers à ignorer lors des opérations de rollback E-Maj directement par les fonctions de la famille de :ref:`emaj_assign_table()<assign_table_sequence>`.
+* Dans les structures JSON gérées par les fonctions :ref:`emaj_export_groups_configuration()<export_groups_conf>` et :ref:`emaj_import_groups_configuration()<import_groups_conf>`, le format de la propriété "ignored_triggers" spécifiant les triggers à ignorer lors des opérations de rollback E-Maj a été simplifiée, il s’agit maintenant d’un simple tableau de texte.
+* L’ancienne famille de fonctions de rollback E-Maj retournant un simple entier est supprimée. Seules les fonctions retournant un ensemble de messages sont conservées.
