@@ -18,18 +18,40 @@ select group_name, group_is_rollbackable, group_creation_time_id,
   from emaj.emaj_group order by group_name;
     group_name    | group_is_rollbackable | group_creation_time_id | group_last_alter_time_id | group_is_logging | group_is_rlbk_protected | group_nb_table | group_nb_sequence | group_comment 
 ------------------+-----------------------+------------------------+--------------------------+------------------+-------------------------+----------------+-------------------+---------------
- myGroup1         | t                     |                      1 |                       18 | t                | t                       |              4 |                 1 | 
- myGroup2         | t                     |                      2 |                          | t                | f                       |              4 |                 2 | 
- myGroup6         | t                     |                     19 |                       21 | f                | f                       |              3 |                 0 | 
- phil's group#3", | f                     |                      3 |                          | t                | t                       |              2 |                 1 | 
+ myGroup1         | t                     |                      1 |                       29 | t                | t                       |              4 |                 1 | 
+ myGroup2         | t                     |                      2 |                       11 | t                | f                       |              4 |                 2 | 
+ myGroup6         | t                     |                      4 |                       31 | f                | f                       |              3 |                 0 | 
+ phil's group#3", | f                     |                      3 |                       13 | t                | t                       |              2 |                 1 | 
 (4 rows)
 
 select * from emaj.emaj_relation_change order by 1,2,3,4;
- rlchg_time_id | rlchg_schema |                      rlchg_tblseq                       | rlchg_change_kind | rlchg_group | rlchg_new_schema | rlchg_new_tblseq | rlchg_new_group | rlchg_priority | rlchg_new_priority | rlchg_log_data_tsp | rlchg_new_log_data_tsp | rlchg_log_index_tsp | rlchg_new_log_index_tsp | rlchg_ignored_triggers | rlchg_new_ignored_triggers | rlchg_rlbk_id 
----------------+--------------+---------------------------------------------------------+-------------------+-------------+------------------+------------------+-----------------+----------------+--------------------+--------------------+------------------------+---------------------+-------------------------+------------------------+----------------------------+---------------
-            18 | myschema1    | myTbl3                                                  | REMOVE_TABLE      | myGroup1    |                  |                  |                 |                |                    |                    |                        |                     |                         |                        |                            |              
-            21 | myschema6    | table_with_55_characters_long_name_____0_________0abcde | REMOVE_TABLE      | myGroup6    |                  |                  |                 |                |                    |                    |                        |                     |                         |                        |                            |              
-(2 rows)
+ rlchg_time_id |  rlchg_schema  |                      rlchg_tblseq                       | rlchg_change_kind |   rlchg_group    | rlchg_new_schema | rlchg_new_tblseq | rlchg_new_group | rlchg_priority | rlchg_new_priority | rlchg_log_data_tsp | rlchg_new_log_data_tsp | rlchg_log_index_tsp | rlchg_new_log_index_tsp | rlchg_ignored_triggers | rlchg_new_ignored_triggers | rlchg_rlbk_id 
+---------------+----------------+---------------------------------------------------------+-------------------+------------------+------------------+------------------+-----------------+----------------+--------------------+--------------------+------------------------+---------------------+-------------------------+------------------------+----------------------------+---------------
+             5 | myschema1      | myTbl3                                                  | ADD_TABLE         | myGroup1         |                  |                  |                 |                |                    |                    |                        |                     |                         |                        |                            |              
+             5 | myschema1      | mytbl1                                                  | ADD_TABLE         | myGroup1         |                  |                  |                 |                |                    |                    |                        |                     |                         |                        |                            |              
+             5 | myschema1      | mytbl2                                                  | ADD_TABLE         | myGroup1         |                  |                  |                 |                |                    |                    |                        |                     |                         |                        |                            |              
+             5 | myschema1      | mytbl2b                                                 | ADD_TABLE         | myGroup1         |                  |                  |                 |                |                    |                    |                        |                     |                         |                        |                            |              
+             5 | myschema1      | mytbl4                                                  | ADD_TABLE         | myGroup1         |                  |                  |                 |                |                    |                    |                        |                     |                         |                        |                            |              
+             6 | myschema1      | mytbl1                                                  | CHANGE_PRIORITY   | myGroup1         |                  |                  |                 |                |                 20 |                    |                        |                     |                         |                        |                            |              
+             7 | myschema1      | myTbl3                                                  | CHANGE_PRIORITY   | myGroup1         |                  |                  |                 |                |                 10 |                    |                        |                     |                         |                        |                            |              
+             8 | myschema1      | mytbl4                                                  | CHANGE_PRIORITY   | myGroup1         |                  |                  |                 |                |                 20 |                    |                        |                     |                         |                        |                            |              
+             9 | myschema1      | myTbl3_col31_seq                                        | ADD_SEQUENCE      | myGroup1         |                  |                  |                 |                |                    |                    |                        |                     |                         |                        |                            |              
+            10 | myschema2      | myTbl3                                                  | ADD_TABLE         | myGroup2         |                  |                  |                 |                |                    |                    |                        |                     |                         |                        |                            |              
+            10 | myschema2      | mytbl1                                                  | ADD_TABLE         | myGroup2         |                  |                  |                 |                |                    |                    |                        |                     |                         |                        |                            |              
+            10 | myschema2      | mytbl2                                                  | ADD_TABLE         | myGroup2         |                  |                  |                 |                |                    |                    |                        |                     |                         |                        |                            |              
+            10 | myschema2      | mytbl4                                                  | ADD_TABLE         | myGroup2         |                  |                  |                 |                |                    |                    |                        |                     |                         |                        |                            |              
+            11 | myschema2      | myTbl3_col31_seq                                        | ADD_SEQUENCE      | myGroup2         |                  |                  |                 |                |                    |                    |                        |                     |                         |                        |                            |              
+            11 | myschema2      | myseq1                                                  | ADD_SEQUENCE      | myGroup2         |                  |                  |                 |                |                    |                    |                        |                     |                         |                        |                            |              
+            12 | phil's schema3 | myTbl2\                                                 | ADD_TABLE         | phil's group#3", |                  |                  |                 |                |                    |                    |                        |                     |                         |                        |                            |              
+            12 | phil's schema3 | phil's tbl1                                             | ADD_TABLE         | phil's group#3", |                  |                  |                 |                |                    |                    |                        |                     |                         |                        |                            |              
+            13 | phil's schema3 | phil's seq\1                                            | ADD_SEQUENCE      | phil's group#3", |                  |                  |                 |                |                    |                    |                        |                     |                         |                        |                            |              
+            14 | myschema6      | table_with_50_characters_long_name_____0_________0      | ADD_TABLE         | myGroup6         |                  |                  |                 |                |                    |                    |                        |                     |                         |                        |                            |              
+            14 | myschema6      | table_with_51_characters_long_name_____0_________0a     | ADD_TABLE         | myGroup6         |                  |                  |                 |                |                    |                    |                        |                     |                         |                        |                            |              
+            14 | myschema6      | table_with_55_characters_long_name_____0_________0abcde | ADD_TABLE         | myGroup6         |                  |                  |                 |                |                    |                    |                        |                     |                         |                        |                            |              
+            14 | myschema6      | table_with_55_characters_long_name_____0_________0fghij | ADD_TABLE         | myGroup6         |                  |                  |                 |                |                    |                    |                        |                     |                         |                        |                            |              
+            29 | myschema1      | myTbl3                                                  | REMOVE_TABLE      | myGroup1         |                  |                  |                 |                |                    |                    |                        |                     |                         |                        |                            |              
+            31 | myschema6      | table_with_55_characters_long_name_____0_________0abcde | REMOVE_TABLE      | myGroup6         |                  |                  |                 |                |                    |                    |                        |                     |                         |                        |                            |              
+(24 rows)
 
 -----------------------------
 -- Step 2 : for both groups, rollback to the common mark just set before the upgrade, after having unprotected the first group
@@ -288,42 +310,52 @@ select time_id, time_last_emaj_gid, time_event from emaj.emaj_time_stamp order b
        1 |                  0 | C
        2 |                  0 | C
        3 |                  0 | C
-       4 |                  0 | M
-       5 |                  0 | M
-       6 |                  0 | M
-       7 |                 29 | M
-       8 |                 40 | M
-       9 |                 46 | R
-      10 |                 49 | R
-      11 |                 76 | M
-      12 |                 80 | M
-      13 |                 80 | R
-      14 |                 82 | M
-      15 |                 82 | R
-      16 |                 84 | M
-      17 |                 84 | M
-      18 |                 84 | A
-      19 |                 84 | C
-      20 |                 84 | M
-      21 |                 84 | A
-      22 |                 84 | M
-      23 |                 85 | R
-      24 |                 85 | R
-      25 |                 92 | M
-      26 |                106 | M
-      27 |                106 | M
-      28 |                106 | M
-      29 |                106 | R
-      30 |                108 | M
-      31 |                108 | R
-      32 |                118 | R
-      33 |                121 | R
-      34 |                124 | M
-      35 |                124 | M
-      36 |                130 | R
-      37 |                130 | M
-      38 |                130 | D
-(38 rows)
+       4 |                  0 | C
+       5 |                  0 | A
+       6 |                  0 | A
+       7 |                  0 | A
+       8 |                  0 | A
+       9 |                  0 | A
+      10 |                  0 | A
+      11 |                  0 | A
+      12 |                  0 | A
+      13 |                  0 | A
+      14 |                  0 | A
+      15 |                  0 | M
+      16 |                  0 | M
+      17 |                  0 | M
+      18 |                 29 | M
+      19 |                 40 | M
+      20 |                 46 | R
+      21 |                 49 | R
+      22 |                 76 | M
+      23 |                 80 | M
+      24 |                 80 | R
+      25 |                 82 | M
+      26 |                 82 | R
+      27 |                 84 | M
+      28 |                 84 | M
+      29 |                 84 | A
+      30 |                 84 | M
+      31 |                 84 | A
+      32 |                 84 | M
+      33 |                 84 | R
+      34 |                 84 | R
+      35 |                 91 | M
+      36 |                105 | M
+      37 |                105 | M
+      38 |                105 | M
+      39 |                105 | R
+      40 |                107 | M
+      41 |                107 | R
+      42 |                117 | R
+      43 |                120 | R
+      44 |                123 | M
+      45 |                123 | M
+      46 |                129 | R
+      47 |                129 | M
+      48 |                129 | D
+(48 rows)
 
 select hist_function, hist_event, hist_object,
        regexp_replace(regexp_replace(regexp_replace(hist_wording,
@@ -335,16 +367,61 @@ select hist_function, hist_event, hist_object,
   order by hist_id;
       hist_function       |     hist_event     |                            hist_object                            |                                        regexp_replace                                         | hist_user 
 --------------------------+--------------------+-------------------------------------------------------------------+-----------------------------------------------------------------------------------------------+-----------
- EMAJ_INSTALL             |                    | E-Maj 3.4.0                                                       | Initialisation completed                                                                      | postgres
+ EMAJ_INSTALL             |                    | E-Maj 4.0.0                                                       | Initialisation completed                                                                      | postgres
  CREATE_GROUP             | BEGIN              | myGroup1                                                          | rollbackable                                                                                  | postgres
- CREATE_GROUP             | LOG_SCHEMA CREATED | emaj_myschema1                                                    |                                                                                               | postgres
- CREATE_GROUP             | END                | myGroup1                                                          | 6 tables/sequences processed                                                                  | postgres
+ CREATE_GROUP             | END                | myGroup1                                                          |                                                                                               | postgres
  CREATE_GROUP             | BEGIN              | myGroup2                                                          | rollbackable                                                                                  | postgres
- CREATE_GROUP             | LOG_SCHEMA CREATED | emaj_myschema2                                                    |                                                                                               | postgres
- CREATE_GROUP             | END                | myGroup2                                                          | 6 tables/sequences processed                                                                  | postgres
+ CREATE_GROUP             | END                | myGroup2                                                          |                                                                                               | postgres
  CREATE_GROUP             | BEGIN              | phil's group#3",                                                  | audit_only                                                                                    | postgres
- CREATE_GROUP             | LOG_SCHEMA CREATED | "emaj_phil's schema3"                                             |                                                                                               | postgres
- CREATE_GROUP             | END                | phil's group#3",                                                  | 3 tables/sequences processed                                                                  | postgres
+ CREATE_GROUP             | END                | phil's group#3",                                                  |                                                                                               | postgres
+ CREATE_GROUP             | BEGIN              | myGroup6                                                          | rollbackable                                                                                  | postgres
+ CREATE_GROUP             | END                | myGroup6                                                          |                                                                                               | postgres
+ ASSIGN_TABLES            | BEGIN              |                                                                   |                                                                                               | postgres
+ ASSIGN_TABLES            | LOG_SCHEMA CREATED | emaj_myschema1                                                    |                                                                                               | postgres
+ ASSIGN_TABLES            | TABLE ADDED        | myschema1."myTbl3"                                                | To the idle group myGroup1                                                                    | postgres
+ ASSIGN_TABLES            | TABLE ADDED        | myschema1.mytbl1                                                  | To the idle group myGroup1                                                                    | postgres
+ ASSIGN_TABLES            | TABLE ADDED        | myschema1.mytbl2                                                  | To the idle group myGroup1                                                                    | postgres
+ ASSIGN_TABLES            | TABLE ADDED        | myschema1.mytbl2b                                                 | To the idle group myGroup1                                                                    | postgres
+ ASSIGN_TABLES            | TABLE ADDED        | myschema1.mytbl4                                                  | To the idle group myGroup1                                                                    | postgres
+ ASSIGN_TABLES            | END                |                                                                   | 5 tables assigned to the group myGroup1                                                       | postgres
+ MODIFY_TABLE             | BEGIN              |                                                                   |                                                                                               | postgres
+ MODIFY_TABLE             | PRIORITY CHANGED   | myschema1.mytbl1                                                  | NULL => 20                                                                                    | postgres
+ MODIFY_TABLE             | END                |                                                                   | 1 tables effectively modified                                                                 | postgres
+ MODIFY_TABLE             | BEGIN              |                                                                   |                                                                                               | postgres
+ MODIFY_TABLE             | PRIORITY CHANGED   | myschema1."myTbl3"                                                | NULL => 10                                                                                    | postgres
+ MODIFY_TABLE             | END                |                                                                   | 1 tables effectively modified                                                                 | postgres
+ MODIFY_TABLE             | BEGIN              |                                                                   |                                                                                               | postgres
+ MODIFY_TABLE             | PRIORITY CHANGED   | myschema1.mytbl4                                                  | NULL => 20                                                                                    | postgres
+ MODIFY_TABLE             | END                |                                                                   | 1 tables effectively modified                                                                 | postgres
+ ASSIGN_SEQUENCE          | BEGIN              |                                                                   |                                                                                               | postgres
+ ASSIGN_SEQUENCE          | SEQUENCE ADDED     | myschema1."myTbl3_col31_seq"                                      | To the idle group myGroup1                                                                    | postgres
+ ASSIGN_SEQUENCE          | END                |                                                                   | 1 sequences assigned to the group myGroup1                                                    | postgres
+ ASSIGN_TABLES            | BEGIN              |                                                                   |                                                                                               | postgres
+ ASSIGN_TABLES            | LOG_SCHEMA CREATED | emaj_myschema2                                                    |                                                                                               | postgres
+ ASSIGN_TABLES            | TABLE ADDED        | myschema2."myTbl3"                                                | To the idle group myGroup2                                                                    | postgres
+ ASSIGN_TABLES            | TABLE ADDED        | myschema2.mytbl1                                                  | To the idle group myGroup2                                                                    | postgres
+ ASSIGN_TABLES            | TABLE ADDED        | myschema2.mytbl2                                                  | To the idle group myGroup2                                                                    | postgres
+ ASSIGN_TABLES            | TABLE ADDED        | myschema2.mytbl4                                                  | To the idle group myGroup2                                                                    | postgres
+ ASSIGN_TABLES            | END                |                                                                   | 4 tables assigned to the group myGroup2                                                       | postgres
+ ASSIGN_SEQUENCES         | BEGIN              |                                                                   |                                                                                               | postgres
+ ASSIGN_SEQUENCES         | SEQUENCE ADDED     | myschema2."myTbl3_col31_seq"                                      | To the idle group myGroup2                                                                    | postgres
+ ASSIGN_SEQUENCES         | SEQUENCE ADDED     | myschema2.myseq1                                                  | To the idle group myGroup2                                                                    | postgres
+ ASSIGN_SEQUENCES         | END                |                                                                   | 2 sequences assigned to the group myGroup2                                                    | postgres
+ ASSIGN_TABLES            | BEGIN              |                                                                   |                                                                                               | postgres
+ ASSIGN_TABLES            | LOG_SCHEMA CREATED | "emaj_phil's schema3"                                             |                                                                                               | postgres
+ ASSIGN_TABLES            | TABLE ADDED        | "phil's schema3"."myTbl2\"                                        | To the idle group phil's group#3",                                                            | postgres
+ ASSIGN_TABLES            | TABLE ADDED        | "phil's schema3"."phil's tbl1"                                    | To the idle group phil's group#3",                                                            | postgres
+ ASSIGN_TABLES            | END                |                                                                   | 2 tables assigned to the group phil's group#3",                                               | postgres
+ ASSIGN_SEQUENCE          | BEGIN              |                                                                   |                                                                                               | postgres
+ ASSIGN_SEQUENCE          | SEQUENCE ADDED     | "phil's schema3"."phil's seq\1"                                   | To the idle group phil's group#3",                                                            | postgres
+ ASSIGN_SEQUENCE          | END                |                                                                   | 1 sequences assigned to the group phil's group#3",                                            | postgres
+ ASSIGN_TABLES            | BEGIN              |                                                                   |                                                                                               | postgres
+ ASSIGN_TABLES            | LOG_SCHEMA CREATED | emaj_myschema6                                                    |                                                                                               | postgres
+ ASSIGN_TABLES            | TABLE ADDED        | myschema6.table_with_50_characters_long_name_____0_________0      | To the idle group myGroup6                                                                    | postgres
+ ASSIGN_TABLES            | TABLE ADDED        | myschema6.table_with_51_characters_long_name_____0_________0a     | To the idle group myGroup6                                                                    | postgres
+ ASSIGN_TABLES            | TABLE ADDED        | myschema6.table_with_55_characters_long_name_____0_________0abcde | To the idle group myGroup6                                                                    | postgres
+ ASSIGN_TABLES            | TABLE ADDED        | myschema6.table_with_55_characters_long_name_____0_________0fghij | To the idle group myGroup6                                                                    | postgres
+ ASSIGN_TABLES            | END                |                                                                   | 4 tables assigned to the group myGroup6                                                       | postgres
  START_GROUP              | BEGIN              | myGroup1                                                          | With log reset                                                                                | postgres
  LOCK_GROUP               | BEGIN              | myGroup1                                                          |                                                                                               | postgres
  LOCK_GROUP               | END                | myGroup1                                                          | 5 tables locked, 0 deadlock(s)                                                                | postgres
@@ -376,7 +453,7 @@ select hist_function, hist_event, hist_object,
  DBLINK_OPEN_CNX          |                    | rlbk#1                                                            | Status = -3                                                                                   | postgres
  LOCK_GROUP               | BEGIN              | myGroup1                                                          | Rollback session #1                                                                           | postgres
  LOCK_GROUP               | END                | myGroup1                                                          | Rollback session #1: 5 tables locked, 0 deadlock(s)                                           | postgres
- ROLLBACK_TABLE           | BEGIN              | myschema1.mytbl1                                                  | All log rows with emaj_gid > 40 and <= 46                                                     | postgres
+ ROLLBACK_TABLE           | BEGIN              | myschema1.mytbl1                                                  | All log rows where emaj_gid > 40 and <= 46, in session_replication_role = replica mode        | postgres
  ROLLBACK_TABLE           | END                | myschema1.mytbl1                                                  | 6 rolled back primary keys                                                                    | postgres
  ROLLBACK_SEQUENCE        |                    | myschema1."myTbl3_col31_seq"                                      |                                                                                               | postgres
  ROLLBACK_GROUP           | NOTICE             | Rollback id 1                                                     | 1 / 5 tables effectively processed.                                                           | postgres
@@ -386,12 +463,12 @@ select hist_function, hist_event, hist_object,
  DBLINK_OPEN_CNX          |                    | rlbk#1                                                            | Status = -3                                                                                   | postgres
  LOCK_GROUP               | BEGIN              | myGroup1                                                          | Rollback session #1                                                                           | postgres
  LOCK_GROUP               | END                | myGroup1                                                          | Rollback session #1: 5 tables locked, 0 deadlock(s)                                           | postgres
- ROLLBACK_TABLE           | BEGIN              | myschema1.mytbl2                                                  | All log rows with emaj_gid > 40 and <= 49                                                     | postgres
+ ROLLBACK_TABLE           | BEGIN              | myschema1.mytbl2                                                  | All log rows where emaj_gid > 40 and <= 49, in session_replication_role = replica mode        | postgres
  ROLLBACK_TABLE           | END                | myschema1.mytbl2                                                  | 1 rolled back primary keys                                                                    | postgres
- ROLLBACK_TABLE           | BEGIN              | myschema1.mytbl4                                                  | All log rows with emaj_gid > 40 and <= 49                                                     | postgres
- ROLLBACK_TABLE           | END                | myschema1.mytbl4                                                  | 1 rolled back primary keys                                                                    | postgres
- ROLLBACK_TABLE           | BEGIN              | myschema1.mytbl2b                                                 | All log rows with emaj_gid > 40 and <= 49                                                     | postgres
+ ROLLBACK_TABLE           | BEGIN              | myschema1.mytbl2b                                                 | All log rows where emaj_gid > 40 and <= 49                                                    | postgres
  ROLLBACK_TABLE           | END                | myschema1.mytbl2b                                                 | 1 rolled back primary keys                                                                    | postgres
+ ROLLBACK_TABLE           | BEGIN              | myschema1.mytbl4                                                  | All log rows where emaj_gid > 40 and <= 49, in session_replication_role = replica mode        | postgres
+ ROLLBACK_TABLE           | END                | myschema1.mytbl4                                                  | 1 rolled back primary keys                                                                    | postgres
  ROLLBACK_SEQUENCE        |                    | myschema1."myTbl3_col31_seq"                                      |                                                                                               | postgres
  ROLLBACK_GROUP           | NOTICE             | Rollback id 2                                                     | 3 / 5 tables effectively processed.                                                           | postgres
  ROLLBACK_GROUP           | NOTICE             | Rollback id 2                                                     | 1 sequences processed.                                                                        | postgres
@@ -412,7 +489,7 @@ select hist_function, hist_event, hist_object,
  LOCK_GROUP               | END                | myGroup2                                                          | Rollback session #1: 4 tables locked, 0 deadlock(s)                                           | postgres
  SET_MARK_GROUP           | BEGIN              | myGroup2                                                          | RLBK_M2_%_START                                                                               | postgres
  SET_MARK_GROUP           | END                | myGroup2                                                          | RLBK_M2_%_START                                                                               | postgres
- ROLLBACK_TABLE           | BEGIN              | myschema2.mytbl4                                                  | All log rows with emaj_gid > 76 and <= 80                                                     | postgres
+ ROLLBACK_TABLE           | BEGIN              | myschema2.mytbl4                                                  | All log rows where emaj_gid > 76 and <= 80, in session_replication_role = replica mode        | postgres
  ROLLBACK_TABLE           | END                | myschema2.mytbl4                                                  | 2 rolled back primary keys                                                                    | postgres
  ROLLBACK_SEQUENCE        |                    | myschema2."myTbl3_col31_seq"                                      |                                                                                               | postgres
  ROLLBACK_SEQUENCE        |                    | myschema2.myseq1                                                  | RESTART 1001 MAXVALUE 2000 CYCLE                                                              | postgres
@@ -427,7 +504,7 @@ select hist_function, hist_event, hist_object,
  LOCK_GROUP               | END                | myGroup2                                                          | Rollback session #1: 4 tables locked, 0 deadlock(s)                                           | postgres
  SET_MARK_GROUP           | BEGIN              | myGroup2                                                          | RLBK_M3_%_START                                                                               | postgres
  SET_MARK_GROUP           | END                | myGroup2                                                          | RLBK_M3_%_START                                                                               | postgres
- ROLLBACK_TABLE           | BEGIN              | myschema2.mytbl4                                                  | All log rows with emaj_gid > 80 and <= 82                                                     | postgres
+ ROLLBACK_TABLE           | BEGIN              | myschema2.mytbl4                                                  | All log rows where emaj_gid > 80 and <= 82, in session_replication_role = replica mode        | postgres
  ROLLBACK_TABLE           | END                | myschema2.mytbl4                                                  | 2 rolled back primary keys                                                                    | postgres
  ROLLBACK_SEQUENCE        |                    | myschema2."myTbl3_col31_seq"                                      |                                                                                               | postgres
  ROLLBACK_SEQUENCE        |                    | myschema2.myseq1                                                  | RESTART 1004 MAXVALUE 9223372036854775807 NO  CYCLE                                           | postgres
@@ -447,9 +524,6 @@ select hist_function, hist_event, hist_object,
  SET_MARK_GROUP           | END                | myGroup1                                                          | REMOVE_%                                                                                      | postgres
  REMOVE_TABLE             | TABLE REMOVED      | myschema1."myTbl3"                                                | From the logging group myGroup1                                                               | postgres
  REMOVE_TABLE             | END                |                                                                   | 1 tables removed from their groups                                                            | postgres
- CREATE_GROUP             | BEGIN              | myGroup6                                                          | rollbackable                                                                                  | postgres
- CREATE_GROUP             | LOG_SCHEMA CREATED | emaj_myschema6                                                    |                                                                                               | postgres
- CREATE_GROUP             | END                | myGroup6                                                          | 4 tables/sequences processed                                                                  | postgres
  START_GROUP              | BEGIN              | myGroup6                                                          | With log reset                                                                                | postgres
  LOCK_GROUP               | BEGIN              | myGroup6                                                          |                                                                                               | postgres
  LOCK_GROUP               | END                | myGroup6                                                          | 4 tables locked, 0 deadlock(s)                                                                | postgres
@@ -469,10 +543,8 @@ select hist_function, hist_event, hist_object,
  SET_MARK_GROUP           | BEGIN              | myGroup6                                                          | STOP_%                                                                                        | postgres
  SET_MARK_GROUP           | END                | myGroup6                                                          | STOP_%                                                                                        | postgres
  STOP_GROUP               | END                | myGroup6                                                          | 3 tables/sequences processed                                                                  | postgres
- ADJUST_GROUP_PROPERTIES  |                    | myGroup1                                                          | Set the group_has_waiting_changes column to true                                              | postgres
- ADJUST_GROUP_PROPERTIES  |                    | myGroup6                                                          | Set the group_has_waiting_changes column to true                                              | postgres
- EMAJ_INSTALL             | BEGIN              | E-Maj <devel>                                                     | Upgrade from 3.4.0 started                                                                    | postgres
- EMAJ_INSTALL             | END                | E-Maj <devel>                                                     | Upgrade from 3.4.0 completed                                                                  | postgres
+ EMAJ_INSTALL             | BEGIN              | E-Maj <devel>                                                     | Upgrade from 4.0.0 started                                                                    | postgres
+ EMAJ_INSTALL             | END                | E-Maj <devel>                                                     | Upgrade from 4.0.0 completed                                                                  | postgres
  UNPROTECT_GROUP          |                    | myGroup1                                                          | Status 1                                                                                      | postgres
  ROLLBACK_GROUPS          | BEGIN              | myGroup1,myGroup2                                                 | Unlogged rollback to mark Common (timestamp)                                                  | postgres
  DBLINK_OPEN_CNX          |                    | rlbk#1                                                            | Status = -5                                                                                   | postgres
@@ -493,9 +565,9 @@ select hist_function, hist_event, hist_object,
  LOCK_GROUP               | END                | myGroup1                                                          | Rollback session #1: 4 tables locked, 0 deadlock(s)                                           | postgres
  SET_MARK_GROUP           | BEGIN              | myGroup1                                                          | RLBK_M2_%_START                                                                               | postgres
  SET_MARK_GROUP           | END                | myGroup1                                                          | RLBK_M2_%_START                                                                               | postgres
- ROLLBACK_TABLE           | BEGIN              | myschema1.mytbl4                                                  | All log rows where emaj_gid > 29 and <= 85, in session_replication_role = replica mode        | postgres
+ ROLLBACK_TABLE           | BEGIN              | myschema1.mytbl4                                                  | All log rows where emaj_gid > 29 and <= 84, in session_replication_role = replica mode        | postgres
  ROLLBACK_TABLE           | END                | myschema1.mytbl4                                                  | 3 rolled back primary keys                                                                    | postgres
- ROLLBACK_TABLE           | BEGIN              | myschema1.mytbl1                                                  | All log rows where emaj_gid > 29 and <= 85, in session_replication_role = replica mode        | postgres
+ ROLLBACK_TABLE           | BEGIN              | myschema1.mytbl1                                                  | All log rows where emaj_gid > 29 and <= 84, in session_replication_role = replica mode        | postgres
  ROLLBACK_TABLE           | END                | myschema1.mytbl1                                                  | 5 rolled back primary keys                                                                    | postgres
  ROLLBACK_SEQUENCE        |                    | myschema1."myTbl3_col31_seq"                                      |                                                                                               | postgres
  SET_MARK_GROUP           | BEGIN              | myGroup1                                                          | RLBK_M2_%_DONE                                                                                | postgres
@@ -525,7 +597,7 @@ select hist_function, hist_event, hist_object,
  LOCK_GROUP               | END                | myGroup2                                                          | Rollback session #1: 4 tables locked, 0 deadlock(s)                                           | postgres
  SET_MARK_GROUP           | BEGIN              | myGroup2                                                          | RLBK_M2_%_START                                                                               | postgres
  SET_MARK_GROUP           | END                | myGroup2                                                          | RLBK_M2_%_START                                                                               | postgres
- ROLLBACK_TABLE           | BEGIN              | myschema2.mytbl4                                                  | All log rows where emaj_gid > 76 and <= 106, in session_replication_role = replica mode       | postgres
+ ROLLBACK_TABLE           | BEGIN              | myschema2.mytbl4                                                  | All log rows where emaj_gid > 76 and <= 105, in session_replication_role = replica mode       | postgres
  ROLLBACK_TABLE           | END                | myschema2.mytbl4                                                  | 2 rolled back primary keys                                                                    | postgres
  ROLLBACK_SEQUENCE        |                    | myschema2."myTbl3_col31_seq"                                      |                                                                                               | postgres
  ROLLBACK_SEQUENCE        |                    | myschema2.myseq1                                                  | RESTART 1001 MAXVALUE 2000 CYCLE                                                              | postgres
@@ -538,7 +610,7 @@ select hist_function, hist_event, hist_object,
  DBLINK_OPEN_CNX          |                    | rlbk#1                                                            | Status = -5                                                                                   | postgres
  LOCK_GROUP               | BEGIN              | myGroup2                                                          | Rollback session #1                                                                           | postgres
  LOCK_GROUP               | END                | myGroup2                                                          | Rollback session #1: 4 tables locked, 0 deadlock(s)                                           | postgres
- ROLLBACK_TABLE           | BEGIN              | myschema2.mytbl4                                                  | All log rows where emaj_gid > 80 and <= 108, in session_replication_role = replica mode       | postgres
+ ROLLBACK_TABLE           | BEGIN              | myschema2.mytbl4                                                  | All log rows where emaj_gid > 80 and <= 107, in session_replication_role = replica mode       | postgres
  ROLLBACK_TABLE           | END                | myschema2.mytbl4                                                  | 2 rolled back primary keys                                                                    | postgres
  ROLLBACK_GROUP           | MARK DELETED       | myGroup2                                                          | mark RLBK_M2_%_START is deleted                                                               | postgres
  ROLLBACK_GROUP           | MARK DELETED       | myGroup2                                                          | mark RLBK_M2_%_DONE is deleted                                                                | postgres
@@ -556,11 +628,11 @@ select hist_function, hist_event, hist_object,
  DBLINK_OPEN_CNX          |                    | rlbk#1                                                            | Status = -5                                                                                   | postgres
  LOCK_GROUP               | BEGIN              | myGroup1                                                          | Rollback session #1                                                                           | postgres
  LOCK_GROUP               | END                | myGroup1                                                          | Rollback session #1: 4 tables locked, 0 deadlock(s)                                           | postgres
- ROLLBACK_TABLE           | BEGIN              | myschema1.mytbl4                                                  | All log rows where emaj_gid > 106 and <= 118, in session_replication_role = replica mode      | postgres
+ ROLLBACK_TABLE           | BEGIN              | myschema1.mytbl4                                                  | All log rows where emaj_gid > 105 and <= 117, in session_replication_role = replica mode      | postgres
  ROLLBACK_TABLE           | END                | myschema1.mytbl4                                                  | 3 rolled back primary keys                                                                    | postgres
- ROLLBACK_TABLE           | BEGIN              | myschema1.mytbl2                                                  | All log rows where emaj_gid > 106 and <= 118, in session_replication_role = replica mode      | postgres
+ ROLLBACK_TABLE           | BEGIN              | myschema1.mytbl2                                                  | All log rows where emaj_gid > 105 and <= 117, in session_replication_role = replica mode      | postgres
  ROLLBACK_TABLE           | END                | myschema1.mytbl2                                                  | 4 rolled back primary keys                                                                    | postgres
- ROLLBACK_TABLE           | BEGIN              | myschema1.mytbl1                                                  | All log rows where emaj_gid > 106 and <= 118, in session_replication_role = replica mode      | postgres
+ ROLLBACK_TABLE           | BEGIN              | myschema1.mytbl1                                                  | All log rows where emaj_gid > 105 and <= 117, in session_replication_role = replica mode      | postgres
  ROLLBACK_TABLE           | END                | myschema1.mytbl1                                                  | 1 rolled back primary keys                                                                    | postgres
  ROLLBACK_GROUP           | MARK DELETED       | myGroup1                                                          | mark M6 is deleted                                                                            | postgres
  ROLLBACK_SEQUENCE        |                    | myschema1."myTbl3_col31_seq"                                      |                                                                                               | postgres
@@ -573,9 +645,9 @@ select hist_function, hist_event, hist_object,
  LOCK_GROUP               | END                | myGroup1                                                          | Rollback session #1: 4 tables locked, 0 deadlock(s)                                           | postgres
  SET_MARK_GROUP           | BEGIN              | myGroup1                                                          | RLBK_M4_%_START                                                                               | postgres
  SET_MARK_GROUP           | END                | myGroup1                                                          | RLBK_M4_%_START                                                                               | postgres
- ROLLBACK_TABLE           | BEGIN              | myschema1.mytbl4                                                  | All log rows where emaj_gid > 106 and <= 121, in session_replication_role = replica mode      | postgres
+ ROLLBACK_TABLE           | BEGIN              | myschema1.mytbl4                                                  | All log rows where emaj_gid > 105 and <= 120, in session_replication_role = replica mode      | postgres
  ROLLBACK_TABLE           | END                | myschema1.mytbl4                                                  | 2 rolled back primary keys                                                                    | postgres
- ROLLBACK_TABLE           | BEGIN              | myschema1.mytbl1                                                  | All log rows where emaj_gid > 106 and <= 121, in session_replication_role = replica mode      | postgres
+ ROLLBACK_TABLE           | BEGIN              | myschema1.mytbl1                                                  | All log rows where emaj_gid > 105 and <= 120, in session_replication_role = replica mode      | postgres
  ROLLBACK_TABLE           | END                | myschema1.mytbl1                                                  | 1 rolled back primary keys                                                                    | postgres
  ROLLBACK_SEQUENCE        |                    | myschema1."myTbl3_col31_seq"                                      |                                                                                               | postgres
  SET_MARK_GROUP           | BEGIN              | myGroup1                                                          | RLBK_M4_%_DONE                                                                                | postgres
@@ -605,7 +677,7 @@ select hist_function, hist_event, hist_object,
  DBLINK_OPEN_CNX          |                    | rlbk#1                                                            | Status = -5                                                                                   | postgres
  LOCK_GROUP               | BEGIN              | myGroup6                                                          | Rollback session #1                                                                           | postgres
  LOCK_GROUP               | END                | myGroup6                                                          | Rollback session #1: 3 tables locked, 0 deadlock(s)                                           | postgres
- ROLLBACK_TABLE           | BEGIN              | myschema6.table_with_51_characters_long_name_____0_________0a     | All log rows where emaj_gid > 124 and <= 130                                                  | postgres
+ ROLLBACK_TABLE           | BEGIN              | myschema6.table_with_51_characters_long_name_____0_________0a     | All log rows where emaj_gid > 123 and <= 129                                                  | postgres
  ROLLBACK_TABLE           | END                | myschema6.table_with_51_characters_long_name_____0_________0a     | 4 rolled back primary keys                                                                    | postgres
  ROLLBACK_GROUP           | NOTICE             | Rollback id 11                                                    | 1 / 3 tables effectively processed.                                                           | postgres
  ROLLBACK_GROUP           | END                | myGroup6                                                          | Rollback_id 11, 1 tables and 0 sequences effectively processed                                | postgres
@@ -618,7 +690,7 @@ select hist_function, hist_event, hist_object,
  DROP_GROUP               | BEGIN              | myGroup6                                                          |                                                                                               | postgres
  DROP_GROUP               | LOG_SCHEMA DROPPED | emaj_myschema6                                                    |                                                                                               | postgres
  DROP_GROUP               | END                | myGroup6                                                          | 3 tables/sequences processed                                                                  | postgres
-(283 rows)
+(323 rows)
 
 --
 reset role;

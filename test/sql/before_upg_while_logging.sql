@@ -11,34 +11,31 @@ grant emaj_adm to emaj_regression_tests_adm_user1, emaj_regression_tests_adm_use
 set role emaj_regression_tests_adm_user1;
 
 -----------------------------
+-- create groups
+-----------------------------
+select emaj.emaj_create_group('myGroup1');
+select emaj.emaj_create_group('myGroup2',true);
+select emaj.emaj_create_group('phil''s group#3",',false);
+select emaj.emaj_create_group('myGroup6');
+
+-----------------------------
 -- prepare groups
 -----------------------------
-delete from emaj.emaj_group_def;
-insert into emaj.emaj_group_def values ('myGroup1','myschema1','mytbl1',20);
-insert into emaj.emaj_group_def values ('myGroup1','myschema1','mytbl2',NULL);
-insert into emaj.emaj_group_def values ('myGroup1','myschema1','mytbl2b',NULL);
-insert into emaj.emaj_group_def values ('myGroup1','myschema1','myTbl3_col31_seq');
-insert into emaj.emaj_group_def values ('myGroup1','myschema1','myTbl3',10);
-insert into emaj.emaj_group_def values ('myGroup1','myschema1','mytbl4',20);
-insert into emaj.emaj_group_def values ('myGroup2','myschema2','mytbl1');
-insert into emaj.emaj_group_def values ('myGroup2','myschema2','mytbl2');
-insert into emaj.emaj_group_def values ('myGroup2','myschema2','myTbl3_col31_seq');
-insert into emaj.emaj_group_def values ('myGroup2','myschema2','myTbl3');
-insert into emaj.emaj_group_def values ('myGroup2','myschema2','mytbl4');
-insert into emaj.emaj_group_def values ('myGroup2','myschema2','myseq1');
+select emaj.emaj_assign_tables('myschema1','.*',NULL,'myGroup1');
+select emaj.emaj_modify_table('myschema1','mytbl1','{"priority":20}'::jsonb);
+select emaj.emaj_modify_table('myschema1','myTbl3','{"priority":10}'::jsonb);
+select emaj.emaj_modify_table('myschema1','mytbl4','{"priority":20}'::jsonb);
+select emaj.emaj_assign_sequence('myschema1','myTbl3_col31_seq','myGroup1');
+
+select emaj.emaj_assign_tables('myschema2','{"mytbl1", "mytbl2", "myTbl3", "mytbl4"}','myGroup2');
+select emaj.emaj_assign_sequences('myschema2','{"myTbl3_col31_seq","myseq1"}','myGroup2');
+
 -- The third group name contains space, comma # and '
-insert into emaj.emaj_group_def values ('phil''s group#3",','phil''s schema3','phil''s tbl1');
-insert into emaj.emaj_group_def values ('phil''s group#3",','phil''s schema3',E'myTbl2\\');
-insert into emaj.emaj_group_def values ('phil''s group#3",','phil''s schema3',E'phil''s seq\\1');
-insert into emaj.emaj_group_def values ('dummyGrp1','dummySchema','mytbl4');
-insert into emaj.emaj_group_def values ('dummyGrp2','myschema1','dummyTable');
-insert into emaj.emaj_group_def values ('dummyGrp3','myschema1','mytbl1');
-insert into emaj.emaj_group_def values ('dummyGrp3','myschema2','mytbl2');
+select emaj.emaj_assign_tables('phil''s schema3','.*','mytbl4','phil''s group#3",');
+select emaj.emaj_assign_sequence('phil''s schema3',E'phil''s seq\\1','phil''s group#3",');
+
 -- Group with long name tables
-insert into emaj.emaj_group_def values ('myGroup6','myschema6','table_with_50_characters_long_name_____0_________0');
-insert into emaj.emaj_group_def values ('myGroup6','myschema6','table_with_51_characters_long_name_____0_________0a');
-insert into emaj.emaj_group_def values ('myGroup6','myschema6','table_with_55_characters_long_name_____0_________0abcde');
-insert into emaj.emaj_group_def values ('myGroup6','myschema6','table_with_55_characters_long_name_____0_________0fghij');
+select emaj.emaj_assign_tables('myschema6','.*',NULL,'myGroup6');
 
 -----------------------------
 -- set the default_tablespace parameter to tspemaj to log tables and indexes into this tablespace
@@ -46,12 +43,8 @@ insert into emaj.emaj_group_def values ('myGroup6','myschema6','table_with_55_ch
 SET default_tablespace TO tspemaj;
 
 -----------------------------
--- create and start groups
+-- start groups
 -----------------------------
-select emaj.emaj_create_group('myGroup1');
-select emaj.emaj_create_group('myGroup2',true);
-select emaj.emaj_create_group('phil''s group#3",',false);
-
 select emaj.emaj_start_group('myGroup1','M1');
 select emaj.emaj_start_group('myGroup2','M1');
 select emaj.emaj_start_group('phil''s group#3",','M1');
@@ -137,7 +130,6 @@ select emaj.emaj_remove_table('myschema1', 'myTbl3');
 -----------------------------
 -- Step 6 : managing a group with long name tables
 -----------------------------
-select emaj.emaj_create_group('myGroup6');
 select emaj.emaj_start_group('myGroup6', 'Start G6');
 select emaj.emaj_remove_table('myschema6', 'table_with_55_characters_long_name_____0_________0abcde');
 select emaj.emaj_stop_group('myGroup6');
@@ -166,7 +158,7 @@ select tbl_schema, tbl_name, tbl_time_id, tbl_tuples, tbl_pages, tbl_log_seq_las
 select sqhl_schema, sqhl_table, sqhl_begin_time_id, sqhl_end_time_id, sqhl_hole_size
   from emaj.emaj_seq_hole order by 1,2,3;
 
-select * from emaj.emaj_alter_plan order by 1,2,3,4,5;
+select * from emaj.emaj_relation_change order by 1,2,3,4,5;
 
 -- log tables
 select col11, col12, col13, emaj_verb, emaj_tuple, emaj_gid from emaj_mySchema1.myTbl1_log order by emaj_gid, emaj_tuple desc;
@@ -183,4 +175,3 @@ select col41, col42, col43, col44, col45, emaj_verb, emaj_tuple, emaj_gid from e
 -------------------------------
 -- Specific tests for this upgrade
 -------------------------------
-truncate table "phil's schema3"."myTbl2\";

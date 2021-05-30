@@ -16,6 +16,8 @@ select relname from pg_catalog.pg_class,
   where t.oid = pg_class.oid
   order by 1;
 
+  select * from emaj.emaj_verify_all();
+
 -- process the extension upgrade
 ALTER EXTENSION emaj UPDATE TO 'devel';
 

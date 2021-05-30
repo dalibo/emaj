@@ -36,7 +36,7 @@ $do$
 -- the E-Maj environment is not damaged
     PERFORM * FROM (SELECT * FROM emaj.emaj_verify_all()) AS t(msg) WHERE msg <> 'No error detected';
     IF FOUND THEN
-      RAISE EXCEPTION 'E-Maj upgrade: the E-Maj environment is damaged. Please fix the issue before upgrading. You may execute "SELECT * FROM emaj.emaj_verify_all();" to get more details.';
+      RAISE WARNING 'E-Maj upgrade: the E-Maj environment is damaged. Please fix the issue before upgrading. You may execute "SELECT * FROM emaj.emaj_verify_all();" to get more details.';
     END IF;
 -- no existing group must have been created with a postgres version prior 8.4
     SELECT string_agg(group_name, ', ') INTO v_groupList FROM emaj.emaj_group

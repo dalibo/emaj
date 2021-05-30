@@ -12,7 +12,7 @@ select * from pg_available_extension_versions where name = 'emaj' order by versi
  name | version | installed | superuser | relocatable | schema |      requires       |                                            comment                                             
 ------+---------+-----------+-----------+-------------+--------+---------------------+------------------------------------------------------------------------------------------------
  emaj | devel   | f         | t         | f           | emaj   | {dblink,btree_gist} | E-Maj extension enables fine-grained write logging and time travel on subsets of the database.
- emaj | 3.4.0   | t         | t         | f           | emaj   | {dblink,btree_gist} | E-Maj extension enables fine-grained write logging and time travel on subsets of the database.
+ emaj | 4.0.0   | t         | t         | f           | emaj   | {dblink,btree_gist} | E-Maj extension enables fine-grained write logging and time travel on subsets of the database.
 (2 rows)
 
 select relname from pg_catalog.pg_class, 
@@ -21,17 +21,15 @@ select relname from pg_catalog.pg_class,
   order by 1;
            relname           
 -----------------------------
- emaj_alter_plan
  emaj_global_seq
  emaj_group
- emaj_group_def
  emaj_hist
  emaj_hist_hist_id_seq
- emaj_ignored_app_trigger
  emaj_mark
  emaj_param
  emaj_rel_hist
  emaj_relation
+ emaj_relation_change
  emaj_rlbk
  emaj_rlbk_plan
  emaj_rlbk_rlbk_id_seq
@@ -43,27 +41,18 @@ select relname from pg_catalog.pg_class,
  emaj_table
  emaj_time_stamp
  emaj_time_stamp_time_id_seq
-(22 rows)
+(20 rows)
+
+  select * from emaj.emaj_verify_all();
+                                                                                emaj_verify_all                                                                                
+-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+ Warning: In the group "myGroup1", the sequence "myschema1"."myTbl3_col31_seq" is linked to the table "myschema1"."myTbl3" but this table does not belong to any tables group.
+ No error detected
+(2 rows)
 
 -- process the extension upgrade
 ALTER EXTENSION emaj UPDATE TO 'devel';
-NOTICE:  drop cascades to 8 other objects
-DETAIL:  drop cascades to function _drop_tbl(emaj_relation,bigint)
-drop cascades to function _drop_seq(emaj_relation,bigint)
-drop cascades to function _rlbk_tbl(emaj_relation,bigint,bigint,integer,boolean)
-drop cascades to function _delete_log_tbl(emaj_relation,bigint,bigint,bigint)
-drop cascades to function _rlbk_seq(emaj_relation,bigint)
-drop cascades to function _log_stat_tbl(emaj_relation,bigint,bigint)
-drop cascades to function _gen_sql_tbl(emaj_relation,bigint,bigint)
-drop cascades to function _gen_sql_seq(emaj_relation,bigint,bigint,bigint)
-NOTICE:  function emaj._drop_tbl(emaj.emaj_relation,pg_catalog.int8) does not exist, skipping
-NOTICE:  function emaj._drop_seq(emaj.emaj_relation,pg_catalog.int8) does not exist, skipping
-NOTICE:  function emaj._rlbk_tbl(emaj.emaj_relation,pg_catalog.int8,pg_catalog.int8,pg_catalog.int4,pg_catalog.bool) does not exist, skipping
-NOTICE:  function emaj._delete_log_tbl(emaj.emaj_relation,pg_catalog.int8,pg_catalog.int8,pg_catalog.int8) does not exist, skipping
-NOTICE:  function emaj._rlbk_seq(emaj.emaj_relation,pg_catalog.int8) does not exist, skipping
-NOTICE:  function emaj._log_stat_tbl(emaj.emaj_relation,pg_catalog.int8,pg_catalog.int8) does not exist, skipping
-NOTICE:  function emaj._gen_sql_tbl(emaj.emaj_relation,pg_catalog.int8,pg_catalog.int8) does not exist, skipping
-NOTICE:  function emaj._gen_sql_seq(emaj.emaj_relation,pg_catalog.int8,pg_catalog.int8,pg_catalog.int8) does not exist, skipping
+WARNING:  E-Maj upgrade: the E-Maj environment is damaged. Please fix the issue before upgrading. You may execute "SELECT * FROM emaj.emaj_verify_all();" to get more details.
 -----------------------------
 -- check installation
 -----------------------------
@@ -780,8 +769,7 @@ Owned by: emaj.emaj_time_stamp.time_id
  emaj_txid    | bigint                      |           |          | txid_current()
  emaj_user    | character varying(32)       |           |          | SESSION_USER
 Indexes:
-    "myTbl3_log_idx_1" PRIMARY KEY, btree (emaj_gid, emaj_tuple) CLUSTER, tablespace "tspemaj"
-Tablespace: "tspemaj"
+    "myTbl3_log_idx_1" PRIMARY KEY, btree (emaj_gid, emaj_tuple) CLUSTER
 
     Index "emaj_myschema1.myTbl3_log_idx_1"
    Column   |         Type         | Definition 
@@ -789,7 +777,6 @@ Tablespace: "tspemaj"
  emaj_gid   | bigint               | emaj_gid
  emaj_tuple | character varying(3) | emaj_tuple
 primary key, btree, for table "emaj_myschema1.myTbl3_log_1", clustered
-Tablespace: "tspemaj"
 
                                      Table "emaj_myschema1.mytbl1_log"
     Column    |           Type           | Collation | Nullable |                  Default                  
@@ -804,8 +791,7 @@ Tablespace: "tspemaj"
  emaj_txid    | bigint                   |           |          | txid_current()
  emaj_user    | character varying(32)    |           |          | SESSION_USER
 Indexes:
-    "mytbl1_log_idx" PRIMARY KEY, btree (emaj_gid, emaj_tuple) CLUSTER, tablespace "tspemaj"
-Tablespace: "tspemaj"
+    "mytbl1_log_idx" PRIMARY KEY, btree (emaj_gid, emaj_tuple) CLUSTER
 
      Index "emaj_myschema1.mytbl1_log_idx"
    Column   |         Type         | Definition 
@@ -813,7 +799,6 @@ Tablespace: "tspemaj"
  emaj_gid   | bigint               | emaj_gid
  emaj_tuple | character varying(3) | emaj_tuple
 primary key, btree, for table "emaj_myschema1.mytbl1_log", clustered
-Tablespace: "tspemaj"
 
                    Sequence "emaj_myschema1.mytbl1_log_seq"
   Type  | Start | Minimum |       Maximum       | Increment | Cycles? | Cache 
@@ -833,8 +818,7 @@ Tablespace: "tspemaj"
  emaj_txid    | bigint                   |           |          | txid_current()
  emaj_user    | character varying(32)    |           |          | SESSION_USER
 Indexes:
-    "mytbl2_log_idx" PRIMARY KEY, btree (emaj_gid, emaj_tuple) CLUSTER, tablespace "tspemaj"
-Tablespace: "tspemaj"
+    "mytbl2_log_idx" PRIMARY KEY, btree (emaj_gid, emaj_tuple) CLUSTER
 
      Index "emaj_myschema1.mytbl2_log_idx"
    Column   |         Type         | Definition 
@@ -842,7 +826,6 @@ Tablespace: "tspemaj"
  emaj_gid   | bigint               | emaj_gid
  emaj_tuple | character varying(3) | emaj_tuple
 primary key, btree, for table "emaj_myschema1.mytbl2_log", clustered
-Tablespace: "tspemaj"
 
                    Sequence "emaj_myschema1.mytbl2_log_seq"
   Type  | Start | Minimum |       Maximum       | Increment | Cycles? | Cache 
@@ -863,8 +846,7 @@ Tablespace: "tspemaj"
  emaj_txid    | bigint                   |           |          | txid_current()
  emaj_user    | character varying(32)    |           |          | SESSION_USER
 Indexes:
-    "mytbl2b_log_idx" PRIMARY KEY, btree (emaj_gid, emaj_tuple) CLUSTER, tablespace "tspemaj"
-Tablespace: "tspemaj"
+    "mytbl2b_log_idx" PRIMARY KEY, btree (emaj_gid, emaj_tuple) CLUSTER
 
      Index "emaj_myschema1.mytbl2b_log_idx"
    Column   |         Type         | Definition 
@@ -872,7 +854,6 @@ Tablespace: "tspemaj"
  emaj_gid   | bigint               | emaj_gid
  emaj_tuple | character varying(3) | emaj_tuple
 primary key, btree, for table "emaj_myschema1.mytbl2b_log", clustered
-Tablespace: "tspemaj"
 
                   Sequence "emaj_myschema1.mytbl2b_log_seq"
   Type  | Start | Minimum |       Maximum       | Increment | Cycles? | Cache 
@@ -894,8 +875,7 @@ Tablespace: "tspemaj"
  emaj_txid    | bigint                   |           |          | txid_current()
  emaj_user    | character varying(32)    |           |          | SESSION_USER
 Indexes:
-    "mytbl4_log_idx" PRIMARY KEY, btree (emaj_gid, emaj_tuple) CLUSTER, tablespace "tspemaj"
-Tablespace: "tspemaj"
+    "mytbl4_log_idx" PRIMARY KEY, btree (emaj_gid, emaj_tuple) CLUSTER
 
      Index "emaj_myschema1.mytbl4_log_idx"
    Column   |         Type         | Definition 
@@ -903,7 +883,6 @@ Tablespace: "tspemaj"
  emaj_gid   | bigint               | emaj_gid
  emaj_tuple | character varying(3) | emaj_tuple
 primary key, btree, for table "emaj_myschema1.mytbl4_log", clustered
-Tablespace: "tspemaj"
 
                    Sequence "emaj_myschema1.mytbl4_log_seq"
   Type  | Start | Minimum |       Maximum       | Increment | Cycles? | Cache 
@@ -923,8 +902,7 @@ Tablespace: "tspemaj"
  emaj_txid    | bigint                      |           |          | txid_current()
  emaj_user    | character varying(32)       |           |          | SESSION_USER
 Indexes:
-    "myTbl3_log_idx" PRIMARY KEY, btree (emaj_gid, emaj_tuple) CLUSTER, tablespace "tspemaj"
-Tablespace: "tspemaj"
+    "myTbl3_log_idx" PRIMARY KEY, btree (emaj_gid, emaj_tuple) CLUSTER
 
      Index "emaj_myschema2.myTbl3_log_idx"
    Column   |         Type         | Definition 
@@ -932,7 +910,6 @@ Tablespace: "tspemaj"
  emaj_gid   | bigint               | emaj_gid
  emaj_tuple | character varying(3) | emaj_tuple
 primary key, btree, for table "emaj_myschema2.myTbl3_log", clustered
-Tablespace: "tspemaj"
 
                    Sequence "emaj_myschema2.myTbl3_log_seq"
   Type  | Start | Minimum |       Maximum       | Increment | Cycles? | Cache 
@@ -952,8 +929,7 @@ Tablespace: "tspemaj"
  emaj_txid    | bigint                   |           |          | txid_current()
  emaj_user    | character varying(32)    |           |          | SESSION_USER
 Indexes:
-    "mytbl1_log_idx" PRIMARY KEY, btree (emaj_gid, emaj_tuple) CLUSTER, tablespace "tspemaj"
-Tablespace: "tspemaj"
+    "mytbl1_log_idx" PRIMARY KEY, btree (emaj_gid, emaj_tuple) CLUSTER
 
      Index "emaj_myschema2.mytbl1_log_idx"
    Column   |         Type         | Definition 
@@ -961,7 +937,6 @@ Tablespace: "tspemaj"
  emaj_gid   | bigint               | emaj_gid
  emaj_tuple | character varying(3) | emaj_tuple
 primary key, btree, for table "emaj_myschema2.mytbl1_log", clustered
-Tablespace: "tspemaj"
 
                    Sequence "emaj_myschema2.mytbl1_log_seq"
   Type  | Start | Minimum |       Maximum       | Increment | Cycles? | Cache 
@@ -981,8 +956,7 @@ Tablespace: "tspemaj"
  emaj_txid    | bigint                   |           |          | txid_current()
  emaj_user    | character varying(32)    |           |          | SESSION_USER
 Indexes:
-    "mytbl2_log_idx" PRIMARY KEY, btree (emaj_gid, emaj_tuple) CLUSTER, tablespace "tspemaj"
-Tablespace: "tspemaj"
+    "mytbl2_log_idx" PRIMARY KEY, btree (emaj_gid, emaj_tuple) CLUSTER
 
      Index "emaj_myschema2.mytbl2_log_idx"
    Column   |         Type         | Definition 
@@ -990,7 +964,6 @@ Tablespace: "tspemaj"
  emaj_gid   | bigint               | emaj_gid
  emaj_tuple | character varying(3) | emaj_tuple
 primary key, btree, for table "emaj_myschema2.mytbl2_log", clustered
-Tablespace: "tspemaj"
 
                    Sequence "emaj_myschema2.mytbl2_log_seq"
   Type  | Start | Minimum |       Maximum       | Increment | Cycles? | Cache 
@@ -1012,8 +985,7 @@ Tablespace: "tspemaj"
  emaj_txid    | bigint                   |           |          | txid_current()
  emaj_user    | character varying(32)    |           |          | SESSION_USER
 Indexes:
-    "mytbl4_log_idx" PRIMARY KEY, btree (emaj_gid, emaj_tuple) CLUSTER, tablespace "tspemaj"
-Tablespace: "tspemaj"
+    "mytbl4_log_idx" PRIMARY KEY, btree (emaj_gid, emaj_tuple) CLUSTER
 
      Index "emaj_myschema2.mytbl4_log_idx"
    Column   |         Type         | Definition 
@@ -1021,7 +993,6 @@ Tablespace: "tspemaj"
  emaj_gid   | bigint               | emaj_gid
  emaj_tuple | character varying(3) | emaj_tuple
 primary key, btree, for table "emaj_myschema2.mytbl4_log", clustered
-Tablespace: "tspemaj"
 
                    Sequence "emaj_myschema2.mytbl4_log_seq"
   Type  | Start | Minimum |       Maximum       | Increment | Cycles? | Cache 
@@ -1039,8 +1010,7 @@ Tablespace: "tspemaj"
  emaj_txid    | bigint                   |           |          | txid_current()
  emaj_user    | character varying(32)    |           |          | SESSION_USER
 Indexes:
-    "table_with_50_characters_long_name_____0_________0_log_idx" PRIMARY KEY, btree (emaj_gid, emaj_tuple) CLUSTER, tablespace "tspemaj"
-Tablespace: "tspemaj"
+    "table_with_50_characters_long_name_____0_________0_log_idx" PRIMARY KEY, btree (emaj_gid, emaj_tuple) CLUSTER
 
 Index "emaj_myschema6.table_with_50_characters_long_name_____0_________0_log_idx"
    Column   |         Type         | Definition 
@@ -1048,7 +1018,6 @@ Index "emaj_myschema6.table_with_50_characters_long_name_____0_________0_log_idx
  emaj_gid   | bigint               | emaj_gid
  emaj_tuple | character varying(3) | emaj_tuple
 primary key, btree, for table "emaj_myschema6.table_with_50_characters_long_name_____0_________0_log", clustered
-Tablespace: "tspemaj"
 
 Sequence "emaj_myschema6.table_with_50_characters_long_name_____0_________0_log_seq"
   Type  | Start | Minimum |       Maximum       | Increment | Cycles? | Cache 
@@ -1066,8 +1035,7 @@ Sequence "emaj_myschema6.table_with_50_characters_long_name_____0_________0_log_
  emaj_txid    | bigint                   |           |          | txid_current()
  emaj_user    | character varying(32)    |           |          | SESSION_USER
 Indexes:
-    "table_with_51_characters_long_name_____0_________0#1_log_idx" PRIMARY KEY, btree (emaj_gid, emaj_tuple) CLUSTER, tablespace "tspemaj"
-Tablespace: "tspemaj"
+    "table_with_51_characters_long_name_____0_________0#1_log_idx" PRIMARY KEY, btree (emaj_gid, emaj_tuple) CLUSTER
 
 Index "emaj_myschema6.table_with_51_characters_long_name_____0_________0#1_log_idx"
    Column   |         Type         | Definition 
@@ -1075,7 +1043,6 @@ Index "emaj_myschema6.table_with_51_characters_long_name_____0_________0#1_log_i
  emaj_gid   | bigint               | emaj_gid
  emaj_tuple | character varying(3) | emaj_tuple
 primary key, btree, for table "emaj_myschema6.table_with_51_characters_long_name_____0_________0#1_log", clustered
-Tablespace: "tspemaj"
 
 Sequence "emaj_myschema6.table_with_51_characters_long_name_____0_________0#1_log_seq"
   Type  | Start | Minimum |       Maximum       | Increment | Cycles? | Cache 
@@ -1093,8 +1060,7 @@ Sequence "emaj_myschema6.table_with_51_characters_long_name_____0_________0#1_lo
  emaj_txid    | bigint                   |           |          | txid_current()
  emaj_user    | character varying(32)    |           |          | SESSION_USER
 Indexes:
-    "table_with_55_characters_long_name_____0_________0#1_log_idx_1" PRIMARY KEY, btree (emaj_gid, emaj_tuple) CLUSTER, tablespace "tspemaj"
-Tablespace: "tspemaj"
+    "table_with_55_characters_long_name_____0_________0#1_log_idx_1" PRIMARY KEY, btree (emaj_gid, emaj_tuple) CLUSTER
 
 Index "emaj_myschema6.table_with_55_characters_long_name_____0_________0#1_log_idx_1"
    Column   |         Type         | Definition 
@@ -1102,7 +1068,6 @@ Index "emaj_myschema6.table_with_55_characters_long_name_____0_________0#1_log_i
  emaj_gid   | bigint               | emaj_gid
  emaj_tuple | character varying(3) | emaj_tuple
 primary key, btree, for table "emaj_myschema6.table_with_55_characters_long_name_____0_________0#1_log_1", clustered
-Tablespace: "tspemaj"
 
               Table "emaj_myschema6.table_with_55_characters_long_name_____0_________0#2_log"
     Column    |           Type           | Collation | Nullable |                  Default                  
@@ -1115,8 +1080,7 @@ Tablespace: "tspemaj"
  emaj_txid    | bigint                   |           |          | txid_current()
  emaj_user    | character varying(32)    |           |          | SESSION_USER
 Indexes:
-    "table_with_55_characters_long_name_____0_________0#2_log_idx" PRIMARY KEY, btree (emaj_gid, emaj_tuple) CLUSTER, tablespace "tspemaj"
-Tablespace: "tspemaj"
+    "table_with_55_characters_long_name_____0_________0#2_log_idx" PRIMARY KEY, btree (emaj_gid, emaj_tuple) CLUSTER
 
 Index "emaj_myschema6.table_with_55_characters_long_name_____0_________0#2_log_idx"
    Column   |         Type         | Definition 
@@ -1124,7 +1088,6 @@ Index "emaj_myschema6.table_with_55_characters_long_name_____0_________0#2_log_i
  emaj_gid   | bigint               | emaj_gid
  emaj_tuple | character varying(3) | emaj_tuple
 primary key, btree, for table "emaj_myschema6.table_with_55_characters_long_name_____0_________0#2_log", clustered
-Tablespace: "tspemaj"
 
 Sequence "emaj_myschema6.table_with_55_characters_long_name_____0_________0#2_log_seq"
   Type  | Start | Minimum |       Maximum       | Increment | Cycles? | Cache 
@@ -1144,8 +1107,7 @@ Sequence "emaj_myschema6.table_with_55_characters_long_name_____0_________0#2_lo
  emaj_txid    | bigint                   |           |          | txid_current()
  emaj_user    | character varying(32)    |           |          | SESSION_USER
 Indexes:
-    "myTbl2\_log_idx" PRIMARY KEY, btree (emaj_gid, emaj_tuple) CLUSTER, tablespace "tspemaj"
-Tablespace: "tspemaj"
+    "myTbl2\_log_idx" PRIMARY KEY, btree (emaj_gid, emaj_tuple) CLUSTER
 
   Index "emaj_phil's schema3.myTbl2\_log_idx"
    Column   |         Type         | Definition 
@@ -1153,7 +1115,6 @@ Tablespace: "tspemaj"
  emaj_gid   | bigint               | emaj_gid
  emaj_tuple | character varying(3) | emaj_tuple
 primary key, btree, for table "emaj_phil's schema3.myTbl2\_log", clustered
-Tablespace: "tspemaj"
 
                 Sequence "emaj_phil's schema3.myTbl2\_log_seq"
   Type  | Start | Minimum |       Maximum       | Increment | Cycles? | Cache 
@@ -1173,8 +1134,7 @@ Tablespace: "tspemaj"
  emaj_txid    | bigint                   |           |          | txid_current()
  emaj_user    | character varying(32)    |           |          | SESSION_USER
 Indexes:
-    "phil's tbl1_log_idx" PRIMARY KEY, btree (emaj_gid, emaj_tuple) CLUSTER, tablespace "tspemaj"
-Tablespace: "tspemaj"
+    "phil's tbl1_log_idx" PRIMARY KEY, btree (emaj_gid, emaj_tuple) CLUSTER
 
 Index "emaj_phil's schema3.phil's tbl1_log_idx"
    Column   |         Type         | Definition 
@@ -1182,7 +1142,6 @@ Index "emaj_phil's schema3.phil's tbl1_log_idx"
  emaj_gid   | bigint               | emaj_gid
  emaj_tuple | character varying(3) | emaj_tuple
 primary key, btree, for table "emaj_phil's schema3.phil's tbl1_log", clustered
-Tablespace: "tspemaj"
 
               Sequence "emaj_phil's schema3.phil's tbl1_log_seq"
   Type  | Start | Minimum |       Maximum       | Increment | Cycles? | Cache 
@@ -1193,19 +1152,19 @@ Tablespace: "tspemaj"
 select * from emaj.emaj_global_seq;
  last_value | log_cnt | is_called 
 ------------+---------+-----------
-         85 |      14 | t
+         84 |      15 | t
 (1 row)
 
 select * from emaj.emaj_hist_hist_id_seq;
  last_value | log_cnt | is_called 
 ------------+---------+-----------
-        138 |      27 | t
+        178 |      20 | t
 (1 row)
 
 select * from emaj.emaj_time_stamp_time_id_seq;
  last_value | log_cnt | is_called 
 ------------+---------+-----------
-         22 |      11 | t
+         32 |       1 | t
 (1 row)
 
 select * from emaj.emaj_rlbk_rlbk_id_seq;
@@ -1283,103 +1242,103 @@ select * from "emaj_phil's schema3"."myTbl2\_log_seq";
 select * from emaj.emaj_sequence order by sequ_schema, sequ_name, sequ_time_id;
   sequ_schema   |    sequ_name     | sequ_time_id | sequ_last_val | sequ_start_val | sequ_increment |    sequ_max_val     | sequ_min_val | sequ_cache_val | sequ_is_cycled | sequ_is_called 
 ----------------+------------------+--------------+---------------+----------------+----------------+---------------------+--------------+----------------+----------------+----------------
- myschema1      | myTbl3_col31_seq |            4 |             1 |              1 |              1 |          2147483647 |            1 |              1 | f              | f
- myschema1      | myTbl3_col31_seq |            7 |            10 |              1 |              1 |          2147483647 |            1 |              1 | f              | t
- myschema1      | myTbl3_col31_seq |            8 |            10 |              1 |              1 |          2147483647 |            1 |              1 | f              | t
- myschema1      | myTbl3_col31_seq |           17 |            10 |              1 |              1 |          2147483647 |            1 |              1 | f              | t
+ myschema1      | myTbl3_col31_seq |           15 |             1 |              1 |              1 |          2147483647 |            1 |              1 | f              | f
  myschema1      | myTbl3_col31_seq |           18 |            10 |              1 |              1 |          2147483647 |            1 |              1 | f              | t
- myschema2      | myTbl3_col31_seq |            5 |             1 |              1 |              1 |          2147483647 |            1 |              1 | f              | f
- myschema2      | myTbl3_col31_seq |           11 |            10 |              1 |              1 |          2147483647 |            1 |              1 | f              | t
- myschema2      | myTbl3_col31_seq |           12 |            10 |              1 |              1 |          2147483647 |            1 |              1 | f              | t
- myschema2      | myTbl3_col31_seq |           13 |            10 |              1 |              1 |          2147483647 |            1 |              1 | f              | t
- myschema2      | myTbl3_col31_seq |           14 |            10 |              1 |              1 |          2147483647 |            1 |              1 | f              | t
- myschema2      | myTbl3_col31_seq |           15 |            10 |              1 |              1 |          2147483647 |            1 |              1 | f              | t
- myschema2      | myTbl3_col31_seq |           16 |            10 |              1 |              1 |          2147483647 |            1 |              1 | f              | t
- myschema2      | myTbl3_col31_seq |           17 |            10 |              1 |              1 |          2147483647 |            1 |              1 | f              | t
- myschema2      | myseq1           |            5 |          1000 |           1000 |              1 |                2000 |         1000 |              1 | t              | f
- myschema2      | myseq1           |           11 |          1000 |           1000 |              1 |                2000 |         1000 |              1 | t              | t
- myschema2      | myseq1           |           12 |          1003 |           1000 |              1 | 9223372036854775807 |         1000 |              1 | f              | t
- myschema2      | myseq1           |           13 |          1003 |           1000 |              1 | 9223372036854775807 |         1000 |              1 | f              | t
- myschema2      | myseq1           |           14 |          1001 |           1000 |              1 |                2000 |         1000 |              1 | t              | f
- myschema2      | myseq1           |           15 |          1001 |           1000 |              1 |                2000 |         1000 |              1 | t              | f
- myschema2      | myseq1           |           16 |          1004 |           1000 |              1 | 9223372036854775807 |         1000 |              1 | f              | f
- myschema2      | myseq1           |           17 |          1004 |           1000 |              1 | 9223372036854775807 |         1000 |              1 | f              | f
- phil's schema3 | phil's seq\1     |            6 |          1000 |           1000 |              1 |                2000 |         1000 |              1 | t              | f
+ myschema1      | myTbl3_col31_seq |           19 |            10 |              1 |              1 |          2147483647 |            1 |              1 | f              | t
+ myschema1      | myTbl3_col31_seq |           28 |            10 |              1 |              1 |          2147483647 |            1 |              1 | f              | t
+ myschema1      | myTbl3_col31_seq |           29 |            10 |              1 |              1 |          2147483647 |            1 |              1 | f              | t
+ myschema2      | myTbl3_col31_seq |           16 |             1 |              1 |              1 |          2147483647 |            1 |              1 | f              | f
+ myschema2      | myTbl3_col31_seq |           22 |            10 |              1 |              1 |          2147483647 |            1 |              1 | f              | t
+ myschema2      | myTbl3_col31_seq |           23 |            10 |              1 |              1 |          2147483647 |            1 |              1 | f              | t
+ myschema2      | myTbl3_col31_seq |           24 |            10 |              1 |              1 |          2147483647 |            1 |              1 | f              | t
+ myschema2      | myTbl3_col31_seq |           25 |            10 |              1 |              1 |          2147483647 |            1 |              1 | f              | t
+ myschema2      | myTbl3_col31_seq |           26 |            10 |              1 |              1 |          2147483647 |            1 |              1 | f              | t
+ myschema2      | myTbl3_col31_seq |           27 |            10 |              1 |              1 |          2147483647 |            1 |              1 | f              | t
+ myschema2      | myTbl3_col31_seq |           28 |            10 |              1 |              1 |          2147483647 |            1 |              1 | f              | t
+ myschema2      | myseq1           |           16 |          1000 |           1000 |              1 |                2000 |         1000 |              1 | t              | f
+ myschema2      | myseq1           |           22 |          1000 |           1000 |              1 |                2000 |         1000 |              1 | t              | t
+ myschema2      | myseq1           |           23 |          1003 |           1000 |              1 | 9223372036854775807 |         1000 |              1 | f              | t
+ myschema2      | myseq1           |           24 |          1003 |           1000 |              1 | 9223372036854775807 |         1000 |              1 | f              | t
+ myschema2      | myseq1           |           25 |          1001 |           1000 |              1 |                2000 |         1000 |              1 | t              | f
+ myschema2      | myseq1           |           26 |          1001 |           1000 |              1 |                2000 |         1000 |              1 | t              | f
+ myschema2      | myseq1           |           27 |          1004 |           1000 |              1 | 9223372036854775807 |         1000 |              1 | f              | f
+ myschema2      | myseq1           |           28 |          1004 |           1000 |              1 | 9223372036854775807 |         1000 |              1 | f              | f
+ phil's schema3 | phil's seq\1     |           17 |          1000 |           1000 |              1 |                2000 |         1000 |              1 | t              | f
 (22 rows)
 
 select * from emaj.emaj_table order by tbl_schema, tbl_name, tbl_time_id;
    tbl_schema   |                        tbl_name                         | tbl_time_id | tbl_pages | tbl_tuples | tbl_log_seq_last_val 
 ----------------+---------------------------------------------------------+-------------+-----------+------------+----------------------
- myschema1      | myTbl3                                                  |           4 |         0 |          0 |                    0
- myschema1      | myTbl3                                                  |           7 |         0 |          0 |                   10
- myschema1      | myTbl3                                                  |           8 |         0 |          0 |                   10
- myschema1      | myTbl3                                                  |          17 |         0 |          0 |                   10
+ myschema1      | myTbl3                                                  |          15 |         0 |          0 |                    0
  myschema1      | myTbl3                                                  |          18 |         0 |          0 |                   10
- myschema1      | mytbl1                                                  |           4 |         0 |          0 |                    0
- myschema1      | mytbl1                                                  |           7 |         0 |          0 |                   15
- myschema1      | mytbl1                                                  |           8 |         0 |          0 |                   18
- myschema1      | mytbl1                                                  |          17 |         0 |          0 |                   24
- myschema1      | mytbl1                                                  |          18 |         0 |          0 |                   24
- myschema1      | mytbl2                                                  |           4 |         0 |          0 |                    0
- myschema1      | mytbl2                                                  |           7 |         0 |          0 |                    2
- myschema1      | mytbl2                                                  |           8 |         0 |          0 |                    2
- myschema1      | mytbl2                                                  |          17 |         0 |          0 |                    3
- myschema1      | mytbl2                                                  |          18 |         0 |          0 |                    3
- myschema1      | mytbl2b                                                 |           4 |         0 |          0 |                    0
- myschema1      | mytbl2b                                                 |           7 |         0 |          0 |                    2
- myschema1      | mytbl2b                                                 |           8 |         0 |          0 |                    2
- myschema1      | mytbl2b                                                 |          17 |         0 |          0 |                    3
- myschema1      | mytbl2b                                                 |          18 |         0 |          0 |                    3
- myschema1      | mytbl4                                                  |           4 |         0 |          0 |                    0
- myschema1      | mytbl4                                                  |           7 |         0 |          0 |                    0
- myschema1      | mytbl4                                                  |           8 |         0 |          0 |                    8
- myschema1      | mytbl4                                                  |          17 |         0 |          0 |                    9
- myschema1      | mytbl4                                                  |          18 |         0 |          0 |                    9
- myschema2      | myTbl3                                                  |           5 |         0 |          0 |                    0
- myschema2      | myTbl3                                                  |          11 |         0 |          0 |                   10
- myschema2      | myTbl3                                                  |          12 |         0 |          0 |                   10
- myschema2      | myTbl3                                                  |          13 |         0 |          0 |                   10
- myschema2      | myTbl3                                                  |          14 |         0 |          0 |                   10
- myschema2      | myTbl3                                                  |          15 |         0 |          0 |                   10
- myschema2      | myTbl3                                                  |          16 |         0 |          0 |                   10
- myschema2      | myTbl3                                                  |          17 |         0 |          0 |                   10
- myschema2      | mytbl1                                                  |           5 |         0 |          0 |                    0
- myschema2      | mytbl1                                                  |          11 |         0 |          0 |                   15
- myschema2      | mytbl1                                                  |          12 |         0 |          0 |                   15
- myschema2      | mytbl1                                                  |          13 |         0 |          0 |                   15
- myschema2      | mytbl1                                                  |          14 |         0 |          0 |                   15
- myschema2      | mytbl1                                                  |          15 |         0 |          0 |                   15
- myschema2      | mytbl1                                                  |          16 |         0 |          0 |                   15
- myschema2      | mytbl1                                                  |          17 |         0 |          0 |                   15
- myschema2      | mytbl2                                                  |           5 |         0 |          0 |                    0
- myschema2      | mytbl2                                                  |          11 |         0 |          0 |                    2
- myschema2      | mytbl2                                                  |          12 |         0 |          0 |                    2
- myschema2      | mytbl2                                                  |          13 |         0 |          0 |                    2
- myschema2      | mytbl2                                                  |          14 |         0 |          0 |                    2
- myschema2      | mytbl2                                                  |          15 |         0 |          0 |                    2
- myschema2      | mytbl2                                                  |          16 |         0 |          0 |                    2
- myschema2      | mytbl2                                                  |          17 |         0 |          0 |                    2
- myschema2      | mytbl4                                                  |           5 |         0 |          0 |                    0
- myschema2      | mytbl4                                                  |          11 |         0 |          0 |                    0
- myschema2      | mytbl4                                                  |          12 |         0 |          0 |                    4
- myschema2      | mytbl4                                                  |          13 |         0 |          0 |                    4
- myschema2      | mytbl4                                                  |          14 |         0 |          0 |                    6
- myschema2      | mytbl4                                                  |          15 |         0 |          0 |                    6
- myschema2      | mytbl4                                                  |          16 |         0 |          0 |                    8
- myschema2      | mytbl4                                                  |          17 |         0 |          0 |                    8
- myschema6      | table_with_50_characters_long_name_____0_________0      |          20 |         0 |          0 |                    0
- myschema6      | table_with_50_characters_long_name_____0_________0      |          21 |         0 |          0 |                    0
- myschema6      | table_with_50_characters_long_name_____0_________0      |          22 |         0 |          0 |                    0
- myschema6      | table_with_51_characters_long_name_____0_________0a     |          20 |         0 |          0 |                    0
- myschema6      | table_with_51_characters_long_name_____0_________0a     |          21 |         0 |          0 |                    0
- myschema6      | table_with_51_characters_long_name_____0_________0a     |          22 |         0 |          0 |                    0
- myschema6      | table_with_55_characters_long_name_____0_________0abcde |          20 |         0 |          0 |                    0
- myschema6      | table_with_55_characters_long_name_____0_________0abcde |          21 |         0 |          0 |                    0
- myschema6      | table_with_55_characters_long_name_____0_________0fghij |          20 |         0 |          0 |                    0
- myschema6      | table_with_55_characters_long_name_____0_________0fghij |          21 |         0 |          0 |                    0
- myschema6      | table_with_55_characters_long_name_____0_________0fghij |          22 |         0 |          0 |                    0
- phil's schema3 | myTbl2\                                                 |           6 |         0 |          0 |                    0
- phil's schema3 | phil's tbl1                                             |           6 |         0 |          0 |                    0
+ myschema1      | myTbl3                                                  |          19 |         0 |          0 |                   10
+ myschema1      | myTbl3                                                  |          28 |         0 |          0 |                   10
+ myschema1      | myTbl3                                                  |          29 |         0 |          0 |                   10
+ myschema1      | mytbl1                                                  |          15 |         0 |          0 |                    0
+ myschema1      | mytbl1                                                  |          18 |         0 |          0 |                   15
+ myschema1      | mytbl1                                                  |          19 |         0 |          0 |                   18
+ myschema1      | mytbl1                                                  |          28 |         0 |          0 |                   24
+ myschema1      | mytbl1                                                  |          29 |         0 |          0 |                   24
+ myschema1      | mytbl2                                                  |          15 |         0 |          0 |                    0
+ myschema1      | mytbl2                                                  |          18 |         0 |          0 |                    2
+ myschema1      | mytbl2                                                  |          19 |         0 |          0 |                    2
+ myschema1      | mytbl2                                                  |          28 |         0 |          0 |                    3
+ myschema1      | mytbl2                                                  |          29 |         0 |          0 |                    3
+ myschema1      | mytbl2b                                                 |          15 |         0 |          0 |                    0
+ myschema1      | mytbl2b                                                 |          18 |         0 |          0 |                    2
+ myschema1      | mytbl2b                                                 |          19 |         0 |          0 |                    2
+ myschema1      | mytbl2b                                                 |          28 |         0 |          0 |                    3
+ myschema1      | mytbl2b                                                 |          29 |         0 |          0 |                    3
+ myschema1      | mytbl4                                                  |          15 |         0 |          0 |                    0
+ myschema1      | mytbl4                                                  |          18 |         0 |          0 |                    0
+ myschema1      | mytbl4                                                  |          19 |         0 |          0 |                    8
+ myschema1      | mytbl4                                                  |          28 |         0 |          0 |                    9
+ myschema1      | mytbl4                                                  |          29 |         0 |          0 |                    9
+ myschema2      | myTbl3                                                  |          16 |         0 |          0 |                    0
+ myschema2      | myTbl3                                                  |          22 |         0 |          0 |                   10
+ myschema2      | myTbl3                                                  |          23 |         0 |          0 |                   10
+ myschema2      | myTbl3                                                  |          24 |         0 |          0 |                   10
+ myschema2      | myTbl3                                                  |          25 |         0 |          0 |                   10
+ myschema2      | myTbl3                                                  |          26 |         0 |          0 |                   10
+ myschema2      | myTbl3                                                  |          27 |         0 |          0 |                   10
+ myschema2      | myTbl3                                                  |          28 |         0 |          0 |                   10
+ myschema2      | mytbl1                                                  |          16 |         0 |          0 |                    0
+ myschema2      | mytbl1                                                  |          22 |         0 |          0 |                   15
+ myschema2      | mytbl1                                                  |          23 |         0 |          0 |                   15
+ myschema2      | mytbl1                                                  |          24 |         0 |          0 |                   15
+ myschema2      | mytbl1                                                  |          25 |         0 |          0 |                   15
+ myschema2      | mytbl1                                                  |          26 |         0 |          0 |                   15
+ myschema2      | mytbl1                                                  |          27 |         0 |          0 |                   15
+ myschema2      | mytbl1                                                  |          28 |         0 |          0 |                   15
+ myschema2      | mytbl2                                                  |          16 |         0 |          0 |                    0
+ myschema2      | mytbl2                                                  |          22 |         0 |          0 |                    2
+ myschema2      | mytbl2                                                  |          23 |         0 |          0 |                    2
+ myschema2      | mytbl2                                                  |          24 |         0 |          0 |                    2
+ myschema2      | mytbl2                                                  |          25 |         0 |          0 |                    2
+ myschema2      | mytbl2                                                  |          26 |         0 |          0 |                    2
+ myschema2      | mytbl2                                                  |          27 |         0 |          0 |                    2
+ myschema2      | mytbl2                                                  |          28 |         0 |          0 |                    2
+ myschema2      | mytbl4                                                  |          16 |         0 |          0 |                    0
+ myschema2      | mytbl4                                                  |          22 |         0 |          0 |                    0
+ myschema2      | mytbl4                                                  |          23 |         0 |          0 |                    4
+ myschema2      | mytbl4                                                  |          24 |         0 |          0 |                    4
+ myschema2      | mytbl4                                                  |          25 |         0 |          0 |                    6
+ myschema2      | mytbl4                                                  |          26 |         0 |          0 |                    6
+ myschema2      | mytbl4                                                  |          27 |         0 |          0 |                    8
+ myschema2      | mytbl4                                                  |          28 |         0 |          0 |                    8
+ myschema6      | table_with_50_characters_long_name_____0_________0      |          30 |         0 |          0 |                    0
+ myschema6      | table_with_50_characters_long_name_____0_________0      |          31 |         0 |          0 |                    0
+ myschema6      | table_with_50_characters_long_name_____0_________0      |          32 |         0 |          0 |                    0
+ myschema6      | table_with_51_characters_long_name_____0_________0a     |          30 |         0 |          0 |                    0
+ myschema6      | table_with_51_characters_long_name_____0_________0a     |          31 |         0 |          0 |                    0
+ myschema6      | table_with_51_characters_long_name_____0_________0a     |          32 |         0 |          0 |                    0
+ myschema6      | table_with_55_characters_long_name_____0_________0abcde |          30 |         0 |          0 |                    0
+ myschema6      | table_with_55_characters_long_name_____0_________0abcde |          31 |         0 |          0 |                    0
+ myschema6      | table_with_55_characters_long_name_____0_________0fghij |          30 |         0 |          0 |                    0
+ myschema6      | table_with_55_characters_long_name_____0_________0fghij |          31 |         0 |          0 |                    0
+ myschema6      | table_with_55_characters_long_name_____0_________0fghij |          32 |         0 |          0 |                    0
+ phil's schema3 | myTbl2\                                                 |          17 |         0 |          0 |                    0
+ phil's schema3 | phil's tbl1                                             |          17 |         0 |          0 |                    0
 (70 rows)
 
 -- log tables
