@@ -6,6 +6,8 @@ E-Maj - Change log
 
 
 ###Bug fixes:###
+  * Fix the rollback state cleanup processing for E-Maj rollback pending in
+    PLANNING or LOCKING state.
   * Fix the E-Maj version upgrade procedure. It raised an exception in case
     of warning detected in the E-Maj environment health check.
 

@@ -104,6 +104,92 @@ SELECT emaj._disable_event_triggers();
 ------------------------------------------------------------------
 -- create new or modified functions                             --
 ------------------------------------------------------------------
+CREATE OR REPLACE FUNCTION emaj._rlbk_init(p_groupNames TEXT[], p_mark TEXT, p_isLoggedRlbk BOOLEAN, p_nbSession INT, p_multiGroup BOOLEAN,
+                                           p_isAlterGroupAllowed BOOLEAN DEFAULT FALSE)
+RETURNS INT LANGUAGE plpgsql AS
+$_rlbk_init$
+-- This is the first step of a rollback group processing.
+-- It tests the environment, the supplied parameters and the foreign key constraints.
+-- By calling the _rlbk_planning() function, it defines the different elementary steps needed for the operation,
+-- and spread the load on the requested number of sessions.
+-- It returns a rollback id that will be needed by next steps (or NULL if there are some NULL input).
+-- This function may be directly called by the Emaj_web client.
+  DECLARE
+    v_markName               TEXT;
+    v_markTimeId             BIGINT;
+    v_markTimestamp          TIMESTAMPTZ;
+    v_nbTblInGroups          INT;
+    v_nbSeqInGroups          INT;
+    v_dbLinkCnxStatus        INT;
+    v_isDblinkUsed           BOOLEAN;
+    v_dbLinkSchema           TEXT;
+    v_effNbTable             INT;
+    v_histId                 BIGINT;
+    v_stmt                   TEXT;
+    v_rlbkId                 INT;
+  BEGIN
+-- Check supplied group names and mark parameters.
+    SELECT emaj._rlbk_check(p_groupNames, p_mark, p_isAlterGroupAllowed, FALSE) INTO v_markName;
+    IF v_markName IS NOT NULL THEN
+-- Check that no group is damaged.
+      PERFORM 0
+        FROM emaj._verify_groups(p_groupNames, TRUE);
+-- Get the time stamp id and its clock timestamp for the first group (as we know this time stamp is the same for all groups of the array).
+      SELECT time_id, time_clock_timestamp INTO v_markTimeId, v_markTimestamp
+        FROM emaj.emaj_mark
+             JOIN emaj.emaj_time_stamp ON (time_id = mark_time_id)
+        WHERE mark_group = p_groupNames[1]
+          AND mark_name = v_markName;
+-- Insert a BEGIN event into the history.
+      INSERT INTO emaj.emaj_hist (hist_function, hist_event, hist_object, hist_wording)
+        VALUES (CASE WHEN p_multiGroup THEN 'ROLLBACK_GROUPS' ELSE 'ROLLBACK_GROUP' END, 'BEGIN',
+                array_to_string(p_groupNames,','),
+                CASE WHEN p_isLoggedRlbk THEN 'Logged' ELSE 'Unlogged' END || ' rollback to mark ' || v_markName
+                || ' [' || v_markTimestamp || ']'
+               )
+        RETURNING hist_id INTO v_histId;
+-- Get the total number of tables for these groups.
+      SELECT sum(group_nb_table), sum(group_nb_sequence) INTO v_nbTblInGroups, v_nbSeqInGroups
+        FROM emaj.emaj_group
+        WHERE group_name = ANY (p_groupNames) ;
+-- First try to open a dblink connection.
+      SELECT p_status, (p_status >= 0), CASE WHEN p_status >= 0 THEN p_schema ELSE NULL END
+        INTO v_dbLinkCnxStatus, v_isDblinkUsed, v_dbLinkSchema
+        FROM emaj._dblink_open_cnx('rlbk#1');
+-- For parallel rollback (i.e. when nb sessions > 1), the dblink connection must be ok.
+      IF p_nbSession > 1 AND NOT v_isDblinkUsed THEN
+        RAISE EXCEPTION '_rlbk_init: Cannot use several sessions without dblink connection capability. (Status of the dblink'
+                        ' connection attempt = % - see E-Maj documentation)',
+          v_dbLinkCnxStatus;
+      END IF;
+-- Create the row representing the rollback event in the emaj_rlbk table and get the rollback id back.
+      v_stmt = 'INSERT INTO emaj.emaj_rlbk (rlbk_groups, rlbk_mark, rlbk_mark_time_id, rlbk_is_logged, rlbk_is_alter_group_allowed, ' ||
+               'rlbk_nb_session, rlbk_nb_table, rlbk_nb_sequence, rlbk_status, rlbk_begin_hist_id, ' ||
+               'rlbk_dblink_schema, rlbk_is_dblink_used) ' ||
+               'VALUES (' || quote_literal(p_groupNames) || ',' || quote_literal(v_markName) || ',' ||
+               v_markTimeId || ',' || p_isLoggedRlbk || ',' || quote_nullable(p_isAlterGroupAllowed) || ',' ||
+               p_nbSession || ',' || v_nbTblInGroups || ',' || v_nbSeqInGroups || ', ''PLANNING'',' || v_histId || ',' ||
+               quote_nullable(v_dbLinkSchema) || ',' || v_isDblinkUsed || ') RETURNING rlbk_id';
+      SELECT emaj._dblink_sql_exec('rlbk#1', v_stmt, v_dblinkSchema) INTO v_rlbkId;
+-- Create the session row the emaj_rlbk_session table.
+      v_stmt = 'INSERT INTO emaj.emaj_rlbk_session (rlbs_rlbk_id, rlbs_session, rlbs_txid, rlbs_start_datetime) ' ||
+               'VALUES (' || v_rlbkId || ', 1, ' || txid_current() || ',' ||
+                quote_literal(clock_timestamp()) || ') RETURNING 1';
+      PERFORM emaj._dblink_sql_exec('rlbk#1', v_stmt, v_dblinkSchema);
+-- Call the rollback planning function to define all the elementary steps to perform, compute their estimated duration
+-- and spread the elementary steps among sessions.
+      v_stmt = 'SELECT emaj._rlbk_planning(' || v_rlbkId || ')';
+      SELECT emaj._dblink_sql_exec('rlbk#1', v_stmt, v_dblinkSchema) INTO v_effNbTable;
+-- Update the emaj_rlbk table to set the real number of tables to process and adjust the rollback status.
+      v_stmt = 'UPDATE emaj.emaj_rlbk SET rlbk_eff_nb_table = ' || v_effNbTable ||
+               ', rlbk_status = ''LOCKING'' ' || ' WHERE rlbk_id = ' || v_rlbkId || ' RETURNING 1';
+      PERFORM emaj._dblink_sql_exec('rlbk#1', v_stmt, v_dblinkSchema);
+    END IF;
+--
+    RETURN v_rlbkId;
+  END;
+$_rlbk_init$;
+
 CREATE OR REPLACE FUNCTION emaj._rlbk_session_lock(p_rlbkId INT, p_session INT)
 RETURNS VOID LANGUAGE plpgsql AS
 $_rlbk_session_lock$
@@ -128,18 +214,18 @@ $_rlbk_session_lock$
 -- For dblink session > 1, open the connection (the session 1 is already opened).
     IF p_session > 1 THEN
       SELECT p_status INTO v_dbLinkCnxStatus
-        FROM emaj._dblink_open_cnx('rlbk#'||p_session);
+        FROM emaj._dblink_open_cnx('rlbk#' || p_session);
       IF v_dbLinkCnxStatus < 0 THEN
         RAISE EXCEPTION '_rlbk_session_lock: Error while opening the dblink session #% (Status of the dblink connection attempt = %'
                         ' - see E-Maj documentation).',
           p_session, v_dbLinkCnxStatus;
       END IF;
+-- ... and create the session row the emaj_rlbk_session table.
+      v_stmt = 'INSERT INTO emaj.emaj_rlbk_session (rlbs_rlbk_id, rlbs_session, rlbs_txid, rlbs_start_datetime) ' ||
+               'VALUES (' || p_rlbkId || ',' || p_session || ',' || txid_current() || ',' ||
+                quote_literal(clock_timestamp()) || ') RETURNING 1';
+      PERFORM emaj._dblink_sql_exec('rlbk#' || p_session, v_stmt, v_dblinkSchema);
     END IF;
--- Create the session row the emaj_rlbk_session table.
-    v_stmt = 'INSERT INTO emaj.emaj_rlbk_session (rlbs_rlbk_id, rlbs_session, rlbs_txid, rlbs_start_datetime) ' ||
-             'VALUES (' || p_rlbkId || ',' || p_session || ',' || txid_current() || ',' ||
-              quote_literal(clock_timestamp()) || ') RETURNING 1';
-    PERFORM emaj._dblink_sql_exec('rlbk#'||p_session, v_stmt, v_dblinkSchema);
 -- Insert a BEGIN event into the history.
     INSERT INTO emaj.emaj_hist (hist_function, hist_event, hist_object, hist_wording)
       VALUES ('LOCK_GROUP', 'BEGIN', array_to_string(v_groupNames,','), 'Rollback session #' || p_session);
@@ -357,6 +443,75 @@ $_rlbk_session_exec$
       RAISE;
   END;
 $_rlbk_session_exec$;
+
+CREATE OR REPLACE FUNCTION emaj._cleanup_rollback_state()
+RETURNS INT LANGUAGE plpgsql
+SECURITY DEFINER SET search_path = pg_catalog, pg_temp AS
+$_cleanup_rollback_state$
+-- This function effectively cleans the rollback states up. It is called by the emaj_cleanup_rollback_state()
+-- and by other emaj functions.
+-- The rollbacks whose transaction(s) is/are active are left as is.
+-- Among the others, those which are also visible in the emaj_hist table are set "COMMITTED",
+--   while those which are not visible in the emaj_hist table are set "ABORTED".
+-- Input: no parameter
+-- Output: number of updated rollback events
+-- The function is defined as SECURITY DEFINER so that emaj_viewer role can update emaj_rlbk and emaj_hist tables.
+  DECLARE
+    v_nbRlbk                 INT = 0;
+    v_nbInProgressTx         INT;
+    v_newStatus              emaj._rlbk_status_enum;
+    r_rlbk                   RECORD;
+  BEGIN
+-- Scan all pending rollback events, counting their in-progress sessions.
+    FOR r_rlbk IN
+      SELECT rlbk_id, rlbk_status, rlbk_begin_hist_id, rlbk_nb_session
+        FROM emaj.emaj_rlbk
+             JOIN emaj.emaj_rlbk_session ON (rlbs_rlbk_id = rlbk_id AND rlbs_session = 1)
+        WHERE rlbk_status IN ('PLANNING', 'LOCKING', 'EXECUTING', 'COMPLETED')  -- only pending rollback events
+          AND rlbs_txid <> txid_current()                                       -- exclude the current tx, to not process the current
+                                                                                --   rollback when start/stop marks are created
+        ORDER BY rlbk_id
+    LOOP
+-- Get the number of unterminated sessions.
+      SELECT count(*) INTO v_nbInProgressTx
+        FROM emaj.emaj_rlbk_session
+        WHERE rlbs_rlbk_id = r_rlbk.rlbk_id
+          AND NOT txid_visible_in_snapshot(rlbs_txid, txid_current_snapshot());
+-- Only process rollback id with no in-progress session.
+      IF v_nbInProgressTx = 0 THEN
+-- Try to lock the current rlbk_id, but skip it if it is not immediately possible to avoid deadlocks in rare cases.
+        IF EXISTS
+             (SELECT 0
+                FROM emaj.emaj_rlbk
+                WHERE rlbk_id = r_rlbk.rlbk_id
+                FOR UPDATE SKIP LOCKED
+             ) THEN
+-- Look at the emaj_hist to find the trace of the rollback begin event.
+          IF EXISTS
+               (SELECT 0
+                  FROM emaj.emaj_hist
+                  WHERE hist_id = r_rlbk.rlbk_begin_hist_id
+               ) THEN
+-- If the emaj_hist rollback_begin event is visible, the rollback transaction has been committed.
+-- So set the rollback event in emaj_rlbk as "COMMITTED".
+          v_newStatus = 'COMMITTED';
+          ELSE
+-- Otherwise, set the rollback event in emaj_rlbk as "ABORTED"
+            v_newStatus = 'ABORTED';
+          END IF;
+          UPDATE emaj.emaj_rlbk
+            SET rlbk_status = v_newStatus
+            WHERE rlbk_id = r_rlbk.rlbk_id;
+          INSERT INTO emaj.emaj_hist (hist_function, hist_object, hist_wording)
+            VALUES ('CLEANUP_RLBK_STATE', 'Rollback id ' || r_rlbk.rlbk_id, 'set to ' || v_newStatus);
+          v_nbRlbk = v_nbRlbk + 1;
+        END IF;
+      END IF;
+    END LOOP;
+--
+    RETURN v_nbRlbk;
+  END;
+$_cleanup_rollback_state$;
 
 --<end_functions>                                pattern used by the tool that extracts and insert the functions definition
 ------------------------------------------
