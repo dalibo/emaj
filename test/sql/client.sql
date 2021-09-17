@@ -195,4 +195,3 @@ insert into emaj.emaj_rlbk (rlbk_id, rlbk_groups, rlbk_mark, rlbk_mark_time_id, 
 -- call emajRollbackMonitor.pl using an emaj_viewer role
 --------------------------------------------
 \! ${EMAJ_DIR}/client/emajRollbackMonitor.pl -h localhost -d regression -U emaj_regression_tests_viewer_user -i 0.1 -n 2 -l 2 -a 12 -v -r
-

@@ -8958,7 +8958,7 @@ $_rlbk_session_lock$
     WHEN SQLSTATE 'P0001' THEN             -- Do not trap the exceptions raised by the function
       RAISE;
     WHEN OTHERS THEN                       -- Otherwise, log the E-Maj rollback abort in emaj_rlbk, if possible
-      PERFORM emaj._rlbk_error(p_rlbkId, 'In _rlbk_session_lock() for session ' || p_session || ': ' || SQLERRM, 'rlbk#'||p_session);
+      PERFORM emaj._rlbk_error(p_rlbkId, 'In _rlbk_session_lock() for session ' || p_session || ': ' || SQLERRM, 'rlbk#' || p_session);
       RAISE;
   END;
 $_rlbk_session_lock$;
@@ -9105,7 +9105,7 @@ $_rlbk_session_exec$
                ' AND rlbp_schema = ' || quote_literal(r_step.rlbp_schema) ||
                ' AND rlbp_table = ' || quote_literal(r_step.rlbp_table) ||
                ' AND rlbp_object = ' || quote_literal(r_step.rlbp_object) || ' RETURNING 1';
-      PERFORM emaj._dblink_sql_exec('rlbk#'||p_session, v_stmt, v_dblinkSchema);
+      PERFORM emaj._dblink_sql_exec('rlbk#' || p_session, v_stmt, v_dblinkSchema);
       v_fullTableName = quote_ident(r_step.rlbp_schema) || '.' || quote_ident(r_step.rlbp_table);
 -- Process the step depending on its type.
       CASE r_step.rlbp_step
@@ -9178,16 +9178,16 @@ $_rlbk_session_exec$
                ' AND rlbp_schema = ' || quote_literal(r_step.rlbp_schema) ||
                ' AND rlbp_table = ' || quote_literal(r_step.rlbp_table) ||
                ' AND rlbp_object = ' || quote_literal(r_step.rlbp_object) || ' RETURNING 1';
-      PERFORM emaj._dblink_sql_exec('rlbk#'||p_session, v_stmt, v_dblinkSchema);
+      PERFORM emaj._dblink_sql_exec('rlbk#' || p_session, v_stmt, v_dblinkSchema);
     END LOOP;
 -- Update the emaj_rlbk_session table to set the timestamp representing the end of work for the session.
     v_stmt = 'UPDATE emaj.emaj_rlbk_session SET rlbs_end_datetime = clock_timestamp()' ||
              ' WHERE rlbs_rlbk_id = ' || p_rlbkId || ' AND rlbs_session = ' || p_session ||
              ' RETURNING 1';
-    PERFORM emaj._dblink_sql_exec('rlbk#'||p_session, v_stmt, v_dblinkSchema);
+    PERFORM emaj._dblink_sql_exec('rlbk#' || p_session, v_stmt, v_dblinkSchema);
 -- Close the dblink connection, if any, for session > 1.
     IF v_isDblinkUsed AND p_session > 1 THEN
-      PERFORM emaj._dblink_close_cnx('rlbk#'||p_session, v_dblinkSchema);
+      PERFORM emaj._dblink_close_cnx('rlbk#' || p_session, v_dblinkSchema);
     END IF;
 --
     RETURN;
@@ -9196,7 +9196,7 @@ $_rlbk_session_exec$
     WHEN SQLSTATE 'P0001' THEN             -- Do not trap the exceptions raised by the function
       RAISE;
     WHEN OTHERS THEN                       -- Otherwise, log the E-Maj rollback abort in emaj_rlbk, if possible
-      PERFORM emaj._rlbk_error(p_rlbkId, 'In _rlbk_session_exec() for session ' || p_session || ': ' || SQLERRM, 'rlbk#'||p_session);
+      PERFORM emaj._rlbk_error(p_rlbkId, 'In _rlbk_session_exec() for session ' || p_session || ': ' || SQLERRM, 'rlbk#' || p_session);
       RAISE;
   END;
 $_rlbk_session_exec$;

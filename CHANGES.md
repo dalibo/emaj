@@ -6,10 +6,10 @@ E-Maj - Change log
 
 
 ###Bug fixes:###
+  * Fix the E-Maj version upgrade procedure. It raised an exception in case
+    of warning detected in the E-Maj environment health check.
 
-
-
-4.0.0 (2020-Jul-24)
+4.0.0 (2021-May-29)
 ------
 ###Enhancements:###
   * E-Maj is compatible with PostgreSQL V14.
