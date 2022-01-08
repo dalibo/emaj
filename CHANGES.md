@@ -10,6 +10,9 @@ E-Maj - Change log
     PLANNING or LOCKING state.
   * Fix the E-Maj version upgrade procedure. It raised an exception in case
     of warning detected in the E-Maj environment health check.
+  * Fix warnings reported by emaj_verify_all() or at set mark time when
+    foreign keys are created on parent tables whose partitions belong to
+    tables groups.
 
 4.0.0 (2021-May-29)
 ------

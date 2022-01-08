@@ -5474,6 +5474,8 @@ $_check_fk_groups$
           AND upper_inf(r.rel_time_range)
           AND r.rel_group = ANY (p_groupNames)                      -- only tables currently belonging to the selected groups
           AND g.group_is_rollbackable                               -- only tables from rollbackable groups
+          AND tf.relkind = 'r'                                      -- only constraints referencing true tables, ie. excluding
+                                                                    --   partitionned tables
           AND NOT EXISTS                                            -- referenced table currently outside the groups
                 (SELECT 0
                    FROM emaj.emaj_relation
@@ -5497,11 +5499,13 @@ $_check_fk_groups$
              JOIN pg_catalog.pg_constraint c ON (c.confrelid  = tf.oid)
              JOIN pg_catalog.pg_class t ON (t.oid = c.conrelid)
              JOIN pg_catalog.pg_namespace n ON (n.oid = t.relnamespace)
-        WHERE contype = 'f'                                           -- FK constraints only
+        WHERE contype = 'f'                                         -- FK constraints only
           AND upper_inf(r.rel_time_range)
-          AND r.rel_group = ANY (p_groupNames)                        -- only tables currently belonging to the selected groups
-          AND g.group_is_rollbackable                                 -- only tables from rollbackable groups
-          AND NOT EXISTS                                              -- referenced table outside the groups
+          AND r.rel_group = ANY (p_groupNames)                      -- only tables currently belonging to the selected groups
+          AND g.group_is_rollbackable                               -- only tables from rollbackable groups
+          AND t.relkind = 'r'                                       -- only constraints referenced by true tables, ie. excluding
+                                                                    --   partitionned tables
+          AND NOT EXISTS                                            -- referenced table outside the groups
                 (SELECT 0
                    FROM emaj.emaj_relation
                    WHERE rel_schema = n.nspname
@@ -11881,6 +11885,8 @@ $_verify_all_groups$
               WHERE contype = 'f'                                         -- FK constraints only
                 AND (r.rel_group IS NOT NULL OR rf.rel_group IS NOT NULL) -- at least the table or the referenced table belongs to
                                                                           -- a tables group
+                AND t.relkind = 'r'                                       -- only constraint linking true tables, ie. excluding
+                AND tf.relkind = 'r'                                      --   partitionned tables
            )
            SELECT tbl_schema, tbl_name,
                   'Warning: In the group "' || tbl_group || '", the foreign key "' || conname ||
