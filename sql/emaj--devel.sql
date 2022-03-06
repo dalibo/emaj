@@ -8273,6 +8273,8 @@ $_rlbk_planning$
               WHERE rlbp_rlbk_id = p_rlbkId                               -- The RLBK_TABLE steps for this rollback operation
                 AND rlbp_step = 'RLBK_TABLE'
                 AND contype = 'f'                                         -- FK constraints
+                AND tf.relkind = 'r'                                      -- only constraints referencing true tables, ie. excluding
+                                                                          --   partitionned tables
                 AND t.relname = rlbp_table
                 AND n.nspname = rlbp_schema
           UNION
@@ -8290,6 +8292,8 @@ $_rlbk_planning$
               WHERE rlbp_rlbk_id = p_rlbkId                               -- The RLBK_TABLE steps for this rollback operation
                 AND rlbp_step = 'RLBK_TABLE'
                 AND contype = 'f'                                         -- FK constraints
+                AND t.relkind = 'r'                                       -- only constraints referenced by true tables, ie. excluding
+                                                                          --   partitionned tables
                 AND tf.relname = rlbp_table
                 AND nf.nspname = rlbp_schema
         ), fkeys_agg AS (

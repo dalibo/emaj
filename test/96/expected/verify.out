@@ -21,11 +21,12 @@ select emaj.emaj_disable_protection_by_event_triggers();
 -----------------------------
 -- should be OK
 select * from emaj.emaj_verify_all();
-                                                                emaj_verify_all                                                                
------------------------------------------------------------------------------------------------------------------------------------------------
+                                                                                   emaj_verify_all                                                                                   
+-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+ Warning: In the group "myGroup4", the foreign key "mytblr_col2_fkey" on the table "myschema4"."mytblr" references the table "myschema4"."mytblp" that does not belong to any group.
  Warning: Some E-Maj event triggers exist but are disabled. You may enable them using the emaj_enable_protection_by_event_triggers() function.
  No error detected
-(2 rows)
+(3 rows)
 
 --
 -- log schemas content errors tests
@@ -509,11 +510,12 @@ PL/pgSQL function emaj.emaj_stop_group(text,text) line 10 at RETURN
 
 -- and everything is clean...
   select * from emaj.emaj_verify_all();
-                                                                emaj_verify_all                                                                
------------------------------------------------------------------------------------------------------------------------------------------------
+                                                                                   emaj_verify_all                                                                                   
+-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+ Warning: In the group "myGroup4", the foreign key "mytblr_col2_fkey" on the table "myschema4"."mytblr" references the table "myschema4"."mytblp" that does not belong to any group.
  Warning: Some E-Maj event triggers exist but are disabled. You may enable them using the emaj_enable_protection_by_event_triggers() function.
  No error detected
-(2 rows)
+(3 rows)
 
 rollback;
 -- cases when a log trigger on an application table is dropped
@@ -564,11 +566,12 @@ PL/pgSQL function emaj.emaj_import_groups_configuration(json,text[],boolean,text
 
 -- and everything is clean...
   select * from emaj.emaj_verify_all();
-                                                                emaj_verify_all                                                                
------------------------------------------------------------------------------------------------------------------------------------------------
+                                                                                   emaj_verify_all                                                                                   
+-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+ Warning: In the group "myGroup4", the foreign key "mytblr_col2_fkey" on the table "myschema4"."mytblr" references the table "myschema4"."mytblp" that does not belong to any group.
  Warning: Some E-Maj event triggers exist but are disabled. You may enable them using the emaj_enable_protection_by_event_triggers() function.
  No error detected
-(2 rows)
+(3 rows)
 
 rollback;
 -- cases when a truncate trigger on an application table is dropped
@@ -596,11 +599,12 @@ PL/pgSQL function emaj.emaj_stop_group(text,text) line 10 at RETURN
 
 -- and everything is clean...
   select * from emaj.emaj_verify_all();
-                                                                emaj_verify_all                                                                
------------------------------------------------------------------------------------------------------------------------------------------------
+                                                                                   emaj_verify_all                                                                                   
+-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+ Warning: In the group "myGroup4", the foreign key "mytblr_col2_fkey" on the table "myschema4"."mytblr" references the table "myschema4"."mytblp" that does not belong to any group.
  Warning: Some E-Maj event triggers exist but are disabled. You may enable them using the emaj_enable_protection_by_event_triggers() function.
  No error detected
-(2 rows)
+(3 rows)
 
 rollback;
 -- cases when a log sequence is dropped
@@ -694,11 +698,12 @@ PL/pgSQL function emaj.emaj_remove_table(text,text,text) line 6 at RETURN
 
 -- and everything is clean...
   select * from emaj.emaj_verify_all();
-                                                                emaj_verify_all                                                                
------------------------------------------------------------------------------------------------------------------------------------------------
+                                                                                   emaj_verify_all                                                                                   
+-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+ Warning: In the group "myGroup4", the foreign key "mytblr_col2_fkey" on the table "myschema4"."mytblr" references the table "myschema4"."mytblp" that does not belong to any group.
  Warning: Some E-Maj event triggers exist but are disabled. You may enable them using the emaj_enable_protection_by_event_triggers() function.
  No error detected
-(2 rows)
+(3 rows)
 
 rollback;
 -- cases when an application sequence is dropped
@@ -714,11 +719,12 @@ begin;
 
 -- and everything is clean...
   select * from emaj.emaj_verify_all();
-                                                                emaj_verify_all                                                                
------------------------------------------------------------------------------------------------------------------------------------------------
+                                                                                   emaj_verify_all                                                                                   
+-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+ Warning: In the group "myGroup4", the foreign key "mytblr_col2_fkey" on the table "myschema4"."mytblr" references the table "myschema4"."mytblp" that does not belong to any group.
  Warning: Some E-Maj event triggers exist but are disabled. You may enable them using the emaj_enable_protection_by_event_triggers() function.
  No error detected
-(2 rows)
+(3 rows)
 
 rollback;
 -- cases when an application schema is dropped
@@ -755,11 +761,12 @@ WARNING:  _stop_groups: The table "myschema2.mytbl8" does not exist any more.
 
 -- and everything is clean...
   select * from emaj.emaj_verify_all();
-                                                                emaj_verify_all                                                                
------------------------------------------------------------------------------------------------------------------------------------------------
+                                                                                   emaj_verify_all                                                                                   
+-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+ Warning: In the group "myGroup4", the foreign key "mytblr_col2_fkey" on the table "myschema4"."mytblr" references the table "myschema4"."mytblp" that does not belong to any group.
  Warning: Some E-Maj event triggers exist but are disabled. You may enable them using the emaj_enable_protection_by_event_triggers() function.
  No error detected
-(2 rows)
+(3 rows)
 
 rollback;
 -- cases when non E-Maj related objects are stored in emaj log schemas
@@ -783,11 +790,12 @@ PL/pgSQL function emaj.emaj_drop_group(text) line 14 at SQL statement
   rollback to savepoint sp1;
 -- use emaj_verify_all() to understand the problem
   select * from emaj.emaj_verify_all();
-                                                                emaj_verify_all                                                                
------------------------------------------------------------------------------------------------------------------------------------------------
+                                                                                   emaj_verify_all                                                                                   
+-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
  Error: In the schema "emaj_myschema1", the sequence "emaj_myschema1"."dummyseq" is not linked to any created tables group.
+ Warning: In the group "myGroup4", the foreign key "mytblr_col2_fkey" on the table "myschema4"."mytblr" references the table "myschema4"."mytblp" that does not belong to any group.
  Warning: Some E-Maj event triggers exist but are disabled. You may enable them using the emaj_enable_protection_by_event_triggers() function.
-(2 rows)
+(3 rows)
 
 -- use emaj_force_drop_group to solve the problem
   select emaj.emaj_force_drop_group('myGroup1');
@@ -798,11 +806,12 @@ PL/pgSQL function emaj.emaj_drop_group(text) line 14 at SQL statement
 
 -- and everything is clean...
   select * from emaj.emaj_verify_all();
-                                                                emaj_verify_all                                                                
------------------------------------------------------------------------------------------------------------------------------------------------
+                                                                                   emaj_verify_all                                                                                   
+-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+ Warning: In the group "myGroup4", the foreign key "mytblr_col2_fkey" on the table "myschema4"."mytblr" references the table "myschema4"."mytblp" that does not belong to any group.
  Warning: Some E-Maj event triggers exist but are disabled. You may enable them using the emaj_enable_protection_by_event_triggers() function.
  No error detected
-(2 rows)
+(3 rows)
 
 rollback;
 -----------------------------
@@ -927,11 +936,12 @@ rollback;
 begin;
   drop event trigger emaj_protection_trg;
   select emaj.emaj_verify_all();
-                                                                      emaj_verify_all                                                                      
------------------------------------------------------------------------------------------------------------------------------------------------------------
+                                                                                   emaj_verify_all                                                                                   
+-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+ Warning: In the group "myGroup4", the foreign key "mytblr_col2_fkey" on the table "myschema4"."mytblr" references the table "myschema4"."mytblp" that does not belong to any group.
  Warning: Some E-Maj event triggers are missing. Your database administrator may (re)create them using the emaj_upgrade_after_postgres_upgrade.sql script.
  No error detected
-(2 rows)
+(3 rows)
 
 rollback;
 -- a non emaj user should be able to create, alter and drop a table without being disturbed by E-Maj event triggers

@@ -13,6 +13,8 @@ E-Maj - Change log
   * Fix warnings reported by emaj_verify_all() or at set mark time when
     foreign keys are created on parent tables whose partitions belong to
     tables groups.
+  * Fix rollback operations when a foreing key references a partitionned table
+    (instead of separate foreign keys referencing each elementary partitions).
 
 4.0.0 (2021-May-29)
 ------

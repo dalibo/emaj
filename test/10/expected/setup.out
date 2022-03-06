@@ -254,14 +254,35 @@ CREATE TABLE IF NOT EXISTS myTblP (
   col2       TEXT,
   col3       SERIAL
 );
-DROP TABLE IF EXISTS myPartP1 ;
-CREATE TABLE myPartP1 PARTITION OF myTblP (PRIMARY KEY (col1)) FOR VALUES FROM (MINVALUE) TO (0);
+-- add a global PK (will fail with PG10 & PG11)
+ALTER TABLE myTblP ADD PRIMARY KEY (col1);
+ERROR:  primary key constraints are not supported on partitioned tables
+LINE 1: ALTER TABLE myTblP ADD PRIMARY KEY (col1);
+                               ^
+DROP TABLE IF EXISTS myPartP1;
+CREATE TABLE myPartP1 PARTITION OF myTblP FOR VALUES FROM (MINVALUE) TO (0);
 -- create the table with PG 9.6- so that next scripts do not abort
-CREATE TABLE IF NOT EXISTS myPartP1 (PRIMARY KEY (col1)) INHERITS (myTblP);
-DROP TABLE IF EXISTS myPartP2 ;
-CREATE TABLE myPartP2 PARTITION OF myTblP (PRIMARY KEY (col1)) FOR VALUES FROM (0) TO (9);
+CREATE TABLE IF NOT EXISTS myPartP1 () INHERITS (myTblP);
+-- add a PK (will fail with PG10+ because of the global PK)
+ALTER TABLE myPartP1 ADD PRIMARY KEY (col1);
+DROP TABLE IF EXISTS myPartP2;
+CREATE TABLE myPartP2 PARTITION OF myTblP FOR VALUES FROM (0) TO (9);
 -- create the table with PG 9.6- so that next scripts do not abort
-CREATE TABLE IF NOT EXISTS myPartP2 (PRIMARY KEY (col1)) INHERITS (myTblP);
+CREATE TABLE IF NOT EXISTS myPartP2 () INHERITS (myTblP);
+-- add a PK (will fail with PG10+ because of the global PK)
+ALTER TABLE myPartP2 ADD PRIMARY KEY (col1);
+DROP TABLE IF EXISTS myTblR ;
+CREATE TABLE myTblR (
+  col1       SERIAL           NOT NULL PRIMARY KEY,
+  col2       INT,
+  col3       TEXT
+);
+-- add a global FK (will fail with PG10 & PG11)
+ALTER TABLE myTblR ADD FOREIGN KEY (col2) REFERENCES myTblP(col1)
+DEFERRABLE INITIALLY DEFERRED
+--DEFERRABLE INITIALLY IMMEDIATE
+;
+ERROR:  cannot reference partitioned table "mytblp"
 --
 -- fifth schema (for tables unsupported in rollbackable tables groups)
 --

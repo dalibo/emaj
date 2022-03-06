@@ -3540,37 +3540,38 @@ select * from emaj.emaj_rel_hist order by 1,2,3;
  myschema2      | mytbl7            | [9510,9512)     | myGroup2         | r
  myschema2      | mytbl8            | [2000,8002)     | myGroup2         | r
  myschema2      | mytbl8            | [8008,9000)     | myGroup2         | r
- myschema4      | mypartp1          | [1023,8005)     | myGroup4         | r
+ myschema4      | mypartp1          | [1027,8005)     | myGroup4         | r
  myschema4      | mypartp1          | [8008,10027)    | myGroup4         | r
  myschema4      | mypartp1          | [10027,10029)   | myGroup1         | r
  myschema4      | mypartp1          | [10029,10031)   | myGroup2         | r
  myschema4      | mypartp1          | [10031,10045)   | myGroup4         | r
- myschema4      | mypartp2          | [1023,8005)     | myGroup4         | r
+ myschema4      | mypartp2          | [1027,8005)     | myGroup4         | r
  myschema4      | mypartp2          | [8008,10027)    | myGroup4         | r
  myschema4      | mypartp2          | [10027,10029)   | myGroup1         | r
  myschema4      | mypartp2          | [10029,10031)   | myGroup2         | r
  myschema4      | mypartp2          | [10031,10045)   | myGroup4         | r
- myschema4      | mytblc1           | [1023,8005)     | myGroup4         | r
+ myschema4      | mytblc1           | [1027,8005)     | myGroup4         | r
  myschema4      | mytblc1           | [8008,10027)    | myGroup4         | r
  myschema4      | mytblc1           | [10027,10029)   | myGroup1         | r
  myschema4      | mytblc1           | [10029,10031)   | myGroup2         | r
  myschema4      | mytblc1           | [10031,10045)   | myGroup4         | r
- myschema4      | mytblc2           | [1023,8005)     | myGroup4         | r
+ myschema4      | mytblc2           | [1027,8005)     | myGroup4         | r
  myschema4      | mytblc2           | [8008,10027)    | myGroup4         | r
  myschema4      | mytblc2           | [10027,10029)   | myGroup1         | r
  myschema4      | mytblc2           | [10029,10031)   | myGroup2         | r
  myschema4      | mytblc2           | [10031,10045)   | myGroup4         | r
- myschema4      | mytblm            | [1023,8005)     | myGroup4         | r
+ myschema4      | mytblm            | [1027,8005)     | myGroup4         | r
  myschema4      | mytblm            | [8008,10027)    | myGroup4         | r
  myschema4      | mytblm            | [10027,10029)   | myGroup1         | r
  myschema4      | mytblm            | [10029,10031)   | myGroup2         | r
  myschema4      | mytblm            | [10031,10045)   | myGroup4         | r
- phil's schema3 | myTbl2\           | [1019,8004)     | phil's group#3", | r
- phil's schema3 | myTbl2\_col21_seq | [1028,8004)     | phil's group#3", | S
- phil's schema3 | phil's seq\1      | [1028,8004)     | phil's group#3", | S
- phil's schema3 | phil's tbl1       | [1019,8004)     | phil's group#3", | r
+ myschema4      | mytblr            | [4046,8005)     | myGroup4         | r
+ phil's schema3 | myTbl2\           | [1021,8004)     | phil's group#3", | r
+ phil's schema3 | myTbl2\_col21_seq | [1032,8004)     | phil's group#3", | S
+ phil's schema3 | phil's seq\1      | [1032,8004)     | phil's group#3", | S
+ phil's schema3 | phil's tbl1       | [1021,8004)     | phil's group#3", | r
  public         | mytbl1_new_name   | [10038,10039)   | myGroup1         | r
-(118 rows)
+(119 rows)
 
 truncate emaj.emaj_hist;
 -- remove the temp directory

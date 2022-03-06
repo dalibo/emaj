@@ -87,9 +87,11 @@ update mySchema4.myTblP set col1 = 2 where col1 = 1;
 
 -- create a new partition and add it into the group ; in passing also add the sequence linked to the serial column of the mother table
 reset role;
-CREATE TABLE mySchema4.myPartP3 PARTITION OF mySchema4.myTblP (PRIMARY KEY (col1)) FOR VALUES FROM (10) TO (19);
+CREATE TABLE mySchema4.myPartP3 PARTITION OF mySchema4.myTblP FOR VALUES FROM (10) TO (19);
 -- create the table with PG 9.6- so that next scripts do not abort
-CREATE TABLE IF NOT EXISTS mySchema4.myPartP3 (PRIMARY KEY (col1)) INHERITS (mySchema4.myTblP);
+CREATE TABLE IF NOT EXISTS mySchema4.myPartP3 () INHERITS (mySchema4.myTblP);
+-- add a PK (will fail with PG12+ because of the global PK)
+ALTER TABLE mySchema4.myPartP3 ADD PRIMARY KEY (col1);
 grant all on mySchema4.myPartP3 to emaj_regression_tests_adm_user1, emaj_regression_tests_adm_user2;
 
 set role emaj_regression_tests_adm_user1;
@@ -102,7 +104,7 @@ select emaj.emaj_remove_table('myschema4','mypartp1','Remove partition 1');
 select emaj.emaj_remove_sequence('myschema4','mytblp_col3_seq','Remove partition 1_seq');
 
 reset role;
-drop table mySchema4.myPartP1;
+drop table mySchema4.myPartP1 cascade;
 set role emaj_regression_tests_adm_user2;
 
 -- verify that emaj_adm has the proper grants to delete old marks leading to an old log table drop

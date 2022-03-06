@@ -1943,10 +1943,19 @@ select * from emaj.emaj_logged_rollback_group('emptyGroup','EGM3');
 -----------------------------
 -- test use of partitionned tables
 -----------------------------
+select emaj.emaj_assign_table('myschema4', 'mytblr','myGroup4');
+NOTICE:  table "mytblr_log" does not exist, skipping
+NOTICE:  trigger "emaj_log_trg" for relation "myschema4.mytblr" does not exist, skipping
+NOTICE:  trigger "emaj_trunc_trg" for relation "myschema4.mytblr" does not exist, skipping
+ emaj_assign_table 
+-------------------
+                 1
+(1 row)
+
 select emaj.emaj_start_group('myGroup4','myGroup4_start');
  emaj_start_group 
 ------------------
-                5
+                6
 (1 row)
 
 insert into myschema4.myTblM values ('2001-09-11',0,'abc'),('2011-09-11',10,'def'),('2021-09-11',20,'ghi');
@@ -1954,15 +1963,16 @@ insert into myschema4.myTblP values (-1,'abc'),(0,'def'),(1,'ghi');
 select emaj.emaj_set_mark_group('myGroup4','mark1');
  emaj_set_mark_group 
 ---------------------
-                   5
+                   6
 (1 row)
 
 truncate myschema4.myTblM;
 update myschema4.myTblP set col2 = 'DEF' where col1 = 0;
+insert into myschema4.mytblr (col2,col3) values (1, 'abc');
 select * from emaj.emaj_logged_rollback_group('myGroup4','mark1');
  rlbk_severity |            rlbk_message             
 ---------------+-------------------------------------
- Notice        | 4 / 5 tables effectively processed.
+ Notice        | 5 / 6 tables effectively processed.
 (1 row)
 
 select col1, col2, col3, emaj_verb, emaj_tuple, emaj_gid from emaj_myschema4.mytblm_log;
@@ -1971,7 +1981,7 @@ select col1, col2, col3, emaj_verb, emaj_tuple, emaj_gid from emaj_myschema4.myt
  09-11-2021 |   20 | ghi  | INS       | NEW        |  4000097
             |      |      | TRU       |            |  4000101
  09-11-2021 |   20 | ghi  | TRU       | OLD        |  4000102
- 09-11-2021 |   20 | ghi  | INS       | NEW        |  4000112
+ 09-11-2021 |   20 | ghi  | INS       | NEW        |  4000113
 (4 rows)
 
 select col1, col2, col3, emaj_verb, emaj_tuple, emaj_gid from emaj_myschema4.mytblc1_log;
@@ -1980,7 +1990,7 @@ select col1, col2, col3, emaj_verb, emaj_tuple, emaj_gid from emaj_myschema4.myt
  09-11-2001 |    0 | abc  | INS       | NEW        |  4000095
             |      |      | TRU       |            |  4000103
  09-11-2001 |    0 | abc  | TRU       | OLD        |  4000104
- 09-11-2001 |    0 | abc  | INS       | NEW        |  4000110
+ 09-11-2001 |    0 | abc  | INS       | NEW        |  4000111
 (4 rows)
 
 select col1, col2, col3, emaj_verb, emaj_tuple, emaj_gid from emaj_myschema4.mytblc2_log;
@@ -1989,7 +1999,7 @@ select col1, col2, col3, emaj_verb, emaj_tuple, emaj_gid from emaj_myschema4.myt
  09-11-2011 |   10 | def  | INS       | NEW        |  4000096
             |      |      | TRU       |            |  4000105
  09-11-2011 |   10 | def  | TRU       | OLD        |  4000106
- 09-11-2011 |   10 | def  | INS       | NEW        |  4000111
+ 09-11-2011 |   10 | def  | INS       | NEW        |  4000112
 (4 rows)
 
 select col1, col2, emaj_verb, emaj_tuple, emaj_gid from emaj_myschema4.mypartp1_log;          -- empty in pg 9.6-
@@ -2005,8 +2015,8 @@ select col1, col2, emaj_verb, emaj_tuple, emaj_gid from emaj_myschema4.mypartp2_
     1 | ghi  | INS       | NEW        |  4000100
     0 | def  | UPD       | OLD        |  4000107
     0 | DEF  | UPD       | NEW        |  4000107
-    0 | DEF  | DEL       | OLD        |  4000108
-    0 | def  | INS       | NEW        |  4000109
+    0 | DEF  | DEL       | OLD        |  4000109
+    0 | def  | INS       | NEW        |  4000110
 (6 rows)
 
 -- use the functions dedicated to emaj_web
@@ -2014,7 +2024,7 @@ select col1, col2, emaj_verb, emaj_tuple, emaj_gid from emaj_myschema4.mypartp2_
 select * from emaj._rlbk_async(emaj._rlbk_init(array['myGroup4'], 'myGroup4_start', false, 1, false, true), false);
  rlbk_severity |            rlbk_message             
 ---------------+-------------------------------------
- Notice        | 5 / 5 tables effectively processed.
+ Notice        | 6 / 6 tables effectively processed.
 (1 row)
 
 -- and check the result
@@ -2024,7 +2034,7 @@ select rlbk_id, rlbk_groups, rlbk_mark, rlbk_mark_time_id, rlbk_time_id, rlbk_is
  from emaj.emaj_rlbk order by rlbk_id desc limit 1;
  rlbk_id | rlbk_groups |   rlbk_mark    | rlbk_mark_time_id | rlbk_time_id | rlbk_is_logged | rlbk_is_alter_group_allowed | rlbk_nb_session | rlbk_nb_table | rlbk_nb_sequence | rlbk_eff_nb_table | rlbk_status | rlbk_begin_hist_id | rlbk_dblink_schema | rlbk_is_dblink_used |                  rlbk_messages                  
 ---------+-------------+----------------+-------------------+--------------+----------------+-----------------------------+-----------------+---------------+------------------+-------------------+-------------+--------------------+--------------------+---------------------+-------------------------------------------------
-    4017 | {myGroup4}  | myGroup4_start |              4046 |         4050 | f              | t                           |               1 |             5 |                0 |                 5 | COMPLETED   |               4380 | public             | t                   | {"Notice: 5 / 5 tables effectively processed."}
+    4017 | {myGroup4}  | myGroup4_start |              4047 |         4051 | f              | t                           |               1 |             6 |                0 |                 6 | COMPLETED   |               4385 | public             | t                   | {"Notice: 6 / 6 tables effectively processed."}
 (1 row)
 
 -----------------------------
@@ -2321,8 +2331,8 @@ select cons_group, cons_target_rlbk_mark_name, cons_target_rlbk_mark_time_id,
  cons_group | cons_target_rlbk_mark_name | cons_target_rlbk_mark_time_id |    regexp_replace    | cons_end_rlbk_mark_time_id | cons_rows | cons_marks 
 ------------+----------------------------+-------------------------------+----------------------+----------------------------+-----------+------------
  emptyGroup | EGM3                       |                          3400 | RLBK_EGM3_%_DONE     |                       4045 |         0 |          2
- myGroup1   | Conso_M1                   |                          4052 | RLBK_Conso_M1_%_DONE |                       4054 |         0 |          0
- myGroup1   | Renamed_conso_M2           |                          4055 | Renamed_last_mark    |                       4058 |        32 |          2
+ myGroup1   | Conso_M1                   |                          4053 | RLBK_Conso_M1_%_DONE |                       4055 |         0 |          0
+ myGroup1   | Renamed_conso_M2           |                          4056 | Renamed_last_mark    |                       4059 |        32 |          2
 (3 rows)
 
   
@@ -2338,8 +2348,8 @@ select cons_group, cons_target_rlbk_mark_name, cons_target_rlbk_mark_time_id,
  cons_group | cons_target_rlbk_mark_name | cons_target_rlbk_mark_time_id |    regexp_replace    | cons_end_rlbk_mark_time_id | cons_rows | cons_marks 
 ------------+----------------------------+-------------------------------+----------------------+----------------------------+-----------+------------
  emptyGroup | EGM3                       |                          3400 | RLBK_EGM3_%_DONE     |                       4045 |         0 |          2
- myGroup1   | Conso_M1                   |                          4052 | RLBK_Conso_M1_%_DONE |                       4054 |         0 |          0
- myGroup1   | Renamed_conso_M2           |                          4055 | Renamed_last_mark    |                       4058 |         0 |          0
+ myGroup1   | Conso_M1                   |                          4053 | RLBK_Conso_M1_%_DONE |                       4055 |         0 |          0
+ myGroup1   | Renamed_conso_M2           |                          4056 | Renamed_last_mark    |                       4059 |         0 |          0
 (3 rows)
 
 -- consolidate a rollback already consolidated
@@ -2355,11 +2365,11 @@ select mark_group, regexp_replace(mark_name,E'\\d\\d\.\\d\\d\\.\\d\\d\\.\\d\\d\\
  myGroup1   | Mark11               |         4035 | f               | f                      |              |                        19 | 
  myGroup1   | Mark12               |         4036 | f               | f                      |              |                        11 | 
  myGroup1   | Mark13               |         4037 | f               | f                      |              |                         0 | 
- myGroup1   | MODIFY_%             |         4051 | f               | f                      |              |                         0 | 
- myGroup1   | Conso_M1             |         4052 | f               | f                      |              |                         0 | 
- myGroup1   | RLBK_Conso_M1_%_DONE |         4054 | f               | f                      |              |                         0 | Conso_M1
- myGroup1   | Renamed_conso_M2     |         4055 | f               | f                      |              |                         0 | 
- myGroup1   | Renamed_last_mark    |         4058 | f               | f                      |              |                           | Renamed_conso_M2
+ myGroup1   | MODIFY_%             |         4052 | f               | f                      |              |                         0 | 
+ myGroup1   | Conso_M1             |         4053 | f               | f                      |              |                         0 | 
+ myGroup1   | RLBK_Conso_M1_%_DONE |         4055 | f               | f                      |              |                         0 | Conso_M1
+ myGroup1   | Renamed_conso_M2     |         4056 | f               | f                      |              |                         0 | 
+ myGroup1   | Renamed_last_mark    |         4059 | f               | f                      |              |                           | Renamed_conso_M2
 (8 rows)
 
 select sequ_schema, sequ_name, sequ_time_id, sequ_last_val, sequ_is_called from emaj.emaj_sequence where sequ_schema = 'emaj_myschema1' order by sequ_time_id, sequ_schema, sequ_name;
@@ -2395,48 +2405,49 @@ select tbl_schema, tbl_name, tbl_time_id, tbl_log_seq_last_val from emaj.emaj_ta
  myschema1      | mytbl2      |        4037 |                    8
  myschema1      | mytbl2b     |        4037 |                    8
  myschema1      | mytbl4      |        4037 |                    3
- myschema4      | mypartp1    |        4046 |                    0
- myschema4      | mypartp2    |        4046 |                    0
- myschema4      | mytblc1     |        4046 |                    0
- myschema4      | mytblc2     |        4046 |                    0
- myschema4      | mytblm      |        4046 |                    0
- myschema1      | myTbl3      |        4051 |                   30
- myschema1      | mytbl1      |        4051 |                   40
- myschema1      | mytbl2      |        4051 |                   10
- myschema1      | mytbl2b     |        4051 |                   10
- myschema1      | mytbl4      |        4051 |                    4
+ myschema4      | mypartp1    |        4047 |                    0
+ myschema4      | mypartp2    |        4047 |                    0
+ myschema4      | mytblc1     |        4047 |                    0
+ myschema4      | mytblc2     |        4047 |                    0
+ myschema4      | mytblm      |        4047 |                    0
+ myschema4      | mytblr      |        4047 |                    0
  myschema1      | myTbl3      |        4052 |                   30
  myschema1      | mytbl1      |        4052 |                   40
  myschema1      | mytbl2      |        4052 |                   10
  myschema1      | mytbl2b     |        4052 |                   10
  myschema1      | mytbl4      |        4052 |                    4
- myschema1      | myTbl3      |        4054 |                   30
- myschema1      | mytbl1      |        4054 |                   40
- myschema1      | mytbl2      |        4054 |                   10
- myschema1      | mytbl2b     |        4054 |                   10
- myschema1      | mytbl4      |        4054 |                    4
+ myschema1      | myTbl3      |        4053 |                   30
+ myschema1      | mytbl1      |        4053 |                   40
+ myschema1      | mytbl2      |        4053 |                   10
+ myschema1      | mytbl2b     |        4053 |                   10
+ myschema1      | mytbl4      |        4053 |                    4
  myschema1      | myTbl3      |        4055 |                   30
  myschema1      | mytbl1      |        4055 |                   40
  myschema1      | mytbl2      |        4055 |                   10
  myschema1      | mytbl2b     |        4055 |                   10
  myschema1      | mytbl4      |        4055 |                    4
- myschema1      | myTbl3      |        4058 |                   30
- myschema1      | mytbl1      |        4058 |                   64
- myschema1      | mytbl2      |        4058 |                   13
- myschema1      | mytbl2b     |        4058 |                   15
- myschema1      | mytbl4      |        4058 |                    4
-(55 rows)
+ myschema1      | myTbl3      |        4056 |                   30
+ myschema1      | mytbl1      |        4056 |                   40
+ myschema1      | mytbl2      |        4056 |                   10
+ myschema1      | mytbl2b     |        4056 |                   10
+ myschema1      | mytbl4      |        4056 |                    4
+ myschema1      | myTbl3      |        4059 |                   30
+ myschema1      | mytbl1      |        4059 |                   64
+ myschema1      | mytbl2      |        4059 |                   13
+ myschema1      | mytbl2b     |        4059 |                   15
+ myschema1      | mytbl4      |        4059 |                    4
+(56 rows)
 
 select sqhl_schema, sqhl_table, sqhl_begin_time_id, sqhl_end_time_id, sqhl_hole_size from emaj.emaj_seq_hole where sqhl_schema = 'myschema1' order by 1,2,3;
  sqhl_schema | sqhl_table | sqhl_begin_time_id | sqhl_end_time_id | sqhl_hole_size 
 -------------+------------+--------------------+------------------+----------------
  myschema1   | myTbl3     |               4037 |             4042 |             10
  myschema1   | mytbl1     |               4037 |             4042 |             10
- myschema1   | mytbl1     |               4055 |             4058 |             24
+ myschema1   | mytbl1     |               4056 |             4059 |             24
  myschema1   | mytbl2     |               4037 |             4042 |              2
- myschema1   | mytbl2     |               4055 |             4058 |              3
+ myschema1   | mytbl2     |               4056 |             4059 |              3
  myschema1   | mytbl2b    |               4037 |             4042 |              2
- myschema1   | mytbl2b    |               4055 |             4058 |              5
+ myschema1   | mytbl2b    |               4056 |             4059 |              5
  myschema1   | mytbl4     |               4037 |             4042 |              1
 (8 rows)
 
@@ -2485,7 +2496,7 @@ begin;
  emptyGroup | SM2           |         3006 | t               | f                      | a comment on a mark for an empty group |                         0 | Mark1
  emptyGroup | EGM3          |         3400 | t               | f                      |                                        |                         0 | 
  emptyGroup | end_rlbk_mark |         4045 | t               | f                      |                                        |                         0 | EGM3
- emptyGroup | stop          |         4061 | t               | f                      |                                        |                         0 | 
+ emptyGroup | stop          |         4062 | t               | f                      |                                        |                         0 | 
 (4 rows)
 
 rollback;
@@ -2519,14 +2530,15 @@ begin;
  myschema2      | mytbl6      |        4029 |                    0
  myschema2      | mytbl7      |        4029 |                    0
  myschema2      | mytbl8      |        4029 |                    0
- myschema4      | mypartp1    |        4046 |                    0
- myschema4      | mypartp2    |        4046 |                    0
- myschema4      | mytblc1     |        4046 |                    0
- myschema4      | mytblc2     |        4046 |                    0
- myschema4      | mytblm      |        4046 |                    0
+ myschema4      | mypartp1    |        4047 |                    0
+ myschema4      | mypartp2    |        4047 |                    0
+ myschema4      | mytblc1     |        4047 |                    0
+ myschema4      | mytblc2     |        4047 |                    0
+ myschema4      | mytblm      |        4047 |                    0
+ myschema4      | mytblr      |        4047 |                    0
  phil's schema3 | myTbl2\     |        3402 |                    0
  phil's schema3 | phil's tbl1 |        3402 |                    0
-(15 rows)
+(16 rows)
 
   select sqhl_schema, sqhl_table, sqhl_begin_time_id, sqhl_end_time_id, sqhl_hole_size from emaj.emaj_seq_hole where sqhl_schema = 'myschema1' order by 1,2,3;
  sqhl_schema | sqhl_table | sqhl_begin_time_id | sqhl_end_time_id | sqhl_hole_size 
@@ -2542,7 +2554,7 @@ begin;
   select * from emaj.emaj_rollback_group('myGroup4','myGroup4_start');
  rlbk_severity |            rlbk_message             
 ---------------+-------------------------------------
- Notice        | 0 / 5 tables effectively processed.
+ Notice        | 0 / 6 tables effectively processed.
 (1 row)
 
 rollback;
@@ -2550,7 +2562,7 @@ select rlbk_id, rlbk_status, rlbk_begin_hist_id, rlbk_nb_session from emaj.emaj_
   where rlbk_status in ('PLANNING', 'LOCKING', 'EXECUTING', 'COMPLETED') order by rlbk_id;
  rlbk_id | rlbk_status | rlbk_begin_hist_id | rlbk_nb_session 
 ---------+-------------+--------------------+-----------------
-    4021 | COMPLETED   |               4513 |               1
+    4021 | COMPLETED   |               4520 |               1
 (1 row)
 
 select emaj.emaj_cleanup_rollback_state();
@@ -2594,12 +2606,12 @@ select rlbk_id, rlbk_groups, rlbk_mark, rlbk_time_id, rlbk_is_logged, rlbk_is_al
     4013 | {myGroup1}          | Mark13         |         4042 | f              | f                           |               1 |             5 |                2 |                 5 | COMMITTED   |               4305 | public             | t                   | [ts]         | {"Notice: 5 / 5 tables effectively processed.","Notice: 2 sequences processed."}
     4014 | {emptyGroup}        | EGM4           |         4043 | f              | f                           |               1 |             0 |                0 |                 0 | COMMITTED   |               4329 | public             | t                   | [ts]         | {"Notice: 0 / 0 tables effectively processed."}
     4015 | {emptyGroup}        | EGM3           |         4044 | t              | f                           |               1 |             0 |                0 |                 0 | COMMITTED   |               4336 | public             | t                   | [ts]         | {"Notice: 0 / 0 tables effectively processed."}
-    4016 | {myGroup4}          | mark1          |         4048 | t              | f                           |               1 |             5 |                0 |                 4 | COMMITTED   |               4361 | public             | t                   | [ts]         | {"Notice: 4 / 5 tables effectively processed."}
-    4017 | {myGroup4}          | myGroup4_start |         4050 | f              | t                           |               1 |             5 |                0 |                 5 | COMMITTED   |               4380 | public             | t                   | [ts]         | {"Notice: 5 / 5 tables effectively processed."}
-    4018 | {myGroup1}          | Conso_M1       |         4053 | t              | f                           |               1 |             5 |                2 |                 0 | COMMITTED   |               4415 | public             | t                   | [ts]         | {"Notice: 0 / 5 tables effectively processed.","Notice: 2 sequences processed."}
-    4019 | {myGroup1}          | Conso_M2       |         4057 | t              | f                           |               1 |             5 |                2 |                 3 | COMMITTED   |               4440 | public             | t                   | [ts]         | {"Notice: 3 / 5 tables effectively processed.","Notice: 2 sequences processed."}
-    4020 | {myGroup1}          | Conso_M1       |         4059 | f              | f                           |               1 |             5 |                2 |                 2 | COMMITTED   |               4468 | public             | t                   | [ts]         | {"Notice: 2 / 5 tables effectively processed.","Notice: 2 sequences processed."}
-    4021 | {myGroup4}          | myGroup4_start |         4064 | f              | f                           |               1 |             5 |                0 |                 0 | ABORTED     |               4513 | public             | t                   | [ts]         | {"Notice: 0 / 5 tables effectively processed."}
+    4016 | {myGroup4}          | mark1          |         4049 | t              | f                           |               1 |             6 |                0 |                 5 | COMMITTED   |               4364 | public             | t                   | [ts]         | {"Notice: 5 / 6 tables effectively processed."}
+    4017 | {myGroup4}          | myGroup4_start |         4051 | f              | t                           |               1 |             6 |                0 |                 6 | COMMITTED   |               4385 | public             | t                   | [ts]         | {"Notice: 6 / 6 tables effectively processed."}
+    4018 | {myGroup1}          | Conso_M1       |         4054 | t              | f                           |               1 |             5 |                2 |                 0 | COMMITTED   |               4422 | public             | t                   | [ts]         | {"Notice: 0 / 5 tables effectively processed.","Notice: 2 sequences processed."}
+    4019 | {myGroup1}          | Conso_M2       |         4058 | t              | f                           |               1 |             5 |                2 |                 3 | COMMITTED   |               4447 | public             | t                   | [ts]         | {"Notice: 3 / 5 tables effectively processed.","Notice: 2 sequences processed."}
+    4020 | {myGroup1}          | Conso_M1       |         4060 | f              | f                           |               1 |             5 |                2 |                 2 | COMMITTED   |               4475 | public             | t                   | [ts]         | {"Notice: 2 / 5 tables effectively processed.","Notice: 2 sequences processed."}
+    4021 | {myGroup4}          | myGroup4_start |         4065 | f              | f                           |               1 |             6 |                0 |                 0 | ABORTED     |               4520 | public             | t                   | [ts]         | {"Notice: 0 / 6 tables effectively processed."}
 (20 rows)
 
 select rlbs_rlbk_id, rlbs_session, 
@@ -2697,40 +2709,45 @@ select rlbp_rlbk_id, rlbp_step, rlbp_schema, rlbp_table, rlbp_object, rlbp_targe
          4013 | ENA_LOG_TRG        | myschema1   | mytbl4     |                       |                     |                 5 |            1 |                 |                   |                           |                         |                    2 |              
          4013 | CTRL+DBLINK        |             |            |                       |                     |                   |              |                 |                   |                           |                      22 |                    2 |              
          4016 | DIS_APP_TRG        | myschema4   | mytblm     | mytblm_insert_trigger |                     |                 4 |            1 |                 |                   |                           |                         |                    2 |              
-         4016 | RLBK_TABLE         | myschema4   | mypartp2   |                       |                4047 |                 1 |            1 |                 |                   | f                         |                       1 |                    3 |             1
-         4016 | RLBK_TABLE         | myschema4   | mytblc1    |                       |                4047 |                 2 |            1 |                 |                   | f                         |                       1 |                    3 |             2
-         4016 | RLBK_TABLE         | myschema4   | mytblc2    |                       |                4047 |                 3 |            1 |                 |                   | f                         |                       1 |                    3 |             2
-         4016 | RLBK_TABLE         | myschema4   | mytblm     |                       |                4047 |                 4 |            1 |                 |                   | f                         |                       1 |                    3 |             2
+         4016 | RLBK_TABLE         | myschema4   | mypartp2   |                       |                4048 |                 1 |            1 |                 |                   | t                         |                       1 |                    3 |             1
+         4016 | RLBK_TABLE         | myschema4   | mytblc1    |                       |                4048 |                 2 |            1 |                 |                   | f                         |                       1 |                    3 |             2
+         4016 | RLBK_TABLE         | myschema4   | mytblc2    |                       |                4048 |                 3 |            1 |                 |                   | f                         |                       1 |                    3 |             2
+         4016 | RLBK_TABLE         | myschema4   | mytblm     |                       |                4048 |                 4 |            1 |                 |                   | f                         |                       1 |                    3 |             2
+         4016 | RLBK_TABLE         | myschema4   | mytblr     |                       |                4048 |                 5 |            1 |                 |                   | t                         |                       1 |                    3 |             1
          4016 | ENA_APP_TRG        | myschema4   | mytblm     | mytblm_insert_trigger |                     |                 4 |            1 |                 |                   |                           |                         |                    2 |              
-         4016 | CTRL+DBLINK        |             |            |                       |                     |                   |              |                 |                   |                           |                       6 |                    2 |              
+         4016 | CTRL+DBLINK        |             |            |                       |                     |                   |              |                 |                   |                           |                       7 |                    2 |              
          4017 | DIS_APP_TRG        | myschema4   | mytblm     | mytblm_insert_trigger |                     |                 4 |            1 |                 |                   |                           |                         |                    2 |              
-         4017 | DIS_LOG_TRG        | myschema4   | mypartp1   |                       |                     |                 5 |            1 |                 |                   |                           |                         |                    2 |              
+         4017 | DIS_LOG_TRG        | myschema4   | mypartp1   |                       |                     |                 6 |            1 |                 |                   |                           |                         |                    2 |              
          4017 | DIS_LOG_TRG        | myschema4   | mypartp2   |                       |                     |                 1 |            1 |                 |                   |                           |                         |                    2 |              
          4017 | DIS_LOG_TRG        | myschema4   | mytblc1    |                       |                     |                 2 |            1 |                 |                   |                           |                         |                    2 |              
          4017 | DIS_LOG_TRG        | myschema4   | mytblc2    |                       |                     |                 3 |            1 |                 |                   |                           |                         |                    2 |              
          4017 | DIS_LOG_TRG        | myschema4   | mytblm     |                       |                     |                 4 |            1 |                 |                   |                           |                         |                    2 |              
-         4017 | RLBK_TABLE         | myschema4   | mypartp1   |                       |                4046 |                 5 |            1 |                 |                   | f                         |                       1 |                    3 |             1
-         4017 | RLBK_TABLE         | myschema4   | mypartp2   |                       |                4046 |                 1 |            1 |                 |                   | f                         |                       5 |                    1 |             2
-         4017 | RLBK_TABLE         | myschema4   | mytblc1    |                       |                4046 |                 2 |            1 |                 |                   | f                         |                       3 |                    1 |             2
-         4017 | RLBK_TABLE         | myschema4   | mytblc2    |                       |                4046 |                 3 |            1 |                 |                   | f                         |                       3 |                    1 |             2
-         4017 | RLBK_TABLE         | myschema4   | mytblm     |                       |                4046 |                 4 |            1 |                 |                   | f                         |                       3 |                    1 |             2
-         4017 | DELETE_LOG         | myschema4   | mypartp1   |                       |                4046 |                 5 |            1 |                 |                   |                           |                       1 |                    3 |             1
-         4017 | DELETE_LOG         | myschema4   | mypartp2   |                       |                4046 |                 1 |            1 |                 |                   |                           |                       5 |                    3 |             6
-         4017 | DELETE_LOG         | myschema4   | mytblc1    |                       |                4046 |                 2 |            1 |                 |                   |                           |                       3 |                    3 |             4
-         4017 | DELETE_LOG         | myschema4   | mytblc2    |                       |                4046 |                 3 |            1 |                 |                   |                           |                       3 |                    3 |             4
-         4017 | DELETE_LOG         | myschema4   | mytblm     |                       |                4046 |                 4 |            1 |                 |                   |                           |                       3 |                    3 |             4
+         4017 | DIS_LOG_TRG        | myschema4   | mytblr     |                       |                     |                 5 |            1 |                 |                   |                           |                         |                    2 |              
+         4017 | RLBK_TABLE         | myschema4   | mypartp1   |                       |                4047 |                 6 |            1 |                 |                   | t                         |                       1 |                    3 |             1
+         4017 | RLBK_TABLE         | myschema4   | mypartp2   |                       |                4047 |                 1 |            1 |                 |                   | t                         |                       5 |                    1 |             2
+         4017 | RLBK_TABLE         | myschema4   | mytblc1    |                       |                4047 |                 2 |            1 |                 |                   | f                         |                       3 |                    1 |             2
+         4017 | RLBK_TABLE         | myschema4   | mytblc2    |                       |                4047 |                 3 |            1 |                 |                   | f                         |                       3 |                    1 |             2
+         4017 | RLBK_TABLE         | myschema4   | mytblm     |                       |                4047 |                 4 |            1 |                 |                   | f                         |                       3 |                    1 |             2
+         4017 | RLBK_TABLE         | myschema4   | mytblr     |                       |                4047 |                 5 |            1 |                 |                   | t                         |                       2 |                    1 |             1
+         4017 | DELETE_LOG         | myschema4   | mypartp1   |                       |                4047 |                 6 |            1 |                 |                   |                           |                       1 |                    3 |             1
+         4017 | DELETE_LOG         | myschema4   | mypartp2   |                       |                4047 |                 1 |            1 |                 |                   |                           |                       5 |                    3 |             6
+         4017 | DELETE_LOG         | myschema4   | mytblc1    |                       |                4047 |                 2 |            1 |                 |                   |                           |                       3 |                    3 |             4
+         4017 | DELETE_LOG         | myschema4   | mytblc2    |                       |                4047 |                 3 |            1 |                 |                   |                           |                       3 |                    3 |             4
+         4017 | DELETE_LOG         | myschema4   | mytblm     |                       |                4047 |                 4 |            1 |                 |                   |                           |                       3 |                    3 |             4
+         4017 | DELETE_LOG         | myschema4   | mytblr     |                       |                4047 |                 5 |            1 |                 |                   |                           |                       2 |                    3 |             2
          4017 | ENA_APP_TRG        | myschema4   | mytblm     | mytblm_insert_trigger |                     |                 4 |            1 |                 |                   |                           |                         |                    2 |              
-         4017 | ENA_LOG_TRG        | myschema4   | mypartp1   |                       |                     |                 5 |            1 |                 |                   |                           |                         |                    2 |              
+         4017 | ENA_LOG_TRG        | myschema4   | mypartp1   |                       |                     |                 6 |            1 |                 |                   |                           |                         |                    2 |              
          4017 | ENA_LOG_TRG        | myschema4   | mypartp2   |                       |                     |                 1 |            1 |                 |                   |                           |                         |                    2 |              
          4017 | ENA_LOG_TRG        | myschema4   | mytblc1    |                       |                     |                 2 |            1 |                 |                   |                           |                         |                    2 |              
          4017 | ENA_LOG_TRG        | myschema4   | mytblc2    |                       |                     |                 3 |            1 |                 |                   |                           |                         |                    2 |              
          4017 | ENA_LOG_TRG        | myschema4   | mytblm     |                       |                     |                 4 |            1 |                 |                   |                           |                         |                    2 |              
-         4017 | CTRL+DBLINK        |             |            |                       |                     |                   |              |                 |                   |                           |                      22 |                    2 |              
+         4017 | ENA_LOG_TRG        | myschema4   | mytblr     |                       |                     |                 5 |            1 |                 |                   |                           |                         |                    2 |              
+         4017 | CTRL+DBLINK        |             |            |                       |                     |                   |              |                 |                   |                           |                      26 |                    2 |              
          4019 | SET_ALWAYS_APP_TRG | myschema1   | mytbl2     | mytbl2trg1            |                     |                 2 |            1 |                 |                   |                           |                         |                    3 |              
          4019 | SET_ALWAYS_APP_TRG | myschema1   | mytbl2     | mytbl2trg2            |                     |                 2 |            1 |                 |                   |                           |                         |                    3 |              
-         4019 | RLBK_TABLE         | myschema1   | mytbl1     |                       |                4055 |                 1 |            1 |                 |                   | t                         |                      13 |                    1 |            12
-         4019 | RLBK_TABLE         | myschema1   | mytbl2     |                       |                4055 |                 2 |            1 |                 |                   | t                         |                       2 |                    1 |             1
-         4019 | RLBK_TABLE         | myschema1   | mytbl2b    |                       |                4055 |                 3 |            1 |                 |                   | f                         |                       2 |                    1 |             2
+         4019 | RLBK_TABLE         | myschema1   | mytbl1     |                       |                4056 |                 1 |            1 |                 |                   | t                         |                      13 |                    1 |            12
+         4019 | RLBK_TABLE         | myschema1   | mytbl2     |                       |                4056 |                 2 |            1 |                 |                   | t                         |                       2 |                    1 |             1
+         4019 | RLBK_TABLE         | myschema1   | mytbl2b    |                       |                4056 |                 3 |            1 |                 |                   | f                         |                       2 |                    1 |             2
          4019 | SET_LOCAL_APP_TRG  | myschema1   | mytbl2     | mytbl2trg1            |                     |                 2 |            1 |                 |                   |                           |                         |                    3 |              
          4019 | SET_LOCAL_APP_TRG  | myschema1   | mytbl2     | mytbl2trg2            |                     |                 2 |            1 |                 |                   |                           |                         |                    3 |              
          4019 | CTRL+DBLINK        |             |            |                       |                     |                   |              |                 |                   |                           |                       7 |                    2 |              
@@ -2738,16 +2755,16 @@ select rlbp_rlbk_id, rlbp_step, rlbp_schema, rlbp_table, rlbp_object, rlbp_targe
          4020 | SET_ALWAYS_APP_TRG | myschema1   | mytbl2     | mytbl2trg2            |                     |                 1 |            1 |                 |                   |                           |                         |                    3 |              
          4020 | DIS_LOG_TRG        | myschema1   | mytbl2     |                       |                     |                 1 |            1 |                 |                   |                           |                         |                    2 |              
          4020 | DIS_LOG_TRG        | myschema1   | mytbl2b    |                       |                     |                 2 |            1 |                 |                   |                           |                         |                    2 |              
-         4020 | RLBK_TABLE         | myschema1   | mytbl2     |                       |                4052 |                 1 |            1 |                 |                   | t                         |                       1 |                    1 |             1
-         4020 | RLBK_TABLE         | myschema1   | mytbl2b    |                       |                4052 |                 2 |            1 |                 |                   | f                         |                       1 |                    1 |             1
-         4020 | DELETE_LOG         | myschema1   | mytbl2     |                       |                4052 |                 1 |            1 |                 |                   |                           |                       1 |                    1 |             1
-         4020 | DELETE_LOG         | myschema1   | mytbl2b    |                       |                4052 |                 2 |            1 |                 |                   |                           |                       1 |                    1 |             2
+         4020 | RLBK_TABLE         | myschema1   | mytbl2     |                       |                4053 |                 1 |            1 |                 |                   | t                         |                       1 |                    1 |             1
+         4020 | RLBK_TABLE         | myschema1   | mytbl2b    |                       |                4053 |                 2 |            1 |                 |                   | f                         |                       1 |                    1 |             1
+         4020 | DELETE_LOG         | myschema1   | mytbl2     |                       |                4053 |                 1 |            1 |                 |                   |                           |                       1 |                    1 |             1
+         4020 | DELETE_LOG         | myschema1   | mytbl2b    |                       |                4053 |                 2 |            1 |                 |                   |                           |                       1 |                    1 |             2
          4020 | SET_LOCAL_APP_TRG  | myschema1   | mytbl2     | mytbl2trg1            |                     |                 1 |            1 |                 |                   |                           |                         |                    3 |              
          4020 | SET_LOCAL_APP_TRG  | myschema1   | mytbl2     | mytbl2trg2            |                     |                 1 |            1 |                 |                   |                           |                         |                    3 |              
          4020 | ENA_LOG_TRG        | myschema1   | mytbl2     |                       |                     |                 1 |            1 |                 |                   |                           |                         |                    2 |              
          4020 | ENA_LOG_TRG        | myschema1   | mytbl2b    |                       |                     |                 2 |            1 |                 |                   |                           |                         |                    2 |              
          4020 | CTRL+DBLINK        |             |            |                       |                     |                   |              |                 |                   |                           |                      12 |                    2 |              
-(113 rows)
+(118 rows)
 
 select rlbt_step, rlbt_schema, rlbt_table, rlbt_object, rlbt_rlbk_id, rlbt_quantity from emaj.emaj_rlbk_stat
   order by rlbt_rlbk_id, rlbt_step, rlbt_schema, rlbt_table, rlbt_object;
@@ -2800,23 +2817,26 @@ select rlbt_step, rlbt_schema, rlbt_table, rlbt_object, rlbt_rlbk_id, rlbt_quant
  RLBK_TABLE  | myschema4   | mytblc1    |             |         4016 |             1
  RLBK_TABLE  | myschema4   | mytblc2    |             |         4016 |             1
  RLBK_TABLE  | myschema4   | mytblm     |             |         4016 |             1
+ RLBK_TABLE  | myschema4   | mytblr     |             |         4016 |             1
  ENA_APP_TRG |             |            |             |         4016 |             1
- CTRL+DBLINK |             |            |             |         4016 |             6
+ CTRL+DBLINK |             |            |             |         4016 |             7
  DIS_APP_TRG |             |            |             |         4017 |             1
- DIS_LOG_TRG |             |            |             |         4017 |             5
+ DIS_LOG_TRG |             |            |             |         4017 |             6
  RLBK_TABLE  | myschema4   | mypartp1   |             |         4017 |             1
  RLBK_TABLE  | myschema4   | mypartp2   |             |         4017 |             5
  RLBK_TABLE  | myschema4   | mytblc1    |             |         4017 |             3
  RLBK_TABLE  | myschema4   | mytblc2    |             |         4017 |             3
  RLBK_TABLE  | myschema4   | mytblm     |             |         4017 |             3
+ RLBK_TABLE  | myschema4   | mytblr     |             |         4017 |             2
  DELETE_LOG  | myschema4   | mypartp1   |             |         4017 |             1
  DELETE_LOG  | myschema4   | mypartp2   |             |         4017 |             5
  DELETE_LOG  | myschema4   | mytblc1    |             |         4017 |             3
  DELETE_LOG  | myschema4   | mytblc2    |             |         4017 |             3
  DELETE_LOG  | myschema4   | mytblm     |             |         4017 |             3
+ DELETE_LOG  | myschema4   | mytblr     |             |         4017 |             2
  ENA_APP_TRG |             |            |             |         4017 |             1
- ENA_LOG_TRG |             |            |             |         4017 |             5
- CTRL+DBLINK |             |            |             |         4017 |            22
+ ENA_LOG_TRG |             |            |             |         4017 |             6
+ CTRL+DBLINK |             |            |             |         4017 |            26
  RLBK_TABLE  | myschema1   | mytbl1     |             |         4019 |            13
  RLBK_TABLE  | myschema1   | mytbl2     |             |         4019 |             2
  RLBK_TABLE  | myschema1   | mytbl2b    |             |         4019 |             2
@@ -2828,7 +2848,7 @@ select rlbt_step, rlbt_schema, rlbt_table, rlbt_object, rlbt_rlbk_id, rlbt_quant
  DELETE_LOG  | myschema1   | mytbl2b    |             |         4020 |             1
  ENA_LOG_TRG |             |            |             |         4020 |             2
  CTRL+DBLINK |             |            |             |         4020 |            12
-(75 rows)
+(78 rows)
 
 -----------------------------
 -- test end: reset history and force sequences id
@@ -2878,23 +2898,24 @@ select time_id, time_last_emaj_gid, time_event from emaj.emaj_time_stamp where t
     4043 |            4000094 | R
     4044 |            4000094 | R
     4045 |            4000094 | M
-    4046 |            4000094 | M
-    4047 |            4000100 | M
-    4048 |            4000107 | R
-    4049 |            4000112 | M
-    4050 |            4000112 | R
-    4051 |            4000112 | A
-    4052 |            4000112 | M
-    4053 |            4000112 | R
-    4054 |            4000112 | M
-    4055 |            4000112 | M
-    4056 |            4000127 | M
-    4057 |            4000129 | R
-    4058 |            4000144 | M
-    4059 |            4000146 | R
-    4060 |            4000147 | A
-    4064 |            4000147 | R
-(52 rows)
+    4046 |            4000094 | A
+    4047 |            4000094 | M
+    4048 |            4000100 | M
+    4049 |            4000108 | R
+    4050 |            4000114 | M
+    4051 |            4000114 | R
+    4052 |            4000114 | A
+    4053 |            4000114 | M
+    4054 |            4000114 | R
+    4055 |            4000114 | M
+    4056 |            4000114 | M
+    4057 |            4000129 | M
+    4058 |            4000131 | R
+    4059 |            4000146 | M
+    4060 |            4000148 | R
+    4061 |            4000149 | A
+    4065 |            4000149 | R
+(53 rows)
 
 select hist_id, hist_function, hist_event, hist_object, regexp_replace(regexp_replace(hist_wording,E'\\d\\d\.\\d\\d\\.\\d\\d\\.\\d\\d\\d\\d','%','g'),E'\\[.+\\]','(timestamp)','g'), hist_user from 
   (select * from emaj.emaj_hist where hist_id >= 4000 order by hist_id) as t;
@@ -3188,150 +3209,157 @@ select hist_id, hist_function, hist_event, hist_object, regexp_replace(regexp_re
     4347 | ROLLBACK_GROUP         | NOTICE                     | Rollback id 4015             | 0 / 0 tables effectively processed.                                                              | postgres
     4348 | DBLINK_CLOSE_CNX       |                            | rlbk#1                       |                                                                                                  | postgres
     4349 | ROLLBACK_GROUP         | END                        | emptyGroup                   | Rollback_id 4015, 0 tables and 0 sequences effectively processed                                 | postgres
-    4350 | START_GROUP            | BEGIN                      | myGroup4                     | With log reset                                                                                   | postgres
-    4351 | LOCK_GROUP             | BEGIN                      | myGroup4                     |                                                                                                  | postgres
-    4352 | LOCK_GROUP             | END                        | myGroup4                     | 5 tables locked, 0 deadlock(s)                                                                   | postgres
-    4353 | SET_MARK_GROUP         | BEGIN                      | myGroup4                     | myGroup4_start                                                                                   | postgres
-    4354 | CLEANUP_RLBK_STATE     |                            | Rollback id 4015             | set to COMMITTED                                                                                 | postgres
-    4355 | SET_MARK_GROUP         | END                        | myGroup4                     | myGroup4_start                                                                                   | postgres
-    4356 | START_GROUP            | END                        | myGroup4                     | 5 tables/sequences processed                                                                     | postgres
-    4357 | SET_MARK_GROUP         | BEGIN                      | myGroup4                     |                                                                                                  | postgres
-    4358 | LOCK_GROUP             | BEGIN                      | myGroup4                     |                                                                                                  | postgres
-    4359 | LOCK_GROUP             | END                        | myGroup4                     | 5 tables locked, 0 deadlock(s)                                                                   | postgres
-    4360 | SET_MARK_GROUP         | END                        | myGroup4                     | mark1                                                                                            | postgres
-    4361 | ROLLBACK_GROUP         | BEGIN                      | myGroup4                     | Logged rollback to mark mark1 (timestamp)                                                        | postgres
-    4362 | DBLINK_OPEN_CNX        |                            | rlbk#1                       | Status = 1                                                                                       | postgres
-    4363 | LOCK_GROUP             | BEGIN                      | myGroup4                     | Rollback session #1                                                                              | postgres
-    4364 | LOCK_GROUP             | END                        | myGroup4                     | Rollback session #1: 5 tables locked, 0 deadlock(s)                                              | postgres
-    4365 | SET_MARK_GROUP         | BEGIN                      | myGroup4                     | RLBK_mark1_%_START                                                                               | postgres
-    4366 | SET_MARK_GROUP         | END                        | myGroup4                     | RLBK_mark1_%_START                                                                               | postgres
-    4367 | ROLLBACK_TABLE         | BEGIN                      | myschema4.mypartp2           | All log rows where emaj_gid > 4000100 and <= 4000107                                             | postgres
-    4368 | ROLLBACK_TABLE         | END                        | myschema4.mypartp2           | 1 rolled back primary keys                                                                       | postgres
-    4369 | ROLLBACK_TABLE         | BEGIN                      | myschema4.mytblc1            | All log rows where emaj_gid > 4000100 and <= 4000107                                             | postgres
-    4370 | ROLLBACK_TABLE         | END                        | myschema4.mytblc1            | 2 rolled back primary keys                                                                       | postgres
-    4371 | ROLLBACK_TABLE         | BEGIN                      | myschema4.mytblc2            | All log rows where emaj_gid > 4000100 and <= 4000107                                             | postgres
-    4372 | ROLLBACK_TABLE         | END                        | myschema4.mytblc2            | 2 rolled back primary keys                                                                       | postgres
-    4373 | ROLLBACK_TABLE         | BEGIN                      | myschema4.mytblm             | All log rows where emaj_gid > 4000100 and <= 4000107                                             | postgres
-    4374 | ROLLBACK_TABLE         | END                        | myschema4.mytblm             | 2 rolled back primary keys                                                                       | postgres
-    4375 | SET_MARK_GROUP         | BEGIN                      | myGroup4                     | RLBK_mark1_%_DONE                                                                                | postgres
-    4376 | SET_MARK_GROUP         | END                        | myGroup4                     | RLBK_mark1_%_DONE                                                                                | postgres
-    4377 | ROLLBACK_GROUP         | NOTICE                     | Rollback id 4016             | 4 / 5 tables effectively processed.                                                              | postgres
-    4378 | DBLINK_CLOSE_CNX       |                            | rlbk#1                       |                                                                                                  | postgres
-    4379 | ROLLBACK_GROUP         | END                        | myGroup4                     | Rollback_id 4016, 4 tables and 0 sequences effectively processed                                 | postgres
-    4380 | ROLLBACK_GROUP         | BEGIN                      | myGroup4                     | Unlogged rollback to mark myGroup4_start (timestamp)                                             | postgres
-    4381 | DBLINK_OPEN_CNX        |                            | rlbk#1                       | Status = 1                                                                                       | postgres
-    4382 | DBLINK_OPEN_CNX        |                            | rlbk#1                       | Status = 0                                                                                       | postgres
-    4383 | LOCK_GROUP             | BEGIN                      | myGroup4                     | Rollback session #1                                                                              | postgres
-    4384 | LOCK_GROUP             | END                        | myGroup4                     | Rollback session #1: 5 tables locked, 0 deadlock(s)                                              | postgres
-    4385 | ROLLBACK_TABLE         | BEGIN                      | myschema4.mypartp2           | All log rows where emaj_gid > 4000094 and <= 4000112                                             | postgres
-    4386 | ROLLBACK_TABLE         | END                        | myschema4.mypartp2           | 2 rolled back primary keys                                                                       | postgres
-    4387 | ROLLBACK_TABLE         | BEGIN                      | myschema4.mytblc1            | All log rows where emaj_gid > 4000094 and <= 4000112                                             | postgres
-    4388 | ROLLBACK_TABLE         | END                        | myschema4.mytblc1            | 2 rolled back primary keys                                                                       | postgres
-    4389 | ROLLBACK_TABLE         | BEGIN                      | myschema4.mytblc2            | All log rows where emaj_gid > 4000094 and <= 4000112                                             | postgres
-    4390 | ROLLBACK_TABLE         | END                        | myschema4.mytblc2            | 2 rolled back primary keys                                                                       | postgres
-    4391 | ROLLBACK_TABLE         | BEGIN                      | myschema4.mytblm             | All log rows where emaj_gid > 4000094 and <= 4000112                                             | postgres
-    4392 | ROLLBACK_TABLE         | END                        | myschema4.mytblm             | 2 rolled back primary keys                                                                       | postgres
-    4393 | ROLLBACK_TABLE         | BEGIN                      | myschema4.mypartp1           | All log rows where emaj_gid > 4000094 and <= 4000112                                             | postgres
-    4394 | ROLLBACK_TABLE         | END                        | myschema4.mypartp1           | 1 rolled back primary keys                                                                       | postgres
-    4395 | ROLLBACK_GROUP         | MARK DELETED               | myGroup4                     | mark mark1 is deleted                                                                            | postgres
-    4396 | ROLLBACK_GROUP         | MARK DELETED               | myGroup4                     | mark RLBK_mark1_%_START is deleted                                                               | postgres
-    4397 | ROLLBACK_GROUP         | MARK DELETED               | myGroup4                     | mark RLBK_mark1_%_DONE is deleted                                                                | postgres
-    4398 | ROLLBACK_GROUP         | NOTICE                     | Rollback id 4017             | 5 / 5 tables effectively processed.                                                              | postgres
-    4399 | DBLINK_CLOSE_CNX       |                            | rlbk#1                       |                                                                                                  | postgres
-    4400 | ROLLBACK_GROUP         | END                        | myGroup4                     | Rollback_id 4017, 5 tables and 0 sequences effectively processed                                 | postgres
-    4402 | MODIFY_TABLE           | BEGIN                      |                              |                                                                                                  | postgres
-    4403 | LOCK_GROUP             | BEGIN                      | myGroup1                     |                                                                                                  | postgres
-    4404 | LOCK_GROUP             | END                        | myGroup1                     | 5 tables locked, 0 deadlock(s)                                                                   | postgres
-    4405 | SET_MARK_GROUPS        | BEGIN                      | myGroup1                     | MODIFY_%                                                                                         | postgres
-    4406 | CLEANUP_RLBK_STATE     |                            | Rollback id 4016             | set to COMMITTED                                                                                 | postgres
-    4407 | CLEANUP_RLBK_STATE     |                            | Rollback id 4017             | set to COMMITTED                                                                                 | postgres
-    4408 | SET_MARK_GROUPS        | END                        | myGroup1                     | MODIFY_%                                                                                         | postgres
-    4409 | MODIFY_TABLE           | TRIGGERS TO IGNORE CHANGED | myschema1.mytbl2             | {mytbl2trg2} => {mytbl2trg1,mytbl2trg2}                                                          | postgres
-    4410 | MODIFY_TABLE           | END                        |                              | 1 tables effectively modified                                                                    | postgres
-    4411 | SET_MARK_GROUP         | BEGIN                      | myGroup1                     |                                                                                                  | postgres
-    4412 | LOCK_GROUP             | BEGIN                      | myGroup1                     |                                                                                                  | postgres
-    4413 | LOCK_GROUP             | END                        | myGroup1                     | 5 tables locked, 0 deadlock(s)                                                                   | postgres
-    4414 | SET_MARK_GROUP         | END                        | myGroup1                     | Conso_M1                                                                                         | postgres
-    4415 | ROLLBACK_GROUP         | BEGIN                      | myGroup1                     | Logged rollback to mark Conso_M1 (timestamp)                                                     | postgres
-    4416 | DBLINK_OPEN_CNX        |                            | rlbk#1                       | Status = 1                                                                                       | postgres
-    4417 | LOCK_GROUP             | BEGIN                      | myGroup1                     | Rollback session #1                                                                              | postgres
-    4418 | LOCK_GROUP             | END                        | myGroup1                     | Rollback session #1: 5 tables locked, 0 deadlock(s)                                              | postgres
-    4419 | SET_MARK_GROUP         | BEGIN                      | myGroup1                     | RLBK_Conso_M1_%_START                                                                            | postgres
-    4420 | SET_MARK_GROUP         | END                        | myGroup1                     | RLBK_Conso_M1_%_START                                                                            | postgres
-    4421 | ROLLBACK_SEQUENCE      |                            | myschema1."myTbl3_col31_seq" |                                                                                                  | postgres
-    4422 | ROLLBACK_SEQUENCE      |                            | myschema1.mytbl2b_col20_seq  |                                                                                                  | postgres
-    4423 | SET_MARK_GROUP         | BEGIN                      | myGroup1                     | RLBK_Conso_M1_%_DONE                                                                             | postgres
-    4424 | SET_MARK_GROUP         | END                        | myGroup1                     | RLBK_Conso_M1_%_DONE                                                                             | postgres
-    4425 | ROLLBACK_GROUP         | NOTICE                     | Rollback id 4018             | 0 / 5 tables effectively processed.                                                              | postgres
-    4426 | ROLLBACK_GROUP         | NOTICE                     | Rollback id 4018             | 2 sequences processed.                                                                           | postgres
-    4427 | DBLINK_CLOSE_CNX       |                            | rlbk#1                       |                                                                                                  | postgres
-    4428 | ROLLBACK_GROUP         | END                        | myGroup1                     | Rollback_id 4018, 0 tables and 2 sequences effectively processed                                 | postgres
-    4429 | CONSOLIDATE_RLBK_GROUP | BEGIN                      | myGroup1                     | Erase all between marks Conso_M1 and RLBK_Conso_M1_%_DONE                                        | postgres
-    4430 | CONSOLIDATE_RLBK_GROUP | END                        | myGroup1                     | 0 tables and 2 sequences processed ; 1 marks deleted                                             | postgres
-    4431 | SET_MARK_GROUP         | BEGIN                      | myGroup1                     |                                                                                                  | postgres
-    4432 | LOCK_GROUP             | BEGIN                      | myGroup1                     |                                                                                                  | postgres
-    4433 | LOCK_GROUP             | END                        | myGroup1                     | 5 tables locked, 0 deadlock(s)                                                                   | postgres
-    4434 | CLEANUP_RLBK_STATE     |                            | Rollback id 4018             | set to COMMITTED                                                                                 | postgres
-    4435 | SET_MARK_GROUP         | END                        | myGroup1                     | Conso_M2                                                                                         | postgres
-    4436 | SET_MARK_GROUP         | BEGIN                      | myGroup1                     |                                                                                                  | postgres
-    4437 | LOCK_GROUP             | BEGIN                      | myGroup1                     |                                                                                                  | postgres
-    4438 | LOCK_GROUP             | END                        | myGroup1                     | 5 tables locked, 0 deadlock(s)                                                                   | postgres
-    4439 | SET_MARK_GROUP         | END                        | myGroup1                     | Conso_M3                                                                                         | postgres
-    4440 | ROLLBACK_GROUP         | BEGIN                      | myGroup1                     | Logged rollback to mark Conso_M2 (timestamp)                                                     | postgres
-    4441 | DBLINK_OPEN_CNX        |                            | rlbk#1                       | Status = 1                                                                                       | postgres
-    4442 | LOCK_GROUP             | BEGIN                      | myGroup1                     | Rollback session #1                                                                              | postgres
-    4443 | LOCK_GROUP             | END                        | myGroup1                     | Rollback session #1: 5 tables locked, 0 deadlock(s)                                              | postgres
-    4444 | SET_MARK_GROUP         | BEGIN                      | myGroup1                     | RLBK_Conso_M2_%_START                                                                            | postgres
-    4445 | SET_MARK_GROUP         | END                        | myGroup1                     | RLBK_Conso_M2_%_START                                                                            | postgres
-    4446 | ROLLBACK_TABLE         | BEGIN                      | myschema1.mytbl1             | All log rows where emaj_gid > 4000112 and <= 4000129, in session_replication_role = replica mode | postgres
-    4447 | ROLLBACK_TABLE         | END                        | myschema1.mytbl1             | 12 rolled back primary keys                                                                      | postgres
-    4448 | ROLLBACK_TABLE         | BEGIN                      | myschema1.mytbl2             | All log rows where emaj_gid > 4000112 and <= 4000129, in session_replication_role = replica mode | postgres
-    4449 | ROLLBACK_TABLE         | END                        | myschema1.mytbl2             | 1 rolled back primary keys                                                                       | postgres
-    4450 | ROLLBACK_TABLE         | BEGIN                      | myschema1.mytbl2b            | All log rows where emaj_gid > 4000112 and <= 4000129                                             | postgres
-    4451 | ROLLBACK_TABLE         | END                        | myschema1.mytbl2b            | 2 rolled back primary keys                                                                       | postgres
-    4452 | ROLLBACK_SEQUENCE      |                            | myschema1."myTbl3_col31_seq" |                                                                                                  | postgres
-    4453 | ROLLBACK_SEQUENCE      |                            | myschema1.mytbl2b_col20_seq  | RESTART 3                                                                                        | postgres
-    4454 | SET_MARK_GROUP         | BEGIN                      | myGroup1                     | RLBK_Conso_M2_%_DONE                                                                             | postgres
-    4455 | SET_MARK_GROUP         | END                        | myGroup1                     | RLBK_Conso_M2_%_DONE                                                                             | postgres
-    4456 | ROLLBACK_GROUP         | NOTICE                     | Rollback id 4019             | 3 / 5 tables effectively processed.                                                              | postgres
-    4457 | ROLLBACK_GROUP         | NOTICE                     | Rollback id 4019             | 2 sequences processed.                                                                           | postgres
-    4458 | DBLINK_CLOSE_CNX       |                            | rlbk#1                       |                                                                                                  | postgres
-    4459 | ROLLBACK_GROUP         | END                        | myGroup1                     | Rollback_id 4019, 3 tables and 2 sequences effectively processed                                 | postgres
-    4460 | RENAME_MARK_GROUP      | BEGIN                      | myGroup1                     | Conso_M2                                                                                         | postgres
-    4461 | RENAME_MARK_GROUP      | END                        | myGroup1                     | Conso_M2 renamed Renamed_conso_M2                                                                | postgres
-    4462 | RENAME_MARK_GROUP      | BEGIN                      | myGroup1                     | EMAJ_LAST_MARK                                                                                   | postgres
-    4463 | RENAME_MARK_GROUP      | END                        | myGroup1                     | RLBK_Conso_M2_%_DONE renamed Renamed_last_mark                                                   | postgres
-    4464 | CONSOLIDATE_RLBK_GROUP | BEGIN                      | myGroup1                     | Erase all between marks Renamed_conso_M2 and Renamed_last_mark                                   | postgres
-    4465 | CONSOLIDATE_RLBK_GROUP | END                        | myGroup1                     | 3 tables and 2 sequences processed ; 2 marks deleted                                             | postgres
-    4466 | CONSOLIDATE_RLBK_GROUP | BEGIN                      | myGroup1                     | Erase all between marks Renamed_conso_M2 and Renamed_last_mark                                   | postgres
-    4467 | CONSOLIDATE_RLBK_GROUP | END                        | myGroup1                     | 0 tables and 2 sequences processed ; 0 marks deleted                                             | postgres
-    4468 | ROLLBACK_GROUP         | BEGIN                      | myGroup1                     | Unlogged rollback to mark Conso_M1 (timestamp)                                                   | postgres
-    4469 | DBLINK_OPEN_CNX        |                            | rlbk#1                       | Status = 1                                                                                       | postgres
-    4470 | LOCK_GROUP             | BEGIN                      | myGroup1                     | Rollback session #1                                                                              | postgres
-    4471 | LOCK_GROUP             | END                        | myGroup1                     | Rollback session #1: 5 tables locked, 0 deadlock(s)                                              | postgres
-    4472 | ROLLBACK_TABLE         | BEGIN                      | myschema1.mytbl2             | All log rows where emaj_gid > 4000112 and <= 4000146, in session_replication_role = replica mode | postgres
-    4473 | ROLLBACK_TABLE         | END                        | myschema1.mytbl2             | 1 rolled back primary keys                                                                       | postgres
-    4474 | ROLLBACK_TABLE         | BEGIN                      | myschema1.mytbl2b            | All log rows where emaj_gid > 4000112 and <= 4000146                                             | postgres
-    4475 | ROLLBACK_TABLE         | END                        | myschema1.mytbl2b            | 1 rolled back primary keys                                                                       | postgres
-    4476 | ROLLBACK_GROUP         | MARK DELETED               | myGroup1                     | mark RLBK_Conso_M1_%_DONE is deleted                                                             | postgres
-    4477 | ROLLBACK_GROUP         | MARK DELETED               | myGroup1                     | mark Renamed_conso_M2 is deleted                                                                 | postgres
-    4478 | ROLLBACK_GROUP         | MARK DELETED               | myGroup1                     | mark Renamed_last_mark is deleted                                                                | postgres
-    4479 | ROLLBACK_SEQUENCE      |                            | myschema1."myTbl3_col31_seq" |                                                                                                  | postgres
-    4480 | ROLLBACK_SEQUENCE      |                            | myschema1.mytbl2b_col20_seq  | RESTART 3                                                                                        | postgres
-    4481 | ROLLBACK_GROUP         | NOTICE                     | Rollback id 4020             | 2 / 5 tables effectively processed.                                                              | postgres
-    4482 | ROLLBACK_GROUP         | NOTICE                     | Rollback id 4020             | 2 sequences processed.                                                                           | postgres
-    4483 | DBLINK_CLOSE_CNX       |                            | rlbk#1                       |                                                                                                  | postgres
-    4484 | ROLLBACK_GROUP         | END                        | myGroup1                     | Rollback_id 4020, 2 tables and 2 sequences effectively processed                                 | postgres
-    4485 | MODIFY_TABLE           | BEGIN                      |                              |                                                                                                  | postgres
-    4486 | LOCK_GROUP             | BEGIN                      | myGroup1                     |                                                                                                  | postgres
-    4487 | LOCK_GROUP             | END                        | myGroup1                     | 5 tables locked, 0 deadlock(s)                                                                   | postgres
-    4488 | SET_MARK_GROUPS        | BEGIN                      | myGroup1                     | MODIFY_%                                                                                         | postgres
-    4489 | CLEANUP_RLBK_STATE     |                            | Rollback id 4019             | set to COMMITTED                                                                                 | postgres
-    4490 | CLEANUP_RLBK_STATE     |                            | Rollback id 4020             | set to COMMITTED                                                                                 | postgres
-    4491 | SET_MARK_GROUPS        | END                        | myGroup1                     | MODIFY_%                                                                                         | postgres
-    4492 | MODIFY_TABLE           | TRIGGERS TO IGNORE CHANGED | myschema1.mytbl2             | {mytbl2trg1,mytbl2trg2} => none                                                                  | postgres
-    4493 | MODIFY_TABLE           | END                        |                              | 1 tables effectively modified                                                                    | postgres
-    4520 | CLEANUP_RLBK_STATE     |                            | Rollback id 4021             | set to ABORTED                                                                                   | postgres
-    4521 | ENABLE_PROTECTION      | EVENT TRIGGERS ENABLED     |                              | emaj_protection_trg, emaj_sql_drop_trg, emaj_table_rewrite_trg                                   | postgres
-(433 rows)
+    4350 | ASSIGN_TABLE           | BEGIN                      |                              |                                                                                                  | postgres
+    4351 | ASSIGN_TABLE           | TABLE ADDED                | myschema4.mytblr             | To the idle group myGroup4                                                                       | postgres
+    4352 | ASSIGN_TABLE           | END                        |                              | 1 tables assigned to the group myGroup4                                                          | postgres
+    4353 | START_GROUP            | BEGIN                      | myGroup4                     | With log reset                                                                                   | postgres
+    4354 | LOCK_GROUP             | BEGIN                      | myGroup4                     |                                                                                                  | postgres
+    4355 | LOCK_GROUP             | END                        | myGroup4                     | 6 tables locked, 0 deadlock(s)                                                                   | postgres
+    4356 | SET_MARK_GROUP         | BEGIN                      | myGroup4                     | myGroup4_start                                                                                   | postgres
+    4357 | CLEANUP_RLBK_STATE     |                            | Rollback id 4015             | set to COMMITTED                                                                                 | postgres
+    4358 | SET_MARK_GROUP         | END                        | myGroup4                     | myGroup4_start                                                                                   | postgres
+    4359 | START_GROUP            | END                        | myGroup4                     | 6 tables/sequences processed                                                                     | postgres
+    4360 | SET_MARK_GROUP         | BEGIN                      | myGroup4                     |                                                                                                  | postgres
+    4361 | LOCK_GROUP             | BEGIN                      | myGroup4                     |                                                                                                  | postgres
+    4362 | LOCK_GROUP             | END                        | myGroup4                     | 6 tables locked, 0 deadlock(s)                                                                   | postgres
+    4363 | SET_MARK_GROUP         | END                        | myGroup4                     | mark1                                                                                            | postgres
+    4364 | ROLLBACK_GROUP         | BEGIN                      | myGroup4                     | Logged rollback to mark mark1 (timestamp)                                                        | postgres
+    4365 | DBLINK_OPEN_CNX        |                            | rlbk#1                       | Status = 1                                                                                       | postgres
+    4366 | LOCK_GROUP             | BEGIN                      | myGroup4                     | Rollback session #1                                                                              | postgres
+    4367 | LOCK_GROUP             | END                        | myGroup4                     | Rollback session #1: 6 tables locked, 0 deadlock(s)                                              | postgres
+    4368 | SET_MARK_GROUP         | BEGIN                      | myGroup4                     | RLBK_mark1_%_START                                                                               | postgres
+    4369 | SET_MARK_GROUP         | END                        | myGroup4                     | RLBK_mark1_%_START                                                                               | postgres
+    4370 | ROLLBACK_TABLE         | BEGIN                      | myschema4.mypartp2           | All log rows where emaj_gid > 4000100 and <= 4000108, in session_replication_role = replica mode | postgres
+    4371 | ROLLBACK_TABLE         | END                        | myschema4.mypartp2           | 1 rolled back primary keys                                                                       | postgres
+    4372 | ROLLBACK_TABLE         | BEGIN                      | myschema4.mytblc1            | All log rows where emaj_gid > 4000100 and <= 4000108                                             | postgres
+    4373 | ROLLBACK_TABLE         | END                        | myschema4.mytblc1            | 2 rolled back primary keys                                                                       | postgres
+    4374 | ROLLBACK_TABLE         | BEGIN                      | myschema4.mytblc2            | All log rows where emaj_gid > 4000100 and <= 4000108                                             | postgres
+    4375 | ROLLBACK_TABLE         | END                        | myschema4.mytblc2            | 2 rolled back primary keys                                                                       | postgres
+    4376 | ROLLBACK_TABLE         | BEGIN                      | myschema4.mytblm             | All log rows where emaj_gid > 4000100 and <= 4000108                                             | postgres
+    4377 | ROLLBACK_TABLE         | END                        | myschema4.mytblm             | 2 rolled back primary keys                                                                       | postgres
+    4378 | ROLLBACK_TABLE         | BEGIN                      | myschema4.mytblr             | All log rows where emaj_gid > 4000100 and <= 4000108, in session_replication_role = replica mode | postgres
+    4379 | ROLLBACK_TABLE         | END                        | myschema4.mytblr             | 1 rolled back primary keys                                                                       | postgres
+    4380 | SET_MARK_GROUP         | BEGIN                      | myGroup4                     | RLBK_mark1_%_DONE                                                                                | postgres
+    4381 | SET_MARK_GROUP         | END                        | myGroup4                     | RLBK_mark1_%_DONE                                                                                | postgres
+    4382 | ROLLBACK_GROUP         | NOTICE                     | Rollback id 4016             | 5 / 6 tables effectively processed.                                                              | postgres
+    4383 | DBLINK_CLOSE_CNX       |                            | rlbk#1                       |                                                                                                  | postgres
+    4384 | ROLLBACK_GROUP         | END                        | myGroup4                     | Rollback_id 4016, 5 tables and 0 sequences effectively processed                                 | postgres
+    4385 | ROLLBACK_GROUP         | BEGIN                      | myGroup4                     | Unlogged rollback to mark myGroup4_start (timestamp)                                             | postgres
+    4386 | DBLINK_OPEN_CNX        |                            | rlbk#1                       | Status = 1                                                                                       | postgres
+    4387 | DBLINK_OPEN_CNX        |                            | rlbk#1                       | Status = 0                                                                                       | postgres
+    4388 | LOCK_GROUP             | BEGIN                      | myGroup4                     | Rollback session #1                                                                              | postgres
+    4389 | LOCK_GROUP             | END                        | myGroup4                     | Rollback session #1: 6 tables locked, 0 deadlock(s)                                              | postgres
+    4390 | ROLLBACK_TABLE         | BEGIN                      | myschema4.mypartp2           | All log rows where emaj_gid > 4000094 and <= 4000114, in session_replication_role = replica mode | postgres
+    4391 | ROLLBACK_TABLE         | END                        | myschema4.mypartp2           | 2 rolled back primary keys                                                                       | postgres
+    4392 | ROLLBACK_TABLE         | BEGIN                      | myschema4.mytblc1            | All log rows where emaj_gid > 4000094 and <= 4000114                                             | postgres
+    4393 | ROLLBACK_TABLE         | END                        | myschema4.mytblc1            | 2 rolled back primary keys                                                                       | postgres
+    4394 | ROLLBACK_TABLE         | BEGIN                      | myschema4.mytblc2            | All log rows where emaj_gid > 4000094 and <= 4000114                                             | postgres
+    4395 | ROLLBACK_TABLE         | END                        | myschema4.mytblc2            | 2 rolled back primary keys                                                                       | postgres
+    4396 | ROLLBACK_TABLE         | BEGIN                      | myschema4.mytblm             | All log rows where emaj_gid > 4000094 and <= 4000114                                             | postgres
+    4397 | ROLLBACK_TABLE         | END                        | myschema4.mytblm             | 2 rolled back primary keys                                                                       | postgres
+    4398 | ROLLBACK_TABLE         | BEGIN                      | myschema4.mytblr             | All log rows where emaj_gid > 4000094 and <= 4000114, in session_replication_role = replica mode | postgres
+    4399 | ROLLBACK_TABLE         | END                        | myschema4.mytblr             | 1 rolled back primary keys                                                                       | postgres
+    4400 | ROLLBACK_TABLE         | BEGIN                      | myschema4.mypartp1           | All log rows where emaj_gid > 4000094 and <= 4000114, in session_replication_role = replica mode | postgres
+    4401 | ROLLBACK_TABLE         | END                        | myschema4.mypartp1           | 1 rolled back primary keys                                                                       | postgres
+    4402 | ROLLBACK_GROUP         | MARK DELETED               | myGroup4                     | mark mark1 is deleted                                                                            | postgres
+    4403 | ROLLBACK_GROUP         | MARK DELETED               | myGroup4                     | mark RLBK_mark1_%_START is deleted                                                               | postgres
+    4404 | ROLLBACK_GROUP         | MARK DELETED               | myGroup4                     | mark RLBK_mark1_%_DONE is deleted                                                                | postgres
+    4405 | ROLLBACK_GROUP         | NOTICE                     | Rollback id 4017             | 6 / 6 tables effectively processed.                                                              | postgres
+    4406 | DBLINK_CLOSE_CNX       |                            | rlbk#1                       |                                                                                                  | postgres
+    4407 | ROLLBACK_GROUP         | END                        | myGroup4                     | Rollback_id 4017, 6 tables and 0 sequences effectively processed                                 | postgres
+    4409 | MODIFY_TABLE           | BEGIN                      |                              |                                                                                                  | postgres
+    4410 | LOCK_GROUP             | BEGIN                      | myGroup1                     |                                                                                                  | postgres
+    4411 | LOCK_GROUP             | END                        | myGroup1                     | 5 tables locked, 0 deadlock(s)                                                                   | postgres
+    4412 | SET_MARK_GROUPS        | BEGIN                      | myGroup1                     | MODIFY_%                                                                                         | postgres
+    4413 | CLEANUP_RLBK_STATE     |                            | Rollback id 4016             | set to COMMITTED                                                                                 | postgres
+    4414 | CLEANUP_RLBK_STATE     |                            | Rollback id 4017             | set to COMMITTED                                                                                 | postgres
+    4415 | SET_MARK_GROUPS        | END                        | myGroup1                     | MODIFY_%                                                                                         | postgres
+    4416 | MODIFY_TABLE           | TRIGGERS TO IGNORE CHANGED | myschema1.mytbl2             | {mytbl2trg2} => {mytbl2trg1,mytbl2trg2}                                                          | postgres
+    4417 | MODIFY_TABLE           | END                        |                              | 1 tables effectively modified                                                                    | postgres
+    4418 | SET_MARK_GROUP         | BEGIN                      | myGroup1                     |                                                                                                  | postgres
+    4419 | LOCK_GROUP             | BEGIN                      | myGroup1                     |                                                                                                  | postgres
+    4420 | LOCK_GROUP             | END                        | myGroup1                     | 5 tables locked, 0 deadlock(s)                                                                   | postgres
+    4421 | SET_MARK_GROUP         | END                        | myGroup1                     | Conso_M1                                                                                         | postgres
+    4422 | ROLLBACK_GROUP         | BEGIN                      | myGroup1                     | Logged rollback to mark Conso_M1 (timestamp)                                                     | postgres
+    4423 | DBLINK_OPEN_CNX        |                            | rlbk#1                       | Status = 1                                                                                       | postgres
+    4424 | LOCK_GROUP             | BEGIN                      | myGroup1                     | Rollback session #1                                                                              | postgres
+    4425 | LOCK_GROUP             | END                        | myGroup1                     | Rollback session #1: 5 tables locked, 0 deadlock(s)                                              | postgres
+    4426 | SET_MARK_GROUP         | BEGIN                      | myGroup1                     | RLBK_Conso_M1_%_START                                                                            | postgres
+    4427 | SET_MARK_GROUP         | END                        | myGroup1                     | RLBK_Conso_M1_%_START                                                                            | postgres
+    4428 | ROLLBACK_SEQUENCE      |                            | myschema1."myTbl3_col31_seq" |                                                                                                  | postgres
+    4429 | ROLLBACK_SEQUENCE      |                            | myschema1.mytbl2b_col20_seq  |                                                                                                  | postgres
+    4430 | SET_MARK_GROUP         | BEGIN                      | myGroup1                     | RLBK_Conso_M1_%_DONE                                                                             | postgres
+    4431 | SET_MARK_GROUP         | END                        | myGroup1                     | RLBK_Conso_M1_%_DONE                                                                             | postgres
+    4432 | ROLLBACK_GROUP         | NOTICE                     | Rollback id 4018             | 0 / 5 tables effectively processed.                                                              | postgres
+    4433 | ROLLBACK_GROUP         | NOTICE                     | Rollback id 4018             | 2 sequences processed.                                                                           | postgres
+    4434 | DBLINK_CLOSE_CNX       |                            | rlbk#1                       |                                                                                                  | postgres
+    4435 | ROLLBACK_GROUP         | END                        | myGroup1                     | Rollback_id 4018, 0 tables and 2 sequences effectively processed                                 | postgres
+    4436 | CONSOLIDATE_RLBK_GROUP | BEGIN                      | myGroup1                     | Erase all between marks Conso_M1 and RLBK_Conso_M1_%_DONE                                        | postgres
+    4437 | CONSOLIDATE_RLBK_GROUP | END                        | myGroup1                     | 0 tables and 2 sequences processed ; 1 marks deleted                                             | postgres
+    4438 | SET_MARK_GROUP         | BEGIN                      | myGroup1                     |                                                                                                  | postgres
+    4439 | LOCK_GROUP             | BEGIN                      | myGroup1                     |                                                                                                  | postgres
+    4440 | LOCK_GROUP             | END                        | myGroup1                     | 5 tables locked, 0 deadlock(s)                                                                   | postgres
+    4441 | CLEANUP_RLBK_STATE     |                            | Rollback id 4018             | set to COMMITTED                                                                                 | postgres
+    4442 | SET_MARK_GROUP         | END                        | myGroup1                     | Conso_M2                                                                                         | postgres
+    4443 | SET_MARK_GROUP         | BEGIN                      | myGroup1                     |                                                                                                  | postgres
+    4444 | LOCK_GROUP             | BEGIN                      | myGroup1                     |                                                                                                  | postgres
+    4445 | LOCK_GROUP             | END                        | myGroup1                     | 5 tables locked, 0 deadlock(s)                                                                   | postgres
+    4446 | SET_MARK_GROUP         | END                        | myGroup1                     | Conso_M3                                                                                         | postgres
+    4447 | ROLLBACK_GROUP         | BEGIN                      | myGroup1                     | Logged rollback to mark Conso_M2 (timestamp)                                                     | postgres
+    4448 | DBLINK_OPEN_CNX        |                            | rlbk#1                       | Status = 1                                                                                       | postgres
+    4449 | LOCK_GROUP             | BEGIN                      | myGroup1                     | Rollback session #1                                                                              | postgres
+    4450 | LOCK_GROUP             | END                        | myGroup1                     | Rollback session #1: 5 tables locked, 0 deadlock(s)                                              | postgres
+    4451 | SET_MARK_GROUP         | BEGIN                      | myGroup1                     | RLBK_Conso_M2_%_START                                                                            | postgres
+    4452 | SET_MARK_GROUP         | END                        | myGroup1                     | RLBK_Conso_M2_%_START                                                                            | postgres
+    4453 | ROLLBACK_TABLE         | BEGIN                      | myschema1.mytbl1             | All log rows where emaj_gid > 4000114 and <= 4000131, in session_replication_role = replica mode | postgres
+    4454 | ROLLBACK_TABLE         | END                        | myschema1.mytbl1             | 12 rolled back primary keys                                                                      | postgres
+    4455 | ROLLBACK_TABLE         | BEGIN                      | myschema1.mytbl2             | All log rows where emaj_gid > 4000114 and <= 4000131, in session_replication_role = replica mode | postgres
+    4456 | ROLLBACK_TABLE         | END                        | myschema1.mytbl2             | 1 rolled back primary keys                                                                       | postgres
+    4457 | ROLLBACK_TABLE         | BEGIN                      | myschema1.mytbl2b            | All log rows where emaj_gid > 4000114 and <= 4000131                                             | postgres
+    4458 | ROLLBACK_TABLE         | END                        | myschema1.mytbl2b            | 2 rolled back primary keys                                                                       | postgres
+    4459 | ROLLBACK_SEQUENCE      |                            | myschema1."myTbl3_col31_seq" |                                                                                                  | postgres
+    4460 | ROLLBACK_SEQUENCE      |                            | myschema1.mytbl2b_col20_seq  | RESTART 3                                                                                        | postgres
+    4461 | SET_MARK_GROUP         | BEGIN                      | myGroup1                     | RLBK_Conso_M2_%_DONE                                                                             | postgres
+    4462 | SET_MARK_GROUP         | END                        | myGroup1                     | RLBK_Conso_M2_%_DONE                                                                             | postgres
+    4463 | ROLLBACK_GROUP         | NOTICE                     | Rollback id 4019             | 3 / 5 tables effectively processed.                                                              | postgres
+    4464 | ROLLBACK_GROUP         | NOTICE                     | Rollback id 4019             | 2 sequences processed.                                                                           | postgres
+    4465 | DBLINK_CLOSE_CNX       |                            | rlbk#1                       |                                                                                                  | postgres
+    4466 | ROLLBACK_GROUP         | END                        | myGroup1                     | Rollback_id 4019, 3 tables and 2 sequences effectively processed                                 | postgres
+    4467 | RENAME_MARK_GROUP      | BEGIN                      | myGroup1                     | Conso_M2                                                                                         | postgres
+    4468 | RENAME_MARK_GROUP      | END                        | myGroup1                     | Conso_M2 renamed Renamed_conso_M2                                                                | postgres
+    4469 | RENAME_MARK_GROUP      | BEGIN                      | myGroup1                     | EMAJ_LAST_MARK                                                                                   | postgres
+    4470 | RENAME_MARK_GROUP      | END                        | myGroup1                     | RLBK_Conso_M2_%_DONE renamed Renamed_last_mark                                                   | postgres
+    4471 | CONSOLIDATE_RLBK_GROUP | BEGIN                      | myGroup1                     | Erase all between marks Renamed_conso_M2 and Renamed_last_mark                                   | postgres
+    4472 | CONSOLIDATE_RLBK_GROUP | END                        | myGroup1                     | 3 tables and 2 sequences processed ; 2 marks deleted                                             | postgres
+    4473 | CONSOLIDATE_RLBK_GROUP | BEGIN                      | myGroup1                     | Erase all between marks Renamed_conso_M2 and Renamed_last_mark                                   | postgres
+    4474 | CONSOLIDATE_RLBK_GROUP | END                        | myGroup1                     | 0 tables and 2 sequences processed ; 0 marks deleted                                             | postgres
+    4475 | ROLLBACK_GROUP         | BEGIN                      | myGroup1                     | Unlogged rollback to mark Conso_M1 (timestamp)                                                   | postgres
+    4476 | DBLINK_OPEN_CNX        |                            | rlbk#1                       | Status = 1                                                                                       | postgres
+    4477 | LOCK_GROUP             | BEGIN                      | myGroup1                     | Rollback session #1                                                                              | postgres
+    4478 | LOCK_GROUP             | END                        | myGroup1                     | Rollback session #1: 5 tables locked, 0 deadlock(s)                                              | postgres
+    4479 | ROLLBACK_TABLE         | BEGIN                      | myschema1.mytbl2             | All log rows where emaj_gid > 4000114 and <= 4000148, in session_replication_role = replica mode | postgres
+    4480 | ROLLBACK_TABLE         | END                        | myschema1.mytbl2             | 1 rolled back primary keys                                                                       | postgres
+    4481 | ROLLBACK_TABLE         | BEGIN                      | myschema1.mytbl2b            | All log rows where emaj_gid > 4000114 and <= 4000148                                             | postgres
+    4482 | ROLLBACK_TABLE         | END                        | myschema1.mytbl2b            | 1 rolled back primary keys                                                                       | postgres
+    4483 | ROLLBACK_GROUP         | MARK DELETED               | myGroup1                     | mark RLBK_Conso_M1_%_DONE is deleted                                                             | postgres
+    4484 | ROLLBACK_GROUP         | MARK DELETED               | myGroup1                     | mark Renamed_conso_M2 is deleted                                                                 | postgres
+    4485 | ROLLBACK_GROUP         | MARK DELETED               | myGroup1                     | mark Renamed_last_mark is deleted                                                                | postgres
+    4486 | ROLLBACK_SEQUENCE      |                            | myschema1."myTbl3_col31_seq" |                                                                                                  | postgres
+    4487 | ROLLBACK_SEQUENCE      |                            | myschema1.mytbl2b_col20_seq  | RESTART 3                                                                                        | postgres
+    4488 | ROLLBACK_GROUP         | NOTICE                     | Rollback id 4020             | 2 / 5 tables effectively processed.                                                              | postgres
+    4489 | ROLLBACK_GROUP         | NOTICE                     | Rollback id 4020             | 2 sequences processed.                                                                           | postgres
+    4490 | DBLINK_CLOSE_CNX       |                            | rlbk#1                       |                                                                                                  | postgres
+    4491 | ROLLBACK_GROUP         | END                        | myGroup1                     | Rollback_id 4020, 2 tables and 2 sequences effectively processed                                 | postgres
+    4492 | MODIFY_TABLE           | BEGIN                      |                              |                                                                                                  | postgres
+    4493 | LOCK_GROUP             | BEGIN                      | myGroup1                     |                                                                                                  | postgres
+    4494 | LOCK_GROUP             | END                        | myGroup1                     | 5 tables locked, 0 deadlock(s)                                                                   | postgres
+    4495 | SET_MARK_GROUPS        | BEGIN                      | myGroup1                     | MODIFY_%                                                                                         | postgres
+    4496 | CLEANUP_RLBK_STATE     |                            | Rollback id 4019             | set to COMMITTED                                                                                 | postgres
+    4497 | CLEANUP_RLBK_STATE     |                            | Rollback id 4020             | set to COMMITTED                                                                                 | postgres
+    4498 | SET_MARK_GROUPS        | END                        | myGroup1                     | MODIFY_%                                                                                         | postgres
+    4499 | MODIFY_TABLE           | TRIGGERS TO IGNORE CHANGED | myschema1.mytbl2             | {mytbl2trg1,mytbl2trg2} => none                                                                  | postgres
+    4500 | MODIFY_TABLE           | END                        |                              | 1 tables effectively modified                                                                    | postgres
+    4527 | CLEANUP_RLBK_STATE     |                            | Rollback id 4021             | set to ABORTED                                                                                   | postgres
+    4528 | ENABLE_PROTECTION      | EVENT TRIGGERS ENABLED     |                              | emaj_protection_trg, emaj_sql_drop_trg, emaj_table_rewrite_trg                                   | postgres
+(440 rows)
 

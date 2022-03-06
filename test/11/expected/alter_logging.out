@@ -3565,12 +3565,13 @@ select * from emaj.emaj_rel_hist order by 1,2,3;
  myschema4      | mytblm            | [10027,10029)   | myGroup1         | r
  myschema4      | mytblm            | [10029,10031)   | myGroup2         | r
  myschema4      | mytblm            | [10031,10045)   | myGroup4         | r
+ myschema4      | mytblr            | [4046,8005)     | myGroup4         | r
  phil's schema3 | myTbl2\           | [1019,8004)     | phil's group#3", | r
  phil's schema3 | myTbl2\_col21_seq | [1028,8004)     | phil's group#3", | S
  phil's schema3 | phil's seq\1      | [1028,8004)     | phil's group#3", | S
  phil's schema3 | phil's tbl1       | [1019,8004)     | phil's group#3", | r
  public         | mytbl1_new_name   | [10038,10039)   | myGroup1         | r
-(118 rows)
+(119 rows)
 
 truncate emaj.emaj_hist;
 -- remove the temp directory

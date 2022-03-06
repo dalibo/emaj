@@ -84,6 +84,9 @@ select emaj.emaj_create_group('myGroup4');
 
 select emaj.emaj_assign_tables('myschema4','.*',null,'myGroup4');
 WARNING:  _assign_tables: Some partitionned tables (mytblp) are not selected.
+NOTICE:  table "mytblr_log" does not exist, skipping
+NOTICE:  trigger "emaj_log_trg" for relation "myschema4.mytblr" does not exist, skipping
+NOTICE:  trigger "emaj_trunc_trg" for relation "myschema4.mytblr" does not exist, skipping
 NOTICE:  table "mytblm_log" does not exist, skipping
 NOTICE:  trigger "emaj_log_trg" for relation "myschema4.mytblm" does not exist, skipping
 NOTICE:  trigger "emaj_trunc_trg" for relation "myschema4.mytblm" does not exist, skipping
@@ -102,7 +105,7 @@ NOTICE:  trigger "emaj_log_trg" for relation "myschema4.mypartp1" does not exist
 NOTICE:  trigger "emaj_trunc_trg" for relation "myschema4.mypartp1" does not exist, skipping
  emaj_assign_tables 
 --------------------
-                  5
+                  6
 (1 row)
 
 -- several similar operations in a single transaction, using different mark names
@@ -110,37 +113,37 @@ begin;
   select emaj.emaj_start_group('myGroup4','M1');
  emaj_start_group 
 ------------------
-                5
+                6
 (1 row)
 
   select emaj.emaj_set_mark_group('myGroup4','M2');
  emaj_set_mark_group 
 ---------------------
-                   5
+                   6
 (1 row)
 
   select emaj.emaj_set_mark_group('myGroup4','M3');
  emaj_set_mark_group 
 ---------------------
-                   5
+                   6
 (1 row)
 
   select emaj.emaj_stop_group('myGroup4','M4');
  emaj_stop_group 
 -----------------
-               5
+               6
 (1 row)
 
   select emaj.emaj_start_group('myGroup4','M5',false);
  emaj_start_group 
 ------------------
-                5
+                6
 (1 row)
 
   select emaj.emaj_stop_group('myGroup4','M6');
  emaj_stop_group 
 -----------------
-               5
+               6
 (1 row)
 
 commit;
@@ -185,47 +188,48 @@ select hist_function, hist_event, hist_object,
  CREATE_GROUP       | END                | myGroup4           |                                         | postgres
  ASSIGN_TABLES      | BEGIN              |                    |                                         | postgres
  ASSIGN_TABLES      | LOG_SCHEMA CREATED | emaj_myschema4     |                                         | postgres
+ ASSIGN_TABLES      | TABLE ADDED        | myschema4.mytblr   | To the idle group myGroup4              | postgres
  ASSIGN_TABLES      | TABLE ADDED        | myschema4.mytblm   | To the idle group myGroup4              | postgres
  ASSIGN_TABLES      | TABLE ADDED        | myschema4.mytblc2  | To the idle group myGroup4              | postgres
  ASSIGN_TABLES      | TABLE ADDED        | myschema4.mypartp2 | To the idle group myGroup4              | postgres
  ASSIGN_TABLES      | TABLE ADDED        | myschema4.mytblc1  | To the idle group myGroup4              | postgres
  ASSIGN_TABLES      | TABLE ADDED        | myschema4.mypartp1 | To the idle group myGroup4              | postgres
- ASSIGN_TABLES      | END                |                    | 5 tables assigned to the group myGroup4 | postgres
+ ASSIGN_TABLES      | END                |                    | 6 tables assigned to the group myGroup4 | postgres
  START_GROUP        | BEGIN              | myGroup4           | With log reset                          | postgres
  LOCK_GROUP         | BEGIN              | myGroup4           |                                         | postgres
- LOCK_GROUP         | END                | myGroup4           | 5 tables locked, 0 deadlock(s)          | postgres
+ LOCK_GROUP         | END                | myGroup4           | 6 tables locked, 0 deadlock(s)          | postgres
  SET_MARK_GROUP     | BEGIN              | myGroup4           | M1                                      | postgres
  CLEANUP_RLBK_STATE |                    | Rollback id 14707  | set to COMMITTED                        | postgres
  CLEANUP_RLBK_STATE |                    | Rollback id 14708  | set to COMMITTED                        | postgres
  SET_MARK_GROUP     | END                | myGroup4           | M1                                      | postgres
- START_GROUP        | END                | myGroup4           | 5 tables/sequences processed            | postgres
+ START_GROUP        | END                | myGroup4           | 6 tables/sequences processed            | postgres
  SET_MARK_GROUP     | BEGIN              | myGroup4           |                                         | postgres
  LOCK_GROUP         | BEGIN              | myGroup4           |                                         | postgres
- LOCK_GROUP         | END                | myGroup4           | 5 tables locked, 0 deadlock(s)          | postgres
+ LOCK_GROUP         | END                | myGroup4           | 6 tables locked, 0 deadlock(s)          | postgres
  SET_MARK_GROUP     | END                | myGroup4           | M2                                      | postgres
  SET_MARK_GROUP     | BEGIN              | myGroup4           |                                         | postgres
  LOCK_GROUP         | BEGIN              | myGroup4           |                                         | postgres
- LOCK_GROUP         | END                | myGroup4           | 5 tables locked, 0 deadlock(s)          | postgres
+ LOCK_GROUP         | END                | myGroup4           | 6 tables locked, 0 deadlock(s)          | postgres
  SET_MARK_GROUP     | END                | myGroup4           | M3                                      | postgres
  STOP_GROUP         | BEGIN              | myGroup4           |                                         | postgres
  LOCK_GROUP         | BEGIN              | myGroup4           |                                         | postgres
- LOCK_GROUP         | END                | myGroup4           | 5 tables locked, 0 deadlock(s)          | postgres
+ LOCK_GROUP         | END                | myGroup4           | 6 tables locked, 0 deadlock(s)          | postgres
  SET_MARK_GROUP     | BEGIN              | myGroup4           | M4                                      | postgres
  SET_MARK_GROUP     | END                | myGroup4           | M4                                      | postgres
- STOP_GROUP         | END                | myGroup4           | 5 tables/sequences processed            | postgres
+ STOP_GROUP         | END                | myGroup4           | 6 tables/sequences processed            | postgres
  START_GROUP        | BEGIN              | myGroup4           | Without log reset                       | postgres
  LOCK_GROUP         | BEGIN              | myGroup4           |                                         | postgres
- LOCK_GROUP         | END                | myGroup4           | 5 tables locked, 0 deadlock(s)          | postgres
+ LOCK_GROUP         | END                | myGroup4           | 6 tables locked, 0 deadlock(s)          | postgres
  SET_MARK_GROUP     | BEGIN              | myGroup4           | M5                                      | postgres
  SET_MARK_GROUP     | END                | myGroup4           | M5                                      | postgres
- START_GROUP        | END                | myGroup4           | 5 tables/sequences processed            | postgres
+ START_GROUP        | END                | myGroup4           | 6 tables/sequences processed            | postgres
  STOP_GROUP         | BEGIN              | myGroup4           |                                         | postgres
  LOCK_GROUP         | BEGIN              | myGroup4           |                                         | postgres
- LOCK_GROUP         | END                | myGroup4           | 5 tables locked, 0 deadlock(s)          | postgres
+ LOCK_GROUP         | END                | myGroup4           | 6 tables locked, 0 deadlock(s)          | postgres
  SET_MARK_GROUP     | BEGIN              | myGroup4           | M6                                      | postgres
  SET_MARK_GROUP     | END                | myGroup4           | M6                                      | postgres
- STOP_GROUP         | END                | myGroup4           | 5 tables/sequences processed            | postgres
-(44 rows)
+ STOP_GROUP         | END                | myGroup4           | 6 tables/sequences processed            | postgres
+(45 rows)
 
 -- set sequence restart value
 select public.handle_emaj_sequences(17200);
@@ -242,23 +246,26 @@ set role emaj_regression_tests_adm_user2;
 select emaj.emaj_start_group('myGroup4','Start');
  emaj_start_group 
 ------------------
-                5
+                6
 (1 row)
 
 insert into mySchema4.myTblP values (-1,'Stored in partition 1'), (1,'Stored in partition 2');
 select emaj.emaj_set_mark_group('myGroup4','M1');
  emaj_set_mark_group 
 ---------------------
-                   5
+                   6
 (1 row)
 
 update mySchema4.myTblP set col1 = 2 where col1 = 1;
 -- create a new partition and add it into the group ; in passing also add the sequence linked to the serial column of the mother table
 reset role;
-CREATE TABLE mySchema4.myPartP3 PARTITION OF mySchema4.myTblP (PRIMARY KEY (col1)) FOR VALUES FROM (10) TO (19);
+CREATE TABLE mySchema4.myPartP3 PARTITION OF mySchema4.myTblP FOR VALUES FROM (10) TO (19);
 -- create the table with PG 9.6- so that next scripts do not abort
-CREATE TABLE IF NOT EXISTS mySchema4.myPartP3 (PRIMARY KEY (col1)) INHERITS (mySchema4.myTblP);
+CREATE TABLE IF NOT EXISTS mySchema4.myPartP3 () INHERITS (mySchema4.myTblP);
 NOTICE:  relation "mypartp3" already exists, skipping
+-- add a PK (will fail with PG12+ because of the global PK)
+ALTER TABLE mySchema4.myPartP3 ADD PRIMARY KEY (col1);
+ERROR:  multiple primary keys for table "mypartp3" are not allowed
 grant all on mySchema4.myPartP3 to emaj_regression_tests_adm_user1, emaj_regression_tests_adm_user2;
 set role emaj_regression_tests_adm_user1;
 select emaj.emaj_assign_table('myschema4','mypartp3','myGroup4',null,'Add partition 3');
@@ -291,7 +298,8 @@ select emaj.emaj_remove_sequence('myschema4','mytblp_col3_seq','Remove partition
 (1 row)
 
 reset role;
-drop table mySchema4.myPartP1;
+drop table mySchema4.myPartP1 cascade;
+NOTICE:  drop cascades to constraint mytblr_col2_fkey on table myschema4.mytblr
 set role emaj_regression_tests_adm_user2;
 -- verify that emaj_adm has the proper grants to delete old marks leading to an old log table drop
 begin transaction;
@@ -313,7 +321,8 @@ select stat_group, stat_schema, stat_table, stat_first_mark, stat_last_mark, sta
  myGroup4   | myschema4   | mytblc1    | Start           |                    |         0
  myGroup4   | myschema4   | mytblc2    | Start           |                    |         0
  myGroup4   | myschema4   | mytblm     | Start           |                    |         0
-(6 rows)
+ myGroup4   | myschema4   | mytblr     | Start           |                    |         0
+(7 rows)
 
 select rel_schema, rel_tblseq, rel_time_range, rel_group, rel_kind, rel_log_schema, rel_log_table,
        rel_emaj_verb_attnum, rel_has_always_ident_col, rel_log_seq_last_value
@@ -350,7 +359,7 @@ select rlbk_severity, regexp_replace(rlbk_message,E'\\d\\d\\d\\d/\\d\\d\\/\\d\\d
   from emaj.emaj_rollback_group('myGroup4','Start',true);
  rlbk_severity |                                             regexp_replace                                              
 ---------------+---------------------------------------------------------------------------------------------------------
- Notice        | 2 / 5 tables effectively processed.
+ Notice        | 2 / 6 tables effectively processed.
  Warning       | The table myschema4.mypartp3 has only been rolled back to its latest group attachment (<timestamp>)
  Warning       | The table myschema4.mypartp1 has been left unchanged (not in group anymore since <timestamp>)
  Warning       | The sequence myschema4.mytblp_col3_seq has been left unchanged (not in group anymore since <timestamp>)
@@ -361,14 +370,14 @@ insert into mySchema4.myTblP values (1,'Initialy stored in partition 2'), (11,'S
 select emaj.emaj_set_mark_group('myGroup4','Before update');
  emaj_set_mark_group 
 ---------------------
-                   5
+                   6
 (1 row)
 
 update mySchema4.myTblP set col1 = 12 where col1=1;
 select * from emaj.emaj_logged_rollback_group('myGroup4','Before update');
  rlbk_severity |            rlbk_message             
 ---------------+-------------------------------------
- Notice        | 2 / 5 tables effectively processed.
+ Notice        | 2 / 6 tables effectively processed.
 (1 row)
 
 select col1, col2, col3, emaj_verb, emaj_tuple, emaj_gid from emaj_myschema4.mypartP2_log;
@@ -390,13 +399,13 @@ select col1, col2, col3, emaj_verb, emaj_tuple, emaj_gid from emaj_myschema4.myp
 select emaj.emaj_stop_group('myGroup4');
  emaj_stop_group 
 -----------------
-               5
+               6
 (1 row)
 
 select emaj.emaj_drop_group('myGroup4');
  emaj_drop_group 
 -----------------
-               5
+               6
 (1 row)
 
 -----------------------------
@@ -431,38 +440,38 @@ select hist_function, hist_event, hist_object,
 --------------------+--------------------+---------------------------+---------------------------------------------------------------------------------------------------------+-----------
  START_GROUP        | BEGIN              | myGroup4                  | With log reset                                                                                          | postgres
  LOCK_GROUP         | BEGIN              | myGroup4                  |                                                                                                         | postgres
- LOCK_GROUP         | END                | myGroup4                  | 5 tables locked, 0 deadlock(s)                                                                          | postgres
+ LOCK_GROUP         | END                | myGroup4                  | 6 tables locked, 0 deadlock(s)                                                                          | postgres
  SET_MARK_GROUP     | BEGIN              | myGroup4                  | Start                                                                                                   | postgres
  SET_MARK_GROUP     | END                | myGroup4                  | Start                                                                                                   | postgres
- START_GROUP        | END                | myGroup4                  | 5 tables/sequences processed                                                                            | postgres
+ START_GROUP        | END                | myGroup4                  | 6 tables/sequences processed                                                                            | postgres
  SET_MARK_GROUP     | BEGIN              | myGroup4                  |                                                                                                         | postgres
  LOCK_GROUP         | BEGIN              | myGroup4                  |                                                                                                         | postgres
- LOCK_GROUP         | END                | myGroup4                  | 5 tables locked, 0 deadlock(s)                                                                          | postgres
+ LOCK_GROUP         | END                | myGroup4                  | 6 tables locked, 0 deadlock(s)                                                                          | postgres
  SET_MARK_GROUP     | END                | myGroup4                  | M1                                                                                                      | postgres
  ASSIGN_TABLE       | BEGIN              |                           |                                                                                                         | postgres
  LOCK_GROUP         | BEGIN              | myGroup4                  |                                                                                                         | postgres
- LOCK_GROUP         | END                | myGroup4                  | 5 tables locked, 0 deadlock(s)                                                                          | postgres
+ LOCK_GROUP         | END                | myGroup4                  | 6 tables locked, 0 deadlock(s)                                                                          | postgres
  SET_MARK_GROUP     | BEGIN              | myGroup4                  | Add partition 3                                                                                         | postgres
  SET_MARK_GROUP     | END                | myGroup4                  | Add partition 3                                                                                         | postgres
  ASSIGN_TABLE       | TABLE ADDED        | myschema4.mypartp3        | To the logging group myGroup4                                                                           | postgres
  ASSIGN_TABLE       | END                |                           | 1 tables assigned to the group myGroup4                                                                 | postgres
  ASSIGN_SEQUENCE    | BEGIN              |                           |                                                                                                         | postgres
  LOCK_GROUP         | BEGIN              | myGroup4                  |                                                                                                         | postgres
- LOCK_GROUP         | END                | myGroup4                  | 6 tables locked, 0 deadlock(s)                                                                          | postgres
+ LOCK_GROUP         | END                | myGroup4                  | 7 tables locked, 0 deadlock(s)                                                                          | postgres
  SET_MARK_GROUP     | BEGIN              | myGroup4                  | Add partition 3_seq                                                                                     | postgres
  SET_MARK_GROUP     | END                | myGroup4                  | Add partition 3_seq                                                                                     | postgres
  ASSIGN_SEQUENCE    | SEQUENCE ADDED     | myschema4.mytblp_col3_seq | To the logging group myGroup4                                                                           | postgres
  ASSIGN_SEQUENCE    | END                |                           | 1 sequences assigned to the group myGroup4                                                              | postgres
  REMOVE_TABLE       | BEGIN              |                           |                                                                                                         | postgres
  LOCK_GROUP         | BEGIN              | myGroup4                  |                                                                                                         | postgres
- LOCK_GROUP         | END                | myGroup4                  | 6 tables locked, 0 deadlock(s)                                                                          | postgres
+ LOCK_GROUP         | END                | myGroup4                  | 7 tables locked, 0 deadlock(s)                                                                          | postgres
  SET_MARK_GROUP     | BEGIN              | myGroup4                  | Remove partition 1                                                                                      | postgres
  SET_MARK_GROUP     | END                | myGroup4                  | Remove partition 1                                                                                      | postgres
  REMOVE_TABLE       | TABLE REMOVED      | myschema4.mypartp1        | From the logging group myGroup4                                                                         | postgres
  REMOVE_TABLE       | END                |                           | 1 tables removed from their groups                                                                      | postgres
  REMOVE_SEQUENCE    | BEGIN              |                           |                                                                                                         | postgres
  LOCK_GROUP         | BEGIN              | myGroup4                  |                                                                                                         | postgres
- LOCK_GROUP         | END                | myGroup4                  | 5 tables locked, 0 deadlock(s)                                                                          | postgres
+ LOCK_GROUP         | END                | myGroup4                  | 6 tables locked, 0 deadlock(s)                                                                          | postgres
  SET_MARK_GROUP     | BEGIN              | myGroup4                  | Remove partition 1_seq                                                                                  | postgres
  SET_MARK_GROUP     | END                | myGroup4                  | Remove partition 1_seq                                                                                  | postgres
  REMOVE_SEQUENCE    | SEQUENCE REMOVED   | myschema4.mytblp_col3_seq | From the logging group myGroup4                                                                         | postgres
@@ -470,7 +479,7 @@ select hist_function, hist_event, hist_object,
  ROLLBACK_GROUP     | BEGIN              | myGroup4                  | Unlogged rollback to mark Start (timestamp)                                                             | postgres
  DBLINK_OPEN_CNX    |                    | rlbk#1                    | Status = 1                                                                                              | postgres
  LOCK_GROUP         | BEGIN              | myGroup4                  | Rollback session #1                                                                                     | postgres
- LOCK_GROUP         | END                | myGroup4                  | Rollback session #1: 5 tables locked, 0 deadlock(s)                                                     | postgres
+ LOCK_GROUP         | END                | myGroup4                  | Rollback session #1: 6 tables locked, 0 deadlock(s)                                                     | postgres
  ROLLBACK_TABLE     | BEGIN              | myschema4.mypartp2        | All log rows where emaj_gid > 17200000 and <= 17200004                                                  | postgres
  ROLLBACK_TABLE     | END                | myschema4.mypartp2        | 2 rolled back primary keys                                                                              | postgres
  ROLLBACK_TABLE     | BEGIN              | myschema4.mypartp3        | All log rows where emaj_gid > 17200003 and <= 17200004                                                  | postgres
@@ -480,7 +489,7 @@ select hist_function, hist_event, hist_object,
  ROLLBACK_GROUP     | MARK DELETED       | myGroup4                  | mark Add partition 3_seq is deleted                                                                     | postgres
  ROLLBACK_GROUP     | MARK DELETED       | myGroup4                  | mark Remove partition 1 is deleted                                                                      | postgres
  ROLLBACK_GROUP     | MARK DELETED       | myGroup4                  | mark Remove partition 1_seq is deleted                                                                  | postgres
- ROLLBACK_GROUP     | NOTICE             | Rollback id 17200         | 2 / 5 tables effectively processed.                                                                     | postgres
+ ROLLBACK_GROUP     | NOTICE             | Rollback id 17200         | 2 / 6 tables effectively processed.                                                                     | postgres
  ROLLBACK_GROUP     | WARNING            | Rollback id 17200         | The table myschema4.mypartp3 has only been rolled back to its latest group attachment (<timestamp>)     | postgres
  ROLLBACK_GROUP     | WARNING            | Rollback id 17200         | The table myschema4.mypartp1 has been left unchanged (not in group anymore since <timestamp>)           | postgres
  ROLLBACK_GROUP     | WARNING            | Rollback id 17200         | The sequence myschema4.mytblp_col3_seq has been left unchanged (not in group anymore since <timestamp>) | postgres
@@ -488,13 +497,13 @@ select hist_function, hist_event, hist_object,
  ROLLBACK_GROUP     | END                | myGroup4                  | Rollback_id 17200, 2 tables and 0 sequences effectively processed                                       | postgres
  SET_MARK_GROUP     | BEGIN              | myGroup4                  |                                                                                                         | postgres
  LOCK_GROUP         | BEGIN              | myGroup4                  |                                                                                                         | postgres
- LOCK_GROUP         | END                | myGroup4                  | 5 tables locked, 0 deadlock(s)                                                                          | postgres
+ LOCK_GROUP         | END                | myGroup4                  | 6 tables locked, 0 deadlock(s)                                                                          | postgres
  CLEANUP_RLBK_STATE |                    | Rollback id 17200         | set to COMMITTED                                                                                        | postgres
  SET_MARK_GROUP     | END                | myGroup4                  | Before update                                                                                           | postgres
  ROLLBACK_GROUP     | BEGIN              | myGroup4                  | Logged rollback to mark Before update (timestamp)                                                       | postgres
  DBLINK_OPEN_CNX    |                    | rlbk#1                    | Status = 1                                                                                              | postgres
  LOCK_GROUP         | BEGIN              | myGroup4                  | Rollback session #1                                                                                     | postgres
- LOCK_GROUP         | END                | myGroup4                  | Rollback session #1: 5 tables locked, 0 deadlock(s)                                                     | postgres
+ LOCK_GROUP         | END                | myGroup4                  | Rollback session #1: 6 tables locked, 0 deadlock(s)                                                     | postgres
  SET_MARK_GROUP     | BEGIN              | myGroup4                  | RLBK_Before update_%_START                                                                              | postgres
  SET_MARK_GROUP     | END                | myGroup4                  | RLBK_Before update_%_START                                                                              | postgres
  ROLLBACK_TABLE     | BEGIN              | myschema4.mypartp2        | All log rows where emaj_gid > 17200006 and <= 17200008                                                  | postgres
@@ -503,19 +512,19 @@ select hist_function, hist_event, hist_object,
  ROLLBACK_TABLE     | END                | myschema4.mypartp3        | 1 rolled back primary keys                                                                              | postgres
  SET_MARK_GROUP     | BEGIN              | myGroup4                  | RLBK_Before update_%_DONE                                                                               | postgres
  SET_MARK_GROUP     | END                | myGroup4                  | RLBK_Before update_%_DONE                                                                               | postgres
- ROLLBACK_GROUP     | NOTICE             | Rollback id 17201         | 2 / 5 tables effectively processed.                                                                     | postgres
+ ROLLBACK_GROUP     | NOTICE             | Rollback id 17201         | 2 / 6 tables effectively processed.                                                                     | postgres
  DBLINK_CLOSE_CNX   |                    | rlbk#1                    |                                                                                                         | postgres
  ROLLBACK_GROUP     | END                | myGroup4                  | Rollback_id 17201, 2 tables and 0 sequences effectively processed                                       | postgres
  STOP_GROUP         | BEGIN              | myGroup4                  |                                                                                                         | postgres
  LOCK_GROUP         | BEGIN              | myGroup4                  |                                                                                                         | postgres
- LOCK_GROUP         | END                | myGroup4                  | 5 tables locked, 0 deadlock(s)                                                                          | postgres
+ LOCK_GROUP         | END                | myGroup4                  | 6 tables locked, 0 deadlock(s)                                                                          | postgres
  SET_MARK_GROUP     | BEGIN              | myGroup4                  | STOP_%                                                                                                  | postgres
  CLEANUP_RLBK_STATE |                    | Rollback id 17201         | set to COMMITTED                                                                                        | postgres
  SET_MARK_GROUP     | END                | myGroup4                  | STOP_%                                                                                                  | postgres
- STOP_GROUP         | END                | myGroup4                  | 5 tables/sequences processed                                                                            | postgres
+ STOP_GROUP         | END                | myGroup4                  | 6 tables/sequences processed                                                                            | postgres
  DROP_GROUP         | BEGIN              | myGroup4                  |                                                                                                         | postgres
  DROP_GROUP         | LOG_SCHEMA DROPPED | emaj_myschema4            |                                                                                                         | postgres
- DROP_GROUP         | END                | myGroup4                  | 5 tables/sequences processed                                                                            | postgres
+ DROP_GROUP         | END                | myGroup4                  | 6 tables/sequences processed                                                                            | postgres
 (87 rows)
 
 -- set sequence restart value
@@ -955,6 +964,9 @@ WARNING:  _assign_tables: Some partitionned tables (mytblp) are not selected.
 NOTICE:  table "mypartp3_log" does not exist, skipping
 NOTICE:  trigger "emaj_log_trg" for relation "myschema4.mypartp3" does not exist, skipping
 NOTICE:  trigger "emaj_trunc_trg" for relation "myschema4.mypartp3" does not exist, skipping
+NOTICE:  table "mytblr_log" does not exist, skipping
+NOTICE:  trigger "emaj_log_trg" for relation "myschema4.mytblr" does not exist, skipping
+NOTICE:  trigger "emaj_trunc_trg" for relation "myschema4.mytblr" does not exist, skipping
 NOTICE:  table "mytblm_log" does not exist, skipping
 NOTICE:  trigger "emaj_log_trg" for relation "myschema4.mytblm" does not exist, skipping
 NOTICE:  trigger "emaj_trunc_trg" for relation "myschema4.mytblm" does not exist, skipping
@@ -970,13 +982,13 @@ NOTICE:  trigger "emaj_log_trg" for relation "myschema4.mytblc1" does not exist,
 NOTICE:  trigger "emaj_trunc_trg" for relation "myschema4.mytblc1" does not exist, skipping
  emaj_assign_tables 
 --------------------
-                  5
+                  6
 (1 row)
 
   select emaj.emaj_assign_sequences('myschema4','.*','','grp_tmp_4');
  emaj_assign_sequences 
 -----------------------
-                     1
+                     2
 (1 row)
 
   select emaj.emaj_modify_table('myschema4','mytblm','{"ignored_triggers": "mytblm_insert_trigger"}'::jsonb);
@@ -995,7 +1007,7 @@ select emaj.emaj_start_group('grp_tmp_3','Start');
 select emaj.emaj_set_mark_groups('{"grp_tmp_3","grp_tmp_4","grp_tmp"}','Mk1');
  emaj_set_mark_groups 
 ----------------------
-                   11
+                   13
 (1 row)
 
 -- export the initial groups configuration
@@ -1014,7 +1026,7 @@ insert into "phil's schema3"."myTbl2\" (col22,col23)
 select emaj.emaj_set_mark_groups('{"grp_tmp_3","grp_tmp_4","grp_tmp"}','Mk2');
  emaj_set_mark_groups 
 ----------------------
-                   11
+                   13
 (1 row)
 
 insert into "phil's schema3"."myTbl2\" (col22,col23)
@@ -1031,7 +1043,7 @@ insert into myschema4.mytblm
 select emaj.emaj_set_mark_groups('{"grp_tmp_3","grp_tmp_4","grp_tmp"}','Mk3');
  emaj_set_mark_groups 
 ----------------------
-                   11
+                   13
 (1 row)
 
 delete from myschema4.mytblm
@@ -1042,8 +1054,8 @@ update myschema4.mytblm set col3 = 'After Mk2 and updated after Mk3'
 select * from emaj.emaj_rollback_groups('{"grp_tmp_3","grp_tmp_4","grp_tmp"}','Mk3');
  rlbk_severity |            rlbk_message             
 ---------------+-------------------------------------
- Notice        | 2 / 8 tables effectively processed.
- Notice        | 3 sequences processed.
+ Notice        | 2 / 9 tables effectively processed.
+ Notice        | 4 sequences processed.
 (2 rows)
 
 -- change some priority and log tablespaces
@@ -1079,19 +1091,19 @@ select emaj.emaj_move_sequences('phil''s schema3','.*','','grp_tmp','Move_seq_3_
 select emaj.emaj_move_tables('myschema4','.*','','grp_tmp','Move_tbl_4_to_tmp');
  emaj_move_tables 
 ------------------
-                5
+                6
 (1 row)
 
 select emaj.emaj_move_sequences('myschema4','.*','','grp_tmp','Move_seq_4_to_tmp');
  emaj_move_sequences 
 ---------------------
-                   1
+                   2
 (1 row)
 
 select emaj.emaj_set_mark_groups('{"grp_tmp_3","grp_tmp_4","grp_tmp"}','Mk4');
  emaj_set_mark_groups 
 ----------------------
-                   11
+                   13
 (1 row)
 
 -- perform some other changes and set marks
@@ -1104,7 +1116,7 @@ delete from "phil's schema3".mytbl4
 select emaj.emaj_set_mark_groups('{"grp_tmp_3","grp_tmp_4","grp_tmp"}','Mk5');
  emaj_set_mark_groups 
 ----------------------
-                   11
+                   13
 (1 row)
 
 insert into myschema4.mytblm
@@ -1119,7 +1131,7 @@ select nextval(E'"phil''s schema3"."phil''s seq\\1"');
 select emaj.emaj_set_mark_groups('{"grp_tmp_3","grp_tmp_4","grp_tmp"}','Mk6');
  emaj_set_mark_groups 
 ----------------------
-                   11
+                   13
 (1 row)
 
 update myschema4.mytblm set col3 = 'After Mk5 and updated after Mk6'
@@ -1142,8 +1154,8 @@ select rlbk_severity, regexp_replace(rlbk_message,E'\\d\\d\\d\\d/\\d\\d\\/\\d\\d
   from emaj.emaj_logged_rollback_groups('{"grp_tmp_3","grp_tmp_4","grp_tmp"}','Mk5', true);
  rlbk_severity |                                                regexp_replace                                                 
 ---------------+---------------------------------------------------------------------------------------------------------------
- Notice        | 2 / 7 tables effectively processed.
- Notice        | 2 sequences processed.
+ Notice        | 2 / 8 tables effectively processed.
+ Notice        | 3 sequences processed.
  Warning       | The table myschema4.mytblc1 has been left unchanged (not in group anymore since <timestamp>)
  Warning       | The sequence "phil's schema3"."phil's seq\1" has been left unchanged (not in group anymore since <timestamp>)
 (4 rows)
@@ -1163,7 +1175,7 @@ delete from myschema4.mytblm
 select emaj.emaj_set_mark_groups('{"grp_tmp_3","grp_tmp_4","grp_tmp"}','Mk7');
  emaj_set_mark_groups 
 ----------------------
-                    9
+                   11
 (1 row)
 
 delete from mySchema4.mytblm;
@@ -1179,7 +1191,7 @@ select * from emaj.emaj_get_consolidable_rollbacks() order by 1,2;
 select emaj.emaj_consolidate_rollback_group('grp_tmp','End_logged_rollback');
  emaj_consolidate_rollback_group 
 ---------------------------------
-                               4
+                               5
 (1 row)
 
 select stat_group, stat_schema, stat_table, stat_first_mark, stat_last_mark, stat_rows
@@ -1192,6 +1204,7 @@ select stat_group, stat_schema, stat_table, stat_first_mark, stat_last_mark, sta
  grp_tmp_4  | myschema4      | mytblc1     | Mk1               | Move_tbl_4_to_tmp |         4
  grp_tmp_4  | myschema4      | mytblc2     | Mk1               | Move_tbl_4_to_tmp |         6
  grp_tmp_4  | myschema4      | mytblm      | Mk1               | Move_tbl_4_to_tmp |         0
+ grp_tmp_4  | myschema4      | mytblr      | Mk1               | Move_tbl_4_to_tmp |         0
  grp_tmp_3  | phil's schema3 | myTbl2\     | Mk1               | Move_tbl_3_to_tmp |         8
  grp_tmp_3  | phil's schema3 | mytbl4      | Mk1               | Move_tbl_3_to_tmp |         6
  grp_tmp_3  | phil's schema3 | phil's tbl1 | Mk1               | Move_tbl_3_to_tmp |         0
@@ -1203,7 +1216,8 @@ select stat_group, stat_schema, stat_table, stat_first_mark, stat_last_mark, sta
  grp_tmp    | myschema4      | mytblc1     | Move_tbl_4_to_tmp | [deleted mark]    |         0
  grp_tmp    | myschema4      | mytblc2     | Move_tbl_4_to_tmp |                   |         6
  grp_tmp    | myschema4      | mytblm      | Move_tbl_4_to_tmp |                   |         0
-(16 rows)
+ grp_tmp    | myschema4      | mytblr      | Move_tbl_4_to_tmp |                   |         0
+(18 rows)
 
 select mark_time_id, regexp_replace(mark_name,E'\\d\\d\.\\d\\d\\.\\d\\d\\.\\d\\d\\d\\d','%','g'), mark_group,
        mark_is_deleted, mark_log_rows_before_next
@@ -1283,8 +1297,8 @@ select rlbk_severity, regexp_replace(rlbk_message,E'\\d\\d\\d\\d/\\d\\d\\/\\d\\d
   from emaj.emaj_rollback_groups('{"grp_tmp_3","grp_tmp_4","grp_tmp"}','Mk3',true);
  rlbk_severity |                                                         regexp_replace                                                         
 ---------------+--------------------------------------------------------------------------------------------------------------------------------
- Notice        | 3 / 7 tables effectively processed.
- Notice        | 2 sequences processed.
+ Notice        | 3 / 8 tables effectively processed.
+ Notice        | 3 sequences processed.
  Warning       | The table "phil's schema3"."myTbl2\" has only been rolled back to its latest group attachment (<timestamp>)
  Warning       | The table "phil's schema3".mytbl4 has only been rolled back to its latest group attachment (<timestamp>)
  Warning       | The table "phil's schema3"."phil's tbl1" has only been rolled back to its latest group attachment (<timestamp>)
@@ -1295,10 +1309,12 @@ select rlbk_severity, regexp_replace(rlbk_message,E'\\d\\d\\d\\d/\\d\\d\\/\\d\\d
  Warning       | The table myschema4.mytblc1 has only been rolled back to its latest group attachment (<timestamp>)
  Warning       | The table myschema4.mytblc2 has only been rolled back to its latest group attachment (<timestamp>)
  Warning       | The table myschema4.mytblm has only been rolled back to its latest group attachment (<timestamp>)
+ Warning       | The table myschema4.mytblr has only been rolled back to its latest group attachment (<timestamp>)
  Warning       | The sequence myschema4.mytblp_col3_seq has only been rolled back to its latest group attachment state (<timestamp>)
+ Warning       | The sequence myschema4.mytblr_col1_seq has only been rolled back to its latest group attachment state (<timestamp>)
  Warning       | Tables group change not rolled back: log data tablespace for "phil's schema3"."phil's tbl1"
  Warning       | Tables group change not rolled back: E-Maj priority for "phil's schema3"."phil's tbl1"
-(15 rows)
+(17 rows)
 
 select stat_group, stat_schema, stat_table, stat_first_mark, stat_last_mark, stat_rows
   from emaj.emaj_log_stat_groups('{"grp_tmp_3","grp_tmp_4","grp_tmp"}','Mk1',null)
@@ -1310,6 +1326,7 @@ select stat_group, stat_schema, stat_table, stat_first_mark, stat_last_mark, sta
  grp_tmp_4  | myschema4      | mytblc1     | Mk1             | [deleted mark] |         4
  grp_tmp_4  | myschema4      | mytblc2     | Mk1             | [deleted mark] |         6
  grp_tmp_4  | myschema4      | mytblm      | Mk1             | [deleted mark] |         0
+ grp_tmp_4  | myschema4      | mytblr      | Mk1             | [deleted mark] |         0
  grp_tmp_3  | phil's schema3 | myTbl2\     | Mk1             | [deleted mark] |         8
  grp_tmp_3  | phil's schema3 | mytbl4      | Mk1             | [deleted mark] |         6
  grp_tmp_3  | phil's schema3 | phil's tbl1 | Mk1             | [deleted mark] |         0
@@ -1321,7 +1338,8 @@ select stat_group, stat_schema, stat_table, stat_first_mark, stat_last_mark, sta
  grp_tmp    | myschema4      | mytblc1     | [deleted mark]  | [deleted mark] |         0
  grp_tmp    | myschema4      | mytblc2     | [deleted mark]  |                |         0
  grp_tmp    | myschema4      | mytblm      | [deleted mark]  |                |         0
-(16 rows)
+ grp_tmp    | myschema4      | mytblr      | [deleted mark]  |                |         0
+(18 rows)
 
 -- delete all marks before Mk3
 select emaj.emaj_delete_before_mark_group(group_name,'Mk3')
@@ -1394,7 +1412,7 @@ PL/pgSQL function emaj.emaj_remove_table(text,text,text) line 6 at RETURN
 select emaj.emaj_force_stop_group('grp_tmp');
  emaj_force_stop_group 
 -----------------------
-                     9
+                    11
 (1 row)
 
 select emaj.emaj_remove_table('phil''s schema3','mytbl4');
@@ -1425,7 +1443,7 @@ select * from emaj.emaj_verify_all();
 select emaj.emaj_start_group('grp_tmp','Group restart');
  emaj_start_group 
 ------------------
-                9
+               11
 (1 row)
 
 -- import the groups configuration
@@ -1456,13 +1474,13 @@ select emaj.emaj_drop_group('grp_tmp_3');
 select emaj.emaj_set_mark_group('grp_tmp_4','Last_mark');
  emaj_set_mark_group 
 ---------------------
-                   6
+                   8
 (1 row)
 
 select emaj.emaj_force_drop_group('grp_tmp_4');
  emaj_force_drop_group 
 -----------------------
-                     6
+                     8
 (1 row)
 
 select emaj.emaj_stop_group('grp_tmp');
@@ -1505,6 +1523,13 @@ select * from emaj.emaj_rel_hist order by 1,2,3;
  myschema4      | mytblp_col3_seq                                                 | [17607,17618)   | grp_tmp_4        | S
  myschema4      | mytblp_col3_seq                                                 | [17618,17633)   | grp_tmp          | S
  myschema4      | mytblp_col3_seq                                                 | [17633,17637)   | grp_tmp_4        | S
+ myschema4      | mytblr                                                          | [17101,17211)   | myGroup4         | r
+ myschema4      | mytblr                                                          | [17606,17617)   | grp_tmp_4        | r
+ myschema4      | mytblr                                                          | [17617,17633)   | grp_tmp          | r
+ myschema4      | mytblr                                                          | [17633,17637)   | grp_tmp_4        | r
+ myschema4      | mytblr_col1_seq                                                 | [17607,17618)   | grp_tmp_4        | S
+ myschema4      | mytblr_col1_seq                                                 | [17618,17633)   | grp_tmp          | S
+ myschema4      | mytblr_col1_seq                                                 | [17633,17637)   | grp_tmp_4        | S
  myschema5      | myoidstbl                                                       | [17403,17414)   | phil's group#3", | r
  myschema5      | myunloggedtbl                                                   | [17403,17414)   | phil's group#3", | r
  phil's schema3 | myTbl2\                                                         | [14201,14507)   | phil's group#3", | r
@@ -1537,7 +1562,7 @@ select * from emaj.emaj_rel_hist order by 1,2,3;
  phil's schema3 | phil's tbl1                                                     | [17615,17633)   | grp_tmp          | r
  phil's schema3 | phil's tbl1                                                     | [17633,17635)   | grp_tmp_3        | r
  phil's schema3 | table_with_very_looooooooooooooooooooooooooooooooooooooong_name | [14502,14507)   | phil's group#3", | r
-(57 rows)
+(64 rows)
 
 select count(*) from emaj.emaj_relation where rel_schema in ('phil''s schema3','myschema4');
  count 
@@ -1631,21 +1656,23 @@ select hist_function, hist_event, hist_object,
  SET_MARK_GROUP           | END                         | grp_tmp_4                            | ASSIGN_%                                                                                                                       | postgres
  ASSIGN_TABLES            | LOG_SCHEMA CREATED          | emaj_myschema4                       |                                                                                                                                | postgres
  ASSIGN_TABLES            | TABLE ADDED                 | myschema4.mypartp3                   | To the logging group grp_tmp_4                                                                                                 | postgres
+ ASSIGN_TABLES            | TABLE ADDED                 | myschema4.mytblr                     | To the logging group grp_tmp_4                                                                                                 | postgres
  ASSIGN_TABLES            | TABLE ADDED                 | myschema4.mytblm                     | To the logging group grp_tmp_4                                                                                                 | postgres
  ASSIGN_TABLES            | TABLE ADDED                 | myschema4.mytblc2                    | To the logging group grp_tmp_4                                                                                                 | postgres
  ASSIGN_TABLES            | TABLE ADDED                 | myschema4.mypartp2                   | To the logging group grp_tmp_4                                                                                                 | postgres
  ASSIGN_TABLES            | TABLE ADDED                 | myschema4.mytblc1                    | To the logging group grp_tmp_4                                                                                                 | postgres
- ASSIGN_TABLES            | END                         |                                      | 5 tables assigned to the group grp_tmp_4                                                                                       | postgres
+ ASSIGN_TABLES            | END                         |                                      | 6 tables assigned to the group grp_tmp_4                                                                                       | postgres
  ASSIGN_SEQUENCES         | BEGIN                       |                                      |                                                                                                                                | postgres
  LOCK_GROUP               | BEGIN                       | grp_tmp_4                            |                                                                                                                                | postgres
- LOCK_GROUP               | END                         | grp_tmp_4                            | 5 tables locked, 0 deadlock(s)                                                                                                 | postgres
+ LOCK_GROUP               | END                         | grp_tmp_4                            | 6 tables locked, 0 deadlock(s)                                                                                                 | postgres
  SET_MARK_GROUP           | BEGIN                       | grp_tmp_4                            | ASSIGN_%                                                                                                                       | postgres
  SET_MARK_GROUP           | END                         | grp_tmp_4                            | ASSIGN_%                                                                                                                       | postgres
  ASSIGN_SEQUENCES         | SEQUENCE ADDED              | myschema4.mytblp_col3_seq            | To the logging group grp_tmp_4                                                                                                 | postgres
- ASSIGN_SEQUENCES         | END                         |                                      | 1 sequences assigned to the group grp_tmp_4                                                                                    | postgres
+ ASSIGN_SEQUENCES         | SEQUENCE ADDED              | myschema4.mytblr_col1_seq            | To the logging group grp_tmp_4                                                                                                 | postgres
+ ASSIGN_SEQUENCES         | END                         |                                      | 2 sequences assigned to the group grp_tmp_4                                                                                    | postgres
  MODIFY_TABLE             | BEGIN                       |                                      |                                                                                                                                | postgres
  LOCK_GROUP               | BEGIN                       | grp_tmp_4                            |                                                                                                                                | postgres
- LOCK_GROUP               | END                         | grp_tmp_4                            | 5 tables locked, 0 deadlock(s)                                                                                                 | postgres
+ LOCK_GROUP               | END                         | grp_tmp_4                            | 6 tables locked, 0 deadlock(s)                                                                                                 | postgres
  SET_MARK_GROUPS          | BEGIN                       | grp_tmp_4                            | MODIFY_%                                                                                                                       | postgres
  SET_MARK_GROUPS          | END                         | grp_tmp_4                            | MODIFY_%                                                                                                                       | postgres
  MODIFY_TABLE             | TRIGGERS TO IGNORE CHANGED  | myschema4.mytblm                     | none => {mytblm_insert_trigger}                                                                                                | postgres
@@ -1658,31 +1685,32 @@ select hist_function, hist_event, hist_object,
  START_GROUP              | END                         | grp_tmp_3                            | 5 tables/sequences processed                                                                                                   | postgres
  SET_MARK_GROUPS          | BEGIN                       | grp_tmp_3,grp_tmp_4,grp_tmp          | Mk1                                                                                                                            | postgres
  LOCK_GROUPS              | BEGIN                       | grp_tmp,grp_tmp_3,grp_tmp_4          |                                                                                                                                | postgres
- LOCK_GROUPS              | END                         | grp_tmp,grp_tmp_3,grp_tmp_4          | 8 tables locked, 0 deadlock(s)                                                                                                 | postgres
+ LOCK_GROUPS              | END                         | grp_tmp,grp_tmp_3,grp_tmp_4          | 9 tables locked, 0 deadlock(s)                                                                                                 | postgres
  SET_MARK_GROUPS          | END                         | grp_tmp,grp_tmp_3,grp_tmp_4          | Mk1                                                                                                                            | postgres
  SET_MARK_GROUPS          | BEGIN                       | grp_tmp_3,grp_tmp_4,grp_tmp          | Mk2                                                                                                                            | postgres
  LOCK_GROUPS              | BEGIN                       | grp_tmp,grp_tmp_3,grp_tmp_4          |                                                                                                                                | postgres
- LOCK_GROUPS              | END                         | grp_tmp,grp_tmp_3,grp_tmp_4          | 8 tables locked, 0 deadlock(s)                                                                                                 | postgres
+ LOCK_GROUPS              | END                         | grp_tmp,grp_tmp_3,grp_tmp_4          | 9 tables locked, 0 deadlock(s)                                                                                                 | postgres
  SET_MARK_GROUPS          | END                         | grp_tmp,grp_tmp_3,grp_tmp_4          | Mk2                                                                                                                            | postgres
  SET_MARK_GROUPS          | BEGIN                       | grp_tmp_3,grp_tmp_4,grp_tmp          | Mk3                                                                                                                            | postgres
  LOCK_GROUPS              | BEGIN                       | grp_tmp,grp_tmp_3,grp_tmp_4          |                                                                                                                                | postgres
- LOCK_GROUPS              | END                         | grp_tmp,grp_tmp_3,grp_tmp_4          | 8 tables locked, 0 deadlock(s)                                                                                                 | postgres
+ LOCK_GROUPS              | END                         | grp_tmp,grp_tmp_3,grp_tmp_4          | 9 tables locked, 0 deadlock(s)                                                                                                 | postgres
  SET_MARK_GROUPS          | END                         | grp_tmp,grp_tmp_3,grp_tmp_4          | Mk3                                                                                                                            | postgres
  ROLLBACK_GROUPS          | BEGIN                       | grp_tmp,grp_tmp_3,grp_tmp_4          | Unlogged rollback to mark Mk3 (timestamp)                                                                                      | postgres
  DBLINK_OPEN_CNX          |                             | rlbk#1                               | Status = 1                                                                                                                     | postgres
  LOCK_GROUP               | BEGIN                       | grp_tmp,grp_tmp_3,grp_tmp_4          | Rollback session #1                                                                                                            | postgres
- LOCK_GROUP               | END                         | grp_tmp,grp_tmp_3,grp_tmp_4          | Rollback session #1: 8 tables locked, 0 deadlock(s)                                                                            | postgres
+ LOCK_GROUP               | END                         | grp_tmp,grp_tmp_3,grp_tmp_4          | Rollback session #1: 9 tables locked, 0 deadlock(s)                                                                            | postgres
  ROLLBACK_TABLE           | BEGIN                       | myschema4.mytblc2                    | All log rows where emaj_gid > 17600024 and <= 17600028                                                                         | postgres
  ROLLBACK_TABLE           | END                         | myschema4.mytblc2                    | 3 rolled back primary keys                                                                                                     | postgres
  ROLLBACK_TABLE           | BEGIN                       | myschema4.mytblc1                    | All log rows where emaj_gid > 17600024 and <= 17600028                                                                         | postgres
  ROLLBACK_TABLE           | END                         | myschema4.mytblc1                    | 1 rolled back primary keys                                                                                                     | postgres
  ROLLBACK_SEQUENCE        |                             | myschema4.mytblp_col3_seq            |                                                                                                                                | postgres
+ ROLLBACK_SEQUENCE        |                             | myschema4.mytblr_col1_seq            |                                                                                                                                | postgres
  ROLLBACK_SEQUENCE        |                             | "phil's schema3"."myTbl2\_col21_seq" |                                                                                                                                | postgres
  ROLLBACK_SEQUENCE        |                             | "phil's schema3"."phil's seq\1"      |                                                                                                                                | postgres
- ROLLBACK_GROUPS          | NOTICE                      | Rollback id 17600                    | 2 / 8 tables effectively processed.                                                                                            | postgres
- ROLLBACK_GROUPS          | NOTICE                      | Rollback id 17600                    | 3 sequences processed.                                                                                                         | postgres
+ ROLLBACK_GROUPS          | NOTICE                      | Rollback id 17600                    | 2 / 9 tables effectively processed.                                                                                            | postgres
+ ROLLBACK_GROUPS          | NOTICE                      | Rollback id 17600                    | 4 sequences processed.                                                                                                         | postgres
  DBLINK_CLOSE_CNX         |                             | rlbk#1                               |                                                                                                                                | postgres
- ROLLBACK_GROUPS          | END                         | grp_tmp,grp_tmp_3,grp_tmp_4          | Rollback_id 17600, 2 tables and 3 sequences effectively processed                                                              | postgres
+ ROLLBACK_GROUPS          | END                         | grp_tmp,grp_tmp_3,grp_tmp_4          | Rollback_id 17600, 2 tables and 4 sequences effectively processed                                                              | postgres
  MODIFY_TABLES            | BEGIN                       |                                      |                                                                                                                                | postgres
  LOCK_GROUP               | BEGIN                       | grp_tmp_3                            |                                                                                                                                | postgres
  LOCK_GROUP               | END                         | grp_tmp_3                            | 3 tables locked, 0 deadlock(s)                                                                                                 | postgres
@@ -1711,7 +1739,7 @@ select hist_function, hist_event, hist_object,
  MOVE_SEQUENCES           | END                         |                                      | 2 sequences moved to the new tables group grp_tmp                                                                              | postgres
  MOVE_TABLES              | BEGIN                       |                                      |                                                                                                                                | postgres
  LOCK_GROUP               | BEGIN                       | grp_tmp,grp_tmp_4                    |                                                                                                                                | postgres
- LOCK_GROUP               | END                         | grp_tmp,grp_tmp_4                    | 8 tables locked, 0 deadlock(s)                                                                                                 | postgres
+ LOCK_GROUP               | END                         | grp_tmp,grp_tmp_4                    | 9 tables locked, 0 deadlock(s)                                                                                                 | postgres
  SET_MARK_GROUPS          | BEGIN                       | grp_tmp,grp_tmp_4                    | Move_tbl_4_to_tmp                                                                                                              | postgres
  SET_MARK_GROUPS          | END                         | grp_tmp,grp_tmp_4                    | Move_tbl_4_to_tmp                                                                                                              | postgres
  MOVE_TABLES              | TABLE MOVED                 | myschema4.mypartp2                   | From the logging group grp_tmp_4 to the logging group grp_tmp                                                                  | postgres
@@ -1719,36 +1747,38 @@ select hist_function, hist_event, hist_object,
  MOVE_TABLES              | TABLE MOVED                 | myschema4.mytblc1                    | From the logging group grp_tmp_4 to the logging group grp_tmp                                                                  | postgres
  MOVE_TABLES              | TABLE MOVED                 | myschema4.mytblc2                    | From the logging group grp_tmp_4 to the logging group grp_tmp                                                                  | postgres
  MOVE_TABLES              | TABLE MOVED                 | myschema4.mytblm                     | From the logging group grp_tmp_4 to the logging group grp_tmp                                                                  | postgres
- MOVE_TABLES              | END                         |                                      | 5 tables moved to the new tables group grp_tmp                                                                                 | postgres
+ MOVE_TABLES              | TABLE MOVED                 | myschema4.mytblr                     | From the logging group grp_tmp_4 to the logging group grp_tmp                                                                  | postgres
+ MOVE_TABLES              | END                         |                                      | 6 tables moved to the new tables group grp_tmp                                                                                 | postgres
  MOVE_SEQUENCES           | BEGIN                       |                                      |                                                                                                                                | postgres
  LOCK_GROUP               | BEGIN                       | grp_tmp,grp_tmp_4                    |                                                                                                                                | postgres
- LOCK_GROUP               | END                         | grp_tmp,grp_tmp_4                    | 8 tables locked, 0 deadlock(s)                                                                                                 | postgres
+ LOCK_GROUP               | END                         | grp_tmp,grp_tmp_4                    | 9 tables locked, 0 deadlock(s)                                                                                                 | postgres
  SET_MARK_GROUPS          | BEGIN                       | grp_tmp,grp_tmp_4                    | Move_seq_4_to_tmp                                                                                                              | postgres
  SET_MARK_GROUPS          | END                         | grp_tmp,grp_tmp_4                    | Move_seq_4_to_tmp                                                                                                              | postgres
  MOVE_SEQUENCES           | SEQUENCE MOVED              | myschema4.mytblp_col3_seq            | From the logging group grp_tmp_4 to the logging group grp_tmp                                                                  | postgres
- MOVE_SEQUENCES           | END                         |                                      | 1 sequences moved to the new tables group grp_tmp                                                                              | postgres
+ MOVE_SEQUENCES           | SEQUENCE MOVED              | myschema4.mytblr_col1_seq            | From the logging group grp_tmp_4 to the logging group grp_tmp                                                                  | postgres
+ MOVE_SEQUENCES           | END                         |                                      | 2 sequences moved to the new tables group grp_tmp                                                                              | postgres
  SET_MARK_GROUPS          | BEGIN                       | grp_tmp_3,grp_tmp_4,grp_tmp          | Mk4                                                                                                                            | postgres
  LOCK_GROUPS              | BEGIN                       | grp_tmp,grp_tmp_3,grp_tmp_4          |                                                                                                                                | postgres
- LOCK_GROUPS              | END                         | grp_tmp,grp_tmp_3,grp_tmp_4          | 8 tables locked, 0 deadlock(s)                                                                                                 | postgres
+ LOCK_GROUPS              | END                         | grp_tmp,grp_tmp_3,grp_tmp_4          | 9 tables locked, 0 deadlock(s)                                                                                                 | postgres
  SET_MARK_GROUPS          | END                         | grp_tmp,grp_tmp_3,grp_tmp_4          | Mk4                                                                                                                            | postgres
  SET_MARK_GROUPS          | BEGIN                       | grp_tmp_3,grp_tmp_4,grp_tmp          | Mk5                                                                                                                            | postgres
  LOCK_GROUPS              | BEGIN                       | grp_tmp,grp_tmp_3,grp_tmp_4          |                                                                                                                                | postgres
- LOCK_GROUPS              | END                         | grp_tmp,grp_tmp_3,grp_tmp_4          | 8 tables locked, 0 deadlock(s)                                                                                                 | postgres
+ LOCK_GROUPS              | END                         | grp_tmp,grp_tmp_3,grp_tmp_4          | 9 tables locked, 0 deadlock(s)                                                                                                 | postgres
  SET_MARK_GROUPS          | END                         | grp_tmp,grp_tmp_3,grp_tmp_4          | Mk5                                                                                                                            | postgres
  SET_MARK_GROUPS          | BEGIN                       | grp_tmp_3,grp_tmp_4,grp_tmp          | Mk6                                                                                                                            | postgres
  LOCK_GROUPS              | BEGIN                       | grp_tmp,grp_tmp_3,grp_tmp_4          |                                                                                                                                | postgres
- LOCK_GROUPS              | END                         | grp_tmp,grp_tmp_3,grp_tmp_4          | 8 tables locked, 0 deadlock(s)                                                                                                 | postgres
+ LOCK_GROUPS              | END                         | grp_tmp,grp_tmp_3,grp_tmp_4          | 9 tables locked, 0 deadlock(s)                                                                                                 | postgres
  SET_MARK_GROUPS          | END                         | grp_tmp,grp_tmp_3,grp_tmp_4          | Mk6                                                                                                                            | postgres
  REMOVE_TABLE             | BEGIN                       |                                      |                                                                                                                                | postgres
  LOCK_GROUP               | BEGIN                       | grp_tmp                              |                                                                                                                                | postgres
- LOCK_GROUP               | END                         | grp_tmp                              | 8 tables locked, 0 deadlock(s)                                                                                                 | postgres
+ LOCK_GROUP               | END                         | grp_tmp                              | 9 tables locked, 0 deadlock(s)                                                                                                 | postgres
  SET_MARK_GROUP           | BEGIN                       | grp_tmp                              | Remove_mytblc1                                                                                                                 | postgres
  SET_MARK_GROUP           | END                         | grp_tmp                              | Remove_mytblc1                                                                                                                 | postgres
  REMOVE_TABLE             | TABLE REMOVED               | myschema4.mytblc1                    | From the logging group grp_tmp                                                                                                 | postgres
  REMOVE_TABLE             | END                         |                                      | 1 tables removed from their groups                                                                                             | postgres
  REMOVE_SEQUENCE          | BEGIN                       |                                      |                                                                                                                                | postgres
  LOCK_GROUP               | BEGIN                       | grp_tmp                              |                                                                                                                                | postgres
- LOCK_GROUP               | END                         | grp_tmp                              | 7 tables locked, 0 deadlock(s)                                                                                                 | postgres
+ LOCK_GROUP               | END                         | grp_tmp                              | 8 tables locked, 0 deadlock(s)                                                                                                 | postgres
  SET_MARK_GROUP           | BEGIN                       | grp_tmp                              | Remove_myseq1                                                                                                                  | postgres
  SET_MARK_GROUP           | END                         | grp_tmp                              | Remove_myseq1                                                                                                                  | postgres
  REMOVE_SEQUENCE          | SEQUENCE REMOVED            | "phil's schema3"."phil's seq\1"      | From the logging group grp_tmp                                                                                                 | postgres
@@ -1756,7 +1786,7 @@ select hist_function, hist_event, hist_object,
  ROLLBACK_GROUPS          | BEGIN                       | grp_tmp,grp_tmp_3,grp_tmp_4          | Logged rollback to mark Mk5 (timestamp)                                                                                        | postgres
  DBLINK_OPEN_CNX          |                             | rlbk#1                               | Status = 1                                                                                                                     | postgres
  LOCK_GROUP               | BEGIN                       | grp_tmp,grp_tmp_3,grp_tmp_4          | Rollback session #1                                                                                                            | postgres
- LOCK_GROUP               | END                         | grp_tmp,grp_tmp_3,grp_tmp_4          | Rollback session #1: 7 tables locked, 0 deadlock(s)                                                                            | postgres
+ LOCK_GROUP               | END                         | grp_tmp,grp_tmp_3,grp_tmp_4          | Rollback session #1: 8 tables locked, 0 deadlock(s)                                                                            | postgres
  SET_MARK_GROUPS          | BEGIN                       | grp_tmp,grp_tmp_3,grp_tmp_4          | RLBK_Mk5_%_START                                                                                                               | postgres
  SET_MARK_GROUPS          | END                         | grp_tmp,grp_tmp_3,grp_tmp_4          | RLBK_Mk5_%_START                                                                                                               | postgres
  ROLLBACK_TABLE           | BEGIN                       | myschema4.mytblc2                    | All log rows where emaj_gid > 17600033 and <= 17600041                                                                         | postgres
@@ -1764,15 +1794,16 @@ select hist_function, hist_event, hist_object,
  ROLLBACK_TABLE           | BEGIN                       | myschema4.mytblm                     | All log rows where emaj_gid > 17600033 and <= 17600041                                                                         | postgres
  ROLLBACK_TABLE           | END                         | myschema4.mytblm                     | 1 rolled back primary keys                                                                                                     | postgres
  ROLLBACK_SEQUENCE        |                             | myschema4.mytblp_col3_seq            |                                                                                                                                | postgres
+ ROLLBACK_SEQUENCE        |                             | myschema4.mytblr_col1_seq            |                                                                                                                                | postgres
  ROLLBACK_SEQUENCE        |                             | "phil's schema3"."myTbl2\_col21_seq" |                                                                                                                                | postgres
  SET_MARK_GROUPS          | BEGIN                       | grp_tmp,grp_tmp_3,grp_tmp_4          | RLBK_Mk5_%_DONE                                                                                                                | postgres
  SET_MARK_GROUPS          | END                         | grp_tmp,grp_tmp_3,grp_tmp_4          | RLBK_Mk5_%_DONE                                                                                                                | postgres
- ROLLBACK_GROUPS          | NOTICE                      | Rollback id 17601                    | 2 / 7 tables effectively processed.                                                                                            | postgres
- ROLLBACK_GROUPS          | NOTICE                      | Rollback id 17601                    | 2 sequences processed.                                                                                                         | postgres
+ ROLLBACK_GROUPS          | NOTICE                      | Rollback id 17601                    | 2 / 8 tables effectively processed.                                                                                            | postgres
+ ROLLBACK_GROUPS          | NOTICE                      | Rollback id 17601                    | 3 sequences processed.                                                                                                         | postgres
  ROLLBACK_GROUPS          | WARNING                     | Rollback id 17601                    | The table myschema4.mytblc1 has been left unchanged (not in group anymore since <timestamp>)                                   | postgres
  ROLLBACK_GROUPS          | WARNING                     | Rollback id 17601                    | The sequence "phil's schema3"."phil's seq\1" has been left unchanged (not in group anymore since <timestamp>)                  | postgres
  DBLINK_CLOSE_CNX         |                             | rlbk#1                               |                                                                                                                                | postgres
- ROLLBACK_GROUPS          | END                         | grp_tmp,grp_tmp_3,grp_tmp_4          | Rollback_id 17601, 2 tables and 2 sequences effectively processed                                                              | postgres
+ ROLLBACK_GROUPS          | END                         | grp_tmp,grp_tmp_3,grp_tmp_4          | Rollback_id 17601, 2 tables and 3 sequences effectively processed                                                              | postgres
  RENAME_MARK_GROUP        | BEGIN                       | grp_tmp_3                            | EMAJ_LAST_MARK                                                                                                                 | postgres
  RENAME_MARK_GROUP        | END                         | grp_tmp_3                            | RLBK_Mk5_%_DONE renamed End_logged_rollback                                                                                    | postgres
  RENAME_MARK_GROUP        | BEGIN                       | grp_tmp_4                            | EMAJ_LAST_MARK                                                                                                                 | postgres
@@ -1781,16 +1812,16 @@ select hist_function, hist_event, hist_object,
  RENAME_MARK_GROUP        | END                         | grp_tmp                              | RLBK_Mk5_%_DONE renamed End_logged_rollback                                                                                    | postgres
  SET_MARK_GROUPS          | BEGIN                       | grp_tmp_3,grp_tmp_4,grp_tmp          | Mk7                                                                                                                            | postgres
  LOCK_GROUPS              | BEGIN                       | grp_tmp,grp_tmp_3,grp_tmp_4          |                                                                                                                                | postgres
- LOCK_GROUPS              | END                         | grp_tmp,grp_tmp_3,grp_tmp_4          | 7 tables locked, 0 deadlock(s)                                                                                                 | postgres
+ LOCK_GROUPS              | END                         | grp_tmp,grp_tmp_3,grp_tmp_4          | 8 tables locked, 0 deadlock(s)                                                                                                 | postgres
  CLEANUP_RLBK_STATE       |                             | Rollback id 17601                    | set to COMMITTED                                                                                                               | postgres
  SET_MARK_GROUPS          | END                         | grp_tmp,grp_tmp_3,grp_tmp_4          | Mk7                                                                                                                            | postgres
  CONSOLIDATE_RLBK_GROUP   | BEGIN                       | grp_tmp                              | Erase all between marks Mk5 and End_logged_rollback                                                                            | postgres
- CONSOLIDATE_RLBK_GROUP   | END                         | grp_tmp                              | 2 tables and 2 sequences processed ; 4 marks deleted                                                                           | postgres
+ CONSOLIDATE_RLBK_GROUP   | END                         | grp_tmp                              | 2 tables and 3 sequences processed ; 4 marks deleted                                                                           | postgres
  GEN_SQL_GROUPS           | BEGIN                       | grp_tmp_3,grp_tmp_4,grp_tmp          | From mark Mk1 to current situation                                                                                             | postgres
  GEN_SQL_GROUPS           | END                         | grp_tmp,grp_tmp_3,grp_tmp_4          | 26 generated statements - script exported into /tmp/emaj_12/adm3/allGroups.sql                                                 | postgres
  MODIFY_TABLES            | BEGIN                       |                                      |                                                                                                                                | postgres
  LOCK_GROUP               | BEGIN                       | grp_tmp                              |                                                                                                                                | postgres
- LOCK_GROUP               | END                         | grp_tmp                              | 7 tables locked, 0 deadlock(s)                                                                                                 | postgres
+ LOCK_GROUP               | END                         | grp_tmp                              | 8 tables locked, 0 deadlock(s)                                                                                                 | postgres
  SET_MARK_GROUPS          | BEGIN                       | grp_tmp                              | revert changes for 1 table                                                                                                     | postgres
  SET_MARK_GROUPS          | END                         | grp_tmp                              | revert changes for 1 table                                                                                                     | postgres
  MODIFY_TABLES            | PRIORITY CHANGED            | "phil's schema3"."phil's tbl1"       | -1 => NULL                                                                                                                     | postgres
@@ -1799,7 +1830,7 @@ select hist_function, hist_event, hist_object,
  ROLLBACK_GROUPS          | BEGIN                       | grp_tmp,grp_tmp_3,grp_tmp_4          | Unlogged rollback to mark Mk3 (timestamp)                                                                                      | postgres
  DBLINK_OPEN_CNX          |                             | rlbk#1                               | Status = 1                                                                                                                     | postgres
  LOCK_GROUP               | BEGIN                       | grp_tmp,grp_tmp_3,grp_tmp_4          | Rollback session #1                                                                                                            | postgres
- LOCK_GROUP               | END                         | grp_tmp,grp_tmp_3,grp_tmp_4          | Rollback session #1: 7 tables locked, 0 deadlock(s)                                                                            | postgres
+ LOCK_GROUP               | END                         | grp_tmp,grp_tmp_3,grp_tmp_4          | Rollback session #1: 8 tables locked, 0 deadlock(s)                                                                            | postgres
  ROLLBACK_TABLE           | BEGIN                       | myschema4.mytblc2                    | All log rows where emaj_gid > 17600028 and <= 17600051                                                                         | postgres
  ROLLBACK_TABLE           | END                         | myschema4.mytblc2                    | 6 rolled back primary keys                                                                                                     | postgres
  ROLLBACK_TABLE           | BEGIN                       | "phil's schema3".mytbl4              | All log rows where emaj_gid > 17600028 and <= 17600051, in session_replication_role = replica mode                             | postgres
@@ -1833,9 +1864,10 @@ select hist_function, hist_event, hist_object,
  ROLLBACK_GROUPS          | MARK DELETED                | grp_tmp_4                            | mark Mk7 is deleted                                                                                                            | postgres
  ROLLBACK_GROUPS          | MARK DELETED                | grp_tmp                              | mark revert changes for 1 table is deleted                                                                                     | postgres
  ROLLBACK_SEQUENCE        |                             | myschema4.mytblp_col3_seq            |                                                                                                                                | postgres
+ ROLLBACK_SEQUENCE        |                             | myschema4.mytblr_col1_seq            |                                                                                                                                | postgres
  ROLLBACK_SEQUENCE        |                             | "phil's schema3"."myTbl2\_col21_seq" |                                                                                                                                | postgres
- ROLLBACK_GROUPS          | NOTICE                      | Rollback id 17602                    | 3 / 7 tables effectively processed.                                                                                            | postgres
- ROLLBACK_GROUPS          | NOTICE                      | Rollback id 17602                    | 2 sequences processed.                                                                                                         | postgres
+ ROLLBACK_GROUPS          | NOTICE                      | Rollback id 17602                    | 3 / 8 tables effectively processed.                                                                                            | postgres
+ ROLLBACK_GROUPS          | NOTICE                      | Rollback id 17602                    | 3 sequences processed.                                                                                                         | postgres
  ROLLBACK_GROUPS          | WARNING                     | Rollback id 17602                    | The table "phil's schema3"."myTbl2\" has only been rolled back to its latest group attachment (<timestamp>)                    | postgres
  ROLLBACK_GROUPS          | WARNING                     | Rollback id 17602                    | The table "phil's schema3".mytbl4 has only been rolled back to its latest group attachment (<timestamp>)                       | postgres
  ROLLBACK_GROUPS          | WARNING                     | Rollback id 17602                    | The table "phil's schema3"."phil's tbl1" has only been rolled back to its latest group attachment (<timestamp>)                | postgres
@@ -1846,11 +1878,13 @@ select hist_function, hist_event, hist_object,
  ROLLBACK_GROUPS          | WARNING                     | Rollback id 17602                    | The table myschema4.mytblc1 has only been rolled back to its latest group attachment (<timestamp>)                             | postgres
  ROLLBACK_GROUPS          | WARNING                     | Rollback id 17602                    | The table myschema4.mytblc2 has only been rolled back to its latest group attachment (<timestamp>)                             | postgres
  ROLLBACK_GROUPS          | WARNING                     | Rollback id 17602                    | The table myschema4.mytblm has only been rolled back to its latest group attachment (<timestamp>)                              | postgres
+ ROLLBACK_GROUPS          | WARNING                     | Rollback id 17602                    | The table myschema4.mytblr has only been rolled back to its latest group attachment (<timestamp>)                              | postgres
  ROLLBACK_GROUPS          | WARNING                     | Rollback id 17602                    | The sequence myschema4.mytblp_col3_seq has only been rolled back to its latest group attachment state (<timestamp>)            | postgres
+ ROLLBACK_GROUPS          | WARNING                     | Rollback id 17602                    | The sequence myschema4.mytblr_col1_seq has only been rolled back to its latest group attachment state (<timestamp>)            | postgres
  ROLLBACK_GROUPS          | WARNING                     | Rollback id 17602                    | Tables group change not rolled back: log data tablespace for "phil's schema3"."phil's tbl1"                                    | postgres
  ROLLBACK_GROUPS          | WARNING                     | Rollback id 17602                    | Tables group change not rolled back: E-Maj priority for "phil's schema3"."phil's tbl1"                                         | postgres
  DBLINK_CLOSE_CNX         |                             | rlbk#1                               |                                                                                                                                | postgres
- ROLLBACK_GROUPS          | END                         | grp_tmp,grp_tmp_3,grp_tmp_4          | Rollback_id 17602, 3 tables and 2 sequences effectively processed                                                              | postgres
+ ROLLBACK_GROUPS          | END                         | grp_tmp,grp_tmp_3,grp_tmp_4          | Rollback_id 17602, 3 tables and 3 sequences effectively processed                                                              | postgres
  DELETE_BEFORE_MARK_GROUP | BEGIN                       | grp_tmp_3                            | Mk3                                                                                                                            | postgres
  DELETE_BEFORE_MARK_GROUP | END                         | grp_tmp_3                            | 3 marks deleted ; Mk3 is now the initial mark                                                                                  | postgres
  DELETE_BEFORE_MARK_GROUP | BEGIN                       | grp_tmp_4                            | Mk3                                                                                                                            | postgres
@@ -1861,8 +1895,8 @@ select hist_function, hist_event, hist_object,
  ENABLE_PROTECTION        | EVENT TRIGGERS ENABLED      |                                      | emaj_protection_trg, emaj_sql_drop_trg, emaj_table_rewrite_trg                                                                 | postgres
  FORCE_STOP_GROUP         | BEGIN                       | grp_tmp                              |                                                                                                                                | postgres
  LOCK_GROUP               | BEGIN                       | grp_tmp                              |                                                                                                                                | postgres
- LOCK_GROUP               | END                         | grp_tmp                              | 7 tables locked, 0 deadlock(s)                                                                                                 | postgres
- FORCE_STOP_GROUP         | END                         | grp_tmp                              | 9 tables/sequences processed                                                                                                   | postgres
+ LOCK_GROUP               | END                         | grp_tmp                              | 8 tables locked, 0 deadlock(s)                                                                                                 | postgres
+ FORCE_STOP_GROUP         | END                         | grp_tmp                              | 11 tables/sequences processed                                                                                                  | postgres
  REMOVE_TABLE             | BEGIN                       |                                      |                                                                                                                                | postgres
  REMOVE_TABLE             | TABLE REMOVED               | "phil's schema3".mytbl4              | From the idle group grp_tmp                                                                                                    | postgres
  REMOVE_TABLE             | END                         |                                      | 1 tables removed from their groups                                                                                             | postgres
@@ -1871,24 +1905,26 @@ select hist_function, hist_event, hist_object,
  ASSIGN_TABLE             | END                         |                                      | 1 tables assigned to the group grp_tmp                                                                                         | postgres
  START_GROUP              | BEGIN                       | grp_tmp                              | With log reset                                                                                                                 | postgres
  LOCK_GROUP               | BEGIN                       | grp_tmp                              |                                                                                                                                | postgres
- LOCK_GROUP               | END                         | grp_tmp                              | 7 tables locked, 0 deadlock(s)                                                                                                 | postgres
+ LOCK_GROUP               | END                         | grp_tmp                              | 8 tables locked, 0 deadlock(s)                                                                                                 | postgres
  SET_MARK_GROUP           | BEGIN                       | grp_tmp                              | Group restart                                                                                                                  | postgres
  CLEANUP_RLBK_STATE       |                             | Rollback id 17602                    | set to COMMITTED                                                                                                               | postgres
  SET_MARK_GROUP           | END                         | grp_tmp                              | Group restart                                                                                                                  | postgres
- START_GROUP              | END                         | grp_tmp                              | 9 tables/sequences processed                                                                                                   | postgres
+ START_GROUP              | END                         | grp_tmp                              | 11 tables/sequences processed                                                                                                  | postgres
  IMPORT_GROUPS            | BEGIN                       | grp_tmp, grp_tmp_3, grp_tmp_4        | Input file: '/tmp/emaj_12/adm3/groups_config.json'                                                                             | postgres
  LOCK_GROUPS              | BEGIN                       | grp_tmp,grp_tmp_3,grp_tmp_4          |                                                                                                                                | postgres
- LOCK_GROUPS              | END                         | grp_tmp,grp_tmp_3,grp_tmp_4          | 7 tables locked, 0 deadlock(s)                                                                                                 | postgres
+ LOCK_GROUPS              | END                         | grp_tmp,grp_tmp_3,grp_tmp_4          | 8 tables locked, 0 deadlock(s)                                                                                                 | postgres
  SET_MARK_GROUPS          | BEGIN                       | grp_tmp,grp_tmp_3,grp_tmp_4          | REVERT_CHANGES                                                                                                                 | postgres
  SET_MARK_GROUPS          | END                         | grp_tmp,grp_tmp_3,grp_tmp_4          | REVERT_CHANGES                                                                                                                 | postgres
  IMPORT_GROUPS            | TABLE MOVED                 | myschema4.mypartp2                   | From the logging group grp_tmp to the logging group grp_tmp_4                                                                  | postgres
  IMPORT_GROUPS            | TABLE MOVED                 | myschema4.mypartp3                   | From the logging group grp_tmp to the logging group grp_tmp_4                                                                  | postgres
  IMPORT_GROUPS            | TABLE MOVED                 | myschema4.mytblc2                    | From the logging group grp_tmp to the logging group grp_tmp_4                                                                  | postgres
  IMPORT_GROUPS            | TABLE MOVED                 | myschema4.mytblm                     | From the logging group grp_tmp to the logging group grp_tmp_4                                                                  | postgres
+ IMPORT_GROUPS            | TABLE MOVED                 | myschema4.mytblr                     | From the logging group grp_tmp to the logging group grp_tmp_4                                                                  | postgres
  IMPORT_GROUPS            | TABLE MOVED                 | "phil's schema3"."myTbl2\"           | From the logging group grp_tmp to the logging group grp_tmp_3                                                                  | postgres
  IMPORT_GROUPS            | TABLE MOVED                 | "phil's schema3".mytbl4              | From the logging group grp_tmp to the logging group grp_tmp_3                                                                  | postgres
  IMPORT_GROUPS            | TABLE MOVED                 | "phil's schema3"."phil's tbl1"       | From the logging group grp_tmp to the logging group grp_tmp_3                                                                  | postgres
  IMPORT_GROUPS            | SEQUENCE MOVED              | myschema4.mytblp_col3_seq            | From the logging group grp_tmp to the logging group grp_tmp_4                                                                  | postgres
+ IMPORT_GROUPS            | SEQUENCE MOVED              | myschema4.mytblr_col1_seq            | From the logging group grp_tmp to the logging group grp_tmp_4                                                                  | postgres
  IMPORT_GROUPS            | SEQUENCE MOVED              | "phil's schema3"."myTbl2\_col21_seq" | From the logging group grp_tmp to the logging group grp_tmp_3                                                                  | postgres
  IMPORT_GROUPS            | TABLE ADDED                 | myschema4.mytblc1                    | To the logging group grp_tmp_4                                                                                                 | postgres
  IMPORT_GROUPS            | SEQUENCE ADDED              | "phil's schema3"."phil's seq\1"      | To the logging group grp_tmp_3                                                                                                 | postgres
@@ -1903,10 +1939,10 @@ select hist_function, hist_event, hist_object,
  DROP_GROUP               | END                         | grp_tmp_3                            | 5 tables/sequences processed                                                                                                   | postgres
  SET_MARK_GROUP           | BEGIN                       | grp_tmp_4                            |                                                                                                                                | postgres
  LOCK_GROUP               | BEGIN                       | grp_tmp_4                            |                                                                                                                                | postgres
- LOCK_GROUP               | END                         | grp_tmp_4                            | 5 tables locked, 0 deadlock(s)                                                                                                 | postgres
+ LOCK_GROUP               | END                         | grp_tmp_4                            | 6 tables locked, 0 deadlock(s)                                                                                                 | postgres
  SET_MARK_GROUP           | END                         | grp_tmp_4                            | Last_mark                                                                                                                      | postgres
  FORCE_DROP_GROUP         | BEGIN                       | grp_tmp_4                            |                                                                                                                                | postgres
- FORCE_DROP_GROUP         | END                         | grp_tmp_4                            | 6 tables/sequences processed                                                                                                   | postgres
+ FORCE_DROP_GROUP         | END                         | grp_tmp_4                            | 8 tables/sequences processed                                                                                                   | postgres
  STOP_GROUP               | BEGIN                       | grp_tmp                              |                                                                                                                                | postgres
  LOCK_GROUP               | BEGIN                       | grp_tmp                              |                                                                                                                                | postgres
  LOCK_GROUP               | END                         | grp_tmp                              | 0 tables locked, 0 deadlock(s)                                                                                                 | postgres
@@ -1917,7 +1953,7 @@ select hist_function, hist_event, hist_object,
  DROP_GROUP               | LOG_SCHEMA DROPPED          | emaj_myschema4                       |                                                                                                                                | postgres
  DROP_GROUP               | LOG_SCHEMA DROPPED          | "emaj_phil's schema3"                |                                                                                                                                | postgres
  DROP_GROUP               | END                         | grp_tmp                              | 0 tables/sequences processed                                                                                                   | postgres
-(315 rows)
+(326 rows)
 
 -- set sequence restart value
 select public.handle_emaj_sequences(18000);
@@ -1948,14 +1984,14 @@ WARNING:  _assign_tables: Some partitionned tables (mytblp) are not selected.
 WARNING:  _create_tbl: The table "myschema4.mytblm" has triggers that will be automatically disabled during E-Maj rollback operations (mytblm_insert_trigger). Use the emaj_modify_table() function to change this behaviour.
  emaj_assign_tables 
 --------------------
-                  5
+                  6
 (1 row)
 
 RESET client_min_messages;
 select emaj.emaj_start_group('truncateTestGroup','M1');
  emaj_start_group 
 ------------------
-                8
+                9
 (1 row)
 
 truncate "phil's schema3"."phil's tbl1" cascade;
@@ -1984,7 +2020,7 @@ select is_called, last_value from "emaj_phil's schema3"."phil's tbl1_log_seq";
 select emaj.emaj_set_mark_group('truncateTestGroup','M2');
  emaj_set_mark_group 
 ---------------------
-                   8
+                   9
 (1 row)
 
 select stat_group, stat_schema, stat_table, stat_first_mark, stat_last_mark, stat_rows
@@ -2001,7 +2037,7 @@ select stat_group, stat_schema, stat_table, stat_first_mark, stat_last_mark, sta
 select * from emaj.emaj_logged_rollback_group('truncateTestGroup','M1', false);
  rlbk_severity |            rlbk_message             
 ---------------+-------------------------------------
- Notice        | 5 / 8 tables effectively processed.
+ Notice        | 5 / 9 tables effectively processed.
 (1 row)
 
 select stat_group, stat_schema, stat_table, stat_first_mark, stat_last_mark, stat_rows
@@ -2027,7 +2063,7 @@ NOTICE:  table "emaj_temp_script" does not exist, skipping
 select * from emaj.emaj_rollback_group('truncateTestGroup','M1', false);
  rlbk_severity |            rlbk_message             
 ---------------+-------------------------------------
- Notice        | 5 / 8 tables effectively processed.
+ Notice        | 5 / 9 tables effectively processed.
 (1 row)
 
 \! sed -i -s 's/at .*$/at [ts]$/' $EMAJTESTTMPDIR/gensql.sql
@@ -2058,13 +2094,13 @@ RESET datestyle;
 select emaj.emaj_stop_group('truncateTestGroup');
  emaj_stop_group 
 -----------------
-               8
+               9
 (1 row)
 
 select emaj.emaj_drop_group('truncateTestGroup');
  emaj_drop_group 
 -----------------
-               8
+               9
 (1 row)
 
 -- first set all rollback events state
@@ -2083,8 +2119,8 @@ select rlbk_id, rlbk_groups, rlbk_mark, rlbk_time_id, rlbk_is_logged, rlbk_is_al
        case when rlbk_end_datetime is null then 'null' else '[ts]' end as "end_datetime",
        regexp_replace(array_to_string(rlbk_messages,'#'),E'\\d\\d\\d\\d/\\d\\d\\/\\d\\d\\ \\d\\d\\:\\d\\d:\\d\\d .*?\\)','<timestamp>)','g')
   from emaj.emaj_rlbk where rlbk_id >= 10000 order by rlbk_id;
- rlbk_id |          rlbk_groups          |       rlbk_mark       | rlbk_time_id | rlbk_is_logged | rlbk_is_alter_group_allowed | rlbk_nb_session | rlbk_nb_table | rlbk_nb_sequence | rlbk_eff_nb_table | rlbk_status | rlbk_begin_hist_id | rlbk_dblink_schema | rlbk_is_dblink_used | end_datetime |                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                    regexp_replace                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                    
----------+-------------------------------+-----------------------+--------------+----------------+-----------------------------+-----------------+---------------+------------------+-------------------+-------------+--------------------+--------------------+---------------------+--------------+----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+ rlbk_id |          rlbk_groups          |       rlbk_mark       | rlbk_time_id | rlbk_is_logged | rlbk_is_alter_group_allowed | rlbk_nb_session | rlbk_nb_table | rlbk_nb_sequence | rlbk_eff_nb_table | rlbk_status | rlbk_begin_hist_id | rlbk_dblink_schema | rlbk_is_dblink_used | end_datetime |                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                        regexp_replace                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                        
+---------+-------------------------------+-----------------------+--------------+----------------+-----------------------------+-----------------+---------------+------------------+-------------------+-------------+--------------------+--------------------+---------------------+--------------+--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
    10000 | {myGroup1,myGroup2}           | after move            |        10009 | t              | f                           |               1 |            11 |                4 |                 1 | COMMITTED   |              10065 | public             | t                   | [ts]         | Notice: 1 / 11 tables effectively processed.#Notice: 4 sequences processed.
    10001 | {myGroup1,myGroup2}           | before move           |        10011 | f              | t                           |               1 |            11 |                4 |                 1 | COMMITTED   |              10083 | public             | t                   | [ts]         | Notice: 1 / 11 tables effectively processed.#Notice: 4 sequences processed.#Warning: The table myschema2."myTbl3" has only been rolled back to its latest group attachment (<timestamp>)#Warning: The sequence myschema2."myTbl3_col31_seq" has only been rolled back to its latest group attachment state (<timestamp>)#Warning: Tables group change not rolled back: log data tablespace for myschema2."myTbl3"#Warning: Tables group change not rolled back: log index tablespace for myschema2."myTbl3"#Warning: Tables group change not rolled back: E-Maj priority for myschema2."myTbl3"
    12300 | {myGroup2}                    | M2                    |        12300 | t              | f                           |               1 |             6 |                2 |                 3 | COMMITTED   |              12300 |                    | f                   | [ts]         | Notice: 3 / 6 tables effectively processed.#Notice: 2 sequences processed.
@@ -2114,13 +2150,13 @@ select rlbk_id, rlbk_groups, rlbk_mark, rlbk_time_id, rlbk_is_logged, rlbk_is_al
    14706 | {myGroup1}                    | MC15                  |        14726 | t              | f                           |               1 |             5 |                2 |                 3 | COMMITTED   |              14891 | public             | t                   | [ts]         | Notice: 3 / 5 tables effectively processed.#Notice: 2 sequences processed.
    14707 | {myGroup1}                    | MC16                  |        14729 | t              | f                           |               1 |             5 |                2 |                 3 | COMMITTED   |              14918 | public             | t                   | [ts]         | Notice: 3 / 5 tables effectively processed.#Notice: 2 sequences processed.
    14708 | {myGroup1}                    | Multi-1               |        14731 | f              | t                           |               1 |             5 |                2 |                 3 | COMMITTED   |              14940 | public             | t                   | [ts]         | Notice: 3 / 5 tables effectively processed.#Notice: 2 sequences processed.#Warning: Tables group change not rolled back: ignored triggers list for myschema1.mytbl2
-   17200 | {myGroup4}                    | Start                 |        17206 | f              | t                           |               1 |             5 |                0 |                 2 | COMMITTED   |              17240 | public             | t                   | [ts]         | Notice: 2 / 5 tables effectively processed.#Warning: The table myschema4.mypartp3 has only been rolled back to its latest group attachment (<timestamp>)#Warning: The table myschema4.mypartp1 has been left unchanged (not in group anymore since <timestamp>)#Warning: The sequence myschema4.mytblp_col3_seq has been left unchanged (not in group anymore since <timestamp>)
-   17201 | {myGroup4}                    | Before update         |        17208 | t              | f                           |               1 |             5 |                0 |                 2 | COMMITTED   |              17264 | public             | t                   | [ts]         | Notice: 2 / 5 tables effectively processed.
-   17600 | {grp_tmp,grp_tmp_3,grp_tmp_4} | Mk3                   |        17613 | f              | f                           |               1 |             8 |                3 |                 2 | COMMITTED   |              17666 | public             | t                   | [ts]         | Notice: 2 / 8 tables effectively processed.#Notice: 3 sequences processed.
-   17601 | {grp_tmp,grp_tmp_3,grp_tmp_4} | Mk5                   |        17624 | t              | t                           |               1 |             7 |                2 |                 2 | COMMITTED   |              17751 | public             | t                   | [ts]         | Notice: 2 / 7 tables effectively processed.#Notice: 2 sequences processed.#Warning: The table myschema4.mytblc1 has been left unchanged (not in group anymore since <timestamp>)#Warning: The sequence "phil's schema3"."phil's seq\1" has been left unchanged (not in group anymore since <timestamp>)
-   17602 | {grp_tmp,grp_tmp_3,grp_tmp_4} | Mk3                   |        17628 | f              | t                           |               1 |             7 |                2 |                 3 | COMMITTED   |              17794 | public             | t                   | [ts]         | Notice: 3 / 7 tables effectively processed.#Notice: 2 sequences processed.#Warning: The table "phil's schema3"."myTbl2\" has only been rolled back to its latest group attachment (<timestamp>)#Warning: The table "phil's schema3".mytbl4 has only been rolled back to its latest group attachment (<timestamp>)#Warning: The table "phil's schema3"."phil's tbl1" has only been rolled back to its latest group attachment (<timestamp>)#Warning: The sequence "phil's schema3"."myTbl2\_col21_seq" has only been rolled back to its latest group attachment state (<timestamp>)#Warning: The sequence "phil's schema3"."phil's seq\1" has only been rolled back to its latest group attachment state (<timestamp>)#Warning: The table myschema4.mypartp2 has only been rolled back to its latest group attachment (<timestamp>)#Warning: The table myschema4.mypartp3 has only been rolled back to its latest group attachment (<timestamp>)#Warning: The table myschema4.mytblc1 has only been rolled back to its latest group attachment (<timestamp>)#Warning: The table myschema4.mytblc2 has only been rolled back to its latest group attachment (<timestamp>)#Warning: The table myschema4.mytblm has only been rolled back to its latest group attachment (<timestamp>)#Warning: The sequence myschema4.mytblp_col3_seq has only been rolled back to its latest group attachment state (<timestamp>)#Warning: Tables group change not rolled back: log data tablespace for "phil's schema3"."phil's tbl1"#Warning: Tables group change not rolled back: E-Maj priority for "phil's schema3"."phil's tbl1"
-   18000 | {truncateTestGroup}           | M1                    |        18005 | t              | f                           |               1 |             8 |                0 |                 5 | COMMITTED   |              18026 | public             | t                   | [ts]         | Notice: 5 / 8 tables effectively processed.
-   18001 | {truncateTestGroup}           | M1                    |        18007 | f              | f                           |               1 |             8 |                0 |                 5 | COMMITTED   |              18049 | public             | t                   | [ts]         | Notice: 5 / 8 tables effectively processed.
+   17200 | {myGroup4}                    | Start                 |        17206 | f              | t                           |               1 |             6 |                0 |                 2 | COMMITTED   |              17240 | public             | t                   | [ts]         | Notice: 2 / 6 tables effectively processed.#Warning: The table myschema4.mypartp3 has only been rolled back to its latest group attachment (<timestamp>)#Warning: The table myschema4.mypartp1 has been left unchanged (not in group anymore since <timestamp>)#Warning: The sequence myschema4.mytblp_col3_seq has been left unchanged (not in group anymore since <timestamp>)
+   17201 | {myGroup4}                    | Before update         |        17208 | t              | f                           |               1 |             6 |                0 |                 2 | COMMITTED   |              17264 | public             | t                   | [ts]         | Notice: 2 / 6 tables effectively processed.
+   17600 | {grp_tmp,grp_tmp_3,grp_tmp_4} | Mk3                   |        17613 | f              | f                           |               1 |             9 |                4 |                 2 | COMMITTED   |              17668 | public             | t                   | [ts]         | Notice: 2 / 9 tables effectively processed.#Notice: 4 sequences processed.
+   17601 | {grp_tmp,grp_tmp_3,grp_tmp_4} | Mk5                   |        17624 | t              | t                           |               1 |             8 |                3 |                 2 | COMMITTED   |              17756 | public             | t                   | [ts]         | Notice: 2 / 8 tables effectively processed.#Notice: 3 sequences processed.#Warning: The table myschema4.mytblc1 has been left unchanged (not in group anymore since <timestamp>)#Warning: The sequence "phil's schema3"."phil's seq\1" has been left unchanged (not in group anymore since <timestamp>)
+   17602 | {grp_tmp,grp_tmp_3,grp_tmp_4} | Mk3                   |        17628 | f              | t                           |               1 |             8 |                3 |                 3 | COMMITTED   |              17800 | public             | t                   | [ts]         | Notice: 3 / 8 tables effectively processed.#Notice: 3 sequences processed.#Warning: The table "phil's schema3"."myTbl2\" has only been rolled back to its latest group attachment (<timestamp>)#Warning: The table "phil's schema3".mytbl4 has only been rolled back to its latest group attachment (<timestamp>)#Warning: The table "phil's schema3"."phil's tbl1" has only been rolled back to its latest group attachment (<timestamp>)#Warning: The sequence "phil's schema3"."myTbl2\_col21_seq" has only been rolled back to its latest group attachment state (<timestamp>)#Warning: The sequence "phil's schema3"."phil's seq\1" has only been rolled back to its latest group attachment state (<timestamp>)#Warning: The table myschema4.mypartp2 has only been rolled back to its latest group attachment (<timestamp>)#Warning: The table myschema4.mypartp3 has only been rolled back to its latest group attachment (<timestamp>)#Warning: The table myschema4.mytblc1 has only been rolled back to its latest group attachment (<timestamp>)#Warning: The table myschema4.mytblc2 has only been rolled back to its latest group attachment (<timestamp>)#Warning: The table myschema4.mytblm has only been rolled back to its latest group attachment (<timestamp>)#Warning: The table myschema4.mytblr has only been rolled back to its latest group attachment (<timestamp>)#Warning: The sequence myschema4.mytblp_col3_seq has only been rolled back to its latest group attachment state (<timestamp>)#Warning: The sequence myschema4.mytblr_col1_seq has only been rolled back to its latest group attachment state (<timestamp>)#Warning: Tables group change not rolled back: log data tablespace for "phil's schema3"."phil's tbl1"#Warning: Tables group change not rolled back: E-Maj priority for "phil's schema3"."phil's tbl1"
+   18000 | {truncateTestGroup}           | M1                    |        18005 | t              | f                           |               1 |             9 |                0 |                 5 | COMMITTED   |              18027 | public             | t                   | [ts]         | Notice: 5 / 9 tables effectively processed.
+   18001 | {truncateTestGroup}           | M1                    |        18007 | f              | f                           |               1 |             9 |                0 |                 5 | COMMITTED   |              18050 | public             | t                   | [ts]         | Notice: 5 / 9 tables effectively processed.
 (36 rows)
 
 select rlbs_rlbk_id, rlbs_session, 
@@ -2629,25 +2665,26 @@ select hist_function, hist_event, hist_object,
  ASSIGN_TABLES      | BEGIN              |                                |                                                                                                    | postgres
  ASSIGN_TABLES      | LOG_SCHEMA CREATED | emaj_myschema4                 |                                                                                                    | postgres
  ASSIGN_TABLES      | TABLE ADDED        | myschema4.mypartp3             | To the idle group truncateTestGroup                                                                | postgres
+ ASSIGN_TABLES      | TABLE ADDED        | myschema4.mytblr               | To the idle group truncateTestGroup                                                                | postgres
  ASSIGN_TABLES      | TABLE ADDED        | myschema4.mytblm               | To the idle group truncateTestGroup                                                                | postgres
  ASSIGN_TABLES      | TABLE ADDED        | myschema4.mytblc2              | To the idle group truncateTestGroup                                                                | postgres
  ASSIGN_TABLES      | TABLE ADDED        | myschema4.mypartp2             | To the idle group truncateTestGroup                                                                | postgres
  ASSIGN_TABLES      | TABLE ADDED        | myschema4.mytblc1              | To the idle group truncateTestGroup                                                                | postgres
- ASSIGN_TABLES      | END                |                                | 5 tables assigned to the group truncateTestGroup                                                   | postgres
+ ASSIGN_TABLES      | END                |                                | 6 tables assigned to the group truncateTestGroup                                                   | postgres
  START_GROUP        | BEGIN              | truncateTestGroup              | With log reset                                                                                     | postgres
  LOCK_GROUP         | BEGIN              | truncateTestGroup              |                                                                                                    | postgres
- LOCK_GROUP         | END                | truncateTestGroup              | 8 tables locked, 0 deadlock(s)                                                                     | postgres
+ LOCK_GROUP         | END                | truncateTestGroup              | 9 tables locked, 0 deadlock(s)                                                                     | postgres
  SET_MARK_GROUP     | BEGIN              | truncateTestGroup              | M1                                                                                                 | postgres
  SET_MARK_GROUP     | END                | truncateTestGroup              | M1                                                                                                 | postgres
- START_GROUP        | END                | truncateTestGroup              | 8 tables/sequences processed                                                                       | postgres
+ START_GROUP        | END                | truncateTestGroup              | 9 tables/sequences processed                                                                       | postgres
  SET_MARK_GROUP     | BEGIN              | truncateTestGroup              |                                                                                                    | postgres
  LOCK_GROUP         | BEGIN              | truncateTestGroup              |                                                                                                    | postgres
- LOCK_GROUP         | END                | truncateTestGroup              | 8 tables locked, 0 deadlock(s)                                                                     | postgres
+ LOCK_GROUP         | END                | truncateTestGroup              | 9 tables locked, 0 deadlock(s)                                                                     | postgres
  SET_MARK_GROUP     | END                | truncateTestGroup              | M2                                                                                                 | postgres
  ROLLBACK_GROUP     | BEGIN              | truncateTestGroup              | Logged rollback to mark M1 (timestamp)                                                             | postgres
  DBLINK_OPEN_CNX    |                    | rlbk#1                         | Status = 1                                                                                         | postgres
  LOCK_GROUP         | BEGIN              | truncateTestGroup              | Rollback session #1                                                                                | postgres
- LOCK_GROUP         | END                | truncateTestGroup              | Rollback session #1: 8 tables locked, 0 deadlock(s)                                                | postgres
+ LOCK_GROUP         | END                | truncateTestGroup              | Rollback session #1: 9 tables locked, 0 deadlock(s)                                                | postgres
  SET_MARK_GROUP     | BEGIN              | truncateTestGroup              | RLBK_M1_%_START                                                                                    | postgres
  SET_MARK_GROUP     | END                | truncateTestGroup              | RLBK_M1_%_START                                                                                    | postgres
  ROLLBACK_TABLE     | BEGIN              | "phil's schema3"."phil's tbl1" | All log rows where emaj_gid > 18000000 and <= 18000045, in session_replication_role = replica mode | postgres
@@ -2662,7 +2699,7 @@ select hist_function, hist_event, hist_object,
  ROLLBACK_TABLE     | END                | myschema4.mypartp3             | 2 rolled back primary keys                                                                         | postgres
  SET_MARK_GROUP     | BEGIN              | truncateTestGroup              | RLBK_M1_%_DONE                                                                                     | postgres
  SET_MARK_GROUP     | END                | truncateTestGroup              | RLBK_M1_%_DONE                                                                                     | postgres
- ROLLBACK_GROUP     | NOTICE             | Rollback id 18000              | 5 / 8 tables effectively processed.                                                                | postgres
+ ROLLBACK_GROUP     | NOTICE             | Rollback id 18000              | 5 / 9 tables effectively processed.                                                                | postgres
  DBLINK_CLOSE_CNX   |                    | rlbk#1                         |                                                                                                    | postgres
  ROLLBACK_GROUP     | END                | truncateTestGroup              | Rollback_id 18000, 5 tables and 0 sequences effectively processed                                  | postgres
  GEN_SQL_GROUP      | BEGIN              | truncateTestGroup              | From mark M1 to mark M2                                                                            | postgres
@@ -2670,7 +2707,7 @@ select hist_function, hist_event, hist_object,
  ROLLBACK_GROUP     | BEGIN              | truncateTestGroup              | Unlogged rollback to mark M1 (timestamp)                                                           | postgres
  DBLINK_OPEN_CNX    |                    | rlbk#1                         | Status = 1                                                                                         | postgres
  LOCK_GROUP         | BEGIN              | truncateTestGroup              | Rollback session #1                                                                                | postgres
- LOCK_GROUP         | END                | truncateTestGroup              | Rollback session #1: 8 tables locked, 0 deadlock(s)                                                | postgres
+ LOCK_GROUP         | END                | truncateTestGroup              | Rollback session #1: 9 tables locked, 0 deadlock(s)                                                | postgres
  ROLLBACK_TABLE     | BEGIN              | "phil's schema3"."phil's tbl1" | All log rows where emaj_gid > 18000000 and <= 18000085, in session_replication_role = replica mode | postgres
  ROLLBACK_TABLE     | END                | "phil's schema3"."phil's tbl1" | 20 rolled back primary keys                                                                        | postgres
  ROLLBACK_TABLE     | BEGIN              | "phil's schema3".mytbl4        | All log rows where emaj_gid > 18000000 and <= 18000085, in session_replication_role = replica mode | postgres
@@ -2684,22 +2721,22 @@ select hist_function, hist_event, hist_object,
  ROLLBACK_GROUP     | MARK DELETED       | truncateTestGroup              | mark M2 is deleted                                                                                 | postgres
  ROLLBACK_GROUP     | MARK DELETED       | truncateTestGroup              | mark RLBK_M1_%_START is deleted                                                                    | postgres
  ROLLBACK_GROUP     | MARK DELETED       | truncateTestGroup              | mark RLBK_M1_%_DONE is deleted                                                                     | postgres
- ROLLBACK_GROUP     | NOTICE             | Rollback id 18001              | 5 / 8 tables effectively processed.                                                                | postgres
+ ROLLBACK_GROUP     | NOTICE             | Rollback id 18001              | 5 / 9 tables effectively processed.                                                                | postgres
  DBLINK_CLOSE_CNX   |                    | rlbk#1                         |                                                                                                    | postgres
  ROLLBACK_GROUP     | END                | truncateTestGroup              | Rollback_id 18001, 5 tables and 0 sequences effectively processed                                  | postgres
  STOP_GROUP         | BEGIN              | truncateTestGroup              |                                                                                                    | postgres
  LOCK_GROUP         | BEGIN              | truncateTestGroup              |                                                                                                    | postgres
- LOCK_GROUP         | END                | truncateTestGroup              | 8 tables locked, 0 deadlock(s)                                                                     | postgres
+ LOCK_GROUP         | END                | truncateTestGroup              | 9 tables locked, 0 deadlock(s)                                                                     | postgres
  SET_MARK_GROUP     | BEGIN              | truncateTestGroup              | STOP_%                                                                                             | postgres
  CLEANUP_RLBK_STATE |                    | Rollback id 18000              | set to COMMITTED                                                                                   | postgres
  CLEANUP_RLBK_STATE |                    | Rollback id 18001              | set to COMMITTED                                                                                   | postgres
  SET_MARK_GROUP     | END                | truncateTestGroup              | STOP_%                                                                                             | postgres
- STOP_GROUP         | END                | truncateTestGroup              | 8 tables/sequences processed                                                                       | postgres
+ STOP_GROUP         | END                | truncateTestGroup              | 9 tables/sequences processed                                                                       | postgres
  DROP_GROUP         | BEGIN              | truncateTestGroup              |                                                                                                    | postgres
  DROP_GROUP         | LOG_SCHEMA DROPPED | emaj_myschema4                 |                                                                                                    | postgres
  DROP_GROUP         | LOG_SCHEMA DROPPED | "emaj_phil's schema3"          |                                                                                                    | postgres
- DROP_GROUP         | END                | truncateTestGroup              | 8 tables/sequences processed                                                                       | postgres
-(81 rows)
+ DROP_GROUP         | END                | truncateTestGroup              | 9 tables/sequences processed                                                                       | postgres
+(82 rows)
 
 --
 reset role;
