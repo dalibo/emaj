@@ -6,6 +6,15 @@ E-Maj - Change log
 
 
 ###Bug fixes:###
+
+
+
+4.0.1 (2022-Apr.-02)
+------
+###Enhancements:###
+
+
+###Bug fixes:###
   * Fix the rollback state cleanup processing for E-Maj rollback pending in
     PLANNING or LOCKING state.
   * Fix the E-Maj version upgrade procedure. It raised an exception in case
