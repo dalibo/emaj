@@ -199,3 +199,4 @@ Furthermore:
 * The *emaj_ignore_app_trigger()* function is deleted. The triggers to ignore at E-Maj rollback time can be registered with the functions of the :ref:`emaj_assign_table()<assign_table_sequence>` family.
 * In JSON structures managed by the :ref:`emaj_export_groups_configuration()<export_groups_conf>` and :ref:`emaj_import_groups_configuration()<import_groups_conf>` functions, the format of the "ignored_triggers" property that lists the triggers to ignore at E-Maj rollback time has been simplified. It is now a simple text array.
 * The old family of E-Maj rollback functions that just returned an integer has been deleted. Only the functions returning a set of messages remain.
+* The name of function parameters have changed: “v\_” prefixes have been transformed into “p\_”. This only impacts function calls formated with named parameters. But this practice is unusual.
