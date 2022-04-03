@@ -367,7 +367,7 @@ select hist_function, hist_event, hist_object,
   order by hist_id;
       hist_function       |     hist_event     |                            hist_object                            |                                        regexp_replace                                         | hist_user 
 --------------------------+--------------------+-------------------------------------------------------------------+-----------------------------------------------------------------------------------------------+-----------
- EMAJ_INSTALL             |                    | E-Maj 4.0.0                                                       | Initialisation completed                                                                      | postgres
+ EMAJ_INSTALL             |                    | E-Maj 4.0.1                                                       | Initialisation completed                                                                      | postgres
  CREATE_GROUP             | BEGIN              | myGroup1                                                          | rollbackable                                                                                  | postgres
  CREATE_GROUP             | END                | myGroup1                                                          |                                                                                               | postgres
  CREATE_GROUP             | BEGIN              | myGroup2                                                          | rollbackable                                                                                  | postgres
@@ -543,8 +543,8 @@ select hist_function, hist_event, hist_object,
  SET_MARK_GROUP           | BEGIN              | myGroup6                                                          | STOP_%                                                                                        | postgres
  SET_MARK_GROUP           | END                | myGroup6                                                          | STOP_%                                                                                        | postgres
  STOP_GROUP               | END                | myGroup6                                                          | 3 tables/sequences processed                                                                  | postgres
- EMAJ_INSTALL             | BEGIN              | E-Maj <devel>                                                     | Upgrade from 4.0.0 started                                                                    | postgres
- EMAJ_INSTALL             | END                | E-Maj <devel>                                                     | Upgrade from 4.0.0 completed                                                                  | postgres
+ EMAJ_INSTALL             | BEGIN              | E-Maj <devel>                                                     | Upgrade from 4.0.1 started                                                                    | postgres
+ EMAJ_INSTALL             | END                | E-Maj <devel>                                                     | Upgrade from 4.0.1 completed                                                                  | postgres
  UNPROTECT_GROUP          |                    | myGroup1                                                          | Status 1                                                                                      | postgres
  ROLLBACK_GROUPS          | BEGIN              | myGroup1,myGroup2                                                 | Unlogged rollback to mark Common (timestamp)                                                  | postgres
  DBLINK_OPEN_CNX          |                    | rlbk#1                                                            | Status = -5                                                                                   | postgres

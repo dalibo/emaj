@@ -18,8 +18,8 @@ use warnings; use strict;
 
 # The 3 variables below are to be customized
   my $ficCurrSrc = "/home/postgres/proj/emaj/sql/emaj--devel.sql";
-  my $ficPrevSrc = "/home/postgres/proj/emaj/sql/emaj--4.0.0.sql";
-  my $ficUpgrade = "/home/postgres/proj/emaj/sql/emaj--4.0.0--devel.sql";
+  my $ficPrevSrc = "/home/postgres/proj/emaj/sql/emaj--4.0.1.sql";
+  my $ficUpgrade = "/home/postgres/proj/emaj/sql/emaj--4.0.1--devel.sql";
 
   my $upgradeScriptHeader = '';  # existing code from the upgrade script before the functions definition
   my $upgradeScriptFooter = '';  # existing code from the upgrade script after the functions definition
