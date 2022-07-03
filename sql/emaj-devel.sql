@@ -5162,7 +5162,7 @@ $_verify_groups$
                WHERE rel_group = ANY (p_groups)
                  AND upper_inf(rel_time_range)
            EXCEPT                                -- all relations known by postgres
-             SELECT nspname, relname, relkind
+             SELECT nspname, relname, relkind::TEXT
                FROM pg_catalog.pg_class
                     JOIN pg_catalog.pg_namespace ON (pg_namespace.oid = relnamespace)
                WHERE relkind IN ('r','S')
@@ -11529,7 +11529,7 @@ $_verify_all_groups$
                FROM emaj.emaj_relation
                WHERE upper_inf(rel_time_range)
            EXCEPT                                    -- minus relations known by postgres
-             SELECT nspname, relname, relkind
+             SELECT nspname, relname, relkind::TEXT
                FROM pg_catalog.pg_class
                     JOIN pg_catalog.pg_namespace ON (pg_namespace.oid = relnamespace)
                WHERE relkind IN ('r','S')

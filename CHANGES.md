@@ -3,6 +3,7 @@ E-Maj - Change log
 <devel>
 ------
 ###Enhancements:###
+  * E-Maj is compatible with PostgreSQL V15.
 
 
 ###Bug fixes:###
