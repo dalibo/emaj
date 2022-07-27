@@ -8772,7 +8772,7 @@ $_estimate_rlbk_step_duration$
       WHEN p_step IN ('RLBK_TABLE', 'DELETE_LOG') THEN
 -- For RLBK_TBL and DELETE_LOG, the estimate takes into account the estimated number of log rows to revert.
 -- First look at the previous rollback durations for the table and with similar rollback volume (same order of magnitude).
-        SELECT sum(rlbt_duration) * p_estimatedQuantity / sum(rlbt_quantity), 1
+        SELECT sum(rlbt_duration) * (p_estimatedQuantity::float / sum(rlbt_quantity)), 1
           INTO p_estimatedDuration, p_estimateMethod
           FROM emaj.emaj_rlbk_stat
           WHERE rlbt_step = p_step
@@ -8783,7 +8783,7 @@ $_estimate_rlbk_step_duration$
             AND p_estimatedQuantity / rlbt_quantity < 10;
         IF p_estimatedDuration IS NULL THEN
 -- If there is no previous rollback operation with similar volume, take statistics for the table with all available volumes.
-          SELECT sum(rlbt_duration) * p_estimatedQuantity / sum(rlbt_quantity), 2
+          SELECT sum(rlbt_duration) * (p_estimatedQuantity::float / sum(rlbt_quantity)), 2
             INTO p_estimatedDuration, p_estimateMethod
             FROM emaj.emaj_rlbk_stat
             WHERE rlbt_step = p_step
@@ -8804,7 +8804,7 @@ $_estimate_rlbk_step_duration$
           p_estimateMethod = 3;
         ELSE
 -- Non empty table and statistics (with at least one row) are available.
-          SELECT sum(rlbt_duration) * p_estimatedQuantity / sum(rlbt_quantity), 1
+          SELECT sum(rlbt_duration) * (p_estimatedQuantity::float / sum(rlbt_quantity)), 1
             INTO p_estimatedDuration, p_estimateMethod
             FROM emaj.emaj_rlbk_stat
             WHERE rlbt_step = p_step
@@ -8839,7 +8839,7 @@ $_estimate_rlbk_step_duration$
 --
       WHEN p_step = 'SET_FK_IMM' THEN
 -- If fkey checks statistics are available for this fkey, compute an average cost.
-        SELECT sum(rlbt_duration) * p_estimatedQuantity / sum(rlbt_quantity), 2
+        SELECT sum(rlbt_duration) * (p_estimatedQuantity::float / sum(rlbt_quantity)), 2
           INTO p_estimatedDuration, p_estimateMethod
           FROM emaj.emaj_rlbk_stat
           WHERE rlbt_step = p_step

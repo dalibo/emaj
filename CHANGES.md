@@ -7,8 +7,10 @@ E-Maj - Change log
 
 
 ###Bug fixes:###
-
-
+  * Fix a bug into the rollback duration estimates and the rollback processing.
+    With a rollback history having large durations and large number of processed
+    rows, an overflow in internal computations may happen. The problem can also
+    be seen with old E-Maj versions.
 
 4.0.1 (2022-Apr.-02)
 ------
