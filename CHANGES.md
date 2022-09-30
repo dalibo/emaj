@@ -3,8 +3,16 @@ E-Maj - Change log
 <devel>
 ------
 ###Enhancements:###
-  * E-Maj is compatible with PostgreSQL V15.
 
+
+###Bug fixes:###
+
+
+
+4.1.0 (2022-Oct.-01)
+------
+###Enhancements:###
+  * E-Maj is compatible with PostgreSQL V15.
 
 ###Bug fixes:###
   * Fix a bug into the rollback duration estimates and the rollback processing.
@@ -15,7 +23,6 @@ E-Maj - Change log
 4.0.1 (2022-Apr.-02)
 ------
 ###Enhancements:###
-
 
 ###Bug fixes:###
   * Fix the rollback state cleanup processing for E-Maj rollback pending in
