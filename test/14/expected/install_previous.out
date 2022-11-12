@@ -13,7 +13,7 @@ SET default_tablespace TO tspemaj;
 ------------------------------------------------------------
 -- emaj installation in its previous version as an extension
 ------------------------------------------------------------
-CREATE EXTENSION emaj VERSION '4.0.1';
+CREATE EXTENSION emaj VERSION '4.1.0';
 ------------------------------------------------------------
 -- check installation
 ------------------------------------------------------------
@@ -21,20 +21,20 @@ CREATE EXTENSION emaj VERSION '4.0.1';
 select extname, extversion from pg_extension where extname = 'emaj';
  extname | extversion 
 ---------+------------
- emaj    | 4.0.1
+ emaj    | 4.1.0
 (1 row)
 
 -- check the emaj_param content
 SELECT param_value_text FROM emaj.emaj_param WHERE param_key = 'emaj_version';
  param_value_text 
 ------------------
- 4.0.1
+ 4.1.0
 (1 row)
 
 -- check history
 select hist_id, hist_function, hist_event, hist_object, hist_wording, hist_user from emaj.emaj_hist order by hist_id;
  hist_id | hist_function | hist_event | hist_object |       hist_wording       | hist_user 
 ---------+---------------+------------+-------------+--------------------------+-----------
-       1 | EMAJ_INSTALL  |            | E-Maj 4.0.1 | Initialisation completed | postgres
+       1 | EMAJ_INSTALL  |            | E-Maj 4.1.0 | Initialisation completed | postgres
 (1 row)
 

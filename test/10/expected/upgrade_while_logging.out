@@ -12,7 +12,7 @@ select * from pg_available_extension_versions where name = 'emaj' order by versi
  name | version | installed | superuser | relocatable | schema |      requires       |                                            comment                                             
 ------+---------+-----------+-----------+-------------+--------+---------------------+------------------------------------------------------------------------------------------------
  emaj | devel   | f         | t         | f           | emaj   | {dblink,btree_gist} | E-Maj extension enables fine-grained write logging and time travel on subsets of the database.
- emaj | 4.0.1   | t         | t         | f           | emaj   | {dblink,btree_gist} | E-Maj extension enables fine-grained write logging and time travel on subsets of the database.
+ emaj | 4.1.0   | t         | t         | f           | emaj   | {dblink,btree_gist} | E-Maj extension enables fine-grained write logging and time travel on subsets of the database.
 (2 rows)
 
 select relname from pg_catalog.pg_class, 

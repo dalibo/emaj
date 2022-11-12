@@ -16,10 +16,11 @@
 
 use warnings; use strict;
 
-# The 3 variables below are to be customized
-  my $ficCurrSrc = "/home/postgres/proj/emaj/sql/emaj--devel.sql";
-  my $ficPrevSrc = "/home/postgres/proj/emaj/sql/emaj--4.0.1.sql";
-  my $ficUpgrade = "/home/postgres/proj/emaj/sql/emaj--4.0.1--devel.sql";
+# The 4 variables below are to be customized
+  my $emajEnvRootDir = "/home/postgres/proj/emaj";
+  my $currentSourceFile  = $emajEnvRootDir . "/sql/emaj--devel.sql";
+  my $previousSourceFile = $emajEnvRootDir . "/sql/emaj--4.1.0.sql";
+  my $upgradeScriptFile  = $emajEnvRootDir . "/sql/emaj--4.1.0--devel.sql";
 
   my $upgradeScriptHeader = '';  # existing code from the upgrade script before the functions definition
   my $upgradeScriptFooter = '';  # existing code from the upgrade script after the functions definition
@@ -134,10 +135,10 @@ use warnings; use strict;
 #
 # read the existing upgrade script and keep in memory all what is before and after the functions definition
 #
-  print ("Reading the existing upgrade script ($ficUpgrade).\n");
-  open (FICUPG,$ficUpgrade) || die ("Error in opening $ficUpgrade file\n");
+  print ("Reading the existing upgrade script ($upgradeScriptFile).\n");
+  open (UPGSCR,$upgradeScriptFile) || die ("Error in opening $upgradeScriptFile file\n");
   $status = 0;
-  while (<FICUPG>){
+  while (<UPGSCR>){
     $line = $_;
     if ($status == 0) {
       # detect existing tables that are dropped (if functions use their type as parameter, these functions will need to be recreated later)
@@ -157,15 +158,15 @@ use warnings; use strict;
   if ($status != 2) {
     die "Error in pattern detection in the upgrade script (status=$status).\n"
   }
-  close (FICUPG);
+  close (UPGSCR);
 
 #
 # read the source of the previous version and keep in memory the functions definition
 #
-  print ("Reading the source of the previous version ($ficPrevSrc)\n");
-  open (FICPREVSRC,$ficPrevSrc) || die ("Error in opening $ficPrevSrc file\n");
+  print ("Reading the source of the previous version ($previousSourceFile)\n");
+  open (PREVSRC,$previousSourceFile) || die ("Error in opening $previousSourceFile file\n");
   $status = 0;
-  while (<FICPREVSRC>){
+  while (<PREVSRC>){
     $line = $_;
     # Stop the analysis of the source at event trigger creation
     # (As the few functions created in this section depends on the postgres version, the processing would be too complex)
@@ -201,17 +202,17 @@ use warnings; use strict;
       $status = 2;
     }
   }
-  close (FICPREVSRC);
+  close (PREVSRC);
   print "  -> $nbFctPrevSrc functions loaded.\n";
 
 #
 # read the source of the current version and keep in memory the functions definition and the function comments
 #
-  print ("Reading the source of the current version ($ficCurrSrc)\n");
-  open (FICCURRSRC,$ficCurrSrc) || die ("Error in opening $ficCurrSrc file\n");
+  print ("Reading the source of the current version ($currentSourceFile)\n");
+  open (CURRSRC,$currentSourceFile) || die ("Error in opening $currentSourceFile file\n");
   $status = 0;
 
-  while (<FICCURRSRC>){
+  while (<CURRSRC>){
     $line = $_;
     # Stop the analysis of the source at event trigger creation
     # (As the few functions created in this section depends on the postgres version, the processing would be too complex)
@@ -270,38 +271,38 @@ use warnings; use strict;
       $currComments{$shortSignature} = $comment;
     }
   }
-  close (FICCURRSRC);
+  close (CURRSRC);
   print "  -> $nbFctCurrSrc functions and $nbCommentCurrSrc comments loaded.\n";
 
 #
 # build the new upgrade script by reading the new source script and comparing the functions with what was read from the previous version
 #
 
-  print ("Writing the upgrade script ($ficUpgrade)\n");
-  open (FICUPG,">$ficUpgrade") || die ("Error in opening $ficUpgrade file\n");
+  print ("Writing the upgrade script ($upgradeScriptFile)\n");
+  open (UPGSCR,">$upgradeScriptFile") || die ("Error in opening $upgradeScriptFile file\n");
 
   # write the upgrade script header
-  print FICUPG $upgradeScriptHeader;
+  print UPGSCR $upgradeScriptHeader;
 
   # write the drop of deleted functions or functions with a changed return type
-  print FICUPG "------------------------------------------------------------------\n";
-  print FICUPG "-- drop obsolete functions or functions with modified interface --\n";
-  print FICUPG "------------------------------------------------------------------\n";
+  print UPGSCR "------------------------------------------------------------------\n";
+  print UPGSCR "-- drop obsolete functions or functions with modified interface --\n";
+  print UPGSCR "------------------------------------------------------------------\n";
   foreach $fnctSignature (@prevSignatures) {
     if (!exists($currFunctions{$fnctSignature}) || 
         getReturnType($prevFunctions{$fnctSignature}) ne getReturnType($currFunctions{$fnctSignature})) {
       # the function is either deleted or has a changed return type
-      print FICUPG "DROP FUNCTION IF EXISTS $fnctSignature;\n";
+      print UPGSCR "DROP FUNCTION IF EXISTS $fnctSignature;\n";
       $nbDropUpgrade++;
     }
   }
-  print FICUPG "\n";
+  print UPGSCR "\n";
 
 #print "dropped tables = $droppedTablesList\n";
   # write the new or modified functions
-  print FICUPG "------------------------------------------------------------------\n";
-  print FICUPG "-- create new or modified functions                             --\n";
-  print FICUPG "------------------------------------------------------------------\n";
+  print UPGSCR "------------------------------------------------------------------\n";
+  print UPGSCR "-- create new or modified functions                             --\n";
+  print UPGSCR "------------------------------------------------------------------\n";
 
   foreach $fnctSignature (@currSignatures) {
 
@@ -310,7 +311,7 @@ use warnings; use strict;
         ($droppedTablesList ne '' && $fnctSignature =~ /$droppedTablesList/i)) { # the function has a parameter whose type is a recreated table
 
       # write the function in the upgrade script
-      print FICUPG $currFunctions{$fnctSignature};
+      print UPGSCR $currFunctions{$fnctSignature};
       $nbFctUpgrade++;
       # if a comment also exists, write it
       # remove variable names from the function signature
@@ -319,17 +320,17 @@ use warnings; use strict;
       $shortSignature =~ s/,\s*OUT\s+(.*?),/,/g; $shortSignature =~ s/,\s*OUT\s+(.*)\)/\)/;
 
       if (exists($currComments{$shortSignature})) {
-        print FICUPG $currComments{$shortSignature};
+        print UPGSCR $currComments{$shortSignature};
         $nbCommentUpgrade++;
       }
       # add a blank line
-      print FICUPG "\n";
+      print UPGSCR "\n";
     }
   }
 
   # write the upgrade script footer before closing
-  print FICUPG $upgradeScriptFooter;
-  close (FICUPG);
+  print UPGSCR $upgradeScriptFooter;
+  close (UPGSCR);
 
 # complete the processing
   print ("  -> $nbDropUpgrade functions dropped, $nbFctUpgrade functions and $nbCommentUpgrade comments copied.\n\n");

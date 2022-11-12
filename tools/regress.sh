@@ -29,7 +29,7 @@ typeset -r EMAJ_REGTEST_PSQL=('install_psql' 'setup' 'create_drop' 'start_stop' 
 typeset -r EMAJ_REGTEST_PSQL_PGVER=(11)
 typeset -r EMAJ_REGTEST_PGUPGRADE_PGVER='9.5!11'
 typeset -r EMAJ_REGTEST_UPGRADE=('install_upgrade' 'setup' 'create_drop' 'start_stop' 'mark' 'rollback' 'misc' 'verify' 'alter' 'alter_logging' 'viewer' 'adm1' 'adm2' 'adm3' 'client' 'check' 'cleanup')
-typeset -r EMAJ_REGTEST_UPGRADE_PGVER='9.5 9.6 10 12 13 14'
+typeset -r EMAJ_REGTEST_UPGRADE_PGVER='9.5 9.6 10 12 13 14 15'
 typeset -r EMAJ_REGTEST_MIXED=('install_previous' 'setup' 'before_upg_while_logging' 'upgrade_while_logging' 'after_upg_while_logging' 'cleanup')
 typeset -r EMAJ_REGTEST_MIXED_PGVER=(10 12 14)
 declare -A EMAJ_REGTEST_MENU_ACTIONS
