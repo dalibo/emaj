@@ -8058,7 +8058,7 @@ $_rlbk_init$
                 || ' [' || v_markTimestamp || ']'
                )
         RETURNING hist_id INTO v_histId;
--- Get the total number of tables for these groups.
+-- Get the total number of tables and sequences for these groups.
       SELECT sum(group_nb_table), sum(group_nb_sequence) INTO v_nbTblInGroups, v_nbSeqInGroups
         FROM emaj.emaj_group
         WHERE group_name = ANY (p_groupNames) ;
@@ -8385,7 +8385,7 @@ $_rlbk_planning$
             AND rlbp_step = 'RLBK_TABLE';
     END IF;
 --
--- Process application triggers to temporarily set as  ALWAYS triggers.
+-- Process application triggers to temporarily set as ALWAYS triggers.
 -- This concerns triggers that must be kept enabled during the rollback processing but the rollback function for its table is executed
 -- with session_replication_role = replica.
 --
