@@ -4,7 +4,7 @@ Installing the Emaj_web client
 Prerequisite
 ------------
 
-*Emaj_web* requires a web server with a php interpreter.
+*Emaj_web* requires a web server with a php interpreter, and its *pgsql* and *intl* extensions.
 
 
 Plug-in download
