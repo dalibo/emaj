@@ -77,7 +77,7 @@ select emaj.emaj_modify_table('myschema1','mytbl2','{"ignored_triggers_profiles"
 select rel_schema, rel_tblseq, rel_time_range, rel_ignored_triggers from emaj.emaj_relation where rel_ignored_triggers is not null order by 1,2,3;
  rel_schema | rel_tblseq | rel_time_range |  rel_ignored_triggers   
 ------------+------------+----------------+-------------------------
- myschema1  | mytbl2     | [8204,)        | {mytbl2trg1,mytbl2trg2}
+ myschema1  | mytbl2     | [8203,)        | {mytbl2trg1,mytbl2trg2}
 (1 row)
 
 -- perform some operations: set an intermediate mark, update myTbl3 and rollback
@@ -1601,7 +1601,7 @@ select rel_schema, rel_tblseq, rel_time_range, rel_group, rel_kind, rel_log_sche
  rel_schema | rel_tblseq | rel_time_range | rel_group | rel_kind | rel_log_schema | rel_log_table | rel_log_seq_last_value 
 ------------+------------+----------------+-----------+----------+----------------+---------------+------------------------
  myschema1  | myTbl3     | [8016,9701)    | myGroup1  | r        | emaj_myschema1 | myTbl3_log_1  |                      3
- myschema1  | mytbl2b    | [8203,9701)    | myGroup1  | r        | emaj_myschema1 | mytbl2b_log_1 |                      0
+ myschema1  | mytbl2b    | [8202,9701)    | myGroup1  | r        | emaj_myschema1 | mytbl2b_log_1 |                      0
 (2 rows)
 
 delete from myschema1."myTbl3" where col33 = 1.;
@@ -1744,9 +1744,9 @@ begin;
  myschema1   | myTbl3      | [8016,9701)     | myGroup1   | r
  myschema1   | mytbl2b     | [2000,8001)     | myGroup1   | r
  myschema1   | mytbl2b     | [8008,8010)     | myGroup1   | r
- myschema1   | mytbl2b     | [8016,8202)     | myGroup1   | r
- myschema1   | mytbl2b     | [8202,8203)     | myGroup2   | r
- myschema1   | mytbl2b     | [8203,9701)     | myGroup1   | r
+ myschema1   | mytbl2b     | [8016,8201)     | myGroup1   | r
+ myschema1   | mytbl2b     | [8201,8202)     | myGroup2   | r
+ myschema1   | mytbl2b     | [8202,9701)     | myGroup1   | r
 (8 rows)
 
 rollback;
@@ -1763,7 +1763,7 @@ begin;
  rel_schema | rel_tblseq | rel_time_range | rel_group | rel_kind | rel_log_schema | rel_log_table | rel_log_seq_last_value 
 ------------+------------+----------------+-----------+----------+----------------+---------------+------------------------
  myschema1  | myTbl3     | [8016,9701)    | myGroup1  | r        | emaj_myschema1 | myTbl3_log_1  |                      3
- myschema1  | mytbl2b    | [8203,9701)    | myGroup1  | r        | emaj_myschema1 | mytbl2b_log_1 |                      0
+ myschema1  | mytbl2b    | [8202,9701)    | myGroup1  | r        | emaj_myschema1 | mytbl2b_log_1 |                      0
 (2 rows)
 
   select tbl_schema, tbl_name, tbl_time_id, tbl_log_seq_last_val from emaj.emaj_table
@@ -1800,7 +1800,7 @@ begin;
 ------------+------------------+----------------+-----------+----------+----------------+---------------+------------------------
  myschema1  | myTbl3           | [8016,9701)    | myGroup1  | r        | emaj_myschema1 | myTbl3_log_1  |                      3
  myschema1  | myTbl3_col31_seq | [8008,9302)    | myGroup1  | S        |                |               |                       
- myschema1  | mytbl2b          | [8203,9701)    | myGroup1  | r        | emaj_myschema1 | mytbl2b_log_1 |                      0
+ myschema1  | mytbl2b          | [8202,9701)    | myGroup1  | r        | emaj_myschema1 | mytbl2b_log_1 |                      0
 (3 rows)
 
   select * from emaj.emaj_rel_hist where relh_schema = 'myschema1' and relh_tblseq = 'mytbl2b' order by 1,2,3;
@@ -1808,8 +1808,8 @@ begin;
 -------------+-------------+-----------------+------------+-----------
  myschema1   | mytbl2b     | [2000,8001)     | myGroup1   | r
  myschema1   | mytbl2b     | [8008,8010)     | myGroup1   | r
- myschema1   | mytbl2b     | [8016,8202)     | myGroup1   | r
- myschema1   | mytbl2b     | [8202,8203)     | myGroup2   | r
+ myschema1   | mytbl2b     | [8016,8201)     | myGroup1   | r
+ myschema1   | mytbl2b     | [8201,8202)     | myGroup2   | r
 (4 rows)
 
   select 'found' from pg_class, pg_namespace where relnamespace = pg_namespace.oid and relname = 'mytbl2b_log_1' and nspname = 'emaj_myschema1';
@@ -1840,9 +1840,9 @@ begin;
 -------------+-------------+-----------------+------------+-----------
  myschema1   | mytbl2b     | [2000,8001)     | myGroup1   | r
  myschema1   | mytbl2b     | [8008,8010)     | myGroup1   | r
- myschema1   | mytbl2b     | [8016,8202)     | myGroup1   | r
- myschema1   | mytbl2b     | [8202,8203)     | myGroup2   | r
- myschema1   | mytbl2b     | [8203,9701)     | myGroup1   | r
+ myschema1   | mytbl2b     | [8016,8201)     | myGroup1   | r
+ myschema1   | mytbl2b     | [8201,8202)     | myGroup2   | r
+ myschema1   | mytbl2b     | [8202,9701)     | myGroup1   | r
 (5 rows)
 
 rollback;
@@ -1922,18 +1922,18 @@ begin;
  myschema1   | myTbl3_col31_seq  | [8008,9302)     | myGroup1   | S
  myschema1   | mytbl1            | [2000,8001)     | myGroup1   | r
  myschema1   | mytbl1            | [8008,8009)     | myGroup1   | r
- myschema1   | mytbl1            | [8016,8201)     | myGroup1   | r
- myschema1   | mytbl1            | [8201,8203)     | myGroup2   | r
- myschema1   | mytbl1            | [8203,9707)     | myGroup1   | r
+ myschema1   | mytbl1            | [8016,8200)     | myGroup1   | r
+ myschema1   | mytbl1            | [8200,8202)     | myGroup2   | r
+ myschema1   | mytbl1            | [8202,9707)     | myGroup1   | r
  myschema1   | mytbl2            | [2000,8001)     | myGroup1   | r
  myschema1   | mytbl2            | [8008,8010)     | myGroup1   | r
- myschema1   | mytbl2            | [8016,8202)     | myGroup1   | r
- myschema1   | mytbl2            | [8202,8204)     | myGroup2   | r
+ myschema1   | mytbl2            | [8016,8201)     | myGroup1   | r
+ myschema1   | mytbl2            | [8201,8203)     | myGroup2   | r
  myschema1   | mytbl2b           | [2000,8001)     | myGroup1   | r
  myschema1   | mytbl2b           | [8008,8010)     | myGroup1   | r
- myschema1   | mytbl2b           | [8016,8202)     | myGroup1   | r
- myschema1   | mytbl2b           | [8202,8203)     | myGroup2   | r
- myschema1   | mytbl2b           | [8203,9701)     | myGroup1   | r
+ myschema1   | mytbl2b           | [8016,8201)     | myGroup1   | r
+ myschema1   | mytbl2b           | [8201,8202)     | myGroup2   | r
+ myschema1   | mytbl2b           | [8202,9701)     | myGroup1   | r
  myschema1   | mytbl2b_col20_seq | [2000,8001)     | myGroup1   | S
  myschema1   | mytbl4            | [2000,8001)     | myGroup1   | r
  myschema1   | mytbl4            | [8008,8011)     | myGroup1   | r
@@ -2403,10 +2403,10 @@ begin;
  MODIFY_TABLE  | LOG INDEX TABLESPACE CHANGED | myschema2."myTbl3"           | Default tablespace => tsplog1
  MODIFY_TABLE  | LOG DATA TABLESPACE CHANGED  | myschema2."myTbl3"           | Default tablespace => tsplog1
  MODIFY_TABLE  | BEGIN                        |                              | 
- MOVE_SEQUENCE | END                          |                              | 1 sequences moved to the new tables group myGroup1
+ MOVE_SEQUENCE | END                          |                              | 1 sequences moved to the tables group myGroup1
  MOVE_SEQUENCE | SEQUENCE MOVED               | myschema2."myTbl3_col31_seq" | From the idle group myGroup2 to the logging group myGroup1
  MOVE_SEQUENCE | BEGIN                        |                              | 
- MOVE_TABLE    | END                          |                              | 1 tables moved to the new tables group myGroup1
+ MOVE_TABLE    | END                          |                              | 1 tables moved to the tables group myGroup1
  MOVE_TABLE    | TABLE MOVED                  | myschema2."myTbl3"           | From the idle group myGroup2 to the logging group myGroup1
  MOVE_TABLE    | BEGIN                        |                              | 
 (10 rows)
@@ -2726,8 +2726,8 @@ select rel_schema, rel_tblseq, rel_time_range, rel_group, rel_kind, rel_log_sche
  myschema2  | myTbl3     | [10013,10015)  | myGroup2  | r        | emaj_myschema2 | myTbl3_log_2  |                     10
  myschema2  | myTbl3     | [10017,10019)  | myGroup2  | r        | emaj_myschema2 | myTbl3_log_3  |                     10
  myschema2  | myTbl3     | [10021,)       | myGroup2  | r        | emaj_myschema2 | myTbl3_log    |                       
- myschema2  | myseq1     | [8207,8208)    | myGroup4  | S        |                |               |                       
- myschema2  | myseq1     | [8208,10016)   | myGroup2  | S        |                |               |                       
+ myschema2  | myseq1     | [8206,8207)    | myGroup4  | S        |                |               |                       
+ myschema2  | myseq1     | [8207,10016)   | myGroup2  | S        |                |               |                       
  myschema2  | myseq1     | [10018,10020)  | myGroup2  | S        |                |               |                       
  myschema2  | myseq1     | [10022,)       | myGroup2  | S        |                |               |                       
  myschema2  | myseq2     | [10018,10020)  | myGroup2  | S        |                |               |                       
@@ -2791,13 +2791,13 @@ select emaj.emaj_move_tables('myschema4','.*','','myGroup2',emaj.emaj_get_previo
 ERROR:  _check_new_mark: The groups "myGroup1, myGroup2" already contain a mark named "MOVE_SEQ_idle_to_logging".
 CONTEXT:  PL/pgSQL function emaj._check_new_mark(text[],text) line 31 at RAISE
 SQL statement "SELECT emaj._check_new_mark(v_loggingGroups, p_mark)"
-PL/pgSQL function emaj._move_tables(text,text[],text,text,boolean,boolean) line 89 at SQL statement
+PL/pgSQL function emaj._move_tables(text,text[],text,text,boolean,boolean) line 91 at SQL statement
 PL/pgSQL function emaj.emaj_move_tables(text,text,text,text,text) line 27 at RETURN
 select emaj.emaj_move_sequences('myschema2','.*','','myGroup2',emaj.emaj_get_previous_mark_group('myGroup1',now()));
 ERROR:  _check_new_mark: The groups "myGroup1, myGroup2" already contain a mark named "MOVE_SEQ_idle_to_logging".
 CONTEXT:  PL/pgSQL function emaj._check_new_mark(text[],text) line 31 at RAISE
 SQL statement "SELECT emaj._check_new_mark(v_loggingGroups, p_mark)"
-PL/pgSQL function emaj._move_sequences(text,text[],text,text,boolean,boolean) line 92 at SQL statement
+PL/pgSQL function emaj._move_sequences(text,text[],text,text,boolean,boolean) line 94 at SQL statement
 PL/pgSQL function emaj.emaj_move_sequences(text,text,text,text,text) line 27 at RETURN
 -- from a logging group to another logging group
 select emaj.emaj_move_tables('myschema4','.*','','myGroup2','MOVE_TBL_logging_to_logging');
@@ -3113,14 +3113,14 @@ select hist_function, hist_event, hist_object,
  SET_MARK_GROUPS    | BEGIN                        | myGroup1,myGroup2            | move table to myGroup1                                                                                                 | postgres
  SET_MARK_GROUPS    | END                          | myGroup1,myGroup2            | move table to myGroup1                                                                                                 | postgres
  MOVE_TABLE         | TABLE MOVED                  | myschema2."myTbl3"           | From the logging group myGroup2 to the logging group myGroup1                                                          | postgres
- MOVE_TABLE         | END                          |                              | 1 tables moved to the new tables group myGroup1                                                                        | postgres
+ MOVE_TABLE         | END                          |                              | 1 tables moved to the tables group myGroup1                                                                            | postgres
  MOVE_SEQUENCE      | BEGIN                        |                              |                                                                                                                        | postgres
  LOCK_GROUP         | BEGIN                        | myGroup1,myGroup2            |                                                                                                                        | postgres
  LOCK_GROUP         | END                          | myGroup1,myGroup2            | 11 tables locked, 0 deadlock(s)                                                                                        | postgres
  SET_MARK_GROUPS    | BEGIN                        | myGroup1,myGroup2            | move seq to myGroup1                                                                                                   | postgres
  SET_MARK_GROUPS    | END                          | myGroup1,myGroup2            | move seq to myGroup1                                                                                                   | postgres
  MOVE_SEQUENCE      | SEQUENCE MOVED               | myschema2."myTbl3_col31_seq" | From the logging group myGroup2 to the logging group myGroup1                                                          | postgres
- MOVE_SEQUENCE      | END                          |                              | 1 sequences moved to the new tables group myGroup1                                                                     | postgres
+ MOVE_SEQUENCE      | END                          |                              | 1 sequences moved to the tables group myGroup1                                                                         | postgres
  MODIFY_TABLE       | BEGIN                        |                              |                                                                                                                        | postgres
  LOCK_GROUP         | BEGIN                        | myGroup1                     |                                                                                                                        | postgres
  LOCK_GROUP         | END                          | myGroup1                     | 6 tables locked, 0 deadlock(s)                                                                                         | postgres
@@ -3318,7 +3318,7 @@ select hist_function, hist_event, hist_object,
  MOVE_TABLES        | TABLE MOVED                  | myschema4.mytblc1            | From the idle group myGroup4 to the logging group myGroup1                                                             | postgres
  MOVE_TABLES        | TABLE MOVED                  | myschema4.mytblc2            | From the idle group myGroup4 to the logging group myGroup1                                                             | postgres
  MOVE_TABLES        | TABLE MOVED                  | myschema4.mytblm             | From the idle group myGroup4 to the logging group myGroup1                                                             | postgres
- MOVE_TABLES        | END                          |                              | 5 tables moved to the new tables group myGroup1                                                                        | postgres
+ MOVE_TABLES        | END                          |                              | 5 tables moved to the tables group myGroup1                                                                            | postgres
  MOVE_SEQUENCES     | BEGIN                        |                              |                                                                                                                        | postgres
  LOCK_GROUP         | BEGIN                        | myGroup1,myGroup2            |                                                                                                                        | postgres
  LOCK_GROUP         | END                          | myGroup1,myGroup2            | 16 tables locked, 0 deadlock(s)                                                                                        | postgres
@@ -3327,7 +3327,7 @@ select hist_function, hist_event, hist_object,
  MOVE_SEQUENCES     | SEQUENCE MOVED               | myschema2."myTbl3_col31_seq" | From the logging group myGroup2 to the logging group myGroup1                                                          | postgres
  MOVE_SEQUENCES     | SEQUENCE MOVED               | myschema2.myseq1             | From the logging group myGroup2 to the logging group myGroup1                                                          | postgres
  MOVE_SEQUENCES     | SEQUENCE MOVED               | myschema2.myseq2             | From the logging group myGroup2 to the logging group myGroup1                                                          | postgres
- MOVE_SEQUENCES     | END                          |                              | 3 sequences moved to the new tables group myGroup1                                                                     | postgres
+ MOVE_SEQUENCES     | END                          |                              | 3 sequences moved to the tables group myGroup1                                                                         | postgres
  MOVE_TABLES        | BEGIN                        |                              |                                                                                                                        | postgres
  LOCK_GROUP         | BEGIN                        | myGroup1,myGroup2            |                                                                                                                        | postgres
  LOCK_GROUP         | END                          | myGroup1,myGroup2            | 16 tables locked, 0 deadlock(s)                                                                                        | postgres
@@ -3338,7 +3338,7 @@ select hist_function, hist_event, hist_object,
  MOVE_TABLES        | TABLE MOVED                  | myschema4.mytblc1            | From the logging group myGroup1 to the logging group myGroup2                                                          | postgres
  MOVE_TABLES        | TABLE MOVED                  | myschema4.mytblc2            | From the logging group myGroup1 to the logging group myGroup2                                                          | postgres
  MOVE_TABLES        | TABLE MOVED                  | myschema4.mytblm             | From the logging group myGroup1 to the logging group myGroup2                                                          | postgres
- MOVE_TABLES        | END                          |                              | 5 tables moved to the new tables group myGroup2                                                                        | postgres
+ MOVE_TABLES        | END                          |                              | 5 tables moved to the tables group myGroup2                                                                            | postgres
  MOVE_SEQUENCES     | BEGIN                        |                              |                                                                                                                        | postgres
  LOCK_GROUP         | BEGIN                        | myGroup1,myGroup2            |                                                                                                                        | postgres
  LOCK_GROUP         | END                          | myGroup1,myGroup2            | 16 tables locked, 0 deadlock(s)                                                                                        | postgres
@@ -3347,7 +3347,7 @@ select hist_function, hist_event, hist_object,
  MOVE_SEQUENCES     | SEQUENCE MOVED               | myschema2."myTbl3_col31_seq" | From the logging group myGroup1 to the logging group myGroup2                                                          | postgres
  MOVE_SEQUENCES     | SEQUENCE MOVED               | myschema2.myseq1             | From the logging group myGroup1 to the logging group myGroup2                                                          | postgres
  MOVE_SEQUENCES     | SEQUENCE MOVED               | myschema2.myseq2             | From the logging group myGroup1 to the logging group myGroup2                                                          | postgres
- MOVE_SEQUENCES     | END                          |                              | 3 sequences moved to the new tables group myGroup2                                                                     | postgres
+ MOVE_SEQUENCES     | END                          |                              | 3 sequences moved to the tables group myGroup2                                                                         | postgres
  MOVE_TABLES        | BEGIN                        |                              |                                                                                                                        | postgres
  LOCK_GROUP         | BEGIN                        | myGroup2                     |                                                                                                                        | postgres
  LOCK_GROUP         | END                          | myGroup2                     | 11 tables locked, 0 deadlock(s)                                                                                        | postgres
@@ -3358,7 +3358,7 @@ select hist_function, hist_event, hist_object,
  MOVE_TABLES        | TABLE MOVED                  | myschema4.mytblc1            | From the logging group myGroup2 to the idle group myGroup4                                                             | postgres
  MOVE_TABLES        | TABLE MOVED                  | myschema4.mytblc2            | From the logging group myGroup2 to the idle group myGroup4                                                             | postgres
  MOVE_TABLES        | TABLE MOVED                  | myschema4.mytblm             | From the logging group myGroup2 to the idle group myGroup4                                                             | postgres
- MOVE_TABLES        | END                          |                              | 5 tables moved to the new tables group myGroup4                                                                        | postgres
+ MOVE_TABLES        | END                          |                              | 5 tables moved to the tables group myGroup4                                                                            | postgres
  MOVE_SEQUENCES     | BEGIN                        |                              |                                                                                                                        | postgres
  LOCK_GROUP         | BEGIN                        | myGroup2                     |                                                                                                                        | postgres
  LOCK_GROUP         | END                          | myGroup2                     | 6 tables locked, 0 deadlock(s)                                                                                         | postgres
@@ -3367,21 +3367,21 @@ select hist_function, hist_event, hist_object,
  MOVE_SEQUENCES     | SEQUENCE MOVED               | myschema2."myTbl3_col31_seq" | From the logging group myGroup2 to the idle group myGroup4                                                             | postgres
  MOVE_SEQUENCES     | SEQUENCE MOVED               | myschema2.myseq1             | From the logging group myGroup2 to the idle group myGroup4                                                             | postgres
  MOVE_SEQUENCES     | SEQUENCE MOVED               | myschema2.myseq2             | From the logging group myGroup2 to the idle group myGroup4                                                             | postgres
- MOVE_SEQUENCES     | END                          |                              | 3 sequences moved to the new tables group myGroup4                                                                     | postgres
+ MOVE_SEQUENCES     | END                          |                              | 3 sequences moved to the tables group myGroup4                                                                         | postgres
  MOVE_TABLE         | BEGIN                        |                              |                                                                                                                        | postgres
  LOCK_GROUP         | BEGIN                        | myGroup1,myGroup2            |                                                                                                                        | postgres
  LOCK_GROUP         | END                          | myGroup1,myGroup2            | 11 tables locked, 0 deadlock(s)                                                                                        | postgres
  SET_MARK_GROUPS    | BEGIN                        | myGroup1,myGroup2            | Move a table with fkey                                                                                                 | postgres
  SET_MARK_GROUPS    | END                          | myGroup1,myGroup2            | Move a table with fkey                                                                                                 | postgres
  MOVE_TABLE         | TABLE MOVED                  | myschema2.mytbl2             | From the logging group myGroup2 to the logging group myGroup1                                                          | postgres
- MOVE_TABLE         | END                          |                              | 1 tables moved to the new tables group myGroup1                                                                        | postgres
+ MOVE_TABLE         | END                          |                              | 1 tables moved to the tables group myGroup1                                                                            | postgres
  MOVE_TABLE         | BEGIN                        |                              |                                                                                                                        | postgres
  LOCK_GROUP         | BEGIN                        | myGroup1,myGroup2            |                                                                                                                        | postgres
  LOCK_GROUP         | END                          | myGroup1,myGroup2            | 11 tables locked, 0 deadlock(s)                                                                                        | postgres
  SET_MARK_GROUPS    | BEGIN                        | myGroup1,myGroup2            | Move a table with fkey back                                                                                            | postgres
  SET_MARK_GROUPS    | END                          | myGroup1,myGroup2            | Move a table with fkey back                                                                                            | postgres
  MOVE_TABLE         | TABLE MOVED                  | myschema2.mytbl2             | From the logging group myGroup1 to the logging group myGroup2                                                          | postgres
- MOVE_TABLE         | END                          |                              | 1 tables moved to the new tables group myGroup2                                                                        | postgres
+ MOVE_TABLE         | END                          |                              | 1 tables moved to the tables group myGroup2                                                                            | postgres
  REMOVE_TABLE       | BEGIN                        |                              |                                                                                                                        | postgres
  LOCK_GROUP         | BEGIN                        | myGroup1                     |                                                                                                                        | postgres
  LOCK_GROUP         | END                          | myGroup1                     | 4 tables locked, 0 deadlock(s)                                                                                         | postgres
@@ -3473,22 +3473,22 @@ select * from emaj.emaj_rel_hist order by 1,2,3;
  myschema1      | myTbl3_col31_seq  | [9310,10042)    | myGroup1         | S
  myschema1      | mytbl1            | [2000,8001)     | myGroup1         | r
  myschema1      | mytbl1            | [8008,8009)     | myGroup1         | r
- myschema1      | mytbl1            | [8016,8201)     | myGroup1         | r
- myschema1      | mytbl1            | [8201,8203)     | myGroup2         | r
- myschema1      | mytbl1            | [8203,9707)     | myGroup1         | r
+ myschema1      | mytbl1            | [8016,8200)     | myGroup1         | r
+ myschema1      | mytbl1            | [8200,8202)     | myGroup2         | r
+ myschema1      | mytbl1            | [8202,9707)     | myGroup1         | r
  myschema1      | mytbl1            | [9713,10035)    | myGroup1         | r
  myschema1      | mytbl1            | [10040,10042)   | myGroup1         | r
  myschema1      | mytbl1_new_name   | [10036,10037)   | myGroup1         | r
  myschema1      | mytbl2            | [2000,8001)     | myGroup1         | r
  myschema1      | mytbl2            | [8008,8010)     | myGroup1         | r
- myschema1      | mytbl2            | [8016,8202)     | myGroup1         | r
- myschema1      | mytbl2            | [8202,8204)     | myGroup2         | r
- myschema1      | mytbl2            | [8204,10042)    | myGroup1         | r
+ myschema1      | mytbl2            | [8016,8201)     | myGroup1         | r
+ myschema1      | mytbl2            | [8201,8203)     | myGroup2         | r
+ myschema1      | mytbl2            | [8203,10042)    | myGroup1         | r
  myschema1      | mytbl2b           | [2000,8001)     | myGroup1         | r
  myschema1      | mytbl2b           | [8008,8010)     | myGroup1         | r
- myschema1      | mytbl2b           | [8016,8202)     | myGroup1         | r
- myschema1      | mytbl2b           | [8202,8203)     | myGroup2         | r
- myschema1      | mytbl2b           | [8203,9701)     | myGroup1         | r
+ myschema1      | mytbl2b           | [8016,8201)     | myGroup1         | r
+ myschema1      | mytbl2b           | [8201,8202)     | myGroup2         | r
+ myschema1      | mytbl2b           | [8202,9701)     | myGroup1         | r
  myschema1      | mytbl2b           | [9713,10042)    | myGroup1         | r
  myschema1      | mytbl2b_col20_seq | [2000,8001)     | myGroup1         | S
  myschema1      | mytbl2b_col20_seq | [8008,10042)    | myGroup1         | S
@@ -3513,10 +3513,11 @@ select * from emaj.emaj_rel_hist order by 1,2,3;
  myschema2      | myTbl3_col31_seq  | [10032,10045)   | myGroup4         | S
  myschema2      | myseq1            | [2000,8002)     | myGroup2         | S
  myschema2      | myseq1            | [8008,8012)     | myGroup2         | S
- myschema2      | myseq1            | [8016,8206)     | myGroup2         | S
- myschema2      | myseq1            | [8206,8207)     | myGroup1         | S
- myschema2      | myseq1            | [8207,8208)     | myGroup4         | S
- myschema2      | myseq1            | [8208,10016)    | myGroup2         | S
+ myschema2      | myseq1            | [8016,8204)     | myGroup2         | S
+ myschema2      | myseq1            | [8204,8205)     | myGroup1         | S
+ myschema2      | myseq1            | [8205,8206)     | myGroup2         | S
+ myschema2      | myseq1            | [8206,8207)     | myGroup4         | S
+ myschema2      | myseq1            | [8207,10016)    | myGroup2         | S
  myschema2      | myseq1            | [10018,10020)   | myGroup2         | S
  myschema2      | myseq1            | [10022,10028)   | myGroup2         | S
  myschema2      | myseq1            | [10028,10030)   | myGroup1         | S
@@ -3583,7 +3584,7 @@ select * from emaj.emaj_rel_hist order by 1,2,3;
  phil's schema3 | phil's seq\1      | [1032,8004)     | phil's group#3", | S
  phil's schema3 | phil's tbl1       | [1021,8004)     | phil's group#3", | r
  public         | mytbl1_new_name   | [10038,10039)   | myGroup1         | r
-(119 rows)
+(120 rows)
 
 truncate emaj.emaj_hist;
 -- remove the temp directory

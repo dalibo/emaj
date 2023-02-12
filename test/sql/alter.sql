@@ -164,6 +164,9 @@ select emaj.emaj_move_tables('myschema1',array[]::text[],'myGroup1');
 select emaj.emaj_move_tables('myschema1',null,'myGroup1');
 select emaj.emaj_move_tables('myschema1',array[''],'myGroup1');
 
+-- move to the same group
+select emaj.emaj_move_tables('myschema1',array['mytbl2','mytbl2b'],'myGroup1');
+
 -- ok (with a duplicate table name)
 select emaj.emaj_move_tables('myschema1',array['mytbl2','mytbl2b','mytbl2'],'myGroup2');
 
@@ -216,6 +219,10 @@ select emaj.emaj_move_sequences('myschema2',array['dummySequence','myseq1'],'myG
 select emaj.emaj_move_sequences('myschema2',array[]::text[],'myGroup1');
 select emaj.emaj_move_sequences('myschema2',null,'myGroup1');
 select emaj.emaj_move_sequences('myschema2',array[''],'myGroup1');
+
+-- move to the same group
+select emaj.emaj_move_sequences('myschema2',array['myseq1','myTbl3_col31_seq'],'myGroup2');
+select emaj.emaj_move_sequences('myschema2',array['myseq1','myTbl3_col31_seq'],'myGroup2');
 
 -- ok (with a duplicate sequence name)
 select emaj.emaj_move_sequences('myschema2',array['myseq1','myseq1'],'myGroup4');

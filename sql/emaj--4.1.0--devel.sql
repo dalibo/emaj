@@ -101,6 +101,296 @@ SELECT emaj._disable_event_triggers();
 ------------------------------------------------------------------
 -- create new or modified functions                             --
 ------------------------------------------------------------------
+CREATE OR REPLACE FUNCTION emaj._move_tables(p_schema TEXT, p_tables TEXT[], p_newGroup TEXT, p_mark TEXT, p_multiTable BOOLEAN,
+                                             p_arrayFromRegex BOOLEAN)
+RETURNS INTEGER LANGUAGE plpgsql AS
+$_move_tables$
+-- The function effectively moves tables from their tables group to another tables group.
+-- Inputs: schema, array of table names, new group name, mark to set if for logging groups,
+--         boolean to indicate whether several tables need to be processed,
+--         a boolean indicating whether the tables array has been built from regex filters
+-- Outputs: number of tables effectively moved to the tables group
+  DECLARE
+    v_function               TEXT;
+    v_newGroupIsLogging      BOOLEAN;
+    v_list                   TEXT;
+    v_uselessTables          TEXT[];
+    v_markName               TEXT;
+    v_timeId                 BIGINT;
+    v_groups                 TEXT[];
+    v_loggingGroups          TEXT[];
+    v_groupName              TEXT;
+    v_groupIsLogging         BOOLEAN;
+    v_oneTable               TEXT;
+    v_nbMovedTbl             INT = 0;
+  BEGIN
+    v_function = CASE WHEN p_multiTable THEN 'MOVE_TABLES' ELSE 'MOVE_TABLE' END;
+-- Insert the begin entry into the emaj_hist table.
+    INSERT INTO emaj.emaj_hist (hist_function, hist_event)
+      VALUES (v_function, 'BEGIN');
+-- Check the group name and if ok, get some properties of the group.
+    PERFORM emaj._check_group_names(p_groupNames := ARRAY[p_newGroup], p_mayBeNull := FALSE, p_lockGroups := TRUE, p_checkList := '');
+    SELECT group_is_logging INTO v_newGroupIsLogging
+      FROM emaj.emaj_group
+      WHERE group_name = p_newGroup;
+-- Check the tables list.
+    IF NOT p_arrayFromRegex THEN
+-- Remove duplicates values, NULL and empty strings from the supplied table names array.
+      SELECT array_agg(DISTINCT table_name) INTO p_tables
+        FROM unnest(p_tables) AS table_name
+        WHERE table_name IS NOT NULL AND table_name <> '';
+-- Check that the tables currently belong to a tables group (not necessarily the same for all table).
+      WITH all_supplied_tables AS (
+        SELECT unnest(p_tables) AS table_name
+        ),
+           tables_in_group AS (
+        SELECT rel_tblseq
+          FROM emaj.emaj_relation
+          WHERE rel_schema = p_schema
+            AND rel_tblseq = ANY(p_tables)
+            AND upper_inf(rel_time_range)
+        )
+      SELECT string_agg(quote_ident(p_schema) || '.' || quote_ident(table_name), ', ' ORDER BY table_name) INTO v_list
+        FROM
+          (  SELECT table_name
+               FROM all_supplied_tables
+           EXCEPT
+             SELECT rel_tblseq
+               FROM tables_in_group
+          ) AS t;
+      IF v_list IS NOT NULL THEN
+        RAISE EXCEPTION '_move_tables: some tables (%) do not currently belong to any tables group.', v_list;
+      END IF;
+-- Remove tables that already belong to the new group.
+      SELECT string_agg(quote_ident(p_schema) || '.' || quote_ident(rel_tblseq), ', ' ORDER BY rel_tblseq), array_agg(rel_tblseq)
+        INTO v_list, v_uselessTables
+        FROM emaj.emaj_relation
+        WHERE rel_schema = p_schema
+          AND rel_tblseq = ANY(p_tables)
+          AND upper_inf(rel_time_range)
+          AND rel_group = p_newGroup;
+      IF v_list IS NOT NULL THEN
+        RAISE WARNING '_move_tables: some tables (%) already belong to the tables group %.', v_list, p_newGroup;
+        SELECT array_agg(tbl) INTO p_tables
+          FROM unnest(p_tables) AS tbl
+          WHERE tbl <> ALL(v_uselessTables);
+      END IF;
+    END IF;
+-- Get the lists of groups and logging groups holding these tables, if any.
+-- It locks the tables groups so that no other operation simultaneously occurs these groups
+-- (the CTE is needed for the FOR UPDATE clause not allowed when aggregate functions).
+    WITH tables_group AS (
+      SELECT group_name, group_is_logging FROM emaj.emaj_group
+        WHERE group_name = p_newGroup OR
+              group_name IN
+               (SELECT DISTINCT rel_group FROM emaj.emaj_relation
+                  WHERE rel_schema = p_schema
+                    AND rel_tblseq = ANY(p_tables)
+                    AND upper_inf(rel_time_range))
+        FOR UPDATE OF emaj_group
+      )
+    SELECT array_agg(group_name ORDER BY group_name),
+           array_agg(group_name ORDER BY group_name) FILTER (WHERE group_is_logging)
+      INTO v_groups, v_loggingGroups
+      FROM tables_group;
+-- Check the supplied mark.
+    SELECT emaj._check_new_mark(v_loggingGroups, p_mark) INTO v_markName;
+-- OK,
+    IF p_tables IS NULL THEN
+-- When no tables are finaly selected, just warn.
+      RAISE WARNING '_move_tables: No table to process.';
+    ELSE
+-- Get the time stamp of the operation.
+      SELECT emaj._set_time_stamp('A') INTO v_timeId;
+-- For LOGGING groups, lock all tables to get a stable point.
+      IF v_loggingGroups IS NOT NULL THEN
+-- Use a ROW EXCLUSIVE lock mode, preventing for a transaction currently updating data, but not conflicting with simple read access or
+--  vacuum operation.
+        PERFORM emaj._lock_groups(v_loggingGroups, 'ROW EXCLUSIVE', FALSE);
+-- ... and set the mark, using the same time identifier.
+        PERFORM emaj._set_mark_groups(v_loggingGroups, v_markName, TRUE, TRUE, NULL, v_timeId);
+      END IF;
+-- Effectively move each table.
+      FOREACH v_oneTable IN ARRAY p_tables
+      LOOP
+-- Get some characteristics of the group that holds the table before the move.
+        SELECT rel_group, group_is_logging INTO v_groupName, v_groupIsLogging
+          FROM emaj.emaj_relation
+               JOIN emaj.emaj_group ON (group_name = rel_group)
+          WHERE rel_schema = p_schema
+            AND rel_tblseq = v_oneTable
+            AND upper_inf(rel_time_range);
+-- Move this table.
+        PERFORM emaj._move_tbl(p_schema, v_oneTable, v_groupName, v_groupIsLogging, p_newGroup, v_newGroupIsLogging, v_timeId, v_function);
+        v_nbMovedTbl = v_nbMovedTbl + 1;
+      END LOOP;
+-- Adjust the groups characteristics.
+      UPDATE emaj.emaj_group
+        SET group_last_alter_time_id = v_timeId,
+            group_nb_table =
+              (SELECT count(*)
+                 FROM emaj.emaj_relation
+                 WHERE rel_group = group_name
+                   AND upper_inf(rel_time_range)
+                   AND rel_kind = 'r'
+              )
+        WHERE group_name = ANY (v_groups);
+    END IF;
+-- Insert the end entry into the emaj_hist table.
+    INSERT INTO emaj.emaj_hist (hist_function, hist_event, hist_wording)
+      VALUES (v_function, 'END', v_nbMovedTbl || ' tables moved to the tables group ' || p_newGroup);
+--
+    RETURN v_nbMovedTbl;
+  END;
+$_move_tables$;
+
+CREATE OR REPLACE FUNCTION emaj._move_sequences(p_schema TEXT, p_sequences TEXT[], p_newGroup TEXT, p_mark TEXT, p_multiSequence BOOLEAN,
+                                             p_arrayFromRegex BOOLEAN)
+RETURNS INTEGER LANGUAGE plpgsql AS
+$_move_sequences$
+-- The function effectively moves sequences from their tables group to another tables group.
+-- Inputs: schema, array of sequence names, new group name, mark to set if for logging groups,
+--         boolean to indicate whether several sequences need to be processed,
+--         a boolean indicating whether the sequences array has been built from regex filters
+-- Outputs: number of sequences effectively moved to the tables group
+  DECLARE
+    v_function               TEXT;
+    v_newGroupIsLogging      BOOLEAN;
+    v_list                   TEXT;
+    v_uselessSequences       TEXT[];
+    v_markName               TEXT;
+    v_timeId                 BIGINT;
+    v_groups                 TEXT[];
+    v_loggingGroups          TEXT[];
+    v_groupName              TEXT;
+    v_groupIsLogging         BOOLEAN;
+    v_oneSequence            TEXT;
+    v_nbMovedSeq             INT = 0;
+  BEGIN
+    v_function = CASE WHEN p_multiSequence THEN 'MOVE_SEQUENCES' ELSE 'MOVE_SEQUENCE' END;
+-- Insert the begin entry into the emaj_hist table.
+    INSERT INTO emaj.emaj_hist (hist_function, hist_event)
+      VALUES (v_function, 'BEGIN');
+-- Check the group name and if ok, get some properties of the group.
+    PERFORM emaj._check_group_names(p_groupNames := ARRAY[p_newGroup], p_mayBeNull := FALSE, p_lockGroups := TRUE, p_checkList := '');
+    SELECT group_is_logging INTO v_newGroupIsLogging
+      FROM emaj.emaj_group
+      WHERE group_name = p_newGroup;
+-- Check the sequences list.
+    IF NOT p_arrayFromRegex THEN
+-- Remove duplicates values, NULL and empty strings from the supplied sequence names array.
+      SELECT array_agg(DISTINCT sequence_name) INTO p_sequences
+        FROM unnest(p_sequences) AS sequence_name
+        WHERE sequence_name IS NOT NULL AND sequence_name <> '';
+-- Check that the sequences currently belong to a tables group (not necessarily the same for all sequences).
+      WITH all_supplied_sequences AS
+        (SELECT unnest(p_sequences) AS sequence_name
+        ),
+           sequences_in_group AS
+        (SELECT rel_tblseq
+           FROM emaj.emaj_relation
+           WHERE rel_schema = p_schema
+             AND rel_tblseq = ANY(p_sequences)
+             AND upper_inf(rel_time_range)
+        )
+      SELECT string_agg(quote_ident(p_schema) || '.' || quote_ident(sequence_name), ', ' ORDER BY sequence_name) INTO v_list
+        FROM
+          (  SELECT sequence_name
+               FROM all_supplied_sequences
+           EXCEPT
+             SELECT rel_tblseq
+               FROM sequences_in_group
+          ) AS t;
+      IF v_list IS NOT NULL THEN
+        RAISE EXCEPTION '_move_sequences: some sequences (%) do not currently belong to any tables group.', v_list;
+      END IF;
+-- Remove sequences that already belong to the new group.
+      SELECT string_agg(quote_ident(p_schema) || '.' || quote_ident(rel_tblseq), ', ' ORDER BY rel_tblseq), array_agg(rel_tblseq)
+        INTO v_list, v_uselessSequences
+        FROM emaj.emaj_relation
+        WHERE rel_schema = p_schema
+          AND rel_tblseq = ANY(p_sequences)
+          AND upper_inf(rel_time_range)
+          AND rel_group = p_newGroup;
+      IF v_list IS NOT NULL THEN
+        RAISE WARNING '_move_sequences: some sequences (%) already belong to the tables group %.', v_list, p_newGroup;
+        SELECT array_agg(seq) INTO p_sequences
+          FROM unnest(p_sequences) AS seq
+          WHERE seq <> ALL(v_uselessSequences);
+      END IF;
+    END IF;
+-- Get the lists of groups and logging groups holding these sequences, if any.
+-- It locks the tables groups so that no other operation simultaneously occurs these groups
+-- (the CTE is needed for the FOR UPDATE clause not allowed when aggregate functions).
+    WITH tables_group AS
+      (SELECT group_name, group_is_logging
+         FROM emaj.emaj_group
+         WHERE group_name = p_newGroup
+            OR group_name IN
+                 (SELECT DISTINCT rel_group
+                    FROM emaj.emaj_relation
+                    WHERE rel_schema = p_schema
+                      AND rel_tblseq = ANY(p_sequences)
+                      AND upper_inf(rel_time_range)
+                 )
+        FOR UPDATE OF emaj_group
+      )
+    SELECT array_agg(group_name ORDER BY group_name),
+           array_agg(group_name ORDER BY group_name) FILTER (WHERE group_is_logging)
+      INTO v_groups, v_loggingGroups
+      FROM tables_group;
+-- Check the supplied mark.
+    SELECT emaj._check_new_mark(v_loggingGroups, p_mark) INTO v_markName;
+-- OK,
+    IF p_sequences IS NULL THEN
+-- When no sequences are finaly selected, just warn.
+      RAISE WARNING '_move_sequences: No sequence to process.';
+    ELSE
+-- Get the time stamp of the operation.
+      SELECT emaj._set_time_stamp('A') INTO v_timeId;
+-- For LOGGING groups, lock all tables to get a stable point.
+      IF v_loggingGroups IS NOT NULL THEN
+-- Use a ROW EXCLUSIVE lock mode, preventing for a transaction currently updating data, but not conflicting with simple read access or
+-- vacuum operation,
+        PERFORM emaj._lock_groups(v_loggingGroups, 'ROW EXCLUSIVE', FALSE);
+-- ... and set the mark, using the same time identifier.
+        PERFORM emaj._set_mark_groups(v_loggingGroups, v_markName, TRUE, TRUE, NULL, v_timeId);
+      END IF;
+-- Effectively move each sequence.
+      FOREACH v_oneSequence IN ARRAY p_sequences
+      LOOP
+-- Get some characteristics of the group that holds the sequence before the move.
+        SELECT rel_group, group_is_logging INTO v_groupName, v_groupIsLogging
+          FROM emaj.emaj_relation
+               JOIN emaj.emaj_group ON (group_name = rel_group)
+          WHERE rel_schema = p_schema
+            AND rel_tblseq = v_oneSequence
+            AND upper_inf(rel_time_range);
+-- Move this sequence.
+        PERFORM emaj._move_seq(p_schema, v_oneSequence, v_groupName, v_groupIsLogging, p_newGroup, v_newGroupIsLogging, v_timeId,
+                               v_function);
+        v_nbMovedSeq = v_nbMovedSeq + 1;
+      END LOOP;
+-- Adjust the groups characteristics.
+      UPDATE emaj.emaj_group
+        SET group_last_alter_time_id = v_timeId,
+            group_nb_sequence =
+              (SELECT count(*)
+                 FROM emaj.emaj_relation
+                 WHERE rel_group = group_name
+                   AND upper_inf(rel_time_range)
+                   AND rel_kind = 'S'
+              )
+        WHERE group_name = ANY (v_groups);
+    END IF;
+-- Insert the end entry into the emaj_hist table.
+    INSERT INTO emaj.emaj_hist (hist_function, hist_event, hist_wording)
+      VALUES (v_function, 'END', v_nbMovedSeq || ' sequences moved to the tables group ' || p_newGroup);
+--
+    RETURN v_nbMovedSeq;
+  END;
+$_move_sequences$;
+
 CREATE OR REPLACE FUNCTION emaj._rlbk_init(p_groupNames TEXT[], p_mark TEXT, p_isLoggedRlbk BOOLEAN, p_nbSession INT, p_multiGroup BOOLEAN,
                                            p_isAlterGroupAllowed BOOLEAN DEFAULT FALSE)
 RETURNS INT LANGUAGE plpgsql AS

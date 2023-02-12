@@ -6,8 +6,11 @@ E-Maj - Change log
   * Minor code changes.
 
 ###Bug fixes:###
-
-
+  * Fix a bug in both emaj_move_tables() and emaj_move_sequences() functions.
+    When several tables/sequences are moved at once to another tables group and
+    the destination group is the same as the source group for at least 2
+    tables/sequences, the called function returned a wrong number of effectively
+    moved tables/sequences.
 
 4.1.0 (2022-Oct.-01)
 ------

@@ -551,7 +551,6 @@ select time_id, time_last_emaj_gid, time_event from emaj.emaj_time_stamp order b
     8205 |            8200000 | A
     8206 |            8200000 | A
     8207 |            8200000 | A
-    8208 |            8200000 | A
     8400 |            8400000 | A
     8401 |            8400000 | A
     8402 |            8400000 | A
@@ -864,7 +863,7 @@ select time_id, time_last_emaj_gid, time_event from emaj.emaj_time_stamp order b
    20203 |           20000272 | R
    20204 |           20000291 | M
    20205 |           20000291 | R
-(510 rows)
+(509 rows)
 
 select sequ_schema, sequ_name, sequ_time_id, sequ_last_val, sequ_is_called from emaj.emaj_sequence order by sequ_time_id, sequ_schema, sequ_name;
  sequ_schema |     sequ_name     | sequ_time_id | sequ_last_val | sequ_is_called 

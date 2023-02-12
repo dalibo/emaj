@@ -2616,15 +2616,16 @@ $_move_tables$
         WHERE table_name IS NOT NULL AND table_name <> '';
 -- Check that the tables currently belong to a tables group (not necessarily the same for all table).
       WITH all_supplied_tables AS (
-        SELECT unnest(p_tables) AS table_name),
+        SELECT unnest(p_tables) AS table_name
+        ),
            tables_in_group AS (
         SELECT rel_tblseq
           FROM emaj.emaj_relation
           WHERE rel_schema = p_schema
             AND rel_tblseq = ANY(p_tables)
             AND upper_inf(rel_time_range)
-                              )
-      SELECT string_agg(quote_ident(p_schema) || '.' || quote_ident(table_name), ', ') INTO v_list
+        )
+      SELECT string_agg(quote_ident(p_schema) || '.' || quote_ident(table_name), ', ' ORDER BY table_name) INTO v_list
         FROM
           (  SELECT table_name
                FROM all_supplied_tables
@@ -2636,7 +2637,7 @@ $_move_tables$
         RAISE EXCEPTION '_move_tables: some tables (%) do not currently belong to any tables group.', v_list;
       END IF;
 -- Remove tables that already belong to the new group.
-      SELECT string_agg(quote_ident(p_schema) || '.' || quote_ident(rel_tblseq), ', '), array_agg(rel_tblseq)
+      SELECT string_agg(quote_ident(p_schema) || '.' || quote_ident(rel_tblseq), ', ' ORDER BY rel_tblseq), array_agg(rel_tblseq)
         INTO v_list, v_uselessTables
         FROM emaj.emaj_relation
         WHERE rel_schema = p_schema
@@ -2645,8 +2646,9 @@ $_move_tables$
           AND rel_group = p_newGroup;
       IF v_list IS NOT NULL THEN
         RAISE WARNING '_move_tables: some tables (%) already belong to the tables group %.', v_list, p_newGroup;
-        SELECT array_remove(p_tables, useless_table) INTO p_tables
-          FROM unnest(v_uselessTables) AS useless_table;
+        SELECT array_agg(tbl) INTO p_tables
+          FROM unnest(p_tables) AS tbl
+          WHERE tbl <> ALL(v_uselessTables);
       END IF;
     END IF;
 -- Get the lists of groups and logging groups holding these tables, if any.
@@ -2711,7 +2713,7 @@ $_move_tables$
     END IF;
 -- Insert the end entry into the emaj_hist table.
     INSERT INTO emaj.emaj_hist (hist_function, hist_event, hist_wording)
-      VALUES (v_function, 'END', v_nbMovedTbl || ' tables moved to the new tables group ' || p_newGroup);
+      VALUES (v_function, 'END', v_nbMovedTbl || ' tables moved to the tables group ' || p_newGroup);
 --
     RETURN v_nbMovedTbl;
   END;
@@ -4381,7 +4383,7 @@ $_move_sequences$
              AND rel_tblseq = ANY(p_sequences)
              AND upper_inf(rel_time_range)
         )
-      SELECT string_agg(quote_ident(p_schema) || '.' || quote_ident(sequence_name), ', ') INTO v_list
+      SELECT string_agg(quote_ident(p_schema) || '.' || quote_ident(sequence_name), ', ' ORDER BY sequence_name) INTO v_list
         FROM
           (  SELECT sequence_name
                FROM all_supplied_sequences
@@ -4393,7 +4395,7 @@ $_move_sequences$
         RAISE EXCEPTION '_move_sequences: some sequences (%) do not currently belong to any tables group.', v_list;
       END IF;
 -- Remove sequences that already belong to the new group.
-      SELECT string_agg(quote_ident(p_schema) || '.' || quote_ident(rel_tblseq), ', '), array_agg(rel_tblseq)
+      SELECT string_agg(quote_ident(p_schema) || '.' || quote_ident(rel_tblseq), ', ' ORDER BY rel_tblseq), array_agg(rel_tblseq)
         INTO v_list, v_uselessSequences
         FROM emaj.emaj_relation
         WHERE rel_schema = p_schema
@@ -4402,7 +4404,9 @@ $_move_sequences$
           AND rel_group = p_newGroup;
       IF v_list IS NOT NULL THEN
         RAISE WARNING '_move_sequences: some sequences (%) already belong to the tables group %.', v_list, p_newGroup;
-        SELECT array_remove(p_sequences, useless_sequence) INTO p_sequences FROM unnest(v_uselessSequences) AS useless_sequence;
+        SELECT array_agg(seq) INTO p_sequences
+          FROM unnest(p_sequences) AS seq
+          WHERE seq <> ALL(v_uselessSequences);
       END IF;
     END IF;
 -- Get the lists of groups and logging groups holding these sequences, if any.
@@ -4471,7 +4475,7 @@ $_move_sequences$
     END IF;
 -- Insert the end entry into the emaj_hist table.
     INSERT INTO emaj.emaj_hist (hist_function, hist_event, hist_wording)
-      VALUES (v_function, 'END', v_nbMovedSeq || ' sequences moved to the new tables group ' || p_newGroup);
+      VALUES (v_function, 'END', v_nbMovedSeq || ' sequences moved to the tables group ' || p_newGroup);
 --
     RETURN v_nbMovedSeq;
   END;
