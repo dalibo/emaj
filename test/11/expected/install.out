@@ -178,10 +178,10 @@ Referenced by:
     TABLE "emaj.emaj_mark" CONSTRAINT "emaj_mark_mark_group_fkey" FOREIGN KEY (mark_group) REFERENCES emaj.emaj_group(group_name) ON DELETE CASCADE
     TABLE "emaj.emaj_relation" CONSTRAINT "emaj_relation_rel_group_fkey" FOREIGN KEY (rel_group) REFERENCES emaj.emaj_group(group_name)
 
-  Index "emaj.emaj_group_pkey"
-   Column   | Type | Definition 
-------------+------+------------
- group_name | text | group_name
+     Index "emaj.emaj_group_pkey"
+   Column   | Type | Key? | Definition 
+------------+------+------+------------
+ group_name | text | yes  | group_name
 primary key, btree, for table "emaj.emaj_group"
 
                                               Table "emaj.emaj_hist"
@@ -204,10 +204,10 @@ Indexes:
  bigint |     1 |       1 | 9223372036854775807 |         1 | no      |     1
 Owned by: emaj.emaj_hist.hist_id
 
-  Index "emaj.emaj_hist_pkey"
- Column  |  Type  | Definition 
----------+--------+------------
- hist_id | bigint | hist_id
+     Index "emaj.emaj_hist_pkey"
+ Column  |  Type  | Key? | Definition 
+---------+--------+------+------------
+ hist_id | bigint | yes  | hist_id
 primary key, btree, for table "emaj.emaj_hist"
 
                        Composite type "emaj.emaj_log_stat_type"
@@ -240,17 +240,17 @@ Foreign-key constraints:
     "emaj_mark_mark_group_fkey" FOREIGN KEY (mark_group) REFERENCES emaj.emaj_group(group_name) ON DELETE CASCADE
     "emaj_mark_mark_time_id_fkey" FOREIGN KEY (mark_time_id) REFERENCES emaj.emaj_time_stamp(time_id)
 
-     Index "emaj.emaj_mark_idx1"
-    Column    |  Type  |  Definition  
---------------+--------+--------------
- mark_time_id | bigint | mark_time_id
+         Index "emaj.emaj_mark_idx1"
+    Column    |  Type  | Key? |  Definition  
+--------------+--------+------+--------------
+ mark_time_id | bigint | yes  | mark_time_id
 btree, for table "emaj.emaj_mark"
 
-  Index "emaj.emaj_mark_pkey"
-   Column   | Type | Definition 
-------------+------+------------
- mark_group | text | mark_group
- mark_name  | text | mark_name
+      Index "emaj.emaj_mark_pkey"
+   Column   | Type | Key? | Definition 
+------------+------+------+------------
+ mark_group | text | yes  | mark_group
+ mark_name  | text | yes  | mark_name
 primary key, btree, for table "emaj.emaj_mark"
 
                      Table "emaj.emaj_param"
@@ -267,10 +267,10 @@ Triggers:
     emaj_param_change_trg AFTER INSERT OR DELETE OR UPDATE ON emaj.emaj_param FOR EACH ROW EXECUTE PROCEDURE emaj._emaj_param_change_fnct()
     emaj_param_truncate_trg BEFORE TRUNCATE ON emaj.emaj_param FOR EACH STATEMENT EXECUTE PROCEDURE emaj._emaj_param_change_fnct()
 
- Index "emaj.emaj_param_pkey"
-  Column   | Type | Definition 
------------+------+------------
- param_key | text | param_key
+     Index "emaj.emaj_param_pkey"
+  Column   | Type | Key? | Definition 
+-----------+------+------+------------
+ param_key | text | yes  | param_key
 primary key, btree, for table "emaj.emaj_param"
 
                   Table "emaj.emaj_rel_hist"
@@ -288,26 +288,26 @@ Indexes:
 Check constraints:
     "emaj_rel_hist_relh_time_range_check" CHECK (NOT upper_inf(relh_time_range))
 
-     Index "emaj.emaj_rel_hist_idx1"
- Column |  Type  |       Definition       
---------+--------+------------------------
- upper  | bigint | upper(relh_time_range)
+         Index "emaj.emaj_rel_hist_idx1"
+ Column |  Type  | Key? |       Definition       
+--------+--------+------+------------------------
+ upper  | bigint | yes  | upper(relh_time_range)
 btree, for table "emaj.emaj_rel_hist"
 
-        Index "emaj.emaj_rel_hist_pkey"
-     Column      |   Type    |   Definition    
------------------+-----------+-----------------
- relh_schema     | text      | relh_schema
- relh_tblseq     | text      | relh_tblseq
- relh_time_range | int8range | relh_time_range
+           Index "emaj.emaj_rel_hist_pkey"
+     Column      |   Type    | Key? |   Definition    
+-----------------+-----------+------+-----------------
+ relh_schema     | text      | yes  | relh_schema
+ relh_tblseq     | text      | yes  | relh_tblseq
+ relh_time_range | int8range | yes  | relh_time_range
 primary key, btree, for table "emaj.emaj_rel_hist"
 
 Index "emaj.emaj_rel_hist_relh_schema_relh_tblseq_relh_time_range_excl"
-     Column      |     Type      |   Definition    
------------------+---------------+-----------------
- relh_schema     | gbtreekey_var | relh_schema
- relh_tblseq     | gbtreekey_var | relh_tblseq
- relh_time_range | int8range     | relh_time_range
+     Column      |     Type      | Key? |   Definition    
+-----------------+---------------+------+-----------------
+ relh_schema     | gbtreekey_var | yes  | relh_schema
+ relh_tblseq     | gbtreekey_var | yes  | relh_tblseq
+ relh_time_range | int8range     | yes  | relh_time_range
 gist, for table "emaj.emaj_rel_hist"
 
                        Table "emaj.emaj_relation"
@@ -371,42 +371,42 @@ Indexes:
 Foreign-key constraints:
     "emaj_relation_change_rlchg_time_id_fkey" FOREIGN KEY (rlchg_time_id) REFERENCES emaj.emaj_time_stamp(time_id)
 
-                 Index "emaj.emaj_relation_change_pkey"
-      Column       |              Type               |    Definition     
--------------------+---------------------------------+-------------------
- rlchg_time_id     | bigint                          | rlchg_time_id
- rlchg_schema      | text                            | rlchg_schema
- rlchg_tblseq      | text                            | rlchg_tblseq
- rlchg_change_kind | emaj._relation_change_kind_enum | rlchg_change_kind
+                     Index "emaj.emaj_relation_change_pkey"
+      Column       |              Type               | Key? |    Definition     
+-------------------+---------------------------------+------+-------------------
+ rlchg_time_id     | bigint                          | yes  | rlchg_time_id
+ rlchg_schema      | text                            | yes  | rlchg_schema
+ rlchg_tblseq      | text                            | yes  | rlchg_tblseq
+ rlchg_change_kind | emaj._relation_change_kind_enum | yes  | rlchg_change_kind
 primary key, btree, for table "emaj.emaj_relation_change"
 
-Index "emaj.emaj_relation_idx1"
-  Column   | Type | Definition 
------------+------+------------
- rel_group | text | rel_group
- rel_kind  | text | rel_kind
+   Index "emaj.emaj_relation_idx1"
+  Column   | Type | Key? | Definition 
+-----------+------+------+------------
+ rel_group | text | yes  | rel_group
+ rel_kind  | text | yes  | rel_kind
 btree, for table "emaj.emaj_relation"
 
-    Index "emaj.emaj_relation_idx2"
-     Column     | Type |   Definition   
-----------------+------+----------------
- rel_log_schema | text | rel_log_schema
+        Index "emaj.emaj_relation_idx2"
+     Column     | Type | Key? |   Definition   
+----------------+------+------+----------------
+ rel_log_schema | text | yes  | rel_log_schema
 btree, for table "emaj.emaj_relation"
 
-       Index "emaj.emaj_relation_pkey"
-     Column     |   Type    |   Definition   
-----------------+-----------+----------------
- rel_schema     | text      | rel_schema
- rel_tblseq     | text      | rel_tblseq
- rel_time_range | int8range | rel_time_range
+          Index "emaj.emaj_relation_pkey"
+     Column     |   Type    | Key? |   Definition   
+----------------+-----------+------+----------------
+ rel_schema     | text      | yes  | rel_schema
+ rel_tblseq     | text      | yes  | rel_tblseq
+ rel_time_range | int8range | yes  | rel_time_range
 primary key, btree, for table "emaj.emaj_relation"
 
 Index "emaj.emaj_relation_rel_schema_rel_tblseq_rel_time_range_excl"
-     Column     |     Type      |   Definition   
-----------------+---------------+----------------
- rel_schema     | gbtreekey_var | rel_schema
- rel_tblseq     | gbtreekey_var | rel_tblseq
- rel_time_range | int8range     | rel_time_range
+     Column     |     Type      | Key? |   Definition   
+----------------+---------------+------+----------------
+ rel_schema     | gbtreekey_var | yes  | rel_schema
+ rel_tblseq     | gbtreekey_var | yes  | rel_tblseq
+ rel_time_range | int8range     | yes  | rel_time_range
 gist, for table "emaj.emaj_relation"
 
                                                      Table "emaj.emaj_rlbk"
@@ -440,16 +440,16 @@ Referenced by:
     TABLE "emaj.emaj_rlbk_session" CONSTRAINT "emaj_rlbk_session_rlbs_rlbk_id_fkey" FOREIGN KEY (rlbs_rlbk_id) REFERENCES emaj.emaj_rlbk(rlbk_id)
     TABLE "emaj.emaj_rlbk_stat" CONSTRAINT "emaj_rlbk_stat_rlbt_rlbk_id_fkey" FOREIGN KEY (rlbt_rlbk_id) REFERENCES emaj.emaj_rlbk(rlbk_id)
 
-            Index "emaj.emaj_rlbk_idx1"
-   Column    |          Type          | Definition  
--------------+------------------------+-------------
- rlbk_status | emaj._rlbk_status_enum | rlbk_status
+                Index "emaj.emaj_rlbk_idx1"
+   Column    |          Type          | Key? | Definition  
+-------------+------------------------+------+-------------
+ rlbk_status | emaj._rlbk_status_enum | yes  | rlbk_status
 btree, for table "emaj.emaj_rlbk", predicate (rlbk_status = ANY (ARRAY['PLANNING'::emaj._rlbk_status_enum, 'LOCKING'::emaj._rlbk_status_enum, 'EXECUTING'::emaj._rlbk_status_enum, 'COMPLETED'::emaj._rlbk_status_enum]))
 
-  Index "emaj.emaj_rlbk_pkey"
- Column  |  Type   | Definition 
----------+---------+------------
- rlbk_id | integer | rlbk_id
+      Index "emaj.emaj_rlbk_pkey"
+ Column  |  Type   | Key? | Definition 
+---------+---------+------+------------
+ rlbk_id | integer | yes  | rlbk_id
 primary key, btree, for table "emaj.emaj_rlbk"
 
                               Table "emaj.emaj_rlbk_plan"
@@ -477,14 +477,14 @@ Indexes:
 Foreign-key constraints:
     "emaj_rlbk_plan_rlbp_rlbk_id_fkey" FOREIGN KEY (rlbp_rlbk_id) REFERENCES emaj.emaj_rlbk(rlbk_id)
 
-          Index "emaj.emaj_rlbk_plan_pkey"
-    Column    |         Type         |  Definition  
---------------+----------------------+--------------
- rlbp_rlbk_id | integer              | rlbp_rlbk_id
- rlbp_step    | emaj._rlbk_step_enum | rlbp_step
- rlbp_schema  | text                 | rlbp_schema
- rlbp_table   | text                 | rlbp_table
- rlbp_object  | text                 | rlbp_object
+             Index "emaj.emaj_rlbk_plan_pkey"
+    Column    |         Type         | Key? |  Definition  
+--------------+----------------------+------+--------------
+ rlbp_rlbk_id | integer              | yes  | rlbp_rlbk_id
+ rlbp_step    | emaj._rlbk_step_enum | yes  | rlbp_step
+ rlbp_schema  | text                 | yes  | rlbp_schema
+ rlbp_table   | text                 | yes  | rlbp_table
+ rlbp_object  | text                 | yes  | rlbp_object
 primary key, btree, for table "emaj.emaj_rlbk_plan"
 
                 Sequence "emaj.emaj_rlbk_rlbk_id_seq"
@@ -506,11 +506,11 @@ Indexes:
 Foreign-key constraints:
     "emaj_rlbk_session_rlbs_rlbk_id_fkey" FOREIGN KEY (rlbs_rlbk_id) REFERENCES emaj.emaj_rlbk(rlbk_id)
 
-  Index "emaj.emaj_rlbk_session_pkey"
-    Column    |  Type   |  Definition  
---------------+---------+--------------
- rlbs_rlbk_id | integer | rlbs_rlbk_id
- rlbs_session | integer | rlbs_session
+     Index "emaj.emaj_rlbk_session_pkey"
+    Column    |  Type   | Key? |  Definition  
+--------------+---------+------+--------------
+ rlbs_rlbk_id | integer | yes  | rlbs_rlbk_id
+ rlbs_session | integer | yes  | rlbs_session
 primary key, btree, for table "emaj.emaj_rlbk_session"
 
                       Table "emaj.emaj_rlbk_stat"
@@ -528,14 +528,14 @@ Indexes:
 Foreign-key constraints:
     "emaj_rlbk_stat_rlbt_rlbk_id_fkey" FOREIGN KEY (rlbt_rlbk_id) REFERENCES emaj.emaj_rlbk(rlbk_id)
 
-          Index "emaj.emaj_rlbk_stat_pkey"
-    Column    |         Type         |  Definition  
---------------+----------------------+--------------
- rlbt_step    | emaj._rlbk_step_enum | rlbt_step
- rlbt_schema  | text                 | rlbt_schema
- rlbt_table   | text                 | rlbt_table
- rlbt_object  | text                 | rlbt_object
- rlbt_rlbk_id | integer              | rlbt_rlbk_id
+             Index "emaj.emaj_rlbk_stat_pkey"
+    Column    |         Type         | Key? |  Definition  
+--------------+----------------------+------+--------------
+ rlbt_step    | emaj._rlbk_step_enum | yes  | rlbt_step
+ rlbt_schema  | text                 | yes  | rlbt_schema
+ rlbt_table   | text                 | yes  | rlbt_table
+ rlbt_object  | text                 | yes  | rlbt_object
+ rlbt_rlbk_id | integer              | yes  | rlbt_rlbk_id
 primary key, btree, for table "emaj.emaj_rlbk_stat"
 
                     Composite type "emaj.emaj_rollback_activity_type"
@@ -567,10 +567,10 @@ Indexes:
 Referenced by:
     TABLE "emaj.emaj_relation" CONSTRAINT "emaj_relation_rel_log_schema_fkey" FOREIGN KEY (rel_log_schema) REFERENCES emaj.emaj_schema(sch_name)
 
-Index "emaj.emaj_schema_pkey"
-  Column  | Type | Definition 
-----------+------+------------
- sch_name | text | sch_name
+    Index "emaj.emaj_schema_pkey"
+  Column  | Type | Key? | Definition 
+----------+------+------+------------
+ sch_name | text | yes  | sch_name
 primary key, btree, for table "emaj.emaj_schema"
 
                   Table "emaj.emaj_seq_hole"
@@ -587,12 +587,12 @@ Foreign-key constraints:
     "emaj_seq_hole_sqhl_begin_time_id_fkey" FOREIGN KEY (sqhl_begin_time_id) REFERENCES emaj.emaj_time_stamp(time_id)
     "emaj_seq_hole_sqhl_end_time_id_fkey" FOREIGN KEY (sqhl_end_time_id) REFERENCES emaj.emaj_time_stamp(time_id)
 
-         Index "emaj.emaj_seq_hole_pkey"
-       Column       |  Type  |     Definition     
---------------------+--------+--------------------
- sqhl_schema        | text   | sqhl_schema
- sqhl_table         | text   | sqhl_table
- sqhl_begin_time_id | bigint | sqhl_begin_time_id
+             Index "emaj.emaj_seq_hole_pkey"
+       Column       |  Type  | Key? |     Definition     
+--------------------+--------+------+--------------------
+ sqhl_schema        | text   | yes  | sqhl_schema
+ sqhl_table         | text   | yes  | sqhl_table
+ sqhl_begin_time_id | bigint | yes  | sqhl_begin_time_id
 primary key, btree, for table "emaj.emaj_seq_hole"
 
                 Table "emaj.emaj_sequence"
@@ -614,12 +614,12 @@ Indexes:
 Foreign-key constraints:
     "emaj_sequence_sequ_time_id_fkey" FOREIGN KEY (sequ_time_id) REFERENCES emaj.emaj_time_stamp(time_id)
 
-   Index "emaj.emaj_sequence_pkey"
-    Column    |  Type  |  Definition  
---------------+--------+--------------
- sequ_schema  | text   | sequ_schema
- sequ_name    | text   | sequ_name
- sequ_time_id | bigint | sequ_time_id
+       Index "emaj.emaj_sequence_pkey"
+    Column    |  Type  | Key? |  Definition  
+--------------+--------+------+--------------
+ sequ_schema  | text   | yes  | sequ_schema
+ sequ_name    | text   | yes  | sequ_name
+ sequ_time_id | bigint | yes  | sequ_time_id
 primary key, btree, for table "emaj.emaj_sequence"
 
                          Table "emaj.emaj_table"
@@ -636,12 +636,12 @@ Indexes:
 Foreign-key constraints:
     "emaj_table_tbl_time_id_fkey" FOREIGN KEY (tbl_time_id) REFERENCES emaj.emaj_time_stamp(time_id)
 
-    Index "emaj.emaj_table_pkey"
-   Column    |  Type  | Definition  
--------------+--------+-------------
- tbl_schema  | text   | tbl_schema
- tbl_name    | text   | tbl_name
- tbl_time_id | bigint | tbl_time_id
+       Index "emaj.emaj_table_pkey"
+   Column    |  Type  | Key? | Definition  
+-------------+--------+------+-------------
+ tbl_schema  | text   | yes  | tbl_schema
+ tbl_name    | text   | yes  | tbl_name
+ tbl_time_id | bigint | yes  | tbl_time_id
 primary key, btree, for table "emaj.emaj_table"
 
                                                   Table "emaj.emaj_time_stamp"
@@ -668,10 +668,10 @@ Referenced by:
     TABLE "emaj.emaj_sequence" CONSTRAINT "emaj_sequence_sequ_time_id_fkey" FOREIGN KEY (sequ_time_id) REFERENCES emaj.emaj_time_stamp(time_id)
     TABLE "emaj.emaj_table" CONSTRAINT "emaj_table_tbl_time_id_fkey" FOREIGN KEY (tbl_time_id) REFERENCES emaj.emaj_time_stamp(time_id)
 
-Index "emaj.emaj_time_stamp_pkey"
- Column  |  Type  | Definition 
----------+--------+------------
- time_id | bigint | time_id
+  Index "emaj.emaj_time_stamp_pkey"
+ Column  |  Type  | Key? | Definition 
+---------+--------+------+------------
+ time_id | bigint | yes  | time_id
 primary key, btree, for table "emaj.emaj_time_stamp"
 
                  Sequence "emaj.emaj_time_stamp_time_id_seq"

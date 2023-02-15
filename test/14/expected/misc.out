@@ -820,7 +820,7 @@ rollback;
 select emaj.emaj_estimate_rollback_group('myGroup2','Mark21',FALSE);
  emaj_estimate_rollback_group 
 ------------------------------
- @ 1.4021 secs
+ @ 1.4226 secs
 (1 row)
 
 -- should return 1.4021 sec (or 1.4226 sec is emaj is not an extension)
@@ -834,7 +834,7 @@ begin;
   select emaj.emaj_estimate_rollback_groups('{"myGroup2"}','Mark21',TRUE);
  emaj_estimate_rollback_groups 
 -------------------------------
- @ 1.8045 secs
+ @ 1.819 secs
 (1 row)
 
 -- should return 1.8045 sec (or 1.819 sec is emaj is not an extension)
@@ -857,7 +857,7 @@ insert into emaj.emaj_rlbk_stat values
 select emaj.emaj_estimate_rollback_group('myGroup2','Mark21',FALSE);
  emaj_estimate_rollback_group 
 ------------------------------
- @ 1.4021 secs
+ @ 1.430306 secs
 (1 row)
 
 -- should return 1.4021 sec (or 1.430306 sec is emaj is not an extension)
@@ -879,7 +879,7 @@ insert into emaj.emaj_rlbk_stat values
 select emaj.emaj_estimate_rollback_group('myGroup2','Mark21',FALSE);
  emaj_estimate_rollback_group 
 ------------------------------
- @ 2.270704 secs
+ @ 2.29891 secs
 (1 row)
 
 -- should return 2.270704 sec (or 2.29891 sec is emaj is not an extension)
@@ -907,7 +907,7 @@ insert into emaj.emaj_rlbk_stat values
 select emaj.emaj_estimate_rollback_group('myGroup2','Mark21',FALSE);
  emaj_estimate_rollback_group 
 ------------------------------
- @ 2.639791 secs
+ @ 2.664997 secs
 (1 row)
 
 -- should return 2.639791 sec (or 2.664997 sec is emaj is not an extension)
@@ -925,7 +925,7 @@ begin;
   select emaj.emaj_estimate_rollback_groups('{"myGroup1","myGroup2"}','Multi-1',FALSE);
  emaj_estimate_rollback_groups 
 -------------------------------
- @ 2.670001 secs
+ @ 2.725913 secs
 (1 row)
 
 -- should return 2.670001 sec (or 2.725913 sec is emaj is not an extension)

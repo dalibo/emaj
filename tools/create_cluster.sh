@@ -34,7 +34,7 @@ fi
 mkdir ${PGDATA}
 
 # Initialize the cluster
-${PGBIN}/initdb -U ${PGUSER}
+${PGBIN}/initdb -U ${PGUSER} --data-checksums
 if [ -f "${PGDATA}/PG_VERSION" ]; then
   echo "Initdb OK"
 else
