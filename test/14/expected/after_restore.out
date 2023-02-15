@@ -292,22 +292,155 @@ select * from mySchema2.myTbl4 order by col41;
 (2 rows)
 
 -- log tables
-select col11, col12, col13, emaj_verb, emaj_tuple from emaj.mySchema2_myTbl1_log order by col11, col12, emaj_gid, emaj_tuple desc;
-ERROR:  relation "emaj.myschema2_mytbl1_log" does not exist
-LINE 1: ...t col11, col12, col13, emaj_verb, emaj_tuple from emaj.mySch...
-                                                             ^
-select col21, col22, col23, emaj_verb, emaj_tuple from emaj.mySchema2_myTbl2_log order by col21, emaj_gid, emaj_tuple desc;
-ERROR:  relation "emaj.myschema2_mytbl2_log" does not exist
-LINE 1: ...t col21, col22, col23, emaj_verb, emaj_tuple from emaj.mySch...
-                                                             ^
-select col31, col33, emaj_verb, emaj_tuple from "emajC"."myschema2_myTbl3_log" order by col31, emaj_gid, emaj_tuple desc;
-ERROR:  relation "emajC.myschema2_myTbl3_log" does not exist
-LINE 1: select col31, col33, emaj_verb, emaj_tuple from "emajC"."mys...
-                                                        ^
-select col41, col42, col43, col44, col45, emaj_verb, emaj_tuple from emaj.mySchema2_myTbl4_log order by col41, emaj_gid, emaj_tuple desc;
-ERROR:  relation "emaj.myschema2_mytbl4_log" does not exist
-LINE 1: ..., col43, col44, col45, emaj_verb, emaj_tuple from emaj.mySch...
-                                                             ^
+select col11, col12, col13, emaj_verb, emaj_tuple from emaj_myschema2.mytbl1_log order by col11, col12, emaj_gid, emaj_tuple desc;
+ col11 |    col12     |  col13   | emaj_verb | emaj_tuple 
+-------+--------------+----------+-----------+------------
+     1 | ABC          | \x1c     | DEL       | OLD
+     1 | ABC          | \x1c     | INS       | NEW
+     1 | ABC          | \x1c     | DEL       | OLD
+     1 | ABC          | \x1c     | INS       | NEW
+     2 | ABC          | \x1c     | DEL       | OLD
+     2 | ABC          | \x1c     | INS       | NEW
+     2 | ABC          | \x1c     | DEL       | OLD
+     2 | ABC          | \x1c     | INS       | NEW
+     3 | ABC          | \x1c     | DEL       | OLD
+     3 | ABC          | \x1c     | INS       | NEW
+     3 | ABC          | \x1c     | DEL       | OLD
+     3 | ABC          | \x1c     | INS       | NEW
+     4 | ABC          | \x0c     | DEL       | OLD
+     4 | ABC          | \x0c     | INS       | NEW
+     4 | ABC          | \x0c     | DEL       | OLD
+     4 | ABC          | \x0c     | INS       | NEW
+     5 | ABC          | \x0c     | DEL       | OLD
+     5 | ABC          | \x0c     | INS       | NEW
+     5 | ABC          | \x0c     | DEL       | OLD
+     5 | ABC          | \x0c     | INS       | NEW
+     6 | ABC          | \x0c     | DEL       | OLD
+     6 | ABC          | \x0c     | INS       | NEW
+     6 | ABC          | \x0c     | DEL       | OLD
+     6 | ABC          | \x0c     | INS       | NEW
+     7 | ABC          | \x0c     | DEL       | OLD
+     7 | ABC          | \x0c     | INS       | NEW
+     7 | ABC          | \x0c     | DEL       | OLD
+     7 | ABC          | \x0c     | INS       | NEW
+     8 | ABC          | \x0c     | DEL       | OLD
+     8 | ABC          | \x0c     | INS       | NEW
+     8 | ABC          | \x0c     | DEL       | OLD
+     8 | ABC          | \x0c     | INS       | NEW
+     9 | ABC          | \x0c     | DEL       | OLD
+     9 | ABC          | \x0c     | INS       | NEW
+     9 | ABC          | \x0c     | DEL       | OLD
+     9 | ABC          | \x0c     | INS       | NEW
+    10 | ABC          | \x0c     | DEL       | OLD
+    10 | ABC          | \x0c     | INS       | NEW
+    10 | ABC          | \x0c     | DEL       | OLD
+    10 | ABC          | \x0c     | INS       | NEW
+   101 | KLM          | \x000c   | INS       | NEW
+   102 | KLM          | \x000c   | INS       | NEW
+   103 | KLM          | \x000c   | INS       | NEW
+   104 | KLM          | \x000c   | INS       | NEW
+   105 | KLM          | \x000c   | INS       | NEW
+   106 | KLM          | \x000c   | INS       | NEW
+   106 | KLM          | \x000c   | UPD       | OLD
+   106 | KLM          | \x001c   | UPD       | NEW
+   107 | KLM          | \x000c   | INS       | NEW
+   107 | KLM          | \x000c   | UPD       | OLD
+   107 | KLM          | \x001c   | UPD       | NEW
+   108 | KLM          | \x000c   | INS       | NEW
+   108 | KLM          | \x000c   | UPD       | OLD
+   108 | KLM          | \x001c   | UPD       | NEW
+   109 | KLM          | \x000c   | INS       | NEW
+   109 | KLM          | \x000c   | UPD       | OLD
+   109 | KLM          | \x001c   | UPD       | NEW
+   110 | KLM          | \x000c   | INS       | NEW
+   110 | KLM          | \x000c   | UPD       | OLD
+   110 | KLM          | \x001c   | UPD       | NEW
+   111 | KLM          | \x000c   | INS       | NEW
+   111 | KLM          | \x000c   | UPD       | OLD
+   111 | KLM          | \x001c   | UPD       | NEW
+   111 | KLM          | \x001c   | DEL       | OLD
+   200 |  Start  End  | \x410042 | UPD       | NEW
+   200 |  Start  End  | \x410042 | DEL       | OLD
+   200 | Start   End  | \x410042 | INS       | NEW
+   200 | Start   End  | \x410042 | UPD       | OLD
+(68 rows)
+
+select col21, col22, col23, emaj_verb, emaj_tuple from emaj_myschema2.mytbl2_log order by col21, emaj_gid, emaj_tuple desc;
+ col21 |                                          col22                                           |   col23    | emaj_verb | emaj_tuple 
+-------+------------------------------------------------------------------------------------------+------------+-----------+------------
+     1 | ABC                                                                                      | 2010-01-01 | DEL       | OLD
+     1 | ABC                                                                                      | 2010-01-01 | INS       | NEW
+     1 | ABC                                                                                      | 2010-01-01 | DEL       | OLD
+     1 | ABC                                                                                      | 2010-01-01 | INS       | NEW
+     2 | DEF                                                                                      |            | DEL       | OLD
+     2 | DEF                                                                                      |            | INS       | NEW
+     2 | DEF                                                                                      |            | DEL       | OLD
+     2 | DEF                                                                                      |            | INS       | NEW
+    10 | row 1 \r... and row 2 with a ' (quote) character                                         |            | INS       | NEW
+    10 | row 1 \r... and row 2 with a ' (quote) character                                         |            | DEL       | OLD
+    11 | row 1 with a true \ character\r... and row 2 with two \n true and a ' (quote) characters |            | INS       | NEW
+    11 | row 1 with a true \ character\r... and row 2 with two \n true and a ' (quote) characters |            | DEL       | OLD
+   100 | KLM                                                                                      | 2012-12-31 | INS       | NEW
+(13 rows)
+
+select col31, col33, emaj_verb, emaj_tuple from emaj_myschema2."myTbl3_log" order by col31, emaj_gid, emaj_tuple desc;
+ col31 | col33 | emaj_verb | emaj_tuple 
+-------+-------+-----------+------------
+    11 | 10.00 | DEL       | OLD
+    11 | 10.00 | INS       | NEW
+    11 | 10.00 | DEL       | OLD
+    11 | 10.00 | INS       | NEW
+    12 | 10.00 | DEL       | OLD
+    12 | 10.00 | INS       | NEW
+    12 | 10.00 | DEL       | OLD
+    12 | 10.00 | INS       | NEW
+    13 | 10.00 | DEL       | OLD
+    13 | 10.00 | INS       | NEW
+    13 | 10.00 | DEL       | OLD
+    13 | 10.00 | INS       | NEW
+    14 | 10.00 | DEL       | OLD
+    14 | 10.00 | INS       | NEW
+    14 | 10.00 | DEL       | OLD
+    14 | 10.00 | INS       | NEW
+    15 | 10.00 | DEL       | OLD
+    15 | 10.00 | INS       | NEW
+    15 | 10.00 | DEL       | OLD
+    15 | 10.00 | INS       | NEW
+    16 | 10.00 | DEL       | OLD
+    16 | 10.00 | INS       | NEW
+    16 | 10.00 | DEL       | OLD
+    16 | 10.00 | INS       | NEW
+    17 | 10.00 | DEL       | OLD
+    17 | 10.00 | INS       | NEW
+    17 | 10.00 | DEL       | OLD
+    17 | 10.00 | INS       | NEW
+    18 | 10.00 | DEL       | OLD
+    18 | 10.00 | INS       | NEW
+    18 | 10.00 | DEL       | OLD
+    18 | 10.00 | INS       | NEW
+    19 | 10.00 | DEL       | OLD
+    19 | 10.00 | INS       | NEW
+    19 | 10.00 | DEL       | OLD
+    19 | 10.00 | INS       | NEW
+    20 | 10.00 | DEL       | OLD
+    20 | 10.00 | INS       | NEW
+    20 | 10.00 | DEL       | OLD
+    20 | 10.00 | INS       | NEW
+(40 rows)
+
+select col41, col42, col43, col44, col45, emaj_verb, emaj_tuple from emaj_myschema2.mytbl4_log order by col41, emaj_gid, emaj_tuple desc;
+ col41 | col42 | col43 | col44 |   col45    | emaj_verb | emaj_tuple 
+-------+-------+-------+-------+------------+-----------+------------
+     1 | FK... |     2 |     1 | ABC        | DEL       | OLD
+     1 | FK... |     2 |     1 | ABC        | INS       | NEW
+     1 | FK... |     2 |     1 | ABC        | DEL       | OLD
+     1 | FK... |     2 |     1 | ABC        | INS       | NEW
+     2 | FK... |     2 |     1 | ABC        | DEL       | OLD
+     2 | FK... |     2 |     1 | ABC        | INS       | NEW
+     2 | FK... |     2 |     1 | ABC        | DEL       | OLD
+     2 | FK... |     2 |     1 | ABC        | INS       | NEW
+(8 rows)
+
 --
 -----------------------------
 -- Step 2 : for myGroup2, rollback to mark Multi-1 (set before dump/restore) 
@@ -990,22 +1123,26 @@ select * from mySchema2.myTbl4 order by col41;
 (2 rows)
 
 -- log tables
-select col11, col12, col13, emaj_verb, emaj_tuple from emaj.mySchema2_myTbl1_log order by emaj_gid, emaj_tuple desc;
-ERROR:  relation "emaj.myschema2_mytbl1_log" does not exist
-LINE 1: ...t col11, col12, col13, emaj_verb, emaj_tuple from emaj.mySch...
-                                                             ^
-select col21, col22, col23, emaj_verb, emaj_tuple from emaj.mySchema2_myTbl2_log order by emaj_gid, emaj_tuple desc;
-ERROR:  relation "emaj.myschema2_mytbl2_log" does not exist
-LINE 1: ...t col21, col22, col23, emaj_verb, emaj_tuple from emaj.mySch...
-                                                             ^
-select col31, col33, emaj_verb, emaj_tuple from "emajC"."myschema2_myTbl3_log" order by emaj_gid, emaj_tuple desc;
-ERROR:  relation "emajC.myschema2_myTbl3_log" does not exist
-LINE 1: select col31, col33, emaj_verb, emaj_tuple from "emajC"."mys...
-                                                        ^
-select col41, col42, col43, col44, col45, emaj_verb, emaj_tuple from emaj.mySchema2_myTbl4_log order by emaj_gid, emaj_tuple desc;
-ERROR:  relation "emaj.myschema2_mytbl4_log" does not exist
-LINE 1: ..., col43, col44, col45, emaj_verb, emaj_tuple from emaj.mySch...
-                                                             ^
+select col11, col12, col13, emaj_verb, emaj_tuple from emaj_myschema2.mytbl1_log order by col11, col12, emaj_gid, emaj_tuple desc;
+ col11 | col12 | col13 | emaj_verb | emaj_tuple 
+-------+-------+-------+-----------+------------
+(0 rows)
+
+select col21, col22, col23, emaj_verb, emaj_tuple from emaj_myschema2.mytbl2_log order by col21, emaj_gid, emaj_tuple desc;
+ col21 | col22 | col23 | emaj_verb | emaj_tuple 
+-------+-------+-------+-----------+------------
+(0 rows)
+
+select col31, col33, emaj_verb, emaj_tuple from emaj_myschema2."myTbl3_log" order by col31, emaj_gid, emaj_tuple desc;
+ col31 | col33 | emaj_verb | emaj_tuple 
+-------+-------+-----------+------------
+(0 rows)
+
+select col41, col42, col43, col44, col45, emaj_verb, emaj_tuple from emaj_myschema2.mytbl4_log order by col41, emaj_gid, emaj_tuple desc;
+ col41 | col42 | col43 | col44 | col45 | emaj_verb | emaj_tuple 
+-------+-------+-------+-------+-------+-----------+------------
+(0 rows)
+
 --
 -----------------------------
 -- Step 3 : stop myGroup2

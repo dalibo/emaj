@@ -88,10 +88,10 @@ select * from mySchema2.myTbl2 order by col21;
 select col31,col33 from mySchema2."myTbl3" order by col31;
 select * from mySchema2.myTbl4 order by col41;
 -- log tables
-select col11, col12, col13, emaj_verb, emaj_tuple from emaj.mySchema2_myTbl1_log order by col11, col12, emaj_gid, emaj_tuple desc;
-select col21, col22, col23, emaj_verb, emaj_tuple from emaj.mySchema2_myTbl2_log order by col21, emaj_gid, emaj_tuple desc;
-select col31, col33, emaj_verb, emaj_tuple from "emajC"."myschema2_myTbl3_log" order by col31, emaj_gid, emaj_tuple desc;
-select col41, col42, col43, col44, col45, emaj_verb, emaj_tuple from emaj.mySchema2_myTbl4_log order by col41, emaj_gid, emaj_tuple desc;
+select col11, col12, col13, emaj_verb, emaj_tuple from emaj_myschema2.mytbl1_log order by col11, col12, emaj_gid, emaj_tuple desc;
+select col21, col22, col23, emaj_verb, emaj_tuple from emaj_myschema2.mytbl2_log order by col21, emaj_gid, emaj_tuple desc;
+select col31, col33, emaj_verb, emaj_tuple from emaj_myschema2."myTbl3_log" order by col31, emaj_gid, emaj_tuple desc;
+select col41, col42, col43, col44, col45, emaj_verb, emaj_tuple from emaj_myschema2.mytbl4_log order by col41, emaj_gid, emaj_tuple desc;
 --
 -----------------------------
 -- Step 2 : for myGroup2, rollback to mark Multi-1 (set before dump/restore) 
@@ -113,10 +113,10 @@ select * from mySchema2.myTbl2 order by col21;
 select col31,col33 from mySchema2."myTbl3" order by col31;
 select * from mySchema2.myTbl4 order by col41;
 -- log tables
-select col11, col12, col13, emaj_verb, emaj_tuple from emaj.mySchema2_myTbl1_log order by emaj_gid, emaj_tuple desc;
-select col21, col22, col23, emaj_verb, emaj_tuple from emaj.mySchema2_myTbl2_log order by emaj_gid, emaj_tuple desc;
-select col31, col33, emaj_verb, emaj_tuple from "emajC"."myschema2_myTbl3_log" order by emaj_gid, emaj_tuple desc;
-select col41, col42, col43, col44, col45, emaj_verb, emaj_tuple from emaj.mySchema2_myTbl4_log order by emaj_gid, emaj_tuple desc;
+select col11, col12, col13, emaj_verb, emaj_tuple from emaj_myschema2.mytbl1_log order by col11, col12, emaj_gid, emaj_tuple desc;
+select col21, col22, col23, emaj_verb, emaj_tuple from emaj_myschema2.mytbl2_log order by col21, emaj_gid, emaj_tuple desc;
+select col31, col33, emaj_verb, emaj_tuple from emaj_myschema2."myTbl3_log" order by col31, emaj_gid, emaj_tuple desc;
+select col41, col42, col43, col44, col45, emaj_verb, emaj_tuple from emaj_myschema2.mytbl4_log order by col41, emaj_gid, emaj_tuple desc;
 --
 -----------------------------
 -- Step 3 : stop myGroup2
