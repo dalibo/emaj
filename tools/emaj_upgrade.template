@@ -31,9 +31,10 @@ $do$
     IF v_emajVersion <> '<PREVIOUS_VERSION>' THEN
       RAISE EXCEPTION 'E-Maj upgrade: the current E-Maj version (%) is not <PREVIOUS_VERSION>',v_emajVersion;
     END IF;
--- The installed postgres version must be at least 9.5.
-    IF current_setting('server_version_num')::int < 90500 THEN
-      RAISE EXCEPTION 'E-Maj upgrade: the current PostgreSQL version (%) is not compatible with the new E-Maj version. The PostgreSQL version should be at least 9.5.', current_setting('server_version');
+-- The installed postgres version must be at least 11.
+    IF current_setting('server_version_num')::int < 110000 THEN
+      RAISE EXCEPTION 'E-Maj upgrade: the current PostgreSQL version (%) is not compatible with the new E-Maj version. The PostgreSQL '
+                      'version should be at least 11.', current_setting('server_version');
     END IF;
 -- Check E-Maj environment state.
     SELECT count(msg) FILTER (WHERE msg = 'No error detected'),
@@ -41,17 +42,20 @@ $do$
       INTO v_nbNoError, v_nbWarning
       FROM emaj.emaj_verify_all() AS t(msg);
     IF v_nbNoError = 0 THEN
-      RAISE EXCEPTION 'E-Maj upgrade: the E-Maj environment is damaged. Please fix the issue before upgrading. You may execute "SELECT * FROM emaj.emaj_verify_all();" to get more details.';
+      RAISE EXCEPTION 'E-Maj upgrade: the E-Maj environment is damaged. Please fix the issue before upgrading. You may execute '
+                      '"SELECT * FROM emaj.emaj_verify_all();" to get more details.';
     END IF;
     IF v_nbWarning > 0 THEN
-      RAISE WARNING 'E-Maj upgrade: the E-Maj environment health check reports warning. You may execute "SELECT * FROM emaj.emaj_verify_all();" to get more details.';
+      RAISE WARNING 'E-Maj upgrade: the E-Maj environment health check reports warning. You may execute "SELECT * FROM '
+                    'emaj.emaj_verify_all();" to get more details.';
     END IF;
 -- No existing group must have been created with a postgres version prior 8.4.
     SELECT string_agg(group_name, ', ') INTO v_groupList FROM emaj.emaj_group
       WHERE cast(to_number(substring(group_pg_version FROM E'^(\\d+)'),'99') * 100 +
                  to_number(substring(group_pg_version FROM E'^\\d+\\.(\\d+)'),'99') AS INTEGER) < 804;
     IF v_groupList IS NOT NULL THEN
-      RAISE EXCEPTION 'E-Maj upgrade: groups "%" have been created with a too old postgres version (< 8.4). Drop these groups before upgrading. ',v_groupList;
+      RAISE EXCEPTION 'E-Maj upgrade: groups "%" have been created with a too old postgres version (< 8.4). Drop these groups before '
+                      'upgrading. ',v_groupList;
     END IF;
   END;
 $do$;
@@ -171,7 +175,8 @@ $tmp$
   BEGIN
 -- Check the max_prepared_transactions GUC value.
     IF current_setting('max_prepared_transactions')::int <= 1 THEN
-      RAISE WARNING 'E-Maj upgrade: as the max_prepared_transactions parameter value (%) on this cluster is too low, no parallel rollback is possible.', current_setting('max_prepared_transactions');
+      RAISE WARNING 'E-Maj upgrade: as the max_prepared_transactions parameter value (%) on this cluster is too low, no parallel rollback '
+                    'is possible.', current_setting('max_prepared_transactions');
     END IF;
   END;
 $tmp$;

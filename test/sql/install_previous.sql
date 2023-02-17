@@ -1,10 +1,5 @@
 -- install_previous.sql : install previous version of E-Maj as an extension
 --
-------------------------------------------------------------
--- install dblink and btree_gist
-------------------------------------------------------------
-CREATE EXTENSION dblink;
-CREATE EXTENSION btree_gist;
 
 -----------------------------
 -- set the default_tablespace parameter to tspemaj to store new technical tables into this tablespace
@@ -15,7 +10,7 @@ SET default_tablespace TO tspemaj;
 ------------------------------------------------------------
 -- emaj installation in its previous version as an extension
 ------------------------------------------------------------
-CREATE EXTENSION emaj VERSION '4.1.0';
+CREATE EXTENSION emaj VERSION '4.1.0' CASCADE;
 
 ------------------------------------------------------------
 -- check installation

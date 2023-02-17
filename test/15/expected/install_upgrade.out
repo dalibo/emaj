@@ -2,11 +2,6 @@
 -- Install the last stable E-Maj version and immediately upgrade to the devel version, while groups are not yet created.
 -- install E-Maj as an extension 
 --
-------------------------------------------------------------
--- install dblink and btree_gist
-------------------------------------------------------------
-CREATE EXTENSION IF NOT EXISTS dblink;
-CREATE EXTENSION IF NOT EXISTS btree_gist;
 -----------------------------
 -- check the extension's availability
 -----------------------------
@@ -407,7 +402,9 @@ select * from pg_extension_update_paths('emaj') order by 1,2;;
 -----------------------------------------------------------
 -- emaj update to next_version
 -----------------------------------------------------------
-CREATE EXTENSION emaj VERSION '4.1.0';
+CREATE EXTENSION emaj VERSION '4.1.0' CASCADE;
+NOTICE:  installing required extension "dblink"
+NOTICE:  installing required extension "btree_gist"
 -- check impact in catalog
 select extname, extversion from pg_extension where extname = 'emaj';
  extname | extversion 

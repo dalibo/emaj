@@ -289,28 +289,14 @@ CREATE TABLE myTblP (
   col2       TEXT,
   col3       SERIAL
 ) PARTITION BY RANGE (col1);
--- create the table with PG 9.6- so that next scripts work
-CREATE TABLE IF NOT EXISTS myTblP (
-  col1       INT              NOT NULL,
-  col2       TEXT,
-  col3       SERIAL
-);
--- add a global PK (will fail with PG10 & PG11)
+-- add a global PK
 ALTER TABLE myTblP ADD PRIMARY KEY (col1);
 
 DROP TABLE IF EXISTS myPartP1;
 CREATE TABLE myPartP1 PARTITION OF myTblP FOR VALUES FROM (MINVALUE) TO (0);
--- create the table with PG 9.6- so that next scripts do not abort
-CREATE TABLE IF NOT EXISTS myPartP1 () INHERITS (myTblP);
--- add a PK (will fail with PG10+ because of the global PK)
-ALTER TABLE myPartP1 ADD PRIMARY KEY (col1);
 
 DROP TABLE IF EXISTS myPartP2;
 CREATE TABLE myPartP2 PARTITION OF myTblP FOR VALUES FROM (0) TO (9);
--- create the table with PG 9.6- so that next scripts do not abort
-CREATE TABLE IF NOT EXISTS myPartP2 () INHERITS (myTblP);
--- add a PK (will fail with PG10+ because of the global PK)
-ALTER TABLE myPartP2 ADD PRIMARY KEY (col1);
 
 DROP TABLE IF EXISTS myTblR ;
 CREATE TABLE myTblR (

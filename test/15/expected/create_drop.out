@@ -148,7 +148,7 @@ select emaj.emaj_assign_table('myschema1','dummyTable','myGroup1');
 ERROR:  _assign_tables: In schema myschema1, some tables ("dummyTable") do not exist.
 CONTEXT:  PL/pgSQL function emaj._assign_tables(text,text[],text,jsonb,text,boolean,boolean) line 78 at RAISE
 PL/pgSQL function emaj.emaj_assign_table(text,text,text,jsonb,text) line 7 at RETURN
--- partitionned table (successful with PG9.6- versions)
+-- partitionned table
 select emaj.emaj_assign_table('myschema4','mytblp','myGroup1');
 ERROR:  _assign_tables: In schema myschema4, some tables (mytblp) are partitionned tables (only elementary partitions are supported by E-Maj).
 CONTEXT:  PL/pgSQL function emaj._assign_tables(text,text[],text,jsonb,text,boolean,boolean) line 90 at RAISE
@@ -489,7 +489,7 @@ WARNING:  _assign_tables: No table to process.
 (1 row)
 
 -- excluded tables
--- bad types (partitionned table is successful with PG9.6- versions)
+-- bad types
 select emaj.emaj_assign_tables('myschema4','mytblp$','','myGroup2');
 WARNING:  _assign_tables: Some partitionned tables (mytblp) are not selected.
 WARNING:  _assign_tables: No table to process.
@@ -505,11 +505,6 @@ WARNING:  _assign_tables: Some UNLOGGED tables (myunloggedtbl) are not selected.
                   1
 (1 row)
 
--- partitionned table is successful with PG9.6- versions, so remove it
-select emaj.emaj_remove_table('myschema4','mytblp');
-ERROR:  _remove_tables: some tables (myschema4.mytblp) do not currently belong to any tables group.
-CONTEXT:  PL/pgSQL function emaj._remove_tables(text,text[],text,boolean,boolean) line 49 at RAISE
-PL/pgSQL function emaj.emaj_remove_table(text,text,text) line 6 at RETURN
 -- the myoidstbl table is removed with PG12+: in these version the myoids table has no OIDS as this propertiy doesn't exist anymore
 select emaj.emaj_remove_table('myschema5','myoidstbl');
  emaj_remove_table 

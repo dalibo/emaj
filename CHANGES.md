@@ -3,6 +3,7 @@ E-Maj - Change log
 <devel>
 ------
 ###Enhancements:###
+  * Remove the support of postgres versions prior V11.
   * Minor code changes.
 
 ###Bug fixes:###

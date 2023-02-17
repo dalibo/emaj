@@ -31,9 +31,10 @@ $do$
     IF v_emajVersion <> '4.1.0' THEN
       RAISE EXCEPTION 'E-Maj upgrade: the current E-Maj version (%) is not 4.1.0',v_emajVersion;
     END IF;
--- The installed postgres version must be at least 9.5.
-    IF current_setting('server_version_num')::int < 90500 THEN
-      RAISE EXCEPTION 'E-Maj upgrade: the current PostgreSQL version (%) is not compatible with the new E-Maj version. The PostgreSQL version should be at least 9.5.', current_setting('server_version');
+-- The installed postgres version must be at least 11.
+    IF current_setting('server_version_num')::int < 110000 THEN
+      RAISE EXCEPTION 'E-Maj upgrade: the current PostgreSQL version (%) is not compatible with the new E-Maj version. The PostgreSQL '
+                      'version should be at least 11.', current_setting('server_version');
     END IF;
 -- Check E-Maj environment state.
     SELECT count(msg) FILTER (WHERE msg = 'No error detected'),
@@ -41,17 +42,20 @@ $do$
       INTO v_nbNoError, v_nbWarning
       FROM emaj.emaj_verify_all() AS t(msg);
     IF v_nbNoError = 0 THEN
-      RAISE EXCEPTION 'E-Maj upgrade: the E-Maj environment is damaged. Please fix the issue before upgrading. You may execute "SELECT * FROM emaj.emaj_verify_all();" to get more details.';
+      RAISE EXCEPTION 'E-Maj upgrade: the E-Maj environment is damaged. Please fix the issue before upgrading. You may execute '
+                      '"SELECT * FROM emaj.emaj_verify_all();" to get more details.';
     END IF;
     IF v_nbWarning > 0 THEN
-      RAISE WARNING 'E-Maj upgrade: the E-Maj environment health check reports warning. You may execute "SELECT * FROM emaj.emaj_verify_all();" to get more details.';
+      RAISE WARNING 'E-Maj upgrade: the E-Maj environment health check reports warning. You may execute "SELECT * FROM '
+                    'emaj.emaj_verify_all();" to get more details.';
     END IF;
 -- No existing group must have been created with a postgres version prior 8.4.
     SELECT string_agg(group_name, ', ') INTO v_groupList FROM emaj.emaj_group
       WHERE cast(to_number(substring(group_pg_version FROM E'^(\\d+)'),'99') * 100 +
                  to_number(substring(group_pg_version FROM E'^\\d+\\.(\\d+)'),'99') AS INTEGER) < 804;
     IF v_groupList IS NOT NULL THEN
-      RAISE EXCEPTION 'E-Maj upgrade: groups "%" have been created with a too old postgres version (< 8.4). Drop these groups before upgrading. ',v_groupList;
+      RAISE EXCEPTION 'E-Maj upgrade: groups "%" have been created with a too old postgres version (< 8.4). Drop these groups before '
+                      'upgrading. ',v_groupList;
     END IF;
   END;
 $do$;
@@ -1300,6 +1304,73 @@ $_rlbk_end$
   END;
 $_rlbk_end$;
 
+CREATE OR REPLACE FUNCTION emaj.emaj_verify_all()
+RETURNS SETOF TEXT LANGUAGE plpgsql AS
+$emaj_verify_all$
+-- The function verifies the consistency between all emaj objects present inside emaj schema and
+-- emaj objects related to tables and sequences referenced in the emaj_relation table.
+-- It returns a set of warning messages for discovered discrepancies. If no error is detected, a single row is returned.
+  DECLARE
+    v_errorFound             BOOLEAN = FALSE;
+    v_nbMissingEventTrigger  INT;
+    r_object                 RECORD;
+  BEGIN
+-- Global checks.
+-- Detect if the current postgres version is at least 11.
+    IF emaj._pg_version_num() < 110000 THEN
+      RETURN NEXT 'Error: The current postgres version (' || version()
+               || ') is not compatible with this E-Maj version. It should be at least 11';
+      v_errorFound = TRUE;
+    END IF;
+-- Check all E-Maj schemas.
+    FOR r_object IN
+      SELECT msg
+        FROM emaj._verify_all_schemas() msg
+    LOOP
+      RETURN NEXT r_object.msg;
+      IF r_object.msg LIKE 'Error%' THEN
+        v_errorFound = TRUE;
+      END IF;
+    END LOOP;
+-- Check all groups components.
+    FOR r_object IN
+      SELECT msg
+        FROM emaj._verify_all_groups() msg
+    LOOP
+      RETURN NEXT r_object.msg;
+      IF r_object.msg LIKE 'Error%' THEN
+        v_errorFound = TRUE;
+      END IF;
+    END LOOP;
+-- Report a warning if some E-Maj event triggers are missing.
+    SELECT 3 - count(*) INTO v_nbMissingEventTrigger
+      FROM pg_catalog.pg_event_trigger
+      WHERE evtname IN ('emaj_protection_trg','emaj_sql_drop_trg','emaj_table_rewrite_trg');
+    IF v_nbMissingEventTrigger > 0 THEN
+      RETURN NEXT 'Warning: Some E-Maj event triggers are missing. Your database administrator may (re)create them using the'
+               || ' emaj_upgrade_after_postgres_upgrade.sql script.';
+    END IF;
+-- Report a warning if some E-Maj event triggers exist but are not enabled.
+    IF EXISTS
+         (SELECT 0
+            FROM pg_catalog.pg_event_trigger
+              WHERE evtname LIKE 'emaj%'
+                AND evtenabled = 'D'
+         ) THEN
+      RETURN NEXT 'Warning: Some E-Maj event triggers exist but are disabled. You may enable them using the'
+               || ' emaj_enable_protection_by_event_triggers() function.';
+    END IF;
+-- Final message if no error has been yet detected.
+    IF NOT v_errorFound THEN
+      RETURN NEXT 'No error detected';
+    END IF;
+--
+    RETURN;
+  END;
+$emaj_verify_all$;
+COMMENT ON FUNCTION emaj.emaj_verify_all() IS
+$$Verifies the consistency between existing E-Maj and application objects.$$;
+
 --<end_functions>                                pattern used by the tool that extracts and insert the functions definition
 ------------------------------------------
 --                                      --
@@ -1376,7 +1447,8 @@ $tmp$
   BEGIN
 -- Check the max_prepared_transactions GUC value.
     IF current_setting('max_prepared_transactions')::int <= 1 THEN
-      RAISE WARNING 'E-Maj upgrade: as the max_prepared_transactions parameter value (%) on this cluster is too low, no parallel rollback is possible.', current_setting('max_prepared_transactions');
+      RAISE WARNING 'E-Maj upgrade: as the max_prepared_transactions parameter value (%) on this cluster is too low, no parallel rollback '
+                    'is possible.', current_setting('max_prepared_transactions');
     END IF;
   END;
 $tmp$;

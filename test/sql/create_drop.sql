@@ -62,7 +62,7 @@ select emaj.emaj_assign_table('dummySchema','mytbl1','myGroup1');
 select emaj.emaj_assign_table('emaj','mytbl1','myGroup1');
 -- bad table
 select emaj.emaj_assign_table('myschema1','dummyTable','myGroup1');
--- partitionned table (successful with PG9.6- versions)
+-- partitionned table
 select emaj.emaj_assign_table('myschema4','mytblp','myGroup1');
 select emaj.emaj_remove_table('myschema4','mytblp');
 -- temp table
@@ -183,11 +183,9 @@ select emaj.emaj_assign_tables('myschema2','','','myGroup2');
 select emaj.emaj_assign_tables('myschema2','mytbl1','mytbl1','myGroup2');
 
 -- excluded tables
--- bad types (partitionned table is successful with PG9.6- versions)
+-- bad types
 select emaj.emaj_assign_tables('myschema4','mytblp$','','myGroup2');
 select emaj.emaj_assign_tables('myschema5','unlogged|oids','','myGroup2');
--- partitionned table is successful with PG9.6- versions, so remove it
-select emaj.emaj_remove_table('myschema4','mytblp');
 -- the myoidstbl table is removed with PG12+: in these version the myoids table has no OIDS as this propertiy doesn't exist anymore
 select emaj.emaj_remove_table('myschema5','myoidstbl');
 -- temp table

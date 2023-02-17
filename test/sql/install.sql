@@ -1,15 +1,10 @@
--- install.sql : install E-Maj as an extension (for postgres version 9.1+)
+-- install.sql : install E-Maj as an extension
 --
------------------------------
--- install dblink and btree_gist
------------------------------
-CREATE EXTENSION IF NOT EXISTS dblink;
-CREATE EXTENSION IF NOT EXISTS btree_gist;
 
 -----------------------------
 -- emaj installation as extension
 -----------------------------
-CREATE EXTENSION emaj VERSION 'devel';
+CREATE EXTENSION emaj VERSION 'devel' CASCADE;
 
 -----------------------------
 -- verify that dropping the extension is blocked by event trigger

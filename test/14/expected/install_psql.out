@@ -28,9 +28,9 @@ CREATE EXTENSION IF NOT EXISTS btree_gist;
 DO LANGUAGE plpgsql
 $do$
   BEGIN
--- Check postgres version is >= 9.5.
-    IF current_setting('server_version_num')::INT < 90500 THEN
-      RAISE EXCEPTION 'E-Maj installation: The current postgres version (%) is too old for this E-Maj version. It should be at least 9.5.',
+-- Check postgres version is >= 11.
+    IF current_setting('server_version_num')::INT < 110000 THEN
+      RAISE EXCEPTION 'E-Maj installation: The current postgres version (%) is too old for this E-Maj version. It should be at least 11.',
         current_setting('server_version');
     END IF;
 -- Create both emaj_adm and emaj_viewer roles (NOLOGIN), if they do not exist.
@@ -11859,10 +11859,10 @@ $emaj_verify_all$
     r_object                 RECORD;
   BEGIN
 -- Global checks.
--- Detect if the current postgres version is at least 9.5.
-    IF emaj._pg_version_num() < 90500 THEN
+-- Detect if the current postgres version is at least 11.
+    IF emaj._pg_version_num() < 110000 THEN
       RETURN NEXT 'Error: The current postgres version (' || version()
-               || ') is not compatible with this E-Maj version. It should be at least 9.5.';
+               || ') is not compatible with this E-Maj version. It should be at least 11';
       v_errorFound = TRUE;
     END IF;
 -- Check all E-Maj schemas.

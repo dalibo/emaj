@@ -121,13 +121,13 @@ select funcname, calls from pg_stat_user_functions
  _delete_intermediate_mark_group           |    23
  _delete_log_tbl                           |    61
  _detailed_log_stat_groups                 |    33
- _disable_event_triggers                   |   318
+ _disable_event_triggers                   |   317
  _drop_group                               |    32
  _drop_log_schemas                         |   130
  _drop_seq                                 |    69
  _drop_tbl                                 |   212
  _emaj_param_change_fnct                   |    42
- _enable_event_triggers                    |   312
+ _enable_event_triggers                    |   311
  _estimate_rlbk_step_duration              |   934
  _estimate_rollback_groups                 |    13
  _event_trigger_sql_drop_fnct              |   168
@@ -180,8 +180,8 @@ select funcname, calls from pg_stat_user_functions
  _start_groups                             |    53
  _stop_groups                              |    67
  _truncate_trigger_fnct                    |    16
- _verify_all_groups                        |    49
- _verify_all_schemas                       |    49
+ _verify_all_groups                        |    47
+ _verify_all_schemas                       |    47
  emaj_assign_sequence                      |     6
  emaj_assign_sequences                     |     7
  emaj_assign_sequences                     |    13
@@ -255,14 +255,14 @@ select funcname, calls from pg_stat_user_functions
  emaj_stop_groups                          |    10
  emaj_unprotect_group                      |     7
  emaj_unprotect_mark_group                 |     6
- emaj_verify_all                           |    49
+ emaj_verify_all                           |    47
 (168 rows)
 
 -- count the total number of user-callable function calls (those who failed are not counted)
 select sum(calls) from pg_stat_user_functions where funcname like E'emaj\\_%';
  sum  
 ------
- 1002
+ 1000
 (1 row)
 
 -----------------------------

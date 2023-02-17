@@ -11,7 +11,7 @@ use warnings; use strict;
 # The 3 variables below are to be customized
   my $dir = "/home/postgres/proj/emaj";
   my $ficSrc = $dir."/sql/emaj--devel.sql";
-  my $dirOut = $dir."/test/10/results";
+  my $dirOut = $dir."/test/11/results";
 
 # Variables used to process the source code
   my $line;
@@ -138,7 +138,7 @@ use warnings; use strict;
 # do not report some messages known to not be present in the regression test suite
                             # installation conditions that are not met during the tests
       if ($msgs{$fnctId} ne 'EXCEPTION:E-Maj installation: The current user (%) is not a superuser.'
-       && $msgs{$fnctId} ne 'EXCEPTION:E-Maj installation: The current postgres version (%) is too old for this E-Maj version. It should be at least 9.5.'
+       && $msgs{$fnctId} ne 'EXCEPTION:E-Maj installation: The current postgres version (%) is too old for this E-Maj version. It should be at least 11.'
        && $msgs{$fnctId} ne 'WARNING:E-Maj installation: As the max_prepared_transactions parameter value (%) on this cluster is too low, no parallel'
        && $msgs{$fnctId} ne 'EXCEPTION:_verify_groups: The current postgres version (%) is not compatible with this E-Maj version.'
                             # internal errors (errors that should never appear and that would be due to coding error)
