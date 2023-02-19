@@ -248,6 +248,120 @@ $_move_tables$
   END;
 $_move_tables$;
 
+CREATE OR REPLACE FUNCTION emaj._build_sql_tbl(p_fullTableName TEXT, OUT p_rlbkColList TEXT, OUT p_rlbkPkColList TEXT,
+                                               OUT p_rlbkPkConditions TEXT, OUT p_genColList TEXT, OUT p_genValList TEXT,
+                                               OUT p_genSetList TEXT, OUT p_genPkConditions TEXT, OUT p_nbGenAlwaysIdentCol INT)
+LANGUAGE plpgsql AS
+$_build_sql_tbl$
+-- This function creates all pieces of SQL that will be recorded into the emaj_relation table, for one application table.
+-- They will later be used at rollback or SQL script generation time.
+-- All SQL pieces are left empty if the table has no pkey, neither rollback nor sql script generation operations being possible
+--   in this case
+-- The Insert columns list remains empty if it is not needed to have a specific list (i.e. when the application table does not contain
+--   any generated column)
+-- Input: the full application table name
+-- Output: 7 pieces of SQL, and the number of columns declared GENERATED ALWAYS AS IDENTITY
+  DECLARE
+    v_stmt                   TEXT;
+    v_nbGenAlwaysExprCol     INTEGER;
+    v_unquotedType           CONSTANT TEXT[] = array['smallint','integer','bigint','numeric','decimal',
+                                                     'int2','int4','int8','serial','bigserial',
+                                                     'real','double precision','float','float4','float8','oid'];
+    r_col                    RECORD;
+  BEGIN
+-- Build the pkey columns list and the "equality on the primary key" conditions for the rollback function
+-- and for the UPDATE and DELETE statements of the sql generation function.
+    SELECT string_agg(quote_ident(attname), ','),
+           string_agg('tbl.' || quote_ident(attname) || ' = keys.' || quote_ident(attname), ' AND '),
+           string_agg(
+             CASE WHEN format_type = ANY(v_unquotedType) THEN
+               quote_ident(replace(attname,'''','''''')) || ' = '' || o.' || quote_ident(attname) || ' || '''
+                  ELSE
+               quote_ident(replace(attname,'''','''''')) || ' = '' || quote_literal(o.' || quote_ident(attname) || ') || '''
+             END, ' AND ')
+      INTO p_rlbkPkColList, p_rlbkPkConditions, p_genPkConditions
+      FROM
+        (SELECT attname, regexp_replace(format_type(atttypid,atttypmod),E'\\(.*$','') AS format_type
+           FROM pg_catalog.pg_attribute
+                JOIN  pg_catalog.pg_index ON (pg_index.indrelid = pg_attribute.attrelid)
+           WHERE attnum = ANY (indkey)
+             AND indrelid = p_fullTableName::regclass
+             AND indisprimary
+             AND attnum > 0
+             AND attisdropped = FALSE
+           ORDER BY attnum
+        ) AS t;
+-- Retrieve from pg_attribute simple columns list and indicators.
+-- If the table has no pkey, keep all the sql pieces to NULL (rollback or sql script generation operations being impossible).
+    IF p_rlbkPkColList IS NOT NULL THEN
+      v_stmt = 'SELECT string_agg(''tbl.'' || quote_ident(attname), '','') FILTER (WHERE attgenerated = ''''),'
+--                             the columns list for rollback, excluding the GENERATED ALWAYS AS (expression) columns
+               '       string_agg(quote_ident(replace(attname,'''''''','''''''''''')), '', '') FILTER (WHERE attgenerated = ''''),'
+--                             the INSERT columns list for sql generation, excluding the GENERATED ALWAYS AS (expression) columns
+               '       count(*) FILTER (WHERE attidentity = ''a''),'
+--                             the number of GENERATED ALWAYS AS IDENTITY columns
+               '       count(*) FILTER (WHERE attgenerated <> '''')'
+--                             the number of GENERATED ALWAYS AS (expression) columns
+               '  FROM ('
+               '  SELECT attname, attidentity, %s AS attgenerated'
+               '    FROM pg_catalog.pg_attribute'
+               '    WHERE attrelid = %s::regclass'
+               '      AND attnum > 0 AND NOT attisdropped'
+               '  ORDER BY attnum) AS t';
+      EXECUTE format(v_stmt,
+                     CASE WHEN emaj._pg_version_num() >= 120000 THEN 'attgenerated' ELSE '''''::TEXT' END,
+                     quote_literal(p_fullTableName))
+        INTO p_rlbkColList, p_genColList, p_nbGenAlwaysIdentCol, v_nbGenAlwaysExprCol;
+      IF v_nbGenAlwaysExprCol = 0 THEN
+-- If the table doesn't contain any generated columns, the is no need for the columns list in the INSERT clause.
+        p_genColList = '';
+      END IF;
+-- Retrieve from pg_attribute all columns of the application table and build :
+-- - the VALUES list used in the INSERT statements
+-- - the SET list used in the UPDATE statements.
+-- The logic is too complex to be build with aggregate functions. So loop on all columns.
+      p_genValList = '';
+      p_genSetList = '';
+      FOR r_col IN EXECUTE format(
+        ' SELECT attname, format_type(atttypid,atttypmod) AS format_type, attidentity, %s AS attgenerated'
+        ' FROM pg_catalog.pg_attribute'
+        ' WHERE attrelid = %s::regclass'
+        '   AND attnum > 0 AND NOT attisdropped'
+        ' ORDER BY attnum',
+        CASE WHEN emaj._pg_version_num() >= 120000 THEN 'attgenerated' ELSE '''''::TEXT' END,
+        quote_literal(p_fullTableName))
+      LOOP
+-- Test if the column format (up to the parenthesis) belongs to the list of formats that do not require any quotation (like numeric
+-- data types)
+        IF regexp_replace(r_col.format_type,E'\\(.*$','') = ANY(v_unquotedType) THEN
+-- Literal for this column can remain as is.
+          IF r_col.attgenerated = '' THEN                                     -- GENERATED ALWAYS AS (expression) columns are not inserted
+            p_genValList = p_genValList || ''' || coalesce(o.' || quote_ident(r_col.attname) || '::TEXT,''NULL'') || '', ';
+          END IF;
+          IF r_col.attidentity <> 'a' AND r_col.attgenerated = '' THEN        -- GENERATED ALWAYS columns are not updated
+            p_genSetList = p_genSetList || quote_ident(replace(r_col.attname,'''','''''')) || ' = '' || coalesce(n.'
+                                        || quote_ident(r_col.attname) || ' ::TEXT,''NULL'') || '', ';
+          END IF;
+        ELSE
+-- Literal for this column must be quoted.
+          IF r_col.attgenerated = '' THEN                                     -- GENERATED ALWAYS AS (expression) columns are not inserted
+            p_genValList = p_genValList || ''' || quote_nullable(o.' || quote_ident(r_col.attname) || ') || '', ';
+          END IF;
+          IF r_col.attidentity <> 'a' AND r_col.attgenerated = '' THEN        -- GENERATED ALWAYS columns are not updated
+            p_genSetList = p_genSetList || quote_ident(replace(r_col.attname,'''','''''')) || ' = '' || quote_nullable(n.'
+                                        || quote_ident(r_col.attname) || ') || '', ';
+          END IF;
+        END IF;
+      END LOOP;
+-- Suppress the final separators.
+      p_genValList = substring(p_genValList FROM 1 FOR char_length(p_genValList) - 2);
+      p_genSetList = substring(p_genSetList FROM 1 FOR char_length(p_genSetList) - 2);
+    END IF;
+--
+    RETURN;
+  END;
+$_build_sql_tbl$;
+
 CREATE OR REPLACE FUNCTION emaj._move_sequences(p_schema TEXT, p_sequences TEXT[], p_newGroup TEXT, p_mark TEXT, p_multiSequence BOOLEAN,
                                              p_arrayFromRegex BOOLEAN)
 RETURNS INTEGER LANGUAGE plpgsql AS
@@ -394,6 +508,491 @@ $_move_sequences$
     RETURN v_nbMovedSeq;
   END;
 $_move_sequences$;
+
+CREATE OR REPLACE FUNCTION emaj._rlbk_seq(r_rel emaj.emaj_relation, p_timeId BIGINT)
+RETURNS VOID LANGUAGE plpgsql
+SECURITY DEFINER SET search_path = pg_catalog, pg_temp AS
+$_rlbk_seq$
+-- This function rollbacks one application sequence to a given mark.
+-- The function is called by emaj.emaj._rlbk_end().
+-- Input: the emaj_relation  row related to the application sequence to process, time id of the mark to rollback to.
+-- The function is defined as SECURITY DEFINER so that emaj_adm role can use it even if it is not the owner of the application sequence.
+  DECLARE
+    v_fullSeqName            TEXT;
+    v_stmt                   TEXT;
+    mark_seq_rec             RECORD;
+    curr_seq_rec             RECORD;
+  BEGIN
+-- Read sequence's characteristics at mark time.
+    BEGIN
+      SELECT sequ_schema, sequ_name, sequ_last_val, sequ_start_val, sequ_increment,
+             sequ_max_val, sequ_min_val, sequ_cache_val, sequ_is_cycled, sequ_is_called
+        INTO STRICT mark_seq_rec
+        FROM emaj.emaj_sequence
+        WHERE sequ_schema = r_rel.rel_schema
+          AND sequ_name = r_rel.rel_tblseq
+          AND sequ_time_id = p_timeId;
+      EXCEPTION
+        WHEN NO_DATA_FOUND THEN
+          RAISE EXCEPTION '_rlbk_seq: No mark at time id "%" can be found for the sequence "%.%".',
+            p_timeId, r_rel.rel_schema, r_rel.rel_tblseq;
+    END;
+-- Read the current sequence's characteristics.
+    v_fullSeqName = quote_ident(r_rel.rel_schema) || '.' || quote_ident(r_rel.rel_tblseq);
+    EXECUTE format('SELECT rel.last_value, start_value, increment_by, max_value, min_value, cache_size as cache_value, '
+                   '       cycle as is_cycled, rel.is_called'
+                   '  FROM %s rel, pg_catalog.pg_sequences '
+                   '  WHERE schemaname = %L AND sequencename = %L',
+                   v_fullSeqName, r_rel.rel_schema, r_rel.rel_tblseq)
+            INTO STRICT curr_seq_rec;
+-- Build the ALTER SEQUENCE statement, depending on the differences between the present values and the related
+-- values at the requested mark time.
+    SELECT emaj._build_alter_seq(curr_seq_rec.last_value, curr_seq_rec.is_called, curr_seq_rec.increment_by,
+                                 curr_seq_rec.start_value, curr_seq_rec.min_value, curr_seq_rec.max_value,
+                                 curr_seq_rec.cache_value, curr_seq_rec.is_cycled, mark_seq_rec.sequ_last_val,
+                                 mark_seq_rec.sequ_is_called, mark_seq_rec.sequ_increment, mark_seq_rec.sequ_start_val,
+                                 mark_seq_rec.sequ_min_val, mark_seq_rec.sequ_max_val, mark_seq_rec.sequ_cache_val,
+                                 mark_seq_rec.sequ_is_cycled) INTO v_stmt;
+-- And execute the statement if at least one parameter has changed.
+    IF v_stmt <> '' THEN
+      EXECUTE format('ALTER SEQUENCE %s %s',
+                     v_fullSeqName, v_stmt);
+    END IF;
+-- Insert the event into the history.
+    INSERT INTO emaj.emaj_hist (hist_function, hist_object, hist_wording)
+      VALUES ('ROLLBACK_SEQUENCE', v_fullSeqName, substr(v_stmt,2));
+--
+    RETURN;
+  END;
+$_rlbk_seq$;
+
+CREATE OR REPLACE FUNCTION emaj._gen_sql_seq(r_rel emaj.emaj_relation, p_firstMarkTimeId BIGINT, p_lastMarkTimeId BIGINT, p_nbSeq BIGINT)
+RETURNS BIGINT LANGUAGE plpgsql AS
+$_gen_sql_seq$
+-- This function generates a SQL command to set the final characteristics of a sequence.
+-- The command is stored into a temporary table created by the _gen_sql_groups() calling function.
+-- Input: row from emaj_relation corresponding to the appplication sequence to proccess,
+--        the time id at requested start and end marks,
+--        the number of already processed sequences
+-- Output: number of generated SQL statements (0 or 1)
+  DECLARE
+    v_fullSeqName            TEXT;
+    v_refLastValue           BIGINT;
+    v_refIsCalled            BOOLEAN;
+    v_refIncrementBy         BIGINT;
+    v_refStartValue          BIGINT;
+    v_refMinValue            BIGINT;
+    v_refMaxValue            BIGINT;
+    v_refCacheValue          BIGINT;
+    v_refIsCycled            BOOLEAN;
+    v_stmt                   TEXT;
+    v_trgLastValue           BIGINT;
+    v_trgIsCalled            BOOLEAN;
+    v_trgIncrementBy         BIGINT;
+    v_trgStartValue          BIGINT;
+    v_trgMinValue            BIGINT;
+    v_trgMaxValue            BIGINT;
+    v_trgCacheValue          BIGINT;
+    v_trgIsCycled            BOOLEAN;
+    v_endTimeId              BIGINT;
+    v_rqSeq                  TEXT;
+  BEGIN
+    v_fullSeqName = quote_ident(r_rel.rel_schema) || '.' || quote_ident(r_rel.rel_tblseq);
+-- Get the sequence characteristics at start mark.
+    SELECT sequ_last_val, sequ_is_called, sequ_increment, sequ_start_val,
+           sequ_min_val, sequ_max_val, sequ_cache_val, sequ_is_cycled
+      INTO STRICT v_refLastValue, v_refIsCalled, v_refIncrementBy, v_refStartValue,
+           v_refMinValue, v_refMaxValue, v_refCacheValue, v_refIsCycled
+      FROM emaj.emaj_sequence
+      WHERE sequ_schema = r_rel.rel_schema
+        AND sequ_name = r_rel.rel_tblseq
+        AND sequ_time_id = p_firstMarkTimeId;
+-- Get the sequence characteristics at end mark or the current state.
+    IF p_lastMarkTimeId IS NULL AND upper_inf(r_rel.rel_time_range) THEN
+-- No supplied last mark and the sequence currently belongs to its group, so get current sequence characteritics.
+      v_stmt = 'SELECT rel.last_value, is_called, increment_by, start_value, min_value, max_value, cache_size, cycle '
+            || 'FROM ' || v_fullSeqName  || ' rel, pg_catalog.pg_sequences '
+            || ' WHERE schemaname = ' || quote_literal(r_rel.rel_schema) || ' AND sequencename = '
+            || quote_literal(r_rel.rel_tblseq);
+      EXECUTE v_stmt INTO v_trgLastValue, v_trgIsCalled, v_trgIncrementBy, v_trgStartValue,
+                          v_trgMinValue, v_trgMaxValue, v_trgCacheValue, v_trgIsCycled;
+    ELSE
+-- A last mark is supplied, or the sequence does not belong to its groupe anymore, so get sequence characteristics from the emaj_sequence
+-- table.
+      v_endTimeId = CASE WHEN upper_inf(r_rel.rel_time_range) OR p_lastMarkTimeId < upper(r_rel.rel_time_range)
+                           THEN p_lastMarkTimeId
+                         ELSE upper(r_rel.rel_time_range) END;
+      SELECT sequ_last_val, sequ_is_called, sequ_increment, sequ_start_val,
+             sequ_min_val, sequ_max_val, sequ_cache_val, sequ_is_cycled
+        INTO STRICT v_trgLastValue, v_trgIsCalled, v_trgIncrementBy, v_trgStartValue,
+             v_trgMinValue, v_trgMaxValue, v_trgCacheValue, v_trgIsCycled
+        FROM emaj.emaj_sequence
+        WHERE sequ_schema = r_rel.rel_schema
+          AND sequ_name = r_rel.rel_tblseq
+          AND sequ_time_id = v_endTimeId;
+    END IF;
+-- Build the ALTER SEQUENCE clause.
+    SELECT emaj._build_alter_seq(v_refLastValue, v_refIsCalled, v_refIncrementBy, v_refStartValue,
+                                 v_refMinValue, v_refMaxValue, v_refCacheValue, v_refIsCycled,
+                                 v_trgLastValue, v_trgIsCalled, v_trgIncrementBy, v_trgStartValue,
+                                 v_trgMinValue, v_trgMaxValue, v_trgCacheValue, v_trgIsCycled) INTO v_rqSeq;
+-- Insert into the temp table and return 1 if at least 1 characteristic needs to be changed.
+    IF v_rqSeq <> '' THEN
+      v_rqSeq = 'ALTER SEQUENCE ' || v_fullSeqName || ' ' || v_rqSeq || ';';
+      EXECUTE 'INSERT INTO emaj_temp_script '
+              '  SELECT NULL, -1 * $1, txid_current(), $2'
+        USING p_nbSeq + 1, v_rqSeq;
+      RETURN 1;
+    END IF;
+-- Otherwise return 0.
+    RETURN 0;
+  END;
+$_gen_sql_seq$;
+
+CREATE OR REPLACE FUNCTION emaj._get_current_sequence_state(p_schema TEXT, p_sequence TEXT, p_timeId BIGINT)
+RETURNS emaj.emaj_sequence LANGUAGE plpgsql AS
+$_get_current_sequence_state$
+-- The function returns the current state of a single sequence.
+-- Input: schema and sequence name,
+--        time_id to set the sequ_time_id
+-- Output: an emaj_sequence record
+  DECLARE
+    r_sequ                   emaj.emaj_sequence%ROWTYPE;
+  BEGIN
+    EXECUTE format('SELECT schemaname, sequencename, %s, rel.last_value, start_value, increment_by, max_value, min_value, cache_size,'
+                   '       cycle, rel.is_called FROM %I.%I rel, pg_catalog.pg_sequences '
+                   '  WHERE schemaname = %L AND sequencename = %L',
+                   p_timeId, p_schema, p_sequence, p_schema, p_sequence)
+      INTO STRICT r_sequ;
+    RETURN r_sequ;
+  END;
+$_get_current_sequence_state$;
+
+CREATE OR REPLACE FUNCTION emaj._verify_groups(p_groups TEXT[], p_onErrorStop BOOLEAN)
+RETURNS SETOF emaj._verify_groups_type LANGUAGE plpgsql AS
+$_verify_groups$
+-- The function verifies the consistency of a tables groups array.
+-- Input: - tables groups array,
+--        - a boolean indicating whether the function has to raise an exception in case of detected unconsistency.
+-- If onErrorStop boolean is false, it returns a set of _verify_groups_type records, one row per detected unconsistency, including
+-- the faulting schema and table or sequence names and a detailed message.
+-- If no error is detected, no row is returned.
+-- This function may be directly called by the Emaj_web client.
+  DECLARE
+    v_hint                   CONSTANT TEXT = 'You may use "SELECT * FROM emaj.emaj_verify_all()" to look for other issues.';
+    r_object                 RECORD;
+  BEGIN
+-- Note that there is no check that the supplied groups exist. This has already been done by all calling functions.
+-- Let's start with some global checks that always raise an exception if an issue is detected.
+-- Look for groups unconsistency.
+-- Unlike emaj_verify_all(), there is no direct check that application schemas exist.
+-- Check that all application relations referenced in the emaj_relation table still exist.
+    FOR r_object IN
+      SELECT t.rel_schema, t.rel_tblseq, r.rel_group,
+             'In group "' || r.rel_group || '", the ' ||
+               CASE WHEN t.rel_kind = 'r' THEN 'table "' ELSE 'sequence "' END ||
+               t.rel_schema || '"."' || t.rel_tblseq || '" does not exist any more.' AS msg
+        FROM
+          (  SELECT rel_schema, rel_tblseq, rel_kind
+               FROM emaj.emaj_relation
+               WHERE rel_group = ANY (p_groups)
+                 AND upper_inf(rel_time_range)
+           EXCEPT                                -- all relations known by postgres
+             SELECT nspname, relname, relkind::TEXT
+               FROM pg_catalog.pg_class
+                    JOIN pg_catalog.pg_namespace ON (pg_namespace.oid = relnamespace)
+               WHERE relkind IN ('r','S')
+          ) AS t, emaj.emaj_relation r         -- join with emaj_relation to get the group name
+        WHERE t.rel_schema = r.rel_schema
+          AND t.rel_tblseq = r.rel_tblseq
+          AND upper_inf(r.rel_time_range)
+        ORDER BY 1,2,3
+    LOOP
+      IF p_onErrorStop THEN RAISE EXCEPTION '_verify_groups (1): % %',r_object.msg,v_hint; END IF;
+      RETURN NEXT r_object;
+    END LOOP;
+-- Check that the log table for all tables referenced in the emaj_relation table still exist.
+    FOR r_object IN
+      SELECT rel_schema, rel_tblseq, rel_group,
+             'In group "' || rel_group || '", the log table "' ||
+               rel_log_schema || '"."' || rel_log_table || '" is not found.' AS msg
+        FROM emaj.emaj_relation
+        WHERE rel_group = ANY (p_groups)
+          AND rel_kind = 'r'
+          AND NOT EXISTS
+                (SELECT NULL
+                   FROM pg_catalog.pg_class
+                        JOIN pg_catalog.pg_namespace ON (pg_namespace.oid = relnamespace)
+                   WHERE nspname = rel_log_schema
+                     AND relname = rel_log_table
+                )
+        ORDER BY 1,2,3
+    LOOP
+      IF p_onErrorStop THEN RAISE EXCEPTION '_verify_groups (2): % %',r_object.msg,v_hint; END IF;
+      RETURN NEXT r_object;
+    END LOOP;
+-- Check that the log function for each table referenced in the emaj_relation table still exists.
+    FOR r_object IN
+                                                  -- the schema and table names are rebuilt from the returned function name
+      SELECT rel_schema, rel_tblseq, rel_group,
+             'In group "' || rel_group || '", the log function "' || rel_log_schema || '"."' || rel_log_function || '" is not found.'
+               AS msg
+        FROM emaj.emaj_relation
+        WHERE rel_group = ANY (p_groups)
+          AND rel_kind = 'r' AND upper_inf(rel_time_range)
+          AND NOT EXISTS
+                (SELECT NULL
+                   FROM pg_catalog.pg_proc
+                        JOIN pg_catalog.pg_namespace ON (pg_namespace.oid = pronamespace)
+                   WHERE nspname = rel_log_schema
+                     AND proname = rel_log_function
+                )
+        ORDER BY 1,2,3
+    LOOP
+      IF p_onErrorStop THEN RAISE EXCEPTION '_verify_groups (3): % %',r_object.msg,v_hint; END IF;
+      RETURN NEXT r_object;
+    END LOOP;
+-- Check that log and truncate triggers for all tables referenced in the emaj_relation table still exist.
+--   Start with the log trigger
+    FOR r_object IN
+      SELECT rel_schema, rel_tblseq, rel_group,
+             'In group "' || rel_group || '", the log trigger "emaj_log_trg" on table "' ||
+               rel_schema || '"."' || rel_tblseq || '" is not found.' AS msg
+        FROM emaj.emaj_relation
+        WHERE rel_group = ANY (p_groups)
+          AND rel_kind = 'r'
+          AND upper_inf(rel_time_range)
+          AND NOT EXISTS
+                (SELECT NULL
+                   FROM pg_catalog.pg_trigger
+                        JOIN pg_catalog.pg_class ON (pg_class.oid = tgrelid)
+                        JOIN pg_catalog.pg_namespace ON (pg_namespace.oid = relnamespace)
+                   WHERE nspname = rel_schema
+                     AND relname = rel_tblseq
+                     AND tgname = 'emaj_log_trg'
+                )
+        ORDER BY 1,2,3
+    LOOP
+      IF p_onErrorStop THEN RAISE EXCEPTION '_verify_groups (4): % %',r_object.msg,v_hint; END IF;
+      RETURN NEXT r_object;
+    END LOOP;
+--   Then the truncate trigger.
+    FOR r_object IN
+      SELECT rel_schema, rel_tblseq, rel_group,
+             'In group "' || rel_group || '", the truncate trigger "emaj_trunc_trg" on table "' ||
+             rel_schema || '"."' || rel_tblseq || '" is not found.' AS msg
+        FROM emaj.emaj_relation
+        WHERE rel_group = ANY (p_groups)
+          AND rel_kind = 'r'
+          AND upper_inf(rel_time_range)
+          AND NOT EXISTS
+                (SELECT NULL
+                   FROM pg_catalog.pg_trigger
+                        JOIN pg_catalog.pg_class ON (pg_class.oid = tgrelid)
+                        JOIN pg_catalog.pg_namespace ON (pg_namespace.oid = relnamespace)
+                   WHERE nspname = rel_schema
+                     AND relname = rel_tblseq
+                     AND tgname = 'emaj_trunc_trg'
+                )
+      ORDER BY 1,2,3
+    LOOP
+      IF p_onErrorStop THEN RAISE EXCEPTION '_verify_groups (5): % %',r_object.msg,v_hint; END IF;
+      RETURN NEXT r_object;
+    END LOOP;
+-- Check that all log tables have a structure consistent with the application tables they reference
+-- (same columns and same formats). It only returns one row per faulting table.
+    FOR r_object IN
+      WITH cte_app_tables_columns AS                  -- application table's columns
+        (SELECT rel_group, rel_schema, rel_tblseq, rel_log_schema, rel_log_table, attname, atttypid, attlen, atttypmod
+           FROM emaj.emaj_relation
+                JOIN pg_catalog.pg_class ON (relname = rel_tblseq)
+                JOIN pg_catalog.pg_namespace ON (pg_namespace.oid = relnamespace AND nspname = rel_schema)
+                JOIN pg_catalog.pg_attribute ON (attrelid = pg_class.oid)
+           WHERE attnum > 0
+             AND attisdropped = FALSE
+             AND rel_group = ANY (p_groups)
+             AND rel_kind = 'r'
+             AND upper_inf(rel_time_range)
+        ),
+           cte_log_tables_columns AS                  -- log table's columns
+        (SELECT rel_group, rel_schema, rel_tblseq, rel_log_schema, rel_log_table, attname, atttypid, attlen, atttypmod
+           FROM emaj.emaj_relation
+                JOIN pg_catalog.pg_class ON (relname = rel_log_table)
+                JOIN pg_catalog.pg_namespace ON (pg_namespace.oid = relnamespace AND nspname = rel_log_schema)
+                JOIN pg_catalog.pg_attribute ON (attrelid = pg_class.oid)
+            WHERE attnum > 0
+              AND NOT attisdropped
+              AND attnum < rel_emaj_verb_attnum
+              AND rel_group = ANY (p_groups)
+              AND rel_kind = 'r'
+              AND upper_inf(rel_time_range))
+      SELECT DISTINCT rel_schema, rel_tblseq, rel_group,
+             'In group "' || rel_group || '", the structure of the application table "' ||
+               rel_schema || '"."' || rel_tblseq || '" is not coherent with its log table ("' ||
+             rel_log_schema || '"."' || rel_log_table || '").' AS msg
+        FROM
+          (
+            (                                        -- application table's columns
+               SELECT rel_group, rel_schema, rel_tblseq, rel_log_schema, rel_log_table, attname, atttypid, attlen, atttypmod
+                 FROM cte_app_tables_columns
+             EXCEPT                                   -- minus log table's columns
+               SELECT rel_group, rel_schema, rel_tblseq, rel_log_schema, rel_log_table, attname, atttypid, attlen, atttypmod
+                 FROM cte_log_tables_columns
+            )
+          UNION
+            (                                         -- log table's columns
+               SELECT rel_group, rel_schema, rel_tblseq, rel_log_schema, rel_log_table, attname, atttypid, attlen, atttypmod
+                 FROM cte_log_tables_columns
+             EXCEPT                                    -- minus application table's columns
+               SELECT rel_group, rel_schema, rel_tblseq, rel_log_schema, rel_log_table, attname, atttypid, attlen, atttypmod
+                 FROM cte_app_tables_columns
+            )
+          ) AS t
+        ORDER BY 1,2,3
+    LOOP
+      IF p_onErrorStop THEN RAISE EXCEPTION '_verify_groups (6): % %',r_object.msg,v_hint; END IF;
+      RETURN NEXT r_object;
+    END LOOP;
+-- Check that all tables have their primary key if they belong to a rollbackable group.
+    FOR r_object IN
+      SELECT rel_schema, rel_tblseq, rel_group,
+             'In rollbackable group "' || rel_group || '", the table "' ||
+             rel_schema || '"."' || rel_tblseq || '" has no primary key any more.' AS msg
+        FROM emaj.emaj_relation
+             JOIN emaj.emaj_group ON (group_name = rel_group)
+        WHERE rel_group = ANY (p_groups)
+          AND rel_kind = 'r'
+          AND upper_inf(rel_time_range)
+          AND group_is_rollbackable
+          AND NOT EXISTS
+                (SELECT NULL
+                   FROM pg_catalog.pg_class
+                        JOIN pg_catalog.pg_namespace ON (pg_namespace.oid = relnamespace)
+                        JOIN pg_catalog.pg_constraint ON (connamespace = pg_namespace.oid AND conrelid = pg_class.oid)
+                   WHERE nspname = rel_schema
+                     AND relname = rel_tblseq
+                     AND contype = 'p'
+                )
+        ORDER BY 1,2,3
+    LOOP
+      IF p_onErrorStop THEN RAISE EXCEPTION '_verify_groups (7): % %',r_object.msg,v_hint; END IF;
+      RETURN NEXT r_object;
+    END LOOP;
+-- For rollbackable groups, check that no table has been altered as UNLOGGED or dropped and recreated as TEMP table after the tables
+-- groups creation.
+    FOR r_object IN
+      SELECT rel_schema, rel_tblseq, rel_group,
+             'In rollbackable group "' || rel_group || '", the table "' ||
+             rel_schema || '"."' || rel_tblseq || '" is UNLOGGED or TEMP.' AS msg
+        FROM emaj.emaj_relation
+             JOIN emaj.emaj_group ON (group_name = rel_group)
+             JOIN pg_catalog.pg_class ON (relname = rel_tblseq)
+             JOIN pg_catalog.pg_namespace ON (pg_namespace.oid = relnamespace AND nspname = rel_schema)
+        WHERE rel_group = ANY (p_groups)
+          AND rel_kind = 'r'
+          AND upper_inf(rel_time_range)
+          AND group_is_rollbackable
+          AND relpersistence <> 'p'
+        ORDER BY 1,2,3
+    LOOP
+      IF p_onErrorStop THEN RAISE EXCEPTION '_verify_groups (8): % %',r_object.msg,v_hint; END IF;
+      RETURN NEXT r_object;
+    END LOOP;
+-- For rollbackable groups, with PG 11-, check that no table has been altered as WITH OIDS after tables groups creation.
+    IF emaj._pg_version_num() < 120000 THEN
+      FOR r_object IN
+        SELECT rel_schema, rel_tblseq, rel_group,
+               'In rollbackable group "' || rel_group || '", the table "' ||
+               rel_schema || '"."' || rel_tblseq || '" is declared WITH OIDS.' AS msg
+          FROM emaj.emaj_relation
+               JOIN emaj.emaj_group ON (group_name = rel_group)
+               JOIN pg_catalog.pg_class ON (relname = rel_tblseq)
+               JOIN pg_catalog.pg_namespace ON (pg_namespace.oid = relnamespace AND nspname = rel_schema)
+          WHERE rel_group = ANY (p_groups)
+            AND rel_kind = 'r'
+            AND upper_inf(rel_time_range)
+            AND group_is_rollbackable
+            AND relhasoids
+          ORDER BY 1,2,3
+      LOOP
+        IF p_onErrorStop THEN RAISE EXCEPTION '_verify_groups (9): % %',r_object.msg,v_hint; END IF;
+        RETURN NEXT r_object;
+      END LOOP;
+    END IF;
+-- Check that the primary key structure of all tables belonging to rollbackable groups is unchanged.
+    FOR r_object IN
+      SELECT rel_schema, rel_tblseq, rel_group,
+             'In rollbackable group "' || rel_group || '", the primary key of the table "' ||
+             rel_schema || '"."' || rel_tblseq || '" has changed (' ||
+             rel_sql_rlbk_pk_columns || ' => ' || current_pk_columns || ').' AS msg
+        FROM
+          (SELECT rel_schema, rel_tblseq, rel_group, rel_sql_rlbk_pk_columns,
+                 string_agg(quote_ident(attname), ',' ORDER BY attnum) AS current_pk_columns
+             FROM emaj.emaj_relation
+                  JOIN emaj.emaj_group ON (group_name = rel_group)
+                  JOIN pg_catalog.pg_class ON (relname = rel_tblseq)
+                  JOIN pg_catalog.pg_namespace ON (pg_namespace.oid = relnamespace AND nspname = rel_schema)
+                  JOIN pg_catalog.pg_index ON (indrelid = pg_class.oid)
+                  JOIN pg_catalog.pg_attribute ON (pg_attribute.attrelid = pg_index.indrelid)
+             WHERE rel_group = ANY (p_groups)
+               AND rel_kind = 'r'
+               AND upper_inf(rel_time_range)
+               AND group_is_rollbackable
+               AND attnum = ANY (indkey)
+               AND indisprimary
+               AND attnum > 0
+               AND NOT attisdropped
+             GROUP BY rel_schema, rel_tblseq, rel_group, rel_sql_rlbk_pk_columns
+          ) AS t
+        WHERE rel_sql_rlbk_pk_columns <> current_pk_columns
+        ORDER BY 1,2,3
+    LOOP
+      IF p_onErrorStop THEN RAISE EXCEPTION '_verify_groups (10): % %',r_object.msg,v_hint; END IF;
+      RETURN NEXT r_object;
+    END LOOP;
+-- Check that all log tables have the 6 required technical columns. It only returns one row per faulting table.
+    FOR r_object IN
+      SELECT DISTINCT rel_schema, rel_tblseq, rel_group,
+             'In group "' || rel_group || '", the log table "' ||
+             rel_log_schema || '"."' || rel_log_table || '" miss some technical columns (' ||
+             string_agg(attname,', ') || ').' AS msg
+        FROM
+          (  SELECT rel_group, rel_schema, rel_tblseq, rel_log_schema, rel_log_table, attname
+               FROM emaj.emaj_relation,
+                   (VALUES ('emaj_verb'), ('emaj_tuple'), ('emaj_gid'), ('emaj_changed'), ('emaj_txid'), ('emaj_user')) AS t(attname)
+               WHERE rel_group = ANY (p_groups)
+                 AND rel_kind = 'r'
+                 AND upper_inf(rel_time_range)
+                 AND EXISTS
+                       (SELECT NULL
+                          FROM pg_catalog.pg_class
+                               JOIN pg_catalog.pg_namespace ON (pg_namespace.oid = relnamespace)
+                          WHERE nspname = rel_log_schema
+                            AND relname = rel_log_table
+                       )
+           EXCEPT
+             SELECT rel_group, rel_schema, rel_tblseq, rel_log_schema, rel_log_table, attname
+               FROM emaj.emaj_relation
+                    JOIN pg_catalog.pg_class ON (relname = rel_log_table)
+                    JOIN pg_catalog.pg_namespace ON (pg_namespace.oid = relnamespace AND nspname = rel_log_schema)
+                    JOIN pg_catalog.pg_attribute ON (attrelid = pg_class.oid)
+               WHERE rel_group = ANY (p_groups)
+                 AND rel_kind = 'r'
+                 AND upper_inf(rel_time_range)
+                 AND attnum > 0
+                 AND attisdropped = FALSE
+                 AND attname IN ('emaj_verb', 'emaj_tuple', 'emaj_gid', 'emaj_changed', 'emaj_txid', 'emaj_user')
+          ) AS t2
+        GROUP BY rel_group, rel_schema, rel_tblseq, rel_log_schema, rel_log_table
+        ORDER BY 1,2,3
+    LOOP
+      IF p_onErrorStop THEN RAISE EXCEPTION '_verify_groups (11): % %',r_object.msg,v_hint; END IF;
+      RETURN NEXT r_object;
+    END LOOP;
+--
+    RETURN;
+  END;
+$_verify_groups$;
 
 CREATE OR REPLACE FUNCTION emaj._rlbk_init(p_groupNames TEXT[], p_mark TEXT, p_isLoggedRlbk BOOLEAN, p_nbSession INT, p_multiGroup BOOLEAN,
                                            p_isAlterGroupAllowed BOOLEAN DEFAULT FALSE)
@@ -1303,6 +1902,119 @@ $_rlbk_end$
       RAISE;
   END;
 $_rlbk_end$;
+
+CREATE OR REPLACE FUNCTION emaj.emaj_snap_group(p_groupName TEXT, p_dir TEXT, p_copyOptions TEXT)
+RETURNS INT LANGUAGE plpgsql AS
+$emaj_snap_group$
+-- This function creates a file for each table and sequence belonging to the group.
+-- For tables, these files contain all rows sorted on primary key.
+-- For sequences, they contain a single row describing the sequence.
+-- To do its job, the function performs COPY TO statement, with all default parameters.
+-- For table without primary key, rows are sorted on all columns.
+-- There is no need for the group not to be logging.
+-- As all COPY statements are executed inside a single transaction:
+--   - the function can be called while other transactions are running,
+--   - the snap files will present a coherent state of tables.
+-- It's users responsability:
+--   - to create the directory (with proper permissions allowing the cluster to write into) before the emaj_snap_group function call, and
+--   - maintain its content outside E-maj.
+-- Input: group name,
+--        the absolute pathname of the directory where the files are to be created and the options to used in the COPY TO statements
+-- Output: number of processed tables and sequences
+  DECLARE
+    v_nbTb                   INT = 0;
+    r_tblsq                  RECORD;
+    v_fullTableName          TEXT;
+    v_colList                TEXT;
+    v_fileName               TEXT;
+    v_stmt                   TEXT;
+  BEGIN
+-- Insert a BEGIN event into the history.
+    INSERT INTO emaj.emaj_hist (hist_function, hist_event, hist_object, hist_wording)
+      VALUES ('SNAP_GROUP', 'BEGIN', p_groupName, p_dir);
+-- Check the group name.
+    PERFORM emaj._check_group_names(p_groupNames := ARRAY[p_groupName], p_mayBeNull := FALSE, p_lockGroups := FALSE, p_checkList := '');
+-- Check the supplied directory is not null.
+    IF p_dir IS NULL THEN
+      RAISE EXCEPTION 'emaj_snap_group: The directory parameter cannot be NULL.';
+    END IF;
+-- Check the copy options parameter doesn't contain unquoted ; that could be used for sql injection.
+    IF regexp_replace(p_copyOptions,'''.*''','') LIKE '%;%' THEN
+      RAISE EXCEPTION 'emaj_snap_group: The COPY options parameter format is invalid.';
+    END IF;
+-- For each table/sequence of the emaj_relation table.
+    FOR r_tblsq IN
+      SELECT rel_priority, rel_schema, rel_tblseq, rel_kind
+        FROM emaj.emaj_relation
+        WHERE upper_inf(rel_time_range)
+          AND rel_group = p_groupName
+        ORDER BY rel_priority, rel_schema, rel_tblseq
+    LOOP
+      v_fileName = p_dir || '/' || translate(r_tblsq.rel_schema || '_' || r_tblsq.rel_tblseq || '.snap', E' /\\$<>*', '_______');
+      v_fullTableName = quote_ident(r_tblsq.rel_schema) || '.' || quote_ident(r_tblsq.rel_tblseq);
+      CASE r_tblsq.rel_kind
+        WHEN 'r' THEN
+-- It is a table.
+--   Build the order by column list.
+          IF EXISTS
+               (SELECT 0
+                  FROM pg_catalog.pg_class
+                       JOIN pg_catalog.pg_namespace ON (pg_namespace.oid = relnamespace)
+                       JOIN pg_catalog.pg_constraint ON (connamespace = pg_namespace.oid AND conrelid = pg_class.oid)
+                  WHERE contype = 'p'
+                    AND nspname = r_tblsq.rel_schema
+                    AND relname = r_tblsq.rel_tblseq
+               ) THEN
+--   The table has a pkey.
+            SELECT string_agg(quote_ident(attname), ',') INTO v_colList
+              FROM
+                (SELECT attname
+                   FROM pg_catalog.pg_attribute
+                        JOIN pg_catalog.pg_index ON (pg_index.indrelid = pg_attribute.attrelid)
+                   WHERE attnum = ANY (indkey)
+                     AND indrelid = v_fullTableName::regclass
+                     AND indisprimary
+                     AND attnum > 0
+                     AND attisdropped = FALSE
+                ) AS t;
+          ELSE
+--   The table has no pkey.
+            SELECT string_agg(quote_ident(attname), ',') INTO v_colList
+              FROM
+                (SELECT attname
+                   FROM pg_catalog.pg_attribute
+                   WHERE attrelid = v_fullTableName::regclass
+                     AND attnum > 0
+                     AND attisdropped = FALSE
+                ) AS t;
+          END IF;
+--   Dump the table
+          v_stmt= '(SELECT * FROM ' || v_fullTableName || ' ORDER BY ' || v_colList || ')';
+          PERFORM emaj._copy_to_file(v_stmt, v_fileName, p_copyOptions);
+        WHEN 'S' THEN
+-- If it is a sequence, the statement has no order by.
+          v_stmt = '(SELECT sequencename, rel.last_value, start_value, increment_by, max_value, '
+                || 'min_value, cache_size, cycle, rel.is_called '
+                || 'FROM ' || v_fullTableName || ' rel, pg_catalog.pg_sequences '
+                || 'WHERE schemaname = '|| quote_literal(r_tblsq.rel_schema) || ' AND sequencename = '
+                || quote_literal(r_tblsq.rel_tblseq) ||')';
+--    Dump the sequence properties.
+          PERFORM emaj._copy_to_file(v_stmt, v_fileName, p_copyOptions);
+      END CASE;
+      v_nbTb = v_nbTb + 1;
+    END LOOP;
+-- Create the _INFO file to keep general information about the snap operation.
+    v_stmt = '(SELECT ' || quote_literal('E-Maj snap of tables group ' || p_groupName || ' at ' || transaction_timestamp()) || ')';
+    PERFORM emaj._copy_to_file(v_stmt, p_dir || '/_INFO', NULL);
+-- Insert a END event into the history.
+    INSERT INTO emaj.emaj_hist (hist_function, hist_event, hist_object, hist_wording)
+      VALUES ('SNAP_GROUP', 'END', p_groupName, v_nbTb || ' tables/sequences processed');
+--
+    RETURN v_nbTb;
+  END;
+$emaj_snap_group$;
+COMMENT ON FUNCTION emaj.emaj_snap_group(TEXT,TEXT,TEXT) IS
+$$Snaps all application tables and sequences of an E-Maj group into a given directory.$$;
 
 CREATE OR REPLACE FUNCTION emaj.emaj_verify_all()
 RETURNS SETOF TEXT LANGUAGE plpgsql AS

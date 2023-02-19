@@ -3271,13 +3271,12 @@ $_build_sql_tbl$
                '       count(*) FILTER (WHERE attgenerated <> '''')'
 --                             the number of GENERATED ALWAYS AS (expression) columns
                '  FROM ('
-               '  SELECT attname, %s AS attidentity, %s AS attgenerated'
+               '  SELECT attname, attidentity, %s AS attgenerated'
                '    FROM pg_catalog.pg_attribute'
                '    WHERE attrelid = %s::regclass'
                '      AND attnum > 0 AND NOT attisdropped'
                '  ORDER BY attnum) AS t';
       EXECUTE format(v_stmt,
-                     CASE WHEN emaj._pg_version_num() >= 100000 THEN 'attidentity' ELSE '''''::TEXT' END,
                      CASE WHEN emaj._pg_version_num() >= 120000 THEN 'attgenerated' ELSE '''''::TEXT' END,
                      quote_literal(p_fullTableName))
         INTO p_rlbkColList, p_genColList, p_nbGenAlwaysIdentCol, v_nbGenAlwaysExprCol;
@@ -3292,12 +3291,11 @@ $_build_sql_tbl$
       p_genValList = '';
       p_genSetList = '';
       FOR r_col IN EXECUTE format(
-        ' SELECT attname, format_type(atttypid,atttypmod) AS format_type, %s AS attidentity, %s AS attgenerated'
+        ' SELECT attname, format_type(atttypid,atttypmod) AS format_type, attidentity, %s AS attgenerated'
         ' FROM pg_catalog.pg_attribute'
         ' WHERE attrelid = %s::regclass'
         '   AND attnum > 0 AND NOT attisdropped'
         ' ORDER BY attnum',
-        CASE WHEN emaj._pg_version_num() >= 100000 THEN 'attidentity' ELSE '''''::TEXT' END,
         CASE WHEN emaj._pg_version_num() >= 120000 THEN 'attgenerated' ELSE '''''::TEXT' END,
         quote_literal(p_fullTableName))
       LOOP
@@ -4779,18 +4777,12 @@ $_rlbk_seq$
     END;
 -- Read the current sequence's characteristics.
     v_fullSeqName = quote_ident(r_rel.rel_schema) || '.' || quote_ident(r_rel.rel_tblseq);
-    IF emaj._pg_version_num() >= 100000 THEN
-      EXECUTE format('SELECT rel.last_value, start_value, increment_by, max_value, min_value, cache_size as cache_value, '
-                     '       cycle as is_cycled, rel.is_called'
-                     '  FROM %s rel, pg_catalog.pg_sequences '
-                     '  WHERE schemaname = %L AND sequencename = %L',
-                     v_fullSeqName, r_rel.rel_schema, r_rel.rel_tblseq)
-              INTO STRICT curr_seq_rec;
-    ELSE
-      EXECUTE format('SELECT last_value, start_value, increment_by, max_value, min_value, cache_value, is_cycled, is_called FROM %s',
-                     v_fullSeqName)
-              INTO STRICT curr_seq_rec;
-    END IF;
+    EXECUTE format('SELECT rel.last_value, start_value, increment_by, max_value, min_value, cache_size as cache_value, '
+                   '       cycle as is_cycled, rel.is_called'
+                   '  FROM %s rel, pg_catalog.pg_sequences '
+                   '  WHERE schemaname = %L AND sequencename = %L',
+                   v_fullSeqName, r_rel.rel_schema, r_rel.rel_tblseq)
+            INTO STRICT curr_seq_rec;
 -- Build the ALTER SEQUENCE statement, depending on the differences between the present values and the related
 -- values at the requested mark time.
     SELECT emaj._build_alter_seq(curr_seq_rec.last_value, curr_seq_rec.is_called, curr_seq_rec.increment_by,
@@ -5032,15 +5024,10 @@ $_gen_sql_seq$
 -- Get the sequence characteristics at end mark or the current state.
     IF p_lastMarkTimeId IS NULL AND upper_inf(r_rel.rel_time_range) THEN
 -- No supplied last mark and the sequence currently belongs to its group, so get current sequence characteritics.
-      IF emaj._pg_version_num() >= 100000 THEN
-        v_stmt = 'SELECT rel.last_value, is_called, increment_by, start_value, min_value, max_value, cache_size, cycle '
-              || 'FROM ' || v_fullSeqName  || ' rel, pg_catalog.pg_sequences '
-              || ' WHERE schemaname = ' || quote_literal(r_rel.rel_schema) || ' AND sequencename = '
-              || quote_literal(r_rel.rel_tblseq);
-      ELSE
-        v_stmt = 'SELECT last_value, is_called, increment_by, start_value, min_value, max_value, cache_value, is_cycled '
-              || 'FROM ' || v_fullSeqName;
-      END IF;
+      v_stmt = 'SELECT rel.last_value, is_called, increment_by, start_value, min_value, max_value, cache_size, cycle '
+            || 'FROM ' || v_fullSeqName  || ' rel, pg_catalog.pg_sequences '
+            || ' WHERE schemaname = ' || quote_literal(r_rel.rel_schema) || ' AND sequencename = '
+            || quote_literal(r_rel.rel_tblseq);
       EXECUTE v_stmt INTO v_trgLastValue, v_trgIsCalled, v_trgIncrementBy, v_trgStartValue,
                           v_trgMinValue, v_trgMaxValue, v_trgCacheValue, v_trgIsCycled;
     ELSE
@@ -5086,18 +5073,11 @@ $_get_current_sequence_state$
   DECLARE
     r_sequ                   emaj.emaj_sequence%ROWTYPE;
   BEGIN
-    IF emaj._pg_version_num() >= 100000 THEN
-      EXECUTE format('SELECT schemaname, sequencename, %s, rel.last_value, start_value, increment_by, max_value, min_value, cache_size,'
-                     '       cycle, rel.is_called FROM %I.%I rel, pg_catalog.pg_sequences '
-                     '  WHERE schemaname = %L AND sequencename = %L',
-                     p_timeId, p_schema, p_sequence, p_schema, p_sequence)
-        INTO STRICT r_sequ;
-    ELSE
-      EXECUTE format('SELECT %L, %L, %s, last_value, start_value, increment_by, max_value, min_value, cache_value, is_cycled, is_called'
-                     ' FROM %I.%I',
-                     p_schema, p_sequence, p_timeId, p_schema, p_sequence)
-        INTO STRICT r_sequ;
-    END IF;
+    EXECUTE format('SELECT schemaname, sequencename, %s, rel.last_value, start_value, increment_by, max_value, min_value, cache_size,'
+                   '       cycle, rel.is_called FROM %I.%I rel, pg_catalog.pg_sequences '
+                   '  WHERE schemaname = %L AND sequencename = %L',
+                   p_timeId, p_schema, p_sequence, p_schema, p_sequence)
+      INTO STRICT r_sequ;
     RETURN r_sequ;
   END;
 $_get_current_sequence_state$;
@@ -5140,12 +5120,7 @@ $_verify_groups$
   BEGIN
 -- Note that there is no check that the supplied groups exist. This has already been done by all calling functions.
 -- Let's start with some global checks that always raise an exception if an issue is detected.
--- Check the postgres version: E-Maj needs postgres 9.5+.
-    IF emaj._pg_version_num() < 90500 THEN
-      RAISE EXCEPTION '_verify_groups: The current postgres version (%) is not compatible with this E-Maj version.'
-                      ' It should be at least 9.5.', version();
-    END IF;
--- OK, now look for groups unconsistency.
+-- Look for groups unconsistency.
 -- Unlike emaj_verify_all(), there is no direct check that application schemas exist.
 -- Check that all application relations referenced in the emaj_relation table still exist.
     FOR r_object IN
@@ -10637,17 +10612,11 @@ $emaj_snap_group$
           PERFORM emaj._copy_to_file(v_stmt, v_fileName, p_copyOptions);
         WHEN 'S' THEN
 -- If it is a sequence, the statement has no order by.
-          IF emaj._pg_version_num() >= 100000 THEN
-            v_stmt = '(SELECT sequencename, rel.last_value, start_value, increment_by, max_value, '
-                  || 'min_value, cache_size, cycle, rel.is_called '
-                  || 'FROM ' || v_fullTableName || ' rel, pg_catalog.pg_sequences '
-                  || 'WHERE schemaname = '|| quote_literal(r_tblsq.rel_schema) || ' AND sequencename = '
-                  || quote_literal(r_tblsq.rel_tblseq) ||')';
-          ELSE
-            v_stmt = '(SELECT sequence_name, last_value, start_value, increment_by, max_value, '
-                  || 'min_value, cache_value, is_cycled, is_called FROM ' || v_fullTableName
-                  || ')';
-          END IF;
+          v_stmt = '(SELECT sequencename, rel.last_value, start_value, increment_by, max_value, '
+                || 'min_value, cache_size, cycle, rel.is_called '
+                || 'FROM ' || v_fullTableName || ' rel, pg_catalog.pg_sequences '
+                || 'WHERE schemaname = '|| quote_literal(r_tblsq.rel_schema) || ' AND sequencename = '
+                || quote_literal(r_tblsq.rel_tblseq) ||')';
 --    Dump the sequence properties.
           PERFORM emaj._copy_to_file(v_stmt, v_fileName, p_copyOptions);
       END CASE;

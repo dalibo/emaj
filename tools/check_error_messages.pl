@@ -140,7 +140,6 @@ use warnings; use strict;
       if ($msgs{$fnctId} ne 'EXCEPTION:E-Maj installation: The current user (%) is not a superuser.'
        && $msgs{$fnctId} ne 'EXCEPTION:E-Maj installation: The current postgres version (%) is too old for this E-Maj version. It should be at least 11.'
        && $msgs{$fnctId} ne 'WARNING:E-Maj installation: As the max_prepared_transactions parameter value (%) on this cluster is too low, no parallel'
-       && $msgs{$fnctId} ne 'EXCEPTION:_verify_groups: The current postgres version (%) is not compatible with this E-Maj version.'
                             # internal errors (errors that should never appear and that would be due to coding error)
        && $msgs{$fnctId} ne 'EXCEPTION:_drop_log_schemas: Internal error (the schema "%" does not exist).'
        && $msgs{$fnctId} ne 'EXCEPTION:emaj_reset_group: Internal error (group "%" is empty).'
