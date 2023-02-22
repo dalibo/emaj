@@ -2989,7 +2989,7 @@ $_create_tbl$
 -- existing names.
       SELECT substr(p_tbl, 1, 50) || '#' || coalesce(max(suffix) + 1, 1)::TEXT INTO v_emajNamesPrefix
         FROM
-          (SELECT unnest(regexp_matches(substr(rel_log_table, 51),'#(\d+)'))::INT AS suffix
+          (SELECT (regexp_match(substr(rel_log_table, 51), '#(\d+)'))[1]::INT AS suffix
              FROM emaj.emaj_relation
              WHERE substr(rel_log_table, 1, 50) = substr(p_tbl, 1, 50)
           ) AS t;
@@ -3505,7 +3505,7 @@ $_remove_tbl$
 -- Compute the suffix to add to the log table and index names (_1, _2, ...), by looking at the existing names.
       SELECT '_' || coalesce(max(suffix) + 1, 1)::TEXT INTO v_namesSuffix
         FROM
-          (SELECT unnest(regexp_matches(rel_log_table,'_(\d+)$'))::INT AS suffix
+          (SELECT (regexp_match(rel_log_table,'_(\d+)$'))[1]::INT AS suffix
              FROM emaj.emaj_relation
              WHERE rel_schema = p_schema
                AND rel_tblseq = p_table
@@ -3595,7 +3595,7 @@ $_move_tbl$
 -- Compute the suffix to add to the log table and index names (_1, _2, ...), by looking at the existing names.
     SELECT '_' || coalesce(max(suffix) + 1, 1)::TEXT INTO v_namesSuffix
       FROM
-        (SELECT unnest(regexp_matches(rel_log_table,'_(\d+)$'))::INT AS suffix
+          (SELECT (regexp_match(rel_log_table,'_(\d+)$'))[1]::INT AS suffix
            FROM emaj.emaj_relation
            WHERE rel_schema = p_schema
              AND rel_tblseq = p_table

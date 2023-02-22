@@ -249,6 +249,217 @@ $_move_tables$
   END;
 $_move_tables$;
 
+CREATE OR REPLACE FUNCTION emaj._create_tbl(p_schema TEXT, p_tbl TEXT, p_groupName TEXT, p_priority INT, p_logDatTsp TEXT,
+                                            p_logIdxTsp TEXT, p_ignoredTriggers TEXT[], p_timeId BIGINT,
+                                            p_groupIsRollbackable BOOLEAN, p_groupIsLogging BOOLEAN)
+RETURNS VOID LANGUAGE plpgsql AS
+$_create_tbl$
+-- This function creates all what is needed to manage the log and rollback operations for an application table.
+-- Input: the application table to process,
+--        the group to add it into,
+--        the table properties: priority, tablespaces attributes and triggers to ignore at rollback time
+--        the time id of the operation,
+--        2 booleans indicating whether the group is rollbackable and whether the group is currently in logging state.
+-- The objects created in the log schema:
+--    - the associated log table, with its own sequence
+--    - the function that logs the tables updates, defined as a trigger
+  DECLARE
+    v_emajNamesPrefix        TEXT;
+    v_baseLogTableName       TEXT;
+    v_baseLogIdxName         TEXT;
+    v_baseLogFnctName        TEXT;
+    v_baseSequenceName       TEXT;
+    v_logSchema              TEXT;
+    v_fullTableName          TEXT;
+    v_logTableName           TEXT;
+    v_logIdxName             TEXT;
+    v_logFnctName            TEXT;
+    v_sequenceName           TEXT;
+    v_dataTblSpace           TEXT;
+    v_idxTblSpace            TEXT;
+    v_rlbkColList            TEXT;
+    v_rlbkPkColList          TEXT;
+    v_rlbkPkConditions       TEXT;
+    v_genColList             TEXT;
+    v_genValList             TEXT;
+    v_genSetList             TEXT;
+    v_genPkConditions        TEXT;
+    v_nbGenAlwaysIdentCol    INTEGER;
+    v_attnum                 SMALLINT;
+    v_alter_log_table_param  TEXT;
+    v_stmt                   TEXT;
+    v_triggerList            TEXT;
+  BEGIN
+-- The checks on the table properties are performed by the calling functions.
+-- Build the prefix of all emaj object to create.
+    IF length(p_tbl) <= 50 THEN
+-- For not too long table name, the prefix is the table name itself.
+      v_emajNamesPrefix = p_tbl;
+    ELSE
+-- For long table names (over 50 char long), compute the suffix to add to the first 50 characters (#1, #2, ...), by looking at the
+-- existing names.
+      SELECT substr(p_tbl, 1, 50) || '#' || coalesce(max(suffix) + 1, 1)::TEXT INTO v_emajNamesPrefix
+        FROM
+          (SELECT (regexp_match(substr(rel_log_table, 51), '#(\d+)'))[1]::INT AS suffix
+             FROM emaj.emaj_relation
+             WHERE substr(rel_log_table, 1, 50) = substr(p_tbl, 1, 50)
+          ) AS t;
+    END IF;
+-- Build the name of emaj components associated to the application table (non schema qualified and not quoted).
+    v_baseLogTableName     = v_emajNamesPrefix || '_log';
+    v_baseLogIdxName       = v_emajNamesPrefix || '_log_idx';
+    v_baseLogFnctName      = v_emajNamesPrefix || '_log_fnct';
+    v_baseSequenceName     = v_emajNamesPrefix || '_log_seq';
+-- Build the different name for table, trigger, functions,...
+    v_logSchema        = 'emaj_' || p_schema;
+    v_fullTableName    = quote_ident(p_schema) || '.' || quote_ident(p_tbl);
+    v_logTableName     = quote_ident(v_logSchema) || '.' || quote_ident(v_baseLogTableName);
+    v_logIdxName       = quote_ident(v_baseLogIdxName);
+    v_logFnctName      = quote_ident(v_logSchema) || '.' || quote_ident(v_baseLogFnctName);
+    v_sequenceName     = quote_ident(v_logSchema) || '.' || quote_ident(v_baseSequenceName);
+-- Prepare the TABLESPACE clauses for data and index
+    v_dataTblSpace = coalesce('TABLESPACE ' || quote_ident(p_logDatTsp),'');
+    v_idxTblSpace = coalesce('USING INDEX TABLESPACE ' || quote_ident(p_logIdxTsp),'');
+-- Create the log table: it looks like the application table, with some additional technical columns.
+    EXECUTE format('DROP TABLE IF EXISTS %s',
+                   v_logTableName);
+    EXECUTE format('CREATE TABLE %s (LIKE %s,'
+                   '  emaj_verb      VARCHAR(3)  NOT NULL,'
+                   '  emaj_tuple     VARCHAR(3)  NOT NULL,'
+                   '  emaj_gid       BIGINT      NOT NULL   DEFAULT nextval(''emaj.emaj_global_seq''),'
+                   '  emaj_changed   TIMESTAMPTZ DEFAULT clock_timestamp(),'
+                   '  emaj_txid      BIGINT      DEFAULT txid_current(),'
+                   '  emaj_user      VARCHAR(32) DEFAULT session_user,'
+                   '  CONSTRAINT %s PRIMARY KEY (emaj_gid, emaj_tuple) %s'
+                   '  ) %s',
+                    v_logTableName, v_fullTableName, v_logIdxName, v_idxTblSpace, v_dataTblSpace);
+-- Get the attnum of the emaj_verb column.
+    SELECT attnum INTO STRICT v_attnum
+      FROM pg_catalog.pg_attribute
+           JOIN pg_catalog.pg_class ON (pg_class.oid = attrelid)
+           JOIN pg_catalog.pg_namespace ON (pg_namespace.oid = relnamespace)
+      WHERE nspname = v_logSchema
+        AND relname = v_baseLogTableName
+        AND attname = 'emaj_verb';
+-- Adjust the log table structure with the alter_log_table parameter, if set.
+    SELECT param_value_text INTO v_alter_log_table_param
+      FROM emaj.emaj_param
+      WHERE param_key = ('alter_log_table');
+    IF v_alter_log_table_param IS NOT NULL AND v_alter_log_table_param <> '' THEN
+      EXECUTE format('ALTER TABLE %s %s',
+                     v_logTableName, v_alter_log_table_param);
+    END IF;
+-- Set the index associated to the primary key as cluster index (It may be useful for CLUSTER command).
+    EXECUTE format('ALTER TABLE ONLY %s CLUSTER ON %s',
+                   v_logTableName, v_logIdxName);
+-- Remove the NOT NULL constraints of application columns.
+--   They are useless and blocking to store truncate event for tables belonging to audit_only tables.
+    SELECT string_agg(action, ',') INTO v_stmt
+      FROM
+        (SELECT ' ALTER COLUMN ' || quote_ident(attname) || ' DROP NOT NULL' AS action
+           FROM pg_catalog.pg_attribute
+                JOIN pg_catalog.pg_class ON (pg_class.oid = attrelid)
+                JOIN pg_catalog.pg_namespace ON (pg_namespace.oid = relnamespace)
+           WHERE nspname = v_logSchema
+             AND relname = v_baseLogTableName
+             AND attnum > 0
+             AND attnum < v_attnum
+             AND NOT attisdropped
+             AND attnotnull
+        ) AS t;
+    IF v_stmt IS NOT NULL THEN
+      EXECUTE format('ALTER TABLE %s %s',
+                     v_logTableName, v_stmt);
+    END IF;
+-- Create the sequence associated to the log table.
+    EXECUTE format('CREATE SEQUENCE %s',
+                   v_sequenceName);
+-- Create the log function.
+-- The new row is logged for each INSERT, the old row is logged for each DELETE and the old and new rows are logged for each UPDATE.
+    EXECUTE 'CREATE OR REPLACE FUNCTION ' || v_logFnctName || '() RETURNS TRIGGER AS $logfnct$'
+         || 'BEGIN'
+-- The sequence associated to the log table is incremented at the beginning of the function ...
+         || '  PERFORM NEXTVAL(' || quote_literal(v_sequenceName) || ');'
+-- ... and the global id sequence is incremented by the first/only INSERT into the log table.
+         || '  IF (TG_OP = ''DELETE'') THEN'
+         || '    INSERT INTO ' || v_logTableName || ' SELECT OLD.*, ''DEL'', ''OLD'';'
+         || '    RETURN OLD;'
+         || '  ELSIF (TG_OP = ''UPDATE'') THEN'
+         || '    INSERT INTO ' || v_logTableName || ' SELECT OLD.*, ''UPD'', ''OLD'';'
+         || '    INSERT INTO ' || v_logTableName || ' SELECT NEW.*, ''UPD'', ''NEW'', lastval();'
+         || '    RETURN NEW;'
+         || '  ELSIF (TG_OP = ''INSERT'') THEN'
+         || '    INSERT INTO ' || v_logTableName || ' SELECT NEW.*, ''INS'', ''NEW'';'
+         || '    RETURN NEW;'
+         || '  END IF;'
+         || '  RETURN NULL;'
+         || 'END;'
+         || '$logfnct$ LANGUAGE plpgsql SECURITY DEFINER SET search_path = pg_catalog, pg_temp;';
+-- Create the log and truncate triggers.
+    PERFORM emaj._handle_trigger_fk_tbl('DROP_TRIGGER', v_fullTableName, 'emaj_log_trg');
+    PERFORM emaj._handle_trigger_fk_tbl('ADD_TRIGGER', v_fullTableName, 'emaj_log_trg', v_logFnctName);
+    PERFORM emaj._handle_trigger_fk_tbl('DROP_TRIGGER', v_fullTableName, 'emaj_trunc_trg');
+    PERFORM emaj._handle_trigger_fk_tbl('ADD_TRIGGER', v_fullTableName, 'emaj_trunc_trg');
+    IF p_groupIsLogging THEN
+-- If the group is in logging state, set the triggers as ALWAYS triggers, so that they can fire at rollback time.
+      PERFORM emaj._handle_trigger_fk_tbl('SET_TRIGGER', v_fullTableName, 'emaj_log_trg', 'ALWAYS');
+      PERFORM emaj._handle_trigger_fk_tbl('SET_TRIGGER', v_fullTableName, 'emaj_trunc_trg', 'ALWAYS');
+    ELSE
+-- If the group is idle, deactivate the triggers (they will be enabled at emaj_start_group time).
+      PERFORM emaj._handle_trigger_fk_tbl('DISABLE_TRIGGER', v_fullTableName, 'emaj_log_trg');
+      PERFORM emaj._handle_trigger_fk_tbl('DISABLE_TRIGGER', v_fullTableName, 'emaj_trunc_trg');
+    END IF;
+-- Set emaj_adm as owner of log objects.
+    EXECUTE format('ALTER TABLE %s OWNER TO emaj_adm',
+                   v_logTableName);
+    EXECUTE format('ALTER SEQUENCE %s OWNER TO emaj_adm',
+                   v_sequenceName);
+    EXECUTE format('ALTER FUNCTION %s () OWNER TO emaj_adm',
+                   v_logFnctName);
+-- Grant appropriate rights to the emaj_viewer role.
+    EXECUTE format('GRANT SELECT ON TABLE %s TO emaj_viewer',
+                   v_logTableName);
+    EXECUTE format('GRANT SELECT ON SEQUENCE %s TO emaj_viewer',
+                   v_sequenceName);
+-- Build some pieces of SQL statements that will be needed at table rollback and gen_sql times.
+-- They are left NULL if the table has no pkey.
+    SELECT * FROM emaj._build_sql_tbl(v_fullTableName)
+      INTO v_rlbkColList, v_rlbkPkColList, v_rlbkPkConditions, v_genColList,
+           v_genValList, v_genSetList, v_genPkConditions, v_nbGenAlwaysIdentCol;
+-- Register the table into emaj_relation.
+    INSERT INTO emaj.emaj_relation
+               (rel_schema, rel_tblseq, rel_time_range, rel_group, rel_priority,
+                rel_log_schema, rel_log_dat_tsp, rel_log_idx_tsp, rel_kind, rel_log_table,
+                rel_log_index, rel_log_sequence, rel_log_function, rel_ignored_triggers, rel_emaj_verb_attnum,
+                rel_has_always_ident_col, rel_sql_rlbk_columns, rel_sql_rlbk_pk_columns, rel_sql_rlbk_pk_conditions,
+                rel_sql_gen_ins_col, rel_sql_gen_ins_val, rel_sql_gen_upd_set, rel_sql_gen_pk_conditions)
+        VALUES (p_schema, p_tbl, int8range(p_timeId, NULL, '[)'), p_groupName, p_priority,
+                v_logSchema, p_logDatTsp, p_logIdxTsp, 'r', v_baseLogTableName,
+                v_baseLogIdxName, v_baseSequenceName, v_baseLogFnctName, p_ignoredTriggers, v_attnum,
+                v_nbGenAlwaysIdentCol > 0, v_rlbkColList, v_rlbkPkColList, v_rlbkPkConditions,
+                v_genColList, v_genValList, v_genSetList, v_genPkConditions);
+-- Check if the table has application (neither internal - ie. created for fk - nor previously created by emaj) triggers not already
+-- declared as 'to be ignored at rollback time'.
+    SELECT string_agg(tgname, ', ' ORDER BY tgname) INTO v_triggerList
+      FROM
+        (SELECT tgname
+           FROM pg_catalog.pg_trigger
+           WHERE tgrelid = v_fullTableName::regclass
+             AND tgconstraint = 0
+             AND tgname NOT LIKE E'emaj\\_%\\_trg'
+             AND NOT tgname = ANY(coalesce(p_ignoredTriggers, '{}'))
+        ) AS t;
+-- If yes, issue a warning.
+-- If a trigger updates another table in the same table group or outside, it could generate problem at rollback time.
+    IF v_triggerList IS NOT NULL THEN
+      RAISE WARNING '_create_tbl: The table "%" has triggers that will be automatically disabled during E-Maj rollback operations (%).'
+                    ' Use the emaj_modify_table() function to change this behaviour.', v_fullTableName, v_triggerList;
+    END IF;
+--
+    RETURN;
+  END;
+$_create_tbl$;
+
 CREATE OR REPLACE FUNCTION emaj._build_sql_tbl(p_fullTableName TEXT, OUT p_rlbkColList TEXT, OUT p_rlbkPkColList TEXT,
                                                OUT p_rlbkPkConditions TEXT, OUT p_genColList TEXT, OUT p_genValList TEXT,
                                                OUT p_genSetList TEXT, OUT p_genPkConditions TEXT, OUT p_nbGenAlwaysIdentCol INT)
@@ -362,6 +573,225 @@ $_build_sql_tbl$
     RETURN;
   END;
 $_build_sql_tbl$;
+
+CREATE OR REPLACE FUNCTION emaj._remove_tbl(p_schema TEXT, p_table TEXT, p_group TEXT, p_groupIsLogging BOOLEAN,
+                                            p_timeId BIGINT, p_function TEXT)
+RETURNS VOID LANGUAGE plpgsql AS
+$_remove_tbl$
+-- The function removes a table from a group. It is called during an alter group or a dynamic removal operation.
+-- If the group is in idle state, it simply calls the _drop_tbl() function.
+-- Otherwise, only triggers, log function and log sequence are dropped now. The other components will be dropped later (at reset_group
+-- time for instance).
+-- Required inputs: schema and sequence to remove, related group name and logging state,
+--                  time stamp id of the operation, main calling function.
+-- The function is defined as SECURITY DEFINER so that emaj_adm role can drop triggers on application tables.
+  DECLARE
+    v_logSchema              TEXT;
+    v_currentLogTable        TEXT;
+    v_currentLogIndex        TEXT;
+    v_logFunction            TEXT;
+    v_logSequence            TEXT;
+    v_logSequenceLastValue   BIGINT;
+    v_namesSuffix            TEXT;
+    v_fullTableName          TEXT;
+  BEGIN
+    IF NOT p_groupIsLogging THEN
+-- If the group is in idle state, drop the table immediately.
+      PERFORM emaj._drop_tbl(emaj.emaj_relation.*, p_timeId)
+        FROM emaj.emaj_relation
+        WHERE rel_schema = p_schema
+          AND rel_tblseq = p_table
+          AND upper_inf(rel_time_range);
+    ELSE
+-- The group is in logging state.
+-- Get the current relation characteristics.
+      SELECT rel_log_schema, rel_log_table, rel_log_index, rel_log_function, rel_log_sequence
+        INTO v_logSchema, v_currentLogTable, v_currentLogIndex, v_logFunction, v_logSequence
+        FROM emaj.emaj_relation
+        WHERE rel_schema = p_schema
+          AND rel_tblseq = p_table
+          AND upper_inf(rel_time_range);
+-- Get the current log sequence characteristics.
+      SELECT tbl_log_seq_last_val INTO STRICT v_logSequenceLastValue
+        FROM emaj.emaj_table
+        WHERE tbl_schema = p_schema
+          AND tbl_name = p_table
+          AND tbl_time_id = p_timeId;
+-- Compute the suffix to add to the log table and index names (_1, _2, ...), by looking at the existing names.
+      SELECT '_' || coalesce(max(suffix) + 1, 1)::TEXT INTO v_namesSuffix
+        FROM
+          (SELECT (regexp_match(rel_log_table,'_(\d+)$'))[1]::INT AS suffix
+             FROM emaj.emaj_relation
+             WHERE rel_schema = p_schema
+               AND rel_tblseq = p_table
+          ) AS t;
+-- Rename the log table and its index (they may have been dropped).
+      EXECUTE format('ALTER TABLE IF EXISTS %I.%I RENAME TO %I',
+                     v_logSchema, v_currentLogTable, v_currentLogTable || v_namesSuffix);
+      EXECUTE format('ALTER INDEX IF EXISTS %I.%I RENAME TO %I',
+                     v_logSchema, v_currentLogIndex, v_currentLogIndex || v_namesSuffix);
+-- Drop the log and truncate triggers.
+-- (check the application table exists before dropping its triggers to avoid an error fires with postgres version <= 9.3)
+      v_fullTableName  = quote_ident(p_schema) || '.' || quote_ident(p_table);
+      IF EXISTS
+           (SELECT 0
+              FROM pg_catalog.pg_class
+                   JOIN pg_catalog.pg_namespace ON (pg_namespace.oid = relnamespace)
+              WHERE nspname = p_schema
+                AND relname = p_table
+                AND relkind = 'r'
+           ) THEN
+        PERFORM emaj._handle_trigger_fk_tbl('DROP_TRIGGER', v_fullTableName, 'emaj_log_trg');
+        PERFORM emaj._handle_trigger_fk_tbl('DROP_TRIGGER', v_fullTableName, 'emaj_trunc_trg');
+      END IF;
+-- Drop the log function and the log sequence.
+-- (but we keep the sequence related data in the emaj_table and the emaj_seq_hole tables)
+      EXECUTE format('DROP FUNCTION IF EXISTS %I.%I() CASCADE',
+                     v_logSchema, v_logFunction);
+      EXECUTE format('DROP SEQUENCE IF EXISTS %I.%I',
+                     v_logSchema, v_logSequence);
+-- Register the end of the relation time frame, the last value of the log sequence, the log table and index names change.
+-- Reflect the changes into the emaj_relation rows:
+--   - for all timeranges pointing to this log table and index
+--     (do not reset the rel_log_sequence value: it will be needed later for _drop_tbl() for the emaj_sequence cleanup)
+      UPDATE emaj.emaj_relation
+        SET rel_log_table = v_currentLogTable || v_namesSuffix , rel_log_index = v_currentLogIndex || v_namesSuffix,
+            rel_log_function = NULL, rel_sql_rlbk_columns = NULL, rel_sql_rlbk_pk_columns = NULL, rel_sql_rlbk_pk_conditions = NULL,
+            rel_log_seq_last_value = v_logSequenceLastValue
+        WHERE rel_schema = p_schema
+          AND rel_tblseq = p_table
+          AND rel_log_table = v_currentLogTable;
+--   - and close the last timerange.
+      UPDATE emaj.emaj_relation
+        SET rel_time_range = int8range(lower(rel_time_range), p_timeId, '[)')
+        WHERE rel_schema = p_schema
+          AND rel_tblseq = p_table
+          AND upper_inf(rel_time_range);
+    END IF;
+-- Insert an entry into the emaj_relation_change table.
+    INSERT INTO emaj.emaj_relation_change (rlchg_time_id, rlchg_schema, rlchg_tblseq, rlchg_change_kind, rlchg_group)
+      VALUES (p_timeId, p_schema, p_table, 'REMOVE_TABLE', p_group);
+-- Insert an entry into the emaj_hist table.
+    INSERT INTO emaj.emaj_hist (hist_function, hist_event, hist_object, hist_wording)
+      VALUES (p_function, 'TABLE REMOVED', quote_ident(p_schema) || '.' || quote_ident(p_table),
+              'From the ' || CASE WHEN p_groupIsLogging THEN 'logging ' ELSE 'idle ' END || 'group ' || p_group);
+--
+    RETURN;
+  END;
+$_remove_tbl$;
+
+CREATE OR REPLACE FUNCTION emaj._move_tbl(p_schema TEXT, p_table TEXT, p_oldGroup TEXT, p_oldGroupIsLogging BOOLEAN, p_newGroup TEXT,
+                                          p_newGroupIsLogging BOOLEAN, p_timeId BIGINT, p_function TEXT)
+RETURNS VOID LANGUAGE plpgsql
+SECURITY DEFINER SET search_path = pg_catalog, pg_temp AS
+$_move_tbl$
+-- The function changes the group ownership of a table. It is called during an alter group or a dynamic assignment operation.
+-- Required inputs: schema and table to move, old and new group names and their logging state,
+--                  time stamp id of the operation, main calling function.
+  DECLARE
+    v_logSchema              TEXT;
+    v_logSequence            TEXT;
+    v_currentLogTable        TEXT;
+    v_currentLogIndex        TEXT;
+    v_dataTblSpace           TEXT;
+    v_idxTblSpace            TEXT;
+    v_namesSuffix            TEXT;
+  BEGIN
+-- Get the current relation characteristics.
+    SELECT rel_log_schema, rel_log_table, rel_log_index, rel_log_sequence,
+           coalesce('TABLESPACE ' || quote_ident(rel_log_dat_tsp),''),
+           coalesce('USING INDEX TABLESPACE ' || quote_ident(rel_log_idx_tsp),'')
+      INTO v_logSchema, v_currentLogTable, v_currentLogIndex, v_logSequence,
+           v_dataTblSpace,
+           v_idxTblSpace
+      FROM emaj.emaj_relation
+      WHERE rel_schema = p_schema
+        AND rel_tblseq = p_table
+        AND upper_inf(rel_time_range);
+-- Compute the suffix to add to the log table and index names (_1, _2, ...), by looking at the existing names.
+    SELECT '_' || coalesce(max(suffix) + 1, 1)::TEXT INTO v_namesSuffix
+      FROM
+          (SELECT (regexp_match(rel_log_table,'_(\d+)$'))[1]::INT AS suffix
+           FROM emaj.emaj_relation
+           WHERE rel_schema = p_schema
+             AND rel_tblseq = p_table
+        ) AS t;
+-- Rename the log table and its index (they may have been dropped).
+    EXECUTE format('ALTER TABLE IF EXISTS %I.%I RENAME TO %I',
+                   v_logSchema, v_currentLogTable, v_currentLogTable || v_namesSuffix);
+    EXECUTE format('ALTER INDEX IF EXISTS %I.%I RENAME TO %I',
+                   v_logSchema, v_currentLogIndex, v_currentLogIndex || v_namesSuffix);
+-- Update emaj_relation to reflect the log table and index rename for all concerned rows.
+    UPDATE emaj.emaj_relation
+      SET rel_log_table = v_currentLogTable || v_namesSuffix , rel_log_index = v_currentLogIndex || v_namesSuffix
+      WHERE rel_schema = p_schema
+        AND rel_tblseq = p_table
+        AND rel_log_table = v_currentLogTable;
+-- Create the new log table, by copying the just renamed table structure.
+    EXECUTE format('CREATE TABLE %I.%I (LIKE %I.%I INCLUDING DEFAULTS) %s',
+                    v_logSchema, v_currentLogTable, v_logSchema, v_currentLogTable || v_namesSuffix, v_dataTblSpace);
+-- Add the primary key.
+    EXECUTE format('ALTER TABLE %I.%I ADD CONSTRAiNT %I PRIMARY KEY (emaj_gid, emaj_tuple) %s',
+                    v_logSchema, v_currentLogTable, v_currentLogIndex, v_idxTblSpace);
+-- Set the index associated to the primary key as cluster index. It may be useful for CLUSTER command.
+    EXECUTE format('ALTER TABLE ONLY %I.%I CLUSTER ON %I',
+                   v_logSchema, v_currentLogTable, v_currentLogIndex);
+-- Grant appropriate rights to both emaj roles.
+    EXECUTE format('ALTER TABLE %I.%I OWNER TO emaj_adm',
+                   v_logSchema, v_currentLogTable);
+    EXECUTE format('GRANT SELECT ON TABLE %I.%I TO emaj_viewer',
+                   v_logSchema, v_currentLogTable);
+-- Register the end of the previous relation time frame and create a new relation time frame with the new group.
+    UPDATE emaj.emaj_relation
+      SET rel_time_range = int8range(lower(rel_time_range),p_timeId,'[)')
+      WHERE rel_schema = p_schema
+        AND rel_tblseq = p_table
+        AND upper_inf(rel_time_range);
+    INSERT INTO emaj.emaj_relation (rel_schema, rel_tblseq, rel_time_range, rel_group, rel_kind, rel_priority, rel_log_schema,
+                                    rel_log_table, rel_log_dat_tsp, rel_log_index, rel_log_idx_tsp, rel_log_sequence, rel_log_function,
+                                    rel_ignored_triggers, rel_emaj_verb_attnum, rel_has_always_ident_col,
+                                    rel_sql_rlbk_columns, rel_sql_rlbk_pk_columns, rel_sql_rlbk_pk_conditions,
+                                    rel_sql_gen_ins_col, rel_sql_gen_ins_val, rel_sql_gen_upd_set, rel_sql_gen_pk_conditions,
+                                    rel_log_seq_last_value)
+      SELECT rel_schema, rel_tblseq, int8range(p_timeId, NULL, '[)'), p_newGroup, rel_kind, rel_priority, rel_log_schema,
+             v_currentLogTable, rel_log_dat_tsp, v_currentLogIndex, rel_log_idx_tsp, rel_log_sequence, rel_log_function,
+             rel_ignored_triggers, rel_emaj_verb_attnum, rel_has_always_ident_col,
+             rel_sql_rlbk_columns, rel_sql_rlbk_pk_columns, rel_sql_rlbk_pk_conditions,
+             rel_sql_gen_ins_col, rel_sql_gen_ins_val, rel_sql_gen_upd_set, rel_sql_gen_pk_conditions,
+             rel_log_seq_last_value
+        FROM emaj.emaj_relation
+        WHERE rel_schema = p_schema
+          AND rel_tblseq = p_table
+          AND upper(rel_time_range) = p_timeId;
+-- If the table is moved from an idle group to a group in logging state,
+    IF NOT p_oldGroupIsLogging AND p_newGroupIsLogging THEN
+-- ... get the log schema and sequence for the new relation,
+      SELECT rel_log_schema, rel_log_sequence INTO v_logSchema, v_logSequence
+        FROM emaj.emaj_relation
+        WHERE rel_schema = p_schema
+          AND rel_tblseq = p_table
+          AND upper_inf(rel_time_range);
+-- ... and record the new log sequence state in the emaj_table table for the current operation mark.
+      INSERT INTO emaj.emaj_table (tbl_schema, tbl_name, tbl_time_id, tbl_tuples, tbl_pages, tbl_log_seq_last_val)
+        SELECT p_schema, p_table, p_timeId, reltuples, relpages, last_value
+          FROM pg_catalog.pg_class
+               JOIN pg_catalog.pg_namespace ON (pg_namespace.oid = relnamespace),
+               LATERAL emaj._get_log_sequence_last_value(v_logSchema, v_logSequence) AS last_value
+          WHERE nspname = p_schema
+            AND relname = p_table;
+    END IF;
+-- Insert an entry into the emaj_relation_change table.
+    INSERT INTO emaj.emaj_relation_change (rlchg_time_id, rlchg_schema, rlchg_tblseq, rlchg_change_kind, rlchg_group, rlchg_new_group)
+      VALUES (p_timeId, p_schema, p_table, 'MOVE_TABLE', p_oldGroup, p_newGroup);
+-- Insert an entry into the emaj_hist table.
+    INSERT INTO emaj.emaj_hist (hist_function, hist_event, hist_object, hist_wording)
+      VALUES (p_function, 'TABLE MOVED', quote_ident(p_schema) || '.' || quote_ident(p_table),
+              'From the ' || CASE WHEN p_oldGroupIsLogging THEN 'logging ' ELSE 'idle ' END || 'group ' || p_oldGroup ||
+              ' to the ' || CASE WHEN p_newGroupIsLogging THEN 'logging ' ELSE 'idle ' END || 'group ' || p_newGroup);
+--
+    RETURN;
+  END;
+$_move_tbl$;
 
 CREATE OR REPLACE FUNCTION emaj._move_sequences(p_schema TEXT, p_sequences TEXT[], p_newGroup TEXT, p_mark TEXT, p_multiSequence BOOLEAN,
                                              p_arrayFromRegex BOOLEAN)
