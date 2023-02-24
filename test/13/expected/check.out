@@ -115,7 +115,7 @@ select funcname, calls from pg_stat_user_functions
  _create_tbl                               |   163
  _dblink_close_cnx                         |    71
  _dblink_open_cnx                          |    88
- _dblink_sql_exec                          |  1961
+ _dblink_sql_exec                          |  1963
  _delete_before_mark_group                 |    23
  _delete_between_marks_group               |    14
  _delete_intermediate_mark_group           |    23
@@ -128,7 +128,7 @@ select funcname, calls from pg_stat_user_functions
  _drop_tbl                                 |   212
  _emaj_param_change_fnct                   |    42
  _enable_event_triggers                    |   311
- _estimate_rlbk_step_duration              |   934
+ _estimate_rlbk_step_duration              |   935
  _estimate_rollback_groups                 |    13
  _event_trigger_sql_drop_fnct              |   168
  _event_trigger_table_rewrite_fnct         |     4
@@ -171,9 +171,9 @@ select funcname, calls from pg_stat_user_functions
  _rlbk_seq                                 |   181
  _rlbk_session_exec                        |    84
  _rlbk_session_lock                        |    84
- _rlbk_set_batch_number                    |   167
+ _rlbk_set_batch_number                    |   168
  _rlbk_start_mark                          |    80
- _rlbk_tbl                                 |   141
+ _rlbk_tbl                                 |   142
  _rollback_activity                        |    17
  _set_mark_groups                          |   354
  _set_time_stamp                           |   569

@@ -379,11 +379,12 @@ select * from emaj.emaj_logged_rollback_group('emptyGroup','EGM3');
 select emaj.emaj_assign_table('myschema4', 'mytblr','myGroup4');
 select emaj.emaj_start_group('myGroup4','myGroup4_start');
 insert into myschema4.myTblM values ('2001-09-11',0,'abc'),('2011-09-11',10,'def'),('2021-09-11',20,'ghi');
-insert into myschema4.myTblP values (-1,'abc'),(0,'def'),(1,'ghi');
+insert into myschema4.myTblP values (-1,'abc'),(0,'def'),(1,'ghi'),(2,'jkl');
 
 select emaj.emaj_set_mark_group('myGroup4','mark1');
 truncate myschema4.myTblM;
 update myschema4.myTblP set col2 = 'DEF' where col1 = 0;
+update myschema4.myTblP set col1 = -2 where col1 = 2;
 insert into myschema4.mytblr (col2,col3) values (1, 'abc');
 
 select * from emaj.emaj_logged_rollback_group('myGroup4','mark1');
@@ -391,8 +392,8 @@ select * from emaj.emaj_logged_rollback_group('myGroup4','mark1');
 select col1, col2, col3, emaj_verb, emaj_tuple, emaj_gid from emaj_myschema4.mytblm_log;
 select col1, col2, col3, emaj_verb, emaj_tuple, emaj_gid from emaj_myschema4.mytblc1_log;
 select col1, col2, col3, emaj_verb, emaj_tuple, emaj_gid from emaj_myschema4.mytblc2_log;
-select col1, col2, emaj_verb, emaj_tuple, emaj_gid from emaj_myschema4.mypartp1_log;          -- empty in pg 9.6-
-select col1, col2, emaj_verb, emaj_tuple, emaj_gid from emaj_myschema4.mypartp2_log;          -- empty in pg 9.6-
+select col1, col2, emaj_verb, emaj_tuple, emaj_gid from emaj_myschema4.mypartp1_log;
+select col1, col2, emaj_verb, emaj_tuple, emaj_gid from emaj_myschema4.mypartp2_log;
 
 -- use the functions dedicated to emaj_web
 -- for an equivalent of "select * from emaj.emaj_rollback_group('myGroup4','myGroup4_start',true);"

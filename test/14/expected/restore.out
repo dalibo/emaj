@@ -644,7 +644,7 @@ ALTER TABLE
 
  setval 
 --------
-      8
+      9
 (1 row)
 
  setval 

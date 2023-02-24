@@ -385,17 +385,17 @@ select * from emaj.emaj_logged_rollback_group('myGroup4','Before update');
 select col1, col2, col3, emaj_verb, emaj_tuple, emaj_gid from emaj_myschema4.mypartP2_log;
  col1 |              col2              | col3 | emaj_verb | emaj_tuple | emaj_gid 
 ------+--------------------------------+------+-----------+------------+----------
-    1 | Initialy stored in partition 2 |    7 | INS       | NEW        | 17200005
-    1 | Initialy stored in partition 2 |    7 | DEL       | OLD        | 17200007
-    1 | Initialy stored in partition 2 |    7 | INS       | NEW        | 17200009
+    1 | Initialy stored in partition 2 |    8 | INS       | NEW        | 17200005
+    1 | Initialy stored in partition 2 |    8 | DEL       | OLD        | 17200007
+    1 | Initialy stored in partition 2 |    8 | INS       | NEW        | 17200009
 (3 rows)
 
 select col1, col2, col3, emaj_verb, emaj_tuple, emaj_gid from emaj_myschema4.mypartP3_log;
  col1 |              col2              | col3 | emaj_verb | emaj_tuple | emaj_gid 
 ------+--------------------------------+------+-----------+------------+----------
-   11 | Stored in partition 3          |    8 | INS       | NEW        | 17200006
-   12 | Initialy stored in partition 2 |    7 | INS       | NEW        | 17200008
-   12 | Initialy stored in partition 2 |    7 | DEL       | OLD        | 17200010
+   11 | Stored in partition 3          |    9 | INS       | NEW        | 17200006
+   12 | Initialy stored in partition 2 |    8 | INS       | NEW        | 17200008
+   12 | Initialy stored in partition 2 |    8 | DEL       | OLD        | 17200010
 (3 rows)
 
 select emaj.emaj_stop_group('myGroup4');
