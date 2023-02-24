@@ -134,16 +134,6 @@ rollback;
 --
 -- tests on groups errors
 --
--- detection of too old group
-begin;
-  update emaj.emaj_group set group_pg_version = '8.0.0' where group_name = 'myGroup1';
-  select * from emaj.emaj_verify_all() t(msg) where msg like 'Error%';
-                                                               msg                                                                
-----------------------------------------------------------------------------------------------------------------------------------
- Error: The group "myGroup1" has been created with a non compatible postgresql version (8.0.0). It must be dropped and recreated.
-(1 row)
-
-rollback;
 -- detection of a missing application schema
 begin;
   drop schema myschema1 cascade;
@@ -378,7 +368,6 @@ begin;
   create table emaj.dummy_log (col1 int);
   create function emaj.dummy_log_fnct () returns int language sql as $$ select 0 $$;
   create function emaj.dummy_rlbk_fnct () returns int language sql as $$ select 0 $$;
-  update emaj.emaj_group set group_pg_version = '8.0.0' where group_name = 'myGroup1';
   drop trigger emaj_log_trg on myschema1.mytbl1;
   drop function emaj_myschema1.mytbl1_log_fnct() cascade;
   drop table emaj_myschema1.mytbl1_log;
@@ -386,18 +375,17 @@ begin;
   update emaj.emaj_relation set rel_kind = 'S' where rel_schema = 'myschema2' and rel_tblseq = 'mytbl1' and upper_inf(rel_time_range);
   alter table myschema1.mytbl4 drop constraint mytbl4_pkey;
   select * from emaj.emaj_verify_all() t(msg) where msg like 'Error%';
-                                                               msg                                                                
-----------------------------------------------------------------------------------------------------------------------------------
+                                                      msg                                                      
+---------------------------------------------------------------------------------------------------------------
  Error: In the schema "emaj", the table "emaj"."dummy_log" is not linked to any created tables group.
  Error: In the schema "emaj", the function "emaj"."dummy_log_fnct" is not linked to any created tables group.
  Error: In the schema "emaj", the function "emaj"."dummy_rlbk_fnct" is not linked to any created tables group.
- Error: The group "myGroup1" has been created with a non compatible postgresql version (8.0.0). It must be dropped and recreated.
  Error: In the group "myGroup2", the sequence "myschema2"."mytbl1" does not exist any more.
  Error: In the group "myGroup1", the log table "emaj_myschema1"."mytbl1_log" is not found.
  Error: In the group "myGroup1", the log function "emaj_myschema1"."mytbl1_log_fnct" is not found.
  Error: In the group "myGroup1", the log trigger "emaj_log_trg" on table "myschema1"."mytbl1" is not found.
  Error: In the rollbackable group "myGroup1", the table "myschema1"."mytbl4" has no primary key any more.
-(9 rows)
+(8 rows)
 
 rollback;
 --

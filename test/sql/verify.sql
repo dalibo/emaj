@@ -78,11 +78,6 @@ rollback;
 -- tests on groups errors
 --
 
--- detection of too old group
-begin;
-  update emaj.emaj_group set group_pg_version = '8.0.0' where group_name = 'myGroup1';
-  select * from emaj.emaj_verify_all() t(msg) where msg like 'Error%';
-rollback;
 -- detection of a missing application schema
 begin;
   drop schema myschema1 cascade;
@@ -177,7 +172,6 @@ begin;
   create table emaj.dummy_log (col1 int);
   create function emaj.dummy_log_fnct () returns int language sql as $$ select 0 $$;
   create function emaj.dummy_rlbk_fnct () returns int language sql as $$ select 0 $$;
-  update emaj.emaj_group set group_pg_version = '8.0.0' where group_name = 'myGroup1';
   drop trigger emaj_log_trg on myschema1.mytbl1;
   drop function emaj_myschema1.mytbl1_log_fnct() cascade;
   drop table emaj_myschema1.mytbl1_log;

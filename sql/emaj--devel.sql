@@ -11405,14 +11405,6 @@ $_verify_all_groups$
 --
 -- Errors detection.
 --
--- Check that the postgres version at groups creation time is compatible (i.e. >= 8.4).
-    RETURN QUERY
-      SELECT 'Error: The group "' || group_name || '" has been created with a non compatible postgresql version (' ||
-               group_pg_version || '). It must be dropped and recreated.' AS msg
-        FROM emaj.emaj_group
-        WHERE cast(to_number(substring(group_pg_version FROM E'^(\\d+)'),'99') * 100 +
-                   to_number(substring(group_pg_version FROM E'^\\d+\\.(\\d+)'),'99') AS INTEGER) < 804
-        ORDER BY msg;
 -- Check that all application schemas referenced in the emaj_relation table still exist.
     RETURN QUERY
       SELECT 'Error: The application schema "' || rel_schema || '" does not exist any more.' AS msg
