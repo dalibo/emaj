@@ -411,8 +411,10 @@ select rlbk_id, rlbk_groups, rlbk_mark, rlbk_mark_time_id, rlbk_time_id, rlbk_is
 -- these tests ares performed inside transactions that are then rolled back.
 begin;
 -- 1 rollback operation in EXECUTING state, but no rollback steps have started yet
-  insert into emaj.emaj_time_stamp (time_id, time_tx_timestamp) values (-1, now()-'0.1 seconds'::interval);
-  insert into emaj.emaj_time_stamp (time_id, time_clock_timestamp) values (-2, '2000-01-01 01:00:00');
+  insert into emaj.emaj_time_stamp (time_id, time_tx_timestamp) overriding system value
+    values (-1, now()-'0.1 seconds'::interval);
+  insert into emaj.emaj_time_stamp (time_id, time_clock_timestamp) overriding system value
+    values (-2, '2000-01-01 01:00:00');
   insert into emaj.emaj_rlbk (rlbk_id, rlbk_groups, rlbk_mark, rlbk_mark_time_id, rlbk_time_id, rlbk_is_logged, rlbk_is_alter_group_allowed, 
              rlbk_nb_session, rlbk_nb_table, rlbk_nb_sequence, rlbk_eff_nb_table, rlbk_status)
     values (1232,array['group1232'],'mark1232',-2,-1,true,false,
@@ -472,8 +474,10 @@ rollback;
 
 begin;
 -- 1 rollback operation in LOCKING state and without step other than LOCK_TABLE
-  insert into emaj.emaj_time_stamp (time_id, time_tx_timestamp) values (-1, now()-'2 minutes'::interval);
-  insert into emaj.emaj_time_stamp (time_id, time_clock_timestamp) values (-2, '2000-01-01 01:00:00');
+  insert into emaj.emaj_time_stamp (time_id, time_tx_timestamp) overriding system value
+    values (-1, now()-'2 minutes'::interval);
+  insert into emaj.emaj_time_stamp (time_id, time_clock_timestamp) overriding system value
+    values (-2, '2000-01-01 01:00:00');
   insert into emaj.emaj_rlbk (rlbk_id, rlbk_groups, rlbk_mark, rlbk_mark_time_id, rlbk_time_id, rlbk_is_logged, rlbk_is_alter_group_allowed, 
              rlbk_nb_session, rlbk_nb_table, rlbk_nb_sequence, rlbk_eff_nb_table, rlbk_status)
     values (1233,array['group1233'],'mark1233',-2,-1,true,false,
@@ -492,7 +496,8 @@ begin;
            (1233, 'RLBK_TABLE','schema','t3','','0:00:20'::interval,null,null);
   select rlbk_id, rlbk_status, rlbk_elapse, rlbk_remaining, rlbk_completion_pct from emaj._rollback_activity();
 -- +1 rollback operation in PLANNING state
-  insert into emaj.emaj_time_stamp (time_id, time_tx_timestamp) values (-3, now()-'1 minute'::interval);
+  insert into emaj.emaj_time_stamp (time_id, time_tx_timestamp) overriding system value
+    values (-3, now()-'1 minute'::interval);
   insert into emaj.emaj_rlbk (rlbk_id, rlbk_groups, rlbk_mark, rlbk_mark_time_id, rlbk_time_id, rlbk_is_logged, rlbk_is_alter_group_allowed, 
              rlbk_nb_session, rlbk_nb_table, rlbk_nb_sequence, rlbk_eff_nb_table, rlbk_status)
     values (1234,array['group1234'],'mark1234',-2,-3,true,false,

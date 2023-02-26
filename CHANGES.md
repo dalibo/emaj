@@ -4,7 +4,8 @@ E-Maj - Change log
 ------
 ###Enhancements:###
   * Remove the support of postgres versions prior V11.
-  * Minor code changes.
+  * Minor code changes, in particular to take benefit from the features brought
+    by Postgres 9.6, 10 and 11.
 
 ###Bug fixes:###
   * Fix a bug in both emaj_move_tables() and emaj_move_sequences() functions.
