@@ -2378,6 +2378,146 @@ $_rlbk_end$
   END;
 $_rlbk_end$;
 
+CREATE OR REPLACE FUNCTION emaj._reset_groups(p_groupNames TEXT[])
+RETURNS INT LANGUAGE plpgsql AS
+$_reset_groups$
+-- This function empties the log tables for all tables of a group, using a TRUNCATE, and deletes the sequences images.
+-- It is called by emaj_reset_group(), emaj_start_group() and emaj_alter_group() functions.
+-- Input: group names array
+-- Output: number of processed tables and sequences
+-- There is no check of the groups state (this is done by callers).
+  DECLARE
+    v_eventTriggers          TEXT[];
+    v_batchSize     CONSTANT INT = 100;
+    v_tableList              TEXT;
+    v_nbTbl                  INT;
+    r_rel                    RECORD;
+  BEGIN
+-- Disable event triggers that protect emaj components and keep in memory these triggers name.
+    SELECT emaj._disable_event_triggers() INTO v_eventTriggers;
+-- Delete all marks for the groups from the emaj_mark table.
+    DELETE FROM emaj.emaj_mark
+      WHERE mark_group = ANY (p_groupNames);
+-- Delete emaj_table rows related to the tables of the groups.
+    DELETE FROM emaj.emaj_table
+      USING emaj.emaj_relation r1
+      WHERE tbl_schema = rel_schema
+        AND tbl_name = rel_tblseq
+        AND rel_group = ANY (p_groupNames)
+        AND rel_kind = 'r'
+        AND ((tbl_time_id <@ rel_time_range               -- all log sequences inside the relation time range
+             AND (tbl_time_id <> lower(rel_time_range)    -- except the lower bound if
+                  OR NOT EXISTS                           --   it is the upper bound of another time range for another group
+                       (SELECT 0
+                          FROM emaj.emaj_relation r2
+                          WHERE r2.rel_schema = tbl_schema
+                            AND r2.rel_tblseq = tbl_name
+                            AND upper(r2.rel_time_range) = tbl_time_id
+                            AND NOT (r2.rel_group = ANY (p_groupNames)) )))
+            OR (tbl_time_id = upper(rel_time_range)        -- but including the upper bound if
+                  AND NOT EXISTS                           --   it is not the lower bound of another time range (for any group)
+                        (SELECT 0
+                           FROM emaj.emaj_relation r3
+                           WHERE r3.rel_schema = tbl_schema
+                             AND r3.rel_tblseq = tbl_name
+                             AND lower(r3.rel_time_range) = tbl_time_id
+                        )
+               ));
+-- Delete all sequence holes for the tables of the groups.
+-- It may delete holes for timeranges that do not belong to the group, if a table has been moved to another group,
+-- but is safe enough for rollbacks.
+    DELETE FROM emaj.emaj_seq_hole
+      USING emaj.emaj_relation
+      WHERE rel_schema = sqhl_schema
+        AND rel_tblseq = sqhl_table
+        AND rel_group = ANY (p_groupNames)
+        AND rel_kind = 'r';
+-- Drop obsolete log tables, but keep those linked to other groups.
+    FOR r_rel IN
+        SELECT DISTINCT rel_log_schema, rel_log_table
+          FROM emaj.emaj_relation
+          WHERE rel_group = ANY (p_groupNames)
+            AND rel_kind = 'r'
+            AND NOT upper_inf(rel_time_range)
+      EXCEPT
+        SELECT rel_log_schema, rel_log_table
+          FROM emaj.emaj_relation
+          WHERE rel_kind = 'r'
+            AND (upper_inf(rel_time_range) OR NOT rel_group = ANY (p_groupNames))
+        ORDER BY 1,2
+    LOOP
+      EXECUTE format('DROP TABLE IF EXISTS %I.%I CASCADE',
+                     r_rel.rel_log_schema, r_rel.rel_log_table);
+    END LOOP;
+-- Delete emaj_sequence rows related to the sequences of the groups.
+    DELETE FROM emaj.emaj_sequence
+      USING emaj.emaj_relation
+      WHERE sequ_schema = rel_schema
+        AND sequ_name = rel_tblseq
+        AND rel_group = ANY (p_groupNames)
+        AND rel_kind = 'S'
+        AND ((sequ_time_id <@ rel_time_range               -- all application sequences inside the relation time range
+             AND (sequ_time_id <> lower(rel_time_range)    -- except the lower bound if
+                  OR NOT EXISTS                            --   it is the upper bound of another time range for another group
+                       (SELECT 0
+                          FROM emaj.emaj_relation r2
+                          WHERE r2.rel_schema = sequ_schema
+                            AND r2.rel_tblseq = sequ_name
+                            AND upper(r2.rel_time_range) = sequ_time_id
+                            AND NOT (r2.rel_group = ANY (p_groupNames))
+                       )))
+          OR (sequ_time_id = upper(rel_time_range)         -- including the upper bound if
+                  AND NOT EXISTS                           --   it is not the lower bound of another time range for another group
+                       (SELECT 0
+                          FROM emaj.emaj_relation r3
+                          WHERE r3.rel_schema = sequ_schema
+                            AND r3.rel_tblseq = sequ_name
+                            AND lower(r3.rel_time_range) = sequ_time_id
+                       ))
+            );
+-- Keep a trace of the relation group ownership history
+-- and finaly delete the old versions of emaj_relation rows (those with a not infinity upper bound).
+    WITH deleted AS
+      (DELETE FROM emaj.emaj_relation
+         WHERE rel_group = ANY (p_groupNames)
+           AND NOT upper_inf(rel_time_range)
+         RETURNING rel_schema, rel_tblseq, rel_time_range, rel_group, rel_kind
+      )
+    INSERT INTO emaj.emaj_rel_hist
+             (relh_schema, relh_tblseq, relh_time_range, relh_group, relh_kind)
+      SELECT rel_schema, rel_tblseq, rel_time_range, rel_group, rel_kind
+        FROM deleted;
+-- Truncate remaining log tables for application tables.
+-- For performance reason, execute one single TRUNCATE statement for every v_batchSize tables.
+    v_tableList = NULL;
+    v_nbTbl = 0;
+    FOR r_rel IN
+      SELECT quote_ident(rel_log_schema) || '.' || quote_ident(rel_log_table) AS full_relation_name
+        FROM emaj.emaj_relation
+        WHERE rel_group = ANY (p_groupNames)
+          AND rel_kind = 'r'
+        ORDER BY rel_priority, rel_schema, rel_tblseq
+    LOOP
+      v_tableList = coalesce(v_tableList || ',' || r_rel.full_relation_name, r_rel.full_relation_name);
+      v_nbTbl = v_nbtbl + 1;
+      IF v_nbTbl >= v_batchSize THEN
+        EXECUTE 'TRUNCATE ' || v_tableList;
+        v_nbTbl = 0;
+        v_tableList = NULL;
+      END IF;
+    END LOOP;
+    IF v_tableList IS NOT NULL THEN
+      EXECUTE 'TRUNCATE ' || v_tableList;
+    END IF;
+-- Enable previously disabled event triggers.
+    PERFORM emaj._enable_event_triggers(v_eventTriggers);
+--
+    RETURN sum(group_nb_table)+sum(group_nb_sequence)
+      FROM emaj.emaj_group
+      WHERE group_name = ANY (p_groupNames);
+  END;
+$_reset_groups$;
+
 CREATE OR REPLACE FUNCTION emaj.emaj_snap_group(p_groupName TEXT, p_dir TEXT, p_copyOptions TEXT)
 RETURNS INT LANGUAGE plpgsql AS
 $emaj_snap_group$

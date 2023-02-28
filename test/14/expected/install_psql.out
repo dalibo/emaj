@@ -9683,6 +9683,9 @@ $_reset_groups$
 -- There is no check of the groups state (this is done by callers).
   DECLARE
     v_eventTriggers          TEXT[];
+    v_batchSize     CONSTANT INT = 100;
+    v_tableList              TEXT;
+    v_nbTbl                  INT;
     r_rel                    RECORD;
   BEGIN
 -- Disable event triggers that protect emaj components and keep in memory these triggers name.
@@ -9780,17 +9783,27 @@ $_reset_groups$
       SELECT rel_schema, rel_tblseq, rel_time_range, rel_group, rel_kind
         FROM deleted;
 -- Truncate remaining log tables for application tables.
+-- For performance reason, execute one single TRUNCATE statement for every v_batchSize tables.
+    v_tableList = NULL;
+    v_nbTbl = 0;
     FOR r_rel IN
-      SELECT rel_log_schema, rel_log_table, rel_log_sequence
+      SELECT quote_ident(rel_log_schema) || '.' || quote_ident(rel_log_table) AS full_relation_name
         FROM emaj.emaj_relation
         WHERE rel_group = ANY (p_groupNames)
           AND rel_kind = 'r'
         ORDER BY rel_priority, rel_schema, rel_tblseq
     LOOP
---   Truncate the log table.
-      EXECUTE format('TRUNCATE %I.%I',
-                     r_rel.rel_log_schema, r_rel.rel_log_table);
+      v_tableList = coalesce(v_tableList || ',' || r_rel.full_relation_name, r_rel.full_relation_name);
+      v_nbTbl = v_nbtbl + 1;
+      IF v_nbTbl >= v_batchSize THEN
+        EXECUTE 'TRUNCATE ' || v_tableList;
+        v_nbTbl = 0;
+        v_tableList = NULL;
+      END IF;
     END LOOP;
+    IF v_tableList IS NOT NULL THEN
+      EXECUTE 'TRUNCATE ' || v_tableList;
+    END IF;
 -- Enable previously disabled event triggers.
     PERFORM emaj._enable_event_triggers(v_eventTriggers);
 --
@@ -12312,7 +12325,7 @@ $do$
     RETURN;
   END;
 $do$;
-psql:sql/emaj-devel.sql:12544: NOTICE:  E-Maj installation: E-Maj successfully installed.
+psql:sql/emaj-devel.sql:12557: NOTICE:  E-Maj installation: E-Maj successfully installed.
 COMMIT;
 -----------------------------
 -- check installation
