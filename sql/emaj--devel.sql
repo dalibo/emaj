@@ -12183,6 +12183,11 @@ $_event_trigger_sql_drop_fnct$
             RAISE EXCEPTION 'E-Maj event trigger: Attempting to drop the log function "%". But dropping an E-Maj log function is not'
                             ' allowed.', r_dropped.object_identity;
           END IF;
+-- Verify that the function is not public._emaj_protection_event_trigger_fnct() (which is intentionaly not linked to the emaj extension)
+          IF r_dropped.object_identity = 'public._emaj_protection_event_trigger_fnct()' THEN
+            RAISE EXCEPTION 'E-Maj event trigger: Attempting to drop the public._emaj_protection_event_trigger_fnct() function. '
+                            'But dropping this E-Maj technical function is not allowed.';
+          END IF;
         WHEN r_dropped.object_type = 'trigger' THEN
 -- The object is a trigger.
 -- Look at the trigger name pattern to identify emaj trigger.

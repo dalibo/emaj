@@ -7,6 +7,8 @@ E-Maj - Change log
   * Minor code changes, in particular to take benefit from the features brought
     by Postgres 9.6, 10 and 11.
   * Improve the performance of log tables TRUNCATEs.
+  * Block any attempt to DROP the public._emaj_protection_event_trigger_fnct()
+    function.
 
 ###Bug fixes:###
   * Fix a bug in both emaj_move_tables() and emaj_move_sequences() functions.

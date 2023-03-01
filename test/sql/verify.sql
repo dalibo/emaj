@@ -407,6 +407,9 @@ begin;
   drop sequence myschema2.mySeq1;
 rollback;
 
+-- drop the public._emaj_protection_event_trigger_fnct() technical function that is left outside the emaj extension
+drop function public._emaj_protection_event_trigger_fnct() CASCADE;
+
 -- missing event triggers
 begin;
   drop event trigger emaj_protection_trg;

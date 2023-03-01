@@ -842,7 +842,7 @@ rollback;
 begin;
   alter table myschema1.mytbl4 drop constraint mytbl4_pkey;
 ERROR:  E-Maj event trigger: Attempting to drop the primary key for the application table "myschema1.mytbl4". But it belongs to the rollbackable tables group "myGroup1".
-CONTEXT:  PL/pgSQL function emaj._event_trigger_sql_drop_fnct() line 132 at RAISE
+CONTEXT:  PL/pgSQL function emaj._event_trigger_sql_drop_fnct() line 137 at RAISE
 rollback;
 -- drop a primary key for a table belonging to an audit_only tables group (should not fail)
 begin;
@@ -867,7 +867,7 @@ rollback;
 begin;
   drop trigger emaj_log_trg on myschema1.mytbl1;
 ERROR:  E-Maj event trigger: Attempting to drop the "emaj_log_trg on myschema1.mytbl1" E-Maj trigger. But dropping an E-Maj trigger is not allowed.
-CONTEXT:  PL/pgSQL function emaj._event_trigger_sql_drop_fnct() line 106 at RAISE
+CONTEXT:  PL/pgSQL function emaj._event_trigger_sql_drop_fnct() line 111 at RAISE
 rollback;
 begin;
   drop schema emaj cascade;
@@ -913,6 +913,10 @@ begin;
   drop table myschema1.mytbl1 cascade;
   drop sequence myschema2.mySeq1;
 rollback;
+-- drop the public._emaj_protection_event_trigger_fnct() technical function that is left outside the emaj extension
+drop function public._emaj_protection_event_trigger_fnct() CASCADE;
+ERROR:  E-Maj event trigger: Attempting to drop the public._emaj_protection_event_trigger_fnct() function. But dropping this E-Maj technical function is not allowed.
+CONTEXT:  PL/pgSQL function emaj._event_trigger_sql_drop_fnct() line 102 at RAISE
 -- missing event triggers
 begin;
   drop event trigger emaj_protection_trg;
