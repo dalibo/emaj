@@ -24,7 +24,6 @@ $do$
     v_emajVersion            TEXT;
     v_nbNoError              INT;
     v_nbWarning              INT;
-    v_groupList              TEXT;
   BEGIN
 -- The emaj version registered in emaj_param must be '4.1.0'.
     SELECT param_value_text INTO v_emajVersion FROM emaj.emaj_param WHERE param_key = 'emaj_version';
@@ -48,14 +47,6 @@ $do$
     IF v_nbWarning > 0 THEN
       RAISE WARNING 'E-Maj upgrade: the E-Maj environment health check reports warning. You may execute "SELECT * FROM '
                     'emaj.emaj_verify_all();" to get more details.';
-    END IF;
--- No existing group must have been created with a postgres version prior 8.4.
-    SELECT string_agg(group_name, ', ') INTO v_groupList FROM emaj.emaj_group
-      WHERE cast(to_number(substring(group_pg_version FROM E'^(\\d+)'),'99') * 100 +
-                 to_number(substring(group_pg_version FROM E'^\\d+\\.(\\d+)'),'99') AS INTEGER) < 804;
-    IF v_groupList IS NOT NULL THEN
-      RAISE EXCEPTION 'E-Maj upgrade: groups "%" have been created with a too old postgres version (< 8.4). Drop these groups before '
-                      'upgrading. ',v_groupList;
     END IF;
   END;
 $do$;
