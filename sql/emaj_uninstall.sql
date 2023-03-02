@@ -34,11 +34,6 @@ $emaj_uninstall$
       RAISE EXCEPTION 'emaj_uninstall: The schema ''emaj'' doesn''t exist';
     END IF;
 --
--- Check postgres version is at least 9.1
-    IF current_setting('server_version_num')::int < 90200 THEN
-      RAISE EXCEPTION 'emaj_uninstall: The postgres version is not compatible with this script (it should be at least 9.2)';
-    END IF;
---
 -- For extensions, check the current role is superuser
     IF EXISTS (SELECT 1 FROM pg_catalog.pg_extension WHERE extname = 'emaj') THEN
        PERFORM 1 FROM pg_catalog.pg_roles WHERE rolname = current_user AND rolsuper;
@@ -65,7 +60,8 @@ $emaj_uninstall$
       v_nbObject = v_nbObject + 1;
     END LOOP;
     IF v_nbObject > 0 THEN
-      RAISE EXCEPTION 'emaj_uninstall: There are % unexpected objects in E-Maj schemas. Drop them before reexecuting the uninstall function.', v_nbObject;
+      RAISE EXCEPTION 'emaj_uninstall: There are % unexpected objects in E-Maj schemas. Drop them before reexecuting the uninstall'
+                      ' function.', v_nbObject;
     END IF;
     RETURN;
   END;
@@ -154,7 +150,8 @@ $emaj_uninstall$
 --
 -- Are emaj roles granted to other roles ?
     v_granteeRoleList = NULL;
-    SELECT string_agg(q.rolname,', ') INTO v_granteeRoleList FROM pg_catalog.pg_auth_members m, pg_catalog.pg_roles r, pg_catalog.pg_roles q
+    SELECT string_agg(q.rolname,', ') INTO v_granteeRoleList
+      FROM pg_catalog.pg_auth_members m, pg_catalog.pg_roles r, pg_catalog.pg_roles q
       WHERE m.roleid = r.oid AND m.member = q.oid AND r.rolname = 'emaj_viewer';
     IF v_granteeRoleList IS NOT NULL THEN
       RAISE WARNING 'emaj_uninstall: There are remaining roles (%) who have been granted emaj_viewer role.', v_granteeRoleList;
@@ -162,7 +159,8 @@ $emaj_uninstall$
     END IF;
 --
     v_granteeRoleList = NULL;
-    SELECT string_agg(q.rolname,', ') INTO v_granteeRoleList FROM pg_catalog.pg_auth_members m, pg_catalog.pg_roles r, pg_catalog.pg_roles q
+    SELECT string_agg(q.rolname,', ') INTO v_granteeRoleList
+      FROM pg_catalog.pg_auth_members m, pg_catalog.pg_roles r, pg_catalog.pg_roles q
       WHERE m.roleid = r.oid AND m.member = q.oid AND r.rolname = 'emaj_adm';
     IF v_granteeRoleList IS NOT NULL THEN
       RAISE WARNING 'emaj_uninstall: There are remaining roles (%) who have been granted emaj_adm role.', v_granteeRoleList;
@@ -171,7 +169,8 @@ $emaj_uninstall$
 --
 -- Are emaj roles granted to relations (tables, views, sequences) (other than just dropped emaj ones) ?
     v_granteeClassList = NULL;
-    SELECT string_agg(nspname || '.' || relname, ', ') INTO v_granteeClassList FROM pg_catalog.pg_namespace, pg_catalog.pg_class
+    SELECT string_agg(nspname || '.' || relname, ', ') INTO v_granteeClassList
+      FROM pg_catalog.pg_namespace, pg_catalog.pg_class
       WHERE pg_namespace.oid = relnamespace AND array_to_string (relacl,';') LIKE '%emaj_viewer=%';
     IF v_granteeClassList IS NOT NULL THEN
       IF length(v_granteeClassList) > 200 THEN
@@ -182,7 +181,8 @@ $emaj_uninstall$
     END IF;
 --
     v_granteeClassList = NULL;
-    SELECT string_agg(nspname || '.' || relname, ', ') INTO v_granteeClassList FROM pg_catalog.pg_namespace, pg_catalog.pg_class
+    SELECT string_agg(nspname || '.' || relname, ', ') INTO v_granteeClassList
+      FROM pg_catalog.pg_namespace, pg_catalog.pg_class
       WHERE pg_namespace.oid = relnamespace AND array_to_string (relacl,';') LIKE '%emaj_adm=%';
     IF v_granteeClassList IS NOT NULL THEN
       IF length(v_granteeClassList) > 200 THEN
@@ -194,7 +194,8 @@ $emaj_uninstall$
 --
 -- Are emaj roles granted to functions (other than just dropped emaj ones) ?
     v_granteeFunctionList = NULL;
-    SELECT string_agg(nspname || '.' || proname || '()', ', ') INTO v_granteeFunctionList FROM pg_catalog.pg_namespace, pg_catalog.pg_proc
+    SELECT string_agg(nspname || '.' || proname || '()', ', ') INTO v_granteeFunctionList
+      FROM pg_catalog.pg_namespace, pg_catalog.pg_proc
       WHERE pg_namespace.oid = pronamespace AND array_to_string (proacl,';') LIKE '%emaj_viewer=%';
     IF v_granteeFunctionList IS NOT NULL THEN
       IF length(v_granteeFunctionList) > 200 THEN
@@ -205,7 +206,8 @@ $emaj_uninstall$
     END IF;
 --
     v_granteeFunctionList = NULL;
-    SELECT string_agg(nspname || '.' || proname || '()', ', ') INTO v_granteeFunctionList FROM pg_catalog.pg_namespace, pg_catalog.pg_proc
+    SELECT string_agg(nspname || '.' || proname || '()', ', ') INTO v_granteeFunctionList
+      FROM pg_catalog.pg_namespace, pg_catalog.pg_proc
       WHERE pg_namespace.oid = pronamespace AND array_to_string (proacl,';') LIKE '%emaj_adm=%';
     IF v_granteeFunctionList IS NOT NULL THEN
       IF length(v_granteeFunctionList) > 200 THEN
@@ -218,7 +220,8 @@ $emaj_uninstall$
 -- If emaj roles can be dropped, drop them
     IF v_roleToDrop THEN
 -- revoke the remaining grants set on tablespaces
-      SELECT string_agg(spcname, ', ') INTO v_tspList FROM pg_catalog.pg_tablespace
+      SELECT string_agg(spcname, ', ') INTO v_tspList
+        FROM pg_catalog.pg_tablespace
         WHERE array_to_string (spcacl,';') LIKE '%emaj_viewer=%' OR array_to_string (spcacl,';') LIKE '%emaj_adm=%';
       IF v_tspList IS NOT NULL THEN
         EXECUTE 'REVOKE ALL ON TABLESPACE ' || v_tspList || ' FROM emaj_viewer, emaj_adm';
