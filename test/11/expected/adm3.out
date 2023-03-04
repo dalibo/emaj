@@ -632,7 +632,7 @@ select * from emaj.emaj_verify_all();
  Error: In the group "phil's group#3",", the structure of the application table "phil's schema3"."mytbl4" is not coherent with its log table ("emaj_phil's schema3"."mytbl4_log").
  Warning: In the group "myGroup2", the foreign key "mytbl6_col61_fkey" on the table "myschema2"."mytbl6" references the table "myschema2"."mytbl7" that does not belong to any group.
  Warning: In the group "myGroup2", the table "myschema2"."mytbl6" is referenced by the foreign key "mytbl8_col81_fkey" of the table "myschema2"."mytbl8" that does not belong to any group.
- Warning: Some E-Maj event triggers exist but are disabled. You may enable them using the emaj_enable_protection_by_event_triggers() function.
+ Warning: Some E-Maj event triggers are disabled. You may enable them using the emaj_enable_protection_by_event_triggers() function.
 (4 rows)
 
 select emaj.emaj_remove_table('phil''s schema3','mytbl4','remove_the_damaged_table');
@@ -669,7 +669,7 @@ select * from emaj.emaj_verify_all();
  Error: In the group "phil's group#3",", the log table "emaj_phil's schema3"."mytbl4_log" is not found.
  Warning: In the group "myGroup2", the foreign key "mytbl6_col61_fkey" on the table "myschema2"."mytbl6" references the table "myschema2"."mytbl7" that does not belong to any group.
  Warning: In the group "myGroup2", the table "myschema2"."mytbl6" is referenced by the foreign key "mytbl8_col81_fkey" of the table "myschema2"."mytbl8" that does not belong to any group.
- Warning: Some E-Maj event triggers exist but are disabled. You may enable them using the emaj_enable_protection_by_event_triggers() function.
+ Warning: Some E-Maj event triggers are disabled. You may enable them using the emaj_enable_protection_by_event_triggers() function.
 (4 rows)
 
 select emaj.emaj_remove_table('phil''s schema3','mytbl4','remove_the_damaged_table_2');

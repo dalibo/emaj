@@ -51,6 +51,31 @@ $do$
   END;
 $do$;
 
+-- Some specific checks for this version upgrade.
+DO
+$do$
+  DECLARE
+    v_nbEventTrigger         INT;
+    v_nbFunction             INT;
+  BEGIN
+-- Count the number of event triggers.
+    SELECT count(*) INTO v_nbEventTrigger
+      FROM pg_catalog.pg_event_trigger
+      WHERE evtname IN ('emaj_protection_trg','emaj_sql_drop_trg','emaj_table_rewrite_trg');
+-- Count the number of functions associated to event triggers.
+    SELECT count(*) INTO v_nbFunction
+      FROM pg_catalog.pg_proc JOIN pg_catalog.pg_namespace ON (pronamespace = pg_namespace.oid)
+      WHERE (nspname = 'public' AND proname = '_emaj_protection_event_trigger_fnct')
+         OR (nspname = 'emaj' AND proname = '_event_trigger_sql_drop_fnct')
+         OR (nspname = 'emaj' AND proname = '_event_trigger_table_rewrite_fnct');
+    IF v_nbEventTrigger + v_nbFunction < 6 THEN
+      RAISE EXCEPTION 'E-Maj upgrade: some E-Maj event triggers and/or associated functions are missing. You could recreate them using '
+                      'the emaj_upgrade_after_postgres_upgrade.sql script of the installed E-Maj version if it exists, or drop and '
+                      'recreate the extension.';
+    END IF;
+  END;
+$do$;
+
 -- OK, the upgrade operation can start...
 
 -- Insert the upgrade begin record in the operation history.
@@ -3067,7 +3092,6 @@ $emaj_verify_all$
 -- It returns a set of warning messages for discovered discrepancies. If no error is detected, a single row is returned.
   DECLARE
     v_errorFound             BOOLEAN = FALSE;
-    v_nbMissingEventTrigger  INT;
     r_object                 RECORD;
   BEGIN
 -- Global checks.
@@ -3097,13 +3121,14 @@ $emaj_verify_all$
         v_errorFound = TRUE;
       END IF;
     END LOOP;
--- Report a warning if some E-Maj event triggers are missing.
-    SELECT 3 - count(*) INTO v_nbMissingEventTrigger
+-- Report a warning if the emaj_protection_trg event triggers is missing.
+-- The other event triggers are protected by the emaj extension they belong to.
+    PERFORM 0
       FROM pg_catalog.pg_event_trigger
-      WHERE evtname IN ('emaj_protection_trg','emaj_sql_drop_trg','emaj_table_rewrite_trg');
-    IF v_nbMissingEventTrigger > 0 THEN
-      RETURN NEXT 'Warning: Some E-Maj event triggers are missing. Your database administrator may (re)create them using the'
-               || ' emaj_upgrade_after_postgres_upgrade.sql script.';
+      WHERE evtname = 'emaj_protection_trg';
+    IF NOT FOUND THEN
+      RETURN NEXT 'Warning: The "emaj_protection_trg" event triggers is missing. It can be recreated using the '
+                  'emaj_enable_protection_by_event_triggers() function.';
     END IF;
 -- Report a warning if some E-Maj event triggers exist but are not enabled.
     IF EXISTS
@@ -3112,7 +3137,7 @@ $emaj_verify_all$
               WHERE evtname LIKE 'emaj%'
                 AND evtenabled = 'D'
          ) THEN
-      RETURN NEXT 'Warning: Some E-Maj event triggers exist but are disabled. You may enable them using the'
+      RETURN NEXT 'Warning: Some E-Maj event triggers are disabled. You may enable them using the'
                || ' emaj_enable_protection_by_event_triggers() function.';
     END IF;
 -- Final message if no error has been yet detected.
@@ -3276,6 +3301,47 @@ $_event_trigger_sql_drop_fnct$
 $_event_trigger_sql_drop_fnct$;
 COMMENT ON FUNCTION emaj._event_trigger_sql_drop_fnct() IS
 $$E-Maj extension: support of the emaj_sql_drop_trg event trigger.$$;
+
+CREATE OR REPLACE FUNCTION emaj._enable_event_triggers(p_eventTriggers TEXT[])
+RETURNS TEXT[] LANGUAGE plpgsql
+SECURITY DEFINER SET search_path = pg_catalog, pg_temp AS
+$_enable_event_triggers$
+-- This function enables all event triggers supplied as parameter.
+-- It also recreates the emaj_protection_trg event trigger if it does not exist.
+-- This is the only component that is not linked to the emaj extension and cannot be protected by another event trigger.
+-- The function is called by functions that alter or drop E-Maj components, such as
+--   _drop_group(), _alter_groups(), _delete_before_mark_group() and _reset_groups().
+-- It is also called by the user emaj_enable_event_triggers_protection() function.
+-- Input: array of event trigger names to enable.
+-- Output: same array.
+-- The function is declared as SECURITY DEFINER because only superusers can alter an event trigger
+  DECLARE
+    v_eventTrigger           TEXT;
+  BEGIN
+-- If the emaj_protection_trg event trigger does not exist, recreate it and report.
+    PERFORM 0
+      FROM pg_catalog.pg_event_trigger
+      WHERE evtname = 'emaj_protection_trg';
+    IF NOT FOUND THEN
+      CREATE EVENT TRIGGER emaj_protection_trg
+        ON sql_drop
+        WHEN TAG IN ('DROP EXTENSION','DROP SCHEMA')
+        EXECUTE PROCEDURE public._emaj_protection_event_trigger_fnct();
+      COMMENT ON EVENT TRIGGER emaj_protection_trg IS
+      $$Blocks the removal of the emaj extension or schema.$$;
+      RAISE WARNING '_enable_event_triggers: the emaj_protection_trg event trigger has been recreated.';
+      INSERT INTO emaj.emaj_hist (hist_function, hist_event, hist_wording)
+        VALUES ('ENABLE_PROTECTION', 'EVENT TRIGGERS RECREATED', 'emaj_protection_trg');
+    END If;
+    FOREACH v_eventTrigger IN ARRAY p_eventTriggers
+    LOOP
+      EXECUTE format('ALTER EVENT TRIGGER %I ENABLE',
+                     v_eventTrigger);
+    END LOOP;
+--
+  RETURN p_eventTriggers;
+  END;
+$_enable_event_triggers$;
 
 --<end_functions>                                pattern used by the tool that extracts and insert the functions definition
 ------------------------------------------

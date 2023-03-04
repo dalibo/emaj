@@ -63,13 +63,13 @@ La colonne *hist_function* peut prendre les valeurs suivantes.
 +----------------------------------+---------------------------------------------------------------------------------------+
 | DELETE_MARK_GROUP                | suppression d'une marque pour un groupe de tables                                     |
 +----------------------------------+---------------------------------------------------------------------------------------+
-| DISABLE_EVENT_TRIGGERS           | désactivation des triggers sur événements                                             |
+| DISABLE_PROTECTION               | désactivation des triggers sur événements                                             |
 +----------------------------------+---------------------------------------------------------------------------------------+
 | DROP_GROUP                       | suppression d'un groupe de tables                                                     |
 +----------------------------------+---------------------------------------------------------------------------------------+
 | EMAJ_INSTALL                     | installation ou mise à jour de la version d'E-Maj                                     |
 +----------------------------------+---------------------------------------------------------------------------------------+
-| ENABLE_EVENT_TRIGGERS            | activation des triggers sur événements                                                |
+| ENABLE_PROTECTION                | activation des triggers sur événements                                                |
 +----------------------------------+---------------------------------------------------------------------------------------+
 | EXPORT_GROUPS                    | export d’une configuration de groupes de tables                                       |
 +----------------------------------+---------------------------------------------------------------------------------------+
@@ -163,9 +163,11 @@ La colonne *hist_event* peut prendre les valeurs suivantes.
 +------------------------------+------------------------------------------------------------------------+
 | END                          | fin                                                                    |
 +------------------------------+------------------------------------------------------------------------+
-| EVENT TRIGGERS DISABLED      | triggers sur événements désactivés                                     |
+| EVENT TRIGGER RECREATED      | trigger sur événement recréé                                           |
 +------------------------------+------------------------------------------------------------------------+
-| EVENT TRIGGERS ENABLED       | triggers sur événements activés                                        |
+| EVENT TRIGGERS DISABLED      | triggers sur événement désactivés                                      |
++------------------------------+------------------------------------------------------------------------+
+| EVENT TRIGGERS ENABLED       | triggers sur événement activés                                         |
 +------------------------------+------------------------------------------------------------------------+
 | GROUP_CREATED                | nouveau groupe de tables créé                                          |
 +------------------------------+------------------------------------------------------------------------+

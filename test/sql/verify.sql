@@ -414,6 +414,7 @@ drop function public._emaj_protection_event_trigger_fnct() CASCADE;
 begin;
   drop event trigger emaj_protection_trg;
   select emaj.emaj_verify_all();
+  select emaj.emaj_enable_protection_by_event_triggers();
 rollback;
 
 -- a non emaj user should be able to create, alter and drop a table without being disturbed by E-Maj event triggers

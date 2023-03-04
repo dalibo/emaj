@@ -31,7 +31,7 @@ L'installation d'E-Maj inclut la création de 2 triggers sur événements de typ
 * *emaj_sql_drop_trg* bloque la suppression :
 
   * de tout objet E-Maj (schéma de log, table de logs, séquence de log, fonction de log et trigger de log),
-  * de toute table ou séquence applicatives appartenant à un groupe de tables en état « *LOGGING* »,
+  * de toute table ou séquence applicative appartenant à un groupe de tables en état « *LOGGING* »,
   * de toute *PRIMARY KEY* d’une table appartenant à un groupe de tables « *rollbackable* »,
   * de tout schéma contenant au moins une table ou séquence appartenant à un groupe de tables en état « *LOGGING* ».
 
@@ -43,5 +43,4 @@ L'installation d'E-Maj inclut aussi la création d'un 3ème trigger sur événem
 
 Il est possible de désactiver/réactiver ces triggers grâce aux deux fonctions : :ref:`emaj_disable_protection_by_event_triggers() <emaj_disable_protection_by_event_triggers>` et :ref:`emaj_enable_protection_by_event_triggers() <emaj_enable_protection_by_event_triggers>`.
 
-Les protections mises en place ne couvrent néanmoins pas tous les risques. En particulier, le renommage de tables ou de séquences ou leur changement de schéma d'appartenance ne sont pas couverts ; et certaines requêtes changeant la structure d'une table ne déclenchent aucun trigger.
-
+Les protections mises en place ne protègent néanmoins pas contre tous les risques. En particulier, le renommage de tables ou de séquences ou leur changement de schéma d'appartenance ne sont pas couverts ; et certaines requêtes changeant la structure d'une table ne déclenchent aucun trigger.
