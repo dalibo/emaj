@@ -3302,13 +3302,62 @@ $_event_trigger_sql_drop_fnct$;
 COMMENT ON FUNCTION emaj._event_trigger_sql_drop_fnct() IS
 $$E-Maj extension: support of the emaj_sql_drop_trg event trigger.$$;
 
+CREATE OR REPLACE FUNCTION emaj.emaj_disable_protection_by_event_triggers()
+RETURNS INT LANGUAGE plpgsql AS
+$emaj_disable_protection_by_event_triggers$
+-- This function disables all known E-Maj event triggers that are in enabled state.
+-- It may be used by an emaj_adm role.
+-- Output: number of effectively disabled event triggers.
+  DECLARE
+    v_eventTriggers          TEXT[];
+  BEGIN
+-- Call the _disable_event_triggers() function and get the disabled event trigger names array.
+    SELECT emaj._disable_event_triggers() INTO v_eventTriggers;
+-- Keep a trace into the emaj_hist table.
+    INSERT INTO emaj.emaj_hist (hist_function, hist_event, hist_wording)
+      VALUES ('DISABLE_PROTECTION', 'EVENT TRIGGERS DISABLED',
+              CASE WHEN v_eventTriggers <> ARRAY[]::TEXT[] THEN array_to_string(v_eventTriggers, ', ') ELSE '<none>' END);
+-- Return the number of disabled event triggers.
+    RETURN coalesce(array_length(v_eventTriggers,1),0);
+  END;
+$emaj_disable_protection_by_event_triggers$;
+COMMENT ON FUNCTION emaj.emaj_disable_protection_by_event_triggers() IS
+$$Disables the protection of E-Maj components by event triggers.$$;
+
+CREATE OR REPLACE FUNCTION emaj.emaj_enable_protection_by_event_triggers()
+RETURNS INT LANGUAGE plpgsql AS
+$emaj_enable_protection_by_event_triggers$
+-- This function enables all known E-Maj event triggers that are in disabled state.
+-- It may be used by an emaj_adm role.
+-- Output: number of effectively enabled event triggers.
+  DECLARE
+    v_eventTriggers          TEXT[];
+  BEGIN
+-- Build the event trigger names array from the pg_event_trigger table.
+    SELECT coalesce(array_agg(evtname  ORDER BY evtname),ARRAY[]::TEXT[]) INTO v_eventTriggers
+      FROM pg_catalog.pg_event_trigger
+      WHERE evtname LIKE 'emaj%'
+        AND evtenabled = 'D';
+-- Call the _enable_event_triggers() function.
+    PERFORM emaj._enable_event_triggers(v_eventTriggers);
+-- Keep a trace into the emaj_hist table.
+    INSERT INTO emaj.emaj_hist (hist_function, hist_event, hist_wording)
+      VALUES ('ENABLE_PROTECTION', 'EVENT TRIGGERS ENABLED',
+              CASE WHEN v_eventTriggers <> ARRAY[]::TEXT[] THEN array_to_string(v_eventTriggers, ', ') ELSE '<none>' END);
+-- Return the number of enabled event triggers.
+    RETURN coalesce(array_length(v_eventTriggers,1),0);
+  END;
+$emaj_enable_protection_by_event_triggers$;
+COMMENT ON FUNCTION emaj.emaj_enable_protection_by_event_triggers() IS
+$$Enables the protection of E-Maj components by event triggers.$$;
+
 CREATE OR REPLACE FUNCTION emaj._enable_event_triggers(p_eventTriggers TEXT[])
 RETURNS TEXT[] LANGUAGE plpgsql
 SECURITY DEFINER SET search_path = pg_catalog, pg_temp AS
 $_enable_event_triggers$
 -- This function enables all event triggers supplied as parameter.
--- It also recreates the emaj_protection_trg event trigger if it does not exist.
--- This is the only component that is not linked to the emaj extension and cannot be protected by another event trigger.
+-- It also recreates the emaj_protection_trg event trigger if it does not exist. This event trigger is the only component
+-- that is not linked to the emaj extension and cannot be protected by another event trigger.
 -- The function is called by functions that alter or drop E-Maj components, such as
 --   _drop_group(), _alter_groups(), _delete_before_mark_group() and _reset_groups().
 -- It is also called by the user emaj_enable_event_triggers_protection() function.

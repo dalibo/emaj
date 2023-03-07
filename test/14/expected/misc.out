@@ -925,7 +925,7 @@ begin;
   select emaj.emaj_estimate_rollback_groups('{"myGroup1","myGroup2"}','Multi-1',FALSE);
  emaj_estimate_rollback_groups 
 -------------------------------
- @ 2.725913 secs
+ @ 2.710901 secs
 (1 row)
 
 -- should return 2.670001 sec (or 2.725913 sec is emaj is not an extension)

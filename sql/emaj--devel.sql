@@ -12290,7 +12290,7 @@ $emaj_disable_protection_by_event_triggers$
   BEGIN
 -- Call the _disable_event_triggers() function and get the disabled event trigger names array.
     SELECT emaj._disable_event_triggers() INTO v_eventTriggers;
--- Insert a row into the emaj_hist table.
+-- Keep a trace into the emaj_hist table.
     INSERT INTO emaj.emaj_hist (hist_function, hist_event, hist_wording)
       VALUES ('DISABLE_PROTECTION', 'EVENT TRIGGERS DISABLED',
               CASE WHEN v_eventTriggers <> ARRAY[]::TEXT[] THEN array_to_string(v_eventTriggers, ', ') ELSE '<none>' END);
@@ -12317,11 +12317,11 @@ $emaj_enable_protection_by_event_triggers$
         AND evtenabled = 'D';
 -- Call the _enable_event_triggers() function.
     PERFORM emaj._enable_event_triggers(v_eventTriggers);
--- Insert a row into the emaj_hist table.
+-- Keep a trace into the emaj_hist table.
     INSERT INTO emaj.emaj_hist (hist_function, hist_event, hist_wording)
       VALUES ('ENABLE_PROTECTION', 'EVENT TRIGGERS ENABLED',
               CASE WHEN v_eventTriggers <> ARRAY[]::TEXT[] THEN array_to_string(v_eventTriggers, ', ') ELSE '<none>' END);
--- Return the number of disabled event triggers.
+-- Return the number of enabled event triggers.
     RETURN coalesce(array_length(v_eventTriggers,1),0);
   END;
 $emaj_enable_protection_by_event_triggers$;
@@ -12365,8 +12365,8 @@ RETURNS TEXT[] LANGUAGE plpgsql
 SECURITY DEFINER SET search_path = pg_catalog, pg_temp AS
 $_enable_event_triggers$
 -- This function enables all event triggers supplied as parameter.
--- It also recreates the emaj_protection_trg event trigger if it does not exist.
--- This is the only component that is not linked to the emaj extension and cannot be protected by another event trigger.
+-- It also recreates the emaj_protection_trg event trigger if it does not exist. This event trigger is the only component
+-- that is not linked to the emaj extension and cannot be protected by another event trigger.
 -- The function is called by functions that alter or drop E-Maj components, such as
 --   _drop_group(), _alter_groups(), _delete_before_mark_group() and _reset_groups().
 -- It is also called by the user emaj_enable_event_triggers_protection() function.
