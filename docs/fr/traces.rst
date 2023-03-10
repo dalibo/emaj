@@ -169,7 +169,7 @@ La colonne *hist_event* peut prendre les valeurs suivantes.
 +------------------------------+------------------------------------------------------------------------+
 | EVENT TRIGGERS ENABLED       | triggers sur événement activés                                         |
 +------------------------------+------------------------------------------------------------------------+
-| GROUP_CREATED                | nouveau groupe de tables créé                                          |
+| GROUP CREATED                | nouveau groupe de tables créé                                          |
 +------------------------------+------------------------------------------------------------------------+
 | INSERTED PARAMETER           | paramètre inséré dans *emaj_param*                                     |
 +------------------------------+------------------------------------------------------------------------+
