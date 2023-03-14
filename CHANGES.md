@@ -10,6 +10,8 @@ E-Maj - Change log
   * Block any attempt to DROP the public._emaj_protection_event_trigger_fnct()
     function and simplify the management of event triggers that protect the
     E-Maj environment.
+  * Enforce checks when tables are moved from an AUDIT_ONLY to a ROLLBACKABLE
+    group.
 
 ###Bug fixes:###
   * Fix a bug in both emaj_move_tables() and emaj_move_sequences() functions.

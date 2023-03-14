@@ -8,7 +8,7 @@ select count(*) from pg_proc, pg_namespace
   where pg_namespace.oid=pronamespace and nspname = 'emaj' and (proname like E'emaj\\_%' or proname like E'\\_%');
  count 
 -------
-   172
+   173
 (1 row)
 
 select count(*) from pg_proc, pg_namespace 
@@ -89,30 +89,31 @@ select funcname, calls from pg_stat_user_functions
                  funcname                  | calls 
 -------------------------------------------+-------
  _add_seq                                  |    46
- _add_tbl                                  |   161
+ _add_tbl                                  |   164
  _assign_sequences                         |    26
- _assign_tables                            |    66
+ _assign_tables                            |    67
  _build_alter_seq                          |   223
- _build_sql_tbl                            |   163
+ _build_sql_tbl                            |   166
  _change_ignored_triggers_tbl              |    13
  _change_log_data_tsp_tbl                  |    15
  _change_log_index_tsp_tbl                 |     9
  _change_priority_tbl                      |    16
  _check_fk_groups                          |    90
- _check_group_names                        |  1068
+ _check_group_names                        |  1075
  _check_json_groups_conf                   |    43
  _check_json_param_conf                    |    15
  _check_json_table_properties              |    46
  _check_mark_name                          |   375
  _check_marks_range                        |   122
- _check_new_mark                           |   461
+ _check_new_mark                           |   464
+ _check_tables_for_rollbackable_group      |    72
  _cleanup_rollback_state                   |   369
  _copy_from_file                           |    27
  _copy_to_file                             |   257
- _create_log_schema                        |    37
+ _create_log_schema                        |    39
  _create_log_schemas                       |    21
  _create_seq                               |    46
- _create_tbl                               |   163
+ _create_tbl                               |   166
  _dblink_close_cnx                         |    71
  _dblink_open_cnx                          |    88
  _dblink_sql_exec                          |  1963
@@ -121,13 +122,13 @@ select funcname, calls from pg_stat_user_functions
  _delete_intermediate_mark_group           |    23
  _delete_log_tbl                           |    61
  _detailed_log_stat_groups                 |    33
- _disable_event_triggers                   |   317
- _drop_group                               |    32
- _drop_log_schemas                         |   130
+ _disable_event_triggers                   |   319
+ _drop_group                               |    33
+ _drop_log_schemas                         |   131
  _drop_seq                                 |    69
- _drop_tbl                                 |   212
+ _drop_tbl                                 |   215
  _emaj_param_change_fnct                   |    42
- _enable_event_triggers                    |   312
+ _enable_event_triggers                    |   314
  _estimate_rlbk_step_duration              |   935
  _estimate_rollback_groups                 |    13
  _event_trigger_sql_drop_fnct              |   168
@@ -141,7 +142,7 @@ select funcname, calls from pg_stat_user_functions
  _get_default_tablespace                   |    11
  _get_log_sequence_last_value              |  2273
  _get_previous_mark_group                  |    37
- _handle_trigger_fk_tbl                    |  2817
+ _handle_trigger_fk_tbl                    |  2841
  _import_groups_conf                       |    20
  _import_groups_conf_alter                 |    20
  _import_groups_conf_check                 |    26
@@ -153,7 +154,7 @@ select funcname, calls from pg_stat_user_functions
  _modify_tables                            |    36
  _move_seq                                 |    24
  _move_sequences                           |    19
- _move_tables                              |    21
+ _move_tables                              |    23
  _move_tbl                                 |    44
  _purge_histories                          |    80
  _remove_seq                               |    15
@@ -176,7 +177,7 @@ select funcname, calls from pg_stat_user_functions
  _rlbk_tbl                                 |   142
  _rollback_activity                        |    17
  _set_mark_groups                          |   354
- _set_time_stamp                           |   569
+ _set_time_stamp                           |   571
  _start_groups                             |    53
  _stop_groups                              |    67
  _truncate_trigger_fnct                    |    16
@@ -185,7 +186,7 @@ select funcname, calls from pg_stat_user_functions
  emaj_assign_sequence                      |     6
  emaj_assign_sequences                     |     7
  emaj_assign_sequences                     |    13
- emaj_assign_table                         |    33
+ emaj_assign_table                         |    34
  emaj_assign_tables                        |     7
  emaj_assign_tables                        |    26
  emaj_cleanup_rollback_state               |     9
@@ -198,7 +199,7 @@ select funcname, calls from pg_stat_user_functions
  emaj_detailed_log_stat_group              |    26
  emaj_detailed_log_stat_groups             |     5
  emaj_disable_protection_by_event_triggers |     9
- emaj_drop_group                           |    26
+ emaj_drop_group                           |    27
  emaj_enable_protection_by_event_triggers  |    10
  emaj_estimate_rollback_group              |     9
  emaj_estimate_rollback_groups             |     4
@@ -230,7 +231,7 @@ select funcname, calls from pg_stat_user_functions
  emaj_move_sequences                       |     9
  emaj_move_table                           |     6
  emaj_move_tables                          |     5
- emaj_move_tables                          |    10
+ emaj_move_tables                          |    12
  emaj_protect_group                        |     7
  emaj_protect_mark_group                   |    11
  emaj_purge_histories                      |     3
@@ -256,13 +257,13 @@ select funcname, calls from pg_stat_user_functions
  emaj_unprotect_group                      |     7
  emaj_unprotect_mark_group                 |     6
  emaj_verify_all                           |    46
-(168 rows)
+(169 rows)
 
 -- count the total number of user-callable function calls (those who failed are not counted)
 select sum(calls) from pg_stat_user_functions where funcname like E'emaj\\_%';
  sum  
 ------
- 1000
+ 1004
 (1 row)
 
 -----------------------------

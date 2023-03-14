@@ -1331,6 +1331,97 @@ $_check_json_param_conf$
     RETURN;
   END;
 $_check_json_param_conf$;
+CREATE OR REPLACE FUNCTION emaj._check_tables_for_rollbackable_group(p_schema TEXT, p_tables TEXT[], p_arrayFromRegex BOOLEAN,
+                                                                     p_callingFunction TEXT)
+RETURNS TEXT[] LANGUAGE plpgsql AS
+$_check_tables_for_rollbackable_group$
+-- This function filters or verifies that tables are compatible with ROLLBACKABLE groups.
+-- (they must have a PK and no be UNLOGGED or WITH OIDS)
+-- Input: schema, array of tables names, boolean indicating whether the tables list is built from regexp, calling function name
+-- Output: updated tables name array
+  DECLARE
+    v_list                   TEXT;
+    v_array                  TEXT[];
+  BEGIN
+-- Check or discard tables without primary key.
+    SELECT string_agg(quote_ident(relname), ', '), array_agg(relname) INTO v_list, v_array
+      FROM pg_catalog.pg_class t
+           JOIN pg_catalog.pg_namespace ON (pg_namespace.oid = relnamespace)
+      WHERE nspname = p_schema AND t.relname = ANY(p_tables)
+        AND relkind = 'r'
+        AND NOT EXISTS
+              (SELECT 0
+                 FROM pg_catalog.pg_class c
+                      JOIN pg_catalog.pg_namespace ON (pg_namespace.oid = c.relnamespace)
+                      JOIN pg_catalog.pg_constraint ON (connamespace = pg_namespace.oid AND conrelid = c.oid)
+                           WHERE contype = 'p'
+                             AND nspname = p_schema
+                             AND c.relname = t.relname
+              );
+    IF v_list IS NOT NULL THEN
+      IF NOT p_arrayFromRegex THEN
+        RAISE EXCEPTION '%: In schema %, some tables (%) have no PRIMARY KEY.', p_callingFunction, quote_ident(p_schema), v_list;
+      ELSE
+        RAISE WARNING '%: Some tables without PRIMARY KEY (%) are not selected.', p_callingFunction, v_list;
+      -- remove these tables from the tables to process
+      SELECT array_agg(remaining_table) INTO p_tables
+        FROM
+          (  SELECT unnest(p_tables)
+           EXCEPT
+             SELECT unnest(v_array)
+          ) AS t(remaining_table);
+      END IF;
+    END IF;
+-- Check or discard UNLOGGED tables.
+    SELECT string_agg(quote_ident(relname), ', '), array_agg(relname) INTO v_list, v_array
+      FROM pg_catalog.pg_class
+           JOIN pg_catalog.pg_namespace ON (pg_namespace.oid = relnamespace)
+      WHERE nspname = p_schema
+        AND relname = ANY(p_tables)
+        AND relkind = 'r'
+        AND relpersistence = 'u';
+    IF v_list IS NOT NULL THEN
+      IF NOT p_arrayFromRegex THEN
+        RAISE EXCEPTION '%: In schema %, some tables (%) are UNLOGGED tables.', p_callingFunction, quote_ident(p_schema), v_list;
+      ELSE
+        RAISE WARNING '%: Some UNLOGGED tables (%) are not selected.', p_callingFunction, v_list;
+      -- remove these tables from the tables to process
+      SELECT array_agg(remaining_table) INTO p_tables
+        FROM
+          (  SELECT unnest(p_tables)
+           EXCEPT
+             SELECT unnest(v_array)
+          ) AS t(remaining_table);
+      END IF;
+    END IF;
+-- With PG11-, check or discard WITH OIDS tables.
+    IF emaj._pg_version_num() < 120000 THEN
+      SELECT string_agg(quote_ident(relname), ', '), array_agg(relname) INTO v_list, v_array
+        FROM pg_catalog.pg_class
+             JOIN pg_catalog.pg_namespace ON (pg_namespace.oid = relnamespace)
+        WHERE nspname = p_schema
+          AND relname = ANY(p_tables)
+          AND relkind = 'r'
+          AND relhasoids;
+      IF v_list IS NOT NULL THEN
+        IF NOT p_arrayFromRegex THEN
+          RAISE EXCEPTION '%: In schema %, some tables (%) are declared WITH OIDS.', p_callingFunction, quote_ident(p_schema), v_list;
+        ELSE
+          RAISE WARNING '%: Some WITH OIDS tables (%) are not selected.', p_callingFunction, v_list;
+        -- remove these tables from the tables to process
+        SELECT array_agg(remaining_table) INTO p_tables
+          FROM
+           (  SELECT unnest(p_tables)
+            EXCEPT
+              SELECT unnest(v_array)
+           ) AS t(remaining_table);
+        END IF;
+      END IF;
+    END IF;
+--
+    RETURN p_tables;
+  END;
+$_check_tables_for_rollbackable_group$;
 CREATE OR REPLACE FUNCTION emaj._check_mark_name(p_groupNames TEXT[], p_mark TEXT, p_checkList TEXT)
 RETURNS TEXT LANGUAGE plpgsql AS
 $_check_mark_name$
@@ -2029,84 +2120,9 @@ $_assign_tables$
            ) AS t(remaining_table);
       END IF;
     END IF;
--- Check or discard UNLOGGED tables in rollbackable groups.
+-- If the group is ROLLBACKABLE, perform additional checks or filters (a PK, not UNLOGGED).
     IF v_groupIsRollbackable THEN
-      SELECT string_agg(quote_ident(relname), ', '), array_agg(relname) INTO v_list, v_array
-        FROM pg_catalog.pg_class
-             JOIN pg_catalog.pg_namespace ON (pg_namespace.oid = relnamespace)
-        WHERE nspname = p_schema
-          AND relname = ANY(p_tables)
-          AND relkind = 'r'
-          AND relpersistence = 'u';
-      IF v_list IS NOT NULL THEN
-        IF NOT p_arrayFromRegex THEN
-          RAISE EXCEPTION '_assign_tables: In schema %, some tables (%) are UNLOGGED tables.', quote_ident(p_schema), v_list;
-        ELSE
-          RAISE WARNING '_assign_tables: Some UNLOGGED tables (%) are not selected.', v_list;
-        -- remove these tables from the tables to process
-        SELECT array_agg(remaining_table) INTO p_tables
-          FROM
-            (  SELECT unnest(p_tables)
-             EXCEPT
-               SELECT unnest(v_array)
-            ) AS t(remaining_table);
-        END IF;
-      END IF;
-    END IF;
--- With PG11-, check or discard WITH OIDS tables in rollbackable groups.
-    IF emaj._pg_version_num() < 120000 AND v_groupIsRollbackable THEN
-      SELECT string_agg(quote_ident(relname), ', '), array_agg(relname) INTO v_list, v_array
-        FROM pg_catalog.pg_class
-             JOIN pg_catalog.pg_namespace ON (pg_namespace.oid = relnamespace)
-        WHERE nspname = p_schema
-          AND relname = ANY(p_tables)
-          AND relkind = 'r'
-          AND relhasoids;
-      IF v_list IS NOT NULL THEN
-        IF NOT p_arrayFromRegex THEN
-          RAISE EXCEPTION '_assign_tables: In schema %, some tables (%) are declared WITH OIDS.', quote_ident(p_schema), v_list;
-        ELSE
-          RAISE WARNING '_assign_tables: Some WITH OIDS tables (%) are not selected.', v_list;
-        -- remove these tables from the tables to process
-        SELECT array_agg(remaining_table) INTO p_tables
-          FROM
-           (  SELECT unnest(p_tables)
-            EXCEPT
-              SELECT unnest(v_array)
-           ) AS t(remaining_table);
-        END IF;
-      END IF;
-    END IF;
--- Check or discard tables whithout primary key in rollbackable groups.
-    IF v_groupIsRollbackable THEN
-      SELECT string_agg(quote_ident(relname), ', '), array_agg(relname) INTO v_list, v_array
-        FROM pg_catalog.pg_class t
-             JOIN pg_catalog.pg_namespace ON (pg_namespace.oid = relnamespace)
-        WHERE nspname = p_schema AND t.relname = ANY(p_tables)
-          AND relkind = 'r'
-          AND NOT EXISTS
-                (SELECT 0
-                   FROM pg_catalog.pg_class c
-                        JOIN pg_catalog.pg_namespace ON (pg_namespace.oid = c.relnamespace)
-                        JOIN pg_catalog.pg_constraint ON (connamespace = pg_namespace.oid AND conrelid = c.oid)
-                             WHERE contype = 'p'
-                               AND nspname = p_schema
-                               AND c.relname = t.relname
-                );
-      IF v_list IS NOT NULL THEN
-        IF NOT p_arrayFromRegex THEN
-          RAISE EXCEPTION '_assign_tables: In schema %, some tables (%) have no PRIMARY KEY.', quote_ident(p_schema), v_list;
-        ELSE
-          RAISE WARNING '_assign_tables: Some tables without PRIMARY KEY (%) are not selected.', v_list;
-        -- remove these tables from the tables to process
-        SELECT array_agg(remaining_table) INTO p_tables
-          FROM
-            (  SELECT unnest(p_tables)
-             EXCEPT
-               SELECT unnest(v_array)
-            ) AS t(remaining_table);
-        END IF;
-      END IF;
+      p_tables = emaj._check_tables_for_rollbackable_group(p_schema, p_tables, p_arrayFromRegex, '_assign_tables');
     END IF;
 -- Check or discard tables already assigned to a group.
     SELECT string_agg(quote_ident(rel_tblseq), ', '), array_agg(rel_tblseq) INTO v_list, v_array
@@ -2522,6 +2538,7 @@ $_move_tables$
 -- Outputs: number of tables effectively moved to the tables group
   DECLARE
     v_function               TEXT;
+    v_newGroupIsRollbackable BOOLEAN;
     v_newGroupIsLogging      BOOLEAN;
     v_list                   TEXT;
     v_uselessTables          TEXT[];
@@ -2529,6 +2546,7 @@ $_move_tables$
     v_timeId                 BIGINT;
     v_groups                 TEXT[];
     v_loggingGroups          TEXT[];
+    v_nbAuditOnlyGroups      INT;
     v_groupName              TEXT;
     v_groupIsLogging         BOOLEAN;
     v_oneTable               TEXT;
@@ -2540,7 +2558,7 @@ $_move_tables$
       VALUES (v_function, 'BEGIN');
 -- Check the group name and if ok, get some properties of the group.
     PERFORM emaj._check_group_names(p_groupNames := ARRAY[p_newGroup], p_mayBeNull := FALSE, p_lockGroups := TRUE, p_checkList := '');
-    SELECT group_is_logging INTO v_newGroupIsLogging
+    SELECT group_is_rollbackable, group_is_logging INTO v_newGroupIsRollbackable, v_newGroupIsLogging
       FROM emaj.emaj_group
       WHERE group_name = p_newGroup;
 -- Check the tables list.
@@ -2586,11 +2604,11 @@ $_move_tables$
           WHERE tbl <> ALL(v_uselessTables);
       END IF;
     END IF;
--- Get the lists of groups and logging groups holding these tables, if any.
--- It locks the tables groups so that no other operation simultaneously occurs these groups
+-- Get the lists of groups and logging groups holding these tables, if any, and count the number of AUDIT_ONLY groups.
+-- It locks the target and source tables groups so that no other operation simultaneously occurs these groups
 -- (the CTE is needed for the FOR UPDATE clause not allowed when aggregate functions).
     WITH tables_group AS (
-      SELECT group_name, group_is_logging FROM emaj.emaj_group
+      SELECT group_name, group_is_logging, group_is_rollbackable FROM emaj.emaj_group
         WHERE group_name = p_newGroup OR
               group_name IN
                (SELECT DISTINCT rel_group FROM emaj.emaj_relation
@@ -2600,9 +2618,15 @@ $_move_tables$
         FOR UPDATE OF emaj_group
       )
     SELECT array_agg(group_name ORDER BY group_name),
-           array_agg(group_name ORDER BY group_name) FILTER (WHERE group_is_logging)
-      INTO v_groups, v_loggingGroups
+           array_agg(group_name ORDER BY group_name) FILTER (WHERE group_is_logging),
+           count(group_name) FILTER (WHERE NOT group_is_rollbackable AND group_name <> p_newGroup)
+      INTO v_groups, v_loggingGroups, v_nbAuditOnlyGroups
       FROM tables_group;
+-- If at least 1 source tables group is of type AUDIT_ONLY and the target tables group is ROLLBACKABLE, add some checks on tables.
+-- They may be incompatible with ROLLBACKABLE groups.
+    IF v_nbAuditOnlyGroups > 0 AND v_newGroupIsRollbackable THEN
+      p_tables = emaj._check_tables_for_rollbackable_group(p_schema, p_tables, p_arrayFromRegex, '_move_tables');
+    END IF;
 -- Check the supplied mark.
     SELECT emaj._check_new_mark(v_loggingGroups, p_mark) INTO v_markName;
 -- OK,
@@ -12347,7 +12371,7 @@ $do$
     RETURN;
   END;
 $do$;
-psql:sql/emaj-devel.sql:12579: NOTICE:  E-Maj installation: E-Maj successfully installed.
+psql:sql/emaj-devel.sql:12604: NOTICE:  E-Maj installation: E-Maj successfully installed.
 COMMIT;
 -----------------------------
 -- check installation

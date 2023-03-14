@@ -172,12 +172,14 @@ rollback;
 -- UNLOGGED table on a rollbackable group
 select emaj.emaj_assign_table('myschema5','myunloggedtbl','myGroup1');
 ERROR:  _assign_tables: In schema myschema5, some tables (myunloggedtbl) are UNLOGGED tables.
-CONTEXT:  PL/pgSQL function emaj._assign_tables(text,text[],text,jsonb,text,boolean,boolean) line 136 at RAISE
+CONTEXT:  PL/pgSQL function emaj._check_tables_for_rollbackable_group(text,text[],boolean,text) line 49 at RAISE
+PL/pgSQL function emaj._assign_tables(text,text[],text,jsonb,text,boolean,boolean) line 127 at assignment
 PL/pgSQL function emaj.emaj_assign_table(text,text,text,jsonb,text) line 7 at RETURN
 -- table WITH OIDS on a rollbackable group - should fail
 select emaj.emaj_assign_table('myschema5','myoidstbl','myGroup1');
 ERROR:  _assign_tables: In schema myschema5, some tables (myoidstbl) are declared WITH OIDS.
-CONTEXT:  PL/pgSQL function emaj._assign_tables(text,text[],text,jsonb,text,boolean,boolean) line 160 at RAISE
+CONTEXT:  PL/pgSQL function emaj._check_tables_for_rollbackable_group(text,text[],boolean,text) line 72 at RAISE
+PL/pgSQL function emaj._assign_tables(text,text[],text,jsonb,text,boolean,boolean) line 127 at assignment
 PL/pgSQL function emaj.emaj_assign_table(text,text,text,jsonb,text) line 7 at RETURN
 -- the table is removed with PG12+: in these version the myoids table has no OIDS as this propertiy doesn't exist anymore
 select emaj.emaj_remove_table('myschema5','myoidstbl');
@@ -187,90 +189,91 @@ PL/pgSQL function emaj.emaj_remove_table(text,text,text) line 6 at RETURN
 -- table without PKEY on a rollbackable group
 select emaj.emaj_assign_table('phil''s schema3','myTbl2\','myGroup1');
 ERROR:  _assign_tables: In schema "phil's schema3", some tables ("myTbl2\") have no PRIMARY KEY.
-CONTEXT:  PL/pgSQL function emaj._assign_tables(text,text[],text,jsonb,text,boolean,boolean) line 191 at RAISE
+CONTEXT:  PL/pgSQL function emaj._check_tables_for_rollbackable_group(text,text[],boolean,text) line 27 at RAISE
+PL/pgSQL function emaj._assign_tables(text,text[],text,jsonb,text,boolean,boolean) line 127 at assignment
 PL/pgSQL function emaj.emaj_assign_table(text,text,text,jsonb,text) line 7 at RETURN
 -- invalid priority
 select emaj.emaj_assign_table('myschema1','mytbl1','myGroup1','{"priority":"not_numeric"}'::jsonb);
 ERROR:  _check_json_table_properties: the "priority" property must be numeric.
 CONTEXT:  PL/pgSQL function emaj._check_json_table_properties(jsonb) line 18 at RAISE
 SQL statement "SELECT *                                                                                            FROM emaj._check_json_table_properties(p_properties)"
-PL/pgSQL function emaj._assign_tables(text,text[],text,jsonb,text,boolean,boolean) line 226 at SQL statement
+PL/pgSQL function emaj._assign_tables(text,text[],text,jsonb,text,boolean,boolean) line 151 at SQL statement
 PL/pgSQL function emaj.emaj_assign_table(text,text,text,jsonb,text) line 7 at RETURN
 -- invalid tablespace
 select emaj.emaj_assign_table('myschema1','mytbl1','myGroup1','{"log_data_tablespace":1}'::jsonb);
 ERROR:  _check_json_table_properties: the log data tablespace must be a string.
 CONTEXT:  PL/pgSQL function emaj._check_json_table_properties(jsonb) line 33 at RAISE
 SQL statement "SELECT *                                                                                            FROM emaj._check_json_table_properties(p_properties)"
-PL/pgSQL function emaj._assign_tables(text,text[],text,jsonb,text,boolean,boolean) line 226 at SQL statement
+PL/pgSQL function emaj._assign_tables(text,text[],text,jsonb,text,boolean,boolean) line 151 at SQL statement
 PL/pgSQL function emaj.emaj_assign_table(text,text,text,jsonb,text) line 7 at RETURN
 select emaj.emaj_assign_table('myschema1','mytbl1','myGroup1','{"log_data_tablespace":"dummytsp"}'::jsonb);
 ERROR:  _check_json_table_properties: the log data tablespace "dummytsp" does not exists.
 CONTEXT:  PL/pgSQL function emaj._check_json_table_properties(jsonb) line 30 at RAISE
 SQL statement "SELECT *                                                                                            FROM emaj._check_json_table_properties(p_properties)"
-PL/pgSQL function emaj._assign_tables(text,text[],text,jsonb,text,boolean,boolean) line 226 at SQL statement
+PL/pgSQL function emaj._assign_tables(text,text[],text,jsonb,text,boolean,boolean) line 151 at SQL statement
 PL/pgSQL function emaj.emaj_assign_table(text,text,text,jsonb,text) line 7 at RETURN
 select emaj.emaj_assign_table('myschema1','mytbl1','myGroup1','{"log_index_tablespace":1}'::jsonb);
 ERROR:  _check_json_table_properties: the log index tablespace must be a string.
 CONTEXT:  PL/pgSQL function emaj._check_json_table_properties(jsonb) line 47 at RAISE
 SQL statement "SELECT *                                                                                            FROM emaj._check_json_table_properties(p_properties)"
-PL/pgSQL function emaj._assign_tables(text,text[],text,jsonb,text,boolean,boolean) line 226 at SQL statement
+PL/pgSQL function emaj._assign_tables(text,text[],text,jsonb,text,boolean,boolean) line 151 at SQL statement
 PL/pgSQL function emaj.emaj_assign_table(text,text,text,jsonb,text) line 7 at RETURN
 select emaj.emaj_assign_table('myschema1','mytbl1','myGroup1','{"log_index_tablespace":"dummytsp"}'::jsonb);
 ERROR:  _check_json_table_properties: the log index tablespace "dummytsp" does not exists.
 CONTEXT:  PL/pgSQL function emaj._check_json_table_properties(jsonb) line 44 at RAISE
 SQL statement "SELECT *                                                                                            FROM emaj._check_json_table_properties(p_properties)"
-PL/pgSQL function emaj._assign_tables(text,text[],text,jsonb,text,boolean,boolean) line 226 at SQL statement
+PL/pgSQL function emaj._assign_tables(text,text[],text,jsonb,text,boolean,boolean) line 151 at SQL statement
 PL/pgSQL function emaj.emaj_assign_table(text,text,text,jsonb,text) line 7 at RETURN
 -- invalid ignored_triggers
 select emaj.emaj_assign_table('myschema1','mytbl1','myGroup1','{"ignored_triggers":1}'::jsonb);
 ERROR:  _check_json_table_properties: the "ignored_triggers" property must be an array or a string.
 CONTEXT:  PL/pgSQL function emaj._check_json_table_properties(jsonb) line 68 at RAISE
 SQL statement "SELECT *                                                                                            FROM emaj._check_json_table_properties(p_properties)"
-PL/pgSQL function emaj._assign_tables(text,text[],text,jsonb,text,boolean,boolean) line 226 at SQL statement
+PL/pgSQL function emaj._assign_tables(text,text[],text,jsonb,text,boolean,boolean) line 151 at SQL statement
 PL/pgSQL function emaj.emaj_assign_table(text,text,text,jsonb,text) line 7 at RETURN
 select emaj.emaj_assign_table('myschema1','mytbl1','myGroup1','{"ignored_triggers":"emaj_log_trg"}'::jsonb);
 ERROR:  _check_json_table_properties: E-Maj triggers are not allowed in the "ignored_triggers" property.
 CONTEXT:  PL/pgSQL function emaj._check_json_table_properties(jsonb) line 72 at RAISE
 SQL statement "SELECT *                                                                                            FROM emaj._check_json_table_properties(p_properties)"
-PL/pgSQL function emaj._assign_tables(text,text[],text,jsonb,text,boolean,boolean) line 226 at SQL statement
+PL/pgSQL function emaj._assign_tables(text,text[],text,jsonb,text,boolean,boolean) line 151 at SQL statement
 PL/pgSQL function emaj.emaj_assign_table(text,text,text,jsonb,text) line 7 at RETURN
 select emaj.emaj_assign_table('myschema1','mytbl1','myGroup1','{"ignored_triggers":["emaj_trunc_trg"]}'::jsonb);
 ERROR:  _check_json_table_properties: E-Maj triggers are not allowed in the "ignored_triggers" property.
 CONTEXT:  PL/pgSQL function emaj._check_json_table_properties(jsonb) line 72 at RAISE
 SQL statement "SELECT *                                                                                            FROM emaj._check_json_table_properties(p_properties)"
-PL/pgSQL function emaj._assign_tables(text,text[],text,jsonb,text,boolean,boolean) line 226 at SQL statement
+PL/pgSQL function emaj._assign_tables(text,text[],text,jsonb,text,boolean,boolean) line 151 at SQL statement
 PL/pgSQL function emaj.emaj_assign_table(text,text,text,jsonb,text) line 7 at RETURN
 select emaj.emaj_assign_table('myschema1','mytbl1','myGroup1','{"ignored_triggers":["dummy"]}'::jsonb);
 ERROR:  _assign_tables: some triggers (dummy) have not been found in the table myschema1.mytbl1.
-CONTEXT:  PL/pgSQL function emaj._assign_tables(text,text[],text,jsonb,text,boolean,boolean) line 303 at RAISE
+CONTEXT:  PL/pgSQL function emaj._assign_tables(text,text[],text,jsonb,text,boolean,boolean) line 228 at RAISE
 PL/pgSQL function emaj.emaj_assign_table(text,text,text,jsonb,text) line 7 at RETURN
 -- invalid ignored_triggers_profiles
 select emaj.emaj_assign_table('myschema1','mytbl1','myGroup1','{"ignored_triggers_profiles":1}'::jsonb);
 ERROR:  _check_json_table_properties: the "ignored_triggers_profiles" property must be an array or a string.
 CONTEXT:  PL/pgSQL function emaj._check_json_table_properties(jsonb) line 85 at RAISE
 SQL statement "SELECT *                                                                                            FROM emaj._check_json_table_properties(p_properties)"
-PL/pgSQL function emaj._assign_tables(text,text[],text,jsonb,text,boolean,boolean) line 226 at SQL statement
+PL/pgSQL function emaj._assign_tables(text,text[],text,jsonb,text,boolean,boolean) line 151 at SQL statement
 PL/pgSQL function emaj.emaj_assign_table(text,text,text,jsonb,text) line 7 at RETURN
 -- unknown property
 select emaj.emaj_assign_table('myschema1','mytbl1','myGroup1','{"unknown_property":null}'::jsonb);
 ERROR:  _check_json_table_properties: properties "{"unknown_property": null}" are unknown.
 CONTEXT:  PL/pgSQL function emaj._check_json_table_properties(jsonb) line 92 at RAISE
 SQL statement "SELECT *                                                                                            FROM emaj._check_json_table_properties(p_properties)"
-PL/pgSQL function emaj._assign_tables(text,text[],text,jsonb,text,boolean,boolean) line 226 at SQL statement
+PL/pgSQL function emaj._assign_tables(text,text[],text,jsonb,text,boolean,boolean) line 151 at SQL statement
 PL/pgSQL function emaj.emaj_assign_table(text,text,text,jsonb,text) line 7 at RETURN
 -- bad mark
 select emaj.emaj_assign_table('myschema1','mytbl1','myGroup1',null,'EMAJ_LAST_MARK');
 ERROR:  _check_new_mark: "EMAJ_LAST_MARK" is not an allowed name for a new mark.
 CONTEXT:  PL/pgSQL function emaj._check_new_mark(text[],text) line 14 at RAISE
 SQL statement "SELECT emaj._check_new_mark(array[p_group], p_mark)"
-PL/pgSQL function emaj._assign_tables(text,text[],text,jsonb,text,boolean,boolean) line 230 at SQL statement
+PL/pgSQL function emaj._assign_tables(text,text[],text,jsonb,text,boolean,boolean) line 155 at SQL statement
 PL/pgSQL function emaj.emaj_assign_table(text,text,text,jsonb,text) line 7 at RETURN
 -- erroneously existing log schema
 begin;
   create schema emaj_myschema1;
   select emaj.emaj_assign_table('myschema1','mytbl1','myGroup1');
 ERROR:  _assign_tables: The schema "emaj_myschema1" should not exist. Drop it manually.
-CONTEXT:  PL/pgSQL function emaj._assign_tables(text,text[],text,jsonb,text,boolean,boolean) line 259 at RAISE
+CONTEXT:  PL/pgSQL function emaj._assign_tables(text,text[],text,jsonb,text,boolean,boolean) line 184 at RAISE
 PL/pgSQL function emaj.emaj_assign_table(text,text,text,jsonb,text) line 7 at RETURN
 rollback;
 -- bad alter_log_table parameter
@@ -287,7 +290,7 @@ SQL statement "SELECT emaj._create_tbl(p_schema, p_table, p_group, p_priority, p
 PL/pgSQL function emaj._add_tbl(text,text,text,integer,text,text,text[],boolean,bigint,text) line 23 at PERFORM
 SQL statement "SELECT emaj._add_tbl(p_schema, v_oneTable, p_group, v_priority, v_logDatTsp, v_logIdxTsp, v_selectedIgnoredTrgs,
                               v_groupIsLogging, v_timeId, v_function)"
-PL/pgSQL function emaj._assign_tables(text,text[],text,jsonb,text,boolean,boolean) line 322 at PERFORM
+PL/pgSQL function emaj._assign_tables(text,text[],text,jsonb,text,boolean,boolean) line 247 at PERFORM
 PL/pgSQL function emaj.emaj_assign_table(text,text,text,jsonb,text) line 7 at RETURN
 rollback;
 -- attempting to assign emaj objects: referencing an emaj schema
@@ -395,7 +398,7 @@ select emaj.emaj_assign_table('myschema1','mytbl4','myGroup1','{"priority":20, "
 -- already assigned table in the same group
 select emaj.emaj_assign_table('myschema1','mytbl1','myGroup1');
 ERROR:  _assign_tables: In schema myschema1, some tables (mytbl1) already belong to a group.
-CONTEXT:  PL/pgSQL function emaj._assign_tables(text,text[],text,jsonb,text,boolean,boolean) line 212 at RAISE
+CONTEXT:  PL/pgSQL function emaj._assign_tables(text,text[],text,jsonb,text,boolean,boolean) line 137 at RAISE
 PL/pgSQL function emaj.emaj_assign_table(text,text,text,jsonb,text) line 7 at RETURN
 -----------------------------------
 -- emaj_assign_tables with array

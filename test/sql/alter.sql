@@ -29,7 +29,10 @@ select emaj.emaj_create_group('myGroup1');
 
 -- rebuild all original groups
 SET client_min_messages TO WARNING;
-select emaj.emaj_import_groups_configuration(:'EMAJTESTTMPDIR' || '/../all_groups_config.json', array['myGroup1','myGroup2','emptyGroup','myGroup4'], true);
+select emaj.emaj_import_groups_configuration(:'EMAJTESTTMPDIR' || '/../all_groups_config.json', array['myGroup1','myGroup2','emptyGroup','myGroup4','myGroup5'], true);
+-- add a table without PK to the audit_only group
+select emaj.emaj_assign_table('phil''s schema3', 'myTbl2\', 'myGroup5');
+
 RESET client_min_messages;
 
 -----------------------------------
@@ -147,6 +150,10 @@ select emaj.emaj_move_table('myschema1','mytbl1','dummyGroup');
 -- bad mark
 select emaj.emaj_move_table('myschema1','mytbl1','myGroup2','EMAJ_LAST_MARK');
 
+-- bad table type for target rollbackable group
+select emaj.emaj_move_table('myschema5', 'myunloggedtbl', 'myGroup1');
+select emaj.emaj_move_table('phil''s schema3', 'myTbl2\', 'myGroup1');
+
 -- move to the same group
 select emaj.emaj_move_table('myschema1','mytbl1','myGroup1');
 
@@ -163,6 +170,9 @@ select emaj.emaj_move_tables('myschema1',array['dummyTable','mytbl1','mytbl2'],'
 select emaj.emaj_move_tables('myschema1',array[]::text[],'myGroup1');
 select emaj.emaj_move_tables('myschema1',null,'myGroup1');
 select emaj.emaj_move_tables('myschema1',array[''],'myGroup1');
+
+-- bad table type for target rollbackable group
+select emaj.emaj_move_tables('myschema5', array['myunloggedtbl'], 'myGroup1');
 
 -- move to the same group
 select emaj.emaj_move_tables('myschema1',array['mytbl2','mytbl2b'],'myGroup1');
@@ -185,6 +195,10 @@ select emaj.emaj_move_tables('myschema1','mytbl1','mytbl1','myGroup1');
 -- ok and go back to myGroup1
 select emaj.emaj_move_tables('myschema1','my(t|T)bl.*','mytbl2$','myGroup1');
 select emaj.emaj_move_tables('myschema1','.*','','myGroup1');
+
+-- bad table type for target rollbackable group
+select emaj.emaj_move_tables('myschema5', '.*', 'oids', 'myGroup1');     -- to exclude 'myoidstbl'
+select emaj.emaj_move_tables('phil''s schema3', 'bl2', '', 'myGroup1');  -- to select 'mytbl2\'
 
 select * from emaj.emaj_relation_change where rlchg_time_id > 8000 order by 1 desc,2,3,4 limit 6;
 select group_last_alter_time_id, group_nb_table, group_nb_sequence from emaj.emaj_group 
