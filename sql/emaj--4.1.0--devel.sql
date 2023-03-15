@@ -152,6 +152,7 @@ $do$;
 ------------------------------------------------------------------
 -- drop obsolete functions or functions with modified interface --
 ------------------------------------------------------------------
+DROP FUNCTION IF EXISTS emaj._create_tbl(P_SCHEMA TEXT,P_TBL TEXT,P_GROUPNAME TEXT,P_PRIORITY INT,P_LOGDATTSP TEXT,P_LOGIDXTSP TEXT,P_IGNOREDTRIGGERS TEXT[],P_TIMEID BIGINT,P_GROUPISROLLBACKABLE BOOLEAN,P_GROUPISLOGGING BOOLEAN);
 DROP FUNCTION IF EXISTS emaj._build_alter_seq(P_REFLASTVALUE BIGINT,P_REFISCALLED BOOLEAN,P_REFINCREMENTBY BIGINT,P_REFSTARTVALUE BIGINT,P_REFMINVALUE BIGINT,P_REFMAXVALUE BIGINT,P_REFCACHEVALUE BIGINT,P_REFISCYCLED BOOLEAN,P_TRGLASTVALUE BIGINT,P_TRGISCALLED BOOLEAN,P_TRGINCREMENTBY BIGINT,P_TRGSTARTVALUE BIGINT,P_TRGMINVALUE BIGINT,P_TRGMAXVALUE BIGINT,P_TRGCACHEVALUE BIGINT,P_TRGISCYCLED BOOLEAN);
 
 ------------------------------------------------------------------
@@ -248,6 +249,65 @@ $_check_tables_for_rollbackable_group$
     RETURN p_tables;
   END;
 $_check_tables_for_rollbackable_group$;
+
+CREATE OR REPLACE FUNCTION emaj._handle_trigger_fk_tbl(p_action TEXT, p_fullTableName TEXT, p_objectName TEXT,
+                                                       p_objectDef TEXT DEFAULT NULL)
+RETURNS VOID LANGUAGE plpgsql
+SECURITY DEFINER SET search_path = pg_catalog, pg_temp AS
+$_handle_trigger_fk_tbl$
+-- The function performs an elementary action for a trigger or a foreign key on an application table.
+-- Inputs: the action to perform: ENABLE_TRIGGER/DISABLE_TRIGGER/ADD_TRIGGER/DROP_TRIGGER/SET_TRIGGER/ADD_FK/DROP_FK
+--         the full name of the application table (schema qualified and quoted if needed)
+--         the trigger or constraint name
+--         the object definition for foreign keys, or the trigger type (ALWAYS/REPLICA/'') for triggers to enable or set
+-- The function is defined as SECURITY DEFINER so that emaj_adm role can perform the action on any application table.
+  DECLARE
+    v_stack                  TEXT;
+  BEGIN
+-- Check that the caller is allowed to do that.
+    GET DIAGNOSTICS v_stack = PG_CONTEXT;
+    IF v_stack NOT LIKE '%emaj._create_tbl(text,text,text,integer,text,text,text[],bigint,boolean)%' AND
+       v_stack NOT LIKE '%emaj._remove_tbl(text,text,text,boolean,bigint,text)%' AND
+       v_stack NOT LIKE '%emaj._drop_tbl(emaj.emaj_relation,bigint)%' AND
+       v_stack NOT LIKE '%emaj._start_groups(text[],text,boolean,boolean)%' AND
+       v_stack NOT LIKE '%emaj._stop_groups(text[],text,boolean,boolean)%' AND
+       v_stack NOT LIKE '%emaj._rlbk_session_exec(integer,integer)%' THEN
+      RAISE EXCEPTION '_handle_trigger_fk_tbl: the calling function is not allowed to reach this sensitive function.';
+    END IF;
+-- Perform the requested action.
+    IF p_action = 'DISABLE_TRIGGER' THEN
+      EXECUTE format('ALTER TABLE %s DISABLE TRIGGER %I',
+                     p_fullTableName, p_objectName);
+    ELSIF p_action = 'ENABLE_TRIGGER' THEN
+      EXECUTE format('ALTER TABLE %s ENABLE %s TRIGGER %I',
+                     p_fullTableName, p_objectDef, p_objectName);
+    ELSIF p_action = 'ADD_TRIGGER' AND p_objectName = 'emaj_log_trg' THEN
+      EXECUTE format('CREATE TRIGGER emaj_log_trg'
+                     ' AFTER INSERT OR UPDATE OR DELETE ON %s'
+                     '  FOR EACH ROW EXECUTE PROCEDURE %s()',
+                     p_fullTableName, p_objectDef);
+    ELSIF p_action = 'ADD_TRIGGER' AND p_objectName = 'emaj_trunc_trg' THEN
+      EXECUTE format('CREATE TRIGGER emaj_trunc_trg'
+                     '  BEFORE TRUNCATE ON %s'
+                     '  FOR EACH STATEMENT EXECUTE PROCEDURE emaj._truncate_trigger_fnct()',
+                     p_fullTableName);
+    ELSIF p_action = 'DROP_TRIGGER' THEN
+      EXECUTE format('DROP TRIGGER IF EXISTS %I ON %s',
+                     p_objectName, p_fullTableName);
+    ELSIF p_action = 'SET_TRIGGER' THEN
+      EXECUTE format('ALTER TABLE %s DISABLE TRIGGER %I, ENABLE %s TRIGGER %I',
+                     p_fullTableName, p_objectName, p_objectDef, p_objectName);
+    ELSIF p_action = 'ADD_FK' THEN
+      EXECUTE format('ALTER TABLE %s ADD CONSTRAINT %I %s',
+                     p_fullTableName, p_objectName, p_objectDef);
+    ELSIF p_action = 'DROP_FK' THEN
+      EXECUTE format('ALTER TABLE %s DROP CONSTRAINT %I',
+                     p_fullTableName, p_objectName);
+    END IF;
+--
+    RETURN;
+  END;
+$_handle_trigger_fk_tbl$;
 
 CREATE OR REPLACE FUNCTION emaj._assign_tables(p_schema TEXT, p_tables TEXT[], p_group TEXT, p_properties JSONB, p_mark TEXT,
                                                p_multiTable BOOLEAN, p_arrayFromRegex BOOLEAN)
@@ -680,8 +740,7 @@ $_move_tables$
 $_move_tables$;
 
 CREATE OR REPLACE FUNCTION emaj._create_tbl(p_schema TEXT, p_tbl TEXT, p_groupName TEXT, p_priority INT, p_logDatTsp TEXT,
-                                            p_logIdxTsp TEXT, p_ignoredTriggers TEXT[], p_timeId BIGINT,
-                                            p_groupIsRollbackable BOOLEAN, p_groupIsLogging BOOLEAN)
+                                            p_logIdxTsp TEXT, p_ignoredTriggers TEXT[], p_timeId BIGINT, p_groupIsLogging BOOLEAN)
 RETURNS VOID LANGUAGE plpgsql AS
 $_create_tbl$
 -- This function creates all what is needed to manage the log and rollback operations for an application table.
@@ -689,10 +748,10 @@ $_create_tbl$
 --        the group to add it into,
 --        the table properties: priority, tablespaces attributes and triggers to ignore at rollback time
 --        the time id of the operation,
---        2 booleans indicating whether the group is rollbackable and whether the group is currently in logging state.
+--        a boolean indicating whether the group is currently in logging state.
 -- The objects created in the log schema:
---    - the associated log table, with its own sequence
---    - the function that logs the tables updates, defined as a trigger
+--    - the associated log table, with its own sequence,
+--    - the function and trigger that log the tables updates.
   DECLARE
     v_emajNamesPrefix        TEXT;
     v_baseLogTableName       TEXT;
@@ -1004,6 +1063,68 @@ $_build_sql_tbl$
   END;
 $_build_sql_tbl$;
 
+CREATE OR REPLACE FUNCTION emaj._add_tbl(p_schema TEXT, p_table TEXT, p_group TEXT, p_priority INT, p_logDatTsp TEXT, p_logIdxTsp TEXT,
+                                         p_ignoredTriggers TEXT[], p_groupIsLogging BOOLEAN, p_timeId BIGINT, p_function TEXT)
+RETURNS VOID LANGUAGE plpgsql AS
+$_add_tbl$
+-- The function adds a table to a group. It is called during an alter group or a dynamic assignment operation.
+-- If the group is in idle state, it simply calls the _create_tbl() function.
+-- Otherwise, it calls the _create_tbl() function, activates the log trigger and
+--    sets a restart value for the log sequence if a previous range exists for the relation.
+-- Required inputs: the schema and table to add
+--                  the group name
+--                  the table properties: priority, log data and index tablespace, triggers to ignore at rollback time
+--                  the group's logging state
+--                  the time stamp id of the operation
+--                  the main calling function
+  DECLARE
+    v_logSchema              TEXT;
+    v_logSequence            TEXT;
+    v_nextVal                BIGINT;
+  BEGIN
+-- Create the table.
+    PERFORM emaj._create_tbl(p_schema, p_table, p_group, p_priority, p_logDatTsp, p_logIdxTsp, p_ignoredTriggers,
+                             p_timeId, p_groupIsLogging);
+-- If the group is in logging state, perform additional tasks,
+    IF p_groupIsLogging THEN
+-- ... get the log schema and sequence for the new relation
+      SELECT rel_log_schema, rel_log_sequence INTO v_logSchema, v_logSequence
+        FROM emaj.emaj_relation
+        WHERE rel_schema = p_schema
+          AND rel_tblseq = p_table
+          AND upper_inf(rel_time_range);
+-- ... get the last log sequence value, if any, for this relation (recorded in emaj_relation at a previous REMOVE_TBL operation)
+      SELECT max(rel_log_seq_last_value) + 1 INTO v_nextVal
+        FROM emaj.emaj_relation
+        WHERE rel_schema = p_schema
+          AND rel_tblseq = p_table
+          AND rel_log_seq_last_value IS NOT NULL;
+-- ... set the new log sequence next_val, if needed
+      IF v_nextVal IS NOT NULL AND v_nextVal > 1 THEN
+        EXECUTE format('ALTER SEQUENCE %I.%I RESTART %s',
+                       v_logSchema, v_logSequence, v_nextVal);
+      END IF;
+-- ... and record the new log sequence state in the emaj_table table for the current operation mark.
+      INSERT INTO emaj.emaj_table (tbl_schema, tbl_name, tbl_time_id, tbl_tuples, tbl_pages, tbl_log_seq_last_val)
+        SELECT p_schema, p_table, p_timeId, reltuples, relpages, last_value
+          FROM pg_catalog.pg_class
+               JOIN pg_catalog.pg_namespace ON (pg_namespace.oid = relnamespace),
+               LATERAL emaj._get_log_sequence_last_value(v_logSchema, v_logSequence) AS last_value
+          WHERE nspname = p_schema
+            AND relname = p_table;
+    END IF;
+-- Insert an entry into the emaj_relation_change table.
+    INSERT INTO emaj.emaj_relation_change (rlchg_time_id, rlchg_schema, rlchg_tblseq, rlchg_change_kind, rlchg_group)
+      VALUES (p_timeId, p_schema, p_table, 'ADD_TABLE', p_group);
+-- Insert an entry into the emaj_hist table.
+    INSERT INTO emaj.emaj_hist (hist_function, hist_event, hist_object, hist_wording)
+      VALUES (p_function, 'TABLE ADDED', quote_ident(p_schema) || '.' || quote_ident(p_table),
+              'To the ' || CASE WHEN p_groupIsLogging THEN 'logging ' ELSE 'idle ' END || 'group ' || p_group);
+--
+    RETURN;
+  END;
+$_add_tbl$;
+
 CREATE OR REPLACE FUNCTION emaj._remove_tbl(p_schema TEXT, p_table TEXT, p_group TEXT, p_groupIsLogging BOOLEAN,
                                             p_timeId BIGINT, p_function TEXT)
 RETURNS VOID LANGUAGE plpgsql AS
@@ -1222,6 +1343,45 @@ $_move_tbl$
     RETURN;
   END;
 $_move_tbl$;
+
+CREATE OR REPLACE FUNCTION emaj._repair_tbl(p_schema TEXT, p_table TEXT, p_group TEXT, p_groupIsLogging BOOLEAN,
+                                            p_timeId BIGINT, p_function TEXT)
+RETURNS VOID LANGUAGE plpgsql AS
+$_repair_tbl$
+-- The function repairs a table detected as corrupted, i.e. with any trouble detected by the emaj_verify_all() and similar functions.
+-- Inputs: the schema and table names to repair
+--         the group that currently owns the table, and its state
+--         the time_id of the operation
+--         the calling function name
+  BEGIN
+    IF p_groupIsLogging THEN
+      RAISE EXCEPTION '_repair_tbl: Cannot repair the table %.%. Its group % is in LOGGING state. Remove first the table from its group.',
+        p_schema, p_table, p_group;
+    ELSE
+-- Remove the table from its group.
+      PERFORM emaj._drop_tbl(emaj.emaj_relation.*, p_timeId)
+        FROM emaj.emaj_relation
+        WHERE rel_schema = p_schema
+          AND rel_tblseq = p_table
+          AND upper_inf(rel_time_range);
+-- And recreate it.
+      PERFORM emaj._create_tbl(p_schema, p_table, p_group, tmp_priority, tmp_log_dat_tsp, tmp_log_idx_tsp,
+                               tmp_ignored_triggers, p_timeId, p_groupIsLogging)
+        FROM tmp_app_table
+        WHERE tmp_group = p_group
+          AND tmp_schema = p_schema
+          AND tmp_tbl_name = p_table;
+-- Insert an entry into the emaj_relation_change table.
+      INSERT INTO emaj.emaj_relation_change (rlchg_time_id, rlchg_schema, rlchg_tblseq, rlchg_change_kind, rlchg_group)
+        VALUES (p_timeId, p_schema, p_table, 'REPAIR_TABLE', p_group);
+-- Insert an entry into the emaj_hist table.
+      INSERT INTO emaj.emaj_hist(hist_function, hist_event, hist_object, hist_wording)
+        VALUES (p_function, 'TABLE REPAIRED', quote_ident(p_schema) || '.' || quote_ident(p_table), 'In group ' || p_group);
+    END IF;
+--
+    RETURN;
+  END;
+$_repair_tbl$;
 
 CREATE OR REPLACE FUNCTION emaj._move_sequences(p_schema TEXT, p_sequences TEXT[], p_newGroup TEXT, p_mark TEXT, p_multiSequence BOOLEAN,
                                              p_arrayFromRegex BOOLEAN)

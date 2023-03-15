@@ -519,7 +519,7 @@ PL/pgSQL function emaj.emaj_stop_group(text,text) line 10 at RETURN
 -- reimporting the group configuration fails if the group is in logging state
     select emaj.emaj_import_groups_configuration(emaj.emaj_export_groups_configuration(),array['myGroup2'],true);
 ERROR:  _repair_tbl: Cannot repair the table myschema2.mytbl4. Its group myGroup2 is in LOGGING state. Remove first the table from its group.
-CONTEXT:  PL/pgSQL function emaj._repair_tbl(text,text,text,boolean,bigint,text) line 11 at RAISE
+CONTEXT:  PL/pgSQL function emaj._repair_tbl(text,text,text,boolean,bigint,text) line 9 at RAISE
 SQL statement "SELECT emaj._repair_tbl(rel_schema, rel_tblseq, rel_group, group_is_logging, p_timeId, 'IMPORT_GROUPS')
       FROM (
         SELECT rel_schema, rel_tblseq, rel_group, group_is_logging

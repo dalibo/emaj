@@ -1880,7 +1880,7 @@ $_handle_trigger_fk_tbl$
   BEGIN
 -- Check that the caller is allowed to do that.
     GET DIAGNOSTICS v_stack = PG_CONTEXT;
-    IF v_stack NOT LIKE '%emaj._create_tbl(text,text,text,integer,text,text,text[],bigint,boolean,boolean)%' AND
+    IF v_stack NOT LIKE '%emaj._create_tbl(text,text,text,integer,text,text,text[],bigint,boolean)%' AND
        v_stack NOT LIKE '%emaj._remove_tbl(text,text,text,boolean,bigint,text)%' AND
        v_stack NOT LIKE '%emaj._drop_tbl(emaj.emaj_relation,bigint)%' AND
        v_stack NOT LIKE '%emaj._start_groups(text[],text,boolean,boolean)%' AND
@@ -3034,8 +3034,7 @@ COMMENT ON FUNCTION emaj.emaj_get_current_log_table(TEXT,TEXT) IS
 $$Retrieve the current log table of a given application table.$$;
 
 CREATE OR REPLACE FUNCTION emaj._create_tbl(p_schema TEXT, p_tbl TEXT, p_groupName TEXT, p_priority INT, p_logDatTsp TEXT,
-                                            p_logIdxTsp TEXT, p_ignoredTriggers TEXT[], p_timeId BIGINT,
-                                            p_groupIsRollbackable BOOLEAN, p_groupIsLogging BOOLEAN)
+                                            p_logIdxTsp TEXT, p_ignoredTriggers TEXT[], p_timeId BIGINT, p_groupIsLogging BOOLEAN)
 RETURNS VOID LANGUAGE plpgsql AS
 $_create_tbl$
 -- This function creates all what is needed to manage the log and rollback operations for an application table.
@@ -3043,10 +3042,10 @@ $_create_tbl$
 --        the group to add it into,
 --        the table properties: priority, tablespaces attributes and triggers to ignore at rollback time
 --        the time id of the operation,
---        2 booleans indicating whether the group is rollbackable and whether the group is currently in logging state.
+--        a boolean indicating whether the group is currently in logging state.
 -- The objects created in the log schema:
---    - the associated log table, with its own sequence
---    - the function that logs the tables updates, defined as a trigger
+--    - the associated log table, with its own sequence,
+--    - the function and trigger that log the tables updates.
   DECLARE
     v_emajNamesPrefix        TEXT;
     v_baseLogTableName       TEXT;
@@ -3373,18 +3372,13 @@ $_add_tbl$
 --                  the time stamp id of the operation
 --                  the main calling function
   DECLARE
-    v_groupIsRollbackable    BOOLEAN;
     v_logSchema              TEXT;
     v_logSequence            TEXT;
     v_nextVal                BIGINT;
   BEGIN
--- Get the is_rollbackable status of the related group.
-    SELECT group_is_rollbackable INTO v_groupIsRollbackable
-      FROM emaj.emaj_group
-      WHERE group_name = p_group;
 -- Create the table.
     PERFORM emaj._create_tbl(p_schema, p_table, p_group, p_priority, p_logDatTsp, p_logIdxTsp, p_ignoredTriggers,
-                             p_timeId, v_groupIsRollbackable, p_groupIsLogging);
+                             p_timeId, p_groupIsLogging);
 -- If the group is in logging state, perform additional tasks,
     IF p_groupIsLogging THEN
 -- ... get the log schema and sequence for the new relation
@@ -3873,8 +3867,6 @@ $_repair_tbl$
 --         the group that currently owns the table, and its state
 --         the time_id of the operation
 --         the calling function name
-  DECLARE
-    v_isRollbackable         BOOLEAN;
   BEGIN
     IF p_groupIsLogging THEN
       RAISE EXCEPTION '_repair_tbl: Cannot repair the table %.%. Its group % is in LOGGING state. Remove first the table from its group.',
@@ -3886,13 +3878,9 @@ $_repair_tbl$
         WHERE rel_schema = p_schema
           AND rel_tblseq = p_table
           AND upper_inf(rel_time_range);
--- Get the is_rollbackable status of the related group.
-      SELECT group_is_rollbackable INTO v_isRollbackable
-        FROM emaj.emaj_group
-        WHERE group_name = p_group;
 -- And recreate it.
       PERFORM emaj._create_tbl(p_schema, p_table, p_group, tmp_priority, tmp_log_dat_tsp, tmp_log_idx_tsp,
-                               tmp_ignored_triggers, p_timeId, v_isRollbackable, p_groupIsLogging)
+                               tmp_ignored_triggers, p_timeId, p_groupIsLogging)
         FROM tmp_app_table
         WHERE tmp_group = p_group
           AND tmp_schema = p_schema
