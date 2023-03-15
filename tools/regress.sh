@@ -199,11 +199,9 @@ pg_upgrade_test()
   ${newPGBIN}/pg_ctl -D ${newPGDATA} start
   sleep 2
   echo " "
-  echo "--> upgrading and checking the E-Maj environment"
+  echo "--> checking the E-Maj environment"
   echo " "
   ${newPGBIN}/psql -p ${newPGPORT} -U ${newPGUSER} regression <<-END_PSQL >${EMAJ_DIR}/test/${2}/results/pgUpgrade.out 2>&1
-	select emaj.emaj_verify_all();
-	\i ${EMAJ_DIR}/sql/emaj_upgrade_after_postgres_upgrade.sql
 	select emaj.emaj_verify_all();
 	END_PSQL
   echo " "
@@ -218,7 +216,7 @@ pg_upgrade_test()
   echo " "
   echo "--> compare the emaj_upgrade_after_postgres_upgrade.sql output with expected results (should not return anything)"
   echo " "
-  diff ${EMAJ_DIR}/test/${2}/expected/pgUpgrade.out ${EMAJ_DIR}/test/${2}/results/pgUpgrade.out #| tee ${EMAJ_DIR}/test/${2}/pgUpgrade.diff
+  diff -c3 ${EMAJ_DIR}/test/${2}/expected/pgUpgrade.out ${EMAJ_DIR}/test/${2}/results/pgUpgrade.out #| tee ${EMAJ_DIR}/test/${2}/pgUpgrade.diff
   return 0
 }
 
