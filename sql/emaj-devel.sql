@@ -9002,7 +9002,7 @@ $_rlbk_start_mark$
             WHERE emaj._log_stat_tbl(t, greatest(v_markTimeId, lower(rel_time_range)), NULL) > 0
          ) THEN
       v_errorMsg = 'the rollback operation has been cancelled due to concurrent activity at E-Maj rollback planning time on tables'
-                || ' to process.';
+                   ' to process.';
       PERFORM emaj._rlbk_error(p_rlbkId, v_errorMsg, 'rlbk#1');
       RAISE EXCEPTION '_rlbk_start_mark: % Please retry.', v_errorMsg;
     END IF;
@@ -9061,6 +9061,19 @@ $_rlbk_session_exec$
            JOIN emaj.emaj_time_stamp ON (time_id = mark_time_id)
       WHERE mark_group = v_groupNames[1]
         AND mark_name = v_mark;
+-- Rollback the application sequences belonging to the groups.
+    IF p_session = 1 THEN
+-- If the sequence has been added to its group after the target rollback mark, rollback up to the corresponding alter_group time.
+      PERFORM emaj._rlbk_seq(t.*, greatest(v_rlbkMarkTimeId, lower(t.rel_time_range)))
+        FROM
+          (SELECT *
+             FROM emaj.emaj_relation
+             WHERE upper_inf(rel_time_range)
+               AND rel_group = ANY (v_groupNames)
+               AND rel_kind = 'S'
+             ORDER BY rel_schema, rel_tblseq
+          ) as t;
+    END IF;
 -- Scan emaj_rlbp_plan to get all steps to process that have been affected to this session, in batch_number and step order.
     FOR r_step IN
       SELECT rlbp_step, rlbp_schema, rlbp_table, rlbp_object, rlbp_object_def, rlbp_app_trg_type,
@@ -9408,18 +9421,6 @@ $_rlbk_end$
       WHERE rlchg_time_id > v_markTimeId
         AND rlchg_group = ANY (v_groupNames)
         AND rlchg_rlbk_id IS NULL;
--- Rollback the application sequences belonging to the groups.
--- Warning, this operation is not transaction safe (that's why it is placed at the end of the rollback operation)!.
--- If the sequence has been added to its group after the target rollback mark, rollback up to the corresponding alter_group time.
-    PERFORM emaj._rlbk_seq(t.*, greatest(v_markTimeId, lower(t.rel_time_range)))
-      FROM
-        (SELECT *
-           FROM emaj.emaj_relation
-           WHERE upper_inf(rel_time_range)
-             AND rel_group = ANY (v_groupNames)
-             AND rel_kind = 'S'
-           ORDER BY rel_schema, rel_tblseq
-        ) as t;
 -- If rollback is a "logged" rollback, automatically set a mark representing the tables state just after the rollback.
 -- This mark is named 'RLBK_<mark name to rollback to>_%_DONE', where % represents the rollback start time.
     IF v_isLoggedRlbk THEN

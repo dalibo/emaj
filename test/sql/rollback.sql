@@ -529,7 +529,6 @@ rollback;
 
 -- should be ok
 set search_path=public,myschema1;
-select emaj.emaj_modify_table('myschema1','mytbl2','{"ignored_triggers_profiles":["^mytbl2trg"]}'::jsonb);
 
 -- rollback without log rows to delete
 select emaj.emaj_set_mark_group('myGroup1','Conso_M1');

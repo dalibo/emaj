@@ -4,6 +4,8 @@ E-Maj - Change log
 ------
 ###Enhancements:###
   * Remove the support of postgres versions prior V11.
+  * Improve the sequences rollback processing: move it at the beginning of the
+    overall E-Maj rollback.
   * Minor code changes, in particular to take benefit from the features brought
     by Postgres 9.6, 10 and 11.
   * Improve the performance of log tables TRUNCATEs.
@@ -663,7 +665,7 @@ E-Maj - Change log
     and technical tables remain on emaj schema (the E-Maj primary schema). 
     But secondary schemas can hold the log table, sequence and functions 
     for any application table. All secondary schema names start with 'emaj'. 
-    E-maj administrator can define a secondary schema for any application 
+    E-Maj administrator can define a secondary schema for any application 
     table though a new column in emaj_group_def table: 
     grpdef_log_schema_suffix. E-Maj functions manage the creation and the 
     deletion of these secondary schemas.
@@ -1170,18 +1172,18 @@ E-Maj - Change log
   * add a serial id to the emaj_hist table to avoid potential duplicate key 
     conditions if 2 events happen in the same micro-second.
   * the table previsously named emaj_group becomes emaj_group_def, column 
-    names being slightly changed. This impact ts E-maj usage.
+    names being slightly changed. This impact ts E-Maj usage.
   * a new table emaj_relation, records working data about the relation 
     belonging to all created groups. It provides a stability of the group 
     composition during its entire life (between emaj_create_group and 
     emaj_drop_group function calls).
   * a new internal table emaj_group maintain the state of managed groups.
-  * a new table emaj_param stores E-maj parameters. A first emaj_version 
+  * a new table emaj_param stores E-Maj parameters. A first emaj_version 
     parameter records the current emaj version.
   * the emaj_delete_group function has been renamed into emaj_drop_group.
-    This impacts E-maj usage.
-  * add a parameter named 'log_only' that allow to configure E-maj in a mode 
-    that disables rollback operations. This permits users to test E-maj 
+    This impacts E-Maj usage.
+  * add a parameter named 'log_only' that allow to configure E-Maj in a mode 
+    that disables rollback operations. This permits users to test E-Maj 
     logging with tables for which a primary key is not yet created.
   * add an automatic deletion of oldest rows in the emaj_hist table. To 
     achieve this, a parameter, named 'history_retention' is created in the 

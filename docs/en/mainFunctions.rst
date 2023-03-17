@@ -107,10 +107,6 @@ When the rollback operation is completed, the following are deleted:
 
 Then, it is possible to continue updating processes, to set other marks, and if needed, to perform another rollback at any mark.
 
-.. caution::
-
-   By their nature, the reset of sequences is not “cancellable” in case of abort and rollback of the transaction that executes the *emaj_rollback_group()* function. That is the reason why the processing of application sequences is always performed after the processing of application tables. However, even-though the time needed to rollback a sequence is very short, a problem may occur during this last phase. Rerunning immediately the *emaj_rollback_group()* function would not break database integrity. But any other database access before the second execution may lead to wrong values for some sequences.
-
 Using the *emaj_rollback_groups()* function, several groups can be rolled back at once::
 
    SELECT * FROM emaj.emaj_rollback_groups('<group.names.array>', '<mark.name>' [, <is_alter_group_allowed>]);
