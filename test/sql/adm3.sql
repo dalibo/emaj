@@ -498,7 +498,7 @@ select emaj.emaj_cleanup_rollback_state();
 -----------------------------
 -- emaj tables
 select rlbk_id, rlbk_groups, rlbk_mark, rlbk_time_id, rlbk_is_logged, rlbk_is_alter_group_allowed, rlbk_nb_session, rlbk_nb_table,
-       rlbk_nb_sequence, rlbk_eff_nb_table, rlbk_status, rlbk_begin_hist_id, rlbk_dblink_schema, rlbk_is_dblink_used,
+       rlbk_nb_sequence, rlbk_eff_nb_table, rlbk_eff_nb_sequence, rlbk_status, rlbk_begin_hist_id, rlbk_dblink_schema, rlbk_is_dblink_used,
        case when rlbk_end_datetime is null then 'null' else '[ts]' end as "end_datetime",
        regexp_replace(array_to_string(rlbk_messages,'#'),E'\\d\\d\\d\\d/\\d\\d\\/\\d\\d\\ \\d\\d\\:\\d\\d:\\d\\d .*?\\)','<timestamp>)','g')
   from emaj.emaj_rlbk where rlbk_id >= 10000 order by rlbk_id;

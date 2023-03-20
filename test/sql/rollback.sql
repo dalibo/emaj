@@ -400,7 +400,7 @@ select col1, col2, emaj_verb, emaj_tuple, emaj_gid from emaj_myschema4.mypartp2_
 select * from emaj._rlbk_async(emaj._rlbk_init(array['myGroup4'], 'myGroup4_start', false, 1, false, true), false);
 -- and check the result
 select rlbk_id, rlbk_groups, rlbk_mark, rlbk_mark_time_id, rlbk_time_id, rlbk_is_logged, rlbk_is_alter_group_allowed, 
-       rlbk_nb_session, rlbk_nb_table, rlbk_nb_sequence, rlbk_eff_nb_table, rlbk_status, rlbk_begin_hist_id,
+       rlbk_nb_session, rlbk_nb_table, rlbk_nb_sequence, rlbk_eff_nb_table, rlbk_eff_nb_sequence, rlbk_status, rlbk_begin_hist_id,
        rlbk_dblink_schema, rlbk_is_dblink_used, rlbk_messages
  from emaj.emaj_rlbk order by rlbk_id desc limit 1;
 
@@ -416,9 +416,9 @@ begin;
   insert into emaj.emaj_time_stamp (time_id, time_clock_timestamp) overriding system value
     values (-2, '2000-01-01 01:00:00');
   insert into emaj.emaj_rlbk (rlbk_id, rlbk_groups, rlbk_mark, rlbk_mark_time_id, rlbk_time_id, rlbk_is_logged, rlbk_is_alter_group_allowed, 
-             rlbk_nb_session, rlbk_nb_table, rlbk_nb_sequence, rlbk_eff_nb_table, rlbk_status)
+             rlbk_nb_session, rlbk_nb_table, rlbk_nb_sequence, rlbk_eff_nb_table, rlbk_eff_nb_sequence, rlbk_status)
     values (1232,array['group1232'],'mark1232',-2,-1,true,false,
-             1,5,4,3,'EXECUTING');
+             1,5,4,3,1,'EXECUTING');
   insert into emaj.emaj_rlbk_plan (rlbp_rlbk_id, rlbp_step, rlbp_schema, rlbp_table, rlbp_object,
              rlbp_estimated_duration, rlbp_estimated_quantity, rlbp_start_datetime, rlbp_duration)
     values (1232, 'RLBK_TABLE','schema','t1','','50 seconds'::interval,null,null,null),
@@ -479,9 +479,9 @@ begin;
   insert into emaj.emaj_time_stamp (time_id, time_clock_timestamp) overriding system value
     values (-2, '2000-01-01 01:00:00');
   insert into emaj.emaj_rlbk (rlbk_id, rlbk_groups, rlbk_mark, rlbk_mark_time_id, rlbk_time_id, rlbk_is_logged, rlbk_is_alter_group_allowed, 
-             rlbk_nb_session, rlbk_nb_table, rlbk_nb_sequence, rlbk_eff_nb_table, rlbk_status)
+             rlbk_nb_session, rlbk_nb_table, rlbk_nb_sequence, rlbk_eff_nb_table, rlbk_eff_nb_sequence, rlbk_status)
     values (1233,array['group1233'],'mark1233',-2,-1,true,false,
-             1,5,4,3,'LOCKING');
+             1,5,4,3,1,'LOCKING');
   insert into emaj.emaj_rlbk_plan (rlbp_rlbk_id, rlbp_step, rlbp_schema, rlbp_table, rlbp_object,
              rlbp_estimated_duration, rlbp_start_datetime, rlbp_duration)
     values (1233, 'LOCK_TABLE','schema','t1','',null,null,null),
@@ -499,11 +499,11 @@ begin;
   insert into emaj.emaj_time_stamp (time_id, time_tx_timestamp) overriding system value
     values (-3, now()-'1 minute'::interval);
   insert into emaj.emaj_rlbk (rlbk_id, rlbk_groups, rlbk_mark, rlbk_mark_time_id, rlbk_time_id, rlbk_is_logged, rlbk_is_alter_group_allowed, 
-             rlbk_nb_session, rlbk_nb_table, rlbk_nb_sequence, rlbk_eff_nb_table, rlbk_status)
+             rlbk_nb_session, rlbk_nb_table, rlbk_nb_sequence, rlbk_eff_nb_table, rlbk_eff_nb_sequence, rlbk_status)
     values (1234,array['group1234'],'mark1234',-2,-3,true,false,
-             1,5,4,3,'PLANNING');
+             1,5,4,3,1,'PLANNING');
   select rlbk_id, rlbk_groups, rlbk_mark, rlbk_mark_datetime, rlbk_is_logged, rlbk_nb_session, rlbk_nb_table,
-         rlbk_nb_sequence, rlbk_eff_nb_table, rlbk_status, rlbk_elapse, rlbk_remaining, rlbk_completion_pct 
+         rlbk_nb_sequence, rlbk_eff_nb_table, rlbk_eff_nb_sequence, rlbk_status, rlbk_elapse, rlbk_remaining, rlbk_completion_pct 
     from emaj._rollback_activity();
 rollback;
 
@@ -609,7 +609,7 @@ select nspname, relname, tgname, tgenabled from pg_trigger, pg_class, pg_namespa
 -- check rollback tables
 -----------------------------
 select rlbk_id, rlbk_groups, rlbk_mark, rlbk_time_id, rlbk_is_logged, rlbk_is_alter_group_allowed, rlbk_nb_session, rlbk_nb_table,
-       rlbk_nb_sequence, rlbk_eff_nb_table, rlbk_status, rlbk_begin_hist_id, rlbk_dblink_schema, rlbk_is_dblink_used,
+       rlbk_nb_sequence, rlbk_eff_nb_table, rlbk_eff_nb_sequence, rlbk_status, rlbk_begin_hist_id, rlbk_dblink_schema, rlbk_is_dblink_used,
        case when rlbk_end_datetime is null then 'null' else '[ts]' end as "end_datetime", rlbk_messages
   from emaj.emaj_rlbk order by rlbk_id;
 select rlbs_rlbk_id, rlbs_session, 

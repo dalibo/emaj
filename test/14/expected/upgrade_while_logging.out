@@ -53,6 +53,13 @@ select relname from pg_catalog.pg_class,
 -- process the extension upgrade
 ALTER EXTENSION emaj UPDATE TO 'devel';
 WARNING:  E-Maj upgrade: the E-Maj environment health check reports warning. You may execute "SELECT * FROM emaj.emaj_verify_all();" to get more details.
+NOTICE:  drop cascades to 3 other objects
+DETAIL:  drop cascades to constraint emaj_rlbk_session_rlbs_rlbk_id_fkey on table emaj_rlbk_session
+drop cascades to constraint emaj_rlbk_plan_rlbp_rlbk_id_fkey on table emaj_rlbk_plan
+drop cascades to constraint emaj_rlbk_stat_rlbt_rlbk_id_fkey on table emaj_rlbk_stat
+NOTICE:  drop cascades to 2 other objects
+DETAIL:  drop cascades to function emaj_rollback_activity()
+drop cascades to function _rollback_activity()
 -----------------------------
 -- check installation
 -----------------------------
@@ -67,11 +74,12 @@ select relname from pg_catalog.pg_class,
                     (select unnest(extconfig) as oid from pg_catalog.pg_extension where extname = 'emaj') as t 
   where t.oid = pg_class.oid
   order by 1;
-       relname        
-----------------------
+           relname           
+-----------------------------
  emaj_global_seq
  emaj_group
  emaj_hist
+ emaj_hist_hist_id_seq
  emaj_mark
  emaj_param
  emaj_rel_hist
@@ -79,6 +87,7 @@ select relname from pg_catalog.pg_class,
  emaj_relation_change
  emaj_rlbk
  emaj_rlbk_plan
+ emaj_rlbk_rlbk_id_seq
  emaj_rlbk_session
  emaj_rlbk_stat
  emaj_schema
@@ -86,7 +95,8 @@ select relname from pg_catalog.pg_class,
  emaj_sequence
  emaj_table
  emaj_time_stamp
-(17 rows)
+ emaj_time_stamp_time_id_seq
+(20 rows)
 
 -- check the emaj_param content
 SELECT param_value_text FROM emaj.emaj_param WHERE param_key = 'emaj_version';
@@ -468,6 +478,7 @@ Tablespace: "tspemaj"
  rlbk_nb_table               | integer                  |           |          | 
  rlbk_nb_sequence            | integer                  |           |          | 
  rlbk_eff_nb_table           | integer                  |           |          | 
+ rlbk_eff_nb_sequence        | integer                  |           |          | 
  rlbk_status                 | emaj._rlbk_status_enum   |           |          | 
  rlbk_begin_hist_id          | bigint                   |           |          | 
  rlbk_dblink_schema          | text                     |           |          | 
@@ -605,6 +616,7 @@ Tablespace: "tspemaj"
  rlbk_nb_table               | integer                  |           |          | 
  rlbk_nb_sequence            | integer                  |           |          | 
  rlbk_eff_nb_table           | integer                  |           |          | 
+ rlbk_eff_nb_sequence        | integer                  |           |          | 
  rlbk_status                 | emaj._rlbk_status_enum   |           |          | 
  rlbk_start_datetime         | timestamp with time zone |           |          | 
  rlbk_elapse                 | interval                 |           |          | 
@@ -1167,7 +1179,7 @@ select * from emaj.emaj_time_stamp_time_id_seq;
 select * from emaj.emaj_rlbk_rlbk_id_seq;
  last_value | log_cnt | is_called 
 ------------+---------+-----------
-          5 |       0 | f
+          4 |       0 | t
 (1 row)
 
 -- check log sequences position

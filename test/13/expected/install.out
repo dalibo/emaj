@@ -420,6 +420,7 @@ gist, for table "emaj.emaj_relation"
  rlbk_nb_table               | integer                  |           |          | 
  rlbk_nb_sequence            | integer                  |           |          | 
  rlbk_eff_nb_table           | integer                  |           |          | 
+ rlbk_eff_nb_sequence        | integer                  |           |          | 
  rlbk_status                 | emaj._rlbk_status_enum   |           |          | 
  rlbk_begin_hist_id          | bigint                   |           |          | 
  rlbk_dblink_schema          | text                     |           |          | 
@@ -548,6 +549,7 @@ primary key, btree, for table "emaj.emaj_rlbk_stat"
  rlbk_nb_table               | integer                  |           |          | 
  rlbk_nb_sequence            | integer                  |           |          | 
  rlbk_eff_nb_table           | integer                  |           |          | 
+ rlbk_eff_nb_sequence        | integer                  |           |          | 
  rlbk_status                 | emaj._rlbk_status_enum   |           |          | 
  rlbk_start_datetime         | timestamp with time zone |           |          | 
  rlbk_elapse                 | interval                 |           |          | 

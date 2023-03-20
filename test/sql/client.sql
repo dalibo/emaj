@@ -55,9 +55,9 @@ insert into emaj.emaj_time_stamp (time_id, time_tx_timestamp) overriding system 
 insert into emaj.emaj_time_stamp (time_id, time_clock_timestamp) overriding system value
   values (-2, '2000-01-01 01:00:00');
 insert into emaj.emaj_rlbk (rlbk_id, rlbk_groups, rlbk_mark, rlbk_mark_time_id, rlbk_time_id, rlbk_is_logged, rlbk_is_alter_group_allowed, rlbk_nb_session, 
-           rlbk_nb_table, rlbk_nb_sequence, rlbk_eff_nb_table, rlbk_status)
+           rlbk_nb_table, rlbk_nb_sequence, rlbk_eff_nb_table, rlbk_eff_nb_sequence, rlbk_status)
   values (20101,array['group20101'],'mark20101',-2,-1,true,false,1,
-           5,4,3,'EXECUTING');
+           5,4,3,1,'EXECUTING');
 insert into emaj.emaj_rlbk_plan (rlbp_rlbk_id, rlbp_step, rlbp_schema, rlbp_table, rlbp_object,
            rlbp_estimated_duration, rlbp_start_datetime, rlbp_duration)
   values (20101, 'RLBK_TABLE','schema','t1','','50 seconds'::interval,null,null),
@@ -76,9 +76,9 @@ update emaj.emaj_rlbk_plan set rlbp_start_datetime = now() - '65 seconds'::inter
 insert into emaj.emaj_time_stamp (time_id, time_tx_timestamp) overriding system value
   values (-3, now()-'2 minutes'::interval);
 insert into emaj.emaj_rlbk (rlbk_id, rlbk_groups, rlbk_mark, rlbk_mark_time_id, rlbk_time_id, rlbk_is_logged, rlbk_is_alter_group_allowed, rlbk_nb_session, 
-           rlbk_nb_table, rlbk_nb_sequence, rlbk_eff_nb_table, rlbk_status)
+           rlbk_nb_table, rlbk_nb_sequence, rlbk_eff_nb_table, rlbk_eff_nb_sequence, rlbk_status)
   values (20102,array['group20102'],'mark20102',-2,-3,true,false,1,
-           5,4,3,'LOCKING');
+           5,4,3,NULL,'LOCKING');
 insert into emaj.emaj_rlbk_plan (rlbp_rlbk_id, rlbp_step, rlbp_schema, rlbp_table, rlbp_object,
            rlbp_estimated_duration, rlbp_start_datetime, rlbp_duration)
   values (20102, 'LOCK_TABLE','schema','t1','',null,null,null),
@@ -91,10 +91,10 @@ insert into emaj.emaj_rlbk_plan (rlbp_rlbk_id, rlbp_step, rlbp_schema, rlbp_tabl
 -- 3rd rollback, in PLANNING state
 insert into emaj.emaj_time_stamp (time_id, time_tx_timestamp) overriding system value
   values (-4, now()-'1 minute'::interval);
-insert into emaj.emaj_rlbk (rlbk_id, rlbk_groups, rlbk_mark, rlbk_mark_time_id, rlbk_time_id, rlbk_is_logged, rlbk_is_alter_group_allowed, rlbk_nb_session, 
-           rlbk_nb_table, rlbk_nb_sequence, rlbk_eff_nb_table, rlbk_status)
+insert into emaj.emaj_rlbk (rlbk_id, rlbk_groups, rlbk_mark, rlbk_mark_time_id, rlbk_time_id, rlbk_is_logged, rlbk_is_alter_group_allowed, rlbk_nb_session,
+           rlbk_nb_table, rlbk_nb_sequence, rlbk_eff_nb_table, rlbk_eff_nb_sequence, rlbk_status)
   values (20103,array['group20103'],'mark20103',-2,-4,true,false,1,
-           5,4,3,'PLANNING');
+           5,4,3,NULL,'PLANNING');
 
 --------------------------------------------
 -- call emajRollbackMonitor.php using an emaj_viewer role
@@ -158,9 +158,9 @@ insert into emaj.emaj_time_stamp (time_id, time_tx_timestamp) overriding system 
 insert into emaj.emaj_time_stamp (time_id, time_clock_timestamp) overriding system value
   values (-6, '2000-01-01 01:00:00');
 insert into emaj.emaj_rlbk (rlbk_id, rlbk_groups, rlbk_mark, rlbk_mark_time_id, rlbk_time_id, rlbk_is_logged, rlbk_is_alter_group_allowed, rlbk_nb_session, 
-           rlbk_nb_table, rlbk_nb_sequence, rlbk_eff_nb_table, rlbk_status)
+           rlbk_nb_table, rlbk_nb_sequence, rlbk_eff_nb_table, rlbk_eff_nb_sequence, rlbk_status)
   values (20301,array['group20301'],'mark20301',-2,-1,true,false,1,
-           5,4,3,'EXECUTING');
+           5,4,3,1,'EXECUTING');
 insert into emaj.emaj_rlbk_plan (rlbp_rlbk_id, rlbp_step, rlbp_schema, rlbp_table, rlbp_object,
            rlbp_estimated_duration, rlbp_start_datetime, rlbp_duration)
   values (20301, 'RLBK_TABLE','schema','t1','','50 seconds'::interval,null,null),
@@ -179,9 +179,9 @@ update emaj.emaj_rlbk_plan set rlbp_start_datetime = now() - '65 seconds'::inter
 insert into emaj.emaj_time_stamp (time_id, time_tx_timestamp) overriding system value
   values (-7, now()-'2 minutes'::interval);
 insert into emaj.emaj_rlbk (rlbk_id, rlbk_groups, rlbk_mark, rlbk_mark_time_id, rlbk_time_id, rlbk_is_logged, rlbk_is_alter_group_allowed, rlbk_nb_session, 
-           rlbk_nb_table, rlbk_nb_sequence, rlbk_eff_nb_table, rlbk_status)
+           rlbk_nb_table, rlbk_nb_sequence, rlbk_eff_nb_table, rlbk_eff_nb_sequence, rlbk_status)
   values (20302,array['group20302'],'mark20302',-2,-3,true,false,1,
-           5,4,3,'LOCKING');
+           5,4,3,NULL,'LOCKING');
 insert into emaj.emaj_rlbk_plan (rlbp_rlbk_id, rlbp_step, rlbp_schema, rlbp_table, rlbp_object,
            rlbp_estimated_duration, rlbp_start_datetime, rlbp_duration)
   values (20302, 'LOCK_TABLE','schema','t1','',null,null,null),
@@ -195,9 +195,9 @@ insert into emaj.emaj_rlbk_plan (rlbp_rlbk_id, rlbp_step, rlbp_schema, rlbp_tabl
 insert into emaj.emaj_time_stamp (time_id, time_tx_timestamp) overriding system value
   values (-8, now()-'1 minute'::interval);
 insert into emaj.emaj_rlbk (rlbk_id, rlbk_groups, rlbk_mark, rlbk_mark_time_id, rlbk_time_id, rlbk_is_logged, rlbk_is_alter_group_allowed, rlbk_nb_session, 
-           rlbk_nb_table, rlbk_nb_sequence, rlbk_eff_nb_table, rlbk_status)
+           rlbk_nb_table, rlbk_nb_sequence, rlbk_eff_nb_table, rlbk_eff_nb_sequence, rlbk_status)
   values (20303,array['group20303'],'mark20303',-2,-4,true,false,1,
-           5,4,3,'PLANNING');
+           5,4,3,NULL,'PLANNING');
 
 --------------------------------------------
 -- call emajRollbackMonitor.pl using an emaj_viewer role
