@@ -64,17 +64,16 @@ displays only once the list of in progress rollback operations and the list of a
 
 Example of display::
 
-    E-Maj (version 3.3.0) - Monitoring rollbacks activity
+    E-Maj (version 4.2.0) - Monitoring rollbacks activity
    ---------------------------------------------------------------
-   04/02/2020 - 12:07:17
-   ** rollback 34 started at 2020-02-04 12:06:20.350962+02 for groups {myGroup1,myGroup2}
-      status: COMMITTED ; ended at 2020-02-04 12:06:21.149111+02 
-   ** rollback 35 started at 2020-02-04 12:06:21.474217+02 for groups {myGroup1}
-      status: COMMITTED ; ended at 2020-02-04 12:06:21.787615+02 
-   -> rollback 36 started at 2020-02-04 12:04:31.769992+02 for groups {group1232}
-      status: EXECUTING ; completion 89 % ; 00:00:20 remaining
-   -> rollback 37 started at 2020-02-04 12:04:21.894546+02 for groups {group1233}
-      status: LOCKING ; completion 0 % ; 00:22:20 remaining
-   -> rollback 38 started at 2020-02-04 12:05:21.900311+02 for groups {group1234}
+   21/03/2023 - 08:31:23
+   ** rollback 34 started at 2023-03-21 08:31:16.777887+01 for groups {myGroup1,myGroup2}
+      status: COMMITTED ; ended at 2023-03-21 08:31:16.9553+01
+   ** rollback 35 started at 2023-03-21 08:31:17.180421+01 for groups {myGroup1}
+      status: COMMITTED ; ended at 2023-03-21 08:31:17.480194+01
+   -> rollback 36 started at 2023-03-21 08:29:26.003502+01 for groups {group20101}
+      status: EXECUTING ; completion 85 %; 00:00:20 remaining
+   -> rollback 37 started at 2023-03-21 08:29:16.123386+01 for groups {group20102}
+      status: LOCKING ; completion 0 %; 00:22:20 remaining
+   -> rollback 38 started at 2023-03-21 08:30:16.130833+01 for groups {group20103}
       status: PLANNING ; completion 0 %
-

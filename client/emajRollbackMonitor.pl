@@ -122,13 +122,17 @@ for (my $i=1; $i<=$nbIter; $i++){
     print (strftime('%d/%m/%Y - %H:%M:%S',localtime)."\n");
   }
 # Retrieve the recently completed rollback operations
-  $stmt = $dbh->prepare("SELECT * FROM (
-                                        SELECT emaj.emaj_rlbk.*, tsr.time_tx_timestamp AS rlbk_start_datetime, tsm.time_tx_timestamp AS rlbk_mark_datetime
-                                        FROM emaj.emaj_rlbk, emaj.emaj_time_stamp tsr, emaj.emaj_time_stamp tsm
-                                        WHERE tsr.time_id = rlbk_time_id AND tsm.time_id = rlbk_mark_time_id
-                                          AND rlbk_end_datetime > current_timestamp - '".$complRlbkAgo." hours'::interval
-                                        ORDER BY rlbk_id DESC LIMIT ".$nbComplRlbk.") AS t
-                         ORDER BY rlbk_id ASC");
+  $stmt = $dbh->prepare("SELECT *
+                           FROM (
+                                 SELECT emaj.emaj_rlbk.*,
+                                        tsr.time_tx_timestamp AS rlbk_start_datetime, tsm.time_tx_timestamp AS rlbk_mark_datetime,
+                                        format('%s/%s', rlbk_eff_nb_table, rlbk_nb_table) AS rlbk_tbl,
+                                        format('%s/%s', coalesce(rlbk_eff_nb_sequence::TEXT, '?'), rlbk_nb_sequence) AS rlbk_seq
+                                 FROM emaj.emaj_rlbk, emaj.emaj_time_stamp tsr, emaj.emaj_time_stamp tsm
+                                 WHERE tsr.time_id = rlbk_time_id AND tsm.time_id = rlbk_mark_time_id
+                                   AND rlbk_end_datetime > current_timestamp - '".$complRlbkAgo." hours'::interval
+                                 ORDER BY rlbk_id DESC LIMIT ".$nbComplRlbk.") AS t
+                           ORDER BY rlbk_id ASC");
   $stmt->execute()
     or die('Access to the emaj_rlbk table failed '.$DBI::errstr."\n");
 
@@ -143,12 +147,15 @@ for (my $i=1; $i<=$nbIter; $i++){
     print ("** rollback ".$row->{'rlbk_id'}." started at ".$row->{'rlbk_start_datetime'}." for groups ".$row->{'rlbk_groups'}."\n");
     print ("   status: ".$row->{'rlbk_status'}." ; ended at ".$row->{'rlbk_end_datetime'}."\n");
     print ("   rollback to mark: \"".$row->{'rlbk_mark'}."\" set at ".$row->{'rlbk_mark_datetime'}."\n") if ($verbose);
-    print ("   ".$row->{'rlbk_nb_session'}." session(s) to process ".$row->{'rlbk_eff_nb_table'}." table(s) and ".$row->{'rlbk_nb_sequence'}." sequence(s)\n") if ($verbose);
+    print ("   ".$row->{'rlbk_nb_session'}." session(s) to process ".$row->{'rlbk_tbl'}." table(s) and ".$row->{'rlbk_seq'}." sequence(s)\n") if ($verbose);
   }
   $stmt->finish;
 
 # Call the emaj_rollback_activity() function to retrieve the rollback operations in progress
-  $stmt = $dbh->prepare("SELECT * FROM emaj.emaj_rollback_activity() ORDER BY rlbk_id");
+  $stmt = $dbh->prepare("SELECT *,
+                                format('%s/%s', rlbk_eff_nb_table, rlbk_nb_table) AS rlbk_tbl,
+                                format('%s/%s', coalesce(rlbk_eff_nb_sequence::TEXT, '?'), rlbk_nb_sequence) AS rlbk_seq
+                           FROM emaj.emaj_rollback_activity() ORDER BY rlbk_id");
   $stmt->execute()
     or die('Call of emaj_rollback_activity() function failed '.$DBI::errstr."\n");
 
@@ -166,7 +173,7 @@ for (my $i=1; $i<=$nbIter; $i++){
       print ("; ".$row->{'rlbk_remaining'}." remaining\n");
     }
     print ("   rollback to mark: ".$row->{'rlbk_mark'}." set at ".$row->{'rlbk_mark_datetime'}."\n") if ($verbose);
-    print ("   ".$row->{'rlbk_nb_session'}." session(s) to process ".$row->{'rlbk_eff_nb_table'}." table(s) and ".$row->{'rlbk_nb_sequence'}." sequence(s)\n") if ($verbose);
+    print ("   ".$row->{'rlbk_nb_session'}." session(s) to process ".$row->{'rlbk_tbl'}." table(s) and ".$row->{'rlbk_seq'}." sequence(s)\n") if ($verbose);
   }
   $stmt->finish;
 

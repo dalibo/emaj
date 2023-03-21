@@ -122,7 +122,9 @@
 
 // Retrieve the recently completed rollback operations
     $query = "SELECT * FROM (
-                SELECT emaj.emaj_rlbk.*, tsr.time_tx_timestamp AS rlbk_start_datetime, tsm.time_tx_timestamp AS rlbk_mark_datetime
+                SELECT emaj.emaj_rlbk.*, tsr.time_tx_timestamp AS rlbk_start_datetime, tsm.time_tx_timestamp AS rlbk_mark_datetime,
+                       format('%s/%s', rlbk_eff_nb_table, rlbk_nb_table) AS rlbk_tbl,
+                       format('%s/%s', coalesce(rlbk_eff_nb_sequence::TEXT, '?'), rlbk_nb_sequence) AS rlbk_seq
                   FROM emaj.emaj_rlbk, emaj.emaj_time_stamp tsr, emaj.emaj_time_stamp tsm
                   WHERE tsr.time_id = rlbk_time_id AND tsm.time_id = rlbk_mark_time_id
                     AND rlbk_end_datetime > current_timestamp - '{$complRlbkAgo} hours'::interval
@@ -141,13 +143,17 @@
       echo "** rollback {$row['rlbk_id']} started at {$row['rlbk_start_datetime']} for groups {$row['rlbk_groups']}\n";
       echo "   status: {$row['rlbk_status']} ; ended at {$row['rlbk_end_datetime']}\n";
       if ($verbose) echo "   rollback to mark: \"{$row['rlbk_mark']}\" set at {$row['rlbk_mark_datetime']}\n";
-      if ($verbose) echo "   {$row['rlbk_nb_session']} session(s) to process {$row['rlbk_eff_nb_table']} table(s) and {$row['rlbk_nb_sequence']} sequence(s)\n";
+      if ($verbose) echo "   {$row['rlbk_nb_session']} session(s) to process {$row['rlbk_tbl']} table(s) " .
+                         "and {$row['rlbk_seq']} sequence(s)\n";
     }
 
     pg_free_result($result);
 
 // Call the emaj_rollback_activity() function to retrieve the rollback operations in progress
-    $query = "SELECT * FROM emaj.emaj_rollback_activity() ORDER BY rlbk_id";
+    $query = "SELECT *,
+                     format('%s/%s', rlbk_eff_nb_table, rlbk_nb_table) AS rlbk_tbl,
+                     format('%s/%s', coalesce(rlbk_eff_nb_sequence::TEXT, '?'), rlbk_nb_sequence) AS rlbk_seq
+                FROM emaj.emaj_rollback_activity() ORDER BY rlbk_id";
     $result = pg_query($dbconn,$query)
         or abort('Call of emaj_rollback_activity() function failed '.pg_last_error()."\n");
 
@@ -164,7 +170,8 @@
       else
         echo "; {$row['rlbk_remaining']} remaining\n";
       if ($verbose) echo "   rollback to mark: {$row['rlbk_mark']} set at {$row['rlbk_mark_datetime']}\n";
-      if ($verbose) echo "   {$row['rlbk_nb_session']} session(s) to process {$row['rlbk_eff_nb_table']} table(s) and {$row['rlbk_nb_sequence']} sequence(s)\n";
+      if ($verbose) echo "   {$row['rlbk_nb_session']} session(s) to process {$row['rlbk_tbl']} table(s) " .
+                         "and {$row['rlbk_seq']} sequence(s)\n";
     }
 
     pg_free_result($result);

@@ -129,44 +129,44 @@ insert into emaj.emaj_rlbk (rlbk_id, rlbk_groups, rlbk_mark, rlbk_mark_time_id, 
 ** rollback 20000 started at [rollback start time] for groups {myGroup1,myGroup2}
    status: COMMITTED ; ended at [rollback end time]
    rollback to mark: "Multi-1" set at [mark time]
-   3 session(s) to process 10 table(s) and 4 sequence(s)
+   3 session(s) to process 10/11 table(s) and 3/4 sequence(s)
 ** rollback 20001 started at [rollback start time] for groups {myGroup1}
    status: COMMITTED ; ended at [rollback end time]
    rollback to mark: "Multi-1" set at [mark time]
-   1 session(s) to process 4 table(s) and 2 sequence(s)
+   1 session(s) to process 4/5 table(s) and 2/2 sequence(s)
 -> rollback 20101 started at [rollback start time] for groups {group20101}
    status: EXECUTING ; completion 85 %; @ 20 secs remaining
    rollback to mark: mark20101 set at [mark time]
-   1 session(s) to process 3 table(s) and 4 sequence(s)
+   1 session(s) to process 3/5 table(s) and 1/4 sequence(s)
 -> rollback 20102 started at [rollback start time] for groups {group20102}
    status: LOCKING ; completion 0 %; @ 22 mins 20 secs remaining
    rollback to mark: mark20102 set at [mark time]
-   1 session(s) to process 3 table(s) and 4 sequence(s)
+   1 session(s) to process 3/5 table(s) and ?/4 sequence(s)
 -> rollback 20103 started at [rollback start time] for groups {group20103}
    status: PLANNING ; completion 0 %
    rollback to mark: mark20103 set at [mark time]
-   1 session(s) to process 3 table(s) and 4 sequence(s)
+   1 session(s) to process 3/5 table(s) and ?/4 sequence(s)
 [current date and time]
 ** rollback 20000 started at [rollback start time] for groups {myGroup1,myGroup2}
    status: COMMITTED ; ended at [rollback end time]
    rollback to mark: "Multi-1" set at [mark time]
-   3 session(s) to process 10 table(s) and 4 sequence(s)
+   3 session(s) to process 10/11 table(s) and 3/4 sequence(s)
 ** rollback 20001 started at [rollback start time] for groups {myGroup1}
    status: COMMITTED ; ended at [rollback end time]
    rollback to mark: "Multi-1" set at [mark time]
-   1 session(s) to process 4 table(s) and 2 sequence(s)
+   1 session(s) to process 4/5 table(s) and 2/2 sequence(s)
 -> rollback 20101 started at [rollback start time] for groups {group20101}
    status: EXECUTING ; completion 85 %; @ 20 secs remaining
    rollback to mark: mark20101 set at [mark time]
-   1 session(s) to process 3 table(s) and 4 sequence(s)
+   1 session(s) to process 3/5 table(s) and 1/4 sequence(s)
 -> rollback 20102 started at [rollback start time] for groups {group20102}
    status: LOCKING ; completion 0 %; @ 22 mins 20 secs remaining
    rollback to mark: mark20102 set at [mark time]
-   1 session(s) to process 3 table(s) and 4 sequence(s)
+   1 session(s) to process 3/5 table(s) and ?/4 sequence(s)
 -> rollback 20103 started at [rollback start time] for groups {group20103}
    status: PLANNING ; completion 0 %
    rollback to mark: mark20103 set at [mark time]
-   1 session(s) to process 3 table(s) and 4 sequence(s)
+   1 session(s) to process 3/5 table(s) and ?/4 sequence(s)
 
 --------------------------------------------------------------
 -- PERL SCRIPTS
@@ -293,65 +293,65 @@ insert into emaj.emaj_rlbk (rlbk_id, rlbk_groups, rlbk_mark, rlbk_mark_time_id, 
 ** rollback 20200 started at [rollback start time] for groups {myGroup1,myGroup2}
    status: COMMITTED ; ended at [rollback end time]
    rollback to mark: "Multi-1" set at [mark time]
-   3 session(s) to process 10 table(s) and 4 sequence(s)
+   3 session(s) to process 10/11 table(s) and 3/4 sequence(s)
 ** rollback 20201 started at [rollback start time] for groups {myGroup1}
    status: COMMITTED ; ended at [rollback end time]
    rollback to mark: "Multi-1" set at [mark time]
-   1 session(s) to process 4 table(s) and 2 sequence(s)
+   1 session(s) to process 4/5 table(s) and 2/2 sequence(s)
 -> rollback 20101 started at [rollback start time] for groups {group20101}
    status: EXECUTING ; completion 85 %; @ 20 secs remaining
    rollback to mark: mark20101 set at [mark time]
-   1 session(s) to process 3 table(s) and 4 sequence(s)
+   1 session(s) to process 3/5 table(s) and 1/4 sequence(s)
 -> rollback 20102 started at [rollback start time] for groups {group20102}
    status: LOCKING ; completion 0 %; @ 22 mins 20 secs remaining
    rollback to mark: mark20102 set at [mark time]
-   1 session(s) to process 3 table(s) and 4 sequence(s)
+   1 session(s) to process 3/5 table(s) and ?/4 sequence(s)
 -> rollback 20103 started at [rollback start time] for groups {group20103}
    status: PLANNING ; completion 0 %
    rollback to mark: mark20103 set at [mark time]
-   1 session(s) to process 3 table(s) and 4 sequence(s)
+   1 session(s) to process 3/5 table(s) and ?/4 sequence(s)
 -> rollback 20301 started at [rollback start time] for groups {group20301}
    status: EXECUTING ; completion 85 %; @ 20 secs remaining
    rollback to mark: mark20301 set at [mark time]
-   1 session(s) to process 3 table(s) and 4 sequence(s)
+   1 session(s) to process 3/5 table(s) and 1/4 sequence(s)
 -> rollback 20302 started at [rollback start time] for groups {group20302}
    status: LOCKING ; completion 0 %; @ 22 mins 20 secs remaining
    rollback to mark: mark20302 set at [mark time]
-   1 session(s) to process 3 table(s) and 4 sequence(s)
+   1 session(s) to process 3/5 table(s) and ?/4 sequence(s)
 -> rollback 20303 started at [rollback start time] for groups {group20303}
    status: PLANNING ; completion 0 %
    rollback to mark: mark20303 set at [mark time]
-   1 session(s) to process 3 table(s) and 4 sequence(s)
+   1 session(s) to process 3/5 table(s) and ?/4 sequence(s)
 [current date and time]
 ** rollback 20200 started at [rollback start time] for groups {myGroup1,myGroup2}
    status: COMMITTED ; ended at [rollback end time]
    rollback to mark: "Multi-1" set at [mark time]
-   3 session(s) to process 10 table(s) and 4 sequence(s)
+   3 session(s) to process 10/11 table(s) and 3/4 sequence(s)
 ** rollback 20201 started at [rollback start time] for groups {myGroup1}
    status: COMMITTED ; ended at [rollback end time]
    rollback to mark: "Multi-1" set at [mark time]
-   1 session(s) to process 4 table(s) and 2 sequence(s)
+   1 session(s) to process 4/5 table(s) and 2/2 sequence(s)
 -> rollback 20101 started at [rollback start time] for groups {group20101}
    status: EXECUTING ; completion 85 %; @ 20 secs remaining
    rollback to mark: mark20101 set at [mark time]
-   1 session(s) to process 3 table(s) and 4 sequence(s)
+   1 session(s) to process 3/5 table(s) and 1/4 sequence(s)
 -> rollback 20102 started at [rollback start time] for groups {group20102}
    status: LOCKING ; completion 0 %; @ 22 mins 20 secs remaining
    rollback to mark: mark20102 set at [mark time]
-   1 session(s) to process 3 table(s) and 4 sequence(s)
+   1 session(s) to process 3/5 table(s) and ?/4 sequence(s)
 -> rollback 20103 started at [rollback start time] for groups {group20103}
    status: PLANNING ; completion 0 %
    rollback to mark: mark20103 set at [mark time]
-   1 session(s) to process 3 table(s) and 4 sequence(s)
+   1 session(s) to process 3/5 table(s) and ?/4 sequence(s)
 -> rollback 20301 started at [rollback start time] for groups {group20301}
    status: EXECUTING ; completion 85 %; @ 20 secs remaining
    rollback to mark: mark20301 set at [mark time]
-   1 session(s) to process 3 table(s) and 4 sequence(s)
+   1 session(s) to process 3/5 table(s) and 1/4 sequence(s)
 -> rollback 20302 started at [rollback start time] for groups {group20302}
    status: LOCKING ; completion 0 %; @ 22 mins 20 secs remaining
    rollback to mark: mark20302 set at [mark time]
-   1 session(s) to process 3 table(s) and 4 sequence(s)
+   1 session(s) to process 3/5 table(s) and ?/4 sequence(s)
 -> rollback 20303 started at [rollback start time] for groups {group20303}
    status: PLANNING ; completion 0 %
    rollback to mark: mark20303 set at [mark time]
-   1 session(s) to process 3 table(s) and 4 sequence(s)
+   1 session(s) to process 3/5 table(s) and ?/4 sequence(s)
