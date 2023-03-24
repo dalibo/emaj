@@ -486,10 +486,6 @@ select mark_group, regexp_replace(mark_name,E'\\d\\d\.\\d\\d\\.\\d\\d\\.\\d\\d\\
 select time_id, time_last_emaj_gid, time_event from emaj.emaj_time_stamp order by time_id;
  time_id | time_last_emaj_gid | time_event 
 ---------+--------------------+------------
-      -8 |                    | 
-      -7 |                    | 
-      -6 |                    | 
-      -5 |                    | 
       -4 |                    | 
       -3 |                    | 
       -2 |                    | 
@@ -992,7 +988,7 @@ select time_id, time_last_emaj_gid, time_event from emaj.emaj_time_stamp order b
    20203 |           20000272 | R
    20204 |           20000291 | M
    20205 |           20000291 | R
-(506 rows)
+(502 rows)
 
 select sequ_schema, sequ_name, sequ_time_id, sequ_last_val, sequ_is_called from emaj.emaj_sequence order by sequ_time_id, sequ_schema, sequ_name;
  sequ_schema |     sequ_name     | sequ_time_id | sequ_last_val | sequ_is_called 
