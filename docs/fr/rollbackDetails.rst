@@ -34,6 +34,8 @@ Ensuite, pour chaque table pour laquelle existent des mises à jour à annuler, 
 * la remise en l’état de triggers applicatifs ;
 * la réactivation des triggers E-Maj.
 
+Le traitement de l’ensemble des séquences concernées par le rollback E-Maj est effectué par une unique étape élémentaire planifiée en début d’opération.
+
 A chaque étape élémentaire, la fonction qui pilote l’exécution du plan met à jour la table *emaj_rlbk_plan*. La consultation de cette table peut donner des informations sur la façon dont un rollback E-Maj s’est déroulé.
 
 Si le paramètre *dblink_user_password* est valorisé, les mises à jour de la table *emaj_rlbk_plan* sont réalisées dans des transactions autonomes, de sorte qu’il est possible de visualiser l’avancement du rollback en temps réel. C’est ce que font les clients :doc:`emajRollbackMonitor<parallelRollbackClient>` et :doc:`Emaj_web<webUsage>`.

@@ -34,6 +34,8 @@ Then, for each table having changes to revert, the elementary steps are chained.
 * reseting the state of application triggers;
 * re-enabling E-Maj triggers.
 
+The processing of all sequences concerned by the E-Maj rollback is performed by a single elementary step that is scheduled at the beginning of the operation.
+
 For each elementary step, the function that drives the plan execution updates the *emaj_rlbk_plan* table. Reading this table’s content may bring interesting information about the way the E-Maj rollback operation has been processed.
 
 If the *dblink_user_password* parameter is set, the *emaj_rlbk_plan* updates are processed into autonomous transactions, so that it is possible to look at the rollback operation in real time. That’s what the :doc:`emajRollbackMonitor<parallelRollbackClient>` and :doc:`Emaj_web<webUsage>` clients do.

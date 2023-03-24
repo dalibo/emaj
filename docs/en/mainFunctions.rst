@@ -98,7 +98,7 @@ To be sure that no concurrent transaction updates any table of the group during 
 
 The E-Maj rollback takes into account the existing triggers and foreign keys on the concerned tables. More details :doc:`here<rollbackDetails>`.
 
-When the volume of updates to cancel is high and the rollback operation is therefore long, it is possible to monitor the operation using the :ref:`emaj_rollback_activity() <emaj_rollback_activity>` function or the :doc:`emajRollbackMonitor.php <rollbackMonitorClient>` client.
+When the volume of updates to cancel is high and the rollback operation is therefore long, it is possible to monitor the operation using the :ref:`emaj_rollback_activity() <emaj_rollback_activity>` function or the :doc:`emajRollbackMonitor <rollbackMonitorClient>` client.
 
 When the rollback operation is completed, the following are deleted:
 
@@ -148,7 +148,7 @@ At the beginning and at the end of the operation, the function automatically set
 
 where rollback.time represents the start time of the transaction performing the rollback, expressed as “hours.minutes.seconds.milliseconds”.
 
-When the volume of updates to cancel is high and the rollback operation is therefore long, it is possible to monitor the operation using the :ref:`emaj_rollback_activity() <emaj_rollback_activity>` function or the :doc:`emajRollbackMonitor.php <rollbackMonitorClient>` client.
+When the volume of updates to cancel is high and the rollback operation is therefore long, it is possible to monitor the operation using the :ref:`emaj_rollback_activity() <emaj_rollback_activity>` function or the :doc:`emajRollbackMonitor <rollbackMonitorClient>` client.
 
 Following the rollback operation, it is possible to resume updating the database, to set other marks, and if needed to perform another rollback at any mark, including the mark set at the beginning of the rollback, to cancel it, or even delete an old mark that was set after the mark used for the rollback.
 

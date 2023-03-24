@@ -234,13 +234,13 @@ begin;
   select emaj.emaj_protect_mark_group('myGroup2','EMAJ_LAST_MARK');
   INSERT INTO emaj.emaj_param (param_key, param_value_interval) VALUES ('fixed_table_rollback_duration','1.4 millisecond'::interval);
   select emaj.emaj_estimate_rollback_group('myGroup2','EMAJ_LAST_MARK',FALSE);
--- should return 0.014 sec
+-- should return 0.0205 sec
   select emaj.emaj_unprotect_mark_group('myGroup2','EMAJ_LAST_MARK');
   select emaj.emaj_unprotect_group('myGroup2');
 rollback;
 
 select emaj.emaj_estimate_rollback_group('myGroup2','Mark21',FALSE);
--- should return 1.4021 sec (or 1.4226 sec is emaj is not an extension)
+-- should return 1.4086 sec (or 1.4291 sec is emaj is not an extension)
 
 -- estimates with empty rollback statistics but temporarily modified parameters
 begin;
@@ -250,10 +250,10 @@ begin;
   UPDATE emaj.emaj_param SET param_value_interval = '7 millisecond'::interval WHERE param_key = 'fixed_step_rollback_duration';
   INSERT INTO emaj.emaj_param (param_key, param_value_interval) VALUES ('fixed_dblink_rollback_duration','2.5 millisecond'::interval);
   select emaj.emaj_estimate_rollback_groups('{"myGroup2"}','Mark21',TRUE);
--- should return 1.8045 sec (or 1.819 sec is emaj is not an extension)
+-- should return 1.814 sec (or 1.8285 sec is emaj is not an extension)
 rollback;
 
--- estimate with added rollback statistics about fkey drops, recreations and checks
+-- estimate with added rollback statistics about fkey drops, recreations and checks, and rollback sequences
 --   drop the foreign key on emaj_rlbk_stat to easily temporarily insert dummy rows
 alter table emaj.emaj_rlbk_stat drop constraint emaj_rlbk_stat_rlbt_rlbk_id_fkey;
 insert into emaj.emaj_rlbk_stat values
@@ -268,8 +268,11 @@ insert into emaj.emaj_rlbk_stat values
   ('ADD_FK','myschema2','mytbl4','mytbl4_col44_fkey',2,200,'0.020 SECONDS'::interval);
 insert into emaj.emaj_rlbk_stat values
   ('SET_FK_IMM','myschema2','mytbl4','mytbl4_col43_fkey',2,1200,'0.015 SECONDS'::interval);
+insert into emaj.emaj_rlbk_stat values
+  ('RLBK_SEQUENCES','','','',1,2,'0.003 SECONDS'::interval);
+
 select emaj.emaj_estimate_rollback_group('myGroup2','Mark21',FALSE);
--- should return 1.4021 sec (or 1.430306 sec is emaj is not an extension)
+-- should return 1.4071 sec (or 1.435306 sec is emaj is not an extension)
 
 -- estimate with added statistics about tables rollbacks
 insert into emaj.emaj_rlbk_stat values
@@ -287,7 +290,7 @@ insert into emaj.emaj_rlbk_stat values
 insert into emaj.emaj_rlbk_stat values
   ('RLBK_TABLE','myschema2','mytbl4','',1,50000,'3.600 SECONDS'::interval);
 select emaj.emaj_estimate_rollback_group('myGroup2','Mark21',FALSE);
--- should return 2.270704 sec (or 2.29891 sec is emaj is not an extension)
+-- should return 2.275704 sec (or 2.30391 sec is emaj is not an extension)
 
 -- estimate with added statistics about log deletes and CTRLxDBLINK pseudo steps
 insert into emaj.emaj_rlbk_stat values
@@ -311,7 +314,7 @@ insert into emaj.emaj_rlbk_stat values
 insert into emaj.emaj_rlbk_stat values
   ('CTRL-DBLINK','','','',3,10,'0.025 SECONDS'::interval);
 select emaj.emaj_estimate_rollback_group('myGroup2','Mark21',FALSE);
--- should return 2.639791 sec (or 2.664997 sec is emaj is not an extension)
+-- should return 2.643791 sec (or 2.668997 sec is emaj is not an extension)
 
 -- estimate with 2 groups and a SET_FK_DEF step
 vacuum analyze myschema1.mytbl4;
@@ -320,7 +323,7 @@ begin;
 -- temporarily insert new rows into myTbl4 of myschema1
   insert into myschema1.myTbl4 select i,'FK...',2,1,'ABC' from generate_series (10,20) as i;
   select emaj.emaj_estimate_rollback_groups('{"myGroup1","myGroup2"}','Multi-1',FALSE);
--- should return 2.670001 sec (or 2.725913 sec is emaj is not an extension)
+-- should return 2.675001 sec (or 2.730913 sec is emaj is not an extension)
 rollback;
 
 -- delete all manualy inserted rollback statistics, cleanup the statistics table and recreate its foreign key

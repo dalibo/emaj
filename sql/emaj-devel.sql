@@ -94,6 +94,7 @@ CREATE TYPE emaj._rlbk_status_enum AS ENUM (
 -- Enum of the possible values for the rollback steps.
 CREATE TYPE emaj._rlbk_step_enum AS ENUM (
   'LOCK_TABLE',              -- set a lock on a table
+  'RLBK_SEQUENCES',          -- rollback all sequences at once
   'DIS_APP_TRG',             -- disable an application trigger
   'SET_ALWAYS_APP_TRG',      -- set an application trigger as an ALWAYS trigger (to fire even in a 'replica' session_replication_role)
   'DIS_LOG_TRG',             -- disable a log trigger
@@ -429,8 +430,8 @@ CREATE TABLE emaj.emaj_rlbk_plan (
   rlbp_rlbk_id                 INT         NOT NULL,       -- rollback id
   rlbp_step                    emaj._rlbk_step_enum
                                            NOT NULL,       -- kind of elementary step in the rollback processing
-  rlbp_schema                  TEXT        NOT NULL,       -- schema object of the step
-  rlbp_table                   TEXT        NOT NULL,       -- table name
+  rlbp_schema                  TEXT        NOT NULL,       -- schema object of the step or ''
+  rlbp_table                   TEXT        NOT NULL,       -- table name or ''
   rlbp_object                  TEXT        NOT NULL,       -- foreign key name for step on foreign key, trigger name for step on trigger
                                                            -- or ''
   rlbp_batch_number            INT,                        -- identifies a set of tables linked by foreign keys
@@ -439,8 +440,10 @@ CREATE TABLE emaj.emaj_rlbk_plan (
   rlbp_app_trg_type            TEXT,                       -- type of an application trigger to enable ('', 'ALWAYS', 'REPLICA') or NULL
   rlbp_is_repl_role_replica    BOOLEAN,                    -- for a RLBK_TABLE step, TRUE if the session_replication_role is replica,
                                                            -- NULL for other steps
-  rlbp_target_time_id          BIGINT,                     -- for RLBK_TABLE and DELETE_LOG, time_id to rollback to or NULL
+  rlbp_target_time_id          BIGINT,                     -- for RLBK_TABLE, RLBK_SEQUENCES and DELETE_LOG, time_id to rollback to
+                                                           -- NULL for other steps
   rlbp_estimated_quantity      BIGINT,                     -- for RLBK_TABLE, estimated number of updates to rollback
+                                                           -- for RLBK_SEQUENCES, number of sequences in the rolled back groups
                                                            -- for DELETE_LOG, estimated number of rows to delete
                                                            -- for fkeys, estimated number of keys to check
   rlbp_estimated_duration      INTERVAL,                   -- estimated elapse time for the step processing
@@ -8029,11 +8032,13 @@ $_rlbk_init$
       END IF;
 -- Create the row representing the rollback event in the emaj_rlbk table and get the rollback id back.
       v_stmt = 'INSERT INTO emaj.emaj_rlbk (rlbk_groups, rlbk_mark, rlbk_mark_time_id, rlbk_is_logged, rlbk_is_alter_group_allowed, ' ||
-               'rlbk_nb_session, rlbk_nb_table, rlbk_nb_sequence, rlbk_status, rlbk_begin_hist_id, ' ||
+               'rlbk_nb_session, rlbk_nb_table, rlbk_nb_sequence, ' ||
+               'rlbk_eff_nb_sequence, rlbk_status, rlbk_begin_hist_id, ' ||
                'rlbk_dblink_schema, rlbk_is_dblink_used) ' ||
                'VALUES (' || quote_literal(p_groupNames) || ',' || quote_literal(v_markName) || ',' ||
                v_markTimeId || ',' || p_isLoggedRlbk || ',' || quote_nullable(p_isAlterGroupAllowed) || ',' ||
-               p_nbSession || ',' || v_nbTblInGroups || ',' || v_nbSeqInGroups || ', ''PLANNING'',' || v_histId || ',' ||
+               p_nbSession || ',' || v_nbTblInGroups || ',' || v_nbSeqInGroups || ',' ||
+               CASE WHEN v_nbSeqInGroups = 0 THEN '0' ELSE 'NULL' END || ',''PLANNING'',' || v_histId || ',' ||
                quote_nullable(v_dbLinkSchema) || ',' || v_isDblinkUsed || ') RETURNING rlbk_id';
       SELECT emaj._dblink_sql_exec('rlbk#1', v_stmt, v_dblinkSchema) INTO v_rlbkId;
 -- Create the session row the emaj_rlbk_session table.
@@ -8142,6 +8147,7 @@ $_rlbk_planning$
     v_mark                   TEXT;
     v_isLoggedRlbk           BOOLEAN;
     v_nbSession              INT;
+    v_nbSequence             INT;
     v_ctrlStepName           emaj._rlbk_step_enum;
     v_markTimeId             BIGINT;
     v_avg_row_rlbk           INTERVAL;
@@ -8149,11 +8155,13 @@ $_rlbk_planning$
     v_avg_fkey_check         INTERVAL;
     v_fixed_step_rlbk        INTERVAL;
     v_fixed_dblink_rlbk      INTERVAL;
+    v_fixed_table_rlbk       INTERVAL;
     v_effNbTable             INT;
     v_isEmajExtension        BOOLEAN;
     v_batchNumber            INT;
     v_checks                 INT;
     v_estimDuration          INTERVAL;
+    v_estimDurationRlbkSeq   INTERVAL;
     v_estimMethod            INT;
     v_estimDropFkDuration    INTERVAL;
     v_estimDropFkMethod      INT;
@@ -8168,9 +8176,10 @@ $_rlbk_planning$
     r_batch                  RECORD;
   BEGIN
 -- Get the rollback characteristics for the emaj_rlbk event.
-    SELECT rlbk_groups, rlbk_mark, rlbk_is_logged, rlbk_nb_session,
+    SELECT rlbk_groups, rlbk_mark, rlbk_is_logged, rlbk_nb_session, rlbk_nb_sequence,
            CASE WHEN rlbk_is_dblink_used THEN 'CTRL+DBLINK'::emaj._rlbk_step_enum ELSE 'CTRL-DBLINK'::emaj._rlbk_step_enum END
-      INTO v_groupNames, v_mark, v_isLoggedRlbk, v_nbSession, v_ctrlStepName
+      INTO v_groupNames, v_mark, v_isLoggedRlbk, v_nbSession, v_nbSequence,
+           v_ctrlStepName
       FROM emaj.emaj_rlbk
       WHERE rlbk_id = p_rlbkId;
 -- Get some mark attributes from emaj_mark.
@@ -8189,16 +8198,32 @@ $_rlbk_planning$
            coalesce ((SELECT param_value_interval FROM emaj.emaj_param
                         WHERE param_key = 'fixed_step_rollback_duration'),'2.5 millisecond'::INTERVAL),
            coalesce ((SELECT param_value_interval FROM emaj.emaj_param
-                        WHERE param_key = 'fixed_dblink_rollback_duration'),'4 millisecond'::INTERVAL)
-           INTO v_avg_row_rlbk, v_avg_row_del_log, v_avg_fkey_check, v_fixed_step_rlbk, v_fixed_dblink_rlbk;
--- Insert into emaj_rlbk_plan a row per table currently belonging to the tables groups to process.
+                        WHERE param_key = 'fixed_dblink_rollback_duration'),'4 millisecond'::INTERVAL),
+           coalesce ((SELECT param_value_interval FROM emaj.emaj_param
+                        WHERE param_key = 'fixed_table_rollback_duration'),'1 millisecond'::INTERVAL)
+           INTO v_avg_row_rlbk, v_avg_row_del_log, v_avg_fkey_check, v_fixed_step_rlbk, v_fixed_dblink_rlbk, v_fixed_table_rlbk;
+-- Process the sequences, if any in the tables groups.
+    IF v_nbSequence > 0 THEN
+-- Compute the cost for each RLBK_SEQUENCES step and keep it for later.
+      SELECT p_estimateMethod, p_estimatedDuration INTO v_estimMethod, v_estimDurationRlbkSeq
+        FROM emaj._estimate_rlbk_step_duration('RLBK_SEQUENCES', NULL, NULL, NULL, v_nbSequence, v_fixed_step_rlbk, v_fixed_table_rlbk);
+-- Insert a RLBK_SEQUENCES step into emaj_rlbk_plan.
+-- Assign it the first session, so that it will be executed by the same session as the start mark set when the rollback is logged.
+      INSERT INTO emaj.emaj_rlbk_plan (rlbp_rlbk_id, rlbp_step, rlbp_schema, rlbp_table, rlbp_object,
+                                       rlbp_session, rlbp_batch_number, rlbp_target_time_id,
+                                       rlbp_estimated_quantity, rlbp_estimated_duration, rlbp_estimate_method)
+        VALUES (p_rlbkId, 'RLBK_SEQUENCES', '', '', '',
+                1, 1, v_markTimeId,
+                v_nbSequence, v_estimDurationRlbkSeq, v_estimMethod);
+    END IF;
+-- Insert into emaj_rlbk_plan a LOCK_TABLE step per table currently belonging to the tables groups to process.
     INSERT INTO emaj.emaj_rlbk_plan (rlbp_rlbk_id, rlbp_step, rlbp_schema, rlbp_table, rlbp_object, rlbp_is_repl_role_replica)
       SELECT p_rlbkId, 'LOCK_TABLE', rel_schema, rel_tblseq, '', FALSE
         FROM emaj.emaj_relation
         WHERE upper_inf(rel_time_range)
           AND rel_group = ANY(v_groupNames)
           AND rel_kind = 'r';
--- Insert into emaj_rlbk_plan a row per table to effectively rollback.
+-- Insert into emaj_rlbk_plan a RLBK_TABLE step per table to effectively rollback.
 -- The numbers of log rows is computed using the _log_stat_tbl() function.
 -- A final check will be performed after tables will be locked to be sure no new table will have been updated.
      INSERT INTO emaj.emaj_rlbk_plan
@@ -8278,7 +8303,8 @@ $_rlbk_planning$
 --
 -- Group tables into batchs to process all tables linked by foreign keys as a batch.
 --
-    v_batchNumber = 1;
+-- Start at 2, 1 being allocated to the RLBK_SEQUENCES step, if exists.
+    v_batchNumber = 2;
 -- Allocate tables with rows to rollback to batch number starting with the heaviest to rollback tables as reported by the
 -- emaj_log_stat_group() function.
     FOR r_tbl IN
@@ -8591,11 +8617,12 @@ $_rlbk_planning$
           AND rlbp_object = r_fk.rlbp_object;
     END LOOP;
 --
--- Allocate batch number to sessions to spread the load on sessions as best as possible.
+-- Allocate batches to sessions to spread the load on sessions as best as possible.
 -- A batch represents all steps related to the processing of one table or several tables linked by foreign keys.
 --
--- Initialisation.
-    FOR v_session IN 1 .. v_nbSession LOOP
+-- Initialisation (for session 1, the RLBK_SEQUENCES step may have been already assigned).
+    v_sessionLoad [1] = coalesce(v_estimDurationRlbkSeq, '0 SECONDS'::INTERVAL);
+    FOR v_session IN 2 .. v_nbSession LOOP
       v_sessionLoad [v_session] = '0 SECONDS'::INTERVAL;
     END LOOP;
 -- Allocate tables batch to sessions, starting with the heaviest to rollback batch.
@@ -8604,6 +8631,7 @@ $_rlbk_planning$
           FROM emaj.emaj_rlbk_plan
           WHERE rlbp_rlbk_id = p_rlbkId
             AND rlbp_batch_number IS NOT NULL
+            AND rlbp_session IS NULL
           GROUP BY rlbp_batch_number
           ORDER BY sum(rlbp_estimated_duration) DESC
     LOOP
@@ -8622,7 +8650,7 @@ $_rlbk_planning$
           AND rlbp_batch_number = r_batch.rlbp_batch_number;
       v_sessionLoad [v_minSession] = v_sessionLoad [v_minSession] + r_batch.batch_duration;
     END LOOP;
--- Assign session 1 to all 'LOCK_TABLE' steps not yet affected.
+-- Assign all not yet affected 'LOCK_TABLE' steps to session 1.
     UPDATE emaj.emaj_rlbk_plan
       SET rlbp_session = 1
       WHERE rlbp_rlbk_id = p_rlbkId
@@ -8811,6 +8839,18 @@ $_estimate_rlbk_step_duration$
             AND rlbt_object = p_object;
         IF p_estimatedDuration IS NULL THEN
 -- No statistics are available for this fkey, so use the supplied E-Maj parameters.
+          p_estimatedDuration = p_estimatedQuantity * p_defaultVariableCost + p_defaultFixedCost;
+          p_estimateMethod = 3;
+        END IF;
+--
+      WHEN p_step = 'RLBK_SEQUENCES' THEN
+-- If sequences rollback statistics are available, compute an average cost.
+        SELECT sum(rlbt_duration) * (p_estimatedQuantity::float / sum(rlbt_quantity)), 2
+          INTO p_estimatedDuration, p_estimateMethod
+          FROM emaj.emaj_rlbk_stat
+          WHERE rlbt_step = p_step;
+        IF p_estimatedDuration IS NULL THEN
+-- No statistics are available for sequences rollbacks, so use the supplied E-Maj parameters.
           p_estimatedDuration = p_estimatedQuantity * p_defaultVariableCost + p_defaultFixedCost;
           p_estimateMethod = 3;
         END IF;
@@ -9035,13 +9075,14 @@ $_rlbk_session_exec$
 -- It updates the emaj_rlbk_plan table, using dblink connection if possible, giving a visibility of the rollback progress.
   DECLARE
     v_stmt                   TEXT;
-    v_dblinkSchema           TEXT;
-    v_isDblinkUsed           BOOLEAN;
     v_groupNames             TEXT[];
     v_mark                   TEXT;
     v_rlbkTimeId             BIGINT;
     v_isLoggedRlbk           BOOLEAN;
     v_nbSession              INT;
+    v_nbSequence             INT;
+    v_dblinkSchema           TEXT;
+    v_isDblinkUsed           BOOLEAN;
     v_maxGlobalSeq           BIGINT;
     v_rlbkMarkTimeId         BIGINT;
     v_lastGlobalSeq          BIGINT;
@@ -9051,10 +9092,10 @@ $_rlbk_session_exec$
     r_step                   RECORD;
   BEGIN
 -- Get the rollback characteristics from the emaj_rlbk table.
-    SELECT rlbk_groups, rlbk_mark, rlbk_time_id, rlbk_is_logged, rlbk_nb_session, rlbk_dblink_schema, rlbk_is_dblink_used,
-           time_last_emaj_gid
-      INTO v_groupNames, v_mark, v_rlbkTimeId, v_isLoggedRlbk, v_nbSession, v_dblinkSchema, v_isDblinkUsed,
-           v_maxGlobalSeq
+    SELECT rlbk_groups, rlbk_mark, rlbk_time_id, rlbk_is_logged, rlbk_nb_session, rlbk_nb_sequence,
+           rlbk_dblink_schema, rlbk_is_dblink_used, time_last_emaj_gid
+      INTO v_groupNames, v_mark, v_rlbkTimeId, v_isLoggedRlbk, v_nbSession, v_nbSequence,
+           v_dblinkSchema, v_isDblinkUsed, v_maxGlobalSeq
       FROM emaj.emaj_rlbk
            JOIN emaj.emaj_time_stamp ON (time_id = rlbk_time_id)
       WHERE rlbk_id = p_rlbkId;
@@ -9065,23 +9106,6 @@ $_rlbk_session_exec$
            JOIN emaj.emaj_time_stamp ON (time_id = mark_time_id)
       WHERE mark_group = v_groupNames[1]
         AND mark_name = v_mark;
--- Rollback the application sequences belonging to the groups.
-    IF p_session = 1 THEN
--- If the sequence has been added to its group after the target rollback mark, rollback up to the corresponding alter_group time.
-      SELECT sum(emaj._rlbk_seq(t.*, greatest(v_rlbkMarkTimeId, lower(t.rel_time_range)))) INTO v_effNbSequence
-        FROM
-          (SELECT *
-             FROM emaj.emaj_relation
-             WHERE upper_inf(rel_time_range)
-               AND rel_group = ANY (v_groupNames)
-               AND rel_kind = 'S'
-             ORDER BY rel_schema, rel_tblseq
-          ) as t;
--- Record the number of effectively rolled back sequences
-      v_stmt = 'UPDATE emaj.emaj_rlbk SET rlbk_eff_nb_sequence = ' || coalesce(v_effNbSequence, 0) ||
-               ' WHERE rlbk_id = ' || p_rlbkId || ' RETURNING 1';
-      PERFORM emaj._dblink_sql_exec('rlbk#' || p_session, v_stmt, v_dblinkSchema);
-    END IF;
 -- Scan emaj_rlbp_plan to get all steps to process that have been affected to this session, in batch_number and step order.
     FOR r_step IN
       SELECT rlbp_step, rlbp_schema, rlbp_table, rlbp_object, rlbp_object_def, rlbp_app_trg_type,
@@ -9102,6 +9126,22 @@ $_rlbk_session_exec$
       v_fullTableName = quote_ident(r_step.rlbp_schema) || '.' || quote_ident(r_step.rlbp_table);
 -- Process the step depending on its type.
       CASE r_step.rlbp_step
+        WHEN 'RLBK_SEQUENCES' THEN
+-- Rollback all sequences at once
+-- If the sequence has been added to its group after the target rollback mark, rollback up to the corresponding alter_group time.
+          SELECT sum(emaj._rlbk_seq(t.*, greatest(v_rlbkMarkTimeId, lower(t.rel_time_range)))) INTO v_effNbSequence
+            FROM
+              (SELECT *
+                 FROM emaj.emaj_relation
+                 WHERE upper_inf(rel_time_range)
+                   AND rel_group = ANY (v_groupNames)
+                   AND rel_kind = 'S'
+                 ORDER BY rel_schema, rel_tblseq
+              ) as t;
+-- Record into emaj_rlbk the number of effectively rolled back sequences
+          v_stmt = 'UPDATE emaj.emaj_rlbk SET rlbk_eff_nb_sequence = ' || coalesce(v_effNbSequence, 0) ||
+                   ' WHERE rlbk_id = ' || p_rlbkId || ' RETURNING 1';
+          PERFORM emaj._dblink_sql_exec('rlbk#' || p_session, v_stmt, v_dblinkSchema);
         WHEN 'DIS_APP_TRG' THEN
 -- Disable an application trigger.
           PERFORM emaj._handle_trigger_fk_tbl('DISABLE_TRIGGER', v_fullTableName, r_step.rlbp_object);
@@ -9159,12 +9199,14 @@ $_rlbk_session_exec$
 -- Enable a log trigger.
           PERFORM emaj._handle_trigger_fk_tbl('ENABLE_TRIGGER', v_fullTableName, 'emaj_log_trg', 'ALWAYS');
       END CASE;
--- Update the emaj_rlbk_plan table to set the step duration.
+-- Update the emaj_rlbk_plan table to set the step duration as well as the quantity when it is relevant.
 -- The computed duration does not include the time needed to update the emaj_rlbk_plan table,
       v_stmt = 'UPDATE emaj.emaj_rlbk_plan SET rlbp_duration = ' || quote_literal(clock_timestamp()) || ' - rlbp_start_datetime';
       IF r_step.rlbp_step = 'RLBK_TABLE' OR r_step.rlbp_step = 'DELETE_LOG' THEN
--- ... nor the effective number of processed rows for RLBK_TABLE and DELETE_LOG steps.
         v_stmt = v_stmt || ' , rlbp_quantity = ' || v_nbRows;
+      END IF;
+      IF r_step.rlbp_step = 'RLBK_SEQUENCES' THEN
+        v_stmt = v_stmt || ' , rlbp_quantity = ' || v_nbSequence;
       END IF;
       v_stmt = v_stmt ||
                ' WHERE rlbp_rlbk_id = ' || p_rlbkId || ' AND rlbp_step = ' || quote_literal(r_step.rlbp_step) ||
@@ -9309,13 +9351,13 @@ $_rlbk_end$
 -- Report duration statistics into the emaj_rlbk_stat table.
     v_stmt = 'INSERT INTO emaj.emaj_rlbk_stat (rlbt_step, rlbt_schema, rlbt_table, rlbt_object,' ||
              '      rlbt_rlbk_id, rlbt_quantity, rlbt_duration)' ||
---   copy elementary steps for RLBK_TABLE, DELETE_LOG, ADD_FK and SET_FK_IMM step types
+--   copy elementary steps for RLBK_TABLE, RLBK_SEQUENCES, DELETE_LOG, ADD_FK and SET_FK_IMM step types
 --     (record the rlbp_estimated_quantity as reference for later forecast)
              '  SELECT rlbp_step, rlbp_schema, rlbp_table, rlbp_object, rlbp_rlbk_id,' ||
              '      rlbp_estimated_quantity, rlbp_duration' ||
              '    FROM emaj.emaj_rlbk_plan' ||
              '    WHERE rlbp_rlbk_id = ' || p_rlbkId ||
-             '      AND rlbp_step IN (''RLBK_TABLE'',''DELETE_LOG'',''ADD_FK'',''SET_FK_IMM'') ' ||
+             '      AND rlbp_step IN (''RLBK_TABLE'',''RLBK_SEQUENCES'',''DELETE_LOG'',''ADD_FK'',''SET_FK_IMM'') ' ||
              '  UNION ALL ' ||
 --   for 6 other steps, aggregate other elementary steps into a global row for each step type
              '  SELECT rlbp_step, '''', '''', '''', rlbp_rlbk_id, ' ||
@@ -10382,12 +10424,13 @@ $_estimate_rollback_groups$
 -- The function is declared SECURITY DEFINER so that emaj_viewer doesn't need a specific INSERT permission on emaj_rlbk.
   DECLARE
     v_markName               TEXT;
+    v_nbTbl                  INT;
+    v_nbSeq                  INT;
     v_fixed_table_rlbk       INTERVAL;
     v_rlbkId                 INT;
     v_estimDuration          INTERVAL;
-    v_nbTblseq               INT;
   BEGIN
--- cCeck the group names (the groups state checks are delayed for later).
+-- Check the group names (the groups state checks are delayed for later).
     SELECT emaj._check_group_names(p_groupNames := p_groupNames, p_mayBeNull := p_multiGroup, p_lockGroups := FALSE, p_checkList := '')
       INTO p_groupNames;
 -- If the group names array is null, immediately return NULL.
@@ -10396,6 +10439,10 @@ $_estimate_rollback_groups$
     END IF;
 -- Check supplied group names and mark parameters with the isAlterGroupAllowed and isRollbackSimulation flags set to true.
     SELECT emaj._rlbk_check(p_groupNames, p_mark, TRUE, TRUE) INTO v_markName;
+-- Compute the number of tables and sequences contained in groups to rollback.
+    SELECT sum(group_nb_table), sum(group_nb_sequence) INTO v_nbTbl, v_nbSeq
+      FROM emaj.emaj_group
+      WHERE group_name = ANY(p_groupNames);
 -- Compute a random negative rollback-id (not to interfere with ids of real rollbacks).
     SELECT (random() * -2147483648)::INT INTO v_rlbkId;
 --
@@ -10404,8 +10451,8 @@ $_estimate_rollback_groups$
     BEGIN
 -- Insert a row into the emaj_rlbk table for this simulated rollback operation.
       INSERT INTO emaj.emaj_rlbk (rlbk_id, rlbk_groups, rlbk_mark, rlbk_mark_time_id, rlbk_is_logged, rlbk_is_alter_group_allowed,
-                                  rlbk_nb_session)
-        SELECT v_rlbkId, p_groupNames, v_markName, mark_time_id, p_isLoggedRlbk, FALSE, 1
+                                  rlbk_nb_session, rlbk_nb_table, rlbk_nb_sequence)
+        SELECT v_rlbkId, p_groupNames, v_markName, mark_time_id, p_isLoggedRlbk, FALSE, 1, v_nbTbl, v_nbSeq
           FROM emaj.emaj_mark
           WHERE mark_group = p_groupNames[1]
             AND mark_name = v_markName;
@@ -10427,12 +10474,8 @@ $_estimate_rollback_groups$
                 FROM emaj.emaj_param
                 WHERE param_key = 'fixed_table_rollback_duration'
              ),'1 millisecond'::INTERVAL) INTO v_fixed_table_rlbk;
--- Get the number of tables to lock and sequences to rollback.
-    SELECT sum(group_nb_table)+sum(group_nb_sequence) INTO v_nbTblseq
-      FROM emaj.emaj_group
-      WHERE group_name = ANY(p_groupNames);
--- Compute the final estimated duration.
-    v_estimDuration = v_estimDuration + (v_nbTblseq * v_fixed_table_rlbk);
+-- Compute the final estimated duration, by adding the minimum cost for LOCK_TABLE steps.
+    v_estimDuration = v_estimDuration + (v_nbTbl * v_fixed_table_rlbk);
 --
     RETURN v_estimDuration;
   END;

@@ -210,7 +210,7 @@ CONTEXT:  PL/pgSQL function emaj._check_mark_name(text[],text,text) line 81 at R
 SQL statement "SELECT emaj._check_mark_name(p_groupNames := p_groupNames, p_mark := p_mark, p_checkList := 'ACTIVE')"
 PL/pgSQL function emaj._rlbk_check(text[],text,boolean,boolean) line 21 at SQL statement
 SQL statement "SELECT emaj._rlbk_check(p_groupNames, p_mark, TRUE, TRUE)"
-PL/pgSQL function emaj._estimate_rollback_groups(text[],boolean,text,boolean) line 24 at SQL statement
+PL/pgSQL function emaj._estimate_rollback_groups(text[],boolean,text,boolean) line 25 at SQL statement
 PL/pgSQL function emaj.emaj_estimate_rollback_group(text,text,boolean) line 7 at RETURN
 -- try to rollback on a deleted mark
 select * from emaj.emaj_rollback_group('myGroup2','M3',false) order by 1,2;
@@ -842,67 +842,79 @@ select sqhl_schema, sqhl_table, sqhl_begin_time_id, sqhl_end_time_id, sqhl_hole_
 
 select rlbt_rlbk_id, rlbt_step, rlbt_schema, rlbt_table, rlbt_object, rlbt_quantity from emaj.emaj_rlbk_stat
   order by rlbt_rlbk_id, rlbt_step, rlbt_schema, rlbt_table, rlbt_object;
- rlbt_rlbk_id |  rlbt_step  | rlbt_schema | rlbt_table |    rlbt_object    | rlbt_quantity 
---------------+-------------+-------------+------------+-------------------+---------------
-        10000 | RLBK_TABLE  | myschema2   | myTbl3     |                   |             2
-        10000 | CTRL+DBLINK |             |            |                   |             1
-        10001 | DIS_LOG_TRG |             |            |                   |             1
-        10001 | RLBK_TABLE  | myschema2   | myTbl3     |                   |             6
-        10001 | DELETE_LOG  | myschema2   | myTbl3     |                   |             6
-        10001 | ENA_LOG_TRG |             |            |                   |             1
-        10001 | CTRL+DBLINK |             |            |                   |             4
-        12300 | SET_FK_DEF  |             |            |                   |             2
-        12300 | RLBK_TABLE  | myschema2   | mytbl4     |                   |             4
-        12300 | RLBK_TABLE  | myschema2   | mytbl5     |                   |             1
-        12300 | RLBK_TABLE  | myschema2   | mytbl6     |                   |             3
-        12300 | SET_FK_IMM  | myschema2   | mytbl6     | mytbl6_col61_fkey |             3
-        12300 | SET_FK_IMM  | myschema2   | mytbl8     | mytbl8_col81_fkey |             3
-        12300 | CTRL-DBLINK |             |            |                   |             7
-        12301 | SET_FK_DEF  |             |            |                   |             2
-        12301 | RLBK_TABLE  | myschema2   | mytbl4     |                   |             2
-        12301 | RLBK_TABLE  | myschema2   | mytbl5     |                   |             1
-        12301 | RLBK_TABLE  | myschema2   | mytbl6     |                   |             3
-        12301 | SET_FK_IMM  | myschema2   | mytbl6     | mytbl6_col61_fkey |             3
-        12301 | SET_FK_IMM  | myschema2   | mytbl8     | mytbl8_col81_fkey |             3
-        12301 | CTRL-DBLINK |             |            |                   |             7
-        12400 | DIS_LOG_TRG |             |            |                   |             2
-        12400 | RLBK_TABLE  | myschema1   | mytbl1     |                   |             3
-        12400 | RLBK_TABLE  | myschema1   | mytbl4     |                   |             8
-        12400 | DELETE_LOG  | myschema1   | mytbl1     |                   |             3
-        12400 | DELETE_LOG  | myschema1   | mytbl4     |                   |             8
-        12400 | ENA_LOG_TRG |             |            |                   |             2
-        12400 | CTRL+DBLINK |             |            |                   |             8
-        12500 | SET_FK_DEF  |             |            |                   |             2
-        12500 | RLBK_TABLE  | myschema2   | mytbl4     |                   |             8
-        12500 | RLBK_TABLE  | myschema2   | mytbl5     |                   |             3
-        12500 | RLBK_TABLE  | myschema2   | mytbl6     |                   |             9
-        12500 | SET_FK_IMM  | myschema2   | mytbl6     | mytbl6_col61_fkey |             9
-        12500 | SET_FK_IMM  | myschema2   | mytbl8     | mytbl8_col81_fkey |             9
-        12500 | CTRL+DBLINK |             |            |                   |             7
-        12501 | DIS_LOG_TRG |             |            |                   |             3
-        12501 | SET_FK_DEF  |             |            |                   |             2
-        12501 | RLBK_TABLE  | myschema2   | mytbl4     |                   |             6
-        12501 | RLBK_TABLE  | myschema2   | mytbl5     |                   |             3
-        12501 | RLBK_TABLE  | myschema2   | mytbl6     |                   |             9
-        12501 | DELETE_LOG  | myschema2   | mytbl4     |                   |             6
-        12501 | DELETE_LOG  | myschema2   | mytbl5     |                   |             3
-        12501 | DELETE_LOG  | myschema2   | mytbl6     |                   |             9
-        12501 | SET_FK_IMM  | myschema2   | mytbl6     | mytbl6_col61_fkey |             9
-        12501 | SET_FK_IMM  | myschema2   | mytbl8     | mytbl8_col81_fkey |             9
-        12501 | ENA_LOG_TRG |             |            |                   |             3
-        12501 | CTRL+DBLINK |             |            |                   |            16
-        12600 | DIS_LOG_TRG |             |            |                   |             2
-        12600 | RLBK_TABLE  | myschema1   | mytbl1     |                   |             1
-        12600 | RLBK_TABLE  | myschema1   | mytbl4     |                   |             2
-        12600 | DELETE_LOG  | myschema1   | mytbl1     |                   |             1
-        12600 | DELETE_LOG  | myschema1   | mytbl4     |                   |             2
-        12600 | ENA_LOG_TRG |             |            |                   |             2
-        12600 | CTRL+DBLINK |             |            |                   |             8
-        12601 | RLBK_TABLE  | myschema1   | myTbl3     |                   |            10
-        12601 | RLBK_TABLE  | myschema1   | mytbl1     |                   |             1
-        12601 | RLBK_TABLE  | myschema1   | mytbl4     |                   |             2
-        12601 | CTRL+DBLINK |             |            |                   |             3
-(58 rows)
+ rlbt_rlbk_id |   rlbt_step    | rlbt_schema | rlbt_table |    rlbt_object    | rlbt_quantity 
+--------------+----------------+-------------+------------+-------------------+---------------
+        12300 | RLBK_SEQUENCES |             |            |                   |             2
+        12300 | SET_FK_DEF     |             |            |                   |             2
+        12300 | RLBK_TABLE     | myschema2   | mytbl4     |                   |             4
+        12300 | RLBK_TABLE     | myschema2   | mytbl5     |                   |             1
+        12300 | RLBK_TABLE     | myschema2   | mytbl6     |                   |             3
+        12300 | SET_FK_IMM     | myschema2   | mytbl6     | mytbl6_col61_fkey |             3
+        12300 | SET_FK_IMM     | myschema2   | mytbl8     | mytbl8_col81_fkey |             3
+        12300 | CTRL-DBLINK    |             |            |                   |             8
+        12301 | RLBK_SEQUENCES |             |            |                   |             2
+        12301 | SET_FK_DEF     |             |            |                   |             2
+        12301 | RLBK_TABLE     | myschema2   | mytbl4     |                   |             2
+        12301 | RLBK_TABLE     | myschema2   | mytbl5     |                   |             1
+        12301 | RLBK_TABLE     | myschema2   | mytbl6     |                   |             3
+        12301 | SET_FK_IMM     | myschema2   | mytbl6     | mytbl6_col61_fkey |             3
+        12301 | SET_FK_IMM     | myschema2   | mytbl8     | mytbl8_col81_fkey |             3
+        12301 | CTRL-DBLINK    |             |            |                   |             8
+        12400 | RLBK_SEQUENCES |             |            |                   |             2
+        12400 | DIS_LOG_TRG    |             |            |                   |             2
+        12400 | RLBK_TABLE     | myschema1   | mytbl1     |                   |             3
+        12400 | RLBK_TABLE     | myschema1   | mytbl4     |                   |             8
+        12400 | DELETE_LOG     | myschema1   | mytbl1     |                   |             3
+        12400 | DELETE_LOG     | myschema1   | mytbl4     |                   |             8
+        12400 | ENA_LOG_TRG    |             |            |                   |             2
+        12400 | CTRL+DBLINK    |             |            |                   |             9
+        12500 | RLBK_SEQUENCES |             |            |                   |             2
+        12500 | SET_FK_DEF     |             |            |                   |             2
+        12500 | RLBK_TABLE     | myschema2   | mytbl4     |                   |             8
+        12500 | RLBK_TABLE     | myschema2   | mytbl5     |                   |             3
+        12500 | RLBK_TABLE     | myschema2   | mytbl6     |                   |             9
+        12500 | SET_FK_IMM     | myschema2   | mytbl6     | mytbl6_col61_fkey |             9
+        12500 | SET_FK_IMM     | myschema2   | mytbl8     | mytbl8_col81_fkey |             9
+        12500 | CTRL+DBLINK    |             |            |                   |             8
+        12501 | RLBK_SEQUENCES |             |            |                   |             2
+        12501 | DIS_LOG_TRG    |             |            |                   |             3
+        12501 | SET_FK_DEF     |             |            |                   |             2
+        12501 | RLBK_TABLE     | myschema2   | mytbl4     |                   |             6
+        12501 | RLBK_TABLE     | myschema2   | mytbl5     |                   |             3
+        12501 | RLBK_TABLE     | myschema2   | mytbl6     |                   |             9
+        12501 | DELETE_LOG     | myschema2   | mytbl4     |                   |             6
+        12501 | DELETE_LOG     | myschema2   | mytbl5     |                   |             3
+        12501 | DELETE_LOG     | myschema2   | mytbl6     |                   |             9
+        12501 | SET_FK_IMM     | myschema2   | mytbl6     | mytbl6_col61_fkey |             9
+        12501 | SET_FK_IMM     | myschema2   | mytbl8     | mytbl8_col81_fkey |             9
+        12501 | ENA_LOG_TRG    |             |            |                   |             3
+        12501 | CTRL+DBLINK    |             |            |                   |            17
+        12600 | RLBK_SEQUENCES |             |            |                   |             2
+        12600 | DIS_LOG_TRG    |             |            |                   |             2
+        12600 | RLBK_TABLE     | myschema1   | mytbl1     |                   |             1
+        12600 | RLBK_TABLE     | myschema1   | mytbl4     |                   |             2
+        12600 | DELETE_LOG     | myschema1   | mytbl1     |                   |             1
+        12600 | DELETE_LOG     | myschema1   | mytbl4     |                   |             2
+        12600 | ENA_LOG_TRG    |             |            |                   |             2
+        12600 | CTRL+DBLINK    |             |            |                   |             9
+        12601 | RLBK_SEQUENCES |             |            |                   |             2
+        12601 | RLBK_TABLE     | myschema1   | myTbl3     |                   |            10
+        12601 | RLBK_TABLE     | myschema1   | mytbl1     |                   |             1
+        12601 | RLBK_TABLE     | myschema1   | mytbl4     |                   |             2
+        12601 | CTRL+DBLINK    |             |            |                   |             4
+        14000 | RLBK_SEQUENCES |             |            |                   |             4
+        14000 | CTRL+DBLINK    |             |            |                   |             1
+        14001 | RLBK_SEQUENCES |             |            |                   |             4
+        14001 | CTRL+DBLINK    |             |            |                   |             1
+        14002 | RLBK_SEQUENCES |             |            |                   |             4
+        14002 | CTRL+DBLINK    |             |            |                   |             1
+        14003 | RLBK_SEQUENCES |             |            |                   |             2
+        14003 | CTRL+DBLINK    |             |            |                   |             1
+        14200 | RLBK_SEQUENCES |             |            |                   |             2
+        14200 | CTRL+DBLINK    |             |            |                   |             1
+        14201 | RLBK_SEQUENCES |             |            |                   |             2
+        14201 | CTRL+DBLINK    |             |            |                   |             1
+(70 rows)
 
 select time_id, time_last_emaj_gid, time_event from emaj.emaj_time_stamp where time_id >= 14200 order by time_id;
  time_id | time_last_emaj_gid | time_event 
@@ -1136,72 +1148,85 @@ select sqhl_schema, sqhl_table, sqhl_begin_time_id, sqhl_end_time_id, sqhl_hole_
 
 select rlbt_rlbk_id, rlbt_step, rlbt_schema, rlbt_table, rlbt_object, rlbt_quantity from emaj.emaj_rlbk_stat
   order by rlbt_rlbk_id, rlbt_step, rlbt_schema, rlbt_table, rlbt_object;
- rlbt_rlbk_id |  rlbt_step  | rlbt_schema | rlbt_table |    rlbt_object    | rlbt_quantity 
---------------+-------------+-------------+------------+-------------------+---------------
-        10000 | RLBK_TABLE  | myschema2   | myTbl3     |                   |             2
-        10000 | CTRL+DBLINK |             |            |                   |             1
-        10001 | DIS_LOG_TRG |             |            |                   |             1
-        10001 | RLBK_TABLE  | myschema2   | myTbl3     |                   |             6
-        10001 | DELETE_LOG  | myschema2   | myTbl3     |                   |             6
-        10001 | ENA_LOG_TRG |             |            |                   |             1
-        10001 | CTRL+DBLINK |             |            |                   |             4
-        12300 | SET_FK_DEF  |             |            |                   |             2
-        12300 | RLBK_TABLE  | myschema2   | mytbl4     |                   |             4
-        12300 | RLBK_TABLE  | myschema2   | mytbl5     |                   |             1
-        12300 | RLBK_TABLE  | myschema2   | mytbl6     |                   |             3
-        12300 | SET_FK_IMM  | myschema2   | mytbl6     | mytbl6_col61_fkey |             3
-        12300 | SET_FK_IMM  | myschema2   | mytbl8     | mytbl8_col81_fkey |             3
-        12300 | CTRL-DBLINK |             |            |                   |             7
-        12301 | SET_FK_DEF  |             |            |                   |             2
-        12301 | RLBK_TABLE  | myschema2   | mytbl4     |                   |             2
-        12301 | RLBK_TABLE  | myschema2   | mytbl5     |                   |             1
-        12301 | RLBK_TABLE  | myschema2   | mytbl6     |                   |             3
-        12301 | SET_FK_IMM  | myschema2   | mytbl6     | mytbl6_col61_fkey |             3
-        12301 | SET_FK_IMM  | myschema2   | mytbl8     | mytbl8_col81_fkey |             3
-        12301 | CTRL-DBLINK |             |            |                   |             7
-        12400 | DIS_LOG_TRG |             |            |                   |             2
-        12400 | RLBK_TABLE  | myschema1   | mytbl1     |                   |             3
-        12400 | RLBK_TABLE  | myschema1   | mytbl4     |                   |             8
-        12400 | DELETE_LOG  | myschema1   | mytbl1     |                   |             3
-        12400 | DELETE_LOG  | myschema1   | mytbl4     |                   |             8
-        12400 | ENA_LOG_TRG |             |            |                   |             2
-        12400 | CTRL+DBLINK |             |            |                   |             8
-        12500 | SET_FK_DEF  |             |            |                   |             2
-        12500 | RLBK_TABLE  | myschema2   | mytbl4     |                   |             8
-        12500 | RLBK_TABLE  | myschema2   | mytbl5     |                   |             3
-        12500 | RLBK_TABLE  | myschema2   | mytbl6     |                   |             9
-        12500 | SET_FK_IMM  | myschema2   | mytbl6     | mytbl6_col61_fkey |             9
-        12500 | SET_FK_IMM  | myschema2   | mytbl8     | mytbl8_col81_fkey |             9
-        12500 | CTRL+DBLINK |             |            |                   |             7
-        12501 | DIS_LOG_TRG |             |            |                   |             3
-        12501 | SET_FK_DEF  |             |            |                   |             2
-        12501 | RLBK_TABLE  | myschema2   | mytbl4     |                   |             6
-        12501 | RLBK_TABLE  | myschema2   | mytbl5     |                   |             3
-        12501 | RLBK_TABLE  | myschema2   | mytbl6     |                   |             9
-        12501 | DELETE_LOG  | myschema2   | mytbl4     |                   |             6
-        12501 | DELETE_LOG  | myschema2   | mytbl5     |                   |             3
-        12501 | DELETE_LOG  | myschema2   | mytbl6     |                   |             9
-        12501 | SET_FK_IMM  | myschema2   | mytbl6     | mytbl6_col61_fkey |             9
-        12501 | SET_FK_IMM  | myschema2   | mytbl8     | mytbl8_col81_fkey |             9
-        12501 | ENA_LOG_TRG |             |            |                   |             3
-        12501 | CTRL+DBLINK |             |            |                   |            16
-        12600 | DIS_LOG_TRG |             |            |                   |             2
-        12600 | RLBK_TABLE  | myschema1   | mytbl1     |                   |             1
-        12600 | RLBK_TABLE  | myschema1   | mytbl4     |                   |             2
-        12600 | DELETE_LOG  | myschema1   | mytbl1     |                   |             1
-        12600 | DELETE_LOG  | myschema1   | mytbl4     |                   |             2
-        12600 | ENA_LOG_TRG |             |            |                   |             2
-        12600 | CTRL+DBLINK |             |            |                   |             8
-        12601 | RLBK_TABLE  | myschema1   | myTbl3     |                   |            10
-        12601 | RLBK_TABLE  | myschema1   | mytbl1     |                   |             1
-        12601 | RLBK_TABLE  | myschema1   | mytbl4     |                   |             2
-        12601 | CTRL+DBLINK |             |            |                   |             3
-        14300 | DIS_LOG_TRG |             |            |                   |             1
-        14300 | RLBK_TABLE  | myschema1   | mytbl1     |                   |            20
-        14300 | DELETE_LOG  | myschema1   | mytbl1     |                   |            20
-        14300 | ENA_LOG_TRG |             |            |                   |             1
-        14300 | CTRL+DBLINK |             |            |                   |             4
-(63 rows)
+ rlbt_rlbk_id |   rlbt_step    | rlbt_schema | rlbt_table |    rlbt_object    | rlbt_quantity 
+--------------+----------------+-------------+------------+-------------------+---------------
+        12300 | RLBK_SEQUENCES |             |            |                   |             2
+        12300 | SET_FK_DEF     |             |            |                   |             2
+        12300 | RLBK_TABLE     | myschema2   | mytbl4     |                   |             4
+        12300 | RLBK_TABLE     | myschema2   | mytbl5     |                   |             1
+        12300 | RLBK_TABLE     | myschema2   | mytbl6     |                   |             3
+        12300 | SET_FK_IMM     | myschema2   | mytbl6     | mytbl6_col61_fkey |             3
+        12300 | SET_FK_IMM     | myschema2   | mytbl8     | mytbl8_col81_fkey |             3
+        12300 | CTRL-DBLINK    |             |            |                   |             8
+        12301 | RLBK_SEQUENCES |             |            |                   |             2
+        12301 | SET_FK_DEF     |             |            |                   |             2
+        12301 | RLBK_TABLE     | myschema2   | mytbl4     |                   |             2
+        12301 | RLBK_TABLE     | myschema2   | mytbl5     |                   |             1
+        12301 | RLBK_TABLE     | myschema2   | mytbl6     |                   |             3
+        12301 | SET_FK_IMM     | myschema2   | mytbl6     | mytbl6_col61_fkey |             3
+        12301 | SET_FK_IMM     | myschema2   | mytbl8     | mytbl8_col81_fkey |             3
+        12301 | CTRL-DBLINK    |             |            |                   |             8
+        12400 | RLBK_SEQUENCES |             |            |                   |             2
+        12400 | DIS_LOG_TRG    |             |            |                   |             2
+        12400 | RLBK_TABLE     | myschema1   | mytbl1     |                   |             3
+        12400 | RLBK_TABLE     | myschema1   | mytbl4     |                   |             8
+        12400 | DELETE_LOG     | myschema1   | mytbl1     |                   |             3
+        12400 | DELETE_LOG     | myschema1   | mytbl4     |                   |             8
+        12400 | ENA_LOG_TRG    |             |            |                   |             2
+        12400 | CTRL+DBLINK    |             |            |                   |             9
+        12500 | RLBK_SEQUENCES |             |            |                   |             2
+        12500 | SET_FK_DEF     |             |            |                   |             2
+        12500 | RLBK_TABLE     | myschema2   | mytbl4     |                   |             8
+        12500 | RLBK_TABLE     | myschema2   | mytbl5     |                   |             3
+        12500 | RLBK_TABLE     | myschema2   | mytbl6     |                   |             9
+        12500 | SET_FK_IMM     | myschema2   | mytbl6     | mytbl6_col61_fkey |             9
+        12500 | SET_FK_IMM     | myschema2   | mytbl8     | mytbl8_col81_fkey |             9
+        12500 | CTRL+DBLINK    |             |            |                   |             8
+        12501 | RLBK_SEQUENCES |             |            |                   |             2
+        12501 | DIS_LOG_TRG    |             |            |                   |             3
+        12501 | SET_FK_DEF     |             |            |                   |             2
+        12501 | RLBK_TABLE     | myschema2   | mytbl4     |                   |             6
+        12501 | RLBK_TABLE     | myschema2   | mytbl5     |                   |             3
+        12501 | RLBK_TABLE     | myschema2   | mytbl6     |                   |             9
+        12501 | DELETE_LOG     | myschema2   | mytbl4     |                   |             6
+        12501 | DELETE_LOG     | myschema2   | mytbl5     |                   |             3
+        12501 | DELETE_LOG     | myschema2   | mytbl6     |                   |             9
+        12501 | SET_FK_IMM     | myschema2   | mytbl6     | mytbl6_col61_fkey |             9
+        12501 | SET_FK_IMM     | myschema2   | mytbl8     | mytbl8_col81_fkey |             9
+        12501 | ENA_LOG_TRG    |             |            |                   |             3
+        12501 | CTRL+DBLINK    |             |            |                   |            17
+        12600 | RLBK_SEQUENCES |             |            |                   |             2
+        12600 | DIS_LOG_TRG    |             |            |                   |             2
+        12600 | RLBK_TABLE     | myschema1   | mytbl1     |                   |             1
+        12600 | RLBK_TABLE     | myschema1   | mytbl4     |                   |             2
+        12600 | DELETE_LOG     | myschema1   | mytbl1     |                   |             1
+        12600 | DELETE_LOG     | myschema1   | mytbl4     |                   |             2
+        12600 | ENA_LOG_TRG    |             |            |                   |             2
+        12600 | CTRL+DBLINK    |             |            |                   |             9
+        12601 | RLBK_SEQUENCES |             |            |                   |             2
+        12601 | RLBK_TABLE     | myschema1   | myTbl3     |                   |            10
+        12601 | RLBK_TABLE     | myschema1   | mytbl1     |                   |             1
+        12601 | RLBK_TABLE     | myschema1   | mytbl4     |                   |             2
+        12601 | CTRL+DBLINK    |             |            |                   |             4
+        14000 | RLBK_SEQUENCES |             |            |                   |             4
+        14000 | CTRL+DBLINK    |             |            |                   |             1
+        14001 | RLBK_SEQUENCES |             |            |                   |             4
+        14001 | CTRL+DBLINK    |             |            |                   |             1
+        14002 | RLBK_SEQUENCES |             |            |                   |             4
+        14002 | CTRL+DBLINK    |             |            |                   |             1
+        14003 | RLBK_SEQUENCES |             |            |                   |             2
+        14003 | CTRL+DBLINK    |             |            |                   |             1
+        14200 | RLBK_SEQUENCES |             |            |                   |             2
+        14200 | CTRL+DBLINK    |             |            |                   |             1
+        14201 | RLBK_SEQUENCES |             |            |                   |             2
+        14201 | CTRL+DBLINK    |             |            |                   |             1
+        14300 | RLBK_SEQUENCES |             |            |                   |             2
+        14300 | DIS_LOG_TRG    |             |            |                   |             1
+        14300 | RLBK_TABLE     | myschema1   | mytbl1     |                   |            20
+        14300 | DELETE_LOG     | myschema1   | mytbl1     |                   |            20
+        14300 | ENA_LOG_TRG    |             |            |                   |             1
+        14300 | CTRL+DBLINK    |             |            |                   |             5
+(76 rows)
 
 select time_id, time_last_emaj_gid, time_event from emaj.emaj_time_stamp where time_id >= 14300 order by time_id;
  time_id | time_last_emaj_gid | time_event 

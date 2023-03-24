@@ -14,6 +14,7 @@ grant emaj_viewer to emaj_regression_tests_viewer_user;
 -----------------------------
 -- prepare groups for the test
 -----------------------------
+delete from emaj.emaj_rlbk_stat;    -- for rollback duration estimates stability
 select emaj.emaj_create_group('myGroup1');
  emaj_create_group 
 -------------------
@@ -263,13 +264,13 @@ select count(*) from emaj.emaj_detailed_log_stat_groups(array['myGroup1'],NULL,N
 select emaj.emaj_estimate_rollback_group('myGroup1',emaj.emaj_get_previous_mark_group('myGroup1',current_timestamp),FALSE);
  emaj_estimate_rollback_group 
 ------------------------------
- @ 0.007 secs
+ @ 0.0135 secs
 (1 row)
 
 select emaj.emaj_estimate_rollback_groups(array['myGroup1'],emaj.emaj_get_previous_mark_group('myGroup1',current_timestamp),FALSE);
  emaj_estimate_rollback_groups 
 -------------------------------
- @ 0.007 secs
+ @ 0.0135 secs
 (1 row)
 
 select * from emaj.emaj_rollback_activity();

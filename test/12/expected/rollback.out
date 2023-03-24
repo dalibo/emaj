@@ -611,15 +611,15 @@ begin;
   select * from emaj.emaj_rollback_group('myGroup2','Mark21');
 ERROR:  _rlbk_seq: No mark at time id "4004" can be found for the sequence "myschema2.myseq1".
 CONTEXT:  PL/pgSQL function emaj._rlbk_seq(emaj.emaj_relation,bigint) line 21 at RAISE
-SQL statement "SELECT sum(emaj._rlbk_seq(t.*, greatest(v_rlbkMarkTimeId, lower(t.rel_time_range))))                              FROM
-          (SELECT *
-             FROM emaj.emaj_relation
-             WHERE upper_inf(rel_time_range)
-               AND rel_group = ANY (v_groupNames)
-               AND rel_kind = 'S'
-             ORDER BY rel_schema, rel_tblseq
-          ) as t"
-PL/pgSQL function emaj._rlbk_session_exec(integer,integer) line 40 at SQL statement
+SQL statement "SELECT sum(emaj._rlbk_seq(t.*, greatest(v_rlbkMarkTimeId, lower(t.rel_time_range))))                                  FROM
+              (SELECT *
+                 FROM emaj.emaj_relation
+                 WHERE upper_inf(rel_time_range)
+                   AND rel_group = ANY (v_groupNames)
+                   AND rel_kind = 'S'
+                 ORDER BY rel_schema, rel_tblseq
+              ) as t"
+PL/pgSQL function emaj._rlbk_session_exec(integer,integer) line 61 at SQL statement
 SQL statement "SELECT emaj._rlbk_session_exec(v_rlbkId, 1)"
 PL/pgSQL function emaj._rlbk_groups(text[],text,boolean,boolean,boolean) line 32 at PERFORM
 PL/pgSQL function emaj.emaj_rollback_group(text,text,boolean) line 7 at RETURN QUERY
@@ -2569,207 +2569,253 @@ select rlbp_rlbk_id, rlbp_step, rlbp_schema, rlbp_table, rlbp_object, rlbp_targe
   from emaj.emaj_rlbk_plan order by rlbp_rlbk_id, rlbp_step, rlbp_schema, rlbp_table, rlbp_object;
  rlbp_rlbk_id |     rlbp_step      | rlbp_schema | rlbp_table |      rlbp_object      | rlbp_target_time_id | rlbp_batch_number | rlbp_session | rlbp_object_def | rlbp_app_trg_type | rlbp_is_repl_role_replica | rlbp_estimated_quantity | rlbp_estimate_method | rlbp_quantity 
 --------------+--------------------+-------------+------------+-----------------------+---------------------+-------------------+--------------+-----------------+-------------------+---------------------------+-------------------------+----------------------+---------------
-         4009 | DIS_LOG_TRG        | myschema1   | myTbl3     |                       |                     |                 1 |            1 |                 |                   |                           |                         |                    3 |              
-         4009 | DIS_LOG_TRG        | myschema1   | mytbl4     |                       |                     |                 2 |            1 |                 |                   |                           |                         |                    3 |              
-         4009 | RLBK_TABLE         | myschema1   | myTbl3     |                       |                4030 |                 1 |            1 |                 |                   | f                         |                      10 |                    3 |            10
-         4009 | RLBK_TABLE         | myschema1   | mytbl4     |                       |                4030 |                 2 |            1 |                 |                   | t                         |                       2 |                    3 |             1
-         4009 | DELETE_LOG         | myschema1   | myTbl3     |                       |                4030 |                 1 |            1 |                 |                   |                           |                      10 |                    3 |            10
-         4009 | DELETE_LOG         | myschema1   | mytbl4     |                       |                4030 |                 2 |            1 |                 |                   |                           |                       2 |                    3 |             3
-         4009 | ENA_LOG_TRG        | myschema1   | myTbl3     |                       |                     |                 1 |            1 |                 |                   |                           |                         |                    3 |              
-         4009 | ENA_LOG_TRG        | myschema1   | mytbl4     |                       |                     |                 2 |            1 |                 |                   |                           |                         |                    3 |              
-         4009 | CTRL+DBLINK        |             |            |                       |                     |                   |              |                 |                   |                           |                       8 |                    3 |              
-         4010 | DIS_APP_TRG        | myschema1   | mytbl2     | mytbl2trg1            |                     |                 2 |            1 |                 |                   |                           |                         |                    3 |              
-         4010 | SET_ALWAYS_APP_TRG | myschema1   | mytbl2     | mytbl2trg2            |                     |                 2 |            1 |                 |                   |                           |                         |                    3 |              
-         4010 | DIS_LOG_TRG        | myschema1   | mytbl1     |                       |                     |                 1 |            1 |                 |                   |                           |                         |                    2 |              
-         4010 | DIS_LOG_TRG        | myschema1   | mytbl2     |                       |                     |                 2 |            1 |                 |                   |                           |                         |                    2 |              
-         4010 | DIS_LOG_TRG        | myschema1   | mytbl2b    |                       |                     |                 3 |            1 |                 |                   |                           |                         |                    2 |              
-         4010 | RLBK_TABLE         | myschema1   | mytbl1     |                       |                4028 |                 1 |            1 |                 |                   | t                         |                      15 |                    3 |            11
-         4010 | RLBK_TABLE         | myschema1   | mytbl2     |                       |                4028 |                 2 |            1 |                 |                   | t                         |                       6 |                    3 |             3
-         4010 | RLBK_TABLE         | myschema1   | mytbl2b    |                       |                4028 |                 3 |            1 |                 |                   | f                         |                       6 |                    3 |             6
-         4010 | DELETE_LOG         | myschema1   | mytbl1     |                       |                4028 |                 1 |            1 |                 |                   |                           |                      15 |                    3 |            18
-         4010 | DELETE_LOG         | myschema1   | mytbl2     |                       |                4028 |                 2 |            1 |                 |                   |                           |                       6 |                    3 |             8
-         4010 | DELETE_LOG         | myschema1   | mytbl2b    |                       |                4028 |                 3 |            1 |                 |                   |                           |                       6 |                    3 |             6
-         4010 | ENA_APP_TRG        | myschema1   | mytbl2     | mytbl2trg1            |                     |                 2 |            1 |                 | ALWAYS            |                           |                         |                    3 |              
-         4010 | SET_LOCAL_APP_TRG  | myschema1   | mytbl2     | mytbl2trg2            |                     |                 2 |            1 |                 |                   |                           |                         |                    3 |              
-         4010 | ENA_LOG_TRG        | myschema1   | mytbl1     |                       |                     |                 1 |            1 |                 |                   |                           |                         |                    2 |              
-         4010 | ENA_LOG_TRG        | myschema1   | mytbl2     |                       |                     |                 2 |            1 |                 |                   |                           |                         |                    2 |              
-         4010 | ENA_LOG_TRG        | myschema1   | mytbl2b    |                       |                     |                 3 |            1 |                 |                   |                           |                         |                    2 |              
-         4010 | CTRL+DBLINK        |             |            |                       |                     |                   |              |                 |                   |                           |                      16 |                    2 |              
-         4011 | RLBK_TABLE         | myschema1   | myTbl3     |                       |                4036 |                 1 |            1 |                 |                   | f                         |                      10 |                    1 |            10
-         4011 | RLBK_TABLE         | myschema1   | mytbl4     |                       |                4036 |                 2 |            1 |                 |                   | t                         |                       1 |                    1 |             1
-         4011 | CTRL+DBLINK        |             |            |                       |                     |                   |              |                 |                   |                           |                       2 |                    2 |              
-         4012 | DIS_APP_TRG        | myschema1   | mytbl2     | mytbl2trg1            |                     |                 3 |            1 |                 |                   |                           |                         |                    2 |              
-         4012 | SET_ALWAYS_APP_TRG | myschema1   | mytbl2     | mytbl2trg2            |                     |                 3 |            1 |                 |                   |                           |                         |                    3 |              
-         4012 | RLBK_TABLE         | myschema1   | myTbl3     |                       |                4035 |                 1 |            1 |                 |                   | f                         |                      20 |                    1 |            10
-         4012 | RLBK_TABLE         | myschema1   | mytbl1     |                       |                4035 |                 2 |            1 |                 |                   | t                         |                      15 |                    1 |            11
-         4012 | RLBK_TABLE         | myschema1   | mytbl2     |                       |                4035 |                 3 |            1 |                 |                   | t                         |                       2 |                    1 |             2
-         4012 | RLBK_TABLE         | myschema1   | mytbl2b    |                       |                4035 |                 4 |            1 |                 |                   | f                         |                       2 |                    1 |             2
-         4012 | RLBK_TABLE         | myschema1   | mytbl4     |                       |                4035 |                 5 |            1 |                 |                   | t                         |                       2 |                    1 |             1
-         4012 | ENA_APP_TRG        | myschema1   | mytbl2     | mytbl2trg1            |                     |                 3 |            1 |                 | ALWAYS            |                           |                         |                    2 |              
-         4012 | SET_LOCAL_APP_TRG  | myschema1   | mytbl2     | mytbl2trg2            |                     |                 3 |            1 |                 |                   |                           |                         |                    3 |              
-         4012 | CTRL+DBLINK        |             |            |                       |                     |                   |              |                 |                   |                           |                       9 |                    2 |              
-         4013 | SET_ALWAYS_APP_TRG | myschema1   | mytbl2     | mytbl2trg2            |                     |                 3 |            1 |                 |                   |                           |                         |                    3 |              
-         4013 | DIS_LOG_TRG        | myschema1   | myTbl3     |                       |                     |                 1 |            1 |                 |                   |                           |                         |                    2 |              
-         4013 | DIS_LOG_TRG        | myschema1   | mytbl1     |                       |                     |                 2 |            1 |                 |                   |                           |                         |                    2 |              
-         4013 | DIS_LOG_TRG        | myschema1   | mytbl2     |                       |                     |                 3 |            1 |                 |                   |                           |                         |                    2 |              
-         4013 | DIS_LOG_TRG        | myschema1   | mytbl2b    |                       |                     |                 4 |            1 |                 |                   |                           |                         |                    2 |              
-         4013 | DIS_LOG_TRG        | myschema1   | mytbl4     |                       |                     |                 5 |            1 |                 |                   |                           |                         |                    2 |              
-         4013 | RLBK_TABLE         | myschema1   | myTbl3     |                       |                4037 |                 1 |            1 |                 |                   | f                         |                      10 |                    1 |            10
-         4013 | RLBK_TABLE         | myschema1   | mytbl1     |                       |                4037 |                 2 |            1 |                 |                   | t                         |                      10 |                    1 |            10
-         4013 | RLBK_TABLE         | myschema1   | mytbl2     |                       |                4037 |                 3 |            1 |                 |                   | t                         |                       2 |                    1 |             2
-         4013 | RLBK_TABLE         | myschema1   | mytbl2b    |                       |                4037 |                 4 |            1 |                 |                   | f                         |                       2 |                    1 |             2
-         4013 | RLBK_TABLE         | myschema1   | mytbl4     |                       |                4037 |                 5 |            1 |                 |                   | t                         |                       1 |                    1 |             1
-         4013 | DELETE_LOG         | myschema1   | myTbl3     |                       |                4037 |                 1 |            1 |                 |                   |                           |                      10 |                    1 |            10
-         4013 | DELETE_LOG         | myschema1   | mytbl1     |                       |                4037 |                 2 |            1 |                 |                   |                           |                      10 |                    1 |            10
-         4013 | DELETE_LOG         | myschema1   | mytbl2     |                       |                4037 |                 3 |            1 |                 |                   |                           |                       2 |                    1 |             2
-         4013 | DELETE_LOG         | myschema1   | mytbl2b    |                       |                4037 |                 4 |            1 |                 |                   |                           |                       2 |                    1 |             2
-         4013 | DELETE_LOG         | myschema1   | mytbl4     |                       |                4037 |                 5 |            1 |                 |                   |                           |                       1 |                    1 |             1
-         4013 | SET_LOCAL_APP_TRG  | myschema1   | mytbl2     | mytbl2trg2            |                     |                 3 |            1 |                 |                   |                           |                         |                    3 |              
-         4013 | ENA_LOG_TRG        | myschema1   | myTbl3     |                       |                     |                 1 |            1 |                 |                   |                           |                         |                    2 |              
-         4013 | ENA_LOG_TRG        | myschema1   | mytbl1     |                       |                     |                 2 |            1 |                 |                   |                           |                         |                    2 |              
-         4013 | ENA_LOG_TRG        | myschema1   | mytbl2     |                       |                     |                 3 |            1 |                 |                   |                           |                         |                    2 |              
-         4013 | ENA_LOG_TRG        | myschema1   | mytbl2b    |                       |                     |                 4 |            1 |                 |                   |                           |                         |                    2 |              
-         4013 | ENA_LOG_TRG        | myschema1   | mytbl4     |                       |                     |                 5 |            1 |                 |                   |                           |                         |                    2 |              
-         4013 | CTRL+DBLINK        |             |            |                       |                     |                   |              |                 |                   |                           |                      22 |                    2 |              
-         4016 | DIS_APP_TRG        | myschema4   | mytblm     | mytblm_insert_trigger |                     |                 5 |            1 |                 |                   |                           |                         |                    2 |              
-         4016 | RLBK_TABLE         | myschema4   | mypartp1   |                       |                4048 |                 2 |            1 |                 |                   | t                         |                       1 |                    3 |             1
-         4016 | RLBK_TABLE         | myschema4   | mypartp2   |                       |                4048 |                 1 |            1 |                 |                   | t                         |                       2 |                    3 |             2
-         4016 | RLBK_TABLE         | myschema4   | mytblc1    |                       |                4048 |                 3 |            1 |                 |                   | f                         |                       1 |                    3 |             2
-         4016 | RLBK_TABLE         | myschema4   | mytblc2    |                       |                4048 |                 4 |            1 |                 |                   | f                         |                       1 |                    3 |             2
-         4016 | RLBK_TABLE         | myschema4   | mytblm     |                       |                4048 |                 5 |            1 |                 |                   | f                         |                       1 |                    3 |             2
-         4016 | RLBK_TABLE         | myschema4   | mytblr     |                       |                4048 |                 6 |            1 |                 |                   | t                         |                       1 |                    3 |             1
-         4016 | ENA_APP_TRG        | myschema4   | mytblm     | mytblm_insert_trigger |                     |                 5 |            1 |                 |                   |                           |                         |                    2 |              
+         4000 | RLBK_SEQUENCES     |             |            |                       |                4005 |                 1 |            1 |                 |                   |                           |                       2 |                    3 |             2
+         4000 | CTRL-DBLINK        |             |            |                       |                     |                   |              |                 |                   |                           |                       1 |                    3 |              
+         4003 | RLBK_SEQUENCES     |             |            |                       |                4005 |                 1 |            1 |                 |                   |                           |                       2 |                    2 |             2
+         4003 | CTRL-DBLINK        |             |            |                       |                     |                   |              |                 |                   |                           |                       1 |                    2 |              
+         4004 | RLBK_SEQUENCES     |             |            |                       |                4004 |                 1 |            1 |                 |                   |                           |                       2 |                    2 |             2
+         4004 | CTRL-DBLINK        |             |            |                       |                     |                   |              |                 |                   |                           |                       1 |                    2 |              
+         4005 | RLBK_SEQUENCES     |             |            |                       |                4020 |                 1 |            1 |                 |                   |                           |                       4 |                    2 |             4
+         4005 | CTRL-DBLINK        |             |            |                       |                     |                   |              |                 |                   |                           |                       1 |                    2 |              
+         4006 | RLBK_SEQUENCES     |             |            |                       |                4020 |                 1 |            1 |                 |                   |                           |                       4 |                    2 |             4
+         4006 | CTRL-DBLINK        |             |            |                       |                     |                   |              |                 |                   |                           |                       1 |                    2 |              
+         4007 | RLBK_SEQUENCES     |             |            |                       |                4020 |                 1 |            1 |                 |                   |                           |                       4 |                    2 |             4
+         4007 | CTRL-DBLINK        |             |            |                       |                     |                   |              |                 |                   |                           |                       1 |                    2 |              
+         4008 | RLBK_SEQUENCES     |             |            |                       |                4020 |                 1 |            1 |                 |                   |                           |                       4 |                    2 |             4
+         4008 | CTRL+DBLINK        |             |            |                       |                     |                   |              |                 |                   |                           |                       1 |                    3 |              
+         4009 | RLBK_SEQUENCES     |             |            |                       |                4030 |                 1 |            1 |                 |                   |                           |                       2 |                    2 |             2
+         4009 | DIS_LOG_TRG        | myschema1   | myTbl3     |                       |                     |                 2 |            1 |                 |                   |                           |                         |                    3 |              
+         4009 | DIS_LOG_TRG        | myschema1   | mytbl4     |                       |                     |                 3 |            1 |                 |                   |                           |                         |                    3 |              
+         4009 | RLBK_TABLE         | myschema1   | myTbl3     |                       |                4030 |                 2 |            1 |                 |                   | f                         |                      10 |                    3 |            10
+         4009 | RLBK_TABLE         | myschema1   | mytbl4     |                       |                4030 |                 3 |            1 |                 |                   | t                         |                       2 |                    3 |             1
+         4009 | DELETE_LOG         | myschema1   | myTbl3     |                       |                4030 |                 2 |            1 |                 |                   |                           |                      10 |                    3 |            10
+         4009 | DELETE_LOG         | myschema1   | mytbl4     |                       |                4030 |                 3 |            1 |                 |                   |                           |                       2 |                    3 |             3
+         4009 | ENA_LOG_TRG        | myschema1   | myTbl3     |                       |                     |                 2 |            1 |                 |                   |                           |                         |                    3 |              
+         4009 | ENA_LOG_TRG        | myschema1   | mytbl4     |                       |                     |                 3 |            1 |                 |                   |                           |                         |                    3 |              
+         4009 | CTRL+DBLINK        |             |            |                       |                     |                   |              |                 |                   |                           |                       9 |                    2 |              
+         4010 | RLBK_SEQUENCES     |             |            |                       |                4028 |                 1 |            1 |                 |                   |                           |                       2 |                    2 |             2
+         4010 | DIS_APP_TRG        | myschema1   | mytbl2     | mytbl2trg1            |                     |                 3 |            1 |                 |                   |                           |                         |                    3 |              
+         4010 | SET_ALWAYS_APP_TRG | myschema1   | mytbl2     | mytbl2trg2            |                     |                 3 |            1 |                 |                   |                           |                         |                    3 |              
+         4010 | DIS_LOG_TRG        | myschema1   | mytbl1     |                       |                     |                 2 |            1 |                 |                   |                           |                         |                    2 |              
+         4010 | DIS_LOG_TRG        | myschema1   | mytbl2     |                       |                     |                 3 |            1 |                 |                   |                           |                         |                    2 |              
+         4010 | DIS_LOG_TRG        | myschema1   | mytbl2b    |                       |                     |                 4 |            1 |                 |                   |                           |                         |                    2 |              
+         4010 | RLBK_TABLE         | myschema1   | mytbl1     |                       |                4028 |                 2 |            1 |                 |                   | t                         |                      15 |                    3 |            11
+         4010 | RLBK_TABLE         | myschema1   | mytbl2     |                       |                4028 |                 3 |            1 |                 |                   | t                         |                       6 |                    3 |             3
+         4010 | RLBK_TABLE         | myschema1   | mytbl2b    |                       |                4028 |                 4 |            1 |                 |                   | f                         |                       6 |                    3 |             6
+         4010 | DELETE_LOG         | myschema1   | mytbl1     |                       |                4028 |                 2 |            1 |                 |                   |                           |                      15 |                    3 |            18
+         4010 | DELETE_LOG         | myschema1   | mytbl2     |                       |                4028 |                 3 |            1 |                 |                   |                           |                       6 |                    3 |             8
+         4010 | DELETE_LOG         | myschema1   | mytbl2b    |                       |                4028 |                 4 |            1 |                 |                   |                           |                       6 |                    3 |             6
+         4010 | ENA_APP_TRG        | myschema1   | mytbl2     | mytbl2trg1            |                     |                 3 |            1 |                 | ALWAYS            |                           |                         |                    3 |              
+         4010 | SET_LOCAL_APP_TRG  | myschema1   | mytbl2     | mytbl2trg2            |                     |                 3 |            1 |                 |                   |                           |                         |                    3 |              
+         4010 | ENA_LOG_TRG        | myschema1   | mytbl1     |                       |                     |                 2 |            1 |                 |                   |                           |                         |                    2 |              
+         4010 | ENA_LOG_TRG        | myschema1   | mytbl2     |                       |                     |                 3 |            1 |                 |                   |                           |                         |                    2 |              
+         4010 | ENA_LOG_TRG        | myschema1   | mytbl2b    |                       |                     |                 4 |            1 |                 |                   |                           |                         |                    2 |              
+         4010 | CTRL+DBLINK        |             |            |                       |                     |                   |              |                 |                   |                           |                      17 |                    2 |              
+         4011 | RLBK_SEQUENCES     |             |            |                       |                4036 |                 1 |            1 |                 |                   |                           |                       2 |                    2 |             2
+         4011 | RLBK_TABLE         | myschema1   | myTbl3     |                       |                4036 |                 2 |            1 |                 |                   | f                         |                      10 |                    1 |            10
+         4011 | RLBK_TABLE         | myschema1   | mytbl4     |                       |                4036 |                 3 |            1 |                 |                   | t                         |                       1 |                    1 |             1
+         4011 | CTRL+DBLINK        |             |            |                       |                     |                   |              |                 |                   |                           |                       3 |                    2 |              
+         4012 | RLBK_SEQUENCES     |             |            |                       |                4035 |                 1 |            1 |                 |                   |                           |                       2 |                    2 |             2
+         4012 | DIS_APP_TRG        | myschema1   | mytbl2     | mytbl2trg1            |                     |                 4 |            1 |                 |                   |                           |                         |                    2 |              
+         4012 | SET_ALWAYS_APP_TRG | myschema1   | mytbl2     | mytbl2trg2            |                     |                 4 |            1 |                 |                   |                           |                         |                    3 |              
+         4012 | RLBK_TABLE         | myschema1   | myTbl3     |                       |                4035 |                 2 |            1 |                 |                   | f                         |                      20 |                    1 |            10
+         4012 | RLBK_TABLE         | myschema1   | mytbl1     |                       |                4035 |                 3 |            1 |                 |                   | t                         |                      15 |                    1 |            11
+         4012 | RLBK_TABLE         | myschema1   | mytbl2     |                       |                4035 |                 4 |            1 |                 |                   | t                         |                       2 |                    1 |             2
+         4012 | RLBK_TABLE         | myschema1   | mytbl2b    |                       |                4035 |                 5 |            1 |                 |                   | f                         |                       2 |                    1 |             2
+         4012 | RLBK_TABLE         | myschema1   | mytbl4     |                       |                4035 |                 6 |            1 |                 |                   | t                         |                       2 |                    1 |             1
+         4012 | ENA_APP_TRG        | myschema1   | mytbl2     | mytbl2trg1            |                     |                 4 |            1 |                 | ALWAYS            |                           |                         |                    2 |              
+         4012 | SET_LOCAL_APP_TRG  | myschema1   | mytbl2     | mytbl2trg2            |                     |                 4 |            1 |                 |                   |                           |                         |                    3 |              
+         4012 | CTRL+DBLINK        |             |            |                       |                     |                   |              |                 |                   |                           |                      10 |                    2 |              
+         4013 | RLBK_SEQUENCES     |             |            |                       |                4037 |                 1 |            1 |                 |                   |                           |                       2 |                    2 |             2
+         4013 | SET_ALWAYS_APP_TRG | myschema1   | mytbl2     | mytbl2trg2            |                     |                 4 |            1 |                 |                   |                           |                         |                    3 |              
+         4013 | DIS_LOG_TRG        | myschema1   | myTbl3     |                       |                     |                 2 |            1 |                 |                   |                           |                         |                    2 |              
+         4013 | DIS_LOG_TRG        | myschema1   | mytbl1     |                       |                     |                 3 |            1 |                 |                   |                           |                         |                    2 |              
+         4013 | DIS_LOG_TRG        | myschema1   | mytbl2     |                       |                     |                 4 |            1 |                 |                   |                           |                         |                    2 |              
+         4013 | DIS_LOG_TRG        | myschema1   | mytbl2b    |                       |                     |                 5 |            1 |                 |                   |                           |                         |                    2 |              
+         4013 | DIS_LOG_TRG        | myschema1   | mytbl4     |                       |                     |                 6 |            1 |                 |                   |                           |                         |                    2 |              
+         4013 | RLBK_TABLE         | myschema1   | myTbl3     |                       |                4037 |                 2 |            1 |                 |                   | f                         |                      10 |                    1 |            10
+         4013 | RLBK_TABLE         | myschema1   | mytbl1     |                       |                4037 |                 3 |            1 |                 |                   | t                         |                      10 |                    1 |            10
+         4013 | RLBK_TABLE         | myschema1   | mytbl2     |                       |                4037 |                 4 |            1 |                 |                   | t                         |                       2 |                    1 |             2
+         4013 | RLBK_TABLE         | myschema1   | mytbl2b    |                       |                4037 |                 5 |            1 |                 |                   | f                         |                       2 |                    1 |             2
+         4013 | RLBK_TABLE         | myschema1   | mytbl4     |                       |                4037 |                 6 |            1 |                 |                   | t                         |                       1 |                    1 |             1
+         4013 | DELETE_LOG         | myschema1   | myTbl3     |                       |                4037 |                 2 |            1 |                 |                   |                           |                      10 |                    1 |            10
+         4013 | DELETE_LOG         | myschema1   | mytbl1     |                       |                4037 |                 3 |            1 |                 |                   |                           |                      10 |                    1 |            10
+         4013 | DELETE_LOG         | myschema1   | mytbl2     |                       |                4037 |                 4 |            1 |                 |                   |                           |                       2 |                    1 |             2
+         4013 | DELETE_LOG         | myschema1   | mytbl2b    |                       |                4037 |                 5 |            1 |                 |                   |                           |                       2 |                    1 |             2
+         4013 | DELETE_LOG         | myschema1   | mytbl4     |                       |                4037 |                 6 |            1 |                 |                   |                           |                       1 |                    1 |             1
+         4013 | SET_LOCAL_APP_TRG  | myschema1   | mytbl2     | mytbl2trg2            |                     |                 4 |            1 |                 |                   |                           |                         |                    3 |              
+         4013 | ENA_LOG_TRG        | myschema1   | myTbl3     |                       |                     |                 2 |            1 |                 |                   |                           |                         |                    2 |              
+         4013 | ENA_LOG_TRG        | myschema1   | mytbl1     |                       |                     |                 3 |            1 |                 |                   |                           |                         |                    2 |              
+         4013 | ENA_LOG_TRG        | myschema1   | mytbl2     |                       |                     |                 4 |            1 |                 |                   |                           |                         |                    2 |              
+         4013 | ENA_LOG_TRG        | myschema1   | mytbl2b    |                       |                     |                 5 |            1 |                 |                   |                           |                         |                    2 |              
+         4013 | ENA_LOG_TRG        | myschema1   | mytbl4     |                       |                     |                 6 |            1 |                 |                   |                           |                         |                    2 |              
+         4013 | CTRL+DBLINK        |             |            |                       |                     |                   |              |                 |                   |                           |                      23 |                    2 |              
+         4016 | DIS_APP_TRG        | myschema4   | mytblm     | mytblm_insert_trigger |                     |                 6 |            1 |                 |                   |                           |                         |                    2 |              
+         4016 | RLBK_TABLE         | myschema4   | mypartp1   |                       |                4048 |                 3 |            1 |                 |                   | t                         |                       1 |                    3 |             1
+         4016 | RLBK_TABLE         | myschema4   | mypartp2   |                       |                4048 |                 2 |            1 |                 |                   | t                         |                       2 |                    3 |             2
+         4016 | RLBK_TABLE         | myschema4   | mytblc1    |                       |                4048 |                 4 |            1 |                 |                   | f                         |                       1 |                    3 |             2
+         4016 | RLBK_TABLE         | myschema4   | mytblc2    |                       |                4048 |                 5 |            1 |                 |                   | f                         |                       1 |                    3 |             2
+         4016 | RLBK_TABLE         | myschema4   | mytblm     |                       |                4048 |                 6 |            1 |                 |                   | f                         |                       1 |                    3 |             2
+         4016 | RLBK_TABLE         | myschema4   | mytblr     |                       |                4048 |                 7 |            1 |                 |                   | t                         |                       1 |                    3 |             1
+         4016 | ENA_APP_TRG        | myschema4   | mytblm     | mytblm_insert_trigger |                     |                 6 |            1 |                 |                   |                           |                         |                    2 |              
          4016 | CTRL+DBLINK        |             |            |                       |                     |                   |              |                 |                   |                           |                       8 |                    2 |              
-         4017 | DIS_APP_TRG        | myschema4   | mytblm     | mytblm_insert_trigger |                     |                 5 |            1 |                 |                   |                           |                         |                    2 |              
-         4017 | DIS_LOG_TRG        | myschema4   | mypartp1   |                       |                     |                 2 |            1 |                 |                   |                           |                         |                    2 |              
-         4017 | DIS_LOG_TRG        | myschema4   | mypartp2   |                       |                     |                 1 |            1 |                 |                   |                           |                         |                    2 |              
-         4017 | DIS_LOG_TRG        | myschema4   | mytblc1    |                       |                     |                 3 |            1 |                 |                   |                           |                         |                    2 |              
-         4017 | DIS_LOG_TRG        | myschema4   | mytblc2    |                       |                     |                 4 |            1 |                 |                   |                           |                         |                    2 |              
-         4017 | DIS_LOG_TRG        | myschema4   | mytblm     |                       |                     |                 5 |            1 |                 |                   |                           |                         |                    2 |              
-         4017 | DIS_LOG_TRG        | myschema4   | mytblr     |                       |                     |                 6 |            1 |                 |                   |                           |                         |                    2 |              
-         4017 | RLBK_TABLE         | myschema4   | mypartp1   |                       |                4047 |                 2 |            1 |                 |                   | t                         |                       3 |                    1 |             2
-         4017 | RLBK_TABLE         | myschema4   | mypartp2   |                       |                4047 |                 1 |            1 |                 |                   | t                         |                       8 |                    1 |             3
-         4017 | RLBK_TABLE         | myschema4   | mytblc1    |                       |                4047 |                 3 |            1 |                 |                   | f                         |                       3 |                    1 |             2
-         4017 | RLBK_TABLE         | myschema4   | mytblc2    |                       |                4047 |                 4 |            1 |                 |                   | f                         |                       3 |                    1 |             2
-         4017 | RLBK_TABLE         | myschema4   | mytblm     |                       |                4047 |                 5 |            1 |                 |                   | f                         |                       3 |                    1 |             2
-         4017 | RLBK_TABLE         | myschema4   | mytblr     |                       |                4047 |                 6 |            1 |                 |                   | t                         |                       2 |                    1 |             1
-         4017 | DELETE_LOG         | myschema4   | mypartp1   |                       |                4047 |                 2 |            1 |                 |                   |                           |                       3 |                    3 |             3
-         4017 | DELETE_LOG         | myschema4   | mypartp2   |                       |                4047 |                 1 |            1 |                 |                   |                           |                       8 |                    3 |             9
-         4017 | DELETE_LOG         | myschema4   | mytblc1    |                       |                4047 |                 3 |            1 |                 |                   |                           |                       3 |                    3 |             4
-         4017 | DELETE_LOG         | myschema4   | mytblc2    |                       |                4047 |                 4 |            1 |                 |                   |                           |                       3 |                    3 |             4
-         4017 | DELETE_LOG         | myschema4   | mytblm     |                       |                4047 |                 5 |            1 |                 |                   |                           |                       3 |                    3 |             4
-         4017 | DELETE_LOG         | myschema4   | mytblr     |                       |                4047 |                 6 |            1 |                 |                   |                           |                       2 |                    3 |             2
-         4017 | ENA_APP_TRG        | myschema4   | mytblm     | mytblm_insert_trigger |                     |                 5 |            1 |                 |                   |                           |                         |                    2 |              
-         4017 | ENA_LOG_TRG        | myschema4   | mypartp1   |                       |                     |                 2 |            1 |                 |                   |                           |                         |                    2 |              
-         4017 | ENA_LOG_TRG        | myschema4   | mypartp2   |                       |                     |                 1 |            1 |                 |                   |                           |                         |                    2 |              
-         4017 | ENA_LOG_TRG        | myschema4   | mytblc1    |                       |                     |                 3 |            1 |                 |                   |                           |                         |                    2 |              
-         4017 | ENA_LOG_TRG        | myschema4   | mytblc2    |                       |                     |                 4 |            1 |                 |                   |                           |                         |                    2 |              
-         4017 | ENA_LOG_TRG        | myschema4   | mytblm     |                       |                     |                 5 |            1 |                 |                   |                           |                         |                    2 |              
-         4017 | ENA_LOG_TRG        | myschema4   | mytblr     |                       |                     |                 6 |            1 |                 |                   |                           |                         |                    2 |              
+         4017 | DIS_APP_TRG        | myschema4   | mytblm     | mytblm_insert_trigger |                     |                 6 |            1 |                 |                   |                           |                         |                    2 |              
+         4017 | DIS_LOG_TRG        | myschema4   | mypartp1   |                       |                     |                 3 |            1 |                 |                   |                           |                         |                    2 |              
+         4017 | DIS_LOG_TRG        | myschema4   | mypartp2   |                       |                     |                 2 |            1 |                 |                   |                           |                         |                    2 |              
+         4017 | DIS_LOG_TRG        | myschema4   | mytblc1    |                       |                     |                 4 |            1 |                 |                   |                           |                         |                    2 |              
+         4017 | DIS_LOG_TRG        | myschema4   | mytblc2    |                       |                     |                 5 |            1 |                 |                   |                           |                         |                    2 |              
+         4017 | DIS_LOG_TRG        | myschema4   | mytblm     |                       |                     |                 6 |            1 |                 |                   |                           |                         |                    2 |              
+         4017 | DIS_LOG_TRG        | myschema4   | mytblr     |                       |                     |                 7 |            1 |                 |                   |                           |                         |                    2 |              
+         4017 | RLBK_TABLE         | myschema4   | mypartp1   |                       |                4047 |                 3 |            1 |                 |                   | t                         |                       3 |                    1 |             2
+         4017 | RLBK_TABLE         | myschema4   | mypartp2   |                       |                4047 |                 2 |            1 |                 |                   | t                         |                       8 |                    1 |             3
+         4017 | RLBK_TABLE         | myschema4   | mytblc1    |                       |                4047 |                 4 |            1 |                 |                   | f                         |                       3 |                    1 |             2
+         4017 | RLBK_TABLE         | myschema4   | mytblc2    |                       |                4047 |                 5 |            1 |                 |                   | f                         |                       3 |                    1 |             2
+         4017 | RLBK_TABLE         | myschema4   | mytblm     |                       |                4047 |                 6 |            1 |                 |                   | f                         |                       3 |                    1 |             2
+         4017 | RLBK_TABLE         | myschema4   | mytblr     |                       |                4047 |                 7 |            1 |                 |                   | t                         |                       2 |                    1 |             1
+         4017 | DELETE_LOG         | myschema4   | mypartp1   |                       |                4047 |                 3 |            1 |                 |                   |                           |                       3 |                    3 |             3
+         4017 | DELETE_LOG         | myschema4   | mypartp2   |                       |                4047 |                 2 |            1 |                 |                   |                           |                       8 |                    3 |             9
+         4017 | DELETE_LOG         | myschema4   | mytblc1    |                       |                4047 |                 4 |            1 |                 |                   |                           |                       3 |                    3 |             4
+         4017 | DELETE_LOG         | myschema4   | mytblc2    |                       |                4047 |                 5 |            1 |                 |                   |                           |                       3 |                    3 |             4
+         4017 | DELETE_LOG         | myschema4   | mytblm     |                       |                4047 |                 6 |            1 |                 |                   |                           |                       3 |                    3 |             4
+         4017 | DELETE_LOG         | myschema4   | mytblr     |                       |                4047 |                 7 |            1 |                 |                   |                           |                       2 |                    3 |             2
+         4017 | ENA_APP_TRG        | myschema4   | mytblm     | mytblm_insert_trigger |                     |                 6 |            1 |                 |                   |                           |                         |                    2 |              
+         4017 | ENA_LOG_TRG        | myschema4   | mypartp1   |                       |                     |                 3 |            1 |                 |                   |                           |                         |                    2 |              
+         4017 | ENA_LOG_TRG        | myschema4   | mypartp2   |                       |                     |                 2 |            1 |                 |                   |                           |                         |                    2 |              
+         4017 | ENA_LOG_TRG        | myschema4   | mytblc1    |                       |                     |                 4 |            1 |                 |                   |                           |                         |                    2 |              
+         4017 | ENA_LOG_TRG        | myschema4   | mytblc2    |                       |                     |                 5 |            1 |                 |                   |                           |                         |                    2 |              
+         4017 | ENA_LOG_TRG        | myschema4   | mytblm     |                       |                     |                 6 |            1 |                 |                   |                           |                         |                    2 |              
+         4017 | ENA_LOG_TRG        | myschema4   | mytblr     |                       |                     |                 7 |            1 |                 |                   |                           |                         |                    2 |              
          4017 | CTRL+DBLINK        |             |            |                       |                     |                   |              |                 |                   |                           |                      26 |                    2 |              
-         4019 | SET_ALWAYS_APP_TRG | myschema1   | mytbl2     | mytbl2trg2            |                     |                 2 |            1 |                 |                   |                           |                         |                    3 |              
-         4019 | RLBK_TABLE         | myschema1   | mytbl1     |                       |                4055 |                 1 |            1 |                 |                   | t                         |                      13 |                    1 |            12
-         4019 | RLBK_TABLE         | myschema1   | mytbl2     |                       |                4055 |                 2 |            1 |                 |                   | t                         |                       2 |                    1 |             1
-         4019 | RLBK_TABLE         | myschema1   | mytbl2b    |                       |                4055 |                 3 |            1 |                 |                   | f                         |                       2 |                    1 |             2
-         4019 | SET_LOCAL_APP_TRG  | myschema1   | mytbl2     | mytbl2trg2            |                     |                 2 |            1 |                 |                   |                           |                         |                    3 |              
-         4019 | CTRL+DBLINK        |             |            |                       |                     |                   |              |                 |                   |                           |                       5 |                    2 |              
-         4020 | SET_ALWAYS_APP_TRG | myschema1   | mytbl2     | mytbl2trg2            |                     |                 1 |            1 |                 |                   |                           |                         |                    3 |              
-         4020 | DIS_LOG_TRG        | myschema1   | mytbl2     |                       |                     |                 1 |            1 |                 |                   |                           |                         |                    2 |              
-         4020 | DIS_LOG_TRG        | myschema1   | mytbl2b    |                       |                     |                 2 |            1 |                 |                   |                           |                         |                    2 |              
-         4020 | RLBK_TABLE         | myschema1   | mytbl2     |                       |                4052 |                 1 |            1 |                 |                   | t                         |                       1 |                    1 |             1
-         4020 | RLBK_TABLE         | myschema1   | mytbl2b    |                       |                4052 |                 2 |            1 |                 |                   | f                         |                       1 |                    1 |             1
-         4020 | DELETE_LOG         | myschema1   | mytbl2     |                       |                4052 |                 1 |            1 |                 |                   |                           |                       1 |                    1 |             1
-         4020 | DELETE_LOG         | myschema1   | mytbl2b    |                       |                4052 |                 2 |            1 |                 |                   |                           |                       1 |                    1 |             1
-         4020 | SET_LOCAL_APP_TRG  | myschema1   | mytbl2     | mytbl2trg2            |                     |                 1 |            1 |                 |                   |                           |                         |                    3 |              
-         4020 | ENA_LOG_TRG        | myschema1   | mytbl2     |                       |                     |                 1 |            1 |                 |                   |                           |                         |                    2 |              
-         4020 | ENA_LOG_TRG        | myschema1   | mytbl2b    |                       |                     |                 2 |            1 |                 |                   |                           |                         |                    2 |              
-         4020 | CTRL+DBLINK        |             |            |                       |                     |                   |              |                 |                   |                           |                      10 |                    2 |              
-(115 rows)
+         4018 | RLBK_SEQUENCES     |             |            |                       |                4052 |                 1 |            1 |                 |                   |                           |                       2 |                    2 |             2
+         4018 | CTRL+DBLINK        |             |            |                       |                     |                   |              |                 |                   |                           |                       1 |                    2 |              
+         4019 | RLBK_SEQUENCES     |             |            |                       |                4055 |                 1 |            1 |                 |                   |                           |                       2 |                    2 |             2
+         4019 | SET_ALWAYS_APP_TRG | myschema1   | mytbl2     | mytbl2trg2            |                     |                 3 |            1 |                 |                   |                           |                         |                    3 |              
+         4019 | RLBK_TABLE         | myschema1   | mytbl1     |                       |                4055 |                 2 |            1 |                 |                   | t                         |                      13 |                    1 |            12
+         4019 | RLBK_TABLE         | myschema1   | mytbl2     |                       |                4055 |                 3 |            1 |                 |                   | t                         |                       2 |                    1 |             1
+         4019 | RLBK_TABLE         | myschema1   | mytbl2b    |                       |                4055 |                 4 |            1 |                 |                   | f                         |                       2 |                    1 |             2
+         4019 | SET_LOCAL_APP_TRG  | myschema1   | mytbl2     | mytbl2trg2            |                     |                 3 |            1 |                 |                   |                           |                         |                    3 |              
+         4019 | CTRL+DBLINK        |             |            |                       |                     |                   |              |                 |                   |                           |                       6 |                    2 |              
+         4020 | RLBK_SEQUENCES     |             |            |                       |                4052 |                 1 |            1 |                 |                   |                           |                       2 |                    2 |             2
+         4020 | SET_ALWAYS_APP_TRG | myschema1   | mytbl2     | mytbl2trg2            |                     |                 2 |            1 |                 |                   |                           |                         |                    3 |              
+         4020 | DIS_LOG_TRG        | myschema1   | mytbl2     |                       |                     |                 2 |            1 |                 |                   |                           |                         |                    2 |              
+         4020 | DIS_LOG_TRG        | myschema1   | mytbl2b    |                       |                     |                 3 |            1 |                 |                   |                           |                         |                    2 |              
+         4020 | RLBK_TABLE         | myschema1   | mytbl2     |                       |                4052 |                 2 |            1 |                 |                   | t                         |                       1 |                    1 |             1
+         4020 | RLBK_TABLE         | myschema1   | mytbl2b    |                       |                4052 |                 3 |            1 |                 |                   | f                         |                       1 |                    1 |             1
+         4020 | DELETE_LOG         | myschema1   | mytbl2     |                       |                4052 |                 2 |            1 |                 |                   |                           |                       1 |                    1 |             1
+         4020 | DELETE_LOG         | myschema1   | mytbl2b    |                       |                4052 |                 3 |            1 |                 |                   |                           |                       1 |                    1 |             1
+         4020 | SET_LOCAL_APP_TRG  | myschema1   | mytbl2     | mytbl2trg2            |                     |                 2 |            1 |                 |                   |                           |                         |                    3 |              
+         4020 | ENA_LOG_TRG        | myschema1   | mytbl2     |                       |                     |                 2 |            1 |                 |                   |                           |                         |                    2 |              
+         4020 | ENA_LOG_TRG        | myschema1   | mytbl2b    |                       |                     |                 3 |            1 |                 |                   |                           |                         |                    2 |              
+         4020 | CTRL+DBLINK        |             |            |                       |                     |                   |              |                 |                   |                           |                      11 |                    2 |              
+(138 rows)
 
 select rlbt_step, rlbt_schema, rlbt_table, rlbt_object, rlbt_rlbk_id, rlbt_quantity from emaj.emaj_rlbk_stat
   order by rlbt_rlbk_id, rlbt_step, rlbt_schema, rlbt_table, rlbt_object;
-  rlbt_step  | rlbt_schema | rlbt_table | rlbt_object | rlbt_rlbk_id | rlbt_quantity 
--------------+-------------+------------+-------------+--------------+---------------
- DIS_LOG_TRG |             |            |             |         4009 |             2
- RLBK_TABLE  | myschema1   | myTbl3     |             |         4009 |            10
- RLBK_TABLE  | myschema1   | mytbl4     |             |         4009 |             2
- DELETE_LOG  | myschema1   | myTbl3     |             |         4009 |            10
- DELETE_LOG  | myschema1   | mytbl4     |             |         4009 |             2
- ENA_LOG_TRG |             |            |             |         4009 |             2
- CTRL+DBLINK |             |            |             |         4009 |             8
- DIS_APP_TRG |             |            |             |         4010 |             1
- DIS_LOG_TRG |             |            |             |         4010 |             3
- RLBK_TABLE  | myschema1   | mytbl1     |             |         4010 |            15
- RLBK_TABLE  | myschema1   | mytbl2     |             |         4010 |             6
- RLBK_TABLE  | myschema1   | mytbl2b    |             |         4010 |             6
- DELETE_LOG  | myschema1   | mytbl1     |             |         4010 |            15
- DELETE_LOG  | myschema1   | mytbl2     |             |         4010 |             6
- DELETE_LOG  | myschema1   | mytbl2b    |             |         4010 |             6
- ENA_APP_TRG |             |            |             |         4010 |             1
- ENA_LOG_TRG |             |            |             |         4010 |             3
- CTRL+DBLINK |             |            |             |         4010 |            16
- RLBK_TABLE  | myschema1   | myTbl3     |             |         4011 |            10
- RLBK_TABLE  | myschema1   | mytbl4     |             |         4011 |             1
- CTRL+DBLINK |             |            |             |         4011 |             2
- DIS_APP_TRG |             |            |             |         4012 |             1
- RLBK_TABLE  | myschema1   | myTbl3     |             |         4012 |            20
- RLBK_TABLE  | myschema1   | mytbl1     |             |         4012 |            15
- RLBK_TABLE  | myschema1   | mytbl2     |             |         4012 |             2
- RLBK_TABLE  | myschema1   | mytbl2b    |             |         4012 |             2
- RLBK_TABLE  | myschema1   | mytbl4     |             |         4012 |             2
- ENA_APP_TRG |             |            |             |         4012 |             1
- CTRL+DBLINK |             |            |             |         4012 |             9
- DIS_LOG_TRG |             |            |             |         4013 |             5
- RLBK_TABLE  | myschema1   | myTbl3     |             |         4013 |            10
- RLBK_TABLE  | myschema1   | mytbl1     |             |         4013 |            10
- RLBK_TABLE  | myschema1   | mytbl2     |             |         4013 |             2
- RLBK_TABLE  | myschema1   | mytbl2b    |             |         4013 |             2
- RLBK_TABLE  | myschema1   | mytbl4     |             |         4013 |             1
- DELETE_LOG  | myschema1   | myTbl3     |             |         4013 |            10
- DELETE_LOG  | myschema1   | mytbl1     |             |         4013 |            10
- DELETE_LOG  | myschema1   | mytbl2     |             |         4013 |             2
- DELETE_LOG  | myschema1   | mytbl2b    |             |         4013 |             2
- DELETE_LOG  | myschema1   | mytbl4     |             |         4013 |             1
- ENA_LOG_TRG |             |            |             |         4013 |             5
- CTRL+DBLINK |             |            |             |         4013 |            22
- DIS_APP_TRG |             |            |             |         4016 |             1
- RLBK_TABLE  | myschema4   | mypartp1   |             |         4016 |             1
- RLBK_TABLE  | myschema4   | mypartp2   |             |         4016 |             2
- RLBK_TABLE  | myschema4   | mytblc1    |             |         4016 |             1
- RLBK_TABLE  | myschema4   | mytblc2    |             |         4016 |             1
- RLBK_TABLE  | myschema4   | mytblm     |             |         4016 |             1
- RLBK_TABLE  | myschema4   | mytblr     |             |         4016 |             1
- ENA_APP_TRG |             |            |             |         4016 |             1
- CTRL+DBLINK |             |            |             |         4016 |             8
- DIS_APP_TRG |             |            |             |         4017 |             1
- DIS_LOG_TRG |             |            |             |         4017 |             6
- RLBK_TABLE  | myschema4   | mypartp1   |             |         4017 |             3
- RLBK_TABLE  | myschema4   | mypartp2   |             |         4017 |             8
- RLBK_TABLE  | myschema4   | mytblc1    |             |         4017 |             3
- RLBK_TABLE  | myschema4   | mytblc2    |             |         4017 |             3
- RLBK_TABLE  | myschema4   | mytblm     |             |         4017 |             3
- RLBK_TABLE  | myschema4   | mytblr     |             |         4017 |             2
- DELETE_LOG  | myschema4   | mypartp1   |             |         4017 |             3
- DELETE_LOG  | myschema4   | mypartp2   |             |         4017 |             8
- DELETE_LOG  | myschema4   | mytblc1    |             |         4017 |             3
- DELETE_LOG  | myschema4   | mytblc2    |             |         4017 |             3
- DELETE_LOG  | myschema4   | mytblm     |             |         4017 |             3
- DELETE_LOG  | myschema4   | mytblr     |             |         4017 |             2
- ENA_APP_TRG |             |            |             |         4017 |             1
- ENA_LOG_TRG |             |            |             |         4017 |             6
- CTRL+DBLINK |             |            |             |         4017 |            26
- RLBK_TABLE  | myschema1   | mytbl1     |             |         4019 |            13
- RLBK_TABLE  | myschema1   | mytbl2     |             |         4019 |             2
- RLBK_TABLE  | myschema1   | mytbl2b    |             |         4019 |             2
- CTRL+DBLINK |             |            |             |         4019 |             5
- DIS_LOG_TRG |             |            |             |         4020 |             2
- RLBK_TABLE  | myschema1   | mytbl2     |             |         4020 |             1
- RLBK_TABLE  | myschema1   | mytbl2b    |             |         4020 |             1
- DELETE_LOG  | myschema1   | mytbl2     |             |         4020 |             1
- DELETE_LOG  | myschema1   | mytbl2b    |             |         4020 |             1
- ENA_LOG_TRG |             |            |             |         4020 |             2
- CTRL+DBLINK |             |            |             |         4020 |            10
-(79 rows)
+   rlbt_step    | rlbt_schema | rlbt_table | rlbt_object | rlbt_rlbk_id | rlbt_quantity 
+----------------+-------------+------------+-------------+--------------+---------------
+ RLBK_SEQUENCES |             |            |             |         4000 |             2
+ CTRL-DBLINK    |             |            |             |         4000 |             1
+ RLBK_SEQUENCES |             |            |             |         4003 |             2
+ CTRL-DBLINK    |             |            |             |         4003 |             1
+ RLBK_SEQUENCES |             |            |             |         4004 |             2
+ CTRL-DBLINK    |             |            |             |         4004 |             1
+ RLBK_SEQUENCES |             |            |             |         4005 |             4
+ CTRL-DBLINK    |             |            |             |         4005 |             1
+ RLBK_SEQUENCES |             |            |             |         4006 |             4
+ CTRL-DBLINK    |             |            |             |         4006 |             1
+ RLBK_SEQUENCES |             |            |             |         4007 |             4
+ CTRL-DBLINK    |             |            |             |         4007 |             1
+ RLBK_SEQUENCES |             |            |             |         4008 |             4
+ CTRL+DBLINK    |             |            |             |         4008 |             1
+ RLBK_SEQUENCES |             |            |             |         4009 |             2
+ DIS_LOG_TRG    |             |            |             |         4009 |             2
+ RLBK_TABLE     | myschema1   | myTbl3     |             |         4009 |            10
+ RLBK_TABLE     | myschema1   | mytbl4     |             |         4009 |             2
+ DELETE_LOG     | myschema1   | myTbl3     |             |         4009 |            10
+ DELETE_LOG     | myschema1   | mytbl4     |             |         4009 |             2
+ ENA_LOG_TRG    |             |            |             |         4009 |             2
+ CTRL+DBLINK    |             |            |             |         4009 |             9
+ RLBK_SEQUENCES |             |            |             |         4010 |             2
+ DIS_APP_TRG    |             |            |             |         4010 |             1
+ DIS_LOG_TRG    |             |            |             |         4010 |             3
+ RLBK_TABLE     | myschema1   | mytbl1     |             |         4010 |            15
+ RLBK_TABLE     | myschema1   | mytbl2     |             |         4010 |             6
+ RLBK_TABLE     | myschema1   | mytbl2b    |             |         4010 |             6
+ DELETE_LOG     | myschema1   | mytbl1     |             |         4010 |            15
+ DELETE_LOG     | myschema1   | mytbl2     |             |         4010 |             6
+ DELETE_LOG     | myschema1   | mytbl2b    |             |         4010 |             6
+ ENA_APP_TRG    |             |            |             |         4010 |             1
+ ENA_LOG_TRG    |             |            |             |         4010 |             3
+ CTRL+DBLINK    |             |            |             |         4010 |            17
+ RLBK_SEQUENCES |             |            |             |         4011 |             2
+ RLBK_TABLE     | myschema1   | myTbl3     |             |         4011 |            10
+ RLBK_TABLE     | myschema1   | mytbl4     |             |         4011 |             1
+ CTRL+DBLINK    |             |            |             |         4011 |             3
+ RLBK_SEQUENCES |             |            |             |         4012 |             2
+ DIS_APP_TRG    |             |            |             |         4012 |             1
+ RLBK_TABLE     | myschema1   | myTbl3     |             |         4012 |            20
+ RLBK_TABLE     | myschema1   | mytbl1     |             |         4012 |            15
+ RLBK_TABLE     | myschema1   | mytbl2     |             |         4012 |             2
+ RLBK_TABLE     | myschema1   | mytbl2b    |             |         4012 |             2
+ RLBK_TABLE     | myschema1   | mytbl4     |             |         4012 |             2
+ ENA_APP_TRG    |             |            |             |         4012 |             1
+ CTRL+DBLINK    |             |            |             |         4012 |            10
+ RLBK_SEQUENCES |             |            |             |         4013 |             2
+ DIS_LOG_TRG    |             |            |             |         4013 |             5
+ RLBK_TABLE     | myschema1   | myTbl3     |             |         4013 |            10
+ RLBK_TABLE     | myschema1   | mytbl1     |             |         4013 |            10
+ RLBK_TABLE     | myschema1   | mytbl2     |             |         4013 |             2
+ RLBK_TABLE     | myschema1   | mytbl2b    |             |         4013 |             2
+ RLBK_TABLE     | myschema1   | mytbl4     |             |         4013 |             1
+ DELETE_LOG     | myschema1   | myTbl3     |             |         4013 |            10
+ DELETE_LOG     | myschema1   | mytbl1     |             |         4013 |            10
+ DELETE_LOG     | myschema1   | mytbl2     |             |         4013 |             2
+ DELETE_LOG     | myschema1   | mytbl2b    |             |         4013 |             2
+ DELETE_LOG     | myschema1   | mytbl4     |             |         4013 |             1
+ ENA_LOG_TRG    |             |            |             |         4013 |             5
+ CTRL+DBLINK    |             |            |             |         4013 |            23
+ DIS_APP_TRG    |             |            |             |         4016 |             1
+ RLBK_TABLE     | myschema4   | mypartp1   |             |         4016 |             1
+ RLBK_TABLE     | myschema4   | mypartp2   |             |         4016 |             2
+ RLBK_TABLE     | myschema4   | mytblc1    |             |         4016 |             1
+ RLBK_TABLE     | myschema4   | mytblc2    |             |         4016 |             1
+ RLBK_TABLE     | myschema4   | mytblm     |             |         4016 |             1
+ RLBK_TABLE     | myschema4   | mytblr     |             |         4016 |             1
+ ENA_APP_TRG    |             |            |             |         4016 |             1
+ CTRL+DBLINK    |             |            |             |         4016 |             8
+ DIS_APP_TRG    |             |            |             |         4017 |             1
+ DIS_LOG_TRG    |             |            |             |         4017 |             6
+ RLBK_TABLE     | myschema4   | mypartp1   |             |         4017 |             3
+ RLBK_TABLE     | myschema4   | mypartp2   |             |         4017 |             8
+ RLBK_TABLE     | myschema4   | mytblc1    |             |         4017 |             3
+ RLBK_TABLE     | myschema4   | mytblc2    |             |         4017 |             3
+ RLBK_TABLE     | myschema4   | mytblm     |             |         4017 |             3
+ RLBK_TABLE     | myschema4   | mytblr     |             |         4017 |             2
+ DELETE_LOG     | myschema4   | mypartp1   |             |         4017 |             3
+ DELETE_LOG     | myschema4   | mypartp2   |             |         4017 |             8
+ DELETE_LOG     | myschema4   | mytblc1    |             |         4017 |             3
+ DELETE_LOG     | myschema4   | mytblc2    |             |         4017 |             3
+ DELETE_LOG     | myschema4   | mytblm     |             |         4017 |             3
+ DELETE_LOG     | myschema4   | mytblr     |             |         4017 |             2
+ ENA_APP_TRG    |             |            |             |         4017 |             1
+ ENA_LOG_TRG    |             |            |             |         4017 |             6
+ CTRL+DBLINK    |             |            |             |         4017 |            26
+ RLBK_SEQUENCES |             |            |             |         4018 |             2
+ CTRL+DBLINK    |             |            |             |         4018 |             1
+ RLBK_SEQUENCES |             |            |             |         4019 |             2
+ RLBK_TABLE     | myschema1   | mytbl1     |             |         4019 |            13
+ RLBK_TABLE     | myschema1   | mytbl2     |             |         4019 |             2
+ RLBK_TABLE     | myschema1   | mytbl2b    |             |         4019 |             2
+ CTRL+DBLINK    |             |            |             |         4019 |             6
+ RLBK_SEQUENCES |             |            |             |         4020 |             2
+ DIS_LOG_TRG    |             |            |             |         4020 |             2
+ RLBK_TABLE     | myschema1   | mytbl2     |             |         4020 |             1
+ RLBK_TABLE     | myschema1   | mytbl2b    |             |         4020 |             1
+ DELETE_LOG     | myschema1   | mytbl2     |             |         4020 |             1
+ DELETE_LOG     | myschema1   | mytbl2b    |             |         4020 |             1
+ ENA_LOG_TRG    |             |            |             |         4020 |             2
+ CTRL+DBLINK    |             |            |             |         4020 |            11
+(102 rows)
 
 -----------------------------
 -- test end: reset history and force sequences id

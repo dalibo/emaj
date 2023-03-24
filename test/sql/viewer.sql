@@ -12,6 +12,7 @@ grant emaj_viewer to emaj_regression_tests_viewer_user;
 -----------------------------
 -- prepare groups for the test
 -----------------------------
+delete from emaj.emaj_rlbk_stat;    -- for rollback duration estimates stability
 select emaj.emaj_create_group('myGroup1');
 select emaj.emaj_assign_tables('myschema1','.*',null,'myGroup1');
 select emaj.emaj_assign_sequences('myschema1','.*',null,'myGroup1');

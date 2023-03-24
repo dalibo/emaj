@@ -57,6 +57,7 @@ NOTICE:  drop cascades to 3 other objects
 DETAIL:  drop cascades to constraint emaj_rlbk_session_rlbs_rlbk_id_fkey on table emaj_rlbk_session
 drop cascades to constraint emaj_rlbk_plan_rlbp_rlbk_id_fkey on table emaj_rlbk_plan
 drop cascades to constraint emaj_rlbk_stat_rlbt_rlbk_id_fkey on table emaj_rlbk_stat
+NOTICE:  drop cascades to function _estimate_rlbk_step_duration(_rlbk_step_enum_old,text,text,text,bigint,interval,interval)
 NOTICE:  drop cascades to 2 other objects
 DETAIL:  drop cascades to function emaj_rollback_activity()
 drop cascades to function _rollback_activity()

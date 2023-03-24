@@ -132,6 +132,7 @@ begin;
 rollback;
 
 -- estimate and then perform a logged rollback to reach a mark prior the ADD_SEQ operation and check
+delete from emaj.emaj_rlbk_stat;    -- to avoid unstable results in estimates
 select * from emaj.emaj_estimate_rollback_group('myGroup2','Before ADD_SEQ',true);
 select rlbk_severity, regexp_replace(rlbk_message,E'\\d\\d\\d\\d/\\d\\d\\/\\d\\d\\ \\d\\d\\:\\d\\d:\\d\\d .*?\\)','<timestamp>)','g')
   from emaj.emaj_logged_rollback_group('myGroup2','Before ADD_SEQ',true);
@@ -356,6 +357,7 @@ begin;
 rollback;
 
 -- estimate and then perform a logged rollback to reach a mark prior the ADD_TBL operation and check
+delete from emaj.emaj_rlbk_stat;    -- to avoid unstable results in estimates
 select * from emaj.emaj_estimate_rollback_group('myGroup2','Before ADD_TBL',true);
 select rlbk_severity, regexp_replace(rlbk_message,E'\\d\\d\\d\\d/\\d\\d\\/\\d\\d\\ \\d\\d\\:\\d\\d:\\d\\d .*?\\)','<timestamp>)','g')
   from emaj.emaj_logged_rollback_group('myGroup2','Before ADD_TBL',true);

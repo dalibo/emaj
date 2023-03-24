@@ -5,7 +5,9 @@ E-Maj - Change log
 ###Enhancements:###
   * Remove the support of postgres versions prior V11.
   * Improve the sequences rollback processing: move it at the beginning of the
-    overall E-Maj rollback; report the number effectively processed sequences.
+    overall E-Maj rollback; rollback sequences in a dedicated elementary step
+    that can be monitored as other steps; report the number effectively
+    processed sequences.
   * Minor code changes, in particular to take benefit from the features brought
     by Postgres 9.6, 10 and 11.
   * Improve the performance of log tables TRUNCATEs.
