@@ -22,7 +22,7 @@ $PROGRAM = 'emajRollbackMonitor.pl';
 $APPNAME = 'emajRollbackMonitor';
 
 # Just asking for help
-if ((!@ARGV)||($ARGV[0] eq '--help')||($ARGV[0] eq '?')) {
+if ((!@ARGV) || ($ARGV[0] eq '--help') || ($ARGV[0] eq '?')) {
   print_help();
   exit 0;
 }
@@ -33,7 +33,7 @@ if ($ARGV[0] eq '--version') {
   exit 0;
 }
 
-print (" E-Maj (version ".$VERSION.") - Monitoring rollbacks activity\n");
+print (" E-Maj (version $VERSION) - Monitoring rollbacks activity\n");
 print ("-----------------------------------------------------------\n");
 
 
@@ -58,46 +58,45 @@ my $conn_string = '';
 # Get supplied parameters
 GetOptions(
 # connection parameters
-  "d=s"=> sub { $dbname = $_[1]; $conn_string .= 'dbname='.$dbname.';'; },
-  "h=s"=> sub { $host = $_[1]; $conn_string .= 'host='.$host.';'; },
-  "p=i"=> sub { $port = $_[1]; $conn_string .= 'port='.$port.';'; },
-  "U=s"=>\$username,
-  "W=s"=>\$password,
+  "d=s" => sub { $dbname = $_[1]; $conn_string .= "dbname=$dbname;"; },
+  "h=s" => sub { $host = $_[1]; $conn_string .= "host=$host;"; },
+  "p=i" => sub { $port = $_[1]; $conn_string .= "port=$port;"; },
+  "U=s" => \$username,
+  "W=s" => \$password,
 #  other parameters
-  "a:i"=>\&check_opt_complRlbkAgo,
-  "i:f"=>\&check_opt_delay,
-  "l:i"=>\&check_opt_nbComplRlbk,
-  "n:i"=>\&check_opt_nbIter,
-  "v"=> sub { $verbose = 1; },
-  "r"=> sub { $regressTest = 1; }
+  "a:i" => \&check_opt_complRlbkAgo,
+  "i:f" => \&check_opt_delay,
+  "l:i" => \&check_opt_nbComplRlbk,
+  "n:i" => \&check_opt_nbIter,
+  "v" => sub { $verbose = 1; },
+  "r" => sub { $regressTest = 1; }
 );
-
 
 sub check_opt_complRlbkAgo {
   $complRlbkAgo = $_[1];
-  if ($complRlbkAgo <0) {
-    die("Nb hours (".$complRlbkAgo.") must be >= 0 !\n");
+  if ($complRlbkAgo < 0) {
+    die("Nb hours ($complRlbkAgo) must be >= 0 !\n");
   }
 }
 
 sub check_opt_delay {
   $delay = $_[1];
-  if ($delay <=0) {
-    die("Interval (".$delay.") must be > 0 !\n");
+  if ($delay <= 0) {
+    die("Interval ($delay) must be > 0 !\n");
   }
 }
 
 sub check_opt_nbComplRlbk {
   $nbComplRlbk = $_[1];
-  if ($nbComplRlbk <0) {
-    die("Number of completed rollback operations (".$nbComplRlbk.") must be >= 0 !\n");
+  if ($nbComplRlbk < 0) {
+    die("Number of completed rollback operations ($nbComplRlbk) must be >= 0 !\n");
   }
 }
 
 sub check_opt_nbIter {
   $nbIter = $_[1];
-  if ($nbIter <=0) {
-    die("Number of iterations (".$nbIter.") must be > 0 !\n");
+  if ($nbIter <= 0) {
+    die("Number of iterations ($nbIter) must be > 0 !\n");
   }
 }
 
@@ -107,12 +106,12 @@ my $row = undef;
 
 # Open a database session.
 #   Connection parameters are optional. If not supplied, the environment variables and PostgreSQL default values are used
-$dbh = DBI->connect('dbi:Pg:'.$conn_string,$username,$password,{AutoCommit=>1,RaiseError=>1,PrintError=>0})
-  or die("Connection failed: ".$DBI::errstr."\n");
+$dbh = DBI->connect('dbi:Pg:' . $conn_string, $username, $password, {AutoCommit => 1, RaiseError => 0, PrintError => 0})
+  or die("$DBI::errstr\n");
 
 # Set the application_name
-$dbh->do("SET application_name to '".$APPNAME."'")
-  or die('Set the application_name failed '.$DBI::errstr."\n");
+$dbh->do("SET application_name to '$APPNAME'")
+  or die("Setting the application_name failed. $DBI::errstr\n");
 
 # Perform the monitoring
 for (my $i=1; $i<=$nbIter; $i++){
@@ -130,11 +129,11 @@ for (my $i=1; $i<=$nbIter; $i++){
                                         format('%s/%s', coalesce(rlbk_eff_nb_sequence::TEXT, '?'), rlbk_nb_sequence) AS rlbk_seq
                                  FROM emaj.emaj_rlbk, emaj.emaj_time_stamp tsr, emaj.emaj_time_stamp tsm
                                  WHERE tsr.time_id = rlbk_time_id AND tsm.time_id = rlbk_mark_time_id
-                                   AND rlbk_end_datetime > current_timestamp - '".$complRlbkAgo." hours'::interval
-                                 ORDER BY rlbk_id DESC LIMIT ".$nbComplRlbk.") AS t
+                                   AND rlbk_end_datetime > current_timestamp - '$complRlbkAgo hours'::interval
+                                 ORDER BY rlbk_id DESC LIMIT $nbComplRlbk) AS t
                            ORDER BY rlbk_id ASC");
   $stmt->execute()
-    or die('Access to the emaj_rlbk table failed '.$DBI::errstr."\n");
+    or die("Accessing to the emaj_rlbk table failed. $DBI::errstr \n");
 
 # Display results
   $dbh->{pg_expand_array} = 0;
@@ -144,10 +143,10 @@ for (my $i=1; $i<=$nbIter; $i++){
 	  $row->{'rlbk_end_datetime'} = '[rollback end time]';
 	  $row->{'rlbk_mark_datetime'} = '[mark time]';
 	}
-    print ("** rollback ".$row->{'rlbk_id'}." started at ".$row->{'rlbk_start_datetime'}." for groups ".$row->{'rlbk_groups'}."\n");
-    print ("   status: ".$row->{'rlbk_status'}." ; ended at ".$row->{'rlbk_end_datetime'}."\n");
-    print ("   rollback to mark: \"".$row->{'rlbk_mark'}."\" set at ".$row->{'rlbk_mark_datetime'}."\n") if ($verbose);
-    print ("   ".$row->{'rlbk_nb_session'}." session(s) to process ".$row->{'rlbk_tbl'}." table(s) and ".$row->{'rlbk_seq'}." sequence(s)\n") if ($verbose);
+    print ("** rollback $row->{'rlbk_id'} started at $row->{'rlbk_start_datetime'} for groups $row->{'rlbk_groups'} \n");
+    print ("   status: $row->{'rlbk_status'} ; ended at $row->{'rlbk_end_datetime'} \n");
+    print ("   rollback to mark: \"$row->{'rlbk_mark'}\" set at $row->{'rlbk_mark_datetime'}\n") if ($verbose);
+    print ("   $row->{'rlbk_nb_session'} session(s) to process $row->{'rlbk_tbl'} table(s) and $row->{'rlbk_seq'} sequence(s)\n") if ($verbose);
   }
   $stmt->finish;
 
@@ -157,7 +156,7 @@ for (my $i=1; $i<=$nbIter; $i++){
                                 format('%s/%s', coalesce(rlbk_eff_nb_sequence::TEXT, '?'), rlbk_nb_sequence) AS rlbk_seq
                            FROM emaj.emaj_rollback_activity() ORDER BY rlbk_id");
   $stmt->execute()
-    or die('Call of emaj_rollback_activity() function failed '.$DBI::errstr."\n");
+    or die("Calling of emaj_rollback_activity() function failed. $DBI::errstr\n");
 
 # Display results
   while ( $row = $stmt->fetchrow_hashref()) {
@@ -165,15 +164,15 @@ for (my $i=1; $i<=$nbIter; $i++){
 	  $row->{'rlbk_start_datetime'} = '[rollback start time]';
 	  $row->{'rlbk_mark_datetime'} = '[mark time]';
 	}
-    print ("-> rollback ".$row->{'rlbk_id'}." started at ".$row->{'rlbk_start_datetime'}." for groups ".$row->{'rlbk_groups'}."\n");
-    print ("   status: ".$row->{'rlbk_status'}." ; completion ".$row->{'rlbk_completion_pct'}." %");
+    print ("-> rollback $row->{'rlbk_id'} started at $row->{'rlbk_start_datetime'} for groups $row->{'rlbk_groups'}\n");
+    print ("   status: $row->{'rlbk_status'} ; completion $row->{'rlbk_completion_pct'} %");
     if (!defined $row->{'rlbk_remaining'}) {
       print ("\n");
     }else{
-      print ("; ".$row->{'rlbk_remaining'}." remaining\n");
+      print ("; $row->{'rlbk_remaining'} remaining\n");
     }
-    print ("   rollback to mark: ".$row->{'rlbk_mark'}." set at ".$row->{'rlbk_mark_datetime'}."\n") if ($verbose);
-    print ("   ".$row->{'rlbk_nb_session'}." session(s) to process ".$row->{'rlbk_tbl'}." table(s) and ".$row->{'rlbk_seq'}." sequence(s)\n") if ($verbose);
+    print ("   rollback to mark: $row->{'rlbk_mark'} set at $row->{'rlbk_mark_datetime'}\n") if ($verbose);
+    print ("   $row->{'rlbk_nb_session'} session(s) to process $row->{'rlbk_tbl'} table(s) and $row->{'rlbk_seq'} sequence(s)\n") if ($verbose);
   }
   $stmt->finish;
 
@@ -185,7 +184,7 @@ for (my $i=1; $i<=$nbIter; $i++){
 
 # Close the sessions
 $dbh->disconnect
-  or die('Disconnect failed: '.$DBI::errstr."\n");
+  or die("Disconnect failed. $DBI::errstr\n");
 
 sub print_help {
   print qq{$PROGRAM belongs to the E-Maj PostgreSQL extension (version $VERSION).

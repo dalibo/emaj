@@ -23,7 +23,7 @@
     exit(0);
   }
 
-  echo " E-Maj (version ".$EmajVersion.") - Monitoring rollbacks activity\n";
+  echo " E-Maj (version $EmajVersion) - Monitoring rollbacks activity\n";
   echo "---------------------------------------------------------------\n";
 
 // Collect and prepare parameters
@@ -51,51 +51,51 @@
   foreach (array_keys($options) as $opt) switch ($opt) {
     case 'd':
       $dbname = $options['d'];
-      $conn_string .= 'dbname='.$dbname.' ';
+      $conn_string .= "dbname=$dbname ";
       break;
     case 'h':
       $host = $options['h'];
-      $conn_string .= 'host='.$host.' ';
+      $conn_string .= "host=$host ";
       break;
     case 'p':
       $port = $options['p'];
-      $conn_string .= 'port='.$port.' ';
+      $conn_string .= "port=$port ";
       break;
     case 'U':
       $username = $options['U'];
-      $conn_string .= 'user='.$username.' ';
+      $conn_string .= "user=$username ";
       break;
     case 'W':
       $password = $options['W'];
-      $conn_string .= 'password='.$password.' ';
+      $conn_string .= "password=$password ";
       break;
     case 'a':
-      if (! is_numeric($options['a']) )
-        abort("Nb hours (".$options['a'].") is not numeric !\n");
       $complRlbkAgo = $options['a'];
+      if (! is_numeric($complRlbkAgo) )
+        abort("Nb hours ($complRlbkAgo) is not numeric !\n");
       if ($complRlbkAgo < 0)
-        abort("Nb hours (".$options['a'].") must be >= 0 !\n");
+        abort("Nb hours ($complRlbkAgo) must be >= 0 !\n");
       break;
     case 'i':
-      if (! is_numeric($options['i']) )
-        abort("Interval (".$options['i'].") is not numeric !\n");
       $delay = $options['i'];
+      if (! is_numeric($delay) )
+        abort("Interval ($delay) is not numeric !\n");
       if ($delay <= 0)
-        abort("Interval (".$options['i'].") must be > 0 !\n");
+        abort("Interval ($delay) must be > 0 !\n");
       break;
     case 'l':
-      if (! is_numeric($options['l']) )
-        abort("Number of completed rollback operations (".$options['l'].") is not numeric !\n");
       $nbComplRlbk = $options['l'];
+      if (! is_numeric($nbComplRlbk) )
+        abort("Number of completed rollback operations ($nbComplRlbk) is not numeric !\n");
       if ($nbComplRlbk < 0)
-        abort("Number of completed rollback operations (".$options['l'].") must be >= 0 !\n");
+        abort("Number of completed rollback operations ($nbComplRlbk) must be >= 0 !\n");
       break;
     case 'n':
-      if (! is_numeric($options['n']) )
-        abort("Number of iterations (".$options['n'].") is not numeric !\n");
       $nbIter = $options['n'];
+      if (! is_numeric($nbIter) )
+        abort("Number of iterations ($nbIter) is not numeric !\n");
       if ($nbIter <= 0)
-        abort("Number of iterations (".$options['n'].") must be > 0 !\n");
+        abort("Number of iterations ($nbIter) must be > 0 !\n");
       break;
     case 'v':
       $verbose = true;
@@ -104,12 +104,12 @@
       $regressTest = true;
       break;
   }
-  $conn_string .= 'application_name='.$appName;
+  $conn_string .= "application_name=$appName";
 
 // Open a database session.
 //   Connection parameters are optional. If not supplied, the environment variables and PostgreSQL default values are used
   $dbconn = pg_connect($conn_string)
-      or abort("Connection failed".pg_last_error()."\n");
+      or abort("Connection failed\n" . pg_last_error() . "\n");
 
 // Perform the monitoring
 
@@ -130,8 +130,8 @@
                     AND rlbk_end_datetime > current_timestamp - '{$complRlbkAgo} hours'::interval
                   ORDER BY rlbk_id DESC LIMIT {$nbComplRlbk}) AS t
               ORDER BY rlbk_id ASC";
-    $result = pg_query($dbconn,$query)
-        or abort('Access to the emaj_rlbk table failed '.pg_last_error()."\n");
+    $result = pg_query($dbconn, $query)
+        or abort("Getting the completed rollback operations failed.\n" . pg_last_error() . "\n");
 
 // Display results
     while ($row = pg_fetch_assoc($result)) {
@@ -154,8 +154,8 @@
                      format('%s/%s', rlbk_eff_nb_table, rlbk_nb_table) AS rlbk_tbl,
                      format('%s/%s', coalesce(rlbk_eff_nb_sequence::TEXT, '?'), rlbk_nb_sequence) AS rlbk_seq
                 FROM emaj.emaj_rollback_activity() ORDER BY rlbk_id";
-    $result = pg_query($dbconn,$query)
-        or abort('Call of emaj_rollback_activity() function failed '.pg_last_error()."\n");
+    $result = pg_query($dbconn, $query)
+        or abort("Calling the emaj_rollback_activity() function failed.\n" . pg_last_error() . "\n");
 
 // Display results
     while ($row = pg_fetch_assoc($result)) {
@@ -224,4 +224,3 @@ function print_version(){
   echo "Type '$progName --help' to get usage information\n\n";
 }
 ?>
-
