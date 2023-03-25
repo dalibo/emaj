@@ -707,6 +707,9 @@ select public.handle_emaj_sequences(5200);
 
 -----------------------------
 -- emaj_estimate_rollback_group() and emaj_estimate_rollback_groups() tests
+--
+-- When emaj is not created as an extension - i.e. is created with the psql script - the estimate durations are different.
+-- This is normal as the FK are not processed the same way.
 -----------------------------
 -- group is unknown
 select emaj.emaj_estimate_rollback_group(NULL,NULL,FALSE);

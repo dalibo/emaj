@@ -8234,7 +8234,7 @@ $_rlbk_planning$
         WHERE emaj._log_stat_tbl(t, greatest(v_markTimeId, lower(rel_time_range)), NULL) > 0;
       GET DIAGNOSTICS v_effNbTable = ROW_COUNT;
 -- For tables having all foreign keys linking tables in the rolled back groups, set the rlbp_is_repl_role_replica flag to TRUE.
--- This only concerns emaj installed as an extension because one needs to be sure that the the _rlbk_tbl() function is executed with a
+-- This only concerns emaj installed as an extension because one needs to be sure that the _rlbk_tbl() function is executed with a
 -- superuser role (this is needed to set the session_replication_role to 'replica').
       v_isEmajExtension = EXISTS (SELECT 1 FROM pg_catalog.pg_extension WHERE extname = 'emaj');
       IF v_isEmajExtension AND v_effNbTable > 0 THEN
