@@ -8240,7 +8240,8 @@ $_rlbk_planning$
           ) AS t
         WHERE emaj._log_stat_tbl(t, greatest(v_markTimeId, lower(rel_time_range)), NULL) > 0;
       GET DIAGNOSTICS v_effNbTable = ROW_COUNT;
--- For tables having all foreign keys linking tables in the rolled back groups, set the rlbp_is_repl_role_replica flag to TRUE.
+-- Set the rlbp_is_repl_role_replica flag to TRUE for tables having all foreign keys linking tables:
+--   1) in the rolled back groups and 2) with the same rollback target mark.
 -- This only concerns emaj installed as an extension because one needs to be sure that the _rlbk_tbl() function is executed with a
 -- superuser role (this is needed to set the session_replication_role to 'replica').
       v_isEmajExtension = EXISTS (SELECT 1 FROM pg_catalog.pg_extension WHERE extname = 'emaj');
@@ -8248,7 +8249,8 @@ $_rlbk_planning$
         WITH fkeys AS (
             -- the foreign keys belonging to tables to rollback
             SELECT rlbp_schema, rlbp_table, c.conname, nf.nspname, tf.relname, rel_group,
-                   rel_group = ANY (v_groupNames) AS are_both_tables_in_groups
+                   rel_group = ANY (v_groupNames) AS are_both_tables_in_groups,
+                   rlbp_target_time_id = greatest(v_markTimeId, lower(rel_time_range)) AS have_both_tables_the_same_target_mark
               FROM emaj.emaj_rlbk_plan,
                    pg_catalog.pg_constraint c
                    JOIN pg_catalog.pg_class t ON (t.oid = c.conrelid)
@@ -8267,7 +8269,8 @@ $_rlbk_planning$
           UNION
             -- the foreign keys referencing tables to rollback
             SELECT rlbp_schema, rlbp_table, c.conname, n.nspname, t.relname, rel_group,
-                   rel_group = ANY (v_groupNames) AS are_both_tables_in_groups
+                   rel_group = ANY (v_groupNames) AS are_both_tables_in_groups,
+                   rlbp_target_time_id = greatest(v_markTimeId, lower(rel_time_range)) AS have_both_tables_the_same_target_mark
               FROM emaj.emaj_rlbk_plan,
                    pg_catalog.pg_constraint c
                    JOIN pg_catalog.pg_class t ON (t.oid = c.conrelid)
@@ -8286,7 +8289,8 @@ $_rlbk_planning$
         ), fkeys_agg AS (
           -- aggregated foreign keys by tables to rollback
           SELECT rlbp_schema, rlbp_table,
-                 count(*) AS nb_all_fk, count(*) FILTER (WHERE are_both_tables_in_groups) AS nb_fk_groups_ok
+                 count(*) AS nb_fk,
+                 count(*) FILTER (WHERE are_both_tables_in_groups AND have_both_tables_the_same_target_mark) AS nb_fk_ok
             FROM fkeys
             GROUP BY 1,2
         )
@@ -8297,7 +8301,8 @@ $_rlbk_planning$
             AND rlbp_step IN ('RLBK_TABLE', 'LOCK_TABLE')
             AND emaj_rlbk_plan.rlbp_table = fkeys_agg.rlbp_table
             AND emaj_rlbk_plan.rlbp_schema = fkeys_agg.rlbp_schema
-            AND nb_all_fk = nb_fk_groups_ok                                -- if all fkeys are linking tables in the rolled back groups
+            AND nb_fk = nb_fk_ok                                           -- if all fkeys are linking tables 1) in the rolled back groups
+                                                                           -- and 2) with the same rollback target mark
         ;
       END IF;
 --

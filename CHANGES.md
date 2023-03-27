@@ -18,6 +18,11 @@ E-Maj - Change log
     group.
 
 ###Bug fixes:###
+  * Fix a bug in the rollback processing. When two tables of rolled back tables
+    group are linked by a foreign key, and one of these tables has been
+    assigned to the group after the other, an E-Maj rollback to a mark set
+    before the last table assignment may lead to an undetected referential
+    integrity violation.
   * Fix a bug in both emaj_move_tables() and emaj_move_sequences() functions.
     When several tables/sequences are moved at once to another tables group and
     the destination group is the same as the source group for at least 2

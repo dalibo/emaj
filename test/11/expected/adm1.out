@@ -214,19 +214,19 @@ select * from emaj.emaj_seq_hole;
 select count(*) from emaj.emaj_rlbk;
  count 
 -------
-    37
+    38
 (1 row)
 
 select count(*) from emaj.emaj_rlbk_session;
  count 
 -------
-    37
+    38
 (1 row)
 
 select count(*) from emaj.emaj_rlbk_plan;
  count 
 -------
-   187
+   203
 (1 row)
 
 select count(*) from emaj.emaj_rlbk_stat;
@@ -264,7 +264,7 @@ select hist_function, hist_event, hist_wording
   hist_function  | hist_event |                                                       hist_wording                                                       
 -----------------+------------+--------------------------------------------------------------------------------------------------------------------------
  PURGE_HISTORIES | BEGIN      | Retention delay @ 0
- PURGE_HISTORIES |            | 20 emaj_hist rows deleted ; 138 relation history rows deleted ; 94 relation changes deleted ; 37 rollback events deleted
+ PURGE_HISTORIES |            | 20 emaj_hist rows deleted ; 138 relation history rows deleted ; 94 relation changes deleted ; 38 rollback events deleted
  PURGE_HISTORIES | END        | 
 (3 rows)
 

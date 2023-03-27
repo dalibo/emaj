@@ -692,7 +692,7 @@ select emaj.emaj_assign_table('myschema1','mytbl4','myGroup1');
 begin;
   select emaj.emaj_remove_table('myschema1','mytbl4');
   alter table myschema1.mytbl4 alter column col45 type varchar(10);
-  select emaj.emaj_assign_table('myschema1','mytbl4','myGroup1');
+  select emaj.emaj_assign_table('myschema1','mytbl4','myGroup1',NULL,'Assign_mytbl4');
 commit;
 
 -- checks
@@ -704,6 +704,20 @@ select sequ_schema, sequ_name, sequ_time_id, sequ_last_val, sequ_is_called from 
   where sequ_schema = 'myschema2' and sequ_name like 'myseq%' order by sequ_name, sequ_time_id;
 select tbl_schema, tbl_name, tbl_time_id, tbl_log_seq_last_val from emaj.emaj_table
   where tbl_schema = 'myschema2' and tbl_name = 'mytbl1' order by tbl_time_id;
+
+-- referential integrity violation attempt while rollbacking to a mark set before an ADD_TBL with a FK involved in the operation.
+insert into myschema1.mytbl2 values (1000,'a',current_date);
+insert into myschema1.mytbl4 values (100,'b',1000,2,'ABC');
+begin;
+  select emaj.emaj_remove_table('myschema1','mytbl4','Remove_mytbl4');
+  select emaj.emaj_assign_table('myschema1','mytbl4','myGroup1',NULL,'Reassign_mytbl4');
+-- deactivate the dblink usage to avoid deadlock, the assign_table and the rollback being executed in the same transaction,
+--   they conflict on the emaj_myschema1.mytbl4_log_seq log sequence
+  delete from emaj.emaj_param where param_key = 'dblink_user_password';
+-- the rollback should fail at FK check
+  select * from emaj.emaj_rollback_group('myGroup1',emaj.emaj_get_previous_mark_group('myGroup1','Remove_mytbl4'),true);
+rollback;
+select * from emaj.emaj_rollback_group('myGroup1','EMAJ_LAST_MARK');
 
 -----------------------------
 -- some extra tests with group ownership change for some tables and sequences

@@ -2663,7 +2663,7 @@ begin;
 (1 row)
 
   alter table myschema1.mytbl4 alter column col45 type varchar(10);
-  select emaj.emaj_assign_table('myschema1','mytbl4','myGroup1');
+  select emaj.emaj_assign_table('myschema1','mytbl4','myGroup1',NULL,'Assign_mytbl4');
 NOTICE:  table "mytbl4_log" does not exist, skipping
 NOTICE:  trigger "emaj_log_trg" for relation "myschema1.mytbl4" does not exist, skipping
 NOTICE:  trigger "emaj_trunc_trg" for relation "myschema1.mytbl4" does not exist, skipping
@@ -2732,6 +2732,47 @@ select tbl_schema, tbl_name, tbl_time_id, tbl_log_seq_last_val from emaj.emaj_ta
  myschema2  | mytbl1   |       10021 |                    2
  myschema2  | mytbl1   |       10022 |                    2
 (7 rows)
+
+-- referential integrity violation attempt while rollbacking to a mark set before an ADD_TBL with a FK involved in the operation.
+insert into myschema1.mytbl2 values (1000,'a',current_date);
+insert into myschema1.mytbl4 values (100,'b',1000,2,'ABC');
+begin;
+  select emaj.emaj_remove_table('myschema1','mytbl4','Remove_mytbl4');
+ emaj_remove_table 
+-------------------
+                 1
+(1 row)
+
+  select emaj.emaj_assign_table('myschema1','mytbl4','myGroup1',NULL,'Reassign_mytbl4');
+NOTICE:  table "mytbl4_log" does not exist, skipping
+NOTICE:  trigger "emaj_log_trg" for relation "myschema1.mytbl4" does not exist, skipping
+NOTICE:  trigger "emaj_trunc_trg" for relation "myschema1.mytbl4" does not exist, skipping
+ emaj_assign_table 
+-------------------
+                 1
+(1 row)
+
+-- deactivate the dblink usage to avoid deadlock, the assign_table and the rollback being executed in the same transaction,
+--   they conflict on the emaj_myschema1.mytbl4_log_seq log sequence
+  delete from emaj.emaj_param where param_key = 'dblink_user_password';
+-- the rollback should fail at FK check
+  select * from emaj.emaj_rollback_group('myGroup1',emaj.emaj_get_previous_mark_group('myGroup1','Remove_mytbl4'),true);
+ERROR:  update or delete on table "mytbl2" violates foreign key constraint "mytbl4_col43_fkey" on table "mytbl4"
+DETAIL:  Key (col21)=(1000) is still referenced from table "mytbl4".
+CONTEXT:  SQL statement "SET CONSTRAINTS myschema1.mytbl4_col43_fkey IMMEDIATE"
+PL/pgSQL function emaj._rlbk_session_exec(integer,integer) line 116 at EXECUTE
+SQL statement "SELECT emaj._rlbk_session_exec(v_rlbkId, 1)"
+PL/pgSQL function emaj._rlbk_groups(text[],text,boolean,boolean,boolean) line 32 at PERFORM
+SQL statement "SELECT *
+        FROM emaj._rlbk_groups(array[p_groupName], p_mark, FALSE, FALSE, coalesce(p_isAlterGroupAllowed, FALSE))"
+PL/pgSQL function emaj.emaj_rollback_group(text,text,boolean) line 7 at RETURN QUERY
+rollback;
+select * from emaj.emaj_rollback_group('myGroup1','EMAJ_LAST_MARK');
+ rlbk_severity |              rlbk_message              
+---------------+----------------------------------------
+ Notice        | 3 / 5 tables effectively processed.
+ Notice        | 1 / 2 sequences effectively processed.
+(2 rows)
 
 -----------------------------
 -- some extra tests with group ownership change for some tables and sequences
@@ -2959,62 +3000,62 @@ select * from emaj.emaj_relation_change where rlchg_time_id >= 10000 order by 1,
          10024 | myschema1      | mytbl4            | ADD_TABLE                   | myGroup1    |                  |                  |                 |                |                    |                    |                        |                     |                         |                        |                            |              
          10025 | myschema1      | mytbl4            | REMOVE_TABLE                | myGroup1    |                  |                  |                 |                |                    |                    |                        |                     |                         |                        |                            |              
          10026 | myschema1      | mytbl4            | ADD_TABLE                   | myGroup1    |                  |                  |                 |                |                    |                    |                        |                     |                         |                        |                            |              
-         10027 | myschema4      | mypartp1          | MOVE_TABLE                  | myGroup4    |                  |                  | myGroup1        |                |                    |                    |                        |                     |                         |                        |                            |              
-         10027 | myschema4      | mypartp2          | MOVE_TABLE                  | myGroup4    |                  |                  | myGroup1        |                |                    |                    |                        |                     |                         |                        |                            |              
-         10027 | myschema4      | mytblc1           | MOVE_TABLE                  | myGroup4    |                  |                  | myGroup1        |                |                    |                    |                        |                     |                         |                        |                            |              
-         10027 | myschema4      | mytblc2           | MOVE_TABLE                  | myGroup4    |                  |                  | myGroup1        |                |                    |                    |                        |                     |                         |                        |                            |              
-         10027 | myschema4      | mytblm            | MOVE_TABLE                  | myGroup4    |                  |                  | myGroup1        |                |                    |                    |                        |                     |                         |                        |                            |              
-         10028 | myschema2      | myTbl3_col31_seq  | MOVE_SEQUENCE               | myGroup2    |                  |                  | myGroup1        |                |                    |                    |                        |                     |                         |                        |                            |              
-         10028 | myschema2      | myseq1            | MOVE_SEQUENCE               | myGroup2    |                  |                  | myGroup1        |                |                    |                    |                        |                     |                         |                        |                            |              
-         10028 | myschema2      | myseq2            | MOVE_SEQUENCE               | myGroup2    |                  |                  | myGroup1        |                |                    |                    |                        |                     |                         |                        |                            |              
-         10029 | myschema4      | mypartp1          | MOVE_TABLE                  | myGroup1    |                  |                  | myGroup2        |                |                    |                    |                        |                     |                         |                        |                            |              
-         10029 | myschema4      | mypartp2          | MOVE_TABLE                  | myGroup1    |                  |                  | myGroup2        |                |                    |                    |                        |                     |                         |                        |                            |              
-         10029 | myschema4      | mytblc1           | MOVE_TABLE                  | myGroup1    |                  |                  | myGroup2        |                |                    |                    |                        |                     |                         |                        |                            |              
-         10029 | myschema4      | mytblc2           | MOVE_TABLE                  | myGroup1    |                  |                  | myGroup2        |                |                    |                    |                        |                     |                         |                        |                            |              
-         10029 | myschema4      | mytblm            | MOVE_TABLE                  | myGroup1    |                  |                  | myGroup2        |                |                    |                    |                        |                     |                         |                        |                            |              
-         10030 | myschema2      | myTbl3_col31_seq  | MOVE_SEQUENCE               | myGroup1    |                  |                  | myGroup2        |                |                    |                    |                        |                     |                         |                        |                            |              
-         10030 | myschema2      | myseq1            | MOVE_SEQUENCE               | myGroup1    |                  |                  | myGroup2        |                |                    |                    |                        |                     |                         |                        |                            |              
-         10030 | myschema2      | myseq2            | MOVE_SEQUENCE               | myGroup1    |                  |                  | myGroup2        |                |                    |                    |                        |                     |                         |                        |                            |              
-         10031 | myschema4      | mypartp1          | MOVE_TABLE                  | myGroup2    |                  |                  | myGroup4        |                |                    |                    |                        |                     |                         |                        |                            |              
-         10031 | myschema4      | mypartp2          | MOVE_TABLE                  | myGroup2    |                  |                  | myGroup4        |                |                    |                    |                        |                     |                         |                        |                            |              
-         10031 | myschema4      | mytblc1           | MOVE_TABLE                  | myGroup2    |                  |                  | myGroup4        |                |                    |                    |                        |                     |                         |                        |                            |              
-         10031 | myschema4      | mytblc2           | MOVE_TABLE                  | myGroup2    |                  |                  | myGroup4        |                |                    |                    |                        |                     |                         |                        |                            |              
-         10031 | myschema4      | mytblm            | MOVE_TABLE                  | myGroup2    |                  |                  | myGroup4        |                |                    |                    |                        |                     |                         |                        |                            |              
-         10032 | myschema2      | myTbl3_col31_seq  | MOVE_SEQUENCE               | myGroup2    |                  |                  | myGroup4        |                |                    |                    |                        |                     |                         |                        |                            |              
-         10032 | myschema2      | myseq1            | MOVE_SEQUENCE               | myGroup2    |                  |                  | myGroup4        |                |                    |                    |                        |                     |                         |                        |                            |              
-         10032 | myschema2      | myseq2            | MOVE_SEQUENCE               | myGroup2    |                  |                  | myGroup4        |                |                    |                    |                        |                     |                         |                        |                            |              
-         10033 | myschema2      | mytbl2            | MOVE_TABLE                  | myGroup2    |                  |                  | myGroup1        |                |                    |                    |                        |                     |                         |                        |                            |              
-         10034 | myschema2      | mytbl2            | MOVE_TABLE                  | myGroup1    |                  |                  | myGroup2        |                |                    |                    |                        |                     |                         |                        |                            |              
-         10035 | myschema1      | mytbl1            | REMOVE_TABLE                | myGroup1    |                  |                  |                 |                |                    |                    |                        |                     |                         |                        |                            |              
-         10036 | myschema1      | mytbl1_new_name   | ADD_TABLE                   | myGroup1    |                  |                  |                 |                |                    |                    |                        |                     |                         |                        |                            |              
-         10037 | myschema1      | mytbl1_new_name   | REMOVE_TABLE                | myGroup1    |                  |                  |                 |                |                    |                    |                        |                     |                         |                        |                            |              
-         10038 | public         | mytbl1_new_name   | ADD_TABLE                   | myGroup1    |                  |                  |                 |                |                    |                    |                        |                     |                         |                        |                            |              
-         10039 | public         | mytbl1_new_name   | REMOVE_TABLE                | myGroup1    |                  |                  |                 |                |                    |                    |                        |                     |                         |                        |                            |              
-         10040 | myschema1      | mytbl1            | ADD_TABLE                   | myGroup1    |                  |                  |                 |                |                    |                    |                        |                     |                         |                        |                            |              
-         10042 | myschema1      | myTbl3            | REMOVE_TABLE                | myGroup1    |                  |                  |                 |                |                    |                    |                        |                     |                         |                        |                            |              
-         10042 | myschema1      | myTbl3_col31_seq  | REMOVE_SEQUENCE             | myGroup1    |                  |                  |                 |                |                    |                    |                        |                     |                         |                        |                            |              
-         10042 | myschema1      | mytbl1            | REMOVE_TABLE                | myGroup1    |                  |                  |                 |                |                    |                    |                        |                     |                         |                        |                            |              
-         10042 | myschema1      | mytbl2            | REMOVE_TABLE                | myGroup1    |                  |                  |                 |                |                    |                    |                        |                     |                         |                        |                            |              
-         10042 | myschema1      | mytbl2b           | REMOVE_TABLE                | myGroup1    |                  |                  |                 |                |                    |                    |                        |                     |                         |                        |                            |              
-         10042 | myschema1      | mytbl2b_col20_seq | REMOVE_SEQUENCE             | myGroup1    |                  |                  |                 |                |                    |                    |                        |                     |                         |                        |                            |              
-         10042 | myschema1      | mytbl4            | REMOVE_TABLE                | myGroup1    |                  |                  |                 |                |                    |                    |                        |                     |                         |                        |                            |              
-         10044 | myschema2      | myTbl3            | REMOVE_TABLE                | myGroup2    |                  |                  |                 |                |                    |                    |                        |                     |                         |                        |                            |              
-         10044 | myschema2      | mytbl1            | REMOVE_TABLE                | myGroup2    |                  |                  |                 |                |                    |                    |                        |                     |                         |                        |                            |              
-         10044 | myschema2      | mytbl2            | REMOVE_TABLE                | myGroup2    |                  |                  |                 |                |                    |                    |                        |                     |                         |                        |                            |              
-         10044 | myschema2      | mytbl4            | REMOVE_TABLE                | myGroup2    |                  |                  |                 |                |                    |                    |                        |                     |                         |                        |                            |              
-         10044 | myschema2      | mytbl5            | REMOVE_TABLE                | myGroup2    |                  |                  |                 |                |                    |                    |                        |                     |                         |                        |                            |              
-         10044 | myschema2      | mytbl6            | REMOVE_TABLE                | myGroup2    |                  |                  |                 |                |                    |                    |                        |                     |                         |                        |                            |              
-         10045 | myschema2      | myTbl3_col31_seq  | REMOVE_SEQUENCE             | myGroup4    |                  |                  |                 |                |                    |                    |                        |                     |                         |                        |                            |              
-         10045 | myschema2      | myseq1            | REMOVE_SEQUENCE             | myGroup4    |                  |                  |                 |                |                    |                    |                        |                     |                         |                        |                            |              
-         10045 | myschema2      | myseq2            | REMOVE_SEQUENCE             | myGroup4    |                  |                  |                 |                |                    |                    |                        |                     |                         |                        |                            |              
-         10045 | myschema4      | mypartp1          | REMOVE_TABLE                | myGroup4    |                  |                  |                 |                |                    |                    |                        |                     |                         |                        |                            |              
-         10045 | myschema4      | mypartp2          | REMOVE_TABLE                | myGroup4    |                  |                  |                 |                |                    |                    |                        |                     |                         |                        |                            |              
-         10045 | myschema4      | mytblc1           | REMOVE_TABLE                | myGroup4    |                  |                  |                 |                |                    |                    |                        |                     |                         |                        |                            |              
-         10045 | myschema4      | mytblc2           | REMOVE_TABLE                | myGroup4    |                  |                  |                 |                |                    |                    |                        |                     |                         |                        |                            |              
-         10045 | myschema4      | mytblm            | REMOVE_TABLE                | myGroup4    |                  |                  |                 |                |                    |                    |                        |                     |                         |                        |                            |              
-         10046 | myschema5      | myoidstbl         | REMOVE_TABLE                | myGroup5    |                  |                  |                 |                |                    |                    |                        |                     |                         |                        |                            |              
-         10046 | myschema5      | myunloggedtbl     | REMOVE_TABLE                | myGroup5    |                  |                  |                 |                |                    |                    |                        |                     |                         |                        |                            |              
-         10046 | phil's schema3 | myTbl2\           | REMOVE_TABLE                | myGroup5    |                  |                  |                 |                |                    |                    |                        |                     |                         |                        |                            |              
+         10031 | myschema4      | mypartp1          | MOVE_TABLE                  | myGroup4    |                  |                  | myGroup1        |                |                    |                    |                        |                     |                         |                        |                            |              
+         10031 | myschema4      | mypartp2          | MOVE_TABLE                  | myGroup4    |                  |                  | myGroup1        |                |                    |                    |                        |                     |                         |                        |                            |              
+         10031 | myschema4      | mytblc1           | MOVE_TABLE                  | myGroup4    |                  |                  | myGroup1        |                |                    |                    |                        |                     |                         |                        |                            |              
+         10031 | myschema4      | mytblc2           | MOVE_TABLE                  | myGroup4    |                  |                  | myGroup1        |                |                    |                    |                        |                     |                         |                        |                            |              
+         10031 | myschema4      | mytblm            | MOVE_TABLE                  | myGroup4    |                  |                  | myGroup1        |                |                    |                    |                        |                     |                         |                        |                            |              
+         10032 | myschema2      | myTbl3_col31_seq  | MOVE_SEQUENCE               | myGroup2    |                  |                  | myGroup1        |                |                    |                    |                        |                     |                         |                        |                            |              
+         10032 | myschema2      | myseq1            | MOVE_SEQUENCE               | myGroup2    |                  |                  | myGroup1        |                |                    |                    |                        |                     |                         |                        |                            |              
+         10032 | myschema2      | myseq2            | MOVE_SEQUENCE               | myGroup2    |                  |                  | myGroup1        |                |                    |                    |                        |                     |                         |                        |                            |              
+         10033 | myschema4      | mypartp1          | MOVE_TABLE                  | myGroup1    |                  |                  | myGroup2        |                |                    |                    |                        |                     |                         |                        |                            |              
+         10033 | myschema4      | mypartp2          | MOVE_TABLE                  | myGroup1    |                  |                  | myGroup2        |                |                    |                    |                        |                     |                         |                        |                            |              
+         10033 | myschema4      | mytblc1           | MOVE_TABLE                  | myGroup1    |                  |                  | myGroup2        |                |                    |                    |                        |                     |                         |                        |                            |              
+         10033 | myschema4      | mytblc2           | MOVE_TABLE                  | myGroup1    |                  |                  | myGroup2        |                |                    |                    |                        |                     |                         |                        |                            |              
+         10033 | myschema4      | mytblm            | MOVE_TABLE                  | myGroup1    |                  |                  | myGroup2        |                |                    |                    |                        |                     |                         |                        |                            |              
+         10034 | myschema2      | myTbl3_col31_seq  | MOVE_SEQUENCE               | myGroup1    |                  |                  | myGroup2        |                |                    |                    |                        |                     |                         |                        |                            |              
+         10034 | myschema2      | myseq1            | MOVE_SEQUENCE               | myGroup1    |                  |                  | myGroup2        |                |                    |                    |                        |                     |                         |                        |                            |              
+         10034 | myschema2      | myseq2            | MOVE_SEQUENCE               | myGroup1    |                  |                  | myGroup2        |                |                    |                    |                        |                     |                         |                        |                            |              
+         10035 | myschema4      | mypartp1          | MOVE_TABLE                  | myGroup2    |                  |                  | myGroup4        |                |                    |                    |                        |                     |                         |                        |                            |              
+         10035 | myschema4      | mypartp2          | MOVE_TABLE                  | myGroup2    |                  |                  | myGroup4        |                |                    |                    |                        |                     |                         |                        |                            |              
+         10035 | myschema4      | mytblc1           | MOVE_TABLE                  | myGroup2    |                  |                  | myGroup4        |                |                    |                    |                        |                     |                         |                        |                            |              
+         10035 | myschema4      | mytblc2           | MOVE_TABLE                  | myGroup2    |                  |                  | myGroup4        |                |                    |                    |                        |                     |                         |                        |                            |              
+         10035 | myschema4      | mytblm            | MOVE_TABLE                  | myGroup2    |                  |                  | myGroup4        |                |                    |                    |                        |                     |                         |                        |                            |              
+         10036 | myschema2      | myTbl3_col31_seq  | MOVE_SEQUENCE               | myGroup2    |                  |                  | myGroup4        |                |                    |                    |                        |                     |                         |                        |                            |              
+         10036 | myschema2      | myseq1            | MOVE_SEQUENCE               | myGroup2    |                  |                  | myGroup4        |                |                    |                    |                        |                     |                         |                        |                            |              
+         10036 | myschema2      | myseq2            | MOVE_SEQUENCE               | myGroup2    |                  |                  | myGroup4        |                |                    |                    |                        |                     |                         |                        |                            |              
+         10037 | myschema2      | mytbl2            | MOVE_TABLE                  | myGroup2    |                  |                  | myGroup1        |                |                    |                    |                        |                     |                         |                        |                            |              
+         10038 | myschema2      | mytbl2            | MOVE_TABLE                  | myGroup1    |                  |                  | myGroup2        |                |                    |                    |                        |                     |                         |                        |                            |              
+         10039 | myschema1      | mytbl1            | REMOVE_TABLE                | myGroup1    |                  |                  |                 |                |                    |                    |                        |                     |                         |                        |                            |              
+         10040 | myschema1      | mytbl1_new_name   | ADD_TABLE                   | myGroup1    |                  |                  |                 |                |                    |                    |                        |                     |                         |                        |                            |              
+         10041 | myschema1      | mytbl1_new_name   | REMOVE_TABLE                | myGroup1    |                  |                  |                 |                |                    |                    |                        |                     |                         |                        |                            |              
+         10042 | public         | mytbl1_new_name   | ADD_TABLE                   | myGroup1    |                  |                  |                 |                |                    |                    |                        |                     |                         |                        |                            |              
+         10043 | public         | mytbl1_new_name   | REMOVE_TABLE                | myGroup1    |                  |                  |                 |                |                    |                    |                        |                     |                         |                        |                            |              
+         10044 | myschema1      | mytbl1            | ADD_TABLE                   | myGroup1    |                  |                  |                 |                |                    |                    |                        |                     |                         |                        |                            |              
+         10046 | myschema1      | myTbl3            | REMOVE_TABLE                | myGroup1    |                  |                  |                 |                |                    |                    |                        |                     |                         |                        |                            |              
+         10046 | myschema1      | myTbl3_col31_seq  | REMOVE_SEQUENCE             | myGroup1    |                  |                  |                 |                |                    |                    |                        |                     |                         |                        |                            |              
+         10046 | myschema1      | mytbl1            | REMOVE_TABLE                | myGroup1    |                  |                  |                 |                |                    |                    |                        |                     |                         |                        |                            |              
+         10046 | myschema1      | mytbl2            | REMOVE_TABLE                | myGroup1    |                  |                  |                 |                |                    |                    |                        |                     |                         |                        |                            |              
+         10046 | myschema1      | mytbl2b           | REMOVE_TABLE                | myGroup1    |                  |                  |                 |                |                    |                    |                        |                     |                         |                        |                            |              
+         10046 | myschema1      | mytbl2b_col20_seq | REMOVE_SEQUENCE             | myGroup1    |                  |                  |                 |                |                    |                    |                        |                     |                         |                        |                            |              
+         10046 | myschema1      | mytbl4            | REMOVE_TABLE                | myGroup1    |                  |                  |                 |                |                    |                    |                        |                     |                         |                        |                            |              
+         10048 | myschema2      | myTbl3            | REMOVE_TABLE                | myGroup2    |                  |                  |                 |                |                    |                    |                        |                     |                         |                        |                            |              
+         10048 | myschema2      | mytbl1            | REMOVE_TABLE                | myGroup2    |                  |                  |                 |                |                    |                    |                        |                     |                         |                        |                            |              
+         10048 | myschema2      | mytbl2            | REMOVE_TABLE                | myGroup2    |                  |                  |                 |                |                    |                    |                        |                     |                         |                        |                            |              
+         10048 | myschema2      | mytbl4            | REMOVE_TABLE                | myGroup2    |                  |                  |                 |                |                    |                    |                        |                     |                         |                        |                            |              
+         10048 | myschema2      | mytbl5            | REMOVE_TABLE                | myGroup2    |                  |                  |                 |                |                    |                    |                        |                     |                         |                        |                            |              
+         10048 | myschema2      | mytbl6            | REMOVE_TABLE                | myGroup2    |                  |                  |                 |                |                    |                    |                        |                     |                         |                        |                            |              
+         10049 | myschema2      | myTbl3_col31_seq  | REMOVE_SEQUENCE             | myGroup4    |                  |                  |                 |                |                    |                    |                        |                     |                         |                        |                            |              
+         10049 | myschema2      | myseq1            | REMOVE_SEQUENCE             | myGroup4    |                  |                  |                 |                |                    |                    |                        |                     |                         |                        |                            |              
+         10049 | myschema2      | myseq2            | REMOVE_SEQUENCE             | myGroup4    |                  |                  |                 |                |                    |                    |                        |                     |                         |                        |                            |              
+         10049 | myschema4      | mypartp1          | REMOVE_TABLE                | myGroup4    |                  |                  |                 |                |                    |                    |                        |                     |                         |                        |                            |              
+         10049 | myschema4      | mypartp2          | REMOVE_TABLE                | myGroup4    |                  |                  |                 |                |                    |                    |                        |                     |                         |                        |                            |              
+         10049 | myschema4      | mytblc1           | REMOVE_TABLE                | myGroup4    |                  |                  |                 |                |                    |                    |                        |                     |                         |                        |                            |              
+         10049 | myschema4      | mytblc2           | REMOVE_TABLE                | myGroup4    |                  |                  |                 |                |                    |                    |                        |                     |                         |                        |                            |              
+         10049 | myschema4      | mytblm            | REMOVE_TABLE                | myGroup4    |                  |                  |                 |                |                    |                    |                        |                     |                         |                        |                            |              
+         10050 | myschema5      | myoidstbl         | REMOVE_TABLE                | myGroup5    |                  |                  |                 |                |                    |                    |                        |                     |                         |                        |                            |              
+         10050 | myschema5      | myunloggedtbl     | REMOVE_TABLE                | myGroup5    |                  |                  |                 |                |                    |                    |                        |                     |                         |                        |                            |              
+         10050 | phil's schema3 | myTbl2\           | REMOVE_TABLE                | myGroup5    |                  |                  |                 |                |                    |                    |                        |                     |                         |                        |                            |              
 (89 rows)
 
 select time_id, time_last_emaj_gid, time_event from emaj.emaj_time_stamp where time_id >= 10000 order by time_id;
@@ -3043,27 +3084,28 @@ select time_id, time_last_emaj_gid, time_event from emaj.emaj_time_stamp where t
    10024 |           10000011 | A
    10025 |           10000011 | A
    10026 |           10000011 | A
-   10027 |           10000011 | A
-   10028 |           10000011 | A
-   10029 |           10000011 | A
-   10030 |           10000011 | A
-   10031 |           10000011 | A
-   10032 |           10000011 | A
-   10033 |           10000011 | A
-   10034 |           10000011 | A
-   10035 |           10000011 | A
-   10036 |           10000011 | A
-   10037 |           10000011 | A
-   10038 |           10000011 | A
-   10039 |           10000011 | A
-   10040 |           10000011 | A
-   10041 |           10000011 | M
-   10042 |           10000011 | D
-   10043 |           10000011 | M
-   10044 |           10000011 | D
-   10045 |           10000011 | D
-   10046 |           10000011 | D
-(43 rows)
+   10030 |           10000014 | R
+   10031 |           10000014 | A
+   10032 |           10000014 | A
+   10033 |           10000014 | A
+   10034 |           10000014 | A
+   10035 |           10000014 | A
+   10036 |           10000014 | A
+   10037 |           10000014 | A
+   10038 |           10000014 | A
+   10039 |           10000014 | A
+   10040 |           10000014 | A
+   10041 |           10000014 | A
+   10042 |           10000014 | A
+   10043 |           10000014 | A
+   10044 |           10000014 | A
+   10045 |           10000014 | M
+   10046 |           10000014 | D
+   10047 |           10000014 | M
+   10048 |           10000014 | D
+   10049 |           10000014 | D
+   10050 |           10000014 | D
+(44 rows)
 
 select hist_function, hist_event, hist_object,
        regexp_replace(regexp_replace(regexp_replace(hist_wording,
@@ -3269,14 +3311,30 @@ select hist_function, hist_event, hist_object,
  ASSIGN_TABLE       | BEGIN                        |                              |                                                                                                                        | postgres
  LOCK_GROUP         | BEGIN                        | myGroup1                     |                                                                                                                        | postgres
  LOCK_GROUP         | END                          | myGroup1                     | 4 tables locked, 0 deadlock(s)                                                                                         | postgres
- SET_MARK_GROUP     | BEGIN                        | myGroup1                     | ASSIGN_%                                                                                                               | postgres
- SET_MARK_GROUP     | END                          | myGroup1                     | ASSIGN_%                                                                                                               | postgres
+ SET_MARK_GROUP     | BEGIN                        | myGroup1                     | Assign_mytbl4                                                                                                          | postgres
+ SET_MARK_GROUP     | END                          | myGroup1                     | Assign_mytbl4                                                                                                          | postgres
  ASSIGN_TABLE       | TABLE ADDED                  | myschema1.mytbl4             | To the logging group myGroup1                                                                                          | postgres
  ASSIGN_TABLE       | END                          |                              | 1 tables assigned to the group myGroup1                                                                                | postgres
+ ROLLBACK_GROUP     | BEGIN                        | myGroup1                     | Unlogged rollback to mark Assign_mytbl4 (timestamp)                                                                    | postgres
+ DBLINK_OPEN_CNX    |                              | rlbk#1                       | Status = 1                                                                                                             | postgres
+ LOCK_GROUP         | BEGIN                        | myGroup1                     | Rollback session #1                                                                                                    | postgres
+ LOCK_GROUP         | END                          | myGroup1                     | Rollback session #1: 5 tables locked, 0 deadlock(s)                                                                    | postgres
+ ROLLBACK_SEQUENCE  |                              | myschema1.mytbl2b_col20_seq  | RESTART 3                                                                                                              | postgres
+ ROLLBACK_TABLE     | BEGIN                        | myschema1.mytbl2             | All log rows where emaj_gid > 10000011 and <= 10000014                                                                 | postgres
+ ROLLBACK_TABLE     | END                          | myschema1.mytbl2             | 1 rolled back primary keys                                                                                             | postgres
+ ROLLBACK_TABLE     | BEGIN                        | myschema1.mytbl4             | All log rows where emaj_gid > 10000011 and <= 10000014                                                                 | postgres
+ ROLLBACK_TABLE     | END                          | myschema1.mytbl4             | 1 rolled back primary keys                                                                                             | postgres
+ ROLLBACK_TABLE     | BEGIN                        | myschema1.mytbl2b            | All log rows where emaj_gid > 10000011 and <= 10000014                                                                 | postgres
+ ROLLBACK_TABLE     | END                          | myschema1.mytbl2b            | 1 rolled back primary keys                                                                                             | postgres
+ ROLLBACK_GROUP     | NOTICE                       | Rollback id 10003            | 3 / 5 tables effectively processed.                                                                                    | postgres
+ ROLLBACK_GROUP     | NOTICE                       | Rollback id 10003            | 1 / 2 sequences effectively processed.                                                                                 | postgres
+ DBLINK_CLOSE_CNX   |                              | rlbk#1                       |                                                                                                                        | postgres
+ ROLLBACK_GROUP     | END                          | myGroup1                     | Rollback_id 10003                                                                                                      | postgres
  MOVE_TABLES        | BEGIN                        |                              |                                                                                                                        | postgres
  LOCK_GROUP         | BEGIN                        | myGroup1                     |                                                                                                                        | postgres
  LOCK_GROUP         | END                          | myGroup1                     | 5 tables locked, 0 deadlock(s)                                                                                         | postgres
  SET_MARK_GROUPS    | BEGIN                        | myGroup1                     | MOVE_TBL_idle_to_logging                                                                                               | postgres
+ CLEANUP_RLBK_STATE |                              | Rollback id 10003            | set to COMMITTED                                                                                                       | postgres
  SET_MARK_GROUPS    | END                          | myGroup1                     | MOVE_TBL_idle_to_logging                                                                                               | postgres
  MOVE_TABLES        | TABLE MOVED                  | myschema4.mypartp1           | From the idle group myGroup4 to the logging group myGroup1                                                             | postgres
  MOVE_TABLES        | TABLE MOVED                  | myschema4.mypartp2           | From the idle group myGroup4 to the logging group myGroup1                                                             | postgres
@@ -3416,7 +3474,7 @@ select hist_function, hist_event, hist_object,
  DROP_GROUP         | LOG_SCHEMA DROPPED           | emaj_myschema5               |                                                                                                                        | postgres
  DROP_GROUP         | LOG_SCHEMA DROPPED           | "emaj_phil's schema3"        |                                                                                                                        | postgres
  DROP_GROUP         | END                          | myGroup5                     | 3 tables/sequences processed                                                                                           | postgres
-(342 rows)
+(358 rows)
 
 select nspname from pg_namespace where nspname like 'emaj%' order by nspname;
  nspname 
@@ -3436,50 +3494,50 @@ select * from emaj.emaj_rel_hist order by 1,2,3;
  myschema1      | myTbl3            | [2000,8001)     | myGroup1         | r
  myschema1      | myTbl3            | [8008,8012)     | myGroup1         | r
  myschema1      | myTbl3            | [8017,9701)     | myGroup1         | r
- myschema1      | myTbl3            | [9713,10042)    | myGroup1         | r
+ myschema1      | myTbl3            | [9713,10046)    | myGroup1         | r
  myschema1      | myTbl3_col31_seq  | [2000,8001)     | myGroup1         | S
  myschema1      | myTbl3_col31_seq  | [8008,9302)     | myGroup1         | S
- myschema1      | myTbl3_col31_seq  | [9310,10042)    | myGroup1         | S
+ myschema1      | myTbl3_col31_seq  | [9310,10046)    | myGroup1         | S
  myschema1      | mytbl1            | [2000,8001)     | myGroup1         | r
  myschema1      | mytbl1            | [8008,8010)     | myGroup1         | r
  myschema1      | mytbl1            | [8017,8200)     | myGroup1         | r
  myschema1      | mytbl1            | [8200,8202)     | myGroup2         | r
  myschema1      | mytbl1            | [8202,9707)     | myGroup1         | r
- myschema1      | mytbl1            | [9713,10035)    | myGroup1         | r
- myschema1      | mytbl1            | [10040,10042)   | myGroup1         | r
- myschema1      | mytbl1_new_name   | [10036,10037)   | myGroup1         | r
+ myschema1      | mytbl1            | [9713,10039)    | myGroup1         | r
+ myschema1      | mytbl1            | [10044,10046)   | myGroup1         | r
+ myschema1      | mytbl1_new_name   | [10040,10041)   | myGroup1         | r
  myschema1      | mytbl2            | [2000,8001)     | myGroup1         | r
  myschema1      | mytbl2            | [8008,8011)     | myGroup1         | r
  myschema1      | mytbl2            | [8017,8201)     | myGroup1         | r
  myschema1      | mytbl2            | [8201,8203)     | myGroup2         | r
- myschema1      | mytbl2            | [8203,10042)    | myGroup1         | r
+ myschema1      | mytbl2            | [8203,10046)    | myGroup1         | r
  myschema1      | mytbl2b           | [2000,8001)     | myGroup1         | r
  myschema1      | mytbl2b           | [8008,8011)     | myGroup1         | r
  myschema1      | mytbl2b           | [8017,8201)     | myGroup1         | r
  myschema1      | mytbl2b           | [8201,8202)     | myGroup2         | r
  myschema1      | mytbl2b           | [8202,9701)     | myGroup1         | r
- myschema1      | mytbl2b           | [9713,10042)    | myGroup1         | r
+ myschema1      | mytbl2b           | [9713,10046)    | myGroup1         | r
  myschema1      | mytbl2b_col20_seq | [2000,8001)     | myGroup1         | S
- myschema1      | mytbl2b_col20_seq | [8008,10042)    | myGroup1         | S
+ myschema1      | mytbl2b_col20_seq | [8008,10046)    | myGroup1         | S
  myschema1      | mytbl4            | [2000,8001)     | myGroup1         | r
  myschema1      | mytbl4            | [8008,8012)     | myGroup1         | r
  myschema1      | mytbl4            | [8017,10023)    | myGroup1         | r
  myschema1      | mytbl4            | [10024,10025)   | myGroup1         | r
- myschema1      | mytbl4            | [10026,10042)   | myGroup1         | r
+ myschema1      | mytbl4            | [10026,10046)   | myGroup1         | r
  myschema2      | myTbl3            | [2000,8002)     | myGroup2         | r
  myschema2      | myTbl3            | [8008,10005)    | myGroup2         | r
  myschema2      | myTbl3            | [10005,10013)   | myGroup1         | r
  myschema2      | myTbl3            | [10013,10015)   | myGroup2         | r
  myschema2      | myTbl3            | [10017,10019)   | myGroup2         | r
- myschema2      | myTbl3            | [10021,10044)   | myGroup2         | r
+ myschema2      | myTbl3            | [10021,10048)   | myGroup2         | r
  myschema2      | myTbl3_col31_seq  | [2000,8002)     | myGroup2         | S
  myschema2      | myTbl3_col31_seq  | [8008,8016)     | myGroup2         | S
  myschema2      | myTbl3_col31_seq  | [8017,10006)    | myGroup2         | S
  myschema2      | myTbl3_col31_seq  | [10006,10013)   | myGroup1         | S
- myschema2      | myTbl3_col31_seq  | [10013,10028)   | myGroup2         | S
- myschema2      | myTbl3_col31_seq  | [10028,10030)   | myGroup1         | S
- myschema2      | myTbl3_col31_seq  | [10030,10032)   | myGroup2         | S
- myschema2      | myTbl3_col31_seq  | [10032,10045)   | myGroup4         | S
+ myschema2      | myTbl3_col31_seq  | [10013,10032)   | myGroup2         | S
+ myschema2      | myTbl3_col31_seq  | [10032,10034)   | myGroup1         | S
+ myschema2      | myTbl3_col31_seq  | [10034,10036)   | myGroup2         | S
+ myschema2      | myTbl3_col31_seq  | [10036,10049)   | myGroup4         | S
  myschema2      | myseq1            | [2000,8002)     | myGroup2         | S
  myschema2      | myseq1            | [8008,8013)     | myGroup2         | S
  myschema2      | myseq1            | [8017,8204)     | myGroup2         | S
@@ -3488,34 +3546,34 @@ select * from emaj.emaj_rel_hist order by 1,2,3;
  myschema2      | myseq1            | [8206,8207)     | myGroup4         | S
  myschema2      | myseq1            | [8207,10016)    | myGroup2         | S
  myschema2      | myseq1            | [10018,10020)   | myGroup2         | S
- myschema2      | myseq1            | [10022,10028)   | myGroup2         | S
- myschema2      | myseq1            | [10028,10030)   | myGroup1         | S
- myschema2      | myseq1            | [10030,10032)   | myGroup2         | S
- myschema2      | myseq1            | [10032,10045)   | myGroup4         | S
+ myschema2      | myseq1            | [10022,10032)   | myGroup2         | S
+ myschema2      | myseq1            | [10032,10034)   | myGroup1         | S
+ myschema2      | myseq1            | [10034,10036)   | myGroup2         | S
+ myschema2      | myseq1            | [10036,10049)   | myGroup4         | S
  myschema2      | myseq2            | [8014,8015)     | myGroup2         | S
  myschema2      | myseq2            | [9102,9107)     | myGroup2         | S
  myschema2      | myseq2            | [9108,9109)     | myGroup2         | S
  myschema2      | myseq2            | [10018,10020)   | myGroup2         | S
- myschema2      | myseq2            | [10022,10028)   | myGroup2         | S
- myschema2      | myseq2            | [10028,10030)   | myGroup1         | S
- myschema2      | myseq2            | [10030,10032)   | myGroup2         | S
- myschema2      | myseq2            | [10032,10045)   | myGroup4         | S
+ myschema2      | myseq2            | [10022,10032)   | myGroup2         | S
+ myschema2      | myseq2            | [10032,10034)   | myGroup1         | S
+ myschema2      | myseq2            | [10034,10036)   | myGroup2         | S
+ myschema2      | myseq2            | [10036,10049)   | myGroup4         | S
  myschema2      | mytbl1            | [2000,8002)     | myGroup2         | r
  myschema2      | mytbl1            | [8008,10015)    | myGroup2         | r
  myschema2      | mytbl1            | [10017,10019)   | myGroup2         | r
- myschema2      | mytbl1            | [10021,10044)   | myGroup2         | r
+ myschema2      | mytbl1            | [10021,10048)   | myGroup2         | r
  myschema2      | mytbl2            | [2000,8002)     | myGroup2         | r
  myschema2      | mytbl2            | [8008,10015)    | myGroup2         | r
  myschema2      | mytbl2            | [10017,10019)   | myGroup2         | r
- myschema2      | mytbl2            | [10021,10033)   | myGroup2         | r
- myschema2      | mytbl2            | [10033,10034)   | myGroup1         | r
- myschema2      | mytbl2            | [10034,10044)   | myGroup2         | r
+ myschema2      | mytbl2            | [10021,10037)   | myGroup2         | r
+ myschema2      | mytbl2            | [10037,10038)   | myGroup1         | r
+ myschema2      | mytbl2            | [10038,10048)   | myGroup2         | r
  myschema2      | mytbl4            | [2000,8002)     | myGroup2         | r
- myschema2      | mytbl4            | [8008,10044)    | myGroup2         | r
+ myschema2      | mytbl4            | [8008,10048)    | myGroup2         | r
  myschema2      | mytbl5            | [2000,8002)     | myGroup2         | r
- myschema2      | mytbl5            | [8008,10044)    | myGroup2         | r
+ myschema2      | mytbl5            | [8008,10048)    | myGroup2         | r
  myschema2      | mytbl6            | [2000,8002)     | myGroup2         | r
- myschema2      | mytbl6            | [8008,10044)    | myGroup2         | r
+ myschema2      | mytbl6            | [8008,10048)    | myGroup2         | r
  myschema2      | mytbl7            | [2000,8002)     | myGroup2         | r
  myschema2      | mytbl7            | [8008,9000)     | myGroup2         | r
  myschema2      | mytbl7            | [9502,9509)     | myGroup2         | r
@@ -3523,39 +3581,39 @@ select * from emaj.emaj_rel_hist order by 1,2,3;
  myschema2      | mytbl8            | [2000,8002)     | myGroup2         | r
  myschema2      | mytbl8            | [8008,9000)     | myGroup2         | r
  myschema4      | mypartp1          | [1027,8005)     | myGroup4         | r
- myschema4      | mypartp1          | [8008,10027)    | myGroup4         | r
- myschema4      | mypartp1          | [10027,10029)   | myGroup1         | r
- myschema4      | mypartp1          | [10029,10031)   | myGroup2         | r
- myschema4      | mypartp1          | [10031,10045)   | myGroup4         | r
+ myschema4      | mypartp1          | [8008,10031)    | myGroup4         | r
+ myschema4      | mypartp1          | [10031,10033)   | myGroup1         | r
+ myschema4      | mypartp1          | [10033,10035)   | myGroup2         | r
+ myschema4      | mypartp1          | [10035,10049)   | myGroup4         | r
  myschema4      | mypartp2          | [1027,8005)     | myGroup4         | r
- myschema4      | mypartp2          | [8008,10027)    | myGroup4         | r
- myschema4      | mypartp2          | [10027,10029)   | myGroup1         | r
- myschema4      | mypartp2          | [10029,10031)   | myGroup2         | r
- myschema4      | mypartp2          | [10031,10045)   | myGroup4         | r
+ myschema4      | mypartp2          | [8008,10031)    | myGroup4         | r
+ myschema4      | mypartp2          | [10031,10033)   | myGroup1         | r
+ myschema4      | mypartp2          | [10033,10035)   | myGroup2         | r
+ myschema4      | mypartp2          | [10035,10049)   | myGroup4         | r
  myschema4      | mytblc1           | [1027,8005)     | myGroup4         | r
- myschema4      | mytblc1           | [8008,10027)    | myGroup4         | r
- myschema4      | mytblc1           | [10027,10029)   | myGroup1         | r
- myschema4      | mytblc1           | [10029,10031)   | myGroup2         | r
- myschema4      | mytblc1           | [10031,10045)   | myGroup4         | r
+ myschema4      | mytblc1           | [8008,10031)    | myGroup4         | r
+ myschema4      | mytblc1           | [10031,10033)   | myGroup1         | r
+ myschema4      | mytblc1           | [10033,10035)   | myGroup2         | r
+ myschema4      | mytblc1           | [10035,10049)   | myGroup4         | r
  myschema4      | mytblc2           | [1027,8005)     | myGroup4         | r
- myschema4      | mytblc2           | [8008,10027)    | myGroup4         | r
- myschema4      | mytblc2           | [10027,10029)   | myGroup1         | r
- myschema4      | mytblc2           | [10029,10031)   | myGroup2         | r
- myschema4      | mytblc2           | [10031,10045)   | myGroup4         | r
+ myschema4      | mytblc2           | [8008,10031)    | myGroup4         | r
+ myschema4      | mytblc2           | [10031,10033)   | myGroup1         | r
+ myschema4      | mytblc2           | [10033,10035)   | myGroup2         | r
+ myschema4      | mytblc2           | [10035,10049)   | myGroup4         | r
  myschema4      | mytblm            | [1027,8005)     | myGroup4         | r
- myschema4      | mytblm            | [8008,10027)    | myGroup4         | r
- myschema4      | mytblm            | [10027,10029)   | myGroup1         | r
- myschema4      | mytblm            | [10029,10031)   | myGroup2         | r
- myschema4      | mytblm            | [10031,10045)   | myGroup4         | r
+ myschema4      | mytblm            | [8008,10031)    | myGroup4         | r
+ myschema4      | mytblm            | [10031,10033)   | myGroup1         | r
+ myschema4      | mytblm            | [10033,10035)   | myGroup2         | r
+ myschema4      | mytblm            | [10035,10049)   | myGroup4         | r
  myschema4      | mytblr            | [4046,8005)     | myGroup4         | r
- myschema5      | myoidstbl         | [8008,10046)    | myGroup5         | r
- myschema5      | myunloggedtbl     | [8008,10046)    | myGroup5         | r
+ myschema5      | myoidstbl         | [8008,10050)    | myGroup5         | r
+ myschema5      | myunloggedtbl     | [8008,10050)    | myGroup5         | r
  phil's schema3 | myTbl2\           | [1021,8004)     | phil's group#3", | r
- phil's schema3 | myTbl2\           | [8009,10046)    | myGroup5         | r
+ phil's schema3 | myTbl2\           | [8009,10050)    | myGroup5         | r
  phil's schema3 | myTbl2\_col21_seq | [1032,8004)     | phil's group#3", | S
  phil's schema3 | phil's seq\1      | [1032,8004)     | phil's group#3", | S
  phil's schema3 | phil's tbl1       | [1021,8004)     | phil's group#3", | r
- public         | mytbl1_new_name   | [10038,10039)   | myGroup1         | r
+ public         | mytbl1_new_name   | [10042,10043)   | myGroup1         | r
 (123 rows)
 
 truncate emaj.emaj_hist;
