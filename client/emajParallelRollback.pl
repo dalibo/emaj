@@ -113,20 +113,20 @@ my @stmt = undef;
 for (my $i = 1 ; $i <= $nbSession; $i++) {
   print (strftime('%d/%m/%Y - %H:%M:%S',localtime)." Open session #$i...\n") if ($verbose);
   $dbh[$i] = DBI->connect('dbi:Pg:'.$conn_string,$username,$password,{AutoCommit => 1, RaiseError => 0, PrintError => 0})
-    or die("Opening the session #$i failed. $DBI::errstr\n");
+    or die("Opening the session #$i failed.\n$DBI::errstr\n");
 }
 
 # Set the application_name
 for (my $i = 1 ; $i <= $nbSession; $i++) {
   $dbh[$i]->do("SET application_name to '$APPNAME'")
-    or die("Setting the application_name for session #$i failed. $DBI::errstr\n");
+    or die("Setting the application_name for session #$i failed.\n$DBI::errstr\n");
 }
 
 # For each session, start a transaction 
 for (my $i = 1 ; $i <= $nbSession; $i++) {
   print (strftime('%d/%m/%Y - %H:%M:%S',localtime)." Start transaction #$i...\n") if ($verbose);
   $dbh[$i]->begin_work() 
-    or die("Begin transaction #$i failed. $DBI::errstr\n");
+    or die("Begin transaction #$i failed.\n$DBI::errstr\n");
 }
 
 # Call _rlbk_init() on first session
@@ -134,7 +134,7 @@ for (my $i = 1 ; $i <= $nbSession; $i++) {
 print (strftime('%d/%m/%Y - %H:%M:%S',localtime)." Call _rlbk_init() for groups $groups and mark $mark....\n") if ($verbose);
 $stmt[1] = $dbh[1]->prepare("SELECT emaj._rlbk_init(array[$groups], " . $dbh[1]->quote($mark) . ", $isLogged, $nbSession, $multiGroup, $isAlterGroupAllowed)");
 $stmt[1]->execute()
-  or die("Calling the _rlbk_init() function failed. $DBI::errstr\n");
+  or die("Calling the _rlbk_init() function failed.\n$DBI::errstr\n");
 my $rlbkId = $stmt[1]->fetchrow_array();
 $stmt[1]->finish;
 print ("==> $msgRlbk to mark '$mark' is now in progress with $nbSession sessions...\n");
@@ -143,26 +143,26 @@ print ("==> $msgRlbk to mark '$mark' is now in progress with $nbSession sessions
 for (my $i = 1 ; $i <= $nbSession; $i++) {
   print (strftime('%d/%m/%Y - %H:%M:%S',localtime)." Call _rlbk_session_lock() for session #$i -> lock tables...\n") if ($verbose);
   $dbh[$i]->do("SELECT emaj._rlbk_session_lock($rlbkId, $i)")
-    or die("Calling the _rlbk_session_lock() function for #$i failed. $DBI::errstr\n"); 
+    or die("Calling the _rlbk_session_lock() function for #$i failed.\n$DBI::errstr\n"); 
 }
 
 # Call _rlbk_start_mark() on first session
 # This sets a rollback start mark if logged rollback
 print (strftime('%d/%m/%Y - %H:%M:%S',localtime)." Call _rlbk_start_mark() ...\n") if ($verbose);
 $dbh[1]->do("SELECT emaj._rlbk_start_mark($rlbkId, $multiGroup)")
-  or die("Calling the _rlbk_start_mark() function failed. $DBI::errstr\n");
+  or die("Calling the _rlbk_start_mark() function failed.\n$DBI::errstr\n");
 
 # For each session, asynchronously call _rlbk_exec() to start the planned steps execution
 for (my $i = 1 ; $i <= $nbSession; $i++) {
   print (strftime('%d/%m/%Y - %H:%M:%S',localtime)." Call _rlbk_session_exec() for session #$i -> rollback tables...\n") if ($verbose);
   $dbh[$i]->do("SELECT emaj._rlbk_session_exec($rlbkId, $i)", {pg_async => PG_ASYNC})
-    or die("Calling the _rlbk_session_exec() function for #$i failed. $DBI::errstr\n");
+    or die("Calling the _rlbk_session_exec() function for #$i failed.\n$DBI::errstr\n");
 }
 
 # For each session, get the result of the previous call of _rlbk_exec()
 for (my $i = 1 ; $i <= $nbSession; $i++) {
   $dbh[$i]->pg_result()
-    or die("Getting the result of the _rlbk_session_exec() function call failed for #$i. $DBI::errstr\n");
+    or die("Getting the result of the _rlbk_session_exec() function call failed for #$i.\n$DBI::errstr\n");
   print (strftime('%d/%m/%Y - %H:%M:%S',localtime)." get result of _rlbk_session_exec call for session #$i...\n") if ($verbose);
 }
 
@@ -170,7 +170,7 @@ for (my $i = 1 ; $i <= $nbSession; $i++) {
 print (strftime('%d/%m/%Y - %H:%M:%S',localtime)." Call _rlbk_end() -> complete rollback operation...\n") if ($verbose);
 $stmt[1] = $dbh[1]->prepare("SELECT * FROM emaj._rlbk_end($rlbkId, $multiGroup)");
 $stmt[1]->execute()
-  or die("Calling the _rlbk_end() function failed. $DBI::errstr\n");
+  or die("Calling the _rlbk_end() function failed.\n$DBI::errstr\n");
 my $execReportRows = $stmt[1]->fetchall_arrayref();
 $stmt[1]->finish;
 
@@ -178,33 +178,33 @@ if ($nbSession == 1) {
 # If there is only 1 session, perform a usual COMMIT
   print (strftime('%d/%m/%Y - %H:%M:%S',localtime)." Commit transaction #1...\n") if ($verbose);
   $dbh[1]->commit
-    or die("Commit prepared #1 failed. $DBI::errstr\n");
+    or die("Commit prepared #1 failed.\n$DBI::errstr\n");
 } else {
 # else, COMMIT with 2PC to be sure that all sessions can either commit or rollback in a single transaction
 # Phase 1 : Prepare transaction
   for (my $i = 1 ; $i <= $nbSession; $i++) {
     print (strftime('%d/%m/%Y - %H:%M:%S',localtime)." Prepare transaction #$i...\n") if ($verbose);
     $dbh[$i]->do("PREPARE TRANSACTION 'emajtx$i'")
-      or die("Prepare transaction #$i failed. $DBI::errstr\n");
+      or die("Prepare transaction #$i failed.\n$DBI::errstr\n");
   }
 # Phase 2 : Commit
   for (my $i = 1 ; $i <= $nbSession; $i++) {
     print (strftime('%d/%m/%Y - %H:%M:%S',localtime)." Commit transaction #$i...\n") if ($verbose);
     $dbh[$i]->do("COMMIT PREPARED 'emajtx$i'")
-      or die("Commit prepared #$i failed. $DBI::errstr\n");
+      or die("Commit prepared #$i failed.\n$DBI::errstr\n");
   }
 }
 
 # Call the emaj_cleanup_rollback_state() function to set the rollback event as committed
 print (strftime('%d/%m/%Y - %H:%M:%S',localtime)." Call emaj_cleanup_rollback_state() -> set the rollback event as committed...\n") if ($verbose);
 $dbh[1]->do("SELECT emaj.emaj_cleanup_rollback_state()")
-  or die("Calling the emaj_cleanup_rollback_state() function failed. $DBI::errstr\n");
+  or die("Calling the emaj_cleanup_rollback_state() function failed.\n$DBI::errstr\n");
 
 # Close the sessions
 print (strftime('%d/%m/%Y - %H:%M:%S',localtime)." Close all sessions...\n") if ($verbose);
 for (my $i = 1 ; $i <= $nbSession; $i++) {
   $dbh[$i]->disconnect
-    or die("Disconnect for session #$i failed: $DBI::errstr\n");
+    or die("Disconnect for session #$i failed:\n$DBI::errstr\n");
 }
 #clean up on error
 END {

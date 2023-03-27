@@ -111,7 +111,7 @@ $dbh = DBI->connect('dbi:Pg:' . $conn_string, $username, $password, {AutoCommit 
 
 # Set the application_name
 $dbh->do("SET application_name to '$APPNAME'")
-  or die("Setting the application_name failed. $DBI::errstr\n");
+  or die("Setting the application_name failed.\n$DBI::errstr\n");
 
 # Perform the monitoring
 for (my $i=1; $i<=$nbIter; $i++){
@@ -133,7 +133,7 @@ for (my $i=1; $i<=$nbIter; $i++){
                                  ORDER BY rlbk_id DESC LIMIT $nbComplRlbk) AS t
                            ORDER BY rlbk_id ASC");
   $stmt->execute()
-    or die("Accessing to the emaj_rlbk table failed. $DBI::errstr \n");
+    or die("Accessing to the emaj_rlbk table failed.\n$DBI::errstr \n");
 
 # Display results
   $dbh->{pg_expand_array} = 0;
@@ -156,7 +156,7 @@ for (my $i=1; $i<=$nbIter; $i++){
                                 format('%s/%s', coalesce(rlbk_eff_nb_sequence::TEXT, '?'), rlbk_nb_sequence) AS rlbk_seq
                            FROM emaj.emaj_rollback_activity() ORDER BY rlbk_id");
   $stmt->execute()
-    or die("Calling of emaj_rollback_activity() function failed. $DBI::errstr\n");
+    or die("Calling of emaj_rollback_activity() function failed.\n$DBI::errstr\n");
 
 # Display results
   while ( $row = $stmt->fetchrow_hashref()) {
@@ -184,7 +184,7 @@ for (my $i=1; $i<=$nbIter; $i++){
 
 # Close the sessions
 $dbh->disconnect
-  or die("Disconnect failed. $DBI::errstr\n");
+  or die("Disconnect failed.\n$DBI::errstr\n");
 
 sub print_help {
   print qq{$PROGRAM belongs to the E-Maj PostgreSQL extension (version $VERSION).
