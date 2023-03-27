@@ -2336,11 +2336,9 @@ $_rlbk_planning$
         FROM emaj._estimate_rlbk_step_duration('RLBK_SEQUENCES', NULL, NULL, NULL, v_nbSequence, v_fixed_step_rlbk, v_fixed_table_rlbk);
 -- Insert a RLBK_SEQUENCES step into emaj_rlbk_plan.
 -- Assign it the first session, so that it will be executed by the same session as the start mark set when the rollback is logged.
-      INSERT INTO emaj.emaj_rlbk_plan (rlbp_rlbk_id, rlbp_step, rlbp_schema, rlbp_table, rlbp_object,
-                                       rlbp_session, rlbp_batch_number, rlbp_target_time_id,
+      INSERT INTO emaj.emaj_rlbk_plan (rlbp_rlbk_id, rlbp_step, rlbp_schema, rlbp_table, rlbp_object, rlbp_session, rlbp_batch_number,
                                        rlbp_estimated_quantity, rlbp_estimated_duration, rlbp_estimate_method)
-        VALUES (p_rlbkId, 'RLBK_SEQUENCES', '', '', '',
-                1, 1, v_markTimeId,
+        VALUES (p_rlbkId, 'RLBK_SEQUENCES', '', '', '', 1, 1,
                 v_nbSequence, v_estimDurationRlbkSeq, v_estimMethod);
     END IF;
 -- Insert into emaj_rlbk_plan a LOCK_TABLE step per table currently belonging to the tables groups to process.
@@ -3077,7 +3075,7 @@ $_rlbk_session_exec$
            JOIN emaj.emaj_time_stamp ON (time_id = mark_time_id)
       WHERE mark_group = v_groupNames[1]
         AND mark_name = v_mark;
--- Scan emaj_rlbp_plan to get all steps to process that have been affected to this session, in batch_number and step order.
+-- Scan emaj_rlbp_plan to get all steps to process that have been assigned to this session, in batch_number and step order.
     FOR r_step IN
       SELECT rlbp_step, rlbp_schema, rlbp_table, rlbp_object, rlbp_object_def, rlbp_app_trg_type,
              rlbp_is_repl_role_replica, rlbp_target_time_id
