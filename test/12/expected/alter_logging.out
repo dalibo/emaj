@@ -594,7 +594,7 @@ select hist_function, hist_event, hist_object,
  SNAP_GROUP             | END              | myGroup2         | 9 tables/sequences processed                                                                               | postgres
  SNAP_LOG_GROUP         | BEGIN            | myGroup2         | From initial mark to mark After ADD_SEQ towards /tmp/emaj_12/alter_logging/snap                            | postgres
  SNAP_LOG_GROUP         | END              | myGroup2         | 9 generated files                                                                                          | postgres
- GEN_SQL_GROUP          | BEGIN            | myGroup2         | From mark Before ADD_SEQ to current situation                                                              | postgres
+ GEN_SQL_GROUP          | BEGIN            | myGroup2         | From mark Before ADD_SEQ to current state                                                                  | postgres
  GEN_SQL_GROUP          | END              | myGroup2         | 0 generated statements - script exported into /tmp/emaj_12/alter_logging/myFile                            | postgres
  ROLLBACK_GROUP         | BEGIN            | myGroup2         | Logged rollback to mark Before ADD_SEQ (timestamp)                                                         | postgres
  DBLINK_OPEN_CNX        |                  | rlbk#1           | Status = 1                                                                                                 | postgres
@@ -951,7 +951,7 @@ select hist_function, hist_event, hist_object,
  REMOVE_SEQUENCE    | END              |                              | 1 sequences removed from their groups                                               | postgres
  SNAP_GROUP         | BEGIN            | myGroup1                     | /tmp/emaj_12/alter_logging/snap                                                     | postgres
  SNAP_GROUP         | END              | myGroup1                     | 6 tables/sequences processed                                                        | postgres
- SNAP_LOG_GROUP     | BEGIN            | myGroup1                     | From mark Mk1 to current situation towards /tmp/emaj_12/alter_logging/snap          | postgres
+ SNAP_LOG_GROUP     | BEGIN            | myGroup1                     | From mark Mk1 to current state towards /tmp/emaj_12/alter_logging/snap              | postgres
  SNAP_LOG_GROUP     | END              | myGroup1                     | 8 generated files                                                                   | postgres
  SET_MARK_GROUP     | BEGIN            | myGroup1                     |                                                                                     | postgres
  LOCK_GROUP         | BEGIN            | myGroup1                     |                                                                                     | postgres
@@ -1530,7 +1530,7 @@ select hist_function, hist_event, hist_object,
  SET_MARK_GROUP         | END           | myGroup2         | Re-add mytbl7                                                                                     | postgres
  ASSIGN_TABLE           | TABLE ADDED   | myschema2.mytbl7 | To the logging group myGroup2                                                                     | postgres
  ASSIGN_TABLE           | END           |                  | 1 tables assigned to the group myGroup2                                                           | postgres
- SNAP_LOG_GROUP         | BEGIN         | myGroup2         | From initial mark to current situation towards /tmp/emaj_12/alter_logging/snap                    | postgres
+ SNAP_LOG_GROUP         | BEGIN         | myGroup2         | From initial mark to current state towards /tmp/emaj_12/alter_logging/snap                        | postgres
  SNAP_LOG_GROUP         | END           | myGroup2         | 11 generated files                                                                                | postgres
  IMPORT_GROUPS          | BEGIN         | myGroup2         | Input file: '/tmp/emaj_12/alter_logging/all_groups_conf.json'                                     | postgres
  LOCK_GROUPS            | BEGIN         | myGroup2         |                                                                                                   | postgres
@@ -2164,9 +2164,9 @@ select hist_function, hist_event, hist_object,
  REMOVE_TABLES          | END           |                              | 2 tables removed from their groups                                                                                     | postgres
  SNAP_GROUP             | BEGIN         | myGroup1                     | /tmp/emaj_12/alter_logging/snap                                                                                        | postgres
  SNAP_GROUP             | END           | myGroup1                     | 5 tables/sequences processed                                                                                           | postgres
- SNAP_LOG_GROUP         | BEGIN         | myGroup1                     | From initial mark to current situation towards /tmp/emaj_12/alter_logging/snap                                         | postgres
+ SNAP_LOG_GROUP         | BEGIN         | myGroup1                     | From initial mark to current state towards /tmp/emaj_12/alter_logging/snap                                             | postgres
  SNAP_LOG_GROUP         | END           | myGroup1                     | 8 generated files                                                                                                      | postgres
- GEN_SQL_GROUP          | BEGIN         | myGroup1                     | From initial mark to current situation with tables/sequences filtering                                                 | postgres
+ GEN_SQL_GROUP          | BEGIN         | myGroup1                     | From initial mark to current state with tables/sequences filtering                                                     | postgres
  GEN_SQL_GROUP          | END           | myGroup1                     | 2 generated statements - script exported into /tmp/emaj_12/alter_logging/script.sql                                    | postgres
  ROLLBACK_GROUP         | BEGIN         | myGroup1                     | Logged rollback to mark Mk2b (timestamp)                                                                               | postgres
  DBLINK_OPEN_CNX        |               | rlbk#1                       | Status = 1                                                                                                             | postgres
@@ -3143,7 +3143,7 @@ select hist_function, hist_event, hist_object,
  LOCK_GROUPS        | BEGIN                        | myGroup1,myGroup2            |                                                                                                                        | postgres
  LOCK_GROUPS        | END                          | myGroup1,myGroup2            | 11 tables locked, 0 deadlock(s)                                                                                        | postgres
  SET_MARK_GROUPS    | END                          | myGroup1,myGroup2            | after move                                                                                                             | postgres
- GEN_SQL_GROUPS     | BEGIN                        | myGroup1,myGroup2            | From mark before move to current situation with tables/sequences filtering                                             | postgres
+ GEN_SQL_GROUPS     | BEGIN                        | myGroup1,myGroup2            | From mark before move to current state with tables/sequences filtering                                                 | postgres
  GEN_SQL_GROUPS     | END                          | myGroup1,myGroup2            | 3 generated statements - script exported into /tmp/emaj_12/alter_logging/script1.sql                                   | postgres
  ROLLBACK_GROUPS    | BEGIN                        | myGroup1,myGroup2            | Logged rollback to mark after move (timestamp)                                                                         | postgres
  DBLINK_OPEN_CNX    |                              | rlbk#1                       | Status = 1                                                                                                             | postgres
@@ -3185,7 +3185,7 @@ select hist_function, hist_event, hist_object,
  ROLLBACK_GROUPS    | WARNING                      | Rollback id 10001            | Tables group change not rolled back: E-Maj priority for myschema2."myTbl3"                                             | postgres
  DBLINK_CLOSE_CNX   |                              | rlbk#1                       |                                                                                                                        | postgres
  ROLLBACK_GROUPS    | END                          | myGroup1,myGroup2            | Rollback_id 10001                                                                                                      | postgres
- GEN_SQL_GROUPS     | BEGIN                        | myGroup1,myGroup2            | From mark before move to current situation with tables/sequences filtering                                             | postgres
+ GEN_SQL_GROUPS     | BEGIN                        | myGroup1,myGroup2            | From mark before move to current state with tables/sequences filtering                                                 | postgres
  GEN_SQL_GROUPS     | END                          | myGroup1,myGroup2            | 3 generated statements - script exported into /tmp/emaj_12/alter_logging/script3.sql                                   | postgres
  STOP_GROUP         | BEGIN                        | myGroup2                     |                                                                                                                        | postgres
  LOCK_GROUP         | BEGIN                        | myGroup2                     |                                                                                                                        | postgres

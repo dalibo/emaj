@@ -43,7 +43,7 @@ The function returns a set of rows, whose type is named *emaj.emaj_log_stat_type
 
 A *NULL* value or an empty string ('') supplied as start mark represents the oldest mark.
 
-A *NULL* value supplied as end mark represents the current situation.
+A *NULL* value supplied as end mark represents the current state.
 
 The keyword *'EMAJ_LAST_MARK'* can be used as mark name. It then represents the last set mark.
 
@@ -110,7 +110,7 @@ The function returns a set of rows, whose type is named *emaj.emaj_detailed_log_
 
 A *NULL* value or an empty string ('') supplied as start mark represents the oldest mark.
 
-A *NULL* value supplied as end mark represents the current situation.
+A *NULL* value supplied as end mark represents the current state.
 
 The keyword *'EMAJ_LAST_MARK'* can be used as mark name. It then represents the last set mark.
 

@@ -8,7 +8,7 @@ Three functions extract data from E-Maj infrastructure and store them into exter
 SQL script generation to replay logged updates
 ----------------------------------------------
 
-Log tables contain all needed information to replay updates. Therefore, it is possible to generate SQL statements corresponding to all updates that occurred between two marks or between a mark and the current situation. This is the purpose of the *emaj_gen_sql_group()* function.
+Log tables contain all needed information to replay updates. Therefore, it is possible to generate SQL statements corresponding to all updates that occurred between two marks or between a mark and the current state. This is the purpose of the *emaj_gen_sql_group()* function.
 
 So these updates can be replayed after the corresponding tables have been restored in their state at the initial mark, without being obliged to rerun application programs.
 
@@ -18,7 +18,7 @@ To generate this SQL script, just execute the following statement::
 
 A *NULL* value or an empty string may be used as start mark, representing the first known mark.
 
-A *NULL* value or an empty string may be used as end mark, representing the current situation.
+A *NULL* value or an empty string may be used as end mark, representing the current state.
 
 The keyword *'EMAJ_LAST_MARK'* can be used as mark name, representing the last set mark.
 
@@ -124,7 +124,7 @@ It is also possible to record a full or a partial image of all log tables relate
    SELECT emaj.emaj_snap_log_group('<group.name>', '<start.mark>', '<end.mark>', '<storage.directory>', '<COPY.options>');
 
 A *NULL* value or an empty string may be used as start mark, representing the first known mark.
-A *NULL* value or an empty string may be used as end mark, representing the current situation.
+A *NULL* value or an empty string may be used as end mark, representing the current state.
 
 The keyword *'EMAJ_LAST_MARK'* can be used as mark name, representing the last set mark.
 

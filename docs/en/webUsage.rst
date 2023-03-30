@@ -107,7 +107,7 @@ Then, the user can see the list of all marks that have been set on the group. Fo
 * its name,
 * the date and time it has been set,
 * its state (active or not, protected against rollback or not),
-* the number of recorded log rows between this mark and the next one (or the current situation if this is the last set mark),
+* the number of recorded log rows between this mark and the next one (or the current state if this is the last set mark),
 * the total number of recorded log rows from when the mark was set,
 * the comment associated to the mark, if it exists.
 
@@ -121,7 +121,7 @@ Using the “*Log statistics*” tab of the group's bar, one gets statistics abo
 
 Two types of statistics can be produced:
 
-* some estimates about the number of updates per table, recorded between two marks or between one mark and the current situation,
+* some estimates about the number of updates per table, recorded between two marks or between one mark and the current state,
 * a precise numbering of updates per tables, per statement type (*INSERT/UPDATE/DELETE/TRUNCATE*) and role.
 
 The figure below shows an example of detailed statistics.
