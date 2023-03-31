@@ -22,14 +22,11 @@ Les tables techniques de l’extension sont créées dans le tablespace par déf
 Création standard de l’EXTENSION emaj
 -------------------------------------
 
-Version PostgreSQL 9.6 et suivantes
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-
 L'extension E-Maj peut maintenant être créée dans la base de données, en exécutant la commande SQL ::
 
    CREATE EXTENSION emaj CASCADE;
 
-Après avoir vérifié que la version de PostgreSQL est supérieure ou égale à la version 9.5, le script crée le schéma *emaj* avec ses tables techniques, ses fonctions et quelques autres objets.
+Après avoir vérifié que la version de PostgreSQL est supérieure ou égale à la version 11, le script crée le schéma *emaj* avec ses tables techniques, ses fonctions et quelques autres objets.
 
 .. caution::
 
@@ -38,15 +35,6 @@ Après avoir vérifié que la version de PostgreSQL est supérieure ou égale à
 S'ils n'existent pas déjà, les 2 rôles *emaj_adm* et *emaj_viewer* sont également créés.
 
 Enfin, le script d'installation examine la configuration de l'instance. Le cas échéant, il affiche un message concernant le paramètre *-max_prepared_statements*.
-
-Version PostgreSQL 9.5
-^^^^^^^^^^^^^^^^^^^^^^
-
-Pour les versions de PostgreSQL antérieures à la version 9.6, la clause *CASCADE* n’existe pas. Les extensions pré-requises doivent donc être créées explicitement si elles n'existent pas déjà dans la base de données ::
-
-	CREATE EXTENSION IF NOT EXISTS dblink;
-	CREATE EXTENSION IF NOT EXISTS btree_gist;
-	CREATE EXTENSION emaj;
 
 Création de l’extension par script
 ----------------------------------
@@ -59,7 +47,7 @@ où <répertoire_emaj> est le répertoire issu de l’:ref:`installation du logi
 
 .. caution::
 
-	Il n’est pas indispensable d’avoir de droit super-utilisateur pour exécuter ce script d’installation. Mais si ce n’est pas le cas, le rôle utilisé devra disposer des droits nécessaires pour créer les triggers sur les tables applicatives des futurs groupes de tables.
+	Il n’est pas indispensable d’avoir le droit super-utilisateur pour exécuter ce script d’installation. Mais si ce n’est pas le cas, le rôle utilisé devra disposer des droits nécessaires pour créer les triggers sur les tables applicatives des futurs groupes de tables.
 
 Dans ce mode d’installation, toutes les optimisations des rollbacks E-Maj ne sont pas disponibles, conduisant à un niveau de performance dégradé sur ces opérations.
 

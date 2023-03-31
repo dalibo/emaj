@@ -16,7 +16,7 @@ For installed E-Maj version 0.11.0 and later, it is possible to perform an upgra
 
 .. caution::
 
-   Starting from version 2.2.0, E-Maj no longer supports PostgreSQL versions prior 9.2. Starting from version 3.0.0, E-Maj no longer supports PostgreSQL versions prior 9.5. If an older PostgreSQL version is used, it must be updated **before** migrating E-Maj to a higher version.
+   Starting from version 2.2.0, E-Maj no longer supports PostgreSQL versions prior 9.2. Starting from version 3.0.0, E-Maj no longer supports PostgreSQL versions prior 9.5. Starting from version 4.2.0, E-Maj no longer supports PostgreSQL versions prior 11. If an older PostgreSQL version is used, it must be updated **before** migrating E-Maj to a higher version.
 
 .. _uninstall_reinstall:
 
@@ -64,7 +64,7 @@ Once connected as super-user, just chain the execution of the *uninstall.sql* sc
 
    \i <old_emaj_directory>/sql/emaj_uninstall.sql
 
-   CREATE EXTENSION emaj;
+   CREATE EXTENSION emaj CASCADE;
 
 NB: before E-Maj 2.0.0, the uninstall script was named *uninstall.sql*.
 
@@ -178,6 +178,8 @@ Version specific details:
 
 * The procedure that upgrades a version 3.4.0 into 4.0.0 updates the log tables content for TRUNCATE recorded statements. The upgrade duration depends on the global log tables size.
 
+* The procedure that upgrades a version 4.1.0 into 4.2.0 checks that all event triggers exist. Previously, depending on the installed PostgreSQL version, some (or even all) event triggers may be missing. If this is the case, the *sql/emaj_upgrade_after_postgres_upgrade.sql* script provided by the previous E-maj version creates the missing event triggers.
+      
 Compatibility break
 -------------------
 

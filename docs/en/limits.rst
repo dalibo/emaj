@@ -3,7 +3,7 @@ Usage limits
 
 The E-Maj extension usage has some limits:
 
-* The minimum required **PostgreSQL version** is 9.5.
+* The minimum required **PostgreSQL version** is 11.
 * All tables belonging to a “*ROLLBACKABLE*” tables group must have an explicit **PRIMARY KEY**. If a table has no explicit *PRIMARY KEY* but has a *UNIQUE* index referencing *NOT NULL* columns, this index should rather be transformed into *PRIMARY KEY*.
 * *UNLOGGED* and *WITH OIDS* tables can only be members of “*audit_only*” tables groups.
 * *TEMPORARY* tables are not supported by E-Maj.

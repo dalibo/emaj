@@ -16,7 +16,7 @@ Pour les versions d'E-Maj installées 0.11.0 et suivantes, il est possible de pr
 
 .. caution::
 
-   A partir de la version 2.2.0, E-Maj ne supporte plus les versions de PostgreSQL antérieures à 9.2. A partir de la version 3.0.0, E-Maj ne supporte plus les versions de PostgreSQL antérieures à 9.5. Si une version antérieure de PostgreSQL est utilisée, il faut la faire évoluer **avant** de migrer E-Maj dans une version supérieure.
+   A partir de la version 2.2.0, E-Maj ne supporte plus les versions de PostgreSQL antérieures à 9.2. A partir de la version 3.0.0, E-Maj ne supporte plus les versions de PostgreSQL antérieures à 9.5. A partir de la version 4.2.0, E-Maj ne supporte plus les versions de PostgreSL antérieures à 11. Si une version antérieure de PostgreSQL est utilisée, il faut la faire évoluer **avant** de migrer E-Maj dans une version supérieure.
 
 .. _uninstall_reinstall:
 
@@ -64,7 +64,7 @@ Une fois connecté en tant que super-utilisateur, il suffit d'enchaîner le scri
 
    \i <répertoire_ancien_emaj>/sql/emaj_uninstall.sql
 
-   CREATE EXTENSION emaj;
+   CREATE EXTENSION emaj CASCADE;
 
 NB : avant la version 2.0.0, le script de désinstallation se nommait *uninstall.sql*.
 
@@ -178,6 +178,8 @@ Spécificités liées aux versions :
 * La procédure de mise à jour d’une version 3.0.0 en version 3.1.0 renomme les objets de log existants. Ceci conduit à une pose de verrou sur chaque table applicative, qui peut entrer en conflit avec des accès concurrents sur les tables. La procédure de mise à jour génère également un message d’alerte indiquant que les changements dans la gestion des triggers applicatifs par les fonctions de rollback E-Maj peuvent nécessiter des modifications dans les procédures utilisateurs.
 
 * La procédure de mise à jour d’une version 3.4.0 en version 4.0.0 modifie le contenu des tables de log pour les enregistrements des requêtes *TRUNCATE*. La durée de la mise à jour dépend donc de la taille globale des tables de log.
+
+* La procédure de mise à jour d’une version 4.1.0 en version 4.2.0 vérifie la présence de tous les triggers sur événements. Antérieurement, en fonction de la version de PostgreSQL utilisée, certains, voire tous, pouvaient ne pas exister. Si cela était le cas, le script *sql/emaj_upgrade_after_postgres_upgrade.sql* fourni par la version précédente d’E-Maj permet de créer les triggers sur événement manquants.
 
 Ruptures de compatibilité
 -------------------------

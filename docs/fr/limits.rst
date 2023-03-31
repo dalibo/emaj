@@ -3,7 +3,7 @@ Limites d'utilisation
 
 L'utilisation de l'extension E-Maj présente quelques limitations.
 
-* La **version PostgreSQL** minimum requise est la version 9.5.
+* La **version PostgreSQL** minimum requise est la version 11.
 * Toutes les tables appartenant à un groupe de tables de type "*rollbackable*" doivent avoir une **clé primaire** explicite (*PRIMARY KEY*). Si une table n’a pas de clé primaire explicite mais a un index *UNIQUE* référençant des colonnes *NOT NULL*, alors il est préférable de transformer cet index en clé primaire explicite.
 * Les tables *UNLOGGED* ou *WITH OIDS* ne peuvent pas appartenir à un groupe de tables de type "*rollbackable*".
 * Les tables temporaires (*TEMPORARY*) ne sont pas gérées par E-Maj
