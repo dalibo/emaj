@@ -298,3 +298,17 @@ Soumettre un patch
 Tout patch peut être proposé aux mainteneurs d’E-Maj au travers d’un *Pull Request* sur le site *github*.
 
 Avant de soumettre un patch, il peut être utile d’ouvrir une « *issue* » sur *github*, afin d’engager un dialogue avec les mainteneurs et ainsi avancer au mieux dans la réalisation du patch.
+
+Contribuer à Emaj_web
+---------------------
+
+Le développement du client web Emaj_web fait l’objet d’un projet à part, bien que fonctionnellement lié à l’extension *emaj*. Des évolutions de l’extension peuvent nécessiter des évolutions du client, notamment :
+
+* lorsque l’API d’utilisation de l’extension change ;
+* pour permettre aux utilisateurs du client web de bénéficier de fonctionnalités ajoutées à l’extension.
+
+Dans le premier cas, les évolutions de l’extension et du client doivent être synchronisées.
+
+Le référentiel du projet est maintenu dans le dépôt github : https://github.com/dalibo/emaj_web
+
+Il est important de garder en tête que le client web interface des extensions *emaj* qui peuvent être dans des versions différentes. Le fichier *libraries/version.inc.php* définit les plages de versions utilisables.
