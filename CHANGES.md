@@ -3,6 +3,15 @@ E-Maj - Change log
 <devel>
 ------
 ###Enhancements:###
+
+
+###Bug fixes:###
+
+
+
+4.2.0 (2023-Apr-03)
+------
+###Enhancements:###
   * Remove the support of postgres versions prior V11.
   * Improve the sequences rollback processing: move it at the beginning of the
     overall E-Maj rollback; rollback sequences in a dedicated elementary step
@@ -29,7 +38,7 @@ E-Maj - Change log
     tables/sequences, the called function returned a wrong number of effectively
     moved tables/sequences.
 
-4.1.0 (2022-Oct.-01)
+4.1.0 (2022-Oct-01)
 ------
 ###Enhancements:###
   * E-Maj is compatible with PostgreSQL V15.
@@ -40,7 +49,7 @@ E-Maj - Change log
     rows, an overflow in internal computations may happen. The problem can also
     be seen with old E-Maj versions.
 
-4.0.1 (2022-Apr.-02)
+4.0.1 (2022-Apr-02)
 ------
 ###Enhancements:###
 

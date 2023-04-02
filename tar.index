@@ -36,7 +36,6 @@ emaj-4.2.0/sql/emaj-0.11.0-to-0.11.1.sql
 emaj-4.2.0/sql/emaj_demo.sql
 emaj-4.2.0/sql/emaj_prepare_parallel_rollback_test.sql
 emaj-4.2.0/sql/emaj_uninstall.sql
-emaj-4.2.0/sql/emaj_upgrade_after_postgres_upgrade.sql
 emaj-4.2.0/doc/Emaj.4.2.0_doc_en.pdf
 emaj-4.2.0/doc/Emaj.4.2.0_doc_fr.pdf
 emaj-4.2.0/doc/Emaj.4.2.0_pres_en.odp
