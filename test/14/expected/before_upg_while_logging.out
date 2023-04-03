@@ -212,19 +212,19 @@ select emaj.emaj_comment_mark_group('myGroup1','M3','Third mark set');
 --
 delete from myTbl1 where col11 > 3;
 select * from emaj.emaj_rollback_group('myGroup1','M3');
- rlbk_severity |            rlbk_message             
----------------+-------------------------------------
+ rlbk_severity |              rlbk_message              
+---------------+----------------------------------------
  Notice        | 1 / 5 tables effectively processed.
- Notice        | 1 sequences processed.
+ Notice        | 0 / 1 sequences effectively processed.
 (2 rows)
 
 insert into myTbl2 values (3,'GHI',NULL);
 update myTbl4 set col43 = 3 where col41 = 2;
 select * from emaj.emaj_rollback_group('myGroup1','M3');
- rlbk_severity |            rlbk_message             
----------------+-------------------------------------
+ rlbk_severity |              rlbk_message              
+---------------+----------------------------------------
  Notice        | 3 / 5 tables effectively processed.
- Notice        | 1 sequences processed.
+ Notice        | 0 / 1 sequences effectively processed.
 (2 rows)
 
 --
@@ -302,17 +302,17 @@ select emaj.emaj_set_mark_group('myGroup2','M3');
 -- Step 3 : for myGroup2, double logged rollback
 -----------------------------
 select * from emaj.emaj_logged_rollback_group('myGroup2','M2');
- rlbk_severity |            rlbk_message             
----------------+-------------------------------------
+ rlbk_severity |              rlbk_message              
+---------------+----------------------------------------
  Notice        | 1 / 4 tables effectively processed.
- Notice        | 2 sequences processed.
+ Notice        | 1 / 2 sequences effectively processed.
 (2 rows)
 
 select * from emaj.emaj_logged_rollback_group('myGroup2','M3');
- rlbk_severity |            rlbk_message             
----------------+-------------------------------------
+ rlbk_severity |              rlbk_message              
+---------------+----------------------------------------
  Notice        | 1 / 4 tables effectively processed.
- Notice        | 2 sequences processed.
+ Notice        | 1 / 2 sequences effectively processed.
 (2 rows)
 
 -----------------------------
