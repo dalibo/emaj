@@ -416,60 +416,60 @@ begin;
   insert into emaj.emaj_time_stamp (time_id, time_clock_timestamp) overriding system value
     values (-2, '2000-01-01 01:00:00');
   insert into emaj.emaj_rlbk (rlbk_id, rlbk_groups, rlbk_mark, rlbk_mark_time_id, rlbk_time_id, rlbk_is_logged, rlbk_is_alter_group_allowed, 
-             rlbk_nb_session, rlbk_nb_table, rlbk_nb_sequence, rlbk_eff_nb_table, rlbk_eff_nb_sequence, rlbk_status)
+             rlbk_nb_session, rlbk_nb_table, rlbk_nb_sequence, rlbk_eff_nb_table, rlbk_eff_nb_sequence, rlbk_start_datetime, rlbk_status)
     values (1232,array['group1232'],'mark1232',-2,-1,true,false,
-             1,5,4,3,1,'EXECUTING');
+             1,5,4,3,1,now()-'0.1 seconds'::interval,'EXECUTING');
   insert into emaj.emaj_rlbk_plan (rlbp_rlbk_id, rlbp_step, rlbp_schema, rlbp_table, rlbp_object,
              rlbp_estimated_duration, rlbp_estimated_quantity, rlbp_start_datetime, rlbp_duration)
     values (1232, 'RLBK_TABLE','schema','t1','','50 seconds'::interval,null,null,null),
            (1232, 'RLBK_TABLE','schema','t2','','30 seconds'::interval,null,null,null),
            (1232, 'RLBK_TABLE','schema','t3','','20 seconds'::interval,null,null,null),
            (1232, 'CTRL+DBLINK','',     '',  '','0.3 second'::interval,3,   null,null);
-  select rlbk_id, rlbk_status, rlbk_remaining, rlbk_completion_pct from emaj._rollback_activity();
+  select rlbk_id, rlbk_status, date_trunc('second',rlbk_remaining) as remaining, rlbk_completion_pct from emaj._rollback_activity();
 -- the first RLBK_TABLE has started, but the elapse of the step is not yet > estimated duration 
-  update emaj.emaj_time_stamp set time_tx_timestamp = now() - '11 seconds'::interval where time_id = -1;
+  update emaj.emaj_rlbk set rlbk_start_datetime = now() - '11 seconds'::interval where rlbk_id = 1232;
   update emaj.emaj_rlbk_plan set rlbp_start_datetime = now() - '11 seconds'::interval
     where rlbp_rlbk_id = 1232 and rlbp_table = 't1';
-  select rlbk_id, rlbk_status, rlbk_remaining, rlbk_completion_pct from emaj._rollback_activity();
+  select rlbk_id, rlbk_status, date_trunc('second',rlbk_remaining) as remaining, rlbk_completion_pct from emaj._rollback_activity();
   select 1.0 - ((20.0 + 30.0)+(50.0 - 11.0) + 2*0.3/3) / (11.1 + (20.0 + 30.0)+(50.0 - 11.0) + 2*0.3/3); -- the completion % should be 11%
 -- the first RLBK_TABLE is completed, and the step duration < the estimated duration 
-  update emaj.emaj_time_stamp set time_tx_timestamp = now() - '45.1 seconds'::interval where time_id = -1;
+  update emaj.emaj_rlbk set rlbk_start_datetime = now() - '45.1 seconds'::interval where rlbk_id = 1232;
   update emaj.emaj_rlbk_plan set rlbp_start_datetime = now() - '45 seconds'::interval,
                                  rlbp_duration = '45 seconds'::interval
     where rlbp_rlbk_id = 1232 and rlbp_table = 't1';
-  select rlbk_id, rlbk_status, rlbk_remaining, rlbk_completion_pct from emaj._rollback_activity();
+  select rlbk_id, rlbk_status, date_trunc('second',rlbk_remaining) as remaining, rlbk_completion_pct from emaj._rollback_activity();
   select 1.0 - (20.0 + 30.0 + 2*0.3/3) / (45.1 + (20.0 + 30.0) + 2*0.3/3);  -- the completion % should be 47%
 -- the second RLBK_TABLE has started, but the elapse of the step is not yet > estimated duration 
-  update emaj.emaj_time_stamp set time_tx_timestamp = now() - '73.1 seconds'::interval where time_id = -1;
+  update emaj.emaj_rlbk set rlbk_start_datetime = now() - '73.1 seconds'::interval where rlbk_id = 1232;
   update emaj.emaj_rlbk_plan set rlbp_start_datetime = now() - '28 seconds'::interval
     where rlbp_rlbk_id = 1232 and rlbp_table = 't2';
-  select rlbk_id, rlbk_status, rlbk_remaining, rlbk_completion_pct from emaj._rollback_activity();
+  select rlbk_id, rlbk_status, date_trunc('second',rlbk_remaining) as remaining, rlbk_completion_pct from emaj._rollback_activity();
   select 1.0 - (20.0 + (30.0 - 28.0) + 1*0.3/3) / (73.1 + (20.0 + (30.0 - 28.0) + 1*0.3/3));  -- the completion % should be 77%
 -- the second RLBK_TABLE has started, but the elapse of the step is already > estimated duration 
-  update emaj.emaj_time_stamp set time_tx_timestamp = now() - '85.1 seconds'::interval where time_id = -1;
+  update emaj.emaj_rlbk set rlbk_start_datetime = now() - '85.1 seconds'::interval where rlbk_id = 1232;
   update emaj.emaj_rlbk_plan set rlbp_start_datetime = now() - '40 seconds'::interval
     where rlbp_rlbk_id = 1232 and rlbp_table = 't2';
-  select rlbk_id, rlbk_status, rlbk_remaining, rlbk_completion_pct from emaj._rollback_activity();
+  select rlbk_id, rlbk_status, date_trunc('second',rlbk_remaining) as remaining, rlbk_completion_pct from emaj._rollback_activity();
   select 1.0 - (20.0 + 1*0.3/3) / (85.1 + (20.0 + 1*0.3/3));  -- the completion % should be 81%
 -- the second RLBK_TABLE has started, but the elapse of the step is already > estimated duration 
-  update emaj.emaj_time_stamp set time_tx_timestamp = now() - '105.1 seconds'::interval where time_id = -1;
+  update emaj.emaj_rlbk set rlbk_start_datetime = now() - '105.1 seconds'::interval where rlbk_id = 1232;
   update emaj.emaj_rlbk_plan set rlbp_start_datetime = now() - '60 seconds'::interval
     where rlbp_rlbk_id = 1232 and rlbp_table = 't2';
-  select rlbk_id, rlbk_status, rlbk_remaining, rlbk_completion_pct from emaj._rollback_activity();
+  select rlbk_id, rlbk_status, date_trunc('second',rlbk_remaining) as remaining, rlbk_completion_pct from emaj._rollback_activity();
   select 1.0 - (20.0 + 1*0.3/3) / (105.1 + (20.0 + 1*0.3/3 ));  -- the completion % should be 84%
--- the second RLBK_TABLE is completed, and the step duration > the estimated duration 
-  update emaj.emaj_time_stamp set time_tx_timestamp = now() - '110.1 seconds'::interval where time_id = -1;
+-- the second RLBK_TABLE is completed, and the step duration > the estimated duration
+  update emaj.emaj_rlbk set rlbk_start_datetime = now() - '110.1 seconds'::interval where rlbk_id = 1232;
   update emaj.emaj_rlbk_plan set rlbp_start_datetime = now() - '65 seconds'::interval,
                                  rlbp_duration = '65 seconds'::interval
     where rlbp_rlbk_id = 1232 and rlbp_table = 't2';
-  select rlbk_id, rlbk_status, rlbk_remaining, rlbk_completion_pct from emaj._rollback_activity();
+  select rlbk_id, rlbk_status, date_trunc('second',rlbk_remaining) as remaining, rlbk_completion_pct from emaj._rollback_activity();
   select 1.0 - (20.0 + 1*0.3/3) / (110.1 + (20.0 + 1*0.3/3));  -- the completion % should be 85%
 -- the third RLBK_TABLE has started, and is almost completed 
-  update emaj.emaj_time_stamp set time_tx_timestamp = now() - '124.1 seconds'::interval where time_id = -1;
-  update emaj.emaj_rlbk_plan set rlbp_start_datetime = now() - '19 seconds'::interval
+  update emaj.emaj_rlbk set rlbk_start_datetime = now() - '124.1 seconds'::interval where rlbk_id = 1232;
+  update emaj.emaj_rlbk_plan set rlbp_start_datetime = now() - '18.8 seconds'::interval
     where rlbp_rlbk_id = 1232 and rlbp_table = 't3';
-  select rlbk_id, rlbk_status, rlbk_remaining, rlbk_completion_pct from emaj._rollback_activity();
-  select 1.0 - ((20.0 - 19.0)) / (124.1 + (20.0 - 19.0));  -- the completion % should be 99%
+  select rlbk_id, rlbk_status, date_trunc('second',rlbk_remaining) as remaining, rlbk_completion_pct from emaj._rollback_activity();
+  select 1.0 - ((20.0 - 18.8)) / (124.1 + (20.0 - 18.8));  -- the completion % should be 99%
 rollback;
 
 begin;
@@ -479,31 +479,32 @@ begin;
   insert into emaj.emaj_time_stamp (time_id, time_clock_timestamp) overriding system value
     values (-2, '2000-01-01 01:00:00');
   insert into emaj.emaj_rlbk (rlbk_id, rlbk_groups, rlbk_mark, rlbk_mark_time_id, rlbk_time_id, rlbk_is_logged, rlbk_is_alter_group_allowed, 
-             rlbk_nb_session, rlbk_nb_table, rlbk_nb_sequence, rlbk_eff_nb_table, rlbk_eff_nb_sequence, rlbk_status)
+             rlbk_nb_session, rlbk_nb_table, rlbk_nb_sequence, rlbk_eff_nb_table, rlbk_eff_nb_sequence, rlbk_start_datetime, rlbk_end_planning_datetime, rlbk_status)
     values (1233,array['group1233'],'mark1233',-2,-1,true,false,
-             1,5,4,3,1,'LOCKING');
+             1,5,4,3,1,now()-'2 minutes'::interval,now()-'1 minutes 59 second'::interval,'LOCKING');
   insert into emaj.emaj_rlbk_plan (rlbp_rlbk_id, rlbp_step, rlbp_schema, rlbp_table, rlbp_object,
              rlbp_estimated_duration, rlbp_start_datetime, rlbp_duration)
     values (1233, 'LOCK_TABLE','schema','t1','',null,null,null),
            (1233, 'LOCK_TABLE','schema','t2','',null,null,null),
            (1233, 'LOCK_TABLE','schema','t3','',null,null,null);
-  select rlbk_id, rlbk_status, rlbk_elapse, rlbk_remaining, rlbk_completion_pct from emaj._rollback_activity();
+  select rlbk_id, rlbk_status, rlbk_planning_duration, date_trunc('second',rlbk_elapse) as elapse, date_trunc('second',rlbk_remaining) as remaining, rlbk_completion_pct
+    from emaj._rollback_activity();
 -- the rollback operation in LOCKING state now has RLBK_TABLE steps
   insert into emaj.emaj_rlbk_plan (rlbp_rlbk_id, rlbp_step, rlbp_schema, rlbp_table, rlbp_object,
              rlbp_estimated_duration, rlbp_start_datetime, rlbp_duration)
     values (1233, 'RLBK_TABLE','schema','t1','','0:20:00'::interval,null,null),
            (1233, 'RLBK_TABLE','schema','t2','','0:02:00'::interval,null,null),
            (1233, 'RLBK_TABLE','schema','t3','','0:00:20'::interval,null,null);
-  select rlbk_id, rlbk_status, rlbk_elapse, rlbk_remaining, rlbk_completion_pct from emaj._rollback_activity();
+  select rlbk_id, rlbk_status, date_trunc('second',rlbk_elapse) as elapse, date_trunc('second',rlbk_remaining) as remaining, rlbk_completion_pct from emaj._rollback_activity();
 -- +1 rollback operation in PLANNING state
   insert into emaj.emaj_time_stamp (time_id, time_tx_timestamp) overriding system value
     values (-3, now()-'1 minute'::interval);
   insert into emaj.emaj_rlbk (rlbk_id, rlbk_groups, rlbk_mark, rlbk_mark_time_id, rlbk_time_id, rlbk_is_logged, rlbk_is_alter_group_allowed, 
-             rlbk_nb_session, rlbk_nb_table, rlbk_nb_sequence, rlbk_eff_nb_table, rlbk_eff_nb_sequence, rlbk_status)
+             rlbk_nb_session, rlbk_nb_table, rlbk_nb_sequence, rlbk_eff_nb_table, rlbk_eff_nb_sequence, rlbk_start_datetime, rlbk_status)
     values (1234,array['group1234'],'mark1234',-2,-3,true,false,
-             1,5,4,3,1,'PLANNING');
-  select rlbk_id, rlbk_groups, rlbk_mark, rlbk_mark_datetime, rlbk_is_logged, rlbk_nb_session, rlbk_nb_table,
-         rlbk_nb_sequence, rlbk_eff_nb_table, rlbk_eff_nb_sequence, rlbk_status, rlbk_elapse, rlbk_remaining, rlbk_completion_pct 
+             1,5,4,3,1,now()-'1 minute'::interval,'PLANNING');
+  select rlbk_id, rlbk_groups, rlbk_mark, rlbk_mark_datetime, rlbk_is_logged, rlbk_nb_session, rlbk_nb_table, rlbk_nb_sequence,
+         rlbk_eff_nb_table, rlbk_eff_nb_sequence, rlbk_status, date_trunc('second',rlbk_elapse) as elapse, date_trunc('second',rlbk_remaining) as remaining, rlbk_completion_pct 
     from emaj._rollback_activity();
 rollback;
 

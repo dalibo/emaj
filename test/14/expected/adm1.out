@@ -2872,8 +2872,8 @@ SQL statement "SELECT emaj._check_group_names(p_groupNames := p_groupNames, p_ma
 PL/pgSQL function emaj._estimate_rollback_groups(text[],boolean,text,boolean) line 18 at SQL statement
 PL/pgSQL function emaj.emaj_estimate_rollback_groups(text[],text,boolean) line 7 at RETURN
 select * from emaj.emaj_rollback_activity();
- rlbk_id | rlbk_groups | rlbk_mark | rlbk_mark_datetime | rlbk_is_logged | rlbk_is_alter_group_allowed | rlbk_nb_session | rlbk_nb_table | rlbk_nb_sequence | rlbk_eff_nb_table | rlbk_eff_nb_sequence | rlbk_status | rlbk_start_datetime | rlbk_elapse | rlbk_remaining | rlbk_completion_pct 
----------+-------------+-----------+--------------------+----------------+-----------------------------+-----------------+---------------+------------------+-------------------+----------------------+-------------+---------------------+-------------+----------------+---------------------
+ rlbk_id | rlbk_groups | rlbk_mark | rlbk_mark_datetime | rlbk_is_logged | rlbk_is_alter_group_allowed | rlbk_nb_session | rlbk_nb_table | rlbk_nb_sequence | rlbk_eff_nb_table | rlbk_eff_nb_sequence | rlbk_status | rlbk_start_datetime | rlbk_planning_duration | rlbk_locking_duration | rlbk_elapse | rlbk_remaining | rlbk_completion_pct 
+---------+-------------+-----------+--------------------+----------------+-----------------------------+-----------------+---------------+------------------+-------------------+----------------------+-------------+---------------------+------------------------+-----------------------+-------------+----------------+---------------------
 (0 rows)
 
 select substr(pg_size_pretty(pg_database_size(current_database())),1,0);

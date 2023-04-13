@@ -53,6 +53,13 @@ select relname from pg_catalog.pg_class,
 -- process the extension upgrade
 ALTER EXTENSION emaj UPDATE TO 'devel';
 WARNING:  E-Maj upgrade: the E-Maj environment health check reports warning. You may execute "SELECT * FROM emaj.emaj_verify_all();" to get more details.
+NOTICE:  drop cascades to 3 other objects
+DETAIL:  drop cascades to constraint emaj_rlbk_session_rlbs_rlbk_id_fkey on table emaj_rlbk_session
+drop cascades to constraint emaj_rlbk_plan_rlbp_rlbk_id_fkey on table emaj_rlbk_plan
+drop cascades to constraint emaj_rlbk_stat_rlbt_rlbk_id_fkey on table emaj_rlbk_stat
+NOTICE:  drop cascades to 2 other objects
+DETAIL:  drop cascades to function emaj_rollback_activity()
+drop cascades to function _rollback_activity()
 -----------------------------
 -- check installation
 -----------------------------
@@ -476,6 +483,9 @@ Tablespace: "tspemaj"
  rlbk_begin_hist_id          | bigint                   |           |          | 
  rlbk_dblink_schema          | text                     |           |          | 
  rlbk_is_dblink_used         | boolean                  |           |          | 
+ rlbk_start_datetime         | timestamp with time zone |           |          | 
+ rlbk_end_planning_datetime  | timestamp with time zone |           |          | 
+ rlbk_end_locking_datetime   | timestamp with time zone |           |          | 
  rlbk_end_datetime           | timestamp with time zone |           |          | 
  rlbk_messages               | text[]                   |           |          | 
 Indexes:
@@ -612,6 +622,8 @@ Tablespace: "tspemaj"
  rlbk_eff_nb_sequence        | integer                  |           |          | 
  rlbk_status                 | emaj._rlbk_status_enum   |           |          | 
  rlbk_start_datetime         | timestamp with time zone |           |          | 
+ rlbk_planning_duration      | interval                 |           |          | 
+ rlbk_locking_duration       | interval                 |           |          | 
  rlbk_elapse                 | interval                 |           |          | 
  rlbk_remaining              | interval                 |           |          | 
  rlbk_completion_pct         | smallint                 |           |          | 
@@ -1172,7 +1184,7 @@ select * from emaj.emaj_time_stamp_time_id_seq;
 select * from emaj.emaj_rlbk_rlbk_id_seq;
  last_value | log_cnt | is_called 
 ------------+---------+-----------
-          4 |      29 | t
+          4 |       0 | t
 (1 row)
 
 -- check log sequences position

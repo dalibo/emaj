@@ -102,9 +102,9 @@ insert into emaj.emaj_time_stamp (time_id, time_tx_timestamp) overriding system 
 insert into emaj.emaj_time_stamp (time_id, time_clock_timestamp) overriding system value
   values (-2, '2000-01-01 01:00:00');
 insert into emaj.emaj_rlbk (rlbk_id, rlbk_groups, rlbk_mark, rlbk_mark_time_id, rlbk_time_id, rlbk_is_logged, rlbk_is_alter_group_allowed, rlbk_nb_session, 
-           rlbk_nb_table, rlbk_nb_sequence, rlbk_eff_nb_table, rlbk_eff_nb_sequence, rlbk_status)
+           rlbk_nb_table, rlbk_nb_sequence, rlbk_eff_nb_table, rlbk_eff_nb_sequence, rlbk_start_datetime, rlbk_end_planning_datetime, rlbk_end_locking_datetime, rlbk_status)
   values (20101,array['group20101'],'mark20101',-2,-1,true,false,1,
-           5,4,3,1,'EXECUTING');
+           5,4,3,1,now()-'110.1 seconds'::interval,now()-'110.0 seconds'::interval,now()-'109.8 seconds'::interval,'EXECUTING');
 insert into emaj.emaj_rlbk_plan (rlbp_rlbk_id, rlbp_step, rlbp_schema, rlbp_table, rlbp_object,
            rlbp_estimated_duration, rlbp_start_datetime, rlbp_duration)
   values (20101, 'RLBK_TABLE','schema','t1','','50 seconds'::interval,null,null),
@@ -123,9 +123,9 @@ update emaj.emaj_rlbk_plan set rlbp_start_datetime = now() - '65 seconds'::inter
 insert into emaj.emaj_time_stamp (time_id, time_tx_timestamp) overriding system value
   values (-3, now()-'2 minutes'::interval);
 insert into emaj.emaj_rlbk (rlbk_id, rlbk_groups, rlbk_mark, rlbk_mark_time_id, rlbk_time_id, rlbk_is_logged, rlbk_is_alter_group_allowed, rlbk_nb_session, 
-           rlbk_nb_table, rlbk_nb_sequence, rlbk_eff_nb_table, rlbk_eff_nb_sequence, rlbk_status)
+           rlbk_nb_table, rlbk_nb_sequence, rlbk_eff_nb_table, rlbk_eff_nb_sequence, rlbk_start_datetime, rlbk_end_planning_datetime, rlbk_status)
   values (20102,array['group20102'],'mark20102',-2,-3,true,false,1,
-           5,4,3,NULL,'LOCKING');
+           5,4,3,NULL,now()-'2 minutes'::interval,now()-'1 minute 59.8 seconds'::interval,'LOCKING');
 insert into emaj.emaj_rlbk_plan (rlbp_rlbk_id, rlbp_step, rlbp_schema, rlbp_table, rlbp_object,
            rlbp_estimated_duration, rlbp_start_datetime, rlbp_duration)
   values (20102, 'LOCK_TABLE','schema','t1','',null,null,null),
@@ -139,9 +139,9 @@ insert into emaj.emaj_rlbk_plan (rlbp_rlbk_id, rlbp_step, rlbp_schema, rlbp_tabl
 insert into emaj.emaj_time_stamp (time_id, time_tx_timestamp) overriding system value
   values (-4, now()-'1 minute'::interval);
 insert into emaj.emaj_rlbk (rlbk_id, rlbk_groups, rlbk_mark, rlbk_mark_time_id, rlbk_time_id, rlbk_is_logged, rlbk_is_alter_group_allowed, rlbk_nb_session,
-           rlbk_nb_table, rlbk_nb_sequence, rlbk_eff_nb_table, rlbk_eff_nb_sequence, rlbk_status)
+           rlbk_nb_table, rlbk_nb_sequence, rlbk_eff_nb_table, rlbk_eff_nb_sequence, rlbk_start_datetime,rlbk_status)
   values (20103,array['group20103'],'mark20103',-2,-4,true,false,1,
-           5,4,3,NULL,'PLANNING');
+           5,4,3,NULL,now()-'1 minute'::interval,'PLANNING');
 
 --------------------------------------------
 -- call emajRollbackMonitor.php using an emaj_viewer role

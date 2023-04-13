@@ -118,7 +118,7 @@ SQL statement "SELECT emaj._check_group_names(p_groupNames := p_groupNames, p_ma
                                      p_checkList := 'LOGGING,ROLLBACKABLE,UNPROTECTED')"
 PL/pgSQL function emaj._rlbk_check(text[],text,boolean,boolean) line 16 at SQL statement
 SQL statement "SELECT emaj._rlbk_check(p_groupNames, p_mark, p_isAlterGroupAllowed, FALSE)"
-PL/pgSQL function emaj._rlbk_init(text[],text,boolean,integer,boolean,boolean) line 23 at SQL statement
+PL/pgSQL function emaj._rlbk_init(text[],text,boolean,integer,boolean,boolean) line 25 at SQL statement
 SQL statement "SELECT emaj._rlbk_init(p_groupNames, p_mark, p_isLoggedRlbk, 1, p_multiGroup, p_isAlterGroupAllowed)"
 PL/pgSQL function emaj._rlbk_groups(text[],text,boolean,boolean,boolean) line 26 at SQL statement
 SQL statement "SELECT *
@@ -131,7 +131,7 @@ SQL statement "SELECT emaj._check_group_names(p_groupNames := p_groupNames, p_ma
                                      p_checkList := 'LOGGING,ROLLBACKABLE,UNPROTECTED')"
 PL/pgSQL function emaj._rlbk_check(text[],text,boolean,boolean) line 16 at SQL statement
 SQL statement "SELECT emaj._rlbk_check(p_groupNames, p_mark, p_isAlterGroupAllowed, FALSE)"
-PL/pgSQL function emaj._rlbk_init(text[],text,boolean,integer,boolean,boolean) line 23 at SQL statement
+PL/pgSQL function emaj._rlbk_init(text[],text,boolean,integer,boolean,boolean) line 25 at SQL statement
 SQL statement "SELECT emaj._rlbk_init(p_groupNames, p_mark, p_isLoggedRlbk, 1, p_multiGroup, p_isAlterGroupAllowed)"
 PL/pgSQL function emaj._rlbk_groups(text[],text,boolean,boolean,boolean) line 26 at SQL statement
 SQL statement "SELECT *
@@ -144,7 +144,7 @@ SQL statement "SELECT emaj._check_group_names(p_groupNames := p_groupNames, p_ma
                                      p_checkList := 'LOGGING,ROLLBACKABLE,UNPROTECTED')"
 PL/pgSQL function emaj._rlbk_check(text[],text,boolean,boolean) line 16 at SQL statement
 SQL statement "SELECT emaj._rlbk_check(p_groupNames, p_mark, p_isAlterGroupAllowed, FALSE)"
-PL/pgSQL function emaj._rlbk_init(text[],text,boolean,integer,boolean,boolean) line 23 at SQL statement
+PL/pgSQL function emaj._rlbk_init(text[],text,boolean,integer,boolean,boolean) line 25 at SQL statement
 SQL statement "SELECT emaj._rlbk_init(p_groupNames, p_mark, p_isLoggedRlbk, 1, p_multiGroup, p_isAlterGroupAllowed)"
 PL/pgSQL function emaj._rlbk_groups(text[],text,boolean,boolean,boolean) line 26 at SQL statement
 SQL statement "SELECT *
@@ -157,7 +157,7 @@ SQL statement "SELECT emaj._check_group_names(p_groupNames := p_groupNames, p_ma
                                      p_checkList := 'LOGGING,ROLLBACKABLE,UNPROTECTED')"
 PL/pgSQL function emaj._rlbk_check(text[],text,boolean,boolean) line 16 at SQL statement
 SQL statement "SELECT emaj._rlbk_check(p_groupNames, p_mark, p_isAlterGroupAllowed, FALSE)"
-PL/pgSQL function emaj._rlbk_init(text[],text,boolean,integer,boolean,boolean) line 23 at SQL statement
+PL/pgSQL function emaj._rlbk_init(text[],text,boolean,integer,boolean,boolean) line 25 at SQL statement
 SQL statement "SELECT emaj._rlbk_init(p_groupNames, p_mark, p_isLoggedRlbk, 1, p_multiGroup, p_isAlterGroupAllowed)"
 PL/pgSQL function emaj._rlbk_groups(text[],text,boolean,boolean,boolean) line 26 at SQL statement
 SQL statement "SELECT *
@@ -170,7 +170,7 @@ SQL statement "SELECT emaj._check_group_names(p_groupNames := p_groupNames, p_ma
                                      p_checkList := 'LOGGING,ROLLBACKABLE,UNPROTECTED')"
 PL/pgSQL function emaj._rlbk_check(text[],text,boolean,boolean) line 16 at SQL statement
 SQL statement "SELECT emaj._rlbk_check(p_groupNames, p_mark, p_isAlterGroupAllowed, FALSE)"
-PL/pgSQL function emaj._rlbk_init(text[],text,boolean,integer,boolean,boolean) line 23 at SQL statement
+PL/pgSQL function emaj._rlbk_init(text[],text,boolean,integer,boolean,boolean) line 25 at SQL statement
 SQL statement "SELECT emaj._rlbk_init(p_groupNames, p_mark, p_isLoggedRlbk, 1, p_multiGroup, p_isAlterGroupAllowed)"
 PL/pgSQL function emaj._rlbk_groups(text[],text,boolean,boolean,boolean) line 26 at SQL statement
 SQL statement "SELECT *
@@ -190,7 +190,7 @@ SQL statement "SELECT emaj._check_group_names(p_groupNames := p_groupNames, p_ma
                                      p_checkList := 'LOGGING,ROLLBACKABLE,UNPROTECTED')"
 PL/pgSQL function emaj._rlbk_check(text[],text,boolean,boolean) line 16 at SQL statement
 SQL statement "SELECT emaj._rlbk_check(p_groupNames, p_mark, p_isAlterGroupAllowed, FALSE)"
-PL/pgSQL function emaj._rlbk_init(text[],text,boolean,integer,boolean,boolean) line 23 at SQL statement
+PL/pgSQL function emaj._rlbk_init(text[],text,boolean,integer,boolean,boolean) line 25 at SQL statement
 SQL statement "SELECT emaj._rlbk_init(p_groupNames, p_mark, p_isLoggedRlbk, 1, p_multiGroup, p_isAlterGroupAllowed)"
 PL/pgSQL function emaj._rlbk_groups(text[],text,boolean,boolean,boolean) line 26 at SQL statement
 SQL statement "SELECT *
@@ -297,7 +297,7 @@ SQL statement "SELECT emaj._check_group_names(p_groupNames := p_groupNames, p_ma
                                      p_checkList := 'LOGGING,ROLLBACKABLE,UNPROTECTED')"
 PL/pgSQL function emaj._rlbk_check(text[],text,boolean,boolean) line 16 at SQL statement
 SQL statement "SELECT emaj._rlbk_check(p_groupNames, p_mark, p_isAlterGroupAllowed, FALSE)"
-PL/pgSQL function emaj._rlbk_init(text[],text,boolean,integer,boolean,boolean) line 23 at SQL statement
+PL/pgSQL function emaj._rlbk_init(text[],text,boolean,integer,boolean,boolean) line 25 at SQL statement
 SQL statement "SELECT emaj._rlbk_init(p_groupNames, p_mark, p_isLoggedRlbk, 1, p_multiGroup, p_isAlterGroupAllowed)"
 PL/pgSQL function emaj._rlbk_groups(text[],text,boolean,boolean,boolean) line 26 at SQL statement
 SQL statement "SELECT *
@@ -310,7 +310,7 @@ SQL statement "SELECT emaj._check_group_names(p_groupNames := p_groupNames, p_ma
                                      p_checkList := 'LOGGING,ROLLBACKABLE,UNPROTECTED')"
 PL/pgSQL function emaj._rlbk_check(text[],text,boolean,boolean) line 16 at SQL statement
 SQL statement "SELECT emaj._rlbk_check(p_groupNames, p_mark, p_isAlterGroupAllowed, FALSE)"
-PL/pgSQL function emaj._rlbk_init(text[],text,boolean,integer,boolean,boolean) line 23 at SQL statement
+PL/pgSQL function emaj._rlbk_init(text[],text,boolean,integer,boolean,boolean) line 25 at SQL statement
 SQL statement "SELECT emaj._rlbk_init(p_groupNames, p_mark, p_isLoggedRlbk, 1, p_multiGroup, p_isAlterGroupAllowed)"
 PL/pgSQL function emaj._rlbk_groups(text[],text,boolean,boolean,boolean) line 26 at SQL statement
 SQL statement "SELECT *
@@ -342,7 +342,7 @@ CONTEXT:  PL/pgSQL function emaj._check_mark_name(text[],text,text) line 59 at R
 SQL statement "SELECT emaj._check_mark_name(p_groupNames := p_groupNames, p_mark := p_mark, p_checkList := 'ACTIVE')"
 PL/pgSQL function emaj._rlbk_check(text[],text,boolean,boolean) line 21 at SQL statement
 SQL statement "SELECT emaj._rlbk_check(p_groupNames, p_mark, p_isAlterGroupAllowed, FALSE)"
-PL/pgSQL function emaj._rlbk_init(text[],text,boolean,integer,boolean,boolean) line 23 at SQL statement
+PL/pgSQL function emaj._rlbk_init(text[],text,boolean,integer,boolean,boolean) line 25 at SQL statement
 SQL statement "SELECT emaj._rlbk_init(p_groupNames, p_mark, p_isLoggedRlbk, 1, p_multiGroup, p_isAlterGroupAllowed)"
 PL/pgSQL function emaj._rlbk_groups(text[],text,boolean,boolean,boolean) line 26 at SQL statement
 SQL statement "SELECT *
@@ -354,7 +354,7 @@ CONTEXT:  PL/pgSQL function emaj._check_mark_name(text[],text,text) line 59 at R
 SQL statement "SELECT emaj._check_mark_name(p_groupNames := p_groupNames, p_mark := p_mark, p_checkList := 'ACTIVE')"
 PL/pgSQL function emaj._rlbk_check(text[],text,boolean,boolean) line 21 at SQL statement
 SQL statement "SELECT emaj._rlbk_check(p_groupNames, p_mark, p_isAlterGroupAllowed, FALSE)"
-PL/pgSQL function emaj._rlbk_init(text[],text,boolean,integer,boolean,boolean) line 23 at SQL statement
+PL/pgSQL function emaj._rlbk_init(text[],text,boolean,integer,boolean,boolean) line 25 at SQL statement
 SQL statement "SELECT emaj._rlbk_init(p_groupNames, p_mark, p_isLoggedRlbk, 1, p_multiGroup, p_isAlterGroupAllowed)"
 PL/pgSQL function emaj._rlbk_groups(text[],text,boolean,boolean,boolean) line 26 at SQL statement
 SQL statement "SELECT *
@@ -366,7 +366,7 @@ CONTEXT:  PL/pgSQL function emaj._check_mark_name(text[],text,text) line 59 at R
 SQL statement "SELECT emaj._check_mark_name(p_groupNames := p_groupNames, p_mark := p_mark, p_checkList := 'ACTIVE')"
 PL/pgSQL function emaj._rlbk_check(text[],text,boolean,boolean) line 21 at SQL statement
 SQL statement "SELECT emaj._rlbk_check(p_groupNames, p_mark, p_isAlterGroupAllowed, FALSE)"
-PL/pgSQL function emaj._rlbk_init(text[],text,boolean,integer,boolean,boolean) line 23 at SQL statement
+PL/pgSQL function emaj._rlbk_init(text[],text,boolean,integer,boolean,boolean) line 25 at SQL statement
 SQL statement "SELECT emaj._rlbk_init(p_groupNames, p_mark, p_isLoggedRlbk, 1, p_multiGroup, p_isAlterGroupAllowed)"
 PL/pgSQL function emaj._rlbk_groups(text[],text,boolean,boolean,boolean) line 26 at SQL statement
 SQL statement "SELECT *
@@ -378,7 +378,7 @@ CONTEXT:  PL/pgSQL function emaj._check_mark_name(text[],text,text) line 59 at R
 SQL statement "SELECT emaj._check_mark_name(p_groupNames := p_groupNames, p_mark := p_mark, p_checkList := 'ACTIVE')"
 PL/pgSQL function emaj._rlbk_check(text[],text,boolean,boolean) line 21 at SQL statement
 SQL statement "SELECT emaj._rlbk_check(p_groupNames, p_mark, p_isAlterGroupAllowed, FALSE)"
-PL/pgSQL function emaj._rlbk_init(text[],text,boolean,integer,boolean,boolean) line 23 at SQL statement
+PL/pgSQL function emaj._rlbk_init(text[],text,boolean,integer,boolean,boolean) line 25 at SQL statement
 SQL statement "SELECT emaj._rlbk_init(p_groupNames, p_mark, p_isLoggedRlbk, 1, p_multiGroup, p_isAlterGroupAllowed)"
 PL/pgSQL function emaj._rlbk_groups(text[],text,boolean,boolean,boolean) line 26 at SQL statement
 SQL statement "SELECT *
@@ -390,7 +390,7 @@ CONTEXT:  PL/pgSQL function emaj._check_mark_name(text[],text,text) line 61 at R
 SQL statement "SELECT emaj._check_mark_name(p_groupNames := p_groupNames, p_mark := p_mark, p_checkList := 'ACTIVE')"
 PL/pgSQL function emaj._rlbk_check(text[],text,boolean,boolean) line 21 at SQL statement
 SQL statement "SELECT emaj._rlbk_check(p_groupNames, p_mark, p_isAlterGroupAllowed, FALSE)"
-PL/pgSQL function emaj._rlbk_init(text[],text,boolean,integer,boolean,boolean) line 23 at SQL statement
+PL/pgSQL function emaj._rlbk_init(text[],text,boolean,integer,boolean,boolean) line 25 at SQL statement
 SQL statement "SELECT emaj._rlbk_init(p_groupNames, p_mark, p_isLoggedRlbk, 1, p_multiGroup, p_isAlterGroupAllowed)"
 PL/pgSQL function emaj._rlbk_groups(text[],text,boolean,boolean,boolean) line 26 at SQL statement
 SQL statement "SELECT *
@@ -402,7 +402,7 @@ CONTEXT:  PL/pgSQL function emaj._check_mark_name(text[],text,text) line 61 at R
 SQL statement "SELECT emaj._check_mark_name(p_groupNames := p_groupNames, p_mark := p_mark, p_checkList := 'ACTIVE')"
 PL/pgSQL function emaj._rlbk_check(text[],text,boolean,boolean) line 21 at SQL statement
 SQL statement "SELECT emaj._rlbk_check(p_groupNames, p_mark, p_isAlterGroupAllowed, FALSE)"
-PL/pgSQL function emaj._rlbk_init(text[],text,boolean,integer,boolean,boolean) line 23 at SQL statement
+PL/pgSQL function emaj._rlbk_init(text[],text,boolean,integer,boolean,boolean) line 25 at SQL statement
 SQL statement "SELECT emaj._rlbk_init(p_groupNames, p_mark, p_isLoggedRlbk, 1, p_multiGroup, p_isAlterGroupAllowed)"
 PL/pgSQL function emaj._rlbk_groups(text[],text,boolean,boolean,boolean) line 26 at SQL statement
 SQL statement "SELECT *
@@ -414,7 +414,7 @@ CONTEXT:  PL/pgSQL function emaj._check_mark_name(text[],text,text) line 61 at R
 SQL statement "SELECT emaj._check_mark_name(p_groupNames := p_groupNames, p_mark := p_mark, p_checkList := 'ACTIVE')"
 PL/pgSQL function emaj._rlbk_check(text[],text,boolean,boolean) line 21 at SQL statement
 SQL statement "SELECT emaj._rlbk_check(p_groupNames, p_mark, p_isAlterGroupAllowed, FALSE)"
-PL/pgSQL function emaj._rlbk_init(text[],text,boolean,integer,boolean,boolean) line 23 at SQL statement
+PL/pgSQL function emaj._rlbk_init(text[],text,boolean,integer,boolean,boolean) line 25 at SQL statement
 SQL statement "SELECT emaj._rlbk_init(p_groupNames, p_mark, p_isLoggedRlbk, 1, p_multiGroup, p_isAlterGroupAllowed)"
 PL/pgSQL function emaj._rlbk_groups(text[],text,boolean,boolean,boolean) line 26 at SQL statement
 SQL statement "SELECT *
@@ -426,7 +426,7 @@ CONTEXT:  PL/pgSQL function emaj._check_mark_name(text[],text,text) line 61 at R
 SQL statement "SELECT emaj._check_mark_name(p_groupNames := p_groupNames, p_mark := p_mark, p_checkList := 'ACTIVE')"
 PL/pgSQL function emaj._rlbk_check(text[],text,boolean,boolean) line 21 at SQL statement
 SQL statement "SELECT emaj._rlbk_check(p_groupNames, p_mark, p_isAlterGroupAllowed, FALSE)"
-PL/pgSQL function emaj._rlbk_init(text[],text,boolean,integer,boolean,boolean) line 23 at SQL statement
+PL/pgSQL function emaj._rlbk_init(text[],text,boolean,integer,boolean,boolean) line 25 at SQL statement
 SQL statement "SELECT emaj._rlbk_init(p_groupNames, p_mark, p_isLoggedRlbk, 1, p_multiGroup, p_isAlterGroupAllowed)"
 PL/pgSQL function emaj._rlbk_groups(text[],text,boolean,boolean,boolean) line 26 at SQL statement
 SQL statement "SELECT *
@@ -438,7 +438,7 @@ CONTEXT:  PL/pgSQL function emaj._check_mark_name(text[],text,text) line 59 at R
 SQL statement "SELECT emaj._check_mark_name(p_groupNames := p_groupNames, p_mark := p_mark, p_checkList := 'ACTIVE')"
 PL/pgSQL function emaj._rlbk_check(text[],text,boolean,boolean) line 21 at SQL statement
 SQL statement "SELECT emaj._rlbk_check(p_groupNames, p_mark, p_isAlterGroupAllowed, FALSE)"
-PL/pgSQL function emaj._rlbk_init(text[],text,boolean,integer,boolean,boolean) line 23 at SQL statement
+PL/pgSQL function emaj._rlbk_init(text[],text,boolean,integer,boolean,boolean) line 25 at SQL statement
 SQL statement "SELECT emaj._rlbk_init(p_groupNames, p_mark, p_isLoggedRlbk, 1, p_multiGroup, p_isAlterGroupAllowed)"
 PL/pgSQL function emaj._rlbk_groups(text[],text,boolean,boolean,boolean) line 26 at SQL statement
 SQL statement "SELECT *
@@ -451,7 +451,7 @@ CONTEXT:  PL/pgSQL function emaj._check_mark_name(text[],text,text) line 70 at R
 SQL statement "SELECT emaj._check_mark_name(p_groupNames := p_groupNames, p_mark := p_mark, p_checkList := 'ACTIVE')"
 PL/pgSQL function emaj._rlbk_check(text[],text,boolean,boolean) line 21 at SQL statement
 SQL statement "SELECT emaj._rlbk_check(p_groupNames, p_mark, p_isAlterGroupAllowed, FALSE)"
-PL/pgSQL function emaj._rlbk_init(text[],text,boolean,integer,boolean,boolean) line 23 at SQL statement
+PL/pgSQL function emaj._rlbk_init(text[],text,boolean,integer,boolean,boolean) line 25 at SQL statement
 SQL statement "SELECT emaj._rlbk_init(p_groupNames, p_mark, p_isLoggedRlbk, 1, p_multiGroup, p_isAlterGroupAllowed)"
 PL/pgSQL function emaj._rlbk_groups(text[],text,boolean,boolean,boolean) line 26 at SQL statement
 SQL statement "SELECT *
@@ -463,7 +463,7 @@ CONTEXT:  PL/pgSQL function emaj._check_mark_name(text[],text,text) line 38 at R
 SQL statement "SELECT emaj._check_mark_name(p_groupNames := p_groupNames, p_mark := p_mark, p_checkList := 'ACTIVE')"
 PL/pgSQL function emaj._rlbk_check(text[],text,boolean,boolean) line 21 at SQL statement
 SQL statement "SELECT emaj._rlbk_check(p_groupNames, p_mark, p_isAlterGroupAllowed, FALSE)"
-PL/pgSQL function emaj._rlbk_init(text[],text,boolean,integer,boolean,boolean) line 23 at SQL statement
+PL/pgSQL function emaj._rlbk_init(text[],text,boolean,integer,boolean,boolean) line 25 at SQL statement
 SQL statement "SELECT emaj._rlbk_init(p_groupNames, p_mark, p_isLoggedRlbk, 1, p_multiGroup, p_isAlterGroupAllowed)"
 PL/pgSQL function emaj._rlbk_groups(text[],text,boolean,boolean,boolean) line 26 at SQL statement
 SQL statement "SELECT *
@@ -483,7 +483,7 @@ SQL statement "SELECT emaj._check_group_names(p_groupNames := p_groupNames, p_ma
                                      p_checkList := 'LOGGING,ROLLBACKABLE,UNPROTECTED')"
 PL/pgSQL function emaj._rlbk_check(text[],text,boolean,boolean) line 16 at SQL statement
 SQL statement "SELECT emaj._rlbk_check(p_groupNames, p_mark, p_isAlterGroupAllowed, FALSE)"
-PL/pgSQL function emaj._rlbk_init(text[],text,boolean,integer,boolean,boolean) line 23 at SQL statement
+PL/pgSQL function emaj._rlbk_init(text[],text,boolean,integer,boolean,boolean) line 25 at SQL statement
 SQL statement "SELECT emaj._rlbk_init(p_groupNames, p_mark, p_isLoggedRlbk, 1, p_multiGroup, p_isAlterGroupAllowed)"
 PL/pgSQL function emaj._rlbk_groups(text[],text,boolean,boolean,boolean) line 26 at SQL statement
 SQL statement "SELECT *
@@ -496,7 +496,7 @@ SQL statement "SELECT emaj._check_group_names(p_groupNames := p_groupNames, p_ma
                                      p_checkList := 'LOGGING,ROLLBACKABLE,UNPROTECTED')"
 PL/pgSQL function emaj._rlbk_check(text[],text,boolean,boolean) line 16 at SQL statement
 SQL statement "SELECT emaj._rlbk_check(p_groupNames, p_mark, p_isAlterGroupAllowed, FALSE)"
-PL/pgSQL function emaj._rlbk_init(text[],text,boolean,integer,boolean,boolean) line 23 at SQL statement
+PL/pgSQL function emaj._rlbk_init(text[],text,boolean,integer,boolean,boolean) line 25 at SQL statement
 SQL statement "SELECT emaj._rlbk_init(p_groupNames, p_mark, p_isLoggedRlbk, 1, p_multiGroup, p_isAlterGroupAllowed)"
 PL/pgSQL function emaj._rlbk_groups(text[],text,boolean,boolean,boolean) line 26 at SQL statement
 SQL statement "SELECT *
@@ -534,7 +534,7 @@ CONTEXT:  PL/pgSQL function emaj._check_mark_name(text[],text,text) line 81 at R
 SQL statement "SELECT emaj._check_mark_name(p_groupNames := p_groupNames, p_mark := p_mark, p_checkList := 'ACTIVE')"
 PL/pgSQL function emaj._rlbk_check(text[],text,boolean,boolean) line 21 at SQL statement
 SQL statement "SELECT emaj._rlbk_check(p_groupNames, p_mark, p_isAlterGroupAllowed, FALSE)"
-PL/pgSQL function emaj._rlbk_init(text[],text,boolean,integer,boolean,boolean) line 23 at SQL statement
+PL/pgSQL function emaj._rlbk_init(text[],text,boolean,integer,boolean,boolean) line 25 at SQL statement
 SQL statement "SELECT emaj._rlbk_init(p_groupNames, p_mark, p_isLoggedRlbk, 1, p_multiGroup, p_isAlterGroupAllowed)"
 PL/pgSQL function emaj._rlbk_groups(text[],text,boolean,boolean,boolean) line 26 at SQL statement
 SQL statement "SELECT *
@@ -571,7 +571,7 @@ begin;
 ERROR:  _rlbk_check: Protected marks (Protected Mark 1, Protected Mark 2) for the group "myGroup1" block the rollback to the mark "Mark11".
 CONTEXT:  PL/pgSQL function emaj._rlbk_check(text[],text,boolean,boolean) line 41 at RAISE
 SQL statement "SELECT emaj._rlbk_check(p_groupNames, p_mark, p_isAlterGroupAllowed, FALSE)"
-PL/pgSQL function emaj._rlbk_init(text[],text,boolean,integer,boolean,boolean) line 23 at SQL statement
+PL/pgSQL function emaj._rlbk_init(text[],text,boolean,integer,boolean,boolean) line 25 at SQL statement
 SQL statement "SELECT emaj._rlbk_init(p_groupNames, p_mark, p_isLoggedRlbk, 1, p_multiGroup, p_isAlterGroupAllowed)"
 PL/pgSQL function emaj._rlbk_groups(text[],text,boolean,boolean,boolean) line 26 at SQL statement
 SQL statement "SELECT *
@@ -602,7 +602,7 @@ begin;
 ERROR:  _rlbk_check: Protected marks (Protected Mark 1) for the group "myGroup1" block the rollback to the mark "Common Mark 1".
 CONTEXT:  PL/pgSQL function emaj._rlbk_check(text[],text,boolean,boolean) line 41 at RAISE
 SQL statement "SELECT emaj._rlbk_check(p_groupNames, p_mark, p_isAlterGroupAllowed, FALSE)"
-PL/pgSQL function emaj._rlbk_init(text[],text,boolean,integer,boolean,boolean) line 23 at SQL statement
+PL/pgSQL function emaj._rlbk_init(text[],text,boolean,integer,boolean,boolean) line 25 at SQL statement
 SQL statement "SELECT emaj._rlbk_init(p_groupNames, p_mark, p_isLoggedRlbk, 1, p_multiGroup, p_isAlterGroupAllowed)"
 PL/pgSQL function emaj._rlbk_groups(text[],text,boolean,boolean,boolean) line 26 at SQL statement
 SQL statement "SELECT *
@@ -621,7 +621,7 @@ begin;
 ERROR:  _rlbk_check: Protected marks (Different_Mark) for the group "myGroup1" block the rollback to the mark "Mark11".
 CONTEXT:  PL/pgSQL function emaj._rlbk_check(text[],text,boolean,boolean) line 41 at RAISE
 SQL statement "SELECT emaj._rlbk_check(p_groupNames, p_mark, p_isAlterGroupAllowed, FALSE)"
-PL/pgSQL function emaj._rlbk_init(text[],text,boolean,integer,boolean,boolean) line 23 at SQL statement
+PL/pgSQL function emaj._rlbk_init(text[],text,boolean,integer,boolean,boolean) line 25 at SQL statement
 SQL statement "SELECT emaj._rlbk_init(p_groupNames, p_mark, p_isLoggedRlbk, 1, p_multiGroup, p_isAlterGroupAllowed)"
 PL/pgSQL function emaj._rlbk_groups(text[],text,boolean,boolean,boolean) line 26 at SQL statement
 SQL statement "SELECT *
@@ -652,7 +652,7 @@ ERROR:  _verify_groups (1): In group "myGroup2", the table "myschema2"."myTbl3" 
 CONTEXT:  PL/pgSQL function emaj._verify_groups(text[],boolean) line 39 at RAISE
 SQL statement "SELECT 0
         FROM emaj._verify_groups(p_groupNames, TRUE)"
-PL/pgSQL function emaj._rlbk_init(text[],text,boolean,integer,boolean,boolean) line 26 at PERFORM
+PL/pgSQL function emaj._rlbk_init(text[],text,boolean,integer,boolean,boolean) line 28 at PERFORM
 SQL statement "SELECT emaj._rlbk_init(p_groupNames, p_mark, p_isLoggedRlbk, 1, p_multiGroup, p_isAlterGroupAllowed)"
 PL/pgSQL function emaj._rlbk_groups(text[],text,boolean,boolean,boolean) line 26 at SQL statement
 SQL statement "SELECT *
@@ -666,7 +666,7 @@ ERROR:  _verify_groups (1): In group "myGroup2", the table "myschema2"."myTbl3" 
 CONTEXT:  PL/pgSQL function emaj._verify_groups(text[],boolean) line 39 at RAISE
 SQL statement "SELECT 0
         FROM emaj._verify_groups(p_groupNames, TRUE)"
-PL/pgSQL function emaj._rlbk_init(text[],text,boolean,integer,boolean,boolean) line 26 at PERFORM
+PL/pgSQL function emaj._rlbk_init(text[],text,boolean,integer,boolean,boolean) line 28 at PERFORM
 SQL statement "SELECT emaj._rlbk_init(p_groupNames, p_mark, p_isLoggedRlbk, 1, p_multiGroup, p_isAlterGroupAllowed)"
 PL/pgSQL function emaj._rlbk_groups(text[],text,boolean,boolean,boolean) line 26 at SQL statement
 SQL statement "SELECT *
@@ -767,7 +767,7 @@ ERROR:  _verify_groups (1): In group "myGroup2", the table "myschema2"."myTbl3" 
 CONTEXT:  PL/pgSQL function emaj._verify_groups(text[],boolean) line 39 at RAISE
 SQL statement "SELECT 0
         FROM emaj._verify_groups(p_groupNames, TRUE)"
-PL/pgSQL function emaj._rlbk_init(text[],text,boolean,integer,boolean,boolean) line 26 at PERFORM
+PL/pgSQL function emaj._rlbk_init(text[],text,boolean,integer,boolean,boolean) line 28 at PERFORM
 SQL statement "SELECT emaj._rlbk_init(p_groupNames, p_mark, p_isLoggedRlbk, 1, p_multiGroup, p_isAlterGroupAllowed)"
 PL/pgSQL function emaj._rlbk_groups(text[],text,boolean,boolean,boolean) line 26 at SQL statement
 SQL statement "SELECT *
@@ -781,7 +781,7 @@ ERROR:  _verify_groups (1): In group "myGroup2", the table "myschema2"."myTbl3" 
 CONTEXT:  PL/pgSQL function emaj._verify_groups(text[],boolean) line 39 at RAISE
 SQL statement "SELECT 0
         FROM emaj._verify_groups(p_groupNames, TRUE)"
-PL/pgSQL function emaj._rlbk_init(text[],text,boolean,integer,boolean,boolean) line 26 at PERFORM
+PL/pgSQL function emaj._rlbk_init(text[],text,boolean,integer,boolean,boolean) line 28 at PERFORM
 SQL statement "SELECT emaj._rlbk_init(p_groupNames, p_mark, p_isLoggedRlbk, 1, p_multiGroup, p_isAlterGroupAllowed)"
 PL/pgSQL function emaj._rlbk_groups(text[],text,boolean,boolean,boolean) line 26 at SQL statement
 SQL statement "SELECT *
@@ -2053,29 +2053,29 @@ begin;
   insert into emaj.emaj_time_stamp (time_id, time_clock_timestamp) overriding system value
     values (-2, '2000-01-01 01:00:00');
   insert into emaj.emaj_rlbk (rlbk_id, rlbk_groups, rlbk_mark, rlbk_mark_time_id, rlbk_time_id, rlbk_is_logged, rlbk_is_alter_group_allowed, 
-             rlbk_nb_session, rlbk_nb_table, rlbk_nb_sequence, rlbk_eff_nb_table, rlbk_eff_nb_sequence, rlbk_status)
+             rlbk_nb_session, rlbk_nb_table, rlbk_nb_sequence, rlbk_eff_nb_table, rlbk_eff_nb_sequence, rlbk_start_datetime, rlbk_status)
     values (1232,array['group1232'],'mark1232',-2,-1,true,false,
-             1,5,4,3,1,'EXECUTING');
+             1,5,4,3,1,now()-'0.1 seconds'::interval,'EXECUTING');
   insert into emaj.emaj_rlbk_plan (rlbp_rlbk_id, rlbp_step, rlbp_schema, rlbp_table, rlbp_object,
              rlbp_estimated_duration, rlbp_estimated_quantity, rlbp_start_datetime, rlbp_duration)
     values (1232, 'RLBK_TABLE','schema','t1','','50 seconds'::interval,null,null,null),
            (1232, 'RLBK_TABLE','schema','t2','','30 seconds'::interval,null,null,null),
            (1232, 'RLBK_TABLE','schema','t3','','20 seconds'::interval,null,null,null),
            (1232, 'CTRL+DBLINK','',     '',  '','0.3 second'::interval,3,   null,null);
-  select rlbk_id, rlbk_status, rlbk_remaining, rlbk_completion_pct from emaj._rollback_activity();
- rlbk_id | rlbk_status |  rlbk_remaining   | rlbk_completion_pct 
----------+-------------+-------------------+---------------------
-    1232 | EXECUTING   | @ 1 min 40.3 secs |                   0
+  select rlbk_id, rlbk_status, date_trunc('second',rlbk_remaining) as remaining, rlbk_completion_pct from emaj._rollback_activity();
+ rlbk_id | rlbk_status |    remaining    | rlbk_completion_pct 
+---------+-------------+-----------------+---------------------
+    1232 | EXECUTING   | @ 1 min 40 secs |                   0
 (1 row)
 
 -- the first RLBK_TABLE has started, but the elapse of the step is not yet > estimated duration 
-  update emaj.emaj_time_stamp set time_tx_timestamp = now() - '11 seconds'::interval where time_id = -1;
+  update emaj.emaj_rlbk set rlbk_start_datetime = now() - '11 seconds'::interval where rlbk_id = 1232;
   update emaj.emaj_rlbk_plan set rlbp_start_datetime = now() - '11 seconds'::interval
     where rlbp_rlbk_id = 1232 and rlbp_table = 't1';
-  select rlbk_id, rlbk_status, rlbk_remaining, rlbk_completion_pct from emaj._rollback_activity();
- rlbk_id | rlbk_status |  rlbk_remaining   | rlbk_completion_pct 
----------+-------------+-------------------+---------------------
-    1232 | EXECUTING   | @ 1 min 29.2 secs |                  11
+  select rlbk_id, rlbk_status, date_trunc('second',rlbk_remaining) as remaining, rlbk_completion_pct from emaj._rollback_activity();
+ rlbk_id | rlbk_status |    remaining    | rlbk_completion_pct 
+---------+-------------+-----------------+---------------------
+    1232 | EXECUTING   | @ 1 min 29 secs |                  11
 (1 row)
 
   select 1.0 - ((20.0 + 30.0)+(50.0 - 11.0) + 2*0.3/3) / (11.1 + (20.0 + 30.0)+(50.0 - 11.0) + 2*0.3/3); -- the completion % should be 11%
@@ -2085,14 +2085,14 @@ begin;
 (1 row)
 
 -- the first RLBK_TABLE is completed, and the step duration < the estimated duration 
-  update emaj.emaj_time_stamp set time_tx_timestamp = now() - '45.1 seconds'::interval where time_id = -1;
+  update emaj.emaj_rlbk set rlbk_start_datetime = now() - '45.1 seconds'::interval where rlbk_id = 1232;
   update emaj.emaj_rlbk_plan set rlbp_start_datetime = now() - '45 seconds'::interval,
                                  rlbp_duration = '45 seconds'::interval
     where rlbp_rlbk_id = 1232 and rlbp_table = 't1';
-  select rlbk_id, rlbk_status, rlbk_remaining, rlbk_completion_pct from emaj._rollback_activity();
- rlbk_id | rlbk_status | rlbk_remaining | rlbk_completion_pct 
----------+-------------+----------------+---------------------
-    1232 | EXECUTING   | @ 50.2 secs    |                  47
+  select rlbk_id, rlbk_status, date_trunc('second',rlbk_remaining) as remaining, rlbk_completion_pct from emaj._rollback_activity();
+ rlbk_id | rlbk_status | remaining | rlbk_completion_pct 
+---------+-------------+-----------+---------------------
+    1232 | EXECUTING   | @ 50 secs |                  47
 (1 row)
 
   select 1.0 - (20.0 + 30.0 + 2*0.3/3) / (45.1 + (20.0 + 30.0) + 2*0.3/3);  -- the completion % should be 47%
@@ -2102,13 +2102,13 @@ begin;
 (1 row)
 
 -- the second RLBK_TABLE has started, but the elapse of the step is not yet > estimated duration 
-  update emaj.emaj_time_stamp set time_tx_timestamp = now() - '73.1 seconds'::interval where time_id = -1;
+  update emaj.emaj_rlbk set rlbk_start_datetime = now() - '73.1 seconds'::interval where rlbk_id = 1232;
   update emaj.emaj_rlbk_plan set rlbp_start_datetime = now() - '28 seconds'::interval
     where rlbp_rlbk_id = 1232 and rlbp_table = 't2';
-  select rlbk_id, rlbk_status, rlbk_remaining, rlbk_completion_pct from emaj._rollback_activity();
- rlbk_id | rlbk_status | rlbk_remaining | rlbk_completion_pct 
----------+-------------+----------------+---------------------
-    1232 | EXECUTING   | @ 22.1 secs    |                  77
+  select rlbk_id, rlbk_status, date_trunc('second',rlbk_remaining) as remaining, rlbk_completion_pct from emaj._rollback_activity();
+ rlbk_id | rlbk_status | remaining | rlbk_completion_pct 
+---------+-------------+-----------+---------------------
+    1232 | EXECUTING   | @ 22 secs |                  77
 (1 row)
 
   select 1.0 - (20.0 + (30.0 - 28.0) + 1*0.3/3) / (73.1 + (20.0 + (30.0 - 28.0) + 1*0.3/3));  -- the completion % should be 77%
@@ -2118,13 +2118,13 @@ begin;
 (1 row)
 
 -- the second RLBK_TABLE has started, but the elapse of the step is already > estimated duration 
-  update emaj.emaj_time_stamp set time_tx_timestamp = now() - '85.1 seconds'::interval where time_id = -1;
+  update emaj.emaj_rlbk set rlbk_start_datetime = now() - '85.1 seconds'::interval where rlbk_id = 1232;
   update emaj.emaj_rlbk_plan set rlbp_start_datetime = now() - '40 seconds'::interval
     where rlbp_rlbk_id = 1232 and rlbp_table = 't2';
-  select rlbk_id, rlbk_status, rlbk_remaining, rlbk_completion_pct from emaj._rollback_activity();
- rlbk_id | rlbk_status | rlbk_remaining | rlbk_completion_pct 
----------+-------------+----------------+---------------------
-    1232 | EXECUTING   | @ 20.1 secs    |                  81
+  select rlbk_id, rlbk_status, date_trunc('second',rlbk_remaining) as remaining, rlbk_completion_pct from emaj._rollback_activity();
+ rlbk_id | rlbk_status | remaining | rlbk_completion_pct 
+---------+-------------+-----------+---------------------
+    1232 | EXECUTING   | @ 20 secs |                  81
 (1 row)
 
   select 1.0 - (20.0 + 1*0.3/3) / (85.1 + (20.0 + 1*0.3/3));  -- the completion % should be 81%
@@ -2134,13 +2134,13 @@ begin;
 (1 row)
 
 -- the second RLBK_TABLE has started, but the elapse of the step is already > estimated duration 
-  update emaj.emaj_time_stamp set time_tx_timestamp = now() - '105.1 seconds'::interval where time_id = -1;
+  update emaj.emaj_rlbk set rlbk_start_datetime = now() - '105.1 seconds'::interval where rlbk_id = 1232;
   update emaj.emaj_rlbk_plan set rlbp_start_datetime = now() - '60 seconds'::interval
     where rlbp_rlbk_id = 1232 and rlbp_table = 't2';
-  select rlbk_id, rlbk_status, rlbk_remaining, rlbk_completion_pct from emaj._rollback_activity();
- rlbk_id | rlbk_status | rlbk_remaining | rlbk_completion_pct 
----------+-------------+----------------+---------------------
-    1232 | EXECUTING   | @ 20.1 secs    |                  84
+  select rlbk_id, rlbk_status, date_trunc('second',rlbk_remaining) as remaining, rlbk_completion_pct from emaj._rollback_activity();
+ rlbk_id | rlbk_status | remaining | rlbk_completion_pct 
+---------+-------------+-----------+---------------------
+    1232 | EXECUTING   | @ 20 secs |                  84
 (1 row)
 
   select 1.0 - (20.0 + 1*0.3/3) / (105.1 + (20.0 + 1*0.3/3 ));  -- the completion % should be 84%
@@ -2149,15 +2149,15 @@ begin;
  0.83945686900958466454
 (1 row)
 
--- the second RLBK_TABLE is completed, and the step duration > the estimated duration 
-  update emaj.emaj_time_stamp set time_tx_timestamp = now() - '110.1 seconds'::interval where time_id = -1;
+-- the second RLBK_TABLE is completed, and the step duration > the estimated duration
+  update emaj.emaj_rlbk set rlbk_start_datetime = now() - '110.1 seconds'::interval where rlbk_id = 1232;
   update emaj.emaj_rlbk_plan set rlbp_start_datetime = now() - '65 seconds'::interval,
                                  rlbp_duration = '65 seconds'::interval
     where rlbp_rlbk_id = 1232 and rlbp_table = 't2';
-  select rlbk_id, rlbk_status, rlbk_remaining, rlbk_completion_pct from emaj._rollback_activity();
- rlbk_id | rlbk_status | rlbk_remaining | rlbk_completion_pct 
----------+-------------+----------------+---------------------
-    1232 | EXECUTING   | @ 20.1 secs    |                  85
+  select rlbk_id, rlbk_status, date_trunc('second',rlbk_remaining) as remaining, rlbk_completion_pct from emaj._rollback_activity();
+ rlbk_id | rlbk_status | remaining | rlbk_completion_pct 
+---------+-------------+-----------+---------------------
+    1232 | EXECUTING   | @ 20 secs |                  85
 (1 row)
 
   select 1.0 - (20.0 + 1*0.3/3) / (110.1 + (20.0 + 1*0.3/3));  -- the completion % should be 85%
@@ -2167,19 +2167,19 @@ begin;
 (1 row)
 
 -- the third RLBK_TABLE has started, and is almost completed 
-  update emaj.emaj_time_stamp set time_tx_timestamp = now() - '124.1 seconds'::interval where time_id = -1;
-  update emaj.emaj_rlbk_plan set rlbp_start_datetime = now() - '19 seconds'::interval
+  update emaj.emaj_rlbk set rlbk_start_datetime = now() - '124.1 seconds'::interval where rlbk_id = 1232;
+  update emaj.emaj_rlbk_plan set rlbp_start_datetime = now() - '18.8 seconds'::interval
     where rlbp_rlbk_id = 1232 and rlbp_table = 't3';
-  select rlbk_id, rlbk_status, rlbk_remaining, rlbk_completion_pct from emaj._rollback_activity();
- rlbk_id | rlbk_status | rlbk_remaining | rlbk_completion_pct 
----------+-------------+----------------+---------------------
-    1232 | EXECUTING   | @ 1 sec        |                  99
+  select rlbk_id, rlbk_status, date_trunc('second',rlbk_remaining) as remaining, rlbk_completion_pct from emaj._rollback_activity();
+ rlbk_id | rlbk_status | remaining | rlbk_completion_pct 
+---------+-------------+-----------+---------------------
+    1232 | EXECUTING   | @ 1 sec   |                  99
 (1 row)
 
-  select 1.0 - ((20.0 - 19.0)) / (124.1 + (20.0 - 19.0));  -- the completion % should be 99%
+  select 1.0 - ((20.0 - 18.8)) / (124.1 + (20.0 - 18.8));  -- the completion % should be 99%
         ?column?        
 ------------------------
- 0.99200639488409272582
+ 0.99042298483639265762
 (1 row)
 
 rollback;
@@ -2190,18 +2190,19 @@ begin;
   insert into emaj.emaj_time_stamp (time_id, time_clock_timestamp) overriding system value
     values (-2, '2000-01-01 01:00:00');
   insert into emaj.emaj_rlbk (rlbk_id, rlbk_groups, rlbk_mark, rlbk_mark_time_id, rlbk_time_id, rlbk_is_logged, rlbk_is_alter_group_allowed, 
-             rlbk_nb_session, rlbk_nb_table, rlbk_nb_sequence, rlbk_eff_nb_table, rlbk_eff_nb_sequence, rlbk_status)
+             rlbk_nb_session, rlbk_nb_table, rlbk_nb_sequence, rlbk_eff_nb_table, rlbk_eff_nb_sequence, rlbk_start_datetime, rlbk_end_planning_datetime, rlbk_status)
     values (1233,array['group1233'],'mark1233',-2,-1,true,false,
-             1,5,4,3,1,'LOCKING');
+             1,5,4,3,1,now()-'2 minutes'::interval,now()-'1 minutes 59 second'::interval,'LOCKING');
   insert into emaj.emaj_rlbk_plan (rlbp_rlbk_id, rlbp_step, rlbp_schema, rlbp_table, rlbp_object,
              rlbp_estimated_duration, rlbp_start_datetime, rlbp_duration)
     values (1233, 'LOCK_TABLE','schema','t1','',null,null,null),
            (1233, 'LOCK_TABLE','schema','t2','',null,null,null),
            (1233, 'LOCK_TABLE','schema','t3','',null,null,null);
-  select rlbk_id, rlbk_status, rlbk_elapse, rlbk_remaining, rlbk_completion_pct from emaj._rollback_activity();
- rlbk_id | rlbk_status | rlbk_elapse | rlbk_remaining | rlbk_completion_pct 
----------+-------------+-------------+----------------+---------------------
-    1233 | LOCKING     | @ 2 mins    | @ 0            |                   0
+  select rlbk_id, rlbk_status, rlbk_planning_duration, date_trunc('second',rlbk_elapse) as elapse, date_trunc('second',rlbk_remaining) as remaining, rlbk_completion_pct
+    from emaj._rollback_activity();
+ rlbk_id | rlbk_status | rlbk_planning_duration |  elapse  | remaining | rlbk_completion_pct 
+---------+-------------+------------------------+----------+-----------+---------------------
+    1233 | LOCKING     | @ 1 sec                | @ 2 mins | @ 0       |                   0
 (1 row)
 
 -- the rollback operation in LOCKING state now has RLBK_TABLE steps
@@ -2210,26 +2211,26 @@ begin;
     values (1233, 'RLBK_TABLE','schema','t1','','0:20:00'::interval,null,null),
            (1233, 'RLBK_TABLE','schema','t2','','0:02:00'::interval,null,null),
            (1233, 'RLBK_TABLE','schema','t3','','0:00:20'::interval,null,null);
-  select rlbk_id, rlbk_status, rlbk_elapse, rlbk_remaining, rlbk_completion_pct from emaj._rollback_activity();
- rlbk_id | rlbk_status | rlbk_elapse |  rlbk_remaining   | rlbk_completion_pct 
----------+-------------+-------------+-------------------+---------------------
-    1233 | LOCKING     | @ 2 mins    | @ 22 mins 20 secs |                   0
+  select rlbk_id, rlbk_status, date_trunc('second',rlbk_elapse) as elapse, date_trunc('second',rlbk_remaining) as remaining, rlbk_completion_pct from emaj._rollback_activity();
+ rlbk_id | rlbk_status |  elapse  |     remaining     | rlbk_completion_pct 
+---------+-------------+----------+-------------------+---------------------
+    1233 | LOCKING     | @ 2 mins | @ 22 mins 20 secs |                   0
 (1 row)
 
 -- +1 rollback operation in PLANNING state
   insert into emaj.emaj_time_stamp (time_id, time_tx_timestamp) overriding system value
     values (-3, now()-'1 minute'::interval);
   insert into emaj.emaj_rlbk (rlbk_id, rlbk_groups, rlbk_mark, rlbk_mark_time_id, rlbk_time_id, rlbk_is_logged, rlbk_is_alter_group_allowed, 
-             rlbk_nb_session, rlbk_nb_table, rlbk_nb_sequence, rlbk_eff_nb_table, rlbk_eff_nb_sequence, rlbk_status)
+             rlbk_nb_session, rlbk_nb_table, rlbk_nb_sequence, rlbk_eff_nb_table, rlbk_eff_nb_sequence, rlbk_start_datetime, rlbk_status)
     values (1234,array['group1234'],'mark1234',-2,-3,true,false,
-             1,5,4,3,1,'PLANNING');
-  select rlbk_id, rlbk_groups, rlbk_mark, rlbk_mark_datetime, rlbk_is_logged, rlbk_nb_session, rlbk_nb_table,
-         rlbk_nb_sequence, rlbk_eff_nb_table, rlbk_eff_nb_sequence, rlbk_status, rlbk_elapse, rlbk_remaining, rlbk_completion_pct 
+             1,5,4,3,1,now()-'1 minute'::interval,'PLANNING');
+  select rlbk_id, rlbk_groups, rlbk_mark, rlbk_mark_datetime, rlbk_is_logged, rlbk_nb_session, rlbk_nb_table, rlbk_nb_sequence,
+         rlbk_eff_nb_table, rlbk_eff_nb_sequence, rlbk_status, date_trunc('second',rlbk_elapse) as elapse, date_trunc('second',rlbk_remaining) as remaining, rlbk_completion_pct 
     from emaj._rollback_activity();
- rlbk_id | rlbk_groups | rlbk_mark |      rlbk_mark_datetime      | rlbk_is_logged | rlbk_nb_session | rlbk_nb_table | rlbk_nb_sequence | rlbk_eff_nb_table | rlbk_eff_nb_sequence | rlbk_status | rlbk_elapse |  rlbk_remaining   | rlbk_completion_pct 
----------+-------------+-----------+------------------------------+----------------+-----------------+---------------+------------------+-------------------+----------------------+-------------+-------------+-------------------+---------------------
-    1233 | {group1233} | mark1233  | Sat Jan 01 01:00:00 2000 PST | t              |               1 |             5 |                4 |                 3 |                    1 | LOCKING     | @ 2 mins    | @ 22 mins 20 secs |                   0
-    1234 | {group1234} | mark1234  | Sat Jan 01 01:00:00 2000 PST | t              |               1 |             5 |                4 |                 3 |                    1 | PLANNING    | @ 1 min     |                   |                   0
+ rlbk_id | rlbk_groups | rlbk_mark |      rlbk_mark_datetime      | rlbk_is_logged | rlbk_nb_session | rlbk_nb_table | rlbk_nb_sequence | rlbk_eff_nb_table | rlbk_eff_nb_sequence | rlbk_status |  elapse  |     remaining     | rlbk_completion_pct 
+---------+-------------+-----------+------------------------------+----------------+-----------------+---------------+------------------+-------------------+----------------------+-------------+----------+-------------------+---------------------
+    1233 | {group1233} | mark1233  | Sat Jan 01 01:00:00 2000 PST | t              |               1 |             5 |                4 |                 3 |                    1 | LOCKING     | @ 2 mins | @ 22 mins 20 secs |                   0
+    1234 | {group1234} | mark1234  | Sat Jan 01 01:00:00 2000 PST | t              |               1 |             5 |                4 |                 3 |                    1 | PLANNING    | @ 1 min  |                   |                   0
 (2 rows)
 
 rollback;
