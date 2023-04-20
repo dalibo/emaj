@@ -217,11 +217,13 @@ Groups level functions
 | <emaj_logged_rollback_group>`                    | | mark TEXT,                  |                                       |
 |                                                  | | [is.alter.group.allowed     |                                       |
 |                                                  | |  BOOLEAN]                   |                                       |
+|                                                  | | [comment TEXT]              |                                       |
 +--------------------------------------------------+-------------------------------+---------------------------------------+
 | :doc:`emaj_logged_rollback_groups                | | groups.array TEXT[],        | SETOF (severity TEXT, message TEXT)   |
 | <multiGroupsFunctions>`                          | | mark TEXT,                  |                                       |
 |                                                  | | [is.alter.group.allowed     |                                       |
 |                                                  | |  BOOLEAN]                   |                                       |
+|                                                  | | [comment TEXT]              |                                       |
 +--------------------------------------------------+-------------------------------+---------------------------------------+
 | :ref:`emaj_protect_group                         | | group TEXT                  | 0/1 INT                               |
 | <emaj_protect_group>`                            |                               |                                       |
@@ -240,11 +242,13 @@ Groups level functions
 | <emaj_rollback_group>`                           | | mark TEXT,                  |                                       |
 |                                                  | | [is_alter_group_allowed     |                                       |
 |                                                  | |  BOOLEAN]                   |                                       |
+|                                                  | | [comment TEXT]              |                                       |
 +--------------------------------------------------+-------------------------------+---------------------------------------+
 | :doc:`emaj_rollback_groups                       | | groups.array TEXT[],        | SETOF (severity TEXT, message TEXT)   |
 | <multiGroupsFunctions>`                          | | mark TEXT,                  |                                       |
 |                                                  | | [is_alter_group_allowed     |                                       |
 |                                                  | |  BOOLEAN]                   |                                       |
+|                                                  | | [comment TEXT]              |                                       |
 +--------------------------------------------------+-------------------------------+---------------------------------------+
 | :ref:`emaj_set_mark_group                        | | group TEXT,                 | #.tables.and.seq INT                  |
 | <emaj_set_mark_group>`                           | | [mark TEXT]                 |                                       |

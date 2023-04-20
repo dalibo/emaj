@@ -474,6 +474,7 @@ Tablespace: "tspemaj"
  rlbk_time_id                | bigint                   |           |          | 
  rlbk_is_logged              | boolean                  |           | not null | 
  rlbk_is_alter_group_allowed | boolean                  |           |          | 
+ rlbk_comment                | text                     |           |          | 
  rlbk_nb_session             | integer                  |           | not null | 
  rlbk_nb_table               | integer                  |           |          | 
  rlbk_nb_sequence            | integer                  |           |          | 
@@ -615,6 +616,7 @@ Tablespace: "tspemaj"
  rlbk_mark_datetime          | timestamp with time zone |           |          | 
  rlbk_is_logged              | boolean                  |           |          | 
  rlbk_is_alter_group_allowed | boolean                  |           |          | 
+ rlbk_comment                | text                     |           |          | 
  rlbk_nb_session             | integer                  |           |          | 
  rlbk_nb_table               | integer                  |           |          | 
  rlbk_nb_sequence            | integer                  |           |          | 

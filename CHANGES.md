@@ -3,6 +3,8 @@ E-Maj - Change log
 <devel>
 ------
 ###Enhancements:###
+  * When launching an E-Maj rollback, allow to set a comment about the
+    operation.
   * Record the E-Maj rollback start, initialization end and locking end
     timestamps into the emaj_rlbk table and let the emaj_rollback_activity()
     function report both rollback planning and locking phases duration.

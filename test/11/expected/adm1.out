@@ -2124,8 +2124,8 @@ insert into myTbl1 values (1, 'Step 6', E'\\001'::bytea);
 insert into myTbl4 values (11,'',1,1,'Step 6');
 insert into myTbl4 values (12,'',1,1,'Step 6');
 --
--- for an equivalent of "select * from emaj.emaj_logged_rollback_group('myGroup1','M4',true);"
-select * from emaj._rlbk_async(emaj._rlbk_init(array['myGroup1'], 'M4', true, 1, false, true), false);
+-- for an equivalent of "select * from emaj.emaj_logged_rollback_group('myGroup1','M4',true,'my comment');"
+select * from emaj._rlbk_async(emaj._rlbk_init(array['myGroup1'], 'M4', true, 1, false, true, 'my comment'), false);
  rlbk_severity |              rlbk_message              
 ---------------+----------------------------------------
  Notice        | 3 / 5 tables effectively processed.
@@ -2133,13 +2133,13 @@ select * from emaj._rlbk_async(emaj._rlbk_init(array['myGroup1'], 'M4', true, 1,
 (2 rows)
 
 -- and check the rollback result
-select rlbk_id, rlbk_groups, rlbk_mark, rlbk_mark_time_id, rlbk_time_id, rlbk_is_logged, rlbk_is_alter_group_allowed, 
+select rlbk_id, rlbk_groups, rlbk_mark, rlbk_mark_time_id, rlbk_time_id, rlbk_is_logged, rlbk_is_alter_group_allowed, rlbk_comment,
        rlbk_nb_session, rlbk_nb_table, rlbk_nb_sequence, rlbk_eff_nb_table, rlbk_eff_nb_sequence, rlbk_status, rlbk_begin_hist_id,
        rlbk_dblink_schema, rlbk_is_dblink_used, rlbk_messages
  from emaj.emaj_rlbk order by rlbk_id desc limit 1;
- rlbk_id | rlbk_groups | rlbk_mark | rlbk_mark_time_id | rlbk_time_id | rlbk_is_logged | rlbk_is_alter_group_allowed | rlbk_nb_session | rlbk_nb_table | rlbk_nb_sequence | rlbk_eff_nb_table | rlbk_eff_nb_sequence | rlbk_status | rlbk_begin_hist_id | rlbk_dblink_schema | rlbk_is_dblink_used |                                          rlbk_messages                                           
----------+-------------+-----------+-------------------+--------------+----------------+-----------------------------+-----------------+---------------+------------------+-------------------+----------------------+-------------+--------------------+--------------------+---------------------+--------------------------------------------------------------------------------------------------
-   12601 | {myGroup1}  | M4        |             12401 |        12601 | t              | t                           |               1 |             5 |                2 |                 3 |                    0 | COMPLETED   |              12613 | public             | t                   | {"Notice: 3 / 5 tables effectively processed.","Notice: 0 / 2 sequences effectively processed."}
+ rlbk_id | rlbk_groups | rlbk_mark | rlbk_mark_time_id | rlbk_time_id | rlbk_is_logged | rlbk_is_alter_group_allowed | rlbk_comment | rlbk_nb_session | rlbk_nb_table | rlbk_nb_sequence | rlbk_eff_nb_table | rlbk_eff_nb_sequence | rlbk_status | rlbk_begin_hist_id | rlbk_dblink_schema | rlbk_is_dblink_used |                                          rlbk_messages                                           
+---------+-------------+-----------+-------------------+--------------+----------------+-----------------------------+--------------+-----------------+---------------+------------------+-------------------+----------------------+-------------+--------------------+--------------------+---------------------+--------------------------------------------------------------------------------------------------
+   12601 | {myGroup1}  | M4        |             12401 |        12601 | t              | t                           | my comment   |               1 |             5 |                2 |                 3 |                    0 | COMPLETED   |              12613 | public             | t                   | {"Notice: 3 / 5 tables effectively processed.","Notice: 0 / 2 sequences effectively processed."}
 (1 row)
 
 -----------------------------
@@ -2859,8 +2859,8 @@ SQL statement "SELECT emaj._check_group_names(p_groupNames := p_groupNames, p_ma
 PL/pgSQL function emaj._estimate_rollback_groups(text[],boolean,text,boolean) line 18 at SQL statement
 PL/pgSQL function emaj.emaj_estimate_rollback_groups(text[],text,boolean) line 7 at RETURN
 select * from emaj.emaj_rollback_activity();
- rlbk_id | rlbk_groups | rlbk_mark | rlbk_mark_datetime | rlbk_is_logged | rlbk_is_alter_group_allowed | rlbk_nb_session | rlbk_nb_table | rlbk_nb_sequence | rlbk_eff_nb_table | rlbk_eff_nb_sequence | rlbk_status | rlbk_start_datetime | rlbk_planning_duration | rlbk_locking_duration | rlbk_elapse | rlbk_remaining | rlbk_completion_pct 
----------+-------------+-----------+--------------------+----------------+-----------------------------+-----------------+---------------+------------------+-------------------+----------------------+-------------+---------------------+------------------------+-----------------------+-------------+----------------+---------------------
+ rlbk_id | rlbk_groups | rlbk_mark | rlbk_mark_datetime | rlbk_is_logged | rlbk_is_alter_group_allowed | rlbk_comment | rlbk_nb_session | rlbk_nb_table | rlbk_nb_sequence | rlbk_eff_nb_table | rlbk_eff_nb_sequence | rlbk_status | rlbk_start_datetime | rlbk_planning_duration | rlbk_locking_duration | rlbk_elapse | rlbk_remaining | rlbk_completion_pct 
+---------+-------------+-----------+--------------------+----------------+-----------------------------+--------------+-----------------+---------------+------------------+-------------------+----------------------+-------------+---------------------+------------------------+-----------------------+-------------+----------------+---------------------
 (0 rows)
 
 select substr(pg_size_pretty(pg_database_size(current_database())),1,0);

@@ -36,7 +36,7 @@ delete from emaj.emaj_param where param_key = 'dblink_user_password';
  E-Maj (version <devel>) - launching parallel rollbacks
 -----------------------------------------------------------
 PHP Warning:  pg_query(): Query failed: ERROR:  _rlbk_init: Cannot use several sessions without dblink connection capability. (Status of the dblink connection attempt = -5 - see E-Maj documentation)
-CONTEXT:  PL/pgSQL function emaj._rlbk_init(text[],text,boolean,integer,boolean,boolean) line 54 at RAISE in /home/postgres/proj/emaj/client/emajParallelRollback.php on line 141
+CONTEXT:  PL/pgSQL function emaj._rlbk_init(text[],text,boolean,integer,boolean,boolean,text) line 54 at RAISE in /home/postgres/proj/emaj/client/emajParallelRollback.php on line 146
 Calling the _rlbk_init() function failed.
 
 insert into emaj.emaj_param (param_key, param_value_text) 
@@ -54,7 +54,7 @@ select emaj.emaj_modify_table('myschema1', 'mytbl1', '{"priority": 2}'::jsonb);
 PHP Warning:  pg_query(): Query failed: ERROR:  _rlbk_check: This rollback operation would cross some previous structure group change operations, which is not allowed by the current function parameters.
 CONTEXT:  PL/pgSQL function emaj._rlbk_check(text[],text,boolean,boolean) line 60 at RAISE
 SQL statement "SELECT emaj._rlbk_check(p_groupNames, p_mark, p_isAlterGroupAllowed, FALSE)"
-PL/pgSQL function emaj._rlbk_init(text[],text,boolean,integer,boolean,boolean) line 25 at SQL statement in /home/postgres/proj/emaj/client/emajParallelRollback.php on line 141
+PL/pgSQL function emaj._rlbk_init(text[],text,boolean,integer,boolean,boolean,text) line 25 at SQL statement in /home/postgres/proj/emaj/client/emajParallelRollback.php on line 146
 Calling the _rlbk_init() function failed.
 
 -- unlogged rollback for 2 groups in unstrict mode
@@ -67,7 +67,7 @@ Calling the _rlbk_init() function failed.
     Notice: 3 / 4 sequences effectively processed.
     Warning: Tables group change not rolled back: E-Maj priority for myschema1.mytbl1
 -- logged rollback for a single group and a single session
-\! ${EMAJ_DIR}/client/emajParallelRollback.php -h localhost -d regression -g myGroup1 -m Multi-1 -s 1 -a
+\! ${EMAJ_DIR}/client/emajParallelRollback.php -h localhost -d regression -g myGroup1 -m Multi-1 -s 1 -a -c "Revert aborted ABC chain"
  E-Maj (version <devel>) - launching parallel rollbacks
 -----------------------------------------------------------
 ==> Rollback to mark 'Multi-1' is now in progress with 1 sessions...
@@ -102,7 +102,7 @@ delete from emaj.emaj_param where param_key = 'dblink_user_password';
 \! ${EMAJ_DIR}/client/emajParallelRollback.pl -h localhost -d regression -g "myGroup1,myGroup2" -m Multi-1 -s 3 -l
 Calling the _rlbk_init() function failed.
 ERROR:  _rlbk_init: Cannot use several sessions without dblink connection capability. (Status of the dblink connection attempt = -5 - see E-Maj documentation)
-CONTEXT:  PL/pgSQL function emaj._rlbk_init(text[],text,boolean,integer,boolean,boolean) line 54 at RAISE
+CONTEXT:  PL/pgSQL function emaj._rlbk_init(text[],text,boolean,integer,boolean,boolean,text) line 54 at RAISE
  E-Maj (version <devel>) - launching parallel rollbacks
 -----------------------------------------------------------
 insert into emaj.emaj_param (param_key, param_value_text) 
@@ -119,7 +119,7 @@ Calling the _rlbk_init() function failed.
 ERROR:  _rlbk_check: This rollback operation would cross some previous structure group change operations, which is not allowed by the current function parameters.
 CONTEXT:  PL/pgSQL function emaj._rlbk_check(text[],text,boolean,boolean) line 60 at RAISE
 SQL statement "SELECT emaj._rlbk_check(p_groupNames, p_mark, p_isAlterGroupAllowed, FALSE)"
-PL/pgSQL function emaj._rlbk_init(text[],text,boolean,integer,boolean,boolean) line 25 at SQL statement
+PL/pgSQL function emaj._rlbk_init(text[],text,boolean,integer,boolean,boolean,text) line 25 at SQL statement
  E-Maj (version <devel>) - launching parallel rollbacks
 -----------------------------------------------------------
 -- unlogged rollback for 2 groups in unstrict mode
@@ -132,7 +132,7 @@ PL/pgSQL function emaj._rlbk_init(text[],text,boolean,integer,boolean,boolean) l
     Notice: 3 / 4 sequences effectively processed.
     Warning: Tables group change not rolled back: E-Maj priority for myschema1.mytbl1
 -- logged rollback for a single group and a single session
-\! ${EMAJ_DIR}/client/emajParallelRollback.pl -h localhost -d regression -g myGroup1 -m Multi-1 -s 1 -a
+\! ${EMAJ_DIR}/client/emajParallelRollback.pl -h localhost -d regression -g myGroup1 -m Multi-1 -s 1 -a -c "Revert aborted DEF chain"
  E-Maj (version <devel>) - launching parallel rollbacks
 -----------------------------------------------------------
 ==> Rollback to mark 'Multi-1' is now in progress with 1 sessions...

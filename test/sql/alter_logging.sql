@@ -572,7 +572,7 @@ select rlbk_severity, regexp_replace(rlbk_message,E'\\d\\d\\d\\d/\\d\\d\\/\\d\\d
   from emaj.emaj_logged_rollback_groups('{"myGroup1","myGroup2"}','Mk2',true) order by 1,2;
 
 select * from emaj.emaj_rollback_groups('{"myGroup1","myGroup2"}','Mk2',false) order by 1,2;
-select * from emaj.emaj_rollback_groups('{"myGroup1","myGroup2"}','Mk1',true) order by 1,2;
+select * from emaj.emaj_rollback_groups('{"myGroup1","myGroup2"}','Mk1',true,'Rollback 2 groups crossing an alter group') order by 1,2;
 
 -- execute additional rollback not crossing alter operations anymore
 select * from emaj.emaj_logged_rollback_groups('{"myGroup1","myGroup2"}','Mk1',false) order by 1,2;
@@ -630,7 +630,7 @@ select emaj.emaj_gen_sql_groups('{"myGroup1","myGroup2"}', 'before move', NULL, 
   array['myschema2.myTbl3','myschema2.myTbl3_col31_seq']);
 
 -- rollback to a mark set after the group change
-select * from emaj.emaj_logged_rollback_groups('{"myGroup1","myGroup2"}','after move');
+select * from emaj.emaj_logged_rollback_groups('{"myGroup1","myGroup2"}','after move',false,'Logged rollback on 2 groups');
 
 -- rollback to a mark set before the group change
 select rlbk_severity, regexp_replace(rlbk_message,E'\\d\\d\\d\\d/\\d\\d\\/\\d\\d\\ \\d\\d\\:\\d\\d:\\d\\d .*?\\)','<timestamp>)','g')
@@ -792,6 +792,8 @@ select hist_function, hist_event, hist_object,
 select nspname from pg_namespace where nspname like 'emaj%' order by nspname;
 select sch_name from emaj.emaj_schema order by 1;
 select * from emaj.emaj_rel_hist order by 1,2,3;
+
+select rlbk_id, rlbk_status, rlbk_comment from emaj.emaj_rlbk where rlbk_comment is not null order by 1;
 
 truncate emaj.emaj_hist;
 

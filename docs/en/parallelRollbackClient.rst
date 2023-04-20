@@ -37,6 +37,7 @@ The general options are:
 
 * -l specifies that the requested rollback is a :ref:`logged rollback <emaj_logged_rollback_group>`
 * -a specifies that the requested rollback is :ref:`allowed to reach a mark set before an alter group operation<emaj_rollback_group>`
+* -c <comment> sets a comment on the rollback operation
 * -v displays more information about the execution of the processing
 * --help only displays a command help
 * --version only displays the software version

@@ -43,7 +43,7 @@ select emaj.emaj_modify_table('myschema1', 'mytbl1', '{"priority": 2}'::jsonb);
 \! ${EMAJ_DIR}/client/emajParallelRollback.php -h localhost -d regression -g "myGroup1,myGroup2" -m Multi-1 -s 3 -l -a
 
 -- logged rollback for a single group and a single session
-\! ${EMAJ_DIR}/client/emajParallelRollback.php -h localhost -d regression -g myGroup1 -m Multi-1 -s 1 -a
+\! ${EMAJ_DIR}/client/emajParallelRollback.php -h localhost -d regression -g myGroup1 -m Multi-1 -s 1 -a -c "Revert aborted ABC chain"
 
 --------------------------------------------
 -- Prepare data for emajParallelRollback.pl
@@ -84,7 +84,7 @@ select emaj.emaj_modify_table('myschema1', 'mytbl1', '{"priority": 1}'::jsonb);
 \! ${EMAJ_DIR}/client/emajParallelRollback.pl -h localhost -d regression -g "myGroup1,myGroup2" -m Multi-1 -s 3 -l -a
 
 -- logged rollback for a single group and a single session
-\! ${EMAJ_DIR}/client/emajParallelRollback.pl -h localhost -d regression -g myGroup1 -m Multi-1 -s 1 -a
+\! ${EMAJ_DIR}/client/emajParallelRollback.pl -h localhost -d regression -g myGroup1 -m Multi-1 -s 1 -a -c "Revert aborted DEF chain"
 
 --------------------------------------------------------------
 --

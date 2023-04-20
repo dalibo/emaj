@@ -37,6 +37,7 @@ Options générales :
 
 * -l spécifie que le rollback demandé est de type :ref:`logged rollback <emaj_logged_rollback_group>`
 * -a spécifie que le rollback demandé est :ref:`autorisé à remonter à une marque antérieure à une modification de groupe de tables <emaj_rollback_group>`
+* -c <commentaire> associe un commentaire au rollback
 * -v affiche davantage d'information sur le déroulement du traitement
 * --help affiche uniquement une aide sur la commande
 * --version affiche uniquement la version du logiciel

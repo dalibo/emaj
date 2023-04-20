@@ -216,11 +216,13 @@ Fonctions de niveau groupe de tables
 | <emaj_logged_rollback_group>`                    | | marque TEXT,                |                                       |
 |                                                  | | [est.modif.groupe.autorisée |                                       |
 |                                                  | |  BOOLEAN]                   |                                       |
+|                                                  | | [commentaire TEXT]          |                                       |
 +--------------------------------------------------+-------------------------------+---------------------------------------+
 | :doc:`emaj_logged_rollback_groups                | | tableau.groupes TEXT[],     | SETOF (sévérité TEXT, message TEXT)   |
 | <multiGroupsFunctions>`                          | | marque TEXT,                |                                       |
 |                                                  | | [est.modif.groupe.autorisée |                                       |
 |                                                  | |  BOOLEAN]                   |                                       |
+|                                                  | | [commentaire TEXT]          |                                       |
 +--------------------------------------------------+-------------------------------+---------------------------------------+
 | :ref:`emaj_protect_group                         | | groupe TEXT                 | 0/1 INT                               |
 | <emaj_protect_group>`                            |                               |                                       |
@@ -239,11 +241,13 @@ Fonctions de niveau groupe de tables
 | <emaj_rollback_group>`                           | | marque TEXT,                |                                       |
 |                                                  | | [est_modif_groupe_autorisé  |                                       |
 |                                                  | |  BOOLEAN]                   |                                       |
+|                                                  | | [commentaire TEXT]          |                                       |
 +--------------------------------------------------+-------------------------------+---------------------------------------+
 | :doc:`emaj_rollback_groups                       | | tableau.groupes TEXT[],     | SETOF (sévérité TEXT, message TEXT)   |
 | <multiGroupsFunctions>`                          | | marque TEXT,                |                                       |
 |                                                  | | [est_modif_groupe_autorisé  |                                       |
 |                                                  | |  BOOLEAN]                   |                                       |
+|                                                  | | [commentaire TEXT]          |                                       |
 +--------------------------------------------------+-------------------------------+---------------------------------------+
 | :ref:`emaj_set_mark_group                        | | groupe TEXT,                | nb.tables.et.seq INT                  |
 | <emaj_set_mark_group>`                           | | [marque TEXT]               |                                       |

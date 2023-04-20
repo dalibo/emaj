@@ -163,37 +163,48 @@ The function does not require any input parameter.
 
 It returns a set of rows of type *emaj.emaj_rollback_activity_type*. Each row represents an in progress rollback operation, with the following columns:
 
-+---------------------+-------------+---------------------------------------------------------------+
-| Column              | Type        | Description                                                   |
-+=====================+=============+===============================================================+
-| rlbk_id             | INT         | rollback identifier                                           |
-+---------------------+-------------+---------------------------------------------------------------+
-| rlbk_groups         | TEXT[]      | tables groups array associated to the rollback                |
-+---------------------+-------------+---------------------------------------------------------------+
-| rlbk_mark           | TEXT        | mark to rollback to                                           |
-+---------------------+-------------+---------------------------------------------------------------+
-| rlbk_mark_datetime  | TIMESTAMPTZ | date and time when the mark to rollback to has been set       |
-+---------------------+-------------+---------------------------------------------------------------+
-| rlbk_is_logged      | BOOLEAN     | boolean taking the “true” value for logged rollbacks          |
-+---------------------+-------------+---------------------------------------------------------------+
-| rlbk_nb_session     | INT         | number of parallel sessions                                   |
-+---------------------+-------------+---------------------------------------------------------------+
-| rlbk_nb_table       | INT         | number of tables contained in the processed tables groups     |
-+---------------------+-------------+---------------------------------------------------------------+
-| rlbk_nb_sequence    | INT         | number of sequences contained in the processed tables groups  |
-+---------------------+-------------+---------------------------------------------------------------+
-| rlbk_eff_nb_table   | INT         | number of tables having updates to cancel                     |
-+---------------------+-------------+---------------------------------------------------------------+
-| rlbk_status         | ENUM        | rollback operation state                                      |
-+---------------------+-------------+---------------------------------------------------------------+
-| rlbk_start_datetime | TIMESTAMPTZ | rollback operation start timestamp                            |
-+---------------------+-------------+---------------------------------------------------------------+
-| rlbk_elapse         | INTERVAL    | elapse time spent since the rollback operation start          |
-+---------------------+-------------+---------------------------------------------------------------+
-| rlbk_remaining      | INTERVAL    | estimated remaining duration                                  |
-+---------------------+-------------+---------------------------------------------------------------+
-| rlbk_completion_pct | SMALLINT    | estimated percentage of the completed work                    |
-+---------------------+-------------+---------------------------------------------------------------+
++-----------------------------+-------------+---------------------------------------------------------------+
+| Column                      | Type        | Description                                                   |
++=============================+=============+===============================================================+
+| rlbk_id                     | INT         | rollback identifier                                           |
++-----------------------------+-------------+---------------------------------------------------------------+
+| rlbk_groups                 | TEXT[]      | tables groups array associated to the rollback                |
++-----------------------------+-------------+---------------------------------------------------------------+
+| rlbk_mark                   | TEXT        | mark to rollback to                                           |
++-----------------------------+-------------+---------------------------------------------------------------+
+| rlbk_mark_datetime          | TIMESTAMPTZ | date and time when the mark to rollback to has been set       |
++-----------------------------+-------------+---------------------------------------------------------------+
+| rlbk_is_logged              | BOOLEAN     | boolean taking the “true” value for logged rollbacks          |
++-----------------------------+-------------+---------------------------------------------------------------+
+| rlbk_is_alter_group_allowed | BOOLEAN     | | boolean indicating whether the rollback can target a mark   |
+|                             |             | | set before a tables groups structure change                 |
++-----------------------------+-------------+---------------------------------------------------------------+
+| rlbk_comment                | TEXT        | comment                                                       |
++-----------------------------+-------------+---------------------------------------------------------------+
+| rlbk_nb_session             | INT         | number of parallel sessions                                   |
++-----------------------------+-------------+---------------------------------------------------------------+
+| rlbk_nb_table               | INT         | number of tables contained in the processed tables groups     |
++-----------------------------+-------------+---------------------------------------------------------------+
+| rlbk_nb_sequence            | INT         | number of sequences contained in the processed tables groups  |
++-----------------------------+-------------+---------------------------------------------------------------+
+| rlbk_eff_nb_table           | INT         | number of tables having updates to cancel                     |
++-----------------------------+-------------+---------------------------------------------------------------+
+| rlbk_eff_nb_sequence        | INT         | number of sequences having attributes to change               |
++-----------------------------+-------------+---------------------------------------------------------------+
+| rlbk_status                 | ENUM        | rollback operation state                                      |
++-----------------------------+-------------+---------------------------------------------------------------+
+| rlbk_start_datetime         | TIMESTAMPTZ | rollback operation start timestamp                            |
++-----------------------------+-------------+---------------------------------------------------------------+
+| rlbk_planning_duration      | INTERVAL    | planning phase duration                                       |
++-----------------------------+-------------+---------------------------------------------------------------+
+| rlbk_locking_duration       | INTERVAL    | tables locking phase duration                                 |
++-----------------------------+-------------+---------------------------------------------------------------+
+| rlbk_elapse                 | INTERVAL    | elapse time spent since the rollback operation start          |
++-----------------------------+-------------+---------------------------------------------------------------+
+| rlbk_remaining              | INTERVAL    | estimated remaining duration                                  |
++-----------------------------+-------------+---------------------------------------------------------------+
+| rlbk_completion_pct         | SMALLINT    | estimated percentage of the completed work                    |
++-----------------------------+-------------+---------------------------------------------------------------+
 
 An in progress rollback operation is in one of the following state:
 

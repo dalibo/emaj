@@ -40,12 +40,13 @@
   $groups = '';                       // -g E-maj group names (mandatory)
   $mark = '';                         // -m E-maj mark name to rollback to (mandatory)
   $nbSession = 1;                     // -s number of parallel E-maj sessions to use for rollback (default=1)
-  $verbose = false;                   // -v flag for verbose mode
+  $comment = '';                      // -c rollback comment
   $isLogged = 'false';                // -l flag for logged rollback mode
   $isAlterGroupAllowed = 'false';     // -a flag to allow the rollback to reach a mark set before alter group operations
+  $verbose = false;                   // -v flag for verbose mode
 
 // Get supplied parameters
-  $shortOptions = "d:h:p:U:W:g:m:s:vla";
+  $shortOptions = "d:h:p:U:W:g:m:s:c:lav";
   $options = getopt($shortOptions);
 
 // ... and process them
@@ -74,9 +75,12 @@
       $password = $options['W'];
       $conn_string .= "password=$password ";
       break;
-// other parameters
+// other parameters (in alphabetical order)
     case 'a':
       $isAlterGroupAllowed = 'true';
+      break;
+    case 'c':
+      $comment = $options['c'];
       break;
     case 'g':
       $groups = "'" . str_replace(",", "','", $options['g']) . "'";
@@ -136,7 +140,8 @@
 
 // Call _rlbk_init() on first session
 // This checks the groups and mark, and prepares the parallel rollback by creating well balanced sessions
-  $query = "SELECT emaj._rlbk_init(array[$groups], '" . pg_escape_string($mark) . "', $isLogged, $nbSession, $multiGroup, $isAlterGroupAllowed)";
+  $query = "SELECT emaj._rlbk_init(array[$groups], '" . pg_escape_string($mark) . "', $isLogged, $nbSession, $multiGroup, " .
+                                  "$isAlterGroupAllowed, '" . pg_escape_string($comment) . "')";
   if ($verbose) echo date("d/m/Y - H:i:s")." Call _rlbk_init() for groups $groups and mark $mark...\n";
   $result = pg_query($dbconn[1], $query)
       or abort("Calling the _rlbk_init() function failed.\n" . pg_last_error() . "\n");
@@ -258,6 +263,7 @@ function print_help(){
   echo "\nOptions:\n";
   echo "  -l          logged rollback mode (i.e. 'rollbackable' rollback)\n";
   echo "  -a          flag to allow rollback to reach a mark set before alter group operations\n";
+  echo "  -c          comment to describe the rollback operation\n";
   echo "  -v          verbose mode; writes more information about the processing\n";
   echo "  --help      shows this help, then exit\n";
   echo "  --version   outputs version information, then exit\n";
@@ -268,12 +274,12 @@ function print_help(){
   echo "  -U,         user name to connect as\n";
   echo "  -W,         password associated to the user, if needed\n";
   echo "\nExamples:\n";
-  echo "  emajParallelRollback.php -g myGroup1 -m myMark -s 3 \n";
-  echo "              performs a parallel rollback of table group myGroup1 to mark\n";
-  echo "              myMark using 3 parallel sessions.\n";
-  echo "  emajParallelRollback.php -h localhost -p 5432 -d myDb -U emajadm -l -g \"myGroup1,myGroup2\" -m myMark -s 5 -v\n";
-  echo "              lets the role emajadm perform a parallel logged rollback of 2 table\n";
-  echo "              groups to mark myMark using 5 parallel sessions, in verbose mode.\n";
+  echo "  emajParallelRollback.php -g myGroup1 -m myMark -s 3 -c \"Revert aborted ABC chain\"\n";
+  echo "              performs a parallel rollback of the tables group myGroup1 to the mark\n";
+  echo "              myMark, using 3 parallel sessions, with a comment.\n";
+  echo "  emajParallelRollback.php -h localhost -p 5432 -d myDb -U emajadmin -l -g \"myGroup1,myGroup2\" -m myMark -s 5 -v\n";
+  echo "              lets the role emajadmin perform a parallel logged rollback of 2 tables\n";
+  echo "              groups to the mark myMark, using 5 parallel sessions, in verbose mode.\n";
 }
 
 function print_version(){

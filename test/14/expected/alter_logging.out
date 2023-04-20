@@ -2046,22 +2046,22 @@ select * from emaj.emaj_logged_rollback_groups('{"myGroup1","myGroup2"}','Mk2');
 ERROR:  _rlbk_check: This rollback operation would cross some previous structure group change operations, which is not allowed by the current function parameters.
 CONTEXT:  PL/pgSQL function emaj._rlbk_check(text[],text,boolean,boolean) line 60 at RAISE
 SQL statement "SELECT emaj._rlbk_check(p_groupNames, p_mark, p_isAlterGroupAllowed, FALSE)"
-PL/pgSQL function emaj._rlbk_init(text[],text,boolean,integer,boolean,boolean) line 25 at SQL statement
-SQL statement "SELECT emaj._rlbk_init(p_groupNames, p_mark, p_isLoggedRlbk, 1, p_multiGroup, p_isAlterGroupAllowed)"
-PL/pgSQL function emaj._rlbk_groups(text[],text,boolean,boolean,boolean) line 26 at SQL statement
+PL/pgSQL function emaj._rlbk_init(text[],text,boolean,integer,boolean,boolean,text) line 25 at SQL statement
+SQL statement "SELECT emaj._rlbk_init(p_groupNames, p_mark, p_isLoggedRlbk, 1, p_multiGroup, p_isAlterGroupAllowed, p_comment)"
+PL/pgSQL function emaj._rlbk_groups(text[],text,boolean,boolean,boolean,text) line 26 at SQL statement
 SQL statement "SELECT *
-        FROM emaj._rlbk_groups(p_groupNames, p_mark, TRUE, TRUE, coalesce(p_isAlterGroupAllowed, FALSE))"
-PL/pgSQL function emaj.emaj_logged_rollback_groups(text[],text,boolean) line 12 at RETURN QUERY
+        FROM emaj._rlbk_groups(p_groupNames, p_mark, TRUE, TRUE, coalesce(p_isAlterGroupAllowed, FALSE), p_comment)"
+PL/pgSQL function emaj.emaj_logged_rollback_groups(text[],text,boolean,text) line 12 at RETURN QUERY
 select * from emaj.emaj_logged_rollback_groups('{"myGroup1","myGroup2"}','Mk2',false) order by 1,2;
 ERROR:  _rlbk_check: This rollback operation would cross some previous structure group change operations, which is not allowed by the current function parameters.
 CONTEXT:  PL/pgSQL function emaj._rlbk_check(text[],text,boolean,boolean) line 60 at RAISE
 SQL statement "SELECT emaj._rlbk_check(p_groupNames, p_mark, p_isAlterGroupAllowed, FALSE)"
-PL/pgSQL function emaj._rlbk_init(text[],text,boolean,integer,boolean,boolean) line 25 at SQL statement
-SQL statement "SELECT emaj._rlbk_init(p_groupNames, p_mark, p_isLoggedRlbk, 1, p_multiGroup, p_isAlterGroupAllowed)"
-PL/pgSQL function emaj._rlbk_groups(text[],text,boolean,boolean,boolean) line 26 at SQL statement
+PL/pgSQL function emaj._rlbk_init(text[],text,boolean,integer,boolean,boolean,text) line 25 at SQL statement
+SQL statement "SELECT emaj._rlbk_init(p_groupNames, p_mark, p_isLoggedRlbk, 1, p_multiGroup, p_isAlterGroupAllowed, p_comment)"
+PL/pgSQL function emaj._rlbk_groups(text[],text,boolean,boolean,boolean,text) line 26 at SQL statement
 SQL statement "SELECT *
-        FROM emaj._rlbk_groups(p_groupNames, p_mark, TRUE, TRUE, coalesce(p_isAlterGroupAllowed, FALSE))"
-PL/pgSQL function emaj.emaj_logged_rollback_groups(text[],text,boolean) line 12 at RETURN QUERY
+        FROM emaj._rlbk_groups(p_groupNames, p_mark, TRUE, TRUE, coalesce(p_isAlterGroupAllowed, FALSE), p_comment)"
+PL/pgSQL function emaj.emaj_logged_rollback_groups(text[],text,boolean,text) line 12 at RETURN QUERY
 select rlbk_severity, regexp_replace(rlbk_message,E'\\d\\d\\d\\d/\\d\\d\\/\\d\\d\\ \\d\\d\\:\\d\\d:\\d\\d .*?\\)','<timestamp>)','g')
   from emaj.emaj_logged_rollback_groups('{"myGroup1","myGroup2"}','Mk2',true) order by 1,2;
  rlbk_severity |                                           regexp_replace                                            
@@ -2084,7 +2084,7 @@ select * from emaj.emaj_rollback_groups('{"myGroup1","myGroup2"}','Mk2',false) o
  Notice        | 0 / 4 sequences effectively processed.
 (2 rows)
 
-select * from emaj.emaj_rollback_groups('{"myGroup1","myGroup2"}','Mk1',true) order by 1,2;
+select * from emaj.emaj_rollback_groups('{"myGroup1","myGroup2"}','Mk1',true,'Rollback 2 groups crossing an alter group') order by 1,2;
  rlbk_severity |                                  rlbk_message                                   
 ---------------+---------------------------------------------------------------------------------
  Notice        | 0 / 11 tables effectively processed.
@@ -2446,7 +2446,7 @@ NOTICE:  table "emaj_temp_script" does not exist, skipping
 (1 row)
 
 -- rollback to a mark set after the group change
-select * from emaj.emaj_logged_rollback_groups('{"myGroup1","myGroup2"}','after move');
+select * from emaj.emaj_logged_rollback_groups('{"myGroup1","myGroup2"}','after move',false,'Logged rollback on 2 groups');
  rlbk_severity |              rlbk_message              
 ---------------+----------------------------------------
  Notice        | 1 / 11 tables effectively processed.
@@ -2762,10 +2762,10 @@ DETAIL:  Key (col21)=(1000) is still referenced from table "mytbl4".
 CONTEXT:  SQL statement "SET CONSTRAINTS myschema1.mytbl4_col43_fkey IMMEDIATE"
 PL/pgSQL function emaj._rlbk_session_exec(integer,integer) line 116 at EXECUTE
 SQL statement "SELECT emaj._rlbk_session_exec(v_rlbkId, 1)"
-PL/pgSQL function emaj._rlbk_groups(text[],text,boolean,boolean,boolean) line 32 at PERFORM
+PL/pgSQL function emaj._rlbk_groups(text[],text,boolean,boolean,boolean,text) line 32 at PERFORM
 SQL statement "SELECT *
-        FROM emaj._rlbk_groups(array[p_groupName], p_mark, FALSE, FALSE, coalesce(p_isAlterGroupAllowed, FALSE))"
-PL/pgSQL function emaj.emaj_rollback_group(text,text,boolean) line 7 at RETURN QUERY
+        FROM emaj._rlbk_groups(array[p_groupName], p_mark, FALSE, FALSE, coalesce(p_isAlterGroupAllowed, FALSE), p_comment)"
+PL/pgSQL function emaj.emaj_rollback_group(text,text,boolean,text) line 8 at RETURN QUERY
 rollback;
 select * from emaj.emaj_rollback_group('myGroup1','EMAJ_LAST_MARK');
  rlbk_severity |              rlbk_message              
@@ -3615,6 +3615,16 @@ select * from emaj.emaj_rel_hist order by 1,2,3;
  phil's schema3 | phil's tbl1       | [1021,8004)     | phil's group#3", | r
  public         | mytbl1_new_name   | [10042,10043)   | myGroup1         | r
 (123 rows)
+
+select rlbk_id, rlbk_status, rlbk_comment from emaj.emaj_rlbk where rlbk_comment is not null order by 1;
+ rlbk_id | rlbk_status |                  rlbk_comment                  
+---------+-------------+------------------------------------------------
+    4010 | COMMITTED   | Rollback set by the 'rollback.sql' script
+    4012 | COMMITTED   | Logged rollback set by the rollback.sql script
+    4017 | COMMITTED   | my comment
+    9706 | COMMITTED   | Rollback 2 groups crossing an alter group
+   10000 | COMMITTED   | Logged rollback on 2 groups
+(5 rows)
 
 truncate emaj.emaj_hist;
 -- remove the temp directory

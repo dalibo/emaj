@@ -419,10 +419,10 @@ insert into myTbl1 values (1, 'Step 6', E'\\001'::bytea);
 insert into myTbl4 values (11,'',1,1,'Step 6');
 insert into myTbl4 values (12,'',1,1,'Step 6');
 --
--- for an equivalent of "select * from emaj.emaj_logged_rollback_group('myGroup1','M4',true);"
-select * from emaj._rlbk_async(emaj._rlbk_init(array['myGroup1'], 'M4', true, 1, false, true), false);
+-- for an equivalent of "select * from emaj.emaj_logged_rollback_group('myGroup1','M4',true,'my comment');"
+select * from emaj._rlbk_async(emaj._rlbk_init(array['myGroup1'], 'M4', true, 1, false, true, 'my comment'), false);
 -- and check the rollback result
-select rlbk_id, rlbk_groups, rlbk_mark, rlbk_mark_time_id, rlbk_time_id, rlbk_is_logged, rlbk_is_alter_group_allowed, 
+select rlbk_id, rlbk_groups, rlbk_mark, rlbk_mark_time_id, rlbk_time_id, rlbk_is_logged, rlbk_is_alter_group_allowed, rlbk_comment,
        rlbk_nb_session, rlbk_nb_table, rlbk_nb_sequence, rlbk_eff_nb_table, rlbk_eff_nb_sequence, rlbk_status, rlbk_begin_hist_id,
        rlbk_dblink_schema, rlbk_is_dblink_used, rlbk_messages
  from emaj.emaj_rlbk order by rlbk_id desc limit 1;

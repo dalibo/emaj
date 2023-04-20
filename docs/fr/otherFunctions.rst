@@ -162,37 +162,48 @@ La fonction ne requiert aucun paramètre en entrée.
 
 Elle retourne un ensemble de lignes de type *emaj.emaj_rollback_activity_type*. Chaque ligne représente une opération de rollback en cours, comprenant les colonnes suivantes :
 
-+---------------------+-------------+------------------------------------------------------------------+
-| Column              | Type        | Description                                                      |
-+=====================+=============+==================================================================+
-| rlbk_id             | INT         | identifiant de rollback                                          |
-+---------------------+-------------+------------------------------------------------------------------+
-| rlbk_groups         | TEXT[]      | tableau des groupes de tables associés au rollback               |
-+---------------------+-------------+------------------------------------------------------------------+
-| rlbk_mark           | TEXT        | marque de rollback                                               |
-+---------------------+-------------+------------------------------------------------------------------+
-| rlbk_mark_datetime  | TIMESTAMPTZ | date et heure de pose de la marque de rollback                   |
-+---------------------+-------------+------------------------------------------------------------------+
-| rlbk_is_logged      | BOOLEAN     | booléen prenant la valeur « vrai » pour les rollbacks annulables |
-+---------------------+-------------+------------------------------------------------------------------+
-| rlbk_nb_session     | INT         | nombre de sessions en parallèle                                  |
-+---------------------+-------------+------------------------------------------------------------------+
-| rlbk_nb_table       | INT         | nombre de tables contenues dans les groupes de tables traités    |
-+---------------------+-------------+------------------------------------------------------------------+
-| rlbk_nb_sequence    | INT         | nombre de séquences contenues dans les groupes de tables traités |
-+---------------------+-------------+------------------------------------------------------------------+
-| rlbk_eff_nb_table   | INT         | nombre de tables ayant eu des mises à jour à annuler             |
-+---------------------+-------------+------------------------------------------------------------------+
-| rlbk_status         | ENUM        | état de l'opération de rollback                                  |
-+---------------------+-------------+------------------------------------------------------------------+
-| rlbk_start_datetime | TIMESTAMPTZ | date et heure de début de l'opération de rollback                |
-+---------------------+-------------+------------------------------------------------------------------+
-| rlbk_elapse         | INTERVAL    | durée écoulée depuis le début de l'opération de rollback         |
-+---------------------+-------------+------------------------------------------------------------------+
-| rlbk_remaining      | INTERVAL    | durée restante estimée                                           |
-+---------------------+-------------+------------------------------------------------------------------+
-| rlbk_completion_pct | SMALLINT    | estimation du pourcentage effectué                               |
-+---------------------+-------------+------------------------------------------------------------------+
++-----------------------------+-------------+------------------------------------------------------------------+
+| Column                      | Type        | Description                                                      |
++=============================+=============+==================================================================+
+| rlbk_id                     | INT         | identifiant de rollback                                          |
++-----------------------------+-------------+------------------------------------------------------------------+
+| rlbk_groups                 | TEXT[]      | tableau des groupes de tables associés au rollback               |
++-----------------------------+-------------+------------------------------------------------------------------+
+| rlbk_mark                   | TEXT        | marque de rollback                                               |
++-----------------------------+-------------+------------------------------------------------------------------+
+| rlbk_mark_datetime          | TIMESTAMPTZ | date et heure de pose de la marque de rollback                   |
++-----------------------------+-------------+------------------------------------------------------------------+
+| rlbk_is_logged              | BOOLEAN     | booléen prenant la valeur « vrai » pour les rollbacks tracés     |
++-----------------------------+-------------+------------------------------------------------------------------+
+| rlbk_is_alter_group_allowed | BOOLEAN     | | booléen indiquant si le rollback peut cibler une marque        |
+|                             |             | | antérieure à un changement de structure des groupes de tables  |
++-----------------------------+-------------+------------------------------------------------------------------+
+| rlbk_comment                | TEXT        | commentaire                                                      |
++-----------------------------+-------------+------------------------------------------------------------------+
+| rlbk_nb_session             | INT         | nombre de sessions en parallèle                                  |
++-----------------------------+-------------+------------------------------------------------------------------+
+| rlbk_nb_table               | INT         | nombre de tables contenues dans les groupes de tables traités    |
++-----------------------------+-------------+------------------------------------------------------------------+
+| rlbk_nb_sequence            | INT         | nombre de séquences contenues dans les groupes de tables traités |
++-----------------------------+-------------+------------------------------------------------------------------+
+| rlbk_eff_nb_table           | INT         | nombre de tables ayant des mises à jour à annuler                |
++-----------------------------+-------------+------------------------------------------------------------------+
+| rlbk_eff_nb_sequence        | INT         | nombre de séquences ayant des attributs à modifier               |
++-----------------------------+-------------+------------------------------------------------------------------+
+| rlbk_status                 | ENUM        | état de l'opération de rollback                                  |
++-----------------------------+-------------+------------------------------------------------------------------+
+| rlbk_start_datetime         | TIMESTAMPTZ | date et heure de début de l'opération de rollback                |
++-----------------------------+-------------+------------------------------------------------------------------+
+| rlbk_planning_duration      | INTERVAL    | durée de la phase de planification                               |
++-----------------------------+-------------+------------------------------------------------------------------+
+| rlbk_locking_duration       | INTERVAL    | durée d’obtention des verrous sur les tables                     |
++-----------------------------+-------------+------------------------------------------------------------------+
+| rlbk_elapse                 | INTERVAL    | durée écoulée depuis le début de l'opération de rollback         |
++-----------------------------+-------------+------------------------------------------------------------------+
+| rlbk_remaining              | INTERVAL    | durée restante estimée                                           |
++-----------------------------+-------------+------------------------------------------------------------------+
+| rlbk_completion_pct         | SMALLINT    | estimation du pourcentage effectué                               |
++-----------------------------+-------------+------------------------------------------------------------------+
 
 Une opération de rollback en cours est dans l'un des états suivants :
 
