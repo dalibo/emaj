@@ -63,6 +63,7 @@ Calling the _rlbk_init() function failed.
 -----------------------------------------------------------
 ==> Logged rollback to mark 'Multi-1' is now in progress with 3 sessions...
 ==> Logged rollback completed.
+    Notice: Rollback id = 20000.
     Notice: 10 / 11 tables effectively processed.
     Notice: 3 / 4 sequences effectively processed.
     Warning: Tables group change not rolled back: E-Maj priority for myschema1.mytbl1
@@ -72,6 +73,7 @@ Calling the _rlbk_init() function failed.
 -----------------------------------------------------------
 ==> Rollback to mark 'Multi-1' is now in progress with 1 sessions...
 ==> Rollback completed.
+    Notice: Rollback id = 20001.
     Notice: 4 / 5 tables effectively processed.
     Notice: 2 / 2 sequences effectively processed.
 --------------------------------------------
@@ -128,6 +130,7 @@ PL/pgSQL function emaj._rlbk_init(text[],text,boolean,integer,boolean,boolean,te
 -----------------------------------------------------------
 ==> Logged rollback to mark 'Multi-1' is now in progress with 3 sessions...
 ==> Logged rollback completed.
+    Notice: Rollback id = 20200.
     Notice: 10 / 11 tables effectively processed.
     Notice: 3 / 4 sequences effectively processed.
     Warning: Tables group change not rolled back: E-Maj priority for myschema1.mytbl1
@@ -137,6 +140,7 @@ PL/pgSQL function emaj._rlbk_init(text[],text,boolean,integer,boolean,boolean,te
 -----------------------------------------------------------
 ==> Rollback to mark 'Multi-1' is now in progress with 1 sessions...
 ==> Rollback completed.
+    Notice: Rollback id = 20201.
     Notice: 4 / 5 tables effectively processed.
     Notice: 2 / 2 sequences effectively processed.
 --------------------------------------------------------------

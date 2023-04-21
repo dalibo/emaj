@@ -81,8 +81,9 @@ select rlbk_severity, regexp_replace(rlbk_message,E'\\d\\d\\d\\d/\\d\\d\\/\\d\\d
 ---------------+-----------------------------------------------------------------------------------------------
  Notice        | 0 / 3 sequences effectively processed.
  Notice        | 0 / 8 tables effectively processed.
+ Notice        | Rollback id = 5.
  Warning       | The table myschema1."myTbl3" has been left unchanged (not in group anymore since <timestamp>)
-(3 rows)
+(4 rows)
 
 -----------------------------
 -- Step 3 : for myGroup1, update tables, then unprotect, logged_rollback, rename the end rollback mark and consolidate the rollback
@@ -112,7 +113,8 @@ select * from emaj.emaj_logged_rollback_group('myGroup1','M2',true) order by 1,2
 ---------------+----------------------------------------
  Notice        | 0 / 1 sequences effectively processed.
  Notice        | 2 / 4 tables effectively processed.
-(2 rows)
+ Notice        | Rollback id = 6.
+(3 rows)
 
 --
 select emaj.emaj_rename_mark_group('myGroup1','EMAJ_LAST_MARK','End_rollback_to_M2');
@@ -166,7 +168,8 @@ select * from emaj.emaj_logged_rollback_group('myGroup2','M2',false) order by 1,
 ---------------+----------------------------------------
  Notice        | 1 / 2 sequences effectively processed.
  Notice        | 1 / 4 tables effectively processed.
-(2 rows)
+ Notice        | Rollback id = 7.
+(3 rows)
 
 --
 select * from emaj.emaj_rollback_group('myGroup2','M3',false) order by 1,2;
@@ -174,7 +177,8 @@ select * from emaj.emaj_rollback_group('myGroup2','M3',false) order by 1,2;
 ---------------+----------------------------------------
  Notice        | 1 / 2 sequences effectively processed.
  Notice        | 1 / 4 tables effectively processed.
-(2 rows)
+ Notice        | Rollback id = 8.
+(3 rows)
 
 -----------------------------
 -- Step 6 : for myGroup1, update tables, rollback, other updates, then logged rollback
@@ -192,7 +196,8 @@ select * from emaj.emaj_rollback_group('myGroup1','M5',false) order by 1,2;
 ---------------+----------------------------------------
  Notice        | 0 / 1 sequences effectively processed.
  Notice        | 3 / 4 tables effectively processed.
-(2 rows)
+ Notice        | Rollback id = 9.
+(3 rows)
 
 --
 insert into myTbl1 values (1, 'Step 6', E'\\001'::bytea);
@@ -203,7 +208,8 @@ select * from emaj.emaj_logged_rollback_group('myGroup1','M4',false) order by 1,
 ---------------+----------------------------------------
  Notice        | 0 / 1 sequences effectively processed.
  Notice        | 2 / 4 tables effectively processed.
-(2 rows)
+ Notice        | Rollback id = 10.
+(3 rows)
 
 -----------------------------
 -- Step 7 : for myGroup1, generate a sql script on the whole time frame
@@ -286,8 +292,9 @@ select stat_group, stat_schema, stat_table, stat_first_mark, stat_last_mark, sta
 select * from emaj.emaj_rollback_group('myGroup6', 'Start G6');
  rlbk_severity |            rlbk_message             
 ---------------+-------------------------------------
+ Notice        | Rollback id = 11.
  Notice        | 1 / 3 tables effectively processed.
-(1 row)
+(2 rows)
 
 select emaj.emaj_stop_group('myGroup6');
  emaj_stop_group 
@@ -547,6 +554,7 @@ select hist_function, hist_event, hist_object,
  LOCK_GROUP               | BEGIN              | myGroup1,myGroup2                                                 | Rollback session #1                                                                           | postgres
  LOCK_GROUP               | END                | myGroup1,myGroup2                                                 | Rollback session #1: 8 tables locked, 0 deadlock(s)                                           | postgres
  ROLLBACK_GROUPS          | MARK DELETED       | myGroup1                                                          | mark REMOVE_% is deleted                                                                      | postgres
+ ROLLBACK_GROUPS          | NOTICE             | Rollback id 5                                                     | Rollback id = 5.                                                                              | postgres
  ROLLBACK_GROUPS          | NOTICE             | Rollback id 5                                                     | 0 / 8 tables effectively processed.                                                           | postgres
  ROLLBACK_GROUPS          | NOTICE             | Rollback id 5                                                     | 0 / 3 sequences effectively processed.                                                        | postgres
  ROLLBACK_GROUPS          | WARNING            | Rollback id 5                                                     | The table myschema1."myTbl3" has been left unchanged (not in group anymore since <timestamp>) | postgres
@@ -564,6 +572,7 @@ select hist_function, hist_event, hist_object,
  ROLLBACK_TABLE           | END                | myschema1.mytbl1                                                  | 5 rolled back primary keys                                                                    | postgres
  SET_MARK_GROUP           | BEGIN              | myGroup1                                                          | RLBK_M2_%_DONE                                                                                | postgres
  SET_MARK_GROUP           | END                | myGroup1                                                          | RLBK_M2_%_DONE                                                                                | postgres
+ ROLLBACK_GROUP           | NOTICE             | Rollback id 6                                                     | Rollback id = 6.                                                                              | postgres
  ROLLBACK_GROUP           | NOTICE             | Rollback id 6                                                     | 2 / 4 tables effectively processed.                                                           | postgres
  ROLLBACK_GROUP           | NOTICE             | Rollback id 6                                                     | 0 / 1 sequences effectively processed.                                                        | postgres
  ROLLBACK_GROUP           | END                | myGroup1                                                          | Rollback_id 6                                                                                 | postgres
@@ -594,6 +603,7 @@ select hist_function, hist_event, hist_object,
  ROLLBACK_TABLE           | END                | myschema2.mytbl4                                                  | 2 rolled back primary keys                                                                    | postgres
  SET_MARK_GROUP           | BEGIN              | myGroup2                                                          | RLBK_M2_%_DONE                                                                                | postgres
  SET_MARK_GROUP           | END                | myGroup2                                                          | RLBK_M2_%_DONE                                                                                | postgres
+ ROLLBACK_GROUP           | NOTICE             | Rollback id 7                                                     | Rollback id = 7.                                                                              | postgres
  ROLLBACK_GROUP           | NOTICE             | Rollback id 7                                                     | 1 / 4 tables effectively processed.                                                           | postgres
  ROLLBACK_GROUP           | NOTICE             | Rollback id 7                                                     | 1 / 2 sequences effectively processed.                                                        | postgres
  ROLLBACK_GROUP           | END                | myGroup2                                                          | Rollback_id 7                                                                                 | postgres
@@ -611,6 +621,7 @@ select hist_function, hist_event, hist_object,
  ROLLBACK_GROUP           | MARK DELETED       | myGroup2                                                          | mark Common is deleted                                                                        | postgres
  ROLLBACK_GROUP           | MARK DELETED       | myGroup2                                                          | mark RLBK_M2_%_START is deleted                                                               | postgres
  ROLLBACK_GROUP           | MARK DELETED       | myGroup2                                                          | mark RLBK_M2_%_DONE is deleted                                                                | postgres
+ ROLLBACK_GROUP           | NOTICE             | Rollback id 8                                                     | Rollback id = 8.                                                                              | postgres
  ROLLBACK_GROUP           | NOTICE             | Rollback id 8                                                     | 1 / 4 tables effectively processed.                                                           | postgres
  ROLLBACK_GROUP           | NOTICE             | Rollback id 8                                                     | 1 / 2 sequences effectively processed.                                                        | postgres
  ROLLBACK_GROUP           | END                | myGroup2                                                          | Rollback_id 8                                                                                 | postgres
@@ -625,6 +636,7 @@ select hist_function, hist_event, hist_object,
  ROLLBACK_TABLE           | BEGIN              | myschema1.mytbl1                                                  | All log rows where emaj_gid > 105 and <= 117, in session_replication_role = replica mode      | postgres
  ROLLBACK_TABLE           | END                | myschema1.mytbl1                                                  | 1 rolled back primary keys                                                                    | postgres
  ROLLBACK_GROUP           | MARK DELETED       | myGroup1                                                          | mark M6 is deleted                                                                            | postgres
+ ROLLBACK_GROUP           | NOTICE             | Rollback id 9                                                     | Rollback id = 9.                                                                              | postgres
  ROLLBACK_GROUP           | NOTICE             | Rollback id 9                                                     | 3 / 4 tables effectively processed.                                                           | postgres
  ROLLBACK_GROUP           | NOTICE             | Rollback id 9                                                     | 0 / 1 sequences effectively processed.                                                        | postgres
  ROLLBACK_GROUP           | END                | myGroup1                                                          | Rollback_id 9                                                                                 | postgres
@@ -640,6 +652,7 @@ select hist_function, hist_event, hist_object,
  ROLLBACK_TABLE           | END                | myschema1.mytbl1                                                  | 1 rolled back primary keys                                                                    | postgres
  SET_MARK_GROUP           | BEGIN              | myGroup1                                                          | RLBK_M4_%_DONE                                                                                | postgres
  SET_MARK_GROUP           | END                | myGroup1                                                          | RLBK_M4_%_DONE                                                                                | postgres
+ ROLLBACK_GROUP           | NOTICE             | Rollback id 10                                                    | Rollback id = 10.                                                                             | postgres
  ROLLBACK_GROUP           | NOTICE             | Rollback id 10                                                    | 2 / 4 tables effectively processed.                                                           | postgres
  ROLLBACK_GROUP           | NOTICE             | Rollback id 10                                                    | 0 / 1 sequences effectively processed.                                                        | postgres
  ROLLBACK_GROUP           | END                | myGroup1                                                          | Rollback_id 10                                                                                | postgres
@@ -667,6 +680,7 @@ select hist_function, hist_event, hist_object,
  LOCK_GROUP               | END                | myGroup6                                                          | Rollback session #1: 3 tables locked, 0 deadlock(s)                                           | postgres
  ROLLBACK_TABLE           | BEGIN              | myschema6.table_with_51_characters_long_name_____0_________0a     | All log rows where emaj_gid > 123 and <= 129                                                  | postgres
  ROLLBACK_TABLE           | END                | myschema6.table_with_51_characters_long_name_____0_________0a     | 4 rolled back primary keys                                                                    | postgres
+ ROLLBACK_GROUP           | NOTICE             | Rollback id 11                                                    | Rollback id = 11.                                                                             | postgres
  ROLLBACK_GROUP           | NOTICE             | Rollback id 11                                                    | 1 / 3 tables effectively processed.                                                           | postgres
  ROLLBACK_GROUP           | END                | myGroup6                                                          | Rollback_id 11                                                                                | postgres
  STOP_GROUP               | BEGIN              | myGroup6                                                          |                                                                                               | postgres
@@ -678,7 +692,7 @@ select hist_function, hist_event, hist_object,
  DROP_GROUP               | BEGIN              | myGroup6                                                          |                                                                                               | postgres
  DROP_GROUP               | LOG_SCHEMA DROPPED | emaj_myschema6                                                    |                                                                                               | postgres
  DROP_GROUP               | END                | myGroup6                                                          | 3 tables/sequences processed                                                                  | postgres
-(311 rows)
+(318 rows)
 
 --
 reset role;

@@ -7822,7 +7822,7 @@ $_rlbk_async$
   END;
 $_rlbk_async$;
 CREATE OR REPLACE FUNCTION emaj._rlbk_init(p_groupNames TEXT[], p_mark TEXT, p_isLoggedRlbk BOOLEAN, p_nbSession INT, p_multiGroup BOOLEAN,
-                                           p_isAlterGroupAllowed BOOLEAN, p_comment TEXT)
+                                           p_isAlterGroupAllowed BOOLEAN, p_comment TEXT DEFAULT NULL)
 RETURNS INT LANGUAGE plpgsql AS
 $_rlbk_init$
 -- This is the first step of a rollback group processing.
@@ -9247,6 +9247,8 @@ $_rlbk_end$
     PERFORM emaj._dblink_sql_exec('rlbk#1', v_stmt, v_dblinkSchema);
 -- Build the execution report.
 -- Start with the NOTICE messages.
+    v_messages = array_append(v_messages,
+                              'Notice: ' || format ('Rollback id = %s.', p_rlbkId::TEXT));
     IF v_nbTbl > 0 THEN
       v_messages = array_append(v_messages,
                                 'Notice: ' || format ('%s / %s tables effectively processed.', v_effNbTbl::TEXT, v_nbTbl::TEXT));
@@ -12457,7 +12459,7 @@ $do$
     RETURN;
   END;
 $do$;
-psql:sql/emaj-devel.sql:12690: NOTICE:  E-Maj installation: E-Maj successfully installed.
+psql:sql/emaj-devel.sql:12692: NOTICE:  E-Maj installation: E-Maj successfully installed.
 COMMIT;
 -----------------------------
 -- check installation

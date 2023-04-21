@@ -94,7 +94,7 @@ The third parameter is a boolean that indicates whether the rollback operation m
 
 A comment associated to the rollback can be supplied as 4th parameter. It allows the administrator to annotate the operation, indicating for instance the reason for it has been launched or the reverted processing.
 
-The function returns a set of rows with a severity level set to either “*Notice*” or “*Warning*” values, and a textual message. The function returns a “*Notice*” row indicating the number of tables and sequences that have been effectively modified by the rollback operation. Other messages of type “*Warning*” may also be reported when the rollback operation has processed tables group changes.
+The function returns a set of rows with a severity level set to either “*Notice*” or “*Warning*” values, and a textual message. The function returns 3 “*Notice*” rows reporting the generated rollback identifier, the number of tables and the number of sequences that have been effectively modified by the rollback operation. Other messages of type “*Warning*” may also be reported when the rollback operation has processed tables group changes.
 
 To be sure that no concurrent transaction updates any table of the group during the rollback operation, the *emaj_rollback_group()* function explicitly sets an *EXCLUSIVE* lock on each table of the group. If transactions updating these tables are running, this can lead to deadlock. If the deadlock processing impacts the execution of the E-Maj function, the error is trapped and the lock operation is repeated, with a maximum of 5 attempts. But tables of the group remain accessible for read only transactions during the operation.
 
@@ -138,7 +138,7 @@ The third parameter is a boolean that indicates whether the rollback operation m
 
 A comment associated to the rollback can be supplied as 4th parameter. It allows the administrator to annotate the operation, indicating for instance the reason for it has been launched or the reverted processing.
 
-The function returns a set of rows with a severity level set to either “*Notice*” or “*Warning*” values, and a textual message. The function returns a “*Notice*” row indicating the number of tables and sequences that have been effectively modified by the rollback operation. Other messages of type “*Warning*” may also be reported when the rollback operation has processed tables group changes.
+The function returns a set of rows with a severity level set to either “*Notice*” or “*Warning*” values, and a textual message. The function returns 3 “*Notice*” rows reporting the generated rollback identifier, the number of tables and the number of sequences that have been effectively modified by the rollback operation. Other messages of type “*Warning*” may also be reported when the rollback operation has processed tables group changes.
 
 To be sure that no concurrent transaction updates any table of the group during the rollback operation, the *emaj_rollback_group()* function explicitly sets an *EXCLUSIVE* lock on each table of the group. If transactions updating these tables are running, this can lead to deadlock. If the deadlock processing impacts the execution of the E-Maj function, the error is trapped and the lock operation is repeated, with a maximum of 5 attempts. But tables of the group remain accessible for read only transactions during the operation.
 

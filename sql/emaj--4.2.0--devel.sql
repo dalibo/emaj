@@ -1316,6 +1316,8 @@ $_rlbk_end$
     PERFORM emaj._dblink_sql_exec('rlbk#1', v_stmt, v_dblinkSchema);
 -- Build the execution report.
 -- Start with the NOTICE messages.
+    v_messages = array_append(v_messages,
+                              'Notice: ' || format ('Rollback id = %s.', p_rlbkId::TEXT));
     IF v_nbTbl > 0 THEN
       v_messages = array_append(v_messages,
                                 'Notice: ' || format ('%s / %s tables effectively processed.', v_effNbTbl::TEXT, v_nbTbl::TEXT));
