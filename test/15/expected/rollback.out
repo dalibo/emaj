@@ -1,6 +1,7 @@
 -- rollback.sql : test updates log, emaj_rollback_group(), emaj_logged_rollback_group(),
 --                emaj_rollback_groups(), emaj_logged_rollback_groups(),
 --                emaj_cleanup_rollback_state(), emaj_rollback_activity(),
+--                emaj_comment_rollback(),
 --                emaj_consolidate_rollback_group() and emaj_get_consolidable_rollbacks() functions.
 --
 -- set sequence restart value
@@ -2252,6 +2253,55 @@ begin;
 
 rollback;
 -----------------------------
+-- test emaj_comment_rollback(),
+-----------------------------
+-- unknown rollback id
+select emaj.emaj_comment_rollback(NULL,NULL);
+ERROR:  emaj_comment_rollback: The rollback identifier <NULL> does not exist.
+CONTEXT:  PL/pgSQL function emaj.emaj_comment_rollback(integer,text) line 11 at RAISE
+select emaj.emaj_comment_rollback(-1,NULL);
+ERROR:  emaj_comment_rollback: The rollback identifier -1 does not exist.
+CONTEXT:  PL/pgSQL function emaj.emaj_comment_rollback(integer,text) line 11 at RAISE
+-- set a comment
+select emaj.emaj_comment_rollback(4000,'First comment');
+ emaj_comment_rollback 
+-----------------------
+ 
+(1 row)
+
+select rlbk_comment from emaj.emaj_rlbk where rlbk_id = 4000;
+ rlbk_comment  
+---------------
+ First comment
+(1 row)
+
+-- update a comment
+select emaj.emaj_comment_rollback(4000,'Updated comment');
+ emaj_comment_rollback 
+-----------------------
+ 
+(1 row)
+
+select rlbk_comment from emaj.emaj_rlbk where rlbk_id = 4000;
+  rlbk_comment   
+-----------------
+ Updated comment
+(1 row)
+
+-- delete a comment
+select emaj.emaj_comment_rollback(4000,NULL);
+ emaj_comment_rollback 
+-----------------------
+ 
+(1 row)
+
+select rlbk_comment from emaj.emaj_rlbk where rlbk_id = 4000;
+ rlbk_comment 
+--------------
+ 
+(1 row)
+
+-----------------------------
 -- test emaj_consolidate_rollback_group() and emaj_get_consolidable_rollbacks()
 -----------------------------
 -- group is NULL or unknown
@@ -2581,7 +2631,7 @@ select rlbk_id, rlbk_status, rlbk_begin_hist_id, rlbk_nb_session from emaj.emaj_
   where rlbk_status in ('PLANNING', 'LOCKING', 'EXECUTING', 'COMPLETED') order by rlbk_id;
  rlbk_id | rlbk_status | rlbk_begin_hist_id | rlbk_nb_session 
 ---------+-------------+--------------------+-----------------
-    4021 | COMPLETED   |               4501 |               1
+    4021 | COMPLETED   |               4504 |               1
 (1 row)
 
 select emaj.emaj_cleanup_rollback_state();
@@ -2628,10 +2678,10 @@ select rlbk_id, rlbk_groups, rlbk_mark, rlbk_time_id, rlbk_is_logged, rlbk_is_al
     4015 | {emptyGroup}        | EGM3           |         4044 | t              | f                           |               1 |                                                |             0 |                0 |                 0 |                    0 | COMMITTED   |               4320 | public             | t                   | [ts]         | {"Notice: Rollback id = 4015.","Notice: no table and sequence to process"}
     4016 | {myGroup4}          | mark1          |         4049 | t              | f                           |               1 |                                                |             6 |                0 |                 6 |                    0 | COMMITTED   |               4349 | public             | t                   | [ts]         | {"Notice: Rollback id = 4016.","Notice: 6 / 6 tables effectively processed."}
     4017 | {myGroup4}          | myGroup4_start |         4051 | f              | t                           |               1 | my comment                                     |             6 |                0 |                 6 |                    0 | COMMITTED   |               4373 | public             | t                   | [ts]         | {"Notice: Rollback id = 4017.","Notice: 6 / 6 tables effectively processed."}
-    4018 | {myGroup1}          | Conso_M1       |         4053 | t              | f                           |               1 |                                                |             5 |                2 |                 0 |                    0 | COMMITTED   |               4404 | public             | t                   | [ts]         | {"Notice: Rollback id = 4018.","Notice: 0 / 5 tables effectively processed.","Notice: 0 / 2 sequences effectively processed."}
-    4019 | {myGroup1}          | Conso_M2       |         4057 | t              | f                           |               1 |                                                |             5 |                2 |                 3 |                    1 | COMMITTED   |               4428 | public             | t                   | [ts]         | {"Notice: Rollback id = 4019.","Notice: 3 / 5 tables effectively processed.","Notice: 1 / 2 sequences effectively processed."}
-    4020 | {myGroup1}          | Conso_M1       |         4059 | f              | f                           |               1 |                                                |             5 |                2 |                 2 |                    1 | COMMITTED   |               4456 | public             | t                   | [ts]         | {"Notice: Rollback id = 4020.","Notice: 2 / 5 tables effectively processed.","Notice: 1 / 2 sequences effectively processed."}
-    4021 | {myGroup4}          | myGroup4_start |         4064 | f              | f                           |               1 |                                                |             6 |                0 |                 0 |                    0 | ABORTED     |               4501 | public             | t                   | [ts]         | {"Notice: Rollback id = 4021.","Notice: 0 / 6 tables effectively processed."}
+    4018 | {myGroup1}          | Conso_M1       |         4053 | t              | f                           |               1 |                                                |             5 |                2 |                 0 |                    0 | COMMITTED   |               4407 | public             | t                   | [ts]         | {"Notice: Rollback id = 4018.","Notice: 0 / 5 tables effectively processed.","Notice: 0 / 2 sequences effectively processed."}
+    4019 | {myGroup1}          | Conso_M2       |         4057 | t              | f                           |               1 |                                                |             5 |                2 |                 3 |                    1 | COMMITTED   |               4431 | public             | t                   | [ts]         | {"Notice: Rollback id = 4019.","Notice: 3 / 5 tables effectively processed.","Notice: 1 / 2 sequences effectively processed."}
+    4020 | {myGroup1}          | Conso_M1       |         4059 | f              | f                           |               1 |                                                |             5 |                2 |                 2 |                    1 | COMMITTED   |               4459 | public             | t                   | [ts]         | {"Notice: Rollback id = 4020.","Notice: 2 / 5 tables effectively processed.","Notice: 1 / 2 sequences effectively processed."}
+    4021 | {myGroup4}          | myGroup4_start |         4064 | f              | f                           |               1 |                                                |             6 |                0 |                 0 |                    0 | ABORTED     |               4504 | public             | t                   | [ts]         | {"Notice: Rollback id = 4021.","Notice: 0 / 6 tables effectively processed."}
 (20 rows)
 
 select rlbs_rlbk_id, rlbs_session, 
@@ -3322,91 +3372,94 @@ select hist_id, hist_function, hist_event, hist_object, regexp_replace(regexp_re
     4394 | ROLLBACK_GROUP         | NOTICE                     | Rollback id 4017             | 6 / 6 tables effectively processed.                                                              | postgres
     4395 | DBLINK_CLOSE_CNX       |                            | rlbk#1                       |                                                                                                  | postgres
     4396 | ROLLBACK_GROUP         | END                        | myGroup4                     | Rollback_id 4017                                                                                 | postgres
-    4398 | SET_MARK_GROUP         | BEGIN                      | myGroup1                     |                                                                                                  | postgres
-    4399 | LOCK_GROUP             | BEGIN                      | myGroup1                     |                                                                                                  | postgres
-    4400 | LOCK_GROUP             | END                        | myGroup1                     | 5 tables locked, 0 deadlock(s)                                                                   | postgres
-    4401 | CLEANUP_RLBK_STATE     |                            | Rollback id 4016             | set to COMMITTED                                                                                 | postgres
-    4402 | CLEANUP_RLBK_STATE     |                            | Rollback id 4017             | set to COMMITTED                                                                                 | postgres
-    4403 | SET_MARK_GROUP         | END                        | myGroup1                     | Conso_M1                                                                                         | postgres
-    4404 | ROLLBACK_GROUP         | BEGIN                      | myGroup1                     | Logged rollback to mark Conso_M1 (timestamp)                                                     | postgres
-    4405 | DBLINK_OPEN_CNX        |                            | rlbk#1                       | Status = 1                                                                                       | postgres
-    4406 | LOCK_GROUP             | BEGIN                      | myGroup1                     | Rollback session #1                                                                              | postgres
-    4407 | LOCK_GROUP             | END                        | myGroup1                     | Rollback session #1: 5 tables locked, 0 deadlock(s)                                              | postgres
-    4408 | SET_MARK_GROUP         | BEGIN                      | myGroup1                     | RLBK_Conso_M1_%_START                                                                            | postgres
-    4409 | SET_MARK_GROUP         | END                        | myGroup1                     | RLBK_Conso_M1_%_START                                                                            | postgres
-    4410 | SET_MARK_GROUP         | BEGIN                      | myGroup1                     | RLBK_Conso_M1_%_DONE                                                                             | postgres
-    4411 | SET_MARK_GROUP         | END                        | myGroup1                     | RLBK_Conso_M1_%_DONE                                                                             | postgres
-    4412 | ROLLBACK_GROUP         | NOTICE                     | Rollback id 4018             | Rollback id = 4018.                                                                              | postgres
-    4413 | ROLLBACK_GROUP         | NOTICE                     | Rollback id 4018             | 0 / 5 tables effectively processed.                                                              | postgres
-    4414 | ROLLBACK_GROUP         | NOTICE                     | Rollback id 4018             | 0 / 2 sequences effectively processed.                                                           | postgres
-    4415 | DBLINK_CLOSE_CNX       |                            | rlbk#1                       |                                                                                                  | postgres
-    4416 | ROLLBACK_GROUP         | END                        | myGroup1                     | Rollback_id 4018                                                                                 | postgres
-    4417 | CONSOLIDATE_RLBK_GROUP | BEGIN                      | myGroup1                     | Erase all between marks Conso_M1 and RLBK_Conso_M1_%_DONE                                        | postgres
-    4418 | CONSOLIDATE_RLBK_GROUP | END                        | myGroup1                     | 0 tables and 2 sequences processed ; 1 marks deleted                                             | postgres
-    4419 | SET_MARK_GROUP         | BEGIN                      | myGroup1                     |                                                                                                  | postgres
-    4420 | LOCK_GROUP             | BEGIN                      | myGroup1                     |                                                                                                  | postgres
-    4421 | LOCK_GROUP             | END                        | myGroup1                     | 5 tables locked, 0 deadlock(s)                                                                   | postgres
-    4422 | CLEANUP_RLBK_STATE     |                            | Rollback id 4018             | set to COMMITTED                                                                                 | postgres
-    4423 | SET_MARK_GROUP         | END                        | myGroup1                     | Conso_M2                                                                                         | postgres
-    4424 | SET_MARK_GROUP         | BEGIN                      | myGroup1                     |                                                                                                  | postgres
-    4425 | LOCK_GROUP             | BEGIN                      | myGroup1                     |                                                                                                  | postgres
-    4426 | LOCK_GROUP             | END                        | myGroup1                     | 5 tables locked, 0 deadlock(s)                                                                   | postgres
-    4427 | SET_MARK_GROUP         | END                        | myGroup1                     | Conso_M3                                                                                         | postgres
-    4428 | ROLLBACK_GROUP         | BEGIN                      | myGroup1                     | Logged rollback to mark Conso_M2 (timestamp)                                                     | postgres
-    4429 | DBLINK_OPEN_CNX        |                            | rlbk#1                       | Status = 1                                                                                       | postgres
-    4430 | LOCK_GROUP             | BEGIN                      | myGroup1                     | Rollback session #1                                                                              | postgres
-    4431 | LOCK_GROUP             | END                        | myGroup1                     | Rollback session #1: 5 tables locked, 0 deadlock(s)                                              | postgres
-    4432 | SET_MARK_GROUP         | BEGIN                      | myGroup1                     | RLBK_Conso_M2_%_START                                                                            | postgres
-    4433 | SET_MARK_GROUP         | END                        | myGroup1                     | RLBK_Conso_M2_%_START                                                                            | postgres
-    4434 | ROLLBACK_SEQUENCE      |                            | myschema1.mytbl2b_col20_seq  | RESTART 3                                                                                        | postgres
-    4435 | ROLLBACK_TABLE         | BEGIN                      | myschema1.mytbl1             | All log rows where emaj_gid > 4000119 and <= 4000136, in session_replication_role = replica mode | postgres
-    4436 | ROLLBACK_TABLE         | END                        | myschema1.mytbl1             | 12 rolled back primary keys                                                                      | postgres
-    4437 | ROLLBACK_TABLE         | BEGIN                      | myschema1.mytbl2             | All log rows where emaj_gid > 4000119 and <= 4000136, in session_replication_role = replica mode | postgres
-    4438 | ROLLBACK_TABLE         | END                        | myschema1.mytbl2             | 1 rolled back primary keys                                                                       | postgres
-    4439 | ROLLBACK_TABLE         | BEGIN                      | myschema1.mytbl2b            | All log rows where emaj_gid > 4000119 and <= 4000136                                             | postgres
-    4440 | ROLLBACK_TABLE         | END                        | myschema1.mytbl2b            | 2 rolled back primary keys                                                                       | postgres
-    4441 | SET_MARK_GROUP         | BEGIN                      | myGroup1                     | RLBK_Conso_M2_%_DONE                                                                             | postgres
-    4442 | SET_MARK_GROUP         | END                        | myGroup1                     | RLBK_Conso_M2_%_DONE                                                                             | postgres
-    4443 | ROLLBACK_GROUP         | NOTICE                     | Rollback id 4019             | Rollback id = 4019.                                                                              | postgres
-    4444 | ROLLBACK_GROUP         | NOTICE                     | Rollback id 4019             | 3 / 5 tables effectively processed.                                                              | postgres
-    4445 | ROLLBACK_GROUP         | NOTICE                     | Rollback id 4019             | 1 / 2 sequences effectively processed.                                                           | postgres
-    4446 | DBLINK_CLOSE_CNX       |                            | rlbk#1                       |                                                                                                  | postgres
-    4447 | ROLLBACK_GROUP         | END                        | myGroup1                     | Rollback_id 4019                                                                                 | postgres
-    4448 | RENAME_MARK_GROUP      | BEGIN                      | myGroup1                     | Conso_M2                                                                                         | postgres
-    4449 | RENAME_MARK_GROUP      | END                        | myGroup1                     | Conso_M2 renamed Renamed_conso_M2                                                                | postgres
-    4450 | RENAME_MARK_GROUP      | BEGIN                      | myGroup1                     | EMAJ_LAST_MARK                                                                                   | postgres
-    4451 | RENAME_MARK_GROUP      | END                        | myGroup1                     | RLBK_Conso_M2_%_DONE renamed Renamed_last_mark                                                   | postgres
-    4452 | CONSOLIDATE_RLBK_GROUP | BEGIN                      | myGroup1                     | Erase all between marks Renamed_conso_M2 and Renamed_last_mark                                   | postgres
-    4453 | CONSOLIDATE_RLBK_GROUP | END                        | myGroup1                     | 3 tables and 2 sequences processed ; 2 marks deleted                                             | postgres
-    4454 | CONSOLIDATE_RLBK_GROUP | BEGIN                      | myGroup1                     | Erase all between marks Renamed_conso_M2 and Renamed_last_mark                                   | postgres
-    4455 | CONSOLIDATE_RLBK_GROUP | END                        | myGroup1                     | 0 tables and 2 sequences processed ; 0 marks deleted                                             | postgres
-    4456 | ROLLBACK_GROUP         | BEGIN                      | myGroup1                     | Unlogged rollback to mark Conso_M1 (timestamp)                                                   | postgres
-    4457 | DBLINK_OPEN_CNX        |                            | rlbk#1                       | Status = 1                                                                                       | postgres
-    4458 | LOCK_GROUP             | BEGIN                      | myGroup1                     | Rollback session #1                                                                              | postgres
-    4459 | LOCK_GROUP             | END                        | myGroup1                     | Rollback session #1: 5 tables locked, 0 deadlock(s)                                              | postgres
-    4460 | ROLLBACK_SEQUENCE      |                            | myschema1.mytbl2b_col20_seq  | RESTART 3                                                                                        | postgres
-    4461 | ROLLBACK_TABLE         | BEGIN                      | myschema1.mytbl2             | All log rows where emaj_gid > 4000119 and <= 4000152, in session_replication_role = replica mode | postgres
-    4462 | ROLLBACK_TABLE         | END                        | myschema1.mytbl2             | 1 rolled back primary keys                                                                       | postgres
-    4463 | ROLLBACK_TABLE         | BEGIN                      | myschema1.mytbl2b            | All log rows where emaj_gid > 4000119 and <= 4000152                                             | postgres
-    4464 | ROLLBACK_TABLE         | END                        | myschema1.mytbl2b            | 1 rolled back primary keys                                                                       | postgres
-    4465 | ROLLBACK_GROUP         | MARK DELETED               | myGroup1                     | mark RLBK_Conso_M1_%_DONE is deleted                                                             | postgres
-    4466 | ROLLBACK_GROUP         | MARK DELETED               | myGroup1                     | mark Renamed_conso_M2 is deleted                                                                 | postgres
-    4467 | ROLLBACK_GROUP         | MARK DELETED               | myGroup1                     | mark Renamed_last_mark is deleted                                                                | postgres
-    4468 | ROLLBACK_GROUP         | NOTICE                     | Rollback id 4020             | Rollback id = 4020.                                                                              | postgres
-    4469 | ROLLBACK_GROUP         | NOTICE                     | Rollback id 4020             | 2 / 5 tables effectively processed.                                                              | postgres
-    4470 | ROLLBACK_GROUP         | NOTICE                     | Rollback id 4020             | 1 / 2 sequences effectively processed.                                                           | postgres
-    4471 | DBLINK_CLOSE_CNX       |                            | rlbk#1                       |                                                                                                  | postgres
-    4472 | ROLLBACK_GROUP         | END                        | myGroup1                     | Rollback_id 4020                                                                                 | postgres
-    4473 | MODIFY_TABLE           | BEGIN                      |                              |                                                                                                  | postgres
-    4474 | LOCK_GROUP             | BEGIN                      | myGroup1                     |                                                                                                  | postgres
-    4475 | LOCK_GROUP             | END                        | myGroup1                     | 5 tables locked, 0 deadlock(s)                                                                   | postgres
-    4476 | SET_MARK_GROUPS        | BEGIN                      | myGroup1                     | MODIFY_%                                                                                         | postgres
-    4477 | CLEANUP_RLBK_STATE     |                            | Rollback id 4019             | set to COMMITTED                                                                                 | postgres
-    4478 | CLEANUP_RLBK_STATE     |                            | Rollback id 4020             | set to COMMITTED                                                                                 | postgres
-    4479 | SET_MARK_GROUPS        | END                        | myGroup1                     | MODIFY_%                                                                                         | postgres
-    4480 | MODIFY_TABLE           | TRIGGERS TO IGNORE CHANGED | myschema1.mytbl2             | {mytbl2trg2} => none                                                                             | postgres
-    4481 | MODIFY_TABLE           | END                        |                              | 1 tables effectively modified                                                                    | postgres
-    4509 | CLEANUP_RLBK_STATE     |                            | Rollback id 4021             | set to ABORTED                                                                                   | postgres
-    4510 | ENABLE_PROTECTION      | EVENT TRIGGERS ENABLED     |                              | emaj_protection_trg, emaj_sql_drop_trg, emaj_table_rewrite_trg                                   | postgres
-(424 rows)
+    4397 | COMMENT_ROLLBACK       |                            | 4000                         |                                                                                                  | postgres
+    4398 | COMMENT_ROLLBACK       |                            | 4000                         |                                                                                                  | postgres
+    4399 | COMMENT_ROLLBACK       |                            | 4000                         |                                                                                                  | postgres
+    4401 | SET_MARK_GROUP         | BEGIN                      | myGroup1                     |                                                                                                  | postgres
+    4402 | LOCK_GROUP             | BEGIN                      | myGroup1                     |                                                                                                  | postgres
+    4403 | LOCK_GROUP             | END                        | myGroup1                     | 5 tables locked, 0 deadlock(s)                                                                   | postgres
+    4404 | CLEANUP_RLBK_STATE     |                            | Rollback id 4016             | set to COMMITTED                                                                                 | postgres
+    4405 | CLEANUP_RLBK_STATE     |                            | Rollback id 4017             | set to COMMITTED                                                                                 | postgres
+    4406 | SET_MARK_GROUP         | END                        | myGroup1                     | Conso_M1                                                                                         | postgres
+    4407 | ROLLBACK_GROUP         | BEGIN                      | myGroup1                     | Logged rollback to mark Conso_M1 (timestamp)                                                     | postgres
+    4408 | DBLINK_OPEN_CNX        |                            | rlbk#1                       | Status = 1                                                                                       | postgres
+    4409 | LOCK_GROUP             | BEGIN                      | myGroup1                     | Rollback session #1                                                                              | postgres
+    4410 | LOCK_GROUP             | END                        | myGroup1                     | Rollback session #1: 5 tables locked, 0 deadlock(s)                                              | postgres
+    4411 | SET_MARK_GROUP         | BEGIN                      | myGroup1                     | RLBK_Conso_M1_%_START                                                                            | postgres
+    4412 | SET_MARK_GROUP         | END                        | myGroup1                     | RLBK_Conso_M1_%_START                                                                            | postgres
+    4413 | SET_MARK_GROUP         | BEGIN                      | myGroup1                     | RLBK_Conso_M1_%_DONE                                                                             | postgres
+    4414 | SET_MARK_GROUP         | END                        | myGroup1                     | RLBK_Conso_M1_%_DONE                                                                             | postgres
+    4415 | ROLLBACK_GROUP         | NOTICE                     | Rollback id 4018             | Rollback id = 4018.                                                                              | postgres
+    4416 | ROLLBACK_GROUP         | NOTICE                     | Rollback id 4018             | 0 / 5 tables effectively processed.                                                              | postgres
+    4417 | ROLLBACK_GROUP         | NOTICE                     | Rollback id 4018             | 0 / 2 sequences effectively processed.                                                           | postgres
+    4418 | DBLINK_CLOSE_CNX       |                            | rlbk#1                       |                                                                                                  | postgres
+    4419 | ROLLBACK_GROUP         | END                        | myGroup1                     | Rollback_id 4018                                                                                 | postgres
+    4420 | CONSOLIDATE_RLBK_GROUP | BEGIN                      | myGroup1                     | Erase all between marks Conso_M1 and RLBK_Conso_M1_%_DONE                                        | postgres
+    4421 | CONSOLIDATE_RLBK_GROUP | END                        | myGroup1                     | 0 tables and 2 sequences processed ; 1 marks deleted                                             | postgres
+    4422 | SET_MARK_GROUP         | BEGIN                      | myGroup1                     |                                                                                                  | postgres
+    4423 | LOCK_GROUP             | BEGIN                      | myGroup1                     |                                                                                                  | postgres
+    4424 | LOCK_GROUP             | END                        | myGroup1                     | 5 tables locked, 0 deadlock(s)                                                                   | postgres
+    4425 | CLEANUP_RLBK_STATE     |                            | Rollback id 4018             | set to COMMITTED                                                                                 | postgres
+    4426 | SET_MARK_GROUP         | END                        | myGroup1                     | Conso_M2                                                                                         | postgres
+    4427 | SET_MARK_GROUP         | BEGIN                      | myGroup1                     |                                                                                                  | postgres
+    4428 | LOCK_GROUP             | BEGIN                      | myGroup1                     |                                                                                                  | postgres
+    4429 | LOCK_GROUP             | END                        | myGroup1                     | 5 tables locked, 0 deadlock(s)                                                                   | postgres
+    4430 | SET_MARK_GROUP         | END                        | myGroup1                     | Conso_M3                                                                                         | postgres
+    4431 | ROLLBACK_GROUP         | BEGIN                      | myGroup1                     | Logged rollback to mark Conso_M2 (timestamp)                                                     | postgres
+    4432 | DBLINK_OPEN_CNX        |                            | rlbk#1                       | Status = 1                                                                                       | postgres
+    4433 | LOCK_GROUP             | BEGIN                      | myGroup1                     | Rollback session #1                                                                              | postgres
+    4434 | LOCK_GROUP             | END                        | myGroup1                     | Rollback session #1: 5 tables locked, 0 deadlock(s)                                              | postgres
+    4435 | SET_MARK_GROUP         | BEGIN                      | myGroup1                     | RLBK_Conso_M2_%_START                                                                            | postgres
+    4436 | SET_MARK_GROUP         | END                        | myGroup1                     | RLBK_Conso_M2_%_START                                                                            | postgres
+    4437 | ROLLBACK_SEQUENCE      |                            | myschema1.mytbl2b_col20_seq  | RESTART 3                                                                                        | postgres
+    4438 | ROLLBACK_TABLE         | BEGIN                      | myschema1.mytbl1             | All log rows where emaj_gid > 4000119 and <= 4000136, in session_replication_role = replica mode | postgres
+    4439 | ROLLBACK_TABLE         | END                        | myschema1.mytbl1             | 12 rolled back primary keys                                                                      | postgres
+    4440 | ROLLBACK_TABLE         | BEGIN                      | myschema1.mytbl2             | All log rows where emaj_gid > 4000119 and <= 4000136, in session_replication_role = replica mode | postgres
+    4441 | ROLLBACK_TABLE         | END                        | myschema1.mytbl2             | 1 rolled back primary keys                                                                       | postgres
+    4442 | ROLLBACK_TABLE         | BEGIN                      | myschema1.mytbl2b            | All log rows where emaj_gid > 4000119 and <= 4000136                                             | postgres
+    4443 | ROLLBACK_TABLE         | END                        | myschema1.mytbl2b            | 2 rolled back primary keys                                                                       | postgres
+    4444 | SET_MARK_GROUP         | BEGIN                      | myGroup1                     | RLBK_Conso_M2_%_DONE                                                                             | postgres
+    4445 | SET_MARK_GROUP         | END                        | myGroup1                     | RLBK_Conso_M2_%_DONE                                                                             | postgres
+    4446 | ROLLBACK_GROUP         | NOTICE                     | Rollback id 4019             | Rollback id = 4019.                                                                              | postgres
+    4447 | ROLLBACK_GROUP         | NOTICE                     | Rollback id 4019             | 3 / 5 tables effectively processed.                                                              | postgres
+    4448 | ROLLBACK_GROUP         | NOTICE                     | Rollback id 4019             | 1 / 2 sequences effectively processed.                                                           | postgres
+    4449 | DBLINK_CLOSE_CNX       |                            | rlbk#1                       |                                                                                                  | postgres
+    4450 | ROLLBACK_GROUP         | END                        | myGroup1                     | Rollback_id 4019                                                                                 | postgres
+    4451 | RENAME_MARK_GROUP      | BEGIN                      | myGroup1                     | Conso_M2                                                                                         | postgres
+    4452 | RENAME_MARK_GROUP      | END                        | myGroup1                     | Conso_M2 renamed Renamed_conso_M2                                                                | postgres
+    4453 | RENAME_MARK_GROUP      | BEGIN                      | myGroup1                     | EMAJ_LAST_MARK                                                                                   | postgres
+    4454 | RENAME_MARK_GROUP      | END                        | myGroup1                     | RLBK_Conso_M2_%_DONE renamed Renamed_last_mark                                                   | postgres
+    4455 | CONSOLIDATE_RLBK_GROUP | BEGIN                      | myGroup1                     | Erase all between marks Renamed_conso_M2 and Renamed_last_mark                                   | postgres
+    4456 | CONSOLIDATE_RLBK_GROUP | END                        | myGroup1                     | 3 tables and 2 sequences processed ; 2 marks deleted                                             | postgres
+    4457 | CONSOLIDATE_RLBK_GROUP | BEGIN                      | myGroup1                     | Erase all between marks Renamed_conso_M2 and Renamed_last_mark                                   | postgres
+    4458 | CONSOLIDATE_RLBK_GROUP | END                        | myGroup1                     | 0 tables and 2 sequences processed ; 0 marks deleted                                             | postgres
+    4459 | ROLLBACK_GROUP         | BEGIN                      | myGroup1                     | Unlogged rollback to mark Conso_M1 (timestamp)                                                   | postgres
+    4460 | DBLINK_OPEN_CNX        |                            | rlbk#1                       | Status = 1                                                                                       | postgres
+    4461 | LOCK_GROUP             | BEGIN                      | myGroup1                     | Rollback session #1                                                                              | postgres
+    4462 | LOCK_GROUP             | END                        | myGroup1                     | Rollback session #1: 5 tables locked, 0 deadlock(s)                                              | postgres
+    4463 | ROLLBACK_SEQUENCE      |                            | myschema1.mytbl2b_col20_seq  | RESTART 3                                                                                        | postgres
+    4464 | ROLLBACK_TABLE         | BEGIN                      | myschema1.mytbl2             | All log rows where emaj_gid > 4000119 and <= 4000152, in session_replication_role = replica mode | postgres
+    4465 | ROLLBACK_TABLE         | END                        | myschema1.mytbl2             | 1 rolled back primary keys                                                                       | postgres
+    4466 | ROLLBACK_TABLE         | BEGIN                      | myschema1.mytbl2b            | All log rows where emaj_gid > 4000119 and <= 4000152                                             | postgres
+    4467 | ROLLBACK_TABLE         | END                        | myschema1.mytbl2b            | 1 rolled back primary keys                                                                       | postgres
+    4468 | ROLLBACK_GROUP         | MARK DELETED               | myGroup1                     | mark RLBK_Conso_M1_%_DONE is deleted                                                             | postgres
+    4469 | ROLLBACK_GROUP         | MARK DELETED               | myGroup1                     | mark Renamed_conso_M2 is deleted                                                                 | postgres
+    4470 | ROLLBACK_GROUP         | MARK DELETED               | myGroup1                     | mark Renamed_last_mark is deleted                                                                | postgres
+    4471 | ROLLBACK_GROUP         | NOTICE                     | Rollback id 4020             | Rollback id = 4020.                                                                              | postgres
+    4472 | ROLLBACK_GROUP         | NOTICE                     | Rollback id 4020             | 2 / 5 tables effectively processed.                                                              | postgres
+    4473 | ROLLBACK_GROUP         | NOTICE                     | Rollback id 4020             | 1 / 2 sequences effectively processed.                                                           | postgres
+    4474 | DBLINK_CLOSE_CNX       |                            | rlbk#1                       |                                                                                                  | postgres
+    4475 | ROLLBACK_GROUP         | END                        | myGroup1                     | Rollback_id 4020                                                                                 | postgres
+    4476 | MODIFY_TABLE           | BEGIN                      |                              |                                                                                                  | postgres
+    4477 | LOCK_GROUP             | BEGIN                      | myGroup1                     |                                                                                                  | postgres
+    4478 | LOCK_GROUP             | END                        | myGroup1                     | 5 tables locked, 0 deadlock(s)                                                                   | postgres
+    4479 | SET_MARK_GROUPS        | BEGIN                      | myGroup1                     | MODIFY_%                                                                                         | postgres
+    4480 | CLEANUP_RLBK_STATE     |                            | Rollback id 4019             | set to COMMITTED                                                                                 | postgres
+    4481 | CLEANUP_RLBK_STATE     |                            | Rollback id 4020             | set to COMMITTED                                                                                 | postgres
+    4482 | SET_MARK_GROUPS        | END                        | myGroup1                     | MODIFY_%                                                                                         | postgres
+    4483 | MODIFY_TABLE           | TRIGGERS TO IGNORE CHANGED | myschema1.mytbl2             | {mytbl2trg2} => none                                                                             | postgres
+    4484 | MODIFY_TABLE           | END                        |                              | 1 tables effectively modified                                                                    | postgres
+    4512 | CLEANUP_RLBK_STATE     |                            | Rollback id 4021             | set to ABORTED                                                                                   | postgres
+    4513 | ENABLE_PROTECTION      | EVENT TRIGGERS ENABLED     |                              | emaj_protection_trg, emaj_sql_drop_trg, emaj_table_rewrite_trg                                   | postgres
+(427 rows)
 

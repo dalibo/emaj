@@ -92,7 +92,7 @@ The '*EMAJ_LAST_MARK*' keyword can be used as mark name, meaning the last set ma
 
 The third parameter is a boolean that indicates whether the rollback operation may target a mark set before an :doc:`alter group <alterGroups>` operation. Depending on their nature, changes performed on tables groups in *LOGGING* state can be automatically cancelled or not. In some cases, this cancellation can be partial. By default, this parameter is set to *FALSE*.
 
-A comment associated to the rollback can be supplied as 4th parameter. It allows the administrator to annotate the operation, indicating for instance the reason for it has been launched or the reverted processing.
+A comment associated to the rollback can be supplied as 4th parameter. It allows the administrator to annotate the operation, indicating for instance the reason for it has been launched or the reverted processing. The comment can also be added by the :ref:`emaj_comment_rollback() <emaj_comment_rollback>` function, this function allowing also its update or deletion.
 
 The function returns a set of rows with a severity level set to either “*Notice*” or “*Warning*” values, and a textual message. The function returns 3 “*Notice*” rows reporting the generated rollback identifier, the number of tables and the number of sequences that have been effectively modified by the rollback operation. Other messages of type “*Warning*” may also be reported when the rollback operation has processed tables group changes.
 
@@ -136,7 +136,7 @@ The '*EMAJ_LAST_MARK*' keyword can be used as mark name, meaning the last set ma
 
 The third parameter is a boolean that indicates whether the rollback operation may target a mark set before an :doc:`alter group <alterGroups>` operation. Depending on their nature, changes performed on tables groups in *LOGGING* state can be automatically cancelled or not. In some cases, this cancellation can be partial. By default, this parameter is set to *FALSE*.
 
-A comment associated to the rollback can be supplied as 4th parameter. It allows the administrator to annotate the operation, indicating for instance the reason for it has been launched or the reverted processing.
+A comment associated to the rollback can be supplied as 4th parameter. It allows the administrator to annotate the operation, indicating for instance the reason for it has been launched or the reverted processing. The comment can also be added by the :ref:`emaj_comment_rollback() <emaj_comment_rollback>` function, this function allowing also its update or deletion.
 
 The function returns a set of rows with a severity level set to either “*Notice*” or “*Warning*” values, and a textual message. The function returns 3 “*Notice*” rows reporting the generated rollback identifier, the number of tables and the number of sequences that have been effectively modified by the rollback operation. Other messages of type “*Warning*” may also be reported when the rollback operation has processed tables group changes.
 

@@ -1,6 +1,7 @@
 -- rollback.sql : test updates log, emaj_rollback_group(), emaj_logged_rollback_group(),
 --                emaj_rollback_groups(), emaj_logged_rollback_groups(),
 --                emaj_cleanup_rollback_state(), emaj_rollback_activity(),
+--                emaj_comment_rollback(),
 --                emaj_consolidate_rollback_group() and emaj_get_consolidable_rollbacks() functions.
 --
 
@@ -507,6 +508,26 @@ begin;
          rlbk_eff_nb_table, rlbk_eff_nb_sequence, rlbk_status, date_trunc('second',rlbk_elapse) as elapse, date_trunc('second',rlbk_remaining) as remaining, rlbk_completion_pct 
     from emaj._rollback_activity();
 rollback;
+
+-----------------------------
+-- test emaj_comment_rollback(),
+-----------------------------
+
+-- unknown rollback id
+select emaj.emaj_comment_rollback(NULL,NULL);
+select emaj.emaj_comment_rollback(-1,NULL);
+
+-- set a comment
+select emaj.emaj_comment_rollback(4000,'First comment');
+select rlbk_comment from emaj.emaj_rlbk where rlbk_id = 4000;
+
+-- update a comment
+select emaj.emaj_comment_rollback(4000,'Updated comment');
+select rlbk_comment from emaj.emaj_rlbk where rlbk_id = 4000;
+
+-- delete a comment
+select emaj.emaj_comment_rollback(4000,NULL);
+select rlbk_comment from emaj.emaj_rlbk where rlbk_id = 4000;
 
 -----------------------------
 -- test emaj_consolidate_rollback_group() and emaj_get_consolidable_rollbacks()

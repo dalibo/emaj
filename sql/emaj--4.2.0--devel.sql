@@ -1463,6 +1463,33 @@ $_rlbk_end$
   END;
 $_rlbk_end$;
 
+CREATE OR REPLACE FUNCTION emaj.emaj_comment_rollback(p_rlbkId INT, p_comment TEXT)
+RETURNS VOID LANGUAGE plpgsql AS
+$emaj_comment_rollback$
+-- This function sets or modifies a comment on a rollback by updating the rlbk_comment of the emaj_rlbk table.
+-- Input: rollback identifier, comment
+--   To reset an existing comment for a rollback, set the supplied comment to NULL.
+  BEGIN
+-- Check the rollback id.
+    PERFORM 0
+      FROM emaj.emaj_rlbk
+      WHERE rlbk_id = p_rlbkId;
+    IF NOT FOUND THEN
+      RAISE EXCEPTION 'emaj_comment_rollback: The rollback identifier % does not exist.',
+        p_rlbkId;
+    END IF;
+-- Update the rlbk_comment column from the emaj_rlbk table.
+    UPDATE emaj.emaj_rlbk SET rlbk_comment = p_comment WHERE rlbk_id = p_rlbkId;
+-- Insert the event into the history.
+    INSERT INTO emaj.emaj_hist (hist_function, hist_object)
+      VALUES ('COMMENT_ROLLBACK', p_rlbkId);
+--
+    RETURN;
+  END;
+$emaj_comment_rollback$;
+COMMENT ON FUNCTION emaj.emaj_comment_rollback(INT, TEXT) IS
+$$Sets a comment on an E-Maj Rollback.$$;
+
 CREATE OR REPLACE FUNCTION emaj.emaj_rollback_activity()
 RETURNS SETOF emaj.emaj_rollback_activity_type LANGUAGE plpgsql AS
 $emaj_rollback_activity$

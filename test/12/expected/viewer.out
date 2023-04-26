@@ -377,6 +377,8 @@ select * from emaj.emaj_logged_rollback_group('myGroup1','mark');
 ERROR:  permission denied for function emaj_logged_rollback_group
 select * from emaj.emaj_logged_rollback_groups(array['myGroup1'],'mark');
 ERROR:  permission denied for function emaj_logged_rollback_groups
+select emaj.emaj_comment_rollback(1,'comment');
+ERROR:  permission denied for function emaj_comment_rollback
 select emaj.emaj_consolidate_rollback_group('myGroup1','mark');
 ERROR:  permission denied for function emaj_consolidate_rollback_group
 select emaj.emaj_reset_group('myGroup1');

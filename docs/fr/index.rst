@@ -40,6 +40,7 @@ Bienvenue dans la documentation E-Maj !
    alterGroups
    otherGroupsFunctions
    marksFunctions
+   rollbackAdminFunctions
    statFunctions
    extractionFunctions
    otherFunctions

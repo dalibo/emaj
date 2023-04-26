@@ -53,6 +53,8 @@ La colonne *hist_function* peut prendre les valeurs suivantes.
 +----------------------------------+---------------------------------------------------------------------------------------+
 | COMMENT_MARK_GROUP               | positionnement d'un commentaire sur une marque                                        |
 +----------------------------------+---------------------------------------------------------------------------------------+
+| COMMENT_ROLLBACK                 | positionnement d'un commentaire sur un rollback E-Maj                                 |
++----------------------------------+---------------------------------------------------------------------------------------+
 | CONSOLIDATE_RLBK_GROUP           | consolide une opération de rollback tracé                                             |
 +----------------------------------+---------------------------------------------------------------------------------------+
 | CREATE_GROUP                     | création d'un groupe de tables                                                        |

@@ -114,6 +114,7 @@ select * from emaj.emaj_rollback_group('myGroup1','mark');
 select * from emaj.emaj_rollback_groups(array['myGroup1'],'mark'); 
 select * from emaj.emaj_logged_rollback_group('myGroup1','mark');
 select * from emaj.emaj_logged_rollback_groups(array['myGroup1'],'mark');
+select emaj.emaj_comment_rollback(1,'comment');
 select emaj.emaj_consolidate_rollback_group('myGroup1','mark');
 select emaj.emaj_reset_group('myGroup1');
 select emaj.emaj_snap_group('myGroup1','/tmp',NULL);

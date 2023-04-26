@@ -92,7 +92,7 @@ Le mot clé '*EMAJ_LAST_MARK*' peut être utilisé comme nom de marque pour indi
 
 Le 3ème paramètre est un booléen qui indique si l’opération de rollback peut cibler une marque posée antérieurement à une opération de :doc:`modification du groupe de tables <alterGroups>`. Selon leur nature, les modifications de groupe de tables effectuées alors que ce dernier est en état *LOGGING* peuvent être ou non automatiquement annulées. Dans certains cas, cette annulation peut être partielle. Par défaut, ce paramètre prend la valeur *FAUX*.
 
-Un commentaire associé au rollback peut être fourni en 4ème paramètre. L’administrateur peut ainsi annoter l’opération en indiquant par exemple la raison de son lancement ou le traitement annulé.
+Un commentaire associé au rollback peut être fourni en 4ème paramètre. L’administrateur peut ainsi annoter l’opération en indiquant par exemple la raison de son lancement ou le traitement annulé. Le commentaire peut également être ajouté avec la fonction :ref:`emaj_comment_rollback() <emaj_comment_rollback>`, cette fonction permettant aussi de le modifier ou de le supprimer.
 
 La fonction retourne un ensemble de lignes comportant un niveau de sévérité pouvant prendre les valeurs « *Notice* » ou « *Warning* », et un texte de message. La fonction retourne 3 lignes de type « *Notice* » indiquant l'identifiant de rollback généré, le nombre de tables et le nombre de séquences effectivement modifiées par l'opération de rollback. Des lignes de types « *Warning* » peuvent aussi être émises dans le cas où des opérations de modification du groupe de tables ont du être traitées par le rollback.
 
@@ -136,7 +136,7 @@ Le mot clé 'EMAJ_LAST_MARK' peut être utilisé comme nom de marque pour indiqu
 
 Le 3ème paramètre est un booléen qui indique si l’opération de rollback peut cibler une marque posée antérieurement à une opération de :doc:`modification du groupe de tables <alterGroups>`. Selon leur nature, les modifications de groupe de tables effectuées alors que ce dernier est en état *LOGGING* peuvent être ou non automatiquement annulées. Dans certains cas, cette annulation peut être partielle. Par défaut, ce paramètre prend la valeur *FAUX*.
 
-Un commentaire associé au rollback peut être fourni en 4ème paramètre. L’administrateur peut ainsi annoter l’opération en indiquant par exemple la raison de son lancement ou le traitement annulé.
+Un commentaire associé au rollback peut être fourni en 4ème paramètre. L’administrateur peut ainsi annoter l’opération en indiquant par exemple la raison de son lancement ou le traitement annulé. Le commentaire peut également être ajouté avec la fonction :ref:`emaj_comment_rollback() <emaj_comment_rollback>`, cette fonction permettant aussi de le modifier ou de le supprimer.
 
 La fonction retourne un ensemble de lignes comportant un niveau de sévérité pouvant prendre les valeurs « *Notice* » ou « *Warning* », et un texte de message. La fonction retourne 3 lignes de type « *Notice* » indiquant l'identifiant de rollback généré, le nombre de tables et le nombre de séquences effectivement modifiées par l'opération de rollback. Des lignes de types « *Warning* » peuvent aussi être émises dans le cas où des opérations de modification du groupe de tables ont du être traitées par le rollback.
 

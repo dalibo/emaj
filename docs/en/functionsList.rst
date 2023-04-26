@@ -295,6 +295,9 @@ General purpose functions
 | :ref:`emaj_cleanup_rollback_state                |                               | #.rollback INT                        |
 | <emaj_cleanup_rollback_state>`                   |                               |                                       |
 +--------------------------------------------------+-------------------------------+---------------------------------------+
+| :ref:`emaj_comment_rollback                      | | rollback.id INT,            |                                       |
+| <emaj_comment_rollback>`                         | | comment TEXT                |                                       |
++--------------------------------------------------+-------------------------------+---------------------------------------+
 | :ref:`emaj_disable_protection_by_event_triggers  |                               | #.triggers INT                        |
 | <emaj_disable_protection_by_event_triggers>`     |                               |                                       |
 +--------------------------------------------------+-------------------------------+---------------------------------------+

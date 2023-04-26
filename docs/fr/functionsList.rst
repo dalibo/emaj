@@ -295,6 +295,9 @@ Fonctions de niveau général
 | :ref:`emaj_cleanup_rollback_state                |                               | nb.rollback INT                       |
 | <emaj_cleanup_rollback_state>`                   |                               |                                       |
 +--------------------------------------------------+-------------------------------+---------------------------------------+
+| :ref:`emaj_comment_rollback                      | | id.rollback INT,            |                                       |
+| <emaj_comment_rollback>`                         | | commentaire TEXT            |                                       |
++--------------------------------------------------+-------------------------------+---------------------------------------+
 | :ref:`emaj_disable_protection_by_event_triggers  |                               | nb.triggers INT                       |
 | <emaj_disable_protection_by_event_triggers>`     |                               |                                       |
 +--------------------------------------------------+-------------------------------+---------------------------------------+

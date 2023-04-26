@@ -123,37 +123,3 @@ Using the *emaj_detailed_log_stat_groups()* function, detailed log statistics ca
    SELECT emaj.emaj_detailed_log_stat_groups('<group.names.array>', '<start.mark>', '<end.mark>');
 
 More information about :doc:`multi-groups functions <multiGroupsFunctions>`.
-
-.. _emaj_estimate_rollback_group:
-
-Estimate the rollback duration
-------------------------------
-
-The *emaj_estimate_rollback_group()* function returns an idea of the time needed to rollback a tables group to a given mark. It can be called with a statement like::
-
-   SELECT emaj.emaj_estimate_rollback_group('<group.name>', '<mark.name>', <is.logged>);
-
-The keyword *'EMAJ_LAST_MARK'* can be used as mark name. It then represents the last set mark.
-
-The third parameter indicates whether the E-Maj rollback to simulate is a *logged rollback* or not.
-
-The function returns an *INTERVAL* value.
-
-The tables group must be in *LOGGING* state and the supplied mark must be usable for a rollback, i.e. it cannot be logically deleted.
-
-This duration estimate is approximative. It takes into account:
-
-* the number of updates in log tables to process, as returned by the :ref:`emaj_log_stat_group() <emaj_log_stat_group>` function,
-* recorded duration of already performed rollbacks for the same tables,  
-* 6 generic :doc:`parameters <parameters>` that are used as default values when no statistics have been already recorded for the tables to process.
-
-The precision of the result cannot be high. The first reason is that, *INSERT*, *UPDATE* and *DELETE* having not the same cost, the part of each SQL type may vary. The second reason is that the load of the server at rollback time can be very different from one run to another. However, if there is a time constraint, the order of magnitude delivered by the function can be helpful to determine of the rollback operation can be performed in the available time interval.
-
-If no statistics on previous rollbacks are available and if the results quality is poor, it is possible to adjust the generic :doc:`parameters <parameters>`. It is also possible to manually change the *emaj.emaj_rlbk_stat* table's content that keep a trace of the previous rollback durations, for instance by deleting rows corresponding to rollback operations performed in unusual load conditions.
-
-Using the *emaj_estimate_rollback_groups()* function, it is possible to estimate the duration of a rollback operation on several groups::
-
-   SELECT emaj.emaj_estimate_rollback_groups('<group.names.array>', '<mark.name>', <is.logged>);
-
-More information about :doc:`multi-groups functions <multiGroupsFunctions>`.
-

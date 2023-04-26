@@ -123,37 +123,3 @@ Des statistiques détaillées peuvent être obtenues sur plusieurs groupes de ta
    SELECT emaj.emaj_detailed_log_stat_groups('<tableau.des.groupes>', '<marque.début>', '<marque.fin>');
 
 Plus d'information sur les :doc:`fonctions multi-groupes <multiGroupsFunctions>`.
-
-.. _emaj_estimate_rollback_group:
-
-Estimation de la durée d'un rollback
-------------------------------------
-
-La fonction *emaj_estimate_rollback_group()* permet d'obtenir une estimation de la durée que prendrait le rollback d'un groupe de tables à une marque donnée. Elle peut être appelée de la façon suivante ::
-
-   SELECT emaj.emaj_estimate_rollback_group('<nom.du.groupe>', '<nom.de.marque>', <est tracé>);
-
-Le mot clé *'EMAJ_LAST_MARK'* peut être utilisé comme nom de marque. Il représente alors la dernière marque posée.
-
-Le troisième paramètre, de type booléen, indique si le rollback à simuler est tracé ou non.
-
-La fonction retourne un donnée de type *INTERVAL*.
-
-Le groupe de tables doit être en état démarré (*LOGGING*) et la marque indiquée doit être utilisable pour un rollback, c'est à dire qu'elle ne doit pas être marquée comme logiquement supprimée (*DELETED*).
-
-L'estimation de cette durée n'est qu'approximative. Elle s'appuie sur :
-
-* le nombre de lignes à traiter dans les tables de logs, tel que le retourne la fonction :ref:`emaj_log_stat_group() <emaj_log_stat_group>`,
-* des relevés de temps issus d'opérations de rollback précédentes pour les mêmes tables  
-* 6 :doc:`paramètres <parameters>` génériques qui sont utilisés comme valeurs par défaut, lorsque aucune statistique n'a été enregistrée pour les tables à traiter.
-
-Compte tenu de la répartition très variable entre les verbes *INSERT*, *UPDATE* et *DELETE* enregistrés dans les logs, et des conditions non moins variables de charge des serveurs lors des opérations de rollback, la précision du résultat restitué est faible. L'ordre de grandeur obtenu peut néanmoins donner une indication utile sur la capacité de traiter un rollback lorsque le temps imparti est contraint.
-
-Sans statistique sur les rollbacks précédents, si les résultats obtenus sont de qualité médiocre, il est possible d'ajuster les :doc:`paramètres <parameters>` génériques. Il est également possible de modifier manuellement le contenu de la table *emaj.emaj_rlbk_stat* qui conserve la durée des rollbacks précédents, en supprimant par exemple les lignes correspondant à des rollbacks effectués dans des conditions de charge inhabituelles.
-
-La fonction *emaj_estimate_rollback_groups()* permet d’estimer la durée d’un rollback portant sur plusieurs groupes de tables ::
-
-   SELECT emaj.emaj_estimate_rollback_groups('<tableau.des.groupes>', '<nom.de.marque>', <est tracé>);
-
-Plus d'information sur les :doc:`fonctions multi-groupes <multiGroupsFunctions>`.
-

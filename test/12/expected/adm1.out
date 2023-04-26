@@ -2145,14 +2145,20 @@ select * from emaj._rlbk_async(emaj._rlbk_init(array['myGroup1'], 'M4', true, 1,
  Notice        | 0 / 2 sequences effectively processed.
 (3 rows)
 
+select emaj.emaj_comment_rollback(12601,'Updated comment');
+ emaj_comment_rollback 
+-----------------------
+ 
+(1 row)
+
 -- and check the rollback result
 select rlbk_id, rlbk_groups, rlbk_mark, rlbk_mark_time_id, rlbk_time_id, rlbk_is_logged, rlbk_is_alter_group_allowed, rlbk_comment,
        rlbk_nb_session, rlbk_nb_table, rlbk_nb_sequence, rlbk_eff_nb_table, rlbk_eff_nb_sequence, rlbk_status, rlbk_begin_hist_id,
        rlbk_dblink_schema, rlbk_is_dblink_used, rlbk_messages
  from emaj.emaj_rlbk order by rlbk_id desc limit 1;
- rlbk_id | rlbk_groups | rlbk_mark | rlbk_mark_time_id | rlbk_time_id | rlbk_is_logged | rlbk_is_alter_group_allowed | rlbk_comment | rlbk_nb_session | rlbk_nb_table | rlbk_nb_sequence | rlbk_eff_nb_table | rlbk_eff_nb_sequence | rlbk_status | rlbk_begin_hist_id | rlbk_dblink_schema | rlbk_is_dblink_used |                                                          rlbk_messages                                                          
----------+-------------+-----------+-------------------+--------------+----------------+-----------------------------+--------------+-----------------+---------------+------------------+-------------------+----------------------+-------------+--------------------+--------------------+---------------------+---------------------------------------------------------------------------------------------------------------------------------
-   12601 | {myGroup1}  | M4        |             12401 |        12601 | t              | t                           | my comment   |               1 |             5 |                2 |                 3 |                    0 | COMPLETED   |              12614 | public             | t                   | {"Notice: Rollback id = 12601.","Notice: 3 / 5 tables effectively processed.","Notice: 0 / 2 sequences effectively processed."}
+ rlbk_id | rlbk_groups | rlbk_mark | rlbk_mark_time_id | rlbk_time_id | rlbk_is_logged | rlbk_is_alter_group_allowed |  rlbk_comment   | rlbk_nb_session | rlbk_nb_table | rlbk_nb_sequence | rlbk_eff_nb_table | rlbk_eff_nb_sequence | rlbk_status | rlbk_begin_hist_id | rlbk_dblink_schema | rlbk_is_dblink_used |                                                          rlbk_messages                                                          
+---------+-------------+-----------+-------------------+--------------+----------------+-----------------------------+-----------------+-----------------+---------------+------------------+-------------------+----------------------+-------------+--------------------+--------------------+---------------------+---------------------------------------------------------------------------------------------------------------------------------
+   12601 | {myGroup1}  | M4        |             12401 |        12601 | t              | t                           | Updated comment |               1 |             5 |                2 |                 3 |                    0 | COMPLETED   |              12614 | public             | t                   | {"Notice: Rollback id = 12601.","Notice: 3 / 5 tables effectively processed.","Notice: 0 / 2 sequences effectively processed."}
 (1 row)
 
 -----------------------------
@@ -2329,7 +2335,8 @@ select hist_function, hist_event, hist_object,
  ROLLBACK_GROUP     | NOTICE       | Rollback id 12601  | 0 / 2 sequences effectively processed.                                                             | postgres
  DBLINK_CLOSE_CNX   |              | rlbk#1             |                                                                                                    | postgres
  ROLLBACK_GROUP     | END          | myGroup1           | Rollback_id 12601                                                                                  | postgres
-(37 rows)
+ COMMENT_ROLLBACK   |              | 12601              |                                                                                                    | postgres
+(38 rows)
 
 -- user tables
 select * from mySchema1.myTbl1 order by col11,col12;
