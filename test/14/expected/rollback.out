@@ -681,7 +681,7 @@ begin;
   delete from emaj.emaj_sequence where sequ_schema = 'myschema2' and sequ_name = 'myseq1';
   select * from emaj.emaj_rollback_group('myGroup2','Mark21');
 ERROR:  _rlbk_seq: No mark at time id "4004" can be found for the sequence "myschema2.myseq1".
-CONTEXT:  PL/pgSQL function emaj._rlbk_seq(emaj.emaj_relation,bigint) line 21 at RAISE
+CONTEXT:  PL/pgSQL function emaj._rlbk_seq(emaj.emaj_relation,bigint) line 20 at RAISE
 SQL statement "SELECT sum(emaj._rlbk_seq(t.*, greatest(v_rlbkMarkTimeId, lower(t.rel_time_range))))                                  FROM
               (SELECT *
                  FROM emaj.emaj_relation

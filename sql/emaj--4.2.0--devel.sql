@@ -235,6 +235,52 @@ DROP FUNCTION IF EXISTS emaj._rlbk_init(P_GROUPNAMES TEXT[],P_MARK TEXT,P_ISLOGG
 ------------------------------------------------------------------
 -- create new or modified functions                             --
 ------------------------------------------------------------------
+CREATE OR REPLACE FUNCTION emaj._rlbk_seq(r_rel emaj.emaj_relation, p_timeId BIGINT)
+RETURNS INT LANGUAGE plpgsql
+SECURITY DEFINER SET search_path = pg_catalog, pg_temp AS
+$_rlbk_seq$
+-- This function rollbacks one application sequence to a given mark.
+-- Input: the emaj_relation row related to the application sequence to process, time id of the mark to rollback to.
+-- Ouput: 0 if no change have to be applied, otherwise 1.
+-- The function is defined as SECURITY DEFINER so that emaj_adm role can use it even if it is not the owner of the application sequence.
+  DECLARE
+    v_stmt                   TEXT;
+    v_fullSeqName            TEXT;
+    mark_seq_rec             emaj.emaj_sequence%ROWTYPE;
+    curr_seq_rec             emaj.emaj_sequence%ROWTYPE;
+  BEGIN
+-- Read sequence's characteristics at mark time.
+    SELECT *
+      INTO mark_seq_rec
+      FROM emaj.emaj_sequence
+      WHERE sequ_schema = r_rel.rel_schema
+        AND sequ_name = r_rel.rel_tblseq
+        AND sequ_time_id = p_timeId;
+    IF NOT FOUND THEN
+      RAISE EXCEPTION '_rlbk_seq: No mark at time id "%" can be found for the sequence "%.%".',
+        p_timeId, r_rel.rel_schema, r_rel.rel_tblseq;
+    END IF;
+-- Read the current sequence's characteristics.
+    SELECT *
+      INTO curr_seq_rec
+      FROM emaj._get_current_sequence_state(r_rel.rel_schema, r_rel.rel_tblseq, NULL);
+-- Build the ALTER SEQUENCE statement, depending on the differences between the current sequence state and its characteristics
+-- at the requested mark time.
+    SELECT emaj._build_alter_seq(curr_seq_rec, mark_seq_rec) INTO v_stmt;
+-- If there is no change to apply, return with 0.
+    IF v_stmt = '' THEN
+      RETURN 0;
+    END IF;
+-- Otherwise, execute the statement, report the event into the history and return 1.
+    v_fullSeqName = quote_ident(r_rel.rel_schema) || '.' || quote_ident(r_rel.rel_tblseq);
+    EXECUTE format('ALTER SEQUENCE %s %s',
+                   v_fullSeqName, v_stmt);
+    INSERT INTO emaj.emaj_hist (hist_function, hist_object, hist_wording)
+      VALUES ('ROLLBACK_SEQUENCE', v_fullSeqName, substr(v_stmt,2));
+    RETURN 1;
+  END;
+$_rlbk_seq$;
+
 CREATE OR REPLACE FUNCTION emaj.emaj_rollback_group(p_groupName TEXT, p_mark TEXT, p_isAlterGroupAllowed BOOLEAN DEFAULT FALSE,
                                                     p_comment TEXT DEFAULT NULL, OUT rlbk_severity TEXT, OUT rlbk_message TEXT)
 RETURNS SETOF RECORD LANGUAGE plpgsql AS
@@ -448,6 +494,77 @@ $_rlbk_init$
     RETURN v_rlbkId;
   END;
 $_rlbk_init$;
+
+CREATE OR REPLACE FUNCTION emaj._rlbk_check(p_groupNames TEXT[], p_mark TEXT, p_isAlterGroupAllowed BOOLEAN, isRollbackSimulation BOOLEAN)
+RETURNS TEXT LANGUAGE plpgsql AS
+$_rlbk_check$
+-- This functions performs checks on group names and mark names supplied as parameter for the emaj_rollback_groups()
+-- and emaj_estimate_rollback_groups() functions.
+-- It returns the real mark name, or NULL if the groups array is NULL or empty.
+  DECLARE
+    v_markName               TEXT;
+    v_aGroupName             TEXT;
+    v_markTimeId             BIGINT;
+    v_protectedMarksList     TEXT;
+  BEGIN
+-- Check the group names and states.
+    IF isRollbackSimulation THEN
+      SELECT emaj._check_group_names(p_groupNames := p_groupNames, p_mayBeNull := FALSE, p_lockGroups := FALSE,
+                                     p_checkList := 'LOGGING,ROLLBACKABLE') INTO p_groupNames;
+    ELSE
+      SELECT emaj._check_group_names(p_groupNames := p_groupNames, p_mayBeNull := FALSE, p_lockGroups := TRUE,
+                                     p_checkList := 'LOGGING,ROLLBACKABLE,UNPROTECTED') INTO p_groupNames;
+    END IF;
+    IF p_groupNames IS NOT NULL THEN
+-- Check the mark name.
+      SELECT emaj._check_mark_name(p_groupNames := p_groupNames, p_mark := p_mark, p_checkList := 'ACTIVE') INTO v_markName;
+      IF NOT isRollbackSimulation THEN
+-- Check that for each group that the rollback wouldn't delete protected marks (check disabled for rollback simulation).
+        FOREACH v_aGroupName IN ARRAY p_groupNames LOOP
+--   Get the target mark time id,
+          SELECT mark_time_id INTO v_markTimeId
+            FROM emaj.emaj_mark
+            WHERE mark_group = v_aGroupName
+              AND mark_name = v_markName;
+--   ... and look at the protected mark.
+          SELECT string_agg(mark_name,', ' ORDER BY mark_name) INTO v_protectedMarksList
+            FROM
+              (SELECT mark_name
+                 FROM emaj.emaj_mark
+                 WHERE mark_group = v_aGroupName
+                   AND mark_time_id > v_markTimeId
+                   AND mark_is_rlbk_protected
+                 ORDER BY mark_time_id
+              ) AS t;
+          IF v_protectedMarksList IS NOT NULL THEN
+            RAISE EXCEPTION '_rlbk_check: Protected marks (%) for the group "%" block the rollback to the mark "%".',
+              v_protectedMarksList, v_aGroupName, v_markName;
+          END IF;
+        END LOOP;
+      END IF;
+-- If the isAlterGroupAllowed flag is not explicitely set to true, check that the rollback would not cross any structure change for
+-- the groups.
+      IF p_isAlterGroupAllowed IS NULL OR NOT p_isAlterGroupAllowed THEN
+        SELECT mark_time_id INTO v_markTimeId
+          FROM emaj.emaj_mark
+          WHERE mark_group = p_groupNames[1]
+            AND mark_name = v_markName;
+        IF EXISTS
+             (SELECT 0
+                FROM emaj.emaj_relation_change
+                WHERE rlchg_time_id > v_markTimeId
+                  AND rlchg_group = ANY (p_groupNames)
+                  AND rlchg_rlbk_id IS NULL
+             ) THEN
+          RAISE EXCEPTION '_rlbk_check: This rollback operation would cross some previous structure group change operations,'
+                          ' which is not allowed by the current function parameters.';
+        END IF;
+      END IF;
+    END IF;
+--
+    RETURN v_markName;
+  END;
+$_rlbk_check$;
 
 CREATE OR REPLACE FUNCTION emaj._rlbk_planning(p_rlbkId INT)
 RETURNS INT LANGUAGE plpgsql

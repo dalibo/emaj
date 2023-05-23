@@ -758,7 +758,7 @@ begin;
   select emaj.emaj_estimate_rollback_group('myGroup1','Mark11',FALSE);
 ERROR:  _check_group_names: The group "myGroup1" is not in LOGGING state.
 CONTEXT:  PL/pgSQL function emaj._check_group_names(text[],boolean,boolean,text) line 87 at RAISE
-SQL statement "SELECT emaj._check_group_names(p_groupNames := p_groupNames, p_mayBeNull := FALSE, p_lockGroups := TRUE,
+SQL statement "SELECT emaj._check_group_names(p_groupNames := p_groupNames, p_mayBeNull := FALSE, p_lockGroups := FALSE,
                                      p_checkList := 'LOGGING,ROLLBACKABLE')"
 PL/pgSQL function emaj._rlbk_check(text[],text,boolean,boolean) line 13 at SQL statement
 SQL statement "SELECT emaj._rlbk_check(p_groupNames, p_mark, TRUE, TRUE)"

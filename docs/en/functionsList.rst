@@ -176,10 +176,12 @@ Groups level functions
 | <emaj_drop_group>`                               |                               |                                       |
 +--------------------------------------------------+-------------------------------+---------------------------------------+
 | :ref:`emaj_estimate_rollback_group               | | group TEXT,                 | duration INTERVAL                     |
-| <emaj_estimate_rollback_group>` (V)              | | mark TEXT                   |                                       |
+| <emaj_estimate_rollback_group>` (V)              | | mark TEXT,                  |                                       |
+|                                                  | | is.logged BOOLEAN           |                                       |
 +--------------------------------------------------+-------------------------------+---------------------------------------+
 | :doc:`emaj_estimate_rollback_groups              | | groups.array TEXT[],        | duration INTERVAL                     |
-| <multiGroupsFunctions>` (V)                      | | mark TEXT                   |                                       |
+| <multiGroupsFunctions>` (V)                      | | mark TEXT,                  |                                       |
+|                                                  | | is.logged BOOLEAN           |                                       |
 +--------------------------------------------------+-------------------------------+---------------------------------------+
 | :ref:`emaj_force_drop_group                      | | group TEXT                  | #.tables.and.seq INT                  |
 | <emaj_force_drop_group>`                         |                               |                                       |

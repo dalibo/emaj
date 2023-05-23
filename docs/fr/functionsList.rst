@@ -175,10 +175,12 @@ Fonctions de niveau groupe de tables
 | <emaj_drop_group>`                               |                               |                                       |
 +--------------------------------------------------+-------------------------------+---------------------------------------+
 | :ref:`emaj_estimate_rollback_group               | | groupe TEXT,                | durée INTERVAL                        |
-| <emaj_estimate_rollback_group>` (V)              | | marque TEXT                 |                                       |
+| <emaj_estimate_rollback_group>` (V)              | | marque TEXT,                |                                       |
+|                                                  | | est.tracé BOOLEAN           |                                       |
 +--------------------------------------------------+-------------------------------+---------------------------------------+
 | :doc:`emaj_estimate_rollback_groups              | | tableau.groupes TEXT[],     | durée INTERVAL                        |
-| <multiGroupsFunctions>` (V)                      | | marque TEXT                 |                                       |
+| <multiGroupsFunctions>` (V)                      | | marque TEXT,                |                                       |
+|                                                  | | est.tracé BOOLEAN           |                                       |
 +--------------------------------------------------+-------------------------------+---------------------------------------+
 | :ref:`emaj_force_drop_group                      | | groupe TEXT                 | nb.tables.et.seq INT                  |
 | <emaj_force_drop_group>`                         |                               |                                       |

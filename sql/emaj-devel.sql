@@ -4786,7 +4786,6 @@ RETURNS INT LANGUAGE plpgsql
 SECURITY DEFINER SET search_path = pg_catalog, pg_temp AS
 $_rlbk_seq$
 -- This function rollbacks one application sequence to a given mark.
--- The function is called by emaj.emaj._rlbk_end().
 -- Input: the emaj_relation row related to the application sequence to process, time id of the mark to rollback to.
 -- Ouput: 0 if no change have to be applied, otherwise 1.
 -- The function is defined as SECURITY DEFINER so that emaj_adm role can use it even if it is not the owner of the application sequence.
@@ -8086,7 +8085,7 @@ $_rlbk_check$
   BEGIN
 -- Check the group names and states.
     IF isRollbackSimulation THEN
-      SELECT emaj._check_group_names(p_groupNames := p_groupNames, p_mayBeNull := FALSE, p_lockGroups := TRUE,
+      SELECT emaj._check_group_names(p_groupNames := p_groupNames, p_mayBeNull := FALSE, p_lockGroups := FALSE,
                                      p_checkList := 'LOGGING,ROLLBACKABLE') INTO p_groupNames;
     ELSE
       SELECT emaj._check_group_names(p_groupNames := p_groupNames, p_mayBeNull := FALSE, p_lockGroups := TRUE,
