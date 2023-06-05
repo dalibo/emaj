@@ -7,6 +7,7 @@ E-Maj - Change log
     operation.
   * Add a emaj_comment_rollback() function to set/change/reset a comment on
     an E-Maj rollback.
+  * Add a check of dblink connections to the emaj_verify_all() function.
   * In the E-Maj rollback execution report, add a Notice message indicating
     the rollback id.
   * Record the E-Maj rollback start, initialization end and locking end

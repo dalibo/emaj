@@ -235,6 +235,89 @@ DROP FUNCTION IF EXISTS emaj._rlbk_init(P_GROUPNAMES TEXT[],P_MARK TEXT,P_ISLOGG
 ------------------------------------------------------------------
 -- create new or modified functions                             --
 ------------------------------------------------------------------
+CREATE OR REPLACE FUNCTION emaj._dblink_open_cnx(p_cnxName TEXT, OUT p_status INT, OUT p_schema TEXT)
+LANGUAGE plpgsql AS
+$_dblink_open_cnx$
+-- This function tries to open a named dblink connection.
+-- It uses as target: the current cluster (port), the current database and a role defined in the emaj_param table.
+-- This connection role must be defined in the emaj_param table with a row having:
+--   - param_key = 'dblink_user_password',
+--   - param_value_text = 'user=<user> password=<password>' with the rules that apply to usual libPQ connect strings.
+-- The password can be omited if the connection doesn't require it.
+-- The dblink_connect_u is used to open the connection so that emaj_adm but non superuser roles can access the
+--    cluster even when no password is required to log on.
+-- The function is directly called by Emaj_web.
+-- Input:  connection name
+-- Output: integer status return.
+--           1 successful connection
+--           0 already opened connection
+--          -1 dblink is not installed
+--          -2 dblink functions are not visible for the session (obsolete)
+--          -3 dblink functions execution is not granted to the role
+--          -4 the transaction isolation level is not READ COMMITTED
+--          -5 no 'dblink_user_password' parameter is defined in the emaj_param table
+--          -6 error at dblink_connect() call
+--         name of the schema that holds the dblink extension (used later to schema qualify all calls to dblink functions)
+  DECLARE
+    v_nbCnx                  INT;
+    v_UserPassword           TEXT;
+    v_connectString          TEXT;
+  BEGIN
+-- Look for the schema holding the dblink functions.
+--   (NULL if the dblink_connect_u function is not available, which should not happen)
+    SELECT nspname INTO p_schema
+      FROM pg_catalog.pg_proc
+           JOIN pg_catalog.pg_namespace ON (pg_namespace.oid = pronamespace)
+      WHERE proname = 'dblink_connect_u'
+      LIMIT 1;
+    IF NOT FOUND THEN
+      p_status = -1;                      -- dblink is not installed
+    ELSIF NOT has_function_privilege(quote_ident(p_schema) || '.dblink_connect_u(text, text)', 'execute') THEN
+      p_status = -3;                      -- current role has not the execute rights on dblink functions
+    ELSIF (p_cnxName LIKE 'rlbk#%' OR p_cnxName = 'test') AND
+          current_setting('transaction_isolation') <> 'read committed' THEN
+      p_status = -4;                      -- 'rlbk#*' connection (used for rollbacks) must only come from a
+                                          --   READ COMMITTED transaction
+    ELSE
+      EXECUTE format('SELECT 0 WHERE %L = ANY (%I.dblink_get_connections())',
+                     p_cnxName, p_schema);
+      GET DIAGNOSTICS v_nbCnx = ROW_COUNT;
+      IF v_nbCnx > 0 THEN
+-- Dblink is usable, so search the requested connection name in dblink connections list.
+        p_status = 0;                       -- the requested connection is already open
+      ELSE
+-- So, get the 'dblink_user_password' parameter if exists, from emaj_param.
+        SELECT param_value_text INTO v_UserPassword
+          FROM emaj.emaj_param
+          WHERE param_key = 'dblink_user_password';
+        IF NOT FOUND THEN
+          p_status = -5;                    -- no 'dblink_user_password' parameter is defined in the emaj_param table
+        ELSE
+-- ... build the connect string
+          v_connectString = 'host=localhost port=' || current_setting('port') ||
+                            ' dbname=' || current_database() || ' ' || v_userPassword;
+-- ... and try to connect
+          BEGIN
+            EXECUTE format('SELECT %I.dblink_connect_u(%L ,%L)',
+                           p_schema, p_cnxName, v_connectString);
+            p_status = 1;                   -- the connection is successful
+          EXCEPTION
+            WHEN OTHERS THEN
+              p_status = -6;                -- the connection attempt failed
+          END;
+        END IF;
+      END IF;
+    END IF;
+-- For connections used for rollback operations, record the dblink connection attempt in the emaj_hist table.
+    IF substring(p_cnxName FROM 1 FOR 5) = 'rlbk#' THEN
+      INSERT INTO emaj.emaj_hist (hist_function, hist_object, hist_wording)
+        VALUES ('DBLINK_OPEN_CNX', p_cnxName, 'Status = ' || p_status);
+    END IF;
+--
+    RETURN;
+  END;
+$_dblink_open_cnx$;
+
 CREATE OR REPLACE FUNCTION emaj._rlbk_seq(r_rel emaj.emaj_relation, p_timeId BIGINT)
 RETURNS INT LANGUAGE plpgsql
 SECURITY DEFINER SET search_path = pg_catalog, pg_temp AS
@@ -1700,6 +1783,105 @@ $_rollback_activity$
     RETURN;
   END;
 $_rollback_activity$;
+
+CREATE OR REPLACE FUNCTION emaj.emaj_verify_all()
+RETURNS SETOF TEXT LANGUAGE plpgsql AS
+$emaj_verify_all$
+-- The function verifies the consistency between all emaj objects present inside emaj schema and
+-- emaj objects related to tables and sequences referenced in the emaj_relation table.
+-- It returns a set of warning messages for discovered discrepancies. If no error is detected, a single row is returned.
+  DECLARE
+    v_errorFound             BOOLEAN = FALSE;
+    v_status                 INT;
+    v_schema                 TEXT;
+    r_object                 RECORD;
+  BEGIN
+-- Global checks.
+-- Detect if the current postgres version is at least 11.
+    IF emaj._pg_version_num() < 110000 THEN
+      RETURN NEXT 'Error: The current postgres version (' || version()
+               || ') is not compatible with this E-Maj version. It should be at least 11';
+      v_errorFound = TRUE;
+    END IF;
+-- Check all E-Maj schemas.
+    FOR r_object IN
+      SELECT msg
+        FROM emaj._verify_all_schemas() msg
+    LOOP
+      RETURN NEXT r_object.msg;
+      IF r_object.msg LIKE 'Error%' THEN
+        v_errorFound = TRUE;
+      END IF;
+    END LOOP;
+-- Check all groups components.
+    FOR r_object IN
+      SELECT msg
+        FROM emaj._verify_all_groups() msg
+    LOOP
+      RETURN NEXT r_object.msg;
+      IF r_object.msg LIKE 'Error%' THEN
+        v_errorFound = TRUE;
+      END IF;
+    END LOOP;
+-- Report a warning if dblink connections are not operational
+    IF has_function_privilege('emaj._dblink_open_cnx(text)', 'execute') THEN
+      SELECT p_status, p_schema INTO v_status, v_schema
+        FROM emaj._dblink_open_cnx('test');
+      CASE v_status
+        WHEN 0, 1 THEN
+          PERFORM emaj._dblink_close_cnx('test', v_schema);
+        WHEN -1 THEN
+          RETURN NEXT 'Warning: The dblink extension is not installed.';
+        WHEN -3 THEN
+          RETURN NEXT 'Warning: While testing the dblink connection, the current role is not granted to execute dblink_connect_u().';
+        WHEN -4 THEN
+          RETURN NEXT 'Warning: While testing the dblink connection, the transaction isolation level is not READ COMMITTED.';
+        WHEN -5 THEN
+          RETURN NEXT 'Warning: The ''dblink_user_password'' parameter value is not set in the emaj_param table.';
+        WHEN -6 THEN
+          RETURN NEXT 'Warning: The dblink connection test failed. The ''dblink_user_password'' parameter value is probably incorrect.';
+        ELSE
+          RETURN NEXT format('Warning: The dblink connection test failed for an unknown reason (status = %s).',
+                             v_status::TEXT);
+      END CASE;
+    ELSE
+      RETURN NEXT 'Warning: The dblink connection has not been tested (the current role is not granted emaj_adm).';
+    END If;
+-- Report a warning if the max_prepared_transaction GUC setting is not appropriate for parallel rollbacks
+    IF current_setting('max_prepared_transactions')::INT <= 1 THEN
+      RETURN NEXT format('Warning: The max_prepared_transactions parameter value (%s) on this cluster is too low to launch parallel '
+                         'rollback.',
+                         current_setting('max_prepared_transactions'));
+    END IF;
+-- Report a warning if the emaj_protection_trg event triggers is missing.
+-- The other event triggers are protected by the emaj extension they belong to.
+    PERFORM 0
+      FROM pg_catalog.pg_event_trigger
+      WHERE evtname = 'emaj_protection_trg';
+    IF NOT FOUND THEN
+      RETURN NEXT 'Warning: The "emaj_protection_trg" event triggers is missing. It can be recreated using the '
+                  'emaj_enable_protection_by_event_triggers() function.';
+    END IF;
+-- Report a warning if some E-Maj event triggers exist but are not enabled.
+    IF EXISTS
+         (SELECT 0
+            FROM pg_catalog.pg_event_trigger
+              WHERE evtname LIKE 'emaj%'
+                AND evtenabled = 'D'
+         ) THEN
+      RETURN NEXT 'Warning: Some E-Maj event triggers are disabled. You may enable them using the '
+                  'emaj_enable_protection_by_event_triggers() function.';
+    END IF;
+-- Final message if no error has been yet detected.
+    IF NOT v_errorFound THEN
+      RETURN NEXT 'No error detected';
+    END IF;
+--
+    RETURN;
+  END;
+$emaj_verify_all$;
+COMMENT ON FUNCTION emaj.emaj_verify_all() IS
+$$Verifies the consistency between existing E-Maj and application objects.$$;
 
 --<end_functions>                                pattern used by the tool that extracts and insert the functions definition
 ------------------------------------------

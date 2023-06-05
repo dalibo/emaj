@@ -25,9 +25,11 @@ The function returns a set of rows describing the detected discrepancies. If no 
 The function also returns warnings when:
 
 * a sequence linked to a column belongs to a tables group, but the associated table does not belong to the same tables group,
-* a table of a tables group is linked to another table by a foreign key, but the associated table does not belong to the same tables group.
+* a table of a tables group is linked to another table by a foreign key, but the associated table does not belong to the same tables group,
+* the dblink connection is not operationnal,
+* event triggers protecting E-Maj are missing or are disabled.
 
-The *emaj_verify_all()* function can be executed by any role belonging to *emaj_adm* or *emaj_viewer* roles.
+The *emaj_verify_all()* function can be executed by any role belonging to *emaj_adm* or *emaj_viewer* roles (the dblink connection not being tested for the later).
 
 If errors are detected, for instance after an application table referenced in a tables group has been dropped, appropriate measures must be taken. Typically, the potential orphan log tables or functions must be manually dropped. 
 

@@ -41,12 +41,19 @@ Monitoring rollback operations
 
 When the volume of recorded updates to cancel leads to a long rollback, it may be interesting to monitor the operation to appreciate how it progresses. A function, named *emaj_rollback_activity()*, and a client, :doc:`emajRollbackMonitor.php <rollbackMonitorClient>`, fit this need. 
 
+.. _emaj_rollback_activity_prerequisites:
+
 Prerequisite
 ^^^^^^^^^^^^
 
 To allow E-Maj administrators to monitor the progress of a rollback operation, the activated functions update several technical tables as the process progresses. To ensure that these updates are visible while the transaction managing the rollback is in progress, they are performed through a *dblink* connection.
 
-If not already present, the *dblink* extension is automatically installed at *emaj* extension creation. But monitoring rollback operations also requires the insertion of a connection identifier usable by *dblink* into the :ref:`emaj_param <emaj_param>` table. This can be performed with a statement like::
+If not already present, the *dblink* extension is automatically installed at *emaj* extension creation. But monitoring rollback operations also requires:
+
+* to give the E-Maj administrator, and only him, the right to execute the **dblink_connect_u(text,text)** function, this right being not granted by default for security reasons;
+* to insert a connection identifier usable by *dblink* into the :ref:`emaj_param <emaj_param>` table. ::
+
+   GRANT EXECUTE ON FUNCTION dblink_connect_u(text,text) TO <admin_role>;
 
    INSERT INTO emaj.emaj_param (param_key, param_value_text) 
    VALUES ('dblink_user_password','user=<user> password=<password>');

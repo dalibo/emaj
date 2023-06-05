@@ -9,8 +9,9 @@ select * from emaj.emaj_verify_all();
                                                                                 emaj_verify_all                                                                                
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
  Warning: In the group "myGroup1", the sequence "myschema1"."myTbl3_col31_seq" is linked to the table "myschema1"."myTbl3" but this table does not belong to any tables group.
+ Warning: The 'dblink_user_password' parameter value is not set in the emaj_param table.
  No error detected
-(2 rows)
+(3 rows)
 
 select group_name, group_is_rollbackable, group_creation_time_id,
        group_last_alter_time_id, group_is_logging, 

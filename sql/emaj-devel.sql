@@ -785,7 +785,7 @@ $_dblink_open_cnx$
       p_status = -1;                      -- dblink is not installed
     ELSIF NOT has_function_privilege(quote_ident(p_schema) || '.dblink_connect_u(text, text)', 'execute') THEN
       p_status = -3;                      -- current role has not the execute rights on dblink functions
-    ELSIF substring(p_cnxName FROM 1 FOR 5) = 'rlbk#' AND
+    ELSIF (p_cnxName LIKE 'rlbk#%' OR p_cnxName = 'test') AND
           current_setting('transaction_isolation') <> 'read committed' THEN
       p_status = -4;                      -- 'rlbk#*' connection (used for rollbacks) must only come from a
                                           --   READ COMMITTED transaction
@@ -12130,6 +12130,8 @@ $emaj_verify_all$
 -- It returns a set of warning messages for discovered discrepancies. If no error is detected, a single row is returned.
   DECLARE
     v_errorFound             BOOLEAN = FALSE;
+    v_status                 INT;
+    v_schema                 TEXT;
     r_object                 RECORD;
   BEGIN
 -- Global checks.
@@ -12159,6 +12161,36 @@ $emaj_verify_all$
         v_errorFound = TRUE;
       END IF;
     END LOOP;
+-- Report a warning if dblink connections are not operational
+    IF has_function_privilege('emaj._dblink_open_cnx(text)', 'execute') THEN
+      SELECT p_status, p_schema INTO v_status, v_schema
+        FROM emaj._dblink_open_cnx('test');
+      CASE v_status
+        WHEN 0, 1 THEN
+          PERFORM emaj._dblink_close_cnx('test', v_schema);
+        WHEN -1 THEN
+          RETURN NEXT 'Warning: The dblink extension is not installed.';
+        WHEN -3 THEN
+          RETURN NEXT 'Warning: While testing the dblink connection, the current role is not granted to execute dblink_connect_u().';
+        WHEN -4 THEN
+          RETURN NEXT 'Warning: While testing the dblink connection, the transaction isolation level is not READ COMMITTED.';
+        WHEN -5 THEN
+          RETURN NEXT 'Warning: The ''dblink_user_password'' parameter value is not set in the emaj_param table.';
+        WHEN -6 THEN
+          RETURN NEXT 'Warning: The dblink connection test failed. The ''dblink_user_password'' parameter value is probably incorrect.';
+        ELSE
+          RETURN NEXT format('Warning: The dblink connection test failed for an unknown reason (status = %s).',
+                             v_status::TEXT);
+      END CASE;
+    ELSE
+      RETURN NEXT 'Warning: The dblink connection has not been tested (the current role is not granted emaj_adm).';
+    END If;
+-- Report a warning if the max_prepared_transaction GUC setting is not appropriate for parallel rollbacks
+    IF current_setting('max_prepared_transactions')::INT <= 1 THEN
+      RETURN NEXT format('Warning: The max_prepared_transactions parameter value (%s) on this cluster is too low to launch parallel '
+                         'rollback.',
+                         current_setting('max_prepared_transactions'));
+    END IF;
 -- Report a warning if the emaj_protection_trg event triggers is missing.
 -- The other event triggers are protected by the emaj extension they belong to.
     PERFORM 0
@@ -12175,8 +12207,8 @@ $emaj_verify_all$
               WHERE evtname LIKE 'emaj%'
                 AND evtenabled = 'D'
          ) THEN
-      RETURN NEXT 'Warning: Some E-Maj event triggers are disabled. You may enable them using the'
-               || ' emaj_enable_protection_by_event_triggers() function.';
+      RETURN NEXT 'Warning: Some E-Maj event triggers are disabled. You may enable them using the '
+                  'emaj_enable_protection_by_event_triggers() function.';
     END IF;
 -- Final message if no error has been yet detected.
     IF NOT v_errorFound THEN

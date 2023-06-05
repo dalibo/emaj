@@ -536,10 +536,11 @@ SELECT param_value_text FROM emaj.emaj_param WHERE param_key = 'emaj_version';
 
 -- check the emaj environment, just after creation
 select emaj.emaj_verify_all();
-  emaj_verify_all  
--------------------
+                                     emaj_verify_all                                     
+-----------------------------------------------------------------------------------------
+ Warning: The 'dblink_user_password' parameter value is not set in the emaj_param table.
  No error detected
-(1 row)
+(2 rows)
 
 -- check history
 select hist_id, hist_function, hist_event, hist_object, hist_wording, hist_user from emaj.emaj_hist order by hist_id;

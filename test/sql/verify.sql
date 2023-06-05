@@ -16,6 +16,36 @@ select emaj.emaj_disable_protection_by_event_triggers();
 select * from emaj.emaj_verify_all();
 
 --
+-- dblink connection tests
+--
+-- The "dblink not installed" test is located into the install_psql.sql script
+
+-- Test the lack of execute right on dblink_connect_u() (they are not yet granted to emaj_adm)
+set role emaj_adm;
+select * from emaj.emaj_verify_all();
+reset role;
+
+-- Test a transaction isolation not READ COMMITTED
+begin transaction isolation level REPEATABLE READ;
+  select * from emaj.emaj_verify_all();
+  rollback;
+end;
+
+-- Test the lack of dblink_user_password parameter
+begin;
+  delete from emaj.emaj_param where param_key = 'dblink_user_password';
+  select * from emaj.emaj_verify_all();
+  rollback;
+end;
+
+-- Test a bad dblink_user_password parameter content
+begin;
+  update emaj.emaj_param set param_value_text = 'bad_content' where param_key = 'dblink_user_password';
+  select * from emaj.emaj_verify_all();
+  rollback;
+end;
+
+--
 -- log schemas content errors tests
 --
 

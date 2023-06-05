@@ -41,12 +41,19 @@ Suivi des opérations de rollback en cours
 
 Lorsque le volume de mises à jour à annuler rend un rollback long, il peut être intéressant de suivre l'opération afin d'en apprécier l'avancement. Une fonction, *emaj_rollback_activity()*, et un client :doc:`emajRollbackMonitor.php <rollbackMonitorClient>` répondent à ce besoin.
 
+.. _emaj_rollback_activity_prerequisites:
+
 Pré-requis
 ^^^^^^^^^^
 
 Pour permettre aux administrateurs E-Maj de suivre la progression d'une opération de rollback, les fonctions activées dans l'opération mettent à jour plusieurs tables techniques au fur et à mesure de son avancement. Pour que ces mises à jour soient visibles alors que la transaction dans laquelle le rollback s'effectue est encore en cours, ces mises à jour sont effectuées au travers d'une connexion *dblink*.
 
-Si elle n’est pas déjà présente, l’extension *dblink* est automatiquement installée au moment de la création de l’extension *emaj*. Mais le suivi des rollbacks nécessite également l'enregistrement dans la table des paramètres, :ref:`emaj_param <emaj_param>`, d'un identifiant de connexion utilisable par dblink. Ceci peut s'effectuer au travers d'une requête du type ::
+Si elle n’est pas déjà présente, l’extension *dblink* est automatiquement installée au moment de la création de l’extension *emaj*. Mais le suivi des rollbacks nécessite également :
+
+* de donner à l’administrateur E-Maj (et uniquement à lui) le droit d’exécuter la fonction *dblink_connect_u(text,text)*, ce droit n’étant pas attribué par défaut pour cette fonction, pour des raisons de sécurité ;
+* d’enregistrer dans la table des paramètres, :ref:`emaj_param <emaj_param>`, un identifiant de connexion utilisable par dblink. ::
+
+   GRANT EXECUTE ON FUNCTION dblink_connect_u(text,text) TO <rôle admin> ;
 
    INSERT INTO emaj.emaj_param (param_key, param_value_text) 
    VALUES ('dblink_user_password','user=<user> password=<password>');

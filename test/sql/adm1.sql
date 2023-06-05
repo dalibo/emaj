@@ -271,6 +271,7 @@ select public.handle_emaj_sequences(12300);
 reset role;
 analyze mytbl4;
 -- rollback with dblink_connect_u not granted
+
 revoke execute on function dblink_connect_u(text,text) from emaj_adm;
 set role emaj_regression_tests_adm_user2;
 select * from emaj.emaj_logged_rollback_group('myGroup2','M2',false) order by 1,2;
@@ -278,6 +279,7 @@ select * from emaj.emaj_logged_rollback_group('myGroup2','M3',false) order by 1,
 reset role;
 grant execute on function dblink_connect_u(text,text) to emaj_adm;
 set role emaj_regression_tests_adm_user1;
+
 -----------------------------
 -- Checking step 3
 -----------------------------

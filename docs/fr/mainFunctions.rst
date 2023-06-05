@@ -119,8 +119,8 @@ Plus d'information sur les :doc:`fonctions multi-groupes <multiGroupsFunctions>`
 
 .. _emaj_logged_rollback_group:
 
-Rollback annulable d'un groupe de tables
-----------------------------------------
+Rollback annulable ou tracé d'un groupe de tables
+-------------------------------------------------
 
 Une autre fonction permet d'exécuter un rollback de type « *logged* », Dans ce cas, les triggers de log sur les tables applicatives ne sont pas désactivés durant le rollback, de sorte que durant le rollback les mises à jours de tables appliquées sont elles-mêmes enregistrées dans les tables de log. Ainsi, il est ensuite possible d'annuler le rollback ou, en quelque sorte, de « rollbacker le rollback ». 
 

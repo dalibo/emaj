@@ -28,6 +28,62 @@ select * from emaj.emaj_verify_all();
 (2 rows)
 
 --
+-- dblink connection tests
+--
+-- The "dblink not installed" test is located into the install_psql.sql script
+-- Test the lack of execute right on dblink_connect_u() (they are not yet granted to emaj_adm)
+set role emaj_adm;
+select * from emaj.emaj_verify_all();
+                                                           emaj_verify_all                                                           
+-------------------------------------------------------------------------------------------------------------------------------------
+ Warning: While testing the dblink connection, the current role is not granted to execute dblink_connect_u().
+ Warning: Some E-Maj event triggers are disabled. You may enable them using the emaj_enable_protection_by_event_triggers() function.
+ No error detected
+(3 rows)
+
+reset role;
+-- Test a transaction isolation not READ COMMITTED
+begin transaction isolation level REPEATABLE READ;
+  select * from emaj.emaj_verify_all();
+                                                           emaj_verify_all                                                           
+-------------------------------------------------------------------------------------------------------------------------------------
+ Warning: While testing the dblink connection, the transaction isolation level is not READ COMMITTED.
+ Warning: Some E-Maj event triggers are disabled. You may enable them using the emaj_enable_protection_by_event_triggers() function.
+ No error detected
+(3 rows)
+
+  rollback;
+end;
+WARNING:  there is no transaction in progress
+-- Test the lack of dblink_user_password parameter
+begin;
+  delete from emaj.emaj_param where param_key = 'dblink_user_password';
+  select * from emaj.emaj_verify_all();
+                                                           emaj_verify_all                                                           
+-------------------------------------------------------------------------------------------------------------------------------------
+ Warning: The 'dblink_user_password' parameter value is not set in the emaj_param table.
+ Warning: Some E-Maj event triggers are disabled. You may enable them using the emaj_enable_protection_by_event_triggers() function.
+ No error detected
+(3 rows)
+
+  rollback;
+end;
+WARNING:  there is no transaction in progress
+-- Test a bad dblink_user_password parameter content
+begin;
+  update emaj.emaj_param set param_value_text = 'bad_content' where param_key = 'dblink_user_password';
+  select * from emaj.emaj_verify_all();
+                                                           emaj_verify_all                                                           
+-------------------------------------------------------------------------------------------------------------------------------------
+ Warning: The dblink connection test failed. The 'dblink_user_password' parameter value is probably incorrect.
+ Warning: Some E-Maj event triggers are disabled. You may enable them using the emaj_enable_protection_by_event_triggers() function.
+ No error detected
+(3 rows)
+
+  rollback;
+end;
+WARNING:  there is no transaction in progress
+--
 -- log schemas content errors tests
 --
 -- detection of unattended tables in E-Maj schemas
@@ -953,8 +1009,8 @@ select hist_id, hist_function, hist_event, hist_object, regexp_replace(regexp_re
  hist_id |   hist_function    |       hist_event        | hist_object |                         regexp_replace                         | hist_user 
 ---------+--------------------+-------------------------+-------------+----------------------------------------------------------------+-----------
     7000 | DISABLE_PROTECTION | EVENT TRIGGERS DISABLED |             | emaj_protection_trg, emaj_sql_drop_trg, emaj_table_rewrite_trg | postgres
-    7121 | DISABLE_PROTECTION | EVENT TRIGGERS DISABLED |             | <none>                                                         | postgres
-    7122 | ENABLE_PROTECTION  | EVENT TRIGGERS ENABLED  |             | emaj_protection_trg, emaj_sql_drop_trg, emaj_table_rewrite_trg | postgres
-    7123 | ENABLE_PROTECTION  | EVENT TRIGGERS ENABLED  |             | <none>                                                         | postgres
+    7123 | DISABLE_PROTECTION | EVENT TRIGGERS DISABLED |             | <none>                                                         | postgres
+    7124 | ENABLE_PROTECTION  | EVENT TRIGGERS ENABLED  |             | emaj_protection_trg, emaj_sql_drop_trg, emaj_table_rewrite_trg | postgres
+    7125 | ENABLE_PROTECTION  | EVENT TRIGGERS ENABLED  |             | <none>                                                         | postgres
 (4 rows)
 
