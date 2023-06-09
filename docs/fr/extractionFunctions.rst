@@ -81,7 +81,7 @@ Il peut s'avérer utile de prendre des images de toutes les tables et séquences
 
 Le nom du répertoire fourni doit être un chemin absolu. Ce répertoire doit exister au préalable et avoir les permissions adéquates pour que l'instance PostgreSQL puisse y écrire. 
 
-Le troisième paramètre précise le format souhaité pour les fichiers générés. Il prend la forme d'une chaîne de caractères reprenant la syntaxe précise des options disponibles pour la commande SQL *COPY TO*.
+Le troisième paramètre précise le format souhaité pour les fichiers générés. Il prend la forme d'une chaîne de caractères reprenant la syntaxe précise des options disponibles pour la commande SQL *COPY TO*. Voir la documentation de PostgreSQL pour le détail des options disponibles (https://www.postgresql.org/docs/current/sql-copy.html).
 
 La fonction retourne le nombre de tables et de séquences contenues dans le groupe.
 
@@ -127,11 +127,11 @@ Le mot clé *'EMAJ_LAST_MARK'* peut être utilisé comme marque de fin. Il repr�
 
 Le nom du répertoire fourni doit être un chemin absolu. Ce répertoire doit exister au préalable et avoir les permissions adéquates pour que l'instance PostgreSQL puisse y écrire.
 
-Le cinquième paramètre précise le format souhaité pour les fichiers générés. Il prend la forme d'une chaîne de caractères reprenant la syntaxe précise des options disponibles pour la commande SQL *COPY TO*.
+Le cinquième paramètre précise le format souhaité pour les fichiers générés. Il prend la forme d'une chaîne de caractères reprenant la syntaxe précise des options disponibles pour la commande SQL *COPY TO*. Voir la documentation de PostgreSQL pour le détail des options disponibles (https://www.postgresql.org/docs/current/sql-copy.html).
 
 La fonction retourne le nombre de fichiers générés.
 
-Cette fonction *emaj_snap_log_group()* génère un fichier par table de log, contenant la partie de cette table correspond aux mises à jour effectuées entre les deux marques citées ou la marque de début et la situation courante. Le nom des fichiers créés pour chaque table est du type : *<nom.de.la.table.de.log>.snap*. Le plus souvent, ce nom ressemblera donc à : *<nom.du.schema>_<nom.de.table>_log.snap* 
+Cette fonction *emaj_snap_log_group()* génère un fichier par table de log, contenant la partie de cette table correspond aux mises à jour effectuées entre les deux marques citées ou la marque de début et la situation courante. Les enregistrements sont triés dans l’ordre croissant d’exécution des mises à jour. Le nom des fichiers créés pour chaque table est du type : *<nom.de.la.table.de.log>.snap*. Le plus souvent, ce nom ressemblera donc à : *<nom.du.schema>_<nom.de.table>_log.snap* 
 
 La fonction génère également deux fichiers, contenant l'état des séquences applicatives lors de la pose respective des deux marques citées, et nommés *<nom.du.groupe>_sequences_at_<nom.de.marque>*.
 
@@ -146,7 +146,5 @@ En fin d'opération, un fichier *_INFO* est créé dans ce même répertoire. Il
 Il n'est pas nécessaire que le groupe de tables soit dans un état inactif, c'est-à-dire qu'il ait été arrêté au préalable. Si aucune marque de fin n’a été spécifiée, le vidage des tables de logs est bornée par une pseudo marque posée en début d’exécution de la fonction. Ceci garantit que, si le groupe est actif, les fichiers ne contiendront pas de mises à jour postérieures au début d’exécution de la fonction.
 
 Comme la fonction peut générer de gros, voire très gros, fichiers (en fonction du volume des tables), il est de la responsabilité de l'utilisateur de prévoir un espace disque suffisant.
-
-Les tables de log ont une structure qui découlent directement des tables applicatives dont elles enregistrent les mises à jour. Elles contiennent les mêmes colonnes avec les mêmes types. Mais elles possèdent aussi quelques colonnes techniques complémentaires :
 
 La structure des tables de log est décrite :ref:`ici <logTableStructure>`.

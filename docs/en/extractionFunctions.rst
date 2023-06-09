@@ -82,7 +82,7 @@ It may be useful to take images of all tables and sequences belonging to a group
  
 The directory/folder name must be supplied as an absolute pathname and must have been previously created. This directory/folder must have the appropriate permission so that the PostgreSQL instance can write in it.
 
-The third parameter defines the output files format. It is a character string that matches the precise syntax available for the *COPY TO* SQL statement. 
+The third parameter defines the output files format. It is a character string that matches the precise syntax available for the *COPY TO* SQL statement. Look at the PostgreSQL documentation to get more details about the available options (https://www.postgresql.org/docs/current/sql-copy.html).
 
 The function returns the number of tables and sequences contained by the group.
 
@@ -130,11 +130,11 @@ The keyword *'EMAJ_LAST_MARK'* can be used as mark name, representing the last s
 
 The directory/folder name must be supplied as an absolute pathname and must have been previously created. This directory/folder must have the appropriate permission so that the PostgreSQL instance can write in it.
 
-The fifth parameter defines the output files format. It is a character string that matches the precise syntax available for the *COPY TO* SQL statement.
+The fifth parameter defines the output files format. It is a character string that matches the precise syntax available for the *COPY TO* SQL statement. Look at the PostgreSQL documentation to get more details about the available options (https://www.postgresql.org/docs/current/sql-copy.html).
 
 The function returns the number of generated files.
 
-This *emaj_snap_log_group()* function generates one file per log table, containing the part of this table that corresponds to the updates performed between both supplied marks. Created files name has the following pattern: *<schema.name>_<table/sequence.name>_log.snap*
+This *emaj_snap_log_group()* function generates one file per log table, containing the part of this table that corresponds to the updates performed between both supplied marks. Records are sorted in ascending ordered of change execution. Created files name has the following pattern: *<schema.name>_<table/sequence.name>_log.snap*
 
 The function also generates two files, containing the application sequences state at the time of the respective supplied marks, and named: *<log.table.name>.snap*. So most of the time, they look like: *<group.name>_sequences_at_<mark.name>*.
 
@@ -148,6 +148,4 @@ It is not necessary that the tables group be in *IDLE* state to snap log tables.
 
 As this function may generate large or very large files (of course depending on tables sizes), it is user's responsibility to provide a sufficient disk space.
 
-The structure of log tables is directly derived from the structure of the related application  table. The log tables contain the same columns with the same type. But they also have some additional technical columns:
-
-The structure of log tables is described :ref:`here <logTableStructure>`.
+The log tables structure is described :ref:`here <logTableStructure>`.
