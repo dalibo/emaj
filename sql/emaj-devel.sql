@@ -1981,10 +1981,10 @@ $_copy_to_file$
 -- Check that the caller is allowed to do that.
     GET DIAGNOSTICS v_stack = PG_CONTEXT;
     IF v_stack NOT LIKE '%emaj.emaj_export_groups_configuration(text,text[])%' AND
+       v_stack NOT LIKE '%emaj.emaj_export_parameters_configuration(text)%' AND
        v_stack NOT LIKE '%emaj.emaj_snap_group(text,text,text)%' AND
        v_stack NOT LIKE '%emaj.emaj_snap_log_group(text,text,text,text,text)%' AND
-       v_stack NOT LIKE '%emaj._gen_sql_groups(text[],boolean,text,text,text,text[])%' AND
-       v_stack NOT LIKE '%emaj.emaj_export_parameters_configuration(text)%' THEN
+       v_stack NOT LIKE '%emaj._gen_sql_groups(text[],boolean,text,text,text,text[])%' THEN
       RAISE EXCEPTION '_copy_to_file: the calling function is not allowed to reach this sensitive function.';
     END IF;
 -- Perform the action.
@@ -10852,7 +10852,7 @@ $emaj_snap_log_group$
       v_fileName = p_dir || '/' || translate(r_tblsq.rel_schema || '_' || r_tblsq.rel_log_table || '.snap', E' /\\$<>*', '_______');
       v_logTableName = quote_ident(r_tblsq.rel_log_schema) || '.' || quote_ident(r_tblsq.rel_log_table);
 --   Dump the log table.
-      v_stmt= '(SELECT * FROM ' || v_logTableName || ' WHERE ' || v_conditions || ' ORDER BY emaj_gid ASC)';
+      v_stmt= '(SELECT * FROM ' || v_logTableName || ' WHERE ' || v_conditions || ' ORDER BY emaj_gid, emaj_tuple)';
       PERFORM emaj._copy_to_file(v_stmt, v_fileName, p_copyOptions);
       v_nbFile = v_nbFile + 1;
     END LOOP;
