@@ -10636,7 +10636,7 @@ $emaj_snap_log_group$
     END IF;
 -- Build the conditions on emaj_gid corresponding to this marks frame, used for the COPY statements dumping the tables.
     v_conditions = 'TRUE';
-    IF NOT p_firstMark IS NOT NULL AND p_firstMark <> '' THEN
+    IF p_firstMark IS NOT NULL AND p_firstMark <> '' THEN
       v_conditions = v_conditions || ' AND emaj_gid > '|| v_firstEmajGid;
     END IF;
     IF NOT v_noSuppliedLastMark THEN

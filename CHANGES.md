@@ -18,8 +18,8 @@ E-Maj - Change log
   * Minor code changes.
 
 ###Bug fixes:###
-
-
+  * Fix a bug in the emaj_snap_log_group() function. The first mark bound was
+    not taken in account when filtering the log records to export.
 
 4.2.0 (2023-Apr-03)
 ------
