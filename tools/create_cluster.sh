@@ -54,7 +54,7 @@ cat <<-EOF1 >${PGDATA}/specif.conf
 	EOF1
 echo "include 'specif.conf'" >> ${PGDATA}/postgresql.conf
 
-# Start cluster
+# Start the cluster
 ${PGBIN}/pg_ctl start
 if [ $? != 0 ]; then
   echo "Error while starting the cluster..."
@@ -80,9 +80,7 @@ ${PGBIN}/psql -a <<-EOF2
 	create tablespace "tsp log'2" location '${PGDATA}/tsplog2';
 	create role myUser login password '';
 	grant all on database postgres to myUser;
-	create extension dblink;
-	create extension btree_gist;
-	create extension emaj;
+	create extension emaj cascade;
 	EOF2
 
 if [ $? != 0 ]; then

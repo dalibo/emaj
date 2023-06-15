@@ -3,6 +3,7 @@ E-Maj - Change log
 <devel>
 ------
 ###Enhancements:###
+  * Support of PG16.
   * When launching an E-Maj rollback, allow to set a comment about the
     operation.
   * Add a emaj_comment_rollback() function to set/change/reset a comment on
