@@ -37,7 +37,7 @@ La procédure dépend de la version E-Maj installée.
 
 **Version installée ≥ 3.3**
 
-La configuration complète des groupes de tables existants ainsi que les paramètres E-Maj peuvent être sauvegardés sur un fichier par ::
+La configuration complète des groupes de tables existants ainsi que les paramètres E-Maj peuvent être sauvegardés sur un fichier par ::
 
    SELECT emaj.emaj_export_groups_configuration('<chemin.fichier.1>');
    
@@ -66,7 +66,7 @@ Une fois connecté en tant que super-utilisateur, il suffit d'enchaîner le scri
 
    CREATE EXTENSION emaj CASCADE;
 
-NB : avant la version 2.0.0, le script de désinstallation se nommait *uninstall.sql*.
+NB : avant la version 2.0.0, le script de désinstallation se nommait *uninstall.sql*.
 
 
 Restauration des données utilisateurs
@@ -74,7 +74,7 @@ Restauration des données utilisateurs
 
 **Version précédente installée ≥ 3.3**
 
-Les configurations de groupes de tables et de paramètres exportées peuvent être rechargées par ::
+Les configurations de groupes de tables et de paramètres exportées peuvent être rechargées par ::
 
    SELECT emaj.emaj_import_parameters_configuration('<chemin.fichier.2>', TRUE);
 
@@ -158,8 +158,8 @@ Cette mise à jour n’est pas non plus possible avec les versions PostgreSQL 13
 Mise à jour d’une version déjà installée comme extension
 --------------------------------------------------------
 
-Une version existante installée comme une *extension* se met à jour par une simple requête ::
- 
+Une version existante installée comme une *extension* se met à jour par une simple requête ::
+
    ALTER EXTENSION emaj UPDATE;
 
 C’est le gestionnaire d’extension de PostgreSQL qui détermine le ou les scripts à exécuter en fonction de la version installée et de la version indiquée comme courante dans le fichier *emaj.control*.
@@ -169,11 +169,11 @@ L’opération est très rapide et ne touche pas aux groupes de tables. Ceux-ci 
 * que des mises à jour de tables peuvent être enregistrées avant puis après le changement de version
 * et donc qu'après le changement de version, un *rollback* à une marque posée avant ce changement de version est possible.
 
-Spécificités liées aux versions :
+Spécificités liées aux versions :
 
 * La procédure de mise à jour d’une version 2.2.2 en version 2.2.3 vérifie les valeurs des séquences de log enregistrées. Dans certains cas, elle peut demander une ré-initialisation préalable de certains groupes de tables.
 
-* La procédure de mise à jour d’une version 2.3.1 en version 3.0.0 change la structure des tables de log : les 2 colonnes *emaj_client_ip* et *emaj_client_port* ne sont plus créées. Les tables de log existantes ne sont pas modifiées. Seules les nouvelles tables de log sont impactées. Mais il est possible à l’administrateur :ref:`d’ajouter ces deux colonnes<addLogColumns>`, en utilisant le paramètre *'alter_log_tables'*.
+* La procédure de mise à jour d’une version 2.3.1 en version 3.0.0 change la structure des tables de log : les 2 colonnes *emaj_client_ip* et *emaj_client_port* ne sont plus créées. Les tables de log existantes ne sont pas modifiées. Seules les nouvelles tables de log sont impactées. Mais il est possible à l’administrateur :ref:`d’ajouter ces deux colonnes<addLogColumns>`, en utilisant le paramètre *'alter_log_tables'*.
 
 * La procédure de mise à jour d’une version 3.0.0 en version 3.1.0 renomme les objets de log existants. Ceci conduit à une pose de verrou sur chaque table applicative, qui peut entrer en conflit avec des accès concurrents sur les tables. La procédure de mise à jour génère également un message d’alerte indiquant que les changements dans la gestion des triggers applicatifs par les fonctions de rollback E-Maj peuvent nécessiter des modifications dans les procédures utilisateurs.
 
@@ -191,15 +191,20 @@ Passage en version 4.0.0
 
 Les ruptures de compatibilité de la version 4.0.0 d’E-Maj portent essentiellement sur la façon de gérer la configuration des groupes de tables. La version 3.2.0 a apporté la capacité de gérer en dynamique l’assignation des tables et séquences dans les groupes de tables. La version 3.3.0 a permis de décrire les configurations de groupes de tables dans des structures JSON. Depuis, ces techniques ont cohabité avec la gestion historique des groupes de tables au travers de la table *emaj_group_def*. Avec la version 4.0.0, cette gestion historique des configurations de groupes de tables disparaît.
 
-Plus précisément :
+Plus précisément :
 
 * La table *emaj_group_def* n’existe plus.
 * La fonction :ref:`emaj_create_group()<emaj_create_group>` crée uniquement des groupes de tables vides, qu’il faut alimenter ensuite avec les fonctions de la famille d’:ref:`emaj_assign_table() / emaj_assign_sequence()<assign_table_sequence>` ou bien la fonction :ref:`emaj_import_groups_configuration()<import_groups_conf>`. Le 3ème et dernier paramètre de la fonction :ref:`emaj_create_group()<emaj_create_group>`, qui permettait de demander la création d’un groupe de tables vide, disparaît donc.
 * Les fonctions *emaj_alter_group()*, *emaj_alter_groups()* et *emaj_sync_def_group()* disparaissent également.
 
-De plus :
+De plus :
 
 * La fonction *emaj_ignore_app_trigger()* est supprimée. On peut dorénavant spécifier les trigggers à ignorer lors des opérations de rollback E-Maj directement par les fonctions de la famille de :ref:`emaj_assign_table()<assign_table_sequence>`.
 * Dans les structures JSON gérées par les fonctions :ref:`emaj_export_groups_configuration()<export_groups_conf>` et :ref:`emaj_import_groups_configuration()<import_groups_conf>`, le format de la propriété "ignored_triggers" spécifiant les triggers à ignorer lors des opérations de rollback E-Maj a été simplifiée, il s’agit maintenant d’un simple tableau de texte.
 * L’ancienne famille de fonctions de rollback E-Maj retournant un simple entier est supprimée. Seules les fonctions retournant un ensemble de messages sont conservées.
-* Le nom des paramètres des fonctions a été modifié. Les préfixes « v\_ » ont été changés en « p\_ ». Ceci n’a d’impact que dans les cas où les appels de fonctions sont formatés avec des paramètres nommés. Mais cette pratique est peu usuelle.
+* Le nom des paramètres des fonctions a été modifié. Les préfixes "v\_" ont été changés en "p\_". Ceci n’a d’impact que dans les cas où les appels de fonctions sont formatés avec des paramètres nommés. Mais cette pratique est peu usuelle.
+
+Passage en version 4.3.0
+^^^^^^^^^^^^^^^^^^^^^^^^
+
+Avant la version 4.3.0, les fonctions des familles *emaj_log_stat_group()*, *emaj_gen_sql_group()* et *emaj_snap_log_group()* acceptaient une valeur NULL ou une chaîne vide comme nom de la marque de début de la tranche de temps souhaitée, cette valeur représentant la première marque connue pour le ou les groupes de tables. Face aux ambiguités générées, en particulier pour les fonctions multi-groupes, cette possibilité a été supprimée en version 4.3.0.

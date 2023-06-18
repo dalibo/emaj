@@ -16,8 +16,6 @@ To generate this SQL script, just execute the following statement::
 
    SELECT emaj.emaj_gen_sql_group('<group.name>', '<start.mark>', '<end.mark>', '<file>' [, <tables/sequences.array>);
 
-A *NULL* value or an empty string may be used as start mark, representing the first known mark.
-
 A *NULL* value or an empty string may be used as end mark, representing the current state.
 
 The keyword *'EMAJ_LAST_MARK'* can be used as mark name, representing the last set mark.
@@ -123,7 +121,6 @@ It is also possible to record a full or a partial image of all log tables relate
 
    SELECT emaj.emaj_snap_log_group('<group.name>', '<start.mark>', '<end.mark>', '<storage.directory>', '<COPY.options>');
 
-A *NULL* value or an empty string may be used as start mark, representing the first known mark.
 A *NULL* value or an empty string may be used as end mark, representing the current state.
 
 The keyword *'EMAJ_LAST_MARK'* can be used as mark name, representing the last set mark.

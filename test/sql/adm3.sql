@@ -114,7 +114,7 @@ rollback;
 
 -- look at statistics and log content
 select stat_group, stat_schema, stat_table, stat_first_mark, stat_last_mark, stat_rows
-  from emaj.emaj_log_stat_group('myGroup4',NULL, NULL) order by 1,2,3,4;
+  from emaj.emaj_log_stat_group('myGroup4','Start', NULL) order by 1,2,3,4;
 select rel_schema, rel_tblseq, rel_time_range, rel_group, rel_kind, rel_log_schema, rel_log_table,
        rel_emaj_verb_attnum, rel_has_always_ident_col, rel_log_seq_last_value
   from emaj.emaj_relation where rel_schema = 'myschema4' and rel_tblseq like 'mypar%' order by rel_tblseq, rel_time_range;

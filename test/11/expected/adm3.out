@@ -311,7 +311,7 @@ begin transaction;
 rollback;
 -- look at statistics and log content
 select stat_group, stat_schema, stat_table, stat_first_mark, stat_last_mark, stat_rows
-  from emaj.emaj_log_stat_group('myGroup4',NULL, NULL) order by 1,2,3,4;
+  from emaj.emaj_log_stat_group('myGroup4','Start', NULL) order by 1,2,3,4;
  stat_group | stat_schema | stat_table | stat_first_mark |   stat_last_mark   | stat_rows 
 ------------+-------------+------------+-----------------+--------------------+-----------
  myGroup4   | myschema4   | mypartp1   | Start           | Remove partition 1 |         1

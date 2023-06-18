@@ -16,14 +16,13 @@ Pour générer ce script SQL, il suffit d'exécuter une requête ::
 
    SELECT emaj.emaj_gen_sql_group('<nom.du.groupe>', '<marque.début>', '<marque.fin>', '<fichier>'[,<liste.tables.séquences>]);
 
-Un *NULL* ou une chaîne vide peuvent être utilisés comme marque de début. Ils représentent alors la première marque connue.
 Un *NULL* ou une chaîne vide peuvent être utilisés comme marque de fin. Ils représentent alors la situation courante.
 
 Le mot clé *'EMAJ_LAST_MARK'* peut être utilisé comme marque de fin. Il représente alors la dernière marque posée.
 
 S'il est fourni, le nom du fichier de sortie doit être exprimé sous forme de chemin absolu. Le fichier doit disposer des permissions adéquates pour que l'instance postgreSQL puisse y écrire. Si le fichier existe déjà, son contenu est écrasé.
 
-Le nom du fichier de sortie peut prendre une valeur NULL. Dans ce cas, le script SQL est préparé dans une table temporaire, accessible ensuite au travers d’une vue temporaire *emaj_sql_script*. A partir du client *psql*, on peut donc enchaîner dans une même session ::
+Le nom du fichier de sortie peut prendre une valeur NULL. Dans ce cas, le script SQL est préparé dans une table temporaire, accessible ensuite au travers d’une vue temporaire *emaj_sql_script*. A partir du client *psql*, on peut donc enchaîner dans une même session ::
 
    SELECT emaj.emaj_gen_sql_group('<nom.du.groupe>', '<marque.début>', '<marque.fin>', NULL [,<liste.tables.séquences>]);
    \copy (SELECT * FROM emaj_sql_script) TO ‘fichier’
@@ -89,7 +88,7 @@ Cette fonction *emaj_snap_group()* génère un fichier par table et par séquenc
 
 Le nom des fichiers créés est du type : *<nom.du.schema>_<nom.de.table/séquence>.snap*
 
-D’éventuels caractères peu pratiques dans un nom de fichier, les espaces, « / », « \\ », « $ », « > », « < », et « \* » sont remplacés par des « _ ».
+D’éventuels caractères peu pratiques dans un nom de fichier, les espaces, "/", "\\", "$", ">", "<", et "\*" sont remplacés par des "_".
 
 Les fichiers correspondant aux séquences ne comportent qu'une seule ligne, qui contient les caractéristiques de la séquence.
 
@@ -120,7 +119,6 @@ Il est également possible d'obtenir le vidage total ou partiel sur fichiers des
 
    SELECT emaj.emaj_snap_log_group('<nom.du.groupe>', '<marque.début>', '<marque.fin>', '<répertoire.de.stockage>', '<options.COPY>');
 
-Un *NULL* ou une chaîne vide peuvent être utilisés comme marque de début. Ils représentent alors la première marque connue.
 Un *NULL* ou une chaîne vide peuvent être utilisés comme marque de fin. Ils représentent alors la situation courante.
 
 Le mot clé *'EMAJ_LAST_MARK'* peut être utilisé comme marque de fin. Il représente alors la dernière marque posée.
@@ -131,7 +129,7 @@ Le cinquième paramètre précise le format souhaité pour les fichiers génér�
 
 La fonction retourne le nombre de fichiers générés.
 
-Cette fonction *emaj_snap_log_group()* génère un fichier par table de log, contenant la partie de cette table correspond aux mises à jour effectuées entre les deux marques citées ou la marque de début et la situation courante. Les enregistrements sont triés dans l’ordre croissant d’exécution des mises à jour. Le nom des fichiers créés pour chaque table est du type : *<nom.de.la.table.de.log>.snap*. Le plus souvent, ce nom ressemblera donc à : *<nom.du.schema>_<nom.de.table>_log.snap* 
+Cette fonction *emaj_snap_log_group()* génère un fichier par table de log, contenant la partie de cette table correspond aux mises à jour effectuées entre les deux marques citées ou la marque de début et la situation courante. Les enregistrements sont triés dans l’ordre croissant d’exécution des mises à jour. Le nom des fichiers créés pour chaque table est du type : *<nom.de.la.table.de.log>.snap*. Le plus souvent, ce nom ressemblera donc à : *<nom.du.schema>_<nom.de.table>_log.snap* 
 
 La fonction génère également deux fichiers, contenant l'état des séquences applicatives lors de la pose respective des deux marques citées, et nommés *<nom.du.groupe>_sequences_at_<nom.de.marque>*.
 
@@ -139,7 +137,7 @@ Si la borne de fin représente la situation courante, le nom du fichier devient 
 
 Tous ces fichiers sont stockés dans le répertoire ou dossier correspondant au quatrième paramètre de la fonction. D'éventuels fichiers de même nom se trouveront écrasés.
 
-D’éventuels caractères peu pratiques dans un nom de fichier, les espaces, « / », « \\ », « $ », « > », « < », et « \* » sont remplacés par des « _ ».
+D’éventuels caractères peu pratiques dans un nom de fichier, les espaces, "/", "\\", "$", ">", "<", et "\*" sont remplacés par des "_".
 
 En fin d'opération, un fichier *_INFO* est créé dans ce même répertoire. Il contient un message incluant le nom du groupe de tables, les marques qui ont servi de bornes et la date et l'heure de l'opération.
 

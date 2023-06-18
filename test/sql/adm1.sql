@@ -121,10 +121,6 @@ select pg_sleep(0.2);
 select emaj.emaj_start_group('myGroup1','M1');
 delete from emaj.emaj_param where param_key = 'history_retention';
 
--- try to generate a sql script for 2 and 3 groups with a mix of groups with or without marks
-select emaj.emaj_gen_sql_groups(array['myGroup1','myGroup2'],NULL,'EMAJ_LAST_MARK','/dev/null');
-select emaj.emaj_gen_sql_groups(array['myGroup1','myGroup2','emptyGroup'],NULL,'EMAJ_LAST_MARK','/dev/null');
-
 select emaj.emaj_start_group('myGroup2','M1');
 
 -- set sequence restart value

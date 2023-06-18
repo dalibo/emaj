@@ -402,19 +402,6 @@ select emaj.emaj_start_group('myGroup1','M1');
 (1 row)
 
 delete from emaj.emaj_param where param_key = 'history_retention';
--- try to generate a sql script for 2 and 3 groups with a mix of groups with or without marks
-select emaj.emaj_gen_sql_groups(array['myGroup1','myGroup2'],NULL,'EMAJ_LAST_MARK','/dev/null');
-ERROR:  _check_marks_range: The group "myGroup2" has no mark.
-CONTEXT:  PL/pgSQL function emaj._check_marks_range(text[],text,text) line 30 at RAISE
-SQL statement "SELECT *                                                                           FROM emaj._check_marks_range(p_groupNames, p_firstMark, p_lastMark)"
-PL/pgSQL function emaj._gen_sql_groups(text[],boolean,text,text,text,text[]) line 42 at SQL statement
-PL/pgSQL function emaj.emaj_gen_sql_groups(text[],text,text,text,text[]) line 14 at RETURN
-select emaj.emaj_gen_sql_groups(array['myGroup1','myGroup2','emptyGroup'],NULL,'EMAJ_LAST_MARK','/dev/null');
-ERROR:  _check_marks_range: The groups "emptyGroup, myGroup2" have no mark.
-CONTEXT:  PL/pgSQL function emaj._check_marks_range(text[],text,text) line 32 at RAISE
-SQL statement "SELECT *                                                                           FROM emaj._check_marks_range(p_groupNames, p_firstMark, p_lastMark)"
-PL/pgSQL function emaj._gen_sql_groups(text[],boolean,text,text,text,text[]) line 42 at SQL statement
-PL/pgSQL function emaj.emaj_gen_sql_groups(text[],text,text,text,text[]) line 14 at RETURN
 select emaj.emaj_start_group('myGroup2','M1');
 WARNING:  _check_fk_groups: The foreign key "mytbl6_col61_fkey" on the table "myschema2.mytbl6" references the table "myschema2.mytbl7" that is outside the groups (myGroup2).
 WARNING:  _check_fk_groups: The table "myschema2.mytbl6" is referenced by the foreign key "mytbl8_col81_fkey" on the table "myschema2.mytbl8" that is outside the groups (myGroup2).
@@ -2848,25 +2835,25 @@ select * from emaj.emaj_log_stat_group('dummyGroup', 'dummyMark', NULL);
 ERROR:  _check_group_names: The group "dummyGroup" does not exist.
 CONTEXT:  PL/pgSQL function emaj._check_group_names(text[],boolean,boolean,text) line 42 at RAISE
 SQL statement "SELECT emaj._check_group_names(p_groupNames := p_groupNames, p_mayBeNull := p_multiGroup, p_lockGroups := FALSE, p_checkList := '')"
-PL/pgSQL function emaj._log_stat_groups(text[],boolean,text,text) line 24 at SQL statement
+PL/pgSQL function emaj._log_stat_groups(text[],boolean,text,text) line 23 at SQL statement
 PL/pgSQL function emaj.emaj_log_stat_group(text,text,text) line 7 at RETURN QUERY
 select * from emaj.emaj_log_stat_groups(array['dummyGroup'], 'dummyMark', NULL); 
 ERROR:  _check_group_names: The group "dummyGroup" does not exist.
 CONTEXT:  PL/pgSQL function emaj._check_group_names(text[],boolean,boolean,text) line 42 at RAISE
 SQL statement "SELECT emaj._check_group_names(p_groupNames := p_groupNames, p_mayBeNull := p_multiGroup, p_lockGroups := FALSE, p_checkList := '')"
-PL/pgSQL function emaj._log_stat_groups(text[],boolean,text,text) line 24 at SQL statement
+PL/pgSQL function emaj._log_stat_groups(text[],boolean,text,text) line 23 at SQL statement
 PL/pgSQL function emaj.emaj_log_stat_groups(text[],text,text) line 7 at RETURN QUERY
 select * from emaj.emaj_detailed_log_stat_group('dummyGroup', 'dummyMark', NULL);
 ERROR:  _check_group_names: The group "dummyGroup" does not exist.
 CONTEXT:  PL/pgSQL function emaj._check_group_names(text[],boolean,boolean,text) line 42 at RAISE
 SQL statement "SELECT emaj._check_group_names(p_groupNames := p_groupNames, p_mayBeNull := p_multiGroup, p_lockGroups := FALSE, p_checkList := '')"
-PL/pgSQL function emaj._detailed_log_stat_groups(text[],boolean,text,text) line 32 at PERFORM
+PL/pgSQL function emaj._detailed_log_stat_groups(text[],boolean,text,text) line 31 at PERFORM
 PL/pgSQL function emaj.emaj_detailed_log_stat_group(text,text,text) line 8 at RETURN QUERY
 select * from emaj.emaj_detailed_log_stat_groups(array['dummyGroup'],NULL,NULL);
 ERROR:  _check_group_names: The group "dummyGroup" does not exist.
 CONTEXT:  PL/pgSQL function emaj._check_group_names(text[],boolean,boolean,text) line 42 at RAISE
 SQL statement "SELECT emaj._check_group_names(p_groupNames := p_groupNames, p_mayBeNull := p_multiGroup, p_lockGroups := FALSE, p_checkList := '')"
-PL/pgSQL function emaj._detailed_log_stat_groups(text[],boolean,text,text) line 32 at PERFORM
+PL/pgSQL function emaj._detailed_log_stat_groups(text[],boolean,text,text) line 31 at PERFORM
 PL/pgSQL function emaj.emaj_detailed_log_stat_groups(text[],text,text) line 8 at RETURN QUERY
 select emaj.emaj_estimate_rollback_group('dummyGroup', 'dummyMark', TRUE);
 ERROR:  _check_group_names: The group "dummyGroup" does not exist.

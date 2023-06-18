@@ -16,6 +16,9 @@ E-Maj - Change log
     function report both rollback planning and locking phases duration.
   * Allow rollback duration estimate functions to be executed while a rollback
     operation is in progress for the same tables groups.
+  * In emaj_log_stat_group(), emaj_snap_log_group() and emaj_gen_sql_group()
+    functions families, remove the ability to set the p_firstMark parameter
+    to NULL to ask for the first known mark of the group.
   * Minor code changes.
 
 ###Bug fixes:###

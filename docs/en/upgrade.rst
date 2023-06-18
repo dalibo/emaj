@@ -202,3 +202,8 @@ Furthermore:
 * In JSON structures managed by the :ref:`emaj_export_groups_configuration()<export_groups_conf>` and :ref:`emaj_import_groups_configuration()<import_groups_conf>` functions, the format of the "ignored_triggers" property that lists the triggers to ignore at E-Maj rollback time has been simplified. It is now a simple text array.
 * The old family of E-Maj rollback functions that just returned an integer has been deleted. Only the functions returning a set of messages remain.
 * The name of function parameters have changed: “v\_” prefixes have been transformed into “p\_”. This only impacts function calls formated with named parameters. But this practice is unusual.
+
+Upgrading towards version 4.3.0
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+Before E-Maj 4.3.0, the *emaj_log_stat_group()*, *emaj_gen_sql_group()* and *emaj_snap_log_group()* functions families accepted a NULL value or an empty string as the first mark name of the requested time range, this value representing the oldest known mark for the tables group or groups. The concept being ambiguous, especially with multi-groups functions, this feature has been removed in version 4.3.0.

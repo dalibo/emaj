@@ -1614,83 +1614,28 @@ $_check_new_mark$
 $_check_new_mark$;
 
 CREATE OR REPLACE FUNCTION emaj._check_marks_range(p_groupNames TEXT[], INOUT p_firstMark TEXT, INOUT p_lastMark TEXT,
-                                                   OUT p_firstMarkTimeId BIGINT, OUT p_lastMarkTimeId BIGINT)
+                                                   OUT p_firstMarkTimeId BIGINT, OUT p_lastMarkTimeId BIGINT,
+                                                   OUT p_firstMarkTs TIMESTAMPTZ, OUT p_lastMarkTs TIMESTAMPTZ,
+                                                   OUT p_firstMarkEmajGid BIGINT, OUT p_lastMarkEmajGid BIGINT)
 LANGUAGE plpgsql AS
 $_check_marks_range$
--- This function verifies that a marks range is valid for one or several groups.
+-- This function verifies that a marks range is valid for one or several groups and return useful data about both marks.
 -- It checks that both marks defining the bounds exist and are in chronological order.
 -- It processes the EMAJ_LAST_MARK keyword.
--- If the first mark (lower bound) is NULL, find the first (deleted or not) mark known for each group.
 -- A last mark (upper bound) set to NULL means "the current state". In this case, no specific checks is performed.
 -- When several groups are supplied, it checks that the marks represent the same point in time for all groups.
 -- Input: array of group names, name of the first mark, name of the last mark
--- Output: internal name and time id of both marks
-  DECLARE
-    v_groupList              TEXT;
-    v_count                  INTEGER;
-    v_firstMarkTs            TIMESTAMPTZ;
-    v_lastMarkTs             TIMESTAMPTZ;
+-- Output: name, time id, clock timestamp and emaj_gid for both marks
   BEGIN
--- If the first mark is NULL or empty, look for the first known mark for the group.
+-- Check that the first mark is not NULL or empty.
     IF p_firstMark IS NULL OR p_firstMark = '' THEN
--- Detect groups that have no recorded mark.
-      SELECT string_agg(group_name,', ' ORDER BY group_name), count(*) INTO v_groupList, v_count
-        FROM
-          (  SELECT unnest(p_groupNames)
-           EXCEPT
-             SELECT mark_group
-               FROM emaj.emaj_mark
-          ) AS t(group_name);
-      IF v_count > 0 THEN
-        IF v_count <> array_length(p_groupNames, 1) THEN
--- Some but not all groups have no mark.
-          IF v_count = 1 THEN
-            RAISE EXCEPTION '_check_marks_range: The group "%" has no mark.', v_groupList;
-          ELSE
-            RAISE EXCEPTION '_check_marks_range: The groups "%" have no mark.', v_groupList;
-          END IF;
-        ELSE
--- All groups have no mark, force the first mark to NULL to be able to return statistics with 0 row.
-          p_firstMark = NULL;
-        END IF;
-      ELSE
--- All groups have at least 1 mark.
--- Count the number of distinct first mark_time_id for all concerned groups.
-        SELECT count(DISTINCT mark_time_id) INTO v_count
-          FROM
-            (SELECT mark_group, min(mark_time_id) AS mark_time_id
-               FROM emaj.emaj_mark
-               WHERE mark_group = ANY (p_groupNames)
-               GROUP BY 1
-            ) AS t;
-        IF v_count > 1 THEN
-          RAISE EXCEPTION '_check_marks_range: The oldest marks of each group do not represent the same point in time.';
-        END IF;
--- Count the number of distinct first mark name for all concerned groups.
-        SELECT min(mark_time_id) INTO p_firstMarkTimeId
-          FROM emaj.emaj_mark
-          WHERE mark_group = p_groupNames[1];
-        SELECT count(DISTINCT mark_name) INTO v_count
-          FROM emaj.emaj_mark
-          WHERE mark_group = ANY (p_groupNames)
-            AND mark_time_id = p_firstMarkTimeId;
-        IF v_count > 1 THEN
-          RAISE EXCEPTION '_check_marks_range: The oldest marks of each group have not the same name.';
-        END IF;
--- Get the name of the first mark for the first group in the array, as we now know that all groups share the same first mark.
-        SELECT mark_name INTO p_firstMark
-          FROM emaj.emaj_mark
-          WHERE mark_group = p_groupNames[1]
-          ORDER BY mark_time_id
-          LIMIT 1;
-      END IF;
-    ELSE
--- Checks the supplied first mark.
-      SELECT emaj._check_mark_name(p_groupNames := p_groupNames, p_mark := p_firstMark, p_checkList := '') INTO p_firstMark;
+      RAISE EXCEPTION '_check_marks_range: The first mark cannot be NULL or empty.';
     END IF;
--- Get some time data about the first mark (that may be NULL)
+-- Checks the supplied first mark.
+    SELECT emaj._check_mark_name(p_groupNames := p_groupNames, p_mark := p_firstMark, p_checkList := '') INTO p_firstMark;
+-- Get some additional data about the first mark.
 -- (use the first group of the array, as we are now sure that all groups share the same mark).
-    SELECT mark_time_id, time_clock_timestamp INTO p_firstMarkTimeId, v_firstMarkTs
+    SELECT mark_time_id, time_clock_timestamp, time_last_emaj_gid INTO p_firstMarkTimeId, p_firstMarkTs, p_firstMarkEmajGid
       FROM emaj.emaj_mark
            JOIN emaj.emaj_time_stamp ON (time_id = mark_time_id)
       WHERE mark_group = p_groupNames[1]
@@ -1698,9 +1643,9 @@ $_check_marks_range$
     IF p_lastMark IS NOT NULL AND p_lastMark <> '' THEN
 -- If the last mark is not NULL or empty, check it.
       SELECT emaj._check_mark_name(p_groupNames := p_groupNames, p_mark := p_lastMark, p_checkList := '') INTO p_lastMark;
--- Get some time data about the last mark (that may be NULL)
+-- Get some additional data about the last mark (that may be NULL)
 -- (use the first group of the array, as we are now sure that all groups share the same mark).
-      SELECT mark_time_id, time_clock_timestamp INTO p_lastMarkTimeId, v_lastMarkTs
+      SELECT mark_time_id, time_clock_timestamp, time_last_emaj_gid INTO p_lastMarkTimeId, p_lastMarkTs, p_lastMarkEmajGid
         FROM emaj.emaj_mark
              JOIN emaj.emaj_time_stamp ON (time_id = mark_time_id)
         WHERE mark_group = p_groupNames[1]
@@ -1708,7 +1653,7 @@ $_check_marks_range$
 -- And check that the last mark has been set after the first mark.
       IF p_firstMarkTimeId > p_lastMarkTimeId THEN
         RAISE EXCEPTION '_check_marks_range: The start mark "%" (%) has been set after the end mark "%" (%).',
-          p_firstMark, v_firstMarkTs, p_lastMark, v_lastMarkTs;
+          p_firstMark, p_firstMarkTs, p_lastMark, p_lastMarkTs;
       END IF;
     END IF;
 --
@@ -10168,7 +10113,6 @@ $_log_stat_groups$
 -- The function is directly called by Emaj_web.
 -- Input: groups name array, a boolean indicating whether the calling function is a multi_groups function, the 2 mark names defining a
 --          range
---   a NULL value or an empty string as first_mark indicates the first recorded mark
 --   a NULL value or an empty string as last_mark indicates the current state
 --   Use a NULL or an empty string as last_mark to know the number of rows to rollback to reach the mark specified by the first_mark
 --   parameter.
@@ -10187,18 +10131,10 @@ $_log_stat_groups$
     SELECT emaj._check_group_names(p_groupNames := p_groupNames, p_mayBeNull := p_multiGroup, p_lockGroups := FALSE, p_checkList := '')
       INTO p_groupNames;
     IF p_groupNames IS NOT NULL THEN
--- Check the marks range.
-      SELECT * INTO p_firstMark, p_lastMark, v_firstMarkTimeId, v_lastMarkTimeId
+-- Check the marks range and get some data about both marks.
+      SELECT *
+        INTO p_firstMark, p_lastMark, v_firstMarkTimeId, v_lastMarkTimeId, v_firstMarkTs, v_lastMarkTs, v_firstEmajGid, v_lastEmajGid
         FROM emaj._check_marks_range(p_groupNames, p_firstMark, p_lastMark);
--- Get additional data for both mark timestamps (in some cases, v_firstMarkTimeId may be NULL).
-      SELECT time_clock_timestamp, time_last_emaj_gid INTO v_firstMarkTs, v_firstEmajGid
-        FROM emaj.emaj_time_stamp
-        WHERE time_id = v_firstMarkTimeId;
-      IF p_lastMark IS NOT NULL AND p_lastMark <> '' THEN
-        SELECT time_clock_timestamp, time_last_emaj_gid INTO v_lastMarkTs, v_lastEmajGid
-          FROM emaj.emaj_time_stamp
-          WHERE time_id = v_lastMarkTimeId;
-      END IF;
 -- For each table of the group, get the number of log rows and return the statistics.
 -- Shorten the timeframe if the table did not belong to the group on the entire requested time frame.
       RETURN QUERY
@@ -10318,7 +10254,6 @@ $_detailed_log_stat_groups$
 -- The function is directly called by Emaj_web.
 -- Input: groups name array, a boolean indicating whether the calling function is a multi_groups function,
 --        the 2 mark names defining a range
---   a NULL value or an empty string as first_mark indicates the first recorded mark
 --   a NULL value or an empty string as last_mark indicates the current state
 --   The keyword 'EMAJ_LAST_MARK' can be used as first or last mark to specify the last set mark.
 -- Output: table of updates by user and table
@@ -10343,22 +10278,10 @@ $_detailed_log_stat_groups$
 -- Check the group name.
     PERFORM emaj._check_group_names(p_groupNames := p_groupNames, p_mayBeNull := p_multiGroup, p_lockGroups := FALSE, p_checkList := '');
     IF p_groupNames IS NOT NULL THEN
--- Check the marks range.
-      SELECT * INTO p_firstMark, p_lastMark, v_firstMarkTimeId, v_lastMarkTimeId
+-- Check the marks range and get some data about both marks.
+      SELECT *
+        INTO p_firstMark, p_lastMark, v_firstMarkTimeId, v_lastMarkTimeId, v_firstMarkTs, v_lastMarkTs, v_firstEmajGid, v_lastEmajGid
         FROM emaj._check_marks_range(p_groupNames, p_firstMark, p_lastMark);
--- If there is no first mark, return quickly.
-      IF p_firstMark IS NULL THEN
-        RETURN;
-      END IF;
--- Get additional data for both mark timestamps.
-      SELECT time_last_emaj_gid, time_clock_timestamp INTO v_firstEmajGid, v_firstMarkTs
-        FROM emaj.emaj_time_stamp
-        WHERE time_id = v_firstMarkTimeId;
-      IF p_lastMark IS NOT NULL AND p_lastMark <> '' THEN
-        SELECT time_last_emaj_gid, time_clock_timestamp INTO v_lastEmajGid, v_lastMarkTs
-          FROM emaj.emaj_time_stamp
-          WHERE time_id = v_lastMarkTimeId;
-      END IF;
 -- For each table currently belonging to the group, count the number of operations per type (INSERT, UPDATE and DELETE) and role.
       FOR r_tblsq IN
         SELECT rel_priority, rel_schema, rel_tblseq, rel_group, rel_time_range, rel_log_schema, rel_log_table
@@ -10774,19 +10697,18 @@ $emaj_snap_log_group$
 -- Input: group name, the 2 mark names defining a range,
 --        the absolute pathname of the directory where the files are to be created,
 --        options for COPY TO statements
---   a NULL value or an empty string as first_mark indicates the first recorded mark
 --   a NULL value or an empty string can be used as last_mark indicating the current state
 --   The keyword 'EMAJ_LAST_MARK' can be used as first or last mark to specify the last set mark.
 -- Output: number of generated files (for tables and sequences, including the _INFO file)
   DECLARE
     v_nbFile                 INT = 3;        -- start with 3 = 2 files for sequences + _INFO
     v_noSuppliedLastMark     BOOLEAN;
-    v_firstEmajGid           BIGINT;
-    v_lastEmajGid            BIGINT;
     v_firstMarkTimeId        BIGINT;
     v_lastMarkTimeId         BIGINT;
     v_firstMarkTs            TIMESTAMPTZ;
     v_lastMarkTs             TIMESTAMPTZ;
+    v_firstEmajGid           BIGINT;
+    v_lastEmajGid            BIGINT;
     v_logTableName           TEXT;
     v_fileName               TEXT;
     v_conditions             TEXT;
@@ -10801,9 +10723,9 @@ $emaj_snap_log_group$
        || p_dir);
 -- Check the group name.
     PERFORM emaj._check_group_names(p_groupNames := ARRAY[p_groupName], p_mayBeNull := FALSE, p_lockGroups := FALSE, p_checkList := '');
--- Check the marks range.
+-- Check the marks range and get some data about both marks.
     v_noSuppliedLastMark = (p_lastMark IS NULL OR p_lastMark = '');
-    SELECT * INTO p_firstMark, p_lastMark, v_firstMarkTimeId, v_lastMarkTimeId
+    SELECT * INTO p_firstMark, p_lastMark, v_firstMarkTimeId, v_lastMarkTimeId, v_firstMarkTs, v_lastMarkTs, v_firstEmajGid, v_lastEmajGid
       FROM emaj._check_marks_range(ARRAY[p_groupName], p_firstMark, p_lastMark);
 -- Check the supplied directory is not null.
     IF p_dir IS NULL THEN
@@ -10813,32 +10735,15 @@ $emaj_snap_log_group$
     IF regexp_replace(p_copyOptions,'''.*''','') LIKE '%;%' THEN
       RAISE EXCEPTION 'emaj_snap_log_group: The COPY options parameter format is invalid.';
     END IF;
--- Get additional data for the first mark (in some cases, v_firstMarkTimeId may be NULL).
-    SELECT time_last_emaj_gid, time_clock_timestamp INTO v_firstEmajGid, v_firstMarkTs
-      FROM emaj.emaj_time_stamp
-      WHERE time_id = v_firstMarkTimeId;
     IF v_noSuppliedLastMark THEN
 -- The end mark is not supplied (look for the current state). So get a simple time stamp and its attributes
       SELECT emaj._set_time_stamp('S') INTO v_lastMarkTimeId;
       SELECT time_last_emaj_gid, time_clock_timestamp INTO v_lastEmajGid, v_lastMarkTs
         FROM emaj.emaj_time_stamp
         WHERE time_id = v_lastMarkTimeId;
-    ELSE
--- The end mark is supplied, get additional data for the last mark.
-      SELECT mark_time_id, time_last_emaj_gid, time_clock_timestamp INTO v_lastMarkTimeId, v_lastEmajGid, v_lastMarkTs
-        FROM emaj.emaj_mark
-             JOIN emaj.emaj_time_stamp ON (time_id = mark_time_id)
-        WHERE mark_group = p_groupName
-          AND mark_name = p_lastMark;
     END IF;
 -- Build the conditions on emaj_gid corresponding to this marks frame, used for the COPY statements dumping the tables.
-    v_conditions = 'TRUE';
-    IF p_firstMark IS NOT NULL AND p_firstMark <> '' THEN
-      v_conditions = v_conditions || ' AND emaj_gid > '|| v_firstEmajGid;
-    END IF;
-    IF NOT v_noSuppliedLastMark THEN
-      v_conditions = v_conditions || ' AND emaj_gid <= '|| v_lastEmajGid;
-    END IF;
+    v_conditions = 'emaj_gid > ' || v_firstEmajGid || coalesce(' AND emaj_gid <= ' || v_lastEmajGid, '');
 -- Process all log tables of the emaj_relation table that enter in the marks range.
     FOR r_tblsq IN
       SELECT rel_priority, rel_schema, rel_tblseq, rel_log_schema, rel_log_table
@@ -10962,7 +10867,7 @@ $_gen_sql_groups$
 -- character strings (double antislash), if any, must be replaced by '\' (single antislash) before feeding
 -- the psql command.
 -- Input: - tables groups array
---        - start mark, NULL representing the first mark
+--        - start mark
 --        - end mark, NULL representing the current state, and 'EMAJ_LAST_MARK' the last set mark for the group
 --        - absolute pathname describing the file that will hold the result
 --          (may be NULL if the caller reads the temporary table that will hold the script after the function execution)
@@ -10973,6 +10878,8 @@ $_gen_sql_groups$
     v_firstEmajGid           BIGINT;
     v_lastMarkTimeId         BIGINT;
     v_lastEmajGid            BIGINT;
+    v_firstMarkTs            TIMESTAMPTZ;
+    v_lastMarkTs             TIMESTAMPTZ;
     v_tblseqErr              TEXT;
     v_count                  INT;
     v_nbSQL                  BIGINT;
@@ -10985,7 +10892,7 @@ $_gen_sql_groups$
 -- Insert a BEGIN event into the history.
     INSERT INTO emaj.emaj_hist (hist_function, hist_event, hist_object, hist_wording)
       VALUES (CASE WHEN p_multiGroup THEN 'GEN_SQL_GROUPS' ELSE 'GEN_SQL_GROUP' END, 'BEGIN', array_to_string(p_groupNames,','),
-       CASE WHEN p_firstMark IS NULL OR p_firstMark = '' THEN 'From initial mark' ELSE 'From mark ' || p_firstMark END ||
+       'From mark ' || coalesce(p_firstMark, '') ||
        CASE WHEN p_lastMark IS NULL OR p_lastMark = '' THEN ' to current state' ELSE ' to mark ' || p_lastMark END ||
        CASE WHEN p_tblseqs IS NOT NULL THEN ' with tables/sequences filtering' ELSE '' END );
 -- Check the group name.
@@ -10993,8 +10900,9 @@ $_gen_sql_groups$
       INTO p_groupNames;
 -- If there is at least 1 group to process, go on.
     IF p_groupNames IS NOT NULL THEN
--- Check the marks range.
-      SELECT * INTO p_firstMark, p_lastMark, v_firstMarkTimeId, v_lastMarkTimeId
+-- Check the marks range and get some data about both marks.
+      SELECT *
+        INTO p_firstMark, p_lastMark, v_firstMarkTimeId, v_lastMarkTimeId, v_firstMarkTs, v_lastMarkTs, v_firstEmajGid, v_lastEmajGid
         FROM emaj._check_marks_range(p_groupNames, p_firstMark, p_lastMark);
 -- If table/sequence names are supplied, check them.
       IF p_tblseqs IS NOT NULL THEN
@@ -11057,27 +10965,6 @@ $_gen_sql_groups$
         PERFORM emaj._copy_to_file('(SELECT 0)', p_location, NULL);
       END IF;
 -- End of checks.
--- If there is no first mark for all groups, return quickly with a warning message.
-      IF p_firstMark IS NULL THEN
-        RAISE WARNING '_gen_sql_groups: No mark exists for the group(s) "%".', array_to_string(p_groupNames,', ');
-        INSERT INTO emaj.emaj_hist (hist_function, hist_event, hist_object, hist_wording)
-          VALUES (CASE WHEN p_multiGroup THEN 'GEN_SQL_GROUPS' ELSE 'GEN_SQL_GROUP' END, 'END',
-                  array_to_string(p_groupNames,','), 'No mark in the group(s) => no file has been generated');
-        RETURN 0;
-      END IF;
--- Retrieve the global sequence value of the supplied first mark.
-      SELECT time_last_emaj_gid INTO v_firstEmajGid
-        FROM emaj.emaj_time_stamp
-        WHERE time_id = v_firstMarkTimeId;
--- If last mark is NULL or empty, there is no timestamp to register.
-      IF p_lastMark IS NULL OR p_lastMark = '' THEN
-        v_lastEmajGid = NULL;
-      ELSE
--- Else, retrieve the global sequence value of the supplied end mark.
-        SELECT time_last_emaj_gid INTO v_lastEmajGid
-          FROM emaj.emaj_time_stamp
-          WHERE time_id = v_lastMarkTimeId;
-      END IF;
 -- Insert initial comments, some session parameters setting:
 --    - the standard_conforming_strings option to properly handle special characters,
 --    - the DateStyle mode used at export time,
@@ -11087,27 +10974,22 @@ $_gen_sql_groups$
       ELSE
         v_endComment = ' and the current state';
       END IF;
-      INSERT INTO emaj_temp_script
-        SELECT 0, 1, 0, '-- SQL script generated by E-Maj at ' || statement_timestamp();
-      INSERT INTO emaj_temp_script
-        SELECT 0, 2, 0, '--    for tables group(s): ' || array_to_string(p_groupNames,',');
-      INSERT INTO emaj_temp_script
-        SELECT 0, 3, 0, '--    processing logs between mark ' || p_firstMark || v_endComment;
-      IF p_tblseqs IS NOT NULL THEN
-        INSERT INTO emaj_temp_script
-          SELECT 0, 4, 0, '--    only for the following tables/sequences: ' || array_to_string(p_tblseqs,',');
-      END IF;
       SELECT setting INTO v_dateStyle
         FROM pg_settings
         WHERE name = 'DateStyle';
-      INSERT INTO emaj_temp_script
-        SELECT 0, 10, 0, 'SET standard_conforming_strings = OFF;';
-      INSERT INTO emaj_temp_script
-        SELECT 0, 11, 0, 'SET escape_string_warning = OFF;';
-      INSERT INTO emaj_temp_script
-        SELECT 0, 12, 0, 'SET datestyle = ' || quote_literal(v_dateStyle) || ';';
-      INSERT INTO emaj_temp_script
-        SELECT 0, 20, 0, 'BEGIN TRANSACTION;';
+      INSERT INTO emaj_temp_script VALUES
+        (0, 1, 0, '-- SQL script generated by E-Maj at ' || statement_timestamp()),
+        (0, 2, 0, '--    for tables group(s): ' || array_to_string(p_groupNames,',')),
+        (0, 3, 0, '--    processing logs between mark ' || p_firstMark || v_endComment);
+      IF p_tblseqs IS NOT NULL THEN
+        INSERT INTO emaj_temp_script VALUES
+          (0, 4, 0, '--    only for the following tables/sequences: ' || array_to_string(p_tblseqs,','));
+      END IF;
+      INSERT INTO emaj_temp_script VALUES
+        (0, 10, 0, 'SET standard_conforming_strings = OFF;'),
+        (0, 11, 0, 'SET escape_string_warning = OFF;'),
+        (0, 12, 0, 'SET datestyle = ' || quote_literal(v_dateStyle) || ';'),
+        (0, 20, 0, 'BEGIN TRANSACTION;');
 -- Process tables.
       FOR r_rel IN
         SELECT *
@@ -11138,15 +11020,12 @@ $_gen_sql_groups$
 -- Process each sequence and increment the sequence counter.
         v_nbSeq = v_nbSeq + emaj._gen_sql_seq(r_rel, v_firstMarkTimeId, v_lastMarkTimeId, v_nbSeq);
       END LOOP;
--- Add command to committhe transaction and reset the modified session parameters.
-      INSERT INTO emaj_temp_script
-        SELECT NULL, 1, txid_current(), 'COMMIT;';
-      INSERT INTO emaj_temp_script
-        SELECT NULL, 10, txid_current(), 'RESET standard_conforming_strings;';
-      INSERT INTO emaj_temp_script
-        SELECT NULL, 11, txid_current(), 'RESET escape_string_warning;';
-      INSERT INTO emaj_temp_script
-        SELECT NULL, 11, txid_current(), 'RESET datestyle;';
+-- Add command to commit the transaction and reset the modified session parameters.
+      INSERT INTO emaj_temp_script VALUES
+        (NULL, 1, txid_current(), 'COMMIT;'),
+        (NULL, 10, txid_current(), 'RESET standard_conforming_strings;'),
+        (NULL, 11, txid_current(), 'RESET escape_string_warning;'),
+        (NULL, 11, txid_current(), 'RESET datestyle;');
 -- If an output file is supplied, write the SQL script on the external file and drop the temporary table.
       IF p_location IS NOT NULL THEN
         PERFORM emaj._copy_to_file('(SELECT scr_sql FROM emaj_temp_script ORDER BY scr_emaj_gid NULLS LAST, scr_subid)', p_location, NULL);
@@ -12660,7 +12539,9 @@ GRANT EXECUTE ON FUNCTION emaj._check_group_names(p_groupNames TEXT[], p_mayBeNu
                           TO emaj_viewer;
 GRANT EXECUTE ON FUNCTION emaj._check_mark_name(p_groupNames TEXT[], p_mark TEXT, p_checkList TEXT) TO emaj_viewer;
 GRANT EXECUTE ON FUNCTION emaj._check_marks_range(p_groupNames TEXT[], INOUT p_firstMark TEXT, INOUT p_lastMark TEXT,
-                          OUT p_firstMarkTimeId BIGINT, OUT p_lastMarkTimeId BIGINT) TO emaj_viewer;
+                          OUT p_firstMarkTimeId BIGINT, OUT p_lastMarkTimeId BIGINT,
+                          OUT p_firstMarkTs TIMESTAMPTZ, OUT p_lastMarkTs TIMESTAMPTZ,
+                          OUT p_firstMarkEmajGid BIGINT, OUT p_lastMarkEmajGid BIGINT) TO emaj_viewer;
 GRANT EXECUTE ON FUNCTION emaj.emaj_get_current_log_table(p_app_schema TEXT, p_app_table TEXT,
                           OUT log_schema TEXT, OUT log_table TEXT) TO emaj_viewer;
 GRANT EXECUTE ON FUNCTION emaj._log_stat_tbl(r_rel emaj.emaj_relation, p_firstMarkTimeId BIGINT, p_lastMarkTimeId BIGINT) TO emaj_viewer;

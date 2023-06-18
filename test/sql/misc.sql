@@ -43,10 +43,6 @@ select count(*) from emaj_myschema1.mytbl2b_log;
 select count(*) from emaj_myschema1."myTbl3_log";
 select count(*) from emaj_myschema1.mytbl4_log;
 
--- test the "no initial mark" error message for the emaj_gen_sql_group()
---   this test has been moved here because, the emaj_reset_group() function cannot be used into a transaction
-select emaj.emaj_gen_sql_group('myGroup1', NULL, NULL, NULL);
-
 -- start myGroup1
 select emaj.emaj_start_group('myGroup1','Mark21');
 -----------------------------
@@ -80,10 +76,12 @@ select * from emaj.emaj_detailed_log_stat_group(NULL,NULL,NULL);
 select * from emaj.emaj_detailed_log_stat_groups(array['unknownGroup'],NULL,NULL);
 
 -- invalid marks
+select * from emaj.emaj_log_stat_group('myGroup2',NULL,NULL);
+select * from emaj.emaj_log_stat_group('myGroup2','',NULL);
 select * from emaj.emaj_log_stat_group('myGroup2','dummyStartMark',NULL);
-select * from emaj.emaj_log_stat_group('myGroup2',NULL,'dummyEndMark');
+select * from emaj.emaj_log_stat_group('myGroup2','Mark22','dummyEndMark');
 select * from emaj.emaj_detailed_log_stat_group('myGroup2','dummyStartMark',NULL);
-select * from emaj.emaj_detailed_log_stat_group('myGroup2',NULL,'dummyEndMark');
+select * from emaj.emaj_detailed_log_stat_group('myGroup2','Mark22','dummyEndMark');
 
 select * from emaj.emaj_log_stat_groups(array['myGroup1','myGroup2'],NULL,NULL);
 select * from emaj.emaj_log_stat_groups(array['myGroup1','myGroup2'],'Multi-1','dummyEndMark');
@@ -119,15 +117,9 @@ select test_log('myGroup2','EMAJ_LAST_MARK','Mark22');
 drop function test_log(text,text,text);
 
 -- should be ok
-select stat_group, stat_schema, stat_table, stat_first_mark, stat_last_mark, stat_rows from emaj.emaj_log_stat_group('myGroup2',NULL,NULL)
-  order by stat_group, stat_schema, stat_table;
-select stat_group, stat_schema, stat_table, stat_first_mark, stat_last_mark, stat_rows from emaj.emaj_log_stat_group('myGroup2','','')
-  order by stat_group, stat_schema, stat_table;
 select stat_group, stat_schema, stat_table, stat_first_mark, stat_last_mark, stat_rows from emaj.emaj_log_stat_group('myGroup2','Mark21',NULL)
   order by stat_group, stat_schema, stat_table;
 select stat_group, stat_schema, stat_table, stat_first_mark, stat_last_mark, stat_rows from emaj.emaj_log_stat_group('myGroup2','Mark21','EMAJ_LAST_MARK')
-  order by stat_group, stat_schema, stat_table;
-select stat_group, stat_schema, stat_table, stat_first_mark, stat_last_mark, stat_rows from emaj.emaj_log_stat_group('myGroup2',NULL,'Mark22')
   order by stat_group, stat_schema, stat_table;
 select stat_group, stat_schema, stat_table, stat_first_mark, stat_last_mark, stat_rows from emaj.emaj_log_stat_group('myGroup2','Mark22','Mark22')
   order by stat_group, stat_schema, stat_table;
@@ -144,19 +136,10 @@ select stat_group, stat_schema, stat_table, stat_first_mark, stat_last_mark, sta
   order by stat_group, stat_schema, stat_table;
 
 select stat_group, stat_schema, stat_table, stat_first_mark, stat_last_mark, stat_role, stat_verb, stat_rows
-  from emaj.emaj_detailed_log_stat_group('myGroup2',NULL,NULL)
-  order by stat_group, stat_schema, stat_table;
-select stat_group, stat_schema, stat_table, stat_first_mark, stat_last_mark, stat_role, stat_verb, stat_rows
-  from emaj.emaj_detailed_log_stat_group('myGroup2','','')
-  order by stat_group, stat_schema, stat_table;
-select stat_group, stat_schema, stat_table, stat_first_mark, stat_last_mark, stat_role, stat_verb, stat_rows
   from emaj.emaj_detailed_log_stat_group('myGroup2','Mark21',NULL)
   order by stat_group, stat_schema, stat_table;
 select stat_group, stat_schema, stat_table, stat_first_mark, stat_last_mark, stat_role, stat_verb, stat_rows
   from emaj.emaj_detailed_log_stat_group('myGroup2','Mark21','EMAJ_LAST_MARK')
-  order by stat_group, stat_schema, stat_table;
-select stat_group, stat_schema, stat_table, stat_first_mark, stat_last_mark, stat_role, stat_verb, stat_rows
-  from emaj.emaj_detailed_log_stat_group('myGroup2',NULL,'Mark22')
   order by stat_group, stat_schema, stat_table;
 select stat_group, stat_schema, stat_table, stat_first_mark, stat_last_mark, stat_role, stat_verb, stat_rows
   from emaj.emaj_detailed_log_stat_group('myGroup2','Mark22','Mark22')
@@ -176,16 +159,8 @@ select stat_group, stat_schema, stat_table, stat_first_mark, stat_last_mark, sta
   order by stat_group, stat_schema, stat_table;
 
 -- empty group
-select * from emaj.emaj_log_stat_group('emptyGroup',NULL,NULL);
-select * from emaj.emaj_detailed_log_stat_group('emptyGroup',NULL,NULL);
-
--- groups without any mark
-begin;
-  select emaj.emaj_stop_group('myGroup1');
-  select emaj.emaj_reset_group('myGroup1');
-  select * from emaj.emaj_log_stat_groups(array['myGroup1'],NULL,NULL);
-  select * from emaj.emaj_detailed_log_stat_groups(array['myGroup1'],NULL,NULL);
-rollback;
+select * from emaj.emaj_log_stat_group('emptyGroup','SM2',NULL);
+select * from emaj.emaj_detailed_log_stat_group('emptyGroup','SM2',NULL);
 
 -- check for emaj_reset_group() and emaj_log_stat_groups() and emaj_detailed_log_stat_group()
 select hist_id, hist_function, hist_event, hist_object, 
@@ -377,16 +352,13 @@ select emaj.emaj_snap_group('myGroup1',:'EMAJTESTTMPDIR','CSV HEADER DELIMITER '
 select emaj.emaj_snap_log_group(NULL,NULL,NULL,NULL,NULL);
 select emaj.emaj_snap_log_group('unknownGroup',NULL,NULL,NULL,NULL);
 
--- invalid directory
-select emaj.emaj_snap_log_group('myGroup2',NULL,'EMAJ_LAST_MARK',NULL,NULL);
-select emaj.emaj_snap_log_group('myGroup2',NULL,'EMAJ_LAST_MARK','unknown_directory',NULL);
-select emaj.emaj_snap_log_group('myGroup2',NULL,'EMAJ_LAST_MARK','/unknown_directory',NULL);
-
 -- invalid start mark
+select emaj.emaj_snap_log_group('myGroup2',NULL,'EMAJ_LAST_MARK',:'EMAJTESTTMPDIR',NULL);
+select emaj.emaj_snap_log_group('myGroup2','','EMAJ_LAST_MARK',:'EMAJTESTTMPDIR',NULL);
 select emaj.emaj_snap_log_group('myGroup2','unknownMark','EMAJ_LAST_MARK',:'EMAJTESTTMPDIR',NULL);
 
 -- invalid end mark
-select emaj.emaj_snap_log_group('myGroup2','','unknownMark',:'EMAJTESTTMPDIR',NULL);
+select emaj.emaj_snap_log_group('myGroup2','Mark21','unknownMark',:'EMAJTESTTMPDIR',NULL);
 
 -- start mark > end mark
 -- just check the error is trapped, because the error message contents timestamps
@@ -406,11 +378,16 @@ select test_snap_log('myGroup2','Mark23','Mark21',:'EMAJTESTTMPDIR');
 select test_snap_log('myGroup2','EMAJ_LAST_MARK','Mark22',:'EMAJTESTTMPDIR');
 drop function test_snap_log(text,text,text);
 
+-- invalid directory
+select emaj.emaj_snap_log_group('myGroup2','Mark21','EMAJ_LAST_MARK',NULL,NULL);
+select emaj.emaj_snap_log_group('myGroup2','Mark21','EMAJ_LAST_MARK','unknown_directory',NULL);
+select emaj.emaj_snap_log_group('myGroup2','Mark21','EMAJ_LAST_MARK','/unknown_directory',NULL);
+
 -- invalid COPY TO options
-select emaj.emaj_snap_log_group('myGroup2',NULL,'EMAJ_LAST_MARK',:'EMAJTESTTMPDIR', 'dummy_option');
+select emaj.emaj_snap_log_group('myGroup2','Mark21','EMAJ_LAST_MARK',:'EMAJTESTTMPDIR', 'dummy_option');
 
 -- SQL injection attempt
-select emaj.emaj_snap_log_group('myGroup2',NULL,'EMAJ_LAST_MARK',:'EMAJTESTTMPDIR','; CREATE ROLE fake LOGIN PASSWORD '''' SUPERUSER');
+select emaj.emaj_snap_log_group('myGroup2','Mark21','EMAJ_LAST_MARK',:'EMAJTESTTMPDIR','; CREATE ROLE fake LOGIN PASSWORD '''' SUPERUSER');
 
 -- should be ok
 select emaj.emaj_snap_log_group('emptyGroup','EGM3','EGM4',:'EMAJTESTTMPDIR',NULL);
@@ -418,8 +395,6 @@ select emaj.emaj_snap_log_group('emptyGroup','EGM3','EGM4',:'EMAJTESTTMPDIR',NUL
 \! cat $EMAJTESTTMPDIR/emptyGroup_sequences_at_EGM3
 \! rm $EMAJTESTTMPDIR/*
 
-select emaj.emaj_snap_log_group('myGroup2',NULL,'EMAJ_LAST_MARK',:'EMAJTESTTMPDIR',NULL);
-select emaj.emaj_snap_log_group('myGroup2','','',:'EMAJTESTTMPDIR','CSV');
 select emaj.emaj_snap_log_group('myGroup2','Mark21',NULL,:'EMAJTESTTMPDIR','CSV HEADER');
 select emaj.emaj_snap_log_group('myGroup2','Mark21','Mark21',:'EMAJTESTTMPDIR','CSV');
 select emaj.emaj_snap_log_group('myGroup2','Mark21','Mark23',:'EMAJTESTTMPDIR',NULL);
@@ -467,7 +442,7 @@ select emaj.emaj_gen_sql_group('myGroup2', 'unknownMark', NULL, NULL);
 select emaj.emaj_gen_sql_groups('{"myGroup1","myGroup2"}', 'Mark11', NULL, NULL, NULL);
 
 -- invalid end mark
-select emaj.emaj_gen_sql_group('myGroup2', NULL, 'unknownMark', NULL);
+select emaj.emaj_gen_sql_group('myGroup2', 'Multi-1', 'unknownMark', NULL);
 select emaj.emaj_gen_sql_groups('{"myGroup1","myGroup2"}', 'Multi-1', 'Mark11', NULL);
 
 -- end mark is prior start mark
@@ -492,78 +467,62 @@ begin;
 rollback;
 
 -- start mark with the same name but that doesn't correspond to the same point in time
-  select emaj.emaj_gen_sql_groups(array['myGroup1','myGroup2'], 'Mark21', 'Multi-2', NULL);
-  select emaj.emaj_gen_sql_groups(array['myGroup1','myGroup2'], NULL, 'Multi-2', NULL, NULL);
-
--- start mark with the same point in time but not with the same name
-begin;
-  select emaj.emaj_stop_groups(array['myGroup1','myGroup2']);
-  select emaj.emaj_start_groups(array['myGroup1','myGroup2'],'Common_mark_name');
-  select emaj.emaj_rename_mark_group('myGroup1', 'Common_mark_name', 'Renamed');
-  select emaj.emaj_gen_sql_groups(array['myGroup1','myGroup2'], NULL, NULL, NULL);
-rollback;
+select emaj.emaj_gen_sql_groups(array['myGroup1','myGroup2'], 'Mark21', 'Multi-2', NULL);
+select emaj.emaj_gen_sql_groups(array['myGroup1','myGroup2'], NULL, 'Multi-2', NULL, NULL);
 
 -- end mark with the same name but that doesn't correspond to the same point in time
-  select emaj.emaj_gen_sql_groups(array['myGroup1','myGroup2'], 'Multi-1', 'Mark21', NULL);
+select emaj.emaj_gen_sql_groups(array['myGroup1','myGroup2'], 'Multi-1', 'Mark21', NULL);
 
 -- empty table/sequence names array
-select emaj.emaj_gen_sql_group('myGroup2', NULL, 'EMAJ_LAST_MARK', :'EMAJTESTTMPDIR' || '/myFile', array['']);
+select emaj.emaj_gen_sql_group('myGroup2', 'Mark21', 'EMAJ_LAST_MARK', :'EMAJTESTTMPDIR' || '/myFile', array['']);
 
 -- unknown table/sequence names in the tables filter
-select emaj.emaj_gen_sql_group('myGroup2', NULL, NULL, :'EMAJTESTTMPDIR' || '/myFile', array['foo']);
-select emaj.emaj_gen_sql_group('myGroup2', NULL, NULL, :'EMAJTESTTMPDIR' || '/myFile', array[
+select emaj.emaj_gen_sql_group('myGroup2', 'Mark21', NULL, :'EMAJTESTTMPDIR' || '/myFile', array['foo']);
+select emaj.emaj_gen_sql_group('myGroup2', 'Mark21', NULL, :'EMAJTESTTMPDIR' || '/myFile', array[
      'myschema1.mytbl1','myschema2.myTbl3_col31_seq','phil''s schema3.phil''s tbl1']);
 select emaj.emaj_gen_sql_groups(array['myGroup1','myGroup2'], 'Multi-1', NULL, :'EMAJTESTTMPDIR' || '/myFile', array[
      'myschema1.mytbl1','foo','myschema2.myTbl3_col31_seq','phil''s schema3.phil''s tbl1']);
 
 -- the tables group contains a table without pkey
-select emaj.emaj_gen_sql_group('phil''s group#3",', NULL, 'EMAJ_LAST_MARK', :'EMAJTESTTMPDIR' || '/Group3');
+select emaj.emaj_gen_sql_group('phil''s group#3",', 'Mark4', 'EMAJ_LAST_MARK', :'EMAJTESTTMPDIR' || '/Group3');
 
 -- invalid location path name
-select emaj.emaj_gen_sql_group('myGroup1', NULL, NULL, '/tmp/unknownDirectory/myFile');
+select emaj.emaj_gen_sql_group('myGroup1', 'Mark21', NULL, '/tmp/unknownDirectory/myFile');
 select emaj.emaj_gen_sql_groups(array['myGroup1','myGroup2'], 'Multi-1', NULL, '/tmp/unknownDirectory/myFile');
 
 -- should be ok
 -- generated files content is checked later in adm2.sql scenario
--- getting counters from detailed log statistics + the number of sequences included in the group allows a comparison
---   with the result of the emaj_gen_sql_group() function
-select emaj.emaj_gen_sql_group('emptyGroup', NULL, NULL, :'EMAJTESTTMPDIR' || '/myFile');
-select emaj.emaj_gen_sql_group('myGroup2', NULL, NULL, :'EMAJTESTTMPDIR' || '/myFile');
-select sum(stat_rows)+2 as check from emaj.emaj_detailed_log_stat_group('myGroup2',NULL,NULL);
 select emaj.emaj_gen_sql_group('myGroup2', 'Mark21', NULL, :'EMAJTESTTMPDIR' || '/myFile');
-select sum(stat_rows)+2 as check from emaj.emaj_detailed_log_stat_group('myGroup2','Mark21',NULL);
-select emaj.emaj_gen_sql_group('myGroup2', NULL, 'Mark22', :'EMAJTESTTMPDIR' || '/myFile');
-select sum(stat_rows)+2 as check from emaj.emaj_detailed_log_stat_group('myGroup2',NULL,'Mark22');
+select emaj.emaj_gen_sql_group('myGroup2', 'Mark21', 'Mark22', :'EMAJTESTTMPDIR' || '/myFile');
 select emaj.emaj_gen_sql_groups(array['myGroup1','myGroup2'], 'Multi-1', NULL, :'EMAJTESTTMPDIR' || '/myFile');
 select emaj.emaj_gen_sql_groups(array['myGroup1','myGroup2'], 'Multi-2', 'Multi-3', :'EMAJTESTTMPDIR' || '/myFile');
-select emaj.emaj_gen_sql_group('myGroup2', NULL, 'EMAJ_LAST_MARK', :'EMAJTESTTMPDIR' || '/myFile');
-select sum(stat_rows)+2 as check from emaj.emaj_detailed_log_stat_group('myGroup2',NULL,'EMAJ_LAST_MARK');
+select emaj.emaj_gen_sql_group('myGroup2', 'Mark21', 'EMAJ_LAST_MARK', :'EMAJTESTTMPDIR' || '/myFile');
 
 -- should be ok with no output file supplied
-select emaj.emaj_gen_sql_group('myGroup1', NULL, NULL, NULL);
+select emaj.emaj_gen_sql_group('myGroup1', 'Mark21', NULL, NULL);
 \copy (select * from emaj_sql_script) to '/dev/null'
 drop table emaj_temp_script cascade;
 
 -- should be ok, with tables and sequences filtering
 select stat_group, stat_schema, stat_table, stat_first_mark, stat_last_mark, stat_role, stat_verb, stat_rows
-  from emaj.emaj_detailed_log_stat_group('myGroup2',NULL,'EMAJ_LAST_MARK');
+  from emaj.emaj_detailed_log_stat_group('myGroup2','Mark21','EMAJ_LAST_MARK');
 -- all tables and sequences
-select emaj.emaj_gen_sql_group('myGroup2', NULL, 'EMAJ_LAST_MARK', :'EMAJTESTTMPDIR' || '/myFile', array[
+select emaj.emaj_gen_sql_group('myGroup2', 'Mark21', 'EMAJ_LAST_MARK', :'EMAJTESTTMPDIR' || '/myFile', array[
      'myschema2.mytbl1','myschema2.mytbl2','myschema2.myTbl3','myschema2.mytbl4',
      'myschema2.mytbl5','myschema2.mytbl6','myschema2.myseq1','myschema2.myTbl3_col31_seq']);
 -- minus 1 sequence
-select emaj.emaj_gen_sql_group('myGroup2', NULL, 'EMAJ_LAST_MARK', :'EMAJTESTTMPDIR' || '/myFile', array[
+select emaj.emaj_gen_sql_group('myGroup2', 'Mark21', 'EMAJ_LAST_MARK', :'EMAJTESTTMPDIR' || '/myFile', array[
      'myschema2.mytbl1','myschema2.mytbl2','myschema2.myTbl3','myschema2.mytbl4',
      'myschema2.mytbl5','myschema2.mytbl6','myschema2.myseq1']);
 -- minus 1 table
-select emaj.emaj_gen_sql_group('myGroup2', NULL, 'EMAJ_LAST_MARK', :'EMAJTESTTMPDIR' || '/myFile', array[
+select emaj.emaj_gen_sql_group('myGroup2', 'Mark21', 'EMAJ_LAST_MARK', :'EMAJTESTTMPDIR' || '/myFile', array[
      'myschema2.mytbl1','myschema2.mytbl2','myschema2.myTbl3',
      'myschema2.mytbl5','myschema2.mytbl6','myschema2.myseq1']);
 -- only 1 sequence
-select emaj.emaj_gen_sql_group('myGroup2', NULL, 'EMAJ_LAST_MARK', :'EMAJTESTTMPDIR' || '/myFile', array[
+select emaj.emaj_gen_sql_group('myGroup2', 'Mark21', 'EMAJ_LAST_MARK', :'EMAJTESTTMPDIR' || '/myFile', array[
      'myschema2.myTbl3_col31_seq']);
 -- only 1 table (with a strange name and belonging to a group having another table without pkey)
-select emaj.emaj_gen_sql_group('phil''s group#3",', NULL, 'EMAJ_LAST_MARK', :'EMAJTESTTMPDIR' || '/myFile', array[
+select emaj.emaj_gen_sql_group('phil''s group#3",', 'Mark4', 'EMAJ_LAST_MARK', :'EMAJTESTTMPDIR' || '/myFile', array[
      'phil''s schema3.phil''s tbl1']);
 -- several groups and 1 table of each, with redondancy in the tables array
 select emaj.emaj_gen_sql_groups(array['myGroup1','myGroup2'], 'Multi-1', 'Multi-3', :'EMAJTESTTMPDIR' || '/myFile', array[

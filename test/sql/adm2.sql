@@ -160,7 +160,7 @@ select emaj.emaj_rename_mark_group('phil''s group#3",','phil''s mark #1','phil''
 -- 
 select emaj.emaj_delete_mark_group('phil''s group#3",','M2_again!');
 --
-select stat_group, stat_schema, stat_table, stat_first_mark, stat_last_mark, stat_rows from emaj.emaj_log_stat_group('phil''s group#3",','','');
+select stat_group, stat_schema, stat_table, stat_first_mark, stat_last_mark, stat_rows from emaj.emaj_log_stat_group('phil''s group#3",','M1_rollbackable','');
 select stat_group, stat_schema, stat_table, stat_first_mark, stat_last_mark, stat_role, stat_verb, stat_rows
   from emaj.emaj_detailed_log_stat_group('phil''s group#3",','phil''s mark #3','');
 --
