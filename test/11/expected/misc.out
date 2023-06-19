@@ -1280,7 +1280,7 @@ HINT:  COPY TO instructs the PostgreSQL server process to write a file. You may 
 CONTEXT:  SQL statement "COPY (SELECT 0) TO '/tmp/unknownDirectory/myFile' "
 PL/pgSQL function emaj._copy_to_file(text,text,text) line 20 at EXECUTE
 SQL statement "SELECT emaj._copy_to_file('(SELECT 0)', p_location, NULL)"
-PL/pgSQL function emaj._gen_sql_groups(text[],boolean,text,text,text,text[]) line 105 at PERFORM
+PL/pgSQL function emaj._gen_sql_groups(text[],boolean,text,text,text,text[]) line 104 at PERFORM
 PL/pgSQL function emaj.emaj_gen_sql_group(text,text,text,text,text[]) line 14 at RETURN
 select emaj.emaj_gen_sql_groups(array['myGroup1','myGroup2'], 'Multi-1', NULL, '/tmp/unknownDirectory/myFile');
 NOTICE:  table "emaj_temp_script" does not exist, skipping
@@ -1289,7 +1289,7 @@ HINT:  COPY TO instructs the PostgreSQL server process to write a file. You may 
 CONTEXT:  SQL statement "COPY (SELECT 0) TO '/tmp/unknownDirectory/myFile' "
 PL/pgSQL function emaj._copy_to_file(text,text,text) line 20 at EXECUTE
 SQL statement "SELECT emaj._copy_to_file('(SELECT 0)', p_location, NULL)"
-PL/pgSQL function emaj._gen_sql_groups(text[],boolean,text,text,text,text[]) line 105 at PERFORM
+PL/pgSQL function emaj._gen_sql_groups(text[],boolean,text,text,text,text[]) line 104 at PERFORM
 PL/pgSQL function emaj.emaj_gen_sql_groups(text[],text,text,text,text[]) line 14 at RETURN
 -- should be ok
 -- generated files content is checked later in adm2.sql scenario

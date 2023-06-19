@@ -10810,7 +10810,7 @@ $emaj_gen_sql_group$
 -- or beetween a mark and the current state. The result is stored into an external file.
 -- It calls the _gen_sql_groups() function to effetively process the request.
 -- Input: - tables group
---        - start mark, NULL representing the first mark
+--        - start mark
 --        - end mark, NULL representing the current state, and 'EMAJ_LAST_MARK' the last set mark for the group
 --        - absolute pathname describing the file that will hold the result
 --          (may be NULL if the caller reads the temporary table that will hold the script after the function execution)
@@ -10833,7 +10833,7 @@ $emaj_gen_sql_groups$
 -- or beetween a mark and the current state. The result is stored into an external file.
 -- It calls the _gen_sql_groups() function to effetively process the request.
 -- Input: - tables groups array
---        - start mark, NULL representing the first mark
+--        - start mark
 --        - end mark, NULL representing the current state, and 'EMAJ_LAST_MARK' the last set mark for the group
 --        - absolute pathname describing the file that will hold the result
 --          (may be NULL if the caller reads the temporary table that will hold the script after the function execution)
@@ -10952,7 +10952,6 @@ $_gen_sql_groups$
         scr_emaj_txid          BIGINT,              -- for future use, to insert commit statement at each txid change
         scr_sql                TEXT                 -- the generated sql text
       );
-      GRANT SELECT ON emaj_temp_script TO PUBLIC;
 -- Test the supplied output file to avoid to discover a bad file name after having spent a lot of time to build the script.
       IF p_location IS NOT NULL THEN
         PERFORM emaj._copy_to_file('(SELECT 0)', p_location, NULL);

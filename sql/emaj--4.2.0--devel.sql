@@ -2225,6 +2225,52 @@ $emaj_snap_log_group$;
 COMMENT ON FUNCTION emaj.emaj_snap_log_group(TEXT,TEXT,TEXT,TEXT,TEXT) IS
 $$Snaps all application tables and sequences of an E-Maj group into a given directory.$$;
 
+CREATE OR REPLACE FUNCTION emaj.emaj_gen_sql_group(p_groupName TEXT, p_firstMark TEXT, p_lastMark TEXT, p_location TEXT,
+                                                   p_tblseqs TEXT[] DEFAULT NULL)
+RETURNS BIGINT LANGUAGE plpgsql
+SET standard_conforming_strings = ON AS
+$emaj_gen_sql_group$
+-- This function generates a SQL script representing all updates performed on a tables group between 2 marks.
+-- or beetween a mark and the current state. The result is stored into an external file.
+-- It calls the _gen_sql_groups() function to effetively process the request.
+-- Input: - tables group
+--        - start mark
+--        - end mark, NULL representing the current state, and 'EMAJ_LAST_MARK' the last set mark for the group
+--        - absolute pathname describing the file that will hold the result
+--          (may be NULL if the caller reads the temporary table that will hold the script after the function execution)
+--        - array of schema qualified table and sequence names to only process those tables and sequences (NULL by default)
+-- Output: number of generated SQL statements (non counting comments and transaction management)
+  BEGIN
+-- Call the _gen_sql_groups() function that effectively processes the request.
+    RETURN emaj._gen_sql_groups(array[p_groupName], FALSE, p_firstMark, p_lastMark, p_location, p_tblseqs);
+  END;
+$emaj_gen_sql_group$;
+COMMENT ON FUNCTION emaj.emaj_gen_sql_group(TEXT,TEXT,TEXT,TEXT,TEXT[]) IS
+$$Generates a sql script corresponding to all updates performed on a tables group between two marks and stores it into a given file.$$;
+
+CREATE OR REPLACE FUNCTION emaj.emaj_gen_sql_groups(p_groupNames TEXT[], p_firstMark TEXT, p_lastMark TEXT, p_location TEXT,
+                                                    p_tblseqs TEXT[] DEFAULT NULL)
+RETURNS BIGINT LANGUAGE plpgsql
+SET standard_conforming_strings = ON AS
+$emaj_gen_sql_groups$
+-- This function generates a SQL script representing all updates performed on a set of tables groups between 2 marks
+-- or beetween a mark and the current state. The result is stored into an external file.
+-- It calls the _gen_sql_groups() function to effetively process the request.
+-- Input: - tables groups array
+--        - start mark
+--        - end mark, NULL representing the current state, and 'EMAJ_LAST_MARK' the last set mark for the group
+--        - absolute pathname describing the file that will hold the result
+--          (may be NULL if the caller reads the temporary table that will hold the script after the function execution)
+--        - array of schema qualified table and sequence names to only process those tables and sequences (NULL by default)
+-- Output: number of generated SQL statements (non counting comments and transaction management)
+  BEGIN
+-- Call the _gen_sql_groups() function that effectively processes the request.
+    RETURN emaj._gen_sql_groups(p_groupNames, TRUE, p_firstMark, p_lastMark, p_location, p_tblseqs);
+  END;
+$emaj_gen_sql_groups$;
+COMMENT ON FUNCTION emaj.emaj_gen_sql_groups(TEXT[],TEXT,TEXT,TEXT,TEXT[]) IS
+$$Generates a sql script replaying all updates performed on a tables groups set between two marks and stores it into a given file.$$;
+
 CREATE OR REPLACE FUNCTION emaj._gen_sql_groups(p_groupNames TEXT[], p_multiGroup BOOLEAN, p_firstMark TEXT, p_lastMark TEXT,
                                                 p_location TEXT, p_tblseqs TEXT[])
 RETURNS BIGINT LANGUAGE plpgsql
@@ -2330,7 +2376,6 @@ $_gen_sql_groups$
         scr_emaj_txid          BIGINT,              -- for future use, to insert commit statement at each txid change
         scr_sql                TEXT                 -- the generated sql text
       );
-      GRANT SELECT ON emaj_temp_script TO PUBLIC;
 -- Test the supplied output file to avoid to discover a bad file name after having spent a lot of time to build the script.
       IF p_location IS NOT NULL THEN
         PERFORM emaj._copy_to_file('(SELECT 0)', p_location, NULL);
