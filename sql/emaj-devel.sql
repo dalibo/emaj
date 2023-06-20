@@ -741,8 +741,8 @@ RETURNS BIGINT LANGUAGE SQL AS
 $$
 -- This function inserts a new time stamp in the emaj_time_stamp table and returns the identifier of the new row.
 INSERT INTO emaj.emaj_time_stamp (time_last_emaj_gid, time_event)
-  SELECT CASE WHEN is_called THEN last_value ELSE last_value - 1 END,
-         p_timeStampType FROM emaj.emaj_global_seq
+  SELECT CASE WHEN is_called THEN last_value ELSE last_value - 1 END, p_timeStampType
+    FROM emaj.emaj_global_seq
     RETURNING time_id;
 $$;
 
@@ -3911,7 +3911,7 @@ $emaj_assign_sequences$
            WHERE nspname = p_schema
              AND relname ~ p_sequencesIncludeFilter
              AND (p_sequencesExcludeFilter IS NULL OR relname !~ p_sequencesExcludeFilter)
-             AND relkind IN ('S')
+             AND relkind = 'S'
            ORDER BY relname
         ) AS t;
 -- OK, call the _assign_sequences() function for execution.
@@ -3985,7 +3985,7 @@ $_assign_sequences$
                             JOIN pg_catalog.pg_namespace ON (pg_namespace.oid = relnamespace)
                        WHERE nspname = p_schema
                          AND relname = sequence_name
-                         AND relkind IN ('S'))
+                         AND relkind = 'S')
           ) AS t;
       IF v_list IS NOT NULL THEN
         RAISE EXCEPTION '_assign_sequences: In schema %, some sequences (%) do not exist.', quote_ident(p_schema), v_list;
@@ -4968,9 +4968,9 @@ $_gen_sql_seq$
 -- Get the sequence characteristics at end mark or the current state.
     IF p_lastMarkTimeId IS NULL AND upper_inf(r_rel.rel_time_range) THEN
 -- No supplied last mark and the sequence currently belongs to its group, so get the current sequence characteritics.
-    SELECT *
-      INTO trg_seq_rec
-      FROM emaj._get_current_sequence_state(r_rel.rel_schema, r_rel.rel_tblseq, NULL);
+      SELECT *
+        INTO trg_seq_rec
+        FROM emaj._get_current_sequence_state(r_rel.rel_schema, r_rel.rel_tblseq, NULL);
     ELSE
 -- A last mark is supplied, or the sequence does not belong to its group anymore, so get the sequence characteristics
 -- from the emaj_sequence table.

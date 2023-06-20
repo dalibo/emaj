@@ -236,6 +236,16 @@ DROP FUNCTION IF EXISTS emaj._rlbk_init(P_GROUPNAMES TEXT[],P_MARK TEXT,P_ISLOGG
 ------------------------------------------------------------------
 -- create new or modified functions                             --
 ------------------------------------------------------------------
+CREATE OR REPLACE FUNCTION emaj._set_time_stamp(p_timeStampType CHAR(1))
+RETURNS BIGINT LANGUAGE SQL AS
+$$
+-- This function inserts a new time stamp in the emaj_time_stamp table and returns the identifier of the new row.
+INSERT INTO emaj.emaj_time_stamp (time_last_emaj_gid, time_event)
+  SELECT CASE WHEN is_called THEN last_value ELSE last_value - 1 END, p_timeStampType
+    FROM emaj.emaj_global_seq
+    RETURNING time_id;
+$$;
+
 CREATE OR REPLACE FUNCTION emaj._dblink_open_cnx(p_cnxName TEXT, OUT p_status INT, OUT p_schema TEXT)
 LANGUAGE plpgsql AS
 $_dblink_open_cnx$
@@ -396,6 +406,173 @@ $_copy_to_file$
   END;
 $_copy_to_file$;
 
+CREATE OR REPLACE FUNCTION emaj.emaj_assign_sequences(p_schema TEXT, p_sequencesIncludeFilter TEXT, p_sequencesExcludeFilter TEXT,
+                                                      p_group TEXT, p_mark TEXT DEFAULT 'ASSIGN_%')
+RETURNS INTEGER LANGUAGE plpgsql AS
+$emaj_assign_sequences$
+-- The function assigns sequences on name regexp pattern into a tables group.
+-- Inputs: schema name, 2 patterns to filter sequence names (one to include and another to exclude), assignment group name,
+--         mark name to set when logging groups (optional)
+-- Outputs: number of sequences effectively assigned to the tables group
+  DECLARE
+    v_sequences              TEXT[];
+  BEGIN
+-- Process empty filters as NULL.
+    SELECT CASE WHEN p_sequencesIncludeFilter = '' THEN NULL ELSE p_sequencesIncludeFilter END,
+           CASE WHEN p_sequencesExcludeFilter = '' THEN NULL ELSE p_sequencesExcludeFilter END
+      INTO p_sequencesIncludeFilter, p_sequencesExcludeFilter;
+-- Build the list of sequences names satisfying the pattern.
+    SELECT array_agg(relname) INTO v_sequences
+      FROM
+        (SELECT relname
+           FROM pg_catalog.pg_class
+                JOIN pg_catalog.pg_namespace ON (pg_namespace.oid = relnamespace)
+           WHERE nspname = p_schema
+             AND relname ~ p_sequencesIncludeFilter
+             AND (p_sequencesExcludeFilter IS NULL OR relname !~ p_sequencesExcludeFilter)
+             AND relkind = 'S'
+           ORDER BY relname
+        ) AS t;
+-- OK, call the _assign_sequences() function for execution.
+    RETURN emaj._assign_sequences(p_schema, v_sequences, p_group, p_mark, TRUE, TRUE);
+  END;
+$emaj_assign_sequences$;
+COMMENT ON FUNCTION emaj.emaj_assign_sequences(TEXT,TEXT,TEXT,TEXT,TEXT) IS
+$$Assign sequences on name patterns into a tables group.$$;
+
+CREATE OR REPLACE FUNCTION emaj._assign_sequences(p_schema TEXT, p_sequences TEXT[], p_group TEXT, p_mark TEXT,
+                                                  p_multiSequence BOOLEAN, p_arrayFromRegex BOOLEAN)
+RETURNS INTEGER LANGUAGE plpgsql AS
+$_assign_sequences$
+-- The function effectively assigns sequences into a tables group.
+-- Inputs: schema, array of sequence names, group name,
+--         mark to set for lonnging groups, a boolean indicating whether several sequences need to be processed,
+--         a boolean indicating whether the tables array has been built from regex filters
+-- Outputs: number of sequences effectively assigned to the tables group
+-- The JSONB v_properties parameter has currenlty only one field '{"priority":...}' the properties being NULL by default
+  DECLARE
+    v_function               TEXT;
+    v_groupIsLogging         BOOLEAN;
+    v_list                   TEXT;
+    v_array                  TEXT[];
+    v_timeId                 BIGINT;
+    v_markName               TEXT;
+    v_oneSequence            TEXT;
+    v_nbAssignedSeq          INT = 0;
+  BEGIN
+    v_function = CASE WHEN p_multiSequence THEN 'ASSIGN_SEQUENCES' ELSE 'ASSIGN_SEQUENCE' END;
+-- Insert the begin entry into the emaj_hist table
+    INSERT INTO emaj.emaj_hist (hist_function, hist_event)
+      VALUES (v_function, 'BEGIN');
+-- Check supplied parameters
+-- Check the group name and if ok, get some properties of the group.
+    PERFORM emaj._check_group_names(p_groupNames := ARRAY[p_group], p_mayBeNull := FALSE, p_lockGroups := TRUE, p_checkList := '');
+    SELECT group_is_logging INTO v_groupIsLogging
+      FROM emaj.emaj_group
+      WHERE group_name = p_group;
+-- Check the supplied schema exists and is not an E-Maj schema.
+    IF NOT EXISTS
+         (SELECT 0
+            FROM pg_catalog.pg_namespace
+            WHERE nspname = p_schema
+         ) THEN
+      RAISE EXCEPTION '_assign_sequences: The schema "%" does not exist.', p_schema;
+    END IF;
+    IF EXISTS
+         (SELECT 0
+            FROM emaj.emaj_schema
+            WHERE sch_name = p_schema
+         ) THEN
+      RAISE EXCEPTION '_assign_sequences: The schema "%" is an E-Maj schema.', p_schema;
+    END IF;
+-- Check sequences.
+    IF NOT p_arrayFromRegex THEN
+-- Remove duplicates values, NULL and empty strings from the sequence names array supplied by the user.
+      SELECT array_agg(DISTINCT sequence_name) INTO p_sequences
+        FROM unnest(p_sequences) AS sequence_name
+        WHERE sequence_name IS NOT NULL AND sequence_name <> '';
+-- Check that application sequences exist.
+      WITH sequences AS (
+        SELECT unnest(p_sequences) AS sequence_name)
+      SELECT string_agg(quote_ident(sequence_name), ', ') INTO v_list
+        FROM
+          (SELECT sequence_name
+             FROM sequences
+             WHERE NOT EXISTS
+                    (SELECT 0
+                       FROM pg_catalog.pg_class
+                            JOIN pg_catalog.pg_namespace ON (pg_namespace.oid = relnamespace)
+                       WHERE nspname = p_schema
+                         AND relname = sequence_name
+                         AND relkind = 'S')
+          ) AS t;
+      IF v_list IS NOT NULL THEN
+        RAISE EXCEPTION '_assign_sequences: In schema %, some sequences (%) do not exist.', quote_ident(p_schema), v_list;
+      END IF;
+    END IF;
+-- Check or discard sequences already assigned to a group.
+    SELECT string_agg(quote_ident(rel_tblseq), ', '), array_agg(rel_tblseq) INTO v_list, v_array
+      FROM emaj.emaj_relation
+      WHERE rel_schema = p_schema
+        AND rel_tblseq = ANY(p_sequences)
+        AND upper_inf(rel_time_range);
+    IF v_list IS NOT NULL THEN
+      IF NOT p_arrayFromRegex THEN
+        RAISE EXCEPTION '_assign_sequences: In schema %, some sequences (%) already belong to a group.', quote_ident(p_schema), v_list;
+      ELSE
+        RAISE WARNING '_assign_sequences: Some sequences already belonging to a group (%) are not selected.', v_list;
+        -- remove these sequences from the sequences to process
+        SELECT array_agg(remaining_sequence) INTO p_sequences
+          FROM
+            (  SELECT unnest(p_sequences)
+             EXCEPT
+               SELECT unnest(v_array)
+            ) AS t(remaining_sequence);
+      END IF;
+    END IF;
+-- Check the supplied mark.
+    SELECT emaj._check_new_mark(array[p_group], p_mark) INTO v_markName;
+-- OK,
+    IF p_sequences IS NULL OR p_sequences = '{}' THEN
+-- When no sequences are finaly selected, just warn.
+      RAISE WARNING '_assign_sequences: No sequence to process.';
+    ELSE
+-- Get the time stamp of the operation.
+      SELECT emaj._set_time_stamp('A') INTO v_timeId;
+-- For LOGGING groups, lock all tables to get a stable point.
+      IF v_groupIsLogging THEN
+-- Use a ROW EXCLUSIVE lock mode, preventing for a transaction currently updating data, but not conflicting with simple read access or
+-- vacuum operation,
+        PERFORM emaj._lock_groups(ARRAY[p_group], 'ROW EXCLUSIVE', FALSE);
+-- ... and set the mark, using the same time identifier.
+        PERFORM emaj._set_mark_groups(ARRAY[p_group], v_markName, FALSE, TRUE, NULL, v_timeId);
+      END IF;
+-- Effectively create the log components for each table.
+      FOREACH v_oneSequence IN ARRAY p_sequences
+      LOOP
+        PERFORM emaj._add_seq(p_schema, v_oneSequence, p_group, v_groupIsLogging, v_timeId, v_function);
+        v_nbAssignedSeq = v_nbAssignedSeq + 1;
+      END LOOP;
+-- Adjust the group characteristics.
+      UPDATE emaj.emaj_group
+        SET group_last_alter_time_id = v_timeId,
+            group_nb_sequence =
+              (SELECT count(*)
+                 FROM emaj.emaj_relation
+                 WHERE rel_group = group_name
+                   AND upper_inf(rel_time_range)
+                   AND rel_kind = 'S'
+              )
+        WHERE group_name = p_group;
+    END IF;
+-- Insert the end entry into the emaj_hist table.
+    INSERT INTO emaj.emaj_hist (hist_function, hist_event, hist_wording)
+      VALUES (v_function, 'END', v_nbAssignedSeq || ' sequences assigned to the group ' || p_group);
+--
+    RETURN v_nbAssignedSeq;
+  END;
+$_assign_sequences$;
+
 CREATE OR REPLACE FUNCTION emaj._rlbk_seq(r_rel emaj.emaj_relation, p_timeId BIGINT)
 RETURNS INT LANGUAGE plpgsql
 SECURITY DEFINER SET search_path = pg_catalog, pg_temp AS
@@ -441,6 +618,62 @@ $_rlbk_seq$
     RETURN 1;
   END;
 $_rlbk_seq$;
+
+CREATE OR REPLACE FUNCTION emaj._gen_sql_seq(r_rel emaj.emaj_relation, p_firstMarkTimeId BIGINT, p_lastMarkTimeId BIGINT, p_nbSeq BIGINT)
+RETURNS BIGINT LANGUAGE plpgsql AS
+$_gen_sql_seq$
+-- This function generates a SQL command to set the final characteristics of a sequence.
+-- The command is stored into a temporary table created by the _gen_sql_groups() calling function.
+-- Input: row from emaj_relation corresponding to the appplication sequence to proccess,
+--        the time id at requested start and end marks,
+--        the number of already processed sequences
+-- Output: number of generated SQL statements (0 or 1)
+  DECLARE
+    v_endTimeId              BIGINT;
+    v_rqSeq                  TEXT;
+    ref_seq_rec              emaj.emaj_sequence%ROWTYPE;
+    trg_seq_rec              emaj.emaj_sequence%ROWTYPE;
+  BEGIN
+-- Get the sequence characteristics at start mark.
+    SELECT *
+      INTO ref_seq_rec
+      FROM emaj.emaj_sequence
+      WHERE sequ_schema = r_rel.rel_schema
+        AND sequ_name = r_rel.rel_tblseq
+        AND sequ_time_id = p_firstMarkTimeId;
+-- Get the sequence characteristics at end mark or the current state.
+    IF p_lastMarkTimeId IS NULL AND upper_inf(r_rel.rel_time_range) THEN
+-- No supplied last mark and the sequence currently belongs to its group, so get the current sequence characteritics.
+      SELECT *
+        INTO trg_seq_rec
+        FROM emaj._get_current_sequence_state(r_rel.rel_schema, r_rel.rel_tblseq, NULL);
+    ELSE
+-- A last mark is supplied, or the sequence does not belong to its group anymore, so get the sequence characteristics
+-- from the emaj_sequence table.
+      v_endTimeId = CASE WHEN upper_inf(r_rel.rel_time_range) OR p_lastMarkTimeId < upper(r_rel.rel_time_range)
+                           THEN p_lastMarkTimeId
+                         ELSE upper(r_rel.rel_time_range) END;
+      SELECT *
+        INTO trg_seq_rec
+        FROM emaj.emaj_sequence
+        WHERE sequ_schema = r_rel.rel_schema
+          AND sequ_name = r_rel.rel_tblseq
+          AND sequ_time_id = v_endTimeId;
+    END IF;
+-- Build the ALTER SEQUENCE clause.
+    SELECT emaj._build_alter_seq(ref_seq_rec, trg_seq_rec) INTO v_rqSeq;
+-- Insert into the temp table and return 1 if at least 1 characteristic needs to be changed.
+    IF v_rqSeq <> '' THEN
+      v_rqSeq = 'ALTER SEQUENCE ' || quote_ident(r_rel.rel_schema) || '.' || quote_ident(r_rel.rel_tblseq) || ' ' || v_rqSeq || ';';
+      EXECUTE 'INSERT INTO emaj_temp_script '
+              '  SELECT NULL, -1 * $1, txid_current(), $2'
+        USING p_nbSeq + 1, v_rqSeq;
+      RETURN 1;
+    END IF;
+-- Otherwise return 0.
+    RETURN 0;
+  END;
+$_gen_sql_seq$;
 
 CREATE OR REPLACE FUNCTION emaj.emaj_rollback_group(p_groupName TEXT, p_mark TEXT, p_isAlterGroupAllowed BOOLEAN DEFAULT FALSE,
                                                     p_comment TEXT DEFAULT NULL, OUT rlbk_severity TEXT, OUT rlbk_message TEXT)
