@@ -102,7 +102,7 @@ select mark_group, regexp_replace(mark_name,E'\\d\\d\.\\d\\d\\.\\d\\d\\.\\d\\d\\
  myGroup2   | STOP_%                       |        14000 | t               | f                      |                      |                         0 | 
  myGroup1   | Stop after rollback          |        14007 | t               | f                      |                      |                         0 | 
  myGroup2   | Stop after rollback          |        14007 | t               | f                      |                      |                         0 | 
- myGroup1   | Multi-1                      |        14008 | f               | f                      |                      |                         0 | 
+ myGroup1   | Multi-1                      |        14008 | f               | f                      |                      |                           | 
  myGroup2   | Multi-1                      |        14008 | f               | f                      |                      |                        92 | 
  myGroup2   | RLBK_Multi-1_%_START         |        20001 | f               | f                      |                      |                        32 | 
  myGroup2   | RLBK_Multi-1_%_DONE          |        20002 | f               | f                      |                      |                        30 | Multi-1
@@ -480,7 +480,7 @@ select mark_group, regexp_replace(mark_name,E'\\d\\d\.\\d\\d\\.\\d\\d\\.\\d\\d\\
  myGroup2   | STOP_%                       |        14000 | t               | f                      |                      |                         0 | 
  myGroup1   | Stop after rollback          |        14007 | t               | f                      |                      |                         0 | 
  myGroup2   | Stop after rollback          |        14007 | t               | f                      |                      |                         0 | 
- myGroup1   | Multi-1                      |        14008 | f               | f                      |                      |                         0 | 
+ myGroup1   | Multi-1                      |        14008 | f               | f                      |                      |                           | 
  myGroup2   | Multi-1                      |        14008 | f               | f                      |                      |                           | 
 (10 rows)
 

@@ -178,6 +178,19 @@ SELECT CASE WHEN EXISTS (SELECT 1 FROM emaj.emaj_rlbk)
 DROP TABLE emaj_rlbk_old;
 
 --
+-- process the emaj_mark table
+--
+-- Reset the mark_log_rows_before_next column of the last mark to NULL for each group.
+UPDATE emaj.emaj_mark m
+  SET mark_log_rows_before_next = NULL
+  WHERE (mark_group, mark_time_id) IN 
+    (SELECT mark_group, max(mark_time_id)
+       FROM emaj.emaj_mark
+       WHERE NOT mark_is_deleted
+       GROUP BY mark_group
+    );
+
+--
 -- Add created or recreated tables and sequences to the list of content to save by pg_dump.
 --
 SELECT pg_catalog.pg_extension_config_dump('emaj_rlbk','');
@@ -674,6 +687,111 @@ $_gen_sql_seq$
     RETURN 0;
   END;
 $_gen_sql_seq$;
+
+CREATE OR REPLACE FUNCTION emaj._set_mark_groups(p_groupNames TEXT[], p_mark TEXT, p_multiGroup BOOLEAN, p_eventToRecord BOOLEAN,
+                                                 p_loggedRlbkTargetMark TEXT DEFAULT NULL, p_timeId BIGINT DEFAULT NULL,
+                                                 p_dblinkSchema TEXT DEFAULT NULL)
+RETURNS INT LANGUAGE plpgsql AS
+$_set_mark_groups$
+-- This function effectively inserts a mark in the emaj_mark table and takes an image of the sequences definitions for the array of groups.
+-- It also updates the previous mark of each group to setup the mark_log_rows_before_next column with the number of rows recorded into all
+-- log tables between this previous mark and the new mark.
+-- It is called by emaj_set_mark_group and emaj_set_mark_groups functions but also by other functions that set internal marks, like
+-- functions that start or rollback groups.
+-- Input: group names array, mark to set,
+--        boolean indicating whether the function is called by a multi group function
+--        boolean indicating whether the event has to be recorded into the emaj_hist table
+--        name of the rollback target mark when this mark is created by the logged_rollback functions (NULL by default)
+--        time stamp identifier to reuse (NULL by default) (this parameter is set when the mark is a rollback start mark)
+--        dblink schema when the mark is set by a rollback operation and dblink connection are used (NULL by default)
+-- Output: number of processed tables and sequences
+-- The insertion of the corresponding event in the emaj_hist table is performed by callers.
+  DECLARE
+    v_nbTbl                  INT;
+    v_nbSeq                  INT;
+    v_stmt                   TEXT;
+  BEGIN
+-- If requested by the calling function, record the set mark begin in emaj_hist.
+    IF p_eventToRecord THEN
+      INSERT INTO emaj.emaj_hist (hist_function, hist_event, hist_object, hist_wording)
+        VALUES (CASE WHEN p_multiGroup THEN 'SET_MARK_GROUPS'
+                     ELSE 'SET_MARK_GROUP' END, 'BEGIN', array_to_string(p_groupNames,','), p_mark);
+    END IF;
+-- Get the time stamp of the operation, if not supplied as input parameter.
+    IF p_timeId IS NULL THEN
+      SELECT emaj._set_time_stamp('M') INTO p_timeId;
+    END IF;
+-- Record sequences state as early as possible (no lock protects them from other transactions activity).
+-- The join on pg_namespace and pg_class filters the potentially dropped application sequences.
+    WITH seq AS                          -- selected sequences
+      (SELECT rel_schema, rel_tblseq
+         FROM emaj.emaj_relation
+              JOIN pg_catalog.pg_class ON (relname = rel_tblseq)
+              JOIN pg_catalog.pg_namespace ON (pg_namespace.oid = relnamespace AND nspname = rel_schema)
+         WHERE upper_inf(rel_time_range)
+           AND rel_kind = 'S'
+           AND rel_group = ANY (p_groupNames)
+      )
+    INSERT INTO emaj.emaj_sequence (sequ_schema, sequ_name, sequ_time_id, sequ_last_val, sequ_start_val,
+                sequ_increment, sequ_max_val, sequ_min_val, sequ_cache_val, sequ_is_cycled, sequ_is_called)
+      SELECT t.*
+        FROM seq,
+             LATERAL emaj._get_current_sequence_state(rel_schema, rel_tblseq, p_timeId) AS t;
+    GET DIAGNOSTICS v_nbSeq = ROW_COUNT;
+-- Record the number of log rows for the old last mark of each selected group.
+-- The statement updates no row in case of emaj_start_group(s)
+    WITH stat_group1 AS                        -- for each group, get the time id of the last active mark
+      (SELECT mark_group, max(mark_time_id) AS last_mark_time_id
+         FROM emaj.emaj_mark
+         WHERE NOT mark_is_deleted
+           AND mark_group = ANY(p_groupNames)
+         GROUP BY mark_group
+      ),
+         stat_group2 AS                        -- compute the number of logged changes for all tables currently belonging to these groups
+      (SELECT mark_group, last_mark_time_id, coalesce(
+                (SELECT sum(emaj._log_stat_tbl(emaj_relation, greatest(last_mark_time_id, lower(rel_time_range)),NULL))
+                   FROM emaj.emaj_relation
+                   WHERE rel_group = mark_group
+                     AND rel_kind = 'r'
+                     AND upper_inf(rel_time_range)
+                ), 0) AS mark_stat
+        FROM stat_group1
+      )
+    UPDATE emaj.emaj_mark m
+      SET mark_log_rows_before_next = mark_stat
+      FROM stat_group2 s
+      WHERE s.mark_group = m.mark_group
+        AND s.last_mark_time_id = m.mark_time_id;
+-- For tables currently belonging to the groups, record their state and their log sequence last_value.
+    INSERT INTO emaj.emaj_table (tbl_schema, tbl_name, tbl_time_id, tbl_tuples, tbl_pages, tbl_log_seq_last_val)
+      SELECT rel_schema, rel_tblseq, p_timeId, reltuples, relpages, last_value
+        FROM emaj.emaj_relation
+             LEFT OUTER JOIN pg_catalog.pg_namespace ON (nspname = rel_schema)
+             LEFT OUTER JOIN pg_catalog.pg_class ON (relname = rel_tblseq AND relnamespace = pg_namespace.oid),
+             LATERAL emaj._get_log_sequence_last_value(rel_log_schema, rel_log_sequence) AS last_value
+        WHERE upper_inf(rel_time_range)
+          AND rel_group = ANY (p_groupNames)
+          AND rel_kind = 'r';
+    GET DIAGNOSTICS v_nbTbl = ROW_COUNT;
+-- Record the mark for each group into the emaj_mark table.
+    INSERT INTO emaj.emaj_mark (mark_group, mark_name, mark_time_id, mark_is_deleted, mark_is_rlbk_protected, mark_logged_rlbk_target_mark)
+      SELECT group_name, p_mark, p_timeId, FALSE, FALSE, p_loggedRlbkTargetMark
+        FROM emaj.emaj_group
+        WHERE group_name = ANY(p_groupNames)
+        ORDER BY group_name;
+-- Before exiting, cleanup the state of the pending rollback events from the emaj_rlbk table.
+-- It uses a dblink connection when the mark to set comes from a rollback operation that uses dblink connections.
+    v_stmt = 'SELECT emaj._cleanup_rollback_state()';
+    PERFORM emaj._dblink_sql_exec('rlbk#1', v_stmt, p_dblinkSchema);
+-- If requested by the calling function, record the set mark end into emaj_hist.
+    IF p_eventToRecord THEN
+      INSERT INTO emaj.emaj_hist (hist_function, hist_event, hist_object, hist_wording)
+        VALUES (CASE WHEN p_multiGroup THEN 'SET_MARK_GROUPS' ELSE 'SET_MARK_GROUP' END, 'END', array_to_string(p_groupNames,','), p_mark);
+    END IF;
+--
+    RETURN v_nbSeq + v_nbTbl;
+  END;
+$_set_mark_groups$;
 
 CREATE OR REPLACE FUNCTION emaj.emaj_rollback_group(p_groupName TEXT, p_mark TEXT, p_isAlterGroupAllowed BOOLEAN DEFAULT FALSE,
                                                     p_comment TEXT DEFAULT NULL, OUT rlbk_severity TEXT, OUT rlbk_message TEXT)

@@ -475,7 +475,7 @@ select mark_group, regexp_replace(mark_name,E'\\d\\d\.\\d\\d\\.\\d\\d\\.\\d\\d\\
  mark_group | regexp_replace | mark_time_id | mark_is_deleted | mark_is_rlbk_protected | mark_is_rlbk_protected |  mark_comment  | mark_log_rows_before_next | mark_logged_rlbk_target_mark 
 ------------+----------------+--------------+-----------------+------------------------+------------------------+----------------+---------------------------+------------------------------
  myGroup1   | M1             |        12015 | f               | f                      | f                      |                |                        29 | 
- myGroup2   | M1             |        12016 | f               | f                      | f                      |                |                         0 | 
+ myGroup2   | M1             |        12016 | f               | f                      | f                      |                |                           | 
  myGroup1   | M2             |        12100 | f               | f                      | f                      |                |                        11 | 
  myGroup1   | M3             |        12101 | f               | f                      | f                      | Third mark set |                           | 
 (4 rows)
@@ -790,7 +790,7 @@ select mark_group, regexp_replace(mark_name,E'\\d\\d\.\\d\\d\\.\\d\\d\\.\\d\\d\\
  myGroup1   | M1             |        12015 | f               | f                      |                |                        29 | 
  myGroup2   | M1             |        12016 | f               | f                      |                |                        41 | 
  myGroup1   | M2             |        12100 | f               | f                      |                |                        11 | 
- myGroup1   | M3             |        12101 | f               | f                      | Third mark set |                         0 | 
+ myGroup1   | M3             |        12101 | f               | f                      | Third mark set |                           | 
  myGroup2   | M2             |        12200 | f               | f                      |                |                         8 | 
  myGroup2   | M3             |        12201 | f               | f                      |                |                           | 
 (6 rows)
@@ -1071,7 +1071,7 @@ select mark_group, regexp_replace(mark_name,E'\\d\\d\.\\d\\d\\.\\d\\d\\.\\d\\d\\
  myGroup1   | M1              |        12015 | f               | f                      |                |                        29 | 
  myGroup2   | M1              |        12016 | f               | f                      |                |                        41 | 
  myGroup1   | M2              |        12100 | f               | f                      |                |                        11 | 
- myGroup1   | M3              |        12101 | f               | f                      | Third mark set |                         0 | 
+ myGroup1   | M3              |        12101 | f               | f                      | Third mark set |                           | 
  myGroup2   | M2              |        12200 | f               | f                      |                |                         8 | 
  myGroup2   | M3              |        12201 | f               | f                      |                |                         0 | 
  myGroup2   | RLBK_M2_%_START |        12300 | f               | f                      |                |                         6 | 
@@ -1451,7 +1451,7 @@ select mark_group, regexp_replace(mark_name,E'\\d\\d\.\\d\\d\\.\\d\\d\\.\\d\\d\\
  myGroup2   | RLBK_M2_%_START |        12300 | f               | f                      |              |                         6 | 
  myGroup2   | RLBK_M2_%_DONE  |        12301 | f               | f                      |              |                         0 | M2
  myGroup2   | RLBK_M3_%_START |        12302 | f               | f                      |              |                         6 | 
- myGroup2   | RLBK_M3_%_DONE  |        12303 | f               | f                      |              |                         0 | M3
+ myGroup2   | RLBK_M3_%_DONE  |        12303 | f               | f                      |              |                           | M3
  myGroup1   | M4              |        12401 | f               | f                      |              |                        10 | 
  myGroup1   | M5              |        12402 | f               | f                      |              |                         0 | 
  myGroup1   | M6              |        12403 | f               | f                      |              |                           | 
@@ -1800,7 +1800,7 @@ select mark_group, regexp_replace(mark_name,E'\\d\\d\.\\d\\d\\.\\d\\d\\.\\d\\d\\
  myGroup2   | M3             |        12201 | f               | f                      |              |                           | 
  myGroup1   | M4             |        12401 | f               | f                      |              |                        10 | 
  myGroup1   | M5             |        12402 | f               | f                      |              |                         0 | 
- myGroup1   | M6             |        12403 | f               | f                      |              |                         0 | 
+ myGroup1   | M6             |        12403 | f               | f                      |              |                           | 
 (8 rows)
 
 select sequ_schema, sequ_name, sequ_time_id, sequ_last_val, sequ_is_called from emaj.emaj_sequence order by sequ_time_id, sequ_schema, sequ_name;
@@ -2159,7 +2159,7 @@ select mark_group, regexp_replace(mark_name,E'\\d\\d\.\\d\\d\\.\\d\\d\\.\\d\\d\\
  myGroup2   | M1              |        12016 | f               | f                      |              |                        41 | 
  myGroup1   | M2              |        12100 | f               | f                      |              |                        14 | 
  myGroup2   | M2              |        12200 | f               | f                      |              |                         8 | 
- myGroup2   | M3              |        12201 | f               | f                      |              |                         0 | 
+ myGroup2   | M3              |        12201 | f               | f                      |              |                           | 
  myGroup1   | M4              |        12401 | f               | f                      |              |                        10 | 
  myGroup1   | M5              |        12402 | f               | f                      |              |                         3 | 
  myGroup1   | RLBK_M4_%_START |        12601 | f               | f                      |              |                        23 | 
@@ -2558,7 +2558,7 @@ select mark_group, regexp_replace(mark_name,E'\\d\\d\.\\d\\d\\.\\d\\d\\.\\d\\d\\
 ------------+------------------------------+--------------+-----------------+------------------------+--------------+---------------------------+------------------------------
  myGroup2   | M1                           |        12016 | f               | f                      |              |                        41 | 
  myGroup2   | M2                           |        12200 | f               | f                      |              |                         8 | 
- myGroup2   | M3                           |        12201 | f               | f                      |              |                         0 | 
+ myGroup2   | M3                           |        12201 | f               | f                      |              |                           | 
  myGroup1   | M4                           |        12401 | f               | f                      |              |                        10 | 
  myGroup1   | M5                           |        12402 | f               | f                      |              |                         3 | 
  myGroup1   | Before logged rollback to M4 |        12601 | f               | f                      |              |                           | 

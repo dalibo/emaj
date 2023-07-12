@@ -13,6 +13,9 @@ select group_name, group_is_rollbackable, group_creation_time_id,
   from emaj.emaj_group order by group_name;
 select * from emaj.emaj_relation_change order by 1,2,3,4;
 
+select mark_group, regexp_replace(mark_name,E'\\d\\d\.\\d\\d\\.\\d\\d\\.\\d\\d\\d\\d','%','g'), mark_time_id, 
+       mark_is_deleted, mark_is_rlbk_protected, mark_comment, mark_log_rows_before_next, mark_logged_rlbk_target_mark 
+  from emaj.emaj_mark order by mark_time_id, mark_group;
 
 -----------------------------
 -- Step 2 : for both groups, rollback to the common mark just set before the upgrade, after having unprotected the first group

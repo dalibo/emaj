@@ -7136,15 +7136,16 @@ $_set_mark_groups$
         FROM seq,
              LATERAL emaj._get_current_sequence_state(rel_schema, rel_tblseq, p_timeId) AS t;
     GET DIAGNOSTICS v_nbSeq = ROW_COUNT;
--- Record the number of log rows for the old last mark of each group.
+-- Record the number of log rows for the old last mark of each selected group.
 -- The statement updates no row in case of emaj_start_group(s)
-    WITH stat_group1 AS                               -- for each group, time id of the last active mark
+    WITH stat_group1 AS                        -- for each group, get the time id of the last active mark
       (SELECT mark_group, max(mark_time_id) AS last_mark_time_id
          FROM emaj.emaj_mark
          WHERE NOT mark_is_deleted
+           AND mark_group = ANY(p_groupNames)
          GROUP BY mark_group
       ),
-         stat_group2 AS                               -- compute the number of log rows for all tables currently belonging to these groups
+         stat_group2 AS                        -- compute the number of logged changes for all tables currently belonging to these groups
       (SELECT mark_group, last_mark_time_id, coalesce(
                 (SELECT sum(emaj._log_stat_tbl(emaj_relation, greatest(last_mark_time_id, lower(rel_time_range)),NULL))
                    FROM emaj.emaj_relation
