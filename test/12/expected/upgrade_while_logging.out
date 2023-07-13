@@ -53,6 +53,15 @@ select relname from pg_catalog.pg_class,
 -- process the extension upgrade
 ALTER EXTENSION emaj UPDATE TO 'devel';
 WARNING:  E-Maj upgrade: the E-Maj environment health check reports warning. You may execute "SELECT * FROM emaj.emaj_verify_all();" to get more details.
+NOTICE:  drop cascades to 8 other objects
+DETAIL:  drop cascades to function _drop_tbl(emaj_relation,bigint)
+drop cascades to function _drop_seq(emaj_relation,bigint)
+drop cascades to function _rlbk_tbl(emaj_relation,bigint,bigint,integer,boolean,boolean)
+drop cascades to function _delete_log_tbl(emaj_relation,bigint,bigint,bigint)
+drop cascades to function _rlbk_seq(emaj_relation,bigint)
+drop cascades to function _log_stat_tbl(emaj_relation,bigint,bigint)
+drop cascades to function _gen_sql_tbl(emaj_relation,bigint,bigint)
+drop cascades to function _gen_sql_seq(emaj_relation,bigint,bigint,bigint)
 NOTICE:  drop cascades to 3 other objects
 DETAIL:  drop cascades to constraint emaj_rlbk_session_rlbs_rlbk_id_fkey on table emaj_rlbk_session
 drop cascades to constraint emaj_rlbk_plan_rlbp_rlbk_id_fkey on table emaj_rlbk_plan
@@ -359,32 +368,31 @@ gist, for table "emaj.emaj_rel_hist"
 Tablespace: "tspemaj"
 
                        Table "emaj.emaj_relation"
-           Column           |   Type    | Collation | Nullable | Default 
-----------------------------+-----------+-----------+----------+---------
- rel_schema                 | text      |           | not null | 
- rel_tblseq                 | text      |           | not null | 
- rel_time_range             | int8range |           | not null | 
- rel_group                  | text      |           | not null | 
- rel_kind                   | text      |           |          | 
- rel_priority               | integer   |           |          | 
- rel_log_schema             | text      |           |          | 
- rel_log_table              | text      |           |          | 
- rel_log_dat_tsp            | text      |           |          | 
- rel_log_index              | text      |           |          | 
- rel_log_idx_tsp            | text      |           |          | 
- rel_log_sequence           | text      |           |          | 
- rel_log_function           | text      |           |          | 
- rel_ignored_triggers       | text[]    |           |          | 
- rel_emaj_verb_attnum       | smallint  |           |          | 
- rel_has_always_ident_col   | boolean   |           |          | 
- rel_sql_rlbk_columns       | text      |           |          | 
- rel_sql_rlbk_pk_columns    | text      |           |          | 
- rel_sql_rlbk_pk_conditions | text      |           |          | 
- rel_sql_gen_ins_col        | text      |           |          | 
- rel_sql_gen_ins_val        | text      |           |          | 
- rel_sql_gen_upd_set        | text      |           |          | 
- rel_sql_gen_pk_conditions  | text      |           |          | 
- rel_log_seq_last_value     | bigint    |           |          | 
+          Column           |   Type    | Collation | Nullable | Default 
+---------------------------+-----------+-----------+----------+---------
+ rel_schema                | text      |           | not null | 
+ rel_tblseq                | text      |           | not null | 
+ rel_time_range            | int8range |           | not null | 
+ rel_group                 | text      |           | not null | 
+ rel_kind                  | text      |           |          | 
+ rel_priority              | integer   |           |          | 
+ rel_log_schema            | text      |           |          | 
+ rel_log_table             | text      |           |          | 
+ rel_log_dat_tsp           | text      |           |          | 
+ rel_log_index             | text      |           |          | 
+ rel_log_idx_tsp           | text      |           |          | 
+ rel_log_sequence          | text      |           |          | 
+ rel_log_function          | text      |           |          | 
+ rel_ignored_triggers      | text[]    |           |          | 
+ rel_pk_cols               | text[]    |           |          | 
+ rel_emaj_verb_attnum      | smallint  |           |          | 
+ rel_has_always_ident_col  | boolean   |           |          | 
+ rel_sql_rlbk_columns      | text      |           |          | 
+ rel_sql_gen_ins_col       | text      |           |          | 
+ rel_sql_gen_ins_val       | text      |           |          | 
+ rel_sql_gen_upd_set       | text      |           |          | 
+ rel_sql_gen_pk_conditions | text      |           |          | 
+ rel_log_seq_last_value    | bigint    |           |          | 
 Indexes:
     "emaj_relation_pkey" PRIMARY KEY, btree (rel_schema, rel_tblseq, rel_time_range), tablespace "tspemaj"
     "emaj_relation_idx1" btree (rel_group, rel_kind), tablespace "tspemaj"

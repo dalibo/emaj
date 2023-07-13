@@ -482,6 +482,15 @@ select relname from pg_catalog.pg_class,
 
 -- process the extension upgrade
 ALTER EXTENSION emaj UPDATE TO 'devel';
+NOTICE:  drop cascades to 8 other objects
+DETAIL:  drop cascades to function _drop_tbl(emaj_relation,bigint)
+drop cascades to function _drop_seq(emaj_relation,bigint)
+drop cascades to function _rlbk_tbl(emaj_relation,bigint,bigint,integer,boolean,boolean)
+drop cascades to function _delete_log_tbl(emaj_relation,bigint,bigint,bigint)
+drop cascades to function _rlbk_seq(emaj_relation,bigint)
+drop cascades to function _log_stat_tbl(emaj_relation,bigint,bigint)
+drop cascades to function _gen_sql_tbl(emaj_relation,bigint,bigint)
+drop cascades to function _gen_sql_seq(emaj_relation,bigint,bigint,bigint)
 NOTICE:  drop cascades to 3 other objects
 DETAIL:  drop cascades to constraint emaj_rlbk_session_rlbs_rlbk_id_fkey on table emaj_rlbk_session
 drop cascades to constraint emaj_rlbk_plan_rlbp_rlbk_id_fkey on table emaj_rlbk_plan
