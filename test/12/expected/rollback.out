@@ -34,14 +34,14 @@ select emaj.emaj_disable_protection_by_event_triggers();
 -- group or groups is NULL
 select * from emaj.emaj_rollback_group(NULL,NULL);
 ERROR:  _check_group_names: No group to process.
-CONTEXT:  PL/pgSQL function emaj._check_group_names(text[],boolean,boolean,text) line 30 at RAISE
-SQL statement "SELECT emaj._check_group_names(p_groupNames := p_groupNames, p_mayBeNull := p_multiGroup, p_lockGroups := FALSE, p_checkList := '')"
+CONTEXT:  PL/pgSQL function emaj._check_group_names(text[],boolean,boolean,boolean,boolean,boolean,boolean) line 30 at RAISE
+SQL statement "SELECT emaj._check_group_names(p_groupNames := p_groupNames, p_mayBeNull := p_multiGroup, p_lockGroups := FALSE)"
 PL/pgSQL function emaj._rlbk_groups(text[],text,boolean,boolean,boolean,text) line 17 at SQL statement
 PL/pgSQL function emaj.emaj_rollback_group(text,text,boolean,text) line 8 at RETURN QUERY
 select * from emaj.emaj_logged_rollback_group(NULL,NULL);
 ERROR:  _check_group_names: No group to process.
-CONTEXT:  PL/pgSQL function emaj._check_group_names(text[],boolean,boolean,text) line 30 at RAISE
-SQL statement "SELECT emaj._check_group_names(p_groupNames := p_groupNames, p_mayBeNull := p_multiGroup, p_lockGroups := FALSE, p_checkList := '')"
+CONTEXT:  PL/pgSQL function emaj._check_group_names(text[],boolean,boolean,boolean,boolean,boolean,boolean) line 30 at RAISE
+SQL statement "SELECT emaj._check_group_names(p_groupNames := p_groupNames, p_mayBeNull := p_multiGroup, p_lockGroups := FALSE)"
 PL/pgSQL function emaj._rlbk_groups(text[],text,boolean,boolean,boolean,text) line 17 at SQL statement
 PL/pgSQL function emaj.emaj_logged_rollback_group(text,text,boolean,text) line 12 at RETURN QUERY
 select * from emaj.emaj_rollback_groups(NULL,NULL);
@@ -61,26 +61,26 @@ WARNING:  _check_group_names: No group to process.
 -- group is unknown
 select * from emaj.emaj_rollback_group('unknownGroup',NULL);
 ERROR:  _check_group_names: The group "unknownGroup" does not exist.
-CONTEXT:  PL/pgSQL function emaj._check_group_names(text[],boolean,boolean,text) line 42 at RAISE
-SQL statement "SELECT emaj._check_group_names(p_groupNames := p_groupNames, p_mayBeNull := p_multiGroup, p_lockGroups := FALSE, p_checkList := '')"
+CONTEXT:  PL/pgSQL function emaj._check_group_names(text[],boolean,boolean,boolean,boolean,boolean,boolean) line 42 at RAISE
+SQL statement "SELECT emaj._check_group_names(p_groupNames := p_groupNames, p_mayBeNull := p_multiGroup, p_lockGroups := FALSE)"
 PL/pgSQL function emaj._rlbk_groups(text[],text,boolean,boolean,boolean,text) line 17 at SQL statement
 PL/pgSQL function emaj.emaj_rollback_group(text,text,boolean,text) line 8 at RETURN QUERY
 select * from emaj.emaj_logged_rollback_group('unknownGroup',NULL);
 ERROR:  _check_group_names: The group "unknownGroup" does not exist.
-CONTEXT:  PL/pgSQL function emaj._check_group_names(text[],boolean,boolean,text) line 42 at RAISE
-SQL statement "SELECT emaj._check_group_names(p_groupNames := p_groupNames, p_mayBeNull := p_multiGroup, p_lockGroups := FALSE, p_checkList := '')"
+CONTEXT:  PL/pgSQL function emaj._check_group_names(text[],boolean,boolean,boolean,boolean,boolean,boolean) line 42 at RAISE
+SQL statement "SELECT emaj._check_group_names(p_groupNames := p_groupNames, p_mayBeNull := p_multiGroup, p_lockGroups := FALSE)"
 PL/pgSQL function emaj._rlbk_groups(text[],text,boolean,boolean,boolean,text) line 17 at SQL statement
 PL/pgSQL function emaj.emaj_logged_rollback_group(text,text,boolean,text) line 12 at RETURN QUERY
 select * from emaj.emaj_rollback_groups('{"unknownGroup"}',NULL);
 ERROR:  _check_group_names: The group "unknownGroup" does not exist.
-CONTEXT:  PL/pgSQL function emaj._check_group_names(text[],boolean,boolean,text) line 42 at RAISE
-SQL statement "SELECT emaj._check_group_names(p_groupNames := p_groupNames, p_mayBeNull := p_multiGroup, p_lockGroups := FALSE, p_checkList := '')"
+CONTEXT:  PL/pgSQL function emaj._check_group_names(text[],boolean,boolean,boolean,boolean,boolean,boolean) line 42 at RAISE
+SQL statement "SELECT emaj._check_group_names(p_groupNames := p_groupNames, p_mayBeNull := p_multiGroup, p_lockGroups := FALSE)"
 PL/pgSQL function emaj._rlbk_groups(text[],text,boolean,boolean,boolean,text) line 17 at SQL statement
 PL/pgSQL function emaj.emaj_rollback_groups(text[],text,boolean,text) line 8 at RETURN QUERY
 select * from emaj.emaj_logged_rollback_groups('{"unknownGroup","myGroup1"}',NULL);
 ERROR:  _check_group_names: The group "unknownGroup" does not exist.
-CONTEXT:  PL/pgSQL function emaj._check_group_names(text[],boolean,boolean,text) line 42 at RAISE
-SQL statement "SELECT emaj._check_group_names(p_groupNames := p_groupNames, p_mayBeNull := p_multiGroup, p_lockGroups := FALSE, p_checkList := '')"
+CONTEXT:  PL/pgSQL function emaj._check_group_names(text[],boolean,boolean,boolean,boolean,boolean,boolean) line 42 at RAISE
+SQL statement "SELECT emaj._check_group_names(p_groupNames := p_groupNames, p_mayBeNull := p_multiGroup, p_lockGroups := FALSE)"
 PL/pgSQL function emaj._rlbk_groups(text[],text,boolean,boolean,boolean,text) line 17 at SQL statement
 PL/pgSQL function emaj.emaj_logged_rollback_groups(text[],text,boolean,text) line 12 at RETURN QUERY
 begin;
@@ -92,17 +92,17 @@ begin;
 
   select * from emaj.emaj_rollback_groups('{"myGroup1","unknownGroup"}','EMAJ_LAST_MARK');
 ERROR:  _check_group_names: The group "unknownGroup" does not exist.
-CONTEXT:  PL/pgSQL function emaj._check_group_names(text[],boolean,boolean,text) line 42 at RAISE
-SQL statement "SELECT emaj._check_group_names(p_groupNames := p_groupNames, p_mayBeNull := p_multiGroup, p_lockGroups := FALSE, p_checkList := '')"
+CONTEXT:  PL/pgSQL function emaj._check_group_names(text[],boolean,boolean,boolean,boolean,boolean,boolean) line 42 at RAISE
+SQL statement "SELECT emaj._check_group_names(p_groupNames := p_groupNames, p_mayBeNull := p_multiGroup, p_lockGroups := FALSE)"
 PL/pgSQL function emaj._rlbk_groups(text[],text,boolean,boolean,boolean,text) line 17 at SQL statement
 PL/pgSQL function emaj.emaj_rollback_groups(text[],text,boolean,text) line 8 at RETURN QUERY
 rollback;
 -- group not in logging state
 select * from emaj.emaj_rollback_group('myGroup1','EMAJ_LAST_MARK');
 ERROR:  _check_group_names: The group "myGroup1" is not in LOGGING state.
-CONTEXT:  PL/pgSQL function emaj._check_group_names(text[],boolean,boolean,text) line 87 at RAISE
+CONTEXT:  PL/pgSQL function emaj._check_group_names(text[],boolean,boolean,boolean,boolean,boolean,boolean) line 87 at RAISE
 SQL statement "SELECT emaj._check_group_names(p_groupNames := p_groupNames, p_mayBeNull := FALSE, p_lockGroups := TRUE,
-                                     p_checkList := 'LOGGING,ROLLBACKABLE,UNPROTECTED')"
+                                     p_checkLogging := TRUE, p_checkRollbackable := TRUE, p_checkUnprotected := TRUE)"
 PL/pgSQL function emaj._rlbk_check(text[],text,boolean,boolean) line 16 at SQL statement
 SQL statement "SELECT emaj._rlbk_check(p_groupNames, p_mark, p_isAlterGroupAllowed, FALSE)"
 PL/pgSQL function emaj._rlbk_init(text[],text,boolean,integer,boolean,boolean,text) line 25 at SQL statement
@@ -111,9 +111,9 @@ PL/pgSQL function emaj._rlbk_groups(text[],text,boolean,boolean,boolean,text) li
 PL/pgSQL function emaj.emaj_rollback_group(text,text,boolean,text) line 8 at RETURN QUERY
 select * from emaj.emaj_rollback_group('myGroup2','EMAJ_LAST_MARK');
 ERROR:  _check_group_names: The group "myGroup2" is not in LOGGING state.
-CONTEXT:  PL/pgSQL function emaj._check_group_names(text[],boolean,boolean,text) line 87 at RAISE
+CONTEXT:  PL/pgSQL function emaj._check_group_names(text[],boolean,boolean,boolean,boolean,boolean,boolean) line 87 at RAISE
 SQL statement "SELECT emaj._check_group_names(p_groupNames := p_groupNames, p_mayBeNull := FALSE, p_lockGroups := TRUE,
-                                     p_checkList := 'LOGGING,ROLLBACKABLE,UNPROTECTED')"
+                                     p_checkLogging := TRUE, p_checkRollbackable := TRUE, p_checkUnprotected := TRUE)"
 PL/pgSQL function emaj._rlbk_check(text[],text,boolean,boolean) line 16 at SQL statement
 SQL statement "SELECT emaj._rlbk_check(p_groupNames, p_mark, p_isAlterGroupAllowed, FALSE)"
 PL/pgSQL function emaj._rlbk_init(text[],text,boolean,integer,boolean,boolean,text) line 25 at SQL statement
@@ -122,9 +122,9 @@ PL/pgSQL function emaj._rlbk_groups(text[],text,boolean,boolean,boolean,text) li
 PL/pgSQL function emaj.emaj_rollback_group(text,text,boolean,text) line 8 at RETURN QUERY
 select * from emaj.emaj_logged_rollback_group('myGroup1','EMAJ_LAST_MARK');
 ERROR:  _check_group_names: The group "myGroup1" is not in LOGGING state.
-CONTEXT:  PL/pgSQL function emaj._check_group_names(text[],boolean,boolean,text) line 87 at RAISE
+CONTEXT:  PL/pgSQL function emaj._check_group_names(text[],boolean,boolean,boolean,boolean,boolean,boolean) line 87 at RAISE
 SQL statement "SELECT emaj._check_group_names(p_groupNames := p_groupNames, p_mayBeNull := FALSE, p_lockGroups := TRUE,
-                                     p_checkList := 'LOGGING,ROLLBACKABLE,UNPROTECTED')"
+                                     p_checkLogging := TRUE, p_checkRollbackable := TRUE, p_checkUnprotected := TRUE)"
 PL/pgSQL function emaj._rlbk_check(text[],text,boolean,boolean) line 16 at SQL statement
 SQL statement "SELECT emaj._rlbk_check(p_groupNames, p_mark, p_isAlterGroupAllowed, FALSE)"
 PL/pgSQL function emaj._rlbk_init(text[],text,boolean,integer,boolean,boolean,text) line 25 at SQL statement
@@ -133,9 +133,9 @@ PL/pgSQL function emaj._rlbk_groups(text[],text,boolean,boolean,boolean,text) li
 PL/pgSQL function emaj.emaj_logged_rollback_group(text,text,boolean,text) line 12 at RETURN QUERY
 select * from emaj.emaj_logged_rollback_group('myGroup2','EMAJ_LAST_MARK');
 ERROR:  _check_group_names: The group "myGroup2" is not in LOGGING state.
-CONTEXT:  PL/pgSQL function emaj._check_group_names(text[],boolean,boolean,text) line 87 at RAISE
+CONTEXT:  PL/pgSQL function emaj._check_group_names(text[],boolean,boolean,boolean,boolean,boolean,boolean) line 87 at RAISE
 SQL statement "SELECT emaj._check_group_names(p_groupNames := p_groupNames, p_mayBeNull := FALSE, p_lockGroups := TRUE,
-                                     p_checkList := 'LOGGING,ROLLBACKABLE,UNPROTECTED')"
+                                     p_checkLogging := TRUE, p_checkRollbackable := TRUE, p_checkUnprotected := TRUE)"
 PL/pgSQL function emaj._rlbk_check(text[],text,boolean,boolean) line 16 at SQL statement
 SQL statement "SELECT emaj._rlbk_check(p_groupNames, p_mark, p_isAlterGroupAllowed, FALSE)"
 PL/pgSQL function emaj._rlbk_init(text[],text,boolean,integer,boolean,boolean,text) line 25 at SQL statement
@@ -144,9 +144,9 @@ PL/pgSQL function emaj._rlbk_groups(text[],text,boolean,boolean,boolean,text) li
 PL/pgSQL function emaj.emaj_logged_rollback_group(text,text,boolean,text) line 12 at RETURN QUERY
 select * from emaj.emaj_rollback_groups('{"myGroup1","myGroup2"}',NULL);
 ERROR:  _check_group_names: The groups "myGroup1, myGroup2" are not in LOGGING state.
-CONTEXT:  PL/pgSQL function emaj._check_group_names(text[],boolean,boolean,text) line 90 at RAISE
+CONTEXT:  PL/pgSQL function emaj._check_group_names(text[],boolean,boolean,boolean,boolean,boolean,boolean) line 90 at RAISE
 SQL statement "SELECT emaj._check_group_names(p_groupNames := p_groupNames, p_mayBeNull := FALSE, p_lockGroups := TRUE,
-                                     p_checkList := 'LOGGING,ROLLBACKABLE,UNPROTECTED')"
+                                     p_checkLogging := TRUE, p_checkRollbackable := TRUE, p_checkUnprotected := TRUE)"
 PL/pgSQL function emaj._rlbk_check(text[],text,boolean,boolean) line 16 at SQL statement
 SQL statement "SELECT emaj._rlbk_check(p_groupNames, p_mark, p_isAlterGroupAllowed, FALSE)"
 PL/pgSQL function emaj._rlbk_init(text[],text,boolean,integer,boolean,boolean,text) line 25 at SQL statement
@@ -162,9 +162,9 @@ begin;
 
   select * from emaj.emaj_logged_rollback_groups('{"myGroup1","myGroup2"}','EMAJ_LAST_MARK');
 ERROR:  _check_group_names: The group "myGroup2" is not in LOGGING state.
-CONTEXT:  PL/pgSQL function emaj._check_group_names(text[],boolean,boolean,text) line 87 at RAISE
+CONTEXT:  PL/pgSQL function emaj._check_group_names(text[],boolean,boolean,boolean,boolean,boolean,boolean) line 87 at RAISE
 SQL statement "SELECT emaj._check_group_names(p_groupNames := p_groupNames, p_mayBeNull := FALSE, p_lockGroups := TRUE,
-                                     p_checkList := 'LOGGING,ROLLBACKABLE,UNPROTECTED')"
+                                     p_checkLogging := TRUE, p_checkRollbackable := TRUE, p_checkUnprotected := TRUE)"
 PL/pgSQL function emaj._rlbk_check(text[],text,boolean,boolean) line 16 at SQL statement
 SQL statement "SELECT emaj._rlbk_check(p_groupNames, p_mark, p_isAlterGroupAllowed, FALSE)"
 PL/pgSQL function emaj._rlbk_init(text[],text,boolean,integer,boolean,boolean,text) line 25 at SQL statement
@@ -267,9 +267,9 @@ select emaj.emaj_protect_group('myGroup2');
 
 select * from emaj.emaj_rollback_group('myGroup1','EMAJ_LAST_MARK');
 ERROR:  _check_group_names: The group "myGroup1" is currently protected against rollback operations.
-CONTEXT:  PL/pgSQL function emaj._check_group_names(text[],boolean,boolean,text) line 100 at RAISE
+CONTEXT:  PL/pgSQL function emaj._check_group_names(text[],boolean,boolean,boolean,boolean,boolean,boolean) line 100 at RAISE
 SQL statement "SELECT emaj._check_group_names(p_groupNames := p_groupNames, p_mayBeNull := FALSE, p_lockGroups := TRUE,
-                                     p_checkList := 'LOGGING,ROLLBACKABLE,UNPROTECTED')"
+                                     p_checkLogging := TRUE, p_checkRollbackable := TRUE, p_checkUnprotected := TRUE)"
 PL/pgSQL function emaj._rlbk_check(text[],text,boolean,boolean) line 16 at SQL statement
 SQL statement "SELECT emaj._rlbk_check(p_groupNames, p_mark, p_isAlterGroupAllowed, FALSE)"
 PL/pgSQL function emaj._rlbk_init(text[],text,boolean,integer,boolean,boolean,text) line 25 at SQL statement
@@ -278,9 +278,9 @@ PL/pgSQL function emaj._rlbk_groups(text[],text,boolean,boolean,boolean,text) li
 PL/pgSQL function emaj.emaj_rollback_group(text,text,boolean,text) line 8 at RETURN QUERY
 select * from emaj.emaj_logged_rollback_groups('{"myGroup2","myGroup1"}',NULL);
 ERROR:  _check_group_names: The groups "myGroup1, myGroup2" are currently protected against rollback operations.
-CONTEXT:  PL/pgSQL function emaj._check_group_names(text[],boolean,boolean,text) line 103 at RAISE
+CONTEXT:  PL/pgSQL function emaj._check_group_names(text[],boolean,boolean,boolean,boolean,boolean,boolean) line 103 at RAISE
 SQL statement "SELECT emaj._check_group_names(p_groupNames := p_groupNames, p_mayBeNull := FALSE, p_lockGroups := TRUE,
-                                     p_checkList := 'LOGGING,ROLLBACKABLE,UNPROTECTED')"
+                                     p_checkLogging := TRUE, p_checkRollbackable := TRUE, p_checkUnprotected := TRUE)"
 PL/pgSQL function emaj._rlbk_check(text[],text,boolean,boolean) line 16 at SQL statement
 SQL statement "SELECT emaj._rlbk_check(p_groupNames, p_mark, p_isAlterGroupAllowed, FALSE)"
 PL/pgSQL function emaj._rlbk_init(text[],text,boolean,integer,boolean,boolean,text) line 25 at SQL statement
@@ -310,8 +310,8 @@ select * from emaj.emaj_rollback_group('myGroup1','EMAJ_LAST_MARK');
 -- unknown mark name
 select * from emaj.emaj_rollback_group('myGroup1',NULL);
 ERROR:  _check_mark_name: The mark "<NULL>" does not exist for the group "myGroup1".
-CONTEXT:  PL/pgSQL function emaj._check_mark_name(text[],text,text) line 59 at RAISE
-SQL statement "SELECT emaj._check_mark_name(p_groupNames := p_groupNames, p_mark := p_mark, p_checkList := 'ACTIVE')"
+CONTEXT:  PL/pgSQL function emaj._check_mark_name(text[],text,boolean) line 59 at RAISE
+SQL statement "SELECT emaj._check_mark_name(p_groupNames := p_groupNames, p_mark := p_mark, p_checkActive := TRUE)"
 PL/pgSQL function emaj._rlbk_check(text[],text,boolean,boolean) line 21 at SQL statement
 SQL statement "SELECT emaj._rlbk_check(p_groupNames, p_mark, p_isAlterGroupAllowed, FALSE)"
 PL/pgSQL function emaj._rlbk_init(text[],text,boolean,integer,boolean,boolean,text) line 25 at SQL statement
@@ -320,8 +320,8 @@ PL/pgSQL function emaj._rlbk_groups(text[],text,boolean,boolean,boolean,text) li
 PL/pgSQL function emaj.emaj_rollback_group(text,text,boolean,text) line 8 at RETURN QUERY
 select * from emaj.emaj_rollback_group('myGroup1','DummyMark');
 ERROR:  _check_mark_name: The mark "DummyMark" does not exist for the group "myGroup1".
-CONTEXT:  PL/pgSQL function emaj._check_mark_name(text[],text,text) line 59 at RAISE
-SQL statement "SELECT emaj._check_mark_name(p_groupNames := p_groupNames, p_mark := p_mark, p_checkList := 'ACTIVE')"
+CONTEXT:  PL/pgSQL function emaj._check_mark_name(text[],text,boolean) line 59 at RAISE
+SQL statement "SELECT emaj._check_mark_name(p_groupNames := p_groupNames, p_mark := p_mark, p_checkActive := TRUE)"
 PL/pgSQL function emaj._rlbk_check(text[],text,boolean,boolean) line 21 at SQL statement
 SQL statement "SELECT emaj._rlbk_check(p_groupNames, p_mark, p_isAlterGroupAllowed, FALSE)"
 PL/pgSQL function emaj._rlbk_init(text[],text,boolean,integer,boolean,boolean,text) line 25 at SQL statement
@@ -330,8 +330,8 @@ PL/pgSQL function emaj._rlbk_groups(text[],text,boolean,boolean,boolean,text) li
 PL/pgSQL function emaj.emaj_rollback_group(text,text,boolean,text) line 8 at RETURN QUERY
 select * from emaj.emaj_logged_rollback_group('myGroup1',NULL);
 ERROR:  _check_mark_name: The mark "<NULL>" does not exist for the group "myGroup1".
-CONTEXT:  PL/pgSQL function emaj._check_mark_name(text[],text,text) line 59 at RAISE
-SQL statement "SELECT emaj._check_mark_name(p_groupNames := p_groupNames, p_mark := p_mark, p_checkList := 'ACTIVE')"
+CONTEXT:  PL/pgSQL function emaj._check_mark_name(text[],text,boolean) line 59 at RAISE
+SQL statement "SELECT emaj._check_mark_name(p_groupNames := p_groupNames, p_mark := p_mark, p_checkActive := TRUE)"
 PL/pgSQL function emaj._rlbk_check(text[],text,boolean,boolean) line 21 at SQL statement
 SQL statement "SELECT emaj._rlbk_check(p_groupNames, p_mark, p_isAlterGroupAllowed, FALSE)"
 PL/pgSQL function emaj._rlbk_init(text[],text,boolean,integer,boolean,boolean,text) line 25 at SQL statement
@@ -340,8 +340,8 @@ PL/pgSQL function emaj._rlbk_groups(text[],text,boolean,boolean,boolean,text) li
 PL/pgSQL function emaj.emaj_logged_rollback_group(text,text,boolean,text) line 12 at RETURN QUERY
 select * from emaj.emaj_logged_rollback_group('myGroup1','DummyMark');
 ERROR:  _check_mark_name: The mark "DummyMark" does not exist for the group "myGroup1".
-CONTEXT:  PL/pgSQL function emaj._check_mark_name(text[],text,text) line 59 at RAISE
-SQL statement "SELECT emaj._check_mark_name(p_groupNames := p_groupNames, p_mark := p_mark, p_checkList := 'ACTIVE')"
+CONTEXT:  PL/pgSQL function emaj._check_mark_name(text[],text,boolean) line 59 at RAISE
+SQL statement "SELECT emaj._check_mark_name(p_groupNames := p_groupNames, p_mark := p_mark, p_checkActive := TRUE)"
 PL/pgSQL function emaj._rlbk_check(text[],text,boolean,boolean) line 21 at SQL statement
 SQL statement "SELECT emaj._rlbk_check(p_groupNames, p_mark, p_isAlterGroupAllowed, FALSE)"
 PL/pgSQL function emaj._rlbk_init(text[],text,boolean,integer,boolean,boolean,text) line 25 at SQL statement
@@ -350,8 +350,8 @@ PL/pgSQL function emaj._rlbk_groups(text[],text,boolean,boolean,boolean,text) li
 PL/pgSQL function emaj.emaj_logged_rollback_group(text,text,boolean,text) line 12 at RETURN QUERY
 select * from emaj.emaj_rollback_groups('{"myGroup1","myGroup2",""}',NULL);
 ERROR:  _check_mark_name: The mark "<NULL>" does not exist for the groups "myGroup1, myGroup2".
-CONTEXT:  PL/pgSQL function emaj._check_mark_name(text[],text,text) line 61 at RAISE
-SQL statement "SELECT emaj._check_mark_name(p_groupNames := p_groupNames, p_mark := p_mark, p_checkList := 'ACTIVE')"
+CONTEXT:  PL/pgSQL function emaj._check_mark_name(text[],text,boolean) line 61 at RAISE
+SQL statement "SELECT emaj._check_mark_name(p_groupNames := p_groupNames, p_mark := p_mark, p_checkActive := TRUE)"
 PL/pgSQL function emaj._rlbk_check(text[],text,boolean,boolean) line 21 at SQL statement
 SQL statement "SELECT emaj._rlbk_check(p_groupNames, p_mark, p_isAlterGroupAllowed, FALSE)"
 PL/pgSQL function emaj._rlbk_init(text[],text,boolean,integer,boolean,boolean,text) line 25 at SQL statement
@@ -360,8 +360,8 @@ PL/pgSQL function emaj._rlbk_groups(text[],text,boolean,boolean,boolean,text) li
 PL/pgSQL function emaj.emaj_rollback_groups(text[],text,boolean,text) line 8 at RETURN QUERY
 select * from emaj.emaj_rollback_groups('{"myGroup1","myGroup2",NULL}',NULL);
 ERROR:  _check_mark_name: The mark "<NULL>" does not exist for the groups "myGroup1, myGroup2".
-CONTEXT:  PL/pgSQL function emaj._check_mark_name(text[],text,text) line 61 at RAISE
-SQL statement "SELECT emaj._check_mark_name(p_groupNames := p_groupNames, p_mark := p_mark, p_checkList := 'ACTIVE')"
+CONTEXT:  PL/pgSQL function emaj._check_mark_name(text[],text,boolean) line 61 at RAISE
+SQL statement "SELECT emaj._check_mark_name(p_groupNames := p_groupNames, p_mark := p_mark, p_checkActive := TRUE)"
 PL/pgSQL function emaj._rlbk_check(text[],text,boolean,boolean) line 21 at SQL statement
 SQL statement "SELECT emaj._rlbk_check(p_groupNames, p_mark, p_isAlterGroupAllowed, FALSE)"
 PL/pgSQL function emaj._rlbk_init(text[],text,boolean,integer,boolean,boolean,text) line 25 at SQL statement
@@ -370,8 +370,8 @@ PL/pgSQL function emaj._rlbk_groups(text[],text,boolean,boolean,boolean,text) li
 PL/pgSQL function emaj.emaj_rollback_groups(text[],text,boolean,text) line 8 at RETURN QUERY
 select * from emaj.emaj_rollback_groups('{"myGroup1","myGroup2"}','DummyMark');
 ERROR:  _check_mark_name: The mark "DummyMark" does not exist for the groups "myGroup1, myGroup2".
-CONTEXT:  PL/pgSQL function emaj._check_mark_name(text[],text,text) line 61 at RAISE
-SQL statement "SELECT emaj._check_mark_name(p_groupNames := p_groupNames, p_mark := p_mark, p_checkList := 'ACTIVE')"
+CONTEXT:  PL/pgSQL function emaj._check_mark_name(text[],text,boolean) line 61 at RAISE
+SQL statement "SELECT emaj._check_mark_name(p_groupNames := p_groupNames, p_mark := p_mark, p_checkActive := TRUE)"
 PL/pgSQL function emaj._rlbk_check(text[],text,boolean,boolean) line 21 at SQL statement
 SQL statement "SELECT emaj._rlbk_check(p_groupNames, p_mark, p_isAlterGroupAllowed, FALSE)"
 PL/pgSQL function emaj._rlbk_init(text[],text,boolean,integer,boolean,boolean,text) line 25 at SQL statement
@@ -380,8 +380,8 @@ PL/pgSQL function emaj._rlbk_groups(text[],text,boolean,boolean,boolean,text) li
 PL/pgSQL function emaj.emaj_rollback_groups(text[],text,boolean,text) line 8 at RETURN QUERY
 select * from emaj.emaj_logged_rollback_groups('{"myGroup1","myGroup2","myGroup2"}',NULL);
 ERROR:  _check_mark_name: The mark "<NULL>" does not exist for the groups "myGroup1, myGroup2".
-CONTEXT:  PL/pgSQL function emaj._check_mark_name(text[],text,text) line 61 at RAISE
-SQL statement "SELECT emaj._check_mark_name(p_groupNames := p_groupNames, p_mark := p_mark, p_checkList := 'ACTIVE')"
+CONTEXT:  PL/pgSQL function emaj._check_mark_name(text[],text,boolean) line 61 at RAISE
+SQL statement "SELECT emaj._check_mark_name(p_groupNames := p_groupNames, p_mark := p_mark, p_checkActive := TRUE)"
 PL/pgSQL function emaj._rlbk_check(text[],text,boolean,boolean) line 21 at SQL statement
 SQL statement "SELECT emaj._rlbk_check(p_groupNames, p_mark, p_isAlterGroupAllowed, FALSE)"
 PL/pgSQL function emaj._rlbk_init(text[],text,boolean,integer,boolean,boolean,text) line 25 at SQL statement
@@ -390,8 +390,8 @@ PL/pgSQL function emaj._rlbk_groups(text[],text,boolean,boolean,boolean,text) li
 PL/pgSQL function emaj.emaj_logged_rollback_groups(text[],text,boolean,text) line 12 at RETURN QUERY
 select * from emaj.emaj_logged_rollback_groups('{"myGroup1","myGroup2"}','Mark11');
 ERROR:  _check_mark_name: The mark "Mark11" does not exist for the group "myGroup2".
-CONTEXT:  PL/pgSQL function emaj._check_mark_name(text[],text,text) line 59 at RAISE
-SQL statement "SELECT emaj._check_mark_name(p_groupNames := p_groupNames, p_mark := p_mark, p_checkList := 'ACTIVE')"
+CONTEXT:  PL/pgSQL function emaj._check_mark_name(text[],text,boolean) line 59 at RAISE
+SQL statement "SELECT emaj._check_mark_name(p_groupNames := p_groupNames, p_mark := p_mark, p_checkActive := TRUE)"
 PL/pgSQL function emaj._rlbk_check(text[],text,boolean,boolean) line 21 at SQL statement
 SQL statement "SELECT emaj._rlbk_check(p_groupNames, p_mark, p_isAlterGroupAllowed, FALSE)"
 PL/pgSQL function emaj._rlbk_init(text[],text,boolean,integer,boolean,boolean,text) line 25 at SQL statement
@@ -401,8 +401,8 @@ PL/pgSQL function emaj.emaj_logged_rollback_groups(text[],text,boolean,text) lin
 -- mark name referencing different points in time
 select * from emaj.emaj_rollback_groups('{"myGroup1","myGroup2"}','Different_Mark');
 ERROR:  _check_mark_name: The mark "Different_Mark" does not represent the same point in time for all groups.
-CONTEXT:  PL/pgSQL function emaj._check_mark_name(text[],text,text) line 70 at RAISE
-SQL statement "SELECT emaj._check_mark_name(p_groupNames := p_groupNames, p_mark := p_mark, p_checkList := 'ACTIVE')"
+CONTEXT:  PL/pgSQL function emaj._check_mark_name(text[],text,boolean) line 70 at RAISE
+SQL statement "SELECT emaj._check_mark_name(p_groupNames := p_groupNames, p_mark := p_mark, p_checkActive := TRUE)"
 PL/pgSQL function emaj._rlbk_check(text[],text,boolean,boolean) line 21 at SQL statement
 SQL statement "SELECT emaj._rlbk_check(p_groupNames, p_mark, p_isAlterGroupAllowed, FALSE)"
 PL/pgSQL function emaj._rlbk_init(text[],text,boolean,integer,boolean,boolean,text) line 25 at SQL statement
@@ -411,8 +411,8 @@ PL/pgSQL function emaj._rlbk_groups(text[],text,boolean,boolean,boolean,text) li
 PL/pgSQL function emaj.emaj_rollback_groups(text[],text,boolean,text) line 8 at RETURN QUERY
 select * from emaj.emaj_rollback_groups('{"myGroup1","myGroup2"}','EMAJ_LAST_MARK');
 ERROR:  _check_mark_name: The EMAJ_LAST_MARK does not represent the same point in time for all groups.
-CONTEXT:  PL/pgSQL function emaj._check_mark_name(text[],text,text) line 38 at RAISE
-SQL statement "SELECT emaj._check_mark_name(p_groupNames := p_groupNames, p_mark := p_mark, p_checkList := 'ACTIVE')"
+CONTEXT:  PL/pgSQL function emaj._check_mark_name(text[],text,boolean) line 38 at RAISE
+SQL statement "SELECT emaj._check_mark_name(p_groupNames := p_groupNames, p_mark := p_mark, p_checkActive := TRUE)"
 PL/pgSQL function emaj._rlbk_check(text[],text,boolean,boolean) line 21 at SQL statement
 SQL statement "SELECT emaj._rlbk_check(p_groupNames, p_mark, p_isAlterGroupAllowed, FALSE)"
 PL/pgSQL function emaj._rlbk_init(text[],text,boolean,integer,boolean,boolean,text) line 25 at SQL statement
@@ -428,9 +428,9 @@ select emaj.emaj_create_group('auditOnlyEmptyGroup',false);
 
 select * from emaj.emaj_rollback_group('phil''s group#3",','EMAJ_LAST_MARK');
 ERROR:  _check_group_names: The group "phil's group#3"," has been created as AUDIT_ONLY.
-CONTEXT:  PL/pgSQL function emaj._check_group_names(text[],boolean,boolean,text) line 61 at RAISE
+CONTEXT:  PL/pgSQL function emaj._check_group_names(text[],boolean,boolean,boolean,boolean,boolean,boolean) line 61 at RAISE
 SQL statement "SELECT emaj._check_group_names(p_groupNames := p_groupNames, p_mayBeNull := FALSE, p_lockGroups := TRUE,
-                                     p_checkList := 'LOGGING,ROLLBACKABLE,UNPROTECTED')"
+                                     p_checkLogging := TRUE, p_checkRollbackable := TRUE, p_checkUnprotected := TRUE)"
 PL/pgSQL function emaj._rlbk_check(text[],text,boolean,boolean) line 16 at SQL statement
 SQL statement "SELECT emaj._rlbk_check(p_groupNames, p_mark, p_isAlterGroupAllowed, FALSE)"
 PL/pgSQL function emaj._rlbk_init(text[],text,boolean,integer,boolean,boolean,text) line 25 at SQL statement
@@ -439,9 +439,9 @@ PL/pgSQL function emaj._rlbk_groups(text[],text,boolean,boolean,boolean,text) li
 PL/pgSQL function emaj.emaj_rollback_group(text,text,boolean,text) line 8 at RETURN QUERY
 select * from emaj.emaj_logged_rollback_groups(array['phil''s group#3",','auditOnlyEmptyGroup'],'M1_audit_only');
 ERROR:  _check_group_names: The groups "auditOnlyEmptyGroup, phil's group#3"," have been created as AUDIT_ONLY.
-CONTEXT:  PL/pgSQL function emaj._check_group_names(text[],boolean,boolean,text) line 64 at RAISE
+CONTEXT:  PL/pgSQL function emaj._check_group_names(text[],boolean,boolean,boolean,boolean,boolean,boolean) line 64 at RAISE
 SQL statement "SELECT emaj._check_group_names(p_groupNames := p_groupNames, p_mayBeNull := FALSE, p_lockGroups := TRUE,
-                                     p_checkList := 'LOGGING,ROLLBACKABLE,UNPROTECTED')"
+                                     p_checkLogging := TRUE, p_checkRollbackable := TRUE, p_checkUnprotected := TRUE)"
 PL/pgSQL function emaj._rlbk_check(text[],text,boolean,boolean) line 16 at SQL statement
 SQL statement "SELECT emaj._rlbk_check(p_groupNames, p_mark, p_isAlterGroupAllowed, FALSE)"
 PL/pgSQL function emaj._rlbk_init(text[],text,boolean,integer,boolean,boolean,text) line 25 at SQL statement
@@ -476,8 +476,8 @@ begin;
 
   select * from emaj.emaj_rollback_group('myGroup1','GeneratedStopMark');
 ERROR:  _check_mark_name: For the group "myGroup1", the mark "GeneratedStopMark" is DELETED.
-CONTEXT:  PL/pgSQL function emaj._check_mark_name(text[],text,text) line 81 at RAISE
-SQL statement "SELECT emaj._check_mark_name(p_groupNames := p_groupNames, p_mark := p_mark, p_checkList := 'ACTIVE')"
+CONTEXT:  PL/pgSQL function emaj._check_mark_name(text[],text,boolean) line 81 at RAISE
+SQL statement "SELECT emaj._check_mark_name(p_groupNames := p_groupNames, p_mark := p_mark, p_checkActive := TRUE)"
 PL/pgSQL function emaj._rlbk_check(text[],text,boolean,boolean) line 21 at SQL statement
 SQL statement "SELECT emaj._rlbk_check(p_groupNames, p_mark, p_isAlterGroupAllowed, FALSE)"
 PL/pgSQL function emaj._rlbk_init(text[],text,boolean,integer,boolean,boolean,text) line 25 at SQL statement
@@ -2233,24 +2233,24 @@ select rlbk_comment from emaj.emaj_rlbk where rlbk_id = 4000;
 -- group is NULL or unknown
 select emaj.emaj_consolidate_rollback_group(NULL,NULL);
 ERROR:  _check_group_names: No group to process.
-CONTEXT:  PL/pgSQL function emaj._check_group_names(text[],boolean,boolean,text) line 30 at RAISE
-SQL statement "SELECT emaj._check_group_names(p_groupNames := ARRAY[p_groupName], p_mayBeNull := FALSE, p_lockGroups := TRUE, p_checkList := '')"
+CONTEXT:  PL/pgSQL function emaj._check_group_names(text[],boolean,boolean,boolean,boolean,boolean,boolean) line 30 at RAISE
+SQL statement "SELECT emaj._check_group_names(p_groupNames := ARRAY[p_groupName], p_mayBeNull := FALSE, p_lockGroups := TRUE)"
 PL/pgSQL function emaj.emaj_consolidate_rollback_group(text,text) line 16 at PERFORM
 select emaj.emaj_consolidate_rollback_group('unknownGroup',NULL);
 ERROR:  _check_group_names: The group "unknownGroup" does not exist.
-CONTEXT:  PL/pgSQL function emaj._check_group_names(text[],boolean,boolean,text) line 42 at RAISE
-SQL statement "SELECT emaj._check_group_names(p_groupNames := ARRAY[p_groupName], p_mayBeNull := FALSE, p_lockGroups := TRUE, p_checkList := '')"
+CONTEXT:  PL/pgSQL function emaj._check_group_names(text[],boolean,boolean,boolean,boolean,boolean,boolean) line 42 at RAISE
+SQL statement "SELECT emaj._check_group_names(p_groupNames := ARRAY[p_groupName], p_mayBeNull := FALSE, p_lockGroups := TRUE)"
 PL/pgSQL function emaj.emaj_consolidate_rollback_group(text,text) line 16 at PERFORM
 -- mark is unknown
 select emaj.emaj_consolidate_rollback_group('myGroup1',NULL);
 ERROR:  _check_mark_name: The mark "<NULL>" does not exist for the group "myGroup1".
-CONTEXT:  PL/pgSQL function emaj._check_mark_name(text[],text,text) line 59 at RAISE
-SQL statement "SELECT emaj._check_mark_name(p_groupNames := ARRAY[p_groupName], p_mark := p_endRlbkMark, p_checkList := '')"
+CONTEXT:  PL/pgSQL function emaj._check_mark_name(text[],text,boolean) line 59 at RAISE
+SQL statement "SELECT emaj._check_mark_name(p_groupNames := ARRAY[p_groupName], p_mark := p_endRlbkMark)"
 PL/pgSQL function emaj.emaj_consolidate_rollback_group(text,text) line 18 at SQL statement
 select emaj.emaj_consolidate_rollback_group('myGroup1','unknown mark');
 ERROR:  _check_mark_name: The mark "unknown mark" does not exist for the group "myGroup1".
-CONTEXT:  PL/pgSQL function emaj._check_mark_name(text[],text,text) line 59 at RAISE
-SQL statement "SELECT emaj._check_mark_name(p_groupNames := ARRAY[p_groupName], p_mark := p_endRlbkMark, p_checkList := '')"
+CONTEXT:  PL/pgSQL function emaj._check_mark_name(text[],text,boolean) line 59 at RAISE
+SQL statement "SELECT emaj._check_mark_name(p_groupNames := ARRAY[p_groupName], p_mark := p_endRlbkMark)"
 PL/pgSQL function emaj.emaj_consolidate_rollback_group(text,text) line 18 at SQL statement
 -- mark is known but is not an end rollback mark
 select emaj.emaj_consolidate_rollback_group('myGroup1','Mark12');

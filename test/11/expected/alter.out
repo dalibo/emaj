@@ -588,8 +588,8 @@ PL/pgSQL function emaj.emaj_move_table(text,text,text,text) line 6 at RETURN
 -- bad new group
 select emaj.emaj_move_table('myschema1','mytbl1','dummyGroup');
 ERROR:  _check_group_names: The group "dummyGroup" does not exist.
-CONTEXT:  PL/pgSQL function emaj._check_group_names(text[],boolean,boolean,text) line 42 at RAISE
-SQL statement "SELECT emaj._check_group_names(p_groupNames := ARRAY[p_newGroup], p_mayBeNull := FALSE, p_lockGroups := TRUE, p_checkList := '')"
+CONTEXT:  PL/pgSQL function emaj._check_group_names(text[],boolean,boolean,boolean,boolean,boolean,boolean) line 42 at RAISE
+SQL statement "SELECT emaj._check_group_names(p_groupNames := ARRAY[p_newGroup], p_mayBeNull := FALSE, p_lockGroups := TRUE)"
 PL/pgSQL function emaj._move_tables(text,text[],text,text,boolean,boolean) line 28 at PERFORM
 PL/pgSQL function emaj.emaj_move_table(text,text,text,text) line 6 at RETURN
 -- bad mark
@@ -781,8 +781,8 @@ PL/pgSQL function emaj.emaj_move_sequence(text,text,text,text) line 6 at RETURN
 -- bad new group
 select emaj.emaj_move_sequence('myschema2','myseq1','dummyGroup');
 ERROR:  _check_group_names: The group "dummyGroup" does not exist.
-CONTEXT:  PL/pgSQL function emaj._check_group_names(text[],boolean,boolean,text) line 42 at RAISE
-SQL statement "SELECT emaj._check_group_names(p_groupNames := ARRAY[p_newGroup], p_mayBeNull := FALSE, p_lockGroups := TRUE, p_checkList := '')"
+CONTEXT:  PL/pgSQL function emaj._check_group_names(text[],boolean,boolean,boolean,boolean,boolean,boolean) line 42 at RAISE
+SQL statement "SELECT emaj._check_group_names(p_groupNames := ARRAY[p_newGroup], p_mayBeNull := FALSE, p_lockGroups := TRUE)"
 PL/pgSQL function emaj._move_sequences(text,text[],text,text,boolean,boolean) line 26 at PERFORM
 PL/pgSQL function emaj.emaj_move_sequence(text,text,text,text) line 6 at RETURN
 -- bad mark

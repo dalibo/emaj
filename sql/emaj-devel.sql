@@ -908,7 +908,9 @@ $_get_default_tablespace$
   END;
 $_get_default_tablespace$;
 
-CREATE OR REPLACE FUNCTION emaj._check_group_names(p_groupNames TEXT[], p_mayBeNull BOOLEAN, p_lockGroups BOOLEAN, p_checkList TEXT)
+CREATE OR REPLACE FUNCTION emaj._check_group_names(p_groupNames TEXT[], p_mayBeNull BOOLEAN, p_lockGroups BOOLEAN,
+                                                   p_checkIdle BOOLEAN DEFAULT FALSE, p_checkLogging BOOLEAN DEFAULT FALSE,
+                                                   p_checkRollbackable BOOLEAN DEFAULT FALSE, p_checkUnprotected BOOLEAN DEFAULT FALSE)
 RETURNS TEXT[] LANGUAGE plpgsql AS
 $_check_group_names$
 -- This function performs various checks on a group names array.
@@ -964,7 +966,7 @@ $_check_group_names$
         FOR UPDATE;
     END IF;
 -- Checks ROLLBACKABLE type, if requested.
-    IF strpos(p_checkList,'ROLLBACKABLE') > 0 THEN
+    IF p_checkRollbackable THEN
       SELECT string_agg(group_name,', '  ORDER BY group_name), count(*) INTO v_groupList, v_count
         FROM emaj.emaj_group
         WHERE group_name = ANY(p_groupNames)
@@ -977,7 +979,7 @@ $_check_group_names$
       END IF;
     END IF;
 -- Checks IDLE state, if requested
-    IF strpos(p_checkList,'IDLE') > 0 THEN
+    IF p_checkIdle THEN
       SELECT string_agg(group_name,', ' ORDER BY group_name), count(*) INTO v_groupList, v_count
         FROM emaj.emaj_group
         WHERE group_name = ANY(p_groupNames)
@@ -990,7 +992,7 @@ $_check_group_names$
       END IF;
     END IF;
 -- Checks LOGGING state, if requested.
-    IF strpos(p_checkList,'LOGGING') > 0 THEN
+    IF p_checkLogging THEN
       SELECT string_agg(group_name,', ' ORDER BY group_name), count(*) INTO v_groupList, v_count
         FROM emaj.emaj_group
         WHERE group_name = ANY(p_groupNames)
@@ -1003,7 +1005,7 @@ $_check_group_names$
       END IF;
     END IF;
 -- Checks UNPROTECTED type, if requested.
-    IF strpos(p_checkList,'UNPROTECTED') > 0 THEN
+    IF p_checkUnprotected THEN
       SELECT string_agg(group_name,', ' ORDER BY group_name), count(*) INTO v_groupList, v_count
         FROM emaj.emaj_group
         WHERE group_name = ANY(p_groupNames)
@@ -1480,13 +1482,13 @@ $_check_tables_for_rollbackable_group$
   END;
 $_check_tables_for_rollbackable_group$;
 
-CREATE OR REPLACE FUNCTION emaj._check_mark_name(p_groupNames TEXT[], p_mark TEXT, p_checkList TEXT)
+CREATE OR REPLACE FUNCTION emaj._check_mark_name(p_groupNames TEXT[], p_mark TEXT, p_checkActive BOOLEAN DEFAULT FALSE)
 RETURNS TEXT LANGUAGE plpgsql AS
 $_check_mark_name$
 -- This function verifies that a mark name exists for one or several groups.
 -- It processes the EMAJ_LAST_MARK keyword.
 -- When several groups are supplied, it checks that the mark represents the same point in time for all groups.
--- Input: array of group names, name of the mark to check, list of checks to perform (currently only 'ACTIVE')
+-- Input: array of group names, name of the mark to check, boolean to ask for a mark is active check
 -- Output: internal name of the mark
   DECLARE
     v_markName               TEXT = p_mark;
@@ -1555,7 +1557,7 @@ $_check_mark_name$
       END IF;
     END IF;
 -- If requested, check the mark is active for all groups.
-    IF strpos(p_checkList,'ACTIVE') > 0 THEN
+    IF p_checkActive THEN
       SELECT string_agg(mark_group,', ' ORDER BY mark_group), count(*) INTO v_groupList, v_count
         FROM emaj.emaj_mark
         WHERE mark_name = v_markName
@@ -1614,6 +1616,7 @@ $_check_new_mark$
 $_check_new_mark$;
 
 CREATE OR REPLACE FUNCTION emaj._check_marks_range(p_groupNames TEXT[], INOUT p_firstMark TEXT, INOUT p_lastMark TEXT,
+                                                   p_finiteUpperBound BOOLEAN DEFAULT FALSE,
                                                    OUT p_firstMarkTimeId BIGINT, OUT p_lastMarkTimeId BIGINT,
                                                    OUT p_firstMarkTs TIMESTAMPTZ, OUT p_lastMarkTs TIMESTAMPTZ,
                                                    OUT p_firstMarkEmajGid BIGINT, OUT p_lastMarkEmajGid BIGINT)
@@ -1632,7 +1635,7 @@ $_check_marks_range$
       RAISE EXCEPTION '_check_marks_range: The first mark cannot be NULL or empty.';
     END IF;
 -- Checks the supplied first mark.
-    SELECT emaj._check_mark_name(p_groupNames := p_groupNames, p_mark := p_firstMark, p_checkList := '') INTO p_firstMark;
+    SELECT emaj._check_mark_name(p_groupNames := p_groupNames, p_mark := p_firstMark) INTO p_firstMark;
 -- Get some additional data about the first mark.
 -- (use the first group of the array, as we are now sure that all groups share the same mark).
     SELECT mark_time_id, time_clock_timestamp, time_last_emaj_gid INTO p_firstMarkTimeId, p_firstMarkTs, p_firstMarkEmajGid
@@ -1640,9 +1643,13 @@ $_check_marks_range$
            JOIN emaj.emaj_time_stamp ON (time_id = mark_time_id)
       WHERE mark_group = p_groupNames[1]
         AND mark_name = p_firstMark;
-    IF p_lastMark IS NOT NULL AND p_lastMark <> '' THEN
--- If the last mark is not NULL or empty, check it.
-      SELECT emaj._check_mark_name(p_groupNames := p_groupNames, p_mark := p_lastMark, p_checkList := '') INTO p_lastMark;
+    IF p_lastMark IS NULL OR p_lastMark = '' THEN
+      IF p_finiteUpperBound THEN
+        RAISE EXCEPTION '_check_marks_range: The last mark cannot be NULL or empty.';
+      END IF;
+    ELSE
+-- The last mark is not NULL or empty, so check it.
+      SELECT emaj._check_mark_name(p_groupNames := p_groupNames, p_mark := p_lastMark) INTO p_lastMark;
 -- Get some additional data about the last mark (that may be NULL)
 -- (use the first group of the array, as we are now sure that all groups share the same mark).
       SELECT mark_time_id, time_clock_timestamp, time_last_emaj_gid INTO p_lastMarkTimeId, p_lastMarkTs, p_lastMarkEmajGid
@@ -2047,7 +2054,7 @@ $_assign_tables$
       VALUES (v_function, 'BEGIN');
 -- Check supplied parameters.
 -- Check the group name and if ok, get some properties of the group.
-    PERFORM emaj._check_group_names(p_groupNames := ARRAY[p_group], p_mayBeNull := FALSE, p_lockGroups := TRUE, p_checkList := '');
+    PERFORM emaj._check_group_names(p_groupNames := ARRAY[p_group], p_mayBeNull := FALSE, p_lockGroups := TRUE);
     SELECT group_is_rollbackable, group_is_logging INTO v_groupIsRollbackable, v_groupIsLogging
       FROM emaj.emaj_group
       WHERE group_name = p_group;
@@ -2582,7 +2589,7 @@ $_move_tables$
     INSERT INTO emaj.emaj_hist (hist_function, hist_event)
       VALUES (v_function, 'BEGIN');
 -- Check the group name and if ok, get some properties of the group.
-    PERFORM emaj._check_group_names(p_groupNames := ARRAY[p_newGroup], p_mayBeNull := FALSE, p_lockGroups := TRUE, p_checkList := '');
+    PERFORM emaj._check_group_names(p_groupNames := ARRAY[p_newGroup], p_mayBeNull := FALSE, p_lockGroups := TRUE);
     SELECT group_is_rollbackable, group_is_logging INTO v_newGroupIsRollbackable, v_newGroupIsLogging
       FROM emaj.emaj_group
       WHERE group_name = p_newGroup;
@@ -3025,8 +3032,6 @@ $_create_tbl$
     v_idxTblSpace            TEXT;
     v_pkCols                 TEXT[];
     v_rlbkColList            TEXT;
-----    v_rlbkPkColList          TEXT;
-----    v_rlbkPkConditions       TEXT;
     v_genColList             TEXT;
     v_genValList             TEXT;
     v_genSetList             TEXT;
@@ -3948,7 +3953,7 @@ $_assign_sequences$
       VALUES (v_function, 'BEGIN');
 -- Check supplied parameters
 -- Check the group name and if ok, get some properties of the group.
-    PERFORM emaj._check_group_names(p_groupNames := ARRAY[p_group], p_mayBeNull := FALSE, p_lockGroups := TRUE, p_checkList := '');
+    PERFORM emaj._check_group_names(p_groupNames := ARRAY[p_group], p_mayBeNull := FALSE, p_lockGroups := TRUE);
     SELECT group_is_logging INTO v_groupIsLogging
       FROM emaj.emaj_group
       WHERE group_name = p_group;
@@ -4333,7 +4338,7 @@ $_move_sequences$
     INSERT INTO emaj.emaj_hist (hist_function, hist_event)
       VALUES (v_function, 'BEGIN');
 -- Check the group name and if ok, get some properties of the group.
-    PERFORM emaj._check_group_names(p_groupNames := ARRAY[p_newGroup], p_mayBeNull := FALSE, p_lockGroups := TRUE, p_checkList := '');
+    PERFORM emaj._check_group_names(p_groupNames := ARRAY[p_newGroup], p_mayBeNull := FALSE, p_lockGroups := TRUE);
     SELECT group_is_logging INTO v_newGroupIsLogging
       FROM emaj.emaj_group
       WHERE group_name = p_newGroup;
@@ -5559,7 +5564,7 @@ $emaj_comment_group$
 --   To reset an existing comment for a group, the supplied comment can be NULL.
   BEGIN
 -- Check the group name.
-    PERFORM emaj._check_group_names(p_groupNames := ARRAY[p_groupName], p_mayBeNull := FALSE, p_lockGroups := TRUE, p_checkList := '');
+    PERFORM emaj._check_group_names(p_groupNames := ARRAY[p_groupName], p_mayBeNull := FALSE, p_lockGroups := TRUE);
 -- Update the group_comment column from emaj_group table.
     UPDATE emaj.emaj_group SET group_comment = p_comment WHERE group_name = p_groupName;
 -- Insert the event into the history.
@@ -5585,7 +5590,7 @@ $emaj_drop_group$
     INSERT INTO emaj.emaj_hist (hist_function, hist_event, hist_object)
       VALUES ('DROP_GROUP', 'BEGIN', p_groupName);
 -- Check the group name.
-    PERFORM emaj._check_group_names(p_groupNames := ARRAY[p_groupName], p_mayBeNull := FALSE, p_lockGroups := TRUE, p_checkList := 'IDLE');
+    PERFORM emaj._check_group_names(p_groupNames := ARRAY[p_groupName], p_mayBeNull := FALSE, p_lockGroups := TRUE, p_checkIdle := TRUE);
 -- Effectively drop the group.
     SELECT emaj._drop_group(p_groupName, FALSE) INTO v_nbRel;
 -- Insert a END event into the history.
@@ -5616,7 +5621,7 @@ $emaj_force_drop_group$
     INSERT INTO emaj.emaj_hist (hist_function, hist_event, hist_object)
       VALUES ('FORCE_DROP_GROUP', 'BEGIN', p_groupName);
 -- Check the group name.
-    PERFORM emaj._check_group_names(p_groupNames := ARRAY[p_groupName], p_mayBeNull := FALSE, p_lockGroups := TRUE, p_checkList := '');
+    PERFORM emaj._check_group_names(p_groupNames := ARRAY[p_groupName], p_mayBeNull := FALSE, p_lockGroups := TRUE);
 -- Effectively drop the group.
     SELECT emaj._drop_group(p_groupName, TRUE) INTO v_nbRel;
 -- Insert a END event into the history.
@@ -6687,7 +6692,7 @@ $_start_groups$
       VALUES (CASE WHEN p_multiGroup THEN 'START_GROUPS' ELSE 'START_GROUP' END, 'BEGIN', array_to_string(p_groupNames,','),
               CASE WHEN p_resetLog THEN 'With log reset' ELSE 'Without log reset' END);
 -- Check the group names.
-    SELECT emaj._check_group_names(p_groupNames := p_groupNames, p_mayBeNull := p_multiGroup, p_lockGroups := TRUE, p_checkList := 'IDLE')
+    SELECT emaj._check_group_names(p_groupNames := p_groupNames, p_mayBeNull := p_multiGroup, p_lockGroups := TRUE, p_checkIdle := TRUE)
       INTO p_groupNames;
     IF p_groupNames IS NOT NULL THEN
 -- If there is at least 1 group to process, go on.
@@ -6819,7 +6824,7 @@ $_stop_groups$
                    ELSE 'FORCE_STOP_GROUP' END,
               'BEGIN', array_to_string(p_groupNames,','));
 -- Check the group names.
-    SELECT emaj._check_group_names(p_groupNames := p_groupNames, p_mayBeNull := p_multiGroup, p_lockGroups := TRUE, p_checkList := '')
+    SELECT emaj._check_group_names(p_groupNames := p_groupNames, p_mayBeNull := p_multiGroup, p_lockGroups := TRUE)
       INTO p_groupNames;
 -- For all already IDLE groups, generate a warning message and remove them from the list of the groups to process.
     SELECT string_agg(group_name,', ' ORDER BY group_name), count(*) INTO v_groupList, v_count
@@ -6971,7 +6976,7 @@ $emaj_protect_group$
   BEGIN
 -- Check the group name.
     PERFORM emaj._check_group_names(p_groupNames := ARRAY[p_groupName], p_mayBeNull := FALSE, p_lockGroups := TRUE,
-                                    p_checkList := 'LOGGING,ROLLBACKABLE');
+                                    p_checkLogging := TRUE, p_checkRollbackable := TRUE);
 -- OK, set the protection.
     UPDATE emaj.emaj_group
       SET group_is_rlbk_protected = TRUE
@@ -6999,7 +7004,7 @@ $emaj_unprotect_group$
   BEGIN
 -- Check the group name.
     PERFORM emaj._check_group_names(p_groupNames := ARRAY[p_groupName], p_mayBeNull := FALSE, p_lockGroups := TRUE,
-                                    p_checkList := 'ROLLBACKABLE');
+                                    p_checkRollbackable := TRUE);
 -- OK, unset the protection.
     UPDATE emaj.emaj_group
       SET group_is_rlbk_protected = FALSE
@@ -7033,7 +7038,7 @@ $emaj_set_mark_group$
       VALUES ('SET_MARK_GROUP', 'BEGIN', p_groupName, v_markName);
 -- Check the group name.
     PERFORM emaj._check_group_names(p_groupNames := ARRAY[p_groupName], p_mayBeNull := FALSE, p_lockGroups := TRUE,
-                                    p_checkList := 'LOGGING');
+                                    p_checkLogging := TRUE);
 -- Check if the emaj group is OK.
     PERFORM 0
       FROM emaj._verify_groups(array[p_groupName], TRUE);
@@ -7071,7 +7076,7 @@ $emaj_set_mark_groups$
     INSERT INTO emaj.emaj_hist (hist_function, hist_event, hist_object, hist_wording)
       VALUES ('SET_MARK_GROUPS', 'BEGIN', array_to_string(p_groupNames,','), p_mark);
 -- Check the group names.
-    SELECT emaj._check_group_names(p_groupNames := p_groupNames, p_mayBeNull := TRUE, p_lockGroups := TRUE, p_checkList := 'LOGGING')
+    SELECT emaj._check_group_names(p_groupNames := p_groupNames, p_mayBeNull := TRUE, p_lockGroups := TRUE, p_checkLogging := TRUE)
       INTO p_groupNames;
 -- Process the groups.
     IF p_groupNames IS NOT NULL THEN
@@ -7211,9 +7216,9 @@ $emaj_comment_mark_group$
 --   To reset an existing comment for a mark, the supplied comment can be NULL.
   BEGIN
 -- Check the group name.
-    PERFORM emaj._check_group_names(p_groupNames := ARRAY[p_groupName], p_mayBeNull := FALSE, p_lockGroups := TRUE, p_checkList := '');
+    PERFORM emaj._check_group_names(p_groupNames := ARRAY[p_groupName], p_mayBeNull := FALSE, p_lockGroups := TRUE);
 -- Check the mark name.
-    SELECT emaj._check_mark_name(p_groupNames := ARRAY[p_groupName], p_mark := p_mark, p_checkList := '') INTO p_mark;
+    SELECT emaj._check_mark_name(p_groupNames := ARRAY[p_groupName], p_mark := p_mark) INTO p_mark;
 -- OK, update the mark_comment from emaj_mark table.
     UPDATE emaj.emaj_mark
       SET mark_comment = p_comment
@@ -7239,7 +7244,7 @@ $emaj_get_previous_mark_group$
 -- Output: mark name, or NULL if there is no mark before the given date and time
   BEGIN
 -- Check the group name.
-    PERFORM emaj._check_group_names(p_groupNames := ARRAY[p_groupName], p_mayBeNull := FALSE, p_lockGroups := FALSE, p_checkList := '');
+    PERFORM emaj._check_group_names(p_groupNames := ARRAY[p_groupName], p_mayBeNull := FALSE, p_lockGroups := FALSE);
 -- Find the requested mark.
     RETURN mark_name
       FROM emaj.emaj_mark
@@ -7263,9 +7268,9 @@ $emaj_get_previous_mark_group$
 -- Output: mark name, or NULL if there is no mark before the given mark
   BEGIN
 -- Check the group name.
-    PERFORM emaj._check_group_names(p_groupNames := ARRAY[p_groupName], p_mayBeNull := FALSE, p_lockGroups := FALSE, p_checkList := '');
+    PERFORM emaj._check_group_names(p_groupNames := ARRAY[p_groupName], p_mayBeNull := FALSE, p_lockGroups := FALSE);
 -- Check the mark name.
-    SELECT emaj._check_mark_name(p_groupNames := ARRAY[p_groupName], p_mark := p_mark, p_checkList := '') INTO p_mark;
+    SELECT emaj._check_mark_name(p_groupNames := ARRAY[p_groupName], p_mark := p_mark) INTO p_mark;
 -- Find the requested mark.
     RETURN emaj._get_previous_mark_group(p_groupName, p_mark);
   END;
@@ -7325,9 +7330,9 @@ $emaj_delete_mark_group$
     INSERT INTO emaj.emaj_hist (hist_function, hist_event, hist_object, hist_wording)
       VALUES ('DELETE_MARK_GROUP', 'BEGIN', p_groupName, p_mark);
 -- Check the group name.
-    PERFORM emaj._check_group_names(p_groupNames := ARRAY[p_groupName], p_mayBeNull := FALSE, p_lockGroups := TRUE, p_checkList := '');
+    PERFORM emaj._check_group_names(p_groupNames := ARRAY[p_groupName], p_mayBeNull := FALSE, p_lockGroups := TRUE);
 -- Check the mark name.
-    SELECT emaj._check_mark_name(p_groupNames := ARRAY[p_groupName], p_mark := p_mark, p_checkList := '') INTO p_mark;
+    SELECT emaj._check_mark_name(p_groupNames := ARRAY[p_groupName], p_mark := p_mark) INTO p_mark;
 -- Count the number of marks in the group.
     SELECT count(*) INTO v_count
       FROM emaj.emaj_mark
@@ -7410,13 +7415,13 @@ $emaj_delete_before_mark_group$
     INSERT INTO emaj.emaj_hist (hist_function, hist_event, hist_object, hist_wording)
       VALUES ('DELETE_BEFORE_MARK_GROUP', 'BEGIN', p_groupName, p_mark);
 -- check the group name.
-    PERFORM emaj._check_group_names(p_groupNames := ARRAY[p_groupName], p_mayBeNull := FALSE, p_lockGroups := TRUE, p_checkList := '');
+    PERFORM emaj._check_group_names(p_groupNames := ARRAY[p_groupName], p_mayBeNull := FALSE, p_lockGroups := TRUE);
 -- Return NULL if the mark name is NULL.
     IF p_mark IS NULL THEN
       RETURN NULL;
     END IF;
 -- Check the mark name.
-    SELECT emaj._check_mark_name(p_groupNames := ARRAY[p_groupName], p_mark := p_mark, p_checkList := '') INTO p_mark;
+    SELECT emaj._check_mark_name(p_groupNames := ARRAY[p_groupName], p_mark := p_mark) INTO p_mark;
 -- Effectively delete all marks before the supplied mark.
     SELECT emaj._delete_before_mark_group(p_groupName, p_mark) INTO v_nbMark;
 -- Insert a END event into the history.
@@ -7687,9 +7692,9 @@ $emaj_rename_mark_group$
     INSERT INTO emaj.emaj_hist (hist_function, hist_event, hist_object, hist_wording)
       VALUES ('RENAME_MARK_GROUP', 'BEGIN', p_groupName, p_mark);
 -- Check the group name.
-    PERFORM emaj._check_group_names(p_groupNames := ARRAY[p_groupName], p_mayBeNull := FALSE, p_lockGroups := TRUE, p_checkList := '');
+    PERFORM emaj._check_group_names(p_groupNames := ARRAY[p_groupName], p_mayBeNull := FALSE, p_lockGroups := TRUE);
 -- Check the mark name.
-    SELECT emaj._check_mark_name(p_groupNames := ARRAY[p_groupName], p_mark := p_mark, p_checkList := '') INTO p_mark;
+    SELECT emaj._check_mark_name(p_groupNames := ARRAY[p_groupName], p_mark := p_mark) INTO p_mark;
 -- Check the new mark name.
     SELECT emaj._check_new_mark(ARRAY[p_groupName], p_newName) INTO p_newName;
 -- OK, update the emaj_mark table.
@@ -7725,9 +7730,9 @@ $emaj_protect_mark_group$
   BEGIN
 -- Check the group name.
     PERFORM emaj._check_group_names(p_groupNames := ARRAY[p_groupName], p_mayBeNull := FALSE, p_lockGroups := TRUE,
-                                    p_checkList := 'ROLLBACKABLE');
+                                    p_checkRollbackable := TRUE);
 -- Check the mark name.
-    SELECT emaj._check_mark_name(p_groupNames := ARRAY[p_groupName], p_mark := p_mark, p_checkList := 'ACTIVE') INTO p_mark;
+    SELECT emaj._check_mark_name(p_groupNames := ARRAY[p_groupName], p_mark := p_mark, p_checkActive := TRUE) INTO p_mark;
 -- OK, set the protection, if not already set, and return 1, or 0 if the mark was already protected.
     UPDATE emaj.emaj_mark
       SET mark_is_rlbk_protected = TRUE
@@ -7757,9 +7762,9 @@ $emaj_unprotect_mark_group$
   BEGIN
 -- Check the group name.
     PERFORM emaj._check_group_names(p_groupNames := ARRAY[p_groupName], p_mayBeNull := FALSE, p_lockGroups := TRUE,
-                                    p_checkList := 'ROLLBACKABLE');
+                                    p_checkRollbackable := TRUE);
 -- Check the mark name.
-    SELECT emaj._check_mark_name(p_groupNames := ARRAY[p_groupName], p_mark := p_mark, p_checkList := '') INTO p_mark;
+    SELECT emaj._check_mark_name(p_groupNames := ARRAY[p_groupName], p_mark := p_mark) INTO p_mark;
 -- OK, unset the protection, and return 1, or 0 if the mark was already unprotected.
     UPDATE emaj.emaj_mark
       SET mark_is_rlbk_protected = FALSE
@@ -7877,7 +7882,7 @@ $_rlbk_groups$
   BEGIN
 -- Check the group names (the groups lock and the state checks are delayed for the later - needed for rollbacks generated by the web
 -- application).
-    SELECT emaj._check_group_names(p_groupNames := p_groupNames, p_mayBeNull := p_multiGroup, p_lockGroups := FALSE, p_checkList := '')
+    SELECT emaj._check_group_names(p_groupNames := p_groupNames, p_mayBeNull := p_multiGroup, p_lockGroups := FALSE)
       INTO p_groupNames;
 -- If the group names array is null, immediately return.
     IF p_groupNames IS NULL THEN
@@ -8043,14 +8048,14 @@ $_rlbk_check$
 -- Check the group names and states.
     IF isRollbackSimulation THEN
       SELECT emaj._check_group_names(p_groupNames := p_groupNames, p_mayBeNull := FALSE, p_lockGroups := FALSE,
-                                     p_checkList := 'LOGGING,ROLLBACKABLE') INTO p_groupNames;
+                                     p_checkLogging := TRUE, p_checkRollbackable := TRUE) INTO p_groupNames;
     ELSE
       SELECT emaj._check_group_names(p_groupNames := p_groupNames, p_mayBeNull := FALSE, p_lockGroups := TRUE,
-                                     p_checkList := 'LOGGING,ROLLBACKABLE,UNPROTECTED') INTO p_groupNames;
+                                     p_checkLogging := TRUE, p_checkRollbackable := TRUE, p_checkUnprotected := TRUE) INTO p_groupNames;
     END IF;
     IF p_groupNames IS NOT NULL THEN
 -- Check the mark name.
-      SELECT emaj._check_mark_name(p_groupNames := p_groupNames, p_mark := p_mark, p_checkList := 'ACTIVE') INTO v_markName;
+      SELECT emaj._check_mark_name(p_groupNames := p_groupNames, p_mark := p_mark, p_checkActive := TRUE) INTO v_markName;
       IF NOT isRollbackSimulation THEN
 -- Check that for each group that the rollback wouldn't delete protected marks (check disabled for rollback simulation).
         FOREACH v_aGroupName IN ARRAY p_groupNames LOOP
@@ -9672,9 +9677,9 @@ $emaj_consolidate_rollback_group$
     v_nbSeq                  INT;
   BEGIN
 -- Check the group name.
-    PERFORM emaj._check_group_names(p_groupNames := ARRAY[p_groupName], p_mayBeNull := FALSE, p_lockGroups := TRUE, p_checkList := '');
+    PERFORM emaj._check_group_names(p_groupNames := ARRAY[p_groupName], p_mayBeNull := FALSE, p_lockGroups := TRUE);
 -- Check the supplied end rollback mark name.
-    SELECT emaj._check_mark_name(p_groupNames := ARRAY[p_groupName], p_mark := p_endRlbkMark, p_checkList := '') INTO v_lastMark;
+    SELECT emaj._check_mark_name(p_groupNames := ARRAY[p_groupName], p_mark := p_endRlbkMark) INTO v_lastMark;
 -- Check that no group is damaged.
     PERFORM 0
       FROM emaj._verify_groups(ARRAY[p_groupName], TRUE);
@@ -9925,7 +9930,7 @@ $emaj_reset_group$
     INSERT INTO emaj.emaj_hist (hist_function, hist_event, hist_object)
       VALUES ('RESET_GROUP', 'BEGIN', p_groupName);
 -- Check the group name.
-    PERFORM emaj._check_group_names(p_groupNames := ARRAY[p_groupName], p_mayBeNull := FALSE, p_lockGroups := TRUE, p_checkList := 'IDLE');
+    PERFORM emaj._check_group_names(p_groupNames := ARRAY[p_groupName], p_mayBeNull := FALSE, p_lockGroups := TRUE, p_checkIdle := TRUE);
 -- Perform the reset operation.
     SELECT emaj._reset_groups(ARRAY[p_groupName]) INTO v_nbRel;
 -- Drop the log schemas that would have been emptied by the _reset_groups() call.
@@ -10140,13 +10145,13 @@ $_log_stat_groups$
     v_lastEmajGid            BIGINT;
   BEGIN
 -- Check the groups name.
-    SELECT emaj._check_group_names(p_groupNames := p_groupNames, p_mayBeNull := p_multiGroup, p_lockGroups := FALSE, p_checkList := '')
+    SELECT emaj._check_group_names(p_groupNames := p_groupNames, p_mayBeNull := p_multiGroup, p_lockGroups := FALSE)
       INTO p_groupNames;
     IF p_groupNames IS NOT NULL THEN
 -- Check the marks range and get some data about both marks.
       SELECT *
         INTO p_firstMark, p_lastMark, v_firstMarkTimeId, v_lastMarkTimeId, v_firstMarkTs, v_lastMarkTs, v_firstEmajGid, v_lastEmajGid
-        FROM emaj._check_marks_range(p_groupNames, p_firstMark, p_lastMark);
+        FROM emaj._check_marks_range(p_groupNames := p_groupNames, p_firstMark := p_firstMark, p_lastMark := p_lastMark);
 -- For each table of the group, get the number of log rows and return the statistics.
 -- Shorten the timeframe if the table did not belong to the group on the entire requested time frame.
       RETURN QUERY
@@ -10288,12 +10293,12 @@ $_detailed_log_stat_groups$
     r_stat                   RECORD;
   BEGIN
 -- Check the group name.
-    PERFORM emaj._check_group_names(p_groupNames := p_groupNames, p_mayBeNull := p_multiGroup, p_lockGroups := FALSE, p_checkList := '');
+    PERFORM emaj._check_group_names(p_groupNames := p_groupNames, p_mayBeNull := p_multiGroup, p_lockGroups := FALSE);
     IF p_groupNames IS NOT NULL THEN
 -- Check the marks range and get some data about both marks.
       SELECT *
         INTO p_firstMark, p_lastMark, v_firstMarkTimeId, v_lastMarkTimeId, v_firstMarkTs, v_lastMarkTs, v_firstEmajGid, v_lastEmajGid
-        FROM emaj._check_marks_range(p_groupNames, p_firstMark, p_lastMark);
+        FROM emaj._check_marks_range(p_groupNames := p_groupNames, p_firstMark := p_firstMark, p_lastMark := p_lastMark);
 -- For each table currently belonging to the group, count the number of operations per type (INSERT, UPDATE and DELETE) and role.
       FOR r_tblsq IN
         SELECT rel_priority, rel_schema, rel_tblseq, rel_group, rel_time_range, rel_log_schema, rel_log_table
@@ -10432,7 +10437,7 @@ $_estimate_rollback_groups$
     v_estimDuration          INTERVAL;
   BEGIN
 -- Check the group names (the groups state checks are delayed for later).
-    SELECT emaj._check_group_names(p_groupNames := p_groupNames, p_mayBeNull := p_multiGroup, p_lockGroups := FALSE, p_checkList := '')
+    SELECT emaj._check_group_names(p_groupNames := p_groupNames, p_mayBeNull := p_multiGroup, p_lockGroups := FALSE)
       INTO p_groupNames;
 -- If the group names array is null, immediately return NULL.
     IF p_groupNames IS NULL THEN
@@ -10606,7 +10611,7 @@ $emaj_snap_group$
     INSERT INTO emaj.emaj_hist (hist_function, hist_event, hist_object, hist_wording)
       VALUES ('SNAP_GROUP', 'BEGIN', p_groupName, p_dir);
 -- Check the group name.
-    PERFORM emaj._check_group_names(p_groupNames := ARRAY[p_groupName], p_mayBeNull := FALSE, p_lockGroups := FALSE, p_checkList := '');
+    PERFORM emaj._check_group_names(p_groupNames := ARRAY[p_groupName], p_mayBeNull := FALSE, p_lockGroups := FALSE);
 -- Check the supplied directory is not null.
     IF p_dir IS NULL THEN
       RAISE EXCEPTION 'emaj_snap_group: The directory parameter cannot be NULL.';
@@ -10734,11 +10739,11 @@ $emaj_snap_log_group$
        CASE WHEN p_lastMark IS NULL OR p_lastMark = '' THEN ' to current state' ELSE ' to mark ' || p_lastMark END || ' towards '
        || p_dir);
 -- Check the group name.
-    PERFORM emaj._check_group_names(p_groupNames := ARRAY[p_groupName], p_mayBeNull := FALSE, p_lockGroups := FALSE, p_checkList := '');
+    PERFORM emaj._check_group_names(p_groupNames := ARRAY[p_groupName], p_mayBeNull := FALSE, p_lockGroups := FALSE);
 -- Check the marks range and get some data about both marks.
     v_noSuppliedLastMark = (p_lastMark IS NULL OR p_lastMark = '');
     SELECT * INTO p_firstMark, p_lastMark, v_firstMarkTimeId, v_lastMarkTimeId, v_firstMarkTs, v_lastMarkTs, v_firstEmajGid, v_lastEmajGid
-      FROM emaj._check_marks_range(ARRAY[p_groupName], p_firstMark, p_lastMark);
+      FROM emaj._check_marks_range(p_groupNames := ARRAY[p_groupName], p_firstMark := p_firstMark, p_lastMark := p_lastMark);
 -- Check the supplied directory is not null.
     IF p_dir IS NULL THEN
       RAISE EXCEPTION 'emaj_snap_log_group: The directory parameter cannot be NULL.';
@@ -10908,14 +10913,14 @@ $_gen_sql_groups$
        CASE WHEN p_lastMark IS NULL OR p_lastMark = '' THEN ' to current state' ELSE ' to mark ' || p_lastMark END ||
        CASE WHEN p_tblseqs IS NOT NULL THEN ' with tables/sequences filtering' ELSE '' END );
 -- Check the group name.
-    SELECT emaj._check_group_names(p_groupNames := p_groupNames, p_mayBeNull := p_multiGroup, p_lockGroups := FALSE, p_checkList := '')
+    SELECT emaj._check_group_names(p_groupNames := p_groupNames, p_mayBeNull := p_multiGroup, p_lockGroups := FALSE)
       INTO p_groupNames;
 -- If there is at least 1 group to process, go on.
     IF p_groupNames IS NOT NULL THEN
 -- Check the marks range and get some data about both marks.
       SELECT *
         INTO p_firstMark, p_lastMark, v_firstMarkTimeId, v_lastMarkTimeId, v_firstMarkTs, v_lastMarkTs, v_firstEmajGid, v_lastEmajGid
-        FROM emaj._check_marks_range(p_groupNames, p_firstMark, p_lastMark);
+        FROM emaj._check_marks_range(p_groupNames := p_groupNames, p_firstMark := p_firstMark, p_lastMark := p_lastMark);
 -- If table/sequence names are supplied, check them.
       IF p_tblseqs IS NOT NULL THEN
 -- Remove duplicates values, NULL and empty strings from the supplied tables/sequences names array.
@@ -12547,10 +12552,13 @@ REVOKE SELECT ON TABLE emaj.emaj_param FROM emaj_viewer;
 
 -- ... and execute a subset of emaj functions for which rights are explicitely granted.
 GRANT EXECUTE ON FUNCTION emaj._pg_version_num() TO emaj_viewer;
-GRANT EXECUTE ON FUNCTION emaj._check_group_names(p_groupNames TEXT[], p_mayBeNull BOOLEAN, p_lockGroups BOOLEAN, p_checkList TEXT)
+GRANT EXECUTE ON FUNCTION emaj._check_group_names(p_groupNames TEXT[], p_mayBeNull BOOLEAN, p_lockGroups BOOLEAN,
+                                                  p_checkIdle BOOLEAN, p_checkLogging BOOLEAN,
+                                                  p_checkRollbackable BOOLEAN, p_checkUnprotected BOOLEAN)
                           TO emaj_viewer;
-GRANT EXECUTE ON FUNCTION emaj._check_mark_name(p_groupNames TEXT[], p_mark TEXT, p_checkList TEXT) TO emaj_viewer;
+GRANT EXECUTE ON FUNCTION emaj._check_mark_name(p_groupNames TEXT[], p_mark TEXT, p_checkActive BOOLEAN) TO emaj_viewer;
 GRANT EXECUTE ON FUNCTION emaj._check_marks_range(p_groupNames TEXT[], INOUT p_firstMark TEXT, INOUT p_lastMark TEXT,
+                          p_finiteUpperBound BOOLEAN,
                           OUT p_firstMarkTimeId BIGINT, OUT p_lastMarkTimeId BIGINT,
                           OUT p_firstMarkTs TIMESTAMPTZ, OUT p_lastMarkTs TIMESTAMPTZ,
                           OUT p_firstMarkEmajGid BIGINT, OUT p_lastMarkEmajGid BIGINT) TO emaj_viewer;
