@@ -1661,6 +1661,65 @@ $_check_marks_range$
   END;
 $_check_marks_range$;
 
+CREATE OR REPLACE FUNCTION emaj._check_tblseqs_filter(INOUT p_tblseqs TEXT[], p_groupNames TEXT[], p_firstMarkTimeId BIGINT,
+                                                      p_lastMarkTimeId BIGINT, p_checkInGroupAtStartMark BOOLEAN DEFAULT FALSE)
+LANGUAGE plpgsql AS
+$_check_tblseqs_filter$
+-- This function verifies that a schema qualified table/sequence names array is valid for one or several groups and in a marks range.
+-- Input: array of table/sequence names, array of group names, time id of the first and last marks,
+--        and a boolean indicating whether the tables and sequences must be owned by one group at start mark time
+-- Output: the array of table/sequence names, without empty or duplicates (the array is empty if it does not contain any relation
+  DECLARE
+    v_tblseqErr              TEXT;
+    v_count                  INT;
+  BEGIN
+-- Remove duplicates values, NULL and empty strings from the supplied tables/sequences names array.
+    SELECT coalesce(array_agg(DISTINCT table_seq_name), ARRAY[]::TEXT[]) INTO p_tblseqs
+      FROM unnest(p_tblseqs) AS table_seq_name
+      WHERE table_seq_name IS NOT NULL
+        AND table_seq_name <> '';
+    IF p_tblseqs = ARRAY[]::TEXT[] THEN
+      RAISE WARNING '_check_tblseqs_filter: The table/sequence names array is empty.';
+      RETURN;
+    END IF;
+    IF p_checkInGroupAtStartMark THEN
+-- Each table/sequence of the filter must be known in emaj_relation and be owned by one of the supplied table groups.
+      SELECT string_agg(t,', ' ORDER BY t), count(*) INTO v_tblseqErr, v_count
+        FROM
+          (  SELECT t
+               FROM unnest(p_tblseqs) AS t
+           EXCEPT
+             SELECT rel_schema || '.' || rel_tblseq
+               FROM emaj.emaj_relation
+               WHERE rel_time_range @> p_firstMarkTimeId              -- tables/sequences that belong to their group
+                 AND rel_group = ANY (p_groupNames)                   -- at the start mark time
+          ) AS t2;
+      IF v_tblseqErr IS NOT NULL THEN
+        RAISE EXCEPTION '_check_tblseqs_filter: % tables/sequences (%) did not belong to any of the selected tables groups '
+                        'at start mark time.', v_count, v_tblseqErr;
+      END IF;
+    ELSE
+-- Each table/sequence of the filter must be known in emaj_relation and be owned by one of the supplied table groups.
+      SELECT string_agg(t,', ' ORDER BY t), count(*) INTO v_tblseqErr, v_count
+        FROM
+          (  SELECT t
+               FROM unnest(p_tblseqs) AS t
+           EXCEPT
+             SELECT rel_schema || '.' || rel_tblseq
+               FROM emaj.emaj_relation
+               WHERE rel_time_range && int8range(p_firstMarkTimeId, p_lastMarkTimeId,'[)')
+                 AND rel_group = ANY (p_groupNames)
+          ) AS t2;
+      IF v_tblseqErr IS NOT NULL THEN
+        RAISE EXCEPTION '_check_tblseqs_filter: % tables/sequences (%) never belonged to any of the selected tables groups '
+                        'during the requested marks range.', v_count, v_tblseqErr;
+      END IF;
+    END IF;
+--
+    RETURN;
+  END;
+$_check_tblseqs_filter$;
+
 CREATE OR REPLACE FUNCTION emaj._truncate_trigger_fnct()
 RETURNS TRIGGER LANGUAGE plpgsql
 SECURITY DEFINER SET search_path = pg_catalog, pg_temp AS
@@ -10916,32 +10975,8 @@ $_gen_sql_groups$
         FROM emaj._check_marks_range(p_groupNames := p_groupNames, p_firstMark := p_firstMark, p_lastMark := p_lastMark);
 -- If table/sequence names are supplied, check them.
       IF p_tblseqs IS NOT NULL THEN
--- Remove duplicates values, NULL and empty strings from the supplied tables/sequences names array.
-        SELECT array_agg(DISTINCT table_seq_name) INTO p_tblseqs
-          FROM unnest(p_tblseqs) AS table_seq_name
-          WHERE table_seq_name IS NOT NULL
-            AND table_seq_name <> '';
-        IF p_tblseqs IS NULL THEN
-          RAISE EXCEPTION '_gen_sql_groups: The filtered table/sequence names array cannot be empty.';
-        END IF;
-      END IF;
--- Check the array of tables and sequences to filter, if supplied.
--- Each table/sequence of the filter must be known in emaj_relation and be owned by one of the supplied table groups.
-      IF p_tblseqs IS NOT NULL THEN
-        SELECT string_agg(t,', ' ORDER BY t), count(*) INTO v_tblseqErr, v_count
-          FROM
-            (  SELECT t
-                 FROM unnest(p_tblseqs) AS t
-             EXCEPT
-               SELECT rel_schema || '.' || rel_tblseq
-                 FROM emaj.emaj_relation
-                 WHERE rel_time_range @> v_firstMarkTimeId              -- tables/sequences that belong to their group
-                   AND rel_group = ANY (p_groupNames)                   -- at the start mark time
-            ) AS t2;
-        IF v_tblseqErr IS NOT NULL THEN
-          RAISE EXCEPTION '_gen_sql_groups: % tables/sequences (%) did not belong to any of the selected tables groups at % mark time.',
-            v_count, v_tblseqErr, p_firstMark;
-        END IF;
+        SELECT emaj._check_tblseqs_filter(p_tblseqs, p_groupNames, v_firstMarkTimeId, v_lastMarkTimeId, TRUE)
+          INTO p_tblseqs;
       END IF;
 -- Check that all tables had pk at start mark time, by verifying the emaj_relation.rel_sql_gen_pk_conditions column.
       SELECT string_agg(rel_schema || '.' || rel_tblseq, ', ' ORDER BY rel_schema, rel_tblseq), count(*)

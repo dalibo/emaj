@@ -333,8 +333,10 @@ NOTICE:  table "emaj_temp_script" does not exist, skipping
 
 \! grep myseq2 $EMAJTESTTMPDIR/myFile
 select emaj.emaj_gen_sql_group('myGroup2', 'Before ADD_SEQ', NULL, :'EMAJTESTTMPDIR' || '/myFile',array['myschema2.myseq2']);
-ERROR:  _gen_sql_groups: 1 tables/sequences (myschema2.myseq2) did not belong to any of the selected tables groups at Before ADD_SEQ mark time.
-CONTEXT:  PL/pgSQL function emaj._gen_sql_groups(text[],boolean,text,text,text,text[]) line 72 at RAISE
+ERROR:  _check_tblseqs_filter: 1 tables/sequences (myschema2.myseq2) did not belong to any of the selected tables groups at start mark time.
+CONTEXT:  PL/pgSQL function emaj._check_tblseqs_filter(text[],text[],bigint,bigint,boolean) line 32 at RAISE
+SQL statement "SELECT emaj._check_tblseqs_filter(p_tblseqs, p_groupNames, v_firstMarkTimeId, v_lastMarkTimeId, TRUE)"
+PL/pgSQL function emaj._gen_sql_groups(text[],boolean,text,text,text,text[]) line 49 at SQL statement
 PL/pgSQL function emaj.emaj_gen_sql_group(text,text,text,text,text[]) line 14 at RETURN
 \! rm $EMAJTESTTMPDIR/myFile
 -- testing mark deletions
@@ -1144,8 +1146,10 @@ select emaj.emaj_snap_log_group('myGroup2','Mk1','After ADD_TBL',:'EMAJTESTTMPDI
 /tmp/emaj_14/alter_logging/snap/myschema2_mytbl6_log.snap
 /tmp/emaj_14/alter_logging/snap/myschema2_mytbl7_log.snap
 select emaj.emaj_gen_sql_group('myGroup2', 'Before ADD_TBL', NULL, :'EMAJTESTTMPDIR' || '/script.sql',array['myschema2.mytbl7']);
-ERROR:  _gen_sql_groups: 1 tables/sequences (myschema2.mytbl7) did not belong to any of the selected tables groups at Before ADD_TBL mark time.
-CONTEXT:  PL/pgSQL function emaj._gen_sql_groups(text[],boolean,text,text,text,text[]) line 72 at RAISE
+ERROR:  _check_tblseqs_filter: 1 tables/sequences (myschema2.mytbl7) did not belong to any of the selected tables groups at start mark time.
+CONTEXT:  PL/pgSQL function emaj._check_tblseqs_filter(text[],text[],bigint,bigint,boolean) line 32 at RAISE
+SQL statement "SELECT emaj._check_tblseqs_filter(p_tblseqs, p_groupNames, v_firstMarkTimeId, v_lastMarkTimeId, TRUE)"
+PL/pgSQL function emaj._gen_sql_groups(text[],boolean,text,text,text,text[]) line 49 at SQL statement
 PL/pgSQL function emaj.emaj_gen_sql_group(text,text,text,text,text[]) line 14 at RETURN
 \! rm $EMAJTESTTMPDIR/script.sql
 rm: cannot remove '/tmp/emaj_14/alter_logging/script.sql': No such file or directory
@@ -2503,8 +2507,10 @@ select rlbk_severity, regexp_replace(rlbk_message,E'\\d\\d\\d\\d/\\d\\d\\/\\d\\d
 -- generate a sql script crossing the move (after rollback)
 select emaj.emaj_gen_sql_group('myGroup1', 'before move', NULL, :'EMAJTESTTMPDIR' || '/script2.sql',
   array['myschema2.myTbl3','myschema2.myTbl3_col31_seq']);
-ERROR:  _gen_sql_groups: 2 tables/sequences (myschema2.myTbl3, myschema2.myTbl3_col31_seq) did not belong to any of the selected tables groups at before move mark time.
-CONTEXT:  PL/pgSQL function emaj._gen_sql_groups(text[],boolean,text,text,text,text[]) line 72 at RAISE
+ERROR:  _check_tblseqs_filter: 2 tables/sequences (myschema2.myTbl3, myschema2.myTbl3_col31_seq) did not belong to any of the selected tables groups at start mark time.
+CONTEXT:  PL/pgSQL function emaj._check_tblseqs_filter(text[],text[],bigint,bigint,boolean) line 32 at RAISE
+SQL statement "SELECT emaj._check_tblseqs_filter(p_tblseqs, p_groupNames, v_firstMarkTimeId, v_lastMarkTimeId, TRUE)"
+PL/pgSQL function emaj._gen_sql_groups(text[],boolean,text,text,text,text[]) line 49 at SQL statement
 PL/pgSQL function emaj.emaj_gen_sql_group(text,text,text,text,text[]) line 14 at RETURN
 select emaj.emaj_gen_sql_groups('{"myGroup1","myGroup2"}', 'before move', NULL, :'EMAJTESTTMPDIR' || '/script3.sql',
   array['myschema2.myTbl3','myschema2.myTbl3_col31_seq']);
