@@ -1,4 +1,14 @@
 -- misc.sql : test miscellaneous functions
+--   emaj_reset_group(), 
+--   emaj_log_stat_group(), emaj_log_stat_groups(), emaj_detailled_log_stat_group() and emaj_detailled_log_stat_groups(),
+--   emaj_estimate_rollback_group() and emaj_estimate_rollback_groups(),
+--   emaj_snap_group(),
+--   emaj_snap_log_group(),
+--   emaj_get_current_log_table(),
+--   emaj_gen_sql_group() and emaj_gen_sql_groups(),
+--   table reclustering,
+--   emaj_import_parameters_configuration() and emaj_export_parameters_configuration(),
+--   emaj_purge_histories().
 --
 -- set sequence restart value
 select public.handle_emaj_sequences(5000);
@@ -883,14 +893,14 @@ CONTEXT:  PL/pgSQL function emaj.emaj_snap_group(text,text,text) line 32 at RAIS
 select emaj.emaj_snap_group('myGroup1','unknown_directory',NULL);
 ERROR:  relative path not allowed for COPY to file
 CONTEXT:  SQL statement "COPY (SELECT * FROM myschema1."myTbl3" ORDER BY col31) TO 'unknown_directory/myschema1_myTbl3.snap' "
-PL/pgSQL function emaj._copy_to_file(text,text,text) line 20 at EXECUTE
+PL/pgSQL function emaj._copy_to_file(text,text,text,boolean,boolean) line 36 at EXECUTE
 SQL statement "SELECT emaj._copy_to_file(v_stmt, v_fileName, p_copyOptions)"
 PL/pgSQL function emaj.emaj_snap_group(text,text,text) line 86 at PERFORM
 select emaj.emaj_snap_group('myGroup1','/unknown_directory',NULL);
 ERROR:  could not open file "/unknown_directory/myschema1_myTbl3.snap" for writing: No such file or directory
 HINT:  COPY TO instructs the PostgreSQL server process to write a file. You may want a client-side facility such as psql's \copy.
 CONTEXT:  SQL statement "COPY (SELECT * FROM myschema1."myTbl3" ORDER BY col31) TO '/unknown_directory/myschema1_myTbl3.snap' "
-PL/pgSQL function emaj._copy_to_file(text,text,text) line 20 at EXECUTE
+PL/pgSQL function emaj._copy_to_file(text,text,text,boolean,boolean) line 36 at EXECUTE
 SQL statement "SELECT emaj._copy_to_file(v_stmt, v_fileName, p_copyOptions)"
 PL/pgSQL function emaj.emaj_snap_group(text,text,text) line 86 at PERFORM
 -- invalid COPY TO options
@@ -899,7 +909,7 @@ ERROR:  syntax error at or near "dummy_option"
 LINE 1: ...l31) TO '/tmp/emaj_16/misc/myschema1_myTbl3.snap' dummy_opti...
                                                              ^
 QUERY:  COPY (SELECT * FROM myschema1."myTbl3" ORDER BY col31) TO '/tmp/emaj_16/misc/myschema1_myTbl3.snap' dummy_option
-CONTEXT:  PL/pgSQL function emaj._copy_to_file(text,text,text) line 20 at EXECUTE
+CONTEXT:  PL/pgSQL function emaj._copy_to_file(text,text,text,boolean,boolean) line 36 at EXECUTE
 SQL statement "SELECT emaj._copy_to_file(v_stmt, v_fileName, p_copyOptions)"
 PL/pgSQL function emaj.emaj_snap_group(text,text,text) line 86 at PERFORM
 -- SQL injection attempt
@@ -1014,14 +1024,14 @@ CONTEXT:  PL/pgSQL function emaj.emaj_snap_log_group(text,text,text,text,text) l
 select emaj.emaj_snap_log_group('myGroup2','Mark21','EMAJ_LAST_MARK','unknown_directory',NULL);
 ERROR:  relative path not allowed for COPY to file
 CONTEXT:  SQL statement "COPY (SELECT * FROM emaj_myschema2."myTbl3_log" WHERE emaj_gid > 4000000 AND emaj_gid <= 5011710 ORDER BY emaj_gid, emaj_tuple) TO 'unknown_directory/myschema2_myTbl3_log.snap' "
-PL/pgSQL function emaj._copy_to_file(text,text,text) line 20 at EXECUTE
+PL/pgSQL function emaj._copy_to_file(text,text,text,boolean,boolean) line 36 at EXECUTE
 SQL statement "SELECT emaj._copy_to_file(v_stmt, v_fileName, p_copyOptions)"
 PL/pgSQL function emaj.emaj_snap_log_group(text,text,text,text,text) line 80 at PERFORM
 select emaj.emaj_snap_log_group('myGroup2','Mark21','EMAJ_LAST_MARK','/unknown_directory',NULL);
 ERROR:  could not open file "/unknown_directory/myschema2_myTbl3_log.snap" for writing: No such file or directory
 HINT:  COPY TO instructs the PostgreSQL server process to write a file. You may want a client-side facility such as psql's \copy.
 CONTEXT:  SQL statement "COPY (SELECT * FROM emaj_myschema2."myTbl3_log" WHERE emaj_gid > 4000000 AND emaj_gid <= 5011710 ORDER BY emaj_gid, emaj_tuple) TO '/unknown_directory/myschema2_myTbl3_log.snap' "
-PL/pgSQL function emaj._copy_to_file(text,text,text) line 20 at EXECUTE
+PL/pgSQL function emaj._copy_to_file(text,text,text,boolean,boolean) line 36 at EXECUTE
 SQL statement "SELECT emaj._copy_to_file(v_stmt, v_fileName, p_copyOptions)"
 PL/pgSQL function emaj.emaj_snap_log_group(text,text,text,text,text) line 80 at PERFORM
 -- invalid COPY TO options
@@ -1030,7 +1040,7 @@ ERROR:  syntax error at or near "dummy_option"
 LINE 1: ... TO '/tmp/emaj_16/misc/myschema2_myTbl3_log.snap' dummy_opti...
                                                              ^
 QUERY:  COPY (SELECT * FROM emaj_myschema2."myTbl3_log" WHERE emaj_gid > 4000000 AND emaj_gid <= 5011710 ORDER BY emaj_gid, emaj_tuple) TO '/tmp/emaj_16/misc/myschema2_myTbl3_log.snap' dummy_option
-CONTEXT:  PL/pgSQL function emaj._copy_to_file(text,text,text) line 20 at EXECUTE
+CONTEXT:  PL/pgSQL function emaj._copy_to_file(text,text,text,boolean,boolean) line 36 at EXECUTE
 SQL statement "SELECT emaj._copy_to_file(v_stmt, v_fileName, p_copyOptions)"
 PL/pgSQL function emaj.emaj_snap_log_group(text,text,text,text,text) line 80 at PERFORM
 -- SQL injection attempt
@@ -1330,7 +1340,7 @@ NOTICE:  table "emaj_temp_script" does not exist, skipping
 ERROR:  could not open file "/tmp/unknownDirectory/myFile" for writing: No such file or directory
 HINT:  COPY TO instructs the PostgreSQL server process to write a file. You may want a client-side facility such as psql's \copy.
 CONTEXT:  SQL statement "COPY (SELECT 0) TO '/tmp/unknownDirectory/myFile' "
-PL/pgSQL function emaj._copy_to_file(text,text,text) line 20 at EXECUTE
+PL/pgSQL function emaj._copy_to_file(text,text,text,boolean,boolean) line 36 at EXECUTE
 SQL statement "SELECT emaj._copy_to_file('(SELECT 0)', p_location, NULL)"
 PL/pgSQL function emaj._gen_sql_groups(text[],boolean,text,text,text,text[]) line 80 at PERFORM
 PL/pgSQL function emaj.emaj_gen_sql_group(text,text,text,text,text[]) line 14 at RETURN
@@ -1339,7 +1349,7 @@ NOTICE:  table "emaj_temp_script" does not exist, skipping
 ERROR:  could not open file "/tmp/unknownDirectory/myFile" for writing: No such file or directory
 HINT:  COPY TO instructs the PostgreSQL server process to write a file. You may want a client-side facility such as psql's \copy.
 CONTEXT:  SQL statement "COPY (SELECT 0) TO '/tmp/unknownDirectory/myFile' "
-PL/pgSQL function emaj._copy_to_file(text,text,text) line 20 at EXECUTE
+PL/pgSQL function emaj._copy_to_file(text,text,text,boolean,boolean) line 36 at EXECUTE
 SQL statement "SELECT emaj._copy_to_file('(SELECT 0)', p_location, NULL)"
 PL/pgSQL function emaj._gen_sql_groups(text[],boolean,text,text,text,text[]) line 80 at PERFORM
 PL/pgSQL function emaj.emaj_gen_sql_groups(text[],text,text,text,text[]) line 14 at RETURN
@@ -1586,7 +1596,7 @@ select emaj.emaj_export_parameters_configuration('/tmp/dummy/location/file');
 ERROR:  could not open file "/tmp/dummy/location/file" for writing: No such file or directory
 HINT:  COPY TO instructs the PostgreSQL server process to write a file. You may want a client-side facility such as psql's \copy.
 CONTEXT:  SQL statement "COPY t TO '/tmp/dummy/location/file' "
-PL/pgSQL function emaj._copy_to_file(text,text,text) line 20 at EXECUTE
+PL/pgSQL function emaj._copy_to_file(text,text,text,boolean,boolean) line 36 at EXECUTE
 SQL statement "SELECT emaj._copy_to_file('t', p_location, NULL)"
 PL/pgSQL function emaj.emaj_export_parameters_configuration(text) line 15 at PERFORM
 --   ok

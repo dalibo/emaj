@@ -918,7 +918,7 @@ select emaj.emaj_export_groups_configuration('/tmp/dummy/location/file');
 ERROR:  could not open file "/tmp/dummy/location/file" for writing: No such file or directory
 HINT:  COPY TO instructs the PostgreSQL server process to write a file. You may want a client-side facility such as psql's \copy.
 CONTEXT:  SQL statement "COPY t TO '/tmp/dummy/location/file' "
-PL/pgSQL function emaj._copy_to_file(text,text,text) line 20 at EXECUTE
+PL/pgSQL function emaj._copy_to_file(text,text,text,boolean,boolean) line 36 at EXECUTE
 SQL statement "SELECT emaj._copy_to_file('t', p_location, NULL)"
 PL/pgSQL function emaj.emaj_export_groups_configuration(text,text[]) line 16 at PERFORM
 --   ok

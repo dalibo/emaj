@@ -1,4 +1,14 @@
 -- misc.sql : test miscellaneous functions
+--   emaj_reset_group(), 
+--   emaj_log_stat_group(), emaj_log_stat_groups(), emaj_detailled_log_stat_group() and emaj_detailled_log_stat_groups(),
+--   emaj_estimate_rollback_group() and emaj_estimate_rollback_groups(),
+--   emaj_snap_group(),
+--   emaj_snap_log_group(),
+--   emaj_get_current_log_table(),
+--   emaj_gen_sql_group() and emaj_gen_sql_groups(),
+--   table reclustering,
+--   emaj_import_parameters_configuration() and emaj_export_parameters_configuration(),
+--   emaj_purge_histories().
 --
 
 -- set sequence restart value
