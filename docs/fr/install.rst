@@ -13,7 +13,7 @@ E-Maj et ses compléments sont également disponibles sur le site Internet **git
 * Interface graphique Emaj_web (https://github.com/dalibo/emaj_web)
 
 .. caution::
-   Installer l’extension à partir du dépôt *github.org* crée l’extension en version de développement ("devel"). Il sera alors impossible de procéder à des mises à jour de l'extension dans le futur. Pour une utilisation dans la durée, il est fortement recommandé d’utiliser les paquets versionnés disponibles sur *PGXN*.
+   Installer l’extension à partir du dépôt *github.com* crée l’extension en version de développement ("devel", même en téléchargeant une version 'taguée'). Il sera alors impossible de procéder à des mises à jour de l'extension dans le futur. Pour une utilisation dans la durée, il est fortement recommandé d’utiliser les paquets versionnés disponibles sur *PGXN*.
 
 Installation standard sur Linux
 *******************************
@@ -21,6 +21,10 @@ Installation standard sur Linux
 Téléchargez la dernière version d’E-Maj par un moyen à votre convenance. Si le *client pgxn* est installé, on peut simplement exécuter la commande ::
 
 	pgxn download E-Maj
+
+On peut aussi utiliser *wget*, par exemple:
+
+        wget https://api.pgxn.org/dist/e-maj/4.2.0/e-maj-4.2.0.zip
 
 Puis décompressez l’archive avec les commandes suivantes ::
 
