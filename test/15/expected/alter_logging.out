@@ -303,7 +303,7 @@ select nextval('myschema2.myseq2');
        5
 (1 row)
 
---testing snap and sql generation
+--testing snap, dump changes and sql generation
 \! mkdir $EMAJTESTTMPDIR/snap
 select emaj.emaj_snap_group('myGroup2',:'EMAJTESTTMPDIR' || '/snap','');
  emaj_snap_group 
@@ -314,16 +314,22 @@ select emaj.emaj_snap_group('myGroup2',:'EMAJTESTTMPDIR' || '/snap','');
 \! cat $EMAJTESTTMPDIR/snap/myschema2_myseq2.snap
 myseq2	5	1	1	9223372036854775807	1	1	f	t
 \! rm $EMAJTESTTMPDIR/snap/*
-select emaj.emaj_snap_log_group('myGroup2','Mk1','After ADD_SEQ',:'EMAJTESTTMPDIR' || '/snap',NULL);
- emaj_snap_log_group 
----------------------
-                   9
+select emaj.emaj_gen_sql_dump_changes_group('myGroup2','Mk1','After ADD_SEQ','SEQUENCES_ONLY',NULL);
+NOTICE:  table "emaj_temp_sql" does not exist, skipping
+                    emaj_gen_sql_dump_changes_group                    
+-----------------------------------------------------------------------
+ 3 SQL statements are available in the "emaj_temp_sql" temporary table
 (1 row)
 
-\! grep myseq2 $EMAJTESTTMPDIR/snap/myGroup2_sequences_at_Mk1
-\! grep myseq2 $EMAJTESTTMPDIR/snap/myGroup2_sequences_at_After_ADD_SEQ
-myschema2	myseq2	9103	3	1	1	9223372036854775807	1	1	f	t
-\! rm $EMAJTESTTMPDIR/snap/*
+select sql_text from emaj_temp_sql where sql_line_number = 0;
+                                                               sql_text                                                                
+---------------------------------------------------------------------------------------------------------------------------------------
+ -- Generated SQL for dumping changes in tables group "myGroup2" between marks "Mk1" and "After ADD_SEQ" using options: SEQUENCES_ONLY
+ -- Dump changes for sequence myschema2.myTbl3_col31_seq between marks "Mk1" and "After ADD_SEQ"
+ -- Dump changes for sequence myschema2.myseq1 between marks "Mk1" and "After ADD_SEQ"
+ -- Dump changes for sequence myschema2.myseq2 between marks "Add myseq2" and "After ADD_SEQ"
+(4 rows)
+
 select emaj.emaj_gen_sql_group('myGroup2', 'Before ADD_SEQ', NULL, :'EMAJTESTTMPDIR' || '/myFile');
 NOTICE:  table "emaj_temp_script" does not exist, skipping
  emaj_gen_sql_group 
@@ -599,8 +605,6 @@ select hist_function, hist_event, hist_object,
  SET_MARK_GROUP         | END              | myGroup2         | After ADD_SEQ                                                                                              | postgres
  SNAP_GROUP             | BEGIN            | myGroup2         | /tmp/emaj_15/alter_logging/snap                                                                            | postgres
  SNAP_GROUP             | END              | myGroup2         | 9 tables/sequences processed                                                                               | postgres
- SNAP_LOG_GROUP         | BEGIN            | myGroup2         | From mark Mk1 to mark After ADD_SEQ towards /tmp/emaj_15/alter_logging/snap                                | postgres
- SNAP_LOG_GROUP         | END              | myGroup2         | 9 generated files                                                                                          | postgres
  GEN_SQL_GROUP          | BEGIN            | myGroup2         | From mark Before ADD_SEQ to current state                                                                  | postgres
  GEN_SQL_GROUP          | END              | myGroup2         | 0 generated statements - script exported into /tmp/emaj_15/alter_logging/myFile                            | postgres
  ROLLBACK_GROUP         | BEGIN            | myGroup2         | Logged rollback to mark Before ADD_SEQ (timestamp)                                                         | postgres
@@ -659,7 +663,7 @@ select hist_function, hist_event, hist_object,
  ROLLBACK_GROUP         | WARNING          | Rollback id 9102 | The sequence myschema2.myseq2 has been left unchanged (not in group anymore since <timestamp>)             | postgres
  DBLINK_CLOSE_CNX       |                  | rlbk#1           |                                                                                                            | postgres
  ROLLBACK_GROUP         | END              | myGroup2         | Rollback_id 9102                                                                                           | postgres
-(81 rows)
+(79 rows)
 
 -- set sequence restart value
 select public.handle_emaj_sequences(9300);
@@ -720,7 +724,7 @@ select * from emaj.emaj_verify_all();
  No error detected
 (5 rows)
 
---testing snap and sql generation
+--testing snap, dump changes and sql generation
 select emaj.emaj_snap_group('myGroup1',:'EMAJTESTTMPDIR' || '/snap','');
  emaj_snap_group 
 -----------------
@@ -736,25 +740,25 @@ myschema1_mytbl2b.snap
 myschema1_mytbl2b_col20_seq.snap
 myschema1_mytbl4.snap
 \! rm -R $EMAJTESTTMPDIR/snap/*
-select emaj.emaj_snap_log_group('myGroup1','Mk1',NULL,:'EMAJTESTTMPDIR' || '/snap',NULL);
- emaj_snap_log_group 
----------------------
-                   8
-(1 row)
-
--- sequences at begin bound
-\! cat $EMAJTESTTMPDIR/snap/myGroup1_sequences_at_Mk1
-myschema1	myTbl3_col31_seq	9001	11	1	1	2147483647	1	1	f	f
-myschema1	mytbl2b_col20_seq	9001	3	1	1	2147483647	1	1	f	f
--- sequences at end bound
-\! find $EMAJTESTTMPDIR/snap -regex '.*/myGroup1_sequences_at_[0123456789].*' | xargs cat
-myschema1	mytbl2b_col20_seq	9303	3	1	1	2147483647	1	1	f	f
-\! rm $EMAJTESTTMPDIR/snap/*
 select emaj.emaj_set_mark_group('myGroup1','After_remove');
  emaj_set_mark_group 
 ---------------------
                    6
 (1 row)
+
+select emaj.emaj_gen_sql_dump_changes_group('myGroup1','Mk1','EMAJ_LAST_MARK','SEQUENCES_ONLY',NULL);
+                    emaj_gen_sql_dump_changes_group                    
+-----------------------------------------------------------------------
+ 2 SQL statements are available in the "emaj_temp_sql" temporary table
+(1 row)
+
+select sql_text from emaj_temp_sql where sql_line_number = 0;
+                                                               sql_text                                                               
+--------------------------------------------------------------------------------------------------------------------------------------
+ -- Generated SQL for dumping changes in tables group "myGroup1" between marks "Mk1" and "After_remove" using options: SEQUENCES_ONLY
+ -- Dump changes for sequence myschema1.myTbl3_col31_seq between marks "Mk1" and "Sequence_removed"
+ -- Dump changes for sequence myschema1.mytbl2b_col20_seq between marks "Mk1" and "After_remove"
+(3 rows)
 
 -- testing sql script generation
 select emaj.emaj_gen_sql_group('myGroup1', 'Mk1', 'EMAJ_LAST_MARK', :'EMAJTESTTMPDIR' || '/script.sql',array['myschema1.myTbl3_col31_seq']);
@@ -797,7 +801,7 @@ begin;
     from emaj.emaj_mark where mark_group = 'myGroup1' order by mark_time_id desc limit 2;
  mark_group | regexp_replace | mark_time_id | mark_is_deleted | mark_is_rlbk_protected | mark_comment | mark_log_rows_before_next | mark_logged_rlbk_target_mark 
 ------------+----------------+--------------+-----------------+------------------------+--------------+---------------------------+------------------------------
- myGroup1   | After_remove   |         9304 | f               | f                      |              |                           | 
+ myGroup1   | After_remove   |         9303 | f               | f                      |              |                           | 
  myGroup1   | Before_remove  |         9301 | f               | f                      |              |                         0 | 
 (2 rows)
 
@@ -919,7 +923,7 @@ select * from emaj.emaj_relation_change where rlchg_time_id >= 9300 order by 1,2
  rlchg_time_id | rlchg_schema |   rlchg_tblseq   | rlchg_change_kind | rlchg_group | rlchg_new_schema | rlchg_new_tblseq | rlchg_new_group | rlchg_priority | rlchg_new_priority | rlchg_log_data_tsp | rlchg_new_log_data_tsp | rlchg_log_index_tsp | rlchg_new_log_index_tsp | rlchg_ignored_triggers | rlchg_new_ignored_triggers | rlchg_rlbk_id 
 ---------------+--------------+------------------+-------------------+-------------+------------------+------------------+-----------------+----------------+--------------------+--------------------+------------------------+---------------------+-------------------------+------------------------+----------------------------+---------------
           9302 | myschema1    | myTbl3_col31_seq | REMOVE_SEQUENCE   | myGroup1    |                  |                  |                 |                |                    |                    |                        |                     |                         |                        |                            |              
-          9310 | myschema1    | myTbl3_col31_seq | ADD_SEQUENCE      | myGroup1    |                  |                  |                 |                |                    |                    |                        |                     |                         |                        |                            |              
+          9309 | myschema1    | myTbl3_col31_seq | ADD_SEQUENCE      | myGroup1    |                  |                  |                 |                |                    |                    |                        |                     |                         |                        |                            |              
 (2 rows)
 
 select time_id, time_last_emaj_gid, time_event from emaj.emaj_time_stamp where time_id >= 9300 order by time_id;
@@ -928,12 +932,11 @@ select time_id, time_last_emaj_gid, time_event from emaj.emaj_time_stamp where t
     9300 |            9300000 | M
     9301 |            9300000 | M
     9302 |            9300000 | A
-    9303 |            9300000 | S
-    9304 |            9300000 | M
-    9305 |            9300000 | R
-    9307 |            9300000 | R
-    9310 |            9300000 | I
-(8 rows)
+    9303 |            9300000 | M
+    9304 |            9300000 | R
+    9306 |            9300000 | R
+    9309 |            9300000 | I
+(7 rows)
 
 select hist_function, hist_event, hist_object,
        regexp_replace(regexp_replace(regexp_replace(hist_wording,
@@ -962,8 +965,6 @@ select hist_function, hist_event, hist_object,
  REMOVE_SEQUENCE    | END              |                              | 1 sequences removed from their groups                                               | postgres
  SNAP_GROUP         | BEGIN            | myGroup1                     | /tmp/emaj_15/alter_logging/snap                                                     | postgres
  SNAP_GROUP         | END              | myGroup1                     | 6 tables/sequences processed                                                        | postgres
- SNAP_LOG_GROUP     | BEGIN            | myGroup1                     | From mark Mk1 to current state towards /tmp/emaj_15/alter_logging/snap              | postgres
- SNAP_LOG_GROUP     | END              | myGroup1                     | 8 generated files                                                                   | postgres
  SET_MARK_GROUP     | BEGIN            | myGroup1                     |                                                                                     | postgres
  LOCK_GROUP         | BEGIN            | myGroup1                     |                                                                                     | postgres
  LOCK_GROUP         | END              | myGroup1                     | 5 tables locked, 0 deadlock(s)                                                      | postgres
@@ -979,7 +980,7 @@ select hist_function, hist_event, hist_object,
  SET_MARK_GROUPS    | END              | myGroup1                     | Revert_sequences_removal                                                            | postgres
  IMPORT_GROUPS      | SEQUENCE ADDED   | myschema1."myTbl3_col31_seq" | To the logging group myGroup1                                                       | postgres
  IMPORT_GROUPS      | END              |                              | 1 created or altered tables groups                                                  | postgres
-(35 rows)
+(33 rows)
 
 -- set sequence restart value
 select public.handle_emaj_sequences(9500);
@@ -1112,7 +1113,7 @@ select stat_group, stat_schema, stat_table, stat_first_mark, stat_last_mark, sta
  myGroup2   | myschema2   | mytbl7     | Add mytbl7      | After ADD_TBL  | postgres  | UPDATE    |         1
 (2 rows)
 
---testing snap and sql generation
+--testing snap, dump changes and sql generation
 select emaj.emaj_snap_group('myGroup2',:'EMAJTESTTMPDIR' || '/snap','');
  emaj_snap_group 
 -----------------
@@ -1131,20 +1132,25 @@ myschema2_mytbl5.snap
 myschema2_mytbl6.snap
 myschema2_mytbl7.snap
 \! rm $EMAJTESTTMPDIR/snap/*
-select emaj.emaj_snap_log_group('myGroup2','Mk1','After ADD_TBL',:'EMAJTESTTMPDIR' || '/snap',NULL);
- emaj_snap_log_group 
----------------------
-                  10
+select emaj.emaj_gen_sql_dump_changes_group('myGroup2','Mk1','After ADD_TBL','TABLES_ONLY',NULL);
+                    emaj_gen_sql_dump_changes_group                    
+-----------------------------------------------------------------------
+ 7 SQL statements are available in the "emaj_temp_sql" temporary table
 (1 row)
 
-\! ls $EMAJTESTTMPDIR/snap/myschema2*
-/tmp/emaj_15/alter_logging/snap/myschema2_myTbl3_log.snap
-/tmp/emaj_15/alter_logging/snap/myschema2_mytbl1_log.snap
-/tmp/emaj_15/alter_logging/snap/myschema2_mytbl2_log.snap
-/tmp/emaj_15/alter_logging/snap/myschema2_mytbl4_log.snap
-/tmp/emaj_15/alter_logging/snap/myschema2_mytbl5_log.snap
-/tmp/emaj_15/alter_logging/snap/myschema2_mytbl6_log.snap
-/tmp/emaj_15/alter_logging/snap/myschema2_mytbl7_log.snap
+select sql_text from emaj_temp_sql where sql_line_number = 0;
+                                                              sql_text                                                              
+------------------------------------------------------------------------------------------------------------------------------------
+ -- Generated SQL for dumping changes in tables group "myGroup2" between marks "Mk1" and "After ADD_TBL" using options: TABLES_ONLY
+ -- Dump changes for table myschema2.myTbl3 between marks "Mk1" and "After ADD_TBL" (0 changes)
+ -- Dump changes for table myschema2.mytbl1 between marks "Mk1" and "After ADD_TBL" (0 changes)
+ -- Dump changes for table myschema2.mytbl2 between marks "Mk1" and "After ADD_TBL" (0 changes)
+ -- Dump changes for table myschema2.mytbl4 between marks "Mk1" and "After ADD_TBL" (0 changes)
+ -- Dump changes for table myschema2.mytbl5 between marks "Mk1" and "After ADD_TBL" (0 changes)
+ -- Dump changes for table myschema2.mytbl6 between marks "Mk1" and "After ADD_TBL" (0 changes)
+ -- Dump changes for table myschema2.mytbl7 between marks "Add mytbl7" and "After ADD_TBL" (3 changes)
+(8 rows)
+
 select emaj.emaj_gen_sql_group('myGroup2', 'Before ADD_TBL', NULL, :'EMAJTESTTMPDIR' || '/script.sql',array['myschema2.mytbl7']);
 ERROR:  _check_tblseqs_filter: 1 tables/sequences (myschema2.mytbl7) did not belong to any of the selected tables groups at start mark time.
 CONTEXT:  PL/pgSQL function emaj._check_tblseqs_filter(text[],text[],bigint,bigint,boolean) line 32 at RAISE
@@ -1407,17 +1413,26 @@ select stat_group, stat_schema, stat_table, stat_log_schema, stat_log_table,
  myGroup2   | myschema2   | mytbl7     | emaj_myschema2  | mytbl7_log     | Re-add mytbl7   |             9500010 |                |                    | postgres  | DELETE    |         1
 (2 rows)
 
--- snap the logs
-select emaj.emaj_snap_log_group('myGroup2','Mk1',NULL,:'EMAJTESTTMPDIR' || '/snap',NULL);
- emaj_snap_log_group 
----------------------
-                  11
+-- dump changes
+select emaj.emaj_gen_sql_dump_changes_group('myGroup2','Mk1','EMAJ_LAST_MARK','TABLES_ONLY',NULL);
+                    emaj_gen_sql_dump_changes_group                    
+-----------------------------------------------------------------------
+ 7 SQL statements are available in the "emaj_temp_sql" temporary table
 (1 row)
 
-\! ls $EMAJTESTTMPDIR/snap/myschema2_mytbl7_log*
-/tmp/emaj_15/alter_logging/snap/myschema2_mytbl7_log.snap
-/tmp/emaj_15/alter_logging/snap/myschema2_mytbl7_log_1.snap
-\! rm $EMAJTESTTMPDIR/snap/*
+select sql_text from emaj_temp_sql where sql_line_number = 0;
+                                                              sql_text                                                              
+------------------------------------------------------------------------------------------------------------------------------------
+ -- Generated SQL for dumping changes in tables group "myGroup2" between marks "Mk1" and "Re-add mytbl7" using options: TABLES_ONLY
+ -- Dump changes for table myschema2.myTbl3 between marks "Mk1" and "Re-add mytbl7" (0 changes)
+ -- Dump changes for table myschema2.mytbl1 between marks "Mk1" and "Re-add mytbl7" (0 changes)
+ -- Dump changes for table myschema2.mytbl2 between marks "Mk1" and "Re-add mytbl7" (0 changes)
+ -- Dump changes for table myschema2.mytbl4 between marks "Mk1" and "Re-add mytbl7" (0 changes)
+ -- Dump changes for table myschema2.mytbl5 between marks "Mk1" and "Re-add mytbl7" (0 changes)
+ -- Dump changes for table myschema2.mytbl6 between marks "Mk1" and "Re-add mytbl7" (0 changes)
+ -- Dump changes for table myschema2.mytbl7 between marks "[deleted mark]" and "Remove mytbl7" (3 changes)
+(8 rows)
+
 -- and finaly revert the group configuration changes
 select emaj.emaj_import_groups_configuration(:'EMAJTESTTMPDIR' || '/all_groups_conf.json', '{"myGroup2"}', true);
 NOTICE:  table "tmp_app_table" does not exist, skipping
@@ -1456,7 +1471,7 @@ select * from emaj.emaj_relation_change where rlchg_time_id >= 9500 order by 1,2
           9502 | myschema2    | mytbl7       | ADD_TABLE         | myGroup2    |                  |                  |                 |                |                    |                    |                        |                     |                         |                        |                            |          9501
           9509 | myschema2    | mytbl7       | REMOVE_TABLE      | myGroup2    |                  |                  |                 |                |                    |                    |                        |                     |                         |                        |                            |          9502
           9510 | myschema2    | mytbl7       | ADD_TABLE         | myGroup2    |                  |                  |                 |                |                    |                    |                        |                     |                         |                        |                            |          9502
-          9512 | myschema2    | mytbl7       | REMOVE_TABLE      | myGroup2    |                  |                  |                 |                |                    |                    |                        |                     |                         |                        |                            |          9502
+          9511 | myschema2    | mytbl7       | REMOVE_TABLE      | myGroup2    |                  |                  |                 |                |                    |                    |                        |                     |                         |                        |                            |          9502
 (4 rows)
 
 select time_id, time_last_emaj_gid, time_event from emaj.emaj_time_stamp where time_id >= 9500 order by time_id;
@@ -1471,10 +1486,9 @@ select time_id, time_last_emaj_gid, time_event from emaj.emaj_time_stamp where t
     9508 |            9500007 | M
     9509 |            9500010 | A
     9510 |            9500010 | A
-    9511 |            9500011 | S
-    9512 |            9500011 | I
-    9513 |            9500011 | R
-(12 rows)
+    9511 |            9500011 | I
+    9512 |            9500011 | R
+(11 rows)
 
 select hist_function, hist_event, hist_object,
        regexp_replace(regexp_replace(regexp_replace(hist_wording,
@@ -1510,8 +1524,6 @@ select hist_function, hist_event, hist_object,
  SET_MARK_GROUP         | END           | myGroup2         | After ADD_TBL                                                                                     | postgres
  SNAP_GROUP             | BEGIN         | myGroup2         | /tmp/emaj_15/alter_logging/snap                                                                   | postgres
  SNAP_GROUP             | END           | myGroup2         | 9 tables/sequences processed                                                                      | postgres
- SNAP_LOG_GROUP         | BEGIN         | myGroup2         | From mark Mk1 to mark After ADD_TBL towards /tmp/emaj_15/alter_logging/snap                       | postgres
- SNAP_LOG_GROUP         | END           | myGroup2         | 10 generated files                                                                                | postgres
  ROLLBACK_GROUP         | BEGIN         | myGroup2         | Logged rollback to mark Before ADD_TBL (timestamp)                                                | postgres
  DBLINK_OPEN_CNX        |               | rlbk#1           | Status = 1                                                                                        | postgres
  LOCK_GROUP             | BEGIN         | myGroup2         | Rollback session #1                                                                               | postgres
@@ -1547,8 +1559,6 @@ select hist_function, hist_event, hist_object,
  SET_MARK_GROUP         | END           | myGroup2         | Re-add mytbl7                                                                                     | postgres
  ASSIGN_TABLE           | TABLE ADDED   | myschema2.mytbl7 | To the logging group myGroup2                                                                     | postgres
  ASSIGN_TABLE           | END           |                  | 1 tables assigned to the group myGroup2                                                           | postgres
- SNAP_LOG_GROUP         | BEGIN         | myGroup2         | From mark Mk1 to current state towards /tmp/emaj_15/alter_logging/snap                            | postgres
- SNAP_LOG_GROUP         | END           | myGroup2         | 11 generated files                                                                                | postgres
  IMPORT_GROUPS          | BEGIN         | myGroup2         | Input file: '/tmp/emaj_15/alter_logging/all_groups_conf.json'                                     | postgres
  LOCK_GROUPS            | BEGIN         | myGroup2         |                                                                                                   | postgres
  LOCK_GROUPS            | END           | myGroup2         | 7 tables locked, 0 deadlock(s)                                                                    | postgres
@@ -1571,7 +1581,7 @@ select hist_function, hist_event, hist_object,
  ROLLBACK_GROUP         | WARNING       | Rollback id 9502 | The table myschema2.mytbl7 has been left unchanged (not in group anymore since <timestamp>)       | postgres
  DBLINK_CLOSE_CNX       |               | rlbk#1           |                                                                                                   | postgres
  ROLLBACK_GROUP         | END           | myGroup2         | Rollback_id 9502                                                                                  | postgres
-(86 rows)
+(82 rows)
 
 -- set sequence restart value
 select public.handle_emaj_sequences(9700);
@@ -1676,7 +1686,7 @@ select stat_group, stat_schema, stat_table, stat_first_mark, stat_first_mark_gid
  myGroup1   | myschema1   | myTbl3     | Mk1             |             9000000 | 2 tables removed from myGroup1 |            9700002 | postgres  | INSERT    |         2
 (1 row)
 
---testing snap and sql generation
+--testing snap, dump changes and sql generation
 select emaj.emaj_snap_group('myGroup1',:'EMAJTESTTMPDIR' || '/snap','');
  emaj_snap_group 
 -----------------
@@ -1691,18 +1701,29 @@ myschema1_mytbl2.snap
 myschema1_mytbl2b_col20_seq.snap
 myschema1_mytbl4.snap
 \! rm $EMAJTESTTMPDIR/snap/*
-select emaj.emaj_snap_log_group('myGroup1','Mk1',NULL,:'EMAJTESTTMPDIR' || '/snap',NULL);
- emaj_snap_log_group 
+select emaj.emaj_set_mark_group('myGroup1','After_2_tables_removed');
+ emaj_set_mark_group 
 ---------------------
-                   8
+                   5
 (1 row)
 
-\! ls $EMAJTESTTMPDIR/snap/myschema1*
-/tmp/emaj_15/alter_logging/snap/myschema1_myTbl3_log_1.snap
-/tmp/emaj_15/alter_logging/snap/myschema1_mytbl1_log.snap
-/tmp/emaj_15/alter_logging/snap/myschema1_mytbl2_log.snap
-/tmp/emaj_15/alter_logging/snap/myschema1_mytbl2b_log_1.snap
-/tmp/emaj_15/alter_logging/snap/myschema1_mytbl4_log.snap
+select emaj.emaj_gen_sql_dump_changes_group('myGroup1','Mk1','EMAJ_LAST_MARK','TABLES_ONLY',NULL);
+                    emaj_gen_sql_dump_changes_group                    
+-----------------------------------------------------------------------
+ 5 SQL statements are available in the "emaj_temp_sql" temporary table
+(1 row)
+
+select sql_text from emaj_temp_sql where sql_line_number = 0;
+                                                                  sql_text                                                                   
+---------------------------------------------------------------------------------------------------------------------------------------------
+ -- Generated SQL for dumping changes in tables group "myGroup1" between marks "Mk1" and "After_2_tables_removed" using options: TABLES_ONLY
+ -- Dump changes for table myschema1.myTbl3 between marks "Mk1" and "2 tables removed from myGroup1" (2 changes)
+ -- Dump changes for table myschema1.mytbl1 between marks "Mk1" and "After_2_tables_removed" (0 changes)
+ -- Dump changes for table myschema1.mytbl2 between marks "Mk1" and "After_2_tables_removed" (0 changes)
+ -- Dump changes for table myschema1.mytbl2b between marks "Mk1" and "2 tables removed from myGroup1" (0 changes)
+ -- Dump changes for table myschema1.mytbl4 between marks "Mk1" and "After_2_tables_removed" (0 changes)
+(6 rows)
+
 select emaj.emaj_gen_sql_group('myGroup1', 'Mk1', NULL, :'EMAJTESTTMPDIR' || '/script.sql',array['myschema1.myTbl3']);
 NOTICE:  table "emaj_temp_script" does not exist, skipping
  emaj_gen_sql_group 
@@ -1730,7 +1751,7 @@ begin;
   select emaj.emaj_delete_before_mark_group('myGroup1','EMAJ_LAST_MARK');
  emaj_delete_before_mark_group 
 -------------------------------
-                            11
+                            12
 (1 row)
 
   select 'should not exist' from pg_class, pg_namespace 
@@ -1830,7 +1851,7 @@ begin;
   select emaj.emaj_delete_before_mark_group('myGroup1','Mk2d');
  emaj_delete_before_mark_group 
 -------------------------------
-                             7
+                             8
 (1 row)
 
   select 'should not exist' from pg_class, pg_namespace where relnamespace = pg_namespace.oid and relname = 'mytbl2b_log' and nspname = 'emaj_myschema1';
@@ -1884,7 +1905,7 @@ select emaj.emaj_remove_table('myschema1', 'mytbl1','2nd remove_tbl');
 select * from emaj.emaj_get_consolidable_rollbacks() where cons_group = 'myGroup1';
  cons_group | cons_target_rlbk_mark_name | cons_target_rlbk_mark_time_id | cons_end_rlbk_mark_name | cons_end_rlbk_mark_time_id | cons_rows | cons_marks 
 ------------+----------------------------+-------------------------------+-------------------------+----------------------------+-----------+------------
- myGroup1   | Mk2b                       |                          9300 | Logged_Rlbk_End         |                       9706 |         2 |          7
+ myGroup1   | Mk2b                       |                          9300 | Logged_Rlbk_End         |                       9706 |         2 |          8
 (1 row)
 
 select * from emaj.emaj_consolidate_rollback_group('myGroup1', 'Logged_Rlbk_End');
@@ -2154,7 +2175,7 @@ select time_id, time_last_emaj_gid, time_event from emaj.emaj_time_stamp where t
 ---------+--------------------+------------
     9700 |            9700001 | M
     9701 |            9700002 | A
-    9703 |            9700002 | S
+    9703 |            9700002 | M
     9705 |            9700003 | R
     9706 |            9700004 | M
     9707 |            9700004 | A
@@ -2195,8 +2216,10 @@ select hist_function, hist_event, hist_object,
  REMOVE_TABLES          | END           |                              | 2 tables removed from their groups                                                                                     | postgres
  SNAP_GROUP             | BEGIN         | myGroup1                     | /tmp/emaj_15/alter_logging/snap                                                                                        | postgres
  SNAP_GROUP             | END           | myGroup1                     | 5 tables/sequences processed                                                                                           | postgres
- SNAP_LOG_GROUP         | BEGIN         | myGroup1                     | From mark Mk1 to current state towards /tmp/emaj_15/alter_logging/snap                                                 | postgres
- SNAP_LOG_GROUP         | END           | myGroup1                     | 8 generated files                                                                                                      | postgres
+ SET_MARK_GROUP         | BEGIN         | myGroup1                     |                                                                                                                        | postgres
+ LOCK_GROUP             | BEGIN         | myGroup1                     |                                                                                                                        | postgres
+ LOCK_GROUP             | END           | myGroup1                     | 3 tables locked, 0 deadlock(s)                                                                                         | postgres
+ SET_MARK_GROUP         | END           | myGroup1                     | After_2_tables_removed                                                                                                 | postgres
  GEN_SQL_GROUP          | BEGIN         | myGroup1                     | From mark Mk1 to current state with tables/sequences filtering                                                         | postgres
  GEN_SQL_GROUP          | END           | myGroup1                     | 2 generated statements - script exported into /tmp/emaj_15/alter_logging/script.sql                                    | postgres
  ROLLBACK_GROUP         | BEGIN         | myGroup1                     | Logged rollback to mark Mk2b (timestamp)                                                                               | postgres
@@ -2229,7 +2252,7 @@ select hist_function, hist_event, hist_object,
  REMOVE_TABLE           | TABLE REMOVED | myschema1.mytbl1             | From the logging group myGroup1                                                                                        | postgres
  REMOVE_TABLE           | END           |                              | 1 tables removed from their groups                                                                                     | postgres
  CONSOLIDATE_RLBK_GROUP | BEGIN         | myGroup1                     | Erase all between marks Mk2b and Logged_Rlbk_End                                                                       | postgres
- CONSOLIDATE_RLBK_GROUP | END           | myGroup1                     | 1 tables and 2 sequences processed ; 7 marks deleted                                                                   | postgres
+ CONSOLIDATE_RLBK_GROUP | END           | myGroup1                     | 1 tables and 2 sequences processed ; 8 marks deleted                                                                   | postgres
  ROLLBACK_GROUP         | BEGIN         | myGroup1                     | Unlogged rollback to mark Mk2b (timestamp)                                                                             | postgres
  DBLINK_OPEN_CNX        |               | rlbk#1                       | Status = 1                                                                                                             | postgres
  LOCK_GROUP             | BEGIN         | myGroup1                     | Rollback session #1                                                                                                    | postgres
@@ -2355,7 +2378,7 @@ select hist_function, hist_event, hist_object,
  ROLLBACK_GROUPS        | NOTICE        | Rollback id 9708             | 0 / 4 sequences effectively processed.                                                                                 | postgres
  DBLINK_CLOSE_CNX       |               | rlbk#1                       |                                                                                                                        | postgres
  ROLLBACK_GROUPS        | END           | myGroup1,myGroup2            | Rollback_id 9708                                                                                                       | postgres
-(175 rows)
+(177 rows)
 
 -- set sequence restart value
 select public.handle_emaj_sequences(10000);
@@ -2972,16 +2995,55 @@ select emaj.emaj_stop_group('myGroup1');
                7
 (1 row)
 
-select emaj.emaj_drop_group('myGroup1');
- emaj_drop_group 
------------------
-               7
-(1 row)
-
 select emaj.emaj_stop_group('myGroup2');
  emaj_stop_group 
 -----------------
                6
+(1 row)
+
+select emaj.emaj_gen_sql_dump_changes_group('myGroup1','Mk1','EMAJ_LAST_MARK',NULL,NULL);
+                    emaj_gen_sql_dump_changes_group                     
+------------------------------------------------------------------------
+ 27 SQL statements are available in the "emaj_temp_sql" temporary table
+(1 row)
+
+select regexp_replace(sql_text, E'\\d\\d\.\\d\\d\\.\\d\\d\\.\\d\\d\\d\\d','<timestamp>','g') from emaj_temp_sql where sql_line_number = 0;
+                                                           regexp_replace                                                            
+-------------------------------------------------------------------------------------------------------------------------------------
+ -- Generated SQL for dumping changes in tables group "myGroup1" between marks "Mk1" and "STOP_<timestamp>"
+ -- Dump changes for table myschema1.myTbl3 between marks "Mk1" and "[deleted mark]" (2 changes)
+ -- Dump changes for table myschema1.myTbl3 between marks "[deleted mark]" and "STOP_<timestamp>" (0 changes)
+ -- Dump changes for table myschema1.mytbl1 between marks "Mk1" and "[deleted mark]" (0 changes)
+ -- Dump changes for table myschema1.mytbl1 between marks "[deleted mark]" and "REMOVE_<timestamp>" (0 changes)
+ -- Dump changes for table myschema1.mytbl1 between marks "ASSIGN_<timestamp>" and "STOP_<timestamp>" (0 changes)
+ -- Dump changes for table myschema1.mytbl1_new_name between marks "ASSIGN_<timestamp>" and "REMOVE_<timestamp>" (0 changes)
+ -- Dump changes for table myschema1.mytbl2 between marks "Mk1" and "STOP_<timestamp>" (0 changes)
+ -- Dump changes for table myschema1.mytbl2b between marks "Mk1" and "[deleted mark]" (0 changes)
+ -- Dump changes for table myschema1.mytbl2b between marks "[deleted mark]" and "STOP_<timestamp>" (0 changes)
+ -- Dump changes for table myschema1.mytbl4 between marks "Mk1" and "REMOVE_<timestamp>" (0 changes)
+ -- Dump changes for table myschema1.mytbl4 between marks "ASSIGN_<timestamp>" and "REMOVE_<timestamp>" (0 changes)
+ -- Dump changes for table myschema1.mytbl4 between marks "Assign_mytbl4" and "STOP_<timestamp>" (0 changes)
+ -- Dump changes for table myschema2.myTbl3 between marks "[deleted mark]" and "IMPORT_<timestamp>" (6 changes)
+ -- Dump changes for table myschema2.mytbl2 between marks "Move a table with fkey" and "Move a table with fkey back" (0 changes)
+ -- Dump changes for table myschema4.mypartp1 between marks "MOVE_TBL_idle_to_logging" and "MOVE_TBL_logging_to_logging" (0 changes)
+ -- Dump changes for table myschema4.mypartp2 between marks "MOVE_TBL_idle_to_logging" and "MOVE_TBL_logging_to_logging" (0 changes)
+ -- Dump changes for table myschema4.mytblc1 between marks "MOVE_TBL_idle_to_logging" and "MOVE_TBL_logging_to_logging" (0 changes)
+ -- Dump changes for table myschema4.mytblc2 between marks "MOVE_TBL_idle_to_logging" and "MOVE_TBL_logging_to_logging" (0 changes)
+ -- Dump changes for table myschema4.mytblm between marks "MOVE_TBL_idle_to_logging" and "MOVE_TBL_logging_to_logging" (0 changes)
+ -- Dump changes for table public.mytbl1_new_name between marks "ASSIGN_<timestamp>" and "REMOVE_<timestamp>" (0 changes)
+ -- Dump changes for sequence myschema1.myTbl3_col31_seq between marks "Mk1" and "[deleted mark]"
+ -- Dump changes for sequence myschema1.myTbl3_col31_seq between marks "[deleted mark]" and "STOP_<timestamp>"
+ -- Dump changes for sequence myschema1.mytbl2b_col20_seq between marks "Mk1" and "STOP_<timestamp>"
+ -- Dump changes for sequence myschema2.myTbl3_col31_seq between marks "[deleted mark]" and "IMPORT_<timestamp>"
+ -- Dump changes for sequence myschema2.myTbl3_col31_seq between marks "MOVE_SEQ_idle_to_logging" and "MOVE_SEQ_logging_to_logging"
+ -- Dump changes for sequence myschema2.myseq1 between marks "MOVE_SEQ_idle_to_logging" and "MOVE_SEQ_logging_to_logging"
+ -- Dump changes for sequence myschema2.myseq2 between marks "MOVE_SEQ_idle_to_logging" and "MOVE_SEQ_logging_to_logging"
+(28 rows)
+
+select emaj.emaj_drop_group('myGroup1');
+ emaj_drop_group 
+-----------------
+               7
 (1 row)
 
 select emaj.emaj_drop_group('myGroup2');
@@ -3072,13 +3134,13 @@ select * from emaj.emaj_relation_change where rlchg_time_id >= 10000 order by 1,
          10042 | public         | mytbl1_new_name   | ADD_TABLE                   | myGroup1    |                  |                  |                 |                |                    |                    |                        |                     |                         |                        |                            |              
          10043 | public         | mytbl1_new_name   | REMOVE_TABLE                | myGroup1    |                  |                  |                 |                |                    |                    |                        |                     |                         |                        |                            |              
          10044 | myschema1      | mytbl1            | ADD_TABLE                   | myGroup1    |                  |                  |                 |                |                    |                    |                        |                     |                         |                        |                            |              
-         10046 | myschema1      | myTbl3            | REMOVE_TABLE                | myGroup1    |                  |                  |                 |                |                    |                    |                        |                     |                         |                        |                            |              
-         10046 | myschema1      | myTbl3_col31_seq  | REMOVE_SEQUENCE             | myGroup1    |                  |                  |                 |                |                    |                    |                        |                     |                         |                        |                            |              
-         10046 | myschema1      | mytbl1            | REMOVE_TABLE                | myGroup1    |                  |                  |                 |                |                    |                    |                        |                     |                         |                        |                            |              
-         10046 | myschema1      | mytbl2            | REMOVE_TABLE                | myGroup1    |                  |                  |                 |                |                    |                    |                        |                     |                         |                        |                            |              
-         10046 | myschema1      | mytbl2b           | REMOVE_TABLE                | myGroup1    |                  |                  |                 |                |                    |                    |                        |                     |                         |                        |                            |              
-         10046 | myschema1      | mytbl2b_col20_seq | REMOVE_SEQUENCE             | myGroup1    |                  |                  |                 |                |                    |                    |                        |                     |                         |                        |                            |              
-         10046 | myschema1      | mytbl4            | REMOVE_TABLE                | myGroup1    |                  |                  |                 |                |                    |                    |                        |                     |                         |                        |                            |              
+         10047 | myschema1      | myTbl3            | REMOVE_TABLE                | myGroup1    |                  |                  |                 |                |                    |                    |                        |                     |                         |                        |                            |              
+         10047 | myschema1      | myTbl3_col31_seq  | REMOVE_SEQUENCE             | myGroup1    |                  |                  |                 |                |                    |                    |                        |                     |                         |                        |                            |              
+         10047 | myschema1      | mytbl1            | REMOVE_TABLE                | myGroup1    |                  |                  |                 |                |                    |                    |                        |                     |                         |                        |                            |              
+         10047 | myschema1      | mytbl2            | REMOVE_TABLE                | myGroup1    |                  |                  |                 |                |                    |                    |                        |                     |                         |                        |                            |              
+         10047 | myschema1      | mytbl2b           | REMOVE_TABLE                | myGroup1    |                  |                  |                 |                |                    |                    |                        |                     |                         |                        |                            |              
+         10047 | myschema1      | mytbl2b_col20_seq | REMOVE_SEQUENCE             | myGroup1    |                  |                  |                 |                |                    |                    |                        |                     |                         |                        |                            |              
+         10047 | myschema1      | mytbl4            | REMOVE_TABLE                | myGroup1    |                  |                  |                 |                |                    |                    |                        |                     |                         |                        |                            |              
          10048 | myschema2      | myTbl3            | REMOVE_TABLE                | myGroup2    |                  |                  |                 |                |                    |                    |                        |                     |                         |                        |                            |              
          10048 | myschema2      | mytbl1            | REMOVE_TABLE                | myGroup2    |                  |                  |                 |                |                    |                    |                        |                     |                         |                        |                            |              
          10048 | myschema2      | mytbl2            | REMOVE_TABLE                | myGroup2    |                  |                  |                 |                |                    |                    |                        |                     |                         |                        |                            |              
@@ -3140,8 +3202,8 @@ select time_id, time_last_emaj_gid, time_event from emaj.emaj_time_stamp where t
    10043 |           10000014 | A
    10044 |           10000014 | A
    10045 |           10000014 | M
-   10046 |           10000014 | D
-   10047 |           10000014 | M
+   10046 |           10000014 | M
+   10047 |           10000014 | D
    10048 |           10000014 | D
    10049 |           10000014 | D
    10050 |           10000014 | D
@@ -3497,16 +3559,16 @@ select hist_function, hist_event, hist_object,
  SET_MARK_GROUP     | BEGIN                        | myGroup1                     | STOP_%                                                                                                                 | postgres
  SET_MARK_GROUP     | END                          | myGroup1                     | STOP_%                                                                                                                 | postgres
  STOP_GROUP         | END                          | myGroup1                     | 7 tables/sequences processed                                                                                           | postgres
- DROP_GROUP         | BEGIN                        | myGroup1                     |                                                                                                                        | postgres
- DROP_GROUP         | LOG_SCHEMA DROPPED           | emaj_myschema1               |                                                                                                                        | postgres
- DROP_GROUP         | LOG_SCHEMA DROPPED           | emaj_public                  |                                                                                                                        | postgres
- DROP_GROUP         | END                          | myGroup1                     | 7 tables/sequences processed                                                                                           | postgres
  STOP_GROUP         | BEGIN                        | myGroup2                     |                                                                                                                        | postgres
  LOCK_GROUP         | BEGIN                        | myGroup2                     |                                                                                                                        | postgres
  LOCK_GROUP         | END                          | myGroup2                     | 6 tables locked, 0 deadlock(s)                                                                                         | postgres
  SET_MARK_GROUP     | BEGIN                        | myGroup2                     | STOP_%                                                                                                                 | postgres
  SET_MARK_GROUP     | END                          | myGroup2                     | STOP_%                                                                                                                 | postgres
  STOP_GROUP         | END                          | myGroup2                     | 6 tables/sequences processed                                                                                           | postgres
+ DROP_GROUP         | BEGIN                        | myGroup1                     |                                                                                                                        | postgres
+ DROP_GROUP         | LOG_SCHEMA DROPPED           | emaj_myschema1               |                                                                                                                        | postgres
+ DROP_GROUP         | LOG_SCHEMA DROPPED           | emaj_public                  |                                                                                                                        | postgres
+ DROP_GROUP         | END                          | myGroup1                     | 7 tables/sequences processed                                                                                           | postgres
  DROP_GROUP         | BEGIN                        | myGroup2                     |                                                                                                                        | postgres
  DROP_GROUP         | LOG_SCHEMA DROPPED           | emaj_myschema2               |                                                                                                                        | postgres
  DROP_GROUP         | END                          | myGroup2                     | 6 tables/sequences processed                                                                                           | postgres
@@ -3537,36 +3599,36 @@ select * from emaj.emaj_rel_hist order by 1,2,3;
  myschema1      | myTbl3            | [2000,8001)     | myGroup1         | r
  myschema1      | myTbl3            | [8008,8012)     | myGroup1         | r
  myschema1      | myTbl3            | [8017,9701)     | myGroup1         | r
- myschema1      | myTbl3            | [9713,10046)    | myGroup1         | r
+ myschema1      | myTbl3            | [9713,10047)    | myGroup1         | r
  myschema1      | myTbl3_col31_seq  | [2000,8001)     | myGroup1         | S
  myschema1      | myTbl3_col31_seq  | [8008,9302)     | myGroup1         | S
- myschema1      | myTbl3_col31_seq  | [9310,10046)    | myGroup1         | S
+ myschema1      | myTbl3_col31_seq  | [9309,10047)    | myGroup1         | S
  myschema1      | mytbl1            | [2000,8001)     | myGroup1         | r
  myschema1      | mytbl1            | [8008,8010)     | myGroup1         | r
  myschema1      | mytbl1            | [8017,8200)     | myGroup1         | r
  myschema1      | mytbl1            | [8200,8202)     | myGroup2         | r
  myschema1      | mytbl1            | [8202,9707)     | myGroup1         | r
  myschema1      | mytbl1            | [9713,10039)    | myGroup1         | r
- myschema1      | mytbl1            | [10044,10046)   | myGroup1         | r
+ myschema1      | mytbl1            | [10044,10047)   | myGroup1         | r
  myschema1      | mytbl1_new_name   | [10040,10041)   | myGroup1         | r
  myschema1      | mytbl2            | [2000,8001)     | myGroup1         | r
  myschema1      | mytbl2            | [8008,8011)     | myGroup1         | r
  myschema1      | mytbl2            | [8017,8201)     | myGroup1         | r
  myschema1      | mytbl2            | [8201,8203)     | myGroup2         | r
- myschema1      | mytbl2            | [8203,10046)    | myGroup1         | r
+ myschema1      | mytbl2            | [8203,10047)    | myGroup1         | r
  myschema1      | mytbl2b           | [2000,8001)     | myGroup1         | r
  myschema1      | mytbl2b           | [8008,8011)     | myGroup1         | r
  myschema1      | mytbl2b           | [8017,8201)     | myGroup1         | r
  myschema1      | mytbl2b           | [8201,8202)     | myGroup2         | r
  myschema1      | mytbl2b           | [8202,9701)     | myGroup1         | r
- myschema1      | mytbl2b           | [9713,10046)    | myGroup1         | r
+ myschema1      | mytbl2b           | [9713,10047)    | myGroup1         | r
  myschema1      | mytbl2b_col20_seq | [2000,8001)     | myGroup1         | S
- myschema1      | mytbl2b_col20_seq | [8008,10046)    | myGroup1         | S
+ myschema1      | mytbl2b_col20_seq | [8008,10047)    | myGroup1         | S
  myschema1      | mytbl4            | [2000,8001)     | myGroup1         | r
  myschema1      | mytbl4            | [8008,8012)     | myGroup1         | r
  myschema1      | mytbl4            | [8017,10023)    | myGroup1         | r
  myschema1      | mytbl4            | [10024,10025)   | myGroup1         | r
- myschema1      | mytbl4            | [10026,10046)   | myGroup1         | r
+ myschema1      | mytbl4            | [10026,10047)   | myGroup1         | r
  myschema2      | myTbl3            | [2000,8002)     | myGroup2         | r
  myschema2      | myTbl3            | [8008,10005)    | myGroup2         | r
  myschema2      | myTbl3            | [10005,10013)   | myGroup1         | r
@@ -3620,7 +3682,7 @@ select * from emaj.emaj_rel_hist order by 1,2,3;
  myschema2      | mytbl7            | [2000,8002)     | myGroup2         | r
  myschema2      | mytbl7            | [8008,9000)     | myGroup2         | r
  myschema2      | mytbl7            | [9502,9509)     | myGroup2         | r
- myschema2      | mytbl7            | [9510,9512)     | myGroup2         | r
+ myschema2      | mytbl7            | [9510,9511)     | myGroup2         | r
  myschema2      | mytbl8            | [2000,8002)     | myGroup2         | r
  myschema2      | mytbl8            | [8008,9000)     | myGroup2         | r
  myschema4      | mypartp1          | [1027,8005)     | myGroup4         | r

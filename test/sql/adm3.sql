@@ -444,7 +444,43 @@ select public.handle_emaj_sequences(18000);
 \! rm $EMAJTESTTMPDIR/*
 
 -----------------------------
--- Step 20 : test TRUNCATE (log, statistics, rollback, sql generation and replay)
+-- Step 20 : test emaj_gen_sql_dump_changes_group() and emaj_dump_changes_group()
+-----------------------------
+
+select emaj.emaj_gen_sql_dump_changes_group('myGroup1','M4','M5','Consolidation=FULL',NULL,:'EMAJTESTTMPDIR' || '/dump_changes.sql');
+\! wc -l $EMAJTESTTMPDIR/dump_changes.sql
+
+select emaj.emaj_dump_changes_group('myGroup1','M4','M5',NULL,'{"myschema1.myTbl3"}',:'EMAJTESTTMPDIR');
+\! wc -l $EMAJTESTTMPDIR/myschema1_myTbl3.changes $EMAJTESTTMPDIR/_INFO
+
+-- Build the table/sequence names array using the emaj_log_stat_group() function result
+SELECT emaj.emaj_gen_sql_dump_changes_group('myGroup1','M4','M5',
+                                            'EMAJ_COLUMNS=(emaj_tuple, emaj_gid, emaj_verb), CONSOLIDATION=FULL, ORDER_BY=TIME',
+                                            (SELECT array_agg(distinct stat_schema || '.' || stat_table) FROM emaj.emaj_log_stat_group('myGroup1','M4','M5'))
+                                           );
+SELECT sql_text FROM emaj_temp_sql ORDER BY sql_stmt_number, sql_line_number;
+
+-- Create a table and a view from a consolidated vision of a log table
+DO $$
+DECLARE
+  v_stmt TEXT;
+BEGIN
+  PERFORM emaj.emaj_gen_sql_dump_changes_group('myGroup1','M4','M5', 'CONSOLIDATION=FULL, EMAJ_COLUMNS=MIN', ARRAY['myschema1.myTbl3']);
+  SELECT sql_text INTO v_stmt FROM emaj_temp_sql WHERE sql_stmt_number = 1 AND sql_line_number = 1;
+  EXECUTE 'CREATE TABLE public.myTbl3_cons_log_table_M4_M5 AS ' || v_stmt;
+  EXECUTE 'CREATE VIEW public.myTbl3_cons_log_view_M4_M5 AS ' || v_stmt;
+END;
+$$;
+SELECT emaj_tuple, col33 FROM public.myTbl3_cons_log_table_M4_M5 WHERE col31 = 13 ORDER BY emaj_tuple DESC;
+SELECT emaj_tuple, col33 FROM public.myTbl3_cons_log_view_M4_M5 WHERE col31 = 13;   -- already sorted
+
+DROP TABLE IF EXISTS public.myTbl3_cons_log_table_M4_M5;
+DROP VIEW IF EXISTS public.myTbl3_cons_log_view_M4_M5;
+
+\! rm $EMAJTESTTMPDIR/*
+
+-----------------------------
+-- Step 21 : test TRUNCATE (log, statistics, rollback, sql generation and replay)
 -----------------------------
 
 SET client_min_messages TO WARNING;
@@ -494,7 +530,7 @@ select emaj.emaj_drop_group('truncateTestGroup');
 select emaj.emaj_cleanup_rollback_state();
 
 -----------------------------
--- Checking step 20
+-- Checking step 21
 -----------------------------
 -- emaj tables
 select rlbk_id, rlbk_groups, rlbk_mark, rlbk_time_id, rlbk_is_logged, rlbk_is_alter_group_allowed, rlbk_nb_session, rlbk_nb_table,

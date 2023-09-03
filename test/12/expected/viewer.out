@@ -290,6 +290,13 @@ select substr(pg_size_pretty(pg_database_size(current_database())),1,0);
  
 (1 row)
 
+select emaj.emaj_gen_sql_dump_changes_group('myGroup1','Start','Start',NULL,NULL);
+NOTICE:  table "emaj_temp_sql" does not exist, skipping
+                    emaj_gen_sql_dump_changes_group                    
+-----------------------------------------------------------------------
+ 0 SQL statements are available in the "emaj_temp_sql" temporary table
+(1 row)
+
 -----------------------------
 -- forbiden table accesses
 -----------------------------
@@ -386,8 +393,10 @@ select emaj.emaj_reset_group('myGroup1');
 ERROR:  permission denied for function emaj_reset_group
 select emaj.emaj_snap_group('myGroup1','/tmp',NULL);
 ERROR:  permission denied for function emaj_snap_group
-select emaj.emaj_snap_log_group('myGroup1',NULL,NULL,'/tmp',NULL);
-ERROR:  permission denied for function emaj_snap_log_group
+select emaj.emaj_dump_changes_group('myGroup1','Start','Start',NULL,NULL,NULL);
+ERROR:  permission denied for function emaj_dump_changes_group
+select emaj.emaj_gen_sql_dump_changes_group('myGroup1','Start','Start',NULL,NULL,'/tmp/dummy');
+ERROR:  permission denied for function emaj_gen_sql_dump_changes_group
 select emaj.emaj_gen_sql_group('myGroup1',NULL,NULL,'/tmp/dummy');
 ERROR:  permission denied for function emaj_gen_sql_group
 select emaj.emaj_gen_sql_group('myGroup1',NULL,NULL,'/tmp/dummy',array['']);

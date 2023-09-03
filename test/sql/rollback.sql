@@ -231,7 +231,7 @@ select tbl_schema, tbl_name, tbl_time_id, tbl_log_seq_last_val from emaj.emaj_ta
 -- inserts/updates/deletes in myTbl3 and myTbl4
 insert into "myTbl3" (col33) select generate_series(1000,1039,4)/100;
 insert into myTbl4 values (1,'FK...',1,1,'ABC');
-update myTbl4 set col43 = NULL where col41 = 1;
+update myTbl4 set col44 = NULL where col41 = 1;
 select count(*) from "myTbl3";
 select count(*) from myTbl4;
 
@@ -256,7 +256,7 @@ select sqhl_schema, sqhl_table, sqhl_begin_time_id, sqhl_end_time_id, sqhl_hole_
 select col31, col33, emaj_verb, emaj_tuple, emaj_gid from emaj_myschema1."myTbl3_log" order by emaj_gid, emaj_tuple desc;
 select col41, col42, col43, col44, col45, emaj_verb, emaj_tuple, emaj_gid from emaj_myschema1.myTbl4_log order by emaj_gid, emaj_tuple desc;
 select col31, col33 from myschema1."myTbl3" order by col31;
-select col41, col42, col43, col44, col45 from myschema1.myTbl4 order by col41;
+select col41, col42, col43, col44, col45 from myschema1.myTbl4 order by col41, col43;
 
 -- rollback #2 (and stop)
 select * from emaj.emaj_rollback_group('myGroup1','Mark11',false,'Rollback set by the ''rollback.sql'' script');
@@ -330,7 +330,7 @@ select sqhl_schema, sqhl_table, sqhl_begin_time_id, sqhl_end_time_id, sqhl_hole_
 select col31, col33, emaj_verb, emaj_tuple, emaj_gid from emaj_myschema1."myTbl3_log" order by emaj_gid, emaj_tuple desc;
 select col41, col42, col43, col44, col45, emaj_verb, emaj_tuple, emaj_gid from emaj_myschema1.myTbl4_log order by emaj_gid, emaj_tuple desc;
 select col31, col33 from myschema1."myTbl3" order by col31;
-select col41, col42, col43, col44, col45 from myschema1.myTbl4 order by col41;
+select col41, col42, col43, col44, col45 from myschema1.myTbl4 order by col41, col43;
 
 -- logged rollback #2
 select * from emaj.emaj_logged_rollback_group('myGroup1','Mark11',false,'Logged rollback set by the rollback.sql script');

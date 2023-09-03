@@ -3,7 +3,6 @@
 --   emaj_log_stat_group(), emaj_log_stat_groups(), emaj_detailled_log_stat_group() and emaj_detailled_log_stat_groups(),
 --   emaj_estimate_rollback_group() and emaj_estimate_rollback_groups(),
 --   emaj_snap_group(),
---   emaj_snap_log_group(),
 --   emaj_get_current_log_table(),
 --   emaj_gen_sql_group() and emaj_gen_sql_groups(),
 --   table reclustering,
@@ -328,7 +327,7 @@ select hist_id, hist_function, hist_event, hist_object,
 select public.handle_emaj_sequences(5300);
 
 -----------------------------
--- emaj_snap_group() test
+-- emaj_snap_group() tests
 -----------------------------
 
 -- group is unknown
@@ -355,71 +354,7 @@ select emaj.emaj_snap_group('myGroup1',:'EMAJTESTTMPDIR','CSV HEADER DELIMITER '
 \! rm $EMAJTESTTMPDIR/*
 
 -----------------------------
--- emaj_snap_log_group() test
------------------------------
-
--- group is unknown
-select emaj.emaj_snap_log_group(NULL,NULL,NULL,NULL,NULL);
-select emaj.emaj_snap_log_group('unknownGroup',NULL,NULL,NULL,NULL);
-
--- invalid start mark
-select emaj.emaj_snap_log_group('myGroup2',NULL,'EMAJ_LAST_MARK',:'EMAJTESTTMPDIR',NULL);
-select emaj.emaj_snap_log_group('myGroup2','','EMAJ_LAST_MARK',:'EMAJTESTTMPDIR',NULL);
-select emaj.emaj_snap_log_group('myGroup2','unknownMark','EMAJ_LAST_MARK',:'EMAJTESTTMPDIR',NULL);
-
--- invalid end mark
-select emaj.emaj_snap_log_group('myGroup2','Mark21','unknownMark',:'EMAJTESTTMPDIR',NULL);
-
--- start mark > end mark
--- just check the error is trapped, because the error message contents timestamps
-create function test_snap_log(v_groupName TEXT, v_firstMark TEXT, v_lastMark TEXT, v_location TEXT) returns void language plpgsql as 
-$$
-begin
-  begin
-    perform emaj.emaj_snap_log_group(v_groupName,v_firstMark,v_lastMark,v_location,NULL);
-    return;
-  exception when raise_exception then
-    raise notice 'Error trapped on emaj_snap_log_group() call';
-  end;
-  return;
-end;
-$$;
-select test_snap_log('myGroup2','Mark23','Mark21',:'EMAJTESTTMPDIR');
-select test_snap_log('myGroup2','EMAJ_LAST_MARK','Mark22',:'EMAJTESTTMPDIR');
-drop function test_snap_log(text,text,text);
-
--- invalid directory
-select emaj.emaj_snap_log_group('myGroup2','Mark21','EMAJ_LAST_MARK',NULL,NULL);
-select emaj.emaj_snap_log_group('myGroup2','Mark21','EMAJ_LAST_MARK','unknown_directory',NULL);
-select emaj.emaj_snap_log_group('myGroup2','Mark21','EMAJ_LAST_MARK','/unknown_directory',NULL);
-
--- invalid COPY TO options
-select emaj.emaj_snap_log_group('myGroup2','Mark21','EMAJ_LAST_MARK',:'EMAJTESTTMPDIR', 'dummy_option');
-
--- SQL injection attempt
-select emaj.emaj_snap_log_group('myGroup2','Mark21','EMAJ_LAST_MARK',:'EMAJTESTTMPDIR','; CREATE ROLE fake LOGIN PASSWORD '''' SUPERUSER');
-
--- should be ok
-select emaj.emaj_snap_log_group('emptyGroup','EGM3','EGM4',:'EMAJTESTTMPDIR',NULL);
-\! ls $EMAJTESTTMPDIR
-\! cat $EMAJTESTTMPDIR/emptyGroup_sequences_at_EGM3
-\! rm $EMAJTESTTMPDIR/*
-
-select emaj.emaj_snap_log_group('myGroup2','Mark21',NULL,:'EMAJTESTTMPDIR','CSV HEADER');
-select emaj.emaj_snap_log_group('myGroup2','Mark21','Mark21',:'EMAJTESTTMPDIR','CSV');
-select emaj.emaj_snap_log_group('myGroup2','Mark21','Mark23',:'EMAJTESTTMPDIR',NULL);
-
--- mark name with special characters
-select emaj.emaj_set_mark_group('myGroup2',E'/<*crazy mark$>\\');
-select emaj.emaj_snap_log_group('myGroup2','Mark21',E'/<*crazy mark$>\\',:'EMAJTESTTMPDIR',NULL);
-
-\! ls $EMAJTESTTMPDIR |sed s/[0-9][0-9].[0-9][0-9].[0-9][0-9].[0-9][0-9][0-9]/\[timestamp_mask\]/g
-select emaj.emaj_delete_mark_group('myGroup2',E'/<*crazy mark$>\\');
-
-\! rm $EMAJTESTTMPDIR/*
-
------------------------------
--- emaj_get_current_log_table() test
+-- emaj_get_current_log_table() tests
 -----------------------------
 -- not found
 select * from emaj.emaj_get_current_log_table('myschema1', 'dummy_table');
@@ -428,7 +363,7 @@ select * from emaj.emaj_get_current_log_table('myschema1', 'mytbl1');
 select 'select count(*) from ' || quote_ident(log_schema) || '.' || quote_ident(log_table)
   from emaj.emaj_get_current_log_table('myschema1','mytbl1');
 
--- check for emaj_snap_group() and emaj_snap_log_group()
+-- check for emaj_snap_group()
 select hist_id, hist_function, hist_event, hist_object, 
        regexp_replace(regexp_replace(hist_wording,E'\\d\\d\.\\d\\d\\.\\d\\d\\.\\d\\d\\d\\d','%','g'),E'\\[.+\\]','(timestamp)','g'), hist_user
   from (select * from emaj.emaj_hist where hist_id >= 5300 order by hist_id) as t;
@@ -437,7 +372,252 @@ select hist_id, hist_function, hist_event, hist_object,
 select public.handle_emaj_sequences(5400);
 
 -----------------------------
--- emaj_gen_sql_group() and emaj_gen_sql_groups() test
+-- emaj_dump_changes_group() and emaj_gen_sql_dump_changes_group() tests
+-----------------------------
+
+--
+-- Test errors with input parameters
+--
+
+-- group is unknown
+select emaj.emaj_gen_sql_dump_changes_group('dummy', NULL, NULL, NULL, NULL);
+
+-- start mark is null or unknown
+select emaj.emaj_gen_sql_dump_changes_group('myGroup2', NULL, NULL, NULL, NULL);
+select emaj.emaj_gen_sql_dump_changes_group('myGroup2', 'dummy', NULL, NULL, NULL);
+
+-- end mark is null or unknown
+select emaj.emaj_gen_sql_dump_changes_group('myGroup2', 'Mark21', NULL, NULL, NULL);
+select emaj.emaj_gen_sql_dump_changes_group('myGroup2', 'Mark21', 'dummy', NULL, NULL);
+
+-- end mark is prior start mark
+-- just check the error is trapped, because the error message contents timestamps
+do language plpgsql
+$$
+begin
+  begin
+    perform emaj.emaj_gen_sql_dump_changes_group('myGroup2', 'Mark23', 'Mark21', NULL, NULL);
+    return;
+  exception when raise_exception then
+    raise notice 'Error trapped on emaj_gen_sql_dump_changes_group() call';
+  end;
+end;
+$$;
+
+-- invalid options
+select emaj.emaj_gen_sql_dump_changes_group('myGroup2', 'Mark21', 'Mark23', 'dummy', NULL);
+select emaj.emaj_gen_sql_dump_changes_group('myGroup2', 'Mark21', 'Mark23', 'COLS_ORDER = dummy', NULL);
+select emaj.emaj_gen_sql_dump_changes_group('phil''s group#3",', 'Mark4', 'Mark5', 'COLS_ORDER = PK', NULL);
+select emaj.emaj_gen_sql_dump_changes_group('myGroup2', 'Mark21', 'Mark23', 'COPY_OPTIONS=()', NULL);
+select emaj.emaj_gen_sql_dump_changes_group('myGroup2', 'Mark21', 'Mark23', 'CONSOLIDATION = dummy', NULL);
+select emaj.emaj_gen_sql_dump_changes_group('phil''s group#3",', 'Mark4', 'Mark5', 'CONSOLIDATION = FULL', NULL);
+select emaj.emaj_gen_sql_dump_changes_group('phil''s group#3",', 'Mark4', 'Mark5', 'CONSOLIDATION = partial', NULL);
+select emaj.emaj_gen_sql_dump_changes_group('myGroup2', 'Mark21', 'Mark23', 'EMAJ_COLUMNS = dummy', NULL);
+select emaj.emaj_gen_sql_dump_changes_group('myGroup2', 'Mark21', 'Mark23', 'EMAJ_COLUMNS = ()', NULL);
+select emaj.emaj_gen_sql_dump_changes_group('myGroup2', 'Mark21', 'Mark23', 'EMAJ_COLUMNS = (emaj_tuple , dummy)', NULL);
+select emaj.emaj_gen_sql_dump_changes_group('myGroup2', 'Mark21', 'Mark23', 'NO_EMPTY_FILES', NULL);
+select emaj.emaj_gen_sql_dump_changes_group('myGroup2', 'Mark21', 'Mark23', 'Tables_Only, Sequences_Only', NULL);
+select emaj.emaj_gen_sql_dump_changes_group('myGroup2', 'Mark21', 'Mark23', 'ORDER_BY = dummy', NULL);
+select emaj.emaj_gen_sql_dump_changes_group('phil''s group#3",', 'Mark4', 'Mark5', 'ORDER_BY = pk', NULL);
+select emaj.emaj_gen_sql_dump_changes_group('myGroup2', 'Mark21', 'Mark23', 'SQL_FORMAT = dummy', NULL);
+select emaj.emaj_gen_sql_dump_changes_group('myGroup2', 'Mark21', 'Mark23', 'PSQL_COPY_DIR=dummy', NULL);
+select emaj.emaj_gen_sql_dump_changes_group('myGroup2', 'Mark21', 'Mark23', 'PSQL_COPY_DIR=(' || :'EMAJTESTTMPDIR' || '), SQL_FORMAT=PRETTY', NULL);
+select emaj.emaj_gen_sql_dump_changes_group('myGroup2', 'Mark21', 'Mark23', 'PSQL_COPY_OPTIONS=dummy', NULL);
+select emaj.emaj_gen_sql_dump_changes_group('myGroup2', 'Mark21', 'Mark23', 'PSQL_COPY_OPTIONS=(format csv)', NULL);
+select emaj.emaj_dump_changes_group('myGroup2', 'Mark21', 'Mark23', 'PSQL_COPY_DIR=dummy', NULL, :'EMAJTESTTMPDIR');
+select emaj.emaj_dump_changes_group('myGroup2', 'Mark21', 'Mark23', 'PSQL_COPY_OPTIONS=()', NULL, :'EMAJTESTTMPDIR');
+select emaj.emaj_dump_changes_group('myGroup2', 'Mark21', 'Mark23', 'COPY_OPTIONS=dummy', NULL, :'EMAJTESTTMPDIR');
+select emaj.emaj_dump_changes_group('myGroup2', 'Mark21', 'Mark23', 'COPY_OPTIONS=(dummy)', NULL, :'EMAJTESTTMPDIR');
+select emaj.emaj_dump_changes_group('myGroup2', 'Mark21', 'Mark23', 'COPY_OPTIONS=(;)', NULL, :'EMAJTESTTMPDIR');
+
+-- invalid relations array
+select emaj.emaj_gen_sql_dump_changes_group('myGroup2', 'Mark21', 'Mark23', NULL, ARRAY['dummy']);
+
+-- invalid output location
+select emaj.emaj_gen_sql_dump_changes_group('myGroup2', 'Mark21', 'Mark23', NULL, NULL, NULL);
+select emaj.emaj_gen_sql_dump_changes_group('myGroup2', 'Mark21', 'Mark23', NULL, NULL, 'dummy');
+select emaj.emaj_gen_sql_dump_changes_group('myGroup2', 'Mark21', 'Mark23', NULL, NULL, '/dummy');
+select emaj.emaj_dump_changes_group('myGroup2', 'Mark21', 'Mark23', NULL, NULL, NULL);
+select emaj.emaj_dump_changes_group('myGroup2', 'Mark21', 'Mark23', NULL, NULL, 'dummy');
+
+--
+-- various options influencing the generated SQL
+--
+
+SELECT emaj.emaj_gen_sql_dump_changes_group('myGroup2', 'Mark21', 'Mark23', '', NULL);
+SELECT * FROM emaj_temp_sql;
+
+SELECT emaj.emaj_gen_sql_dump_changes_group('myGroup2', 'Mark21', 'Mark23', 'CONSOLIDATION=NONE,SQL_FORMAT=PRETTY', NULL);
+SELECT sql_tblseq, sql_text FROM emaj_temp_sql WHERE sql_tblseq in ('mytbl1','myseq1') and sql_line_number >= 1 order by sql_stmt_number, sql_line_number;
+SELECT emaj.emaj_gen_sql_dump_changes_group('myGroup2', 'Mark21', 'Mark23', 'CONSOLIDATION=PARTIAL,SQL_FORMAT=PRETTY', NULL);
+SELECT sql_tblseq, sql_text FROM emaj_temp_sql WHERE sql_tblseq in ('mytbl1','myseq1') and sql_line_number >= 1 order by sql_stmt_number, sql_line_number;
+SELECT emaj.emaj_gen_sql_dump_changes_group('myGroup2', 'Mark21', 'Mark23', 'CONSOLIDATION=FULL,SQL_FORMAT=PRETTY', NULL);
+SELECT sql_tblseq, sql_text FROM emaj_temp_sql WHERE sql_tblseq in ('mytbl1','myseq1') and sql_line_number >= 1 order by sql_stmt_number, sql_line_number;
+
+SELECT emaj.emaj_gen_sql_dump_changes_group('myGroup2', 'Mark21', 'Mark23', 'EMAJ_COLUMNS=ALL,CONSOLIDATION=FULL,SQL_FORMAT=PRETTY', NULL);
+SELECT sql_tblseq, sql_text FROM emaj_temp_sql WHERE sql_tblseq in ('mytbl1','myseq1') and sql_line_number >= 1 order by sql_stmt_number, sql_line_number;
+SELECT emaj.emaj_gen_sql_dump_changes_group('myGroup2', 'Mark21', 'Mark23', 'EMAJ_COLUMNS=MIN,SQL_FORMAT=PRETTY', NULL);
+SELECT sql_tblseq, sql_text FROM emaj_temp_sql WHERE sql_tblseq in ('mytbl1','myseq1') and sql_line_number >= 1 order by sql_stmt_number, sql_line_number;
+SELECT emaj.emaj_gen_sql_dump_changes_group('myGroup2', 'Mark21', 'Mark23', 'EMAJ_COLUMNS=(emaj_tuple, emaj_gid, emaj_txid),SQL_FORMAT=PRETTY', NULL);
+SELECT sql_tblseq, sql_text FROM emaj_temp_sql WHERE sql_tblseq in ('mytbl1','myseq1') and sql_line_number >= 1 order by sql_stmt_number, sql_line_number;
+
+SELECT emaj.emaj_gen_sql_dump_changes_group('myGroup2', 'Mark21', 'Mark23', 'ORDER_BY=PK,SQL_FORMAT=PRETTY', NULL);
+SELECT sql_tblseq, sql_text FROM emaj_temp_sql WHERE sql_tblseq in ('mytbl1','myseq1') and sql_line_number >= 1 order by sql_stmt_number, sql_line_number;
+SELECT emaj.emaj_gen_sql_dump_changes_group('myGroup2', 'Mark21', 'Mark23', 'ORDER_BY = TIME,
+																			 Consolidation = partial,
+																			 Sql_Format = Pretty', NULL);
+SELECT sql_tblseq, sql_text FROM emaj_temp_sql WHERE sql_tblseq in ('mytbl1','myseq1') and sql_line_number >= 1 order by sql_stmt_number, sql_line_number;
+
+SELECT emaj.emaj_gen_sql_dump_changes_group('myGroup2', 'Mark21', 'Mark23', 'SEQUENCES_ONLY', NULL);
+SELECT sql_rel_kind, count(*) FROM emaj_temp_sql WHERE sql_line_number = 1 group by sql_rel_kind ORDER BY sql_rel_kind;
+SELECT emaj.emaj_gen_sql_dump_changes_group('myGroup2', 'Mark21', 'Mark23', 'TABLES_ONLY', NULL);
+SELECT sql_rel_kind, count(*) FROM emaj_temp_sql WHERE sql_line_number = 1 group by sql_rel_kind ORDER BY sql_rel_kind;
+
+-- test the tables/sequences array filter
+SELECT emaj.emaj_gen_sql_dump_changes_group('myGroup2', 'Mark21', 'Mark23', NULL, ARRAY[]::TEXT[]);
+SELECT emaj.emaj_gen_sql_dump_changes_group('myGroup2', 'Mark21', 'Mark23', NULL, ARRAY[NULL, '']::TEXT[]);
+SELECT emaj.emaj_gen_sql_dump_changes_group('myGroup2', 'Mark21', 'Mark23', NULL, ARRAY['myschema2.mytbl1', 'myschema2.myseq1']);
+SELECT sql_rel_kind, count(*) FROM emaj_temp_sql WHERE sql_line_number = 1 group by 1;
+SELECT emaj.emaj_gen_sql_dump_changes_group('myGroup2', 'Mark21', 'Mark23', 'SEQUENCES_ONLY', ARRAY['myschema2.mytbl1']);
+SELECT emaj.emaj_gen_sql_dump_changes_group('myGroup2', 'Mark21', 'Mark23', 'TABLES_ONLY', ARRAY['myschema2.myseq1']);
+
+-- test output as a sql/psql script
+SELECT emaj.emaj_gen_sql_dump_changes_group('myGroup2', 'Mark21', 'Mark23', 'SQL_FORMAT=PRETTY', ARRAY['myschema2.mytbl1', 'myschema2.myseq1'],
+											:'EMAJTESTTMPDIR' || '/sql_script');
+\! cat $EMAJTESTTMPDIR/sql_script
+SELECT emaj.emaj_gen_sql_dump_changes_group('myGroup2', 'Mark21', 'Mark23', 'PSQL_COPY_DIR=(' || :'EMAJTESTTMPDIR' || ')', ARRAY['myschema2.mytbl1', 'myschema2.myseq1'],
+											:'EMAJTESTTMPDIR' || '/sql_script');
+\! cat $EMAJTESTTMPDIR/sql_script
+SELECT emaj.emaj_gen_sql_dump_changes_group('myGroup2', 'Mark21', 'Mark23',
+											'PSQL_COPY_DIR=(' || :'EMAJTESTTMPDIR' || '), PSQL_COPY_OPTIONS=(format csv, delimiter '';'', header)',
+											ARRAY['myschema2.mytbl1', 'myschema2.myseq1'], :'EMAJTESTTMPDIR' || '/sql_script');
+\! cat $EMAJTESTTMPDIR/sql_script
+\! rm $EMAJTESTTMPDIR/*
+
+-- Perform logged changes
+
+select emaj.emaj_set_mark_group('myGroup1','Dump_changes_tests_M1');
+
+-- Build the base content of the test table
+UPDATE myschema1.myTbl4 SET col42 = 'Initial row' WHERE col41 = 1 and col43 = 1;
+INSERT INTO myschema1.myTbl4
+  SELECT i, 'Initial row', 1, 1, 'ABC' FROM generate_series(2,9) i;
+
+select emaj.emaj_set_mark_group('myGroup1','Dump_changes_tests_M2');
+
+-- Record changes
+
+INSERT INTO myschema1.myTbl4 VALUES (10, 'Inserted row', 1, 1, 'ABC');
+
+DELETE FROM myschema1.myTbl4 WHERE col41 = 1 and col43 = 1;
+
+UPDATE myschema1.myTbl4 SET col43 = 2, col42 = 'PK col changed' WHERE col41 = 2 and col43 = 1;
+
+UPDATE myschema1.myTbl4 SET col42 = 'Non PK col changed' WHERE col41 = 3 and col43 = 1;
+
+UPDATE myschema1.myTbl4 SET col42 = 'Non PK col changed' WHERE col41 = 4 and col43 = 1;
+UPDATE myschema1.myTbl4 SET col42 = 'Non PK col changed twice' WHERE col41 = 4 and col43 = 1;
+
+UPDATE myschema1.myTbl4 SET col44 = 1 WHERE col41 = 5 and col43 = 1;  -- actually no change
+
+select emaj.emaj_set_mark_group('myGroup1','Dump_changes_tests_M3');
+
+INSERT INTO myschema1.myTbl4 VALUES (11, 'Inserted and deleted row', 2, 1, 'ABC');
+DELETE FROM myschema1.myTbl4 WHERE col41 = 11 and col43 = 2;
+
+DELETE FROM myschema1.myTbl4 WHERE col41 = 6 and col43 = 1;
+INSERT INTO myschema1.myTbl4 VALUES (6, 'Deleted and inserted row', 1, 1, 'ABC');
+
+DELETE FROM myschema1.myTbl4 WHERE col41 = 7 and col43 = 1;
+INSERT INTO myschema1.myTbl4 VALUES (7, 'Initial row', 1, 1, 'ABC');    -- totaly unchanged row
+
+INSERT INTO myschema1.myTbl4 VALUES (12, 'Inserted, updated and deleted row', 2, 1, 'ABC');
+UPDATE myschema1.myTbl4 SET col44 = 2 WHERE col41 = 12 and col43 = 2;
+DELETE FROM myschema1.myTbl4 WHERE col41 = 12 and col43 = 2;
+
+SELECT nextval('myschema1."myTbl3_col31_seq"');
+
+select * from emaj.emaj_set_mark_group('myGroup1','Dump_changes_tests_M4');
+
+-- Directly dump changes
+SELECT emaj.emaj_dump_changes_group('myGroup1', 'Dump_changes_tests_M2', 'Dump_changes_tests_M3',
+									'NO_EMPTY_FILES, EMAJ_COLUMNS=MIN',
+									NULL, :'EMAJTESTTMPDIR');
+\! ls -1sS $EMAJTESTTMPDIR
+\! cat $EMAJTESTTMPDIR/myschema1_mytbl4.changes
+\! cat $EMAJTESTTMPDIR/myschema1_myTbl3_col31_seq.changes
+\! rm $EMAJTESTTMPDIR/*
+
+CREATE EXTENSION adminpack;
+SELECT emaj.emaj_dump_changes_group('myGroup1', 'Dump_changes_tests_M3', 'Dump_changes_tests_M4',
+									'NO_EMPTY_FILES, COPY_OPTIONS=(format csv, header), EMAJ_COLUMNS=(emaj_verb,emaj_tuple,emaj_gid)',
+									NULL, :'EMAJTESTTMPDIR');
+\! ls -1sS $EMAJTESTTMPDIR
+\! grep -v '  started at ' $EMAJTESTTMPDIR/_INFO
+\! cat $EMAJTESTTMPDIR/myschema1_mytbl4.changes
+\! cat $EMAJTESTTMPDIR/myschema1_myTbl3_col31_seq.changes
+\! rm $EMAJTESTTMPDIR/*
+DROP EXTENSION adminpack;
+
+SELECT emaj.emaj_dump_changes_group('myGroup1', 'Dump_changes_tests_M2', 'Dump_changes_tests_M4',
+									'CONSOLIDATION=FULL, COPY_OPTIONS=(format csv, delimiter '';'', force_quote *, header)',
+                                    NULL, :'EMAJTESTTMPDIR');
+\! cat $EMAJTESTTMPDIR/myschema1_mytbl4.changes
+\! cat $EMAJTESTTMPDIR/myschema1_myTbl3_col31_seq.changes
+\! rm $EMAJTESTTMPDIR/*
+
+SELECT emaj.emaj_dump_changes_group('myGroup1', 'Dump_changes_tests_M2', 'Dump_changes_tests_M4',
+									'CONSOLIDATION=PARTIAL',
+                                    NULL, :'EMAJTESTTMPDIR');
+\! cat $EMAJTESTTMPDIR/myschema1_mytbl4.changes
+\! cat $EMAJTESTTMPDIR/myschema1_myTbl3_col31_seq.changes
+\! rm $EMAJTESTTMPDIR/*
+
+-- Dump changes for tables with unusual data types and consolidation.
+
+SELECT emaj.emaj_dump_changes_group('myGroup2', 'Multi-2', 'Multi-3',
+									'CONSOLIDATION=PARTIAL',
+                                    '{"myschema2.mytbl5", "myschema2.mytbl6"}', :'EMAJTESTTMPDIR');
+\! ls -1sS $EMAJTESTTMPDIR
+\! rm $EMAJTESTTMPDIR/*
+
+SELECT emaj.emaj_dump_changes_group('myGroup2', 'Multi-2', 'Multi-3',
+									'CONSOLIDATION=FULL',
+                                    '{"myschema2.mytbl5", "myschema2.mytbl6"}', :'EMAJTESTTMPDIR');
+\! ls -1sS $EMAJTESTTMPDIR
+\! rm $EMAJTESTTMPDIR/*
+
+-- Generate SQL statements with the PSQL_COPY_DIR option and execute the generated script
+SELECT emaj.emaj_gen_sql_dump_changes_group('myGroup1', 'Dump_changes_tests_M2', 'Dump_changes_tests_M4',
+											'PSQL_COPY_DIR=(' || :'EMAJTESTTMPDIR' || '), CONSOLIDATION=FULL',
+											NULL, :'EMAJTESTTMPDIR' || '/sql_script');
+\i :EMAJTESTTMPDIR/sql_script
+\! ls -1sS $EMAJTESTTMPDIR
+\! cat $EMAJTESTTMPDIR/myschema1_mytbl4.changes
+\! cat $EMAJTESTTMPDIR/myschema1_myTbl3_col31_seq.changes
+\! rm $EMAJTESTTMPDIR/*
+
+select * from emaj.emaj_rollback_group('myGroup1','Dump_changes_tests_M1');
+select emaj.emaj_cleanup_rollback_state();
+select emaj.emaj_delete_mark_group('myGroup1','EMAJ_LAST_MARK');
+
+-- Test using quotes in schéma, table or group names
+SELECT emaj.emaj_dump_changes_group('phil''s group#3",', 'Mark4', 'Mark5', NULL, NULL, :'EMAJTESTTMPDIR');
+\! ls -1sS $EMAJTESTTMPDIR
+\! grep -v '  started at ' $EMAJTESTTMPDIR/_INFO
+\! cat $EMAJTESTTMPDIR/"phil's_schema3_myTbl2__col21_seq.changes"
+\! rm $EMAJTESTTMPDIR/*
+
+-- Checks for emaj_dump_changes_group() and emaj_gen_sql_dump_changes_group()
+select hist_id, hist_function, hist_event, hist_object, 
+       regexp_replace(regexp_replace(hist_wording,E'\\d\\d\.\\d\\d\\.\\d\\d\\.\\d\\d\\d\\d','%','g'),E'\\[.+\\]','(timestamp)','g'), hist_user
+  from (select * from emaj.emaj_hist where hist_id >= 5400 order by hist_id) as t;
+
+-- set sequence restart value
+select public.handle_emaj_sequences(5500);
+
+-----------------------------
+-- emaj_gen_sql_group() and emaj_gen_sql_groups() tests
 -----------------------------
 
 -- group is unknown
@@ -563,7 +743,7 @@ rollback;
 -- check for emaj_gen_sql_group()
 select hist_id, hist_function, hist_event, hist_object, 
        regexp_replace(regexp_replace(hist_wording,E'\\d\\d\.\\d\\d\\.\\d\\d\\.\\d\\d\\d\\d','%','g'),E'\\[.+\\]','(timestamp)','g'), hist_user
-  from (select * from emaj.emaj_hist where hist_id >= 5400 order by hist_id) as t;
+  from (select * from emaj.emaj_hist where hist_id >= 5500 order by hist_id) as t;
 
 -- set sequence restart value
 select public.handle_emaj_sequences(5600);
@@ -581,7 +761,7 @@ truncate emaj.emaj_param;
 delete from emaj.emaj_param where param_key = 'emaj_version';
 
 -----------------------------
--- test parameters export and import functions
+-- emaj_export_parameters_configuration() and emaj_import_parameters_configuration() tests
 -----------------------------
 -- direct export
 --   ok
@@ -633,7 +813,7 @@ select json_array_length(emaj.emaj_export_parameters_configuration()->'parameter
 select emaj.emaj_import_parameters_configuration(:'EMAJTESTTMPDIR' || '/orig_param_config', false);
 
 -----------------------------
--- emaj_purge_histories() test
+-- emaj_purge_histories() tests
 -----------------------------
 select emaj.emaj_purge_histories(NULL);
 select emaj.emaj_purge_histories('0 SECOND');

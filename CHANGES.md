@@ -4,6 +4,12 @@ E-Maj - Change log
 ------
 ###Enhancements:###
   * Support of PG16.
+  * Replace the emaj_snap_log_group() function by two new functions,
+    emaj_dump_changes_group() and emaj_gen_sql_dump_changes_group(),
+    providing much more flexibility in data changes analysis, thanks to
+    a rich set of options. Among them, the CONSOLIDATION option allows to
+    easily understand the net changes on tables and sequences on a given
+    marks frame.
   * When launching an E-Maj rollback, allow to set a comment about the
     operation.
   * Add an emaj_comment_rollback() function to set/change/reset a comment on

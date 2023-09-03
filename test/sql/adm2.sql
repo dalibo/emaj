@@ -112,7 +112,7 @@ select col11, col12, col13, emaj_verb, emaj_tuple, emaj_gid from emaj_mySchema2.
 select col21, col22, col23, emaj_verb, emaj_tuple, emaj_gid from emaj_mySchema2.myTbl2_log order by emaj_gid, emaj_tuple desc;
 select col31, col33, emaj_verb, emaj_tuple, emaj_gid from emaj_myschema2."myTbl3_log" order by emaj_gid, emaj_tuple desc;
 select col41, col42, col43, col44, col45, emaj_verb, emaj_tuple, emaj_gid from emaj_myschema2.mytbl4_log order by emaj_gid, emaj_tuple desc;
-select col51, col52, col53, col54, emaj_verb, emaj_tuple, emaj_gid from emaj_myschema2.mytbl5_log order by emaj_gid, emaj_tuple desc;
+select col51, col52, col53, col54, col55, col56, col57, col58, emaj_verb, emaj_tuple, emaj_gid from emaj_myschema2.mytbl5_log order by emaj_gid, emaj_tuple desc;
 select col61, col62, col63, col64, col65, col66, emaj_verb, emaj_tuple, emaj_gid from emaj_mySchema2.myTbl6_log order by emaj_gid, emaj_tuple desc;
 
 -- set sequence restart value
@@ -238,11 +238,11 @@ delete from mytbl2b where col21 >= 10;
 
 -- add some updates for tables with unusual types (arrays, geometric)
 set search_path=public,myschema2;
-insert into myTbl5 values (10,'{"abc","def","ghi"}','{1,2,3}',NULL,'{}');
-insert into myTbl5 values (20,array['abc','def','ghi'],array[3,4,5],array['2000/02/01'::date,'2000/02/28'::date],'{"id":1000, "c1":"abc"}');
-update myTbl5 set col54 = '{"2010/11/28","2010/12/03"}', col55 = '{"id":1001, "c2":"def"}' where col54 is null;
-insert into myTbl6 select i+10, point(i,1.3), '((0,0),(2,2))', circle(point(5,5),i),'((-2,-2),(3,0),(1,4))','10.20.30.40/27' from generate_series (1,8) as i;
-update myTbl6 set col64 = '<(5,6),3.5>', col65 = null where col61 <= 13;
+insert into myTbl5 values (10,'{"abc","def","ghi"}','{1,2,3}',NULL,'{}',NULL,'{"id":1000}','[2020-01-01, 2021-01-01)',NULL);
+insert into myTbl5 values (20,array['abc','def','ghi'],array[3,4,5],array['2000/02/01'::date,'2000/02/28'::date],'{"id":1001, "c1":"abc"}',NULL,'{"id":1001}',NULL,XMLPARSE (CONTENT '<foo>bar</foo>'));
+update myTbl5 set col54 = '{"2010/11/28","2010/12/03"}', col55 = '{"id":1001, "c2":"def"}', col57 = '{"id":1001, "c3":"ghi"}' where col54 is null;
+insert into myTbl6 select i+10, point(i,1.3), '((0,0),(2,2))', circle(point(5,5),i),'((-2,-2),(3,0),(1,4))','10.20.30.40/27','EXECUTING',(i+10,point(i,1.3))::mycomposite from generate_series (1,8) as i;
+update myTbl6 set col64 = '<(5,6),3.5>', col65 = null, col67 = 'COMPLETED' where col61 <= 13;
 
 -- also add rows with unusual text content
 insert into mytbl2 values (10, E'row 1 \r... and row 2 with a '' (quote) character',null);
@@ -268,13 +268,13 @@ select emaj.emaj_snap_group('phil''s group#3",',:'EMAJTESTTMPDIR' || '/snaps1','
 
 -- generate a sql script for each active group (and check the result with detailed log statistics + number of sequences)
 select emaj.emaj_gen_sql_group('myGroup1', 'Multi-1', NULL, :'EMAJTESTTMPDIR' || '/myGroup1.sql');
-select coalesce(sum(stat_rows),0) + 2 as check from emaj.emaj_detailed_log_stat_group('myGroup1', 'Multi-1', NULL);
+select coalesce(sum(stat_rows),0) + 1 /* sequence change */ as check from emaj.emaj_detailed_log_stat_group('myGroup1', 'Multi-1', NULL);
 select emaj.emaj_gen_sql_group('myGroup2', 'Multi-1', NULL, :'EMAJTESTTMPDIR' || '/myGroup2.sql', array[
      'myschema2.mytbl1','myschema2.mytbl2','myschema2.myTbl3','myschema2.mytbl4',
      'myschema2.mytbl5','myschema2.mytbl6','myschema2.myseq1','myschema2.myTbl3_col31_seq']);
-select sum(stat_rows) + 2 as check from emaj.emaj_detailed_log_stat_group('myGroup2', 'Multi-1', NULL);
+select sum(stat_rows) + 1 /* sequence change */ as check from emaj.emaj_detailed_log_stat_group('myGroup2', 'Multi-1', NULL);
 select emaj.emaj_gen_sql_group('phil''s group#3",', 'M1_rollbackable', NULL, :'EMAJTESTTMPDIR' || '/Group3.sql');
-select sum(stat_rows) + 2 as check from emaj.emaj_detailed_log_stat_group('phil''s group#3",', 'M1_rollbackable', NULL);
+select sum(stat_rows) + 1 /* sequence change*/ as check from emaj.emaj_detailed_log_stat_group('phil''s group#3",', 'M1_rollbackable', NULL);
 
 -- generate another sql script for myGroup1 but with a manual export and check both scripts are the same
 select emaj.emaj_gen_sql_group('myGroup1', 'Multi-1', NULL, NULL);
@@ -449,7 +449,7 @@ select emaj.emaj_rename_mark_group('myGroup1','EMAJ_LAST_MARK','RLBK_MC1_DONE');
 select emaj.emaj_set_mark_group('myGroup1','MC3');
 insert into "myTbl3" (col33) select generate_series(2000,2039,4)/100;
 insert into myTbl4 values (2000,'FK...',1,10,'ABC');
-update myTbl4 set col43 = NULL where col41 = 2000;
+update myTbl4 set col44 = NULL where col41 = 2000;
 
 select emaj.emaj_set_mark_group('myGroup1','MC4');
 select emaj.emaj_set_mark_group('myGroup1','MC5');
@@ -495,7 +495,7 @@ select emaj.emaj_consolidate_rollback_group('myGroup1','EMAJ_LAST_MARK');
 select emaj.emaj_set_mark_group('myGroup1','MC9');
 insert into "myTbl3" (col33) select generate_series(2000,2039,4)/100;
 insert into myTbl4 values (2000,'FK...',1,10,'ABC');
-update myTbl4 set col43 = NULL where col41 = 2000;
+update myTbl4 set col44 = NULL where col41 = 2000;
 
 select * from emaj.emaj_logged_rollback_group('myGroup1','MC6',false) order by 1,2;
 select emaj.emaj_consolidate_rollback_group('myGroup1','EMAJ_LAST_MARK');
@@ -518,7 +518,7 @@ update myTbl2 set col22 = 'TC7' WHERE col22 ='TC6';
 
 select emaj.emaj_set_mark_group('myGroup1','MC11');
 insert into myTbl4 values (3000,'FK...',1,10,'ABC');
-update myTbl4 set col43 = NULL where col41 = 3000;
+update myTbl4 set col44 = NULL where col41 = 3000;
 
 select * from emaj.emaj_logged_rollback_group('myGroup1','MC10',false) order by 1,2;
 select emaj.emaj_consolidate_rollback_group('myGroup1','EMAJ_LAST_MARK');

@@ -3,7 +3,6 @@
 --   emaj_log_stat_group(), emaj_log_stat_groups(), emaj_detailled_log_stat_group() and emaj_detailled_log_stat_groups(),
 --   emaj_estimate_rollback_group() and emaj_estimate_rollback_groups(),
 --   emaj_snap_group(),
---   emaj_snap_log_group(),
 --   emaj_get_current_log_table(),
 --   emaj_gen_sql_group() and emaj_gen_sql_groups(),
 --   table reclustering,
@@ -831,7 +830,7 @@ select public.handle_emaj_sequences(5300);
 (1 row)
 
 -----------------------------
--- emaj_snap_group() test
+-- emaj_snap_group() tests
 -----------------------------
 -- group is unknown
 select emaj.emaj_snap_group(NULL,NULL,NULL);
@@ -851,14 +850,14 @@ CONTEXT:  PL/pgSQL function emaj.emaj_snap_group(text,text,text) line 32 at RAIS
 select emaj.emaj_snap_group('myGroup1','unknown_directory',NULL);
 ERROR:  relative path not allowed for COPY to file
 CONTEXT:  SQL statement "COPY (SELECT * FROM myschema1."myTbl3" ORDER BY col31) TO 'unknown_directory/myschema1_myTbl3.snap' "
-PL/pgSQL function emaj._copy_to_file(text,text,text,boolean,boolean) line 36 at EXECUTE
+PL/pgSQL function emaj._copy_to_file(text,text,text,boolean,boolean) line 37 at EXECUTE
 SQL statement "SELECT emaj._copy_to_file(v_stmt, v_fileName, p_copyOptions)"
 PL/pgSQL function emaj.emaj_snap_group(text,text,text) line 86 at PERFORM
 select emaj.emaj_snap_group('myGroup1','/unknown_directory',NULL);
 ERROR:  could not open file "/unknown_directory/myschema1_myTbl3.snap" for writing: No such file or directory
 HINT:  COPY TO instructs the PostgreSQL server process to write a file. You may want a client-side facility such as psql's \copy.
 CONTEXT:  SQL statement "COPY (SELECT * FROM myschema1."myTbl3" ORDER BY col31) TO '/unknown_directory/myschema1_myTbl3.snap' "
-PL/pgSQL function emaj._copy_to_file(text,text,text,boolean,boolean) line 36 at EXECUTE
+PL/pgSQL function emaj._copy_to_file(text,text,text,boolean,boolean) line 37 at EXECUTE
 SQL statement "SELECT emaj._copy_to_file(v_stmt, v_fileName, p_copyOptions)"
 PL/pgSQL function emaj.emaj_snap_group(text,text,text) line 86 at PERFORM
 -- invalid COPY TO options
@@ -867,7 +866,7 @@ ERROR:  syntax error at or near "dummy_option"
 LINE 1: ...l31) TO '/tmp/emaj_12/misc/myschema1_myTbl3.snap' dummy_opti...
                                                              ^
 QUERY:  COPY (SELECT * FROM myschema1."myTbl3" ORDER BY col31) TO '/tmp/emaj_12/misc/myschema1_myTbl3.snap' dummy_option
-CONTEXT:  PL/pgSQL function emaj._copy_to_file(text,text,text,boolean,boolean) line 36 at EXECUTE
+CONTEXT:  PL/pgSQL function emaj._copy_to_file(text,text,text,boolean,boolean) line 37 at EXECUTE
 SQL statement "SELECT emaj._copy_to_file(v_stmt, v_fileName, p_copyOptions)"
 PL/pgSQL function emaj.emaj_snap_group(text,text,text) line 86 at PERFORM
 -- SQL injection attempt
@@ -906,172 +905,7 @@ myschema1_mytbl2b_col20_seq.snap
 myschema1_mytbl4.snap
 \! rm $EMAJTESTTMPDIR/*
 -----------------------------
--- emaj_snap_log_group() test
------------------------------
--- group is unknown
-select emaj.emaj_snap_log_group(NULL,NULL,NULL,NULL,NULL);
-ERROR:  _check_group_names: No group to process.
-CONTEXT:  PL/pgSQL function emaj._check_group_names(text[],boolean,boolean,boolean,boolean,boolean,boolean) line 30 at RAISE
-SQL statement "SELECT emaj._check_group_names(p_groupNames := ARRAY[p_groupName], p_mayBeNull := FALSE, p_lockGroups := FALSE)"
-PL/pgSQL function emaj.emaj_snap_log_group(text,text,text,text,text) line 44 at PERFORM
-select emaj.emaj_snap_log_group('unknownGroup',NULL,NULL,NULL,NULL);
-ERROR:  _check_group_names: The group "unknownGroup" does not exist.
-CONTEXT:  PL/pgSQL function emaj._check_group_names(text[],boolean,boolean,boolean,boolean,boolean,boolean) line 42 at RAISE
-SQL statement "SELECT emaj._check_group_names(p_groupNames := ARRAY[p_groupName], p_mayBeNull := FALSE, p_lockGroups := FALSE)"
-PL/pgSQL function emaj.emaj_snap_log_group(text,text,text,text,text) line 44 at PERFORM
--- invalid start mark
-select emaj.emaj_snap_log_group('myGroup2',NULL,'EMAJ_LAST_MARK',:'EMAJTESTTMPDIR',NULL);
-ERROR:  _check_marks_range: The first mark cannot be NULL or empty.
-CONTEXT:  PL/pgSQL function emaj._check_marks_range(text[],text,text,boolean) line 12 at RAISE
-SQL statement "SELECT *                                                                                                                                     FROM emaj._check_marks_range(p_groupNames := ARRAY[p_groupName], p_firstMark := p_firstMark, p_lastMark := p_lastMark)"
-PL/pgSQL function emaj.emaj_snap_log_group(text,text,text,text,text) line 47 at SQL statement
-select emaj.emaj_snap_log_group('myGroup2','','EMAJ_LAST_MARK',:'EMAJTESTTMPDIR',NULL);
-ERROR:  _check_marks_range: The first mark cannot be NULL or empty.
-CONTEXT:  PL/pgSQL function emaj._check_marks_range(text[],text,text,boolean) line 12 at RAISE
-SQL statement "SELECT *                                                                                                                                     FROM emaj._check_marks_range(p_groupNames := ARRAY[p_groupName], p_firstMark := p_firstMark, p_lastMark := p_lastMark)"
-PL/pgSQL function emaj.emaj_snap_log_group(text,text,text,text,text) line 47 at SQL statement
-select emaj.emaj_snap_log_group('myGroup2','unknownMark','EMAJ_LAST_MARK',:'EMAJTESTTMPDIR',NULL);
-ERROR:  _check_mark_name: The mark "unknownMark" does not exist for the group "myGroup2".
-CONTEXT:  PL/pgSQL function emaj._check_mark_name(text[],text,boolean) line 59 at RAISE
-SQL statement "SELECT emaj._check_mark_name(p_groupNames := p_groupNames, p_mark := p_firstMark)"
-PL/pgSQL function emaj._check_marks_range(text[],text,text,boolean) line 15 at SQL statement
-SQL statement "SELECT *                                                                                                                                     FROM emaj._check_marks_range(p_groupNames := ARRAY[p_groupName], p_firstMark := p_firstMark, p_lastMark := p_lastMark)"
-PL/pgSQL function emaj.emaj_snap_log_group(text,text,text,text,text) line 47 at SQL statement
--- invalid end mark
-select emaj.emaj_snap_log_group('myGroup2','Mark21','unknownMark',:'EMAJTESTTMPDIR',NULL);
-ERROR:  _check_mark_name: The mark "unknownMark" does not exist for the group "myGroup2".
-CONTEXT:  PL/pgSQL function emaj._check_mark_name(text[],text,boolean) line 59 at RAISE
-SQL statement "SELECT emaj._check_mark_name(p_groupNames := p_groupNames, p_mark := p_lastMark)"
-PL/pgSQL function emaj._check_marks_range(text[],text,text,boolean) line 29 at SQL statement
-SQL statement "SELECT *                                                                                                                                     FROM emaj._check_marks_range(p_groupNames := ARRAY[p_groupName], p_firstMark := p_firstMark, p_lastMark := p_lastMark)"
-PL/pgSQL function emaj.emaj_snap_log_group(text,text,text,text,text) line 47 at SQL statement
--- start mark > end mark
--- just check the error is trapped, because the error message contents timestamps
-create function test_snap_log(v_groupName TEXT, v_firstMark TEXT, v_lastMark TEXT, v_location TEXT) returns void language plpgsql as 
-$$
-begin
-  begin
-    perform emaj.emaj_snap_log_group(v_groupName,v_firstMark,v_lastMark,v_location,NULL);
-    return;
-  exception when raise_exception then
-    raise notice 'Error trapped on emaj_snap_log_group() call';
-  end;
-  return;
-end;
-$$;
-select test_snap_log('myGroup2','Mark23','Mark21',:'EMAJTESTTMPDIR');
-NOTICE:  Error trapped on emaj_snap_log_group() call
- test_snap_log 
----------------
- 
-(1 row)
-
-select test_snap_log('myGroup2','EMAJ_LAST_MARK','Mark22',:'EMAJTESTTMPDIR');
-NOTICE:  Error trapped on emaj_snap_log_group() call
- test_snap_log 
----------------
- 
-(1 row)
-
-drop function test_snap_log(text,text,text);
-ERROR:  function test_snap_log(text, text, text) does not exist
--- invalid directory
-select emaj.emaj_snap_log_group('myGroup2','Mark21','EMAJ_LAST_MARK',NULL,NULL);
-ERROR:  emaj_snap_log_group: The directory parameter cannot be NULL.
-CONTEXT:  PL/pgSQL function emaj.emaj_snap_log_group(text,text,text,text,text) line 51 at RAISE
-select emaj.emaj_snap_log_group('myGroup2','Mark21','EMAJ_LAST_MARK','unknown_directory',NULL);
-ERROR:  relative path not allowed for COPY to file
-CONTEXT:  SQL statement "COPY (SELECT * FROM emaj_myschema2."myTbl3_log" WHERE emaj_gid > 4000000 AND emaj_gid <= 5011710 ORDER BY emaj_gid, emaj_tuple) TO 'unknown_directory/myschema2_myTbl3_log.snap' "
-PL/pgSQL function emaj._copy_to_file(text,text,text,boolean,boolean) line 36 at EXECUTE
-SQL statement "SELECT emaj._copy_to_file(v_stmt, v_fileName, p_copyOptions)"
-PL/pgSQL function emaj.emaj_snap_log_group(text,text,text,text,text) line 80 at PERFORM
-select emaj.emaj_snap_log_group('myGroup2','Mark21','EMAJ_LAST_MARK','/unknown_directory',NULL);
-ERROR:  could not open file "/unknown_directory/myschema2_myTbl3_log.snap" for writing: No such file or directory
-HINT:  COPY TO instructs the PostgreSQL server process to write a file. You may want a client-side facility such as psql's \copy.
-CONTEXT:  SQL statement "COPY (SELECT * FROM emaj_myschema2."myTbl3_log" WHERE emaj_gid > 4000000 AND emaj_gid <= 5011710 ORDER BY emaj_gid, emaj_tuple) TO '/unknown_directory/myschema2_myTbl3_log.snap' "
-PL/pgSQL function emaj._copy_to_file(text,text,text,boolean,boolean) line 36 at EXECUTE
-SQL statement "SELECT emaj._copy_to_file(v_stmt, v_fileName, p_copyOptions)"
-PL/pgSQL function emaj.emaj_snap_log_group(text,text,text,text,text) line 80 at PERFORM
--- invalid COPY TO options
-select emaj.emaj_snap_log_group('myGroup2','Mark21','EMAJ_LAST_MARK',:'EMAJTESTTMPDIR', 'dummy_option');
-ERROR:  syntax error at or near "dummy_option"
-LINE 1: ... TO '/tmp/emaj_12/misc/myschema2_myTbl3_log.snap' dummy_opti...
-                                                             ^
-QUERY:  COPY (SELECT * FROM emaj_myschema2."myTbl3_log" WHERE emaj_gid > 4000000 AND emaj_gid <= 5011710 ORDER BY emaj_gid, emaj_tuple) TO '/tmp/emaj_12/misc/myschema2_myTbl3_log.snap' dummy_option
-CONTEXT:  PL/pgSQL function emaj._copy_to_file(text,text,text,boolean,boolean) line 36 at EXECUTE
-SQL statement "SELECT emaj._copy_to_file(v_stmt, v_fileName, p_copyOptions)"
-PL/pgSQL function emaj.emaj_snap_log_group(text,text,text,text,text) line 80 at PERFORM
--- SQL injection attempt
-select emaj.emaj_snap_log_group('myGroup2','Mark21','EMAJ_LAST_MARK',:'EMAJTESTTMPDIR','; CREATE ROLE fake LOGIN PASSWORD '''' SUPERUSER');
-ERROR:  emaj_snap_log_group: The COPY options parameter format is invalid.
-CONTEXT:  PL/pgSQL function emaj.emaj_snap_log_group(text,text,text,text,text) line 55 at RAISE
--- should be ok
-select emaj.emaj_snap_log_group('emptyGroup','EGM3','EGM4',:'EMAJTESTTMPDIR',NULL);
- emaj_snap_log_group 
----------------------
-                   3
-(1 row)
-
-\! ls $EMAJTESTTMPDIR
-_INFO
-emptyGroup_sequences_at_EGM3
-emptyGroup_sequences_at_EGM4
-\! cat $EMAJTESTTMPDIR/emptyGroup_sequences_at_EGM3
-\! rm $EMAJTESTTMPDIR/*
-select emaj.emaj_snap_log_group('myGroup2','Mark21',NULL,:'EMAJTESTTMPDIR','CSV HEADER');
- emaj_snap_log_group 
----------------------
-                  11
-(1 row)
-
-select emaj.emaj_snap_log_group('myGroup2','Mark21','Mark21',:'EMAJTESTTMPDIR','CSV');
- emaj_snap_log_group 
----------------------
-                   3
-(1 row)
-
-select emaj.emaj_snap_log_group('myGroup2','Mark21','Mark23',:'EMAJTESTTMPDIR',NULL);
- emaj_snap_log_group 
----------------------
-                  11
-(1 row)
-
--- mark name with special characters
-select emaj.emaj_set_mark_group('myGroup2',E'/<*crazy mark$>\\');
- emaj_set_mark_group 
----------------------
-                  10
-(1 row)
-
-select emaj.emaj_snap_log_group('myGroup2','Mark21',E'/<*crazy mark$>\\',:'EMAJTESTTMPDIR',NULL);
- emaj_snap_log_group 
----------------------
-                  11
-(1 row)
-
-\! ls $EMAJTESTTMPDIR |sed s/[0-9][0-9].[0-9][0-9].[0-9][0-9].[0-9][0-9][0-9]/\[timestamp_mask\]/g
-_INFO
-myGroup2_sequences_at_[timestamp_mask]
-myGroup2_sequences_at_Mark21
-myGroup2_sequences_at_Mark23
-myGroup2_sequences_at____crazy_mark___
-myschema2_myTbl3_log.snap
-myschema2_mytbl1_log.snap
-myschema2_mytbl2_log.snap
-myschema2_mytbl4_log.snap
-myschema2_mytbl5_log.snap
-myschema2_mytbl6_log.snap
-myschema2_mytbl7_log.snap
-myschema2_mytbl8_log.snap
-select emaj.emaj_delete_mark_group('myGroup2',E'/<*crazy mark$>\\');
- emaj_delete_mark_group 
-------------------------
-                      1
-(1 row)
-
-\! rm $EMAJTESTTMPDIR/*
------------------------------
--- emaj_get_current_log_table() test
+-- emaj_get_current_log_table() tests
 -----------------------------
 -- not found
 select * from emaj.emaj_get_current_log_table('myschema1', 'dummy_table');
@@ -1094,35 +928,19 @@ select 'select count(*) from ' || quote_ident(log_schema) || '.' || quote_ident(
  select count(*) from emaj_myschema1.mytbl1_log
 (1 row)
 
--- check for emaj_snap_group() and emaj_snap_log_group()
+-- check for emaj_snap_group()
 select hist_id, hist_function, hist_event, hist_object, 
        regexp_replace(regexp_replace(hist_wording,E'\\d\\d\.\\d\\d\\.\\d\\d\\.\\d\\d\\d\\d','%','g'),E'\\[.+\\]','(timestamp)','g'), hist_user
   from (select * from emaj.emaj_hist where hist_id >= 5300 order by hist_id) as t;
- hist_id |   hist_function   | hist_event | hist_object |                           regexp_replace                            | hist_user 
----------+-------------------+------------+-------------+---------------------------------------------------------------------+-----------
-    5307 | SNAP_GROUP        | BEGIN      | emptyGroup  | /tmp/emaj_12/misc                                                   | postgres
-    5308 | SNAP_GROUP        | END        | emptyGroup  | 0 tables/sequences processed                                        | postgres
-    5309 | SNAP_GROUP        | BEGIN      | myGroup1    | /tmp/emaj_12/misc                                                   | postgres
-    5310 | SNAP_GROUP        | END        | myGroup1    | 7 tables/sequences processed                                        | postgres
-    5311 | SNAP_GROUP        | BEGIN      | myGroup1    | /tmp/emaj_12/misc                                                   | postgres
-    5312 | SNAP_GROUP        | END        | myGroup1    | 7 tables/sequences processed                                        | postgres
-    5326 | SNAP_LOG_GROUP    | BEGIN      | emptyGroup  | From mark EGM3 to mark EGM4 towards /tmp/emaj_12/misc               | postgres
-    5327 | SNAP_LOG_GROUP    | END        | emptyGroup  | 3 generated files                                                   | postgres
-    5328 | SNAP_LOG_GROUP    | BEGIN      | myGroup2    | From mark Mark21 to current state towards /tmp/emaj_12/misc         | postgres
-    5329 | SNAP_LOG_GROUP    | END        | myGroup2    | 11 generated files                                                  | postgres
-    5330 | SNAP_LOG_GROUP    | BEGIN      | myGroup2    | From mark Mark21 to mark Mark21 towards /tmp/emaj_12/misc           | postgres
-    5331 | SNAP_LOG_GROUP    | END        | myGroup2    | 3 generated files                                                   | postgres
-    5332 | SNAP_LOG_GROUP    | BEGIN      | myGroup2    | From mark Mark21 to mark Mark23 towards /tmp/emaj_12/misc           | postgres
-    5333 | SNAP_LOG_GROUP    | END        | myGroup2    | 11 generated files                                                  | postgres
-    5334 | SET_MARK_GROUP    | BEGIN      | myGroup2    |                                                                     | postgres
-    5335 | LOCK_GROUP        | BEGIN      | myGroup2    |                                                                     | postgres
-    5336 | LOCK_GROUP        | END        | myGroup2    | 8 tables locked, 0 deadlock(s)                                      | postgres
-    5337 | SET_MARK_GROUP    | END        | myGroup2    | /<*crazy mark$>\                                                    | postgres
-    5338 | SNAP_LOG_GROUP    | BEGIN      | myGroup2    | From mark Mark21 to mark /<*crazy mark$>\ towards /tmp/emaj_12/misc | postgres
-    5339 | SNAP_LOG_GROUP    | END        | myGroup2    | 11 generated files                                                  | postgres
-    5340 | DELETE_MARK_GROUP | BEGIN      | myGroup2    | /<*crazy mark$>\                                                    | postgres
-    5341 | DELETE_MARK_GROUP | END        | myGroup2    | /<*crazy mark$>\                                                    | postgres
-(22 rows)
+ hist_id | hist_function | hist_event | hist_object |        regexp_replace        | hist_user 
+---------+---------------+------------+-------------+------------------------------+-----------
+    5307 | SNAP_GROUP    | BEGIN      | emptyGroup  | /tmp/emaj_12/misc            | postgres
+    5308 | SNAP_GROUP    | END        | emptyGroup  | 0 tables/sequences processed | postgres
+    5309 | SNAP_GROUP    | BEGIN      | myGroup1    | /tmp/emaj_12/misc            | postgres
+    5310 | SNAP_GROUP    | END        | myGroup1    | 7 tables/sequences processed | postgres
+    5311 | SNAP_GROUP    | BEGIN      | myGroup1    | /tmp/emaj_12/misc            | postgres
+    5312 | SNAP_GROUP    | END        | myGroup1    | 7 tables/sequences processed | postgres
+(6 rows)
 
 -- set sequence restart value
 select public.handle_emaj_sequences(5400);
@@ -1132,7 +950,1094 @@ select public.handle_emaj_sequences(5400);
 (1 row)
 
 -----------------------------
--- emaj_gen_sql_group() and emaj_gen_sql_groups() test
+-- emaj_dump_changes_group() and emaj_gen_sql_dump_changes_group() tests
+-----------------------------
+--
+-- Test errors with input parameters
+--
+-- group is unknown
+select emaj.emaj_gen_sql_dump_changes_group('dummy', NULL, NULL, NULL, NULL);
+ERROR:  _check_group_names: The group "dummy" does not exist.
+CONTEXT:  PL/pgSQL function emaj._check_group_names(text[],boolean,boolean,boolean,boolean,boolean,boolean) line 42 at RAISE
+SQL statement "SELECT emaj._check_group_names(p_groupNames := ARRAY[p_groupName], p_mayBeNull := FALSE, p_lockGroups := FALSE)"
+PL/pgSQL function emaj._gen_sql_dump_changes_group(text,text,text,text,text[],boolean) line 50 at PERFORM
+SQL statement "SELECT p_nbStmt, p_isPsqlCopy
+      FROM emaj._gen_sql_dump_changes_group(p_groupName, p_firstMark, p_lastMark, p_optionsList, p_tblseqs, TRUE)"
+PL/pgSQL function emaj.emaj_gen_sql_dump_changes_group(text,text,text,text,text[]) line 26 at SQL statement
+-- start mark is null or unknown
+select emaj.emaj_gen_sql_dump_changes_group('myGroup2', NULL, NULL, NULL, NULL);
+ERROR:  _check_marks_range: The first mark cannot be NULL or empty.
+CONTEXT:  PL/pgSQL function emaj._check_marks_range(text[],text,text,boolean) line 12 at RAISE
+SQL statement "SELECT *                                                                                                                                     FROM emaj._check_marks_range(p_groupNames := ARRAY[p_groupName], p_firstMark := p_firstMark, p_lastMark := p_lastMark,
+                                   p_finiteUpperBound := TRUE)"
+PL/pgSQL function emaj._gen_sql_dump_changes_group(text,text,text,text,text[],boolean) line 52 at SQL statement
+SQL statement "SELECT p_nbStmt, p_isPsqlCopy
+      FROM emaj._gen_sql_dump_changes_group(p_groupName, p_firstMark, p_lastMark, p_optionsList, p_tblseqs, TRUE)"
+PL/pgSQL function emaj.emaj_gen_sql_dump_changes_group(text,text,text,text,text[]) line 26 at SQL statement
+select emaj.emaj_gen_sql_dump_changes_group('myGroup2', 'dummy', NULL, NULL, NULL);
+ERROR:  _check_mark_name: The mark "dummy" does not exist for the group "myGroup2".
+CONTEXT:  PL/pgSQL function emaj._check_mark_name(text[],text,boolean) line 59 at RAISE
+SQL statement "SELECT emaj._check_mark_name(p_groupNames := p_groupNames, p_mark := p_firstMark)"
+PL/pgSQL function emaj._check_marks_range(text[],text,text,boolean) line 15 at SQL statement
+SQL statement "SELECT *                                                                                                                                     FROM emaj._check_marks_range(p_groupNames := ARRAY[p_groupName], p_firstMark := p_firstMark, p_lastMark := p_lastMark,
+                                   p_finiteUpperBound := TRUE)"
+PL/pgSQL function emaj._gen_sql_dump_changes_group(text,text,text,text,text[],boolean) line 52 at SQL statement
+SQL statement "SELECT p_nbStmt, p_isPsqlCopy
+      FROM emaj._gen_sql_dump_changes_group(p_groupName, p_firstMark, p_lastMark, p_optionsList, p_tblseqs, TRUE)"
+PL/pgSQL function emaj.emaj_gen_sql_dump_changes_group(text,text,text,text,text[]) line 26 at SQL statement
+-- end mark is null or unknown
+select emaj.emaj_gen_sql_dump_changes_group('myGroup2', 'Mark21', NULL, NULL, NULL);
+ERROR:  _check_marks_range: The last mark cannot be NULL or empty.
+CONTEXT:  PL/pgSQL function emaj._check_marks_range(text[],text,text,boolean) line 25 at RAISE
+SQL statement "SELECT *                                                                                                                                     FROM emaj._check_marks_range(p_groupNames := ARRAY[p_groupName], p_firstMark := p_firstMark, p_lastMark := p_lastMark,
+                                   p_finiteUpperBound := TRUE)"
+PL/pgSQL function emaj._gen_sql_dump_changes_group(text,text,text,text,text[],boolean) line 52 at SQL statement
+SQL statement "SELECT p_nbStmt, p_isPsqlCopy
+      FROM emaj._gen_sql_dump_changes_group(p_groupName, p_firstMark, p_lastMark, p_optionsList, p_tblseqs, TRUE)"
+PL/pgSQL function emaj.emaj_gen_sql_dump_changes_group(text,text,text,text,text[]) line 26 at SQL statement
+select emaj.emaj_gen_sql_dump_changes_group('myGroup2', 'Mark21', 'dummy', NULL, NULL);
+ERROR:  _check_mark_name: The mark "dummy" does not exist for the group "myGroup2".
+CONTEXT:  PL/pgSQL function emaj._check_mark_name(text[],text,boolean) line 59 at RAISE
+SQL statement "SELECT emaj._check_mark_name(p_groupNames := p_groupNames, p_mark := p_lastMark)"
+PL/pgSQL function emaj._check_marks_range(text[],text,text,boolean) line 29 at SQL statement
+SQL statement "SELECT *                                                                                                                                     FROM emaj._check_marks_range(p_groupNames := ARRAY[p_groupName], p_firstMark := p_firstMark, p_lastMark := p_lastMark,
+                                   p_finiteUpperBound := TRUE)"
+PL/pgSQL function emaj._gen_sql_dump_changes_group(text,text,text,text,text[],boolean) line 52 at SQL statement
+SQL statement "SELECT p_nbStmt, p_isPsqlCopy
+      FROM emaj._gen_sql_dump_changes_group(p_groupName, p_firstMark, p_lastMark, p_optionsList, p_tblseqs, TRUE)"
+PL/pgSQL function emaj.emaj_gen_sql_dump_changes_group(text,text,text,text,text[]) line 26 at SQL statement
+-- end mark is prior start mark
+-- just check the error is trapped, because the error message contents timestamps
+do language plpgsql
+$$
+begin
+  begin
+    perform emaj.emaj_gen_sql_dump_changes_group('myGroup2', 'Mark23', 'Mark21', NULL, NULL);
+    return;
+  exception when raise_exception then
+    raise notice 'Error trapped on emaj_gen_sql_dump_changes_group() call';
+  end;
+end;
+$$;
+NOTICE:  Error trapped on emaj_gen_sql_dump_changes_group() call
+-- invalid options
+select emaj.emaj_gen_sql_dump_changes_group('myGroup2', 'Mark21', 'Mark23', 'dummy', NULL);
+ERROR:  _gen_sql_dump_changes_group: The option "DUMMY" is unknown.
+CONTEXT:  PL/pgSQL function emaj._gen_sql_dump_changes_group(text,text,text,text,text[],boolean) line 179 at RAISE
+SQL statement "SELECT p_nbStmt, p_isPsqlCopy
+      FROM emaj._gen_sql_dump_changes_group(p_groupName, p_firstMark, p_lastMark, p_optionsList, p_tblseqs, TRUE)"
+PL/pgSQL function emaj.emaj_gen_sql_dump_changes_group(text,text,text,text,text[]) line 26 at SQL statement
+select emaj.emaj_gen_sql_dump_changes_group('myGroup2', 'Mark21', 'Mark23', 'COLS_ORDER = dummy', NULL);
+ERROR:  _gen_sql_dump_changes_group: Error on the option "COLS_ORDER=DUMMY". The COLS_ORDER option only accepts TABLE_LOG or PK values).
+CONTEXT:  PL/pgSQL function emaj._gen_sql_dump_changes_group(text,text,text,text,text[],boolean) line 95 at RAISE
+SQL statement "SELECT p_nbStmt, p_isPsqlCopy
+      FROM emaj._gen_sql_dump_changes_group(p_groupName, p_firstMark, p_lastMark, p_optionsList, p_tblseqs, TRUE)"
+PL/pgSQL function emaj.emaj_gen_sql_dump_changes_group(text,text,text,text,text[]) line 26 at SQL statement
+select emaj.emaj_gen_sql_dump_changes_group('phil''s group#3",', 'Mark4', 'Mark5', 'COLS_ORDER = PK', NULL);
+ERROR:  _gen_sql_dump_changes_group: A CONSOLIDATION level set to PARTIAL or FULL or a COLS_ORDER set to PK or an ORDER_BY set to PK cannot support tables without primary key. And no primary key is defined for tables "phil's schema3.myTbl2\"
+CONTEXT:  PL/pgSQL function emaj._gen_sql_dump_changes_group(text,text,text,text,text[],boolean) line 211 at RAISE
+SQL statement "SELECT p_nbStmt, p_isPsqlCopy
+      FROM emaj._gen_sql_dump_changes_group(p_groupName, p_firstMark, p_lastMark, p_optionsList, p_tblseqs, TRUE)"
+PL/pgSQL function emaj.emaj_gen_sql_dump_changes_group(text,text,text,text,text[]) line 26 at SQL statement
+select emaj.emaj_gen_sql_dump_changes_group('myGroup2', 'Mark21', 'Mark23', 'COPY_OPTIONS=()', NULL);
+ERROR:  _gen_sql_dump_changes_group: The option "COPY_OPTIONS=()" is unknown.
+CONTEXT:  PL/pgSQL function emaj._gen_sql_dump_changes_group(text,text,text,text,text[],boolean) line 179 at RAISE
+SQL statement "SELECT p_nbStmt, p_isPsqlCopy
+      FROM emaj._gen_sql_dump_changes_group(p_groupName, p_firstMark, p_lastMark, p_optionsList, p_tblseqs, TRUE)"
+PL/pgSQL function emaj.emaj_gen_sql_dump_changes_group(text,text,text,text,text[]) line 26 at SQL statement
+select emaj.emaj_gen_sql_dump_changes_group('myGroup2', 'Mark21', 'Mark23', 'CONSOLIDATION = dummy', NULL);
+ERROR:  _gen_sql_dump_changes_group: Error on the option "CONSOLIDATION=DUMMY". The CONSOLIDATION option only accepts NONE or PARTIAL or FULL values).
+CONTEXT:  PL/pgSQL function emaj._gen_sql_dump_changes_group(text,text,text,text,text[],boolean) line 108 at RAISE
+SQL statement "SELECT p_nbStmt, p_isPsqlCopy
+      FROM emaj._gen_sql_dump_changes_group(p_groupName, p_firstMark, p_lastMark, p_optionsList, p_tblseqs, TRUE)"
+PL/pgSQL function emaj.emaj_gen_sql_dump_changes_group(text,text,text,text,text[]) line 26 at SQL statement
+select emaj.emaj_gen_sql_dump_changes_group('phil''s group#3",', 'Mark4', 'Mark5', 'CONSOLIDATION = FULL', NULL);
+ERROR:  _gen_sql_dump_changes_group: A CONSOLIDATION level set to PARTIAL or FULL or a COLS_ORDER set to PK or an ORDER_BY set to PK cannot support tables without primary key. And no primary key is defined for tables "phil's schema3.myTbl2\"
+CONTEXT:  PL/pgSQL function emaj._gen_sql_dump_changes_group(text,text,text,text,text[],boolean) line 211 at RAISE
+SQL statement "SELECT p_nbStmt, p_isPsqlCopy
+      FROM emaj._gen_sql_dump_changes_group(p_groupName, p_firstMark, p_lastMark, p_optionsList, p_tblseqs, TRUE)"
+PL/pgSQL function emaj.emaj_gen_sql_dump_changes_group(text,text,text,text,text[]) line 26 at SQL statement
+select emaj.emaj_gen_sql_dump_changes_group('phil''s group#3",', 'Mark4', 'Mark5', 'CONSOLIDATION = partial', NULL);
+ERROR:  _gen_sql_dump_changes_group: A CONSOLIDATION level set to PARTIAL or FULL or a COLS_ORDER set to PK or an ORDER_BY set to PK cannot support tables without primary key. And no primary key is defined for tables "phil's schema3.myTbl2\"
+CONTEXT:  PL/pgSQL function emaj._gen_sql_dump_changes_group(text,text,text,text,text[],boolean) line 211 at RAISE
+SQL statement "SELECT p_nbStmt, p_isPsqlCopy
+      FROM emaj._gen_sql_dump_changes_group(p_groupName, p_firstMark, p_lastMark, p_optionsList, p_tblseqs, TRUE)"
+PL/pgSQL function emaj.emaj_gen_sql_dump_changes_group(text,text,text,text,text[]) line 26 at SQL statement
+select emaj.emaj_gen_sql_dump_changes_group('myGroup2', 'Mark21', 'Mark23', 'EMAJ_COLUMNS = dummy', NULL);
+ERROR:  _gen_sql_dump_changes_group: Error on the option "EMAJ_COLUMNS=DUMMY". The EMAJ_COLUMNS option only accepts ALL or MIN values or a (columns list).
+CONTEXT:  PL/pgSQL function emaj._gen_sql_dump_changes_group(text,text,text,text,text[],boolean) line 134 at RAISE
+SQL statement "SELECT p_nbStmt, p_isPsqlCopy
+      FROM emaj._gen_sql_dump_changes_group(p_groupName, p_firstMark, p_lastMark, p_optionsList, p_tblseqs, TRUE)"
+PL/pgSQL function emaj.emaj_gen_sql_dump_changes_group(text,text,text,text,text[]) line 26 at SQL statement
+select emaj.emaj_gen_sql_dump_changes_group('myGroup2', 'Mark21', 'Mark23', 'EMAJ_COLUMNS = ()', NULL);
+ERROR:  _gen_sql_dump_changes_group: In the EMAJ_COLUMN option, the "emaj_tuple" column must be part of the columns list.
+CONTEXT:  PL/pgSQL function emaj._gen_sql_dump_changes_group(text,text,text,text,text[],boolean) line 130 at RAISE
+SQL statement "SELECT p_nbStmt, p_isPsqlCopy
+      FROM emaj._gen_sql_dump_changes_group(p_groupName, p_firstMark, p_lastMark, p_optionsList, p_tblseqs, TRUE)"
+PL/pgSQL function emaj.emaj_gen_sql_dump_changes_group(text,text,text,text,text[]) line 26 at SQL statement
+select emaj.emaj_gen_sql_dump_changes_group('myGroup2', 'Mark21', 'Mark23', 'EMAJ_COLUMNS = (emaj_tuple , dummy)', NULL);
+NOTICE:  table "emaj_temp_sql" does not exist, skipping
+ERROR:  _gen_sql_dump_changes_tbl: The emaj column "dummy" from the EMAJ_COLUMNS option (emaj_tuple,dummy) is not valid for table emaj_myschema2.myTbl3_log.
+CONTEXT:  PL/pgSQL function emaj._gen_sql_dump_changes_tbl(text,text,integer,text[],bigint,bigint,text,text,text,text) line 62 at RAISE
+PL/pgSQL function emaj._gen_sql_dump_changes_group(text,text,text,text,text[],boolean) line 326 at assignment
+SQL statement "SELECT p_nbStmt, p_isPsqlCopy
+      FROM emaj._gen_sql_dump_changes_group(p_groupName, p_firstMark, p_lastMark, p_optionsList, p_tblseqs, TRUE)"
+PL/pgSQL function emaj.emaj_gen_sql_dump_changes_group(text,text,text,text,text[]) line 26 at SQL statement
+select emaj.emaj_gen_sql_dump_changes_group('myGroup2', 'Mark21', 'Mark23', 'NO_EMPTY_FILES', NULL);
+ERROR:  _gen_sql_dump_changes_group: The option "NO_EMPTY_FILES" is unknown.
+CONTEXT:  PL/pgSQL function emaj._gen_sql_dump_changes_group(text,text,text,text,text[],boolean) line 179 at RAISE
+SQL statement "SELECT p_nbStmt, p_isPsqlCopy
+      FROM emaj._gen_sql_dump_changes_group(p_groupName, p_firstMark, p_lastMark, p_optionsList, p_tblseqs, TRUE)"
+PL/pgSQL function emaj.emaj_gen_sql_dump_changes_group(text,text,text,text,text[]) line 26 at SQL statement
+select emaj.emaj_gen_sql_dump_changes_group('myGroup2', 'Mark21', 'Mark23', 'Tables_Only, Sequences_Only', NULL);
+ERROR:  _gen_sql_dump_changes_group: SEQUENCES_ONLY and TABLES_ONLY options are mutually exclusive.
+CONTEXT:  PL/pgSQL function emaj._gen_sql_dump_changes_group(text,text,text,text,text[],boolean) line 186 at RAISE
+SQL statement "SELECT p_nbStmt, p_isPsqlCopy
+      FROM emaj._gen_sql_dump_changes_group(p_groupName, p_firstMark, p_lastMark, p_optionsList, p_tblseqs, TRUE)"
+PL/pgSQL function emaj.emaj_gen_sql_dump_changes_group(text,text,text,text,text[]) line 26 at SQL statement
+select emaj.emaj_gen_sql_dump_changes_group('myGroup2', 'Mark21', 'Mark23', 'ORDER_BY = dummy', NULL);
+ERROR:  _gen_sql_dump_changes_group: Error on the option "ORDER_BY=DUMMY". The ORDER_BY option only accepts PK or TIME values.
+CONTEXT:  PL/pgSQL function emaj._gen_sql_dump_changes_group(text,text,text,text,text[],boolean) line 147 at RAISE
+SQL statement "SELECT p_nbStmt, p_isPsqlCopy
+      FROM emaj._gen_sql_dump_changes_group(p_groupName, p_firstMark, p_lastMark, p_optionsList, p_tblseqs, TRUE)"
+PL/pgSQL function emaj.emaj_gen_sql_dump_changes_group(text,text,text,text,text[]) line 26 at SQL statement
+select emaj.emaj_gen_sql_dump_changes_group('phil''s group#3",', 'Mark4', 'Mark5', 'ORDER_BY = pk', NULL);
+ERROR:  _gen_sql_dump_changes_group: A CONSOLIDATION level set to PARTIAL or FULL or a COLS_ORDER set to PK or an ORDER_BY set to PK cannot support tables without primary key. And no primary key is defined for tables "phil's schema3.myTbl2\"
+CONTEXT:  PL/pgSQL function emaj._gen_sql_dump_changes_group(text,text,text,text,text[],boolean) line 211 at RAISE
+SQL statement "SELECT p_nbStmt, p_isPsqlCopy
+      FROM emaj._gen_sql_dump_changes_group(p_groupName, p_firstMark, p_lastMark, p_optionsList, p_tblseqs, TRUE)"
+PL/pgSQL function emaj.emaj_gen_sql_dump_changes_group(text,text,text,text,text[]) line 26 at SQL statement
+select emaj.emaj_gen_sql_dump_changes_group('myGroup2', 'Mark21', 'Mark23', 'SQL_FORMAT = dummy', NULL);
+ERROR:  _gen_sql_dump_changes_group: Error on the option "SQL_FORMAT=DUMMY". The SQL_FORMAT option only accepts RAW or PRETTY values.
+CONTEXT:  PL/pgSQL function emaj._gen_sql_dump_changes_group(text,text,text,text,text[],boolean) line 171 at RAISE
+SQL statement "SELECT p_nbStmt, p_isPsqlCopy
+      FROM emaj._gen_sql_dump_changes_group(p_groupName, p_firstMark, p_lastMark, p_optionsList, p_tblseqs, TRUE)"
+PL/pgSQL function emaj.emaj_gen_sql_dump_changes_group(text,text,text,text,text[]) line 26 at SQL statement
+select emaj.emaj_gen_sql_dump_changes_group('myGroup2', 'Mark21', 'Mark23', 'PSQL_COPY_DIR=dummy', NULL);
+ERROR:  _gen_sql_dump_changes_group: Error on the option "PSQL_COPY_DIR=DUMMY". The directory name must be set between ().
+CONTEXT:  PL/pgSQL function emaj._gen_sql_dump_changes_group(text,text,text,text,text[],boolean) line 154 at RAISE
+SQL statement "SELECT p_nbStmt, p_isPsqlCopy
+      FROM emaj._gen_sql_dump_changes_group(p_groupName, p_firstMark, p_lastMark, p_optionsList, p_tblseqs, TRUE)"
+PL/pgSQL function emaj.emaj_gen_sql_dump_changes_group(text,text,text,text,text[]) line 26 at SQL statement
+select emaj.emaj_gen_sql_dump_changes_group('myGroup2', 'Mark21', 'Mark23', 'PSQL_COPY_DIR=(' || :'EMAJTESTTMPDIR' || '), SQL_FORMAT=PRETTY', NULL);
+ERROR:  _gen_sql_dump_changes_group: PSQL_COPY_DIR and FORMAT=PRETTY options are mutually exclusive.
+CONTEXT:  PL/pgSQL function emaj._gen_sql_dump_changes_group(text,text,text,text,text[],boolean) line 194 at RAISE
+SQL statement "SELECT p_nbStmt, p_isPsqlCopy
+      FROM emaj._gen_sql_dump_changes_group(p_groupName, p_firstMark, p_lastMark, p_optionsList, p_tblseqs, TRUE)"
+PL/pgSQL function emaj.emaj_gen_sql_dump_changes_group(text,text,text,text,text[]) line 26 at SQL statement
+select emaj.emaj_gen_sql_dump_changes_group('myGroup2', 'Mark21', 'Mark23', 'PSQL_COPY_OPTIONS=dummy', NULL);
+ERROR:  _gen_sql_dump_changes_group: Error on the option "PSQL_COPY_OPTIONS=DUMMY". The COPY options list must be set between ().
+CONTEXT:  PL/pgSQL function emaj._gen_sql_dump_changes_group(text,text,text,text,text[],boolean) line 159 at RAISE
+SQL statement "SELECT p_nbStmt, p_isPsqlCopy
+      FROM emaj._gen_sql_dump_changes_group(p_groupName, p_firstMark, p_lastMark, p_optionsList, p_tblseqs, TRUE)"
+PL/pgSQL function emaj.emaj_gen_sql_dump_changes_group(text,text,text,text,text[]) line 26 at SQL statement
+select emaj.emaj_gen_sql_dump_changes_group('myGroup2', 'Mark21', 'Mark23', 'PSQL_COPY_OPTIONS=(format csv)', NULL);
+ERROR:  _gen_sql_dump_changes_group: the PSQL_COPY_OPTIONS option needs a PSQL_COPY_DIR option to be set.
+CONTEXT:  PL/pgSQL function emaj._gen_sql_dump_changes_group(text,text,text,text,text[],boolean) line 190 at RAISE
+SQL statement "SELECT p_nbStmt, p_isPsqlCopy
+      FROM emaj._gen_sql_dump_changes_group(p_groupName, p_firstMark, p_lastMark, p_optionsList, p_tblseqs, TRUE)"
+PL/pgSQL function emaj.emaj_gen_sql_dump_changes_group(text,text,text,text,text[]) line 26 at SQL statement
+select emaj.emaj_dump_changes_group('myGroup2', 'Mark21', 'Mark23', 'PSQL_COPY_DIR=dummy', NULL, :'EMAJTESTTMPDIR');
+ERROR:  _gen_sql_dump_changes_group: The option "PSQL_COPY_DIR=DUMMY" is unknown.
+CONTEXT:  PL/pgSQL function emaj._gen_sql_dump_changes_group(text,text,text,text,text[],boolean) line 179 at RAISE
+SQL statement "SELECT p_copyOptions, p_noEmptyFiles, g.p_lastMark
+      FROM emaj._gen_sql_dump_changes_group(p_groupName, p_firstMark, p_lastMark, p_optionsList, p_tblseqs, FALSE) g"
+PL/pgSQL function emaj.emaj_dump_changes_group(text,text,text,text,text[],text) line 37 at SQL statement
+select emaj.emaj_dump_changes_group('myGroup2', 'Mark21', 'Mark23', 'PSQL_COPY_OPTIONS=()', NULL, :'EMAJTESTTMPDIR');
+ERROR:  _gen_sql_dump_changes_group: The option "PSQL_COPY_OPTIONS=()" is unknown.
+CONTEXT:  PL/pgSQL function emaj._gen_sql_dump_changes_group(text,text,text,text,text[],boolean) line 179 at RAISE
+SQL statement "SELECT p_copyOptions, p_noEmptyFiles, g.p_lastMark
+      FROM emaj._gen_sql_dump_changes_group(p_groupName, p_firstMark, p_lastMark, p_optionsList, p_tblseqs, FALSE) g"
+PL/pgSQL function emaj.emaj_dump_changes_group(text,text,text,text,text[],text) line 37 at SQL statement
+select emaj.emaj_dump_changes_group('myGroup2', 'Mark21', 'Mark23', 'COPY_OPTIONS=dummy', NULL, :'EMAJTESTTMPDIR');
+ERROR:  _gen_sql_dump_changes_group: Error on the option "COPY_OPTIONS=DUMMY". The COPY options must be set between ().
+CONTEXT:  PL/pgSQL function emaj._gen_sql_dump_changes_group(text,text,text,text,text[],boolean) line 114 at RAISE
+SQL statement "SELECT p_copyOptions, p_noEmptyFiles, g.p_lastMark
+      FROM emaj._gen_sql_dump_changes_group(p_groupName, p_firstMark, p_lastMark, p_optionsList, p_tblseqs, FALSE) g"
+PL/pgSQL function emaj.emaj_dump_changes_group(text,text,text,text,text[],text) line 37 at SQL statement
+select emaj.emaj_dump_changes_group('myGroup2', 'Mark21', 'Mark23', 'COPY_OPTIONS=(dummy)', NULL, :'EMAJTESTTMPDIR');
+NOTICE:  table "emaj_temp_sql" does not exist, skipping
+ERROR:  option "dummy" not recognized
+LINE 1: COPY (SELECT '') TO '/tmp/emaj_12/misc/_INFO' (dummy)
+                                                       ^
+QUERY:  COPY (SELECT '') TO '/tmp/emaj_12/misc/_INFO' (dummy)
+CONTEXT:  PL/pgSQL function emaj._copy_to_file(text,text,text,boolean,boolean) line 37 at EXECUTE
+SQL statement "SELECT emaj._copy_to_file('(SELECT '''')', p_dir || '/_INFO', v_copyOptions)"
+PL/pgSQL function emaj.emaj_dump_changes_group(text,text,text,text,text[],text) line 44 at PERFORM
+select emaj.emaj_dump_changes_group('myGroup2', 'Mark21', 'Mark23', 'COPY_OPTIONS=(;)', NULL, :'EMAJTESTTMPDIR');
+ERROR:  _gen_sql_dump_changes_group: Unquoted semi-column in COPY options is illegal.
+CONTEXT:  PL/pgSQL function emaj._gen_sql_dump_changes_group(text,text,text,text,text[],boolean) line 119 at RAISE
+SQL statement "SELECT p_copyOptions, p_noEmptyFiles, g.p_lastMark
+      FROM emaj._gen_sql_dump_changes_group(p_groupName, p_firstMark, p_lastMark, p_optionsList, p_tblseqs, FALSE) g"
+PL/pgSQL function emaj.emaj_dump_changes_group(text,text,text,text,text[],text) line 37 at SQL statement
+-- invalid relations array
+select emaj.emaj_gen_sql_dump_changes_group('myGroup2', 'Mark21', 'Mark23', NULL, ARRAY['dummy']);
+ERROR:  _check_tblseqs_filter: 1 tables/sequences (dummy) never belonged to any of the selected tables groups during the requested marks range.
+CONTEXT:  PL/pgSQL function emaj._check_tblseqs_filter(text[],text[],bigint,bigint,boolean) line 48 at RAISE
+PL/pgSQL function emaj._gen_sql_dump_changes_group(text,text,text,text,text[],boolean) line 228 at assignment
+SQL statement "SELECT p_nbStmt, p_isPsqlCopy
+      FROM emaj._gen_sql_dump_changes_group(p_groupName, p_firstMark, p_lastMark, p_optionsList, p_tblseqs, TRUE)"
+PL/pgSQL function emaj.emaj_gen_sql_dump_changes_group(text,text,text,text,text[]) line 26 at SQL statement
+-- invalid output location
+select emaj.emaj_gen_sql_dump_changes_group('myGroup2', 'Mark21', 'Mark23', NULL, NULL, NULL);
+ERROR:  emaj_gen_sql_dump_changes_group: The output script location parameter cannot be NULL.
+CONTEXT:  PL/pgSQL function emaj.emaj_gen_sql_dump_changes_group(text,text,text,text,text[],text) line 35 at RAISE
+select emaj.emaj_gen_sql_dump_changes_group('myGroup2', 'Mark21', 'Mark23', NULL, NULL, 'dummy');
+NOTICE:  table "emaj_temp_sql" does not exist, skipping
+ERROR:  relative path not allowed for COPY to file
+CONTEXT:  SQL statement "COPY (SELECT sql_text FROM emaj_temp_sql ORDER BY sql_stmt_number, sql_line_number) TO 'dummy' "
+PL/pgSQL function emaj._copy_to_file(text,text,text,boolean,boolean) line 37 at EXECUTE
+SQL statement "SELECT emaj._copy_to_file('(SELECT sql_text FROM emaj_temp_sql ORDER BY sql_stmt_number, sql_line_number)',
+                                 p_scriptLocation, NULL, FALSE, FALSE)"
+PL/pgSQL function emaj.emaj_gen_sql_dump_changes_group(text,text,text,text,text[],text) line 59 at PERFORM
+select emaj.emaj_gen_sql_dump_changes_group('myGroup2', 'Mark21', 'Mark23', NULL, NULL, '/dummy');
+NOTICE:  table "emaj_temp_sql" does not exist, skipping
+ERROR:  could not open file "/dummy" for writing: Permission denied
+HINT:  COPY TO instructs the PostgreSQL server process to write a file. You may want a client-side facility such as psql's \copy.
+CONTEXT:  SQL statement "COPY (SELECT sql_text FROM emaj_temp_sql ORDER BY sql_stmt_number, sql_line_number) TO '/dummy' "
+PL/pgSQL function emaj._copy_to_file(text,text,text,boolean,boolean) line 37 at EXECUTE
+SQL statement "SELECT emaj._copy_to_file('(SELECT sql_text FROM emaj_temp_sql ORDER BY sql_stmt_number, sql_line_number)',
+                                 p_scriptLocation, NULL, FALSE, FALSE)"
+PL/pgSQL function emaj.emaj_gen_sql_dump_changes_group(text,text,text,text,text[],text) line 59 at PERFORM
+select emaj.emaj_dump_changes_group('myGroup2', 'Mark21', 'Mark23', NULL, NULL, NULL);
+NOTICE:  table "emaj_temp_sql" does not exist, skipping
+ERROR:  emaj_dump_changes_group: The directory parameter cannot be NULL.
+CONTEXT:  PL/pgSQL function emaj.emaj_dump_changes_group(text,text,text,text,text[],text) line 42 at RAISE
+select emaj.emaj_dump_changes_group('myGroup2', 'Mark21', 'Mark23', NULL, NULL, 'dummy');
+NOTICE:  table "emaj_temp_sql" does not exist, skipping
+ERROR:  relative path not allowed for COPY to file
+CONTEXT:  SQL statement "COPY (SELECT '') TO 'dummy/_INFO' "
+PL/pgSQL function emaj._copy_to_file(text,text,text,boolean,boolean) line 37 at EXECUTE
+SQL statement "SELECT emaj._copy_to_file('(SELECT '''')', p_dir || '/_INFO', v_copyOptions)"
+PL/pgSQL function emaj.emaj_dump_changes_group(text,text,text,text,text[],text) line 44 at PERFORM
+--
+-- various options influencing the generated SQL
+--
+SELECT emaj.emaj_gen_sql_dump_changes_group('myGroup2', 'Mark21', 'Mark23', '', NULL);
+NOTICE:  table "emaj_temp_sql" does not exist, skipping
+                    emaj_gen_sql_dump_changes_group                     
+------------------------------------------------------------------------
+ 10 SQL statements are available in the "emaj_temp_sql" temporary table
+(1 row)
+
+SELECT * FROM emaj_temp_sql;
+ sql_stmt_number | sql_line_number | sql_rel_kind | sql_schema |    sql_tblseq    | sql_first_mark | sql_last_mark | sql_group | sql_nb_changes | sql_file_name_suffix |                                                                                                                                                                sql_text                                                                                                                                                                | sql_result 
+-----------------+-----------------+--------------+------------+------------------+----------------+---------------+-----------+----------------+----------------------+----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+------------
+               0 |               0 |              |            |                  |                |               |           |                |                      | -- Generated SQL for dumping changes in tables group "myGroup2" between marks "Mark21" and "Mark23"                                                                                                                                                                                                                                    |           
+               1 |               0 | table        | myschema2  | myTbl3           | Mark21         | Mark23        | myGroup2  |             10 |                      | -- Dump changes for table myschema2.myTbl3 between marks "Mark21" and "Mark23" (10 changes)                                                                                                                                                                                                                                            |           
+               1 |               1 | table        | myschema2  | myTbl3           | Mark21         | Mark23        | myGroup2  |             10 | .changes             | SELECT tbl.* FROM emaj_myschema2."myTbl3_log" tbl WHERE emaj_gid > 4000000 AND emaj_gid <= 5011710 ORDER BY emaj_gid, emaj_tuple DESC;                                                                                                                                                                                                 |           
+               2 |               0 | table        | myschema2  | mytbl1           | Mark21         | Mark23        | myGroup2  |          10700 |                      | -- Dump changes for table myschema2.mytbl1 between marks "Mark21" and "Mark23" (10700 changes)                                                                                                                                                                                                                                         |           
+               2 |               1 | table        | myschema2  | mytbl1           | Mark21         | Mark23        | myGroup2  |          10700 | .changes             | SELECT tbl.* FROM emaj_myschema2.mytbl1_log tbl WHERE emaj_gid > 4000000 AND emaj_gid <= 5011710 ORDER BY emaj_gid, emaj_tuple DESC;                                                                                                                                                                                                   |           
+               3 |               0 | table        | myschema2  | mytbl2           | Mark21         | Mark23        | myGroup2  |            900 |                      | -- Dump changes for table myschema2.mytbl2 between marks "Mark21" and "Mark23" (900 changes)                                                                                                                                                                                                                                           |           
+               3 |               1 | table        | myschema2  | mytbl2           | Mark21         | Mark23        | myGroup2  |            900 | .changes             | SELECT tbl.* FROM emaj_myschema2.mytbl2_log tbl WHERE emaj_gid > 4000000 AND emaj_gid <= 5011710 ORDER BY emaj_gid, emaj_tuple DESC;                                                                                                                                                                                                   |           
+               4 |               0 | table        | myschema2  | mytbl4           | Mark21         | Mark23        | myGroup2  |            100 |                      | -- Dump changes for table myschema2.mytbl4 between marks "Mark21" and "Mark23" (100 changes)                                                                                                                                                                                                                                           |           
+               4 |               1 | table        | myschema2  | mytbl4           | Mark21         | Mark23        | myGroup2  |            100 | .changes             | SELECT tbl.* FROM emaj_myschema2.mytbl4_log tbl WHERE emaj_gid > 4000000 AND emaj_gid <= 5011710 ORDER BY emaj_gid, emaj_tuple DESC;                                                                                                                                                                                                   |           
+               5 |               0 | table        | myschema2  | mytbl5           | Mark21         | Mark23        | myGroup2  |              0 |                      | -- Dump changes for table myschema2.mytbl5 between marks "Mark21" and "Mark23" (0 changes)                                                                                                                                                                                                                                             |           
+               5 |               1 | table        | myschema2  | mytbl5           | Mark21         | Mark23        | myGroup2  |              0 | .changes             | SELECT tbl.* FROM emaj_myschema2.mytbl5_log tbl WHERE emaj_gid > 4000000 AND emaj_gid <= 5011710 ORDER BY emaj_gid, emaj_tuple DESC;                                                                                                                                                                                                   |           
+               6 |               0 | table        | myschema2  | mytbl6           | Mark21         | Mark23        | myGroup2  |              0 |                      | -- Dump changes for table myschema2.mytbl6 between marks "Mark21" and "Mark23" (0 changes)                                                                                                                                                                                                                                             |           
+               6 |               1 | table        | myschema2  | mytbl6           | Mark21         | Mark23        | myGroup2  |              0 | .changes             | SELECT tbl.* FROM emaj_myschema2.mytbl6_log tbl WHERE emaj_gid > 4000000 AND emaj_gid <= 5011710 ORDER BY emaj_gid, emaj_tuple DESC;                                                                                                                                                                                                   |           
+               7 |               0 | table        | myschema2  | mytbl7           | Mark21         | Mark23        | myGroup2  |              0 |                      | -- Dump changes for table myschema2.mytbl7 between marks "Mark21" and "Mark23" (0 changes)                                                                                                                                                                                                                                             |           
+               7 |               1 | table        | myschema2  | mytbl7           | Mark21         | Mark23        | myGroup2  |              0 | .changes             | SELECT tbl.* FROM emaj_myschema2.mytbl7_log tbl WHERE emaj_gid > 4000000 AND emaj_gid <= 5011710 ORDER BY emaj_gid, emaj_tuple DESC;                                                                                                                                                                                                   |           
+               8 |               0 | table        | myschema2  | mytbl8           | Mark21         | Mark23        | myGroup2  |              0 |                      | -- Dump changes for table myschema2.mytbl8 between marks "Mark21" and "Mark23" (0 changes)                                                                                                                                                                                                                                             |           
+               8 |               1 | table        | myschema2  | mytbl8           | Mark21         | Mark23        | myGroup2  |              0 | .changes             | SELECT tbl.* FROM emaj_myschema2.mytbl8_log tbl WHERE emaj_gid > 4000000 AND emaj_gid <= 5011710 ORDER BY emaj_gid, emaj_tuple DESC;                                                                                                                                                                                                   |           
+               9 |               0 | sequence     | myschema2  | myTbl3_col31_seq | Mark21         | Mark23        | myGroup2  |                |                      | -- Dump changes for sequence myschema2.myTbl3_col31_seq between marks "Mark21" and "Mark23"                                                                                                                                                                                                                                            |           
+               9 |               1 | sequence     | myschema2  | myTbl3_col31_seq | Mark21         | Mark23        | myGroup2  |                | .changes             | SELECT 'OLD' AS emaj_tuple, * FROM emaj.emaj_sequence WHERE sequ_schema = 'myschema2' AND sequ_name = 'myTbl3_col31_seq' AND sequ_time_id = 4029 UNION ALL SELECT 'NEW' AS emaj_tuple, * FROM emaj.emaj_sequence WHERE sequ_schema = 'myschema2' AND sequ_name = 'myTbl3_col31_seq' AND sequ_time_id = 5006 ORDER BY emaj_tuple DESC ; |           
+              10 |               0 | sequence     | myschema2  | myseq1           | Mark21         | Mark23        | myGroup2  |                |                      | -- Dump changes for sequence myschema2.myseq1 between marks "Mark21" and "Mark23"                                                                                                                                                                                                                                                      |           
+              10 |               1 | sequence     | myschema2  | myseq1           | Mark21         | Mark23        | myGroup2  |                | .changes             | SELECT 'OLD' AS emaj_tuple, * FROM emaj.emaj_sequence WHERE sequ_schema = 'myschema2' AND sequ_name = 'myseq1' AND sequ_time_id = 4029 UNION ALL SELECT 'NEW' AS emaj_tuple, * FROM emaj.emaj_sequence WHERE sequ_schema = 'myschema2' AND sequ_name = 'myseq1' AND sequ_time_id = 5006 ORDER BY emaj_tuple DESC ;                     |           
+(21 rows)
+
+SELECT emaj.emaj_gen_sql_dump_changes_group('myGroup2', 'Mark21', 'Mark23', 'CONSOLIDATION=NONE,SQL_FORMAT=PRETTY', NULL);
+                    emaj_gen_sql_dump_changes_group                     
+------------------------------------------------------------------------
+ 10 SQL statements are available in the "emaj_temp_sql" temporary table
+(1 row)
+
+SELECT sql_tblseq, sql_text FROM emaj_temp_sql WHERE sql_tblseq in ('mytbl1','myseq1') and sql_line_number >= 1 order by sql_stmt_number, sql_line_number;
+ sql_tblseq |                       sql_text                        
+------------+-------------------------------------------------------
+ mytbl1     | SELECT tbl.*
+ mytbl1     |   FROM emaj_myschema2.mytbl1_log tbl
+ mytbl1     |   WHERE emaj_gid > 4000000 AND emaj_gid <= 5011710
+ mytbl1     |   ORDER BY emaj_gid, emaj_tuple DESC;
+ myseq1     | SELECT 'OLD' AS emaj_tuple, * FROM emaj.emaj_sequence
+ myseq1     |   WHERE sequ_schema = 'myschema2'
+ myseq1     |     AND sequ_name = 'myseq1'
+ myseq1     |     AND sequ_time_id = 4029
+ myseq1     |  UNION ALL 
+ myseq1     | SELECT 'NEW' AS emaj_tuple, * FROM emaj.emaj_sequence
+ myseq1     |   WHERE sequ_schema = 'myschema2'
+ myseq1     |     AND sequ_name = 'myseq1'
+ myseq1     |     AND sequ_time_id = 5006
+ myseq1     |  ORDER BY emaj_tuple DESC
+ myseq1     | ;
+(15 rows)
+
+SELECT emaj.emaj_gen_sql_dump_changes_group('myGroup2', 'Mark21', 'Mark23', 'CONSOLIDATION=PARTIAL,SQL_FORMAT=PRETTY', NULL);
+                    emaj_gen_sql_dump_changes_group                     
+------------------------------------------------------------------------
+ 10 SQL statements are available in the "emaj_temp_sql" temporary table
+(1 row)
+
+SELECT sql_tblseq, sql_text FROM emaj_temp_sql WHERE sql_tblseq in ('mytbl1','myseq1') and sql_line_number >= 1 order by sql_stmt_number, sql_line_number;
+ sql_tblseq |                                 sql_text                                 
+------------+--------------------------------------------------------------------------
+ mytbl1     | WITH keys AS (
+ mytbl1     |   SELECT col11,col12, min(emaj_gid) AS min_gid, max(emaj_gid) AS max_gid
+ mytbl1     |     FROM emaj_myschema2.mytbl1_log
+ mytbl1     |     WHERE emaj_gid > 4000000 AND emaj_gid <= 5011710
+ mytbl1     |     GROUP BY col11,col12
+ mytbl1     |   ) 
+ mytbl1     | SELECT tbl.col11,tbl.col12,emaj_tuple,tbl.col13
+ mytbl1     |   FROM emaj_myschema2.mytbl1_log tbl
+ mytbl1     |        JOIN keys ON (tbl.col11 = keys.col11 AND tbl.col12 = keys.col12)
+ mytbl1     |   WHERE (tbl.emaj_tuple = 'OLD' AND tbl.emaj_gid = keys.min_gid)
+ mytbl1     |      OR (tbl.emaj_tuple = 'NEW' AND tbl.emaj_gid = keys.max_gid)
+ mytbl1     |   ORDER BY tbl.col11,tbl.col12, emaj_gid, emaj_tuple DESC;
+ myseq1     | SELECT 'OLD' AS emaj_tuple, * FROM emaj.emaj_sequence
+ myseq1     |   WHERE sequ_schema = 'myschema2'
+ myseq1     |     AND sequ_name = 'myseq1'
+ myseq1     |     AND sequ_time_id = 4029
+ myseq1     |  UNION ALL 
+ myseq1     | SELECT 'NEW' AS emaj_tuple, * FROM emaj.emaj_sequence
+ myseq1     |   WHERE sequ_schema = 'myschema2'
+ myseq1     |     AND sequ_name = 'myseq1'
+ myseq1     |     AND sequ_time_id = 5006
+ myseq1     |  ORDER BY emaj_tuple DESC
+ myseq1     | ;
+(23 rows)
+
+SELECT emaj.emaj_gen_sql_dump_changes_group('myGroup2', 'Mark21', 'Mark23', 'CONSOLIDATION=FULL,SQL_FORMAT=PRETTY', NULL);
+                    emaj_gen_sql_dump_changes_group                     
+------------------------------------------------------------------------
+ 10 SQL statements are available in the "emaj_temp_sql" temporary table
+(1 row)
+
+SELECT sql_tblseq, sql_text FROM emaj_temp_sql WHERE sql_tblseq in ('mytbl1','myseq1') and sql_line_number >= 1 order by sql_stmt_number, sql_line_number;
+ sql_tblseq |                                                     sql_text                                                     
+------------+------------------------------------------------------------------------------------------------------------------
+ mytbl1     | WITH keys AS (
+ mytbl1     |   SELECT col11,col12, min(emaj_gid) AS min_gid, max(emaj_gid) AS max_gid
+ mytbl1     |     FROM emaj_myschema2.mytbl1_log
+ mytbl1     |     WHERE emaj_gid > 4000000 AND emaj_gid <= 5011710
+ mytbl1     |     GROUP BY col11,col12
+ mytbl1     |   ),
+ mytbl1     |      consolidated AS (
+ mytbl1     |   SELECT tbl.*
+ mytbl1     |     FROM emaj_myschema2.mytbl1_log tbl
+ mytbl1     |          JOIN keys ON (tbl.col11 = keys.col11 AND tbl.col12 = keys.col12)
+ mytbl1     |     WHERE (tbl.emaj_tuple = 'OLD' AND tbl.emaj_gid = keys.min_gid)
+ mytbl1     |        OR (tbl.emaj_tuple = 'NEW' AND tbl.emaj_gid = keys.max_gid)
+ mytbl1     |   ),
+ mytbl1     |      unchanged_keys AS (
+ mytbl1     |   SELECT r1.col11,r1.col12
+ mytbl1     |     FROM consolidated r1
+ mytbl1     |          JOIN consolidated r2 ON (r1.col11=r2.col11 AND r1.col12=r2.col12)
+ mytbl1     |     WHERE r1.emaj_tuple = 'OLD' AND r2.emaj_tuple = 'NEW'
+ mytbl1     |       AND (r1.col13=r2.col13 OR (r1.col13 IS NULL AND r2.col13 IS NULL))
+ mytbl1     |   )
+ mytbl1     |   SELECT tbl.col11,tbl.col12,emaj_tuple,tbl.col13
+ mytbl1     |     FROM consolidated tbl
+ mytbl1     |     WHERE NOT EXISTS (SELECT 0 FROM unchanged_keys keys WHERE tbl.col11 = keys.col11 AND tbl.col12 = keys.col12)
+ mytbl1     |     ORDER BY tbl.col11,tbl.col12, emaj_gid, emaj_tuple DESC;
+ myseq1     | WITH seq_begin AS (
+ myseq1     |   SELECT 'OLD' AS emaj_tuple, * FROM emaj.emaj_sequence
+ myseq1     |     WHERE sequ_schema = 'myschema2'
+ myseq1     |       AND sequ_name = 'myseq1'
+ myseq1     |       AND sequ_time_id = 4029
+ myseq1     |   ), seq_end AS (
+ myseq1     |   SELECT 'NEW' AS emaj_tuple, * FROM emaj.emaj_sequence
+ myseq1     |     WHERE sequ_schema = 'myschema2'
+ myseq1     |       AND sequ_name = 'myseq1'
+ myseq1     |       AND sequ_time_id = 5006
+ myseq1     |   ), seq_agg AS (
+ myseq1     |   SELECT '<>' FROM seq_begin b, seq_end e
+ myseq1     |     WHERE (CASE WHEN b.sequ_is_called THEN b.sequ_last_val ELSE b.sequ_last_val - b.sequ_increment END <>
+ myseq1     |            CASE WHEN e.sequ_is_called THEN e.sequ_last_val ELSE e.sequ_last_val - e.sequ_increment END) OR
+ myseq1     |            b.sequ_start_val <> e.sequ_start_val OR b.sequ_increment <> e.sequ_increment OR
+ myseq1     |            b.sequ_max_val <> e.sequ_max_val OR b.sequ_min_val <> e.sequ_min_val OR
+ myseq1     |            b.sequ_cache_val <> e.sequ_cache_val OR b.sequ_is_cycled <> e.sequ_is_cycled
+ myseq1     |   )
+ myseq1     | SELECT t.* FROM ( SELECT * FROM seq_begin UNION ALL SELECT * FROM seq_end ) AS t, seq_agg
+ myseq1     |   ORDER BY emaj_tuple DESC
+ myseq1     | ;
+(45 rows)
+
+SELECT emaj.emaj_gen_sql_dump_changes_group('myGroup2', 'Mark21', 'Mark23', 'EMAJ_COLUMNS=ALL,CONSOLIDATION=FULL,SQL_FORMAT=PRETTY', NULL);
+                    emaj_gen_sql_dump_changes_group                     
+------------------------------------------------------------------------
+ 10 SQL statements are available in the "emaj_temp_sql" temporary table
+(1 row)
+
+SELECT sql_tblseq, sql_text FROM emaj_temp_sql WHERE sql_tblseq in ('mytbl1','myseq1') and sql_line_number >= 1 order by sql_stmt_number, sql_line_number;
+ sql_tblseq |                                                     sql_text                                                     
+------------+------------------------------------------------------------------------------------------------------------------
+ mytbl1     | WITH keys AS (
+ mytbl1     |   SELECT col11,col12, min(emaj_gid) AS min_gid, max(emaj_gid) AS max_gid
+ mytbl1     |     FROM emaj_myschema2.mytbl1_log
+ mytbl1     |     WHERE emaj_gid > 4000000 AND emaj_gid <= 5011710
+ mytbl1     |     GROUP BY col11,col12
+ mytbl1     |   ),
+ mytbl1     |      consolidated AS (
+ mytbl1     |   SELECT tbl.*
+ mytbl1     |     FROM emaj_myschema2.mytbl1_log tbl
+ mytbl1     |          JOIN keys ON (tbl.col11 = keys.col11 AND tbl.col12 = keys.col12)
+ mytbl1     |     WHERE (tbl.emaj_tuple = 'OLD' AND tbl.emaj_gid = keys.min_gid)
+ mytbl1     |        OR (tbl.emaj_tuple = 'NEW' AND tbl.emaj_gid = keys.max_gid)
+ mytbl1     |   ),
+ mytbl1     |      unchanged_keys AS (
+ mytbl1     |   SELECT r1.col11,r1.col12
+ mytbl1     |     FROM consolidated r1
+ mytbl1     |          JOIN consolidated r2 ON (r1.col11=r2.col11 AND r1.col12=r2.col12)
+ mytbl1     |     WHERE r1.emaj_tuple = 'OLD' AND r2.emaj_tuple = 'NEW'
+ mytbl1     |       AND (r1.col13=r2.col13 OR (r1.col13 IS NULL AND r2.col13 IS NULL))
+ mytbl1     |   )
+ mytbl1     |   SELECT tbl.col11,tbl.col12,emaj_gid,emaj_tuple,tbl.col13,emaj_verb,emaj_changed,emaj_txid,emaj_user
+ mytbl1     |     FROM consolidated tbl
+ mytbl1     |     WHERE NOT EXISTS (SELECT 0 FROM unchanged_keys keys WHERE tbl.col11 = keys.col11 AND tbl.col12 = keys.col12)
+ mytbl1     |     ORDER BY tbl.col11,tbl.col12, emaj_gid, emaj_tuple DESC;
+ myseq1     | WITH seq_begin AS (
+ myseq1     |   SELECT 'OLD' AS emaj_tuple, * FROM emaj.emaj_sequence
+ myseq1     |     WHERE sequ_schema = 'myschema2'
+ myseq1     |       AND sequ_name = 'myseq1'
+ myseq1     |       AND sequ_time_id = 4029
+ myseq1     |   ), seq_end AS (
+ myseq1     |   SELECT 'NEW' AS emaj_tuple, * FROM emaj.emaj_sequence
+ myseq1     |     WHERE sequ_schema = 'myschema2'
+ myseq1     |       AND sequ_name = 'myseq1'
+ myseq1     |       AND sequ_time_id = 5006
+ myseq1     |   ), seq_agg AS (
+ myseq1     |   SELECT '<>' FROM seq_begin b, seq_end e
+ myseq1     |     WHERE (CASE WHEN b.sequ_is_called THEN b.sequ_last_val ELSE b.sequ_last_val - b.sequ_increment END <>
+ myseq1     |            CASE WHEN e.sequ_is_called THEN e.sequ_last_val ELSE e.sequ_last_val - e.sequ_increment END) OR
+ myseq1     |            b.sequ_start_val <> e.sequ_start_val OR b.sequ_increment <> e.sequ_increment OR
+ myseq1     |            b.sequ_max_val <> e.sequ_max_val OR b.sequ_min_val <> e.sequ_min_val OR
+ myseq1     |            b.sequ_cache_val <> e.sequ_cache_val OR b.sequ_is_cycled <> e.sequ_is_cycled
+ myseq1     |   )
+ myseq1     | SELECT t.* FROM ( SELECT * FROM seq_begin UNION ALL SELECT * FROM seq_end ) AS t, seq_agg
+ myseq1     |   ORDER BY emaj_tuple DESC
+ myseq1     | ;
+(45 rows)
+
+SELECT emaj.emaj_gen_sql_dump_changes_group('myGroup2', 'Mark21', 'Mark23', 'EMAJ_COLUMNS=MIN,SQL_FORMAT=PRETTY', NULL);
+                    emaj_gen_sql_dump_changes_group                     
+------------------------------------------------------------------------
+ 10 SQL statements are available in the "emaj_temp_sql" temporary table
+(1 row)
+
+SELECT sql_tblseq, sql_text FROM emaj_temp_sql WHERE sql_tblseq in ('mytbl1','myseq1') and sql_line_number >= 1 order by sql_stmt_number, sql_line_number;
+ sql_tblseq |                         sql_text                         
+------------+----------------------------------------------------------
+ mytbl1     | SELECT tbl.col11,tbl.col12,tbl.col13,emaj_gid,emaj_tuple
+ mytbl1     |   FROM emaj_myschema2.mytbl1_log tbl
+ mytbl1     |   WHERE emaj_gid > 4000000 AND emaj_gid <= 5011710
+ mytbl1     |   ORDER BY emaj_gid, emaj_tuple DESC;
+ myseq1     | SELECT 'OLD' AS emaj_tuple, * FROM emaj.emaj_sequence
+ myseq1     |   WHERE sequ_schema = 'myschema2'
+ myseq1     |     AND sequ_name = 'myseq1'
+ myseq1     |     AND sequ_time_id = 4029
+ myseq1     |  UNION ALL 
+ myseq1     | SELECT 'NEW' AS emaj_tuple, * FROM emaj.emaj_sequence
+ myseq1     |   WHERE sequ_schema = 'myschema2'
+ myseq1     |     AND sequ_name = 'myseq1'
+ myseq1     |     AND sequ_time_id = 5006
+ myseq1     |  ORDER BY emaj_tuple DESC
+ myseq1     | ;
+(15 rows)
+
+SELECT emaj.emaj_gen_sql_dump_changes_group('myGroup2', 'Mark21', 'Mark23', 'EMAJ_COLUMNS=(emaj_tuple, emaj_gid, emaj_txid),SQL_FORMAT=PRETTY', NULL);
+                    emaj_gen_sql_dump_changes_group                     
+------------------------------------------------------------------------
+ 10 SQL statements are available in the "emaj_temp_sql" temporary table
+(1 row)
+
+SELECT sql_tblseq, sql_text FROM emaj_temp_sql WHERE sql_tblseq in ('mytbl1','myseq1') and sql_line_number >= 1 order by sql_stmt_number, sql_line_number;
+ sql_tblseq |                              sql_text                              
+------------+--------------------------------------------------------------------
+ mytbl1     | SELECT tbl.col11,tbl.col12,tbl.col13,emaj_tuple,emaj_gid,emaj_txid
+ mytbl1     |   FROM emaj_myschema2.mytbl1_log tbl
+ mytbl1     |   WHERE emaj_gid > 4000000 AND emaj_gid <= 5011710
+ mytbl1     |   ORDER BY emaj_gid, emaj_tuple DESC;
+ myseq1     | SELECT 'OLD' AS emaj_tuple, * FROM emaj.emaj_sequence
+ myseq1     |   WHERE sequ_schema = 'myschema2'
+ myseq1     |     AND sequ_name = 'myseq1'
+ myseq1     |     AND sequ_time_id = 4029
+ myseq1     |  UNION ALL 
+ myseq1     | SELECT 'NEW' AS emaj_tuple, * FROM emaj.emaj_sequence
+ myseq1     |   WHERE sequ_schema = 'myschema2'
+ myseq1     |     AND sequ_name = 'myseq1'
+ myseq1     |     AND sequ_time_id = 5006
+ myseq1     |  ORDER BY emaj_tuple DESC
+ myseq1     | ;
+(15 rows)
+
+SELECT emaj.emaj_gen_sql_dump_changes_group('myGroup2', 'Mark21', 'Mark23', 'ORDER_BY=PK,SQL_FORMAT=PRETTY', NULL);
+                    emaj_gen_sql_dump_changes_group                     
+------------------------------------------------------------------------
+ 10 SQL statements are available in the "emaj_temp_sql" temporary table
+(1 row)
+
+SELECT sql_tblseq, sql_text FROM emaj_temp_sql WHERE sql_tblseq in ('mytbl1','myseq1') and sql_line_number >= 1 order by sql_stmt_number, sql_line_number;
+ sql_tblseq |                          sql_text                          
+------------+------------------------------------------------------------
+ mytbl1     | SELECT tbl.*
+ mytbl1     |   FROM emaj_myschema2.mytbl1_log tbl
+ mytbl1     |   WHERE emaj_gid > 4000000 AND emaj_gid <= 5011710
+ mytbl1     |   ORDER BY tbl.col11,tbl.col12, emaj_gid, emaj_tuple DESC;
+ myseq1     | SELECT 'OLD' AS emaj_tuple, * FROM emaj.emaj_sequence
+ myseq1     |   WHERE sequ_schema = 'myschema2'
+ myseq1     |     AND sequ_name = 'myseq1'
+ myseq1     |     AND sequ_time_id = 4029
+ myseq1     |  UNION ALL 
+ myseq1     | SELECT 'NEW' AS emaj_tuple, * FROM emaj.emaj_sequence
+ myseq1     |   WHERE sequ_schema = 'myschema2'
+ myseq1     |     AND sequ_name = 'myseq1'
+ myseq1     |     AND sequ_time_id = 5006
+ myseq1     |  ORDER BY emaj_tuple DESC
+ myseq1     | ;
+(15 rows)
+
+SELECT emaj.emaj_gen_sql_dump_changes_group('myGroup2', 'Mark21', 'Mark23', 'ORDER_BY = TIME,
+																			 Consolidation = partial,
+																			 Sql_Format = Pretty', NULL);
+                    emaj_gen_sql_dump_changes_group                     
+------------------------------------------------------------------------
+ 10 SQL statements are available in the "emaj_temp_sql" temporary table
+(1 row)
+
+SELECT sql_tblseq, sql_text FROM emaj_temp_sql WHERE sql_tblseq in ('mytbl1','myseq1') and sql_line_number >= 1 order by sql_stmt_number, sql_line_number;
+ sql_tblseq |                                 sql_text                                 
+------------+--------------------------------------------------------------------------
+ mytbl1     | WITH keys AS (
+ mytbl1     |   SELECT col11,col12, min(emaj_gid) AS min_gid, max(emaj_gid) AS max_gid
+ mytbl1     |     FROM emaj_myschema2.mytbl1_log
+ mytbl1     |     WHERE emaj_gid > 4000000 AND emaj_gid <= 5011710
+ mytbl1     |     GROUP BY col11,col12
+ mytbl1     |   ) 
+ mytbl1     | SELECT tbl.col11,tbl.col12,emaj_tuple,tbl.col13
+ mytbl1     |   FROM emaj_myschema2.mytbl1_log tbl
+ mytbl1     |        JOIN keys ON (tbl.col11 = keys.col11 AND tbl.col12 = keys.col12)
+ mytbl1     |   WHERE (tbl.emaj_tuple = 'OLD' AND tbl.emaj_gid = keys.min_gid)
+ mytbl1     |      OR (tbl.emaj_tuple = 'NEW' AND tbl.emaj_gid = keys.max_gid)
+ mytbl1     |   ORDER BY emaj_gid, emaj_tuple DESC;
+ myseq1     | SELECT 'OLD' AS emaj_tuple, * FROM emaj.emaj_sequence
+ myseq1     |   WHERE sequ_schema = 'myschema2'
+ myseq1     |     AND sequ_name = 'myseq1'
+ myseq1     |     AND sequ_time_id = 4029
+ myseq1     |  UNION ALL 
+ myseq1     | SELECT 'NEW' AS emaj_tuple, * FROM emaj.emaj_sequence
+ myseq1     |   WHERE sequ_schema = 'myschema2'
+ myseq1     |     AND sequ_name = 'myseq1'
+ myseq1     |     AND sequ_time_id = 5006
+ myseq1     |  ORDER BY emaj_tuple DESC
+ myseq1     | ;
+(23 rows)
+
+SELECT emaj.emaj_gen_sql_dump_changes_group('myGroup2', 'Mark21', 'Mark23', 'SEQUENCES_ONLY', NULL);
+                    emaj_gen_sql_dump_changes_group                    
+-----------------------------------------------------------------------
+ 2 SQL statements are available in the "emaj_temp_sql" temporary table
+(1 row)
+
+SELECT sql_rel_kind, count(*) FROM emaj_temp_sql WHERE sql_line_number = 1 group by sql_rel_kind ORDER BY sql_rel_kind;
+ sql_rel_kind | count 
+--------------+-------
+ sequence     |     2
+(1 row)
+
+SELECT emaj.emaj_gen_sql_dump_changes_group('myGroup2', 'Mark21', 'Mark23', 'TABLES_ONLY', NULL);
+                    emaj_gen_sql_dump_changes_group                    
+-----------------------------------------------------------------------
+ 8 SQL statements are available in the "emaj_temp_sql" temporary table
+(1 row)
+
+SELECT sql_rel_kind, count(*) FROM emaj_temp_sql WHERE sql_line_number = 1 group by sql_rel_kind ORDER BY sql_rel_kind;
+ sql_rel_kind | count 
+--------------+-------
+ table        |     8
+(1 row)
+
+-- test the tables/sequences array filter
+SELECT emaj.emaj_gen_sql_dump_changes_group('myGroup2', 'Mark21', 'Mark23', NULL, ARRAY[]::TEXT[]);
+WARNING:  _check_tblseqs_filter: The table/sequence names array is empty.
+                    emaj_gen_sql_dump_changes_group                    
+-----------------------------------------------------------------------
+ 0 SQL statements are available in the "emaj_temp_sql" temporary table
+(1 row)
+
+SELECT emaj.emaj_gen_sql_dump_changes_group('myGroup2', 'Mark21', 'Mark23', NULL, ARRAY[NULL, '']::TEXT[]);
+WARNING:  _check_tblseqs_filter: The table/sequence names array is empty.
+                    emaj_gen_sql_dump_changes_group                    
+-----------------------------------------------------------------------
+ 0 SQL statements are available in the "emaj_temp_sql" temporary table
+(1 row)
+
+SELECT emaj.emaj_gen_sql_dump_changes_group('myGroup2', 'Mark21', 'Mark23', NULL, ARRAY['myschema2.mytbl1', 'myschema2.myseq1']);
+                    emaj_gen_sql_dump_changes_group                    
+-----------------------------------------------------------------------
+ 2 SQL statements are available in the "emaj_temp_sql" temporary table
+(1 row)
+
+SELECT sql_rel_kind, count(*) FROM emaj_temp_sql WHERE sql_line_number = 1 group by 1;
+ sql_rel_kind | count 
+--------------+-------
+ table        |     1
+ sequence     |     1
+(2 rows)
+
+SELECT emaj.emaj_gen_sql_dump_changes_group('myGroup2', 'Mark21', 'Mark23', 'SEQUENCES_ONLY', ARRAY['myschema2.mytbl1']);
+                    emaj_gen_sql_dump_changes_group                    
+-----------------------------------------------------------------------
+ 0 SQL statements are available in the "emaj_temp_sql" temporary table
+(1 row)
+
+SELECT emaj.emaj_gen_sql_dump_changes_group('myGroup2', 'Mark21', 'Mark23', 'TABLES_ONLY', ARRAY['myschema2.myseq1']);
+                    emaj_gen_sql_dump_changes_group                    
+-----------------------------------------------------------------------
+ 0 SQL statements are available in the "emaj_temp_sql" temporary table
+(1 row)
+
+-- test output as a sql/psql script
+SELECT emaj.emaj_gen_sql_dump_changes_group('myGroup2', 'Mark21', 'Mark23', 'SQL_FORMAT=PRETTY', ARRAY['myschema2.mytbl1', 'myschema2.myseq1'],
+											:'EMAJTESTTMPDIR' || '/sql_script');
+                         emaj_gen_sql_dump_changes_group                         
+---------------------------------------------------------------------------------
+ 2 SQL statements have been written into the "/tmp/emaj_12/misc/sql_script" file
+(1 row)
+
+\! cat $EMAJTESTTMPDIR/sql_script
+-- Generated SQL for dumping changes in tables group "myGroup2" (subset) between marks "Mark21" and "Mark23" using options: SQL_FORMAT=PRETTY
+-- Dump changes for table myschema2.mytbl1 between marks "Mark21" and "Mark23" (10700 changes)
+SELECT tbl.*
+  FROM emaj_myschema2.mytbl1_log tbl
+  WHERE emaj_gid > 4000000 AND emaj_gid <= 5011710
+  ORDER BY emaj_gid, emaj_tuple DESC;
+-- Dump changes for sequence myschema2.myseq1 between marks "Mark21" and "Mark23"
+SELECT 'OLD' AS emaj_tuple, * FROM emaj.emaj_sequence
+  WHERE sequ_schema = 'myschema2'
+    AND sequ_name = 'myseq1'
+    AND sequ_time_id = 4029
+ UNION ALL 
+SELECT 'NEW' AS emaj_tuple, * FROM emaj.emaj_sequence
+  WHERE sequ_schema = 'myschema2'
+    AND sequ_name = 'myseq1'
+    AND sequ_time_id = 5006
+ ORDER BY emaj_tuple DESC
+;
+SELECT emaj.emaj_gen_sql_dump_changes_group('myGroup2', 'Mark21', 'Mark23', 'PSQL_COPY_DIR=(' || :'EMAJTESTTMPDIR' || ')', ARRAY['myschema2.mytbl1', 'myschema2.myseq1'],
+											:'EMAJTESTTMPDIR' || '/sql_script');
+NOTICE:  table "emaj_temp_sql" does not exist, skipping
+                         emaj_gen_sql_dump_changes_group                         
+---------------------------------------------------------------------------------
+ 2 SQL statements have been written into the "/tmp/emaj_12/misc/sql_script" file
+(1 row)
+
+\! cat $EMAJTESTTMPDIR/sql_script
+-- Generated SQL for dumping changes in tables group "myGroup2" (subset) between marks "Mark21" and "Mark23" using options: PSQL_COPY_DIR=(/tmp/emaj_12/misc)
+-- Dump changes for table myschema2.mytbl1 between marks "Mark21" and "Mark23" (10700 changes)
+\copy (SELECT tbl.* FROM emaj_myschema2.mytbl1_log tbl WHERE emaj_gid > 4000000 AND emaj_gid <= 5011710 ORDER BY emaj_gid, emaj_tuple DESC) TO '/tmp/emaj_12/misc/myschema2_mytbl1.changes'
+-- Dump changes for sequence myschema2.myseq1 between marks "Mark21" and "Mark23"
+\copy (SELECT 'OLD' AS emaj_tuple, * FROM emaj.emaj_sequence WHERE sequ_schema = 'myschema2' AND sequ_name = 'myseq1' AND sequ_time_id = 4029 UNION ALL SELECT 'NEW' AS emaj_tuple, * FROM emaj.emaj_sequence WHERE sequ_schema = 'myschema2' AND sequ_name = 'myseq1' AND sequ_time_id = 5006 ORDER BY emaj_tuple DESC ) TO '/tmp/emaj_12/misc/myschema2_myseq1.changes'
+SELECT emaj.emaj_gen_sql_dump_changes_group('myGroup2', 'Mark21', 'Mark23',
+											'PSQL_COPY_DIR=(' || :'EMAJTESTTMPDIR' || '), PSQL_COPY_OPTIONS=(format csv, delimiter '';'', header)',
+											ARRAY['myschema2.mytbl1', 'myschema2.myseq1'], :'EMAJTESTTMPDIR' || '/sql_script');
+NOTICE:  table "emaj_temp_sql" does not exist, skipping
+                         emaj_gen_sql_dump_changes_group                         
+---------------------------------------------------------------------------------
+ 2 SQL statements have been written into the "/tmp/emaj_12/misc/sql_script" file
+(1 row)
+
+\! cat $EMAJTESTTMPDIR/sql_script
+-- Generated SQL for dumping changes in tables group "myGroup2" (subset) between marks "Mark21" and "Mark23" using options: PSQL_COPY_DIR=(/tmp/emaj_12/misc), PSQL_COPY_OPTIONS=(format csv, delimiter ';', header)
+-- Dump changes for table myschema2.mytbl1 between marks "Mark21" and "Mark23" (10700 changes)
+\copy (SELECT tbl.* FROM emaj_myschema2.mytbl1_log tbl WHERE emaj_gid > 4000000 AND emaj_gid <= 5011710 ORDER BY emaj_gid, emaj_tuple DESC) TO '/tmp/emaj_12/misc/myschema2_mytbl1.changes' (format csv, delimiter ';', header)
+-- Dump changes for sequence myschema2.myseq1 between marks "Mark21" and "Mark23"
+\copy (SELECT 'OLD' AS emaj_tuple, * FROM emaj.emaj_sequence WHERE sequ_schema = 'myschema2' AND sequ_name = 'myseq1' AND sequ_time_id = 4029 UNION ALL SELECT 'NEW' AS emaj_tuple, * FROM emaj.emaj_sequence WHERE sequ_schema = 'myschema2' AND sequ_name = 'myseq1' AND sequ_time_id = 5006 ORDER BY emaj_tuple DESC ) TO '/tmp/emaj_12/misc/myschema2_myseq1.changes' (format csv, delimiter ';', header)
+\! rm $EMAJTESTTMPDIR/*
+-- Perform logged changes
+select emaj.emaj_set_mark_group('myGroup1','Dump_changes_tests_M1');
+ emaj_set_mark_group 
+---------------------
+                   7
+(1 row)
+
+-- Build the base content of the test table
+UPDATE myschema1.myTbl4 SET col42 = 'Initial row' WHERE col41 = 1 and col43 = 1;
+INSERT INTO myschema1.myTbl4
+  SELECT i, 'Initial row', 1, 1, 'ABC' FROM generate_series(2,9) i;
+select emaj.emaj_set_mark_group('myGroup1','Dump_changes_tests_M2');
+ emaj_set_mark_group 
+---------------------
+                   7
+(1 row)
+
+-- Record changes
+INSERT INTO myschema1.myTbl4 VALUES (10, 'Inserted row', 1, 1, 'ABC');
+DELETE FROM myschema1.myTbl4 WHERE col41 = 1 and col43 = 1;
+UPDATE myschema1.myTbl4 SET col43 = 2, col42 = 'PK col changed' WHERE col41 = 2 and col43 = 1;
+UPDATE myschema1.myTbl4 SET col42 = 'Non PK col changed' WHERE col41 = 3 and col43 = 1;
+UPDATE myschema1.myTbl4 SET col42 = 'Non PK col changed' WHERE col41 = 4 and col43 = 1;
+UPDATE myschema1.myTbl4 SET col42 = 'Non PK col changed twice' WHERE col41 = 4 and col43 = 1;
+UPDATE myschema1.myTbl4 SET col44 = 1 WHERE col41 = 5 and col43 = 1;  -- actually no change
+select emaj.emaj_set_mark_group('myGroup1','Dump_changes_tests_M3');
+ emaj_set_mark_group 
+---------------------
+                   7
+(1 row)
+
+INSERT INTO myschema1.myTbl4 VALUES (11, 'Inserted and deleted row', 2, 1, 'ABC');
+DELETE FROM myschema1.myTbl4 WHERE col41 = 11 and col43 = 2;
+DELETE FROM myschema1.myTbl4 WHERE col41 = 6 and col43 = 1;
+INSERT INTO myschema1.myTbl4 VALUES (6, 'Deleted and inserted row', 1, 1, 'ABC');
+DELETE FROM myschema1.myTbl4 WHERE col41 = 7 and col43 = 1;
+INSERT INTO myschema1.myTbl4 VALUES (7, 'Initial row', 1, 1, 'ABC');    -- totaly unchanged row
+INSERT INTO myschema1.myTbl4 VALUES (12, 'Inserted, updated and deleted row', 2, 1, 'ABC');
+UPDATE myschema1.myTbl4 SET col44 = 2 WHERE col41 = 12 and col43 = 2;
+DELETE FROM myschema1.myTbl4 WHERE col41 = 12 and col43 = 2;
+SELECT nextval('myschema1."myTbl3_col31_seq"');
+ nextval 
+---------
+      11
+(1 row)
+
+select * from emaj.emaj_set_mark_group('myGroup1','Dump_changes_tests_M4');
+ emaj_set_mark_group 
+---------------------
+                   7
+(1 row)
+
+-- Directly dump changes
+SELECT emaj.emaj_dump_changes_group('myGroup1', 'Dump_changes_tests_M2', 'Dump_changes_tests_M3',
+									'NO_EMPTY_FILES, EMAJ_COLUMNS=MIN',
+									NULL, :'EMAJTESTTMPDIR');
+WARNING:  emaj_dump_changes_group: the NO_EMPTY_FILES option cannot be satisfied because the adminpack extension is not installed.
+NOTICE:  table "emaj_temp_sql" does not exist, skipping
+            emaj_dump_changes_group             
+------------------------------------------------
+ 8 files have been created in /tmp/emaj_12/misc
+(1 row)
+
+\! ls -1sS $EMAJTESTTMPDIR
+total 16
+4 _INFO
+4 myschema1_mytbl4.changes
+4 myschema1_myTbl3_col31_seq.changes
+4 myschema1_mytbl2b_col20_seq.changes
+0 myschema1_myTbl3.changes
+0 myschema1_mytbl1.changes
+0 myschema1_mytbl2.changes
+0 myschema1_mytbl2b.changes
+\! cat $EMAJTESTTMPDIR/myschema1_mytbl4.changes
+10	Inserted row	1	1	ABC       	5400010	NEW
+1	Initial row	1	1	ABC       	5400011	OLD
+2	Initial row	1	1	ABC       	5400012	OLD
+2	PK col changed	2	1	ABC       	5400012	NEW
+3	Initial row	1	1	ABC       	5400013	OLD
+3	Non PK col changed	1	1	ABC       	5400013	NEW
+4	Initial row	1	1	ABC       	5400014	OLD
+4	Non PK col changed	1	1	ABC       	5400014	NEW
+4	Non PK col changed	1	1	ABC       	5400015	OLD
+4	Non PK col changed twice	1	1	ABC       	5400015	NEW
+5	Initial row	1	1	ABC       	5400016	OLD
+5	Initial row	1	1	ABC       	5400016	NEW
+\! cat $EMAJTESTTMPDIR/myschema1_myTbl3_col31_seq.changes
+OLD	myschema1	myTbl3_col31_seq	5401	11	1	1	2147483647	1	1	f	f
+NEW	myschema1	myTbl3_col31_seq	5402	11	1	1	2147483647	1	1	f	f
+\! rm $EMAJTESTTMPDIR/*
+CREATE EXTENSION adminpack;
+SELECT emaj.emaj_dump_changes_group('myGroup1', 'Dump_changes_tests_M3', 'Dump_changes_tests_M4',
+									'NO_EMPTY_FILES, COPY_OPTIONS=(format csv, header), EMAJ_COLUMNS=(emaj_verb,emaj_tuple,emaj_gid)',
+									NULL, :'EMAJTESTTMPDIR');
+NOTICE:  table "emaj_temp_sql" does not exist, skipping
+            emaj_dump_changes_group             
+------------------------------------------------
+ 4 files have been created in /tmp/emaj_12/misc
+(1 row)
+
+\! ls -1sS $EMAJTESTTMPDIR
+total 16
+4 _INFO
+4 myschema1_mytbl4.changes
+4 myschema1_myTbl3_col31_seq.changes
+4 myschema1_mytbl2b_col20_seq.changes
+\! grep -v '  started at ' $EMAJTESTTMPDIR/_INFO
+Dump logged changes for the group "myGroup1" between mark "Dump_changes_tests_M3" and mark "Dump_changes_tests_M4"
+  using options "NO_EMPTY_FILES, COPY_OPTIONS=(format csv, header), EMAJ_COLUMNS=(emaj_verb,emaj_tuple,emaj_gid)"
+File myschema1_mytbl4.changes covers table "myschema1.mytbl4" from mark "Dump_changes_tests_M3" to mark "Dump_changes_tests_M4"
+File myschema1_myTbl3_col31_seq.changes covers sequence "myschema1.myTbl3_col31_seq" from mark "Dump_changes_tests_M3" to mark "Dump_changes_tests_M4"
+File myschema1_mytbl2b_col20_seq.changes covers sequence "myschema1.mytbl2b_col20_seq" from mark "Dump_changes_tests_M3" to mark "Dump_changes_tests_M4"
+\! cat $EMAJTESTTMPDIR/myschema1_mytbl4.changes
+col41,col42,col43,col44,col45,emaj_verb,emaj_tuple,emaj_gid
+11,Inserted and deleted row,2,1,ABC       ,INS,NEW,5400017
+11,Inserted and deleted row,2,1,ABC       ,DEL,OLD,5400018
+6,Initial row,1,1,ABC       ,DEL,OLD,5400019
+6,Deleted and inserted row,1,1,ABC       ,INS,NEW,5400020
+7,Initial row,1,1,ABC       ,DEL,OLD,5400021
+7,Initial row,1,1,ABC       ,INS,NEW,5400022
+12,"Inserted, updated and deleted row",2,1,ABC       ,INS,NEW,5400023
+12,"Inserted, updated and deleted row",2,1,ABC       ,UPD,OLD,5400024
+12,"Inserted, updated and deleted row",2,2,ABC       ,UPD,NEW,5400024
+12,"Inserted, updated and deleted row",2,2,ABC       ,DEL,OLD,5400025
+\! cat $EMAJTESTTMPDIR/myschema1_myTbl3_col31_seq.changes
+emaj_tuple,sequ_schema,sequ_name,sequ_time_id,sequ_last_val,sequ_start_val,sequ_increment,sequ_max_val,sequ_min_val,sequ_cache_val,sequ_is_cycled,sequ_is_called
+OLD,myschema1,myTbl3_col31_seq,5402,11,1,1,2147483647,1,1,f,f
+NEW,myschema1,myTbl3_col31_seq,5403,11,1,1,2147483647,1,1,f,t
+\! rm $EMAJTESTTMPDIR/*
+DROP EXTENSION adminpack;
+SELECT emaj.emaj_dump_changes_group('myGroup1', 'Dump_changes_tests_M2', 'Dump_changes_tests_M4',
+									'CONSOLIDATION=FULL, COPY_OPTIONS=(format csv, delimiter '';'', force_quote *, header)',
+                                    NULL, :'EMAJTESTTMPDIR');
+NOTICE:  table "emaj_temp_sql" does not exist, skipping
+            emaj_dump_changes_group             
+------------------------------------------------
+ 8 files have been created in /tmp/emaj_12/misc
+(1 row)
+
+\! cat $EMAJTESTTMPDIR/myschema1_mytbl4.changes
+col41;col43;emaj_tuple;col42;col44;col45
+"1";"1";"OLD";"Initial row";"1";"ABC       "
+"2";"1";"OLD";"Initial row";"1";"ABC       "
+"2";"2";"NEW";"PK col changed";"1";"ABC       "
+"3";"1";"OLD";"Initial row";"1";"ABC       "
+"3";"1";"NEW";"Non PK col changed";"1";"ABC       "
+"4";"1";"OLD";"Initial row";"1";"ABC       "
+"4";"1";"NEW";"Non PK col changed twice";"1";"ABC       "
+"6";"1";"OLD";"Initial row";"1";"ABC       "
+"6";"1";"NEW";"Deleted and inserted row";"1";"ABC       "
+"10";"1";"NEW";"Inserted row";"1";"ABC       "
+\! cat $EMAJTESTTMPDIR/myschema1_myTbl3_col31_seq.changes
+emaj_tuple;sequ_schema;sequ_name;sequ_time_id;sequ_last_val;sequ_start_val;sequ_increment;sequ_max_val;sequ_min_val;sequ_cache_val;sequ_is_cycled;sequ_is_called
+"OLD";"myschema1";"myTbl3_col31_seq";"5401";"11";"1";"1";"2147483647";"1";"1";"f";"f"
+"NEW";"myschema1";"myTbl3_col31_seq";"5403";"11";"1";"1";"2147483647";"1";"1";"f";"t"
+\! rm $EMAJTESTTMPDIR/*
+SELECT emaj.emaj_dump_changes_group('myGroup1', 'Dump_changes_tests_M2', 'Dump_changes_tests_M4',
+									'CONSOLIDATION=PARTIAL',
+                                    NULL, :'EMAJTESTTMPDIR');
+NOTICE:  table "emaj_temp_sql" does not exist, skipping
+            emaj_dump_changes_group             
+------------------------------------------------
+ 8 files have been created in /tmp/emaj_12/misc
+(1 row)
+
+\! cat $EMAJTESTTMPDIR/myschema1_mytbl4.changes
+1	1	OLD	Initial row	1	ABC       
+2	1	OLD	Initial row	1	ABC       
+2	2	NEW	PK col changed	1	ABC       
+3	1	OLD	Initial row	1	ABC       
+3	1	NEW	Non PK col changed	1	ABC       
+4	1	OLD	Initial row	1	ABC       
+4	1	NEW	Non PK col changed twice	1	ABC       
+5	1	OLD	Initial row	1	ABC       
+5	1	NEW	Initial row	1	ABC       
+6	1	OLD	Initial row	1	ABC       
+6	1	NEW	Deleted and inserted row	1	ABC       
+7	1	OLD	Initial row	1	ABC       
+7	1	NEW	Initial row	1	ABC       
+10	1	NEW	Inserted row	1	ABC       
+\! cat $EMAJTESTTMPDIR/myschema1_myTbl3_col31_seq.changes
+OLD	myschema1	myTbl3_col31_seq	5401	11	1	1	2147483647	1	1	f	f
+NEW	myschema1	myTbl3_col31_seq	5403	11	1	1	2147483647	1	1	f	t
+\! rm $EMAJTESTTMPDIR/*
+-- Dump changes for tables with unusual data types and consolidation.
+SELECT emaj.emaj_dump_changes_group('myGroup2', 'Multi-2', 'Multi-3',
+									'CONSOLIDATION=PARTIAL',
+                                    '{"myschema2.mytbl5", "myschema2.mytbl6"}', :'EMAJTESTTMPDIR');
+NOTICE:  table "emaj_temp_sql" does not exist, skipping
+            emaj_dump_changes_group             
+------------------------------------------------
+ 3 files have been created in /tmp/emaj_12/misc
+(1 row)
+
+\! ls -1sS $EMAJTESTTMPDIR
+total 4
+4 _INFO
+0 myschema2_mytbl5.changes
+0 myschema2_mytbl6.changes
+\! rm $EMAJTESTTMPDIR/*
+SELECT emaj.emaj_dump_changes_group('myGroup2', 'Multi-2', 'Multi-3',
+									'CONSOLIDATION=FULL',
+                                    '{"myschema2.mytbl5", "myschema2.mytbl6"}', :'EMAJTESTTMPDIR');
+NOTICE:  table "emaj_temp_sql" does not exist, skipping
+            emaj_dump_changes_group             
+------------------------------------------------
+ 3 files have been created in /tmp/emaj_12/misc
+(1 row)
+
+\! ls -1sS $EMAJTESTTMPDIR
+total 4
+4 _INFO
+0 myschema2_mytbl5.changes
+0 myschema2_mytbl6.changes
+\! rm $EMAJTESTTMPDIR/*
+-- Generate SQL statements with the PSQL_COPY_DIR option and execute the generated script
+SELECT emaj.emaj_gen_sql_dump_changes_group('myGroup1', 'Dump_changes_tests_M2', 'Dump_changes_tests_M4',
+											'PSQL_COPY_DIR=(' || :'EMAJTESTTMPDIR' || '), CONSOLIDATION=FULL',
+											NULL, :'EMAJTESTTMPDIR' || '/sql_script');
+NOTICE:  table "emaj_temp_sql" does not exist, skipping
+                         emaj_gen_sql_dump_changes_group                         
+---------------------------------------------------------------------------------
+ 7 SQL statements have been written into the "/tmp/emaj_12/misc/sql_script" file
+(1 row)
+
+\i :EMAJTESTTMPDIR/sql_script
+-- Generated SQL for dumping changes in tables group "myGroup1" between marks "Dump_changes_tests_M2" and "Dump_changes_tests_M4" using options: PSQL_COPY_DIR=(/tmp/emaj_12/misc), CONSOLIDATION=FULL
+-- Dump changes for table myschema1.myTbl3 between marks "Dump_changes_tests_M2" and "Dump_changes_tests_M4" (0 changes)
+\copy (WITH keys AS ( SELECT col31, min(emaj_gid) AS min_gid, max(emaj_gid) AS max_gid FROM emaj_myschema1."myTbl3_log" WHERE emaj_gid > 5400009 AND emaj_gid <= 5400025 GROUP BY col31 ), consolidated AS ( SELECT tbl.* FROM emaj_myschema1."myTbl3_log" tbl JOIN keys ON (tbl.col31 = keys.col31) WHERE (tbl.emaj_tuple = 'OLD' AND tbl.emaj_gid = keys.min_gid) OR (tbl.emaj_tuple = 'NEW' AND tbl.emaj_gid = keys.max_gid) ), unchanged_keys AS ( SELECT r1.col31 FROM consolidated r1 JOIN consolidated r2 ON (r1.col31=r2.col31) WHERE r1.emaj_tuple = 'OLD' AND r2.emaj_tuple = 'NEW' AND (r1.col32=r2.col32 OR (r1.col32 IS NULL AND r2.col32 IS NULL)) AND (r1.col33=r2.col33 OR (r1.col33 IS NULL AND r2.col33 IS NULL)) ) SELECT tbl.col31,emaj_tuple,tbl.col32,tbl.col33 FROM consolidated tbl WHERE NOT EXISTS (SELECT 0 FROM unchanged_keys keys WHERE tbl.col31 = keys.col31) ORDER BY tbl.col31, emaj_gid, emaj_tuple DESC) TO '/tmp/emaj_12/misc/myschema1_myTbl3.changes'
+-- Dump changes for table myschema1.mytbl1 between marks "Dump_changes_tests_M2" and "Dump_changes_tests_M4" (0 changes)
+\copy (WITH keys AS ( SELECT col11,col12, min(emaj_gid) AS min_gid, max(emaj_gid) AS max_gid FROM emaj_myschema1.mytbl1_log WHERE emaj_gid > 5400009 AND emaj_gid <= 5400025 GROUP BY col11,col12 ), consolidated AS ( SELECT tbl.* FROM emaj_myschema1.mytbl1_log tbl JOIN keys ON (tbl.col11 = keys.col11 AND tbl.col12 = keys.col12) WHERE (tbl.emaj_tuple = 'OLD' AND tbl.emaj_gid = keys.min_gid) OR (tbl.emaj_tuple = 'NEW' AND tbl.emaj_gid = keys.max_gid) ), unchanged_keys AS ( SELECT r1.col11,r1.col12 FROM consolidated r1 JOIN consolidated r2 ON (r1.col11=r2.col11 AND r1.col12=r2.col12) WHERE r1.emaj_tuple = 'OLD' AND r2.emaj_tuple = 'NEW' AND (r1.col13=r2.col13 OR (r1.col13 IS NULL AND r2.col13 IS NULL)) ) SELECT tbl.col11,tbl.col12,emaj_tuple,tbl.col13 FROM consolidated tbl WHERE NOT EXISTS (SELECT 0 FROM unchanged_keys keys WHERE tbl.col11 = keys.col11 AND tbl.col12 = keys.col12) ORDER BY tbl.col11,tbl.col12, emaj_gid, emaj_tuple DESC) TO '/tmp/emaj_12/misc/myschema1_mytbl1.changes'
+-- Dump changes for table myschema1.mytbl2 between marks "Dump_changes_tests_M2" and "Dump_changes_tests_M4" (0 changes)
+\copy (WITH keys AS ( SELECT col21, min(emaj_gid) AS min_gid, max(emaj_gid) AS max_gid FROM emaj_myschema1.mytbl2_log WHERE emaj_gid > 5400009 AND emaj_gid <= 5400025 GROUP BY col21 ), consolidated AS ( SELECT tbl.* FROM emaj_myschema1.mytbl2_log tbl JOIN keys ON (tbl.col21 = keys.col21) WHERE (tbl.emaj_tuple = 'OLD' AND tbl.emaj_gid = keys.min_gid) OR (tbl.emaj_tuple = 'NEW' AND tbl.emaj_gid = keys.max_gid) ), unchanged_keys AS ( SELECT r1.col21 FROM consolidated r1 JOIN consolidated r2 ON (r1.col21=r2.col21) WHERE r1.emaj_tuple = 'OLD' AND r2.emaj_tuple = 'NEW' AND (r1.col22=r2.col22 OR (r1.col22 IS NULL AND r2.col22 IS NULL)) AND (r1.col23=r2.col23 OR (r1.col23 IS NULL AND r2.col23 IS NULL)) ) SELECT tbl.col21,emaj_tuple,tbl.col22,tbl.col23 FROM consolidated tbl WHERE NOT EXISTS (SELECT 0 FROM unchanged_keys keys WHERE tbl.col21 = keys.col21) ORDER BY tbl.col21, emaj_gid, emaj_tuple DESC) TO '/tmp/emaj_12/misc/myschema1_mytbl2.changes'
+-- Dump changes for table myschema1.mytbl2b between marks "Dump_changes_tests_M2" and "Dump_changes_tests_M4" (0 changes)
+\copy (WITH keys AS ( SELECT col20, min(emaj_gid) AS min_gid, max(emaj_gid) AS max_gid FROM emaj_myschema1.mytbl2b_log WHERE emaj_gid > 5400009 AND emaj_gid <= 5400025 GROUP BY col20 ), consolidated AS ( SELECT tbl.* FROM emaj_myschema1.mytbl2b_log tbl JOIN keys ON (tbl.col20 = keys.col20) WHERE (tbl.emaj_tuple = 'OLD' AND tbl.emaj_gid = keys.min_gid) OR (tbl.emaj_tuple = 'NEW' AND tbl.emaj_gid = keys.max_gid) ), unchanged_keys AS ( SELECT r1.col20 FROM consolidated r1 JOIN consolidated r2 ON (r1.col20=r2.col20) WHERE r1.emaj_tuple = 'OLD' AND r2.emaj_tuple = 'NEW' AND (r1.col21=r2.col21 OR (r1.col21 IS NULL AND r2.col21 IS NULL)) AND (r1.col22=r2.col22 OR (r1.col22 IS NULL AND r2.col22 IS NULL)) AND (r1.col23=r2.col23 OR (r1.col23 IS NULL AND r2.col23 IS NULL)) ) SELECT tbl.col20,emaj_tuple,tbl.col21,tbl.col22,tbl.col23 FROM consolidated tbl WHERE NOT EXISTS (SELECT 0 FROM unchanged_keys keys WHERE tbl.col20 = keys.col20) ORDER BY tbl.col20, emaj_gid, emaj_tuple DESC) TO '/tmp/emaj_12/misc/myschema1_mytbl2b.changes'
+-- Dump changes for table myschema1.mytbl4 between marks "Dump_changes_tests_M2" and "Dump_changes_tests_M4" (16 changes)
+\copy (WITH keys AS ( SELECT col41,col43, min(emaj_gid) AS min_gid, max(emaj_gid) AS max_gid FROM emaj_myschema1.mytbl4_log WHERE emaj_gid > 5400009 AND emaj_gid <= 5400025 GROUP BY col41,col43 ), consolidated AS ( SELECT tbl.* FROM emaj_myschema1.mytbl4_log tbl JOIN keys ON (tbl.col41 = keys.col41 AND tbl.col43 = keys.col43) WHERE (tbl.emaj_tuple = 'OLD' AND tbl.emaj_gid = keys.min_gid) OR (tbl.emaj_tuple = 'NEW' AND tbl.emaj_gid = keys.max_gid) ), unchanged_keys AS ( SELECT r1.col41,r1.col43 FROM consolidated r1 JOIN consolidated r2 ON (r1.col41=r2.col41 AND r1.col43=r2.col43) WHERE r1.emaj_tuple = 'OLD' AND r2.emaj_tuple = 'NEW' AND (r1.col42=r2.col42 OR (r1.col42 IS NULL AND r2.col42 IS NULL)) AND (r1.col44=r2.col44 OR (r1.col44 IS NULL AND r2.col44 IS NULL)) AND (r1.col45=r2.col45 OR (r1.col45 IS NULL AND r2.col45 IS NULL)) ) SELECT tbl.col41,tbl.col43,emaj_tuple,tbl.col42,tbl.col44,tbl.col45 FROM consolidated tbl WHERE NOT EXISTS (SELECT 0 FROM unchanged_keys keys WHERE tbl.col41 = keys.col41 AND tbl.col43 = keys.col43) ORDER BY tbl.col41,tbl.col43, emaj_gid, emaj_tuple DESC) TO '/tmp/emaj_12/misc/myschema1_mytbl4.changes'
+-- Dump changes for sequence myschema1.myTbl3_col31_seq between marks "Dump_changes_tests_M2" and "Dump_changes_tests_M4"
+\copy (WITH seq_begin AS ( SELECT 'OLD' AS emaj_tuple, * FROM emaj.emaj_sequence WHERE sequ_schema = 'myschema1' AND sequ_name = 'myTbl3_col31_seq' AND sequ_time_id = 5401 ), seq_end AS ( SELECT 'NEW' AS emaj_tuple, * FROM emaj.emaj_sequence WHERE sequ_schema = 'myschema1' AND sequ_name = 'myTbl3_col31_seq' AND sequ_time_id = 5403 ), seq_agg AS ( SELECT '<>' FROM seq_begin b, seq_end e WHERE (CASE WHEN b.sequ_is_called THEN b.sequ_last_val ELSE b.sequ_last_val - b.sequ_increment END <> CASE WHEN e.sequ_is_called THEN e.sequ_last_val ELSE e.sequ_last_val - e.sequ_increment END) OR b.sequ_start_val <> e.sequ_start_val OR b.sequ_increment <> e.sequ_increment OR b.sequ_max_val <> e.sequ_max_val OR b.sequ_min_val <> e.sequ_min_val OR b.sequ_cache_val <> e.sequ_cache_val OR b.sequ_is_cycled <> e.sequ_is_cycled ) SELECT t.* FROM ( SELECT * FROM seq_begin UNION ALL SELECT * FROM seq_end ) AS t, seq_agg ORDER BY emaj_tuple DESC ) TO '/tmp/emaj_12/misc/myschema1_myTbl3_col31_seq.changes'
+-- Dump changes for sequence myschema1.mytbl2b_col20_seq between marks "Dump_changes_tests_M2" and "Dump_changes_tests_M4"
+\copy (WITH seq_begin AS ( SELECT 'OLD' AS emaj_tuple, * FROM emaj.emaj_sequence WHERE sequ_schema = 'myschema1' AND sequ_name = 'mytbl2b_col20_seq' AND sequ_time_id = 5401 ), seq_end AS ( SELECT 'NEW' AS emaj_tuple, * FROM emaj.emaj_sequence WHERE sequ_schema = 'myschema1' AND sequ_name = 'mytbl2b_col20_seq' AND sequ_time_id = 5403 ), seq_agg AS ( SELECT '<>' FROM seq_begin b, seq_end e WHERE (CASE WHEN b.sequ_is_called THEN b.sequ_last_val ELSE b.sequ_last_val - b.sequ_increment END <> CASE WHEN e.sequ_is_called THEN e.sequ_last_val ELSE e.sequ_last_val - e.sequ_increment END) OR b.sequ_start_val <> e.sequ_start_val OR b.sequ_increment <> e.sequ_increment OR b.sequ_max_val <> e.sequ_max_val OR b.sequ_min_val <> e.sequ_min_val OR b.sequ_cache_val <> e.sequ_cache_val OR b.sequ_is_cycled <> e.sequ_is_cycled ) SELECT t.* FROM ( SELECT * FROM seq_begin UNION ALL SELECT * FROM seq_end ) AS t, seq_agg ORDER BY emaj_tuple DESC ) TO '/tmp/emaj_12/misc/myschema1_mytbl2b_col20_seq.changes'
+\! ls -1sS $EMAJTESTTMPDIR
+total 16
+8 sql_script
+4 myschema1_mytbl4.changes
+4 myschema1_myTbl3_col31_seq.changes
+0 myschema1_myTbl3.changes
+0 myschema1_mytbl1.changes
+0 myschema1_mytbl2.changes
+0 myschema1_mytbl2b.changes
+0 myschema1_mytbl2b_col20_seq.changes
+\! cat $EMAJTESTTMPDIR/myschema1_mytbl4.changes
+1	1	OLD	Initial row	1	ABC       
+2	1	OLD	Initial row	1	ABC       
+2	2	NEW	PK col changed	1	ABC       
+3	1	OLD	Initial row	1	ABC       
+3	1	NEW	Non PK col changed	1	ABC       
+4	1	OLD	Initial row	1	ABC       
+4	1	NEW	Non PK col changed twice	1	ABC       
+6	1	OLD	Initial row	1	ABC       
+6	1	NEW	Deleted and inserted row	1	ABC       
+10	1	NEW	Inserted row	1	ABC       
+\! cat $EMAJTESTTMPDIR/myschema1_myTbl3_col31_seq.changes
+OLD	myschema1	myTbl3_col31_seq	5401	11	1	1	2147483647	1	1	f	f
+NEW	myschema1	myTbl3_col31_seq	5403	11	1	1	2147483647	1	1	f	t
+\! rm $EMAJTESTTMPDIR/*
+select * from emaj.emaj_rollback_group('myGroup1','Dump_changes_tests_M1');
+ rlbk_severity |              rlbk_message              
+---------------+----------------------------------------
+ Notice        | Rollback id = 5400.
+ Notice        | 1 / 5 tables effectively processed.
+ Notice        | 1 / 2 sequences effectively processed.
+(3 rows)
+
+select emaj.emaj_cleanup_rollback_state();
+ emaj_cleanup_rollback_state 
+-----------------------------
+                           1
+(1 row)
+
+select emaj.emaj_delete_mark_group('myGroup1','EMAJ_LAST_MARK');
+ emaj_delete_mark_group 
+------------------------
+                      1
+(1 row)
+
+-- Test using quotes in schéma, table or group names
+SELECT emaj.emaj_dump_changes_group('phil''s group#3",', 'Mark4', 'Mark5', NULL, NULL, :'EMAJTESTTMPDIR');
+NOTICE:  table "emaj_temp_sql" does not exist, skipping
+            emaj_dump_changes_group             
+------------------------------------------------
+ 5 files have been created in /tmp/emaj_12/misc
+(1 row)
+
+\! ls -1sS $EMAJTESTTMPDIR
+total 12
+4 _INFO
+4 phil's_schema3_myTbl2__col21_seq.changes
+4 phil's_schema3_phil's_seq_1.changes
+0 phil's_schema3_myTbl2_.changes
+0 phil's_schema3_phil's_tbl1.changes
+\! grep -v '  started at ' $EMAJTESTTMPDIR/_INFO
+Dump logged changes for the group "phil's group#3"," between mark "Mark4" and mark "Mark5"
+ without option
+File phil's_schema3_myTbl2_.changes covers table "phil's schema3.myTbl2\\" from mark "Mark4" to mark "Mark5"
+File phil's_schema3_phil's_tbl1.changes covers table "phil's schema3.phil's tbl1" from mark "Mark4" to mark "Mark5"
+File phil's_schema3_myTbl2__col21_seq.changes covers sequence "phil's schema3.myTbl2\\_col21_seq" from mark "Mark4" to mark "Mark5"
+File phil's_schema3_phil's_seq_1.changes covers sequence "phil's schema3.phil's seq\\1" from mark "Mark4" to mark "Mark5"
+\! cat $EMAJTESTTMPDIR/"phil's_schema3_myTbl2__col21_seq.changes"
+OLD	phil's schema3	myTbl2\\_col21_seq	3402	1	1	1	2147483647	1	1	f	f
+NEW	phil's schema3	myTbl2\\_col21_seq	3403	1	1	1	2147483647	1	1	f	f
+\! rm $EMAJTESTTMPDIR/*
+-- Checks for emaj_dump_changes_group() and emaj_gen_sql_dump_changes_group()
+select hist_id, hist_function, hist_event, hist_object, 
+       regexp_replace(regexp_replace(hist_wording,E'\\d\\d\.\\d\\d\\.\\d\\d\\.\\d\\d\\d\\d','%','g'),E'\\[.+\\]','(timestamp)','g'), hist_user
+  from (select * from emaj.emaj_hist where hist_id >= 5400 order by hist_id) as t;
+ hist_id |       hist_function        |  hist_event  |         hist_object          |                                          regexp_replace                                          | hist_user 
+---------+----------------------------+--------------+------------------------------+--------------------------------------------------------------------------------------------------+-----------
+    5410 | GEN_SQL_DUMP_CHANGES_GROUP | BEGIN        | myGroup2                     | From mark Mark21 to Mark23 towards /tmp/emaj_12/misc/sql_script                                  | postgres
+    5411 | GEN_SQL_DUMP_CHANGES_GROUP | END          | myGroup2                     | 2 generated SQL statements                                                                       | postgres
+    5412 | GEN_SQL_DUMP_CHANGES_GROUP | BEGIN        | myGroup2                     | From mark Mark21 to Mark23 towards /tmp/emaj_12/misc/sql_script                                  | postgres
+    5413 | GEN_SQL_DUMP_CHANGES_GROUP | END          | myGroup2                     | 2 generated SQL statements                                                                       | postgres
+    5414 | GEN_SQL_DUMP_CHANGES_GROUP | BEGIN        | myGroup2                     | From mark Mark21 to Mark23 towards /tmp/emaj_12/misc/sql_script                                  | postgres
+    5415 | GEN_SQL_DUMP_CHANGES_GROUP | END          | myGroup2                     | 2 generated SQL statements                                                                       | postgres
+    5416 | SET_MARK_GROUP             | BEGIN        | myGroup1                     |                                                                                                  | postgres
+    5417 | LOCK_GROUP                 | BEGIN        | myGroup1                     |                                                                                                  | postgres
+    5418 | LOCK_GROUP                 | END          | myGroup1                     | 5 tables locked, 0 deadlock(s)                                                                   | postgres
+    5419 | SET_MARK_GROUP             | END          | myGroup1                     | Dump_changes_tests_M1                                                                            | postgres
+    5420 | SET_MARK_GROUP             | BEGIN        | myGroup1                     |                                                                                                  | postgres
+    5421 | LOCK_GROUP                 | BEGIN        | myGroup1                     |                                                                                                  | postgres
+    5422 | LOCK_GROUP                 | END          | myGroup1                     | 5 tables locked, 0 deadlock(s)                                                                   | postgres
+    5423 | SET_MARK_GROUP             | END          | myGroup1                     | Dump_changes_tests_M2                                                                            | postgres
+    5424 | SET_MARK_GROUP             | BEGIN        | myGroup1                     |                                                                                                  | postgres
+    5425 | LOCK_GROUP                 | BEGIN        | myGroup1                     |                                                                                                  | postgres
+    5426 | LOCK_GROUP                 | END          | myGroup1                     | 5 tables locked, 0 deadlock(s)                                                                   | postgres
+    5427 | SET_MARK_GROUP             | END          | myGroup1                     | Dump_changes_tests_M3                                                                            | postgres
+    5428 | SET_MARK_GROUP             | BEGIN        | myGroup1                     |                                                                                                  | postgres
+    5429 | LOCK_GROUP                 | BEGIN        | myGroup1                     |                                                                                                  | postgres
+    5430 | LOCK_GROUP                 | END          | myGroup1                     | 5 tables locked, 0 deadlock(s)                                                                   | postgres
+    5431 | SET_MARK_GROUP             | END          | myGroup1                     | Dump_changes_tests_M4                                                                            | postgres
+    5432 | DUMP_CHANGES_GROUP         | BEGIN        | myGroup1                     | From mark Dump_changes_tests_M2 to Dump_changes_tests_M3 towards /tmp/emaj_12/misc               | postgres
+    5433 | DUMP_CHANGES_GROUP         | END          | myGroup1                     | 8 generated files                                                                                | postgres
+    5434 | DUMP_CHANGES_GROUP         | BEGIN        | myGroup1                     | From mark Dump_changes_tests_M3 to Dump_changes_tests_M4 towards /tmp/emaj_12/misc               | postgres
+    5435 | DUMP_CHANGES_GROUP         | END          | myGroup1                     | 4 generated files                                                                                | postgres
+    5436 | DUMP_CHANGES_GROUP         | BEGIN        | myGroup1                     | From mark Dump_changes_tests_M2 to Dump_changes_tests_M4 towards /tmp/emaj_12/misc               | postgres
+    5437 | DUMP_CHANGES_GROUP         | END          | myGroup1                     | 8 generated files                                                                                | postgres
+    5438 | DUMP_CHANGES_GROUP         | BEGIN        | myGroup1                     | From mark Dump_changes_tests_M2 to Dump_changes_tests_M4 towards /tmp/emaj_12/misc               | postgres
+    5439 | DUMP_CHANGES_GROUP         | END          | myGroup1                     | 8 generated files                                                                                | postgres
+    5440 | DUMP_CHANGES_GROUP         | BEGIN        | myGroup2                     | From mark Multi-2 to Multi-3 towards /tmp/emaj_12/misc                                           | postgres
+    5441 | DUMP_CHANGES_GROUP         | END          | myGroup2                     | 3 generated files                                                                                | postgres
+    5442 | DUMP_CHANGES_GROUP         | BEGIN        | myGroup2                     | From mark Multi-2 to Multi-3 towards /tmp/emaj_12/misc                                           | postgres
+    5443 | DUMP_CHANGES_GROUP         | END          | myGroup2                     | 3 generated files                                                                                | postgres
+    5444 | GEN_SQL_DUMP_CHANGES_GROUP | BEGIN        | myGroup1                     | From mark Dump_changes_tests_M2 to Dump_changes_tests_M4 towards /tmp/emaj_12/misc/sql_script    | postgres
+    5445 | GEN_SQL_DUMP_CHANGES_GROUP | END          | myGroup1                     | 7 generated SQL statements                                                                       | postgres
+    5446 | ROLLBACK_GROUP             | BEGIN        | myGroup1                     | Unlogged rollback to mark Dump_changes_tests_M1 (timestamp)                                      | postgres
+    5447 | DBLINK_OPEN_CNX            |              | rlbk#1                       | Status = 1                                                                                       | postgres
+    5448 | LOCK_GROUP                 | BEGIN        | myGroup1                     | Rollback session #1                                                                              | postgres
+    5449 | LOCK_GROUP                 | END          | myGroup1                     | Rollback session #1: 5 tables locked, 0 deadlock(s)                                              | postgres
+    5450 | ROLLBACK_SEQUENCE          |              | myschema1."myTbl3_col31_seq" | RESTART 11                                                                                       | postgres
+    5451 | ROLLBACK_TABLE             | BEGIN        | myschema1.mytbl4             | All log rows where emaj_gid > 5400000 and <= 5400025, in session_replication_role = replica mode | postgres
+    5452 | ROLLBACK_TABLE             | END          | myschema1.mytbl4             | 13 rolled back primary keys                                                                      | postgres
+    5453 | ROLLBACK_GROUP             | MARK DELETED | myGroup1                     | mark Dump_changes_tests_M2 is deleted                                                            | postgres
+    5454 | ROLLBACK_GROUP             | MARK DELETED | myGroup1                     | mark Dump_changes_tests_M3 is deleted                                                            | postgres
+    5455 | ROLLBACK_GROUP             | MARK DELETED | myGroup1                     | mark Dump_changes_tests_M4 is deleted                                                            | postgres
+    5456 | ROLLBACK_GROUP             | NOTICE       | Rollback id 5400             | Rollback id = 5400.                                                                              | postgres
+    5457 | ROLLBACK_GROUP             | NOTICE       | Rollback id 5400             | 1 / 5 tables effectively processed.                                                              | postgres
+    5458 | ROLLBACK_GROUP             | NOTICE       | Rollback id 5400             | 1 / 2 sequences effectively processed.                                                           | postgres
+    5459 | DBLINK_CLOSE_CNX           |              | rlbk#1                       |                                                                                                  | postgres
+    5460 | ROLLBACK_GROUP             | END          | myGroup1                     | Rollback_id 5400                                                                                 | postgres
+    5461 | CLEANUP_RLBK_STATE         |              | Rollback id 5400             | set to COMMITTED                                                                                 | postgres
+    5462 | DELETE_MARK_GROUP          | BEGIN        | myGroup1                     | EMAJ_LAST_MARK                                                                                   | postgres
+    5463 | DELETE_MARK_GROUP          | END          | myGroup1                     | Dump_changes_tests_M1                                                                            | postgres
+    5464 | DUMP_CHANGES_GROUP         | BEGIN        | phil's group#3",             | From mark Mark4 to Mark5 towards /tmp/emaj_12/misc                                               | postgres
+    5465 | DUMP_CHANGES_GROUP         | END          | phil's group#3",             | 5 generated files                                                                                | postgres
+(56 rows)
+
+-- set sequence restart value
+select public.handle_emaj_sequences(5500);
+ handle_emaj_sequences 
+-----------------------
+ 
+(1 row)
+
+-----------------------------
+-- emaj_gen_sql_group() and emaj_gen_sql_groups() tests
 -----------------------------
 -- group is unknown
 select emaj.emaj_gen_sql_group(NULL, NULL, NULL, NULL);
@@ -1298,7 +2203,7 @@ NOTICE:  table "emaj_temp_script" does not exist, skipping
 ERROR:  could not open file "/tmp/unknownDirectory/myFile" for writing: No such file or directory
 HINT:  COPY TO instructs the PostgreSQL server process to write a file. You may want a client-side facility such as psql's \copy.
 CONTEXT:  SQL statement "COPY (SELECT 0) TO '/tmp/unknownDirectory/myFile' "
-PL/pgSQL function emaj._copy_to_file(text,text,text,boolean,boolean) line 36 at EXECUTE
+PL/pgSQL function emaj._copy_to_file(text,text,text,boolean,boolean) line 37 at EXECUTE
 SQL statement "SELECT emaj._copy_to_file('(SELECT 0)', p_location, NULL)"
 PL/pgSQL function emaj._gen_sql_groups(text[],boolean,text,text,text,text[]) line 80 at PERFORM
 PL/pgSQL function emaj.emaj_gen_sql_group(text,text,text,text,text[]) line 14 at RETURN
@@ -1307,7 +2212,7 @@ NOTICE:  table "emaj_temp_script" does not exist, skipping
 ERROR:  could not open file "/tmp/unknownDirectory/myFile" for writing: No such file or directory
 HINT:  COPY TO instructs the PostgreSQL server process to write a file. You may want a client-side facility such as psql's \copy.
 CONTEXT:  SQL statement "COPY (SELECT 0) TO '/tmp/unknownDirectory/myFile' "
-PL/pgSQL function emaj._copy_to_file(text,text,text,boolean,boolean) line 36 at EXECUTE
+PL/pgSQL function emaj._copy_to_file(text,text,text,boolean,boolean) line 37 at EXECUTE
 SQL statement "SELECT emaj._copy_to_file('(SELECT 0)', p_location, NULL)"
 PL/pgSQL function emaj._gen_sql_groups(text[],boolean,text,text,text,text[]) line 80 at PERFORM
 PL/pgSQL function emaj.emaj_gen_sql_groups(text[],text,text,text,text[]) line 14 at RETURN
@@ -1483,37 +2388,37 @@ rollback;
 -- check for emaj_gen_sql_group()
 select hist_id, hist_function, hist_event, hist_object, 
        regexp_replace(regexp_replace(hist_wording,E'\\d\\d\.\\d\\d\\.\\d\\d\\.\\d\\d\\d\\d','%','g'),E'\\[.+\\]','(timestamp)','g'), hist_user
-  from (select * from emaj.emaj_hist where hist_id >= 5400 order by hist_id) as t;
+  from (select * from emaj.emaj_hist where hist_id >= 5500 order by hist_id) as t;
  hist_id | hist_function  | hist_event |    hist_object    |                               regexp_replace                               | hist_user 
 ---------+----------------+------------+-------------------+----------------------------------------------------------------------------+-----------
-    5402 | GEN_SQL_GROUPS | BEGIN      |                   | From mark  to current state                                                | postgres
-    5403 | GEN_SQL_GROUPS | END        |                   | 0 generated statements - script not exported                               | postgres
-    5414 | GEN_SQL_GROUP  | BEGIN      | myGroup2          | From mark Mark21 to mark EMAJ_LAST_MARK with tables/sequences filtering    | postgres
-    5415 | GEN_SQL_GROUP  | END        | myGroup2          | 0 generated statements - script exported into /tmp/emaj_12/misc/myFile     | postgres
-    5422 | GEN_SQL_GROUP  | BEGIN      | myGroup2          | From mark Mark21 to current state                                          | postgres
-    5423 | GEN_SQL_GROUP  | END        | myGroup2          | 11711 generated statements - script exported into /tmp/emaj_12/misc/myFile | postgres
-    5424 | GEN_SQL_GROUP  | BEGIN      | myGroup2          | From mark Mark21 to mark Mark22                                            | postgres
-    5425 | GEN_SQL_GROUP  | END        | myGroup2          | 11600 generated statements - script exported into /tmp/emaj_12/misc/myFile | postgres
-    5426 | GEN_SQL_GROUPS | BEGIN      | myGroup1,myGroup2 | From mark Multi-1 to current state                                         | postgres
-    5427 | GEN_SQL_GROUPS | END        | myGroup1,myGroup2 | 11711 generated statements - script exported into /tmp/emaj_12/misc/myFile | postgres
-    5428 | GEN_SQL_GROUPS | BEGIN      | myGroup1,myGroup2 | From mark Multi-2 to mark Multi-3                                          | postgres
-    5429 | GEN_SQL_GROUPS | END        | myGroup1,myGroup2 | 111 generated statements - script exported into /tmp/emaj_12/misc/myFile   | postgres
-    5430 | GEN_SQL_GROUP  | BEGIN      | myGroup2          | From mark Mark21 to mark EMAJ_LAST_MARK                                    | postgres
-    5431 | GEN_SQL_GROUP  | END        | myGroup2          | 11711 generated statements - script exported into /tmp/emaj_12/misc/myFile | postgres
-    5432 | GEN_SQL_GROUP  | BEGIN      | myGroup1          | From mark Mark21 to current state                                          | postgres
-    5433 | GEN_SQL_GROUP  | END        | myGroup1          | 0 generated statements - script not exported                               | postgres
-    5434 | GEN_SQL_GROUP  | BEGIN      | myGroup2          | From mark Mark21 to mark EMAJ_LAST_MARK with tables/sequences filtering    | postgres
-    5435 | GEN_SQL_GROUP  | END        | myGroup2          | 11711 generated statements - script exported into /tmp/emaj_12/misc/myFile | postgres
-    5436 | GEN_SQL_GROUP  | BEGIN      | myGroup2          | From mark Mark21 to mark EMAJ_LAST_MARK with tables/sequences filtering    | postgres
-    5437 | GEN_SQL_GROUP  | END        | myGroup2          | 11710 generated statements - script exported into /tmp/emaj_12/misc/myFile | postgres
-    5438 | GEN_SQL_GROUP  | BEGIN      | myGroup2          | From mark Mark21 to mark EMAJ_LAST_MARK with tables/sequences filtering    | postgres
-    5439 | GEN_SQL_GROUP  | END        | myGroup2          | 11610 generated statements - script exported into /tmp/emaj_12/misc/myFile | postgres
-    5440 | GEN_SQL_GROUP  | BEGIN      | myGroup2          | From mark Mark21 to mark EMAJ_LAST_MARK with tables/sequences filtering    | postgres
-    5441 | GEN_SQL_GROUP  | END        | myGroup2          | 1 generated statements - script exported into /tmp/emaj_12/misc/myFile     | postgres
-    5442 | GEN_SQL_GROUP  | BEGIN      | phil's group#3",  | From mark Mark4 to mark EMAJ_LAST_MARK with tables/sequences filtering     | postgres
-    5443 | GEN_SQL_GROUP  | END        | phil's group#3",  | 0 generated statements - script exported into /tmp/emaj_12/misc/myFile     | postgres
-    5444 | GEN_SQL_GROUPS | BEGIN      | myGroup1,myGroup2 | From mark Multi-1 to mark Multi-3 with tables/sequences filtering          | postgres
-    5445 | GEN_SQL_GROUPS | END        | myGroup1,myGroup2 | 100 generated statements - script exported into /tmp/emaj_12/misc/myFile   | postgres
+    5502 | GEN_SQL_GROUPS | BEGIN      |                   | From mark  to current state                                                | postgres
+    5503 | GEN_SQL_GROUPS | END        |                   | 0 generated statements - script not exported                               | postgres
+    5514 | GEN_SQL_GROUP  | BEGIN      | myGroup2          | From mark Mark21 to mark EMAJ_LAST_MARK with tables/sequences filtering    | postgres
+    5515 | GEN_SQL_GROUP  | END        | myGroup2          | 0 generated statements - script exported into /tmp/emaj_12/misc/myFile     | postgres
+    5522 | GEN_SQL_GROUP  | BEGIN      | myGroup2          | From mark Mark21 to current state                                          | postgres
+    5523 | GEN_SQL_GROUP  | END        | myGroup2          | 11711 generated statements - script exported into /tmp/emaj_12/misc/myFile | postgres
+    5524 | GEN_SQL_GROUP  | BEGIN      | myGroup2          | From mark Mark21 to mark Mark22                                            | postgres
+    5525 | GEN_SQL_GROUP  | END        | myGroup2          | 11600 generated statements - script exported into /tmp/emaj_12/misc/myFile | postgres
+    5526 | GEN_SQL_GROUPS | BEGIN      | myGroup1,myGroup2 | From mark Multi-1 to current state                                         | postgres
+    5527 | GEN_SQL_GROUPS | END        | myGroup1,myGroup2 | 11711 generated statements - script exported into /tmp/emaj_12/misc/myFile | postgres
+    5528 | GEN_SQL_GROUPS | BEGIN      | myGroup1,myGroup2 | From mark Multi-2 to mark Multi-3                                          | postgres
+    5529 | GEN_SQL_GROUPS | END        | myGroup1,myGroup2 | 111 generated statements - script exported into /tmp/emaj_12/misc/myFile   | postgres
+    5530 | GEN_SQL_GROUP  | BEGIN      | myGroup2          | From mark Mark21 to mark EMAJ_LAST_MARK                                    | postgres
+    5531 | GEN_SQL_GROUP  | END        | myGroup2          | 11711 generated statements - script exported into /tmp/emaj_12/misc/myFile | postgres
+    5532 | GEN_SQL_GROUP  | BEGIN      | myGroup1          | From mark Mark21 to current state                                          | postgres
+    5533 | GEN_SQL_GROUP  | END        | myGroup1          | 0 generated statements - script not exported                               | postgres
+    5534 | GEN_SQL_GROUP  | BEGIN      | myGroup2          | From mark Mark21 to mark EMAJ_LAST_MARK with tables/sequences filtering    | postgres
+    5535 | GEN_SQL_GROUP  | END        | myGroup2          | 11711 generated statements - script exported into /tmp/emaj_12/misc/myFile | postgres
+    5536 | GEN_SQL_GROUP  | BEGIN      | myGroup2          | From mark Mark21 to mark EMAJ_LAST_MARK with tables/sequences filtering    | postgres
+    5537 | GEN_SQL_GROUP  | END        | myGroup2          | 11710 generated statements - script exported into /tmp/emaj_12/misc/myFile | postgres
+    5538 | GEN_SQL_GROUP  | BEGIN      | myGroup2          | From mark Mark21 to mark EMAJ_LAST_MARK with tables/sequences filtering    | postgres
+    5539 | GEN_SQL_GROUP  | END        | myGroup2          | 11610 generated statements - script exported into /tmp/emaj_12/misc/myFile | postgres
+    5540 | GEN_SQL_GROUP  | BEGIN      | myGroup2          | From mark Mark21 to mark EMAJ_LAST_MARK with tables/sequences filtering    | postgres
+    5541 | GEN_SQL_GROUP  | END        | myGroup2          | 1 generated statements - script exported into /tmp/emaj_12/misc/myFile     | postgres
+    5542 | GEN_SQL_GROUP  | BEGIN      | phil's group#3",  | From mark Mark4 to mark EMAJ_LAST_MARK with tables/sequences filtering     | postgres
+    5543 | GEN_SQL_GROUP  | END        | phil's group#3",  | 0 generated statements - script exported into /tmp/emaj_12/misc/myFile     | postgres
+    5544 | GEN_SQL_GROUPS | BEGIN      | myGroup1,myGroup2 | From mark Multi-1 to mark Multi-3 with tables/sequences filtering          | postgres
+    5545 | GEN_SQL_GROUPS | END        | myGroup1,myGroup2 | 100 generated statements - script exported into /tmp/emaj_12/misc/myFile   | postgres
 (28 rows)
 
 -- set sequence restart value
@@ -1538,7 +2443,7 @@ delete from emaj.emaj_param where param_key = 'emaj_version';
 ERROR:  _emaj_param_change_fnct: modifying the emaj_version key is not allowed.
 CONTEXT:  PL/pgSQL function emaj._emaj_param_change_fnct() line 5 at RAISE
 -----------------------------
--- test parameters export and import functions
+-- emaj_export_parameters_configuration() and emaj_import_parameters_configuration() tests
 -----------------------------
 -- direct export
 --   ok
@@ -1554,7 +2459,7 @@ select emaj.emaj_export_parameters_configuration('/tmp/dummy/location/file');
 ERROR:  could not open file "/tmp/dummy/location/file" for writing: No such file or directory
 HINT:  COPY TO instructs the PostgreSQL server process to write a file. You may want a client-side facility such as psql's \copy.
 CONTEXT:  SQL statement "COPY t TO '/tmp/dummy/location/file' "
-PL/pgSQL function emaj._copy_to_file(text,text,text,boolean,boolean) line 36 at EXECUTE
+PL/pgSQL function emaj._copy_to_file(text,text,text,boolean,boolean) line 37 at EXECUTE
 SQL statement "SELECT emaj._copy_to_file('t', p_location, NULL)"
 PL/pgSQL function emaj.emaj_export_parameters_configuration(text) line 15 at PERFORM
 --   ok
@@ -1684,7 +2589,7 @@ select emaj.emaj_import_parameters_configuration(:'EMAJTESTTMPDIR' || '/orig_par
 (1 row)
 
 -----------------------------
--- emaj_purge_histories() test
+-- emaj_purge_histories() tests
 -----------------------------
 select emaj.emaj_purge_histories(NULL);
  emaj_purge_histories 

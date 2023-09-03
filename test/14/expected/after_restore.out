@@ -586,6 +586,7 @@ select time_id, time_last_emaj_gid, time_event from emaj.emaj_time_stamp order b
     3400 |            3400000 | M
     3401 |            3400000 | M
     3402 |            3400000 | M
+    3403 |            3400000 | M
     3600 |            3600000 | M
     3601 |            3600000 | M
     4000 |            4000000 | A
@@ -647,8 +648,11 @@ select time_id, time_last_emaj_gid, time_event from emaj.emaj_time_stamp order b
     5005 |            5011600 | M
     5006 |            5011710 | M
     5007 |            5011710 | M
-    5300 |            5300000 | S
-    5301 |            5300000 | M
+    5400 |            5400000 | M
+    5401 |            5400009 | M
+    5402 |            5400016 | M
+    5403 |            5400025 | M
+    5404 |            5400025 | R
     8000 |            8000000 | M
     8001 |            8000000 | D
     8002 |            8000000 | D
@@ -708,11 +712,10 @@ select time_id, time_last_emaj_gid, time_event from emaj.emaj_time_stamp order b
     9300 |            9300000 | M
     9301 |            9300000 | M
     9302 |            9300000 | A
-    9303 |            9300000 | S
-    9304 |            9300000 | M
-    9305 |            9300000 | R
-    9307 |            9300000 | R
-    9310 |            9300000 | I
+    9303 |            9300000 | M
+    9304 |            9300000 | R
+    9306 |            9300000 | R
+    9309 |            9300000 | I
     9500 |            9500000 | M
     9501 |            9500000 | M
     9502 |            9500000 | A
@@ -722,12 +725,11 @@ select time_id, time_last_emaj_gid, time_event from emaj.emaj_time_stamp order b
     9508 |            9500007 | M
     9509 |            9500010 | A
     9510 |            9500010 | A
-    9511 |            9500011 | S
-    9512 |            9500011 | I
-    9513 |            9500011 | R
+    9511 |            9500011 | I
+    9512 |            9500011 | R
     9700 |            9700001 | M
     9701 |            9700002 | A
-    9703 |            9700002 | S
+    9703 |            9700002 | M
     9705 |            9700003 | R
     9706 |            9700004 | M
     9707 |            9700004 | A
@@ -781,8 +783,8 @@ select time_id, time_last_emaj_gid, time_event from emaj.emaj_time_stamp order b
    10043 |           10000014 | A
    10044 |           10000014 | A
    10045 |           10000014 | M
-   10046 |           10000014 | D
-   10047 |           10000014 | M
+   10046 |           10000014 | M
+   10047 |           10000014 | D
    10048 |           10000014 | D
    10049 |           10000014 | D
    10050 |           10000014 | D
@@ -989,7 +991,7 @@ select time_id, time_last_emaj_gid, time_event from emaj.emaj_time_stamp order b
    20203 |           20000272 | R
    20204 |           20000291 | M
    20205 |           20000291 | R
-(502 rows)
+(504 rows)
 
 select sequ_schema, sequ_name, sequ_time_id, sequ_last_val, sequ_is_called from emaj.emaj_sequence order by sequ_time_id, sequ_schema, sequ_name;
  sequ_schema |     sequ_name     | sequ_time_id | sequ_last_val | sequ_is_called 

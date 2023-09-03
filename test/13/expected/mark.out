@@ -1117,6 +1117,12 @@ select emaj.emaj_set_mark_group('phil''s group#3",','Mark4');
                    4
 (1 row)
 
+select emaj.emaj_set_mark_group('phil''s group#3",','Mark5');
+ emaj_set_mark_group 
+---------------------
+                   4
+(1 row)
+
 select emaj.emaj_delete_before_mark_group('phil''s group#3",','Mark4');
  emaj_delete_before_mark_group 
 -------------------------------
@@ -1131,7 +1137,8 @@ select time_id, time_last_emaj_gid, time_event from emaj.emaj_time_stamp where t
     3400 |            3400000 | M
     3401 |            3400000 | M
     3402 |            3400000 | M
-(3 rows)
+    3403 |            3400000 | M
+(4 rows)
 
 select hist_id, hist_function, hist_event, hist_object, 
   regexp_replace(regexp_replace(hist_wording,E'\\d\\d\.\\d\\d\\.\\d\\d\\.\\d\\d\\d\\d','%','g'),E'\\[.+\\]','(timestamp)','g'),
@@ -1180,11 +1187,15 @@ select hist_id, hist_function, hist_event, hist_object,
     3447 | LOCK_GROUP               | BEGIN              | phil's group#3",  |                                                 | postgres
     3448 | LOCK_GROUP               | END                | phil's group#3",  | 2 tables locked, 0 deadlock(s)                  | postgres
     3449 | SET_MARK_GROUP           | END                | phil's group#3",  | Mark4                                           | postgres
-    3450 | DELETE_BEFORE_MARK_GROUP | BEGIN              | phil's group#3",  | Mark4                                           | postgres
-    3451 | PURGE_HISTORIES          |                    |                   | 210 emaj_hist rows deleted                      | postgres
-    3452 | DELETE_BEFORE_MARK_GROUP | END                | phil's group#3",  | 1 marks deleted ; Mark4 is now the initial mark | postgres
-    3453 |                          | DELETED PARAMETER  | history_retention |                                                 | postgres
-(46 rows)
+    3450 | SET_MARK_GROUP           | BEGIN              | phil's group#3",  |                                                 | postgres
+    3451 | LOCK_GROUP               | BEGIN              | phil's group#3",  |                                                 | postgres
+    3452 | LOCK_GROUP               | END                | phil's group#3",  | 2 tables locked, 0 deadlock(s)                  | postgres
+    3453 | SET_MARK_GROUP           | END                | phil's group#3",  | Mark5                                           | postgres
+    3454 | DELETE_BEFORE_MARK_GROUP | BEGIN              | phil's group#3",  | Mark4                                           | postgres
+    3455 | PURGE_HISTORIES          |                    |                   | 210 emaj_hist rows deleted                      | postgres
+    3456 | DELETE_BEFORE_MARK_GROUP | END                | phil's group#3",  | 1 marks deleted ; Mark4 is now the initial mark | postgres
+    3457 |                          | DELETED PARAMETER  | history_retention |                                                 | postgres
+(50 rows)
 
 select public.handle_emaj_sequences(3600);
  handle_emaj_sequences 
@@ -1400,10 +1411,11 @@ select mark_group, regexp_replace(mark_name,E'\\d\\d\.\\d\\d\\.\\d\\d\\.\\d\\d\\
  myGroup2         | SM2            |         3015 | t               | f                      | a comment for group #2                 |                         0 | 
  emptyGroup       | EGM3           |         3400 | f               | f                      |                                        |                         0 | 
  emptyGroup       | EGM4           |         3401 | f               | f                      |                                        |                           | 
- phil's group#3", | Mark4          |         3402 | f               | f                      |                                        |                           | 
+ phil's group#3", | Mark4          |         3402 | f               | f                      |                                        |                         0 | 
+ phil's group#3", | Mark5          |         3403 | f               | f                      |                                        |                           | 
  myGroup1         | RENAMED        |         3600 | t               | f                      |                                        |                         0 | 
  myGroup2         | STOP_%         |         3601 | t               | f                      |                                        |                         0 | 
-(8 rows)
+(9 rows)
 
 select sequ_schema, sequ_name, sequ_time_id, sequ_last_val, sequ_is_called from emaj.emaj_sequence order by sequ_time_id, sequ_schema, sequ_name;
   sequ_schema   |     sequ_name     | sequ_time_id | sequ_last_val | sequ_is_called 
@@ -1414,11 +1426,13 @@ select sequ_schema, sequ_name, sequ_time_id, sequ_last_val, sequ_is_called from 
  myschema2      | myseq1            |         3015 |          1000 | f
  phil's schema3 | myTbl2\_col21_seq |         3402 |             1 | f
  phil's schema3 | phil's seq\1      |         3402 |          1000 | f
+ phil's schema3 | myTbl2\_col21_seq |         3403 |             1 | f
+ phil's schema3 | phil's seq\1      |         3403 |          1000 | f
  myschema1      | myTbl3_col31_seq  |         3600 |             1 | f
  myschema1      | mytbl2b_col20_seq |         3600 |             1 | f
  myschema2      | myTbl3_col31_seq  |         3601 |             1 | f
  myschema2      | myseq1            |         3601 |          1000 | f
-(10 rows)
+(12 rows)
 
 select tbl_schema, tbl_name, tbl_time_id, tbl_log_seq_last_val from emaj.emaj_table order by tbl_time_id, tbl_schema, tbl_name;
    tbl_schema   |  tbl_name   | tbl_time_id | tbl_log_seq_last_val 
@@ -1438,6 +1452,8 @@ select tbl_schema, tbl_name, tbl_time_id, tbl_log_seq_last_val from emaj.emaj_ta
  myschema2      | mytbl8      |        3015 |                    0
  phil's schema3 | myTbl2\     |        3402 |                    0
  phil's schema3 | phil's tbl1 |        3402 |                    0
+ phil's schema3 | myTbl2\     |        3403 |                    0
+ phil's schema3 | phil's tbl1 |        3403 |                    0
  myschema1      | myTbl3      |        3600 |                    0
  myschema1      | mytbl1      |        3600 |                    0
  myschema1      | mytbl2      |        3600 |                    0
@@ -1451,7 +1467,7 @@ select tbl_schema, tbl_name, tbl_time_id, tbl_log_seq_last_val from emaj.emaj_ta
  myschema2      | mytbl6      |        3601 |                    0
  myschema2      | mytbl7      |        3601 |                    0
  myschema2      | mytbl8      |        3601 |                    0
-(28 rows)
+(30 rows)
 
 -----------------------------
 -- test end: check

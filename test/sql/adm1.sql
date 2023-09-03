@@ -203,11 +203,11 @@ delete from myTbl1 where col11 > 10;
 select nextval('myschema2.myseq1');
 insert into myTbl2 values (2,'DEF',NULL);
 insert into "myTbl3" (col33) select generate_series(1000,1039,4)/100;
-insert into myTbl5 values (1,'{"abc","def","ghi"}','{1,2,3}',NULL,'{}');
-insert into myTbl5 values (2,array['abc','def','ghi'],array[3,4,5],array['2000/02/01'::date,'2000/02/28'::date],'{"id":1000, "c1":"abc"}');
-update myTbl5 set col54 = '{"2010/11/28","2010/12/03"}', col55 = '{"id":1001, "c2":"def"}' where col54 is null;
-insert into myTbl6 select i, point(i,1.3), '((0,0),(2,2))', circle(point(5,5),i),'((-2,-2),(3,0),(1,4))','10.20.30.40/27' from generate_series (1,8) as i;
-update myTbl6 set col64 = '<(5,6),3.5>', col65 = null where col61 between 1 and 3;
+insert into myTbl5 values (1,'{"abc","def","ghi"}','{1,2,3}',NULL,'{}',NULL,'{"id":1000}','[2020-01-01, 2021-01-01)',NULL);
+insert into myTbl5 values (2,array['abc','def','ghi'],array[3,4,5],array['2000/02/01'::date,'2000/02/28'::date],'{"id":1001, "c1":"abc"}',NULL,'{"id":1001}',NULL,XMLPARSE (CONTENT '<foo>bar</foo>'));
+update myTbl5 set col54 = '{"2010/11/28","2010/12/03"}', col55 = '{"id":1001, "c2":"def"}', col57 = '{"id":1001, "c3":"ghi"}' where col54 is null;
+insert into myTbl6 select i, point(i,1.3), '((0,0),(2,2))', circle(point(5,5),i),'((-2,-2),(3,0),(1,4))','10.20.30.40/27','EXECUTING',(i,point(i,1.3))::mycomposite from generate_series (1,8) as i;
+update myTbl6 set col64 = '<(5,6),3.5>', col65 = null, col67 = 'COMPLETED' where col61 between 1 and 3;
 --
 select emaj.emaj_set_mark_group('myGroup2','M2');
 --

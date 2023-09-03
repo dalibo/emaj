@@ -207,3 +207,13 @@ Upgrading towards version 4.3.0
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 Before E-Maj 4.3.0, the *emaj_log_stat_group()*, *emaj_gen_sql_group()* and *emaj_snap_log_group()* functions families accepted a NULL value or an empty string as the first mark name of the requested time range, this value representing the oldest known mark for the tables group or groups. The concept being ambiguous, especially with multi-groups functions, this feature has been removed in version 4.3.0.
+
+The *emaj_snap_log_group()* function has been replaced by both :ref:`emaj_dump_changes_group()<emaj_dump_changes_group>` and :ref:`emaj_gen_sql_dump_changes_group()<emaj_gen_sql_dump_changes_group>` functions, providing much larger features. In order to create a files set of log tables extracts, the statement::
+
+   SELECT emaj.emaj_snap_log_group(<group>, <start.mark>, <end_mark>, <directory>, <copy.options>);
+
+can be easily changed into::
+
+   SELECT emaj.emaj_dump_changes_group(<group>, <start.mark>, <end.mark>, 'COPY_OPTIONS=(<copy.options>)', NULL, <directory>);
+
+Note that none of the start and end marks can now be NULL. Furthermore, data format about sequences has changed: while 2 files grouped the initial and final sequences states respectively, there is now one file per sequence with the same elementary information.

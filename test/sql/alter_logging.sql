@@ -87,16 +87,14 @@ select emaj.emaj_set_mark_group('myGroup2','After ADD_SEQ');
 select nextval('myschema2.myseq2');
 select nextval('myschema2.myseq2');
 
---testing snap and sql generation
+--testing snap, dump changes and sql generation
 \! mkdir $EMAJTESTTMPDIR/snap
 select emaj.emaj_snap_group('myGroup2',:'EMAJTESTTMPDIR' || '/snap','');
 \! cat $EMAJTESTTMPDIR/snap/myschema2_myseq2.snap
 \! rm $EMAJTESTTMPDIR/snap/*
 
-select emaj.emaj_snap_log_group('myGroup2','Mk1','After ADD_SEQ',:'EMAJTESTTMPDIR' || '/snap',NULL);
-\! grep myseq2 $EMAJTESTTMPDIR/snap/myGroup2_sequences_at_Mk1
-\! grep myseq2 $EMAJTESTTMPDIR/snap/myGroup2_sequences_at_After_ADD_SEQ
-\! rm $EMAJTESTTMPDIR/snap/*
+select emaj.emaj_gen_sql_dump_changes_group('myGroup2','Mk1','After ADD_SEQ','SEQUENCES_ONLY',NULL);
+select sql_text from emaj_temp_sql where sql_line_number = 0;
 
 select emaj.emaj_gen_sql_group('myGroup2', 'Before ADD_SEQ', NULL, :'EMAJTESTTMPDIR' || '/myFile');
 \! grep myseq2 $EMAJTESTTMPDIR/myFile
@@ -197,19 +195,15 @@ select rel_schema, rel_tblseq, rel_time_range, rel_group, rel_kind
   from emaj.emaj_relation where rel_schema = 'myschema1' and rel_tblseq = 'myTbl3_col31_seq' order by rel_time_range;
 select * from emaj.emaj_verify_all();
 
---testing snap and sql generation
+--testing snap, dump changes and sql generation
 select emaj.emaj_snap_group('myGroup1',:'EMAJTESTTMPDIR' || '/snap','');
 \! ls $EMAJTESTTMPDIR/snap
 \! rm -R $EMAJTESTTMPDIR/snap/*
 
-select emaj.emaj_snap_log_group('myGroup1','Mk1',NULL,:'EMAJTESTTMPDIR' || '/snap',NULL);
--- sequences at begin bound
-\! cat $EMAJTESTTMPDIR/snap/myGroup1_sequences_at_Mk1
--- sequences at end bound
-\! find $EMAJTESTTMPDIR/snap -regex '.*/myGroup1_sequences_at_[0123456789].*' | xargs cat
-\! rm $EMAJTESTTMPDIR/snap/*
-
 select emaj.emaj_set_mark_group('myGroup1','After_remove');
+
+select emaj.emaj_gen_sql_dump_changes_group('myGroup1','Mk1','EMAJ_LAST_MARK','SEQUENCES_ONLY',NULL);
+select sql_text from emaj_temp_sql where sql_line_number = 0;
 
 -- testing sql script generation
 select emaj.emaj_gen_sql_group('myGroup1', 'Mk1', 'EMAJ_LAST_MARK', :'EMAJTESTTMPDIR' || '/script.sql',array['myschema1.myTbl3_col31_seq']);
@@ -313,12 +307,13 @@ select emaj.emaj_set_mark_group('myGroup2','After ADD_TBL');
 select stat_group, stat_schema, stat_table, stat_first_mark, stat_last_mark, stat_role, stat_verb, stat_rows
   from emaj.emaj_detailed_log_stat_group('myGroup2','ADD_TBL test','After ADD_TBL');
 
---testing snap and sql generation
+--testing snap, dump changes and sql generation
 select emaj.emaj_snap_group('myGroup2',:'EMAJTESTTMPDIR' || '/snap','');
 \! ls $EMAJTESTTMPDIR/snap
 \! rm $EMAJTESTTMPDIR/snap/*
-select emaj.emaj_snap_log_group('myGroup2','Mk1','After ADD_TBL',:'EMAJTESTTMPDIR' || '/snap',NULL);
-\! ls $EMAJTESTTMPDIR/snap/myschema2*
+
+select emaj.emaj_gen_sql_dump_changes_group('myGroup2','Mk1','After ADD_TBL','TABLES_ONLY',NULL);
+select sql_text from emaj_temp_sql where sql_line_number = 0;
 
 select emaj.emaj_gen_sql_group('myGroup2', 'Before ADD_TBL', NULL, :'EMAJTESTTMPDIR' || '/script.sql',array['myschema2.mytbl7']);
 \! rm $EMAJTESTTMPDIR/script.sql
@@ -399,10 +394,9 @@ select stat_group, stat_schema, stat_table, stat_log_schema, stat_log_table,
        stat_first_mark, stat_first_mark_gid, stat_last_mark, stat_last_mark_gid, stat_role, stat_verb, stat_rows 
   from emaj._detailed_log_stat_groups('{"myGroup2"}',false,'ADD_TBL test',NULL);
 
--- snap the logs
-select emaj.emaj_snap_log_group('myGroup2','Mk1',NULL,:'EMAJTESTTMPDIR' || '/snap',NULL);
-\! ls $EMAJTESTTMPDIR/snap/myschema2_mytbl7_log*
-\! rm $EMAJTESTTMPDIR/snap/*
+-- dump changes
+select emaj.emaj_gen_sql_dump_changes_group('myGroup2','Mk1','EMAJ_LAST_MARK','TABLES_ONLY',NULL);
+select sql_text from emaj_temp_sql where sql_line_number = 0;
 
 -- and finaly revert the group configuration changes
 select emaj.emaj_import_groups_configuration(:'EMAJTESTTMPDIR' || '/all_groups_conf.json', '{"myGroup2"}', true);
@@ -459,13 +453,14 @@ select stat_group, stat_schema, stat_table, stat_first_mark, stat_first_mark_gid
 select stat_group, stat_schema, stat_table, stat_first_mark, stat_first_mark_gid, stat_last_mark, stat_last_mark_gid, stat_role, stat_verb, stat_rows 
   from emaj._detailed_log_stat_groups('{"myGroup1"}',false,'Mk1',NULL);
 
---testing snap and sql generation
+--testing snap, dump changes and sql generation
 select emaj.emaj_snap_group('myGroup1',:'EMAJTESTTMPDIR' || '/snap','');
 \! ls $EMAJTESTTMPDIR/snap
 \! rm $EMAJTESTTMPDIR/snap/*
 
-select emaj.emaj_snap_log_group('myGroup1','Mk1',NULL,:'EMAJTESTTMPDIR' || '/snap',NULL);
-\! ls $EMAJTESTTMPDIR/snap/myschema1*
+select emaj.emaj_set_mark_group('myGroup1','After_2_tables_removed');
+select emaj.emaj_gen_sql_dump_changes_group('myGroup1','Mk1','EMAJ_LAST_MARK','TABLES_ONLY',NULL);
+select sql_text from emaj_temp_sql where sql_line_number = 0;
 
 select emaj.emaj_gen_sql_group('myGroup1', 'Mk1', NULL, :'EMAJTESTTMPDIR' || '/script.sql',array['myschema1.myTbl3']);
 \! rm $EMAJTESTTMPDIR/script.sql
@@ -770,11 +765,13 @@ select emaj.emaj_assign_table('myschema1','mytbl1','myGroup1');
 -- test end: check
 -----------------------------
 select emaj.emaj_stop_group('myGroup1');
-select emaj.emaj_drop_group('myGroup1');
-
 select emaj.emaj_stop_group('myGroup2');
-select emaj.emaj_drop_group('myGroup2');
 
+select emaj.emaj_gen_sql_dump_changes_group('myGroup1','Mk1','EMAJ_LAST_MARK',NULL,NULL);
+select regexp_replace(sql_text, E'\\d\\d\.\\d\\d\\.\\d\\d\\.\\d\\d\\d\\d','<timestamp>','g') from emaj_temp_sql where sql_line_number = 0;
+
+select emaj.emaj_drop_group('myGroup1');
+select emaj.emaj_drop_group('myGroup2');
 select emaj.emaj_drop_group('myGroup4');
 select emaj.emaj_drop_group('myGroup5');
 

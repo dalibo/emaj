@@ -12,6 +12,8 @@ Néanmoins, pour garantir l'intégrité de l'opération, le rollback de toutes l
 
 L’affectation des tables dans les sessions est réalisée de sorte que les durées estimées des sessions soient les plus équilibrés possibles.
 
+.. _parallel_rollback_prerequisite:
+
 Préalables
 ----------
 
@@ -20,16 +22,16 @@ Deux outils équivalents sont en fait proposés, l’un codé en *php*, l’autr
 * pour le client *php*, le logiciel **php** et son interface PostgreSQL
 * pour le client *perl*, le logiciel **perl** avec les modules *DBI* et *DBD::Pg*
 
-Le rollback de chaque session au sein d'une unique transaction implique l'utilisation de commit à deux phases. En conséquence, le paramètre **max_prepared_transaction** du fichier *postgresql.conf* doit être ajusté. La valeur par défaut du paramètre est 0. Il faut donc la modifier en spécifiant une valeur au moins égale au nombre maximum de *sessions* qui seront utilisées.
+Le rollback de chaque session au sein d'une unique transaction implique l'utilisation de commit à deux phases. En conséquence, le paramètre **max_prepared_transactions** du fichier *postgresql.conf* doit être ajusté. La valeur par défaut du paramètre est 0. Il faut donc la modifier en spécifiant une valeur au moins égale au nombre maximum de *sessions* qui seront utilisées.
 
 Syntaxe
 -------
 
-Les deux commandes php et perl partagent la même syntaxe ::
+Les deux commandes php et perl partagent la même syntaxe : ::
 
    emajParallelRollback.php -g <nom.du.ou.des.groupes> -m <marque> -s <nombre.de.sessions> [OPTIONS]...
 
-et::
+et : ::
 
    emajParallelRollback.pl -g <nom.du.ou.des.groupes> -m <marque> -s <nombre.de.sessions> [OPTIONS]...
 
@@ -69,13 +71,13 @@ Pour tester les commandes **emajParallelRollback**, E-Maj fournit un script, *em
 Exemples
 --------
 
-La commande ::
+La commande : ::
 
    ./client/emajParallelRollback.php -d mydb -g myGroup1 -m Mark1 -s 3
 
 se connecte à la base de données *mydb* et exécute un rollback du groupe *myGroup1* à la marque *Mark1*, avec 3 sessions en parallèle.
 
-La commande :
+La commande : ::
 
    ./client/emajParallelRollback.pl -d mydb -g "myGroup1,myGroup2" -m Mark1 -s 3 -l
 

@@ -232,6 +232,7 @@ select mark_group, mark_name, mark_logged_rlbk_target_mark from emaj.emaj_mark w
 -- check emaj_delete_before_mark_group() also cleans up the emaj_hist table
 insert into emaj.emaj_param (param_key, param_value_interval) values ('history_retention','0 second'::interval);
 select emaj.emaj_set_mark_group('phil''s group#3",','Mark4');
+select emaj.emaj_set_mark_group('phil''s group#3",','Mark5');
 select emaj.emaj_delete_before_mark_group('phil''s group#3",','Mark4');
 delete from emaj.emaj_param where param_key = 'history_retention';
 

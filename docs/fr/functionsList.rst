@@ -174,6 +174,13 @@ Fonctions de niveau groupe de tables
 | :ref:`emaj_drop_group                            | | groupe TEXT                 | nb.tables.et.seq INT                  |
 | <emaj_drop_group>`                               |                               |                                       |
 +--------------------------------------------------+-------------------------------+---------------------------------------+
+| :ref:`emaj_dump_changes_group                    | | groupe TEXT,                | msg.nb.fichiers INT                   |
+| <emaj_dump_changes_group>`                       | | marque.début TEXT,          |                                       |
+|                                                  | | marque.fin TEXT,            |                                       |
+|                                                  | | liste.options TEXT,         |                                       |
+|                                                  | | tableau.tables.seq TEXT[],  |                                       |
+|                                                  | | répertoire TEXT             |                                       |
++--------------------------------------------------+-------------------------------+---------------------------------------+
 | :ref:`emaj_estimate_rollback_group               | | groupe TEXT,                | durée INTERVAL                        |
 | <emaj_estimate_rollback_group>` (V)              | | marque TEXT,                |                                       |
 |                                                  | | est.tracé BOOLEAN           |                                       |
@@ -187,6 +194,19 @@ Fonctions de niveau groupe de tables
 +--------------------------------------------------+-------------------------------+---------------------------------------+
 | :ref:`emaj_force_stop_group                      | | groupe TEXT                 | nb.tables.et.seq INT                  |
 | <emaj_force_stop_group>`                         |                               |                                       |
++--------------------------------------------------+-------------------------------+---------------------------------------+
+| :ref:`emaj_gen_sql_dump_changes_group            | | groupe TEXT,                | msg.nb.requêtes INT                   |
+| <emaj_gen_sql_dump_changes_group>`               | | marque.début TEXT,          |                                       |
+|                                                  | | marque.fin TEXT,            |                                       |
+|                                                  | | liste.options TEXT,         |                                       |
+|                                                  | | tableau.tables.seq TEXT[]   |                                       |
++--------------------------------------------------+-------------------------------+---------------------------------------+
+| :ref:`emaj_gen_sql_dump_changes_group            | | groupe TEXT,                | msg.nb.requêtes INT                   |
+| <emaj_gen_sql_dump_changes_group>`               | | marque.début TEXT,          |                                       |
+|                                                  | | marque.fin TEXT,            |                                       |
+|                                                  | | liste.options TEXT,         |                                       |
+|                                                  | | tableau.tables.seq TEXT[],  |                                       |
+|                                                  | | fichier.sortie TEXT         |                                       |
 +--------------------------------------------------+-------------------------------+---------------------------------------+
 | :ref:`emaj_gen_sql_group                         | | groupe TEXT,                | nb.req.générées BIGINT                |
 | <emaj_gen_sql_group>`                            | | marque.début TEXT,          |                                       |
@@ -259,12 +279,6 @@ Fonctions de niveau groupe de tables
 +--------------------------------------------------+-------------------------------+---------------------------------------+
 | :ref:`emaj_snap_group                            | | groupe TEXT,                | nb.tables.et.seq INT                  |
 | <emaj_snap_group>`                               | | répertoire TEXT,            |                                       |
-|                                                  | | options.copy TEXT           |                                       |
-+--------------------------------------------------+-------------------------------+---------------------------------------+
-| :ref:`emaj_snap_log_group                        | | groupe TEXT,                | nb.tables.et.seq INT                  |
-| <emaj_snap_log_group>`                           | | marque.début TEXT,          |                                       |
-|                                                  | | marque.fin TEXT,            |                                       |
-|                                                  | | répertoire TEXT,            |                                       |
 |                                                  | | options.copy TEXT           |                                       |
 +--------------------------------------------------+-------------------------------+---------------------------------------+
 | :ref:`emaj_start_group                           | | groupe TEXT,                | nb.tables.et.seq INT                  |

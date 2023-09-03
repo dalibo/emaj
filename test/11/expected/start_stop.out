@@ -210,7 +210,7 @@ begin;
   alter table myschema1.mytbl4 drop constraint mytbl4_pkey;
   alter table myschema1.mytbl4 add primary key (col41, col42);
   select emaj.emaj_start_group('myGroup1','M1');
-ERROR:  _verify_groups (10): In rollbackable group "myGroup1", the primary key of the table "myschema1"."mytbl4" has changed (col41 => col41,col42). You may use "SELECT * FROM emaj.emaj_verify_all()" to look for other issues.
+ERROR:  _verify_groups (10): In rollbackable group "myGroup1", the primary key of the table "myschema1"."mytbl4" has changed (col41,col43 => col41,col42). You may use "SELECT * FROM emaj.emaj_verify_all()" to look for other issues.
 CONTEXT:  PL/pgSQL function emaj._verify_groups(text[],boolean) line 279 at RAISE
 SQL statement "SELECT 0
         FROM emaj._verify_groups(p_groupNames, TRUE)"

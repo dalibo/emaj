@@ -140,6 +140,7 @@ use warnings; use strict;
       if ($msgs{$fnctId} ne 'EXCEPTION:E-Maj installation: The current user (%) is not a superuser.'
        && $msgs{$fnctId} ne 'EXCEPTION:E-Maj installation: The current postgres version (%) is too old for this E-Maj version. It should be at least 11.'
        && $msgs{$fnctId} ne 'WARNING:E-Maj installation: As the max_prepared_transactions parameter value (%) on this cluster is too low, no parallel'
+       && $msgs{$fnctId} ne 'WARNING:E-Maj installation: The adminpack extension is not installed, and thus can\'\'t be created into the database. The'
                             # internal errors (errors that should never appear and that would be due to coding error)
        && $msgs{$fnctId} ne 'EXCEPTION:_drop_log_schemas: Internal error (the schema "%" does not exist).'
        && $msgs{$fnctId} ne 'EXCEPTION:emaj_reset_group: Internal error (group "%" is empty).'
@@ -159,8 +160,9 @@ use warnings; use strict;
                             # error messages containing timestamp.
                             # (as they are not stable though test executions, these cases are tested in the misc.sql script but without displaying the error messages)
        && $msgs{$fnctId} ne 'EXCEPTION:emaj_log_stat_group: The start mark "%" (%) has been set after the end mark "%" (%).'
-       && $msgs{$fnctId} ne 'EXCEPTION:emaj_detailed_log_stat_group: The start mark "%" (%) has been set after the end mark "%" (%).'
-       && $msgs{$fnctId} ne 'EXCEPTION:emaj_snap_log_group: The start mark "%" (%) has been set after the end mark "%" (%).'
+       && $msgs{$fnctId} ne 'EXCEPTION:_gen_sql_dump_changes_tbl: Internal error - the generated statement is NULL.'
+       && $msgs{$fnctId} ne 'EXCEPTION:_gen_sql_dump_changes_seq: Internal error - the generated statement is NULL.'
+       && $msgs{$fnctId} ne 'WARNING:emaj_gen_sql_dump_changes_group: the shell sed command does not seem to exist.'
          ) {
 # report the other messages
         if (! $isTittleDisplayed) {

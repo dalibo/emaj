@@ -48,7 +48,7 @@ CREATE TABLE myTbl4 (
   col43       INT              ,
   col44       DECIMAL(7)       ,
   col45       CHAR(10)         ,
-  PRIMARY KEY (col41),
+  PRIMARY KEY (col41,col43),
   FOREIGN KEY (col43) REFERENCES myTbl2 (col21) DEFERRABLE INITIALLY IMMEDIATE,
   CONSTRAINT mytbl4_col44_fkey FOREIGN KEY (col44,col45) REFERENCES myTbl1 (col11,col12) ON DELETE CASCADE ON UPDATE SET NULL DEFERRABLE INITIALLY DEFERRED
 );
@@ -160,6 +160,9 @@ CREATE TABLE myTbl4 (
   CONSTRAINT mytbl4_col44_fkey FOREIGN KEY (col44,col45) REFERENCES myTbl1 (col11,col12) ON DELETE CASCADE ON UPDATE SET NULL
 );
 
+DROP DOMAIN IF EXISTS idjson;
+CREATE DOMAIN idjson AS JSON CHECK (json_typeof(VALUE -> 'id') = 'number' AND json_typeof(VALUE -> 'id') IS NOT NULL);
+
 DROP TABLE IF EXISTS myTbl5 ;
 CREATE TABLE myTbl5 (
   col51       INT              NOT NULL,
@@ -167,8 +170,18 @@ CREATE TABLE myTbl5 (
   col53       INT[]            ,
   col54       DATE[]           ,
   col55       JSON             ,
+  col56       JSONB            ,
+  col57       idjson           ,
+  col58       DATERANGE        ,
+  col59       XML              ,
   PRIMARY KEY (col51)
 );
+
+DROP TYPE IF EXISTS myEnum;
+CREATE TYPE myEnum AS ENUM ('EXECUTING', 'COMPLETED');
+
+DROP TYPE IF EXISTS myComposite;
+CREATE TYPE myComposite AS (compo_id INT, compo_text POINT);
 
 DROP TABLE IF EXISTS myTbl6 ;
 CREATE TABLE myTbl6 (
@@ -178,6 +191,8 @@ CREATE TABLE myTbl6 (
   col64       CIRCLE           ,
   col65       PATH             ,
   col66       inet             ,
+  col67       myEnum           ,
+  col68       myComposite      ,
   PRIMARY KEY (col61)
 );
 

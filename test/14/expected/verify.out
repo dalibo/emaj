@@ -403,9 +403,9 @@ begin;
   alter table myschema1.mytbl4 drop constraint mytbl4_pkey;
   alter table myschema1.mytbl4 add primary key (col41, col42);
   select * from emaj.emaj_verify_all() t(msg) where msg like 'Error%';
-                                                                msg                                                                 
-------------------------------------------------------------------------------------------------------------------------------------
- Error: In the rollbackable group "myGroup1", the primary key of the table "myschema1"."mytbl4" has changed (col41 => col41,col42).
+                                                                   msg                                                                    
+------------------------------------------------------------------------------------------------------------------------------------------
+ Error: In the rollbackable group "myGroup1", the primary key of the table "myschema1"."mytbl4" has changed (col41,col43 => col41,col42).
 (1 row)
 
 rollback;
@@ -1006,13 +1006,13 @@ reset role;
 -----------------------------
 -- test end: check
 -----------------------------
-select hist_id, hist_function, hist_event, hist_object, regexp_replace(regexp_replace(hist_wording,E'\\d\\d\.\\d\\d\\.\\d\\d\\.\\d\\d\\d\\d','%','g'),E'\\[.+\\]','(timestamp)','g'), hist_user from 
+select hist_function, hist_event, hist_object, regexp_replace(regexp_replace(hist_wording,E'\\d\\d\.\\d\\d\\.\\d\\d\\.\\d\\d\\d\\d','%','g'),E'\\[.+\\]','(timestamp)','g'), hist_user from 
   (select * from emaj.emaj_hist where hist_id >= 7000 order by hist_id) as t;
- hist_id |   hist_function    |       hist_event        | hist_object |                         regexp_replace                         | hist_user 
----------+--------------------+-------------------------+-------------+----------------------------------------------------------------+-----------
-    7000 | DISABLE_PROTECTION | EVENT TRIGGERS DISABLED |             | emaj_protection_trg, emaj_sql_drop_trg, emaj_table_rewrite_trg | postgres
-    7123 | DISABLE_PROTECTION | EVENT TRIGGERS DISABLED |             | <none>                                                         | postgres
-    7124 | ENABLE_PROTECTION  | EVENT TRIGGERS ENABLED  |             | emaj_protection_trg, emaj_sql_drop_trg, emaj_table_rewrite_trg | postgres
-    7125 | ENABLE_PROTECTION  | EVENT TRIGGERS ENABLED  |             | <none>                                                         | postgres
+   hist_function    |       hist_event        | hist_object |                         regexp_replace                         | hist_user 
+--------------------+-------------------------+-------------+----------------------------------------------------------------+-----------
+ DISABLE_PROTECTION | EVENT TRIGGERS DISABLED |             | emaj_protection_trg, emaj_sql_drop_trg, emaj_table_rewrite_trg | postgres
+ DISABLE_PROTECTION | EVENT TRIGGERS DISABLED |             | <none>                                                         | postgres
+ ENABLE_PROTECTION  | EVENT TRIGGERS ENABLED  |             | emaj_protection_trg, emaj_sql_drop_trg, emaj_table_rewrite_trg | postgres
+ ENABLE_PROTECTION  | EVENT TRIGGERS ENABLED  |             | <none>                                                         | postgres
 (4 rows)
 

@@ -65,6 +65,7 @@ select emaj.emaj_estimate_rollback_groups(array['myGroup1'],emaj.emaj_get_previo
 select * from emaj.emaj_rollback_activity();
 select * from emaj.emaj_get_consolidable_rollbacks();
 select substr(pg_size_pretty(pg_database_size(current_database())),1,0);
+select emaj.emaj_gen_sql_dump_changes_group('myGroup1','Start','Start',NULL,NULL);
 
 -----------------------------
 -- forbiden table accesses
@@ -118,7 +119,8 @@ select emaj.emaj_comment_rollback(1,'comment');
 select emaj.emaj_consolidate_rollback_group('myGroup1','mark');
 select emaj.emaj_reset_group('myGroup1');
 select emaj.emaj_snap_group('myGroup1','/tmp',NULL);
-select emaj.emaj_snap_log_group('myGroup1',NULL,NULL,'/tmp',NULL);
+select emaj.emaj_dump_changes_group('myGroup1','Start','Start',NULL,NULL,NULL);
+select emaj.emaj_gen_sql_dump_changes_group('myGroup1','Start','Start',NULL,NULL,'/tmp/dummy');
 select emaj.emaj_gen_sql_group('myGroup1',NULL,NULL,'/tmp/dummy');
 select emaj.emaj_gen_sql_group('myGroup1',NULL,NULL,'/tmp/dummy',array['']);
 select emaj.emaj_gen_sql_groups(array['myGroup1'],NULL,NULL,'/tmp/dummy');

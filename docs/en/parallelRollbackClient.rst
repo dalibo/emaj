@@ -12,6 +12,8 @@ However, in order to guarantee the integrity of the global operation, the rollba
 
 Tables are assigned to sessions so that the estimated session durations be the most balanced as possible.
 
+.. _parallel_rollback_prerequisite:
+
 Prerequisites
 -------------
 
@@ -20,7 +22,7 @@ Two equivalent tools are actually provided, one coded in *php* and the other in 
 * for the *php* client, the **php** software and its PostgreSQL interface,
 * for the *perl* client, the **perl** software with the *DBI* and *DBD::Pg* modules.
 
-Rolling back each session on behalf of a unique transaction implies the use of two phase commit. As a consequence, the **max_prepared_transaction** parameter of the *postgresql.conf* file must be adjusted. As the default value of this parameter equals 0, it must be modified by specifying a value at least equal to the maximum number of *sessions* that will be used.
+Rolling back each session on behalf of a unique transaction implies the use of two phase commit. As a consequence, the **max_prepared_transactions** parameter of the *postgresql.conf* file must be adjusted. As the default value of this parameter equals 0, it must be modified by specifying a value at least equal to the maximum number of *sessions* that will be used.
 
 Syntax
 ------

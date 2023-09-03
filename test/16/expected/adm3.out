@@ -1969,7 +1969,84 @@ select public.handle_emaj_sequences(18000);
 
 \! rm $EMAJTESTTMPDIR/*
 -----------------------------
--- Step 20 : test TRUNCATE (log, statistics, rollback, sql generation and replay)
+-- Step 20 : test emaj_gen_sql_dump_changes_group() and emaj_dump_changes_group()
+-----------------------------
+select emaj.emaj_gen_sql_dump_changes_group('myGroup1','M4','M5','Consolidation=FULL',NULL,:'EMAJTESTTMPDIR' || '/dump_changes.sql');
+NOTICE:  table "emaj_temp_sql" does not exist, skipping
+                            emaj_gen_sql_dump_changes_group                            
+---------------------------------------------------------------------------------------
+ 7 SQL statements have been written into the "/tmp/emaj_16/adm3/dump_changes.sql" file
+(1 row)
+
+\! wc -l $EMAJTESTTMPDIR/dump_changes.sql
+15 /tmp/emaj_16/adm3/dump_changes.sql
+select emaj.emaj_dump_changes_group('myGroup1','M4','M5',NULL,'{"myschema1.myTbl3"}',:'EMAJTESTTMPDIR');
+NOTICE:  table "emaj_temp_sql" does not exist, skipping
+            emaj_dump_changes_group             
+------------------------------------------------
+ 2 files have been created in /tmp/emaj_16/adm3
+(1 row)
+
+\! wc -l $EMAJTESTTMPDIR/myschema1_myTbl3.changes $EMAJTESTTMPDIR/_INFO
+  20 /tmp/emaj_16/adm3/myschema1_myTbl3.changes
+   4 /tmp/emaj_16/adm3/_INFO
+  24 total
+-- Build the table/sequence names array using the emaj_log_stat_group() function result
+SELECT emaj.emaj_gen_sql_dump_changes_group('myGroup1','M4','M5',
+                                            'EMAJ_COLUMNS=(emaj_tuple, emaj_gid, emaj_verb), CONSOLIDATION=FULL, ORDER_BY=TIME',
+                                            (SELECT array_agg(distinct stat_schema || '.' || stat_table) FROM emaj.emaj_log_stat_group('myGroup1','M4','M5'))
+                                           );
+NOTICE:  table "emaj_temp_sql" does not exist, skipping
+                    emaj_gen_sql_dump_changes_group                    
+-----------------------------------------------------------------------
+ 5 SQL statements are available in the "emaj_temp_sql" temporary table
+(1 row)
+
+SELECT sql_text FROM emaj_temp_sql ORDER BY sql_stmt_number, sql_line_number;
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                    sql_text                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                     
+-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+ -- Generated SQL for dumping changes in tables group "myGroup1" (subset) between marks "M4" and "M5" using options: EMAJ_COLUMNS=(emaj_tuple, emaj_gid, emaj_verb), CONSOLIDATION=FULL, ORDER_BY=TIME
+ -- Dump changes for table myschema1.myTbl3 between marks "M4" and "M5" (10 changes)
+ WITH keys AS ( SELECT col31, min(emaj_gid) AS min_gid, max(emaj_gid) AS max_gid FROM emaj_myschema1."myTbl3_log" WHERE emaj_gid > 12400014 AND emaj_gid <= 12400024 GROUP BY col31 ), consolidated AS ( SELECT tbl.* FROM emaj_myschema1."myTbl3_log" tbl JOIN keys ON (tbl.col31 = keys.col31) WHERE (tbl.emaj_tuple = 'OLD' AND tbl.emaj_gid = keys.min_gid) OR (tbl.emaj_tuple = 'NEW' AND tbl.emaj_gid = keys.max_gid) ), unchanged_keys AS ( SELECT r1.col31 FROM consolidated r1 JOIN consolidated r2 ON (r1.col31=r2.col31) WHERE r1.emaj_tuple = 'OLD' AND r2.emaj_tuple = 'NEW' AND (r1.col32=r2.col32 OR (r1.col32 IS NULL AND r2.col32 IS NULL)) AND (r1.col33=r2.col33 OR (r1.col33 IS NULL AND r2.col33 IS NULL)) ) SELECT tbl.col31,emaj_gid,emaj_tuple,tbl.col32,tbl.col33,emaj_verb FROM consolidated tbl WHERE NOT EXISTS (SELECT 0 FROM unchanged_keys keys WHERE tbl.col31 = keys.col31) ORDER BY emaj_gid, emaj_tuple DESC;
+ -- Dump changes for table myschema1.mytbl1 between marks "M4" and "M5" (0 changes)
+ WITH keys AS ( SELECT col11,col12, min(emaj_gid) AS min_gid, max(emaj_gid) AS max_gid FROM emaj_myschema1.mytbl1_log WHERE emaj_gid > 12400014 AND emaj_gid <= 12400024 GROUP BY col11,col12 ), consolidated AS ( SELECT tbl.* FROM emaj_myschema1.mytbl1_log tbl JOIN keys ON (tbl.col11 = keys.col11 AND tbl.col12 = keys.col12) WHERE (tbl.emaj_tuple = 'OLD' AND tbl.emaj_gid = keys.min_gid) OR (tbl.emaj_tuple = 'NEW' AND tbl.emaj_gid = keys.max_gid) ), unchanged_keys AS ( SELECT r1.col11,r1.col12 FROM consolidated r1 JOIN consolidated r2 ON (r1.col11=r2.col11 AND r1.col12=r2.col12) WHERE r1.emaj_tuple = 'OLD' AND r2.emaj_tuple = 'NEW' AND (r1.col13=r2.col13 OR (r1.col13 IS NULL AND r2.col13 IS NULL)) ) SELECT tbl.col11,tbl.col12,emaj_gid,emaj_tuple,tbl.col13,emaj_verb FROM consolidated tbl WHERE NOT EXISTS (SELECT 0 FROM unchanged_keys keys WHERE tbl.col11 = keys.col11 AND tbl.col12 = keys.col12) ORDER BY emaj_gid, emaj_tuple DESC;
+ -- Dump changes for table myschema1.mytbl2 between marks "M4" and "M5" (0 changes)
+ WITH keys AS ( SELECT col21, min(emaj_gid) AS min_gid, max(emaj_gid) AS max_gid FROM emaj_myschema1.mytbl2_log WHERE emaj_gid > 12400014 AND emaj_gid <= 12400024 GROUP BY col21 ), consolidated AS ( SELECT tbl.* FROM emaj_myschema1.mytbl2_log tbl JOIN keys ON (tbl.col21 = keys.col21) WHERE (tbl.emaj_tuple = 'OLD' AND tbl.emaj_gid = keys.min_gid) OR (tbl.emaj_tuple = 'NEW' AND tbl.emaj_gid = keys.max_gid) ), unchanged_keys AS ( SELECT r1.col21 FROM consolidated r1 JOIN consolidated r2 ON (r1.col21=r2.col21) WHERE r1.emaj_tuple = 'OLD' AND r2.emaj_tuple = 'NEW' AND (r1.col22=r2.col22 OR (r1.col22 IS NULL AND r2.col22 IS NULL)) AND (r1.col23=r2.col23 OR (r1.col23 IS NULL AND r2.col23 IS NULL)) ) SELECT tbl.col21,emaj_gid,emaj_tuple,tbl.col22,tbl.col23,emaj_verb FROM consolidated tbl WHERE NOT EXISTS (SELECT 0 FROM unchanged_keys keys WHERE tbl.col21 = keys.col21) ORDER BY emaj_gid, emaj_tuple DESC;
+ -- Dump changes for table myschema1.mytbl2b between marks "M4" and "M5" (0 changes)
+ WITH keys AS ( SELECT col20, min(emaj_gid) AS min_gid, max(emaj_gid) AS max_gid FROM emaj_myschema1.mytbl2b_log WHERE emaj_gid > 12400014 AND emaj_gid <= 12400024 GROUP BY col20 ), consolidated AS ( SELECT tbl.* FROM emaj_myschema1.mytbl2b_log tbl JOIN keys ON (tbl.col20 = keys.col20) WHERE (tbl.emaj_tuple = 'OLD' AND tbl.emaj_gid = keys.min_gid) OR (tbl.emaj_tuple = 'NEW' AND tbl.emaj_gid = keys.max_gid) ), unchanged_keys AS ( SELECT r1.col20 FROM consolidated r1 JOIN consolidated r2 ON (r1.col20=r2.col20) WHERE r1.emaj_tuple = 'OLD' AND r2.emaj_tuple = 'NEW' AND (r1.col21=r2.col21 OR (r1.col21 IS NULL AND r2.col21 IS NULL)) AND (r1.col22=r2.col22 OR (r1.col22 IS NULL AND r2.col22 IS NULL)) AND (r1.col23=r2.col23 OR (r1.col23 IS NULL AND r2.col23 IS NULL)) ) SELECT tbl.col20,emaj_gid,emaj_tuple,tbl.col21,tbl.col22,tbl.col23,emaj_verb FROM consolidated tbl WHERE NOT EXISTS (SELECT 0 FROM unchanged_keys keys WHERE tbl.col20 = keys.col20) ORDER BY emaj_gid, emaj_tuple DESC;
+ -- Dump changes for table myschema1.mytbl4 between marks "M4" and "M5" (0 changes)
+ WITH keys AS ( SELECT col41,col43, min(emaj_gid) AS min_gid, max(emaj_gid) AS max_gid FROM emaj_myschema1.mytbl4_log WHERE emaj_gid > 12400014 AND emaj_gid <= 12400024 GROUP BY col41,col43 ), consolidated AS ( SELECT tbl.* FROM emaj_myschema1.mytbl4_log tbl JOIN keys ON (tbl.col41 = keys.col41 AND tbl.col43 = keys.col43) WHERE (tbl.emaj_tuple = 'OLD' AND tbl.emaj_gid = keys.min_gid) OR (tbl.emaj_tuple = 'NEW' AND tbl.emaj_gid = keys.max_gid) ), unchanged_keys AS ( SELECT r1.col41,r1.col43 FROM consolidated r1 JOIN consolidated r2 ON (r1.col41=r2.col41 AND r1.col43=r2.col43) WHERE r1.emaj_tuple = 'OLD' AND r2.emaj_tuple = 'NEW' AND (r1.col42=r2.col42 OR (r1.col42 IS NULL AND r2.col42 IS NULL)) AND (r1.col44=r2.col44 OR (r1.col44 IS NULL AND r2.col44 IS NULL)) AND (r1.col45::text=r2.col45::text OR (r1.col45 IS NULL AND r2.col45 IS NULL)) ) SELECT tbl.col41,tbl.col43,emaj_gid,emaj_tuple,tbl.col42,tbl.col44,tbl.col45,emaj_verb FROM consolidated tbl WHERE NOT EXISTS (SELECT 0 FROM unchanged_keys keys WHERE tbl.col41 = keys.col41 AND tbl.col43 = keys.col43) ORDER BY emaj_gid, emaj_tuple DESC;
+(11 rows)
+
+-- Create a table and a view from a consolidated vision of a log table
+DO $$
+DECLARE
+  v_stmt TEXT;
+BEGIN
+  PERFORM emaj.emaj_gen_sql_dump_changes_group('myGroup1','M4','M5', 'CONSOLIDATION=FULL, EMAJ_COLUMNS=MIN', ARRAY['myschema1.myTbl3']);
+  SELECT sql_text INTO v_stmt FROM emaj_temp_sql WHERE sql_stmt_number = 1 AND sql_line_number = 1;
+  EXECUTE 'CREATE TABLE public.myTbl3_cons_log_table_M4_M5 AS ' || v_stmt;
+  EXECUTE 'CREATE VIEW public.myTbl3_cons_log_view_M4_M5 AS ' || v_stmt;
+END;
+$$;
+ERROR:  permission denied for schema public
+CONTEXT:  SQL statement "CREATE TABLE public.myTbl3_cons_log_table_M4_M5 AS WITH keys AS ( SELECT col31, min(emaj_gid) AS min_gid, max(emaj_gid) AS max_gid FROM emaj_myschema1."myTbl3_log" WHERE emaj_gid > 12400014 AND emaj_gid <= 12400024 GROUP BY col31 ), consolidated AS ( SELECT tbl.* FROM emaj_myschema1."myTbl3_log" tbl JOIN keys ON (tbl.col31 = keys.col31) WHERE (tbl.emaj_tuple = 'OLD' AND tbl.emaj_gid = keys.min_gid) OR (tbl.emaj_tuple = 'NEW' AND tbl.emaj_gid = keys.max_gid) ), unchanged_keys AS ( SELECT r1.col31 FROM consolidated r1 JOIN consolidated r2 ON (r1.col31=r2.col31) WHERE r1.emaj_tuple = 'OLD' AND r2.emaj_tuple = 'NEW' AND (r1.col32=r2.col32 OR (r1.col32 IS NULL AND r2.col32 IS NULL)) AND (r1.col33=r2.col33 OR (r1.col33 IS NULL AND r2.col33 IS NULL)) ) SELECT tbl.col31,emaj_tuple,tbl.col32,tbl.col33 FROM consolidated tbl WHERE NOT EXISTS (SELECT 0 FROM unchanged_keys keys WHERE tbl.col31 = keys.col31) ORDER BY tbl.col31, emaj_gid, emaj_tuple DESC;"
+PL/pgSQL function inline_code_block line 7 at EXECUTE
+SELECT emaj_tuple, col33 FROM public.myTbl3_cons_log_table_M4_M5 WHERE col31 = 13 ORDER BY emaj_tuple DESC;
+ERROR:  relation "public.mytbl3_cons_log_table_m4_m5" does not exist
+LINE 1: SELECT emaj_tuple, col33 FROM public.myTbl3_cons_log_table_M...
+                                      ^
+SELECT emaj_tuple, col33 FROM public.myTbl3_cons_log_view_M4_M5 WHERE col31 = 13;   -- already sorted
+ERROR:  relation "public.mytbl3_cons_log_view_m4_m5" does not exist
+LINE 1: SELECT emaj_tuple, col33 FROM public.myTbl3_cons_log_view_M4...
+                                      ^
+DROP TABLE IF EXISTS public.myTbl3_cons_log_table_M4_M5;
+NOTICE:  table "mytbl3_cons_log_table_m4_m5" does not exist, skipping
+DROP VIEW IF EXISTS public.myTbl3_cons_log_view_M4_M5;
+NOTICE:  view "mytbl3_cons_log_view_m4_m5" does not exist, skipping
+\! rm $EMAJTESTTMPDIR/*
+-----------------------------
+-- Step 21 : test TRUNCATE (log, statistics, rollback, sql generation and replay)
 -----------------------------
 SET client_min_messages TO WARNING;
 select emaj.emaj_create_group('truncateTestGroup');
@@ -2118,7 +2195,7 @@ select emaj.emaj_cleanup_rollback_state();
 (1 row)
 
 -----------------------------
--- Checking step 20
+-- Checking step 21
 -----------------------------
 -- emaj tables
 select rlbk_id, rlbk_groups, rlbk_mark, rlbk_time_id, rlbk_is_logged, rlbk_is_alter_group_allowed, rlbk_nb_session, rlbk_nb_table,
@@ -2163,8 +2240,8 @@ select rlbk_id, rlbk_groups, rlbk_mark, rlbk_time_id, rlbk_is_logged, rlbk_is_al
    17600 | {grp_tmp,grp_tmp_3,grp_tmp_4} | Mk3                   |        17613 | f              | f                           |               1 |             9 |                4 |                 2 |                    0 | COMMITTED   |              17668 | public             | t                   | [ts]         | Notice: Rollback id = 17600.#Notice: 2 / 9 tables effectively processed.#Notice: 0 / 4 sequences effectively processed.
    17601 | {grp_tmp,grp_tmp_3,grp_tmp_4} | Mk5                   |        17624 | t              | t                           |               1 |             8 |                3 |                 2 |                    0 | COMMITTED   |              17753 | public             | t                   | [ts]         | Notice: Rollback id = 17601.#Notice: 2 / 8 tables effectively processed.#Notice: 0 / 3 sequences effectively processed.#Warning: The table myschema4.mytblc1 has been left unchanged (not in group anymore since <timestamp>)#Warning: The sequence "phil's schema3"."phil's seq\1" has been left unchanged (not in group anymore since <timestamp>)
    17602 | {grp_tmp,grp_tmp_3,grp_tmp_4} | Mk3                   |        17628 | f              | t                           |               1 |             8 |                3 |                 3 |                    0 | COMMITTED   |              17795 | public             | t                   | [ts]         | Notice: Rollback id = 17602.#Notice: 3 / 8 tables effectively processed.#Notice: 0 / 3 sequences effectively processed.#Warning: The table "phil's schema3"."myTbl2\" has only been rolled back to its latest group attachment (<timestamp>)#Warning: The table "phil's schema3".mytbl4 has only been rolled back to its latest group attachment (<timestamp>)#Warning: The table "phil's schema3"."phil's tbl1" has only been rolled back to its latest group attachment (<timestamp>)#Warning: The sequence "phil's schema3"."myTbl2\_col21_seq" has only been rolled back to its latest group attachment state (<timestamp>)#Warning: The sequence "phil's schema3"."phil's seq\1" has only been rolled back to its latest group attachment state (<timestamp>)#Warning: The table myschema4.mypartp2 has only been rolled back to its latest group attachment (<timestamp>)#Warning: The table myschema4.mypartp3 has only been rolled back to its latest group attachment (<timestamp>)#Warning: The table myschema4.mytblc1 has only been rolled back to its latest group attachment (<timestamp>)#Warning: The table myschema4.mytblc2 has only been rolled back to its latest group attachment (<timestamp>)#Warning: The table myschema4.mytblm has only been rolled back to its latest group attachment (<timestamp>)#Warning: The table myschema4.mytblr has only been rolled back to its latest group attachment (<timestamp>)#Warning: The sequence myschema4.mytblp_col3_seq has only been rolled back to its latest group attachment state (<timestamp>)#Warning: The sequence myschema4.mytblr_col1_seq has only been rolled back to its latest group attachment state (<timestamp>)#Warning: Tables group change not rolled back: log data tablespace for "phil's schema3"."phil's tbl1"#Warning: Tables group change not rolled back: E-Maj priority for "phil's schema3"."phil's tbl1"
-   18000 | {truncateTestGroup}           | M1                    |        18005 | t              | f                           |               1 |             9 |                0 |                 5 |                    0 | COMMITTED   |              18027 | public             | t                   | [ts]         | Notice: Rollback id = 18000.#Notice: 5 / 9 tables effectively processed.
-   18001 | {truncateTestGroup}           | M1                    |        18007 | f              | f                           |               1 |             9 |                0 |                 5 |                    0 | COMMITTED   |              18051 | public             | t                   | [ts]         | Notice: Rollback id = 18001.#Notice: 5 / 9 tables effectively processed.
+   18000 | {truncateTestGroup}           | M1                    |        18005 | t              | f                           |               1 |             9 |                0 |                 5 |                    0 | COMMITTED   |              18031 | public             | t                   | [ts]         | Notice: Rollback id = 18000.#Notice: 5 / 9 tables effectively processed.
+   18001 | {truncateTestGroup}           | M1                    |        18007 | f              | f                           |               1 |             9 |                0 |                 5 |                    0 | COMMITTED   |              18055 | public             | t                   | [ts]         | Notice: Rollback id = 18001.#Notice: 5 / 9 tables effectively processed.
 (37 rows)
 
 select rlbs_rlbk_id, rlbs_session, 
@@ -2235,7 +2312,7 @@ select rlbp_rlbk_id, rlbp_step, rlbp_schema, rlbp_table, rlbp_object, rlbp_targe
         12400 | DIS_LOG_TRG        | myschema1      | mytbl1                                                          |                   |                     |                 3 |            1 |                                                                                                                                                                                             |                   |                           |                         |                    3 |              
         12400 | DIS_LOG_TRG        | myschema1      | mytbl4                                                          |                   |                     |                 2 |            1 |                                                                                                                                                                                             |                   |                           |                         |                    3 |              
         12400 | RLBK_TABLE         | myschema1      | mytbl1                                                          |                   |               12100 |                 3 |            1 |                                                                                                                                                                                             |                   | t                         |                       3 |                    3 |             5
-        12400 | RLBK_TABLE         | myschema1      | mytbl4                                                          |                   |               12100 |                 2 |            1 |                                                                                                                                                                                             |                   | t                         |                       8 |                    3 |             3
+        12400 | RLBK_TABLE         | myschema1      | mytbl4                                                          |                   |               12100 |                 2 |            1 |                                                                                                                                                                                             |                   | t                         |                       8 |                    3 |             5
         12400 | DELETE_LOG         | myschema1      | mytbl1                                                          |                   |               12100 |                 3 |            1 |                                                                                                                                                                                             |                   |                           |                       3 |                    3 |             5
         12400 | DELETE_LOG         | myschema1      | mytbl4                                                          |                   |               12100 |                 2 |            1 |                                                                                                                                                                                             |                   |                           |                       8 |                    3 |            12
         12400 | ENA_LOG_TRG        | myschema1      | mytbl1                                                          |                   |                     |                 3 |            1 |                                                                                                                                                                                             |                   |                           |                         |                    3 |              
@@ -2725,93 +2802,97 @@ select hist_function, hist_event, hist_object,
             E'\\[.+\\]','(timestamp)','g'), 
        hist_user
   from emaj.emaj_hist where hist_id >= 18000 order by hist_id;
-   hist_function    |     hist_event     |          hist_object           |                                           regexp_replace                                           | hist_user 
---------------------+--------------------+--------------------------------+----------------------------------------------------------------------------------------------------+-----------
- CREATE_GROUP       | BEGIN              | truncateTestGroup              | rollbackable                                                                                       | postgres
- CREATE_GROUP       | END                | truncateTestGroup              |                                                                                                    | postgres
- ASSIGN_TABLES      | BEGIN              |                                |                                                                                                    | postgres
- ASSIGN_TABLES      | LOG_SCHEMA CREATED | "emaj_phil's schema3"          |                                                                                                    | postgres
- ASSIGN_TABLES      | TABLE ADDED        | "phil's schema3"."myTbl2\"     | To the idle group truncateTestGroup                                                                | postgres
- ASSIGN_TABLES      | TABLE ADDED        | "phil's schema3".mytbl4        | To the idle group truncateTestGroup                                                                | postgres
- ASSIGN_TABLES      | TABLE ADDED        | "phil's schema3"."phil's tbl1" | To the idle group truncateTestGroup                                                                | postgres
- ASSIGN_TABLES      | END                |                                | 3 tables assigned to the group truncateTestGroup                                                   | postgres
- ASSIGN_TABLES      | BEGIN              |                                |                                                                                                    | postgres
- ASSIGN_TABLES      | LOG_SCHEMA CREATED | emaj_myschema4                 |                                                                                                    | postgres
- ASSIGN_TABLES      | TABLE ADDED        | myschema4.mypartp3             | To the idle group truncateTestGroup                                                                | postgres
- ASSIGN_TABLES      | TABLE ADDED        | myschema4.mytblr               | To the idle group truncateTestGroup                                                                | postgres
- ASSIGN_TABLES      | TABLE ADDED        | myschema4.mytblm               | To the idle group truncateTestGroup                                                                | postgres
- ASSIGN_TABLES      | TABLE ADDED        | myschema4.mytblc2              | To the idle group truncateTestGroup                                                                | postgres
- ASSIGN_TABLES      | TABLE ADDED        | myschema4.mypartp2             | To the idle group truncateTestGroup                                                                | postgres
- ASSIGN_TABLES      | TABLE ADDED        | myschema4.mytblc1              | To the idle group truncateTestGroup                                                                | postgres
- ASSIGN_TABLES      | END                |                                | 6 tables assigned to the group truncateTestGroup                                                   | postgres
- START_GROUP        | BEGIN              | truncateTestGroup              | With log reset                                                                                     | postgres
- LOCK_GROUP         | BEGIN              | truncateTestGroup              |                                                                                                    | postgres
- LOCK_GROUP         | END                | truncateTestGroup              | 9 tables locked, 0 deadlock(s)                                                                     | postgres
- SET_MARK_GROUP     | BEGIN              | truncateTestGroup              | M1                                                                                                 | postgres
- SET_MARK_GROUP     | END                | truncateTestGroup              | M1                                                                                                 | postgres
- START_GROUP        | END                | truncateTestGroup              | 9 tables/sequences processed                                                                       | postgres
- SET_MARK_GROUP     | BEGIN              | truncateTestGroup              |                                                                                                    | postgres
- LOCK_GROUP         | BEGIN              | truncateTestGroup              |                                                                                                    | postgres
- LOCK_GROUP         | END                | truncateTestGroup              | 9 tables locked, 0 deadlock(s)                                                                     | postgres
- SET_MARK_GROUP     | END                | truncateTestGroup              | M2                                                                                                 | postgres
- ROLLBACK_GROUP     | BEGIN              | truncateTestGroup              | Logged rollback to mark M1 (timestamp)                                                             | postgres
- DBLINK_OPEN_CNX    |                    | rlbk#1                         | Status = 1                                                                                         | postgres
- LOCK_GROUP         | BEGIN              | truncateTestGroup              | Rollback session #1                                                                                | postgres
- LOCK_GROUP         | END                | truncateTestGroup              | Rollback session #1: 9 tables locked, 0 deadlock(s)                                                | postgres
- SET_MARK_GROUP     | BEGIN              | truncateTestGroup              | RLBK_M1_%_START                                                                                    | postgres
- SET_MARK_GROUP     | END                | truncateTestGroup              | RLBK_M1_%_START                                                                                    | postgres
- ROLLBACK_TABLE     | BEGIN              | "phil's schema3"."phil's tbl1" | All log rows where emaj_gid > 18000000 and <= 18000045, in session_replication_role = replica mode | postgres
- ROLLBACK_TABLE     | END                | "phil's schema3"."phil's tbl1" | 20 rolled back primary keys                                                                        | postgres
- ROLLBACK_TABLE     | BEGIN              | "phil's schema3".mytbl4        | All log rows where emaj_gid > 18000000 and <= 18000045, in session_replication_role = replica mode | postgres
- ROLLBACK_TABLE     | END                | "phil's schema3".mytbl4        | 9 rolled back primary keys                                                                         | postgres
- ROLLBACK_TABLE     | BEGIN              | myschema4.mytblc2              | All log rows where emaj_gid > 18000000 and <= 18000045                                             | postgres
- ROLLBACK_TABLE     | END                | myschema4.mytblc2              | 7 rolled back primary keys                                                                         | postgres
- ROLLBACK_TABLE     | BEGIN              | "phil's schema3"."myTbl2\"     | All log rows where emaj_gid > 18000000 and <= 18000045, in session_replication_role = replica mode | postgres
- ROLLBACK_TABLE     | END                | "phil's schema3"."myTbl2\"     | 7 rolled back primary keys                                                                         | postgres
- ROLLBACK_TABLE     | BEGIN              | myschema4.mypartp3             | All log rows where emaj_gid > 18000000 and <= 18000045                                             | postgres
- ROLLBACK_TABLE     | END                | myschema4.mypartp3             | 2 rolled back primary keys                                                                         | postgres
- SET_MARK_GROUP     | BEGIN              | truncateTestGroup              | RLBK_M1_%_DONE                                                                                     | postgres
- SET_MARK_GROUP     | END                | truncateTestGroup              | RLBK_M1_%_DONE                                                                                     | postgres
- ROLLBACK_GROUP     | NOTICE             | Rollback id 18000              | Rollback id = 18000.                                                                               | postgres
- ROLLBACK_GROUP     | NOTICE             | Rollback id 18000              | 5 / 9 tables effectively processed.                                                                | postgres
- DBLINK_CLOSE_CNX   |                    | rlbk#1                         |                                                                                                    | postgres
- ROLLBACK_GROUP     | END                | truncateTestGroup              | Rollback_id 18000                                                                                  | postgres
- GEN_SQL_GROUP      | BEGIN              | truncateTestGroup              | From mark M1 to mark M2                                                                            | postgres
- GEN_SQL_GROUP      | END                | truncateTestGroup              | 5 generated statements - script exported into /tmp/emaj_16/adm3/gensql.sql                         | postgres
- ROLLBACK_GROUP     | BEGIN              | truncateTestGroup              | Unlogged rollback to mark M1 (timestamp)                                                           | postgres
- DBLINK_OPEN_CNX    |                    | rlbk#1                         | Status = 1                                                                                         | postgres
- LOCK_GROUP         | BEGIN              | truncateTestGroup              | Rollback session #1                                                                                | postgres
- LOCK_GROUP         | END                | truncateTestGroup              | Rollback session #1: 9 tables locked, 0 deadlock(s)                                                | postgres
- ROLLBACK_TABLE     | BEGIN              | "phil's schema3"."phil's tbl1" | All log rows where emaj_gid > 18000000 and <= 18000085, in session_replication_role = replica mode | postgres
- ROLLBACK_TABLE     | END                | "phil's schema3"."phil's tbl1" | 20 rolled back primary keys                                                                        | postgres
- ROLLBACK_TABLE     | BEGIN              | "phil's schema3".mytbl4        | All log rows where emaj_gid > 18000000 and <= 18000085, in session_replication_role = replica mode | postgres
- ROLLBACK_TABLE     | END                | "phil's schema3".mytbl4        | 9 rolled back primary keys                                                                         | postgres
- ROLLBACK_TABLE     | BEGIN              | myschema4.mytblc2              | All log rows where emaj_gid > 18000000 and <= 18000085                                             | postgres
- ROLLBACK_TABLE     | END                | myschema4.mytblc2              | 7 rolled back primary keys                                                                         | postgres
- ROLLBACK_TABLE     | BEGIN              | "phil's schema3"."myTbl2\"     | All log rows where emaj_gid > 18000000 and <= 18000085, in session_replication_role = replica mode | postgres
- ROLLBACK_TABLE     | END                | "phil's schema3"."myTbl2\"     | 7 rolled back primary keys                                                                         | postgres
- ROLLBACK_TABLE     | BEGIN              | myschema4.mypartp3             | All log rows where emaj_gid > 18000000 and <= 18000085                                             | postgres
- ROLLBACK_TABLE     | END                | myschema4.mypartp3             | 2 rolled back primary keys                                                                         | postgres
- ROLLBACK_GROUP     | MARK DELETED       | truncateTestGroup              | mark M2 is deleted                                                                                 | postgres
- ROLLBACK_GROUP     | MARK DELETED       | truncateTestGroup              | mark RLBK_M1_%_START is deleted                                                                    | postgres
- ROLLBACK_GROUP     | MARK DELETED       | truncateTestGroup              | mark RLBK_M1_%_DONE is deleted                                                                     | postgres
- ROLLBACK_GROUP     | NOTICE             | Rollback id 18001              | Rollback id = 18001.                                                                               | postgres
- ROLLBACK_GROUP     | NOTICE             | Rollback id 18001              | 5 / 9 tables effectively processed.                                                                | postgres
- DBLINK_CLOSE_CNX   |                    | rlbk#1                         |                                                                                                    | postgres
- ROLLBACK_GROUP     | END                | truncateTestGroup              | Rollback_id 18001                                                                                  | postgres
- STOP_GROUP         | BEGIN              | truncateTestGroup              |                                                                                                    | postgres
- LOCK_GROUP         | BEGIN              | truncateTestGroup              |                                                                                                    | postgres
- LOCK_GROUP         | END                | truncateTestGroup              | 9 tables locked, 0 deadlock(s)                                                                     | postgres
- SET_MARK_GROUP     | BEGIN              | truncateTestGroup              | STOP_%                                                                                             | postgres
- CLEANUP_RLBK_STATE |                    | Rollback id 18000              | set to COMMITTED                                                                                   | postgres
- CLEANUP_RLBK_STATE |                    | Rollback id 18001              | set to COMMITTED                                                                                   | postgres
- SET_MARK_GROUP     | END                | truncateTestGroup              | STOP_%                                                                                             | postgres
- STOP_GROUP         | END                | truncateTestGroup              | 9 tables/sequences processed                                                                       | postgres
- DROP_GROUP         | BEGIN              | truncateTestGroup              |                                                                                                    | postgres
- DROP_GROUP         | LOG_SCHEMA DROPPED | emaj_myschema4                 |                                                                                                    | postgres
- DROP_GROUP         | LOG_SCHEMA DROPPED | "emaj_phil's schema3"          |                                                                                                    | postgres
- DROP_GROUP         | END                | truncateTestGroup              | 9 tables/sequences processed                                                                       | postgres
-(84 rows)
+       hist_function        |     hist_event     |          hist_object           |                                           regexp_replace                                           | hist_user 
+----------------------------+--------------------+--------------------------------+----------------------------------------------------------------------------------------------------+-----------
+ GEN_SQL_DUMP_CHANGES_GROUP | BEGIN              | myGroup1                       | From mark M4 to M5 towards /tmp/emaj_16/adm3/dump_changes.sql                                      | postgres
+ GEN_SQL_DUMP_CHANGES_GROUP | END                | myGroup1                       | 7 generated SQL statements                                                                         | postgres
+ DUMP_CHANGES_GROUP         | BEGIN              | myGroup1                       | From mark M4 to M5 towards /tmp/emaj_16/adm3                                                       | postgres
+ DUMP_CHANGES_GROUP         | END                | myGroup1                       | 2 generated files                                                                                  | postgres
+ CREATE_GROUP               | BEGIN              | truncateTestGroup              | rollbackable                                                                                       | postgres
+ CREATE_GROUP               | END                | truncateTestGroup              |                                                                                                    | postgres
+ ASSIGN_TABLES              | BEGIN              |                                |                                                                                                    | postgres
+ ASSIGN_TABLES              | LOG_SCHEMA CREATED | "emaj_phil's schema3"          |                                                                                                    | postgres
+ ASSIGN_TABLES              | TABLE ADDED        | "phil's schema3"."myTbl2\"     | To the idle group truncateTestGroup                                                                | postgres
+ ASSIGN_TABLES              | TABLE ADDED        | "phil's schema3".mytbl4        | To the idle group truncateTestGroup                                                                | postgres
+ ASSIGN_TABLES              | TABLE ADDED        | "phil's schema3"."phil's tbl1" | To the idle group truncateTestGroup                                                                | postgres
+ ASSIGN_TABLES              | END                |                                | 3 tables assigned to the group truncateTestGroup                                                   | postgres
+ ASSIGN_TABLES              | BEGIN              |                                |                                                                                                    | postgres
+ ASSIGN_TABLES              | LOG_SCHEMA CREATED | emaj_myschema4                 |                                                                                                    | postgres
+ ASSIGN_TABLES              | TABLE ADDED        | myschema4.mypartp3             | To the idle group truncateTestGroup                                                                | postgres
+ ASSIGN_TABLES              | TABLE ADDED        | myschema4.mytblr               | To the idle group truncateTestGroup                                                                | postgres
+ ASSIGN_TABLES              | TABLE ADDED        | myschema4.mytblm               | To the idle group truncateTestGroup                                                                | postgres
+ ASSIGN_TABLES              | TABLE ADDED        | myschema4.mytblc2              | To the idle group truncateTestGroup                                                                | postgres
+ ASSIGN_TABLES              | TABLE ADDED        | myschema4.mypartp2             | To the idle group truncateTestGroup                                                                | postgres
+ ASSIGN_TABLES              | TABLE ADDED        | myschema4.mytblc1              | To the idle group truncateTestGroup                                                                | postgres
+ ASSIGN_TABLES              | END                |                                | 6 tables assigned to the group truncateTestGroup                                                   | postgres
+ START_GROUP                | BEGIN              | truncateTestGroup              | With log reset                                                                                     | postgres
+ LOCK_GROUP                 | BEGIN              | truncateTestGroup              |                                                                                                    | postgres
+ LOCK_GROUP                 | END                | truncateTestGroup              | 9 tables locked, 0 deadlock(s)                                                                     | postgres
+ SET_MARK_GROUP             | BEGIN              | truncateTestGroup              | M1                                                                                                 | postgres
+ SET_MARK_GROUP             | END                | truncateTestGroup              | M1                                                                                                 | postgres
+ START_GROUP                | END                | truncateTestGroup              | 9 tables/sequences processed                                                                       | postgres
+ SET_MARK_GROUP             | BEGIN              | truncateTestGroup              |                                                                                                    | postgres
+ LOCK_GROUP                 | BEGIN              | truncateTestGroup              |                                                                                                    | postgres
+ LOCK_GROUP                 | END                | truncateTestGroup              | 9 tables locked, 0 deadlock(s)                                                                     | postgres
+ SET_MARK_GROUP             | END                | truncateTestGroup              | M2                                                                                                 | postgres
+ ROLLBACK_GROUP             | BEGIN              | truncateTestGroup              | Logged rollback to mark M1 (timestamp)                                                             | postgres
+ DBLINK_OPEN_CNX            |                    | rlbk#1                         | Status = 1                                                                                         | postgres
+ LOCK_GROUP                 | BEGIN              | truncateTestGroup              | Rollback session #1                                                                                | postgres
+ LOCK_GROUP                 | END                | truncateTestGroup              | Rollback session #1: 9 tables locked, 0 deadlock(s)                                                | postgres
+ SET_MARK_GROUP             | BEGIN              | truncateTestGroup              | RLBK_M1_%_START                                                                                    | postgres
+ SET_MARK_GROUP             | END                | truncateTestGroup              | RLBK_M1_%_START                                                                                    | postgres
+ ROLLBACK_TABLE             | BEGIN              | "phil's schema3"."phil's tbl1" | All log rows where emaj_gid > 18000000 and <= 18000045, in session_replication_role = replica mode | postgres
+ ROLLBACK_TABLE             | END                | "phil's schema3"."phil's tbl1" | 20 rolled back primary keys                                                                        | postgres
+ ROLLBACK_TABLE             | BEGIN              | "phil's schema3".mytbl4        | All log rows where emaj_gid > 18000000 and <= 18000045, in session_replication_role = replica mode | postgres
+ ROLLBACK_TABLE             | END                | "phil's schema3".mytbl4        | 9 rolled back primary keys                                                                         | postgres
+ ROLLBACK_TABLE             | BEGIN              | myschema4.mytblc2              | All log rows where emaj_gid > 18000000 and <= 18000045                                             | postgres
+ ROLLBACK_TABLE             | END                | myschema4.mytblc2              | 7 rolled back primary keys                                                                         | postgres
+ ROLLBACK_TABLE             | BEGIN              | "phil's schema3"."myTbl2\"     | All log rows where emaj_gid > 18000000 and <= 18000045, in session_replication_role = replica mode | postgres
+ ROLLBACK_TABLE             | END                | "phil's schema3"."myTbl2\"     | 7 rolled back primary keys                                                                         | postgres
+ ROLLBACK_TABLE             | BEGIN              | myschema4.mypartp3             | All log rows where emaj_gid > 18000000 and <= 18000045                                             | postgres
+ ROLLBACK_TABLE             | END                | myschema4.mypartp3             | 2 rolled back primary keys                                                                         | postgres
+ SET_MARK_GROUP             | BEGIN              | truncateTestGroup              | RLBK_M1_%_DONE                                                                                     | postgres
+ SET_MARK_GROUP             | END                | truncateTestGroup              | RLBK_M1_%_DONE                                                                                     | postgres
+ ROLLBACK_GROUP             | NOTICE             | Rollback id 18000              | Rollback id = 18000.                                                                               | postgres
+ ROLLBACK_GROUP             | NOTICE             | Rollback id 18000              | 5 / 9 tables effectively processed.                                                                | postgres
+ DBLINK_CLOSE_CNX           |                    | rlbk#1                         |                                                                                                    | postgres
+ ROLLBACK_GROUP             | END                | truncateTestGroup              | Rollback_id 18000                                                                                  | postgres
+ GEN_SQL_GROUP              | BEGIN              | truncateTestGroup              | From mark M1 to mark M2                                                                            | postgres
+ GEN_SQL_GROUP              | END                | truncateTestGroup              | 5 generated statements - script exported into /tmp/emaj_16/adm3/gensql.sql                         | postgres
+ ROLLBACK_GROUP             | BEGIN              | truncateTestGroup              | Unlogged rollback to mark M1 (timestamp)                                                           | postgres
+ DBLINK_OPEN_CNX            |                    | rlbk#1                         | Status = 1                                                                                         | postgres
+ LOCK_GROUP                 | BEGIN              | truncateTestGroup              | Rollback session #1                                                                                | postgres
+ LOCK_GROUP                 | END                | truncateTestGroup              | Rollback session #1: 9 tables locked, 0 deadlock(s)                                                | postgres
+ ROLLBACK_TABLE             | BEGIN              | "phil's schema3"."phil's tbl1" | All log rows where emaj_gid > 18000000 and <= 18000085, in session_replication_role = replica mode | postgres
+ ROLLBACK_TABLE             | END                | "phil's schema3"."phil's tbl1" | 20 rolled back primary keys                                                                        | postgres
+ ROLLBACK_TABLE             | BEGIN              | "phil's schema3".mytbl4        | All log rows where emaj_gid > 18000000 and <= 18000085, in session_replication_role = replica mode | postgres
+ ROLLBACK_TABLE             | END                | "phil's schema3".mytbl4        | 9 rolled back primary keys                                                                         | postgres
+ ROLLBACK_TABLE             | BEGIN              | myschema4.mytblc2              | All log rows where emaj_gid > 18000000 and <= 18000085                                             | postgres
+ ROLLBACK_TABLE             | END                | myschema4.mytblc2              | 7 rolled back primary keys                                                                         | postgres
+ ROLLBACK_TABLE             | BEGIN              | "phil's schema3"."myTbl2\"     | All log rows where emaj_gid > 18000000 and <= 18000085, in session_replication_role = replica mode | postgres
+ ROLLBACK_TABLE             | END                | "phil's schema3"."myTbl2\"     | 7 rolled back primary keys                                                                         | postgres
+ ROLLBACK_TABLE             | BEGIN              | myschema4.mypartp3             | All log rows where emaj_gid > 18000000 and <= 18000085                                             | postgres
+ ROLLBACK_TABLE             | END                | myschema4.mypartp3             | 2 rolled back primary keys                                                                         | postgres
+ ROLLBACK_GROUP             | MARK DELETED       | truncateTestGroup              | mark M2 is deleted                                                                                 | postgres
+ ROLLBACK_GROUP             | MARK DELETED       | truncateTestGroup              | mark RLBK_M1_%_START is deleted                                                                    | postgres
+ ROLLBACK_GROUP             | MARK DELETED       | truncateTestGroup              | mark RLBK_M1_%_DONE is deleted                                                                     | postgres
+ ROLLBACK_GROUP             | NOTICE             | Rollback id 18001              | Rollback id = 18001.                                                                               | postgres
+ ROLLBACK_GROUP             | NOTICE             | Rollback id 18001              | 5 / 9 tables effectively processed.                                                                | postgres
+ DBLINK_CLOSE_CNX           |                    | rlbk#1                         |                                                                                                    | postgres
+ ROLLBACK_GROUP             | END                | truncateTestGroup              | Rollback_id 18001                                                                                  | postgres
+ STOP_GROUP                 | BEGIN              | truncateTestGroup              |                                                                                                    | postgres
+ LOCK_GROUP                 | BEGIN              | truncateTestGroup              |                                                                                                    | postgres
+ LOCK_GROUP                 | END                | truncateTestGroup              | 9 tables locked, 0 deadlock(s)                                                                     | postgres
+ SET_MARK_GROUP             | BEGIN              | truncateTestGroup              | STOP_%                                                                                             | postgres
+ CLEANUP_RLBK_STATE         |                    | Rollback id 18000              | set to COMMITTED                                                                                   | postgres
+ CLEANUP_RLBK_STATE         |                    | Rollback id 18001              | set to COMMITTED                                                                                   | postgres
+ SET_MARK_GROUP             | END                | truncateTestGroup              | STOP_%                                                                                             | postgres
+ STOP_GROUP                 | END                | truncateTestGroup              | 9 tables/sequences processed                                                                       | postgres
+ DROP_GROUP                 | BEGIN              | truncateTestGroup              |                                                                                                    | postgres
+ DROP_GROUP                 | LOG_SCHEMA DROPPED | emaj_myschema4                 |                                                                                                    | postgres
+ DROP_GROUP                 | LOG_SCHEMA DROPPED | "emaj_phil's schema3"          |                                                                                                    | postgres
+ DROP_GROUP                 | END                | truncateTestGroup              | 9 tables/sequences processed                                                                       | postgres
+(88 rows)
 
 --
 reset role;

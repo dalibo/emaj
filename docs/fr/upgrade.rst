@@ -208,3 +208,13 @@ Passage en version 4.3.0
 ^^^^^^^^^^^^^^^^^^^^^^^^
 
 Avant la version 4.3.0, les fonctions des familles *emaj_log_stat_group()*, *emaj_gen_sql_group()* et *emaj_snap_log_group()* acceptaient une valeur NULL ou une chaîne vide comme nom de la marque de début de la tranche de temps souhaitée, cette valeur représentant la première marque connue pour le ou les groupes de tables. Face aux ambiguités générées, en particulier pour les fonctions multi-groupes, cette possibilité a été supprimée en version 4.3.0.
+
+La fonction *emaj_snap_log_group()* a été remplacée par les deux fonctions :ref:`emaj_dump_changes_group()<emaj_dump_changes_group>` et :ref:`emaj_gen_sql_dump_changes_group()<emaj_gen_sql_dump_changes_group>` avec des fonctionnalités nettement plus étendues. Pour produire un jeu de fichiers d’extraction des tables de log, on pourra facilement remplacer : ::
+
+   SELECT emaj.emaj_snap_log_group(<groupe>, <marque.début>, <marque.fin>, <répertoire>, <options.copy>);
+
+par : ::
+
+   SELECT emaj.emaj_dump_changes_group(<groupe>, <marque.début>, <marque.fin>, 'COPY_OPTIONS=(<options.copy>)', NULL, <répertoire>);
+
+Notons que, désormais, aucun des deux paramètres de marques ne peut être NULL. Par ailleurs le format des informations concernant les séquences est modifié : les deux fichiers listant l’état des séquences aux marque début et fin sont remplacés par un fichier distinct par séquence, contenant les mêmes informations.

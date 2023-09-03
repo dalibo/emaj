@@ -69,6 +69,7 @@ drop cascades to constraint emaj_rlbk_stat_rlbt_rlbk_id_fkey on table emaj_rlbk_
 NOTICE:  drop cascades to 2 other objects
 DETAIL:  drop cascades to function emaj_rollback_activity()
 drop cascades to function _rollback_activity()
+WARNING:  E-Maj installation: The adminpack extension is available but not yet created. Execute a "CREATE EXTENSION adminpack;" statement to enable the NO_EMPTY_FILE option use of the emaj_dump_changes_group() function.
 -----------------------------
 -- check installation
 -----------------------------

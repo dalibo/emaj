@@ -571,9 +571,9 @@ select col41, col42, col43, col44, col45, emaj_verb, emaj_tuple, emaj_gid from e
 -------+-------+-------+-------+-------+-----------+------------+----------
 (0 rows)
 
-select col51, col52, col53, col54, emaj_verb, emaj_tuple, emaj_gid from emaj_myschema2.mytbl5_log order by emaj_gid, emaj_tuple desc;
- col51 | col52 | col53 | col54 | emaj_verb | emaj_tuple | emaj_gid 
--------+-------+-------+-------+-----------+------------+----------
+select col51, col52, col53, col54, col55, col56, col57, col58, emaj_verb, emaj_tuple, emaj_gid from emaj_myschema2.mytbl5_log order by emaj_gid, emaj_tuple desc;
+ col51 | col52 | col53 | col54 | col55 | col56 | col57 | col58 | emaj_verb | emaj_tuple | emaj_gid 
+-------+-------+-------+-------+-------+-------+-------+-------+-----------+------------+----------
 (0 rows)
 
 select col61, col62, col63, col64, col65, col66, emaj_verb, emaj_tuple, emaj_gid from emaj_mySchema2.myTbl6_log order by emaj_gid, emaj_tuple desc;
@@ -1340,11 +1340,11 @@ update mytbl2b set col21 = 12 where col21 = 11;
 delete from mytbl2b where col21 >= 10;
 -- add some updates for tables with unusual types (arrays, geometric)
 set search_path=public,myschema2;
-insert into myTbl5 values (10,'{"abc","def","ghi"}','{1,2,3}',NULL,'{}');
-insert into myTbl5 values (20,array['abc','def','ghi'],array[3,4,5],array['2000/02/01'::date,'2000/02/28'::date],'{"id":1000, "c1":"abc"}');
-update myTbl5 set col54 = '{"2010/11/28","2010/12/03"}', col55 = '{"id":1001, "c2":"def"}' where col54 is null;
-insert into myTbl6 select i+10, point(i,1.3), '((0,0),(2,2))', circle(point(5,5),i),'((-2,-2),(3,0),(1,4))','10.20.30.40/27' from generate_series (1,8) as i;
-update myTbl6 set col64 = '<(5,6),3.5>', col65 = null where col61 <= 13;
+insert into myTbl5 values (10,'{"abc","def","ghi"}','{1,2,3}',NULL,'{}',NULL,'{"id":1000}','[2020-01-01, 2021-01-01)',NULL);
+insert into myTbl5 values (20,array['abc','def','ghi'],array[3,4,5],array['2000/02/01'::date,'2000/02/28'::date],'{"id":1001, "c1":"abc"}',NULL,'{"id":1001}',NULL,XMLPARSE (CONTENT '<foo>bar</foo>'));
+update myTbl5 set col54 = '{"2010/11/28","2010/12/03"}', col55 = '{"id":1001, "c2":"def"}', col57 = '{"id":1001, "c3":"ghi"}' where col54 is null;
+insert into myTbl6 select i+10, point(i,1.3), '((0,0),(2,2))', circle(point(5,5),i),'((-2,-2),(3,0),(1,4))','10.20.30.40/27','EXECUTING',(i+10,point(i,1.3))::mycomposite from generate_series (1,8) as i;
+update myTbl6 set col64 = '<(5,6),3.5>', col65 = null, col67 = 'COMPLETED' where col61 <= 13;
 -- also add rows with unusual text content
 insert into mytbl2 values (10, E'row 1 \r... and row 2 with a '' (quote) character',null);
 insert into mytbl2 values (11, E'row 1 with a true \\ character\r... and row 2 with two \\n true and a '' (quote) characters',null);
@@ -1406,10 +1406,10 @@ NOTICE:  table "emaj_temp_script" does not exist, skipping
                   6
 (1 row)
 
-select coalesce(sum(stat_rows),0) + 2 as check from emaj.emaj_detailed_log_stat_group('myGroup1', 'Multi-1', NULL);
+select coalesce(sum(stat_rows),0) + 1 /* sequence change */ as check from emaj.emaj_detailed_log_stat_group('myGroup1', 'Multi-1', NULL);
  check 
 -------
-     7
+     6
 (1 row)
 
 select emaj.emaj_gen_sql_group('myGroup2', 'Multi-1', NULL, :'EMAJTESTTMPDIR' || '/myGroup2.sql', array[
@@ -1421,10 +1421,10 @@ NOTICE:  table "emaj_temp_script" does not exist, skipping
                  26
 (1 row)
 
-select sum(stat_rows) + 2 as check from emaj.emaj_detailed_log_stat_group('myGroup2', 'Multi-1', NULL);
+select sum(stat_rows) + 1 /* sequence change */ as check from emaj.emaj_detailed_log_stat_group('myGroup2', 'Multi-1', NULL);
  check 
 -------
-    27
+    26
 (1 row)
 
 select emaj.emaj_gen_sql_group('phil''s group#3",', 'M1_rollbackable', NULL, :'EMAJTESTTMPDIR' || '/Group3.sql');
@@ -1434,10 +1434,10 @@ NOTICE:  table "emaj_temp_script" does not exist, skipping
                  56
 (1 row)
 
-select sum(stat_rows) + 2 as check from emaj.emaj_detailed_log_stat_group('phil''s group#3",', 'M1_rollbackable', NULL);
+select sum(stat_rows) + 1 /* sequence change*/ as check from emaj.emaj_detailed_log_stat_group('phil''s group#3",', 'M1_rollbackable', NULL);
  check 
 -------
-    57
+    56
 (1 row)
 
 -- generate another sql script for myGroup1 but with a manual export and check both scripts are the same
@@ -1546,26 +1546,26 @@ SET standard_conforming_strings = OFF;
 SET escape_string_warning = OFF;
 SET datestyle = 'ISO, YMD';
 --BEGIN TRANSACTION;
-INSERT INTO myschema2.mytbl5 VALUES (10, '{abc,def,ghi}', '{1,2,3}', NULL, '{}');
-INSERT INTO myschema2.mytbl5 VALUES (20, '{abc,def,ghi}', '{3,4,5}', '{2000-02-01,2000-02-28}', '{"id":1000, "c1":"abc"}');
-UPDATE ONLY myschema2.mytbl5 SET col51 = 10, col52 = '{abc,def,ghi}', col53 = '{1,2,3}', col54 = '{2010-11-28,2010-12-03}', col55 = '{"id":1001, "c2":"def"}' WHERE col51 = 10;
-INSERT INTO myschema2.mytbl6 VALUES (11, '(1,1.3)', '(2,2),(0,0)', '<(5,5),1>', '((-2,-2),(3,0),(1,4))', '10.20.30.40/27');
-INSERT INTO myschema2.mytbl6 VALUES (12, '(2,1.3)', '(2,2),(0,0)', '<(5,5),2>', '((-2,-2),(3,0),(1,4))', '10.20.30.40/27');
-INSERT INTO myschema2.mytbl6 VALUES (13, '(3,1.3)', '(2,2),(0,0)', '<(5,5),3>', '((-2,-2),(3,0),(1,4))', '10.20.30.40/27');
-INSERT INTO myschema2.mytbl6 VALUES (14, '(4,1.3)', '(2,2),(0,0)', '<(5,5),4>', '((-2,-2),(3,0),(1,4))', '10.20.30.40/27');
-INSERT INTO myschema2.mytbl6 VALUES (15, '(5,1.3)', '(2,2),(0,0)', '<(5,5),5>', '((-2,-2),(3,0),(1,4))', '10.20.30.40/27');
-INSERT INTO myschema2.mytbl6 VALUES (16, '(6,1.3)', '(2,2),(0,0)', '<(5,5),6>', '((-2,-2),(3,0),(1,4))', '10.20.30.40/27');
-INSERT INTO myschema2.mytbl6 VALUES (17, '(7,1.3)', '(2,2),(0,0)', '<(5,5),7>', '((-2,-2),(3,0),(1,4))', '10.20.30.40/27');
-INSERT INTO myschema2.mytbl6 VALUES (18, '(8,1.3)', '(2,2),(0,0)', '<(5,5),8>', '((-2,-2),(3,0),(1,4))', '10.20.30.40/27');
-UPDATE ONLY myschema2.mytbl6 SET col61 = 0, col62 = NULL, col63 = NULL, col64 = '<(5,6),3.5>', col65 = NULL, col66 = NULL WHERE col61 = 0;
-UPDATE ONLY myschema2.mytbl6 SET col61 = 4, col62 = '(4,1.3)', col63 = '(2,2),(0,0)', col64 = '<(5,6),3.5>', col65 = NULL, col66 = '10.20.30.40/27' WHERE col61 = 4;
-UPDATE ONLY myschema2.mytbl6 SET col61 = 5, col62 = '(5,1.3)', col63 = '(2,2),(0,0)', col64 = '<(5,6),3.5>', col65 = NULL, col66 = '10.20.30.40/27' WHERE col61 = 5;
-UPDATE ONLY myschema2.mytbl6 SET col61 = 6, col62 = '(6,1.3)', col63 = '(2,2),(0,0)', col64 = '<(5,6),3.5>', col65 = NULL, col66 = '10.20.30.40/27' WHERE col61 = 6;
-UPDATE ONLY myschema2.mytbl6 SET col61 = 7, col62 = '(7,1.3)', col63 = '(2,2),(0,0)', col64 = '<(5,6),3.5>', col65 = NULL, col66 = '10.20.30.40/27' WHERE col61 = 7;
-UPDATE ONLY myschema2.mytbl6 SET col61 = 8, col62 = '(8,1.3)', col63 = '(2,2),(0,0)', col64 = '<(5,6),3.5>', col65 = NULL, col66 = '10.20.30.40/27' WHERE col61 = 8;
-UPDATE ONLY myschema2.mytbl6 SET col61 = 11, col62 = '(1,1.3)', col63 = '(2,2),(0,0)', col64 = '<(5,6),3.5>', col65 = NULL, col66 = '10.20.30.40/27' WHERE col61 = 11;
-UPDATE ONLY myschema2.mytbl6 SET col61 = 12, col62 = '(2,1.3)', col63 = '(2,2),(0,0)', col64 = '<(5,6),3.5>', col65 = NULL, col66 = '10.20.30.40/27' WHERE col61 = 12;
-UPDATE ONLY myschema2.mytbl6 SET col61 = 13, col62 = '(3,1.3)', col63 = '(2,2),(0,0)', col64 = '<(5,6),3.5>', col65 = NULL, col66 = '10.20.30.40/27' WHERE col61 = 13;
+INSERT INTO myschema2.mytbl5 VALUES (10, '{abc,def,ghi}', '{1,2,3}', NULL, '{}', NULL, '{"id":1000}', '[2020-01-01,2021-01-01)', NULL);
+INSERT INTO myschema2.mytbl5 VALUES (20, '{abc,def,ghi}', '{3,4,5}', '{2000-02-01,2000-02-28}', '{"id":1001, "c1":"abc"}', NULL, '{"id":1001}', NULL, '<foo>bar</foo>');
+UPDATE ONLY myschema2.mytbl5 SET col51 = 10, col52 = '{abc,def,ghi}', col53 = '{1,2,3}', col54 = '{2010-11-28,2010-12-03}', col55 = '{"id":1001, "c2":"def"}', col56 = NULL, col57 = '{"id":1001, "c3":"ghi"}', col58 = '[2020-01-01,2021-01-01)', col59 = NULL WHERE col51 = 10;
+INSERT INTO myschema2.mytbl6 VALUES (11, '(1,1.3)', '(2,2),(0,0)', '<(5,5),1>', '((-2,-2),(3,0),(1,4))', '10.20.30.40/27', 'EXECUTING', '(11,"(1,1.3)")');
+INSERT INTO myschema2.mytbl6 VALUES (12, '(2,1.3)', '(2,2),(0,0)', '<(5,5),2>', '((-2,-2),(3,0),(1,4))', '10.20.30.40/27', 'EXECUTING', '(12,"(2,1.3)")');
+INSERT INTO myschema2.mytbl6 VALUES (13, '(3,1.3)', '(2,2),(0,0)', '<(5,5),3>', '((-2,-2),(3,0),(1,4))', '10.20.30.40/27', 'EXECUTING', '(13,"(3,1.3)")');
+INSERT INTO myschema2.mytbl6 VALUES (14, '(4,1.3)', '(2,2),(0,0)', '<(5,5),4>', '((-2,-2),(3,0),(1,4))', '10.20.30.40/27', 'EXECUTING', '(14,"(4,1.3)")');
+INSERT INTO myschema2.mytbl6 VALUES (15, '(5,1.3)', '(2,2),(0,0)', '<(5,5),5>', '((-2,-2),(3,0),(1,4))', '10.20.30.40/27', 'EXECUTING', '(15,"(5,1.3)")');
+INSERT INTO myschema2.mytbl6 VALUES (16, '(6,1.3)', '(2,2),(0,0)', '<(5,5),6>', '((-2,-2),(3,0),(1,4))', '10.20.30.40/27', 'EXECUTING', '(16,"(6,1.3)")');
+INSERT INTO myschema2.mytbl6 VALUES (17, '(7,1.3)', '(2,2),(0,0)', '<(5,5),7>', '((-2,-2),(3,0),(1,4))', '10.20.30.40/27', 'EXECUTING', '(17,"(7,1.3)")');
+INSERT INTO myschema2.mytbl6 VALUES (18, '(8,1.3)', '(2,2),(0,0)', '<(5,5),8>', '((-2,-2),(3,0),(1,4))', '10.20.30.40/27', 'EXECUTING', '(18,"(8,1.3)")');
+UPDATE ONLY myschema2.mytbl6 SET col61 = 0, col62 = NULL, col63 = NULL, col64 = '<(5,6),3.5>', col65 = NULL, col66 = NULL, col67 = 'COMPLETED', col68 = NULL WHERE col61 = 0;
+UPDATE ONLY myschema2.mytbl6 SET col61 = 4, col62 = '(4,1.3)', col63 = '(2,2),(0,0)', col64 = '<(5,6),3.5>', col65 = NULL, col66 = '10.20.30.40/27', col67 = 'COMPLETED', col68 = '(4,"(4,1.3)")' WHERE col61 = 4;
+UPDATE ONLY myschema2.mytbl6 SET col61 = 5, col62 = '(5,1.3)', col63 = '(2,2),(0,0)', col64 = '<(5,6),3.5>', col65 = NULL, col66 = '10.20.30.40/27', col67 = 'COMPLETED', col68 = '(5,"(5,1.3)")' WHERE col61 = 5;
+UPDATE ONLY myschema2.mytbl6 SET col61 = 6, col62 = '(6,1.3)', col63 = '(2,2),(0,0)', col64 = '<(5,6),3.5>', col65 = NULL, col66 = '10.20.30.40/27', col67 = 'COMPLETED', col68 = '(6,"(6,1.3)")' WHERE col61 = 6;
+UPDATE ONLY myschema2.mytbl6 SET col61 = 7, col62 = '(7,1.3)', col63 = '(2,2),(0,0)', col64 = '<(5,6),3.5>', col65 = NULL, col66 = '10.20.30.40/27', col67 = 'COMPLETED', col68 = '(7,"(7,1.3)")' WHERE col61 = 7;
+UPDATE ONLY myschema2.mytbl6 SET col61 = 8, col62 = '(8,1.3)', col63 = '(2,2),(0,0)', col64 = '<(5,6),3.5>', col65 = NULL, col66 = '10.20.30.40/27', col67 = 'COMPLETED', col68 = '(8,"(8,1.3)")' WHERE col61 = 8;
+UPDATE ONLY myschema2.mytbl6 SET col61 = 11, col62 = '(1,1.3)', col63 = '(2,2),(0,0)', col64 = '<(5,6),3.5>', col65 = NULL, col66 = '10.20.30.40/27', col67 = 'COMPLETED', col68 = '(11,"(1,1.3)")' WHERE col61 = 11;
+UPDATE ONLY myschema2.mytbl6 SET col61 = 12, col62 = '(2,1.3)', col63 = '(2,2),(0,0)', col64 = '<(5,6),3.5>', col65 = NULL, col66 = '10.20.30.40/27', col67 = 'COMPLETED', col68 = '(12,"(2,1.3)")' WHERE col61 = 12;
+UPDATE ONLY myschema2.mytbl6 SET col61 = 13, col62 = '(3,1.3)', col63 = '(2,2),(0,0)', col64 = '<(5,6),3.5>', col65 = NULL, col66 = '10.20.30.40/27', col67 = 'COMPLETED', col68 = '(13,"(3,1.3)")' WHERE col61 = 13;
 INSERT INTO myschema2.mytbl2 VALUES (10, 'row 1 \r... and row 2 with a '' (quote) character', NULL);
 INSERT INTO myschema2.mytbl2 VALUES (11, E'row 1 with a true \\ character\r... and row 2 with two \\n true and a '' (quote) characters', NULL);
 INSERT INTO myschema2.mytbl1 VALUES (200, 'Start\tEnd', E'\\x410042');
@@ -2036,7 +2036,7 @@ select emaj.emaj_set_mark_group('myGroup1','MC3');
 
 insert into "myTbl3" (col33) select generate_series(2000,2039,4)/100;
 insert into myTbl4 values (2000,'FK...',1,10,'ABC');
-update myTbl4 set col43 = NULL where col41 = 2000;
+update myTbl4 set col44 = NULL where col41 = 2000;
 select emaj.emaj_set_mark_group('myGroup1','MC4');
  emaj_set_mark_group 
 ---------------------
@@ -2147,7 +2147,7 @@ select emaj.emaj_set_mark_group('myGroup1','MC9');
 
 insert into "myTbl3" (col33) select generate_series(2000,2039,4)/100;
 insert into myTbl4 values (2000,'FK...',1,10,'ABC');
-update myTbl4 set col43 = NULL where col41 = 2000;
+update myTbl4 set col44 = NULL where col41 = 2000;
 select * from emaj.emaj_logged_rollback_group('myGroup1','MC6',false) order by 1,2;
  rlbk_severity |              rlbk_message              
 ---------------+----------------------------------------
@@ -2201,7 +2201,7 @@ select emaj.emaj_set_mark_group('myGroup1','MC11');
 (1 row)
 
 insert into myTbl4 values (3000,'FK...',1,10,'ABC');
-update myTbl4 set col43 = NULL where col41 = 3000;
+update myTbl4 set col44 = NULL where col41 = 3000;
 select * from emaj.emaj_logged_rollback_group('myGroup1','MC10',false) order by 1,2;
  rlbk_severity |              rlbk_message              
 ---------------+----------------------------------------

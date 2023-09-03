@@ -175,6 +175,13 @@ Groups level functions
 | :ref:`emaj_drop_group                            | | group TEXT                  | #.tables.and.seq INT                  |
 | <emaj_drop_group>`                               |                               |                                       |
 +--------------------------------------------------+-------------------------------+---------------------------------------+
+| :ref:`emaj_dump_changes_group                    | | group TEXT,                 | msg.#.files BIGINT                    |
+| <emaj_dump_changes_group>`                       | | start.mark TEXT,            |                                       |
+|                                                  | | end.mark TEXT,              |                                       |
+|                                                  | | options.list TEXT           |                                       |
+|                                                  | | tables.seq.array TEXT[]     |                                       |
+|                                                  | | output.directory TEXT,      |                                       |
++--------------------------------------------------+-------------------------------+---------------------------------------+
 | :ref:`emaj_estimate_rollback_group               | | group TEXT,                 | duration INTERVAL                     |
 | <emaj_estimate_rollback_group>` (V)              | | mark TEXT,                  |                                       |
 |                                                  | | is.logged BOOLEAN           |                                       |
@@ -188,6 +195,19 @@ Groups level functions
 +--------------------------------------------------+-------------------------------+---------------------------------------+
 | :ref:`emaj_force_stop_group                      | | group TEXT                  | #.tables.and.seq INT                  |
 | <emaj_force_stop_group>`                         |                               |                                       |
++--------------------------------------------------+-------------------------------+---------------------------------------+
+| :ref:`emaj_gen_sql_dump_changes_group            | | group TEXT,                 | msg.#.statements BIGINT               |
+| <emaj_gen_sql_dump_changes_group>` (V)           | | start.mark TEXT,            |                                       |
+|                                                  | | end.mark TEXT,              |                                       |
+|                                                  | | options.list TEXT           |                                       |
+|                                                  | | tables.seq.array TEXT[]     |                                       |
++--------------------------------------------------+-------------------------------+---------------------------------------+
+| :ref:`emaj_gen_sql_dump_changes_group            | | group TEXT,                 | msg.#.statements BIGINT               |
+| <emaj_gen_sql_dump_changes_group>`               | | start.mark TEXT,            |                                       |
+|                                                  | | end.mark TEXT,              |                                       |
+|                                                  | | options.list TEXT           |                                       |
+|                                                  | | tables.seq.array TEXT[]     |                                       |
+|                                                  | | output.directory TEXT,      |                                       |
 +--------------------------------------------------+-------------------------------+---------------------------------------+
 | :ref:`emaj_gen_sql_group                         | | group TEXT,                 | #.gen.statements BIGINT               |
 | <emaj_gen_sql_group>`                            | | start.mark TEXT,            |                                       |
@@ -260,12 +280,6 @@ Groups level functions
 +--------------------------------------------------+-------------------------------+---------------------------------------+
 | :ref:`emaj_snap_group                            | | group TEXT,                 | #.tables.and.seq INT                  |
 | <emaj_snap_group>`                               | | directory TEXT,             |                                       |
-|                                                  | | copy.options TEXT           |                                       |
-+--------------------------------------------------+-------------------------------+---------------------------------------+
-| :ref:`emaj_snap_log_group                        | | group TEXT,                 | #.tables.and.seq INT                  |
-| <emaj_snap_log_group>`                           | | start.mark TEXT,            |                                       |
-|                                                  | | end.mark TEXT,              |                                       |
-|                                                  | | directory TEXT,             |                                       |
 |                                                  | | copy.options TEXT           |                                       |
 +--------------------------------------------------+-------------------------------+---------------------------------------+
 | :ref:`emaj_start_group                           | | group TEXT,                 | #.tables.and.seq INT                  |

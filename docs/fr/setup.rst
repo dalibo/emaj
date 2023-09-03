@@ -34,7 +34,10 @@ Après avoir vérifié que la version de PostgreSQL est supérieure ou égale à
 
 S'ils n'existent pas déjà, les 2 rôles *emaj_adm* et *emaj_viewer* sont également créés.
 
-Enfin, le script d'installation examine la configuration de l'instance. Le cas échéant, il affiche un message concernant le paramètre *-max_prepared_statements*.
+Enfin, le script d'installation examine la configuration de l'instance. Le cas échéant, il affiche un ou plusieurs messages concernant :
+
+* le :ref:`paramètre max_prepared_transactions<parallel_rollback_prerequisite>` ;
+* la disponibilité de l’extension *adminpack*, utile pour certaines :ref:`extractions de données<examining_changes>`.
 
 Création de l’extension par script
 ----------------------------------
@@ -57,7 +60,7 @@ Adaptation du fichier de configuration postgresql.conf
 
 Les fonctions principales d'E-Maj posent un verrou sur chacune des tables du groupe traité. Si le nombre de tables constituant le groupe est élevé, il peut s'avérer nécessaire d'augmenter la valeur du paramètre **max_locks_per_transaction** dans le fichier de configuration *postgresql.conf*. Ce paramètre entre dans le dimensionnement de la table en mémoire qui gère les verrous de l'instance. Sa valeur par défaut est de 64. On peut le porter à une valeur supérieure si une opération E-Maj échoue en retournant un message d'erreur indiquant clairement que toutes les entrées de la table des verrous sont utilisées.
 
-De plus, si l'utilisation de l'outil de :doc:`rollback en parallèle <parallelRollbackClient>` est envisagée, il sera probablement nécessaire d'ajuster le paramètre **max_prepared_transaction**.
+De plus, si l'utilisation de l'outil de :doc:`rollback en parallèle <parallelRollbackClient>` est envisagée, il sera probablement nécessaire d'ajuster le paramètre **max_prepared_transactions**.
 
 
 Paramétrage d'E-Maj
