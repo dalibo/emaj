@@ -8,25 +8,29 @@ E-Maj est disponible en téléchargement sur le site Internet **PGXN** (https://
 
 E-Maj et ses compléments sont également disponibles sur le site Internet **github.org** :
 
-* Composants sources (https://github.com/dalibo/emaj)
+* Composants sources (https://github.org/dalibo/emaj)
 * Documentation (https://github.com/beaud76/emaj_doc)
 * Interface graphique Emaj_web (https://github.com/dalibo/emaj_web)
 
 .. caution::
-   Installer l’extension à partir du dépôt *github.org* crée l’extension en version de développement ("devel"). Il sera alors impossible de procéder à des mises à jour de l'extension dans le futur. Pour une utilisation dans la durée, il est fortement recommandé d’utiliser les paquets versionnés disponibles sur *PGXN*.
+   Installer l’extension à partir du dépôt *github.org* crée l’extension en version de développement ("devel"), même en téléchargeant une version 'taguée'. Il sera alors impossible de procéder à des mises à jour de l'extension dans le futur. Pour une utilisation dans la durée, il est fortement recommandé d’utiliser les paquets versionnés disponibles sur *PGXN*.
 
 Installation standard sur Linux
 *******************************
 
 Téléchargez la dernière version d’E-Maj par un moyen à votre convenance. Si le *client pgxn* est installé, on peut simplement exécuter la commande ::
 
-	pgxn download E-Maj
+   pgxn download E-Maj
+
+On peut aussi utiliser la commande *wget* ::
+ 
+   wget https://api.pgxn.org/dist/e-maj/<version>/e-maj-<version>.zip
 
 Puis décompressez l’archive avec les commandes suivantes ::
 
-	unzip e-maj-<version>.zip
+   unzip e-maj-<version>.zip
 
-	cd e-maj-<version>/
+   cd e-maj-<version>/
 
 Identifiez la localisation précise du répertoire *SHAREDIR*. Selon l’installation de PostgreSQL, la commande *pg_config --sharedir* peut retourner directement le nom du répertoire. Sinon, rechercher les localisations typiques, telles que :
 

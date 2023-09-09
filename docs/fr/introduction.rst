@@ -14,7 +14,7 @@ E-Maj est l'acronyme français de « *Enregistrement des Mises A Jour* ».
 
 Il répond à deux objectifs principaux :
 
-* E-Maj peut servir à **tracer les mises à jours** effectuées sur le contenu de tables par des traitements. La consultation de ces mises à jour enregistrées offre ainsi une réponse aux besoins d' « audit des mises à jour ».
+* E-Maj peut servir à **tracer les mises à jour** effectuées sur le contenu de tables par des traitements. La consultation de ces mises à jour enregistrées offre ainsi une réponse aux besoins d' « audit des mises à jour ».
 * Utilisant ces mises à jour enregistrées, E-Maj est capable de **remettre le contenu d'un ensemble de tables dans un état prédéfini**, sans restauration physique de l'ensemble des fichiers d'une instance (cluster) PostgreSQL, ni rechargement complet de l'ensemble des tables concernées.
 
 En d’autres termes, E-Maj est une extension PostgreSQL qui permet un enregistrement des mises à jour avec une fine granularité et un voyage dans le temps de sous-ensembles de bases de données.

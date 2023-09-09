@@ -8,25 +8,29 @@ E-Maj is available for download on the Internet site **PGXN**, the PostgreSQL Ex
 
 E-Maj and its add-ons are also available on the **github.org** Internet site:
 
-* source components (https://github.com/dalibo/emaj)
+* source components (https://github.org/dalibo/emaj)
 * documentation (https://github.com/beaud76/emaj_doc)
 * Emaj_web GUI (https://github.com/dalibo/emaj_web)
 
 .. caution::
-   Installing the extension from the *github.org* repository creates the extension in its development version ("devel"). In this case, no future extension update is possible. For a stable E-Maj use, it is highly recommended to use the packets available from *PGXN*.
+   Installing the extension from the *github.org* repository creates the extension in its development version ("devel"), even when downloading a 'tagged' version. In this case, no future extension update is possible. For a stable E-Maj use, it is highly recommended to use the packets available from *PGXN*.
 
 Standart installation on Linux
 ******************************
 
 Download the latest E-Maj version by any convenient way. If the *pgxn client* is installed, just execute the command::
 
-	pgxn download E-Maj
+   pgxn download E-Maj
+
+It is also possible to use the *wget* command::
+
+   wget https://api.pgxn.org/dist/e-maj/<version>/e-maj-<version>.zip
 
 Then decompress the downloaded archive file with the commands::
 
-	unzip e-maj-<version>.zip
+   unzip e-maj-<version>.zip
 
-	cd e-maj-<version>/
+   cd e-maj-<version>/
 
 Identify the precise location of the *SHAREDIR* directory. Depending on the PostgreSQL installation, the *pg_config --sharedir* shell command may directly report this directory name. Otherwise, look at typical locations like:
 

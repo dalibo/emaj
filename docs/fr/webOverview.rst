@@ -5,7 +5,7 @@ Une application web, **Emaj_web**, facilite grandement l'utilisation d'E-Maj.
 
 Pour mémoire, un plugin pour *phpPgAdmin* existait également pour les versions d’E-Maj antérieures à la version 3.0. Mais il n’est plus maintenu depuis cette version.
 
-*Emaj_web* a empreinté à *phpPgAdmin* son infrastructure (browser, barre d’icones, connexion aux bases de données,...) et quelques fonctions utiles telles que la consultation du contenu de tables ou la saisie de requêtes SQL.
+*Emaj_web* a emprunté à *phpPgAdmin* son infrastructure (browser, barre d’icones, connexion aux bases de données,...) et quelques fonctions utiles telles que la consultation du contenu de tables ou la saisie de requêtes SQL.
 
 Pour les bases de données dans lesquelles l'extension E-Maj a été installée, et si l'utilisateur est connecté avec un rôle qui dispose des autorisations nécessaires, tous les objets E-Maj sont visibles et manipulables.
 
