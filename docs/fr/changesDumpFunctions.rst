@@ -1,17 +1,19 @@
-Fonctions d'extraction de données
-=================================
-
-Les tables de log et la table interne des états des séquences constituent une mine d’or pour qui veut analyser les changements de données intervenus entre deux marques. Au delà de l’annulation et du comptage des changements déjà présentés, il est aussi possible de visualiser ces changements sous différentes formes.
+Examiner les changements de contenu de données
+==============================================
 
 .. _examining_changes:
 
-Examen des changements de contenu de données
---------------------------------------------
+Introduction
+------------
 
-Deux fonctions, :ref:`emaj_dump_changes_group()<emaj_dump_changes_group>` et :ref:`emaj_gen_sql_dump_changes_group()<emaj_gen_sql_dump_changes_group>`, permettent de visualiser les changements de contenu de données, pour chaque table et séquence d’un groupe de tables, et sur un intervalle de temps borné par deux marques.
+Les tables de log et la table interne des états des séquences constituent une mine d’or pour qui veut analyser les changements de données intervenus entre deux marques. Au delà de l’annulation et du comptage des changements déjà présentés, il est aussi possible de visualiser ces changements sous différentes formes.
+
+Tout d’abord, tout utilisateur disposant des droits *emaj_adm* ou *emaj_viewer* peut consulter directement les tables de log. Leur structure est décrite :ref:`ici<logTableStructure>`.
+
+Mais deux fonctions, :ref:`emaj_dump_changes_group()<emaj_dump_changes_group>` et :ref:`emaj_gen_sql_dump_changes_group()<emaj_gen_sql_dump_changes_group>`, peuvent faciliter cet examen. Elles permettent de visualiser les changements de contenu de données, pour chaque table et séquence d’un groupe de tables, et sur un intervalle de temps borné par deux marques.
 
 Types de sortie
-^^^^^^^^^^^^^^^
+---------------
 
 Pour répondre à de nombreux cas d’usage, la visualisation des changements de contenu de données peut prendre différentes formes :
 
@@ -20,7 +22,7 @@ Pour répondre à de nombreux cas d’usage, la visualisation des changements de
 * une table temporaire contenant des requêtes SQL permettant à un client quelconque de directement visualiser et exploiter les changements de données.
 
 Niveaux de consolidation
-^^^^^^^^^^^^^^^^^^^^^^^^
+------------------------
 
 Différents niveaux de visualisation des changements sont proposés au travers du concept de **consolidation**.
 
@@ -90,7 +92,7 @@ Pour chaque séquence, deux lignes sont restituées, correspondant à l’état 
 .. _emaj_dump_changes_group:
 
 La fonction emaj_dump_changes_group()
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+-------------------------------------
 
 La fonction *emaj_dump_changes_group()* extrait les changements des tables de log et de la table des états des séquences et crée des fichiers dans l’espace disque de l’instance PostgreSQL, au moyen de requêtes *COPY TO*. ::
 
@@ -152,7 +154,7 @@ La structure des tables de log est décrite :ref:`ici <logTableStructure>`.
 .. _emaj_gen_sql_dump_changes_group:
 
 La fonction emaj_gen_sql_dump_changes_group()
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+---------------------------------------------
 
 La fonction *emaj_gen_sql_dump_changes_group()* génère des requêtes SQL permettant d’extraire les changements des tables de log et de la table des états des séquences. Elle existe en 2 versions, selon la présence ou non du 6ème paramètre. ::
 
@@ -229,7 +231,7 @@ Durant la génération du SQL, le groupe de tables peut être actif ou non.
 La fonction *emaj_gen_sql_dump_changes_group()* peut être exécutée par un rôle disposant du droit *emaj_viewer* mais pas du droit *emaj_adm* si aucun fichier n’est directement généré par la fonction (i.e. le sixième paramètre est absent).
 
 Les impacts des changements de structure des groupes de tables
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+--------------------------------------------------------------
 
 Il peut arriver que, sur l’intervalle de marques sélectionné, la structure du groupe de tables se trouve modifiée.
 
@@ -239,110 +241,3 @@ Il peut arriver que, sur l’intervalle de marques sélectionné, la structure d
 Une table ou une séquence peut être assignée au groupe ou retirée du groupe entre les marques début et fin sélectionnées, comme c’est le cas des tables t2 et t3 dans le graphique ci-desus. Les extractions portent alors sur les périodes réelles d’appartenance des tables et séquences à leur groupe de tables. C’est la raison pour laquelle le fichier *_INFO* ou la table *emaj_temp_sql* contiennent les informations relatives aux bornes effectivement utilisées pour chaque table ou séquence.
 
 Une table ou séquence peut même être sortie de son groupe puis y être réintégrée ultérieurement, comme c’est le cas pour la table t4. Il y a alors plusieurs extractions pour la table ou séquence : la fonction *emaj_gen_sql_dump_changes_group()* génére plusieurs requêtes dans *emaj_temp_sql* et la fonction *emaj_dump_changes_group()* crée plusieurs fichiers pour la même table ou séquence. Le suffixe du nom de fichier produit devient alors *_1.changes*, *_2.changes*, etc.
-
-.. _emaj_gen_sql_group:
-
-Génération de scripts SQL rejouant les mises à jour tracées
------------------------------------------------------------
-
-Les tables de log contiennent toutes les informations permettant de rejouer les mises à jour. Il est dès lors possible de générer des requêtes SQL correspondant à toutes les mises à jour intervenues entre 2 marques particulières ou à partir d'une marque. C'est l'objectif de la fonction *emaj_gen_sql_group()*.
-
-Ceci peut permettre de ré-appliquer des mises à jour après avoir restauré les tables du groupe dans l'état correspondant à la marque initiale, sans avoir à ré-exécuter aucun traitement applicatif.
-
-Pour générer ce script SQL, il suffit d'exécuter une requête ::
-
-   SELECT emaj.emaj_gen_sql_group('<nom.du.groupe>', '<marque.début>', '<marque.fin>', '<fichier>'[,<liste.tables.séquences>]);
-
-Un *NULL* ou une chaîne vide peuvent être utilisés comme marque de fin. Ils représentent alors la situation courante.
-
-Le mot clé *'EMAJ_LAST_MARK'* peut être utilisé comme marque de fin. Il représente alors la dernière marque posée.
-
-S'il est fourni, le nom du fichier de sortie doit être exprimé sous forme de chemin absolu. Le fichier doit disposer des permissions adéquates pour que l'instance postgreSQL puisse y écrire. Si le fichier existe déjà, son contenu est écrasé.
-
-Le nom du fichier de sortie peut prendre une valeur NULL. Dans ce cas, le script SQL est préparé dans une table temporaire, accessible ensuite au travers d’une vue temporaire *emaj_sql_script*. A partir du client *psql*, on peut donc enchaîner dans une même session ::
-
-   SELECT emaj.emaj_gen_sql_group('<nom.du.groupe>', '<marque.début>', '<marque.fin>', NULL [,<liste.tables.séquences>]);
-   \copy (SELECT * FROM emaj_sql_script) TO ‘fichier’
-
-Cette méthode permet de générer un fichier en dehors des systèmes de fichiers accessibles par l’instance PostgreSQL.
-
-Le dernier paramètre de la fonction *emaj_gen_sql_group()* est optionnel. Il permet de filtrer la liste des tables et séquences à traiter. Si le paramètre est omis ou a la valeur *NULL*, toutes les tables et séquences du groupe de tables sont traitées. S'il est spécifié, le paramètre doit être exprimé sous la forme d'un tableau non vide d'éléments texte, chacun d'eux représentant le nom d'une table ou d'une séquence préfixé par le nom de schéma. On peut utiliser indifféremment  les syntaxes ::
-
-   ARRAY['sch1.tbl1','sch1.tbl2']
-
-ou ::
-
-   '{ "sch1.tbl1" , "sch1.tbl2" }'
-
-La fonction retourne le nombre de requêtes générées (hors commentaire et gestion de transaction).
-
-Le groupe de tables peut être dans un état actif ou inactif. 
-
-Pour que le script puisse être généré, toutes les tables doivent avoir une clé primaire explicite (*PRIMARY KEY*).
-
-.. caution::
-
-   Si une liste de tables et séquences est spécifiée pour restreindre le champ d'application de la fonction *emaj_gen_sql_group()*, il est de la responsabilité de l'utilisateur de prendre en compte l'existence éventuelle de clés étrangères (*foreign keys*) pour la validité du script SQL généré par la fonction.
-
-Les requêtes sont générées dans l'ordre d'exécution initial.
-
-Elles sont insérées dans une transaction. Elles sont entourées d'une requête *BEGIN TRANSACTION;* et d'une requête *COMMIT;*. Un commentaire initial rappelle les caractéristiques de la génération du script : la date et l'heure de génération, le groupe de tables concerné et les marques utilisées. 
-
-Enfin, les séquences appartenant au groupe de tables sont repositionnées à leurs caractéristiques finales en fin de script.
-
-Le fichier généré peut ensuite être exécuté tel quel par l'outil psql, pour peu que le rôle de connexion choisi dispose des autorisations d'accès adéquates sur les tables et séquences accédées.
-
-La technique mise en œuvre aboutit à avoir des caractères antislash doublés dans le fichier de sortie. Il faut alors supprimer ces doublons avant d'exécuter le script, par exemple dans les environnement Unix/Linux par une commande du type ::
-
-   sed 's/\\\\/\\/g' <nom_fichier> | psql ...
-
-Comme la fonction peut générer un gros, voire très gros, fichier (en fonction du volume des logs), il est de la responsabilité de l'utilisateur de prévoir un espace disque suffisant.
-
-Il est aussi de la responsabilité de l'utilisateur de désactiver d'éventuels triggers applicatifs avant d'exécuter le script généré.
-
-La fonction *emaj_gen_sql_groups()* permet de générer des scripts SQL portant sur plusieurs groupes de tables ::
-
-   SELECT emaj.emaj_gen_sql_groups('<tableau.des.groupes>', '<marque.début>', '<marque.fin>', '<fichier>'[,<liste.tables.séquences>]);
-
-Plus d'information sur les :doc:`fonctions multi-groupes <multiGroupsFunctions>`.
-
-.. _emaj_snap_group:
-
-Vidage des tables d'un groupe
------------------------------
-
-Il peut s'avérer utile de prendre des images de toutes les tables et séquences appartenant à un groupe, afin de pouvoir en observer le contenu ou les comparer. Une fonction permet d'obtenir le vidage sur fichiers des tables d'un groupe ::
-
-   SELECT emaj.emaj_snap_group('<nom.du.groupe>', '<répertoire.de.stockage>', '<options.COPY>');
-
-Le nom du répertoire fourni doit être un chemin absolu. Ce répertoire doit exister au préalable et avoir les permissions adéquates pour que l'instance PostgreSQL puisse y écrire. 
-
-Le troisième paramètre précise le format souhaité pour les fichiers générés. Il prend la forme d'une chaîne de caractères reprenant la syntaxe précise des options disponibles pour la commande SQL *COPY TO*. Voir la documentation de PostgreSQL pour le détail des options disponibles (https://www.postgresql.org/docs/current/sql-copy.html).
-
-La fonction retourne le nombre de tables et de séquences contenues dans le groupe.
-
-Cette fonction *emaj_snap_group()* génère un fichier par table et par séquence appartenant au groupe de tables cité. Ces fichiers sont stockés dans le répertoire ou dossier correspondant au second paramètre de la fonction. D'éventuels fichiers de même nom se trouveront écrasés.
-
-Le nom des fichiers créés est du type : *<nom.du.schema>_<nom.de.table/séquence>.snap*
-
-D’éventuels caractères peu pratiques dans un nom de fichier, les espaces, "/", "\\", "$", ">", "<", et "\*" sont remplacés par des "_".
-
-Les fichiers correspondant aux séquences ne comportent qu'une seule ligne, qui contient les caractéristiques de la séquence.
-
-Les fichiers correspondant aux tables contiennent un enregistrement par ligne de la table, dans le format spécifié en paramètre. Ces enregistrements sont triés dans l'ordre croissant de la clé primaire.
-
-En fin d'opération, un fichier *_INFO* est créé dans ce même répertoire. Il contient un message incluant le nom du groupe de tables et la date et l'heure de l'opération.
-
-Il n'est pas nécessaire que le groupe de tables soit dans un état inactif, c'est-à-dire qu'il ait été arrêté au préalable. 
-
-Comme la fonction peut générer de gros ou très gros fichiers (dépendant bien sûr de la taille des tables), il est de la responsabilité de l'utilisateur de prévoir un espace disque suffisant.
-
-Avec cette fonction, un test simple de fonctionnement d'E-Maj peut enchaîner :
-
-* :ref:`emaj_create_group() <emaj_create_group>`,
-* :ref:`emaj_start_group() <emaj_start_group>`,
-* emaj_snap_group(<répertoire_1>),
-* mises à jour des tables applicatives,
-* :ref:`emaj_rollback_group() <emaj_rollback_group>`,
-* emaj_snap_group(<répertoire_2>),
-* comparaison du contenu des deux répertoires par une commande *diff* par exemple.

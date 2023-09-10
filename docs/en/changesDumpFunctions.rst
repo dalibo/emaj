@@ -1,17 +1,19 @@
-Data extraction functions
-=========================
-
-Log tables and the internal sequences states table are a real gold mine for the analysis of changes recorded between two marks. Aside already described cancellation (rollback) and statistics functions, it is possible to view the changes in different forms.
+Examine data content changes
+============================
 
 .. _examining_changes:
 
-Examining data content changes
-------------------------------
+Introduction
+------------
 
-Two functions, :ref:`emaj_dump_changes_group()<emaj_dump_changes_group>` and :ref:`emaj_gen_sql_dump_changes_group()<emaj_gen_sql_dump_changes_group>`, allow to visualize data content changes for each table and sequence belonging to a tables group, for a period of time framed by two marks.
+Log tables and the internal sequences states table are a real gold mine for the analysis of changes recorded between two marks. Aside already described cancellation (rollback) and statistics functions, it is possible to view the changes in different forms.
+
+First of all, any user having *emaj_adm* or *emaj_viewer* privileges can directly query log tables. Their structure is described :ref:`here<logTableStructure>`.
+
+But two functions, :ref:`emaj_dump_changes_group()<emaj_dump_changes_group>` and :ref:`emaj_gen_sql_dump_changes_group()<emaj_gen_sql_dump_changes_group>`, may help this examination. They allow to visualize data content changes for each table and sequence belonging to a tables group, for a period of time framed by two marks.
 
 Output types
-^^^^^^^^^^^^
+------------
 
 In order to cover many use cases, the data changes visualization may take different forms:
 
@@ -20,7 +22,7 @@ In order to cover many use cases, the data changes visualization may take differ
 * a temporary table containing SQL statements allowing any client to directly visualize and analyze data changes.
 
 Consolidation levels
-^^^^^^^^^^^^^^^^^^^^
+--------------------
 
 Different levels of changes visualization are available through the concept of **consolidation**.
 
@@ -90,7 +92,7 @@ For each sequence, two rows are returned, corresponding to its initial and final
 .. _emaj_dump_changes_group:
 
 The emaj_dump_changes_group() function
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+--------------------------------------
 
 The *emaj_dump_changes_group()* function extracts changes from log tables and from the sequences states table and create files into the PostgreSQL instance disk space, using *COPY TO* statements. ::
 
@@ -152,7 +154,7 @@ The log tables structure is described :ref:`here <logTableStructure>`.
 .. _emaj_gen_sql_dump_changes_group:
 
 The emaj_gen_sql_dump_changes_group() function
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+----------------------------------------------
 
 The *emaj_gen_sql_dump_changes_group()* function generates SQL statements that extract changes from log tables and from the sequences states table. Two versions exist, depending whether the 6th parameter is present. ::
 
@@ -229,7 +231,7 @@ During the SQL generation, the tables group may be in any idle or logging state.
 The *emaj_gen_sql_dump_changes_group()* function can be called by any role who has been granted *emaj_viewer* but not *emaj_adm* if no file is directly written by the function (i.e. if the 6th parameter is not present).
 
 Impact of tables group structure changes
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+----------------------------------------
 
 It may happen that the tables group structure changes during the examined marks frame.
 
@@ -239,112 +241,3 @@ It may happen that the tables group structure changes during the examined marks 
 A table or a sequence may have been removed from the group or assigned to the group between the selected start mark and end mark. In this case, as for table t2 and t3 in the example above, the extraction frames the real period of time the table or sequence belonged to the tables group. For this reason, the *_INFO* file and the *emaj_temp_sql* table contain information about the real marks frame used for each table or sequence.
 
 A table or a sequence may even be removed from its group and reassigned to it later. In this case, as for table t4 above, there are several distinct extractions; the *emaj_dump_changes_group()* function generates several statements into the *emaj_temp_sql* table and the *emaj_gen_sql_dump_changes_group()* function writes several files for the same table or sequence. Then, the output file name suffix becomes *_1.changes*, *_2.changes*, etc.
-
-.. _emaj_gen_sql_group:
-
-SQL script generation to replay logged updates
-----------------------------------------------
-
-Log tables contain all needed information to replay updates. Therefore, it is possible to generate SQL statements corresponding to all updates that occurred between two marks or between a mark and the current state. This is the purpose of the *emaj_gen_sql_group()* function.
-
-So these updates can be replayed after the corresponding tables have been restored in their state at the initial mark, without being obliged to rerun application programs.
-
-To generate this SQL script, just execute the following statement::
-
-   SELECT emaj.emaj_gen_sql_group('<group.name>', '<start.mark>', '<end.mark>', '<file>' [, <tables/sequences.array>);
-
-A *NULL* value or an empty string may be used as end mark, representing the current state.
-
-The keyword *'EMAJ_LAST_MARK'* can be used as mark name, representing the last set mark.
-
-If supplied, the output file name must be an absolute pathname. It must have the appropriate permission so that the PostgreSQL instance can write to it. If the file already exists, its content is overwritten.
-
-The output file name may be set to NULL. In this case, the SQL script is prepared in a temporary table that can then be accessed through a temporary view, *emaj_sql_script*. Using *psql*, the script can be exported with both commands::
-
-   SELECT emaj.emaj_gen_sql_group('<group.name>', '<start.mark>', '<end.mark>', NULL [, <tables/sequences.array>);
-   \copy (SELECT * FROM emaj_sql_script) TO ‘file’
-
-This method allows to generate a script in a file located outside the file systems accessible by the PostgreSQL instance.
-
-The last parameter of the *emaj_gen_sql_group()* function is optional. It allows filtering of the tables and sequences to process. If the parameter is omitted or has a *NULL* value, all tables and sequences of the tables group are processed. If specified, the parameter must be expressed as a non empty array of text elements, each of them representing a schema qualified table or sequence name. Both syntaxes can be used::
-
-   ARRAY['sch1.tbl1','sch1.tbl2']
-
-or::
-
-   '{ "sch1.tbl1" , "sch1.tbl2" }'
-
-The function returns the number of generated statements (not including comments and transaction management statements).
-
-The tables group may be in *IDLE* or in *LOGGING* state while the function is called.
-
-In order to generate the script, all tables must have an explicit *PRIMARY KEY*.
-
-.. caution::
-
-   If a tables and sequences list is specified to limit the *emaj_gen_sql_group()* function's work, it is the user's responsibility to take into account the possible presence of foreign keys, in order to let the function produce a viable SQL script.
-
-Statements are generated in the order of their initial execution.
-
-The statements are inserted into a single transaction. They are surrounded by a *BEGIN TRANSACTION;* statement and a *COMMIT;* statement. An initial comment specifies the characteristics of the script generation: generation date and time, related tables group and used marks. 
-
-At the end of the script, sequences belonging to the tables group are set to their final state.
-
-Then, the generated file may be executed as is by psql tool, using a connection role that has enough rights on accessed tables and sequences.
-
-The used technology may result to doubled backslashes in the output file. These doubled characters must be suppressed before executing the script, for instance, in Unix/Linux environment, using a command like::
-
-   sed 's/\\\\/\\/g' <file.name> | psql ...
-
-As the function can generate a large, or even very large, file (depending on the log volume), it is the user's responsibility to provide a sufficient disk space.
-
-It is also the user's responsibility to deactivate application triggers, if any exist, before executing the generated script.
-
-Using the *emaj_gen_sql_groups()* function, it is possible to generate a sql script related to several groups::
-
-   SELECT emaj.emaj_gen_sql_groups('<group.names.array>', '<start.mark>', '<end.mark>', '<file>' [, <tables/sequences.array>);
-
-More information about :doc:`multi-groups functions <multiGroupsFunctions>`.
-
-.. _emaj_snap_group:
-
-Snap tables of a group
-----------------------
-
-It may be useful to take images of all tables and sequences belonging to a group to be able to analyse their content or compare them. It is possible to dump to files all tables and sequences of a group with::
-
-   SELECT emaj.emaj_snap_group('<group.name>', '<storage.directory>', '<COPY.options>');
- 
-The directory/folder name must be supplied as an absolute pathname and must have been previously created. This directory/folder must have the appropriate permission so that the PostgreSQL instance can write in it.
-
-The third parameter defines the output files format. It is a character string that matches the precise syntax available for the *COPY TO* SQL statement. Look at the PostgreSQL documentation to get more details about the available options (https://www.postgresql.org/docs/current/sql-copy.html).
-
-The function returns the number of tables and sequences contained by the group.
-
-This *emaj_snap_group()* function generates one file per table and sequence belonging to the supplied tables group. These files are stored in the directory or folder corresponding to the second parameter.
-
-New files will overwrite existing files of the same name.
-
-Created files are named with the following pattern: *<schema.name>_<table/sequence.name>.snap*
-
-Some unconvenient in file name characters, namely spaces, “/”, “\\”, “$”, “>”, “<”, and “\*” are replaced by “_”.
-
-Each file corresponding to a sequence has only one row, containing all characteristics of the sequence.
-
-Files corresponding to tables contain one record per row, in the format corresponding to the supplied parameter. These records are sorted in ascending order of the primary key.
-
-At the end of the operation, a file named *_INFO* is created in this same directory/folder. It contains a message including the tables group name and the date and time of the snap operation.
-
-It is not necessary that the tables group be in *IDLE* state to snap tables.
-
-As this function may generate large or very large files (of course depending on tables sizes), it is user's responsibility to provide a sufficient disk space.
-
-Thanks to this function, a simple test of the E-Maj behaviour could chain:
-
-* :ref:`emaj_create_group() <emaj_create_group>`,
-* :ref:`emaj_start_group() <emaj_start_group>`,
-* emaj_snap_group(<directory_1>),
-* updates of application tables,
-* :ref:`emaj_rollback_group() <emaj_rollback_group>`,
-* emaj_snap_group(<directory_2>),
-* comparison of both directories content, using a diff command for instance.

@@ -159,3 +159,46 @@ To reactivate existing event triggers::
    SELECT emaj.emaj_enable_protection_by_event_triggers();
 
 The function returns the number of reactivated event triggers.
+
+.. _emaj_snap_group:
+
+Snap tables and sequences of a tables group
+-------------------------------------------
+
+It may be useful to take images of all tables and sequences belonging to a group to be able to analyse their content or compare them. It is possible to dump to files all tables and sequences of a group with::
+
+   SELECT emaj.emaj_snap_group('<group.name>', '<storage.directory>', '<COPY.options>');
+ 
+The directory/folder name must be supplied as an absolute pathname and must have been previously created. This directory/folder must have the appropriate permission so that the PostgreSQL instance can write in it.
+
+The third parameter defines the output files format. It is a character string that matches the precise syntax available for the *COPY TO* SQL statement. Look at the PostgreSQL documentation to get more details about the available options (https://www.postgresql.org/docs/current/sql-copy.html).
+
+The function returns the number of tables and sequences contained by the group.
+
+This *emaj_snap_group()* function generates one file per table and sequence belonging to the supplied tables group. These files are stored in the directory or folder corresponding to the second parameter.
+
+New files will overwrite existing files of the same name.
+
+Created files are named with the following pattern: *<schema.name>_<table/sequence.name>.snap*
+
+Some unconvenient in file name characters, namely spaces, “/”, “\\”, “$”, “>”, “<”, and “\*” are replaced by “_”.
+
+Each file corresponding to a sequence has only one row, containing all characteristics of the sequence.
+
+Files corresponding to tables contain one record per row, in the format corresponding to the supplied parameter. These records are sorted in ascending order of the primary key.
+
+At the end of the operation, a file named *_INFO* is created in this same directory/folder. It contains a message including the tables group name and the date and time of the snap operation.
+
+It is not necessary that the tables group be in *IDLE* state to snap tables.
+
+As this function may generate large or very large files (of course depending on tables sizes), it is user's responsibility to provide a sufficient disk space.
+
+Thanks to this function, a simple test of the E-Maj behaviour could chain:
+
+* :ref:`emaj_create_group() <emaj_create_group>`,
+* :ref:`emaj_start_group() <emaj_start_group>`,
+* emaj_snap_group(<directory_1>),
+* updates of application tables,
+* :ref:`emaj_rollback_group() <emaj_rollback_group>`,
+* emaj_snap_group(<directory_2>),
+* comparison of both directories content, using a diff command for instance.

@@ -42,7 +42,8 @@ Bienvenue dans la documentation E-Maj !
    marksFunctions
    rollbackAdminFunctions
    statFunctions
-   extractionFunctions
+   changesDumpFunctions
+   changesReplayFunctions
    otherFunctions
    multiGroupsFunctions
    parallelRollbackClient

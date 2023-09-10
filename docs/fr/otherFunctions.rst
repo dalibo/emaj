@@ -159,3 +159,43 @@ Pour réactiver les triggers sur événement existants ::
 
 La fonction retourne le nombre de triggers réactivés.
 
+.. _emaj_snap_group:
+
+Vider les tables et séquences d'un groupe de tables
+---------------------------------------------------
+
+Il peut s'avérer utile de prendre des images de toutes les tables et séquences appartenant à un groupe, afin de pouvoir en observer le contenu ou les comparer. Une fonction permet d'obtenir le vidage sur fichiers des tables d'un groupe ::
+
+   SELECT emaj.emaj_snap_group('<nom.du.groupe>', '<répertoire.de.stockage>', '<options.COPY>');
+
+Le nom du répertoire fourni doit être un chemin absolu. Ce répertoire doit exister au préalable et avoir les permissions adéquates pour que l'instance PostgreSQL puisse y écrire. 
+
+Le troisième paramètre précise le format souhaité pour les fichiers générés. Il prend la forme d'une chaîne de caractères reprenant la syntaxe précise des options disponibles pour la commande SQL *COPY TO*. Voir la documentation de PostgreSQL pour le détail des options disponibles (https://www.postgresql.org/docs/current/sql-copy.html).
+
+La fonction retourne le nombre de tables et de séquences contenues dans le groupe.
+
+Cette fonction *emaj_snap_group()* génère un fichier par table et par séquence appartenant au groupe de tables cité. Ces fichiers sont stockés dans le répertoire ou dossier correspondant au second paramètre de la fonction. D'éventuels fichiers de même nom se trouveront écrasés.
+
+Le nom des fichiers créés est du type : *<nom.du.schema>_<nom.de.table/séquence>.snap*
+
+D’éventuels caractères peu pratiques dans un nom de fichier, les espaces, "/", "\\", "$", ">", "<", et "\*" sont remplacés par des "_".
+
+Les fichiers correspondant aux séquences ne comportent qu'une seule ligne, qui contient les caractéristiques de la séquence.
+
+Les fichiers correspondant aux tables contiennent un enregistrement par ligne de la table, dans le format spécifié en paramètre. Ces enregistrements sont triés dans l'ordre croissant de la clé primaire.
+
+En fin d'opération, un fichier *_INFO* est créé dans ce même répertoire. Il contient un message incluant le nom du groupe de tables et la date et l'heure de l'opération.
+
+Il n'est pas nécessaire que le groupe de tables soit dans un état inactif, c'est-à-dire qu'il ait été arrêté au préalable. 
+
+Comme la fonction peut générer de gros ou très gros fichiers (dépendant bien sûr de la taille des tables), il est de la responsabilité de l'utilisateur de prévoir un espace disque suffisant.
+
+Avec cette fonction, un test simple de fonctionnement d'E-Maj peut enchaîner :
+
+* :ref:`emaj_create_group() <emaj_create_group>`,
+* :ref:`emaj_start_group() <emaj_start_group>`,
+* emaj_snap_group(<répertoire_1>),
+* mises à jour des tables applicatives,
+* :ref:`emaj_rollback_group() <emaj_rollback_group>`,
+* emaj_snap_group(<répertoire_2>),
+* comparaison du contenu des deux répertoires par une commande *diff* par exemple.
