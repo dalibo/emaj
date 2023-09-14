@@ -199,8 +199,8 @@ La fonction retourne un message textuel contenant le nombre de requêtes génér
 
 La table temporaire *emaj_temp_sql*, mise à la disposition de l’appelant quand le dernier paramètre est absent, a la structure suivante :
 
-* sql_stmt_number (INT) : numéro de la requête (0 pour un commentaire initial)
-* sql_line_number (INT) : numéro de ligne de la requête (0 pour le commentaire associé à chaque requête, 1 pour la requête complète quand SQL_FORMAT = RAW, 1 à n quand SQL_FORMAT = PRETTY)
+* sql_stmt_number (INT) : numéro de la requête
+* sql_line_number (INT) : numéro de ligne de la requête (0 pour les commentaires, 1 pour une requête complète quand SQL_FORMAT = RAW, 1 à n quand SQL_FORMAT = PRETTY)
 * sql_rel_kind (TEXT) : type de relation ("table" ou "sequence")
 * sql_schema (TEXT) : schéma contenant la table ou séquence applicative
 * sql_tblseq (TEXT) : nom de la table ou séquence
@@ -211,6 +211,16 @@ La table temporaire *emaj_temp_sql*, mise à la disposition de l’appelant quan
 * sql_file_name_suffix (TEXT) : suffixe du nom de fichier à générer quand l’option PSQL_COPY_DIR a été valorisée
 * sql_text (TEXT) : ligne de texte de la requête générée
 * sql_result (BIGINT) : colonne destinée à l’appelant pour son propre usage dans l’exploitation de la table temporaire.
+
+La table contient :
+
+* une première requête de commentaire général, reprenant les caractéristiques de la génération : groupe de tables, marques, options, etc (*sql_stmt_number* = 0) ;
+* en cas de consolidation complète, une requête modifiant la variable de configuration *enable_nestloop* ; cette requête est nécessaire pour optimiser les analyses des tables de log, (*sql_stmt_number* = 1) ;
+* puis, pour chaque table et séquence traitée :
+
+   * un commentaire propre à la table ou la séquence (*sql_line_number* = 0) ;
+   * la requête d’analyse, sur une ou plusieurs lignes, en fonction de la valeur de l’option SQL_FORMAT ;
+* en cas de consolidation complète, une dernière requête repositionnant la variable *enable_nestloop* à sa valeur précédente.
 
 Un index est créé sur les deux premières colonnes.
 

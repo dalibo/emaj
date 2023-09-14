@@ -199,8 +199,8 @@ The function returns a textual message containing the number of generated statem
 
 The *emaj_temp_sql* temporary table left at the caller’s disposal when the 6th parameter is not present has the following structure:
 
-* sql_stmt_number (INT): statement number (0 for an initial comment)
-* sql_line_number (INT): line number for the statement (0 for the comment associated to each statement, 1 for the full statement when SQL_FORMAT = RAW, 1 to n when SQL_FORMAT = PRETTY)
+* sql_stmt_number (INT): statement number
+* sql_line_number (INT): line number for the statement (0 for comments, 1 for a full statement when SQL_FORMAT = RAW, 1 to n when SQL_FORMAT = PRETTY)
 * sql_rel_kind (TEXT): kind of relation ("table" ou "sequence")
 * sql_schema (TEXT): schema containing the application table or sequence
 * sql_tblseq (TEXT): table or sequence name
@@ -211,6 +211,16 @@ The *emaj_temp_sql* temporary table left at the caller’s disposal when the 6th
 * sql_file_name_suffix (TEXT): file name suffix when the PSQL_COPY_DIR option has been set
 * sql_text (TEXT): a line of text of the generated statement
 * sql_result (BIGINT): column dedicated to the caller for its own purpose when using the temporary table.
+
+The table contents:
+
+* a first statement which is a general comment, reporting the main SQL generation characteristics: tables group, marks, options, etc (*sql_stmt_number* = 0);
+* in case of full consolidation, a statement that changes the *enable_nestloop* configuration variable ; this statement is needed to optimize the log tables analysis (*sql_stmt_number* = 1);
+* then, for each table and sequence:
+
+   * a comment related to this table or sequence (*sql_line_number* = 0);
+   * the analysis statement, on one or several lines, depending on the SQL_FORMAT option;
+* in case of full consolidation, a last statement reseting the *enable_nestloop* variable to its previous value.
 
 An index is created on columns *sql_stmt_number* and *sql_line_number*.
 

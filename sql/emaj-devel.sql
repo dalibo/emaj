@@ -10692,12 +10692,11 @@ $emaj_gen_sql_dump_changes_group$
 -- Output: Message with the number of generated SQL statements.
   DECLARE
     v_nbStmt                 INT;
-    v_isPsqlCopy             BOOLEAN;
   BEGIN
 -- Call the _gen_sql_dump_changes_group() function to proccess options and build the SQL statements.
-    SELECT p_nbStmt, p_isPsqlCopy
-      FROM emaj._gen_sql_dump_changes_group(p_groupName, p_firstMark, p_lastMark, p_optionsList, p_tblseqs, TRUE)
-      INTO v_nbStmt, v_isPsqlCopy;
+    SELECT p_nbStmt
+      INTO v_nbStmt
+      FROM emaj._gen_sql_dump_changes_group(p_groupName, p_firstMark, p_lastMark, p_optionsList, p_tblseqs, TRUE);
 -- Just add an index on the temporary table to help its use by the client.
     CREATE INDEX ON emaj_temp_sql(sql_stmt_number, sql_line_number);
 -- Return a formatted message.
@@ -10822,8 +10821,8 @@ $emaj_dump_changes_group$
        coalesce(' towards ' || p_dir, ''));
 -- Call the _gen_sql_dump_changes_group() function to proccess options and get the SQL statements.
     SELECT p_copyOptions, p_noEmptyFiles, g.p_lastMark
-      FROM emaj._gen_sql_dump_changes_group(p_groupName, p_firstMark, p_lastMark, p_optionsList, p_tblseqs, FALSE) g
-      INTO v_copyOptions, v_noEmptyFiles, p_lastMark;
+      INTO v_copyOptions, v_noEmptyFiles, p_lastMark
+      FROM emaj._gen_sql_dump_changes_group(p_groupName, p_firstMark, p_lastMark, p_optionsList, p_tblseqs, FALSE) g;
 -- Test the supplied output directory and copy options.
     IF p_dir IS NULL THEN
       RAISE EXCEPTION 'emaj_dump_changes_group: The directory parameter cannot be NULL.';
@@ -10836,15 +10835,20 @@ $emaj_dump_changes_group$
         WHERE sql_line_number = 1
         ORDER BY sql_stmt_number
       LOOP
--- Dump the log table.
-        v_fileName = p_dir || '/' || translate(r_sql.sql_schema || '_' || r_sql.sql_tblseq || r_sql.sql_file_name_suffix,
-                                               E' /\\$<>*', '_______');
-        v_copyResult = emaj._copy_to_file('(' || r_sql.sql_text || ')', v_fileName, v_copyOptions, v_noEmptyFiles);
-        v_nbFile = v_nbFile + v_copyResult;
+        IF r_sql.sql_text ~ '^(SET|RESET)' THEN
+-- The SET or RESET statements are executed as is.
+          EXECUTE r_sql.sql_text;
+        ELSE
+-- Otherwise, dump the log table or the sequence states.
+          v_fileName = p_dir || '/' || translate(r_sql.sql_schema || '_' || r_sql.sql_tblseq || r_sql.sql_file_name_suffix,
+                                                 E' /\\$<>*', '_______');
+          v_copyResult = emaj._copy_to_file('(' || r_sql.sql_text || ')', v_fileName, v_copyOptions, v_noEmptyFiles);
+          v_nbFile = v_nbFile + v_copyResult;
 -- Keep a trace of the dump execution.
-        UPDATE emaj_temp_sql
-          SET sql_result = v_copyResult
-          WHERE sql_stmt_number = r_sql.sql_stmt_number AND sql_line_number = 1;
+          UPDATE emaj_temp_sql
+            SET sql_result = v_copyResult
+            WHERE sql_stmt_number = r_sql.sql_stmt_number AND sql_line_number = 1;
+        END IF;
     END LOOP;
 -- Create the _INFO file to keep information about the operation.
 -- It contains 3 first rows with general information and then 1 row per effectively written file, describing the file content.
@@ -10888,7 +10892,7 @@ $_gen_sql_dump_changes_group$
 --        options (a comma separated options list),
 --        array of schema qualified table and sequence names to process (NULL to process all relations),
 --        a boolean indentifying the calling function.
--- Output: the number of generated SQL statements,
+-- Output: the number of generated SQL statements, excluding comments, but including SET or RESET statements, if any.
 --         the COPY_OPTIONS and NO_EMPTY_FILES options needed by the emaj_dump_changes_group() function,
 --         a flag for generated psql \copy meta-commands needed by the emaj_gen_sql_dump_changes_group() function.
   DECLARE
@@ -11144,6 +11148,13 @@ $_gen_sql_dump_changes_group$
                        CASE WHEN p_optionsList IS NOT NULL AND p_optionsList <> '' THEN ' using options: ' || p_optionsList ELSE '' END);
     INSERT INTO emaj_temp_sql (sql_stmt_number, sql_line_number, sql_text)
       VALUES (0, 0, v_comment);
+-- If the requested consolidation level is FULL, then add a SET statement to disable nested-loop nodes in the execution plan.
+--   This solves a performance issue with the generated SQL statements for log tables analysis.
+    IF v_consolidation = 'FULL' THEN
+      v_nbStmt = v_nbStmt + 1;
+      INSERT INTO emaj_temp_sql (sql_stmt_number, sql_line_number, sql_text)
+        VALUES (v_nbStmt, 1, 'SET enable_nestloop = FALSE;');
+    END IF;
 -- Process each log table or sequence from the emaj_relation table that enters in the marks range, starting with tables.
     FOR r_rel IN
       SELECT rel_schema, rel_tblseq, rel_time_range, rel_group, rel_kind,
@@ -11241,6 +11252,12 @@ $_gen_sql_dump_changes_group$
                CASE WHEN r_rel.nb_time_range > 1 THEN '_' || r_rel.time_range_rank ELSE '' END || '.changes', line
           FROM regexp_split_to_table(v_stmt, E'\n') AS line;
     END LOOP;
+-- If the requested consolidation level is FULL, then add a RESET statement to revert the previous 'SET enable_nestloop = FALSE'.
+    IF v_consolidation = 'FULL' THEN
+      v_nbStmt = v_nbStmt + 1;
+      INSERT INTO emaj_temp_sql (sql_stmt_number, sql_line_number, sql_text)
+        VALUES (v_nbStmt, 1, 'RESET enable_nestloop;');
+    END IF;
 -- Return output parameters.
   p_nbStmt = v_nbStmt;
   p_copyOptions = v_copyOptions;

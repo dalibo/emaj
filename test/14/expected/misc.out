@@ -1003,9 +1003,9 @@ ERROR:  _check_group_names: The group "dummy" does not exist.
 CONTEXT:  PL/pgSQL function emaj._check_group_names(text[],boolean,boolean,boolean,boolean,boolean,boolean) line 42 at RAISE
 SQL statement "SELECT emaj._check_group_names(p_groupNames := ARRAY[p_groupName], p_mayBeNull := FALSE, p_lockGroups := FALSE)"
 PL/pgSQL function emaj._gen_sql_dump_changes_group(text,text,text,text,text[],boolean) line 50 at PERFORM
-SQL statement "SELECT p_nbStmt, p_isPsqlCopy
-      FROM emaj._gen_sql_dump_changes_group(p_groupName, p_firstMark, p_lastMark, p_optionsList, p_tblseqs, TRUE)"
-PL/pgSQL function emaj.emaj_gen_sql_dump_changes_group(text,text,text,text,text[]) line 26 at SQL statement
+SQL statement "SELECT p_nbStmt
+                          FROM emaj._gen_sql_dump_changes_group(p_groupName, p_firstMark, p_lastMark, p_optionsList, p_tblseqs, TRUE)"
+PL/pgSQL function emaj.emaj_gen_sql_dump_changes_group(text,text,text,text,text[]) line 25 at SQL statement
 -- start mark is null or unknown
 select emaj.emaj_gen_sql_dump_changes_group('myGroup2', NULL, NULL, NULL, NULL);
 ERROR:  _check_marks_range: The first mark cannot be NULL or empty.
@@ -1013,9 +1013,9 @@ CONTEXT:  PL/pgSQL function emaj._check_marks_range(text[],text,text,boolean) li
 SQL statement "SELECT *                                                                                                                                     FROM emaj._check_marks_range(p_groupNames := ARRAY[p_groupName], p_firstMark := p_firstMark, p_lastMark := p_lastMark,
                                    p_finiteUpperBound := TRUE)"
 PL/pgSQL function emaj._gen_sql_dump_changes_group(text,text,text,text,text[],boolean) line 52 at SQL statement
-SQL statement "SELECT p_nbStmt, p_isPsqlCopy
-      FROM emaj._gen_sql_dump_changes_group(p_groupName, p_firstMark, p_lastMark, p_optionsList, p_tblseqs, TRUE)"
-PL/pgSQL function emaj.emaj_gen_sql_dump_changes_group(text,text,text,text,text[]) line 26 at SQL statement
+SQL statement "SELECT p_nbStmt
+                          FROM emaj._gen_sql_dump_changes_group(p_groupName, p_firstMark, p_lastMark, p_optionsList, p_tblseqs, TRUE)"
+PL/pgSQL function emaj.emaj_gen_sql_dump_changes_group(text,text,text,text,text[]) line 25 at SQL statement
 select emaj.emaj_gen_sql_dump_changes_group('myGroup2', 'dummy', NULL, NULL, NULL);
 ERROR:  _check_mark_name: The mark "dummy" does not exist for the group "myGroup2".
 CONTEXT:  PL/pgSQL function emaj._check_mark_name(text[],text,boolean) line 59 at RAISE
@@ -1024,9 +1024,9 @@ PL/pgSQL function emaj._check_marks_range(text[],text,text,boolean) line 15 at S
 SQL statement "SELECT *                                                                                                                                     FROM emaj._check_marks_range(p_groupNames := ARRAY[p_groupName], p_firstMark := p_firstMark, p_lastMark := p_lastMark,
                                    p_finiteUpperBound := TRUE)"
 PL/pgSQL function emaj._gen_sql_dump_changes_group(text,text,text,text,text[],boolean) line 52 at SQL statement
-SQL statement "SELECT p_nbStmt, p_isPsqlCopy
-      FROM emaj._gen_sql_dump_changes_group(p_groupName, p_firstMark, p_lastMark, p_optionsList, p_tblseqs, TRUE)"
-PL/pgSQL function emaj.emaj_gen_sql_dump_changes_group(text,text,text,text,text[]) line 26 at SQL statement
+SQL statement "SELECT p_nbStmt
+                          FROM emaj._gen_sql_dump_changes_group(p_groupName, p_firstMark, p_lastMark, p_optionsList, p_tblseqs, TRUE)"
+PL/pgSQL function emaj.emaj_gen_sql_dump_changes_group(text,text,text,text,text[]) line 25 at SQL statement
 -- end mark is null or unknown
 select emaj.emaj_gen_sql_dump_changes_group('myGroup2', 'Mark21', NULL, NULL, NULL);
 ERROR:  _check_marks_range: The last mark cannot be NULL or empty.
@@ -1034,9 +1034,9 @@ CONTEXT:  PL/pgSQL function emaj._check_marks_range(text[],text,text,boolean) li
 SQL statement "SELECT *                                                                                                                                     FROM emaj._check_marks_range(p_groupNames := ARRAY[p_groupName], p_firstMark := p_firstMark, p_lastMark := p_lastMark,
                                    p_finiteUpperBound := TRUE)"
 PL/pgSQL function emaj._gen_sql_dump_changes_group(text,text,text,text,text[],boolean) line 52 at SQL statement
-SQL statement "SELECT p_nbStmt, p_isPsqlCopy
-      FROM emaj._gen_sql_dump_changes_group(p_groupName, p_firstMark, p_lastMark, p_optionsList, p_tblseqs, TRUE)"
-PL/pgSQL function emaj.emaj_gen_sql_dump_changes_group(text,text,text,text,text[]) line 26 at SQL statement
+SQL statement "SELECT p_nbStmt
+                          FROM emaj._gen_sql_dump_changes_group(p_groupName, p_firstMark, p_lastMark, p_optionsList, p_tblseqs, TRUE)"
+PL/pgSQL function emaj.emaj_gen_sql_dump_changes_group(text,text,text,text,text[]) line 25 at SQL statement
 select emaj.emaj_gen_sql_dump_changes_group('myGroup2', 'Mark21', 'dummy', NULL, NULL);
 ERROR:  _check_mark_name: The mark "dummy" does not exist for the group "myGroup2".
 CONTEXT:  PL/pgSQL function emaj._check_mark_name(text[],text,boolean) line 59 at RAISE
@@ -1045,9 +1045,9 @@ PL/pgSQL function emaj._check_marks_range(text[],text,text,boolean) line 29 at S
 SQL statement "SELECT *                                                                                                                                     FROM emaj._check_marks_range(p_groupNames := ARRAY[p_groupName], p_firstMark := p_firstMark, p_lastMark := p_lastMark,
                                    p_finiteUpperBound := TRUE)"
 PL/pgSQL function emaj._gen_sql_dump_changes_group(text,text,text,text,text[],boolean) line 52 at SQL statement
-SQL statement "SELECT p_nbStmt, p_isPsqlCopy
-      FROM emaj._gen_sql_dump_changes_group(p_groupName, p_firstMark, p_lastMark, p_optionsList, p_tblseqs, TRUE)"
-PL/pgSQL function emaj.emaj_gen_sql_dump_changes_group(text,text,text,text,text[]) line 26 at SQL statement
+SQL statement "SELECT p_nbStmt
+                          FROM emaj._gen_sql_dump_changes_group(p_groupName, p_firstMark, p_lastMark, p_optionsList, p_tblseqs, TRUE)"
+PL/pgSQL function emaj.emaj_gen_sql_dump_changes_group(text,text,text,text,text[]) line 25 at SQL statement
 -- end mark is prior start mark
 -- just check the error is trapped, because the error message contents timestamps
 do language plpgsql
@@ -1066,136 +1066,136 @@ NOTICE:  Error trapped on emaj_gen_sql_dump_changes_group() call
 select emaj.emaj_gen_sql_dump_changes_group('myGroup2', 'Mark21', 'Mark23', 'dummy', NULL);
 ERROR:  _gen_sql_dump_changes_group: The option "DUMMY" is unknown.
 CONTEXT:  PL/pgSQL function emaj._gen_sql_dump_changes_group(text,text,text,text,text[],boolean) line 179 at RAISE
-SQL statement "SELECT p_nbStmt, p_isPsqlCopy
-      FROM emaj._gen_sql_dump_changes_group(p_groupName, p_firstMark, p_lastMark, p_optionsList, p_tblseqs, TRUE)"
-PL/pgSQL function emaj.emaj_gen_sql_dump_changes_group(text,text,text,text,text[]) line 26 at SQL statement
+SQL statement "SELECT p_nbStmt
+                          FROM emaj._gen_sql_dump_changes_group(p_groupName, p_firstMark, p_lastMark, p_optionsList, p_tblseqs, TRUE)"
+PL/pgSQL function emaj.emaj_gen_sql_dump_changes_group(text,text,text,text,text[]) line 25 at SQL statement
 select emaj.emaj_gen_sql_dump_changes_group('myGroup2', 'Mark21', 'Mark23', 'COLS_ORDER = dummy', NULL);
 ERROR:  _gen_sql_dump_changes_group: Error on the option "COLS_ORDER=DUMMY". The COLS_ORDER option only accepts TABLE_LOG or PK values).
 CONTEXT:  PL/pgSQL function emaj._gen_sql_dump_changes_group(text,text,text,text,text[],boolean) line 95 at RAISE
-SQL statement "SELECT p_nbStmt, p_isPsqlCopy
-      FROM emaj._gen_sql_dump_changes_group(p_groupName, p_firstMark, p_lastMark, p_optionsList, p_tblseqs, TRUE)"
-PL/pgSQL function emaj.emaj_gen_sql_dump_changes_group(text,text,text,text,text[]) line 26 at SQL statement
+SQL statement "SELECT p_nbStmt
+                          FROM emaj._gen_sql_dump_changes_group(p_groupName, p_firstMark, p_lastMark, p_optionsList, p_tblseqs, TRUE)"
+PL/pgSQL function emaj.emaj_gen_sql_dump_changes_group(text,text,text,text,text[]) line 25 at SQL statement
 select emaj.emaj_gen_sql_dump_changes_group('phil''s group#3",', 'Mark4', 'Mark5', 'COLS_ORDER = PK', NULL);
 ERROR:  _gen_sql_dump_changes_group: A CONSOLIDATION level set to PARTIAL or FULL or a COLS_ORDER set to PK or an ORDER_BY set to PK cannot support tables without primary key. And no primary key is defined for tables "phil's schema3.myTbl2\"
 CONTEXT:  PL/pgSQL function emaj._gen_sql_dump_changes_group(text,text,text,text,text[],boolean) line 211 at RAISE
-SQL statement "SELECT p_nbStmt, p_isPsqlCopy
-      FROM emaj._gen_sql_dump_changes_group(p_groupName, p_firstMark, p_lastMark, p_optionsList, p_tblseqs, TRUE)"
-PL/pgSQL function emaj.emaj_gen_sql_dump_changes_group(text,text,text,text,text[]) line 26 at SQL statement
+SQL statement "SELECT p_nbStmt
+                          FROM emaj._gen_sql_dump_changes_group(p_groupName, p_firstMark, p_lastMark, p_optionsList, p_tblseqs, TRUE)"
+PL/pgSQL function emaj.emaj_gen_sql_dump_changes_group(text,text,text,text,text[]) line 25 at SQL statement
 select emaj.emaj_gen_sql_dump_changes_group('myGroup2', 'Mark21', 'Mark23', 'COPY_OPTIONS=()', NULL);
 ERROR:  _gen_sql_dump_changes_group: The option "COPY_OPTIONS=()" is unknown.
 CONTEXT:  PL/pgSQL function emaj._gen_sql_dump_changes_group(text,text,text,text,text[],boolean) line 179 at RAISE
-SQL statement "SELECT p_nbStmt, p_isPsqlCopy
-      FROM emaj._gen_sql_dump_changes_group(p_groupName, p_firstMark, p_lastMark, p_optionsList, p_tblseqs, TRUE)"
-PL/pgSQL function emaj.emaj_gen_sql_dump_changes_group(text,text,text,text,text[]) line 26 at SQL statement
+SQL statement "SELECT p_nbStmt
+                          FROM emaj._gen_sql_dump_changes_group(p_groupName, p_firstMark, p_lastMark, p_optionsList, p_tblseqs, TRUE)"
+PL/pgSQL function emaj.emaj_gen_sql_dump_changes_group(text,text,text,text,text[]) line 25 at SQL statement
 select emaj.emaj_gen_sql_dump_changes_group('myGroup2', 'Mark21', 'Mark23', 'CONSOLIDATION = dummy', NULL);
 ERROR:  _gen_sql_dump_changes_group: Error on the option "CONSOLIDATION=DUMMY". The CONSOLIDATION option only accepts NONE or PARTIAL or FULL values).
 CONTEXT:  PL/pgSQL function emaj._gen_sql_dump_changes_group(text,text,text,text,text[],boolean) line 108 at RAISE
-SQL statement "SELECT p_nbStmt, p_isPsqlCopy
-      FROM emaj._gen_sql_dump_changes_group(p_groupName, p_firstMark, p_lastMark, p_optionsList, p_tblseqs, TRUE)"
-PL/pgSQL function emaj.emaj_gen_sql_dump_changes_group(text,text,text,text,text[]) line 26 at SQL statement
+SQL statement "SELECT p_nbStmt
+                          FROM emaj._gen_sql_dump_changes_group(p_groupName, p_firstMark, p_lastMark, p_optionsList, p_tblseqs, TRUE)"
+PL/pgSQL function emaj.emaj_gen_sql_dump_changes_group(text,text,text,text,text[]) line 25 at SQL statement
 select emaj.emaj_gen_sql_dump_changes_group('phil''s group#3",', 'Mark4', 'Mark5', 'CONSOLIDATION = FULL', NULL);
 ERROR:  _gen_sql_dump_changes_group: A CONSOLIDATION level set to PARTIAL or FULL or a COLS_ORDER set to PK or an ORDER_BY set to PK cannot support tables without primary key. And no primary key is defined for tables "phil's schema3.myTbl2\"
 CONTEXT:  PL/pgSQL function emaj._gen_sql_dump_changes_group(text,text,text,text,text[],boolean) line 211 at RAISE
-SQL statement "SELECT p_nbStmt, p_isPsqlCopy
-      FROM emaj._gen_sql_dump_changes_group(p_groupName, p_firstMark, p_lastMark, p_optionsList, p_tblseqs, TRUE)"
-PL/pgSQL function emaj.emaj_gen_sql_dump_changes_group(text,text,text,text,text[]) line 26 at SQL statement
+SQL statement "SELECT p_nbStmt
+                          FROM emaj._gen_sql_dump_changes_group(p_groupName, p_firstMark, p_lastMark, p_optionsList, p_tblseqs, TRUE)"
+PL/pgSQL function emaj.emaj_gen_sql_dump_changes_group(text,text,text,text,text[]) line 25 at SQL statement
 select emaj.emaj_gen_sql_dump_changes_group('phil''s group#3",', 'Mark4', 'Mark5', 'CONSOLIDATION = partial', NULL);
 ERROR:  _gen_sql_dump_changes_group: A CONSOLIDATION level set to PARTIAL or FULL or a COLS_ORDER set to PK or an ORDER_BY set to PK cannot support tables without primary key. And no primary key is defined for tables "phil's schema3.myTbl2\"
 CONTEXT:  PL/pgSQL function emaj._gen_sql_dump_changes_group(text,text,text,text,text[],boolean) line 211 at RAISE
-SQL statement "SELECT p_nbStmt, p_isPsqlCopy
-      FROM emaj._gen_sql_dump_changes_group(p_groupName, p_firstMark, p_lastMark, p_optionsList, p_tblseqs, TRUE)"
-PL/pgSQL function emaj.emaj_gen_sql_dump_changes_group(text,text,text,text,text[]) line 26 at SQL statement
+SQL statement "SELECT p_nbStmt
+                          FROM emaj._gen_sql_dump_changes_group(p_groupName, p_firstMark, p_lastMark, p_optionsList, p_tblseqs, TRUE)"
+PL/pgSQL function emaj.emaj_gen_sql_dump_changes_group(text,text,text,text,text[]) line 25 at SQL statement
 select emaj.emaj_gen_sql_dump_changes_group('myGroup2', 'Mark21', 'Mark23', 'EMAJ_COLUMNS = dummy', NULL);
 ERROR:  _gen_sql_dump_changes_group: Error on the option "EMAJ_COLUMNS=DUMMY". The EMAJ_COLUMNS option only accepts ALL or MIN values or a (columns list).
 CONTEXT:  PL/pgSQL function emaj._gen_sql_dump_changes_group(text,text,text,text,text[],boolean) line 134 at RAISE
-SQL statement "SELECT p_nbStmt, p_isPsqlCopy
-      FROM emaj._gen_sql_dump_changes_group(p_groupName, p_firstMark, p_lastMark, p_optionsList, p_tblseqs, TRUE)"
-PL/pgSQL function emaj.emaj_gen_sql_dump_changes_group(text,text,text,text,text[]) line 26 at SQL statement
+SQL statement "SELECT p_nbStmt
+                          FROM emaj._gen_sql_dump_changes_group(p_groupName, p_firstMark, p_lastMark, p_optionsList, p_tblseqs, TRUE)"
+PL/pgSQL function emaj.emaj_gen_sql_dump_changes_group(text,text,text,text,text[]) line 25 at SQL statement
 select emaj.emaj_gen_sql_dump_changes_group('myGroup2', 'Mark21', 'Mark23', 'EMAJ_COLUMNS = ()', NULL);
 ERROR:  _gen_sql_dump_changes_group: In the EMAJ_COLUMN option, the "emaj_tuple" column must be part of the columns list.
 CONTEXT:  PL/pgSQL function emaj._gen_sql_dump_changes_group(text,text,text,text,text[],boolean) line 130 at RAISE
-SQL statement "SELECT p_nbStmt, p_isPsqlCopy
-      FROM emaj._gen_sql_dump_changes_group(p_groupName, p_firstMark, p_lastMark, p_optionsList, p_tblseqs, TRUE)"
-PL/pgSQL function emaj.emaj_gen_sql_dump_changes_group(text,text,text,text,text[]) line 26 at SQL statement
+SQL statement "SELECT p_nbStmt
+                          FROM emaj._gen_sql_dump_changes_group(p_groupName, p_firstMark, p_lastMark, p_optionsList, p_tblseqs, TRUE)"
+PL/pgSQL function emaj.emaj_gen_sql_dump_changes_group(text,text,text,text,text[]) line 25 at SQL statement
 select emaj.emaj_gen_sql_dump_changes_group('myGroup2', 'Mark21', 'Mark23', 'EMAJ_COLUMNS = (emaj_tuple , dummy)', NULL);
 NOTICE:  table "emaj_temp_sql" does not exist, skipping
 ERROR:  _gen_sql_dump_changes_tbl: The emaj column "dummy" from the EMAJ_COLUMNS option (emaj_tuple,dummy) is not valid for table emaj_myschema2.myTbl3_log.
 CONTEXT:  PL/pgSQL function emaj._gen_sql_dump_changes_tbl(text,text,integer,text[],bigint,bigint,text,text,text,text) line 62 at RAISE
-PL/pgSQL function emaj._gen_sql_dump_changes_group(text,text,text,text,text[],boolean) line 326 at assignment
-SQL statement "SELECT p_nbStmt, p_isPsqlCopy
-      FROM emaj._gen_sql_dump_changes_group(p_groupName, p_firstMark, p_lastMark, p_optionsList, p_tblseqs, TRUE)"
-PL/pgSQL function emaj.emaj_gen_sql_dump_changes_group(text,text,text,text,text[]) line 26 at SQL statement
+PL/pgSQL function emaj._gen_sql_dump_changes_group(text,text,text,text,text[],boolean) line 333 at assignment
+SQL statement "SELECT p_nbStmt
+                          FROM emaj._gen_sql_dump_changes_group(p_groupName, p_firstMark, p_lastMark, p_optionsList, p_tblseqs, TRUE)"
+PL/pgSQL function emaj.emaj_gen_sql_dump_changes_group(text,text,text,text,text[]) line 25 at SQL statement
 select emaj.emaj_gen_sql_dump_changes_group('myGroup2', 'Mark21', 'Mark23', 'NO_EMPTY_FILES', NULL);
 ERROR:  _gen_sql_dump_changes_group: The option "NO_EMPTY_FILES" is unknown.
 CONTEXT:  PL/pgSQL function emaj._gen_sql_dump_changes_group(text,text,text,text,text[],boolean) line 179 at RAISE
-SQL statement "SELECT p_nbStmt, p_isPsqlCopy
-      FROM emaj._gen_sql_dump_changes_group(p_groupName, p_firstMark, p_lastMark, p_optionsList, p_tblseqs, TRUE)"
-PL/pgSQL function emaj.emaj_gen_sql_dump_changes_group(text,text,text,text,text[]) line 26 at SQL statement
+SQL statement "SELECT p_nbStmt
+                          FROM emaj._gen_sql_dump_changes_group(p_groupName, p_firstMark, p_lastMark, p_optionsList, p_tblseqs, TRUE)"
+PL/pgSQL function emaj.emaj_gen_sql_dump_changes_group(text,text,text,text,text[]) line 25 at SQL statement
 select emaj.emaj_gen_sql_dump_changes_group('myGroup2', 'Mark21', 'Mark23', 'Tables_Only, Sequences_Only', NULL);
 ERROR:  _gen_sql_dump_changes_group: SEQUENCES_ONLY and TABLES_ONLY options are mutually exclusive.
 CONTEXT:  PL/pgSQL function emaj._gen_sql_dump_changes_group(text,text,text,text,text[],boolean) line 186 at RAISE
-SQL statement "SELECT p_nbStmt, p_isPsqlCopy
-      FROM emaj._gen_sql_dump_changes_group(p_groupName, p_firstMark, p_lastMark, p_optionsList, p_tblseqs, TRUE)"
-PL/pgSQL function emaj.emaj_gen_sql_dump_changes_group(text,text,text,text,text[]) line 26 at SQL statement
+SQL statement "SELECT p_nbStmt
+                          FROM emaj._gen_sql_dump_changes_group(p_groupName, p_firstMark, p_lastMark, p_optionsList, p_tblseqs, TRUE)"
+PL/pgSQL function emaj.emaj_gen_sql_dump_changes_group(text,text,text,text,text[]) line 25 at SQL statement
 select emaj.emaj_gen_sql_dump_changes_group('myGroup2', 'Mark21', 'Mark23', 'ORDER_BY = dummy', NULL);
 ERROR:  _gen_sql_dump_changes_group: Error on the option "ORDER_BY=DUMMY". The ORDER_BY option only accepts PK or TIME values.
 CONTEXT:  PL/pgSQL function emaj._gen_sql_dump_changes_group(text,text,text,text,text[],boolean) line 147 at RAISE
-SQL statement "SELECT p_nbStmt, p_isPsqlCopy
-      FROM emaj._gen_sql_dump_changes_group(p_groupName, p_firstMark, p_lastMark, p_optionsList, p_tblseqs, TRUE)"
-PL/pgSQL function emaj.emaj_gen_sql_dump_changes_group(text,text,text,text,text[]) line 26 at SQL statement
+SQL statement "SELECT p_nbStmt
+                          FROM emaj._gen_sql_dump_changes_group(p_groupName, p_firstMark, p_lastMark, p_optionsList, p_tblseqs, TRUE)"
+PL/pgSQL function emaj.emaj_gen_sql_dump_changes_group(text,text,text,text,text[]) line 25 at SQL statement
 select emaj.emaj_gen_sql_dump_changes_group('phil''s group#3",', 'Mark4', 'Mark5', 'ORDER_BY = pk', NULL);
 ERROR:  _gen_sql_dump_changes_group: A CONSOLIDATION level set to PARTIAL or FULL or a COLS_ORDER set to PK or an ORDER_BY set to PK cannot support tables without primary key. And no primary key is defined for tables "phil's schema3.myTbl2\"
 CONTEXT:  PL/pgSQL function emaj._gen_sql_dump_changes_group(text,text,text,text,text[],boolean) line 211 at RAISE
-SQL statement "SELECT p_nbStmt, p_isPsqlCopy
-      FROM emaj._gen_sql_dump_changes_group(p_groupName, p_firstMark, p_lastMark, p_optionsList, p_tblseqs, TRUE)"
-PL/pgSQL function emaj.emaj_gen_sql_dump_changes_group(text,text,text,text,text[]) line 26 at SQL statement
+SQL statement "SELECT p_nbStmt
+                          FROM emaj._gen_sql_dump_changes_group(p_groupName, p_firstMark, p_lastMark, p_optionsList, p_tblseqs, TRUE)"
+PL/pgSQL function emaj.emaj_gen_sql_dump_changes_group(text,text,text,text,text[]) line 25 at SQL statement
 select emaj.emaj_gen_sql_dump_changes_group('myGroup2', 'Mark21', 'Mark23', 'SQL_FORMAT = dummy', NULL);
 ERROR:  _gen_sql_dump_changes_group: Error on the option "SQL_FORMAT=DUMMY". The SQL_FORMAT option only accepts RAW or PRETTY values.
 CONTEXT:  PL/pgSQL function emaj._gen_sql_dump_changes_group(text,text,text,text,text[],boolean) line 171 at RAISE
-SQL statement "SELECT p_nbStmt, p_isPsqlCopy
-      FROM emaj._gen_sql_dump_changes_group(p_groupName, p_firstMark, p_lastMark, p_optionsList, p_tblseqs, TRUE)"
-PL/pgSQL function emaj.emaj_gen_sql_dump_changes_group(text,text,text,text,text[]) line 26 at SQL statement
+SQL statement "SELECT p_nbStmt
+                          FROM emaj._gen_sql_dump_changes_group(p_groupName, p_firstMark, p_lastMark, p_optionsList, p_tblseqs, TRUE)"
+PL/pgSQL function emaj.emaj_gen_sql_dump_changes_group(text,text,text,text,text[]) line 25 at SQL statement
 select emaj.emaj_gen_sql_dump_changes_group('myGroup2', 'Mark21', 'Mark23', 'PSQL_COPY_DIR=dummy', NULL);
 ERROR:  _gen_sql_dump_changes_group: Error on the option "PSQL_COPY_DIR=DUMMY". The directory name must be set between ().
 CONTEXT:  PL/pgSQL function emaj._gen_sql_dump_changes_group(text,text,text,text,text[],boolean) line 154 at RAISE
-SQL statement "SELECT p_nbStmt, p_isPsqlCopy
-      FROM emaj._gen_sql_dump_changes_group(p_groupName, p_firstMark, p_lastMark, p_optionsList, p_tblseqs, TRUE)"
-PL/pgSQL function emaj.emaj_gen_sql_dump_changes_group(text,text,text,text,text[]) line 26 at SQL statement
+SQL statement "SELECT p_nbStmt
+                          FROM emaj._gen_sql_dump_changes_group(p_groupName, p_firstMark, p_lastMark, p_optionsList, p_tblseqs, TRUE)"
+PL/pgSQL function emaj.emaj_gen_sql_dump_changes_group(text,text,text,text,text[]) line 25 at SQL statement
 select emaj.emaj_gen_sql_dump_changes_group('myGroup2', 'Mark21', 'Mark23', 'PSQL_COPY_DIR=(' || :'EMAJTESTTMPDIR' || '), SQL_FORMAT=PRETTY', NULL);
 ERROR:  _gen_sql_dump_changes_group: PSQL_COPY_DIR and FORMAT=PRETTY options are mutually exclusive.
 CONTEXT:  PL/pgSQL function emaj._gen_sql_dump_changes_group(text,text,text,text,text[],boolean) line 194 at RAISE
-SQL statement "SELECT p_nbStmt, p_isPsqlCopy
-      FROM emaj._gen_sql_dump_changes_group(p_groupName, p_firstMark, p_lastMark, p_optionsList, p_tblseqs, TRUE)"
-PL/pgSQL function emaj.emaj_gen_sql_dump_changes_group(text,text,text,text,text[]) line 26 at SQL statement
+SQL statement "SELECT p_nbStmt
+                          FROM emaj._gen_sql_dump_changes_group(p_groupName, p_firstMark, p_lastMark, p_optionsList, p_tblseqs, TRUE)"
+PL/pgSQL function emaj.emaj_gen_sql_dump_changes_group(text,text,text,text,text[]) line 25 at SQL statement
 select emaj.emaj_gen_sql_dump_changes_group('myGroup2', 'Mark21', 'Mark23', 'PSQL_COPY_OPTIONS=dummy', NULL);
 ERROR:  _gen_sql_dump_changes_group: Error on the option "PSQL_COPY_OPTIONS=DUMMY". The COPY options list must be set between ().
 CONTEXT:  PL/pgSQL function emaj._gen_sql_dump_changes_group(text,text,text,text,text[],boolean) line 159 at RAISE
-SQL statement "SELECT p_nbStmt, p_isPsqlCopy
-      FROM emaj._gen_sql_dump_changes_group(p_groupName, p_firstMark, p_lastMark, p_optionsList, p_tblseqs, TRUE)"
-PL/pgSQL function emaj.emaj_gen_sql_dump_changes_group(text,text,text,text,text[]) line 26 at SQL statement
+SQL statement "SELECT p_nbStmt
+                          FROM emaj._gen_sql_dump_changes_group(p_groupName, p_firstMark, p_lastMark, p_optionsList, p_tblseqs, TRUE)"
+PL/pgSQL function emaj.emaj_gen_sql_dump_changes_group(text,text,text,text,text[]) line 25 at SQL statement
 select emaj.emaj_gen_sql_dump_changes_group('myGroup2', 'Mark21', 'Mark23', 'PSQL_COPY_OPTIONS=(format csv)', NULL);
 ERROR:  _gen_sql_dump_changes_group: the PSQL_COPY_OPTIONS option needs a PSQL_COPY_DIR option to be set.
 CONTEXT:  PL/pgSQL function emaj._gen_sql_dump_changes_group(text,text,text,text,text[],boolean) line 190 at RAISE
-SQL statement "SELECT p_nbStmt, p_isPsqlCopy
-      FROM emaj._gen_sql_dump_changes_group(p_groupName, p_firstMark, p_lastMark, p_optionsList, p_tblseqs, TRUE)"
-PL/pgSQL function emaj.emaj_gen_sql_dump_changes_group(text,text,text,text,text[]) line 26 at SQL statement
+SQL statement "SELECT p_nbStmt
+                          FROM emaj._gen_sql_dump_changes_group(p_groupName, p_firstMark, p_lastMark, p_optionsList, p_tblseqs, TRUE)"
+PL/pgSQL function emaj.emaj_gen_sql_dump_changes_group(text,text,text,text,text[]) line 25 at SQL statement
 select emaj.emaj_dump_changes_group('myGroup2', 'Mark21', 'Mark23', 'PSQL_COPY_DIR=dummy', NULL, :'EMAJTESTTMPDIR');
 ERROR:  _gen_sql_dump_changes_group: The option "PSQL_COPY_DIR=DUMMY" is unknown.
 CONTEXT:  PL/pgSQL function emaj._gen_sql_dump_changes_group(text,text,text,text,text[],boolean) line 179 at RAISE
 SQL statement "SELECT p_copyOptions, p_noEmptyFiles, g.p_lastMark
-      FROM emaj._gen_sql_dump_changes_group(p_groupName, p_firstMark, p_lastMark, p_optionsList, p_tblseqs, FALSE) g"
+                                                           FROM emaj._gen_sql_dump_changes_group(p_groupName, p_firstMark, p_lastMark, p_optionsList, p_tblseqs, FALSE) g"
 PL/pgSQL function emaj.emaj_dump_changes_group(text,text,text,text,text[],text) line 37 at SQL statement
 select emaj.emaj_dump_changes_group('myGroup2', 'Mark21', 'Mark23', 'PSQL_COPY_OPTIONS=()', NULL, :'EMAJTESTTMPDIR');
 ERROR:  _gen_sql_dump_changes_group: The option "PSQL_COPY_OPTIONS=()" is unknown.
 CONTEXT:  PL/pgSQL function emaj._gen_sql_dump_changes_group(text,text,text,text,text[],boolean) line 179 at RAISE
 SQL statement "SELECT p_copyOptions, p_noEmptyFiles, g.p_lastMark
-      FROM emaj._gen_sql_dump_changes_group(p_groupName, p_firstMark, p_lastMark, p_optionsList, p_tblseqs, FALSE) g"
+                                                           FROM emaj._gen_sql_dump_changes_group(p_groupName, p_firstMark, p_lastMark, p_optionsList, p_tblseqs, FALSE) g"
 PL/pgSQL function emaj.emaj_dump_changes_group(text,text,text,text,text[],text) line 37 at SQL statement
 select emaj.emaj_dump_changes_group('myGroup2', 'Mark21', 'Mark23', 'COPY_OPTIONS=dummy', NULL, :'EMAJTESTTMPDIR');
 ERROR:  _gen_sql_dump_changes_group: Error on the option "COPY_OPTIONS=DUMMY". The COPY options must be set between ().
 CONTEXT:  PL/pgSQL function emaj._gen_sql_dump_changes_group(text,text,text,text,text[],boolean) line 114 at RAISE
 SQL statement "SELECT p_copyOptions, p_noEmptyFiles, g.p_lastMark
-      FROM emaj._gen_sql_dump_changes_group(p_groupName, p_firstMark, p_lastMark, p_optionsList, p_tblseqs, FALSE) g"
+                                                           FROM emaj._gen_sql_dump_changes_group(p_groupName, p_firstMark, p_lastMark, p_optionsList, p_tblseqs, FALSE) g"
 PL/pgSQL function emaj.emaj_dump_changes_group(text,text,text,text,text[],text) line 37 at SQL statement
 select emaj.emaj_dump_changes_group('myGroup2', 'Mark21', 'Mark23', 'COPY_OPTIONS=(dummy)', NULL, :'EMAJTESTTMPDIR');
 NOTICE:  table "emaj_temp_sql" does not exist, skipping
@@ -1210,16 +1210,16 @@ select emaj.emaj_dump_changes_group('myGroup2', 'Mark21', 'Mark23', 'COPY_OPTION
 ERROR:  _gen_sql_dump_changes_group: Unquoted semi-column in COPY options is illegal.
 CONTEXT:  PL/pgSQL function emaj._gen_sql_dump_changes_group(text,text,text,text,text[],boolean) line 119 at RAISE
 SQL statement "SELECT p_copyOptions, p_noEmptyFiles, g.p_lastMark
-      FROM emaj._gen_sql_dump_changes_group(p_groupName, p_firstMark, p_lastMark, p_optionsList, p_tblseqs, FALSE) g"
+                                                           FROM emaj._gen_sql_dump_changes_group(p_groupName, p_firstMark, p_lastMark, p_optionsList, p_tblseqs, FALSE) g"
 PL/pgSQL function emaj.emaj_dump_changes_group(text,text,text,text,text[],text) line 37 at SQL statement
 -- invalid relations array
 select emaj.emaj_gen_sql_dump_changes_group('myGroup2', 'Mark21', 'Mark23', NULL, ARRAY['dummy']);
 ERROR:  _check_tblseqs_filter: 1 tables/sequences (dummy) never belonged to any of the selected tables groups during the requested marks range.
 CONTEXT:  PL/pgSQL function emaj._check_tblseqs_filter(text[],text[],bigint,bigint,boolean) line 48 at RAISE
 PL/pgSQL function emaj._gen_sql_dump_changes_group(text,text,text,text,text[],boolean) line 228 at assignment
-SQL statement "SELECT p_nbStmt, p_isPsqlCopy
-      FROM emaj._gen_sql_dump_changes_group(p_groupName, p_firstMark, p_lastMark, p_optionsList, p_tblseqs, TRUE)"
-PL/pgSQL function emaj.emaj_gen_sql_dump_changes_group(text,text,text,text,text[]) line 26 at SQL statement
+SQL statement "SELECT p_nbStmt
+                          FROM emaj._gen_sql_dump_changes_group(p_groupName, p_firstMark, p_lastMark, p_optionsList, p_tblseqs, TRUE)"
+PL/pgSQL function emaj.emaj_gen_sql_dump_changes_group(text,text,text,text,text[]) line 25 at SQL statement
 -- invalid output location
 select emaj.emaj_gen_sql_dump_changes_group('myGroup2', 'Mark21', 'Mark23', NULL, NULL, NULL);
 ERROR:  emaj_gen_sql_dump_changes_group: The output script location parameter cannot be NULL.
@@ -1351,7 +1351,7 @@ SELECT sql_tblseq, sql_text FROM emaj_temp_sql WHERE sql_tblseq in ('mytbl1','my
 SELECT emaj.emaj_gen_sql_dump_changes_group('myGroup2', 'Mark21', 'Mark23', 'CONSOLIDATION=FULL,SQL_FORMAT=PRETTY', NULL);
                     emaj_gen_sql_dump_changes_group                     
 ------------------------------------------------------------------------
- 10 SQL statements are available in the "emaj_temp_sql" temporary table
+ 12 SQL statements are available in the "emaj_temp_sql" temporary table
 (1 row)
 
 SELECT sql_tblseq, sql_text FROM emaj_temp_sql WHERE sql_tblseq in ('mytbl1','myseq1') and sql_line_number >= 1 order by sql_stmt_number, sql_line_number;
@@ -1407,7 +1407,7 @@ SELECT sql_tblseq, sql_text FROM emaj_temp_sql WHERE sql_tblseq in ('mytbl1','my
 SELECT emaj.emaj_gen_sql_dump_changes_group('myGroup2', 'Mark21', 'Mark23', 'EMAJ_COLUMNS=ALL,CONSOLIDATION=FULL,SQL_FORMAT=PRETTY', NULL);
                     emaj_gen_sql_dump_changes_group                     
 ------------------------------------------------------------------------
- 10 SQL statements are available in the "emaj_temp_sql" temporary table
+ 12 SQL statements are available in the "emaj_temp_sql" temporary table
 (1 row)
 
 SELECT sql_tblseq, sql_text FROM emaj_temp_sql WHERE sql_tblseq in ('mytbl1','myseq1') and sql_line_number >= 1 order by sql_stmt_number, sql_line_number;
@@ -1917,11 +1917,12 @@ SELECT emaj.emaj_gen_sql_dump_changes_group('myGroup1', 'Dump_changes_tests_M2',
 NOTICE:  table "emaj_temp_sql" does not exist, skipping
                          emaj_gen_sql_dump_changes_group                         
 ---------------------------------------------------------------------------------
- 7 SQL statements have been written into the "/tmp/emaj_14/misc/sql_script" file
+ 9 SQL statements have been written into the "/tmp/emaj_14/misc/sql_script" file
 (1 row)
 
 \i :EMAJTESTTMPDIR/sql_script
 -- Generated SQL for dumping changes in tables group "myGroup1" between marks "Dump_changes_tests_M2" and "Dump_changes_tests_M4" using options: PSQL_COPY_DIR=(/tmp/emaj_14/misc), CONSOLIDATION=FULL
+SET enable_nestloop = FALSE;
 -- Dump changes for table myschema1.myTbl3 between marks "Dump_changes_tests_M2" and "Dump_changes_tests_M4" (0 changes)
 \copy (WITH keys AS ( SELECT col31, min(emaj_gid) AS min_gid, max(emaj_gid) AS max_gid FROM emaj_myschema1."myTbl3_log" WHERE emaj_gid > 5400009 AND emaj_gid <= 5400025 GROUP BY col31 ), consolidated AS ( SELECT tbl.* FROM emaj_myschema1."myTbl3_log" tbl JOIN keys ON (tbl.col31 = keys.col31) WHERE (tbl.emaj_tuple = 'OLD' AND tbl.emaj_gid = keys.min_gid) OR (tbl.emaj_tuple = 'NEW' AND tbl.emaj_gid = keys.max_gid) ), unchanged_keys AS ( SELECT r1.col31 FROM consolidated r1 JOIN consolidated r2 ON (r1.col31=r2.col31) WHERE r1.emaj_tuple = 'OLD' AND r2.emaj_tuple = 'NEW' AND (r1.col32=r2.col32 OR (r1.col32 IS NULL AND r2.col32 IS NULL)) AND (r1.col33=r2.col33 OR (r1.col33 IS NULL AND r2.col33 IS NULL)) ) SELECT tbl.col31,emaj_tuple,tbl.col32,tbl.col33 FROM consolidated tbl WHERE NOT EXISTS (SELECT 0 FROM unchanged_keys keys WHERE tbl.col31 = keys.col31) ORDER BY tbl.col31, emaj_gid, emaj_tuple DESC) TO '/tmp/emaj_14/misc/myschema1_myTbl3.changes'
 -- Dump changes for table myschema1.mytbl1 between marks "Dump_changes_tests_M2" and "Dump_changes_tests_M4" (0 changes)
@@ -1936,6 +1937,7 @@ NOTICE:  table "emaj_temp_sql" does not exist, skipping
 \copy (WITH seq_begin AS ( SELECT 'OLD' AS emaj_tuple, * FROM emaj.emaj_sequence WHERE sequ_schema = 'myschema1' AND sequ_name = 'myTbl3_col31_seq' AND sequ_time_id = 5401 ), seq_end AS ( SELECT 'NEW' AS emaj_tuple, * FROM emaj.emaj_sequence WHERE sequ_schema = 'myschema1' AND sequ_name = 'myTbl3_col31_seq' AND sequ_time_id = 5403 ), seq_agg AS ( SELECT '<>' FROM seq_begin b, seq_end e WHERE (CASE WHEN b.sequ_is_called THEN b.sequ_last_val ELSE b.sequ_last_val - b.sequ_increment END <> CASE WHEN e.sequ_is_called THEN e.sequ_last_val ELSE e.sequ_last_val - e.sequ_increment END) OR b.sequ_start_val <> e.sequ_start_val OR b.sequ_increment <> e.sequ_increment OR b.sequ_max_val <> e.sequ_max_val OR b.sequ_min_val <> e.sequ_min_val OR b.sequ_cache_val <> e.sequ_cache_val OR b.sequ_is_cycled <> e.sequ_is_cycled ) SELECT t.* FROM ( SELECT * FROM seq_begin UNION ALL SELECT * FROM seq_end ) AS t, seq_agg ORDER BY emaj_tuple DESC ) TO '/tmp/emaj_14/misc/myschema1_myTbl3_col31_seq.changes'
 -- Dump changes for sequence myschema1.mytbl2b_col20_seq between marks "Dump_changes_tests_M2" and "Dump_changes_tests_M4"
 \copy (WITH seq_begin AS ( SELECT 'OLD' AS emaj_tuple, * FROM emaj.emaj_sequence WHERE sequ_schema = 'myschema1' AND sequ_name = 'mytbl2b_col20_seq' AND sequ_time_id = 5401 ), seq_end AS ( SELECT 'NEW' AS emaj_tuple, * FROM emaj.emaj_sequence WHERE sequ_schema = 'myschema1' AND sequ_name = 'mytbl2b_col20_seq' AND sequ_time_id = 5403 ), seq_agg AS ( SELECT '<>' FROM seq_begin b, seq_end e WHERE (CASE WHEN b.sequ_is_called THEN b.sequ_last_val ELSE b.sequ_last_val - b.sequ_increment END <> CASE WHEN e.sequ_is_called THEN e.sequ_last_val ELSE e.sequ_last_val - e.sequ_increment END) OR b.sequ_start_val <> e.sequ_start_val OR b.sequ_increment <> e.sequ_increment OR b.sequ_max_val <> e.sequ_max_val OR b.sequ_min_val <> e.sequ_min_val OR b.sequ_cache_val <> e.sequ_cache_val OR b.sequ_is_cycled <> e.sequ_is_cycled ) SELECT t.* FROM ( SELECT * FROM seq_begin UNION ALL SELECT * FROM seq_end ) AS t, seq_agg ORDER BY emaj_tuple DESC ) TO '/tmp/emaj_14/misc/myschema1_mytbl2b_col20_seq.changes'
+RESET enable_nestloop;
 \! ls -1sS $EMAJTESTTMPDIR
 total 16
 8 sql_script
@@ -2048,7 +2050,7 @@ select hist_id, hist_function, hist_event, hist_object,
     5442 | DUMP_CHANGES_GROUP         | BEGIN        | myGroup2                     | From mark Multi-2 to Multi-3 towards /tmp/emaj_14/misc                                        | postgres
     5443 | DUMP_CHANGES_GROUP         | END          | myGroup2                     | 3 generated files                                                                             | postgres
     5444 | GEN_SQL_DUMP_CHANGES_GROUP | BEGIN        | myGroup1                     | From mark Dump_changes_tests_M2 to Dump_changes_tests_M4 towards /tmp/emaj_14/misc/sql_script | postgres
-    5445 | GEN_SQL_DUMP_CHANGES_GROUP | END          | myGroup1                     | 7 generated SQL statements                                                                    | postgres
+    5445 | GEN_SQL_DUMP_CHANGES_GROUP | END          | myGroup1                     | 9 generated SQL statements                                                                    | postgres
     5446 | ROLLBACK_GROUP             | BEGIN        | myGroup1                     | Unlogged rollback to mark Dump_changes_tests_M1 (timestamp)                                   | postgres
     5447 | DBLINK_OPEN_CNX            |              | rlbk#1                       | Status = 1                                                                                    | postgres
     5448 | LOCK_GROUP                 | BEGIN        | myGroup1                     | Rollback session #1                                                                           | postgres

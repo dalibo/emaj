@@ -1971,11 +1971,11 @@ select emaj.emaj_gen_sql_dump_changes_group('myGroup1','M4','M5','Consolidation=
 NOTICE:  table "emaj_temp_sql" does not exist, skipping
                             emaj_gen_sql_dump_changes_group                            
 ---------------------------------------------------------------------------------------
- 7 SQL statements have been written into the "/tmp/emaj_13/adm3/dump_changes.sql" file
+ 9 SQL statements have been written into the "/tmp/emaj_13/adm3/dump_changes.sql" file
 (1 row)
 
 \! wc -l $EMAJTESTTMPDIR/dump_changes.sql
-15 /tmp/emaj_13/adm3/dump_changes.sql
+17 /tmp/emaj_13/adm3/dump_changes.sql
 select emaj.emaj_dump_changes_group('myGroup1','M4','M5',NULL,'{"myschema1.myTbl3"}',:'EMAJTESTTMPDIR');
 NOTICE:  table "emaj_temp_sql" does not exist, skipping
             emaj_dump_changes_group             
@@ -1995,13 +1995,14 @@ SELECT emaj.emaj_gen_sql_dump_changes_group('myGroup1','M4','M5',
 NOTICE:  table "emaj_temp_sql" does not exist, skipping
                     emaj_gen_sql_dump_changes_group                    
 -----------------------------------------------------------------------
- 5 SQL statements are available in the "emaj_temp_sql" temporary table
+ 7 SQL statements are available in the "emaj_temp_sql" temporary table
 (1 row)
 
 SELECT sql_text FROM emaj_temp_sql ORDER BY sql_stmt_number, sql_line_number;
                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                     sql_text                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                     
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
  -- Generated SQL for dumping changes in tables group "myGroup1" (subset) between marks "M4" and "M5" using options: EMAJ_COLUMNS=(emaj_tuple, emaj_gid, emaj_verb), CONSOLIDATION=FULL, ORDER_BY=TIME
+ SET enable_nestloop = FALSE;
  -- Dump changes for table myschema1.myTbl3 between marks "M4" and "M5" (10 changes)
  WITH keys AS ( SELECT col31, min(emaj_gid) AS min_gid, max(emaj_gid) AS max_gid FROM emaj_myschema1."myTbl3_log" WHERE emaj_gid > 12400014 AND emaj_gid <= 12400024 GROUP BY col31 ), consolidated AS ( SELECT tbl.* FROM emaj_myschema1."myTbl3_log" tbl JOIN keys ON (tbl.col31 = keys.col31) WHERE (tbl.emaj_tuple = 'OLD' AND tbl.emaj_gid = keys.min_gid) OR (tbl.emaj_tuple = 'NEW' AND tbl.emaj_gid = keys.max_gid) ), unchanged_keys AS ( SELECT r1.col31 FROM consolidated r1 JOIN consolidated r2 ON (r1.col31=r2.col31) WHERE r1.emaj_tuple = 'OLD' AND r2.emaj_tuple = 'NEW' AND (r1.col32=r2.col32 OR (r1.col32 IS NULL AND r2.col32 IS NULL)) AND (r1.col33=r2.col33 OR (r1.col33 IS NULL AND r2.col33 IS NULL)) ) SELECT tbl.col31,emaj_gid,emaj_tuple,tbl.col32,tbl.col33,emaj_verb FROM consolidated tbl WHERE NOT EXISTS (SELECT 0 FROM unchanged_keys keys WHERE tbl.col31 = keys.col31) ORDER BY emaj_gid, emaj_tuple DESC;
  -- Dump changes for table myschema1.mytbl1 between marks "M4" and "M5" (0 changes)
@@ -2012,7 +2013,8 @@ SELECT sql_text FROM emaj_temp_sql ORDER BY sql_stmt_number, sql_line_number;
  WITH keys AS ( SELECT col20, min(emaj_gid) AS min_gid, max(emaj_gid) AS max_gid FROM emaj_myschema1.mytbl2b_log WHERE emaj_gid > 12400014 AND emaj_gid <= 12400024 GROUP BY col20 ), consolidated AS ( SELECT tbl.* FROM emaj_myschema1.mytbl2b_log tbl JOIN keys ON (tbl.col20 = keys.col20) WHERE (tbl.emaj_tuple = 'OLD' AND tbl.emaj_gid = keys.min_gid) OR (tbl.emaj_tuple = 'NEW' AND tbl.emaj_gid = keys.max_gid) ), unchanged_keys AS ( SELECT r1.col20 FROM consolidated r1 JOIN consolidated r2 ON (r1.col20=r2.col20) WHERE r1.emaj_tuple = 'OLD' AND r2.emaj_tuple = 'NEW' AND (r1.col21=r2.col21 OR (r1.col21 IS NULL AND r2.col21 IS NULL)) AND (r1.col22=r2.col22 OR (r1.col22 IS NULL AND r2.col22 IS NULL)) AND (r1.col23=r2.col23 OR (r1.col23 IS NULL AND r2.col23 IS NULL)) ) SELECT tbl.col20,emaj_gid,emaj_tuple,tbl.col21,tbl.col22,tbl.col23,emaj_verb FROM consolidated tbl WHERE NOT EXISTS (SELECT 0 FROM unchanged_keys keys WHERE tbl.col20 = keys.col20) ORDER BY emaj_gid, emaj_tuple DESC;
  -- Dump changes for table myschema1.mytbl4 between marks "M4" and "M5" (0 changes)
  WITH keys AS ( SELECT col41,col43, min(emaj_gid) AS min_gid, max(emaj_gid) AS max_gid FROM emaj_myschema1.mytbl4_log WHERE emaj_gid > 12400014 AND emaj_gid <= 12400024 GROUP BY col41,col43 ), consolidated AS ( SELECT tbl.* FROM emaj_myschema1.mytbl4_log tbl JOIN keys ON (tbl.col41 = keys.col41 AND tbl.col43 = keys.col43) WHERE (tbl.emaj_tuple = 'OLD' AND tbl.emaj_gid = keys.min_gid) OR (tbl.emaj_tuple = 'NEW' AND tbl.emaj_gid = keys.max_gid) ), unchanged_keys AS ( SELECT r1.col41,r1.col43 FROM consolidated r1 JOIN consolidated r2 ON (r1.col41=r2.col41 AND r1.col43=r2.col43) WHERE r1.emaj_tuple = 'OLD' AND r2.emaj_tuple = 'NEW' AND (r1.col42=r2.col42 OR (r1.col42 IS NULL AND r2.col42 IS NULL)) AND (r1.col44=r2.col44 OR (r1.col44 IS NULL AND r2.col44 IS NULL)) AND (r1.col45::text=r2.col45::text OR (r1.col45 IS NULL AND r2.col45 IS NULL)) ) SELECT tbl.col41,tbl.col43,emaj_gid,emaj_tuple,tbl.col42,tbl.col44,tbl.col45,emaj_verb FROM consolidated tbl WHERE NOT EXISTS (SELECT 0 FROM unchanged_keys keys WHERE tbl.col41 = keys.col41 AND tbl.col43 = keys.col43) ORDER BY emaj_gid, emaj_tuple DESC;
-(11 rows)
+ RESET enable_nestloop;
+(13 rows)
 
 -- Create a table and a view from a consolidated vision of a log table
 DO $$
@@ -2020,7 +2022,7 @@ DECLARE
   v_stmt TEXT;
 BEGIN
   PERFORM emaj.emaj_gen_sql_dump_changes_group('myGroup1','M4','M5', 'CONSOLIDATION=FULL, EMAJ_COLUMNS=MIN', ARRAY['myschema1.myTbl3']);
-  SELECT sql_text INTO v_stmt FROM emaj_temp_sql WHERE sql_stmt_number = 1 AND sql_line_number = 1;
+  SELECT sql_text INTO v_stmt FROM emaj_temp_sql WHERE sql_schema = 'myschema1' and sql_tblseq = 'myTbl3' AND sql_line_number = 1;
   EXECUTE 'CREATE TABLE public.myTbl3_cons_log_table_M4_M5 AS ' || v_stmt;
   EXECUTE 'CREATE VIEW public.myTbl3_cons_log_view_M4_M5 AS ' || v_stmt;
 END;
@@ -2802,7 +2804,7 @@ select hist_function, hist_event, hist_object,
        hist_function        |     hist_event     |          hist_object           |                                           regexp_replace                                           | hist_user 
 ----------------------------+--------------------+--------------------------------+----------------------------------------------------------------------------------------------------+-----------
  GEN_SQL_DUMP_CHANGES_GROUP | BEGIN              | myGroup1                       | From mark M4 to M5 towards /tmp/emaj_13/adm3/dump_changes.sql                                      | postgres
- GEN_SQL_DUMP_CHANGES_GROUP | END                | myGroup1                       | 7 generated SQL statements                                                                         | postgres
+ GEN_SQL_DUMP_CHANGES_GROUP | END                | myGroup1                       | 9 generated SQL statements                                                                         | postgres
  DUMP_CHANGES_GROUP         | BEGIN              | myGroup1                       | From mark M4 to M5 towards /tmp/emaj_13/adm3                                                       | postgres
  DUMP_CHANGES_GROUP         | END                | myGroup1                       | 2 generated files                                                                                  | postgres
  CREATE_GROUP               | BEGIN              | truncateTestGroup              | rollbackable                                                                                       | postgres
