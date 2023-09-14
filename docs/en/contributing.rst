@@ -264,7 +264,8 @@ The scripts cover the following domains:
 
 * *log_overhead/pgbench.sh* evaluates the log mechanism overhead, using pgbench,
 * *large_group/large_group.sh* evaluates the behaviour of groups containing a large number of tables,
-* *rollback/rollback_perf.sh* evaluates the E-Maj rollback performances with different tables profiles.
+* *rollback/rollback_perf.sh* evaluates the E-Maj rollback performances with different tables profiles,
+* *dump_changes/dump_changes_perf.sh* measure the performances of changes dump operations, with various consolidation levels.
 
 For all these files, some variables have to be configured at the begining of the scripts.
 
