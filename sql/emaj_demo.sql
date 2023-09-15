@@ -254,7 +254,7 @@ select * from emaj.emaj_mark where mark_group = 'emaj demo group 1';
 \echo '---'
 \echo '--- Count the total number of logged updates.'
 \echo '---'
-select sum(stat_rows) from emaj.emaj_log_stat_group('emaj demo group 1',NULL,NULL);
+select sum(stat_rows) from emaj.emaj_log_stat_group('emaj demo group 1','MARK1',NULL);
 
 \echo '---------------------------------------------------------------------------'
 \echo '---                                                                     ---'
@@ -275,7 +275,7 @@ select * from emaj.emaj_mark where mark_group = 'emaj demo group 1';
 \echo '---'
 \echo '--- Count the total number of logged updates. 20 - among the 23 - have been rollbacked'
 \echo '---'
-select sum(stat_rows) from emaj.emaj_log_stat_group('emaj demo group 1',NULL,NULL);
+select sum(stat_rows) from emaj.emaj_log_stat_group('emaj demo group 1','MARK1',NULL);
 
 \echo '---------------------------------------------------------------------------'
 \echo '---                                                                     ---'
