@@ -60,7 +60,7 @@ The version currently under development is named *devel*.
 
 Regularly and when it is justified, a new version is created. Its name has a X.Y.Z pattern.
 
-The *tools/create_version.sh* *shell* script assists in creating this version. It is only used by the E-Maj maintainers. So its use is not described here.
+The *create_version* tool assists in creating this version. It is only used by the E-Maj maintainers. So its use is not described here.
 
 Coding rules
 ^^^^^^^^^^^^

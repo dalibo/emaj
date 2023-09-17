@@ -62,7 +62,7 @@ La version en cours de développement est nommée *devel*.
 
 Régulièrement, et lorsque cela se justifie, une nouvelle version est créée. Elle porte un nom au format X.Y.Z.
 
-L’outil *tools/create_version.sh* aide à la création de cette version. Il est utilisé uniquement par les mainteneurs d’E-Maj. Son utilisation n’est donc pas décrite ici.
+L’outil *create_version* aide à la création de cette version. Il est utilisé uniquement par les mainteneurs d’E-Maj. Son utilisation n’est donc pas décrite ici.
 
 
 Règles de codage
