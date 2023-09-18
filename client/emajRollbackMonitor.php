@@ -7,7 +7,7 @@
 //
 // It monitors E-Maj rollback operations in progress or recently completed.
 
-  $EmajVersion = '<devel>';
+  $EmajVersion = '4.3.0';
   $appName = 'emajRollbackMonitor';
   $progName = 'emajRollbackMonitor.php';
 

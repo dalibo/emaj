@@ -1,4 +1,4 @@
--- emaj_demo.sql : Version <devel>
+-- emaj_demo.sql : Version 4.3.0
 --
 -- This script demonstrates the main features of the E-Maj extension.
 --

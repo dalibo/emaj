@@ -1,6 +1,7 @@
 E-Maj - Change log
 ==================
-<devel>
+
+4.3.0 (2023-Sept-18)
 ------
 ###Enhancements:###
   * Support of PG16.

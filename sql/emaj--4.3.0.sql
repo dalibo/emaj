@@ -1,5 +1,5 @@
 --
--- E-Maj : logs and rollbacks table changes : Version <devel>
+-- E-Maj : logs and rollbacks table changes : Version 4.3.0
 --
 -- This software is distributed under the GNU General Public License.
 --
@@ -624,7 +624,7 @@ $$Represents a generic notice, warning or error message structure that can be tr
 -- Parameters                     --
 --                                --
 ------------------------------------
-INSERT INTO emaj.emaj_param (param_key, param_value_text) VALUES ('emaj_version','<devel>');
+INSERT INTO emaj.emaj_param (param_key, param_value_text) VALUES ('emaj_version','4.3.0');
 
 -- Other parameters are optional. They may be set by E-Maj administrators if needed.
 
@@ -13414,7 +13414,7 @@ SELECT pg_catalog.pg_extension_config_dump('emaj.emaj_time_stamp_time_id_seq',''
 SELECT pg_catalog.pg_extension_config_dump('emaj.emaj_rlbk_rlbk_id_seq','');
 
 -- Insert the INIT event into the operations history.
-INSERT INTO emaj.emaj_hist (hist_function, hist_object, hist_wording) VALUES ('EMAJ_INSTALL','E-Maj <devel>', 'Initialisation completed');
+INSERT INTO emaj.emaj_hist (hist_function, hist_object, hist_wording) VALUES ('EMAJ_INSTALL','E-Maj 4.3.0', 'Initialisation completed');
 -- Insert the emaj schema into the emaj_schema table.
 INSERT INTO emaj.emaj_schema (sch_name) VALUES ('emaj');
 
