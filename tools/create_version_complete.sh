@@ -124,8 +124,10 @@
 	mv sql/emaj_uninstall.sql.bak sql/emaj_uninstall.sql
 	mv sql/emaj_demo.sql.bak sql/emaj_demo.sql
 	mv sql/emaj-devel.sql.bak sql/emaj-devel.sql
+	git add sql/emaj-devel.sql
 	mv sql/emaj_prepare_parallel_rollback_test.sql.bak sql/emaj_prepare_parallel_rollback_test.sql
 	mv sql/emaj--devel.sql.bak sql/emaj--devel.sql
+	git add sql/emaj--devel.sql
 	mv client/emajRollbackMonitor.php.bak client/emajRollbackMonitor.php
 	mv client/emajParallelRollback.php.bak client/emajParallelRollback.php
 	mv client/emajParallelRollback.pl.bak client/emajParallelRollback.pl
@@ -148,15 +150,8 @@
 	sed -i -E "s/previousSourceFile = .*;/previousSourceFile = \$emajEnvRootDir . \"\/sql\/emaj--${NEW}\.sql\";/" tools/sync_fct_in_upgrade_script.pl
 	sed -i -E "s/upgradeScriptFile  = .*;/upgradeScriptFile  = \$emajEnvRootDir . \"\/sql\/emaj--${NEW}--devel\.sql\";/" tools/sync_fct_in_upgrade_script.pl
 
-	cd ..
-
-# Automatic emaj changes
-# ----------------------
-
-	cd $MAINDIR
-
 # Delete the now useless psql installation script for the last version
-	rm sql/emaj-${NEW}.sql
+	git rm sql/emaj-${NEW}.sql
 
 # Adjust the extension version to create into the install_previous.sql and install_upgrade.sql test scripts
 	sed -i "s/CREATE EXTENSION emaj VERSION '.*' CASCADE;/CREATE EXTENSION emaj VERSION '${NEW}' CASCADE;/" test/sql/install_previous.sql
