@@ -12,7 +12,7 @@ select * from pg_available_extension_versions where name = 'emaj' order by versi
  name | version | installed | superuser | relocatable | schema |      requires       |                                            comment                                             
 ------+---------+-----------+-----------+-------------+--------+---------------------+------------------------------------------------------------------------------------------------
  emaj | devel   | f         | t         | f           | emaj   | {dblink,btree_gist} | E-Maj extension enables fine-grained write logging and time travel on subsets of the database.
- emaj | 4.2.0   | t         | t         | f           | emaj   | {dblink,btree_gist} | E-Maj extension enables fine-grained write logging and time travel on subsets of the database.
+ emaj | 4.3.0   | t         | t         | f           | emaj   | {dblink,btree_gist} | E-Maj extension enables fine-grained write logging and time travel on subsets of the database.
 (2 rows)
 
 select relname from pg_catalog.pg_class, 
@@ -47,29 +47,13 @@ select relname from pg_catalog.pg_class,
                                                                                 emaj_verify_all                                                                                
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
  Warning: In the group "myGroup1", the sequence "myschema1"."myTbl3_col31_seq" is linked to the table "myschema1"."myTbl3" but this table does not belong to any tables group.
+ Warning: The 'dblink_user_password' parameter value is not set in the emaj_param table.
  No error detected
-(2 rows)
+(3 rows)
 
 -- process the extension upgrade
 ALTER EXTENSION emaj UPDATE TO 'devel';
 WARNING:  E-Maj upgrade: the E-Maj environment health check reports warning. You may execute "SELECT * FROM emaj.emaj_verify_all();" to get more details.
-NOTICE:  drop cascades to 8 other objects
-DETAIL:  drop cascades to function _drop_tbl(emaj_relation,bigint)
-drop cascades to function _drop_seq(emaj_relation,bigint)
-drop cascades to function _rlbk_tbl(emaj_relation,bigint,bigint,integer,boolean,boolean)
-drop cascades to function _delete_log_tbl(emaj_relation,bigint,bigint,bigint)
-drop cascades to function _rlbk_seq(emaj_relation,bigint)
-drop cascades to function _log_stat_tbl(emaj_relation,bigint,bigint)
-drop cascades to function _gen_sql_tbl(emaj_relation,bigint,bigint)
-drop cascades to function _gen_sql_seq(emaj_relation,bigint,bigint,bigint)
-NOTICE:  drop cascades to 3 other objects
-DETAIL:  drop cascades to constraint emaj_rlbk_session_rlbs_rlbk_id_fkey on table emaj_rlbk_session
-drop cascades to constraint emaj_rlbk_plan_rlbp_rlbk_id_fkey on table emaj_rlbk_plan
-drop cascades to constraint emaj_rlbk_stat_rlbt_rlbk_id_fkey on table emaj_rlbk_stat
-NOTICE:  drop cascades to 2 other objects
-DETAIL:  drop cascades to function emaj_rollback_activity()
-drop cascades to function _rollback_activity()
-WARNING:  E-Maj installation: The adminpack extension is available but not yet created. Execute a "CREATE EXTENSION adminpack;" statement to enable the NO_EMPTY_FILE option use of the emaj_dump_changes_group() function.
 -----------------------------
 -- check installation
 -----------------------------
@@ -1183,7 +1167,7 @@ select * from emaj.emaj_global_seq;
 select * from emaj.emaj_hist_hist_id_seq;
  last_value | log_cnt | is_called 
 ------------+---------+-----------
-        174 |      24 | t
+        178 |      20 | t
 (1 row)
 
 select * from emaj.emaj_time_stamp_time_id_seq;
@@ -1195,7 +1179,7 @@ select * from emaj.emaj_time_stamp_time_id_seq;
 select * from emaj.emaj_rlbk_rlbk_id_seq;
  last_value | log_cnt | is_called 
 ------------+---------+-----------
-          4 |       0 | t
+          4 |      29 | t
 (1 row)
 
 -- check log sequences position

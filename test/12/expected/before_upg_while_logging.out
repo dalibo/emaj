@@ -214,18 +214,20 @@ delete from myTbl1 where col11 > 3;
 select * from emaj.emaj_rollback_group('myGroup1','M3');
  rlbk_severity |              rlbk_message              
 ---------------+----------------------------------------
+ Notice        | Rollback id = 1.
  Notice        | 1 / 5 tables effectively processed.
  Notice        | 0 / 1 sequences effectively processed.
-(2 rows)
+(3 rows)
 
 insert into myTbl2 values (3,'GHI',NULL);
 update myTbl4 set col43 = 3 where col41 = 2;
 select * from emaj.emaj_rollback_group('myGroup1','M3');
  rlbk_severity |              rlbk_message              
 ---------------+----------------------------------------
+ Notice        | Rollback id = 2.
  Notice        | 3 / 5 tables effectively processed.
  Notice        | 0 / 1 sequences effectively processed.
-(2 rows)
+(3 rows)
 
 --
 select emaj.emaj_protect_mark_group('myGroup1','M3');
@@ -304,16 +306,18 @@ select emaj.emaj_set_mark_group('myGroup2','M3');
 select * from emaj.emaj_logged_rollback_group('myGroup2','M2');
  rlbk_severity |              rlbk_message              
 ---------------+----------------------------------------
+ Notice        | Rollback id = 3.
  Notice        | 1 / 4 tables effectively processed.
  Notice        | 1 / 2 sequences effectively processed.
-(2 rows)
+(3 rows)
 
 select * from emaj.emaj_logged_rollback_group('myGroup2','M3');
  rlbk_severity |              rlbk_message              
 ---------------+----------------------------------------
+ Notice        | Rollback id = 4.
  Notice        | 1 / 4 tables effectively processed.
  Notice        | 1 / 2 sequences effectively processed.
-(2 rows)
+(3 rows)
 
 -----------------------------
 -- Step 4 : for both myGroup1 and myGroup2, set a common mark
@@ -414,7 +418,7 @@ select mark_group, regexp_replace(mark_name,E'\\d\\d\.\\d\\d\\.\\d\\d\\.\\d\\d\\
 ------------------+-----------------+--------------+-----------------+------------------------+----------------+---------------------------+------------------------------
  myGroup1         | M1              |           15 | f               | f                      |                |                        29 | 
  myGroup2         | M1              |           16 | f               | f                      |                |                        27 | 
- phil's group#3", | M1              |           17 | f               | f                      |                |                         0 | 
+ phil's group#3", | M1              |           17 | f               | f                      |                |                           | 
  myGroup1         | M2              |           18 | f               | f                      |                |                        11 | 
  myGroup1         | M3              |           19 | f               | t                      | Third mark set |                         0 | 
  myGroup2         | M2              |           22 | f               | f                      |                |                         4 | 
@@ -424,8 +428,8 @@ select mark_group, regexp_replace(mark_name,E'\\d\\d\.\\d\\d\\.\\d\\d\\.\\d\\d\\
  myGroup2         | RLBK_M3_%_START |           26 | f               | f                      |                |                         2 | 
  myGroup2         | RLBK_M3_%_DONE  |           27 | f               | f                      |                |                         0 | M3
  myGroup1         | Common          |           28 | f               | f                      |                |                         0 | 
- myGroup2         | Common          |           28 | f               | f                      |                |                         0 | 
- myGroup1         | REMOVE_%        |           29 | f               | f                      |                |                         0 | 
+ myGroup2         | Common          |           28 | f               | f                      |                |                           | 
+ myGroup1         | REMOVE_%        |           29 | f               | f                      |                |                           | 
  myGroup6         | Start G6        |           30 | t               | f                      |                |                         0 | 
  myGroup6         | REMOVE_%        |           31 | t               | f                      |                |                         0 | 
  myGroup6         | STOP_%          |           32 | t               | f                      |                |                         0 | 
