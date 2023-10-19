@@ -81,7 +81,7 @@ Let’s take some examples, using a table described as *(col1 INT PRIMARY KEY, c
 | |                           | | 3,’B’,NEW,3                         | |                       | |                    |
 +-----------------------------+---------------------------------------+-------------------------+----------------------+
 
-(*) the log table extract corresponds to columns *(col1, col2, emaj_tuple, emaj_gid)*.
+(*) the log table extract corresponds to columns *(col1, col2, emaj_tuple, emaj_gid)*, other E-Maj technical columns not being mentionned.
 
 .. caution::
 
@@ -195,6 +195,8 @@ The effects of this tables/sequences selection and the TABLES_ONLY and SEQUENCES
 
 The script file name parameter supplied as **6th parameter** is optional. If it is not present, generated statements are left at the caller’s disposal into an *emaj_temp_sql* temporary table. Otherwise, they are written into the file defined by this parameter. It must be an absolute pathname. The directory must have been created prior the function call and it must have the appropriate permission so that the PostgreSQL instance can write into it.
 
+If any schema, table or column name contains a "\\" (antislah) character, the *COPY* command executed to build the output script file duplicates this character. If a *sed* command is available on the server hosting the PostgreSQL instance, the *emaj_gen_sql_dump_changes_group()* function automatically removes such duplicated characters. Otherwise, manual script changes are required.
+
 The function returns a textual message containing the number of generated statements and their location.
 
 The *emaj_temp_sql* temporary table left at the caller’s disposal when the 6th parameter is not present has the following structure:
@@ -224,9 +226,9 @@ The table contents:
 
 An index is created on columns *sql_stmt_number* and *sql_line_number*.
 
-Once the *emaj_gen_sql_dump_changes_group()* function has been executed the caller can use the temporary table as he wants. With *ALTER TABLE* statements, he can even add columns, rename the table, transform it into a permanent table; He can also add an additional index, if needed.
+Once the *emaj_gen_sql_dump_changes_group()* function has been executed the caller can use the temporary table as he wants. With *ALTER TABLE* statements, he can even add columns, rename the table, transform it into a permanent table; He can also add an additional index, if needed. The estimated number of changes can be used to efficiently parallelize the statements execution.
 
-For instance, the caller can generate a SQL script with::
+For instance, the caller can generate a SQL script and store it locally with::
 
    \copy (SELECT sql_text FROM emaj_temp_sql) to <fichier>
 

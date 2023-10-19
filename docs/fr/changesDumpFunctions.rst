@@ -81,7 +81,7 @@ Prenons quelques exemples, avec une simple table de 2 colonnes *(col1 INT PRIMAR
 | |                           | | 3,’B’,NEW,3                         | |                       | |                    |
 +-----------------------------+---------------------------------------+-------------------------+----------------------+
 
-(*) l'extrait de la table de log correspond aux colonnes (col1, col2, emaj_tuple, emaj_gid).
+(*) l'extrait de la table de log correspond aux colonnes (col1, col2, emaj_tuple, emaj_gid), les autres colonnes techniques E-Maj n’étant pas mentionnées.
 
 .. caution::
 
@@ -195,6 +195,8 @@ Les filtres que représentent les options SEQUENCES_ONLY et TABLES_ONLY et ceux 
 
 Le nom du répertoire fourni en **sixième paramètre** est facultatif. S’il est absent, les requêtes générées sont mises à la disposition de l’appelant dans une table temporaire, *emaj_temp_sql*. Dans le cas contraire, elles sont écrites dans le fichier défini par le paramètre. Le nom de fichier doit alors être un chemin absolu. Le répertoire doit exister au préalable et avoir les permissions adéquates pour que l’instance PostgreSQL puisse y écrire.
 
+Si des noms de schémas, de tables ou de colonnes contiennent des caractères "\\" (antislash), la commande *COPY* qui crée le fichier script double ces caractères. Si une commande *sed* est disponible sur le serveur hébergeant l’instance PostgreSQL, la fonction *emaj_gen_sql_dump_changes_group()* dédouble automatiquement ces caractères "\\". Sinon, il est nécessaire de retraiter manuellement le script généré.
+
 La fonction retourne un message textuel contenant le nombre de requêtes générées et leur localisation.
 
 La table temporaire *emaj_temp_sql*, mise à la disposition de l’appelant quand le dernier paramètre est absent, a la structure suivante :
@@ -224,9 +226,9 @@ La table contient :
 
 Un index est créé sur les deux premières colonnes.
 
-A l’issue de l’exécution de la fonction *emaj_gen_sql_dump_changes_group()*, l’appelant peut utiliser la table temporaire à sa guise. Avec des requêtes *ALTER TABLE*, il peut même ajouter une ou plusieurs autres colonnes, renommer la table, la transformer en table permanente. Il peut également créer un index supplémentaire si cela s’avère utile.
+A l’issue de l’exécution de la fonction *emaj_gen_sql_dump_changes_group()*, l’appelant peut utiliser la table temporaire à sa guise. Avec des requêtes *ALTER TABLE*, il peut même ajouter une ou plusieurs autres colonnes, renommer la table, la transformer en table permanente. Il peut également créer un index supplémentaire si cela s’avère utile. Le nombre estimé de mises à jour peut être utile pour paralléliser efficacement l’exécution des requêtes.
 
-L’appelant peut par exemple générer ensuite un script sql avec une requête ::
+L’appelant peut par exemple générer ensuite un script sql et le stocker localement avec une requête ::
 
    \copy (SELECT sql_text FROM emaj_temp_sql) to <fichier>
 
