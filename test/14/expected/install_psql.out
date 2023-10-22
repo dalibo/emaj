@@ -9990,10 +9990,10 @@ $_reset_groups$;
 CREATE OR REPLACE FUNCTION emaj.emaj_log_stat_group(p_groupName TEXT, p_firstMark TEXT, p_lastMark TEXT)
 RETURNS SETOF emaj.emaj_log_stat_type LANGUAGE plpgsql AS
 $emaj_log_stat_group$
--- This function returns statistics on row updates executed between 2 marks or between a mark and the current state for a single group.
--- It is used to quickly get simple statistics of updates logged between 2 marks (i.e. for one or several processing).
+-- This function returns statistics about logged data changes between 2 marks or between a mark and the current state for a single group.
+-- It is used to quickly get simple statistics of changes logged between 2 marks.
 -- Input: group name, the 2 mark names defining a range
--- Output: set of log rows by table (including tables with 0 rows to rollback)
+-- Output: set of stat rows by table (including tables without any data change)
   BEGIN
     RETURN QUERY
       SELECT stat_group, stat_schema, stat_table, stat_first_mark, stat_first_mark_datetime, stat_last_mark,
@@ -10002,14 +10002,14 @@ $emaj_log_stat_group$
   END;
 $emaj_log_stat_group$;
 COMMENT ON FUNCTION emaj.emaj_log_stat_group(TEXT,TEXT,TEXT) IS
-$$Returns global statistics about logged events for an E-Maj group between 2 marks for a single group.$$;
+$$Returns global statistics about logged data changes between 2 marks for a single group.$$;
 CREATE OR REPLACE FUNCTION emaj.emaj_log_stat_groups(p_groupNames TEXT[], p_firstMark TEXT, p_lastMark TEXT)
 RETURNS SETOF emaj.emaj_log_stat_type LANGUAGE plpgsql AS
 $emaj_log_stat_groups$
--- This function returns statistics on row updates executed between 2 marks or between a mark and the current state for a groups array.
--- It is used to quickly get simple statistics of updates logged between 2 marks (i.e. for one or several processing).
+-- This function returns statistics about logged data changes between 2 marks or between a mark and the current state for a groups array.
+-- It is used to quickly get simple statistics of changes logged between 2 marks.
 -- Input: group names array, the 2 mark names defining a range
--- Output: set of log rows by table (including tables with 0 rows to rollback)
+-- Output: set of stat rows by table (including tables without any data change)
   BEGIN
     RETURN QUERY
       SELECT stat_group, stat_schema, stat_table, stat_first_mark, stat_first_mark_datetime, stat_last_mark,
@@ -10018,22 +10018,20 @@ $emaj_log_stat_groups$
   END;
 $emaj_log_stat_groups$;
 COMMENT ON FUNCTION emaj.emaj_log_stat_groups(TEXT[],TEXT,TEXT) IS
-$$Returns global statistics about logged events for an E-Maj group between 2 marks for a groups array.$$;
+$$Returns global statistics about logged data changes between 2 marks for several groups.$$;
 CREATE OR REPLACE FUNCTION emaj._log_stat_groups(p_groupNames TEXT[], p_multiGroup BOOLEAN, p_firstMark TEXT, p_lastMark TEXT)
 RETURNS SETOF emaj._log_stat_type LANGUAGE plpgsql AS
 $_log_stat_groups$
--- This function effectively returns statistics on row updates executed between 2 marks or between a mark and the current state for 1
+-- This function effectively returns statistics about logged data changes between 2 marks or between a mark and the current state for 1
 -- or several groups.
 -- These statistics are computed using the serial id of log tables and holes is sequences recorded into emaj_seq_hole at rollback time.
--- The function is directly called by Emaj_web.
 -- Input: groups name array, a boolean indicating whether the calling function is a multi_groups function, the 2 mark names defining a
 --          range
 --   a NULL value or an empty string as last_mark indicates the current state
 --   Use a NULL or an empty string as last_mark to know the number of rows to rollback to reach the mark specified by the first_mark
 --   parameter.
 --   The keyword 'EMAJ_LAST_MARK' can be used as first or last mark to specify the last set mark for the groups.
--- Output: set of log rows by table (including tables with 0 rows to rollback)
--- This function may be directly called by the Emaj_web client.
+-- Output: set of stat rows by table (including tables without any data change)
   DECLARE
     v_firstMarkTimeId        BIGINT;
     v_lastMarkTimeId         BIGINT;
@@ -10125,11 +10123,11 @@ $_log_stat_groups$;
 CREATE OR REPLACE FUNCTION emaj.emaj_detailed_log_stat_group(p_groupName TEXT, p_firstMark TEXT, p_lastMark TEXT)
 RETURNS SETOF emaj.emaj_detailed_log_stat_type LANGUAGE plpgsql AS
 $emaj_detailed_log_stat_group$
--- This function returns statistics on row updates executed between 2 marks as viewed through the log tables for one tables group.
--- It provides more information than emaj_log_stat_group but it needs to scan log tables in order to provide these data.
+-- This function returns statistics on logged data changes between 2 marks as viewed through the log tables for one tables group.
+-- It provides much precise information than emaj_log_stat_group but it needs to scan log tables in order to provide these data.
 -- So the response time may be much longer.
 -- Input: group name, the 2 marks names defining a range
--- Output: table of updates by user and table.
+-- Output: set of stat rows by table, user and SQL type
   BEGIN
     RETURN QUERY
       SELECT stat_group, stat_schema, stat_table, stat_first_mark, stat_first_mark_datetime, stat_last_mark, stat_last_mark_datetime,
@@ -10138,15 +10136,15 @@ $emaj_detailed_log_stat_group$
   END;
 $emaj_detailed_log_stat_group$;
 COMMENT ON FUNCTION emaj.emaj_detailed_log_stat_group(TEXT,TEXT,TEXT) IS
-$$Returns detailed statistics about logged events for an E-Maj group between 2 marks for a group.$$;
+$$Returns detailed statistics about logged data changes between 2 marks for a single group.$$;
 CREATE OR REPLACE FUNCTION emaj.emaj_detailed_log_stat_groups(p_groupNames TEXT[], p_firstMark TEXT, p_lastMark TEXT)
 RETURNS SETOF emaj.emaj_detailed_log_stat_type LANGUAGE plpgsql AS
 $emaj_detailed_log_stat_groups$
--- This function returns statistics on row updates executed between 2 marks as viewed through the log tables for several tables group.
--- It provides more information than emaj_log_stat_group but it needs to scan log tables in order to provide these data.
+-- This function returns statistics on logged data changes between 2 marks as viewed through the log tables for several tables groups.
+-- It provides much precise information than emaj_log_stat_group but it needs to scan log tables in order to provide these data.
 -- So the response time may be much longer.
 -- Input: group names array, the 2 marks names defining a range
--- Output: table of updates by user and table
+-- Output: set of stat rows by table, user and SQL type
   BEGIN
     RETURN QUERY
       SELECT stat_group, stat_schema, stat_table, stat_first_mark, stat_first_mark_datetime, stat_last_mark, stat_last_mark_datetime,
@@ -10155,21 +10153,19 @@ $emaj_detailed_log_stat_groups$
   END;
 $emaj_detailed_log_stat_groups$;
 COMMENT ON FUNCTION emaj.emaj_detailed_log_stat_groups(TEXT[],TEXT,TEXT) IS
-$$Returns detailed statistics about logged events for an E-Maj group between 2 marks for several groups.$$;
+$$Returns detailed statistics about logged data changes between 2 marks for several groups.$$;
 CREATE OR REPLACE FUNCTION emaj._detailed_log_stat_groups(p_groupNames TEXT[], p_multiGroup BOOLEAN, p_firstMark TEXT, p_lastMark TEXT)
 RETURNS SETOF emaj._detailed_log_stat_type LANGUAGE plpgsql AS
 $_detailed_log_stat_groups$
--- This function effectively returns statistics on row updates executed between 2 marks as viewed through the log tables for one or several
--- groups.
--- It provides more information than emaj_log_stat_group but it needs to scan log tables in order to provide these data.
+-- This function effectively returns statistics on logged data changes executed between 2 marks as viewed through the log tables for one
+-- or several groups.
+-- It provides muche precise information than emaj_log_stat_group but it needs to scan log tables in order to provide these data.
 -- So the response time may be much longer.
--- The function is directly called by Emaj_web.
 -- Input: groups name array, a boolean indicating whether the calling function is a multi_groups function,
 --        the 2 mark names defining a range
 --   a NULL value or an empty string as last_mark indicates the current state
 --   The keyword 'EMAJ_LAST_MARK' can be used as first or last mark to specify the last set mark.
--- Output: table of updates by user and table
--- This function may be directly called by the Emaj_web client.
+-- Output: set of stat rows by table, user and SQL type
   DECLARE
     v_firstMarkTimeId        BIGINT;
     v_lastMarkTimeId         BIGINT;
@@ -10273,7 +10269,7 @@ $_detailed_log_stat_groups$
              || coalesce(' AND emaj_gid <= '|| v_upperBoundGid, '')
              || ' GROUP BY stat_group, stat_schema, stat_table, stat_user, stat_verb'
              || ' ORDER BY stat_user, stat_verb';
--- And execute the statement.
+-- Execute the statement.
         FOR r_stat IN EXECUTE v_stmt LOOP
           RETURN NEXT r_stat;
         END LOOP;
@@ -13210,8 +13206,8 @@ $do$
     RETURN;
   END;
 $do$;
-psql:sql/emaj-devel.sql:13457: NOTICE:  E-Maj installation: E-Maj successfully installed.
-psql:sql/emaj-devel.sql:13457: WARNING:  E-Maj installation: The adminpack extension is available but not yet created. Execute a "CREATE EXTENSION adminpack;" statement to enable the NO_EMPTY_FILE option use of the emaj_dump_changes_group() function.
+psql:sql/emaj-devel.sql:13453: NOTICE:  E-Maj installation: E-Maj successfully installed.
+psql:sql/emaj-devel.sql:13453: WARNING:  E-Maj installation: The adminpack extension is available but not yet created. Execute a "CREATE EXTENSION adminpack;" statement to enable the NO_EMPTY_FILE option use of the emaj_dump_changes_group() function.
 COMMIT;
 -- Test the dblink extension lack (this cannot be easily simulated in the verify.sql unit tests script when emaj is installed as an extension)
 begin;

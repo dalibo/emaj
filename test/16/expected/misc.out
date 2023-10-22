@@ -190,7 +190,7 @@ select * from emaj.emaj_log_stat_group(NULL,NULL,NULL);
 ERROR:  _check_group_names: No group to process.
 CONTEXT:  PL/pgSQL function emaj._check_group_names(text[],boolean,boolean,boolean,boolean,boolean,boolean) line 30 at RAISE
 SQL statement "SELECT emaj._check_group_names(p_groupNames := p_groupNames, p_mayBeNull := p_multiGroup, p_lockGroups := FALSE)"
-PL/pgSQL function emaj._log_stat_groups(text[],boolean,text,text) line 23 at SQL statement
+PL/pgSQL function emaj._log_stat_groups(text[],boolean,text,text) line 21 at SQL statement
 SQL statement "SELECT stat_group, stat_schema, stat_table, stat_first_mark, stat_first_mark_datetime, stat_last_mark,
              stat_last_mark_datetime, stat_rows
         FROM emaj._log_stat_groups(ARRAY[p_groupName], FALSE, p_firstMark, p_lastMark)"
@@ -199,7 +199,7 @@ select * from emaj.emaj_log_stat_groups(array['unknownGroup'],NULL,NULL);
 ERROR:  _check_group_names: The group "unknownGroup" does not exist.
 CONTEXT:  PL/pgSQL function emaj._check_group_names(text[],boolean,boolean,boolean,boolean,boolean,boolean) line 42 at RAISE
 SQL statement "SELECT emaj._check_group_names(p_groupNames := p_groupNames, p_mayBeNull := p_multiGroup, p_lockGroups := FALSE)"
-PL/pgSQL function emaj._log_stat_groups(text[],boolean,text,text) line 23 at SQL statement
+PL/pgSQL function emaj._log_stat_groups(text[],boolean,text,text) line 21 at SQL statement
 SQL statement "SELECT stat_group, stat_schema, stat_table, stat_first_mark, stat_first_mark_datetime, stat_last_mark,
              stat_last_mark_datetime, stat_rows
         FROM emaj._log_stat_groups(p_groupNames, TRUE, p_firstMark, p_lastMark)"
@@ -208,7 +208,7 @@ select * from emaj.emaj_detailed_log_stat_group(NULL,NULL,NULL);
 ERROR:  _check_group_names: No group to process.
 CONTEXT:  PL/pgSQL function emaj._check_group_names(text[],boolean,boolean,boolean,boolean,boolean,boolean) line 30 at RAISE
 SQL statement "SELECT emaj._check_group_names(p_groupNames := p_groupNames, p_mayBeNull := p_multiGroup, p_lockGroups := FALSE)"
-PL/pgSQL function emaj._detailed_log_stat_groups(text[],boolean,text,text) line 31 at PERFORM
+PL/pgSQL function emaj._detailed_log_stat_groups(text[],boolean,text,text) line 29 at PERFORM
 SQL statement "SELECT stat_group, stat_schema, stat_table, stat_first_mark, stat_first_mark_datetime, stat_last_mark, stat_last_mark_datetime,
              stat_role, stat_verb, stat_rows
         FROM emaj._detailed_log_stat_groups(ARRAY[p_groupName], FALSE, p_firstMark, p_lastMark)"
@@ -217,7 +217,7 @@ select * from emaj.emaj_detailed_log_stat_groups(array['unknownGroup'],NULL,NULL
 ERROR:  _check_group_names: The group "unknownGroup" does not exist.
 CONTEXT:  PL/pgSQL function emaj._check_group_names(text[],boolean,boolean,boolean,boolean,boolean,boolean) line 42 at RAISE
 SQL statement "SELECT emaj._check_group_names(p_groupNames := p_groupNames, p_mayBeNull := p_multiGroup, p_lockGroups := FALSE)"
-PL/pgSQL function emaj._detailed_log_stat_groups(text[],boolean,text,text) line 31 at PERFORM
+PL/pgSQL function emaj._detailed_log_stat_groups(text[],boolean,text,text) line 29 at PERFORM
 SQL statement "SELECT stat_group, stat_schema, stat_table, stat_first_mark, stat_first_mark_datetime, stat_last_mark, stat_last_mark_datetime,
              stat_role, stat_verb, stat_rows
         FROM emaj._detailed_log_stat_groups(p_groupNames, TRUE, p_firstMark, p_lastMark)"
@@ -228,7 +228,7 @@ ERROR:  _check_marks_range: The first mark cannot be NULL or empty.
 CONTEXT:  PL/pgSQL function emaj._check_marks_range(text[],text,text,boolean) line 12 at RAISE
 SQL statement "SELECT *
                                                                                                                                               FROM emaj._check_marks_range(p_groupNames := p_groupNames, p_firstMark := p_firstMark, p_lastMark := p_lastMark)"
-PL/pgSQL function emaj._log_stat_groups(text[],boolean,text,text) line 27 at SQL statement
+PL/pgSQL function emaj._log_stat_groups(text[],boolean,text,text) line 25 at SQL statement
 SQL statement "SELECT stat_group, stat_schema, stat_table, stat_first_mark, stat_first_mark_datetime, stat_last_mark,
              stat_last_mark_datetime, stat_rows
         FROM emaj._log_stat_groups(ARRAY[p_groupName], FALSE, p_firstMark, p_lastMark)"
@@ -238,7 +238,7 @@ ERROR:  _check_marks_range: The first mark cannot be NULL or empty.
 CONTEXT:  PL/pgSQL function emaj._check_marks_range(text[],text,text,boolean) line 12 at RAISE
 SQL statement "SELECT *
                                                                                                                                               FROM emaj._check_marks_range(p_groupNames := p_groupNames, p_firstMark := p_firstMark, p_lastMark := p_lastMark)"
-PL/pgSQL function emaj._log_stat_groups(text[],boolean,text,text) line 27 at SQL statement
+PL/pgSQL function emaj._log_stat_groups(text[],boolean,text,text) line 25 at SQL statement
 SQL statement "SELECT stat_group, stat_schema, stat_table, stat_first_mark, stat_first_mark_datetime, stat_last_mark,
              stat_last_mark_datetime, stat_rows
         FROM emaj._log_stat_groups(ARRAY[p_groupName], FALSE, p_firstMark, p_lastMark)"
@@ -250,7 +250,7 @@ SQL statement "SELECT emaj._check_mark_name(p_groupNames := p_groupNames, p_mark
 PL/pgSQL function emaj._check_marks_range(text[],text,text,boolean) line 15 at SQL statement
 SQL statement "SELECT *
                                                                                                                                               FROM emaj._check_marks_range(p_groupNames := p_groupNames, p_firstMark := p_firstMark, p_lastMark := p_lastMark)"
-PL/pgSQL function emaj._log_stat_groups(text[],boolean,text,text) line 27 at SQL statement
+PL/pgSQL function emaj._log_stat_groups(text[],boolean,text,text) line 25 at SQL statement
 SQL statement "SELECT stat_group, stat_schema, stat_table, stat_first_mark, stat_first_mark_datetime, stat_last_mark,
              stat_last_mark_datetime, stat_rows
         FROM emaj._log_stat_groups(ARRAY[p_groupName], FALSE, p_firstMark, p_lastMark)"
@@ -262,7 +262,7 @@ SQL statement "SELECT emaj._check_mark_name(p_groupNames := p_groupNames, p_mark
 PL/pgSQL function emaj._check_marks_range(text[],text,text,boolean) line 29 at SQL statement
 SQL statement "SELECT *
                                                                                                                                               FROM emaj._check_marks_range(p_groupNames := p_groupNames, p_firstMark := p_firstMark, p_lastMark := p_lastMark)"
-PL/pgSQL function emaj._log_stat_groups(text[],boolean,text,text) line 27 at SQL statement
+PL/pgSQL function emaj._log_stat_groups(text[],boolean,text,text) line 25 at SQL statement
 SQL statement "SELECT stat_group, stat_schema, stat_table, stat_first_mark, stat_first_mark_datetime, stat_last_mark,
              stat_last_mark_datetime, stat_rows
         FROM emaj._log_stat_groups(ARRAY[p_groupName], FALSE, p_firstMark, p_lastMark)"
@@ -274,7 +274,7 @@ SQL statement "SELECT emaj._check_mark_name(p_groupNames := p_groupNames, p_mark
 PL/pgSQL function emaj._check_marks_range(text[],text,text,boolean) line 15 at SQL statement
 SQL statement "SELECT *
                                                                                                                                               FROM emaj._check_marks_range(p_groupNames := p_groupNames, p_firstMark := p_firstMark, p_lastMark := p_lastMark)"
-PL/pgSQL function emaj._detailed_log_stat_groups(text[],boolean,text,text) line 34 at SQL statement
+PL/pgSQL function emaj._detailed_log_stat_groups(text[],boolean,text,text) line 32 at SQL statement
 SQL statement "SELECT stat_group, stat_schema, stat_table, stat_first_mark, stat_first_mark_datetime, stat_last_mark, stat_last_mark_datetime,
              stat_role, stat_verb, stat_rows
         FROM emaj._detailed_log_stat_groups(ARRAY[p_groupName], FALSE, p_firstMark, p_lastMark)"
@@ -286,7 +286,7 @@ SQL statement "SELECT emaj._check_mark_name(p_groupNames := p_groupNames, p_mark
 PL/pgSQL function emaj._check_marks_range(text[],text,text,boolean) line 29 at SQL statement
 SQL statement "SELECT *
                                                                                                                                               FROM emaj._check_marks_range(p_groupNames := p_groupNames, p_firstMark := p_firstMark, p_lastMark := p_lastMark)"
-PL/pgSQL function emaj._detailed_log_stat_groups(text[],boolean,text,text) line 34 at SQL statement
+PL/pgSQL function emaj._detailed_log_stat_groups(text[],boolean,text,text) line 32 at SQL statement
 SQL statement "SELECT stat_group, stat_schema, stat_table, stat_first_mark, stat_first_mark_datetime, stat_last_mark, stat_last_mark_datetime,
              stat_role, stat_verb, stat_rows
         FROM emaj._detailed_log_stat_groups(ARRAY[p_groupName], FALSE, p_firstMark, p_lastMark)"
@@ -296,7 +296,7 @@ ERROR:  _check_marks_range: The first mark cannot be NULL or empty.
 CONTEXT:  PL/pgSQL function emaj._check_marks_range(text[],text,text,boolean) line 12 at RAISE
 SQL statement "SELECT *
                                                                                                                                               FROM emaj._check_marks_range(p_groupNames := p_groupNames, p_firstMark := p_firstMark, p_lastMark := p_lastMark)"
-PL/pgSQL function emaj._log_stat_groups(text[],boolean,text,text) line 27 at SQL statement
+PL/pgSQL function emaj._log_stat_groups(text[],boolean,text,text) line 25 at SQL statement
 SQL statement "SELECT stat_group, stat_schema, stat_table, stat_first_mark, stat_first_mark_datetime, stat_last_mark,
              stat_last_mark_datetime, stat_rows
         FROM emaj._log_stat_groups(p_groupNames, TRUE, p_firstMark, p_lastMark)"
@@ -308,7 +308,7 @@ SQL statement "SELECT emaj._check_mark_name(p_groupNames := p_groupNames, p_mark
 PL/pgSQL function emaj._check_marks_range(text[],text,text,boolean) line 29 at SQL statement
 SQL statement "SELECT *
                                                                                                                                               FROM emaj._check_marks_range(p_groupNames := p_groupNames, p_firstMark := p_firstMark, p_lastMark := p_lastMark)"
-PL/pgSQL function emaj._log_stat_groups(text[],boolean,text,text) line 27 at SQL statement
+PL/pgSQL function emaj._log_stat_groups(text[],boolean,text,text) line 25 at SQL statement
 SQL statement "SELECT stat_group, stat_schema, stat_table, stat_first_mark, stat_first_mark_datetime, stat_last_mark,
              stat_last_mark_datetime, stat_rows
         FROM emaj._log_stat_groups(p_groupNames, TRUE, p_firstMark, p_lastMark)"
@@ -318,7 +318,7 @@ ERROR:  _check_marks_range: The first mark cannot be NULL or empty.
 CONTEXT:  PL/pgSQL function emaj._check_marks_range(text[],text,text,boolean) line 12 at RAISE
 SQL statement "SELECT *
                                                                                                                                               FROM emaj._check_marks_range(p_groupNames := p_groupNames, p_firstMark := p_firstMark, p_lastMark := p_lastMark)"
-PL/pgSQL function emaj._detailed_log_stat_groups(text[],boolean,text,text) line 34 at SQL statement
+PL/pgSQL function emaj._detailed_log_stat_groups(text[],boolean,text,text) line 32 at SQL statement
 SQL statement "SELECT stat_group, stat_schema, stat_table, stat_first_mark, stat_first_mark_datetime, stat_last_mark, stat_last_mark_datetime,
              stat_role, stat_verb, stat_rows
         FROM emaj._detailed_log_stat_groups(p_groupNames, TRUE, p_firstMark, p_lastMark)"
@@ -330,7 +330,7 @@ SQL statement "SELECT emaj._check_mark_name(p_groupNames := p_groupNames, p_mark
 PL/pgSQL function emaj._check_marks_range(text[],text,text,boolean) line 29 at SQL statement
 SQL statement "SELECT *
                                                                                                                                               FROM emaj._check_marks_range(p_groupNames := p_groupNames, p_firstMark := p_firstMark, p_lastMark := p_lastMark)"
-PL/pgSQL function emaj._detailed_log_stat_groups(text[],boolean,text,text) line 34 at SQL statement
+PL/pgSQL function emaj._detailed_log_stat_groups(text[],boolean,text,text) line 32 at SQL statement
 SQL statement "SELECT stat_group, stat_schema, stat_table, stat_first_mark, stat_first_mark_datetime, stat_last_mark, stat_last_mark_datetime,
              stat_role, stat_verb, stat_rows
         FROM emaj._detailed_log_stat_groups(p_groupNames, TRUE, p_firstMark, p_lastMark)"

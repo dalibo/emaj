@@ -2835,7 +2835,7 @@ select * from emaj.emaj_log_stat_group('dummyGroup', 'dummyMark', NULL);
 ERROR:  _check_group_names: The group "dummyGroup" does not exist.
 CONTEXT:  PL/pgSQL function emaj._check_group_names(text[],boolean,boolean,boolean,boolean,boolean,boolean) line 42 at RAISE
 SQL statement "SELECT emaj._check_group_names(p_groupNames := p_groupNames, p_mayBeNull := p_multiGroup, p_lockGroups := FALSE)"
-PL/pgSQL function emaj._log_stat_groups(text[],boolean,text,text) line 23 at SQL statement
+PL/pgSQL function emaj._log_stat_groups(text[],boolean,text,text) line 21 at SQL statement
 SQL statement "SELECT stat_group, stat_schema, stat_table, stat_first_mark, stat_first_mark_datetime, stat_last_mark,
              stat_last_mark_datetime, stat_rows
         FROM emaj._log_stat_groups(ARRAY[p_groupName], FALSE, p_firstMark, p_lastMark)"
@@ -2844,7 +2844,7 @@ select * from emaj.emaj_log_stat_groups(array['dummyGroup'], 'dummyMark', NULL);
 ERROR:  _check_group_names: The group "dummyGroup" does not exist.
 CONTEXT:  PL/pgSQL function emaj._check_group_names(text[],boolean,boolean,boolean,boolean,boolean,boolean) line 42 at RAISE
 SQL statement "SELECT emaj._check_group_names(p_groupNames := p_groupNames, p_mayBeNull := p_multiGroup, p_lockGroups := FALSE)"
-PL/pgSQL function emaj._log_stat_groups(text[],boolean,text,text) line 23 at SQL statement
+PL/pgSQL function emaj._log_stat_groups(text[],boolean,text,text) line 21 at SQL statement
 SQL statement "SELECT stat_group, stat_schema, stat_table, stat_first_mark, stat_first_mark_datetime, stat_last_mark,
              stat_last_mark_datetime, stat_rows
         FROM emaj._log_stat_groups(p_groupNames, TRUE, p_firstMark, p_lastMark)"
@@ -2853,7 +2853,7 @@ select * from emaj.emaj_detailed_log_stat_group('dummyGroup', 'dummyMark', NULL)
 ERROR:  _check_group_names: The group "dummyGroup" does not exist.
 CONTEXT:  PL/pgSQL function emaj._check_group_names(text[],boolean,boolean,boolean,boolean,boolean,boolean) line 42 at RAISE
 SQL statement "SELECT emaj._check_group_names(p_groupNames := p_groupNames, p_mayBeNull := p_multiGroup, p_lockGroups := FALSE)"
-PL/pgSQL function emaj._detailed_log_stat_groups(text[],boolean,text,text) line 31 at PERFORM
+PL/pgSQL function emaj._detailed_log_stat_groups(text[],boolean,text,text) line 29 at PERFORM
 SQL statement "SELECT stat_group, stat_schema, stat_table, stat_first_mark, stat_first_mark_datetime, stat_last_mark, stat_last_mark_datetime,
              stat_role, stat_verb, stat_rows
         FROM emaj._detailed_log_stat_groups(ARRAY[p_groupName], FALSE, p_firstMark, p_lastMark)"
@@ -2862,7 +2862,7 @@ select * from emaj.emaj_detailed_log_stat_groups(array['dummyGroup'],NULL,NULL);
 ERROR:  _check_group_names: The group "dummyGroup" does not exist.
 CONTEXT:  PL/pgSQL function emaj._check_group_names(text[],boolean,boolean,boolean,boolean,boolean,boolean) line 42 at RAISE
 SQL statement "SELECT emaj._check_group_names(p_groupNames := p_groupNames, p_mayBeNull := p_multiGroup, p_lockGroups := FALSE)"
-PL/pgSQL function emaj._detailed_log_stat_groups(text[],boolean,text,text) line 31 at PERFORM
+PL/pgSQL function emaj._detailed_log_stat_groups(text[],boolean,text,text) line 29 at PERFORM
 SQL statement "SELECT stat_group, stat_schema, stat_table, stat_first_mark, stat_first_mark_datetime, stat_last_mark, stat_last_mark_datetime,
              stat_role, stat_verb, stat_rows
         FROM emaj._detailed_log_stat_groups(p_groupNames, TRUE, p_firstMark, p_lastMark)"
