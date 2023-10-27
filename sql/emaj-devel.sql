@@ -10967,13 +10967,13 @@ $_gen_sql_dump_changes_group$
         CASE
           WHEN v_option LIKE 'COLS_ORDER=%' THEN
             CASE
-              WHEN v_option = 'COLS_ORDER=TABLE_LOG' THEN
-                v_colsOrder = 'TABLE_LOG';
+              WHEN v_option = 'COLS_ORDER=LOG_TABLE' THEN
+                v_colsOrder = 'LOG_TABLE';
               WHEN v_option = 'COLS_ORDER=PK' THEN
                 v_colsOrder = 'PK';
               ELSE
                 RAISE EXCEPTION '_gen_sql_dump_changes_group: Error on the option "%". The COLS_ORDER option only accepts '
-                                'TABLE_LOG or PK values).',
+                                'LOG_TABLE or PK values).',
                                 v_option;
             END CASE;
           WHEN v_option LIKE 'CONSOLIDATION=%' THEN

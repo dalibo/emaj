@@ -1070,7 +1070,7 @@ SQL statement "SELECT p_nbStmt
                           FROM emaj._gen_sql_dump_changes_group(p_groupName, p_firstMark, p_lastMark, p_optionsList, p_tblseqs, TRUE)"
 PL/pgSQL function emaj.emaj_gen_sql_dump_changes_group(text,text,text,text,text[]) line 25 at SQL statement
 select emaj.emaj_gen_sql_dump_changes_group('myGroup2', 'Mark21', 'Mark23', 'COLS_ORDER = dummy', NULL);
-ERROR:  _gen_sql_dump_changes_group: Error on the option "COLS_ORDER=DUMMY". The COLS_ORDER option only accepts TABLE_LOG or PK values).
+ERROR:  _gen_sql_dump_changes_group: Error on the option "COLS_ORDER=DUMMY". The COLS_ORDER option only accepts LOG_TABLE or PK values).
 CONTEXT:  PL/pgSQL function emaj._gen_sql_dump_changes_group(text,text,text,text,text[],boolean) line 95 at RAISE
 SQL statement "SELECT p_nbStmt
                           FROM emaj._gen_sql_dump_changes_group(p_groupName, p_firstMark, p_lastMark, p_optionsList, p_tblseqs, TRUE)"
@@ -1573,6 +1573,56 @@ SELECT sql_tblseq, sql_text FROM emaj_temp_sql WHERE sql_tblseq in ('mytbl1','my
  myseq1     |  ORDER BY emaj_tuple DESC
  myseq1     | ;
 (23 rows)
+
+SELECT emaj.emaj_gen_sql_dump_changes_group('myGroup2', 'Mark21', 'Mark23', 'COLS_ORDER=LOG_TABLE,CONSOLIDATION=FULL,SQL_FORMAT=PRETTY', NULL);
+                    emaj_gen_sql_dump_changes_group                     
+------------------------------------------------------------------------
+ 12 SQL statements are available in the "emaj_temp_sql" temporary table
+(1 row)
+
+SELECT sql_tblseq, sql_text FROM emaj_temp_sql WHERE sql_tblseq = 'mytbl1' and sql_line_number >= 1 order by sql_stmt_number, sql_line_number;
+ sql_tblseq |                                                     sql_text                                                     
+------------+------------------------------------------------------------------------------------------------------------------
+ mytbl1     | WITH keys AS (
+ mytbl1     |   SELECT col11,col12, min(emaj_gid) AS min_gid, max(emaj_gid) AS max_gid
+ mytbl1     |     FROM emaj_myschema2.mytbl1_log
+ mytbl1     |     WHERE emaj_gid > 4000000 AND emaj_gid <= 5011710
+ mytbl1     |     GROUP BY col11,col12
+ mytbl1     |   ),
+ mytbl1     |      consolidated AS (
+ mytbl1     |   SELECT tbl.*
+ mytbl1     |     FROM emaj_myschema2.mytbl1_log tbl
+ mytbl1     |          JOIN keys ON (tbl.col11 = keys.col11 AND tbl.col12 = keys.col12)
+ mytbl1     |     WHERE (tbl.emaj_tuple = 'OLD' AND tbl.emaj_gid = keys.min_gid)
+ mytbl1     |        OR (tbl.emaj_tuple = 'NEW' AND tbl.emaj_gid = keys.max_gid)
+ mytbl1     |   ),
+ mytbl1     |      unchanged_keys AS (
+ mytbl1     |   SELECT r1.col11,r1.col12
+ mytbl1     |     FROM consolidated r1
+ mytbl1     |          JOIN consolidated r2 ON (r1.col11=r2.col11 AND r1.col12=r2.col12)
+ mytbl1     |     WHERE r1.emaj_tuple = 'OLD' AND r2.emaj_tuple = 'NEW'
+ mytbl1     |       AND (r1.col13=r2.col13 OR (r1.col13 IS NULL AND r2.col13 IS NULL))
+ mytbl1     |   )
+ mytbl1     |   SELECT tbl.col11,tbl.col12,tbl.col13,emaj_tuple
+ mytbl1     |     FROM consolidated tbl
+ mytbl1     |     WHERE NOT EXISTS (SELECT 0 FROM unchanged_keys keys WHERE tbl.col11 = keys.col11 AND tbl.col12 = keys.col12)
+ mytbl1     |     ORDER BY tbl.col11,tbl.col12, emaj_gid, emaj_tuple DESC;
+(24 rows)
+
+SELECT emaj.emaj_gen_sql_dump_changes_group('myGroup2', 'Mark21', 'Mark23', 'COLS_ORDER=PK,SQL_FORMAT=PRETTY', NULL);
+                    emaj_gen_sql_dump_changes_group                     
+------------------------------------------------------------------------
+ 10 SQL statements are available in the "emaj_temp_sql" temporary table
+(1 row)
+
+SELECT sql_tblseq, sql_text FROM emaj_temp_sql WHERE sql_tblseq = 'mytbl1' and sql_line_number >= 1 order by sql_stmt_number, sql_line_number;
+ sql_tblseq |                                              sql_text                                               
+------------+-----------------------------------------------------------------------------------------------------
+ mytbl1     | SELECT tbl.col11,tbl.col12,emaj_gid,emaj_tuple,tbl.col13,emaj_verb,emaj_changed,emaj_txid,emaj_user
+ mytbl1     |   FROM emaj_myschema2.mytbl1_log tbl
+ mytbl1     |   WHERE emaj_gid > 4000000 AND emaj_gid <= 5011710
+ mytbl1     |   ORDER BY emaj_gid, emaj_tuple DESC;
+(4 rows)
 
 SELECT emaj.emaj_gen_sql_dump_changes_group('myGroup2', 'Mark21', 'Mark23', 'SEQUENCES_ONLY', NULL);
                     emaj_gen_sql_dump_changes_group                    

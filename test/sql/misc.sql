@@ -467,6 +467,10 @@ SELECT emaj.emaj_gen_sql_dump_changes_group('myGroup2', 'Mark21', 'Mark23', 'ORD
 																			 Consolidation = partial,
 																			 Sql_Format = Pretty', NULL);
 SELECT sql_tblseq, sql_text FROM emaj_temp_sql WHERE sql_tblseq in ('mytbl1','myseq1') and sql_line_number >= 1 order by sql_stmt_number, sql_line_number;
+SELECT emaj.emaj_gen_sql_dump_changes_group('myGroup2', 'Mark21', 'Mark23', 'COLS_ORDER=LOG_TABLE,CONSOLIDATION=FULL,SQL_FORMAT=PRETTY', NULL);
+SELECT sql_tblseq, sql_text FROM emaj_temp_sql WHERE sql_tblseq = 'mytbl1' and sql_line_number >= 1 order by sql_stmt_number, sql_line_number;
+SELECT emaj.emaj_gen_sql_dump_changes_group('myGroup2', 'Mark21', 'Mark23', 'COLS_ORDER=PK,SQL_FORMAT=PRETTY', NULL);
+SELECT sql_tblseq, sql_text FROM emaj_temp_sql WHERE sql_tblseq = 'mytbl1' and sql_line_number >= 1 order by sql_stmt_number, sql_line_number;
 
 SELECT emaj.emaj_gen_sql_dump_changes_group('myGroup2', 'Mark21', 'Mark23', 'SEQUENCES_ONLY', NULL);
 SELECT sql_rel_kind, count(*) FROM emaj_temp_sql WHERE sql_line_number = 1 group by sql_rel_kind ORDER BY sql_rel_kind;

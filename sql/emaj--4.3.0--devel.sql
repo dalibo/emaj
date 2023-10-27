@@ -394,6 +394,396 @@ $_detailed_log_stat_groups$
   END;
 $_detailed_log_stat_groups$;
 
+CREATE OR REPLACE FUNCTION emaj._gen_sql_dump_changes_group(p_groupName TEXT, p_firstMark TEXT, INOUT p_lastMark TEXT,
+                                                            p_optionsList TEXT, p_tblseqs TEXT[], p_genSqlOnly BOOLEAN,
+                                                            OUT p_nbStmt INT, OUT p_copyOptions TEXT, OUT p_noEmptyFiles BOOLEAN,
+                                                            OUT p_isPsqlCopy BOOLEAN)
+LANGUAGE plpgsql AS
+$_gen_sql_dump_changes_group$
+-- This function returns SQL statements that read log tables and sequences states to show the data changes recorded between 2 marks for
+--   a group.
+-- It is called by both emaj_gen_sql_dump_changes_group() and emaj_dump_changes_group() functions to prepare the SQL statements to be
+--   stored or executed.
+-- The function checks the supplied parameters, including the options that may be common or specific to both calling functions.
+-- Input: group name, 2 mark names defining the time range,
+--        options (a comma separated options list),
+--        array of schema qualified table and sequence names to process (NULL to process all relations),
+--        a boolean indentifying the calling function.
+-- Output: the number of generated SQL statements, excluding comments, but including SET or RESET statements, if any.
+--         the COPY_OPTIONS and NO_EMPTY_FILES options needed by the emaj_dump_changes_group() function,
+--         a flag for generated psql \copy meta-commands needed by the emaj_gen_sql_dump_changes_group() function.
+  DECLARE
+    v_firstMarkTimeId        BIGINT;
+    v_lastMarkTimeId         BIGINT;
+    v_firstMarkTs            TIMESTAMPTZ;
+    v_lastMarkTs             TIMESTAMPTZ;
+    v_firstEmajGid           BIGINT;
+    v_lastEmajGid            BIGINT;
+    v_optionsList            TEXT;
+    v_options                TEXT[];
+    v_option                 TEXT;
+    v_colsOrder              TEXT;
+    v_consolidation          TEXT;
+    v_copyOptions            TEXT;
+    v_psqlCopyDir            TEXT;
+    v_psqlCopyOptions        TEXT;
+    v_emajColumnsList        TEXT;
+    v_isPsqlCopy             BOOLEAN = FALSE;
+    v_noEmptyFiles           BOOLEAN = FALSE;
+    v_orderBy                TEXT;
+    v_sequencesOnly          BOOLEAN = FALSE;
+    v_sqlFormat              TEXT = 'RAW';
+    v_tablesOnly             BOOLEAN = FALSE;
+    v_tableWithoutPkList     TEXT;
+    v_nbStmt                 INT = 0;
+    v_relFirstMark           TEXT;
+    v_relLastMark            TEXT;
+    v_relFirstEmajGid        BIGINT;
+    v_relLastEmajGid         BIGINT;
+    v_relFirstTimeId         BIGINT;
+    v_relLastTimeId          BIGINT;
+    v_stmt                   TEXT;
+    v_comment                TEXT;
+    v_copyOutputFile         TEXT;
+    r_rel                    RECORD;
+  BEGIN
+-- Check the group name.
+    PERFORM emaj._check_group_names(p_groupNames := ARRAY[p_groupName], p_mayBeNull := FALSE, p_lockGroups := FALSE);
+-- Check the marks range and get some data about both marks.
+    SELECT * INTO p_firstMark, p_lastMark, v_firstMarkTimeId, v_lastMarkTimeId, v_firstMarkTs, v_lastMarkTs, v_firstEmajGid, v_lastEmajGid
+      FROM emaj._check_marks_range(p_groupNames := ARRAY[p_groupName], p_firstMark := p_firstMark, p_lastMark := p_lastMark,
+                                   p_finiteUpperBound := TRUE);
+-- Analyze the options parameter.
+    IF p_optionsList IS NOT NULL THEN
+      v_optionsList = p_optionsList;
+      IF NOT p_genSqlOnly THEN
+-- Extract the COPY_OPTIONS list, if any, before removing spaces.
+        v_copyOptions = (regexp_match(v_optionsList, 'COPY_OPTIONS\s*?=\s*?\((.*?)\)', 'i'))[1];
+        IF v_copyOptions IS NOT NULL THEN
+          v_optionsList = replace(v_optionsList, v_copyOptions, '');
+        END IF;
+      END IF;
+      IF p_genSqlOnly THEN
+-- Extract the PSQL_COPY_DIR and PSQL_COPY_OPTIONS options, if any, before removing spaces.
+        v_psqlCopyDir = (regexp_match(v_optionsList, 'PSQL_COPY_DIR\s*?=\s*?\((.*?)\)', 'i'))[1];
+        IF v_psqlCopyDir IS NOT NULL THEN
+          v_optionsList = replace(v_optionsList, v_psqlCopyDir, '');
+        END IF;
+        v_psqlCopyOptions = (regexp_match(v_optionsList, 'PSQL_COPY_OPTIONS\s*?=\s*?\((.*?)\)', 'i'))[1];
+        IF v_psqlCopyOptions IS NOT NULL THEN
+          v_optionsList = replace(v_optionsList, v_psqlCopyOptions, '');
+        END IF;
+      END IF;
+-- Remove spaces, tabs and newlines from the options list.
+      v_optionsList = regexp_replace(v_optionsList, '\s', '', 'g');
+-- Extract the option values list, if any.
+      v_emajColumnsList = (regexp_match(v_optionsList, 'EMAJ_COLUMNS\s*?=\s*?\((.*?)\)', 'i'))[1];
+      IF v_emajColumnsList IS NOT NULL THEN
+        v_optionsList = replace(v_optionsList, v_emajColumnsList, '');
+      END IF;
+-- Process each option from the comma separated list.
+      v_options = regexp_split_to_array(upper(v_optionsList), ',');
+      FOREACH v_option IN ARRAY v_options
+      LOOP
+        CASE
+          WHEN v_option LIKE 'COLS_ORDER=%' THEN
+            CASE
+              WHEN v_option = 'COLS_ORDER=LOG_TABLE' THEN
+                v_colsOrder = 'LOG_TABLE';
+              WHEN v_option = 'COLS_ORDER=PK' THEN
+                v_colsOrder = 'PK';
+              ELSE
+                RAISE EXCEPTION '_gen_sql_dump_changes_group: Error on the option "%". The COLS_ORDER option only accepts '
+                                'LOG_TABLE or PK values).',
+                                v_option;
+            END CASE;
+          WHEN v_option LIKE 'CONSOLIDATION=%' THEN
+            CASE
+              WHEN v_option = 'CONSOLIDATION=NONE' THEN
+                v_consolidation = 'NONE';
+              WHEN v_option = 'CONSOLIDATION=PARTIAL' THEN
+                v_consolidation = 'PARTIAL';
+              WHEN v_option = 'CONSOLIDATION=FULL' THEN
+                v_consolidation = 'FULL';
+              ELSE
+                RAISE EXCEPTION '_gen_sql_dump_changes_group: Error on the option "%". The CONSOLIDATION option only accepts '
+                                'NONE or PARTIAL or FULL values).',
+                                v_option;
+            END CASE;
+          WHEN v_option LIKE 'COPY_OPTIONS=%' AND NOT p_genSqlOnly THEN
+            IF v_option <> 'COPY_OPTIONS=()' THEN
+              RAISE EXCEPTION '_gen_sql_dump_changes_group: Error on the option "%". The COPY options must be set between ().',
+                              v_option;
+            END IF;
+-- Check the copy options parameter doesn't contain unquoted semicolon that could be used for sql injection.
+            IF regexp_replace(v_copyOptions,'''.*''','') LIKE '%;%' THEN
+              RAISE EXCEPTION '_gen_sql_dump_changes_group: Unquoted semi-column in COPY options is illegal.';
+            END IF;
+            v_copyOptions = '(' || v_copyOptions || ')';
+          WHEN v_option LIKE 'EMAJ_COLUMNS=%' THEN
+            CASE
+              WHEN v_option = 'EMAJ_COLUMNS=ALL' THEN
+                v_emajColumnsList = '*';
+              WHEN v_option = 'EMAJ_COLUMNS=MIN' THEN
+                v_emajColumnsList = 'MIN';
+              WHEN v_option = 'EMAJ_COLUMNS=()' THEN
+                IF v_emajColumnsList NOT ILIKE '%emaj_tuple%' THEN
+                  RAISE EXCEPTION '_gen_sql_dump_changes_group: In the EMAJ_COLUMN option, the "emaj_tuple" column must be part '
+                                  'of the columns list.';
+                END IF;
+              ELSE
+                RAISE EXCEPTION '_gen_sql_dump_changes_group: Error on the option "%". The EMAJ_COLUMNS option only accepts '
+                                'ALL or MIN values or a (columns list).',
+                                v_option;
+            END CASE;
+          WHEN v_option = 'NO_EMPTY_FILES' AND NOT p_genSqlOnly THEN
+            v_noEmptyFiles = TRUE;
+          WHEN v_option LIKE 'ORDER_BY=%' THEN
+            CASE
+              WHEN v_option = 'ORDER_BY=PK' THEN
+                v_orderBy = 'PK';
+              WHEN v_option = 'ORDER_BY=TIME' THEN
+                v_orderBy = 'TIME';
+              ELSE
+                RAISE EXCEPTION '_gen_sql_dump_changes_group: Error on the option "%". The ORDER_BY option only accepts '
+                                'PK or TIME values.',
+                                v_option;
+            END CASE;
+          WHEN v_option LIKE 'PSQL_COPY_DIR%' AND p_genSqlOnly THEN
+            v_isPsqlCopy = TRUE;
+            IF v_option <> 'PSQL_COPY_DIR=()' THEN
+              RAISE EXCEPTION '_gen_sql_dump_changes_group: Error on the option "%". The directory name must be set between ().',
+                              v_option;
+            END IF;
+          WHEN v_option LIKE 'PSQL_COPY_OPTIONS=%' AND p_genSqlOnly THEN
+            IF v_option <> 'PSQL_COPY_OPTIONS=()' THEN
+              RAISE EXCEPTION '_gen_sql_dump_changes_group: Error on the option "%". The COPY options list must be set between ().',
+                               v_option;
+            END IF;
+          WHEN v_option = 'SEQUENCES_ONLY' THEN
+            v_sequencesOnly = TRUE;
+          WHEN v_option LIKE 'SQL_FORMAT=%' AND p_genSqlOnly THEN
+            CASE
+              WHEN v_option = 'SQL_FORMAT=RAW' THEN
+                v_sqlFormat = 'RAW';
+              WHEN v_option = 'SQL_FORMAT=PRETTY' THEN
+                v_sqlFormat = 'PRETTY';
+              ELSE
+                RAISE EXCEPTION '_gen_sql_dump_changes_group: Error on the option "%". The SQL_FORMAT option only accepts '
+                                'RAW or PRETTY values.',
+                                v_option;
+            END CASE;
+          WHEN v_option = 'TABLES_ONLY' THEN
+            v_tablesOnly = TRUE;
+          ELSE
+            IF v_option <> '' THEN
+              RAISE EXCEPTION '_gen_sql_dump_changes_group: The option "%" is unknown.', v_option;
+            END IF;
+        END CASE;
+      END LOOP;
+-- Validate the relations between options.
+-- SEQUENCES_ONLY and TABLES_ONLY are not compatible.
+      IF v_sequencesOnly AND v_tablesOnly THEN
+        RAISE EXCEPTION '_gen_sql_dump_changes_group: SEQUENCES_ONLY and TABLES_ONLY options are mutually exclusive.';
+      END IF;
+-- PSQL_COPY_OPTIONS needs a PSQL_COPY_DIR to be set;
+      IF v_psqlCopyOptions IS NOT NULL AND NOT v_isPsqlCopy THEN
+        RAISE EXCEPTION '_gen_sql_dump_changes_group: the PSQL_COPY_OPTIONS option needs a PSQL_COPY_DIR option to be set.';
+      END IF;
+-- PSQL_COPY_DIR and FORMAT=PRETTY are not compatible (for a psql \copy, the statement must be one a single line).
+      IF v_isPsqlCopy AND v_sqlFormat = 'PRETTY' THEN
+        RAISE EXCEPTION '_gen_sql_dump_changes_group: PSQL_COPY_DIR and FORMAT=PRETTY options are mutually exclusive.';
+      END IF;
+-- When one or several options need PRIMARY KEYS, check that all selected tables have a PK.
+      IF v_consolidation IN ('PARTIAL', 'FULL') OR v_colsOrder = 'PK' OR v_orderBy = 'PK' THEN
+        SELECT string_agg(table_name, ', ')
+          INTO v_tableWithoutPkList
+          FROM (
+            SELECT rel_schema || '.' || rel_tblseq AS table_name
+              FROM emaj.emaj_relation
+              WHERE rel_group = p_groupName
+                AND rel_kind = 'r' AND NOT v_sequencesOnly
+                AND (p_tblseqs IS NULL OR rel_schema || '.' || rel_tblseq = ANY (p_tblseqs))
+                AND rel_time_range && int8range(v_firstMarkTimeId, v_lastMarkTimeId,'[)')
+                AND rel_pk_cols IS NULL
+              ORDER BY rel_schema, rel_tblseq, rel_time_range
+            ) AS t;
+        IF v_tableWithoutPkList IS NOT NULL THEN
+          RAISE EXCEPTION '_gen_sql_dump_changes_group: A CONSOLIDATION level set to PARTIAL or FULL or a COLS_ORDER set to PK or an '
+                          'ORDER_BY set to PK cannot support tables without primary key. And no primary key is defined for tables "%"',
+                          v_tableWithoutPkList;
+        END IF;
+      END IF;
+-- Reject the empty files removing if the adminpack extension is not installed.
+      IF v_noEmptyFiles THEN
+        PERFORM 1 FROM pg_catalog.pg_extension WHERE extname = 'adminpack';
+        IF NOT FOUND THEN
+          RAISE WARNING 'emaj_dump_changes_group: the NO_EMPTY_FILES option cannot be satisfied because the adminpack extension is not '
+                        'installed.';
+          v_noEmptyFiles = FALSE;
+        END IF;
+      END IF;
+    END IF;
+-- If table/sequence names to filter are supplied, check them.
+    IF p_tblseqs IS NOT NULL THEN
+      p_tblseqs = emaj._check_tblseqs_filter(p_tblseqs, ARRAY[p_groupName], v_firstMarkTimeId, v_lastMarkTimeId, FALSE);
+    END IF;
+-- End of checks.
+-- Set options default values.
+    v_consolidation = coalesce(v_consolidation, 'NONE');
+    v_copyOptions = coalesce(v_copyOptions, '');
+    v_colsOrder = coalesce(v_colsOrder, CASE WHEN v_consolidation = 'NONE' THEN 'LOG_TABLE' ELSE 'PK' END);
+    v_emajColumnsList = coalesce(v_emajColumnsList, CASE WHEN v_consolidation = 'NONE' THEN '*' ELSE 'emaj_tuple' END);
+    v_orderBy = coalesce(v_orderBy, CASE WHEN v_consolidation = 'NONE' THEN 'TIME' ELSE 'PK' END);
+-- Resolve the MIN value for the EMAJ_COLUMNS option, depending on the final consolidation level.
+    IF v_emajColumnsList = 'MIN' THEN
+      v_emajColumnsList = CASE WHEN v_consolidation = 'NONE' THEN 'emaj_gid,emaj_tuple' ELSE 'emaj_tuple' END;
+    END IF;
+-- Set the ORDER_BY clause if not explicitely done in the supplied options.
+    v_orderBy = coalesce(v_orderBy, CASE WHEN v_consolidation = 'NONE' THEN 'TIME' ELSE 'PK' END);
+-- Create a temporary table to hold the SQL statements.
+    DROP TABLE IF EXISTS emaj_temp_sql CASCADE;
+    CREATE TEMP TABLE emaj_temp_sql (
+      sql_stmt_number        INT,                 -- SQL statement number
+      sql_line_number        INT,                 -- line number for the statement (0 for an initial comment)
+      sql_rel_kind           TEXT,                -- either "table" or "sequence"
+      sql_schema             TEXT,                -- the application schema
+      sql_tblseq             TEXT,                -- the table or sequence name
+      sql_first_mark         TEXT,                -- the first mark name
+      sql_last_mark          TEXT,                -- the last mark name
+      sql_group              TEXT,                -- the group name
+      sql_nb_changes         BIGINT,              -- the estimated number of changes to process (NULL for sequences)
+      sql_file_name_suffix   TEXT,                -- the file name suffix to use to build the output file name if the statement
+                                                  --   has to be executed by a COPY statement or a \copy meta-command
+      sql_text               TEXT,                -- the generated sql text
+      sql_result             BIGINT               -- a column available for caller usage (if needed, some other can be added by the
+                                                  --   caller with an ALTER TABLE)
+    );
+-- Add an initial comment reporting the supplied options.
+    v_comment = format('-- Generated SQL for dumping changes in tables group "%s" %sbetween marks "%s" and "%s"%s',
+                       p_groupName, CASE WHEN p_tblseqs IS NOT NULL THEN '(subset) ' ELSE '' END, p_firstMark, p_lastMark,
+                       CASE WHEN p_optionsList IS NOT NULL AND p_optionsList <> '' THEN ' using options: ' || p_optionsList ELSE '' END);
+    INSERT INTO emaj_temp_sql (sql_stmt_number, sql_line_number, sql_text)
+      VALUES (0, 0, v_comment);
+-- If the requested consolidation level is FULL, then add a SET statement to disable nested-loop nodes in the execution plan.
+--   This solves a performance issue with the generated SQL statements for log tables analysis.
+    IF v_consolidation = 'FULL' THEN
+      v_nbStmt = v_nbStmt + 1;
+      INSERT INTO emaj_temp_sql (sql_stmt_number, sql_line_number, sql_text)
+        VALUES (v_nbStmt, 1, 'SET enable_nestloop = FALSE;');
+    END IF;
+-- Process each log table or sequence from the emaj_relation table that enters in the marks range, starting with tables.
+    FOR r_rel IN
+      SELECT rel_schema, rel_tblseq, rel_time_range, rel_group, rel_kind,
+             rel_log_schema, rel_log_table, rel_emaj_verb_attnum, rel_pk_cols,
+             CASE WHEN rel_kind = 'r' THEN 'table' ELSE 'sequence' END AS kind,
+             count(*) OVER (PARTITION BY rel_schema, rel_tblseq) AS nb_time_range,
+             row_number() OVER (PARTITION BY rel_schema, rel_tblseq ORDER BY rel_time_range) AS time_range_rank,
+             CASE WHEN rel_kind = 'S'
+                    THEN NULL
+                    ELSE emaj._log_stat_tbl(emaj_relation,
+                                            CASE WHEN v_firstMarkTimeId >= lower(rel_time_range)
+                                                   THEN v_firstMarkTimeId ELSE lower(rel_time_range) END,
+                                            CASE WHEN NOT upper_inf(rel_time_range)
+                                                   AND (v_lastMarkTimeId IS NULL OR upper(rel_time_range) < v_lastMarkTimeId)
+                                                   THEN upper(rel_time_range) ELSE v_lastMarkTimeId END)
+                 END AS nb_changes
+        FROM emaj.emaj_relation
+        WHERE rel_group = p_groupName
+          AND ((rel_kind = 'r' AND NOT v_sequencesOnly) OR (rel_kind = 'S' AND NOT v_tablesOnly))
+          AND (p_tblseqs IS NULL OR rel_schema || '.' || rel_tblseq = ANY (p_tblseqs))
+          AND rel_time_range && int8range(v_firstMarkTimeId, v_lastMarkTimeId,'[)')
+        ORDER BY rel_kind DESC, rel_schema, rel_tblseq, rel_time_range
+    LOOP
+-- Compute the real mark and gid range for the relation (the relation time range can be shorter that the requested mark range).
+      IF lower(r_rel.rel_time_range) <= v_firstMarkTimeId THEN
+        v_relFirstMark = p_firstMark;
+        v_relFirstEmajGid = v_firstEmajGid;
+        v_relFirstTimeId = v_firstMarkTimeId;
+      ELSE
+        v_relFirstMark = coalesce((SELECT mark_name
+                                     FROM emaj.emaj_mark
+                                     WHERE mark_time_id = lower(r_rel.rel_time_range)
+                                       AND mark_group = r_rel.rel_group
+                                  ),'[deleted mark]');
+        SELECT time_last_emaj_gid INTO STRICT v_firstEmajGid
+          FROM emaj.emaj_time_stamp
+          WHERE time_id = lower(r_rel.rel_time_range);
+        v_relFirstTimeId = lower(r_rel.rel_time_range);
+      END IF;
+      IF upper_inf(r_rel.rel_time_range) OR upper(r_rel.rel_time_range) >= v_lastMarkTimeId THEN
+        v_relLastMark = p_lastMark;
+        v_relLastEmajGid = v_lastEmajGid;
+        v_relLastTimeId = v_lastMarkTimeId;
+      ELSE
+        v_relLastMark = coalesce((SELECT mark_name
+                                     FROM emaj.emaj_mark
+                                     WHERE mark_time_id = upper(r_rel.rel_time_range)
+                                       AND mark_group = r_rel.rel_group
+                                  ),'[deleted mark]');
+        SELECT time_last_emaj_gid INTO STRICT v_lastEmajGid
+          FROM emaj.emaj_time_stamp
+          WHERE time_id = upper(r_rel.rel_time_range);
+        v_relLastTimeId = upper(r_rel.rel_time_range);
+      END IF;
+      v_nbStmt = v_nbStmt + 1;
+-- Generate the comment and the statement for the table or sequence.
+      IF r_rel.rel_kind = 'r' THEN
+        v_comment = format('-- Dump changes for table %s.%s between marks "%s" and "%s" (%s changes)',
+                           r_rel.rel_schema, r_rel.rel_tblseq, v_relFirstMark, v_relLastMark, r_rel.nb_changes);
+        v_stmt = emaj._gen_sql_dump_changes_tbl(r_rel.rel_log_schema, r_rel.rel_log_table, r_rel.rel_emaj_verb_attnum,
+                                                r_rel.rel_pk_cols, v_relFirstEmajGid, v_relLastEmajGid, v_consolidation,
+                                                v_emajColumnsList, v_colsOrder, v_orderBy);
+      ELSE
+        v_comment = format('-- Dump changes for sequence %s.%s between marks "%s" and "%s"',
+                           r_rel.rel_schema, r_rel.rel_tblseq, v_relFirstMark, v_relLastMark);
+        v_stmt = emaj._gen_sql_dump_changes_seq(r_rel.rel_schema, r_rel.rel_tblseq,
+                                                v_relFirstTimeId, v_relLastTimeId, v_consolidation);
+      END IF;
+-- If the output is a psql script, build the output file name for the \copy command.
+      IF v_isPsqlCopy THEN
+-- As several files may be generated for a single table or sequence, add a "_nn" to the file name suffix.
+        v_copyOutputFile = v_psqlCopyDir || '/' || translate(
+                               r_rel.rel_schema || '_' || r_rel.rel_tblseq ||
+                                 CASE WHEN r_rel.nb_time_range > 1 THEN '_' || r_rel.time_range_rank ELSE '' END || '.changes',
+                               E' /\\$<>*', '_______');
+        v_stmt = '\copy (' || v_stmt || ') TO ' || quote_literal(v_copyOutputFile) || coalesce(' (' || v_psqlCopyOptions || ')', '');
+      ELSE
+        IF p_genSqlOnly THEN
+          v_stmt = v_stmt || ';';
+        END IF;
+      END IF;
+-- Record the comment on line 0.
+      INSERT INTO emaj_temp_sql
+        VALUES (v_nbStmt, 0, r_rel.kind, r_rel.rel_schema, r_rel.rel_tblseq, v_relFirstMark, v_relLastMark, r_rel.rel_group,
+                r_rel.nb_changes, NULL, v_comment);
+-- Record the statement on 1 or several rows, depending on the SQL_FORMAT option.
+-- In raw format, newlines and consecutive spaces are removed.
+      IF v_sqlFormat = 'RAW' THEN
+        v_stmt = replace(v_stmt, E'\n', ' ');
+        v_stmt = regexp_replace(v_stmt, '\s{2,}', ' ', 'g');
+      END IF;
+      INSERT INTO emaj_temp_sql
+        SELECT v_nbStmt, row_number() OVER (), r_rel.kind, r_rel.rel_schema, r_rel.rel_tblseq, v_relFirstMark, v_relLastMark,
+               r_rel.rel_group, r_rel.nb_changes,
+               CASE WHEN r_rel.nb_time_range > 1 THEN '_' || r_rel.time_range_rank ELSE '' END || '.changes', line
+          FROM regexp_split_to_table(v_stmt, E'\n') AS line;
+    END LOOP;
+-- If the requested consolidation level is FULL, then add a RESET statement to revert the previous 'SET enable_nestloop = FALSE'.
+    IF v_consolidation = 'FULL' THEN
+      v_nbStmt = v_nbStmt + 1;
+      INSERT INTO emaj_temp_sql (sql_stmt_number, sql_line_number, sql_text)
+        VALUES (v_nbStmt, 1, 'RESET enable_nestloop;');
+    END IF;
+-- Return output parameters.
+  p_nbStmt = v_nbStmt;
+  p_copyOptions = v_copyOptions;
+  p_noEmptyFiles = v_noEmptyFiles;
+  p_isPsqlCopy = v_isPsqlCopy;
+  RETURN;
+  END;
+$_gen_sql_dump_changes_group$;
+
 --<end_functions>                                pattern used by the tool that extracts and insert the functions definition
 ------------------------------------------
 --                                      --

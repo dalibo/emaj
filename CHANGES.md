@@ -7,7 +7,8 @@ E-Maj - Change log
 
 
 ###Bug fixes:###
-
+  * Fix a bug in _gen_sql_dump_changes_group(). The COLS_ORDER=LOG_TABLE
+    option was not decoded correctly (github issue #51).
 
 
 4.3.0 (2023-Sept-18)
