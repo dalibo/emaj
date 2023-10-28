@@ -4903,7 +4903,7 @@ $_build_alter_seq$
     END IF;
     IF ref_seq_rec.sequ_is_cycled <> trg_seq_rec.sequ_is_cycled THEN
       IF trg_seq_rec.sequ_is_cycled = 'f' THEN
-        v_stmt = v_stmt || ' NO ';
+        v_stmt = v_stmt || ' NO';
       END IF;
       v_stmt = v_stmt || ' CYCLE ';
     END IF;

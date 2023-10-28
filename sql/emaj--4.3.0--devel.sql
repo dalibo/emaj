@@ -96,6 +96,53 @@ SELECT emaj._disable_event_triggers();
 ------------------------------------------------------------------
 -- create new or modified functions                             --
 ------------------------------------------------------------------
+CREATE OR REPLACE FUNCTION emaj._build_alter_seq(ref_seq_rec emaj.emaj_sequence, trg_seq_rec emaj.emaj_sequence)
+RETURNS TEXT LANGUAGE plpgsql AS
+$_build_alter_seq$
+-- This function builds an ALTER SEQUENCE clause including only the sequence characteristics that have changed between a reference
+-- and a target.
+-- The function is called by _rlbk_seq() and _gen_sql_groups().
+-- Input: 2 emaj_sequence records representing the reference and the target sequence characteristics
+-- Output: the alter sequence clause with all modified characteristics
+  DECLARE
+    v_stmt                   TEXT;
+  BEGIN
+    v_stmt = '';
+-- Build the ALTER SEQUENCE clause, depending on the differences between the reference and target values.
+    IF ref_seq_rec.sequ_last_val <> trg_seq_rec.sequ_last_val OR
+       ref_seq_rec.sequ_is_called <> trg_seq_rec.sequ_is_called THEN
+      IF trg_seq_rec.sequ_is_called THEN
+        v_stmt = v_stmt || ' RESTART ' || trg_seq_rec.sequ_last_val + trg_seq_rec.sequ_increment;
+      ELSE
+        v_stmt = v_stmt || ' RESTART ' || trg_seq_rec.sequ_last_val;
+      END IF;
+    END IF;
+    IF ref_seq_rec.sequ_start_val <> trg_seq_rec.sequ_start_val THEN
+      v_stmt = v_stmt || ' START ' || trg_seq_rec.sequ_start_val;
+    END IF;
+    IF ref_seq_rec.sequ_increment <> trg_seq_rec.sequ_increment THEN
+      v_stmt = v_stmt || ' INCREMENT ' || trg_seq_rec.sequ_increment;
+    END IF;
+    IF ref_seq_rec.sequ_min_val <> trg_seq_rec.sequ_min_val THEN
+      v_stmt = v_stmt || ' MINVALUE ' || trg_seq_rec.sequ_min_val;
+    END IF;
+    IF ref_seq_rec.sequ_max_val <> trg_seq_rec.sequ_max_val THEN
+      v_stmt = v_stmt || ' MAXVALUE ' || trg_seq_rec.sequ_max_val;
+    END IF;
+    IF ref_seq_rec.sequ_cache_val <> trg_seq_rec.sequ_cache_val THEN
+      v_stmt = v_stmt || ' CACHE ' || trg_seq_rec.sequ_cache_val;
+    END IF;
+    IF ref_seq_rec.sequ_is_cycled <> trg_seq_rec.sequ_is_cycled THEN
+      IF trg_seq_rec.sequ_is_cycled = 'f' THEN
+        v_stmt = v_stmt || ' NO';
+      END IF;
+      v_stmt = v_stmt || ' CYCLE ';
+    END IF;
+--
+    RETURN v_stmt;
+  END;
+$_build_alter_seq$;
+
 CREATE OR REPLACE FUNCTION emaj.emaj_log_stat_group(p_groupName TEXT, p_firstMark TEXT, p_lastMark TEXT)
 RETURNS SETOF emaj.emaj_log_stat_type LANGUAGE plpgsql AS
 $emaj_log_stat_group$

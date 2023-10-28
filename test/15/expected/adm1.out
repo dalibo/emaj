@@ -1210,7 +1210,7 @@ select hist_function, hist_event, hist_object,
  LOCK_GROUP        | END        | myGroup2          | Rollback session #1: 6 tables locked, 0 deadlock(s)                                                | postgres
  SET_MARK_GROUP    | BEGIN      | myGroup2          | RLBK_M3_%_START                                                                                    | postgres
  SET_MARK_GROUP    | END        | myGroup2          | RLBK_M3_%_START                                                                                    | postgres
- ROLLBACK_SEQUENCE |            | myschema2.myseq1  | RESTART 1004 MAXVALUE 9223372036854775807 NO  CYCLE                                                | postgres
+ ROLLBACK_SEQUENCE |            | myschema2.myseq1  | RESTART 1004 MAXVALUE 9223372036854775807 NO CYCLE                                                 | postgres
  ROLLBACK_TABLE    | BEGIN      | myschema2.mytbl6  | All log rows where emaj_gid > 12200049 and <= 12300006                                             | postgres
  ROLLBACK_TABLE    | END        | myschema2.mytbl6  | 3 rolled back primary keys                                                                         | postgres
  ROLLBACK_TABLE    | BEGIN      | myschema2.mytbl4  | All log rows where emaj_gid > 12200049 and <= 12300006, in session_replication_role = replica mode | postgres
@@ -1923,7 +1923,7 @@ select hist_function, hist_event, hist_object,
  DBLINK_OPEN_CNX   |              | rlbk#1            | Status = 1                                                                                         | postgres
  LOCK_GROUP        | BEGIN        | myGroup2          | Rollback session #1                                                                                | postgres
  LOCK_GROUP        | END          | myGroup2          | Rollback session #1: 6 tables locked, 0 deadlock(s)                                                | postgres
- ROLLBACK_SEQUENCE |              | myschema2.myseq1  | RESTART 1004 MAXVALUE 9223372036854775807 NO  CYCLE                                                | postgres
+ ROLLBACK_SEQUENCE |              | myschema2.myseq1  | RESTART 1004 MAXVALUE 9223372036854775807 NO CYCLE                                                 | postgres
  ROLLBACK_TABLE    | BEGIN        | myschema2.mytbl6  | All log rows where emaj_gid > 12200049 and <= 12500006                                             | postgres
  ROLLBACK_TABLE    | END          | myschema2.mytbl6  | 3 rolled back primary keys                                                                         | postgres
  ROLLBACK_TABLE    | BEGIN        | myschema2.mytbl4  | All log rows where emaj_gid > 12200049 and <= 12500006, in session_replication_role = replica mode | postgres
