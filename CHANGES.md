@@ -3,7 +3,7 @@ E-Maj - Change log
 <devel>
 ------
 ###Enhancements:###
-  * Minor code changes.
+  * Minor code and documentation changes.
 
 
 ###Bug fixes:###

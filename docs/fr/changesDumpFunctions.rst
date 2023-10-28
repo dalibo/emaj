@@ -53,7 +53,7 @@ Prenons quelques exemples, avec une simple table de 2 colonnes *(col1 INT PRIMAR
 | | DELETE (1,’B’)            | | 1,’B’,OLD,1                         | |                       | |                    |
 +-----------------------------+---------------------------------------+-------------------------+----------------------+
 | | UPDATE (1,’A’) => (1,’B’) | | 1,’A’,OLD,1                         | | 1,’A’,OLD             | | 1,’A’,OLD          |
-| |                           | | 1,’B’,NEW,1                         | | 1,’C’,NEW             | | 1,’C’,NEW          |
+| |                           | | 1,’B’,NEW,1                         | | 1,’D’,NEW             | | 1,’D’,NEW          |
 | | UPDATE (1,’B’) => (1,’C’) | | 1,’B’,OLD,2                         | |                       | |                    |
 | |                           | | 1,’C’,NEW,2                         | |                       | |                    |
 | | UPDATE (1,’C’) => (1,’D’) | | 1,’C’,OLD,3                         | |                       | |                    |
