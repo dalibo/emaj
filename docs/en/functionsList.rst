@@ -272,6 +272,14 @@ Groups level functions
 |                                                  | |  BOOLEAN]                   |                                       |
 |                                                  | | [comment TEXT]              |                                       |
 +--------------------------------------------------+-------------------------------+---------------------------------------+
+| :ref:`emaj_sequence_stat_group                   | | group TEXT,                 | SETOF emaj_sequence_stat_type         |
+| <emaj_sequence_stat_group>` (V)                  | | start.mark TEXT,            |                                       |
+|                                                  | | end.mark TEXT               |                                       |
++--------------------------------------------------+-------------------------------+---------------------------------------+
+| :doc:`emaj_sequence_stat_groups                  | | groups.array TEXT[],        | SETOF emaj_sequence_stat_type         |
+| <multiGroupsFunctions>` (V)                      | | start.mark TEXT,            |                                       |
+|                                                  | | end.mark TEXT               |                                       |
++--------------------------------------------------+-------------------------------+---------------------------------------+
 | :ref:`emaj_set_mark_group                        | | group TEXT,                 | #.tables.and.seq INT                  |
 | <emaj_set_mark_group>`                           | | [mark TEXT]                 |                                       |
 +--------------------------------------------------+-------------------------------+---------------------------------------+

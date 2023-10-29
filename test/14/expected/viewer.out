@@ -262,6 +262,18 @@ select count(*) from emaj.emaj_detailed_log_stat_groups(array['myGroup1'],'Start
      0
 (1 row)
 
+select count(*) from emaj.emaj_sequence_stat_group('myGroup1','Start',NULL);
+ count 
+-------
+     2
+(1 row)
+
+select count(*) from emaj.emaj_sequence_stat_groups(array['myGroup1'],'Start',NULL);
+ count 
+-------
+     2
+(1 row)
+
 select emaj.emaj_estimate_rollback_group('myGroup1',emaj.emaj_get_previous_mark_group('myGroup1',current_timestamp),FALSE);
  emaj_estimate_rollback_group 
 ------------------------------

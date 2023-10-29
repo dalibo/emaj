@@ -3,13 +3,14 @@ E-Maj - Change log
 <devel>
 ------
 ###Enhancements:###
+  * Add 2 new functions, namely emaj_sequence_stat_group() and
+    emaj_sequence_stat_groups(), that return statistics about changes
+    recorded between 2 marks for sequences belonging to one or several groups.
   * Minor code and documentation changes.
-
 
 ###Bug fixes:###
   * Fix a bug in _gen_sql_dump_changes_group(). The COLS_ORDER=LOG_TABLE
     option was not decoded correctly (github issue #51).
-
 
 4.3.0 (2023-Sept-18)
 ------

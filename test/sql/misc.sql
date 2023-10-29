@@ -1,6 +1,7 @@
 -- misc.sql : test miscellaneous functions
 --   emaj_reset_group(), 
 --   emaj_log_stat_group(), emaj_log_stat_groups(), emaj_detailled_log_stat_group() and emaj_detailled_log_stat_groups(),
+--   emaj_sequence_stat_group() and emaj_sequence_stat_groups()
 --   emaj_estimate_rollback_group() and emaj_estimate_rollback_groups(),
 --   emaj_snap_group(),
 --   emaj_get_current_log_table(),
@@ -55,25 +56,37 @@ select count(*) from emaj_myschema1.mytbl4_log;
 -- start myGroup1
 select emaj.emaj_start_group('myGroup1','Mark21');
 -----------------------------
--- log updates on myschema2 between 3 mono-group and multi-groups marks 
+-- log updates on myschema2 between 3 mono-group and multi-groups marks
 -----------------------------
 set search_path=public,myschema2;
+
 -- set a multi-groups mark
 select emaj.emaj_set_mark_groups(array['myGroup1','myGroup2'],'Multi-1');
--- inserts/updates/deletes in myTbl1, myTbl2 and myTbl2b (via trigger)
+
+-- inserts/updates/deletes in myTbl1, myTbl2 and myTbl2b (via trigger) and increment myseq1
 insert into myTbl1 select i, 'ABC', E'\\014'::bytea from generate_series (1,10100) as i;
 update myTbl1 set col13=E'\\034'::bytea where col11 <= 500;
 delete from myTbl1 where col11 > 10000;
 insert into myTbl2 select i, 'DEF', current_date from generate_series (1,900) as i;
+select nextval('myschema2.myseq1');
+select nextval('myschema2.myseq1');
+
 -- set marks
 select emaj.emaj_set_mark_group('myGroup2','Mark22');
 select emaj.emaj_set_mark_groups(array['myGroup1','myGroup2'],'Multi-2');
--- inserts/updates/deletes in myTbl3 and myTbl4
+
+-- inserts/updates/deletes in myTbl3 and myTbl4and increment and alter myseq1
 insert into "myTbl3" (col33) select generate_series(1000,1039,4)/100;
 insert into myTbl4 select i,'FK...',i,1,'ABC' from generate_series (1,100) as i;
+select nextval('myschema2.myseq1');
+alter sequence myschema2.myseq1 MAXVALUE 10000;
+
 -- set marks
 select emaj.emaj_set_mark_group('myGroup2','Mark23');
 select emaj.emaj_set_mark_groups(array['myGroup1','myGroup2'],'Multi-3');
+
+-- reset the sequence alter
+alter sequence myschema2.myseq1 MAXVALUE 2000;
 
 -----------------------------
 -- emaj_log_stat_group(), emaj_log_stat_groups(), emaj_detailled_log_stat_group() and emaj_detailled_log_stat_groups() test
@@ -171,7 +184,50 @@ select stat_group, stat_schema, stat_table, stat_first_mark, stat_last_mark, sta
 select * from emaj.emaj_log_stat_group('emptyGroup','SM2',NULL);
 select * from emaj.emaj_detailed_log_stat_group('emptyGroup','SM2',NULL);
 
--- check for emaj_reset_group() and emaj_log_stat_groups() and emaj_detailed_log_stat_group()
+-----------------------------
+-- emaj_sequence_stat_group(), emaj_sequence_stat_groups() test
+-----------------------------
+
+-- group is unknown
+SELECT * from emaj.emaj_sequence_stat_group('dummy', NULL, NULL);
+
+-- start mark is null or unknown
+SELECT * from emaj.emaj_sequence_stat_group('myGroup1', NULL, NULL);
+SELECT * from emaj.emaj_sequence_stat_groups(ARRAY['myGroup1'], 'dummy', NULL);
+
+-- end mark is unknown
+SELECT * from emaj.emaj_sequence_stat_group('myGroup1', 'EMAJ_LAST_MARK', 'dummy');
+
+-- end mark is prior start mark (not tested as this is the same piece of code as for emaj_log_stat_group()
+
+-- empty group
+select * from emaj.emaj_sequence_stat_group('emptyGroup','SM2',NULL);
+
+-- should be ok
+select stat_group, stat_schema, stat_sequence, stat_first_mark, stat_last_mark, stat_increments, stat_has_structure_changed
+  from emaj.emaj_sequence_stat_group('myGroup2','Mark21',NULL)
+  order by stat_group, stat_schema, stat_sequence;
+select stat_group, stat_schema, stat_sequence, stat_first_mark, stat_last_mark, stat_increments, stat_has_structure_changed
+  from emaj.emaj_sequence_stat_group('myGroup2','Mark21','EMAJ_LAST_MARK')
+  order by stat_group, stat_schema, stat_sequence;
+select stat_group, stat_schema, stat_sequence, stat_first_mark, stat_last_mark, stat_increments, stat_has_structure_changed
+  from emaj.emaj_sequence_stat_group('myGroup2','Mark22','Mark22')
+  order by stat_group, stat_schema, stat_sequence;
+select stat_group, stat_schema, stat_sequence, stat_first_mark, stat_last_mark, stat_increments, stat_has_structure_changed
+  from emaj.emaj_sequence_stat_group('myGroup2','Mark22','Mark23')
+  order by stat_group, stat_schema, stat_sequence;
+select stat_group, stat_schema, stat_sequence, stat_first_mark, stat_last_mark, stat_increments, stat_has_structure_changed
+  from emaj.emaj_sequence_stat_group('myGroup2','EMAJ_LAST_MARK','')
+  order by stat_group, stat_schema, stat_sequence;
+
+select stat_group, stat_schema, stat_sequence, stat_first_mark, stat_last_mark, stat_increments, stat_has_structure_changed
+  from emaj.emaj_sequence_stat_groups(array['myGroup1','myGroup2'],'Multi-1',NULL)
+  order by stat_group, stat_schema, stat_sequence;
+select stat_group, stat_schema, stat_sequence, stat_first_mark, stat_last_mark, stat_increments, stat_has_structure_changed
+  from emaj.emaj_sequence_stat_groups(array['myGroup1','myGroup2'],'Multi-1','Multi-3')
+  order by stat_group, stat_schema, stat_sequence;
+
+-- check for emaj_reset_group() and emaj_log_stat_groups(), emaj_detailed_log_stat_group() and emaj_sequence_stat_group() functions family
 select hist_id, hist_function, hist_event, hist_object, 
        regexp_replace(regexp_replace(hist_wording,E'\\d\\d\.\\d\\d\\.\\d\\d\\.\\d\\d\\d\\d','%','g'),E'\\[.+\\]','(timestamp)','g'), hist_user
   from (select * from emaj.emaj_hist where hist_id >= 5000 order by hist_id) as t;

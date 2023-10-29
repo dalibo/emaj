@@ -37,6 +37,8 @@ The following table lists the multi-groups functions, with their relative mono-g
 +------------------------------------------+---------------------------------------------------------------------------+
 | **emaj.emaj_detailed_log_stat_groups()** | :ref:`emaj.emaj_detailed_log_stat_group() <emaj_detailed_log_stat_group>` |
 +------------------------------------------+---------------------------------------------------------------------------+
+| **emaj.emaj_sequence_stat_groups()**     | :ref:`emaj.emaj_sequence_stat_group() <emaj_sequence_stat_group>`         |
++------------------------------------------+---------------------------------------------------------------------------+
 | **emaj.emaj_gen_sql_groups()**           | :ref:`emaj.emaj_gen_sql_group() <emaj_gen_sql_group>`                     |
 +------------------------------------------+---------------------------------------------------------------------------+
 

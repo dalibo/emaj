@@ -694,6 +694,19 @@ Tablespace: "tspemaj"
 primary key, btree, for table "emaj.emaj_sequence"
 Tablespace: "tspemaj"
 
+                     Composite type "emaj.emaj_sequence_stat_type"
+           Column           |           Type           | Collation | Nullable | Default 
+----------------------------+--------------------------+-----------+----------+---------
+ stat_group                 | text                     |           |          | 
+ stat_schema                | text                     |           |          | 
+ stat_sequence              | text                     |           |          | 
+ stat_first_mark            | text                     |           |          | 
+ stat_first_mark_datetime   | timestamp with time zone |           |          | 
+ stat_last_mark             | text                     |           |          | 
+ stat_last_mark_datetime    | timestamp with time zone |           |          | 
+ stat_increments            | bigint                   |           |          | 
+ stat_has_structure_changed | boolean                  |           |          | 
+
                          Table "emaj.emaj_table"
         Column        |       Type       | Collation | Nullable | Default 
 ----------------------+------------------+-----------+----------+---------

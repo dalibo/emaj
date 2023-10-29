@@ -40,11 +40,12 @@ select emaj.emaj_rename_mark_group('myGroup1','EMAJ_LAST_MARK','End_rollback_to_
 select emaj.emaj_consolidate_rollback_group('myGroup1','End_rollback_to_M2');
 
 -----------------------------
--- Step 4 : for myGroup1, update tables again then set 3 marks
+-- Step 4 : for myGroup1, update tables and sequences again then set 3 marks and get stats
 -----------------------------
 insert into myTbl1 select i, 'DEF', E'\\000'::bytea from generate_series (100,110) as i;
 insert into myTbl2 values (3,'GHI','2010-01-02');
 delete from myTbl1 where col11 = 1;
+select nextval('myschema1."myTbl3_col31_seq"');
 --
 select emaj.emaj_set_mark_group('myGroup1','M4');
 --
@@ -55,6 +56,12 @@ select emaj.emaj_set_mark_group('myGroup1','M5');
 update myTbl1 set col11 = 99 where col11 = 1;
 --
 select emaj.emaj_set_mark_group('myGroup1','M6');
+--
+select stat_group, stat_schema, stat_table, stat_first_mark, stat_last_mark, stat_rows
+  from emaj.emaj_log_stat_group('myGroup1', 'M2', 'M6') order by 1,2,3,4;
+select stat_group, stat_schema, stat_sequence, stat_first_mark, stat_last_mark, stat_increments, stat_has_structure_changed
+  from emaj.emaj_sequence_stat_group('myGroup1', 'M2', 'M6')
+  order by stat_group, stat_schema, stat_sequence, stat_first_mark_datetime;
 
 -----------------------------
 -- Step 5 : for myGroup2, logged rollback again then unlogged rollback 

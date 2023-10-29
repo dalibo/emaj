@@ -60,6 +60,8 @@ select count(*) from emaj.emaj_log_stat_group('myGroup1','Start',NULL);
 select count(*) from emaj.emaj_log_stat_groups(array['myGroup1'],'Start',NULL);
 select count(*) from emaj.emaj_detailed_log_stat_group('myGroup1','Start',NULL);
 select count(*) from emaj.emaj_detailed_log_stat_groups(array['myGroup1'],'Start',NULL);
+select count(*) from emaj.emaj_sequence_stat_group('myGroup1','Start',NULL);
+select count(*) from emaj.emaj_sequence_stat_groups(array['myGroup1'],'Start',NULL);
 select emaj.emaj_estimate_rollback_group('myGroup1',emaj.emaj_get_previous_mark_group('myGroup1',current_timestamp),FALSE);
 select emaj.emaj_estimate_rollback_groups(array['myGroup1'],emaj.emaj_get_previous_mark_group('myGroup1',current_timestamp),FALSE);
 select * from emaj.emaj_rollback_activity();

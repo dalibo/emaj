@@ -556,6 +556,14 @@ select hist_function, hist_event, hist_object,
        hist_user
   from emaj.emaj_hist where hist_id >= 18000 order by hist_id;
 
+-----------------------------
+-- check grants on other functions to emaj_adm role
+-----------------------------
+select emaj.emaj_get_previous_mark_group('dummyGroup', 'EMAJ_LAST_MARK');
+select emaj.emaj_estimate_rollback_groups(array['dummyGroup'], 'dummyMark', FALSE);
+select * from emaj.emaj_rollback_activity();
+select substr(pg_size_pretty(pg_database_size(current_database())),1,0);
+
 --
 reset role;
 

@@ -54,12 +54,18 @@ select emaj.emaj_delete_mark_group('myGroup1','Multi-2');
 
 -- use this mark for the other group before delete it
 select * from emaj.emaj_detailed_log_stat_group('myGroup2','Multi-2',NULL);
+select stat_group, stat_schema, stat_sequence, stat_first_mark, stat_last_mark, stat_increments, stat_has_structure_changed
+  from emaj.emaj_sequence_stat_group('myGroup2', 'Multi-2', NULL)
+  order by stat_group, stat_schema, stat_sequence, stat_first_mark_datetime;
 select * from emaj.emaj_rollback_group('myGroup2','Multi-2',false) order by 1,2;
 select emaj.emaj_delete_mark_group('myGroup2','Multi-2');
 
 -- get statistics using deleted marks
 select stat_group, stat_schema, stat_table, stat_first_mark, stat_last_mark, stat_role, stat_verb, stat_rows
   from emaj.emaj_detailed_log_stat_group('myGroup2','M1','M2');
+select stat_group, stat_schema, stat_sequence, stat_first_mark, stat_last_mark, stat_increments, stat_has_structure_changed
+  from emaj.emaj_sequence_stat_group('myGroup2', 'M1', 'M2')
+  order by stat_group, stat_schema, stat_sequence, stat_first_mark_datetime;
 
 -- delete intermediate deleted marks
 select emaj.emaj_delete_mark_group('myGroup1','Multi-1');

@@ -271,6 +271,14 @@ Fonctions de niveau groupe de tables
 |                                                  | |  BOOLEAN]                   |                                       |
 |                                                  | | [commentaire TEXT]          |                                       |
 +--------------------------------------------------+-------------------------------+---------------------------------------+
+| :ref:`emaj_sequence_stat_group                   | | groupe TEXT,                | SETOF emaj_sequence_stat_type         |
+| <emaj_sequence_stat_group>` (V)                  | | marque.début TEXT,          |                                       |
+|                                                  | | marque.fin TEXT             |                                       |
++--------------------------------------------------+-------------------------------+---------------------------------------+
+| :doc:`emaj_sequence_stat_groups                  | | tableau.groupes TEXT[],     | SETOF emaj_sequence_stat_type         |
+| <multiGroupsFunctions>` (V)                      | | marque.début TEXT,          |                                       |
+|                                                  | | marque.fin TEXT             |                                       |
++--------------------------------------------------+-------------------------------+---------------------------------------+
 | :ref:`emaj_set_mark_group                        | | groupe TEXT,                | nb.tables.et.seq INT                  |
 | <emaj_set_mark_group>`                           | | [marque TEXT]               |                                       |
 +--------------------------------------------------+-------------------------------+---------------------------------------+

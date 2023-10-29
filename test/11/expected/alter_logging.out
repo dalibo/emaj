@@ -303,6 +303,17 @@ select nextval('myschema2.myseq2');
        5
 (1 row)
 
+-- get statistics
+select stat_group, stat_schema, stat_sequence, stat_first_mark, stat_last_mark, stat_increments, stat_has_structure_changed
+  from emaj.emaj_sequence_stat_group('myGroup2', 'ADD_SEQ test', NULL)
+  order by stat_group, stat_schema, stat_sequence, stat_first_mark_datetime;
+ stat_group | stat_schema |  stat_sequence   | stat_first_mark | stat_last_mark | stat_increments | stat_has_structure_changed 
+------------+-------------+------------------+-----------------+----------------+-----------------+----------------------------
+ myGroup2   | myschema2   | myTbl3_col31_seq | ADD_SEQ test    |                |               0 | f
+ myGroup2   | myschema2   | myseq1           | ADD_SEQ test    |                |               0 | f
+ myGroup2   | myschema2   | myseq2           | Add myseq2      |                |               3 | f
+(3 rows)
+
 --testing snap, dump changes and sql generation
 \! mkdir $EMAJTESTTMPDIR/snap
 select emaj.emaj_snap_group('myGroup2',:'EMAJTESTTMPDIR' || '/snap','');
@@ -398,6 +409,16 @@ begin;
 -------------+-----------+--------------+---------------+----------------+----------------+---------------------+--------------+----------------+----------------+----------------
  myschema2   | myseq2    |         9102 |             2 |              1 |              1 | 9223372036854775807 |            1 |              1 | f              | t
 (1 row)
+
+  select stat_group, stat_schema, stat_sequence, stat_first_mark, stat_last_mark, stat_increments, stat_has_structure_changed
+    from emaj.emaj_sequence_stat_group('myGroup2', 'ADD_SEQ test', NULL)
+    order by stat_group, stat_schema, stat_sequence, stat_first_mark_datetime;
+ stat_group | stat_schema |  stat_sequence   | stat_first_mark | stat_last_mark | stat_increments | stat_has_structure_changed 
+------------+-------------+------------------+-----------------+----------------+-----------------+----------------------------
+ myGroup2   | myschema2   | myTbl3_col31_seq | ADD_SEQ test    |                |               0 | f
+ myGroup2   | myschema2   | myseq1           | ADD_SEQ test    |                |               0 | f
+ myGroup2   | myschema2   | myseq2           | [deleted mark]  |                |               3 | f
+(3 rows)
 
 rollback;
 -- test sequences at bounds following a rollback targeting a mark set before an ADD_SEQ
@@ -758,6 +779,16 @@ select sql_text from emaj_temp_sql where sql_line_number = 0;
  -- Dump changes for sequence myschema1.mytbl2b_col20_seq between marks "Mk1" and "After_remove"
 (3 rows)
 
+-- testing statistics
+select stat_group, stat_schema, stat_sequence, stat_first_mark, stat_last_mark, stat_increments, stat_has_structure_changed
+  from emaj.emaj_sequence_stat_group('myGroup1', 'Before_remove', NULL)
+  order by stat_group, stat_schema, stat_sequence, stat_first_mark_datetime;
+ stat_group | stat_schema |   stat_sequence   | stat_first_mark |  stat_last_mark  | stat_increments | stat_has_structure_changed 
+------------+-------------+-------------------+-----------------+------------------+-----------------+----------------------------
+ myGroup1   | myschema1   | myTbl3_col31_seq  | Before_remove   | Sequence_removed |               0 | f
+ myGroup1   | myschema1   | mytbl2b_col20_seq | Before_remove   |                  |               0 | f
+(2 rows)
+
 -- testing sql script generation
 select emaj.emaj_gen_sql_group('myGroup1', 'Mk1', 'EMAJ_LAST_MARK', :'EMAJTESTTMPDIR' || '/script.sql',array['myschema1.myTbl3_col31_seq']);
 NOTICE:  table "emaj_temp_script" does not exist, skipping
@@ -786,6 +817,15 @@ begin;
 ------------------------
                       1
 (1 row)
+
+  select stat_group, stat_schema, stat_sequence, stat_first_mark, stat_last_mark, stat_increments, stat_has_structure_changed
+    from emaj.emaj_sequence_stat_group('myGroup1', 'Before_remove', NULL)
+    order by stat_group, stat_schema, stat_sequence, stat_first_mark_datetime;
+ stat_group | stat_schema |   stat_sequence   | stat_first_mark | stat_last_mark | stat_increments | stat_has_structure_changed 
+------------+-------------+-------------------+-----------------+----------------+-----------------+----------------------------
+ myGroup1   | myschema1   | myTbl3_col31_seq  | Before_remove   | [deleted mark] |               0 | f
+ myGroup1   | myschema1   | mytbl2b_col20_seq | Before_remove   |                |               0 | f
+(2 rows)
 
   select rel_schema, rel_tblseq, rel_time_range, rel_group, rel_kind
     from emaj.emaj_relation where rel_schema = 'myschema1' and rel_tblseq = 'myTbl3_col31_seq' order by rel_time_range;
@@ -2573,7 +2613,7 @@ insert into myschema2.mytbl1 values (100, 'Started', E'\\000'::bytea);
 select nextval('myschema2.myseq1');
  nextval 
 ---------
-    1000
+    1003
 (1 row)
 
 -- remove and assign somes tables and sequences in a single transaction
@@ -2617,7 +2657,7 @@ WARNING:  _check_fk_groups: The table "myschema2.mytbl6" is referenced by the fo
   select nextval('myschema2.myseq1');
  nextval 
 ---------
-    1001
+    1004
 (1 row)
 
   -- what if some (all but the emaj sequence) emaj components are missing at remove_table time ?
@@ -2759,13 +2799,13 @@ select sequ_schema, sequ_name, sequ_time_id, sequ_last_val, sequ_is_called from 
   where sequ_schema = 'myschema2' and sequ_name like 'myseq%' order by sequ_name, sequ_time_id;
  sequ_schema | sequ_name | sequ_time_id | sequ_last_val | sequ_is_called 
 -------------+-----------+--------------+---------------+----------------
- myschema2   | myseq1    |        10014 |          1000 | f
- myschema2   | myseq1    |        10015 |          1000 | t
- myschema2   | myseq1    |        10016 |          1000 | t
- myschema2   | myseq1    |        10018 |          1000 | t
- myschema2   | myseq1    |        10019 |          1001 | t
- myschema2   | myseq1    |        10020 |          1001 | t
- myschema2   | myseq1    |        10022 |          1001 | t
+ myschema2   | myseq1    |        10014 |          1002 | t
+ myschema2   | myseq1    |        10015 |          1003 | t
+ myschema2   | myseq1    |        10016 |          1003 | t
+ myschema2   | myseq1    |        10018 |          1003 | t
+ myschema2   | myseq1    |        10019 |          1004 | t
+ myschema2   | myseq1    |        10020 |          1004 | t
+ myschema2   | myseq1    |        10022 |          1004 | t
  myschema2   | myseq2    |        10018 |             3 | f
  myschema2   | myseq2    |        10019 |             3 | f
  myschema2   | myseq2    |        10020 |             3 | f
