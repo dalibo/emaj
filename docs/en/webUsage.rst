@@ -117,14 +117,15 @@ For each mark, several buttons are available to perform the actions permitted by
 Statistics
 ----------
 
-Using the “*Log statistics*” tab of the group's bar, one gets statistics about updates recorded into the log tables for the selected tables group.
+Using the "*Changes statistics*" tab of the group’s bar, one gets statistics about recorded changes for tables or sequences, for the selected tables group and a given time interval. This time interval is defined as either two marks or a mark and the current state.
 
-Two types of statistics can be produced:
+Three types of statistics can be produced:
 
-* some estimates about the number of updates per table, recorded between two marks or between one mark and the current state,
-* a precise numbering of updates per tables, per statement type (*INSERT/UPDATE/DELETE/TRUNCATE*) and role.
+* a number of changes estimate for each table,
+* a precise numbering of changes per table, statement type (INSERT/UPDATE/DELETE/TRUNCATE) and role,
+* a number of increments estimate and properties changes per sequence.
 
-The figure below shows an example of detailed statistics.
+The figure below shows an example of detailed statistics for tables.
 
 .. figure:: images/emajweb_groupstat.png
    :align: center
@@ -133,7 +134,7 @@ The figure below shows an example of detailed statistics.
 
 The displayed page contains a first line returning global counters.
 
-On each line of the statistics table, the user can click on a “*SQL*” button to easily look at the log tables content. A click on this button opens the SQL editor window and proposes the statement displaying the content of the log table that corresponds to the selection (table, time frame, role, statement type). The user can modify this suggested statement before executing it to better fit his needs.
+On each line of the statistics table, the user can click on a "*SQL*" button to easily look at the log tables content. A click on this button opens a window to set the SQL generation parameters. Then, the generated SQL statement is displayed into the SQL editor window, so that the user can adjust it before execution to better fit his needs.
 
 Tables group content
 --------------------
@@ -195,11 +196,9 @@ Clicking on a rollback identifier in one of these tables displays a page that sh
 
 More precisely, are displayed:
 
-* the rollback identification,
+* the rollback properties,
 * its progress,
 * the final report returned to the user, when the operation is completed,
-* its main technical characteristics,
-* the launched session or sessions,
 * and the detail of the operation plan, showing each elementary step, with its duration and optionaly estimates computed by E-Maj at the operation initialisation.
 
 .. figure:: images/emajweb_rollbackdetails.png

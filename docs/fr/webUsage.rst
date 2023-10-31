@@ -118,14 +118,15 @@ Pour chaque marque, plusieurs boutons permettent d'exécuter toute action que so
 Statistiques
 ------------
 
-L'onglet « *Statistiques log* » de la barre des groupes permet d'obtenir des statistiques sur le contenu des mises à jour enregistrées dans les tables de log pour le groupe de tables.
+L'onglet « *Statistiques / Mises à jour* » de la barre des groupes permet d'obtenir, pour le groupe de tables et sur un intervalle de temps donné, des statistiques sur les mises à jour enregistrées pour les tables et les changements apportés aux séquences. L’intervalle de temps est défini soit par deux marques soit par une marque et la situation courante.
 
-Deux types de statistiques peuvent être obtenues :
+Trois types de statistiques peuvent être obtenues :
 
-* des estimations du nombre de mises à jour par table, enregistrées entre 2 marques ou entre une marque et la situation présente,
-* un dénombrement précis du nombre de mises à jour par table, type de requête (*INSERT/UPDATE/DELETE/TRUNCATE*) et rôle.
+* une estimation du nombre de mises à jour pour chaque table,
+* un dénombrement précis du nombre de mises à jour enregistrées, par table, type de requête (*INSERT/UPDATE/DELETE/TRUNCATE*) et rôle,
+* une estimation du nombre d’incréments et des changements de structure pour chaque séquence.
 
-La figure suivante montre un exemple de statistiques détaillées.
+La figure suivante montre un exemple de statistiques détaillées pour les tables.
 
 .. figure:: images/emajweb_groupstat.png
    :align: center
@@ -134,7 +135,7 @@ La figure suivante montre un exemple de statistiques détaillées.
 
 La page restituée contient une première ligne contenant des compteurs globaux.
 
-Sur chacune des lignes du tableau de statistiques, un bouton « *SQL* » permet à l'utilisateur de visualiser facilement le contenu des mises à jour enregistrées dans les tables de log. Un clic sur ce bouton ouvre l'éditeur de requêtes SQL et propose la requête visualisant le contenu de la table de log correspondant à la sélection (table, tranche de temps, rôle, type de requête). L'utilisateur peut la modifier à sa convenance avant de l'exécuter, afin, par exemple, de cibler davantage les lignes qui l'intéressent.
+Sur chacune des lignes du tableau de statistiques, un bouton « *SQL* » permet à l'utilisateur de visualiser facilement le contenu des mises à jour enregistrées dans les tables de log. Un clic sur ce bouton ouvre une fenêtre de paramétrage de la requête SQL à générer. Celle-ci est ensuite affichée dans l'éditeur de requêtes SQL pour modification éventuelle par l’utilisateur avant exécution, afin, par exemple, de cibler davantage les lignes qui l'intéressent.
 
 Contenu d'un groupe de tables
 -----------------------------
@@ -196,11 +197,9 @@ En cliquant sur un identifiant de rollback dans l’un de ces tableaux, on accè
 
 On y trouve plus précisément des données concernant :
 
-* l’identification du rollback,
+* les propriétés du rollback,
 * sa progression,
 * le rapport final restitué à l’utilisateur, quand l’opération est terminée,
-* ses principales caractéristiques techniques,
-* la ou les sessions lancées,
 * et le détail de la planification de l’opération, montrant chaque étape élémentaire, avec notamment sa durée, et optionnellement les estimations initiales calculées par E-Maj.
 
 .. figure:: images/emajweb_rollbackdetails.png
