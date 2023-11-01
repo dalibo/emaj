@@ -1,6 +1,7 @@
 E-Maj - Change log
 ==================
-<devel>
+
+4.3.1 (2023-Nov-1)
 ------
 ###Enhancements:###
   * Add 2 new functions, namely emaj_sequence_stat_group() and
