@@ -19,8 +19,8 @@ use warnings; use strict;
 # The 4 variables below are to be customized
   my $emajEnvRootDir = "/home/postgres/proj/emaj";
   my $currentSourceFile  = $emajEnvRootDir . "/sql/emaj--devel.sql";
-  my $previousSourceFile = $emajEnvRootDir . "/sql/emaj--4.3.0.sql";
-  my $upgradeScriptFile  = $emajEnvRootDir . "/sql/emaj--4.3.0--devel.sql";
+  my $previousSourceFile = $emajEnvRootDir . "/sql/emaj--4.3.1.sql";
+  my $upgradeScriptFile  = $emajEnvRootDir . "/sql/emaj--4.3.1--devel.sql";
 
   my $upgradeScriptHeader = '';  # existing code from the upgrade script before the functions definition
   my $upgradeScriptFooter = '';  # existing code from the upgrade script after the functions definition
