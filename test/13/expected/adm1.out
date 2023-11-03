@@ -466,16 +466,16 @@ select group_name, group_is_rollbackable, group_creation_time_id,
   from emaj.emaj_group order by group_name;
  group_name | group_is_rollbackable | group_creation_time_id | group_last_alter_time_id | group_is_logging | group_is_rlbk_protected | group_nb_table | group_nb_sequence |  group_comment   
 ------------+-----------------------+------------------------+--------------------------+------------------+-------------------------+----------------+-------------------+------------------
- emptyGroup | t                     |                  12014 |                          | f                | f                       |              0 |                 0 | 
- myGroup1   | t                     |                  12004 |                    12010 | t                | f                       |              5 |                 2 | This is group #1
- myGroup2   | t                     |                  12011 |                    12013 | t                | f                       |              6 |                 2 | 
+ emptyGroup | t                     |                  12015 |                          | f                | f                       |              0 |                 0 | 
+ myGroup1   | t                     |                  12005 |                    12011 | t                | f                       |              5 |                 2 | This is group #1
+ myGroup2   | t                     |                  12012 |                    12014 | t                | f                       |              6 |                 2 | 
 (3 rows)
 
 select mark_group, regexp_replace(mark_name,E'\\d\\d\.\\d\\d\\.\\d\\d\\.\\d\\d\\d\\d','%','g'), mark_time_id, mark_is_deleted, mark_is_rlbk_protected, mark_is_rlbk_protected, mark_comment, mark_log_rows_before_next, mark_logged_rlbk_target_mark from emaj.emaj_mark order by mark_time_id, mark_group;
  mark_group | regexp_replace | mark_time_id | mark_is_deleted | mark_is_rlbk_protected | mark_is_rlbk_protected |  mark_comment  | mark_log_rows_before_next | mark_logged_rlbk_target_mark 
 ------------+----------------+--------------+-----------------+------------------------+------------------------+----------------+---------------------------+------------------------------
- myGroup1   | M1             |        12015 | f               | f                      | f                      |                |                        29 | 
- myGroup2   | M1             |        12016 | f               | f                      | f                      |                |                           | 
+ myGroup1   | M1             |        12016 | f               | f                      | f                      |                |                        29 | 
+ myGroup2   | M1             |        12017 | f               | f                      | f                      |                |                           | 
  myGroup1   | M2             |        12100 | f               | f                      | f                      |                |                        11 | 
  myGroup1   | M3             |        12101 | f               | f                      | f                      | Third mark set |                           | 
 (4 rows)
@@ -483,10 +483,10 @@ select mark_group, regexp_replace(mark_name,E'\\d\\d\.\\d\\d\\.\\d\\d\\.\\d\\d\\
 select sequ_schema, sequ_name, sequ_time_id, sequ_last_val, sequ_is_called from emaj.emaj_sequence order by sequ_time_id, sequ_schema, sequ_name;
  sequ_schema |     sequ_name     | sequ_time_id | sequ_last_val | sequ_is_called 
 -------------+-------------------+--------------+---------------+----------------
- myschema1   | myTbl3_col31_seq  |        12015 |            11 | f
- myschema1   | mytbl2b_col20_seq |        12015 |             3 | f
- myschema2   | myTbl3_col31_seq  |        12016 |            10 | t
- myschema2   | myseq1            |        12016 |          1000 | f
+ myschema1   | myTbl3_col31_seq  |        12016 |            11 | f
+ myschema1   | mytbl2b_col20_seq |        12016 |             3 | f
+ myschema2   | myTbl3_col31_seq  |        12017 |            10 | t
+ myschema2   | myseq1            |        12017 |          1000 | f
  myschema1   | myTbl3_col31_seq  |        12100 |            20 | t
  myschema1   | mytbl2b_col20_seq |        12100 |             4 | t
  myschema1   | myTbl3_col31_seq  |        12101 |            20 | t
@@ -496,17 +496,17 @@ select sequ_schema, sequ_name, sequ_time_id, sequ_last_val, sequ_is_called from 
 select tbl_schema, tbl_name, tbl_time_id, tbl_tuples, tbl_pages, tbl_log_seq_last_val from emaj.emaj_table order by tbl_time_id, tbl_schema, tbl_name;
  tbl_schema | tbl_name | tbl_time_id | tbl_tuples | tbl_pages | tbl_log_seq_last_val 
 ------------+----------+-------------+------------+-----------+----------------------
- myschema1  | myTbl3   |       12015 |          0 |         0 |                    0
- myschema1  | mytbl1   |       12015 |          0 |         0 |                    0
- myschema1  | mytbl2   |       12015 |          0 |         0 |                    0
- myschema1  | mytbl2b  |       12015 |          0 |         0 |                    0
- myschema1  | mytbl4   |       12015 |          0 |         0 |                    0
- myschema2  | myTbl3   |       12016 |          0 |         0 |                    0
- myschema2  | mytbl1   |       12016 |          0 |         0 |                    0
- myschema2  | mytbl2   |       12016 |          0 |         0 |                    0
- myschema2  | mytbl4   |       12016 |          0 |         0 |                    0
- myschema2  | mytbl5   |       12016 |          0 |         0 |                    0
- myschema2  | mytbl6   |       12016 |          1 |         1 |                    0
+ myschema1  | myTbl3   |       12016 |          0 |         0 |                    0
+ myschema1  | mytbl1   |       12016 |          0 |         0 |                    0
+ myschema1  | mytbl2   |       12016 |          0 |         0 |                    0
+ myschema1  | mytbl2b  |       12016 |          0 |         0 |                    0
+ myschema1  | mytbl4   |       12016 |          0 |         0 |                    0
+ myschema2  | myTbl3   |       12017 |          0 |         0 |                    0
+ myschema2  | mytbl1   |       12017 |          0 |         0 |                    0
+ myschema2  | mytbl2   |       12017 |          0 |         0 |                    0
+ myschema2  | mytbl4   |       12017 |          0 |         0 |                    0
+ myschema2  | mytbl5   |       12017 |          0 |         0 |                    0
+ myschema2  | mytbl6   |       12017 |          1 |         1 |                    0
  myschema1  | myTbl3   |       12100 |          0 |         0 |                   10
  myschema1  | mytbl1   |       12100 |          0 |         0 |                   15
  myschema1  | mytbl2   |       12100 |          0 |         0 |                    2
@@ -522,26 +522,27 @@ select tbl_schema, tbl_name, tbl_time_id, tbl_tuples, tbl_pages, tbl_log_seq_las
 select time_id, time_last_emaj_gid, time_event from emaj.emaj_time_stamp where time_id >= 12000 order by time_id;
  time_id | time_last_emaj_gid | time_event 
 ---------+--------------------+------------
-   12000 |           12000000 | M
+   12000 |           12000000 | X
    12001 |           12000000 | D
    12002 |           12000000 | D
-   12003 |           12000000 | D
-   12004 |           12000000 | C
-   12005 |           12000000 | A
+   12003 |           12000000 | X
+   12004 |           12000000 | D
+   12005 |           12000000 | C
    12006 |           12000000 | A
    12007 |           12000000 | A
    12008 |           12000000 | A
    12009 |           12000000 | A
    12010 |           12000000 | A
-   12011 |           12000000 | C
-   12012 |           12000000 | A
+   12011 |           12000000 | A
+   12012 |           12000000 | C
    12013 |           12000000 | A
-   12014 |           12000000 | C
-   12015 |           12000000 | M
-   12016 |           12000000 | M
+   12014 |           12000000 | A
+   12015 |           12000000 | C
+   12016 |           12000000 | S
+   12017 |           12000000 | S
    12100 |           12100029 | M
    12101 |           12100040 | M
-(19 rows)
+(20 rows)
 
 select hist_function, hist_event, hist_object,
        regexp_replace(regexp_replace(regexp_replace(hist_wording,
@@ -787,8 +788,8 @@ select emaj.emaj_set_mark_group('myGroup2','M3');
 select mark_group, regexp_replace(mark_name,E'\\d\\d\.\\d\\d\\.\\d\\d\\.\\d\\d\\d\\d','%','g'), mark_time_id, mark_is_deleted, mark_is_rlbk_protected, mark_comment, mark_log_rows_before_next, mark_logged_rlbk_target_mark from emaj.emaj_mark order by mark_time_id, mark_group;
  mark_group | regexp_replace | mark_time_id | mark_is_deleted | mark_is_rlbk_protected |  mark_comment  | mark_log_rows_before_next | mark_logged_rlbk_target_mark 
 ------------+----------------+--------------+-----------------+------------------------+----------------+---------------------------+------------------------------
- myGroup1   | M1             |        12015 | f               | f                      |                |                        29 | 
- myGroup2   | M1             |        12016 | f               | f                      |                |                        41 | 
+ myGroup1   | M1             |        12016 | f               | f                      |                |                        29 | 
+ myGroup2   | M1             |        12017 | f               | f                      |                |                        41 | 
  myGroup1   | M2             |        12100 | f               | f                      |                |                        11 | 
  myGroup1   | M3             |        12101 | f               | f                      | Third mark set |                           | 
  myGroup2   | M2             |        12200 | f               | f                      |                |                         8 | 
@@ -798,10 +799,10 @@ select mark_group, regexp_replace(mark_name,E'\\d\\d\.\\d\\d\\.\\d\\d\\.\\d\\d\\
 select sequ_schema, sequ_name, sequ_time_id, sequ_last_val, sequ_is_called from emaj.emaj_sequence order by sequ_time_id, sequ_schema, sequ_name;
  sequ_schema |     sequ_name     | sequ_time_id | sequ_last_val | sequ_is_called 
 -------------+-------------------+--------------+---------------+----------------
- myschema1   | myTbl3_col31_seq  |        12015 |            11 | f
- myschema1   | mytbl2b_col20_seq |        12015 |             3 | f
- myschema2   | myTbl3_col31_seq  |        12016 |            10 | t
- myschema2   | myseq1            |        12016 |          1000 | f
+ myschema1   | myTbl3_col31_seq  |        12016 |            11 | f
+ myschema1   | mytbl2b_col20_seq |        12016 |             3 | f
+ myschema2   | myTbl3_col31_seq  |        12017 |            10 | t
+ myschema2   | myseq1            |        12017 |          1000 | f
  myschema1   | myTbl3_col31_seq  |        12100 |            20 | t
  myschema1   | mytbl2b_col20_seq |        12100 |             4 | t
  myschema1   | myTbl3_col31_seq  |        12101 |            20 | t
@@ -815,17 +816,17 @@ select sequ_schema, sequ_name, sequ_time_id, sequ_last_val, sequ_is_called from 
 select tbl_schema, tbl_name, tbl_time_id, tbl_log_seq_last_val from emaj.emaj_table order by tbl_time_id, tbl_schema, tbl_name;
  tbl_schema | tbl_name | tbl_time_id | tbl_log_seq_last_val 
 ------------+----------+-------------+----------------------
- myschema1  | myTbl3   |       12015 |                    0
- myschema1  | mytbl1   |       12015 |                    0
- myschema1  | mytbl2   |       12015 |                    0
- myschema1  | mytbl2b  |       12015 |                    0
- myschema1  | mytbl4   |       12015 |                    0
- myschema2  | myTbl3   |       12016 |                    0
- myschema2  | mytbl1   |       12016 |                    0
- myschema2  | mytbl2   |       12016 |                    0
- myschema2  | mytbl4   |       12016 |                    0
- myschema2  | mytbl5   |       12016 |                    0
- myschema2  | mytbl6   |       12016 |                    0
+ myschema1  | myTbl3   |       12016 |                    0
+ myschema1  | mytbl1   |       12016 |                    0
+ myschema1  | mytbl2   |       12016 |                    0
+ myschema1  | mytbl2b  |       12016 |                    0
+ myschema1  | mytbl4   |       12016 |                    0
+ myschema2  | myTbl3   |       12017 |                    0
+ myschema2  | mytbl1   |       12017 |                    0
+ myschema2  | mytbl2   |       12017 |                    0
+ myschema2  | mytbl4   |       12017 |                    0
+ myschema2  | mytbl5   |       12017 |                    0
+ myschema2  | mytbl6   |       12017 |                    0
  myschema1  | myTbl3   |       12100 |                   10
  myschema1  | mytbl1   |       12100 |                   15
  myschema1  | mytbl2   |       12100 |                    2
@@ -1068,8 +1069,8 @@ set role emaj_regression_tests_adm_user1;
 select mark_group, regexp_replace(mark_name,E'\\d\\d\.\\d\\d\\.\\d\\d\\.\\d\\d\\d\\d','%','g'), mark_time_id, mark_is_deleted, mark_is_rlbk_protected, mark_comment, mark_log_rows_before_next, mark_logged_rlbk_target_mark from emaj.emaj_mark order by mark_time_id, mark_group;
  mark_group | regexp_replace  | mark_time_id | mark_is_deleted | mark_is_rlbk_protected |  mark_comment  | mark_log_rows_before_next | mark_logged_rlbk_target_mark 
 ------------+-----------------+--------------+-----------------+------------------------+----------------+---------------------------+------------------------------
- myGroup1   | M1              |        12015 | f               | f                      |                |                        29 | 
- myGroup2   | M1              |        12016 | f               | f                      |                |                        41 | 
+ myGroup1   | M1              |        12016 | f               | f                      |                |                        29 | 
+ myGroup2   | M1              |        12017 | f               | f                      |                |                        41 | 
  myGroup1   | M2              |        12100 | f               | f                      |                |                        11 | 
  myGroup1   | M3              |        12101 | f               | f                      | Third mark set |                           | 
  myGroup2   | M2              |        12200 | f               | f                      |                |                         8 | 
@@ -1083,10 +1084,10 @@ select mark_group, regexp_replace(mark_name,E'\\d\\d\.\\d\\d\\.\\d\\d\\.\\d\\d\\
 select sequ_schema, sequ_name, sequ_time_id, sequ_last_val, sequ_is_called from emaj.emaj_sequence order by sequ_time_id, sequ_schema, sequ_name;
  sequ_schema |     sequ_name     | sequ_time_id | sequ_last_val | sequ_is_called 
 -------------+-------------------+--------------+---------------+----------------
- myschema1   | myTbl3_col31_seq  |        12015 |            11 | f
- myschema1   | mytbl2b_col20_seq |        12015 |             3 | f
- myschema2   | myTbl3_col31_seq  |        12016 |            10 | t
- myschema2   | myseq1            |        12016 |          1000 | f
+ myschema1   | myTbl3_col31_seq  |        12016 |            11 | f
+ myschema1   | mytbl2b_col20_seq |        12016 |             3 | f
+ myschema2   | myTbl3_col31_seq  |        12017 |            10 | t
+ myschema2   | myseq1            |        12017 |          1000 | f
  myschema1   | myTbl3_col31_seq  |        12100 |            20 | t
  myschema1   | mytbl2b_col20_seq |        12100 |             4 | t
  myschema1   | myTbl3_col31_seq  |        12101 |            20 | t
@@ -1108,17 +1109,17 @@ select sequ_schema, sequ_name, sequ_time_id, sequ_last_val, sequ_is_called from 
 select tbl_schema, tbl_name, tbl_time_id, tbl_log_seq_last_val from emaj.emaj_table order by tbl_time_id, tbl_schema, tbl_name;
  tbl_schema | tbl_name | tbl_time_id | tbl_log_seq_last_val 
 ------------+----------+-------------+----------------------
- myschema1  | myTbl3   |       12015 |                    0
- myschema1  | mytbl1   |       12015 |                    0
- myschema1  | mytbl2   |       12015 |                    0
- myschema1  | mytbl2b  |       12015 |                    0
- myschema1  | mytbl4   |       12015 |                    0
- myschema2  | myTbl3   |       12016 |                    0
- myschema2  | mytbl1   |       12016 |                    0
- myschema2  | mytbl2   |       12016 |                    0
- myschema2  | mytbl4   |       12016 |                    0
- myschema2  | mytbl5   |       12016 |                    0
- myschema2  | mytbl6   |       12016 |                    0
+ myschema1  | myTbl3   |       12016 |                    0
+ myschema1  | mytbl1   |       12016 |                    0
+ myschema1  | mytbl2   |       12016 |                    0
+ myschema1  | mytbl2b  |       12016 |                    0
+ myschema1  | mytbl4   |       12016 |                    0
+ myschema2  | myTbl3   |       12017 |                    0
+ myschema2  | mytbl1   |       12017 |                    0
+ myschema2  | mytbl2   |       12017 |                    0
+ myschema2  | mytbl4   |       12017 |                    0
+ myschema2  | mytbl5   |       12017 |                    0
+ myschema2  | mytbl6   |       12017 |                    0
  myschema1  | myTbl3   |       12100 |                   10
  myschema1  | mytbl1   |       12100 |                   15
  myschema1  | mytbl2   |       12100 |                    2
@@ -1443,8 +1444,8 @@ select emaj.emaj_set_mark_group('myGroup1','M6');
 select mark_group, regexp_replace(mark_name,E'\\d\\d\.\\d\\d\\.\\d\\d\\.\\d\\d\\d\\d','%','g'), mark_time_id, mark_is_deleted, mark_is_rlbk_protected, mark_comment, mark_log_rows_before_next, mark_logged_rlbk_target_mark from emaj.emaj_mark order by mark_time_id, mark_group;
  mark_group | regexp_replace  | mark_time_id | mark_is_deleted | mark_is_rlbk_protected | mark_comment | mark_log_rows_before_next | mark_logged_rlbk_target_mark 
 ------------+-----------------+--------------+-----------------+------------------------+--------------+---------------------------+------------------------------
- myGroup1   | M1              |        12015 | f               | f                      |              |                        29 | 
- myGroup2   | M1              |        12016 | f               | f                      |              |                        41 | 
+ myGroup1   | M1              |        12016 | f               | f                      |              |                        29 | 
+ myGroup2   | M1              |        12017 | f               | f                      |              |                        41 | 
  myGroup1   | M2              |        12100 | f               | f                      |              |                        14 | 
  myGroup2   | M2              |        12200 | f               | f                      |              |                         8 | 
  myGroup2   | M3              |        12201 | f               | f                      |              |                         0 | 
@@ -1460,10 +1461,10 @@ select mark_group, regexp_replace(mark_name,E'\\d\\d\.\\d\\d\\.\\d\\d\\.\\d\\d\\
 select sequ_schema, sequ_name, sequ_time_id, sequ_last_val, sequ_is_called from emaj.emaj_sequence order by sequ_time_id, sequ_schema, sequ_name;
  sequ_schema |     sequ_name     | sequ_time_id | sequ_last_val | sequ_is_called 
 -------------+-------------------+--------------+---------------+----------------
- myschema1   | myTbl3_col31_seq  |        12015 |            11 | f
- myschema1   | mytbl2b_col20_seq |        12015 |             3 | f
- myschema2   | myTbl3_col31_seq  |        12016 |            10 | t
- myschema2   | myseq1            |        12016 |          1000 | f
+ myschema1   | myTbl3_col31_seq  |        12016 |            11 | f
+ myschema1   | mytbl2b_col20_seq |        12016 |             3 | f
+ myschema2   | myTbl3_col31_seq  |        12017 |            10 | t
+ myschema2   | myseq1            |        12017 |          1000 | f
  myschema1   | myTbl3_col31_seq  |        12100 |            20 | t
  myschema1   | mytbl2b_col20_seq |        12100 |             4 | t
  myschema2   | myTbl3_col31_seq  |        12200 |            20 | t
@@ -1489,17 +1490,17 @@ select sequ_schema, sequ_name, sequ_time_id, sequ_last_val, sequ_is_called from 
 select tbl_schema, tbl_name, tbl_time_id, tbl_log_seq_last_val from emaj.emaj_table order by tbl_time_id, tbl_schema, tbl_name;
  tbl_schema | tbl_name | tbl_time_id | tbl_log_seq_last_val 
 ------------+----------+-------------+----------------------
- myschema1  | myTbl3   |       12015 |                    0
- myschema1  | mytbl1   |       12015 |                    0
- myschema1  | mytbl2   |       12015 |                    0
- myschema1  | mytbl2b  |       12015 |                    0
- myschema1  | mytbl4   |       12015 |                    0
- myschema2  | myTbl3   |       12016 |                    0
- myschema2  | mytbl1   |       12016 |                    0
- myschema2  | mytbl2   |       12016 |                    0
- myschema2  | mytbl4   |       12016 |                    0
- myschema2  | mytbl5   |       12016 |                    0
- myschema2  | mytbl6   |       12016 |                    0
+ myschema1  | myTbl3   |       12016 |                    0
+ myschema1  | mytbl1   |       12016 |                    0
+ myschema1  | mytbl2   |       12016 |                    0
+ myschema1  | mytbl2b  |       12016 |                    0
+ myschema1  | mytbl4   |       12016 |                    0
+ myschema2  | myTbl3   |       12017 |                    0
+ myschema2  | mytbl1   |       12017 |                    0
+ myschema2  | mytbl2   |       12017 |                    0
+ myschema2  | mytbl4   |       12017 |                    0
+ myschema2  | mytbl5   |       12017 |                    0
+ myschema2  | mytbl6   |       12017 |                    0
  myschema1  | myTbl3   |       12100 |                   10
  myschema1  | mytbl1   |       12100 |                   15
  myschema1  | mytbl2   |       12100 |                    2
@@ -1793,8 +1794,8 @@ select * from emaj.emaj_rollback_group('myGroup2','M3',false) order by 1,2;
 select mark_group, regexp_replace(mark_name,E'\\d\\d\.\\d\\d\\.\\d\\d\\.\\d\\d\\d\\d','%','g'), mark_time_id, mark_is_deleted, mark_is_rlbk_protected, mark_comment, mark_log_rows_before_next, mark_logged_rlbk_target_mark from emaj.emaj_mark order by mark_time_id, mark_group;
  mark_group | regexp_replace | mark_time_id | mark_is_deleted | mark_is_rlbk_protected | mark_comment | mark_log_rows_before_next | mark_logged_rlbk_target_mark 
 ------------+----------------+--------------+-----------------+------------------------+--------------+---------------------------+------------------------------
- myGroup1   | M1             |        12015 | f               | f                      |              |                        29 | 
- myGroup2   | M1             |        12016 | f               | f                      |              |                        41 | 
+ myGroup1   | M1             |        12016 | f               | f                      |              |                        29 | 
+ myGroup2   | M1             |        12017 | f               | f                      |              |                        41 | 
  myGroup1   | M2             |        12100 | f               | f                      |              |                        14 | 
  myGroup2   | M2             |        12200 | f               | f                      |              |                         8 | 
  myGroup2   | M3             |        12201 | f               | f                      |              |                           | 
@@ -1806,10 +1807,10 @@ select mark_group, regexp_replace(mark_name,E'\\d\\d\.\\d\\d\\.\\d\\d\\.\\d\\d\\
 select sequ_schema, sequ_name, sequ_time_id, sequ_last_val, sequ_is_called from emaj.emaj_sequence order by sequ_time_id, sequ_schema, sequ_name;
  sequ_schema |     sequ_name     | sequ_time_id | sequ_last_val | sequ_is_called 
 -------------+-------------------+--------------+---------------+----------------
- myschema1   | myTbl3_col31_seq  |        12015 |            11 | f
- myschema1   | mytbl2b_col20_seq |        12015 |             3 | f
- myschema2   | myTbl3_col31_seq  |        12016 |            10 | t
- myschema2   | myseq1            |        12016 |          1000 | f
+ myschema1   | myTbl3_col31_seq  |        12016 |            11 | f
+ myschema1   | mytbl2b_col20_seq |        12016 |             3 | f
+ myschema2   | myTbl3_col31_seq  |        12017 |            10 | t
+ myschema2   | myseq1            |        12017 |          1000 | f
  myschema1   | myTbl3_col31_seq  |        12100 |            20 | t
  myschema1   | mytbl2b_col20_seq |        12100 |             4 | t
  myschema2   | myTbl3_col31_seq  |        12200 |            20 | t
@@ -1827,17 +1828,17 @@ select sequ_schema, sequ_name, sequ_time_id, sequ_last_val, sequ_is_called from 
 select tbl_schema, tbl_name, tbl_time_id, tbl_log_seq_last_val from emaj.emaj_table order by tbl_time_id, tbl_schema, tbl_name;
  tbl_schema | tbl_name | tbl_time_id | tbl_log_seq_last_val 
 ------------+----------+-------------+----------------------
- myschema1  | myTbl3   |       12015 |                    0
- myschema1  | mytbl1   |       12015 |                    0
- myschema1  | mytbl2   |       12015 |                    0
- myschema1  | mytbl2b  |       12015 |                    0
- myschema1  | mytbl4   |       12015 |                    0
- myschema2  | myTbl3   |       12016 |                    0
- myschema2  | mytbl1   |       12016 |                    0
- myschema2  | mytbl2   |       12016 |                    0
- myschema2  | mytbl4   |       12016 |                    0
- myschema2  | mytbl5   |       12016 |                    0
- myschema2  | mytbl6   |       12016 |                    0
+ myschema1  | myTbl3   |       12016 |                    0
+ myschema1  | mytbl1   |       12016 |                    0
+ myschema1  | mytbl2   |       12016 |                    0
+ myschema1  | mytbl2b  |       12016 |                    0
+ myschema1  | mytbl4   |       12016 |                    0
+ myschema2  | myTbl3   |       12017 |                    0
+ myschema2  | mytbl1   |       12017 |                    0
+ myschema2  | mytbl2   |       12017 |                    0
+ myschema2  | mytbl4   |       12017 |                    0
+ myschema2  | mytbl5   |       12017 |                    0
+ myschema2  | mytbl6   |       12017 |                    0
  myschema1  | myTbl3   |       12100 |                   10
  myschema1  | mytbl1   |       12100 |                   15
  myschema1  | mytbl2   |       12100 |                    2
@@ -2155,8 +2156,8 @@ select rlbk_id, rlbk_groups, rlbk_mark, rlbk_mark_time_id, rlbk_time_id, rlbk_is
 select mark_group, regexp_replace(mark_name,E'\\d\\d\.\\d\\d\\.\\d\\d\\.\\d\\d\\d\\d','%','g'), mark_time_id, mark_is_deleted, mark_is_rlbk_protected, mark_comment, mark_log_rows_before_next, mark_logged_rlbk_target_mark from emaj.emaj_mark order by mark_time_id, mark_group;
  mark_group | regexp_replace  | mark_time_id | mark_is_deleted | mark_is_rlbk_protected | mark_comment | mark_log_rows_before_next | mark_logged_rlbk_target_mark 
 ------------+-----------------+--------------+-----------------+------------------------+--------------+---------------------------+------------------------------
- myGroup1   | M1              |        12015 | f               | f                      |              |                        29 | 
- myGroup2   | M1              |        12016 | f               | f                      |              |                        41 | 
+ myGroup1   | M1              |        12016 | f               | f                      |              |                        29 | 
+ myGroup2   | M1              |        12017 | f               | f                      |              |                        41 | 
  myGroup1   | M2              |        12100 | f               | f                      |              |                        14 | 
  myGroup2   | M2              |        12200 | f               | f                      |              |                         8 | 
  myGroup2   | M3              |        12201 | f               | f                      |              |                           | 
@@ -2169,10 +2170,10 @@ select mark_group, regexp_replace(mark_name,E'\\d\\d\.\\d\\d\\.\\d\\d\\.\\d\\d\\
 select sequ_schema, sequ_name, sequ_time_id, sequ_last_val, sequ_is_called from emaj.emaj_sequence order by sequ_time_id, sequ_schema, sequ_name;
  sequ_schema |     sequ_name     | sequ_time_id | sequ_last_val | sequ_is_called 
 -------------+-------------------+--------------+---------------+----------------
- myschema1   | myTbl3_col31_seq  |        12015 |            11 | f
- myschema1   | mytbl2b_col20_seq |        12015 |             3 | f
- myschema2   | myTbl3_col31_seq  |        12016 |            10 | t
- myschema2   | myseq1            |        12016 |          1000 | f
+ myschema1   | myTbl3_col31_seq  |        12016 |            11 | f
+ myschema1   | mytbl2b_col20_seq |        12016 |             3 | f
+ myschema2   | myTbl3_col31_seq  |        12017 |            10 | t
+ myschema2   | myseq1            |        12017 |          1000 | f
  myschema1   | myTbl3_col31_seq  |        12100 |            20 | t
  myschema1   | mytbl2b_col20_seq |        12100 |             4 | t
  myschema2   | myTbl3_col31_seq  |        12200 |            20 | t
@@ -2192,17 +2193,17 @@ select sequ_schema, sequ_name, sequ_time_id, sequ_last_val, sequ_is_called from 
 select tbl_schema, tbl_name, tbl_time_id, tbl_log_seq_last_val from emaj.emaj_table order by tbl_time_id, tbl_schema, tbl_name;
  tbl_schema | tbl_name | tbl_time_id | tbl_log_seq_last_val 
 ------------+----------+-------------+----------------------
- myschema1  | myTbl3   |       12015 |                    0
- myschema1  | mytbl1   |       12015 |                    0
- myschema1  | mytbl2   |       12015 |                    0
- myschema1  | mytbl2b  |       12015 |                    0
- myschema1  | mytbl4   |       12015 |                    0
- myschema2  | myTbl3   |       12016 |                    0
- myschema2  | mytbl1   |       12016 |                    0
- myschema2  | mytbl2   |       12016 |                    0
- myschema2  | mytbl4   |       12016 |                    0
- myschema2  | mytbl5   |       12016 |                    0
- myschema2  | mytbl6   |       12016 |                    0
+ myschema1  | myTbl3   |       12016 |                    0
+ myschema1  | mytbl1   |       12016 |                    0
+ myschema1  | mytbl2   |       12016 |                    0
+ myschema1  | mytbl2b  |       12016 |                    0
+ myschema1  | mytbl4   |       12016 |                    0
+ myschema2  | myTbl3   |       12017 |                    0
+ myschema2  | mytbl1   |       12017 |                    0
+ myschema2  | mytbl2   |       12017 |                    0
+ myschema2  | mytbl4   |       12017 |                    0
+ myschema2  | mytbl5   |       12017 |                    0
+ myschema2  | mytbl6   |       12017 |                    0
  myschema1  | myTbl3   |       12100 |                   10
  myschema1  | mytbl1   |       12100 |                   15
  myschema1  | mytbl2   |       12100 |                    2
@@ -2556,7 +2557,7 @@ select emaj.emaj_delete_before_mark_group('myGroup1','M4');
 select mark_group, regexp_replace(mark_name,E'\\d\\d\.\\d\\d\\.\\d\\d\\.\\d\\d\\d\\d','%','g'), mark_time_id, mark_is_deleted, mark_is_rlbk_protected, mark_comment, mark_log_rows_before_next, mark_logged_rlbk_target_mark from emaj.emaj_mark order by mark_time_id, mark_group;
  mark_group |        regexp_replace        | mark_time_id | mark_is_deleted | mark_is_rlbk_protected | mark_comment | mark_log_rows_before_next | mark_logged_rlbk_target_mark 
 ------------+------------------------------+--------------+-----------------+------------------------+--------------+---------------------------+------------------------------
- myGroup2   | M1                           |        12016 | f               | f                      |              |                        41 | 
+ myGroup2   | M1                           |        12017 | f               | f                      |              |                        41 | 
  myGroup2   | M2                           |        12200 | f               | f                      |              |                         8 | 
  myGroup2   | M3                           |        12201 | f               | f                      |              |                           | 
  myGroup1   | M4                           |        12401 | f               | f                      |              |                        10 | 
@@ -2567,8 +2568,8 @@ select mark_group, regexp_replace(mark_name,E'\\d\\d\.\\d\\d\\.\\d\\d\\.\\d\\d\\
 select sequ_schema, sequ_name, sequ_time_id, sequ_last_val, sequ_is_called from emaj.emaj_sequence order by sequ_time_id, sequ_schema, sequ_name;
  sequ_schema |     sequ_name     | sequ_time_id | sequ_last_val | sequ_is_called 
 -------------+-------------------+--------------+---------------+----------------
- myschema2   | myTbl3_col31_seq  |        12016 |            10 | t
- myschema2   | myseq1            |        12016 |          1000 | f
+ myschema2   | myTbl3_col31_seq  |        12017 |            10 | t
+ myschema2   | myseq1            |        12017 |          1000 | f
  myschema2   | myTbl3_col31_seq  |        12200 |            20 | t
  myschema2   | myseq1            |        12200 |          1000 | t
  myschema2   | myTbl3_col31_seq  |        12201 |            20 | t
@@ -2584,12 +2585,12 @@ select sequ_schema, sequ_name, sequ_time_id, sequ_last_val, sequ_is_called from 
 select tbl_schema, tbl_name, tbl_time_id, tbl_log_seq_last_val from emaj.emaj_table order by tbl_time_id, tbl_schema, tbl_name;
  tbl_schema | tbl_name | tbl_time_id | tbl_log_seq_last_val 
 ------------+----------+-------------+----------------------
- myschema2  | myTbl3   |       12016 |                    0
- myschema2  | mytbl1   |       12016 |                    0
- myschema2  | mytbl2   |       12016 |                    0
- myschema2  | mytbl4   |       12016 |                    0
- myschema2  | mytbl5   |       12016 |                    0
- myschema2  | mytbl6   |       12016 |                    0
+ myschema2  | myTbl3   |       12017 |                    0
+ myschema2  | mytbl1   |       12017 |                    0
+ myschema2  | mytbl2   |       12017 |                    0
+ myschema2  | mytbl4   |       12017 |                    0
+ myschema2  | mytbl5   |       12017 |                    0
+ myschema2  | mytbl6   |       12017 |                    0
  myschema2  | myTbl3   |       12200 |                   10
  myschema2  | mytbl1   |       12200 |                   15
  myschema2  | mytbl2   |       12200 |                    2

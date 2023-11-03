@@ -161,8 +161,8 @@ CREATE TABLE emaj.emaj_time_stamp (
                                DEFAULT txid_current(),
   time_last_emaj_gid           BIGINT,                     -- last value of the E-Maj global sequence
   time_event                   CHAR(1),                    -- event type that has generated the time stamp
-                                                           --   C(reate group), D(rop group), A(lter group),
-                                                           --   M(ark setting), R(ollback), S(imple)
+                                                           --   C(reate group), D(rop group), A(lter group), I(mport)
+                                                           --   S(tart), M(ark setting), R(ollback), X(stop)
   PRIMARY KEY (time_id)
   );
 COMMENT ON TABLE emaj.emaj_time_stamp IS
@@ -6821,6 +6821,7 @@ $_start_groups$
 -- The function is defined as SECURITY DEFINER so that emaj_adm role can use it even if he is not the owner of application tables and
 -- sequences.
   DECLARE
+    v_timeId                 BIGINT;
     v_nbTblSeq               INT = 0;
     v_markName               TEXT;
     v_eventTriggers          TEXT[];
@@ -6838,6 +6839,8 @@ $_start_groups$
 -- Check that no group is damaged.
       PERFORM 0
         FROM emaj._verify_groups(p_groupNames, TRUE);
+-- Get a time stamp id of type 'S' for the operation.
+      SELECT emaj._set_time_stamp('S') INTO v_timeId;
 -- Check foreign keys with tables outside the group
       PERFORM emaj._check_fk_groups(p_groupNames);
 -- Purge the history tables, if needed.
@@ -6881,7 +6884,7 @@ $_start_groups$
         SET group_is_logging = TRUE
         WHERE group_name = ANY (p_groupNames);
 -- Set the first mark for each group.
-      PERFORM emaj._set_mark_groups(p_groupNames, v_markName, p_multiGroup, TRUE);
+      PERFORM emaj._set_mark_groups(p_groupNames, v_markName, p_multiGroup, TRUE, NULL, v_timeId);
     END IF;
 -- Insert a END event into the history.
     INSERT INTO emaj.emaj_hist (hist_function, hist_event, hist_object, hist_wording)
@@ -6950,6 +6953,7 @@ $_stop_groups$
   DECLARE
     v_groupList              TEXT;
     v_count                  INT;
+    v_timeId                 BIGINT;
     v_nbTblSeq               INT = 0;
     v_markName               TEXT;
     v_fullTableName          TEXT;
@@ -6966,7 +6970,8 @@ $_stop_groups$
     SELECT emaj._check_group_names(p_groupNames := p_groupNames, p_mayBeNull := p_multiGroup, p_lockGroups := TRUE)
       INTO p_groupNames;
 -- For all already IDLE groups, generate a warning message and remove them from the list of the groups to process.
-    SELECT string_agg(group_name,', ' ORDER BY group_name), count(*) INTO v_groupList, v_count
+    SELECT string_agg(group_name,', ' ORDER BY group_name), count(*)
+      INTO v_groupList, v_count
       FROM emaj.emaj_group
       WHERE group_name = ANY(p_groupNames)
        AND NOT group_is_logging;
@@ -6976,7 +6981,8 @@ $_stop_groups$
     IF v_count > 1 THEN
       RAISE WARNING '_stop_groups: The groups "%" are already in IDLE state.', v_groupList;
     END IF;
-    SELECT array_agg(DISTINCT group_name) INTO p_groupNames
+    SELECT array_agg(DISTINCT group_name)
+      INTO p_groupNames
       FROM emaj.emaj_group
       WHERE group_name = ANY(p_groupNames)
         AND group_is_logging;
@@ -6990,6 +6996,8 @@ $_stop_groups$
         SELECT emaj._check_new_mark(p_groupNames, p_mark) INTO v_markName;
       END IF;
 -- OK (no error detected and at least one group in logging state)
+-- Get a time stamp id of type 'X' for the operation.
+      SELECT emaj._set_time_stamp('X') INTO v_timeId;
 -- Lock all tables to get a stable point.
 -- One sets the locks at the beginning of the operation (rather than let the ALTER TABLE statements set their own locks) to decrease the
 -- risk of deadlock.
@@ -7069,7 +7077,7 @@ $_stop_groups$
       END LOOP;
       IF NOT p_isForced THEN
 -- If the function is not called by emaj_force_stop_group(), set the stop mark for each group,
-        PERFORM emaj._set_mark_groups(p_groupNames, v_markName, p_multiGroup, TRUE);
+        PERFORM emaj._set_mark_groups(p_groupNames, v_markName, p_multiGroup, TRUE, NULL, v_timeId);
 -- and set the number of log rows to 0 for these marks.
         UPDATE emaj.emaj_mark m
           SET mark_log_rows_before_next = 0

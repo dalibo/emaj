@@ -43,11 +43,13 @@ select emaj.emaj_assign_tables('myschema6','.*',NULL,'myGroup6');
 SET default_tablespace TO tspemaj;
 
 -----------------------------
--- start groups
+-- start groups in a single transaction
 -----------------------------
-select emaj.emaj_start_group('myGroup1','M1');
-select emaj.emaj_start_group('myGroup2','M1');
-select emaj.emaj_start_group('phil''s group#3",','M1');
+begin;
+  select emaj.emaj_start_group('myGroup1','M1');
+  select emaj.emaj_start_group('myGroup2','M1');
+  select emaj.emaj_start_group('phil''s group#3",','M1');
+commit;
 
 -----------------------------
 -- Step 1 : for myGroup1, update tables, set 2 marks, perform 2 unlogged rollbacks and protect the group and its last mark

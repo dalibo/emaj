@@ -1841,8 +1841,8 @@ select time_id, time_last_emaj_gid, time_event from emaj.emaj_time_stamp order b
     1041 |            1000000 | I
     1042 |            1000000 | I
     1043 |            1000000 | A
-    1044 |            1000000 | M
-    1045 |            1000000 | M
+    1044 |            1000000 | S
+    1045 |            1000000 | X
     1047 |            1000000 | D
     1048 |            1000000 | D
     1049 |            1000000 | D
@@ -1850,11 +1850,11 @@ select time_id, time_last_emaj_gid, time_event from emaj.emaj_time_stamp order b
     1051 |            1000000 | D
     1052 |            1000000 | C
     1053 |            1000000 | A
-    1054 |            1000000 | M
+    1054 |            1000000 | S
     1055 |            1000000 | D
     1056 |            1000000 | C
     1057 |            1000000 | A
-    1058 |            1000000 | M
+    1058 |            1000000 | S
     1059 |            1000000 | D
 (51 rows)
 

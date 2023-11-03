@@ -183,7 +183,7 @@ select funcname, calls from pg_stat_user_functions
  _sequence_stat_groups                     |    16
  _sequence_stat_seq                        |    36
  _set_mark_groups                          |   357
- _set_time_stamp                           |   568
+ _set_time_stamp                           |   589
  _start_groups                             |    52
  _stop_groups                              |    65
  _truncate_trigger_fnct                    |    16

@@ -115,7 +115,7 @@ select funcname, calls from pg_stat_user_functions
  _create_seq                               |    46
  _create_tbl                               |   167
  _dblink_close_cnx                         |   117
- _dblink_open_cnx                          |   140
+ _dblink_open_cnx                          |   139
  _dblink_sql_exec                          |  2254
  _delete_before_mark_group                 |    23
  _delete_between_marks_group               |    14
@@ -183,12 +183,12 @@ select funcname, calls from pg_stat_user_functions
  _sequence_stat_groups                     |    16
  _sequence_stat_seq                        |    36
  _set_mark_groups                          |   357
- _set_time_stamp                           |   572
+ _set_time_stamp                           |   593
  _start_groups                             |    52
  _stop_groups                              |    65
  _truncate_trigger_fnct                    |    16
- _verify_all_groups                        |    50
- _verify_all_schemas                       |    50
+ _verify_all_groups                        |    49
+ _verify_all_schemas                       |    49
  emaj_assign_sequence                      |     6
  emaj_assign_sequences                     |     7
  emaj_assign_sequences                     |    13
@@ -267,14 +267,14 @@ select funcname, calls from pg_stat_user_functions
  emaj_stop_groups                          |     9
  emaj_unprotect_group                      |     7
  emaj_unprotect_mark_group                 |     6
- emaj_verify_all                           |    50
+ emaj_verify_all                           |    49
 (181 rows)
 
 -- count the total number of user-callable function calls (those who failed are not counted)
 select sum(calls) from pg_stat_user_functions where funcname like E'emaj\\_%';
  sum  
 ------
- 1047
+ 1046
 (1 row)
 
 -----------------------------

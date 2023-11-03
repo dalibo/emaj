@@ -128,7 +128,7 @@ select time_id, time_last_emaj_gid, time_event from emaj.emaj_time_stamp where t
  time_id | time_last_emaj_gid | time_event 
 ---------+--------------------+------------
     9000 |            9000000 | A
-    9001 |            9000000 | M
+    9001 |            9000000 | S
     9002 |            9000000 | A
     9003 |            9000000 | A
     9004 |            9000000 | A
@@ -732,7 +732,7 @@ select rel_schema, rel_tblseq, rel_time_range, rel_group, rel_kind
   from emaj.emaj_relation where rel_schema = 'myschema1' and rel_tblseq = 'myTbl3_col31_seq' order by rel_time_range;
  rel_schema |    rel_tblseq    | rel_time_range | rel_group | rel_kind 
 ------------+------------------+----------------+-----------+----------
- myschema1  | myTbl3_col31_seq | [8008,9302)    | myGroup1  | S
+ myschema1  | myTbl3_col31_seq | [8010,9302)    | myGroup1  | S
 (1 row)
 
 select * from emaj.emaj_verify_all();
@@ -831,7 +831,7 @@ begin;
     from emaj.emaj_relation where rel_schema = 'myschema1' and rel_tblseq = 'myTbl3_col31_seq' order by rel_time_range;
  rel_schema |    rel_tblseq    | rel_time_range | rel_group | rel_kind 
 ------------+------------------+----------------+-----------+----------
- myschema1  | myTbl3_col31_seq | [8008,9302)    | myGroup1  | S
+ myschema1  | myTbl3_col31_seq | [8010,9302)    | myGroup1  | S
 (1 row)
 
   select mark_group, regexp_replace(mark_name,E'\\d\\d\.\\d\\d\\.\\d\\d\\.\\d\\d\\d\\d','%','g'), mark_time_id,
@@ -889,7 +889,7 @@ begin;
       from emaj.emaj_relation where rel_group = 'myGroup1' and not upper_inf(rel_time_range) order by 1,2,3;
  rel_schema |    rel_tblseq    | rel_time_range | rel_group | rel_kind 
 ------------+------------------+----------------+-----------+----------
- myschema1  | myTbl3_col31_seq | [8008,9302)    | myGroup1  | S
+ myschema1  | myTbl3_col31_seq | [8010,9302)    | myGroup1  | S
 (1 row)
 
     select emaj.emaj_reset_group('myGroup1');
@@ -922,7 +922,7 @@ begin;
     from emaj.emaj_relation where rel_group = 'myGroup1' and not upper_inf(rel_time_range) order by 1,2,3;
  rel_schema |    rel_tblseq    | rel_time_range | rel_group | rel_kind 
 ------------+------------------+----------------+-----------+----------
- myschema1  | myTbl3_col31_seq | [8008,9302)    | myGroup1  | S
+ myschema1  | myTbl3_col31_seq | [8010,9302)    | myGroup1  | S
 (1 row)
 
   select emaj.emaj_delete_before_mark_group('myGroup1','Mk2d');
@@ -1654,7 +1654,7 @@ select rel_schema, rel_tblseq, rel_time_range, rel_group, rel_kind, rel_log_sche
   from emaj.emaj_relation where rel_schema = 'myschema1' and (rel_tblseq = 'myTbl3' or rel_tblseq = 'mytbl2b') order by 1,2,3;
  rel_schema | rel_tblseq | rel_time_range | rel_group | rel_kind | rel_log_schema | rel_log_table | rel_log_seq_last_value 
 ------------+------------+----------------+-----------+----------+----------------+---------------+------------------------
- myschema1  | myTbl3     | [8017,9701)    | myGroup1  | r        | emaj_myschema1 | myTbl3_log_1  |                      3
+ myschema1  | myTbl3     | [8019,9701)    | myGroup1  | r        | emaj_myschema1 | myTbl3_log_1  |                      3
  myschema1  | mytbl2b    | [8202,9701)    | myGroup1  | r        | emaj_myschema1 | mytbl2b_log_1 |                      0
 (2 rows)
 
@@ -1804,11 +1804,11 @@ begin;
  relh_schema | relh_tblseq | relh_time_range | relh_group | relh_kind 
 -------------+-------------+-----------------+------------+-----------
  myschema1   | myTbl3      | [2000,8001)     | myGroup1   | r
- myschema1   | myTbl3      | [8008,8012)     | myGroup1   | r
- myschema1   | myTbl3      | [8017,9701)     | myGroup1   | r
+ myschema1   | myTbl3      | [8010,8014)     | myGroup1   | r
+ myschema1   | myTbl3      | [8019,9701)     | myGroup1   | r
  myschema1   | mytbl2b     | [2000,8001)     | myGroup1   | r
- myschema1   | mytbl2b     | [8008,8011)     | myGroup1   | r
- myschema1   | mytbl2b     | [8017,8201)     | myGroup1   | r
+ myschema1   | mytbl2b     | [8010,8013)     | myGroup1   | r
+ myschema1   | mytbl2b     | [8019,8201)     | myGroup1   | r
  myschema1   | mytbl2b     | [8201,8202)     | myGroup2   | r
  myschema1   | mytbl2b     | [8202,9701)     | myGroup1   | r
 (8 rows)
@@ -1826,7 +1826,7 @@ begin;
     from emaj.emaj_relation where rel_schema = 'myschema1' and (rel_tblseq = 'myTbl3' or rel_tblseq = 'mytbl2b') order by rel_tblseq;
  rel_schema | rel_tblseq | rel_time_range | rel_group | rel_kind | rel_log_schema | rel_log_table | rel_log_seq_last_value 
 ------------+------------+----------------+-----------+----------+----------------+---------------+------------------------
- myschema1  | myTbl3     | [8017,9701)    | myGroup1  | r        | emaj_myschema1 | myTbl3_log_1  |                      3
+ myschema1  | myTbl3     | [8019,9701)    | myGroup1  | r        | emaj_myschema1 | myTbl3_log_1  |                      3
  myschema1  | mytbl2b    | [8202,9701)    | myGroup1  | r        | emaj_myschema1 | mytbl2b_log_1 |                      0
 (2 rows)
 
@@ -1862,8 +1862,8 @@ begin;
     from emaj.emaj_relation where rel_group = 'myGroup1' and not upper_inf(rel_time_range) order by 1,2,3;
  rel_schema |    rel_tblseq    | rel_time_range | rel_group | rel_kind | rel_log_schema | rel_log_table | rel_log_seq_last_value 
 ------------+------------------+----------------+-----------+----------+----------------+---------------+------------------------
- myschema1  | myTbl3           | [8017,9701)    | myGroup1  | r        | emaj_myschema1 | myTbl3_log_1  |                      3
- myschema1  | myTbl3_col31_seq | [8008,9302)    | myGroup1  | S        |                |               |                       
+ myschema1  | myTbl3           | [8019,9701)    | myGroup1  | r        | emaj_myschema1 | myTbl3_log_1  |                      3
+ myschema1  | myTbl3_col31_seq | [8010,9302)    | myGroup1  | S        |                |               |                       
  myschema1  | mytbl2b          | [8202,9701)    | myGroup1  | r        | emaj_myschema1 | mytbl2b_log_1 |                      0
 (3 rows)
 
@@ -1871,8 +1871,8 @@ begin;
  relh_schema | relh_tblseq | relh_time_range | relh_group | relh_kind 
 -------------+-------------+-----------------+------------+-----------
  myschema1   | mytbl2b     | [2000,8001)     | myGroup1   | r
- myschema1   | mytbl2b     | [8008,8011)     | myGroup1   | r
- myschema1   | mytbl2b     | [8017,8201)     | myGroup1   | r
+ myschema1   | mytbl2b     | [8010,8013)     | myGroup1   | r
+ myschema1   | mytbl2b     | [8019,8201)     | myGroup1   | r
  myschema1   | mytbl2b     | [8201,8202)     | myGroup2   | r
 (4 rows)
 
@@ -1903,8 +1903,8 @@ begin;
  relh_schema | relh_tblseq | relh_time_range | relh_group | relh_kind 
 -------------+-------------+-----------------+------------+-----------
  myschema1   | mytbl2b     | [2000,8001)     | myGroup1   | r
- myschema1   | mytbl2b     | [8008,8011)     | myGroup1   | r
- myschema1   | mytbl2b     | [8017,8201)     | myGroup1   | r
+ myschema1   | mytbl2b     | [8010,8013)     | myGroup1   | r
+ myschema1   | mytbl2b     | [8019,8201)     | myGroup1   | r
  myschema1   | mytbl2b     | [8201,8202)     | myGroup2   | r
  myschema1   | mytbl2b     | [8202,9701)     | myGroup1   | r
 (5 rows)
@@ -1982,27 +1982,27 @@ begin;
  relh_schema |    relh_tblseq    | relh_time_range | relh_group | relh_kind 
 -------------+-------------------+-----------------+------------+-----------
  myschema1   | myTbl3            | [2000,8001)     | myGroup1   | r
- myschema1   | myTbl3            | [8008,8012)     | myGroup1   | r
- myschema1   | myTbl3            | [8017,9701)     | myGroup1   | r
+ myschema1   | myTbl3            | [8010,8014)     | myGroup1   | r
+ myschema1   | myTbl3            | [8019,9701)     | myGroup1   | r
  myschema1   | myTbl3_col31_seq  | [2000,8001)     | myGroup1   | S
- myschema1   | myTbl3_col31_seq  | [8008,9302)     | myGroup1   | S
+ myschema1   | myTbl3_col31_seq  | [8010,9302)     | myGroup1   | S
  myschema1   | mytbl1            | [2000,8001)     | myGroup1   | r
- myschema1   | mytbl1            | [8008,8010)     | myGroup1   | r
- myschema1   | mytbl1            | [8017,8200)     | myGroup1   | r
+ myschema1   | mytbl1            | [8010,8012)     | myGroup1   | r
+ myschema1   | mytbl1            | [8019,8200)     | myGroup1   | r
  myschema1   | mytbl1            | [8200,8202)     | myGroup2   | r
  myschema1   | mytbl1            | [8202,9707)     | myGroup1   | r
  myschema1   | mytbl2            | [2000,8001)     | myGroup1   | r
- myschema1   | mytbl2            | [8008,8011)     | myGroup1   | r
- myschema1   | mytbl2            | [8017,8201)     | myGroup1   | r
+ myschema1   | mytbl2            | [8010,8013)     | myGroup1   | r
+ myschema1   | mytbl2            | [8019,8201)     | myGroup1   | r
  myschema1   | mytbl2            | [8201,8203)     | myGroup2   | r
  myschema1   | mytbl2b           | [2000,8001)     | myGroup1   | r
- myschema1   | mytbl2b           | [8008,8011)     | myGroup1   | r
- myschema1   | mytbl2b           | [8017,8201)     | myGroup1   | r
+ myschema1   | mytbl2b           | [8010,8013)     | myGroup1   | r
+ myschema1   | mytbl2b           | [8019,8201)     | myGroup1   | r
  myschema1   | mytbl2b           | [8201,8202)     | myGroup2   | r
  myschema1   | mytbl2b           | [8202,9701)     | myGroup1   | r
  myschema1   | mytbl2b_col20_seq | [2000,8001)     | myGroup1   | S
  myschema1   | mytbl4            | [2000,8001)     | myGroup1   | r
- myschema1   | mytbl4            | [8008,8012)     | myGroup1   | r
+ myschema1   | mytbl4            | [8010,8014)     | myGroup1   | r
 (22 rows)
 
 rollback;
@@ -2493,9 +2493,9 @@ select emaj.emaj_modify_table('myschema2', 'myTbl3', '{"log_data_tablespace":"ts
 select * from emaj.emaj_relation where rel_schema = 'myschema2' and (rel_tblseq = 'myTbl3' or rel_tblseq = 'myTbl3_col31_seq') order by 1,2,3,4;
  rel_schema |    rel_tblseq    | rel_time_range | rel_group | rel_kind | rel_priority | rel_log_schema | rel_log_table | rel_log_dat_tsp |  rel_log_index   | rel_log_idx_tsp | rel_log_sequence | rel_log_function | rel_ignored_triggers | rel_pk_cols | rel_emaj_verb_attnum | rel_has_always_ident_col |     rel_sql_rlbk_columns      | rel_sql_gen_ins_col |                                                  rel_sql_gen_ins_val                                                  |                                                               rel_sql_gen_upd_set                                                               | rel_sql_gen_pk_conditions | rel_log_seq_last_value 
 ------------+------------------+----------------+-----------+----------+--------------+----------------+---------------+-----------------+------------------+-----------------+------------------+------------------+----------------------+-------------+----------------------+--------------------------+-------------------------------+---------------------+-----------------------------------------------------------------------------------------------------------------------+-------------------------------------------------------------------------------------------------------------------------------------------------+---------------------------+------------------------
- myschema2  | myTbl3           | [8008,10005)   | myGroup2  | r        |              | emaj_myschema2 | myTbl3_log_1  |                 | myTbl3_log_idx_1 |                 | myTbl3_log_seq   | myTbl3_log_fnct  |                      | {col31}     |                    4 | f                        | tbl.col31,tbl.col32,tbl.col33 |                     | ' || coalesce(o.col31::TEXT,'NULL') || ', ' || quote_nullable(o.col32) || ', ' || coalesce(o.col33::TEXT,'NULL') || ' | col31 = ' || coalesce(n.col31 ::TEXT,'NULL') || ', col32 = ' || quote_nullable(n.col32) || ', col33 = ' || coalesce(n.col33 ::TEXT,'NULL') || ' | col31 = ' || o.col31 || ' |                       
+ myschema2  | myTbl3           | [8010,10005)   | myGroup2  | r        |              | emaj_myschema2 | myTbl3_log_1  |                 | myTbl3_log_idx_1 |                 | myTbl3_log_seq   | myTbl3_log_fnct  |                      | {col31}     |                    4 | f                        | tbl.col31,tbl.col32,tbl.col33 |                     | ' || coalesce(o.col31::TEXT,'NULL') || ', ' || quote_nullable(o.col32) || ', ' || coalesce(o.col33::TEXT,'NULL') || ' | col31 = ' || coalesce(n.col31 ::TEXT,'NULL') || ', col32 = ' || quote_nullable(n.col32) || ', col33 = ' || coalesce(n.col33 ::TEXT,'NULL') || ' | col31 = ' || o.col31 || ' |                       
  myschema2  | myTbl3           | [10005,)       | myGroup1  | r        |          100 | emaj_myschema2 | myTbl3_log    | tsplog1         | myTbl3_log_idx   | tsplog1         | myTbl3_log_seq   | myTbl3_log_fnct  |                      | {col31}     |                    4 | f                        | tbl.col31,tbl.col32,tbl.col33 |                     | ' || coalesce(o.col31::TEXT,'NULL') || ', ' || quote_nullable(o.col32) || ', ' || coalesce(o.col33::TEXT,'NULL') || ' | col31 = ' || coalesce(n.col31 ::TEXT,'NULL') || ', col32 = ' || quote_nullable(n.col32) || ', col33 = ' || coalesce(n.col33 ::TEXT,'NULL') || ' | col31 = ' || o.col31 || ' |                       
- myschema2  | myTbl3_col31_seq | [8017,10006)   | myGroup2  | S        |              |                |               |                 |                  |                 |                  |                  |                      |             |                      |                          |                               |                     |                                                                                                                       |                                                                                                                                                 |                           |                       
+ myschema2  | myTbl3_col31_seq | [8019,10006)   | myGroup2  | S        |              |                |               |                 |                  |                 |                  |                  |                      |             |                      |                          |                               |                     |                                                                                                                       |                                                                                                                                                 |                           |                       
  myschema2  | myTbl3_col31_seq | [10006,)       | myGroup1  | S        |              |                |               |                 |                  |                 |                  |                  |                      |             |                      |                          |                               |                     |                                                                                                                       |                                                                                                                                                 |                           |                       
 (4 rows)
 
@@ -2787,10 +2787,10 @@ select rel_schema, rel_tblseq, rel_time_range, rel_group, rel_kind, rel_log_sche
  myschema2  | myseq1     | [10022,)       | myGroup2  | S        |                |               |                       
  myschema2  | myseq2     | [10018,10020)  | myGroup2  | S        |                |               |                       
  myschema2  | myseq2     | [10022,)       | myGroup2  | S        |                |               |                       
- myschema2  | mytbl1     | [8008,10015)   | myGroup2  | r        | emaj_myschema2 | mytbl1_log_1  |                      1
+ myschema2  | mytbl1     | [8010,10015)   | myGroup2  | r        | emaj_myschema2 | mytbl1_log_1  |                      1
  myschema2  | mytbl1     | [10017,10019)  | myGroup2  | r        | emaj_myschema2 | mytbl1_log_2  |                      2
  myschema2  | mytbl1     | [10021,)       | myGroup2  | r        | emaj_myschema2 | mytbl1_log    |                       
- myschema2  | mytbl2     | [8008,10015)   | myGroup2  | r        | emaj_myschema2 | mytbl2_log_1  |                      0
+ myschema2  | mytbl2     | [8010,10015)   | myGroup2  | r        | emaj_myschema2 | mytbl2_log_1  |                      0
  myschema2  | mytbl2     | [10017,10019)  | myGroup2  | r        | emaj_myschema2 | mytbl2_log_2  |                      0
  myschema2  | mytbl2     | [10021,)       | myGroup2  | r        | emaj_myschema2 | mytbl2_log    |                       
 (16 rows)
@@ -3197,9 +3197,9 @@ select time_id, time_last_emaj_gid, time_event from emaj.emaj_time_stamp where t
    10009 |           10000005 | R
    10010 |           10000009 | M
    10011 |           10000009 | R
-   10012 |           10000009 | M
+   10012 |           10000009 | X
    10013 |           10000009 | I
-   10014 |           10000009 | M
+   10014 |           10000009 | S
    10015 |           10000010 | A
    10016 |           10000010 | A
    10017 |           10000010 | A
@@ -3227,8 +3227,8 @@ select time_id, time_last_emaj_gid, time_event from emaj.emaj_time_stamp where t
    10042 |           10000014 | A
    10043 |           10000014 | A
    10044 |           10000014 | A
-   10045 |           10000014 | M
-   10046 |           10000014 | M
+   10045 |           10000014 | X
+   10046 |           10000014 | X
    10047 |           10000014 | D
    10048 |           10000014 | D
    10049 |           10000014 | D
@@ -3623,55 +3623,55 @@ select * from emaj.emaj_rel_hist order by 1,2,3;
   relh_schema   |    relh_tblseq    | relh_time_range |    relh_group    | relh_kind 
 ----------------+-------------------+-----------------+------------------+-----------
  myschema1      | myTbl3            | [2000,8001)     | myGroup1         | r
- myschema1      | myTbl3            | [8008,8012)     | myGroup1         | r
- myschema1      | myTbl3            | [8017,9701)     | myGroup1         | r
+ myschema1      | myTbl3            | [8010,8014)     | myGroup1         | r
+ myschema1      | myTbl3            | [8019,9701)     | myGroup1         | r
  myschema1      | myTbl3            | [9713,10047)    | myGroup1         | r
  myschema1      | myTbl3_col31_seq  | [2000,8001)     | myGroup1         | S
- myschema1      | myTbl3_col31_seq  | [8008,9302)     | myGroup1         | S
+ myschema1      | myTbl3_col31_seq  | [8010,9302)     | myGroup1         | S
  myschema1      | myTbl3_col31_seq  | [9309,10047)    | myGroup1         | S
  myschema1      | mytbl1            | [2000,8001)     | myGroup1         | r
- myschema1      | mytbl1            | [8008,8010)     | myGroup1         | r
- myschema1      | mytbl1            | [8017,8200)     | myGroup1         | r
+ myschema1      | mytbl1            | [8010,8012)     | myGroup1         | r
+ myschema1      | mytbl1            | [8019,8200)     | myGroup1         | r
  myschema1      | mytbl1            | [8200,8202)     | myGroup2         | r
  myschema1      | mytbl1            | [8202,9707)     | myGroup1         | r
  myschema1      | mytbl1            | [9713,10039)    | myGroup1         | r
  myschema1      | mytbl1            | [10044,10047)   | myGroup1         | r
  myschema1      | mytbl1_new_name   | [10040,10041)   | myGroup1         | r
  myschema1      | mytbl2            | [2000,8001)     | myGroup1         | r
- myschema1      | mytbl2            | [8008,8011)     | myGroup1         | r
- myschema1      | mytbl2            | [8017,8201)     | myGroup1         | r
+ myschema1      | mytbl2            | [8010,8013)     | myGroup1         | r
+ myschema1      | mytbl2            | [8019,8201)     | myGroup1         | r
  myschema1      | mytbl2            | [8201,8203)     | myGroup2         | r
  myschema1      | mytbl2            | [8203,10047)    | myGroup1         | r
  myschema1      | mytbl2b           | [2000,8001)     | myGroup1         | r
- myschema1      | mytbl2b           | [8008,8011)     | myGroup1         | r
- myschema1      | mytbl2b           | [8017,8201)     | myGroup1         | r
+ myschema1      | mytbl2b           | [8010,8013)     | myGroup1         | r
+ myschema1      | mytbl2b           | [8019,8201)     | myGroup1         | r
  myschema1      | mytbl2b           | [8201,8202)     | myGroup2         | r
  myschema1      | mytbl2b           | [8202,9701)     | myGroup1         | r
  myschema1      | mytbl2b           | [9713,10047)    | myGroup1         | r
  myschema1      | mytbl2b_col20_seq | [2000,8001)     | myGroup1         | S
- myschema1      | mytbl2b_col20_seq | [8008,10047)    | myGroup1         | S
+ myschema1      | mytbl2b_col20_seq | [8010,10047)    | myGroup1         | S
  myschema1      | mytbl4            | [2000,8001)     | myGroup1         | r
- myschema1      | mytbl4            | [8008,8012)     | myGroup1         | r
- myschema1      | mytbl4            | [8017,10023)    | myGroup1         | r
+ myschema1      | mytbl4            | [8010,8014)     | myGroup1         | r
+ myschema1      | mytbl4            | [8019,10023)    | myGroup1         | r
  myschema1      | mytbl4            | [10024,10025)   | myGroup1         | r
  myschema1      | mytbl4            | [10026,10047)   | myGroup1         | r
  myschema2      | myTbl3            | [2000,8002)     | myGroup2         | r
- myschema2      | myTbl3            | [8008,10005)    | myGroup2         | r
+ myschema2      | myTbl3            | [8010,10005)    | myGroup2         | r
  myschema2      | myTbl3            | [10005,10013)   | myGroup1         | r
  myschema2      | myTbl3            | [10013,10015)   | myGroup2         | r
  myschema2      | myTbl3            | [10017,10019)   | myGroup2         | r
  myschema2      | myTbl3            | [10021,10048)   | myGroup2         | r
  myschema2      | myTbl3_col31_seq  | [2000,8002)     | myGroup2         | S
- myschema2      | myTbl3_col31_seq  | [8008,8016)     | myGroup2         | S
- myschema2      | myTbl3_col31_seq  | [8017,10006)    | myGroup2         | S
+ myschema2      | myTbl3_col31_seq  | [8010,8018)     | myGroup2         | S
+ myschema2      | myTbl3_col31_seq  | [8019,10006)    | myGroup2         | S
  myschema2      | myTbl3_col31_seq  | [10006,10013)   | myGroup1         | S
  myschema2      | myTbl3_col31_seq  | [10013,10032)   | myGroup2         | S
  myschema2      | myTbl3_col31_seq  | [10032,10034)   | myGroup1         | S
  myschema2      | myTbl3_col31_seq  | [10034,10036)   | myGroup2         | S
  myschema2      | myTbl3_col31_seq  | [10036,10049)   | myGroup4         | S
  myschema2      | myseq1            | [2000,8002)     | myGroup2         | S
- myschema2      | myseq1            | [8008,8013)     | myGroup2         | S
- myschema2      | myseq1            | [8017,8204)     | myGroup2         | S
+ myschema2      | myseq1            | [8010,8015)     | myGroup2         | S
+ myschema2      | myseq1            | [8019,8204)     | myGroup2         | S
  myschema2      | myseq1            | [8204,8205)     | myGroup1         | S
  myschema2      | myseq1            | [8205,8206)     | myGroup2         | S
  myschema2      | myseq1            | [8206,8207)     | myGroup4         | S
@@ -3681,7 +3681,7 @@ select * from emaj.emaj_rel_hist order by 1,2,3;
  myschema2      | myseq1            | [10032,10034)   | myGroup1         | S
  myschema2      | myseq1            | [10034,10036)   | myGroup2         | S
  myschema2      | myseq1            | [10036,10049)   | myGroup4         | S
- myschema2      | myseq2            | [8014,8015)     | myGroup2         | S
+ myschema2      | myseq2            | [8016,8017)     | myGroup2         | S
  myschema2      | myseq2            | [9102,9107)     | myGroup2         | S
  myschema2      | myseq2            | [9108,9109)     | myGroup2         | S
  myschema2      | myseq2            | [10018,10020)   | myGroup2         | S
@@ -3690,57 +3690,57 @@ select * from emaj.emaj_rel_hist order by 1,2,3;
  myschema2      | myseq2            | [10034,10036)   | myGroup2         | S
  myschema2      | myseq2            | [10036,10049)   | myGroup4         | S
  myschema2      | mytbl1            | [2000,8002)     | myGroup2         | r
- myschema2      | mytbl1            | [8008,10015)    | myGroup2         | r
+ myschema2      | mytbl1            | [8010,10015)    | myGroup2         | r
  myschema2      | mytbl1            | [10017,10019)   | myGroup2         | r
  myschema2      | mytbl1            | [10021,10048)   | myGroup2         | r
  myschema2      | mytbl2            | [2000,8002)     | myGroup2         | r
- myschema2      | mytbl2            | [8008,10015)    | myGroup2         | r
+ myschema2      | mytbl2            | [8010,10015)    | myGroup2         | r
  myschema2      | mytbl2            | [10017,10019)   | myGroup2         | r
  myschema2      | mytbl2            | [10021,10037)   | myGroup2         | r
  myschema2      | mytbl2            | [10037,10038)   | myGroup1         | r
  myschema2      | mytbl2            | [10038,10048)   | myGroup2         | r
  myschema2      | mytbl4            | [2000,8002)     | myGroup2         | r
- myschema2      | mytbl4            | [8008,10048)    | myGroup2         | r
+ myschema2      | mytbl4            | [8010,10048)    | myGroup2         | r
  myschema2      | mytbl5            | [2000,8002)     | myGroup2         | r
- myschema2      | mytbl5            | [8008,10048)    | myGroup2         | r
+ myschema2      | mytbl5            | [8010,10048)    | myGroup2         | r
  myschema2      | mytbl6            | [2000,8002)     | myGroup2         | r
- myschema2      | mytbl6            | [8008,10048)    | myGroup2         | r
+ myschema2      | mytbl6            | [8010,10048)    | myGroup2         | r
  myschema2      | mytbl7            | [2000,8002)     | myGroup2         | r
- myschema2      | mytbl7            | [8008,9000)     | myGroup2         | r
+ myschema2      | mytbl7            | [8010,9000)     | myGroup2         | r
  myschema2      | mytbl7            | [9502,9509)     | myGroup2         | r
  myschema2      | mytbl7            | [9510,9511)     | myGroup2         | r
  myschema2      | mytbl8            | [2000,8002)     | myGroup2         | r
- myschema2      | mytbl8            | [8008,9000)     | myGroup2         | r
- myschema4      | mypartp1          | [1023,8005)     | myGroup4         | r
- myschema4      | mypartp1          | [8008,10031)    | myGroup4         | r
+ myschema2      | mytbl8            | [8010,9000)     | myGroup2         | r
+ myschema4      | mypartp1          | [1023,8006)     | myGroup4         | r
+ myschema4      | mypartp1          | [8010,10031)    | myGroup4         | r
  myschema4      | mypartp1          | [10031,10033)   | myGroup1         | r
  myschema4      | mypartp1          | [10033,10035)   | myGroup2         | r
  myschema4      | mypartp1          | [10035,10049)   | myGroup4         | r
- myschema4      | mypartp2          | [1023,8005)     | myGroup4         | r
- myschema4      | mypartp2          | [8008,10031)    | myGroup4         | r
+ myschema4      | mypartp2          | [1023,8006)     | myGroup4         | r
+ myschema4      | mypartp2          | [8010,10031)    | myGroup4         | r
  myschema4      | mypartp2          | [10031,10033)   | myGroup1         | r
  myschema4      | mypartp2          | [10033,10035)   | myGroup2         | r
  myschema4      | mypartp2          | [10035,10049)   | myGroup4         | r
- myschema4      | mytblc1           | [1023,8005)     | myGroup4         | r
- myschema4      | mytblc1           | [8008,10031)    | myGroup4         | r
+ myschema4      | mytblc1           | [1023,8006)     | myGroup4         | r
+ myschema4      | mytblc1           | [8010,10031)    | myGroup4         | r
  myschema4      | mytblc1           | [10031,10033)   | myGroup1         | r
  myschema4      | mytblc1           | [10033,10035)   | myGroup2         | r
  myschema4      | mytblc1           | [10035,10049)   | myGroup4         | r
- myschema4      | mytblc2           | [1023,8005)     | myGroup4         | r
- myschema4      | mytblc2           | [8008,10031)    | myGroup4         | r
+ myschema4      | mytblc2           | [1023,8006)     | myGroup4         | r
+ myschema4      | mytblc2           | [8010,10031)    | myGroup4         | r
  myschema4      | mytblc2           | [10031,10033)   | myGroup1         | r
  myschema4      | mytblc2           | [10033,10035)   | myGroup2         | r
  myschema4      | mytblc2           | [10035,10049)   | myGroup4         | r
- myschema4      | mytblm            | [1023,8005)     | myGroup4         | r
- myschema4      | mytblm            | [8008,10031)    | myGroup4         | r
+ myschema4      | mytblm            | [1023,8006)     | myGroup4         | r
+ myschema4      | mytblm            | [8010,10031)    | myGroup4         | r
  myschema4      | mytblm            | [10031,10033)   | myGroup1         | r
  myschema4      | mytblm            | [10033,10035)   | myGroup2         | r
  myschema4      | mytblm            | [10035,10049)   | myGroup4         | r
- myschema4      | mytblr            | [4046,8005)     | myGroup4         | r
- myschema5      | myoidstbl         | [8008,10050)    | myGroup5         | r
- myschema5      | myunloggedtbl     | [8008,10050)    | myGroup5         | r
+ myschema4      | mytblr            | [4046,8006)     | myGroup4         | r
+ myschema5      | myoidstbl         | [8010,10050)    | myGroup5         | r
+ myschema5      | myunloggedtbl     | [8010,10050)    | myGroup5         | r
  phil's schema3 | myTbl2\           | [1019,8004)     | phil's group#3", | r
- phil's schema3 | myTbl2\           | [8009,10050)    | myGroup5         | r
+ phil's schema3 | myTbl2\           | [8011,10050)    | myGroup5         | r
  phil's schema3 | myTbl2\_col21_seq | [1028,8004)     | phil's group#3", | S
  phil's schema3 | phil's seq\1      | [1028,8004)     | phil's group#3", | S
  phil's schema3 | phil's tbl1       | [1019,8004)     | phil's group#3", | r

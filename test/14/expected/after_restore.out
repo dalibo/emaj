@@ -102,8 +102,8 @@ select mark_group, regexp_replace(mark_name,E'\\d\\d\.\\d\\d\\.\\d\\d\\.\\d\\d\\
  myGroup2   | STOP_%                       |        14000 | t               | f                      |                      |                         0 | 
  myGroup1   | Stop after rollback          |        14007 | t               | f                      |                      |                         0 | 
  myGroup2   | Stop after rollback          |        14007 | t               | f                      |                      |                         0 | 
- myGroup1   | Multi-1                      |        14008 | f               | f                      |                      |                           | 
- myGroup2   | Multi-1                      |        14008 | f               | f                      |                      |                        92 | 
+ myGroup1   | Multi-1                      |        14009 | f               | f                      |                      |                           | 
+ myGroup2   | Multi-1                      |        14009 | f               | f                      |                      |                        92 | 
  myGroup2   | RLBK_Multi-1_%_START         |        20001 | f               | f                      |                      |                        32 | 
  myGroup2   | RLBK_Multi-1_%_DONE          |        20002 | f               | f                      |                      |                        30 | Multi-1
  myGroup2   | RLBK_Multi-1_%_START         |        20201 | f               | f                      |                      |                        32 | 
@@ -130,10 +130,10 @@ select sequ_schema, sequ_name, sequ_time_id, sequ_last_val, sequ_is_called from 
  myschema1   | myTbl3_col31_seq  |        14007 |            20 | t
  myschema2   | myseq1            |        14007 |          1004 | f
  myschema2   | myTbl3_col31_seq  |        14007 |            20 | t
- myschema1   | mytbl2b_col20_seq |        14008 |             5 | t
- myschema1   | myTbl3_col31_seq  |        14008 |            20 | t
- myschema2   | myseq1            |        14008 |          1004 | f
- myschema2   | myTbl3_col31_seq  |        14008 |            20 | t
+ myschema1   | mytbl2b_col20_seq |        14009 |             5 | t
+ myschema1   | myTbl3_col31_seq  |        14009 |            20 | t
+ myschema2   | myseq1            |        14009 |          1004 | f
+ myschema2   | myTbl3_col31_seq  |        14009 |            20 | t
  myschema2   | myseq1            |        20001 |          9999 | f
  myschema2   | myTbl3_col31_seq  |        20001 |            20 | t
  myschema2   | myseq1            |        20002 |          1004 | f
@@ -192,17 +192,17 @@ select tbl_schema, tbl_name, tbl_time_id, tbl_log_seq_last_val from emaj.emaj_ta
  myschema2  | mytbl4   |       14007 |                   10
  myschema2  | mytbl5   |       14007 |                    7
  myschema2  | mytbl6   |       14007 |                   23
- myschema1  | mytbl1   |       14008 |                   33
- myschema1  | mytbl2   |       14008 |                    3
- myschema1  | mytbl2b  |       14008 |                    3
- myschema1  | myTbl3   |       14008 |                   45
- myschema1  | mytbl4   |       14008 |                   14
- myschema2  | mytbl1   |       14008 |                   15
- myschema2  | mytbl2   |       14008 |                    2
- myschema2  | myTbl3   |       14008 |                   10
- myschema2  | mytbl4   |       14008 |                   10
- myschema2  | mytbl5   |       14008 |                    7
- myschema2  | mytbl6   |       14008 |                   23
+ myschema1  | mytbl1   |       14009 |                   33
+ myschema1  | mytbl2   |       14009 |                    3
+ myschema1  | mytbl2b  |       14009 |                    3
+ myschema1  | myTbl3   |       14009 |                   45
+ myschema1  | mytbl4   |       14009 |                   14
+ myschema2  | mytbl1   |       14009 |                   15
+ myschema2  | mytbl2   |       14009 |                    2
+ myschema2  | myTbl3   |       14009 |                   10
+ myschema2  | mytbl4   |       14009 |                   10
+ myschema2  | mytbl5   |       14009 |                    7
+ myschema2  | mytbl6   |       14009 |                   23
  myschema2  | mytbl1   |       20001 |                   31
  myschema2  | mytbl2   |       20001 |                   10
  myschema2  | myTbl3   |       20001 |                   20
@@ -480,8 +480,8 @@ select mark_group, regexp_replace(mark_name,E'\\d\\d\.\\d\\d\\.\\d\\d\\.\\d\\d\\
  myGroup2   | STOP_%                       |        14000 | t               | f                      |                      |                         0 | 
  myGroup1   | Stop after rollback          |        14007 | t               | f                      |                      |                         0 | 
  myGroup2   | Stop after rollback          |        14007 | t               | f                      |                      |                         0 | 
- myGroup1   | Multi-1                      |        14008 | f               | f                      |                      |                           | 
- myGroup2   | Multi-1                      |        14008 | f               | f                      |                      |                           | 
+ myGroup1   | Multi-1                      |        14009 | f               | f                      |                      |                           | 
+ myGroup2   | Multi-1                      |        14009 | f               | f                      |                      |                           | 
 (10 rows)
 
 select time_id, time_last_emaj_gid, time_event from emaj.emaj_time_stamp order by time_id;
@@ -527,8 +527,8 @@ select time_id, time_last_emaj_gid, time_event from emaj.emaj_time_stamp order b
     1041 |            1000000 | I
     1042 |            1000000 | I
     1043 |            1000000 | A
-    1044 |            1000000 | M
-    1045 |            1000000 | M
+    1044 |            1000000 | S
+    1045 |            1000000 | X
     1047 |            1000000 | D
     1048 |            1000000 | D
     1049 |            1000000 | D
@@ -536,40 +536,42 @@ select time_id, time_last_emaj_gid, time_event from emaj.emaj_time_stamp order b
     1051 |            1000000 | D
     1052 |            1000000 | C
     1053 |            1000000 | A
-    1054 |            1000000 | M
+    1054 |            1000000 | S
     1055 |            1000000 | D
     1056 |            1000000 | C
     1057 |            1000000 | A
-    1058 |            1000000 | M
+    1058 |            1000000 | S
     1059 |            1000000 | D
     2000 |            2000000 | I
-    2001 |            2000000 | M
-    2002 |            2000000 | M
-    2003 |            2000000 | M
-    2004 |            2000000 | M
-    2005 |            2000000 | M
-    2006 |            2000000 | M
-    2008 |            2000000 | M
-    2009 |            2000000 | M
-    2200 |            2200000 | M
-    2201 |            2200000 | M
-    2202 |            2200000 | M
-    2203 |            2200000 | M
-    2204 |            2200000 | M
-    2205 |            2200000 | M
-    2206 |            2200000 | M
-    2400 |            2400000 | M
-    2401 |            2400000 | M
-    2403 |            2400000 | M
-    2500 |            2500000 | M
-    2501 |            2500000 | M
-    2600 |            2600000 | M
-    2601 |            2600000 | M
-    2602 |            2600000 | M
-    2603 |            2600000 | M
-    3000 |            3000000 | M
-    3001 |            3000000 | M
-    3002 |            3000000 | M
+    2002 |            2000000 | S
+    2003 |            2000000 | S
+    2004 |            2000000 | S
+    2005 |            2000000 | S
+    2006 |            2000000 | X
+    2007 |            2000000 | X
+    2009 |            2000000 | S
+    2010 |            2000000 | S
+    2201 |            2200000 | X
+    2202 |            2200000 | X
+    2203 |            2200000 | X
+    2204 |            2200000 | S
+    2205 |            2200000 | S
+    2206 |            2200000 | X
+    2207 |            2200000 | X
+    2401 |            2400000 | S
+    2402 |            2400000 | X
+    2404 |            2400000 | S
+    2501 |            2500000 | X
+    2502 |            2500000 | S
+    2507 |            2500000 | X
+    2508 |            2500000 | X
+    2600 |            2600000 | S
+    2601 |            2600000 | X
+    2602 |            2600000 | S
+    2603 |            2600000 | X
+    3000 |            3000000 | S
+    3001 |            3000000 | S
+    3002 |            3000000 | S
     3003 |            3000000 | M
     3004 |            3000000 | M
     3005 |            3000000 | M
@@ -587,11 +589,11 @@ select time_id, time_last_emaj_gid, time_event from emaj.emaj_time_stamp order b
     3401 |            3400000 | M
     3402 |            3400000 | M
     3403 |            3400000 | M
-    3600 |            3600000 | M
-    3601 |            3600000 | M
+    3600 |            3600000 | X
+    3601 |            3600000 | X
     4000 |            4000000 | A
-    4003 |            4000000 | M
-    4004 |            4000000 | M
+    4003 |            4000000 | S
+    4004 |            4000000 | S
     4005 |            4000000 | M
     4006 |            4000000 | M
     4007 |            4000000 | R
@@ -606,15 +608,15 @@ select time_id, time_last_emaj_gid, time_event from emaj.emaj_time_stamp order b
     4024 |            4000000 | M
     4025 |            4000000 | R
     4026 |            4000000 | M
-    4027 |            4000000 | M
-    4028 |            4000000 | M
-    4029 |            4000000 | M
+    4027 |            4000000 | X
+    4028 |            4000000 | S
+    4029 |            4000000 | S
     4030 |            4000027 | M
     4031 |            4000039 | M
     4032 |            4000039 | R
     4033 |            4000039 | R
-    4034 |            4000039 | M
-    4035 |            4000039 | M
+    4034 |            4000039 | X
+    4035 |            4000039 | S
     4036 |            4000058 | M
     4037 |            4000069 | M
     4038 |            4000069 | R
@@ -626,7 +628,7 @@ select time_id, time_last_emaj_gid, time_event from emaj.emaj_time_stamp order b
     4044 |            4000094 | R
     4045 |            4000094 | M
     4046 |            4000094 | A
-    4047 |            4000094 | M
+    4047 |            4000094 | S
     4048 |            4000101 | M
     4049 |            4000111 | R
     4050 |            4000119 | M
@@ -641,8 +643,8 @@ select time_id, time_last_emaj_gid, time_event from emaj.emaj_time_stamp order b
     4059 |            4000152 | R
     4060 |            4000152 | A
     4064 |            4000152 | R
-    5000 |            5000000 | M
-    5002 |            5000000 | M
+    5000 |            5000000 | X
+    5002 |            5000000 | S
     5003 |            5000000 | M
     5004 |            5011600 | M
     5005 |            5011600 | M
@@ -653,24 +655,26 @@ select time_id, time_last_emaj_gid, time_event from emaj.emaj_time_stamp order b
     5402 |            5400016 | M
     5403 |            5400025 | M
     5404 |            5400025 | R
-    8000 |            8000000 | M
+    8000 |            8000000 | X
     8001 |            8000000 | D
     8002 |            8000000 | D
-    8003 |            8000000 | M
+    8003 |            8000000 | X
     8004 |            8000000 | D
-    8005 |            8000000 | D
+    8005 |            8000000 | X
     8006 |            8000000 | D
-    8007 |            8000000 | C
-    8008 |            8000000 | I
-    8009 |            8000000 | A
-    8010 |            8000000 | A
+    8007 |            8000000 | X
+    8008 |            8000000 | D
+    8009 |            8000000 | C
+    8010 |            8000000 | I
     8011 |            8000000 | A
     8012 |            8000000 | A
     8013 |            8000000 | A
     8014 |            8000000 | A
     8015 |            8000000 | A
     8016 |            8000000 | A
-    8017 |            8000000 | I
+    8017 |            8000000 | A
+    8018 |            8000000 | A
+    8019 |            8000000 | I
     8200 |            8200000 | A
     8201 |            8200000 | A
     8202 |            8200000 | A
@@ -691,7 +695,7 @@ select time_id, time_last_emaj_gid, time_event from emaj.emaj_time_stamp order b
     8409 |            8400000 | A
     8410 |            8400000 | A
     9000 |            9000000 | A
-    9001 |            9000000 | M
+    9001 |            9000000 | S
     9002 |            9000000 | A
     9003 |            9000000 | A
     9004 |            9000000 | A
@@ -752,9 +756,9 @@ select time_id, time_last_emaj_gid, time_event from emaj.emaj_time_stamp order b
    10009 |           10000005 | R
    10010 |           10000009 | M
    10011 |           10000009 | R
-   10012 |           10000009 | M
+   10012 |           10000009 | X
    10013 |           10000009 | I
-   10014 |           10000009 | M
+   10014 |           10000009 | S
    10015 |           10000010 | A
    10016 |           10000010 | A
    10017 |           10000010 | A
@@ -782,8 +786,8 @@ select time_id, time_last_emaj_gid, time_event from emaj.emaj_time_stamp order b
    10042 |           10000014 | A
    10043 |           10000014 | A
    10044 |           10000014 | A
-   10045 |           10000014 | M
-   10046 |           10000014 | M
+   10045 |           10000014 | X
+   10046 |           10000014 | X
    10047 |           10000014 | D
    10048 |           10000014 | D
    10049 |           10000014 | D
@@ -791,28 +795,29 @@ select time_id, time_last_emaj_gid, time_event from emaj.emaj_time_stamp order b
    11000 |           11000000 | C
    11001 |           11000000 | A
    11002 |           11000000 | A
-   11003 |           11000000 | M
+   11003 |           11000000 | S
    11004 |           11000000 | C
    11005 |           11000000 | A
    11006 |           11000000 | A
-   11007 |           11000000 | M
-   12000 |           12000000 | M
+   11007 |           11000000 | S
+   12000 |           12000000 | X
    12001 |           12000000 | D
    12002 |           12000000 | D
-   12003 |           12000000 | D
-   12004 |           12000000 | C
-   12005 |           12000000 | A
+   12003 |           12000000 | X
+   12004 |           12000000 | D
+   12005 |           12000000 | C
    12006 |           12000000 | A
    12007 |           12000000 | A
    12008 |           12000000 | A
    12009 |           12000000 | A
    12010 |           12000000 | A
-   12011 |           12000000 | C
-   12012 |           12000000 | A
+   12011 |           12000000 | A
+   12012 |           12000000 | C
    12013 |           12000000 | A
-   12014 |           12000000 | C
-   12015 |           12000000 | M
-   12016 |           12000000 | M
+   12014 |           12000000 | A
+   12015 |           12000000 | C
+   12016 |           12000000 | S
+   12017 |           12000000 | S
    12100 |           12100029 | M
    12101 |           12100040 | M
    12200 |           12200041 | M
@@ -831,21 +836,21 @@ select time_id, time_last_emaj_gid, time_event from emaj.emaj_time_stamp order b
    12600 |           12600003 | R
    12601 |           12600006 | R
    12602 |           12600029 | M
-   14000 |           14000000 | M
-   14001 |           14000000 | M
+   14000 |           14000000 | X
+   14001 |           14000000 | S
    14002 |           14000000 | M
    14003 |           14000000 | R
    14004 |           14000000 | M
    14005 |           14000000 | R
    14006 |           14000000 | R
-   14007 |           14000000 | M
-   14008 |           14000000 | M
-   14009 |           14000000 | M
-   14010 |           14000000 | R
+   14007 |           14000000 | X
+   14009 |           14000000 | S
+   14010 |           14000000 | M
+   14011 |           14000000 | R
    14200 |           14200000 | C
    14201 |           14200000 | A
    14202 |           14200000 | A
-   14203 |           14200000 | M
+   14203 |           14200000 | S
    14204 |           14200052 | M
    14205 |           14200052 | M
    14206 |           14200055 | M
@@ -856,13 +861,13 @@ select time_id, time_last_emaj_gid, time_event from emaj.emaj_time_stamp order b
    14400 |           14400030 | R
    14401 |           14400030 | R
    14402 |           14400030 | R
-   14500 |           14500000 | M
+   14500 |           14500000 | X
    14501 |           14500000 | A
    14502 |           14500000 | A
-   14503 |           14500000 | M
+   14503 |           14500000 | S
    14504 |           14500004 | M
    14505 |           14500006 | R
-   14506 |           14500006 | M
+   14506 |           14500006 | X
    14507 |           14500006 | D
    14600 |           14600000 | M
    14700 |           14700000 | A
@@ -899,13 +904,13 @@ select time_id, time_last_emaj_gid, time_event from emaj.emaj_time_stamp order b
    14731 |           14700193 | R
    17100 |           17100000 | C
    17101 |           17100000 | A
-   17102 |           17100000 | M
+   17102 |           17100000 | S
    17103 |           17100000 | M
    17104 |           17100000 | M
-   17105 |           17100000 | M
-   17106 |           17100000 | M
-   17107 |           17100000 | M
-   17200 |           17200000 | M
+   17105 |           17100000 | X
+   17106 |           17100000 | S
+   17107 |           17100000 | X
+   17200 |           17200000 | S
    17201 |           17200002 | M
    17202 |           17200003 | A
    17203 |           17200003 | A
@@ -915,13 +920,13 @@ select time_id, time_last_emaj_gid, time_event from emaj.emaj_time_stamp order b
    17207 |           17200006 | M
    17208 |           17200008 | R
    17209 |           17200010 | M
-   17210 |           17200010 | M
+   17210 |           17200010 | X
    17211 |           17200010 | D
    17400 |           17400000 | C
    17401 |           17400000 | A
    17402 |           17400000 | A
    17403 |           17400000 | A
-   17404 |           17400000 | M
+   17404 |           17400000 | S
    17405 |           17400010 | A
    17406 |           17400010 | A
    17407 |           17400010 | A
@@ -930,18 +935,18 @@ select time_id, time_last_emaj_gid, time_event from emaj.emaj_time_stamp order b
    17410 |           17400010 | A
    17411 |           17400010 | A
    17412 |           17400010 | A
-   17413 |           17400010 | M
+   17413 |           17400010 | X
    17414 |           17400010 | D
    17600 |           17600000 | C
    17601 |           17600000 | C
    17602 |           17600000 | C
-   17603 |           17600000 | M
+   17603 |           17600000 | S
    17604 |           17600000 | A
    17605 |           17600000 | A
    17606 |           17600000 | A
    17607 |           17600000 | A
    17608 |           17600000 | A
-   17609 |           17600000 | M
+   17609 |           17600000 | S
    17610 |           17600000 | M
    17611 |           17600011 | M
    17612 |           17600024 | M
@@ -961,25 +966,26 @@ select time_id, time_last_emaj_gid, time_event from emaj.emaj_time_stamp order b
    17626 |           17600045 | M
    17627 |           17600051 | A
    17628 |           17600051 | R
-   17630 |           17600051 | A
+   17630 |           17600051 | X
    17631 |           17600051 | A
-   17632 |           17600051 | M
-   17633 |           17600051 | I
-   17634 |           17600051 | M
-   17635 |           17600051 | D
-   17636 |           17600051 | M
-   17637 |           17600051 | D
-   17638 |           17600051 | M
-   17639 |           17600051 | D
+   17632 |           17600051 | A
+   17633 |           17600051 | S
+   17634 |           17600051 | I
+   17635 |           17600051 | X
+   17636 |           17600051 | D
+   17637 |           17600051 | M
+   17638 |           17600051 | D
+   17639 |           17600051 | X
+   17640 |           17600051 | D
    18000 |           18000000 | C
    18001 |           18000000 | A
    18002 |           18000000 | A
-   18003 |           18000000 | M
+   18003 |           18000000 | S
    18004 |           18000045 | M
    18005 |           18000045 | R
    18006 |           18000085 | M
    18007 |           18000085 | R
-   18008 |           18000133 | M
+   18008 |           18000133 | X
    18009 |           18000133 | D
    20000 |           20000079 | A
    20001 |           20000079 | R
@@ -991,7 +997,7 @@ select time_id, time_last_emaj_gid, time_event from emaj.emaj_time_stamp order b
    20203 |           20000272 | R
    20204 |           20000291 | M
    20205 |           20000291 | R
-(504 rows)
+(510 rows)
 
 select sequ_schema, sequ_name, sequ_time_id, sequ_last_val, sequ_is_called from emaj.emaj_sequence order by sequ_time_id, sequ_schema, sequ_name;
  sequ_schema |     sequ_name     | sequ_time_id | sequ_last_val | sequ_is_called 
@@ -1012,10 +1018,10 @@ select sequ_schema, sequ_name, sequ_time_id, sequ_last_val, sequ_is_called from 
  myschema1   | myTbl3_col31_seq  |        14007 |            20 | t
  myschema2   | myseq1            |        14007 |          1004 | f
  myschema2   | myTbl3_col31_seq  |        14007 |            20 | t
- myschema1   | mytbl2b_col20_seq |        14008 |             5 | t
- myschema1   | myTbl3_col31_seq  |        14008 |            20 | t
- myschema2   | myseq1            |        14008 |          1004 | f
- myschema2   | myTbl3_col31_seq  |        14008 |            20 | t
+ myschema1   | mytbl2b_col20_seq |        14009 |             5 | t
+ myschema1   | myTbl3_col31_seq  |        14009 |            20 | t
+ myschema2   | myseq1            |        14009 |          1004 | f
+ myschema2   | myTbl3_col31_seq  |        14009 |            20 | t
 (20 rows)
 
 select tbl_schema, tbl_name, tbl_time_id, tbl_log_seq_last_val from emaj.emaj_table order by tbl_time_id, tbl_schema, tbl_name;
@@ -1064,17 +1070,17 @@ select tbl_schema, tbl_name, tbl_time_id, tbl_log_seq_last_val from emaj.emaj_ta
  myschema2  | mytbl4   |       14007 |                   10
  myschema2  | mytbl5   |       14007 |                    7
  myschema2  | mytbl6   |       14007 |                   23
- myschema1  | mytbl1   |       14008 |                   33
- myschema1  | mytbl2   |       14008 |                    3
- myschema1  | mytbl2b  |       14008 |                    3
- myschema1  | myTbl3   |       14008 |                   45
- myschema1  | mytbl4   |       14008 |                   14
- myschema2  | mytbl1   |       14008 |                   15
- myschema2  | mytbl2   |       14008 |                    2
- myschema2  | myTbl3   |       14008 |                   10
- myschema2  | mytbl4   |       14008 |                   10
- myschema2  | mytbl5   |       14008 |                    7
- myschema2  | mytbl6   |       14008 |                   23
+ myschema1  | mytbl1   |       14009 |                   33
+ myschema1  | mytbl2   |       14009 |                    3
+ myschema1  | mytbl2b  |       14009 |                    3
+ myschema1  | myTbl3   |       14009 |                   45
+ myschema1  | mytbl4   |       14009 |                   14
+ myschema2  | mytbl1   |       14009 |                   15
+ myschema2  | mytbl2   |       14009 |                    2
+ myschema2  | myTbl3   |       14009 |                   10
+ myschema2  | mytbl4   |       14009 |                   10
+ myschema2  | mytbl5   |       14009 |                    7
+ myschema2  | mytbl6   |       14009 |                   23
 (54 rows)
 
 -- user tables

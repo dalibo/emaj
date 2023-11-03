@@ -379,9 +379,9 @@ select time_id, time_last_emaj_gid, time_event from emaj.emaj_time_stamp order b
       12 |                  0 | A
       13 |                  0 | A
       14 |                  0 | A
-      15 |                  0 | M
-      16 |                  0 | M
-      17 |                  0 | M
+      15 |                  0 | S
+      16 |                  0 | S
+      17 |                  0 | S
       18 |                 29 | M
       19 |                 40 | M
       20 |                 46 | R
@@ -394,9 +394,9 @@ select time_id, time_last_emaj_gid, time_event from emaj.emaj_time_stamp order b
       27 |                 84 | M
       28 |                 84 | M
       29 |                 84 | A
-      30 |                 84 | M
+      30 |                 84 | S
       31 |                 84 | A
-      32 |                 84 | M
+      32 |                 84 | X
       33 |                 84 | R
       34 |                 84 | R
       35 |                 91 | M
@@ -409,9 +409,9 @@ select time_id, time_last_emaj_gid, time_event from emaj.emaj_time_stamp order b
       42 |                117 | R
       43 |                120 | R
       44 |                123 | M
-      45 |                123 | M
+      45 |                123 | S
       46 |                129 | R
-      47 |                129 | M
+      47 |                129 | X
       48 |                129 | D
 (48 rows)
 

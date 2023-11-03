@@ -38,26 +38,26 @@ select emaj.emaj_start_group(NULL,NULL);
 ERROR:  _check_group_names: No group to process.
 CONTEXT:  PL/pgSQL function emaj._check_group_names(text[],boolean,boolean,boolean,boolean,boolean,boolean) line 30 at RAISE
 SQL statement "SELECT emaj._check_group_names(p_groupNames := p_groupNames, p_mayBeNull := p_multiGroup, p_lockGroups := TRUE, p_checkIdle := TRUE)"
-PL/pgSQL function emaj._start_groups(text[],text,boolean,boolean) line 20 at SQL statement
+PL/pgSQL function emaj._start_groups(text[],text,boolean,boolean) line 21 at SQL statement
 PL/pgSQL function emaj.emaj_start_group(text,text,boolean) line 12 at RETURN
 select emaj.emaj_start_group('unknownGroup',NULL,NULL);
 ERROR:  _check_group_names: The group "unknownGroup" does not exist.
 CONTEXT:  PL/pgSQL function emaj._check_group_names(text[],boolean,boolean,boolean,boolean,boolean,boolean) line 42 at RAISE
 SQL statement "SELECT emaj._check_group_names(p_groupNames := p_groupNames, p_mayBeNull := p_multiGroup, p_lockGroups := TRUE, p_checkIdle := TRUE)"
-PL/pgSQL function emaj._start_groups(text[],text,boolean,boolean) line 20 at SQL statement
+PL/pgSQL function emaj._start_groups(text[],text,boolean,boolean) line 21 at SQL statement
 PL/pgSQL function emaj.emaj_start_group(text,text,boolean) line 12 at RETURN
 select emaj.emaj_start_groups(array['unknownGroup1','unknownGroup2'],NULL,NULL);
 ERROR:  _check_group_names: The groups "unknownGroup1, unknownGroup2" do not exist.
 CONTEXT:  PL/pgSQL function emaj._check_group_names(text[],boolean,boolean,boolean,boolean,boolean,boolean) line 44 at RAISE
 SQL statement "SELECT emaj._check_group_names(p_groupNames := p_groupNames, p_mayBeNull := p_multiGroup, p_lockGroups := TRUE, p_checkIdle := TRUE)"
-PL/pgSQL function emaj._start_groups(text[],text,boolean,boolean) line 20 at SQL statement
+PL/pgSQL function emaj._start_groups(text[],text,boolean,boolean) line 21 at SQL statement
 PL/pgSQL function emaj.emaj_start_groups(text[],text,boolean) line 11 at RETURN
 -- reserved mark name
 select emaj.emaj_start_group('myGroup1','EMAJ_LAST_MARK');
 ERROR:  _check_new_mark: "EMAJ_LAST_MARK" is not an allowed name for a new mark.
 CONTEXT:  PL/pgSQL function emaj._check_new_mark(text[],text) line 14 at RAISE
 SQL statement "SELECT emaj._check_new_mark(p_groupNames, p_mark)"
-PL/pgSQL function emaj._start_groups(text[],text,boolean,boolean) line 44 at SQL statement
+PL/pgSQL function emaj._start_groups(text[],text,boolean,boolean) line 47 at SQL statement
 PL/pgSQL function emaj.emaj_start_group(text,text,boolean) line 12 at RETURN
 -- detection of a missing application schema
 begin;
@@ -67,7 +67,7 @@ ERROR:  _verify_groups (1): In group "myGroup1", the table "myschema1"."myTbl3" 
 CONTEXT:  PL/pgSQL function emaj._verify_groups(text[],boolean) line 39 at RAISE
 SQL statement "SELECT 0
         FROM emaj._verify_groups(p_groupNames, TRUE)"
-PL/pgSQL function emaj._start_groups(text[],text,boolean,boolean) line 25 at PERFORM
+PL/pgSQL function emaj._start_groups(text[],text,boolean,boolean) line 26 at PERFORM
 PL/pgSQL function emaj.emaj_start_group(text,text,boolean) line 12 at RETURN
 rollback;
 -- detection of a missing application relation
@@ -78,7 +78,7 @@ ERROR:  _verify_groups (1): In group "myGroup1", the table "myschema1"."mytbl4" 
 CONTEXT:  PL/pgSQL function emaj._verify_groups(text[],boolean) line 39 at RAISE
 SQL statement "SELECT 0
         FROM emaj._verify_groups(p_groupNames, TRUE)"
-PL/pgSQL function emaj._start_groups(text[],text,boolean,boolean) line 25 at PERFORM
+PL/pgSQL function emaj._start_groups(text[],text,boolean,boolean) line 26 at PERFORM
 PL/pgSQL function emaj.emaj_start_group(text,text,boolean) line 12 at RETURN
 rollback;
 -- detection of relation type change (a table is now a sequence!)
@@ -89,7 +89,7 @@ ERROR:  _verify_groups (1): In group "myGroup1", the sequence "myschema1"."mytbl
 CONTEXT:  PL/pgSQL function emaj._verify_groups(text[],boolean) line 39 at RAISE
 SQL statement "SELECT 0
         FROM emaj._verify_groups(p_groupNames, TRUE)"
-PL/pgSQL function emaj._start_groups(text[],text,boolean,boolean) line 25 at PERFORM
+PL/pgSQL function emaj._start_groups(text[],text,boolean,boolean) line 26 at PERFORM
 PL/pgSQL function emaj.emaj_start_group(text,text,boolean) line 12 at RETURN
 rollback;
 -- detection of a missing E-Maj log schema
@@ -100,7 +100,7 @@ ERROR:  _verify_groups (2): In group "myGroup1", the log table "emaj_myschema1".
 CONTEXT:  PL/pgSQL function emaj._verify_groups(text[],boolean) line 59 at RAISE
 SQL statement "SELECT 0
         FROM emaj._verify_groups(p_groupNames, TRUE)"
-PL/pgSQL function emaj._start_groups(text[],text,boolean,boolean) line 25 at PERFORM
+PL/pgSQL function emaj._start_groups(text[],text,boolean,boolean) line 26 at PERFORM
 PL/pgSQL function emaj.emaj_start_group(text,text,boolean) line 12 at RETURN
 rollback;
 -- detection of a missing log trigger
@@ -111,7 +111,7 @@ ERROR:  _verify_groups (4): In group "myGroup1", the log trigger "emaj_log_trg" 
 CONTEXT:  PL/pgSQL function emaj._verify_groups(text[],boolean) line 104 at RAISE
 SQL statement "SELECT 0
         FROM emaj._verify_groups(p_groupNames, TRUE)"
-PL/pgSQL function emaj._start_groups(text[],text,boolean,boolean) line 25 at PERFORM
+PL/pgSQL function emaj._start_groups(text[],text,boolean,boolean) line 26 at PERFORM
 PL/pgSQL function emaj.emaj_start_group(text,text,boolean) line 12 at RETURN
 rollback;
 -- detection of a missing log function
@@ -122,7 +122,7 @@ ERROR:  _verify_groups (3): In group "myGroup1", the log function "emaj_myschema
 CONTEXT:  PL/pgSQL function emaj._verify_groups(text[],boolean) line 80 at RAISE
 SQL statement "SELECT 0
         FROM emaj._verify_groups(p_groupNames, TRUE)"
-PL/pgSQL function emaj._start_groups(text[],text,boolean,boolean) line 25 at PERFORM
+PL/pgSQL function emaj._start_groups(text[],text,boolean,boolean) line 26 at PERFORM
 PL/pgSQL function emaj.emaj_start_group(text,text,boolean) line 12 at RETURN
 rollback;
 -- detection of a missing truncate trigger
@@ -133,7 +133,7 @@ ERROR:  _verify_groups (5): In group "myGroup1", the truncate trigger "emaj_trun
 CONTEXT:  PL/pgSQL function emaj._verify_groups(text[],boolean) line 127 at RAISE
 SQL statement "SELECT 0
         FROM emaj._verify_groups(p_groupNames, TRUE)"
-PL/pgSQL function emaj._start_groups(text[],text,boolean,boolean) line 25 at PERFORM
+PL/pgSQL function emaj._start_groups(text[],text,boolean,boolean) line 26 at PERFORM
 PL/pgSQL function emaj.emaj_start_group(text,text,boolean) line 12 at RETURN
 rollback;
 -- detection of a missing log table
@@ -144,7 +144,7 @@ ERROR:  _verify_groups (2): In group "myGroup1", the log table "emaj_myschema1".
 CONTEXT:  PL/pgSQL function emaj._verify_groups(text[],boolean) line 59 at RAISE
 SQL statement "SELECT 0
         FROM emaj._verify_groups(p_groupNames, TRUE)"
-PL/pgSQL function emaj._start_groups(text[],text,boolean,boolean) line 25 at PERFORM
+PL/pgSQL function emaj._start_groups(text[],text,boolean,boolean) line 26 at PERFORM
 PL/pgSQL function emaj.emaj_start_group(text,text,boolean) line 12 at RETURN
 rollback;
 -- detection of a change in the application table structure (new column)
@@ -157,7 +157,7 @@ ERROR:  _verify_groups (6): In group "myGroup1", the structure of the applicatio
 CONTEXT:  PL/pgSQL function emaj._verify_groups(text[],boolean) line 181 at RAISE
 SQL statement "SELECT 0
         FROM emaj._verify_groups(p_groupNames, TRUE)"
-PL/pgSQL function emaj._start_groups(text[],text,boolean,boolean) line 25 at PERFORM
+PL/pgSQL function emaj._start_groups(text[],text,boolean,boolean) line 26 at PERFORM
 PL/pgSQL function emaj.emaj_start_group(text,text,boolean) line 12 at RETURN
 rollback;
 -- detection of a change in the application table structure (column type change)
@@ -169,7 +169,7 @@ ERROR:  _verify_groups (6): In group "myGroup1", the structure of the applicatio
 CONTEXT:  PL/pgSQL function emaj._verify_groups(text[],boolean) line 181 at RAISE
 SQL statement "SELECT 0
         FROM emaj._verify_groups(p_groupNames, TRUE)"
-PL/pgSQL function emaj._start_groups(text[],text,boolean,boolean) line 25 at PERFORM
+PL/pgSQL function emaj._start_groups(text[],text,boolean,boolean) line 26 at PERFORM
 PL/pgSQL function emaj.emaj_start_group(text,text,boolean) line 12 at RETURN
 rollback;
 -- detection of a missing primary key
@@ -180,7 +180,7 @@ ERROR:  _verify_groups (7): In rollbackable group "myGroup1", the table "myschem
 CONTEXT:  PL/pgSQL function emaj._verify_groups(text[],boolean) line 206 at RAISE
 SQL statement "SELECT 0
         FROM emaj._verify_groups(p_groupNames, TRUE)"
-PL/pgSQL function emaj._start_groups(text[],text,boolean,boolean) line 25 at PERFORM
+PL/pgSQL function emaj._start_groups(text[],text,boolean,boolean) line 26 at PERFORM
 PL/pgSQL function emaj.emaj_start_group(text,text,boolean) line 12 at RETURN
 rollback;
 -- detection of a table altered as UNLOGGED
@@ -191,7 +191,7 @@ ERROR:  _verify_groups (8): In rollbackable group "myGroup1", the table "myschem
 CONTEXT:  PL/pgSQL function emaj._verify_groups(text[],boolean) line 226 at RAISE
 SQL statement "SELECT 0
         FROM emaj._verify_groups(p_groupNames, TRUE)"
-PL/pgSQL function emaj._start_groups(text[],text,boolean,boolean) line 25 at PERFORM
+PL/pgSQL function emaj._start_groups(text[],text,boolean,boolean) line 26 at PERFORM
 PL/pgSQL function emaj.emaj_start_group(text,text,boolean) line 12 at RETURN
 rollback;
 -- detection of a table altered as WITH OIDS (PG12+ generates an error)
@@ -202,7 +202,7 @@ ERROR:  _verify_groups (9): In rollbackable group "myGroup1", the table "myschem
 CONTEXT:  PL/pgSQL function emaj._verify_groups(text[],boolean) line 246 at RAISE
 SQL statement "SELECT 0
         FROM emaj._verify_groups(p_groupNames, TRUE)"
-PL/pgSQL function emaj._start_groups(text[],text,boolean,boolean) line 25 at PERFORM
+PL/pgSQL function emaj._start_groups(text[],text,boolean,boolean) line 26 at PERFORM
 PL/pgSQL function emaj.emaj_start_group(text,text,boolean) line 12 at RETURN
 rollback;
 -- detection of a primary key structure change
@@ -214,7 +214,7 @@ ERROR:  _verify_groups (10): In rollbackable group "myGroup1", the primary key o
 CONTEXT:  PL/pgSQL function emaj._verify_groups(text[],boolean) line 279 at RAISE
 SQL statement "SELECT 0
         FROM emaj._verify_groups(p_groupNames, TRUE)"
-PL/pgSQL function emaj._start_groups(text[],text,boolean,boolean) line 25 at PERFORM
+PL/pgSQL function emaj._start_groups(text[],text,boolean,boolean) line 26 at PERFORM
 PL/pgSQL function emaj.emaj_start_group(text,text,boolean) line 12 at RETURN
 rollback;
 -- detection of a log table missing a technical column
@@ -225,7 +225,7 @@ ERROR:  _verify_groups (11): In group "myGroup1", the log table "emaj_myschema1"
 CONTEXT:  PL/pgSQL function emaj._verify_groups(text[],boolean) line 318 at RAISE
 SQL statement "SELECT 0
         FROM emaj._verify_groups(p_groupNames, TRUE)"
-PL/pgSQL function emaj._start_groups(text[],text,boolean,boolean) line 25 at PERFORM
+PL/pgSQL function emaj._start_groups(text[],text,boolean,boolean) line 26 at PERFORM
 PL/pgSQL function emaj.emaj_start_group(text,text,boolean) line 12 at RETURN
 rollback;
 -- should be OK
@@ -323,7 +323,7 @@ select emaj.emaj_start_group('myGroup2','Mark3');
 ERROR:  _check_group_names: The group "myGroup2" is not in IDLE state.
 CONTEXT:  PL/pgSQL function emaj._check_group_names(text[],boolean,boolean,boolean,boolean,boolean,boolean) line 74 at RAISE
 SQL statement "SELECT emaj._check_group_names(p_groupNames := p_groupNames, p_mayBeNull := p_multiGroup, p_lockGroups := TRUE, p_checkIdle := TRUE)"
-PL/pgSQL function emaj._start_groups(text[],text,boolean,boolean) line 20 at SQL statement
+PL/pgSQL function emaj._start_groups(text[],text,boolean,boolean) line 21 at SQL statement
 PL/pgSQL function emaj.emaj_start_group(text,text,boolean) line 12 at RETURN
 SET client_min_messages TO NOTICE;
 -- use of % in start mark name
@@ -331,17 +331,17 @@ select emaj.emaj_start_group('myGroup1','Foo%Bar');
 ERROR:  _check_group_names: The group "myGroup1" is not in IDLE state.
 CONTEXT:  PL/pgSQL function emaj._check_group_names(text[],boolean,boolean,boolean,boolean,boolean,boolean) line 74 at RAISE
 SQL statement "SELECT emaj._check_group_names(p_groupNames := p_groupNames, p_mayBeNull := p_multiGroup, p_lockGroups := TRUE, p_checkIdle := TRUE)"
-PL/pgSQL function emaj._start_groups(text[],text,boolean,boolean) line 20 at SQL statement
+PL/pgSQL function emaj._start_groups(text[],text,boolean,boolean) line 21 at SQL statement
 PL/pgSQL function emaj.emaj_start_group(text,text,boolean) line 12 at RETURN
 select mark_group, regexp_replace(mark_name,E'\\d\\d\.\\d\\d\\.\\d\\d\\.\\d\\d\\d\\d','%','g'), mark_time_id, mark_is_deleted, mark_is_rlbk_protected, mark_comment, mark_log_rows_before_next, mark_logged_rlbk_target_mark from emaj.emaj_mark order by mark_time_id, mark_group;
     mark_group    | regexp_replace | mark_time_id | mark_is_deleted | mark_is_rlbk_protected | mark_comment | mark_log_rows_before_next | mark_logged_rlbk_target_mark 
 ------------------+----------------+--------------+-----------------+------------------------+--------------+---------------------------+------------------------------
- myGroup2         | Mark2          |         2002 | t               | f                      |              |                         0 | 
- phil's group#3", | Mark3          |         2003 | f               | f                      |              |                           | 
- emptyGroup       | Mark1          |         2004 | f               | f                      |              |                           | 
- myGroup2         | STOP_%         |         2006 | t               | f                      |              |                         0 | 
- myGroup1         | %abc%          |         2008 | f               | f                      |              |                           | 
- myGroup2         | START_%        |         2009 | f               | f                      |              |                           | 
+ myGroup2         | Mark2          |         2003 | t               | f                      |              |                         0 | 
+ phil's group#3", | Mark3          |         2004 | f               | f                      |              |                           | 
+ emptyGroup       | Mark1          |         2005 | f               | f                      |              |                           | 
+ myGroup2         | STOP_%         |         2007 | t               | f                      |              |                         0 | 
+ myGroup1         | %abc%          |         2009 | f               | f                      |              |                           | 
+ myGroup2         | START_%        |         2010 | f               | f                      |              |                           | 
 (6 rows)
 
 -- multiple emaj_start_group() using the same generated start mark name => fails
@@ -367,26 +367,26 @@ select mark_group, regexp_replace(mark_name,E'\\d\\d\.\\d\\d\\.\\d\\d\\.\\d\\d\\
   from emaj.emaj_mark where mark_time_id >= 2000 order by mark_time_id, mark_group;
     mark_group    | regexp_replace | mark_time_id | mark_is_deleted | mark_is_rlbk_protected | mark_comment | mark_log_rows_before_next | mark_logged_rlbk_target_mark 
 ------------------+----------------+--------------+-----------------+------------------------+--------------+---------------------------+------------------------------
- myGroup2         | Mark2          |         2002 | t               | f                      |              |                         0 | 
- phil's group#3", | Mark3          |         2003 | f               | f                      |              |                           | 
- emptyGroup       | Mark1          |         2004 | f               | f                      |              |                           | 
- myGroup2         | STOP_%         |         2006 | t               | f                      |              |                         0 | 
- myGroup1         | %abc%          |         2008 | f               | f                      |              |                           | 
- myGroup2         | START_%        |         2009 | f               | f                      |              |                           | 
+ myGroup2         | Mark2          |         2003 | t               | f                      |              |                         0 | 
+ phil's group#3", | Mark3          |         2004 | f               | f                      |              |                           | 
+ emptyGroup       | Mark1          |         2005 | f               | f                      |              |                           | 
+ myGroup2         | STOP_%         |         2007 | t               | f                      |              |                         0 | 
+ myGroup1         | %abc%          |         2009 | f               | f                      |              |                           | 
+ myGroup2         | START_%        |         2010 | f               | f                      |              |                           | 
 (6 rows)
 
 select time_id, time_last_emaj_gid, time_event from emaj.emaj_time_stamp where time_id >= 2000 order by time_id;
  time_id | time_last_emaj_gid | time_event 
 ---------+--------------------+------------
     2000 |            2000000 | I
-    2001 |            2000000 | M
-    2002 |            2000000 | M
-    2003 |            2000000 | M
-    2004 |            2000000 | M
-    2005 |            2000000 | M
-    2006 |            2000000 | M
-    2008 |            2000000 | M
-    2009 |            2000000 | M
+    2002 |            2000000 | S
+    2003 |            2000000 | S
+    2004 |            2000000 | S
+    2005 |            2000000 | S
+    2006 |            2000000 | X
+    2007 |            2000000 | X
+    2009 |            2000000 | S
+    2010 |            2000000 | S
 (9 rows)
 
 select hist_id, hist_function, hist_event, hist_object, 
@@ -461,46 +461,46 @@ select emaj.emaj_stop_group(NULL);
 ERROR:  _check_group_names: No group to process.
 CONTEXT:  PL/pgSQL function emaj._check_group_names(text[],boolean,boolean,boolean,boolean,boolean,boolean) line 30 at RAISE
 SQL statement "SELECT emaj._check_group_names(p_groupNames := p_groupNames, p_mayBeNull := p_multiGroup, p_lockGroups := TRUE)"
-PL/pgSQL function emaj._stop_groups(text[],text,boolean,boolean) line 23 at SQL statement
+PL/pgSQL function emaj._stop_groups(text[],text,boolean,boolean) line 24 at SQL statement
 PL/pgSQL function emaj.emaj_stop_group(text,text) line 10 at RETURN
 select emaj.emaj_stop_group('unknownGroup');
 ERROR:  _check_group_names: The group "unknownGroup" does not exist.
 CONTEXT:  PL/pgSQL function emaj._check_group_names(text[],boolean,boolean,boolean,boolean,boolean,boolean) line 42 at RAISE
 SQL statement "SELECT emaj._check_group_names(p_groupNames := p_groupNames, p_mayBeNull := p_multiGroup, p_lockGroups := TRUE)"
-PL/pgSQL function emaj._stop_groups(text[],text,boolean,boolean) line 23 at SQL statement
+PL/pgSQL function emaj._stop_groups(text[],text,boolean,boolean) line 24 at SQL statement
 PL/pgSQL function emaj.emaj_stop_group(text,text) line 10 at RETURN
 select emaj.emaj_stop_group(NULL,NULL);
 ERROR:  _check_group_names: No group to process.
 CONTEXT:  PL/pgSQL function emaj._check_group_names(text[],boolean,boolean,boolean,boolean,boolean,boolean) line 30 at RAISE
 SQL statement "SELECT emaj._check_group_names(p_groupNames := p_groupNames, p_mayBeNull := p_multiGroup, p_lockGroups := TRUE)"
-PL/pgSQL function emaj._stop_groups(text[],text,boolean,boolean) line 23 at SQL statement
+PL/pgSQL function emaj._stop_groups(text[],text,boolean,boolean) line 24 at SQL statement
 PL/pgSQL function emaj.emaj_stop_group(text,text) line 10 at RETURN
 select emaj.emaj_stop_group('unknownGroup',NULL);
 ERROR:  _check_group_names: The group "unknownGroup" does not exist.
 CONTEXT:  PL/pgSQL function emaj._check_group_names(text[],boolean,boolean,boolean,boolean,boolean,boolean) line 42 at RAISE
 SQL statement "SELECT emaj._check_group_names(p_groupNames := p_groupNames, p_mayBeNull := p_multiGroup, p_lockGroups := TRUE)"
-PL/pgSQL function emaj._stop_groups(text[],text,boolean,boolean) line 23 at SQL statement
+PL/pgSQL function emaj._stop_groups(text[],text,boolean,boolean) line 24 at SQL statement
 PL/pgSQL function emaj.emaj_stop_group(text,text) line 10 at RETURN
 -- invalid mark
 select emaj.emaj_stop_group('myGroup1','EMAJ_LAST_MARK');
 ERROR:  _check_new_mark: "EMAJ_LAST_MARK" is not an allowed name for a new mark.
 CONTEXT:  PL/pgSQL function emaj._check_new_mark(text[],text) line 14 at RAISE
 SQL statement "SELECT emaj._check_new_mark(p_groupNames, p_mark)"
-PL/pgSQL function emaj._stop_groups(text[],text,boolean,boolean) line 47 at SQL statement
+PL/pgSQL function emaj._stop_groups(text[],text,boolean,boolean) line 50 at SQL statement
 PL/pgSQL function emaj.emaj_stop_group(text,text) line 10 at RETURN
 -- already existing mark
 select emaj.emaj_stop_group('phil''s group#3",','Mark3');
 ERROR:  _check_new_mark: The group "phil's group#3"," already contains a mark named "Mark3".
 CONTEXT:  PL/pgSQL function emaj._check_new_mark(text[],text) line 29 at RAISE
 SQL statement "SELECT emaj._check_new_mark(p_groupNames, p_mark)"
-PL/pgSQL function emaj._stop_groups(text[],text,boolean,boolean) line 47 at SQL statement
+PL/pgSQL function emaj._stop_groups(text[],text,boolean,boolean) line 50 at SQL statement
 PL/pgSQL function emaj.emaj_stop_group(text,text) line 10 at RETURN
 -- missing application table
 begin;
   drop table mySchema2."myTbl3" cascade;
   select emaj.emaj_stop_group('myGroup2');
 ERROR:  _stop_groups: The table "myschema2.myTbl3" does not exist any more.
-CONTEXT:  PL/pgSQL function emaj._stop_groups(text[],text,boolean,boolean) line 93 at RAISE
+CONTEXT:  PL/pgSQL function emaj._stop_groups(text[],text,boolean,boolean) line 98 at RAISE
 PL/pgSQL function emaj.emaj_stop_group(text,text) line 10 at RETURN
 rollback;
 -- should be OK
@@ -556,11 +556,11 @@ commit;
 select mark_group, regexp_replace(mark_name,E'\\d\\d\.\\d\\d\\.\\d\\d\\.\\d\\d\\d\\d','%','g'), mark_time_id, mark_is_deleted, mark_is_rlbk_protected, mark_comment, mark_log_rows_before_next, mark_logged_rlbk_target_mark from emaj.emaj_mark order by mark_time_id, mark_group;
     mark_group    | regexp_replace | mark_time_id | mark_is_deleted | mark_is_rlbk_protected | mark_comment | mark_log_rows_before_next | mark_logged_rlbk_target_mark 
 ------------------+----------------+--------------+-----------------+------------------------+--------------+---------------------------+------------------------------
- phil's group#3", | Mark3          |         2003 | f               | f                      |              |                           | 
- emptyGroup       | Mark1          |         2004 | t               | f                      |              |                         0 | 
- emptyGroup       | STOP_%         |         2201 | t               | f                      |              |                         0 | 
- myGroup1         | START_%        |         2203 | f               | f                      |              |                           | 
- myGroup2         | START_%        |         2204 | f               | f                      |              |                           | 
+ phil's group#3", | Mark3          |         2004 | f               | f                      |              |                           | 
+ emptyGroup       | Mark1          |         2005 | t               | f                      |              |                         0 | 
+ emptyGroup       | STOP_%         |         2202 | t               | f                      |              |                         0 | 
+ myGroup1         | START_%        |         2204 | f               | f                      |              |                           | 
+ myGroup2         | START_%        |         2205 | f               | f                      |              |                           | 
 (5 rows)
 
 begin transaction;
@@ -600,23 +600,23 @@ select mark_group, regexp_replace(mark_name,E'\\d\\d\.\\d\\d\\.\\d\\d\\.\\d\\d\\
   from emaj.emaj_mark where mark_time_id >= 2200 order by mark_time_id, mark_group;
  mark_group | regexp_replace | mark_time_id | mark_is_deleted | mark_is_rlbk_protected | mark_comment | mark_log_rows_before_next | mark_logged_rlbk_target_mark 
 ------------+----------------+--------------+-----------------+------------------------+--------------+---------------------------+------------------------------
- emptyGroup | STOP_%         |         2201 | t               | f                      |              |                         0 | 
- myGroup1   | START_%        |         2203 | t               | f                      |              |                         0 | 
- myGroup2   | START_%        |         2204 | t               | f                      |              |                         0 | 
- myGroup1   | STOP_%         |         2205 | t               | f                      |              |                         0 | 
- myGroup2   | STOP_%         |         2206 | t               | f                      |              |                         0 | 
+ emptyGroup | STOP_%         |         2202 | t               | f                      |              |                         0 | 
+ myGroup1   | START_%        |         2204 | t               | f                      |              |                         0 | 
+ myGroup2   | START_%        |         2205 | t               | f                      |              |                         0 | 
+ myGroup1   | STOP_%         |         2206 | t               | f                      |              |                         0 | 
+ myGroup2   | STOP_%         |         2207 | t               | f                      |              |                         0 | 
 (5 rows)
 
 select time_id, time_last_emaj_gid, time_event from emaj.emaj_time_stamp where time_id >= 2200 order by time_id;
  time_id | time_last_emaj_gid | time_event 
 ---------+--------------------+------------
-    2200 |            2200000 | M
-    2201 |            2200000 | M
-    2202 |            2200000 | M
-    2203 |            2200000 | M
-    2204 |            2200000 | M
-    2205 |            2200000 | M
-    2206 |            2200000 | M
+    2201 |            2200000 | X
+    2202 |            2200000 | X
+    2203 |            2200000 | X
+    2204 |            2200000 | S
+    2205 |            2200000 | S
+    2206 |            2200000 | X
+    2207 |            2200000 | X
 (7 rows)
 
 select hist_id, hist_function, hist_event, hist_object, 
@@ -708,20 +708,20 @@ select emaj.emaj_start_groups('{"unknownGroup",""}',NULL,true);
 ERROR:  _check_group_names: The group "unknownGroup" does not exist.
 CONTEXT:  PL/pgSQL function emaj._check_group_names(text[],boolean,boolean,boolean,boolean,boolean,boolean) line 42 at RAISE
 SQL statement "SELECT emaj._check_group_names(p_groupNames := p_groupNames, p_mayBeNull := p_multiGroup, p_lockGroups := TRUE, p_checkIdle := TRUE)"
-PL/pgSQL function emaj._start_groups(text[],text,boolean,boolean) line 20 at SQL statement
+PL/pgSQL function emaj._start_groups(text[],text,boolean,boolean) line 21 at SQL statement
 PL/pgSQL function emaj.emaj_start_groups(text[],text,boolean) line 11 at RETURN
 select emaj.emaj_start_groups('{"myGroup1","unknownGroup"}',NULL,false);
 ERROR:  _check_group_names: The group "unknownGroup" does not exist.
 CONTEXT:  PL/pgSQL function emaj._check_group_names(text[],boolean,boolean,boolean,boolean,boolean,boolean) line 42 at RAISE
 SQL statement "SELECT emaj._check_group_names(p_groupNames := p_groupNames, p_mayBeNull := p_multiGroup, p_lockGroups := TRUE, p_checkIdle := TRUE)"
-PL/pgSQL function emaj._start_groups(text[],text,boolean,boolean) line 20 at SQL statement
+PL/pgSQL function emaj._start_groups(text[],text,boolean,boolean) line 21 at SQL statement
 PL/pgSQL function emaj.emaj_start_groups(text[],text,boolean) line 11 at RETURN
 -- reserved mark name
 select emaj.emaj_start_groups('{"myGroup1"}','EMAJ_LAST_MARK');
 ERROR:  _check_new_mark: "EMAJ_LAST_MARK" is not an allowed name for a new mark.
 CONTEXT:  PL/pgSQL function emaj._check_new_mark(text[],text) line 14 at RAISE
 SQL statement "SELECT emaj._check_new_mark(p_groupNames, p_mark)"
-PL/pgSQL function emaj._start_groups(text[],text,boolean,boolean) line 44 at SQL statement
+PL/pgSQL function emaj._start_groups(text[],text,boolean,boolean) line 47 at SQL statement
 PL/pgSQL function emaj.emaj_start_groups(text[],text,boolean) line 11 at RETURN
 -- 2 groups already started
 select emaj.emaj_start_groups('{"myGroup1","myGroup2"}','Mark1',true);
@@ -734,7 +734,7 @@ select emaj.emaj_start_groups('{"myGroup1","myGroup2"}','Mark1',false);
 ERROR:  _check_group_names: The groups "myGroup1, myGroup2" are not in IDLE state.
 CONTEXT:  PL/pgSQL function emaj._check_group_names(text[],boolean,boolean,boolean,boolean,boolean,boolean) line 77 at RAISE
 SQL statement "SELECT emaj._check_group_names(p_groupNames := p_groupNames, p_mayBeNull := p_multiGroup, p_lockGroups := TRUE, p_checkIdle := TRUE)"
-PL/pgSQL function emaj._start_groups(text[],text,boolean,boolean) line 20 at SQL statement
+PL/pgSQL function emaj._start_groups(text[],text,boolean,boolean) line 21 at SQL statement
 PL/pgSQL function emaj.emaj_start_groups(text[],text,boolean) line 11 at RETURN
 select emaj.emaj_stop_groups('{"myGroup1","myGroup2"}');
  emaj_stop_groups 
@@ -750,7 +750,7 @@ ERROR:  _verify_groups (1): In group "myGroup2", the table "myschema2"."myTbl3" 
 CONTEXT:  PL/pgSQL function emaj._verify_groups(text[],boolean) line 39 at RAISE
 SQL statement "SELECT 0
         FROM emaj._verify_groups(p_groupNames, TRUE)"
-PL/pgSQL function emaj._start_groups(text[],text,boolean,boolean) line 25 at PERFORM
+PL/pgSQL function emaj._start_groups(text[],text,boolean,boolean) line 26 at PERFORM
 PL/pgSQL function emaj.emaj_start_groups(text[],text,boolean) line 11 at RETURN
 rollback;
 -- should be OK, with a warning on fkey between tables from different groups and warning on group names array content
@@ -786,16 +786,16 @@ select mark_group, regexp_replace(mark_name,E'\\d\\d\.\\d\\d\\.\\d\\d\\.\\d\\d\\
   from emaj.emaj_mark where mark_time_id >= 2400 order by mark_time_id, mark_group;
  mark_group | regexp_replace | mark_time_id | mark_is_deleted | mark_is_rlbk_protected | mark_comment | mark_log_rows_before_next | mark_logged_rlbk_target_mark 
 ------------+----------------+--------------+-----------------+------------------------+--------------+---------------------------+------------------------------
- myGroup1   | Mark1          |         2403 | f               | f                      |              |                           | 
- myGroup2   | Mark1          |         2403 | f               | f                      |              |                           | 
+ myGroup1   | Mark1          |         2404 | f               | f                      |              |                           | 
+ myGroup2   | Mark1          |         2404 | f               | f                      |              |                           | 
 (2 rows)
 
 select time_id, time_last_emaj_gid, time_event from emaj.emaj_time_stamp where time_id >= 2400 order by time_id;
  time_id | time_last_emaj_gid | time_event 
 ---------+--------------------+------------
-    2400 |            2400000 | M
-    2401 |            2400000 | M
-    2403 |            2400000 | M
+    2401 |            2400000 | S
+    2402 |            2400000 | X
+    2404 |            2400000 | S
 (3 rows)
 
 select hist_id, hist_function, hist_event, hist_object, 
@@ -858,20 +858,20 @@ select emaj.emaj_stop_groups('{"unknownGroup",""}');
 ERROR:  _check_group_names: The group "unknownGroup" does not exist.
 CONTEXT:  PL/pgSQL function emaj._check_group_names(text[],boolean,boolean,boolean,boolean,boolean,boolean) line 42 at RAISE
 SQL statement "SELECT emaj._check_group_names(p_groupNames := p_groupNames, p_mayBeNull := p_multiGroup, p_lockGroups := TRUE)"
-PL/pgSQL function emaj._stop_groups(text[],text,boolean,boolean) line 23 at SQL statement
+PL/pgSQL function emaj._stop_groups(text[],text,boolean,boolean) line 24 at SQL statement
 PL/pgSQL function emaj.emaj_stop_groups(text[],text) line 7 at RETURN
 select emaj.emaj_stop_groups('{"myGroup1","unknownGroup"}');
 ERROR:  _check_group_names: The group "unknownGroup" does not exist.
 CONTEXT:  PL/pgSQL function emaj._check_group_names(text[],boolean,boolean,boolean,boolean,boolean,boolean) line 42 at RAISE
 SQL statement "SELECT emaj._check_group_names(p_groupNames := p_groupNames, p_mayBeNull := p_multiGroup, p_lockGroups := TRUE)"
-PL/pgSQL function emaj._stop_groups(text[],text,boolean,boolean) line 23 at SQL statement
+PL/pgSQL function emaj._stop_groups(text[],text,boolean,boolean) line 24 at SQL statement
 PL/pgSQL function emaj.emaj_stop_groups(text[],text) line 7 at RETURN
 -- missing application table
 begin;
   drop table mySchema2."myTbl3" cascade;
   select emaj.emaj_stop_groups(array['myGroup1','myGroup2']);
 ERROR:  _stop_groups: The table "myschema2.myTbl3" does not exist any more.
-CONTEXT:  PL/pgSQL function emaj._stop_groups(text[],text,boolean,boolean) line 93 at RAISE
+CONTEXT:  PL/pgSQL function emaj._stop_groups(text[],text,boolean,boolean) line 98 at RAISE
 PL/pgSQL function emaj.emaj_stop_groups(text[],text) line 7 at RETURN
 rollback;
 -- should be OK
@@ -884,13 +884,13 @@ select emaj.emaj_stop_groups(array['myGroup1','myGroup2'],'Global Stop at %');
 select mark_group, regexp_replace(mark_name,E'\\d\\d\.\\d\\d\\.\\d\\d\\.\\d\\d\\d\\d','%','g'), mark_time_id, mark_is_deleted, mark_is_rlbk_protected, mark_comment, mark_log_rows_before_next, mark_logged_rlbk_target_mark from emaj.emaj_mark order by mark_time_id, mark_group;
     mark_group    |  regexp_replace  | mark_time_id | mark_is_deleted | mark_is_rlbk_protected | mark_comment | mark_log_rows_before_next | mark_logged_rlbk_target_mark 
 ------------------+------------------+--------------+-----------------+------------------------+--------------+---------------------------+------------------------------
- phil's group#3", | Mark3            |         2003 | f               | f                      |              |                           | 
- emptyGroup       | Mark1            |         2004 | t               | f                      |              |                         0 | 
- emptyGroup       | STOP_%           |         2201 | t               | f                      |              |                         0 | 
- myGroup1         | Mark1            |         2403 | t               | f                      |              |                         0 | 
- myGroup2         | Mark1            |         2403 | t               | f                      |              |                         0 | 
- myGroup1         | Global Stop at % |         2500 | t               | f                      |              |                         0 | 
- myGroup2         | Global Stop at % |         2500 | t               | f                      |              |                         0 | 
+ phil's group#3", | Mark3            |         2004 | f               | f                      |              |                           | 
+ emptyGroup       | Mark1            |         2005 | t               | f                      |              |                         0 | 
+ emptyGroup       | STOP_%           |         2202 | t               | f                      |              |                         0 | 
+ myGroup1         | Mark1            |         2404 | t               | f                      |              |                         0 | 
+ myGroup2         | Mark1            |         2404 | t               | f                      |              |                         0 | 
+ myGroup1         | Global Stop at % |         2501 | t               | f                      |              |                         0 | 
+ myGroup2         | Global Stop at % |         2501 | t               | f                      |              |                         0 | 
 (7 rows)
 
 -- with warning about group names array content
@@ -915,13 +915,13 @@ select emaj.emaj_force_stop_group(NULL);
 ERROR:  _check_group_names: No group to process.
 CONTEXT:  PL/pgSQL function emaj._check_group_names(text[],boolean,boolean,boolean,boolean,boolean,boolean) line 30 at RAISE
 SQL statement "SELECT emaj._check_group_names(p_groupNames := p_groupNames, p_mayBeNull := p_multiGroup, p_lockGroups := TRUE)"
-PL/pgSQL function emaj._stop_groups(text[],text,boolean,boolean) line 23 at SQL statement
+PL/pgSQL function emaj._stop_groups(text[],text,boolean,boolean) line 24 at SQL statement
 PL/pgSQL function emaj.emaj_force_stop_group(text) line 9 at RETURN
 select emaj.emaj_force_stop_group('unknownGroup');
 ERROR:  _check_group_names: The group "unknownGroup" does not exist.
 CONTEXT:  PL/pgSQL function emaj._check_group_names(text[],boolean,boolean,boolean,boolean,boolean,boolean) line 42 at RAISE
 SQL statement "SELECT emaj._check_group_names(p_groupNames := p_groupNames, p_mayBeNull := p_multiGroup, p_lockGroups := TRUE)"
-PL/pgSQL function emaj._stop_groups(text[],text,boolean,boolean) line 23 at SQL statement
+PL/pgSQL function emaj._stop_groups(text[],text,boolean,boolean) line 24 at SQL statement
 PL/pgSQL function emaj.emaj_force_stop_group(text) line 9 at RETURN
 -- should be OK
 -- missing application schema
@@ -1013,16 +1013,18 @@ select mark_group, regexp_replace(mark_name,E'\\d\\d\.\\d\\d\\.\\d\\d\\.\\d\\d\\
   from emaj.emaj_mark where mark_time_id >= 2500 order by mark_time_id, mark_group;
  mark_group | regexp_replace | mark_time_id | mark_is_deleted | mark_is_rlbk_protected | mark_comment | mark_log_rows_before_next | mark_logged_rlbk_target_mark 
 ------------+----------------+--------------+-----------------+------------------------+--------------+---------------------------+------------------------------
- myGroup1   | Mark1          |         2501 | t               | f                      |              |                           | 
- myGroup2   | Mark1          |         2501 | t               | f                      |              |                           | 
+ myGroup1   | Mark1          |         2502 | t               | f                      |              |                           | 
+ myGroup2   | Mark1          |         2502 | t               | f                      |              |                           | 
 (2 rows)
 
 select time_id, time_last_emaj_gid, time_event from emaj.emaj_time_stamp where time_id >= 2500 order by time_id;
  time_id | time_last_emaj_gid | time_event 
 ---------+--------------------+------------
-    2500 |            2500000 | M
-    2501 |            2500000 | M
-(2 rows)
+    2501 |            2500000 | X
+    2502 |            2500000 | S
+    2507 |            2500000 | X
+    2508 |            2500000 | X
+(4 rows)
 
 select hist_id, hist_function, hist_event, hist_object, 
   regexp_replace(regexp_replace(hist_wording,E'\\d\\d\.\\d\\d\\.\\d\\d\\.\\d\\d\\d\\d','%','g'),E'\\[.+\\]','(timestamp)','g'),
@@ -1230,10 +1232,10 @@ select emaj.emaj_enable_protection_by_event_triggers();
 select time_id, time_last_emaj_gid, time_event from emaj.emaj_time_stamp where time_id >= 2600 order by time_id;
  time_id | time_last_emaj_gid | time_event 
 ---------+--------------------+------------
-    2600 |            2600000 | M
-    2601 |            2600000 | M
-    2602 |            2600000 | M
-    2603 |            2600000 | M
+    2600 |            2600000 | S
+    2601 |            2600000 | X
+    2602 |            2600000 | S
+    2603 |            2600000 | X
 (4 rows)
 
 select hist_id, hist_function, hist_event, hist_object, 

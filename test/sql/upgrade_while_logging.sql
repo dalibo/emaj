@@ -1,5 +1,6 @@
 -- upgrade_while_logging.sql : Upgrade from the previous to the next version while groups are in logging state.
 --
+
 -----------------------------
 -- set the default_tablespace parameter to tspemaj to store new technical tables into this tablespace
 -----------------------------

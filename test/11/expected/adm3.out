@@ -167,12 +167,12 @@ select time_id, time_last_emaj_gid, time_event from emaj.emaj_time_stamp where t
 ---------+--------------------+------------
    17100 |           17100000 | C
    17101 |           17100000 | A
-   17102 |           17100000 | M
+   17102 |           17100000 | S
    17103 |           17100000 | M
    17104 |           17100000 | M
-   17105 |           17100000 | M
-   17106 |           17100000 | M
-   17107 |           17100000 | M
+   17105 |           17100000 | X
+   17106 |           17100000 | S
+   17107 |           17100000 | X
 (8 rows)
 
 select hist_function, hist_event, hist_object,
@@ -416,7 +416,7 @@ select emaj.emaj_drop_group('myGroup4');
 select time_id, time_last_emaj_gid, time_event from emaj.emaj_time_stamp where time_id >= 17200 order by time_id;
  time_id | time_last_emaj_gid | time_event 
 ---------+--------------------+------------
-   17200 |           17200000 | M
+   17200 |           17200000 | S
    17201 |           17200002 | M
    17202 |           17200003 | A
    17203 |           17200003 | A
@@ -426,7 +426,7 @@ select time_id, time_last_emaj_gid, time_event from emaj.emaj_time_stamp where t
    17207 |           17200006 | M
    17208 |           17200008 | R
    17209 |           17200010 | M
-   17210 |           17200010 | M
+   17210 |           17200010 | X
    17211 |           17200010 | D
 (12 rows)
 
@@ -788,7 +788,7 @@ select time_id, time_last_emaj_gid, time_event from emaj.emaj_time_stamp where t
    17401 |           17400000 | A
    17402 |           17400000 | A
    17403 |           17400000 | A
-   17404 |           17400000 | M
+   17404 |           17400000 | S
    17405 |           17400010 | A
    17406 |           17400010 | A
    17407 |           17400010 | A
@@ -797,7 +797,7 @@ select time_id, time_last_emaj_gid, time_event from emaj.emaj_time_stamp where t
    17410 |           17400010 | A
    17411 |           17400010 | A
    17412 |           17400010 | A
-   17413 |           17400010 | M
+   17413 |           17400010 | X
    17414 |           17400010 | D
 (15 rows)
 
@@ -1508,66 +1508,66 @@ select * from emaj.emaj_rel_hist order by 1,2,3;
  myschema4      | mypartp1                                                        | [17101,17204)   | myGroup4         | r
  myschema4      | mypartp2                                                        | [17101,17211)   | myGroup4         | r
  myschema4      | mypartp2                                                        | [17606,17617)   | grp_tmp_4        | r
- myschema4      | mypartp2                                                        | [17617,17633)   | grp_tmp          | r
- myschema4      | mypartp2                                                        | [17633,17637)   | grp_tmp_4        | r
+ myschema4      | mypartp2                                                        | [17617,17634)   | grp_tmp          | r
+ myschema4      | mypartp2                                                        | [17634,17638)   | grp_tmp_4        | r
  myschema4      | mypartp3                                                        | [17202,17211)   | myGroup4         | r
  myschema4      | mypartp3                                                        | [17606,17617)   | grp_tmp_4        | r
- myschema4      | mypartp3                                                        | [17617,17633)   | grp_tmp          | r
- myschema4      | mypartp3                                                        | [17633,17637)   | grp_tmp_4        | r
+ myschema4      | mypartp3                                                        | [17617,17634)   | grp_tmp          | r
+ myschema4      | mypartp3                                                        | [17634,17638)   | grp_tmp_4        | r
  myschema4      | mytblc1                                                         | [17101,17211)   | myGroup4         | r
  myschema4      | mytblc1                                                         | [17606,17617)   | grp_tmp_4        | r
  myschema4      | mytblc1                                                         | [17617,17622)   | grp_tmp          | r
- myschema4      | mytblc1                                                         | [17633,17637)   | grp_tmp_4        | r
+ myschema4      | mytblc1                                                         | [17634,17638)   | grp_tmp_4        | r
  myschema4      | mytblc2                                                         | [17101,17211)   | myGroup4         | r
  myschema4      | mytblc2                                                         | [17606,17617)   | grp_tmp_4        | r
- myschema4      | mytblc2                                                         | [17617,17633)   | grp_tmp          | r
- myschema4      | mytblc2                                                         | [17633,17637)   | grp_tmp_4        | r
+ myschema4      | mytblc2                                                         | [17617,17634)   | grp_tmp          | r
+ myschema4      | mytblc2                                                         | [17634,17638)   | grp_tmp_4        | r
  myschema4      | mytblm                                                          | [17101,17211)   | myGroup4         | r
  myschema4      | mytblm                                                          | [17606,17617)   | grp_tmp_4        | r
- myschema4      | mytblm                                                          | [17617,17633)   | grp_tmp          | r
- myschema4      | mytblm                                                          | [17633,17637)   | grp_tmp_4        | r
+ myschema4      | mytblm                                                          | [17617,17634)   | grp_tmp          | r
+ myschema4      | mytblm                                                          | [17634,17638)   | grp_tmp_4        | r
  myschema4      | mytblp_col3_seq                                                 | [17203,17205)   | myGroup4         | S
  myschema4      | mytblp_col3_seq                                                 | [17607,17618)   | grp_tmp_4        | S
- myschema4      | mytblp_col3_seq                                                 | [17618,17633)   | grp_tmp          | S
- myschema4      | mytblp_col3_seq                                                 | [17633,17637)   | grp_tmp_4        | S
+ myschema4      | mytblp_col3_seq                                                 | [17618,17634)   | grp_tmp          | S
+ myschema4      | mytblp_col3_seq                                                 | [17634,17638)   | grp_tmp_4        | S
  myschema4      | mytblr                                                          | [17101,17211)   | myGroup4         | r
  myschema4      | mytblr                                                          | [17606,17617)   | grp_tmp_4        | r
- myschema4      | mytblr                                                          | [17617,17633)   | grp_tmp          | r
- myschema4      | mytblr                                                          | [17633,17637)   | grp_tmp_4        | r
+ myschema4      | mytblr                                                          | [17617,17634)   | grp_tmp          | r
+ myschema4      | mytblr                                                          | [17634,17638)   | grp_tmp_4        | r
  myschema4      | mytblr_col1_seq                                                 | [17607,17618)   | grp_tmp_4        | S
- myschema4      | mytblr_col1_seq                                                 | [17618,17633)   | grp_tmp          | S
- myschema4      | mytblr_col1_seq                                                 | [17633,17637)   | grp_tmp_4        | S
+ myschema4      | mytblr_col1_seq                                                 | [17618,17634)   | grp_tmp          | S
+ myschema4      | mytblr_col1_seq                                                 | [17634,17638)   | grp_tmp_4        | S
  myschema5      | myoidstbl                                                       | [17403,17414)   | phil's group#3", | r
  myschema5      | myunloggedtbl                                                   | [17403,17414)   | phil's group#3", | r
  phil's schema3 | myTbl2\                                                         | [14201,14507)   | phil's group#3", | r
  phil's schema3 | myTbl2\                                                         | [17401,17414)   | phil's group#3", | r
  phil's schema3 | myTbl2\                                                         | [17604,17615)   | grp_tmp_3        | r
- phil's schema3 | myTbl2\                                                         | [17615,17633)   | grp_tmp          | r
- phil's schema3 | myTbl2\                                                         | [17633,17635)   | grp_tmp_3        | r
+ phil's schema3 | myTbl2\                                                         | [17615,17634)   | grp_tmp          | r
+ phil's schema3 | myTbl2\                                                         | [17634,17636)   | grp_tmp_3        | r
  phil's schema3 | myTbl2\_col21_seq                                               | [14202,14507)   | phil's group#3", | S
  phil's schema3 | myTbl2\_col21_seq                                               | [17402,17414)   | phil's group#3", | S
  phil's schema3 | myTbl2\_col21_seq                                               | [17605,17616)   | grp_tmp_3        | S
- phil's schema3 | myTbl2\_col21_seq                                               | [17616,17633)   | grp_tmp          | S
- phil's schema3 | myTbl2\_col21_seq                                               | [17633,17635)   | grp_tmp_3        | S
+ phil's schema3 | myTbl2\_col21_seq                                               | [17616,17634)   | grp_tmp          | S
+ phil's schema3 | myTbl2\_col21_seq                                               | [17634,17636)   | grp_tmp_3        | S
  phil's schema3 | mytbl4                                                          | [17401,17405)   | phil's group#3", | r
  phil's schema3 | mytbl4                                                          | [17406,17407)   | phil's group#3", | r
  phil's schema3 | mytbl4                                                          | [17408,17409)   | phil's group#3", | r
  phil's schema3 | mytbl4                                                          | [17411,17414)   | phil's group#3", | r
  phil's schema3 | mytbl4                                                          | [17604,17615)   | grp_tmp_3        | r
- phil's schema3 | mytbl4                                                          | [17615,17630)   | grp_tmp          | r
- phil's schema3 | mytbl4                                                          | [17631,17633)   | grp_tmp          | r
- phil's schema3 | mytbl4                                                          | [17633,17635)   | grp_tmp_3        | r
+ phil's schema3 | mytbl4                                                          | [17615,17631)   | grp_tmp          | r
+ phil's schema3 | mytbl4                                                          | [17632,17634)   | grp_tmp          | r
+ phil's schema3 | mytbl4                                                          | [17634,17636)   | grp_tmp_3        | r
  phil's schema3 | phil's seq\1                                                    | [14202,14507)   | phil's group#3", | S
  phil's schema3 | phil's seq\1                                                    | [17402,17410)   | phil's group#3", | S
  phil's schema3 | phil's seq\1                                                    | [17412,17414)   | phil's group#3", | S
  phil's schema3 | phil's seq\1                                                    | [17605,17616)   | grp_tmp_3        | S
  phil's schema3 | phil's seq\1                                                    | [17616,17623)   | grp_tmp          | S
- phil's schema3 | phil's seq\1                                                    | [17633,17635)   | grp_tmp_3        | S
+ phil's schema3 | phil's seq\1                                                    | [17634,17636)   | grp_tmp_3        | S
  phil's schema3 | phil's tbl1                                                     | [14201,14501)   | phil's group#3", | r
  phil's schema3 | phil's tbl1                                                     | [17401,17414)   | phil's group#3", | r
  phil's schema3 | phil's tbl1                                                     | [17604,17615)   | grp_tmp_3        | r
- phil's schema3 | phil's tbl1                                                     | [17615,17633)   | grp_tmp          | r
- phil's schema3 | phil's tbl1                                                     | [17633,17635)   | grp_tmp_3        | r
+ phil's schema3 | phil's tbl1                                                     | [17615,17634)   | grp_tmp          | r
+ phil's schema3 | phil's tbl1                                                     | [17634,17636)   | grp_tmp_3        | r
  phil's schema3 | table_with_very_looooooooooooooooooooooooooooooooooooooong_name | [14502,14507)   | phil's group#3", | r
 (64 rows)
 
@@ -1587,13 +1587,13 @@ select time_id, time_last_emaj_gid, time_event from emaj.emaj_time_stamp where t
    17600 |           17600000 | C
    17601 |           17600000 | C
    17602 |           17600000 | C
-   17603 |           17600000 | M
+   17603 |           17600000 | S
    17604 |           17600000 | A
    17605 |           17600000 | A
    17606 |           17600000 | A
    17607 |           17600000 | A
    17608 |           17600000 | A
-   17609 |           17600000 | M
+   17609 |           17600000 | S
    17610 |           17600000 | M
    17611 |           17600011 | M
    17612 |           17600024 | M
@@ -1613,17 +1613,18 @@ select time_id, time_last_emaj_gid, time_event from emaj.emaj_time_stamp where t
    17626 |           17600045 | M
    17627 |           17600051 | A
    17628 |           17600051 | R
-   17630 |           17600051 | A
+   17630 |           17600051 | X
    17631 |           17600051 | A
-   17632 |           17600051 | M
-   17633 |           17600051 | I
-   17634 |           17600051 | M
-   17635 |           17600051 | D
-   17636 |           17600051 | M
-   17637 |           17600051 | D
-   17638 |           17600051 | M
-   17639 |           17600051 | D
-(39 rows)
+   17632 |           17600051 | A
+   17633 |           17600051 | S
+   17634 |           17600051 | I
+   17635 |           17600051 | X
+   17636 |           17600051 | D
+   17637 |           17600051 | M
+   17638 |           17600051 | D
+   17639 |           17600051 | X
+   17640 |           17600051 | D
+(40 rows)
 
 select hist_function, hist_event, hist_object,
        regexp_replace(regexp_replace(regexp_replace(hist_wording,
@@ -2216,7 +2217,7 @@ select rlbk_id, rlbk_groups, rlbk_mark, rlbk_time_id, rlbk_is_logged, rlbk_is_al
    14000 | {myGroup1,myGroup2}           | Multi-1               |        14003 | t              | f                           |               1 |            11 |                4 |                 0 |                    0 | COMMITTED   |              14022 | public             | t                   | [ts]         | Notice: Rollback id = 14000.#Notice: 0 / 11 tables effectively processed.#Notice: 0 / 4 sequences effectively processed.
    14001 | {myGroup1,myGroup2}           | Multi-2               |        14005 | f              | f                           |               1 |            11 |                4 |                 0 |                    0 | COMMITTED   |              14035 | public             | t                   | [ts]         | Notice: Rollback id = 14001.#Notice: 0 / 11 tables effectively processed.#Notice: 0 / 4 sequences effectively processed.
    14002 | {myGroup1,myGroup2}           | Multi-1               |        14006 | f              | f                           |               1 |            11 |                4 |                 0 |                    0 | COMMITTED   |              14048 | public             | t                   | [ts]         | Notice: Rollback id = 14002.#Notice: 0 / 11 tables effectively processed.#Notice: 0 / 4 sequences effectively processed.
-   14003 | {myGroup2}                    | Multi-2               |        14010 | f              | f                           |               1 |             6 |                2 |                 0 |                    0 | COMMITTED   |              14081 | public             | t                   | [ts]         | Notice: Rollback id = 14003.#Notice: 0 / 6 tables effectively processed.#Notice: 0 / 2 sequences effectively processed.
+   14003 | {myGroup2}                    | Multi-2               |        14011 | f              | f                           |               1 |             6 |                2 |                 0 |                    0 | COMMITTED   |              14081 | public             | t                   | [ts]         | Notice: Rollback id = 14003.#Notice: 0 / 6 tables effectively processed.#Notice: 0 / 2 sequences effectively processed.
    14200 | {"phil's group#3\","}         | phil's mark #3        |        14207 | t              | f                           |               1 |             2 |                2 |                 0 |                    0 | COMMITTED   |              14235 | public             | t                   | [ts]         | Notice: Rollback id = 14200.#Notice: 0 / 2 tables effectively processed.#Notice: 0 / 2 sequences effectively processed.
    14201 | {"phil's group#3\","}         | phil's mark #3        |        14209 | f              | f                           |               1 |             2 |                2 |                 0 |                    0 | COMMITTED   |              14248 | public             | t                   | [ts]         | Notice: Rollback id = 14201.#Notice: 0 / 2 tables effectively processed.#Notice: 0 / 2 sequences effectively processed.
    14300 | {myGroup1}                    | Multi-1               |        14300 | f              | f                           |               1 |             5 |                2 |                 1 |                    0 | COMMITTED   |              14300 | public             | t                   | [ts]         | Notice: Rollback id = 14300.#Notice: 1 / 5 tables effectively processed.#Notice: 0 / 2 sequences effectively processed.
@@ -2372,14 +2373,14 @@ select rlbp_rlbk_id, rlbp_step, rlbp_schema, rlbp_table, rlbp_object, rlbp_targe
         14201 | CTRL+DBLINK        |                |                                                                 |                   |                     |                   |              |                                                                                                                                                                                             |                   |                           |                       1 |                    2 |              
         14300 | RLBK_SEQUENCES     |                |                                                                 |                   |                     |                 1 |            1 |                                                                                                                                                                                             |                   |                           |                       2 |                    2 |             2
         14300 | DIS_LOG_TRG        | myschema1      | mytbl1                                                          |                   |                     |                 2 |            1 |                                                                                                                                                                                             |                   |                           |                         |                    2 |              
-        14300 | RLBK_TABLE         | myschema1      | mytbl1                                                          |                   |               14008 |                 2 |            1 |                                                                                                                                                                                             |                   | t                         |                      20 |                    1 |             0
-        14300 | DELETE_LOG         | myschema1      | mytbl1                                                          |                   |               14008 |                 2 |            1 |                                                                                                                                                                                             |                   |                           |                      20 |                    1 |             0
+        14300 | RLBK_TABLE         | myschema1      | mytbl1                                                          |                   |               14009 |                 2 |            1 |                                                                                                                                                                                             |                   | t                         |                      20 |                    1 |             0
+        14300 | DELETE_LOG         | myschema1      | mytbl1                                                          |                   |               14009 |                 2 |            1 |                                                                                                                                                                                             |                   |                           |                      20 |                    1 |             0
         14300 | ENA_LOG_TRG        | myschema1      | mytbl1                                                          |                   |                     |                 2 |            1 |                                                                                                                                                                                             |                   |                           |                         |                    2 |              
         14300 | CTRL+DBLINK        |                |                                                                 |                   |                     |                   |              |                                                                                                                                                                                             |                   |                           |                       5 |                    2 |              
         14400 | RLBK_SEQUENCES     |                |                                                                 |                   |                     |                 1 |            1 |                                                                                                                                                                                             |                   |                           |                       2 |                    2 |             2
         14400 | DIS_LOG_TRG        | myschema1      | mytbl2b                                                         |                   |                     |                 2 |            1 |                                                                                                                                                                                             |                   |                           |                         |                    2 |              
-        14400 | RLBK_TABLE         | myschema1      | mytbl2b                                                         |                   |               14008 |                 2 |            1 |                                                                                                                                                                                             |                   | f                         |                       5 |                    3 |             2
-        14400 | DELETE_LOG         | myschema1      | mytbl2b                                                         |                   |               14008 |                 2 |            1 |                                                                                                                                                                                             |                   |                           |                       5 |                    3 |             6
+        14400 | RLBK_TABLE         | myschema1      | mytbl2b                                                         |                   |               14009 |                 2 |            1 |                                                                                                                                                                                             |                   | f                         |                       5 |                    3 |             2
+        14400 | DELETE_LOG         | myschema1      | mytbl2b                                                         |                   |               14009 |                 2 |            1 |                                                                                                                                                                                             |                   |                           |                       5 |                    3 |             6
         14400 | ENA_LOG_TRG        | myschema1      | mytbl2b                                                         |                   |                     |                 2 |            1 |                                                                                                                                                                                             |                   |                           |                         |                    2 |              
         14400 | CTRL+DBLINK        |                |                                                                 |                   |                     |                   |              |                                                                                                                                                                                             |                   |                           |                       5 |                    2 |              
         14401 | RLBK_SEQUENCES     |                |                                                                 |                   |                     |                 1 |            1 |                                                                                                                                                                                             |                   |                           |                       2 |                    2 |             2
@@ -2389,14 +2390,14 @@ select rlbp_rlbk_id, rlbp_step, rlbp_schema, rlbp_table, rlbp_object, rlbp_targe
         14401 | DIS_LOG_TRG        | myschema2      | mytbl6                                                          |                   |                     |                 2 |            1 |                                                                                                                                                                                             |                   |                           |                         |                    2 |              
         14401 | SET_FK_DEF         | myschema2      | mytbl6                                                          | mytbl6_col61_fkey |                     |                 2 |            1 |                                                                                                                                                                                             |                   |                           |                         |                    2 |              
         14401 | SET_FK_DEF         | myschema2      | mytbl8                                                          | mytbl8_col81_fkey |                     |                 2 |            1 |                                                                                                                                                                                             |                   |                           |                         |                    2 |              
-        14401 | RLBK_TABLE         | myschema2      | mytbl1                                                          |                   |               14008 |                 3 |            1 |                                                                                                                                                                                             |                   | t                         |                       3 |                    3 |             2
-        14401 | RLBK_TABLE         | myschema2      | mytbl2                                                          |                   |               14008 |                 5 |            1 |                                                                                                                                                                                             |                   | t                         |                       2 |                    3 |             2
-        14401 | RLBK_TABLE         | myschema2      | mytbl5                                                          |                   |               14008 |                 4 |            1 |                                                                                                                                                                                             |                   | f                         |                       3 |                    1 |             2
-        14401 | RLBK_TABLE         | myschema2      | mytbl6                                                          |                   |               14008 |                 2 |            1 |                                                                                                                                                                                             |                   | f                         |                      17 |                    1 |            14
-        14401 | DELETE_LOG         | myschema2      | mytbl1                                                          |                   |               14008 |                 3 |            1 |                                                                                                                                                                                             |                   |                           |                       3 |                    3 |             4
-        14401 | DELETE_LOG         | myschema2      | mytbl2                                                          |                   |               14008 |                 5 |            1 |                                                                                                                                                                                             |                   |                           |                       2 |                    3 |             2
-        14401 | DELETE_LOG         | myschema2      | mytbl5                                                          |                   |               14008 |                 4 |            1 |                                                                                                                                                                                             |                   |                           |                       3 |                    1 |             4
-        14401 | DELETE_LOG         | myschema2      | mytbl6                                                          |                   |               14008 |                 2 |            1 |                                                                                                                                                                                             |                   |                           |                      17 |                    1 |            26
+        14401 | RLBK_TABLE         | myschema2      | mytbl1                                                          |                   |               14009 |                 3 |            1 |                                                                                                                                                                                             |                   | t                         |                       3 |                    3 |             2
+        14401 | RLBK_TABLE         | myschema2      | mytbl2                                                          |                   |               14009 |                 5 |            1 |                                                                                                                                                                                             |                   | t                         |                       2 |                    3 |             2
+        14401 | RLBK_TABLE         | myschema2      | mytbl5                                                          |                   |               14009 |                 4 |            1 |                                                                                                                                                                                             |                   | f                         |                       3 |                    1 |             2
+        14401 | RLBK_TABLE         | myschema2      | mytbl6                                                          |                   |               14009 |                 2 |            1 |                                                                                                                                                                                             |                   | f                         |                      17 |                    1 |            14
+        14401 | DELETE_LOG         | myschema2      | mytbl1                                                          |                   |               14009 |                 3 |            1 |                                                                                                                                                                                             |                   |                           |                       3 |                    3 |             4
+        14401 | DELETE_LOG         | myschema2      | mytbl2                                                          |                   |               14009 |                 5 |            1 |                                                                                                                                                                                             |                   |                           |                       2 |                    3 |             2
+        14401 | DELETE_LOG         | myschema2      | mytbl5                                                          |                   |               14009 |                 4 |            1 |                                                                                                                                                                                             |                   |                           |                       3 |                    1 |             4
+        14401 | DELETE_LOG         | myschema2      | mytbl6                                                          |                   |               14009 |                 2 |            1 |                                                                                                                                                                                             |                   |                           |                      17 |                    1 |            26
         14401 | SET_FK_IMM         | myschema2      | mytbl6                                                          | mytbl6_col61_fkey |                     |                 2 |            1 |                                                                                                                                                                                             |                   |                           |                      17 |                    2 |              
         14401 | SET_FK_IMM         | myschema2      | mytbl8                                                          | mytbl8_col81_fkey |                     |                 2 |            1 |                                                                                                                                                                                             |                   |                           |                      17 |                    3 |              
         14401 | ENA_LOG_TRG        | myschema2      | mytbl1                                                          |                   |                     |                 3 |            1 |                                                                                                                                                                                             |                   |                           |                         |                    2 |              
@@ -2478,12 +2479,12 @@ select rlbp_rlbk_id, rlbp_step, rlbp_schema, rlbp_table, rlbp_object, rlbp_targe
         14708 | DIS_LOG_TRG        | myschema1      | mytbl1                                                          |                   |                     |                 3 |            1 |                                                                                                                                                                                             |                   |                           |                         |                    2 |              
         14708 | DIS_LOG_TRG        | myschema1      | mytbl2                                                          |                   |                     |                 4 |            1 |                                                                                                                                                                                             |                   |                           |                         |                    2 |              
         14708 | DIS_LOG_TRG        | myschema1      | mytbl2b                                                         |                   |                     |                 2 |            1 |                                                                                                                                                                                             |                   |                           |                         |                    2 |              
-        14708 | RLBK_TABLE         | myschema1      | mytbl1                                                          |                   |               14008 |                 3 |            1 |                                                                                                                                                                                             |                   | t                         |                      11 |                    1 |            11
-        14708 | RLBK_TABLE         | myschema1      | mytbl2                                                          |                   |               14008 |                 4 |            1 |                                                                                                                                                                                             |                   | t                         |                       4 |                    1 |             3
-        14708 | RLBK_TABLE         | myschema1      | mytbl2b                                                         |                   |               14008 |                 2 |            1 |                                                                                                                                                                                             |                   | f                         |                      14 |                    1 |             4
-        14708 | DELETE_LOG         | myschema1      | mytbl1                                                          |                   |               14008 |                 3 |            1 |                                                                                                                                                                                             |                   |                           |                      11 |                    1 |            11
-        14708 | DELETE_LOG         | myschema1      | mytbl2                                                          |                   |               14008 |                 4 |            1 |                                                                                                                                                                                             |                   |                           |                       4 |                    3 |             4
-        14708 | DELETE_LOG         | myschema1      | mytbl2b                                                         |                   |               14008 |                 2 |            1 |                                                                                                                                                                                             |                   |                           |                      14 |                    1 |            10
+        14708 | RLBK_TABLE         | myschema1      | mytbl1                                                          |                   |               14009 |                 3 |            1 |                                                                                                                                                                                             |                   | t                         |                      11 |                    1 |            11
+        14708 | RLBK_TABLE         | myschema1      | mytbl2                                                          |                   |               14009 |                 4 |            1 |                                                                                                                                                                                             |                   | t                         |                       4 |                    1 |             3
+        14708 | RLBK_TABLE         | myschema1      | mytbl2b                                                         |                   |               14009 |                 2 |            1 |                                                                                                                                                                                             |                   | f                         |                      14 |                    1 |             4
+        14708 | DELETE_LOG         | myschema1      | mytbl1                                                          |                   |               14009 |                 3 |            1 |                                                                                                                                                                                             |                   |                           |                      11 |                    1 |            11
+        14708 | DELETE_LOG         | myschema1      | mytbl2                                                          |                   |               14009 |                 4 |            1 |                                                                                                                                                                                             |                   |                           |                       4 |                    3 |             4
+        14708 | DELETE_LOG         | myschema1      | mytbl2b                                                         |                   |               14009 |                 2 |            1 |                                                                                                                                                                                             |                   |                           |                      14 |                    1 |            10
         14708 | SET_LOCAL_APP_TRG  | myschema1      | mytbl2                                                          | mytbl2trg2        |                     |                 4 |            1 |                                                                                                                                                                                             |                   |                           |                         |                    3 |              
         14708 | ENA_LOG_TRG        | myschema1      | mytbl1                                                          |                   |                     |                 3 |            1 |                                                                                                                                                                                             |                   |                           |                         |                    2 |              
         14708 | ENA_LOG_TRG        | myschema1      | mytbl2                                                          |                   |                     |                 4 |            1 |                                                                                                                                                                                             |                   |                           |                         |                    2 |              
@@ -2784,12 +2785,12 @@ select time_id, time_last_emaj_gid, time_event from emaj.emaj_time_stamp where t
    18000 |           18000000 | C
    18001 |           18000000 | A
    18002 |           18000000 | A
-   18003 |           18000000 | M
+   18003 |           18000000 | S
    18004 |           18000045 | M
    18005 |           18000045 | R
    18006 |           18000085 | M
    18007 |           18000085 | R
-   18008 |           18000133 | M
+   18008 |           18000133 | X
    18009 |           18000133 | D
 (10 rows)
 
