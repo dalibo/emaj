@@ -157,7 +157,7 @@ CREATE TABLE emaj.emaj_time_stamp (
                                DEFAULT statement_timestamp(),
   time_tx_timestamp            TIMESTAMPTZ NOT NULL        -- insertion transaction start time
                                DEFAULT transaction_timestamp(),
-  time_tx_id                   BIGINT                      -- id of the tx that has generated the time stamp
+  time_txid                    BIGINT                      -- id of the tx that has generated the time stamp
                                DEFAULT txid_current(),
   time_last_emaj_gid           BIGINT,                     -- last value of the E-Maj global sequence
   time_event                   CHAR(1),                    -- event type that has generated the time stamp

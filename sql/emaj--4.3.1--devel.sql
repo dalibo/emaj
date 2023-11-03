@@ -94,6 +94,10 @@ WITH begin_and_end_event AS (
       AND time_clock_timestamp BETWEEN begin_ts AND end_ts
       AND time_event = 'M';
 
+--
+-- Rename the emaj_time_stamp.time_tx_id column
+--
+ALTER TABLE emaj.emaj_time_stamp RENAME time_tx_id TO time_txid;
 
 --
 -- Add created or recreated tables and sequences to the list of content to save by pg_dump.
