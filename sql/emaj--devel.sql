@@ -565,7 +565,7 @@ CREATE TYPE emaj.emaj_consolidable_rollback_type AS (
 COMMENT ON TYPE emaj.emaj_consolidable_rollback_type IS
 $$Represents the structure of rows returned by the emaj_get_consolidable_rollbacks() function.$$;
 
--- Composite types used by emaj internal functions or web clients.
+-- Composite types used by emaj internal functions.
 
 CREATE TYPE emaj._verify_groups_type AS (                -- this type is not used by functions called by users
   ver_schema                   TEXT,
@@ -575,42 +575,6 @@ CREATE TYPE emaj._verify_groups_type AS (                -- this type is not use
   );
 COMMENT ON TYPE emaj._verify_groups_type IS
 $$Represents the structure of rows returned by the internal _verify_groups() function.$$;
-
-CREATE TYPE emaj._log_stat_type AS (
-  stat_group                   TEXT,                       -- group name owning the schema.table
-  stat_schema                  TEXT,                       -- schema name
-  stat_table                   TEXT,                       -- table name
-  stat_log_schema              TEXT,                       -- schema holding the log table
-  stat_log_table               TEXT,                       -- log table
-  stat_first_mark              TEXT,                       -- mark representing the lower bound of the time range
-  stat_first_mark_datetime     TIMESTAMPTZ,                -- clock timestamp of the mark representing the lower bound of the time range
-  stat_first_mark_gid          BIGINT,                     -- global sequence value at the lower bound of the time range
-  stat_last_mark               TEXT,                       -- mark representing the upper bound of the time range
-  stat_last_mark_datetime      TIMESTAMPTZ,                -- clock timestamp of the mark representing the upper bound of the time range
-  stat_last_mark_gid           BIGINT,                     -- global sequence value at the upper bound of the time range
-  stat_rows                    BIGINT                      -- estimated number of update events recorded for this table
-  );
-COMMENT ON TYPE emaj._log_stat_type IS
-$$Represents the structure of rows returned by the _log_stat_groups() function.$$;
-
-CREATE TYPE emaj._detailed_log_stat_type AS (
-  stat_group                   TEXT,                       -- group name owning the schema.table
-  stat_schema                  TEXT,                       -- schema name
-  stat_table                   TEXT,                       -- table name
-  stat_log_schema              TEXT,                       -- schema holding the log table
-  stat_log_table               TEXT,                       -- log table
-  stat_first_mark              TEXT,                       -- mark representing the lower bound of the time range
-  stat_first_mark_datetime     TIMESTAMPTZ,                -- clock timestamp of the mark representing the lower bound of the time range
-  stat_first_mark_gid          BIGINT,                     -- global sequence value at the lower bound of the time range
-  stat_last_mark               TEXT,                       -- mark representing the upper bound of the time range
-  stat_last_mark_datetime      TIMESTAMPTZ,                -- clock timestamp of the mark representing the upper bound of the time range
-  stat_last_mark_gid           BIGINT,                     -- global sequence value at the upper bound of the time range
-  stat_role                    VARCHAR(32),                -- user having generated update events
-  stat_verb                    VARCHAR(6),                 -- type of SQL statement (INSERT/UPDATE/DELETE)
-  stat_rows                    BIGINT                      -- real number of update events recorded for this table
-  );
-COMMENT ON TYPE emaj._detailed_log_stat_type IS
-$$Represents the structure of rows returned by the _detailed_log_stat_groups() function.$$;
 
 CREATE TYPE emaj._report_message_type AS (
   rpt_msg_type                 INT,                        -- message number
@@ -10269,7 +10233,7 @@ COMMENT ON FUNCTION emaj.emaj_log_stat_groups(TEXT[],TEXT,TEXT) IS
 $$Returns global statistics about logged data changes between 2 marks for several groups.$$;
 
 CREATE OR REPLACE FUNCTION emaj._log_stat_groups(p_groupNames TEXT[], p_multiGroup BOOLEAN, p_firstMark TEXT, p_lastMark TEXT)
-RETURNS SETOF emaj._log_stat_type LANGUAGE plpgsql AS
+RETURNS SETOF emaj.emaj_log_stat_type LANGUAGE plpgsql AS
 $_log_stat_groups$
 -- This function effectively returns statistics about logged data changes between 2 marks or between a mark and the current state for 1
 -- or several groups.
@@ -10286,21 +10250,19 @@ $_log_stat_groups$
     v_lastMarkTimeId         BIGINT;
     v_firstMarkTs            TIMESTAMPTZ;
     v_lastMarkTs             TIMESTAMPTZ;
-    v_firstEmajGid           BIGINT;
-    v_lastEmajGid            BIGINT;
   BEGIN
 -- Check the groups name.
     SELECT emaj._check_group_names(p_groupNames := p_groupNames, p_mayBeNull := p_multiGroup, p_lockGroups := FALSE)
       INTO p_groupNames;
     IF p_groupNames IS NOT NULL THEN
 -- Check the marks range and get some data about both marks.
-      SELECT *
-        INTO p_firstMark, p_lastMark, v_firstMarkTimeId, v_lastMarkTimeId, v_firstMarkTs, v_lastMarkTs, v_firstEmajGid, v_lastEmajGid
-        FROM emaj._check_marks_range(p_groupNames := p_groupNames, p_firstMark := p_firstMark, p_lastMark := p_lastMark);
+      SELECT c.p_firstMark, c.p_lastMark, c.p_firstMarkTimeId, c.p_lastMarkTimeId, c.p_firstMarkTs, c.p_lastMarkTs
+        INTO p_firstMark, p_lastMark, v_firstMarkTimeId, v_lastMarkTimeId, v_firstMarkTs, v_lastMarkTs
+        FROM emaj._check_marks_range(p_groupNames := p_groupNames, p_firstMark := p_firstMark, p_lastMark := p_lastMark) c;
 -- For each table of the group, get the number of log rows and return the statistics.
 -- Shorten the timeframe if the table did not belong to the group on the entire requested time frame.
       RETURN QUERY
-        SELECT rel_group, rel_schema, rel_tblseq, rel_log_schema, rel_log_table,
+        SELECT rel_group, rel_schema, rel_tblseq,
                CASE WHEN v_firstMarkTimeId IS NULL THEN NULL
                     WHEN v_firstMarkTimeId >= lower(rel_time_range) THEN p_firstMark
                     ELSE coalesce(
@@ -10317,13 +10279,6 @@ $_log_stat_groups$
                             WHERE time_id = lower(rel_time_range)
                          )
                  END AS stat_first_mark_datetime,
-               CASE WHEN v_firstMarkTimeId IS NULL THEN NULL
-                    WHEN v_firstMarkTimeId >= lower(rel_time_range) THEN v_firstEmajGid
-                    ELSE (SELECT time_last_emaj_gid
-                            FROM emaj.emaj_time_stamp
-                            WHERE time_id = lower(rel_time_range)
-                         )
-                 END AS stat_first_mark_gid,
                CASE WHEN v_lastMarkTimeId IS NULL AND upper_inf(rel_time_range) THEN NULL
                     WHEN NOT upper_inf(rel_time_range) AND (v_lastMarkTimeId IS NULL OR upper(rel_time_range) < v_lastMarkTimeId)
                          THEN coalesce(
@@ -10342,14 +10297,6 @@ $_log_stat_groups$
                               )
                     ELSE v_lastMarkTs
                  END AS stat_last_mark_datetime,
-               CASE WHEN v_lastMarkTimeId IS NULL AND upper_inf(rel_time_range) THEN NULL
-                    WHEN NOT upper_inf(rel_time_range) AND (v_lastMarkTimeId IS NULL OR upper(rel_time_range) < v_lastMarkTimeId)
-                         THEN (SELECT time_last_emaj_gid
-                                 FROM emaj.emaj_time_stamp
-                                 WHERE time_id = upper(rel_time_range)
-                              )
-                    ELSE v_lastEmajGid
-                 END AS stat_last_mark_gid,
                CASE WHEN v_firstMarkTimeId IS NULL THEN 0                                       -- group just created but without any mark
                     ELSE emaj._log_stat_tbl(emaj_relation,
                                             CASE WHEN v_firstMarkTimeId >= lower(rel_time_range)
@@ -10407,7 +10354,7 @@ COMMENT ON FUNCTION emaj.emaj_detailed_log_stat_groups(TEXT[],TEXT,TEXT) IS
 $$Returns detailed statistics about logged data changes between 2 marks for several groups.$$;
 
 CREATE OR REPLACE FUNCTION emaj._detailed_log_stat_groups(p_groupNames TEXT[], p_multiGroup BOOLEAN, p_firstMark TEXT, p_lastMark TEXT)
-RETURNS SETOF emaj._detailed_log_stat_type LANGUAGE plpgsql AS
+RETURNS SETOF emaj.emaj_detailed_log_stat_type LANGUAGE plpgsql AS
 $_detailed_log_stat_groups$
 -- This function effectively returns statistics on logged data changes executed between 2 marks as viewed through the log tables for one
 -- or several groups.
@@ -10501,14 +10448,10 @@ $_detailed_log_stat_groups$
         v_stmt= 'SELECT ' || quote_literal(r_tblsq.rel_group) || '::TEXT AS stat_group, '
              || quote_literal(r_tblsq.rel_schema) || '::TEXT AS stat_schema, '
              || quote_literal(r_tblsq.rel_tblseq) || '::TEXT AS stat_table, '
-             || quote_literal(r_tblsq.rel_log_schema) || '::TEXT AS stat_log_schema, '
-             || quote_literal(r_tblsq.rel_log_table) || '::TEXT AS stat_log_table, '
              || quote_literal(v_lowerBoundMark) || '::TEXT AS stat_first_mark, '
              || quote_literal(v_lowerBoundMarkTs) || '::TIMESTAMPTZ AS stat_first_mark_datetime, '
-             || v_lowerBoundGid || '::BIGINT AS stat_first_mark_gid, '
              || coalesce(quote_literal(v_upperBoundMark),'NULL') || '::TEXT AS stat_last_mark, '
              || coalesce(quote_literal(v_upperBoundMarkTs),'NULL') || '::TIMESTAMPTZ AS stat_last_mark_datetime, '
-             || coalesce(v_upperBoundGid::text,'NULL') || '::BIGINT AS stat_last_mark_gid, '
              || ' emaj_user AS stat_user,'
              || ' CASE emaj_verb WHEN ''INS'' THEN ''INSERT'''
              ||                ' WHEN ''UPD'' THEN ''UPDATE'''

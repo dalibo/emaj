@@ -54,6 +54,10 @@ select relname from pg_catalog.pg_class,
 -- process the extension upgrade
 ALTER EXTENSION emaj UPDATE TO 'devel';
 WARNING:  E-Maj upgrade: the E-Maj environment health check reports warning. You may execute "SELECT * FROM emaj.emaj_verify_all();" to get more details.
+NOTICE:  drop cascades to function _log_stat_groups(text[],boolean,text,text)
+NOTICE:  drop cascades to function _detailed_log_stat_groups(text[],boolean,text,text)
+NOTICE:  function emaj._log_stat_groups(text[],pg_catalog.bool,text,text) does not exist, skipping
+NOTICE:  function emaj._detailed_log_stat_groups(text[],pg_catalog.bool,text,text) does not exist, skipping
 -----------------------------
 -- check installation
 -----------------------------
@@ -101,40 +105,6 @@ SELECT param_value_text FROM emaj.emaj_param WHERE param_key = 'emaj_version';
 
 -- check tables list
 \d emaj*.*
-                    Composite type "emaj._detailed_log_stat_type"
-          Column          |           Type           | Collation | Nullable | Default 
---------------------------+--------------------------+-----------+----------+---------
- stat_group               | text                     |           |          | 
- stat_schema              | text                     |           |          | 
- stat_table               | text                     |           |          | 
- stat_log_schema          | text                     |           |          | 
- stat_log_table           | text                     |           |          | 
- stat_first_mark          | text                     |           |          | 
- stat_first_mark_datetime | timestamp with time zone |           |          | 
- stat_first_mark_gid      | bigint                   |           |          | 
- stat_last_mark           | text                     |           |          | 
- stat_last_mark_datetime  | timestamp with time zone |           |          | 
- stat_last_mark_gid       | bigint                   |           |          | 
- stat_role                | character varying(32)    |           |          | 
- stat_verb                | character varying(6)     |           |          | 
- stat_rows                | bigint                   |           |          | 
-
-                         Composite type "emaj._log_stat_type"
-          Column          |           Type           | Collation | Nullable | Default 
---------------------------+--------------------------+-----------+----------+---------
- stat_group               | text                     |           |          | 
- stat_schema              | text                     |           |          | 
- stat_table               | text                     |           |          | 
- stat_log_schema          | text                     |           |          | 
- stat_log_table           | text                     |           |          | 
- stat_first_mark          | text                     |           |          | 
- stat_first_mark_datetime | timestamp with time zone |           |          | 
- stat_first_mark_gid      | bigint                   |           |          | 
- stat_last_mark           | text                     |           |          | 
- stat_last_mark_datetime  | timestamp with time zone |           |          | 
- stat_last_mark_gid       | bigint                   |           |          | 
- stat_rows                | bigint                   |           |          | 
-
         Composite type "emaj._report_message_type"
      Column     |  Type   | Collation | Nullable | Default 
 ----------------+---------+-----------+----------+---------
@@ -738,7 +708,7 @@ Tablespace: "tspemaj"
  time_clock_timestamp | timestamp with time zone |           | not null | clock_timestamp()
  time_stmt_timestamp  | timestamp with time zone |           | not null | statement_timestamp()
  time_tx_timestamp    | timestamp with time zone |           | not null | transaction_timestamp()
- time_tx_id           | bigint                   |           |          | txid_current()
+ time_txid            | bigint                   |           |          | txid_current()
  time_last_emaj_gid   | bigint                   |           |          | 
  time_event           | character(1)             |           |          | 
 Indexes:

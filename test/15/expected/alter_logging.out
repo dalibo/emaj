@@ -1289,17 +1289,17 @@ begin;
  myschema2   | mytbl7     |               9502 |             9506 |              3
 (1 row)
 
-  select stat_group, stat_schema, stat_table, stat_first_mark, stat_first_mark_gid, stat_last_mark, stat_last_mark_gid, stat_rows 
-    from emaj._log_stat_groups('{"myGroup2"}',false,'ADD_TBL test',NULL);
- stat_group | stat_schema | stat_table | stat_first_mark | stat_first_mark_gid | stat_last_mark | stat_last_mark_gid | stat_rows 
-------------+-------------+------------+-----------------+---------------------+----------------+--------------------+-----------
- myGroup2   | myschema2   | myTbl3     | ADD_TBL test    |             9500000 |                |                    |         0
- myGroup2   | myschema2   | mytbl1     | ADD_TBL test    |             9500000 |                |                    |         0
- myGroup2   | myschema2   | mytbl2     | ADD_TBL test    |             9500000 |                |                    |         0
- myGroup2   | myschema2   | mytbl4     | ADD_TBL test    |             9500000 |                |                    |         0
- myGroup2   | myschema2   | mytbl5     | ADD_TBL test    |             9500000 |                |                    |         0
- myGroup2   | myschema2   | mytbl6     | ADD_TBL test    |             9500000 |                |                    |         0
- myGroup2   | myschema2   | mytbl7     | [deleted mark]  |             9500000 |                |                    |         0
+  select stat_group, stat_schema, stat_table, stat_first_mark, stat_last_mark, stat_rows
+    from emaj.emaj_log_stat_group('myGroup2','ADD_TBL test',NULL);
+ stat_group | stat_schema | stat_table | stat_first_mark | stat_last_mark | stat_rows 
+------------+-------------+------------+-----------------+----------------+-----------
+ myGroup2   | myschema2   | myTbl3     | ADD_TBL test    |                |         0
+ myGroup2   | myschema2   | mytbl1     | ADD_TBL test    |                |         0
+ myGroup2   | myschema2   | mytbl2     | ADD_TBL test    |                |         0
+ myGroup2   | myschema2   | mytbl4     | ADD_TBL test    |                |         0
+ myGroup2   | myschema2   | mytbl5     | ADD_TBL test    |                |         0
+ myGroup2   | myschema2   | mytbl6     | ADD_TBL test    |                |         0
+ myGroup2   | myschema2   | mytbl7     | [deleted mark]  |                |         0
 (7 rows)
 
 rollback;
@@ -1428,29 +1428,27 @@ select rel_schema, rel_tblseq, rel_time_range, rel_group, rel_kind, rel_log_sche
 (2 rows)
 
 delete from myschema2.myTbl7 where col71 = 9;
--- get statistics, using directly internal functions as done by web clients
-select stat_group, stat_schema, stat_table, stat_log_schema, stat_log_table,
-       stat_first_mark, stat_first_mark_gid, stat_last_mark, stat_last_mark_gid, stat_rows 
-  from emaj._log_stat_groups('{"myGroup2"}',false,'ADD_TBL test',NULL);
- stat_group | stat_schema | stat_table | stat_log_schema | stat_log_table | stat_first_mark | stat_first_mark_gid | stat_last_mark | stat_last_mark_gid | stat_rows 
-------------+-------------+------------+-----------------+----------------+-----------------+---------------------+----------------+--------------------+-----------
- myGroup2   | myschema2   | myTbl3     | emaj_myschema2  | myTbl3_log     | ADD_TBL test    |             9500000 |                |                    |         0
- myGroup2   | myschema2   | mytbl1     | emaj_myschema2  | mytbl1_log     | ADD_TBL test    |             9500000 |                |                    |         0
- myGroup2   | myschema2   | mytbl2     | emaj_myschema2  | mytbl2_log     | ADD_TBL test    |             9500000 |                |                    |         0
- myGroup2   | myschema2   | mytbl4     | emaj_myschema2  | mytbl4_log     | ADD_TBL test    |             9500000 |                |                    |         0
- myGroup2   | myschema2   | mytbl5     | emaj_myschema2  | mytbl5_log     | ADD_TBL test    |             9500000 |                |                    |         0
- myGroup2   | myschema2   | mytbl6     | emaj_myschema2  | mytbl6_log     | ADD_TBL test    |             9500000 |                |                    |         0
- myGroup2   | myschema2   | mytbl7     | emaj_myschema2  | mytbl7_log_1   | [deleted mark]  |             9500000 | Remove mytbl7  |            9500010 |         3
- myGroup2   | myschema2   | mytbl7     | emaj_myschema2  | mytbl7_log     | Re-add mytbl7   |             9500010 |                |                    |         1
+-- get statistics
+select stat_group, stat_schema, stat_table, stat_first_mark, stat_last_mark, stat_rows 
+  from emaj.emaj_log_stat_group('myGroup2','ADD_TBL test',NULL);
+ stat_group | stat_schema | stat_table | stat_first_mark | stat_last_mark | stat_rows 
+------------+-------------+------------+-----------------+----------------+-----------
+ myGroup2   | myschema2   | myTbl3     | ADD_TBL test    |                |         0
+ myGroup2   | myschema2   | mytbl1     | ADD_TBL test    |                |         0
+ myGroup2   | myschema2   | mytbl2     | ADD_TBL test    |                |         0
+ myGroup2   | myschema2   | mytbl4     | ADD_TBL test    |                |         0
+ myGroup2   | myschema2   | mytbl5     | ADD_TBL test    |                |         0
+ myGroup2   | myschema2   | mytbl6     | ADD_TBL test    |                |         0
+ myGroup2   | myschema2   | mytbl7     | [deleted mark]  | Remove mytbl7  |         3
+ myGroup2   | myschema2   | mytbl7     | Re-add mytbl7   |                |         1
 (8 rows)
 
-select stat_group, stat_schema, stat_table, stat_log_schema, stat_log_table,
-       stat_first_mark, stat_first_mark_gid, stat_last_mark, stat_last_mark_gid, stat_role, stat_verb, stat_rows 
-  from emaj._detailed_log_stat_groups('{"myGroup2"}',false,'ADD_TBL test',NULL);
- stat_group | stat_schema | stat_table | stat_log_schema | stat_log_table | stat_first_mark | stat_first_mark_gid | stat_last_mark | stat_last_mark_gid | stat_role | stat_verb | stat_rows 
-------------+-------------+------------+-----------------+----------------+-----------------+---------------------+----------------+--------------------+-----------+-----------+-----------
- myGroup2   | myschema2   | mytbl7     | emaj_myschema2  | mytbl7_log_1   | [deleted mark]  |             9500000 | Remove mytbl7  |            9500010 | postgres  | INSERT    |         3
- myGroup2   | myschema2   | mytbl7     | emaj_myschema2  | mytbl7_log     | Re-add mytbl7   |             9500010 |                |                    | postgres  | DELETE    |         1
+select stat_group, stat_schema, stat_table, stat_first_mark, stat_last_mark, stat_role, stat_verb, stat_rows 
+  from emaj.emaj_detailed_log_stat_group('myGroup2','ADD_TBL test',NULL);
+ stat_group | stat_schema | stat_table | stat_first_mark | stat_last_mark | stat_role | stat_verb | stat_rows 
+------------+-------------+------------+-----------------+----------------+-----------+-----------+-----------
+ myGroup2   | myschema2   | mytbl7     | [deleted mark]  | Remove mytbl7  | postgres  | INSERT    |         3
+ myGroup2   | myschema2   | mytbl7     | Re-add mytbl7   |                | postgres  | DELETE    |         1
 (2 rows)
 
 -- dump changes
@@ -1707,23 +1705,23 @@ begin;
 (5 rows)
 
 rollback;
--- get statistics, using directly internal functions as done by web clients
-select stat_group, stat_schema, stat_table, stat_first_mark, stat_first_mark_gid, stat_last_mark, stat_last_mark_gid, stat_rows 
-  from emaj._log_stat_groups('{"myGroup1"}',false,'Mk1',NULL);
- stat_group | stat_schema | stat_table | stat_first_mark | stat_first_mark_gid |         stat_last_mark         | stat_last_mark_gid | stat_rows 
-------------+-------------+------------+-----------------+---------------------+--------------------------------+--------------------+-----------
- myGroup1   | myschema1   | myTbl3     | Mk1             |             9000000 | 2 tables removed from myGroup1 |            9700002 |         2
- myGroup1   | myschema1   | mytbl1     | Mk1             |             9000000 |                                |                    |         0
- myGroup1   | myschema1   | mytbl2     | Mk1             |             9000000 |                                |                    |         0
- myGroup1   | myschema1   | mytbl2b    | Mk1             |             9000000 | 2 tables removed from myGroup1 |            9700002 |         0
- myGroup1   | myschema1   | mytbl4     | Mk1             |             9000000 |                                |                    |         0
+-- get statistics
+select stat_group, stat_schema, stat_table, stat_first_mark, stat_last_mark, stat_rows 
+  from emaj.emaj_log_stat_group('myGroup1','Mk1',NULL);
+ stat_group | stat_schema | stat_table | stat_first_mark |         stat_last_mark         | stat_rows 
+------------+-------------+------------+-----------------+--------------------------------+-----------
+ myGroup1   | myschema1   | myTbl3     | Mk1             | 2 tables removed from myGroup1 |         2
+ myGroup1   | myschema1   | mytbl1     | Mk1             |                                |         0
+ myGroup1   | myschema1   | mytbl2     | Mk1             |                                |         0
+ myGroup1   | myschema1   | mytbl2b    | Mk1             | 2 tables removed from myGroup1 |         0
+ myGroup1   | myschema1   | mytbl4     | Mk1             |                                |         0
 (5 rows)
 
-select stat_group, stat_schema, stat_table, stat_first_mark, stat_first_mark_gid, stat_last_mark, stat_last_mark_gid, stat_role, stat_verb, stat_rows 
-  from emaj._detailed_log_stat_groups('{"myGroup1"}',false,'Mk1',NULL);
- stat_group | stat_schema | stat_table | stat_first_mark | stat_first_mark_gid |         stat_last_mark         | stat_last_mark_gid | stat_role | stat_verb | stat_rows 
-------------+-------------+------------+-----------------+---------------------+--------------------------------+--------------------+-----------+-----------+-----------
- myGroup1   | myschema1   | myTbl3     | Mk1             |             9000000 | 2 tables removed from myGroup1 |            9700002 | postgres  | INSERT    |         2
+select stat_group, stat_schema, stat_table, stat_first_mark, stat_last_mark, stat_role, stat_verb, stat_rows 
+  from emaj.emaj_detailed_log_stat_group('myGroup1','Mk1',NULL);
+ stat_group | stat_schema | stat_table | stat_first_mark |         stat_last_mark         | stat_role | stat_verb | stat_rows 
+------------+-------------+------------+-----------------+--------------------------------+-----------+-----------+-----------
+ myGroup1   | myschema1   | myTbl3     | Mk1             | 2 tables removed from myGroup1 | postgres  | INSERT    |         2
 (1 row)
 
 --testing snap, dump changes and sql generation
