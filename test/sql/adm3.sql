@@ -500,13 +500,13 @@ select is_called, last_value from "emaj_phil's schema3"."phil's tbl1_log_seq";
 
 select emaj.emaj_set_mark_group('truncateTestGroup','M2');
 
-select stat_group, stat_schema, stat_table, stat_first_mark, stat_last_mark, stat_rows
-  from emaj.emaj_log_stat_group('truncateTestGroup','M1',null) where stat_rows > 0 order by 1,2,3,4;
+select stat_group, stat_schema, stat_table, stat_first_mark, stat_last_mark, stat_role, stat_verb, stat_rows
+  from emaj.emaj_detailed_log_stat_group('truncateTestGroup','M1',null);
 
 select * from emaj.emaj_logged_rollback_group('truncateTestGroup','M1', false);
 
-select stat_group, stat_schema, stat_table, stat_first_mark, stat_last_mark, stat_rows
-  from emaj.emaj_log_stat_group('truncateTestGroup','M1',null) where stat_rows > 0 order by 1,2,3,4;
+select stat_group, stat_schema, stat_table, stat_first_mark, stat_last_mark, stat_role, stat_verb, stat_rows
+  from emaj.emaj_detailed_log_stat_group('truncateTestGroup','M1',null);
 
 select emaj.emaj_gen_sql_group('truncateTestGroup','M1','M2',:'EMAJTESTTMPDIR' || '/gensql.sql');
 -- TODO: replace the previous statement by the next one, once the issue with the emaj_logged_rollback_group() and emaj_gen_sql_groups() functions will be fixed

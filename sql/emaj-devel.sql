@@ -515,8 +515,8 @@ CREATE TYPE emaj.emaj_detailed_log_stat_type AS (
   stat_first_mark_datetime     TIMESTAMPTZ,                -- clock timestamp of the mark representing the lower bound of the time range
   stat_last_mark               TEXT,                       -- mark representing the upper bound of the time range
   stat_last_mark_datetime      TIMESTAMPTZ,                -- clock timestamp of the mark representing the upper bound of the time range
-  stat_role                    VARCHAR(32),                -- user having generated update events
-  stat_verb                    VARCHAR(6),                 -- type of SQL statement (INSERT/UPDATE/DELETE)
+  stat_role                    TEXT,                       -- user having generated update events
+  stat_verb                    TEXT,                       -- type of SQL statement (INSERT/UPDATE/DELETE/TRUNCATE)
   stat_rows                    BIGINT                      -- real number of update events recorded for this table
   );
 COMMENT ON TYPE emaj.emaj_detailed_log_stat_type IS
@@ -10459,14 +10459,15 @@ $_detailed_log_stat_groups$
              || quote_literal(v_lowerBoundMarkTs) || '::TIMESTAMPTZ AS stat_first_mark_datetime, '
              || coalesce(quote_literal(v_upperBoundMark),'NULL') || '::TEXT AS stat_last_mark, '
              || coalesce(quote_literal(v_upperBoundMarkTs),'NULL') || '::TIMESTAMPTZ AS stat_last_mark_datetime, '
-             || ' emaj_user AS stat_user,'
+             || ' emaj_user::TEXT AS stat_user,'
              || ' CASE emaj_verb WHEN ''INS'' THEN ''INSERT'''
              ||                ' WHEN ''UPD'' THEN ''UPDATE'''
              ||                ' WHEN ''DEL'' THEN ''DELETE'''
-             ||                             ' ELSE ''?'' END::VARCHAR(6) AS stat_verb,'
+             ||                ' WHEN ''TRU'' THEN ''TRUNCATE'''
+             ||                             ' ELSE ''?'' END AS stat_verb,'
              || ' count(*) AS stat_rows'
              || ' FROM ' || quote_ident(r_tblsq.rel_log_schema) || '.' || quote_ident(r_tblsq.rel_log_table)
-             || ' WHERE NOT (emaj_verb = ''UPD'' AND emaj_tuple = ''OLD'')'
+             || ' WHERE NOT (emaj_verb = ''UPD'' AND emaj_tuple = ''OLD'') AND NOT (emaj_verb = ''TRU'' AND emaj_tuple = '''')'
              || ' AND emaj_gid > '|| v_lowerBoundGid
              || coalesce(' AND emaj_gid <= '|| v_upperBoundGid, '')
              || ' GROUP BY stat_group, stat_schema, stat_table, stat_user, stat_verb'

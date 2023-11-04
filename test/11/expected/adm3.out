@@ -2104,15 +2104,15 @@ select emaj.emaj_set_mark_group('truncateTestGroup','M2');
                    9
 (1 row)
 
-select stat_group, stat_schema, stat_table, stat_first_mark, stat_last_mark, stat_rows
-  from emaj.emaj_log_stat_group('truncateTestGroup','M1',null) where stat_rows > 0 order by 1,2,3,4;
-    stat_group     |  stat_schema   | stat_table  | stat_first_mark | stat_last_mark | stat_rows 
--------------------+----------------+-------------+-----------------+----------------+-----------
- truncateTestGroup | myschema4      | mypartp3    | M1              |                |         1
- truncateTestGroup | myschema4      | mytblc2     | M1              |                |         6
- truncateTestGroup | phil's schema3 | myTbl2\     | M1              |                |         6
- truncateTestGroup | phil's schema3 | mytbl4      | M1              |                |         8
- truncateTestGroup | phil's schema3 | phil's tbl1 | M1              |                |        19
+select stat_group, stat_schema, stat_table, stat_first_mark, stat_last_mark, stat_role, stat_verb, stat_rows
+  from emaj.emaj_detailed_log_stat_group('truncateTestGroup','M1',null);
+    stat_group     |  stat_schema   | stat_table  | stat_first_mark | stat_last_mark | stat_role | stat_verb | stat_rows 
+-------------------+----------------+-------------+-----------------+----------------+-----------+-----------+-----------
+ truncateTestGroup | myschema4      | mypartp3    | M1              |                | postgres  | TRUNCATE  |         1
+ truncateTestGroup | myschema4      | mytblc2     | M1              |                | postgres  | TRUNCATE  |         6
+ truncateTestGroup | phil's schema3 | myTbl2\     | M1              |                | postgres  | TRUNCATE  |         6
+ truncateTestGroup | phil's schema3 | mytbl4      | M1              |                | postgres  | TRUNCATE  |         8
+ truncateTestGroup | phil's schema3 | phil's tbl1 | M1              |                | postgres  | TRUNCATE  |        19
 (5 rows)
 
 select * from emaj.emaj_logged_rollback_group('truncateTestGroup','M1', false);
@@ -2122,16 +2122,21 @@ select * from emaj.emaj_logged_rollback_group('truncateTestGroup','M1', false);
  Notice        | 5 / 9 tables effectively processed.
 (2 rows)
 
-select stat_group, stat_schema, stat_table, stat_first_mark, stat_last_mark, stat_rows
-  from emaj.emaj_log_stat_group('truncateTestGroup','M1',null) where stat_rows > 0 order by 1,2,3,4;
-    stat_group     |  stat_schema   | stat_table  | stat_first_mark | stat_last_mark | stat_rows 
--------------------+----------------+-------------+-----------------+----------------+-----------
- truncateTestGroup | myschema4      | mypartp3    | M1              |                |         2
- truncateTestGroup | myschema4      | mytblc2     | M1              |                |        12
- truncateTestGroup | phil's schema3 | myTbl2\     | M1              |                |        12
- truncateTestGroup | phil's schema3 | mytbl4      | M1              |                |        16
- truncateTestGroup | phil's schema3 | phil's tbl1 | M1              |                |        38
-(5 rows)
+select stat_group, stat_schema, stat_table, stat_first_mark, stat_last_mark, stat_role, stat_verb, stat_rows
+  from emaj.emaj_detailed_log_stat_group('truncateTestGroup','M1',null);
+    stat_group     |  stat_schema   | stat_table  | stat_first_mark | stat_last_mark | stat_role | stat_verb | stat_rows 
+-------------------+----------------+-------------+-----------------+----------------+-----------+-----------+-----------
+ truncateTestGroup | myschema4      | mypartp3    | M1              |                | postgres  | INSERT    |         1
+ truncateTestGroup | myschema4      | mypartp3    | M1              |                | postgres  | TRUNCATE  |         1
+ truncateTestGroup | myschema4      | mytblc2     | M1              |                | postgres  | INSERT    |         6
+ truncateTestGroup | myschema4      | mytblc2     | M1              |                | postgres  | TRUNCATE  |         6
+ truncateTestGroup | phil's schema3 | myTbl2\     | M1              |                | postgres  | INSERT    |         6
+ truncateTestGroup | phil's schema3 | myTbl2\     | M1              |                | postgres  | TRUNCATE  |         6
+ truncateTestGroup | phil's schema3 | mytbl4      | M1              |                | postgres  | INSERT    |         8
+ truncateTestGroup | phil's schema3 | mytbl4      | M1              |                | postgres  | TRUNCATE  |         8
+ truncateTestGroup | phil's schema3 | phil's tbl1 | M1              |                | postgres  | INSERT    |        19
+ truncateTestGroup | phil's schema3 | phil's tbl1 | M1              |                | postgres  | TRUNCATE  |        19
+(10 rows)
 
 select emaj.emaj_gen_sql_group('truncateTestGroup','M1','M2',:'EMAJTESTTMPDIR' || '/gensql.sql');
 NOTICE:  table "emaj_temp_script" does not exist, skipping

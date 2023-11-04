@@ -98,9 +98,9 @@ The function returns a set of rows, whose type is named *emaj.emaj_detailed_log_
 +--------------------------+-------------+--------------------------------------------------------------------------------------------------+
 | stat_last_mark_datetime  | TIMESTAMPTZ | mark timestamp of the period end                                                                 |
 +--------------------------+-------------+--------------------------------------------------------------------------------------------------+
-| stat_role                | VARCHAR(32) | connection role                                                                                  |
+| stat_role                | TEXT        | connection role                                                                                  |
 +--------------------------+-------------+--------------------------------------------------------------------------------------------------+
-| stat_verb                | VARCHAR(6)  | type of the SQL verb that has performed the update, with values: *INSERT* / *UPDATE* / *DELETE*) |
+| stat_verb                | TEXT        | type of the SQL verb that has performed the update, with values: *INSERT* / *UPDATE* / *DELETE*) |
 +--------------------------+-------------+--------------------------------------------------------------------------------------------------+
 | stat_rows                | BIGINT      | number of updates recorded into the related log table                                            |
 +--------------------------+-------------+--------------------------------------------------------------------------------------------------+

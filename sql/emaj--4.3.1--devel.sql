@@ -111,6 +111,9 @@ ALTER TABLE emaj.emaj_time_stamp RENAME time_tx_id TO time_txid;
 DROP TYPE emaj._log_stat_type CASCADE;
 DROP TYPE emaj._detailed_log_stat_type CASCADE;
 
+ALTER TYPE emaj.emaj_detailed_log_stat_type ALTER ATTRIBUTE stat_role TYPE TEXT;
+ALTER TYPE emaj.emaj_detailed_log_stat_type ALTER ATTRIBUTE stat_verb TYPE TEXT;
+
 ------------------------------------
 --                                --
 -- emaj functions                 --
@@ -567,14 +570,15 @@ $_detailed_log_stat_groups$
              || quote_literal(v_lowerBoundMarkTs) || '::TIMESTAMPTZ AS stat_first_mark_datetime, '
              || coalesce(quote_literal(v_upperBoundMark),'NULL') || '::TEXT AS stat_last_mark, '
              || coalesce(quote_literal(v_upperBoundMarkTs),'NULL') || '::TIMESTAMPTZ AS stat_last_mark_datetime, '
-             || ' emaj_user AS stat_user,'
+             || ' emaj_user::TEXT AS stat_user,'
              || ' CASE emaj_verb WHEN ''INS'' THEN ''INSERT'''
              ||                ' WHEN ''UPD'' THEN ''UPDATE'''
              ||                ' WHEN ''DEL'' THEN ''DELETE'''
-             ||                             ' ELSE ''?'' END::VARCHAR(6) AS stat_verb,'
+             ||                ' WHEN ''TRU'' THEN ''TRUNCATE'''
+             ||                             ' ELSE ''?'' END AS stat_verb,'
              || ' count(*) AS stat_rows'
              || ' FROM ' || quote_ident(r_tblsq.rel_log_schema) || '.' || quote_ident(r_tblsq.rel_log_table)
-             || ' WHERE NOT (emaj_verb = ''UPD'' AND emaj_tuple = ''OLD'')'
+             || ' WHERE NOT (emaj_verb = ''UPD'' AND emaj_tuple = ''OLD'') AND NOT (emaj_verb = ''TRU'' AND emaj_tuple = '''')'
              || ' AND emaj_gid > '|| v_lowerBoundGid
              || coalesce(' AND emaj_gid <= '|| v_upperBoundGid, '')
              || ' GROUP BY stat_group, stat_schema, stat_table, stat_user, stat_verb'

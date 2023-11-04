@@ -98,9 +98,9 @@ La fonction retourne un ensemble de lignes, de type *emaj.emaj_detailed_log_stat
 +--------------------------+-------------+------------------------------------------------------------------------------------------+
 | stat_last_mark_datetime  | TIMESTAMPTZ | date et heure de la marque de fin de période                                             |
 +--------------------------+-------------+------------------------------------------------------------------------------------------+
-| stat_role                | VARCHAR(32) | rôle de connexion                                                                        |
+| stat_role                | TEXT        | rôle de connexion                                                                        |
 +--------------------------+-------------+------------------------------------------------------------------------------------------+
-| stat_verb                | VARCHAR(6)  | verbe SQL à l'origine de la mise à jour (*INSERT* / *UPDATE* / *DELETE* / *TRUNCATE*)    |
+| stat_verb                | TEXT        | verbe SQL à l'origine de la mise à jour (*INSERT* / *UPDATE* / *DELETE* / *TRUNCATE*)    |
 +--------------------------+-------------+------------------------------------------------------------------------------------------+
 | stat_rows                | BIGINT      | nombre de modifications de lignes enregistrées dans la table de log associée à la table  |
 +--------------------------+-------------+------------------------------------------------------------------------------------------+

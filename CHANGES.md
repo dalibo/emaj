@@ -6,7 +6,7 @@ E-Maj - Change log
   * Minor code changes.
 
 ###Bug fixes:###
-
+  * Fix the emaj_detailed_log_stat_group() output for TRUNCATE recorded events.
 
 4.3.1 (2023-Nov-1)
 ------
