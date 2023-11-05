@@ -11500,6 +11500,7 @@ $_gen_sql_dump_changes_tbl$
           E'SELECT %s\n'
            '  FROM %I.%I tbl\n'
            '  WHERE %s\n'
+           '    AND emaj_tuple IN (''OLD'',''NEW'')\n'
            '  ORDER BY %s';
         v_stmt = format(v_template,
                         v_columnsList, p_logSchema, p_logTable, v_conditions, v_orderByColumns);
@@ -11509,6 +11510,7 @@ $_gen_sql_dump_changes_tbl$
            '  SELECT %s, min(emaj_gid) AS min_gid, max(emaj_gid) AS max_gid\n'
            '    FROM %I.%I\n'
            '    WHERE %s\n'
+           '      AND emaj_tuple IN (''OLD'',''NEW'')\n'
            '    GROUP BY %s\n'
            '  ) \n'
            'SELECT %s\n'
@@ -11543,6 +11545,7 @@ $_gen_sql_dump_changes_tbl$
            '  SELECT %s, min(emaj_gid) AS min_gid, max(emaj_gid) AS max_gid\n'
            '    FROM %I.%I\n'
            '    WHERE %s\n'
+           '      AND emaj_tuple IN (''OLD'',''NEW'')\n'
            '    GROUP BY %s\n'
            '  ),\n'
            '     consolidated AS (\n'

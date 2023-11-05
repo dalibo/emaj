@@ -594,6 +594,197 @@ $_detailed_log_stat_groups$
   END;
 $_detailed_log_stat_groups$;
 
+CREATE OR REPLACE FUNCTION emaj._gen_sql_dump_changes_tbl(p_logSchema TEXT, p_logTable TEXT, p_emajVerbAttnum INT, p_pkCols TEXT[],
+                                                          p_firstEmajGid BIGINT, p_lastEmajGid BIGINT, p_consolidationLevel TEXT,
+                                                          p_emajColumnsList TEXT, p_colsOrder TEXT, p_orderBy TEXT)
+RETURNS TEXT LANGUAGE plpgsql AS
+$_gen_sql_dump_changes_tbl$
+-- This function builds a SQL statement that snaps a log table subset, with or without consolidation.
+-- Input: the log schema and table names to process, with its emaj_verb attribute number and its PK columns array,
+--        the emaj sequence range corresponding to the selected mark range,
+--        the requested consolidation level (NONE or PARTIAL or FULL),
+--        the list of emaj columns to add to the application columns,
+--        the criteria to use for the columns order (LOG_TABLE or PK)
+--        the criteria to use for the ORDER BY clause (TIME or PK).
+-- Output: the formatted SQL statement.
+-- When CONSOLIDATION=NONE, the SQL statements return all rows from the log tables corresponding to the marks range.
+-- When CONSOLIDATION=PARTIAL or FULL, there are at the most 1 row of type OLD and 1 row of type NEW for each primary key value,
+--   representing the net changes for this primary key value, without taking care of the columns content.
+-- When CONSOLIDATION=FULL, changes that produce the same row content are not visible.
+  DECLARE
+    v_logTableName           TEXT;
+    v_stmt                   TEXT;
+    v_allAppCols             TEXT[];
+    v_allAppColumnsList      TEXT;
+    v_allEmajCols            TEXT[];
+    v_colsWithoutEqualOp     TEXT[];
+    v_col                    TEXT;
+    v_pkColsList             TEXT;
+    v_prefixedPkColsList     TEXT;
+    v_pkConditions           TEXT;
+    v_nonPkCols              TEXT[];
+    v_prefixedNonPkColsList  TEXT;
+    v_columnsList            TEXT;
+    v_extraEmajColumnsList   TEXT;
+    v_isEmajgidInList        BOOLEAN;
+    v_orderByColumns         TEXT;
+    v_r1PkColumns            TEXT;
+    v_r1R2PkCond             TEXT;
+    v_r1R2NonPkCond          TEXT;
+    v_conditions             TEXT;
+    v_template               TEXT;
+  BEGIN
+-- Build columns arrays.
+    v_logTableName = quote_ident(p_logSchema) || '.' || quote_ident(p_logTable);
+    v_stmt = 'SELECT array_agg(attname) FILTER (WHERE attnum < %s),'
+             '       string_agg(''tbl.'' || quote_ident(attname), '','') FILTER (WHERE attnum < %s),'
+             '       array_agg(attname) FILTER (WHERE attnum >= %s),'
+             '       array_agg(attname) FILTER (WHERE no_equal_operator)'
+             '  FROM ('
+             '  SELECT attname, attnum, oprname IS NULL AS no_equal_operator'
+             '    FROM pg_catalog.pg_attribute'
+             '         JOIN pg_catalog.pg_type ON (atttypid=pg_type.oid)'
+             '         LEFT OUTER JOIN pg_catalog.pg_operator ON (pg_type.oid = oprleft AND oprright = oprleft AND oprname = ''='')'
+             '    WHERE attrelid = %L::regclass'
+             '      AND attnum > 0 AND NOT attisdropped'
+             '  ORDER BY attnum) AS t';
+    EXECUTE format(v_stmt,
+                   p_emajVerbAttnum, p_emajVerbAttnum, p_emajVerbAttnum, v_logTableName)
+      INTO v_allAppCols, v_allAppColumnsList, v_allEmajCols, v_colsWithoutEqualOp;
+    SELECT array_agg(col ORDER BY rownum), string_agg('tbl.' || quote_ident(col), ',' ORDER BY rownum)
+      INTO v_nonPkCols, v_prefixedNonPkColsList
+      FROM (SELECT col, row_number() OVER () AS rownum FROM unnest(v_allAppCols) AS col WHERE col <> ALL(p_pkCols)) AS t;
+-- Check the emaj columns from the EMAJ_COLUMNS option, for this table (emaj columns may differ from a table to another).
+    IF p_emajColumnsList <> '*' THEN
+      FOREACH v_col IN ARRAY string_to_array(p_emajColumnsList, ',')
+        LOOP
+        IF v_col <> ALL(v_allEmajCols) THEN
+          RAISE EXCEPTION '_gen_sql_dump_changes_tbl: The emaj column "%" from the EMAJ_COLUMNS option (%) is not valid for table %.%.',
+                          v_col, p_emajColumnsList, p_logSchema, p_logTable;
+        END IF;
+      END LOOP;
+    END IF;
+-- Build the PK columns lists and conditions.
+    v_pkColsList = array_to_string(p_pkCols, ',');
+    v_prefixedPkColsList = 'tbl.' || array_to_string(p_pkCols, ',tbl.');
+    SELECT string_agg('tbl.' || quote_ident(attname) || ' = keys.' || quote_ident(attname), ' AND ')
+      INTO v_pkConditions
+      FROM unnest(p_pkCols) AS attname;
+-- Build the columns list.
+    IF p_colsOrder = 'LOG_TABLE' THEN
+      IF p_emajColumnsList = '*' THEN
+        v_columnsList = 'tbl.*';
+      ELSE
+        v_columnsList = v_allAppColumnsList || ',' || p_emajColumnsList;
+      END IF;
+    ELSE           -- COLS_ORDER=PK
+      IF p_emajColumnsList = '*' THEN
+        p_emajColumnsList = array_to_string(v_allEmajCols, ',');
+      END IF;
+      v_extraEmajColumnsList = replace(replace(p_emajColumnsList, 'emaj_tuple,', ''), 'emaj_tuple', '');
+      v_isEmajgidInList = (position('emaj_gid' IN v_extraEmajColumnsList) > 0);
+      IF v_isEmajgidInList THEN
+        v_extraEmajColumnsList = replace(replace(v_extraEmajColumnsList, 'emaj_gid,', ''), 'emaj_gid', '');
+      END IF;
+      v_columnsList = v_prefixedPkColsList ||
+                      CASE WHEN v_isEmajgidInList THEN ',emaj_gid,emaj_tuple' ELSE ',emaj_tuple' END ||
+                      CASE WHEN v_prefixedNonPkColsList <> '' THEN ',' || v_prefixedNonPkColsList ELSE '' END ||
+                      CASE WHEN v_extraEmajColumnsList <> '' THEN ',' || v_extraEmajColumnsList ELSE '' END;
+    END IF;
+-- Build the conditions on emaj_gid.
+    v_conditions = 'emaj_gid > ' || p_firstEmajGid || coalesce(' AND emaj_gid <= ' || p_lastEmajGid, '');
+-- Build the ORDER BY columns list.
+    IF p_orderBy = 'TIME' THEN
+      v_orderByColumns = 'emaj_gid, emaj_tuple DESC';
+    ELSE
+      v_orderByColumns = 'tbl.' || array_to_string(p_pkCols, ',tbl.') || ', emaj_gid, emaj_tuple DESC';
+    END IF;
+-- Build the final statement.
+    CASE p_consolidationLevel
+      WHEN 'NONE' THEN
+        v_template =
+          E'SELECT %s\n'
+           '  FROM %I.%I tbl\n'
+           '  WHERE %s\n'
+           '    AND emaj_tuple IN (''OLD'',''NEW'')\n'
+           '  ORDER BY %s';
+        v_stmt = format(v_template,
+                        v_columnsList, p_logSchema, p_logTable, v_conditions, v_orderByColumns);
+      WHEN 'PARTIAL' THEN
+        v_template =
+          E'WITH keys AS (\n'
+           '  SELECT %s, min(emaj_gid) AS min_gid, max(emaj_gid) AS max_gid\n'
+           '    FROM %I.%I\n'
+           '    WHERE %s\n'
+           '      AND emaj_tuple IN (''OLD'',''NEW'')\n'
+           '    GROUP BY %s\n'
+           '  ) \n'
+           'SELECT %s\n'
+           '  FROM %I.%I tbl\n'
+           '       JOIN keys ON (%s)\n'
+           '  WHERE (tbl.emaj_tuple = ''OLD'' AND tbl.emaj_gid = keys.min_gid)\n'
+           '     OR (tbl.emaj_tuple = ''NEW'' AND tbl.emaj_gid = keys.max_gid)\n'
+           '  ORDER BY %s';
+        v_stmt = format(v_template,
+                        v_pkColsList, p_logSchema, p_logTable, v_conditions, v_pkColsList,
+                        v_columnsList, p_logSchema, p_logTable, v_pkConditions, v_orderByColumns);
+      WHEN 'FULL' THEN
+-- Some additional SQL pieces for full consolidation.
+        v_r1PkColumns = 'r1.' || array_to_string(p_pkCols, ',r1.');
+        SELECT string_agg(condition, ' AND ') INTO v_r1R2PkCond
+          FROM (
+            SELECT 'r1.' || col || '=r2.' || col
+              FROM unnest(p_pkCols) AS col
+            ) AS t(condition);
+        SELECT string_agg(condition, ' AND ') INTO v_r1R2NonPkCond
+          FROM (
+            SELECT CASE
+                     WHEN col = ANY(v_colsWithoutEqualOp) THEN     -- columns without '=' operator are casted into TEXT for the comparison
+                          '(r1.' || col || '::text=r2.' || col || '::text OR (r1.' || col || ' IS NULL AND r2.' || col || ' IS NULL))'
+                     ELSE '(r1.' || col || '=r2.' || col || ' OR (r1.' || col || ' IS NULL AND r2.' || col || ' IS NULL))'
+                   END
+              FROM unnest(v_nonPkCols) AS col
+            ) AS t(condition);
+-- And the final statement.
+        v_template =
+          E'WITH keys AS (\n'
+           '  SELECT %s, min(emaj_gid) AS min_gid, max(emaj_gid) AS max_gid\n'
+           '    FROM %I.%I\n'
+           '    WHERE %s\n'
+           '      AND emaj_tuple IN (''OLD'',''NEW'')\n'
+           '    GROUP BY %s\n'
+           '  ),\n'
+           '     consolidated AS (\n'
+           '  SELECT tbl.*\n'
+           '    FROM %I.%I tbl\n'
+           '         JOIN keys ON (%s)\n'
+           '    WHERE (tbl.emaj_tuple = ''OLD'' AND tbl.emaj_gid = keys.min_gid)\n'
+           '       OR (tbl.emaj_tuple = ''NEW'' AND tbl.emaj_gid = keys.max_gid)\n'
+           '  ),\n'
+           '     unchanged_keys AS (\n'
+           '  SELECT %s\n'
+           '    FROM consolidated r1\n'
+           '         JOIN consolidated r2 ON (%s)\n'
+           '    WHERE r1.emaj_tuple = ''OLD'' AND r2.emaj_tuple = ''NEW''\n'
+           '      AND %s\n'
+           '  )\n'
+           '  SELECT %s\n'
+           '    FROM consolidated tbl\n'
+           '    WHERE NOT EXISTS (SELECT 0 FROM unchanged_keys keys WHERE %s)\n'
+           '    ORDER BY %s';
+        v_stmt = format(v_template,
+                        v_pkColsList, p_logSchema, p_logTable, v_conditions, v_pkColsList,
+                        p_logSchema, p_logTable, v_pkConditions,
+                        v_r1PkColumns, v_r1R2PkCond, v_r1R2NonPkCond,
+                        v_columnsList, v_pkConditions, v_orderByColumns);
+    END CASE;
+    IF v_stmt IS NULL THEN
+      RAISE EXCEPTION '_gen_sql_dump_changes_tbl: Internal error - the generated statement is NULL.';
+    END IF;
+    RETURN v_stmt;
+  END;
+$_gen_sql_dump_changes_tbl$;
+
 --<end_functions>                                pattern used by the tool that extracts and insert the functions definition
 ------------------------------------------
 --                                      --

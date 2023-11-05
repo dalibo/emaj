@@ -1359,21 +1359,21 @@ SELECT * FROM emaj_temp_sql;
 -----------------+-----------------+--------------+------------+------------------+----------------+---------------+-----------+----------------+----------------------+----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+------------
                0 |               0 |              |            |                  |                |               |           |                |                      | -- Generated SQL for dumping changes in tables group "myGroup2" between marks "Mark21" and "Mark23"                                                                                                                                                                                                                                    |           
                1 |               0 | table        | myschema2  | myTbl3           | Mark21         | Mark23        | myGroup2  |             10 |                      | -- Dump changes for table myschema2.myTbl3 between marks "Mark21" and "Mark23" (10 changes)                                                                                                                                                                                                                                            |           
-               1 |               1 | table        | myschema2  | myTbl3           | Mark21         | Mark23        | myGroup2  |             10 | .changes             | SELECT tbl.* FROM emaj_myschema2."myTbl3_log" tbl WHERE emaj_gid > 4000000 AND emaj_gid <= 5011710 ORDER BY emaj_gid, emaj_tuple DESC;                                                                                                                                                                                                 |           
+               1 |               1 | table        | myschema2  | myTbl3           | Mark21         | Mark23        | myGroup2  |             10 | .changes             | SELECT tbl.* FROM emaj_myschema2."myTbl3_log" tbl WHERE emaj_gid > 4000000 AND emaj_gid <= 5011710 AND emaj_tuple IN ('OLD','NEW') ORDER BY emaj_gid, emaj_tuple DESC;                                                                                                                                                                 |           
                2 |               0 | table        | myschema2  | mytbl1           | Mark21         | Mark23        | myGroup2  |          10700 |                      | -- Dump changes for table myschema2.mytbl1 between marks "Mark21" and "Mark23" (10700 changes)                                                                                                                                                                                                                                         |           
-               2 |               1 | table        | myschema2  | mytbl1           | Mark21         | Mark23        | myGroup2  |          10700 | .changes             | SELECT tbl.* FROM emaj_myschema2.mytbl1_log tbl WHERE emaj_gid > 4000000 AND emaj_gid <= 5011710 ORDER BY emaj_gid, emaj_tuple DESC;                                                                                                                                                                                                   |           
+               2 |               1 | table        | myschema2  | mytbl1           | Mark21         | Mark23        | myGroup2  |          10700 | .changes             | SELECT tbl.* FROM emaj_myschema2.mytbl1_log tbl WHERE emaj_gid > 4000000 AND emaj_gid <= 5011710 AND emaj_tuple IN ('OLD','NEW') ORDER BY emaj_gid, emaj_tuple DESC;                                                                                                                                                                   |           
                3 |               0 | table        | myschema2  | mytbl2           | Mark21         | Mark23        | myGroup2  |            900 |                      | -- Dump changes for table myschema2.mytbl2 between marks "Mark21" and "Mark23" (900 changes)                                                                                                                                                                                                                                           |           
-               3 |               1 | table        | myschema2  | mytbl2           | Mark21         | Mark23        | myGroup2  |            900 | .changes             | SELECT tbl.* FROM emaj_myschema2.mytbl2_log tbl WHERE emaj_gid > 4000000 AND emaj_gid <= 5011710 ORDER BY emaj_gid, emaj_tuple DESC;                                                                                                                                                                                                   |           
+               3 |               1 | table        | myschema2  | mytbl2           | Mark21         | Mark23        | myGroup2  |            900 | .changes             | SELECT tbl.* FROM emaj_myschema2.mytbl2_log tbl WHERE emaj_gid > 4000000 AND emaj_gid <= 5011710 AND emaj_tuple IN ('OLD','NEW') ORDER BY emaj_gid, emaj_tuple DESC;                                                                                                                                                                   |           
                4 |               0 | table        | myschema2  | mytbl4           | Mark21         | Mark23        | myGroup2  |            100 |                      | -- Dump changes for table myschema2.mytbl4 between marks "Mark21" and "Mark23" (100 changes)                                                                                                                                                                                                                                           |           
-               4 |               1 | table        | myschema2  | mytbl4           | Mark21         | Mark23        | myGroup2  |            100 | .changes             | SELECT tbl.* FROM emaj_myschema2.mytbl4_log tbl WHERE emaj_gid > 4000000 AND emaj_gid <= 5011710 ORDER BY emaj_gid, emaj_tuple DESC;                                                                                                                                                                                                   |           
+               4 |               1 | table        | myschema2  | mytbl4           | Mark21         | Mark23        | myGroup2  |            100 | .changes             | SELECT tbl.* FROM emaj_myschema2.mytbl4_log tbl WHERE emaj_gid > 4000000 AND emaj_gid <= 5011710 AND emaj_tuple IN ('OLD','NEW') ORDER BY emaj_gid, emaj_tuple DESC;                                                                                                                                                                   |           
                5 |               0 | table        | myschema2  | mytbl5           | Mark21         | Mark23        | myGroup2  |              0 |                      | -- Dump changes for table myschema2.mytbl5 between marks "Mark21" and "Mark23" (0 changes)                                                                                                                                                                                                                                             |           
-               5 |               1 | table        | myschema2  | mytbl5           | Mark21         | Mark23        | myGroup2  |              0 | .changes             | SELECT tbl.* FROM emaj_myschema2.mytbl5_log tbl WHERE emaj_gid > 4000000 AND emaj_gid <= 5011710 ORDER BY emaj_gid, emaj_tuple DESC;                                                                                                                                                                                                   |           
+               5 |               1 | table        | myschema2  | mytbl5           | Mark21         | Mark23        | myGroup2  |              0 | .changes             | SELECT tbl.* FROM emaj_myschema2.mytbl5_log tbl WHERE emaj_gid > 4000000 AND emaj_gid <= 5011710 AND emaj_tuple IN ('OLD','NEW') ORDER BY emaj_gid, emaj_tuple DESC;                                                                                                                                                                   |           
                6 |               0 | table        | myschema2  | mytbl6           | Mark21         | Mark23        | myGroup2  |              0 |                      | -- Dump changes for table myschema2.mytbl6 between marks "Mark21" and "Mark23" (0 changes)                                                                                                                                                                                                                                             |           
-               6 |               1 | table        | myschema2  | mytbl6           | Mark21         | Mark23        | myGroup2  |              0 | .changes             | SELECT tbl.* FROM emaj_myschema2.mytbl6_log tbl WHERE emaj_gid > 4000000 AND emaj_gid <= 5011710 ORDER BY emaj_gid, emaj_tuple DESC;                                                                                                                                                                                                   |           
+               6 |               1 | table        | myschema2  | mytbl6           | Mark21         | Mark23        | myGroup2  |              0 | .changes             | SELECT tbl.* FROM emaj_myschema2.mytbl6_log tbl WHERE emaj_gid > 4000000 AND emaj_gid <= 5011710 AND emaj_tuple IN ('OLD','NEW') ORDER BY emaj_gid, emaj_tuple DESC;                                                                                                                                                                   |           
                7 |               0 | table        | myschema2  | mytbl7           | Mark21         | Mark23        | myGroup2  |              0 |                      | -- Dump changes for table myschema2.mytbl7 between marks "Mark21" and "Mark23" (0 changes)                                                                                                                                                                                                                                             |           
-               7 |               1 | table        | myschema2  | mytbl7           | Mark21         | Mark23        | myGroup2  |              0 | .changes             | SELECT tbl.* FROM emaj_myschema2.mytbl7_log tbl WHERE emaj_gid > 4000000 AND emaj_gid <= 5011710 ORDER BY emaj_gid, emaj_tuple DESC;                                                                                                                                                                                                   |           
+               7 |               1 | table        | myschema2  | mytbl7           | Mark21         | Mark23        | myGroup2  |              0 | .changes             | SELECT tbl.* FROM emaj_myschema2.mytbl7_log tbl WHERE emaj_gid > 4000000 AND emaj_gid <= 5011710 AND emaj_tuple IN ('OLD','NEW') ORDER BY emaj_gid, emaj_tuple DESC;                                                                                                                                                                   |           
                8 |               0 | table        | myschema2  | mytbl8           | Mark21         | Mark23        | myGroup2  |              0 |                      | -- Dump changes for table myschema2.mytbl8 between marks "Mark21" and "Mark23" (0 changes)                                                                                                                                                                                                                                             |           
-               8 |               1 | table        | myschema2  | mytbl8           | Mark21         | Mark23        | myGroup2  |              0 | .changes             | SELECT tbl.* FROM emaj_myschema2.mytbl8_log tbl WHERE emaj_gid > 4000000 AND emaj_gid <= 5011710 ORDER BY emaj_gid, emaj_tuple DESC;                                                                                                                                                                                                   |           
+               8 |               1 | table        | myschema2  | mytbl8           | Mark21         | Mark23        | myGroup2  |              0 | .changes             | SELECT tbl.* FROM emaj_myschema2.mytbl8_log tbl WHERE emaj_gid > 4000000 AND emaj_gid <= 5011710 AND emaj_tuple IN ('OLD','NEW') ORDER BY emaj_gid, emaj_tuple DESC;                                                                                                                                                                   |           
                9 |               0 | sequence     | myschema2  | myTbl3_col31_seq | Mark21         | Mark23        | myGroup2  |                |                      | -- Dump changes for sequence myschema2.myTbl3_col31_seq between marks "Mark21" and "Mark23"                                                                                                                                                                                                                                            |           
                9 |               1 | sequence     | myschema2  | myTbl3_col31_seq | Mark21         | Mark23        | myGroup2  |                | .changes             | SELECT 'OLD' AS emaj_tuple, * FROM emaj.emaj_sequence WHERE sequ_schema = 'myschema2' AND sequ_name = 'myTbl3_col31_seq' AND sequ_time_id = 4029 UNION ALL SELECT 'NEW' AS emaj_tuple, * FROM emaj.emaj_sequence WHERE sequ_schema = 'myschema2' AND sequ_name = 'myTbl3_col31_seq' AND sequ_time_id = 5006 ORDER BY emaj_tuple DESC ; |           
               10 |               0 | sequence     | myschema2  | myseq1           | Mark21         | Mark23        | myGroup2  |                |                      | -- Dump changes for sequence myschema2.myseq1 between marks "Mark21" and "Mark23"                                                                                                                                                                                                                                                      |           
@@ -1392,6 +1392,7 @@ SELECT sql_tblseq, sql_text FROM emaj_temp_sql WHERE sql_tblseq in ('mytbl1','my
  mytbl1     | SELECT tbl.*
  mytbl1     |   FROM emaj_myschema2.mytbl1_log tbl
  mytbl1     |   WHERE emaj_gid > 4000000 AND emaj_gid <= 5011710
+ mytbl1     |     AND emaj_tuple IN ('OLD','NEW')
  mytbl1     |   ORDER BY emaj_gid, emaj_tuple DESC;
  myseq1     | SELECT 'OLD' AS emaj_tuple, * FROM emaj.emaj_sequence
  myseq1     |   WHERE sequ_schema = 'myschema2'
@@ -1404,7 +1405,7 @@ SELECT sql_tblseq, sql_text FROM emaj_temp_sql WHERE sql_tblseq in ('mytbl1','my
  myseq1     |     AND sequ_time_id = 5006
  myseq1     |  ORDER BY emaj_tuple DESC
  myseq1     | ;
-(15 rows)
+(16 rows)
 
 SELECT emaj.emaj_gen_sql_dump_changes_group('myGroup2', 'Mark21', 'Mark23', 'CONSOLIDATION=PARTIAL,SQL_FORMAT=PRETTY', NULL);
                     emaj_gen_sql_dump_changes_group                     
@@ -1419,6 +1420,7 @@ SELECT sql_tblseq, sql_text FROM emaj_temp_sql WHERE sql_tblseq in ('mytbl1','my
  mytbl1     |   SELECT col11,col12, min(emaj_gid) AS min_gid, max(emaj_gid) AS max_gid
  mytbl1     |     FROM emaj_myschema2.mytbl1_log
  mytbl1     |     WHERE emaj_gid > 4000000 AND emaj_gid <= 5011710
+ mytbl1     |       AND emaj_tuple IN ('OLD','NEW')
  mytbl1     |     GROUP BY col11,col12
  mytbl1     |   ) 
  mytbl1     | SELECT tbl.col11,tbl.col12,emaj_tuple,tbl.col13
@@ -1438,7 +1440,7 @@ SELECT sql_tblseq, sql_text FROM emaj_temp_sql WHERE sql_tblseq in ('mytbl1','my
  myseq1     |     AND sequ_time_id = 5006
  myseq1     |  ORDER BY emaj_tuple DESC
  myseq1     | ;
-(23 rows)
+(24 rows)
 
 SELECT emaj.emaj_gen_sql_dump_changes_group('myGroup2', 'Mark21', 'Mark23', 'CONSOLIDATION=FULL,SQL_FORMAT=PRETTY', NULL);
                     emaj_gen_sql_dump_changes_group                     
@@ -1453,6 +1455,7 @@ SELECT sql_tblseq, sql_text FROM emaj_temp_sql WHERE sql_tblseq in ('mytbl1','my
  mytbl1     |   SELECT col11,col12, min(emaj_gid) AS min_gid, max(emaj_gid) AS max_gid
  mytbl1     |     FROM emaj_myschema2.mytbl1_log
  mytbl1     |     WHERE emaj_gid > 4000000 AND emaj_gid <= 5011710
+ mytbl1     |       AND emaj_tuple IN ('OLD','NEW')
  mytbl1     |     GROUP BY col11,col12
  mytbl1     |   ),
  mytbl1     |      consolidated AS (
@@ -1494,7 +1497,7 @@ SELECT sql_tblseq, sql_text FROM emaj_temp_sql WHERE sql_tblseq in ('mytbl1','my
  myseq1     | SELECT t.* FROM ( SELECT * FROM seq_begin UNION ALL SELECT * FROM seq_end ) AS t, seq_agg
  myseq1     |   ORDER BY emaj_tuple DESC
  myseq1     | ;
-(45 rows)
+(46 rows)
 
 SELECT emaj.emaj_gen_sql_dump_changes_group('myGroup2', 'Mark21', 'Mark23', 'EMAJ_COLUMNS=ALL,CONSOLIDATION=FULL,SQL_FORMAT=PRETTY', NULL);
                     emaj_gen_sql_dump_changes_group                     
@@ -1509,6 +1512,7 @@ SELECT sql_tblseq, sql_text FROM emaj_temp_sql WHERE sql_tblseq in ('mytbl1','my
  mytbl1     |   SELECT col11,col12, min(emaj_gid) AS min_gid, max(emaj_gid) AS max_gid
  mytbl1     |     FROM emaj_myschema2.mytbl1_log
  mytbl1     |     WHERE emaj_gid > 4000000 AND emaj_gid <= 5011710
+ mytbl1     |       AND emaj_tuple IN ('OLD','NEW')
  mytbl1     |     GROUP BY col11,col12
  mytbl1     |   ),
  mytbl1     |      consolidated AS (
@@ -1550,7 +1554,7 @@ SELECT sql_tblseq, sql_text FROM emaj_temp_sql WHERE sql_tblseq in ('mytbl1','my
  myseq1     | SELECT t.* FROM ( SELECT * FROM seq_begin UNION ALL SELECT * FROM seq_end ) AS t, seq_agg
  myseq1     |   ORDER BY emaj_tuple DESC
  myseq1     | ;
-(45 rows)
+(46 rows)
 
 SELECT emaj.emaj_gen_sql_dump_changes_group('myGroup2', 'Mark21', 'Mark23', 'EMAJ_COLUMNS=MIN,SQL_FORMAT=PRETTY', NULL);
                     emaj_gen_sql_dump_changes_group                     
@@ -1564,6 +1568,7 @@ SELECT sql_tblseq, sql_text FROM emaj_temp_sql WHERE sql_tblseq in ('mytbl1','my
  mytbl1     | SELECT tbl.col11,tbl.col12,tbl.col13,emaj_gid,emaj_tuple
  mytbl1     |   FROM emaj_myschema2.mytbl1_log tbl
  mytbl1     |   WHERE emaj_gid > 4000000 AND emaj_gid <= 5011710
+ mytbl1     |     AND emaj_tuple IN ('OLD','NEW')
  mytbl1     |   ORDER BY emaj_gid, emaj_tuple DESC;
  myseq1     | SELECT 'OLD' AS emaj_tuple, * FROM emaj.emaj_sequence
  myseq1     |   WHERE sequ_schema = 'myschema2'
@@ -1576,7 +1581,7 @@ SELECT sql_tblseq, sql_text FROM emaj_temp_sql WHERE sql_tblseq in ('mytbl1','my
  myseq1     |     AND sequ_time_id = 5006
  myseq1     |  ORDER BY emaj_tuple DESC
  myseq1     | ;
-(15 rows)
+(16 rows)
 
 SELECT emaj.emaj_gen_sql_dump_changes_group('myGroup2', 'Mark21', 'Mark23', 'EMAJ_COLUMNS=(emaj_tuple, emaj_gid, emaj_txid),SQL_FORMAT=PRETTY', NULL);
                     emaj_gen_sql_dump_changes_group                     
@@ -1590,6 +1595,7 @@ SELECT sql_tblseq, sql_text FROM emaj_temp_sql WHERE sql_tblseq in ('mytbl1','my
  mytbl1     | SELECT tbl.col11,tbl.col12,tbl.col13,emaj_tuple,emaj_gid,emaj_txid
  mytbl1     |   FROM emaj_myschema2.mytbl1_log tbl
  mytbl1     |   WHERE emaj_gid > 4000000 AND emaj_gid <= 5011710
+ mytbl1     |     AND emaj_tuple IN ('OLD','NEW')
  mytbl1     |   ORDER BY emaj_gid, emaj_tuple DESC;
  myseq1     | SELECT 'OLD' AS emaj_tuple, * FROM emaj.emaj_sequence
  myseq1     |   WHERE sequ_schema = 'myschema2'
@@ -1602,7 +1608,7 @@ SELECT sql_tblseq, sql_text FROM emaj_temp_sql WHERE sql_tblseq in ('mytbl1','my
  myseq1     |     AND sequ_time_id = 5006
  myseq1     |  ORDER BY emaj_tuple DESC
  myseq1     | ;
-(15 rows)
+(16 rows)
 
 SELECT emaj.emaj_gen_sql_dump_changes_group('myGroup2', 'Mark21', 'Mark23', 'ORDER_BY=PK,SQL_FORMAT=PRETTY', NULL);
                     emaj_gen_sql_dump_changes_group                     
@@ -1616,6 +1622,7 @@ SELECT sql_tblseq, sql_text FROM emaj_temp_sql WHERE sql_tblseq in ('mytbl1','my
  mytbl1     | SELECT tbl.*
  mytbl1     |   FROM emaj_myschema2.mytbl1_log tbl
  mytbl1     |   WHERE emaj_gid > 4000000 AND emaj_gid <= 5011710
+ mytbl1     |     AND emaj_tuple IN ('OLD','NEW')
  mytbl1     |   ORDER BY tbl.col11,tbl.col12, emaj_gid, emaj_tuple DESC;
  myseq1     | SELECT 'OLD' AS emaj_tuple, * FROM emaj.emaj_sequence
  myseq1     |   WHERE sequ_schema = 'myschema2'
@@ -1628,7 +1635,7 @@ SELECT sql_tblseq, sql_text FROM emaj_temp_sql WHERE sql_tblseq in ('mytbl1','my
  myseq1     |     AND sequ_time_id = 5006
  myseq1     |  ORDER BY emaj_tuple DESC
  myseq1     | ;
-(15 rows)
+(16 rows)
 
 SELECT emaj.emaj_gen_sql_dump_changes_group('myGroup2', 'Mark21', 'Mark23', 'ORDER_BY = TIME,
 																			 Consolidation = partial,
@@ -1645,6 +1652,7 @@ SELECT sql_tblseq, sql_text FROM emaj_temp_sql WHERE sql_tblseq in ('mytbl1','my
  mytbl1     |   SELECT col11,col12, min(emaj_gid) AS min_gid, max(emaj_gid) AS max_gid
  mytbl1     |     FROM emaj_myschema2.mytbl1_log
  mytbl1     |     WHERE emaj_gid > 4000000 AND emaj_gid <= 5011710
+ mytbl1     |       AND emaj_tuple IN ('OLD','NEW')
  mytbl1     |     GROUP BY col11,col12
  mytbl1     |   ) 
  mytbl1     | SELECT tbl.col11,tbl.col12,emaj_tuple,tbl.col13
@@ -1664,7 +1672,7 @@ SELECT sql_tblseq, sql_text FROM emaj_temp_sql WHERE sql_tblseq in ('mytbl1','my
  myseq1     |     AND sequ_time_id = 5006
  myseq1     |  ORDER BY emaj_tuple DESC
  myseq1     | ;
-(23 rows)
+(24 rows)
 
 SELECT emaj.emaj_gen_sql_dump_changes_group('myGroup2', 'Mark21', 'Mark23', 'COLS_ORDER=LOG_TABLE,CONSOLIDATION=FULL,SQL_FORMAT=PRETTY', NULL);
                     emaj_gen_sql_dump_changes_group                     
@@ -1679,6 +1687,7 @@ SELECT sql_tblseq, sql_text FROM emaj_temp_sql WHERE sql_tblseq = 'mytbl1' and s
  mytbl1     |   SELECT col11,col12, min(emaj_gid) AS min_gid, max(emaj_gid) AS max_gid
  mytbl1     |     FROM emaj_myschema2.mytbl1_log
  mytbl1     |     WHERE emaj_gid > 4000000 AND emaj_gid <= 5011710
+ mytbl1     |       AND emaj_tuple IN ('OLD','NEW')
  mytbl1     |     GROUP BY col11,col12
  mytbl1     |   ),
  mytbl1     |      consolidated AS (
@@ -1699,7 +1708,7 @@ SELECT sql_tblseq, sql_text FROM emaj_temp_sql WHERE sql_tblseq = 'mytbl1' and s
  mytbl1     |     FROM consolidated tbl
  mytbl1     |     WHERE NOT EXISTS (SELECT 0 FROM unchanged_keys keys WHERE tbl.col11 = keys.col11 AND tbl.col12 = keys.col12)
  mytbl1     |     ORDER BY tbl.col11,tbl.col12, emaj_gid, emaj_tuple DESC;
-(24 rows)
+(25 rows)
 
 SELECT emaj.emaj_gen_sql_dump_changes_group('myGroup2', 'Mark21', 'Mark23', 'COLS_ORDER=PK,SQL_FORMAT=PRETTY', NULL);
                     emaj_gen_sql_dump_changes_group                     
@@ -1713,8 +1722,9 @@ SELECT sql_tblseq, sql_text FROM emaj_temp_sql WHERE sql_tblseq = 'mytbl1' and s
  mytbl1     | SELECT tbl.col11,tbl.col12,emaj_gid,emaj_tuple,tbl.col13,emaj_verb,emaj_changed,emaj_txid,emaj_user
  mytbl1     |   FROM emaj_myschema2.mytbl1_log tbl
  mytbl1     |   WHERE emaj_gid > 4000000 AND emaj_gid <= 5011710
+ mytbl1     |     AND emaj_tuple IN ('OLD','NEW')
  mytbl1     |   ORDER BY emaj_gid, emaj_tuple DESC;
-(4 rows)
+(5 rows)
 
 SELECT emaj.emaj_gen_sql_dump_changes_group('myGroup2', 'Mark21', 'Mark23', 'SEQUENCES_ONLY', NULL);
                     emaj_gen_sql_dump_changes_group                    
@@ -1794,6 +1804,7 @@ SELECT emaj.emaj_gen_sql_dump_changes_group('myGroup2', 'Mark21', 'Mark23', 'SQL
 SELECT tbl.*
   FROM emaj_myschema2.mytbl1_log tbl
   WHERE emaj_gid > 4000000 AND emaj_gid <= 5011710
+    AND emaj_tuple IN ('OLD','NEW')
   ORDER BY emaj_gid, emaj_tuple DESC;
 -- Dump changes for sequence myschema2.myseq1 between marks "Mark21" and "Mark23"
 SELECT 'OLD' AS emaj_tuple, * FROM emaj.emaj_sequence
@@ -1818,7 +1829,7 @@ NOTICE:  table "emaj_temp_sql" does not exist, skipping
 \! cat $EMAJTESTTMPDIR/sql_script
 -- Generated SQL for dumping changes in tables group "myGroup2" (subset) between marks "Mark21" and "Mark23" using options: PSQL_COPY_DIR=(/tmp/emaj_13/misc)
 -- Dump changes for table myschema2.mytbl1 between marks "Mark21" and "Mark23" (10700 changes)
-\copy (SELECT tbl.* FROM emaj_myschema2.mytbl1_log tbl WHERE emaj_gid > 4000000 AND emaj_gid <= 5011710 ORDER BY emaj_gid, emaj_tuple DESC) TO '/tmp/emaj_13/misc/myschema2_mytbl1.changes'
+\copy (SELECT tbl.* FROM emaj_myschema2.mytbl1_log tbl WHERE emaj_gid > 4000000 AND emaj_gid <= 5011710 AND emaj_tuple IN ('OLD','NEW') ORDER BY emaj_gid, emaj_tuple DESC) TO '/tmp/emaj_13/misc/myschema2_mytbl1.changes'
 -- Dump changes for sequence myschema2.myseq1 between marks "Mark21" and "Mark23"
 \copy (SELECT 'OLD' AS emaj_tuple, * FROM emaj.emaj_sequence WHERE sequ_schema = 'myschema2' AND sequ_name = 'myseq1' AND sequ_time_id = 4029 UNION ALL SELECT 'NEW' AS emaj_tuple, * FROM emaj.emaj_sequence WHERE sequ_schema = 'myschema2' AND sequ_name = 'myseq1' AND sequ_time_id = 5006 ORDER BY emaj_tuple DESC ) TO '/tmp/emaj_13/misc/myschema2_myseq1.changes'
 SELECT emaj.emaj_gen_sql_dump_changes_group('myGroup2', 'Mark21', 'Mark23',
@@ -1833,7 +1844,7 @@ NOTICE:  table "emaj_temp_sql" does not exist, skipping
 \! cat $EMAJTESTTMPDIR/sql_script
 -- Generated SQL for dumping changes in tables group "myGroup2" (subset) between marks "Mark21" and "Mark23" using options: PSQL_COPY_DIR=(/tmp/emaj_13/misc), PSQL_COPY_OPTIONS=(format csv, delimiter ';', header)
 -- Dump changes for table myschema2.mytbl1 between marks "Mark21" and "Mark23" (10700 changes)
-\copy (SELECT tbl.* FROM emaj_myschema2.mytbl1_log tbl WHERE emaj_gid > 4000000 AND emaj_gid <= 5011710 ORDER BY emaj_gid, emaj_tuple DESC) TO '/tmp/emaj_13/misc/myschema2_mytbl1.changes' (format csv, delimiter ';', header)
+\copy (SELECT tbl.* FROM emaj_myschema2.mytbl1_log tbl WHERE emaj_gid > 4000000 AND emaj_gid <= 5011710 AND emaj_tuple IN ('OLD','NEW') ORDER BY emaj_gid, emaj_tuple DESC) TO '/tmp/emaj_13/misc/myschema2_mytbl1.changes' (format csv, delimiter ';', header)
 -- Dump changes for sequence myschema2.myseq1 between marks "Mark21" and "Mark23"
 \copy (SELECT 'OLD' AS emaj_tuple, * FROM emaj.emaj_sequence WHERE sequ_schema = 'myschema2' AND sequ_name = 'myseq1' AND sequ_time_id = 4029 UNION ALL SELECT 'NEW' AS emaj_tuple, * FROM emaj.emaj_sequence WHERE sequ_schema = 'myschema2' AND sequ_name = 'myseq1' AND sequ_time_id = 5006 ORDER BY emaj_tuple DESC ) TO '/tmp/emaj_13/misc/myschema2_myseq1.changes' (format csv, delimiter ';', header)
 \! rm $EMAJTESTTMPDIR/*
@@ -2066,30 +2077,30 @@ NOTICE:  table "emaj_temp_sql" does not exist, skipping
 -- Generated SQL for dumping changes in tables group "myGroup1" between marks "Dump_changes_tests_M2" and "Dump_changes_tests_M4" using options: PSQL_COPY_DIR=(/tmp/emaj_13/misc), CONSOLIDATION=FULL
 SET enable_nestloop = FALSE;
 -- Dump changes for table myschema1.myTbl3 between marks "Dump_changes_tests_M2" and "Dump_changes_tests_M4" (0 changes)
-\copy (WITH keys AS ( SELECT col31, min(emaj_gid) AS min_gid, max(emaj_gid) AS max_gid FROM emaj_myschema1."myTbl3_log" WHERE emaj_gid > 5400009 AND emaj_gid <= 5400025 GROUP BY col31 ), consolidated AS ( SELECT tbl.* FROM emaj_myschema1."myTbl3_log" tbl JOIN keys ON (tbl.col31 = keys.col31) WHERE (tbl.emaj_tuple = 'OLD' AND tbl.emaj_gid = keys.min_gid) OR (tbl.emaj_tuple = 'NEW' AND tbl.emaj_gid = keys.max_gid) ), unchanged_keys AS ( SELECT r1.col31 FROM consolidated r1 JOIN consolidated r2 ON (r1.col31=r2.col31) WHERE r1.emaj_tuple = 'OLD' AND r2.emaj_tuple = 'NEW' AND (r1.col32=r2.col32 OR (r1.col32 IS NULL AND r2.col32 IS NULL)) AND (r1.col33=r2.col33 OR (r1.col33 IS NULL AND r2.col33 IS NULL)) ) SELECT tbl.col31,emaj_tuple,tbl.col32,tbl.col33 FROM consolidated tbl WHERE NOT EXISTS (SELECT 0 FROM unchanged_keys keys WHERE tbl.col31 = keys.col31) ORDER BY tbl.col31, emaj_gid, emaj_tuple DESC) TO '/tmp/emaj_13/misc/myschema1_myTbl3.changes'
+\copy (WITH keys AS ( SELECT col31, min(emaj_gid) AS min_gid, max(emaj_gid) AS max_gid FROM emaj_myschema1."myTbl3_log" WHERE emaj_gid > 5400009 AND emaj_gid <= 5400025 AND emaj_tuple IN ('OLD','NEW') GROUP BY col31 ), consolidated AS ( SELECT tbl.* FROM emaj_myschema1."myTbl3_log" tbl JOIN keys ON (tbl.col31 = keys.col31) WHERE (tbl.emaj_tuple = 'OLD' AND tbl.emaj_gid = keys.min_gid) OR (tbl.emaj_tuple = 'NEW' AND tbl.emaj_gid = keys.max_gid) ), unchanged_keys AS ( SELECT r1.col31 FROM consolidated r1 JOIN consolidated r2 ON (r1.col31=r2.col31) WHERE r1.emaj_tuple = 'OLD' AND r2.emaj_tuple = 'NEW' AND (r1.col32=r2.col32 OR (r1.col32 IS NULL AND r2.col32 IS NULL)) AND (r1.col33=r2.col33 OR (r1.col33 IS NULL AND r2.col33 IS NULL)) ) SELECT tbl.col31,emaj_tuple,tbl.col32,tbl.col33 FROM consolidated tbl WHERE NOT EXISTS (SELECT 0 FROM unchanged_keys keys WHERE tbl.col31 = keys.col31) ORDER BY tbl.col31, emaj_gid, emaj_tuple DESC) TO '/tmp/emaj_13/misc/myschema1_myTbl3.changes'
 -- Dump changes for table myschema1.mytbl1 between marks "Dump_changes_tests_M2" and "Dump_changes_tests_M4" (0 changes)
-\copy (WITH keys AS ( SELECT col11,col12, min(emaj_gid) AS min_gid, max(emaj_gid) AS max_gid FROM emaj_myschema1.mytbl1_log WHERE emaj_gid > 5400009 AND emaj_gid <= 5400025 GROUP BY col11,col12 ), consolidated AS ( SELECT tbl.* FROM emaj_myschema1.mytbl1_log tbl JOIN keys ON (tbl.col11 = keys.col11 AND tbl.col12 = keys.col12) WHERE (tbl.emaj_tuple = 'OLD' AND tbl.emaj_gid = keys.min_gid) OR (tbl.emaj_tuple = 'NEW' AND tbl.emaj_gid = keys.max_gid) ), unchanged_keys AS ( SELECT r1.col11,r1.col12 FROM consolidated r1 JOIN consolidated r2 ON (r1.col11=r2.col11 AND r1.col12=r2.col12) WHERE r1.emaj_tuple = 'OLD' AND r2.emaj_tuple = 'NEW' AND (r1.col13=r2.col13 OR (r1.col13 IS NULL AND r2.col13 IS NULL)) ) SELECT tbl.col11,tbl.col12,emaj_tuple,tbl.col13 FROM consolidated tbl WHERE NOT EXISTS (SELECT 0 FROM unchanged_keys keys WHERE tbl.col11 = keys.col11 AND tbl.col12 = keys.col12) ORDER BY tbl.col11,tbl.col12, emaj_gid, emaj_tuple DESC) TO '/tmp/emaj_13/misc/myschema1_mytbl1.changes'
+\copy (WITH keys AS ( SELECT col11,col12, min(emaj_gid) AS min_gid, max(emaj_gid) AS max_gid FROM emaj_myschema1.mytbl1_log WHERE emaj_gid > 5400009 AND emaj_gid <= 5400025 AND emaj_tuple IN ('OLD','NEW') GROUP BY col11,col12 ), consolidated AS ( SELECT tbl.* FROM emaj_myschema1.mytbl1_log tbl JOIN keys ON (tbl.col11 = keys.col11 AND tbl.col12 = keys.col12) WHERE (tbl.emaj_tuple = 'OLD' AND tbl.emaj_gid = keys.min_gid) OR (tbl.emaj_tuple = 'NEW' AND tbl.emaj_gid = keys.max_gid) ), unchanged_keys AS ( SELECT r1.col11,r1.col12 FROM consolidated r1 JOIN consolidated r2 ON (r1.col11=r2.col11 AND r1.col12=r2.col12) WHERE r1.emaj_tuple = 'OLD' AND r2.emaj_tuple = 'NEW' AND (r1.col13=r2.col13 OR (r1.col13 IS NULL AND r2.col13 IS NULL)) ) SELECT tbl.col11,tbl.col12,emaj_tuple,tbl.col13 FROM consolidated tbl WHERE NOT EXISTS (SELECT 0 FROM unchanged_keys keys WHERE tbl.col11 = keys.col11 AND tbl.col12 = keys.col12) ORDER BY tbl.col11,tbl.col12, emaj_gid, emaj_tuple DESC) TO '/tmp/emaj_13/misc/myschema1_mytbl1.changes'
 -- Dump changes for table myschema1.mytbl2 between marks "Dump_changes_tests_M2" and "Dump_changes_tests_M4" (0 changes)
-\copy (WITH keys AS ( SELECT col21, min(emaj_gid) AS min_gid, max(emaj_gid) AS max_gid FROM emaj_myschema1.mytbl2_log WHERE emaj_gid > 5400009 AND emaj_gid <= 5400025 GROUP BY col21 ), consolidated AS ( SELECT tbl.* FROM emaj_myschema1.mytbl2_log tbl JOIN keys ON (tbl.col21 = keys.col21) WHERE (tbl.emaj_tuple = 'OLD' AND tbl.emaj_gid = keys.min_gid) OR (tbl.emaj_tuple = 'NEW' AND tbl.emaj_gid = keys.max_gid) ), unchanged_keys AS ( SELECT r1.col21 FROM consolidated r1 JOIN consolidated r2 ON (r1.col21=r2.col21) WHERE r1.emaj_tuple = 'OLD' AND r2.emaj_tuple = 'NEW' AND (r1.col22=r2.col22 OR (r1.col22 IS NULL AND r2.col22 IS NULL)) AND (r1.col23=r2.col23 OR (r1.col23 IS NULL AND r2.col23 IS NULL)) ) SELECT tbl.col21,emaj_tuple,tbl.col22,tbl.col23 FROM consolidated tbl WHERE NOT EXISTS (SELECT 0 FROM unchanged_keys keys WHERE tbl.col21 = keys.col21) ORDER BY tbl.col21, emaj_gid, emaj_tuple DESC) TO '/tmp/emaj_13/misc/myschema1_mytbl2.changes'
+\copy (WITH keys AS ( SELECT col21, min(emaj_gid) AS min_gid, max(emaj_gid) AS max_gid FROM emaj_myschema1.mytbl2_log WHERE emaj_gid > 5400009 AND emaj_gid <= 5400025 AND emaj_tuple IN ('OLD','NEW') GROUP BY col21 ), consolidated AS ( SELECT tbl.* FROM emaj_myschema1.mytbl2_log tbl JOIN keys ON (tbl.col21 = keys.col21) WHERE (tbl.emaj_tuple = 'OLD' AND tbl.emaj_gid = keys.min_gid) OR (tbl.emaj_tuple = 'NEW' AND tbl.emaj_gid = keys.max_gid) ), unchanged_keys AS ( SELECT r1.col21 FROM consolidated r1 JOIN consolidated r2 ON (r1.col21=r2.col21) WHERE r1.emaj_tuple = 'OLD' AND r2.emaj_tuple = 'NEW' AND (r1.col22=r2.col22 OR (r1.col22 IS NULL AND r2.col22 IS NULL)) AND (r1.col23=r2.col23 OR (r1.col23 IS NULL AND r2.col23 IS NULL)) ) SELECT tbl.col21,emaj_tuple,tbl.col22,tbl.col23 FROM consolidated tbl WHERE NOT EXISTS (SELECT 0 FROM unchanged_keys keys WHERE tbl.col21 = keys.col21) ORDER BY tbl.col21, emaj_gid, emaj_tuple DESC) TO '/tmp/emaj_13/misc/myschema1_mytbl2.changes'
 -- Dump changes for table myschema1.mytbl2b between marks "Dump_changes_tests_M2" and "Dump_changes_tests_M4" (0 changes)
-\copy (WITH keys AS ( SELECT col20, min(emaj_gid) AS min_gid, max(emaj_gid) AS max_gid FROM emaj_myschema1.mytbl2b_log WHERE emaj_gid > 5400009 AND emaj_gid <= 5400025 GROUP BY col20 ), consolidated AS ( SELECT tbl.* FROM emaj_myschema1.mytbl2b_log tbl JOIN keys ON (tbl.col20 = keys.col20) WHERE (tbl.emaj_tuple = 'OLD' AND tbl.emaj_gid = keys.min_gid) OR (tbl.emaj_tuple = 'NEW' AND tbl.emaj_gid = keys.max_gid) ), unchanged_keys AS ( SELECT r1.col20 FROM consolidated r1 JOIN consolidated r2 ON (r1.col20=r2.col20) WHERE r1.emaj_tuple = 'OLD' AND r2.emaj_tuple = 'NEW' AND (r1.col21=r2.col21 OR (r1.col21 IS NULL AND r2.col21 IS NULL)) AND (r1.col22=r2.col22 OR (r1.col22 IS NULL AND r2.col22 IS NULL)) AND (r1.col23=r2.col23 OR (r1.col23 IS NULL AND r2.col23 IS NULL)) ) SELECT tbl.col20,emaj_tuple,tbl.col21,tbl.col22,tbl.col23 FROM consolidated tbl WHERE NOT EXISTS (SELECT 0 FROM unchanged_keys keys WHERE tbl.col20 = keys.col20) ORDER BY tbl.col20, emaj_gid, emaj_tuple DESC) TO '/tmp/emaj_13/misc/myschema1_mytbl2b.changes'
+\copy (WITH keys AS ( SELECT col20, min(emaj_gid) AS min_gid, max(emaj_gid) AS max_gid FROM emaj_myschema1.mytbl2b_log WHERE emaj_gid > 5400009 AND emaj_gid <= 5400025 AND emaj_tuple IN ('OLD','NEW') GROUP BY col20 ), consolidated AS ( SELECT tbl.* FROM emaj_myschema1.mytbl2b_log tbl JOIN keys ON (tbl.col20 = keys.col20) WHERE (tbl.emaj_tuple = 'OLD' AND tbl.emaj_gid = keys.min_gid) OR (tbl.emaj_tuple = 'NEW' AND tbl.emaj_gid = keys.max_gid) ), unchanged_keys AS ( SELECT r1.col20 FROM consolidated r1 JOIN consolidated r2 ON (r1.col20=r2.col20) WHERE r1.emaj_tuple = 'OLD' AND r2.emaj_tuple = 'NEW' AND (r1.col21=r2.col21 OR (r1.col21 IS NULL AND r2.col21 IS NULL)) AND (r1.col22=r2.col22 OR (r1.col22 IS NULL AND r2.col22 IS NULL)) AND (r1.col23=r2.col23 OR (r1.col23 IS NULL AND r2.col23 IS NULL)) ) SELECT tbl.col20,emaj_tuple,tbl.col21,tbl.col22,tbl.col23 FROM consolidated tbl WHERE NOT EXISTS (SELECT 0 FROM unchanged_keys keys WHERE tbl.col20 = keys.col20) ORDER BY tbl.col20, emaj_gid, emaj_tuple DESC) TO '/tmp/emaj_13/misc/myschema1_mytbl2b.changes'
 -- Dump changes for table myschema1.mytbl4 between marks "Dump_changes_tests_M2" and "Dump_changes_tests_M4" (16 changes)
-\copy (WITH keys AS ( SELECT col41,col43, min(emaj_gid) AS min_gid, max(emaj_gid) AS max_gid FROM emaj_myschema1.mytbl4_log WHERE emaj_gid > 5400009 AND emaj_gid <= 5400025 GROUP BY col41,col43 ), consolidated AS ( SELECT tbl.* FROM emaj_myschema1.mytbl4_log tbl JOIN keys ON (tbl.col41 = keys.col41 AND tbl.col43 = keys.col43) WHERE (tbl.emaj_tuple = 'OLD' AND tbl.emaj_gid = keys.min_gid) OR (tbl.emaj_tuple = 'NEW' AND tbl.emaj_gid = keys.max_gid) ), unchanged_keys AS ( SELECT r1.col41,r1.col43 FROM consolidated r1 JOIN consolidated r2 ON (r1.col41=r2.col41 AND r1.col43=r2.col43) WHERE r1.emaj_tuple = 'OLD' AND r2.emaj_tuple = 'NEW' AND (r1.col42=r2.col42 OR (r1.col42 IS NULL AND r2.col42 IS NULL)) AND (r1.col44=r2.col44 OR (r1.col44 IS NULL AND r2.col44 IS NULL)) AND (r1.col45=r2.col45 OR (r1.col45 IS NULL AND r2.col45 IS NULL)) ) SELECT tbl.col41,tbl.col43,emaj_tuple,tbl.col42,tbl.col44,tbl.col45 FROM consolidated tbl WHERE NOT EXISTS (SELECT 0 FROM unchanged_keys keys WHERE tbl.col41 = keys.col41 AND tbl.col43 = keys.col43) ORDER BY tbl.col41,tbl.col43, emaj_gid, emaj_tuple DESC) TO '/tmp/emaj_13/misc/myschema1_mytbl4.changes'
+\copy (WITH keys AS ( SELECT col41,col43, min(emaj_gid) AS min_gid, max(emaj_gid) AS max_gid FROM emaj_myschema1.mytbl4_log WHERE emaj_gid > 5400009 AND emaj_gid <= 5400025 AND emaj_tuple IN ('OLD','NEW') GROUP BY col41,col43 ), consolidated AS ( SELECT tbl.* FROM emaj_myschema1.mytbl4_log tbl JOIN keys ON (tbl.col41 = keys.col41 AND tbl.col43 = keys.col43) WHERE (tbl.emaj_tuple = 'OLD' AND tbl.emaj_gid = keys.min_gid) OR (tbl.emaj_tuple = 'NEW' AND tbl.emaj_gid = keys.max_gid) ), unchanged_keys AS ( SELECT r1.col41,r1.col43 FROM consolidated r1 JOIN consolidated r2 ON (r1.col41=r2.col41 AND r1.col43=r2.col43) WHERE r1.emaj_tuple = 'OLD' AND r2.emaj_tuple = 'NEW' AND (r1.col42=r2.col42 OR (r1.col42 IS NULL AND r2.col42 IS NULL)) AND (r1.col44=r2.col44 OR (r1.col44 IS NULL AND r2.col44 IS NULL)) AND (r1.col45=r2.col45 OR (r1.col45 IS NULL AND r2.col45 IS NULL)) ) SELECT tbl.col41,tbl.col43,emaj_tuple,tbl.col42,tbl.col44,tbl.col45 FROM consolidated tbl WHERE NOT EXISTS (SELECT 0 FROM unchanged_keys keys WHERE tbl.col41 = keys.col41 AND tbl.col43 = keys.col43) ORDER BY tbl.col41,tbl.col43, emaj_gid, emaj_tuple DESC) TO '/tmp/emaj_13/misc/myschema1_mytbl4.changes'
 -- Dump changes for sequence myschema1.myTbl3_col31_seq between marks "Dump_changes_tests_M2" and "Dump_changes_tests_M4"
 \copy (WITH seq_begin AS ( SELECT 'OLD' AS emaj_tuple, * FROM emaj.emaj_sequence WHERE sequ_schema = 'myschema1' AND sequ_name = 'myTbl3_col31_seq' AND sequ_time_id = 5401 ), seq_end AS ( SELECT 'NEW' AS emaj_tuple, * FROM emaj.emaj_sequence WHERE sequ_schema = 'myschema1' AND sequ_name = 'myTbl3_col31_seq' AND sequ_time_id = 5403 ), seq_agg AS ( SELECT '<>' FROM seq_begin b, seq_end e WHERE (CASE WHEN b.sequ_is_called THEN b.sequ_last_val ELSE b.sequ_last_val - b.sequ_increment END <> CASE WHEN e.sequ_is_called THEN e.sequ_last_val ELSE e.sequ_last_val - e.sequ_increment END) OR b.sequ_start_val <> e.sequ_start_val OR b.sequ_increment <> e.sequ_increment OR b.sequ_max_val <> e.sequ_max_val OR b.sequ_min_val <> e.sequ_min_val OR b.sequ_cache_val <> e.sequ_cache_val OR b.sequ_is_cycled <> e.sequ_is_cycled ) SELECT t.* FROM ( SELECT * FROM seq_begin UNION ALL SELECT * FROM seq_end ) AS t, seq_agg ORDER BY emaj_tuple DESC ) TO '/tmp/emaj_13/misc/myschema1_myTbl3_col31_seq.changes'
 -- Dump changes for sequence myschema1.mytbl2b_col20_seq between marks "Dump_changes_tests_M2" and "Dump_changes_tests_M4"
 \copy (WITH seq_begin AS ( SELECT 'OLD' AS emaj_tuple, * FROM emaj.emaj_sequence WHERE sequ_schema = 'myschema1' AND sequ_name = 'mytbl2b_col20_seq' AND sequ_time_id = 5401 ), seq_end AS ( SELECT 'NEW' AS emaj_tuple, * FROM emaj.emaj_sequence WHERE sequ_schema = 'myschema1' AND sequ_name = 'mytbl2b_col20_seq' AND sequ_time_id = 5403 ), seq_agg AS ( SELECT '<>' FROM seq_begin b, seq_end e WHERE (CASE WHEN b.sequ_is_called THEN b.sequ_last_val ELSE b.sequ_last_val - b.sequ_increment END <> CASE WHEN e.sequ_is_called THEN e.sequ_last_val ELSE e.sequ_last_val - e.sequ_increment END) OR b.sequ_start_val <> e.sequ_start_val OR b.sequ_increment <> e.sequ_increment OR b.sequ_max_val <> e.sequ_max_val OR b.sequ_min_val <> e.sequ_min_val OR b.sequ_cache_val <> e.sequ_cache_val OR b.sequ_is_cycled <> e.sequ_is_cycled ) SELECT t.* FROM ( SELECT * FROM seq_begin UNION ALL SELECT * FROM seq_end ) AS t, seq_agg ORDER BY emaj_tuple DESC ) TO '/tmp/emaj_13/misc/myschema1_mytbl2b_col20_seq.changes'
 RESET enable_nestloop;
 \! ls -1sS $EMAJTESTTMPDIR
-total 16
-8 sql_script
-4 myschema1_mytbl4.changes
-4 myschema1_myTbl3_col31_seq.changes
-0 myschema1_myTbl3.changes
-0 myschema1_mytbl1.changes
-0 myschema1_mytbl2.changes
-0 myschema1_mytbl2b.changes
-0 myschema1_mytbl2b_col20_seq.changes
+total 20
+12 sql_script
+ 4 myschema1_mytbl4.changes
+ 4 myschema1_myTbl3_col31_seq.changes
+ 0 myschema1_myTbl3.changes
+ 0 myschema1_mytbl1.changes
+ 0 myschema1_mytbl2.changes
+ 0 myschema1_mytbl2b.changes
+ 0 myschema1_mytbl2b_col20_seq.changes
 \! cat $EMAJTESTTMPDIR/myschema1_mytbl4.changes
 1	1	OLD	Initial row	1	ABC       
 2	1	OLD	Initial row	1	ABC       

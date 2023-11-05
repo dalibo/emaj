@@ -7,6 +7,9 @@ E-Maj - Change log
 
 ###Bug fixes:###
   * Fix the emaj_detailed_log_stat_group() output for TRUNCATE recorded events.
+  * Fix the emaj_dump_changes_group() functions family. When TRUNCATEs were
+    recorded in log tables, the unconsolidated view of data changes erroneously
+    returned a line with NULL values.
 
 4.3.1 (2023-Nov-1)
 ------

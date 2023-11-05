@@ -492,8 +492,8 @@ CREATE TYPE emaj.emaj_detailed_log_stat_type AS (
   stat_first_mark_datetime     TIMESTAMPTZ,                -- clock timestamp of the mark representing the lower bound of the time range
   stat_last_mark               TEXT,                       -- mark representing the upper bound of the time range
   stat_last_mark_datetime      TIMESTAMPTZ,                -- clock timestamp of the mark representing the upper bound of the time range
-  stat_role                    VARCHAR(32),                -- user having generated update events
-  stat_verb                    VARCHAR(6),                 -- type of SQL statement (INSERT/UPDATE/DELETE)
+  stat_role                    TEXT,                       -- user having generated update events
+  stat_verb                    TEXT,                       -- type of SQL statement (INSERT/UPDATE/DELETE/TRUNCATE)
   stat_rows                    BIGINT                      -- real number of update events recorded for this table
   );
 COMMENT ON TYPE emaj.emaj_detailed_log_stat_type IS
@@ -10268,14 +10268,15 @@ $_detailed_log_stat_groups$
              || quote_literal(v_lowerBoundMarkTs) || '::TIMESTAMPTZ AS stat_first_mark_datetime, '
              || coalesce(quote_literal(v_upperBoundMark),'NULL') || '::TEXT AS stat_last_mark, '
              || coalesce(quote_literal(v_upperBoundMarkTs),'NULL') || '::TIMESTAMPTZ AS stat_last_mark_datetime, '
-             || ' emaj_user AS stat_user,'
+             || ' emaj_user::TEXT AS stat_user,'
              || ' CASE emaj_verb WHEN ''INS'' THEN ''INSERT'''
              ||                ' WHEN ''UPD'' THEN ''UPDATE'''
              ||                ' WHEN ''DEL'' THEN ''DELETE'''
-             ||                             ' ELSE ''?'' END::VARCHAR(6) AS stat_verb,'
+             ||                ' WHEN ''TRU'' THEN ''TRUNCATE'''
+             ||                             ' ELSE ''?'' END AS stat_verb,'
              || ' count(*) AS stat_rows'
              || ' FROM ' || quote_ident(r_tblsq.rel_log_schema) || '.' || quote_ident(r_tblsq.rel_log_table)
-             || ' WHERE NOT (emaj_verb = ''UPD'' AND emaj_tuple = ''OLD'')'
+             || ' WHERE NOT (emaj_verb = ''UPD'' AND emaj_tuple = ''OLD'') AND NOT (emaj_verb = ''TRU'' AND emaj_tuple = '''')'
              || ' AND emaj_gid > '|| v_lowerBoundGid
              || coalesce(' AND emaj_gid <= '|| v_upperBoundGid, '')
              || ' GROUP BY stat_group, stat_schema, stat_table, stat_user, stat_verb'
@@ -11302,6 +11303,7 @@ $_gen_sql_dump_changes_tbl$
           E'SELECT %s\n'
            '  FROM %I.%I tbl\n'
            '  WHERE %s\n'
+           '    AND emaj_tuple IN (''OLD'',''NEW'')\n'
            '  ORDER BY %s';
         v_stmt = format(v_template,
                         v_columnsList, p_logSchema, p_logTable, v_conditions, v_orderByColumns);
@@ -11311,6 +11313,7 @@ $_gen_sql_dump_changes_tbl$
            '  SELECT %s, min(emaj_gid) AS min_gid, max(emaj_gid) AS max_gid\n'
            '    FROM %I.%I\n'
            '    WHERE %s\n'
+           '      AND emaj_tuple IN (''OLD'',''NEW'')\n'
            '    GROUP BY %s\n'
            '  ) \n'
            'SELECT %s\n'
@@ -11345,6 +11348,7 @@ $_gen_sql_dump_changes_tbl$
            '  SELECT %s, min(emaj_gid) AS min_gid, max(emaj_gid) AS max_gid\n'
            '    FROM %I.%I\n'
            '    WHERE %s\n'
+           '      AND emaj_tuple IN (''OLD'',''NEW'')\n'
            '    GROUP BY %s\n'
            '  ),\n'
            '     consolidated AS (\n'
@@ -13341,8 +13345,8 @@ $do$
     RETURN;
   END;
 $do$;
-psql:sql/emaj-devel.sql:13592: NOTICE:  E-Maj installation: E-Maj successfully installed.
-psql:sql/emaj-devel.sql:13592: WARNING:  E-Maj installation: The adminpack extension is available but not yet created. Execute a "CREATE EXTENSION adminpack;" statement to enable the NO_EMPTY_FILE option use of the emaj_dump_changes_group() function.
+psql:sql/emaj-devel.sql:13596: NOTICE:  E-Maj installation: E-Maj successfully installed.
+psql:sql/emaj-devel.sql:13596: WARNING:  E-Maj installation: The adminpack extension is available but not yet created. Execute a "CREATE EXTENSION adminpack;" statement to enable the NO_EMPTY_FILE option use of the emaj_dump_changes_group() function.
 COMMIT;
 -- Test the dblink extension lack (this cannot be easily simulated in the verify.sql unit tests script when emaj is installed as an extension)
 begin;
@@ -13418,8 +13422,8 @@ delete from emaj.emaj_hist;
  stat_first_mark_datetime | timestamp with time zone |           |          | 
  stat_last_mark           | text                     |           |          | 
  stat_last_mark_datetime  | timestamp with time zone |           |          | 
- stat_role                | character varying(32)    |           |          | 
- stat_verb                | character varying(6)     |           |          | 
+ stat_role                | text                     |           |          | 
+ stat_verb                | text                     |           |          | 
  stat_rows                | bigint                   |           |          | 
 
                        Sequence "emaj.emaj_global_seq"

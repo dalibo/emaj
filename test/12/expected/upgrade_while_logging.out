@@ -146,8 +146,8 @@ SELECT param_value_text FROM emaj.emaj_param WHERE param_key = 'emaj_version';
  stat_first_mark_datetime | timestamp with time zone |           |          | 
  stat_last_mark           | text                     |           |          | 
  stat_last_mark_datetime  | timestamp with time zone |           |          | 
- stat_role                | character varying(32)    |           |          | 
- stat_verb                | character varying(6)     |           |          | 
+ stat_role                | text                     |           |          | 
+ stat_verb                | text                     |           |          | 
  stat_rows                | bigint                   |           |          | 
 
                        Sequence "emaj.emaj_global_seq"

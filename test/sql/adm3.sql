@@ -503,6 +503,12 @@ select emaj.emaj_set_mark_group('truncateTestGroup','M2');
 select stat_group, stat_schema, stat_table, stat_first_mark, stat_last_mark, stat_role, stat_verb, stat_rows
   from emaj.emaj_detailed_log_stat_group('truncateTestGroup','M1',null);
 
+SELECT emaj.emaj_dump_changes_group('truncateTestGroup', 'M1', 'M2', 'CONSOLIDATION=NONE, EMAJ_COLUMNS=MIN', '{"myschema4.mypartp3"}', :'EMAJTESTTMPDIR');
+\! cat $EMAJTESTTMPDIR/myschema4_mypartp3.changes
+SELECT emaj.emaj_dump_changes_group('truncateTestGroup', 'M1', 'M2', 'CONSOLIDATION=PARTIAL', '{"myschema4.mypartp3"}', :'EMAJTESTTMPDIR');
+\! cat $EMAJTESTTMPDIR/myschema4_mypartp3.changes
+\! rm $EMAJTESTTMPDIR/*
+
 select * from emaj.emaj_logged_rollback_group('truncateTestGroup','M1', false);
 
 select stat_group, stat_schema, stat_table, stat_first_mark, stat_last_mark, stat_role, stat_verb, stat_rows
