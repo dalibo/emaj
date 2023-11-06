@@ -5,6 +5,7 @@
 --   emaj_estimate_rollback_group() and emaj_estimate_rollback_groups(),
 --   emaj_snap_group(),
 --   emaj_get_current_log_table(),
+--   emaj_dump_changes_group() and emaj_gen_sql_dump_changes_group(),
 --   emaj_gen_sql_group() and emaj_gen_sql_groups(),
 --   table reclustering,
 --   emaj_import_parameters_configuration() and emaj_export_parameters_configuration(),
@@ -1266,7 +1267,7 @@ PL/pgSQL function emaj.emaj_gen_sql_dump_changes_group(text,text,text,text,text[
 select emaj.emaj_gen_sql_dump_changes_group('myGroup2', 'Mark21', 'Mark23', 'EMAJ_COLUMNS = (emaj_tuple , dummy)', NULL);
 NOTICE:  table "emaj_temp_sql" does not exist, skipping
 ERROR:  _gen_sql_dump_changes_tbl: The emaj column "dummy" from the EMAJ_COLUMNS option (emaj_tuple,dummy) is not valid for table emaj_myschema2.myTbl3_log.
-CONTEXT:  PL/pgSQL function emaj._gen_sql_dump_changes_tbl(text,text,integer,text[],bigint,bigint,text,text,text,text) line 62 at RAISE
+CONTEXT:  PL/pgSQL function emaj._gen_sql_dump_changes_tbl(text,text,integer,text[],bigint,bigint,text,text,text,text) line 64 at RAISE
 PL/pgSQL function emaj._gen_sql_dump_changes_group(text,text,text,text,text[],boolean) line 333 at assignment
 SQL statement "SELECT p_nbStmt
                           FROM emaj._gen_sql_dump_changes_group(p_groupName, p_firstMark, p_lastMark, p_optionsList, p_tblseqs, TRUE)"
@@ -2190,8 +2191,8 @@ select emaj.emaj_delete_mark_group('myGroup1','EMAJ_LAST_MARK');
                       1
 (1 row)
 
--- Test using quotes in schéma, table or group names
-SELECT emaj.emaj_dump_changes_group('phil''s group#3",', 'Mark4', 'Mark5', NULL, NULL, :'EMAJTESTTMPDIR');
+-- Test using quotes in schema, table or group names
+SELECT emaj.emaj_dump_changes_group('phil''s group#3",', 'Mark4', 'Mark5', 'CONSOLIDATION=NONE', NULL, :'EMAJTESTTMPDIR');
 NOTICE:  table "emaj_temp_sql" does not exist, skipping
             emaj_dump_changes_group             
 ------------------------------------------------
@@ -2207,7 +2208,7 @@ total 12
 0 phil's_schema3_phil's_tbl1.changes
 \! grep -v '  started at ' $EMAJTESTTMPDIR/_INFO
 Dump logged changes for the group "phil's group#3"," between mark "Mark4" and mark "Mark5"
- without option
+  using options "CONSOLIDATION=NONE"
 File phil's_schema3_myTbl2_.changes covers table "phil's schema3.myTbl2\\" from mark "Mark4" to mark "Mark5"
 File phil's_schema3_phil's_tbl1.changes covers table "phil's schema3.phil's tbl1" from mark "Mark4" to mark "Mark5"
 File phil's_schema3_myTbl2__col21_seq.changes covers sequence "phil's schema3.myTbl2\\_col21_seq" from mark "Mark4" to mark "Mark5"
@@ -2215,6 +2216,20 @@ File phil's_schema3_phil's_seq_1.changes covers sequence "phil's schema3.phil's 
 \! cat $EMAJTESTTMPDIR/"phil's_schema3_myTbl2__col21_seq.changes"
 OLD	phil's schema3	myTbl2\\_col21_seq	3402	1	1	1	2147483647	1	1	f	f
 NEW	phil's schema3	myTbl2\\_col21_seq	3403	1	1	1	2147483647	1	1	f	f
+SELECT emaj.emaj_dump_changes_group('phil''s group#3",', 'Mark4', 'Mark5', 'CONSOLIDATION=PARTIAL', '{"phil''s schema3.phil''s tbl1"}', :'EMAJTESTTMPDIR');
+NOTICE:  table "emaj_temp_sql" does not exist, skipping
+            emaj_dump_changes_group             
+------------------------------------------------
+ 2 files have been created in /tmp/emaj_15/misc
+(1 row)
+
+SELECT emaj.emaj_dump_changes_group('phil''s group#3",', 'Mark4', 'Mark5', 'CONSOLIDATION=FULL', '{"phil''s schema3.phil''s tbl1"}', :'EMAJTESTTMPDIR');
+NOTICE:  table "emaj_temp_sql" does not exist, skipping
+            emaj_dump_changes_group             
+------------------------------------------------
+ 2 files have been created in /tmp/emaj_15/misc
+(1 row)
+
 \! rm $EMAJTESTTMPDIR/*
 -- Checks for emaj_dump_changes_group() and emaj_gen_sql_dump_changes_group()
 select hist_id, hist_function, hist_event, hist_object, 
@@ -2278,7 +2293,11 @@ select hist_id, hist_function, hist_event, hist_object,
     5463 | DELETE_MARK_GROUP          | END          | myGroup1                     | Dump_changes_tests_M1                                                                            | postgres
     5464 | DUMP_CHANGES_GROUP         | BEGIN        | phil's group#3",             | From mark Mark4 to Mark5 towards /tmp/emaj_15/misc                                               | postgres
     5465 | DUMP_CHANGES_GROUP         | END          | phil's group#3",             | 5 generated files                                                                                | postgres
-(56 rows)
+    5466 | DUMP_CHANGES_GROUP         | BEGIN        | phil's group#3",             | From mark Mark4 to Mark5 towards /tmp/emaj_15/misc                                               | postgres
+    5467 | DUMP_CHANGES_GROUP         | END          | phil's group#3",             | 2 generated files                                                                                | postgres
+    5468 | DUMP_CHANGES_GROUP         | BEGIN        | phil's group#3",             | From mark Mark4 to Mark5 towards /tmp/emaj_15/misc                                               | postgres
+    5469 | DUMP_CHANGES_GROUP         | END          | phil's group#3",             | 2 generated files                                                                                | postgres
+(60 rows)
 
 -- set sequence restart value
 select public.handle_emaj_sequences(5500);

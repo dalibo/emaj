@@ -5,6 +5,7 @@
 --   emaj_estimate_rollback_group() and emaj_estimate_rollback_groups(),
 --   emaj_snap_group(),
 --   emaj_get_current_log_table(),
+--   emaj_dump_changes_group() and emaj_gen_sql_dump_changes_group(),
 --   emaj_gen_sql_group() and emaj_gen_sql_groups(),
 --   table reclustering,
 --   emaj_import_parameters_configuration() and emaj_export_parameters_configuration(),
@@ -661,11 +662,14 @@ select * from emaj.emaj_rollback_group('myGroup1','Dump_changes_tests_M1');
 select emaj.emaj_cleanup_rollback_state();
 select emaj.emaj_delete_mark_group('myGroup1','EMAJ_LAST_MARK');
 
--- Test using quotes in schéma, table or group names
-SELECT emaj.emaj_dump_changes_group('phil''s group#3",', 'Mark4', 'Mark5', NULL, NULL, :'EMAJTESTTMPDIR');
+-- Test using quotes in schema, table or group names
+SELECT emaj.emaj_dump_changes_group('phil''s group#3",', 'Mark4', 'Mark5', 'CONSOLIDATION=NONE', NULL, :'EMAJTESTTMPDIR');
 \! ls -1sS $EMAJTESTTMPDIR
 \! grep -v '  started at ' $EMAJTESTTMPDIR/_INFO
 \! cat $EMAJTESTTMPDIR/"phil's_schema3_myTbl2__col21_seq.changes"
+
+SELECT emaj.emaj_dump_changes_group('phil''s group#3",', 'Mark4', 'Mark5', 'CONSOLIDATION=PARTIAL', '{"phil''s schema3.phil''s tbl1"}', :'EMAJTESTTMPDIR');
+SELECT emaj.emaj_dump_changes_group('phil''s group#3",', 'Mark4', 'Mark5', 'CONSOLIDATION=FULL', '{"phil''s schema3.phil''s tbl1"}', :'EMAJTESTTMPDIR');
 \! rm $EMAJTESTTMPDIR/*
 
 -- Checks for emaj_dump_changes_group() and emaj_gen_sql_dump_changes_group()

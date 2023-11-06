@@ -618,6 +618,7 @@ $_gen_sql_dump_changes_tbl$
     v_allAppColumnsList      TEXT;
     v_allEmajCols            TEXT[];
     v_colsWithoutEqualOp     TEXT[];
+    v_pkCols                 TEXT[];
     v_col                    TEXT;
     v_pkColsList             TEXT;
     v_prefixedPkColsList     TEXT;
@@ -634,12 +635,12 @@ $_gen_sql_dump_changes_tbl$
     v_conditions             TEXT;
     v_template               TEXT;
   BEGIN
--- Build columns arrays.
+-- Build columns arrays (identifier quoted).
     v_logTableName = quote_ident(p_logSchema) || '.' || quote_ident(p_logTable);
-    v_stmt = 'SELECT array_agg(attname) FILTER (WHERE attnum < %s),'
+    v_stmt = 'SELECT array_agg(quote_ident(attname)) FILTER (WHERE attnum < %s),'
              '       string_agg(''tbl.'' || quote_ident(attname), '','') FILTER (WHERE attnum < %s),'
-             '       array_agg(attname) FILTER (WHERE attnum >= %s),'
-             '       array_agg(attname) FILTER (WHERE no_equal_operator)'
+             '       array_agg(quote_ident(attname)) FILTER (WHERE attnum >= %s),'
+             '       array_agg(quote_ident(attname)) FILTER (WHERE no_equal_operator)'
              '  FROM ('
              '  SELECT attname, attnum, oprname IS NULL AS no_equal_operator'
              '    FROM pg_catalog.pg_attribute'
@@ -651,25 +652,26 @@ $_gen_sql_dump_changes_tbl$
     EXECUTE format(v_stmt,
                    p_emajVerbAttnum, p_emajVerbAttnum, p_emajVerbAttnum, v_logTableName)
       INTO v_allAppCols, v_allAppColumnsList, v_allEmajCols, v_colsWithoutEqualOp;
-    SELECT array_agg(col ORDER BY rownum), string_agg('tbl.' || quote_ident(col), ',' ORDER BY rownum)
+    v_pkCols = array_agg(quote_ident(col)) FROM unnest (p_pkCols) AS col;
+    SELECT array_agg(col ORDER BY rownum), string_agg('tbl.' || col, ',' ORDER BY rownum)
       INTO v_nonPkCols, v_prefixedNonPkColsList
-      FROM (SELECT col, row_number() OVER () AS rownum FROM unnest(v_allAppCols) AS col WHERE col <> ALL(p_pkCols)) AS t;
+      FROM (SELECT col, row_number() OVER () AS rownum FROM unnest(v_allAppCols) AS col WHERE col <> ALL(v_pkCols)) AS t;
 -- Check the emaj columns from the EMAJ_COLUMNS option, for this table (emaj columns may differ from a table to another).
     IF p_emajColumnsList <> '*' THEN
       FOREACH v_col IN ARRAY string_to_array(p_emajColumnsList, ',')
         LOOP
-        IF v_col <> ALL(v_allEmajCols) THEN
+        IF quote_ident(v_col) <> ALL(v_allEmajCols) THEN
           RAISE EXCEPTION '_gen_sql_dump_changes_tbl: The emaj column "%" from the EMAJ_COLUMNS option (%) is not valid for table %.%.',
                           v_col, p_emajColumnsList, p_logSchema, p_logTable;
         END IF;
       END LOOP;
     END IF;
 -- Build the PK columns lists and conditions.
-    v_pkColsList = array_to_string(p_pkCols, ',');
-    v_prefixedPkColsList = 'tbl.' || array_to_string(p_pkCols, ',tbl.');
-    SELECT string_agg('tbl.' || quote_ident(attname) || ' = keys.' || quote_ident(attname), ' AND ')
+    v_pkColsList = array_to_string(v_pkCols, ',');
+    v_prefixedPkColsList = 'tbl.' || array_to_string(v_pkCols, ',tbl.');
+    SELECT string_agg('tbl.' || attname || ' = keys.' || attname, ' AND ')
       INTO v_pkConditions
-      FROM unnest(p_pkCols) AS attname;
+      FROM unnest(v_pkCols) AS attname;
 -- Build the columns list.
     IF p_colsOrder = 'LOG_TABLE' THEN
       IF p_emajColumnsList = '*' THEN
@@ -697,7 +699,7 @@ $_gen_sql_dump_changes_tbl$
     IF p_orderBy = 'TIME' THEN
       v_orderByColumns = 'emaj_gid, emaj_tuple DESC';
     ELSE
-      v_orderByColumns = 'tbl.' || array_to_string(p_pkCols, ',tbl.') || ', emaj_gid, emaj_tuple DESC';
+      v_orderByColumns = 'tbl.' || array_to_string(v_pkCols, ',tbl.') || ', emaj_gid, emaj_tuple DESC';
     END IF;
 -- Build the final statement.
     CASE p_consolidationLevel
@@ -730,11 +732,11 @@ $_gen_sql_dump_changes_tbl$
                         v_columnsList, p_logSchema, p_logTable, v_pkConditions, v_orderByColumns);
       WHEN 'FULL' THEN
 -- Some additional SQL pieces for full consolidation.
-        v_r1PkColumns = 'r1.' || array_to_string(p_pkCols, ',r1.');
+        v_r1PkColumns = 'r1.' || array_to_string(v_pkCols, ',r1.');
         SELECT string_agg(condition, ' AND ') INTO v_r1R2PkCond
           FROM (
             SELECT 'r1.' || col || '=r2.' || col
-              FROM unnest(p_pkCols) AS col
+              FROM unnest(v_pkCols) AS col
             ) AS t(condition);
         SELECT string_agg(condition, ' AND ') INTO v_r1R2NonPkCond
           FROM (

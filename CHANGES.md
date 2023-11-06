@@ -10,6 +10,9 @@ E-Maj - Change log
   * Fix the emaj_dump_changes_group() functions family. When TRUNCATEs were
     recorded in log tables, the unconsolidated view of data changes erroneously
     returned a line with NULL values.
+  * Fix the _gen_sql_dump_changes_tbl() function. Missing double quotes
+    surround PK column names let the function fail when the consolidation level
+    was PARTIAL or FULL.
 
 4.3.1 (2023-Nov-1)
 ------
