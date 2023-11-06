@@ -136,7 +136,7 @@ Lorsque la structure du groupe de tables est stable entre les deux marques cibl�
 
 L’impact des changements de structure du groupe de tables est présenté plus loin.
 
-D’éventuels caractères peu pratiques dans un nom de fichier, les espaces, "/", "\\", "$", ">", "<", et "\*" sont remplacés par des "_".
+Pour faciliter la manipulation des fichiers générés, d’éventuels caractères espaces, "/", "\\", "$", ">", "<", '|', simples ou doubles guillemets et "\*" sont remplacés par des "_". Attention, cette adaptation des noms de fichier peut conduire à des doublons, le dernier fichier généré écrasant alors les précédents.
 
 Tous ces fichiers sont stockés dans le répertoire ou dossier correspondant au dernier paramètre de la fonction. D'éventuels fichiers de même nom déjà présents dans le répertoire seront écrasés.
 

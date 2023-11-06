@@ -46,21 +46,21 @@ select sch_name from emaj.emaj_schema where sch_name not in (select distinct rel
 select pg_sleep(1.5);
 
 -- display the functions that are not called by any regression test script
---   (_rlbk_error is not executed in regression tests - rare cases difficult to simulate)
+--   (_build_path_name is executed but is inlined in calling statements, and so it is not counted in statistics)
 select nspname, proname from pg_proc, pg_namespace
   where pronamespace = pg_namespace.oid
     and nspname = 'emaj' and (proname like E'emaj\\_%' or proname like E'\\_%')
+    and proname not in ('_build_path_name')
 except
 select schemaname, funcname from pg_stat_user_functions
   where schemaname = 'emaj' and (funcname like E'emaj\\_%' or funcname like E'\\_%')
 order by 1,2;
 
 -- display the number of calls for each emaj function (
---   (_pg_version_num() is excluded as it is an sql immutable function that may thus be inlined and not always counted in statistics
---    _verify_groups() and _log_stat_tbl() are also excluded as their number of calls is not stable)
+--   (_verify_groups() and _log_stat_tbl() functions are excluded as their number of calls is not stable)
 select funcname, calls from pg_stat_user_functions
   where schemaname = 'emaj' and (funcname like E'emaj\\_%' or funcname like E'\\_%')
-    and funcname <> '_pg_version_num' and funcname <> '_verify_groups'  and funcname <> '_log_stat_tbl'
+    and funcname not in ('_verify_groups', '_log_stat_tbl')
   order by funcname, funcid;
 
 -- count the total number of user-callable function calls (those who failed are not counted)

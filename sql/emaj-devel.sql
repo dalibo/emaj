@@ -1930,6 +1930,15 @@ $_handle_trigger_fk_tbl$
   END;
 $_handle_trigger_fk_tbl$;
 
+CREATE OR REPLACE FUNCTION emaj._build_path_name(p_dir TEXT, p_file TEXT)
+RETURNS TEXT LANGUAGE SQL IMMUTABLE AS
+$_build_path_name$
+-- This function build a path name from a directory name and a file names.
+-- Some characters of the file name are translated in order to manipulate files on the OS more easily.
+-- Both names are concatenated with a / character between.
+SELECT p_dir || '/' || translate(p_file, E' /\\|$<>*\'"', '__________');
+$_build_path_name$;
+
 CREATE OR REPLACE FUNCTION emaj._copy_from_file(p_destination_table TEXT, p_location TEXT)
 RETURNS VOID LANGUAGE plpgsql
 SECURITY DEFINER SET search_path = pg_catalog, pg_temp AS
@@ -10937,7 +10946,7 @@ $emaj_dump_changes_group$
     v_copyOptions            TEXT;
     v_noEmptyFiles           BOOLEAN;
     v_nbFile                 INT = 1;
-    v_fileName               TEXT;
+    v_pathName               TEXT;
     v_copyResult             INT;
     v_stmt                   TEXT;
     r_sql                    RECORD;
@@ -10968,9 +10977,8 @@ $emaj_dump_changes_group$
           EXECUTE r_sql.sql_text;
         ELSE
 -- Otherwise, dump the log table or the sequence states.
-          v_fileName = p_dir || '/' || translate(r_sql.sql_schema || '_' || r_sql.sql_tblseq || r_sql.sql_file_name_suffix,
-                                                 E' /\\$<>*', '_______');
-          v_copyResult = emaj._copy_to_file('(' || r_sql.sql_text || ')', v_fileName, v_copyOptions, v_noEmptyFiles);
+          v_pathName = emaj._build_path_name(p_dir, r_sql.sql_schema || '_' || r_sql.sql_tblseq || r_sql.sql_file_name_suffix);
+          v_copyResult = emaj._copy_to_file('(' || r_sql.sql_text || ')', v_pathName, v_copyOptions, v_noEmptyFiles);
           v_nbFile = v_nbFile + v_copyResult;
 -- Keep a trace of the dump execution.
           UPDATE emaj_temp_sql
@@ -11354,10 +11362,8 @@ $_gen_sql_dump_changes_group$
 -- If the output is a psql script, build the output file name for the \copy command.
       IF v_isPsqlCopy THEN
 -- As several files may be generated for a single table or sequence, add a "_nn" to the file name suffix.
-        v_copyOutputFile = v_psqlCopyDir || '/' || translate(
-                               r_rel.rel_schema || '_' || r_rel.rel_tblseq ||
-                                 CASE WHEN r_rel.nb_time_range > 1 THEN '_' || r_rel.time_range_rank ELSE '' END || '.changes',
-                               E' /\\$<>*', '_______');
+        v_copyOutputFile = emaj._build_path_name(v_psqlCopyDir, r_rel.rel_schema || '_' || r_rel.rel_tblseq ||
+                             CASE WHEN r_rel.nb_time_range > 1 THEN '_' || r_rel.time_range_rank ELSE '' END || '.changes');
         v_stmt = '\copy (' || v_stmt || ') TO ' || quote_literal(v_copyOutputFile) || coalesce(' (' || v_psqlCopyOptions || ')', '');
       ELSE
         IF p_genSqlOnly THEN
@@ -11676,7 +11682,7 @@ $emaj_snap_group$
     r_tblsq                  RECORD;
     v_fullTableName          TEXT;
     v_colList                TEXT;
-    v_fileName               TEXT;
+    v_pathName               TEXT;
     v_stmt                   TEXT;
   BEGIN
 -- Insert a BEGIN event into the history.
@@ -11700,7 +11706,7 @@ $emaj_snap_group$
           AND rel_group = p_groupName
         ORDER BY rel_priority, rel_schema, rel_tblseq
     LOOP
-      v_fileName = p_dir || '/' || translate(r_tblsq.rel_schema || '_' || r_tblsq.rel_tblseq || '.snap', E' /\\$<>*', '_______');
+      v_pathName = emaj._build_path_name(p_dir, r_tblsq.rel_schema || '_' || r_tblsq.rel_tblseq || '.snap');
       v_fullTableName = quote_ident(r_tblsq.rel_schema) || '.' || quote_ident(r_tblsq.rel_tblseq);
       CASE r_tblsq.rel_kind
         WHEN 'r' THEN
@@ -11740,7 +11746,7 @@ $emaj_snap_group$
           END IF;
 --   Dump the table
           v_stmt= '(SELECT * FROM ' || v_fullTableName || ' ORDER BY ' || v_colList || ')';
-          PERFORM emaj._copy_to_file(v_stmt, v_fileName, p_copyOptions);
+          PERFORM emaj._copy_to_file(v_stmt, v_pathName, p_copyOptions);
         WHEN 'S' THEN
 -- If it is a sequence, the statement has no order by.
           v_stmt = '(SELECT sequencename, rel.last_value, start_value, increment_by, max_value, '
@@ -11749,7 +11755,7 @@ $emaj_snap_group$
                 || 'WHERE schemaname = '|| quote_literal(r_tblsq.rel_schema) || ' AND sequencename = '
                 || quote_literal(r_tblsq.rel_tblseq) ||')';
 --    Dump the sequence properties.
-          PERFORM emaj._copy_to_file(v_stmt, v_fileName, p_copyOptions);
+          PERFORM emaj._copy_to_file(v_stmt, v_pathName, p_copyOptions);
       END CASE;
       v_nbRel = v_nbRel + 1;
     END LOOP;

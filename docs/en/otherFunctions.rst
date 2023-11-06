@@ -181,7 +181,7 @@ New files will overwrite existing files of the same name.
 
 Created files are named with the following pattern: *<schema.name>_<table/sequence.name>.snap*
 
-Some unconvenient in file name characters, namely spaces, “/”, “\\”, “$”, “>”, “<”, and “\*” are replaced by “_”.
+In order to manipulate generated files more easily, any unconvenient in file name characters, namely spaces, “/”, “\”, “$”, “>”, “<”, “|”, single or double quotes and “*” are replaced by “_”. Beware, these file names adjusment may lead to duplicates, the last generated file overwriting then the previous ones.
 
 Each file corresponding to a sequence has only one row, containing all characteristics of the sequence.
 

@@ -178,7 +178,7 @@ Cette fonction *emaj_snap_group()* génère un fichier par table et par séquenc
 
 Le nom des fichiers créés est du type : *<nom.du.schema>_<nom.de.table/séquence>.snap*
 
-D’éventuels caractères peu pratiques dans un nom de fichier, les espaces, "/", "\\", "$", ">", "<", et "\*" sont remplacés par des "_".
+Pour faciliter la manipulation des fichiers générés, d’éventuels caractères espaces, "/", "\\", "$", ">", "<", "|", simples ou doubles guillemets et "\*" sont remplacés par des "_". Attention, cette adaptation des noms de fichier peut conduire à des doublons, le dernier fichier généré écrasant alors les précédents.
 
 Les fichiers correspondant aux séquences ne comportent qu'une seule ligne, qui contient les caractéristiques de la séquence.
 

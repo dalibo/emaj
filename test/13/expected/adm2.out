@@ -1359,10 +1359,10 @@ myschema2_mytbl2.snap
 myschema2_mytbl4.snap
 myschema2_mytbl5.snap
 myschema2_mytbl6.snap
-phil's_schema3_myTbl2_.snap
-phil's_schema3_myTbl2__col21_seq.snap
-phil's_schema3_phil's_seq_1.snap
-phil's_schema3_phil's_tbl1.snap
+phil_s_schema3_myTbl2_.snap
+phil_s_schema3_myTbl2__col21_seq.snap
+phil_s_schema3_phil_s_seq_1.snap
+phil_s_schema3_phil_s_tbl1.snap
 -- generate a sql script for each active group (and check the result with detailed log statistics + number of sequences)
 select emaj.emaj_gen_sql_group('myGroup1', 'Multi-1', NULL, :'EMAJTESTTMPDIR' || '/myGroup1.sql');
 NOTICE:  table "emaj_temp_script" does not exist, skipping
@@ -1641,7 +1641,7 @@ diff --exclude _INFO_s /tmp/emaj_13/adm2/snaps1/myschema1_mytbl2b_col20_seq.snap
 < mytbl2b_col20_seq,7,1,1,2147483647,1,1,f,t
 ---
 > mytbl2b_col20_seq,8,1,1,2147483647,1,1,f,f
-diff --exclude _INFO_s /tmp/emaj_13/adm2/snaps1/phil's_schema3_phil's_seq_1.snap /tmp/emaj_13/adm2/snaps2/phil's_schema3_phil's_seq_1.snap
+diff --exclude _INFO_s /tmp/emaj_13/adm2/snaps1/phil_s_schema3_phil_s_seq_1.snap /tmp/emaj_13/adm2/snaps2/phil_s_schema3_phil_s_seq_1.snap
 2c2
 < phil's seq\1,1001,1000,1,2000,1000,1,t,t
 ---

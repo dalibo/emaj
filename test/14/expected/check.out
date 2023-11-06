@@ -8,7 +8,7 @@ select count(*) from pg_proc, pg_namespace
   where pg_namespace.oid=pronamespace and nspname = 'emaj' and (proname like E'emaj\\_%' or proname like E'\\_%');
  count 
 -------
-   184
+   185
 (1 row)
 
 select count(*) from pg_proc, pg_namespace 
@@ -66,10 +66,11 @@ select pg_sleep(1.5);
 (1 row)
 
 -- display the functions that are not called by any regression test script
---   (_rlbk_error is not executed in regression tests - rare cases difficult to simulate)
+--   (_build_path_name is executed but is inlined in calling statements, and so it is not counted in statistics)
 select nspname, proname from pg_proc, pg_namespace
   where pronamespace = pg_namespace.oid
     and nspname = 'emaj' and (proname like E'emaj\\_%' or proname like E'\\_%')
+    and proname not in ('_build_path_name')
 except
 select schemaname, funcname from pg_stat_user_functions
   where schemaname = 'emaj' and (funcname like E'emaj\\_%' or funcname like E'\\_%')
@@ -79,11 +80,10 @@ order by 1,2;
 (0 rows)
 
 -- display the number of calls for each emaj function (
---   (_pg_version_num() is excluded as it is an sql immutable function that may thus be inlined and not always counted in statistics
---    _verify_groups() and _log_stat_tbl() are also excluded as their number of calls is not stable)
+--   (_verify_groups() and _log_stat_tbl() functions are excluded as their number of calls is not stable)
 select funcname, calls from pg_stat_user_functions
   where schemaname = 'emaj' and (funcname like E'emaj\\_%' or funcname like E'\\_%')
-    and funcname <> '_pg_version_num' and funcname <> '_verify_groups'  and funcname <> '_log_stat_tbl'
+    and funcname not in ('_verify_groups', '_log_stat_tbl')
   order by funcname, funcid;
                  funcname                  | calls 
 -------------------------------------------+-------
@@ -159,6 +159,7 @@ select funcname, calls from pg_stat_user_functions
  _move_sequences                           |    19
  _move_tables                              |    23
  _move_tbl                                 |    44
+ _pg_version_num                           |   220
  _purge_histories                          |    79
  _remove_seq                               |    15
  _remove_sequences                         |    19
@@ -268,7 +269,7 @@ select funcname, calls from pg_stat_user_functions
  emaj_unprotect_group                      |     7
  emaj_unprotect_mark_group                 |     6
  emaj_verify_all                           |    50
-(181 rows)
+(182 rows)
 
 -- count the total number of user-callable function calls (those who failed are not counted)
 select sum(calls) from pg_stat_user_functions where funcname like E'emaj\\_%';

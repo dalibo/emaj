@@ -1040,14 +1040,14 @@ select emaj.emaj_snap_group('myGroup1','unknown_directory',NULL);
 ERROR:  relative path not allowed for COPY to file
 CONTEXT:  SQL statement "COPY (SELECT * FROM myschema1."myTbl3" ORDER BY col31) TO 'unknown_directory/myschema1_myTbl3.snap' "
 PL/pgSQL function emaj._copy_to_file(text,text,text,boolean,boolean) line 37 at EXECUTE
-SQL statement "SELECT emaj._copy_to_file(v_stmt, v_fileName, p_copyOptions)"
+SQL statement "SELECT emaj._copy_to_file(v_stmt, v_pathName, p_copyOptions)"
 PL/pgSQL function emaj.emaj_snap_group(text,text,text) line 86 at PERFORM
 select emaj.emaj_snap_group('myGroup1','/unknown_directory',NULL);
 ERROR:  could not open file "/unknown_directory/myschema1_myTbl3.snap" for writing: No such file or directory
 HINT:  COPY TO instructs the PostgreSQL server process to write a file. You may want a client-side facility such as psql's \copy.
 CONTEXT:  SQL statement "COPY (SELECT * FROM myschema1."myTbl3" ORDER BY col31) TO '/unknown_directory/myschema1_myTbl3.snap' "
 PL/pgSQL function emaj._copy_to_file(text,text,text,boolean,boolean) line 37 at EXECUTE
-SQL statement "SELECT emaj._copy_to_file(v_stmt, v_fileName, p_copyOptions)"
+SQL statement "SELECT emaj._copy_to_file(v_stmt, v_pathName, p_copyOptions)"
 PL/pgSQL function emaj.emaj_snap_group(text,text,text) line 86 at PERFORM
 -- invalid COPY TO options
 select emaj.emaj_snap_group('myGroup1',:'EMAJTESTTMPDIR','dummy_option');
@@ -1056,7 +1056,7 @@ LINE 1: ...l31) TO '/tmp/emaj_15/misc/myschema1_myTbl3.snap' dummy_opti...
                                                              ^
 QUERY:  COPY (SELECT * FROM myschema1."myTbl3" ORDER BY col31) TO '/tmp/emaj_15/misc/myschema1_myTbl3.snap' dummy_option
 CONTEXT:  PL/pgSQL function emaj._copy_to_file(text,text,text,boolean,boolean) line 37 at EXECUTE
-SQL statement "SELECT emaj._copy_to_file(v_stmt, v_fileName, p_copyOptions)"
+SQL statement "SELECT emaj._copy_to_file(v_stmt, v_pathName, p_copyOptions)"
 PL/pgSQL function emaj.emaj_snap_group(text,text,text) line 86 at PERFORM
 -- SQL injection attempt
 select emaj.emaj_snap_group('myGroup1',:'EMAJTESTTMPDIR','; CREATE ROLE fake LOGIN PASSWORD '''' SUPERUSER');
@@ -2202,10 +2202,10 @@ NOTICE:  table "emaj_temp_sql" does not exist, skipping
 \! ls -1sS $EMAJTESTTMPDIR
 total 12
 4 _INFO
-4 phil's_schema3_myTbl2__col21_seq.changes
-4 phil's_schema3_phil's_seq_1.changes
-0 phil's_schema3_myTbl2_.changes
-0 phil's_schema3_phil's_tbl1.changes
+4 phil_s_schema3_myTbl2__col21_seq.changes
+4 phil_s_schema3_phil_s_seq_1.changes
+0 phil_s_schema3_myTbl2_.changes
+0 phil_s_schema3_phil_s_tbl1.changes
 \! grep -v '  started at ' $EMAJTESTTMPDIR/_INFO
 Dump logged changes for the group "phil's group#3"," between mark "Mark4" and mark "Mark5"
   using options "CONSOLIDATION=NONE"
@@ -2214,8 +2214,7 @@ File phil's_schema3_phil's_tbl1.changes covers table "phil's schema3.phil's tbl1
 File phil's_schema3_myTbl2__col21_seq.changes covers sequence "phil's schema3.myTbl2\\_col21_seq" from mark "Mark4" to mark "Mark5"
 File phil's_schema3_phil's_seq_1.changes covers sequence "phil's schema3.phil's seq\\1" from mark "Mark4" to mark "Mark5"
 \! cat $EMAJTESTTMPDIR/"phil's_schema3_myTbl2__col21_seq.changes"
-OLD	phil's schema3	myTbl2\\_col21_seq	3402	1	1	1	2147483647	1	1	f	f
-NEW	phil's schema3	myTbl2\\_col21_seq	3403	1	1	1	2147483647	1	1	f	f
+cat: "/tmp/emaj_15/misc/phil's_schema3_myTbl2__col21_seq.changes": No such file or directory
 SELECT emaj.emaj_dump_changes_group('phil''s group#3",', 'Mark4', 'Mark5', 'CONSOLIDATION=PARTIAL', '{"phil''s schema3.phil''s tbl1"}', :'EMAJTESTTMPDIR');
 NOTICE:  table "emaj_temp_sql" does not exist, skipping
             emaj_dump_changes_group             

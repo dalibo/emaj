@@ -136,7 +136,7 @@ When the tables group structure is stable between both targeted marks, the *emaj
 
 The impact of tables group structure changes is presented below.
 
-Some unconvenient characters in file name, namely spaces, “/”, “\”, “$”, “>”, “<”, and “*” are replaced by “_”.
+In order to manipulate generated files more easily, any unconvenient in file name characters, namely spaces, “/”, “\”, “$”, “>”, “<”, “|”, single or double quotes and “*” are replaced by “_”. Beware, these file names adjusment may lead to duplicates, the last generated file overwriting then the previous ones.
 
 All files are stored into the directory/folder set as 6th parameter. Already existing files are overwritten.
 
