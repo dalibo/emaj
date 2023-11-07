@@ -10287,7 +10287,7 @@ $_detailed_log_stat_groups$
              || ' WHERE NOT (emaj_verb = ''UPD'' AND emaj_tuple = ''OLD'') AND NOT (emaj_verb = ''TRU'' AND emaj_tuple = '''')'
              || ' AND emaj_gid > '|| v_lowerBoundGid
              || coalesce(' AND emaj_gid <= '|| v_upperBoundGid, '')
-             || ' GROUP BY stat_group, stat_schema, stat_table, stat_user, stat_verb'
+             || ' GROUP BY stat_user, stat_verb'
              || ' ORDER BY stat_user, stat_verb';
 -- Execute the statement.
         FOR r_stat IN EXECUTE v_stmt LOOP
