@@ -25,6 +25,7 @@ select 'select ok' as result from (select count(*) from emaj.emaj_group) as t;
 select 'select ok' as result from (select count(*) from emaj.emaj_schema) as t;
 select 'select ok' as result from (select count(*) from emaj.emaj_relation) as t;
 select 'select ok' as result from (select count(*) from emaj.emaj_rel_hist) as t;
+select 'select ok' as result from (select count(*) from emaj.emaj_log_session) as t;
 select 'select ok' as result from (select count(*) from emaj.emaj_mark) as t;
 select 'select ok' as result from (select count(*) from emaj.emaj_sequence) as t;
 select 'select ok' as result from (select count(*) from emaj.emaj_table) as t;

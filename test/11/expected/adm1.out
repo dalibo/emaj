@@ -66,6 +66,12 @@ select 'select ok' as result from (select count(*) from emaj.emaj_rel_hist) as t
  select ok
 (1 row)
 
+select 'select ok' as result from (select count(*) from emaj.emaj_log_session) as t;
+  result   
+-----------
+ select ok
+(1 row)
+
 select 'select ok' as result from (select count(*) from emaj.emaj_mark) as t;
   result   
 -----------
@@ -261,10 +267,10 @@ select emaj.emaj_purge_histories('0 SECOND');
 
 select hist_function, hist_event, hist_wording
   from emaj.emaj_hist order by hist_id;
-  hist_function  | hist_event |                                                       hist_wording                                                       
------------------+------------+--------------------------------------------------------------------------------------------------------------------------
+  hist_function  | hist_event |                                                                      hist_wording                                                                      
+-----------------+------------+--------------------------------------------------------------------------------------------------------------------------------------------------------
  PURGE_HISTORIES | BEGIN      | Retention delay @ 0
- PURGE_HISTORIES |            | 20 emaj_hist rows deleted ; 138 relation history rows deleted ; 94 relation changes deleted ; 39 rollback events deleted
+ PURGE_HISTORIES |            | 20 emaj_hist rows deleted ; 16 log session rows deleted ; 138 relation history rows deleted ; 94 relation changes deleted ; 39 rollback events deleted
  PURGE_HISTORIES | END        | 
 (3 rows)
 

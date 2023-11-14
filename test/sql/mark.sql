@@ -314,6 +314,7 @@ select tbl_schema, tbl_name, tbl_time_id, tbl_log_seq_last_val from emaj.emaj_ta
 -----------------------------
 -- test end: check
 -----------------------------
+select * from emaj.emaj_log_session order by lses_group, lses_time_range;
 select time_id, time_last_emaj_gid, time_event from emaj.emaj_time_stamp where time_id >= 3600 order by time_id;
 select hist_id, hist_function, hist_event, regexp_replace(hist_object,E'\\d\\d\.\\d\\d\\.\\d\\d\\.\\d\\d\\d\\d','%','g'), regexp_replace(regexp_replace(hist_wording,E'\\d\\d\.\\d\\d\\.\\d\\d\\.\\d\\d\\d\\d','%','g'),E'\\[.+\\]','(timestamp)','g'), hist_user from 
   (select * from emaj.emaj_hist where hist_id >= 3600 order by hist_id) as t;

@@ -46,8 +46,7 @@ SET default_tablespace TO tspemaj;
 -- start groups in a single transaction
 -----------------------------
 begin;
-  select emaj.emaj_start_group('myGroup1','M1');
-  select emaj.emaj_start_group('myGroup2','M1');
+  select emaj.emaj_start_groups('{"myGroup1","myGroup2"}','M1');
   select emaj.emaj_start_group('phil''s group#3",','M1');
 commit;
 

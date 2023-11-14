@@ -300,6 +300,21 @@ CREATE TABLE emaj.emaj_relation_change (
 COMMENT ON TABLE emaj.emaj_relation_change IS
 $$Contains the changes in relations registered in tables groups.$$;
 
+-- Table containing the log sessions, i.e. the history of groups starts and stops.
+CREATE TABLE emaj.emaj_log_session (
+  lses_group                   TEXT        NOT NULL,       -- group name
+  lses_time_range              INT8RANGE   NOT NULL,       -- range of time id representing the validity time range
+  lses_group_creation_time_id  BIGINT,                     -- group's creation time id
+  lses_marks                   INTEGER,                    -- number of recorded marks during the session, including rolled back marks
+  lses_log_rows                BIGINT,                     -- number of changes estimates during the session (updated at each mark set)
+  PRIMARY KEY (lses_group, lses_time_range),
+  EXCLUDE USING gist (lses_group WITH =, lses_time_range WITH &&)
+  );
+-- Functional index on emaj_log_session used to speedup the history purge function.
+CREATE INDEX emaj_log_session_idx1 ON emaj.emaj_log_session ((upper(lses_time_range)));
+COMMENT ON TABLE emaj.emaj_log_session IS
+$$Contains the log sessions history of E-Maj groups.$$;
+
 -- Table containing the marks.
 CREATE TABLE emaj.emaj_mark (
   mark_group                   TEXT        NOT NULL,       -- group for which the mark has been set
@@ -5799,6 +5814,11 @@ $_drop_group$
     DELETE FROM emaj.emaj_group
       WHERE group_name = p_groupName
       RETURNING group_nb_table + group_nb_sequence INTO v_nbRel;
+-- Update the last log session for the group to set the time range upper bound, if it is infinity
+    UPDATE emaj.emaj_log_session
+      SET lses_time_range = int8range(lower(lses_time_range), v_timeId, '[)')
+      WHERE lses_group = p_groupName
+        AND upper_inf(lses_time_range);
 -- Enable previously disabled event triggers.
     PERFORM emaj._enable_event_triggers(v_eventTriggers);
 --
@@ -6844,7 +6864,7 @@ $_start_groups$
 --   risk of deadlock.
       PERFORM emaj._lock_groups(p_groupNames,'SHARE ROW EXCLUSIVE',p_multiGroup);
 -- Enable all log triggers for the groups.
--- For each relation currently belonging to the group,
+-- For each relation currently belonging to the groups,
       FOR r_tblsq IN
         SELECT rel_kind, quote_ident(rel_schema) || '.' || quote_ident(rel_tblseq) AS full_relation_name
           FROM emaj.emaj_relation
@@ -6863,6 +6883,12 @@ $_start_groups$
       UPDATE emaj.emaj_group
         SET group_is_logging = TRUE
         WHERE group_name = ANY (p_groupNames);
+-- Insert log sessions start in emaj_log_session.
+--   lses_marks is already set to 1 as it will not be incremented at the first mark set.
+      INSERT INTO emaj.emaj_log_session
+        SELECT group_name, int8range(v_timeId, NULL, '[)'), group_creation_time_id, 1, 0
+          FROM emaj.emaj_group
+          WHERE group_name = ANY (p_groupNames);
 -- Set the first mark for each group.
       PERFORM emaj._set_mark_groups(p_groupNames, v_markName, p_multiGroup, TRUE, NULL, v_timeId);
     END IF;
@@ -7079,6 +7105,11 @@ $_stop_groups$
       UPDATE emaj.emaj_group
         SET group_is_logging = FALSE, group_is_rlbk_protected = NOT group_is_rollbackable
         WHERE group_name = ANY (p_groupNames);
+-- Update the log sessions to set the time range upper bound
+      UPDATE emaj.emaj_log_session
+        SET lses_time_range = int8range(lower(lses_time_range), v_timeId, '[)')
+        WHERE lses_group = ANY (p_groupNames)
+          AND upper_inf(lses_time_range);
     END IF;
 -- Insert a END event into the history.
     INSERT INTO emaj.emaj_hist (hist_function, hist_event, hist_object, hist_wording)
@@ -7279,8 +7310,9 @@ $_set_mark_groups$
         FROM seq,
              LATERAL emaj._get_current_sequence_state(rel_schema, rel_tblseq, p_timeId) AS t;
     GET DIAGNOSTICS v_nbSeq = ROW_COUNT;
--- Record the number of log rows for the old last mark of each selected group.
+-- Record the number of log rows for the previous last mark of each selected group.
 -- The statement updates no row in case of emaj_start_group(s)
+-- With the same statistics, update the counters of the last log session for each groups
     WITH stat_group1 AS                        -- for each group, get the time id of the last active mark
       (SELECT mark_group, max(mark_time_id) AS last_mark_time_id
          FROM emaj.emaj_mark
@@ -7297,12 +7329,20 @@ $_set_mark_groups$
                      AND upper_inf(rel_time_range)
                 ), 0) AS mark_stat
         FROM stat_group1
+      ),
+         update_mark AS                        -- update emaj_mark
+      (UPDATE emaj.emaj_mark m
+         SET mark_log_rows_before_next = mark_stat
+         FROM stat_group2 s
+         WHERE s.mark_group = m.mark_group
+           AND s.last_mark_time_id = m.mark_time_id
       )
-    UPDATE emaj.emaj_mark m
-      SET mark_log_rows_before_next = mark_stat
+    UPDATE emaj.emaj_log_session l             -- update emaj_log_session
+      SET lses_marks = lses_marks + 1,
+          lses_log_rows = lses_log_rows + mark_stat
       FROM stat_group2 s
-      WHERE s.mark_group = m.mark_group
-        AND s.last_mark_time_id = m.mark_time_id;
+      WHERE s.mark_group = l.lses_group
+        AND upper_inf(lses_time_range);
 -- For tables currently belonging to the groups, record their state and their log sequence last_value.
     INSERT INTO emaj.emaj_table (tbl_schema, tbl_name, tbl_time_id, tbl_tuples, tbl_pages, tbl_log_seq_last_val)
       SELECT rel_schema, rel_tblseq, p_timeId, reltuples, relpages, last_value
@@ -12033,6 +12073,7 @@ $_purge_histories$
     v_maxTimeId              BIGINT;
     v_maxRlbkId              BIGINT;
     v_nbPurgedHist           BIGINT;
+    v_nbPurgedLogSession     BIGINT;
     v_nbPurgedRelHist        BIGINT;
     v_nbPurgedRlbk           BIGINT;
     v_nbPurgedRelChanges     BIGINT;
@@ -12074,6 +12115,13 @@ $_purge_histories$
     GET DIAGNOSTICS v_nbPurgedHist = ROW_COUNT;
     IF v_nbPurgedHist > 0 THEN
       v_wording = v_nbPurgedHist || ' emaj_hist rows deleted';
+    END IF;
+-- Delete oldest rows from emaj_log_session.
+    DELETE FROM emaj.emaj_log_session
+      WHERE upper(lses_time_range) < v_maxTimeId;
+    GET DIAGNOSTICS v_nbPurgedLogSession = ROW_COUNT;
+    IF v_nbPurgedLogSession > 0 THEN
+      v_wording = v_wording || ' ; ' || v_nbPurgedLogSession || ' log session rows deleted';
     END IF;
 -- Delete oldest rows from emaj_rel_hist.
     DELETE FROM emaj.emaj_rel_hist
@@ -13551,6 +13599,7 @@ GRANT EXECUTE ON FUNCTION emaj.emaj_verify_all() TO emaj_viewer;
 --SELECT pg_catalog.pg_extension_config_dump('emaj_schema','WHERE sch_name <> ''emaj''');
 --SELECT pg_catalog.pg_extension_config_dump('emaj_relation','');
 --SELECT pg_catalog.pg_extension_config_dump('emaj_rel_hist','');
+--SELECT pg_catalog.pg_extension_config_dump('emaj_log_session','');
 --SELECT pg_catalog.pg_extension_config_dump('emaj_mark','');
 --SELECT pg_catalog.pg_extension_config_dump('emaj_sequence','');
 --SELECT pg_catalog.pg_extension_config_dump('emaj_table','');

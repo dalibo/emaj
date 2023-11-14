@@ -69,30 +69,20 @@ SELECT emaj._disable_event_triggers();
 --                                          --
 ----------------------------------------------
 
---
--- emaj_time_stamp: update the time_event columns for marks generated at start group or stop group events.
---
-WITH begin_and_end_event AS (
-  SELECT hist_id, hist_function, hist_event, hist_datetime, hist_txid
-    FROM emaj.emaj_hist
-    where hist_function IN ('START_GROUP', 'STOP_GROUP')
-      AND hist_event IN ('BEGIN', 'END')
-  ),
-     start_stop_operation AS (
-  SELECT s1.hist_id, s1.hist_function, s1.hist_txid, s1.hist_datetime AS begin_ts, min(s2.hist_datetime) AS end_ts
-    FROM begin_and_end_event s1, begin_and_end_event s2
-    WHERE s1.hist_event = 'BEGIN' AND s2.hist_event = 'END'
-      AND s1.hist_txid = s2.hist_txid
-      AND s2.hist_id > s1.hist_id
-    GROUP BY 1,2,3,4
-    ORDER BY s1.hist_id
-  )
-  UPDATE emaj.emaj_time_stamp
-    SET time_event = CASE WHEN hist_function = 'START_GROUP' THEN 'S' ELSE 'X' END
-    FROM start_stop_operation
-    WHERE time_tx_id = hist_txid
-      AND time_clock_timestamp BETWEEN begin_ts AND end_ts
-      AND time_event = 'M';
+-- Table containing the log sessions, i.e. the history of groups starts and stops.
+CREATE TABLE emaj.emaj_log_session (
+  lses_group                   TEXT        NOT NULL,       -- group name
+  lses_time_range              INT8RANGE   NOT NULL,       -- range of time id representing the validity time range
+  lses_group_creation_time_id  BIGINT,                     -- group's creation time id
+  lses_marks                   INTEGER,                    -- number of recorded marks during the session, including rolled back marks
+  lses_log_rows                BIGINT,                     -- number of changes estimates during the session (updated at each mark set)
+  PRIMARY KEY (lses_group, lses_time_range),
+  EXCLUDE USING gist (lses_group WITH =, lses_time_range WITH &&)
+  );
+-- Functional index on emaj_log_session used to speedup the history purge function.
+CREATE INDEX emaj_log_session_idx1 ON emaj.emaj_log_session ((upper(lses_time_range)));
+COMMENT ON TABLE emaj.emaj_log_session IS
+$$Contains the log sessions history of E-Maj groups.$$;
 
 --
 -- Rename the emaj_time_stamp.time_tx_id column
@@ -100,8 +90,317 @@ WITH begin_and_end_event AS (
 ALTER TABLE emaj.emaj_time_stamp RENAME time_tx_id TO time_txid;
 
 --
+-- Create 3 materialized views and a temporary table to build timed events from the emaj_hist and emaj_time_stamp tables.
+-- This will be used to populate the emaj_log_session table, and adjust the emaj_time_stamp table.
+--
+
+CREATE MATERIALIZED VIEW emaj.emaj_tmp_hist AS (
+  SELECT *
+    FROM emaj.emaj_hist
+    WHERE hist_function IN
+            ('CREATE_GROUP', 'DROP_GROUP', 'IMPORT_GROUPS',
+             'ASSIGN_TABLE', 'REMOVE_TABLE', 'MOVE_TABLE', 'MODIFY_TABLE',
+             'ASSIGN_TABLES', 'REMOVE_TABLES', 'MOVE_TABLES', 'MODIFY_TABLES',
+             'ASSIGN_SEQUENCE', 'REMOVE_SEQUENCE', 'MOVE_SEQUENCE',
+             'ASSIGN_SEQUENCES', 'REMOVE_SEQUENCES', 'MOVE_SEQUENCES',
+             'START_GROUP', 'STOP_GROUP', 'START_GROUPS', 'STOP_GROUPS',
+             'SET_MARK_GROUP', 'SET_MARK_GROUPS', 'ROLLBACK_GROUP', 'ROLLBACK_GROUPS')
+      AND hist_event IN ('BEGIN', 'END')
+);
+CREATE INDEX ON emaj.emaj_tmp_hist(hist_txid);
+
+CREATE MATERIALIZED VIEW emaj.emaj_tmp_time_stamp AS (
+  SELECT time_id, time_clock_timestamp, time_stmt_timestamp, time_txid, time_event
+    FROM emaj.emaj_time_stamp
+    WHERE time_clock_timestamp >= (SELECT min(hist_datetime) FROM emaj.emaj_tmp_hist)
+      AND time_id > 0
+);
+CREATE INDEX ON emaj.emaj_tmp_time_stamp(time_txid);
+
+CREATE MATERIALIZED VIEW emaj.emaj_tmp_event AS (
+  SELECT b.hist_id as begin_hist_id, b.hist_function, b.hist_txid, b.hist_datetime AS begin_ts, min(e.hist_id) as end_hist_id
+    FROM emaj.emaj_tmp_hist b, emaj.emaj_tmp_hist e
+    WHERE b.hist_function = e.hist_function
+      AND b.hist_event = 'BEGIN' AND e.hist_event = 'END'
+      AND b.hist_txid = e.hist_txid
+      AND e.hist_id > b.hist_id
+    GROUP BY 1,2,3,4
+    ORDER BY b.hist_id
+  );
+
+CREATE TEMPORARY TABLE emaj_tmp_timed_event (
+  event_hist_id_begin        BIGINT,
+  event_hist_id_end          BIGINT,
+  event_time_id              INTEGER,
+  event_function             TEXT,
+  event_object               TEXT
+);
+
+-- Scan the functions begin and end from the emaj_hist table and look at the emaj_time_stamp table to get their related time_id.
+DO
+$do$
+  DECLARE
+    v_rlbkId                 INTEGER;
+    v_timeId                 BIGINT;
+    v_timeEvent              CHAR(1);
+    v_timeClockTs            TIMESTAMPTZ;
+    v_lastRlbkTimeId         BIGINT;
+    v_lastRlbkBeginTs        TIMESTAMPTZ;
+    v_lastRlbkEndTs          TIMESTAMPTZ;
+    v_lastRlbkObject         TEXT;
+    r_fctExec                RECORD;
+  BEGIN
+-- Scan the functions execution built from emaj_hist.
+    FOR r_fctExec IN
+      SELECT begin_hist_id, end_hist_id, b.hist_function, b.hist_txid, begin_ts,
+             e.hist_datetime AS end_ts, e.hist_object, e.hist_wording
+        FROM emaj.emaj_tmp_event b
+             JOIN emaj.emaj_tmp_hist e ON (e.hist_id = end_hist_id)
+    LOOP
+      IF r_fctExec.hist_function IN ('ROLLBACK_GROUP','ROLLBACK_GROUPS') THEN
+-- Process the E-Maj rollback function executions in a special way, because when a logged rollback uses dblink connections, the txids
+--   in emaj_hist and emaj_time_stamp differ. But the rollback time_id is already known in the emaj_rlbk table. So get it from there.
+-- Get the rollback id from the end rollback event.
+        v_rlbkId = substr(r_fctExec.hist_wording,13)::INTEGER;
+-- Read the emaj_rlbk table to get the rollback time_id.
+        SELECT rlbk_time_id
+          INTO v_timeId
+          FROM emaj.emaj_rlbk
+          WHERE rlbk_id = v_rlbkId;
+-- Record the event.
+        INSERT INTO emaj_tmp_timed_event
+          VALUES (r_fctExec.begin_hist_id, r_fctExec.end_hist_id, v_timeId, r_fctExec.hist_function, r_fctExec.hist_object);
+-- Keep in memory the characteristics of this rollback to use it if needed later for mark set event executed inside this rollback.
+        v_lastRlbkTimeId = v_timeId;
+        v_lastRlbkBeginTs = r_fctExec.begin_ts;
+        v_lastRlbkEndTs = r_fctExec.end_ts;
+        v_lastRlbkObject = r_fctExec.hist_object;
+      ELSE
+-- Process other function executions.
+-- Look at the emaj_time_stamp events to find the time stamp in the execution time frame for the same transaction.
+        SELECT time_id, time_event, time_clock_timestamp
+          INTO v_timeId, v_timeEvent, v_timeClockTs
+          FROM emaj.emaj_tmp_time_stamp
+          WHERE r_fctExec.hist_txid = time_txid
+            AND time_clock_timestamp BETWEEN r_fctExec.begin_ts AND r_fctExec.end_ts;
+        IF FOUND THEN
+-- OK, we got it, so record the event.
+          INSERT INTO emaj_tmp_timed_event
+            VALUES (r_fctExec.begin_hist_id, r_fctExec.end_hist_id, v_timeId, r_fctExec.hist_function, r_fctExec.hist_object);
+        ELSE
+-- We have not found matching time stamp.
+          IF r_fctExec.hist_function IN ('SET_MARK_GROUP','SET_MARK_GROUPS') THEN
+-- If it deals with a mark set, look at the previous time stamp for the same transaction.
+--   This cover cases with groups structure change while in logging state. (the main function shares the time stamp with the mark set)
+            SELECT time_id, time_event, time_clock_timestamp
+              INTO v_timeId, v_timeEvent, v_timeClockTs
+              FROM emaj.emaj_tmp_time_stamp
+              WHERE time_txid = r_fctExec.hist_txid
+                AND time_clock_timestamp < r_fctExec.begin_ts
+              ORDER BY time_id DESC
+              LIMIT 1;
+            IF FOUND THEN
+-- OK, we got it, so record the event.
+              INSERT INTO emaj_tmp_timed_event
+                VALUES (r_fctExec.begin_hist_id, r_fctExec.end_hist_id, v_timeId, r_fctExec.hist_function, r_fctExec.hist_object);
+            ELSE
+              IF r_fctExec.begin_ts BETWEEN v_lastRlbkBeginTs AND v_lastRlbkEndTs AND v_lastRlbkObject = v_lastRlbkObject THEN
+-- We have not found it but the mark set is inside the time interval of the last executed rollback operation.
+                v_timeId = v_lastRlbkTimeId;
+-- Record the event.
+                INSERT INTO emaj_tmp_timed_event
+                  VALUES (r_fctExec.begin_hist_id, r_fctExec.end_hist_id, v_timeId, r_fctExec.hist_function, r_fctExec.hist_object);
+              ELSE
+                IF r_fctExec.hist_object IS NOT NULL THEN
+-- The time id of the mark set is definitely not found.
+                  RAISE WARNING 'Search for time stamp id: for hist_id %, time_id not found (function = % starting at %)',
+                                 r_fctExec.begin_hist_id, r_fctExec.hist_function, r_fctExec.begin_ts;
+                END IF;
+              END IF;
+            END IF;
+          ELSE
+-- The time id of the other function is not found.
+            RAISE WARNING 'Search for time stamp id: for hist_id %, time_id not found (function = % starting at %)',
+                           r_fctExec.begin_hist_id, r_fctExec.hist_function, r_fctExec.begin_ts;
+          END IF;
+        END IF;
+      END IF;
+    END LOOP;
+  END;
+$do$;
+
+--
+-- Once this events history is built, update the stable emaj tables
+--
+
+-- emaj_time_stamp: update the time_event columns for marks generated at start group or stop group events.
+--   Set the time_event to 'S' or 'X' instead of 'M' for the start group or stop group operations respectively.
+UPDATE emaj.emaj_time_stamp
+  SET time_event = CASE WHEN event_function IN ('START_GROUP', 'START_GROUPS') THEN 'S' ELSE 'X' END
+  FROM emaj_tmp_timed_event
+  WHERE event_function IN ('START_GROUP', 'START_GROUPS', 'STOP_GROUP', 'STOP_GROUPS')
+    AND time_id = event_time_id
+    AND time_event = 'M';
+
+-- emaj_log_session: create the log session rows.
+DO
+$do$
+  DECLARE
+    v_createTimeId           BIGINT;
+    v_startTimeId            BIGINT;
+    v_1stMarkAfterStopTimeId BIGINT;
+    v_nbMark                 INTEGER;
+    v_nbChange               BIGINT;
+    v_beginLastValue         BIGINT;
+    v_endLastValue           BIGINT;
+    r_group                  RECORD;
+    r_event                  RECORD;
+    r_rel                    RECORD;
+  BEGIN
+    RAISE NOTICE 'Starting the rows generation for the new emaj_log_session table.';
+    RAISE NOTICE 'Based on existing history and logs content, #marks and #changes statistics may be inaccurate.';
+-- Process each existing group in sequence (log sessions for dropped group are not rebuilt).
+    FOR r_group IN
+      SELECT group_name, group_creation_time_id, group_is_logging
+        FROM emaj.emaj_group
+        ORDER BY group_name
+    LOOP
+      RAISE NOTICE '==> Processing group "%" (%)',
+                   r_group.group_name, CASE WHEN r_group.group_is_logging THEN 'LOGGING' ELSE 'STOPPED' END;
+-- Initialize variables.
+      v_nbMark = 0;
+      v_createTimeId = NULL;
+      v_startTimeId = NULL;
+      v_1stMarkAfterStopTimeId = NULL;
+-- Look at each create/start/stop/set_mark event for the group.
+      FOR r_event IN
+        SELECT *, substring(event_function, '#"%#"_GROUP%', '#') AS abbrev_function
+          FROM emaj_tmp_timed_event
+          WHERE event_function IN ('CREATE_GROUP', 'START_GROUP', 'START_GROUPS',
+                                   'STOP_GROUP', 'STOP_GROUPS', 'SET_MARK_GROUP','SET_MARK_GROUPS')
+            AND event_object ~ ('(^|,)' || r_group.group_name || '(,|$)')
+          ORDER BY event_hist_id_end
+      LOOP
+        CASE r_event.abbrev_function
+          WHEN 'CREATE' THEN
+-- A group creation => keep the creation time id.
+            v_createTimeId = r_event.event_time_id;
+          WHEN 'START' THEN
+-- A group start => keep the start time id.
+            v_nbMark = 1;
+            v_startTimeId = r_event.event_time_id;
+          WHEN 'STOP' THEN
+-- A group stop => generate a log session if there is at least 1 mark and reset variables.
+            IF v_nbMark > 0 THEN
+              v_startTimeId = coalesce(v_startTimeId, v_1stMarkAfterStopTimeId);
+              IF v_startTimeId > r_group.group_creation_time_id THEN
+                v_createTimeId = r_group.group_creation_time_id;
+              END IF;
+-- Get the changes statistics on the time frame.
+              v_nbChange = NULL;
+              FOR r_rel IN
+                SELECT rel_schema, rel_tblseq, rel_time_range
+                  FROM emaj.emaj_relation
+                  WHERE rel_group = r_group.group_name
+                    AND rel_kind = 'r'
+                    AND rel_time_range && int8range(v_startTimeId, r_event.event_time_id, '[)')
+              LOOP
+                SELECT tbl_log_seq_last_val INTO v_beginLastValue
+                  FROM emaj.emaj_table
+                  WHERE tbl_schema = r_rel.rel_schema
+                    AND tbl_name = r_rel.rel_tblseq
+                    AND tbl_time_id = greatest(v_startTimeId, lower(r_rel.rel_time_range));
+                IF FOUND THEN
+                  SELECT tbl_log_seq_last_val INTO v_endLastValue
+                    FROM emaj.emaj_table
+                    WHERE tbl_schema = r_rel.rel_schema
+                      AND tbl_name = r_rel.rel_tblseq
+                      AND tbl_time_id = least(r_event.event_time_id, upper(r_rel.rel_time_range));
+                  IF FOUND THEN
+                    v_nbChange = coalesce(v_nbChange, 0) + v_endLastValue - v_beginLastValue;
+                  END IF;
+                END IF;
+              END LOOP;
+-- Create the log session.
+              RAISE NOTICE '  --> Create a log session for time interval [% , %) (% marks, % changes)',
+                v_startTimeId, r_event.event_time_id, v_nbMark, v_nbChange;
+              INSERT INTO emaj.emaj_log_session VALUES
+                (r_group.group_name, int8range(v_startTimeId, r_event.event_time_id, '[)'), v_createTimeId, v_nbMark, v_nbChange);
+            END IF;
+            v_startTimeId = NULL;
+            v_1stMarkAfterStopTimeId = NULL;
+          WHEN 'SET_MARK' THEN
+-- A mark set for the group => increment the marks counter.
+            IF v_1stMarkAfterStopTimeId IS NULL THEN
+              v_1stMarkAfterStopTimeId = r_event.event_time_id;
+            END IF;
+            v_nbMark = v_nbMark + 1;
+        END CASE;
+      END LOOP;
+      IF r_group.group_is_logging THEN
+        IF v_startTimeId IS NOT NULL OR v_1stMarkAfterStopTimeId IS NOT NULL THEN
+-- If the group is in logging state and a start group or a mark set is known, create the current log session.
+          v_startTimeId = coalesce(v_startTimeId, v_1stMarkAfterStopTimeId);
+          IF v_startTimeId > r_group.group_creation_time_id THEN
+            v_createTimeId = r_group.group_creation_time_id;
+          END IF;
+          v_nbChange = NULL;
+          FOR r_rel IN
+            SELECT rel_schema, rel_tblseq, rel_time_range, rel_log_schema, rel_log_sequence
+              FROM emaj.emaj_relation
+              WHERE rel_group = r_group.group_name
+                AND rel_kind = 'r'
+                AND rel_time_range @> v_startTimeId
+          LOOP
+            SELECT tbl_log_seq_last_val INTO v_beginLastValue
+              FROM emaj.emaj_table
+              WHERE tbl_schema = r_rel.rel_schema
+                AND tbl_name = r_rel.rel_tblseq
+                AND tbl_time_id = greatest(v_startTimeId, lower(r_rel.rel_time_range));
+            IF FOUND THEN
+              IF upper_inf(r_rel.rel_time_range) THEN
+                EXECUTE format('SELECT CASE WHEN is_called THEN last_value ELSE last_value - 1 END FROM %I.%I',
+                               r_rel.rel_log_schema, r_rel.rel_log_sequence)
+                  INTO v_endLastValue;
+              ELSE
+                SELECT tbl_log_seq_last_val INTO v_endLastValue
+                  FROM emaj.emaj_table
+                  WHERE tbl_schema = r_rel.rel_schema
+                    AND tbl_name = r_rel.rel_tblseq
+                    AND tbl_time_id = upper(r_rel.rel_time_range);
+              END IF;
+              IF FOUND THEN
+                v_nbChange = coalesce(v_nbChange, 0) + v_endLastValue - v_beginLastValue;
+              END IF;
+            END IF;
+          END LOOP;
+-- Create the log session.
+          RAISE NOTICE '  --> Create a log session for time interval [% , NULL) (% marks, % changes)',
+            v_startTimeId, v_nbMark, v_nbChange;
+          INSERT INTO emaj.emaj_log_session VALUES
+            (r_group.group_name, int8range(v_startTimeId, NULL, '[)'), v_createTimeId, v_nbMark, v_nbChange);
+        ELSE
+          RAISE WARNING '*** Tables group % is logging, but the last group start event has not been found. No log session is generated.',
+                        r_group.group_name;
+        END IF;
+      ELSE
+-- If the group is stopped but the last group start is not followed by a group stop, warn and do not created a log session.
+        IF v_startTimeId IS NOT NULL THEN
+          RAISE WARNING '*** Tables group % is stopped, but the last group stop event has not been found. No log session is generated.',
+                         r_group.group_name;
+        END IF;
+      END IF;
+    END LOOP;
+  END;
+$do$;
+
+DROP TABLE IF EXISTS emaj_tmp_timed_event;
+DROP MATERIALIZED VIEW IF EXISTS emaj.emaj_tmp_hist CASCADE;
+
+--
 -- Add created or recreated tables and sequences to the list of content to save by pg_dump.
 --
+SELECT pg_catalog.pg_extension_config_dump('emaj_log_session','');
 
 ------------------------------------
 --                                --
@@ -140,6 +439,64 @@ $_build_path_name$
 -- Both names are concatenated with a / character between.
 SELECT p_dir || '/' || translate(p_file, E' /\\|$<>*\'"', '__________');
 $_build_path_name$;
+
+CREATE OR REPLACE FUNCTION emaj._drop_group(p_groupName TEXT, p_isForced BOOLEAN)
+RETURNS INT LANGUAGE plpgsql AS
+$_drop_group$
+-- This function effectively deletes the emaj objects for all tables of a group.
+-- It also drops log schemas that are not useful any more.
+-- Input: group name, and a boolean indicating whether the group's state has to be checked
+-- Output: number of processed tables and sequences
+  DECLARE
+    v_eventTriggers          TEXT[];
+    v_timeId                 BIGINT;
+    v_nbRel                  INT;
+    r_rel                    emaj.emaj_relation%ROWTYPE;
+  BEGIN
+-- Get the time stamp of the operation.
+    SELECT emaj._set_time_stamp('D') INTO v_timeId;
+-- Register into emaj_relation_change the tables and sequences removal from their group, for completeness.
+    INSERT INTO emaj.emaj_relation_change (rlchg_time_id, rlchg_schema, rlchg_tblseq, rlchg_change_kind, rlchg_group)
+      SELECT v_timeId, rel_schema, rel_tblseq,
+             CASE WHEN rel_kind = 'r' THEN 'REMOVE_TABLE'::emaj._relation_change_kind_enum
+                                      ELSE 'REMOVE_SEQUENCE'::emaj._relation_change_kind_enum END,
+             p_groupName
+        FROM emaj.emaj_relation
+        WHERE rel_group = p_groupName
+          AND upper_inf(rel_time_range)
+        ORDER BY rel_priority, rel_schema, rel_tblseq, rel_time_range;
+-- Disable event triggers that protect emaj components and keep in memory these triggers name.
+    SELECT emaj._disable_event_triggers() INTO v_eventTriggers;
+-- Delete the emaj objects and references for each table and sequences of the group.
+    FOR r_rel IN
+      SELECT *
+        FROM emaj.emaj_relation
+        WHERE rel_group = p_groupName
+        ORDER BY rel_priority, rel_schema, rel_tblseq, rel_time_range
+    LOOP
+      PERFORM CASE r_rel.rel_kind
+                WHEN 'r' THEN emaj._drop_tbl(r_rel, v_timeId)
+                WHEN 'S' THEN emaj._drop_seq(r_rel, v_timeId)
+              END;
+    END LOOP;
+-- Drop the E-Maj log schemas that are now useless (i.e. not used by any other created group).
+    PERFORM emaj._drop_log_schemas(CASE WHEN p_isForced THEN 'FORCE_DROP_GROUP' ELSE 'DROP_GROUP' END, p_isForced);
+-- Delete group row from the emaj_group table.
+-- By cascade, it also deletes rows from emaj_mark.
+    DELETE FROM emaj.emaj_group
+      WHERE group_name = p_groupName
+      RETURNING group_nb_table + group_nb_sequence INTO v_nbRel;
+-- Update the last log session for the group to set the time range upper bound, if it is infinity
+    UPDATE emaj.emaj_log_session
+      SET lses_time_range = int8range(lower(lses_time_range), v_timeId, '[)')
+      WHERE lses_group = p_groupName
+        AND upper_inf(lses_time_range);
+-- Enable previously disabled event triggers.
+    PERFORM emaj._enable_event_triggers(v_eventTriggers);
+--
+    RETURN v_nbRel;
+  END;
+$_drop_group$;
 
 CREATE OR REPLACE FUNCTION emaj._start_groups(p_groupNames TEXT[], p_mark TEXT, p_multiGroup BOOLEAN, p_resetLog BOOLEAN)
 RETURNS INT LANGUAGE plpgsql AS
@@ -195,7 +552,7 @@ $_start_groups$
 --   risk of deadlock.
       PERFORM emaj._lock_groups(p_groupNames,'SHARE ROW EXCLUSIVE',p_multiGroup);
 -- Enable all log triggers for the groups.
--- For each relation currently belonging to the group,
+-- For each relation currently belonging to the groups,
       FOR r_tblsq IN
         SELECT rel_kind, quote_ident(rel_schema) || '.' || quote_ident(rel_tblseq) AS full_relation_name
           FROM emaj.emaj_relation
@@ -214,6 +571,12 @@ $_start_groups$
       UPDATE emaj.emaj_group
         SET group_is_logging = TRUE
         WHERE group_name = ANY (p_groupNames);
+-- Insert log sessions start in emaj_log_session.
+--   lses_marks is already set to 1 as it will not be incremented at the first mark set.
+      INSERT INTO emaj.emaj_log_session
+        SELECT group_name, int8range(v_timeId, NULL, '[)'), group_creation_time_id, 1, 0
+          FROM emaj.emaj_group
+          WHERE group_name = ANY (p_groupNames);
 -- Set the first mark for each group.
       PERFORM emaj._set_mark_groups(p_groupNames, v_markName, p_multiGroup, TRUE, NULL, v_timeId);
     END IF;
@@ -383,6 +746,11 @@ $_stop_groups$
       UPDATE emaj.emaj_group
         SET group_is_logging = FALSE, group_is_rlbk_protected = NOT group_is_rollbackable
         WHERE group_name = ANY (p_groupNames);
+-- Update the log sessions to set the time range upper bound
+      UPDATE emaj.emaj_log_session
+        SET lses_time_range = int8range(lower(lses_time_range), v_timeId, '[)')
+        WHERE lses_group = ANY (p_groupNames)
+          AND upper_inf(lses_time_range);
     END IF;
 -- Insert a END event into the history.
     INSERT INTO emaj.emaj_hist (hist_function, hist_event, hist_object, hist_wording)
@@ -394,6 +762,120 @@ $_stop_groups$
     RETURN v_nbTblSeq;
   END;
 $_stop_groups$;
+
+CREATE OR REPLACE FUNCTION emaj._set_mark_groups(p_groupNames TEXT[], p_mark TEXT, p_multiGroup BOOLEAN, p_eventToRecord BOOLEAN,
+                                                 p_loggedRlbkTargetMark TEXT DEFAULT NULL, p_timeId BIGINT DEFAULT NULL,
+                                                 p_dblinkSchema TEXT DEFAULT NULL)
+RETURNS INT LANGUAGE plpgsql AS
+$_set_mark_groups$
+-- This function effectively inserts a mark in the emaj_mark table and takes an image of the sequences definitions for the array of groups.
+-- It also updates the previous mark of each group to setup the mark_log_rows_before_next column with the number of rows recorded into all
+-- log tables between this previous mark and the new mark.
+-- It is called by emaj_set_mark_group and emaj_set_mark_groups functions but also by other functions that set internal marks, like
+-- functions that start or rollback groups.
+-- Input: group names array, mark to set,
+--        boolean indicating whether the function is called by a multi group function
+--        boolean indicating whether the event has to be recorded into the emaj_hist table
+--        name of the rollback target mark when this mark is created by the logged_rollback functions (NULL by default)
+--        time stamp identifier to reuse (NULL by default) (this parameter is set when the mark is a rollback start mark)
+--        dblink schema when the mark is set by a rollback operation and dblink connection are used (NULL by default)
+-- Output: number of processed tables and sequences
+-- The insertion of the corresponding event in the emaj_hist table is performed by callers.
+  DECLARE
+    v_nbTbl                  INT;
+    v_nbSeq                  INT;
+    v_stmt                   TEXT;
+  BEGIN
+-- If requested by the calling function, record the set mark begin in emaj_hist.
+    IF p_eventToRecord THEN
+      INSERT INTO emaj.emaj_hist (hist_function, hist_event, hist_object, hist_wording)
+        VALUES (CASE WHEN p_multiGroup THEN 'SET_MARK_GROUPS'
+                     ELSE 'SET_MARK_GROUP' END, 'BEGIN', array_to_string(p_groupNames,','), p_mark);
+    END IF;
+-- Get the time stamp of the operation, if not supplied as input parameter.
+    IF p_timeId IS NULL THEN
+      SELECT emaj._set_time_stamp('M') INTO p_timeId;
+    END IF;
+-- Record sequences state as early as possible (no lock protects them from other transactions activity).
+-- The join on pg_namespace and pg_class filters the potentially dropped application sequences.
+    WITH seq AS                          -- selected sequences
+      (SELECT rel_schema, rel_tblseq
+         FROM emaj.emaj_relation
+              JOIN pg_catalog.pg_class ON (relname = rel_tblseq)
+              JOIN pg_catalog.pg_namespace ON (pg_namespace.oid = relnamespace AND nspname = rel_schema)
+         WHERE upper_inf(rel_time_range)
+           AND rel_kind = 'S'
+           AND rel_group = ANY (p_groupNames)
+      )
+    INSERT INTO emaj.emaj_sequence (sequ_schema, sequ_name, sequ_time_id, sequ_last_val, sequ_start_val,
+                sequ_increment, sequ_max_val, sequ_min_val, sequ_cache_val, sequ_is_cycled, sequ_is_called)
+      SELECT t.*
+        FROM seq,
+             LATERAL emaj._get_current_sequence_state(rel_schema, rel_tblseq, p_timeId) AS t;
+    GET DIAGNOSTICS v_nbSeq = ROW_COUNT;
+-- Record the number of log rows for the previous last mark of each selected group.
+-- The statement updates no row in case of emaj_start_group(s)
+-- With the same statistics, update the counters of the last log session for each groups
+    WITH stat_group1 AS                        -- for each group, get the time id of the last active mark
+      (SELECT mark_group, max(mark_time_id) AS last_mark_time_id
+         FROM emaj.emaj_mark
+         WHERE NOT mark_is_deleted
+           AND mark_group = ANY(p_groupNames)
+         GROUP BY mark_group
+      ),
+         stat_group2 AS                        -- compute the number of logged changes for all tables currently belonging to these groups
+      (SELECT mark_group, last_mark_time_id, coalesce(
+                (SELECT sum(emaj._log_stat_tbl(emaj_relation, greatest(last_mark_time_id, lower(rel_time_range)),NULL))
+                   FROM emaj.emaj_relation
+                   WHERE rel_group = mark_group
+                     AND rel_kind = 'r'
+                     AND upper_inf(rel_time_range)
+                ), 0) AS mark_stat
+        FROM stat_group1
+      ),
+         update_mark AS                        -- update emaj_mark
+      (UPDATE emaj.emaj_mark m
+         SET mark_log_rows_before_next = mark_stat
+         FROM stat_group2 s
+         WHERE s.mark_group = m.mark_group
+           AND s.last_mark_time_id = m.mark_time_id
+      )
+    UPDATE emaj.emaj_log_session l             -- update emaj_log_session
+      SET lses_marks = lses_marks + 1,
+          lses_log_rows = lses_log_rows + mark_stat
+      FROM stat_group2 s
+      WHERE s.mark_group = l.lses_group
+        AND upper_inf(lses_time_range);
+-- For tables currently belonging to the groups, record their state and their log sequence last_value.
+    INSERT INTO emaj.emaj_table (tbl_schema, tbl_name, tbl_time_id, tbl_tuples, tbl_pages, tbl_log_seq_last_val)
+      SELECT rel_schema, rel_tblseq, p_timeId, reltuples, relpages, last_value
+        FROM emaj.emaj_relation
+             LEFT OUTER JOIN pg_catalog.pg_namespace ON (nspname = rel_schema)
+             LEFT OUTER JOIN pg_catalog.pg_class ON (relname = rel_tblseq AND relnamespace = pg_namespace.oid),
+             LATERAL emaj._get_log_sequence_last_value(rel_log_schema, rel_log_sequence) AS last_value
+        WHERE upper_inf(rel_time_range)
+          AND rel_group = ANY (p_groupNames)
+          AND rel_kind = 'r';
+    GET DIAGNOSTICS v_nbTbl = ROW_COUNT;
+-- Record the mark for each group into the emaj_mark table.
+    INSERT INTO emaj.emaj_mark (mark_group, mark_name, mark_time_id, mark_is_deleted, mark_is_rlbk_protected, mark_logged_rlbk_target_mark)
+      SELECT group_name, p_mark, p_timeId, FALSE, FALSE, p_loggedRlbkTargetMark
+        FROM emaj.emaj_group
+        WHERE group_name = ANY(p_groupNames)
+        ORDER BY group_name;
+-- Before exiting, cleanup the state of the pending rollback events from the emaj_rlbk table.
+-- It uses a dblink connection when the mark to set comes from a rollback operation that uses dblink connections.
+    v_stmt = 'SELECT emaj._cleanup_rollback_state()';
+    PERFORM emaj._dblink_sql_exec('rlbk#1', v_stmt, p_dblinkSchema);
+-- If requested by the calling function, record the set mark end into emaj_hist.
+    IF p_eventToRecord THEN
+      INSERT INTO emaj.emaj_hist (hist_function, hist_event, hist_object, hist_wording)
+        VALUES (CASE WHEN p_multiGroup THEN 'SET_MARK_GROUPS' ELSE 'SET_MARK_GROUP' END, 'END', array_to_string(p_groupNames,','), p_mark);
+    END IF;
+--
+    RETURN v_nbSeq + v_nbTbl;
+  END;
+$_set_mark_groups$;
 
 CREATE OR REPLACE FUNCTION emaj._log_stat_groups(p_groupNames TEXT[], p_multiGroup BOOLEAN, p_firstMark TEXT, p_lastMark TEXT)
 RETURNS SETOF emaj.emaj_log_stat_type LANGUAGE plpgsql AS
@@ -1391,6 +1873,117 @@ $emaj_snap_group$
 $emaj_snap_group$;
 COMMENT ON FUNCTION emaj.emaj_snap_group(TEXT,TEXT,TEXT) IS
 $$Snaps all application tables and sequences of an E-Maj group into a given directory.$$;
+
+CREATE OR REPLACE FUNCTION emaj._purge_histories(p_retentionDelay INTERVAL DEFAULT NULL)
+RETURNS VOID LANGUAGE plpgsql AS
+$_purge_histories$
+-- This function purges the emaj history by deleting all rows prior the 'history_retention' parameter, but
+--   without deleting event traces neither after the oldest active mark or after the oldest not committed or aborted rollback operation.
+-- It also purges oldest rows from the emaj_exec_plan, emaj_rlbk_session and emaj_rlbk_plan tables, using the same rules.
+-- The function is called at start group time and when oldest marks are deleted.
+-- It is also called by the emaj_purge_histories() function.
+-- A retention delay >= 100 years means infinite.
+-- Input: retention delay ; if supplied, it overloads the history_retention parameter from the emaj_param table.
+  DECLARE
+    v_delay                  INTERVAL;
+    v_datetimeLimit          TIMESTAMPTZ;
+    v_maxTimeId              BIGINT;
+    v_maxRlbkId              BIGINT;
+    v_nbPurgedHist           BIGINT;
+    v_nbPurgedLogSession     BIGINT;
+    v_nbPurgedRelHist        BIGINT;
+    v_nbPurgedRlbk           BIGINT;
+    v_nbPurgedRelChanges     BIGINT;
+    v_wording                TEXT = '';
+  BEGIN
+-- Compute the retention delay to use.
+    SELECT coalesce(p_retentionDelay,
+                    (SELECT param_value_interval
+                       FROM emaj.emaj_param
+                       WHERE param_key = 'history_retention'
+                    ),'1 YEAR')
+      INTO v_delay;
+-- Immediately exit if the delay is infinity.
+    IF v_delay >= INTERVAL '100 years' THEN
+      RETURN;
+    END IF;
+-- Compute the timestamp limit.
+    SELECT least(
+                                         -- compute the timestamp limit from the retention delay value
+        (SELECT current_timestamp - v_delay),
+                                         -- get the transaction timestamp of the oldest non deleted mark for all groups
+        (SELECT min(time_tx_timestamp)
+           FROM emaj.emaj_mark
+                JOIN emaj.emaj_time_stamp ON (time_id = mark_time_id)
+           WHERE NOT mark_is_deleted),
+                                         -- get the transaction timestamp of the oldest non committed or aborted rollback
+        (SELECT min(time_tx_timestamp)
+           FROM emaj.emaj_rlbk
+                JOIN emaj.emaj_time_stamp ON (time_id = rlbk_time_id)
+           WHERE rlbk_status IN ('PLANNING', 'LOCKING', 'EXECUTING', 'COMPLETED')))
+      INTO v_datetimeLimit;
+-- Get the greatest timestamp identifier corresponding to the timeframe to purge, if any.
+    SELECT max(time_id) INTO v_maxTimeId
+      FROM emaj.emaj_time_stamp
+      WHERE time_tx_timestamp < v_datetimeLimit;
+-- Delete oldest rows from emaj_hist.
+    DELETE FROM emaj.emaj_hist
+      WHERE hist_datetime < v_datetimeLimit;
+    GET DIAGNOSTICS v_nbPurgedHist = ROW_COUNT;
+    IF v_nbPurgedHist > 0 THEN
+      v_wording = v_nbPurgedHist || ' emaj_hist rows deleted';
+    END IF;
+-- Delete oldest rows from emaj_log_session.
+    DELETE FROM emaj.emaj_log_session
+      WHERE upper(lses_time_range) < v_maxTimeId;
+    GET DIAGNOSTICS v_nbPurgedLogSession = ROW_COUNT;
+    IF v_nbPurgedLogSession > 0 THEN
+      v_wording = v_wording || ' ; ' || v_nbPurgedLogSession || ' log session rows deleted';
+    END IF;
+-- Delete oldest rows from emaj_rel_hist.
+    DELETE FROM emaj.emaj_rel_hist
+      WHERE upper(relh_time_range) < v_maxTimeId;
+    GET DIAGNOSTICS v_nbPurgedRelHist = ROW_COUNT;
+    IF v_nbPurgedRelHist > 0 THEN
+      v_wording = v_wording || ' ; ' || v_nbPurgedRelHist || ' relation history rows deleted';
+    END IF;
+-- Purge the emaj_relation_change table.
+    WITH deleted_relation_change AS
+      (DELETE FROM emaj.emaj_relation_change
+         WHERE rlchg_time_id <= v_maxTimeId
+         RETURNING rlchg_time_id
+      )
+      SELECT COUNT (DISTINCT rlchg_time_id) INTO v_nbPurgedRelChanges
+        FROM deleted_relation_change;
+    IF v_nbPurgedRelChanges > 0 THEN
+      v_wording = v_wording || ' ; ' || v_nbPurgedRelChanges || ' relation changes deleted';
+    END IF;
+-- Get the greatest rollback identifier to purge.
+    SELECT max(rlbk_id) INTO v_maxRlbkId
+      FROM emaj.emaj_rlbk
+      WHERE rlbk_time_id <= v_maxTimeId;
+-- And purge the emaj_rlbk_plan and emaj_rlbk_session tables.
+    IF v_maxRlbkId IS NOT NULL THEN
+      DELETE FROM emaj.emaj_rlbk_plan
+        WHERE rlbp_rlbk_id <= v_maxRlbkId;
+      WITH deleted_rlbk AS
+        (DELETE FROM emaj.emaj_rlbk_session
+           WHERE rlbs_rlbk_id <= v_maxRlbkId
+           RETURNING rlbs_rlbk_id
+        )
+        SELECT COUNT(DISTINCT rlbs_rlbk_id) INTO v_nbPurgedRlbk
+          FROM deleted_rlbk;
+      v_wording = v_wording || ' ; ' || v_nbPurgedRlbk || ' rollback events deleted';
+    END IF;
+-- Record the purge into the history if there are significant data.
+    IF v_wording <> '' THEN
+      INSERT INTO emaj.emaj_hist (hist_function, hist_wording)
+        VALUES ('PURGE_HISTORIES', v_wording);
+    END IF;
+--
+    RETURN;
+  END;
+$_purge_histories$;
 
 --<end_functions>                                pattern used by the tool that extracts and insert the functions definition
 ------------------------------------------

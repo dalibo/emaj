@@ -676,13 +676,21 @@ SQL statement "WITH stat_group1 AS                        -- for each group, get
                      AND upper_inf(rel_time_range)
                 ), 0) AS mark_stat
         FROM stat_group1
+      ),
+         update_mark AS                        -- update emaj_mark
+      (UPDATE emaj.emaj_mark m
+         SET mark_log_rows_before_next = mark_stat
+         FROM stat_group2 s
+         WHERE s.mark_group = m.mark_group
+           AND s.last_mark_time_id = m.mark_time_id
       )
-    UPDATE emaj.emaj_mark m
-      SET mark_log_rows_before_next = mark_stat
+    UPDATE emaj.emaj_log_session l             -- update emaj_log_session
+      SET lses_marks = lses_marks + 1,
+          lses_log_rows = lses_log_rows + mark_stat
       FROM stat_group2 s
-      WHERE s.mark_group = m.mark_group
-        AND s.last_mark_time_id = m.mark_time_id"
-PL/pgSQL function emaj._set_mark_groups(text[],text,boolean,boolean,text,bigint,text) line 49 at SQL statement
+      WHERE s.mark_group = l.lses_group
+        AND upper_inf(lses_time_range)"
+PL/pgSQL function emaj._set_mark_groups(text[],text,boolean,boolean,text,bigint,text) line 50 at SQL statement
 SQL statement "SELECT emaj._set_mark_groups(p_groupNames, v_markName, p_multiGroup, TRUE, NULL, v_timeId)"
 PL/pgSQL function emaj._stop_groups(text[],text,boolean,boolean) line 134 at PERFORM
 PL/pgSQL function emaj.emaj_stop_group(text,text) line 10 at RETURN
@@ -710,13 +718,21 @@ SQL statement "WITH stat_group1 AS                        -- for each group, get
                      AND upper_inf(rel_time_range)
                 ), 0) AS mark_stat
         FROM stat_group1
+      ),
+         update_mark AS                        -- update emaj_mark
+      (UPDATE emaj.emaj_mark m
+         SET mark_log_rows_before_next = mark_stat
+         FROM stat_group2 s
+         WHERE s.mark_group = m.mark_group
+           AND s.last_mark_time_id = m.mark_time_id
       )
-    UPDATE emaj.emaj_mark m
-      SET mark_log_rows_before_next = mark_stat
+    UPDATE emaj.emaj_log_session l             -- update emaj_log_session
+      SET lses_marks = lses_marks + 1,
+          lses_log_rows = lses_log_rows + mark_stat
       FROM stat_group2 s
-      WHERE s.mark_group = m.mark_group
-        AND s.last_mark_time_id = m.mark_time_id"
-PL/pgSQL function emaj._set_mark_groups(text[],text,boolean,boolean,text,bigint,text) line 49 at SQL statement
+      WHERE s.mark_group = l.lses_group
+        AND upper_inf(lses_time_range)"
+PL/pgSQL function emaj._set_mark_groups(text[],text,boolean,boolean,text,bigint,text) line 50 at SQL statement
 SQL statement "SELECT emaj._set_mark_groups(v_loggingGroups, v_markName, FALSE, TRUE, NULL, v_timeId)"
 PL/pgSQL function emaj._remove_tables(text,text[],text,boolean,boolean) line 85 at PERFORM
 PL/pgSQL function emaj.emaj_remove_table(text,text,text) line 6 at RETURN

@@ -227,6 +227,7 @@ select emaj.emaj_set_mark_group('myGroup1','Mark12');
 select mark_group, regexp_replace(mark_name,E'\\d\\d\.\\d\\d\\.\\d\\d\\.\\d\\d\\d\\d','%','g'), mark_time_id, mark_is_deleted, mark_is_rlbk_protected, mark_comment, mark_log_rows_before_next, mark_logged_rlbk_target_mark from emaj.emaj_mark order by mark_time_id, mark_group;
 select sequ_schema, sequ_name, sequ_time_id, sequ_last_val, sequ_is_called from emaj.emaj_sequence order by sequ_time_id, sequ_schema, sequ_name;
 select tbl_schema, tbl_name, tbl_time_id, tbl_log_seq_last_val from emaj.emaj_table order by tbl_time_id, tbl_schema, tbl_name;
+select * from emaj.emaj_log_session where lses_group = 'myGroup1' and upper_inf(lses_time_range) order by lses_group, lses_time_range;
 
 -- inserts/updates/deletes in myTbl3 and myTbl4
 insert into "myTbl3" (col33) select generate_series(1000,1039,4)/100;
@@ -648,6 +649,7 @@ select rlbt_step, rlbt_schema, rlbt_table, rlbt_object, rlbt_rlbk_id, rlbt_quant
 -- test end: reset history and force sequences id
 -----------------------------
 select emaj.emaj_enable_protection_by_event_triggers();
+select * from emaj.emaj_log_session where lower(lses_time_range) >= 4000 order by lses_group, lses_time_range;
 select time_id, time_last_emaj_gid, time_event from emaj.emaj_time_stamp where time_id >= 4000 order by time_id;
 select hist_id, hist_function, hist_event, hist_object, regexp_replace(regexp_replace(hist_wording,E'\\d\\d\.\\d\\d\\.\\d\\d\\.\\d\\d\\d\\d','%','g'),E'\\[.+\\]','(timestamp)','g'), hist_user from 
   (select * from emaj.emaj_hist where hist_id >= 4000 order by hist_id) as t;

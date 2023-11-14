@@ -1143,58 +1143,58 @@ select time_id, time_last_emaj_gid, time_event from emaj.emaj_time_stamp where t
 select hist_id, hist_function, hist_event, hist_object, 
   regexp_replace(regexp_replace(hist_wording,E'\\d\\d\.\\d\\d\\.\\d\\d\\.\\d\\d\\d\\d','%','g'),E'\\[.+\\]','(timestamp)','g'),
   hist_user from emaj.emaj_hist where hist_id >= 3400 order by hist_id;
- hist_id |      hist_function       |     hist_event     |    hist_object    |                 regexp_replace                  | hist_user 
----------+--------------------------+--------------------+-------------------+-------------------------------------------------+-----------
-    3404 | DELETE_MARK_GROUP        | BEGIN              | myGroup1          | EMAJ_LAST_MARK                                  | postgres
-    3405 | DELETE_MARK_GROUP        | END                | myGroup1          | SM2                                             | postgres
-    3406 | DELETE_MARK_GROUP        | BEGIN              | myGroup1          | SM1                                             | postgres
-    3407 | DELETE_MARK_GROUP        | END                | myGroup1          | SM1                                             | postgres
-    3408 | DELETE_MARK_GROUP        | BEGIN              | emptyGroup        | MarkInit                                        | postgres
-    3409 | DELETE_MARK_GROUP        | END                | emptyGroup        | MarkInit                                        | postgres
-    3410 | DELETE_MARK_GROUP        | BEGIN              | myGroup1          | First Mark                                      | postgres
-    3411 | DELETE_MARK_GROUP        | END                | myGroup1          | First Mark                                      | postgres
-    3412 | DELETE_MARK_GROUP        | BEGIN              | myGroup1          | MARK_%                                          | postgres
-    3413 | DELETE_MARK_GROUP        | END                | myGroup1          | MARK_%                                          | postgres
-    3414 | DELETE_MARK_GROUP        | BEGIN              | myGroup1          | Foo%Bar                                         | postgres
-    3415 | DELETE_MARK_GROUP        | END                | myGroup1          | Foo%Bar                                         | postgres
-    3416 | DELETE_MARK_GROUP        | BEGIN              | myGroup1          | MARK_%                                          | postgres
-    3417 | DELETE_MARK_GROUP        | END                | myGroup1          | MARK_%                                          | postgres
-    3418 | DELETE_MARK_GROUP        | BEGIN              | myGroup1          | MARK_%                                          | postgres
-    3419 | DELETE_MARK_GROUP        | END                | myGroup1          | MARK_%                                          | postgres
-    3420 | DELETE_MARK_GROUP        | BEGIN              | myGroup1          | MARK_%                                          | postgres
-    3421 | DELETE_MARK_GROUP        | END                | myGroup1          | MARK_%                                          | postgres
-    3422 | DELETE_MARK_GROUP        | BEGIN              | myGroup2          | john's mark #1                                  | postgres
-    3423 | DELETE_MARK_GROUP        | END                | myGroup2          | john's mark #1                                  | postgres
-    3428 | DELETE_BEFORE_MARK_GROUP | BEGIN              | myGroup2          |                                                 | postgres
-    3429 | DELETE_BEFORE_MARK_GROUP | BEGIN              | myGroup1          | SM3                                             | postgres
-    3430 | DELETE_BEFORE_MARK_GROUP | END                | myGroup1          | 0 marks deleted ; SM3 is now the initial mark   | postgres
-    3431 | DELETE_BEFORE_MARK_GROUP | BEGIN              | myGroup1          | EMAJ_LAST_MARK                                  | postgres
-    3432 | DELETE_BEFORE_MARK_GROUP | END                | myGroup1          | 0 marks deleted ; SM3 is now the initial mark   | postgres
-    3433 | SET_MARK_GROUP           | BEGIN              | emptyGroup        |                                                 | postgres
-    3434 | LOCK_GROUP               | BEGIN              | emptyGroup        |                                                 | postgres
-    3435 | LOCK_GROUP               | END                | emptyGroup        | 0 tables locked, 0 deadlock(s)                  | postgres
-    3436 | SET_MARK_GROUP           | END                | emptyGroup        | EGM3                                            | postgres
-    3437 | SET_MARK_GROUP           | BEGIN              | emptyGroup        |                                                 | postgres
-    3438 | LOCK_GROUP               | BEGIN              | emptyGroup        |                                                 | postgres
-    3439 | LOCK_GROUP               | END                | emptyGroup        | 0 tables locked, 0 deadlock(s)                  | postgres
-    3440 | SET_MARK_GROUP           | END                | emptyGroup        | EGM4                                            | postgres
-    3441 | DELETE_BEFORE_MARK_GROUP | BEGIN              | emptyGroup        | SM2                                             | postgres
-    3442 | DELETE_BEFORE_MARK_GROUP | END                | emptyGroup        | 0 marks deleted ; SM2 is now the initial mark   | postgres
-    3443 | DELETE_BEFORE_MARK_GROUP | BEGIN              | myGroup2          | SM2                                             | postgres
-    3444 | DELETE_BEFORE_MARK_GROUP | END                | myGroup2          | 8 marks deleted ; SM2 is now the initial mark   | postgres
-    3445 |                          | INSERTED PARAMETER | history_retention | @ 0                                             | postgres
-    3446 | SET_MARK_GROUP           | BEGIN              | phil's group#3",  |                                                 | postgres
-    3447 | LOCK_GROUP               | BEGIN              | phil's group#3",  |                                                 | postgres
-    3448 | LOCK_GROUP               | END                | phil's group#3",  | 2 tables locked, 0 deadlock(s)                  | postgres
-    3449 | SET_MARK_GROUP           | END                | phil's group#3",  | Mark4                                           | postgres
-    3450 | SET_MARK_GROUP           | BEGIN              | phil's group#3",  |                                                 | postgres
-    3451 | LOCK_GROUP               | BEGIN              | phil's group#3",  |                                                 | postgres
-    3452 | LOCK_GROUP               | END                | phil's group#3",  | 2 tables locked, 0 deadlock(s)                  | postgres
-    3453 | SET_MARK_GROUP           | END                | phil's group#3",  | Mark5                                           | postgres
-    3454 | DELETE_BEFORE_MARK_GROUP | BEGIN              | phil's group#3",  | Mark4                                           | postgres
-    3455 | PURGE_HISTORIES          |                    |                   | 210 emaj_hist rows deleted                      | postgres
-    3456 | DELETE_BEFORE_MARK_GROUP | END                | phil's group#3",  | 1 marks deleted ; Mark4 is now the initial mark | postgres
-    3457 |                          | DELETED PARAMETER  | history_retention |                                                 | postgres
+ hist_id |      hist_function       |     hist_event     |    hist_object    |                      regexp_replace                      | hist_user 
+---------+--------------------------+--------------------+-------------------+----------------------------------------------------------+-----------
+    3404 | DELETE_MARK_GROUP        | BEGIN              | myGroup1          | EMAJ_LAST_MARK                                           | postgres
+    3405 | DELETE_MARK_GROUP        | END                | myGroup1          | SM2                                                      | postgres
+    3406 | DELETE_MARK_GROUP        | BEGIN              | myGroup1          | SM1                                                      | postgres
+    3407 | DELETE_MARK_GROUP        | END                | myGroup1          | SM1                                                      | postgres
+    3408 | DELETE_MARK_GROUP        | BEGIN              | emptyGroup        | MarkInit                                                 | postgres
+    3409 | DELETE_MARK_GROUP        | END                | emptyGroup        | MarkInit                                                 | postgres
+    3410 | DELETE_MARK_GROUP        | BEGIN              | myGroup1          | First Mark                                               | postgres
+    3411 | DELETE_MARK_GROUP        | END                | myGroup1          | First Mark                                               | postgres
+    3412 | DELETE_MARK_GROUP        | BEGIN              | myGroup1          | MARK_%                                                   | postgres
+    3413 | DELETE_MARK_GROUP        | END                | myGroup1          | MARK_%                                                   | postgres
+    3414 | DELETE_MARK_GROUP        | BEGIN              | myGroup1          | Foo%Bar                                                  | postgres
+    3415 | DELETE_MARK_GROUP        | END                | myGroup1          | Foo%Bar                                                  | postgres
+    3416 | DELETE_MARK_GROUP        | BEGIN              | myGroup1          | MARK_%                                                   | postgres
+    3417 | DELETE_MARK_GROUP        | END                | myGroup1          | MARK_%                                                   | postgres
+    3418 | DELETE_MARK_GROUP        | BEGIN              | myGroup1          | MARK_%                                                   | postgres
+    3419 | DELETE_MARK_GROUP        | END                | myGroup1          | MARK_%                                                   | postgres
+    3420 | DELETE_MARK_GROUP        | BEGIN              | myGroup1          | MARK_%                                                   | postgres
+    3421 | DELETE_MARK_GROUP        | END                | myGroup1          | MARK_%                                                   | postgres
+    3422 | DELETE_MARK_GROUP        | BEGIN              | myGroup2          | john's mark #1                                           | postgres
+    3423 | DELETE_MARK_GROUP        | END                | myGroup2          | john's mark #1                                           | postgres
+    3428 | DELETE_BEFORE_MARK_GROUP | BEGIN              | myGroup2          |                                                          | postgres
+    3429 | DELETE_BEFORE_MARK_GROUP | BEGIN              | myGroup1          | SM3                                                      | postgres
+    3430 | DELETE_BEFORE_MARK_GROUP | END                | myGroup1          | 0 marks deleted ; SM3 is now the initial mark            | postgres
+    3431 | DELETE_BEFORE_MARK_GROUP | BEGIN              | myGroup1          | EMAJ_LAST_MARK                                           | postgres
+    3432 | DELETE_BEFORE_MARK_GROUP | END                | myGroup1          | 0 marks deleted ; SM3 is now the initial mark            | postgres
+    3433 | SET_MARK_GROUP           | BEGIN              | emptyGroup        |                                                          | postgres
+    3434 | LOCK_GROUP               | BEGIN              | emptyGroup        |                                                          | postgres
+    3435 | LOCK_GROUP               | END                | emptyGroup        | 0 tables locked, 0 deadlock(s)                           | postgres
+    3436 | SET_MARK_GROUP           | END                | emptyGroup        | EGM3                                                     | postgres
+    3437 | SET_MARK_GROUP           | BEGIN              | emptyGroup        |                                                          | postgres
+    3438 | LOCK_GROUP               | BEGIN              | emptyGroup        |                                                          | postgres
+    3439 | LOCK_GROUP               | END                | emptyGroup        | 0 tables locked, 0 deadlock(s)                           | postgres
+    3440 | SET_MARK_GROUP           | END                | emptyGroup        | EGM4                                                     | postgres
+    3441 | DELETE_BEFORE_MARK_GROUP | BEGIN              | emptyGroup        | SM2                                                      | postgres
+    3442 | DELETE_BEFORE_MARK_GROUP | END                | emptyGroup        | 0 marks deleted ; SM2 is now the initial mark            | postgres
+    3443 | DELETE_BEFORE_MARK_GROUP | BEGIN              | myGroup2          | SM2                                                      | postgres
+    3444 | DELETE_BEFORE_MARK_GROUP | END                | myGroup2          | 8 marks deleted ; SM2 is now the initial mark            | postgres
+    3445 |                          | INSERTED PARAMETER | history_retention | @ 0                                                      | postgres
+    3446 | SET_MARK_GROUP           | BEGIN              | phil's group#3",  |                                                          | postgres
+    3447 | LOCK_GROUP               | BEGIN              | phil's group#3",  |                                                          | postgres
+    3448 | LOCK_GROUP               | END                | phil's group#3",  | 2 tables locked, 0 deadlock(s)                           | postgres
+    3449 | SET_MARK_GROUP           | END                | phil's group#3",  | Mark4                                                    | postgres
+    3450 | SET_MARK_GROUP           | BEGIN              | phil's group#3",  |                                                          | postgres
+    3451 | LOCK_GROUP               | BEGIN              | phil's group#3",  |                                                          | postgres
+    3452 | LOCK_GROUP               | END                | phil's group#3",  | 2 tables locked, 0 deadlock(s)                           | postgres
+    3453 | SET_MARK_GROUP           | END                | phil's group#3",  | Mark5                                                    | postgres
+    3454 | DELETE_BEFORE_MARK_GROUP | BEGIN              | phil's group#3",  | Mark4                                                    | postgres
+    3455 | PURGE_HISTORIES          |                    |                   | 210 emaj_hist rows deleted ; 15 log session rows deleted | postgres
+    3456 | DELETE_BEFORE_MARK_GROUP | END                | phil's group#3",  | 1 marks deleted ; Mark4 is now the initial mark          | postgres
+    3457 |                          | DELETED PARAMETER  | history_retention |                                                          | postgres
 (50 rows)
 
 select public.handle_emaj_sequences(3600);
@@ -1472,6 +1472,15 @@ select tbl_schema, tbl_name, tbl_time_id, tbl_log_seq_last_val from emaj.emaj_ta
 -----------------------------
 -- test end: check
 -----------------------------
+select * from emaj.emaj_log_session order by lses_group, lses_time_range;
+    lses_group    | lses_time_range | lses_group_creation_time_id | lses_marks | lses_log_rows 
+------------------+-----------------+-----------------------------+------------+---------------
+ emptyGroup       | [3002,)         |                        2000 |          4 |             0
+ myGroup1         | [3000,3600)     |                        2000 |         10 |             0
+ myGroup2         | [3001,3601)     |                        2000 |         11 |             0
+ phil's group#3", | [2004,)         |                        1003 |          3 |             0
+(4 rows)
+
 select time_id, time_last_emaj_gid, time_event from emaj.emaj_time_stamp where time_id >= 3600 order by time_id;
  time_id | time_last_emaj_gid | time_event 
 ---------+--------------------+------------

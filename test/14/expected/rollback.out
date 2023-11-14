@@ -924,6 +924,12 @@ select tbl_schema, tbl_name, tbl_time_id, tbl_log_seq_last_val from emaj.emaj_ta
  myschema1      | mytbl4      |        4030 |                    0
 (22 rows)
 
+select * from emaj.emaj_log_session where lses_group = 'myGroup1' and upper_inf(lses_time_range) order by lses_group, lses_time_range;
+ lses_group | lses_time_range | lses_group_creation_time_id | lses_marks | lses_log_rows 
+------------+-----------------+-----------------------------+------------+---------------
+ myGroup1   | [4028,)         |                        2000 |          2 |            27
+(1 row)
+
 -- inserts/updates/deletes in myTbl3 and myTbl4
 insert into "myTbl3" (col33) select generate_series(1000,1039,4)/100;
 insert into myTbl4 values (1,'FK...',1,1,'ABC');
@@ -3078,6 +3084,17 @@ select emaj.emaj_enable_protection_by_event_triggers();
 ------------------------------------------
                                         3
 (1 row)
+
+select * from emaj.emaj_log_session where lower(lses_time_range) >= 4000 order by lses_group, lses_time_range;
+ lses_group | lses_time_range | lses_group_creation_time_id | lses_marks | lses_log_rows 
+------------+-----------------+-----------------------------+------------+---------------
+ myGroup1   | [4003,4027)     |                        2000 |          8 |             0
+ myGroup1   | [4028,4034)     |                        2000 |          4 |            39
+ myGroup1   | [4035,)         |                        2000 |         15 |            86
+ myGroup2   | [4004,4027)     |                        2000 |          8 |             0
+ myGroup2   | [4029,)         |                        2000 |          1 |             0
+ myGroup4   | [4047,)         |                        1004 |          4 |            22
+(6 rows)
 
 select time_id, time_last_emaj_gid, time_event from emaj.emaj_time_stamp where time_id >= 4000 order by time_id;
  time_id | time_last_emaj_gid | time_event 

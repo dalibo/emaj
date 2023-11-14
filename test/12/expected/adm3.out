@@ -1407,13 +1407,21 @@ SQL statement "WITH stat_group1 AS                        -- for each group, get
                      AND upper_inf(rel_time_range)
                 ), 0) AS mark_stat
         FROM stat_group1
+      ),
+         update_mark AS                        -- update emaj_mark
+      (UPDATE emaj.emaj_mark m
+         SET mark_log_rows_before_next = mark_stat
+         FROM stat_group2 s
+         WHERE s.mark_group = m.mark_group
+           AND s.last_mark_time_id = m.mark_time_id
       )
-    UPDATE emaj.emaj_mark m
-      SET mark_log_rows_before_next = mark_stat
+    UPDATE emaj.emaj_log_session l             -- update emaj_log_session
+      SET lses_marks = lses_marks + 1,
+          lses_log_rows = lses_log_rows + mark_stat
       FROM stat_group2 s
-      WHERE s.mark_group = m.mark_group
-        AND s.last_mark_time_id = m.mark_time_id"
-PL/pgSQL function emaj._set_mark_groups(text[],text,boolean,boolean,text,bigint,text) line 49 at SQL statement
+      WHERE s.mark_group = l.lses_group
+        AND upper_inf(lses_time_range)"
+PL/pgSQL function emaj._set_mark_groups(text[],text,boolean,boolean,text,bigint,text) line 50 at SQL statement
 SQL statement "SELECT emaj._set_mark_groups(v_loggingGroups, v_markName, FALSE, TRUE, NULL, v_timeId)"
 PL/pgSQL function emaj._remove_tables(text,text[],text,boolean,boolean) line 85 at PERFORM
 PL/pgSQL function emaj.emaj_remove_table(text,text,text) line 6 at RETURN
@@ -2920,6 +2928,28 @@ select hist_function, hist_event, hist_object,
  DROP_GROUP                 | LOG_SCHEMA DROPPED | "emaj_phil's schema3"          |                                                                                                    | postgres
  DROP_GROUP                 | END                | truncateTestGroup              | 9 tables/sequences processed                                                                       | postgres
 (92 rows)
+
+select * from emaj.emaj_log_session where lower(lses_time_range) >= 12000 order by lses_group, lses_time_range;
+    lses_group     | lses_time_range | lses_group_creation_time_id | lses_marks | lses_log_rows 
+-------------------+-----------------+-----------------------------+------------+---------------
+ grp_tmp           | [17603,17630)   |                       17600 |         17 |            23
+ grp_tmp           | [17633,17639)   |                       17600 |          3 |             0
+ grp_tmp_3         | [17609,17635)   |                       17601 |         15 |            14
+ grp_tmp_4         | [17603,17638)   |                       17602 |         17 |            10
+ myGroup1          | [12016,14000)   |                       12005 |          9 |           118
+ myGroup1          | [14001,14007)   |                       12005 |          5 |             0
+ myGroup1          | [14009,)        |                       12005 |         34 |           213
+ myGroup2          | [12017,14000)   |                       12012 |         10 |            67
+ myGroup2          | [14001,14007)   |                       12012 |          5 |             0
+ myGroup2          | [14009,)        |                       12012 |          2 |             0
+ myGroup4          | [17102,17105)   |                       17100 |          4 |             0
+ myGroup4          | [17106,17107)   |                       17100 |          2 |             0
+ myGroup4          | [17200,17210)   |                       17100 |         10 |            10
+ phil's group#3",  | [14203,14500)   |                       14200 |          7 |           110
+ phil's group#3",  | [14503,14506)   |                       14200 |          3 |             4
+ phil's group#3",  | [17404,17413)   |                       17400 |         10 |            10
+ truncateTestGroup | [18003,18008)   |                       18000 |          5 |           120
+(17 rows)
 
 -----------------------------
 -- check grants on other functions to emaj_adm role

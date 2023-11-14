@@ -562,6 +562,8 @@ select hist_function, hist_event, hist_object,
        hist_user
   from emaj.emaj_hist where hist_id >= 18000 order by hist_id;
 
+select * from emaj.emaj_log_session where lower(lses_time_range) >= 12000 order by lses_group, lses_time_range;
+
 -----------------------------
 -- check grants on other functions to emaj_adm role
 -----------------------------

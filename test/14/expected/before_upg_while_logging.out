@@ -154,16 +154,10 @@ SET default_tablespace TO tspemaj;
 -- start groups in a single transaction
 -----------------------------
 begin;
-  select emaj.emaj_start_group('myGroup1','M1');
- emaj_start_group 
-------------------
-                6
-(1 row)
-
-  select emaj.emaj_start_group('myGroup2','M1');
- emaj_start_group 
-------------------
-                6
+  select emaj.emaj_start_groups('{"myGroup1","myGroup2"}','M1');
+ emaj_start_groups 
+-------------------
+                12
 (1 row)
 
   select emaj.emaj_start_group('phil''s group#3",','M1');
@@ -383,23 +377,22 @@ select time_id, time_last_emaj_gid, time_event from emaj.emaj_time_stamp order b
       14 |                  0 | A
       15 |                  0 | M
       16 |                  0 | M
-      17 |                  0 | M
-      18 |                 29 | M
-      19 |                 40 | M
-      20 |                 46 | R
-      21 |                 49 | R
-      22 |                 76 | M
-      23 |                 80 | M
-      24 |                 80 | R
-      25 |                 82 | M
-      26 |                 82 | R
+      17 |                 29 | M
+      18 |                 40 | M
+      19 |                 46 | R
+      20 |                 49 | R
+      21 |                 76 | M
+      22 |                 80 | M
+      23 |                 80 | R
+      24 |                 82 | M
+      25 |                 82 | R
+      26 |                 84 | M
       27 |                 84 | M
-      28 |                 84 | M
-      29 |                 84 | A
-      30 |                 84 | M
-      31 |                 84 | A
-      32 |                 84 | M
-(32 rows)
+      28 |                 84 | A
+      29 |                 84 | M
+      30 |                 84 | A
+      31 |                 84 | M
+(31 rows)
 
 select group_name, group_is_rollbackable, group_creation_time_id,
        group_last_alter_time_id, group_is_logging, 
@@ -407,9 +400,9 @@ select group_name, group_is_rollbackable, group_creation_time_id,
   from emaj.emaj_group order by group_name;
     group_name    | group_is_rollbackable | group_creation_time_id | group_last_alter_time_id | group_is_logging | group_is_rlbk_protected | group_nb_table | group_nb_sequence | group_comment 
 ------------------+-----------------------+------------------------+--------------------------+------------------+-------------------------+----------------+-------------------+---------------
- myGroup1         | t                     |                      1 |                       29 | t                | t                       |              4 |                 1 | 
+ myGroup1         | t                     |                      1 |                       28 | t                | t                       |              4 |                 1 | 
  myGroup2         | t                     |                      2 |                       11 | t                | f                       |              4 |                 2 | 
- myGroup6         | t                     |                      4 |                       31 | f                | f                       |              3 |                 0 | 
+ myGroup6         | t                     |                      4 |                       30 | f                | f                       |              3 |                 0 | 
  phil's group#3", | f                     |                      3 |                       13 | t                | t                       |              2 |                 1 | 
 (4 rows)
 
@@ -419,22 +412,22 @@ select mark_group, regexp_replace(mark_name,E'\\d\\d\.\\d\\d\\.\\d\\d\\.\\d\\d\\
     mark_group    | regexp_replace  | mark_time_id | mark_is_deleted | mark_is_rlbk_protected |  mark_comment  | mark_log_rows_before_next | mark_logged_rlbk_target_mark 
 ------------------+-----------------+--------------+-----------------+------------------------+----------------+---------------------------+------------------------------
  myGroup1         | M1              |           15 | f               | f                      |                |                        29 | 
- myGroup2         | M1              |           16 | f               | f                      |                |                        27 | 
- phil's group#3", | M1              |           17 | f               | f                      |                |                           | 
- myGroup1         | M2              |           18 | f               | f                      |                |                        11 | 
- myGroup1         | M3              |           19 | f               | t                      | Third mark set |                         0 | 
- myGroup2         | M2              |           22 | f               | f                      |                |                         4 | 
- myGroup2         | M3              |           23 | f               | f                      |                |                         0 | 
- myGroup2         | RLBK_M2_%_START |           24 | f               | f                      |                |                         2 | 
- myGroup2         | RLBK_M2_%_DONE  |           25 | f               | f                      |                |                         0 | M2
- myGroup2         | RLBK_M3_%_START |           26 | f               | f                      |                |                         2 | 
- myGroup2         | RLBK_M3_%_DONE  |           27 | f               | f                      |                |                         0 | M3
- myGroup1         | Common          |           28 | f               | f                      |                |                         0 | 
- myGroup2         | Common          |           28 | f               | f                      |                |                           | 
- myGroup1         | REMOVE_%        |           29 | f               | f                      |                |                           | 
- myGroup6         | Start G6        |           30 | t               | f                      |                |                         0 | 
- myGroup6         | REMOVE_%        |           31 | t               | f                      |                |                         0 | 
- myGroup6         | STOP_%          |           32 | t               | f                      |                |                         0 | 
+ myGroup2         | M1              |           15 | f               | f                      |                |                        27 | 
+ phil's group#3", | M1              |           16 | f               | f                      |                |                           | 
+ myGroup1         | M2              |           17 | f               | f                      |                |                        11 | 
+ myGroup1         | M3              |           18 | f               | t                      | Third mark set |                         0 | 
+ myGroup2         | M2              |           21 | f               | f                      |                |                         4 | 
+ myGroup2         | M3              |           22 | f               | f                      |                |                         0 | 
+ myGroup2         | RLBK_M2_%_START |           23 | f               | f                      |                |                         2 | 
+ myGroup2         | RLBK_M2_%_DONE  |           24 | f               | f                      |                |                         0 | M2
+ myGroup2         | RLBK_M3_%_START |           25 | f               | f                      |                |                         2 | 
+ myGroup2         | RLBK_M3_%_DONE  |           26 | f               | f                      |                |                         0 | M3
+ myGroup1         | Common          |           27 | f               | f                      |                |                         0 | 
+ myGroup2         | Common          |           27 | f               | f                      |                |                           | 
+ myGroup1         | REMOVE_%        |           28 | f               | f                      |                |                           | 
+ myGroup6         | Start G6        |           29 | t               | f                      |                |                         0 | 
+ myGroup6         | REMOVE_%        |           30 | t               | f                      |                |                         0 | 
+ myGroup6         | STOP_%          |           31 | t               | f                      |                |                         0 | 
 (17 rows)
 
 select sequ_schema, sequ_name, sequ_time_id, sequ_last_val, sequ_is_called
@@ -442,27 +435,27 @@ select sequ_schema, sequ_name, sequ_time_id, sequ_last_val, sequ_is_called
   sequ_schema   |    sequ_name     | sequ_time_id | sequ_last_val | sequ_is_called 
 ----------------+------------------+--------------+---------------+----------------
  myschema1      | myTbl3_col31_seq |           15 |             1 | f
- myschema2      | myTbl3_col31_seq |           16 |             1 | f
- myschema2      | myseq1           |           16 |          1000 | f
- phil's schema3 | phil's seq\1     |           17 |          1000 | f
+ myschema2      | myTbl3_col31_seq |           15 |             1 | f
+ myschema2      | myseq1           |           15 |          1000 | f
+ phil's schema3 | phil's seq\1     |           16 |          1000 | f
+ myschema1      | myTbl3_col31_seq |           17 |            10 | t
  myschema1      | myTbl3_col31_seq |           18 |            10 | t
- myschema1      | myTbl3_col31_seq |           19 |            10 | t
+ myschema2      | myTbl3_col31_seq |           21 |            10 | t
+ myschema2      | myseq1           |           21 |          1000 | t
  myschema2      | myTbl3_col31_seq |           22 |            10 | t
- myschema2      | myseq1           |           22 |          1000 | t
+ myschema2      | myseq1           |           22 |          1003 | t
  myschema2      | myTbl3_col31_seq |           23 |            10 | t
  myschema2      | myseq1           |           23 |          1003 | t
  myschema2      | myTbl3_col31_seq |           24 |            10 | t
- myschema2      | myseq1           |           24 |          1003 | t
+ myschema2      | myseq1           |           24 |          1001 | f
  myschema2      | myTbl3_col31_seq |           25 |            10 | t
  myschema2      | myseq1           |           25 |          1001 | f
  myschema2      | myTbl3_col31_seq |           26 |            10 | t
- myschema2      | myseq1           |           26 |          1001 | f
+ myschema2      | myseq1           |           26 |          1004 | f
+ myschema1      | myTbl3_col31_seq |           27 |            10 | t
  myschema2      | myTbl3_col31_seq |           27 |            10 | t
  myschema2      | myseq1           |           27 |          1004 | f
  myschema1      | myTbl3_col31_seq |           28 |            10 | t
- myschema2      | myTbl3_col31_seq |           28 |            10 | t
- myschema2      | myseq1           |           28 |          1004 | f
- myschema1      | myTbl3_col31_seq |           29 |            10 | t
 (22 rows)
 
 select tbl_schema, tbl_name, tbl_time_id, tbl_tuples, tbl_pages, tbl_log_seq_last_val
@@ -474,26 +467,30 @@ select tbl_schema, tbl_name, tbl_time_id, tbl_tuples, tbl_pages, tbl_log_seq_las
  myschema1      | mytbl2                                                  |          15 |         -1 |         0 |                    0
  myschema1      | mytbl2b                                                 |          15 |         -1 |         0 |                    0
  myschema1      | mytbl4                                                  |          15 |         -1 |         0 |                    0
- myschema2      | myTbl3                                                  |          16 |         -1 |         0 |                    0
- myschema2      | mytbl1                                                  |          16 |         -1 |         0 |                    0
- myschema2      | mytbl2                                                  |          16 |         -1 |         0 |                    0
- myschema2      | mytbl4                                                  |          16 |         -1 |         0 |                    0
- phil's schema3 | myTbl2\                                                 |          17 |         -1 |         0 |                    0
- phil's schema3 | phil's tbl1                                             |          17 |         -1 |         0 |                    0
+ myschema2      | myTbl3                                                  |          15 |         -1 |         0 |                    0
+ myschema2      | mytbl1                                                  |          15 |         -1 |         0 |                    0
+ myschema2      | mytbl2                                                  |          15 |         -1 |         0 |                    0
+ myschema2      | mytbl4                                                  |          15 |         -1 |         0 |                    0
+ phil's schema3 | myTbl2\                                                 |          16 |         -1 |         0 |                    0
+ phil's schema3 | phil's tbl1                                             |          16 |         -1 |         0 |                    0
+ myschema1      | myTbl3                                                  |          17 |         -1 |         0 |                   10
+ myschema1      | mytbl1                                                  |          17 |         -1 |         0 |                   15
+ myschema1      | mytbl2                                                  |          17 |         -1 |         0 |                    2
+ myschema1      | mytbl2b                                                 |          17 |         -1 |         0 |                    2
+ myschema1      | mytbl4                                                  |          17 |         -1 |         0 |                    0
  myschema1      | myTbl3                                                  |          18 |         -1 |         0 |                   10
- myschema1      | mytbl1                                                  |          18 |         -1 |         0 |                   15
+ myschema1      | mytbl1                                                  |          18 |         -1 |         0 |                   18
  myschema1      | mytbl2                                                  |          18 |         -1 |         0 |                    2
  myschema1      | mytbl2b                                                 |          18 |         -1 |         0 |                    2
- myschema1      | mytbl4                                                  |          18 |         -1 |         0 |                    0
- myschema1      | myTbl3                                                  |          19 |         -1 |         0 |                   10
- myschema1      | mytbl1                                                  |          19 |         -1 |         0 |                   18
- myschema1      | mytbl2                                                  |          19 |         -1 |         0 |                    2
- myschema1      | mytbl2b                                                 |          19 |         -1 |         0 |                    2
- myschema1      | mytbl4                                                  |          19 |         -1 |         0 |                    8
+ myschema1      | mytbl4                                                  |          18 |         -1 |         0 |                    8
+ myschema2      | myTbl3                                                  |          21 |         -1 |         0 |                   10
+ myschema2      | mytbl1                                                  |          21 |         -1 |         0 |                   15
+ myschema2      | mytbl2                                                  |          21 |         -1 |         0 |                    2
+ myschema2      | mytbl4                                                  |          21 |         -1 |         0 |                    0
  myschema2      | myTbl3                                                  |          22 |         -1 |         0 |                   10
  myschema2      | mytbl1                                                  |          22 |         -1 |         0 |                   15
  myschema2      | mytbl2                                                  |          22 |         -1 |         0 |                    2
- myschema2      | mytbl4                                                  |          22 |         -1 |         0 |                    0
+ myschema2      | mytbl4                                                  |          22 |         -1 |         0 |                    4
  myschema2      | myTbl3                                                  |          23 |         -1 |         0 |                   10
  myschema2      | mytbl1                                                  |          23 |         -1 |         0 |                   15
  myschema2      | mytbl2                                                  |          23 |         -1 |         0 |                    2
@@ -501,7 +498,7 @@ select tbl_schema, tbl_name, tbl_time_id, tbl_tuples, tbl_pages, tbl_log_seq_las
  myschema2      | myTbl3                                                  |          24 |         -1 |         0 |                   10
  myschema2      | mytbl1                                                  |          24 |         -1 |         0 |                   15
  myschema2      | mytbl2                                                  |          24 |         -1 |         0 |                    2
- myschema2      | mytbl4                                                  |          24 |         -1 |         0 |                    4
+ myschema2      | mytbl4                                                  |          24 |         -1 |         0 |                    6
  myschema2      | myTbl3                                                  |          25 |         -1 |         0 |                   10
  myschema2      | mytbl1                                                  |          25 |         -1 |         0 |                   15
  myschema2      | mytbl2                                                  |          25 |         -1 |         0 |                    2
@@ -509,7 +506,12 @@ select tbl_schema, tbl_name, tbl_time_id, tbl_tuples, tbl_pages, tbl_log_seq_las
  myschema2      | myTbl3                                                  |          26 |         -1 |         0 |                   10
  myschema2      | mytbl1                                                  |          26 |         -1 |         0 |                   15
  myschema2      | mytbl2                                                  |          26 |         -1 |         0 |                    2
- myschema2      | mytbl4                                                  |          26 |         -1 |         0 |                    6
+ myschema2      | mytbl4                                                  |          26 |         -1 |         0 |                    8
+ myschema1      | myTbl3                                                  |          27 |         -1 |         0 |                   10
+ myschema1      | mytbl1                                                  |          27 |         -1 |         0 |                   24
+ myschema1      | mytbl2                                                  |          27 |         -1 |         0 |                    3
+ myschema1      | mytbl2b                                                 |          27 |         -1 |         0 |                    3
+ myschema1      | mytbl4                                                  |          27 |         -1 |         0 |                    9
  myschema2      | myTbl3                                                  |          27 |         -1 |         0 |                   10
  myschema2      | mytbl1                                                  |          27 |         -1 |         0 |                   15
  myschema2      | mytbl2                                                  |          27 |         -1 |         0 |                    2
@@ -519,36 +521,27 @@ select tbl_schema, tbl_name, tbl_time_id, tbl_tuples, tbl_pages, tbl_log_seq_las
  myschema1      | mytbl2                                                  |          28 |         -1 |         0 |                    3
  myschema1      | mytbl2b                                                 |          28 |         -1 |         0 |                    3
  myschema1      | mytbl4                                                  |          28 |         -1 |         0 |                    9
- myschema2      | myTbl3                                                  |          28 |         -1 |         0 |                   10
- myschema2      | mytbl1                                                  |          28 |         -1 |         0 |                   15
- myschema2      | mytbl2                                                  |          28 |         -1 |         0 |                    2
- myschema2      | mytbl4                                                  |          28 |         -1 |         0 |                    8
- myschema1      | myTbl3                                                  |          29 |         -1 |         0 |                   10
- myschema1      | mytbl1                                                  |          29 |         -1 |         0 |                   24
- myschema1      | mytbl2                                                  |          29 |         -1 |         0 |                    3
- myschema1      | mytbl2b                                                 |          29 |         -1 |         0 |                    3
- myschema1      | mytbl4                                                  |          29 |         -1 |         0 |                    9
+ myschema6      | table_with_50_characters_long_name_____0_________0      |          29 |         -1 |         0 |                    0
+ myschema6      | table_with_51_characters_long_name_____0_________0a     |          29 |         -1 |         0 |                    0
+ myschema6      | table_with_55_characters_long_name_____0_________0abcde |          29 |         -1 |         0 |                    0
+ myschema6      | table_with_55_characters_long_name_____0_________0fghij |          29 |         -1 |         0 |                    0
  myschema6      | table_with_50_characters_long_name_____0_________0      |          30 |         -1 |         0 |                    0
  myschema6      | table_with_51_characters_long_name_____0_________0a     |          30 |         -1 |         0 |                    0
  myschema6      | table_with_55_characters_long_name_____0_________0abcde |          30 |         -1 |         0 |                    0
  myschema6      | table_with_55_characters_long_name_____0_________0fghij |          30 |         -1 |         0 |                    0
  myschema6      | table_with_50_characters_long_name_____0_________0      |          31 |         -1 |         0 |                    0
  myschema6      | table_with_51_characters_long_name_____0_________0a     |          31 |         -1 |         0 |                    0
- myschema6      | table_with_55_characters_long_name_____0_________0abcde |          31 |         -1 |         0 |                    0
  myschema6      | table_with_55_characters_long_name_____0_________0fghij |          31 |         -1 |         0 |                    0
- myschema6      | table_with_50_characters_long_name_____0_________0      |          32 |         -1 |         0 |                    0
- myschema6      | table_with_51_characters_long_name_____0_________0a     |          32 |         -1 |         0 |                    0
- myschema6      | table_with_55_characters_long_name_____0_________0fghij |          32 |         -1 |         0 |                    0
 (70 rows)
 
 select sqhl_schema, sqhl_table, sqhl_begin_time_id, sqhl_end_time_id, sqhl_hole_size
   from emaj.emaj_seq_hole order by 1,2,3;
  sqhl_schema | sqhl_table | sqhl_begin_time_id | sqhl_end_time_id | sqhl_hole_size 
 -------------+------------+--------------------+------------------+----------------
- myschema1   | mytbl1     |                 19 |               20 |              6
- myschema1   | mytbl2     |                 19 |               21 |              1
- myschema1   | mytbl2b    |                 19 |               21 |              1
- myschema1   | mytbl4     |                 19 |               21 |              1
+ myschema1   | mytbl1     |                 18 |               19 |              6
+ myschema1   | mytbl2     |                 18 |               20 |              1
+ myschema1   | mytbl2b    |                 18 |               20 |              1
+ myschema1   | mytbl4     |                 18 |               20 |              1
 (4 rows)
 
 select * from emaj.emaj_relation_change order by 1,2,3,4,5;
@@ -576,8 +569,8 @@ select * from emaj.emaj_relation_change order by 1,2,3,4,5;
             14 | myschema6      | table_with_51_characters_long_name_____0_________0a     | ADD_TABLE         | myGroup6         |                  |                  |                 |                |                    |                    |                        |                     |                         |                        |                            |              
             14 | myschema6      | table_with_55_characters_long_name_____0_________0abcde | ADD_TABLE         | myGroup6         |                  |                  |                 |                |                    |                    |                        |                     |                         |                        |                            |              
             14 | myschema6      | table_with_55_characters_long_name_____0_________0fghij | ADD_TABLE         | myGroup6         |                  |                  |                 |                |                    |                    |                        |                     |                         |                        |                            |              
-            29 | myschema1      | myTbl3                                                  | REMOVE_TABLE      | myGroup1         |                  |                  |                 |                |                    |                    |                        |                     |                         |                        |                            |              
-            31 | myschema6      | table_with_55_characters_long_name_____0_________0abcde | REMOVE_TABLE      | myGroup6         |                  |                  |                 |                |                    |                    |                        |                     |                         |                        |                            |              
+            28 | myschema1      | myTbl3                                                  | REMOVE_TABLE      | myGroup1         |                  |                  |                 |                |                    |                    |                        |                     |                         |                        |                            |              
+            30 | myschema6      | table_with_55_characters_long_name_____0_________0abcde | REMOVE_TABLE      | myGroup6         |                  |                  |                 |                |                    |                    |                        |                     |                         |                        |                            |              
 (24 rows)
 
 -- log tables

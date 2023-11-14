@@ -13,15 +13,31 @@ select * from emaj.emaj_verify_all();
  No error detected
 (3 rows)
 
+select * from emaj.emaj_log_session;
+    lses_group    | lses_time_range | lses_group_creation_time_id | lses_marks | lses_log_rows 
+------------------+-----------------+-----------------------------+------------+---------------
+ myGroup1         | [15,)           |                           1 |          5 |            49
+ myGroup2         | [15,)           |                           2 |          8 |            35
+ myGroup6         | [29,31)         |                           4 |          3 |             0
+ phil's group#3", | [16,)           |                           3 |          1 |             0
+(4 rows)
+
+select time_event, count(*) from emaj.emaj_time_stamp where time_event in ('S','X') group by 1 order by 1;
+ time_event | count 
+------------+-------
+ S          |     3
+ X          |     1
+(2 rows)
+
 select group_name, group_is_rollbackable, group_creation_time_id,
        group_last_alter_time_id, group_is_logging, 
        group_is_rlbk_protected, group_nb_table, group_nb_sequence, group_comment
   from emaj.emaj_group order by group_name;
     group_name    | group_is_rollbackable | group_creation_time_id | group_last_alter_time_id | group_is_logging | group_is_rlbk_protected | group_nb_table | group_nb_sequence | group_comment 
 ------------------+-----------------------+------------------------+--------------------------+------------------+-------------------------+----------------+-------------------+---------------
- myGroup1         | t                     |                      1 |                       29 | t                | t                       |              4 |                 1 | 
+ myGroup1         | t                     |                      1 |                       28 | t                | t                       |              4 |                 1 | 
  myGroup2         | t                     |                      2 |                       11 | t                | f                       |              4 |                 2 | 
- myGroup6         | t                     |                      4 |                       31 | f                | f                       |              3 |                 0 | 
+ myGroup6         | t                     |                      4 |                       30 | f                | f                       |              3 |                 0 | 
  phil's group#3", | f                     |                      3 |                       13 | t                | t                       |              2 |                 1 | 
 (4 rows)
 
@@ -50,33 +66,9 @@ select * from emaj.emaj_relation_change order by 1,2,3,4;
             14 | myschema6      | table_with_51_characters_long_name_____0_________0a     | ADD_TABLE         | myGroup6         |                  |                  |                 |                |                    |                    |                        |                     |                         |                        |                            |              
             14 | myschema6      | table_with_55_characters_long_name_____0_________0abcde | ADD_TABLE         | myGroup6         |                  |                  |                 |                |                    |                    |                        |                     |                         |                        |                            |              
             14 | myschema6      | table_with_55_characters_long_name_____0_________0fghij | ADD_TABLE         | myGroup6         |                  |                  |                 |                |                    |                    |                        |                     |                         |                        |                            |              
-            29 | myschema1      | myTbl3                                                  | REMOVE_TABLE      | myGroup1         |                  |                  |                 |                |                    |                    |                        |                     |                         |                        |                            |              
-            31 | myschema6      | table_with_55_characters_long_name_____0_________0abcde | REMOVE_TABLE      | myGroup6         |                  |                  |                 |                |                    |                    |                        |                     |                         |                        |                            |              
+            28 | myschema1      | myTbl3                                                  | REMOVE_TABLE      | myGroup1         |                  |                  |                 |                |                    |                    |                        |                     |                         |                        |                            |              
+            30 | myschema6      | table_with_55_characters_long_name_____0_________0abcde | REMOVE_TABLE      | myGroup6         |                  |                  |                 |                |                    |                    |                        |                     |                         |                        |                            |              
 (24 rows)
-
-select mark_group, regexp_replace(mark_name,E'\\d\\d\.\\d\\d\\.\\d\\d\\.\\d\\d\\d\\d','%','g'), mark_time_id, 
-       mark_is_deleted, mark_is_rlbk_protected, mark_comment, mark_log_rows_before_next, mark_logged_rlbk_target_mark 
-  from emaj.emaj_mark order by mark_time_id, mark_group;
-    mark_group    | regexp_replace  | mark_time_id | mark_is_deleted | mark_is_rlbk_protected |  mark_comment  | mark_log_rows_before_next | mark_logged_rlbk_target_mark 
-------------------+-----------------+--------------+-----------------+------------------------+----------------+---------------------------+------------------------------
- myGroup1         | M1              |           15 | f               | f                      |                |                        29 | 
- myGroup2         | M1              |           16 | f               | f                      |                |                        27 | 
- phil's group#3", | M1              |           17 | f               | f                      |                |                           | 
- myGroup1         | M2              |           18 | f               | f                      |                |                        11 | 
- myGroup1         | M3              |           19 | f               | t                      | Third mark set |                         0 | 
- myGroup2         | M2              |           22 | f               | f                      |                |                         4 | 
- myGroup2         | M3              |           23 | f               | f                      |                |                         0 | 
- myGroup2         | RLBK_M2_%_START |           24 | f               | f                      |                |                         2 | 
- myGroup2         | RLBK_M2_%_DONE  |           25 | f               | f                      |                |                         0 | M2
- myGroup2         | RLBK_M3_%_START |           26 | f               | f                      |                |                         2 | 
- myGroup2         | RLBK_M3_%_DONE  |           27 | f               | f                      |                |                         0 | M3
- myGroup1         | Common          |           28 | f               | f                      |                |                         0 | 
- myGroup2         | Common          |           28 | f               | f                      |                |                           | 
- myGroup1         | REMOVE_%        |           29 | f               | f                      |                |                           | 
- myGroup6         | Start G6        |           30 | t               | f                      |                |                         0 | 
- myGroup6         | REMOVE_%        |           31 | t               | f                      |                |                         0 | 
- myGroup6         | STOP_%          |           32 | t               | f                      |                |                         0 | 
-(17 rows)
 
 -----------------------------
 -- Step 2 : for both groups, rollback to the common mark just set before the upgrade, after having unprotected the first group
@@ -381,39 +373,38 @@ select time_id, time_last_emaj_gid, time_event from emaj.emaj_time_stamp order b
       14 |                  0 | A
       15 |                  0 | S
       16 |                  0 | S
-      17 |                  0 | S
-      18 |                 29 | M
-      19 |                 40 | M
-      20 |                 46 | R
-      21 |                 49 | R
-      22 |                 76 | M
-      23 |                 80 | M
-      24 |                 80 | R
-      25 |                 82 | M
-      26 |                 82 | R
+      17 |                 29 | M
+      18 |                 40 | M
+      19 |                 46 | R
+      20 |                 49 | R
+      21 |                 76 | M
+      22 |                 80 | M
+      23 |                 80 | R
+      24 |                 82 | M
+      25 |                 82 | R
+      26 |                 84 | M
       27 |                 84 | M
-      28 |                 84 | M
-      29 |                 84 | A
-      30 |                 84 | S
-      31 |                 84 | A
-      32 |                 84 | X
+      28 |                 84 | A
+      29 |                 84 | S
+      30 |                 84 | A
+      31 |                 84 | X
+      32 |                 84 | R
       33 |                 84 | R
-      34 |                 84 | R
-      35 |                 91 | M
+      34 |                 91 | M
+      35 |                105 | M
       36 |                105 | M
       37 |                105 | M
-      38 |                105 | M
-      39 |                105 | R
-      40 |                107 | M
-      41 |                107 | R
-      42 |                117 | R
-      43 |                120 | R
-      44 |                123 | M
-      45 |                123 | S
-      46 |                129 | R
-      47 |                129 | X
-      48 |                129 | D
-(48 rows)
+      38 |                105 | R
+      39 |                107 | M
+      40 |                107 | R
+      41 |                117 | R
+      42 |                120 | R
+      43 |                123 | M
+      44 |                123 | S
+      45 |                129 | R
+      46 |                129 | X
+      47 |                129 | D
+(47 rows)
 
 select hist_function, hist_event, hist_object,
        regexp_replace(regexp_replace(regexp_replace(hist_wording,
@@ -480,18 +471,12 @@ select hist_function, hist_event, hist_object,
  ASSIGN_TABLES            | TABLE ADDED        | myschema6.table_with_55_characters_long_name_____0_________0abcde | To the idle group myGroup6                                                                    | postgres
  ASSIGN_TABLES            | TABLE ADDED        | myschema6.table_with_55_characters_long_name_____0_________0fghij | To the idle group myGroup6                                                                    | postgres
  ASSIGN_TABLES            | END                |                                                                   | 4 tables assigned to the group myGroup6                                                       | postgres
- START_GROUP              | BEGIN              | myGroup1                                                          | With log reset                                                                                | postgres
- LOCK_GROUP               | BEGIN              | myGroup1                                                          |                                                                                               | postgres
- LOCK_GROUP               | END                | myGroup1                                                          | 5 tables locked, 0 deadlock(s)                                                                | postgres
- SET_MARK_GROUP           | BEGIN              | myGroup1                                                          | M1                                                                                            | postgres
- SET_MARK_GROUP           | END                | myGroup1                                                          | M1                                                                                            | postgres
- START_GROUP              | END                | myGroup1                                                          | 6 tables/sequences processed                                                                  | postgres
- START_GROUP              | BEGIN              | myGroup2                                                          | With log reset                                                                                | postgres
- LOCK_GROUP               | BEGIN              | myGroup2                                                          |                                                                                               | postgres
- LOCK_GROUP               | END                | myGroup2                                                          | 4 tables locked, 0 deadlock(s)                                                                | postgres
- SET_MARK_GROUP           | BEGIN              | myGroup2                                                          | M1                                                                                            | postgres
- SET_MARK_GROUP           | END                | myGroup2                                                          | M1                                                                                            | postgres
- START_GROUP              | END                | myGroup2                                                          | 6 tables/sequences processed                                                                  | postgres
+ START_GROUPS             | BEGIN              | myGroup1,myGroup2                                                 | With log reset                                                                                | postgres
+ LOCK_GROUPS              | BEGIN              | myGroup1,myGroup2                                                 |                                                                                               | postgres
+ LOCK_GROUPS              | END                | myGroup1,myGroup2                                                 | 9 tables locked, 0 deadlock(s)                                                                | postgres
+ SET_MARK_GROUPS          | BEGIN              | myGroup1,myGroup2                                                 | M1                                                                                            | postgres
+ SET_MARK_GROUPS          | END                | myGroup1,myGroup2                                                 | M1                                                                                            | postgres
+ START_GROUPS             | END                | myGroup1,myGroup2                                                 | 12 tables/sequences processed                                                                 | postgres
  START_GROUP              | BEGIN              | phil's group#3",                                                  | With log reset                                                                                | postgres
  LOCK_GROUP               | BEGIN              | phil's group#3",                                                  |                                                                                               | postgres
  LOCK_GROUP               | END                | phil's group#3",                                                  | 2 tables locked, 0 deadlock(s)                                                                | postgres
@@ -747,7 +732,7 @@ select hist_function, hist_event, hist_object,
  DROP_GROUP               | BEGIN              | myGroup6                                                          |                                                                                               | postgres
  DROP_GROUP               | LOG_SCHEMA DROPPED | emaj_myschema6                                                    |                                                                                               | postgres
  DROP_GROUP               | END                | myGroup6                                                          | 3 tables/sequences processed                                                                  | postgres
-(322 rows)
+(316 rows)
 
 --
 reset role;
