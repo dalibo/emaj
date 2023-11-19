@@ -367,9 +367,9 @@ select * from emaj.emaj_log_session order by lses_group, lses_time_range;
     lses_group    | lses_time_range | lses_group_creation_time_id | lses_marks | lses_log_rows 
 ------------------+-----------------+-----------------------------+------------+---------------
  emptyGroup       | [2005,)         |                        2000 |          1 |             0
- myGroup1         | [2002,2006)     |                        2000 |          2 |             0
+ myGroup1         | [2002,2007)     |                        2000 |          2 |             0
  myGroup1         | [2009,)         |                        2000 |          1 |             0
- myGroup2         | [2003,2007)     |                        2000 |          2 |             0
+ myGroup2         | [2003,2008)     |                        2000 |          2 |             0
  myGroup2         | [2010,)         |                        2000 |          1 |             0
  phil's group#3", | [2004,)         |                        1003 |          1 |             0
 (6 rows)
@@ -1023,19 +1023,19 @@ select group_name, group_is_logging, group_is_rlbk_protected from emaj.emaj_grou
 select * from emaj.emaj_log_session order by lses_group, lses_time_range;
     lses_group    | lses_time_range | lses_group_creation_time_id | lses_marks | lses_log_rows 
 ------------------+-----------------+-----------------------------+------------+---------------
- emptyGroup       | [2005,2202)     |                        2000 |          2 |             0
- myGroup1         | [2002,2006)     |                        2000 |          2 |             0
- myGroup1         | [2009,2201)     |                        2000 |          2 |             0
- myGroup1         | [2204,2206)     |                        2000 |          2 |             0
- myGroup1         | [2401,2402)     |                        2000 |          2 |             0
- myGroup1         | [2404,2501)     |                        2000 |          2 |             0
- myGroup1         | [2502,2508)     |                        2000 |          1 |             0
- myGroup2         | [2003,2007)     |                        2000 |          2 |             0
- myGroup2         | [2010,2203)     |                        2000 |          2 |             0
- myGroup2         | [2205,2207)     |                        2000 |          2 |             0
- myGroup2         | [2401,2402)     |                        2000 |          2 |             0
- myGroup2         | [2404,2501)     |                        2000 |          2 |             0
- myGroup2         | [2502,2507)     |                        2000 |          1 |             0
+ emptyGroup       | [2005,2203)     |                        2000 |          2 |             0
+ myGroup1         | [2002,2007)     |                        2000 |          2 |             0
+ myGroup1         | [2009,2202)     |                        2000 |          2 |             0
+ myGroup1         | [2204,2207)     |                        2000 |          2 |             0
+ myGroup1         | [2401,2403)     |                        2000 |          2 |             0
+ myGroup1         | [2404,2502)     |                        2000 |          2 |             0
+ myGroup1         | [2502,2509)     |                        2000 |          1 |             0
+ myGroup2         | [2003,2008)     |                        2000 |          2 |             0
+ myGroup2         | [2010,2204)     |                        2000 |          2 |             0
+ myGroup2         | [2205,2208)     |                        2000 |          2 |             0
+ myGroup2         | [2401,2403)     |                        2000 |          2 |             0
+ myGroup2         | [2404,2502)     |                        2000 |          2 |             0
+ myGroup2         | [2502,2508)     |                        2000 |          1 |             0
  phil's group#3", | [2004,)         |                        1003 |          1 |             0
 (14 rows)
 

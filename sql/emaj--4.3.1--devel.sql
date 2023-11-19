@@ -325,7 +325,7 @@ $do$
               RAISE NOTICE '  --> Create a log session for time interval [% , %) (% marks, % changes)',
                 v_startTimeId, r_event.event_time_id, v_nbMark, v_nbChange;
               INSERT INTO emaj.emaj_log_session VALUES
-                (r_group.group_name, int8range(v_startTimeId, r_event.event_time_id, '[)'), v_createTimeId, v_nbMark, v_nbChange);
+                (r_group.group_name, int8range(v_startTimeId, r_event.event_time_id, '[]'), v_createTimeId, v_nbMark, v_nbChange);
             END IF;
             v_startTimeId = NULL;
             v_1stMarkAfterStopTimeId = NULL;
@@ -378,7 +378,7 @@ $do$
           RAISE NOTICE '  --> Create a log session for time interval [% , NULL) (% marks, % changes)',
             v_startTimeId, v_nbMark, v_nbChange;
           INSERT INTO emaj.emaj_log_session VALUES
-            (r_group.group_name, int8range(v_startTimeId, NULL, '[)'), v_createTimeId, v_nbMark, v_nbChange);
+            (r_group.group_name, int8range(v_startTimeId, NULL, '[]'), v_createTimeId, v_nbMark, v_nbChange);
         ELSE
           RAISE WARNING '*** Tables group % is logging, but the last group start event has not been found. No log session is generated.',
                         r_group.group_name;
@@ -492,7 +492,7 @@ $_check_marks_range$
           PERFORM 0
             FROM emaj.emaj_log_session
             WHERE lses_group = v_groupName
-              AND lses_time_range @> int8range(p_firstMarkTimeId, NULL, '[)');
+              AND lses_time_range @> int8range(p_firstMarkTimeId, NULL, '[]');
           IF NOT FOUND THEN
             RAISE WARNING 'Since mark "%", the tables group "%" has not been always in logging state. '
                           'Some data changes may not have been recorded.', p_firstMark, v_groupName;
@@ -501,7 +501,7 @@ $_check_marks_range$
           PERFORM 0
             FROM emaj.emaj_log_session
             WHERE lses_group = v_groupName
-              AND lses_time_range @> int8range(p_firstMarkTimeId, p_lastMarkTimeId, '[)');
+              AND lses_time_range @> int8range(p_firstMarkTimeId, p_lastMarkTimeId, '[]');
           IF NOT FOUND THEN
             RAISE WARNING 'Between marks "%" and "%", the tables group "%" has not been always in logging state. '
                           'Some data changes may not have been recorded.', p_firstMark, p_lastMark, v_groupName;
@@ -571,7 +571,7 @@ $_drop_group$
       RETURNING group_nb_table + group_nb_sequence INTO v_nbRel;
 -- Update the last log session for the group to set the time range upper bound, if it is infinity
     UPDATE emaj.emaj_log_session
-      SET lses_time_range = int8range(lower(lses_time_range), v_timeId, '[)')
+      SET lses_time_range = int8range(lower(lses_time_range), v_timeId, '[]')
       WHERE lses_group = p_groupName
         AND upper_inf(lses_time_range);
 -- Enable previously disabled event triggers.
@@ -657,7 +657,7 @@ $_start_groups$
 -- Insert log sessions start in emaj_log_session.
 --   lses_marks is already set to 1 as it will not be incremented at the first mark set.
       INSERT INTO emaj.emaj_log_session
-        SELECT group_name, int8range(v_timeId, NULL, '[)'), group_creation_time_id, 1, 0
+        SELECT group_name, int8range(v_timeId, NULL, '[]'), group_creation_time_id, 1, 0
           FROM emaj.emaj_group
           WHERE group_name = ANY (p_groupNames);
 -- Set the first mark for each group.
@@ -831,7 +831,7 @@ $_stop_groups$
         WHERE group_name = ANY (p_groupNames);
 -- Update the log sessions to set the time range upper bound
       UPDATE emaj.emaj_log_session
-        SET lses_time_range = int8range(lower(lses_time_range), v_timeId, '[)')
+        SET lses_time_range = int8range(lower(lses_time_range), v_timeId, '[]')
         WHERE lses_group = ANY (p_groupNames)
           AND upper_inf(lses_time_range);
     END IF;
@@ -2048,7 +2048,7 @@ CREATE OR REPLACE FUNCTION emaj._purge_histories(p_retentionDelay INTERVAL DEFAU
 RETURNS VOID LANGUAGE plpgsql AS
 $_purge_histories$
 -- This function purges the emaj history by deleting all rows prior the 'history_retention' parameter, but
---   without deleting event traces neither after the oldest active mark or after the oldest not committed or aborted rollback operation.
+--   without deleting event traces neither after the oldest mark or after the oldest not committed or aborted rollback operation.
 -- It also purges oldest rows from the emaj_exec_plan, emaj_rlbk_session and emaj_rlbk_plan tables, using the same rules.
 -- The function is called at start group time and when oldest marks are deleted.
 -- It is also called by the emaj_purge_histories() function.
@@ -2081,11 +2081,10 @@ $_purge_histories$
     SELECT least(
                                          -- compute the timestamp limit from the retention delay value
         (SELECT current_timestamp - v_delay),
-                                         -- get the transaction timestamp of the oldest non deleted mark for all groups
+                                         -- get the transaction timestamp of the oldest known mark
         (SELECT min(time_tx_timestamp)
            FROM emaj.emaj_mark
-                JOIN emaj.emaj_time_stamp ON (time_id = mark_time_id)
-           WHERE NOT mark_is_deleted),
+                JOIN emaj.emaj_time_stamp ON (time_id = mark_time_id)),
                                          -- get the transaction timestamp of the oldest non committed or aborted rollback
         (SELECT min(time_tx_timestamp)
            FROM emaj.emaj_rlbk
@@ -2105,7 +2104,7 @@ $_purge_histories$
     END IF;
 -- Delete oldest rows from emaj_log_session.
     DELETE FROM emaj.emaj_log_session
-      WHERE upper(lses_time_range) < v_maxTimeId;
+      WHERE upper(lses_time_range) - 1 < v_maxTimeId;
     GET DIAGNOSTICS v_nbPurgedLogSession = ROW_COUNT;
     IF v_nbPurgedLogSession > 0 THEN
       v_wording = v_wording || ' ; ' || v_nbPurgedLogSession || ' log session rows deleted';

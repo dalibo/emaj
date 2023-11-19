@@ -1476,8 +1476,8 @@ select * from emaj.emaj_log_session order by lses_group, lses_time_range;
     lses_group    | lses_time_range | lses_group_creation_time_id | lses_marks | lses_log_rows 
 ------------------+-----------------+-----------------------------+------------+---------------
  emptyGroup       | [3002,)         |                        2000 |          4 |             0
- myGroup1         | [3000,3600)     |                        2000 |         10 |             0
- myGroup2         | [3001,3601)     |                        2000 |         11 |             0
+ myGroup1         | [3000,3601)     |                        2000 |         10 |             0
+ myGroup2         | [3001,3602)     |                        2000 |         11 |             0
  phil's group#3", | [2004,)         |                        1003 |          3 |             0
 (4 rows)
 

@@ -2952,10 +2952,10 @@ select emaj.emaj_enable_protection_by_event_triggers();
 select * from emaj.emaj_log_session where lower(lses_time_range) >= 4000 order by lses_group, lses_time_range;
  lses_group | lses_time_range | lses_group_creation_time_id | lses_marks | lses_log_rows 
 ------------+-----------------+-----------------------------+------------+---------------
- myGroup1   | [4003,4027)     |                        2000 |          8 |             0
- myGroup1   | [4028,4034)     |                        2000 |          4 |            39
+ myGroup1   | [4003,4028)     |                        2000 |          8 |             0
+ myGroup1   | [4028,4035)     |                        2000 |          4 |            39
  myGroup1   | [4035,)         |                        2000 |         15 |            86
- myGroup2   | [4004,4027)     |                        2000 |          8 |             0
+ myGroup2   | [4004,4028)     |                        2000 |          8 |             0
  myGroup2   | [4029,)         |                        2000 |          1 |             0
  myGroup4   | [4047,)         |                        1004 |          4 |            22
 (6 rows)
