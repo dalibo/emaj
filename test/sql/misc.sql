@@ -140,15 +140,20 @@ select test_log('myGroup2','EMAJ_LAST_MARK','Mark22');
 drop function test_log(text,text,text);
 
 -- should be ok
-select stat_group, stat_schema, stat_table, stat_first_mark, stat_last_mark, stat_rows from emaj.emaj_log_stat_group('myGroup2','Mark21',NULL)
+select stat_group, stat_schema, stat_table, stat_first_mark, stat_last_mark, stat_rows
+  from emaj.emaj_log_stat_group('myGroup2','Mark21',NULL)
   order by stat_group, stat_schema, stat_table;
-select stat_group, stat_schema, stat_table, stat_first_mark, stat_last_mark, stat_rows from emaj.emaj_log_stat_group('myGroup2','Mark21','EMAJ_LAST_MARK')
+select stat_group, stat_schema, stat_table, stat_first_mark, stat_last_mark, stat_rows
+  from emaj.emaj_log_stat_group('myGroup2','Mark21','EMAJ_LAST_MARK')
   order by stat_group, stat_schema, stat_table;
-select stat_group, stat_schema, stat_table, stat_first_mark, stat_last_mark, stat_rows from emaj.emaj_log_stat_group('myGroup2','Mark22','Mark22')
+select stat_group, stat_schema, stat_table, stat_first_mark, stat_last_mark, stat_rows
+  from emaj.emaj_log_stat_group('myGroup2','Mark22','Mark22')
   order by stat_group, stat_schema, stat_table;
-select stat_group, stat_schema, stat_table, stat_first_mark, stat_last_mark, stat_rows from emaj.emaj_log_stat_group('myGroup2','Mark22','Mark23')
+select stat_group, stat_schema, stat_table, stat_first_mark, stat_last_mark, stat_rows
+  from emaj.emaj_log_stat_group('myGroup2','Mark22','Mark23')
   order by stat_group, stat_schema, stat_table;
-select stat_group, stat_schema, stat_table, stat_first_mark, stat_last_mark, stat_rows from emaj.emaj_log_stat_group('myGroup2','EMAJ_LAST_MARK','')
+select stat_group, stat_schema, stat_table, stat_first_mark, stat_last_mark, stat_rows
+  from emaj.emaj_log_stat_group('myGroup2','EMAJ_LAST_MARK','')
   order by stat_group, stat_schema, stat_table;
 
 select stat_group, stat_schema, stat_table, stat_first_mark, stat_last_mark, stat_rows
@@ -184,6 +189,16 @@ select stat_group, stat_schema, stat_table, stat_first_mark, stat_last_mark, sta
 -- empty group
 select * from emaj.emaj_log_stat_group('emptyGroup','SM2',NULL);
 select * from emaj.emaj_detailed_log_stat_group('emptyGroup','SM2',NULL);
+
+-- warning on marks range too wide to be contained by a single log session
+select emaj.emaj_stop_group('myGroup4', 'myGroup4_stop');
+select emaj.emaj_start_group('myGroup4', 'myGroup4_restart', false);
+select stat_group, stat_schema, stat_table, stat_first_mark, stat_last_mark, stat_rows
+  from emaj.emaj_log_stat_group('myGroup4','myGroup4_start','myGroup4_restart')
+  order by stat_group, stat_schema, stat_table;
+select stat_group, stat_schema, stat_table, stat_first_mark, stat_last_mark, stat_rows
+  from emaj.emaj_log_stat_group('myGroup4','myGroup4_start','')
+  order by stat_group, stat_schema, stat_table;
 
 -----------------------------
 -- emaj_sequence_stat_group(), emaj_sequence_stat_groups() test

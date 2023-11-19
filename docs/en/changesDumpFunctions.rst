@@ -100,6 +100,8 @@ The *emaj_dump_changes_group()* function extracts changes from log tables and fr
 
 The keyword 'EMAJ_LAST_MARK' can be used as end mark name, representing the last set mark.
 
+If the marks range is not contained by a single *log session*, i.e. if group stops/restarts occured between these marks, a warning message is raised, indicating that data changes may have been not recorded.
+
 The **4th parameter** is a list of options, separated by commas. Options can be any of the following keywords (in alphabetic order):
 
 * COLS_ORDER = LOG_TABLE | PK: defines the columns order in output files (LOG_TABLE = the same order than in log tables, PK = the primary key columns first);
@@ -165,6 +167,8 @@ or ::
    SELECT emaj.emaj_gen_sql_dump_changes_group('<group.name>', '<start.mark>', '<end.mark>', '<options.list>', <tables/sequences.array>, '<script.location>');
 
 The keyword 'EMAJ_LAST_MARK' can be used as end mark name, representing the last set mark.
+
+If the marks range is not contained by a single *log session*, i.e. if group stops/restarts occured between these marks, a warning message is raised, indicating that data changes may have been not recorded.
 
 The **4th parameter** is a list of options, separated by commas. Options can be any of the following keywords (in alphabetic order):
 

@@ -5,6 +5,9 @@ E-Maj - Change log
 ###Enhancements:###
   * Add an internal table that records log sessions, i.e. time ranges between
     start_group and stop_group operations.
+  * When computing log statistics or generating SQL statements for changes
+    dump or replay, raise a warning if the requested marks range is not
+    contained by a single log session.
   * Minor code changes.
 
 ###Bug fixes:###
@@ -34,7 +37,7 @@ E-Maj - Change log
   * Support of PG16.
   * Replace the emaj_snap_log_group() function by two new functions,
     emaj_dump_changes_group() and emaj_gen_sql_dump_changes_group(),
-    providing much more flexibility in data changes analysis, thanks to
+   oviding much more flexibility in data changes analysis, thanks to
     a rich set of options. Among them, the CONSOLIDATION option allows to
     easily understand the net changes on tables and sequences on a given
     marks frame.

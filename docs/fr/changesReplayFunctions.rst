@@ -15,6 +15,8 @@ Un *NULL* ou une chaîne vide peuvent être utilisés comme marque de fin. Ils r
 
 Le mot clé *'EMAJ_LAST_MARK'* peut être utilisé comme marque de fin. Il représente alors la dernière marque posée.
 
+Si l’intervalle de marques n’est pas contenu dans une seule *session de log*, c’est à dire si des arrêts/relances du groupe de tables ont eu lieu entre ces deux marques, un message d’avertissement est retourné, indiquant que des mises à jour de données ont pu ne pas être enregistrées.
+
 S'il est fourni, le nom du fichier de sortie doit être exprimé sous forme de chemin absolu. Le fichier doit disposer des permissions adéquates pour que l'instance postgreSQL puisse y écrire. Si le fichier existe déjà, son contenu est écrasé.
 
 Le nom du fichier de sortie peut prendre une valeur NULL. Dans ce cas, le script SQL est préparé dans une table temporaire, accessible ensuite au travers d’une vue temporaire *emaj_sql_script*. A partir du client *psql*, on peut donc enchaîner dans une même session ::

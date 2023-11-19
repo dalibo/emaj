@@ -44,6 +44,8 @@ Une valeur *NULL* fournie comme marque de fin représente la situation courante.
 
 Le mot clé *'EMAJ_LAST_MARK'* peut être utilisé comme nom de marque. Il représente alors la dernière marque posée.
 
+Si l’intervalle de marques n’est pas contenu dans une seule *session de log*, c’est à dire si des arrêts/relances du groupe de tables ont eu lieu entre ces deux marques, un message d’avertissement est retourné, indiquant que des mises à jour de données ont pu ne pas être enregistrées.
+
 La fonction retourne une ligne par table, même si aucune mise à jour n'est enregistrée pour la table entre les deux marques. Dans ce cas, la colonne *stat_rows* contient la valeur 0.
 
 La plupart du temps, les colonnes *stat_first_mark*, *stat_first_mark_datetime*, *stat_last_mark* et *stat_last_mark_datetime* référencent les marques de début et de fin de période demandée. Mais elles peuvent contenir des valeurs différentes si une table a été ajoutée ou supprimée du groupe de tables pendant l’intervalle de temps demandé.
@@ -108,6 +110,8 @@ La fonction retourne un ensemble de lignes, de type *emaj.emaj_detailed_log_stat
 Une valeur *NULL* fournie comme marque de fin représente la situation courante.
 
 Le mot clé *'EMAJ_LAST_MARK'* peut être utilisé comme nom de marque. Il représente alors la dernière marque posée.
+
+Si l’intervalle de marques n’est pas contenu dans une seule *session de log*, c’est à dire si des arrêts/relances du groupe de tables ont eu lieu entre ces deux marques, un message d’avertissement est retourné, indiquant que des mises à jour de données ont pu ne pas être enregistrées.
 
 Contrairement à la fonction :ref:`emaj_log_stat_group() <emaj_log_stat_group>`, *emaj_detailed_log_stat_group()* ne retourne aucune ligne pour les tables sans mise à jour enregistrée sur l'intervalle de marques demandées. La colonne *stat_rows* ne contient donc jamais de valeur 0. 
 

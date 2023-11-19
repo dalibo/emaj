@@ -15,6 +15,8 @@ A *NULL* value or an empty string may be used as end mark, representing the curr
 
 The keyword *'EMAJ_LAST_MARK'* can be used as mark name, representing the last set mark.
 
+If the marks range is not contained by a single *log session*, i.e. if group stops/restarts occured between these marks, a warning message is raised, indicating that data changes may have been not recorded.
+
 If supplied, the output file name must be an absolute pathname. It must have the appropriate permission so that the PostgreSQL instance can write to it. If the file already exists, its content is overwritten.
 
 The output file name may be set to NULL. In this case, the SQL script is prepared in a temporary table that can then be accessed through a temporary view, *emaj_sql_script*. Using *psql*, the script can be exported with both commands::

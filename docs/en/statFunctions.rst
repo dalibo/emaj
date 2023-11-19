@@ -44,6 +44,8 @@ A *NULL* value supplied as end mark represents the current state.
 
 The keyword *'EMAJ_LAST_MARK'* can be used as mark name. It then represents the last set mark.
 
+If the marks range is not contained by a single *log session*, i.e. if group stops/restarts occured between these marks, a warning message is raised, indicating that data changes may have been not recorded.
+
 The function returns one row per table, even if there is no logged update for this table. In this case, stat_rows columns value is 0.
 
 Most of the time, the *stat_first_mark*, *stat_first_mark_datetime*, *stat_last_mark* and *stat_last_mark_datetime* columns reference the start and end marks of the requested period. But they can contain other values when a table has been added or removed from the tables group during the requested time interval.
@@ -108,6 +110,8 @@ The function returns a set of rows, whose type is named *emaj.emaj_detailed_log_
 A *NULL* value supplied as end mark represents the current state.
 
 The keyword *'EMAJ_LAST_MARK'* can be used as mark name. It then represents the last set mark.
+
+If the marks range is not contained by a single *log session*, i.e. if group stops/restarts occured between these marks, a warning message is raised, indicating that data changes may have been not recorded.
 
 Unlike :ref:`emaj_log_stat_group() <emaj_log_stat_group>`, the *emaj_detailed_log_stat_group()* function doesn't return any rows for tables having no logged updates inside the requested marks range. So *stat_rows* column never contains 0.
 

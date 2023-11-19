@@ -425,12 +425,95 @@ ALTER TYPE emaj.emaj_detailed_log_stat_type ALTER ATTRIBUTE stat_verb TYPE TEXT;
 ------------------------------------------------------------------
 -- drop obsolete functions or functions with modified interface --
 ------------------------------------------------------------------
+DROP FUNCTION IF EXISTS emaj._check_marks_range(P_GROUPNAMES TEXT[],INOUT P_FIRSTMARK TEXT,INOUT P_LASTMARK TEXT,P_FINITEUPPERBOUND BOOLEAN,OUT P_FIRSTMARKTIMEID BIGINT,OUT P_LASTMARKTIMEID BIGINT,OUT P_FIRSTMARKTS TIMESTAMPTZ,OUT P_LASTMARKTS TIMESTAMPTZ,OUT P_FIRSTMARKEMAJGID BIGINT,OUT P_LASTMARKEMAJGID BIGINT);
 DROP FUNCTION IF EXISTS emaj._log_stat_groups(P_GROUPNAMES TEXT[],P_MULTIGROUP BOOLEAN,P_FIRSTMARK TEXT,P_LASTMARK TEXT);
 DROP FUNCTION IF EXISTS emaj._detailed_log_stat_groups(P_GROUPNAMES TEXT[],P_MULTIGROUP BOOLEAN,P_FIRSTMARK TEXT,P_LASTMARK TEXT);
 
 ------------------------------------------------------------------
 -- create new or modified functions                             --
 ------------------------------------------------------------------
+CREATE OR REPLACE FUNCTION emaj._check_marks_range(p_groupNames TEXT[], INOUT p_firstMark TEXT, INOUT p_lastMark TEXT,
+                                                   p_finiteUpperBound BOOLEAN DEFAULT FALSE, p_checkLogSession BOOLEAN DEFAULT TRUE,
+                                                   OUT p_firstMarkTimeId BIGINT, OUT p_lastMarkTimeId BIGINT,
+                                                   OUT p_firstMarkTs TIMESTAMPTZ, OUT p_lastMarkTs TIMESTAMPTZ,
+                                                   OUT p_firstMarkEmajGid BIGINT, OUT p_lastMarkEmajGid BIGINT)
+LANGUAGE plpgsql AS
+$_check_marks_range$
+-- This function verifies that a marks range is valid for one or several groups and return useful data about both marks.
+-- It checks that both marks defining the bounds exist and are in chronological order.
+-- If required, it warns if the mark range is not contained by a log session.
+-- It processes the EMAJ_LAST_MARK keyword.
+-- A last mark (upper bound) set to NULL means "the current state". In this case, no specific checks is performed.
+-- When several groups are supplied, it checks that the marks represent the same point in time for all groups.
+-- Input: array of group names, name of the first mark, name of the last mark,
+--        2 booleans to perform or not additional checks
+-- Output: name, time id, clock timestamp and emaj_gid for both marks
+  DECLARE
+    v_groupName              TEXT;
+  BEGIN
+-- Check that the first mark is not NULL or empty.
+    IF p_firstMark IS NULL OR p_firstMark = '' THEN
+      RAISE EXCEPTION '_check_marks_range: The first mark cannot be NULL or empty.';
+    END IF;
+-- Checks the supplied first mark.
+    SELECT emaj._check_mark_name(p_groupNames := p_groupNames, p_mark := p_firstMark) INTO p_firstMark;
+-- Get some additional data about the first mark.
+-- (use the first group of the array, as we are now sure that all groups share the same mark).
+    SELECT mark_time_id, time_clock_timestamp, time_last_emaj_gid INTO p_firstMarkTimeId, p_firstMarkTs, p_firstMarkEmajGid
+      FROM emaj.emaj_mark
+           JOIN emaj.emaj_time_stamp ON (time_id = mark_time_id)
+      WHERE mark_group = p_groupNames[1]
+        AND mark_name = p_firstMark;
+    IF p_lastMark IS NULL OR p_lastMark = '' THEN
+      IF p_finiteUpperBound THEN
+        RAISE EXCEPTION '_check_marks_range: The last mark cannot be NULL or empty.';
+      END IF;
+    ELSE
+-- The last mark is not NULL or empty, so check it.
+      SELECT emaj._check_mark_name(p_groupNames := p_groupNames, p_mark := p_lastMark) INTO p_lastMark;
+-- Get some additional data about the last mark (that may be NULL)
+-- (use the first group of the array, as we are now sure that all groups share the same mark).
+      SELECT mark_time_id, time_clock_timestamp, time_last_emaj_gid INTO p_lastMarkTimeId, p_lastMarkTs, p_lastMarkEmajGid
+        FROM emaj.emaj_mark
+             JOIN emaj.emaj_time_stamp ON (time_id = mark_time_id)
+        WHERE mark_group = p_groupNames[1]
+          AND mark_name = p_lastMark;
+-- And check that the last mark has been set after the first mark.
+      IF p_firstMarkTimeId > p_lastMarkTimeId THEN
+        RAISE EXCEPTION '_check_marks_range: The start mark "%" (%) has been set after the end mark "%" (%).',
+          p_firstMark, p_firstMarkTs, p_lastMark, p_lastMarkTs;
+      END IF;
+    END IF;
+-- If required, warn if the mark range is not contained by a single log session for any tables group.
+    IF p_checkLogSession THEN
+      FOREACH v_groupName IN ARRAY p_groupNames
+      LOOP
+        IF p_lastMark IS NULL OR p_lastMark = '' THEN
+          PERFORM 0
+            FROM emaj.emaj_log_session
+            WHERE lses_group = v_groupName
+              AND lses_time_range @> int8range(p_firstMarkTimeId, NULL, '[)');
+          IF NOT FOUND THEN
+            RAISE WARNING 'Since mark "%", the tables group "%" has not been always in logging state. '
+                          'Some data changes may not have been recorded.', p_firstMark, v_groupName;
+          END IF;
+        ELSE
+          PERFORM 0
+            FROM emaj.emaj_log_session
+            WHERE lses_group = v_groupName
+              AND lses_time_range @> int8range(p_firstMarkTimeId, p_lastMarkTimeId, '[)');
+          IF NOT FOUND THEN
+            RAISE WARNING 'Between marks "%" and "%", the tables group "%" has not been always in logging state. '
+                          'Some data changes may not have been recorded.', p_firstMark, p_lastMark, v_groupName;
+          END IF;
+        END IF;
+      END LOOP;
+    END IF;
+--
+    RETURN;
+  END;
+$_check_marks_range$;
+
 CREATE OR REPLACE FUNCTION emaj._build_path_name(p_dir TEXT, p_file TEXT)
 RETURNS TEXT LANGUAGE SQL IMMUTABLE AS
 $_build_path_name$
@@ -901,9 +984,9 @@ $_log_stat_groups$
       INTO p_groupNames;
     IF p_groupNames IS NOT NULL THEN
 -- Check the marks range and get some data about both marks.
-      SELECT c.p_firstMark, c.p_lastMark, c.p_firstMarkTimeId, c.p_lastMarkTimeId, c.p_firstMarkTs, c.p_lastMarkTs
+      SELECT checked.p_firstMark, checked.p_lastMark, p_firstMarkTimeId, p_lastMarkTimeId, p_firstMarkTs, p_lastMarkTs
         INTO p_firstMark, p_lastMark, v_firstMarkTimeId, v_lastMarkTimeId, v_firstMarkTs, v_lastMarkTs
-        FROM emaj._check_marks_range(p_groupNames := p_groupNames, p_firstMark := p_firstMark, p_lastMark := p_lastMark) c;
+        FROM emaj._check_marks_range(p_groupNames := p_groupNames, p_firstMark := p_firstMark, p_lastMark := p_lastMark) checked;
 -- For each table of the group, get the number of log rows and return the statistics.
 -- Shorten the timeframe if the table did not belong to the group on the entire requested time frame.
       RETURN QUERY
@@ -1084,6 +1167,93 @@ $_detailed_log_stat_groups$
     RETURN;
   END;
 $_detailed_log_stat_groups$;
+
+CREATE OR REPLACE FUNCTION emaj._sequence_stat_groups(p_groupNames TEXT[], p_multiGroup BOOLEAN, p_firstMark TEXT, p_lastMark TEXT)
+RETURNS SETOF emaj.emaj_sequence_stat_type LANGUAGE plpgsql AS
+$_sequence_stat_groups$
+-- This function effectively returns statistics on sequences changes recorded between 2 marks or between a mark and the current state for
+-- one or several groups.
+-- Input: group names array, a boolean indicating whether the calling function is a multi_groups function, both mark names defining a
+--          range
+--   a NULL value or an empty string as last_mark indicates the current state
+--   The keyword 'EMAJ_LAST_MARK' can be used as first or last mark to specify the last set mark for the groups.
+-- Output: set of stats by sequence (including unchanged sequences).
+  DECLARE
+    v_firstMarkTimeId        BIGINT;
+    v_lastMarkTimeId         BIGINT;
+    v_firstMarkTs            TIMESTAMPTZ;
+    v_lastMarkTs             TIMESTAMPTZ;
+    v_lowerTimeId            BIGINT;
+    v_upperTimeId            BIGINT;
+    r_seq                    emaj.emaj_relation%ROWTYPE;
+    r_stat                   emaj.emaj_sequence_stat_type%ROWTYPE;
+  BEGIN
+-- Check the groups name.
+    SELECT emaj._check_group_names(p_groupNames := p_groupNames, p_mayBeNull := p_multiGroup, p_lockGroups := FALSE)
+      INTO p_groupNames;
+    IF p_groupNames IS NOT NULL THEN
+-- Check the marks range and get some data about both marks.
+      SELECT checked.p_firstMark, checked.p_lastMark, p_firstMarkTimeId, p_lastMarkTimeId, p_firstMarkTs, p_lastMarkTs
+        INTO p_firstMark, p_lastMark, v_firstMarkTimeId, v_lastMarkTimeId, v_firstMarkTs, v_lastMarkTs
+        FROM emaj._check_marks_range(p_groupNames := p_groupNames, p_firstMark := p_firstMark, p_lastMark := p_lastMark,
+                                     p_checkLogSession := FALSE) AS checked;
+-- For each sequence of the group, get and return the statistics.
+      FOR r_seq IN
+          SELECT *
+            FROM emaj.emaj_relation
+            WHERE rel_group = ANY(p_groupNames)
+              AND rel_kind = 'S'                                                                  -- sequences belonging to the groups
+              AND (upper_inf(rel_time_range) OR upper(rel_time_range) > v_firstMarkTimeId)        --   at the requested time frame
+              AND (v_lastMarkTimeId IS NULL OR lower(rel_time_range) < v_lastMarkTimeId)
+            ORDER BY rel_schema, rel_tblseq, rel_time_range
+      LOOP
+        r_stat.stat_group = r_seq.rel_group;
+        r_stat.stat_schema = r_seq.rel_schema;
+        r_stat.stat_sequence = r_seq.rel_tblseq;
+        r_stat.stat_first_mark = p_firstMark;
+        r_stat.stat_first_mark_datetime = v_firstMarkTs;
+        r_stat.stat_last_mark = p_lastMark;
+        r_stat.stat_last_mark_datetime = v_lastMarkTs;
+        v_lowerTimeId = v_firstMarkTimeId;
+        v_upperTimeId = v_lastMarkTimeId;
+-- Shorten the time frame if the sequence did not belong to the group on the entire requested time frame.
+        IF v_firstMarkTimeId < lower(r_seq.rel_time_range) THEN
+          v_lowerTimeId = lower(r_seq.rel_time_range);
+          r_stat.stat_first_mark = coalesce(
+                           (SELECT mark_name
+                              FROM emaj.emaj_mark
+                              WHERE mark_time_id = v_lowerTimeId
+                                AND mark_group = r_seq.rel_group
+                           ),'[deleted mark]');
+          r_stat.stat_first_mark_datetime = (SELECT time_clock_timestamp
+                            FROM emaj.emaj_time_stamp
+                            WHERE time_id = v_lowerTimeId
+                         );
+        END IF;
+        IF NOT upper_inf(r_seq.rel_time_range) AND (v_lastMarkTimeId IS NULL OR upper(r_seq.rel_time_range) < v_lastMarkTimeId) THEN
+          v_upperTimeId = upper(r_seq.rel_time_range);
+          r_stat.stat_last_mark = coalesce(
+                           (SELECT mark_name
+                              FROM emaj.emaj_mark
+                              WHERE mark_time_id = v_upperTimeId
+                                AND mark_group = r_seq.rel_group
+                           ),'[deleted mark]');
+          r_stat.stat_last_mark_datetime = (SELECT time_clock_timestamp
+                            FROM emaj.emaj_time_stamp
+                            WHERE time_id = v_upperTimeId
+                         );
+        END IF;
+-- Get the stats for the sequence.
+        SELECT p_increments, p_hasStructureChanged
+          INTO r_stat.stat_increments, r_stat.stat_has_structure_changed
+          FROM emaj._sequence_stat_seq(r_seq, v_lowerTimeId, v_upperTimeId);
+-- Return the stat row for the sequence.
+        RETURN NEXT r_stat;
+      END LOOP;
+    END IF;
+    RETURN;
+  END;
+$_sequence_stat_groups$;
 
 CREATE OR REPLACE FUNCTION emaj.emaj_dump_changes_group(p_groupName TEXT, p_firstMark TEXT, p_lastMark TEXT, p_optionsList TEXT,
                                                         p_tblseqs TEXT[], p_dir TEXT)
@@ -2011,6 +2181,11 @@ GRANT EXECUTE ON FUNCTION emaj._log_stat_groups(p_groupNames TEXT[], p_multiGrou
                           TO emaj_viewer;
 GRANT EXECUTE ON FUNCTION emaj._detailed_log_stat_groups(p_groupNames TEXT[], p_multiGroup BOOLEAN, p_firstMark TEXT, p_lastMark TEXT)
                           TO emaj_viewer;
+GRANT EXECUTE ON FUNCTION emaj._check_marks_range(p_groupNames TEXT[], INOUT p_firstMark TEXT, INOUT p_lastMark TEXT,
+                          p_finiteUpperBound BOOLEAN, p_checkLogSession BOOLEAN,
+                          OUT p_firstMarkTimeId BIGINT, OUT p_lastMarkTimeId BIGINT,
+                          OUT p_firstMarkTs TIMESTAMPTZ, OUT p_lastMarkTs TIMESTAMPTZ,
+                          OUT p_firstMarkEmajGid BIGINT, OUT p_lastMarkEmajGid BIGINT) TO emaj_viewer;
 
 ------------------------------------
 --                                --

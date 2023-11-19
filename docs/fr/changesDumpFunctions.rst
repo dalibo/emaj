@@ -100,6 +100,8 @@ La fonction *emaj_dump_changes_group()* extrait les changements des tables de lo
 
 Le mot clé 'EMAJ_LAST_MARK' peut être utilisé comme marque de fin. Il représente alors la dernière marque posée.
 
+Si l’intervalle de marques n’est pas contenu dans une seule *session de log*, c’est à dire si des arrêts/relances du groupe de tables ont eu lieu entre ces deux marques, un message d’avertissement est retourné, indiquant que des mises à jour de données ont pu ne pas être enregistrées.
+
 Le **quatrième paramètre** est une liste d’options, séparées par des virgules. Les options peuvent prendre les valeurs suivantes (par ordre alphabétique) :
 
 * COLS_ORDER = LOG_TABLE | PK : définit l’ordre des colonnes dans les fichiers de sortie (LOG_TABLE = le même ordre que dans les tables de log, PK = les colonnes de clé primaire en tête) ;
@@ -165,6 +167,8 @@ ou ::
    SELECT emaj.emaj_gen_sql_dump_changes_group('<nom.du.groupe>', '<marque.début>', '<marque.fin>', '<liste.options>', '<tableau.tables.séquences>', '<localisation.du.script>');
 
 Le mot clé 'EMAJ_LAST_MARK' peut être utilisé comme marque de fin. Il représente alors la dernière marque posée.
+
+Si l’intervalle de marques n’est pas contenu dans une seule *session de log*, c’est à dire si des arrêts/relances du groupe de tables ont eu lieu entre ces deux marques, un message d’avertissement est retourné, indiquant que des mises à jour de données ont pu ne pas être enregistrées.
 
 Le **quatrième paramètre** est une liste d’options, séparées par des virgules. Les options peuvent prendre les valeurs suivantes (par ordre alphabétique) :
 
