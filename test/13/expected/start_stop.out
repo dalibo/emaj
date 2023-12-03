@@ -38,26 +38,26 @@ select emaj.emaj_start_group(NULL,NULL);
 ERROR:  _check_group_names: No group to process.
 CONTEXT:  PL/pgSQL function emaj._check_group_names(text[],boolean,boolean,boolean,boolean,boolean,boolean) line 30 at RAISE
 SQL statement "SELECT emaj._check_group_names(p_groupNames := p_groupNames, p_mayBeNull := p_multiGroup, p_lockGroups := TRUE, p_checkIdle := TRUE)"
-PL/pgSQL function emaj._start_groups(text[],text,boolean,boolean) line 21 at SQL statement
+PL/pgSQL function emaj._start_groups(text[],text,boolean,boolean) line 23 at SQL statement
 PL/pgSQL function emaj.emaj_start_group(text,text,boolean) line 12 at RETURN
 select emaj.emaj_start_group('unknownGroup',NULL,NULL);
 ERROR:  _check_group_names: The group "unknownGroup" does not exist.
 CONTEXT:  PL/pgSQL function emaj._check_group_names(text[],boolean,boolean,boolean,boolean,boolean,boolean) line 42 at RAISE
 SQL statement "SELECT emaj._check_group_names(p_groupNames := p_groupNames, p_mayBeNull := p_multiGroup, p_lockGroups := TRUE, p_checkIdle := TRUE)"
-PL/pgSQL function emaj._start_groups(text[],text,boolean,boolean) line 21 at SQL statement
+PL/pgSQL function emaj._start_groups(text[],text,boolean,boolean) line 23 at SQL statement
 PL/pgSQL function emaj.emaj_start_group(text,text,boolean) line 12 at RETURN
 select emaj.emaj_start_groups(array['unknownGroup1','unknownGroup2'],NULL,NULL);
 ERROR:  _check_group_names: The groups "unknownGroup1, unknownGroup2" do not exist.
 CONTEXT:  PL/pgSQL function emaj._check_group_names(text[],boolean,boolean,boolean,boolean,boolean,boolean) line 44 at RAISE
 SQL statement "SELECT emaj._check_group_names(p_groupNames := p_groupNames, p_mayBeNull := p_multiGroup, p_lockGroups := TRUE, p_checkIdle := TRUE)"
-PL/pgSQL function emaj._start_groups(text[],text,boolean,boolean) line 21 at SQL statement
+PL/pgSQL function emaj._start_groups(text[],text,boolean,boolean) line 23 at SQL statement
 PL/pgSQL function emaj.emaj_start_groups(text[],text,boolean) line 11 at RETURN
 -- reserved mark name
 select emaj.emaj_start_group('myGroup1','EMAJ_LAST_MARK');
 ERROR:  _check_new_mark: "EMAJ_LAST_MARK" is not an allowed name for a new mark.
 CONTEXT:  PL/pgSQL function emaj._check_new_mark(text[],text) line 14 at RAISE
 SQL statement "SELECT emaj._check_new_mark(p_groupNames, p_mark)"
-PL/pgSQL function emaj._start_groups(text[],text,boolean,boolean) line 47 at SQL statement
+PL/pgSQL function emaj._start_groups(text[],text,boolean,boolean) line 49 at SQL statement
 PL/pgSQL function emaj.emaj_start_group(text,text,boolean) line 12 at RETURN
 -- detection of a missing application schema
 begin;
@@ -67,7 +67,7 @@ ERROR:  _verify_groups (1): In group "myGroup1", the table "myschema1"."myTbl3" 
 CONTEXT:  PL/pgSQL function emaj._verify_groups(text[],boolean) line 39 at RAISE
 SQL statement "SELECT 0
         FROM emaj._verify_groups(p_groupNames, TRUE)"
-PL/pgSQL function emaj._start_groups(text[],text,boolean,boolean) line 26 at PERFORM
+PL/pgSQL function emaj._start_groups(text[],text,boolean,boolean) line 28 at PERFORM
 PL/pgSQL function emaj.emaj_start_group(text,text,boolean) line 12 at RETURN
 rollback;
 -- detection of a missing application relation
@@ -78,7 +78,7 @@ ERROR:  _verify_groups (1): In group "myGroup1", the table "myschema1"."mytbl4" 
 CONTEXT:  PL/pgSQL function emaj._verify_groups(text[],boolean) line 39 at RAISE
 SQL statement "SELECT 0
         FROM emaj._verify_groups(p_groupNames, TRUE)"
-PL/pgSQL function emaj._start_groups(text[],text,boolean,boolean) line 26 at PERFORM
+PL/pgSQL function emaj._start_groups(text[],text,boolean,boolean) line 28 at PERFORM
 PL/pgSQL function emaj.emaj_start_group(text,text,boolean) line 12 at RETURN
 rollback;
 -- detection of relation type change (a table is now a sequence!)
@@ -89,7 +89,7 @@ ERROR:  _verify_groups (1): In group "myGroup1", the sequence "myschema1"."mytbl
 CONTEXT:  PL/pgSQL function emaj._verify_groups(text[],boolean) line 39 at RAISE
 SQL statement "SELECT 0
         FROM emaj._verify_groups(p_groupNames, TRUE)"
-PL/pgSQL function emaj._start_groups(text[],text,boolean,boolean) line 26 at PERFORM
+PL/pgSQL function emaj._start_groups(text[],text,boolean,boolean) line 28 at PERFORM
 PL/pgSQL function emaj.emaj_start_group(text,text,boolean) line 12 at RETURN
 rollback;
 -- detection of a missing E-Maj log schema
@@ -100,7 +100,7 @@ ERROR:  _verify_groups (2): In group "myGroup1", the log table "emaj_myschema1".
 CONTEXT:  PL/pgSQL function emaj._verify_groups(text[],boolean) line 59 at RAISE
 SQL statement "SELECT 0
         FROM emaj._verify_groups(p_groupNames, TRUE)"
-PL/pgSQL function emaj._start_groups(text[],text,boolean,boolean) line 26 at PERFORM
+PL/pgSQL function emaj._start_groups(text[],text,boolean,boolean) line 28 at PERFORM
 PL/pgSQL function emaj.emaj_start_group(text,text,boolean) line 12 at RETURN
 rollback;
 -- detection of a missing log trigger
@@ -111,7 +111,7 @@ ERROR:  _verify_groups (4): In group "myGroup1", the log trigger "emaj_log_trg" 
 CONTEXT:  PL/pgSQL function emaj._verify_groups(text[],boolean) line 104 at RAISE
 SQL statement "SELECT 0
         FROM emaj._verify_groups(p_groupNames, TRUE)"
-PL/pgSQL function emaj._start_groups(text[],text,boolean,boolean) line 26 at PERFORM
+PL/pgSQL function emaj._start_groups(text[],text,boolean,boolean) line 28 at PERFORM
 PL/pgSQL function emaj.emaj_start_group(text,text,boolean) line 12 at RETURN
 rollback;
 -- detection of a missing log function
@@ -122,7 +122,7 @@ ERROR:  _verify_groups (3): In group "myGroup1", the log function "emaj_myschema
 CONTEXT:  PL/pgSQL function emaj._verify_groups(text[],boolean) line 80 at RAISE
 SQL statement "SELECT 0
         FROM emaj._verify_groups(p_groupNames, TRUE)"
-PL/pgSQL function emaj._start_groups(text[],text,boolean,boolean) line 26 at PERFORM
+PL/pgSQL function emaj._start_groups(text[],text,boolean,boolean) line 28 at PERFORM
 PL/pgSQL function emaj.emaj_start_group(text,text,boolean) line 12 at RETURN
 rollback;
 -- detection of a missing truncate trigger
@@ -133,7 +133,7 @@ ERROR:  _verify_groups (5): In group "myGroup1", the truncate trigger "emaj_trun
 CONTEXT:  PL/pgSQL function emaj._verify_groups(text[],boolean) line 127 at RAISE
 SQL statement "SELECT 0
         FROM emaj._verify_groups(p_groupNames, TRUE)"
-PL/pgSQL function emaj._start_groups(text[],text,boolean,boolean) line 26 at PERFORM
+PL/pgSQL function emaj._start_groups(text[],text,boolean,boolean) line 28 at PERFORM
 PL/pgSQL function emaj.emaj_start_group(text,text,boolean) line 12 at RETURN
 rollback;
 -- detection of a missing log table
@@ -144,7 +144,7 @@ ERROR:  _verify_groups (2): In group "myGroup1", the log table "emaj_myschema1".
 CONTEXT:  PL/pgSQL function emaj._verify_groups(text[],boolean) line 59 at RAISE
 SQL statement "SELECT 0
         FROM emaj._verify_groups(p_groupNames, TRUE)"
-PL/pgSQL function emaj._start_groups(text[],text,boolean,boolean) line 26 at PERFORM
+PL/pgSQL function emaj._start_groups(text[],text,boolean,boolean) line 28 at PERFORM
 PL/pgSQL function emaj.emaj_start_group(text,text,boolean) line 12 at RETURN
 rollback;
 -- detection of a change in the application table structure (new column)
@@ -157,7 +157,7 @@ ERROR:  _verify_groups (6): In group "myGroup1", the structure of the applicatio
 CONTEXT:  PL/pgSQL function emaj._verify_groups(text[],boolean) line 181 at RAISE
 SQL statement "SELECT 0
         FROM emaj._verify_groups(p_groupNames, TRUE)"
-PL/pgSQL function emaj._start_groups(text[],text,boolean,boolean) line 26 at PERFORM
+PL/pgSQL function emaj._start_groups(text[],text,boolean,boolean) line 28 at PERFORM
 PL/pgSQL function emaj.emaj_start_group(text,text,boolean) line 12 at RETURN
 rollback;
 -- detection of a change in the application table structure (column type change)
@@ -169,7 +169,7 @@ ERROR:  _verify_groups (6): In group "myGroup1", the structure of the applicatio
 CONTEXT:  PL/pgSQL function emaj._verify_groups(text[],boolean) line 181 at RAISE
 SQL statement "SELECT 0
         FROM emaj._verify_groups(p_groupNames, TRUE)"
-PL/pgSQL function emaj._start_groups(text[],text,boolean,boolean) line 26 at PERFORM
+PL/pgSQL function emaj._start_groups(text[],text,boolean,boolean) line 28 at PERFORM
 PL/pgSQL function emaj.emaj_start_group(text,text,boolean) line 12 at RETURN
 rollback;
 -- detection of a missing primary key
@@ -180,7 +180,7 @@ ERROR:  _verify_groups (7): In rollbackable group "myGroup1", the table "myschem
 CONTEXT:  PL/pgSQL function emaj._verify_groups(text[],boolean) line 206 at RAISE
 SQL statement "SELECT 0
         FROM emaj._verify_groups(p_groupNames, TRUE)"
-PL/pgSQL function emaj._start_groups(text[],text,boolean,boolean) line 26 at PERFORM
+PL/pgSQL function emaj._start_groups(text[],text,boolean,boolean) line 28 at PERFORM
 PL/pgSQL function emaj.emaj_start_group(text,text,boolean) line 12 at RETURN
 rollback;
 -- detection of a table altered as UNLOGGED
@@ -191,7 +191,7 @@ ERROR:  _verify_groups (8): In rollbackable group "myGroup1", the table "myschem
 CONTEXT:  PL/pgSQL function emaj._verify_groups(text[],boolean) line 226 at RAISE
 SQL statement "SELECT 0
         FROM emaj._verify_groups(p_groupNames, TRUE)"
-PL/pgSQL function emaj._start_groups(text[],text,boolean,boolean) line 26 at PERFORM
+PL/pgSQL function emaj._start_groups(text[],text,boolean,boolean) line 28 at PERFORM
 PL/pgSQL function emaj.emaj_start_group(text,text,boolean) line 12 at RETURN
 rollback;
 -- detection of a table altered as WITH OIDS (PG12+ generates an error)
@@ -212,7 +212,7 @@ ERROR:  _verify_groups (10): In rollbackable group "myGroup1", the primary key o
 CONTEXT:  PL/pgSQL function emaj._verify_groups(text[],boolean) line 279 at RAISE
 SQL statement "SELECT 0
         FROM emaj._verify_groups(p_groupNames, TRUE)"
-PL/pgSQL function emaj._start_groups(text[],text,boolean,boolean) line 26 at PERFORM
+PL/pgSQL function emaj._start_groups(text[],text,boolean,boolean) line 28 at PERFORM
 PL/pgSQL function emaj.emaj_start_group(text,text,boolean) line 12 at RETURN
 rollback;
 -- detection of a log table missing a technical column
@@ -223,7 +223,7 @@ ERROR:  _verify_groups (11): In group "myGroup1", the log table "emaj_myschema1"
 CONTEXT:  PL/pgSQL function emaj._verify_groups(text[],boolean) line 318 at RAISE
 SQL statement "SELECT 0
         FROM emaj._verify_groups(p_groupNames, TRUE)"
-PL/pgSQL function emaj._start_groups(text[],text,boolean,boolean) line 26 at PERFORM
+PL/pgSQL function emaj._start_groups(text[],text,boolean,boolean) line 28 at PERFORM
 PL/pgSQL function emaj.emaj_start_group(text,text,boolean) line 12 at RETURN
 rollback;
 -- should be OK
@@ -246,16 +246,17 @@ select hist_function, hist_event, hist_object,
        regexp_replace(regexp_replace(hist_wording,E'\\d\\d\.\\d\\d\\.\\d\\d\\.\\d\\d\\d\\d','%','g'),E'\\[.+\\]','(timestamp)','g'),
        hist_user
   from emaj.emaj_hist order by hist_id;
-  hist_function  | hist_event | hist_object |                                                      regexp_replace                                                      | hist_user 
------------------+------------+-------------+--------------------------------------------------------------------------------------------------------------------------+-----------
- START_GROUP     | BEGIN      | myGroup1    | With log reset                                                                                                           | postgres
- PURGE_HISTORIES |            |             | 272 emaj_hist rows deleted ; 3 log session rows deleted ; 39 relation history rows deleted ; 37 relation changes deleted | postgres
- LOCK_GROUP      | BEGIN      | myGroup1    |                                                                                                                          | postgres
- LOCK_GROUP      | END        | myGroup1    | 5 tables locked, 0 deadlock(s)                                                                                           | postgres
- SET_MARK_GROUP  | BEGIN      | myGroup1    | Mark1                                                                                                                    | postgres
- SET_MARK_GROUP  | END        | myGroup1    | Mark1                                                                                                                    | postgres
- START_GROUP     | END        | myGroup1    | 7 tables/sequences processed                                                                                             | postgres
-(7 rows)
+  hist_function  |   hist_event   | hist_object |                                                      regexp_replace                                                      | hist_user 
+-----------------+----------------+-------------+--------------------------------------------------------------------------------------------------------------------------+-----------
+ START_GROUP     | BEGIN          | myGroup1    | With log reset                                                                                                           | postgres
+ START_GROUP     | TIME STAMP SET | 2002        |                                                                                                                          | postgres
+ PURGE_HISTORIES |                |             | 328 emaj_hist rows deleted ; 3 log session rows deleted ; 39 relation history rows deleted ; 37 relation changes deleted | postgres
+ LOCK_GROUP      | BEGIN          | myGroup1    |                                                                                                                          | postgres
+ LOCK_GROUP      | END            | myGroup1    | 5 tables locked, 0 deadlock(s)                                                                                           | postgres
+ SET_MARK_GROUP  | BEGIN          | myGroup1    | Mark1                                                                                                                    | postgres
+ SET_MARK_GROUP  | END            | myGroup1    | Mark1                                                                                                                    | postgres
+ START_GROUP     | END            | myGroup1    | 7 tables/sequences processed                                                                                             | postgres
+(8 rows)
 
 -- test the smallest history_retention value that means infinity
 update emaj.emaj_param set param_value_interval = '100 years'::interval where param_key = 'history_retention';
@@ -321,7 +322,7 @@ select emaj.emaj_start_group('myGroup2','Mark3');
 ERROR:  _check_group_names: The group "myGroup2" is not in IDLE state.
 CONTEXT:  PL/pgSQL function emaj._check_group_names(text[],boolean,boolean,boolean,boolean,boolean,boolean) line 74 at RAISE
 SQL statement "SELECT emaj._check_group_names(p_groupNames := p_groupNames, p_mayBeNull := p_multiGroup, p_lockGroups := TRUE, p_checkIdle := TRUE)"
-PL/pgSQL function emaj._start_groups(text[],text,boolean,boolean) line 21 at SQL statement
+PL/pgSQL function emaj._start_groups(text[],text,boolean,boolean) line 23 at SQL statement
 PL/pgSQL function emaj.emaj_start_group(text,text,boolean) line 12 at RETURN
 SET client_min_messages TO NOTICE;
 -- use of % in start mark name
@@ -329,7 +330,7 @@ select emaj.emaj_start_group('myGroup1','Foo%Bar');
 ERROR:  _check_group_names: The group "myGroup1" is not in IDLE state.
 CONTEXT:  PL/pgSQL function emaj._check_group_names(text[],boolean,boolean,boolean,boolean,boolean,boolean) line 74 at RAISE
 SQL statement "SELECT emaj._check_group_names(p_groupNames := p_groupNames, p_mayBeNull := p_multiGroup, p_lockGroups := TRUE, p_checkIdle := TRUE)"
-PL/pgSQL function emaj._start_groups(text[],text,boolean,boolean) line 21 at SQL statement
+PL/pgSQL function emaj._start_groups(text[],text,boolean,boolean) line 23 at SQL statement
 PL/pgSQL function emaj.emaj_start_group(text,text,boolean) line 12 at RETURN
 select mark_group, regexp_replace(mark_name,E'\\d\\d\.\\d\\d\\.\\d\\d\\.\\d\\d\\d\\d','%','g'), mark_time_id, mark_is_deleted, mark_is_rlbk_protected, mark_comment, mark_log_rows_before_next, mark_logged_rlbk_target_mark from emaj.emaj_mark order by mark_time_id, mark_group;
     mark_group    | regexp_replace | mark_time_id | mark_is_deleted | mark_is_rlbk_protected | mark_comment | mark_log_rows_before_next | mark_logged_rlbk_target_mark 
@@ -403,58 +404,66 @@ select hist_id, hist_function, hist_event, hist_object,
   hist_user from emaj.emaj_hist where hist_id >= 2000 order by hist_id;
  hist_id |  hist_function  |    hist_event     |    hist_object    |                                                      regexp_replace                                                      | hist_user 
 ---------+-----------------+-------------------+-------------------+--------------------------------------------------------------------------------------------------------------------------+-----------
-    2044 | START_GROUP     | BEGIN             | myGroup1          | With log reset                                                                                                           | postgres
-    2045 | PURGE_HISTORIES |                   |                   | 272 emaj_hist rows deleted ; 3 log session rows deleted ; 39 relation history rows deleted ; 37 relation changes deleted | postgres
-    2046 | LOCK_GROUP      | BEGIN             | myGroup1          |                                                                                                                          | postgres
-    2047 | LOCK_GROUP      | END               | myGroup1          | 5 tables locked, 0 deadlock(s)                                                                                           | postgres
-    2048 | SET_MARK_GROUP  | BEGIN             | myGroup1          | Mark1                                                                                                                    | postgres
-    2049 | SET_MARK_GROUP  | END               | myGroup1          | Mark1                                                                                                                    | postgres
-    2050 | START_GROUP     | END               | myGroup1          | 7 tables/sequences processed                                                                                             | postgres
-    2051 |                 | UPDATED PARAMETER | history_retention | @ 100 years                                                                                                              | postgres
-    2052 | START_GROUP     | BEGIN             | myGroup2          | With log reset                                                                                                           | postgres
-    2053 | LOCK_GROUP      | BEGIN             | myGroup2          |                                                                                                                          | postgres
-    2054 | LOCK_GROUP      | END               | myGroup2          | 8 tables locked, 0 deadlock(s)                                                                                           | postgres
-    2055 | SET_MARK_GROUP  | BEGIN             | myGroup2          | Mark2                                                                                                                    | postgres
-    2056 | SET_MARK_GROUP  | END               | myGroup2          | Mark2                                                                                                                    | postgres
-    2057 | START_GROUP     | END               | myGroup2          | 10 tables/sequences processed                                                                                            | postgres
-    2058 |                 | DELETED PARAMETER | history_retention |                                                                                                                          | postgres
-    2059 | START_GROUP     | BEGIN             | phil's group#3",  | Without log reset                                                                                                        | postgres
-    2060 | LOCK_GROUP      | BEGIN             | phil's group#3",  |                                                                                                                          | postgres
-    2061 | LOCK_GROUP      | END               | phil's group#3",  | 2 tables locked, 0 deadlock(s)                                                                                           | postgres
-    2062 | SET_MARK_GROUP  | BEGIN             | phil's group#3",  | Mark3                                                                                                                    | postgres
-    2063 | SET_MARK_GROUP  | END               | phil's group#3",  | Mark3                                                                                                                    | postgres
-    2064 | START_GROUP     | END               | phil's group#3",  | 4 tables/sequences processed                                                                                             | postgres
-    2065 | START_GROUP     | BEGIN             | emptyGroup        | With log reset                                                                                                           | postgres
-    2066 | LOCK_GROUP      | BEGIN             | emptyGroup        |                                                                                                                          | postgres
-    2067 | LOCK_GROUP      | END               | emptyGroup        | 0 tables locked, 0 deadlock(s)                                                                                           | postgres
-    2068 | SET_MARK_GROUP  | BEGIN             | emptyGroup        | Mark1                                                                                                                    | postgres
-    2069 | SET_MARK_GROUP  | END               | emptyGroup        | Mark1                                                                                                                    | postgres
-    2070 | START_GROUP     | END               | emptyGroup        | 0 tables/sequences processed                                                                                             | postgres
-    2071 | STOP_GROUP      | BEGIN             | myGroup1          |                                                                                                                          | postgres
-    2072 | LOCK_GROUP      | BEGIN             | myGroup1          |                                                                                                                          | postgres
-    2073 | LOCK_GROUP      | END               | myGroup1          | 5 tables locked, 0 deadlock(s)                                                                                           | postgres
-    2074 | SET_MARK_GROUP  | BEGIN             | myGroup1          | STOP_%                                                                                                                   | postgres
-    2075 | SET_MARK_GROUP  | END               | myGroup1          | STOP_%                                                                                                                   | postgres
-    2076 | STOP_GROUP      | END               | myGroup1          | 7 tables/sequences processed                                                                                             | postgres
-    2077 | STOP_GROUP      | BEGIN             | myGroup2          |                                                                                                                          | postgres
-    2078 | LOCK_GROUP      | BEGIN             | myGroup2          |                                                                                                                          | postgres
-    2079 | LOCK_GROUP      | END               | myGroup2          | 8 tables locked, 0 deadlock(s)                                                                                           | postgres
-    2080 | SET_MARK_GROUP  | BEGIN             | myGroup2          | STOP_%                                                                                                                   | postgres
-    2081 | SET_MARK_GROUP  | END               | myGroup2          | STOP_%                                                                                                                   | postgres
-    2082 | STOP_GROUP      | END               | myGroup2          | 10 tables/sequences processed                                                                                            | postgres
-    2089 | START_GROUP     | BEGIN             | myGroup1          | With log reset                                                                                                           | postgres
-    2090 | LOCK_GROUP      | BEGIN             | myGroup1          |                                                                                                                          | postgres
-    2091 | LOCK_GROUP      | END               | myGroup1          | 5 tables locked, 0 deadlock(s)                                                                                           | postgres
-    2092 | SET_MARK_GROUP  | BEGIN             | myGroup1          | %abc%                                                                                                                    | postgres
-    2093 | SET_MARK_GROUP  | END               | myGroup1          | %abc%                                                                                                                    | postgres
-    2094 | START_GROUP     | END               | myGroup1          | 7 tables/sequences processed                                                                                             | postgres
-    2095 | START_GROUP     | BEGIN             | myGroup2          | Without log reset                                                                                                        | postgres
-    2096 | LOCK_GROUP      | BEGIN             | myGroup2          |                                                                                                                          | postgres
-    2097 | LOCK_GROUP      | END               | myGroup2          | 8 tables locked, 0 deadlock(s)                                                                                           | postgres
-    2098 | SET_MARK_GROUP  | BEGIN             | myGroup2          | START_%                                                                                                                  | postgres
-    2099 | SET_MARK_GROUP  | END               | myGroup2          | START_%                                                                                                                  | postgres
-    2100 | START_GROUP     | END               | myGroup2          | 10 tables/sequences processed                                                                                            | postgres
-(51 rows)
+    2046 | START_GROUP     | BEGIN             | myGroup1          | With log reset                                                                                                           | postgres
+    2047 | START_GROUP     | TIME STAMP SET    | 2002              |                                                                                                                          | postgres
+    2048 | PURGE_HISTORIES |                   |                   | 328 emaj_hist rows deleted ; 3 log session rows deleted ; 39 relation history rows deleted ; 37 relation changes deleted | postgres
+    2049 | LOCK_GROUP      | BEGIN             | myGroup1          |                                                                                                                          | postgres
+    2050 | LOCK_GROUP      | END               | myGroup1          | 5 tables locked, 0 deadlock(s)                                                                                           | postgres
+    2051 | SET_MARK_GROUP  | BEGIN             | myGroup1          | Mark1                                                                                                                    | postgres
+    2052 | SET_MARK_GROUP  | END               | myGroup1          | Mark1                                                                                                                    | postgres
+    2053 | START_GROUP     | END               | myGroup1          | 7 tables/sequences processed                                                                                             | postgres
+    2054 |                 | UPDATED PARAMETER | history_retention | @ 100 years                                                                                                              | postgres
+    2055 | START_GROUP     | BEGIN             | myGroup2          | With log reset                                                                                                           | postgres
+    2056 | START_GROUP     | TIME STAMP SET    | 2003              |                                                                                                                          | postgres
+    2057 | LOCK_GROUP      | BEGIN             | myGroup2          |                                                                                                                          | postgres
+    2058 | LOCK_GROUP      | END               | myGroup2          | 8 tables locked, 0 deadlock(s)                                                                                           | postgres
+    2059 | SET_MARK_GROUP  | BEGIN             | myGroup2          | Mark2                                                                                                                    | postgres
+    2060 | SET_MARK_GROUP  | END               | myGroup2          | Mark2                                                                                                                    | postgres
+    2061 | START_GROUP     | END               | myGroup2          | 10 tables/sequences processed                                                                                            | postgres
+    2062 |                 | DELETED PARAMETER | history_retention |                                                                                                                          | postgres
+    2063 | START_GROUP     | BEGIN             | phil's group#3",  | Without log reset                                                                                                        | postgres
+    2064 | START_GROUP     | TIME STAMP SET    | 2004              |                                                                                                                          | postgres
+    2065 | LOCK_GROUP      | BEGIN             | phil's group#3",  |                                                                                                                          | postgres
+    2066 | LOCK_GROUP      | END               | phil's group#3",  | 2 tables locked, 0 deadlock(s)                                                                                           | postgres
+    2067 | SET_MARK_GROUP  | BEGIN             | phil's group#3",  | Mark3                                                                                                                    | postgres
+    2068 | SET_MARK_GROUP  | END               | phil's group#3",  | Mark3                                                                                                                    | postgres
+    2069 | START_GROUP     | END               | phil's group#3",  | 4 tables/sequences processed                                                                                             | postgres
+    2070 | START_GROUP     | BEGIN             | emptyGroup        | With log reset                                                                                                           | postgres
+    2071 | START_GROUP     | TIME STAMP SET    | 2005              |                                                                                                                          | postgres
+    2072 | LOCK_GROUP      | BEGIN             | emptyGroup        |                                                                                                                          | postgres
+    2073 | LOCK_GROUP      | END               | emptyGroup        | 0 tables locked, 0 deadlock(s)                                                                                           | postgres
+    2074 | SET_MARK_GROUP  | BEGIN             | emptyGroup        | Mark1                                                                                                                    | postgres
+    2075 | SET_MARK_GROUP  | END               | emptyGroup        | Mark1                                                                                                                    | postgres
+    2076 | START_GROUP     | END               | emptyGroup        | 0 tables/sequences processed                                                                                             | postgres
+    2077 | STOP_GROUP      | BEGIN             | myGroup1          |                                                                                                                          | postgres
+    2078 | STOP_GROUP      | TIME STAMP SET    | 2006              |                                                                                                                          | postgres
+    2079 | LOCK_GROUP      | BEGIN             | myGroup1          |                                                                                                                          | postgres
+    2080 | LOCK_GROUP      | END               | myGroup1          | 5 tables locked, 0 deadlock(s)                                                                                           | postgres
+    2081 | SET_MARK_GROUP  | BEGIN             | myGroup1          | STOP_%                                                                                                                   | postgres
+    2082 | SET_MARK_GROUP  | END               | myGroup1          | STOP_%                                                                                                                   | postgres
+    2083 | STOP_GROUP      | END               | myGroup1          | 7 tables/sequences processed                                                                                             | postgres
+    2084 | STOP_GROUP      | BEGIN             | myGroup2          |                                                                                                                          | postgres
+    2085 | STOP_GROUP      | TIME STAMP SET    | 2007              |                                                                                                                          | postgres
+    2086 | LOCK_GROUP      | BEGIN             | myGroup2          |                                                                                                                          | postgres
+    2087 | LOCK_GROUP      | END               | myGroup2          | 8 tables locked, 0 deadlock(s)                                                                                           | postgres
+    2088 | SET_MARK_GROUP  | BEGIN             | myGroup2          | STOP_%                                                                                                                   | postgres
+    2089 | SET_MARK_GROUP  | END               | myGroup2          | STOP_%                                                                                                                   | postgres
+    2090 | STOP_GROUP      | END               | myGroup2          | 10 tables/sequences processed                                                                                            | postgres
+    2098 | START_GROUP     | BEGIN             | myGroup1          | With log reset                                                                                                           | postgres
+    2099 | START_GROUP     | TIME STAMP SET    | 2009              |                                                                                                                          | postgres
+    2100 | LOCK_GROUP      | BEGIN             | myGroup1          |                                                                                                                          | postgres
+    2101 | LOCK_GROUP      | END               | myGroup1          | 5 tables locked, 0 deadlock(s)                                                                                           | postgres
+    2102 | SET_MARK_GROUP  | BEGIN             | myGroup1          | %abc%                                                                                                                    | postgres
+    2103 | SET_MARK_GROUP  | END               | myGroup1          | %abc%                                                                                                                    | postgres
+    2104 | START_GROUP     | END               | myGroup1          | 7 tables/sequences processed                                                                                             | postgres
+    2105 | START_GROUP     | BEGIN             | myGroup2          | Without log reset                                                                                                        | postgres
+    2106 | START_GROUP     | TIME STAMP SET    | 2010              |                                                                                                                          | postgres
+    2107 | LOCK_GROUP      | BEGIN             | myGroup2          |                                                                                                                          | postgres
+    2108 | LOCK_GROUP      | END               | myGroup2          | 8 tables locked, 0 deadlock(s)                                                                                           | postgres
+    2109 | SET_MARK_GROUP  | BEGIN             | myGroup2          | START_%                                                                                                                  | postgres
+    2110 | SET_MARK_GROUP  | END               | myGroup2          | START_%                                                                                                                  | postgres
+    2111 | START_GROUP     | END               | myGroup2          | 10 tables/sequences processed                                                                                            | postgres
+(59 rows)
 
 select public.handle_emaj_sequences(2200);
  handle_emaj_sequences 
@@ -470,46 +479,46 @@ select emaj.emaj_stop_group(NULL);
 ERROR:  _check_group_names: No group to process.
 CONTEXT:  PL/pgSQL function emaj._check_group_names(text[],boolean,boolean,boolean,boolean,boolean,boolean) line 30 at RAISE
 SQL statement "SELECT emaj._check_group_names(p_groupNames := p_groupNames, p_mayBeNull := p_multiGroup, p_lockGroups := TRUE)"
-PL/pgSQL function emaj._stop_groups(text[],text,boolean,boolean) line 24 at SQL statement
+PL/pgSQL function emaj._stop_groups(text[],text,boolean,boolean) line 25 at SQL statement
 PL/pgSQL function emaj.emaj_stop_group(text,text) line 10 at RETURN
 select emaj.emaj_stop_group('unknownGroup');
 ERROR:  _check_group_names: The group "unknownGroup" does not exist.
 CONTEXT:  PL/pgSQL function emaj._check_group_names(text[],boolean,boolean,boolean,boolean,boolean,boolean) line 42 at RAISE
 SQL statement "SELECT emaj._check_group_names(p_groupNames := p_groupNames, p_mayBeNull := p_multiGroup, p_lockGroups := TRUE)"
-PL/pgSQL function emaj._stop_groups(text[],text,boolean,boolean) line 24 at SQL statement
+PL/pgSQL function emaj._stop_groups(text[],text,boolean,boolean) line 25 at SQL statement
 PL/pgSQL function emaj.emaj_stop_group(text,text) line 10 at RETURN
 select emaj.emaj_stop_group(NULL,NULL);
 ERROR:  _check_group_names: No group to process.
 CONTEXT:  PL/pgSQL function emaj._check_group_names(text[],boolean,boolean,boolean,boolean,boolean,boolean) line 30 at RAISE
 SQL statement "SELECT emaj._check_group_names(p_groupNames := p_groupNames, p_mayBeNull := p_multiGroup, p_lockGroups := TRUE)"
-PL/pgSQL function emaj._stop_groups(text[],text,boolean,boolean) line 24 at SQL statement
+PL/pgSQL function emaj._stop_groups(text[],text,boolean,boolean) line 25 at SQL statement
 PL/pgSQL function emaj.emaj_stop_group(text,text) line 10 at RETURN
 select emaj.emaj_stop_group('unknownGroup',NULL);
 ERROR:  _check_group_names: The group "unknownGroup" does not exist.
 CONTEXT:  PL/pgSQL function emaj._check_group_names(text[],boolean,boolean,boolean,boolean,boolean,boolean) line 42 at RAISE
 SQL statement "SELECT emaj._check_group_names(p_groupNames := p_groupNames, p_mayBeNull := p_multiGroup, p_lockGroups := TRUE)"
-PL/pgSQL function emaj._stop_groups(text[],text,boolean,boolean) line 24 at SQL statement
+PL/pgSQL function emaj._stop_groups(text[],text,boolean,boolean) line 25 at SQL statement
 PL/pgSQL function emaj.emaj_stop_group(text,text) line 10 at RETURN
 -- invalid mark
 select emaj.emaj_stop_group('myGroup1','EMAJ_LAST_MARK');
 ERROR:  _check_new_mark: "EMAJ_LAST_MARK" is not an allowed name for a new mark.
 CONTEXT:  PL/pgSQL function emaj._check_new_mark(text[],text) line 14 at RAISE
 SQL statement "SELECT emaj._check_new_mark(p_groupNames, p_mark)"
-PL/pgSQL function emaj._stop_groups(text[],text,boolean,boolean) line 50 at SQL statement
+PL/pgSQL function emaj._stop_groups(text[],text,boolean,boolean) line 51 at SQL statement
 PL/pgSQL function emaj.emaj_stop_group(text,text) line 10 at RETURN
 -- already existing mark
 select emaj.emaj_stop_group('phil''s group#3",','Mark3');
 ERROR:  _check_new_mark: The group "phil's group#3"," already contains a mark named "Mark3".
 CONTEXT:  PL/pgSQL function emaj._check_new_mark(text[],text) line 29 at RAISE
 SQL statement "SELECT emaj._check_new_mark(p_groupNames, p_mark)"
-PL/pgSQL function emaj._stop_groups(text[],text,boolean,boolean) line 50 at SQL statement
+PL/pgSQL function emaj._stop_groups(text[],text,boolean,boolean) line 51 at SQL statement
 PL/pgSQL function emaj.emaj_stop_group(text,text) line 10 at RETURN
 -- missing application table
 begin;
   drop table mySchema2."myTbl3" cascade;
   select emaj.emaj_stop_group('myGroup2');
 ERROR:  _stop_groups: The table "myschema2.myTbl3" does not exist any more.
-CONTEXT:  PL/pgSQL function emaj._stop_groups(text[],text,boolean,boolean) line 98 at RAISE
+CONTEXT:  PL/pgSQL function emaj._stop_groups(text[],text,boolean,boolean) line 99 at RAISE
 PL/pgSQL function emaj.emaj_stop_group(text,text) line 10 at RETURN
 rollback;
 -- should be OK
@@ -631,55 +640,62 @@ select time_id, time_last_emaj_gid, time_event from emaj.emaj_time_stamp where t
 select hist_id, hist_function, hist_event, hist_object, 
   regexp_replace(regexp_replace(hist_wording,E'\\d\\d\.\\d\\d\\.\\d\\d\\.\\d\\d\\d\\d','%','g'),E'\\[.+\\]','(timestamp)','g'),
   hist_user from emaj.emaj_hist where hist_id >= 2200 order by hist_id;
- hist_id | hist_function  | hist_event | hist_object |         regexp_replace         | hist_user 
----------+----------------+------------+-------------+--------------------------------+-----------
-    2209 | STOP_GROUP     | BEGIN      | myGroup1    |                                | postgres
-    2210 | LOCK_GROUP     | BEGIN      | myGroup1    |                                | postgres
-    2211 | LOCK_GROUP     | END        | myGroup1    | 5 tables locked, 0 deadlock(s) | postgres
-    2212 | SET_MARK_GROUP | BEGIN      | myGroup1    | STOP_%                         | postgres
-    2213 | SET_MARK_GROUP | END        | myGroup1    | STOP_%                         | postgres
-    2214 | STOP_GROUP     | END        | myGroup1    | 7 tables/sequences processed   | postgres
-    2215 | STOP_GROUP     | BEGIN      | emptyGroup  |                                | postgres
-    2216 | LOCK_GROUP     | BEGIN      | emptyGroup  |                                | postgres
-    2217 | LOCK_GROUP     | END        | emptyGroup  | 0 tables locked, 0 deadlock(s) | postgres
-    2218 | SET_MARK_GROUP | BEGIN      | emptyGroup  | STOP_%                         | postgres
-    2219 | SET_MARK_GROUP | END        | emptyGroup  | STOP_%                         | postgres
-    2220 | STOP_GROUP     | END        | emptyGroup  | 0 tables/sequences processed   | postgres
-    2221 | STOP_GROUP     | BEGIN      | myGroup2    |                                | postgres
-    2222 | LOCK_GROUP     | BEGIN      | myGroup2    |                                | postgres
-    2223 | LOCK_GROUP     | END        | myGroup2    | 8 tables locked, 0 deadlock(s) | postgres
-    2224 | SET_MARK_GROUP | BEGIN      | myGroup2    | Stop mark                      | postgres
-    2225 | SET_MARK_GROUP | END        | myGroup2    | Stop mark                      | postgres
-    2226 | STOP_GROUP     | END        | myGroup2    | 10 tables/sequences processed  | postgres
-    2227 | STOP_GROUP     | BEGIN      | myGroup2    |                                | postgres
-    2228 | STOP_GROUP     | END        |             | 0 tables/sequences processed   | postgres
-    2229 | STOP_GROUP     | BEGIN      | myGroup2    |                                | postgres
-    2230 | STOP_GROUP     | END        |             | 0 tables/sequences processed   | postgres
-    2231 | START_GROUP    | BEGIN      | myGroup1    | With log reset                 | postgres
-    2232 | LOCK_GROUP     | BEGIN      | myGroup1    |                                | postgres
-    2233 | LOCK_GROUP     | END        | myGroup1    | 5 tables locked, 0 deadlock(s) | postgres
-    2234 | SET_MARK_GROUP | BEGIN      | myGroup1    | START_%                        | postgres
-    2235 | SET_MARK_GROUP | END        | myGroup1    | START_%                        | postgres
-    2236 | START_GROUP    | END        | myGroup1    | 7 tables/sequences processed   | postgres
-    2237 | START_GROUP    | BEGIN      | myGroup2    | With log reset                 | postgres
-    2238 | LOCK_GROUP     | BEGIN      | myGroup2    |                                | postgres
-    2239 | LOCK_GROUP     | END        | myGroup2    | 8 tables locked, 0 deadlock(s) | postgres
-    2240 | SET_MARK_GROUP | BEGIN      | myGroup2    | START_%                        | postgres
-    2241 | SET_MARK_GROUP | END        | myGroup2    | START_%                        | postgres
-    2242 | START_GROUP    | END        | myGroup2    | 10 tables/sequences processed  | postgres
-    2243 | STOP_GROUP     | BEGIN      | myGroup1    |                                | postgres
-    2244 | LOCK_GROUP     | BEGIN      | myGroup1    |                                | postgres
-    2245 | LOCK_GROUP     | END        | myGroup1    | 5 tables locked, 0 deadlock(s) | postgres
-    2246 | SET_MARK_GROUP | BEGIN      | myGroup1    | STOP_%                         | postgres
-    2247 | SET_MARK_GROUP | END        | myGroup1    | STOP_%                         | postgres
-    2248 | STOP_GROUP     | END        | myGroup1    | 7 tables/sequences processed   | postgres
-    2249 | STOP_GROUP     | BEGIN      | myGroup2    |                                | postgres
-    2250 | LOCK_GROUP     | BEGIN      | myGroup2    |                                | postgres
-    2251 | LOCK_GROUP     | END        | myGroup2    | 8 tables locked, 0 deadlock(s) | postgres
-    2252 | SET_MARK_GROUP | BEGIN      | myGroup2    | STOP_%                         | postgres
-    2253 | SET_MARK_GROUP | END        | myGroup2    | STOP_%                         | postgres
-    2254 | STOP_GROUP     | END        | myGroup2    | 10 tables/sequences processed  | postgres
-(46 rows)
+ hist_id | hist_function  |   hist_event   | hist_object |         regexp_replace         | hist_user 
+---------+----------------+----------------+-------------+--------------------------------+-----------
+    2210 | STOP_GROUP     | BEGIN          | myGroup1    |                                | postgres
+    2211 | STOP_GROUP     | TIME STAMP SET | 2201        |                                | postgres
+    2212 | LOCK_GROUP     | BEGIN          | myGroup1    |                                | postgres
+    2213 | LOCK_GROUP     | END            | myGroup1    | 5 tables locked, 0 deadlock(s) | postgres
+    2214 | SET_MARK_GROUP | BEGIN          | myGroup1    | STOP_%                         | postgres
+    2215 | SET_MARK_GROUP | END            | myGroup1    | STOP_%                         | postgres
+    2216 | STOP_GROUP     | END            | myGroup1    | 7 tables/sequences processed   | postgres
+    2217 | STOP_GROUP     | BEGIN          | emptyGroup  |                                | postgres
+    2218 | STOP_GROUP     | TIME STAMP SET | 2202        |                                | postgres
+    2219 | LOCK_GROUP     | BEGIN          | emptyGroup  |                                | postgres
+    2220 | LOCK_GROUP     | END            | emptyGroup  | 0 tables locked, 0 deadlock(s) | postgres
+    2221 | SET_MARK_GROUP | BEGIN          | emptyGroup  | STOP_%                         | postgres
+    2222 | SET_MARK_GROUP | END            | emptyGroup  | STOP_%                         | postgres
+    2223 | STOP_GROUP     | END            | emptyGroup  | 0 tables/sequences processed   | postgres
+    2224 | STOP_GROUP     | BEGIN          | myGroup2    |                                | postgres
+    2225 | STOP_GROUP     | TIME STAMP SET | 2203        |                                | postgres
+    2226 | LOCK_GROUP     | BEGIN          | myGroup2    |                                | postgres
+    2227 | LOCK_GROUP     | END            | myGroup2    | 8 tables locked, 0 deadlock(s) | postgres
+    2228 | SET_MARK_GROUP | BEGIN          | myGroup2    | Stop mark                      | postgres
+    2229 | SET_MARK_GROUP | END            | myGroup2    | Stop mark                      | postgres
+    2230 | STOP_GROUP     | END            | myGroup2    | 10 tables/sequences processed  | postgres
+    2231 | STOP_GROUP     | BEGIN          | myGroup2    |                                | postgres
+    2232 | STOP_GROUP     | END            |             | 0 tables/sequences processed   | postgres
+    2233 | STOP_GROUP     | BEGIN          | myGroup2    |                                | postgres
+    2234 | STOP_GROUP     | END            |             | 0 tables/sequences processed   | postgres
+    2235 | START_GROUP    | BEGIN          | myGroup1    | With log reset                 | postgres
+    2236 | START_GROUP    | TIME STAMP SET | 2204        |                                | postgres
+    2237 | LOCK_GROUP     | BEGIN          | myGroup1    |                                | postgres
+    2238 | LOCK_GROUP     | END            | myGroup1    | 5 tables locked, 0 deadlock(s) | postgres
+    2239 | SET_MARK_GROUP | BEGIN          | myGroup1    | START_%                        | postgres
+    2240 | SET_MARK_GROUP | END            | myGroup1    | START_%                        | postgres
+    2241 | START_GROUP    | END            | myGroup1    | 7 tables/sequences processed   | postgres
+    2242 | START_GROUP    | BEGIN          | myGroup2    | With log reset                 | postgres
+    2243 | START_GROUP    | TIME STAMP SET | 2205        |                                | postgres
+    2244 | LOCK_GROUP     | BEGIN          | myGroup2    |                                | postgres
+    2245 | LOCK_GROUP     | END            | myGroup2    | 8 tables locked, 0 deadlock(s) | postgres
+    2246 | SET_MARK_GROUP | BEGIN          | myGroup2    | START_%                        | postgres
+    2247 | SET_MARK_GROUP | END            | myGroup2    | START_%                        | postgres
+    2248 | START_GROUP    | END            | myGroup2    | 10 tables/sequences processed  | postgres
+    2249 | STOP_GROUP     | BEGIN          | myGroup1    |                                | postgres
+    2250 | STOP_GROUP     | TIME STAMP SET | 2206        |                                | postgres
+    2251 | LOCK_GROUP     | BEGIN          | myGroup1    |                                | postgres
+    2252 | LOCK_GROUP     | END            | myGroup1    | 5 tables locked, 0 deadlock(s) | postgres
+    2253 | SET_MARK_GROUP | BEGIN          | myGroup1    | STOP_%                         | postgres
+    2254 | SET_MARK_GROUP | END            | myGroup1    | STOP_%                         | postgres
+    2255 | STOP_GROUP     | END            | myGroup1    | 7 tables/sequences processed   | postgres
+    2256 | STOP_GROUP     | BEGIN          | myGroup2    |                                | postgres
+    2257 | STOP_GROUP     | TIME STAMP SET | 2207        |                                | postgres
+    2258 | LOCK_GROUP     | BEGIN          | myGroup2    |                                | postgres
+    2259 | LOCK_GROUP     | END            | myGroup2    | 8 tables locked, 0 deadlock(s) | postgres
+    2260 | SET_MARK_GROUP | BEGIN          | myGroup2    | STOP_%                         | postgres
+    2261 | SET_MARK_GROUP | END            | myGroup2    | STOP_%                         | postgres
+    2262 | STOP_GROUP     | END            | myGroup2    | 10 tables/sequences processed  | postgres
+(53 rows)
 
 select public.handle_emaj_sequences(2400);
  handle_emaj_sequences 
@@ -717,20 +733,20 @@ select emaj.emaj_start_groups('{"unknownGroup",""}',NULL,true);
 ERROR:  _check_group_names: The group "unknownGroup" does not exist.
 CONTEXT:  PL/pgSQL function emaj._check_group_names(text[],boolean,boolean,boolean,boolean,boolean,boolean) line 42 at RAISE
 SQL statement "SELECT emaj._check_group_names(p_groupNames := p_groupNames, p_mayBeNull := p_multiGroup, p_lockGroups := TRUE, p_checkIdle := TRUE)"
-PL/pgSQL function emaj._start_groups(text[],text,boolean,boolean) line 21 at SQL statement
+PL/pgSQL function emaj._start_groups(text[],text,boolean,boolean) line 23 at SQL statement
 PL/pgSQL function emaj.emaj_start_groups(text[],text,boolean) line 11 at RETURN
 select emaj.emaj_start_groups('{"myGroup1","unknownGroup"}',NULL,false);
 ERROR:  _check_group_names: The group "unknownGroup" does not exist.
 CONTEXT:  PL/pgSQL function emaj._check_group_names(text[],boolean,boolean,boolean,boolean,boolean,boolean) line 42 at RAISE
 SQL statement "SELECT emaj._check_group_names(p_groupNames := p_groupNames, p_mayBeNull := p_multiGroup, p_lockGroups := TRUE, p_checkIdle := TRUE)"
-PL/pgSQL function emaj._start_groups(text[],text,boolean,boolean) line 21 at SQL statement
+PL/pgSQL function emaj._start_groups(text[],text,boolean,boolean) line 23 at SQL statement
 PL/pgSQL function emaj.emaj_start_groups(text[],text,boolean) line 11 at RETURN
 -- reserved mark name
 select emaj.emaj_start_groups('{"myGroup1"}','EMAJ_LAST_MARK');
 ERROR:  _check_new_mark: "EMAJ_LAST_MARK" is not an allowed name for a new mark.
 CONTEXT:  PL/pgSQL function emaj._check_new_mark(text[],text) line 14 at RAISE
 SQL statement "SELECT emaj._check_new_mark(p_groupNames, p_mark)"
-PL/pgSQL function emaj._start_groups(text[],text,boolean,boolean) line 47 at SQL statement
+PL/pgSQL function emaj._start_groups(text[],text,boolean,boolean) line 49 at SQL statement
 PL/pgSQL function emaj.emaj_start_groups(text[],text,boolean) line 11 at RETURN
 -- 2 groups already started
 select emaj.emaj_start_groups('{"myGroup1","myGroup2"}','Mark1',true);
@@ -743,7 +759,7 @@ select emaj.emaj_start_groups('{"myGroup1","myGroup2"}','Mark1',false);
 ERROR:  _check_group_names: The groups "myGroup1, myGroup2" are not in IDLE state.
 CONTEXT:  PL/pgSQL function emaj._check_group_names(text[],boolean,boolean,boolean,boolean,boolean,boolean) line 77 at RAISE
 SQL statement "SELECT emaj._check_group_names(p_groupNames := p_groupNames, p_mayBeNull := p_multiGroup, p_lockGroups := TRUE, p_checkIdle := TRUE)"
-PL/pgSQL function emaj._start_groups(text[],text,boolean,boolean) line 21 at SQL statement
+PL/pgSQL function emaj._start_groups(text[],text,boolean,boolean) line 23 at SQL statement
 PL/pgSQL function emaj.emaj_start_groups(text[],text,boolean) line 11 at RETURN
 select emaj.emaj_stop_groups('{"myGroup1","myGroup2"}');
  emaj_stop_groups 
@@ -759,7 +775,7 @@ ERROR:  _verify_groups (1): In group "myGroup2", the table "myschema2"."myTbl3" 
 CONTEXT:  PL/pgSQL function emaj._verify_groups(text[],boolean) line 39 at RAISE
 SQL statement "SELECT 0
         FROM emaj._verify_groups(p_groupNames, TRUE)"
-PL/pgSQL function emaj._start_groups(text[],text,boolean,boolean) line 26 at PERFORM
+PL/pgSQL function emaj._start_groups(text[],text,boolean,boolean) line 28 at PERFORM
 PL/pgSQL function emaj.emaj_start_groups(text[],text,boolean) line 11 at RETURN
 rollback;
 -- should be OK, with a warning on fkey between tables from different groups and warning on group names array content
@@ -810,33 +826,36 @@ select time_id, time_last_emaj_gid, time_event from emaj.emaj_time_stamp where t
 select hist_id, hist_function, hist_event, hist_object, 
   regexp_replace(regexp_replace(hist_wording,E'\\d\\d\.\\d\\d\\.\\d\\d\\.\\d\\d\\d\\d','%','g'),E'\\[.+\\]','(timestamp)','g'),
   hist_user from emaj.emaj_hist where hist_id >= 2400 order by hist_id;
- hist_id |  hist_function  | hist_event |    hist_object    |         regexp_replace          | hist_user 
----------+-----------------+------------+-------------------+---------------------------------+-----------
-    2400 | STOP_GROUP      | BEGIN      | myGroup1          |                                 | postgres
-    2401 | STOP_GROUP      | END        |                   | 0 tables/sequences processed    | postgres
-    2402 | START_GROUPS    | BEGIN      |                   | Without log reset               | postgres
-    2403 | START_GROUPS    | END        |                   | 0 tables/sequences processed    | postgres
-    2404 | START_GROUPS    | BEGIN      |                   | With log reset                  | postgres
-    2405 | START_GROUPS    | END        |                   | 0 tables/sequences processed    | postgres
-    2409 | START_GROUPS    | BEGIN      | myGroup1,myGroup2 | With log reset                  | postgres
-    2410 | LOCK_GROUPS     | BEGIN      | myGroup1,myGroup2 |                                 | postgres
-    2411 | LOCK_GROUPS     | END        | myGroup1,myGroup2 | 13 tables locked, 0 deadlock(s) | postgres
-    2412 | SET_MARK_GROUPS | BEGIN      | myGroup1,myGroup2 | Mark1                           | postgres
-    2413 | SET_MARK_GROUPS | END        | myGroup1,myGroup2 | Mark1                           | postgres
-    2414 | START_GROUPS    | END        | myGroup1,myGroup2 | 17 tables/sequences processed   | postgres
-    2416 | STOP_GROUPS     | BEGIN      | myGroup1,myGroup2 |                                 | postgres
-    2417 | LOCK_GROUPS     | BEGIN      | myGroup1,myGroup2 |                                 | postgres
-    2418 | LOCK_GROUPS     | END        | myGroup1,myGroup2 | 13 tables locked, 0 deadlock(s) | postgres
-    2419 | SET_MARK_GROUPS | BEGIN      | myGroup1,myGroup2 | STOP_%                          | postgres
-    2420 | SET_MARK_GROUPS | END        | myGroup1,myGroup2 | STOP_%                          | postgres
-    2421 | STOP_GROUPS     | END        | myGroup1,myGroup2 | 17 tables/sequences processed   | postgres
-    2429 | START_GROUPS    | BEGIN      | myGroup1,myGroup2 | With log reset                  | postgres
-    2430 | LOCK_GROUPS     | BEGIN      | myGroup1,myGroup2 |                                 | postgres
-    2431 | LOCK_GROUPS     | END        | myGroup1,myGroup2 | 13 tables locked, 0 deadlock(s) | postgres
-    2432 | SET_MARK_GROUPS | BEGIN      | myGroup1,myGroup2 | Mark1                           | postgres
-    2433 | SET_MARK_GROUPS | END        | myGroup1,myGroup2 | Mark1                           | postgres
-    2434 | START_GROUPS    | END        | myGroup1,myGroup2 | 17 tables/sequences processed   | postgres
-(24 rows)
+ hist_id |  hist_function  |   hist_event   |    hist_object    |         regexp_replace          | hist_user 
+---------+-----------------+----------------+-------------------+---------------------------------+-----------
+    2400 | STOP_GROUP      | BEGIN          | myGroup1          |                                 | postgres
+    2401 | STOP_GROUP      | END            |                   | 0 tables/sequences processed    | postgres
+    2402 | START_GROUPS    | BEGIN          |                   | Without log reset               | postgres
+    2403 | START_GROUPS    | END            |                   | 0 tables/sequences processed    | postgres
+    2404 | START_GROUPS    | BEGIN          |                   | With log reset                  | postgres
+    2405 | START_GROUPS    | END            |                   | 0 tables/sequences processed    | postgres
+    2410 | START_GROUPS    | BEGIN          | myGroup1,myGroup2 | With log reset                  | postgres
+    2411 | START_GROUPS    | TIME STAMP SET | 2401              |                                 | postgres
+    2412 | LOCK_GROUPS     | BEGIN          | myGroup1,myGroup2 |                                 | postgres
+    2413 | LOCK_GROUPS     | END            | myGroup1,myGroup2 | 13 tables locked, 0 deadlock(s) | postgres
+    2414 | SET_MARK_GROUPS | BEGIN          | myGroup1,myGroup2 | Mark1                           | postgres
+    2415 | SET_MARK_GROUPS | END            | myGroup1,myGroup2 | Mark1                           | postgres
+    2416 | START_GROUPS    | END            | myGroup1,myGroup2 | 17 tables/sequences processed   | postgres
+    2418 | STOP_GROUPS     | BEGIN          | myGroup1,myGroup2 |                                 | postgres
+    2419 | STOP_GROUPS     | TIME STAMP SET | 2402              |                                 | postgres
+    2420 | LOCK_GROUPS     | BEGIN          | myGroup1,myGroup2 |                                 | postgres
+    2421 | LOCK_GROUPS     | END            | myGroup1,myGroup2 | 13 tables locked, 0 deadlock(s) | postgres
+    2422 | SET_MARK_GROUPS | BEGIN          | myGroup1,myGroup2 | STOP_%                          | postgres
+    2423 | SET_MARK_GROUPS | END            | myGroup1,myGroup2 | STOP_%                          | postgres
+    2424 | STOP_GROUPS     | END            | myGroup1,myGroup2 | 17 tables/sequences processed   | postgres
+    2433 | START_GROUPS    | BEGIN          | myGroup1,myGroup2 | With log reset                  | postgres
+    2434 | START_GROUPS    | TIME STAMP SET | 2404              |                                 | postgres
+    2435 | LOCK_GROUPS     | BEGIN          | myGroup1,myGroup2 |                                 | postgres
+    2436 | LOCK_GROUPS     | END            | myGroup1,myGroup2 | 13 tables locked, 0 deadlock(s) | postgres
+    2437 | SET_MARK_GROUPS | BEGIN          | myGroup1,myGroup2 | Mark1                           | postgres
+    2438 | SET_MARK_GROUPS | END            | myGroup1,myGroup2 | Mark1                           | postgres
+    2439 | START_GROUPS    | END            | myGroup1,myGroup2 | 17 tables/sequences processed   | postgres
+(27 rows)
 
 select public.handle_emaj_sequences(2500);
  handle_emaj_sequences 
@@ -867,20 +886,20 @@ select emaj.emaj_stop_groups('{"unknownGroup",""}');
 ERROR:  _check_group_names: The group "unknownGroup" does not exist.
 CONTEXT:  PL/pgSQL function emaj._check_group_names(text[],boolean,boolean,boolean,boolean,boolean,boolean) line 42 at RAISE
 SQL statement "SELECT emaj._check_group_names(p_groupNames := p_groupNames, p_mayBeNull := p_multiGroup, p_lockGroups := TRUE)"
-PL/pgSQL function emaj._stop_groups(text[],text,boolean,boolean) line 24 at SQL statement
+PL/pgSQL function emaj._stop_groups(text[],text,boolean,boolean) line 25 at SQL statement
 PL/pgSQL function emaj.emaj_stop_groups(text[],text) line 7 at RETURN
 select emaj.emaj_stop_groups('{"myGroup1","unknownGroup"}');
 ERROR:  _check_group_names: The group "unknownGroup" does not exist.
 CONTEXT:  PL/pgSQL function emaj._check_group_names(text[],boolean,boolean,boolean,boolean,boolean,boolean) line 42 at RAISE
 SQL statement "SELECT emaj._check_group_names(p_groupNames := p_groupNames, p_mayBeNull := p_multiGroup, p_lockGroups := TRUE)"
-PL/pgSQL function emaj._stop_groups(text[],text,boolean,boolean) line 24 at SQL statement
+PL/pgSQL function emaj._stop_groups(text[],text,boolean,boolean) line 25 at SQL statement
 PL/pgSQL function emaj.emaj_stop_groups(text[],text) line 7 at RETURN
 -- missing application table
 begin;
   drop table mySchema2."myTbl3" cascade;
   select emaj.emaj_stop_groups(array['myGroup1','myGroup2']);
 ERROR:  _stop_groups: The table "myschema2.myTbl3" does not exist any more.
-CONTEXT:  PL/pgSQL function emaj._stop_groups(text[],text,boolean,boolean) line 98 at RAISE
+CONTEXT:  PL/pgSQL function emaj._stop_groups(text[],text,boolean,boolean) line 99 at RAISE
 PL/pgSQL function emaj.emaj_stop_groups(text[],text) line 7 at RETURN
 rollback;
 -- should be OK
@@ -924,13 +943,13 @@ select emaj.emaj_force_stop_group(NULL);
 ERROR:  _check_group_names: No group to process.
 CONTEXT:  PL/pgSQL function emaj._check_group_names(text[],boolean,boolean,boolean,boolean,boolean,boolean) line 30 at RAISE
 SQL statement "SELECT emaj._check_group_names(p_groupNames := p_groupNames, p_mayBeNull := p_multiGroup, p_lockGroups := TRUE)"
-PL/pgSQL function emaj._stop_groups(text[],text,boolean,boolean) line 24 at SQL statement
+PL/pgSQL function emaj._stop_groups(text[],text,boolean,boolean) line 25 at SQL statement
 PL/pgSQL function emaj.emaj_force_stop_group(text) line 9 at RETURN
 select emaj.emaj_force_stop_group('unknownGroup');
 ERROR:  _check_group_names: The group "unknownGroup" does not exist.
 CONTEXT:  PL/pgSQL function emaj._check_group_names(text[],boolean,boolean,boolean,boolean,boolean,boolean) line 42 at RAISE
 SQL statement "SELECT emaj._check_group_names(p_groupNames := p_groupNames, p_mayBeNull := p_multiGroup, p_lockGroups := TRUE)"
-PL/pgSQL function emaj._stop_groups(text[],text,boolean,boolean) line 24 at SQL statement
+PL/pgSQL function emaj._stop_groups(text[],text,boolean,boolean) line 25 at SQL statement
 PL/pgSQL function emaj.emaj_force_stop_group(text) line 9 at RETURN
 -- should be OK
 -- missing application schema
@@ -1057,37 +1076,41 @@ select time_id, time_last_emaj_gid, time_event from emaj.emaj_time_stamp where t
 select hist_id, hist_function, hist_event, hist_object, 
   regexp_replace(regexp_replace(hist_wording,E'\\d\\d\.\\d\\d\\.\\d\\d\\.\\d\\d\\d\\d','%','g'),E'\\[.+\\]','(timestamp)','g'),
   hist_user from emaj.emaj_hist where hist_id >= 2500 order by hist_id;
- hist_id |  hist_function   | hist_event |                  hist_object                  |         regexp_replace          | hist_user 
----------+------------------+------------+-----------------------------------------------+---------------------------------+-----------
-    2500 | STOP_GROUPS      | BEGIN      |                                               |                                 | postgres
-    2501 | STOP_GROUPS      | END        |                                               | 0 tables/sequences processed    | postgres
-    2502 | STOP_GROUPS      | BEGIN      |                                               |                                 | postgres
-    2503 | STOP_GROUPS      | END        |                                               | 0 tables/sequences processed    | postgres
-    2509 | STOP_GROUPS      | BEGIN      | myGroup1,myGroup2                             |                                 | postgres
-    2510 | LOCK_GROUPS      | BEGIN      | myGroup1,myGroup2                             |                                 | postgres
-    2511 | LOCK_GROUPS      | END        | myGroup1,myGroup2                             | 13 tables locked, 0 deadlock(s) | postgres
-    2512 | SET_MARK_GROUPS  | BEGIN      | myGroup1,myGroup2                             | Global Stop at %                | postgres
-    2513 | SET_MARK_GROUPS  | END        | myGroup1,myGroup2                             | Global Stop at %                | postgres
-    2514 | STOP_GROUPS      | END        | myGroup1,myGroup2                             | 17 tables/sequences processed   | postgres
-    2515 | STOP_GROUPS      | BEGIN      | myGroup1,myGroup2,,myGroup2,myGroup2,myGroup1 |                                 | postgres
-    2516 | STOP_GROUPS      | END        |                                               | 0 tables/sequences processed    | postgres
-    2517 | START_GROUPS     | BEGIN      | myGroup1,myGroup2                             | With log reset                  | postgres
-    2518 | LOCK_GROUPS      | BEGIN      | myGroup1,myGroup2                             |                                 | postgres
-    2519 | LOCK_GROUPS      | END        | myGroup1,myGroup2                             | 13 tables locked, 0 deadlock(s) | postgres
-    2520 | SET_MARK_GROUPS  | BEGIN      | myGroup1,myGroup2                             | Mark1                           | postgres
-    2521 | SET_MARK_GROUPS  | END        | myGroup1,myGroup2                             | Mark1                           | postgres
-    2522 | START_GROUPS     | END        | myGroup1,myGroup2                             | 17 tables/sequences processed   | postgres
-    2541 | FORCE_STOP_GROUP | BEGIN      | myGroup2                                      |                                 | postgres
-    2542 | LOCK_GROUP       | BEGIN      | myGroup2                                      |                                 | postgres
-    2543 | LOCK_GROUP       | END        | myGroup2                                      | 8 tables locked, 0 deadlock(s)  | postgres
-    2544 | FORCE_STOP_GROUP | END        | myGroup2                                      | 10 tables/sequences processed   | postgres
-    2545 | FORCE_STOP_GROUP | BEGIN      | myGroup1                                      |                                 | postgres
-    2546 | LOCK_GROUP       | BEGIN      | myGroup1                                      |                                 | postgres
-    2547 | LOCK_GROUP       | END        | myGroup1                                      | 5 tables locked, 0 deadlock(s)  | postgres
-    2548 | FORCE_STOP_GROUP | END        | myGroup1                                      | 7 tables/sequences processed    | postgres
-    2549 | FORCE_STOP_GROUP | BEGIN      | myGroup2                                      |                                 | postgres
-    2550 | FORCE_STOP_GROUP | END        |                                               | 0 tables/sequences processed    | postgres
-(28 rows)
+ hist_id |  hist_function   |   hist_event   |                  hist_object                  |         regexp_replace          | hist_user 
+---------+------------------+----------------+-----------------------------------------------+---------------------------------+-----------
+    2500 | STOP_GROUPS      | BEGIN          |                                               |                                 | postgres
+    2501 | STOP_GROUPS      | END            |                                               | 0 tables/sequences processed    | postgres
+    2502 | STOP_GROUPS      | BEGIN          |                                               |                                 | postgres
+    2503 | STOP_GROUPS      | END            |                                               | 0 tables/sequences processed    | postgres
+    2510 | STOP_GROUPS      | BEGIN          | myGroup1,myGroup2                             |                                 | postgres
+    2511 | STOP_GROUPS      | TIME STAMP SET | 2501                                          |                                 | postgres
+    2512 | LOCK_GROUPS      | BEGIN          | myGroup1,myGroup2                             |                                 | postgres
+    2513 | LOCK_GROUPS      | END            | myGroup1,myGroup2                             | 13 tables locked, 0 deadlock(s) | postgres
+    2514 | SET_MARK_GROUPS  | BEGIN          | myGroup1,myGroup2                             | Global Stop at %                | postgres
+    2515 | SET_MARK_GROUPS  | END            | myGroup1,myGroup2                             | Global Stop at %                | postgres
+    2516 | STOP_GROUPS      | END            | myGroup1,myGroup2                             | 17 tables/sequences processed   | postgres
+    2517 | STOP_GROUPS      | BEGIN          | myGroup1,myGroup2,,myGroup2,myGroup2,myGroup1 |                                 | postgres
+    2518 | STOP_GROUPS      | END            |                                               | 0 tables/sequences processed    | postgres
+    2519 | START_GROUPS     | BEGIN          | myGroup1,myGroup2                             | With log reset                  | postgres
+    2520 | START_GROUPS     | TIME STAMP SET | 2502                                          |                                 | postgres
+    2521 | LOCK_GROUPS      | BEGIN          | myGroup1,myGroup2                             |                                 | postgres
+    2522 | LOCK_GROUPS      | END            | myGroup1,myGroup2                             | 13 tables locked, 0 deadlock(s) | postgres
+    2523 | SET_MARK_GROUPS  | BEGIN          | myGroup1,myGroup2                             | Mark1                           | postgres
+    2524 | SET_MARK_GROUPS  | END            | myGroup1,myGroup2                             | Mark1                           | postgres
+    2525 | START_GROUPS     | END            | myGroup1,myGroup2                             | 17 tables/sequences processed   | postgres
+    2548 | FORCE_STOP_GROUP | BEGIN          | myGroup2                                      |                                 | postgres
+    2549 | FORCE_STOP_GROUP | TIME STAMP SET | 2507                                          |                                 | postgres
+    2550 | LOCK_GROUP       | BEGIN          | myGroup2                                      |                                 | postgres
+    2551 | LOCK_GROUP       | END            | myGroup2                                      | 8 tables locked, 0 deadlock(s)  | postgres
+    2552 | FORCE_STOP_GROUP | END            | myGroup2                                      | 10 tables/sequences processed   | postgres
+    2553 | FORCE_STOP_GROUP | BEGIN          | myGroup1                                      |                                 | postgres
+    2554 | FORCE_STOP_GROUP | TIME STAMP SET | 2508                                          |                                 | postgres
+    2555 | LOCK_GROUP       | BEGIN          | myGroup1                                      |                                 | postgres
+    2556 | LOCK_GROUP       | END            | myGroup1                                      | 5 tables locked, 0 deadlock(s)  | postgres
+    2557 | FORCE_STOP_GROUP | END            | myGroup1                                      | 7 tables/sequences processed    | postgres
+    2558 | FORCE_STOP_GROUP | BEGIN          | myGroup2                                      |                                 | postgres
+    2559 | FORCE_STOP_GROUP | END            |                                               | 0 tables/sequences processed    | postgres
+(32 rows)
 
 select public.handle_emaj_sequences(2600);
  handle_emaj_sequences 
@@ -1272,37 +1295,41 @@ select hist_id, hist_function, hist_event, hist_object,
  hist_id |   hist_function   |       hist_event       | hist_object |                         regexp_replace                         | hist_user 
 ---------+-------------------+------------------------+-------------+----------------------------------------------------------------+-----------
     2600 | START_GROUP       | BEGIN                  | myGroup1    | With log reset                                                 | postgres
-    2601 | LOCK_GROUP        | BEGIN                  | myGroup1    |                                                                | postgres
-    2602 | LOCK_GROUP        | END                    | myGroup1    | 5 tables locked, 0 deadlock(s)                                 | postgres
-    2603 | SET_MARK_GROUP    | BEGIN                  | myGroup1    | M1                                                             | postgres
-    2604 | SET_MARK_GROUP    | END                    | myGroup1    | M1                                                             | postgres
-    2605 | START_GROUP       | END                    | myGroup1    | 7 tables/sequences processed                                   | postgres
-    2606 | PROTECT_GROUP     |                        | myGroup1    | Status 1                                                       | postgres
-    2607 | PROTECT_GROUP     |                        | myGroup1    | Status 0                                                       | postgres
-    2608 | STOP_GROUP        | BEGIN                  | myGroup1    |                                                                | postgres
-    2609 | LOCK_GROUP        | BEGIN                  | myGroup1    |                                                                | postgres
-    2610 | LOCK_GROUP        | END                    | myGroup1    | 5 tables locked, 0 deadlock(s)                                 | postgres
-    2611 | SET_MARK_GROUP    | BEGIN                  | myGroup1    | STOP_%                                                         | postgres
-    2612 | SET_MARK_GROUP    | END                    | myGroup1    | STOP_%                                                         | postgres
-    2613 | STOP_GROUP        | END                    | myGroup1    | 7 tables/sequences processed                                   | postgres
-    2614 | UNPROTECT_GROUP   |                        | myGroup1    | Status 0                                                       | postgres
-    2615 | START_GROUP       | BEGIN                  | myGroup1    | With log reset                                                 | postgres
-    2616 | LOCK_GROUP        | BEGIN                  | myGroup1    |                                                                | postgres
-    2617 | LOCK_GROUP        | END                    | myGroup1    | 5 tables locked, 0 deadlock(s)                                 | postgres
-    2618 | SET_MARK_GROUP    | BEGIN                  | myGroup1    | M1                                                             | postgres
-    2619 | SET_MARK_GROUP    | END                    | myGroup1    | M1                                                             | postgres
-    2620 | START_GROUP       | END                    | myGroup1    | 7 tables/sequences processed                                   | postgres
-    2621 | PROTECT_GROUP     |                        | myGroup1    | Status 1                                                       | postgres
-    2622 | UNPROTECT_GROUP   |                        | myGroup1    | Status 1                                                       | postgres
-    2623 | UNPROTECT_GROUP   |                        | myGroup1    | Status 0                                                       | postgres
-    2624 | STOP_GROUP        | BEGIN                  | myGroup1    |                                                                | postgres
-    2625 | LOCK_GROUP        | BEGIN                  | myGroup1    |                                                                | postgres
-    2626 | LOCK_GROUP        | END                    | myGroup1    | 5 tables locked, 0 deadlock(s)                                 | postgres
-    2627 | SET_MARK_GROUP    | BEGIN                  | myGroup1    | STOP_%                                                         | postgres
-    2628 | SET_MARK_GROUP    | END                    | myGroup1    | STOP_%                                                         | postgres
-    2629 | STOP_GROUP        | END                    | myGroup1    | 7 tables/sequences processed                                   | postgres
-    2630 | ENABLE_PROTECTION | EVENT TRIGGERS ENABLED |             | emaj_protection_trg, emaj_sql_drop_trg, emaj_table_rewrite_trg | postgres
-(31 rows)
+    2601 | START_GROUP       | TIME STAMP SET         | 2600        |                                                                | postgres
+    2602 | LOCK_GROUP        | BEGIN                  | myGroup1    |                                                                | postgres
+    2603 | LOCK_GROUP        | END                    | myGroup1    | 5 tables locked, 0 deadlock(s)                                 | postgres
+    2604 | SET_MARK_GROUP    | BEGIN                  | myGroup1    | M1                                                             | postgres
+    2605 | SET_MARK_GROUP    | END                    | myGroup1    | M1                                                             | postgres
+    2606 | START_GROUP       | END                    | myGroup1    | 7 tables/sequences processed                                   | postgres
+    2607 | PROTECT_GROUP     |                        | myGroup1    | Status 1                                                       | postgres
+    2608 | PROTECT_GROUP     |                        | myGroup1    | Status 0                                                       | postgres
+    2609 | STOP_GROUP        | BEGIN                  | myGroup1    |                                                                | postgres
+    2610 | STOP_GROUP        | TIME STAMP SET         | 2601        |                                                                | postgres
+    2611 | LOCK_GROUP        | BEGIN                  | myGroup1    |                                                                | postgres
+    2612 | LOCK_GROUP        | END                    | myGroup1    | 5 tables locked, 0 deadlock(s)                                 | postgres
+    2613 | SET_MARK_GROUP    | BEGIN                  | myGroup1    | STOP_%                                                         | postgres
+    2614 | SET_MARK_GROUP    | END                    | myGroup1    | STOP_%                                                         | postgres
+    2615 | STOP_GROUP        | END                    | myGroup1    | 7 tables/sequences processed                                   | postgres
+    2616 | UNPROTECT_GROUP   |                        | myGroup1    | Status 0                                                       | postgres
+    2617 | START_GROUP       | BEGIN                  | myGroup1    | With log reset                                                 | postgres
+    2618 | START_GROUP       | TIME STAMP SET         | 2602        |                                                                | postgres
+    2619 | LOCK_GROUP        | BEGIN                  | myGroup1    |                                                                | postgres
+    2620 | LOCK_GROUP        | END                    | myGroup1    | 5 tables locked, 0 deadlock(s)                                 | postgres
+    2621 | SET_MARK_GROUP    | BEGIN                  | myGroup1    | M1                                                             | postgres
+    2622 | SET_MARK_GROUP    | END                    | myGroup1    | M1                                                             | postgres
+    2623 | START_GROUP       | END                    | myGroup1    | 7 tables/sequences processed                                   | postgres
+    2624 | PROTECT_GROUP     |                        | myGroup1    | Status 1                                                       | postgres
+    2625 | UNPROTECT_GROUP   |                        | myGroup1    | Status 1                                                       | postgres
+    2626 | UNPROTECT_GROUP   |                        | myGroup1    | Status 0                                                       | postgres
+    2627 | STOP_GROUP        | BEGIN                  | myGroup1    |                                                                | postgres
+    2628 | STOP_GROUP        | TIME STAMP SET         | 2603        |                                                                | postgres
+    2629 | LOCK_GROUP        | BEGIN                  | myGroup1    |                                                                | postgres
+    2630 | LOCK_GROUP        | END                    | myGroup1    | 5 tables locked, 0 deadlock(s)                                 | postgres
+    2631 | SET_MARK_GROUP    | BEGIN                  | myGroup1    | STOP_%                                                         | postgres
+    2632 | SET_MARK_GROUP    | END                    | myGroup1    | STOP_%                                                         | postgres
+    2633 | STOP_GROUP        | END                    | myGroup1    | 7 tables/sequences processed                                   | postgres
+    2634 | ENABLE_PROTECTION | EVENT TRIGGERS ENABLED |             | emaj_protection_trg, emaj_sql_drop_trg, emaj_table_rewrite_trg | postgres
+(35 rows)
 
 -- remove the temp directory
 \! rm -R $EMAJTESTTMPDIR

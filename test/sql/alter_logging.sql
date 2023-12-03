@@ -613,7 +613,7 @@ begin;
   select emaj.emaj_move_sequence('myschema2', 'myTbl3_col31_seq', 'myGroup1', 'move seq to myGroup1 while logging');
   select emaj.emaj_modify_table('myschema2', 'myTbl3', '{"log_data_tablespace":"tsplog1", "log_index_tablespace":"tsplog1"}'::jsonb, 'modify table to myGroup1 while logging');
   select hist_function, hist_event, hist_object, hist_wording from emaj.emaj_hist 
-    where hist_function like 'MO%' order by hist_id desc limit 10;
+    where hist_function like 'MO%' order by hist_id desc limit 13;
 rollback;
 
 -- case when both groups are logging

@@ -685,14 +685,23 @@ $$
 -- This function returns as an integer the current postgresql version.
 SELECT current_setting('server_version_num')::INT;
 $$;
-CREATE OR REPLACE FUNCTION emaj._set_time_stamp(p_timeStampType CHAR(1))
+CREATE OR REPLACE FUNCTION emaj._set_time_stamp(p_function TEXT, p_timeEvent CHAR(1))
 RETURNS BIGINT LANGUAGE SQL AS
 $$
--- This function inserts a new time stamp in the emaj_time_stamp table and returns the identifier of the new row.
-INSERT INTO emaj.emaj_time_stamp (time_last_emaj_gid, time_event)
-  SELECT CASE WHEN is_called THEN last_value ELSE last_value - 1 END, p_timeStampType
-    FROM emaj.emaj_global_seq
-    RETURNING time_id;
+-- This function creates a new time stamp in the emaj_time_stamp table, records it into the emaj_hist table (except for rollback events)
+--   and returns its identifier.
+WITH inserted_time_stamp AS (
+  INSERT INTO emaj.emaj_time_stamp (time_last_emaj_gid, time_event)
+    SELECT CASE WHEN is_called THEN last_value ELSE last_value - 1 END, p_timeEvent
+      FROM emaj.emaj_global_seq
+    RETURNING time_id, time_clock_timestamp
+  ), inserted_hist AS (
+  INSERT INTO emaj.emaj_hist (hist_datetime, hist_function, hist_event, hist_object)
+    SELECT time_clock_timestamp, p_function, 'TIME STAMP SET', time_id::TEXT
+      FROM inserted_time_stamp
+      WHERE p_timeEvent <> 'R'
+  )
+  SELECT time_id FROM inserted_time_stamp;
 $$;
 CREATE OR REPLACE FUNCTION emaj._dblink_open_cnx(p_cnxName TEXT, OUT p_status INT, OUT p_schema TEXT)
 LANGUAGE plpgsql AS
@@ -2228,7 +2237,7 @@ $_assign_tables$
       RAISE WARNING '_assign_tables: No table to process.';
     ELSE
 -- Get the time stamp of the operation.
-      SELECT emaj._set_time_stamp('A') INTO v_timeId;
+      SELECT emaj._set_time_stamp(v_function, 'A') INTO v_timeId;
 -- For LOGGING groups, lock all tables to get a stable point.
       IF v_groupIsLogging THEN
 --   Use a ROW EXCLUSIVE lock mode, preventing for a transaction currently updating data, but not conflicting with simple read access or
@@ -2479,7 +2488,7 @@ $_remove_tables$
     ELSE
       v_logSchema = 'emaj_' || p_schema;
 -- Get the time stamp of the operation.
-      SELECT emaj._set_time_stamp('A') INTO v_timeId;
+      SELECT emaj._set_time_stamp(v_function, 'A') INTO v_timeId;
 -- For LOGGING groups, lock all tables to get a stable point.
       IF v_loggingGroups IS NOT NULL THEN
 -- Use a ROW EXCLUSIVE lock mode, preventing for a transaction currently updating data, but not conflicting with simple read access or
@@ -2706,7 +2715,7 @@ $_move_tables$
       RAISE WARNING '_move_tables: No table to process.';
     ELSE
 -- Get the time stamp of the operation.
-      SELECT emaj._set_time_stamp('A') INTO v_timeId;
+      SELECT emaj._set_time_stamp(v_function, 'A') INTO v_timeId;
 -- For LOGGING groups, lock all tables to get a stable point.
       IF v_loggingGroups IS NOT NULL THEN
 -- Use a ROW EXCLUSIVE lock mode, preventing for a transaction currently updating data, but not conflicting with simple read access or
@@ -2913,7 +2922,7 @@ $_modify_tables$
       RAISE WARNING '_modified_tables: No property change to process.';
     ELSE
 -- Get the time stamp of the operation.
-      SELECT emaj._set_time_stamp('A') INTO v_timeId;
+      SELECT emaj._set_time_stamp(v_function, 'A') INTO v_timeId;
 -- For LOGGING groups, lock all tables to get a stable point.
       IF v_loggingGroups IS NOT NULL THEN
 -- Use a ROW EXCLUSIVE lock mode, preventing for a transaction currently updating data, but not conflicting with simple read access or
@@ -4044,7 +4053,7 @@ $_assign_sequences$
       RAISE WARNING '_assign_sequences: No sequence to process.';
     ELSE
 -- Get the time stamp of the operation.
-      SELECT emaj._set_time_stamp('A') INTO v_timeId;
+      SELECT emaj._set_time_stamp(v_function, 'A') INTO v_timeId;
 -- For LOGGING groups, lock all tables to get a stable point.
       IF v_groupIsLogging THEN
 -- Use a ROW EXCLUSIVE lock mode, preventing for a transaction currently updating data, but not conflicting with simple read access or
@@ -4217,7 +4226,7 @@ $_remove_sequences$
       RAISE WARNING '_remove_sequences: No sequence to process.';
     ELSE
 -- Get the time stamp of the operation.
-      SELECT emaj._set_time_stamp('A') INTO v_timeId;
+      SELECT emaj._set_time_stamp(v_function, 'A') INTO v_timeId;
 -- For LOGGING groups, lock all tables to get a stable point.
       IF v_loggingGroups IS NOT NULL THEN
 -- Use a ROW EXCLUSIVE lock mode, preventing for a transaction currently updating data, but not conflicting with simple read access or
@@ -4424,7 +4433,7 @@ $_move_sequences$
       RAISE WARNING '_move_sequences: No sequence to process.';
     ELSE
 -- Get the time stamp of the operation.
-      SELECT emaj._set_time_stamp('A') INTO v_timeId;
+      SELECT emaj._set_time_stamp(v_function, 'A') INTO v_timeId;
 -- For LOGGING groups, lock all tables to get a stable point.
       IF v_loggingGroups IS NOT NULL THEN
 -- Use a ROW EXCLUSIVE lock mode, preventing for a transaction currently updating data, but not conflicting with simple read access or
@@ -5559,11 +5568,12 @@ $emaj_create_group$
 --        boolean indicating whether the group is rollbackable or not (true by default),
 -- Output: 1 = number of created groups
   DECLARE
+    v_function               TEXT = 'CREATE_GROUP';
     v_timeId                 BIGINT;
   BEGIN
 -- Insert a BEGIN event into the history.
     INSERT INTO emaj.emaj_hist (hist_function, hist_event, hist_object, hist_wording)
-      VALUES ('CREATE_GROUP', 'BEGIN', p_groupName, CASE WHEN p_isRollbackable THEN 'rollbackable' ELSE 'audit_only' END);
+      VALUES (v_function, 'BEGIN', p_groupName, CASE WHEN p_isRollbackable THEN 'rollbackable' ELSE 'audit_only' END);
 -- Check that the group name is valid.
     IF p_groupName IS NULL OR p_groupName = '' THEN
       RAISE EXCEPTION 'emaj_create_group: The group name can''t be NULL or empty.';
@@ -5578,7 +5588,7 @@ $emaj_create_group$
     END IF;
 -- OK
 -- Get the time stamp of the operation.
-    SELECT emaj._set_time_stamp('C') INTO v_timeId;
+    SELECT emaj._set_time_stamp(v_function, 'C') INTO v_timeId;
 -- Insert the row describing the group into the emaj_group table
 -- (The group_is_rlbk_protected boolean column is always initialized as not group_is_rollbackable).
     INSERT INTO emaj.emaj_group (group_name, group_is_rollbackable, group_creation_time_id,
@@ -5586,7 +5596,7 @@ $emaj_create_group$
       VALUES (p_groupName, p_isRollbackable, v_timeId, FALSE, NOT p_isRollbackable, 0, 0);
 -- Insert a END event into the history.
     INSERT INTO emaj.emaj_hist (hist_function, hist_event, hist_object)
-      VALUES ('CREATE_GROUP', 'END', p_groupName);
+      VALUES (v_function, 'END', p_groupName);
     RETURN 1;
   END;
 $emaj_create_group$;
@@ -5619,18 +5629,19 @@ $emaj_drop_group$
 -- Input: group name
 -- Output: number of processed tables and sequences
   DECLARE
+    v_function               TEXT = 'DROP_GROUP';
     v_nbRel                  INT;
   BEGIN
 -- Insert a BEGIN event into the history.
     INSERT INTO emaj.emaj_hist (hist_function, hist_event, hist_object)
-      VALUES ('DROP_GROUP', 'BEGIN', p_groupName);
+      VALUES (v_function, 'BEGIN', p_groupName);
 -- Check the group name.
     PERFORM emaj._check_group_names(p_groupNames := ARRAY[p_groupName], p_mayBeNull := FALSE, p_lockGroups := TRUE, p_checkIdle := TRUE);
 -- Effectively drop the group.
     SELECT emaj._drop_group(p_groupName, FALSE) INTO v_nbRel;
 -- Insert a END event into the history.
     INSERT INTO emaj.emaj_hist (hist_function, hist_event, hist_object, hist_wording)
-      VALUES ('DROP_GROUP', 'END', p_groupName, v_nbRel || ' tables/sequences processed');
+      VALUES (v_function, 'END', p_groupName, v_nbRel || ' tables/sequences processed');
 --
     RETURN v_nbRel;
   END;
@@ -5649,18 +5660,19 @@ $emaj_force_drop_group$
 -- Input: group name
 -- Output: number of processed tables and sequences
   DECLARE
+    v_function               TEXT = 'FORCE_DROP_GROUP';
     v_nbRel                  INT;
   BEGIN
 -- Insert a BEGIN event into the history.
     INSERT INTO emaj.emaj_hist (hist_function, hist_event, hist_object)
-      VALUES ('FORCE_DROP_GROUP', 'BEGIN', p_groupName);
+      VALUES (v_function, 'BEGIN', p_groupName);
 -- Check the group name.
     PERFORM emaj._check_group_names(p_groupNames := ARRAY[p_groupName], p_mayBeNull := FALSE, p_lockGroups := TRUE);
 -- Effectively drop the group.
     SELECT emaj._drop_group(p_groupName, TRUE) INTO v_nbRel;
 -- Insert a END event into the history.
     INSERT INTO emaj.emaj_hist (hist_function, hist_event, hist_object, hist_wording)
-      VALUES ('FORCE_DROP_GROUP', 'END', p_groupName, v_nbRel || ' tables/sequences processed');
+      VALUES (v_function, 'END', p_groupName, v_nbRel || ' tables/sequences processed');
 --
     RETURN v_nbRel;
   END;
@@ -5675,13 +5687,15 @@ $_drop_group$
 -- Input: group name, and a boolean indicating whether the group's state has to be checked
 -- Output: number of processed tables and sequences
   DECLARE
+    v_function               TEXT;
     v_eventTriggers          TEXT[];
     v_timeId                 BIGINT;
     v_nbRel                  INT;
     r_rel                    emaj.emaj_relation%ROWTYPE;
   BEGIN
+    v_function = CASE WHEN p_isForced THEN 'FORCE_DROP_GROUP' ELSE 'DROP_GROUP' END;
 -- Get the time stamp of the operation.
-    SELECT emaj._set_time_stamp('D') INTO v_timeId;
+    SELECT emaj._set_time_stamp(v_function, 'D') INTO v_timeId;
 -- Register into emaj_relation_change the tables and sequences removal from their group, for completeness.
     INSERT INTO emaj.emaj_relation_change (rlchg_time_id, rlchg_schema, rlchg_tblseq, rlchg_change_kind, rlchg_group)
       SELECT v_timeId, rel_schema, rel_tblseq,
@@ -5707,7 +5721,7 @@ $_drop_group$
               END;
     END LOOP;
 -- Drop the E-Maj log schemas that are now useless (i.e. not used by any other created group).
-    PERFORM emaj._drop_log_schemas(CASE WHEN p_isForced THEN 'FORCE_DROP_GROUP' ELSE 'DROP_GROUP' END, p_isForced);
+    PERFORM emaj._drop_log_schemas(v_function, p_isForced);
 -- Delete group row from the emaj_group table.
 -- By cascade, it also deletes rows from emaj_mark.
     DELETE FROM emaj.emaj_group
@@ -6360,6 +6374,7 @@ $_import_groups_conf_exec$
 --        - the mark name to set for tables groups in logging state
 -- Output: the number of created or altered tables groups
   DECLARE
+    v_function               TEXT = 'IMPORT_GROUPS';
     v_timeId                 BIGINT;
     v_groupsJson             JSON;
     v_nbGroup                INT;
@@ -6370,7 +6385,7 @@ $_import_groups_conf_exec$
     r_group                  RECORD;
   BEGIN
 -- Get a time stamp id of type 'I' for the operation.
-    SELECT emaj._set_time_stamp('I') INTO v_timeId;
+    SELECT emaj._set_time_stamp(v_function, 'I') INTO v_timeId;
 -- Extract the "tables_groups" json path.
     v_groupsJson = p_json #> '{"tables_groups"}';
 -- In a third pass over the JSON structure:
@@ -6394,7 +6409,7 @@ $_import_groups_conf_exec$
           VALUES (r_group.groupJson ->> 'group', v_isRollbackable, v_timeId,
                                      FALSE, NOT v_isRollbackable, 0, 0, r_group.groupJson ->> 'comment');
         INSERT INTO emaj.emaj_hist (hist_function, hist_event, hist_object, hist_wording)
-          VALUES ('IMPORT_GROUPS', 'GROUP CREATED', r_group.groupJson ->> 'group',
+          VALUES (v_function, 'GROUP CREATED', r_group.groupJson ->> 'group',
                   CASE WHEN v_isRollbackable THEN 'rollbackable' ELSE 'audit_only' END);
       ELSE
 -- If the group exists, adjust the comment if needed.
@@ -6434,7 +6449,7 @@ $_import_groups_conf_exec$
     DROP TABLE tmp_app_sequence;
 -- Insert a END event into the history.
     INSERT INTO emaj.emaj_hist (hist_function, hist_event, hist_wording)
-      VALUES ('IMPORT_GROUPS', 'END', v_nbGroup || ' created or altered tables groups');
+      VALUES (v_function, 'END', v_nbGroup || ' created or altered tables groups');
 --
     RETURN v_nbGroup;
   END;
@@ -6707,15 +6722,17 @@ $_start_groups$
 -- The function is defined as SECURITY DEFINER so that emaj_adm role can use it even if he is not the owner of application tables and
 -- sequences.
   DECLARE
+    v_function               TEXT;
     v_timeId                 BIGINT;
     v_nbTblSeq               INT = 0;
     v_markName               TEXT;
     v_eventTriggers          TEXT[];
     r_tblsq                  RECORD;
   BEGIN
+    v_function = CASE WHEN p_multiGroup THEN 'START_GROUPS' ELSE 'START_GROUP' END;
 -- Insert a BEGIN event into the history.
     INSERT INTO emaj.emaj_hist (hist_function, hist_event, hist_object, hist_wording)
-      VALUES (CASE WHEN p_multiGroup THEN 'START_GROUPS' ELSE 'START_GROUP' END, 'BEGIN', array_to_string(p_groupNames,','),
+      VALUES (v_function, 'BEGIN', array_to_string(p_groupNames,','),
               CASE WHEN p_resetLog THEN 'With log reset' ELSE 'Without log reset' END);
 -- Check the group names.
     SELECT emaj._check_group_names(p_groupNames := p_groupNames, p_mayBeNull := p_multiGroup, p_lockGroups := TRUE, p_checkIdle := TRUE)
@@ -6726,7 +6743,7 @@ $_start_groups$
       PERFORM 0
         FROM emaj._verify_groups(p_groupNames, TRUE);
 -- Get a time stamp id of type 'S' for the operation.
-      SELECT emaj._set_time_stamp('S') INTO v_timeId;
+      SELECT emaj._set_time_stamp(v_function, 'S') INTO v_timeId;
 -- Check foreign keys with tables outside the group
       PERFORM emaj._check_fk_groups(p_groupNames);
 -- Purge the history tables, if needed.
@@ -6780,8 +6797,7 @@ $_start_groups$
     END IF;
 -- Insert a END event into the history.
     INSERT INTO emaj.emaj_hist (hist_function, hist_event, hist_object, hist_wording)
-      VALUES (CASE WHEN p_multiGroup THEN 'START_GROUPS' ELSE 'START_GROUP' END, 'END', array_to_string(p_groupNames,','),
-              v_nbTblSeq || ' tables/sequences processed');
+      VALUES (v_function, 'END', array_to_string(p_groupNames,','), v_nbTblSeq || ' tables/sequences processed');
 --
     RETURN v_nbTblSeq;
   END;
@@ -6839,6 +6855,7 @@ $_stop_groups$
 -- The function is defined as SECURITY DEFINER so that emaj_adm role can use it even if he is not the owner of application tables and
 -- sequences.
   DECLARE
+    v_function               TEXT;
     v_groupList              TEXT;
     v_count                  INT;
     v_timeId                 BIGINT;
@@ -6848,12 +6865,12 @@ $_stop_groups$
     r_schema                 RECORD;
     r_tblsq                  RECORD;
   BEGIN
+    v_function = CASE WHEN p_multiGroup THEN 'STOP_GROUPS'
+                   WHEN NOT p_multiGroup AND NOT p_isForced THEN 'STOP_GROUP'
+                   ELSE 'FORCE_STOP_GROUP' END;
 -- Insert a BEGIN event into the history.
     INSERT INTO emaj.emaj_hist (hist_function, hist_event, hist_object)
-      VALUES (CASE WHEN p_multiGroup THEN 'STOP_GROUPS'
-                   WHEN NOT p_multiGroup AND NOT p_isForced THEN 'STOP_GROUP'
-                   ELSE 'FORCE_STOP_GROUP' END,
-              'BEGIN', array_to_string(p_groupNames,','));
+      VALUES (v_function, 'BEGIN', array_to_string(p_groupNames,','));
 -- Check the group names.
     SELECT emaj._check_group_names(p_groupNames := p_groupNames, p_mayBeNull := p_multiGroup, p_lockGroups := TRUE)
       INTO p_groupNames;
@@ -6885,7 +6902,7 @@ $_stop_groups$
       END IF;
 -- OK (no error detected and at least one group in logging state)
 -- Get a time stamp id of type 'X' for the operation.
-      SELECT emaj._set_time_stamp('X') INTO v_timeId;
+      SELECT emaj._set_time_stamp(v_function, 'X') INTO v_timeId;
 -- Lock all tables to get a stable point.
 -- One sets the locks at the beginning of the operation (rather than let the ALTER TABLE statements set their own locks) to decrease the
 -- risk of deadlock.
@@ -6995,10 +7012,7 @@ $_stop_groups$
     END IF;
 -- Insert a END event into the history.
     INSERT INTO emaj.emaj_hist (hist_function, hist_event, hist_object, hist_wording)
-      VALUES (CASE WHEN p_multiGroup THEN 'STOP_GROUPS'
-                   WHEN NOT p_multiGroup AND NOT p_isForced THEN 'STOP_GROUP'
-                   ELSE 'FORCE_STOP_GROUP' END,
-              'END', array_to_string(p_groupNames,','), v_nbTblSeq || ' tables/sequences processed');
+      VALUES (v_function, 'END', array_to_string(p_groupNames,','), v_nbTblSeq || ' tables/sequences processed');
 --
     RETURN v_nbTblSeq;
   END;
@@ -7156,19 +7170,20 @@ $_set_mark_groups$
 -- Output: number of processed tables and sequences
 -- The insertion of the corresponding event in the emaj_hist table is performed by callers.
   DECLARE
+    v_function               TEXT;
     v_nbTbl                  INT;
     v_nbSeq                  INT;
     v_stmt                   TEXT;
   BEGIN
+    v_function = CASE WHEN p_multiGroup THEN 'SET_MARK_GROUPS' ELSE 'SET_MARK_GROUP' END;
 -- If requested by the calling function, record the set mark begin in emaj_hist.
     IF p_eventToRecord THEN
       INSERT INTO emaj.emaj_hist (hist_function, hist_event, hist_object, hist_wording)
-        VALUES (CASE WHEN p_multiGroup THEN 'SET_MARK_GROUPS'
-                     ELSE 'SET_MARK_GROUP' END, 'BEGIN', array_to_string(p_groupNames,','), p_mark);
+        VALUES (v_function, 'BEGIN', array_to_string(p_groupNames,','), p_mark);
     END IF;
 -- Get the time stamp of the operation, if not supplied as input parameter.
     IF p_timeId IS NULL THEN
-      SELECT emaj._set_time_stamp('M') INTO p_timeId;
+      SELECT emaj._set_time_stamp(v_function, 'M') INTO p_timeId;
     END IF;
 -- Record sequences state as early as possible (no lock protects them from other transactions activity).
 -- The join on pg_namespace and pg_class filters the potentially dropped application sequences.
@@ -7244,7 +7259,7 @@ $_set_mark_groups$
 -- If requested by the calling function, record the set mark end into emaj_hist.
     IF p_eventToRecord THEN
       INSERT INTO emaj.emaj_hist (hist_function, hist_event, hist_object, hist_wording)
-        VALUES (CASE WHEN p_multiGroup THEN 'SET_MARK_GROUPS' ELSE 'SET_MARK_GROUP' END, 'END', array_to_string(p_groupNames,','), p_mark);
+        VALUES (v_function, 'END', array_to_string(p_groupNames,','), p_mark);
     END IF;
 --
     RETURN v_nbSeq + v_nbTbl;
@@ -9006,6 +9021,7 @@ $_rlbk_start_mark$
 -- for tables for which no rollback was needed at planning time.
 -- It also sets the rollback status to EXECUTING.
   DECLARE
+    v_function               TEXT;
     v_isDblinkUsed           BOOLEAN;
     v_dblinkSchema           TEXT;
     v_stmt                   TEXT;
@@ -9018,13 +9034,17 @@ $_rlbk_start_mark$
     v_markName               TEXT;
     v_errorMsg               TEXT;
   BEGIN
+    v_function = CASE WHEN p_multiGroup THEN 'ROLLBACK_GROUPS' ELSE 'ROLLBACK_GROUP' END;
 -- Get the dblink usage characteristics for the current rollback.
     SELECT rlbk_is_dblink_used, rlbk_dblink_schema INTO v_isDblinkUsed, v_dblinkSchema
       FROM emaj.emaj_rlbk
       WHERE rlbk_id = p_rlbkId;
--- Get a time stamp for the rollback operation.
-    v_stmt = 'SELECT emaj._set_time_stamp(''R'')';
+-- Get a time stamp for the rollback operation and record it into emaj_hist
+--   (the _set_time_stamp() function doesn't trace events of type 'R' in emaj_hist for visibility reason.)
+    v_stmt = 'SELECT emaj._set_time_stamp(''' || v_function || ''', ''R'')';
     SELECT emaj._dblink_sql_exec('rlbk#1', v_stmt, v_dblinkSchema) INTO v_timeId;
+    INSERT INTO emaj.emaj_hist (hist_function, hist_event, hist_object)
+      VALUES (v_function, 'TIME STAMP SET', v_timeId::TEXT);
 -- Update the emaj_rlbk table to record the time stamp and adjust the rollback status.
     v_stmt = 'UPDATE emaj.emaj_rlbk' ||
              ' SET rlbk_time_id = ' || v_timeId || ', rlbk_end_locking_datetime = time_clock_timestamp, rlbk_status = ''EXECUTING''' ||
@@ -9266,6 +9286,7 @@ $_rlbk_end$
 --    - and finaly set the operation as COMPLETED or COMMITED.
 -- It returns the execution report of the rollback operation (a set of rows).
   DECLARE
+    v_function               TEXT;
     v_groupNames             TEXT[];
     v_mark                   TEXT;
     v_isLoggedRlbk           BOOLEAN;
@@ -9286,6 +9307,7 @@ $_rlbk_end$
     v_msgList                TEXT;
     r_msg                    RECORD;
   BEGIN
+    v_function = CASE WHEN p_multiGroup THEN 'ROLLBACK_GROUPS' ELSE 'ROLLBACK_GROUP' END;
 -- Get the rollback characteristics from the emaj_rlbk table.
     SELECT rlbk_groups, rlbk_mark, rlbk_is_logged, rlbk_is_alter_group_allowed, rlbk_nb_table, rlbk_eff_nb_table, rlbk_nb_sequence,
            rlbk_eff_nb_sequence, rlbk_dblink_schema, rlbk_is_dblink_used, rlbk_end_locking_datetime
@@ -9315,8 +9337,7 @@ $_rlbk_end$
            ORDER BY mark_time_id, mark_group
         )
       INSERT INTO emaj.emaj_hist (hist_function, hist_event, hist_object, hist_wording)
-        SELECT CASE WHEN p_multiGroup THEN 'ROLLBACK_GROUPS' ELSE 'ROLLBACK_GROUP' END,
-               'MARK DELETED', mark_group, 'mark ' || mark_name || ' is deleted'
+        SELECT v_function, 'MARK DELETED', mark_group, 'mark ' || mark_name || ' is deleted'
         FROM sorted_deleted;
 -- And reset the mark_log_rows_before_next column for the new last mark.
       UPDATE emaj.emaj_mark
@@ -9527,8 +9548,7 @@ $_rlbk_end$
     END IF;
 -- Insert a END event into the history.
     INSERT INTO emaj.emaj_hist (hist_function, hist_event, hist_object, hist_wording)
-      VALUES (CASE WHEN p_multiGroup THEN 'ROLLBACK_GROUPS' ELSE 'ROLLBACK_GROUP' END, 'END',
-              array_to_string(v_groupNames,','), 'Rollback_id ' || p_rlbkId);
+      VALUES (v_function, 'END', array_to_string(v_groupNames,','), 'Rollback_id ' || p_rlbkId);
 -- Final return.
     RETURN;
 -- Trap and record exception during the rollback operation.
@@ -13429,8 +13449,8 @@ $do$
     RETURN;
   END;
 $do$;
-psql:sql/emaj-devel.sql:13682: NOTICE:  E-Maj installation: E-Maj successfully installed.
-psql:sql/emaj-devel.sql:13682: WARNING:  E-Maj installation: The adminpack extension is available but not yet created. Execute a "CREATE EXTENSION adminpack;" statement to enable the NO_EMPTY_FILE option use of the emaj_dump_changes_group() function.
+psql:sql/emaj-devel.sql:13702: NOTICE:  E-Maj installation: E-Maj successfully installed.
+psql:sql/emaj-devel.sql:13702: WARNING:  E-Maj installation: The adminpack extension is available but not yet created. Execute a "CREATE EXTENSION adminpack;" statement to enable the NO_EMPTY_FILE option use of the emaj_dump_changes_group() function.
 COMMIT;
 -- Test the dblink extension lack (this cannot be easily simulated in the verify.sql unit tests script when emaj is installed as an extension)
 begin;
