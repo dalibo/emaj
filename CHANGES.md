@@ -1,8 +1,8 @@
 E-Maj - Change log
 ==================
-<devel>
+\<devel\>
 ------
-###Enhancements:###
+### Enhancements: ###
   * Add an internal table that records log sessions, i.e. time ranges between
     start_group and stop_group operations.
   * When computing log statistics or generating SQL statements for changes
@@ -10,7 +10,7 @@ E-Maj - Change log
     contained by a single log session.
   * Minor code changes.
 
-###Bug fixes:###
+### Bug fixes: ###
   * Fix the emaj_detailed_log_stat_group() output for TRUNCATE recorded events.
   * Fix the emaj_dump_changes_group() functions family. When TRUNCATEs were
     recorded in log tables, the unconsolidated view of data changes erroneously
@@ -21,19 +21,19 @@ E-Maj - Change log
 
 4.3.1 (2023-Nov-1)
 ------
-###Enhancements:###
+### Enhancements: ###
   * Add 2 new functions, namely emaj_sequence_stat_group() and
     emaj_sequence_stat_groups(), that return statistics about changes
     recorded between 2 marks for sequences belonging to one or several groups.
   * Minor code and documentation changes.
 
-###Bug fixes:###
+### Bug fixes: ###
   * Fix a bug in _gen_sql_dump_changes_group(). The COLS_ORDER=LOG_TABLE
     option was not decoded correctly (github issue #51).
 
 4.3.0 (2023-Sept-18)
 ------
-###Enhancements:###
+### Enhancements: ###
   * Support of PG16.
   * Replace the emaj_snap_log_group() function by two new functions,
     emaj_dump_changes_group() and emaj_gen_sql_dump_changes_group(),
@@ -58,13 +58,13 @@ E-Maj - Change log
     to NULL to ask for the first known mark of the group.
   * Minor code changes.
 
-###Bug fixes:###
+### Bug fixes: ###
   * Fix a bug in the emaj_snap_log_group() function. The first mark bound was
     not taken in account when filtering the log records to export.
 
 4.2.0 (2023-Apr-03)
 ------
-###Enhancements:###
+### Enhancements: ###
   * Remove the support of postgres versions prior V11.
   * Improve the sequences rollback processing: move it at the beginning of the
     overall E-Maj rollback; rollback sequences in a dedicated elementary step
@@ -79,7 +79,7 @@ E-Maj - Change log
   * Enforce checks when tables are moved from an AUDIT_ONLY to a ROLLBACKABLE
     group.
 
-###Bug fixes:###
+### Bug fixes: ###
   * Fix a bug in the rollback processing. When two tables of rolled back tables
     group are linked by a foreign key, and one of these tables has been
     assigned to the group after the other, an E-Maj rollback to a mark set
@@ -93,10 +93,10 @@ E-Maj - Change log
 
 4.1.0 (2022-Oct-01)
 ------
-###Enhancements:###
+### Enhancements: ###
   * E-Maj is compatible with PostgreSQL V15.
 
-###Bug fixes:###
+### Bug fixes: ###
   * Fix a bug into the rollback duration estimates and the rollback processing.
     With a rollback history having large durations and large number of processed
     rows, an overflow in internal computations may happen. The problem can also
@@ -104,9 +104,9 @@ E-Maj - Change log
 
 4.0.1 (2022-Apr-02)
 ------
-###Enhancements:###
+### Enhancements: ###
 
-###Bug fixes:###
+### Bug fixes: ###
   * Fix the rollback state cleanup processing for E-Maj rollback pending in
     PLANNING or LOCKING state.
   * Fix the E-Maj version upgrade procedure. It raised an exception in case
@@ -119,7 +119,7 @@ E-Maj - Change log
 
 4.0.0 (2021-May-29)
 ------
-###Enhancements:###
+### Enhancements: ###
   * E-Maj is compatible with PostgreSQL V14.
   * Remove the emaj_alter_group(), emaj_alter_groups() and
     emaj_sync_def_group() functions.
@@ -152,7 +152,7 @@ E-Maj - Change log
   * Coding style improvements.
   * Minor code improvements.
 
-###Bug fixes:###
+### Bug fixes: ###
   * Set the E-Maj triggers as ALWAYS TRIGGER so that they can be fired by a
     logical replication changes stream within a subscription.
   * Transform the unique index on log tables into primary key. This allows
@@ -162,7 +162,7 @@ E-Maj - Change log
 
 3.4.0 (2020-Jul-24)
 ------
-###Enhancements:###
+### Enhancements: ###
   * E-Maj is compatible with PostgreSQL V13.
   * For tables belonging to rollbackable tables groups, TRUNCATEs are not
     blocked anymore. Just before truncating a table, its content is recorded
@@ -174,7 +174,7 @@ E-Maj - Change log
     impact for users.
   * Minor coding changes.
 
-###Bug fixes:###
+### Bug fixes: ###
   * Fix some missing temporary table drops in several old extension upgrade
     scripts.
   * Fix a rare case of deadlock with the emaj_logged_rollback_group() function
@@ -182,7 +182,7 @@ E-Maj - Change log
 
 3.3.0 (2020-Mar-14)
 ------
-###Enhancements:###
+### Enhancements: ###
   * Two new emaj_export_groups_configuration() functions allow to export
     tables groups configurations as a JSON structure, either directly or into
     a file.
@@ -199,7 +199,7 @@ E-Maj - Change log
     keys and that are not all in the same table group.
   * Protect and trace the changes in the emaj_param table.
 
-###Bug fixes:###
+### Bug fixes: ###
   * For tables having columns defined as GENERATED ALWAYS AS IDENTITY (pg10+)
     or GENERATED ALWAYS AS (expression (pg12+)), the SQL generation functions
     produced a script that failed when executed.
@@ -218,7 +218,7 @@ E-Maj - Change log
 
 3.2.0 (2019-Oct-15)
 ------
-###Enhancements:###
+### Enhancements: ###
   * In the emaj_gen_sql_group() and emaj_gen_sql_groups() functions, a NULL
     value for the "output file" parameter prepares the SQL script in a
     temporary table that can be then accessed via a emaj_sql_script view.
@@ -258,7 +258,7 @@ E-Maj - Change log
     sequences.
   * Minor coding improvements.
 
-###Bug fixes:###
+### Bug fixes: ###
   * Fix a bug in the event trigger function that checks table rewrites. When
     an application table has been removed from a logging tables group and an
     ALTER TABLE leads then to a table rewrite, the event trigger erroneously
@@ -276,7 +276,7 @@ E-Maj - Change log
 
 3.1.0 (2019-Jun-20)
 ------
-###Enhancements:###
+### Enhancements: ###
   * Let E-Maj work with PostgreSQL 12.
   * The rollback functions now automatically disable the application triggers,
     unless they are set in a list of triggers that should not be automatically
@@ -294,7 +294,7 @@ E-Maj - Change log
     log table name of a given application table.
   * Minor coding improvements.
 
-###Bug fixes:###
+### Bug fixes: ###
   * Fix a security vulnerability with functions declared as SECURITY DEFINER.
   * When checking the emaj_group_def table content, duplicate emaj names
     prefix were sometimes erroneously detected.
@@ -306,7 +306,7 @@ E-Maj - Change log
 
 3.0.0 (2019-Mar-19)
 ------
-###Enhancements:###
+### Enhancements: ###
   * A psql script is supplied to install emaj on environments where it is not 
     possible to CREATE an EXTENSION (like PGaaS clouds).
   * Unlogged tables and tables with OIDS can be members of audit_only groups.
@@ -325,7 +325,7 @@ E-Maj - Change log
   * The PostgreSQL versions prior 9.5 are not supported anymore.
   * Minor coding improvements.
 
-###Bug fixes:###
+### Bug fixes: ###
   * Fix error that may occur when a non emaj role tries to drop or alter an
     object.
   * Fix a rare condition that aborts the emaj_uninstall.sql script.
@@ -339,17 +339,17 @@ E-Maj - Change log
 
 2.3.1 (2018-Sept-6)
 ------
-###Enhancements:###
+### Enhancements: ###
   * Additional columns can be added to log tables by setting a new parameter
     into the emaj_param table.
 
-###Bug fixes:###
+### Bug fixes: ###
   * Fix 2 issues when dumping a database with E-Maj using pg_dump. The
     restore of the emaj_schema or emaj_hist tables may lead to wrong content.
 
 2.3.0 (2018-Jul-8)
 ------
-###Enhancements:###
+### Enhancements: ###
   * A table or a sequence can be added to a tables group in LOGGING state.
   * A table or a sequence can be moved from one group to another, whatever
     the state of these groups.
@@ -366,7 +366,7 @@ E-Maj - Change log
     run E-Maj parallel rollbacks.
   * Minor coding improvements.
 
-###Bug fixes:###
+### Bug fixes: ###
   * The functions that estimate the rollbacks duration reported wrong results
     when the 'EMAJ_LAST_MARK' keyword was used as rollback target mark.
   * When a logging group was altered and changed either the log schema suffix
@@ -379,7 +379,7 @@ E-Maj - Change log
 
 2.2.3 (2018-Mar-13)
 ------
-###Enhancements:###
+### Enhancements: ###
   * Change the behaviour of the statistics functions. emaj_log_stat_group()
     and emaj_detailed_log_stat_group() now return begin and end marks name
     and timestamp. They also filter tables that belonged to the group during
@@ -387,7 +387,7 @@ E-Maj - Change log
     tables belonging to the group at the function execution time).
   * Some internal code changes. This may change some error messages.
 
-###Bug fixes:###
+### Bug fixes: ###
   * Fix a serious bug that may corrupt the database under some rare
     conditions. If a single transaction contains calls to emaj_stop_group(),
     and then emaj_start_group() and if this transaction aborts, any further
@@ -401,7 +401,7 @@ E-Maj - Change log
 
 2.2.2 (2018-Jan-24)
 ------
-###Enhancements:###
+### Enhancements: ###
   * Adjust the behaviour of some functions that process past time frame,
     when tables have been removed from their group. Now
     emaj_delete_mark_group(), emaj_get_consolidable_rollbacks(), 
@@ -414,7 +414,7 @@ E-Maj - Change log
     used to build the output file names).
   * Various minor code changes.
 
-###Bug fixes:###
+### Bug fixes: ###
   * Fix a bug in the _rlbk_error() function that processes errors in rollback
     functions.
   * When a tables group is dropped, some rows may remain in the internal
@@ -422,17 +422,17 @@ E-Maj - Change log
 
 2.2.1 (2017-Dec-26)
 ------
-###Enhancements:###
+### Enhancements: ###
   * When a table is removed from a tables group in LOGGING state, its log
     table is renamed with a _1 suffix added to its name.
 
-###Bug fixes:###
+### Bug fixes: ###
   * When a table is removed from a tables group in LOGGING state, the
     execution failed when the role was not a superuser or the table's owner.
 
 2.2.0 (2017-Dec-18)
 ------
-###Enhancements:###
+### Enhancements: ###
 
   * Improve the documentation about the installation.
   * PostgreSQL versions prior 9.2 are not supported by E-Maj anymore.
@@ -448,7 +448,7 @@ E-Maj - Change log
   * Log into the emaj_hist table the final report of rollback operations.
   * Some minor code improvements.
 
-###Bug fixes:###
+### Bug fixes: ###
 
   * Fix the format of this change log so that it is correctly displayed on the 
     pgxn.org site. Also add the release dates.
@@ -458,7 +458,7 @@ E-Maj - Change log
 
 2.1.0 (2017-Aug-02)
 ------
-###Enhancements:###
+### Enhancements: ###
 
   * Let E-Maj work with PostgreSQL 10.
   * Support elementary partitions of partitionned tables (PostgreSQL 10+).
@@ -489,11 +489,11 @@ E-Maj - Change log
     The emaj.control file is now in the root directory.
   * Improve some error messages.
 
-###Bug fixes:###
+### Bug fixes: ###
 
 2.0.1 (2017-Feb-23)
 ------
-###Enhancements:###
+### Enhancements: ###
 
   * Rollback simulations using the emaj_estimate_rollback_group() function is 
     now able to process protected groups or marks.
@@ -501,7 +501,7 @@ E-Maj - Change log
     tables of rollbackable groups have their primary key.
   * Some minor code improvements.
 
-###Bug fixes:###
+### Bug fixes: ###
 
   * Fix the extension upgrade procedure. The extension upgrade scripts from 
     unpackaged to 1.3.1 and from 1.3.1 to 2.0.0 failed to register the emaj 
@@ -509,7 +509,7 @@ E-Maj - Change log
 
 2.0.0 (2016-Nov-15)
 ------
-###Enhancements:###
+### Enhancements: ###
 
   * E-Maj is now installed as a standard extension using the CREATE
     EXTENSION SQL command.
@@ -562,7 +562,7 @@ E-Maj - Change log
   * The script supplied to prepare a parallel rollback test environment is 
     renamed emaj_prepare_parallel_rollback_test.sql and enhanced.
 
-###Bug fixes:###
+### Bug fixes: ###
 
   * The emaj_gen_sql_group() and emaj_gen_sql_groups() functions now properly 
     generate an error if the "list of tables/sequences to filter" parameter 
@@ -570,10 +570,10 @@ E-Maj - Change log
 
 1.3.1 (2016-Sep-16)
 ------
-###Enhancements:###
+### Enhancements: ###
 
 
-###Bug fixes:###
+### Bug fixes: ###
 
   * Fix a performance issue with logged rollback operations in some rare
     cases, involving tables with primary keys having more than 6 columns.
@@ -582,7 +582,7 @@ E-Maj - Change log
 
 1.3.0 (2016-Apr-10)
 ------
-###Enhancements:###
+### Enhancements: ###
 
   * Two new functions, emaj_protect_group() and emaj_unprotect_group(), 
     respectively set and unset a specific lock on a group. When such a lock 
@@ -604,12 +604,12 @@ E-Maj - Change log
     even for the phppgadmin plugin.
   * Minor improvements in the code and in comments.
 
-###Bug fixes:###
+### Bug fixes: ###
 
 
 1.2.0 (2015-Jan-02)
 ------
-###Enhancements:###
+### Enhancements: ###
 
   * In table emaj_group_def, add a column named grpdef_emaj_names_prefix to
     set a specific prefix for all objects created by E-Maj for tables. If 
@@ -631,7 +631,7 @@ E-Maj - Change log
     operation.
   * Some minor coding improvements
 
-###Bug fixes:###
+### Bug fixes: ###
 
   * Replace all NOT IN (subquery) by the almost equivalent NOT EXISTS() 
     syntax. This fixes potential issues with NULL value processing mainly 
@@ -643,7 +643,7 @@ E-Maj - Change log
 
 1.1.0 (2013-Oct-10)
 ------
-###Enhancements:###
+### Enhancements: ###
 
   * The rollback processing has been largely redesigned and recoded so that
     emaj administrators can monitor rollback operations progress. This 
@@ -698,15 +698,15 @@ E-Maj - Change log
     the replacement of the group_state column in the emaj_group table by a 
     boolean column named group_is_logging ; some error message improvements.
 
-###Bug fixes:###
+### Bug fixes: ###
 
 
 1.0.2 (2013-Mar-15)
 ------
-###Enhancements:###
+### Enhancements: ###
 
 
-###Bug fixes:###
+### Bug fixes: ###
 
   * At the beginning of a rollback operation, if a table known as 'not 
     needing rollback' at initialisation time is updated before the locking 
@@ -716,10 +716,10 @@ E-Maj - Change log
 
 1.0.1 (2013-Jan-04)
 ------
-###Enhancements:###
+### Enhancements: ###
 
 
-###Bug fixes:###
+### Bug fixes: ###
 
   * Fix an abort in rollback processing when a deferrable foreign key links 
     two tables, one not being covered by E-Maj, and the other having events 
@@ -727,7 +727,7 @@ E-Maj - Change log
 
 1.0.0 (2012-Nov-30)
 ------
-###Enhancements:###
+### Enhancements: ###
 
   * To help managing databases having a large number of tables, it is now 
     possible to spread E-Maj objects on several schemas. E-Maj functions 
@@ -787,7 +787,7 @@ E-Maj - Change log
     the mark search not being based on timestamp any more.
   * Minor improvements in the code and in comments.
 
-###Bug fixes:###
+### Bug fixes: ###
 
   * Let emaj_force_drop_group() works when an application schema or relation 
     has been previously dropped.
@@ -807,7 +807,7 @@ E-Maj - Change log
 
 0.11.1 (2012-Jul-28)
 ------
-###Enhancements:###
+### Enhancements: ###
 
   * Largely improve the processing of foreing keys during rollback operations:
     foreign keys are only dropped and recreated when this is really needed 
@@ -824,7 +824,7 @@ E-Maj - Change log
   * Minor internal improvements in rollback functions, and in 
     emaj_delete_mark_group() and emaj_delete_before_mark_group() functions.
 
-###Bug fixes:###
+### Bug fixes: ###
 
   * Fix an incorrect state for marks generated at stop_group(s) time. Being 
     previously left as ACTIVE after the emaj_stop_group() or 
@@ -837,7 +837,7 @@ E-Maj - Change log
 
 0.11.0 (2012-May-28)
 ------
-###Enhancements:###
+### Enhancements: ###
 
   * Add an optional "resetLog" boolean parameter to the emaj_start_group() 
     and emaj_start_groups() functions, indicating if the old log records must 
@@ -895,7 +895,7 @@ E-Maj - Change log
   * Minor improvement in messages produced by emaj.emaj_verify_all() function.
   * Minor improvements in the code and in comments.
 
-###Bug fixes:###
+### Bug fixes: ###
 
   * Fix a bad error message in emaj_create_group() function when the group 
     to create is not referenced in emaj_group_def table.
@@ -912,7 +912,7 @@ E-Maj - Change log
 
 0.10.1 (2011-Dec-30)
 ------
-###Enhancements:###
+### Enhancements: ###
 
   * Enhance emaj_snap_group() function so that it can be used by emaj_adm 
     granted role. The use of the function is also recorded into the emaj_hist 
@@ -929,7 +929,7 @@ E-Maj - Change log
     the rollback operations or detailed statistics requests on large log 
     tables.
 
-###Bug fixes:###
+### Bug fixes: ###
 
   * Fix emaj_delete_mark_group() and emaj_delete_before_mark_group() 
     operations. When a mark set for several groups by an 
@@ -946,7 +946,7 @@ E-Maj - Change log
 
 0.10.0 (2011-Nov-12)
 ------
-###Enhancements:###
+### Enhancements: ###
 
   * On PostgreSQL 9.1 and later, E-Maj can be installed with a SQL "CREATE 
     EXTENSION" statement. If this version is already installed using the 
@@ -1023,7 +1023,7 @@ E-Maj - Change log
     the group has been created with a compatible postgres version (for 
     instance, a group created in 8.3 should not be directly used in 8.4).
 
-###Bug fixes:###
+### Bug fixes: ###
 
   * In emaj_create_group(), check the supplied group name is not null, and 
     not empty.
@@ -1042,7 +1042,7 @@ E-Maj - Change log
 
 0.9.1 (2011-Jul-24)
 -----
-###Enhancements:###
+### Enhancements: ###
 
   * emaj_snap_group(): avoid setting explicit locks on tables because it is 
     not necessary to get a coherent image of all tables of the group.
@@ -1060,7 +1060,7 @@ E-Maj - Change log
     aborts.  The comment in the history table reports the number of locked 
     tables and the number of deadlocks encountered.
 
-###Bug fixes:###
+### Bug fixes: ###
 
   * fix a case of infinite wait on parallel rollback at foreign key processing 
     when several tables affected to different sub-groups have a foreign key 
@@ -1087,7 +1087,7 @@ E-Maj - Change log
 
 0.9.0 (2011-Feb-06)
 -----
-###Enhancements:###
+### Enhancements: ###
 
   * a new emaj_estimate_rollback_duration() function computes an approximate 
     value for the duration of a rollback operation. It uses statistics 
@@ -1116,7 +1116,7 @@ E-Maj - Change log
     They all call a new emaj._forbid_truncate_fnct() function. The log trigger 
     names change also, becoming <schema>_<table>_emaj_log_trg.
 
-###Bug fixes:###
+### Bug fixes: ###
 
   * in rollback_and_stop_group function, an error was abnormaly returned when 
     not all tables of the group needed to be effectively rollbacked.
@@ -1130,7 +1130,7 @@ E-Maj - Change log
 
 0.8.0 (2010-Oct-16)
 -----
-###Enhancements:###
+### Enhancements: ###
 
   * enlarge the usage of the emaj_delete_mark_group function. It is now 
     possible to delete the first mark of a group. As a result, all rows from 
@@ -1182,7 +1182,7 @@ E-Maj - Change log
     time between two marks.The associated emaj_rlbk_stat_type type is renamed 
     into emaj_log_stat_type.
 
-###Bug fixes:###
+### Bug fixes: ###
 
   * in rollback, solve problem with a loss of mark for other groups than the 
     rollbacked one.
@@ -1191,7 +1191,7 @@ E-Maj - Change log
 
 0.7.1 (2010-Jun-30)
 -----
-###Enhancements:###
+### Enhancements: ###
 
   * add a emaj_snap_group function for test purpose that snaps all tables
     and sequences of a group on individual files located into a given 
@@ -1204,7 +1204,7 @@ E-Maj - Change log
   * minor coding improvement.
   * this version is also tested with postgresql 9.0 beta 2.
 
-###Bug fixes:###
+### Bug fixes: ###
 
   * in log_only mode, solve the problem encountered when creating log for 
     a table without primary key.
@@ -1224,7 +1224,7 @@ E-Maj - Change log
 
 0.7 (2010-Jun-12)
 ---
-###Enhancements:###
+### Enhancements: ###
 
   * add a feature to perform parallel rollbacks, in order to speed up the 
     rollback operations on multi-processor servers. A PHP command is created
@@ -1268,14 +1268,14 @@ E-Maj - Change log
     equivalent to the last active mark that exists for the group. It can also 
     be used in emaj_rlbk_stat_group function
 
-###Bug fixes:###
+### Bug fixes: ###
 
   * change emaj_delete_group, emaj_start_group and emaj_reset_group functions 
     to add a check that the group to process is not in logging state
 
 0.6 (2010-Apr-26))
 ---
-###Enhancements:###
+### Enhancements: ###
 
   * add an emaj_rollback_and_stop_group function to rollback a table_group and 
     stop it at the same time. 
@@ -1295,7 +1295,7 @@ E-Maj - Change log
   * change column names from emaj_hist table to get a better consistency 
     between table name and columns name prefix
 
-###Bug fixes:###
+### Bug fixes: ###
 
   * in rollback operations, don't delete the mark used to rollback to, and its 
     associated data for sequences, because it can be useful for a future use 
@@ -1303,18 +1303,18 @@ E-Maj - Change log
 
 0.5.2 (2010-Mar-10)
 -----
-###Bug fixes:###
+### Bug fixes: ###
 
   * The UPDATE statements generated for the rollback functions did not handle properly the columns list of the SET clause.
   * Supply the right test-emaj.sql file !
 
 0.5.1 (2010-Mar-09)
 -----
-###Enhancements:###
+### Enhancements: ###
 
   * Replace the current_timestamp default value for emaj_changed column of log tables by clock_timestamp() so that every log row has its own creation timestamp.
 
-###Bug fixes:###
+### Bug fixes: ###
 
   * When a table has several indexes, the UPDATE or DELETE statements generated by the emaj_rollback_group function was often erroneous.
 
