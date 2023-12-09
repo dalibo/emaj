@@ -540,7 +540,7 @@ PL/pgSQL function emaj.emaj_comment_mark_group(text,text,text) line 8 at PERFORM
 -- mark is unknown
 select emaj.emaj_comment_mark_group('myGroup1','unknownMark',NULL);
 ERROR:  _check_mark_name: The mark "unknownMark" does not exist for the group "myGroup1".
-CONTEXT:  PL/pgSQL function emaj._check_mark_name(text[],text,boolean) line 59 at RAISE
+CONTEXT:  PL/pgSQL function emaj._check_mark_name(text[],text,boolean) line 61 at RAISE
 SQL statement "SELECT emaj._check_mark_name(p_groupNames := ARRAY[p_groupName], p_mark := p_mark)"
 PL/pgSQL function emaj.emaj_comment_mark_group(text,text,text) line 10 at SQL statement
 -- should be OK
@@ -613,7 +613,7 @@ PL/pgSQL function emaj.emaj_get_previous_mark_group(text,text) line 9 at PERFORM
 -- mark is unknown in emaj_mark
 select emaj.emaj_get_previous_mark_group('myGroup2','unknownMark');
 ERROR:  _check_mark_name: The mark "unknownMark" does not exist for the group "myGroup2".
-CONTEXT:  PL/pgSQL function emaj._check_mark_name(text[],text,boolean) line 59 at RAISE
+CONTEXT:  PL/pgSQL function emaj._check_mark_name(text[],text,boolean) line 61 at RAISE
 SQL statement "SELECT emaj._check_mark_name(p_groupNames := ARRAY[p_groupName], p_mark := p_mark)"
 PL/pgSQL function emaj.emaj_get_previous_mark_group(text,text) line 11 at SQL statement
 -- should be OK
@@ -676,7 +676,7 @@ PL/pgSQL function emaj.emaj_rename_mark_group(text,text,text) line 12 at PERFORM
 -- unknown mark name
 select emaj.emaj_rename_mark_group('myGroup1','DummyMark','new mark');
 ERROR:  _check_mark_name: The mark "DummyMark" does not exist for the group "myGroup1".
-CONTEXT:  PL/pgSQL function emaj._check_mark_name(text[],text,boolean) line 59 at RAISE
+CONTEXT:  PL/pgSQL function emaj._check_mark_name(text[],text,boolean) line 61 at RAISE
 SQL statement "SELECT emaj._check_mark_name(p_groupNames := ARRAY[p_groupName], p_mark := p_mark)"
 PL/pgSQL function emaj.emaj_rename_mark_group(text,text,text) line 14 at SQL statement
 -- invalid new mark name
@@ -989,12 +989,12 @@ PL/pgSQL function emaj.emaj_delete_mark_group(text,text) line 27 at PERFORM
 -- unknown mark name
 select emaj.emaj_delete_mark_group('myGroup2',NULL);
 ERROR:  _check_mark_name: The mark "<NULL>" does not exist for the group "myGroup2".
-CONTEXT:  PL/pgSQL function emaj._check_mark_name(text[],text,boolean) line 59 at RAISE
+CONTEXT:  PL/pgSQL function emaj._check_mark_name(text[],text,boolean) line 61 at RAISE
 SQL statement "SELECT emaj._check_mark_name(p_groupNames := ARRAY[p_groupName], p_mark := p_mark)"
 PL/pgSQL function emaj.emaj_delete_mark_group(text,text) line 29 at SQL statement
 select emaj.emaj_delete_mark_group('myGroup2','DummyMark');
 ERROR:  _check_mark_name: The mark "DummyMark" does not exist for the group "myGroup2".
-CONTEXT:  PL/pgSQL function emaj._check_mark_name(text[],text,boolean) line 59 at RAISE
+CONTEXT:  PL/pgSQL function emaj._check_mark_name(text[],text,boolean) line 61 at RAISE
 SQL statement "SELECT emaj._check_mark_name(p_groupNames := ARRAY[p_groupName], p_mark := p_mark)"
 PL/pgSQL function emaj.emaj_delete_mark_group(text,text) line 29 at SQL statement
 -- next attempts should be OK
@@ -1067,7 +1067,7 @@ PL/pgSQL function emaj.emaj_delete_before_mark_group(text,text) line 17 at PERFO
 -- unknown mark name
 select emaj.emaj_delete_before_mark_group('myGroup2','DummyMark');
 ERROR:  _check_mark_name: The mark "DummyMark" does not exist for the group "myGroup2".
-CONTEXT:  PL/pgSQL function emaj._check_mark_name(text[],text,boolean) line 59 at RAISE
+CONTEXT:  PL/pgSQL function emaj._check_mark_name(text[],text,boolean) line 61 at RAISE
 SQL statement "SELECT emaj._check_mark_name(p_groupNames := ARRAY[p_groupName], p_mark := p_mark)"
 PL/pgSQL function emaj.emaj_delete_before_mark_group(text,text) line 23 at SQL statement
 -- NULL input for mark name returns NULL
@@ -1249,12 +1249,12 @@ PL/pgSQL function emaj.emaj_protect_mark_group(text,text) line 11 at PERFORM
 -- mark is unknown
 select emaj.emaj_protect_mark_group('myGroup1',NULL);
 ERROR:  _check_mark_name: The mark "<NULL>" does not exist for the group "myGroup1".
-CONTEXT:  PL/pgSQL function emaj._check_mark_name(text[],text,boolean) line 59 at RAISE
+CONTEXT:  PL/pgSQL function emaj._check_mark_name(text[],text,boolean) line 61 at RAISE
 SQL statement "SELECT emaj._check_mark_name(p_groupNames := ARRAY[p_groupName], p_mark := p_mark, p_checkActive := TRUE)"
 PL/pgSQL function emaj.emaj_protect_mark_group(text,text) line 14 at SQL statement
 select emaj.emaj_protect_mark_group('myGroup1','unknownMark');
 ERROR:  _check_mark_name: The mark "unknownMark" does not exist for the group "myGroup1".
-CONTEXT:  PL/pgSQL function emaj._check_mark_name(text[],text,boolean) line 59 at RAISE
+CONTEXT:  PL/pgSQL function emaj._check_mark_name(text[],text,boolean) line 61 at RAISE
 SQL statement "SELECT emaj._check_mark_name(p_groupNames := ARRAY[p_groupName], p_mark := p_mark, p_checkActive := TRUE)"
 PL/pgSQL function emaj.emaj_protect_mark_group(text,text) line 14 at SQL statement
 -- should be ok
@@ -1315,12 +1315,12 @@ PL/pgSQL function emaj.emaj_unprotect_mark_group(text,text) line 10 at PERFORM
 -- mark is unknown
 select emaj.emaj_unprotect_mark_group('myGroup1',NULL);
 ERROR:  _check_mark_name: The mark "<NULL>" does not exist for the group "myGroup1".
-CONTEXT:  PL/pgSQL function emaj._check_mark_name(text[],text,boolean) line 59 at RAISE
+CONTEXT:  PL/pgSQL function emaj._check_mark_name(text[],text,boolean) line 61 at RAISE
 SQL statement "SELECT emaj._check_mark_name(p_groupNames := ARRAY[p_groupName], p_mark := p_mark)"
 PL/pgSQL function emaj.emaj_unprotect_mark_group(text,text) line 13 at SQL statement
 select emaj.emaj_unprotect_mark_group('myGroup1','unknownMark');
 ERROR:  _check_mark_name: The mark "unknownMark" does not exist for the group "myGroup1".
-CONTEXT:  PL/pgSQL function emaj._check_mark_name(text[],text,boolean) line 59 at RAISE
+CONTEXT:  PL/pgSQL function emaj._check_mark_name(text[],text,boolean) line 61 at RAISE
 SQL statement "SELECT emaj._check_mark_name(p_groupNames := ARRAY[p_groupName], p_mark := p_mark)"
 PL/pgSQL function emaj.emaj_unprotect_mark_group(text,text) line 13 at SQL statement
 -- should be ok
@@ -1413,7 +1413,7 @@ select emaj.emaj_rename_mark_group('myGroup1','EMAJ_LAST_MARK','RENAMED');
 
 select emaj.emaj_protect_mark_group('myGroup1','RENAMED');
 ERROR:  _check_mark_name: For the group "myGroup1", the mark "RENAMED" is DELETED.
-CONTEXT:  PL/pgSQL function emaj._check_mark_name(text[],text,boolean) line 81 at RAISE
+CONTEXT:  PL/pgSQL function emaj._check_mark_name(text[],text,boolean) line 83 at RAISE
 SQL statement "SELECT emaj._check_mark_name(p_groupNames := ARRAY[p_groupName], p_mark := p_mark, p_checkActive := TRUE)"
 PL/pgSQL function emaj.emaj_protect_mark_group(text,text) line 14 at SQL statement
 select emaj.emaj_unprotect_mark_group('myGroup1','EMAJ_LAST_MARK');

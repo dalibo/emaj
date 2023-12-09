@@ -100,7 +100,7 @@ WARNING:  _check_fk_groups: The table "myschema2.mytbl6" is referenced by the fo
 -- try to rollback several groups to a deleted common mark
 select * from emaj.emaj_rollback_groups(array['myGroup1','myGroup2'],'Multi-1', false);
 ERROR:  _check_mark_name: For the groups "myGroup1, myGroup2", the mark "Multi-1" is DELETED.
-CONTEXT:  PL/pgSQL function emaj._check_mark_name(text[],text,boolean) line 84 at RAISE
+CONTEXT:  PL/pgSQL function emaj._check_mark_name(text[],text,boolean) line 86 at RAISE
 SQL statement "SELECT emaj._check_mark_name(p_groupNames := p_groupNames, p_mark := p_mark, p_checkActive := TRUE)"
 PL/pgSQL function emaj._rlbk_check(text[],text,boolean,boolean) line 21 at SQL statement
 SQL statement "SELECT emaj._rlbk_check(p_groupNames, p_mark, p_isAlterGroupAllowed, FALSE)"
@@ -230,7 +230,7 @@ select emaj.emaj_comment_mark_group('myGroup2','M3','This mark is deleted');
 -- try to get a rollback duration estimate on a deleted mark
 select emaj.emaj_estimate_rollback_group('myGroup2','M3',TRUE);
 ERROR:  _check_mark_name: For the group "myGroup2", the mark "M3" is DELETED.
-CONTEXT:  PL/pgSQL function emaj._check_mark_name(text[],text,boolean) line 81 at RAISE
+CONTEXT:  PL/pgSQL function emaj._check_mark_name(text[],text,boolean) line 83 at RAISE
 SQL statement "SELECT emaj._check_mark_name(p_groupNames := p_groupNames, p_mark := p_mark, p_checkActive := TRUE)"
 PL/pgSQL function emaj._rlbk_check(text[],text,boolean,boolean) line 21 at SQL statement
 SQL statement "SELECT emaj._rlbk_check(p_groupNames, p_mark, TRUE, TRUE)"
@@ -239,7 +239,7 @@ PL/pgSQL function emaj.emaj_estimate_rollback_group(text,text,boolean) line 7 at
 -- try to rollback on a deleted mark
 select * from emaj.emaj_rollback_group('myGroup2','M3',false) order by 1,2;
 ERROR:  _check_mark_name: For the group "myGroup2", the mark "M3" is DELETED.
-CONTEXT:  PL/pgSQL function emaj._check_mark_name(text[],text,boolean) line 81 at RAISE
+CONTEXT:  PL/pgSQL function emaj._check_mark_name(text[],text,boolean) line 83 at RAISE
 SQL statement "SELECT emaj._check_mark_name(p_groupNames := p_groupNames, p_mark := p_mark, p_checkActive := TRUE)"
 PL/pgSQL function emaj._rlbk_check(text[],text,boolean,boolean) line 21 at SQL statement
 SQL statement "SELECT emaj._rlbk_check(p_groupNames, p_mark, p_isAlterGroupAllowed, FALSE)"

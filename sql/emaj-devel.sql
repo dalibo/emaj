@@ -1514,16 +1514,18 @@ $_check_mark_name$
           RAISE EXCEPTION '_check_mark_name: The groups "%" have no mark.', v_groupList;
         END IF;
       END IF;
--- Count the number of distinct lastest mark_time_id for all concerned groups.
-      SELECT count(DISTINCT mark_time_id) INTO v_count
-        FROM
-          (SELECT mark_group, max(mark_time_id) AS mark_time_id
-             FROM emaj.emaj_mark
-             WHERE mark_group = ANY (p_groupNames)
-             GROUP BY 1
-          ) AS t;
-      IF v_count > 1 THEN
-        RAISE EXCEPTION '_check_mark_name: The EMAJ_LAST_MARK does not represent the same point in time for all groups.';
+      IF array_length(p_groupNames, 1) > 1 THEN
+-- In multi-group operations, verify that the last mark of each group has been set at the same time.
+        SELECT count(DISTINCT mark_time_id) INTO v_count
+          FROM
+            (SELECT mark_group, max(mark_time_id) AS mark_time_id
+               FROM emaj.emaj_mark
+               WHERE mark_group = ANY (p_groupNames)
+               GROUP BY 1
+            ) AS t;
+        IF v_count > 1 THEN
+          RAISE EXCEPTION '_check_mark_name: The EMAJ_LAST_MARK does not represent the same point in time for all groups.';
+        END IF;
       END IF;
 -- Get the name of the last mark for the first group in the array, as we now know that all groups share the same last mark.
       SELECT mark_name INTO v_markName

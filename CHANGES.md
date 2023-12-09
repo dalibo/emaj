@@ -8,7 +8,7 @@ E-Maj - Change log
   * When computing log statistics or generating SQL statements for changes
     dump or replay, raise a warning if the requested marks range is not
     contained by a single log session.
-  * Minor code changes.
+  * Minor code changes and optimizations.
 
 ### Bug fixes: ###
   * Fix the emaj_detailed_log_stat_group() output for TRUNCATE recorded events.

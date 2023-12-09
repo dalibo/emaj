@@ -452,6 +452,101 @@ WITH inserted_time_stamp AS (
   SELECT time_id FROM inserted_time_stamp;
 $$;
 
+CREATE OR REPLACE FUNCTION emaj._check_mark_name(p_groupNames TEXT[], p_mark TEXT, p_checkActive BOOLEAN DEFAULT FALSE)
+RETURNS TEXT LANGUAGE plpgsql AS
+$_check_mark_name$
+-- This function verifies that a mark name exists for one or several groups.
+-- It processes the EMAJ_LAST_MARK keyword.
+-- When several groups are supplied, it checks that the mark represents the same point in time for all groups.
+-- Input: array of group names, name of the mark to check, boolean to ask for a mark is active check
+-- Output: internal name of the mark
+  DECLARE
+    v_markName               TEXT = p_mark;
+    v_groupList              TEXT;
+    v_count                  INTEGER;
+  BEGIN
+-- Process the 'EMAJ_LAST_MARK' keyword, if needed.
+    IF p_mark = 'EMAJ_LAST_MARK' THEN
+-- Detect groups that have no recorded mark.
+      SELECT string_agg(group_name,', ' ORDER BY group_name), count(*) INTO v_groupList, v_count
+        FROM
+          (  SELECT unnest(p_groupNames)
+           EXCEPT
+             SELECT mark_group
+               FROM emaj.emaj_mark
+          ) AS t(group_name);
+      IF v_count > 0 THEN
+        IF v_count = 1 THEN
+          RAISE EXCEPTION '_check_mark_name: The group "%" has no mark.', v_groupList;
+        ELSE
+          RAISE EXCEPTION '_check_mark_name: The groups "%" have no mark.', v_groupList;
+        END IF;
+      END IF;
+      IF array_length(p_groupNames, 1) > 1 THEN
+-- In multi-group operations, verify that the last mark of each group has been set at the same time.
+        SELECT count(DISTINCT mark_time_id) INTO v_count
+          FROM
+            (SELECT mark_group, max(mark_time_id) AS mark_time_id
+               FROM emaj.emaj_mark
+               WHERE mark_group = ANY (p_groupNames)
+               GROUP BY 1
+            ) AS t;
+        IF v_count > 1 THEN
+          RAISE EXCEPTION '_check_mark_name: The EMAJ_LAST_MARK does not represent the same point in time for all groups.';
+        END IF;
+      END IF;
+-- Get the name of the last mark for the first group in the array, as we now know that all groups share the same last mark.
+      SELECT mark_name INTO v_markName
+        FROM emaj.emaj_mark
+        WHERE mark_group = p_groupNames[1]
+        ORDER BY mark_time_id DESC
+        LIMIT 1;
+    ELSE
+-- For usual mark name (i.e. not EMAJ_LAST_MARK),
+-- ... Check that the mark exists for all groups.
+      SELECT string_agg(group_name,', ' ORDER BY group_name), count(*) INTO v_groupList, v_count
+        FROM
+          (  SELECT unnest(p_groupNames)
+           EXCEPT
+             SELECT mark_group
+               FROM emaj.emaj_mark
+               WHERE mark_name = v_markName
+          ) AS t(group_name);
+      IF v_count > 0 THEN
+        IF v_count = 1 THEN
+          RAISE EXCEPTION '_check_mark_name: The mark "%" does not exist for the group "%".', v_markName, v_groupList;
+        ELSE
+          RAISE EXCEPTION '_check_mark_name: The mark "%" does not exist for the groups "%".', v_markName, v_groupList;
+        END IF;
+      END IF;
+-- ... Check that the mark represents the same point in time for all groups.
+      SELECT count(DISTINCT mark_time_id) INTO v_count
+        FROM emaj.emaj_mark
+        WHERE mark_name = v_markName
+          AND mark_group = ANY (p_groupNames);
+      IF v_count > 1 THEN
+        RAISE EXCEPTION '_check_mark_name: The mark "%" does not represent the same point in time for all groups.', v_markName;
+      END IF;
+    END IF;
+-- If requested, check the mark is active for all groups.
+    IF p_checkActive THEN
+      SELECT string_agg(mark_group,', ' ORDER BY mark_group), count(*) INTO v_groupList, v_count
+        FROM emaj.emaj_mark
+        WHERE mark_name = v_markName
+          AND mark_group = ANY(p_groupNames)
+          AND mark_is_deleted;
+      IF v_count = 1 THEN
+        RAISE EXCEPTION '_check_mark_name: For the group "%", the mark "%" is DELETED.', v_groupList, v_markName;
+      END IF;
+      IF v_count > 1 THEN
+        RAISE EXCEPTION '_check_mark_name: For the groups "%", the mark "%" is DELETED.', v_groupList, v_markName;
+      END IF;
+    END IF;
+--
+    RETURN v_markName;
+  END;
+$_check_mark_name$;
+
 CREATE OR REPLACE FUNCTION emaj._check_marks_range(p_groupNames TEXT[], INOUT p_firstMark TEXT, INOUT p_lastMark TEXT,
                                                    p_finiteUpperBound BOOLEAN DEFAULT FALSE, p_checkLogSession BOOLEAN DEFAULT TRUE,
                                                    OUT p_firstMarkTimeId BIGINT, OUT p_lastMarkTimeId BIGINT,
