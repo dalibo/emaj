@@ -6748,8 +6748,6 @@ $_start_groups$
       SELECT emaj._set_time_stamp(v_function, 'S') INTO v_timeId;
 -- Check foreign keys with tables outside the group
       PERFORM emaj._check_fk_groups(p_groupNames);
--- Purge the history tables, if needed.
-      PERFORM emaj._purge_histories();
 -- If requested by the user, call the emaj_reset_groups() function to erase remaining traces from previous logs.
       IF p_resetLog THEN
         PERFORM emaj._reset_groups(p_groupNames);
@@ -9982,7 +9980,7 @@ CREATE OR REPLACE FUNCTION emaj._reset_groups(p_groupNames TEXT[])
 RETURNS INT LANGUAGE plpgsql AS
 $_reset_groups$
 -- This function empties the log tables for all tables of a group, using a TRUNCATE, and deletes the sequences images.
--- It is called by emaj_reset_group(), emaj_start_group() and emaj_alter_group() functions.
+-- It is called by emaj_reset_group(), _start_groups() and _import_groups_conf_alter() functions.
 -- Input: group names array
 -- Output: number of processed tables and sequences
 -- There is no check of the groups state (this is done by callers).
@@ -10111,6 +10109,8 @@ $_reset_groups$
     END IF;
 -- Enable previously disabled event triggers.
     PERFORM emaj._enable_event_triggers(v_eventTriggers);
+-- Purge the history tables, if needed.
+    PERFORM emaj._purge_histories();
 --
     RETURN sum(group_nb_table)+sum(group_nb_sequence)
       FROM emaj.emaj_group

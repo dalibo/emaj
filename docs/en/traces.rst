@@ -217,11 +217,17 @@ The *hist_event* column can take the following values:
 Purge obsolete traces
 ---------------------
 
-When a tables group is started, using the :ref:`emaj_start_group() <emaj_start_group>` function, or when old marks are deleted, using the :ref:`emaj_delete_before_mark_group() <emaj_delete_before_mark_group>` function, the oldest events are deleted from *emaj_hist* tables. The events kept are those not older than a parametrised retention delay and not older than the oldest mark and not older than the oldest uncompleted rollback operation. By default, the retention delay for events equals 1 year. But this value can be modified at any time by inserting the *history_retention* parameter into the :ref:`emaj_param <emaj_param>` table with a SQL statement. The same retention applies to the tables that log elementary steps of tables groups alter or rollback operations.
+When a tables group is started with reset (:ref:`emaj_start_group() <emaj_start_group>` function), or when old marks are deleted (:ref:`emaj_delete_before_mark_group() <emaj_delete_before_mark_group>` function), the oldest events are deleted from *emaj_hist* tables. Some other internal history tables are also purged at the same time. The events kept are those not older than:
+
+* a parametrised retention delay,
+* the oldest mark,
+* and the oldest uncompleted rollback operation.
+
+By default, the retention delay for events equals 1 year. But this value can be modified at any time by inserting the *history_retention* parameter into the :ref:`emaj_param <emaj_param>` table with a SQL statement. If the *history_retention* parameter is set to 100 years or more, no histories purge is executed.
 
 The obsolete traces purge can also be initiated by explicitely calling the :ref:`emaj_purge_histories() <emaj_purge_histories>` function. The input parameter of the function defines a retention delay that overloads the *history_retention* parameter of the *emaj_param* table.
 
 In order to schedule purges periodically, it is possible to:
 
-* set the *history_retention* parameter to a very high value (for instance '100 YEARS'), so that tables groups starts and oldest marks deletions do not perform any purge, and
-* schedule purge operations by any means (*crontab*, *pgAgent*, *pgTimeTable* or any other tool).
+* set the *history_retention* parameter to a very high value (for instance '100 YEARS')
+* and schedule purge operations by any mean (*crontab*, *pgAgent*, *pgTimeTable* or any other tool).

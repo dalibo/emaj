@@ -215,11 +215,17 @@ La colonne *hist_event* peut prendre les valeurs suivantes.
 Purge des traces obsolètes
 --------------------------
 
-A chaque démarrage de groupe (fonction :ref:`emaj_start_group() <emaj_start_group>`) et suppression des marques les plus anciennes (fonction :ref:`emaj_delete_before_mark_group() <emaj_delete_before_mark_group>`), les événements les plus anciens de la table *emaj_hist* sont supprimés. Les événements conservés sont ceux à la fois postérieurs à un délai de rétention paramétrable, postérieurs à la pose de la plus ancienne marque et postérieurs à la plus ancienne opération de rollback non terminée. Par défaut, la durée de rétention des événements est de 1 an. Mais cette valeur peut être modifiée à tout moment en insérant par une requête SQL le paramètre *history_retention* dans la table :ref:`emaj_param <emaj_param>`. La même rétention s’applique aux contenus des tables qui historisent les actions élémentaires des opérations de modification ou de rollback de groupes de tables.
+Quand un groupe de tables est démarré avec réinitialisation (fonction :ref:`emaj_start_group() <emaj_start_group>`) ou quand les marques les plus anciennes sont supprimées (fonction :ref:`emaj_delete_before_mark_group() <emaj_delete_before_mark_group>`), les événements les plus anciens de la table *emaj_hist* sont supprimés. Il en est de même de plusieurs autres tables internes d’historique. Les événements conservés sont ceux postérieurs :
+
+* à un délai de rétention paramétrable,
+* à la pose de la plus ancienne marque,
+* et à la plus ancienne opération de rollback non terminée.
+
+Par défaut, la durée de rétention des événements est de 1 an. Mais cette valeur peut être modifiée à tout moment en insérant par une requête SQL le paramètre *history_retention* dans la table :ref:`emaj_param <emaj_param>`. Si le paramètre *history_retention* a une valeur supérieure ou égale à 100 ans, aucune purge des historiques n’est appliquée.
 
 La purge des données périmées peut également être initiée par l’appel explicite de la fonction :ref:`emaj_purge_histories() <emaj_purge_histories>` . La paramètre en entrée de cette fonction définit un délai de rétention qui surcharge le paramètre *history_retention* de la table *emaj_param*.
 
 Si on souhaite planifier des purges régulières, il est donc possible de :
 
-* positionner une valeur de paramètre *history_retention* très élevée (par exemple *'100 YEARS'*), afin que les démarrages de groupe de tables ou les suppressions des plus anciennes marques ne déclenchent pas de purge, et
-* planifier les purges par un ordonnanceur quelconque (crontab, pgAgent, pgTimeTable ou tout autre outil).
+* positionner une valeur de paramètre *history_retention* très élevée (par exemple *'100 YEARS'*) ;
+* et planifier les purges par un ordonnanceur quelconque (crontab, pgAgent, pgTimeTable ou tout autre outil).

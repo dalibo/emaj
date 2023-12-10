@@ -57,7 +57,7 @@ select emaj.emaj_start_group('myGroup1','EMAJ_LAST_MARK');
 ERROR:  _check_new_mark: "EMAJ_LAST_MARK" is not an allowed name for a new mark.
 CONTEXT:  PL/pgSQL function emaj._check_new_mark(text[],text) line 14 at RAISE
 SQL statement "SELECT emaj._check_new_mark(p_groupNames, p_mark)"
-PL/pgSQL function emaj._start_groups(text[],text,boolean,boolean) line 49 at SQL statement
+PL/pgSQL function emaj._start_groups(text[],text,boolean,boolean) line 47 at SQL statement
 PL/pgSQL function emaj.emaj_start_group(text,text,boolean) line 12 at RETURN
 -- detection of a missing application schema
 begin;
@@ -748,7 +748,7 @@ select emaj.emaj_start_groups('{"myGroup1"}','EMAJ_LAST_MARK');
 ERROR:  _check_new_mark: "EMAJ_LAST_MARK" is not an allowed name for a new mark.
 CONTEXT:  PL/pgSQL function emaj._check_new_mark(text[],text) line 14 at RAISE
 SQL statement "SELECT emaj._check_new_mark(p_groupNames, p_mark)"
-PL/pgSQL function emaj._start_groups(text[],text,boolean,boolean) line 49 at SQL statement
+PL/pgSQL function emaj._start_groups(text[],text,boolean,boolean) line 47 at SQL statement
 PL/pgSQL function emaj.emaj_start_groups(text[],text,boolean) line 11 at RETURN
 -- 2 groups already started
 select emaj.emaj_start_groups('{"myGroup1","myGroup2"}','Mark1',true);
