@@ -662,37 +662,12 @@ LINE 1: ...lled THEN last_value ELSE last_value - 1 END FROM emaj_mysch...
                                                              ^
 QUERY:  SELECT CASE WHEN is_called THEN last_value ELSE last_value - 1 END FROM emaj_myschema2.mytbl4_log_seq
 CONTEXT:  PL/pgSQL function emaj._log_stat_tbl(emaj.emaj_relation,bigint,bigint) line 22 at EXECUTE
-SQL statement "WITH stat_group1 AS                        -- for each group, get the time id of the last active mark
-      (SELECT mark_group, max(mark_time_id) AS last_mark_time_id
-         FROM emaj.emaj_mark
-         WHERE NOT mark_is_deleted
-           AND mark_group = ANY(p_groupNames)
-         GROUP BY mark_group
-      ),
-         stat_group2 AS                        -- compute the number of logged changes for all tables currently belonging to these groups
-      (SELECT mark_group, last_mark_time_id, coalesce(
-                (SELECT sum(emaj._log_stat_tbl(emaj_relation, greatest(last_mark_time_id, lower(rel_time_range)),NULL))
-                   FROM emaj.emaj_relation
-                   WHERE rel_group = mark_group
-                     AND rel_kind = 'r'
-                     AND upper_inf(rel_time_range)
-                ), 0) AS mark_stat
-        FROM stat_group1
-      ),
-         update_mark AS                        -- update emaj_mark
-      (UPDATE emaj.emaj_mark m
-         SET mark_log_rows_before_next = mark_stat
-         FROM stat_group2 s
-         WHERE s.mark_group = m.mark_group
-           AND s.last_mark_time_id = m.mark_time_id
-      )
-    UPDATE emaj.emaj_log_session l             -- update emaj_log_session
-      SET lses_marks = lses_marks + 1,
-          lses_log_rows = lses_log_rows + mark_stat
-      FROM stat_group2 s
-      WHERE s.mark_group = l.lses_group
-        AND upper_inf(lses_time_range)"
-PL/pgSQL function emaj._set_mark_groups(text[],text,boolean,boolean,text,bigint,text) line 51 at SQL statement
+SQL statement "SELECT coalesce(sum(emaj._log_stat_tbl(emaj_relation, greatest(v_latestMarkTimeId, lower(rel_time_range)),NULL)), 0)
+                                     FROM emaj.emaj_relation
+          WHERE rel_group = v_group
+            AND rel_kind = 'r'
+            AND upper_inf(rel_time_range)"
+PL/pgSQL function emaj._set_mark_groups(text[],text,boolean,boolean,text,bigint,text) line 72 at SQL statement
 SQL statement "SELECT emaj._set_mark_groups(p_groupNames, v_markName, p_multiGroup, TRUE, NULL, v_timeId)"
 PL/pgSQL function emaj._stop_groups(text[],text,boolean,boolean) line 135 at PERFORM
 PL/pgSQL function emaj.emaj_stop_group(text,text) line 10 at RETURN
@@ -704,37 +679,12 @@ LINE 1: ...lled THEN last_value ELSE last_value - 1 END FROM emaj_mysch...
                                                              ^
 QUERY:  SELECT CASE WHEN is_called THEN last_value ELSE last_value - 1 END FROM emaj_myschema2.mytbl4_log_seq
 CONTEXT:  PL/pgSQL function emaj._log_stat_tbl(emaj.emaj_relation,bigint,bigint) line 22 at EXECUTE
-SQL statement "WITH stat_group1 AS                        -- for each group, get the time id of the last active mark
-      (SELECT mark_group, max(mark_time_id) AS last_mark_time_id
-         FROM emaj.emaj_mark
-         WHERE NOT mark_is_deleted
-           AND mark_group = ANY(p_groupNames)
-         GROUP BY mark_group
-      ),
-         stat_group2 AS                        -- compute the number of logged changes for all tables currently belonging to these groups
-      (SELECT mark_group, last_mark_time_id, coalesce(
-                (SELECT sum(emaj._log_stat_tbl(emaj_relation, greatest(last_mark_time_id, lower(rel_time_range)),NULL))
-                   FROM emaj.emaj_relation
-                   WHERE rel_group = mark_group
-                     AND rel_kind = 'r'
-                     AND upper_inf(rel_time_range)
-                ), 0) AS mark_stat
-        FROM stat_group1
-      ),
-         update_mark AS                        -- update emaj_mark
-      (UPDATE emaj.emaj_mark m
-         SET mark_log_rows_before_next = mark_stat
-         FROM stat_group2 s
-         WHERE s.mark_group = m.mark_group
-           AND s.last_mark_time_id = m.mark_time_id
-      )
-    UPDATE emaj.emaj_log_session l             -- update emaj_log_session
-      SET lses_marks = lses_marks + 1,
-          lses_log_rows = lses_log_rows + mark_stat
-      FROM stat_group2 s
-      WHERE s.mark_group = l.lses_group
-        AND upper_inf(lses_time_range)"
-PL/pgSQL function emaj._set_mark_groups(text[],text,boolean,boolean,text,bigint,text) line 51 at SQL statement
+SQL statement "SELECT coalesce(sum(emaj._log_stat_tbl(emaj_relation, greatest(v_latestMarkTimeId, lower(rel_time_range)),NULL)), 0)
+                                     FROM emaj.emaj_relation
+          WHERE rel_group = v_group
+            AND rel_kind = 'r'
+            AND upper_inf(rel_time_range)"
+PL/pgSQL function emaj._set_mark_groups(text[],text,boolean,boolean,text,bigint,text) line 72 at SQL statement
 SQL statement "SELECT emaj._set_mark_groups(v_loggingGroups, v_markName, FALSE, TRUE, NULL, v_timeId)"
 PL/pgSQL function emaj._remove_tables(text,text[],text,boolean,boolean) line 85 at PERFORM
 PL/pgSQL function emaj.emaj_remove_table(text,text,text) line 6 at RETURN

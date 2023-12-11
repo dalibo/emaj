@@ -7309,10 +7309,10 @@ CREATE OR REPLACE FUNCTION emaj._set_mark_groups(p_groupNames TEXT[], p_mark TEX
 RETURNS INT LANGUAGE plpgsql AS
 $_set_mark_groups$
 -- This function effectively inserts a mark in the emaj_mark table and takes an image of the sequences definitions for the array of groups.
--- It also updates the previous mark of each group to setup the mark_log_rows_before_next column with the number of rows recorded into all
--- log tables between this previous mark and the new mark.
--- It is called by emaj_set_mark_group and emaj_set_mark_groups functions but also by other functions that set internal marks, like
--- functions that start or rollback groups.
+-- It also updates 1) the previous mark of each group to setup the mark_log_rows_before_next column with the number of rows recorded into
+-- all log tables between this previous mark and the new mark and 2) the current log session.
+-- The function is called by emaj_set_mark_group and emaj_set_mark_groups functions but also by other functions that set internal marks,
+-- like functions that start, stop or rollback groups.
 -- Input: group names array, mark to set,
 --        boolean indicating whether the function is called by a multi group function
 --        boolean indicating whether the event has to be recorded into the emaj_hist table
@@ -7323,8 +7323,12 @@ $_set_mark_groups$
 -- The insertion of the corresponding event in the emaj_hist table is performed by callers.
   DECLARE
     v_function               TEXT;
-    v_nbTbl                  INT;
     v_nbSeq                  INT;
+    v_group                  TEXT;
+    v_lsesTimeRange          INT8RANGE;
+    v_latestMarkTimeId       BIGINT;
+    v_nbChanges              BIGINT;
+    v_nbTbl                  INT;
     v_stmt                   TEXT;
   BEGIN
     v_function = CASE WHEN p_multiGroup THEN 'SET_MARK_GROUPS' ELSE 'SET_MARK_GROUP' END;
@@ -7355,38 +7359,44 @@ $_set_mark_groups$
              LATERAL emaj._get_current_sequence_state(rel_schema, rel_tblseq, p_timeId) AS t;
     GET DIAGNOSTICS v_nbSeq = ROW_COUNT;
 -- Record the number of log rows for the previous last mark of each selected group.
--- The statement updates no row in case of emaj_start_group(s)
--- With the same statistics, update the counters of the last log session for each groups
-    WITH stat_group1 AS                        -- for each group, get the time id of the last active mark
-      (SELECT mark_group, max(mark_time_id) AS last_mark_time_id
-         FROM emaj.emaj_mark
-         WHERE NOT mark_is_deleted
-           AND mark_group = ANY(p_groupNames)
-         GROUP BY mark_group
-      ),
-         stat_group2 AS                        -- compute the number of logged changes for all tables currently belonging to these groups
-      (SELECT mark_group, last_mark_time_id, coalesce(
-                (SELECT sum(emaj._log_stat_tbl(emaj_relation, greatest(last_mark_time_id, lower(rel_time_range)),NULL))
-                   FROM emaj.emaj_relation
-                   WHERE rel_group = mark_group
-                     AND rel_kind = 'r'
-                     AND upper_inf(rel_time_range)
-                ), 0) AS mark_stat
-        FROM stat_group1
-      ),
-         update_mark AS                        -- update emaj_mark
-      (UPDATE emaj.emaj_mark m
-         SET mark_log_rows_before_next = mark_stat
-         FROM stat_group2 s
-         WHERE s.mark_group = m.mark_group
-           AND s.last_mark_time_id = m.mark_time_id
-      )
-    UPDATE emaj.emaj_log_session l             -- update emaj_log_session
-      SET lses_marks = lses_marks + 1,
-          lses_log_rows = lses_log_rows + mark_stat
-      FROM stat_group2 s
-      WHERE s.mark_group = l.lses_group
-        AND upper_inf(lses_time_range);
+    FOREACH v_group IN ARRAY p_groupNames
+    LOOP
+-- Get the latest log session of the tables group.
+      SELECT lses_time_range
+        INTO v_lsesTimeRange
+        FROM emaj.emaj_log_session
+        WHERE lses_group = v_group
+        ORDER BY lses_time_range DESC
+        LIMIT 1;
+      IF p_timeId > lower(v_lsesTimeRange) THEN
+-- This condition excludes marks set at start_group time, for which there is nothing to do.
+-- Get the latest mark for the tables group.
+        SELECT mark_time_id
+          INTO v_latestMarkTimeId
+          FROM emaj.emaj_mark
+          WHERE mark_group = v_group
+          ORDER BY mark_time_id DESC
+          LIMIT 1;
+-- Compute the number of changes for tables since this latest mark
+        SELECT coalesce(sum(emaj._log_stat_tbl(emaj_relation, greatest(v_latestMarkTimeId, lower(rel_time_range)),NULL)), 0)
+          INTO v_nbChanges
+          FROM emaj.emaj_relation
+          WHERE rel_group = v_group
+            AND rel_kind = 'r'
+            AND upper_inf(rel_time_range);
+-- Update the latest mark statistics.
+        UPDATE emaj.emaj_mark
+          SET mark_log_rows_before_next = v_nbChanges
+          WHERE mark_group = v_group
+            AND mark_time_id = v_latestMarkTimeId;
+-- Update the current log session statistics.
+        UPDATE emaj.emaj_log_session
+          SET lses_marks = lses_marks + 1,
+              lses_log_rows = lses_log_rows + v_nbChanges
+          WHERE lses_group = v_group
+            AND lses_time_range = v_lsesTimeRange;
+      END IF;
+    END LOOP;
 -- For tables currently belonging to the groups, record their state and their log sequence last_value.
     INSERT INTO emaj.emaj_table (tbl_schema, tbl_name, tbl_time_id, tbl_tuples, tbl_pages, tbl_log_seq_last_val)
       SELECT rel_schema, rel_tblseq, p_timeId, reltuples, relpages, last_value
