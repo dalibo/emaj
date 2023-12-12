@@ -6992,8 +6992,6 @@ $_stop_groups$
 -- This function effectively de-activates the log triggers of all the tables for a group.
 -- Input: array of group names, a mark name to set, and a boolean indicating if the function is called by a multi group function
 -- Output: number of processed tables and sequences
--- The function is defined as SECURITY DEFINER so that emaj_adm role can use it even if he is not the owner of application tables and
--- sequences.
   DECLARE
     v_function               TEXT;
     v_groupList              TEXT;
@@ -7002,6 +7000,8 @@ $_stop_groups$
     v_nbTblSeq               INT = 0;
     v_markName               TEXT;
     v_fullTableName          TEXT;
+    v_group                  TEXT;
+    v_lsesTimeRange          INT8RANGE;
     r_schema                 RECORD;
     r_tblsq                  RECORD;
   BEGIN
@@ -7026,18 +7026,18 @@ $_stop_groups$
     IF v_count > 1 THEN
       RAISE WARNING '_stop_groups: The groups "%" are already in IDLE state.', v_groupList;
     END IF;
+-- Process the LOGGING groups.
     SELECT array_agg(DISTINCT group_name)
       INTO p_groupNames
       FROM emaj.emaj_group
       WHERE group_name = ANY(p_groupNames)
         AND group_is_logging;
--- Process the LOGGING groups.
     IF p_groupNames IS NOT NULL THEN
 -- Check and process the supplied mark name (except if the function is called by emaj_force_stop_group()).
-      IF p_mark IS NULL OR p_mark = '' THEN
-        p_mark = 'STOP_%';
-      END IF;
       IF NOT p_isForced THEN
+        IF p_mark IS NULL OR p_mark = '' THEN
+          p_mark = 'STOP_%';
+        END IF;
         SELECT emaj._check_new_mark(p_groupNames, p_mark) INTO v_markName;
       END IF;
 -- OK (no error detected and at least one group in logging state)
@@ -7066,7 +7066,7 @@ $_stop_groups$
           RAISE EXCEPTION '_stop_groups: The schema "%" does not exist any more.', r_schema.rel_schema;
         END IF;
       END LOOP;
--- For each relation currently belonging to the groups to process.
+-- For each relation currently belonging to the groups to process...
       FOR r_tblsq IN
         SELECT rel_priority, rel_schema, rel_tblseq, rel_kind
           FROM emaj.emaj_relation
@@ -7127,28 +7127,33 @@ $_stop_groups$
         UPDATE emaj.emaj_mark m
           SET mark_log_rows_before_next = 0
           WHERE mark_group = ANY (p_groupNames)
-            AND (mark_group, mark_time_id) IN                        -- select only last mark of each concerned group
-                  (SELECT mark_group, max(mark_time_id)
-                     FROM emaj.emaj_mark
-                     WHERE mark_group = ANY (p_groupNames)
-                       AND NOT mark_is_deleted
-                     GROUP BY mark_group
-                  );
+            AND mark_time_id = v_timeId;
       END IF;
--- Set all marks for the groups from the emaj_mark table as 'DELETED' to avoid any further rollback and remove protection, if any.
-      UPDATE emaj.emaj_mark
-        SET mark_is_deleted = TRUE, mark_is_rlbk_protected = FALSE
-        WHERE mark_group = ANY (p_groupNames)
-          AND NOT mark_is_deleted;
--- Update the state of the groups rows from the emaj_group table (the rollback protection of rollbackable groups is reset).
+-- Process each tables group separately to ...
+      FOREACH v_group IN ARRAY p_groupNames
+      LOOP
+-- Get the latest log session of the tables group.
+        SELECT lses_time_range
+          INTO v_lsesTimeRange
+          FROM emaj.emaj_log_session
+          WHERE lses_group = v_group
+          ORDER BY lses_time_range DESC
+          LIMIT 1;
+-- Set all marks as 'DELETED' to avoid any further rollback and remove marks protection against rollback, if any.
+        UPDATE emaj.emaj_mark
+          SET mark_is_deleted = TRUE, mark_is_rlbk_protected = FALSE
+          WHERE mark_group = v_group
+            AND mark_time_id >= lower(v_lsesTimeRange);
+-- Update the log session to set the time range upper bound
+        UPDATE emaj.emaj_log_session
+          SET lses_time_range = int8range(lower(lses_time_range), v_timeId, '[]')
+          WHERE lses_group = v_group
+            AND lses_time_range = v_lsesTimeRange;
+      END LOOP;
+-- Update the emaj_group table to set the groups state and the rollback protections.
       UPDATE emaj.emaj_group
         SET group_is_logging = FALSE, group_is_rlbk_protected = NOT group_is_rollbackable
         WHERE group_name = ANY (p_groupNames);
--- Update the log sessions to set the time range upper bound
-      UPDATE emaj.emaj_log_session
-        SET lses_time_range = int8range(lower(lses_time_range), v_timeId, '[]')
-        WHERE lses_group = ANY (p_groupNames)
-          AND upper_inf(lses_time_range);
     END IF;
 -- Insert a END event into the history.
     INSERT INTO emaj.emaj_hist (hist_function, hist_event, hist_object, hist_wording)
