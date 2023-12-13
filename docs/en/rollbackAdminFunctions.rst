@@ -16,7 +16,7 @@ The third parameter indicates whether the E-Maj rollback to simulate is a *logge
 
 The function returns an *INTERVAL* value.
 
-The tables group must be in *LOGGING* state and the supplied mark must be usable for a rollback, i.e. it cannot be logically deleted.
+The tables group must be in *LOGGING* state and the supplied mark must be usable for an E-Maj rollback.
 
 This duration estimate is approximative. It takes into account:
 

@@ -197,7 +197,7 @@ select emaj.emaj_assign_table('phil''s schema3', 'mytbl4', 'phil''s group#3",', 
 select * from emaj.emaj_relation where rel_schema = 'phil''s schema3' and rel_tblseq = 'mytbl4' order by rel_time_range;
 
 -----------------------------
--- test a remove operation to fix the case of a deleted log table, log sequence or log function
+-- test a remove operation to fix the case of a dropped log table, log sequence or log function
 -----------------------------
 reset role;
 drop table "emaj_phil's schema3".mytbl4_log;
@@ -212,7 +212,7 @@ select rel_schema, rel_tblseq, rel_time_range, rel_group, rel_kind
   from emaj.emaj_relation where rel_schema = 'phil''s schema3' and rel_tblseq = 'mytbl4' order by rel_time_range;
 
 -----------------------------
--- test a remove operation to fix the case of a deleted application table or sequence
+-- test a remove operation to fix the case of a dropped application table or sequence
 -----------------------------
 -- in fact just rename the table and the sequence
 reset role;
@@ -370,7 +370,7 @@ select stat_group, stat_schema, stat_table, stat_first_mark, stat_last_mark, sta
   from emaj.emaj_log_stat_groups('{"grp_tmp_3","grp_tmp_4","grp_tmp"}','Mk1',null)
   order by stat_first_mark_datetime, stat_schema, stat_table;
 select mark_time_id, regexp_replace(mark_name,E'\\d\\d\.\\d\\d\\.\\d\\d\\.\\d\\d\\d\\d','%','g'), mark_group,
-       mark_is_deleted, mark_log_rows_before_next
+       mark_log_rows_before_next
   from emaj.emaj_mark where mark_group in ('grp_tmp_3','grp_tmp_4','grp_tmp')
   order by 1,2,3;
 

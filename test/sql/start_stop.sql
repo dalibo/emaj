@@ -150,7 +150,7 @@ SET client_min_messages TO NOTICE;
 
 -- use of % in start mark name
 select emaj.emaj_start_group('myGroup1','Foo%Bar');
-select mark_group, regexp_replace(mark_name,E'\\d\\d\.\\d\\d\\.\\d\\d\\.\\d\\d\\d\\d','%','g'), mark_time_id, mark_is_deleted, mark_is_rlbk_protected, mark_comment, mark_log_rows_before_next, mark_logged_rlbk_target_mark from emaj.emaj_mark order by mark_time_id, mark_group;
+select mark_group, regexp_replace(mark_name,E'\\d\\d\.\\d\\d\\.\\d\\d\\.\\d\\d\\d\\d','%','g'), mark_time_id, mark_is_rlbk_protected, mark_comment, mark_log_rows_before_next, mark_logged_rlbk_target_mark from emaj.emaj_mark order by mark_time_id, mark_group;
 
 -- multiple emaj_start_group() using the same generated start mark name => fails
 -- this test is commented because the generated error message differs from one run to another
@@ -165,7 +165,7 @@ SET client_min_messages TO WARNING;
 -- check for emaj_start_group()
 select group_name, group_is_logging, group_is_rlbk_protected from emaj.emaj_group order by group_name;
 select * from emaj.emaj_log_session order by lses_group, lses_time_range;
-select mark_group, regexp_replace(mark_name,E'\\d\\d\.\\d\\d\\.\\d\\d\\.\\d\\d\\d\\d','%','g'), mark_time_id, mark_is_deleted, mark_is_rlbk_protected, mark_comment, mark_log_rows_before_next, mark_logged_rlbk_target_mark
+select mark_group, regexp_replace(mark_name,E'\\d\\d\.\\d\\d\\.\\d\\d\\.\\d\\d\\d\\d','%','g'), mark_time_id, mark_is_rlbk_protected, mark_comment, mark_log_rows_before_next, mark_logged_rlbk_target_mark
   from emaj.emaj_mark where mark_time_id >= 2000 order by mark_time_id, mark_group;
 select time_id, time_last_emaj_gid, time_event from emaj.emaj_time_stamp where time_id >= 2000 order by time_id;
 select hist_id, hist_function, hist_event, hist_object, 
@@ -209,7 +209,7 @@ begin transaction;
   select emaj.emaj_start_group('myGroup1');
   select emaj.emaj_start_group('myGroup2','');
 commit;
-select mark_group, regexp_replace(mark_name,E'\\d\\d\.\\d\\d\\.\\d\\d\\.\\d\\d\\d\\d','%','g'), mark_time_id, mark_is_deleted, mark_is_rlbk_protected, mark_comment, mark_log_rows_before_next, mark_logged_rlbk_target_mark from emaj.emaj_mark order by mark_time_id, mark_group;
+select mark_group, regexp_replace(mark_name,E'\\d\\d\.\\d\\d\\.\\d\\d\\.\\d\\d\\d\\d','%','g'), mark_time_id, mark_is_rlbk_protected, mark_comment, mark_log_rows_before_next, mark_logged_rlbk_target_mark from emaj.emaj_mark order by mark_time_id, mark_group;
 
 begin transaction;
   select emaj.emaj_stop_group('myGroup1');
@@ -227,7 +227,7 @@ commit;
 
 -- check for emaj_stop_group()
 select group_name, group_is_logging, group_is_rlbk_protected from emaj.emaj_group order by group_name;
-select mark_group, regexp_replace(mark_name,E'\\d\\d\.\\d\\d\\.\\d\\d\\.\\d\\d\\d\\d','%','g'), mark_time_id, mark_is_deleted, mark_is_rlbk_protected, mark_comment, mark_log_rows_before_next, mark_logged_rlbk_target_mark
+select mark_group, regexp_replace(mark_name,E'\\d\\d\.\\d\\d\\.\\d\\d\\.\\d\\d\\d\\d','%','g'), mark_time_id, mark_is_rlbk_protected, mark_comment, mark_log_rows_before_next, mark_logged_rlbk_target_mark
   from emaj.emaj_mark where mark_time_id >= 2200 order by mark_time_id, mark_group;
 select time_id, time_last_emaj_gid, time_event from emaj.emaj_time_stamp where time_id >= 2200 order by time_id;
 select hist_id, hist_function, hist_event, hist_object, 
@@ -273,7 +273,7 @@ rollback;
 -- check for emaj_start_groups()
 select emaj.emaj_start_groups(array['myGroup1','myGroup2'],'Mark1',true);
 select group_name, group_is_logging, group_is_rlbk_protected from emaj.emaj_group order by group_name;
-select mark_group, regexp_replace(mark_name,E'\\d\\d\.\\d\\d\\.\\d\\d\\.\\d\\d\\d\\d','%','g'), mark_time_id, mark_is_deleted, mark_is_rlbk_protected, mark_comment, mark_log_rows_before_next, mark_logged_rlbk_target_mark
+select mark_group, regexp_replace(mark_name,E'\\d\\d\.\\d\\d\\.\\d\\d\\.\\d\\d\\d\\d','%','g'), mark_time_id, mark_is_rlbk_protected, mark_comment, mark_log_rows_before_next, mark_logged_rlbk_target_mark
   from emaj.emaj_mark where mark_time_id >= 2400 order by mark_time_id, mark_group;
 select time_id, time_last_emaj_gid, time_event from emaj.emaj_time_stamp where time_id >= 2400 order by time_id;
 select hist_id, hist_function, hist_event, hist_object, 
@@ -302,7 +302,7 @@ rollback;
 -- should be OK
 select emaj.emaj_stop_groups(array['myGroup1','myGroup2'],'Global Stop at %');
 
-select mark_group, regexp_replace(mark_name,E'\\d\\d\.\\d\\d\\.\\d\\d\\.\\d\\d\\d\\d','%','g'), mark_time_id, mark_is_deleted, mark_is_rlbk_protected, mark_comment, mark_log_rows_before_next, mark_logged_rlbk_target_mark from emaj.emaj_mark order by mark_time_id, mark_group;
+select mark_group, regexp_replace(mark_name,E'\\d\\d\.\\d\\d\\.\\d\\d\\.\\d\\d\\d\\d','%','g'), mark_time_id, mark_is_rlbk_protected, mark_comment, mark_log_rows_before_next, mark_logged_rlbk_target_mark from emaj.emaj_mark order by mark_time_id, mark_group;
 
 -- with warning about group names array content
 select emaj.emaj_stop_groups(array['myGroup1',NULL,'myGroup2','','myGroup2','myGroup2','myGroup1']);
@@ -347,7 +347,7 @@ select emaj.emaj_force_stop_group('myGroup2');
 -- impact of stopped groups
 select group_name, group_is_logging, group_is_rlbk_protected from emaj.emaj_group order by group_name;
 select * from emaj.emaj_log_session order by lses_group, lses_time_range;
-select mark_group, regexp_replace(mark_name,E'\\d\\d\.\\d\\d\\.\\d\\d\\.\\d\\d\\d\\d','%','g'), mark_time_id, mark_is_deleted, mark_is_rlbk_protected, mark_comment, mark_log_rows_before_next, mark_logged_rlbk_target_mark
+select mark_group, regexp_replace(mark_name,E'\\d\\d\.\\d\\d\\.\\d\\d\\.\\d\\d\\d\\d','%','g'), mark_time_id, mark_is_rlbk_protected, mark_comment, mark_log_rows_before_next, mark_logged_rlbk_target_mark
   from emaj.emaj_mark where mark_time_id >= 2500 order by mark_time_id, mark_group;
 select time_id, time_last_emaj_gid, time_event from emaj.emaj_time_stamp where time_id >= 2500 order by time_id;
 select hist_id, hist_function, hist_event, hist_object, 

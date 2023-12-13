@@ -16,7 +16,7 @@ set role emaj_regression_tests_adm_user1;
 select emaj.emaj_import_parameters_configuration(emaj.emaj_export_parameters_configuration());
 
 -----------------------------
--- Step 8 : use of multi-group functions, start_group(s) without log reset and use deleted marks
+-- Step 8 : use of multi-group functions, start_group(s) without log reset and use old marks (i.e. set before the latest group start)
 -----------------------------
 -- stop both groups
 select emaj.emaj_stop_groups(array['myGroup1','myGroup2']);
@@ -37,13 +37,13 @@ select * from emaj.emaj_rollback_groups(array['myGroup1','myGroup2'],'Multi-2',f
 select * from emaj.emaj_rollback_groups(array['myGroup1','myGroup2'],'Multi-1',false) order by 1,2;
 select emaj.emaj_stop_groups(array['myGroup1','myGroup2'],'Stop after rollback');
 
--- try to start both groups, but with an old deleted mark name
+-- try to start both groups, but with an old mark name
 select emaj.emaj_start_groups(array['myGroup1','myGroup2'],'Multi-1', false);
 
 -- really start both groups
 select emaj.emaj_start_groups(array['myGroup1','myGroup2'],'Multi-1b', false);
 
--- try to rollback several groups to a deleted common mark
+-- try to rollback several groups to an old common mark
 select * from emaj.emaj_rollback_groups(array['myGroup1','myGroup2'],'Multi-1', false);
 
 -- set again a mark for both groups
@@ -60,42 +60,42 @@ select stat_group, stat_schema, stat_sequence, stat_first_mark, stat_last_mark, 
 select * from emaj.emaj_rollback_group('myGroup2','Multi-2',false) order by 1,2;
 select emaj.emaj_delete_mark_group('myGroup2','Multi-2');
 
--- get statistics using deleted marks
+-- get statistics using old marks
 select stat_group, stat_schema, stat_table, stat_first_mark, stat_last_mark, stat_role, stat_verb, stat_rows
   from emaj.emaj_detailed_log_stat_group('myGroup2','M1','M2');
 select stat_group, stat_schema, stat_sequence, stat_first_mark, stat_last_mark, stat_increments, stat_has_structure_changed
   from emaj.emaj_sequence_stat_group('myGroup2', 'M1', 'M2')
   order by stat_group, stat_schema, stat_sequence, stat_first_mark_datetime;
 
--- delete intermediate deleted marks
+-- delete intermediate old marks
 select emaj.emaj_delete_mark_group('myGroup1','Multi-1');
 select emaj.emaj_delete_mark_group('myGroup2','Multi-1');
 -- ... and reuse mark names for parallel rollback test
 select emaj.emaj_rename_mark_group('myGroup1','Multi-1b','Multi-1');
 select emaj.emaj_rename_mark_group('myGroup2','Multi-1b','Multi-1');
 
--- rename a deleted mark
+-- rename an old mark
 select emaj.emaj_rename_mark_group('myGroup2','M2','Deleted M2');
 
--- use emaj_get_previous_mark_group and delete an initial deleted mark
+-- use emaj_get_previous_mark_group and delete an initial old mark
 select emaj.emaj_delete_before_mark_group('myGroup2',
       (select emaj.emaj_get_previous_mark_group('myGroup2',
              (select time_clock_timestamp from emaj.emaj_mark, emaj.emaj_time_stamp where time_id = mark_time_id and mark_group = 'myGroup2' and mark_group = 'myGroup2' and mark_name = 'M3')+'0.000001 SECOND'::interval)));
 
--- comment a deleted mark
-select emaj.emaj_comment_mark_group('myGroup2','M3','This mark is deleted');
+-- comment an old mark
+select emaj.emaj_comment_mark_group('myGroup2','M3','This mark is old');
 
--- try to get a rollback duration estimate on a deleted mark
+-- try to get a rollback duration estimate on an old mark
 select emaj.emaj_estimate_rollback_group('myGroup2','M3',TRUE);
 
--- try to rollback on a deleted mark
+-- try to rollback on an old mark
 select * from emaj.emaj_rollback_group('myGroup2','M3',false) order by 1,2;
 
 -----------------------------
 -- Checking step 8
 -----------------------------
 -- emaj tables
-select mark_group, regexp_replace(mark_name,E'\\d\\d\.\\d\\d\\.\\d\\d\\.\\d\\d\\d\\d','%','g'), mark_time_id, mark_is_deleted, mark_is_rlbk_protected, mark_comment, mark_log_rows_before_next, mark_logged_rlbk_target_mark from emaj.emaj_mark order by mark_time_id, mark_group;
+select mark_group, regexp_replace(mark_name,E'\\d\\d\.\\d\\d\\.\\d\\d\\.\\d\\d\\d\\d','%','g'), mark_time_id, mark_is_rlbk_protected, mark_comment, mark_log_rows_before_next, mark_logged_rlbk_target_mark from emaj.emaj_mark order by mark_time_id, mark_group;
 select sequ_schema, sequ_name, sequ_time_id, sequ_last_val, sequ_is_called from emaj.emaj_sequence order by sequ_time_id, sequ_schema, sequ_name;
 select tbl_schema, tbl_name, tbl_time_id, tbl_tuples, tbl_pages, tbl_log_seq_last_val from emaj.emaj_table order by tbl_time_id, tbl_schema, tbl_name;
 select sqhl_schema, sqhl_table, sqhl_begin_time_id, sqhl_end_time_id, sqhl_hole_size from emaj.emaj_seq_hole order by 1,2,3;
@@ -177,7 +177,7 @@ select * from emaj.emaj_rollback_group('phil''s group#3",','phil''s mark #3',fal
 -- Checking step 9
 -----------------------------
 -- emaj tables
-select mark_group, regexp_replace(mark_name,E'\\d\\d\.\\d\\d\\.\\d\\d\\.\\d\\d\\d\\d','%','g'), mark_time_id, mark_is_deleted, mark_is_rlbk_protected, mark_comment, mark_log_rows_before_next, mark_logged_rlbk_target_mark from emaj.emaj_mark order by mark_time_id, mark_group;
+select mark_group, regexp_replace(mark_name,E'\\d\\d\.\\d\\d\\.\\d\\d\\.\\d\\d\\d\\d','%','g'), mark_time_id, mark_is_rlbk_protected, mark_comment, mark_log_rows_before_next, mark_logged_rlbk_target_mark from emaj.emaj_mark order by mark_time_id, mark_group;
 select sequ_schema, sequ_name, sequ_time_id, sequ_last_val, sequ_is_called from emaj.emaj_sequence order by sequ_time_id, sequ_schema, sequ_name;
 select tbl_schema, tbl_name, tbl_time_id, tbl_log_seq_last_val from emaj.emaj_table order by tbl_time_id, tbl_schema, tbl_name;
 select sqhl_schema, sqhl_table, sqhl_begin_time_id, sqhl_end_time_id, sqhl_hole_size from emaj.emaj_seq_hole order by 1,2,3;
@@ -564,7 +564,7 @@ select * from myTbl2 order by col21;
 -- Checking step 14
 -----------------------------
 
-select mark_group, regexp_replace(mark_name,E'\\d\\d\.\\d\\d\\.\\d\\d\\.\\d\\d\\d\\d','%','g'), mark_time_id, mark_is_deleted, mark_is_rlbk_protected, mark_comment, mark_log_rows_before_next, mark_logged_rlbk_target_mark from emaj.emaj_mark where mark_group = 'myGroup1' order by mark_time_id, mark_group;
+select mark_group, regexp_replace(mark_name,E'\\d\\d\.\\d\\d\\.\\d\\d\\.\\d\\d\\d\\d','%','g'), mark_time_id, mark_is_rlbk_protected, mark_comment, mark_log_rows_before_next, mark_logged_rlbk_target_mark from emaj.emaj_mark where mark_group = 'myGroup1' order by mark_time_id, mark_group;
 select sequ_schema, sequ_name, sequ_time_id, sequ_last_val, sequ_is_called from emaj.emaj_sequence where sequ_schema = 'emaj_myschema1' order by sequ_time_id, sequ_schema, sequ_name;
 select tbl_schema, tbl_name, tbl_time_id, tbl_log_seq_last_val from emaj.emaj_table where tbl_schema = 'myschema1' order by tbl_time_id, tbl_schema, tbl_name;
 select sqhl_schema, sqhl_table, sqhl_begin_time_id, sqhl_end_time_id, sqhl_hole_size from emaj.emaj_seq_hole where sqhl_schema = 'myschema1' order by 1,2,3;

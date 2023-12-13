@@ -79,7 +79,7 @@ select emaj.emaj_set_mark_groups('{"myGroup1","myGroup2"}');
 select emaj.emaj_set_mark_groups('{"myGroup1","myGroup2"}','Bar%Foo');
 
 -- check for emaj_set_mark_group() and emaj_set_mark_groups()
-select mark_group, regexp_replace(mark_name,E'\\d\\d\.\\d\\d\\.\\d\\d\\.\\d\\d\\d\\d','%','g'), mark_time_id, mark_is_deleted, mark_is_rlbk_protected, mark_comment, mark_log_rows_before_next, mark_logged_rlbk_target_mark from emaj.emaj_mark order by mark_time_id, mark_group;
+select mark_group, regexp_replace(mark_name,E'\\d\\d\.\\d\\d\\.\\d\\d\\.\\d\\d\\d\\d','%','g'), mark_time_id, mark_is_rlbk_protected, mark_comment, mark_log_rows_before_next, mark_logged_rlbk_target_mark from emaj.emaj_mark order by mark_time_id, mark_group;
 select time_id, time_last_emaj_gid, time_event from emaj.emaj_time_stamp where time_id >= 3000 order by time_id;
 select sequ_schema, sequ_name, sequ_time_id, sequ_last_val, sequ_is_called from emaj.emaj_sequence order by sequ_time_id, sequ_schema, sequ_name;
 select tbl_schema, tbl_name, tbl_time_id, tbl_tuples, tbl_pages, tbl_log_seq_last_val from emaj.emaj_table order by tbl_time_id, tbl_schema, tbl_name;
@@ -158,7 +158,7 @@ update emaj.emaj_mark set mark_logged_rlbk_target_mark = 'Mark1' where mark_name
 select emaj.emaj_rename_mark_group('myGroup1','Mark1','First Mark');
 
 -- check for emaj_comment_mark_group() and emaj_rename_mark_group()
-select mark_group, regexp_replace(mark_name,E'\\d\\d\.\\d\\d\\.\\d\\d\\.\\d\\d\\d\\d','%','g'), mark_time_id, mark_is_deleted, mark_is_rlbk_protected, mark_comment, mark_log_rows_before_next, mark_logged_rlbk_target_mark from emaj.emaj_mark order by mark_time_id, mark_group;
+select mark_group, regexp_replace(mark_name,E'\\d\\d\.\\d\\d\\.\\d\\d\\.\\d\\d\\d\\d','%','g'), mark_time_id, mark_is_rlbk_protected, mark_comment, mark_log_rows_before_next, mark_logged_rlbk_target_mark from emaj.emaj_mark order by mark_time_id, mark_group;
 select sequ_schema, sequ_name, sequ_time_id, sequ_last_val, sequ_is_called from emaj.emaj_sequence order by sequ_time_id, sequ_schema, sequ_name;
 select tbl_schema, tbl_name, tbl_time_id, tbl_log_seq_last_val from emaj.emaj_table order by tbl_time_id, tbl_schema, tbl_name;
 select time_id, time_last_emaj_gid, time_event from emaj.emaj_time_stamp where time_id >= 3200 order by time_id;
@@ -257,12 +257,12 @@ select emaj.emaj_protect_mark_group('myGroup1',NULL);
 select emaj.emaj_protect_mark_group('myGroup1','unknownMark');
 -- should be ok
 select emaj.emaj_protect_mark_group('myGroup1','EMAJ_LAST_MARK');
-select mark_time_id, mark_name, mark_group, mark_is_deleted, mark_is_rlbk_protected from emaj.emaj_mark where mark_group = 'myGroup1';
+select mark_time_id, mark_name, mark_group, mark_is_rlbk_protected from emaj.emaj_mark where mark_group = 'myGroup1';
 select emaj.emaj_protect_mark_group('emptyGroup','EMAJ_LAST_MARK');
 
 -- protect an already protected group
 select emaj.emaj_protect_mark_group('myGroup1','SM3');
-select mark_time_id, mark_name, mark_group, mark_is_deleted, mark_is_rlbk_protected from emaj.emaj_mark where mark_group = 'myGroup1';
+select mark_time_id, mark_name, mark_group, mark_is_rlbk_protected from emaj.emaj_mark where mark_group = 'myGroup1';
 
 -----------------------------
 -- emaj_unprotect_mark_group() tests
@@ -277,21 +277,21 @@ select emaj.emaj_unprotect_mark_group('myGroup1',NULL);
 select emaj.emaj_unprotect_mark_group('myGroup1','unknownMark');
 -- should be ok
 select emaj.emaj_unprotect_mark_group('myGroup1','EMAJ_LAST_MARK');
-select mark_time_id, mark_name, mark_group, mark_is_deleted, mark_is_rlbk_protected from emaj.emaj_mark where mark_group = 'myGroup1';
+select mark_time_id, mark_name, mark_group, mark_is_rlbk_protected from emaj.emaj_mark where mark_group = 'myGroup1';
 
 select emaj.emaj_unprotect_mark_group('emptyGroup','EMAJ_LAST_MARK');
 
 -- protect an already protected group
 select emaj.emaj_unprotect_mark_group('myGroup1','SM3');
-select mark_time_id, mark_name, mark_group, mark_is_deleted, mark_is_rlbk_protected from emaj.emaj_mark where mark_group = 'myGroup1';
+select mark_time_id, mark_name, mark_group, mark_is_rlbk_protected from emaj.emaj_mark where mark_group = 'myGroup1';
 
 -- check mark protections is removed by stop_group functions
 select emaj.emaj_protect_mark_group('myGroup1','EMAJ_LAST_MARK');
-select regexp_replace(mark_name,E'\\d\\d\.\\d\\d\\.\\d\\d\\.\\d\\d\\d\\d','%','g'), mark_is_deleted, mark_is_rlbk_protected 
+select regexp_replace(mark_name,E'\\d\\d\.\\d\\d\\.\\d\\d\\.\\d\\d\\d\\d','%','g'), mark_is_rlbk_protected 
   from emaj.emaj_mark where mark_group = 'myGroup1' order by mark_time_id, mark_group;
   
 select emaj.emaj_stop_group('myGroup1');
-select regexp_replace(mark_name,E'\\d\\d\.\\d\\d\\.\\d\\d\\.\\d\\d\\d\\d','%','g'), mark_is_deleted, mark_is_rlbk_protected 
+select regexp_replace(mark_name,E'\\d\\d\.\\d\\d\\.\\d\\d\\.\\d\\d\\d\\d','%','g'), mark_is_rlbk_protected 
   from emaj.emaj_mark where mark_group = 'myGroup1' order by mark_time_id, mark_group;
 
 -----------------------------
@@ -307,7 +307,7 @@ select emaj.emaj_protect_mark_group('myGroup1','RENAMED');
 select emaj.emaj_unprotect_mark_group('myGroup1','EMAJ_LAST_MARK');
 
 -- check marks state
-select mark_group, regexp_replace(mark_name,E'\\d\\d\.\\d\\d\\.\\d\\d\\.\\d\\d\\d\\d','%','g'), mark_time_id, mark_is_deleted, mark_is_rlbk_protected, mark_comment, mark_log_rows_before_next, mark_logged_rlbk_target_mark from emaj.emaj_mark order by mark_time_id, mark_group;
+select mark_group, regexp_replace(mark_name,E'\\d\\d\.\\d\\d\\.\\d\\d\\.\\d\\d\\d\\d','%','g'), mark_time_id, mark_is_rlbk_protected, mark_comment, mark_log_rows_before_next, mark_logged_rlbk_target_mark from emaj.emaj_mark order by mark_time_id, mark_group;
 select sequ_schema, sequ_name, sequ_time_id, sequ_last_val, sequ_is_called from emaj.emaj_sequence order by sequ_time_id, sequ_schema, sequ_name;
 select tbl_schema, tbl_name, tbl_time_id, tbl_log_seq_last_val from emaj.emaj_table order by tbl_time_id, tbl_schema, tbl_name;
 

@@ -86,7 +86,7 @@ If it is necessary to reset tables and sequences of a group in the state they we
 
    SELECT * FROM emaj.emaj_rollback_group('<group.name>', '<mark.name>' [, <is_alter_group_allowed> [, <comment>]]);
 
-The tables group must be in *LOGGING* state and the supplied mark must be usable for a rollback, i.e. it cannot be logically deleted.
+The tables group must be in *LOGGING* state and :ref:`not protected<emaj_protect_group>`. The target mark cannot be prior a :ref:`protected mark<emaj_protect_mark_group>`.
 
 The '*EMAJ_LAST_MARK*' keyword can be used as mark name, meaning the last set mark.
 
@@ -130,7 +130,7 @@ To execute a “*logged*” rollback, the following SQL statement can be execute
 
 The usage rules are the same as with *emaj_rollback_group()* function.
 
-The tables group must be in *LOGGING* state and the supplied mark must be usable for a rollback, i.e. it cannot be logically deleted.
+The tables group must be in *LOGGING* state and :ref:`not protected<emaj_protect_group>`. The target mark cannot be prior a :ref:`protected mark<emaj_protect_mark_group>`.
 
 The '*EMAJ_LAST_MARK*' keyword can be used as mark name, meaning the last set mark.
 
@@ -193,9 +193,9 @@ If the mark parameter is not specified or is empty or *NULL*, a mark name is gen
 
 Stopping a tables group simply deactivates log triggers of application tables of the group. The setting of *SHARE ROW EXCLUSIVE* locks may lead to deadlock. If the deadlock processing impacts the execution of the E-Maj function, the error is trapped and the lock operation is repeated, with a maximum of 5 attempts.
 
-Additionally, the *emaj_stop_group()* function changes the status of all marks set for the group into a *DELETED* state. Then, it is not possible to execute a rollback command any more, even though no updates have been applied on tables between the execution of both *emaj_stop_group()* and :ref:`emaj_rollback_group() <emaj_rollback_group>` functions.
+The *emaj_stop_group()* function closes the current log session. Then, it is not possible to execute an E-Maj rollback targeting an existing mark anymore, even though no changes have been applied since the tables group stop.
 
-But the content of log tables and E-Maj technical tables can be examined. 
+However the content of log tables and E-Maj technical tables can be examined. 
 
 When a group is stopped, its state becomes "*IDLE*" again.
 

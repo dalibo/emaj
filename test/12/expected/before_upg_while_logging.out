@@ -407,27 +407,27 @@ select group_name, group_is_rollbackable, group_creation_time_id,
 (4 rows)
 
 select mark_group, regexp_replace(mark_name,E'\\d\\d\.\\d\\d\\.\\d\\d\\.\\d\\d\\d\\d','%','g'), mark_time_id, 
-       mark_is_deleted, mark_is_rlbk_protected, mark_comment, mark_log_rows_before_next, mark_logged_rlbk_target_mark 
+       mark_is_rlbk_protected, mark_comment, mark_log_rows_before_next, mark_logged_rlbk_target_mark 
   from emaj.emaj_mark order by mark_time_id, mark_group;
-    mark_group    | regexp_replace  | mark_time_id | mark_is_deleted | mark_is_rlbk_protected |  mark_comment  | mark_log_rows_before_next | mark_logged_rlbk_target_mark 
-------------------+-----------------+--------------+-----------------+------------------------+----------------+---------------------------+------------------------------
- myGroup1         | M1              |           15 | f               | f                      |                |                        29 | 
- myGroup2         | M1              |           15 | f               | f                      |                |                        27 | 
- phil's group#3", | M1              |           16 | f               | f                      |                |                           | 
- myGroup1         | M2              |           17 | f               | f                      |                |                        11 | 
- myGroup1         | M3              |           18 | f               | t                      | Third mark set |                         0 | 
- myGroup2         | M2              |           21 | f               | f                      |                |                         4 | 
- myGroup2         | M3              |           22 | f               | f                      |                |                         0 | 
- myGroup2         | RLBK_M2_%_START |           23 | f               | f                      |                |                         2 | 
- myGroup2         | RLBK_M2_%_DONE  |           24 | f               | f                      |                |                         0 | M2
- myGroup2         | RLBK_M3_%_START |           25 | f               | f                      |                |                         2 | 
- myGroup2         | RLBK_M3_%_DONE  |           26 | f               | f                      |                |                         0 | M3
- myGroup1         | Common          |           27 | f               | f                      |                |                         0 | 
- myGroup2         | Common          |           27 | f               | f                      |                |                           | 
- myGroup1         | REMOVE_%        |           28 | f               | f                      |                |                           | 
- myGroup6         | Start G6        |           29 | t               | f                      |                |                         0 | 
- myGroup6         | REMOVE_%        |           30 | t               | f                      |                |                         0 | 
- myGroup6         | STOP_%          |           31 | t               | f                      |                |                         0 | 
+    mark_group    | regexp_replace  | mark_time_id | mark_is_rlbk_protected |  mark_comment  | mark_log_rows_before_next | mark_logged_rlbk_target_mark 
+------------------+-----------------+--------------+------------------------+----------------+---------------------------+------------------------------
+ myGroup1         | M1              |           15 | f                      |                |                        29 | 
+ myGroup2         | M1              |           15 | f                      |                |                        27 | 
+ phil's group#3", | M1              |           16 | f                      |                |                           | 
+ myGroup1         | M2              |           17 | f                      |                |                        11 | 
+ myGroup1         | M3              |           18 | t                      | Third mark set |                         0 | 
+ myGroup2         | M2              |           21 | f                      |                |                         4 | 
+ myGroup2         | M3              |           22 | f                      |                |                         0 | 
+ myGroup2         | RLBK_M2_%_START |           23 | f                      |                |                         2 | 
+ myGroup2         | RLBK_M2_%_DONE  |           24 | f                      |                |                         0 | M2
+ myGroup2         | RLBK_M3_%_START |           25 | f                      |                |                         2 | 
+ myGroup2         | RLBK_M3_%_DONE  |           26 | f                      |                |                         0 | M3
+ myGroup1         | Common          |           27 | f                      |                |                         0 | 
+ myGroup2         | Common          |           27 | f                      |                |                           | 
+ myGroup1         | REMOVE_%        |           28 | f                      |                |                           | 
+ myGroup6         | Start G6        |           29 | f                      |                |                         0 | 
+ myGroup6         | REMOVE_%        |           30 | f                      |                |                         0 | 
+ myGroup6         | STOP_%          |           31 | f                      |                |                         0 | 
 (17 rows)
 
 select sequ_schema, sequ_name, sequ_time_id, sequ_last_val, sequ_is_called

@@ -233,7 +233,7 @@ begin;
   select rel_schema, rel_tblseq, rel_time_range, rel_group, rel_kind
     from emaj.emaj_relation where rel_schema = 'myschema1' and rel_tblseq = 'myTbl3_col31_seq' order by rel_time_range;
   select mark_group, regexp_replace(mark_name,E'\\d\\d\.\\d\\d\\.\\d\\d\\.\\d\\d\\d\\d','%','g'), mark_time_id,
-    mark_is_deleted, mark_is_rlbk_protected, mark_comment, mark_log_rows_before_next, mark_logged_rlbk_target_mark
+    mark_is_rlbk_protected, mark_comment, mark_log_rows_before_next, mark_logged_rlbk_target_mark
     from emaj.emaj_mark where mark_group = 'myGroup1' order by mark_time_id desc limit 2;
 rollback;
 
@@ -564,7 +564,7 @@ select emaj.emaj_cleanup_rollback_state();
 
 -- set an intermediate mark
 select emaj.emaj_set_mark_groups('{"myGroup1","myGroup2"}','Mk3');
-select mark_group, regexp_replace(mark_name,E'\\d\\d\.\\d\\d\\.\\d\\d\\.\\d\\d\\d\\d','%','g'), mark_time_id, mark_is_deleted,
+select mark_group, regexp_replace(mark_name,E'\\d\\d\.\\d\\d\\.\\d\\d\\.\\d\\d\\d\\d','%','g'), mark_time_id,
        mark_is_rlbk_protected, mark_comment, mark_log_rows_before_next, mark_logged_rlbk_target_mark
   from emaj.emaj_mark order by mark_time_id, mark_group;
 

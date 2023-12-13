@@ -387,9 +387,9 @@ begin;
 (1 row)
 
   select * from emaj.emaj_mark where mark_group = 'myGroup2';
- mark_group | mark_name  | mark_time_id | mark_is_deleted | mark_is_rlbk_protected | mark_comment | mark_log_rows_before_next | mark_logged_rlbk_target_mark 
-------------+------------+--------------+-----------------+------------------------+--------------+---------------------------+------------------------------
- myGroup2   | Add myseq2 |         9102 | f               | f                      |              |                           | 
+ mark_group | mark_name  | mark_time_id | mark_is_rlbk_protected | mark_comment | mark_log_rows_before_next | mark_logged_rlbk_target_mark 
+------------+------------+--------------+------------------------+--------------+---------------------------+------------------------------
+ myGroup2   | Add myseq2 |         9102 | f                      |              |                           | 
 (1 row)
 
   select * from emaj.emaj_sequence where sequ_name = 'myseq2' order by sequ_time_id;
@@ -856,12 +856,12 @@ begin;
 (1 row)
 
   select mark_group, regexp_replace(mark_name,E'\\d\\d\.\\d\\d\\.\\d\\d\\.\\d\\d\\d\\d','%','g'), mark_time_id,
-    mark_is_deleted, mark_is_rlbk_protected, mark_comment, mark_log_rows_before_next, mark_logged_rlbk_target_mark
+    mark_is_rlbk_protected, mark_comment, mark_log_rows_before_next, mark_logged_rlbk_target_mark
     from emaj.emaj_mark where mark_group = 'myGroup1' order by mark_time_id desc limit 2;
- mark_group | regexp_replace | mark_time_id | mark_is_deleted | mark_is_rlbk_protected | mark_comment | mark_log_rows_before_next | mark_logged_rlbk_target_mark 
-------------+----------------+--------------+-----------------+------------------------+--------------+---------------------------+------------------------------
- myGroup1   | After_remove   |         9303 | f               | f                      |              |                           | 
- myGroup1   | Before_remove  |         9301 | f               | f                      |              |                         0 | 
+ mark_group | regexp_replace | mark_time_id | mark_is_rlbk_protected | mark_comment | mark_log_rows_before_next | mark_logged_rlbk_target_mark 
+------------+----------------+--------------+------------------------+--------------+---------------------------+------------------------------
+ myGroup1   | After_remove   |         9303 | f                      |              |                           | 
+ myGroup1   | Before_remove  |         9301 | f                      |              |                         0 | 
 (2 rows)
 
 rollback;
@@ -1245,9 +1245,9 @@ begin;
 (1 row)
 
   select * from emaj.emaj_mark where mark_group = 'myGroup2';
- mark_group |     mark_name      | mark_time_id | mark_is_deleted | mark_is_rlbk_protected | mark_comment | mark_log_rows_before_next | mark_logged_rlbk_target_mark 
-------------+--------------------+--------------+-----------------+------------------------+--------------+---------------------------+------------------------------
- myGroup2   | Just after ADD_TBL |         9504 | f               | f                      |              |                           | 
+ mark_group |     mark_name      | mark_time_id | mark_is_rlbk_protected | mark_comment | mark_log_rows_before_next | mark_logged_rlbk_target_mark 
+------------+--------------------+--------------+------------------------+--------------+---------------------------+------------------------------
+ myGroup2   | Just after ADD_TBL |         9504 | f                      |              |                           | 
 (1 row)
 
   select tbl_schema, tbl_name, tbl_time_id, tbl_log_seq_last_val from emaj.emaj_table
@@ -1815,9 +1815,9 @@ begin;
 (1 row)
 
   select * from emaj.emaj_mark where mark_group = 'myGroup1' and mark_name = 'Mk2b';
- mark_group | mark_name | mark_time_id | mark_is_deleted | mark_is_rlbk_protected | mark_comment | mark_log_rows_before_next | mark_logged_rlbk_target_mark 
-------------+-----------+--------------+-----------------+------------------------+--------------+---------------------------+------------------------------
- myGroup1   | Mk2b      |         9300 | f               | f                      |              |                         0 | 
+ mark_group | mark_name | mark_time_id | mark_is_rlbk_protected | mark_comment | mark_log_rows_before_next | mark_logged_rlbk_target_mark 
+------------+-----------+--------------+------------------------+--------------+---------------------------+------------------------------
+ myGroup1   | Mk2b      |         9300 | f                      |              |                         0 | 
 (1 row)
 
 -- testing marks deletion (delete all marks before the alter_group)
@@ -1878,8 +1878,8 @@ begin;
 (2 rows)
 
   select * from emaj.emaj_mark where mark_group = 'myGroup1' and mark_name = '2 tables removed from myGroup1';
- mark_group | mark_name | mark_time_id | mark_is_deleted | mark_is_rlbk_protected | mark_comment | mark_log_rows_before_next | mark_logged_rlbk_target_mark 
-------------+-----------+--------------+-----------------+------------------------+--------------+---------------------------+------------------------------
+ mark_group | mark_name | mark_time_id | mark_is_rlbk_protected | mark_comment | mark_log_rows_before_next | mark_logged_rlbk_target_mark 
+------------+-----------+--------------+------------------------+--------------+---------------------------+------------------------------
 (0 rows)
 
 rollback;
@@ -2117,27 +2117,27 @@ select emaj.emaj_set_mark_groups('{"myGroup1","myGroup2"}','Mk3');
                    15
 (1 row)
 
-select mark_group, regexp_replace(mark_name,E'\\d\\d\.\\d\\d\\.\\d\\d\\.\\d\\d\\d\\d','%','g'), mark_time_id, mark_is_deleted,
+select mark_group, regexp_replace(mark_name,E'\\d\\d\.\\d\\d\\.\\d\\d\\.\\d\\d\\d\\d','%','g'), mark_time_id,
        mark_is_rlbk_protected, mark_comment, mark_log_rows_before_next, mark_logged_rlbk_target_mark
   from emaj.emaj_mark order by mark_time_id, mark_group;
- mark_group |    regexp_replace     | mark_time_id | mark_is_deleted | mark_is_rlbk_protected | mark_comment | mark_log_rows_before_next | mark_logged_rlbk_target_mark 
-------------+-----------------------+--------------+-----------------+------------------------+--------------+---------------------------+------------------------------
- myGroup1   | Mk1                   |         9001 | f               | f                      |              |                         0 | 
- myGroup2   | Mk1                   |         9001 | f               | f                      |              |                         0 | 
- myGroup1   | Priority Changed      |         9002 | f               | f                      |              |                         0 | 
- myGroup1   | Attributes_changed_1  |         9003 | f               | f                      |              |                         0 | 
- myGroup2   | Attributes_changed_2  |         9004 | f               | f                      |              |                         0 | 
- myGroup1   | MODIFY_%              |         9005 | f               | f                      |              |                         0 | 
- myGroup1   | Mk2                   |         9006 | f               | f                      |              |                         0 | 
- myGroup2   | Mk2                   |         9006 | f               | f                      |              |                         0 | 
- myGroup1   | IMPORT_%              |         9008 | f               | f                      |              |                         0 | 
- myGroup2   | IMPORT_%              |         9008 | f               | f                      |              |                         0 | 
- myGroup2   | ADD_SEQ test          |         9100 | f               | f                      |              |                         0 | 
- myGroup1   | Mk2b                  |         9300 | f               | f                      |              |                         0 | 
- myGroup2   | ADD_TBL test          |         9500 | f               | f                      |              |                         0 | 
- myGroup1   | Revert_tables_removal |         9713 | f               | f                      |              |                         0 | 
- myGroup1   | Mk3                   |         9714 | f               | f                      |              |                           | 
- myGroup2   | Mk3                   |         9714 | f               | f                      |              |                           | 
+ mark_group |    regexp_replace     | mark_time_id | mark_is_rlbk_protected | mark_comment | mark_log_rows_before_next | mark_logged_rlbk_target_mark 
+------------+-----------------------+--------------+------------------------+--------------+---------------------------+------------------------------
+ myGroup1   | Mk1                   |         9001 | f                      |              |                         0 | 
+ myGroup2   | Mk1                   |         9001 | f                      |              |                         0 | 
+ myGroup1   | Priority Changed      |         9002 | f                      |              |                         0 | 
+ myGroup1   | Attributes_changed_1  |         9003 | f                      |              |                         0 | 
+ myGroup2   | Attributes_changed_2  |         9004 | f                      |              |                         0 | 
+ myGroup1   | MODIFY_%              |         9005 | f                      |              |                         0 | 
+ myGroup1   | Mk2                   |         9006 | f                      |              |                         0 | 
+ myGroup2   | Mk2                   |         9006 | f                      |              |                         0 | 
+ myGroup1   | IMPORT_%              |         9008 | f                      |              |                         0 | 
+ myGroup2   | IMPORT_%              |         9008 | f                      |              |                         0 | 
+ myGroup2   | ADD_SEQ test          |         9100 | f                      |              |                         0 | 
+ myGroup1   | Mk2b                  |         9300 | f                      |              |                         0 | 
+ myGroup2   | ADD_TBL test          |         9500 | f                      |              |                         0 | 
+ myGroup1   | Revert_tables_removal |         9713 | f                      |              |                         0 | 
+ myGroup1   | Mk3                   |         9714 | f                      |              |                           | 
+ myGroup2   | Mk3                   |         9714 | f                      |              |                           | 
 (16 rows)
 
 -- estimate a rollback crossing alter group operations

@@ -86,7 +86,7 @@ S'il est nécessaire de remettre les tables et séquences d'un groupe dans l'ét
 
    SELECT * FROM emaj.emaj_rollback_group('<nom.du.groupe>', '<nom.de.marque>' [, <est_altération_groupe_permise [, <commentaire>]]);
 
-Le groupe de tables doit être à l'état actif et la marque indiquée doit être toujours « active », c'est à dire qu'elle ne doit pas être marquée comme logiquement supprimée.
+Le groupe de tables doit être à l'état démarré (*LOGGING*) et :ref:`non protégé <emaj_protect_group>`. La marque ciblée ne doit pas être antérieure à une marque :ref:`protégée contre les rollbacks <emaj_protect_mark_group>`.
 
 Le mot clé '*EMAJ_LAST_MARK*' peut être utilisé comme nom de marque pour indiquer la dernière marque posée.
 
@@ -130,7 +130,7 @@ Pour exécuter un « *logged rollback* » sur un groupe de tables, il suffit d
 
 Les règles d'utilisation sont les mêmes que pour la fonction *emaj_rollback_group()*, 
 
-Le groupe de tables doit être en état démarré (*LOGGING*) et la marque indiquée doit être toujours « active », c'est à dire qu'elle ne doit pas être marquée comme logiquement supprimée (*DELETED*).
+Le groupe de tables doit être à l'état démarré (*LOGGING*) et :ref:`non protégé <emaj_protect_group>`. La marque ciblée ne doit pas être antérieure à une marque :ref:`protégée contre les rollbacks <emaj_protect_mark_group>`.
 
 Le mot clé 'EMAJ_LAST_MARK' peut être utilisé comme nom de marque pour indiquer la dernière marque posée.
 
@@ -194,7 +194,7 @@ Si le paramètre représentant cette marque n'est pas spécifié ou s'il est vid
 
 L'arrêt d'un groupe de table désactive simplement les triggers de log des tables applicatives du groupe. La pose de verrous de type *SHARE ROW EXCLUSIVE* qu’entraîne cette opération peut se traduire par la survenue d'une étreinte fatale (*deadlock*).  Si la résolution de l'étreinte fatale impacte la fonction E-Maj, le deadlock est intercepté et la pose de verrou est automatiquement réitérée, avec un maximum de 5 tentatives.
 
-En complément, la fonction *emaj_stop_group()* passe le statut des marques à l'état « supprimé ». Il n'est dès lors plus possible d'exécuter une commande de rollback, même si aucune mise à jour n'est intervenue sur les tables entre l'exécution des deux fonctions *emaj_stop_group()* et *emaj_rollback_group()*.
+La fonction *emaj_stop_group()* clôt la session de log courante. Il n'est dès lors plus possible d'exécuter une commande de rollback E-Maj ciblant l’une des marques posées précédemment, même si aucune mise à jour n'a été effectuée depuis l'arrêt du groupe de tables.
 
 Pour autant, le contenu des tables de log et des tables internes d'E-Maj peut encore être visualisé.
 

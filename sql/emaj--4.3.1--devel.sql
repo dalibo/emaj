@@ -90,6 +90,11 @@ $$Contains the log sessions history of E-Maj groups.$$;
 ALTER TABLE emaj.emaj_time_stamp RENAME time_tx_id TO time_txid;
 
 --
+-- Drop the emaj_mark.mark_is_deleted column
+--
+ALTER TABLE emaj.emaj_mark DROP COLUMN mark_is_deleted;
+
+--
 -- Create 3 materialized views and a temporary table to build timed events from the emaj_hist and emaj_time_stamp tables.
 -- This will be used to populate the emaj_log_session table, and adjust the emaj_time_stamp table.
 --
@@ -530,16 +535,20 @@ $_check_mark_name$
     END IF;
 -- If requested, check the mark is active for all groups.
     IF p_checkActive THEN
-      SELECT string_agg(mark_group,', ' ORDER BY mark_group), count(*) INTO v_groupList, v_count
+      SELECT string_agg(mark_group,', ' ORDER BY mark_group), count(*)
+        INTO v_groupList, v_count
         FROM emaj.emaj_mark
+             JOIN emaj.emaj_log_session ON (lses_group = mark_group AND lses_time_range @> mark_time_id)
         WHERE mark_name = v_markName
           AND mark_group = ANY(p_groupNames)
-          AND mark_is_deleted;
+          AND NOT upper_inf(lses_time_range);
       IF v_count = 1 THEN
-        RAISE EXCEPTION '_check_mark_name: For the group "%", the mark "%" is DELETED.', v_groupList, v_markName;
+        RAISE EXCEPTION '_check_mark_name: For the group "%", the mark "%" was set before the latest group start.',
+                        v_groupList, v_markName;
       END IF;
       IF v_count > 1 THEN
-        RAISE EXCEPTION '_check_mark_name: For the groups "%", the mark "%" is DELETED.', v_groupList, v_markName;
+        RAISE EXCEPTION '_check_mark_name: For the groups "%", the mark "%" was set before the latest group start.',
+                        v_groupList, v_markName;
       END IF;
     END IF;
 --
@@ -2328,7 +2337,7 @@ $_stop_groups$
           LIMIT 1;
 -- Set all marks as 'DELETED' to avoid any further rollback and remove marks protection against rollback, if any.
         UPDATE emaj.emaj_mark
-          SET mark_is_deleted = TRUE, mark_is_rlbk_protected = FALSE
+          SET mark_is_rlbk_protected = FALSE
           WHERE mark_group = v_group
             AND mark_time_id >= lower(v_lsesTimeRange);
 -- Update the log session to set the time range upper bound
@@ -2456,8 +2465,8 @@ $_set_mark_groups$
           AND rel_kind = 'r';
     GET DIAGNOSTICS v_nbTbl = ROW_COUNT;
 -- Record the mark for each group into the emaj_mark table.
-    INSERT INTO emaj.emaj_mark (mark_group, mark_name, mark_time_id, mark_is_deleted, mark_is_rlbk_protected, mark_logged_rlbk_target_mark)
-      SELECT group_name, p_mark, p_timeId, FALSE, FALSE, p_loggedRlbkTargetMark
+    INSERT INTO emaj.emaj_mark (mark_group, mark_name, mark_time_id, mark_is_rlbk_protected, mark_logged_rlbk_target_mark)
+      SELECT group_name, p_mark, p_timeId, FALSE, p_loggedRlbkTargetMark
         FROM emaj.emaj_group
         WHERE group_name = ANY(p_groupNames)
         ORDER BY group_name;
@@ -2474,6 +2483,164 @@ $_set_mark_groups$
     RETURN v_nbSeq + v_nbTbl;
   END;
 $_set_mark_groups$;
+
+CREATE OR REPLACE FUNCTION emaj._delete_before_mark_group(p_groupName TEXT, p_mark TEXT)
+RETURNS INT LANGUAGE plpgsql AS
+$_delete_before_mark_group$
+-- This function deletes all logs and marks set before a given mark.
+-- The function is called by the emaj_delete_before_mark_group(), emaj_delete_mark_group() functions.
+-- It deletes rows corresponding to the marks to delete from emaj_mark and emaj_sequence.
+-- It deletes rows from emaj_relation corresponding to old versions that become unreacheable.
+-- It deletes rows from all concerned log tables.
+-- To complete, the function deletes oldest rows from emaj_hist.
+-- Input: group name, name of the new first mark.
+-- Output: number of deleted marks, number of tables effectively processed (for which at least one log row has been deleted)
+  DECLARE
+    v_eventTriggers          TEXT[];
+    v_markGlobalSeq          BIGINT;
+    v_markTimeId             BIGINT;
+    v_nbMark                 INT;
+    r_rel                    RECORD;
+  BEGIN
+-- Disable event triggers that protect emaj components and keep in memory these triggers name.
+    SELECT emaj._disable_event_triggers() INTO v_eventTriggers;
+-- Retrieve the timestamp and the emaj_gid value and the time stamp id of the target new first mark.
+    SELECT time_last_emaj_gid, mark_time_id INTO v_markGlobalSeq, v_markTimeId
+      FROM emaj.emaj_mark
+           JOIN emaj.emaj_time_stamp ON (time_id = mark_time_id)
+      WHERE mark_group = p_groupName
+        AND mark_name = p_mark;
+--
+-- First process all obsolete time ranges for the group.
+--
+-- Drop obsolete old log tables.
+    FOR r_rel IN
+        -- log tables for the group, whose end time stamp is older than the new first mark time stamp
+        SELECT DISTINCT rel_log_schema, rel_log_table
+          FROM emaj.emaj_relation
+          WHERE rel_kind = 'r'
+            AND rel_group = p_groupName
+            AND upper(rel_time_range) <= v_markTimeId
+      EXCEPT
+        -- unless they are also used for more recent time range, or are also linked to other groups
+        SELECT rel_log_schema, rel_log_table
+          FROM emaj.emaj_relation
+          WHERE rel_kind = 'r'
+            AND (upper(rel_time_range) > v_markTimeId
+                 OR upper_inf(rel_time_range)
+                 OR rel_group <> p_groupName)
+        ORDER BY 1,2
+    LOOP
+      EXECUTE format('DROP TABLE IF EXISTS %I.%I CASCADE',
+                     r_rel.rel_log_schema, r_rel.rel_log_table);
+    END LOOP;
+-- Delete emaj_table rows corresponding to obsolete relation time range that will be deleted just later.
+-- The related emaj_seq_hole rows will be deleted just later ; they are not directly linked to an emaj_relation row.
+    DELETE FROM emaj.emaj_table
+      USING emaj.emaj_relation r1
+      WHERE rel_group = p_groupName
+        AND rel_kind = 'r'
+        AND tbl_schema = rel_schema
+        AND tbl_name = rel_tblseq
+        AND upper(rel_time_range) <= v_markTimeId
+        AND (tbl_time_id < v_markTimeId                   -- all tables states prior the mark time
+             OR (tbl_time_id = v_markTimeId               -- and the tables state of the mark time
+                 AND NOT EXISTS                           --   if it is not the lower bound of an adjacent time range
+                       (SELECT 0
+                          FROM emaj.emaj_relation r2
+                          WHERE r2.rel_schema = r1.rel_schema
+                            AND r2.rel_tblseq = r1.rel_tblseq
+                            AND lower(r2.rel_time_range) = v_markTimeId
+                       )));
+-- Keep a trace of the relation group ownership history and finaly delete from the emaj_relation table the relation that ended before
+-- the new first mark.
+    WITH deleted AS
+      (DELETE FROM emaj.emaj_relation
+         WHERE rel_group = p_groupName
+           AND upper(rel_time_range) <= v_markTimeId
+         RETURNING rel_schema, rel_tblseq, rel_time_range, rel_group, rel_kind
+      )
+    INSERT INTO emaj.emaj_rel_hist
+             (relh_schema, relh_tblseq, relh_time_range, relh_group, relh_kind)
+      SELECT rel_schema, rel_tblseq, rel_time_range, rel_group, rel_kind
+        FROM deleted;
+-- Drop the E-Maj log schemas that are now useless (i.e. not used by any created group).
+    PERFORM emaj._drop_log_schemas('DELETE_BEFORE_MARK_GROUP', FALSE);
+--
+-- Then process the current relation time range for the group.
+--
+-- Delete rows from all log tables.
+    FOR r_rel IN
+      SELECT quote_ident(rel_log_schema) || '.' || quote_ident(rel_log_table) AS log_table_name
+        FROM emaj.emaj_relation
+        WHERE rel_group = p_groupName
+          AND rel_kind = 'r'
+          AND (upper_inf(rel_time_range) OR upper(rel_time_range) > v_markTimeId)
+        ORDER BY rel_priority, rel_schema, rel_tblseq
+    LOOP
+-- Delete log rows prior to the new first mark.
+      EXECUTE format('DELETE FROM %s WHERE emaj_gid <= $1',
+                     r_rel.log_table_name)
+        USING v_markGlobalSeq;
+    END LOOP;
+-- Process emaj_seq_hole content.
+-- Delete all existing holes, if any, before the mark.
+-- It may delete holes for timeranges that do not belong to the group, if a table has been moved to another group,
+-- but is safe enough for rollbacks.
+    DELETE FROM emaj.emaj_seq_hole
+      USING emaj.emaj_relation
+      WHERE rel_group = p_groupName
+        AND rel_kind = 'r'
+        AND rel_schema = sqhl_schema
+        AND rel_tblseq = sqhl_table
+        AND sqhl_begin_time_id < v_markTimeId;
+-- Now the sequences related to the mark to delete can be suppressed.
+-- Delete first application sequences related data for the group.
+-- The sequence state at time range bounds are kept (if the mark comes from a logging group alter operation).
+    DELETE FROM emaj.emaj_sequence
+      USING emaj.emaj_relation
+      WHERE sequ_schema = rel_schema
+        AND sequ_name = rel_tblseq
+        AND rel_time_range @> sequ_time_id
+        AND rel_group = p_groupName
+        AND rel_kind = 'S'
+        AND sequ_time_id < v_markTimeId
+        AND lower(rel_time_range) <> sequ_time_id;
+-- Delete then tables related data for the group.
+-- The tables state at time range bounds are kept.
+    DELETE FROM emaj.emaj_table
+      USING emaj.emaj_relation
+      WHERE tbl_schema = rel_schema
+        AND tbl_name = rel_tblseq
+        AND rel_time_range @> tbl_time_id
+        AND rel_group = p_groupName
+        AND rel_kind = 'r'
+        AND tbl_time_id < v_markTimeId
+        AND lower(rel_time_range) <> tbl_time_id;
+-- And that may have one of the deleted marks as target mark from a previous logged rollback operation.
+    UPDATE emaj.emaj_mark
+      SET mark_logged_rlbk_target_mark = NULL
+      WHERE mark_group = p_groupName
+        AND mark_time_id >= v_markTimeId
+        AND mark_logged_rlbk_target_mark IN
+             (SELECT mark_name
+                FROM emaj.emaj_mark
+                WHERE mark_group = p_groupName
+                  AND mark_time_id < v_markTimeId
+             );
+-- Delete oldest marks.
+    DELETE FROM emaj.emaj_mark
+      WHERE mark_group = p_groupName
+        AND mark_time_id < v_markTimeId;
+    GET DIAGNOSTICS v_nbMark = ROW_COUNT;
+-- Enable previously disabled event triggers.
+    PERFORM emaj._enable_event_triggers(v_eventTriggers);
+-- Purge the history tables, if needed (even if no mark as been really dropped).
+    PERFORM emaj._purge_histories();
+--
+    RETURN v_nbMark;
+  END;
+$_delete_before_mark_group$;
 
 CREATE OR REPLACE FUNCTION emaj._rlbk_start_mark(p_rlbkId INT, p_multiGroup BOOLEAN)
 RETURNS VOID LANGUAGE plpgsql AS
@@ -2619,15 +2786,14 @@ $_rlbk_end$
 -- If "unlogged" rollback, delete all marks later than the now rolled back mark and the associated sequences.
     IF NOT v_isLoggedRlbk THEN
 -- Get the highest mark time id of the mark used for rollback, for all groups.
--- Delete the marks that are suppressed by the rollback (the related sequences have been already deleted by rollback functions)
--- with a logging in the history.
+-- Delete the marks that are suppressed by the rollback (the related sequences have been already deleted), with a trace in the history,
       WITH deleted AS
         (DELETE FROM emaj.emaj_mark
            WHERE mark_group = ANY (v_groupNames)
              AND mark_time_id > v_markTimeId
            RETURNING mark_time_id, mark_group, mark_name
         ),
-           sorted_deleted AS                                         -- the sort is performed to produce stable results in regression tests
+           sorted_deleted AS                                        -- the sort is performed to produce stable results in regression tests
         (SELECT mark_group, mark_name
            FROM deleted
            ORDER BY mark_time_id, mark_group
@@ -2635,17 +2801,11 @@ $_rlbk_end$
       INSERT INTO emaj.emaj_hist (hist_function, hist_event, hist_object, hist_wording)
         SELECT v_function, 'MARK DELETED', mark_group, 'mark ' || mark_name || ' is deleted'
         FROM sorted_deleted;
--- And reset the mark_log_rows_before_next column for the new last mark.
+-- ... and reset the mark_log_rows_before_next column for the new groups latest marks.
       UPDATE emaj.emaj_mark
         SET mark_log_rows_before_next = NULL
         WHERE mark_group = ANY (v_groupNames)
-          AND (mark_group, mark_time_id) IN                -- select only the last non deleted mark of each concerned group
-              (SELECT mark_group, max(mark_time_id)
-                 FROM emaj.emaj_mark
-                 WHERE mark_group = ANY (v_groupNames)
-                   AND NOT mark_is_deleted
-                 GROUP BY mark_group
-              );
+          AND mark_time_id = v_markTimeId;
 -- The sequences related to the deleted marks can be also suppressed.
 -- Delete first application sequences related data for the groups.
       DELETE FROM emaj.emaj_sequence

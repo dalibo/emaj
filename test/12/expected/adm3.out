@@ -152,14 +152,14 @@ commit;
 -----------------------------
 -- emaj tables
 select * from emaj.emaj_mark where mark_group = 'myGroup4' order by mark_time_id, mark_group;
- mark_group | mark_name | mark_time_id | mark_is_deleted | mark_is_rlbk_protected | mark_comment | mark_log_rows_before_next | mark_logged_rlbk_target_mark 
-------------+-----------+--------------+-----------------+------------------------+--------------+---------------------------+------------------------------
- myGroup4   | M1        |        17102 | t               | f                      |              |                         0 | 
- myGroup4   | M2        |        17103 | t               | f                      |              |                         0 | 
- myGroup4   | M3        |        17104 | t               | f                      |              |                         0 | 
- myGroup4   | M4        |        17105 | t               | f                      |              |                         0 | 
- myGroup4   | M5        |        17106 | t               | f                      |              |                         0 | 
- myGroup4   | M6        |        17107 | t               | f                      |              |                         0 | 
+ mark_group | mark_name | mark_time_id | mark_is_rlbk_protected | mark_comment | mark_log_rows_before_next | mark_logged_rlbk_target_mark 
+------------+-----------+--------------+------------------------+--------------+---------------------------+------------------------------
+ myGroup4   | M1        |        17102 | f                      |              |                         0 | 
+ myGroup4   | M2        |        17103 | f                      |              |                         0 | 
+ myGroup4   | M3        |        17104 | f                      |              |                         0 | 
+ myGroup4   | M4        |        17105 | f                      |              |                         0 | 
+ myGroup4   | M5        |        17106 | f                      |              |                         0 | 
+ myGroup4   | M6        |        17107 | f                      |              |                         0 | 
 (6 rows)
 
 select time_id, time_last_emaj_gid, time_event from emaj.emaj_time_stamp where time_id >= 17100 order by time_id;
@@ -683,7 +683,7 @@ select * from emaj.emaj_relation where rel_schema = 'phil''s schema3' and rel_tb
 (2 rows)
 
 -----------------------------
--- test a remove operation to fix the case of a deleted log table, log sequence or log function
+-- test a remove operation to fix the case of a dropped log table, log sequence or log function
 -----------------------------
 reset role;
 drop table "emaj_phil's schema3".mytbl4_log;
@@ -724,7 +724,7 @@ select rel_schema, rel_tblseq, rel_time_range, rel_group, rel_kind
 (3 rows)
 
 -----------------------------
--- test a remove operation to fix the case of a deleted application table or sequence
+-- test a remove operation to fix the case of a dropped application table or sequence
 -----------------------------
 -- in fact just rename the table and the sequence
 reset role;
@@ -1261,51 +1261,51 @@ select stat_group, stat_schema, stat_table, stat_first_mark, stat_last_mark, sta
 (18 rows)
 
 select mark_time_id, regexp_replace(mark_name,E'\\d\\d\.\\d\\d\\.\\d\\d\\.\\d\\d\\d\\d','%','g'), mark_group,
-       mark_is_deleted, mark_log_rows_before_next
+       mark_log_rows_before_next
   from emaj.emaj_mark where mark_group in ('grp_tmp_3','grp_tmp_4','grp_tmp')
   order by 1,2,3;
- mark_time_id |   regexp_replace    | mark_group | mark_is_deleted | mark_log_rows_before_next 
---------------+---------------------+------------+-----------------+---------------------------
-        17603 | Start               | grp_tmp    | f               |                         0
-        17603 | Start               | grp_tmp_4  | f               |                         0
-        17606 | ASSIGN_%            | grp_tmp_4  | f               |                         0
-        17607 | ASSIGN_%            | grp_tmp_4  | f               |                         0
-        17608 | MODIFY_%            | grp_tmp_4  | f               |                         0
-        17609 | Start               | grp_tmp_3  | f               |                         0
-        17610 | Mk1                 | grp_tmp    | f               |                         0
-        17610 | Mk1                 | grp_tmp_3  | f               |                        11
-        17610 | Mk1                 | grp_tmp_4  | f               |                         0
-        17611 | Mk2                 | grp_tmp    | f               |                         0
-        17611 | Mk2                 | grp_tmp_3  | f               |                         3
-        17611 | Mk2                 | grp_tmp_4  | f               |                        10
-        17612 | Mk3                 | grp_tmp    | f               |                         0
-        17612 | Mk3                 | grp_tmp_3  | f               |                         0
-        17612 | Mk3                 | grp_tmp_4  | f               |                         0
-        17614 | Modify 1 table      | grp_tmp_3  | f               |                         0
-        17615 | Move_tbl_3_to_tmp   | grp_tmp    | f               |                         0
-        17615 | Move_tbl_3_to_tmp   | grp_tmp_3  | f               |                         0
-        17616 | Move_seq_3_to_tmp   | grp_tmp    | f               |                         0
-        17616 | Move_seq_3_to_tmp   | grp_tmp_3  | f               |                         0
-        17617 | Move_tbl_4_to_tmp   | grp_tmp    | f               |                         0
-        17617 | Move_tbl_4_to_tmp   | grp_tmp_4  | f               |                         0
-        17618 | Move_seq_4_to_tmp   | grp_tmp    | f               |                         0
-        17618 | Move_seq_4_to_tmp   | grp_tmp_4  | f               |                         0
-        17619 | Mk4                 | grp_tmp    | f               |                         5
-        17619 | Mk4                 | grp_tmp_3  | f               |                         0
-        17619 | Mk4                 | grp_tmp_4  | f               |                         0
-        17620 | Mk5                 | grp_tmp    | f               |                         0
-        17620 | Mk5                 | grp_tmp_3  | f               |                         0
-        17620 | Mk5                 | grp_tmp_4  | f               |                         0
-        17621 | Mk6                 | grp_tmp_3  | f               |                         0
-        17621 | Mk6                 | grp_tmp_4  | f               |                         0
-        17624 | RLBK_Mk5_%_START    | grp_tmp_3  | f               |                         0
-        17624 | RLBK_Mk5_%_START    | grp_tmp_4  | f               |                         0
-        17625 | End_logged_rollback | grp_tmp    | f               |                         0
-        17625 | End_logged_rollback | grp_tmp_3  | f               |                         0
-        17625 | End_logged_rollback | grp_tmp_4  | f               |                         0
-        17626 | Mk7                 | grp_tmp    | f               |                          
-        17626 | Mk7                 | grp_tmp_3  | f               |                          
-        17626 | Mk7                 | grp_tmp_4  | f               |                          
+ mark_time_id |   regexp_replace    | mark_group | mark_log_rows_before_next 
+--------------+---------------------+------------+---------------------------
+        17603 | Start               | grp_tmp    |                         0
+        17603 | Start               | grp_tmp_4  |                         0
+        17606 | ASSIGN_%            | grp_tmp_4  |                         0
+        17607 | ASSIGN_%            | grp_tmp_4  |                         0
+        17608 | MODIFY_%            | grp_tmp_4  |                         0
+        17609 | Start               | grp_tmp_3  |                         0
+        17610 | Mk1                 | grp_tmp    |                         0
+        17610 | Mk1                 | grp_tmp_3  |                        11
+        17610 | Mk1                 | grp_tmp_4  |                         0
+        17611 | Mk2                 | grp_tmp    |                         0
+        17611 | Mk2                 | grp_tmp_3  |                         3
+        17611 | Mk2                 | grp_tmp_4  |                        10
+        17612 | Mk3                 | grp_tmp    |                         0
+        17612 | Mk3                 | grp_tmp_3  |                         0
+        17612 | Mk3                 | grp_tmp_4  |                         0
+        17614 | Modify 1 table      | grp_tmp_3  |                         0
+        17615 | Move_tbl_3_to_tmp   | grp_tmp    |                         0
+        17615 | Move_tbl_3_to_tmp   | grp_tmp_3  |                         0
+        17616 | Move_seq_3_to_tmp   | grp_tmp    |                         0
+        17616 | Move_seq_3_to_tmp   | grp_tmp_3  |                         0
+        17617 | Move_tbl_4_to_tmp   | grp_tmp    |                         0
+        17617 | Move_tbl_4_to_tmp   | grp_tmp_4  |                         0
+        17618 | Move_seq_4_to_tmp   | grp_tmp    |                         0
+        17618 | Move_seq_4_to_tmp   | grp_tmp_4  |                         0
+        17619 | Mk4                 | grp_tmp    |                         5
+        17619 | Mk4                 | grp_tmp_3  |                         0
+        17619 | Mk4                 | grp_tmp_4  |                         0
+        17620 | Mk5                 | grp_tmp    |                         0
+        17620 | Mk5                 | grp_tmp_3  |                         0
+        17620 | Mk5                 | grp_tmp_4  |                         0
+        17621 | Mk6                 | grp_tmp_3  |                         0
+        17621 | Mk6                 | grp_tmp_4  |                         0
+        17624 | RLBK_Mk5_%_START    | grp_tmp_3  |                         0
+        17624 | RLBK_Mk5_%_START    | grp_tmp_4  |                         0
+        17625 | End_logged_rollback | grp_tmp    |                         0
+        17625 | End_logged_rollback | grp_tmp_3  |                         0
+        17625 | End_logged_rollback | grp_tmp_4  |                         0
+        17626 | Mk7                 | grp_tmp    |                          
+        17626 | Mk7                 | grp_tmp_3  |                          
+        17626 | Mk7                 | grp_tmp_4  |                          
 (40 rows)
 
 -- generate sql script

@@ -16,7 +16,7 @@ Le troisième paramètre, de type booléen, indique si le rollback à simuler es
 
 La fonction retourne un donnée de type *INTERVAL*.
 
-Le groupe de tables doit être en état démarré (*LOGGING*) et la marque indiquée doit être utilisable pour un rollback, c'est à dire qu'elle ne doit pas être marquée comme logiquement supprimée (*DELETED*).
+Le groupe de tables doit être en état démarré (*LOGGING*) et la marque indiquée doit être utilisable pour un rollback.
 
 L'estimation de cette durée n'est qu'approximative. Elle s'appuie sur :
 

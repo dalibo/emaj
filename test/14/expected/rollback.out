@@ -531,8 +531,8 @@ begin;
 (1 row)
 
   select * from emaj.emaj_rollback_group('myGroup1','GeneratedStopMark');
-ERROR:  _check_mark_name: For the group "myGroup1", the mark "GeneratedStopMark" is DELETED.
-CONTEXT:  PL/pgSQL function emaj._check_mark_name(text[],text,boolean) line 83 at RAISE
+ERROR:  _check_mark_name: For the group "myGroup1", the mark "GeneratedStopMark" was set before the latest group start.
+CONTEXT:  PL/pgSQL function emaj._check_mark_name(text[],text,boolean) line 85 at RAISE
 SQL statement "SELECT emaj._check_mark_name(p_groupNames := p_groupNames, p_mark := p_mark, p_checkActive := TRUE)"
 PL/pgSQL function emaj._rlbk_check(text[],text,boolean,boolean) line 21 at SQL statement
 SQL statement "SELECT emaj._rlbk_check(p_groupNames, p_mark, p_isAlterGroupAllowed, FALSE)"
@@ -869,17 +869,17 @@ select emaj.emaj_set_mark_group('myGroup1','Mark12');
                    7
 (1 row)
 
-select mark_group, regexp_replace(mark_name,E'\\d\\d\.\\d\\d\\.\\d\\d\\.\\d\\d\\d\\d','%','g'), mark_time_id, mark_is_deleted, mark_is_rlbk_protected, mark_comment, mark_log_rows_before_next, mark_logged_rlbk_target_mark from emaj.emaj_mark order by mark_time_id, mark_group;
-    mark_group    | regexp_replace | mark_time_id | mark_is_deleted | mark_is_rlbk_protected |              mark_comment              | mark_log_rows_before_next | mark_logged_rlbk_target_mark 
-------------------+----------------+--------------+-----------------+------------------------+----------------------------------------+---------------------------+------------------------------
- emptyGroup       | SM2            |         3006 | f               | f                      | a comment on a mark for an empty group |                         0 | Mark1
- emptyGroup       | EGM3           |         3400 | f               | f                      |                                        |                         0 | 
- emptyGroup       | EGM4           |         3401 | f               | f                      |                                        |                           | 
- phil's group#3", | Mark4          |         3402 | f               | f                      |                                        |                         0 | 
- phil's group#3", | Mark5          |         3403 | f               | f                      |                                        |                           | 
- myGroup1         | Mark11         |         4028 | f               | f                      |                                        |                        27 | 
- myGroup2         | Mark21         |         4029 | f               | f                      |                                        |                           | 
- myGroup1         | Mark12         |         4030 | f               | f                      |                                        |                           | 
+select mark_group, regexp_replace(mark_name,E'\\d\\d\.\\d\\d\\.\\d\\d\\.\\d\\d\\d\\d','%','g'), mark_time_id, mark_is_rlbk_protected, mark_comment, mark_log_rows_before_next, mark_logged_rlbk_target_mark from emaj.emaj_mark order by mark_time_id, mark_group;
+    mark_group    | regexp_replace | mark_time_id | mark_is_rlbk_protected |              mark_comment              | mark_log_rows_before_next | mark_logged_rlbk_target_mark 
+------------------+----------------+--------------+------------------------+----------------------------------------+---------------------------+------------------------------
+ emptyGroup       | SM2            |         3006 | f                      | a comment on a mark for an empty group |                         0 | Mark1
+ emptyGroup       | EGM3           |         3400 | f                      |                                        |                         0 | 
+ emptyGroup       | EGM4           |         3401 | f                      |                                        |                           | 
+ phil's group#3", | Mark4          |         3402 | f                      |                                        |                         0 | 
+ phil's group#3", | Mark5          |         3403 | f                      |                                        |                           | 
+ myGroup1         | Mark11         |         4028 | f                      |                                        |                        27 | 
+ myGroup2         | Mark21         |         4029 | f                      |                                        |                           | 
+ myGroup1         | Mark12         |         4030 | f                      |                                        |                           | 
 (8 rows)
 
 select sequ_schema, sequ_name, sequ_time_id, sequ_last_val, sequ_is_called from emaj.emaj_sequence order by sequ_time_id, sequ_schema, sequ_name;
@@ -953,18 +953,18 @@ select emaj.emaj_set_mark_group('myGroup1','Mark13');
                    7
 (1 row)
 
-select mark_group, regexp_replace(mark_name,E'\\d\\d\.\\d\\d\\.\\d\\d\\.\\d\\d\\d\\d','%','g'), mark_time_id, mark_is_deleted, mark_is_rlbk_protected, mark_comment, mark_log_rows_before_next, mark_logged_rlbk_target_mark from emaj.emaj_mark order by mark_time_id, mark_group;
-    mark_group    | regexp_replace | mark_time_id | mark_is_deleted | mark_is_rlbk_protected |              mark_comment              | mark_log_rows_before_next | mark_logged_rlbk_target_mark 
-------------------+----------------+--------------+-----------------+------------------------+----------------------------------------+---------------------------+------------------------------
- emptyGroup       | SM2            |         3006 | f               | f                      | a comment on a mark for an empty group |                         0 | Mark1
- emptyGroup       | EGM3           |         3400 | f               | f                      |                                        |                         0 | 
- emptyGroup       | EGM4           |         3401 | f               | f                      |                                        |                           | 
- phil's group#3", | Mark4          |         3402 | f               | f                      |                                        |                         0 | 
- phil's group#3", | Mark5          |         3403 | f               | f                      |                                        |                           | 
- myGroup1         | Mark11         |         4028 | f               | f                      |                                        |                        27 | 
- myGroup2         | Mark21         |         4029 | f               | f                      |                                        |                           | 
- myGroup1         | Mark12         |         4030 | f               | f                      |                                        |                        12 | 
- myGroup1         | Mark13         |         4031 | f               | f                      |                                        |                           | 
+select mark_group, regexp_replace(mark_name,E'\\d\\d\.\\d\\d\\.\\d\\d\\.\\d\\d\\d\\d','%','g'), mark_time_id, mark_is_rlbk_protected, mark_comment, mark_log_rows_before_next, mark_logged_rlbk_target_mark from emaj.emaj_mark order by mark_time_id, mark_group;
+    mark_group    | regexp_replace | mark_time_id | mark_is_rlbk_protected |              mark_comment              | mark_log_rows_before_next | mark_logged_rlbk_target_mark 
+------------------+----------------+--------------+------------------------+----------------------------------------+---------------------------+------------------------------
+ emptyGroup       | SM2            |         3006 | f                      | a comment on a mark for an empty group |                         0 | Mark1
+ emptyGroup       | EGM3           |         3400 | f                      |                                        |                         0 | 
+ emptyGroup       | EGM4           |         3401 | f                      |                                        |                           | 
+ phil's group#3", | Mark4          |         3402 | f                      |                                        |                         0 | 
+ phil's group#3", | Mark5          |         3403 | f                      |                                        |                           | 
+ myGroup1         | Mark11         |         4028 | f                      |                                        |                        27 | 
+ myGroup2         | Mark21         |         4029 | f                      |                                        |                           | 
+ myGroup1         | Mark12         |         4030 | f                      |                                        |                        12 | 
+ myGroup1         | Mark13         |         4031 | f                      |                                        |                           | 
 (9 rows)
 
 select sequ_schema, sequ_name, sequ_time_id, sequ_last_val, sequ_is_called from emaj.emaj_sequence order by sequ_time_id, sequ_schema, sequ_name;
@@ -1096,17 +1096,17 @@ select * from emaj.emaj_rollback_group('myGroup1','Mark12');
 (3 rows)
 
 -- check impact
-select mark_group, regexp_replace(mark_name,E'\\d\\d\.\\d\\d\\.\\d\\d\\.\\d\\d\\d\\d','%','g'), mark_time_id, mark_is_deleted, mark_is_rlbk_protected, mark_comment, mark_log_rows_before_next, mark_logged_rlbk_target_mark from emaj.emaj_mark order by mark_time_id, mark_group;
-    mark_group    | regexp_replace | mark_time_id | mark_is_deleted | mark_is_rlbk_protected |              mark_comment              | mark_log_rows_before_next | mark_logged_rlbk_target_mark 
-------------------+----------------+--------------+-----------------+------------------------+----------------------------------------+---------------------------+------------------------------
- emptyGroup       | SM2            |         3006 | f               | f                      | a comment on a mark for an empty group |                         0 | Mark1
- emptyGroup       | EGM3           |         3400 | f               | f                      |                                        |                         0 | 
- emptyGroup       | EGM4           |         3401 | f               | f                      |                                        |                           | 
- phil's group#3", | Mark4          |         3402 | f               | f                      |                                        |                         0 | 
- phil's group#3", | Mark5          |         3403 | f               | f                      |                                        |                           | 
- myGroup1         | Mark11         |         4028 | f               | f                      |                                        |                        27 | 
- myGroup2         | Mark21         |         4029 | f               | f                      |                                        |                           | 
- myGroup1         | Mark12         |         4030 | f               | f                      |                                        |                           | 
+select mark_group, regexp_replace(mark_name,E'\\d\\d\.\\d\\d\\.\\d\\d\\.\\d\\d\\d\\d','%','g'), mark_time_id, mark_is_rlbk_protected, mark_comment, mark_log_rows_before_next, mark_logged_rlbk_target_mark from emaj.emaj_mark order by mark_time_id, mark_group;
+    mark_group    | regexp_replace | mark_time_id | mark_is_rlbk_protected |              mark_comment              | mark_log_rows_before_next | mark_logged_rlbk_target_mark 
+------------------+----------------+--------------+------------------------+----------------------------------------+---------------------------+------------------------------
+ emptyGroup       | SM2            |         3006 | f                      | a comment on a mark for an empty group |                         0 | Mark1
+ emptyGroup       | EGM3           |         3400 | f                      |                                        |                         0 | 
+ emptyGroup       | EGM4           |         3401 | f                      |                                        |                           | 
+ phil's group#3", | Mark4          |         3402 | f                      |                                        |                         0 | 
+ phil's group#3", | Mark5          |         3403 | f                      |                                        |                           | 
+ myGroup1         | Mark11         |         4028 | f                      |                                        |                        27 | 
+ myGroup2         | Mark21         |         4029 | f                      |                                        |                           | 
+ myGroup1         | Mark12         |         4030 | f                      |                                        |                           | 
 (8 rows)
 
 select sequ_schema, sequ_name, sequ_time_id, sequ_last_val, sequ_is_called from emaj.emaj_sequence order by sequ_time_id, sequ_schema, sequ_name;
@@ -1194,17 +1194,17 @@ select emaj.emaj_stop_group('myGroup1');
 (1 row)
 
 -- check impact
-select mark_group, regexp_replace(mark_name,E'\\d\\d\.\\d\\d\\.\\d\\d\\.\\d\\d\\d\\d','%','g'), mark_time_id, mark_is_deleted, mark_is_rlbk_protected, mark_comment, mark_log_rows_before_next, mark_logged_rlbk_target_mark from emaj.emaj_mark order by mark_time_id, mark_group;
-    mark_group    | regexp_replace | mark_time_id | mark_is_deleted | mark_is_rlbk_protected |              mark_comment              | mark_log_rows_before_next | mark_logged_rlbk_target_mark 
-------------------+----------------+--------------+-----------------+------------------------+----------------------------------------+---------------------------+------------------------------
- emptyGroup       | SM2            |         3006 | f               | f                      | a comment on a mark for an empty group |                         0 | Mark1
- emptyGroup       | EGM3           |         3400 | f               | f                      |                                        |                         0 | 
- emptyGroup       | EGM4           |         3401 | f               | f                      |                                        |                           | 
- phil's group#3", | Mark4          |         3402 | f               | f                      |                                        |                         0 | 
- phil's group#3", | Mark5          |         3403 | f               | f                      |                                        |                           | 
- myGroup1         | Mark11         |         4028 | t               | f                      |                                        |                         0 | 
- myGroup2         | Mark21         |         4029 | f               | f                      |                                        |                           | 
- myGroup1         | STOP_%         |         4034 | t               | f                      |                                        |                         0 | 
+select mark_group, regexp_replace(mark_name,E'\\d\\d\.\\d\\d\\.\\d\\d\\.\\d\\d\\d\\d','%','g'), mark_time_id, mark_is_rlbk_protected, mark_comment, mark_log_rows_before_next, mark_logged_rlbk_target_mark from emaj.emaj_mark order by mark_time_id, mark_group;
+    mark_group    | regexp_replace | mark_time_id | mark_is_rlbk_protected |              mark_comment              | mark_log_rows_before_next | mark_logged_rlbk_target_mark 
+------------------+----------------+--------------+------------------------+----------------------------------------+---------------------------+------------------------------
+ emptyGroup       | SM2            |         3006 | f                      | a comment on a mark for an empty group |                         0 | Mark1
+ emptyGroup       | EGM3           |         3400 | f                      |                                        |                         0 | 
+ emptyGroup       | EGM4           |         3401 | f                      |                                        |                           | 
+ phil's group#3", | Mark4          |         3402 | f                      |                                        |                         0 | 
+ phil's group#3", | Mark5          |         3403 | f                      |                                        |                           | 
+ myGroup1         | Mark11         |         4028 | f                      |                                        |                         0 | 
+ myGroup2         | Mark21         |         4029 | f                      |                                        |                           | 
+ myGroup1         | STOP_%         |         4034 | f                      |                                        |                         0 | 
 (8 rows)
 
 select sequ_schema, sequ_name, sequ_time_id, sequ_last_val, sequ_is_called from emaj.emaj_sequence order by sequ_time_id, sequ_schema, sequ_name;
@@ -1387,18 +1387,18 @@ select emaj.emaj_set_mark_group('myGroup1','Mark13');
                    7
 (1 row)
 
-select mark_group, regexp_replace(mark_name,E'\\d\\d\.\\d\\d\\.\\d\\d\\.\\d\\d\\d\\d','%','g'),mark_time_id, mark_is_deleted, mark_is_rlbk_protected, mark_comment, mark_log_rows_before_next, mark_logged_rlbk_target_mark from emaj.emaj_mark order by mark_time_id, mark_group;
-    mark_group    | regexp_replace | mark_time_id | mark_is_deleted | mark_is_rlbk_protected |              mark_comment              | mark_log_rows_before_next | mark_logged_rlbk_target_mark 
-------------------+----------------+--------------+-----------------+------------------------+----------------------------------------+---------------------------+------------------------------
- emptyGroup       | SM2            |         3006 | f               | f                      | a comment on a mark for an empty group |                         0 | Mark1
- emptyGroup       | EGM3           |         3400 | f               | f                      |                                        |                         0 | 
- emptyGroup       | EGM4           |         3401 | f               | f                      |                                        |                           | 
- phil's group#3", | Mark4          |         3402 | f               | f                      |                                        |                         0 | 
- phil's group#3", | Mark5          |         3403 | f               | f                      |                                        |                           | 
- myGroup2         | Mark21         |         4029 | f               | f                      |                                        |                           | 
- myGroup1         | Mark11         |         4035 | f               | f                      |                                        |                        19 | 
- myGroup1         | Mark12         |         4036 | f               | f                      |                                        |                        11 | 
- myGroup1         | Mark13         |         4037 | f               | f                      |                                        |                           | 
+select mark_group, regexp_replace(mark_name,E'\\d\\d\.\\d\\d\\.\\d\\d\\.\\d\\d\\d\\d','%','g'),mark_time_id, mark_is_rlbk_protected, mark_comment, mark_log_rows_before_next, mark_logged_rlbk_target_mark from emaj.emaj_mark order by mark_time_id, mark_group;
+    mark_group    | regexp_replace | mark_time_id | mark_is_rlbk_protected |              mark_comment              | mark_log_rows_before_next | mark_logged_rlbk_target_mark 
+------------------+----------------+--------------+------------------------+----------------------------------------+---------------------------+------------------------------
+ emptyGroup       | SM2            |         3006 | f                      | a comment on a mark for an empty group |                         0 | Mark1
+ emptyGroup       | EGM3           |         3400 | f                      |                                        |                         0 | 
+ emptyGroup       | EGM4           |         3401 | f                      |                                        |                           | 
+ phil's group#3", | Mark4          |         3402 | f                      |                                        |                         0 | 
+ phil's group#3", | Mark5          |         3403 | f                      |                                        |                           | 
+ myGroup2         | Mark21         |         4029 | f                      |                                        |                           | 
+ myGroup1         | Mark11         |         4035 | f                      |                                        |                        19 | 
+ myGroup1         | Mark12         |         4036 | f                      |                                        |                        11 | 
+ myGroup1         | Mark13         |         4037 | f                      |                                        |                           | 
 (9 rows)
 
 select sequ_schema, sequ_name, sequ_time_id, sequ_last_val, sequ_is_called from emaj.emaj_sequence order by sequ_time_id, sequ_schema, sequ_name;
@@ -1518,20 +1518,20 @@ select * from emaj.emaj_logged_rollback_group('myGroup1','Mark12');
 (3 rows)
 
 -- check impact
-select mark_group, regexp_replace(mark_name,E'\\d\\d\.\\d\\d\\.\\d\\d\\.\\d\\d\\d\\d','%','g'), mark_time_id, mark_is_deleted, mark_is_rlbk_protected, mark_comment, mark_log_rows_before_next, mark_logged_rlbk_target_mark from emaj.emaj_mark order by mark_time_id, mark_group;
-    mark_group    |   regexp_replace    | mark_time_id | mark_is_deleted | mark_is_rlbk_protected |              mark_comment              | mark_log_rows_before_next | mark_logged_rlbk_target_mark 
-------------------+---------------------+--------------+-----------------+------------------------+----------------------------------------+---------------------------+------------------------------
- emptyGroup       | SM2                 |         3006 | f               | f                      | a comment on a mark for an empty group |                         0 | Mark1
- emptyGroup       | EGM3                |         3400 | f               | f                      |                                        |                         0 | 
- emptyGroup       | EGM4                |         3401 | f               | f                      |                                        |                           | 
- phil's group#3", | Mark4               |         3402 | f               | f                      |                                        |                         0 | 
- phil's group#3", | Mark5               |         3403 | f               | f                      |                                        |                           | 
- myGroup2         | Mark21              |         4029 | f               | f                      |                                        |                           | 
- myGroup1         | Mark11              |         4035 | f               | f                      |                                        |                        19 | 
- myGroup1         | Mark12              |         4036 | f               | f                      |                                        |                        11 | 
- myGroup1         | Mark13              |         4037 | f               | f                      |                                        |                         0 | 
- myGroup1         | RLBK_Mark12_%_START |         4038 | f               | f                      |                                        |                        11 | 
- myGroup1         | RLBK_Mark12_%_DONE  |         4039 | f               | f                      |                                        |                           | Mark12
+select mark_group, regexp_replace(mark_name,E'\\d\\d\.\\d\\d\\.\\d\\d\\.\\d\\d\\d\\d','%','g'), mark_time_id, mark_is_rlbk_protected, mark_comment, mark_log_rows_before_next, mark_logged_rlbk_target_mark from emaj.emaj_mark order by mark_time_id, mark_group;
+    mark_group    |   regexp_replace    | mark_time_id | mark_is_rlbk_protected |              mark_comment              | mark_log_rows_before_next | mark_logged_rlbk_target_mark 
+------------------+---------------------+--------------+------------------------+----------------------------------------+---------------------------+------------------------------
+ emptyGroup       | SM2                 |         3006 | f                      | a comment on a mark for an empty group |                         0 | Mark1
+ emptyGroup       | EGM3                |         3400 | f                      |                                        |                         0 | 
+ emptyGroup       | EGM4                |         3401 | f                      |                                        |                           | 
+ phil's group#3", | Mark4               |         3402 | f                      |                                        |                         0 | 
+ phil's group#3", | Mark5               |         3403 | f                      |                                        |                           | 
+ myGroup2         | Mark21              |         4029 | f                      |                                        |                           | 
+ myGroup1         | Mark11              |         4035 | f                      |                                        |                        19 | 
+ myGroup1         | Mark12              |         4036 | f                      |                                        |                        11 | 
+ myGroup1         | Mark13              |         4037 | f                      |                                        |                         0 | 
+ myGroup1         | RLBK_Mark12_%_START |         4038 | f                      |                                        |                        11 | 
+ myGroup1         | RLBK_Mark12_%_DONE  |         4039 | f                      |                                        |                           | Mark12
 (11 rows)
 
 select sequ_schema, sequ_name, sequ_time_id, sequ_last_val, sequ_is_called from emaj.emaj_sequence order by sequ_time_id, sequ_schema, sequ_name;
@@ -1654,22 +1654,22 @@ select * from emaj.emaj_logged_rollback_group('myGroup1','Mark11',false,'Logged 
 (3 rows)
 
 -- check impact
-select mark_group, regexp_replace(mark_name,E'\\d\\d\.\\d\\d\\.\\d\\d\\.\\d\\d\\d\\d','%','g'), mark_time_id, mark_is_deleted, mark_is_rlbk_protected, mark_comment, mark_log_rows_before_next, mark_logged_rlbk_target_mark from emaj.emaj_mark order by mark_time_id, mark_group;
-    mark_group    |   regexp_replace    | mark_time_id | mark_is_deleted | mark_is_rlbk_protected |              mark_comment              | mark_log_rows_before_next | mark_logged_rlbk_target_mark 
-------------------+---------------------+--------------+-----------------+------------------------+----------------------------------------+---------------------------+------------------------------
- emptyGroup       | SM2                 |         3006 | f               | f                      | a comment on a mark for an empty group |                         0 | Mark1
- emptyGroup       | EGM3                |         3400 | f               | f                      |                                        |                         0 | 
- emptyGroup       | EGM4                |         3401 | f               | f                      |                                        |                           | 
- phil's group#3", | Mark4               |         3402 | f               | f                      |                                        |                         0 | 
- phil's group#3", | Mark5               |         3403 | f               | f                      |                                        |                           | 
- myGroup2         | Mark21              |         4029 | f               | f                      |                                        |                           | 
- myGroup1         | Mark11              |         4035 | f               | f                      |                                        |                        19 | 
- myGroup1         | Mark12              |         4036 | f               | f                      |                                        |                        11 | 
- myGroup1         | Mark13              |         4037 | f               | f                      |                                        |                         0 | 
- myGroup1         | RLBK_Mark12_%_START |         4038 | f               | f                      |                                        |                        11 | 
- myGroup1         | RLBK_Mark12_%_DONE  |         4039 | f               | f                      |                                        |                         0 | Mark12
- myGroup1         | RLBK_Mark11_%_START |         4040 | f               | f                      |                                        |                        14 | 
- myGroup1         | RLBK_Mark11_%_DONE  |         4041 | f               | f                      |                                        |                           | Mark11
+select mark_group, regexp_replace(mark_name,E'\\d\\d\.\\d\\d\\.\\d\\d\\.\\d\\d\\d\\d','%','g'), mark_time_id, mark_is_rlbk_protected, mark_comment, mark_log_rows_before_next, mark_logged_rlbk_target_mark from emaj.emaj_mark order by mark_time_id, mark_group;
+    mark_group    |   regexp_replace    | mark_time_id | mark_is_rlbk_protected |              mark_comment              | mark_log_rows_before_next | mark_logged_rlbk_target_mark 
+------------------+---------------------+--------------+------------------------+----------------------------------------+---------------------------+------------------------------
+ emptyGroup       | SM2                 |         3006 | f                      | a comment on a mark for an empty group |                         0 | Mark1
+ emptyGroup       | EGM3                |         3400 | f                      |                                        |                         0 | 
+ emptyGroup       | EGM4                |         3401 | f                      |                                        |                           | 
+ phil's group#3", | Mark4               |         3402 | f                      |                                        |                         0 | 
+ phil's group#3", | Mark5               |         3403 | f                      |                                        |                           | 
+ myGroup2         | Mark21              |         4029 | f                      |                                        |                           | 
+ myGroup1         | Mark11              |         4035 | f                      |                                        |                        19 | 
+ myGroup1         | Mark12              |         4036 | f                      |                                        |                        11 | 
+ myGroup1         | Mark13              |         4037 | f                      |                                        |                         0 | 
+ myGroup1         | RLBK_Mark12_%_START |         4038 | f                      |                                        |                        11 | 
+ myGroup1         | RLBK_Mark12_%_DONE  |         4039 | f                      |                                        |                         0 | Mark12
+ myGroup1         | RLBK_Mark11_%_START |         4040 | f                      |                                        |                        14 | 
+ myGroup1         | RLBK_Mark11_%_DONE  |         4041 | f                      |                                        |                           | Mark11
 (13 rows)
 
 select sequ_schema, sequ_name, sequ_time_id, sequ_last_val, sequ_is_called from emaj.emaj_sequence order by sequ_time_id, sequ_schema, sequ_name;
@@ -1844,18 +1844,18 @@ select * from emaj.emaj_rollback_group('myGroup1','Mark13');
 
 alter table mySchema1.myTbl2 enable trigger myTbl2trg1;
 -- check impact
-select mark_group, regexp_replace(mark_name,E'\\d\\d\.\\d\\d\\.\\d\\d\\.\\d\\d\\d\\d','%','g'), mark_time_id, mark_is_deleted, mark_is_rlbk_protected, mark_comment, mark_log_rows_before_next, mark_logged_rlbk_target_mark from emaj.emaj_mark order by mark_time_id, mark_group;
-    mark_group    | regexp_replace | mark_time_id | mark_is_deleted | mark_is_rlbk_protected |              mark_comment              | mark_log_rows_before_next | mark_logged_rlbk_target_mark 
-------------------+----------------+--------------+-----------------+------------------------+----------------------------------------+---------------------------+------------------------------
- emptyGroup       | SM2            |         3006 | f               | f                      | a comment on a mark for an empty group |                         0 | Mark1
- emptyGroup       | EGM3           |         3400 | f               | f                      |                                        |                         0 | 
- emptyGroup       | EGM4           |         3401 | f               | f                      |                                        |                           | 
- phil's group#3", | Mark4          |         3402 | f               | f                      |                                        |                         0 | 
- phil's group#3", | Mark5          |         3403 | f               | f                      |                                        |                           | 
- myGroup2         | Mark21         |         4029 | f               | f                      |                                        |                           | 
- myGroup1         | Mark11         |         4035 | f               | f                      |                                        |                        19 | 
- myGroup1         | Mark12         |         4036 | f               | f                      |                                        |                        11 | 
- myGroup1         | Mark13         |         4037 | f               | f                      |                                        |                           | 
+select mark_group, regexp_replace(mark_name,E'\\d\\d\.\\d\\d\\.\\d\\d\\.\\d\\d\\d\\d','%','g'), mark_time_id, mark_is_rlbk_protected, mark_comment, mark_log_rows_before_next, mark_logged_rlbk_target_mark from emaj.emaj_mark order by mark_time_id, mark_group;
+    mark_group    | regexp_replace | mark_time_id | mark_is_rlbk_protected |              mark_comment              | mark_log_rows_before_next | mark_logged_rlbk_target_mark 
+------------------+----------------+--------------+------------------------+----------------------------------------+---------------------------+------------------------------
+ emptyGroup       | SM2            |         3006 | f                      | a comment on a mark for an empty group |                         0 | Mark1
+ emptyGroup       | EGM3           |         3400 | f                      |                                        |                         0 | 
+ emptyGroup       | EGM4           |         3401 | f                      |                                        |                           | 
+ phil's group#3", | Mark4          |         3402 | f                      |                                        |                         0 | 
+ phil's group#3", | Mark5          |         3403 | f                      |                                        |                           | 
+ myGroup2         | Mark21         |         4029 | f                      |                                        |                           | 
+ myGroup1         | Mark11         |         4035 | f                      |                                        |                        19 | 
+ myGroup1         | Mark12         |         4036 | f                      |                                        |                        11 | 
+ myGroup1         | Mark13         |         4037 | f                      |                                        |                           | 
 (9 rows)
 
 select sequ_schema, sequ_name, sequ_time_id, sequ_last_val, sequ_is_called from emaj.emaj_sequence order by sequ_time_id, sequ_schema, sequ_name;
@@ -2478,16 +2478,16 @@ select emaj.emaj_consolidate_rollback_group('myGroup1','Renamed_last_mark');
                                2
 (1 row)
 
-select mark_group, regexp_replace(mark_name,E'\\d\\d\.\\d\\d\\.\\d\\d\\.\\d\\d\\d\\d','%','g'), mark_time_id, mark_is_deleted, mark_is_rlbk_protected, mark_comment, mark_log_rows_before_next, mark_logged_rlbk_target_mark from emaj.emaj_mark where mark_group = 'myGroup1' order by mark_time_id, mark_group;
- mark_group |    regexp_replace    | mark_time_id | mark_is_deleted | mark_is_rlbk_protected | mark_comment | mark_log_rows_before_next | mark_logged_rlbk_target_mark 
-------------+----------------------+--------------+-----------------+------------------------+--------------+---------------------------+------------------------------
- myGroup1   | Mark11               |         4035 | f               | f                      |              |                        19 | 
- myGroup1   | Mark12               |         4036 | f               | f                      |              |                        11 | 
- myGroup1   | Mark13               |         4037 | f               | f                      |              |                         0 | 
- myGroup1   | Conso_M1             |         4052 | f               | f                      |              |                         0 | 
- myGroup1   | RLBK_Conso_M1_%_DONE |         4054 | f               | f                      |              |                         0 | Conso_M1
- myGroup1   | Renamed_conso_M2     |         4055 | f               | f                      |              |                         0 | 
- myGroup1   | Renamed_last_mark    |         4058 | f               | f                      |              |                           | Renamed_conso_M2
+select mark_group, regexp_replace(mark_name,E'\\d\\d\.\\d\\d\\.\\d\\d\\.\\d\\d\\d\\d','%','g'), mark_time_id, mark_is_rlbk_protected, mark_comment, mark_log_rows_before_next, mark_logged_rlbk_target_mark from emaj.emaj_mark where mark_group = 'myGroup1' order by mark_time_id, mark_group;
+ mark_group |    regexp_replace    | mark_time_id | mark_is_rlbk_protected | mark_comment | mark_log_rows_before_next | mark_logged_rlbk_target_mark 
+------------+----------------------+--------------+------------------------+--------------+---------------------------+------------------------------
+ myGroup1   | Mark11               |         4035 | f                      |              |                        19 | 
+ myGroup1   | Mark12               |         4036 | f                      |              |                        11 | 
+ myGroup1   | Mark13               |         4037 | f                      |              |                         0 | 
+ myGroup1   | Conso_M1             |         4052 | f                      |              |                         0 | 
+ myGroup1   | RLBK_Conso_M1_%_DONE |         4054 | f                      |              |                         0 | Conso_M1
+ myGroup1   | Renamed_conso_M2     |         4055 | f                      |              |                         0 | 
+ myGroup1   | Renamed_last_mark    |         4058 | f                      |              |                           | Renamed_conso_M2
 (7 rows)
 
 select sequ_schema, sequ_name, sequ_time_id, sequ_last_val, sequ_is_called from emaj.emaj_sequence where sequ_schema = 'emaj_myschema1' order by sequ_time_id, sequ_schema, sequ_name;
@@ -2607,12 +2607,12 @@ begin;
 (1 row)
 
   select * from emaj.emaj_mark where mark_group = 'emptyGroup' order by mark_time_id, mark_group;
- mark_group |   mark_name   | mark_time_id | mark_is_deleted | mark_is_rlbk_protected |              mark_comment              | mark_log_rows_before_next | mark_logged_rlbk_target_mark 
-------------+---------------+--------------+-----------------+------------------------+----------------------------------------+---------------------------+------------------------------
- emptyGroup | SM2           |         3006 | t               | f                      | a comment on a mark for an empty group |                         0 | Mark1
- emptyGroup | EGM3          |         3400 | t               | f                      |                                        |                         0 | 
- emptyGroup | end_rlbk_mark |         4045 | t               | f                      |                                        |                         0 | EGM3
- emptyGroup | stop          |         4061 | t               | f                      |                                        |                         0 | 
+ mark_group |   mark_name   | mark_time_id | mark_is_rlbk_protected |              mark_comment              | mark_log_rows_before_next | mark_logged_rlbk_target_mark 
+------------+---------------+--------------+------------------------+----------------------------------------+---------------------------+------------------------------
+ emptyGroup | SM2           |         3006 | f                      | a comment on a mark for an empty group |                         0 | Mark1
+ emptyGroup | EGM3          |         3400 | f                      |                                        |                         0 | 
+ emptyGroup | end_rlbk_mark |         4045 | f                      |                                        |                         0 | EGM3
+ emptyGroup | stop          |         4061 | f                      |                                        |                         0 | 
 (4 rows)
 
 rollback;
@@ -2853,8 +2853,8 @@ select rlbp_rlbk_id, rlbp_step, rlbp_schema, rlbp_table, rlbp_object, rlbp_targe
          4013 | DELETE_LOG     | myschema1   | mytbl2     |                       |                4037 |                 3 |            1 |                                                                                                                                         |                   |                           |                       2 |                    1 |             2
          4013 | DELETE_LOG     | myschema1   | mytbl2b    |                       |                4037 |                 4 |            1 |                                                                                                                                         |                   |                           |                       2 |                    1 |             2
          4013 | DELETE_LOG     | myschema1   | mytbl4     |                       |                4037 |                 3 |            1 |                                                                                                                                         |                   |                           |                       1 |                    1 |             1
-         4013 | SET_FK_IMM     | myschema1   | mytbl4     | mytbl4_col43_fkey     |                     |                 3 |            1 |                                                                                                                                         |                   |                           |                       3 |                    3 |              
-         4013 | ADD_FK         | myschema1   | mytbl4     | mytbl4_col44_fkey     |                     |                 3 |            1 | FOREIGN KEY (col44, col45) REFERENCES myschema1.mytbl1(col11, col12) ON UPDATE SET NULL ON DELETE CASCADE DEFERRABLE INITIALLY DEFERRED |                   |                           |                      -1 |                    3 |              
+         4013 | SET_FK_IMM     | myschema1   | mytbl4     | mytbl4_col43_fkey     |                     |                 3 |            1 |                                                                                                                                         |                   |                           |                       3 |                    2 |              
+         4013 | ADD_FK         | myschema1   | mytbl4     | mytbl4_col44_fkey     |                     |                 3 |            1 | FOREIGN KEY (col44, col45) REFERENCES myschema1.mytbl1(col11, col12) ON UPDATE SET NULL ON DELETE CASCADE DEFERRABLE INITIALLY DEFERRED |                   |                           |                      -1 |                    2 |              
          4013 | ENA_LOG_TRG    | myschema1   | myTbl3     |                       |                     |                 2 |            1 |                                                                                                                                         |                   |                           |                         |                    2 |              
          4013 | ENA_LOG_TRG    | myschema1   | mytbl1     |                       |                     |                 3 |            1 |                                                                                                                                         |                   |                           |                         |                    2 |              
          4013 | ENA_LOG_TRG    | myschema1   | mytbl2     |                       |                     |                 3 |            1 |                                                                                                                                         |                   |                           |                         |                    2 |              
@@ -2892,9 +2892,9 @@ select rlbp_rlbk_id, rlbp_step, rlbp_schema, rlbp_table, rlbp_object, rlbp_targe
          4017 | DELETE_LOG     | myschema4   | mytblc2    |                       |                4047 |                 4 |            1 |                                                                                                                                         |                   |                           |                       3 |                    3 |             4
          4017 | DELETE_LOG     | myschema4   | mytblm     |                       |                4047 |                 5 |            1 |                                                                                                                                         |                   |                           |                       3 |                    3 |             4
          4017 | DELETE_LOG     | myschema4   | mytblr     |                       |                4047 |                 2 |            1 |                                                                                                                                         |                   |                           |                       2 |                    3 |             2
-         4017 | SET_FK_IMM     | myschema4   | mytblr     | mytblr_col2_fkey      |                     |                 2 |            1 |                                                                                                                                         |                   |                           |                       2 |                    3 |              
-         4017 | SET_FK_IMM     | myschema4   | mytblr     | mytblr_col2_fkey1     |                     |                 2 |            1 |                                                                                                                                         |                   |                           |                       5 |                    3 |              
-         4017 | SET_FK_IMM     | myschema4   | mytblr     | mytblr_col2_fkey2     |                     |                 2 |            1 |                                                                                                                                         |                   |                           |                      10 |                    3 |              
+         4017 | SET_FK_IMM     | myschema4   | mytblr     | mytblr_col2_fkey      |                     |                 2 |            1 |                                                                                                                                         |                   |                           |                       2 |                    2 |              
+         4017 | SET_FK_IMM     | myschema4   | mytblr     | mytblr_col2_fkey1     |                     |                 2 |            1 |                                                                                                                                         |                   |                           |                       5 |                    2 |              
+         4017 | SET_FK_IMM     | myschema4   | mytblr     | mytblr_col2_fkey2     |                     |                 2 |            1 |                                                                                                                                         |                   |                           |                      10 |                    2 |              
          4017 | ENA_APP_TRG    | myschema4   | mytblm     | mytblm_insert_trigger |                     |                 5 |            1 |                                                                                                                                         |                   |                           |                         |                    2 |              
          4017 | ENA_LOG_TRG    | myschema4   | mypartp1   |                       |                     |                 2 |            1 |                                                                                                                                         |                   |                           |                         |                    2 |              
          4017 | ENA_LOG_TRG    | myschema4   | mypartp2   |                       |                     |                 2 |            1 |                                                                                                                                         |                   |                           |                         |                    2 |              

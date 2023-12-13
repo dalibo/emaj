@@ -332,15 +332,15 @@ CONTEXT:  PL/pgSQL function emaj._check_group_names(text[],boolean,boolean,boole
 SQL statement "SELECT emaj._check_group_names(p_groupNames := p_groupNames, p_mayBeNull := p_multiGroup, p_lockGroups := TRUE, p_checkIdle := TRUE)"
 PL/pgSQL function emaj._start_groups(text[],text,boolean,boolean) line 23 at SQL statement
 PL/pgSQL function emaj.emaj_start_group(text,text,boolean) line 12 at RETURN
-select mark_group, regexp_replace(mark_name,E'\\d\\d\.\\d\\d\\.\\d\\d\\.\\d\\d\\d\\d','%','g'), mark_time_id, mark_is_deleted, mark_is_rlbk_protected, mark_comment, mark_log_rows_before_next, mark_logged_rlbk_target_mark from emaj.emaj_mark order by mark_time_id, mark_group;
-    mark_group    | regexp_replace | mark_time_id | mark_is_deleted | mark_is_rlbk_protected | mark_comment | mark_log_rows_before_next | mark_logged_rlbk_target_mark 
-------------------+----------------+--------------+-----------------+------------------------+--------------+---------------------------+------------------------------
- myGroup2         | Mark2          |         2003 | t               | f                      |              |                         0 | 
- phil's group#3", | Mark3          |         2004 | f               | f                      |              |                           | 
- emptyGroup       | Mark1          |         2005 | f               | f                      |              |                           | 
- myGroup2         | STOP_%         |         2007 | t               | f                      |              |                         0 | 
- myGroup1         | %abc%          |         2009 | f               | f                      |              |                           | 
- myGroup2         | START_%        |         2010 | f               | f                      |              |                           | 
+select mark_group, regexp_replace(mark_name,E'\\d\\d\.\\d\\d\\.\\d\\d\\.\\d\\d\\d\\d','%','g'), mark_time_id, mark_is_rlbk_protected, mark_comment, mark_log_rows_before_next, mark_logged_rlbk_target_mark from emaj.emaj_mark order by mark_time_id, mark_group;
+    mark_group    | regexp_replace | mark_time_id | mark_is_rlbk_protected | mark_comment | mark_log_rows_before_next | mark_logged_rlbk_target_mark 
+------------------+----------------+--------------+------------------------+--------------+---------------------------+------------------------------
+ myGroup2         | Mark2          |         2003 | f                      |              |                         0 | 
+ phil's group#3", | Mark3          |         2004 | f                      |              |                           | 
+ emptyGroup       | Mark1          |         2005 | f                      |              |                           | 
+ myGroup2         | STOP_%         |         2007 | f                      |              |                         0 | 
+ myGroup1         | %abc%          |         2009 | f                      |              |                           | 
+ myGroup2         | START_%        |         2010 | f                      |              |                           | 
 (6 rows)
 
 -- multiple emaj_start_group() using the same generated start mark name => fails
@@ -373,16 +373,16 @@ select * from emaj.emaj_log_session order by lses_group, lses_time_range;
  phil's group#3", | [2004,)         |                        1003 |          1 |             0
 (6 rows)
 
-select mark_group, regexp_replace(mark_name,E'\\d\\d\.\\d\\d\\.\\d\\d\\.\\d\\d\\d\\d','%','g'), mark_time_id, mark_is_deleted, mark_is_rlbk_protected, mark_comment, mark_log_rows_before_next, mark_logged_rlbk_target_mark
+select mark_group, regexp_replace(mark_name,E'\\d\\d\.\\d\\d\\.\\d\\d\\.\\d\\d\\d\\d','%','g'), mark_time_id, mark_is_rlbk_protected, mark_comment, mark_log_rows_before_next, mark_logged_rlbk_target_mark
   from emaj.emaj_mark where mark_time_id >= 2000 order by mark_time_id, mark_group;
-    mark_group    | regexp_replace | mark_time_id | mark_is_deleted | mark_is_rlbk_protected | mark_comment | mark_log_rows_before_next | mark_logged_rlbk_target_mark 
-------------------+----------------+--------------+-----------------+------------------------+--------------+---------------------------+------------------------------
- myGroup2         | Mark2          |         2003 | t               | f                      |              |                         0 | 
- phil's group#3", | Mark3          |         2004 | f               | f                      |              |                           | 
- emptyGroup       | Mark1          |         2005 | f               | f                      |              |                           | 
- myGroup2         | STOP_%         |         2007 | t               | f                      |              |                         0 | 
- myGroup1         | %abc%          |         2009 | f               | f                      |              |                           | 
- myGroup2         | START_%        |         2010 | f               | f                      |              |                           | 
+    mark_group    | regexp_replace | mark_time_id | mark_is_rlbk_protected | mark_comment | mark_log_rows_before_next | mark_logged_rlbk_target_mark 
+------------------+----------------+--------------+------------------------+--------------+---------------------------+------------------------------
+ myGroup2         | Mark2          |         2003 | f                      |              |                         0 | 
+ phil's group#3", | Mark3          |         2004 | f                      |              |                           | 
+ emptyGroup       | Mark1          |         2005 | f                      |              |                           | 
+ myGroup2         | STOP_%         |         2007 | f                      |              |                         0 | 
+ myGroup1         | %abc%          |         2009 | f                      |              |                           | 
+ myGroup2         | START_%        |         2010 | f                      |              |                           | 
 (6 rows)
 
 select time_id, time_last_emaj_gid, time_event from emaj.emaj_time_stamp where time_id >= 2000 order by time_id;
@@ -571,14 +571,14 @@ begin transaction;
 (1 row)
 
 commit;
-select mark_group, regexp_replace(mark_name,E'\\d\\d\.\\d\\d\\.\\d\\d\\.\\d\\d\\d\\d','%','g'), mark_time_id, mark_is_deleted, mark_is_rlbk_protected, mark_comment, mark_log_rows_before_next, mark_logged_rlbk_target_mark from emaj.emaj_mark order by mark_time_id, mark_group;
-    mark_group    | regexp_replace | mark_time_id | mark_is_deleted | mark_is_rlbk_protected | mark_comment | mark_log_rows_before_next | mark_logged_rlbk_target_mark 
-------------------+----------------+--------------+-----------------+------------------------+--------------+---------------------------+------------------------------
- phil's group#3", | Mark3          |         2004 | f               | f                      |              |                           | 
- emptyGroup       | Mark1          |         2005 | t               | f                      |              |                         0 | 
- emptyGroup       | STOP_%         |         2202 | t               | f                      |              |                         0 | 
- myGroup1         | START_%        |         2204 | f               | f                      |              |                           | 
- myGroup2         | START_%        |         2205 | f               | f                      |              |                           | 
+select mark_group, regexp_replace(mark_name,E'\\d\\d\.\\d\\d\\.\\d\\d\\.\\d\\d\\d\\d','%','g'), mark_time_id, mark_is_rlbk_protected, mark_comment, mark_log_rows_before_next, mark_logged_rlbk_target_mark from emaj.emaj_mark order by mark_time_id, mark_group;
+    mark_group    | regexp_replace | mark_time_id | mark_is_rlbk_protected | mark_comment | mark_log_rows_before_next | mark_logged_rlbk_target_mark 
+------------------+----------------+--------------+------------------------+--------------+---------------------------+------------------------------
+ phil's group#3", | Mark3          |         2004 | f                      |              |                           | 
+ emptyGroup       | Mark1          |         2005 | f                      |              |                         0 | 
+ emptyGroup       | STOP_%         |         2202 | f                      |              |                         0 | 
+ myGroup1         | START_%        |         2204 | f                      |              |                           | 
+ myGroup2         | START_%        |         2205 | f                      |              |                           | 
 (5 rows)
 
 begin transaction;
@@ -614,15 +614,15 @@ select group_name, group_is_logging, group_is_rlbk_protected from emaj.emaj_grou
  phil's group#3", | t                | t
 (5 rows)
 
-select mark_group, regexp_replace(mark_name,E'\\d\\d\.\\d\\d\\.\\d\\d\\.\\d\\d\\d\\d','%','g'), mark_time_id, mark_is_deleted, mark_is_rlbk_protected, mark_comment, mark_log_rows_before_next, mark_logged_rlbk_target_mark
+select mark_group, regexp_replace(mark_name,E'\\d\\d\.\\d\\d\\.\\d\\d\\.\\d\\d\\d\\d','%','g'), mark_time_id, mark_is_rlbk_protected, mark_comment, mark_log_rows_before_next, mark_logged_rlbk_target_mark
   from emaj.emaj_mark where mark_time_id >= 2200 order by mark_time_id, mark_group;
- mark_group | regexp_replace | mark_time_id | mark_is_deleted | mark_is_rlbk_protected | mark_comment | mark_log_rows_before_next | mark_logged_rlbk_target_mark 
-------------+----------------+--------------+-----------------+------------------------+--------------+---------------------------+------------------------------
- emptyGroup | STOP_%         |         2202 | t               | f                      |              |                         0 | 
- myGroup1   | START_%        |         2204 | t               | f                      |              |                         0 | 
- myGroup2   | START_%        |         2205 | t               | f                      |              |                         0 | 
- myGroup1   | STOP_%         |         2206 | t               | f                      |              |                         0 | 
- myGroup2   | STOP_%         |         2207 | t               | f                      |              |                         0 | 
+ mark_group | regexp_replace | mark_time_id | mark_is_rlbk_protected | mark_comment | mark_log_rows_before_next | mark_logged_rlbk_target_mark 
+------------+----------------+--------------+------------------------+--------------+---------------------------+------------------------------
+ emptyGroup | STOP_%         |         2202 | f                      |              |                         0 | 
+ myGroup1   | START_%        |         2204 | f                      |              |                         0 | 
+ myGroup2   | START_%        |         2205 | f                      |              |                         0 | 
+ myGroup1   | STOP_%         |         2206 | f                      |              |                         0 | 
+ myGroup2   | STOP_%         |         2207 | f                      |              |                         0 | 
 (5 rows)
 
 select time_id, time_last_emaj_gid, time_event from emaj.emaj_time_stamp where time_id >= 2200 order by time_id;
@@ -807,12 +807,12 @@ select group_name, group_is_logging, group_is_rlbk_protected from emaj.emaj_grou
  phil's group#3", | t                | t
 (5 rows)
 
-select mark_group, regexp_replace(mark_name,E'\\d\\d\.\\d\\d\\.\\d\\d\\.\\d\\d\\d\\d','%','g'), mark_time_id, mark_is_deleted, mark_is_rlbk_protected, mark_comment, mark_log_rows_before_next, mark_logged_rlbk_target_mark
+select mark_group, regexp_replace(mark_name,E'\\d\\d\.\\d\\d\\.\\d\\d\\.\\d\\d\\d\\d','%','g'), mark_time_id, mark_is_rlbk_protected, mark_comment, mark_log_rows_before_next, mark_logged_rlbk_target_mark
   from emaj.emaj_mark where mark_time_id >= 2400 order by mark_time_id, mark_group;
- mark_group | regexp_replace | mark_time_id | mark_is_deleted | mark_is_rlbk_protected | mark_comment | mark_log_rows_before_next | mark_logged_rlbk_target_mark 
-------------+----------------+--------------+-----------------+------------------------+--------------+---------------------------+------------------------------
- myGroup1   | Mark1          |         2404 | f               | f                      |              |                           | 
- myGroup2   | Mark1          |         2404 | f               | f                      |              |                           | 
+ mark_group | regexp_replace | mark_time_id | mark_is_rlbk_protected | mark_comment | mark_log_rows_before_next | mark_logged_rlbk_target_mark 
+------------+----------------+--------------+------------------------+--------------+---------------------------+------------------------------
+ myGroup1   | Mark1          |         2404 | f                      |              |                           | 
+ myGroup2   | Mark1          |         2404 | f                      |              |                           | 
 (2 rows)
 
 select time_id, time_last_emaj_gid, time_event from emaj.emaj_time_stamp where time_id >= 2400 order by time_id;
@@ -909,16 +909,16 @@ select emaj.emaj_stop_groups(array['myGroup1','myGroup2'],'Global Stop at %');
                17
 (1 row)
 
-select mark_group, regexp_replace(mark_name,E'\\d\\d\.\\d\\d\\.\\d\\d\\.\\d\\d\\d\\d','%','g'), mark_time_id, mark_is_deleted, mark_is_rlbk_protected, mark_comment, mark_log_rows_before_next, mark_logged_rlbk_target_mark from emaj.emaj_mark order by mark_time_id, mark_group;
-    mark_group    |  regexp_replace  | mark_time_id | mark_is_deleted | mark_is_rlbk_protected | mark_comment | mark_log_rows_before_next | mark_logged_rlbk_target_mark 
-------------------+------------------+--------------+-----------------+------------------------+--------------+---------------------------+------------------------------
- phil's group#3", | Mark3            |         2004 | f               | f                      |              |                           | 
- emptyGroup       | Mark1            |         2005 | t               | f                      |              |                         0 | 
- emptyGroup       | STOP_%           |         2202 | t               | f                      |              |                         0 | 
- myGroup1         | Mark1            |         2404 | t               | f                      |              |                         0 | 
- myGroup2         | Mark1            |         2404 | t               | f                      |              |                         0 | 
- myGroup1         | Global Stop at % |         2501 | t               | f                      |              |                         0 | 
- myGroup2         | Global Stop at % |         2501 | t               | f                      |              |                         0 | 
+select mark_group, regexp_replace(mark_name,E'\\d\\d\.\\d\\d\\.\\d\\d\\.\\d\\d\\d\\d','%','g'), mark_time_id, mark_is_rlbk_protected, mark_comment, mark_log_rows_before_next, mark_logged_rlbk_target_mark from emaj.emaj_mark order by mark_time_id, mark_group;
+    mark_group    |  regexp_replace  | mark_time_id | mark_is_rlbk_protected | mark_comment | mark_log_rows_before_next | mark_logged_rlbk_target_mark 
+------------------+------------------+--------------+------------------------+--------------+---------------------------+------------------------------
+ phil's group#3", | Mark3            |         2004 | f                      |              |                           | 
+ emptyGroup       | Mark1            |         2005 | f                      |              |                         0 | 
+ emptyGroup       | STOP_%           |         2202 | f                      |              |                         0 | 
+ myGroup1         | Mark1            |         2404 | f                      |              |                         0 | 
+ myGroup2         | Mark1            |         2404 | f                      |              |                         0 | 
+ myGroup1         | Global Stop at % |         2501 | f                      |              |                         0 | 
+ myGroup2         | Global Stop at % |         2501 | f                      |              |                         0 | 
 (7 rows)
 
 -- with warning about group names array content
@@ -1056,12 +1056,12 @@ select * from emaj.emaj_log_session order by lses_group, lses_time_range;
  phil's group#3", | [2004,)         |                        1003 |          1 |             0
 (14 rows)
 
-select mark_group, regexp_replace(mark_name,E'\\d\\d\.\\d\\d\\.\\d\\d\\.\\d\\d\\d\\d','%','g'), mark_time_id, mark_is_deleted, mark_is_rlbk_protected, mark_comment, mark_log_rows_before_next, mark_logged_rlbk_target_mark
+select mark_group, regexp_replace(mark_name,E'\\d\\d\.\\d\\d\\.\\d\\d\\.\\d\\d\\d\\d','%','g'), mark_time_id, mark_is_rlbk_protected, mark_comment, mark_log_rows_before_next, mark_logged_rlbk_target_mark
   from emaj.emaj_mark where mark_time_id >= 2500 order by mark_time_id, mark_group;
- mark_group | regexp_replace | mark_time_id | mark_is_deleted | mark_is_rlbk_protected | mark_comment | mark_log_rows_before_next | mark_logged_rlbk_target_mark 
-------------+----------------+--------------+-----------------+------------------------+--------------+---------------------------+------------------------------
- myGroup1   | Mark1          |         2502 | t               | f                      |              |                           | 
- myGroup2   | Mark1          |         2502 | t               | f                      |              |                           | 
+ mark_group | regexp_replace | mark_time_id | mark_is_rlbk_protected | mark_comment | mark_log_rows_before_next | mark_logged_rlbk_target_mark 
+------------+----------------+--------------+------------------------+--------------+---------------------------+------------------------------
+ myGroup1   | Mark1          |         2502 | f                      |              |                           | 
+ myGroup2   | Mark1          |         2502 | f                      |              |                           | 
 (2 rows)
 
 select time_id, time_last_emaj_gid, time_event from emaj.emaj_time_stamp where time_id >= 2500 order by time_id;
