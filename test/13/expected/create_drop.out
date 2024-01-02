@@ -746,19 +746,30 @@ select emaj.emaj_assign_sequences('myschema1','my.*_seq','myseq1$','myGroup1');
 -----------------------------------
 -- check populated groups
 -----------------------------------
-select group_name, group_is_rollbackable, group_creation_time_id,
-       group_last_alter_time_id, group_is_logging, 
+select group_name, group_is_rollbackable, group_last_alter_time_id, group_is_logging,
        group_is_rlbk_protected, group_nb_table, group_nb_sequence, group_comment
   from emaj.emaj_group order by group_name;
-    group_name    | group_is_rollbackable | group_creation_time_id | group_last_alter_time_id | group_is_logging | group_is_rlbk_protected | group_nb_table | group_nb_sequence | group_comment  
-------------------+-----------------------+------------------------+--------------------------+------------------+-------------------------+----------------+-------------------+----------------
- emptyGroup       | t                     |                   1000 |                          | f                | f                       |              0 |                 0 | an empty group
- myGroup1         | t                     |                   1001 |                     1033 | f                | f                       |              5 |                 2 | 
- myGroup2         | t                     |                   1002 |                     1031 | f                | f                       |              8 |                 2 | 
- myGroup4         | t                     |                   1004 |                     1027 | f                | f                       |              5 |                 0 | 
- myGroup5         | f                     |                   1005 |                     1028 | f                | t                       |              2 |                 0 | 
- myGroup6         | t                     |                   1006 |                     1029 | f                | f                       |              4 |                 0 | 
- phil's group#3", | f                     |                   1003 |                     1032 | f                | t                       |              2 |                 2 | 
+    group_name    | group_is_rollbackable | group_last_alter_time_id | group_is_logging | group_is_rlbk_protected | group_nb_table | group_nb_sequence | group_comment  
+------------------+-----------------------+--------------------------+------------------+-------------------------+----------------+-------------------+----------------
+ emptyGroup       | t                     |                          | f                | f                       |              0 |                 0 | an empty group
+ myGroup1         | t                     |                     1033 | f                | f                       |              5 |                 2 | 
+ myGroup2         | t                     |                     1031 | f                | f                       |              8 |                 2 | 
+ myGroup4         | t                     |                     1027 | f                | f                       |              5 |                 0 | 
+ myGroup5         | f                     |                     1028 | f                | t                       |              2 |                 0 | 
+ myGroup6         | t                     |                     1029 | f                | f                       |              4 |                 0 | 
+ phil's group#3", | f                     |                     1032 | f                | t                       |              2 |                 2 | 
+(7 rows)
+
+select * from emaj.emaj_group_hist order by grph_group, grph_time_range;
+    grph_group    | grph_time_range | grph_is_rollbackable | grph_log_sessions 
+------------------+-----------------+----------------------+-------------------
+ emptyGroup       | [1000,)         | t                    |                 0
+ myGroup1         | [1001,)         | t                    |                 0
+ myGroup2         | [1002,)         | t                    |                 0
+ myGroup4         | [1004,)         | t                    |                 0
+ myGroup5         | [1005,)         | f                    |                 0
+ myGroup6         | [1006,)         | t                    |                 0
+ phil's group#3", | [1003,)         | f                    |                 0
 (7 rows)
 
 select * from emaj.emaj_relation order by rel_group, rel_priority, rel_schema, rel_tblseq, rel_time_range;

@@ -130,6 +130,12 @@ select 'select ok' as result from (select count(*) from emaj.emaj_group) as t;
  select ok
 (1 row)
 
+select 'select ok' as result from (select count(*) from emaj.emaj_group_hist) as t;
+  result   
+-----------
+ select ok
+(1 row)
+
 select 'select ok' as result from (select count(*) from emaj.emaj_schema) as t;
   result   
 -----------

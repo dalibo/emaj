@@ -54,19 +54,10 @@ select relname from pg_catalog.pg_class,
 -- process the extension upgrade
 ALTER EXTENSION emaj UPDATE TO 'devel';
 WARNING:  E-Maj upgrade: the E-Maj environment health check reports warning. You may execute "SELECT * FROM emaj.emaj_verify_all();" to get more details.
+NOTICE:  Starting the rows generation for the new emaj_group_hist table.
+NOTICE:  Based on existing history and logs content, #log_sessions statistics may be inaccurate.
 NOTICE:  Starting the rows generation for the new emaj_log_session table.
 NOTICE:  Based on existing history and logs content, #marks and #changes statistics may be inaccurate.
-NOTICE:  ==> Processing group "myGroup1" (LOGGING)
-NOTICE:    --> Create a log session for time interval [15 , NULL) (5 marks, 49 changes)
-NOTICE:  ==> Processing group "myGroup2" (LOGGING)
-NOTICE:    --> Create a log session for time interval [15 , NULL) (8 marks, 35 changes)
-NOTICE:  ==> Processing group "myGroup6" (STOPPED)
-NOTICE:    --> Create a log session for time interval [29 , 31) (3 marks, 0 changes)
-NOTICE:  ==> Processing group "phil's group#3"," (LOGGING)
-NOTICE:    --> Create a log session for time interval [16 , NULL) (1 marks, 0 changes)
-NOTICE:  drop cascades to 2 other objects
-DETAIL:  drop cascades to materialized view emaj_tmp_time_stamp
-drop cascades to materialized view emaj_tmp_event
 NOTICE:  drop cascades to function _log_stat_groups(text[],boolean,text,text)
 NOTICE:  drop cascades to function _detailed_log_stat_groups(text[],boolean,text,text)
 NOTICE:  function emaj._log_stat_groups(text[],pg_catalog.bool,text,text) does not exist, skipping
@@ -89,6 +80,7 @@ select relname from pg_catalog.pg_class,
 -----------------------------
  emaj_global_seq
  emaj_group
+ emaj_group_hist
  emaj_hist
  emaj_hist_hist_id_seq
  emaj_log_session
@@ -108,7 +100,7 @@ select relname from pg_catalog.pg_class,
  emaj_table
  emaj_time_stamp
  emaj_time_stamp_time_id_seq
-(21 rows)
+(22 rows)
 
 -- check the emaj_param content
 SELECT param_value_text FROM emaj.emaj_param WHERE param_key = 'emaj_version';
@@ -174,7 +166,6 @@ SELECT param_value_text FROM emaj.emaj_param WHERE param_key = 'emaj_version';
 --------------------------+---------+-----------+----------+----------------------------------------------------------------
  group_name               | text    |           | not null | 
  group_is_rollbackable    | boolean |           | not null | 
- group_creation_time_id   | bigint  |           | not null | 
  group_pg_version         | text    |           | not null | "substring"(version(), 'PostgreSQL\s([.,0-9,A-Z,a-z]*)'::text)
  group_last_alter_time_id | bigint  |           |          | 
  group_is_logging         | boolean |           | not null | 
@@ -185,11 +176,38 @@ SELECT param_value_text FROM emaj.emaj_param WHERE param_key = 'emaj_version';
 Indexes:
     "emaj_group_pkey" PRIMARY KEY, btree (group_name), tablespace "tspemaj"
 Foreign-key constraints:
-    "emaj_group_group_creation_time_id_fkey" FOREIGN KEY (group_creation_time_id) REFERENCES emaj.emaj_time_stamp(time_id)
     "emaj_group_group_last_alter_time_id_fkey" FOREIGN KEY (group_last_alter_time_id) REFERENCES emaj.emaj_time_stamp(time_id)
 Referenced by:
     TABLE "emaj.emaj_mark" CONSTRAINT "emaj_mark_mark_group_fkey" FOREIGN KEY (mark_group) REFERENCES emaj.emaj_group(group_name) ON DELETE CASCADE
     TABLE "emaj.emaj_relation" CONSTRAINT "emaj_relation_rel_group_fkey" FOREIGN KEY (rel_group) REFERENCES emaj.emaj_group(group_name)
+Tablespace: "tspemaj"
+
+                   Table "emaj.emaj_group_hist"
+        Column        |   Type    | Collation | Nullable | Default 
+----------------------+-----------+-----------+----------+---------
+ grph_group           | text      |           | not null | 
+ grph_time_range      | int8range |           | not null | 
+ grph_is_rollbackable | boolean   |           |          | 
+ grph_log_sessions    | integer   |           |          | 
+Indexes:
+    "emaj_group_hist_pkey" PRIMARY KEY, btree (grph_group, grph_time_range), tablespace "tspemaj"
+    "emaj_group_hist_grph_group_grph_time_range_excl" EXCLUDE USING gist (grph_group WITH =, grph_time_range WITH &&), tablespace "tspemaj"
+Tablespace: "tspemaj"
+
+Index "emaj.emaj_group_hist_grph_group_grph_time_range_excl"
+     Column      |     Type      | Key? |   Definition    
+-----------------+---------------+------+-----------------
+ grph_group      | gbtreekey_var | yes  | grph_group
+ grph_time_range | int8range     | yes  | grph_time_range
+gist, for table "emaj.emaj_group_hist"
+Tablespace: "tspemaj"
+
+          Index "emaj.emaj_group_hist_pkey"
+     Column      |   Type    | Key? |   Definition    
+-----------------+-----------+------+-----------------
+ grph_group      | text      | yes  | grph_group
+ grph_time_range | int8range | yes  | grph_time_range
+primary key, btree, for table "emaj.emaj_group_hist"
 Tablespace: "tspemaj"
 
      Index "emaj.emaj_group_pkey"
@@ -227,14 +245,13 @@ Sequence for identity column: emaj.emaj_hist.hist_id
 primary key, btree, for table "emaj.emaj_hist"
 Tablespace: "tspemaj"
 
-                      Table "emaj.emaj_log_session"
-           Column            |   Type    | Collation | Nullable | Default 
------------------------------+-----------+-----------+----------+---------
- lses_group                  | text      |           | not null | 
- lses_time_range             | int8range |           | not null | 
- lses_group_creation_time_id | bigint    |           |          | 
- lses_marks                  | integer   |           |          | 
- lses_log_rows               | bigint    |           |          | 
+                Table "emaj.emaj_log_session"
+     Column      |   Type    | Collation | Nullable | Default 
+-----------------+-----------+-----------+----------+---------
+ lses_group      | text      |           | not null | 
+ lses_time_range | int8range |           | not null | 
+ lses_marks      | integer   |           |          | 
+ lses_log_rows   | bigint    |           |          | 
 Indexes:
     "emaj_log_session_pkey" PRIMARY KEY, btree (lses_group, lses_time_range), tablespace "tspemaj"
     "emaj_log_session_idx1" btree (upper(lses_time_range)), tablespace "tspemaj"
@@ -764,7 +781,6 @@ Tablespace: "tspemaj"
 Indexes:
     "emaj_time_stamp_pkey" PRIMARY KEY, btree (time_id), tablespace "tspemaj"
 Referenced by:
-    TABLE "emaj.emaj_group" CONSTRAINT "emaj_group_group_creation_time_id_fkey" FOREIGN KEY (group_creation_time_id) REFERENCES emaj.emaj_time_stamp(time_id)
     TABLE "emaj.emaj_group" CONSTRAINT "emaj_group_group_last_alter_time_id_fkey" FOREIGN KEY (group_last_alter_time_id) REFERENCES emaj.emaj_time_stamp(time_id)
     TABLE "emaj.emaj_mark" CONSTRAINT "emaj_mark_mark_time_id_fkey" FOREIGN KEY (mark_time_id) REFERENCES emaj.emaj_time_stamp(time_id)
     TABLE "emaj.emaj_relation_change" CONSTRAINT "emaj_relation_change_rlchg_time_id_fkey" FOREIGN KEY (rlchg_time_id) REFERENCES emaj.emaj_time_stamp(time_id)

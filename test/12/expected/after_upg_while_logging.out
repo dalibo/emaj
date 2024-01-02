@@ -14,12 +14,12 @@ select * from emaj.emaj_verify_all();
 (3 rows)
 
 select * from emaj.emaj_log_session;
-    lses_group    | lses_time_range | lses_group_creation_time_id | lses_marks | lses_log_rows 
-------------------+-----------------+-----------------------------+------------+---------------
- myGroup1         | [15,)           |                           1 |          5 |            49
- myGroup2         | [15,)           |                           2 |          8 |            35
- myGroup6         | [29,32)         |                           4 |          3 |             0
- phil's group#3", | [16,)           |                           3 |          1 |             0
+    lses_group    | lses_time_range | lses_marks | lses_log_rows 
+------------------+-----------------+------------+---------------
+ myGroup1         | [15,)           |          5 |            49
+ myGroup2         | [15,)           |          8 |            35
+ myGroup6         | [29,32)         |          3 |             0
+ phil's group#3", | [16,)           |          1 |             0
 (4 rows)
 
 select time_event, count(*) from emaj.emaj_time_stamp where time_event in ('S','X') group by 1 order by 1;
@@ -29,16 +29,24 @@ select time_event, count(*) from emaj.emaj_time_stamp where time_event in ('S','
  X          |     1
 (2 rows)
 
-select group_name, group_is_rollbackable, group_creation_time_id,
-       group_last_alter_time_id, group_is_logging, 
+select group_name, group_is_rollbackable, group_last_alter_time_id, group_is_logging, 
        group_is_rlbk_protected, group_nb_table, group_nb_sequence, group_comment
   from emaj.emaj_group order by group_name;
-    group_name    | group_is_rollbackable | group_creation_time_id | group_last_alter_time_id | group_is_logging | group_is_rlbk_protected | group_nb_table | group_nb_sequence | group_comment 
-------------------+-----------------------+------------------------+--------------------------+------------------+-------------------------+----------------+-------------------+---------------
- myGroup1         | t                     |                      1 |                       28 | t                | t                       |              4 |                 1 | 
- myGroup2         | t                     |                      2 |                       11 | t                | f                       |              4 |                 2 | 
- myGroup6         | t                     |                      4 |                       30 | f                | f                       |              3 |                 0 | 
- phil's group#3", | f                     |                      3 |                       13 | t                | t                       |              2 |                 1 | 
+    group_name    | group_is_rollbackable | group_last_alter_time_id | group_is_logging | group_is_rlbk_protected | group_nb_table | group_nb_sequence | group_comment 
+------------------+-----------------------+--------------------------+------------------+-------------------------+----------------+-------------------+---------------
+ myGroup1         | t                     |                       28 | t                | t                       |              4 |                 1 | 
+ myGroup2         | t                     |                       11 | t                | f                       |              4 |                 2 | 
+ myGroup6         | t                     |                       30 | f                | f                       |              3 |                 0 | 
+ phil's group#3", | f                     |                       13 | t                | t                       |              2 |                 1 | 
+(4 rows)
+
+select * from emaj.emaj_group_hist order by grph_group, grph_time_range;
+    grph_group    | grph_time_range | grph_is_rollbackable | grph_log_sessions 
+------------------+-----------------+----------------------+-------------------
+ myGroup1         | [1,)            | t                    |                 1
+ myGroup2         | [2,)            | t                    |                 1
+ myGroup6         | [4,)            | t                    |                 1
+ phil's group#3", | [3,)            | f                    |                 1
 (4 rows)
 
 select * from emaj.emaj_relation_change order by 1,2,3,4;

@@ -570,11 +570,10 @@ select relname from pg_catalog.pg_class,
 -- process the extension upgrade
 ALTER EXTENSION emaj UPDATE TO 'devel';
 WARNING:  E-Maj upgrade: the E-Maj environment health check reports warning. You may execute "SELECT * FROM emaj.emaj_verify_all();" to get more details.
+NOTICE:  Starting the rows generation for the new emaj_group_hist table.
+NOTICE:  Based on existing history and logs content, #log_sessions statistics may be inaccurate.
 NOTICE:  Starting the rows generation for the new emaj_log_session table.
 NOTICE:  Based on existing history and logs content, #marks and #changes statistics may be inaccurate.
-NOTICE:  drop cascades to 2 other objects
-DETAIL:  drop cascades to materialized view emaj_tmp_time_stamp
-drop cascades to materialized view emaj_tmp_event
 NOTICE:  drop cascades to function _log_stat_groups(text[],boolean,text,text)
 NOTICE:  drop cascades to function _detailed_log_stat_groups(text[],boolean,text,text)
 NOTICE:  function emaj._log_stat_groups(text[],pg_catalog.bool,text,text) does not exist, skipping
@@ -597,6 +596,7 @@ select relname from pg_catalog.pg_class,
 -----------------------------
  emaj_global_seq
  emaj_group
+ emaj_group_hist
  emaj_hist
  emaj_hist_hist_id_seq
  emaj_log_session
@@ -616,7 +616,7 @@ select relname from pg_catalog.pg_class,
  emaj_table
  emaj_time_stamp
  emaj_time_stamp_time_id_seq
-(21 rows)
+(22 rows)
 
 -- check the emaj_param content
 SELECT param_value_text FROM emaj.emaj_param WHERE param_key = 'emaj_version';

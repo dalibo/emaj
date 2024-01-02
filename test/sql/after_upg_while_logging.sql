@@ -8,12 +8,15 @@
 select * from emaj.emaj_verify_all();
 
 select * from emaj.emaj_log_session;
+
 select time_event, count(*) from emaj.emaj_time_stamp where time_event in ('S','X') group by 1 order by 1;
 
-select group_name, group_is_rollbackable, group_creation_time_id,
-       group_last_alter_time_id, group_is_logging, 
+select group_name, group_is_rollbackable, group_last_alter_time_id, group_is_logging, 
        group_is_rlbk_protected, group_nb_table, group_nb_sequence, group_comment
   from emaj.emaj_group order by group_name;
+
+select * from emaj.emaj_group_hist order by grph_group, grph_time_range;
+
 select * from emaj.emaj_relation_change order by 1,2,3,4;
 
 -----------------------------

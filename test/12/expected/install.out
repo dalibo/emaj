@@ -33,6 +33,7 @@ select relname from pg_catalog.pg_class,
 -----------------------------
  emaj_global_seq
  emaj_group
+ emaj_group_hist
  emaj_hist
  emaj_hist_hist_id_seq
  emaj_log_session
@@ -52,7 +53,7 @@ select relname from pg_catalog.pg_class,
  emaj_table
  emaj_time_stamp
  emaj_time_stamp_time_id_seq
-(21 rows)
+(22 rows)
 
 -- check the emaj_param content
 SELECT param_value_text FROM emaj.emaj_param WHERE param_key = 'emaj_version';
@@ -126,7 +127,6 @@ delete from emaj.emaj_hist;
 --------------------------+---------+-----------+----------+----------------------------------------------------------------
  group_name               | text    |           | not null | 
  group_is_rollbackable    | boolean |           | not null | 
- group_creation_time_id   | bigint  |           | not null | 
  group_pg_version         | text    |           | not null | "substring"(version(), 'PostgreSQL\s([.,0-9,A-Z,a-z]*)'::text)
  group_last_alter_time_id | bigint  |           |          | 
  group_is_logging         | boolean |           | not null | 
@@ -137,11 +137,35 @@ delete from emaj.emaj_hist;
 Indexes:
     "emaj_group_pkey" PRIMARY KEY, btree (group_name)
 Foreign-key constraints:
-    "emaj_group_group_creation_time_id_fkey" FOREIGN KEY (group_creation_time_id) REFERENCES emaj.emaj_time_stamp(time_id)
     "emaj_group_group_last_alter_time_id_fkey" FOREIGN KEY (group_last_alter_time_id) REFERENCES emaj.emaj_time_stamp(time_id)
 Referenced by:
     TABLE "emaj.emaj_mark" CONSTRAINT "emaj_mark_mark_group_fkey" FOREIGN KEY (mark_group) REFERENCES emaj.emaj_group(group_name) ON DELETE CASCADE
     TABLE "emaj.emaj_relation" CONSTRAINT "emaj_relation_rel_group_fkey" FOREIGN KEY (rel_group) REFERENCES emaj.emaj_group(group_name)
+
+                   Table "emaj.emaj_group_hist"
+        Column        |   Type    | Collation | Nullable | Default 
+----------------------+-----------+-----------+----------+---------
+ grph_group           | text      |           | not null | 
+ grph_time_range      | int8range |           | not null | 
+ grph_is_rollbackable | boolean   |           |          | 
+ grph_log_sessions    | integer   |           |          | 
+Indexes:
+    "emaj_group_hist_pkey" PRIMARY KEY, btree (grph_group, grph_time_range)
+    "emaj_group_hist_grph_group_grph_time_range_excl" EXCLUDE USING gist (grph_group WITH =, grph_time_range WITH &&)
+
+Index "emaj.emaj_group_hist_grph_group_grph_time_range_excl"
+     Column      |     Type      | Key? |   Definition    
+-----------------+---------------+------+-----------------
+ grph_group      | gbtreekey_var | yes  | grph_group
+ grph_time_range | int8range     | yes  | grph_time_range
+gist, for table "emaj.emaj_group_hist"
+
+          Index "emaj.emaj_group_hist_pkey"
+     Column      |   Type    | Key? |   Definition    
+-----------------+-----------+------+-----------------
+ grph_group      | text      | yes  | grph_group
+ grph_time_range | int8range | yes  | grph_time_range
+primary key, btree, for table "emaj.emaj_group_hist"
 
      Index "emaj.emaj_group_pkey"
    Column   | Type | Key? | Definition 
@@ -175,14 +199,13 @@ Sequence for identity column: emaj.emaj_hist.hist_id
  hist_id | bigint | yes  | hist_id
 primary key, btree, for table "emaj.emaj_hist"
 
-                      Table "emaj.emaj_log_session"
-           Column            |   Type    | Collation | Nullable | Default 
------------------------------+-----------+-----------+----------+---------
- lses_group                  | text      |           | not null | 
- lses_time_range             | int8range |           | not null | 
- lses_group_creation_time_id | bigint    |           |          | 
- lses_marks                  | integer   |           |          | 
- lses_log_rows               | bigint    |           |          | 
+                Table "emaj.emaj_log_session"
+     Column      |   Type    | Collation | Nullable | Default 
+-----------------+-----------+-----------+----------+---------
+ lses_group      | text      |           | not null | 
+ lses_time_range | int8range |           | not null | 
+ lses_marks      | integer   |           |          | 
+ lses_log_rows   | bigint    |           |          | 
 Indexes:
     "emaj_log_session_pkey" PRIMARY KEY, btree (lses_group, lses_time_range)
     "emaj_log_session_idx1" btree (upper(lses_time_range))
@@ -675,7 +698,6 @@ primary key, btree, for table "emaj.emaj_table"
 Indexes:
     "emaj_time_stamp_pkey" PRIMARY KEY, btree (time_id)
 Referenced by:
-    TABLE "emaj.emaj_group" CONSTRAINT "emaj_group_group_creation_time_id_fkey" FOREIGN KEY (group_creation_time_id) REFERENCES emaj.emaj_time_stamp(time_id)
     TABLE "emaj.emaj_group" CONSTRAINT "emaj_group_group_last_alter_time_id_fkey" FOREIGN KEY (group_last_alter_time_id) REFERENCES emaj.emaj_time_stamp(time_id)
     TABLE "emaj.emaj_mark" CONSTRAINT "emaj_mark_mark_time_id_fkey" FOREIGN KEY (mark_time_id) REFERENCES emaj.emaj_time_stamp(time_id)
     TABLE "emaj.emaj_relation_change" CONSTRAINT "emaj_relation_change_rlchg_time_id_fkey" FOREIGN KEY (rlchg_time_id) REFERENCES emaj.emaj_time_stamp(time_id)

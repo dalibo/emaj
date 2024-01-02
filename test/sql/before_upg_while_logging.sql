@@ -141,10 +141,12 @@ select emaj.emaj_stop_group('myGroup6');
 -- emaj tables
 select time_id, time_last_emaj_gid, time_event from emaj.emaj_time_stamp order by time_id;
 
-select group_name, group_is_rollbackable, group_creation_time_id,
-       group_last_alter_time_id, group_is_logging, 
+select group_name, group_is_rollbackable, group_last_alter_time_id, group_is_logging, 
        group_is_rlbk_protected, group_nb_table, group_nb_sequence, group_comment
   from emaj.emaj_group order by group_name;
+
+-- Uncomment the next statement when the previous version will be >= 4.4.0
+--select * from emaj.emaj_group_hist order by grph_group, grph_time_range;
 
 select mark_group, regexp_replace(mark_name,E'\\d\\d\.\\d\\d\\.\\d\\d\\.\\d\\d\\d\\d','%','g'), mark_time_id, 
        mark_is_rlbk_protected, mark_comment, mark_log_rows_before_next, mark_logged_rlbk_target_mark 

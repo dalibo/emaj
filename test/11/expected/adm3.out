@@ -1430,7 +1430,7 @@ SQL statement "SELECT coalesce(sum(emaj._log_stat_tbl(emaj_relation, greatest(v_
           WHERE rel_group = v_group
             AND rel_kind = 'r'
             AND upper_inf(rel_time_range)"
-PL/pgSQL function emaj._set_mark_groups(text[],text,boolean,boolean,text,bigint,text) line 72 at SQL statement
+PL/pgSQL function emaj._set_mark_groups(text[],text,boolean,boolean,text,bigint,text) line 74 at SQL statement
 SQL statement "SELECT emaj._set_mark_groups(v_loggingGroups, v_markName, FALSE, TRUE, NULL, v_timeId)"
 PL/pgSQL function emaj._remove_tables(text,text[],text,boolean,boolean) line 85 at PERFORM
 PL/pgSQL function emaj.emaj_remove_table(text,text,text) line 6 at RETURN
@@ -2989,26 +2989,41 @@ select hist_function, hist_event, hist_object,
 (102 rows)
 
 select * from emaj.emaj_log_session where lower(lses_time_range) >= 12000 order by lses_group, lses_time_range;
-    lses_group     | lses_time_range | lses_group_creation_time_id | lses_marks | lses_log_rows 
--------------------+-----------------+-----------------------------+------------+---------------
- grp_tmp           | [17603,17631)   |                       17600 |         17 |            23
- grp_tmp           | [17633,17640)   |                       17600 |          3 |             0
- grp_tmp_3         | [17609,17636)   |                       17601 |         15 |            14
- grp_tmp_4         | [17603,17639)   |                       17602 |         17 |            10
- myGroup1          | [12016,14001)   |                       12005 |          9 |           118
- myGroup1          | [14001,14008)   |                       12005 |          5 |             0
- myGroup1          | [14009,)        |                       12005 |         34 |           213
- myGroup2          | [12017,14001)   |                       12012 |         10 |            67
- myGroup2          | [14001,14008)   |                       12012 |          5 |             0
- myGroup2          | [14009,)        |                       12012 |          2 |             0
- myGroup4          | [17102,17106)   |                       17100 |          4 |             0
- myGroup4          | [17106,17108)   |                       17100 |          2 |             0
- myGroup4          | [17200,17211)   |                       17100 |         10 |            10
- phil's group#3",  | [14203,14501)   |                       14200 |          7 |           110
- phil's group#3",  | [14503,14507)   |                       14200 |          3 |             4
- phil's group#3",  | [17404,17414)   |                       17400 |         10 |            10
- truncateTestGroup | [18003,18009)   |                       18000 |          5 |           120
+    lses_group     | lses_time_range | lses_marks | lses_log_rows 
+-------------------+-----------------+------------+---------------
+ grp_tmp           | [17603,17631)   |         17 |            23
+ grp_tmp           | [17633,17640)   |          3 |             0
+ grp_tmp_3         | [17609,17636)   |         15 |            14
+ grp_tmp_4         | [17603,17639)   |         17 |            10
+ myGroup1          | [12016,14001)   |          9 |           118
+ myGroup1          | [14001,14008)   |          5 |             0
+ myGroup1          | [14009,)        |         34 |           213
+ myGroup2          | [12017,14001)   |         10 |            67
+ myGroup2          | [14001,14008)   |          5 |             0
+ myGroup2          | [14009,)        |          2 |             0
+ myGroup4          | [17102,17106)   |          4 |             0
+ myGroup4          | [17106,17108)   |          2 |             0
+ myGroup4          | [17200,17211)   |         10 |            10
+ phil's group#3",  | [14203,14501)   |          7 |           110
+ phil's group#3",  | [14503,14507)   |          3 |             4
+ phil's group#3",  | [17404,17414)   |         10 |            10
+ truncateTestGroup | [18003,18009)   |          5 |           120
 (17 rows)
+
+select * from emaj.emaj_group_hist order by grph_group, grph_time_range;
+    grph_group     | grph_time_range | grph_is_rollbackable | grph_log_sessions 
+-------------------+-----------------+----------------------+-------------------
+ emptyGroup        | [12015,)        | t                    |                 0
+ grp_tmp           | [17600,17641)   | t                    |                 2
+ grp_tmp_3         | [17601,17637)   | t                    |                 1
+ grp_tmp_4         | [17602,17639)   | t                    |                 1
+ myGroup1          | [12005,)        | t                    |                 3
+ myGroup2          | [12012,)        | t                    |                 3
+ myGroup4          | [17100,17212)   | t                    |                 3
+ phil's group#3",  | [14200,14508)   | t                    |                 2
+ phil's group#3",  | [17400,17415)   | f                    |                 1
+ truncateTestGroup | [18000,18010)   | t                    |                 1
+(10 rows)
 
 -----------------------------
 -- check grants on other functions to emaj_adm role

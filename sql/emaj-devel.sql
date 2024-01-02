@@ -180,25 +180,33 @@ $$Contains the time stamps of major E-Maj events.$$;
 CREATE TABLE emaj.emaj_group (
   group_name                   TEXT        NOT NULL,
   group_is_rollbackable        BOOLEAN     NOT NULL,       -- false for 'AUDIT_ONLY' and true for 'ROLLBACKABLE' groups
-  group_creation_time_id       BIGINT      NOT NULL,       -- time stamp of the group's creation
   group_pg_version             TEXT        NOT NULL        -- postgres version at emaj_create_group() time
                                DEFAULT substring (version() FROM E'PostgreSQL\\s([.,0-9,A-Z,a-z]*)'),
   group_last_alter_time_id     BIGINT,                     -- time stamp of the last group structure change
-                                                           --   set to NULL at emaj_create_group() time
+                                                           --   (NULL at group creation time)
   group_is_logging             BOOLEAN     NOT NULL,       -- are log triggers activated ?
-                                                           -- true between emaj_start_group(s) and emaj_stop_group(s)
-                                                           -- false in other cases
   group_is_rlbk_protected      BOOLEAN     NOT NULL,       -- is the group currently protected against rollback ?
-                                                           -- always true for AUDIT_ONLY groups
-  group_nb_table               INT,                        -- number of tables at emaj_create_group time
-  group_nb_sequence            INT,                        -- number of sequences at emaj_create_group time
+                                                           --   (always true for AUDIT_ONLY groups)
+  group_nb_table               INT,                        -- current number of tables
+  group_nb_sequence            INT,                        -- current number of sequences
   group_comment                TEXT,                       -- optional user comment
   PRIMARY KEY (group_name),
-  FOREIGN KEY (group_creation_time_id) REFERENCES emaj.emaj_time_stamp (time_id),
   FOREIGN KEY (group_last_alter_time_id) REFERENCES emaj.emaj_time_stamp (time_id)
   );
 COMMENT ON TABLE emaj.emaj_group IS
 $$Contains created E-Maj groups.$$;
+
+-- Table containing the groups history, i.e. the history of groups creations and drops.
+CREATE TABLE emaj.emaj_group_hist (
+  grph_group                   TEXT        NOT NULL,       -- group name
+  grph_time_range              INT8RANGE   NOT NULL,       -- time stamps range of the group
+  grph_is_rollbackable         BOOLEAN,                    -- false for 'AUDIT_ONLY' and true for 'ROLLBACKABLE' groups
+  grph_log_sessions            INT,                        -- number of log sessions during the entire group's life
+  PRIMARY KEY (grph_group, grph_time_range),
+  EXCLUDE USING gist (grph_group WITH =, grph_time_range WITH &&)
+  );
+COMMENT ON TABLE emaj.emaj_group_hist IS
+$$Contains E-Maj groups history.$$;
 
 -- Table containing the emaj and log schemas.
 CREATE TABLE emaj.emaj_schema (
@@ -304,7 +312,6 @@ $$Contains the changes in relations registered in tables groups.$$;
 CREATE TABLE emaj.emaj_log_session (
   lses_group                   TEXT        NOT NULL,       -- group name
   lses_time_range              INT8RANGE   NOT NULL,       -- range of time id representing the validity time range
-  lses_group_creation_time_id  BIGINT,                     -- group's creation time id
   lses_marks                   INTEGER,                    -- number of recorded marks during the session, including rolled back marks
   lses_log_rows                BIGINT,                     -- number of changes estimates during the session (updated at each mark set)
   PRIMARY KEY (lses_group, lses_time_range),
@@ -5720,11 +5727,13 @@ $emaj_create_group$
 -- OK
 -- Get the time stamp of the operation.
     SELECT emaj._set_time_stamp(v_function, 'C') INTO v_timeId;
--- Insert the row describing the group into the emaj_group table
+-- Insert the row describing the group into the emaj_group and emaj_group_hist tables
 -- (The group_is_rlbk_protected boolean column is always initialized as not group_is_rollbackable).
-    INSERT INTO emaj.emaj_group (group_name, group_is_rollbackable, group_creation_time_id,
-                                 group_is_logging, group_is_rlbk_protected, group_nb_table, group_nb_sequence)
-      VALUES (p_groupName, p_isRollbackable, v_timeId, FALSE, NOT p_isRollbackable, 0, 0);
+    INSERT INTO emaj.emaj_group (group_name, group_is_rollbackable, group_is_logging,
+                                 group_is_rlbk_protected, group_nb_table, group_nb_sequence)
+      VALUES (p_groupName, p_isRollbackable, FALSE, NOT p_isRollbackable, 0, 0);
+    INSERT INTO emaj.emaj_group_hist (grph_group, grph_time_range, grph_is_rollbackable, grph_log_sessions)
+      VALUES (p_groupName, int8range(v_timeId, NULL, '[]'), p_isRollbackable, 0);
 -- Insert a END event into the history.
     INSERT INTO emaj.emaj_hist (hist_function, hist_event, hist_object)
       VALUES (v_function, 'END', p_groupName);
@@ -5862,11 +5871,16 @@ $_drop_group$
     DELETE FROM emaj.emaj_group
       WHERE group_name = p_groupName
       RETURNING group_nb_table + group_nb_sequence INTO v_nbRel;
--- Update the last log session for the group to set the time range upper bound, if it is infinity
+-- Update the last log session for the group to set the time range upper bound
     UPDATE emaj.emaj_log_session
       SET lses_time_range = int8range(lower(lses_time_range), v_timeId, '[]')
       WHERE lses_group = p_groupName
         AND upper_inf(lses_time_range);
+-- Update the last group history row to set the time range upper bound
+    UPDATE emaj.emaj_group_hist
+      SET grph_time_range = int8range(lower(grph_time_range), v_timeId, '[]')
+      WHERE grph_group = p_groupName
+        AND upper_inf(grph_time_range);
 -- Enable previously disabled event triggers.
     PERFORM emaj._enable_event_triggers(v_eventTriggers);
 --
@@ -6548,9 +6562,9 @@ $_import_groups_conf_exec$
         WHERE group_name = r_group.groupJson ->> 'group';
       IF NOT FOUND THEN
         v_isRollbackable = coalesce((r_group.groupJson ->> 'is_rollbackable')::BOOLEAN, TRUE);
-        INSERT INTO emaj.emaj_group (group_name, group_is_rollbackable, group_creation_time_id,
+        INSERT INTO emaj.emaj_group (group_name, group_is_rollbackable,
                                      group_is_logging, group_is_rlbk_protected, group_nb_table, group_nb_sequence, group_comment)
-          VALUES (r_group.groupJson ->> 'group', v_isRollbackable, v_timeId,
+          VALUES (r_group.groupJson ->> 'group', v_isRollbackable,
                                      FALSE, NOT v_isRollbackable, 0, 0, r_group.groupJson ->> 'comment');
         INSERT INTO emaj.emaj_hist (hist_function, hist_event, hist_object, hist_wording)
           VALUES (v_function, 'GROUP CREATED', r_group.groupJson ->> 'group',
@@ -6932,12 +6946,17 @@ $_start_groups$
       UPDATE emaj.emaj_group
         SET group_is_logging = TRUE
         WHERE group_name = ANY (p_groupNames);
--- Insert log sessions start in emaj_log_session.
+-- Insert log sessions start into emaj_log_session...
 --   lses_marks is already set to 1 as it will not be incremented at the first mark set.
       INSERT INTO emaj.emaj_log_session
-        SELECT group_name, int8range(v_timeId, NULL, '[]'), group_creation_time_id, 1, 0
+        SELECT group_name, int8range(v_timeId, NULL, '[]'), 1, 0
           FROM emaj.emaj_group
           WHERE group_name = ANY (p_groupNames);
+-- ... and update the last group history row to increment the number of log sessions
+      UPDATE emaj.emaj_group_hist
+        SET grph_log_sessions = grph_log_sessions + 1
+        WHERE grph_group = ANY (p_groupNames)
+          AND upper_inf(grph_time_range);
 -- Set the first mark for each group.
       PERFORM emaj._set_mark_groups(p_groupNames, v_markName, p_multiGroup, TRUE, NULL, v_timeId);
     END IF;
@@ -7376,8 +7395,10 @@ $_set_mark_groups$
         WHERE lses_group = v_group
         ORDER BY lses_time_range DESC
         LIMIT 1;
-      IF p_timeId > lower(v_lsesTimeRange) THEN
+      IF p_timeId > lower(v_lsesTimeRange) OR lower(v_lsesTimeRange) IS NULL THEN
 -- This condition excludes marks set at start_group time, for which there is nothing to do.
+--   The lower bound may be null when the log session has been created by the emaj version upgrade processing and the last start_group
+--   call has not been found into the history.
 -- Get the latest mark for the tables group.
         SELECT mark_time_id
           INTO v_latestMarkTimeId
@@ -12123,9 +12144,10 @@ $$Purges obsolete data from emaj history tables.$$;
 CREATE OR REPLACE FUNCTION emaj._purge_histories(p_retentionDelay INTERVAL DEFAULT NULL)
 RETURNS VOID LANGUAGE plpgsql AS
 $_purge_histories$
--- This function purges the emaj history by deleting all rows prior the 'history_retention' parameter, but
+-- This function purges the emaj histories by deleting all rows prior the 'history_retention' parameter, but
 --   without deleting event traces neither after the oldest mark or after the oldest not committed or aborted rollback operation.
--- It also purges oldest rows from the emaj_exec_plan, emaj_rlbk_session and emaj_rlbk_plan tables, using the same rules.
+-- It purges oldest rows from the following tables:
+--    emaj_hist, emaj_log_sessions, emaj_group_hist, emaj_rel_hist, emaj_relation_change, emaj_rlbk_session and emaj_rlbk_plan.
 -- The function is called at start group time and when oldest marks are deleted.
 -- It is also called by the emaj_purge_histories() function.
 -- A retention delay >= 100 years means infinite.
@@ -12135,9 +12157,7 @@ $_purge_histories$
     v_datetimeLimit          TIMESTAMPTZ;
     v_maxTimeId              BIGINT;
     v_maxRlbkId              BIGINT;
-    v_nbPurgedHist           BIGINT;
-    v_nbPurgedLogSession     BIGINT;
-    v_nbPurgedRelHist        BIGINT;
+    v_nbDeletedRows          BIGINT;
     v_nbPurgedRlbk           BIGINT;
     v_nbPurgedRelChanges     BIGINT;
     v_wording                TEXT = '';
@@ -12174,23 +12194,30 @@ $_purge_histories$
 -- Delete oldest rows from emaj_hist.
     DELETE FROM emaj.emaj_hist
       WHERE hist_datetime < v_datetimeLimit;
-    GET DIAGNOSTICS v_nbPurgedHist = ROW_COUNT;
-    IF v_nbPurgedHist > 0 THEN
-      v_wording = v_nbPurgedHist || ' emaj_hist rows deleted';
+    GET DIAGNOSTICS v_nbDeletedRows = ROW_COUNT;
+    IF v_nbDeletedRows > 0 THEN
+      v_wording = v_nbDeletedRows || ' emaj_hist rows deleted';
     END IF;
 -- Delete oldest rows from emaj_log_session.
     DELETE FROM emaj.emaj_log_session
       WHERE upper(lses_time_range) - 1 < v_maxTimeId;
-    GET DIAGNOSTICS v_nbPurgedLogSession = ROW_COUNT;
-    IF v_nbPurgedLogSession > 0 THEN
-      v_wording = v_wording || ' ; ' || v_nbPurgedLogSession || ' log session rows deleted';
+    GET DIAGNOSTICS v_nbDeletedRows = ROW_COUNT;
+    IF v_nbDeletedRows > 0 THEN
+      v_wording = v_wording || ' ; ' || v_nbDeletedRows || ' log session rows deleted';
+    END IF;
+-- Delete oldest rows from emaj_group_hist.
+    DELETE FROM emaj.emaj_group_hist
+      WHERE upper(grph_time_range) - 1 < v_maxTimeId;
+    GET DIAGNOSTICS v_nbDeletedRows = ROW_COUNT;
+    IF v_nbDeletedRows > 0 THEN
+      v_wording = v_wording || ' ; ' || v_nbDeletedRows || ' group history rows deleted';
     END IF;
 -- Delete oldest rows from emaj_rel_hist.
     DELETE FROM emaj.emaj_rel_hist
       WHERE upper(relh_time_range) < v_maxTimeId;
-    GET DIAGNOSTICS v_nbPurgedRelHist = ROW_COUNT;
-    IF v_nbPurgedRelHist > 0 THEN
-      v_wording = v_wording || ' ; ' || v_nbPurgedRelHist || ' relation history rows deleted';
+    GET DIAGNOSTICS v_nbDeletedRows = ROW_COUNT;
+    IF v_nbDeletedRows > 0 THEN
+      v_wording = v_wording || ' ; ' || v_nbDeletedRows || ' relation history rows deleted';
     END IF;
 -- Purge the emaj_relation_change table.
     WITH deleted_relation_change AS
@@ -13658,6 +13685,7 @@ GRANT EXECUTE ON FUNCTION emaj.emaj_verify_all() TO emaj_viewer;
 --SELECT pg_catalog.pg_extension_config_dump('emaj_hist','WHERE hist_id > 1');
 --SELECT pg_catalog.pg_extension_config_dump('emaj_time_stamp','');
 --SELECT pg_catalog.pg_extension_config_dump('emaj_group','');
+--SELECT pg_catalog.pg_extension_config_dump('emaj_group_hist','');
 --SELECT pg_catalog.pg_extension_config_dump('emaj_schema','WHERE sch_name <> ''emaj''');
 --SELECT pg_catalog.pg_extension_config_dump('emaj_relation','');
 --SELECT pg_catalog.pg_extension_config_dump('emaj_rel_hist','');

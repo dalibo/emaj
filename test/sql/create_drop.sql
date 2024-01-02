@@ -280,10 +280,10 @@ select emaj.emaj_assign_sequences('myschema1','my.*_seq','myseq1$','myGroup1');
 -----------------------------------
 -- check populated groups
 -----------------------------------
-select group_name, group_is_rollbackable, group_creation_time_id,
-       group_last_alter_time_id, group_is_logging, 
+select group_name, group_is_rollbackable, group_last_alter_time_id, group_is_logging,
        group_is_rlbk_protected, group_nb_table, group_nb_sequence, group_comment
   from emaj.emaj_group order by group_name;
+select * from emaj.emaj_group_hist order by grph_group, grph_time_range;
 select * from emaj.emaj_relation order by rel_group, rel_priority, rel_schema, rel_tblseq, rel_time_range;
 select schemaname, tablename, tableowner, tablespace from pg_tables where schemaname like 'emaj\_%' order by schemaname, tablename;
 select nspname, relname, rolname from pg_class, pg_namespace, pg_authid 

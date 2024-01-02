@@ -165,6 +165,7 @@ SET client_min_messages TO WARNING;
 -- check for emaj_start_group()
 select group_name, group_is_logging, group_is_rlbk_protected from emaj.emaj_group order by group_name;
 select * from emaj.emaj_log_session order by lses_group, lses_time_range;
+select * from emaj.emaj_group_hist order by grph_group, grph_time_range;
 select mark_group, regexp_replace(mark_name,E'\\d\\d\.\\d\\d\\.\\d\\d\\.\\d\\d\\d\\d','%','g'), mark_time_id, mark_is_rlbk_protected, mark_comment, mark_log_rows_before_next, mark_logged_rlbk_target_mark
   from emaj.emaj_mark where mark_time_id >= 2000 order by mark_time_id, mark_group;
 select time_id, time_last_emaj_gid, time_event from emaj.emaj_time_stamp where time_id >= 2000 order by time_id;

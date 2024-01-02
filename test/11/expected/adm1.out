@@ -182,8 +182,8 @@ select emaj.emaj_drop_group('emptyGroup');
 
 -- emaj tables
 select * from emaj.emaj_group;
- group_name | group_is_rollbackable | group_creation_time_id | group_pg_version | group_last_alter_time_id | group_is_logging | group_is_rlbk_protected | group_nb_table | group_nb_sequence | group_comment 
-------------+-----------------------+------------------------+------------------+--------------------------+------------------+-------------------------+----------------+-------------------+---------------
+ group_name | group_is_rollbackable | group_pg_version | group_last_alter_time_id | group_is_logging | group_is_rlbk_protected | group_nb_table | group_nb_sequence | group_comment 
+------------+-----------------------+------------------+--------------------------+------------------+-------------------------+----------------+-------------------+---------------
 (0 rows)
 
 select sch_name from emaj.emaj_schema;
@@ -267,10 +267,10 @@ select emaj.emaj_purge_histories('0 SECOND');
 
 select hist_function, hist_event, hist_wording
   from emaj.emaj_hist order by hist_id;
-  hist_function  | hist_event |                                                                      hist_wording                                                                      
------------------+------------+--------------------------------------------------------------------------------------------------------------------------------------------------------
+  hist_function  | hist_event |                                                                                     hist_wording                                                                                      
+-----------------+------------+---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
  PURGE_HISTORIES | BEGIN      | Retention delay @ 0
- PURGE_HISTORIES |            | 25 emaj_hist rows deleted ; 17 log session rows deleted ; 138 relation history rows deleted ; 94 relation changes deleted ; 39 rollback events deleted
+ PURGE_HISTORIES |            | 25 emaj_hist rows deleted ; 17 log session rows deleted ; 6 group history rows deleted ; 138 relation history rows deleted ; 94 relation changes deleted ; 39 rollback events deleted
  PURGE_HISTORIES | END        | 
 (3 rows)
 
@@ -466,14 +466,21 @@ select emaj.emaj_comment_mark_group('myGroup1','M3','Third mark set');
 -- Checking step 1
 -----------------------------
 -- emaj tables
-select group_name, group_is_rollbackable, group_creation_time_id,
-       group_last_alter_time_id, group_is_logging, group_is_rlbk_protected, group_nb_table, group_nb_sequence, group_comment
+select group_name, group_is_rollbackable, group_last_alter_time_id, group_is_logging, group_is_rlbk_protected, group_nb_table, group_nb_sequence, group_comment
   from emaj.emaj_group order by group_name;
- group_name | group_is_rollbackable | group_creation_time_id | group_last_alter_time_id | group_is_logging | group_is_rlbk_protected | group_nb_table | group_nb_sequence |  group_comment   
-------------+-----------------------+------------------------+--------------------------+------------------+-------------------------+----------------+-------------------+------------------
- emptyGroup | t                     |                  12015 |                          | f                | f                       |              0 |                 0 | 
- myGroup1   | t                     |                  12005 |                    12011 | t                | f                       |              5 |                 2 | This is group #1
- myGroup2   | t                     |                  12012 |                    12014 | t                | f                       |              6 |                 2 | 
+ group_name | group_is_rollbackable | group_last_alter_time_id | group_is_logging | group_is_rlbk_protected | group_nb_table | group_nb_sequence |  group_comment   
+------------+-----------------------+--------------------------+------------------+-------------------------+----------------+-------------------+------------------
+ emptyGroup | t                     |                          | f                | f                       |              0 |                 0 | 
+ myGroup1   | t                     |                    12011 | t                | f                       |              5 |                 2 | This is group #1
+ myGroup2   | t                     |                    12014 | t                | f                       |              6 |                 2 | 
+(3 rows)
+
+select * from emaj.emaj_group_hist order by grph_group, grph_time_range;
+ grph_group | grph_time_range | grph_is_rollbackable | grph_log_sessions 
+------------+-----------------+----------------------+-------------------
+ emptyGroup | [12015,)        | t                    |                 0
+ myGroup1   | [12005,)        | t                    |                 1
+ myGroup2   | [12012,)        | t                    |                 1
 (3 rows)
 
 select mark_group, regexp_replace(mark_name,E'\\d\\d\.\\d\\d\\.\\d\\d\\.\\d\\d\\d\\d','%','g'), mark_time_id, mark_is_rlbk_protected, mark_is_rlbk_protected, mark_comment, mark_log_rows_before_next, mark_logged_rlbk_target_mark from emaj.emaj_mark order by mark_time_id, mark_group;
