@@ -444,7 +444,6 @@ Tablespace: "tspemaj"
  rlchg_new_log_index_tsp    | text                            |           |          | 
  rlchg_ignored_triggers     | text[]                          |           |          | 
  rlchg_new_ignored_triggers | text[]                          |           |          | 
- rlchg_rlbk_id              | bigint                          |           |          | 
 Indexes:
     "emaj_relation_change_pkey" PRIMARY KEY, btree (rlchg_time_id, rlchg_schema, rlchg_tblseq, rlchg_change_kind), tablespace "tspemaj"
 Foreign-key constraints:

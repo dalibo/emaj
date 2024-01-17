@@ -469,6 +469,11 @@ ALTER TABLE emaj.emaj_mark DROP COLUMN mark_is_deleted;
 ALTER TABLE emaj.emaj_group DROP COLUMN group_creation_time_id;
 
 --
+-- Drop the emaj_relation_change.rlchg_rlbk_id column
+--
+ALTER TABLE emaj.emaj_relation_change DROP COLUMN rlchg_rlbk_id;
+
+--
 -- Add created or recreated tables and sequences to the list of content to save by pg_dump.
 --
 SELECT pg_catalog.pg_extension_config_dump('emaj_group_hist','');
@@ -2723,6 +2728,76 @@ $_delete_before_mark_group$
   END;
 $_delete_before_mark_group$;
 
+CREATE OR REPLACE FUNCTION emaj._rlbk_check(p_groupNames TEXT[], p_mark TEXT, p_isAlterGroupAllowed BOOLEAN, isRollbackSimulation BOOLEAN)
+RETURNS TEXT LANGUAGE plpgsql AS
+$_rlbk_check$
+-- This functions performs checks on group names and mark names supplied as parameter for the emaj_rollback_groups()
+-- and emaj_estimate_rollback_groups() functions.
+-- It returns the real mark name, or NULL if the groups array is NULL or empty.
+  DECLARE
+    v_markName               TEXT;
+    v_aGroupName             TEXT;
+    v_markTimeId             BIGINT;
+    v_protectedMarksList     TEXT;
+  BEGIN
+-- Check the group names and states.
+    IF isRollbackSimulation THEN
+      SELECT emaj._check_group_names(p_groupNames := p_groupNames, p_mayBeNull := FALSE, p_lockGroups := FALSE,
+                                     p_checkLogging := TRUE, p_checkRollbackable := TRUE) INTO p_groupNames;
+    ELSE
+      SELECT emaj._check_group_names(p_groupNames := p_groupNames, p_mayBeNull := FALSE, p_lockGroups := TRUE,
+                                     p_checkLogging := TRUE, p_checkRollbackable := TRUE, p_checkUnprotected := TRUE) INTO p_groupNames;
+    END IF;
+    IF p_groupNames IS NOT NULL THEN
+-- Check the mark name.
+      SELECT emaj._check_mark_name(p_groupNames := p_groupNames, p_mark := p_mark, p_checkActive := TRUE) INTO v_markName;
+      IF NOT isRollbackSimulation THEN
+-- Check that for each group that the rollback wouldn't delete protected marks (check disabled for rollback simulation).
+        FOREACH v_aGroupName IN ARRAY p_groupNames LOOP
+--   Get the target mark time id,
+          SELECT mark_time_id INTO v_markTimeId
+            FROM emaj.emaj_mark
+            WHERE mark_group = v_aGroupName
+              AND mark_name = v_markName;
+--   ... and look at the protected mark.
+          SELECT string_agg(mark_name,', ' ORDER BY mark_name) INTO v_protectedMarksList
+            FROM
+              (SELECT mark_name
+                 FROM emaj.emaj_mark
+                 WHERE mark_group = v_aGroupName
+                   AND mark_time_id > v_markTimeId
+                   AND mark_is_rlbk_protected
+                 ORDER BY mark_time_id
+              ) AS t;
+          IF v_protectedMarksList IS NOT NULL THEN
+            RAISE EXCEPTION '_rlbk_check: Protected marks (%) for the group "%" block the rollback to the mark "%".',
+              v_protectedMarksList, v_aGroupName, v_markName;
+          END IF;
+        END LOOP;
+      END IF;
+-- If the isAlterGroupAllowed flag is not explicitely set to true, check that the rollback would not cross any structure change for
+-- the groups.
+      IF p_isAlterGroupAllowed IS NULL OR NOT p_isAlterGroupAllowed THEN
+        SELECT mark_time_id INTO v_markTimeId
+          FROM emaj.emaj_mark
+          WHERE mark_group = p_groupNames[1]
+            AND mark_name = v_markName;
+        IF EXISTS
+             (SELECT 0
+                FROM emaj.emaj_relation_change
+                WHERE rlchg_time_id > v_markTimeId
+                  AND rlchg_group = ANY (p_groupNames)
+             ) THEN
+          RAISE EXCEPTION '_rlbk_check: This rollback operation would cross some previous structure group change operations,'
+                          ' which is not allowed by the current function parameters.';
+        END IF;
+      END IF;
+    END IF;
+--
+    RETURN v_markName;
+  END;
+$_rlbk_check$;
+
 CREATE OR REPLACE FUNCTION emaj._rlbk_start_mark(p_rlbkId INT, p_multiGroup BOOLEAN)
 RETURNS VOID LANGUAGE plpgsql AS
 $_rlbk_start_mark$
@@ -3007,7 +3082,6 @@ $_rlbk_end$
                     WHERE rlchg_time_id > v_markTimeId
                       AND rlchg_group = ANY (v_groupNames)
                       AND rlchg_tblseq <> ''
-                      AND rlchg_rlbk_id IS NULL
                       AND rlchg_change_kind IN
                             ('ADD_TABLE','ADD_SEQUENCE','REMOVE_TABLE','REMOVE_SEQUENCE','MOVE_TABLE','MOVE_SEQUENCE')
                   ) AS t1
@@ -3041,7 +3115,6 @@ $_rlbk_end$
                     WHERE rlchg_time_id > v_markTimeId
                       AND rlchg_group = ANY (v_groupNames)
                       AND rlchg_tblseq <> ''
-                      AND rlchg_rlbk_id IS NULL
                       AND rlchg_change_kind NOT IN
                             ('ADD_TABLE','ADD_SEQUENCE','REMOVE_TABLE','REMOVE_SEQUENCE','MOVE_TABLE','MOVE_SEQUENCE')
                  ) AS t1
@@ -3051,12 +3124,6 @@ $_rlbk_end$
     LOOP
       v_messages = array_append(v_messages, 'Warning: ' || r_msg.message);
     END LOOP;
--- Update the groups structure changes that are been covered by the rollback.
-    UPDATE emaj.emaj_relation_change
-      SET rlchg_rlbk_id = p_rlbkId
-      WHERE rlchg_time_id > v_markTimeId
-        AND rlchg_group = ANY (v_groupNames)
-        AND rlchg_rlbk_id IS NULL;
 -- If rollback is a "logged" rollback, automatically set a mark representing the tables state just after the rollback.
 -- This mark is named 'RLBK_<mark name to rollback to>_%_DONE', where % represents the rollback start time.
     IF v_isLoggedRlbk THEN

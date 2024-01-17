@@ -294,7 +294,6 @@ CREATE TABLE emaj.emaj_relation_change (
   rlchg_new_log_index_tsp       TEXT        ,               -- new log index tablespace, if changed
   rlchg_ignored_triggers        TEXT[]      ,               -- current or old array of triggers to ignore at rollback time
   rlchg_new_ignored_triggers    TEXT[]      ,               -- new array of triggers to ignore at rollback time, if changed
-  rlchg_rlbk_id                 BIGINT      ,               -- rollback id if a rollback has already crossed over the group change
   PRIMARY KEY (rlchg_time_id, rlchg_schema, rlchg_tblseq, rlchg_change_kind),
   FOREIGN KEY (rlchg_time_id) REFERENCES emaj.emaj_time_stamp (time_id)
   );
@@ -8335,7 +8334,6 @@ $_rlbk_check$
                 FROM emaj.emaj_relation_change
                 WHERE rlchg_time_id > v_markTimeId
                   AND rlchg_group = ANY (p_groupNames)
-                  AND rlchg_rlbk_id IS NULL
              ) THEN
           RAISE EXCEPTION '_rlbk_check: This rollback operation would cross some previous structure group change operations,'
                           ' which is not allowed by the current function parameters.';
@@ -9673,7 +9671,6 @@ $_rlbk_end$
                     WHERE rlchg_time_id > v_markTimeId
                       AND rlchg_group = ANY (v_groupNames)
                       AND rlchg_tblseq <> ''
-                      AND rlchg_rlbk_id IS NULL
                       AND rlchg_change_kind IN
                             ('ADD_TABLE','ADD_SEQUENCE','REMOVE_TABLE','REMOVE_SEQUENCE','MOVE_TABLE','MOVE_SEQUENCE')
                   ) AS t1
@@ -9707,7 +9704,6 @@ $_rlbk_end$
                     WHERE rlchg_time_id > v_markTimeId
                       AND rlchg_group = ANY (v_groupNames)
                       AND rlchg_tblseq <> ''
-                      AND rlchg_rlbk_id IS NULL
                       AND rlchg_change_kind NOT IN
                             ('ADD_TABLE','ADD_SEQUENCE','REMOVE_TABLE','REMOVE_SEQUENCE','MOVE_TABLE','MOVE_SEQUENCE')
                  ) AS t1
@@ -9717,12 +9713,6 @@ $_rlbk_end$
     LOOP
       v_messages = array_append(v_messages, 'Warning: ' || r_msg.message);
     END LOOP;
--- Update the groups structure changes that are been covered by the rollback.
-    UPDATE emaj.emaj_relation_change
-      SET rlchg_rlbk_id = p_rlbkId
-      WHERE rlchg_time_id > v_markTimeId
-        AND rlchg_group = ANY (v_groupNames)
-        AND rlchg_rlbk_id IS NULL;
 -- If rollback is a "logged" rollback, automatically set a mark representing the tables state just after the rollback.
 -- This mark is named 'RLBK_<mark name to rollback to>_%_DONE', where % represents the rollback start time.
     IF v_isLoggedRlbk THEN

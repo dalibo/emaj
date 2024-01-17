@@ -36,7 +36,8 @@ update "myTbl3" set col33 = col33 / 2;
 --
 select * from emaj.emaj_rollback_group('myGroup1','M2',false) order by 1,2;
 select emaj.emaj_unprotect_mark_group('myGroup1','M3');
-select * from emaj.emaj_logged_rollback_group('myGroup1','M2',true) order by 1,2;
+select rlbk_severity, regexp_replace(rlbk_message,E'\\d\\d\\d\\d/\\d\\d\\/\\d\\d\\ \\d\\d\\:\\d\\d:\\d\\d .*?\\)','<timestamp>)','g')
+  from emaj.emaj_logged_rollback_group('myGroup1','M2',true) order by 1,2;
 --
 select emaj.emaj_rename_mark_group('myGroup1','EMAJ_LAST_MARK','End_rollback_to_M2');
 select emaj.emaj_consolidate_rollback_group('myGroup1','End_rollback_to_M2');
