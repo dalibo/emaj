@@ -152,6 +152,7 @@ Referenced by:
 Indexes:
     "emaj_group_hist_pkey" PRIMARY KEY, btree (grph_group, grph_time_range)
     "emaj_group_hist_grph_group_grph_time_range_excl" EXCLUDE USING gist (grph_group WITH =, grph_time_range WITH &&)
+    "emaj_group_hist_idx1" btree (upper(grph_time_range))
 
 Index "emaj.emaj_group_hist_grph_group_grph_time_range_excl"
      Column      |     Type      | Key? |   Definition    
@@ -159,6 +160,12 @@ Index "emaj.emaj_group_hist_grph_group_grph_time_range_excl"
  grph_group      | gbtreekey_var | yes  | grph_group
  grph_time_range | int8range     | yes  | grph_time_range
 gist, for table "emaj.emaj_group_hist"
+
+        Index "emaj.emaj_group_hist_idx1"
+ Column |  Type  | Key? |       Definition       
+--------+--------+------+------------------------
+ upper  | bigint | yes  | upper(grph_time_range)
+btree, for table "emaj.emaj_group_hist"
 
           Index "emaj.emaj_group_hist_pkey"
      Column      |   Type    | Key? |   Definition    

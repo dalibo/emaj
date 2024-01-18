@@ -192,6 +192,7 @@ Tablespace: "tspemaj"
 Indexes:
     "emaj_group_hist_pkey" PRIMARY KEY, btree (grph_group, grph_time_range), tablespace "tspemaj"
     "emaj_group_hist_grph_group_grph_time_range_excl" EXCLUDE USING gist (grph_group WITH =, grph_time_range WITH &&), tablespace "tspemaj"
+    "emaj_group_hist_idx1" btree (upper(grph_time_range)), tablespace "tspemaj"
 Tablespace: "tspemaj"
 
 Index "emaj.emaj_group_hist_grph_group_grph_time_range_excl"
@@ -200,6 +201,13 @@ Index "emaj.emaj_group_hist_grph_group_grph_time_range_excl"
  grph_group      | gbtreekey_var | yes  | grph_group
  grph_time_range | int8range     | yes  | grph_time_range
 gist, for table "emaj.emaj_group_hist"
+Tablespace: "tspemaj"
+
+        Index "emaj.emaj_group_hist_idx1"
+ Column |  Type  | Key? |       Definition       
+--------+--------+------+------------------------
+ upper  | bigint | yes  | upper(grph_time_range)
+btree, for table "emaj.emaj_group_hist"
 Tablespace: "tspemaj"
 
           Index "emaj.emaj_group_hist_pkey"

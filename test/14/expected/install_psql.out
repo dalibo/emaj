@@ -197,6 +197,8 @@ CREATE TABLE emaj.emaj_group_hist (
   PRIMARY KEY (grph_group, grph_time_range),
   EXCLUDE USING gist (grph_group WITH =, grph_time_range WITH &&)
   );
+-- Functional index on emaj_group_hist used to speedup the history purge function.
+CREATE INDEX emaj_group_hist_idx1 ON emaj.emaj_group_hist ((upper(grph_time_range)));
 COMMENT ON TABLE emaj.emaj_group_hist IS
 $$Contains E-Maj groups history.$$;
 -- Table containing the emaj and log schemas.
@@ -13469,8 +13471,8 @@ $do$
     RETURN;
   END;
 $do$;
-psql:sql/emaj-devel.sql:13723: NOTICE:  E-Maj installation: E-Maj successfully installed.
-psql:sql/emaj-devel.sql:13723: WARNING:  E-Maj installation: The adminpack extension is available but not yet created. Execute a "CREATE EXTENSION adminpack;" statement to enable the NO_EMPTY_FILE option use of the emaj_dump_changes_group() function.
+psql:sql/emaj-devel.sql:13725: NOTICE:  E-Maj installation: E-Maj successfully installed.
+psql:sql/emaj-devel.sql:13725: WARNING:  E-Maj installation: The adminpack extension is available but not yet created. Execute a "CREATE EXTENSION adminpack;" statement to enable the NO_EMPTY_FILE option use of the emaj_dump_changes_group() function.
 COMMIT;
 -- Test the dblink extension lack (this cannot be easily simulated in the verify.sql unit tests script when emaj is installed as an extension)
 begin;
@@ -13585,6 +13587,7 @@ Referenced by:
 Indexes:
     "emaj_group_hist_pkey" PRIMARY KEY, btree (grph_group, grph_time_range)
     "emaj_group_hist_grph_group_grph_time_range_excl" EXCLUDE USING gist (grph_group WITH =, grph_time_range WITH &&)
+    "emaj_group_hist_idx1" btree (upper(grph_time_range))
 
 Index "emaj.emaj_group_hist_grph_group_grph_time_range_excl"
      Column      |     Type      | Key? |   Definition    
@@ -13592,6 +13595,12 @@ Index "emaj.emaj_group_hist_grph_group_grph_time_range_excl"
  grph_group      | gbtreekey_var | yes  | grph_group
  grph_time_range | int8range     | yes  | grph_time_range
 gist, for table "emaj.emaj_group_hist"
+
+        Index "emaj.emaj_group_hist_idx1"
+ Column |  Type  | Key? |       Definition       
+--------+--------+------+------------------------
+ upper  | bigint | yes  | upper(grph_time_range)
+btree, for table "emaj.emaj_group_hist"
 
           Index "emaj.emaj_group_hist_pkey"
      Column      |   Type    | Key? |   Definition    

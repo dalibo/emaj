@@ -198,6 +198,8 @@ CREATE TABLE emaj.emaj_group_hist (
   PRIMARY KEY (grph_group, grph_time_range),
   EXCLUDE USING gist (grph_group WITH =, grph_time_range WITH &&)
   );
+-- Functional index on emaj_group_hist used to speedup the history purge function.
+CREATE INDEX emaj_group_hist_idx1 ON emaj.emaj_group_hist ((upper(grph_time_range)));
 COMMENT ON TABLE emaj.emaj_group_hist IS
 $$Contains E-Maj groups history.$$;
 
