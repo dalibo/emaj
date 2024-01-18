@@ -16,6 +16,11 @@ E-Maj - Change log
   * Minor code changes and optimizations.
 
 ### Bug fixes: ###
+  * Fix the detection of an E-Maj rollback operation whose target mark was set
+    prior a table or sequence MOVE, when the receiving group is rolled back.
+  * Fix the message reported in the rollback execution report when an E-Maj
+    rollback operation whose target mark was set prior a table or sequence
+    MOVE, when the receiving group is rolled back.
   * Fix the emaj_detailed_log_stat_group() output for TRUNCATE recorded events.
   * Fix the emaj_dump_changes_group() functions family. When TRUNCATEs were
     recorded in log tables, the unconsolidated view of data changes erroneously

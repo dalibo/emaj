@@ -8333,7 +8333,7 @@ $_rlbk_check$
              (SELECT 0
                 FROM emaj.emaj_relation_change
                 WHERE rlchg_time_id > v_markTimeId
-                  AND rlchg_group = ANY (p_groupNames)
+                  AND (rlchg_group = ANY (p_groupNames) OR rlchg_new_group = ANY (p_groupNames))
              ) THEN
           RAISE EXCEPTION '_rlbk_check: This rollback operation would cross some previous structure group change operations,'
                           ' which is not allowed by the current function parameters.';
@@ -9634,42 +9634,35 @@ $_rlbk_end$
     FOR r_msg IN
 -- Steps are splitted into 2 groups to filter them differently.
         SELECT rlchg_time_id, rlchg_change_kind, rlchg_schema, rlchg_tblseq,
-               (CASE rlchg_change_kind
-                  WHEN 'ADD_SEQUENCE' THEN
+               (CASE
+                  WHEN rlchg_change_kind = 'ADD_SEQUENCE' OR (rlchg_change_kind = 'MOVE_SEQUENCE' AND new_group_is_rolledback) THEN
                     'The sequence ' || quote_ident(rlchg_schema) || '.' || quote_ident(rlchg_tblseq) ||
                     ' has only been rolled back to its latest group attachment state ('
                     || to_char(time_tx_timestamp, 'YYYY/MM/DD HH:MI:SS TZ') || ')'
-                  WHEN 'ADD_TABLE' THEN
-                    'The table ' || quote_ident(rlchg_schema) || '.' || quote_ident(rlchg_tblseq) ||
-                    ' has only been rolled back to its latest group attachment ('
-                    || to_char(time_tx_timestamp, 'YYYY/MM/DD HH:MI:SS TZ') || ')'
-                  WHEN 'REMOVE_SEQUENCE' THEN
+                  WHEN rlchg_change_kind = 'REMOVE_SEQUENCE' OR (rlchg_change_kind = 'MOVE_SEQUENCE' AND NOT new_group_is_rolledback) THEN
                     'The sequence ' || quote_ident(rlchg_schema) || '.' || quote_ident(rlchg_tblseq) ||
                     ' has been left unchanged (not in group anymore since ' ||
                     to_char(time_tx_timestamp, 'YYYY/MM/DD HH:MI:SS TZ') || ')'
-                  WHEN 'REMOVE_TABLE' THEN
-                    'The table ' || quote_ident(rlchg_schema) || '.' || quote_ident(rlchg_tblseq) ||
-                    ' has been left unchanged (not in group anymore since '
-                    || to_char(time_tx_timestamp, 'YYYY/MM/DD HH:MI:SS TZ') || ')'
-                  WHEN 'MOVE_SEQUENCE' THEN
-                    'The sequence ' || quote_ident(rlchg_schema) || '.' || quote_ident(rlchg_tblseq) ||
-                    ' has only been rolled back to its latest group attachment state ('
-                    || to_char(time_tx_timestamp, 'YYYY/MM/DD HH:MI:SS TZ') || ')'
-                  WHEN 'MOVE_TABLE' THEN
+                  WHEN rlchg_change_kind = 'ADD_TABLE' OR (rlchg_change_kind = 'MOVE_TABLE' AND new_group_is_rolledback) THEN
                     'The table ' || quote_ident(rlchg_schema) || '.' || quote_ident(rlchg_tblseq) ||
                     ' has only been rolled back to its latest group attachment ('
+                    || to_char(time_tx_timestamp, 'YYYY/MM/DD HH:MI:SS TZ') || ')'
+                  WHEN rlchg_change_kind = 'REMOVE_TABLE' OR (rlchg_change_kind = 'MOVE_TABLE' AND NOT new_group_is_rolledback) THEN
+                    'The table ' || quote_ident(rlchg_schema) || '.' || quote_ident(rlchg_tblseq) ||
+                    ' has been left unchanged (not in group anymore since '
                     || to_char(time_tx_timestamp, 'YYYY/MM/DD HH:MI:SS TZ') || ')'
                   END)::TEXT AS message
           FROM
 -- Suppress duplicate ADD_TABLE / MOVE_TABLE / REMOVE_TABLE or ADD_SEQUENCE / MOVE_SEQUENCE / REMOVE_SEQUENCE for same table or sequence,
 -- by keeping the most recent changes.
-            (SELECT rlchg_schema, rlchg_tblseq, rlchg_time_id, rlchg_change_kind
+            (SELECT rlchg_schema, rlchg_tblseq, rlchg_time_id, rlchg_change_kind, new_group_is_rolledback
                FROM
                  (SELECT rlchg_schema, rlchg_tblseq, rlchg_time_id, rlchg_change_kind,
+                         (rlchg_new_group = ANY (v_groupNames)) AS new_group_is_rolledback,
                          rank() OVER (PARTITION BY rlchg_schema, rlchg_tblseq ORDER BY rlchg_time_id DESC) AS rlchg_rank
                     FROM emaj.emaj_relation_change
                     WHERE rlchg_time_id > v_markTimeId
-                      AND rlchg_group = ANY (v_groupNames)
+                      AND (rlchg_group = ANY (v_groupNames) OR rlchg_new_group = ANY (v_groupNames))
                       AND rlchg_tblseq <> ''
                       AND rlchg_change_kind IN
                             ('ADD_TABLE','ADD_SEQUENCE','REMOVE_TABLE','REMOVE_SEQUENCE','MOVE_TABLE','MOVE_SEQUENCE')
@@ -9679,19 +9672,16 @@ $_rlbk_end$
           WHERE rlchg_time_id = time_id
       UNION
         SELECT rlchg_time_id, rlchg_change_kind, rlchg_schema, rlchg_tblseq,
+               'Tables group change not rolled back: ' ||
                (CASE rlchg_change_kind
                   WHEN 'CHANGE_PRIORITY' THEN
-                    'Tables group change not rolled back: E-Maj priority for '
-                    || quote_ident(rlchg_schema) || '.' || quote_ident(rlchg_tblseq)
+                    'E-Maj priority for ' || quote_ident(rlchg_schema) || '.' || quote_ident(rlchg_tblseq)
                   WHEN 'CHANGE_LOG_DATA_TABLESPACE' THEN
-                    'Tables group change not rolled back: log data tablespace for '
-                    || quote_ident(rlchg_schema) || '.' || quote_ident(rlchg_tblseq)
+                    'log data tablespace for ' || quote_ident(rlchg_schema) || '.' || quote_ident(rlchg_tblseq)
                   WHEN 'CHANGE_LOG_INDEX_TABLESPACE' THEN
-                    'Tables group change not rolled back: log index tablespace for '
-                    || quote_ident(rlchg_schema) || '.' || quote_ident(rlchg_tblseq)
+                    'log index tablespace for ' || quote_ident(rlchg_schema) || '.' || quote_ident(rlchg_tblseq)
                   WHEN 'CHANGE_IGNORED_TRIGGERS' THEN
-                    'Tables group change not rolled back: ignored triggers list for '
-                    || quote_ident(rlchg_schema) || '.' || quote_ident(rlchg_tblseq)
+                    'ignored triggers list for ' || quote_ident(rlchg_schema) || '.' || quote_ident(rlchg_tblseq)
                   ELSE rlchg_change_kind::TEXT || ' / ' || quote_ident(rlchg_schema) || '.' || quote_ident(rlchg_tblseq)
                   END)::TEXT AS message
           FROM

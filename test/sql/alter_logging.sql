@@ -621,6 +621,23 @@ update myschema2."myTbl3" set col32 = col32 + '1 day' where col31 >= 8;
 select emaj.emaj_move_table('myschema2', 'myTbl3', 'myGroup1', 'move table to myGroup1');
 select emaj.emaj_move_sequence('myschema2', 'myTbl3_col31_seq', 'myGroup1', 'move seq to myGroup1');
 
+begin;
+  select rlbk_severity, regexp_replace(rlbk_message,E'\\d\\d\\d\\d/\\d\\d\\/\\d\\d\\ \\d\\d\\:\\d\\d:\\d\\d .*?\\)','<timestamp>)','g')
+    from emaj.emaj_rollback_group('myGroup1','before move',false);
+rollback;
+begin;
+  select rlbk_severity, regexp_replace(rlbk_message,E'\\d\\d\\d\\d/\\d\\d\\/\\d\\d\\ \\d\\d\\:\\d\\d:\\d\\d .*?\\)','<timestamp>)','g')
+    from emaj.emaj_rollback_group('myGroup2','before move',false);
+rollback;
+begin;
+  select rlbk_severity, regexp_replace(rlbk_message,E'\\d\\d\\d\\d/\\d\\d\\/\\d\\d\\ \\d\\d\\:\\d\\d:\\d\\d .*?\\)','<timestamp>)','g')
+    from emaj.emaj_rollback_group('myGroup1','before move',true);
+rollback;
+begin;
+  select rlbk_severity, regexp_replace(rlbk_message,E'\\d\\d\\d\\d/\\d\\d\\/\\d\\d\\ \\d\\d\\:\\d\\d:\\d\\d .*?\\)','<timestamp>)','g')
+    from emaj.emaj_rollback_group('myGroup2','before move',true);
+rollback;
+
 select emaj.emaj_modify_table('myschema2', 'myTbl3', '{"log_data_tablespace":"tsplog1", "log_index_tablespace":"tsplog1", "priority":100}'::jsonb, 'modify table');
 select * from emaj.emaj_relation where rel_schema = 'myschema2' and (rel_tblseq = 'myTbl3' or rel_tblseq = 'myTbl3_col31_seq') order by 1,2,3,4;
 
