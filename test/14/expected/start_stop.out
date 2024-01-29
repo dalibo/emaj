@@ -250,7 +250,7 @@ select hist_function, hist_event, hist_object,
 -----------------+----------------+-------------+---------------------------------------------------------------------------------------------------------------------------------------------------------+-----------
  START_GROUP     | BEGIN          | myGroup1    | With log reset                                                                                                                                          | postgres
  START_GROUP     | TIME STAMP SET | 2002        |                                                                                                                                                         | postgres
- PURGE_HISTORIES |                |             | 328 emaj_hist rows deleted ; 3 log session rows deleted ; 7 group history rows deleted ; 39 relation history rows deleted ; 37 relation changes deleted | postgres
+ PURGE_HISTORIES |                |             | 328 emaj_hist rows deleted ; 3 log session rows deleted ; 9 group history rows deleted ; 39 relation history rows deleted ; 37 relation changes deleted | postgres
  LOCK_GROUP      | BEGIN          | myGroup1    |                                                                                                                                                         | postgres
  LOCK_GROUP      | END            | myGroup1    | 5 tables locked, 0 deadlock(s)                                                                                                                          | postgres
  SET_MARK_GROUP  | BEGIN          | myGroup1    | Mark1                                                                                                                                                   | postgres
@@ -376,9 +376,12 @@ select * from emaj.emaj_log_session order by lses_group, lses_time_range;
 select * from emaj.emaj_group_hist order by grph_group, grph_time_range;
     grph_group    | grph_time_range | grph_is_rollbackable | grph_log_sessions 
 ------------------+-----------------+----------------------+-------------------
+ emptyGroup       | [2000,)         | t                    |                 1
+ myGroup1         | [2000,)         | t                    |                 2
+ myGroup2         | [2000,)         | t                    |                 2
  myGroup4         | [1004,)         | t                    |                 0
  phil's group#3", | [1003,)         | f                    |                 1
-(2 rows)
+(5 rows)
 
 select mark_group, regexp_replace(mark_name,E'\\d\\d\.\\d\\d\\.\\d\\d\\.\\d\\d\\d\\d','%','g'), mark_time_id, mark_is_rlbk_protected, mark_comment, mark_log_rows_before_next, mark_logged_rlbk_target_mark
   from emaj.emaj_mark where mark_time_id >= 2000 order by mark_time_id, mark_group;
@@ -413,7 +416,7 @@ select hist_id, hist_function, hist_event, hist_object,
 ---------+-----------------+-------------------+-------------------+---------------------------------------------------------------------------------------------------------------------------------------------------------+-----------
     2046 | START_GROUP     | BEGIN             | myGroup1          | With log reset                                                                                                                                          | postgres
     2047 | START_GROUP     | TIME STAMP SET    | 2002              |                                                                                                                                                         | postgres
-    2048 | PURGE_HISTORIES |                   |                   | 328 emaj_hist rows deleted ; 3 log session rows deleted ; 7 group history rows deleted ; 39 relation history rows deleted ; 37 relation changes deleted | postgres
+    2048 | PURGE_HISTORIES |                   |                   | 328 emaj_hist rows deleted ; 3 log session rows deleted ; 9 group history rows deleted ; 39 relation history rows deleted ; 37 relation changes deleted | postgres
     2049 | LOCK_GROUP      | BEGIN             | myGroup1          |                                                                                                                                                         | postgres
     2050 | LOCK_GROUP      | END               | myGroup1          | 5 tables locked, 0 deadlock(s)                                                                                                                          | postgres
     2051 | SET_MARK_GROUP  | BEGIN             | myGroup1          | Mark1                                                                                                                                                   | postgres

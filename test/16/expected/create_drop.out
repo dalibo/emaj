@@ -1221,7 +1221,7 @@ CONTEXT:  PL/pgSQL function emaj._create_log_schemas(text) line 23 at RAISE
 SQL statement "SELECT emaj._create_log_schemas('IMPORT_GROUPS')"
 PL/pgSQL function emaj._import_groups_conf_alter(text[],text,bigint) line 14 at PERFORM
 SQL statement "SELECT emaj._import_groups_conf_alter(p_groups, p_mark, v_timeId)"
-PL/pgSQL function emaj._import_groups_conf_exec(json,text[],text) line 80 at PERFORM
+PL/pgSQL function emaj._import_groups_conf_exec(json,text[],text) line 82 at PERFORM
 PL/pgSQL function emaj._import_groups_conf(json,text[],boolean,text,text) line 81 at RETURN
 PL/pgSQL function emaj.emaj_import_groups_configuration(text,text[],boolean,text) line 28 at RETURN
 rollback;

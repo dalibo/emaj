@@ -6567,6 +6567,8 @@ $_import_groups_conf_exec$
                                      group_is_logging, group_is_rlbk_protected, group_nb_table, group_nb_sequence, group_comment)
           VALUES (r_group.groupJson ->> 'group', v_isRollbackable,
                                      FALSE, NOT v_isRollbackable, 0, 0, r_group.groupJson ->> 'comment');
+        INSERT INTO emaj.emaj_group_hist (grph_group, grph_time_range, grph_is_rollbackable, grph_log_sessions)
+          VALUES (r_group.groupJson ->> 'group', int8range(v_timeId, NULL, '[]'), v_isRollbackable, 0);
         INSERT INTO emaj.emaj_hist (hist_function, hist_event, hist_object, hist_wording)
           VALUES (v_function, 'GROUP CREATED', r_group.groupJson ->> 'group',
                   CASE WHEN v_isRollbackable THEN 'rollbackable' ELSE 'audit_only' END);

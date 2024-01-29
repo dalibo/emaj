@@ -593,7 +593,7 @@ SQL statement "SELECT emaj._repair_tbl(rel_schema, rel_tblseq, rel_group, group_
            ) AS t"
 PL/pgSQL function emaj._import_groups_conf_alter(text[],text,bigint) line 50 at PERFORM
 SQL statement "SELECT emaj._import_groups_conf_alter(p_groups, p_mark, v_timeId)"
-PL/pgSQL function emaj._import_groups_conf_exec(json,text[],text) line 80 at PERFORM
+PL/pgSQL function emaj._import_groups_conf_exec(json,text[],text) line 82 at PERFORM
 PL/pgSQL function emaj._import_groups_conf(json,text[],boolean,text,text) line 81 at RETURN
 PL/pgSQL function emaj.emaj_import_groups_configuration(json,text[],boolean,text) line 12 at RETURN
   rollback to savepoint sp1;
