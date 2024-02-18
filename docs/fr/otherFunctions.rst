@@ -44,7 +44,7 @@ Deux jeux de fonctions permettent de respectivement exporter et importer des jeu
 Export d’une configuration de paramètres
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Deux versions de la fonction *emaj_export_parameters_configuration()* exportent sous forme de structure JSON l’ensemble des paramètres de la configuration présents dans la table *emaj_param*, à l’exception du paramètre de clé *"emaj_version"*, lié à l’extension *emaj* elle-même et qui n’est pas à proprement parler un paramètre de configuration.
+Deux versions de la fonction *emaj_export_parameters_configuration()* exportent sous forme de structure JSON l’ensemble des paramètres de la configuration présents dans la table :ref:`emaj_param<emaj_param>`.
 
 On peut écrire dans un fichier les données de paramétrage par ::
 
@@ -74,7 +74,7 @@ Si le chemin du fichier n’est pas renseigné, la fonction retourne directement
 Import d’une configuration de paramètres
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Deux versions de la fonction *emaj_import_parameters_configuration()* importent des paramètres sous forme de structure JSON dans la table *emaj_param*.
+Deux versions de la fonction *emaj_import_parameters_configuration()* importent des paramètres sous forme de structure JSON dans la table :ref:`emaj_param<emaj_param>`.
 
 On peut lire dans un fichier des paramètres à charger par ::
 
@@ -97,8 +97,6 @@ Le fichier doit contenir une structure JSON ayant un attribut nommé *"parameter
 Si un paramètre n’a pas d’attribut *"value"* ou si cet attribut est valorisé à *NULL*, le paramètre n’est pas inséré dans la table *emaj_param*, et est supprimé s’il existait déjà dans la table. En conséquence, la valeur par défaut du paramètre sera utilisée par l’extension *emaj*.
 
 La fonction peut directement charger un fichier généré par la fonction *emaj_export_parameters_configuration()*.
-
-S’il est présent, le paramètre de clé *"emaj_version"* n’est pas traité.
 
 Le second paramètre, de type booléen, est optionnel. Il indique si l’ensemble de la configuration présente doit être supprimée avant le chargement. Par défaut, sa valeur *FALSE* indique que les clés présentes dans la table *emaj_param* mais absentes de la structure JSON sont conservées (chargement en mode différentiel). Si la valeur du second paramètre est positionnée à *TRUE*, la fonction effectue un remplacement complet de la configuration de paramétrage (chargement en mode complet).
 

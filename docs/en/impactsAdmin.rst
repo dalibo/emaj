@@ -38,7 +38,7 @@ After a file level restore, tables groups are in the very same state as at the s
 Logical saves and restores of entire database
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-To properly save and restore a database with E-Maj, using *pg_dump*, and *psql* or *pg_restore*, it is essential that both source and restored databases use the **same E-Maj version**. If this is not the case, the content of some technical tables may be not synchronised with their structure. Reading the row of key *'emaj_version'* in the *emaj.emaj_param* table may help in knowning the version of an E-Maj extension created in a database.
+To properly save and restore a database with E-Maj, using *pg_dump*, and *psql* or *pg_restore*, it is essential that both source and restored databases use the **same E-Maj version**. If this is not the case, the content of some technical tables may be not synchronised with their structure. Reading the *emaj_version_hist* table may help in knowning the current version of the *emaj* extension.
 
 Regarding stopped tables groups (in *IDLE* state), as log triggers are disabled and the content of related log tables is meaningless, there is no action required to find them in the same state as at save time.
 

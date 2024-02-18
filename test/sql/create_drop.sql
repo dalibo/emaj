@@ -311,6 +311,7 @@ select emaj.emaj_export_groups_configuration('/tmp/dummy/location/file');
 select emaj.emaj_export_groups_configuration(:'EMAJTESTTMPDIR' || '/orig_groups_config_all.json');
 select emaj.emaj_export_groups_configuration(:'EMAJTESTTMPDIR' || '/orig_groups_config_partial.json', array['myGroup1','myGroup2']);
 \! wc -l $EMAJTESTTMPDIR/*.json
+\! grep -v ', at ' $EMAJTESTTMPDIR/orig_groups_config_all.json
 
 -- direct import
 --   bad content

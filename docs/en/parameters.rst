@@ -21,11 +21,7 @@ The **emaj_param** table structure is the following:
 | param_value_interval | INTERVAL | parameter value, if its type is time interval (otherwise NULL) |
 +----------------------+----------+----------------------------------------------------------------+
 
-The E-Maj extension installation procedure inserts a single row into the *emaj_param* table. This row, that should not be modified, describes parameter:
-
-* **version** : (text) current E-Maj version.
-
-But the E-Maj administrator may insert other rows into the *emaj_param* table to change the default value of some parameters.
+Once the *emaj* extension is installed, the *emaj_param* table is empty, all parameters having their default value. But the E-Maj administrator may insert rows to set up other values for any parameter.
 
 Presented in alphabetic order, the existing key values are:
 

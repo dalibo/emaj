@@ -837,7 +837,6 @@ vacuum full emaj_myschema1.mytbl1_log;
 -- try forbiden actions on emaj_param
 -----------------------------
 truncate emaj.emaj_param;
-delete from emaj.emaj_param where param_key = 'emaj_version';
 
 -----------------------------
 -- emaj_export_parameters_configuration() and emaj_import_parameters_configuration() tests
@@ -852,13 +851,14 @@ select emaj.emaj_export_parameters_configuration('/tmp/dummy/location/file');
 --   ok
 select emaj.emaj_export_parameters_configuration(:'EMAJTESTTMPDIR' || '/orig_param_config');
 \! wc -l $EMAJTESTTMPDIR/orig_param_config
+\! grep -v ', at ' $EMAJTESTTMPDIR/orig_param_config
 
 -- direct import
 --   error
 --     no "parameters" array
 select emaj.emaj_import_parameters_configuration('{ "dummy_json": null }'::json);
 --     unknown attributes
-select emaj.emaj_import_parameters_configuration('{ "parameters": [ { "key": "emaj_version", "unknown_attribute_1": null, "unknown_attribute_2": null} ] }'::json);
+select emaj.emaj_import_parameters_configuration('{ "parameters": [ { "key": "history_retention", "unknown_attribute_1": null, "unknown_attribute_2": null} ] }'::json);
 --     missing or null "key" attributes
 select emaj.emaj_import_parameters_configuration('{ "parameters": [ { "value": "no_key"} ] }'::json);
 select emaj.emaj_import_parameters_configuration('{ "parameters": [ { "key": null} ] }'::json);

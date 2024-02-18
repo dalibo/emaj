@@ -31,6 +31,7 @@ set role emaj_regression_tests_viewer_user;
 -----------------------------
 -- authorized table or view accesses
 -----------------------------
+select 'select ok' as result from (select count(*) from emaj.emaj_version_hist) as t;
 select 'select ok' as result from (select count(*) from emaj.emaj_visible_param) as t;
 select 'select ok' as result from (select count(*) from emaj.emaj_hist) as t;
 select 'select ok' as result from (select count(*) from emaj.emaj_time_stamp) as t;
@@ -74,6 +75,7 @@ select emaj.emaj_gen_sql_dump_changes_group('myGroup1','Start','Start',NULL,NULL
 -----------------------------
 -- forbiden table accesses
 -----------------------------
+delete from emaj.emaj_version_hist;
 select count(*) from emaj.emaj_param;
 delete from emaj.emaj_param;
 delete from emaj.emaj_hist;

@@ -56,6 +56,23 @@ $$Contains all E-Maj related objects.$$;
 --                                            --
 ------------------------------------------------
 
+-- Table containing the history of all installed E-Maj versions.
+-- It is the very first created structure, in order to record the installation duration.
+CREATE TABLE emaj.emaj_version_hist (
+  verh_version                 TEXT        NOT NULL,       -- emaj version name
+  verh_time_range              TSTZRANGE   NOT NULL,       -- validity time stamps range (with inclusive bounds)
+                                                           --   the lower bound corresponds to the installation/upgrade end time or the
+                                                           --   latest database logical restore time
+  verh_install_duration        INTERVAL,                   -- installation or upgrade duration
+  verh_txid                    BIGINT
+                               DEFAULT txid_current(),     -- id of the transaction installing/upgrading the version
+  PRIMARY KEY (verh_version),
+  EXCLUDE USING gist (verh_version WITH =, verh_time_range WITH &&)
+  );
+INSERT INTO emaj.emaj_version_hist (verh_version, verh_time_range) VALUES ('<devel>', TSTZRANGE(clock_timestamp(), null, '[]'));
+COMMENT ON TABLE emaj.emaj_version_hist IS
+$$Contains E-Maj versions history.$$;
+
 -- Enum of the possible values for the rlchg_change_kind column of the emaj_relation_change table.
 CREATE TYPE emaj._relation_change_kind_enum AS ENUM (
   'REMOVE_TABLE',
@@ -624,9 +641,7 @@ $$Represents a generic notice, warning or error message structure that can be tr
 -- Parameters                     --
 --                                --
 ------------------------------------
-INSERT INTO emaj.emaj_param (param_key, param_value_text) VALUES ('emaj_version','<devel>');
-
--- Other parameters are optional. They may be set by E-Maj administrators if needed.
+-- All parameters are optional. They may be set by E-Maj administrators, if needed.
 
 -- The 'dblink_user_password' parameter defines the role and its associated password, if any, to establish a dblink
 -- connection for the monitoring of rollback operations.
@@ -671,17 +686,13 @@ CREATE VIEW emaj.emaj_visible_param WITH (security_barrier) AS
 ------------------------------------
 
 -- Triggers for changes and truncate on the emaj_param table.
--- It blocks any change of the 'emaj_version' parameter and traces other changes into the emaj_hist table, masking the
--- 'dblink_user_password' parameter value, if concerned.
+-- It traces changes into the emaj_hist table, masking the 'dblink_user_password' parameter value, if concerned.
+-- TRUNCATE verb are blocked to allow the tracing of deleted parameters.
 
 CREATE OR REPLACE FUNCTION emaj._emaj_param_change_fnct()
 RETURNS TRIGGER LANGUAGE plpgsql AS
 $_emaj_param_change_fnct$
   BEGIN
-    IF (TG_OP = 'DELETE' AND OLD.param_key = 'emaj_version') OR
-       ((TG_OP = 'UPDATE' OR TG_OP = 'INSERT') AND NEW.param_key = 'emaj_version') THEN
-      RAISE EXCEPTION '_emaj_param_change_fnct: modifying the emaj_version key is not allowed.';
-    END IF;
     IF TG_OP = 'DELETE' THEN
       INSERT INTO emaj.emaj_hist (hist_function, hist_event, hist_object)
         VALUES ('', 'DELETED PARAMETER', OLD.param_key);
@@ -703,7 +714,7 @@ $_emaj_param_change_fnct$
                 END);
       RETURN NEW;
     ELSIF TG_OP = 'TRUNCATE' THEN
-      RAISE EXCEPTION '_emaj_param_change_fnct: TRUNCATE the emaj_param table is not allowed.';
+      RAISE EXCEPTION '_emaj_param_change_fnct: TRUNCATE the emaj_param table is not allowed. Use DELETE instead.';
     END IF;
     RETURN NULL;
   END;
@@ -1366,7 +1377,7 @@ $_check_json_param_conf$
                 WHERE attr NOT IN ('key', 'value')
               ) AS t;
 -- Check the key is valid.
-        IF v_key NOT IN ('emaj_version', 'dblink_user_password', 'history_retention', 'alter_log_table',
+        IF v_key NOT IN ('dblink_user_password', 'history_retention', 'alter_log_table',
                          'avg_row_rollback_duration', 'avg_row_delete_log_duration', 'avg_fkey_check_duration',
                          'fixed_step_rollback_duration', 'fixed_table_rollback_duration', 'fixed_dblink_rollback_duration') THEN
           RETURN QUERY
@@ -5939,7 +5950,7 @@ $_export_groups_conf$
   BEGIN
 -- Build the header of the JSON structure.
     v_groupsText = E'{\n  "_comment": "Generated on database ' || current_database() || ' with emaj version ' ||
-                           (SELECT param_value_text FROM emaj.emaj_param WHERE param_key = 'emaj_version') ||
+                           (SELECT verh_version FROM emaj.emaj_version_hist WHERE upper_inf(verh_time_range)) ||
                            ', at ' || current_timestamp || E'",\n';
 -- Check the group names array, if supplied. All the listed groups must exist.
     IF p_groups IS NOT NULL THEN
@@ -12287,7 +12298,7 @@ $_export_param_conf$
   BEGIN
 -- Build the header of the JSON structure.
     v_params = E'{\n  "_comment": "Generated on database ' || current_database() || ' with emaj version ' ||
-                           (SELECT param_value_text FROM emaj.emaj_param WHERE param_key = 'emaj_version') ||
+                           (SELECT verh_version FROM emaj.emaj_version_hist WHERE upper_inf(verh_time_range)) ||
                            ', at ' || current_timestamp || E'",\n' ||
                E'  "_comment": "Known parameter keys: dblink_user_password, history_retention (default = 1 year), alter_log_table, '
                 'avg_row_rollback_duration (default = 00:00:00.0001), avg_row_delete_log_duration (default = 00:00:00.00001), '
@@ -12303,13 +12314,11 @@ $_export_param_conf$
                       to_json(param_value_numeric),
                       'null') as value
         FROM emaj.emaj_param
-             JOIN (VALUES (1::INT, 'emaj_version'), (2,'dblink_user_password'),
-                          (3, 'history_retention'), (4, 'alter_log_table'),
-                          (5, 'avg_row_rollback_duration'), (5, 'avg_row_delete_log_duration'),
-                          (7, 'avg_fkey_check_duration'), (8, 'fixed_step_rollback_duration'),
-                          (9, 'fixed_table_rollback_duration'), (10, 'fixed_dblink_rollback_duration')
+             JOIN (VALUES (1::INT, 'dblink_user_password'), (2, 'history_retention'), (3, 'alter_log_table'),
+                          (10, 'avg_row_rollback_duration'), (11, 'avg_row_delete_log_duration'),
+                          (12, 'avg_fkey_check_duration'), (13, 'fixed_step_rollback_duration'),
+                          (14, 'fixed_table_rollback_duration'), (15, 'fixed_dblink_rollback_duration')
                   ) AS p(rank,key) ON (p.key = param_key)
-        WHERE param_key <> 'emaj_version'
         ORDER BY rank
     LOOP
       v_params = v_params || E'    {\n'
@@ -12443,11 +12452,10 @@ $_import_param_conf$
     END IF;
 -- OK
     v_parameters = p_json #> '{"parameters"}';
--- If requested, delete the existing parameters, except the 'emaj_version'.
+-- If requested, delete the existing parameters.
 -- The trigger on emaj_param records the deletions into emaj_hist.
     IF p_deleteCurrentConf THEN
-      DELETE FROM emaj.emaj_param
-        WHERE param_key <> 'emaj_version';
+      DELETE FROM emaj.emaj_param;
     END IF;
 -- Process each parameter.
     v_nbParam = 0;
@@ -12458,29 +12466,26 @@ $_import_param_conf$
 -- Get each parameter from the list.
         v_key = r_param.param ->> 'key';
         v_value = r_param.param ->> 'value';
--- Exclude the 'emaj_version' entry that cannot be changed.
-        IF v_key <> 'emaj_version' THEN
-          v_nbParam = v_nbParam + 1;
+        v_nbParam = v_nbParam + 1;
 -- If there is no value to set, deleted the parameter, if it exists.
-          IF v_value IS NULL THEN
-            DELETE FROM emaj.emaj_param
-              WHERE param_key = v_key;
-          ELSE
+        IF v_value IS NULL THEN
+          DELETE FROM emaj.emaj_param
+            WHERE param_key = v_key;
+        ELSE
 -- Insert or update the parameter in the emaj_param table, selecting the right parameter value column type depending on the key.
-            IF v_key IN ('dblink_user_password', 'alter_log_table') THEN
-              INSERT INTO emaj.emaj_param (param_key, param_value_text)
-                VALUES (v_key, v_value)
-                ON CONFLICT (param_key) DO
-                  UPDATE SET param_value_text = v_value
-                    WHERE EXCLUDED.param_key = v_key;
-            ELSIF v_key IN ('history_retention', 'avg_row_rollback_duration', 'avg_row_delete_log_duration', 'avg_fkey_check_duration',
-                           'fixed_step_rollback_duration', 'fixed_table_rollback_duration', 'fixed_dblink_rollback_duration') THEN
-              INSERT INTO emaj.emaj_param (param_key, param_value_interval)
-                VALUES (v_key, v_value::INTERVAL)
-                ON CONFLICT (param_key) DO
-                  UPDATE SET param_value_interval = v_value::INTERVAL
-                    WHERE EXCLUDED.param_key = v_key;
-            END IF;
+          IF v_key IN ('dblink_user_password', 'alter_log_table') THEN
+            INSERT INTO emaj.emaj_param (param_key, param_value_text)
+              VALUES (v_key, v_value)
+              ON CONFLICT (param_key) DO
+                UPDATE SET param_value_text = v_value
+                  WHERE EXCLUDED.param_key = v_key;
+          ELSIF v_key IN ('history_retention', 'avg_row_rollback_duration', 'avg_row_delete_log_duration', 'avg_fkey_check_duration',
+                         'fixed_step_rollback_duration', 'fixed_table_rollback_duration', 'fixed_dblink_rollback_duration') THEN
+            INSERT INTO emaj.emaj_param (param_key, param_value_interval)
+              VALUES (v_key, v_value::INTERVAL)
+              ON CONFLICT (param_key) DO
+                UPDATE SET param_value_interval = v_value::INTERVAL
+                  WHERE EXCLUDED.param_key = v_key;
           END IF;
         END IF;
       END LOOP;
@@ -13658,7 +13663,8 @@ GRANT EXECUTE ON FUNCTION emaj.emaj_verify_all() TO emaj_viewer;
 --                                    --
 ----------------------------------------
 -- Register emaj tables content as candidate for pg_dump.
-SELECT pg_catalog.pg_extension_config_dump('emaj_param','WHERE param_key <> ''emaj_version''');
+SELECT pg_catalog.pg_extension_config_dump('emaj_version_hist','WHERE NOT upper_inf(verh_time_range)');
+SELECT pg_catalog.pg_extension_config_dump('emaj_param','');
 SELECT pg_catalog.pg_extension_config_dump('emaj_hist','WHERE hist_id > 1');
 SELECT pg_catalog.pg_extension_config_dump('emaj_time_stamp','');
 SELECT pg_catalog.pg_extension_config_dump('emaj_group','');
@@ -13683,11 +13689,6 @@ SELECT pg_catalog.pg_extension_config_dump('emaj.emaj_hist_hist_id_seq','');
 SELECT pg_catalog.pg_extension_config_dump('emaj.emaj_time_stamp_time_id_seq','');
 SELECT pg_catalog.pg_extension_config_dump('emaj.emaj_rlbk_rlbk_id_seq','');
 
--- Insert the INIT event into the operations history.
-INSERT INTO emaj.emaj_hist (hist_function, hist_object, hist_wording) VALUES ('EMAJ_INSTALL','E-Maj <devel>', 'Initialisation completed');
--- Insert the emaj schema into the emaj_schema table.
-INSERT INTO emaj.emaj_schema (sch_name) VALUES ('emaj');
-
 -- Set comments for all internal functions, by directly inserting a row in the pg_description table for all emaj functions that do not
 -- have yet a recorded comment.
 INSERT INTO pg_catalog.pg_description (objoid, classoid, objsubid, description)
@@ -13710,6 +13711,20 @@ INSERT INTO pg_catalog.pg_description (objoid, classoid, objsubid, description)
              AND (proname LIKE E'emaj\\_%' OR proname LIKE E'\\_%')
              AND pg_description.description IS NULL
         );
+
+-- Insert the emaj schema into the emaj_schema table.
+INSERT INTO emaj.emaj_schema (sch_name) VALUES ('emaj');
+-- Insert the INIT event into the operations history.
+INSERT INTO emaj.emaj_hist (hist_function, hist_object, hist_wording) VALUES ('EMAJ_INSTALL','E-Maj <devel>', 'Initialisation completed');
+-- Update the emaj_version_hist row to record the installation duration and shift the time range lower bound to the current time.
+WITH start_time_data AS (
+  SELECT clock_timestamp() - lower(verh_time_range) AS duration
+    FROM emaj.emaj_version_hist
+    LIMIT 1
+  )
+  UPDATE emaj.emaj_version_hist
+    SET verh_time_range = TSTZRANGE(clock_timestamp(), null, '[]'), verh_install_duration = duration
+    FROM start_time_data;
 
 -- Final checks and messages.
 DO LANGUAGE plpgsql

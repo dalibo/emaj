@@ -21,11 +21,7 @@ La structure de la table **emaj_param** est la suivante :
 | param_value_interval | INTERVAL | valeur du paramètre, s'il est de type intervalle (sinon NULL)  |
 +----------------------+----------+----------------------------------------------------------------+
 
-La procédure d'installation de l'extension E-Maj ne crée qu'une seule ligne dans la table *emaj_param*. Cette ligne, qui ne doit pas être modifiée, décrit le paramètre :
-
-* **version** : (texte) version courante d'E-Maj
-
-Mais l'administrateur d'E-Maj peut insérer d'autres lignes dans *emaj_param* pour modifier la valeur par défaut de certains paramètres.
+A l’issue de l’installation de l’extension, la table *emaj_param* est vide, les paramètres prenant leur valeur par défaut. Mais l'administrateur d'E-Maj peut y insérer des lignes pour donner des valeurs spécifiques à certains paramètres.
 
 Les valeurs de clé des paramètres sont, par ordre alphabétique :
 

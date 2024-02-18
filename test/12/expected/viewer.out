@@ -106,6 +106,12 @@ set role emaj_regression_tests_viewer_user;
 -----------------------------
 -- authorized table or view accesses
 -----------------------------
+select 'select ok' as result from (select count(*) from emaj.emaj_version_hist) as t;
+  result   
+-----------
+ select ok
+(1 row)
+
 select 'select ok' as result from (select count(*) from emaj.emaj_visible_param) as t;
   result   
 -----------
@@ -324,6 +330,8 @@ NOTICE:  table "emaj_temp_sql" does not exist, skipping
 -----------------------------
 -- forbiden table accesses
 -----------------------------
+delete from emaj.emaj_version_hist;
+ERROR:  permission denied for table emaj_version_hist
 select count(*) from emaj.emaj_param;
 ERROR:  permission denied for table emaj_param
 delete from emaj.emaj_param;

@@ -952,6 +952,198 @@ select emaj.emaj_export_groups_configuration(:'EMAJTESTTMPDIR' || '/orig_groups_
  192 /tmp/emaj_14/create_drop/orig_groups_config_all.json
  101 /tmp/emaj_14/create_drop/orig_groups_config_partial.json
  293 total
+\! grep -v ', at ' $EMAJTESTTMPDIR/orig_groups_config_all.json
+{
+  "tables_groups": [
+    {
+      "group": "emptyGroup",
+      "is_rollbackable": true,
+      "comment": "an empty group"
+    },
+    {
+      "group": "myGroup1",
+      "is_rollbackable": true,
+      "tables": [
+        {
+          "schema": "myschema1",
+          "table": "myTbl3",
+          "priority": 10,
+          "log_data_tablespace": "tsplog1"
+        },
+        {
+          "schema": "myschema1",
+          "table": "mytbl1",
+          "priority": 20
+        },
+        {
+          "schema": "myschema1",
+          "table": "mytbl2",
+          "log_data_tablespace": "tsplog1",
+          "log_index_tablespace": "tsplog1",
+          "ignored_triggers": ["mytbl2trg1","mytbl2trg2"]
+        },
+        {
+          "schema": "myschema1",
+          "table": "mytbl2b",
+          "log_data_tablespace": "tsp log'2",
+          "log_index_tablespace": "tsp log'2"
+        },
+        {
+          "schema": "myschema1",
+          "table": "mytbl4",
+          "priority": 20,
+          "log_data_tablespace": "tsplog1",
+          "log_index_tablespace": "tsp log'2"
+        }
+      ],
+      "sequences": [
+        {
+          "schema": "myschema1",
+          "sequence": "myTbl3_col31_seq"
+        },
+        {
+          "schema": "myschema1",
+          "sequence": "mytbl2b_col20_seq"
+        }
+      ]
+    },
+    {
+      "group": "myGroup2",
+      "is_rollbackable": true,
+      "tables": [
+        {
+          "schema": "myschema2",
+          "table": "myTbl3"
+        },
+        {
+          "schema": "myschema2",
+          "table": "mytbl1"
+        },
+        {
+          "schema": "myschema2",
+          "table": "mytbl2"
+        },
+        {
+          "schema": "myschema2",
+          "table": "mytbl4"
+        },
+        {
+          "schema": "myschema2",
+          "table": "mytbl5"
+        },
+        {
+          "schema": "myschema2",
+          "table": "mytbl6"
+        },
+        {
+          "schema": "myschema2",
+          "table": "mytbl7"
+        },
+        {
+          "schema": "myschema2",
+          "table": "mytbl8"
+        }
+      ],
+      "sequences": [
+        {
+          "schema": "myschema2",
+          "sequence": "myTbl3_col31_seq"
+        },
+        {
+          "schema": "myschema2",
+          "sequence": "myseq1"
+        }
+      ]
+    },
+    {
+      "group": "myGroup4",
+      "is_rollbackable": true,
+      "tables": [
+        {
+          "schema": "myschema4",
+          "table": "mypartp1"
+        },
+        {
+          "schema": "myschema4",
+          "table": "mypartp2"
+        },
+        {
+          "schema": "myschema4",
+          "table": "mytblc1"
+        },
+        {
+          "schema": "myschema4",
+          "table": "mytblc2"
+        },
+        {
+          "schema": "myschema4",
+          "table": "mytblm"
+        }
+      ]
+    },
+    {
+      "group": "myGroup5",
+      "is_rollbackable": false,
+      "tables": [
+        {
+          "schema": "myschema5",
+          "table": "myoidstbl"
+        },
+        {
+          "schema": "myschema5",
+          "table": "myunloggedtbl"
+        }
+      ]
+    },
+    {
+      "group": "myGroup6",
+      "is_rollbackable": true,
+      "tables": [
+        {
+          "schema": "myschema6",
+          "table": "table_with_50_characters_long_name_____0_________0"
+        },
+        {
+          "schema": "myschema6",
+          "table": "table_with_51_characters_long_name_____0_________0a"
+        },
+        {
+          "schema": "myschema6",
+          "table": "table_with_55_characters_long_name_____0_________0abcde"
+        },
+        {
+          "schema": "myschema6",
+          "table": "table_with_55_characters_long_name_____0_________0fghij"
+        }
+      ]
+    },
+    {
+      "group": "phil's group#3\\",",
+      "is_rollbackable": false,
+      "tables": [
+        {
+          "schema": "phil's schema3",
+          "table": "myTbl2\\\\"
+        },
+        {
+          "schema": "phil's schema3",
+          "table": "phil's tbl1"
+        }
+      ],
+      "sequences": [
+        {
+          "schema": "phil's schema3",
+          "sequence": "myTbl2\\\\_col21_seq"
+        },
+        {
+          "schema": "phil's schema3",
+          "sequence": "phil's seq\\\\1"
+        }
+      ]
+    }
+  ]
+}
+
 -- direct import
 --   bad content
 select * from emaj.emaj_import_groups_configuration('{ "dummy_json": null }'::json);

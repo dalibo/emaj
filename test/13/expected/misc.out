@@ -2727,11 +2727,8 @@ vacuum full emaj_myschema1.mytbl1_log;
 -- try forbiden actions on emaj_param
 -----------------------------
 truncate emaj.emaj_param;
-ERROR:  _emaj_param_change_fnct: TRUNCATE the emaj_param table is not allowed.
-CONTEXT:  PL/pgSQL function emaj._emaj_param_change_fnct() line 28 at RAISE
-delete from emaj.emaj_param where param_key = 'emaj_version';
-ERROR:  _emaj_param_change_fnct: modifying the emaj_version key is not allowed.
-CONTEXT:  PL/pgSQL function emaj._emaj_param_change_fnct() line 5 at RAISE
+ERROR:  _emaj_param_change_fnct: TRUNCATE the emaj_param table is not allowed. Use DELETE instead.
+CONTEXT:  PL/pgSQL function emaj._emaj_param_change_fnct() line 24 at RAISE
 -----------------------------
 -- emaj_export_parameters_configuration() and emaj_import_parameters_configuration() tests
 -----------------------------
@@ -2761,6 +2758,21 @@ select emaj.emaj_export_parameters_configuration(:'EMAJTESTTMPDIR' || '/orig_par
 
 \! wc -l $EMAJTESTTMPDIR/orig_param_config
 15 /tmp/emaj_13/misc/orig_param_config
+\! grep -v ', at ' $EMAJTESTTMPDIR/orig_param_config
+{
+  "_comment": "Known parameter keys: dblink_user_password, history_retention (default = 1 year), alter_log_table, avg_row_rollback_duration (default = 00:00:00.0001), avg_row_delete_log_duration (default = 00:00:00.00001), avg_fkey_check_duration (default = 00:00:00.00002), fixed_step_rollback_duration (default = 00:00:00.0025), fixed_table_rollback_duration (default = 00:00:00.001) and fixed_dblink_rollback_duration (default = 00:00:00.004).",
+  "parameters": [
+    {
+      "key": "dblink_user_password",
+      "value": "user=postgres password=postgres"
+    },
+    {
+      "key": "fixed_step_rollback_duration",
+      "value": "@ 0.0025 secs"
+    }
+  ]
+}
+
 -- direct import
 --   error
 --     no "parameters" array
@@ -2771,9 +2783,9 @@ CONTEXT:  PL/pgSQL function emaj._import_param_conf(json,boolean) line 32 at RAI
 SQL statement "SELECT emaj._import_param_conf(p_paramsJson, p_deleteCurrentConf)"
 PL/pgSQL function emaj.emaj_import_parameters_configuration(json,boolean) line 17 at SQL statement
 --     unknown attributes
-select emaj.emaj_import_parameters_configuration('{ "parameters": [ { "key": "emaj_version", "unknown_attribute_1": null, "unknown_attribute_2": null} ] }'::json);
-WARNING:  _import_param_conf : For the parameter "emaj_version", the attribute "unknown_attribute_1" is unknown.
-WARNING:  _import_param_conf : For the parameter "emaj_version", the attribute "unknown_attribute_2" is unknown.
+select emaj.emaj_import_parameters_configuration('{ "parameters": [ { "key": "history_retention", "unknown_attribute_1": null, "unknown_attribute_2": null} ] }'::json);
+WARNING:  _import_param_conf : For the parameter "history_retention", the attribute "unknown_attribute_1" is unknown.
+WARNING:  _import_param_conf : For the parameter "history_retention", the attribute "unknown_attribute_2" is unknown.
 ERROR:  _import_param_conf: One or several errors have been detected in the supplied JSON structure.
 CONTEXT:  PL/pgSQL function emaj._import_param_conf(json,boolean) line 32 at RAISE
 SQL statement "SELECT emaj._import_param_conf(p_paramsJson, p_deleteCurrentConf)"

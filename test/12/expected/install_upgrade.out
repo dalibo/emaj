@@ -616,14 +616,16 @@ select relname from pg_catalog.pg_class,
  emaj_table
  emaj_time_stamp
  emaj_time_stamp_time_id_seq
-(22 rows)
+ emaj_version_hist
+(23 rows)
 
--- check the emaj_param content
-SELECT param_value_text FROM emaj.emaj_param WHERE param_key = 'emaj_version';
- param_value_text 
-------------------
+-- check the emaj_version_hist content
+select verh_version from emaj.emaj_version_hist order by verh_time_range;
+ verh_version 
+--------------
+ 4.3.1
  <devel>
-(1 row)
+(2 rows)
 
 -- check the emaj environment, just after creation
 select emaj.emaj_verify_all();

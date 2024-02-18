@@ -68,6 +68,21 @@ SELECT emaj._disable_event_triggers();
 -- emaj enums, tables, views and sequences  --
 --                                          --
 ----------------------------------------------
+-- Table containing the history of all installed E-Maj versions.
+CREATE TABLE emaj.emaj_version_hist (
+  verh_version                 TEXT        NOT NULL,       -- emaj version name
+  verh_time_range              TSTZRANGE   NOT NULL,       -- validity time stamps range (with inclusive bounds)
+                                                           --   the lower bound corresponds to the installation/upgrade end time or the
+                                                           --   latest database logical restore time
+  verh_install_duration        INTERVAL,                   -- installation or upgrade duration
+  verh_txid                    BIGINT
+                               DEFAULT txid_current(),     -- id of the transaction installing/upgrading the version
+  PRIMARY KEY (verh_version),
+  EXCLUDE USING gist (verh_version WITH =, verh_time_range WITH &&)
+  );
+COMMENT ON TABLE emaj.emaj_version_hist IS
+$$Contains E-Maj versions history.$$;
+
 -- Table containing the groups history, i.e. the history of groups creations and drops.
 CREATE TABLE emaj.emaj_group_hist (
   grph_group                   TEXT        NOT NULL,       -- group name
@@ -104,20 +119,22 @@ ALTER TABLE emaj.emaj_time_stamp RENAME time_tx_id TO time_txid;
 --
 -- Create 3 materialized views and a temporary table to build timed events from the emaj_hist and emaj_time_stamp tables.
 -- This will be used to populate the emaj_log_session table, and adjust the emaj_time_stamp table.
+-- The first materialized view will also be used to populate the new emaj_version_hist table.
 --
 
 CREATE MATERIALIZED VIEW emaj.emaj_tmp_hist AS (
   SELECT *
     FROM emaj.emaj_hist
-    WHERE hist_function IN
-            ('CREATE_GROUP', 'DROP_GROUP', 'IMPORT_GROUPS',
-             'ASSIGN_TABLE', 'REMOVE_TABLE', 'MOVE_TABLE', 'MODIFY_TABLE',
-             'ASSIGN_TABLES', 'REMOVE_TABLES', 'MOVE_TABLES', 'MODIFY_TABLES',
-             'ASSIGN_SEQUENCE', 'REMOVE_SEQUENCE', 'MOVE_SEQUENCE',
-             'ASSIGN_SEQUENCES', 'REMOVE_SEQUENCES', 'MOVE_SEQUENCES',
-             'START_GROUP', 'STOP_GROUP', 'START_GROUPS', 'STOP_GROUPS',
-             'SET_MARK_GROUP', 'SET_MARK_GROUPS', 'ROLLBACK_GROUP', 'ROLLBACK_GROUPS')
-      AND hist_event IN ('BEGIN', 'END')
+    WHERE (hist_function IN
+             ('CREATE_GROUP', 'DROP_GROUP', 'IMPORT_GROUPS',
+              'ASSIGN_TABLE', 'REMOVE_TABLE', 'MOVE_TABLE', 'MODIFY_TABLE',
+              'ASSIGN_TABLES', 'REMOVE_TABLES', 'MOVE_TABLES', 'MODIFY_TABLES',
+              'ASSIGN_SEQUENCE', 'REMOVE_SEQUENCE', 'MOVE_SEQUENCE',
+              'ASSIGN_SEQUENCES', 'REMOVE_SEQUENCES', 'MOVE_SEQUENCES',
+              'START_GROUP', 'STOP_GROUP', 'START_GROUPS', 'STOP_GROUPS',
+              'SET_MARK_GROUP', 'SET_MARK_GROUPS', 'ROLLBACK_GROUP', 'ROLLBACK_GROUPS')
+            AND hist_event IN ('BEGIN', 'END'))
+       OR hist_function = 'EMAJ_INSTALL'
 );
 CREATE INDEX ON emaj.emaj_tmp_hist(hist_txid);
 
@@ -136,6 +153,7 @@ CREATE MATERIALIZED VIEW emaj.emaj_tmp_event AS (
       AND b.hist_event = 'BEGIN' AND e.hist_event = 'END'
       AND b.hist_txid = e.hist_txid
       AND e.hist_id > b.hist_id
+      AND b.hist_function <> 'EMAJ_INSTALL'
     GROUP BY 1,2,3,4
     ORDER BY b.hist_id
   );
@@ -455,6 +473,48 @@ $do$
   END;
 $do$;
 
+-- Populate emaj_log_session.
+DO
+$do$
+  DECLARE
+    v_version                TEXT;
+    v_startDatetime          TIMESTAMPTZ;
+    v_txid                   BIGINT;
+    r_hist                   RECORD;
+  BEGIN
+-- Scan the EMAJ_INSTALL events
+    FOR r_hist IN
+      SELECT hist_datetime, hist_event, substring(hist_object FROM 'E-Maj (.*)') AS version, hist_txid
+        FROM emaj.emaj_tmp_hist
+        WHERE hist_function = 'EMAJ_INSTALL'
+        ORDER BY hist_id
+      LOOP
+      CASE r_hist.hist_event
+        WHEN 'BEGIN' THEN
+-- This is a version upgrade start.
+          UPDATE emaj.emaj_version_hist
+            SET verh_time_range = TSTZRANGE(lower(verh_time_range), r_hist.hist_datetime, '[]')
+            WHERE upper_inf(verh_time_range);
+          v_startDatetime = r_hist.hist_datetime;
+          v_version = r_hist.version;
+          v_txid = r_hist.hist_txid;
+        WHEN 'END' THEN
+-- This is the version upgrade end.
+          IF r_hist.version <> v_version OR r_hist.hist_txid < v_txid then
+            RAISE EXCEPTION 'E-Maj upgrade: Internal error while populating the new emaj_veresion_hist table.';
+          ELSE
+            INSERT INTO emaj.emaj_version_hist VALUES
+              (r_hist.version, TSTZRANGE(r_hist.hist_datetime, NULL, '[]'), r_hist.hist_datetime - v_startDatetime, r_hist.hist_txid);
+          END IF;
+        ELSE
+-- This is an initial installation. (the initial installation duration will remain unknown)
+          INSERT INTO emaj.emaj_version_hist VALUES
+            (r_hist.version, TSTZRANGE(r_hist.hist_datetime, NULL, '[]'), NULL, r_hist.hist_txid);
+      END CASE;
+    END LOOP;
+  END;
+$do$;
+
 DROP TABLE emaj_tmp_timed_event;
 DROP MATERIALIZED VIEW emaj.emaj_tmp_event CASCADE;
 DROP MATERIALIZED VIEW emaj.emaj_tmp_time_stamp CASCADE;
@@ -478,6 +538,8 @@ ALTER TABLE emaj.emaj_relation_change DROP COLUMN rlchg_rlbk_id;
 --
 -- Add created or recreated tables and sequences to the list of content to save by pg_dump.
 --
+SELECT pg_catalog.pg_extension_config_dump('emaj_version_hist','WHERE NOT upper_inf(verh_time_range)');
+SELECT pg_catalog.pg_extension_config_dump('emaj_param','');
 SELECT pg_catalog.pg_extension_config_dump('emaj_group_hist','');
 SELECT pg_catalog.pg_extension_config_dump('emaj_log_session','');
 
@@ -512,6 +574,37 @@ DROP FUNCTION IF EXISTS emaj._detailed_log_stat_groups(P_GROUPNAMES TEXT[],P_MUL
 ------------------------------------------------------------------
 -- create new or modified functions                             --
 ------------------------------------------------------------------
+CREATE OR REPLACE FUNCTION emaj._emaj_param_change_fnct()
+RETURNS TRIGGER LANGUAGE plpgsql AS
+$_emaj_param_change_fnct$
+  BEGIN
+    IF TG_OP = 'DELETE' THEN
+      INSERT INTO emaj.emaj_hist (hist_function, hist_event, hist_object)
+        VALUES ('', 'DELETED PARAMETER', OLD.param_key);
+      RETURN OLD;
+    ELSIF TG_OP = 'UPDATE' THEN
+      INSERT INTO emaj.emaj_hist (hist_function, hist_event, hist_object, hist_wording)
+        VALUES ('', 'UPDATED PARAMETER', NEW.param_key,
+                CASE WHEN NEW.param_key = 'dblink_user_password' THEN '<masked data>'
+                     ELSE coalesce(NEW.param_value_text, NEW.param_value_numeric::TEXT,
+                          NEW.param_value_boolean::TEXT, NEW.param_value_interval::TEXT)
+                END);
+      RETURN NEW;
+    ELSIF TG_OP = 'INSERT' THEN
+      INSERT INTO emaj.emaj_hist (hist_function, hist_event, hist_object, hist_wording)
+        VALUES ('', 'INSERTED PARAMETER', NEW.param_key,
+                CASE WHEN NEW.param_key = 'dblink_user_password' THEN '<masked data>'
+                     ELSE coalesce(NEW.param_value_text, NEW.param_value_numeric::TEXT,
+                          NEW.param_value_boolean::TEXT, NEW.param_value_interval::TEXT)
+                END);
+      RETURN NEW;
+    ELSIF TG_OP = 'TRUNCATE' THEN
+      RAISE EXCEPTION '_emaj_param_change_fnct: TRUNCATE the emaj_param table is not allowed. Use DELETE instead.';
+    END IF;
+    RETURN NULL;
+  END;
+$_emaj_param_change_fnct$;
+
 CREATE OR REPLACE FUNCTION emaj._set_time_stamp(p_function TEXT, p_timeEvent CHAR(1))
 RETURNS BIGINT LANGUAGE SQL AS
 $$
@@ -530,6 +623,85 @@ WITH inserted_time_stamp AS (
   )
   SELECT time_id FROM inserted_time_stamp;
 $$;
+
+CREATE OR REPLACE FUNCTION emaj._check_json_param_conf(p_paramsJson JSON)
+RETURNS SETOF emaj._report_message_type LANGUAGE plpgsql AS
+$_check_json_param_conf$
+-- This function verifies that the JSON structure that contains a parameter configuration is correct.
+-- Any detected issue is reported as a message row. The caller defines what to do with them.
+-- It is called by the _import_param_conf() function.
+-- The function is also directly called by Emaj_web.
+-- This function checks that:
+--   - the "parameters" attribute exists
+--   - "key" attribute are defined and are known parameters
+--   - no unknow attribute are listed
+--   - parameters are not described several times
+-- Input: the JSON structure to check
+-- Output: set of error messages
+  DECLARE
+    v_parameters             JSON;
+    v_paramNumber            INT;
+    v_key                    TEXT;
+    r_param                  RECORD;
+  BEGIN
+-- Extract the "parameters" json path and check that the attribute exists.
+    v_parameters = p_paramsJson #> '{"parameters"}';
+    IF v_parameters IS NULL THEN
+      RETURN QUERY
+        VALUES (101, 1, NULL::TEXT, NULL::TEXT, NULL::TEXT, NULL::TEXT, NULL::INT,
+                'The JSON structure does not contain any "parameters" array.');
+    ELSE
+-- Check that all keywords of the "parameters" structure are valid.
+      v_paramNumber = 0;
+      FOR r_param IN
+        SELECT param
+          FROM json_array_elements(v_parameters) AS t(param)
+      LOOP
+        v_paramNumber = v_paramNumber + 1;
+-- Check the "key" attribute exists in the json structure.
+        v_key = r_param.param ->> 'key';
+        IF v_key IS NULL THEN
+          RETURN QUERY
+            VALUES (102, 1, NULL::TEXT, NULL::TEXT, NULL::TEXT, NULL::TEXT, v_paramNumber,
+                    format('The #%s parameter has no "key" attribute or a "key" set to null.',
+                           v_paramNumber::TEXT));
+        END IF;
+-- Check that the structure only contains "key" and "value" attributes.
+        RETURN QUERY
+          SELECT 103, 1, v_key, attr, NULL::TEXT, NULL::TEXT, NULL::INT,
+               format('For the parameter "%s", the attribute "%s" is unknown.',
+                      v_key, attr)
+            FROM (
+              SELECT attr
+                FROM json_object_keys(r_param.param) AS x(attr)
+                WHERE attr NOT IN ('key', 'value')
+              ) AS t;
+-- Check the key is valid.
+        IF v_key NOT IN ('dblink_user_password', 'history_retention', 'alter_log_table',
+                         'avg_row_rollback_duration', 'avg_row_delete_log_duration', 'avg_fkey_check_duration',
+                         'fixed_step_rollback_duration', 'fixed_table_rollback_duration', 'fixed_dblink_rollback_duration') THEN
+          RETURN QUERY
+            VALUES (104, 1, v_key, NULL::TEXT, NULL::TEXT, NULL::TEXT, NULL::INT,
+                 format('"%s" is not a known E-Maj parameter.',
+                        v_key));
+        END IF;
+      END LOOP;
+-- Check that parameters are not configured more than once in the JSON structure.
+      RETURN QUERY
+        SELECT 105, 1, "key", NULL::TEXT, NULL::TEXT, NULL::TEXT, NULL::INT,
+             format('The JSON structure references several times the parameter "%s".',
+                    "key")
+          FROM (
+            SELECT "key", count(*)
+              FROM json_to_recordset(v_parameters) AS x("key" TEXT)
+              GROUP BY "key"
+              HAVING count(*) > 1
+            ) AS t;
+    END IF;
+--
+    RETURN;
+  END;
+$_check_json_param_conf$;
 
 CREATE OR REPLACE FUNCTION emaj._check_mark_name(p_groupNames TEXT[], p_mark TEXT, p_checkActive BOOLEAN DEFAULT FALSE)
 RETURNS TEXT LANGUAGE plpgsql AS
@@ -2077,6 +2249,125 @@ $_drop_group$
     RETURN v_nbRel;
   END;
 $_drop_group$;
+
+CREATE OR REPLACE FUNCTION emaj._export_groups_conf(p_groups TEXT[] DEFAULT NULL)
+RETURNS JSON LANGUAGE plpgsql AS
+$_export_groups_conf$
+-- This function generates a JSON formatted structure representing the current configuration of some or all tables groups.
+-- Input: an optional array of goup's names, NULL means all tables groups
+-- Output: the tables groups configuration in JSON format
+  DECLARE
+    v_groupsText             TEXT;
+    v_unknownGroupsList      TEXT;
+    v_groupsJson             JSON;
+    r_group                  RECORD;
+    r_table                  RECORD;
+    r_sequence               RECORD;
+  BEGIN
+-- Build the header of the JSON structure.
+    v_groupsText = E'{\n  "_comment": "Generated on database ' || current_database() || ' with emaj version ' ||
+                           (SELECT verh_version FROM emaj.emaj_version_hist WHERE upper_inf(verh_time_range)) ||
+                           ', at ' || current_timestamp || E'",\n';
+-- Check the group names array, if supplied. All the listed groups must exist.
+    IF p_groups IS NOT NULL THEN
+      SELECT string_agg(group_name, ', ') INTO v_unknownGroupsList
+        FROM
+          (SELECT *
+             FROM unnest(p_groups) AS grp(group_name)
+             WHERE NOT EXISTS
+                    (SELECT group_name
+                       FROM emaj.emaj_group
+                       WHERE emaj_group.group_name = grp.group_name
+                    )
+          ) AS t;
+      IF v_unknownGroupsList IS NOT NULL THEN
+        RAISE EXCEPTION '_export_groups_conf: The tables groups % are unknown.', v_unknownGroupsList;
+      END IF;
+    END IF;
+-- Build the tables groups description.
+    v_groupsText = v_groupsText
+                || E'  "tables_groups": [\n';
+    FOR r_group IN
+      SELECT group_name, group_is_rollbackable, group_comment, group_nb_table, group_nb_sequence
+        FROM emaj.emaj_group
+        WHERE (p_groups IS NULL OR group_name = ANY(p_groups))
+        ORDER BY group_name
+    LOOP
+      v_groupsText = v_groupsText
+                  || E'    {\n'
+                  ||  '      "group": ' || to_json(r_group.group_name) || E',\n'
+                  ||  '      "is_rollbackable": ' || to_json(r_group.group_is_rollbackable) || E',\n';
+      IF r_group.group_comment IS NOT NULL THEN
+        v_groupsText = v_groupsText
+                  ||  '      "comment": ' || to_json(r_group.group_comment) || E',\n';
+      END IF;
+      IF r_group.group_nb_table > 0 THEN
+-- Build the tables list, if any.
+        v_groupsText = v_groupsText
+                    || E'      "tables": [\n';
+        FOR r_table IN
+          SELECT rel_schema, rel_tblseq, rel_priority, rel_log_dat_tsp, rel_log_idx_tsp, rel_ignored_triggers
+            FROM emaj.emaj_relation
+            WHERE rel_kind = 'r'
+              AND upper_inf(rel_time_range)
+              AND rel_group = r_group.group_name
+            ORDER BY rel_schema, rel_tblseq
+        LOOP
+          v_groupsText = v_groupsText
+                      || E'        {\n'
+                      ||  '          "schema": ' || to_json(r_table.rel_schema) || E',\n'
+                      ||  '          "table": ' || to_json(r_table.rel_tblseq) || E',\n'
+                      || coalesce('          "priority": '|| to_json(r_table.rel_priority) || E',\n', '')
+                      || coalesce('          "log_data_tablespace": '|| to_json(r_table.rel_log_dat_tsp) || E',\n', '')
+                      || coalesce('          "log_index_tablespace": '|| to_json(r_table.rel_log_idx_tsp) || E',\n', '')
+                      || coalesce('          "ignored_triggers": ' || array_to_json(r_table.rel_ignored_triggers) || E',\n', '')
+                      || E'        },\n';
+        END LOOP;
+        v_groupsText = v_groupsText
+                    || E'      ],\n';
+      END IF;
+      IF r_group.group_nb_sequence > 0 THEN
+-- Build the sequences list, if any.
+        v_groupsText = v_groupsText
+                    || E'      "sequences": [\n';
+        FOR r_sequence IN
+          SELECT rel_schema, rel_tblseq
+            FROM emaj.emaj_relation
+            WHERE rel_kind = 'S'
+              AND upper_inf(rel_time_range)
+              AND rel_group = r_group.group_name
+            ORDER BY rel_schema, rel_tblseq
+        LOOP
+          v_groupsText = v_groupsText
+                      || E'        {\n'
+                      ||  '          "schema": ' || to_json(r_sequence.rel_schema) || E',\n'
+                      ||  '          "sequence": ' || to_json(r_sequence.rel_tblseq) || E',\n'
+                      || E'        },\n';
+        END LOOP;
+        v_groupsText = v_groupsText
+                    || E'      ],\n';
+      END IF;
+      v_groupsText = v_groupsText
+                  || E'    },\n';
+    END LOOP;
+    v_groupsText = v_groupsText
+                || E'  ]\n';
+-- Build the trailer and remove illicite commas at the end of arrays and attributes lists.
+    v_groupsText = v_groupsText
+                || E'}\n';
+    v_groupsText = regexp_replace(v_groupsText, E',(\n *(\]|}))', '\1', 'g');
+-- Test the JSON format by casting the text structure to json and report a warning in case of problem
+-- (this should not fail, unless the function code is bogus).
+    BEGIN
+      v_groupsJson = v_groupsText::JSON;
+      EXCEPTION WHEN OTHERS THEN
+        RAISE EXCEPTION '_export_groups_conf: The generated JSON structure is not properly formatted. '
+                        'Please report the bug to the E-Maj project.';
+    END;
+--
+    RETURN v_groupsJson;
+  END;
+$_export_groups_conf$;
 
 CREATE OR REPLACE FUNCTION emaj._import_groups_conf_exec(p_json JSON, p_groups TEXT[], p_mark TEXT)
 RETURNS INT LANGUAGE plpgsql AS
@@ -4501,6 +4792,144 @@ $_purge_histories$
   END;
 $_purge_histories$;
 
+CREATE OR REPLACE FUNCTION emaj._export_param_conf()
+RETURNS JSON LANGUAGE plpgsql AS
+$_export_param_conf$
+-- This function generates a JSON formatted structure representing the parameters registered in the emaj_param table.
+-- All parameters are extracted, except the "emaj_version" key that is directly linked to the extension and thus is not updatable.
+-- The E-Maj version is already displayed in the generated comment at the beginning of the structure.
+-- Output: the parameters content in JSON format
+  DECLARE
+    v_params                 TEXT;
+    v_paramsJson             JSON;
+    r_param                  RECORD;
+  BEGIN
+-- Build the header of the JSON structure.
+    v_params = E'{\n  "_comment": "Generated on database ' || current_database() || ' with emaj version ' ||
+                           (SELECT verh_version FROM emaj.emaj_version_hist WHERE upper_inf(verh_time_range)) ||
+                           ', at ' || current_timestamp || E'",\n' ||
+               E'  "_comment": "Known parameter keys: dblink_user_password, history_retention (default = 1 year), alter_log_table, '
+                'avg_row_rollback_duration (default = 00:00:00.0001), avg_row_delete_log_duration (default = 00:00:00.00001), '
+                'avg_fkey_check_duration (default = 00:00:00.00002), fixed_step_rollback_duration (default = 00:00:00.0025), '
+                'fixed_table_rollback_duration (default = 00:00:00.001) and fixed_dblink_rollback_duration (default = 00:00:00.004).",\n';
+-- Build the parameters description.
+    v_params = v_params || E'  "parameters": [\n';
+    FOR r_param IN
+      SELECT param_key AS key,
+             coalesce(to_json(param_value_text),
+                      to_json(param_value_interval),
+                      to_json(param_value_boolean),
+                      to_json(param_value_numeric),
+                      'null') as value
+        FROM emaj.emaj_param
+             JOIN (VALUES (1::INT, 'dblink_user_password'), (2, 'history_retention'), (3, 'alter_log_table'),
+                          (10, 'avg_row_rollback_duration'), (11, 'avg_row_delete_log_duration'),
+                          (12, 'avg_fkey_check_duration'), (13, 'fixed_step_rollback_duration'),
+                          (14, 'fixed_table_rollback_duration'), (15, 'fixed_dblink_rollback_duration')
+                  ) AS p(rank,key) ON (p.key = param_key)
+        ORDER BY rank
+    LOOP
+      v_params = v_params || E'    {\n'
+                          ||  '      "key": ' || to_json(r_param.key) || E',\n'
+                          ||  '      "value": ' || r_param.value || E'\n'
+                          || E'    },\n';
+    END LOOP;
+    v_params = v_params || E'  ]\n';
+-- Build the trailer and remove illicite commas at the end of arrays and attributes lists.
+    v_params = v_params || E'}\n';
+    v_params = regexp_replace(v_params, E',(\n *(\]|}))', '\1', 'g');
+-- Test the JSON format by casting the text structure to json and report a warning in case of problem
+-- (this should not fail, unless the function code is bogus).
+    BEGIN
+      v_paramsJson = v_params::JSON;
+      EXCEPTION WHEN OTHERS THEN
+        RAISE EXCEPTION '_export_param_conf: The generated JSON structure is not properly formatted. '
+                        'Please report the bug to the E-Maj project.';
+    END;
+--
+    RETURN v_paramsJson;
+  END;
+$_export_param_conf$;
+
+CREATE OR REPLACE FUNCTION emaj._import_param_conf(p_json JSON, p_deleteCurrentConf BOOLEAN)
+RETURNS INT LANGUAGE plpgsql AS
+$_import_param_conf$
+-- This function processes a JSON formatted structure representing the E-Maj parameters to load.
+-- This structure can have been generated by the emaj_export_parameters_configuration() functions and may have been adapted by the user.
+-- The "emaj_version" parameter key is always left unchanged because it is a constant linked to the extension itself.
+-- The expected JSON structure must contain an array like:
+-- { "parameters": [
+--      { "key": "...", "value": "..." },
+--      { ... }
+--    ] }
+-- If the "value" attribute is missing or null, the parameter is removed from the emaj_param table, and the parameter will be set at
+--   its default value
+-- Input: - the parameter configuration structure in JSON format
+--        - an optional boolean indicating whether the current parameters configuration must be deleted before loading the new parameters
+-- Output: the number of inserted or updated parameter keys
+  DECLARE
+    v_parameters             JSON;
+    v_nbParam                INT;
+    v_key                    TEXT;
+    v_value                  TEXT;
+    r_msg                    RECORD;
+    r_param                  RECORD;
+  BEGIN
+-- Performs various checks on the parameters content described in the supplied JSON structure.
+    FOR r_msg IN
+      SELECT rpt_message
+        FROM emaj._check_json_param_conf(p_json)
+        ORDER BY rpt_msg_type, rpt_text_var_1, rpt_text_var_2, rpt_int_var_1
+    LOOP
+      RAISE WARNING '_import_param_conf : %', r_msg.rpt_message;
+    END LOOP;
+    IF FOUND THEN
+      RAISE EXCEPTION '_import_param_conf: One or several errors have been detected in the supplied JSON structure.';
+    END IF;
+-- OK
+    v_parameters = p_json #> '{"parameters"}';
+-- If requested, delete the existing parameters.
+-- The trigger on emaj_param records the deletions into emaj_hist.
+    IF p_deleteCurrentConf THEN
+      DELETE FROM emaj.emaj_param;
+    END IF;
+-- Process each parameter.
+    v_nbParam = 0;
+    FOR r_param IN
+        SELECT param
+          FROM json_array_elements(v_parameters) AS t(param)
+      LOOP
+-- Get each parameter from the list.
+        v_key = r_param.param ->> 'key';
+        v_value = r_param.param ->> 'value';
+        v_nbParam = v_nbParam + 1;
+-- If there is no value to set, deleted the parameter, if it exists.
+        IF v_value IS NULL THEN
+          DELETE FROM emaj.emaj_param
+            WHERE param_key = v_key;
+        ELSE
+-- Insert or update the parameter in the emaj_param table, selecting the right parameter value column type depending on the key.
+          IF v_key IN ('dblink_user_password', 'alter_log_table') THEN
+            INSERT INTO emaj.emaj_param (param_key, param_value_text)
+              VALUES (v_key, v_value)
+              ON CONFLICT (param_key) DO
+                UPDATE SET param_value_text = v_value
+                  WHERE EXCLUDED.param_key = v_key;
+          ELSIF v_key IN ('history_retention', 'avg_row_rollback_duration', 'avg_row_delete_log_duration', 'avg_fkey_check_duration',
+                         'fixed_step_rollback_duration', 'fixed_table_rollback_duration', 'fixed_dblink_rollback_duration') THEN
+            INSERT INTO emaj.emaj_param (param_key, param_value_interval)
+              VALUES (v_key, v_value::INTERVAL)
+              ON CONFLICT (param_key) DO
+                UPDATE SET param_value_interval = v_value::INTERVAL
+                  WHERE EXCLUDED.param_key = v_key;
+          END IF;
+        END IF;
+      END LOOP;
+--
+    RETURN v_nbParam;
+  END;
+$_import_param_conf$;
+
 --<end_functions>                                pattern used by the tool that extracts and insert the functions definition
 ------------------------------------------
 --                                      --
@@ -4570,12 +4999,29 @@ INSERT INTO pg_catalog.pg_description (objoid, classoid, objsubid, description)
             AND pg_description.description IS NULL
        );
 
--- Update the version id in the emaj_param table.
+-- Delete the version id in the emaj_param table.
 ALTER TABLE emaj.emaj_param DISABLE TRIGGER emaj_param_change_trg;
-UPDATE emaj.emaj_param SET param_value_text = '<devel>' WHERE param_key = 'emaj_version';
+DELETE FROM emaj.emaj_param WHERE param_key = 'emaj_version';
 ALTER TABLE emaj.emaj_param ENABLE TRIGGER emaj_param_change_trg;
 
--- Insert the upgrade end record in the operation history.
+-- Update the previous versions from emaj_version_hist and insert the new version into this same table.
+-- The upgrade start time (as recorded in emaj_hist) is used as upper time bound of the previous version.
+WITH start_time_data AS (
+  SELECT hist_datetime AS start_time, clock_timestamp() - hist_datetime AS duration
+    FROM emaj.emaj_hist
+    ORDER BY hist_id DESC
+    LIMIT 1
+  ), updated_versions AS (
+  UPDATE emaj.emaj_version_hist
+    SET verh_time_range = TSTZRANGE(lower(verh_time_range), start_time, '[]')
+    FROM start_time_data
+    WHERE upper_inf(verh_time_range)
+  )
+  INSERT INTO emaj.emaj_version_hist (verh_version, verh_time_range, verh_install_duration)
+    SELECT '<devel>', TSTZRANGE(clock_timestamp(), null, '[]'), duration
+      FROM start_time_data;
+
+-- Insert the upgrade end record into the emaj_hist table.
 INSERT INTO emaj.emaj_hist (hist_function, hist_event, hist_object, hist_wording)
   VALUES ('EMAJ_INSTALL','END','E-Maj <devel>', 'Upgrade from 4.3.1 completed');
 

@@ -53,12 +53,13 @@ select relname from pg_catalog.pg_class,
  emaj_table
  emaj_time_stamp
  emaj_time_stamp_time_id_seq
-(22 rows)
+ emaj_version_hist
+(23 rows)
 
--- check the emaj_param content
-SELECT param_value_text FROM emaj.emaj_param WHERE param_key = 'emaj_version';
- param_value_text 
-------------------
+-- check the emaj_version_hist content
+select verh_version from emaj.emaj_version_hist;
+ verh_version 
+--------------
  <devel>
 (1 row)
 
@@ -725,6 +726,30 @@ primary key, btree, for table "emaj.emaj_time_stamp"
 --------+-------+---------+---------------------+-----------+---------+-------
  bigint |     1 |       1 | 9223372036854775807 |         1 | no      |     1
 Sequence for identity column: emaj.emaj_time_stamp.time_id
+
+                      Table "emaj.emaj_version_hist"
+        Column         |   Type    | Collation | Nullable |    Default     
+-----------------------+-----------+-----------+----------+----------------
+ verh_version          | text      |           | not null | 
+ verh_time_range       | tstzrange |           | not null | 
+ verh_install_duration | interval  |           |          | 
+ verh_txid             | bigint    |           |          | txid_current()
+Indexes:
+    "emaj_version_hist_pkey" PRIMARY KEY, btree (verh_version)
+    "emaj_version_hist_verh_version_verh_time_range_excl" EXCLUDE USING gist (verh_version WITH =, verh_time_range WITH &&)
+
+    Index "emaj.emaj_version_hist_pkey"
+    Column    | Type | Key? |  Definition  
+--------------+------+------+--------------
+ verh_version | text | yes  | verh_version
+primary key, btree, for table "emaj.emaj_version_hist"
+
+Index "emaj.emaj_version_hist_verh_version_verh_time_range_excl"
+     Column      |     Type      | Key? |   Definition    
+-----------------+---------------+------+-----------------
+ verh_version    | gbtreekey_var | yes  | verh_version
+ verh_time_range | tstzrange     | yes  | verh_time_range
+gist, for table "emaj.emaj_version_hist"
 
                   View "emaj.emaj_visible_param"
         Column        |   Type   | Collation | Nullable | Default 

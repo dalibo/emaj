@@ -3,6 +3,8 @@ E-Maj - Change log
 \<devel\>
 ------
 ### Enhancements: ###
+  * Add an internal table that records emaj versions history, replacing the
+    'emaj_version' parameter.
   * Add an internal table that records group creations and drops.
   * Add an internal table that records log sessions, i.e. time ranges between
     start_group and stop_group operations.

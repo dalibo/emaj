@@ -17,6 +17,7 @@ set role emaj_regression_tests_adm_user1;
 -----------------------------
 -- authorized table accesses
 -----------------------------
+select 'select ok' as result from (select count(*) from emaj.emaj_version_hist) as t;
 select 'select ok' as result from (select count(*) from emaj.emaj_param) as t;
 select 'select ok' as result from (select count(*) from emaj.emaj_visible_param) as t;
 select 'select ok' as result from (select count(*) from emaj.emaj_time_stamp) as t;

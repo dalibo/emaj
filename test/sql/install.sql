@@ -23,8 +23,8 @@ select relname from pg_catalog.pg_class,
   where t.oid = pg_class.oid
   order by 1;
 
--- check the emaj_param content
-SELECT param_value_text FROM emaj.emaj_param WHERE param_key = 'emaj_version';
+-- check the emaj_version_hist content
+select verh_version from emaj.emaj_version_hist;
 
 -- check history
 select hist_id, hist_function, hist_event, hist_object, hist_wording, hist_user from emaj.emaj_hist order by hist_id;

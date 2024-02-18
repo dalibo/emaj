@@ -38,8 +38,8 @@ select relname from pg_catalog.pg_class,
   where t.oid = pg_class.oid
   order by 1;
 
--- check the emaj_param content
-SELECT param_value_text FROM emaj.emaj_param WHERE param_key = 'emaj_version';
+-- check the emaj_version_hist content
+select verh_version from emaj.emaj_version_hist order by verh_time_range;
 
 -- check the emaj environment, just after creation
 select emaj.emaj_verify_all();
