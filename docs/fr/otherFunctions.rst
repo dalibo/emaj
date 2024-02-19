@@ -1,6 +1,15 @@
 Autres fonctions
 ================
 
+.. _emaj_get_version:
+
+Obtenir la version courante de l’extension emaj
+-----------------------------------------------
+
+La fonction *emaj_get_version()* retourne l’identifiant de la version courante de l’extension *emaj*. ::
+
+   SELECT emaj.emaj_get_version();
+
 .. _emaj_verify_all:
 
 Vérification de la consistance de l'environnement E-Maj

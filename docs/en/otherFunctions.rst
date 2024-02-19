@@ -1,6 +1,15 @@
 Other functions
 ===============
 
+.. _emaj_get_version:
+
+Get the emaj extension current version
+--------------------------------------
+
+The *emaj_get_version()* function returns the current version identifier of the *emaj* extension. ::
+
+   SELECT emaj.emaj_get_version();
+
 .. _emaj_verify_all:
 
 Check the consistency of the E-Maj environment

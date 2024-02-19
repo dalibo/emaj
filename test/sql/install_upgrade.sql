@@ -40,6 +40,7 @@ select relname from pg_catalog.pg_class,
 
 -- check the emaj_version_hist content
 select verh_version from emaj.emaj_version_hist order by verh_time_range;
+select emaj.emaj_get_version();
 
 -- check the emaj environment, just after creation
 select emaj.emaj_verify_all();
@@ -49,7 +50,7 @@ select hist_id, hist_function, hist_event, hist_object, hist_wording, hist_user 
 delete from emaj.emaj_hist;
 
 -- reset function calls statistics (so the check.sql output is stable with all installation paths)
--- wait during half a second to let the statistics collector aggregate the latest stats (from the emaj_verify_all() function call)
+-- wait during half a second to let the statistics collector aggregate the latest stats
 select pg_sleep(0.5);
 with reset as (select funcid, pg_stat_reset_single_function_counters(funcid) from pg_stat_user_functions
                  where (funcname like E'emaj\\_%' or funcname like E'\\_%') )

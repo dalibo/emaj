@@ -343,6 +343,9 @@ Fonctions de niveau général
 | :ref:`emaj_get_consolidable_rollbacks            |                               | SETOF emaj_consolidable_rollback_type |
 | <emaj_get_consolidable_rollbacks>` (V)           |                               |                                       |
 +--------------------------------------------------+-------------------------------+---------------------------------------+
+| :ref:`emaj_get_version                           |                               | version TEXT                          |
+| <emaj_get_version>` (V)                          |                               |                                       |
++--------------------------------------------------+-------------------------------+---------------------------------------+
 | :ref:`emaj_import_groups_configuration           | | groupes JSON,               | nb.groupes INT                        |
 | <import_groups_conf>`                            | | [tableau.groupes TEXT[]],   |                                       |
 |                                                  | | [traiter.groupes.démarrés   |                                       |

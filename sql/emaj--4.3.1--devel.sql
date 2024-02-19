@@ -2266,8 +2266,7 @@ $_export_groups_conf$
   BEGIN
 -- Build the header of the JSON structure.
     v_groupsText = E'{\n  "_comment": "Generated on database ' || current_database() || ' with emaj version ' ||
-                           (SELECT verh_version FROM emaj.emaj_version_hist WHERE upper_inf(verh_time_range)) ||
-                           ', at ' || current_timestamp || E'",\n';
+                           emaj.emaj_get_version() || ', at ' || current_timestamp || E'",\n';
 -- Check the group names array, if supplied. All the listed groups must exist.
     IF p_groups IS NOT NULL THEN
       SELECT string_agg(group_name, ', ') INTO v_unknownGroupsList
@@ -4676,6 +4675,15 @@ $emaj_snap_group$;
 COMMENT ON FUNCTION emaj.emaj_snap_group(TEXT,TEXT,TEXT) IS
 $$Snaps all application tables and sequences of an E-Maj group into a given directory.$$;
 
+CREATE OR REPLACE FUNCTION emaj.emaj_get_version()
+RETURNS TEXT LANGUAGE SQL STABLE AS
+$$
+-- This function returns the current emaj extension version.
+SELECT verh_version FROM emaj.emaj_version_hist WHERE upper_inf(verh_time_range);
+$$;
+COMMENT ON FUNCTION emaj.emaj_get_version() IS
+$$Returns the current emaj version.$$;
+
 CREATE OR REPLACE FUNCTION emaj._purge_histories(p_retentionDelay INTERVAL DEFAULT NULL)
 RETURNS VOID LANGUAGE plpgsql AS
 $_purge_histories$
@@ -4806,8 +4814,7 @@ $_export_param_conf$
   BEGIN
 -- Build the header of the JSON structure.
     v_params = E'{\n  "_comment": "Generated on database ' || current_database() || ' with emaj version ' ||
-                           (SELECT verh_version FROM emaj.emaj_version_hist WHERE upper_inf(verh_time_range)) ||
-                           ', at ' || current_timestamp || E'",\n' ||
+                           emaj.emaj_get_version() || ', at ' || current_timestamp || E'",\n' ||
                E'  "_comment": "Known parameter keys: dblink_user_password, history_retention (default = 1 year), alter_log_table, '
                 'avg_row_rollback_duration (default = 00:00:00.0001), avg_row_delete_log_duration (default = 00:00:00.00001), '
                 'avg_fkey_check_duration (default = 00:00:00.00002), fixed_step_rollback_duration (default = 00:00:00.0025), '
@@ -4961,6 +4968,7 @@ GRANT EXECUTE ON FUNCTION emaj._check_marks_range(p_groupNames TEXT[], INOUT p_f
                           OUT p_firstMarkTimeId BIGINT, OUT p_lastMarkTimeId BIGINT,
                           OUT p_firstMarkTs TIMESTAMPTZ, OUT p_lastMarkTs TIMESTAMPTZ,
                           OUT p_firstMarkEmajGid BIGINT, OUT p_lastMarkEmajGid BIGINT) TO emaj_viewer;
+GRANT EXECUTE ON FUNCTION emaj.emaj_get_version() TO emaj_viewer;
 
 ------------------------------------
 --                                --

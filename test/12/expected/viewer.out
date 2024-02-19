@@ -223,6 +223,12 @@ select 'select ok' as result from (select count(*) from emaj_mySchema1.myTbl1_lo
 -----------------------------
 -- authorized functions
 -----------------------------
+select emaj.emaj_get_version();
+ emaj_get_version 
+------------------
+ <devel>
+(1 row)
+
 select * from emaj.emaj_get_current_log_table('myschema1', 'mytbl1');
    log_schema   | log_table  
 ----------------+------------

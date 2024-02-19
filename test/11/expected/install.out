@@ -63,6 +63,12 @@ select verh_version from emaj.emaj_version_hist;
  <devel>
 (1 row)
 
+select emaj.emaj_get_version();
+ emaj_get_version 
+------------------
+ <devel>
+(1 row)
+
 -- check history
 select hist_id, hist_function, hist_event, hist_object, hist_wording, hist_user from emaj.emaj_hist order by hist_id;
  hist_id | hist_function | hist_event |  hist_object  |       hist_wording       | hist_user 
@@ -761,6 +767,13 @@ gist, for table "emaj.emaj_version_hist"
  param_value_interval | interval |           |          | 
 
 -- reset function calls statistics (so the check.sql output is stable with all installation paths)
+-- wait during half a second to let the statistics collector aggregate the latest stats
+select pg_sleep(0.5);
+ pg_sleep 
+----------
+ 
+(1 row)
+
 with reset as (select funcid, pg_stat_reset_single_function_counters(funcid) from pg_stat_user_functions
                  where (funcname like E'emaj\\_%' or funcname like E'\\_%') )
   select * from reset where funcid is null;

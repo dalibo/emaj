@@ -25,8 +25,8 @@ $do$
     v_nbNoError              INT;
     v_nbWarning              INT;
   BEGIN
--- The emaj version registered in emaj_param must be '<PREVIOUS_VERSION>'.
-    SELECT verh_version INTO v_emajVersion FROM emaj.emaj_version_hist WHERE upper_inf(verh_time_range);
+-- The current emaj version must be '<PREVIOUS_VERSION>'.
+    SELECT emaj.emaj_get_version() INTO v_emajVersion;
     IF v_emajVersion <> '<PREVIOUS_VERSION>' THEN
       RAISE EXCEPTION 'E-Maj upgrade: the current E-Maj version (%) is not <PREVIOUS_VERSION>',v_emajVersion;
     END IF;

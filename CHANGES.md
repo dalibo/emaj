@@ -5,6 +5,8 @@ E-Maj - Change log
 ### Enhancements: ###
   * Add an internal table that records emaj versions history, replacing the
     'emaj_version' parameter.
+  * Create a new emaj_get_version() function that returns the current emaj
+    extension version.
   * Add an internal table that records group creations and drops.
   * Add an internal table that records log sessions, i.e. time ranges between
     start_group and stop_group operations.

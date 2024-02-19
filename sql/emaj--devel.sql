@@ -5950,8 +5950,7 @@ $_export_groups_conf$
   BEGIN
 -- Build the header of the JSON structure.
     v_groupsText = E'{\n  "_comment": "Generated on database ' || current_database() || ' with emaj version ' ||
-                           (SELECT verh_version FROM emaj.emaj_version_hist WHERE upper_inf(verh_time_range)) ||
-                           ', at ' || current_timestamp || E'",\n';
+                           emaj.emaj_get_version() || ', at ' || current_timestamp || E'",\n';
 -- Check the group names array, if supplied. All the listed groups must exist.
     IF p_groups IS NOT NULL THEN
       SELECT string_agg(group_name, ', ') INTO v_unknownGroupsList
@@ -12106,6 +12105,15 @@ $_gen_sql_groups$;
 -- Global purpose functions       --
 --                                --
 ------------------------------------
+CREATE OR REPLACE FUNCTION emaj.emaj_get_version()
+RETURNS TEXT LANGUAGE SQL STABLE AS
+$$
+-- This function returns the current emaj extension version.
+SELECT verh_version FROM emaj.emaj_version_hist WHERE upper_inf(verh_time_range);
+$$;
+COMMENT ON FUNCTION emaj.emaj_get_version() IS
+$$Returns the current emaj version.$$;
+
 CREATE OR REPLACE FUNCTION emaj.emaj_purge_histories(p_retentionDelay INTERVAL)
 RETURNS VOID LANGUAGE plpgsql AS
 $emaj_purge_histories$
@@ -12298,8 +12306,7 @@ $_export_param_conf$
   BEGIN
 -- Build the header of the JSON structure.
     v_params = E'{\n  "_comment": "Generated on database ' || current_database() || ' with emaj version ' ||
-                           (SELECT verh_version FROM emaj.emaj_version_hist WHERE upper_inf(verh_time_range)) ||
-                           ', at ' || current_timestamp || E'",\n' ||
+                           emaj.emaj_get_version() || ', at ' || current_timestamp || E'",\n' ||
                E'  "_comment": "Known parameter keys: dblink_user_password, history_retention (default = 1 year), alter_log_table, '
                 'avg_row_rollback_duration (default = 00:00:00.0001), avg_row_delete_log_duration (default = 00:00:00.00001), '
                 'avg_fkey_check_duration (default = 00:00:00.00002), fixed_step_rollback_duration (default = 00:00:00.0025), '
@@ -13639,6 +13646,7 @@ GRANT EXECUTE ON FUNCTION emaj.emaj_estimate_rollback_group(p_groupName TEXT, p_
 GRANT EXECUTE ON FUNCTION emaj.emaj_estimate_rollback_groups(p_groupNames TEXT[], p_mark TEXT, p_isLoggedRlbk BOOLEAN) TO emaj_viewer;
 GRANT EXECUTE ON FUNCTION emaj._estimate_rollback_groups(p_groupNames TEXT[], p_multiGroup BOOLEAN, p_mark TEXT, p_isLoggedRlbk BOOLEAN)
                           TO emaj_viewer;
+GRANT EXECUTE ON FUNCTION emaj.emaj_get_version() TO emaj_viewer;
 GRANT EXECUTE ON FUNCTION emaj.emaj_rollback_activity() TO emaj_viewer;
 GRANT EXECUTE ON FUNCTION emaj._rollback_activity() TO emaj_viewer;
 GRANT EXECUTE ON FUNCTION emaj.emaj_get_consolidable_rollbacks() TO emaj_viewer;

@@ -111,6 +111,12 @@ select verh_version from emaj.emaj_version_hist order by verh_time_range;
  <devel>
 (2 rows)
 
+select emaj.emaj_get_version();
+ emaj_get_version 
+------------------
+ <devel>
+(1 row)
+
 -- check tables list
 \d emaj*.*
         Composite type "emaj._report_message_type"
