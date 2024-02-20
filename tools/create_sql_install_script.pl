@@ -84,18 +84,15 @@ use warnings; use strict;
         print FICOT "--$line";
         next;
       }
-      if ($line =~/^INSERT INTO emaj\.emaj_hist/) {
-        $status++;
-      }
     }
 # Remove the comment setting for internal functions. This curiously fails in Amazon-RDS environment.
-    if ($status == 7 && $line =~ /^-- Set comments for all internal functions,/) {
+    if ($status == 6 && $line =~ /^-- Set comments for all internal functions,/) {
       for (my $i = 0; $i <= 22; $i++) { $line = <FICIN>; }
       $status++;
 	}
 
 # Add final checks and messages
-    if ($status == 8 && $line =~ /^-- Check the max_prepared_transactions/) {
+    if ($status == 7 && $line =~ /^-- Check the max_prepared_transactions/) {
       print FICOT "    RAISE NOTICE 'E-Maj installation: E-Maj successfully installed.';\n";
       print FICOT "-- Check that the role is superuser.\n";
       print FICOT "    PERFORM 0 FROM pg_catalog.pg_roles WHERE rolname = current_user AND rolsuper;\n";
@@ -111,7 +108,7 @@ use warnings; use strict;
 # Add a final COMMIT
   print FICOT "COMMIT;\n";
 
-  if ($status != 9) { die "Error while processing emaj--devel.sql: the status ($status) is expected to be 9."; }
+  if ($status != 8) { die "Error while processing emaj--devel.sql: the status ($status) is expected to be 8."; }
 
 # Close files
   close FICIN;
