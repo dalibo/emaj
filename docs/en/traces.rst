@@ -81,6 +81,8 @@ The *hist_function* column can take the following values:
 +----------------------------------+----------------------------------------------------------------------------+
 | FORCE_STOP_GROUP                 | tables group forced stop                                                   |
 +----------------------------------+----------------------------------------------------------------------------+
+| FORGET_GROUP                     | erase historical traces for a dropped tables group                         |
++----------------------------------+----------------------------------------------------------------------------+
 | GEN_SQL_GROUP                    | generation of a psql script to replay updates for a tables group           |
 +----------------------------------+----------------------------------------------------------------------------+
 | GEN_SQL_GROUPS                   | generation of a psql script to replay updates for several tables groups    |

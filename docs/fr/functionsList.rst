@@ -195,6 +195,9 @@ Fonctions de niveau groupe de tables
 | :ref:`emaj_force_stop_group                      | | groupe TEXT                 | nb.tables.et.seq INT                  |
 | <emaj_force_stop_group>`                         |                               |                                       |
 +--------------------------------------------------+-------------------------------+---------------------------------------+
+| :ref:`emaj_forget_group                          | | groupe TEXT                 | nb.traces.effacées INT                |
+| <emaj_forget_group>`                             |                               |                                       |
++--------------------------------------------------+-------------------------------+---------------------------------------+
 | :ref:`emaj_gen_sql_dump_changes_group            | | groupe TEXT,                | msg.nb.requêtes INT                   |
 | <emaj_gen_sql_dump_changes_group>`               | | marque.début TEXT,          |                                       |
 |                                                  | | marque.fin TEXT,            |                                       |

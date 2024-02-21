@@ -188,3 +188,16 @@ The function returns the number of imported tables groups.
 In a variation of the function, the first input parameter directly contains the JSON description of the groups to load::
 
    SELECT emaj_import_groups_configuration(<JSON.structure> [,<groups.names.array> [,<alter_started_groups> [,<mark>]]]);
+
+.. _emaj_forget_group:
+
+Erase traces from a tables group drop
+-------------------------------------
+
+When a tables group is dropped, data about its previous life (creations, drops, starts, stops) are retained into two historical tables, with the same retention as for other :doc:`historical data<traces>`. But when dropping a tables group that had been mistakenly created, it may be useful to erase this traces immediately to avoid a pollution of these histories. A dedicated function is available for this purpose::
+
+   SELECT emaj.emaj_forget_group('<group.name>');
+
+The tables group must not exist anymore.
+
+The function returns the number of deleted traces.

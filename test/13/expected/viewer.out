@@ -379,6 +379,8 @@ select emaj.emaj_drop_group('myGroup1');
 ERROR:  permission denied for function emaj_drop_group
 select emaj.emaj_force_drop_group('myGroup1');
 ERROR:  permission denied for function emaj_force_drop_group
+select emaj.emaj_forget_group('myGroup1');
+ERROR:  permission denied for function emaj_forget_group
 select emaj.emaj_export_groups_configuration();
 ERROR:  permission denied for function emaj_export_groups_configuration
 select emaj.emaj_import_groups_configuration('{}'::json);

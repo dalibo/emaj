@@ -196,6 +196,9 @@ Groups level functions
 | :ref:`emaj_force_stop_group                      | | group TEXT                  | #.tables.and.seq INT                  |
 | <emaj_force_stop_group>`                         |                               |                                       |
 +--------------------------------------------------+-------------------------------+---------------------------------------+
+| :ref:`emaj_forget_group                          | | group TEXT                  | #.erased.traces INT                   |
+| <emaj_forget_group>`                             |                               |                                       |
++--------------------------------------------------+-------------------------------+---------------------------------------+
 | :ref:`emaj_gen_sql_dump_changes_group            | | group TEXT,                 | msg.#.statements BIGINT               |
 | <emaj_gen_sql_dump_changes_group>` (V)           | | start.mark TEXT,            |                                       |
 |                                                  | | end.mark TEXT,              |                                       |

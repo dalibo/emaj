@@ -491,6 +491,16 @@ select emaj.emaj_start_group('myGroup1','');
 select emaj.emaj_force_drop_group('myGroup1');
 
 -----------------------------
+-- emaj_forget_group() tests
+-----------------------------
+-- not dropped group
+select emaj.emaj_forget_group('myGroup4');
+-- unknown group
+select emaj.emaj_forget_group('unknownGroup');
+-- should be OK
+select emaj.emaj_forget_group('myGroup1');
+
+-----------------------------
 -- test end: global check
 -----------------------------
 select nspname from pg_namespace where nspname like 'emaj%' order by nspname;

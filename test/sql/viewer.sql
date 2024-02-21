@@ -100,6 +100,7 @@ delete from emaj_mySchema1.myTbl1_log;
 select emaj.emaj_create_group('myGroup1');
 select emaj.emaj_drop_group('myGroup1');
 select emaj.emaj_force_drop_group('myGroup1');
+select emaj.emaj_forget_group('myGroup1');
 select emaj.emaj_export_groups_configuration();
 select emaj.emaj_import_groups_configuration('{}'::json);
 select emaj.emaj_start_group('myGroup1','mark');

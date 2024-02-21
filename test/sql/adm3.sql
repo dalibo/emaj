@@ -572,6 +572,7 @@ select emaj.emaj_get_previous_mark_group('dummyGroup', 'EMAJ_LAST_MARK');
 select emaj.emaj_estimate_rollback_groups(array['dummyGroup'], 'dummyMark', FALSE);
 select * from emaj.emaj_rollback_activity();
 select substr(pg_size_pretty(pg_database_size(current_database())),1,0);
+select emaj.emaj_forget_group('dummyGroup');
 
 --
 reset role;

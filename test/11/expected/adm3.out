@@ -3052,6 +3052,13 @@ select substr(pg_size_pretty(pg_database_size(current_database())),1,0);
  
 (1 row)
 
+select emaj.emaj_forget_group('dummyGroup');
+WARNING:  emaj_forget_group: the tables group "dummyGroup" has not been found in history tables
+ emaj_forget_group 
+-------------------
+                 0
+(1 row)
+
 --
 reset role;
 -- the groups are left in their current state for the parallel rollback test.

@@ -5900,6 +5900,52 @@ $_drop_group$
   END;
 $_drop_group$;
 
+CREATE OR REPLACE FUNCTION emaj.emaj_forget_group(p_groupName TEXT)
+RETURNS INT LANGUAGE plpgsql AS
+$emaj_forget_group$
+-- This function deletes all traces of a dropped group from emaj_group_hist and emaj_log_sessions tables.
+-- Input: group name
+-- Output: number of deleted rows
+  DECLARE
+    v_nbDeletedSession       INT = 0;
+    v_nbDeletedHistory       INT = 0;
+  BEGIN
+-- Insert a BEGIN event into the history.
+    INSERT INTO emaj.emaj_hist (hist_function, hist_event, hist_object)
+      VALUES ('FORGET_GROUP', 'BEGIN', p_groupName);
+-- Check that the group is not recorded in emaj_group table anymore
+    IF EXISTS
+         (SELECT 0
+            FROM emaj.emaj_group
+            WHERE group_name = p_groupName
+         ) THEN
+      RAISE EXCEPTION 'emaj_forget_group: The group "%" still exists.', p_groupName;
+    END IF;
+-- OK
+-- Delete rows from emaj_log_session.
+    DELETE FROM emaj.emaj_log_session
+      WHERE lses_group = p_groupName;
+    GET DIAGNOSTICS v_nbDeletedSession = ROW_COUNT;
+-- Delete rows from emaj_group_hist.
+    DELETE FROM emaj.emaj_group_hist
+      WHERE grph_group = p_groupName;
+    GET DIAGNOSTICS v_nbDeletedHistory = ROW_COUNT;
+-- Warn if the group has not been found in any history table.
+    IF v_nbDeletedSession + v_nbDeletedHistory = 0 THEN
+      RAISE WARNING 'emaj_forget_group: the tables group "%" has not been found in history tables', p_groupName;
+    END IF;
+-- Insert a END event into the history.
+    INSERT INTO emaj.emaj_hist (hist_function, hist_event, hist_object, hist_wording)
+      VALUES ('FORGET_GROUP', 'END', p_groupName,
+              v_nbDeletedSession || ' rows deleted from emaj_log_session and ' ||
+              v_nbDeletedHistory || ' rows deleted from emaj_group_hist');
+--
+    RETURN v_nbDeletedSession + v_nbDeletedHistory;
+  END;
+$emaj_forget_group$;
+COMMENT ON FUNCTION emaj.emaj_forget_group(TEXT) IS
+$$Removes traces of a dropped group from histories.$$;
+
 CREATE OR REPLACE FUNCTION emaj.emaj_export_groups_configuration(p_groups TEXT[] DEFAULT NULL)
 RETURNS JSON LANGUAGE plpgsql AS
 $emaj_export_groups_configuration$
@@ -13704,29 +13750,6 @@ GRANT EXECUTE ON FUNCTION emaj.emaj_verify_all() TO emaj_viewer;
 --SELECT pg_catalog.pg_extension_config_dump('emaj.emaj_time_stamp_time_id_seq','');
 --SELECT pg_catalog.pg_extension_config_dump('emaj.emaj_rlbk_rlbk_id_seq','');
 
--- Set comments for all internal functions, by directly inserting a row in the pg_description table for all emaj functions that do not
--- have yet a recorded comment.
-INSERT INTO pg_catalog.pg_description (objoid, classoid, objsubid, description)
-  SELECT pg_proc.oid, pg_class.oid, 0 , 'E-Maj internal function'
-    FROM pg_catalog.pg_proc
-         CROSS JOIN pg_catalog.pg_class
-    WHERE pg_class.relname = 'pg_proc'
-      AND pg_proc.oid IN               -- list all emaj functions that do not have yet a comment in pg_description
-        (SELECT pg_proc.oid
-           FROM pg_catalog.pg_proc
-                JOIN pg_catalog.pg_namespace ON (pg_namespace.oid = pronamespace)
-                LEFT OUTER JOIN pg_catalog.pg_description ON (pg_description.objoid = pg_proc.oid
-                                      AND classoid =
-                                           (SELECT oid
-                                              FROM pg_catalog.pg_class
-                                              WHERE relname = 'pg_proc'
-                                           )
-                                      AND objsubid = 0)
-           WHERE nspname = 'emaj'
-             AND (proname LIKE E'emaj\\_%' OR proname LIKE E'\\_%')
-             AND pg_description.description IS NULL
-        );
-
 -- Insert the emaj schema into the emaj_schema table.
 INSERT INTO emaj.emaj_schema (sch_name) VALUES ('emaj');
 -- Insert the INIT event into the operations history.
@@ -13747,6 +13770,12 @@ $do$
   DECLARE
     v_adminpackVersion       TEXT;
   BEGIN
+    RAISE NOTICE 'E-Maj installation: E-Maj successfully installed.';
+-- Check that the role is superuser.
+    PERFORM 0 FROM pg_catalog.pg_roles WHERE rolname = current_user AND rolsuper;
+    IF NOT FOUND THEN
+      RAISE WARNING 'E-Maj installation: The current user (%) is not a superuser. This may lead to permission issues when using E-Maj.', current_user;
+    END IF;
 -- Check the max_prepared_transactions GUC value and report a warning if its value is too low for parallel rollback.
     IF current_setting('max_prepared_transactions')::INT <= 1 THEN
       RAISE WARNING 'E-Maj installation: As the max_prepared_transactions parameter value (%) on this cluster is too low, no parallel'

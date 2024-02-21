@@ -187,3 +187,16 @@ La fonction retourne le nombre de groupes de tables importés.
 Dans une variante de la fonction, le premier paramètre en entrée contient directement la structure JSON des groupes de tables à charger ::
 
    SELECT emaj_import_groups_configuration('<structure.JSON>'[,<tableau.noms.groupes> [,<modifier.groupes.démarrés> [,<marque> ]]]);
+
+.. _emaj_forget_group:
+
+Effacer les traces de suppression d’un groupe de tables
+-------------------------------------------------------
+
+Lorsqu’un groupe de tables est supprimé, des données sur sa vie antérieure (créations, suppressions, démarrages et arrêts) sont conservées dans deux tables d’historiques, avec une même rétention que les autres :doc:`données historiques<traces>`. Mais en cas de suppression d’un groupe de tables qui a été créé par erreur, il peut s’avérer utile d’effacer immédiatement ces traces, afin de ne pas polluer ces historiques. Pour ce faire, une fonction spéciale est disponible ::
+
+   SELECT emaj.emaj_forget_group('<nom.du.groupe>');
+
+Le groupe de tables ne doit plus exister.
+
+La fonction retourne le nombre de traces supprimées.

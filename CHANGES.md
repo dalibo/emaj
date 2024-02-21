@@ -13,6 +13,8 @@ E-Maj - Change log
   * When computing log statistics or generating SQL statements for changes
     dump or replay, raise a warning if the requested marks range is not
     contained by a single log session.
+  * Create a new emaj_forget_group() function that removes rows about an old
+    dropped group from emaj_group_hist and emaj_log_session history tables.
   * Enforce the protection against E-Maj rollback operations crossing back
     tables group structure changes. The existing protection for the first
     rollback operation now concerns all subsequent operations crossing again 
