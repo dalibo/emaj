@@ -98,7 +98,7 @@ select funcname, calls from pg_stat_user_functions
  _change_log_index_tsp_tbl                 |     9
  _change_priority_tbl                      |    16
  _check_fk_groups                          |    91
- _check_group_names                        |  1150
+ _check_group_names                        |  1152
  _check_json_groups_conf                   |    43
  _check_json_param_conf                    |    15
  _check_json_table_properties              |    45

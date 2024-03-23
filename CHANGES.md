@@ -34,6 +34,9 @@ E-Maj - Change log
   * Fix the _gen_sql_dump_changes_tbl() function. Missing double quotes
     surround PK column names let the function fail when the consolidation level
     was PARTIAL or FULL.
+  * Fix a bug in the dynamic groups management. When moving or removing tables
+    or sequences from their tables group, add a check that table names are
+    really tables and sequence names are really sequences.
 
 4.3.1 (2023-Nov-1)
 ------

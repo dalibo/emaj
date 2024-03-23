@@ -2535,11 +2535,12 @@ $_remove_tables$
 -- Check that the tables currently belong to a tables group (not necessarily the same for all tables).
       WITH all_supplied_tables AS (
         SELECT unnest(p_tables) AS table_name),
-           tables_in_group AS (
+           tables_in_groups AS (
         SELECT rel_tblseq
           FROM emaj.emaj_relation
           WHERE rel_schema = p_schema
             AND rel_tblseq = ANY(p_tables)
+            AND rel_kind = 'r'
             AND upper_inf(rel_time_range)
                               )
       SELECT string_agg(quote_ident(p_schema) || '.' || quote_ident(table_name), ', ') INTO v_list
@@ -2547,7 +2548,7 @@ $_remove_tables$
           (  SELECT table_name
                FROM all_supplied_tables
            EXCEPT
-             SELECT rel_tblseq FROM tables_in_group
+             SELECT rel_tblseq FROM tables_in_groups
           ) AS t;
       IF v_list IS NOT NULL THEN
         RAISE EXCEPTION '_remove_tables: some tables (%) do not currently belong to any tables group.', v_list;
@@ -2751,6 +2752,7 @@ $_move_tables$
           FROM emaj.emaj_relation
           WHERE rel_schema = p_schema
             AND rel_tblseq = ANY(p_tables)
+            AND rel_kind = 'r'
             AND upper_inf(rel_time_range)
         )
       SELECT string_agg(quote_ident(p_schema) || '.' || quote_ident(table_name), ', ' ORDER BY table_name) INTO v_list
@@ -2969,6 +2971,7 @@ $_modify_tables$
           FROM emaj.emaj_relation
           WHERE rel_schema = p_schema
             AND rel_tblseq = ANY(p_tables)
+            AND rel_kind = 'r'
             AND upper_inf(rel_time_range))
       SELECT string_agg(quote_ident(p_schema) || '.' || quote_ident(table_name), ', ') INTO v_list
         FROM
@@ -4299,11 +4302,12 @@ $_remove_sequences$
       WITH all_supplied_sequences AS
         (SELECT unnest(p_sequences) AS sequence_name
         ),
-           sequences_in_group AS
+           sequences_in_groups AS
         (SELECT rel_tblseq
            FROM emaj.emaj_relation
            WHERE rel_schema = p_schema
              AND rel_tblseq = ANY(p_sequences)
+             AND rel_kind = 'S'
              AND upper_inf(rel_time_range)
         )
       SELECT string_agg(quote_ident(p_schema) || '.' || quote_ident(sequence_name), ', ') INTO v_list
@@ -4312,7 +4316,7 @@ $_remove_sequences$
                FROM all_supplied_sequences
            EXCEPT
              SELECT rel_tblseq
-               FROM sequences_in_group
+               FROM sequences_in_groups
           ) AS t;
       IF v_list IS NOT NULL THEN
         RAISE EXCEPTION '_remove_sequences: some sequences (%) do not currently belong to any tables group.', v_list;
@@ -4500,6 +4504,7 @@ $_move_sequences$
            FROM emaj.emaj_relation
            WHERE rel_schema = p_schema
              AND rel_tblseq = ANY(p_sequences)
+             AND rel_kind = 'S'
              AND upper_inf(rel_time_range)
         )
       SELECT string_agg(quote_ident(p_schema) || '.' || quote_ident(sequence_name), ', ' ORDER BY sequence_name) INTO v_list

@@ -1432,7 +1432,7 @@ SQL statement "SELECT coalesce(sum(emaj._log_stat_tbl(emaj_relation, greatest(v_
             AND upper_inf(rel_time_range)"
 PL/pgSQL function emaj._set_mark_groups(text[],text,boolean,boolean,text,bigint,text) line 74 at SQL statement
 SQL statement "SELECT emaj._set_mark_groups(v_loggingGroups, v_markName, FALSE, TRUE, NULL, v_timeId)"
-PL/pgSQL function emaj._remove_tables(text,text[],text,boolean,boolean) line 85 at PERFORM
+PL/pgSQL function emaj._remove_tables(text,text[],text,boolean,boolean) line 86 at PERFORM
 PL/pgSQL function emaj.emaj_remove_table(text,text,text) line 6 at RETURN
 select emaj.emaj_force_stop_group('grp_tmp');
  emaj_force_stop_group 

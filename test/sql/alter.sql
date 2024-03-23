@@ -43,6 +43,8 @@ RESET client_min_messages;
 -- table not in a group
 select emaj.emaj_remove_table('dummySchema','mytbl1');
 select emaj.emaj_remove_table('myschema1','dummyTable');
+-- bad relation kind
+select emaj.emaj_remove_table('myschema1','mytbl2b_col20_seq');
 -- bad mark
 select emaj.emaj_remove_table('myschema1','mytbl1','EMAJ_LAST_MARK');
 
@@ -84,6 +86,8 @@ select group_last_alter_time_id, group_nb_table, group_nb_sequence from emaj.ema
 -- sequence not in a group
 select emaj.emaj_remove_sequence('dummySchema','myseq1');
 select emaj.emaj_remove_sequence('myschema2','dummySequence');
+-- bad relation kind
+select emaj.emaj_remove_sequence('myschema2','mytbl1');
 -- bad mark
 select emaj.emaj_remove_sequence('myschema2','myseq1','EMAJ_LAST_MARK');
 
@@ -145,6 +149,8 @@ select public.handle_emaj_sequences(8200);
 -- table not in a group
 select emaj.emaj_move_table('dummySchema','mytbl1','myGroup2');
 select emaj.emaj_move_table('myschema1','dummyTable','myGroup2');
+-- bad relation kind
+select emaj.emaj_move_table('myschema1','mytbl2b_col20_seq','myGroup2');
 -- bad new group
 select emaj.emaj_move_table('myschema1','mytbl1','dummyGroup');
 -- bad mark
@@ -212,6 +218,8 @@ select group_last_alter_time_id, group_nb_table, group_nb_sequence from emaj.ema
 -- sequence not in a group
 select emaj.emaj_move_sequence('dummySchema','myseq1','myGroup1');
 select emaj.emaj_move_sequence('myschema2','dummySequence','myGroup1');
+-- bad relation kind
+select emaj.emaj_move_sequence('myschema2','mytbl1','myGroup1');
 -- bad new group
 select emaj.emaj_move_sequence('myschema2','myseq1','dummyGroup');
 -- bad mark
@@ -282,6 +290,8 @@ select public.handle_emaj_sequences(8400);
 -- table not in a group
 select emaj.emaj_modify_table('dummySchema','mytbl1',null);
 select emaj.emaj_modify_table('myschema1','dummyTable',null);
+-- bad relation kind
+select emaj.emaj_modify_table('myschema1','mytbl2b_col20_seq',null);
 
 -- invalid priority
 select emaj.emaj_modify_table('myschema1','mytbl1','{"priority":"not_numeric"}'::jsonb);

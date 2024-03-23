@@ -155,7 +155,7 @@ CONTEXT:  PL/pgSQL function emaj._assign_tables(text,text[],text,jsonb,text,bool
 PL/pgSQL function emaj.emaj_assign_table(text,text,text,jsonb,text) line 7 at RETURN
 select emaj.emaj_remove_table('myschema4','mytblp');
 ERROR:  _remove_tables: some tables (myschema4.mytblp) do not currently belong to any tables group.
-CONTEXT:  PL/pgSQL function emaj._remove_tables(text,text[],text,boolean,boolean) line 49 at RAISE
+CONTEXT:  PL/pgSQL function emaj._remove_tables(text,text[],text,boolean,boolean) line 50 at RAISE
 PL/pgSQL function emaj.emaj_remove_table(text,text,text) line 6 at RETURN
 -- temp table
 begin;
