@@ -174,6 +174,11 @@ select emaj.emaj_remove_tables('myschema1',array['mytbl2','mytbl2b','mytbl2']);
 -----------------------------------
 -- emaj_remove_tables with filters
 -----------------------------------
+-- bad schema
+select emaj.emaj_remove_tables('dummySchema',null,null);
+ERROR:  _build_tblseqs_array_from_regexp: The schema "dummySchema" does not exist.
+CONTEXT:  PL/pgSQL function emaj._build_tblseqs_array_from_regexp(text,text,text,text) line 14 at RAISE
+PL/pgSQL function emaj.emaj_remove_tables(text,text,text,text) line 9 at assignment
 -- empty tables array
 select emaj.emaj_remove_tables('myschema1',null,null);
 WARNING:  _remove_tables: No table to process.
@@ -288,6 +293,11 @@ select emaj.emaj_remove_sequences('myschema2',array['myseq2','myseq2']);
 -----------------------------------
 -- emaj_remove_sequences with filters
 -----------------------------------
+-- bad schema
+select emaj.emaj_remove_sequences('dummySchema',null,null);
+ERROR:  _build_tblseqs_array_from_regexp: The schema "dummySchema" does not exist.
+CONTEXT:  PL/pgSQL function emaj._build_tblseqs_array_from_regexp(text,text,text,text) line 14 at RAISE
+PL/pgSQL function emaj.emaj_remove_sequences(text,text,text,text) line 9 at assignment
 -- empty tables array
 select emaj.emaj_remove_sequences('myschema2',null,null);
 WARNING:  _remove_sequences: No sequence to process.
@@ -634,18 +644,18 @@ select emaj.emaj_move_table('myschema1','mytbl1','myGroup2','EMAJ_LAST_MARK');
 ERROR:  _check_new_mark: "EMAJ_LAST_MARK" is not an allowed name for a new mark.
 CONTEXT:  PL/pgSQL function emaj._check_new_mark(text[],text) line 14 at RAISE
 SQL statement "SELECT emaj._check_new_mark(v_loggingGroups, p_mark)"
-PL/pgSQL function emaj._move_tables(text,text[],text,text,boolean,boolean) line 100 at SQL statement
+PL/pgSQL function emaj._move_tables(text,text[],text,text,boolean,boolean) line 103 at SQL statement
 PL/pgSQL function emaj.emaj_move_table(text,text,text,text) line 6 at RETURN
 -- bad table type for target rollbackable group
 select emaj.emaj_move_table('myschema5', 'myunloggedtbl', 'myGroup1');
 ERROR:  _move_tables: In schema myschema5, some tables (myunloggedtbl) are UNLOGGED tables.
 CONTEXT:  PL/pgSQL function emaj._check_tables_for_rollbackable_group(text,text[],boolean,text) line 49 at RAISE
-PL/pgSQL function emaj._move_tables(text,text[],text,text,boolean,boolean) line 97 at assignment
+PL/pgSQL function emaj._move_tables(text,text[],text,text,boolean,boolean) line 100 at assignment
 PL/pgSQL function emaj.emaj_move_table(text,text,text,text) line 6 at RETURN
 select emaj.emaj_move_table('phil''s schema3', 'myTbl2\', 'myGroup1');
 ERROR:  _move_tables: In schema "phil's schema3", some tables ("myTbl2\") have no PRIMARY KEY.
 CONTEXT:  PL/pgSQL function emaj._check_tables_for_rollbackable_group(text,text[],boolean,text) line 27 at RAISE
-PL/pgSQL function emaj._move_tables(text,text[],text,text,boolean,boolean) line 97 at assignment
+PL/pgSQL function emaj._move_tables(text,text[],text,text,boolean,boolean) line 100 at assignment
 PL/pgSQL function emaj.emaj_move_table(text,text,text,text) line 6 at RETURN
 -- move to the same group
 select emaj.emaj_move_table('myschema1','mytbl1','myGroup1');
@@ -698,7 +708,7 @@ WARNING:  _move_tables: No table to process.
 select emaj.emaj_move_tables('myschema5', array['myunloggedtbl'], 'myGroup1');
 ERROR:  _move_tables: In schema myschema5, some tables (myunloggedtbl) are UNLOGGED tables.
 CONTEXT:  PL/pgSQL function emaj._check_tables_for_rollbackable_group(text,text[],boolean,text) line 49 at RAISE
-PL/pgSQL function emaj._move_tables(text,text[],text,text,boolean,boolean) line 97 at assignment
+PL/pgSQL function emaj._move_tables(text,text[],text,text,boolean,boolean) line 100 at assignment
 PL/pgSQL function emaj.emaj_move_tables(text,text[],text,text) line 6 at RETURN
 -- move to the same group
 select emaj.emaj_move_tables('myschema1',array['mytbl2','mytbl2b'],'myGroup1');
@@ -832,7 +842,7 @@ select emaj.emaj_move_sequence('myschema2','myseq1','myGroup1','EMAJ_LAST_MARK')
 ERROR:  _check_new_mark: "EMAJ_LAST_MARK" is not an allowed name for a new mark.
 CONTEXT:  PL/pgSQL function emaj._check_new_mark(text[],text) line 14 at RAISE
 SQL statement "SELECT emaj._check_new_mark(v_loggingGroups, p_mark)"
-PL/pgSQL function emaj._move_sequences(text,text[],text,text,boolean,boolean) line 95 at SQL statement
+PL/pgSQL function emaj._move_sequences(text,text[],text,text,boolean,boolean) line 97 at SQL statement
 PL/pgSQL function emaj.emaj_move_sequence(text,text,text,text) line 6 at RETURN
 -- move to the same group
 select emaj.emaj_move_sequence('myschema2','myseq1','myGroup2');
@@ -917,21 +927,21 @@ select rel_schema, rel_tblseq, rel_group from emaj.emaj_relation
 -- emaj_move_sequences with filters
 -----------------------------------
 -- empty sequences array
-select emaj.emaj_move_sequences('myschema21',null,null,'myGroup2');
+select emaj.emaj_move_sequences('myschema2',null,null,'myGroup2');
 WARNING:  _move_sequences: No sequence to process.
  emaj_move_sequences 
 ---------------------
                    0
 (1 row)
 
-select emaj.emaj_move_sequences('myschema21','','','myGroup2');
+select emaj.emaj_move_sequences('myschema2','','','myGroup2');
 WARNING:  _move_sequences: No sequence to process.
  emaj_move_sequences 
 ---------------------
                    0
 (1 row)
 
-select emaj.emaj_move_sequences('myschema21','myseq1','myseq1','myGroup2');
+select emaj.emaj_move_sequences('myschema2','myseq1','myseq1','myGroup2');
 WARNING:  _move_sequences: No sequence to process.
  emaj_move_sequences 
 ---------------------

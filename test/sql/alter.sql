@@ -68,6 +68,9 @@ select emaj.emaj_remove_tables('myschema1',array['mytbl2','mytbl2b','mytbl2']);
 -----------------------------------
 -- emaj_remove_tables with filters
 -----------------------------------
+-- bad schema
+select emaj.emaj_remove_tables('dummySchema',null,null);
+
 -- empty tables array
 select emaj.emaj_remove_tables('myschema1',null,null);
 select emaj.emaj_remove_tables('myschema1','','');
@@ -112,6 +115,9 @@ select emaj.emaj_remove_sequences('myschema2',array['myseq2','myseq2']);
 -----------------------------------
 -- emaj_remove_sequences with filters
 -----------------------------------
+-- bad schema
+select emaj.emaj_remove_sequences('dummySchema',null,null);
+
 -- empty tables array
 select emaj.emaj_remove_sequences('myschema2',null,null);
 select emaj.emaj_remove_sequences('myschema2','','');
@@ -257,9 +263,9 @@ select rel_schema, rel_tblseq, rel_group from emaj.emaj_relation
 -- emaj_move_sequences with filters
 -----------------------------------
 -- empty sequences array
-select emaj.emaj_move_sequences('myschema21',null,null,'myGroup2');
-select emaj.emaj_move_sequences('myschema21','','','myGroup2');
-select emaj.emaj_move_sequences('myschema21','myseq1','myseq1','myGroup2');
+select emaj.emaj_move_sequences('myschema2',null,null,'myGroup2');
+select emaj.emaj_move_sequences('myschema2','','','myGroup2');
+select emaj.emaj_move_sequences('myschema2','myseq1','myseq1','myGroup2');
 
 -- ok and go back to myGroup2
 select emaj.emaj_move_sequences('myschema2','.*','','myGroup2');

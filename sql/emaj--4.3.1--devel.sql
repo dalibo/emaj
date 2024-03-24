@@ -703,6 +703,42 @@ $_check_json_param_conf$
   END;
 $_check_json_param_conf$;
 
+CREATE OR REPLACE FUNCTION emaj._build_tblseqs_array_from_regexp(p_schema TEXT, p_relkind TEXT, p_includeFilter TEXT, p_excludeFilter TEXT)
+RETURNS TEXT[] LANGUAGE plpgsql AS
+$_build_tblseqs_array_from_regexp$
+-- The function builds the names array of tables or sequences belonging to any tables groups, based on include and exclude regexp filters.
+-- Inputs: schema,
+--         relation kind ('r' or 'S'),
+--         2 patterns to filter table names (one to include and another to exclude).
+-- Outputs: tables or sequences names array
+  BEGIN
+-- Check that the schema exists.
+    IF NOT EXISTS
+         (SELECT 0
+            FROM pg_catalog.pg_namespace
+            WHERE nspname = p_schema
+         ) THEN
+      RAISE EXCEPTION '_build_tblseqs_array_from_regexp: The schema "%" does not exist.', p_schema;
+    END IF;
+-- Process empty filters as NULL.
+    SELECT CASE WHEN p_includeFilter = '' THEN NULL ELSE p_includeFilter END,
+           CASE WHEN p_excludeFilter = '' THEN NULL ELSE p_excludeFilter END
+      INTO p_includeFilter, p_excludeFilter;
+-- Build and return the list of relations names satisfying the pattern.
+    RETURN array_agg(rel_tblseq)
+      FROM (
+        SELECT rel_tblseq
+          FROM emaj.emaj_relation
+          WHERE rel_schema = p_schema
+            AND rel_tblseq ~ p_includeFilter
+            AND (p_excludeFilter IS NULL OR rel_tblseq !~ p_excludeFilter)
+            AND rel_kind = p_relkind
+            AND upper_inf(rel_time_range)
+          ORDER BY rel_tblseq
+           ) AS t;
+  END;
+$_build_tblseqs_array_from_regexp$;
+
 CREATE OR REPLACE FUNCTION emaj._check_mark_name(p_groupNames TEXT[], p_mark TEXT, p_checkActive BOOLEAN DEFAULT FALSE)
 RETURNS TEXT LANGUAGE plpgsql AS
 $_check_mark_name$
@@ -1172,6 +1208,25 @@ $_assign_tables$
   END;
 $_assign_tables$;
 
+CREATE OR REPLACE FUNCTION emaj.emaj_remove_tables(p_schema TEXT, p_tablesIncludeFilter TEXT, p_tablesExcludeFilter TEXT,
+                                                   p_mark TEXT DEFAULT 'REMOVE_%')
+RETURNS INTEGER LANGUAGE plpgsql AS
+$emaj_remove_tables$
+-- The function removes tables on name patterns from their tables group.
+-- Inputs: schema, 2 patterns to filter table names (one to include and another to exclude),
+--         mark name to set when logging groups (optional)
+-- Outputs: number of tables effectively removed from the tables group
+  DECLARE
+    v_tables                 TEXT[];
+  BEGIN
+    v_tables = emaj._build_tblseqs_array_from_regexp(p_schema, 'r', p_tablesIncludeFilter, p_tablesExcludeFilter);
+-- Call the _remove_tables() function for execution.
+    RETURN emaj._remove_tables(p_schema, v_tables, p_mark, TRUE, TRUE);
+  END;
+$emaj_remove_tables$;
+COMMENT ON FUNCTION emaj.emaj_remove_tables(TEXT,TEXT,TEXT,TEXT) IS
+$$Remove several tables on name patterns from their tables group.$$;
+
 CREATE OR REPLACE FUNCTION emaj._remove_tables(p_schema TEXT, p_tables TEXT[], p_mark TEXT, p_multiTable BOOLEAN,
                                                p_arrayFromRegex BOOLEAN)
 RETURNS INTEGER LANGUAGE plpgsql AS
@@ -1315,6 +1370,25 @@ $_remove_tables$
   END;
 $_remove_tables$;
 
+CREATE OR REPLACE FUNCTION emaj.emaj_move_tables(p_schema TEXT, p_tablesIncludeFilter TEXT, p_tablesExcludeFilter TEXT,
+                                                 p_newGroup TEXT, p_mark TEXT DEFAULT 'MOVE_%')
+RETURNS INTEGER LANGUAGE plpgsql AS
+$emaj_move_tables$
+-- The function moves tables on name patterns from their tables group to another tables group.
+-- Inputs: schema, 2 patterns to filter table names (one to include and another to exclude), new group name,
+--         mark name to set when logging groups (optional)
+-- Outputs: number of tables effectively moved to the new tables group
+  DECLARE
+    v_tables                 TEXT[];
+  BEGIN
+    v_tables = emaj._build_tblseqs_array_from_regexp(p_schema, 'r', p_tablesIncludeFilter, p_tablesExcludeFilter);
+-- Call the _move_tables() function for execution.
+    RETURN emaj._move_tables(p_schema, v_tables, p_newGroup, p_mark, TRUE, TRUE);
+  END;
+$emaj_move_tables$;
+COMMENT ON FUNCTION emaj.emaj_move_tables(TEXT,TEXT,TEXT,TEXT,TEXT) IS
+$$Move several tables on name patterns from their tables group to another tables group.$$;
+
 CREATE OR REPLACE FUNCTION emaj._move_tables(p_schema TEXT, p_tables TEXT[], p_newGroup TEXT, p_mark TEXT, p_multiTable BOOLEAN,
                                              p_arrayFromRegex BOOLEAN)
 RETURNS INTEGER LANGUAGE plpgsql AS
@@ -1378,19 +1452,22 @@ $_move_tables$
       IF v_list IS NOT NULL THEN
         RAISE EXCEPTION '_move_tables: some tables (%) do not currently belong to any tables group.', v_list;
       END IF;
+    END IF;
 -- Remove tables that already belong to the new group.
-      SELECT string_agg(quote_ident(p_schema) || '.' || quote_ident(rel_tblseq), ', ' ORDER BY rel_tblseq), array_agg(rel_tblseq)
-        INTO v_list, v_uselessTables
-        FROM emaj.emaj_relation
-        WHERE rel_schema = p_schema
-          AND rel_tblseq = ANY(p_tables)
-          AND upper_inf(rel_time_range)
-          AND rel_group = p_newGroup;
-      IF v_list IS NOT NULL THEN
+    SELECT string_agg(quote_ident(p_schema) || '.' || quote_ident(rel_tblseq), ', ' ORDER BY rel_tblseq), array_agg(rel_tblseq)
+      INTO v_list, v_uselessTables
+      FROM emaj.emaj_relation
+      WHERE rel_schema = p_schema
+        AND rel_tblseq = ANY(p_tables)
+        AND upper_inf(rel_time_range)
+        AND rel_group = p_newGroup;
+    IF v_list IS NOT NULL THEN
+      SELECT array_agg(tbl) INTO p_tables
+        FROM unnest(p_tables) AS tbl
+        WHERE tbl <> ALL(v_uselessTables);
+-- Warn only if the tables list has been supplied by the user.
+      IF NOT p_arrayFromRegex THEN
         RAISE WARNING '_move_tables: some tables (%) already belong to the tables group %.', v_list, p_newGroup;
-        SELECT array_agg(tbl) INTO p_tables
-          FROM unnest(p_tables) AS tbl
-          WHERE tbl <> ALL(v_uselessTables);
       END IF;
     END IF;
 -- Get the lists of groups and logging groups holding these tables, if any, and count the number of AUDIT_ONLY groups.
@@ -1466,6 +1543,25 @@ $_move_tables$
     RETURN v_nbMovedTbl;
   END;
 $_move_tables$;
+
+CREATE OR REPLACE FUNCTION emaj.emaj_modify_tables(p_schema TEXT, p_tablesIncludeFilter TEXT, p_tablesExcludeFilter TEXT,
+                                                   p_properties JSONB, p_mark TEXT DEFAULT 'MODIFY_%')
+RETURNS INTEGER LANGUAGE plpgsql AS
+$emaj_modify_tables$
+-- The function modifies the assignment properties for several tables selected on name regexp pattern at once.
+-- Inputs: schema name, 2 patterns to filter table names (one to include and another to exclude),
+--         assignment properties, mark name to set when logging groups (optional)
+-- Outputs: number of tables effectively modified
+  DECLARE
+    v_tables                 TEXT[];
+  BEGIN
+    v_tables = emaj._build_tblseqs_array_from_regexp(p_schema, 'r', p_tablesIncludeFilter, p_tablesExcludeFilter);
+-- Call the _modify_tables() function for execution.
+    RETURN emaj._modify_tables(p_schema, v_tables, p_properties, p_mark, TRUE, TRUE);
+  END;
+$emaj_modify_tables$;
+COMMENT ON FUNCTION emaj.emaj_modify_tables(TEXT,TEXT,TEXT,JSONB,TEXT) IS
+$$Modify the assignment properties of several tables selected on name patterns.$$;
 
 CREATE OR REPLACE FUNCTION emaj._modify_tables(p_schema TEXT, p_tables TEXT[], p_changedProperties JSONB, p_mark TEXT,
                                                p_multiTable BOOLEAN, p_arrayFromRegex BOOLEAN)
@@ -1808,6 +1904,25 @@ $_assign_sequences$
   END;
 $_assign_sequences$;
 
+CREATE OR REPLACE FUNCTION emaj.emaj_remove_sequences(p_schema TEXT, p_sequencesIncludeFilter TEXT, p_sequencesExcludeFilter TEXT,
+                                                      p_mark TEXT DEFAULT 'REMOVE_%')
+RETURNS INTEGER LANGUAGE plpgsql AS
+$emaj_remove_sequences$
+-- The function removes sequences on name patterns from their tables group.
+-- Inputs: schema, 2 patterns to filter sequence names (one to include and another to exclude),
+--         mark name to set when logging groups (optional)
+-- Outputs: number of sequences effectively removed from the tables group
+  DECLARE
+    v_sequences              TEXT[];
+  BEGIN
+    v_sequences = emaj._build_tblseqs_array_from_regexp(p_schema, 'S', p_sequencesIncludeFilter, p_sequencesExcludeFilter);
+-- Call the _remove_sequences() function for execution.
+    RETURN emaj._remove_sequences(p_schema, v_sequences, p_mark, TRUE, TRUE);
+  END;
+$emaj_remove_sequences$;
+COMMENT ON FUNCTION emaj.emaj_remove_sequences(TEXT,TEXT,TEXT,TEXT) IS
+$$Remove several sequences on name patterns from their tables group.$$;
+
 CREATE OR REPLACE FUNCTION emaj._remove_sequences(p_schema TEXT, p_sequences TEXT[], p_mark TEXT, p_multiSequence BOOLEAN,
                                                   p_arrayFromRegex BOOLEAN)
 RETURNS INTEGER LANGUAGE plpgsql AS
@@ -1938,6 +2053,25 @@ $_remove_sequences$
   END;
 $_remove_sequences$;
 
+CREATE OR REPLACE FUNCTION emaj.emaj_move_sequences(p_schema TEXT, p_sequencesIncludeFilter TEXT, p_sequencesExcludeFilter TEXT,
+                                                 p_newGroup TEXT, p_mark TEXT DEFAULT 'MOVE_%')
+RETURNS INTEGER LANGUAGE plpgsql AS
+$emaj_move_sequences$
+-- The function moves sequences on name patterns from their tables group to another tables group.
+-- Inputs: schema, 2 patterns to filter sequence names (one to include and another to exclude), new group name,
+--         mark name to set when logging groups (optional)
+-- Outputs: number of sequences effectively moved to the new tables group
+  DECLARE
+    v_sequences              TEXT[];
+  BEGIN
+    v_sequences = emaj._build_tblseqs_array_from_regexp(p_schema, 'S', p_sequencesIncludeFilter, p_sequencesExcludeFilter);
+-- Call the _move_sequences() function for execution.
+    RETURN emaj._move_sequences(p_schema, v_sequences, p_newGroup, p_mark, TRUE, TRUE);
+  END;
+$emaj_move_sequences$;
+COMMENT ON FUNCTION emaj.emaj_move_sequences(TEXT,TEXT,TEXT,TEXT,TEXT) IS
+$$Move several sequences on name patterns from their tables group to another tables group.$$;
+
 CREATE OR REPLACE FUNCTION emaj._move_sequences(p_schema TEXT, p_sequences TEXT[], p_newGroup TEXT, p_mark TEXT, p_multiSequence BOOLEAN,
                                              p_arrayFromRegex BOOLEAN)
 RETURNS INTEGER LANGUAGE plpgsql AS
@@ -1999,19 +2133,21 @@ $_move_sequences$
       IF v_list IS NOT NULL THEN
         RAISE EXCEPTION '_move_sequences: some sequences (%) do not currently belong to any tables group.', v_list;
       END IF;
+    END IF;
 -- Remove sequences that already belong to the new group.
-      SELECT string_agg(quote_ident(p_schema) || '.' || quote_ident(rel_tblseq), ', ' ORDER BY rel_tblseq), array_agg(rel_tblseq)
-        INTO v_list, v_uselessSequences
-        FROM emaj.emaj_relation
-        WHERE rel_schema = p_schema
-          AND rel_tblseq = ANY(p_sequences)
-          AND upper_inf(rel_time_range)
-          AND rel_group = p_newGroup;
-      IF v_list IS NOT NULL THEN
+    SELECT string_agg(quote_ident(p_schema) || '.' || quote_ident(rel_tblseq), ', ' ORDER BY rel_tblseq), array_agg(rel_tblseq)
+      INTO v_list, v_uselessSequences
+      FROM emaj.emaj_relation
+      WHERE rel_schema = p_schema
+        AND rel_tblseq = ANY(p_sequences)
+        AND upper_inf(rel_time_range)
+        AND rel_group = p_newGroup;
+    IF v_list IS NOT NULL THEN
+      SELECT array_agg(seq) INTO p_sequences
+        FROM unnest(p_sequences) AS seq
+        WHERE seq <> ALL(v_uselessSequences);
+      IF NOT p_arrayFromRegex THEN
         RAISE WARNING '_move_sequences: some sequences (%) already belong to the tables group %.', v_list, p_newGroup;
-        SELECT array_agg(seq) INTO p_sequences
-          FROM unnest(p_sequences) AS seq
-          WHERE seq <> ALL(v_uselessSequences);
       END IF;
     END IF;
 -- Get the lists of groups and logging groups holding these sequences, if any.

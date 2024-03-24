@@ -8,7 +8,7 @@ select count(*) from pg_proc, pg_namespace
   where pg_namespace.oid=pronamespace and nspname = 'emaj' and (proname like E'emaj\\_%' or proname like E'\\_%');
  count 
 -------
-   187
+   188
 (1 row)
 
 select count(*) from pg_proc, pg_namespace 
@@ -93,6 +93,7 @@ select funcname, calls from pg_stat_user_functions
  _assign_tables                            |    68
  _build_alter_seq                          |   219
  _build_sql_tbl                            |   167
+ _build_tblseqs_array_from_regexp          |    38
  _change_ignored_triggers_tbl              |    12
  _change_log_data_tsp_tbl                  |    15
  _change_log_index_tsp_tbl                 |     9
@@ -115,20 +116,20 @@ select funcname, calls from pg_stat_user_functions
  _create_seq                               |    46
  _create_tbl                               |   167
  _dblink_close_cnx                         |   116
- _dblink_open_cnx                          |   138
+ _dblink_open_cnx                          |   140
  _dblink_sql_exec                          |  2241
  _delete_before_mark_group                 |    23
  _delete_between_marks_group               |    14
  _delete_intermediate_mark_group           |    23
  _delete_log_tbl                           |    66
  _detailed_log_stat_groups                 |    27
- _disable_event_triggers                   |   317
+ _disable_event_triggers                   |   318
  _drop_group                               |    33
  _drop_log_schemas                         |   129
  _drop_seq                                 |    69
  _drop_tbl                                 |   215
  _emaj_param_change_fnct                   |    45
- _enable_event_triggers                    |   312
+ _enable_event_triggers                    |   313
  _estimate_rlbk_step_duration              |   772
  _estimate_rollback_groups                 |    13
  _event_trigger_sql_drop_fnct              |   213
@@ -159,7 +160,7 @@ select funcname, calls from pg_stat_user_functions
  _move_sequences                           |    19
  _move_tables                              |    23
  _move_tbl                                 |    44
- _pg_version_num                           |   254
+ _pg_version_num                           |   258
  _purge_histories                          |    99
  _remove_seq                               |    15
  _remove_sequences                         |    19
@@ -188,8 +189,8 @@ select funcname, calls from pg_stat_user_functions
  _start_groups                             |    53
  _stop_groups                              |    66
  _truncate_trigger_fnct                    |    16
- _verify_all_groups                        |    49
- _verify_all_schemas                       |    49
+ _verify_all_groups                        |    51
+ _verify_all_schemas                       |    51
  emaj_assign_sequence                      |     6
  emaj_assign_sequences                     |     7
  emaj_assign_sequences                     |    13
@@ -227,7 +228,7 @@ select funcname, calls from pg_stat_user_functions
  emaj_get_current_log_table                |     4
  emaj_get_previous_mark_group              |    11
  emaj_get_previous_mark_group              |    10
- emaj_get_version                          |    20
+ emaj_get_version                          |    21
  emaj_import_groups_configuration          |     4
  emaj_import_groups_configuration          |    16
  emaj_import_parameters_configuration      |     4
@@ -270,14 +271,14 @@ select funcname, calls from pg_stat_user_functions
  emaj_stop_groups                          |     9
  emaj_unprotect_group                      |     7
  emaj_unprotect_mark_group                 |     6
- emaj_verify_all                           |    49
-(184 rows)
+ emaj_verify_all                           |    51
+(185 rows)
 
 -- count the total number of user-callable function calls (those who failed are not counted)
 select sum(calls) from pg_stat_user_functions where funcname like E'emaj\\_%';
  sum  
 ------
- 1081
+ 1084
 (1 row)
 
 -----------------------------

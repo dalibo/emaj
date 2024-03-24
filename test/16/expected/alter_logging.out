@@ -2959,14 +2959,14 @@ select emaj.emaj_move_tables('myschema4','.*','','myGroup2',emaj.emaj_get_previo
 ERROR:  _check_new_mark: The groups "myGroup1, myGroup2" already contain a mark named "MOVE_SEQ_idle_to_logging".
 CONTEXT:  PL/pgSQL function emaj._check_new_mark(text[],text) line 31 at RAISE
 SQL statement "SELECT emaj._check_new_mark(v_loggingGroups, p_mark)"
-PL/pgSQL function emaj._move_tables(text,text[],text,text,boolean,boolean) line 100 at SQL statement
-PL/pgSQL function emaj.emaj_move_tables(text,text,text,text,text) line 27 at RETURN
+PL/pgSQL function emaj._move_tables(text,text[],text,text,boolean,boolean) line 103 at SQL statement
+PL/pgSQL function emaj.emaj_move_tables(text,text,text,text,text) line 11 at RETURN
 select emaj.emaj_move_sequences('myschema2','.*','','myGroup2',emaj.emaj_get_previous_mark_group('myGroup1',now()));
 ERROR:  _check_new_mark: The groups "myGroup1, myGroup2" already contain a mark named "MOVE_SEQ_idle_to_logging".
 CONTEXT:  PL/pgSQL function emaj._check_new_mark(text[],text) line 31 at RAISE
 SQL statement "SELECT emaj._check_new_mark(v_loggingGroups, p_mark)"
-PL/pgSQL function emaj._move_sequences(text,text[],text,text,boolean,boolean) line 95 at SQL statement
-PL/pgSQL function emaj.emaj_move_sequences(text,text,text,text,text) line 27 at RETURN
+PL/pgSQL function emaj._move_sequences(text,text[],text,text,boolean,boolean) line 97 at SQL statement
+PL/pgSQL function emaj.emaj_move_sequences(text,text,text,text,text) line 11 at RETURN
 -- from a logging group to another logging group
 select emaj.emaj_move_tables('myschema4','.*','','myGroup2','MOVE_TBL_logging_to_logging');
  emaj_move_tables 
