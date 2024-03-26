@@ -19,6 +19,8 @@ E-Maj - Change log
     tables group structure changes. The existing protection for the first
     rollback operation now concerns all subsequent operations crossing again 
     any group structure change.
+  * Add schemas, tables and sequences existence checks to functions that
+    dynamically change the tables groups structure.
   * Minor code changes and optimizations.
 
 ### Bug fixes: ###

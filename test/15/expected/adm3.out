@@ -743,6 +743,7 @@ SQL statement "SELECT 0
 PL/pgSQL function emaj.emaj_set_mark_group(text,text) line 18 at PERFORM
 rollback;
 select emaj.emaj_remove_table('phil''s schema3','mytbl4','remove_the_dropped_table');
+WARNING:  _check_tblseqs_array: In schema "phil's schema3", some tables (mytbl4) do not exist.
 NOTICE:  drop cascades to trigger emaj_log_trg on table "phil's schema3".mytbl4_sav
  emaj_remove_table 
 -------------------
@@ -750,6 +751,7 @@ NOTICE:  drop cascades to trigger emaj_log_trg on table "phil's schema3".mytbl4_
 (1 row)
 
 select emaj.emaj_remove_sequence('phil''s schema3','phil''s seq\1','remove_the_dropped_seq');
+WARNING:  _check_tblseqs_array: In schema "phil's schema3", some sequences ("phil's seq\1") do not exist.
  emaj_remove_sequence 
 ----------------------
                     1
@@ -1437,7 +1439,7 @@ SQL statement "SELECT coalesce(sum(emaj._log_stat_tbl(emaj_relation, greatest(v_
             AND upper_inf(rel_time_range)"
 PL/pgSQL function emaj._set_mark_groups(text[],text,boolean,boolean,text,bigint,text) line 74 at SQL statement
 SQL statement "SELECT emaj._set_mark_groups(v_loggingGroups, v_markName, FALSE, TRUE, NULL, v_timeId)"
-PL/pgSQL function emaj._remove_tables(text,text[],text,boolean,boolean) line 86 at PERFORM
+PL/pgSQL function emaj._remove_tables(text,text[],text,boolean,boolean) line 61 at PERFORM
 PL/pgSQL function emaj.emaj_remove_table(text,text,text) line 6 at RETURN
 select emaj.emaj_force_stop_group('grp_tmp');
  emaj_force_stop_group 
@@ -2425,7 +2427,7 @@ select rlbp_rlbk_id, rlbp_step, rlbp_schema, rlbp_table, rlbp_object, rlbp_targe
         12501 | DELETE_LOG         | myschema2      | mytbl4                                                          |                   |               12201 |                 3 |            1 |                                                                                                                                                                                             |                   |                           |                       6 |                    3 |             6
         12501 | DELETE_LOG         | myschema2      | mytbl5                                                          |                   |               12201 |                 4 |            1 |                                                                                                                                                                                             |                   |                           |                       3 |                    3 |             3
         12501 | DELETE_LOG         | myschema2      | mytbl6                                                          |                   |               12201 |                 2 |            1 |                                                                                                                                                                                             |                   |                           |                       9 |                    3 |             9
-        12501 | SET_FK_IMM         | myschema2      | mytbl6                                                          | mytbl6_col61_fkey |                     |                 2 |            1 |                                                                                                                                                                                             |                   |                           |                       9 |                    2 |              
+        12501 | SET_FK_IMM         | myschema2      | mytbl6                                                          | mytbl6_col61_fkey |                     |                 2 |            1 |                                                                                                                                                                                             |                   |                           |                       9 |                    3 |              
         12501 | SET_FK_IMM         | myschema2      | mytbl8                                                          | mytbl8_col81_fkey |                     |                 2 |            1 |                                                                                                                                                                                             |                   |                           |                       9 |                    3 |              
         12501 | ENA_LOG_TRG        | myschema2      | mytbl4                                                          |                   |                     |                 3 |            1 |                                                                                                                                                                                             |                   |                           |                         |                    2 |              
         12501 | ENA_LOG_TRG        | myschema2      | mytbl5                                                          |                   |                     |                 4 |            1 |                                                                                                                                                                                             |                   |                           |                         |                    2 |              

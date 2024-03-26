@@ -43,7 +43,7 @@ select emaj.emaj_modify_table('myschema1','mytbl1','{"priority":30}'::jsonb,emaj
 ERROR:  _check_new_mark: The group "myGroup1" already contains a mark named "Mk1".
 CONTEXT:  PL/pgSQL function emaj._check_new_mark(text[],text) line 29 at RAISE
 SQL statement "SELECT emaj._check_new_mark(v_loggingGroups, p_mark)"
-PL/pgSQL function emaj._modify_tables(text,text[],jsonb,text,boolean,boolean) line 94 at SQL statement
+PL/pgSQL function emaj._modify_tables(text,text[],jsonb,text,boolean,boolean) line 69 at SQL statement
 PL/pgSQL function emaj.emaj_modify_table(text,text,jsonb,text) line 7 at RETURN
 -- change the priority
 select emaj.emaj_modify_table('myschema1','mytbl1','{"priority":30}'::jsonb,'Priority Changed');
@@ -2785,13 +2785,13 @@ select emaj.emaj_remove_table('myschema2','mytbl1','Mark_assign_sequences');
 ERROR:  _check_new_mark: The group "myGroup2" already contains a mark named "Mark_assign_sequences".
 CONTEXT:  PL/pgSQL function emaj._check_new_mark(text[],text) line 29 at RAISE
 SQL statement "SELECT emaj._check_new_mark(v_loggingGroups, p_mark)"
-PL/pgSQL function emaj._remove_tables(text,text[],text,boolean,boolean) line 71 at SQL statement
+PL/pgSQL function emaj._remove_tables(text,text[],text,boolean,boolean) line 46 at SQL statement
 PL/pgSQL function emaj.emaj_remove_table(text,text,text) line 6 at RETURN
 select emaj.emaj_remove_sequence('myschema2','myseq1','Mark_assign_sequences');
 ERROR:  _check_new_mark: The group "myGroup2" already contains a mark named "Mark_assign_sequences".
 CONTEXT:  PL/pgSQL function emaj._check_new_mark(text[],text) line 29 at RAISE
 SQL statement "SELECT emaj._check_new_mark(v_loggingGroups, p_mark)"
-PL/pgSQL function emaj._remove_sequences(text,text[],text,boolean,boolean) line 74 at SQL statement
+PL/pgSQL function emaj._remove_sequences(text,text[],text,boolean,boolean) line 47 at SQL statement
 PL/pgSQL function emaj.emaj_remove_sequence(text,text,text) line 6 at RETURN
 -- alter a table in a logging group
 select emaj.emaj_remove_table('myschema1','mytbl4');
@@ -2949,13 +2949,13 @@ select emaj.emaj_move_tables('myschema4','.*','','myGroup2',emaj.emaj_get_previo
 ERROR:  _check_new_mark: The groups "myGroup1, myGroup2" already contain a mark named "MOVE_SEQ_idle_to_logging".
 CONTEXT:  PL/pgSQL function emaj._check_new_mark(text[],text) line 31 at RAISE
 SQL statement "SELECT emaj._check_new_mark(v_loggingGroups, p_mark)"
-PL/pgSQL function emaj._move_tables(text,text[],text,text,boolean,boolean) line 103 at SQL statement
+PL/pgSQL function emaj._move_tables(text,text[],text,text,boolean,boolean) line 77 at SQL statement
 PL/pgSQL function emaj.emaj_move_tables(text,text,text,text,text) line 11 at RETURN
 select emaj.emaj_move_sequences('myschema2','.*','','myGroup2',emaj.emaj_get_previous_mark_group('myGroup1',now()));
 ERROR:  _check_new_mark: The groups "myGroup1, myGroup2" already contain a mark named "MOVE_SEQ_idle_to_logging".
 CONTEXT:  PL/pgSQL function emaj._check_new_mark(text[],text) line 31 at RAISE
 SQL statement "SELECT emaj._check_new_mark(v_loggingGroups, p_mark)"
-PL/pgSQL function emaj._move_sequences(text,text[],text,text,boolean,boolean) line 97 at SQL statement
+PL/pgSQL function emaj._move_sequences(text,text[],text,text,boolean,boolean) line 71 at SQL statement
 PL/pgSQL function emaj.emaj_move_sequences(text,text,text,text,text) line 11 at RETURN
 -- from a logging group to another logging group
 select emaj.emaj_move_tables('myschema4','.*','','myGroup2','MOVE_TBL_logging_to_logging');
@@ -3030,6 +3030,7 @@ select emaj.emaj_move_table('myschema2','mytbl2','myGroup2','Move a table with f
 -- rename a table and/or change its schema
 alter table myschema1.mytbl1 rename to mytbl1_new_name;
 select emaj.emaj_remove_table('myschema1','mytbl1');
+WARNING:  _check_tblseqs_array: In schema "myschema1", some tables (mytbl1) do not exist.
 NOTICE:  drop cascades to trigger emaj_log_trg on table myschema1.mytbl1_new_name
  emaj_remove_table 
 -------------------
@@ -3046,6 +3047,7 @@ NOTICE:  trigger "emaj_log_trg" for relation "myschema1.mytbl1_new_name" does no
 
 alter table myschema1.mytbl1_new_name set schema public;
 select emaj.emaj_remove_table('myschema1','mytbl1_new_name');
+WARNING:  _check_tblseqs_array: In schema "myschema1", some tables (mytbl1_new_name) do not exist.
 NOTICE:  drop cascades to trigger emaj_log_trg on table mytbl1_new_name
  emaj_remove_table 
 -------------------
@@ -3063,6 +3065,7 @@ NOTICE:  trigger "emaj_log_trg" for relation "public.mytbl1_new_name" does not e
 alter table public.mytbl1_new_name rename to mytbl1;
 alter table public.mytbl1 set schema myschema1;
 select emaj.emaj_remove_table('public','mytbl1_new_name');
+WARNING:  _check_tblseqs_array: In schema "public", some tables (mytbl1_new_name) do not exist.
 NOTICE:  drop cascades to trigger emaj_log_trg on table myschema1.mytbl1
  emaj_remove_table 
 -------------------

@@ -1538,6 +1538,102 @@ $_build_tblseqs_array_from_regexp$
   END;
 $_build_tblseqs_array_from_regexp$;
 
+CREATE OR REPLACE FUNCTION emaj._check_tblseqs_array(p_schema TEXT, p_tblseqs TEXT[], p_relkind TEXT, p_exceptionIfMissing BOOLEAN)
+RETURNS TEXT[] LANGUAGE plpgsql AS
+$_check_tblseqs_array$
+-- The function checks a names array of tables or sequences.
+-- Depending on the p_exceptionIfMissing parameter, it warns or raises an error if the schema or any table or sequence doesn't exist.
+-- (WARNING only is used by removal functions so that it is possible to remove a dropped or renamed relation from its group)
+-- It verifies that the schema and the tables or sequences belong to a tables group (not necessary the same one).
+-- It returns the names array, duplicates and empty names being removed.
+-- Inputs: schema,
+--         tables or sequences names array,
+--         relation kind ('r' or 'S'),
+--         boolean indicating whether a missing schema or relation must raise an exception or just a warning.
+-- Outputs: tables or sequences names array.
+  DECLARE
+    v_relationKind           TEXT;
+    v_schemaExists           BOOLEAN = TRUE;
+    v_list                   TEXT;
+    v_tblseqs                TEXT[];
+  BEGIN
+-- Setup constant.
+    IF p_relkind = 'r' THEN
+      v_relationKind = 'tables';
+    ELSE
+      v_relationKind = 'sequences';
+    END IF;
+-- Check that the schema exists.
+    IF NOT EXISTS
+         (SELECT 0
+            FROM pg_catalog.pg_namespace
+            WHERE nspname = p_schema
+         ) THEN
+      IF p_exceptionIfMissing THEN
+        RAISE EXCEPTION '_check_tblseqs_array: The schema "%" does not exist!', p_schema;
+      ELSE
+        RAISE WARNING '_check_tblseqs_array: The schema "%" does not exist.', p_schema;
+      END IF;
+      v_schemaExists = FALSE;
+    END IF;
+-- Clean up the relation names array: remove duplicates values, NULL and empty strings.
+    SELECT array_agg(DISTINCT tblseq) INTO v_tblseqs
+      FROM unnest(p_tblseqs) AS tblseq
+      WHERE tblseq IS NOT NULL AND tblseq <> '';
+-- If the schema exists, check that all relations exist.
+    IF v_schemaExists THEN
+      WITH tblseqs AS (
+        SELECT unnest(v_tblseqs) AS tblseq
+        )
+      SELECT string_agg(quote_ident(tblseq), ', ') INTO v_list
+        FROM
+          (SELECT tblseq
+             FROM tblseqs
+             WHERE NOT EXISTS
+                     (SELECT 0
+                        FROM pg_catalog.pg_class
+                             JOIN pg_catalog.pg_namespace ON (pg_namespace.oid = relnamespace)
+                        WHERE nspname = p_schema
+                          AND relname = tblseq
+                          AND relkind = p_relkind
+                     )
+          ) AS t;
+      IF v_list IS NOT NULL THEN
+        IF p_exceptionIfMissing THEN
+          RAISE EXCEPTION '_check_tblseqs_array: In schema "%", some % (%) do not exist!', p_schema, v_relationKind, v_list;
+        ELSE
+          RAISE WARNING '_check_tblseqs_array: In schema "%", some % (%) do not exist.', p_schema, v_relationKind, v_list;
+        END IF;
+      END IF;
+    END IF;
+-- Check that the relations currently belong to a tables group (not necessarily the same for all relations).
+    WITH all_supplied_tblseqs AS (
+      SELECT unnest(v_tblseqs) AS tblseq
+      ),
+         tblseqs_in_groups AS (
+      SELECT rel_tblseq
+        FROM emaj.emaj_relation
+        WHERE rel_schema = p_schema
+          AND rel_tblseq = ANY(v_tblseqs)
+          AND rel_kind = p_relkind
+          AND upper_inf(rel_time_range)
+      )
+    SELECT string_agg(quote_ident(tblseq), ', ') INTO v_list
+      FROM
+        (  SELECT tblseq
+             FROM all_supplied_tblseqs
+         EXCEPT
+           SELECT rel_tblseq FROM tblseqs_in_groups
+        ) AS t;
+    IF v_list IS NOT NULL THEN
+      RAISE EXCEPTION '_check_tblseqs_array: In schema "%", some % (%) do not currently belong to any tables group.',
+                      p_schema, v_relationKind, v_list;
+    END IF;
+--
+    RETURN v_tblseqs;
+  END;
+$_check_tblseqs_array$;
+
 CREATE OR REPLACE FUNCTION emaj._check_mark_name(p_groupNames TEXT[], p_mark TEXT, p_checkActive BOOLEAN DEFAULT FALSE)
 RETURNS TEXT LANGUAGE plpgsql AS
 $_check_mark_name$
@@ -2538,7 +2634,6 @@ $_remove_tables$
 -- Outputs: number of tables effectively removed to the tables group
   DECLARE
     v_function               TEXT;
-    v_list                   TEXT;
     v_markName               TEXT;
     v_timeId                 BIGINT;
     v_groups                 TEXT[];
@@ -2556,31 +2651,7 @@ $_remove_tables$
       VALUES (v_function, 'BEGIN');
 -- Check the tables list.
     IF NOT p_arrayFromRegex THEN
--- Remove duplicates values, NULL and empty strings from the supplied table names array.
-      SELECT array_agg(DISTINCT table_name) INTO p_tables
-        FROM unnest(p_tables) AS table_name
-        WHERE table_name IS NOT NULL AND table_name <> '';
--- Check that the tables currently belong to a tables group (not necessarily the same for all tables).
-      WITH all_supplied_tables AS (
-        SELECT unnest(p_tables) AS table_name),
-           tables_in_groups AS (
-        SELECT rel_tblseq
-          FROM emaj.emaj_relation
-          WHERE rel_schema = p_schema
-            AND rel_tblseq = ANY(p_tables)
-            AND rel_kind = 'r'
-            AND upper_inf(rel_time_range)
-                              )
-      SELECT string_agg(quote_ident(p_schema) || '.' || quote_ident(table_name), ', ') INTO v_list
-        FROM
-          (  SELECT table_name
-               FROM all_supplied_tables
-           EXCEPT
-             SELECT rel_tblseq FROM tables_in_groups
-          ) AS t;
-      IF v_list IS NOT NULL THEN
-        RAISE EXCEPTION '_remove_tables: some tables (%) do not currently belong to any tables group.', v_list;
-      END IF;
+      p_tables = emaj._check_tblseqs_array(p_schema, p_tables, 'r', FALSE);
     END IF;
 -- Get the lists of groups and logging groups holding these tables, if any.
 -- It locks the tables groups so that no other operation simultaneously occurs these groups.
@@ -2751,33 +2822,7 @@ $_move_tables$
       WHERE group_name = p_newGroup;
 -- Check the tables list.
     IF NOT p_arrayFromRegex THEN
--- Remove duplicates values, NULL and empty strings from the supplied table names array.
-      SELECT array_agg(DISTINCT table_name) INTO p_tables
-        FROM unnest(p_tables) AS table_name
-        WHERE table_name IS NOT NULL AND table_name <> '';
--- Check that the tables currently belong to a tables group (not necessarily the same for all table).
-      WITH all_supplied_tables AS (
-        SELECT unnest(p_tables) AS table_name
-        ),
-           tables_in_group AS (
-        SELECT rel_tblseq
-          FROM emaj.emaj_relation
-          WHERE rel_schema = p_schema
-            AND rel_tblseq = ANY(p_tables)
-            AND rel_kind = 'r'
-            AND upper_inf(rel_time_range)
-        )
-      SELECT string_agg(quote_ident(p_schema) || '.' || quote_ident(table_name), ', ' ORDER BY table_name) INTO v_list
-        FROM
-          (  SELECT table_name
-               FROM all_supplied_tables
-           EXCEPT
-             SELECT rel_tblseq
-               FROM tables_in_group
-          ) AS t;
-      IF v_list IS NOT NULL THEN
-        RAISE EXCEPTION '_move_tables: some tables (%) do not currently belong to any tables group.', v_list;
-      END IF;
+      p_tables = emaj._check_tblseqs_array(p_schema, p_tables, 'r', TRUE);
     END IF;
 -- Remove tables that already belong to the new group.
     SELECT string_agg(quote_ident(p_schema) || '.' || quote_ident(rel_tblseq), ', ' ORDER BY rel_tblseq), array_agg(rel_tblseq)
@@ -2941,7 +2986,6 @@ $_modify_tables$
     v_newLogIdxTsp           TEXT;
     v_ignoredTriggers        TEXT[];
     v_ignoredTrgProfiles     TEXT[];
-    v_list                   TEXT;
     v_groups                 TEXT[];
     v_loggingGroups          TEXT[];
     v_timeId                 BIGINT;
@@ -2959,31 +3003,7 @@ $_modify_tables$
 -- Check supplied parameters.
 -- Check tables.
     IF NOT p_arrayFromRegex THEN
--- From the tables array supplied by the user, remove duplicates values, NULL and empty strings from the supplied table names array.
-      SELECT array_agg(DISTINCT table_name) INTO p_tables
-        FROM unnest(p_tables) AS table_name
-        WHERE table_name IS NOT NULL AND table_name <> '';
--- Check that the tables currently belong to a tables group (not necessarily the same for all tables).
-      WITH all_supplied_tables AS (
-        SELECT unnest(p_tables) AS table_name),
-           tables_in_group AS (
-        SELECT rel_tblseq
-          FROM emaj.emaj_relation
-          WHERE rel_schema = p_schema
-            AND rel_tblseq = ANY(p_tables)
-            AND rel_kind = 'r'
-            AND upper_inf(rel_time_range))
-      SELECT string_agg(quote_ident(p_schema) || '.' || quote_ident(table_name), ', ') INTO v_list
-        FROM
-          (  SELECT table_name
-               FROM all_supplied_tables
-           EXCEPT
-             SELECT rel_tblseq
-               FROM tables_in_group
-          ) AS t;
-      IF v_list IS NOT NULL THEN
-        RAISE EXCEPTION '_modify_tables: some tables (%) do not currently belong to any tables group.', v_list;
-      END IF;
+      p_tables = emaj._check_tblseqs_array(p_schema, p_tables, 'r', TRUE);
     END IF;
 -- Determine which properties are listed in the json parameter.
     v_priorityChanged = p_changedProperties ? 'priority';
@@ -4262,7 +4282,6 @@ $_remove_sequences$
 -- Outputs: number of sequences effectively assigned to the sequences group
   DECLARE
     v_function               TEXT;
-    v_list                   TEXT;
     v_markName               TEXT;
     v_timeId                 BIGINT;
     v_groups                 TEXT[];
@@ -4279,33 +4298,7 @@ $_remove_sequences$
       VALUES (v_function, 'BEGIN');
 -- Check the sequences array.
     IF NOT p_arrayFromRegex THEN
--- Remove duplicates values, NULL and empty strings from the supplied sequence names array.
-      SELECT array_agg(DISTINCT sequence_name) INTO p_sequences
-        FROM unnest(p_sequences) AS sequence_name
-        WHERE sequence_name IS NOT NULL AND sequence_name <> '';
--- Check that the sequences currently belong to a tables group (not necessarily the same one).
-      WITH all_supplied_sequences AS
-        (SELECT unnest(p_sequences) AS sequence_name
-        ),
-           sequences_in_groups AS
-        (SELECT rel_tblseq
-           FROM emaj.emaj_relation
-           WHERE rel_schema = p_schema
-             AND rel_tblseq = ANY(p_sequences)
-             AND rel_kind = 'S'
-             AND upper_inf(rel_time_range)
-        )
-      SELECT string_agg(quote_ident(p_schema) || '.' || quote_ident(sequence_name), ', ') INTO v_list
-        FROM
-          (  SELECT sequence_name
-               FROM all_supplied_sequences
-           EXCEPT
-             SELECT rel_tblseq
-               FROM sequences_in_groups
-          ) AS t;
-      IF v_list IS NOT NULL THEN
-        RAISE EXCEPTION '_remove_sequences: some sequences (%) do not currently belong to any tables group.', v_list;
-      END IF;
+      p_sequences = emaj._check_tblseqs_array(p_schema, p_sequences, 'S', FALSE);
     END IF;
 -- Get the lists of groups and logging groups holding these sequences, if any.
 -- It locks the tables groups so that no other operation simultaneously occurs these groups.
@@ -4460,33 +4453,7 @@ $_move_sequences$
       WHERE group_name = p_newGroup;
 -- Check the sequences list.
     IF NOT p_arrayFromRegex THEN
--- Remove duplicates values, NULL and empty strings from the supplied sequence names array.
-      SELECT array_agg(DISTINCT sequence_name) INTO p_sequences
-        FROM unnest(p_sequences) AS sequence_name
-        WHERE sequence_name IS NOT NULL AND sequence_name <> '';
--- Check that the sequences currently belong to a tables group (not necessarily the same for all sequences).
-      WITH all_supplied_sequences AS
-        (SELECT unnest(p_sequences) AS sequence_name
-        ),
-           sequences_in_group AS
-        (SELECT rel_tblseq
-           FROM emaj.emaj_relation
-           WHERE rel_schema = p_schema
-             AND rel_tblseq = ANY(p_sequences)
-             AND rel_kind = 'S'
-             AND upper_inf(rel_time_range)
-        )
-      SELECT string_agg(quote_ident(p_schema) || '.' || quote_ident(sequence_name), ', ' ORDER BY sequence_name) INTO v_list
-        FROM
-          (  SELECT sequence_name
-               FROM all_supplied_sequences
-           EXCEPT
-             SELECT rel_tblseq
-               FROM sequences_in_group
-          ) AS t;
-      IF v_list IS NOT NULL THEN
-        RAISE EXCEPTION '_move_sequences: some sequences (%) do not currently belong to any tables group.', v_list;
-      END IF;
+      p_sequences = emaj._check_tblseqs_array(p_schema, p_sequences, 'S', TRUE);
     END IF;
 -- Remove sequences that already belong to the new group.
     SELECT string_agg(quote_ident(p_schema) || '.' || quote_ident(rel_tblseq), ', ' ORDER BY rel_tblseq), array_agg(rel_tblseq)

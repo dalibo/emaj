@@ -154,8 +154,10 @@ ERROR:  _assign_tables: In schema myschema4, some tables (mytblp) are partitionn
 CONTEXT:  PL/pgSQL function emaj._assign_tables(text,text[],text,jsonb,text,boolean,boolean) line 90 at RAISE
 PL/pgSQL function emaj.emaj_assign_table(text,text,text,jsonb,text) line 7 at RETURN
 select emaj.emaj_remove_table('myschema4','mytblp');
-ERROR:  _remove_tables: some tables (myschema4.mytblp) do not currently belong to any tables group.
-CONTEXT:  PL/pgSQL function emaj._remove_tables(text,text[],text,boolean,boolean) line 50 at RAISE
+WARNING:  _check_tblseqs_array: In schema "myschema4", some tables (mytblp) do not exist.
+ERROR:  _check_tblseqs_array: In schema "myschema4", some tables (mytblp) do not currently belong to any tables group.
+CONTEXT:  PL/pgSQL function emaj._check_tblseqs_array(text,text[],text,boolean) line 87 at RAISE
+PL/pgSQL function emaj._remove_tables(text,text[],text,boolean,boolean) line 26 at assignment
 PL/pgSQL function emaj.emaj_remove_table(text,text,text) line 6 at RETURN
 -- temp table
 begin;
@@ -183,8 +185,9 @@ PL/pgSQL function emaj._assign_tables(text,text[],text,jsonb,text,boolean,boolea
 PL/pgSQL function emaj.emaj_assign_table(text,text,text,jsonb,text) line 7 at RETURN
 -- the table is removed with PG12+: in these version the myoids table has no OIDS as this propertiy doesn't exist anymore
 select emaj.emaj_remove_table('myschema5','myoidstbl');
-ERROR:  _remove_tables: some tables (myschema5.myoidstbl) do not currently belong to any tables group.
-CONTEXT:  PL/pgSQL function emaj._remove_tables(text,text[],text,boolean,boolean) line 50 at RAISE
+ERROR:  _check_tblseqs_array: In schema "myschema5", some tables (myoidstbl) do not currently belong to any tables group.
+CONTEXT:  PL/pgSQL function emaj._check_tblseqs_array(text,text[],text,boolean) line 87 at RAISE
+PL/pgSQL function emaj._remove_tables(text,text[],text,boolean,boolean) line 26 at assignment
 PL/pgSQL function emaj.emaj_remove_table(text,text,text) line 6 at RETURN
 -- table without PKEY on a rollbackable group
 select emaj.emaj_assign_table('phil''s schema3','myTbl2\','myGroup1');
@@ -508,8 +511,9 @@ WARNING:  _assign_tables: No table to process.
 
 -- the myoidstbl table is removed with PG12+: in these version the myoids table has no OIDS as this propertiy doesn't exist anymore
 select emaj.emaj_remove_table('myschema5','myoidstbl');
-ERROR:  _remove_tables: some tables (myschema5.myoidstbl) do not currently belong to any tables group.
-CONTEXT:  PL/pgSQL function emaj._remove_tables(text,text[],text,boolean,boolean) line 50 at RAISE
+ERROR:  _check_tblseqs_array: In schema "myschema5", some tables (myoidstbl) do not currently belong to any tables group.
+CONTEXT:  PL/pgSQL function emaj._check_tblseqs_array(text,text[],text,boolean) line 87 at RAISE
+PL/pgSQL function emaj._remove_tables(text,text[],text,boolean,boolean) line 26 at assignment
 PL/pgSQL function emaj.emaj_remove_table(text,text,text) line 6 at RETURN
 -- temp table
 begin;

@@ -546,6 +546,7 @@ PL/pgSQL function emaj.emaj_stop_group(text,text) line 10 at RETURN
   rollback to savepoint sp1;
 -- just removing the table solves the issue
   select emaj.emaj_remove_table('myschema2','mytbl4');
+WARNING:  _check_tblseqs_array: In schema "myschema2", some tables (mytbl4) do not exist.
  emaj_remove_table 
 -------------------
                  1
@@ -682,7 +683,7 @@ SQL statement "SELECT coalesce(sum(emaj._log_stat_tbl(emaj_relation, greatest(v_
             AND upper_inf(rel_time_range)"
 PL/pgSQL function emaj._set_mark_groups(text[],text,boolean,boolean,text,bigint,text) line 74 at SQL statement
 SQL statement "SELECT emaj._set_mark_groups(v_loggingGroups, v_markName, FALSE, TRUE, NULL, v_timeId)"
-PL/pgSQL function emaj._remove_tables(text,text[],text,boolean,boolean) line 86 at PERFORM
+PL/pgSQL function emaj._remove_tables(text,text[],text,boolean,boolean) line 61 at PERFORM
 PL/pgSQL function emaj.emaj_remove_table(text,text,text) line 6 at RETURN
   rollback to savepoint sp1;
 -- the only solution is to force the group's stop before removing/reassigning the table
@@ -719,6 +720,7 @@ begin;
 -- setting a mark or stopping the group fails
 -- just removing the sequence solves the issue
   select emaj.emaj_remove_sequence('myschema2','myseq1');
+WARNING:  _check_tblseqs_array: In schema "myschema2", some sequences (myseq1) do not exist.
  emaj_remove_sequence 
 ----------------------
                     1

@@ -40,9 +40,11 @@ RESET client_min_messages;
 -----------------------------------
 
 -- error cases
--- table not in a group
+-- missing table
 select emaj.emaj_remove_table('dummySchema','mytbl1');
 select emaj.emaj_remove_table('myschema1','dummyTable');
+-- table not in a group
+select emaj.emaj_remove_table('myschema6','table_with_50_characters_long_name_____0_________0');
 -- bad relation kind
 select emaj.emaj_remove_table('myschema1','mytbl2b_col20_seq');
 -- bad mark
@@ -59,7 +61,7 @@ select emaj.emaj_remove_table('myschema1','mytbl1');
 select emaj.emaj_remove_tables('myschema1',array[]::text[]);
 select emaj.emaj_remove_tables('myschema1',null);
 select emaj.emaj_remove_tables('myschema1',array['']);
--- table not in a group
+-- missing table
 select emaj.emaj_remove_tables('myschema1',array['dummyTable','mytbl1','mytbl2']);
 
 -- ok (with a duplicate table name)
@@ -86,9 +88,11 @@ select group_last_alter_time_id, group_nb_table, group_nb_sequence from emaj.ema
 -----------------------------------
 
 -- error cases
--- sequence not in a group
+-- missing sequence
 select emaj.emaj_remove_sequence('dummySchema','myseq1');
 select emaj.emaj_remove_sequence('myschema2','dummySequence');
+-- sequence not in a group
+select emaj.emaj_remove_sequence('myschema2','myseq2');
 -- bad relation kind
 select emaj.emaj_remove_sequence('myschema2','mytbl1');
 -- bad mark
@@ -105,7 +109,7 @@ select emaj.emaj_remove_sequence('myschema2','myseq1');
 select emaj.emaj_remove_sequences('myschema2',array[]::text[]);
 select emaj.emaj_remove_sequences('myschema2',null);
 select emaj.emaj_remove_sequences('myschema2',array['']);
--- sequence not in a group
+-- missing sequence
 select emaj.emaj_remove_sequences('myschema2',array['dummyTable','myseq2']);
 
 -- ok (with a duplicate sequence name)
@@ -152,11 +156,14 @@ select public.handle_emaj_sequences(8200);
 -----------------------------------
 
 -- error cases
--- table not in a group
+-- missing table
 select emaj.emaj_move_table('dummySchema','mytbl1','myGroup2');
 select emaj.emaj_move_table('myschema1','dummyTable','myGroup2');
+-- table not in a group
+select emaj.emaj_move_table('myschema6','table_with_50_characters_long_name_____0_________0','myGroup1');
 -- bad relation kind
 select emaj.emaj_move_table('myschema1','mytbl2b_col20_seq','myGroup2');
+
 -- bad new group
 select emaj.emaj_move_table('myschema1','mytbl1','dummyGroup');
 -- bad mark
@@ -176,7 +183,7 @@ select emaj.emaj_move_table('myschema1','mytbl1','myGroup2');
 -- emaj_move_tables with array
 -----------------------------------
 -- error cases
--- table not in a group
+-- missing table
 select emaj.emaj_move_tables('myschema1',array['dummyTable','mytbl1','mytbl2'],'myGroup1');
 -- empty tables array
 select emaj.emaj_move_tables('myschema1',array[]::text[],'myGroup1');
@@ -221,9 +228,11 @@ select group_last_alter_time_id, group_nb_table, group_nb_sequence from emaj.ema
 -----------------------------------
 
 -- error cases
--- sequence not in a group
+-- missing sequence
 select emaj.emaj_move_sequence('dummySchema','myseq1','myGroup1');
 select emaj.emaj_move_sequence('myschema2','dummySequence','myGroup1');
+-- sequence not in a group
+select emaj.emaj_move_sequence('myschema2','myseq2','myGroup1');
 -- bad relation kind
 select emaj.emaj_move_sequence('myschema2','mytbl1','myGroup1');
 -- bad new group
@@ -241,7 +250,7 @@ select emaj.emaj_move_sequence('myschema2','myseq1','myGroup1');
 -- emaj_move_sequences with array
 -----------------------------------
 -- error cases
--- sequence not in a group
+-- missing sequence
 select emaj.emaj_move_sequences('myschema2',array['dummySequence','myseq1'],'myGroup1');
 -- empty tables array
 select emaj.emaj_move_sequences('myschema2',array[]::text[],'myGroup1');
@@ -293,9 +302,11 @@ select public.handle_emaj_sequences(8400);
 -----------------------------------
 
 -- error cases
--- table not in a group
+-- missing table
 select emaj.emaj_modify_table('dummySchema','mytbl1',null);
 select emaj.emaj_modify_table('myschema1','dummyTable',null);
+-- table not in a group
+select emaj.emaj_modify_table('myschema6','table_with_50_characters_long_name_____0_________0',null);
 -- bad relation kind
 select emaj.emaj_modify_table('myschema1','mytbl2b_col20_seq',null);
 
@@ -351,7 +362,7 @@ select rel_schema, rel_tblseq, rel_time_range, rel_log_dat_tsp, rel_log_idx_tsp 
 ---- emaj_modify_tables with array
 -------------------------------------
 -- error cases
--- table not in a group
+-- missing table
 select emaj.emaj_modify_tables('myschema2',array['dummyTable','mytbl1','mytbl2'],null);
 -- empty tables array
 select emaj.emaj_modify_tables('myschema2',array[]::text[],null);
