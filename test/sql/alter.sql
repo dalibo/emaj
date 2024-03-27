@@ -206,6 +206,9 @@ select rel_schema, rel_tblseq, rel_group from emaj.emaj_relation
 -----------------------------------
 -- emaj_move_tables with filters
 -----------------------------------
+-- bad schema
+select emaj.emaj_move_tables('dummySchema',null,null,'myGroup2');
+
 -- empty tables array
 select emaj.emaj_move_tables('myschema1',null,null,'myGroup1');
 select emaj.emaj_move_tables('myschema1','','','myGroup1');
@@ -271,6 +274,9 @@ select rel_schema, rel_tblseq, rel_group from emaj.emaj_relation
 -----------------------------------
 -- emaj_move_sequences with filters
 -----------------------------------
+-- bad schema
+select emaj.emaj_move_sequences('dummySchema',null,null,'myGroup2');
+
 -- empty sequences array
 select emaj.emaj_move_sequences('myschema2',null,null,'myGroup2');
 select emaj.emaj_move_sequences('myschema2','','','myGroup2');
@@ -377,6 +383,9 @@ select rel_schema, rel_tblseq, rel_time_range, rel_priority, rel_log_dat_tsp fro
 -----------------------------------
 -- emaj_modify_tables with filters
 -----------------------------------
+-- bad schema
+select emaj.emaj_modify_tables('dummySchema',null,null,null::jsonb);
+
 -- empty tables array
 select emaj.emaj_modify_tables('myschema2',null,null,null::jsonb);
 select emaj.emaj_modify_tables('myschema2','','',null::jsonb);

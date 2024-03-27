@@ -190,9 +190,13 @@ select emaj.emaj_remove_tables('myschema1',array['mytbl2','mytbl2b','mytbl2']);
 -----------------------------------
 -- bad schema
 select emaj.emaj_remove_tables('dummySchema',null,null);
-ERROR:  _build_tblseqs_array_from_regexp: The schema "dummySchema" does not exist.
-CONTEXT:  PL/pgSQL function emaj._build_tblseqs_array_from_regexp(text,text,text,text) line 14 at RAISE
-PL/pgSQL function emaj.emaj_remove_tables(text,text,text,text) line 9 at assignment
+WARNING:  _build_tblseqs_array_from_regexp: The schema "dummySchema" does not exist.
+WARNING:  _remove_tables: No table to process.
+ emaj_remove_tables 
+--------------------
+                  0
+(1 row)
+
 -- empty tables array
 select emaj.emaj_remove_tables('myschema1',null,null);
 WARNING:  _remove_tables: No table to process.
@@ -323,9 +327,13 @@ select emaj.emaj_remove_sequences('myschema2',array['myseq2','myseq2']);
 -----------------------------------
 -- bad schema
 select emaj.emaj_remove_sequences('dummySchema',null,null);
-ERROR:  _build_tblseqs_array_from_regexp: The schema "dummySchema" does not exist.
-CONTEXT:  PL/pgSQL function emaj._build_tblseqs_array_from_regexp(text,text,text,text) line 14 at RAISE
-PL/pgSQL function emaj.emaj_remove_sequences(text,text,text,text) line 9 at assignment
+WARNING:  _build_tblseqs_array_from_regexp: The schema "dummySchema" does not exist.
+WARNING:  _remove_sequences: No sequence to process.
+ emaj_remove_sequences 
+-----------------------
+                     0
+(1 row)
+
 -- empty tables array
 select emaj.emaj_remove_sequences('myschema2',null,null);
 WARNING:  _remove_sequences: No sequence to process.
@@ -589,6 +597,8 @@ select hist_function, hist_event, hist_object,
  REMOVE_TABLES    | BEGIN              |                                                    |                                                            | postgres
  REMOVE_TABLES    | END                |                                                    | 0 tables removed from their groups                         | postgres
  REMOVE_TABLES    | BEGIN              |                                                    |                                                            | postgres
+ REMOVE_TABLES    | END                |                                                    | 0 tables removed from their groups                         | postgres
+ REMOVE_TABLES    | BEGIN              |                                                    |                                                            | postgres
  REMOVE_TABLES    | TIME STAMP SET     | 8014                                               |                                                            | postgres
  REMOVE_TABLES    | TABLE REMOVED      | myschema1."myTbl3"                                 | From the idle group myGroup1                               | postgres
  REMOVE_TABLES    | TABLE REMOVED      | myschema1.mytbl4                                   | From the idle group myGroup1                               | postgres
@@ -619,6 +629,8 @@ select hist_function, hist_event, hist_object,
  REMOVE_SEQUENCES | BEGIN              |                                                    |                                                            | postgres
  REMOVE_SEQUENCES | END                |                                                    | 0 sequences removed from their groups                      | postgres
  REMOVE_SEQUENCES | BEGIN              |                                                    |                                                            | postgres
+ REMOVE_SEQUENCES | END                |                                                    | 0 sequences removed from their groups                      | postgres
+ REMOVE_SEQUENCES | BEGIN              |                                                    |                                                            | postgres
  REMOVE_SEQUENCES | TIME STAMP SET     | 8018                                               |                                                            | postgres
  REMOVE_SEQUENCES | SEQUENCE REMOVED   | myschema2."myTbl3_col31_seq"                       | From the idle group myGroup2                               | postgres
  REMOVE_SEQUENCES | END                |                                                    | 1 sequences removed from their groups                      | postgres
@@ -633,7 +645,7 @@ select hist_function, hist_event, hist_object,
  IMPORT_GROUPS    | SEQUENCE ADDED     | myschema2."myTbl3_col31_seq"                       | To the idle group myGroup2                                 | postgres
  IMPORT_GROUPS    | SEQUENCE ADDED     | myschema2.myseq1                                   | To the idle group myGroup2                                 | postgres
  IMPORT_GROUPS    | END                |                                                    | 4 created or altered tables groups                         | postgres
-(154 rows)
+(158 rows)
 
 -- set sequence restart value
 select public.handle_emaj_sequences(8200);
@@ -779,6 +791,11 @@ select rel_schema, rel_tblseq, rel_group from emaj.emaj_relation
 -----------------------------------
 -- emaj_move_tables with filters
 -----------------------------------
+-- bad schema
+select emaj.emaj_move_tables('dummySchema',null,null,'myGroup2');
+ERROR:  _build_tblseqs_array_from_regexp: The schema "dummySchema" does not exist!
+CONTEXT:  PL/pgSQL function emaj._build_tblseqs_array_from_regexp(text,text,text,text,boolean) line 18 at RAISE
+PL/pgSQL function emaj.emaj_move_tables(text,text,text,text,text) line 9 at assignment
 -- empty tables array
 select emaj.emaj_move_tables('myschema1',null,null,'myGroup1');
 WARNING:  _move_tables: No table to process.
@@ -974,6 +991,11 @@ select rel_schema, rel_tblseq, rel_group from emaj.emaj_relation
 -----------------------------------
 -- emaj_move_sequences with filters
 -----------------------------------
+-- bad schema
+select emaj.emaj_move_sequences('dummySchema',null,null,'myGroup2');
+ERROR:  _build_tblseqs_array_from_regexp: The schema "dummySchema" does not exist!
+CONTEXT:  PL/pgSQL function emaj._build_tblseqs_array_from_regexp(text,text,text,text,boolean) line 18 at RAISE
+PL/pgSQL function emaj.emaj_move_sequences(text,text,text,text,text) line 9 at assignment
 -- empty sequences array
 select emaj.emaj_move_sequences('myschema2',null,null,'myGroup2');
 WARNING:  _move_sequences: No sequence to process.
@@ -1369,6 +1391,11 @@ select rel_schema, rel_tblseq, rel_time_range, rel_priority, rel_log_dat_tsp fro
 -----------------------------------
 -- emaj_modify_tables with filters
 -----------------------------------
+-- bad schema
+select emaj.emaj_modify_tables('dummySchema',null,null,null::jsonb);
+ERROR:  _build_tblseqs_array_from_regexp: The schema "dummySchema" does not exist!
+CONTEXT:  PL/pgSQL function emaj._build_tblseqs_array_from_regexp(text,text,text,text,boolean) line 18 at RAISE
+PL/pgSQL function emaj.emaj_modify_tables(text,text,text,jsonb,text) line 9 at assignment
 -- empty tables array
 select emaj.emaj_modify_tables('myschema2',null,null,null::jsonb);
 WARNING:  _modified_tables: No table to process.

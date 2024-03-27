@@ -1495,13 +1495,17 @@ $_check_tables_for_rollbackable_group$
   END;
 $_check_tables_for_rollbackable_group$;
 
-CREATE OR REPLACE FUNCTION emaj._build_tblseqs_array_from_regexp(p_schema TEXT, p_relkind TEXT, p_includeFilter TEXT, p_excludeFilter TEXT)
+CREATE OR REPLACE FUNCTION emaj._build_tblseqs_array_from_regexp(p_schema TEXT, p_relkind TEXT, p_includeFilter TEXT, p_excludeFilter TEXT,
+                                                                 p_exceptionIfMissing BOOLEAN)
 RETURNS TEXT[] LANGUAGE plpgsql AS
 $_build_tblseqs_array_from_regexp$
 -- The function builds the names array of tables or sequences belonging to any tables groups, based on include and exclude regexp filters.
+-- Depending on the p_exceptionIfMissing parameter, it warns or raises an error if the schema doesn't exist.
+-- (WARNING only is used by removal functions so that it is possible to remove from its group relations of a dropped or renamed schema)
 -- Inputs: schema,
 --         relation kind ('r' or 'S'),
---         2 patterns to filter table names (one to include and another to exclude).
+--         2 patterns to filter table names (one to include and another to exclude),
+--         boolean indicating whether a missing schema must raise an exception or just a warning.
 -- Outputs: tables or sequences names array
   BEGIN
 -- Check that the schema exists.
@@ -1510,7 +1514,11 @@ $_build_tblseqs_array_from_regexp$
             FROM pg_catalog.pg_namespace
             WHERE nspname = p_schema
          ) THEN
-      RAISE EXCEPTION '_build_tblseqs_array_from_regexp: The schema "%" does not exist.', p_schema;
+      IF p_exceptionIfMissing THEN
+        RAISE EXCEPTION '_build_tblseqs_array_from_regexp: The schema "%" does not exist!', p_schema;
+      ELSE
+        RAISE WARNING '_build_tblseqs_array_from_regexp: The schema "%" does not exist.', p_schema;
+      END IF;
     END IF;
 -- Process empty filters as NULL.
     SELECT CASE WHEN p_includeFilter = '' THEN NULL ELSE p_includeFilter END,
@@ -2608,7 +2616,7 @@ $emaj_remove_tables$
   DECLARE
     v_tables                 TEXT[];
   BEGIN
-    v_tables = emaj._build_tblseqs_array_from_regexp(p_schema, 'r', p_tablesIncludeFilter, p_tablesExcludeFilter);
+    v_tables = emaj._build_tblseqs_array_from_regexp(p_schema, 'r', p_tablesIncludeFilter, p_tablesExcludeFilter, FALSE);
 -- Call the _remove_tables() function for execution.
     RETURN emaj._remove_tables(p_schema, v_tables, p_mark, TRUE, TRUE);
   END;
@@ -2771,7 +2779,7 @@ $emaj_move_tables$
   DECLARE
     v_tables                 TEXT[];
   BEGIN
-    v_tables = emaj._build_tblseqs_array_from_regexp(p_schema, 'r', p_tablesIncludeFilter, p_tablesExcludeFilter);
+    v_tables = emaj._build_tblseqs_array_from_regexp(p_schema, 'r', p_tablesIncludeFilter, p_tablesExcludeFilter, TRUE);
 -- Call the _move_tables() function for execution.
     RETURN emaj._move_tables(p_schema, v_tables, p_newGroup, p_mark, TRUE, TRUE);
   END;
@@ -2949,7 +2957,7 @@ $emaj_modify_tables$
   DECLARE
     v_tables                 TEXT[];
   BEGIN
-    v_tables = emaj._build_tblseqs_array_from_regexp(p_schema, 'r', p_tablesIncludeFilter, p_tablesExcludeFilter);
+    v_tables = emaj._build_tblseqs_array_from_regexp(p_schema, 'r', p_tablesIncludeFilter, p_tablesExcludeFilter, TRUE);
 -- Call the _modify_tables() function for execution.
     RETURN emaj._modify_tables(p_schema, v_tables, p_properties, p_mark, TRUE, TRUE);
   END;
@@ -4256,7 +4264,7 @@ $emaj_remove_sequences$
   DECLARE
     v_sequences              TEXT[];
   BEGIN
-    v_sequences = emaj._build_tblseqs_array_from_regexp(p_schema, 'S', p_sequencesIncludeFilter, p_sequencesExcludeFilter);
+    v_sequences = emaj._build_tblseqs_array_from_regexp(p_schema, 'S', p_sequencesIncludeFilter, p_sequencesExcludeFilter, FALSE);
 -- Call the _remove_sequences() function for execution.
     RETURN emaj._remove_sequences(p_schema, v_sequences, p_mark, TRUE, TRUE);
   END;
@@ -4404,7 +4412,7 @@ $emaj_move_sequences$
   DECLARE
     v_sequences              TEXT[];
   BEGIN
-    v_sequences = emaj._build_tblseqs_array_from_regexp(p_schema, 'S', p_sequencesIncludeFilter, p_sequencesExcludeFilter);
+    v_sequences = emaj._build_tblseqs_array_from_regexp(p_schema, 'S', p_sequencesIncludeFilter, p_sequencesExcludeFilter, TRUE);
 -- Call the _move_sequences() function for execution.
     RETURN emaj._move_sequences(p_schema, v_sequences, p_newGroup, p_mark, TRUE, TRUE);
   END;

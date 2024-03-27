@@ -93,7 +93,7 @@ select funcname, calls from pg_stat_user_functions
  _assign_tables                            |    67
  _build_alter_seq                          |   219
  _build_sql_tbl                            |   165
- _build_tblseqs_array_from_regexp          |    38
+ _build_tblseqs_array_from_regexp          |    40
  _change_ignored_triggers_tbl              |    12
  _change_log_data_tsp_tbl                  |    15
  _change_log_index_tsp_tbl                 |     9
@@ -105,7 +105,7 @@ select funcname, calls from pg_stat_user_functions
  _check_json_table_properties              |    45
  _check_mark_name                          |   557
  _check_marks_range                        |   181
- _check_new_mark                           |   465
+ _check_new_mark                           |   467
  _check_tables_for_rollbackable_group      |    72
  _check_tblseqs_array                      |   110
  _check_tblseqs_filter                     |    29
@@ -164,8 +164,8 @@ select funcname, calls from pg_stat_user_functions
  _pg_version_num                           |   247
  _purge_histories                          |    99
  _remove_seq                               |    15
- _remove_sequences                         |    19
- _remove_tables                            |    33
+ _remove_sequences                         |    20
+ _remove_tables                            |    34
  _remove_tbl                               |    37
  _repair_tbl                               |     2
  _reset_groups                             |    73
@@ -252,10 +252,10 @@ select funcname, calls from pg_stat_user_functions
  emaj_purge_histories                      |     3
  emaj_remove_sequence                      |    10
  emaj_remove_sequences                     |     5
- emaj_remove_sequences                     |     4
+ emaj_remove_sequences                     |     5
  emaj_remove_table                         |    21
  emaj_remove_tables                        |     7
- emaj_remove_tables                        |     5
+ emaj_remove_tables                        |     6
  emaj_rename_mark_group                    |    24
  emaj_reset_group                          |     7
  emaj_rollback_activity                    |     6
@@ -279,7 +279,7 @@ select funcname, calls from pg_stat_user_functions
 select sum(calls) from pg_stat_user_functions where funcname like E'emaj\\_%';
  sum  
 ------
- 1079
+ 1081
 (1 row)
 
 -----------------------------
