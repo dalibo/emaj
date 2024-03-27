@@ -698,7 +698,7 @@ PL/pgSQL function emaj.emaj_move_table(text,text,text,text) line 6 at RETURN
 -- bad table type for target rollbackable group
 select emaj.emaj_move_table('myschema5', 'myunloggedtbl', 'myGroup1');
 ERROR:  _move_tables: In schema myschema5, some tables (myunloggedtbl) are UNLOGGED tables.
-CONTEXT:  PL/pgSQL function emaj._check_tables_for_rollbackable_group(text,text[],boolean,text) line 49 at RAISE
+CONTEXT:  PL/pgSQL function emaj._check_tables_for_rollbackable_group(text,text[],boolean,text) line 44 at RAISE
 PL/pgSQL function emaj._move_tables(text,text[],text,text,boolean,boolean) line 74 at assignment
 PL/pgSQL function emaj.emaj_move_table(text,text,text,text) line 6 at RETURN
 select emaj.emaj_move_table('phil''s schema3', 'myTbl2\', 'myGroup1');
@@ -757,7 +757,7 @@ WARNING:  _move_tables: No table to process.
 -- bad table type for target rollbackable group
 select emaj.emaj_move_tables('myschema5', array['myunloggedtbl'], 'myGroup1');
 ERROR:  _move_tables: In schema myschema5, some tables (myunloggedtbl) are UNLOGGED tables.
-CONTEXT:  PL/pgSQL function emaj._check_tables_for_rollbackable_group(text,text[],boolean,text) line 49 at RAISE
+CONTEXT:  PL/pgSQL function emaj._check_tables_for_rollbackable_group(text,text[],boolean,text) line 44 at RAISE
 PL/pgSQL function emaj._move_tables(text,text[],text,text,boolean,boolean) line 74 at assignment
 PL/pgSQL function emaj.emaj_move_tables(text,text[],text,text) line 6 at RETURN
 -- move to the same group

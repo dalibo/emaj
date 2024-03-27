@@ -1442,13 +1442,8 @@ $_check_tables_for_rollbackable_group$
         RAISE EXCEPTION '%: In schema %, some tables (%) have no PRIMARY KEY.', p_callingFunction, quote_ident(p_schema), v_list;
       ELSE
         RAISE WARNING '%: Some tables without PRIMARY KEY (%) are not selected.', p_callingFunction, v_list;
-      -- remove these tables from the tables to process
-      SELECT array_agg(remaining_table) INTO p_tables
-        FROM
-          (  SELECT unnest(p_tables)
-           EXCEPT
-             SELECT unnest(v_array)
-          ) AS t(remaining_table);
+        -- remove these tables from the tables to process
+        p_tables = array(SELECT unnest(p_tables) EXCEPT SELECT unnest(v_array));
       END IF;
     END IF;
 -- Check or discard UNLOGGED tables.
@@ -1464,13 +1459,8 @@ $_check_tables_for_rollbackable_group$
         RAISE EXCEPTION '%: In schema %, some tables (%) are UNLOGGED tables.', p_callingFunction, quote_ident(p_schema), v_list;
       ELSE
         RAISE WARNING '%: Some UNLOGGED tables (%) are not selected.', p_callingFunction, v_list;
-      -- remove these tables from the tables to process
-      SELECT array_agg(remaining_table) INTO p_tables
-        FROM
-          (  SELECT unnest(p_tables)
-           EXCEPT
-             SELECT unnest(v_array)
-          ) AS t(remaining_table);
+        -- remove these tables from the tables to process
+        p_tables = array(SELECT unnest(p_tables) EXCEPT SELECT unnest(v_array));
       END IF;
     END IF;
 -- With PG11-, check or discard WITH OIDS tables.
@@ -1487,13 +1477,8 @@ $_check_tables_for_rollbackable_group$
           RAISE EXCEPTION '%: In schema %, some tables (%) are declared WITH OIDS.', p_callingFunction, quote_ident(p_schema), v_list;
         ELSE
           RAISE WARNING '%: Some WITH OIDS tables (%) are not selected.', p_callingFunction, v_list;
-        -- remove these tables from the tables to process
-        SELECT array_agg(remaining_table) INTO p_tables
-          FROM
-           (  SELECT unnest(p_tables)
-            EXCEPT
-              SELECT unnest(v_array)
-           ) AS t(remaining_table);
+          -- remove these tables from the tables to process
+          p_tables = array(SELECT unnest(p_tables) EXCEPT SELECT unnest(v_array));
         END IF;
       END IF;
     END IF;
@@ -2875,7 +2860,7 @@ $_move_tables$
 -- Check the supplied mark.
     SELECT emaj._check_new_mark(v_loggingGroups, p_mark) INTO v_markName;
 -- OK,
-    IF p_tables IS NULL THEN
+    IF p_tables IS NULL OR p_tables = '{}' THEN
 -- When no tables are finaly selected, just warn.
       RAISE WARNING '_move_tables: No table to process.';
     ELSE

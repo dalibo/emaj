@@ -703,6 +703,83 @@ $_check_json_param_conf$
   END;
 $_check_json_param_conf$;
 
+CREATE OR REPLACE FUNCTION emaj._check_tables_for_rollbackable_group(p_schema TEXT, p_tables TEXT[], p_arrayFromRegex BOOLEAN,
+                                                                     p_callingFunction TEXT)
+RETURNS TEXT[] LANGUAGE plpgsql AS
+$_check_tables_for_rollbackable_group$
+-- This function filters or verifies that tables are compatible with ROLLBACKABLE groups.
+-- (they must have a PK and no be UNLOGGED or WITH OIDS)
+-- Input: schema, array of tables names, boolean indicating whether the tables list is built from regexp, calling function name
+-- Output: updated tables name array
+  DECLARE
+    v_list                   TEXT;
+    v_array                  TEXT[];
+  BEGIN
+-- Check or discard tables without primary key.
+    SELECT string_agg(quote_ident(relname), ', '), array_agg(relname) INTO v_list, v_array
+      FROM pg_catalog.pg_class t
+           JOIN pg_catalog.pg_namespace ON (pg_namespace.oid = relnamespace)
+      WHERE nspname = p_schema AND t.relname = ANY(p_tables)
+        AND relkind = 'r'
+        AND NOT EXISTS
+              (SELECT 0
+                 FROM pg_catalog.pg_class c
+                      JOIN pg_catalog.pg_namespace ON (pg_namespace.oid = c.relnamespace)
+                      JOIN pg_catalog.pg_constraint ON (connamespace = pg_namespace.oid AND conrelid = c.oid)
+                           WHERE contype = 'p'
+                             AND nspname = p_schema
+                             AND c.relname = t.relname
+              );
+    IF v_list IS NOT NULL THEN
+      IF NOT p_arrayFromRegex THEN
+        RAISE EXCEPTION '%: In schema %, some tables (%) have no PRIMARY KEY.', p_callingFunction, quote_ident(p_schema), v_list;
+      ELSE
+        RAISE WARNING '%: Some tables without PRIMARY KEY (%) are not selected.', p_callingFunction, v_list;
+        -- remove these tables from the tables to process
+        p_tables = array(SELECT unnest(p_tables) EXCEPT SELECT unnest(v_array));
+      END IF;
+    END IF;
+-- Check or discard UNLOGGED tables.
+    SELECT string_agg(quote_ident(relname), ', '), array_agg(relname) INTO v_list, v_array
+      FROM pg_catalog.pg_class
+           JOIN pg_catalog.pg_namespace ON (pg_namespace.oid = relnamespace)
+      WHERE nspname = p_schema
+        AND relname = ANY(p_tables)
+        AND relkind = 'r'
+        AND relpersistence = 'u';
+    IF v_list IS NOT NULL THEN
+      IF NOT p_arrayFromRegex THEN
+        RAISE EXCEPTION '%: In schema %, some tables (%) are UNLOGGED tables.', p_callingFunction, quote_ident(p_schema), v_list;
+      ELSE
+        RAISE WARNING '%: Some UNLOGGED tables (%) are not selected.', p_callingFunction, v_list;
+        -- remove these tables from the tables to process
+        p_tables = array(SELECT unnest(p_tables) EXCEPT SELECT unnest(v_array));
+      END IF;
+    END IF;
+-- With PG11-, check or discard WITH OIDS tables.
+    IF emaj._pg_version_num() < 120000 THEN
+      SELECT string_agg(quote_ident(relname), ', '), array_agg(relname) INTO v_list, v_array
+        FROM pg_catalog.pg_class
+             JOIN pg_catalog.pg_namespace ON (pg_namespace.oid = relnamespace)
+        WHERE nspname = p_schema
+          AND relname = ANY(p_tables)
+          AND relkind = 'r'
+          AND relhasoids;
+      IF v_list IS NOT NULL THEN
+        IF NOT p_arrayFromRegex THEN
+          RAISE EXCEPTION '%: In schema %, some tables (%) are declared WITH OIDS.', p_callingFunction, quote_ident(p_schema), v_list;
+        ELSE
+          RAISE WARNING '%: Some WITH OIDS tables (%) are not selected.', p_callingFunction, v_list;
+          -- remove these tables from the tables to process
+          p_tables = array(SELECT unnest(p_tables) EXCEPT SELECT unnest(v_array));
+        END IF;
+      END IF;
+    END IF;
+--
+    RETURN p_tables;
+  END;
+$_check_tables_for_rollbackable_group$;
+
 CREATE OR REPLACE FUNCTION emaj._build_tblseqs_array_from_regexp(p_schema TEXT, p_relkind TEXT, p_includeFilter TEXT, p_excludeFilter TEXT,
                                                                  p_exceptionIfMissing BOOLEAN)
 RETURNS TEXT[] LANGUAGE plpgsql AS
@@ -1549,7 +1626,7 @@ $_move_tables$
 -- Check the supplied mark.
     SELECT emaj._check_new_mark(v_loggingGroups, p_mark) INTO v_markName;
 -- OK,
-    IF p_tables IS NULL THEN
+    IF p_tables IS NULL OR p_tables = '{}' THEN
 -- When no tables are finaly selected, just warn.
       RAISE WARNING '_move_tables: No table to process.';
     ELSE
