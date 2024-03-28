@@ -1627,6 +1627,42 @@ $_check_tblseqs_array$
   END;
 $_check_tblseqs_array$;
 
+CREATE OR REPLACE FUNCTION emaj._get_lock_tblseqs_groups(p_schema TEXT, p_tblseqs TEXT[], p_newGroup TEXT,
+                                                         OUT p_groups TEXT[], OUT p_loggingGroups TEXT[], OUT p_nbAuditOnlyGroups INT)
+LANGUAGE plpgsql AS
+$_get_lock_tblseqs_groups$
+-- This function gets the lists of groups and logging groups holding a set of tables or sequences of a single schema.
+-- It also counts the number of AUDIT_ONLY groups.
+-- It is called by functions that change the tables groups structure.
+-- For functions moving tables or sequences from a group to another, it handles the target tables group.
+-- It locks the target and source tables groups so that no other operation simultaneously occurs for these groups.
+-- Input: schema,
+--        array of table or sequence names,
+--        target tables group for move functions (set to NULL for other functions).
+-- Output: tables groups names array, logging tables groups names array, number of AUDIT_ONLY tables groups.
+  BEGIN
+-- Build the output data.
+-- The CTE is needed for the FOR UPDATE clause not allowed when aggregate functions.
+    WITH tables_group AS (
+      SELECT group_name, group_is_logging, group_is_rollbackable FROM emaj.emaj_group
+        WHERE (p_newGroup IS NOT NULL AND group_name = p_newGroup) OR
+              group_name IN
+               (SELECT DISTINCT rel_group FROM emaj.emaj_relation
+                  WHERE rel_schema = p_schema
+                    AND rel_tblseq = ANY(p_tblseqs)
+                    AND upper_inf(rel_time_range))
+        FOR UPDATE OF emaj_group
+      )
+    SELECT array_agg(group_name ORDER BY group_name),
+           array_agg(group_name ORDER BY group_name) FILTER (WHERE group_is_logging),
+           count(group_name) FILTER (WHERE NOT group_is_rollbackable AND (p_newGroup IS NULL OR group_name <> p_newGroup))
+      INTO p_groups, p_loggingGroups, p_nbAuditOnlyGroups
+      FROM tables_group;
+--
+    RETURN;
+  END;
+$_get_lock_tblseqs_groups$;
+
 CREATE OR REPLACE FUNCTION emaj._check_mark_name(p_groupNames TEXT[], p_mark TEXT, p_checkActive BOOLEAN DEFAULT FALSE)
 RETURNS TEXT LANGUAGE plpgsql AS
 $_check_mark_name$
@@ -2646,23 +2682,9 @@ $_remove_tables$
     IF NOT p_arrayFromRegex THEN
       p_tables = emaj._check_tblseqs_array(p_schema, p_tables, 'r', FALSE);
     END IF;
--- Get the lists of groups and logging groups holding these tables, if any.
--- It locks the tables groups so that no other operation simultaneously occurs these groups.
-    WITH tables_group AS (
-      SELECT group_name, group_is_logging
-        FROM emaj.emaj_relation
-             JOIN emaj.emaj_group ON (group_name = rel_group)
-        WHERE rel_schema = p_schema
-          AND rel_tblseq = ANY(p_tables)
-          AND upper_inf(rel_time_range)
-        FOR UPDATE OF emaj_group
-                         )
-    SELECT (SELECT array_agg(group_name)
-              FROM tables_group),
-           (SELECT array_agg(group_name)
-              FROM tables_group
-              WHERE group_is_logging)
-      INTO v_groups, v_loggingGroups;
+-- Get and lock the tables groups and logging groups holding these tables.
+    SELECT p_groups, p_loggingGroups INTO v_groups, v_loggingGroups
+      FROM emaj._get_lock_tblseqs_groups(p_schema, p_tables, NULL);
 -- Check the supplied mark.
     SELECT emaj._check_new_mark(v_loggingGroups, p_mark) INTO v_markName;
 -- OK,
@@ -2834,24 +2856,9 @@ $_move_tables$
         RAISE WARNING '_move_tables: some tables (%) already belong to the tables group %.', v_list, p_newGroup;
       END IF;
     END IF;
--- Get the lists of groups and logging groups holding these tables, if any, and count the number of AUDIT_ONLY groups.
--- It locks the target and source tables groups so that no other operation simultaneously occurs these groups
--- (the CTE is needed for the FOR UPDATE clause not allowed when aggregate functions).
-    WITH tables_group AS (
-      SELECT group_name, group_is_logging, group_is_rollbackable FROM emaj.emaj_group
-        WHERE group_name = p_newGroup OR
-              group_name IN
-               (SELECT DISTINCT rel_group FROM emaj.emaj_relation
-                  WHERE rel_schema = p_schema
-                    AND rel_tblseq = ANY(p_tables)
-                    AND upper_inf(rel_time_range))
-        FOR UPDATE OF emaj_group
-      )
-    SELECT array_agg(group_name ORDER BY group_name),
-           array_agg(group_name ORDER BY group_name) FILTER (WHERE group_is_logging),
-           count(group_name) FILTER (WHERE NOT group_is_rollbackable AND group_name <> p_newGroup)
-      INTO v_groups, v_loggingGroups, v_nbAuditOnlyGroups
-      FROM tables_group;
+-- Get and lock the tables groups and logging groups holding these tables, and count the number of AUDIT_ONLY groups.
+    SELECT p_groups, p_loggingGroups, p_nbAuditOnlyGroups INTO v_groups, v_loggingGroups, v_nbAuditOnlyGroups
+      FROM emaj._get_lock_tblseqs_groups(p_schema, p_tables, p_newGroup);
 -- If at least 1 source tables group is of type AUDIT_ONLY and the target tables group is ROLLBACKABLE, add some checks on tables.
 -- They may be incompatible with ROLLBACKABLE groups.
     IF v_nbAuditOnlyGroups > 0 AND v_newGroupIsRollbackable THEN
@@ -3008,25 +3015,9 @@ $_modify_tables$
       SELECT * INTO v_newPriority, v_newLogDatTsp, v_newLogIdxTsp, v_ignoredTriggers, v_ignoredTrgProfiles
         FROM emaj._check_json_table_properties(p_changedProperties);
     END IF;
--- Get the lists of groups and logging groups holding these tables, if any.
--- The FOR UPDATE clause locks the tables groups so that no other operation simultaneously occurs on these groups
--- (the CTE is needed for the FOR UPDATE clause not allowed when aggregate functions).
-    WITH tables_group AS (
-      SELECT group_name, group_is_logging
-        FROM emaj.emaj_group
-        WHERE group_name IN
-               (SELECT DISTINCT rel_group
-                  FROM emaj.emaj_relation
-                  WHERE rel_schema = p_schema
-                    AND rel_tblseq = ANY(p_tables)
-                    AND upper_inf(rel_time_range)
-               )
-        FOR UPDATE OF emaj_group
-      )
-    SELECT array_agg(group_name ORDER BY group_name),
-           array_agg(group_name ORDER BY group_name) FILTER (WHERE group_is_logging)
-      INTO v_groups, v_loggingGroups
-      FROM tables_group;
+-- Get and lock the tables groups and logging groups holding these tables.
+    SELECT p_groups, p_loggingGroups INTO v_groups, v_loggingGroups
+      FROM emaj._get_lock_tblseqs_groups(p_schema, p_tables, NULL);
 -- Check the supplied mark.
     SELECT emaj._check_new_mark(v_loggingGroups, p_mark) INTO v_markName;
 -- OK,
@@ -4293,25 +4284,9 @@ $_remove_sequences$
     IF NOT p_arrayFromRegex THEN
       p_sequences = emaj._check_tblseqs_array(p_schema, p_sequences, 'S', FALSE);
     END IF;
--- Get the lists of groups and logging groups holding these sequences, if any.
--- It locks the tables groups so that no other operation simultaneously occurs these groups.
-    WITH tables_group AS
-      (SELECT group_name, group_is_logging
-         FROM emaj.emaj_relation
-              JOIN emaj.emaj_group ON (group_name = rel_group)
-         WHERE rel_schema = p_schema
-           AND rel_tblseq = ANY(p_sequences)
-           AND upper_inf(rel_time_range)
-         FOR UPDATE OF emaj_group
-      )
-    SELECT (SELECT array_agg(group_name)
-              FROM tables_group
-           ),
-           (SELECT array_agg(group_name)
-              FROM tables_group
-              WHERE group_is_logging
-           )
-      INTO v_groups, v_loggingGroups;
+-- Get and lock the tables groups and logging groups holding these sequences.
+    SELECT p_groups, p_loggingGroups INTO v_groups, v_loggingGroups
+      FROM emaj._get_lock_tblseqs_groups(p_schema, p_sequences, NULL);
 -- Check the supplied mark.
     SELECT emaj._check_new_mark(v_loggingGroups, p_mark) INTO v_markName;
 -- OK,
@@ -4464,26 +4439,9 @@ $_move_sequences$
         RAISE WARNING '_move_sequences: some sequences (%) already belong to the tables group %.', v_list, p_newGroup;
       END IF;
     END IF;
--- Get the lists of groups and logging groups holding these sequences, if any.
--- It locks the tables groups so that no other operation simultaneously occurs these groups
--- (the CTE is needed for the FOR UPDATE clause not allowed when aggregate functions).
-    WITH tables_group AS
-      (SELECT group_name, group_is_logging
-         FROM emaj.emaj_group
-         WHERE group_name = p_newGroup
-            OR group_name IN
-                 (SELECT DISTINCT rel_group
-                    FROM emaj.emaj_relation
-                    WHERE rel_schema = p_schema
-                      AND rel_tblseq = ANY(p_sequences)
-                      AND upper_inf(rel_time_range)
-                 )
-        FOR UPDATE OF emaj_group
-      )
-    SELECT array_agg(group_name ORDER BY group_name),
-           array_agg(group_name ORDER BY group_name) FILTER (WHERE group_is_logging)
-      INTO v_groups, v_loggingGroups
-      FROM tables_group;
+-- Get and lock the tables groups and logging groups holding these sequences, and count the number of AUDIT_ONLY groups.
+    SELECT p_groups, p_loggingGroups INTO v_groups, v_loggingGroups
+      FROM emaj._get_lock_tblseqs_groups(p_schema, p_sequences, p_newGroup);
 -- Check the supplied mark.
     SELECT emaj._check_new_mark(v_loggingGroups, p_mark) INTO v_markName;
 -- OK,

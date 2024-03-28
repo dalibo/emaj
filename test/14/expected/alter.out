@@ -136,7 +136,7 @@ select emaj.emaj_remove_table('myschema1','mytbl1','EMAJ_LAST_MARK');
 ERROR:  _check_new_mark: "EMAJ_LAST_MARK" is not an allowed name for a new mark.
 CONTEXT:  PL/pgSQL function emaj._check_new_mark(text[],text) line 14 at RAISE
 SQL statement "SELECT emaj._check_new_mark(v_loggingGroups, p_mark)"
-PL/pgSQL function emaj._remove_tables(text,text[],text,boolean,boolean) line 46 at SQL statement
+PL/pgSQL function emaj._remove_tables(text,text[],text,boolean,boolean) line 32 at SQL statement
 PL/pgSQL function emaj.emaj_remove_table(text,text,text) line 6 at RETURN
 -- ok
 select emaj.emaj_remove_table('myschema1','mytbl1');
@@ -267,7 +267,7 @@ select emaj.emaj_remove_sequence('myschema2','myseq1','EMAJ_LAST_MARK');
 ERROR:  _check_new_mark: "EMAJ_LAST_MARK" is not an allowed name for a new mark.
 CONTEXT:  PL/pgSQL function emaj._check_new_mark(text[],text) line 14 at RAISE
 SQL statement "SELECT emaj._check_new_mark(v_loggingGroups, p_mark)"
-PL/pgSQL function emaj._remove_sequences(text,text[],text,boolean,boolean) line 47 at SQL statement
+PL/pgSQL function emaj._remove_sequences(text,text[],text,boolean,boolean) line 31 at SQL statement
 PL/pgSQL function emaj.emaj_remove_sequence(text,text,text) line 6 at RETURN
 -- ok
 select emaj.emaj_remove_sequence('myschema2','myseq1');
@@ -693,18 +693,18 @@ select emaj.emaj_move_table('myschema1','mytbl1','myGroup2','EMAJ_LAST_MARK');
 ERROR:  _check_new_mark: "EMAJ_LAST_MARK" is not an allowed name for a new mark.
 CONTEXT:  PL/pgSQL function emaj._check_new_mark(text[],text) line 14 at RAISE
 SQL statement "SELECT emaj._check_new_mark(v_loggingGroups, p_mark)"
-PL/pgSQL function emaj._move_tables(text,text[],text,text,boolean,boolean) line 77 at SQL statement
+PL/pgSQL function emaj._move_tables(text,text[],text,text,boolean,boolean) line 62 at SQL statement
 PL/pgSQL function emaj.emaj_move_table(text,text,text,text) line 6 at RETURN
 -- bad table type for target rollbackable group
 select emaj.emaj_move_table('myschema5', 'myunloggedtbl', 'myGroup1');
 ERROR:  _move_tables: In schema myschema5, some tables (myunloggedtbl) are UNLOGGED tables.
 CONTEXT:  PL/pgSQL function emaj._check_tables_for_rollbackable_group(text,text[],boolean,text) line 44 at RAISE
-PL/pgSQL function emaj._move_tables(text,text[],text,text,boolean,boolean) line 74 at assignment
+PL/pgSQL function emaj._move_tables(text,text[],text,text,boolean,boolean) line 59 at assignment
 PL/pgSQL function emaj.emaj_move_table(text,text,text,text) line 6 at RETURN
 select emaj.emaj_move_table('phil''s schema3', 'myTbl2\', 'myGroup1');
 ERROR:  _move_tables: In schema "phil's schema3", some tables ("myTbl2\") have no PRIMARY KEY.
 CONTEXT:  PL/pgSQL function emaj._check_tables_for_rollbackable_group(text,text[],boolean,text) line 27 at RAISE
-PL/pgSQL function emaj._move_tables(text,text[],text,text,boolean,boolean) line 74 at assignment
+PL/pgSQL function emaj._move_tables(text,text[],text,text,boolean,boolean) line 59 at assignment
 PL/pgSQL function emaj.emaj_move_table(text,text,text,text) line 6 at RETURN
 -- move to the same group
 select emaj.emaj_move_table('myschema1','mytbl1','myGroup1');
@@ -758,7 +758,7 @@ WARNING:  _move_tables: No table to process.
 select emaj.emaj_move_tables('myschema5', array['myunloggedtbl'], 'myGroup1');
 ERROR:  _move_tables: In schema myschema5, some tables (myunloggedtbl) are UNLOGGED tables.
 CONTEXT:  PL/pgSQL function emaj._check_tables_for_rollbackable_group(text,text[],boolean,text) line 44 at RAISE
-PL/pgSQL function emaj._move_tables(text,text[],text,text,boolean,boolean) line 74 at assignment
+PL/pgSQL function emaj._move_tables(text,text[],text,text,boolean,boolean) line 59 at assignment
 PL/pgSQL function emaj.emaj_move_tables(text,text[],text,text) line 6 at RETURN
 -- move to the same group
 select emaj.emaj_move_tables('myschema1',array['mytbl2','mytbl2b'],'myGroup1');
@@ -906,7 +906,7 @@ select emaj.emaj_move_sequence('myschema2','myseq1','myGroup1','EMAJ_LAST_MARK')
 ERROR:  _check_new_mark: "EMAJ_LAST_MARK" is not an allowed name for a new mark.
 CONTEXT:  PL/pgSQL function emaj._check_new_mark(text[],text) line 14 at RAISE
 SQL statement "SELECT emaj._check_new_mark(v_loggingGroups, p_mark)"
-PL/pgSQL function emaj._move_sequences(text,text[],text,text,boolean,boolean) line 71 at SQL statement
+PL/pgSQL function emaj._move_sequences(text,text[],text,text,boolean,boolean) line 54 at SQL statement
 PL/pgSQL function emaj.emaj_move_sequence(text,text,text,text) line 6 at RETURN
 -- move to the same group
 select emaj.emaj_move_sequence('myschema2','myseq1','myGroup2');
@@ -1218,7 +1218,7 @@ select emaj.emaj_modify_table('myschema1','mytbl1',null,'EMAJ_LAST_MARK');
 ERROR:  _check_new_mark: "EMAJ_LAST_MARK" is not an allowed name for a new mark.
 CONTEXT:  PL/pgSQL function emaj._check_new_mark(text[],text) line 14 at RAISE
 SQL statement "SELECT emaj._check_new_mark(v_loggingGroups, p_mark)"
-PL/pgSQL function emaj._modify_tables(text,text[],jsonb,text,boolean,boolean) line 69 at SQL statement
+PL/pgSQL function emaj._modify_tables(text,text[],jsonb,text,boolean,boolean) line 53 at SQL statement
 PL/pgSQL function emaj.emaj_modify_table(text,text,jsonb,text) line 7 at RETURN
 -- ok
 -- no property

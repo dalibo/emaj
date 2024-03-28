@@ -43,7 +43,7 @@ select emaj.emaj_modify_table('myschema1','mytbl1','{"priority":30}'::jsonb,emaj
 ERROR:  _check_new_mark: The group "myGroup1" already contains a mark named "Mk1".
 CONTEXT:  PL/pgSQL function emaj._check_new_mark(text[],text) line 29 at RAISE
 SQL statement "SELECT emaj._check_new_mark(v_loggingGroups, p_mark)"
-PL/pgSQL function emaj._modify_tables(text,text[],jsonb,text,boolean,boolean) line 69 at SQL statement
+PL/pgSQL function emaj._modify_tables(text,text[],jsonb,text,boolean,boolean) line 53 at SQL statement
 PL/pgSQL function emaj.emaj_modify_table(text,text,jsonb,text) line 7 at RETURN
 -- change the priority
 select emaj.emaj_modify_table('myschema1','mytbl1','{"priority":30}'::jsonb,'Priority Changed');
@@ -2264,10 +2264,10 @@ select hist_function, hist_event, hist_object,
  SET_MARK_GROUP         | END            | myGroup1                     | Mk2c                                                                                                                   | postgres
  REMOVE_TABLES          | BEGIN          |                              |                                                                                                                        | postgres
  REMOVE_TABLES          | TIME STAMP SET | 9701                         |                                                                                                                        | postgres
- LOCK_GROUP             | BEGIN          | myGroup1,myGroup1            |                                                                                                                        | postgres
- LOCK_GROUP             | END            | myGroup1,myGroup1            | 5 tables locked, 0 deadlock(s)                                                                                         | postgres
- SET_MARK_GROUP         | BEGIN          | myGroup1,myGroup1            | 2 tables removed from myGroup1                                                                                         | postgres
- SET_MARK_GROUP         | END            | myGroup1,myGroup1            | 2 tables removed from myGroup1                                                                                         | postgres
+ LOCK_GROUP             | BEGIN          | myGroup1                     |                                                                                                                        | postgres
+ LOCK_GROUP             | END            | myGroup1                     | 5 tables locked, 0 deadlock(s)                                                                                         | postgres
+ SET_MARK_GROUP         | BEGIN          | myGroup1                     | 2 tables removed from myGroup1                                                                                         | postgres
+ SET_MARK_GROUP         | END            | myGroup1                     | 2 tables removed from myGroup1                                                                                         | postgres
  REMOVE_TABLES          | TABLE REMOVED  | myschema1."myTbl3"           | From the logging group myGroup1                                                                                        | postgres
  REMOVE_TABLES          | TABLE REMOVED  | myschema1.mytbl2b            | From the logging group myGroup1                                                                                        | postgres
  REMOVE_TABLES          | END            |                              | 2 tables removed from their groups                                                                                     | postgres
@@ -2785,13 +2785,13 @@ select emaj.emaj_remove_table('myschema2','mytbl1','Mark_assign_sequences');
 ERROR:  _check_new_mark: The group "myGroup2" already contains a mark named "Mark_assign_sequences".
 CONTEXT:  PL/pgSQL function emaj._check_new_mark(text[],text) line 29 at RAISE
 SQL statement "SELECT emaj._check_new_mark(v_loggingGroups, p_mark)"
-PL/pgSQL function emaj._remove_tables(text,text[],text,boolean,boolean) line 46 at SQL statement
+PL/pgSQL function emaj._remove_tables(text,text[],text,boolean,boolean) line 32 at SQL statement
 PL/pgSQL function emaj.emaj_remove_table(text,text,text) line 6 at RETURN
 select emaj.emaj_remove_sequence('myschema2','myseq1','Mark_assign_sequences');
 ERROR:  _check_new_mark: The group "myGroup2" already contains a mark named "Mark_assign_sequences".
 CONTEXT:  PL/pgSQL function emaj._check_new_mark(text[],text) line 29 at RAISE
 SQL statement "SELECT emaj._check_new_mark(v_loggingGroups, p_mark)"
-PL/pgSQL function emaj._remove_sequences(text,text[],text,boolean,boolean) line 47 at SQL statement
+PL/pgSQL function emaj._remove_sequences(text,text[],text,boolean,boolean) line 31 at SQL statement
 PL/pgSQL function emaj.emaj_remove_sequence(text,text,text) line 6 at RETURN
 -- alter a table in a logging group
 select emaj.emaj_remove_table('myschema1','mytbl4');
@@ -2949,13 +2949,13 @@ select emaj.emaj_move_tables('myschema4','.*','','myGroup2',emaj.emaj_get_previo
 ERROR:  _check_new_mark: The groups "myGroup1, myGroup2" already contain a mark named "MOVE_SEQ_idle_to_logging".
 CONTEXT:  PL/pgSQL function emaj._check_new_mark(text[],text) line 31 at RAISE
 SQL statement "SELECT emaj._check_new_mark(v_loggingGroups, p_mark)"
-PL/pgSQL function emaj._move_tables(text,text[],text,text,boolean,boolean) line 77 at SQL statement
+PL/pgSQL function emaj._move_tables(text,text[],text,text,boolean,boolean) line 62 at SQL statement
 PL/pgSQL function emaj.emaj_move_tables(text,text,text,text,text) line 11 at RETURN
 select emaj.emaj_move_sequences('myschema2','.*','','myGroup2',emaj.emaj_get_previous_mark_group('myGroup1',now()));
 ERROR:  _check_new_mark: The groups "myGroup1, myGroup2" already contain a mark named "MOVE_SEQ_idle_to_logging".
 CONTEXT:  PL/pgSQL function emaj._check_new_mark(text[],text) line 31 at RAISE
 SQL statement "SELECT emaj._check_new_mark(v_loggingGroups, p_mark)"
-PL/pgSQL function emaj._move_sequences(text,text[],text,text,boolean,boolean) line 71 at SQL statement
+PL/pgSQL function emaj._move_sequences(text,text[],text,text,boolean,boolean) line 54 at SQL statement
 PL/pgSQL function emaj.emaj_move_sequences(text,text,text,text,text) line 11 at RETURN
 -- from a logging group to another logging group
 select emaj.emaj_move_tables('myschema4','.*','','myGroup2','MOVE_TBL_logging_to_logging');
@@ -3433,10 +3433,10 @@ select hist_function, hist_event, hist_object,
  START_GROUP        | END                          | myGroup2                     | 8 tables/sequences processed                                                                                           | postgres
  REMOVE_TABLES      | BEGIN                        |                              |                                                                                                                        | postgres
  REMOVE_TABLES      | TIME STAMP SET               | 10017                        |                                                                                                                        | postgres
- LOCK_GROUP         | BEGIN                        | myGroup2,myGroup2,myGroup2   |                                                                                                                        | postgres
- LOCK_GROUP         | END                          | myGroup2,myGroup2,myGroup2   | 6 tables locked, 0 deadlock(s)                                                                                         | postgres
- SET_MARK_GROUP     | BEGIN                        | myGroup2,myGroup2,myGroup2   | REMOVE_3_TABLES                                                                                                        | postgres
- SET_MARK_GROUP     | END                          | myGroup2,myGroup2,myGroup2   | REMOVE_3_TABLES                                                                                                        | postgres
+ LOCK_GROUP         | BEGIN                        | myGroup2                     |                                                                                                                        | postgres
+ LOCK_GROUP         | END                          | myGroup2                     | 6 tables locked, 0 deadlock(s)                                                                                         | postgres
+ SET_MARK_GROUP     | BEGIN                        | myGroup2                     | REMOVE_3_TABLES                                                                                                        | postgres
+ SET_MARK_GROUP     | END                          | myGroup2                     | REMOVE_3_TABLES                                                                                                        | postgres
  REMOVE_TABLES      | TABLE REMOVED                | myschema2."myTbl3"           | From the logging group myGroup2                                                                                        | postgres
  REMOVE_TABLES      | TABLE REMOVED                | myschema2.mytbl1             | From the logging group myGroup2                                                                                        | postgres
  REMOVE_TABLES      | TABLE REMOVED                | myschema2.mytbl2             | From the logging group myGroup2                                                                                        | postgres
@@ -3472,20 +3472,20 @@ select hist_function, hist_event, hist_object,
  ENABLE_PROTECTION  | EVENT TRIGGERS ENABLED       |                              | emaj_protection_trg, emaj_sql_drop_trg, emaj_table_rewrite_trg                                                         | postgres
  REMOVE_TABLES      | BEGIN                        |                              |                                                                                                                        | postgres
  REMOVE_TABLES      | TIME STAMP SET               | 10021                        |                                                                                                                        | postgres
- LOCK_GROUP         | BEGIN                        | myGroup2,myGroup2,myGroup2   |                                                                                                                        | postgres
- LOCK_GROUP         | END                          | myGroup2,myGroup2,myGroup2   | 6 tables locked, 0 deadlock(s)                                                                                         | postgres
- SET_MARK_GROUP     | BEGIN                        | myGroup2,myGroup2,myGroup2   | REMOVE_%                                                                                                               | postgres
- SET_MARK_GROUP     | END                          | myGroup2,myGroup2,myGroup2   | REMOVE_%                                                                                                               | postgres
+ LOCK_GROUP         | BEGIN                        | myGroup2                     |                                                                                                                        | postgres
+ LOCK_GROUP         | END                          | myGroup2                     | 6 tables locked, 0 deadlock(s)                                                                                         | postgres
+ SET_MARK_GROUP     | BEGIN                        | myGroup2                     | REMOVE_%                                                                                                               | postgres
+ SET_MARK_GROUP     | END                          | myGroup2                     | REMOVE_%                                                                                                               | postgres
  REMOVE_TABLES      | TABLE REMOVED                | myschema2."myTbl3"           | From the logging group myGroup2                                                                                        | postgres
  REMOVE_TABLES      | TABLE REMOVED                | myschema2.mytbl1             | From the logging group myGroup2                                                                                        | postgres
  REMOVE_TABLES      | TABLE REMOVED                | myschema2.mytbl2             | From the logging group myGroup2                                                                                        | postgres
  REMOVE_TABLES      | END                          |                              | 3 tables removed from their groups                                                                                     | postgres
  REMOVE_SEQUENCES   | BEGIN                        |                              |                                                                                                                        | postgres
  REMOVE_SEQUENCES   | TIME STAMP SET               | 10022                        |                                                                                                                        | postgres
- LOCK_GROUP         | BEGIN                        | myGroup2,myGroup2            |                                                                                                                        | postgres
- LOCK_GROUP         | END                          | myGroup2,myGroup2            | 3 tables locked, 0 deadlock(s)                                                                                         | postgres
- SET_MARK_GROUP     | BEGIN                        | myGroup2,myGroup2            | REMOVE_%                                                                                                               | postgres
- SET_MARK_GROUP     | END                          | myGroup2,myGroup2            | REMOVE_%                                                                                                               | postgres
+ LOCK_GROUP         | BEGIN                        | myGroup2                     |                                                                                                                        | postgres
+ LOCK_GROUP         | END                          | myGroup2                     | 3 tables locked, 0 deadlock(s)                                                                                         | postgres
+ SET_MARK_GROUP     | BEGIN                        | myGroup2                     | REMOVE_%                                                                                                               | postgres
+ SET_MARK_GROUP     | END                          | myGroup2                     | REMOVE_%                                                                                                               | postgres
  REMOVE_SEQUENCES   | SEQUENCE REMOVED             | myschema2.myseq1             | From the logging group myGroup2                                                                                        | postgres
  REMOVE_SEQUENCES   | SEQUENCE REMOVED             | myschema2.myseq2             | From the logging group myGroup2                                                                                        | postgres
  REMOVE_SEQUENCES   | END                          |                              | 2 sequences removed from their groups                                                                                  | postgres
