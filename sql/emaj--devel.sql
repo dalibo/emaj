@@ -2808,7 +2808,6 @@ $_move_tables$
     v_newGroupIsRollbackable BOOLEAN;
     v_newGroupIsLogging      BOOLEAN;
     v_list                   TEXT;
-    v_uselessTables          TEXT[];
     v_markName               TEXT;
     v_timeId                 BIGINT;
     v_groups                 TEXT[];
@@ -2833,21 +2832,16 @@ $_move_tables$
       p_tables = emaj._check_tblseqs_array(p_schema, p_tables, 'r', TRUE);
     END IF;
 -- Remove tables that already belong to the new group.
-    SELECT string_agg(quote_ident(p_schema) || '.' || quote_ident(rel_tblseq), ', ' ORDER BY rel_tblseq), array_agg(rel_tblseq)
-      INTO v_list, v_uselessTables
+    SELECT array_agg(rel_tblseq ORDER BY rel_tblseq) FILTER (WHERE rel_group <> p_newGroup),
+           string_agg(quote_ident(rel_tblseq), ', ' ORDER BY rel_tblseq) FILTER (WHERE rel_group = p_newGroup)
+      INTO p_tables, v_list
       FROM emaj.emaj_relation
       WHERE rel_schema = p_schema
         AND rel_tblseq = ANY(p_tables)
-        AND upper_inf(rel_time_range)
-        AND rel_group = p_newGroup;
-    IF v_list IS NOT NULL THEN
-      SELECT array_agg(tbl) INTO p_tables
-        FROM unnest(p_tables) AS tbl
-        WHERE tbl <> ALL(v_uselessTables);
+        AND upper_inf(rel_time_range);
 -- Warn only if the tables list has been supplied by the user.
-      IF NOT p_arrayFromRegex THEN
-        RAISE WARNING '_move_tables: some tables (%) already belong to the tables group %.', v_list, p_newGroup;
-      END IF;
+    IF v_list IS NOT NULL AND NOT p_arrayFromRegex THEN
+      RAISE WARNING '_move_tables: In schema "%", some tables (%) already belong to the tables group "%".', p_schema, v_list, p_newGroup;
     END IF;
 -- Get and lock the tables groups and logging groups holding these tables, and count the number of AUDIT_ONLY groups.
     SELECT p_groups, p_loggingGroups, p_nbAuditOnlyGroups INTO v_groups, v_loggingGroups, v_nbAuditOnlyGroups
@@ -4393,7 +4387,6 @@ $_move_sequences$
     v_function               TEXT;
     v_newGroupIsLogging      BOOLEAN;
     v_list                   TEXT;
-    v_uselessSequences       TEXT[];
     v_markName               TEXT;
     v_timeId                 BIGINT;
     v_groups                 TEXT[];
@@ -4417,20 +4410,17 @@ $_move_sequences$
       p_sequences = emaj._check_tblseqs_array(p_schema, p_sequences, 'S', TRUE);
     END IF;
 -- Remove sequences that already belong to the new group.
-    SELECT string_agg(quote_ident(p_schema) || '.' || quote_ident(rel_tblseq), ', ' ORDER BY rel_tblseq), array_agg(rel_tblseq)
-      INTO v_list, v_uselessSequences
+    SELECT array_agg(rel_tblseq ORDER BY rel_tblseq) FILTER (WHERE rel_group <> p_newGroup),
+           string_agg(quote_ident(rel_tblseq), ', ' ORDER BY rel_tblseq) FILTER (WHERE rel_group = p_newGroup)
+      INTO p_sequences, v_list
       FROM emaj.emaj_relation
       WHERE rel_schema = p_schema
         AND rel_tblseq = ANY(p_sequences)
-        AND upper_inf(rel_time_range)
-        AND rel_group = p_newGroup;
-    IF v_list IS NOT NULL THEN
-      SELECT array_agg(seq) INTO p_sequences
-        FROM unnest(p_sequences) AS seq
-        WHERE seq <> ALL(v_uselessSequences);
-      IF NOT p_arrayFromRegex THEN
-        RAISE WARNING '_move_sequences: some sequences (%) already belong to the tables group %.', v_list, p_newGroup;
-      END IF;
+        AND upper_inf(rel_time_range);
+-- Warn only if the sequences list has been supplied by the user.
+    IF v_list IS NOT NULL AND NOT p_arrayFromRegex THEN
+      RAISE WARNING '_move_sequences: In schema "%", some sequences (%) already belong to the tables group "%".',
+                    p_schema, v_list, p_newGroup;
     END IF;
 -- Get and lock the tables groups and logging groups holding these sequences, and count the number of AUDIT_ONLY groups.
     SELECT p_groups, p_loggingGroups INTO v_groups, v_loggingGroups
