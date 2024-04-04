@@ -214,10 +214,23 @@ La colonne *hist_event* peut prendre les valeurs suivantes.
 | WARNING                      | message d’avertissement issu d’un rollback                             |
 +------------------------------+------------------------------------------------------------------------+
 
+Autres tables historiques
+-------------------------
+
+Plusieurs autres tables internes historisent les opérations :
+
+* *emaj_version_hist* conserve la trace des changements de version de l’extension ;
+* *emaj_group_hist* enregistre les créations et suppressions des groupes de tables ;
+* *emaj_rel_hist* conserve les assignations des tables et séquences aux groupes de tables ;
+* *emaj_log_session* enregistre les périodes durant lesquelles les groupes de tables sont actifs (démarrés) ;
+* et plusieurs tables supportant les opérations de rollback E-Maj.
+
+Le client Emaj_web est le moyen le plus facile pour examiner le contenu de ces tables.
+
 Purge des traces obsolètes
 --------------------------
 
-Quand un groupe de tables est démarré avec réinitialisation (fonction :ref:`emaj_start_group() <emaj_start_group>`) ou quand les marques les plus anciennes sont supprimées (fonction :ref:`emaj_delete_before_mark_group() <emaj_delete_before_mark_group>`), les événements les plus anciens de la table *emaj_hist* sont supprimés. Il en est de même de plusieurs autres tables internes d’historique. Les événements conservés sont ceux postérieurs :
+Quand un groupe de tables est démarré avec réinitialisation (fonction :ref:`emaj_start_group() <emaj_start_group>`) ou quand les marques les plus anciennes sont supprimées (fonction :ref:`emaj_delete_before_mark_group() <emaj_delete_before_mark_group>`), les événements les plus anciens de la plupart des tables d'historiques sont supprimés. Les événements conservés sont ceux postérieurs :
 
 * à un délai de rétention paramétrable,
 * à la pose de la plus ancienne marque,
@@ -227,7 +240,7 @@ Par défaut, la durée de rétention des événements est de 1 an. Mais cette va
 
 La purge des données périmées peut également être initiée par l’appel explicite de la fonction :ref:`emaj_purge_histories() <emaj_purge_histories>` . La paramètre en entrée de cette fonction définit un délai de rétention qui surcharge le paramètre *history_retention* de la table *emaj_param*.
 
-Si on souhaite planifier des purges régulières, il est donc possible de :
+Pour planifier des purges régulières, il est donc possible de :
 
 * positionner une valeur de paramètre *history_retention* très élevée (par exemple *'100 YEARS'*) ;
 * et planifier les purges par un ordonnanceur quelconque (crontab, pgAgent, pgTimeTable ou tout autre outil).

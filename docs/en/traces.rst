@@ -216,10 +216,23 @@ The *hist_event* column can take the following values:
 | WARNING                      | warning message issued by a rollback                           |
 +------------------------------+----------------------------------------------------------------+
 
+Other history tables
+--------------------
+
+Several other internal tables store historical data :
+
+* *emaj_version_hist* keeps the trace of the extension version changes;
+* *emaj_group_hist* records tables groups creations and drops;
+* *emaj_rel_hist* keeps tables and sequences assignments to tables groups;
+* *emaj_log_session* records the periods of time when the tables groups are enabled (started);
+* and several other tables handling E-Maj rollbacks data.
+
+The Emaj_web client is the easiest way to examine these tables content.
+
 Purge obsolete traces
 ---------------------
 
-When a tables group is started with reset (:ref:`emaj_start_group() <emaj_start_group>` function), or when old marks are deleted (:ref:`emaj_delete_before_mark_group() <emaj_delete_before_mark_group>` function), the oldest events are deleted from *emaj_hist* tables. Some other internal history tables are also purged at the same time. The events kept are those not older than:
+When a tables group is started with reset (:ref:`emaj_start_group() <emaj_start_group>` function), or when old marks are deleted (:ref:`emaj_delete_before_mark_group() <emaj_delete_before_mark_group>` function), the oldest events are deleted from most historical tables. The events kept are those not older than:
 
 * a parametrised retention delay,
 * the oldest mark,
