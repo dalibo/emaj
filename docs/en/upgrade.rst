@@ -170,15 +170,18 @@ The operation is very quick et does not alter tables groups. They may remain in 
 
 Version specific details:
 
-* The  procedure that upgrades a version 2.2.2 into 2.2.3 checks the recorded log sequences values. In some cases, it may ask for a preliminary reset of some tables groups.
+* The  procedure that upgrades a version **2.2.2** into **2.2.3** checks the recorded log sequences values. In some cases, it may ask for a preliminary reset of some tables groups.
 
-* The  procedure that upgrades a version 2.3.1 into 3.0.0 changes the structure of log tables: both *emaj_client_ip* and *emaj_client_port* columns are not created anymore. Existing log tables are not modified. Only the new log tables are impacted. But the administrator can :ref:`add these columns<addLogColumns>`, by using the *'alter_log_tables'* parameter.
+* The  procedure that upgrades a version **2.3.1** into **3.0.0** changes the structure of log tables: both *emaj_client_ip* and *emaj_client_port* columns are not created anymore. Existing log tables are not modified. Only the new log tables are impacted. But the administrator can :ref:`add these columns<addLogColumns>`, by using the *'alter_log_tables'* parameter.
 
-* The procedure that upgrades a version 3.0.0 into 3.1.0 renames existing log objects. This leads to locking the application tables, which may generate conflicts with the parallel use of these tables. This procedure also issues a warning message indicating that the changes in E-Maj rollback functions regarding the application triggers processing may require changes in user’s procedures.
+* The procedure that upgrades a version **3.0.0** into **3.1.0** renames existing log objects. This leads to locking the application tables, which may generate conflicts with the parallel use of these tables. This procedure also issues a warning message indicating that the changes in E-Maj rollback functions regarding the application triggers processing may require changes in user’s procedures.
 
-* The procedure that upgrades a version 3.4.0 into 4.0.0 updates the log tables content for TRUNCATE recorded statements. The upgrade duration depends on the global log tables size.
+* The procedure that upgrades a version **3.4.0** into **4.0.0** updates the log tables content for TRUNCATE recorded statements. The upgrade duration depends on the global log tables size.
 
-* The procedure that upgrades a version 4.1.0 into 4.2.0 checks that all event triggers exist. Previously, depending on the installed PostgreSQL version, some (or even all) event triggers may be missing. If this is the case, the *sql/emaj_upgrade_after_postgres_upgrade.sql* script provided by the previous E-maj version creates the missing event triggers.
+* The procedure that upgrades a version **4.1.0** into **4.2.0** checks that all event triggers exist. Previously, depending on the installed PostgreSQL version, some (or even all) event triggers may be missing. If this is the case, the *sql/emaj_upgrade_after_postgres_upgrade.sql* script provided by the previous E-maj version creates the missing event triggers.
+
+* The procedure that upgrades a version **4.3.1** into **4.4.0** reads the *emaj_hist* table content in order to build 3 histories populating the 3 new internal tables. Although rather short, the upgrade duration depends on the *emaj_hist* table size.
+      
       
 Compatibility break
 -------------------

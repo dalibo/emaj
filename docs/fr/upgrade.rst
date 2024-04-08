@@ -171,15 +171,17 @@ L’opération est très rapide et ne touche pas aux groupes de tables. Ceux-ci 
 
 Spécificités liées aux versions :
 
-* La procédure de mise à jour d’une version 2.2.2 en version 2.2.3 vérifie les valeurs des séquences de log enregistrées. Dans certains cas, elle peut demander une ré-initialisation préalable de certains groupes de tables.
+* La procédure de mise à jour d’une version **2.2.2** en version **2.2.3** vérifie les valeurs des séquences de log enregistrées. Dans certains cas, elle peut demander une ré-initialisation préalable de certains groupes de tables.
 
-* La procédure de mise à jour d’une version 2.3.1 en version 3.0.0 change la structure des tables de log : les 2 colonnes *emaj_client_ip* et *emaj_client_port* ne sont plus créées. Les tables de log existantes ne sont pas modifiées. Seules les nouvelles tables de log sont impactées. Mais il est possible à l’administrateur :ref:`d’ajouter ces deux colonnes<addLogColumns>`, en utilisant le paramètre *'alter_log_tables'*.
+* La procédure de mise à jour d’une version **2.3.1** en version **3.0.0** change la structure des tables de log : les 2 colonnes *emaj_client_ip* et *emaj_client_port* ne sont plus créées. Les tables de log existantes ne sont pas modifiées. Seules les nouvelles tables de log sont impactées. Mais il est possible à l’administrateur :ref:`d’ajouter ces deux colonnes<addLogColumns>`, en utilisant le paramètre *'alter_log_tables'*.
 
-* La procédure de mise à jour d’une version 3.0.0 en version 3.1.0 renomme les objets de log existants. Ceci conduit à une pose de verrou sur chaque table applicative, qui peut entrer en conflit avec des accès concurrents sur les tables. La procédure de mise à jour génère également un message d’alerte indiquant que les changements dans la gestion des triggers applicatifs par les fonctions de rollback E-Maj peuvent nécessiter des modifications dans les procédures utilisateurs.
+* La procédure de mise à jour d’une version **3.0.0** en version **3.1.0** renomme les objets de log existants. Ceci conduit à une pose de verrou sur chaque table applicative, qui peut entrer en conflit avec des accès concurrents sur les tables. La procédure de mise à jour génère également un message d’alerte indiquant que les changements dans la gestion des triggers applicatifs par les fonctions de rollback E-Maj peuvent nécessiter des modifications dans les procédures utilisateurs.
 
-* La procédure de mise à jour d’une version 3.4.0 en version 4.0.0 modifie le contenu des tables de log pour les enregistrements des requêtes *TRUNCATE*. La durée de la mise à jour dépend donc de la taille globale des tables de log.
+* La procédure de mise à jour d’une version **3.4.0** en version **4.0.0** modifie le contenu des tables de log pour les enregistrements des requêtes *TRUNCATE*. La durée de la mise à jour dépend donc de la taille globale des tables de log.
 
-* La procédure de mise à jour d’une version 4.1.0 en version 4.2.0 vérifie la présence de tous les triggers sur événements. Antérieurement, en fonction de la version de PostgreSQL utilisée, certains, voire tous, pouvaient ne pas exister. Si cela était le cas, le script *sql/emaj_upgrade_after_postgres_upgrade.sql* fourni par la version précédente d’E-Maj permet de créer les triggers sur événement manquants.
+* La procédure de mise à jour d’une version **4.1.0** en version **4.2.0** vérifie la présence de tous les triggers sur événements. Antérieurement, en fonction de la version de PostgreSQL utilisée, certains, voire tous, pouvaient ne pas exister. Si cela était le cas, le script *sql/emaj_upgrade_after_postgres_upgrade.sql* fourni par la version précédente d’E-Maj permet de créer les triggers sur événement manquants.
+
+* La procédure de mise à jour d’une version **4.3.1** en version **4.4.0** lit le contenu de la table *emaj_hist* pour reconstituer 3 historiques alimentant les 3 nouvelles tables techniques de la version. Bien qu’assez courte, la durée de la mise à jour dépend donc de la volumétrie de la table *emaj_hist*.
 
 Ruptures de compatibilité
 -------------------------

@@ -47,12 +47,12 @@ A **log table** has the same structure as its corresponding application table. H
 
 To let E-Maj work, some **other technical objects** are also created at extension installation time:
 
-* 16 tables,
+* 19 tables,
+* 1 sequence named *emaj_global_seq* used to assign to every update recorded in any log table of the database a unique identifier with an increasing value over time,
 * 8 composite and 3 enum types,
 * 1 view,
-* 2 triggers,
-* more than 150 functions, more than 70 of them being directly :doc:`callable by users<functionsList>`,
-* 1 sequence named *emaj_global_seq* used to assign to every update recorded in any log table of the database a unique identifier with an increasing value over time,
+* more than 180 functions, more than 80 of them being directly :doc:`callable by users<functionsList>`,
+* 1 trigger,
 * 1 specific schema, named emaj, that contains all these relational objects,
 * 2 roles acting as groups (NOLOGIN): *emaj_adm* to manage E-Maj components, and *emaj_viewer* to only look at E-Maj components
 * 3 event triggers.
