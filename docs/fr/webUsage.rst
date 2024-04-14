@@ -17,7 +17,7 @@ Située à gauche, l'arborescence de navigation offre la visibilité de toutes l
 
 	Figure 1 – Arborescence de navigation.
 
-Les deux icônes en bas et à droite permettent d’ajuster la largeur du l’arborescence de navigation.
+Les deux icônes en bas et à droite (non visible ici) permettent d’ajuster la largeur de l’arborescence de navigation.
 
 Liste des groupes de tables
 ---------------------------
@@ -44,8 +44,9 @@ Pour chaque groupe de tables créé, sont affichés les attributs suivants :
 
 Pour chaque groupe également, plusieurs boutons sont proposés afin de pouvoir effectuer les actions que son état autorise.
 
-Trois boutons en bas de page permettent de créer un nouveau groupe de tables, d’exporter ou d’importer une configuration de groupes de tables vers ou à partir d’un fichier local.
+En dessous, trois boutons permettent de créer un nouveau groupe de tables, d’exporter ou d’importer une configuration de groupes de tables vers ou à partir d’un fichier local.
 
+Enfin, est affiché la liste des groupes de tables qui ont été supprimés.
 
 Quelques détails de l'interface utilisateur
 -------------------------------------------
@@ -72,9 +73,9 @@ Deux barres d'icônes permettent de naviguer dans les différentes fonctions d'E
 
 Pour les rôles de type *emaj_viewer*, certaines icônes ne sont pas visibles.
 
-Sur certains tableaux, il est possible de trier en dynamique les lignes affichées à l'aide de petites flèches verticales situées à droite des titres de colonnes. 
+Sur la plupart des tableaux, il est possible de trier en dynamique les lignes affichées à l'aide de petites flèches verticales situées à droite des titres de colonnes. 
 
-Sur certains tableaux également, une icône à gauche de la ligne de titre fait apparaître ou disparaître des champs de saisie permettant le filtrage des lignes affichées.
+Sur la plupart des tableaux également, une icône à gauche de la ligne de titre fait apparaître ou disparaître des champs de saisie permettant le filtrage des lignes affichées.
 
 .. figure:: images/emajweb_filter.png
    :align: center
@@ -104,11 +105,11 @@ Cette ligne est suivie par l'éventuel commentaire associé au groupe.
  
 Puis une série de boutons permet de réaliser les actions que l'état du groupe permet.
 
-L'utilisateur trouve ensuite un tableau des marques positionnées pour le groupe. Pour chacune d'elles, on trouve :
+L'utilisateur trouve ensuite un tableau des marques positionnées pour le groupe, les plus récentes étant en haut de tableau.  Pour chacune d'elles, on trouve :
 
 * son nom,
 * sa date et son heure de pose,
-* son état (actif ou non, protégé contre les rollbacks ou non),
+* son état protégé contre les rollbacks ou non,
 * le nombre de lignes de log enregistrées entre cette marque et la suivante (ou la situation courante s'il s'agit de la dernière marque),
 * le nombre total de lignes de log enregistrées depuis que la marque a été posée,
 * l'éventuel commentaire associé à la marque.
@@ -123,8 +124,8 @@ L'onglet « *Statistiques / Mises à jour* » de la barre des groupes permet d
 Trois types de statistiques peuvent être obtenues :
 
 * une estimation du nombre de mises à jour pour chaque table,
-* un dénombrement précis du nombre de mises à jour enregistrées, par table, type de requête (*INSERT/UPDATE/DELETE/TRUNCATE*) et rôle,
-* une estimation du nombre d’incréments et des changements de structure pour chaque séquence.
+* une estimation du nombre d’incréments et des changements de structure pour chaque séquence,
+* un dénombrement précis du nombre de mises à jour enregistrées, par table, type de requête (*INSERT/UPDATE/DELETE/TRUNCATE*) et rôle.
 
 La figure suivante montre un exemple de statistiques détaillées pour les tables.
 
@@ -135,7 +136,12 @@ La figure suivante montre un exemple de statistiques détaillées pour les table
 
 La page restituée contient une première ligne contenant des compteurs globaux.
 
-Sur chacune des lignes du tableau de statistiques, un bouton « *SQL* » permet à l'utilisateur de visualiser facilement le contenu des mises à jour enregistrées dans les tables de log. Un clic sur ce bouton ouvre une fenêtre de paramétrage de la requête SQL à générer. Celle-ci est ensuite affichée dans l'éditeur de requêtes SQL pour modification éventuelle par l’utilisateur avant exécution, afin, par exemple, de cibler davantage les lignes qui l'intéressent.
+Sur chacune des lignes du tableau de statistiques, un bouton permet à l'utilisateur de visualiser facilement le contenu des mises à jour enregistrées dans les tables de log. Un clic sur ce bouton ouvre une fenêtre de paramétrage de la requête SQL à générer. Celle-ci est ensuite affichée dans l'éditeur de requêtes SQL pour modification éventuelle avant exécution. Cela peut permettre à l’utilisateur de cibler davantage les lignes qui l'intéressent.
+
+.. figure:: images/emajweb_changesform.png
+   :align: center
+
+   Figure 8 – Formulaire de génération des requêtes de consultation des changements 
 
 Contenu d'un groupe de tables
 -----------------------------
@@ -147,8 +153,17 @@ Pour chaque table du groupe, le tableau affiché reprend ses propriétés E-Maj,
 .. figure:: images/emajweb_groupcontent.png
    :align: center
 
-   Figure 8 – Contenu d'un groupe de tables.
+   Figure 9 – Contenu d'un groupe de tables.
 
+Historique des groupes de tables
+--------------------------------
+
+L’onglet « *Historique* » permet de visualiser les périodes durant lesquelles un groupe de tables existe, ainsi que celles durant lesquelles le groupe est démarré (les *sessions de log*). La profondeur d’historique conservé dépend du paramètre *history_retention*.
+
+.. figure:: images/emajweb_grouphistory.png
+   :align: center
+
+   Figure 10 – Historique d'un groupe de tables.
 
 Schémas et configuration des groupes de tables
 ----------------------------------------------
@@ -162,7 +177,7 @@ Pour chaque liste, on trouve les propriétés E-Maj et quelques caractéristique
 .. figure:: images/emajweb_schemas.png
    :align: center
 
-   Figure 9 – Contenu des schémas et configuration des groupes de tables.
+   Figure 11 – Contenu des schémas et configuration des groupes de tables.
 
 Triggers
 --------
@@ -174,7 +189,7 @@ Un bouton permet de changer le mode de désactivation lors des rollbacks E-Maj.
 .. figure:: images/emajweb_triggers.png
    :align: center
 
-   Figure 10 – Liste des triggers applicatifs
+   Figure 12 – Liste des triggers applicatifs
 
 
 Suivi des opérations de rollback
@@ -191,7 +206,7 @@ Pour chaque rollback tracé consolidable listé, un bouton permet d’exécuter 
 .. figure:: images/emajweb_rollbacks.png
    :align: center
 
-   Figure 11 – Suivi des opérations de rollback.
+   Figure 13 – Suivi des opérations de rollback.
 
 En cliquant sur un identifiant de rollback dans l’un de ces tableaux, on accède à une page présentant des informations détaillées sur le déroulement en cours ou passé de l’opération sélectionnée.
 
@@ -200,24 +215,24 @@ On y trouve plus précisément des données concernant :
 * les propriétés du rollback,
 * sa progression,
 * le rapport final restitué à l’utilisateur, quand l’opération est terminée,
-* et le détail de la planification de l’opération, montrant chaque étape élémentaire, avec notamment sa durée, et optionnellement les estimations initiales calculées par E-Maj.
+* le détail de la planification de l’opération, montrant chaque étape élémentaire, avec notamment sa durée, et optionnellement les estimations initiales calculées par E-Maj,
+* et les informations relatives à la ou aux sessions de rollback.
 
 .. figure:: images/emajweb_rollbackdetails.png
    :align: center
 
-   Figure 12 – Détails d’une opération de rollback.
+   Figure 14 – Détails d’une opération de rollback.
 
 État de l'environnement E-Maj
 -----------------------------
 
 En sélectionnant l’onglet « *E-Maj* » de la barre principale, l'utilisateur accède à une synthèse de l'état de l'environnement E-Maj.
 
-Sont d'abord restitués :
-
-* les versions de PostgreSQL et d'E-Maj installées,
-* la place disque occupée par E-Maj (tables de log, tables techniques et index associés) et la part que cela représente dans la taille globale de la base de données.
+Sont d'abord restitués les versions de PostgreSQL et d'E-Maj installées.
 
 Lorsque l’utilisateur est connecté avec un rôle "*superuser*", des boutons permettent, en fonction du contexte, de créer, mettre à jour ou supprimer l’extension *emaj*.
+
+Ensuite sont affichés : la place disque occupée par E-Maj (tables de log, tables techniques et index associés) et la part que cela représente dans la taille globale de la base de données.
 
 Puis l'intégrité de l'environnement est testé ; le résultat de l'exécution de la fonction :ref:`emaj_verify_all() <emaj_verify_all>` est affiché.
 
@@ -228,4 +243,4 @@ Deux boutons en bas de page permettent d’exporter ou d’importer une configur
 .. figure:: images/emajweb_emaj.png
    :align: center
 
-   Figure 13 – État de l'environnement E-Maj 
+   Figure 15 – État de l'environnement E-Maj 

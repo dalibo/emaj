@@ -8,7 +8,7 @@ Accessing Emaj_web in a browser displays the welcome page.
 
 To sign in to a database, select the target instance in the left browser or in the *servers* tab, and fill the connection identifier and password. Several connections can remain opened simultaneously.
 
-Once connected to a database where the emaj extension has been installed, the user interacts with the extension, depending on the role it owns (*super-user*, *emaj_adm* or *emaj_viewer*).
+Once connected to a database where the *emaj* extension has been installed, the user interacts with the extension, depending on the role it owns (*super-user*, *emaj_adm* or *emaj_viewer*).
 
 On the left, the browser tree shows all the configured instances, that may be split into instances groups, and all the databases they contain. By unfolding a database object, the user reaches the E-Maj tables groups and the existing schemas.
 
@@ -17,7 +17,7 @@ On the left, the browser tree shows all the configured instances, that may be sp
 
 	Figure 1 – The browser tree.
 
-Both icons located at the bottom-right allow to adjust the browser width.
+Both icons located at the bottom-right (not visible here) allow to adjust the browser width.
 
 Tables groups list
 ------------------
@@ -44,7 +44,9 @@ For each created tables group, the following attributes are displayed:
 
 For each tables group, several buttons are available so that the user can perform any possible action, depending on the group state.
 
-At the bottom of the page, three buttons allow to create a new tables group, to export or import a tables groups configuration to or from a local file.
+Below, three buttons allow to create a new tables group, to export or import a tables groups configuration to or from a local file.
+
+Lastly, a list of dropped tables groups is displayed.
 
 Some details about the user interface
 -------------------------------------
@@ -71,9 +73,9 @@ The user can navigate in Emaj_web functions using two icon bars: one for the gen
 
 For *emaj_viewer* roles, some icons are not visible.
 
-On some tables, it is possible to dynamically sort displayed rows, using small vertical arrows on the right of column titles.
+On most tables, it is possible to dynamically sort displayed rows, using small vertical arrows on the right of column titles.
 
-On some tables too, an icon located at the left of the header row, let show or hide input fields that can be used to dynamically filter displayed rows.
+On most tables too, an icon located at the left of the header row, let show or hide input fields that can be used to dynamically filter displayed rows.
 
 .. figure:: images/emajweb_filter.png
    :align: center
@@ -102,11 +104,11 @@ This line is followed by the group's comment, if any has been recorded for this 
 
 Next is a set of buttons to execute actions depending on the group's state.
 
-Then, the user can see the list of all marks that have been set on the group. For each of them, the following is displayed:
+Then, the user can see the list of all marks that have been set on the group, the most recent being ahead. For each of them, the following is displayed:
 
 * its name,
 * the date and time it has been set,
-* its state (active or not, protected against rollback or not),
+* its protected against rollback state,
 * the number of recorded log rows between this mark and the next one (or the current state if this is the last set mark),
 * the total number of recorded log rows from when the mark was set,
 * the comment associated to the mark, if it exists.
@@ -122,8 +124,8 @@ Using the "*Changes statistics*" tab of the group’s bar, one gets statistics a
 Three types of statistics can be produced:
 
 * a number of changes estimate for each table,
-* a precise numbering of changes per table, statement type (INSERT/UPDATE/DELETE/TRUNCATE) and role,
-* a number of increments estimate and properties changes per sequence.
+* a number of increments estimate and properties changes per sequence,
+* a precise numbering of changes per table, statement type (INSERT/UPDATE/DELETE/TRUNCATE) and role.
 
 The figure below shows an example of detailed statistics for tables.
 
@@ -134,7 +136,12 @@ The figure below shows an example of detailed statistics for tables.
 
 The displayed page contains a first line returning global counters.
 
-On each line of the statistics table, the user can click on a "*SQL*" button to easily look at the log tables content. A click on this button opens a window to set the SQL generation parameters. Then, the generated SQL statement is displayed into the SQL editor window, so that the user can adjust it before execution to better fit his needs.
+On each line of the statistics table, the user can click on a button to easily look at the log tables content. A click on this button opens a window to set the SQL generation parameters. Then, the generated SQL statement is displayed into the SQL editor window, so that the user can adjust it before execution to better fit his needs.
+
+.. figure:: images/emajweb_changesform.png
+   :align: center
+
+   Figure 8 – Form to generate the SQL statement displaying table changes
 
 Tables group content
 --------------------
@@ -146,8 +153,17 @@ For each table belonging to the group, the displayed sheet shows its E-Maj chara
 .. figure:: images/emajweb_groupcontent.png
    :align: center
 
-   Figure 8 – A tables group's content.
+   Figure 9 – A tables group's content.
 
+Tables group history
+--------------------
+
+The “*History*” tab displays the periods of time when the tables group exists and the periods of time when the group is in *LOGGING* state (*log sessions*). The historical depth depends on the *history_retention* parameter.
+
+.. figure:: images/emajweb_grouphistory.png
+   :align: center
+
+Figure 10 – A tables group’s history.
 
 Schemas and tables groups configuration
 ---------------------------------------
@@ -161,7 +177,7 @@ For both lists, the E-Maj properties and some general properties of each object 
 .. figure:: images/emajweb_schemas.png
    :align: center
 
-   Figure 9 – Schema content and tables groups configuration.
+   Figure 11 – Schema content and tables groups configuration.
 
 
 Triggers
@@ -174,7 +190,7 @@ A button allows to switch their de-activation mode at E-Maj rollback time.
 .. figure:: images/emajweb_triggers.png
    :align: center
 
-   Figure 10 – Application triggers list.
+   Figure 12 – Application triggers list.
 
 Monitoring rollback operations
 ------------------------------
@@ -190,7 +206,7 @@ For each consolidable rollback, a button allows to effectively consolidate the o
 .. figure:: images/emajweb_rollbacks.png
    :align: center
 
-   Figure 11 – Rollback operations monitoring.
+   Figure 13 – Rollback operations monitoring.
 
 Clicking on a rollback identifier in one of these tables displays a page that shows information details about the selected in progress or completed operation.
 
@@ -199,26 +215,26 @@ More precisely, are displayed:
 * the rollback properties,
 * its progress,
 * the final report returned to the user, when the operation is completed,
-* and the detail of the operation plan, showing each elementary step, with its duration and optionaly estimates computed by E-Maj at the operation initialisation.
+* the detail of the operation plan, showing each elementary step, with its duration and optionaly estimates computed by E-Maj at the operation initialisation,
+* and information about rollback sessions.
 
 .. figure:: images/emajweb_rollbackdetails.png
    :align: center
 
-   Figure 12 – Details of a Rollback operation.
+   Figure 14 – Details of a Rollback operation.
 
 E-Maj environment state
 -----------------------
 
 By selecting the "*E-Maj*" tab of the main bar, the user reaches an overview of the E-Maj environment state.
 
-First, some items are displayed:
-
-* the installed PostgreSQL and E-Maj versions,
-* the disk space used by E-Maj (log tables, technical tables and their indexes), and the part of the global database space it represents.
+First, the installed PostgreSQL and E-Maj versions are displayed.
 
 If the user is connected with a "*superuser*" role, some buttons allow to create, update or drop the *emaj* extension, depending on the context.
 
-Then, the environment integrity is checked; the result of the :ref:`emaj_verify_all() <emaj_verify_all>` function execution is displayed.
+Then the disk space used by E-Maj (log tables, technical tables and their indexes), and the part of the global database space it represents are displayed.
+
+Next, the environment integrity is checked; the result of the :ref:`emaj_verify_all() <emaj_verify_all>` function execution is displayed.
 
 The page ends with a list of the extension parameters value, be they present in the *emaj_param table* or set to their default value.
 
@@ -227,4 +243,4 @@ Two buttons allow to export and import parameters configurations to or from a lo
 .. figure:: images/emajweb_emaj.png
    :align: center
 
-   Figure 13 – The E-Maj environment state.
+   Figure 15 – The E-Maj environment state.
