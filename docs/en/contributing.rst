@@ -262,10 +262,10 @@ The *tools/performance* directory contains some shell scripts helping in measuri
 
 The scripts cover the following domains:
 
-* *log_overhead/pgbench.sh* evaluates the log mechanism overhead, using pgbench,
-* *large_group/large_group.sh* evaluates the behaviour of groups containing a large number of tables,
-* *rollback/rollback_perf.sh* evaluates the E-Maj rollback performances with different tables profiles,
-* *dump_changes/dump_changes_perf.sh* measure the performances of changes dump operations, with various consolidation levels.
+* *dump_changes/dump_changes_perf.sh* measures the performances of changes dump operations, with various consolidation levels;
+* *large_group/large_group.sh* evaluates the behaviour of groups containing a large number of tables;
+* *log_overhead/pgbench.sh* evaluates the log mechanism overhead, using pgbench;
+* *rollback/rollback_perf.sh* evaluates the E-Maj rollback performances with different tables profiles.
 
 For all these files, some variables have to be configured at the begining of the scripts.
 

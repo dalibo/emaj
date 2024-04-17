@@ -4,10 +4,10 @@ The tools/performance directory contains several scripts that may be used to eva
 
 More precisely, it contains the following directories:
 
-- tools/performance/large_group, to measure the elapse time of main E-Maj functions with large tables groups (ie. containing a big number of tables)
-- tools/performance/log_overhead, to evaluate the overhead of the logging mechanism, using pgbench
+- tools/performance/dump_changes, to measure the changes dump operations performance with each consolidation level;
+- tools/performance/large_group, to measure the elapse time of main E-Maj functions with large tables groups (ie. containing a big number of tables);
+- tools/performance/log_overhead, to evaluate the overhead of the logging mechanism, using pgbench;
 - tools/performance/rollback, to appreciate the rollback operations performance with various types of data updates.
-- tools/performance/dump_changes, to measure the changes dump operations performance with each consolidation level
 
 Each sub-directory contains a single shell script that needs to be customized.
 

@@ -265,10 +265,10 @@ Le répertoire *tools/performance* contient quelques scripts shell permettant de
 
 Les scripts couvrent les domaines suivants :
 
-* *log_overhead/pgbench.sh* évalue le surcoût du mécanisme de log, à l’aide de pgbench,
-* *large_group/large_group.sh* évalue le fonctionnement de groupes contenant un grand nombre de tables,
-* *rollback/rollback_perf.sh* évalue les performances des rollbacks E-Maj avec différents profils de tables,
-* *dump_changes/dump_changes_perf.sh* mesure les performances des opérations de vidage des mises à jour, avec différents niveaux de consolidation.
+* *dump_changes/dump_changes_perf.sh* mesure les performances des opérations de vidage des mises à jour, avec différents niveaux de consolidation ;
+* *large_group/large_group.sh* évalue le fonctionnement de groupes contenant un grand nombre de tables ;
+* *log_overhead/pgbench.sh* évalue le surcoût du mécanisme de log, à l’aide de pgbench ;
+* *rollback/rollback_perf.sh* évalue les performances des rollbacks E-Maj avec différents profils de tables.
 
 Pour chacun de ces fichiers, des variables sont à configurer en début de scripts,
 

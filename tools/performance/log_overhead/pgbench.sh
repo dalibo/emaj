@@ -24,7 +24,7 @@ CREATE EXTENSION dblink;
 CREATE EXTENSION emaj;
 
 -- create the tables group
-SELECT emaj.emaj_create_group('bench', false, true);     -- the group is created in AUDIT_ONLY mode because pgbench_history has no PK
+SELECT emaj.emaj_create_group('bench', false);     -- the group is created in AUDIT_ONLY mode because pgbench_history has no PK
 SELECT emaj.emaj_assign_tables('public','.*','','bench');
 
 -- start the tables group

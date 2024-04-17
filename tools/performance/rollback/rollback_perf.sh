@@ -55,8 +55,8 @@ primary key (c1)
 );
 create index on perf2(c2);
 
-select emaj.emaj_create_group('perf1',true,true);
-select emaj.emaj_create_group('perf2',true,true);
+select emaj.emaj_create_group('perf1',true);
+select emaj.emaj_create_group('perf2',true);
 
 select emaj.emaj_assign_table('perfschema','perf1','perf1');
 select emaj.emaj_assign_table('perfschema','perf2','perf2');

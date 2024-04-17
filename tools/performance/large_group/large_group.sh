@@ -65,7 +65,7 @@ select create_tbl(:p_scaleFactor);
 
 checkpoint;
 
-select emaj.emaj_create_group('large_group',true,true);
+select emaj.emaj_create_group('large_group',true);
 
 select emaj.emaj_assign_tables('large_schema','.*','','large_group');
 
