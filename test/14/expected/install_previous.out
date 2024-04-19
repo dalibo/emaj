@@ -8,7 +8,7 @@ SET default_tablespace TO tspemaj;
 ------------------------------------------------------------
 -- emaj installation in its previous version as an extension
 ------------------------------------------------------------
-CREATE EXTENSION emaj VERSION '4.3.1' CASCADE;
+CREATE EXTENSION emaj VERSION '4.4.0' CASCADE;
 NOTICE:  installing required extension "dblink"
 NOTICE:  installing required extension "btree_gist"
 WARNING:  E-Maj installation: The adminpack extension is available but not yet created. Execute a "CREATE EXTENSION adminpack;" statement to enable the NO_EMPTY_FILE option use of the emaj_dump_changes_group() function.
@@ -19,20 +19,19 @@ WARNING:  E-Maj installation: The adminpack extension is available but not yet c
 select extname, extversion from pg_extension where extname = 'emaj';
  extname | extversion 
 ---------+------------
- emaj    | 4.3.1
+ emaj    | 4.4.0
 (1 row)
 
 -- check the emaj_param content
 SELECT param_value_text FROM emaj.emaj_param WHERE param_key = 'emaj_version';
  param_value_text 
 ------------------
- 4.3.1
-(1 row)
+(0 rows)
 
 -- check history
 select hist_id, hist_function, hist_event, hist_object, hist_wording, hist_user from emaj.emaj_hist order by hist_id;
  hist_id | hist_function | hist_event | hist_object |       hist_wording       | hist_user 
 ---------+---------------+------------+-------------+--------------------------+-----------
-       1 | EMAJ_INSTALL  |            | E-Maj 4.3.1 | Initialisation completed | postgres
+       1 | EMAJ_INSTALL  |            | E-Maj 4.4.0 | Initialisation completed | postgres
 (1 row)
 

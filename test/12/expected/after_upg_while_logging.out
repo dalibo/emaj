@@ -13,10 +13,10 @@ select * from emaj.emaj_verify_all();
  No error detected
 (3 rows)
 
-select * from emaj.emaj_log_session;
+select * from emaj.emaj_log_session order by 1,2;
     lses_group    | lses_time_range | lses_marks | lses_log_rows 
 ------------------+-----------------+------------+---------------
- myGroup1         | [15,)           |          5 |            49
+ myGroup1         | [15,)           |          5 |            40
  myGroup2         | [15,)           |          8 |            35
  myGroup6         | [29,32)         |          3 |             0
  phil's group#3", | [16,)           |          1 |             0
@@ -422,16 +422,21 @@ select hist_function, hist_event, hist_object,
   order by hist_id;
       hist_function       |     hist_event     |                            hist_object                            |                                        regexp_replace                                         | hist_user 
 --------------------------+--------------------+-------------------------------------------------------------------+-----------------------------------------------------------------------------------------------+-----------
- EMAJ_INSTALL             |                    | E-Maj 4.3.1                                                       | Initialisation completed                                                                      | postgres
+ EMAJ_INSTALL             |                    | E-Maj 4.4.0                                                       | Initialisation completed                                                                      | postgres
  CREATE_GROUP             | BEGIN              | myGroup1                                                          | rollbackable                                                                                  | postgres
+ CREATE_GROUP             | TIME STAMP SET     | 1                                                                 |                                                                                               | postgres
  CREATE_GROUP             | END                | myGroup1                                                          |                                                                                               | postgres
  CREATE_GROUP             | BEGIN              | myGroup2                                                          | rollbackable                                                                                  | postgres
+ CREATE_GROUP             | TIME STAMP SET     | 2                                                                 |                                                                                               | postgres
  CREATE_GROUP             | END                | myGroup2                                                          |                                                                                               | postgres
  CREATE_GROUP             | BEGIN              | phil's group#3",                                                  | audit_only                                                                                    | postgres
+ CREATE_GROUP             | TIME STAMP SET     | 3                                                                 |                                                                                               | postgres
  CREATE_GROUP             | END                | phil's group#3",                                                  |                                                                                               | postgres
  CREATE_GROUP             | BEGIN              | myGroup6                                                          | rollbackable                                                                                  | postgres
+ CREATE_GROUP             | TIME STAMP SET     | 4                                                                 |                                                                                               | postgres
  CREATE_GROUP             | END                | myGroup6                                                          |                                                                                               | postgres
  ASSIGN_TABLES            | BEGIN              |                                                                   |                                                                                               | postgres
+ ASSIGN_TABLES            | TIME STAMP SET     | 5                                                                 |                                                                                               | postgres
  ASSIGN_TABLES            | LOG_SCHEMA CREATED | emaj_myschema1                                                    |                                                                                               | postgres
  ASSIGN_TABLES            | TABLE ADDED        | myschema1."myTbl3"                                                | To the idle group myGroup1                                                                    | postgres
  ASSIGN_TABLES            | TABLE ADDED        | myschema1.mytbl1                                                  | To the idle group myGroup1                                                                    | postgres
@@ -440,18 +445,23 @@ select hist_function, hist_event, hist_object,
  ASSIGN_TABLES            | TABLE ADDED        | myschema1.mytbl4                                                  | To the idle group myGroup1                                                                    | postgres
  ASSIGN_TABLES            | END                |                                                                   | 5 tables assigned to the group myGroup1                                                       | postgres
  MODIFY_TABLE             | BEGIN              |                                                                   |                                                                                               | postgres
+ MODIFY_TABLE             | TIME STAMP SET     | 6                                                                 |                                                                                               | postgres
  MODIFY_TABLE             | PRIORITY CHANGED   | myschema1.mytbl1                                                  | NULL => 20                                                                                    | postgres
  MODIFY_TABLE             | END                |                                                                   | 1 tables effectively modified                                                                 | postgres
  MODIFY_TABLE             | BEGIN              |                                                                   |                                                                                               | postgres
+ MODIFY_TABLE             | TIME STAMP SET     | 7                                                                 |                                                                                               | postgres
  MODIFY_TABLE             | PRIORITY CHANGED   | myschema1."myTbl3"                                                | NULL => 10                                                                                    | postgres
  MODIFY_TABLE             | END                |                                                                   | 1 tables effectively modified                                                                 | postgres
  MODIFY_TABLE             | BEGIN              |                                                                   |                                                                                               | postgres
+ MODIFY_TABLE             | TIME STAMP SET     | 8                                                                 |                                                                                               | postgres
  MODIFY_TABLE             | PRIORITY CHANGED   | myschema1.mytbl4                                                  | NULL => 20                                                                                    | postgres
  MODIFY_TABLE             | END                |                                                                   | 1 tables effectively modified                                                                 | postgres
  ASSIGN_SEQUENCE          | BEGIN              |                                                                   |                                                                                               | postgres
+ ASSIGN_SEQUENCE          | TIME STAMP SET     | 9                                                                 |                                                                                               | postgres
  ASSIGN_SEQUENCE          | SEQUENCE ADDED     | myschema1."myTbl3_col31_seq"                                      | To the idle group myGroup1                                                                    | postgres
  ASSIGN_SEQUENCE          | END                |                                                                   | 1 sequences assigned to the group myGroup1                                                    | postgres
  ASSIGN_TABLES            | BEGIN              |                                                                   |                                                                                               | postgres
+ ASSIGN_TABLES            | TIME STAMP SET     | 10                                                                |                                                                                               | postgres
  ASSIGN_TABLES            | LOG_SCHEMA CREATED | emaj_myschema2                                                    |                                                                                               | postgres
  ASSIGN_TABLES            | TABLE ADDED        | myschema2."myTbl3"                                                | To the idle group myGroup2                                                                    | postgres
  ASSIGN_TABLES            | TABLE ADDED        | myschema2.mytbl1                                                  | To the idle group myGroup2                                                                    | postgres
@@ -459,18 +469,22 @@ select hist_function, hist_event, hist_object,
  ASSIGN_TABLES            | TABLE ADDED        | myschema2.mytbl4                                                  | To the idle group myGroup2                                                                    | postgres
  ASSIGN_TABLES            | END                |                                                                   | 4 tables assigned to the group myGroup2                                                       | postgres
  ASSIGN_SEQUENCES         | BEGIN              |                                                                   |                                                                                               | postgres
+ ASSIGN_SEQUENCES         | TIME STAMP SET     | 11                                                                |                                                                                               | postgres
  ASSIGN_SEQUENCES         | SEQUENCE ADDED     | myschema2."myTbl3_col31_seq"                                      | To the idle group myGroup2                                                                    | postgres
  ASSIGN_SEQUENCES         | SEQUENCE ADDED     | myschema2.myseq1                                                  | To the idle group myGroup2                                                                    | postgres
  ASSIGN_SEQUENCES         | END                |                                                                   | 2 sequences assigned to the group myGroup2                                                    | postgres
  ASSIGN_TABLES            | BEGIN              |                                                                   |                                                                                               | postgres
+ ASSIGN_TABLES            | TIME STAMP SET     | 12                                                                |                                                                                               | postgres
  ASSIGN_TABLES            | LOG_SCHEMA CREATED | "emaj_phil's schema3"                                             |                                                                                               | postgres
  ASSIGN_TABLES            | TABLE ADDED        | "phil's schema3"."myTbl2\"                                        | To the idle group phil's group#3",                                                            | postgres
  ASSIGN_TABLES            | TABLE ADDED        | "phil's schema3"."phil's tbl1"                                    | To the idle group phil's group#3",                                                            | postgres
  ASSIGN_TABLES            | END                |                                                                   | 2 tables assigned to the group phil's group#3",                                               | postgres
  ASSIGN_SEQUENCE          | BEGIN              |                                                                   |                                                                                               | postgres
+ ASSIGN_SEQUENCE          | TIME STAMP SET     | 13                                                                |                                                                                               | postgres
  ASSIGN_SEQUENCE          | SEQUENCE ADDED     | "phil's schema3"."phil's seq\1"                                   | To the idle group phil's group#3",                                                            | postgres
  ASSIGN_SEQUENCE          | END                |                                                                   | 1 sequences assigned to the group phil's group#3",                                            | postgres
  ASSIGN_TABLES            | BEGIN              |                                                                   |                                                                                               | postgres
+ ASSIGN_TABLES            | TIME STAMP SET     | 14                                                                |                                                                                               | postgres
  ASSIGN_TABLES            | LOG_SCHEMA CREATED | emaj_myschema6                                                    |                                                                                               | postgres
  ASSIGN_TABLES            | TABLE ADDED        | myschema6.table_with_50_characters_long_name_____0_________0      | To the idle group myGroup6                                                                    | postgres
  ASSIGN_TABLES            | TABLE ADDED        | myschema6.table_with_51_characters_long_name_____0_________0a     | To the idle group myGroup6                                                                    | postgres
@@ -478,12 +492,14 @@ select hist_function, hist_event, hist_object,
  ASSIGN_TABLES            | TABLE ADDED        | myschema6.table_with_55_characters_long_name_____0_________0fghij | To the idle group myGroup6                                                                    | postgres
  ASSIGN_TABLES            | END                |                                                                   | 4 tables assigned to the group myGroup6                                                       | postgres
  START_GROUPS             | BEGIN              | myGroup1,myGroup2                                                 | With log reset                                                                                | postgres
+ START_GROUPS             | TIME STAMP SET     | 15                                                                |                                                                                               | postgres
  LOCK_GROUPS              | BEGIN              | myGroup1,myGroup2                                                 |                                                                                               | postgres
  LOCK_GROUPS              | END                | myGroup1,myGroup2                                                 | 9 tables locked, 0 deadlock(s)                                                                | postgres
  SET_MARK_GROUPS          | BEGIN              | myGroup1,myGroup2                                                 | M1                                                                                            | postgres
  SET_MARK_GROUPS          | END                | myGroup1,myGroup2                                                 | M1                                                                                            | postgres
  START_GROUPS             | END                | myGroup1,myGroup2                                                 | 12 tables/sequences processed                                                                 | postgres
  START_GROUP              | BEGIN              | phil's group#3",                                                  | With log reset                                                                                | postgres
+ START_GROUP              | TIME STAMP SET     | 16                                                                |                                                                                               | postgres
  LOCK_GROUP               | BEGIN              | phil's group#3",                                                  |                                                                                               | postgres
  LOCK_GROUP               | END                | phil's group#3",                                                  | 2 tables locked, 0 deadlock(s)                                                                | postgres
  SET_MARK_GROUP           | BEGIN              | phil's group#3",                                                  | M1                                                                                            | postgres
@@ -492,16 +508,19 @@ select hist_function, hist_event, hist_object,
  SET_MARK_GROUP           | BEGIN              | myGroup1                                                          |                                                                                               | postgres
  LOCK_GROUP               | BEGIN              | myGroup1                                                          |                                                                                               | postgres
  LOCK_GROUP               | END                | myGroup1                                                          | 5 tables locked, 0 deadlock(s)                                                                | postgres
+ SET_MARK_GROUP           | TIME STAMP SET     | 17                                                                |                                                                                               | postgres
  SET_MARK_GROUP           | END                | myGroup1                                                          | M2                                                                                            | postgres
  SET_MARK_GROUP           | BEGIN              | myGroup1                                                          |                                                                                               | postgres
  LOCK_GROUP               | BEGIN              | myGroup1                                                          |                                                                                               | postgres
  LOCK_GROUP               | END                | myGroup1                                                          | 5 tables locked, 0 deadlock(s)                                                                | postgres
+ SET_MARK_GROUP           | TIME STAMP SET     | 18                                                                |                                                                                               | postgres
  SET_MARK_GROUP           | END                | myGroup1                                                          | M3                                                                                            | postgres
  COMMENT_MARK_GROUP       |                    | myGroup1                                                          | Mark M3                                                                                       | postgres
  ROLLBACK_GROUP           | BEGIN              | myGroup1                                                          | Unlogged rollback to mark M3 (timestamp)                                                      | postgres
  DBLINK_OPEN_CNX          |                    | rlbk#1                                                            | Status = -3                                                                                   | postgres
  LOCK_GROUP               | BEGIN              | myGroup1                                                          | Rollback session #1                                                                           | postgres
  LOCK_GROUP               | END                | myGroup1                                                          | Rollback session #1: 5 tables locked, 0 deadlock(s)                                           | postgres
+ ROLLBACK_GROUP           | TIME STAMP SET     | 19                                                                |                                                                                               | postgres
  ROLLBACK_TABLE           | BEGIN              | myschema1.mytbl1                                                  | All log rows where emaj_gid > 40 and <= 46, in session_replication_role = replica mode        | postgres
  ROLLBACK_TABLE           | END                | myschema1.mytbl1                                                  | 6 rolled back primary keys                                                                    | postgres
  ROLLBACK_GROUP           | NOTICE             | Rollback id 1                                                     | Rollback id = 1.                                                                              | postgres
@@ -512,6 +531,7 @@ select hist_function, hist_event, hist_object,
  DBLINK_OPEN_CNX          |                    | rlbk#1                                                            | Status = -3                                                                                   | postgres
  LOCK_GROUP               | BEGIN              | myGroup1                                                          | Rollback session #1                                                                           | postgres
  LOCK_GROUP               | END                | myGroup1                                                          | Rollback session #1: 5 tables locked, 0 deadlock(s)                                           | postgres
+ ROLLBACK_GROUP           | TIME STAMP SET     | 20                                                                |                                                                                               | postgres
  ROLLBACK_TABLE           | BEGIN              | myschema1.mytbl2                                                  | All log rows where emaj_gid > 40 and <= 49, in session_replication_role = replica mode        | postgres
  ROLLBACK_TABLE           | END                | myschema1.mytbl2                                                  | 1 rolled back primary keys                                                                    | postgres
  ROLLBACK_TABLE           | BEGIN              | myschema1.mytbl2b                                                 | All log rows where emaj_gid > 40 and <= 49                                                    | postgres
@@ -527,21 +547,25 @@ select hist_function, hist_event, hist_object,
  SET_MARK_GROUP           | BEGIN              | myGroup2                                                          |                                                                                               | postgres
  LOCK_GROUP               | BEGIN              | myGroup2                                                          |                                                                                               | postgres
  LOCK_GROUP               | END                | myGroup2                                                          | 4 tables locked, 0 deadlock(s)                                                                | postgres
+ SET_MARK_GROUP           | TIME STAMP SET     | 21                                                                |                                                                                               | postgres
  SET_MARK_GROUP           | END                | myGroup2                                                          | M2                                                                                            | postgres
  SET_MARK_GROUP           | BEGIN              | myGroup2                                                          |                                                                                               | postgres
  LOCK_GROUP               | BEGIN              | myGroup2                                                          |                                                                                               | postgres
  LOCK_GROUP               | END                | myGroup2                                                          | 4 tables locked, 0 deadlock(s)                                                                | postgres
+ SET_MARK_GROUP           | TIME STAMP SET     | 22                                                                |                                                                                               | postgres
  SET_MARK_GROUP           | END                | myGroup2                                                          | M3                                                                                            | postgres
  ROLLBACK_GROUP           | BEGIN              | myGroup2                                                          | Logged rollback to mark M2 (timestamp)                                                        | postgres
  DBLINK_OPEN_CNX          |                    | rlbk#1                                                            | Status = -3                                                                                   | postgres
  LOCK_GROUP               | BEGIN              | myGroup2                                                          | Rollback session #1                                                                           | postgres
  LOCK_GROUP               | END                | myGroup2                                                          | Rollback session #1: 4 tables locked, 0 deadlock(s)                                           | postgres
+ ROLLBACK_GROUP           | TIME STAMP SET     | 23                                                                |                                                                                               | postgres
  SET_MARK_GROUP           | BEGIN              | myGroup2                                                          | RLBK_M2_%_START                                                                               | postgres
  SET_MARK_GROUP           | END                | myGroup2                                                          | RLBK_M2_%_START                                                                               | postgres
  ROLLBACK_SEQUENCE        |                    | myschema2.myseq1                                                  | RESTART 1001 MAXVALUE 2000 CYCLE                                                              | postgres
  ROLLBACK_TABLE           | BEGIN              | myschema2.mytbl4                                                  | All log rows where emaj_gid > 76 and <= 80, in session_replication_role = replica mode        | postgres
  ROLLBACK_TABLE           | END                | myschema2.mytbl4                                                  | 2 rolled back primary keys                                                                    | postgres
  SET_MARK_GROUP           | BEGIN              | myGroup2                                                          | RLBK_M2_%_DONE                                                                                | postgres
+ SET_MARK_GROUP           | TIME STAMP SET     | 24                                                                |                                                                                               | postgres
  SET_MARK_GROUP           | END                | myGroup2                                                          | RLBK_M2_%_DONE                                                                                | postgres
  ROLLBACK_GROUP           | NOTICE             | Rollback id 3                                                     | Rollback id = 3.                                                                              | postgres
  ROLLBACK_GROUP           | NOTICE             | Rollback id 3                                                     | 1 / 4 tables effectively processed.                                                           | postgres
@@ -551,12 +575,14 @@ select hist_function, hist_event, hist_object,
  DBLINK_OPEN_CNX          |                    | rlbk#1                                                            | Status = -3                                                                                   | postgres
  LOCK_GROUP               | BEGIN              | myGroup2                                                          | Rollback session #1                                                                           | postgres
  LOCK_GROUP               | END                | myGroup2                                                          | Rollback session #1: 4 tables locked, 0 deadlock(s)                                           | postgres
+ ROLLBACK_GROUP           | TIME STAMP SET     | 25                                                                |                                                                                               | postgres
  SET_MARK_GROUP           | BEGIN              | myGroup2                                                          | RLBK_M3_%_START                                                                               | postgres
  SET_MARK_GROUP           | END                | myGroup2                                                          | RLBK_M3_%_START                                                                               | postgres
  ROLLBACK_SEQUENCE        |                    | myschema2.myseq1                                                  | RESTART 1004 MAXVALUE 9223372036854775807 NO CYCLE                                            | postgres
  ROLLBACK_TABLE           | BEGIN              | myschema2.mytbl4                                                  | All log rows where emaj_gid > 80 and <= 82, in session_replication_role = replica mode        | postgres
  ROLLBACK_TABLE           | END                | myschema2.mytbl4                                                  | 2 rolled back primary keys                                                                    | postgres
  SET_MARK_GROUP           | BEGIN              | myGroup2                                                          | RLBK_M3_%_DONE                                                                                | postgres
+ SET_MARK_GROUP           | TIME STAMP SET     | 26                                                                |                                                                                               | postgres
  SET_MARK_GROUP           | END                | myGroup2                                                          | RLBK_M3_%_DONE                                                                                | postgres
  ROLLBACK_GROUP           | NOTICE             | Rollback id 4                                                     | Rollback id = 4.                                                                              | postgres
  ROLLBACK_GROUP           | NOTICE             | Rollback id 4                                                     | 1 / 4 tables effectively processed.                                                           | postgres
@@ -565,8 +591,10 @@ select hist_function, hist_event, hist_object,
  SET_MARK_GROUPS          | BEGIN              | myGroup1,myGroup2                                                 | Common                                                                                        | postgres
  LOCK_GROUPS              | BEGIN              | myGroup1,myGroup2                                                 |                                                                                               | postgres
  LOCK_GROUPS              | END                | myGroup1,myGroup2                                                 | 9 tables locked, 0 deadlock(s)                                                                | postgres
+ SET_MARK_GROUPS          | TIME STAMP SET     | 27                                                                |                                                                                               | postgres
  SET_MARK_GROUPS          | END                | myGroup1,myGroup2                                                 | Common                                                                                        | postgres
  REMOVE_TABLE             | BEGIN              |                                                                   |                                                                                               | postgres
+ REMOVE_TABLE             | TIME STAMP SET     | 28                                                                |                                                                                               | postgres
  LOCK_GROUP               | BEGIN              | myGroup1                                                          |                                                                                               | postgres
  LOCK_GROUP               | END                | myGroup1                                                          | 5 tables locked, 0 deadlock(s)                                                                | postgres
  SET_MARK_GROUP           | BEGIN              | myGroup1                                                          | REMOVE_%                                                                                      | postgres
@@ -574,12 +602,14 @@ select hist_function, hist_event, hist_object,
  REMOVE_TABLE             | TABLE REMOVED      | myschema1."myTbl3"                                                | From the logging group myGroup1                                                               | postgres
  REMOVE_TABLE             | END                |                                                                   | 1 tables removed from their groups                                                            | postgres
  START_GROUP              | BEGIN              | myGroup6                                                          | With log reset                                                                                | postgres
+ START_GROUP              | TIME STAMP SET     | 29                                                                |                                                                                               | postgres
  LOCK_GROUP               | BEGIN              | myGroup6                                                          |                                                                                               | postgres
  LOCK_GROUP               | END                | myGroup6                                                          | 4 tables locked, 0 deadlock(s)                                                                | postgres
  SET_MARK_GROUP           | BEGIN              | myGroup6                                                          | Start G6                                                                                      | postgres
  SET_MARK_GROUP           | END                | myGroup6                                                          | Start G6                                                                                      | postgres
  START_GROUP              | END                | myGroup6                                                          | 4 tables/sequences processed                                                                  | postgres
  REMOVE_TABLE             | BEGIN              |                                                                   |                                                                                               | postgres
+ REMOVE_TABLE             | TIME STAMP SET     | 30                                                                |                                                                                               | postgres
  LOCK_GROUP               | BEGIN              | myGroup6                                                          |                                                                                               | postgres
  LOCK_GROUP               | END                | myGroup6                                                          | 4 tables locked, 0 deadlock(s)                                                                | postgres
  SET_MARK_GROUP           | BEGIN              | myGroup6                                                          | REMOVE_%                                                                                      | postgres
@@ -587,13 +617,14 @@ select hist_function, hist_event, hist_object,
  REMOVE_TABLE             | TABLE REMOVED      | myschema6.table_with_55_characters_long_name_____0_________0abcde | From the logging group myGroup6                                                               | postgres
  REMOVE_TABLE             | END                |                                                                   | 1 tables removed from their groups                                                            | postgres
  STOP_GROUP               | BEGIN              | myGroup6                                                          |                                                                                               | postgres
+ STOP_GROUP               | TIME STAMP SET     | 31                                                                |                                                                                               | postgres
  LOCK_GROUP               | BEGIN              | myGroup6                                                          |                                                                                               | postgres
  LOCK_GROUP               | END                | myGroup6                                                          | 3 tables locked, 0 deadlock(s)                                                                | postgres
  SET_MARK_GROUP           | BEGIN              | myGroup6                                                          | STOP_%                                                                                        | postgres
  SET_MARK_GROUP           | END                | myGroup6                                                          | STOP_%                                                                                        | postgres
  STOP_GROUP               | END                | myGroup6                                                          | 3 tables/sequences processed                                                                  | postgres
- EMAJ_INSTALL             | BEGIN              | E-Maj <devel>                                                     | Upgrade from 4.3.1 started                                                                    | postgres
- EMAJ_INSTALL             | END                | E-Maj <devel>                                                     | Upgrade from 4.3.1 completed                                                                  | postgres
+ EMAJ_INSTALL             | BEGIN              | E-Maj <devel>                                                     | Upgrade from 4.4.0 started                                                                    | postgres
+ EMAJ_INSTALL             | END                | E-Maj <devel>                                                     | Upgrade from 4.4.0 completed                                                                  | postgres
  UNPROTECT_GROUP          |                    | myGroup1                                                          | Status 1                                                                                      | postgres
  ROLLBACK_GROUPS          | BEGIN              | myGroup1,myGroup2                                                 | Unlogged rollback to mark Common (timestamp)                                                  | postgres
  DBLINK_OPEN_CNX          |                    | rlbk#1                                                            | Status = -5                                                                                   | postgres
@@ -755,7 +786,7 @@ select hist_function, hist_event, hist_object,
  DROP_GROUP               | TIME STAMP SET     | 47                                                                |                                                                                               | postgres
  DROP_GROUP               | LOG_SCHEMA DROPPED | emaj_myschema6                                                    |                                                                                               | postgres
  DROP_GROUP               | END                | myGroup6                                                          | 3 tables/sequences processed                                                                  | postgres
-(333 rows)
+(364 rows)
 
 --
 reset role;

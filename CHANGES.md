@@ -1,5 +1,13 @@
 E-Maj - Change log
 ==================
+<devel>
+------
+###Enhancements:###
+
+
+###Bug fixes:###
+
+
 \<devel\>
 ------
 ### Enhancements: ###

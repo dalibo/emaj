@@ -7,7 +7,7 @@
 -----------------------------
 select * from emaj.emaj_verify_all();
 
-select * from emaj.emaj_log_session;
+select * from emaj.emaj_log_session order by 1,2;
 
 select time_event, count(*) from emaj.emaj_time_stamp where time_event in ('S','X') group by 1 order by 1;
 

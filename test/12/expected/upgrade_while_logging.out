@@ -12,7 +12,7 @@ select * from pg_available_extension_versions where name = 'emaj' order by versi
  name | version | installed | superuser | relocatable | schema |      requires       |                                            comment                                             
 ------+---------+-----------+-----------+-------------+--------+---------------------+------------------------------------------------------------------------------------------------
  emaj | devel   | f         | t         | f           | emaj   | {dblink,btree_gist} | E-Maj extension enables fine-grained write logging and time travel on subsets of the database.
- emaj | 4.3.1   | t         | t         | f           | emaj   | {dblink,btree_gist} | E-Maj extension enables fine-grained write logging and time travel on subsets of the database.
+ emaj | 4.4.0   | t         | t         | f           | emaj   | {dblink,btree_gist} | E-Maj extension enables fine-grained write logging and time travel on subsets of the database.
 (2 rows)
 
 select relname from pg_catalog.pg_class, 
@@ -23,8 +23,10 @@ select relname from pg_catalog.pg_class,
 -----------------------------
  emaj_global_seq
  emaj_group
+ emaj_group_hist
  emaj_hist
  emaj_hist_hist_id_seq
+ emaj_log_session
  emaj_mark
  emaj_param
  emaj_rel_hist
@@ -41,7 +43,8 @@ select relname from pg_catalog.pg_class,
  emaj_table
  emaj_time_stamp
  emaj_time_stamp_time_id_seq
-(20 rows)
+ emaj_version_hist
+(23 rows)
 
   select * from emaj.emaj_verify_all();
                                                                                 emaj_verify_all                                                                                
@@ -54,14 +57,6 @@ select relname from pg_catalog.pg_class,
 -- process the extension upgrade
 ALTER EXTENSION emaj UPDATE TO 'devel';
 WARNING:  E-Maj upgrade: the E-Maj environment health check reports warning. You may execute "SELECT * FROM emaj.emaj_verify_all();" to get more details.
-NOTICE:  Starting the rows generation for the new emaj_group_hist table.
-NOTICE:  Based on existing history and logs content, #log_sessions statistics may be inaccurate.
-NOTICE:  Starting the rows generation for the new emaj_log_session table.
-NOTICE:  Based on existing history and logs content, #marks and #changes statistics may be inaccurate.
-NOTICE:  drop cascades to function _log_stat_groups(text[],boolean,text,text)
-NOTICE:  drop cascades to function _detailed_log_stat_groups(text[],boolean,text,text)
-NOTICE:  function emaj._log_stat_groups(text[],pg_catalog.bool,text,text) does not exist, skipping
-NOTICE:  function emaj._detailed_log_stat_groups(text[],pg_catalog.bool,text,text) does not exist, skipping
 -----------------------------
 -- check installation
 -----------------------------
@@ -107,7 +102,7 @@ select relname from pg_catalog.pg_class,
 select verh_version from emaj.emaj_version_hist order by verh_time_range;
  verh_version 
 --------------
- 4.3.1
+ 4.4.0
  <devel>
 (2 rows)
 
@@ -1258,7 +1253,7 @@ select * from emaj.emaj_global_seq;
 select * from emaj.emaj_hist_hist_id_seq;
  last_value | log_cnt | is_called 
 ------------+---------+-----------
-        172 |      26 | t
+        203 |      28 | t
 (1 row)
 
 select * from emaj.emaj_time_stamp_time_id_seq;
