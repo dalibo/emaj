@@ -3,7 +3,7 @@
 -----------------------------
 -- emaj installation (not as extension)
 -----------------------------
-\i sql/emaj-devel.sql
+\i sql/emaj-4.4.0.sql
 
 -- Test the dblink extension lack (this cannot be easily simulated in the verify.sql unit tests script when emaj is installed as an extension)
 begin;

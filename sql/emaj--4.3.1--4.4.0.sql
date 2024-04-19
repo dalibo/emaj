@@ -1,5 +1,5 @@
 --
--- E-Maj: migration from 4.3.1 to <devel>
+-- E-Maj: migration from 4.3.1 to 4.4.0
 --
 -- This software is distributed under the GNU General Public License.
 --
@@ -55,7 +55,7 @@ $do$;
 
 -- Insert the upgrade begin record in the operation history.
 INSERT INTO emaj.emaj_hist (hist_function, hist_event, hist_object, hist_wording)
-  VALUES ('EMAJ_INSTALL','BEGIN','E-Maj <devel>', 'Upgrade from 4.3.1 started');
+  VALUES ('EMAJ_INSTALL','BEGIN','E-Maj 4.4.0', 'Upgrade from 4.3.1 started');
 
 -- Lock emaj_group table to avoid any concurrent E-Maj activity.
 LOCK TABLE emaj.emaj_group IN EXCLUSIVE MODE;
@@ -5213,12 +5213,12 @@ WITH start_time_data AS (
     WHERE upper_inf(verh_time_range)
   )
   INSERT INTO emaj.emaj_version_hist (verh_version, verh_time_range, verh_install_duration)
-    SELECT '<devel>', TSTZRANGE(clock_timestamp(), null, '[]'), duration
+    SELECT '4.4.0', TSTZRANGE(clock_timestamp(), null, '[]'), duration
       FROM start_time_data;
 
 -- Insert the upgrade end record into the emaj_hist table.
 INSERT INTO emaj.emaj_hist (hist_function, hist_event, hist_object, hist_wording)
-  VALUES ('EMAJ_INSTALL','END','E-Maj <devel>', 'Upgrade from 4.3.1 completed');
+  VALUES ('EMAJ_INSTALL','END','E-Maj 4.4.0', 'Upgrade from 4.3.1 completed');
 
 -- Post installation checks.
 DO
