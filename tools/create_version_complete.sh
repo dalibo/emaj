@@ -100,6 +100,14 @@
 	libreoffice --headless --convert-to pdf Emaj.${NEW}_overview_fr.odp
 	cd ..
 
+# Add the doc files into the tar.index file
+	echo "${NEWDIR}/doc/Emaj.${NEW}_doc_en.pdf" >>tar.index
+	echo "${NEWDIR}/doc/Emaj.${NEW}_doc_fr.pdf" >>tar.index
+	echo "${NEWDIR}/doc/Emaj.${NEW}_pres_en.odp" >>tar.index
+	echo "${NEWDIR}/doc/Emaj.${NEW}_pres_fr.odp" >>tar.index
+	echo "${NEWDIR}/doc/Emaj.${NEW}_pres_en.pdf" >>tar.index
+	echo "${NEWDIR}/doc/Emaj.${NEW}_pres_fr.pdf" >>tar.index
+
 # Create the delivery tar file
 	cd ..
 	echo "Creating the tar file for PGXN (emaj-${NEW}.tar.gz)..."
@@ -121,6 +129,7 @@
 	mv META.json.bak META.json
 	mv README.md.bak README.md
 	mv emaj.control.bak emaj.control
+	mv tar.index.bak tar.index
 	mv sql/emaj_uninstall.sql.bak sql/emaj_uninstall.sql
 	mv sql/emaj_demo.sql.bak sql/emaj_demo.sql
 	mv sql/emaj-devel.sql.bak sql/emaj-devel.sql
@@ -145,6 +154,10 @@
 # Create a new empty migration script, by copying and adjusting the upgrade script template
     sed "s/<PREVIOUS_VERSION>/${NEW}/g" tools/emaj_upgrade.template >sql/emaj--$NEW--devel.sql
 	git add sql/emaj--$NEW--devel.sql
+
+# Adjust the tar.index content
+	sed -ri "s/emaj--(.*?)--devel.sql/emaj--\1--${NEW}.sql/" tar.index
+	sed -i "/emaj-devel.sql/ a\emaj/sql/emaj--${NEW}--devel.sql" tar.index
 
 # Adjust the functions synchronization tool that build the upgrade script (sync_fct_in_upgrade_script.pl)
 	sed -i -E "s/previousSourceFile = .*;/previousSourceFile = \$emajEnvRootDir . \"\/sql\/emaj--${NEW}\.sql\";/" tools/sync_fct_in_upgrade_script.pl

@@ -8,7 +8,7 @@ E-Maj - Change log
 ###Bug fixes:###
 
 
-\<devel\>
+4.4.0 (2024-Apr-19)
 ------
 ### Enhancements: ###
   * Add an internal table that records emaj versions history, replacing the
