@@ -76,8 +76,11 @@
 # Change version identifiers inside files from /client
 	find client/emajParallelRollback* client/emajRollbackMonitor* -type f -exec sed -i.bak "s/<devel>/${NEW}/g" '{}' \;
 
-# Change version identifiers inside META.json and README.md files
-	find META.json README.md -type f -exec sed -i.bak "s/<devel>/${NEW}/g" '{}' \;
+# Change version identifiers inside README.md
+	sed -i.bak "s/<devel>/${NEW}/g" README.md
+
+# Change version identifiers inside META.json
+	sed -i.bak "s/([\"\.-])devel([\"\._])/\1${NEW}\2/" META.json
 
 # Change version identifiers inside emaj.control
 	sed -i.bak "s/devel/${NEW}/g" emaj.control
