@@ -5,7 +5,7 @@
    "version": "devel",
    "maintainer": "Philippe Beaudoin - phb<dot>emaj<at>free<dot>fr",
    "license": "gpl_3",
-   "tags": [ "emaj", "table log", "audit", "log", "logging", "audit log", "audit logging", "DML log", "trigger-based logging", "version", "log trigger", "archive before journal", "logical rollback", "flashback", "change data capture", "table content change recording", "traceability", "tracking", "trackability" ],
+   "tags": [ "emaj", "table log", "audit", "auditing", "log", "logging", "audit log", "audit logging", "DML log", "trigger-based logging", "version", "log trigger", "archive before journal", "logical rollback", "flashback", "change data capture", "table content change recording", "traceability", "tracking", "trackability" ],
    "prereqs": {
      "runtime": {
        "requires": {
