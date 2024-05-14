@@ -1,11 +1,11 @@
 # File:	emaj.control
 # E-Maj extension
 
-default_version 	= 'devel'
-comment 			= 'E-Maj extension enables fine-grained write logging and time travel on subsets of the database.'
-#directory 			= '<directory containing installation scripts, if not SHAREDIR>'
-superuser 			= true
-schema 				= 'emaj'
-relocatable 		= false
-requires 			= 'dblink, btree_gist'
+default_version = 'devel'
+comment         = 'E-Maj extension enables fine-grained write logging and time travel on subsets of the database.'
+#directory 	    = '<directory containing installation scripts, if not SHAREDIR>'
+superuser       = true
+schema 	        = 'emaj'
+relocatable     = false
+requires        = 'dblink, btree_gist'
 
