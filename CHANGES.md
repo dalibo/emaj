@@ -3,7 +3,8 @@ E-Maj - Change log
 <devel>
 ------
 ###Enhancements:###
-
+  * Add a Makefile to help installing and uninstalling the E-Maj software,
+    allowing also the pgxn client's usage.
 
 ###Bug fixes:###
 

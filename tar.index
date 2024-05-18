@@ -4,6 +4,7 @@ emaj/AUTHORS.md
 emaj/LICENSE
 emaj/META.json
 emaj/emaj.control
+emaj/Makefile
 emaj/sql/emaj--devel.sql
 emaj/sql/emaj-devel.sql
 emaj/sql/emaj--4.4.0--devel.sql

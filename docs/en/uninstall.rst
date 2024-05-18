@@ -1,5 +1,8 @@
+Uninstall
+=========
+
 Uninstalling an E-Maj extension from a database
-===============================================
+***********************************************
 
 To uninstall E-Maj from a database, the user must log on this database with *psql*, as a superuser.
 
@@ -34,3 +37,17 @@ The uninstallation script execution displays::
    SET
    >>> E-maj successfully uninstalled from this database
 
+Removing the E-Maj software
+***************************
+
+The way to remove the E-Maj software depends on the way it has been installed.
+
+For a standart install with the *pgxn* client, a single command is required::
+
+  pgxn uninstall E-Maj --sudo
+
+For a standart install without the *pgxn* client, reach the initial directory of the E-Maj distribution and type::
+
+  sudo make uninstall
+
+For a manual install, the installed components must be removed by reverting the initial installation steps.
