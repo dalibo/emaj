@@ -19,6 +19,10 @@
 # EMAJ_REGTEST_UPGRADE_PGVER       : Contains the PostgreSQL versions on which the "E-Maj upgrade" regression test can be run
 # EMAJ_REGTEST_MIXED               : Contains the sequence of sql scripts of the "mixed with E-Maj upgrade" regression test
 # EMAJ_REGTEST_MIXED_PGVER         : Contains the PostgreSQL versions on which the "mixed with E-Maj upgrade" regression test can be run
+# EMAJ_REGTEST_UNINSTALL           : Contains the sequence of sql scripts of the "uninstall" regression test 
+# EMAJ_REGTEST_UNINSTALL_PGVER     : Contains the PostgreSQL versions on which the "uninstall" regression test can be run
+# EMAJ_REGTEST_UNINST_PSQL         : Contains the sequence of sql scripts of the "uninstall_psql" regression test 
+# EMAJ_REGTEST_UNINST_PSQL_PGVER   : Contains the PostgreSQL versions on which the "uninstall_psql" regression test can be run
 # EMAJ_REGTEST_MENU_ACTIONS        : Contains the functions to be executed according to the regression test and the PostgreSQL version (do not fill this array)
 # EMAJ_REGTEST_MENU                : Contains the menu's entries (do not fill this array)
 typeset -r EMAJ_REGTEST_STANDART=('install' 'setup' 'create_drop' 'start_stop' 'mark' 'rollback' 'misc' 'verify' 'alter' 'alter_logging' 'viewer' 'adm1' 'adm2' 'adm3' 'client' 'check' 'cleanup')
@@ -32,6 +36,11 @@ typeset -r EMAJ_REGTEST_UPGRADE=('install_upgrade' 'setup' 'create_drop' 'start_
 typeset -r EMAJ_REGTEST_UPGRADE_PGVER='11 12 13 15 16'
 typeset -r EMAJ_REGTEST_MIXED=('install_previous' 'setup' 'before_upg_while_logging' 'upgrade_while_logging' 'after_upg_while_logging' 'cleanup')
 typeset -r EMAJ_REGTEST_MIXED_PGVER=(12 14)
+typeset -r EMAJ_REGTEST_UNINSTALL=('install' 'setup' 'before_uninstall' 'uninstall' 'install' 'cleanup')
+typeset -r EMAJ_REGTEST_UNINSTALL_PGVER=(11)
+typeset -r EMAJ_REGTEST_UNINST_PSQL=('install_psql' 'setup' 'before_uninstall' 'uninstall_psql' 'install_psql' 'cleanup')
+typeset -r EMAJ_REGTEST_UNINST_PSQL_PGVER=(14)
+
 declare -A EMAJ_REGTEST_MENU_ACTIONS
 declare -A EMAJ_REGTEST_MENU
 
@@ -252,14 +261,19 @@ echo "----------------"
 # MENU_KEY_1STREGTEST_STANDART     : 1st letter attributed in the menu to execute a "standart" test for a specific PostgreSQL version
 # MENU_KEY_ALLREGTEST_STANDART     : Letter attributed in the menu to execute the "standart" test foreach PostgreSQL versions
 # MENU_KEY_1STREGTEST_DUMP_RESTORE : 1st letter attributed in the menu to execute a "dump and restore" test for a specific PostgreSQL version
+# MENU_KEY_1STREGTEST_UNINSTALL    : 1st letter attributed in the menu to execute a "uninstall" test for a specific PostgreSQL version
+# MENU_KEY_1STREGTEST_UNINST_PSQL  : 1st letter attributed in the menu to execute a "uninstall_psql" test for a specific PostgreSQL version
 # MENU_KEY_1STREGTEST_PGUPGRADE    : 1st letter attributed in the menu to execute a "pg_upgrade" test for a specific PostgreSQL version
 # MENU_KEY_1STREGTEST_UPGRADE      : 1st letter attributed in the menu to execute an "E-Maj upgrade" test for a specific PostgreSQL version
 # MENU_KEY_ALLREGTEST_UPGRADE      : Letter attributed in the menu to execute the "E-Maj upgrade" test foreach PostgreSQL versions
 # MENU_KEY_1STREGTEST_MIXED        : 1st letter attributed in the menu to execute a "mixed with E-Maj upgrade" test for a specific PostgreSQL version
+
 MENU_KEY_1STREGTEST_STANDART='a'
 MENU_KEY_ALLREGTEST_STANDART='t'
 MENU_KEY_1STREGTEST_DUMP_RESTORE='m'
 MENU_KEY_1STREGTEST_PSQL='p'
+MENU_KEY_1STREGTEST_UNINSTALL='q'
+MENU_KEY_1STREGTEST_UNINST_PSQL='r'
 MENU_KEY_1STREGTEST_PGUPGRADE='u'
 MENU_KEY_1STREGTEST_UPGRADE='A'
 MENU_KEY_ALLREGTEST_UPGRADE='T'
@@ -347,6 +361,45 @@ for PGMENUVER in ${EMAJ_REGTEST_PSQL_PGVER[@]}; do
       EMAJ_REGTEST_MENU[${MENU_KEY}]=$(printf "pg %s (port %d) psql install test" ${PGMENUVER} $(pg_dspvar ${PGMENUVER//.} PGPORT))
       # store the associated function to execute
       EMAJ_REGTEST_MENU_ACTIONS[${MENU_KEY}]="reg_test_version ${PGMENUVER//.} psql"
+      # the next decimal ASCII character
+      let nCHAR++
+      let TODISPLAY++
+      continue 2
+    fi
+   done 
+done
+
+# UNINSTALL
+nCHAR=`printf '%d' \'${MENU_KEY_1STREGTEST_UNINSTALL}`
+for PGMENUVER in ${EMAJ_REGTEST_UNINSTALL_PGVER[@]}; do
+  for PGUSERVER in ${EMAJ_USER_PGVER[@]//.}; do
+    if [ "${PGMENUVER//.}" == "${PGUSERVER}" ]; then
+      # decimal to ASCII char
+      MENU_KEY=`printf '\'$(printf "%03o" ${nCHAR})`
+      # store the menu's entry
+      EMAJ_REGTEST_MENU[${MENU_KEY}]=$(printf "pg %s (port %d) uninstall test" ${PGMENUVER} $(pg_dspvar ${PGMENUVER//.} PGPORT))
+      # store the associated function to execute
+      EMAJ_REGTEST_MENU_ACTIONS[${MENU_KEY}]="reg_test_version ${PGMENUVER//.} uninstall"
+#      EMAJ_REGTEST_MENU_ACTIONS[${MENU_KEY}]="reg_test_version ${PGMENUVER//.} uninst_psql"
+      # the next decimal ASCII character
+      let nCHAR++
+      let TODISPLAY++
+      continue 2
+    fi
+   done 
+done
+
+# UNINSTALL_PSQL
+nCHAR=`printf '%d' \'${MENU_KEY_1STREGTEST_UNINST_PSQL}`
+for PGMENUVER in ${EMAJ_REGTEST_UNINST_PSQL_PGVER[@]}; do
+  for PGUSERVER in ${EMAJ_USER_PGVER[@]//.}; do
+    if [ "${PGMENUVER//.}" == "${PGUSERVER}" ]; then
+      # decimal to ASCII char
+      MENU_KEY=`printf '\'$(printf "%03o" ${nCHAR})`
+      # store the menu's entry
+      EMAJ_REGTEST_MENU[${MENU_KEY}]=$(printf "pg %s (port %d) uninstall from psql test" ${PGMENUVER} $(pg_dspvar ${PGMENUVER//.} PGPORT))
+      # store the associated function to execute
+      EMAJ_REGTEST_MENU_ACTIONS[${MENU_KEY}]="reg_test_version ${PGMENUVER//.} uninst_psql"
       # the next decimal ASCII character
       let nCHAR++
       let TODISPLAY++

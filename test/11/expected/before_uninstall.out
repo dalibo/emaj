@@ -1,0 +1,639 @@
+-- before_uninstall.sql : prepare the uninstall test
+--
+-- Record the dblink_user_password parameter
+insert into emaj.emaj_param (param_key, param_value_text) 
+  values ('dblink_user_password','user=postgres password=postgres');
+-- Grant emaj_adm so that the cleanup.sql report be stable
+grant emaj_adm to emaj_regression_tests_adm_user1, emaj_regression_tests_adm_user2;
+-- Execute the demo scripts
+\o /dev/null
+\i sql/emaj_demo.sql
+-- emaj_demo.sql : Version <devel>
+--
+-- This script demonstrates the main features of the E-Maj extension.
+--
+-- This test script must be executed by a role member of emaj_adm (or by a superuser).
+--
+-- E-Maj extension must have been previously installed.
+--
+-- At the end of the script's execution, the demo environment is left as is, so that users can examine the results.
+-- The script can be run several times in sequence.
+-- To remove all traces left by this demo, just 
+--     SELECT emaj.emaj_demo_cleanup();
+\echo '---------------------------------------------------------------------------'
+---------------------------------------------------------------------------
+\echo '---                                                                     ---'
+---                                                                     ---
+\echo '---                          E-Maj Demo start                           ---'
+---                          E-Maj Demo start                           ---
+\echo '---                                                                     ---'
+---                                                                     ---
+\echo '---------------------------------------------------------------------------'
+---------------------------------------------------------------------------
+\set ON_ERROR_STOP
+\pset pager off
+\set ECHO none
+---
+--- Check the E-Maj environment.
+---
+---
+--- Create the emaj.emaj_demo_cleanup() function to use later in order to remove objects created by this script.
+---
+---
+--- Get the E-Maj version installed in the current database.
+---
+SELECT param_value_text FROM emaj.emaj_param WHERE param_key = 'emaj_version';
+---------------------------------------------------------------------------
+---                                                                     ---
+--- Let us create a schema with some application tables and sequences.  ---
+--- Note that myTbl3 table name is case sensitive.                      ---
+---                                                                     ---
+---------------------------------------------------------------------------
+DROP SCHEMA IF EXISTS emaj_demo_app_schema CASCADE;
+CREATE SCHEMA emaj_demo_app_schema;
+SET search_path=emaj_demo_app_schema;
+CREATE TABLE emaj_demo_app_schema.myTbl1 (
+  col11       DECIMAL(7)       NOT NULL,
+  col12       CHAR(10)         NOT NULL,
+  col13       BYTEA            ,
+  PRIMARY KEY (col11,col12)
+);
+CREATE TABLE emaj_demo_app_schema.myTbl2 (
+  col21       INT              NOT NULL,
+  col22       TEXT             ,
+  col23       DATE             ,
+  PRIMARY KEY (col21)
+);
+CREATE TABLE emaj_demo_app_schema."myTbl3" (
+  col31       SERIAL           NOT NULL,
+  col32       TIMESTAMP        DEFAULT now(),
+  col33       DECIMAL (12,2)   ,
+  PRIMARY KEY (col31)
+);
+CREATE INDEX myIdx3 ON "myTbl3" (col32,col33);
+CREATE TABLE emaj_demo_app_schema.myTbl4 (
+  col41       INT              NOT NULL,
+  col42       TEXT             ,
+  col43       INT              ,
+  col44       DECIMAL(7)       ,
+  col45       CHAR(10)         ,
+  PRIMARY KEY (col41),
+  FOREIGN KEY (col43) REFERENCES myTbl2 (col21) DEFERRABLE INITIALLY DEFERRED,
+  FOREIGN KEY (col44,col45) REFERENCES myTbl1 (col11,col12) ON DELETE CASCADE
+);
+CREATE SEQUENCE mySeq1 MINVALUE 1000 MAXVALUE 2000 CYCLE;
+---------------------------------------------------------------------------
+---                                                                     ---
+---  Now let us define and create 2 rollbackable groups                 ---
+---  "emaj demo group 1" and "emaj demo group 2".                       ---
+---                                                                     ---
+---------------------------------------------------------------------------
+---
+--- Create both table groups.
+---
+select emaj.emaj_create_group('emaj demo group 1');
+select emaj.emaj_create_group('emaj demo group 2');
+---
+--- Populate both groups.
+---
+select emaj.emaj_assign_tables('emaj_demo_app_schema',array['mytbl1','mytbl2','mytbl4'],'emaj demo group 1');
+select emaj.emaj_assign_table('emaj_demo_app_schema','myTbl3','emaj demo group 2');
+select emaj.emaj_assign_sequences('emaj_demo_app_schema','.*','','emaj demo group 2');
+---
+--- Set a comment for the first table group.
+---
+select emaj.emaj_comment_group('emaj demo group 1','This group has no sequence');
+---
+--- Look at our groups in the internal emaj_group table (They are currently not logging).
+---
+select * from emaj.emaj_group where group_name in ('emaj demo group 1','emaj demo group 2');
+---
+--- Look at the content of the emaj_emaj_demo_app_schema schema containing our log tables.
+---
+select relname from pg_class, pg_namespace 
+  where relnamespace = pg_namespace.oid and nspname = 'emaj_emaj_demo_app_schema' and relkind = 'r';
+---------------------------------------------------------------------------
+---                                                                     ---
+---  Application tables can be populated, but without logging ... for   ---
+---  the moment.                                                        ---
+---                                                                     ---
+---------------------------------------------------------------------------
+---
+--- Insert few rows into myTbl1, myTbl2 and myTbl4 tables.
+---
+insert into myTbl1 
+  select i, 'ABC', E'\\000\\001\\002'::bytea from generate_series (1,10) as i;
+insert into myTbl2 
+  select i, 'ABC', current_date + to_char(i,'99 DAYS')::interval from generate_series (1,10) as i;
+insert into myTbl4 values (1,'FK...',1,1,'ABC');
+---
+---  As log triggers are not yet enabled, log tables remain empty.
+---
+select * from emaj_emaj_demo_app_schema.mytbl1_log;
+---------------------------------------------------------------------------
+---                                                                     ---
+---  Let us start the first group and perform some table updates.       ---
+---                                                                     ---
+---------------------------------------------------------------------------
+---
+--- Start the first group to activate its log triggers.
+---
+select emaj.emaj_start_group('emaj demo group 1','MARK1');
+---
+--- Perform 1 INSERT, 1 UPDATE and 1 DELETE on myTbl4.
+---
+insert into myTbl4 values (2,'FK...',1,1,'ABC');
+update myTbl4 set col43 = 2 where col41 = 2;
+delete from myTbl4 where col41 = 1;
+---
+--- Look at the myTbl4 log table.
+---
+select * from emaj_emaj_demo_app_schema.mytbl4_log;
+---------------------------------------------------------------------------
+---                                                                     ---
+---  Let us set a second mark on "emaj demo group 1" tables group and   ---
+---  perform some new tables updates.                                   ---
+---                                                                     ---
+---------------------------------------------------------------------------
+---
+--- Set MARK2.
+---
+select emaj.emaj_set_mark_group('emaj demo group 1','MARK2');
+---
+--- Perform some updates on myTbl1 and myTbl2.
+---
+insert into myTbl1 
+  select i, 'DEF', E'\\003\\004\\005'::bytea from generate_series (11,20) as i;
+delete from myTbl2 where col21 > 8;
+---
+--- What does the statistic function report about our latest updates?
+---
+select * from emaj.emaj_log_stat_group('emaj demo group 1','EMAJ_LAST_MARK',NULL);
+---
+--- And in a more detailed way?
+---
+select * from emaj.emaj_detailed_log_stat_group('emaj demo group 1','EMAJ_LAST_MARK',NULL);
+---------------------------------------------------------------------------
+---                                                                     ---
+---  Let us set a third mark on "emaj demo group 1" tables group and    ---
+---  perform some new tables updates.                                   ---
+---                                                                     ---
+---------------------------------------------------------------------------
+---
+--- Set MARK3.
+---
+select emaj.emaj_set_mark_group('emaj demo group 1','MARK3');
+---
+--- Perform some updates on myTbl1 and myTbl2.
+---
+update myTbl4 set col43 = NULL where col41 between 5 and 10;
+update myTbl2 set col23 = col23 + '1 YEAR'::interval;
+---
+--- Look at the known marks for our group 1 (there should be 3 undeleted marks).
+---
+select * from emaj.emaj_mark where mark_group = 'emaj demo group 1';
+---
+--- Count the total number of logged updates.
+---
+select sum(stat_rows) from emaj.emaj_log_stat_group('emaj demo group 1','MARK1',NULL);
+---------------------------------------------------------------------------
+---                                                                     ---
+---  Let us rollback "emaj demo group 1" tables group to MARK2.         ---
+---                                                                     ---
+---------------------------------------------------------------------------
+---
+--- (unlogged) rollback to MARK2.
+---
+select * from emaj.emaj_rollback_group('emaj demo group 1','MARK2');
+---
+--- Look at the known marks for our group 1. MARK 3 has disappeared.
+---
+select * from emaj.emaj_mark where mark_group = 'emaj demo group 1';
+---
+--- Count the total number of logged updates. 20 - among the 23 - have been rollbacked
+---
+select sum(stat_rows) from emaj.emaj_log_stat_group('emaj demo group 1','MARK1',NULL);
+---------------------------------------------------------------------------
+---                                                                     ---
+---  Let us chain again some updates and set marks.                     ---
+---                                                                     ---
+---------------------------------------------------------------------------
+---
+--- Perform some updates on myTbl1 and myTbl2.
+---
+insert into myTbl1 
+  select i, 'GHI', E'\\006\\007\\010'::bytea from generate_series (21,25) as i;
+delete from myTbl2 where col21 > 8;
+---
+--- Set MARK4.
+---
+select emaj.emaj_set_mark_group('emaj demo group 1','MARK4');
+---
+--- Perform some updates on myTbl1 and myTbl2.
+---
+update myTbl2 set col23 = col23 - '1 YEAR'::interval;
+update myTbl4 set col43 = NULL where col41 = 2;
+---
+--- Set MARK5.
+---
+select emaj.emaj_set_mark_group('emaj demo group 1','MARK5');
+---------------------------------------------------------------------------
+---                                                                     ---
+---  Let us perform a logged rollback of "emaj demo group 1" to MARK4.  ---
+---                                                                     ---
+---------------------------------------------------------------------------
+---
+--- First verify tables content.
+---
+select * from myTbl2 where col23 < current_date;
+select * from myTbl4 where col43 is NULL;
+---
+--- Perform a logged rollback to MARK2.
+---
+select * from emaj.emaj_logged_rollback_group('emaj demo group 1','MARK4');
+---
+--- Check the resulting tables content.
+---
+select * from myTbl2 where col23 < current_date;
+select * from myTbl4 where col43 is NULL;
+---
+--- Latests updates have been canceled. But the old MARK4 still exists. And 2 new marks frame the rollback operation.
+---
+select * from emaj.emaj_mark where mark_group = 'emaj demo group 1' order by mark_time_id;
+---
+--- And the rollback operation has been logged.
+---
+select * from emaj_emaj_demo_app_schema.mytbl4_log;
+---------------------------------------------------------------------------
+---                                                                     ---
+---  Let us improve our marks.                                          ---
+---                                                                     ---
+---------------------------------------------------------------------------
+---
+--- Remove the mark corresponding to the logged rollback start (RLBK_MARK4_<time>_START).
+---
+select emaj.emaj_delete_mark_group('emaj demo group 1',emaj.emaj_get_previous_mark_group('emaj demo group 1','EMAJ_LAST_MARK'));
+---
+--- Rename and comment the mark corresponding to the logged rollback stop (RLBK_MARK4_<time>_STOP).
+---
+select emaj.emaj_rename_mark_group('emaj demo group 1','EMAJ_LAST_MARK','End of rollback');
+select emaj.emaj_comment_mark_group('emaj demo group 1','End of rollback','This mark corresponds to the end of the logged rollback');
+---
+--- Look at the result in the emaj_group table.
+---
+select * from emaj.emaj_mark where mark_group = 'emaj demo group 1' order by mark_time_id;
+---
+--- Find the name of the mark set 1 micro-second ago.
+---
+select emaj.emaj_get_previous_mark_group('emaj demo group 1',current_timestamp - '1 microsecond'::interval);
+---------------------------------------------------------------------------
+---                                                                     ---
+---  Now, we can rollback ... our last rollback.                        ---
+---                                                                     ---
+---------------------------------------------------------------------------
+---
+--- (unlogged) rollback to MARK5.
+---
+select * from emaj.emaj_rollback_group('emaj demo group 1','MARK5');
+---
+--- ... and look at the result in the emaj_mark table.
+---
+select * from emaj.emaj_mark where mark_group = 'emaj demo group 1' order by mark_time_id;
+---------------------------------------------------------------------------
+---                                                                     ---
+---  Estimate how long a roolback would take.                           ---
+---                                                                     ---
+---------------------------------------------------------------------------
+---
+--- Estimate the duration of an unlogged rollback to the first mark.
+---  (See the documentation to see how this estimate is computed)
+---
+select emaj.emaj_estimate_rollback_group('emaj demo group 1','MARK1',false);
+---------------------------------------------------------------------------
+---                                                                     ---
+---  Let us start the second group and perform some table updates.      ---
+---                                                                     ---
+---------------------------------------------------------------------------
+---
+--- Start the second group to activate its log triggers.
+---
+select emaj.emaj_start_group('emaj demo group 2','MARK1');
+---
+--- perform some table updates and sequence changes.
+---
+insert into "myTbl3" (col33) select generate_series (1,10)*random();
+alter sequence emaj_demo_app_schema.mySeq1 increment 3 maxvalue 3000;
+select nextval('emaj_demo_app_schema.mySeq1');
+---------------------------------------------------------------------------
+---                                                                     ---
+---  Let us set a common mark on both groups and perform some updates.  ---
+---                                                                     ---
+---------------------------------------------------------------------------
+---
+--- Set a mark for both group in a single operation.
+---
+select emaj.emaj_set_mark_groups(array['emaj demo group 1','emaj demo group 2'],'COMMON_MARK2');
+---
+--- perform some table updates and sequence changes.
+---
+update "myTbl3" set col32 = col32 + '1 DAY'::interval where col31 <= 3;
+select nextval('emaj_demo_app_schema.mySeq1');
+insert into myTbl4 values (3,'XYZ',2,2,'ABC');
+select nextval('emaj_demo_app_schema.mySeq1');
+---
+--- look at the mySeq1 sequence table.
+---
+select * from emaj_demo_app_schema.mySeq1;
+---------------------------------------------------------------------------
+---                                                                     ---
+---  Let us rollback both groups together to COMMON_MARK2.              ---
+---                                                                     ---
+---------------------------------------------------------------------------
+---
+--- Look at the emaj_group table.
+---
+select * from emaj.emaj_mark where mark_group in ('emaj demo group 1','emaj demo group 2') order by mark_time_id;
+---
+--- Try first to rollback to MARK1 (each group has one MARK1 mark, but they do not represent the same point in time).
+---
+begin;
+select * from emaj.emaj_rollback_groups(array['emaj demo group 1','emaj demo group 2'],'MARK1');
+psql:sql/emaj_demo.sql:454: ERROR:  _check_mark_name: The mark "MARK1" does not represent the same point in time for all groups.
+CONTEXT:  PL/pgSQL function emaj._check_mark_name(text[],text,boolean) line 72 at RAISE
+SQL statement "SELECT emaj._check_mark_name(p_groupNames := p_groupNames, p_mark := p_mark, p_checkActive := TRUE)"
+PL/pgSQL function emaj._rlbk_check(text[],text,boolean,boolean) line 21 at SQL statement
+SQL statement "SELECT emaj._rlbk_check(p_groupNames, p_mark, p_isAlterGroupAllowed, FALSE)"
+PL/pgSQL function emaj._rlbk_init(text[],text,boolean,integer,boolean,boolean,text) line 25 at SQL statement
+SQL statement "SELECT emaj._rlbk_init(p_groupNames, p_mark, p_isLoggedRlbk, 1, p_multiGroup, p_isAlterGroupAllowed, p_comment)"
+PL/pgSQL function emaj._rlbk_groups(text[],text,boolean,boolean,boolean,text) line 26 at SQL statement
+PL/pgSQL function emaj.emaj_rollback_groups(text[],text,boolean,text) line 8 at RETURN QUERY
+rollback;
+---
+--- So now let us use the real common mark.
+---
+select * from emaj.emaj_rollback_groups(array['emaj demo group 1','emaj demo group 2'],'COMMON_MARK2');
+---
+--- Look at the mySeq1 sequence table to see the result of the rollback.
+---
+select * from emaj_demo_app_schema.mySeq1;
+---------------------------------------------------------------------------
+---                                                                     ---
+---  Now let us consider we can forget all what has been logged         ---
+---  before MARK5 for the first group.                                  ---
+---                                                                     ---
+---------------------------------------------------------------------------
+---
+--- Look at the log table linked to myTbl4.
+---
+select * from emaj_emaj_demo_app_schema.mytbl4_log;
+---
+--- Purge the obsolete log.
+---
+select emaj.emaj_delete_before_mark_group('emaj demo group 1','MARK5');
+---
+--- Look at the result in the log table and in the emaj_mark table.
+---
+select * from emaj_emaj_demo_app_schema.mytbl4_log;
+select * from emaj.emaj_mark where mark_group = 'emaj demo group 1' order by mark_time_id;
+---------------------------------------------------------------------------
+---                                                                     ---
+---  Our logging period is completed. Let us stop the groups.           ---
+---                                                                     ---
+---------------------------------------------------------------------------
+---
+--- Stop the first group.
+---
+select emaj.emaj_stop_group('emaj demo group 1');
+---
+--- Stop the second group and set a specific stop mark name.
+---
+select emaj.emaj_stop_group('emaj demo group 2','Our own stop mark for the second group');
+---
+--- The marks are still there but are logically deleted.
+---
+select * from emaj.emaj_mark where mark_group in ('emaj demo group 1','emaj demo group 2') order by mark_time_id;
+---
+--- The log rows are still there too, but are not usable for any rollback.
+---
+select * from emaj_emaj_demo_app_schema."myTbl3_log";
+---------------------------------------------------------------------------
+---                                                                     ---
+---  Sometimes, tables structure or tables groups content change...     ---
+---                                                                     ---
+---------------------------------------------------------------------------
+---
+--- While the first group is IDLE, alter the myTbl4 table.
+--- To do that, the table must be temporarily removed from its group.
+---
+select emaj.emaj_remove_table('emaj_demo_app_schema','mytbl4');
+alter table emaj_demo_app_schema.myTbl4 add column col46 bigint;
+select emaj.emaj_assign_table('emaj_demo_app_schema','mytbl4','emaj demo group 1');
+---
+--- Move mySeq1 sequence to the first group.
+---
+select emaj.emaj_move_sequence('emaj_demo_app_schema','myseq1','emaj demo group 1');
+---
+--- Verify that the whole E-Maj environment is in good shape.
+---
+select * from emaj.emaj_verify_all();
+---
+--- Both groups are now ready to be started.
+---
+---------------------------------------------------------------------------
+---                                                                     ---
+---  The emaj_hist table records all E-Maj events. It can be examined   ---
+---  by the administrator at any time if needed.                        ---
+---                                                                     ---
+---------------------------------------------------------------------------
+---
+--- Here is the part of the history that reflects the execution of this script.
+---
+select * from emaj.emaj_hist where hist_id >= (select hist_id from emaj.emaj_hist where hist_function = 'CREATE_GROUP' and hist_event = 'BEGIN' and hist_object = 'emaj demo group 1' order by hist_id desc limit 1);
+---
+--- The demo environment is left as is to let you play with it.
+--- To remove it, just execute:
+---     SELECT emaj.emaj_demo_cleanup();
+--- This demo script can be rerun as many times as you wish.
+---
+--- This ends the E-Maj demo. Thank You for using E-Maj and have fun!
+---
+---------------------------------------------------------------------------
+---                                                                     ---
+---     Setting up an environment to test E-Maj parallel rollbacks      ---
+---                                                                     ---
+---------------------------------------------------------------------------
+---
+--- Check the E-Maj environment.
+---
+---
+--- Create the emaj.emaj_parallel_rollback_test_cleanup() function to use later in order to remove objects created by this script.
+---
+---
+--- Create an application schema and tables for the test
+---
+DROP SCHEMA IF EXISTS emaj_parallel_rollback_test_app_schema CASCADE;
+CREATE SCHEMA emaj_parallel_rollback_test_app_schema;
+SET search_path=emaj_parallel_rollback_test_app_schema;
+DROP TABLE IF EXISTS myTbl1 ;
+CREATE TABLE myTbl1 (
+  col11       DECIMAL (7)      NOT NULL,
+  col12       CHAR (10)        NOT NULL,
+  col13       BYTEA            ,
+  PRIMARY KEY (col11,col12)
+);
+DROP TABLE IF EXISTS myTbl2 ;
+CREATE TABLE myTbl2 (
+  col21       INT              NOT NULL,
+  col22       TEXT             ,
+  col23       DATE             ,
+  PRIMARY KEY (col21)
+);
+DROP TABLE IF EXISTS "myTbl3" ;
+CREATE TABLE "myTbl3" (
+  col31       SERIAL           NOT NULL,
+  col32       TIMESTAMP        DEFAULT now(),
+  col33       DECIMAL (12,2)   ,
+  PRIMARY KEY (col31)
+);
+CREATE INDEX myIdx3 ON "myTbl3" (col32,col33);
+DROP TABLE IF EXISTS myTbl4 ;
+CREATE TABLE myTbl4 (
+  col41       INT              NOT NULL,
+  col42       TEXT             ,
+  col43       INT              ,
+  col44       DECIMAL(7)       ,
+  col45       CHAR(10)         ,
+  PRIMARY KEY (col41),
+  FOREIGN KEY (col43) REFERENCES myTbl2 (col21),
+  FOREIGN KEY (col44,col45) REFERENCES myTbl1 (col11,col12) ON DELETE CASCADE
+);
+DROP TABLE IF EXISTS myTbl2b ;
+CREATE TABLE myTbl2b (
+  col20       SERIAL           NOT NULL,
+  col21       INT              NOT NULL,
+  PRIMARY KEY (col20)
+);
+CREATE or REPLACE FUNCTION myTbl2trgfct () RETURNS trigger AS $$
+BEGIN
+  IF (TG_OP = 'DELETE') THEN
+    INSERT INTO myTbl2b (col21) SELECT OLD.col21;
+    RETURN OLD;
+  ELSIF (TG_OP = 'UPDATE') THEN
+    INSERT INTO myTbl2b (col21) SELECT NEW.col21;
+    RETURN NEW;
+  ELSIF (TG_OP = 'INSERT') THEN
+    INSERT INTO myTbl2b (col21) SELECT NEW.col21;
+    RETURN NEW;
+  END IF;
+  RETURN NULL;
+END;
+$$ LANGUAGE plpgsql SECURITY DEFINER;
+CREATE TRIGGER myTbl2trg
+  AFTER INSERT OR UPDATE OR DELETE ON myTbl2
+  FOR EACH ROW EXECUTE PROCEDURE myTbl2trgfct ();
+---
+--- Create E-Maj objects
+---
+SELECT emaj.emaj_create_group('emaj parallel rollback test group');
+---
+--- Now the E-Maj administrator populates the tables groups
+---
+SELECT emaj.emaj_assign_table('emaj_parallel_rollback_test_app_schema', 'mytbl1', 'emaj parallel rollback test group');
+SELECT emaj.emaj_assign_table('emaj_parallel_rollback_test_app_schema', 'mytbl2', 'emaj parallel rollback test group');
+psql:sql/emaj_prepare_parallel_rollback_test.sql:173: WARNING:  _create_tbl: The table "emaj_parallel_rollback_test_app_schema.mytbl2" has triggers that will be automatically disabled during E-Maj rollback operations (mytbl2trg). Use the emaj_modify_table() function to change this behaviour.
+SELECT emaj.emaj_assign_table('emaj_parallel_rollback_test_app_schema', 'myTbl3', 'emaj parallel rollback test group');
+SELECT emaj.emaj_assign_table('emaj_parallel_rollback_test_app_schema', 'mytbl2b', 'emaj parallel rollback test group');
+SELECT emaj.emaj_assign_table('emaj_parallel_rollback_test_app_schema', 'mytbl4', 'emaj parallel rollback test group');
+SELECT emaj.emaj_assign_sequence('emaj_parallel_rollback_test_app_schema', 'myTbl3_col31_seq', 'emaj parallel rollback test group');
+---
+--- Log triggers activation and setting of a BEFORE_PROC_1 mark
+---
+SELECT emaj.emaj_start_group('emaj parallel rollback test group','BEFORE_PROC_1');
+---
+--- Simulate the update activity of a first processing
+---
+INSERT INTO myTbl1 VALUES (1,'ABC',E'\014'::bytea);
+INSERT INTO myTbl1 VALUES (1,'DEF',E'\014'::bytea);
+INSERT INTO myTbl2 VALUES (1,'ABC',current_date);
+INSERT INTO myTbl2 VALUES (2,'DEF',NULL);
+INSERT INTO myTbl4 VALUES (1,'FK...',1,1,'ABC');
+UPDATE myTbl1 SET col13=E'\034'::bytea WHERE col12='ABC';
+UPDATE myTbl1 SET col13=NULL WHERE col12='DEF';
+INSERT INTO "myTbl3" (col33) SELECT generate_series (1,10)*random();
+---
+--- Application tables at the end of this first processing
+---
+SELECT * FROM myTbl1;
+SELECT * FROM myTbl2;
+SELECT * FROM "myTbl3";
+SELECT * FROM myTbl2b;
+SELECT * FROM "myTbl3_col31_seq";
+---
+--- Set a BEFORE_PROC_2 mark
+---
+SELECT emaj.emaj_set_mark_group('emaj parallel rollback test group','BEFORE_PROC_2');
+---
+--- Simulate the update activity of a second processing, including a sequence change
+---
+ALTER SEQUENCE "myTbl3_col31_seq" INCREMENT 3 MAXVALUE 10000000;
+INSERT INTO myTbl1 VALUES (1,'GHI',E'\014'::bytea);
+INSERT INTO myTbl1 VALUES (1,'JKL',E'\014'::bytea);
+DELETE FROM myTbl1 WHERE col12 = 'DEF';
+INSERT INTO myTbl2 VALUES (3,'GHI','01/01/2009');
+UPDATE "myTbl3" SET col33 = 0 WHERE col31 = 1;
+INSERT INTO "myTbl3" (col33) VALUES (3);
+---
+--- Set a BEFORE_PROC_3 mark
+---
+SELECT emaj.emaj_set_mark_group('emaj parallel rollback test group','BEFORE_PROC_3');
+---
+--- Simulate the update activity of a third processing
+---
+INSERT INTO myTbl1 VALUES (1,'MNO',E'\014'::bytea);
+INSERT INTO myTbl1 VALUES (1,'PQR',E'\014'::bytea);
+INSERT INTO "myTbl3" (col33) VALUES (4);
+DELETE FROM "myTbl3";
+---
+--- deactivate trigger on mytbl2
+---
+ALTER TABLE mytbl2 DISABLE TRIGGER mytbl2trg;
+RESET search_path;
+---
+--- emaj_prepare_parallel_rollback_test.sql script successfuly completed.
+--- A parallel rollback can be performed, from the E-Maj main directory, using a command like:
+    ./client/emajParallelRollback.php -g 'emaj parallel rollback test group' -m BEFORE_PROC_2 -s 3 -v <and any needed connection parameters among -dhpUW>
+--- "./client/emajParallelRollback.php --help" provides information about available parameters.
+---
+-- Direct emaj extension drop attempt
+drop extension emaj cascade;
+ERROR:  E-Maj event trigger: Attempting to drop the emaj extension. Please use the emaj_uninstall.sql script if you really want to remove all E-Maj components.
+CONTEXT:  PL/pgSQL function _emaj_protection_event_trigger_fnct() line 22 at RAISE
+-- Direct emaj schema drop attempt
+drop schema emaj cascade;
+ERROR:  E-Maj event trigger: Attempting to drop the schema "emaj". Please use the emaj_uninstall.sql script if you really want to remove all E-Maj components.
+CONTEXT:  PL/pgSQL function _emaj_protection_event_trigger_fnct() line 17 at RAISE
+-- Look at the tables groups
+select group_name from emaj.emaj_group order by group_name;
+            group_name             
+-----------------------------------
+ emaj demo group 1
+ emaj demo group 2
+ emaj parallel rollback test group
+(3 rows)
+
+-- Look at the public and cleanup functions
+\df public._emaj*
+                                      List of functions
+ Schema |                Name                 | Result data type | Argument data types | Type 
+--------+-------------------------------------+------------------+---------------------+------
+ public | _emaj_protection_event_trigger_fnct | event_trigger    |                     | func
+(1 row)
+
+\df emaj.emaj_*_cleanup*
+                                      List of functions
+ Schema |                Name                 | Result data type | Argument data types | Type 
+--------+-------------------------------------+------------------+---------------------+------
+ emaj   | emaj_demo_cleanup                   | text             |                     | func
+ emaj   | emaj_parallel_rollback_test_cleanup | text             |                     | func
+(2 rows)
+

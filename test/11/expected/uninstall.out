@@ -1,0 +1,53 @@
+-- uninstall.sql : test of the emaj EXTENSION drop
+--
+-- Corrupt a log schema by adding an unattended object
+create sequence emaj_emaj_demo_app_schema.not_an_emaj_seq;
+-- Try to uninstall the extension. It fails because of the extra sequence.
+\i sql/emaj_uninstall.sql
+-- emaj_uninstall.sql
+--
+-- E-MAJ uninstall script : Version <devel>
+-- 
+-- This software is distributed under the GNU General Public License.
+--
+-- This script uninstalls any E-Maj environment.
+-- It drops all components previously created either by a "CREATE EXTENSION emaj;" statement or using a psql script.
+--
+-- When emaj is installed as an EXTENSION, the script must be executed by a role having SUPERUSER privileges.
+-- Otherwise it must be executed by the emaj schema owner.
+--
+-- After its execution, some operations may have to be done manually.
+\set ON_ERROR_STOP ON
+\set ECHO none
+>>> Starting the E-Maj uninstallation procedure...
+psql:sql/emaj_uninstall.sql:68: WARNING:  Error: In the schema "emaj_emaj_demo_app_schema", the sequence "emaj_emaj_demo_app_schema"."not_an_emaj_seq" is not linked to any created tables group.
+psql:sql/emaj_uninstall.sql:68: ERROR:  emaj_uninstall: There are 1 unexpected objects in E-Maj schemas. Drop them before reexecuting the uninstall function.
+CONTEXT:  PL/pgSQL function inline_code_block line 39 at RAISE
+>>> Starting the E-Maj uninstallation procedure...
+psql:sql/emaj_uninstall.sql:238: WARNING:  emaj_uninstall: emaj_viewer role is also referenced in some other databases (postgres)
+psql:sql/emaj_uninstall.sql:238: WARNING:  emaj_uninstall: emaj_adm role is also referenced in some other databases (postgres)
+psql:sql/emaj_uninstall.sql:238: WARNING:  emaj_uninstall: There are remaining roles (emaj_regression_tests_adm_user1, emaj_regression_tests_adm_user2) who have been granted emaj_adm role.
+psql:sql/emaj_uninstall.sql:238: WARNING:  emaj_uninstall: For these reasons, emaj roles are not dropped by this script.
+>>> E-maj successfully uninstalled from this database
+                                   List of installed extensions
+    Name    | Version |   Schema   |                         Description                          
+------------+---------+------------+--------------------------------------------------------------
+ btree_gist | 1.5     | public     | support for indexing common datatypes in GiST
+ dblink     | 1.2     | public     | connect to other PostgreSQL databases from within a database
+ plpgsql    | 1.0     | pg_catalog | PL/pgSQL procedural language
+(3 rows)
+
+      List of schemas
+      Name      |  Owner   
+----------------+----------
+ myschema1      | postgres
+ myschema2      | postgres
+ myschema4      | postgres
+ myschema5      | postgres
+ myschema6      | postgres
+ phil's schema3 | postgres
+ public         | postgres
+(7 rows)
+
+DROP EXTENSION
+DROP EXTENSION

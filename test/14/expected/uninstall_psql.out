@@ -1,0 +1,39 @@
+-- uninstall_psql.sql : test of the E-Maj drop when installed with a psql script (i.e. not as an EXTENSION)
+--
+-- Call the uninstall psql script
+\i sql/emaj_uninstall.sql
+-- emaj_uninstall.sql
+--
+-- E-MAJ uninstall script : Version <devel>
+-- 
+-- This software is distributed under the GNU General Public License.
+--
+-- This script uninstalls any E-Maj environment.
+-- It drops all components previously created either by a "CREATE EXTENSION emaj;" statement or using a psql script.
+--
+-- When emaj is installed as an EXTENSION, the script must be executed by a role having SUPERUSER privileges.
+-- Otherwise it must be executed by the emaj schema owner.
+--
+-- After its execution, some operations may have to be done manually.
+\set ON_ERROR_STOP ON
+\set ECHO none
+>>> Starting the E-Maj uninstallation procedure...
+psql:sql/emaj_uninstall.sql:238: WARNING:  emaj_uninstall: emaj_viewer role is also referenced in some other databases (postgres)
+psql:sql/emaj_uninstall.sql:238: WARNING:  emaj_uninstall: emaj_adm role is also referenced in some other databases (postgres)
+psql:sql/emaj_uninstall.sql:238: WARNING:  emaj_uninstall: There are remaining roles (emaj_regression_tests_adm_user1, emaj_regression_tests_adm_user2) who have been granted emaj_adm role.
+psql:sql/emaj_uninstall.sql:238: WARNING:  emaj_uninstall: For these reasons, emaj roles are not dropped by this script.
+>>> E-maj successfully uninstalled from this database
+      List of schemas
+      Name      |  Owner   
+----------------+----------
+ myschema1      | postgres
+ myschema2      | postgres
+ myschema4      | postgres
+ myschema5      | postgres
+ myschema6      | postgres
+ phil's schema3 | postgres
+ public         | postgres
+(7 rows)
+
+DROP EXTENSION
+DROP EXTENSION
