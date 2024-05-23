@@ -88,6 +88,8 @@ Once :doc:`installed <install>`, an E-Maj version contents the following files.
 +---------------------------------------------+---------------------------------------------------------------------+
 | emaj.control                                | extension control file used by the integrated extensions management |
 +---------------------------------------------+---------------------------------------------------------------------+
+| Makefile                                    | E-Maj install/uninstall description for the make command            |
++---------------------------------------------+---------------------------------------------------------------------+
 | doc/Emaj.<version>_doc_en.pdf               | English version of the full E-Maj documentation                     |
 +---------------------------------------------+---------------------------------------------------------------------+
 | doc/Emaj.<version>_doc_fr.pdf               | French version of the full E-Maj documentation                      |

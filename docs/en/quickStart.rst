@@ -27,9 +27,9 @@ Extension install
 
 To install the emaj extension into a database, log on the target database, using a super-user role and execute::
 
-  create extension emaj cascade;
+  CREATE EXTENSION emaj CASCADE;
 
-  grant emaj_adm to <role>;
+  GRANT emaj_adm TO <role>;
 
 For PostgreSQL versions prior 9.6, see :ref:`this chapter <create_emaj_extension>`.
 

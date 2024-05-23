@@ -27,9 +27,9 @@ Installation de l’extension
 
 Pour installer l’extension emaj dans une base de données, connectez-vous à la base de données cible, en utilisant un rôle super-utilisateur et passez les commandes ::
 
-  create extension emaj cascade;
+  CREATE EXTENSION emaj CASCADE;
 
-  grant emaj_adm to <role>;
+  GRANT emaj_adm TO <role>;
 
 Pour les versions de PostgreSQL antérieures à la version 9.6, se référer à ce :ref:`chapitre <create_emaj_extension>`.
 

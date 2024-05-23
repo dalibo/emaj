@@ -73,13 +73,13 @@ Examples
 
 The command::
 
-   ./client/emajParallelRollback.php -d mydb -g myGroup1 -m Mark1 -s 3
+   emajParallelRollback.php -d mydb -g myGroup1 -m Mark1 -s 3
 
 logs on database mydb and executes a rollback of group myGroup1 to mark Mark1, using 3 parallel sessions.
 
 The command::
 
-   ./client/emajParallelRollback.pl -d mydb -g "myGroup1,myGroup2" -m Mark1 -s 3 -l
+   emajParallelRollback.pl -d mydb -g "myGroup1,myGroup2" -m Mark1 -s 3 -l
 
 logs on database mydb and executes a logged rollback of both groups myGroup1 and myGroup2 to mark Mark1, using 3 parallel sessions.
 
