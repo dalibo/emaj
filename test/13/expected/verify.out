@@ -897,7 +897,7 @@ CONTEXT:  PL/pgSQL function emaj._event_trigger_sql_drop_fnct() line 111 at RAIS
 rollback;
 begin;
   drop schema emaj cascade;
-ERROR:  E-Maj event trigger: Attempting to drop the schema "emaj". Please use the emaj_uninstall.sql script if you really want to remove all E-Maj components.
+ERROR:  E-Maj event trigger: Attempting to drop the schema "emaj". Please execute the emaj.emaj_drop_extension() function if you really want to remove all E-Maj components.
 CONTEXT:  PL/pgSQL function _emaj_protection_event_trigger_fnct() line 17 at RAISE
 rollback;
 begin;

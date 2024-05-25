@@ -328,6 +328,9 @@ Fonctions de niveau général
 | :ref:`emaj_disable_protection_by_event_triggers  |                               | nb.triggers INT                       |
 | <emaj_disable_protection_by_event_triggers>`     |                               |                                       |
 +--------------------------------------------------+-------------------------------+---------------------------------------+
+| :doc:`emaj_drop_extension                        |                               |                                       |
+| <uninstall>`                                     |                               |                                       |
++--------------------------------------------------+-------------------------------+---------------------------------------+
 | :ref:`emaj_enable_protection_by_event_triggers   |                               | nb.triggers INT                       |
 | <emaj_enable_protection_by_event_triggers>`      |                               |                                       |
 +--------------------------------------------------+-------------------------------+---------------------------------------+

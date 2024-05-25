@@ -328,6 +328,9 @@ General purpose functions
 | :ref:`emaj_disable_protection_by_event_triggers  |                               | #.triggers INT                        |
 | <emaj_disable_protection_by_event_triggers>`     |                               |                                       |
 +--------------------------------------------------+-------------------------------+---------------------------------------+
+| :doc:`emaj_drop_extension                        |                               |                                       |
+| <uninstall>`                                     |                               |                                       |
++--------------------------------------------------+-------------------------------+---------------------------------------+
 | :ref:`emaj_enable_protection_by_event_triggers   |                               | #.triggers INT                        |
 | <emaj_enable_protection_by_event_triggers>`      |                               |                                       |
 +--------------------------------------------------+-------------------------------+---------------------------------------+

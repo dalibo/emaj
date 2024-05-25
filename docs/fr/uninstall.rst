@@ -1,10 +1,10 @@
 Désinstallation
 ===============
 
-Désinstallation d'E-Maj d'une base de données
-*********************************************
+Suppression d'E-Maj d'une base de données
+*****************************************
 
-Pour désinstaller E-Maj d'une base de données, l'utilisateur doit se connecter à cette base avec *psql*, en tant que super-utilisateur.
+Pour supprimer E-Maj d'une base de données, l'utilisateur doit se connecter à cette base avec *psql*, en tant que super-utilisateur.
 
 Si on souhaite supprimer les **rôles** *emaj_adm* et *emaj_viewer*, il faut au préalable retirer les droits donnés sur ces rôles à d'éventuels autres rôles, à l'aide de requêtes SQL *REVOKE*. ::
 
@@ -13,34 +13,26 @@ Si on souhaite supprimer les **rôles** *emaj_adm* et *emaj_viewer*, il faut au 
 
 Si ces rôles *emaj_adm* et *emaj_viewer* possèdent des droits d'accès sur des tables ou autres objets relationnels applicatifs, il faut également supprimer ces droits au préalable à l'aide d'autres requêtes SQL *REVOKE*.
 
-Bien qu'installé en standard avec une requête *CREATE EXTENSION*, E-Maj ne peut se désinstaller par une simple requête *DROP EXTENSION*. Un trigger sur événement bloque d'ailleurs l'exécution d'une telle requête.
+Bien qu'installée en standard avec une requête *CREATE EXTENSION*, l’extension *emaj* ne peut être supprimée par une simple requête *DROP EXTENSION*. Un trigger sur événement bloque d'ailleurs l'exécution d'une telle requête.
 
-Pour désinstaller E-Maj, il faut simplement exécuter le **script fourni** *emaj_uninstall.sql*. ::
+Quelle que soit la façon dont l’extension *emaj* a été installée (en standard, par une requête *CREATE EXTENSION*, ou par l’exécution d’un script *psql* lorsque l’ajout d’une nouvelle extension n’est pas possible), sa suppression s’effectue par la simple fonction *emaj_drop_extension()* ::
 
-   \i <répertoire_emaj>/sql/emaj_uninstall.sql
+   SELECT emaj.emaj_drop_extension();
 
-Ce script effectue les actions suivantes :
+Cette fonction effectue les actions suivantes :
 
-* iI exécute les éventuelles fonctions de nettoyage créées par l'exécution des scripts de démonstration ou de test fournis,
-* il arrête les groupes de tables encore actifs, s’il y en a,
-* il supprime les groupes de tables existants, supprimant en particulier les triggers sur les tables applicatives,
-* il supprime l'extension et le schéma principal *emaj*,
-* il supprime les rôles *emaj_adm* et *emaj_viewer* s'ils ne sont pas associés à d'autres rôles ou à d'autres bases de données de l'instance et ne possèdent pas de droits sur d'autres tables. 
+* elle exécute les éventuelles fonctions de nettoyage créées par l'exécution des scripts de démonstration ou de test fournis,
+* elle arrête les groupes de tables encore actifs, s’il y en a,
+* elle supprime les groupes de tables existants, supprimant en particulier les triggers sur les tables applicatives,
+* elle supprime l'extension et le schéma principal *emaj*,
+* elle supprime les rôles *emaj_adm* et *emaj_viewer* s'ils ne sont pas associés à d'autres rôles ou à d'autres bases de données de l'instance et ne possèdent pas de droits sur d'autres tables. 
 
-L'exécution du script de désinstallation affiche ceci ::
+Dans les versions d’E-Maj 4.4.0 et antérieures cette suppression de l’extension *emaj* s’effectuait par l’exécution du script *sql/emaj_uninstall.sql*. Bien que dépréciée, cette façon de procéder est toujours possible.
 
-   $ psql ... -f sql/emaj_uninstall.sql 
-   >>> Starting E-Maj uninstallation procedure...
-   SET
-   psql:sql/emaj_uninstall.sql:203: WARNING:  emaj_uninstall: emaj_adm and emaj_viewer roles have been dropped.
-   DO
-   SET
-   >>> E-maj successfully uninstalled from this database
+Désinstallation du logiciel E-Maj
+*********************************
 
-Suppression du logiciel E-Maj
-*****************************
-
-Le mode de suppression du logiciel E-Maj dépend de son mode d’installation.
+Le mode de désinstallation du logiciel E-Maj dépend de son mode d’installation.
 
 Pour une installation standard avec le client *pgxn*, une seule commande est requise ::
 

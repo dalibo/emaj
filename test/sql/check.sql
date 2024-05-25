@@ -46,11 +46,12 @@ select sch_name from emaj.emaj_schema where sch_name not in (select distinct rel
 select pg_sleep(1.5);
 
 -- display the functions that are not called by any regression test script
---   (_build_path_name is executed but is inlined in calling statements, and so it is not counted in statistics)
+--   (_build_path_name() is executed but is inlined in calling statements, and so it is not counted in statistics
+--    emaj_drop_extension() is not called by the standart test scenarios, but a dedicated scenario tests it)
 select nspname, proname from pg_proc, pg_namespace
   where pronamespace = pg_namespace.oid
     and nspname = 'emaj' and (proname like E'emaj\\_%' or proname like E'\\_%')
-    and proname not in ('_build_path_name')
+    and proname not in ('_build_path_name', 'emaj_drop_extension')
 except
 select schemaname, funcname from pg_stat_user_functions
   where schemaname = 'emaj' and (funcname like E'emaj\\_%' or funcname like E'\\_%')

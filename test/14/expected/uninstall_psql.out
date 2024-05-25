@@ -1,39 +1,140 @@
 -- uninstall_psql.sql : test of the E-Maj drop when installed with a psql script (i.e. not as an EXTENSION)
 --
--- Call the uninstall psql script
-\i sql/emaj_uninstall.sql
--- emaj_uninstall.sql
---
--- E-MAJ uninstall script : Version <devel>
--- 
--- This software is distributed under the GNU General Public License.
---
--- This script uninstalls any E-Maj environment.
--- It drops all components previously created either by a "CREATE EXTENSION emaj;" statement or using a psql script.
---
--- When emaj is installed as an EXTENSION, the script must be executed by a role having SUPERUSER privileges.
--- Otherwise it must be executed by the emaj schema owner.
---
--- After its execution, some operations may have to be done manually.
-\set ON_ERROR_STOP ON
-\set ECHO none
->>> Starting the E-Maj uninstallation procedure...
-psql:sql/emaj_uninstall.sql:238: WARNING:  emaj_uninstall: emaj_viewer role is also referenced in some other databases (postgres)
-psql:sql/emaj_uninstall.sql:238: WARNING:  emaj_uninstall: emaj_adm role is also referenced in some other databases (postgres)
-psql:sql/emaj_uninstall.sql:238: WARNING:  emaj_uninstall: There are remaining roles (emaj_regression_tests_adm_user1, emaj_regression_tests_adm_user2) who have been granted emaj_adm role.
-psql:sql/emaj_uninstall.sql:238: WARNING:  emaj_uninstall: For these reasons, emaj roles are not dropped by this script.
->>> E-maj successfully uninstalled from this database
-      List of schemas
-      Name      |  Owner   
-----------------+----------
- myschema1      | postgres
- myschema2      | postgres
- myschema4      | postgres
- myschema5      | postgres
- myschema6      | postgres
- phil's schema3 | postgres
- public         | postgres
-(7 rows)
+-- Call the emaj_drop_extension function
+select emaj.emaj_drop_extension();
+NOTICE:  drop cascades to 5 other objects
+DETAIL:  drop cascades to table emaj_demo_app_schema.mytbl1
+drop cascades to table emaj_demo_app_schema.mytbl2
+drop cascades to table emaj_demo_app_schema."myTbl3"
+drop cascades to table emaj_demo_app_schema.mytbl4
+drop cascades to sequence emaj_demo_app_schema.myseq1
+NOTICE:  drop cascades to 6 other objects
+DETAIL:  drop cascades to table emaj_parallel_rollback_test_app_schema.mytbl1
+drop cascades to table emaj_parallel_rollback_test_app_schema.mytbl2
+drop cascades to table emaj_parallel_rollback_test_app_schema."myTbl3"
+drop cascades to table emaj_parallel_rollback_test_app_schema.mytbl4
+drop cascades to table emaj_parallel_rollback_test_app_schema.mytbl2b
+drop cascades to function emaj_parallel_rollback_test_app_schema.mytbl2trgfct()
+NOTICE:  extension "emaj" does not exist, skipping
+NOTICE:  drop cascades to 224 other objects
+DETAIL:  drop cascades to table emaj.emaj_version_hist
+drop cascades to type emaj._relation_change_kind_enum
+drop cascades to type emaj._rlbk_status_enum
+drop cascades to type emaj._rlbk_step_enum
+drop cascades to sequence emaj.emaj_global_seq
+drop cascades to table emaj.emaj_param
+drop cascades to table emaj.emaj_hist
+drop cascades to table emaj.emaj_time_stamp
+drop cascades to table emaj.emaj_group
+drop cascades to table emaj.emaj_group_hist
+drop cascades to table emaj.emaj_schema
+drop cascades to table emaj.emaj_relation
+drop cascades to table emaj.emaj_rel_hist
+drop cascades to table emaj.emaj_relation_change
+drop cascades to table emaj.emaj_log_session
+drop cascades to table emaj.emaj_mark
+drop cascades to table emaj.emaj_sequence
+drop cascades to table emaj.emaj_table
+drop cascades to table emaj.emaj_seq_hole
+drop cascades to table emaj.emaj_rlbk
+drop cascades to table emaj.emaj_rlbk_session
+drop cascades to table emaj.emaj_rlbk_plan
+drop cascades to table emaj.emaj_rlbk_stat
+drop cascades to type emaj.emaj_log_stat_type
+drop cascades to type emaj.emaj_detailed_log_stat_type
+drop cascades to type emaj.emaj_sequence_stat_type
+drop cascades to type emaj.emaj_rollback_activity_type
+drop cascades to type emaj.emaj_consolidable_rollback_type
+drop cascades to type emaj._verify_groups_type
+drop cascades to type emaj._report_message_type
+drop cascades to view emaj.emaj_visible_param
+drop cascades to function emaj._emaj_param_change_fnct()
+drop cascades to function emaj._pg_version_num()
+drop cascades to function emaj._set_time_stamp(text,character)
+drop cascades to function emaj._dblink_open_cnx(text)
+drop cascades to function emaj._dblink_sql_exec(text,text,text)
+drop cascades to function emaj._dblink_close_cnx(text,text)
+drop cascades to function emaj._get_default_tablespace()
+drop cascades to function emaj._check_group_names(text[],boolean,boolean,boolean,boolean,boolean,boolean)
+drop cascades to function emaj._check_json_groups_conf(json)
+drop cascades to function emaj._check_json_table_properties(jsonb)
+drop cascades to function emaj._check_json_param_conf(json)
+drop cascades to function emaj._check_tables_for_rollbackable_group(text,text[],boolean,text)
+drop cascades to function emaj._build_tblseqs_array_from_regexp(text,text,text,text,boolean)
+drop cascades to function emaj._check_tblseqs_array(text,text[],text,boolean)
+drop cascades to function emaj._get_lock_tblseqs_groups(text,text[],text)
+drop cascades to function emaj._check_mark_name(text[],text,boolean)
+drop cascades to function emaj._check_new_mark(text[],text)
+drop cascades to function emaj._check_marks_range(text[],text,text,boolean,boolean)
+drop cascades to function emaj._check_tblseqs_filter(text[],text[],bigint,bigint,boolean)
+drop cascades to function emaj._truncate_trigger_fnct()
+drop cascades to function emaj._create_log_schemas(text)
+drop cascades to function emaj._create_log_schema(text,text)
+drop cascades to function emaj._drop_log_schemas(text,boolean)
+drop cascades to function emaj._handle_trigger_fk_tbl(text,text,text,text)
+drop cascades to function emaj._build_path_name(text,text)
+drop cascades to function emaj._copy_from_file(text,text)
+drop cascades to function emaj._copy_to_file(text,text,text,boolean,boolean)
+drop cascades to function emaj.emaj_assign_table(text,text,text,jsonb,text)
+drop cascades to function emaj.emaj_assign_tables(text,text[],text,jsonb,text)
+drop cascades to function emaj.emaj_assign_tables(text,text,text,text,jsonb,text)
+drop cascades to function emaj._assign_tables(text,text[],text,jsonb,text,boolean,boolean)
+drop cascades to function emaj.emaj_remove_table(text,text,text)
+drop cascades to function emaj.emaj_remove_tables(text,text[],text)
+drop cascades to function emaj.emaj_remove_tables(text,text,text,text)
+drop cascades to function emaj._remove_tables(text,text[],text,boolean,boolean)
+drop cascades to function emaj.emaj_move_table(text,text,text,text)
+drop cascades to function emaj.emaj_move_tables(text,text[],text,text)
+drop cascades to function emaj.emaj_move_tables(text,text,text,text,text)
+drop cascades to function emaj._move_tables(text,text[],text,text,boolean,boolean)
+drop cascades to function emaj.emaj_modify_table(text,text,jsonb,text)
+drop cascades to function emaj.emaj_modify_tables(text,text[],jsonb,text)
+drop cascades to function emaj.emaj_modify_tables(text,text,text,jsonb,text)
+drop cascades to function emaj._modify_tables(text,text[],jsonb,text,boolean,boolean)
+drop cascades to function emaj.emaj_get_current_log_table(text,text)
+drop cascades to function emaj._create_tbl(text,text,text,integer,text,text,text[],bigint,boolean)
+drop cascades to function emaj._build_sql_tbl(text)
+drop cascades to function emaj._add_tbl(text,text,text,integer,text,text,text[],boolean,bigint,text)
+drop cascades to function emaj._change_priority_tbl(text,text,integer,integer,bigint,text,text)
+drop cascades to function emaj._change_log_data_tsp_tbl(text,text,text,text,text,text,bigint,text,text)
+drop cascades to function emaj._change_log_index_tsp_tbl(text,text,text,text,text,text,bigint,text,text)
+drop cascades to function emaj._change_ignored_triggers_tbl(text,text,text[],text[],bigint,text,text)
+drop cascades to function emaj._remove_tbl(text,text,text,boolean,bigint,text)
+drop cascades to function emaj._move_tbl(text,text,text,boolean,text,boolean,bigint,text)
+drop cascades to function emaj._drop_tbl(emaj.emaj_relation,bigint)
+drop cascades to function emaj._repair_tbl(text,text,text,boolean,bigint,text)
+drop cascades to function emaj.emaj_assign_sequence(text,text,text,text)
+drop cascades to function emaj.emaj_assign_sequences(text,text[],text,text)
+drop cascades to function emaj.emaj_assign_sequences(text,text,text,text,text)
+drop cascades to function emaj._assign_sequences(text,text[],text,text,boolean,boolean)
+drop cascades to function emaj.emaj_remove_sequence(text,text,text)
+drop cascades to function emaj.emaj_remove_sequences(text,text[],text)
+drop cascades to function emaj.emaj_remove_sequences(text,text,text,text)
+drop cascades to function emaj._remove_sequences(text,text[],text,boolean,boolean)
+drop cascades to function emaj.emaj_move_sequence(text,text,text,text)
+drop cascades to function emaj.emaj_move_sequences(text,text[],text,text)
+drop cascades to function emaj.emaj_move_sequences(text,text,text,text,text)
+drop cascades to function emaj._move_sequences(text,text[],text,text,boolean,boolean)
+drop cascades to function emaj._create_seq(text,text,text,bigint)
+drop cascades to function emaj._add_seq(text,text,text,boolean,bigint,text)
+and 124 other objects (see server log for list)
+NOTICE:  drop cascades to event trigger emaj_protection_trg
+WARNING:  emaj_drop_extension: emaj_viewer role is also referenced in some other databases (postgres)
+WARNING:  emaj_drop_extension: emaj_adm role is also referenced in some other databases (postgres)
+WARNING:  emaj_drop_extension: There are remaining roles (emaj_regression_tests_adm_user1, emaj_regression_tests_adm_user2) who have been granted emaj_adm role.
+WARNING:  emaj_drop_extension: For these reasons, emaj roles are not dropped by this script.
+ emaj_drop_extension 
+---------------------
+ 
+(1 row)
 
-DROP EXTENSION
-DROP EXTENSION
+-- Check that the emaj schema is not known anymore
+\dn emaj
+List of schemas
+ Name | Owner 
+------+-------
+(0 rows)
+
+-- Drop the extra extension to get a stable re-install test
+drop extension dblink;
+drop extension btree_gist;

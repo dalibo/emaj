@@ -5,6 +5,8 @@ E-Maj - Change log
 ###Enhancements:###
   * Add a Makefile to help installing and uninstalling the E-Maj software,
     allowing also the pgxn client's usage.
+  * Move the code of the emaj_uninstall.sql script into a new
+    emaj_drop_extension() function to simplify the emaj extension drop.
 
 ###Bug fixes:###
 

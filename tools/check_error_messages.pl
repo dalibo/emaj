@@ -165,12 +165,14 @@ use warnings; use strict;
        && $msgs{$fnctId} ne 'EXCEPTION:_rlbk_session_lock: Error while opening the dblink session #% (Status of the dblink connection attempt = %'
        && $msgs{$fnctId} ne 'EXCEPTION:_rlbk_session_lock: Too many (5) deadlocks encountered while locking tables for groups "%".'
        && $msgs{$fnctId} ne 'EXCEPTION:_rlbk_start_mark: % Please retry.'
-                            # error messages containing timestamp.
+                            # error messages containing timestamp
                             # (as they are not stable though test executions, these cases are tested in the misc.sql script but without displaying the error messages)
        && $msgs{$fnctId} ne 'EXCEPTION:emaj_log_stat_group: The start mark "%" (%) has been set after the end mark "%" (%).'
        && $msgs{$fnctId} ne 'EXCEPTION:_gen_sql_dump_changes_tbl: Internal error - the generated statement is NULL.'
        && $msgs{$fnctId} ne 'EXCEPTION:_gen_sql_dump_changes_seq: Internal error - the generated statement is NULL.'
        && $msgs{$fnctId} ne 'WARNING:emaj_gen_sql_dump_changes_group: the shell sed command does not seem to exist.'
+							# error or warning messages from the emaj_drop_extension() function (only a few of them are covered in non regression tests)
+       && $fnctId !~ '^emaj.emaj_drop_extension:'
          ) {
 # Report the other messages
         if (! $isTittleDisplayed) {
