@@ -160,17 +160,24 @@ CONTEXT:  PL/pgSQL function emaj._check_tblseqs_array(text,text[],text,boolean) 
 PL/pgSQL function emaj._remove_tables(text,text[],text,boolean,boolean) line 26 at assignment
 PL/pgSQL function emaj.emaj_remove_table(text,text,text) line 6 at RETURN
 -- temp table
-begin;
+DO LANGUAGE plpgsql
+$$
+begin
   CREATE TEMPORARY TABLE myTempTbl (
     col1       INT     NOT NULL,
     PRIMARY KEY (col1)
   );
-  select emaj.emaj_assign_table(nspname,'mytemptbl','myGroup1') from pg_class, pg_namespace
-    where relnamespace = pg_namespace.oid and relname = 'mytemptbl';
-ERROR:  _assign_tables: In schema pg_temp_3, some tables (mytemptbl) are TEMP tables.
-CONTEXT:  PL/pgSQL function emaj._assign_tables(text,text[],text,jsonb,text,boolean,boolean) line 113 at RAISE
-PL/pgSQL function emaj.emaj_assign_table(text,text,text,jsonb,text) line 7 at RETURN
-rollback;
+  begin
+    select emaj.emaj_assign_table(nspname,'mytemptbl','myGroup1') from pg_class, pg_namespace
+      where relnamespace = pg_namespace.oid and relname = 'mytemptbl';
+    return;
+  exception when raise_exception then
+    raise exception 'Error trapped on emaj_assign_table() call';
+  end;
+end;
+$$;
+ERROR:  Error trapped on emaj_assign_table() call
+CONTEXT:  PL/pgSQL function inline_code_block line 12 at RAISE
 -- UNLOGGED table on a rollbackable group
 select emaj.emaj_assign_table('myschema5','myunloggedtbl','myGroup1');
 ERROR:  _assign_tables: In schema myschema5, some tables (myunloggedtbl) are UNLOGGED tables.

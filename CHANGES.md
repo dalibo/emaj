@@ -3,6 +3,7 @@ E-Maj - Change log
 <devel>
 ------
 ###Enhancements:###
+  * Support of PG17
   * Add a Makefile to help installing and uninstalling the E-Maj software,
     allowing also the pgxn client's usage.
   * Move the code of the emaj_uninstall.sql script into a new

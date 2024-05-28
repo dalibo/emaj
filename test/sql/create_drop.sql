@@ -66,14 +66,23 @@ select emaj.emaj_assign_table('myschema1','dummyTable','myGroup1');
 select emaj.emaj_assign_table('myschema4','mytblp','myGroup1');
 select emaj.emaj_remove_table('myschema4','mytblp');
 -- temp table
-begin;
+DO LANGUAGE plpgsql
+$$
+begin
   CREATE TEMPORARY TABLE myTempTbl (
     col1       INT     NOT NULL,
     PRIMARY KEY (col1)
   );
-  select emaj.emaj_assign_table(nspname,'mytemptbl','myGroup1') from pg_class, pg_namespace
-    where relnamespace = pg_namespace.oid and relname = 'mytemptbl';
-rollback;
+  begin
+    select emaj.emaj_assign_table(nspname,'mytemptbl','myGroup1') from pg_class, pg_namespace
+      where relnamespace = pg_namespace.oid and relname = 'mytemptbl';
+    return;
+  exception when raise_exception then
+    raise exception 'Error trapped on emaj_assign_table() call';
+  end;
+end;
+$$;
+
 -- UNLOGGED table on a rollbackable group
 select emaj.emaj_assign_table('myschema5','myunloggedtbl','myGroup1');
 -- table WITH OIDS on a rollbackable group - should fail
