@@ -146,7 +146,7 @@ ERROR:  _copy_from_file: the calling function is not allowed to reach this sensi
 CONTEXT:  PL/pgSQL function emaj._copy_from_file(text,text) line 13 at RAISE
 select emaj._copy_to_file('illegal_table', 'dummy_location', NULL);
 ERROR:  _copy_to_file: the calling function is not allowed to reach this sensitive function.
-CONTEXT:  PL/pgSQL function emaj._copy_to_file(text,text,text,boolean,boolean) line 28 at RAISE
+CONTEXT:  PL/pgSQL function emaj._copy_to_file(text,text,text,boolean,boolean) line 26 at RAISE
 -----------------------------
 -- stop, reset and drop existing groups
 -----------------------------

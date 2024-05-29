@@ -8,6 +8,7 @@ E-Maj - Change log
     allowing also the pgxn client's usage.
   * Move the code of the emaj_uninstall.sql script into a new
     emaj_drop_extension() function to simplify the emaj extension drop.
+  * Remove the need for the adminpack extension.
 
 ###Bug fixes:###
 

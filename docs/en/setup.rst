@@ -33,10 +33,7 @@ After having verified that the PostgreSQL version is at least 9.5, the script cr
 
 If they are not already present, both *emaj_adm* and *emaj_viewer* roles are created.
 
-Finally, the installation script looks at the instance configuration and may display one or several warning messages regarding:
-
-* the :ref:`max_prepared_transactions parameter<parallel_rollback_prerequisite>`;
-* the *adminpack* extension availability, useful for some :ref:`data extractions<examining_changes>`.
+Finally, the installation script looks at the instance configuration and may display a warning message regarding the :ref:`max_prepared_transactions parameter<parallel_rollback_prerequisite>`.
 
 Creating the extension by script
 --------------------------------

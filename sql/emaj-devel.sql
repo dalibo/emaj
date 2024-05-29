@@ -2215,11 +2215,9 @@ $_copy_to_file$
 --         a boolean indicating whether the output file is a psql script.
 -- Output: the number of effectively writen file (0 or 1).
 -- The function is defined as SECURITY DEFINER so that emaj roles can perform the COPY statement.
--- The empty files removal is performed using the pg_file_unlink() function from the adminpack extension.
 -- If the output file is a psql script, the '\\' are transformed into '\', using a sed command.
 -- The caller is responsible for checking:
 --  - the output file location (directory, permissions),
---  - the adminpack extension availability when p_removeEmptyFile is set to TRUE,
 --  - the sed command availability when p_psqlScript is set to TRUE.
   DECLARE
     v_stack                  TEXT;
@@ -2249,7 +2247,9 @@ $_copy_to_file$
     IF p_removeEmptyFile THEN
       GET DIAGNOSTICS v_nbRows = ROW_COUNT;
       IF v_nbRows = 0 THEN
-        PERFORM pg_catalog.pg_file_unlink(p_location);
+-- The file is removed by calling a rm shell command through a COPY TO PROGRAM statement.
+        EXECUTE format ('COPY (SELECT NULL) TO PROGRAM ''rm %s''',
+                        p_location);
         RETURN 0;
        END IF;
     END IF;
@@ -10970,7 +10970,7 @@ $emaj_dump_changes_group$
 --   - CONSOLIDATION=NONE|PARTIAL|FULL allows to get a consolidated view of changes for each PK during the mark range
 --   - COPY_OPTIONS=(options) sets the options to use for COPY TO statements
 --   - EMAJ_COLUMNS=ALL|MIN|(columns list) restricts the emaj columns recorded into the output (default depends on the consolidation level)
---   - NO_EMPTY_FILES ... remove empty files (requires the adminpack extension to be installed)
+--   - NO_EMPTY_FILES ... removes empty files
 --   - ORDER_BY=PK|TIME defines the data sort criteria in the output for tables (default depends on the consolidation level)
 --   - SEQUENCES_ONLY filters only sequences
 --   - TABLES_ONLY filters only tables
@@ -11272,15 +11272,6 @@ $_gen_sql_dump_changes_group$
           RAISE EXCEPTION '_gen_sql_dump_changes_group: A CONSOLIDATION level set to PARTIAL or FULL or a COLS_ORDER set to PK or an '
                           'ORDER_BY set to PK cannot support tables without primary key. And no primary key is defined for tables "%"',
                           v_tableWithoutPkList;
-        END IF;
-      END IF;
--- Reject the empty files removing if the adminpack extension is not installed.
-      IF v_noEmptyFiles THEN
-        PERFORM 1 FROM pg_catalog.pg_extension WHERE extname = 'adminpack';
-        IF NOT FOUND THEN
-          RAISE WARNING 'emaj_dump_changes_group: the NO_EMPTY_FILES option cannot be satisfied because the adminpack extension is not '
-                        'installed.';
-          v_noEmptyFiles = FALSE;
         END IF;
       END IF;
     END IF;
@@ -13867,8 +13858,6 @@ WITH start_time_data AS (
 -- Final checks and messages.
 DO LANGUAGE plpgsql
 $do$
-  DECLARE
-    v_adminpackVersion       TEXT;
   BEGIN
     RAISE NOTICE 'E-Maj installation: E-Maj successfully installed.';
 -- Check that the role is superuser.
@@ -13880,15 +13869,6 @@ $do$
     IF current_setting('max_prepared_transactions')::INT <= 1 THEN
       RAISE WARNING 'E-Maj installation: As the max_prepared_transactions parameter value (%) on this cluster is too low, no parallel'
                     ' rollback is possible.', current_setting('max_prepared_transactions');
-    END IF;
--- Warn if the adminpack extension is not created.
-    SELECT installed_version INTO v_adminpackVersion FROM pg_catalog.pg_available_extensions WHERE name = 'adminpack';
-    IF NOT FOUND THEN
-      RAISE WARNING 'E-Maj installation: The adminpack extension is not installed, and thus can''t be created into the database. The'
-                    ' NO_EMPTY_FILE option of the emaj_dump_changes_group() function will be disabled.';
-    ELSIF v_adminpackVersion IS NULL THEN
-      RAISE WARNING 'E-Maj installation: The adminpack extension is available but not yet created. Execute a "CREATE EXTENSION adminpack;"'
-                    ' statement to enable the NO_EMPTY_FILE option use of the emaj_dump_changes_group() function.';
     END IF;
 --
     RETURN;

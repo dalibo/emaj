@@ -6,7 +6,6 @@
 CREATE EXTENSION emaj VERSION 'devel' CASCADE;
 NOTICE:  installing required extension "dblink"
 NOTICE:  installing required extension "btree_gist"
-WARNING:  E-Maj installation: The adminpack extension is available but not yet created. Execute a "CREATE EXTENSION adminpack;" statement to enable the NO_EMPTY_FILE option use of the emaj_dump_changes_group() function.
 -----------------------------
 -- verify that dropping the extension is blocked by event trigger
 -----------------------------

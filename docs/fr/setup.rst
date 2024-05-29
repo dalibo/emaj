@@ -34,10 +34,7 @@ Après avoir vérifié que la version de PostgreSQL est supérieure ou égale à
 
 S'ils n'existent pas déjà, les 2 rôles *emaj_adm* et *emaj_viewer* sont également créés.
 
-Enfin, le script d'installation examine la configuration de l'instance. Le cas échéant, il affiche un ou plusieurs messages concernant :
-
-* le :ref:`paramètre max_prepared_transactions<parallel_rollback_prerequisite>` ;
-* la disponibilité de l’extension *adminpack*, utile pour certaines :ref:`extractions de données<examining_changes>`.
+Enfin, le script d'installation examine la configuration de l'instance. Le cas échéant, il affiche un message d'avertissement concernant le :ref:`paramètre max_prepared_transactions<parallel_rollback_prerequisite>`.
 
 Création de l’extension par script
 ----------------------------------

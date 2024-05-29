@@ -108,7 +108,7 @@ Le **quatrième paramètre** est une liste d’options, séparées par des virgu
 * CONSOLIDATION = NONE | PARTIAL | FULL : définit le niveau de consolidation souhaité ; la valeur par défaut est NONE ;
 * COPY_OPTIONS = (options) : définit les options à utiliser par les requêtes *COPY TO* ; la liste doit être placée entre parenthèses ; voir la documentation de PostgreSQL pour le détail des options disponibles (https://www.postgresql.org/docs/current/sql-copy.html) ;
 * EMAJ_COLUMNS = ALL | MIN | (liste.colonnes) : restreint la liste des colonnes techniques E-Maj restituées : ALL = toutes les colonnes techniques existantes, MIN = un nombre minimum de colonnes, ou une liste explicite de colonnes placée entre parenthèses ;
-* NO_EMPTY_FILES : supprime les éventuels fichiers sans donnée ; l’option requiert l’extension *adminpack* ;
+* NO_EMPTY_FILES : supprime les éventuels fichiers sans donnée ;
 * ORDER_BY = PK | TIME : définit le critère de tri des lignes dans les fichiers ; PK = l’ordre des clés primaires, TIME = l’ordre d’entrée dans la table de log ;
 * SEQUENCES_ONLY : ne traite que les séquences du groupe de tables ; par défaut, les tables sont traitées ;
 * TABLES_ONLY : ne traite que les tables du groupe de tables ; par défaut les séquences sont traitées.

@@ -1109,14 +1109,14 @@ CONTEXT:  PL/pgSQL function emaj.emaj_snap_group(text,text,text) line 32 at RAIS
 select emaj.emaj_snap_group('myGroup1','unknown_directory',NULL);
 ERROR:  relative path not allowed for COPY to file
 CONTEXT:  SQL statement "COPY (SELECT * FROM myschema1."myTbl3" ORDER BY col31) TO 'unknown_directory/myschema1_myTbl3.snap' "
-PL/pgSQL function emaj._copy_to_file(text,text,text,boolean,boolean) line 37 at EXECUTE
+PL/pgSQL function emaj._copy_to_file(text,text,text,boolean,boolean) line 35 at EXECUTE
 SQL statement "SELECT emaj._copy_to_file(v_stmt, v_pathName, p_copyOptions)"
 PL/pgSQL function emaj.emaj_snap_group(text,text,text) line 86 at PERFORM
 select emaj.emaj_snap_group('myGroup1','/unknown_directory',NULL);
 ERROR:  could not open file "/unknown_directory/myschema1_myTbl3.snap" for writing: No such file or directory
 HINT:  COPY TO instructs the PostgreSQL server process to write a file. You may want a client-side facility such as psql's \copy.
 CONTEXT:  SQL statement "COPY (SELECT * FROM myschema1."myTbl3" ORDER BY col31) TO '/unknown_directory/myschema1_myTbl3.snap' "
-PL/pgSQL function emaj._copy_to_file(text,text,text,boolean,boolean) line 37 at EXECUTE
+PL/pgSQL function emaj._copy_to_file(text,text,text,boolean,boolean) line 35 at EXECUTE
 SQL statement "SELECT emaj._copy_to_file(v_stmt, v_pathName, p_copyOptions)"
 PL/pgSQL function emaj.emaj_snap_group(text,text,text) line 86 at PERFORM
 -- invalid COPY TO options
@@ -1125,7 +1125,7 @@ ERROR:  syntax error at or near "dummy_option"
 LINE 1: ...l31) TO '/tmp/emaj_17/misc/myschema1_myTbl3.snap' dummy_opti...
                                                              ^
 QUERY:  COPY (SELECT * FROM myschema1."myTbl3" ORDER BY col31) TO '/tmp/emaj_17/misc/myschema1_myTbl3.snap' dummy_option
-CONTEXT:  PL/pgSQL function emaj._copy_to_file(text,text,text,boolean,boolean) line 37 at EXECUTE
+CONTEXT:  PL/pgSQL function emaj._copy_to_file(text,text,text,boolean,boolean) line 35 at EXECUTE
 SQL statement "SELECT emaj._copy_to_file(v_stmt, v_pathName, p_copyOptions)"
 PL/pgSQL function emaj.emaj_snap_group(text,text,text) line 86 at PERFORM
 -- SQL injection attempt
@@ -1338,7 +1338,7 @@ select emaj.emaj_gen_sql_dump_changes_group('myGroup2', 'Mark21', 'Mark23', 'EMA
 NOTICE:  table "emaj_temp_sql" does not exist, skipping
 ERROR:  _gen_sql_dump_changes_tbl: The emaj column "dummy" from the EMAJ_COLUMNS option (emaj_tuple,dummy) is not valid for table emaj_myschema2.myTbl3_log.
 CONTEXT:  PL/pgSQL function emaj._gen_sql_dump_changes_tbl(text,text,integer,text[],bigint,bigint,text,text,text,text) line 64 at RAISE
-PL/pgSQL function emaj._gen_sql_dump_changes_group(text,text,text,text,text[],boolean) line 333 at assignment
+PL/pgSQL function emaj._gen_sql_dump_changes_group(text,text,text,text,text[],boolean) line 324 at assignment
 SQL statement "SELECT p_nbStmt
                           FROM emaj._gen_sql_dump_changes_group(p_groupName, p_firstMark, p_lastMark, p_optionsList, p_tblseqs, TRUE)"
 PL/pgSQL function emaj.emaj_gen_sql_dump_changes_group(text,text,text,text,text[]) line 25 at SQL statement
@@ -1420,7 +1420,7 @@ ERROR:  option "dummy" not recognized
 LINE 1: COPY (SELECT '') TO '/tmp/emaj_17/misc/_INFO' (dummy)
                                                        ^
 QUERY:  COPY (SELECT '') TO '/tmp/emaj_17/misc/_INFO' (dummy)
-CONTEXT:  PL/pgSQL function emaj._copy_to_file(text,text,text,boolean,boolean) line 37 at EXECUTE
+CONTEXT:  PL/pgSQL function emaj._copy_to_file(text,text,text,boolean,boolean) line 35 at EXECUTE
 SQL statement "SELECT emaj._copy_to_file('(SELECT '''')', p_dir || '/_INFO', v_copyOptions)"
 PL/pgSQL function emaj.emaj_dump_changes_group(text,text,text,text,text[],text) line 44 at PERFORM
 select emaj.emaj_dump_changes_group('myGroup2', 'Mark21', 'Mark23', 'COPY_OPTIONS=(;)', NULL, :'EMAJTESTTMPDIR');
@@ -1433,7 +1433,7 @@ PL/pgSQL function emaj.emaj_dump_changes_group(text,text,text,text,text[],text) 
 select emaj.emaj_gen_sql_dump_changes_group('myGroup2', 'Mark21', 'Mark23', NULL, ARRAY['dummy']);
 ERROR:  _check_tblseqs_filter: 1 tables/sequences (dummy) never belonged to any of the selected tables groups during the requested marks range.
 CONTEXT:  PL/pgSQL function emaj._check_tblseqs_filter(text[],text[],bigint,bigint,boolean) line 48 at RAISE
-PL/pgSQL function emaj._gen_sql_dump_changes_group(text,text,text,text,text[],boolean) line 228 at assignment
+PL/pgSQL function emaj._gen_sql_dump_changes_group(text,text,text,text,text[],boolean) line 219 at assignment
 SQL statement "SELECT p_nbStmt
                           FROM emaj._gen_sql_dump_changes_group(p_groupName, p_firstMark, p_lastMark, p_optionsList, p_tblseqs, TRUE)"
 PL/pgSQL function emaj.emaj_gen_sql_dump_changes_group(text,text,text,text,text[]) line 25 at SQL statement
@@ -1445,7 +1445,7 @@ select emaj.emaj_gen_sql_dump_changes_group('myGroup2', 'Mark21', 'Mark23', NULL
 NOTICE:  table "emaj_temp_sql" does not exist, skipping
 ERROR:  relative path not allowed for COPY to file
 CONTEXT:  SQL statement "COPY (SELECT sql_text FROM emaj_temp_sql ORDER BY sql_stmt_number, sql_line_number) TO 'dummy' "
-PL/pgSQL function emaj._copy_to_file(text,text,text,boolean,boolean) line 37 at EXECUTE
+PL/pgSQL function emaj._copy_to_file(text,text,text,boolean,boolean) line 35 at EXECUTE
 SQL statement "SELECT emaj._copy_to_file('(SELECT sql_text FROM emaj_temp_sql ORDER BY sql_stmt_number, sql_line_number)',
                                  p_scriptLocation, NULL, FALSE, FALSE)"
 PL/pgSQL function emaj.emaj_gen_sql_dump_changes_group(text,text,text,text,text[],text) line 59 at PERFORM
@@ -1454,7 +1454,7 @@ NOTICE:  table "emaj_temp_sql" does not exist, skipping
 ERROR:  could not open file "/dummy" for writing: Permission denied
 HINT:  COPY TO instructs the PostgreSQL server process to write a file. You may want a client-side facility such as psql's \copy.
 CONTEXT:  SQL statement "COPY (SELECT sql_text FROM emaj_temp_sql ORDER BY sql_stmt_number, sql_line_number) TO '/dummy' "
-PL/pgSQL function emaj._copy_to_file(text,text,text,boolean,boolean) line 37 at EXECUTE
+PL/pgSQL function emaj._copy_to_file(text,text,text,boolean,boolean) line 35 at EXECUTE
 SQL statement "SELECT emaj._copy_to_file('(SELECT sql_text FROM emaj_temp_sql ORDER BY sql_stmt_number, sql_line_number)',
                                  p_scriptLocation, NULL, FALSE, FALSE)"
 PL/pgSQL function emaj.emaj_gen_sql_dump_changes_group(text,text,text,text,text[],text) line 59 at PERFORM
@@ -1466,7 +1466,7 @@ select emaj.emaj_dump_changes_group('myGroup2', 'Mark21', 'Mark23', NULL, NULL, 
 NOTICE:  table "emaj_temp_sql" does not exist, skipping
 ERROR:  relative path not allowed for COPY to file
 CONTEXT:  SQL statement "COPY (SELECT '') TO 'dummy/_INFO' "
-PL/pgSQL function emaj._copy_to_file(text,text,text,boolean,boolean) line 37 at EXECUTE
+PL/pgSQL function emaj._copy_to_file(text,text,text,boolean,boolean) line 35 at EXECUTE
 SQL statement "SELECT emaj._copy_to_file('(SELECT '''')', p_dir || '/_INFO', v_copyOptions)"
 PL/pgSQL function emaj.emaj_dump_changes_group(text,text,text,text,text[],text) line 44 at PERFORM
 --
@@ -2029,11 +2029,10 @@ select * from emaj.emaj_set_mark_group('myGroup1','Dump_changes_tests_M4');
 SELECT emaj.emaj_dump_changes_group('myGroup1', 'Dump_changes_tests_M2', 'Dump_changes_tests_M3',
 									'NO_EMPTY_FILES, EMAJ_COLUMNS=MIN',
 									NULL, :'EMAJTESTTMPDIR');
-WARNING:  emaj_dump_changes_group: the NO_EMPTY_FILES option cannot be satisfied because the adminpack extension is not installed.
 NOTICE:  table "emaj_temp_sql" does not exist, skipping
             emaj_dump_changes_group             
 ------------------------------------------------
- 8 files have been created in /tmp/emaj_17/misc
+ 4 files have been created in /tmp/emaj_17/misc
 (1 row)
 
 \! ls -1sS $EMAJTESTTMPDIR
@@ -2042,10 +2041,6 @@ total 16
 4 myschema1_mytbl4.changes
 4 myschema1_myTbl3_col31_seq.changes
 4 myschema1_mytbl2b_col20_seq.changes
-0 myschema1_myTbl3.changes
-0 myschema1_mytbl1.changes
-0 myschema1_mytbl2.changes
-0 myschema1_mytbl2b.changes
 \! cat $EMAJTESTTMPDIR/myschema1_mytbl4.changes
 10	Inserted row	1	1	ABC       	5400010	NEW
 1	Initial row	1	1	ABC       	5400011	OLD
@@ -2063,37 +2058,24 @@ total 16
 OLD	myschema1	myTbl3_col31_seq	5401	11	1	1	2147483647	1	1	f	f
 NEW	myschema1	myTbl3_col31_seq	5402	11	1	1	2147483647	1	1	f	f
 \! rm $EMAJTESTTMPDIR/*
-CREATE EXTENSION adminpack;
-ERROR:  extension "adminpack" is not available
-DETAIL:  Could not open extension control file "/usr/local/pg17beta1/share/postgresql/extension/adminpack.control": No such file or directory.
-HINT:  The extension must first be installed on the system where PostgreSQL is running.
 SELECT emaj.emaj_dump_changes_group('myGroup1', 'Dump_changes_tests_M3', 'Dump_changes_tests_M4',
 									'NO_EMPTY_FILES, COPY_OPTIONS=(format csv, header), EMAJ_COLUMNS=(emaj_verb,emaj_tuple,emaj_gid)',
 									NULL, :'EMAJTESTTMPDIR');
-WARNING:  emaj_dump_changes_group: the NO_EMPTY_FILES option cannot be satisfied because the adminpack extension is not installed.
 NOTICE:  table "emaj_temp_sql" does not exist, skipping
             emaj_dump_changes_group             
 ------------------------------------------------
- 8 files have been created in /tmp/emaj_17/misc
+ 4 files have been created in /tmp/emaj_17/misc
 (1 row)
 
 \! ls -1sS $EMAJTESTTMPDIR
-total 32
+total 16
 4 _INFO
 4 myschema1_mytbl4.changes
 4 myschema1_myTbl3_col31_seq.changes
 4 myschema1_mytbl2b_col20_seq.changes
-4 myschema1_mytbl2b.changes
-4 myschema1_myTbl3.changes
-4 myschema1_mytbl1.changes
-4 myschema1_mytbl2.changes
 \! grep -v '  started at ' $EMAJTESTTMPDIR/_INFO
 Dump logged changes for the group "myGroup1" between mark "Dump_changes_tests_M3" and mark "Dump_changes_tests_M4"
   using options "NO_EMPTY_FILES, COPY_OPTIONS=(format csv, header), EMAJ_COLUMNS=(emaj_verb,emaj_tuple,emaj_gid)"
-File myschema1_myTbl3.changes covers table "myschema1.myTbl3" from mark "Dump_changes_tests_M3" to mark "Dump_changes_tests_M4"
-File myschema1_mytbl1.changes covers table "myschema1.mytbl1" from mark "Dump_changes_tests_M3" to mark "Dump_changes_tests_M4"
-File myschema1_mytbl2.changes covers table "myschema1.mytbl2" from mark "Dump_changes_tests_M3" to mark "Dump_changes_tests_M4"
-File myschema1_mytbl2b.changes covers table "myschema1.mytbl2b" from mark "Dump_changes_tests_M3" to mark "Dump_changes_tests_M4"
 File myschema1_mytbl4.changes covers table "myschema1.mytbl4" from mark "Dump_changes_tests_M3" to mark "Dump_changes_tests_M4"
 File myschema1_myTbl3_col31_seq.changes covers sequence "myschema1.myTbl3_col31_seq" from mark "Dump_changes_tests_M3" to mark "Dump_changes_tests_M4"
 File myschema1_mytbl2b_col20_seq.changes covers sequence "myschema1.mytbl2b_col20_seq" from mark "Dump_changes_tests_M3" to mark "Dump_changes_tests_M4"
@@ -2114,8 +2096,6 @@ emaj_tuple,sequ_schema,sequ_name,sequ_time_id,sequ_last_val,sequ_start_val,sequ_
 OLD,myschema1,myTbl3_col31_seq,5402,11,1,1,2147483647,1,1,f,f
 NEW,myschema1,myTbl3_col31_seq,5403,11,1,1,2147483647,1,1,f,t
 \! rm $EMAJTESTTMPDIR/*
-DROP EXTENSION adminpack;
-ERROR:  extension "adminpack" does not exist
 SELECT emaj.emaj_dump_changes_group('myGroup1', 'Dump_changes_tests_M2', 'Dump_changes_tests_M4',
 									'CONSOLIDATION=FULL, COPY_OPTIONS=(format csv, delimiter '';'', force_quote *, header)',
                                     NULL, :'EMAJTESTTMPDIR');
@@ -2346,9 +2326,9 @@ select hist_id, hist_function, hist_event, hist_object,
     5434 | SET_MARK_GROUP             | TIME STAMP SET | 5403                         |                                                                                                  | postgres
     5435 | SET_MARK_GROUP             | END            | myGroup1                     | Dump_changes_tests_M4                                                                            | postgres
     5436 | DUMP_CHANGES_GROUP         | BEGIN          | myGroup1                     | From mark Dump_changes_tests_M2 to Dump_changes_tests_M3 towards /tmp/emaj_17/misc               | postgres
-    5437 | DUMP_CHANGES_GROUP         | END            | myGroup1                     | 8 generated files                                                                                | postgres
+    5437 | DUMP_CHANGES_GROUP         | END            | myGroup1                     | 4 generated files                                                                                | postgres
     5438 | DUMP_CHANGES_GROUP         | BEGIN          | myGroup1                     | From mark Dump_changes_tests_M3 to Dump_changes_tests_M4 towards /tmp/emaj_17/misc               | postgres
-    5439 | DUMP_CHANGES_GROUP         | END            | myGroup1                     | 8 generated files                                                                                | postgres
+    5439 | DUMP_CHANGES_GROUP         | END            | myGroup1                     | 4 generated files                                                                                | postgres
     5440 | DUMP_CHANGES_GROUP         | BEGIN          | myGroup1                     | From mark Dump_changes_tests_M2 to Dump_changes_tests_M4 towards /tmp/emaj_17/misc               | postgres
     5441 | DUMP_CHANGES_GROUP         | END            | myGroup1                     | 8 generated files                                                                                | postgres
     5442 | DUMP_CHANGES_GROUP         | BEGIN          | myGroup1                     | From mark Dump_changes_tests_M2 to Dump_changes_tests_M4 towards /tmp/emaj_17/misc               | postgres
@@ -2560,7 +2540,7 @@ NOTICE:  table "emaj_temp_script" does not exist, skipping
 ERROR:  could not open file "/tmp/unknownDirectory/myFile" for writing: No such file or directory
 HINT:  COPY TO instructs the PostgreSQL server process to write a file. You may want a client-side facility such as psql's \copy.
 CONTEXT:  SQL statement "COPY (SELECT 0) TO '/tmp/unknownDirectory/myFile' "
-PL/pgSQL function emaj._copy_to_file(text,text,text,boolean,boolean) line 37 at EXECUTE
+PL/pgSQL function emaj._copy_to_file(text,text,text,boolean,boolean) line 35 at EXECUTE
 SQL statement "SELECT emaj._copy_to_file('(SELECT 0)', p_location, NULL)"
 PL/pgSQL function emaj._gen_sql_groups(text[],boolean,text,text,text,text[]) line 80 at PERFORM
 PL/pgSQL function emaj.emaj_gen_sql_group(text,text,text,text,text[]) line 14 at RETURN
@@ -2569,7 +2549,7 @@ NOTICE:  table "emaj_temp_script" does not exist, skipping
 ERROR:  could not open file "/tmp/unknownDirectory/myFile" for writing: No such file or directory
 HINT:  COPY TO instructs the PostgreSQL server process to write a file. You may want a client-side facility such as psql's \copy.
 CONTEXT:  SQL statement "COPY (SELECT 0) TO '/tmp/unknownDirectory/myFile' "
-PL/pgSQL function emaj._copy_to_file(text,text,text,boolean,boolean) line 37 at EXECUTE
+PL/pgSQL function emaj._copy_to_file(text,text,text,boolean,boolean) line 35 at EXECUTE
 SQL statement "SELECT emaj._copy_to_file('(SELECT 0)', p_location, NULL)"
 PL/pgSQL function emaj._gen_sql_groups(text[],boolean,text,text,text,text[]) line 80 at PERFORM
 PL/pgSQL function emaj.emaj_gen_sql_groups(text[],text,text,text,text[]) line 14 at RETURN
@@ -2813,7 +2793,7 @@ select emaj.emaj_export_parameters_configuration('/tmp/dummy/location/file');
 ERROR:  could not open file "/tmp/dummy/location/file" for writing: No such file or directory
 HINT:  COPY TO instructs the PostgreSQL server process to write a file. You may want a client-side facility such as psql's \copy.
 CONTEXT:  SQL statement "COPY t TO '/tmp/dummy/location/file' "
-PL/pgSQL function emaj._copy_to_file(text,text,text,boolean,boolean) line 37 at EXECUTE
+PL/pgSQL function emaj._copy_to_file(text,text,text,boolean,boolean) line 35 at EXECUTE
 SQL statement "SELECT emaj._copy_to_file('t', p_location, NULL)"
 PL/pgSQL function emaj.emaj_export_parameters_configuration(text) line 15 at PERFORM
 --   ok

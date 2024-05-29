@@ -134,7 +134,7 @@ select funcname, calls from pg_stat_user_functions
  _enable_event_triggers                    |   308
  _estimate_rlbk_step_duration              |   772
  _estimate_rollback_groups                 |    13
- _event_trigger_sql_drop_fnct              |   214
+ _event_trigger_sql_drop_fnct              |   211
  _event_trigger_table_rewrite_fnct         |     4
  _export_groups_conf                       |    11
  _export_param_conf                        |     7

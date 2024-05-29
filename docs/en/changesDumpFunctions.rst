@@ -108,7 +108,7 @@ The **4th parameter** is a list of options, separated by commas. Options can be 
 * CONSOLIDATION = NONE | PARTIAL | FULL: defines the consolidation level; the default value is NONE;
 * COPY_OPTIONS = (options): defines the options to be used by the *COPY TO* statements; the list must be set between parenthesis; refer to the PostgreSQL documentation for the available options details (https://www.postgresql.org/docs/current/sql-copy.html);
 * EMAJ_COLUMNS = ALL | MIN | (columns list): restricts the returned E-Maj technical columns: ALL = all existing columns, MIN = a minimum number of columns, or an explicit columns list, set between parenthesis;
-* NO_EMPTY_FILES: removes files that do not contain any data; the option requires the *adminpack* extension;
+* NO_EMPTY_FILES: removes files that do not contain any data;
 * ORDER_BY = PK | TIME: defines the rows sort order in files; PK = the primary key order, TIME = the entry into the table log order;
 * SEQUENCES_ONLY: only process sequences of the tables group; by default, tables are processed;
 * TABLES_ONLY: only process tables of the tables groups; by default, sequences are processed.

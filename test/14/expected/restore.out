@@ -35,7 +35,6 @@ CREATE EXTENSION
 COMMENT
 CREATE EXTENSION
 COMMENT
-WARNING:  E-Maj installation: The adminpack extension is available but not yet created. Execute a "CREATE EXTENSION adminpack;" statement to enable the NO_EMPTY_FILE option use of the emaj_dump_changes_group() function.
 CREATE EXTENSION
 COMMENT
 CREATE DOMAIN

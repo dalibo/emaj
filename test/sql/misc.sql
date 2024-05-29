@@ -624,7 +624,6 @@ SELECT emaj.emaj_dump_changes_group('myGroup1', 'Dump_changes_tests_M2', 'Dump_c
 \! cat $EMAJTESTTMPDIR/myschema1_myTbl3_col31_seq.changes
 \! rm $EMAJTESTTMPDIR/*
 
-CREATE EXTENSION adminpack;
 SELECT emaj.emaj_dump_changes_group('myGroup1', 'Dump_changes_tests_M3', 'Dump_changes_tests_M4',
 									'NO_EMPTY_FILES, COPY_OPTIONS=(format csv, header), EMAJ_COLUMNS=(emaj_verb,emaj_tuple,emaj_gid)',
 									NULL, :'EMAJTESTTMPDIR');
@@ -633,7 +632,6 @@ SELECT emaj.emaj_dump_changes_group('myGroup1', 'Dump_changes_tests_M3', 'Dump_c
 \! cat $EMAJTESTTMPDIR/myschema1_mytbl4.changes
 \! cat $EMAJTESTTMPDIR/myschema1_myTbl3_col31_seq.changes
 \! rm $EMAJTESTTMPDIR/*
-DROP EXTENSION adminpack;
 
 SELECT emaj.emaj_dump_changes_group('myGroup1', 'Dump_changes_tests_M2', 'Dump_changes_tests_M4',
 									'CONSOLIDATION=FULL, COPY_OPTIONS=(format csv, delimiter '';'', force_quote *, header)',
