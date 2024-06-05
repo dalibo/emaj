@@ -4,19 +4,22 @@ Mise à jour d'une version E-Maj existante
 Démarche générale
 -----------------
 
-La première étape consiste à :doc:`installer la nouvelle version du logiciel E-Maj <install>`. Conserver l’ancien répertoire E-Maj au moins jusqu’à la fin de la mise à jour. Certains fichiers pourront être utiles.
+La première étape consiste à :doc:`installer la nouvelle version du logiciel E-Maj <install>`.
 
 Il faut également vérifier si des :ref:`opérations préliminaires <preliminary_operations>` doivent être exécutées (extensions pré-requises, *tablespace* par défaut).
 
-Ensuite, la procédure de mise à jour de la version d'E-Maj installée dans une base de données dépend de cette version installée.
+Ensuite, la procédure de mise à jour de la version d'E-Maj installée dans une base de données dépend de cette version installée et de la façon dont elle a été installée.
 
-Pour les versions d'E-Maj antérieures à 0.11.0, il n'existe pas de procédure spécifique de mise à jour. On procédera donc à une simple désinstallation puis réinstallation de l'extension. Cette démarche peut d'ailleurs être utilisée quelle que soit la version d'E-Maj installée. Elle présente néanmoins l'inconvénient de devoir supprimer tous les logs enregistrés, perdant ainsi toute capacité ultérieure de rollback ou d'examen des mises à jour enregistrées.
+Tout environement E-Maj installé dans une base de données peut être mis à jour par une simple :ref:`désinstallation puis réinstallation<uninstall_reinstall>`.
 
-Pour les versions d'E-Maj installées 0.11.0 et suivantes, il est possible de procéder à une mise à jour sans désinstallation. Suivant la situation, il faut procéder en une ou en plusieurs étapes.
+Pour les versions d'E-Maj installées comme une *EXTENSION* et dont la version est supérieure ou égale à 2.3.1, il est possible de procéder à une :ref:`mise à jour sans désinstallation<extension_upgrade>`.  Cette méthode présente l’avantage de conserver tous les logs, permettant ainsi d'examiner les changements enregistrés, voire d’effectuer un rollback E-Maj ciblant une marque posée avant la mise à jour de la version.
+
+Notons que pour les versions d'E-Maj qui ont été installée par script *psql* (et qui ne constitue donc pas une *EXTENSION*), il n'existe pas de procédure spécifique de mise à jour. Sur ces environnements, on procédera donc à une simple désinstallation puis réinstallation de l'extension.
 
 .. caution::
 
-   A partir de la version 2.2.0, E-Maj ne supporte plus les versions de PostgreSQL antérieures à 9.2. A partir de la version 3.0.0, E-Maj ne supporte plus les versions de PostgreSQL antérieures à 9.5. A partir de la version 4.2.0, E-Maj ne supporte plus les versions de PostgreSL antérieures à 11. Si une version antérieure de PostgreSQL est utilisée, il faut la faire évoluer **avant** de migrer E-Maj dans une version supérieure.
+   Il est impératif de vérifier avec la :doc:`matrice de compatibilité des versions PostgreSQL et E-Maj<versionsMatrix>` que la mise à jour de la version existante d’E-Maj est possible. Si la version de PostgreSQL utilisée est trop ancienne, il faut la faire évoluer **avant** de migrer E-Maj dans une version supérieure.
+
 
 .. _uninstall_reinstall:
 
@@ -66,8 +69,6 @@ Une fois connecté en tant que super-utilisateur, il suffit d'enchaîner le scri
 
    CREATE EXTENSION emaj CASCADE;
 
-NB : avant la version 2.0.0, le script de désinstallation se nommait *uninstall.sql*.
-
 
 Restauration des données utilisateurs
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -92,73 +93,12 @@ Les groupes de tables doivent également être recréés par les :doc:`moyens di
 
 Les tables ou fichiers temporaires peuvent alors être supprimés.
 
-
-Mise à jour à partir d’une version E-Maj comprise entre 0.11.0 et 1.3.1
------------------------------------------------------------------------
-Pour les versions comprises entre 0.11.0 et 1.3.1, des **scripts psql de mise à jour** sont livrés. Ils permettent de passer d’une version à la suivante.
-
-Chaque étape peut être réalisée sans toucher aux groupes de tables, ceux-ci pouvant même être actifs au moment du changement de version. Ceci signifie en particulier :
-
-* que des mises à jour de tables peuvent être enregistrées avant puis après le changement de version, sans que les groupes de tables soient arrêtés,
-* et donc qu'après le changement de version, un *rollback* à une marque posée avant ce changement de version est possible.
-
-+---------------+----------------+---------------------------+-------------+-------------------------------+
-|Version source | Version cible  | script psql               | Durée       | Mises à jour concurrentes (1) |
-+===============+================+===========================+=============+===============================+
-| 0.11.0        | 0.11.1         | emaj-0.11.0-to-0.11.1.sql | Très rapide | Oui                           |
-+---------------+----------------+---------------------------+-------------+-------------------------------+
-| 0.11.1        | 1.0.0          | emaj-0.11.1-to-1.0.0.sql  | Très rapide | Oui                           |
-+---------------+----------------+---------------------------+-------------+-------------------------------+
-| 1.0.0         | 1.0.1          | emaj-1.0.0-to-1.0.1.sql   | Très rapide | Oui                           |
-+---------------+----------------+---------------------------+-------------+-------------------------------+
-| 1.0.1         | 1.0.2          | emaj-1.0.1-to-1.0.2.sql   | Très rapide | Oui                           |
-+---------------+----------------+---------------------------+-------------+-------------------------------+
-| 1.0.2         | 1.1.0          | emaj-1.0.2-to-1.1.0.sql   | Variable    | Non (2)                       |
-+---------------+----------------+---------------------------+-------------+-------------------------------+
-| 1.1.0         | 1.2.0          | emaj-1.1.0-to-1.2.0.sql   | Très rapide | Oui                           |
-+---------------+----------------+---------------------------+-------------+-------------------------------+
-| 1.2.0         | 1.3.0          | emaj-1.2.0-to-1.3.0.sql   | Rapide      | Oui (3)                       |
-+---------------+----------------+---------------------------+-------------+-------------------------------+
-| 1.3.0         | 1.3.1          | emaj-1.3.0-to-1.3.1.sql   | Très rapide | Oui                           |
-+---------------+----------------+---------------------------+-------------+-------------------------------+
-
-(1) La dernière colonne indique si la mise à jour de la version E-Maj peut être effectuée alors que des tables couvertes par E-Maj sont accédées en mise à jour. Notons que durant la mise à jour, d’éventuelles autres actions E-Maj (pose de marque, rollback,…) sont mises en attentes.
-
-(2) Le passage en 1.1.0 nécessite la transformation des tables de log (ajout d'une colonne). Cela a pour conséquence que :
-
-* même si les groupes de tables peuvent rester actifs, ce changement de version ne peut s'exécuter qu'à un moment où les tables ne sont pas mises à jour par des traitements,
-* la durée de l'opération est très variable et dépend essentiellement du volume de données contenu dans les tables de log.
-
-Notez également que les statistiques qu'E-Maj a collectées lors des précédentes opérations de rollback ne sont pas reprises (le fonctionnement des rollbacks est trop différent pour que ces anciennes statistiques soient pertinentes).
-
-(3) Il est recommandé de réaliser le passage en 1.3.0 dans une période de faible activité sur la base de données. En effet, le renommage des triggers E-Maj sur les tables applicatives entraîne la pose de verrous de type *Access Exclusive* qui peuvent entrer en conflit avec d'autres accès.
-
-A la fin de chaque mise à jour le message suivant est affiché :
-
->>> E-Maj successfully upgraded to <nouvelle_version>
-
-
-Passage d’E-Maj 1.3.1 à une version supérieure
-----------------------------------------------
-
-La mise à jour de la version 1.3.1 est spécifique car elle doit gérer le passage d’une installation par script *psql* à une installation par *extension*.
-
-Pour ce faire, il suffit d’exécuter la requête SQL ::
-
-   CREATE EXTENSION emaj FROM unpackaged;
-
-C’est le gestionnaire d’extension de PostgreSQL qui détermine le ou les scripts à exécuter en fonction de la version indiquée comme courante dans le fichier *emaj.control*.
-
-Cette mise à jour ne peut néanmoins pas traiter le cas où au moins un groupe de tables a été créé avec une version de PostgreSQL antérieure à 8.4. Dans ce cas le ou les groupes de tables concernés doivent être supprimés au préalable puis recréés par la suite.
-
-Cette mise à jour n’est pas non plus possible avec les versions PostgreSQL 13 et suivantes. Pour ces versions de PostgreSQL, E-Maj doit être désinstallé puis réinstallé dans sa dernière version.
-
 .. _extension_upgrade:
 
-Mise à jour d’une version déjà installée comme extension
---------------------------------------------------------
+Mise à jour d’une version installée comme EXTENSION
+---------------------------------------------------
 
-Une version existante installée comme une *extension* se met à jour par une simple requête ::
+Une version existante installée comme une *EXTENSION* se met à jour par une simple requête ::
 
    ALTER EXTENSION emaj UPDATE;
 
@@ -171,15 +111,13 @@ L’opération est très rapide et ne touche pas aux groupes de tables. Ceux-ci 
 
 Spécificités liées aux versions :
 
-* La procédure de mise à jour d’une version **2.2.2** en version **2.2.3** vérifie les valeurs des séquences de log enregistrées. Dans certains cas, elle peut demander une ré-initialisation préalable de certains groupes de tables.
-
 * La procédure de mise à jour d’une version **2.3.1** en version **3.0.0** change la structure des tables de log : les 2 colonnes *emaj_client_ip* et *emaj_client_port* ne sont plus créées. Les tables de log existantes ne sont pas modifiées. Seules les nouvelles tables de log sont impactées. Mais il est possible à l’administrateur :ref:`d’ajouter ces deux colonnes<addLogColumns>`, en utilisant le paramètre *'alter_log_tables'*.
 
 * La procédure de mise à jour d’une version **3.0.0** en version **3.1.0** renomme les objets de log existants. Ceci conduit à une pose de verrou sur chaque table applicative, qui peut entrer en conflit avec des accès concurrents sur les tables. La procédure de mise à jour génère également un message d’alerte indiquant que les changements dans la gestion des triggers applicatifs par les fonctions de rollback E-Maj peuvent nécessiter des modifications dans les procédures utilisateurs.
 
 * La procédure de mise à jour d’une version **3.4.0** en version **4.0.0** modifie le contenu des tables de log pour les enregistrements des requêtes *TRUNCATE*. La durée de la mise à jour dépend donc de la taille globale des tables de log.
 
-* La procédure de mise à jour d’une version **4.1.0** en version **4.2.0** vérifie la présence de tous les triggers sur événements. Antérieurement, en fonction de la version de PostgreSQL utilisée, certains, voire tous, pouvaient ne pas exister. Si cela était le cas, le script *sql/emaj_upgrade_after_postgres_upgrade.sql* fourni par la version précédente d’E-Maj permet de créer les triggers sur événement manquants.
+* La procédure de mise à jour d’une version **4.1.0** en version **4.2.0** vérifie la présence de tous les triggers sur événements. S’il en manque, il faut recréer une installation E-Maj complète (ou se procurer et exécuter le script *sql/emaj_upgrade_after_postgres_upgrade.sql* fourni par la version 4.1.0 d’E-Maj pour recréer les triggers sur événement manquants).
 
 * La procédure de mise à jour d’une version **4.3.1** en version **4.4.0** lit le contenu de la table *emaj_hist* pour reconstituer 3 historiques alimentant les 3 nouvelles tables techniques de la version. Bien qu’assez courte, la durée de la mise à jour dépend donc de la volumétrie de la table *emaj_hist*.
 
