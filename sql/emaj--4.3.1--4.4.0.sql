@@ -191,7 +191,7 @@ $do$
 -- Process the E-Maj rollback function executions in a special way, because when a logged rollback uses dblink connections, the txids
 --   in emaj_hist and emaj_time_stamp differ. But the rollback time_id is already known in the emaj_rlbk table. So get it from there.
 -- Get the rollback id from the end rollback event.
-        v_rlbkId = substr(r_fctExec.hist_wording,13)::INTEGER;
+        v_rlbkId = substring(r_fctExec.hist_wording from 'Rollback_id (\d+)')::INTEGER;
 -- Read the emaj_rlbk table to get the rollback time_id.
         SELECT rlbk_time_id
           INTO v_timeId

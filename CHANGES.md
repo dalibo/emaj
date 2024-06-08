@@ -11,7 +11,7 @@ E-Maj - Change log
   * Remove the need for the adminpack extension.
 
 ###Bug fixes:###
-
+  * Fix 4 bugs in various E-Maj version upgrade scripts.
 
 4.4.0 (2024-Apr-19)
 ------
