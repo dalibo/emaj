@@ -247,6 +247,7 @@ INSERT INTO emaj.emaj_relation_change (rlchg_time_id, rlchg_schema, rlchg_tblseq
 --
 -- Add values to the _rlbk_step_enum enum type
 --
+DROP TYPE IF EXISTS emaj._rlbk_step_enum_old;		-- there may be a leftover from a previous upgrade
 ALTER TYPE emaj._rlbk_step_enum
   RENAME TO _rlbk_step_enum_old;
 -- enum of the possible values for the rollback steps
@@ -337,7 +338,6 @@ INSERT INTO emaj.emaj_rlbk_plan (
 
 -- and finaly drop the temporary table
 DROP TABLE emaj_rlbk_plan_old;
-
 --
 -- change the emaj_rlbk_plan table structure
 --
@@ -350,6 +350,8 @@ ALTER TABLE emaj.emaj_rlbk_plan
 ALTER TABLE emaj.emaj_rlbk_stat
   ALTER COLUMN rlbt_step TYPE emaj._rlbk_step_enum USING rlbt_step::TEXT::emaj._rlbk_step_enum;
 
+-- and finaly drop the temporary enum type
+DROP TYPE emaj._rlbk_step_enum_old;
 --
 -- drop the emaj_alter_plan table and its enum type
 --
