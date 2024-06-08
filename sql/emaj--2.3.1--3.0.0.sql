@@ -249,6 +249,9 @@ $$Represents the structure of rows returned by the _check_conf_groups() function
 DROP EVENT TRIGGER IF EXISTS emaj_table_rewrite_trg CASCADE;
 DROP FUNCTION _emaj_event_trigger_table_rewrite_fnct();
 
+-- Re-attach the _emaj_protection_event_trigger_fnct() function to the extension, in order to change its code.
+ALTER EXTENSION emaj ADD FUNCTION public._emaj_protection_event_trigger_fnct();
+
 ------------------------------------
 --                                --
 -- emaj functions                 --

@@ -240,7 +240,9 @@ INSERT INTO emaj.emaj_relation_change (rlchg_time_id, rlchg_schema, rlchg_tblseq
            WHEN 'ADD_SEQ' THEN 'ADD_SEQUENCE'::emaj._relation_change_kind_enum
          END,
          altr_group, altr_new_group, altr_rlbk_id
-    FROM emaj.emaj_alter_plan;
+    FROM emaj.emaj_alter_plan
+    WHERE altr_step IN ('REMOVE_TBL', 'REMOVE_SEQ', 'REPAIR_TBL', 'CHANGE_TBL_LOG_DATA_TSP', 'CHANGE_TBL_LOG_INDEX_TSP',
+                        'MOVE_TBL', 'MOVE_SEQ', 'CHANGE_REL_PRIORITY', 'ADD_TBL', 'ADD_SEQ');
 
 --
 -- Add values to the _rlbk_step_enum enum type
@@ -371,6 +373,14 @@ SELECT pg_catalog.pg_extension_config_dump('emaj_rlbk_plan','');
 -- emaj types                     --
 --                                --
 ------------------------------------
+
+------------------------------------
+--                                --
+-- event triggers                 --
+--                                --
+------------------------------------
+-- Re-attach the _emaj_protection_event_trigger_fnct() function to the extension, in order to change its code.
+ALTER EXTENSION emaj ADD FUNCTION public._emaj_protection_event_trigger_fnct();
 
 ------------------------------------
 --                                --

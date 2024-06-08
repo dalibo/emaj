@@ -453,6 +453,14 @@ SELECT pg_catalog.pg_extension_config_dump('emaj_ignored_app_trigger','');
 
 ------------------------------------
 --                                --
+-- event triggers                 --
+--                                --
+------------------------------------
+-- Re-attach the _emaj_protection_event_trigger_fnct() function to the extension, in order to change its code.
+ALTER EXTENSION emaj ADD FUNCTION public._emaj_protection_event_trigger_fnct();
+
+------------------------------------
+--                                --
 -- emaj functions                 --
 --                                --
 ------------------------------------
