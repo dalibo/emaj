@@ -906,7 +906,7 @@ REVOKE SELECT ON TABLE emaj.emaj_param FROM emaj_viewer;
 -- Complete the upgrade           --
 --                                --
 ------------------------------------
--- Re-detach the _emaj_protection_event_trigger_fnct() function to the extension.
+-- Re-detach the _emaj_protection_event_trigger_fnct() function from the extension.
 ALTER EXTENSION emaj DROP FUNCTION public._emaj_protection_event_trigger_fnct();
 
 -- Enable the event triggers.

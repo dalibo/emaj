@@ -138,12 +138,13 @@ A solid test environment is supplied in the repository. It contains:
 The test scenarios
 ''''''''''''''''''
 
-The test system contains 4 scenarios:
+The test system contains 5 scenarios:
 
 * a full standart scenario,
 * the same scenario but installing the extension with the *emaj-devel.sql* script provided for cases when a *“CREATE EXTENSION emaj*” statement is not possible,
 * the same scenario but installing the extension from the previous version with an immediate upgrade into the current version,
-* a shorter scenario but with an upgrade into the current version while tables groups are in logging state.
+* a shorter scenario but with an upgrade from the previous extension version to the current one while tables groups are in logging state,
+* a similar scenario but with an upgrade from the oldest E-Maj version that is available for the oldest supported Postgres version.
 
 These scenarios call *psql* scripts, all located into the *test/sql* directory. The scripts chain E-Maj function calls in different contexts, and SQL statements to prepare or check the results.
 

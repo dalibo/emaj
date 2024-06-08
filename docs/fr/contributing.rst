@@ -141,12 +141,13 @@ Un solide environnement de test est fourni dans le dépôt. Il contient :
 Les scénarios de test
 '''''''''''''''''''''
 
-Le système de test comprend 4 scénarios de test :
+Le système de test comprend 5 scénarios de test :
 
 * un scénario standard complet,
-* le même scénario mais en installant l’extension à partir de la version précédente puis *upgrade* dans la version courante,
 * le même scénario mais en installant l’extension à partir du script *emaj-devel.sql* fourni pour les cas où une requête "*CREATE EXTENSION emaj*" n’est pas possible,
-* un scénario réduit mais avec un *upgrade* dans la version courante alors que des groupes de tables sont actifs.
+* le même scénario mais en installant l’extension à partir de la version précédente puis en effectuant un *upgrade* dans la version courante,
+* un scénario réduit comportant un *upgrade* de la version précédente vers la version courante de l’extension alors que des groupes de tables sont actifs,
+* un scénario réduit similaire au précédent mais avec un *upgrade* depuis la plus ancienne version d’E-Maj disponible avec la plus ancienne version de PostgreSQL supportée.
 
 Ces scénarios font appel à des scripts *psql*, tous localisés dans *test/sql*. Les scripts enchaînent dans différents contextes des séquences d’appels de fonctions E-Maj et de requêtes SQL de préparation et de contrôle des résultats obtenus.
 
