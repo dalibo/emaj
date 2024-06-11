@@ -22,6 +22,7 @@ DO
 $do$
   DECLARE
     v_emajVersion            TEXT;
+    v_nbNoError              INT;
     v_groupList              TEXT;
   BEGIN
 -- check the current role is a superuser
@@ -45,13 +46,19 @@ $do$
     IF v_groupList IS NOT NULL THEN
       RAISE EXCEPTION 'E-Maj upgrade: groups "%" have been created with a too old postgres version (< 8.4). Drop these groups before upgrading. ',v_groupList;
     END IF;
--- specific test for this version: verify the emaj environment integrity
--- for PG12, the previous emaj version would not contain a compatible emaj_verify_all() version
-    IF emaj._pg_version_num() < 120000 THEN
-      PERFORM 0 FROM emaj.emaj_verify_all() AS t(msg) WHERE msg = 'No error detected';
-      IF NOT FOUND THEN
-        RAISE EXCEPTION 'E-Maj upgrade: The E-Maj environment looks unsane. Please execute the "SELECT * FROM emaj.emaj_verify_all()" statement and solve the reported issues before upgrading.';
-      END IF;
+-- the E-Maj environment is not damaged
+    BEGIN
+      SELECT count(msg) FILTER (WHERE msg = 'No error detected')
+        INTO v_nbNoError
+        FROM emaj.emaj_verify_all() AS t(msg);
+    EXCEPTION
+-- Errors during the emaj_verify_all() execution are trapped. The emaj_verify_all() code may be incompatible with the current PG version.
+        WHEN OTHERS THEN -- do nothing
+    END;
+    IF v_nbNoError = 0 THEN
+      RAISE EXCEPTION 'E-Maj upgrade: the E-Maj environment is damaged. Please fix the issue before upgrading. '
+                      'You may execute "SELECT * FROM emaj.emaj_verify_all();" to get more details. '
+                      'An "ALTER EXTENSION emaj UPDATE TO ''%'';" statement may be required before.', v_emajVersion;
     END IF;
   END;
 $do$;

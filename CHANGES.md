@@ -12,6 +12,9 @@ E-Maj - Change log
 
 ###Bug fixes:###
   * Fix 4 bugs in various E-Maj version upgrade scripts.
+  * Fix E-Maj version upgrade scripts to avoid environment health checks
+    failing because of old code not compatible with the current Postgres
+    version.
 
 4.4.0 (2024-Apr-19)
 ------

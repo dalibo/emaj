@@ -112,8 +112,6 @@ NOTICE:  function emaj._log_stat_tbl(emaj.emaj_relation,pg_catalog.int8,pg_catal
 NOTICE:  function emaj._gen_sql_tbl(emaj.emaj_relation,pg_catalog.int8,pg_catalog.int8) does not exist, skipping
 NOTICE:  function emaj._gen_sql_seq(emaj.emaj_relation,pg_catalog.int8,pg_catalog.int8,pg_catalog.int8) does not exist, skipping
 WARNING:  E-Maj upgrade: the E-Maj environment health check reports warning. You may execute "SELECT * FROM emaj.emaj_verify_all();" to get more details.
-WARNING:  E-Maj upgrade: the E-Maj environment health check reports warning. You may execute "SELECT * FROM emaj.emaj_verify_all();" to get more details.
-WARNING:  E-Maj upgrade: the E-Maj environment health check reports warning. You may execute "SELECT * FROM emaj.emaj_verify_all();" to get more details.
 NOTICE:  drop cascades to 3 other objects
 DETAIL:  drop cascades to constraint emaj_rlbk_session_rlbs_rlbk_id_fkey on table emaj_rlbk_session
 drop cascades to constraint emaj_rlbk_stat_rlbt_rlbk_id_fkey on table emaj_rlbk_stat
@@ -122,7 +120,6 @@ NOTICE:  drop cascades to function _estimate_rlbk_step_duration(_rlbk_step_enum_
 NOTICE:  drop cascades to 2 other objects
 DETAIL:  drop cascades to function emaj_rollback_activity()
 drop cascades to function _rollback_activity()
-WARNING:  E-Maj upgrade: the E-Maj environment health check reports warning. You may execute "SELECT * FROM emaj.emaj_verify_all();" to get more details.
 NOTICE:  drop cascades to 8 other objects
 DETAIL:  drop cascades to function _drop_tbl(emaj_relation,bigint)
 drop cascades to function _drop_seq(emaj_relation,bigint)
@@ -140,8 +137,6 @@ NOTICE:  drop cascades to 2 other objects
 DETAIL:  drop cascades to function emaj_rollback_activity()
 drop cascades to function _rollback_activity()
 WARNING:  E-Maj installation: The adminpack extension is available but not yet created. Execute a "CREATE EXTENSION adminpack;" statement to enable the NO_EMPTY_FILE option use of the emaj_dump_changes_group() function.
-WARNING:  E-Maj upgrade: the E-Maj environment health check reports warning. You may execute "SELECT * FROM emaj.emaj_verify_all();" to get more details.
-WARNING:  E-Maj upgrade: the E-Maj environment health check reports warning. You may execute "SELECT * FROM emaj.emaj_verify_all();" to get more details.
 NOTICE:  Starting the rows generation for the new emaj_group_hist table.
 NOTICE:  Based on existing history and logs content, #log_sessions statistics may be inaccurate.
 NOTICE:  Starting the rows generation for the new emaj_log_session table.

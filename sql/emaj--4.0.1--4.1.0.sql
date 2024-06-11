@@ -22,6 +22,7 @@ DO
 $do$
   DECLARE
     v_emajVersion            TEXT;
+    v_txid                   TEXT;
     v_nbNoError              INT;
     v_nbWarning              INT;
     v_groupList              TEXT;
@@ -35,16 +36,30 @@ $do$
     IF current_setting('server_version_num')::int < 90500 THEN
       RAISE EXCEPTION 'E-Maj upgrade: the current PostgreSQL version (%) is not compatible with the new E-Maj version. The PostgreSQL version should be at least 9.5.', current_setting('server_version');
     END IF;
--- Check E-Maj environment state.
-    SELECT count(msg) FILTER (WHERE msg = 'No error detected'),
-           count(msg) FILTER (WHERE msg LIKE 'Warning:%')
-      INTO v_nbNoError, v_nbWarning
-      FROM emaj.emaj_verify_all() AS t(msg);
-    IF v_nbNoError = 0 THEN
-      RAISE EXCEPTION 'E-Maj upgrade: the E-Maj environment is damaged. Please fix the issue before upgrading. You may execute "SELECT * FROM emaj.emaj_verify_all();" to get more details.';
-    END IF;
-    IF v_nbWarning > 0 THEN
-      RAISE WARNING 'E-Maj upgrade: the E-Maj environment health check reports warning. You may execute "SELECT * FROM emaj.emaj_verify_all();" to get more details.';
+-- Check the E-Maj environment state, if not yet done by a previous upgrade in the same transaction.
+    SELECT current_setting('emaj.upgrade_verify_txid', TRUE) INTO v_txid;
+    IF v_txid IS NULL OR v_txid <> txid_current()::TEXT THEN
+      BEGIN
+        SELECT count(msg) FILTER (WHERE msg = 'No error detected'),
+               count(msg) FILTER (WHERE msg LIKE 'Warning:%')
+          INTO v_nbNoError, v_nbWarning
+          FROM emaj.emaj_verify_all() AS t(msg);
+      EXCEPTION
+-- Errors during the emaj_verify_all() execution are trapped. The emaj_verify_all() code may be incompatible with the current PG version.
+        WHEN OTHERS THEN -- do nothing
+      END;
+      IF v_nbNoError = 0 THEN
+        RAISE EXCEPTION 'E-Maj upgrade: the E-Maj environment is damaged. Please fix the issue before upgrading. '
+                        'You may execute "SELECT * FROM emaj.emaj_verify_all();" to get more details. '
+                        'An "ALTER EXTENSION emaj UPDATE TO ''%'';" statement may be required before.', v_emajVersion;
+      END IF;
+      IF v_nbWarning > 0 THEN
+        RAISE WARNING 'E-Maj upgrade: the E-Maj environment health check reports warning. '
+                      'You may execute "SELECT * FROM emaj.emaj_verify_all();" to get more details.';
+      END IF;
+      IF v_nbWarning IS NOT NULL THEN
+        PERFORM set_config('emaj.upgrade_verify_txid', txid_current()::TEXT, TRUE);
+      END IF;
     END IF;
 -- No existing group must have been created with a postgres version prior 8.4.
     SELECT string_agg(group_name, ', ') INTO v_groupList FROM emaj.emaj_group

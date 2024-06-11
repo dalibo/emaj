@@ -22,6 +22,7 @@ DO
 $do$
   DECLARE
     v_emajVersion            TEXT;
+    v_nbNoError              INT;
     v_groupList              TEXT;
   BEGIN
 -- the emaj version registered in emaj_param must be '3.4.0'
@@ -34,9 +35,18 @@ $do$
       RAISE EXCEPTION 'E-Maj upgrade: the current PostgreSQL version (%) is not compatible with the new E-Maj version. The PostgreSQL version should be at least 9.5.', current_setting('server_version');
     END IF;
 -- the E-Maj environment is not damaged
-    PERFORM * FROM (SELECT * FROM emaj.emaj_verify_all()) AS t(msg) WHERE msg <> 'No error detected';
-    IF FOUND THEN
-      RAISE EXCEPTION 'E-Maj upgrade: the E-Maj environment is damaged. Please fix the issue before upgrading. You may execute "SELECT * FROM emaj.emaj_verify_all();" to get more details.';
+    BEGIN
+      SELECT count(msg) FILTER (WHERE msg = 'No error detected')
+        INTO v_nbNoError
+        FROM emaj.emaj_verify_all() AS t(msg);
+    EXCEPTION
+-- Errors during the emaj_verify_all() execution are trapped. The emaj_verify_all() code may be incompatible with the current PG version.
+        WHEN OTHERS THEN -- do nothing
+    END;
+    IF v_nbNoError = 0 THEN
+      RAISE EXCEPTION 'E-Maj upgrade: the E-Maj environment is damaged. Please fix the issue before upgrading. '
+                      'You may execute "SELECT * FROM emaj.emaj_verify_all();" to get more details. '
+                      'An "ALTER EXTENSION emaj UPDATE TO ''%'';" statement may be required before.', v_emajVersion;
     END IF;
 -- no existing group must have been created with a postgres version prior 8.4
     SELECT string_agg(group_name, ', ') INTO v_groupList FROM emaj.emaj_group
