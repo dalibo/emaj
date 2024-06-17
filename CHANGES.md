@@ -9,6 +9,7 @@ E-Maj - Change log
   * Move the code of the emaj_uninstall.sql script into a new
     emaj_drop_extension() function to simplify the emaj extension drop.
   * Remove the need for the adminpack extension.
+  * Minor code changes.
 
 ###Bug fixes:###
   * Fix 4 bugs in various E-Maj version upgrade scripts.

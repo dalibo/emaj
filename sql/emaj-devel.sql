@@ -6185,7 +6185,8 @@ $_import_groups_conf_prepare$
 -- If the p_allowGroupsUpdate flag is TRUE, check that existing tables groups have the same type than in the JSON structure.
       RETURN QUERY
         SELECT 252, 1, group_name, NULL::TEXT, NULL::TEXT, NULL::TEXT, NULL::INT,
-                     format('Changing the type of the tables group "%s" is not allowed.',
+                     format('Changing the type of the tables group "%s" is not allowed. '
+                            'You may drop this tables group before importing the configuration.',
                             group_name)
           FROM
             (SELECT "group" AS group_name

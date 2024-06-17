@@ -6043,7 +6043,8 @@ $_import_groups_conf_prepare$
 -- If the p_allowGroupsUpdate flag is TRUE, check that existing tables groups have the same type than in the JSON structure.
       RETURN QUERY
         SELECT 252, 1, group_name, NULL::TEXT, NULL::TEXT, NULL::TEXT, NULL::INT,
-                     format('Changing the type of the tables group "%s" is not allowed.',
+                     format('Changing the type of the tables group "%s" is not allowed. '
+                            'You may drop this tables group before importing the configuration.',
                             group_name)
           FROM
             (SELECT "group" AS group_name
@@ -13617,7 +13618,7 @@ $do$
     RETURN;
   END;
 $do$;
-psql:sql/emaj-devel.sql:13876: NOTICE:  E-Maj installation: E-Maj successfully installed.
+psql:sql/emaj-devel.sql:13877: NOTICE:  E-Maj installation: E-Maj successfully installed.
 COMMIT;
 -- Test the dblink extension lack (this cannot be easily simulated in the verify.sql unit tests script when emaj is installed as an extension)
 begin;

@@ -1255,8 +1255,8 @@ CONTEXT:  PL/pgSQL function emaj._import_groups_conf(json,text[],boolean,text,te
 PL/pgSQL function emaj.emaj_import_groups_configuration(json,text[],boolean,text) line 12 at RETURN
 --   bad type for existing groups
 select emaj.emaj_import_groups_configuration('{ "tables_groups": [ { "group": "myGroup1", "is_rollbackable": false }, { "group": "myGroup2", "is_rollbackable": false } ] }'::json, null, true);
-WARNING:  _import_groups_conf (2): Changing the type of the tables group "myGroup1" is not allowed.
-WARNING:  _import_groups_conf (2): Changing the type of the tables group "myGroup2" is not allowed.
+WARNING:  _import_groups_conf (2): Changing the type of the tables group "myGroup1" is not allowed. You may drop this tables group before importing the configuration.
+WARNING:  _import_groups_conf (2): Changing the type of the tables group "myGroup2" is not allowed. You may drop this tables group before importing the configuration.
 ERROR:  _import_groups_conf: One or several errors have been detected in the JSON groups configuration.
 CONTEXT:  PL/pgSQL function emaj._import_groups_conf(json,text[],boolean,text,text) line 78 at RAISE
 PL/pgSQL function emaj.emaj_import_groups_configuration(json,text[],boolean,text) line 12 at RETURN
