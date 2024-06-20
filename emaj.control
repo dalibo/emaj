@@ -3,7 +3,7 @@
 
 default_version = 'devel'
 comment         = 'E-Maj extension enables fine-grained write logging and time travel on subsets of the database.'
-#directory 	    = '<directory containing installation scripts, if not SHAREDIR>'
+#directory 	    = 'emaj'
 superuser       = true
 schema 	        = 'emaj'
 relocatable     = false
