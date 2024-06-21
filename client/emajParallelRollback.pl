@@ -25,13 +25,13 @@ $VERSION = '<devel>';
 $PROGRAM = 'emajParallelRollback.pl';
 $APPNAME = 'emajParallelRollback';
 
-# Just asking for help
+# Just asking for help.
 if ((!@ARGV) || ($ARGV[0] eq '--help') || ($ARGV[0] eq '?')) {
   print_help();
   exit 0;
 }
 
-# Just asking for version
+# Just asking for version.
 if ($ARGV[0] eq '--version') {
   print_version();
   exit 0;
@@ -40,10 +40,10 @@ if ($ARGV[0] eq '--version') {
 print (" E-Maj (version $VERSION) - launching parallel rollbacks\n");
 print ("-----------------------------------------------------------\n");
  
-# Collect and prepare parameters
+# Collect and prepare options.
 #   long options (with -- ) are not used for portability reasons
 #
-# Initialize parameters with their default values
+# Initialize parameters with their default values.
 my $dbname = undef;                       # -d PostgreSQL database name
 my $host = undef;                         # -h PostgreSQL server host name
 my $port = undef;                         # -p PostgreSQL server ip port
@@ -61,7 +61,7 @@ my  $conn_string = '';
 my  $multiGroup = 'false';
 my  $msgRlbk = 'Rollback';
 
-# Get supplied parameters
+# Get supplied options.
 GetOptions(
 # connection parameters
   "d=s" => sub { $dbname = $_[1]; $conn_string .= "dbname=$dbname;"; },
@@ -69,13 +69,13 @@ GetOptions(
   "p=i" => sub { $port = $_[1]; $conn_string .= "port=$port;"; },
   "U=s" => \$username,
   "W=s" => \$password,
-#  other parameters
+# other parameters
   "a"   => sub { $isAlterGroupAllowed = 'true'; },
   "c:s" => \$comment,
   "g=s" => \&check_opt_groups,
   "l"   => sub {$isLogged = 'true'; $msgRlbk = 'Logged rollback'; },
   "m:s" => \$mark,
-  "s:i" => \&check_opt_session,
+  "s:i" => \$nbSession,
   "v"   => sub { $verbose = 1; }
 );
 
@@ -88,19 +88,17 @@ sub check_opt_groups {
   $groups = "'$groups'";
 }
 
-sub check_opt_session {
-  $nbSession = $_[1];
-  if (($nbSession < 1) || ($nbSession > 990)) {
-    die("Number of sessions must be greater than 0 and lower than 100 !\n");
-  }
+# Check options.
+if (($nbSession < 1) || ($nbSession > 990)) {
+  die("Number of sessions must be greater than 0 and lower than 100 !\n");
 }
 
-# check the group name has been supplied
+# Check the group name has been supplied.
 if (!defined $groups) {
   die("At least one group name must be supplied with the -g parameter !\n");
 }
 
-# check the mark has been supplied
+# Check the mark has been supplied.
 if (!defined $mark) {	
   die("A mark must be supplied with the -m parameter !\n");
 }
@@ -108,31 +106,31 @@ if (!defined $mark) {
 my @dbh = undef;
 my @stmt = undef;
 
-# Open all required sessions
-#   There is 1 session per corridor, the first being also used for global dialog with pg
+# Open all required sessions.
+#   There is 1 session per corridor, the first being also used for global dialog with PG.
 #   They all use the same connection parameters.
-#   Connection parameters are optional. If not supplied, the environment variables and PostgreSQL default values are used
+#   Connection parameters are optional. If not supplied, the environment variables and PostgreSQL default values are used.
 for (my $i = 1 ; $i <= $nbSession; $i++) {
   print (strftime('%d/%m/%Y - %H:%M:%S',localtime)." Open session #$i...\n") if ($verbose);
   $dbh[$i] = DBI->connect('dbi:Pg:'.$conn_string,$username,$password,{AutoCommit => 1, RaiseError => 0, PrintError => 0})
     or die("Opening the session #$i failed.\n$DBI::errstr\n");
 }
 
-# Set the application_name
+# Set the application_name.
 for (my $i = 1 ; $i <= $nbSession; $i++) {
   $dbh[$i]->do("SET application_name to '$APPNAME'")
     or die("Setting the application_name for session #$i failed.\n$DBI::errstr\n");
 }
 
-# For each session, start a transaction 
+# For each session, start a transaction.
 for (my $i = 1 ; $i <= $nbSession; $i++) {
   print (strftime('%d/%m/%Y - %H:%M:%S',localtime)." Start transaction #$i...\n") if ($verbose);
   $dbh[$i]->begin_work() 
     or die("Begin transaction #$i failed.\n$DBI::errstr\n");
 }
 
-# Call _rlbk_init() on first session
-# This checks the groups and mark, and prepares the parallel rollback by creating well balanced sessions
+# Call _rlbk_init() on first session.
+# This checks the groups and mark, and prepares the parallel rollback by creating well balanced sessions.
 print (strftime('%d/%m/%Y - %H:%M:%S',localtime)." Call _rlbk_init() for groups $groups and mark $mark....\n") if ($verbose);
 $stmt[1] = $dbh[1]->prepare("SELECT emaj._rlbk_init(array[$groups], " . $dbh[1]->quote($mark) . ", $isLogged, $nbSession, $multiGroup, " .
                                                    "$isAlterGroupAllowed, " . $dbh[1]->quote($comment) . ")");
@@ -142,34 +140,34 @@ my $rlbkId = $stmt[1]->fetchrow_array();
 $stmt[1]->finish;
 print ("==> $msgRlbk to mark '$mark' is now in progress with $nbSession sessions...\n");
 
-# For each session, synchronously call _rlbk_session_lock() to lock all tables
+# For each session, synchronously call _rlbk_session_lock() to lock all tables.
 for (my $i = 1 ; $i <= $nbSession; $i++) {
   print (strftime('%d/%m/%Y - %H:%M:%S',localtime)." Call _rlbk_session_lock() for session #$i -> lock tables...\n") if ($verbose);
   $dbh[$i]->do("SELECT emaj._rlbk_session_lock($rlbkId, $i)")
     or die("Calling the _rlbk_session_lock() function for #$i failed.\n$DBI::errstr\n"); 
 }
 
-# Call _rlbk_start_mark() on first session
-# This sets a rollback start mark if logged rollback
+# Call _rlbk_start_mark() on first session.
+# This sets a rollback start mark if logged rollback.
 print (strftime('%d/%m/%Y - %H:%M:%S',localtime)." Call _rlbk_start_mark() ...\n") if ($verbose);
 $dbh[1]->do("SELECT emaj._rlbk_start_mark($rlbkId, $multiGroup)")
   or die("Calling the _rlbk_start_mark() function failed.\n$DBI::errstr\n");
 
-# For each session, asynchronously call _rlbk_exec() to start the planned steps execution
+# For each session, asynchronously call _rlbk_exec() to start the planned steps execution.
 for (my $i = 1 ; $i <= $nbSession; $i++) {
   print (strftime('%d/%m/%Y - %H:%M:%S',localtime)." Call _rlbk_session_exec() for session #$i -> rollback tables...\n") if ($verbose);
   $dbh[$i]->do("SELECT emaj._rlbk_session_exec($rlbkId, $i)", {pg_async => PG_ASYNC})
     or die("Calling the _rlbk_session_exec() function for #$i failed.\n$DBI::errstr\n");
 }
 
-# For each session, get the result of the previous call of _rlbk_exec()
+# For each session, get the result of the previous call of _rlbk_exec().
 for (my $i = 1 ; $i <= $nbSession; $i++) {
   $dbh[$i]->pg_result()
     or die("Getting the result of the _rlbk_session_exec() function call failed for #$i.\n$DBI::errstr\n");
   print (strftime('%d/%m/%Y - %H:%M:%S',localtime)." get result of _rlbk_session_exec call for session #$i...\n") if ($verbose);
 }
 
-# Call emaj_rlbk_end() on first session to complete the rollback operation
+# Call emaj_rlbk_end() on first session to complete the rollback operation.
 print (strftime('%d/%m/%Y - %H:%M:%S',localtime)." Call _rlbk_end() -> complete rollback operation...\n") if ($verbose);
 $stmt[1] = $dbh[1]->prepare("SELECT * FROM emaj._rlbk_end($rlbkId, $multiGroup)");
 $stmt[1]->execute()
@@ -178,12 +176,12 @@ my $execReportRows = $stmt[1]->fetchall_arrayref();
 $stmt[1]->finish;
 
 if ($nbSession == 1) {
-# If there is only 1 session, perform a usual COMMIT
+# If there is only 1 session, perform a usual COMMIT ...
   print (strftime('%d/%m/%Y - %H:%M:%S',localtime)." Commit transaction #1...\n") if ($verbose);
   $dbh[1]->commit
     or die("Commit prepared #1 failed.\n$DBI::errstr\n");
 } else {
-# else, COMMIT with 2PC to be sure that all sessions can either commit or rollback in a single transaction
+# ... else, COMMIT with 2PC to be sure that all sessions can either commit or rollback in a single transaction.
 # Phase 1 : Prepare transaction
   for (my $i = 1 ; $i <= $nbSession; $i++) {
     print (strftime('%d/%m/%Y - %H:%M:%S',localtime)." Prepare transaction #$i...\n") if ($verbose);
@@ -198,18 +196,18 @@ if ($nbSession == 1) {
   }
 }
 
-# Call the emaj_cleanup_rollback_state() function to set the rollback event as committed
+# Call the emaj_cleanup_rollback_state() function to set the rollback event as committed.
 print (strftime('%d/%m/%Y - %H:%M:%S',localtime)." Call emaj_cleanup_rollback_state() -> set the rollback event as committed...\n") if ($verbose);
 $dbh[1]->do("SELECT emaj.emaj_cleanup_rollback_state()")
   or die("Calling the emaj_cleanup_rollback_state() function failed.\n$DBI::errstr\n");
 
-# Close the sessions
+# Close the sessions.
 print (strftime('%d/%m/%Y - %H:%M:%S',localtime)." Close all sessions...\n") if ($verbose);
 for (my $i = 1 ; $i <= $nbSession; $i++) {
   $dbh[$i]->disconnect
     or die("Disconnect for session #$i failed:\n$DBI::errstr\n");
 }
-#clean up on error
+# Clean up on error.
 END {
   if (defined($nbSession)) {
     for (my $i = 1 ; $i <= $nbSession; $i++) {
@@ -218,8 +216,7 @@ END {
   }
 }
 
-# And issue the final message
-
+# And issue the final message.
 print ("==> ".$msgRlbk." completed.\n");
 foreach $execReportRows ( @$execReportRows) {
   print ("    ".@$execReportRows[0].": ".@$execReportRows[1]."\n");

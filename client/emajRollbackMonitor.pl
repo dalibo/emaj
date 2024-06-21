@@ -21,13 +21,13 @@ $VERSION = '<devel>';
 $PROGRAM = 'emajRollbackMonitor.pl';
 $APPNAME = 'emajRollbackMonitor';
 
-# Just asking for help
+# Just asking for help.
 if ((!@ARGV) || ($ARGV[0] eq '--help') || ($ARGV[0] eq '?')) {
   print_help();
   exit 0;
 }
 
-# Just asking for version
+# Just asking for version.
 if ($ARGV[0] eq '--version') {
   print_version();
   exit 0;
@@ -37,10 +37,10 @@ print (" E-Maj (version $VERSION) - Monitoring rollbacks activity\n");
 print ("-----------------------------------------------------------\n");
 
 
-# Collect and prepare parameters
+# Collect and prepare parameters.
 #   long options (with -- ) are not used for portability reasons
 #
-# Initialize parameters with their default values
+# Initialize parameters with their default values.
 my $dbname = undef;                       # -d PostgreSQL database name
 my $host = undef;                         # -h PostgreSQL server host name
 my $port = undef;                         # -p PostgreSQL server ip port
@@ -55,7 +55,7 @@ my $regressTest = 0;                      # -r regression test flag (doesn't dis
 
 my $conn_string = '';
 
-# Get supplied parameters
+# Get supplied options.
 GetOptions(
 # connection parameters
   "d=s" => sub { $dbname = $_[1]; $conn_string .= "dbname=$dbname;"; },
@@ -63,41 +63,27 @@ GetOptions(
   "p=i" => sub { $port = $_[1]; $conn_string .= "port=$port;"; },
   "U=s" => \$username,
   "W=s" => \$password,
-#  other parameters
-  "a:i" => \&check_opt_complRlbkAgo,
-  "i:f" => \&check_opt_delay,
-  "l:i" => \&check_opt_nbComplRlbk,
-  "n:i" => \&check_opt_nbIter,
+# other options
+  "a:i" => \$complRlbkAgo,
+  "i:f" => \$delay,
+  "l:i" => \$nbComplRlbk,
+  "n:i" => \$nbIter,
   "v" => sub { $verbose = 1; },
   "r" => sub { $regressTest = 1; }
 );
 
-sub check_opt_complRlbkAgo {
-  $complRlbkAgo = $_[1];
-  if ($complRlbkAgo < 0) {
-    die("Nb hours ($complRlbkAgo) must be >= 0 !\n");
-  }
+# Check options.
+if ($complRlbkAgo < 0) {
+  die("Nb hours ($complRlbkAgo) must be >= 0 !\n");
 }
-
-sub check_opt_delay {
-  $delay = $_[1];
-  if ($delay <= 0) {
-    die("Interval ($delay) must be > 0 !\n");
-  }
+if ($delay <= 0) {
+  die("Interval ($delay) must be > 0 !\n");
 }
-
-sub check_opt_nbComplRlbk {
-  $nbComplRlbk = $_[1];
-  if ($nbComplRlbk < 0) {
-    die("Number of completed rollback operations ($nbComplRlbk) must be >= 0 !\n");
-  }
+if ($nbComplRlbk < 0) {
+  die("Number of completed rollback operations ($nbComplRlbk) must be >= 0 !\n");
 }
-
-sub check_opt_nbIter {
-  $nbIter = $_[1];
-  if ($nbIter <= 0) {
-    die("Number of iterations ($nbIter) must be > 0 !\n");
-  }
+if ($nbIter <= 0) {
+  die("Number of iterations ($nbIter) must be > 0 !\n");
 }
 
 my $dbh = undef;
@@ -105,7 +91,7 @@ my $stmt = undef;
 my $row = undef;
 
 # Open a database session.
-#   Connection parameters are optional. If not supplied, the environment variables and PostgreSQL default values are used
+#   Connection parameters are optional. If not supplied, the environment variables and PostgreSQL default values are used.
 $dbh = DBI->connect('dbi:Pg:' . $conn_string, $username, $password, {AutoCommit => 1, RaiseError => 0, PrintError => 0})
   or die("$DBI::errstr\n");
 
@@ -113,14 +99,14 @@ $dbh = DBI->connect('dbi:Pg:' . $conn_string, $username, $password, {AutoCommit 
 $dbh->do("SET application_name to '$APPNAME'")
   or die("Setting the application_name failed.\n$DBI::errstr\n");
 
-# Perform the monitoring
+# Perform the monitoring.
 for (my $i=1; $i<=$nbIter; $i++){
   if ($regressTest) {
     print ("[current date and time]\n");
   }else{
     print (strftime('%d/%m/%Y - %H:%M:%S',localtime)."\n");
   }
-# Retrieve the recently completed rollback operations
+# Retrieve the recently completed E-Maj rollback operations.
   $stmt = $dbh->prepare("SELECT *
                            FROM (
                                  SELECT emaj.emaj_rlbk.*,
@@ -135,7 +121,7 @@ for (my $i=1; $i<=$nbIter; $i++){
   $stmt->execute()
     or die("Accessing to the emaj_rlbk table failed.\n$DBI::errstr \n");
 
-# Display results
+# Display completed E-Maj rollback operations.
   $dbh->{pg_expand_array} = 0;
   while ( $row = $stmt->fetchrow_hashref()) {
 	if ($regressTest){
@@ -150,7 +136,7 @@ for (my $i=1; $i<=$nbIter; $i++){
   }
   $stmt->finish;
 
-# Call the emaj_rollback_activity() function to retrieve the rollback operations in progress
+# Call the emaj_rollback_activity() function to retrieve the in progress E-Maj rollback operations.
   $stmt = $dbh->prepare("SELECT *,
                                 format('%s/%s', rlbk_eff_nb_table, rlbk_nb_table) AS rlbk_tbl,
                                 format('%s/%s', coalesce(rlbk_eff_nb_sequence::TEXT, '?'), rlbk_nb_sequence) AS rlbk_seq
@@ -158,7 +144,7 @@ for (my $i=1; $i<=$nbIter; $i++){
   $stmt->execute()
     or die("Calling of emaj_rollback_activity() function failed.\n$DBI::errstr\n");
 
-# Display results
+# Display the in progress E-Maj rollback operations.
   while ( $row = $stmt->fetchrow_hashref()) {
 	if ($regressTest){
 	  $row->{'rlbk_start_datetime'} = '[rollback start time]';
@@ -176,13 +162,13 @@ for (my $i=1; $i<=$nbIter; $i++){
   }
   $stmt->finish;
 
-# wait during the delay parameter (except for the last occurrence)
+# Wait during the delay parameter (except for the last occurrence).
   if ($i < $nbIter){
     sleep $delay;
   }
 }
 
-# Close the sessions
+# Close the sessions.
 $dbh->disconnect
   or die("Disconnect failed.\n$DBI::errstr\n");
 

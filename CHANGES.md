@@ -16,6 +16,8 @@ E-Maj - Change log
   * Fix E-Maj version upgrade scripts to avoid environment health checks
     failing because of old code not compatible with the current Postgres
     version.
+  * Fix emajRollbackMonitor.pl and emajParallelRollback.pl perl clients.
+    Incorrect option values were not properly processed.
 
 4.4.0 (2024-Apr-19)
 ------
