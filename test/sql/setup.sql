@@ -471,9 +471,9 @@ BEGIN
       v_lastval, v_restart * 1000;
   END IF;
 -- OK, let's set the sequences values
-  EXECUTE 'ALTER SEQUENCE emaj.emaj_hist_hist_id_seq RESTART ' || v_restart;
-  EXECUTE 'ALTER SEQUENCE emaj.emaj_time_stamp_time_id_seq RESTART ' || v_restart;
-  EXECUTE 'ALTER SEQUENCE emaj.emaj_rlbk_rlbk_id_seq RESTART ' || v_restart;
-  EXECUTE 'ALTER SEQUENCE emaj.emaj_global_seq RESTART ' || v_restart * 1000 + 1;
+  PERFORM setval('emaj.emaj_hist_hist_id_seq', v_restart - 1, true);
+  PERFORM setval('emaj.emaj_time_stamp_time_id_seq', v_restart - 1, true);
+  PERFORM setval('emaj.emaj_rlbk_rlbk_id_seq', v_restart - 1, true);
+  PERFORM setval('emaj.emaj_global_seq', v_restart * 1000, true);
 END;
 $handle_emaj_sequences$;
