@@ -2,6 +2,7 @@
 --   emaj_reset_group(), 
 --   emaj_log_stat_group(), emaj_log_stat_groups(), emaj_detailled_log_stat_group() and emaj_detailled_log_stat_groups(),
 --   emaj_sequence_stat_group() and emaj_sequence_stat_groups()
+--   _get_sequences_last_value()
 --   emaj_estimate_rollback_group() and emaj_estimate_rollback_groups(),
 --   emaj_snap_group(),
 --   emaj_get_current_log_table(),
@@ -250,6 +251,18 @@ select hist_id, hist_function, hist_event, hist_object,
 
 -- set sequence restart value
 select public.handle_emaj_sequences(5200);
+
+-----------------------------
+-- _get_sequences_last_value() test
+-----------------------------
+-- get all groups, tables and sequences
+select * from emaj._get_sequences_last_value(null, null, null, null, null, null)
+  where p_key <> 'current_epoch' order by 1;
+-- filter on groups
+select p_key from emaj._get_sequences_last_value('Group', null, null, null, null, null) order by 1;
+select p_key from emaj._get_sequences_last_value(null, 'Group', null, null, null, null) order by 1;
+-- filter on tables and sequences
+select p_key from emaj._get_sequences_last_value(null, null, 'tbl2|tbl4', '2b', 'col', 'myschema2') order by 1;
 
 -----------------------------
 -- emaj_estimate_rollback_group() and emaj_estimate_rollback_groups() tests

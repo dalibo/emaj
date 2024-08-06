@@ -10654,6 +10654,86 @@ $_sequence_stat_groups$
   END;
 $_sequence_stat_groups$;
 
+CREATE OR REPLACE FUNCTION emaj._get_sequences_last_value(p_groupsIncludeFilter TEXT, p_groupsExcludeFilter TEXT,
+                                                          p_tablesIncludeFilter TEXT, p_tablesExcludeFilter TEXT,
+                                                          p_sequencesIncludeFilter TEXT, p_sequencesExcludeFilter TEXT,
+                                                          OUT p_key TEXT, OUT p_value TEXT)
+RETURNS SETOF RECORD LANGUAGE plpgsql AS
+$_get_sequences_last_value$
+-- The function is used by the emajStat client and Emaj_web to monitor the recorded tables and/or sequences changes.
+-- It returns in textual format:
+--    - the last_value of selected log and application sequences,
+--    - the last value of 2 emaj technical sequences to detect tables groups changes or marks set,
+--    - the current timestamp as EPOCH
+-- The function traps the execution error that may happen when table groups structure are changing.
+-- In this case, it just returns a key set to 'error' with the SQLSTATE (typically XX000) as value.
+-- This error trapping is the main reason for this function exists. Otherwise, the client could just execute the main query.
+-- Input: include and exclude regexps to filter tables groups, tables and sequences.
+-- Output: a set of (key, value) records.
+  DECLARE
+    v_stmt                   TEXT;
+  BEGIN
+-- Set the default value for NULL filters (to include all and exclude nothing).
+    p_groupsIncludeFilter = coalesce(p_groupsIncludeFilter, '.*');
+    p_groupsExcludeFilter = coalesce(p_groupsExcludeFilter, '');
+    p_tablesIncludeFilter = coalesce(p_tablesIncludeFilter, '.*');
+    p_tablesExcludeFilter = coalesce(p_tablesExcludeFilter, '');
+    p_sequencesIncludeFilter = coalesce(p_sequencesIncludeFilter, '.*');
+    p_sequencesExcludeFilter = coalesce(p_sequencesExcludeFilter, '');
+-- Build the statement to execute.
+    v_stmt = $$
+      WITH filtered_group AS (
+        SELECT group_name
+          FROM emaj.emaj_group
+          WHERE group_name ~ $1
+            AND ($2 = '' OR group_name !~ $2)
+        )
+        SELECT 'current_epoch', extract('EPOCH' FROM statement_timestamp())::TEXT
+      UNION ALL
+        SELECT 'emaj.emaj_time_stamp_time_id_seq', last_value::TEXT FROM emaj.emaj_time_stamp_time_id_seq
+      UNION ALL
+        SELECT 'emaj.emaj_global_seq', last_value::TEXT FROM emaj.emaj_global_seq
+    $$;
+    IF p_tablesExcludeFilter != '.*' THEN
+      v_stmt = v_stmt || $$
+      UNION ALL
+        SELECT rel_schema || '.' || rel_tblseq, coalesce(last_value, 0)::TEXT AS seq_current
+          FROM emaj.emaj_relation
+            JOIN filtered_group ON (group_name = rel_group)
+            JOIN pg_catalog.pg_sequences ON (schemaname = rel_log_schema AND sequencename = rel_log_sequence)
+         WHERE upper_inf(rel_time_range)
+           AND rel_kind = 'r'
+           AND (rel_schema || '.' || rel_tblseq) ~ $3
+           AND ($4 = '' OR (rel_schema || '.' || rel_tblseq) !~ $4)
+      $$;
+    END IF;
+    IF p_sequencesExcludeFilter != '.*' THEN
+      v_stmt = v_stmt || $$
+      UNION ALL
+        SELECT rel_schema || '.' || rel_tblseq, coalesce(last_value, 0)::TEXT AS seq_current
+          FROM emaj.emaj_relation
+            JOIN filtered_group ON (group_name = rel_group)
+            JOIN pg_catalog.pg_sequences ON (schemaname = rel_schema AND sequencename = rel_tblseq)
+         WHERE upper_inf(rel_time_range)
+           AND rel_kind = 'S'
+           AND (rel_schema || '.' || rel_tblseq) ~ $5
+           AND ($6 = '' OR (rel_schema || '.' || rel_tblseq) !~ $6)
+      $$;
+    END IF;
+    BEGIN
+      RETURN QUERY EXECUTE v_stmt
+        USING p_groupsIncludeFilter, p_groupsExcludeFilter,
+              p_tablesIncludeFilter, p_tablesExcludeFilter,
+              p_sequencesIncludeFilter, p_sequencesExcludeFilter;
+    EXCEPTION WHEN OTHERS THEN
+-- If an error occurs, just return an error key with the SQLSTATE.
+      RETURN QUERY SELECT 'error', SQLSTATE;
+    END;
+--
+    RETURN;
+  END;
+$_get_sequences_last_value$;
+
 CREATE OR REPLACE FUNCTION emaj.emaj_estimate_rollback_group(p_groupName TEXT, p_mark TEXT, p_isLoggedRlbk BOOLEAN)
 RETURNS INTERVAL LANGUAGE plpgsql AS
 $emaj_estimate_rollback_group$
@@ -13792,6 +13872,10 @@ GRANT EXECUTE ON FUNCTION emaj.emaj_estimate_rollback_groups(p_groupNames TEXT[]
 GRANT EXECUTE ON FUNCTION emaj._estimate_rollback_groups(p_groupNames TEXT[], p_multiGroup BOOLEAN, p_mark TEXT, p_isLoggedRlbk BOOLEAN)
                           TO emaj_viewer;
 GRANT EXECUTE ON FUNCTION emaj.emaj_get_version() TO emaj_viewer;
+GRANT EXECUTE ON FUNCTION emaj._get_sequences_last_value(p_groupsIncludeFilter TEXT, p_groupsExcludeFilter TEXT,
+                                                         p_tablesIncludeFilter TEXT, p_tablesExcludeFilter TEXT,
+                                                         p_sequencesIncludeFilter TEXT, p_sequencesExcludeFilter TEXT,
+                                                         OUT p_key TEXT, OUT p_value TEXT) TO emaj_viewer;
 GRANT EXECUTE ON FUNCTION emaj.emaj_rollback_activity() TO emaj_viewer;
 GRANT EXECUTE ON FUNCTION emaj._rollback_activity() TO emaj_viewer;
 GRANT EXECUTE ON FUNCTION emaj.emaj_get_consolidable_rollbacks() TO emaj_viewer;

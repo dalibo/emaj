@@ -2,6 +2,7 @@
 --   emaj_reset_group(), 
 --   emaj_log_stat_group(), emaj_log_stat_groups(), emaj_detailled_log_stat_group() and emaj_detailled_log_stat_groups(),
 --   emaj_sequence_stat_group() and emaj_sequence_stat_groups()
+--   _get_sequences_last_value()
 --   emaj_estimate_rollback_group() and emaj_estimate_rollback_groups(),
 --   emaj_snap_group(),
 --   emaj_get_current_log_table(),
@@ -837,6 +838,105 @@ select public.handle_emaj_sequences(5200);
 -----------------------
  
 (1 row)
+
+-----------------------------
+-- _get_sequences_last_value() test
+-----------------------------
+-- get all groups, tables and sequences
+select * from emaj._get_sequences_last_value(null, null, null, null, null, null)
+  where p_key <> 'current_epoch' order by 1;
+              p_key               | p_value 
+----------------------------------+---------
+ emaj.emaj_global_seq             | 5200000
+ emaj.emaj_time_stamp_time_id_seq | 5199
+ myschema1.myTbl3                 | 30
+ myschema1.myTbl3_col31_seq       | 0
+ myschema1.mytbl1                 | 64
+ myschema1.mytbl2                 | 14
+ myschema1.mytbl2b                | 15
+ myschema1.mytbl2b_col20_seq      | 0
+ myschema1.mytbl4                 | 4
+ myschema2.myTbl3                 | 10
+ myschema2.myTbl3_col31_seq       | 10
+ myschema2.myseq1                 | 1002
+ myschema2.mytbl1                 | 10700
+ myschema2.mytbl2                 | 900
+ myschema2.mytbl4                 | 100
+ myschema2.mytbl5                 | 0
+ myschema2.mytbl6                 | 0
+ myschema2.mytbl7                 | 0
+ myschema2.mytbl8                 | 0
+ myschema4.mypartp1               | 3
+ myschema4.mypartp2               | 8
+ myschema4.mytblc1                | 3
+ myschema4.mytblc2                | 3
+ myschema4.mytblm                 | 3
+ myschema4.mytblr                 | 2
+ phil's schema3.myTbl2\           | 0
+ phil's schema3.myTbl2\_col21_seq | 0
+ phil's schema3.phil's seq\1      | 0
+ phil's schema3.phil's tbl1       | 0
+(29 rows)
+
+-- filter on groups
+select p_key from emaj._get_sequences_last_value('Group', null, null, null, null, null) order by 1;
+              p_key               
+----------------------------------
+ current_epoch
+ emaj.emaj_global_seq
+ emaj.emaj_time_stamp_time_id_seq
+ myschema1.myTbl3
+ myschema1.myTbl3_col31_seq
+ myschema1.mytbl1
+ myschema1.mytbl2
+ myschema1.mytbl2b
+ myschema1.mytbl2b_col20_seq
+ myschema1.mytbl4
+ myschema2.myTbl3
+ myschema2.myTbl3_col31_seq
+ myschema2.myseq1
+ myschema2.mytbl1
+ myschema2.mytbl2
+ myschema2.mytbl4
+ myschema2.mytbl5
+ myschema2.mytbl6
+ myschema2.mytbl7
+ myschema2.mytbl8
+ myschema4.mypartp1
+ myschema4.mypartp2
+ myschema4.mytblc1
+ myschema4.mytblc2
+ myschema4.mytblm
+ myschema4.mytblr
+(26 rows)
+
+select p_key from emaj._get_sequences_last_value(null, 'Group', null, null, null, null) order by 1;
+              p_key               
+----------------------------------
+ current_epoch
+ emaj.emaj_global_seq
+ emaj.emaj_time_stamp_time_id_seq
+ phil's schema3.myTbl2\
+ phil's schema3.myTbl2\_col21_seq
+ phil's schema3.phil's seq\1
+ phil's schema3.phil's tbl1
+(7 rows)
+
+-- filter on tables and sequences
+select p_key from emaj._get_sequences_last_value(null, null, 'tbl2|tbl4', '2b', 'col', 'myschema2') order by 1;
+              p_key               
+----------------------------------
+ current_epoch
+ emaj.emaj_global_seq
+ emaj.emaj_time_stamp_time_id_seq
+ myschema1.myTbl3_col31_seq
+ myschema1.mytbl2
+ myschema1.mytbl2b_col20_seq
+ myschema1.mytbl4
+ myschema2.mytbl2
+ myschema2.mytbl4
+ phil's schema3.myTbl2\_col21_seq
+(10 rows)
 
 -----------------------------
 -- emaj_estimate_rollback_group() and emaj_estimate_rollback_groups() tests

@@ -298,6 +298,12 @@ select count(*) from emaj.emaj_sequence_stat_groups(array['myGroup1'],'Start',NU
      2
 (1 row)
 
+select count(*) from emaj._get_sequences_last_value(null, null, null, null, null, null);
+ count 
+-------
+    18
+(1 row)
+
 select emaj.emaj_estimate_rollback_group('myGroup1',emaj.emaj_get_previous_mark_group('myGroup1',current_timestamp),FALSE);
  emaj_estimate_rollback_group 
 ------------------------------
