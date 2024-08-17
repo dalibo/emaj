@@ -48,6 +48,7 @@ Bienvenue dans la documentation E-Maj !
    multiGroupsFunctions
    parallelRollbackClient
    rollbackMonitorClient
+   emajStatClient
 
 .. toctree::
    :maxdepth: 1

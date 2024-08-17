@@ -102,11 +102,13 @@ Once :doc:`installed <install>`, an E-Maj version contents the following files.
 +---------------------------------------------+---------------------------------------------------------------------+
 | doc/Emaj.<version>_pres.fr.pdf              | French version of the E-Maj presentation (pdf version)              |
 +---------------------------------------------+---------------------------------------------------------------------+
-| client/emajParallelRollback.php             | php tool for parallel rollback                                      |
+| client/emajParallelRollback.php             | php tool to spawn parallel rollbacks                                |
 +---------------------------------------------+---------------------------------------------------------------------+
-| client/emajParallelRollback.pl              | perl tool for parallel rollback                                     |
+| client/emajParallelRollback.pl              | perl tool to spawn parallel rollbacks                               |
 +---------------------------------------------+---------------------------------------------------------------------+
-| client/emajRollbackMonitor.php              | php tool for rollbacks monitoring                                   |
+| client/emajRollbackMonitor.php              | php tool to monitor rollbacks                                       |
 +---------------------------------------------+---------------------------------------------------------------------+
-| client/emajRollbackMonitor.pl               | perl tool for rollbacks monitoring                                  |
+| client/emajRollbackMonitor.pl               | perl tool to monitor rollbacks                                      |
++---------------------------------------------+---------------------------------------------------------------------+
+| client/emajStat.pl                          | perl tool to monitor changes recording                              |
 +---------------------------------------------+---------------------------------------------------------------------+

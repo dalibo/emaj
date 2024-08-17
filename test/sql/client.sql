@@ -153,3 +153,11 @@ insert into emaj.emaj_rlbk (rlbk_id, rlbk_groups, rlbk_mark, rlbk_mark_time_id, 
 --------------------------------------------
 \! ${EMAJ_DIR}/client/emajRollbackMonitor.pl -h localhost -d regression -U emaj_regression_tests_viewer_user -i 0.1 -n 2 -l 2 -a 12 -v -r
 
+--------------------------------------------------------------
+--
+-- emajStat client
+--
+--------------------------------------------------------------
+
+-- 2 displays with an emaj_viewer role with various options
+\! ${EMAJ_DIR}/client/emajStat.pl -h localhost -d regression -U emaj_regression_tests_viewer_user --regression-test --no-cls --interval 0.1 --iter 2 --include-group '1' --max-table 5 --exclude-sequence 'col31' --max-relation-name-length 23

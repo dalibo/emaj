@@ -297,3 +297,34 @@ insert into emaj.emaj_rlbk (rlbk_id, rlbk_groups, rlbk_mark, rlbk_mark_time_id, 
    status: PLANNING ; completion 0 %
    rollback to mark: mark20103 set at [mark time]
    1 session(s) to process 3/5 table(s) and ?/4 sequence(s)
+--------------------------------------------------------------
+--
+-- emajStat client
+--
+--------------------------------------------------------------
+-- 2 displays with an emaj_viewer role with various options
+\! ${EMAJ_DIR}/client/emajStat.pl -h localhost -d regression -U emaj_regression_tests_viewer_user --regression-test --no-cls --interval 0.1 --iter 2 --include-group '1' --max-table 5 --exclude-sequence 'col31' --max-relation-name-length 23
+ E-Maj (version <devel>) - Monitoring logged changes on database regression (@127.0.0.1:5413)
+----------------------------------------------------------------------------------------------
+[current date and time] - Logging: groups=2/3 tables=11/11 sequences=4/4 -
+  Group name + Latest mark                   + Changes since mark + Changes since prev.
+    myGroup1 | Multi-1 ([latest mark date and time]) |   359 ([cps])
+  Table name          + Group    + Changes since mark + Changes since prev.
+    myschema1.mytbl1  | myGroup1 |   211 ([cps])
+    myschema1.myTbl3  | myGroup1 |    60 ([cps])
+    myschema1.mytbl2b | myGroup1 |    52 ([cps])
+    myschema1.mytbl2  | myGroup1 |    27 ([cps])
+    myschema1.mytbl4  | myGroup1 |     9 ([cps])
+  Sequence name             + Group    + Changes since mark + Changes since prev.
+    myschema1.mytbl2b_col20 | myGroup1 |    -5 ([cps])
+[current date and time] - Logging: groups=2/3 tables=11/11 sequences=4/4 - Changes since [refresh duration] sec: 0 ([global cps] c/s)
+  Group name + Latest mark                   + Changes since mark + Changes since prev.
+    myGroup1 | Multi-1 ([latest mark date and time]) |   359 ([cps]) |      0 ([cps])
+  Table name          + Group    + Changes since mark + Changes since prev.
+    myschema1.mytbl1  | myGroup1 |   211 ([cps]) |      0 ([cps])
+    myschema1.myTbl3  | myGroup1 |    60 ([cps]) |      0 ([cps])
+    myschema1.mytbl2b | myGroup1 |    52 ([cps]) |      0 ([cps])
+    myschema1.mytbl2  | myGroup1 |    27 ([cps]) |      0 ([cps])
+    myschema1.mytbl4  | myGroup1 |     9 ([cps]) |      0 ([cps])
+  Sequence name             + Group    + Changes since mark + Changes since prev.
+    myschema1.mytbl2b_col20 | myGroup1 |    -5 ([cps]) |      0 ([cps])

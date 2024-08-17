@@ -102,11 +102,13 @@ Après :doc:`installation <install>`, une version d’E-Maj contient les fichier
 +---------------------------------------------+-----------------------------------------------------------------------------+
 | doc/Emaj.<version>_pres.fr.pdf              | présentation en français de l'extension E-Maj (version pdf)                 |
 +---------------------------------------------+-----------------------------------------------------------------------------+
-| client/emajParallelRollback.php             | client php pour les rollbacks parallélisés                                  |
+| client/emajParallelRollback.php             | client php pour soumettre des rollbacks parallélisés                        |
 +---------------------------------------------+-----------------------------------------------------------------------------+
-| client/emajParallelRollback.pl              | client perl pour les rollbacks parallélisés                                 |
+| client/emajParallelRollback.pl              | client perl pour soumettre des rollbacks parallélisés                       |
 +---------------------------------------------+-----------------------------------------------------------------------------+
-| client/emajRollbackMonitor.php              | client php pour le suivi des rollbacks                                      |
+| client/emajRollbackMonitor.php              | client php pour suivre les rollbacks                                        |
 +---------------------------------------------+-----------------------------------------------------------------------------+
-| client/emajRollbackMonitor.pl               | client perl pour le suivi des rollbacks                                     |
+| client/emajRollbackMonitor.pl               | client perl pour suivre les rollbacks                                       |
++---------------------------------------------+-----------------------------------------------------------------------------+
+| client/emajStat.pl                          | client perl pour suivre l'enregistrement des mises à jour                   |
 +---------------------------------------------+-----------------------------------------------------------------------------+
