@@ -874,7 +874,7 @@ select * from emaj._get_sequences_last_value(null, null, null, null, null, null)
  myschema4.mytblr                 | 2
  phil's schema3.myTbl2\           | 0
  phil's schema3.myTbl2\_col21_seq | 0
- phil's schema3.phil's seq\1      | 0
+ phil's schema3.phil's seq\1      | 999
  phil's schema3.phil's tbl1       | 0
 (29 rows)
 

@@ -338,7 +338,7 @@ $_get_sequences_last_value$
     IF p_tablesExcludeFilter != '.*' THEN
       v_stmt = v_stmt || $$
       UNION ALL
-        SELECT rel_schema || '.' || rel_tblseq, coalesce(last_value, 0)::TEXT AS seq_current
+        SELECT rel_schema || '.' || rel_tblseq, coalesce(last_value, start_value - increment_by)::TEXT AS seq_current
           FROM emaj.emaj_relation
             JOIN filtered_group ON (group_name = rel_group)
             JOIN pg_catalog.pg_sequences ON (schemaname = rel_log_schema AND sequencename = rel_log_sequence)
@@ -351,7 +351,7 @@ $_get_sequences_last_value$
     IF p_sequencesExcludeFilter != '.*' THEN
       v_stmt = v_stmt || $$
       UNION ALL
-        SELECT rel_schema || '.' || rel_tblseq, coalesce(last_value, 0)::TEXT AS seq_current
+        SELECT rel_schema || '.' || rel_tblseq, coalesce(last_value, start_value - increment_by)::TEXT AS seq_current
           FROM emaj.emaj_relation
             JOIN filtered_group ON (group_name = rel_group)
             JOIN pg_catalog.pg_sequences ON (schemaname = rel_schema AND sequencename = rel_tblseq)
