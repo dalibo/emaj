@@ -73,6 +73,8 @@ Dans ce second cas de figure, ce contrôle d’intégrité est réalisé :
 
 La première option est choisie si la clé étrangère est déclarée *DEFERRABLE* et si elle ne porte pas de clause *ON DELETE* ou *ON UPDATE*.
 
+Les clés étrangères (*FOREIGN KEYs*) définies au niveau des tables partitionnées ne sont pas supportées par les opérations de rollback E-Maj. En effet, il n’est pas possible de supprimer puis recréer la clé étrangère sur une seule partition, en cas de besoin. Et il n'est pas possible non plus de purement supprimer et recréer la clé sur la table partitionnée, car d’autres partitions hors des groupes de tables concernées par le rollback peuvent nécessiter de conserver la contrainte active durant l’opération. Pour contourner cette limite, les clés étrangères peuvent être créées au niveau de chaque partition élémentaire.
+
 
 Gestion des triggers applicatifs
 --------------------------------

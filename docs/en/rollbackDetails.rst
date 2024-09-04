@@ -72,6 +72,8 @@ In this second case, checking the referential integrity is performed:
 
 The first option is choosen if the foreign key is declared *DEFERRABLE* and does not hold an *ON DELETE* or *ON UPDATE* clause.
 
+*FOREIGN KEYs* defined on partitionned tables are not supported by E-Maj rollback operations. Indeed, it is impossible to drop and recreate such a foreign key for just a partition, if needed. And it is also impossible to simply drop and recreate the foreign key on the partitionned table because other partitions located outside the rolled back tables groups may need to keep the foreign key enabled during the operation. As a workaround, foreign keys can be created on each elementary partition.
+
 Application triggers management
 -------------------------------
 
