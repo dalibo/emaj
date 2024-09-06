@@ -1,6 +1,7 @@
 E-Maj - Change log
 ==================
-<devel>
+
+4.5.0 (2025-Sept-6)
 ------
 ###Enhancements:###
   * Support of PG17

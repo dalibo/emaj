@@ -74,13 +74,13 @@
 	git mv sql/emaj-devel.sql sql/emaj-${NEW}.sql
 
 # Change version identifiers inside files from /client
-	find client/emajParallelRollback* client/emajRollbackMonitor* -type f -exec sed -i.bak "s/<devel>/${NEW}/g" '{}' \;
+	find client/emajParallelRollback* client/emajRollbackMonitor* client/emajStat* -type f -exec sed -i.bak "s/<devel>/${NEW}/g" '{}' \;
 
 # Change version identifiers inside README.md
 	sed -i.bak "s/<devel>/${NEW}/g" README.md
 
 # Change version identifiers inside META.json
-	sed -i.bak "s/([\"\.-])devel([\"\._])/\1${NEW}\2/" META.json
+	sed -i.bak -e "s/\"devel\"/\"${NEW}\"/" -e "s/emaj--devel.sql/emaj--${NEW}.sql/" -e "s/Emaj.devel_doc/Emaj.${NEW}_doc/" META.json
 
 # Change version identifiers inside emaj.control
 	sed -i.bak "s/devel/${NEW}/g" emaj.control
