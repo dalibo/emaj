@@ -504,8 +504,10 @@ select hist_function, hist_event, hist_object,
  EMAJ_INSTALL             | END                | E-Maj 4.3.1                  | Upgrade from 4.3.0 completed                                                                  | postgres
  EMAJ_INSTALL             | BEGIN              | E-Maj 4.4.0                  | Upgrade from 4.3.1 started                                                                    | postgres
  EMAJ_INSTALL             | END                | E-Maj 4.4.0                  | Upgrade from 4.3.1 completed                                                                  | postgres
- EMAJ_INSTALL             | BEGIN              | E-Maj <devel>                | Upgrade from 4.4.0 started                                                                    | postgres
- EMAJ_INSTALL             | END                | E-Maj <devel>                | Upgrade from 4.4.0 completed                                                                  | postgres
+ EMAJ_INSTALL             | BEGIN              | E-Maj 4.5.0                  | Upgrade from 4.4.0 started                                                                    | postgres
+ EMAJ_INSTALL             | END                | E-Maj 4.5.0                  | Upgrade from 4.4.0 completed                                                                  | postgres
+ EMAJ_INSTALL             | BEGIN              | E-Maj <devel>                | Upgrade from 4.5.0 started                                                                    | postgres
+ EMAJ_INSTALL             | END                | E-Maj <devel>                | Upgrade from 4.5.0 completed                                                                  | postgres
  UNPROTECT_GROUP          |                    | myGroup1                     | Status 1                                                                                      | postgres
  ROLLBACK_GROUPS          | BEGIN              | myGroup1,myGroup2            | Unlogged rollback to mark Common (timestamp)                                                  | postgres
  DBLINK_OPEN_CNX          |                    | rlbk#1                       | Status = -5                                                                                   | postgres
@@ -637,7 +639,7 @@ select hist_function, hist_event, hist_object,
  DELETE_MARK_GROUP        | END                | myGroup1                     | M1                                                                                            | postgres
  DELETE_BEFORE_MARK_GROUP | BEGIN              | myGroup1                     | M4                                                                                            | postgres
  DELETE_BEFORE_MARK_GROUP | END                | myGroup1                     | 2 marks deleted ; M4 is now the initial mark                                                  | postgres
-(268 rows)
+(270 rows)
 
 --
 reset role;

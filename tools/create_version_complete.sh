@@ -141,10 +141,12 @@
 	mv client/emajParallelRollback.php.bak client/emajParallelRollback.php
 	mv client/emajParallelRollback.pl.bak client/emajParallelRollback.pl
 	mv client/emajRollbackMonitor.pl.bak client/emajRollbackMonitor.pl
+	mv client/emajStat.pl.bak client/emajStat.pl
 	mv test/sql/upgrade_while_logging.sql.bak test/sql/upgrade_while_logging.sql
 	mv test/sql/install_psql.sql.bak test/sql/install_psql.sql
 	mv test/sql/install_upgrade.sql.bak test/sql/install_upgrade.sql
 	mv test/sql/install.sql.bak test/sql/install.sql
+	mv test/sql/install_oldest.sql.bak test/sql/install_oldest.sql
 
 # Adjust the extension version to create into the install_previous.sql and install_upgrade.sql test scripts
 	rm test/sql/install_previous.sql.bak
