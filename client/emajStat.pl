@@ -685,8 +685,8 @@ sub displayGroups {
 		# Mask some data in regression test mode to get stable outputs.
 		if ($regressTest) {
 			$latestMarkTs = '[latest mark date and time]';
-			$cpsSinceMark = '([cps])';
-			$cpsSincePrevious = '([cps])';
+			$pad1 = ''; $cpsSinceMark = '([cps])';
+			$pad2 = ''; $cpsSincePrevious = '([cps])';
 		}
 		# Print the line.
 		printf "    $groupName | $latestMark ($latestMarkTs) | $pad1$changesSinceMark $cpsSinceMark";
@@ -759,8 +759,8 @@ sub displayTables {
 		}
 		# Mask some data in regression test mode to get stable outputs.
 		if ($regressTest) {
-			$cpsSinceMark = '([cps])';
-			$cpsSincePrevious = '([cps])';
+			$pad1 = ''; $cpsSinceMark = '([cps])';
+			$pad2 = ''; $cpsSincePrevious = '([cps])';
 		}
 		# Print the line.
 		print "    $tableName | $groupName | $pad1$changesSinceMark $cpsSinceMark";
@@ -833,8 +833,8 @@ sub displaySequences {
 		}
 		# Mask some data in regression test mode to get stable outputs.
 		if ($regressTest) {
-			$cpsSinceMark = '([cps])';
-			$cpsSincePrevious = '([cps])';
+			$pad1 = ''; $cpsSinceMark = '([cps])';
+			$pad2 = ''; $cpsSincePrevious = '([cps])';
 		}
 		# Print the line.
 		print "    $sequenceName | $groupName | $pad1$changesSinceMark $cpsSinceMark";
