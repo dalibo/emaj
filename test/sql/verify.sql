@@ -443,7 +443,7 @@ drop function public._emaj_protection_event_trigger_fnct() CASCADE;
 -- missing event triggers
 begin;
   drop event trigger emaj_protection_trg;
-  select emaj.emaj_verify_all();
+  select * from emaj.emaj_verify_all();
   select emaj.emaj_enable_protection_by_event_triggers();
 rollback;
 

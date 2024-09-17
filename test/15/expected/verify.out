@@ -948,7 +948,7 @@ CONTEXT:  PL/pgSQL function emaj._event_trigger_sql_drop_fnct() line 102 at RAIS
 -- missing event triggers
 begin;
   drop event trigger emaj_protection_trg;
-  select emaj.emaj_verify_all();
+  select * from emaj.emaj_verify_all();
                                                                  emaj_verify_all                                                                  
 --------------------------------------------------------------------------------------------------------------------------------------------------
  Warning: The "emaj_protection_trg" event triggers is missing. It can be recreated using the emaj_enable_protection_by_event_triggers() function.
