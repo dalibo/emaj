@@ -4746,14 +4746,11 @@ $_delete_log_tbl$
         AND sqhl_begin_time_id >= p_beginTimeId
         AND sqhl_begin_time_id < p_endTimeId;
 -- Then insert the new log sequence hole.
-    EXECUTE format('INSERT INTO emaj.emaj_seq_hole (sqhl_schema, sqhl_table, sqhl_begin_time_id, sqhl_end_time_id, sqhl_hole_size)'
-                   ' VALUES (%L, %L, %s, %s, ('
-                   '   SELECT CASE WHEN is_called THEN last_value ELSE last_value - 1 END FROM %I.%I'
-                   '   )-('
-                   '   SELECT tbl_log_seq_last_val FROM emaj.emaj_table'
-                   '     WHERE tbl_schema = %L AND tbl_name = %L AND tbl_time_id = %s))',
-                   r_rel.rel_schema, r_rel.rel_tblseq, p_beginTimeId, p_endTimeId, r_rel.rel_log_schema, r_rel.rel_log_sequence,
-                   r_rel.rel_schema, r_rel.rel_tblseq, p_beginTimeId);
+    INSERT INTO emaj.emaj_seq_hole (sqhl_schema, sqhl_table, sqhl_begin_time_id, sqhl_end_time_id, sqhl_hole_size)
+      SELECT r_rel.rel_schema, r_rel.rel_tblseq, p_beginTimeId, p_endTimeId,
+             emaj._get_log_sequence_last_value(r_rel.rel_log_schema, r_rel.rel_log_sequence) - tbl_log_seq_last_val
+        FROM emaj.emaj_table
+        WHERE tbl_schema = r_rel.rel_schema AND tbl_name = r_rel.rel_tblseq AND tbl_time_id = p_beginTimeId;
 --
     RETURN v_nbRows;
   END;
@@ -4857,51 +4854,54 @@ CREATE OR REPLACE FUNCTION emaj._log_stat_tbl(r_rel emaj.emaj_relation, p_beginT
 RETURNS BIGINT LANGUAGE plpgsql AS
 $_log_stat_tbl$
 -- This function returns the number of log rows for a single table between 2 time stamps or between a time stamp and the current state.
--- It is called by the emaj_log_stat_group(), _rlbk_planning(), _rlbk_start_mark() and _gen_sql_groups() functions.
--- These statistics are computed using the log sequence associated to each application table and holes is sequences recorded into
---   emaj_seq_hole at rollback time or rollback consolidation time.
--- Input: row from emaj_relation corresponding to the appplication table to proccess, the time stamp ids defining the time range to examine
+-- It is called by various functions, when building log statistics, but also when setting or deleting a mark, rollbacking a group
+--   or dumping changes.
+-- These statistics are computed using the log sequence associated to each application table and holes in sequences recorded into
+--   emaj_seq_hole.
+-- Input: emaj_relation row corresponding to the appplication table to proccess, the time stamp ids defining the time range to examine
 --        (a end time stamp id set to NULL indicates the current state)
 -- Output: number of log rows between both marks for the table
-  DECLARE
-    v_beginLastValue         BIGINT;
-    v_endLastValue           BIGINT;
-    v_sumHole                BIGINT;
   BEGIN
--- Get the log sequence last value at begin time id.
-    SELECT tbl_log_seq_last_val INTO STRICT v_beginLastValue
-      FROM emaj.emaj_table
-      WHERE tbl_schema = r_rel.rel_schema
-        AND tbl_name = r_rel.rel_tblseq
-        AND tbl_time_id = p_beginTimeId;
     IF p_endTimeId IS NULL THEN
--- Last time id is NULL, so examine the current state of the log sequence,
-      EXECUTE format('SELECT CASE WHEN is_called THEN last_value ELSE last_value - 1 END FROM %I.%I',
-                     r_rel.rel_log_schema, r_rel.rel_log_sequence)
-        INTO STRICT v_endLastValue;
--- ... and count the sum of hole from the start time to now.
-      SELECT coalesce(sum(sqhl_hole_size),0) INTO v_sumHole
-        FROM emaj.emaj_seq_hole
-        WHERE sqhl_schema = r_rel.rel_schema
-          AND sqhl_table = r_rel.rel_tblseq
-          AND sqhl_begin_time_id >= p_beginTimeId;
+-- Compute log rows between a mark and the current state.
+      RETURN
+           -- the current last value of the log sequence
+          (SELECT emaj._get_log_sequence_last_value(r_rel.rel_log_schema, r_rel.rel_log_sequence))
+           -- the log sequence last value at begin time id
+        - (SELECT tbl_log_seq_last_val
+             FROM emaj.emaj_table
+             WHERE tbl_schema = r_rel.rel_schema
+               AND tbl_name = r_rel.rel_tblseq
+               AND tbl_time_id = p_beginTimeId)
+           -- sum of hole from the begin time to now
+        - (SELECT coalesce(sum(sqhl_hole_size),0)
+             FROM emaj.emaj_seq_hole
+             WHERE sqhl_schema = r_rel.rel_schema
+               AND sqhl_table = r_rel.rel_tblseq
+               AND sqhl_begin_time_id >= p_beginTimeId);
     ELSE
--- Last time id is not NULL, so get the log sequence last value at end time id,
-      SELECT tbl_log_seq_last_val INTO v_endLastValue
-        FROM emaj.emaj_table
-        WHERE tbl_schema = r_rel.rel_schema
-          AND tbl_name = r_rel.rel_tblseq
-          AND tbl_time_id = p_endTimeId;
---  ... and count the sum of hole from the start time to the end time.
-      SELECT coalesce(sum(sqhl_hole_size),0) INTO v_sumHole
-        FROM emaj.emaj_seq_hole
-        WHERE sqhl_schema = r_rel.rel_schema
-          AND sqhl_table = r_rel.rel_tblseq
-          AND sqhl_begin_time_id >= p_beginTimeId
-          AND sqhl_end_time_id <= p_endTimeId;
+-- Compute log rows between 2 marks.
+      RETURN
+           -- the log sequence last value at end time id
+          (SELECT tbl_log_seq_last_val
+             FROM emaj.emaj_table
+             WHERE tbl_schema = r_rel.rel_schema
+               AND tbl_name = r_rel.rel_tblseq
+               AND tbl_time_id = p_endTimeId)
+           -- the log sequence last value at begin time id
+        - (SELECT tbl_log_seq_last_val
+             FROM emaj.emaj_table
+             WHERE tbl_schema = r_rel.rel_schema
+               AND tbl_name = r_rel.rel_tblseq
+               AND tbl_time_id = p_beginTimeId)
+           -- sum of hole between begin time and end time
+        - (SELECT coalesce(sum(sqhl_hole_size),0)
+             FROM emaj.emaj_seq_hole
+             WHERE sqhl_schema = r_rel.rel_schema
+               AND sqhl_table = r_rel.rel_tblseq
+               AND sqhl_begin_time_id >= p_beginTimeId
+               AND sqhl_end_time_id <= p_endTimeId);
     END IF;
--- Return the stat row for the table.
-    RETURN (v_endLastValue - v_beginLastValue - v_sumHole);
   END;
 $_log_stat_tbl$;
 
@@ -5103,14 +5103,21 @@ CREATE OR REPLACE FUNCTION emaj._get_log_sequence_last_value(p_schema TEXT, p_se
 RETURNS BIGINT LANGUAGE plpgsql AS
 $_get_log_sequence_last_value$
 -- The function returns the last value state of a single log sequence.
+-- It first calls the undocumented but very efficient pg_sequence_last_value(oid) function.
+-- If this pg_sequence_last_value() function returns NULL, meaning the is_called attribute is FALSE which is not a frequent case,
+--   select the sequence itself.
 -- Input: log schema and log sequence name,
 -- Output: last_value
   DECLARE
     v_lastValue                BIGINT;
   BEGIN
-    EXECUTE format('SELECT CASE WHEN is_called THEN last_value ELSE last_value - 1 END as last_value FROM %I.%I',
-                   p_schema, p_sequence)
-      INTO STRICT v_lastValue;
+    SELECT pg_sequence_last_value((quote_ident(p_schema) || '.' || quote_ident(p_sequence))::regclass) INTO v_lastValue;
+    IF v_lastValue IS NULL THEN
+-- The is_called attribute seems to be false, so reach the sequence itself.
+      EXECUTE format('SELECT CASE WHEN is_called THEN last_value ELSE last_value - 1 END as last_value FROM %I.%I',
+                     p_schema, p_sequence)
+        INTO STRICT v_lastValue;
+    END IF;
     RETURN v_lastValue;
   END;
 $_get_log_sequence_last_value$;
@@ -10690,10 +10697,9 @@ $_get_sequences_last_value$
     IF p_tablesExcludeFilter != '.*' THEN
       v_stmt = v_stmt || $$
       UNION ALL
-        SELECT rel_schema || '.' || rel_tblseq, coalesce(last_value, start_value - increment_by)::TEXT AS seq_current
+        SELECT rel_schema || '.' || rel_tblseq, emaj._get_log_sequence_last_value(rel_log_schema, rel_log_sequence)::TEXT AS seq_current
           FROM emaj.emaj_relation
             JOIN filtered_group ON (group_name = rel_group)
-            JOIN pg_catalog.pg_sequences ON (schemaname = rel_log_schema AND sequencename = rel_log_sequence)
          WHERE upper_inf(rel_time_range)
            AND rel_kind = 'r'
            AND (rel_schema || '.' || rel_tblseq) ~ $3

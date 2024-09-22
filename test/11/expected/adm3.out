@@ -1423,10 +1423,22 @@ select * from emaj.emaj_verify_all();
 --     a removal while the group is LOGGING fails
 select emaj.emaj_remove_table('phil''s schema3','mytbl4');
 ERROR:  relation "emaj_phil's schema3.mytbl4_log_seq" does not exist
-LINE 1: ...lled THEN last_value ELSE last_value - 1 END FROM "emaj_phil...
-                                                             ^
-QUERY:  SELECT CASE WHEN is_called THEN last_value ELSE last_value - 1 END FROM "emaj_phil's schema3".mytbl4_log_seq
-CONTEXT:  PL/pgSQL function emaj._log_stat_tbl(emaj.emaj_relation,bigint,bigint) line 22 at EXECUTE
+CONTEXT:  SQL statement "SELECT pg_sequence_last_value((quote_ident(p_schema) || '.' || quote_ident(p_sequence))::regclass)"
+PL/pgSQL function emaj._get_log_sequence_last_value(text,text) line 11 at SQL statement
+SQL statement "SELECT (SELECT emaj._get_log_sequence_last_value(r_rel.rel_log_schema, r_rel.rel_log_sequence))
+           -- the log sequence last value at begin time id
+        - (SELECT tbl_log_seq_last_val
+             FROM emaj.emaj_table
+             WHERE tbl_schema = r_rel.rel_schema
+               AND tbl_name = r_rel.rel_tblseq
+               AND tbl_time_id = p_beginTimeId)
+           -- sum of hole from the begin time to now
+        - (SELECT coalesce(sum(sqhl_hole_size),0)
+             FROM emaj.emaj_seq_hole
+             WHERE sqhl_schema = r_rel.rel_schema
+               AND sqhl_table = r_rel.rel_tblseq
+               AND sqhl_begin_time_id >= p_beginTimeId)"
+PL/pgSQL function emaj._log_stat_tbl(emaj.emaj_relation,bigint,bigint) line 13 at RETURN
 SQL statement "SELECT coalesce(sum(emaj._log_stat_tbl(emaj_relation, greatest(v_latestMarkTimeId, lower(rel_time_range)),NULL)), 0)
                                      FROM emaj.emaj_relation
           WHERE rel_group = v_group

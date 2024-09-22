@@ -147,7 +147,7 @@ select funcname, calls from pg_stat_user_functions
  _get_current_sequence_state               |   987
  _get_default_tablespace                   |    11
  _get_lock_tblseqs_groups                  |   148
- _get_log_sequence_last_value              |  2254
+ _get_log_sequence_last_value              |  5793
  _get_previous_mark_group                  |    38
  _get_sequences_last_value                 |     7
  _handle_trigger_fk_tbl                    |  2892
