@@ -203,6 +203,28 @@ $_log_stat_tbl$
   END;
 $_log_stat_tbl$;
 
+CREATE OR REPLACE FUNCTION emaj._get_current_sequence_state(p_schema TEXT, p_sequence TEXT, p_timeId BIGINT)
+RETURNS emaj.emaj_sequence LANGUAGE plpgsql AS
+$_get_current_sequence_state$
+-- The function returns the current state of a single sequence.
+-- Input: schema and sequence name,
+--        time_id to set the sequ_time_id
+-- Output: an emaj_sequence record
+  DECLARE
+    r_sequ                   emaj.emaj_sequence%ROWTYPE;
+  BEGIN
+    EXECUTE format('SELECT nspname, relname, %s, sq.last_value, seqstart, seqincrement, seqmax, seqmin, seqcache, seqcycle, sq.is_called'
+                   '  FROM %I.%I sq,'
+                   '       pg_catalog.pg_sequence s'
+                   '       JOIN pg_class c ON (c.oid = s.seqrelid)'
+                   '       JOIN pg_namespace n ON (n.oid = c.relnamespace)'
+                   '  WHERE nspname = %L AND relname = %L',
+                   coalesce(p_timeId, 0), p_schema, p_sequence, p_schema, p_sequence)
+      INTO STRICT r_sequ;
+    RETURN r_sequ;
+  END;
+$_get_current_sequence_state$;
+
 CREATE OR REPLACE FUNCTION emaj._get_log_sequence_last_value(p_schema TEXT, p_sequence TEXT)
 RETURNS BIGINT LANGUAGE plpgsql AS
 $_get_log_sequence_last_value$
@@ -247,7 +269,7 @@ $_get_app_sequence_last_value$
                      '         (SELECT seqincrement'
                      '            FROM pg_catalog.pg_sequence s'
                      '                 JOIN pg_class c ON (c.oid = s.seqrelid)'
-                     '                 LEFT JOIN pg_namespace n ON (n.oid = c.relnamespace)'
+                     '                 JOIN pg_namespace n ON (n.oid = c.relnamespace)'
                      '            WHERE nspname = %L AND relname = %L'
                      '         ) END as last_value FROM %I.%I',
                      p_schema, p_sequence, p_schema, p_sequence)
@@ -334,6 +356,121 @@ $_get_sequences_last_value$
     RETURN;
   END;
 $_get_sequences_last_value$;
+
+CREATE OR REPLACE FUNCTION emaj.emaj_snap_group(p_groupName TEXT, p_dir TEXT, p_copyOptions TEXT)
+RETURNS INT LANGUAGE plpgsql AS
+$emaj_snap_group$
+-- This function creates a file for each table and sequence belonging to the group.
+-- For tables, these files contain all rows sorted on primary key.
+-- For sequences, they contain a single row describing the sequence.
+-- To do its job, the function performs COPY TO statement, with all default parameters.
+-- For table without primary key, rows are sorted on all columns.
+-- There is no need for the group not to be logging.
+-- As all COPY statements are executed inside a single transaction:
+--   - the function can be called while other transactions are running,
+--   - the snap files will present a coherent state of tables.
+-- It's users responsability:
+--   - to create the directory (with proper permissions allowing the cluster to write into) before the emaj_snap_group function call, and
+--   - maintain its content outside E-maj.
+-- Input: group name,
+--        the absolute pathname of the directory where the files are to be created and the options to used in the COPY TO statements
+-- Output: number of processed tables and sequences
+  DECLARE
+    v_nbRel                  INT = 0;
+    r_tblsq                  RECORD;
+    v_fullTableName          TEXT;
+    v_colList                TEXT;
+    v_pathName               TEXT;
+    v_stmt                   TEXT;
+  BEGIN
+-- Insert a BEGIN event into the history.
+    INSERT INTO emaj.emaj_hist (hist_function, hist_event, hist_object, hist_wording)
+      VALUES ('SNAP_GROUP', 'BEGIN', p_groupName, p_dir);
+-- Check the group name.
+    PERFORM emaj._check_group_names(p_groupNames := ARRAY[p_groupName], p_mayBeNull := FALSE, p_lockGroups := FALSE);
+-- Check the supplied directory is not null.
+    IF p_dir IS NULL THEN
+      RAISE EXCEPTION 'emaj_snap_group: The directory parameter cannot be NULL.';
+    END IF;
+-- Check the copy options parameter doesn't contain unquoted ; that could be used for sql injection.
+    IF regexp_replace(p_copyOptions,'''.*''','') LIKE '%;%' THEN
+      RAISE EXCEPTION 'emaj_snap_group: The COPY options parameter format is invalid.';
+    END IF;
+-- For each table/sequence of the emaj_relation table.
+    FOR r_tblsq IN
+      SELECT rel_priority, rel_schema, rel_tblseq, rel_kind
+        FROM emaj.emaj_relation
+        WHERE upper_inf(rel_time_range)
+          AND rel_group = p_groupName
+        ORDER BY rel_priority, rel_schema, rel_tblseq
+    LOOP
+      v_pathName = emaj._build_path_name(p_dir, r_tblsq.rel_schema || '_' || r_tblsq.rel_tblseq || '.snap');
+      CASE r_tblsq.rel_kind
+        WHEN 'r' THEN
+-- It is a table.
+          v_fullTableName = quote_ident(r_tblsq.rel_schema) || '.' || quote_ident(r_tblsq.rel_tblseq);
+--   Build the order by column list.
+          IF EXISTS
+               (SELECT 0
+                  FROM pg_catalog.pg_class
+                       JOIN pg_catalog.pg_namespace ON (pg_namespace.oid = relnamespace)
+                       JOIN pg_catalog.pg_constraint ON (connamespace = pg_namespace.oid AND conrelid = pg_class.oid)
+                  WHERE contype = 'p'
+                    AND nspname = r_tblsq.rel_schema
+                    AND relname = r_tblsq.rel_tblseq
+               ) THEN
+--   The table has a pkey.
+            SELECT string_agg(quote_ident(attname), ',') INTO v_colList
+              FROM
+                (SELECT attname
+                   FROM pg_catalog.pg_attribute
+                        JOIN pg_catalog.pg_index ON (pg_index.indrelid = pg_attribute.attrelid)
+                   WHERE attnum = ANY (indkey)
+                     AND indrelid = v_fullTableName::regclass
+                     AND indisprimary
+                     AND attnum > 0
+                     AND attisdropped = FALSE
+                ) AS t;
+          ELSE
+--   The table has no pkey.
+            SELECT string_agg(quote_ident(attname), ',') INTO v_colList
+              FROM
+                (SELECT attname
+                   FROM pg_catalog.pg_attribute
+                   WHERE attrelid = v_fullTableName::regclass
+                     AND attnum > 0
+                     AND attisdropped = FALSE
+                ) AS t;
+          END IF;
+--   Dump the table
+          v_stmt = format('(SELECT * FROM %s ORDER BY %s)', v_fullTableName, v_colList);
+          PERFORM emaj._copy_to_file(v_stmt, v_pathName, p_copyOptions);
+        WHEN 'S' THEN
+-- It is a sequence.
+          v_stmt = format('(SELECT relname, rel.last_value, seqstart, seqincrement, seqmax, seqmin, seqcache, seqcycle, rel.is_called'
+                          '  FROM %I.%I rel,'
+                          '       pg_catalog.pg_sequence s'
+                          '       JOIN pg_class c ON (c.oid = s.seqrelid)'
+                          '       JOIN pg_namespace n ON (n.oid = c.relnamespace)'
+                          '  WHERE nspname = %L AND relname = %L)',
+                         r_tblsq.rel_schema, r_tblsq.rel_tblseq, r_tblsq.rel_schema, r_tblsq.rel_tblseq);
+--    Dump the sequence properties.
+          PERFORM emaj._copy_to_file(v_stmt, v_pathName, p_copyOptions);
+      END CASE;
+      v_nbRel = v_nbRel + 1;
+    END LOOP;
+-- Create the _INFO file to keep general information about the snap operation.
+    v_stmt = '(SELECT ' || quote_literal('E-Maj snap of tables group ' || p_groupName || ' at ' || transaction_timestamp()) || ')';
+    PERFORM emaj._copy_to_file(v_stmt, p_dir || '/_INFO', NULL);
+-- Insert a END event into the history.
+    INSERT INTO emaj.emaj_hist (hist_function, hist_event, hist_object, hist_wording)
+      VALUES ('SNAP_GROUP', 'END', p_groupName, v_nbRel || ' tables/sequences processed');
+--
+    RETURN v_nbRel;
+  END;
+$emaj_snap_group$;
+COMMENT ON FUNCTION emaj.emaj_snap_group(TEXT,TEXT,TEXT) IS
+$$Snaps all application tables and sequences of an E-Maj group into a given directory.$$;
 
 --<end_functions>                                pattern used by the tool that extracts and insert the functions definition
 ------------------------------------------

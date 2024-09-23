@@ -5090,9 +5090,12 @@ $_get_current_sequence_state$
   DECLARE
     r_sequ                   emaj.emaj_sequence%ROWTYPE;
   BEGIN
-    EXECUTE format('SELECT schemaname, sequencename, %s, rel.last_value, start_value, increment_by, max_value, min_value, cache_size,'
-                   '       cycle, rel.is_called FROM %I.%I rel, pg_catalog.pg_sequences '
-                   '  WHERE schemaname = %L AND sequencename = %L',
+    EXECUTE format('SELECT nspname, relname, %s, sq.last_value, seqstart, seqincrement, seqmax, seqmin, seqcache, seqcycle, sq.is_called'
+                   '  FROM %I.%I sq,'
+                   '       pg_catalog.pg_sequence s'
+                   '       JOIN pg_class c ON (c.oid = s.seqrelid)'
+                   '       JOIN pg_namespace n ON (n.oid = c.relnamespace)'
+                   '  WHERE nspname = %L AND relname = %L',
                    coalesce(p_timeId, 0), p_schema, p_sequence, p_schema, p_sequence)
       INTO STRICT r_sequ;
     RETURN r_sequ;
@@ -5143,7 +5146,7 @@ $_get_app_sequence_last_value$
                      '         (SELECT seqincrement'
                      '            FROM pg_catalog.pg_sequence s'
                      '                 JOIN pg_class c ON (c.oid = s.seqrelid)'
-                     '                 LEFT JOIN pg_namespace n ON (n.oid = c.relnamespace)'
+                     '                 JOIN pg_namespace n ON (n.oid = c.relnamespace)'
                      '            WHERE nspname = %L AND relname = %L'
                      '         ) END as last_value FROM %I.%I',
                      p_schema, p_sequence, p_schema, p_sequence)
@@ -11849,10 +11852,10 @@ $emaj_snap_group$
         ORDER BY rel_priority, rel_schema, rel_tblseq
     LOOP
       v_pathName = emaj._build_path_name(p_dir, r_tblsq.rel_schema || '_' || r_tblsq.rel_tblseq || '.snap');
-      v_fullTableName = quote_ident(r_tblsq.rel_schema) || '.' || quote_ident(r_tblsq.rel_tblseq);
       CASE r_tblsq.rel_kind
         WHEN 'r' THEN
 -- It is a table.
+          v_fullTableName = quote_ident(r_tblsq.rel_schema) || '.' || quote_ident(r_tblsq.rel_tblseq);
 --   Build the order by column list.
           IF EXISTS
                (SELECT 0
@@ -11887,15 +11890,17 @@ $emaj_snap_group$
                 ) AS t;
           END IF;
 --   Dump the table
-          v_stmt= '(SELECT * FROM ' || v_fullTableName || ' ORDER BY ' || v_colList || ')';
+          v_stmt = format('(SELECT * FROM %s ORDER BY %s)', v_fullTableName, v_colList);
           PERFORM emaj._copy_to_file(v_stmt, v_pathName, p_copyOptions);
         WHEN 'S' THEN
--- If it is a sequence, the statement has no order by.
-          v_stmt = '(SELECT sequencename, rel.last_value, start_value, increment_by, max_value, '
-                || 'min_value, cache_size, cycle, rel.is_called '
-                || 'FROM ' || v_fullTableName || ' rel, pg_catalog.pg_sequences '
-                || 'WHERE schemaname = '|| quote_literal(r_tblsq.rel_schema) || ' AND sequencename = '
-                || quote_literal(r_tblsq.rel_tblseq) ||')';
+-- It is a sequence.
+          v_stmt = format('(SELECT relname, rel.last_value, seqstart, seqincrement, seqmax, seqmin, seqcache, seqcycle, rel.is_called'
+                          '  FROM %I.%I rel,'
+                          '       pg_catalog.pg_sequence s'
+                          '       JOIN pg_class c ON (c.oid = s.seqrelid)'
+                          '       JOIN pg_namespace n ON (n.oid = c.relnamespace)'
+                          '  WHERE nspname = %L AND relname = %L)',
+                         r_tblsq.rel_schema, r_tblsq.rel_tblseq, r_tblsq.rel_schema, r_tblsq.rel_tblseq);
 --    Dump the sequence properties.
           PERFORM emaj._copy_to_file(v_stmt, v_pathName, p_copyOptions);
       END CASE;
