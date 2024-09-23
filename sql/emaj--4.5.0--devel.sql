@@ -207,6 +207,7 @@ CREATE OR REPLACE FUNCTION emaj._get_log_sequence_last_value(p_schema TEXT, p_se
 RETURNS BIGINT LANGUAGE plpgsql AS
 $_get_log_sequence_last_value$
 -- The function returns the last value state of a single log sequence.
+-- If the sequence has not been called, it returns the previous value, the increment being always 1.
 -- It first calls the undocumented but very efficient pg_sequence_last_value(oid) function.
 -- If this pg_sequence_last_value() function returns NULL, meaning the is_called attribute is FALSE which is not a frequent case,
 --   select the sequence itself.
@@ -225,6 +226,36 @@ $_get_log_sequence_last_value$
     RETURN v_lastValue;
   END;
 $_get_log_sequence_last_value$;
+
+CREATE OR REPLACE FUNCTION emaj._get_app_sequence_last_value(p_schema TEXT, p_sequence TEXT)
+RETURNS BIGINT LANGUAGE plpgsql AS
+$_get_app_sequence_last_value$
+-- The function returns the last value state of a single application sequence.
+-- If the sequence has not been called, it returns the previous value defined as (last_value - increment).
+-- It first calls the undocumented but very efficient pg_sequence_last_value(oid) function.
+-- If this pg_sequence_last_value() function returns NULL, meaning the is_called attribute is FALSE which is not a frequent case,
+--   select the sequence itself.
+-- Input: schema and sequence name
+-- Output: last_value
+  DECLARE
+    v_lastValue                BIGINT;
+  BEGIN
+    SELECT pg_sequence_last_value((quote_ident(p_schema) || '.' || quote_ident(p_sequence))::regclass) INTO v_lastValue;
+    IF v_lastValue IS NULL THEN
+-- The is_called attribute seems to be false, so reach the sequence itself.
+      EXECUTE format('SELECT CASE WHEN is_called THEN last_value ELSE last_value -'
+                     '         (SELECT seqincrement'
+                     '            FROM pg_catalog.pg_sequence s'
+                     '                 JOIN pg_class c ON (c.oid = s.seqrelid)'
+                     '                 LEFT JOIN pg_namespace n ON (n.oid = c.relnamespace)'
+                     '            WHERE nspname = %L AND relname = %L'
+                     '         ) END as last_value FROM %I.%I',
+                     p_schema, p_sequence, p_schema, p_sequence)
+        INTO STRICT v_lastValue;
+    END IF;
+    RETURN v_lastValue;
+  END;
+$_get_app_sequence_last_value$;
 
 CREATE OR REPLACE FUNCTION emaj._get_sequences_last_value(p_groupsIncludeFilter TEXT, p_groupsExcludeFilter TEXT,
                                                           p_tablesIncludeFilter TEXT, p_tablesExcludeFilter TEXT,
@@ -281,10 +312,9 @@ $_get_sequences_last_value$
     IF p_sequencesExcludeFilter != '.*' THEN
       v_stmt = v_stmt || $$
       UNION ALL
-        SELECT rel_schema || '.' || rel_tblseq, coalesce(last_value, start_value - increment_by)::TEXT AS seq_current
+        SELECT rel_schema || '.' || rel_tblseq, emaj._get_app_sequence_last_value(rel_schema, rel_tblseq)::TEXT AS seq_current
           FROM emaj.emaj_relation
             JOIN filtered_group ON (group_name = rel_group)
-            JOIN pg_catalog.pg_sequences ON (schemaname = rel_schema AND sequencename = rel_tblseq)
          WHERE upper_inf(rel_time_range)
            AND rel_kind = 'S'
            AND (rel_schema || '.' || rel_tblseq) ~ $5
@@ -327,6 +357,7 @@ GRANT SELECT ON ALL TABLES IN SCHEMA emaj TO emaj_viewer;
 GRANT SELECT ON ALL SEQUENCES IN SCHEMA emaj TO emaj_viewer;
 REVOKE SELECT ON TABLE emaj.emaj_param FROM emaj_viewer;
 
+GRANT EXECUTE ON FUNCTION emaj._get_app_sequence_last_value(p_schema TEXT, p_sequence TEXT) TO emaj_viewer;
 
 ------------------------------------
 --                                --

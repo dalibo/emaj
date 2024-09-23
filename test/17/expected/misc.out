@@ -850,11 +850,11 @@ select * from emaj._get_sequences_last_value(null, null, null, null, null, null)
  emaj.emaj_global_seq             | 5200000
  emaj.emaj_time_stamp_time_id_seq | 5199
  myschema1.myTbl3                 | 30
- myschema1.myTbl3_col31_seq       | 0
+ myschema1.myTbl3_col31_seq       | 10
  myschema1.mytbl1                 | 64
  myschema1.mytbl2                 | 14
  myschema1.mytbl2b                | 15
- myschema1.mytbl2b_col20_seq      | 0
+ myschema1.mytbl2b_col20_seq      | 2
  myschema1.mytbl4                 | 4
  myschema2.myTbl3                 | 10
  myschema2.myTbl3_col31_seq       | 10

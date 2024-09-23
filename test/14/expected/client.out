@@ -316,7 +316,7 @@ insert into emaj.emaj_rlbk (rlbk_id, rlbk_groups, rlbk_mark, rlbk_mark_time_id, 
     myschema1.mytbl2  | myGroup1 |  27 ([cps])
     myschema1.mytbl4  | myGroup1 |   9 ([cps])
   Sequence name             + Group    + Changes since mark + Changes since prev.
-    myschema1.mytbl2b_col20 | myGroup1 | -5 ([cps])
+    myschema1.mytbl2b_col20 | myGroup1 | 0 ([cps])
 [current date and time] - Logging: groups=2/3 tables=11/11 sequences=4/4 - Changes since [refresh duration] sec: 0 ([global cps] c/s)
   Group name + Latest mark                   + Changes since mark + Changes since prev.
     myGroup1 | Multi-1 ([latest mark date and time]) | 359 ([cps]) | 0 ([cps])
@@ -327,4 +327,4 @@ insert into emaj.emaj_rlbk (rlbk_id, rlbk_groups, rlbk_mark, rlbk_mark_time_id, 
     myschema1.mytbl2  | myGroup1 |  27 ([cps]) | 0 ([cps])
     myschema1.mytbl4  | myGroup1 |   9 ([cps]) | 0 ([cps])
   Sequence name             + Group    + Changes since mark + Changes since prev.
-    myschema1.mytbl2b_col20 | myGroup1 | -5 ([cps]) | 0 ([cps])
+    myschema1.mytbl2b_col20 | myGroup1 | 0 ([cps]) | 0 ([cps])

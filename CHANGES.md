@@ -6,8 +6,8 @@ E-Maj - Change log
   * Minor code changes.
 
 ###Bug fixes:###
-
-
+  * emajStat.pl reported wrong changes number for sequences just rolled back
+    by E-Maj and not incremented later.
 
 4.5.0 (2025-Sept-6)
 ------
