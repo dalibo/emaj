@@ -57,11 +57,17 @@ select schemaname, funcname from pg_stat_user_functions
   where schemaname = 'emaj' and (funcname like E'emaj\\_%' or funcname like E'\\_%')
 order by 1,2;
 
--- display the number of calls for each emaj function (
---   (_verify_groups() and _log_stat_tbl() functions are excluded as their number of calls is not stable)
+-- display the number of calls for each emaj function
+--   (_verify_groups(), _log_stat_tbl() and _get_log_sequence_last_value() functions are excluded as their number of calls is not stable.
+--      _log_stat_tbl() and _get_log_sequence_last_value() sometimes differ in verify.sql or adm3.sql, always at the same place:
+--      a call to emaj.emaj_verify_all() (verify.sql line 313) and to _remove_tables() (adm3.sql line 409). But these functions do not
+--      call _log_stat_tbl(), directly or indirectly. This happens mostly with PG 11.)
 select funcname, calls from pg_stat_user_functions
   where schemaname = 'emaj' and (funcname like E'emaj\\_%' or funcname like E'\\_%')
-    and funcname not in ('_verify_groups', '_log_stat_tbl')
+    and funcname not in (
+      '_log_stat_tbl', '_get_log_sequence_last_value',
+      '_verify_groups'
+                        )
   order by funcname, funcid;
 
 -- count the total number of user-callable function calls (those who failed are not counted)

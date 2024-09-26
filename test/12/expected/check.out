@@ -80,11 +80,17 @@ order by 1,2;
 ---------+---------
 (0 rows)
 
--- display the number of calls for each emaj function (
---   (_verify_groups() and _log_stat_tbl() functions are excluded as their number of calls is not stable)
+-- display the number of calls for each emaj function
+--   (_verify_groups(), _log_stat_tbl() and _get_log_sequence_last_value() functions are excluded as their number of calls is not stable.
+--      _log_stat_tbl() and _get_log_sequence_last_value() sometimes differ in verify.sql or adm3.sql, always at the same place:
+--      a call to emaj.emaj_verify_all() (verify.sql line 313) and to _remove_tables() (adm3.sql line 409). But these functions do not
+--      call _log_stat_tbl(), directly or indirectly. This happens mostly with PG 11.)
 select funcname, calls from pg_stat_user_functions
   where schemaname = 'emaj' and (funcname like E'emaj\\_%' or funcname like E'\\_%')
-    and funcname not in ('_verify_groups', '_log_stat_tbl')
+    and funcname not in (
+      '_log_stat_tbl', '_get_log_sequence_last_value',
+      '_verify_groups'
+                        )
   order by funcname, funcid;
                  funcname                  | calls 
 -------------------------------------------+-------
@@ -148,7 +154,6 @@ select funcname, calls from pg_stat_user_functions
  _get_current_sequence_state               |   987
  _get_default_tablespace                   |    11
  _get_lock_tblseqs_groups                  |   148
- _get_log_sequence_last_value              |  5793
  _get_previous_mark_group                  |    38
  _get_sequences_last_value                 |     7
  _handle_trigger_fk_tbl                    |  2818
@@ -277,7 +282,7 @@ select funcname, calls from pg_stat_user_functions
  emaj_unprotect_group                      |     7
  emaj_unprotect_mark_group                 |     6
  emaj_verify_all                           |    49
-(189 rows)
+(188 rows)
 
 -- count the total number of user-callable function calls (those who failed are not counted)
 select sum(calls) from pg_stat_user_functions where funcname like E'emaj\\_%';
