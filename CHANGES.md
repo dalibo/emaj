@@ -8,6 +8,8 @@ E-Maj - Change log
 ###Bug fixes:###
   * emajStat.pl reported wrong changes number for sequences just rolled back
     by E-Maj and not incremented later.
+  * Fix emajStat that failed to report statistics when the user had not the
+    SELECT right on all examined application sequences.
 
 4.5.0 (2025-Sept-6)
 ------

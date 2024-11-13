@@ -250,7 +250,8 @@ $_get_log_sequence_last_value$
 $_get_log_sequence_last_value$;
 
 CREATE OR REPLACE FUNCTION emaj._get_app_sequence_last_value(p_schema TEXT, p_sequence TEXT)
-RETURNS BIGINT LANGUAGE plpgsql AS
+RETURNS BIGINT LANGUAGE plpgsql
+SECURITY DEFINER SET search_path = pg_catalog, pg_temp AS
 $_get_app_sequence_last_value$
 -- The function returns the last value state of a single application sequence.
 -- If the sequence has not been called, it returns the previous value defined as (last_value - increment).
@@ -259,6 +260,7 @@ $_get_app_sequence_last_value$
 --   select the sequence itself.
 -- Input: schema and sequence name
 -- Output: last_value
+-- The function is defined as SECURITY DEFINER so that any emaj role can use it even if he is not the application sequence owner.
   DECLARE
     v_lastValue                BIGINT;
   BEGIN
@@ -278,6 +280,99 @@ $_get_app_sequence_last_value$
     RETURN v_lastValue;
   END;
 $_get_app_sequence_last_value$;
+
+CREATE OR REPLACE FUNCTION emaj._start_groups(p_groupNames TEXT[], p_mark TEXT, p_multiGroup BOOLEAN, p_resetLog BOOLEAN)
+RETURNS INT LANGUAGE plpgsql AS
+$_start_groups$
+-- This function activates the log triggers of all the tables for one or several groups and set a first mark.
+-- It also delete oldest rows in emaj_hist table.
+-- Input: array of group names, name of the mark to set, boolean indicating whether the function is called by a multi group function,
+--        boolean indicating whether the function must reset the group at start time
+-- Output: number of processed tables
+  DECLARE
+    v_function               TEXT;
+    v_timeId                 BIGINT;
+    v_nbTblSeq               INT = 0;
+    v_markName               TEXT;
+    v_eventTriggers          TEXT[];
+    r_tblsq                  RECORD;
+  BEGIN
+    v_function = CASE WHEN p_multiGroup THEN 'START_GROUPS' ELSE 'START_GROUP' END;
+-- Insert a BEGIN event into the history.
+    INSERT INTO emaj.emaj_hist (hist_function, hist_event, hist_object, hist_wording)
+      VALUES (v_function, 'BEGIN', array_to_string(p_groupNames,','),
+              CASE WHEN p_resetLog THEN 'With log reset' ELSE 'Without log reset' END);
+-- Check the group names.
+    SELECT emaj._check_group_names(p_groupNames := p_groupNames, p_mayBeNull := p_multiGroup, p_lockGroups := TRUE, p_checkIdle := TRUE)
+      INTO p_groupNames;
+    IF p_groupNames IS NOT NULL THEN
+-- If there is at least 1 group to process, go on.
+-- Check that no group is damaged.
+      PERFORM 0
+        FROM emaj._verify_groups(p_groupNames, TRUE);
+-- Get a time stamp id of type 'S' for the operation.
+      SELECT emaj._set_time_stamp(v_function, 'S') INTO v_timeId;
+-- Check foreign keys with tables outside the group
+      PERFORM emaj._check_fk_groups(p_groupNames);
+-- If requested by the user, call the emaj_reset_groups() function to erase remaining traces from previous logs.
+      IF p_resetLog THEN
+        PERFORM emaj._reset_groups(p_groupNames);
+-- Drop the log schemas that would have been emptied by the _reset_groups() call.
+        SELECT emaj._disable_event_triggers() INTO v_eventTriggers;
+        PERFORM emaj._drop_log_schemas(CASE WHEN p_multiGroup THEN 'START_GROUPS' ELSE 'START_GROUP' END, FALSE);
+        PERFORM emaj._enable_event_triggers(v_eventTriggers);
+      END IF;
+-- Check the supplied mark name (the check must be performed after the _reset_groups() call to allow to reuse an old mark name that is
+-- being deleted.
+      IF p_mark IS NULL OR p_mark = '' THEN
+        p_mark = 'START_%';
+      END IF;
+      SELECT emaj._check_new_mark(p_groupNames, p_mark) INTO v_markName;
+-- OK, lock all tables to get a stable point.
+--   one sets the locks at the beginning of the operation (rather than let the ALTER TABLE statements set their own locks) to decrease the
+--   risk of deadlock.
+      PERFORM emaj._lock_groups(p_groupNames,'SHARE ROW EXCLUSIVE',p_multiGroup);
+-- Enable all log triggers for the groups.
+-- For each relation currently belonging to the groups,
+      FOR r_tblsq IN
+        SELECT rel_kind, quote_ident(rel_schema) || '.' || quote_ident(rel_tblseq) AS full_relation_name
+          FROM emaj.emaj_relation
+          WHERE upper_inf(rel_time_range)
+            AND rel_group = ANY (p_groupNames)
+          ORDER BY rel_priority, rel_schema, rel_tblseq
+      LOOP
+        IF r_tblsq.rel_kind = 'r' THEN
+-- ... if it is a table, enable the emaj log and truncate triggers.
+          PERFORM emaj._handle_trigger_fk_tbl('ENABLE_TRIGGER', r_tblsq.full_relation_name, 'emaj_log_trg', 'ALWAYS');
+          PERFORM emaj._handle_trigger_fk_tbl('ENABLE_TRIGGER', r_tblsq.full_relation_name, 'emaj_trunc_trg', 'ALWAYS');
+        END IF;
+        v_nbTblSeq = v_nbTblSeq + 1;
+      END LOOP;
+-- Update the state of the group row from the emaj_group table.
+      UPDATE emaj.emaj_group
+        SET group_is_logging = TRUE
+        WHERE group_name = ANY (p_groupNames);
+-- Insert log sessions start into emaj_log_session...
+--   lses_marks is already set to 1 as it will not be incremented at the first mark set.
+      INSERT INTO emaj.emaj_log_session
+        SELECT group_name, int8range(v_timeId, NULL, '[]'), 1, 0
+          FROM emaj.emaj_group
+          WHERE group_name = ANY (p_groupNames);
+-- ... and update the last group history row to increment the number of log sessions
+      UPDATE emaj.emaj_group_hist
+        SET grph_log_sessions = grph_log_sessions + 1
+        WHERE grph_group = ANY (p_groupNames)
+          AND upper_inf(grph_time_range);
+-- Set the first mark for each group.
+      PERFORM emaj._set_mark_groups(p_groupNames, v_markName, p_multiGroup, TRUE, NULL, v_timeId);
+    END IF;
+-- Insert a END event into the history.
+    INSERT INTO emaj.emaj_hist (hist_function, hist_event, hist_object, hist_wording)
+      VALUES (v_function, 'END', array_to_string(p_groupNames,','), v_nbTblSeq || ' tables/sequences processed');
+--
+    RETURN v_nbTblSeq;
+  END;
+$_start_groups$;
 
 CREATE OR REPLACE FUNCTION emaj._get_sequences_last_value(p_groupsIncludeFilter TEXT, p_groupsExcludeFilter TEXT,
                                                           p_tablesIncludeFilter TEXT, p_tablesExcludeFilter TEXT,

@@ -150,7 +150,7 @@ select funcname, calls from pg_stat_user_functions
  _gen_sql_groups                           |    26
  _gen_sql_seq                              |    40
  _gen_sql_tbl                              |    51
- _get_app_sequence_last_value              |    21
+ _get_app_sequence_last_value              |    23
  _get_current_sequence_state               |   987
  _get_default_tablespace                   |    11
  _get_lock_tblseqs_groups                  |   148

@@ -5008,7 +5008,8 @@ $_get_log_sequence_last_value$
   END;
 $_get_log_sequence_last_value$;
 CREATE OR REPLACE FUNCTION emaj._get_app_sequence_last_value(p_schema TEXT, p_sequence TEXT)
-RETURNS BIGINT LANGUAGE plpgsql AS
+RETURNS BIGINT LANGUAGE plpgsql
+SECURITY DEFINER SET search_path = pg_catalog, pg_temp AS
 $_get_app_sequence_last_value$
 -- The function returns the last value state of a single application sequence.
 -- If the sequence has not been called, it returns the previous value defined as (last_value - increment).
@@ -5017,6 +5018,7 @@ $_get_app_sequence_last_value$
 --   select the sequence itself.
 -- Input: schema and sequence name
 -- Output: last_value
+-- The function is defined as SECURITY DEFINER so that any emaj role can use it even if he is not the application sequence owner.
   DECLARE
     v_lastValue                BIGINT;
   BEGIN
@@ -6710,8 +6712,6 @@ $_start_groups$
 -- Input: array of group names, name of the mark to set, boolean indicating whether the function is called by a multi group function,
 --        boolean indicating whether the function must reset the group at start time
 -- Output: number of processed tables
--- The function is defined as SECURITY DEFINER so that emaj_adm role can use it even if he is not the owner of application tables and
--- sequences.
   DECLARE
     v_function               TEXT;
     v_timeId                 BIGINT;
