@@ -3671,7 +3671,6 @@ $_remove_tbl$
 -- time for instance).
 -- Required inputs: schema and sequence to remove, related group name and logging state,
 --                  time stamp id of the operation, main calling function.
--- The function is defined as SECURITY DEFINER so that emaj_adm role can drop triggers on application tables.
   DECLARE
     v_logSchema              TEXT;
     v_currentLogTable        TEXT;
@@ -3885,7 +3884,6 @@ RETURNS VOID LANGUAGE plpgsql AS
 $_drop_tbl$
 -- The function deletes a timerange for a table. This centralizes the deletion of all what has been created by _create_tbl() function.
 -- Required inputs: row from emaj_relation corresponding to the appplication table to proccess, time id.
--- The function is defined as SECURITY DEFINER so that emaj_adm role can use it even if he is not the owner of the application table.
   DECLARE
     v_fullTableName          TEXT;
   BEGIN
@@ -4978,7 +4976,8 @@ $_gen_sql_tbl$
 $_gen_sql_tbl$;
 
 CREATE OR REPLACE FUNCTION emaj._sequence_stat_seq(r_rel emaj.emaj_relation, p_beginTimeId BIGINT, p_endTimeId BIGINT,
-                                                   OUT p_increments BIGINT, OUT p_hasStructureChanged BOOLEAN) LANGUAGE plpgsql AS
+                                                   OUT p_increments BIGINT, OUT p_hasStructureChanged BOOLEAN)
+LANGUAGE plpgsql AS
 $_sequence_stat_seq$
 -- This function compares the state of a single sequence between 2 time stamps or between a time stamp and the current state.
 -- It is called by the _sequence_stat_group() function.
@@ -5081,15 +5080,29 @@ $_gen_sql_seq$
 $_gen_sql_seq$;
 
 CREATE OR REPLACE FUNCTION emaj._get_current_sequence_state(p_schema TEXT, p_sequence TEXT, p_timeId BIGINT)
-RETURNS emaj.emaj_sequence LANGUAGE plpgsql AS
+RETURNS emaj.emaj_sequence LANGUAGE plpgsql
+SECURITY DEFINER SET search_path = pg_catalog, pg_temp AS
 $_get_current_sequence_state$
 -- The function returns the current state of a single sequence.
 -- Input: schema and sequence name,
---        time_id to set the sequ_time_id
+--        time_id to set the sequ_time_id to report
 -- Output: an emaj_sequence record
+-- The function is defined as SECURITY DEFINER so that emaj_adm and emaj_viewer roles can use it even without SELECT right on the sequence.
   DECLARE
+    v_stack                  TEXT;
     r_sequ                   emaj.emaj_sequence%ROWTYPE;
   BEGIN
+-- Check that the caller is allowed to do that.
+-- This prevents against an emaj_adm or emaj_viewer role without SELECT privilege on the sequence to look at it.
+    GET DIAGNOSTICS v_stack = PG_CONTEXT;
+    IF v_stack NOT LIKE '%emaj._set_mark_groups(text[],text,boolean,boolean,text,bigint,text)%' AND
+       v_stack NOT LIKE '%emaj._rlbk_seq(emaj.emaj_relation,bigint)%' AND
+       v_stack NOT LIKE '%emaj._add_seq(text,text,text,boolean,bigint,text)%' AND
+       v_stack NOT LIKE '%emaj._sequence_stat_seq(emaj.emaj_relation,bigint,bigint)%' AND
+       v_stack NOT LIKE '%emaj._gen_sql_seq(emaj.emaj_relation,bigint,bigint,bigint)%' THEN
+      RAISE EXCEPTION '_get_current_sequence_state: the calling function is not allowed to reach this sensitive function.';
+    END IF;
+-- Read the sequence.
     EXECUTE format('SELECT nspname, relname, %s, sq.last_value, seqstart, seqincrement, seqmax, seqmin, seqcache, seqcycle, sq.is_called'
                    '  FROM %I.%I sq,'
                    '       pg_catalog.pg_sequence s'

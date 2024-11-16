@@ -10,6 +10,7 @@ E-Maj - Change log
     by E-Maj and not incremented later.
   * Fix emajStat that failed to report statistics when the user had not the
     SELECT right on all examined application sequences.
+  * Let emaj_viewer roles really work without any grant on sequences.
 
 4.5.0 (2025-Sept-6)
 ------

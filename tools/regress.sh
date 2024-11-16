@@ -154,10 +154,15 @@ migrat_test()
     echo "  Error: can't dump the regression database from ${1}"
     return 1
   fi
-  echo "Drop the control tables in the ${1} regression database"
+  echo "Drop the control tables and the temporary function in the ${1} regression database"
   ${oldPGBIN}/psql -p ${oldPGPORT} -U ${oldPGUSER} regression -q -c "DROP TABLE emaj.emaj_regtest_dump_tbl;" -c "DROP TABLE emaj.emaj_regtest_dump_seq;"
   if [ $? -ne 0 ]; then
-    echo "  Error: can't drop control tables from the ${1} regression databasa"
+    echo "  Error: can't drop control tables from the ${1} regression database"
+    return 1
+  fi
+  ${oldPGBIN}/psql -p ${oldPGPORT} -U ${oldPGUSER} regression -q -c "DROP FUNCTION emaj.tmp_get_current_sequence_state(TEXT, TEXT, BIGINT);"
+  if [ $? -ne 0 ]; then
+    echo "  Error: can't drop the temporary function from the ${1} regression database"
     return 1
   fi
   return 0

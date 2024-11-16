@@ -400,12 +400,7 @@ create role emaj_regression_tests_viewer_user login password 'viewer';
 create role emaj_regression_tests_anonym_user login password 'anonym';
 --
 grant all on schema mySchema1, mySchema2, "phil's schema3", mySchema4, mySchema5, mySchema6
-  to emaj_regression_tests_adm_user1, emaj_regression_tests_adm_user2, emaj_regression_tests_viewer_user;
---
-grant select on all tables in schema mySchema1, mySchema2, "phil's schema3", mySchema4, mySchema5, mySchema6
-  to emaj_regression_tests_viewer_user;
-grant select on all sequences in schema mySchema1, mySchema2, mySchema4, mySchema5, mySchema6
-  to emaj_regression_tests_viewer_user;
+  to emaj_regression_tests_adm_user1, emaj_regression_tests_adm_user2;
 --
 grant all on all tables in schema mySchema1, mySchema2, "phil's schema3", mySchema4, mySchema5, mySchema6
   to emaj_regression_tests_adm_user1, emaj_regression_tests_adm_user2;

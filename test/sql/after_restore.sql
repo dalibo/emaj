@@ -9,12 +9,12 @@
 DO LANGUAGE plpgsql $$
 DECLARE
   r             RECORD;
-  keepTable     BOOLEAN = false;
+  keepTable     BOOLEAN = FALSE;
   delta         SMALLINT;
   expected_val  BIGINT;
   returned_val  BIGINT;
 BEGIN
--- Comparing the number of rows in each table
+-- Comparing the number of rows in each table.
   FOR r IN
     SELECT nspname, relname
       FROM pg_catalog.pg_class, pg_catalog.pg_namespace
@@ -25,12 +25,12 @@ BEGIN
     SELECT tbl_tuple INTO expected_val FROM emaj.emaj_regtest_dump_tbl WHERE tbl_schema = r.nspname AND tbl_name = r.relname;
     EXECUTE 'SELECT count(*) FROM '||quote_ident(r.nspname)||'.'||quote_ident(r.relname) INTO returned_val;
     IF NOT (expected_val = returned_val OR (r.nspname || '.' || r.relname = 'emaj.emaj_hist' AND expected_val = returned_val - 1)) THEN
--- the emaj_hist table may contain 1 more row created at extension creation
+-- the emaj_hist table may contain 1 more row created at extension creation.
       RAISE WARNING 'Error, the table %.% contains % rows instead of %', quote_ident(r.nspname), quote_ident(r.relname), returned_val, expected_val;
-      keepTable = true;
+      keepTable = TRUE;
     END IF;
   END LOOP;
--- Comparing the properties of each sequence
+-- Comparing the properties of each sequence.
   FOR r IN
     SELECT nspname, relname
       FROM pg_catalog.pg_class, pg_catalog.pg_namespace
@@ -39,24 +39,26 @@ BEGIN
      ORDER BY 1,2
   LOOP
     EXECUTE 'SELECT * FROM emaj.emaj_regtest_dump_seq WHERE sequ_schema = ' || quote_literal(r.nspname) || ' AND sequ_name = ' || quote_literal(r.relname)
-         || ' EXCEPT SELECT * FROM emaj._get_current_sequence_state(' || quote_literal(r.nspname) || ',' || quote_literal(r.relname) || ',0)';
+         || ' EXCEPT SELECT * FROM emaj.tmp_get_current_sequence_state(' || quote_literal(r.nspname) || ',' || quote_literal(r.relname) || ',0)';
     GET DIAGNOSTICS delta = ROW_COUNT;
     IF delta > 0 THEN
       SELECT sequ_last_val INTO expected_val FROM emaj.emaj_regtest_dump_seq WHERE sequ_schema = r.nspname AND sequ_name = r.relname;
-      EXECUTE 'SELECT sequ_last_val FROM emaj._get_current_sequence_state(' || quote_literal(r.nspname) || ',' || quote_literal(r.relname) || ',0)'
+      EXECUTE 'SELECT sequ_last_val FROM emaj.tmp_get_current_sequence_state(' || quote_literal(r.nspname) || ',' || quote_literal(r.relname) || ',0)'
         INTO returned_val;
       IF expected_val <> returned_val THEN
         RAISE WARNING 'Error, the sequence %.% has last_val equal to % instead of %', quote_ident(r.nspname), quote_ident(r.relname), returned_val, expected_val;
       ELSE
         RAISE WARNING 'Error, the properties of the sequence %.% are not the expected ones', quote_ident(r.nspname), quote_ident(r.relname);
       END IF;
-      keepTable = true;
+      keepTable = TRUE;
     END IF;
   END LOOP;
--- if everything is OK, drop both control tables created just before the database dump
+-- if everything is OK, drop both control tables created just before the database dump.
   IF NOT keepTable THEN
     DROP TABLE emaj.emaj_regtest_dump_tbl, emaj.emaj_regtest_dump_seq;
   END IF;
+-- drop the specific function created just before the database dump.
+  DROP FUNCTION emaj.tmp_get_current_sequence_state(TEXT, TEXT, BIGINT);
 END $$;
 
 -----------------------------

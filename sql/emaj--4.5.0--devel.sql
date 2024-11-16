@@ -110,6 +110,194 @@ SELECT emaj._disable_event_triggers();
 ------------------------------------------------------------------
 -- create new or modified functions                             --
 ------------------------------------------------------------------
+CREATE OR REPLACE FUNCTION emaj._remove_tbl(p_schema TEXT, p_table TEXT, p_group TEXT, p_groupIsLogging BOOLEAN,
+                                            p_timeId BIGINT, p_function TEXT)
+RETURNS VOID LANGUAGE plpgsql AS
+$_remove_tbl$
+-- The function removes a table from a group. It is called during an alter group or a dynamic removal operation.
+-- If the group is in idle state, it simply calls the _drop_tbl() function.
+-- Otherwise, only triggers, log function and log sequence are dropped now. The other components will be dropped later (at reset_group
+-- time for instance).
+-- Required inputs: schema and sequence to remove, related group name and logging state,
+--                  time stamp id of the operation, main calling function.
+  DECLARE
+    v_logSchema              TEXT;
+    v_currentLogTable        TEXT;
+    v_currentLogIndex        TEXT;
+    v_logFunction            TEXT;
+    v_logSequence            TEXT;
+    v_logSequenceLastValue   BIGINT;
+    v_namesSuffix            TEXT;
+    v_fullTableName          TEXT;
+  BEGIN
+    IF NOT p_groupIsLogging THEN
+-- If the group is in idle state, drop the table immediately.
+      PERFORM emaj._drop_tbl(emaj.emaj_relation.*, p_timeId)
+        FROM emaj.emaj_relation
+        WHERE rel_schema = p_schema
+          AND rel_tblseq = p_table
+          AND upper_inf(rel_time_range);
+    ELSE
+-- The group is in logging state.
+-- Get the current relation characteristics.
+      SELECT rel_log_schema, rel_log_table, rel_log_index, rel_log_function, rel_log_sequence
+        INTO v_logSchema, v_currentLogTable, v_currentLogIndex, v_logFunction, v_logSequence
+        FROM emaj.emaj_relation
+        WHERE rel_schema = p_schema
+          AND rel_tblseq = p_table
+          AND upper_inf(rel_time_range);
+-- Get the current log sequence characteristics.
+      SELECT tbl_log_seq_last_val INTO STRICT v_logSequenceLastValue
+        FROM emaj.emaj_table
+        WHERE tbl_schema = p_schema
+          AND tbl_name = p_table
+          AND tbl_time_id = p_timeId;
+-- Compute the suffix to add to the log table and index names (_1, _2, ...), by looking at the existing names.
+      SELECT '_' || coalesce(max(suffix) + 1, 1)::TEXT INTO v_namesSuffix
+        FROM
+          (SELECT (regexp_match(rel_log_table,'_(\d+)$'))[1]::INT AS suffix
+             FROM emaj.emaj_relation
+             WHERE rel_schema = p_schema
+               AND rel_tblseq = p_table
+          ) AS t;
+-- Rename the log table and its index (they may have been dropped).
+      EXECUTE format('ALTER TABLE IF EXISTS %I.%I RENAME TO %I',
+                     v_logSchema, v_currentLogTable, v_currentLogTable || v_namesSuffix);
+      EXECUTE format('ALTER INDEX IF EXISTS %I.%I RENAME TO %I',
+                     v_logSchema, v_currentLogIndex, v_currentLogIndex || v_namesSuffix);
+-- Drop the log and truncate triggers.
+-- (check the application table exists before dropping its triggers to avoid an error fires with postgres version <= 9.3)
+      v_fullTableName  = quote_ident(p_schema) || '.' || quote_ident(p_table);
+      IF EXISTS
+           (SELECT 0
+              FROM pg_catalog.pg_class
+                   JOIN pg_catalog.pg_namespace ON (pg_namespace.oid = relnamespace)
+              WHERE nspname = p_schema
+                AND relname = p_table
+                AND relkind = 'r'
+           ) THEN
+        PERFORM emaj._handle_trigger_fk_tbl('DROP_TRIGGER', v_fullTableName, 'emaj_log_trg');
+        PERFORM emaj._handle_trigger_fk_tbl('DROP_TRIGGER', v_fullTableName, 'emaj_trunc_trg');
+      END IF;
+-- Drop the log function and the log sequence.
+-- (but we keep the sequence related data in the emaj_table and the emaj_seq_hole tables)
+      EXECUTE format('DROP FUNCTION IF EXISTS %I.%I() CASCADE',
+                     v_logSchema, v_logFunction);
+      EXECUTE format('DROP SEQUENCE IF EXISTS %I.%I',
+                     v_logSchema, v_logSequence);
+-- Register the end of the relation time frame, the last value of the log sequence, the log table and index names change.
+-- Reflect the changes into the emaj_relation rows:
+--   - for all timeranges pointing to this log table and index
+--     (do not reset the rel_log_sequence value: it will be needed later for _drop_tbl() for the emaj_sequence cleanup)
+      UPDATE emaj.emaj_relation
+        SET rel_log_table = v_currentLogTable || v_namesSuffix , rel_log_index = v_currentLogIndex || v_namesSuffix,
+            rel_log_function = NULL, rel_sql_rlbk_columns = NULL,
+            rel_log_seq_last_value = v_logSequenceLastValue
+        WHERE rel_schema = p_schema
+          AND rel_tblseq = p_table
+          AND rel_log_table = v_currentLogTable;
+--   - and close the last timerange.
+      UPDATE emaj.emaj_relation
+        SET rel_time_range = int8range(lower(rel_time_range), p_timeId, '[)')
+        WHERE rel_schema = p_schema
+          AND rel_tblseq = p_table
+          AND upper_inf(rel_time_range);
+    END IF;
+-- Insert an entry into the emaj_relation_change table.
+    INSERT INTO emaj.emaj_relation_change (rlchg_time_id, rlchg_schema, rlchg_tblseq, rlchg_change_kind, rlchg_group)
+      VALUES (p_timeId, p_schema, p_table, 'REMOVE_TABLE', p_group);
+-- Insert an entry into the emaj_hist table.
+    INSERT INTO emaj.emaj_hist (hist_function, hist_event, hist_object, hist_wording)
+      VALUES (p_function, 'TABLE REMOVED', quote_ident(p_schema) || '.' || quote_ident(p_table),
+              'From the ' || CASE WHEN p_groupIsLogging THEN 'logging ' ELSE 'idle ' END || 'group ' || p_group);
+--
+    RETURN;
+  END;
+$_remove_tbl$;
+
+CREATE OR REPLACE FUNCTION emaj._drop_tbl(r_rel emaj.emaj_relation, p_timeId BIGINT)
+RETURNS VOID LANGUAGE plpgsql AS
+$_drop_tbl$
+-- The function deletes a timerange for a table. This centralizes the deletion of all what has been created by _create_tbl() function.
+-- Required inputs: row from emaj_relation corresponding to the appplication table to proccess, time id.
+  DECLARE
+    v_fullTableName          TEXT;
+  BEGIN
+    v_fullTableName = quote_ident(r_rel.rel_schema) || '.' || quote_ident(r_rel.rel_tblseq);
+-- If the table is currently linked to a group, drop the log trigger, function and sequence.
+    IF upper_inf(r_rel.rel_time_range) THEN
+-- Check the table exists before dropping its triggers.
+      IF EXISTS
+           (SELECT 0
+              FROM pg_catalog.pg_class
+                   JOIN pg_catalog.pg_namespace ON (pg_namespace.oid = relnamespace)
+              WHERE nspname = r_rel.rel_schema
+                AND relname = r_rel.rel_tblseq
+                AND relkind = 'r'
+           ) THEN
+-- Drop the log and truncate triggers on the application table.
+        PERFORM emaj._handle_trigger_fk_tbl('DROP_TRIGGER', v_fullTableName, 'emaj_log_trg');
+        PERFORM emaj._handle_trigger_fk_tbl('DROP_TRIGGER', v_fullTableName, 'emaj_trunc_trg');
+      END IF;
+-- Drop the log function.
+      IF r_rel.rel_log_function IS NOT NULL THEN
+        EXECUTE format('DROP FUNCTION IF EXISTS %I.%I() CASCADE',
+                       r_rel.rel_log_schema, r_rel.rel_log_function);
+      END IF;
+-- Drop the sequence associated to the log table.
+      EXECUTE format('DROP SEQUENCE IF EXISTS %I.%I',
+                     r_rel.rel_log_schema, r_rel.rel_log_sequence);
+    END IF;
+-- Drop the log table if it is not referenced on other timeranges (for potentially other groups).
+    IF NOT EXISTS
+         (SELECT 0
+            FROM emaj.emaj_relation
+            WHERE rel_log_schema = r_rel.rel_log_schema
+              AND rel_log_table = r_rel.rel_log_table
+              AND rel_time_range <> r_rel.rel_time_range
+         ) THEN
+      EXECUTE format('DROP TABLE IF EXISTS %I.%I CASCADE',
+                     r_rel.rel_log_schema, r_rel.rel_log_table);
+    END IF;
+-- Process log sequence information if the sequence is not referenced in other timerange (for potentially other groups).
+    IF NOT EXISTS
+         (SELECT 0
+            FROM emaj.emaj_relation
+            WHERE rel_log_schema = r_rel.rel_log_schema
+              AND rel_log_sequence = r_rel.rel_log_sequence
+              AND rel_time_range <> r_rel.rel_time_range
+         ) THEN
+-- Delete rows related to the log sequence from emaj_table
+-- (it may delete rows for other already processed time_ranges for the same table).
+      DELETE FROM emaj.emaj_table
+        WHERE tbl_schema = r_rel.rel_schema
+          AND tbl_name = r_rel.rel_tblseq;
+-- Delete rows related to the table from emaj_seq_hole table
+-- (it may delete holes for timeranges that do not belong to the group, if a table has been moved to another group,
+--  but is safe enough for rollbacks).
+      DELETE FROM emaj.emaj_seq_hole
+        WHERE sqhl_schema = r_rel.rel_schema
+          AND sqhl_table = r_rel.rel_tblseq;
+    END IF;
+-- Keep a trace of the table group ownership history and finaly delete the table reference from the emaj_relation table.
+    WITH deleted AS (
+      DELETE FROM emaj.emaj_relation
+        WHERE rel_schema = r_rel.rel_schema
+          AND rel_tblseq = r_rel.rel_tblseq
+          AND rel_time_range = r_rel.rel_time_range
+        RETURNING rel_schema, rel_tblseq, rel_time_range, rel_group, rel_kind
+      )
+    INSERT INTO emaj.emaj_rel_hist
+             (relh_schema, relh_tblseq, relh_time_range, relh_group, relh_kind)
+      SELECT rel_schema, rel_tblseq,
+             CASE WHEN upper_inf(rel_time_range) THEN int8range(lower(rel_time_range), p_timeId, '[)') ELSE rel_time_range END,
+             rel_group, rel_kind
+        FROM deleted;
+--
+    RETURN;
+  END;
+$_drop_tbl$;
+
 CREATE OR REPLACE FUNCTION emaj._delete_log_tbl(r_rel emaj.emaj_relation, p_beginTimeId BIGINT, p_endTimeId BIGINT, p_lastGlobalSeq BIGINT)
 RETURNS BIGINT LANGUAGE plpgsql AS
 $_delete_log_tbl$
@@ -203,16 +391,77 @@ $_log_stat_tbl$
   END;
 $_log_stat_tbl$;
 
+CREATE OR REPLACE FUNCTION emaj._sequence_stat_seq(r_rel emaj.emaj_relation, p_beginTimeId BIGINT, p_endTimeId BIGINT,
+                                                   OUT p_increments BIGINT, OUT p_hasStructureChanged BOOLEAN)
+LANGUAGE plpgsql AS
+$_sequence_stat_seq$
+-- This function compares the state of a single sequence between 2 time stamps or between a time stamp and the current state.
+-- It is called by the _sequence_stat_group() function.
+-- Input: row from emaj_relation corresponding to the appplication sequence to proccess,
+--        the time stamp ids defining the time range to examine (a end time stamp id set to NULL indicates the current state).
+-- Output: number of sequence increments between both time stamps for the sequence
+--         a boolean indicating whether any structure property has been modified between both time stamps.
+  DECLARE
+    r_beginSeq               emaj.emaj_sequence%ROWTYPE;
+    r_endSeq                 emaj.emaj_sequence%ROWTYPE;
+  BEGIN
+-- Get the sequence characteristics at begin time id.
+    SELECT *
+      INTO r_beginSeq
+      FROM emaj.emaj_sequence
+      WHERE sequ_schema = r_rel.rel_schema
+        AND sequ_name = r_rel.rel_tblseq
+        AND sequ_time_id = p_beginTimeId;
+-- Get the sequence characteristics at end time id.
+    IF p_endTimeId IS NOT NULL THEN
+      SELECT *
+        INTO r_endSeq
+        FROM emaj.emaj_sequence
+        WHERE sequ_schema = r_rel.rel_schema
+          AND sequ_name = r_rel.rel_tblseq
+          AND sequ_time_id = p_endTimeId;
+    ELSE
+      SELECT *
+        INTO r_endSeq
+        FROM emaj._get_current_sequence_state(r_rel.rel_schema, r_rel.rel_tblseq, NULL);
+    END IF;
+-- Compute the statistics
+    p_increments = (r_endSeq.sequ_last_val - r_beginSeq.sequ_last_val) / r_beginSeq.sequ_increment
+                   - CASE WHEN r_endSeq.sequ_is_called THEN 0 ELSE 1 END
+                   + CASE WHEN r_beginSeq.sequ_is_called THEN 0 ELSE 1 END;
+    p_hasStructureChanged = r_beginSeq.sequ_start_val <> r_endSeq.sequ_start_val
+                         OR r_beginSeq.sequ_increment <> r_endSeq.sequ_increment
+                         OR r_beginSeq.sequ_max_val <> r_endSeq.sequ_max_val
+                         OR r_beginSeq.sequ_min_val <> r_endSeq.sequ_min_val
+                         OR r_beginSeq.sequ_is_cycled <> r_endSeq.sequ_is_cycled;
+    RETURN;
+  END;
+$_sequence_stat_seq$;
+
 CREATE OR REPLACE FUNCTION emaj._get_current_sequence_state(p_schema TEXT, p_sequence TEXT, p_timeId BIGINT)
-RETURNS emaj.emaj_sequence LANGUAGE plpgsql AS
+RETURNS emaj.emaj_sequence LANGUAGE plpgsql
+SECURITY DEFINER SET search_path = pg_catalog, pg_temp AS
 $_get_current_sequence_state$
 -- The function returns the current state of a single sequence.
 -- Input: schema and sequence name,
---        time_id to set the sequ_time_id
+--        time_id to set the sequ_time_id to report
 -- Output: an emaj_sequence record
+-- The function is defined as SECURITY DEFINER so that emaj_adm and emaj_viewer roles can use it even without SELECT right on the sequence.
   DECLARE
+    v_stack                  TEXT;
     r_sequ                   emaj.emaj_sequence%ROWTYPE;
   BEGIN
+-- Check that the caller is allowed to do that.
+-- This prevents against an emaj_adm or emaj_viewer role without SELECT privilege on the sequence to look at it.
+    GET DIAGNOSTICS v_stack = PG_CONTEXT;
+    IF v_stack NOT LIKE '%emaj._set_mark_groups(text[],text,boolean,boolean,text,bigint,text)%' AND
+       v_stack NOT LIKE '%emaj._rlbk_seq(emaj.emaj_relation,bigint)%' AND
+       v_stack NOT LIKE '%emaj._add_seq(text,text,text,boolean,bigint,text)%' AND
+       v_stack NOT LIKE '%emaj._sequence_stat_seq(emaj.emaj_relation,bigint,bigint)%' AND
+       v_stack NOT LIKE '%emaj._gen_sql_seq(emaj.emaj_relation,bigint,bigint,bigint)%' THEN
+      RAISE EXCEPTION '_get_current_sequence_state: the calling function is not allowed to reach this sensitive function.';
+    END IF;
+-- Read the sequence.
     EXECUTE format('SELECT nspname, relname, %s, sq.last_value, seqstart, seqincrement, seqmax, seqmin, seqcache, seqcycle, sq.is_called'
                    '  FROM %I.%I sq,'
                    '       pg_catalog.pg_sequence s'

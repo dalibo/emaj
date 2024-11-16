@@ -293,7 +293,7 @@ select emaj.emaj_start_group('myGroup6', 'Start G6');
 ERROR:  _check_group_names: The group "myGroup6" does not exist.
 CONTEXT:  PL/pgSQL function emaj._check_group_names(text[],boolean,boolean,boolean,boolean,boolean,boolean) line 42 at RAISE
 SQL statement "SELECT emaj._check_group_names(p_groupNames := p_groupNames, p_mayBeNull := p_multiGroup, p_lockGroups := TRUE, p_checkIdle := TRUE)"
-PL/pgSQL function emaj._start_groups(text[],text,boolean,boolean) line 23 at SQL statement
+PL/pgSQL function emaj._start_groups(text[],text,boolean,boolean) line 21 at SQL statement
 PL/pgSQL function emaj.emaj_start_group(text,text,boolean) line 12 at RETURN
 insert into mySchema6.table_with_51_characters_long_name_____0_________0a values (3),(4);
 delete from mySchema6.table_with_51_characters_long_name_____0_________0a;
