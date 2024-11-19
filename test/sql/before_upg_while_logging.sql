@@ -7,12 +7,18 @@ SET datestyle TO ymd;
 -- grant emaj_adm role 
 -----------------------------
 grant emaj_adm to emaj_regression_tests_adm_user1, emaj_regression_tests_adm_user2;
-
-set role emaj_regression_tests_adm_user1;
+-- Give rights while we are in an emaj version 4.5.0 or earlier.
+grant all on schema mySchema1, mySchema2, "phil's schema3", mySchema4, mySchema5, mySchema6
+  to emaj_regression_tests_adm_user1, emaj_regression_tests_adm_user2;
+grant all on all tables in schema mySchema1, mySchema2, "phil's schema3", mySchema4, mySchema5, mySchema6
+  to emaj_regression_tests_adm_user1, emaj_regression_tests_adm_user2;
+grant all on all sequences in schema mySchema1, mySchema2, "phil's schema3", mySchema4, mySchema5, mySchema6
+  to emaj_regression_tests_adm_user1, emaj_regression_tests_adm_user2;
 
 -----------------------------
 -- create groups
 -----------------------------
+set role emaj_regression_tests_adm_user1;
 select emaj.emaj_create_group('myGroup1');
 select emaj.emaj_create_group('myGroup2',true);
 select emaj.emaj_create_group('phil''s group#3",',false);
@@ -53,7 +59,8 @@ commit;
 -----------------------------
 -- Step 1 : for myGroup1, update tables, set 2 marks, perform 2 unlogged rollbacks and protect the group and its last mark
 -----------------------------
--- 
+--
+reset role;
 set search_path=myschema1;
 insert into myTbl1 select i, 'ABC', E'\\014'::bytea from generate_series (1,11) as i;
 update myTbl1 set col13=E'\\034'::bytea where col11 <= 3;
@@ -62,8 +69,10 @@ delete from myTbl1 where col11 > 10;
 insert into myTbl2 values (2,'DEF',NULL);
 insert into "myTbl3" (col33) select generate_series(1000,1039,4)/100;
 --
+set role emaj_regression_tests_adm_user1;
 select emaj.emaj_set_mark_group('myGroup1','M2');
 --
+reset role;
 insert into myTbl4 values (1,'FK...',1,1,'ABC');
 insert into myTbl4 values (2,'FK...',1,1,'ABC');
 update myTbl4 set col43 = 2;
@@ -71,21 +80,25 @@ insert into myTbl4 values (3,'FK...',1,10,'ABC');
 delete from myTbl1 where col11 = 10;
 update myTbl1 set col12='DEF' where col11 <= 2;
 --
+set role emaj_regression_tests_adm_user1;
 select emaj.emaj_set_mark_group('myGroup1','M3');
 select emaj.emaj_comment_mark_group('myGroup1','M3','Third mark set');
 --
+reset role;
 delete from myTbl1 where col11 > 3;
 select * from emaj.emaj_rollback_group('myGroup1','M3');
 insert into myTbl2 values (3,'GHI',NULL);
 update myTbl4 set col43 = 3 where col41 = 2;
 select * from emaj.emaj_rollback_group('myGroup1','M3');
 --
+set role emaj_regression_tests_adm_user1;
 select emaj.emaj_protect_mark_group('myGroup1','M3');
 select emaj.emaj_protect_group('myGroup1');
 
 -----------------------------
 -- Step 2 : for myGroup2, start, update tables and set 2 marks 
 -----------------------------
+reset role;
 set search_path=myschema2;
 insert into myTbl1 select i, 'ABC', E'\\014'::bytea from generate_series (1,11) as i;
 update myTbl1 set col13=E'\\034'::bytea where col11 <= 3;
@@ -95,14 +108,15 @@ select nextval('myschema2.myseq1');
 insert into myTbl2 values (2,'DEF',NULL);
 insert into "myTbl3" (col33) select generate_series(1000,1039,4)/100;
 --
+set role emaj_regression_tests_adm_user1;
 select emaj.emaj_set_mark_group('myGroup2','M2');
 --
+reset role;
 set search_path=myschema2;
 select nextval('myschema2.myseq1');
 select nextval('myschema2.myseq1');
 select nextval('myschema2.myseq1');
 --
-reset role;
 alter sequence mySeq1 NO MAXVALUE NO CYCLE;
 set role emaj_regression_tests_adm_user1;
 --
@@ -110,7 +124,9 @@ insert into myTbl4 values (1,'FK...',1,1,'ABC');
 insert into myTbl4 values (2,'FK...',1,1,'ABC');
 update myTbl4 set col43 = 2;
 --
+set role emaj_regression_tests_adm_user1;
 select emaj.emaj_set_mark_group('myGroup2','M3');
+
 -----------------------------
 -- Step 3 : for myGroup2, double logged rollback
 -----------------------------
@@ -145,8 +161,7 @@ select group_name, group_is_rollbackable, group_last_alter_time_id, group_is_log
        group_is_rlbk_protected, group_nb_table, group_nb_sequence, group_comment
   from emaj.emaj_group order by group_name;
 
--- Uncomment the next statement when the previous version will be >= 4.4.0
---select * from emaj.emaj_group_hist order by grph_group, grph_time_range;
+select * from emaj.emaj_group_hist order by grph_group, grph_time_range;
 
 select mark_group, regexp_replace(mark_name,E'\\d\\d\.\\d\\d\\.\\d\\d\\.\\d\\d\\d\\d','%','g'), mark_time_id, 
        mark_is_rlbk_protected, mark_comment, mark_log_rows_before_next, mark_logged_rlbk_target_mark 
@@ -178,5 +193,6 @@ select col41, col42, col43, col44, col45, emaj_verb, emaj_tuple, emaj_gid from e
 -------------------------------
 -- Specific tests for this upgrade
 -------------------------------
+-- There is no specific test for this version
+
 reset role;
-create extension adminpack;

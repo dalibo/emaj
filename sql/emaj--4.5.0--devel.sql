@@ -106,10 +106,288 @@ SELECT emaj._disable_event_triggers();
 ------------------------------------------------------------------
 -- drop obsolete functions or functions with modified interface --
 ------------------------------------------------------------------
+DROP FUNCTION IF EXISTS emaj._handle_trigger_fk_tbl(P_ACTION TEXT,P_FULLTABLENAME TEXT,P_OBJECTNAME TEXT,P_OBJECTDEF TEXT);
 
 ------------------------------------------------------------------
 -- create new or modified functions                             --
 ------------------------------------------------------------------
+CREATE OR REPLACE FUNCTION emaj._handle_trigger_fk_tbl(p_action TEXT, p_schema TEXT, p_table TEXT, p_objectName TEXT,
+                                                       p_objectDef TEXT DEFAULT NULL)
+RETURNS VOID LANGUAGE plpgsql
+SECURITY DEFINER SET search_path = pg_catalog, pg_temp AS
+$_handle_trigger_fk_tbl$
+-- The function performs an elementary action for a trigger or a foreign key on an application table.
+-- Inputs: the action to perform: ENABLE_TRIGGER/DISABLE_TRIGGER/ADD_TRIGGER/DROP_TRIGGER/SET_TRIGGER/ADD_FK/DROP_FK
+--         the schema of the application table
+--         the application table name
+--         the trigger or constraint name
+--         the object definition for foreign keys, or the trigger type (ALWAYS/REPLICA/'') for triggers to enable or set
+-- The function is defined as SECURITY DEFINER so that emaj_adm role can perform the action on any application table.
+  DECLARE
+    v_stack                  TEXT;
+  BEGIN
+-- Check that the caller is allowed to do that.
+    GET DIAGNOSTICS v_stack = PG_CONTEXT;
+    IF v_stack NOT LIKE '%emaj._create_tbl(text,text,text,integer,text,text,text[],bigint,boolean)%' AND
+       v_stack NOT LIKE '%emaj._remove_tbl(text,text,text,boolean,bigint,text)%' AND
+       v_stack NOT LIKE '%emaj._drop_tbl(emaj.emaj_relation,bigint)%' AND
+       v_stack NOT LIKE '%emaj._start_groups(text[],text,boolean,boolean)%' AND
+       v_stack NOT LIKE '%emaj._stop_groups(text[],text,boolean,boolean)%' AND
+       v_stack NOT LIKE '%emaj._rlbk_session_exec(integer,integer)%' THEN
+      RAISE EXCEPTION '_handle_trigger_fk_tbl: the calling function is not allowed to reach this sensitive function.';
+    END IF;
+-- Perform the requested action.
+    IF p_action = 'DISABLE_TRIGGER' THEN
+      EXECUTE format('ALTER TABLE %I.%I DISABLE TRIGGER %I',
+                     p_schema, p_table, p_objectName);
+    ELSIF p_action = 'ENABLE_TRIGGER' THEN
+      EXECUTE format('ALTER TABLE %I.%I ENABLE %s TRIGGER %I',
+                     p_schema, p_table, p_objectDef, p_objectName);
+    ELSIF p_action = 'ADD_TRIGGER' AND p_objectName = 'emaj_log_trg' THEN
+      EXECUTE format('CREATE TRIGGER emaj_log_trg'
+                     ' AFTER INSERT OR UPDATE OR DELETE ON %I.%I'
+                     '  FOR EACH ROW EXECUTE PROCEDURE %s()',
+                     p_schema, p_table, p_objectDef);
+    ELSIF p_action = 'ADD_TRIGGER' AND p_objectName = 'emaj_trunc_trg' THEN
+      EXECUTE format('CREATE TRIGGER emaj_trunc_trg'
+                     '  BEFORE TRUNCATE ON %I.%I'
+                     '  FOR EACH STATEMENT EXECUTE PROCEDURE emaj._truncate_trigger_fnct()',
+                     p_schema, p_table);
+    ELSIF p_action = 'DROP_TRIGGER' THEN
+      EXECUTE format('DROP TRIGGER IF EXISTS %I ON %I.%I',
+                     p_objectName, p_schema, p_table);
+    ELSIF p_action = 'SET_TRIGGER' THEN
+      EXECUTE format('ALTER TABLE %I.%I DISABLE TRIGGER %I, ENABLE %s TRIGGER %I',
+                     p_schema, p_table, p_objectName, p_objectDef, p_objectName);
+    ELSIF p_action = 'ADD_FK' THEN
+      EXECUTE format('ALTER TABLE %I.%I ADD CONSTRAINT %I %s',
+                     p_schema, p_table, p_objectName, p_objectDef);
+    ELSIF p_action = 'DROP_FK' THEN
+      EXECUTE format('ALTER TABLE %I.%I DROP CONSTRAINT %I',
+                     p_schema, p_table, p_objectName);
+    ELSIF p_action = 'SET_FK_DEFERRED' THEN
+      EXECUTE format('SET CONSTRAINTS %I.%I DEFERRED',
+                         p_schema, p_objectName);
+    ELSIF p_action = 'SET_FK_IMMEDIATE' THEN
+      EXECUTE format('SET CONSTRAINTS %I.%I IMMEDIATE',
+                         p_schema, p_objectName);
+    END IF;
+--
+    RETURN;
+  END;
+$_handle_trigger_fk_tbl$;
+
+CREATE OR REPLACE FUNCTION emaj._create_tbl(p_schema TEXT, p_tbl TEXT, p_groupName TEXT, p_priority INT, p_logDatTsp TEXT,
+                                            p_logIdxTsp TEXT, p_ignoredTriggers TEXT[], p_timeId BIGINT, p_groupIsLogging BOOLEAN)
+RETURNS VOID LANGUAGE plpgsql
+SECURITY DEFINER SET search_path = pg_catalog, pg_temp AS
+$_create_tbl$
+-- This function creates all what is needed to manage the log and rollback operations for an application table.
+-- Input: the application table to process,
+--        the group to add it into,
+--        the table properties: priority, tablespaces attributes and triggers to ignore at rollback time
+--        the time id of the operation,
+--        a boolean indicating whether the group is currently in logging state.
+-- The objects created in the log schema:
+--    - the associated log table, with its own sequence,
+--    - the function and trigger that log the tables updates.
+-- The function is defined as SECURITY DEFINER so that emaj_adm role can use it even if he has not been granted privileges on the
+--   application table.
+  DECLARE
+    v_emajNamesPrefix        TEXT;
+    v_baseLogTableName       TEXT;
+    v_baseLogIdxName         TEXT;
+    v_baseLogFnctName        TEXT;
+    v_baseSequenceName       TEXT;
+    v_logSchema              TEXT;
+    v_fullTableName          TEXT;
+    v_logTableName           TEXT;
+    v_logIdxName             TEXT;
+    v_logFnctName            TEXT;
+    v_sequenceName           TEXT;
+    v_dataTblSpace           TEXT;
+    v_idxTblSpace            TEXT;
+    v_pkCols                 TEXT[];
+    v_rlbkColList            TEXT;
+    v_genColList             TEXT;
+    v_genValList             TEXT;
+    v_genSetList             TEXT;
+    v_genPkConditions        TEXT;
+    v_nbGenAlwaysIdentCol    INTEGER;
+    v_attnum                 SMALLINT;
+    v_alter_log_table_param  TEXT;
+    v_stmt                   TEXT;
+    v_triggerList            TEXT;
+  BEGIN
+-- The checks on the table properties are performed by the calling functions.
+-- Build the prefix of all emaj object to create.
+    IF length(p_tbl) <= 50 THEN
+-- For not too long table name, the prefix is the table name itself.
+      v_emajNamesPrefix = p_tbl;
+    ELSE
+-- For long table names (over 50 char long), compute the suffix to add to the first 50 characters (#1, #2, ...), by looking at the
+-- existing names.
+      SELECT substr(p_tbl, 1, 50) || '#' || coalesce(max(suffix) + 1, 1)::TEXT INTO v_emajNamesPrefix
+        FROM
+          (SELECT (regexp_match(substr(rel_log_table, 51), '#(\d+)'))[1]::INT AS suffix
+             FROM emaj.emaj_relation
+             WHERE substr(rel_log_table, 1, 50) = substr(p_tbl, 1, 50)
+          ) AS t;
+    END IF;
+-- Build the name of emaj components associated to the application table (non schema qualified and not quoted).
+    v_baseLogTableName     = v_emajNamesPrefix || '_log';
+    v_baseLogIdxName       = v_emajNamesPrefix || '_log_idx';
+    v_baseLogFnctName      = v_emajNamesPrefix || '_log_fnct';
+    v_baseSequenceName     = v_emajNamesPrefix || '_log_seq';
+-- Build the different name for table, trigger, functions,...
+    v_logSchema        = 'emaj_' || p_schema;
+    v_fullTableName    = quote_ident(p_schema) || '.' || quote_ident(p_tbl);
+    v_logTableName     = quote_ident(v_logSchema) || '.' || quote_ident(v_baseLogTableName);
+    v_logIdxName       = quote_ident(v_baseLogIdxName);
+    v_logFnctName      = quote_ident(v_logSchema) || '.' || quote_ident(v_baseLogFnctName);
+    v_sequenceName     = quote_ident(v_logSchema) || '.' || quote_ident(v_baseSequenceName);
+-- Prepare the TABLESPACE clauses for data and index
+    v_dataTblSpace = coalesce('TABLESPACE ' || quote_ident(p_logDatTsp),'');
+    v_idxTblSpace = coalesce('USING INDEX TABLESPACE ' || quote_ident(p_logIdxTsp),'');
+-- Create the log table: it looks like the application table, with some additional technical columns.
+    EXECUTE format('DROP TABLE IF EXISTS %s',
+                   v_logTableName);
+    EXECUTE format('CREATE TABLE %s (LIKE %s,'
+                   '  emaj_verb      VARCHAR(3)  NOT NULL,'
+                   '  emaj_tuple     VARCHAR(3)  NOT NULL,'
+                   '  emaj_gid       BIGINT      NOT NULL   DEFAULT nextval(''emaj.emaj_global_seq''),'
+                   '  emaj_changed   TIMESTAMPTZ DEFAULT clock_timestamp(),'
+                   '  emaj_txid      BIGINT      DEFAULT txid_current(),'
+                   '  emaj_user      VARCHAR(32) DEFAULT session_user,'
+                   '  CONSTRAINT %s PRIMARY KEY (emaj_gid, emaj_tuple) %s'
+                   '  ) %s',
+                    v_logTableName, v_fullTableName, v_logIdxName, v_idxTblSpace, v_dataTblSpace);
+-- Get the attnum of the emaj_verb column.
+    SELECT attnum INTO STRICT v_attnum
+      FROM pg_catalog.pg_attribute
+           JOIN pg_catalog.pg_class ON (pg_class.oid = attrelid)
+           JOIN pg_catalog.pg_namespace ON (pg_namespace.oid = relnamespace)
+      WHERE nspname = v_logSchema
+        AND relname = v_baseLogTableName
+        AND attname = 'emaj_verb';
+-- Adjust the log table structure with the alter_log_table parameter, if set.
+    SELECT param_value_text INTO v_alter_log_table_param
+      FROM emaj.emaj_param
+      WHERE param_key = ('alter_log_table');
+    IF v_alter_log_table_param IS NOT NULL AND v_alter_log_table_param <> '' THEN
+      EXECUTE format('ALTER TABLE %s %s',
+                     v_logTableName, v_alter_log_table_param);
+    END IF;
+-- Set the index associated to the primary key as cluster index (It may be useful for CLUSTER command).
+    EXECUTE format('ALTER TABLE ONLY %s CLUSTER ON %s',
+                   v_logTableName, v_logIdxName);
+-- Remove the NOT NULL constraints of application columns.
+--   They are useless and blocking to store truncate event for tables belonging to audit_only tables.
+    SELECT string_agg(action, ',') INTO v_stmt
+      FROM
+        (SELECT ' ALTER COLUMN ' || quote_ident(attname) || ' DROP NOT NULL' AS action
+           FROM pg_catalog.pg_attribute
+                JOIN pg_catalog.pg_class ON (pg_class.oid = attrelid)
+                JOIN pg_catalog.pg_namespace ON (pg_namespace.oid = relnamespace)
+           WHERE nspname = v_logSchema
+             AND relname = v_baseLogTableName
+             AND attnum > 0
+             AND attnum < v_attnum
+             AND NOT attisdropped
+             AND attnotnull
+        ) AS t;
+    IF v_stmt IS NOT NULL THEN
+      EXECUTE format('ALTER TABLE %s %s',
+                     v_logTableName, v_stmt);
+    END IF;
+-- Create the sequence associated to the log table.
+    EXECUTE format('CREATE SEQUENCE %s',
+                   v_sequenceName);
+-- Create the log function.
+-- The new row is logged for each INSERT, the old row is logged for each DELETE and the old and new rows are logged for each UPDATE.
+    EXECUTE 'CREATE OR REPLACE FUNCTION ' || v_logFnctName || '() RETURNS TRIGGER AS $logfnct$'
+         || 'BEGIN'
+-- The sequence associated to the log table is incremented at the beginning of the function ...
+         || '  PERFORM NEXTVAL(' || quote_literal(v_sequenceName) || ');'
+-- ... and the global id sequence is incremented by the first/only INSERT into the log table.
+         || '  IF (TG_OP = ''DELETE'') THEN'
+         || '    INSERT INTO ' || v_logTableName || ' SELECT OLD.*, ''DEL'', ''OLD'';'
+         || '    RETURN OLD;'
+         || '  ELSIF (TG_OP = ''UPDATE'') THEN'
+         || '    INSERT INTO ' || v_logTableName || ' SELECT OLD.*, ''UPD'', ''OLD'';'
+         || '    INSERT INTO ' || v_logTableName || ' SELECT NEW.*, ''UPD'', ''NEW'', lastval();'
+         || '    RETURN NEW;'
+         || '  ELSIF (TG_OP = ''INSERT'') THEN'
+         || '    INSERT INTO ' || v_logTableName || ' SELECT NEW.*, ''INS'', ''NEW'';'
+         || '    RETURN NEW;'
+         || '  END IF;'
+         || '  RETURN NULL;'
+         || 'END;'
+         || '$logfnct$ LANGUAGE plpgsql SECURITY DEFINER SET search_path = pg_catalog, pg_temp;';
+-- Create the log and truncate triggers.
+    PERFORM emaj._handle_trigger_fk_tbl('DROP_TRIGGER', p_schema, p_tbl, 'emaj_log_trg');
+    PERFORM emaj._handle_trigger_fk_tbl('ADD_TRIGGER', p_schema, p_tbl, 'emaj_log_trg', v_logFnctName);
+    PERFORM emaj._handle_trigger_fk_tbl('DROP_TRIGGER', p_schema, p_tbl, 'emaj_trunc_trg');
+    PERFORM emaj._handle_trigger_fk_tbl('ADD_TRIGGER', p_schema, p_tbl, 'emaj_trunc_trg');
+    IF p_groupIsLogging THEN
+-- If the group is in logging state, set the triggers as ALWAYS triggers, so that they can fire at rollback time.
+      PERFORM emaj._handle_trigger_fk_tbl('SET_TRIGGER', p_schema, p_tbl, 'emaj_log_trg', 'ALWAYS');
+      PERFORM emaj._handle_trigger_fk_tbl('SET_TRIGGER', p_schema, p_tbl, 'emaj_trunc_trg', 'ALWAYS');
+    ELSE
+-- If the group is idle, deactivate the triggers (they will be enabled at emaj_start_group time).
+      PERFORM emaj._handle_trigger_fk_tbl('DISABLE_TRIGGER', p_schema, p_tbl, 'emaj_log_trg');
+      PERFORM emaj._handle_trigger_fk_tbl('DISABLE_TRIGGER', p_schema, p_tbl, 'emaj_trunc_trg');
+    END IF;
+-- Set emaj_adm as owner of log objects.
+    EXECUTE format('ALTER TABLE %s OWNER TO emaj_adm',
+                   v_logTableName);
+    EXECUTE format('ALTER SEQUENCE %s OWNER TO emaj_adm',
+                   v_sequenceName);
+    EXECUTE format('ALTER FUNCTION %s () OWNER TO emaj_adm',
+                   v_logFnctName);
+-- Grant appropriate rights to the emaj_viewer role.
+    EXECUTE format('GRANT SELECT ON TABLE %s TO emaj_viewer',
+                   v_logTableName);
+    EXECUTE format('GRANT SELECT ON SEQUENCE %s TO emaj_viewer',
+                   v_sequenceName);
+-- Build the PK columns names array and some pieces of SQL statements that will be needed at table rollback and gen_sql times.
+-- They are left NULL if the table has no pkey.
+    SELECT * FROM emaj._build_sql_tbl(v_fullTableName)
+      INTO v_pkCols, v_rlbkColList, v_genColList, v_genValList, v_genSetList, v_genPkConditions, v_nbGenAlwaysIdentCol;
+-- Register the table into emaj_relation.
+    INSERT INTO emaj.emaj_relation
+               (rel_schema, rel_tblseq, rel_time_range, rel_group, rel_priority,
+                rel_log_schema, rel_log_dat_tsp, rel_log_idx_tsp, rel_kind, rel_log_table,
+                rel_log_index, rel_log_sequence, rel_log_function, rel_ignored_triggers, rel_pk_cols,
+                rel_emaj_verb_attnum, rel_has_always_ident_col, rel_sql_rlbk_columns,
+                rel_sql_gen_ins_col, rel_sql_gen_ins_val, rel_sql_gen_upd_set, rel_sql_gen_pk_conditions)
+        VALUES (p_schema, p_tbl, int8range(p_timeId, NULL, '[)'), p_groupName, p_priority,
+                v_logSchema, p_logDatTsp, p_logIdxTsp, 'r', v_baseLogTableName,
+                v_baseLogIdxName, v_baseSequenceName, v_baseLogFnctName, p_ignoredTriggers, v_pkCols,
+                v_attnum, v_nbGenAlwaysIdentCol > 0, v_rlbkColList,
+                v_genColList, v_genValList, v_genSetList, v_genPkConditions);
+-- Check if the table has application (neither internal - ie. created for fk - nor previously created by emaj) triggers not already
+-- declared as 'to be ignored at rollback time'.
+    SELECT string_agg(tgname, ', ' ORDER BY tgname) INTO v_triggerList
+      FROM
+        (SELECT tgname
+           FROM pg_catalog.pg_trigger
+           WHERE tgrelid = v_fullTableName::regclass
+             AND tgconstraint = 0
+             AND tgname NOT LIKE E'emaj\\_%\\_trg'
+             AND NOT tgname = ANY(coalesce(p_ignoredTriggers, '{}'))
+        ) AS t;
+-- If yes, issue a warning.
+-- If a trigger updates another table in the same table group or outside, it could generate problem at rollback time.
+    IF v_triggerList IS NOT NULL THEN
+      RAISE WARNING '_create_tbl: The table "%" has triggers that will be automatically disabled during E-Maj rollback operations (%).'
+                    ' Use the emaj_modify_table() function to change this behaviour.', v_fullTableName, v_triggerList;
+    END IF;
+--
+    RETURN;
+  END;
+$_create_tbl$;
+
 CREATE OR REPLACE FUNCTION emaj._remove_tbl(p_schema TEXT, p_table TEXT, p_group TEXT, p_groupIsLogging BOOLEAN,
                                             p_timeId BIGINT, p_function TEXT)
 RETURNS VOID LANGUAGE plpgsql AS
@@ -128,7 +406,6 @@ $_remove_tbl$
     v_logSequence            TEXT;
     v_logSequenceLastValue   BIGINT;
     v_namesSuffix            TEXT;
-    v_fullTableName          TEXT;
   BEGIN
     IF NOT p_groupIsLogging THEN
 -- If the group is in idle state, drop the table immediately.
@@ -167,7 +444,6 @@ $_remove_tbl$
                      v_logSchema, v_currentLogIndex, v_currentLogIndex || v_namesSuffix);
 -- Drop the log and truncate triggers.
 -- (check the application table exists before dropping its triggers to avoid an error fires with postgres version <= 9.3)
-      v_fullTableName  = quote_ident(p_schema) || '.' || quote_ident(p_table);
       IF EXISTS
            (SELECT 0
               FROM pg_catalog.pg_class
@@ -176,8 +452,8 @@ $_remove_tbl$
                 AND relname = p_table
                 AND relkind = 'r'
            ) THEN
-        PERFORM emaj._handle_trigger_fk_tbl('DROP_TRIGGER', v_fullTableName, 'emaj_log_trg');
-        PERFORM emaj._handle_trigger_fk_tbl('DROP_TRIGGER', v_fullTableName, 'emaj_trunc_trg');
+        PERFORM emaj._handle_trigger_fk_tbl('DROP_TRIGGER', p_schema, p_table, 'emaj_log_trg');
+        PERFORM emaj._handle_trigger_fk_tbl('DROP_TRIGGER', p_schema, p_table, 'emaj_trunc_trg');
       END IF;
 -- Drop the log function and the log sequence.
 -- (but we keep the sequence related data in the emaj_table and the emaj_seq_hole tables)
@@ -220,10 +496,7 @@ RETURNS VOID LANGUAGE plpgsql AS
 $_drop_tbl$
 -- The function deletes a timerange for a table. This centralizes the deletion of all what has been created by _create_tbl() function.
 -- Required inputs: row from emaj_relation corresponding to the appplication table to proccess, time id.
-  DECLARE
-    v_fullTableName          TEXT;
   BEGIN
-    v_fullTableName = quote_ident(r_rel.rel_schema) || '.' || quote_ident(r_rel.rel_tblseq);
 -- If the table is currently linked to a group, drop the log trigger, function and sequence.
     IF upper_inf(r_rel.rel_time_range) THEN
 -- Check the table exists before dropping its triggers.
@@ -236,8 +509,8 @@ $_drop_tbl$
                 AND relkind = 'r'
            ) THEN
 -- Drop the log and truncate triggers on the application table.
-        PERFORM emaj._handle_trigger_fk_tbl('DROP_TRIGGER', v_fullTableName, 'emaj_log_trg');
-        PERFORM emaj._handle_trigger_fk_tbl('DROP_TRIGGER', v_fullTableName, 'emaj_trunc_trg');
+        PERFORM emaj._handle_trigger_fk_tbl('DROP_TRIGGER', r_rel.rel_schema, r_rel.rel_tblseq, 'emaj_log_trg');
+        PERFORM emaj._handle_trigger_fk_tbl('DROP_TRIGGER', r_rel.rel_schema, r_rel.rel_tblseq, 'emaj_trunc_trg');
       END IF;
 -- Drop the log function.
       IF r_rel.rel_log_function IS NOT NULL THEN
@@ -530,6 +803,67 @@ $_get_app_sequence_last_value$
   END;
 $_get_app_sequence_last_value$;
 
+CREATE OR REPLACE FUNCTION emaj._lock_groups(p_groupNames TEXT[], p_lockMode TEXT, p_multiGroup BOOLEAN)
+RETURNS VOID LANGUAGE plpgsql
+SECURITY DEFINER SET search_path = pg_catalog, pg_temp AS
+$_lock_groups$
+-- This function locks all tables of a groups array.
+-- The lock mode is provided by the calling function.
+-- It only locks existing tables. It is calling function's responsability to handle cases when application tables are missing.
+-- Input: array of group names, lock mode, flag indicating whether the function is called to processed several groups.
+-- The function is defined as SECURITY DEFINER so that emaj_adm role can use it even if he has not been granted privileges on tables.
+  DECLARE
+    v_nbRetry                SMALLINT = 0;
+    v_nbTbl                  INT;
+    v_ok                     BOOLEAN = FALSE;
+    v_fullTableName          TEXT;
+    r_tblsq                  RECORD;
+  BEGIN
+-- Insert a BEGIN event into the history.
+    INSERT INTO emaj.emaj_hist (hist_function, hist_event, hist_object)
+      VALUES (CASE WHEN p_multiGroup THEN 'LOCK_GROUPS' ELSE 'LOCK_GROUP' END,'BEGIN', array_to_string(p_groupNames,','));
+-- Acquire lock on all tables.
+-- In case of deadlock, retry up to 5 times.
+    WHILE NOT v_ok AND v_nbRetry < 5 LOOP
+      BEGIN
+-- Process each table currently belonging to the groups.
+        v_nbTbl = 0;
+        FOR r_tblsq IN
+          SELECT rel_priority, rel_schema, rel_tblseq
+            FROM emaj.emaj_relation
+                 JOIN pg_catalog.pg_class ON (relname = rel_tblseq)
+                 JOIN pg_catalog.pg_namespace ON (pg_namespace.oid = relnamespace AND nspname = rel_schema)
+            WHERE rel_group = ANY (p_groupNames)
+              AND rel_kind = 'r'
+              AND upper_inf(rel_time_range)
+            ORDER BY rel_priority, rel_schema, rel_tblseq
+        LOOP
+-- Lock the table.
+          v_fullTableName = quote_ident(r_tblsq.rel_schema) || '.' || quote_ident(r_tblsq.rel_tblseq);
+          EXECUTE format('LOCK TABLE %s IN %s MODE',
+                         v_fullTableName, p_lockMode);
+          v_nbTbl = v_nbTbl + 1;
+        END LOOP;
+-- Ok, all tables are locked.
+        v_ok = TRUE;
+      EXCEPTION
+        WHEN deadlock_detected THEN
+          v_nbRetry = v_nbRetry + 1;
+          RAISE NOTICE '_lock_groups: A deadlock has been trapped while locking tables of group "%".', p_groupNames;
+      END;
+    END LOOP;
+    IF NOT v_ok THEN
+      RAISE EXCEPTION '_lock_groups: Too many (5) deadlocks encountered while locking tables of group "%".',p_groupNames;
+    END IF;
+-- Insert a END event into the history.
+    INSERT INTO emaj.emaj_hist (hist_function, hist_event, hist_object, hist_wording)
+      VALUES (CASE WHEN p_multiGroup THEN 'LOCK_GROUPS' ELSE 'LOCK_GROUP' END, 'END',
+              array_to_string(p_groupNames,','), v_nbTbl || ' tables locked, ' || v_nbRetry || ' deadlock(s)');
+--
+    RETURN;
+  END;
+$_lock_groups$;
+
 CREATE OR REPLACE FUNCTION emaj._start_groups(p_groupNames TEXT[], p_mark TEXT, p_multiGroup BOOLEAN, p_resetLog BOOLEAN)
 RETURNS INT LANGUAGE plpgsql AS
 $_start_groups$
@@ -584,7 +918,7 @@ $_start_groups$
 -- Enable all log triggers for the groups.
 -- For each relation currently belonging to the groups,
       FOR r_tblsq IN
-        SELECT rel_kind, quote_ident(rel_schema) || '.' || quote_ident(rel_tblseq) AS full_relation_name
+        SELECT rel_kind, rel_schema, rel_tblseq
           FROM emaj.emaj_relation
           WHERE upper_inf(rel_time_range)
             AND rel_group = ANY (p_groupNames)
@@ -592,8 +926,8 @@ $_start_groups$
       LOOP
         IF r_tblsq.rel_kind = 'r' THEN
 -- ... if it is a table, enable the emaj log and truncate triggers.
-          PERFORM emaj._handle_trigger_fk_tbl('ENABLE_TRIGGER', r_tblsq.full_relation_name, 'emaj_log_trg', 'ALWAYS');
-          PERFORM emaj._handle_trigger_fk_tbl('ENABLE_TRIGGER', r_tblsq.full_relation_name, 'emaj_trunc_trg', 'ALWAYS');
+          PERFORM emaj._handle_trigger_fk_tbl('ENABLE_TRIGGER', r_tblsq.rel_schema, r_tblsq.rel_tblseq, 'emaj_log_trg', 'ALWAYS');
+          PERFORM emaj._handle_trigger_fk_tbl('ENABLE_TRIGGER', r_tblsq.rel_schema, r_tblsq.rel_tblseq, 'emaj_trunc_trg', 'ALWAYS');
         END IF;
         v_nbTblSeq = v_nbTblSeq + 1;
       END LOOP;
@@ -622,6 +956,463 @@ $_start_groups$
     RETURN v_nbTblSeq;
   END;
 $_start_groups$;
+
+CREATE OR REPLACE FUNCTION emaj._stop_groups(p_groupNames TEXT[], p_mark TEXT, p_multiGroup BOOLEAN, p_isForced BOOLEAN)
+RETURNS INT LANGUAGE plpgsql AS
+$_stop_groups$
+-- This function effectively de-activates the log triggers of all the tables for a group.
+-- Input: array of group names, a mark name to set, and a boolean indicating if the function is called by a multi group function
+-- Output: number of processed tables and sequences
+  DECLARE
+    v_function               TEXT;
+    v_groupList              TEXT;
+    v_count                  INT;
+    v_timeId                 BIGINT;
+    v_nbTblSeq               INT = 0;
+    v_markName               TEXT;
+    v_group                  TEXT;
+    v_lsesTimeRange          INT8RANGE;
+    r_schema                 RECORD;
+    r_tblsq                  RECORD;
+  BEGIN
+    v_function = CASE WHEN p_multiGroup THEN 'STOP_GROUPS'
+                   WHEN NOT p_multiGroup AND NOT p_isForced THEN 'STOP_GROUP'
+                   ELSE 'FORCE_STOP_GROUP' END;
+-- Insert a BEGIN event into the history.
+    INSERT INTO emaj.emaj_hist (hist_function, hist_event, hist_object)
+      VALUES (v_function, 'BEGIN', array_to_string(p_groupNames,','));
+-- Check the group names.
+    SELECT emaj._check_group_names(p_groupNames := p_groupNames, p_mayBeNull := p_multiGroup, p_lockGroups := TRUE)
+      INTO p_groupNames;
+-- For all already IDLE groups, generate a warning message and remove them from the list of the groups to process.
+    SELECT string_agg(group_name,', ' ORDER BY group_name), count(*)
+      INTO v_groupList, v_count
+      FROM emaj.emaj_group
+      WHERE group_name = ANY(p_groupNames)
+       AND NOT group_is_logging;
+    IF v_count = 1 THEN
+      RAISE WARNING '_stop_groups: The group "%" is already in IDLE state.', v_groupList;
+    END IF;
+    IF v_count > 1 THEN
+      RAISE WARNING '_stop_groups: The groups "%" are already in IDLE state.', v_groupList;
+    END IF;
+-- Process the LOGGING groups.
+    SELECT array_agg(DISTINCT group_name)
+      INTO p_groupNames
+      FROM emaj.emaj_group
+      WHERE group_name = ANY(p_groupNames)
+        AND group_is_logging;
+    IF p_groupNames IS NOT NULL THEN
+-- Check and process the supplied mark name (except if the function is called by emaj_force_stop_group()).
+      IF NOT p_isForced THEN
+        IF p_mark IS NULL OR p_mark = '' THEN
+          p_mark = 'STOP_%';
+        END IF;
+        SELECT emaj._check_new_mark(p_groupNames, p_mark) INTO v_markName;
+      END IF;
+-- OK (no error detected and at least one group in logging state)
+-- Get a time stamp id of type 'X' for the operation.
+      SELECT emaj._set_time_stamp(v_function, 'X') INTO v_timeId;
+-- Lock all tables to get a stable point.
+-- One sets the locks at the beginning of the operation (rather than let the ALTER TABLE statements set their own locks) to decrease the
+-- risk of deadlock.
+      PERFORM emaj._lock_groups(p_groupNames,'SHARE ROW EXCLUSIVE',p_multiGroup);
+-- Verify that all application schemas for the groups still exists.
+      FOR r_schema IN
+        SELECT DISTINCT rel_schema
+          FROM emaj.emaj_relation
+          WHERE upper_inf(rel_time_range)
+            AND rel_group = ANY (p_groupNames)
+            AND NOT EXISTS
+                 (SELECT nspname
+                    FROM pg_catalog.pg_namespace
+                    WHERE nspname = rel_schema
+                 )
+          ORDER BY rel_schema
+      LOOP
+        IF p_isForced THEN
+          RAISE WARNING '_stop_groups: The schema "%" does not exist any more.', r_schema.rel_schema;
+        ELSE
+          RAISE EXCEPTION '_stop_groups: The schema "%" does not exist any more.', r_schema.rel_schema;
+        END IF;
+      END LOOP;
+-- For each relation currently belonging to the groups to process...
+      FOR r_tblsq IN
+        SELECT rel_priority, rel_schema, rel_tblseq, rel_kind
+          FROM emaj.emaj_relation
+          WHERE upper_inf(rel_time_range)
+            AND rel_group = ANY (p_groupNames)
+          ORDER BY rel_priority, rel_schema, rel_tblseq
+      LOOP
+        IF r_tblsq.rel_kind = 'r' THEN
+-- If it is a table, check the table still exists,
+          IF NOT EXISTS
+               (SELECT 0
+                  FROM pg_catalog.pg_class
+                       JOIN pg_catalog.pg_namespace ON (pg_namespace.oid = relnamespace)
+                  WHERE nspname = r_tblsq.rel_schema
+                    AND relname = r_tblsq.rel_tblseq
+               ) THEN
+            IF p_isForced THEN
+              RAISE WARNING '_stop_groups: The table "%.%" does not exist any more.', r_tblsq.rel_schema, r_tblsq.rel_tblseq;
+            ELSE
+              RAISE EXCEPTION '_stop_groups: The table "%.%" does not exist any more.', r_tblsq.rel_schema, r_tblsq.rel_tblseq;
+            END IF;
+          ELSE
+-- ... and disable the emaj log and truncate triggers.
+-- Errors are captured so that emaj_force_stop_group() can be silently executed.
+            BEGIN
+              PERFORM emaj._handle_trigger_fk_tbl('DISABLE_TRIGGER', r_tblsq.rel_schema, r_tblsq.rel_tblseq, 'emaj_log_trg');
+            EXCEPTION
+              WHEN undefined_object THEN
+                IF p_isForced THEN
+                  RAISE WARNING '_stop_groups: The log trigger "emaj_log_trg" on table "%.%" does not exist any more.',
+                    r_tblsq.rel_schema, r_tblsq.rel_tblseq;
+                ELSE
+                  RAISE EXCEPTION '_stop_groups: The log trigger "emaj_log_trg" on table "%.%" does not exist any more.',
+                    r_tblsq.rel_schema, r_tblsq.rel_tblseq;
+                END IF;
+            END;
+            BEGIN
+              PERFORM emaj._handle_trigger_fk_tbl('DISABLE_TRIGGER', r_tblsq.rel_schema, r_tblsq.rel_tblseq, 'emaj_trunc_trg');
+            EXCEPTION
+              WHEN undefined_object THEN
+                IF p_isForced THEN
+                  RAISE WARNING '_stop_groups: The truncate trigger "emaj_trunc_trg" on table "%.%" does not exist any more.',
+                    r_tblsq.rel_schema, r_tblsq.rel_tblseq;
+                ELSE
+                  RAISE EXCEPTION '_stop_groups: The truncate trigger "emaj_trunc_trg" on table "%.%" does not exist any more.',
+                    r_tblsq.rel_schema, r_tblsq.rel_tblseq;
+                END IF;
+            END;
+          END IF;
+        END IF;
+        v_nbTblSeq = v_nbTblSeq + 1;
+      END LOOP;
+      IF NOT p_isForced THEN
+-- If the function is not called by emaj_force_stop_group(), set the stop mark for each group,
+        PERFORM emaj._set_mark_groups(p_groupNames, v_markName, p_multiGroup, TRUE, NULL, v_timeId);
+-- and set the number of log rows to 0 for these marks.
+        UPDATE emaj.emaj_mark m
+          SET mark_log_rows_before_next = 0
+          WHERE mark_group = ANY (p_groupNames)
+            AND mark_time_id = v_timeId;
+      END IF;
+-- Process each tables group separately to ...
+      FOREACH v_group IN ARRAY p_groupNames
+      LOOP
+-- Get the latest log session of the tables group.
+        SELECT lses_time_range
+          INTO v_lsesTimeRange
+          FROM emaj.emaj_log_session
+          WHERE lses_group = v_group
+          ORDER BY lses_time_range DESC
+          LIMIT 1;
+-- Set all marks as 'DELETED' to avoid any further rollback and remove marks protection against rollback, if any.
+        UPDATE emaj.emaj_mark
+          SET mark_is_rlbk_protected = FALSE
+          WHERE mark_group = v_group
+            AND mark_time_id >= lower(v_lsesTimeRange);
+-- Update the log session to set the time range upper bound
+        UPDATE emaj.emaj_log_session
+          SET lses_time_range = int8range(lower(lses_time_range), v_timeId, '[]')
+          WHERE lses_group = v_group
+            AND lses_time_range = v_lsesTimeRange;
+      END LOOP;
+-- Update the emaj_group table to set the groups state and the rollback protections.
+      UPDATE emaj.emaj_group
+        SET group_is_logging = FALSE, group_is_rlbk_protected = NOT group_is_rollbackable
+        WHERE group_name = ANY (p_groupNames);
+    END IF;
+-- Insert a END event into the history.
+    INSERT INTO emaj.emaj_hist (hist_function, hist_event, hist_object, hist_wording)
+      VALUES (v_function, 'END', array_to_string(p_groupNames,','), v_nbTblSeq || ' tables/sequences processed');
+--
+    RETURN v_nbTblSeq;
+  END;
+$_stop_groups$;
+
+CREATE OR REPLACE FUNCTION emaj._rlbk_session_lock(p_rlbkId INT, p_session INT)
+RETURNS VOID LANGUAGE plpgsql
+SECURITY DEFINER SET search_path = pg_catalog, pg_temp AS
+$_rlbk_session_lock$
+-- It opens the session if needed, creates the session row in the emaj_rlbk_session table
+-- and then locks all the application tables for the session.
+-- The function is defined as SECURITY DEFINER so that emaj_adm role can use it even if he has not been granted privileges on tables.
+  DECLARE
+    v_isDblinkUsed           BOOLEAN;
+    v_dblinkSchema           TEXT;
+    v_dbLinkCnxStatus        INT;
+    v_stmt                   TEXT;
+    v_groupNames             TEXT[];
+    v_nbRetry                SMALLINT = 0;
+    v_ok                     BOOLEAN = FALSE;
+    v_nbTbl                  INT;
+    r_tbl                    RECORD;
+  BEGIN
+-- Get the rollback characteristics from the emaj_rlbk table.
+    SELECT rlbk_is_dblink_used, rlbk_dblink_schema, rlbk_groups
+      INTO v_isDblinkUsed, v_dblinkSchema, v_groupNames
+      FROM emaj.emaj_rlbk
+      WHERE rlbk_id = p_rlbkId;
+-- For dblink session > 1, open the connection (the session 1 is already opened).
+    IF p_session > 1 THEN
+      SELECT p_status INTO v_dbLinkCnxStatus
+        FROM emaj._dblink_open_cnx('rlbk#' || p_session);
+      IF v_dbLinkCnxStatus < 0 THEN
+        RAISE EXCEPTION '_rlbk_session_lock: Error while opening the dblink session #% (Status of the dblink connection attempt = %'
+                        ' - see E-Maj documentation).',
+          p_session, v_dbLinkCnxStatus;
+      END IF;
+-- ... and create the session row the emaj_rlbk_session table.
+      v_stmt = 'INSERT INTO emaj.emaj_rlbk_session (rlbs_rlbk_id, rlbs_session, rlbs_txid, rlbs_start_datetime) ' ||
+               'VALUES (' || p_rlbkId || ',' || p_session || ',' || txid_current() || ',' ||
+                quote_literal(clock_timestamp()) || ') RETURNING 1';
+      PERFORM emaj._dblink_sql_exec('rlbk#' || p_session, v_stmt, v_dblinkSchema);
+    END IF;
+-- Insert a BEGIN event into the history.
+    INSERT INTO emaj.emaj_hist (hist_function, hist_event, hist_object, hist_wording)
+      VALUES ('LOCK_GROUP', 'BEGIN', array_to_string(v_groupNames,','), 'Rollback session #' || p_session);
+--
+-- Acquire locks on tables.
+--
+-- In case of deadlock, retry up to 5 times.
+    WHILE NOT v_ok AND v_nbRetry < 5 LOOP
+      BEGIN
+        v_nbTbl = 0;
+-- Scan all tables of the session, in priority ascending order.
+        FOR r_tbl IN
+          SELECT quote_ident(rlbp_schema) || '.' || quote_ident(rlbp_table) AS fullName,
+                 EXISTS
+                   (SELECT 1
+                      FROM emaj.emaj_rlbk_plan rlbp2
+                      WHERE rlbp2.rlbp_rlbk_id = p_rlbkId
+                        AND rlbp2.rlbp_session = p_session
+                        AND rlbp2.rlbp_schema = rlbp1.rlbp_schema
+                        AND rlbp2.rlbp_table = rlbp1.rlbp_table
+                        AND rlbp2.rlbp_step = 'DIS_LOG_TRG'
+                   ) AS disLogTrg
+            FROM emaj.emaj_rlbk_plan rlbp1
+                 JOIN emaj.emaj_relation ON (rel_schema = rlbp_schema AND rel_tblseq = rlbp_table AND upper_inf(rel_time_range))
+            WHERE rlbp_rlbk_id = p_rlbkId
+              AND rlbp_step = 'LOCK_TABLE'
+              AND rlbp_session = p_session
+            ORDER BY rel_priority, rel_schema, rel_tblseq
+        LOOP
+-- Lock each table.
+-- The locking level is EXCLUSIVE mode.
+-- This blocks all concurrent update capabilities of all tables of the groups (including tables with no logged update to rollback),
+-- in order to ensure a stable state of the group at the end of the rollback operation).
+-- But these tables can be accessed by SELECT statements during the E-Maj rollback.
+          EXECUTE format('LOCK TABLE %s IN EXCLUSIVE MODE',
+                         r_tbl.fullName);
+          v_nbTbl = v_nbTbl + 1;
+        END LOOP;
+-- OK, all tables locked.
+        v_ok = TRUE;
+      EXCEPTION
+        WHEN deadlock_detected THEN
+          v_nbRetry = v_nbRetry + 1;
+          RAISE NOTICE '_rlbk_session_lock: A deadlock has been trapped while locking tables for groups "%".',
+            array_to_string(v_groupNames,',');
+      END;
+    END LOOP;
+    IF NOT v_ok THEN
+      PERFORM emaj._rlbk_error(p_rlbkId, '_rlbk_session_lock: Too many (5) deadlocks encountered while locking tables',
+                               'rlbk#' || p_session);
+      RAISE EXCEPTION '_rlbk_session_lock: Too many (5) deadlocks encountered while locking tables for groups "%".',
+        array_to_string(v_groupNames,',');
+    END IF;
+-- Insert a END event into the history.
+    INSERT INTO emaj.emaj_hist (hist_function, hist_event, hist_object, hist_wording)
+      VALUES ('LOCK_GROUP', 'END', array_to_string(v_groupNames,','),
+              'Rollback session #' || p_session || ': ' || v_nbTbl || ' tables locked, ' || v_nbRetry || ' deadlock(s)');
+--
+    RETURN;
+-- Trap and record exception during the rollback operation.
+  EXCEPTION
+    WHEN SQLSTATE 'P0001' THEN             -- Do not trap the exceptions raised by the function
+      RAISE;
+    WHEN OTHERS THEN                       -- Otherwise, log the E-Maj rollback abort in emaj_rlbk, if possible
+      PERFORM emaj._rlbk_error(p_rlbkId, 'In _rlbk_session_lock() for session ' || p_session || ': ' || SQLERRM, 'rlbk#' || p_session);
+      RAISE;
+  END;
+$_rlbk_session_lock$;
+
+CREATE OR REPLACE FUNCTION emaj._rlbk_session_exec(p_rlbkId INT, p_session INT)
+RETURNS VOID LANGUAGE plpgsql AS
+$_rlbk_session_exec$
+-- This function executes the main part of a rollback operation.
+-- It executes the steps identified by _rlbk_planning() and stored into emaj_rlbk_plan, for one session.
+-- It updates the emaj_rlbk_plan table, using dblink connection if possible, giving a visibility of the rollback progress.
+  DECLARE
+    v_stmt                   TEXT;
+    v_groupNames             TEXT[];
+    v_mark                   TEXT;
+    v_rlbkTimeId             BIGINT;
+    v_isLoggedRlbk           BOOLEAN;
+    v_nbSession              INT;
+    v_nbSequence             INT;
+    v_dblinkSchema           TEXT;
+    v_isDblinkUsed           BOOLEAN;
+    v_maxGlobalSeq           BIGINT;
+    v_rlbkMarkTimeId         BIGINT;
+    v_lastGlobalSeq          BIGINT;
+    v_effNbSequence          INT;
+    v_nbRows                 BIGINT;
+    r_step                   RECORD;
+  BEGIN
+-- Get the rollback characteristics from the emaj_rlbk table.
+    SELECT rlbk_groups, rlbk_mark, rlbk_time_id, rlbk_is_logged, rlbk_nb_session, rlbk_nb_sequence,
+           rlbk_dblink_schema, rlbk_is_dblink_used, time_last_emaj_gid
+      INTO v_groupNames, v_mark, v_rlbkTimeId, v_isLoggedRlbk, v_nbSession, v_nbSequence,
+           v_dblinkSchema, v_isDblinkUsed, v_maxGlobalSeq
+      FROM emaj.emaj_rlbk
+           JOIN emaj.emaj_time_stamp ON (time_id = rlbk_time_id)
+      WHERE rlbk_id = p_rlbkId;
+-- Fetch the mark_time_id, the last global sequence at set_mark time for the first group of the groups array.
+-- They all share the same values.
+    SELECT mark_time_id, time_last_emaj_gid INTO v_rlbkMarkTimeId, v_lastGlobalSeq
+      FROM emaj.emaj_mark
+           JOIN emaj.emaj_time_stamp ON (time_id = mark_time_id)
+      WHERE mark_group = v_groupNames[1]
+        AND mark_name = v_mark;
+-- Scan emaj_rlbp_plan to get all steps to process that have been assigned to this session, in batch_number and step order.
+    FOR r_step IN
+      SELECT rlbp_step, rlbp_schema, rlbp_table, rlbp_object, rlbp_object_def, rlbp_app_trg_type,
+             rlbp_is_repl_role_replica, rlbp_target_time_id
+        FROM emaj.emaj_rlbk_plan
+        WHERE rlbp_rlbk_id = p_rlbkId
+          AND rlbp_step NOT IN ('LOCK_TABLE','CTRL-DBLINK','CTRL+DBLINK')
+          AND rlbp_session = p_session
+        ORDER BY rlbp_batch_number, rlbp_step, rlbp_table, rlbp_object
+    LOOP
+-- Update the emaj_rlbk_plan table to set the step start time.
+      v_stmt = 'UPDATE emaj.emaj_rlbk_plan SET rlbp_start_datetime = clock_timestamp() ' ||
+               ' WHERE rlbp_rlbk_id = ' || p_rlbkId || ' AND rlbp_step = ' || quote_literal(r_step.rlbp_step) ||
+               ' AND rlbp_schema = ' || quote_literal(r_step.rlbp_schema) ||
+               ' AND rlbp_table = ' || quote_literal(r_step.rlbp_table) ||
+               ' AND rlbp_object = ' || quote_literal(r_step.rlbp_object) || ' RETURNING 1';
+      PERFORM emaj._dblink_sql_exec('rlbk#' || p_session, v_stmt, v_dblinkSchema);
+-- Process the step depending on its type.
+      CASE r_step.rlbp_step
+        WHEN 'RLBK_SEQUENCES' THEN
+-- Rollback all sequences at once
+-- If the sequence has been added to its group after the target rollback mark, rollback up to the corresponding alter_group time.
+          SELECT sum(emaj._rlbk_seq(t.*, greatest(v_rlbkMarkTimeId, lower(t.rel_time_range)))) INTO v_effNbSequence
+            FROM
+              (SELECT *
+                 FROM emaj.emaj_relation
+                 WHERE upper_inf(rel_time_range)
+                   AND rel_group = ANY (v_groupNames)
+                   AND rel_kind = 'S'
+                 ORDER BY rel_schema, rel_tblseq
+              ) as t;
+-- Record into emaj_rlbk the number of effectively rolled back sequences
+          v_stmt = 'UPDATE emaj.emaj_rlbk SET rlbk_eff_nb_sequence = ' || coalesce(v_effNbSequence, 0) ||
+                   ' WHERE rlbk_id = ' || p_rlbkId || ' RETURNING 1';
+          PERFORM emaj._dblink_sql_exec('rlbk#' || p_session, v_stmt, v_dblinkSchema);
+        WHEN 'DIS_APP_TRG' THEN
+-- Disable an application trigger.
+          PERFORM emaj._handle_trigger_fk_tbl('DISABLE_TRIGGER', r_step.rlbp_schema, r_step.rlbp_table,
+                                              r_step.rlbp_object);
+        WHEN 'SET_ALWAYS_APP_TRG' THEN
+-- Set an application trigger as an ALWAYS trigger.
+          PERFORM emaj._handle_trigger_fk_tbl('SET_TRIGGER', r_step.rlbp_schema, r_step.rlbp_table,
+                                              r_step.rlbp_object, 'ALWAYS');
+        WHEN 'DIS_LOG_TRG' THEN
+-- Disable a log trigger.
+          PERFORM emaj._handle_trigger_fk_tbl('DISABLE_TRIGGER', r_step.rlbp_schema, r_step.rlbp_table,
+                                              'emaj_log_trg');
+        WHEN 'DROP_FK' THEN
+-- Delete a foreign key.
+          PERFORM emaj._handle_trigger_fk_tbl('DROP_FK', r_step.rlbp_schema, r_step.rlbp_table,
+                                              r_step.rlbp_object);
+        WHEN 'SET_FK_DEF' THEN
+-- Set a foreign key deferred.
+          PERFORM emaj._handle_trigger_fk_tbl('SET_FK_DEFERRED', r_step.rlbp_schema, NULL,
+                                              r_step.rlbp_object);
+        WHEN 'RLBK_TABLE' THEN
+-- Process a table rollback.
+-- For tables added to the group after the rollback target mark, get the last sequence value specific to each table.
+          SELECT emaj._rlbk_tbl(emaj_relation.*,
+                                CASE WHEN v_rlbkMarkTimeId = r_step.rlbp_target_time_id THEN v_lastGlobalSeq      -- common case
+                                     ELSE (SELECT time_last_emaj_gid FROM emaj.emaj_time_stamp WHERE time_id = r_step.rlbp_target_time_id)
+                                END,
+                                v_maxGlobalSeq, v_nbSession, v_isLoggedRlbk, r_step.rlbp_is_repl_role_replica) INTO v_nbRows
+            FROM emaj.emaj_relation
+            WHERE rel_schema = r_step.rlbp_schema
+              AND rel_tblseq = r_step.rlbp_table
+              AND upper_inf(rel_time_range);
+        WHEN 'DELETE_LOG' THEN
+-- Process the deletion of log rows.
+-- For tables added to the group after the rollback target mark, get the last sequence value specific to each table.
+          SELECT emaj._delete_log_tbl(emaj_relation.*, r_step.rlbp_target_time_id, v_rlbkTimeId,
+                                      CASE WHEN v_rlbkMarkTimeId = r_step.rlbp_target_time_id THEN v_lastGlobalSeq      -- common case
+                                           ELSE (SELECT time_last_emaj_gid FROM emaj.emaj_time_stamp
+                                                   WHERE time_id = r_step.rlbp_target_time_id) END)
+            INTO v_nbRows
+            FROM emaj.emaj_relation
+            WHERE rel_schema = r_step.rlbp_schema
+              AND rel_tblseq = r_step.rlbp_table
+              AND upper_inf(rel_time_range);
+        WHEN 'SET_FK_IMM' THEN
+-- Set a foreign key immediate.
+          PERFORM emaj._handle_trigger_fk_tbl('SET_FK_IMMEDIATE', r_step.rlbp_schema, NULL,
+                                              r_step.rlbp_object);
+        WHEN 'ADD_FK' THEN
+-- Re-create a foreign key.
+          PERFORM emaj._handle_trigger_fk_tbl('ADD_FK', r_step.rlbp_schema, r_step.rlbp_table,
+                                              r_step.rlbp_object, r_step.rlbp_object_def);
+        WHEN 'ENA_APP_TRG' THEN
+-- Enable an application trigger.
+          PERFORM emaj._handle_trigger_fk_tbl('ENABLE_TRIGGER', r_step.rlbp_schema, r_step.rlbp_table,
+                                              r_step.rlbp_object, r_step.rlbp_app_trg_type);
+        WHEN 'SET_LOCAL_APP_TRG' THEN
+-- Reset an application trigger to its common type.
+          PERFORM emaj._handle_trigger_fk_tbl('SET_TRIGGER', r_step.rlbp_schema, r_step.rlbp_table,
+                                              r_step.rlbp_object, '');
+        WHEN 'ENA_LOG_TRG' THEN
+-- Enable a log trigger.
+          PERFORM emaj._handle_trigger_fk_tbl('ENABLE_TRIGGER', r_step.rlbp_schema, r_step.rlbp_table,
+                                              'emaj_log_trg', 'ALWAYS');
+      END CASE;
+-- Update the emaj_rlbk_plan table to set the step duration as well as the quantity when it is relevant.
+-- The computed duration does not include the time needed to update the emaj_rlbk_plan table,
+      v_stmt = 'UPDATE emaj.emaj_rlbk_plan SET rlbp_duration = ' || quote_literal(clock_timestamp()) || ' - rlbp_start_datetime';
+      IF r_step.rlbp_step = 'RLBK_TABLE' OR r_step.rlbp_step = 'DELETE_LOG' THEN
+        v_stmt = v_stmt || ' , rlbp_quantity = ' || v_nbRows;
+      END IF;
+      IF r_step.rlbp_step = 'RLBK_SEQUENCES' THEN
+        v_stmt = v_stmt || ' , rlbp_quantity = ' || v_nbSequence;
+      END IF;
+      v_stmt = v_stmt ||
+               ' WHERE rlbp_rlbk_id = ' || p_rlbkId || ' AND rlbp_step = ' || quote_literal(r_step.rlbp_step) ||
+               ' AND rlbp_schema = ' || quote_literal(r_step.rlbp_schema) ||
+               ' AND rlbp_table = ' || quote_literal(r_step.rlbp_table) ||
+               ' AND rlbp_object = ' || quote_literal(r_step.rlbp_object) || ' RETURNING 1';
+      PERFORM emaj._dblink_sql_exec('rlbk#' || p_session, v_stmt, v_dblinkSchema);
+    END LOOP;
+-- Update the emaj_rlbk_session table to set the timestamp representing the end of work for the session.
+    v_stmt = 'UPDATE emaj.emaj_rlbk_session SET rlbs_end_datetime = clock_timestamp()' ||
+             ' WHERE rlbs_rlbk_id = ' || p_rlbkId || ' AND rlbs_session = ' || p_session ||
+             ' RETURNING 1';
+    PERFORM emaj._dblink_sql_exec('rlbk#' || p_session, v_stmt, v_dblinkSchema);
+-- Close the dblink connection, if any, for session > 1.
+    IF v_isDblinkUsed AND p_session > 1 THEN
+      PERFORM emaj._dblink_close_cnx('rlbk#' || p_session, v_dblinkSchema);
+    END IF;
+--
+    RETURN;
+-- Trap and record exception during the rollback operation.
+  EXCEPTION
+    WHEN SQLSTATE 'P0001' THEN             -- Do not trap the exceptions raised by the function
+      RAISE;
+    WHEN OTHERS THEN                       -- Otherwise, log the E-Maj rollback abort in emaj_rlbk, if possible
+      PERFORM emaj._rlbk_error(p_rlbkId, 'In _rlbk_session_exec() for session ' || p_session || ': ' || SQLERRM, 'rlbk#' || p_session);
+      RAISE;
+  END;
+$_rlbk_session_exec$;
 
 CREATE OR REPLACE FUNCTION emaj._get_sequences_last_value(p_groupsIncludeFilter TEXT, p_groupsExcludeFilter TEXT,
                                                           p_tablesIncludeFilter TEXT, p_tablesExcludeFilter TEXT,
@@ -723,6 +1514,7 @@ $emaj_snap_group$
     v_nbRel                  INT = 0;
     r_tblsq                  RECORD;
     v_fullTableName          TEXT;
+    v_relOid                 OID;
     v_colList                TEXT;
     v_pathName               TEXT;
     v_stmt                   TEXT;
@@ -753,6 +1545,11 @@ $emaj_snap_group$
         WHEN 'r' THEN
 -- It is a table.
           v_fullTableName = quote_ident(r_tblsq.rel_schema) || '.' || quote_ident(r_tblsq.rel_tblseq);
+          SELECT pg_class.oid INTO v_relOid
+            FROM pg_class
+                 JOIN pg_namespace ON (pg_namespace.oid = relnamespace)
+            WHERE nspname = r_tblsq.rel_schema
+              AND relname = r_tblsq.rel_tblseq;
 --   Build the order by column list.
           IF EXISTS
                (SELECT 0
@@ -770,7 +1567,7 @@ $emaj_snap_group$
                    FROM pg_catalog.pg_attribute
                         JOIN pg_catalog.pg_index ON (pg_index.indrelid = pg_attribute.attrelid)
                    WHERE attnum = ANY (indkey)
-                     AND indrelid = v_fullTableName::regclass
+                     AND indrelid = v_relOid
                      AND indisprimary
                      AND attnum > 0
                      AND attisdropped = FALSE
@@ -781,7 +1578,7 @@ $emaj_snap_group$
               FROM
                 (SELECT attname
                    FROM pg_catalog.pg_attribute
-                   WHERE attrelid = v_fullTableName::regclass
+                   WHERE attrelid = v_relOid
                      AND attnum > 0
                      AND attisdropped = FALSE
                 ) AS t;

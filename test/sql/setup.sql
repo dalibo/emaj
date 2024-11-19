@@ -392,21 +392,13 @@ CREATE TABLE table_with_55_characters_long_name_____0_________0fghij (
 );
 
 -----------------------------
--- create roles and give rigths on application objects
+-- create roles and give rights
 -----------------------------
 create role emaj_regression_tests_adm_user1 login password 'adm';
 create role emaj_regression_tests_adm_user2 login password 'adm';
 create role emaj_regression_tests_viewer_user login password 'viewer';
 create role emaj_regression_tests_anonym_user login password 'anonym';
 --
-grant all on schema mySchema1, mySchema2, "phil's schema3", mySchema4, mySchema5, mySchema6
-  to emaj_regression_tests_adm_user1, emaj_regression_tests_adm_user2;
---
-grant all on all tables in schema mySchema1, mySchema2, "phil's schema3", mySchema4, mySchema5, mySchema6
-  to emaj_regression_tests_adm_user1, emaj_regression_tests_adm_user2;
-grant all on all sequences in schema mySchema1, mySchema2, "phil's schema3", mySchema4, mySchema5, mySchema6
-  to emaj_regression_tests_adm_user1, emaj_regression_tests_adm_user2;
-
 grant create on tablespace tsplog1, "tsp log'2"
   to emaj_regression_tests_adm_user1, emaj_regression_tests_adm_user2;
 -- give the CREATE right to emaj_adm on either trpemaj or tspemaj_renamed tablespace

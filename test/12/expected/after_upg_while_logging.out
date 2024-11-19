@@ -2,14 +2,22 @@
 -- The E-Maj version is changed while groups are in logging state
 -- This script is the part of operations performed after the upgrade
 --
+-- Revoke rights granted before the upgrade.
+revoke all on schema mySchema1, mySchema2, "phil's schema3", mySchema4, mySchema5, mySchema6
+  from emaj_regression_tests_adm_user1, emaj_regression_tests_adm_user2;
+revoke all on all tables in schema mySchema1, mySchema2, "phil's schema3", mySchema4, mySchema5, mySchema6
+  from emaj_regression_tests_adm_user1, emaj_regression_tests_adm_user2;
+revoke all on all sequences in schema mySchema1, mySchema2, "phil's schema3", mySchema4, mySchema5, mySchema6
+  from emaj_regression_tests_adm_user1, emaj_regression_tests_adm_user2;
 -----------------------------
 -- Step 1 : check the E-Maj installation
 -----------------------------
+set role emaj_regression_tests_adm_user2;
 select * from emaj.emaj_verify_all();
                                                                                 emaj_verify_all                                                                                
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
  Warning: In the group "myGroup1", the sequence "myschema1"."myTbl3_col31_seq" is linked to the table "myschema1"."myTbl3" but this table does not belong to any tables group.
- Warning: The 'dblink_user_password' parameter value is not set in the emaj_param table.
+ Warning: While testing the dblink connection, the current role is not granted to execute dblink_connect_u().
  No error detected
 (3 rows)
 
@@ -111,10 +119,12 @@ select rlbk_severity, regexp_replace(rlbk_message,E'\\d\\d\\d\\d/\\d\\d\\/\\d\\d
 -----------------------------
 -- Step 3 : for myGroup1, update tables, then unprotect, logged_rollback, rename the end rollback mark and consolidate the rollback
 -----------------------------
+reset role;
 set search_path=myschema1;
 --
 update "myTbl3" set col33 = col33 / 2;
 --
+set role emaj_regression_tests_adm_user2;
 select * from emaj.emaj_rollback_group('myGroup1','M2',false) order by 1,2;
 ERROR:  _rlbk_check: Protected marks (M3) for the group "myGroup1" block the rollback to the mark "M2".
 CONTEXT:  PL/pgSQL function emaj._rlbk_check(text[],text,boolean,boolean) line 41 at RAISE
@@ -155,6 +165,7 @@ select emaj.emaj_consolidate_rollback_group('myGroup1','End_rollback_to_M2');
 -----------------------------
 -- Step 4 : for myGroup1, update tables and sequences again then set 3 marks and get stats
 -----------------------------
+reset role;
 insert into myTbl1 select i, 'DEF', E'\\000'::bytea from generate_series (100,110) as i;
 insert into myTbl2 values (3,'GHI','2010-01-02');
 delete from myTbl1 where col11 = 1;
@@ -165,6 +176,7 @@ select nextval('myschema1."myTbl3_col31_seq"');
 (1 row)
 
 --
+set role emaj_regression_tests_adm_user2;
 select emaj.emaj_set_mark_group('myGroup1','M4');
  emaj_set_mark_group 
 ---------------------
@@ -172,8 +184,10 @@ select emaj.emaj_set_mark_group('myGroup1','M4');
 (1 row)
 
 --
+reset role;
 update "myTbl3" set col33 = col33 / 2;
 --
+set role emaj_regression_tests_adm_user2;
 select emaj.emaj_set_mark_group('myGroup1','M5');
  emaj_set_mark_group 
 ---------------------
@@ -181,8 +195,10 @@ select emaj.emaj_set_mark_group('myGroup1','M5');
 (1 row)
 
 --
+reset role;
 update myTbl1 set col11 = 99 where col11 = 1;
 --
+set role emaj_regression_tests_adm_user2;
 select emaj.emaj_set_mark_group('myGroup1','M6');
  emaj_set_mark_group 
 ---------------------
@@ -232,6 +248,7 @@ select * from emaj.emaj_rollback_group('myGroup2','M3',false) order by 1,2;
 -----------------------------
 -- Step 6 : for myGroup1, update tables, rollback, other updates, then logged rollback
 -----------------------------
+reset role;
 set search_path=myschema1;
 --
 insert into myTbl1 values (1, 'Step 6', E'\\000'::bytea);
@@ -240,6 +257,7 @@ insert into myTbl4 values (12,'FK...',1,1,'Step 6');
 truncate myTbl2 cascade;
 NOTICE:  truncate cascades to table "mytbl4"
 --
+set role emaj_regression_tests_adm_user2;
 select * from emaj.emaj_rollback_group('myGroup1','M5',false) order by 1,2;
  rlbk_severity |              rlbk_message              
 ---------------+----------------------------------------
@@ -249,9 +267,11 @@ select * from emaj.emaj_rollback_group('myGroup1','M5',false) order by 1,2;
 (3 rows)
 
 --
+reset role;
 insert into myTbl1 values (1, 'Step 6', E'\\001'::bytea);
 copy myTbl4 from stdin;
 --
+set role emaj_regression_tests_adm_user2;
 select * from emaj.emaj_logged_rollback_group('myGroup1','M4',false) order by 1,2;
  rlbk_severity |              rlbk_message              
 ---------------+----------------------------------------
@@ -280,17 +300,18 @@ NOTICE:  table "emaj_temp_script" does not exist, skipping
 -----------------------------
 -- Step 8 : for myGroup1, update tables, rename a mark, then delete 2 marks then delete all before a mark 
 -----------------------------
+reset role;
 set search_path=myschema1;
 --
 delete from "myTbl3" where col31 between 14 and 18;
 --
+set role emaj_regression_tests_adm_user2;
 select emaj.emaj_rename_mark_group('myGroup1',mark_name,'Before logged rollback to M4') from emaj.emaj_mark where mark_name like 'RLBK_M4_%_START';
  emaj_rename_mark_group 
 ------------------------
  
 (1 row)
 
--- 
 select emaj.emaj_delete_mark_group('myGroup1',mark_name) from emaj.emaj_mark where mark_name like 'RLBK_M4_%_DONE';
  emaj_delete_mark_group 
 ------------------------
@@ -303,7 +324,6 @@ select emaj.emaj_delete_mark_group('myGroup1','M1');
                       1
 (1 row)
 
---
 select emaj.emaj_delete_before_mark_group('myGroup1','M4');
  emaj_delete_before_mark_group 
 -------------------------------
@@ -314,6 +334,7 @@ select emaj.emaj_delete_before_mark_group('myGroup1','M4');
 -- Step 9 : for myGroup6, perform a table change and verify that no log trigger has been called
 --          and finaly drop the group
 -----------------------------
+reset role;
 insert into mySchema6.table_with_51_characters_long_name_____0_________0a values (1),(2);
 select count(*) from emaj_myschema6."table_with_51_characters_long_name_____0_________0#1_log";
  count 
@@ -321,14 +342,20 @@ select count(*) from emaj_myschema6."table_with_51_characters_long_name_____0___
      0
 (1 row)
 
+--
+set role emaj_regression_tests_adm_user2;
 select emaj.emaj_start_group('myGroup6', 'Start G6');
  emaj_start_group 
 ------------------
                 3
 (1 row)
 
+--
+reset role;
 insert into mySchema6.table_with_51_characters_long_name_____0_________0a values (3),(4);
 delete from mySchema6.table_with_51_characters_long_name_____0_________0a;
+--
+set role emaj_regression_tests_adm_user2;
 select stat_group, stat_schema, stat_table, stat_first_mark, stat_last_mark, stat_rows
   from emaj.emaj_log_stat_group('myGroup6','Start G6',NULL) order by 1,2,3,4;
  stat_group | stat_schema |                       stat_table                        | stat_first_mark | stat_last_mark | stat_rows 
@@ -517,7 +544,7 @@ select hist_function, hist_event, hist_object,
  SET_MARK_GROUP           | END                | myGroup1                                                          | M3                                                                                            | postgres
  COMMENT_MARK_GROUP       |                    | myGroup1                                                          | Mark M3                                                                                       | postgres
  ROLLBACK_GROUP           | BEGIN              | myGroup1                                                          | Unlogged rollback to mark M3 (timestamp)                                                      | postgres
- DBLINK_OPEN_CNX          |                    | rlbk#1                                                            | Status = -3                                                                                   | postgres
+ DBLINK_OPEN_CNX          |                    | rlbk#1                                                            | Status = -5                                                                                   | postgres
  LOCK_GROUP               | BEGIN              | myGroup1                                                          | Rollback session #1                                                                           | postgres
  LOCK_GROUP               | END                | myGroup1                                                          | Rollback session #1: 5 tables locked, 0 deadlock(s)                                           | postgres
  ROLLBACK_GROUP           | TIME STAMP SET     | 19                                                                |                                                                                               | postgres
@@ -528,7 +555,7 @@ select hist_function, hist_event, hist_object,
  ROLLBACK_GROUP           | NOTICE             | Rollback id 1                                                     | 0 / 1 sequences effectively processed.                                                        | postgres
  ROLLBACK_GROUP           | END                | myGroup1                                                          | Rollback_id 1                                                                                 | postgres
  ROLLBACK_GROUP           | BEGIN              | myGroup1                                                          | Unlogged rollback to mark M3 (timestamp)                                                      | postgres
- DBLINK_OPEN_CNX          |                    | rlbk#1                                                            | Status = -3                                                                                   | postgres
+ DBLINK_OPEN_CNX          |                    | rlbk#1                                                            | Status = -5                                                                                   | postgres
  LOCK_GROUP               | BEGIN              | myGroup1                                                          | Rollback session #1                                                                           | postgres
  LOCK_GROUP               | END                | myGroup1                                                          | Rollback session #1: 5 tables locked, 0 deadlock(s)                                           | postgres
  ROLLBACK_GROUP           | TIME STAMP SET     | 20                                                                |                                                                                               | postgres
@@ -627,7 +654,7 @@ select hist_function, hist_event, hist_object,
  EMAJ_INSTALL             | END                | E-Maj <devel>                                                     | Upgrade from 4.5.0 completed                                                                  | postgres
  UNPROTECT_GROUP          |                    | myGroup1                                                          | Status 1                                                                                      | postgres
  ROLLBACK_GROUPS          | BEGIN              | myGroup1,myGroup2                                                 | Unlogged rollback to mark Common (timestamp)                                                  | postgres
- DBLINK_OPEN_CNX          |                    | rlbk#1                                                            | Status = -5                                                                                   | postgres
+ DBLINK_OPEN_CNX          |                    | rlbk#1                                                            | Status = -3                                                                                   | postgres
  LOCK_GROUP               | BEGIN              | myGroup1,myGroup2                                                 | Rollback session #1                                                                           | postgres
  LOCK_GROUP               | END                | myGroup1,myGroup2                                                 | Rollback session #1: 8 tables locked, 0 deadlock(s)                                           | postgres
  ROLLBACK_GROUPS          | TIME STAMP SET     | 32                                                                |                                                                                               | postgres
@@ -639,7 +666,7 @@ select hist_function, hist_event, hist_object,
  ROLLBACK_GROUPS          | END                | myGroup1,myGroup2                                                 | Rollback_id 5                                                                                 | postgres
  UNPROTECT_MARK_GROUP     |                    | myGroup1                                                          | Mark M3 ; status 1                                                                            | postgres
  ROLLBACK_GROUP           | BEGIN              | myGroup1                                                          | Logged rollback to mark M2 (timestamp)                                                        | postgres
- DBLINK_OPEN_CNX          |                    | rlbk#1                                                            | Status = -5                                                                                   | postgres
+ DBLINK_OPEN_CNX          |                    | rlbk#1                                                            | Status = -3                                                                                   | postgres
  LOCK_GROUP               | BEGIN              | myGroup1                                                          | Rollback session #1                                                                           | postgres
  LOCK_GROUP               | END                | myGroup1                                                          | Rollback session #1: 4 tables locked, 0 deadlock(s)                                           | postgres
  ROLLBACK_GROUP           | TIME STAMP SET     | 33                                                                |                                                                                               | postgres
@@ -677,7 +704,7 @@ select hist_function, hist_event, hist_object,
  SET_MARK_GROUP           | TIME STAMP SET     | 37                                                                |                                                                                               | postgres
  SET_MARK_GROUP           | END                | myGroup1                                                          | M6                                                                                            | postgres
  ROLLBACK_GROUP           | BEGIN              | myGroup2                                                          | Logged rollback to mark M2 (timestamp)                                                        | postgres
- DBLINK_OPEN_CNX          |                    | rlbk#1                                                            | Status = -5                                                                                   | postgres
+ DBLINK_OPEN_CNX          |                    | rlbk#1                                                            | Status = -3                                                                                   | postgres
  LOCK_GROUP               | BEGIN              | myGroup2                                                          | Rollback session #1                                                                           | postgres
  LOCK_GROUP               | END                | myGroup2                                                          | Rollback session #1: 4 tables locked, 0 deadlock(s)                                           | postgres
  ROLLBACK_GROUP           | TIME STAMP SET     | 38                                                                |                                                                                               | postgres
@@ -694,7 +721,7 @@ select hist_function, hist_event, hist_object,
  ROLLBACK_GROUP           | NOTICE             | Rollback id 7                                                     | 1 / 2 sequences effectively processed.                                                        | postgres
  ROLLBACK_GROUP           | END                | myGroup2                                                          | Rollback_id 7                                                                                 | postgres
  ROLLBACK_GROUP           | BEGIN              | myGroup2                                                          | Unlogged rollback to mark M3 (timestamp)                                                      | postgres
- DBLINK_OPEN_CNX          |                    | rlbk#1                                                            | Status = -5                                                                                   | postgres
+ DBLINK_OPEN_CNX          |                    | rlbk#1                                                            | Status = -3                                                                                   | postgres
  LOCK_GROUP               | BEGIN              | myGroup2                                                          | Rollback session #1                                                                           | postgres
  LOCK_GROUP               | END                | myGroup2                                                          | Rollback session #1: 4 tables locked, 0 deadlock(s)                                           | postgres
  ROLLBACK_GROUP           | TIME STAMP SET     | 40                                                                |                                                                                               | postgres
@@ -713,7 +740,7 @@ select hist_function, hist_event, hist_object,
  ROLLBACK_GROUP           | NOTICE             | Rollback id 8                                                     | 1 / 2 sequences effectively processed.                                                        | postgres
  ROLLBACK_GROUP           | END                | myGroup2                                                          | Rollback_id 8                                                                                 | postgres
  ROLLBACK_GROUP           | BEGIN              | myGroup1                                                          | Unlogged rollback to mark M5 (timestamp)                                                      | postgres
- DBLINK_OPEN_CNX          |                    | rlbk#1                                                            | Status = -5                                                                                   | postgres
+ DBLINK_OPEN_CNX          |                    | rlbk#1                                                            | Status = -3                                                                                   | postgres
  LOCK_GROUP               | BEGIN              | myGroup1                                                          | Rollback session #1                                                                           | postgres
  LOCK_GROUP               | END                | myGroup1                                                          | Rollback session #1: 4 tables locked, 0 deadlock(s)                                           | postgres
  ROLLBACK_GROUP           | TIME STAMP SET     | 41                                                                |                                                                                               | postgres
@@ -729,7 +756,7 @@ select hist_function, hist_event, hist_object,
  ROLLBACK_GROUP           | NOTICE             | Rollback id 9                                                     | 0 / 1 sequences effectively processed.                                                        | postgres
  ROLLBACK_GROUP           | END                | myGroup1                                                          | Rollback_id 9                                                                                 | postgres
  ROLLBACK_GROUP           | BEGIN              | myGroup1                                                          | Logged rollback to mark M4 (timestamp)                                                        | postgres
- DBLINK_OPEN_CNX          |                    | rlbk#1                                                            | Status = -5                                                                                   | postgres
+ DBLINK_OPEN_CNX          |                    | rlbk#1                                                            | Status = -3                                                                                   | postgres
  LOCK_GROUP               | BEGIN              | myGroup1                                                          | Rollback session #1                                                                           | postgres
  LOCK_GROUP               | END                | myGroup1                                                          | Rollback session #1: 4 tables locked, 0 deadlock(s)                                           | postgres
  ROLLBACK_GROUP           | TIME STAMP SET     | 42                                                                |                                                                                               | postgres
@@ -766,7 +793,7 @@ select hist_function, hist_event, hist_object,
  SET_MARK_GROUP           | END                | myGroup6                                                          | Start G6                                                                                      | postgres
  START_GROUP              | END                | myGroup6                                                          | 3 tables/sequences processed                                                                  | postgres
  ROLLBACK_GROUP           | BEGIN              | myGroup6                                                          | Unlogged rollback to mark Start G6 (timestamp)                                                | postgres
- DBLINK_OPEN_CNX          |                    | rlbk#1                                                            | Status = -5                                                                                   | postgres
+ DBLINK_OPEN_CNX          |                    | rlbk#1                                                            | Status = -3                                                                                   | postgres
  LOCK_GROUP               | BEGIN              | myGroup6                                                          | Rollback session #1                                                                           | postgres
  LOCK_GROUP               | END                | myGroup6                                                          | Rollback session #1: 3 tables locked, 0 deadlock(s)                                           | postgres
  ROLLBACK_GROUP           | TIME STAMP SET     | 45                                                                |                                                                                               | postgres
@@ -789,18 +816,26 @@ select hist_function, hist_event, hist_object,
 (364 rows)
 
 --
-reset role;
+-- set sequence restart value
 truncate emaj.emaj_hist;
-alter sequence emaj.emaj_hist_hist_id_seq restart 30000;
+select public.handle_emaj_sequences(30000);
+ handle_emaj_sequences 
+-----------------------
+ 
+(1 row)
+
 -- the groups are left in their current state for the parallel rollback test.
 -- perform some updates to prepare the parallel rollback test
 -- set a mark for both groups
+set role emaj_regression_tests_adm_user2;
 select emaj.emaj_set_mark_groups(array['myGroup1','myGroup2'],'Multi-1');
  emaj_set_mark_groups 
 ----------------------
                    11
 (1 row)
 
+--
+reset role;
 select count(*) from mySchema1.myTbl4;
  count 
 -------
@@ -865,3 +900,4 @@ delete from mySchema2.myTbl1;
 delete from mySchema2.myTbl2; 
 delete from mySchema2."myTbl3";
 alter sequence mySchema2.mySeq1 restart 9999;
+--

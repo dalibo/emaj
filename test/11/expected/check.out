@@ -156,7 +156,7 @@ select funcname, calls from pg_stat_user_functions
  _get_lock_tblseqs_groups                  |   146
  _get_previous_mark_group                  |    38
  _get_sequences_last_value                 |     7
- _handle_trigger_fk_tbl                    |  2802
+ _handle_trigger_fk_tbl                    |  2835
  _import_groups_conf                       |    20
  _import_groups_conf_alter                 |    20
  _import_groups_conf_check                 |    26
@@ -170,7 +170,7 @@ select funcname, calls from pg_stat_user_functions
  _move_sequences                           |    19
  _move_tables                              |    23
  _move_tbl                                 |    44
- _pg_version_num                           |   247
+ _pg_version_num                           |   244
  _purge_histories                          |    99
  _remove_seq                               |    15
  _remove_sequences                         |    20

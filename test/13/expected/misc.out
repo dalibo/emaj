@@ -1142,29 +1142,29 @@ select emaj.emaj_snap_group(NULL,NULL,NULL);
 ERROR:  _check_group_names: No group to process.
 CONTEXT:  PL/pgSQL function emaj._check_group_names(text[],boolean,boolean,boolean,boolean,boolean,boolean) line 30 at RAISE
 SQL statement "SELECT emaj._check_group_names(p_groupNames := ARRAY[p_groupName], p_mayBeNull := FALSE, p_lockGroups := FALSE)"
-PL/pgSQL function emaj.emaj_snap_group(text,text,text) line 29 at PERFORM
+PL/pgSQL function emaj.emaj_snap_group(text,text,text) line 30 at PERFORM
 select emaj.emaj_snap_group('unknownGroup',NULL,NULL);
 ERROR:  _check_group_names: The group "unknownGroup" does not exist.
 CONTEXT:  PL/pgSQL function emaj._check_group_names(text[],boolean,boolean,boolean,boolean,boolean,boolean) line 42 at RAISE
 SQL statement "SELECT emaj._check_group_names(p_groupNames := ARRAY[p_groupName], p_mayBeNull := FALSE, p_lockGroups := FALSE)"
-PL/pgSQL function emaj.emaj_snap_group(text,text,text) line 29 at PERFORM
+PL/pgSQL function emaj.emaj_snap_group(text,text,text) line 30 at PERFORM
 -- invalid directory
 select emaj.emaj_snap_group('myGroup1',NULL,NULL);
 ERROR:  emaj_snap_group: The directory parameter cannot be NULL.
-CONTEXT:  PL/pgSQL function emaj.emaj_snap_group(text,text,text) line 32 at RAISE
+CONTEXT:  PL/pgSQL function emaj.emaj_snap_group(text,text,text) line 33 at RAISE
 select emaj.emaj_snap_group('myGroup1','unknown_directory',NULL);
 ERROR:  relative path not allowed for COPY to file
 CONTEXT:  SQL statement "COPY (SELECT * FROM myschema1."myTbl3" ORDER BY col31) TO 'unknown_directory/myschema1_myTbl3.snap' "
 PL/pgSQL function emaj._copy_to_file(text,text,text,boolean,boolean) line 35 at EXECUTE
 SQL statement "SELECT emaj._copy_to_file(v_stmt, v_pathName, p_copyOptions)"
-PL/pgSQL function emaj.emaj_snap_group(text,text,text) line 86 at PERFORM
+PL/pgSQL function emaj.emaj_snap_group(text,text,text) line 92 at PERFORM
 select emaj.emaj_snap_group('myGroup1','/unknown_directory',NULL);
 ERROR:  could not open file "/unknown_directory/myschema1_myTbl3.snap" for writing: No such file or directory
 HINT:  COPY TO instructs the PostgreSQL server process to write a file. You may want a client-side facility such as psql's \copy.
 CONTEXT:  SQL statement "COPY (SELECT * FROM myschema1."myTbl3" ORDER BY col31) TO '/unknown_directory/myschema1_myTbl3.snap' "
 PL/pgSQL function emaj._copy_to_file(text,text,text,boolean,boolean) line 35 at EXECUTE
 SQL statement "SELECT emaj._copy_to_file(v_stmt, v_pathName, p_copyOptions)"
-PL/pgSQL function emaj.emaj_snap_group(text,text,text) line 86 at PERFORM
+PL/pgSQL function emaj.emaj_snap_group(text,text,text) line 92 at PERFORM
 -- invalid COPY TO options
 select emaj.emaj_snap_group('myGroup1',:'EMAJTESTTMPDIR','dummy_option');
 ERROR:  syntax error at or near "dummy_option"
@@ -1173,11 +1173,11 @@ LINE 1: ...l31) TO '/tmp/emaj_13/misc/myschema1_myTbl3.snap' dummy_opti...
 QUERY:  COPY (SELECT * FROM myschema1."myTbl3" ORDER BY col31) TO '/tmp/emaj_13/misc/myschema1_myTbl3.snap' dummy_option
 CONTEXT:  PL/pgSQL function emaj._copy_to_file(text,text,text,boolean,boolean) line 35 at EXECUTE
 SQL statement "SELECT emaj._copy_to_file(v_stmt, v_pathName, p_copyOptions)"
-PL/pgSQL function emaj.emaj_snap_group(text,text,text) line 86 at PERFORM
+PL/pgSQL function emaj.emaj_snap_group(text,text,text) line 92 at PERFORM
 -- SQL injection attempt
 select emaj.emaj_snap_group('myGroup1',:'EMAJTESTTMPDIR','; CREATE ROLE fake LOGIN PASSWORD '''' SUPERUSER');
 ERROR:  emaj_snap_group: The COPY options parameter format is invalid.
-CONTEXT:  PL/pgSQL function emaj.emaj_snap_group(text,text,text) line 36 at RAISE
+CONTEXT:  PL/pgSQL function emaj.emaj_snap_group(text,text,text) line 37 at RAISE
 -- should be OK (even when executed twice, files being overwriten)
 select emaj.emaj_snap_group('emptyGroup',:'EMAJTESTTMPDIR','');
  emaj_snap_group 

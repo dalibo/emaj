@@ -491,46 +491,46 @@ select emaj.emaj_stop_group(NULL);
 ERROR:  _check_group_names: No group to process.
 CONTEXT:  PL/pgSQL function emaj._check_group_names(text[],boolean,boolean,boolean,boolean,boolean,boolean) line 30 at RAISE
 SQL statement "SELECT emaj._check_group_names(p_groupNames := p_groupNames, p_mayBeNull := p_multiGroup, p_lockGroups := TRUE)"
-PL/pgSQL function emaj._stop_groups(text[],text,boolean,boolean) line 25 at SQL statement
+PL/pgSQL function emaj._stop_groups(text[],text,boolean,boolean) line 24 at SQL statement
 PL/pgSQL function emaj.emaj_stop_group(text,text) line 10 at RETURN
 select emaj.emaj_stop_group('unknownGroup');
 ERROR:  _check_group_names: The group "unknownGroup" does not exist.
 CONTEXT:  PL/pgSQL function emaj._check_group_names(text[],boolean,boolean,boolean,boolean,boolean,boolean) line 42 at RAISE
 SQL statement "SELECT emaj._check_group_names(p_groupNames := p_groupNames, p_mayBeNull := p_multiGroup, p_lockGroups := TRUE)"
-PL/pgSQL function emaj._stop_groups(text[],text,boolean,boolean) line 25 at SQL statement
+PL/pgSQL function emaj._stop_groups(text[],text,boolean,boolean) line 24 at SQL statement
 PL/pgSQL function emaj.emaj_stop_group(text,text) line 10 at RETURN
 select emaj.emaj_stop_group(NULL,NULL);
 ERROR:  _check_group_names: No group to process.
 CONTEXT:  PL/pgSQL function emaj._check_group_names(text[],boolean,boolean,boolean,boolean,boolean,boolean) line 30 at RAISE
 SQL statement "SELECT emaj._check_group_names(p_groupNames := p_groupNames, p_mayBeNull := p_multiGroup, p_lockGroups := TRUE)"
-PL/pgSQL function emaj._stop_groups(text[],text,boolean,boolean) line 25 at SQL statement
+PL/pgSQL function emaj._stop_groups(text[],text,boolean,boolean) line 24 at SQL statement
 PL/pgSQL function emaj.emaj_stop_group(text,text) line 10 at RETURN
 select emaj.emaj_stop_group('unknownGroup',NULL);
 ERROR:  _check_group_names: The group "unknownGroup" does not exist.
 CONTEXT:  PL/pgSQL function emaj._check_group_names(text[],boolean,boolean,boolean,boolean,boolean,boolean) line 42 at RAISE
 SQL statement "SELECT emaj._check_group_names(p_groupNames := p_groupNames, p_mayBeNull := p_multiGroup, p_lockGroups := TRUE)"
-PL/pgSQL function emaj._stop_groups(text[],text,boolean,boolean) line 25 at SQL statement
+PL/pgSQL function emaj._stop_groups(text[],text,boolean,boolean) line 24 at SQL statement
 PL/pgSQL function emaj.emaj_stop_group(text,text) line 10 at RETURN
 -- invalid mark
 select emaj.emaj_stop_group('myGroup1','EMAJ_LAST_MARK');
 ERROR:  _check_new_mark: "EMAJ_LAST_MARK" is not an allowed name for a new mark.
 CONTEXT:  PL/pgSQL function emaj._check_new_mark(text[],text) line 14 at RAISE
 SQL statement "SELECT emaj._check_new_mark(p_groupNames, p_mark)"
-PL/pgSQL function emaj._stop_groups(text[],text,boolean,boolean) line 51 at SQL statement
+PL/pgSQL function emaj._stop_groups(text[],text,boolean,boolean) line 50 at SQL statement
 PL/pgSQL function emaj.emaj_stop_group(text,text) line 10 at RETURN
 -- already existing mark
 select emaj.emaj_stop_group('phil''s group#3",','Mark3');
 ERROR:  _check_new_mark: The group "phil's group#3"," already contains a mark named "Mark3".
 CONTEXT:  PL/pgSQL function emaj._check_new_mark(text[],text) line 29 at RAISE
 SQL statement "SELECT emaj._check_new_mark(p_groupNames, p_mark)"
-PL/pgSQL function emaj._stop_groups(text[],text,boolean,boolean) line 51 at SQL statement
+PL/pgSQL function emaj._stop_groups(text[],text,boolean,boolean) line 50 at SQL statement
 PL/pgSQL function emaj.emaj_stop_group(text,text) line 10 at RETURN
 -- missing application table
 begin;
   drop table mySchema2."myTbl3" cascade;
   select emaj.emaj_stop_group('myGroup2');
 ERROR:  _stop_groups: The table "myschema2.myTbl3" does not exist any more.
-CONTEXT:  PL/pgSQL function emaj._stop_groups(text[],text,boolean,boolean) line 99 at RAISE
+CONTEXT:  PL/pgSQL function emaj._stop_groups(text[],text,boolean,boolean) line 98 at RAISE
 PL/pgSQL function emaj.emaj_stop_group(text,text) line 10 at RETURN
 rollback;
 -- should be OK
@@ -898,20 +898,20 @@ select emaj.emaj_stop_groups('{"unknownGroup",""}');
 ERROR:  _check_group_names: The group "unknownGroup" does not exist.
 CONTEXT:  PL/pgSQL function emaj._check_group_names(text[],boolean,boolean,boolean,boolean,boolean,boolean) line 42 at RAISE
 SQL statement "SELECT emaj._check_group_names(p_groupNames := p_groupNames, p_mayBeNull := p_multiGroup, p_lockGroups := TRUE)"
-PL/pgSQL function emaj._stop_groups(text[],text,boolean,boolean) line 25 at SQL statement
+PL/pgSQL function emaj._stop_groups(text[],text,boolean,boolean) line 24 at SQL statement
 PL/pgSQL function emaj.emaj_stop_groups(text[],text) line 7 at RETURN
 select emaj.emaj_stop_groups('{"myGroup1","unknownGroup"}');
 ERROR:  _check_group_names: The group "unknownGroup" does not exist.
 CONTEXT:  PL/pgSQL function emaj._check_group_names(text[],boolean,boolean,boolean,boolean,boolean,boolean) line 42 at RAISE
 SQL statement "SELECT emaj._check_group_names(p_groupNames := p_groupNames, p_mayBeNull := p_multiGroup, p_lockGroups := TRUE)"
-PL/pgSQL function emaj._stop_groups(text[],text,boolean,boolean) line 25 at SQL statement
+PL/pgSQL function emaj._stop_groups(text[],text,boolean,boolean) line 24 at SQL statement
 PL/pgSQL function emaj.emaj_stop_groups(text[],text) line 7 at RETURN
 -- missing application table
 begin;
   drop table mySchema2."myTbl3" cascade;
   select emaj.emaj_stop_groups(array['myGroup1','myGroup2']);
 ERROR:  _stop_groups: The table "myschema2.myTbl3" does not exist any more.
-CONTEXT:  PL/pgSQL function emaj._stop_groups(text[],text,boolean,boolean) line 99 at RAISE
+CONTEXT:  PL/pgSQL function emaj._stop_groups(text[],text,boolean,boolean) line 98 at RAISE
 PL/pgSQL function emaj.emaj_stop_groups(text[],text) line 7 at RETURN
 rollback;
 -- should be OK
@@ -955,13 +955,13 @@ select emaj.emaj_force_stop_group(NULL);
 ERROR:  _check_group_names: No group to process.
 CONTEXT:  PL/pgSQL function emaj._check_group_names(text[],boolean,boolean,boolean,boolean,boolean,boolean) line 30 at RAISE
 SQL statement "SELECT emaj._check_group_names(p_groupNames := p_groupNames, p_mayBeNull := p_multiGroup, p_lockGroups := TRUE)"
-PL/pgSQL function emaj._stop_groups(text[],text,boolean,boolean) line 25 at SQL statement
+PL/pgSQL function emaj._stop_groups(text[],text,boolean,boolean) line 24 at SQL statement
 PL/pgSQL function emaj.emaj_force_stop_group(text) line 9 at RETURN
 select emaj.emaj_force_stop_group('unknownGroup');
 ERROR:  _check_group_names: The group "unknownGroup" does not exist.
 CONTEXT:  PL/pgSQL function emaj._check_group_names(text[],boolean,boolean,boolean,boolean,boolean,boolean) line 42 at RAISE
 SQL statement "SELECT emaj._check_group_names(p_groupNames := p_groupNames, p_mayBeNull := p_multiGroup, p_lockGroups := TRUE)"
-PL/pgSQL function emaj._stop_groups(text[],text,boolean,boolean) line 25 at SQL statement
+PL/pgSQL function emaj._stop_groups(text[],text,boolean,boolean) line 24 at SQL statement
 PL/pgSQL function emaj.emaj_force_stop_group(text) line 9 at RETURN
 -- should be OK
 -- missing application schema

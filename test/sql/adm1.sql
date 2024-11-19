@@ -41,9 +41,10 @@ select 'select ok' as result from (select count(*) from emaj_mySchema1.myTbl1_lo
 -- forbiden direct call of SECURITY DEFINER functions
 -----------------------------
 select emaj._create_log_schema('illegal_schema','dummy');
-select emaj._handle_trigger_fk_tbl('illegal function', 'illegal_table', 'dummy');
+select emaj._handle_trigger_fk_tbl('illegal function', 'illegal schema', 'illegal_table', 'dummy');
 select emaj._copy_from_file('illegal_table', 'dummy_location');
 select emaj._copy_to_file('illegal_table', 'dummy_location', NULL);
+select emaj._get_current_sequence_state('illegal schema', 'illegal sequence', 0);
 
 -----------------------------
 -- stop, reset and drop existing groups
@@ -132,6 +133,7 @@ select public.handle_emaj_sequences(12100);
 -- Step 1 : for myGroup1, update tables and set 2 marks
 -----------------------------
 --
+reset role;
 set search_path=public,myschema1;
 insert into myTbl1 select i, 'ABC', E'\\014'::bytea from generate_series (1,11) as i;
 update myTbl1 set col13=E'\\034'::bytea where col11 <= 3;
@@ -140,8 +142,10 @@ delete from myTbl1 where col11 > 10;
 insert into myTbl2 values (2,'DEF',NULL);
 insert into "myTbl3" (col33) select generate_series(1000,1039,4)/100;
 --
+set role emaj_regression_tests_adm_user2;
 select emaj.emaj_set_mark_group('myGroup1','M2');
 --
+reset role;
 set search_path=public,myschema1;
 insert into myTbl4 values (1,'FK...',1,1,'ABC');
 insert into myTbl4 values (2,'FK...',1,1,'ABC');
@@ -151,6 +155,7 @@ insert into myTbl4 values (3,'FK...',1,10,'ABC');
 delete from myTbl1 where col11 = 10;
 update myTbl1 set col12='DEF' where col11 <= 2;
 --
+set role emaj_regression_tests_adm_user2;
 select emaj.emaj_set_mark_group('myGroup1','M3');
 select emaj.emaj_comment_mark_group('myGroup1','M3','Third mark set');
 
@@ -174,6 +179,7 @@ select hist_function, hist_event, hist_object,
   from emaj.emaj_hist where hist_id >= 12000 order by hist_id;
 
 -- user tables
+reset role;
 select * from mySchema1.myTbl1 order by col11,col12;
 select * from mySchema1.myTbl2 order by col21;
 select * from mySchema1.myTbl2b order by col20;
@@ -211,16 +217,16 @@ update myTbl5 set col54 = '{"2010/11/28","2010/12/03"}', col55 = '{"id":1001, "c
 insert into myTbl6 select i, point(i,1.3), '((0,0),(2,2))', circle(point(5,5),i),'((-2,-2),(3,0),(1,4))','10.20.30.40/27','EXECUTING',(i,point(i,1.3))::mycomposite from generate_series (1,8) as i;
 update myTbl6 set col64 = '<(5,6),3.5>', col65 = null, col67 = 'COMPLETED' where col61 between 1 and 3;
 --
+set role emaj_regression_tests_adm_user1;
 select emaj.emaj_set_mark_group('myGroup2','M2');
 --
+reset role;
 set search_path=public,myschema2;
 select nextval('myschema2.myseq1');
 select nextval('myschema2.myseq1');
 select nextval('myschema2.myseq1');
 --
-reset role;
 alter sequence mySeq1 NO MAXVALUE NO CYCLE;
-set role emaj_regression_tests_adm_user1;
 --
 insert into myTbl4 values (1,'FK...',1,1,'ABC');
 insert into myTbl4 values (2,'FK...',1,1,'ABC');
@@ -228,6 +234,7 @@ update myTbl4 set col43 = 2;
 delete from mytbl5 where 4 = any(col53);
 delete from myTbl6 where col65 is null and col61 <> 0;
 --
+set role emaj_regression_tests_adm_user1;
 select emaj.emaj_set_mark_group('myGroup2','M3');
 -----------------------------
 -- Checking step 2
@@ -246,6 +253,7 @@ select hist_function, hist_event, hist_object,
   from emaj.emaj_hist where hist_id >= 12200 order by hist_id;
 
 -- user tables
+reset role;
 select * from mySchema2.myTbl1 order by col11,col12;
 select * from mySchema2.myTbl2 order by col21;
 select col31,col33 from mySchema2."myTbl3" order by col31;
@@ -253,6 +261,7 @@ select * from mySchema2.myTbl4 order by col41;
 select * from mySchema2.myTbl5 order by col51;
 select * from mySchema2.myTbl6 order by col61;
 -- log tables
+set role emaj_regression_tests_adm_user1;
 select col11, col12, col13, emaj_verb, emaj_tuple, emaj_gid from emaj_mySchema2.myTbl1_log order by emaj_gid, emaj_tuple desc;
 select col21, col22, col23, emaj_verb, emaj_tuple, emaj_gid from emaj_mySchema2.myTbl2_log order by emaj_gid, emaj_tuple desc;
 select col31, col33, emaj_verb, emaj_tuple, emaj_gid from emaj_myschema2."myTbl3_log" order by emaj_gid, emaj_tuple desc;
@@ -295,6 +304,7 @@ select hist_function, hist_event, hist_object,
   from emaj.emaj_hist where hist_id >= 12300 order by hist_id;
 
 -- user tables
+reset role;
 select * from mySchema2.myTbl1 order by col11,col12;
 select * from mySchema2.myTbl2 order by col21;
 select col31,col33 from mySchema2."myTbl3" order by col31;
@@ -302,6 +312,7 @@ select * from mySchema2.myTbl4 order by col41;
 select * from mySchema2.myTbl5 order by col51;
 select * from mySchema2.myTbl6 order by col61;
 -- log tables
+set role emaj_regression_tests_adm_user1;
 select col11, col12, col13, emaj_verb, emaj_tuple, emaj_gid from emaj_mySchema2.myTbl1_log order by emaj_gid, emaj_tuple desc;
 select col21, col22, col23, emaj_verb, emaj_tuple, emaj_gid from emaj_mySchema2.myTbl2_log order by emaj_gid, emaj_tuple desc;
 select col31, col33, emaj_verb, emaj_tuple, emaj_gid from emaj_myschema2."myTbl3_log" order by emaj_gid, emaj_tuple desc;
@@ -317,19 +328,25 @@ select public.handle_emaj_sequences(12400);
 -----------------------------
 select * from emaj.emaj_rollback_group('myGroup1','M2',false) order by 1,2;
 --
+reset role;
 set search_path=public,myschema1;
 insert into myTbl1 select i, 'DEF', E'\\000'::bytea from generate_series (100,110) as i;
 insert into myTbl2 values (3,'GHI','2010-01-02');
 delete from myTbl1 where col11 = 1;
 --
+set role emaj_regression_tests_adm_user1;
 select emaj.emaj_set_mark_group('myGroup1','M4');
 --
+reset role;
 update "myTbl3" set col33 = col33 / 2;
 --
+set role emaj_regression_tests_adm_user1;
 select emaj.emaj_set_mark_group('myGroup1','M5');
 --
+reset role;
 update myTbl1 set col11 = 99 where col11 = 1;
 --
+set role emaj_regression_tests_adm_user1;
 select emaj.emaj_set_mark_group('myGroup1','M6');
 -----------------------------
 -- Checking step 4
@@ -348,12 +365,14 @@ select hist_function, hist_event, hist_object,
   from emaj.emaj_hist where hist_id >= 12400 order by hist_id;
 
 -- user tables
+reset role;
 select * from mySchema1.myTbl1 order by col11,col12;
 select * from mySchema1.myTbl2 order by col21;
 select * from mySchema1.myTbl2b order by col20;
 select col31,col33 from mySchema1."myTbl3" order by col31;
 select * from mySchema1.myTbl4 order by col41;
 -- log tables
+set role emaj_regression_tests_adm_user1;
 select col11, col12, col13, emaj_verb, emaj_tuple, emaj_gid from emaj_mySchema1.myTbl1_log order by emaj_gid, emaj_tuple desc;
 select col21, col22, col23, emaj_verb, emaj_tuple, emaj_gid from emaj_mySchema1.myTbl2_log order by emaj_gid, emaj_tuple desc;
 select col20, col21, col22, col23, emaj_verb, emaj_tuple, emaj_gid from emaj_mySchema1.myTbl2b_log order by emaj_gid, emaj_tuple desc;
@@ -387,6 +406,7 @@ select hist_function, hist_event, hist_object,
   from emaj.emaj_hist where hist_id >= 12500 order by hist_id;
 
 -- user tables
+reset role;
 select * from mySchema2.myTbl1 order by col11,col12;
 select * from mySchema2.myTbl2 order by col21;
 select col31,col33 from mySchema2."myTbl3" order by col31;
@@ -394,6 +414,7 @@ select * from mySchema2.myTbl4 order by col41;
 select * from mySchema2.myTbl5 order by col51;
 select * from mySchema2.myTbl6 order by col61;
 -- log tables
+set role emaj_regression_tests_adm_user1;
 select col11, col12, col13, emaj_verb, emaj_tuple, emaj_gid from emaj_mySchema2.myTbl1_log order by emaj_gid, emaj_tuple desc;
 select col21, col22, col23, emaj_verb, emaj_tuple, emaj_gid from emaj_mySchema2.myTbl2_log order by emaj_gid, emaj_tuple desc;
 select col31, col33, emaj_verb, emaj_tuple, emaj_gid from emaj_myschema2."myTbl3_log" order by emaj_gid, emaj_tuple desc;
@@ -407,19 +428,23 @@ select public.handle_emaj_sequences(12600);
 -----------------------------
 -- Step 6 : for myGroup1, update tables, rollback, other updates, then logged rollback
 -----------------------------
+reset role;
 set search_path=public,myschema1;
 --
 insert into myTbl1 values (1, 'Step 6', E'\\000'::bytea);
 insert into myTbl4 values (11,'FK...',1,1,'Step 6');
 insert into myTbl4 values (12,'FK...',1,1,'Step 6');
 --
+set role emaj_regression_tests_adm_user1;
 select * from emaj.emaj_rollback_group('myGroup1','M5',false) order by 1,2;
 --
+reset role;
 insert into myTbl1 values (1, 'Step 6', E'\\001'::bytea);
 insert into myTbl4 values (11,'',1,1,'Step 6');
 insert into myTbl4 values (12,'',1,1,'Step 6');
 --
 -- for an equivalent of "select * from emaj.emaj_logged_rollback_group('myGroup1','M4',true,'my comment');"
+set role emaj_regression_tests_adm_user1;
 select * from emaj._rlbk_async(emaj._rlbk_init(array['myGroup1'], 'M4', true, 1, false, true, 'my comment'), false);
 
 select emaj.emaj_comment_rollback(12601,'Updated comment');
@@ -458,12 +483,14 @@ select hist_function, hist_event, hist_object,
   from emaj.emaj_hist where hist_id >= 12600 order by hist_id;
 
 -- user tables
+reset role;
 select * from mySchema1.myTbl1 order by col11,col12;
 select * from mySchema1.myTbl2 order by col21;
 select * from mySchema1.myTbl2b order by col20;
 select col31,col33 from mySchema1."myTbl3" order by col31;
 select * from mySchema1.myTbl4 order by col41;
 -- log tables
+set role emaj_regression_tests_adm_user1;
 select col11, col12, col13, emaj_verb, emaj_tuple, emaj_gid from emaj_mySchema1.myTbl1_log order by emaj_gid, emaj_tuple desc;
 select col21, col22, col23, emaj_verb, emaj_tuple, emaj_gid from emaj_mySchema1.myTbl2_log order by emaj_gid, emaj_tuple desc;
 select col20, col21, col22, col23, emaj_verb, emaj_tuple, emaj_gid from emaj_mySchema1.myTbl2b_log order by emaj_gid, emaj_tuple desc;
@@ -478,12 +505,14 @@ select public.handle_emaj_sequences(12700);
 -----------------------------
 set search_path=public,myschema1;
 --
+reset role;
 delete from "myTbl3" where col31 = 14;
 delete from "myTbl3" where col31 = 15;
 delete from "myTbl3" where col31 = 16;
 delete from "myTbl3" where col31 = 17;
 delete from "myTbl3" where col31 = 18;
 --
+set role emaj_regression_tests_adm_user1;
 select emaj.emaj_rename_mark_group('myGroup1',mark_name,'Before logged rollback to M4') from emaj.emaj_mark where mark_name like 'RLBK_M4_%_START';
 -- 
 select emaj.emaj_delete_mark_group('myGroup1',mark_name) from emaj.emaj_mark where mark_name like 'RLBK_M4_%_DONE';
@@ -508,12 +537,14 @@ select hist_function, hist_event, hist_object,
   from emaj.emaj_hist where hist_id >= 12700 order by hist_id;
 
 -- user tables
+reset role;
 select * from mySchema1.myTbl1 order by col11,col12;
 select * from mySchema1.myTbl2 order by col21;
 select * from mySchema1.myTbl2b order by col20;
 select col31,col33 from mySchema1."myTbl3" order by col31;
 select * from mySchema1.myTbl4 order by col41;
 -- log tables
+set role emaj_regression_tests_adm_user1;
 select col11, col12, col13, emaj_verb, emaj_tuple, emaj_gid from emaj_mySchema1.myTbl1_log order by emaj_gid, emaj_tuple desc;
 select col21, col22, col23, emaj_verb, emaj_tuple, emaj_gid from emaj_mySchema1.myTbl2_log order by emaj_gid, emaj_tuple desc;
 select col20, col21, col22, col23, emaj_verb, emaj_tuple, emaj_gid from emaj_mySchema1.myTbl2b_log order by emaj_gid, emaj_tuple desc;
@@ -530,3 +561,4 @@ select col41, col42, col43, col44, col45, emaj_verb, emaj_tuple, emaj_gid from e
 --6	up R-M5 up LR-M4(->M4S+M4E)
 --7	up M7 REN-M4S DEL-M4E DEL-M1 DELBEF-M4
 --
+reset role;
