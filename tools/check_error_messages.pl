@@ -45,6 +45,7 @@ use warnings; use strict;
 #
 # Phase 1.
 #
+  print "-> Reading the extension source file ($ficSrc)...\n";
 # Scan and process input file
   while (<FICSRC>){
     $line = $_; $lineNumber++; $lineNumberInFnct++;
@@ -85,11 +86,13 @@ use warnings; use strict;
   }
 
 # Complete the source processing
+  print "The source file contains $nbException exceptions and $nbWarning warning messages.\n";
   close (FICSRC);
 
 #
 # Phase 2.
 #
+  print "-> Reading the test output files from $dirOut...\n";
 # Search for error messages in regression tests results, using grep
   $res = `grep -P 'ERROR:|WARNING:' $dirOut/*.out`;
 
@@ -140,7 +143,6 @@ use warnings; use strict;
   }
 
 # The analysis of regression test output files is completed, display the results
-  print "The source file contains $nbException exceptions and $nbWarning warning messages.\n";
   while (($fnctId, $nbFound) = each(%msgCount)) {
     if ($nbFound == 0) {
 # Do not report some messages known to not be present in the regression test suite
