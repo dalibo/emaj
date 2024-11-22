@@ -93,11 +93,11 @@ begin;
   create table emaj_myschema1.emaj_dummy (col1 int);
   create table emaj.emaj_dummy (col1 int);               -- this one is not detected
   select * from emaj.emaj_verify_all() t(msg) where msg like 'Error%';
-                                                            msg                                                            
----------------------------------------------------------------------------------------------------------------------------
- Error: In the schema "emaj", the table "emaj"."dummy1_log" is not linked to any created tables group.
- Error: In the schema "emaj", the table "emaj"."dummy2" is not linked to any created tables group.
- Error: In the schema "emaj_myschema1", the table "emaj_myschema1"."emaj_dummy" is not linked to any created tables group.
+                                                          msg                                                          
+-----------------------------------------------------------------------------------------------------------------------
+ Error: In schema "emaj", the table "emaj"."dummy1_log" is not linked to any created tables group.
+ Error: In schema "emaj", the table "emaj"."dummy2" is not linked to any created tables group.
+ Error: In schema "emaj_myschema1", the table "emaj_myschema1"."emaj_dummy" is not linked to any created tables group.
 (3 rows)
 
 rollback;
@@ -109,11 +109,11 @@ begin;
   create function emaj._dummy4_fnct () returns int language sql as $$ select 0 $$;      -- this one is not detected
   create function emaj.emaj_dummy5_fnct () returns int language sql as $$ select 0 $$;  -- this one is not detected
   select * from emaj.emaj_verify_all() t(msg) where msg like 'Error%';
-                                                                msg                                                                 
-------------------------------------------------------------------------------------------------------------------------------------
- Error: In the schema "emaj", the function "emaj"."dummy1_log_fnct" is not linked to any created tables group.
- Error: In the schema "emaj_myschema1", the function "emaj_myschema1"."dummy2_rlbk_fnct" is not linked to any created tables group.
- Error: In the schema "emaj_myschema1", the function "emaj_myschema1"."dummy3_fnct" is not linked to any created tables group.
+                                                              msg                                                               
+--------------------------------------------------------------------------------------------------------------------------------
+ Error: In schema "emaj", the function "emaj"."dummy1_log_fnct" is not linked to any created tables group.
+ Error: In schema "emaj_myschema1", the function "emaj_myschema1"."dummy2_rlbk_fnct" is not linked to any created tables group.
+ Error: In schema "emaj_myschema1", the function "emaj_myschema1"."dummy3_fnct" is not linked to any created tables group.
 (3 rows)
 
 rollback;
@@ -124,12 +124,12 @@ begin;
   create sequence emaj_myschema1.dummy3_log_seq;
   create sequence emaj.emaj_dummy4_seq;                  -- this one is not detected
   select * from emaj.emaj_verify_all() t(msg) where msg like 'Error%';
-                                                               msg                                                                
-----------------------------------------------------------------------------------------------------------------------------------
- Error: In the schema "emaj", the table "emaj"."dummy1_log" is not linked to any created tables group.
- Error: In the schema "emaj", the sequence "emaj"."dummy1_log_col1_seq" is not linked to any created tables group.
- Error: In the schema "emaj_myschema1", the sequence "emaj_myschema1"."dummy2_seq" is not linked to any created tables group.
- Error: In the schema "emaj_myschema1", the sequence "emaj_myschema1"."dummy3_log_seq" is not linked to any created tables group.
+                                                             msg                                                              
+------------------------------------------------------------------------------------------------------------------------------
+ Error: In schema "emaj", the table "emaj"."dummy1_log" is not linked to any created tables group.
+ Error: In schema "emaj", the sequence "emaj"."dummy1_log_col1_seq" is not linked to any created tables group.
+ Error: In schema "emaj_myschema1", the sequence "emaj_myschema1"."dummy2_seq" is not linked to any created tables group.
+ Error: In schema "emaj_myschema1", the sequence "emaj_myschema1"."dummy3_log_seq" is not linked to any created tables group.
 (4 rows)
 
 rollback;
@@ -140,11 +140,11 @@ begin;
   create type emaj_myschema1.dummy3_type as (col1 int);
   create type emaj.emaj_dummy4_type as (col1 int);       -- this one is not detected
   select * from emaj.emaj_verify_all() t(msg) where msg like 'Error%';
-                                                    msg                                                    
------------------------------------------------------------------------------------------------------------
- Error: In the schema "emaj", the type "emaj"."dummy1_type" is not an E-Maj component.
- Error: In the schema "emaj_myschema1", the type "emaj_myschema1"."dummy2_type" is not an E-Maj component.
- Error: In the schema "emaj_myschema1", the type "emaj_myschema1"."dummy3_type" is not an E-Maj component.
+                                                  msg                                                  
+-------------------------------------------------------------------------------------------------------
+ Error: In schema "emaj", the type "emaj"."dummy1_type" is not an E-Maj component.
+ Error: In schema "emaj_myschema1", the type "emaj_myschema1"."dummy2_type" is not an E-Maj component.
+ Error: In schema "emaj_myschema1", the type "emaj_myschema1"."dummy3_type" is not an E-Maj component.
 (3 rows)
 
 rollback;
@@ -153,10 +153,10 @@ begin;
   create view emaj.dummy1_view as select hist_id, hist_function, hist_event, hist_object from emaj.emaj_hist;
   create view emaj.dummy2_view as select hist_id, hist_function, hist_event, hist_object from emaj.emaj_hist;
   select * from emaj.emaj_verify_all() t(msg) where msg like 'Error%';
-                                          msg                                          
----------------------------------------------------------------------------------------
- Error: In the schema "emaj", the view "emaj"."dummy1_view" is not an E-Maj component.
- Error: In the schema "emaj", the view "emaj"."dummy2_view" is not an E-Maj component.
+                                        msg                                        
+-----------------------------------------------------------------------------------
+ Error: In schema "emaj", the view "emaj"."dummy1_view" is not an E-Maj component.
+ Error: In schema "emaj", the view "emaj"."dummy2_view" is not an E-Maj component.
 (2 rows)
 
 rollback;
@@ -168,10 +168,10 @@ begin;
   create foreign table emaj.dummy1_ftbl (ligne TEXT) server file_server options(filename '/dev/null');
   create foreign table emaj.dummy2_ftbl (ligne TEXT) server file_server options(filename '/dev/null');
   select * from emaj.emaj_verify_all() t(msg) where msg like 'Error%';
-                                              msg                                               
-------------------------------------------------------------------------------------------------
- Error: In the schema "emaj", the foreign table "emaj"."dummy1_ftbl" is not an E-Maj component.
- Error: In the schema "emaj", the foreign table "emaj"."dummy2_ftbl" is not an E-Maj component.
+                                            msg                                             
+--------------------------------------------------------------------------------------------
+ Error: In schema "emaj", the foreign table "emaj"."dummy1_ftbl" is not an E-Maj component.
+ Error: In schema "emaj", the foreign table "emaj"."dummy2_ftbl" is not an E-Maj component.
 (2 rows)
 
 rollback;
@@ -180,10 +180,10 @@ begin;
   create domain emaj_myschema1.dummy1_domain as int check (VALUE > 0);
   create domain emaj_myschema1.dummy2_domain as int check (VALUE > 0);
   select * from emaj.emaj_verify_all() t(msg) where msg like 'Error%';
-                                                      msg                                                      
----------------------------------------------------------------------------------------------------------------
- Error: In the schema "emaj_myschema1", the domain "emaj_myschema1"."dummy1_domain" is not an E-Maj component.
- Error: In the schema "emaj_myschema1", the domain "emaj_myschema1"."dummy2_domain" is not an E-Maj component.
+                                                    msg                                                    
+-----------------------------------------------------------------------------------------------------------
+ Error: In schema "emaj_myschema1", the domain "emaj_myschema1"."dummy1_domain" is not an E-Maj component.
+ Error: In schema "emaj_myschema1", the domain "emaj_myschema1"."dummy2_domain" is not an E-Maj component.
 (2 rows)
 
 rollback;
@@ -202,16 +202,16 @@ drop cascades to table myschema1.mytbl2b
 drop cascades to function myschema1.mytbl2trgfct1()
 drop cascades to function myschema1.mytbl2trgfct2()
   select * from emaj.emaj_verify_all() t(msg) where msg like 'Error%';
-                                                  msg                                                  
--------------------------------------------------------------------------------------------------------
+                                                   msg                                                    
+----------------------------------------------------------------------------------------------------------
  Error: The application schema "myschema1" does not exist any more.
- Error: In the group "myGroup1", the table "myschema1"."myTbl3" does not exist any more.
- Error: In the group "myGroup1", the sequence "myschema1"."myTbl3_col31_seq" does not exist any more.
- Error: In the group "myGroup1", the table "myschema1"."mytbl1" does not exist any more.
- Error: In the group "myGroup1", the table "myschema1"."mytbl2" does not exist any more.
- Error: In the group "myGroup1", the table "myschema1"."mytbl2b" does not exist any more.
- Error: In the group "myGroup1", the sequence "myschema1"."mytbl2b_col20_seq" does not exist any more.
- Error: In the group "myGroup1", the table "myschema1"."mytbl4" does not exist any more.
+ Error: In tables group "myGroup1", the table "myschema1"."myTbl3" does not exist any more.
+ Error: In tables group "myGroup1", the sequence "myschema1"."myTbl3_col31_seq" does not exist any more.
+ Error: In tables group "myGroup1", the table "myschema1"."mytbl1" does not exist any more.
+ Error: In tables group "myGroup1", the table "myschema1"."mytbl2" does not exist any more.
+ Error: In tables group "myGroup1", the table "myschema1"."mytbl2b" does not exist any more.
+ Error: In tables group "myGroup1", the sequence "myschema1"."mytbl2b_col20_seq" does not exist any more.
+ Error: In tables group "myGroup1", the table "myschema1"."mytbl4" does not exist any more.
 (8 rows)
 
 rollback;
@@ -219,9 +219,9 @@ rollback;
 begin;
   drop table myschema1.mytbl4;
   select * from emaj.emaj_verify_all() t(msg) where msg like 'Error%';
-                                           msg                                           
------------------------------------------------------------------------------------------
- Error: In the group "myGroup1", the table "myschema1"."mytbl4" does not exist any more.
+                                            msg                                             
+--------------------------------------------------------------------------------------------
+ Error: In tables group "myGroup1", the table "myschema1"."mytbl4" does not exist any more.
 (1 row)
 
 rollback;
@@ -229,9 +229,9 @@ rollback;
 begin;
   update emaj.emaj_relation set rel_kind = 'S' where rel_schema = 'myschema1' and rel_tblseq = 'mytbl1' and upper_inf(rel_time_range);
   select * from emaj.emaj_verify_all() t(msg) where msg like 'Error%';
-                                            msg                                             
---------------------------------------------------------------------------------------------
- Error: In the group "myGroup1", the sequence "myschema1"."mytbl1" does not exist any more.
+                                              msg                                              
+-----------------------------------------------------------------------------------------------
+ Error: In tables group "myGroup1", the sequence "myschema1"."mytbl1" does not exist any more.
 (1 row)
 
 rollback;
@@ -260,29 +260,29 @@ drop cascades to sequence emaj_myschema1.mytbl2b_log_seq
 drop cascades to function emaj_myschema1.mytbl2b_log_fnct()
 drop cascades to trigger emaj_log_trg on table myschema1.mytbl2b
   select * from emaj.emaj_verify_all() t(msg) where msg like 'Error%';
-                                                     msg                                                     
--------------------------------------------------------------------------------------------------------------
+                                                      msg                                                       
+----------------------------------------------------------------------------------------------------------------
  Error: The E-Maj schema "emaj_myschema1" does not exist any more.
- Error: In the group "myGroup1", the log table "emaj_myschema1"."myTbl3_log" is not found.
- Error: In the group "myGroup1", the log table "emaj_myschema1"."mytbl1_log" is not found.
- Error: In the group "myGroup1", the log table "emaj_myschema1"."mytbl2_log" is not found.
- Error: In the group "myGroup1", the log table "emaj_myschema1"."mytbl2b_log" is not found.
- Error: In the group "myGroup1", the log table "emaj_myschema1"."mytbl4_log" is not found.
- Error: In the group "myGroup1", the log sequence "emaj_myschema1"."myTbl3_log_seq" is not found.
- Error: In the group "myGroup1", the log sequence "emaj_myschema1"."mytbl1_log_seq" is not found.
- Error: In the group "myGroup1", the log sequence "emaj_myschema1"."mytbl2_log_seq" is not found.
- Error: In the group "myGroup1", the log sequence "emaj_myschema1"."mytbl2b_log_seq" is not found.
- Error: In the group "myGroup1", the log sequence "emaj_myschema1"."mytbl4_log_seq" is not found.
- Error: In the group "myGroup1", the log function "emaj_myschema1"."myTbl3_log_fnct" is not found.
- Error: In the group "myGroup1", the log function "emaj_myschema1"."mytbl1_log_fnct" is not found.
- Error: In the group "myGroup1", the log function "emaj_myschema1"."mytbl2_log_fnct" is not found.
- Error: In the group "myGroup1", the log function "emaj_myschema1"."mytbl2b_log_fnct" is not found.
- Error: In the group "myGroup1", the log function "emaj_myschema1"."mytbl4_log_fnct" is not found.
- Error: In the group "myGroup1", the log trigger "emaj_log_trg" on table "myschema1"."myTbl3" is not found.
- Error: In the group "myGroup1", the log trigger "emaj_log_trg" on table "myschema1"."mytbl1" is not found.
- Error: In the group "myGroup1", the log trigger "emaj_log_trg" on table "myschema1"."mytbl2" is not found.
- Error: In the group "myGroup1", the log trigger "emaj_log_trg" on table "myschema1"."mytbl2b" is not found.
- Error: In the group "myGroup1", the log trigger "emaj_log_trg" on table "myschema1"."mytbl4" is not found.
+ Error: In tables group "myGroup1", the log table "emaj_myschema1"."myTbl3_log" is not found.
+ Error: In tables group "myGroup1", the log table "emaj_myschema1"."mytbl1_log" is not found.
+ Error: In tables group "myGroup1", the log table "emaj_myschema1"."mytbl2_log" is not found.
+ Error: In tables group "myGroup1", the log table "emaj_myschema1"."mytbl2b_log" is not found.
+ Error: In tables group "myGroup1", the log table "emaj_myschema1"."mytbl4_log" is not found.
+ Error: In tables group "myGroup1", the log sequence "emaj_myschema1"."myTbl3_log_seq" is not found.
+ Error: In tables group "myGroup1", the log sequence "emaj_myschema1"."mytbl1_log_seq" is not found.
+ Error: In tables group "myGroup1", the log sequence "emaj_myschema1"."mytbl2_log_seq" is not found.
+ Error: In tables group "myGroup1", the log sequence "emaj_myschema1"."mytbl2b_log_seq" is not found.
+ Error: In tables group "myGroup1", the log sequence "emaj_myschema1"."mytbl4_log_seq" is not found.
+ Error: In tables group "myGroup1", the log function "emaj_myschema1"."myTbl3_log_fnct" is not found.
+ Error: In tables group "myGroup1", the log function "emaj_myschema1"."mytbl1_log_fnct" is not found.
+ Error: In tables group "myGroup1", the log function "emaj_myschema1"."mytbl2_log_fnct" is not found.
+ Error: In tables group "myGroup1", the log function "emaj_myschema1"."mytbl2b_log_fnct" is not found.
+ Error: In tables group "myGroup1", the log function "emaj_myschema1"."mytbl4_log_fnct" is not found.
+ Error: In tables group "myGroup1", the log trigger "emaj_log_trg" on table "myschema1"."myTbl3" is not found.
+ Error: In tables group "myGroup1", the log trigger "emaj_log_trg" on table "myschema1"."mytbl1" is not found.
+ Error: In tables group "myGroup1", the log trigger "emaj_log_trg" on table "myschema1"."mytbl2" is not found.
+ Error: In tables group "myGroup1", the log trigger "emaj_log_trg" on table "myschema1"."mytbl2b" is not found.
+ Error: In tables group "myGroup1", the log trigger "emaj_log_trg" on table "myschema1"."mytbl4" is not found.
 (21 rows)
 
 rollback;
@@ -290,9 +290,9 @@ rollback;
 begin;
   drop trigger emaj_log_trg on myschema1.mytbl1;
   select * from emaj.emaj_verify_all() t(msg) where msg like 'Error%';
-                                                    msg                                                     
-------------------------------------------------------------------------------------------------------------
- Error: In the group "myGroup1", the log trigger "emaj_log_trg" on table "myschema1"."mytbl1" is not found.
+                                                      msg                                                      
+---------------------------------------------------------------------------------------------------------------
+ Error: In tables group "myGroup1", the log trigger "emaj_log_trg" on table "myschema1"."mytbl1" is not found.
 (1 row)
 
 rollback;
@@ -301,10 +301,10 @@ begin;
   drop function emaj_myschema1.mytbl1_log_fnct() cascade;
 NOTICE:  drop cascades to trigger emaj_log_trg on table myschema1.mytbl1
   select * from emaj.emaj_verify_all() t(msg) where msg like 'Error%';
-                                                    msg                                                     
-------------------------------------------------------------------------------------------------------------
- Error: In the group "myGroup1", the log function "emaj_myschema1"."mytbl1_log_fnct" is not found.
- Error: In the group "myGroup1", the log trigger "emaj_log_trg" on table "myschema1"."mytbl1" is not found.
+                                                      msg                                                      
+---------------------------------------------------------------------------------------------------------------
+ Error: In tables group "myGroup1", the log function "emaj_myschema1"."mytbl1_log_fnct" is not found.
+ Error: In tables group "myGroup1", the log trigger "emaj_log_trg" on table "myschema1"."mytbl1" is not found.
 (2 rows)
 
 rollback;
@@ -312,9 +312,9 @@ rollback;
 begin;
   drop trigger emaj_trunc_trg on myschema1.mytbl1;
   select * from emaj.emaj_verify_all() t(msg) where msg like 'Error%';
-                                                        msg                                                        
--------------------------------------------------------------------------------------------------------------------
- Error: In the group "myGroup1", the truncate trigger "emaj_trunc_trg" on table "myschema1"."mytbl1" is not found.
+                                                         msg                                                          
+----------------------------------------------------------------------------------------------------------------------
+ Error: In tables group "myGroup1", the truncate trigger "emaj_trunc_trg" on table "myschema1"."mytbl1" is not found.
 (1 row)
 
 rollback;
@@ -322,9 +322,9 @@ rollback;
 begin;
   drop table emaj_myschema1.mytbl1_log;
   select * from emaj.emaj_verify_all() t(msg) where msg like 'Error%';
-                                            msg                                            
--------------------------------------------------------------------------------------------
- Error: In the group "myGroup1", the log table "emaj_myschema1"."mytbl1_log" is not found.
+                                             msg                                              
+----------------------------------------------------------------------------------------------
+ Error: In tables group "myGroup1", the log table "emaj_myschema1"."mytbl1_log" is not found.
 (1 row)
 
 rollback;
@@ -332,9 +332,9 @@ rollback;
 begin;
   drop sequence emaj_myschema1.mytbl1_log_seq;
   select * from emaj.emaj_verify_all() t(msg) where msg like 'Error%';
-                                               msg                                                
---------------------------------------------------------------------------------------------------
- Error: In the group "myGroup1", the log sequence "emaj_myschema1"."mytbl1_log_seq" is not found.
+                                                 msg                                                 
+-----------------------------------------------------------------------------------------------------
+ Error: In tables group "myGroup1", the log sequence "emaj_myschema1"."mytbl1_log_seq" is not found.
 (1 row)
 
 rollback;
@@ -344,10 +344,10 @@ begin;
   alter table myschema1.mytbl1 add column othernewcol text;
   alter table myschema1.mytbl2 add column newcol int;
   select * from emaj.emaj_verify_all() t(msg) where msg like 'Error%';
-                                                                               msg                                                                               
------------------------------------------------------------------------------------------------------------------------------------------------------------------
- Error: In the group "myGroup1", the structure of the application table "myschema1"."mytbl1" is not coherent with its log table ("emaj_myschema1"."mytbl1_log").
- Error: In the group "myGroup1", the structure of the application table "myschema1"."mytbl2" is not coherent with its log table ("emaj_myschema1"."mytbl2_log").
+                                                                                msg                                                                                 
+--------------------------------------------------------------------------------------------------------------------------------------------------------------------
+ Error: In tables group "myGroup1", the structure of the application table "myschema1"."mytbl1" is not coherent with its log table ("emaj_myschema1"."mytbl1_log").
+ Error: In tables group "myGroup1", the structure of the application table "myschema1"."mytbl2" is not coherent with its log table ("emaj_myschema1"."mytbl2_log").
 (2 rows)
 
 rollback;
@@ -356,9 +356,9 @@ begin;
   alter table myschema1.mytbl4 drop column col42;
   alter table myschema1.mytbl4 alter column col45 type varchar(15);
   select * from emaj.emaj_verify_all() t(msg) where msg like 'Error%';
-                                                                               msg                                                                               
------------------------------------------------------------------------------------------------------------------------------------------------------------------
- Error: In the group "myGroup1", the structure of the application table "myschema1"."mytbl4" is not coherent with its log table ("emaj_myschema1"."mytbl4_log").
+                                                                                msg                                                                                 
+--------------------------------------------------------------------------------------------------------------------------------------------------------------------
+ Error: In tables group "myGroup1", the structure of the application table "myschema1"."mytbl4" is not coherent with its log table ("emaj_myschema1"."mytbl4_log").
 (1 row)
 
 rollback;
@@ -414,10 +414,10 @@ begin;
   alter table emaj_myschema1.mytbl1_log drop column emaj_verb, drop column emaj_tuple;
   alter table emaj_myschema1.mytbl4_log drop column emaj_gid, drop column emaj_user;
   select * from emaj.emaj_verify_all() t(msg) where msg like 'Error%';
-                                                               msg                                                                
-----------------------------------------------------------------------------------------------------------------------------------
- Error: In the group "myGroup1", the log table "emaj_myschema1"."mytbl1_log" miss some technical columns (emaj_tuple, emaj_verb).
- Error: In the group "myGroup1", the log table "emaj_myschema1"."mytbl4_log" miss some technical columns (emaj_user, emaj_gid).
+                                                                 msg                                                                 
+-------------------------------------------------------------------------------------------------------------------------------------
+ Error: In tables group "myGroup1", the log table "emaj_myschema1"."mytbl1_log" miss some technical columns (emaj_tuple, emaj_verb).
+ Error: In tables group "myGroup1", the log table "emaj_myschema1"."mytbl4_log" miss some technical columns (emaj_user, emaj_gid).
 (2 rows)
 
 rollback;
@@ -435,13 +435,13 @@ begin;
   select * from emaj.emaj_verify_all() t(msg) where msg like 'Error%';
                                                       msg                                                      
 ---------------------------------------------------------------------------------------------------------------
- Error: In the schema "emaj", the table "emaj"."dummy_log" is not linked to any created tables group.
- Error: In the schema "emaj", the function "emaj"."dummy_log_fnct" is not linked to any created tables group.
- Error: In the schema "emaj", the function "emaj"."dummy_rlbk_fnct" is not linked to any created tables group.
- Error: In the group "myGroup2", the sequence "myschema2"."mytbl1" does not exist any more.
- Error: In the group "myGroup1", the log table "emaj_myschema1"."mytbl1_log" is not found.
- Error: In the group "myGroup1", the log function "emaj_myschema1"."mytbl1_log_fnct" is not found.
- Error: In the group "myGroup1", the log trigger "emaj_log_trg" on table "myschema1"."mytbl1" is not found.
+ Error: In schema "emaj", the table "emaj"."dummy_log" is not linked to any created tables group.
+ Error: In schema "emaj", the function "emaj"."dummy_log_fnct" is not linked to any created tables group.
+ Error: In schema "emaj", the function "emaj"."dummy_rlbk_fnct" is not linked to any created tables group.
+ Error: In tables group "myGroup2", the sequence "myschema2"."mytbl1" does not exist any more.
+ Error: In tables group "myGroup1", the log table "emaj_myschema1"."mytbl1_log" is not found.
+ Error: In tables group "myGroup1", the log function "emaj_myschema1"."mytbl1_log_fnct" is not found.
+ Error: In tables group "myGroup1", the log trigger "emaj_log_trg" on table "myschema1"."mytbl1" is not found.
  Error: In the rollbackable group "myGroup1", the table "myschema1"."mytbl4" has no primary key any more.
 (8 rows)
 
@@ -825,7 +825,7 @@ PL/pgSQL function emaj.emaj_drop_group(text) line 15 at SQL statement
   select * from emaj.emaj_verify_all();
                                                            emaj_verify_all                                                           
 -------------------------------------------------------------------------------------------------------------------------------------
- Error: In the schema "emaj_myschema1", the sequence "emaj_myschema1"."dummyseq" is not linked to any created tables group.
+ Error: In schema "emaj_myschema1", the sequence "emaj_myschema1"."dummyseq" is not linked to any created tables group.
  Warning: Some E-Maj event triggers are disabled. You may enable them using the emaj_enable_protection_by_event_triggers() function.
 (2 rows)
 

@@ -1387,8 +1387,8 @@ select emaj.emaj_import_groups_configuration(:'EMAJTESTTMPDIR' || '/modified_gro
 -- register an unknown trigger and an emaj trigger
 \! sed -e 's/"mytbl2trg1","mytbl2trg2"/"unknowntrigger","emaj_trunc_trg"/' $EMAJTESTTMPDIR/modified_groups_config_1.json >$EMAJTESTTMPDIR/modified_groups_config_2.json
 select emaj.emaj_import_groups_configuration(:'EMAJTESTTMPDIR' || '/modified_groups_config_2.json', null, true);
-WARNING:  _import_groups_conf (2): In the group "myGroup1" and for the table myschema1.mytbl2, the trigger unknowntrigger does not exist.
-WARNING:  _import_groups_conf (2): In the group "myGroup1" and for the table myschema1.mytbl2, the trigger emaj_trunc_trg is an E-Maj trigger.
+WARNING:  _import_groups_conf (2): In tables group "myGroup1" and for the table myschema1.mytbl2, the trigger unknowntrigger does not exist.
+WARNING:  _import_groups_conf (2): In tables group "myGroup1" and for the table myschema1.mytbl2, the trigger emaj_trunc_trg is an E-Maj trigger.
 ERROR:  _import_groups_conf: One or several errors have been detected in the JSON groups configuration.
 CONTEXT:  PL/pgSQL function emaj._import_groups_conf(json,text[],boolean,text,text) line 78 at RAISE
 PL/pgSQL function emaj.emaj_import_groups_configuration(text,text[],boolean,text) line 28 at RETURN

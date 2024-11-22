@@ -755,12 +755,12 @@ select rel_schema, rel_tblseq, rel_time_range, rel_group, rel_kind
 (1 row)
 
 select * from emaj.emaj_verify_all();
-                                                                                       emaj_verify_all                                                                                        
-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
- Warning: In the group "myGroup2", the foreign key "mytbl6_col61_fkey" on the table "myschema2"."mytbl6" references the table "myschema2"."mytbl7" that does not belong to any group.
- Warning: In the group "myGroup2", the table "myschema2"."mytbl6" is referenced by the foreign key "mytbl8_col81_fkey" of the table "myschema2"."mytbl8" that does not belong to any group.
- Warning: In the group "myGroup4", the table "myschema4"."mypartp1" is referenced by the foreign key "mytblr_col2_fkey1" of the table "myschema4"."mytblr" that does not belong to any group.
- Warning: In the group "myGroup4", the table "myschema4"."mypartp2" is referenced by the foreign key "mytblr_col2_fkey2" of the table "myschema4"."mytblr" that does not belong to any group.
+                                                                                         emaj_verify_all                                                                                         
+-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+ Warning: In tables group "myGroup2", the foreign key "mytbl6_col61_fkey" on the table "myschema2"."mytbl6" references the table "myschema2"."mytbl7" that does not belong to any group.
+ Warning: In tables group "myGroup2", the table "myschema2"."mytbl6" is referenced by the foreign key "mytbl8_col81_fkey" of the table "myschema2"."mytbl8" that does not belong to any group.
+ Warning: In tables group "myGroup4", the table "myschema4"."mypartp1" is referenced by the foreign key "mytblr_col2_fkey1" of the table "myschema4"."mytblr" that does not belong to any group.
+ Warning: In tables group "myGroup4", the table "myschema4"."mypartp2" is referenced by the foreign key "mytblr_col2_fkey2" of the table "myschema4"."mytblr" that does not belong to any group.
  No error detected
 (5 rows)
 
@@ -1412,12 +1412,12 @@ begin;
 
   drop table emaj_myschema2.mytbl7_log;
   select * from emaj.emaj_verify_all();
-                                                                                       emaj_verify_all                                                                                        
-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
- Error: In the group "myGroup2", the log table "emaj_myschema2"."mytbl7_log" is not found.
- Warning: In the group "myGroup2", the table "myschema2"."mytbl6" is referenced by the foreign key "mytbl8_col81_fkey" of the table "myschema2"."mytbl8" that does not belong to any group.
- Warning: In the group "myGroup4", the table "myschema4"."mypartp1" is referenced by the foreign key "mytblr_col2_fkey1" of the table "myschema4"."mytblr" that does not belong to any group.
- Warning: In the group "myGroup4", the table "myschema4"."mypartp2" is referenced by the foreign key "mytblr_col2_fkey2" of the table "myschema4"."mytblr" that does not belong to any group.
+                                                                                         emaj_verify_all                                                                                         
+-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+ Error: In tables group "myGroup2", the log table "emaj_myschema2"."mytbl7_log" is not found.
+ Warning: In tables group "myGroup2", the table "myschema2"."mytbl6" is referenced by the foreign key "mytbl8_col81_fkey" of the table "myschema2"."mytbl8" that does not belong to any group.
+ Warning: In tables group "myGroup4", the table "myschema4"."mypartp1" is referenced by the foreign key "mytblr_col2_fkey1" of the table "myschema4"."mytblr" that does not belong to any group.
+ Warning: In tables group "myGroup4", the table "myschema4"."mypartp2" is referenced by the foreign key "mytblr_col2_fkey2" of the table "myschema4"."mytblr" that does not belong to any group.
  Warning: Some E-Maj event triggers are disabled. You may enable them using the emaj_enable_protection_by_event_triggers() function.
 (5 rows)
 
@@ -1705,14 +1705,14 @@ select count(*) from emaj_myschema1."myTbl3_log_1";
 (1 row)
 
 select * from emaj.emaj_verify_all();
-                                                                                       emaj_verify_all                                                                                        
-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
- Warning: In the group "myGroup1", the sequence "myschema1"."myTbl3_col31_seq" is linked to the table "myschema1"."myTbl3" but this table does not belong to any tables group.
- Warning: In the group "myGroup1", the sequence "myschema1"."mytbl2b_col20_seq" is linked to the table "myschema1"."mytbl2b" but this table does not belong to any tables group.
- Warning: In the group "myGroup2", the foreign key "mytbl6_col61_fkey" on the table "myschema2"."mytbl6" references the table "myschema2"."mytbl7" that does not belong to any group.
- Warning: In the group "myGroup2", the table "myschema2"."mytbl6" is referenced by the foreign key "mytbl8_col81_fkey" of the table "myschema2"."mytbl8" that does not belong to any group.
- Warning: In the group "myGroup4", the table "myschema4"."mypartp1" is referenced by the foreign key "mytblr_col2_fkey1" of the table "myschema4"."mytblr" that does not belong to any group.
- Warning: In the group "myGroup4", the table "myschema4"."mypartp2" is referenced by the foreign key "mytblr_col2_fkey2" of the table "myschema4"."mytblr" that does not belong to any group.
+                                                                                         emaj_verify_all                                                                                         
+-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+ Warning: In tables group "myGroup1", the sequence "myschema1"."myTbl3_col31_seq" is linked to the table "myschema1"."myTbl3" but this table does not belong to any tables group.
+ Warning: In tables group "myGroup1", the sequence "myschema1"."mytbl2b_col20_seq" is linked to the table "myschema1"."mytbl2b" but this table does not belong to any tables group.
+ Warning: In tables group "myGroup2", the foreign key "mytbl6_col61_fkey" on the table "myschema2"."mytbl6" references the table "myschema2"."mytbl7" that does not belong to any group.
+ Warning: In tables group "myGroup2", the table "myschema2"."mytbl6" is referenced by the foreign key "mytbl8_col81_fkey" of the table "myschema2"."mytbl8" that does not belong to any group.
+ Warning: In tables group "myGroup4", the table "myschema4"."mypartp1" is referenced by the foreign key "mytblr_col2_fkey1" of the table "myschema4"."mytblr" that does not belong to any group.
+ Warning: In tables group "myGroup4", the table "myschema4"."mypartp2" is referenced by the foreign key "mytblr_col2_fkey2" of the table "myschema4"."mytblr" that does not belong to any group.
  No error detected
 (7 rows)
 
@@ -3013,15 +3013,15 @@ select emaj.emaj_move_table('myschema2','mytbl2','myGroup1','Move a table with f
 (1 row)
 
 select * from emaj.emaj_verify_all();
-                                                                                       emaj_verify_all                                                                                        
-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
- Error: In the group "myGroup2", the log table "emaj_myschema2"."mytbl1_log_2" is not found.
- Warning: In the group "myGroup4", the sequence "myschema2"."myTbl3_col31_seq" is linked to the table "myschema2"."myTbl3" but this table belongs to another tables group (myGroup2).
- Warning: In the group "myGroup2", the foreign key "mytbl4_col43_fkey" on the table "myschema2"."mytbl4" references the table "myschema2"."mytbl2" that belongs to another group ("myGroup1")
- Warning: In the group "myGroup2", the foreign key "mytbl6_col61_fkey" on the table "myschema2"."mytbl6" references the table "myschema2"."mytbl7" that does not belong to any group.
- Warning: In the group "myGroup2", the table "myschema2"."mytbl6" is referenced by the foreign key "mytbl8_col81_fkey" of the table "myschema2"."mytbl8" that does not belong to any group.
- Warning: In the group "myGroup4", the table "myschema4"."mypartp1" is referenced by the foreign key "mytblr_col2_fkey1" of the table "myschema4"."mytblr" that does not belong to any group.
- Warning: In the group "myGroup4", the table "myschema4"."mypartp2" is referenced by the foreign key "mytblr_col2_fkey2" of the table "myschema4"."mytblr" that does not belong to any group.
+                                                                                         emaj_verify_all                                                                                         
+-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+ Error: In tables group "myGroup2", the log table "emaj_myschema2"."mytbl1_log_2" is not found.
+ Warning: In tables group "myGroup4", the sequence "myschema2"."myTbl3_col31_seq" is linked to the table "myschema2"."myTbl3" but this table belongs to another tables group (myGroup2).
+ Warning: In tables group "myGroup2", the foreign key "mytbl4_col43_fkey" on the table "myschema2"."mytbl4" references the table "myschema2"."mytbl2" that belongs to another group ("myGroup1")
+ Warning: In tables group "myGroup2", the foreign key "mytbl6_col61_fkey" on the table "myschema2"."mytbl6" references the table "myschema2"."mytbl7" that does not belong to any group.
+ Warning: In tables group "myGroup2", the table "myschema2"."mytbl6" is referenced by the foreign key "mytbl8_col81_fkey" of the table "myschema2"."mytbl8" that does not belong to any group.
+ Warning: In tables group "myGroup4", the table "myschema4"."mypartp1" is referenced by the foreign key "mytblr_col2_fkey1" of the table "myschema4"."mytblr" that does not belong to any group.
+ Warning: In tables group "myGroup4", the table "myschema4"."mypartp2" is referenced by the foreign key "mytblr_col2_fkey2" of the table "myschema4"."mytblr" that does not belong to any group.
 (7 rows)
 
 select emaj.emaj_move_table('myschema2','mytbl2','myGroup2','Move a table with fkey back');
