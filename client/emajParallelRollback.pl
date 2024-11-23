@@ -116,6 +116,25 @@ for (my $i = 1 ; $i <= $nbSession; $i++) {
     or die("Opening the session #$i failed.\n$DBI::errstr\n");
 }
 
+# Check on the first session that the emaj schema exists in the database.
+$stmt[1] = qq(
+	SELECT 1
+		FROM pg_catalog.pg_namespace
+		WHERE nspname = 'emaj'
+		);
+$dbh[1]->selectrow_array($stmt[1])
+	or die("Error: the emaj extension does not exist in the database.\n");
+
+# Check on the first session that the user has emaj_adm rights.
+$stmt[1] = qq(
+	SELECT CASE WHEN pg_catalog.pg_has_role('emaj_adm','USAGE') THEN 1 ELSE 0 END AS is_emaj_viewer
+		);
+my ($isEmajAdm) = $dbh[1]->selectrow_array($stmt[1])
+	or die("Error while checking the emaj_adm rights.$DBI::errstr \n\n");
+if (!$isEmajAdm) {
+	die "Error: the user has not been granted emaj_adm rights.\n";
+}
+
 # Set the application_name.
 for (my $i = 1 ; $i <= $nbSession; $i++) {
   $dbh[$i]->do("SET application_name to '$APPNAME'")

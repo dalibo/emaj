@@ -3,6 +3,8 @@ E-Maj - Change log
 <devel>
 ------
 ###Enhancements:###
+  * In emajParallelRollback and emajRollbackMonitor perl clients, enforce
+    checks at connection time.
   * Minor code changes.
 
 ###Bug fixes:###

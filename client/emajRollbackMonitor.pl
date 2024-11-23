@@ -95,6 +95,25 @@ my $row = undef;
 $dbh = DBI->connect('dbi:Pg:' . $conn_string, $username, $password, {AutoCommit => 1, RaiseError => 0, PrintError => 0})
   or die("$DBI::errstr\n");
 
+# Check that the emaj schema exists in the database.
+$stmt = qq(
+	SELECT 1
+		FROM pg_catalog.pg_namespace
+		WHERE nspname = 'emaj'
+		);
+$dbh->selectrow_array($stmt)
+	or die("Error: the emaj extension does not exist in the database.\n");
+
+# Check that the user has emaj_viewer rights.
+$stmt = qq(
+	SELECT CASE WHEN pg_catalog.pg_has_role('emaj_viewer','USAGE') THEN 1 ELSE 0 END AS is_emaj_viewer
+		);
+my ($isEmajViewer) = $dbh->selectrow_array($stmt)
+	or die("Error while checking the emaj_viewer rights.$DBI::errstr \n\n");
+if (!$isEmajViewer) {
+	die "Error: the user has not been granted emaj_viewer rights.\n";
+}
+
 # Set the application_name
 $dbh->do("SET application_name to '$APPNAME'")
   or die("Setting the application_name failed.\n$DBI::errstr\n");
