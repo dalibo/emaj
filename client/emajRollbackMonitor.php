@@ -38,7 +38,7 @@
   $complRlbkAgo = 24;                 // -a max time interval for completed rollbacks (in hours, default = 24)
   $delay = 5;                         // -i delay (in seconds, default=5s)
   $nbComplRlbk = 3;                   // -l nb latest completed rollbacks
-  $nbIter = 1;                        // -n number of iterations (default=1)
+  $maxIter = 1;                        // -n number of iterations (default=1)
   $verbose = false;                   // -v flag for verbose mode
   $regressTest = false;               // -r regression test flag (doesn't display real timestamp)
 
@@ -91,11 +91,11 @@
         abort("Number of completed rollback operations ($nbComplRlbk) must be >= 0 !\n");
       break;
     case 'n':
-      $nbIter = $options['n'];
-      if (! is_numeric($nbIter) )
-        abort("Number of iterations ($nbIter) is not numeric !\n");
-      if ($nbIter <= 0)
-        abort("Number of iterations ($nbIter) must be > 0 !\n");
+      $maxIter = $options['n'];
+      if (! is_numeric($maxIter) )
+        abort("Number of iterations ($maxIter) is not numeric !\n");
+      if ($maxIter < 0)
+        abort("Number of iterations ($maxIter) must be >= 0 !\n");
       break;
     case 'v':
       $verbose = true;
@@ -113,8 +113,9 @@
 
 // Perform the monitoring
 
-  for ($i = 1 ; $i <= $nbIter ; $i++){
-
+  $nbIter = 0;
+  while ($maxIter == 0 || $nbIter < $maxIter) {
+    $nbIter++;
     if ($regressTest)
       echo "[current date and time]\n";
     else
@@ -177,7 +178,7 @@
     pg_free_result($result);
 
 // wait during the delay parameter (except for the last occurrence)
-    if ($i < $nbIter){
+    if ($maxIter == 0 || $nbIter < $maxIter){
       sleep($delay);
     }
   }
@@ -201,7 +202,7 @@ function print_help(){
   echo "  -a          max time interval for completed rollback operations to display (in hours, default = 24)\n";
   echo "  -i          time Interval between 2 displays (in seconds, default = 5s)\n";
   echo "  -l          maximum completed rollback operations to display (default = 3)\n";
-  echo "  -n          Number of displays (default = 1)\n";
+  echo "  -n          Number of displays (default = 1, 0 for infinite loop)\n";
   echo "  --help      shows this help, then exit\n";
   echo "  --version   outputs version information, then exit\n";
   echo "\nConnection options:\n";

@@ -49,7 +49,7 @@ my $password = undef;                     # -W user password
 my $complRlbkAgo = 24;                    # -a max time interval for completed rollbacks (in hours, default = 24)
 my $delay = 5;                            # -i delay (in seconds, default=5s)
 my $nbComplRlbk = 3;                      # -l nb latest completed rollbacks
-my $nbIter = 1;                           # -n number of iterations (default=1)
+my $maxIter = 1;                          # -n number of iterations (default=1)
 my $verbose = 0;                          # -v flag for verbose mode
 my $regressTest = 0;                      # -r regression test flag (doesn't display real timestamp)
 
@@ -67,7 +67,7 @@ GetOptions(
   "a:i" => \$complRlbkAgo,
   "i:f" => \$delay,
   "l:i" => \$nbComplRlbk,
-  "n:i" => \$nbIter,
+  "n:i" => \$maxIter,
   "v" => sub { $verbose = 1; },
   "r" => sub { $regressTest = 1; }
 );
@@ -82,8 +82,8 @@ if ($delay <= 0) {
 if ($nbComplRlbk < 0) {
   die("Number of completed rollback operations ($nbComplRlbk) must be >= 0 !\n");
 }
-if ($nbIter <= 0) {
-  die("Number of iterations ($nbIter) must be > 0 !\n");
+if ($maxIter < 0) {
+  die("Number of iterations ($maxIter) must be >= 0 !\n");
 }
 
 my $dbh = undef;
@@ -119,7 +119,9 @@ $dbh->do("SET application_name to '$APPNAME'")
   or die("Setting the application_name failed.\n$DBI::errstr\n");
 
 # Perform the monitoring.
-for (my $i=1; $i<=$nbIter; $i++){
+my $nbIter = 0;
+while ($maxIter == 0 || $nbIter < $maxIter) {
+  $nbIter++;
   if ($regressTest) {
     print ("[current date and time]\n");
   }else{
@@ -182,7 +184,7 @@ for (my $i=1; $i<=$nbIter; $i++){
   $stmt->finish;
 
 # Wait during the delay parameter (except for the last occurrence).
-  if ($i < $nbIter){
+  if ($maxIter == 0 || $nbIter < $maxIter){
     sleep $delay;
   }
 }
@@ -202,7 +204,7 @@ Options:
   -a          max time interval for completed rollback operations to display (in hours, default = 24)
   -i          time Interval between 2 displays (in seconds, default = 5s)
   -l          maximum completed rollback operations to display (default = 3)
-  -n          Number of displays (default = 1)
+  -n          Number of displays (default = 1, 0 for infinite loop)
   --help      shows this help, then exit
   --version   outputs version information, then exit
 

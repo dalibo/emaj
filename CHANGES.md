@@ -3,6 +3,7 @@ E-Maj - Change log
 <devel>
 ------
 ###Enhancements:###
+  * Rollback monitor clients: allow infinite loop with command option -n 0.
   * In emajParallelRollback and emajRollbackMonitor perl clients, enforce
     checks at connection time.
   * Minor code changes.

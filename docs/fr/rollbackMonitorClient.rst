@@ -28,7 +28,7 @@ et::
 Options générales :
 
 * -i <intervalle de temps entre 2 affichages> (en secondes, défaut = 5s)
-* -n <nombre d'affichages> (défaut = 1)
+* -n <nombre d'affichages> (défaut = 1, 0 pour une boucle infinie)
 * -a <intervalle de temps maximum pour les opérations de rollback terminés à afficher> (en heures, défaut = 24h)
 * -l <nombre maximum d'opérations de rollback terminés à afficher> (défaut = 3)
 * --help affiche uniquement une aide sur la commande

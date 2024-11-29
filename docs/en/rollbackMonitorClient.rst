@@ -27,7 +27,7 @@ and::
 The general options are:
 
 * -i <time interval between 2 displays> (in seconds, default = 5s)
-* -n <number of displays> (default = 1)
+* -n <number of displays> (default = 1, 0 for infinite loop)
 * -a <maximum time interval for rollback operations to display> (in hours, default = 24h)
 * -l <maximum number of completed rollback operations to display> (default = 3)
 * --help only displays a command help
