@@ -127,7 +127,7 @@ $dbh[1]->selectrow_array($stmt[1])
 
 # Check on the first session that the user has emaj_adm rights.
 $stmt[1] = qq(
-	SELECT CASE WHEN pg_catalog.pg_has_role('emaj_adm','USAGE') THEN 1 ELSE 0 END AS is_emaj_viewer
+	SELECT CASE WHEN pg_catalog.pg_has_role('emaj_adm','USAGE') THEN 1 ELSE 0 END AS is_emaj_adm
 		);
 my ($isEmajAdm) = $dbh[1]->selectrow_array($stmt[1])
 	or die("Error while checking the emaj_adm rights.$DBI::errstr \n\n");
@@ -158,6 +158,7 @@ $stmt[1]->execute()
 my $rlbkId = $stmt[1]->fetchrow_array();
 $stmt[1]->finish;
 print ("==> $msgRlbk to mark '$mark' is now in progress with $nbSession sessions...\n");
+print ("    Its rollback identifier is $rlbkId. It can be monitored using the emajRollbackMonitor client or Emaj_web.\n");
 
 # For each session, synchronously call _rlbk_session_lock() to lock all tables.
 for (my $i = 1 ; $i <= $nbSession; $i++) {

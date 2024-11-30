@@ -132,6 +132,7 @@ PL/pgSQL function emaj._rlbk_init(text[],text,boolean,integer,boolean,boolean,te
  E-Maj (version <devel>) - launching parallel rollbacks
 -----------------------------------------------------------
 ==> Logged rollback to mark 'Multi-1' is now in progress with 3 sessions...
+    Its rollback identifier is 20200. It can be monitored using the emajRollbackMonitor client or Emaj_web.
 ==> Logged rollback completed.
     Notice: Rollback id = 20200.
     Notice: 10 / 11 tables effectively processed.
@@ -143,6 +144,7 @@ PL/pgSQL function emaj._rlbk_init(text[],text,boolean,integer,boolean,boolean,te
  E-Maj (version <devel>) - launching parallel rollbacks
 -----------------------------------------------------------
 ==> Rollback to mark 'Multi-1' is now in progress with 1 sessions...
+    Its rollback identifier is 20201. It can be monitored using the emajRollbackMonitor client or Emaj_web.
 ==> Rollback completed.
     Notice: Rollback id = 20201.
     Notice: 4 / 5 tables effectively processed.
