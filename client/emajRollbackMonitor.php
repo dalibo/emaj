@@ -185,6 +185,9 @@
 
 // Close the sessions
   pg_close($dbconn);
+  echo "Warning: this php version of emajRollbackMonitor is deprecated. No functional improvement will be added ";
+  echo "in the future and it may be removed in a future version. It is strongly advisable to use emajRollbackMonitor.pl instead, ";
+  echo "which has the same features and parameters.\n";
 
 function abort($msg){
   echo $msg;
@@ -196,6 +199,9 @@ function print_help(){
  
   echo "$progName belongs to the E-Maj PostgreSQL extension (version $EmajVersion).\n";
   echo "It monitors E-Maj rollback operations in progress or recently completed.\n\n";
+  echo "Warning: this php version of emajRollbackMonitor is deprecated. No functional improvement will be added ";
+  echo "in the future and it may be removed in a future version. It is strongly advisable to use emajRollbackMonitor.pl instead, ";
+  echo "which has the same features and parameters.\n\n";
   echo "Usage:\n";
   echo "  $progName [OPTION]... \n";
   echo "\nOptions:\n";

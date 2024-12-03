@@ -6,21 +6,14 @@ E-Maj delivers an external client to run as a command that monitors the progress
 Prerequisite
 ------------
 
-Two equivalent tools are actually provided, one coded in *php* and the other in *perl*. Both need that some software components be installed on the server that executes the command (which is not necessarily the same as the one that hosts the PostgreSQL instance) :
-
-* for the *php* client, the **php** software and its PostgreSQL interface,
-* for the *perl* client, the **perl** software with the *DBI* and *DBD::Pg* modules.
+The provided tool is coded in *perl*. It needs that the **perl** software with the *DBI* and *DBD::Pg* modules be installed on the server that executes the command (which is not necessarily the same as the one that hosts the PostgreSQL instance).
 
 In order to get detailed information about the in-progress rollback operations, it is necessary to set the :doc:`dblink_user_password<parameters>` parameter and give right to execute the *dblink_connect_u* function. :ref:`More details... <emaj_rollback_activity_prerequisites>`
 
 Syntax
 ------
 
-Both php and perl commands share the same syntax::
-
-   emajRollbackMonitor.php [OPTIONS]...
-
-and::
+The syntax is::
 
    emajRollbackMonitor.pl [OPTIONS]...
 
@@ -52,7 +45,7 @@ Examples
 
 The command::
 
-   emajRollbackMonitor.php -i 3 -n 10
+   emajRollbackMonitor.pl -i 3 -n 10
 
 displays 10 times and every 3 seconds, the list of in progress rollback operations and the list of the at most 3 latest rollback operations completed in the latest 24 hours.
 
@@ -62,7 +55,7 @@ The command::
 
 displays only once the list of in progress rollback operations and the list of at most 10 operations completed in the latest 12 hours.
 
-Example of display::
+Display example::
 
     E-Maj (version 4.2.0) - Monitoring rollbacks activity
    ---------------------------------------------------------------

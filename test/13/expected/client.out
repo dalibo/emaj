@@ -68,6 +68,7 @@ Calling the _rlbk_init() function failed.
     Notice: 3 / 4 sequences effectively processed.
     Warning: Tables group change not rolled back: ignored triggers list for myschema1.mytbl2
     Warning: Tables group change not rolled back: E-Maj priority for myschema1.mytbl1
+Warning: this php version of emajParallelRollback is deprecated. No functional improvement will be added in the future and it may be removed in a future version. It is strongly advisable to use emajParallelRollback.pl instead, which has the same features and parameters.
 -- logged rollback for a single group and a single session
 \! ${EMAJ_DIR}/client/emajParallelRollback.php -h localhost -d regression -g myGroup1 -m Multi-1 -s 1 -a -c "Revert aborted ABC chain"
  E-Maj (version <devel>) - launching parallel rollbacks
@@ -79,6 +80,7 @@ Calling the _rlbk_init() function failed.
     Notice: 2 / 2 sequences effectively processed.
     Warning: Tables group change not rolled back: ignored triggers list for myschema1.mytbl2
     Warning: Tables group change not rolled back: E-Maj priority for myschema1.mytbl1
+Warning: this php version of emajParallelRollback is deprecated. No functional improvement will be added in the future and it may be removed in a future version. It is strongly advisable to use emajParallelRollback.pl instead, which has the same features and parameters.
 --------------------------------------------
 -- Prepare data for emajParallelRollback.pl
 --------------------------------------------
@@ -251,6 +253,7 @@ insert into emaj.emaj_rlbk (rlbk_id, rlbk_groups, rlbk_mark, rlbk_mark_time_id, 
    status: PLANNING ; completion 0 %
    rollback to mark: mark20103 set at [mark time]
    1 session(s) to process 3/5 table(s) and ?/4 sequence(s)
+Warning: this php version of emajRollbackMonitor is deprecated. No functional improvement will be added in the future and it may be removed in a future version. It is strongly advisable to use emajRollbackMonitor.pl instead, which has the same features and parameters.
 --------------------------------------------
 -- call emajRollbackMonitor.pl using an emaj_viewer role
 --------------------------------------------

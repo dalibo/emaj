@@ -247,6 +247,9 @@
   foreach ($execReportRows as $execReportRow) {
     echo "    {$execReportRow['rlbk_severity']}: {$execReportRow['rlbk_message']}\n";
   }
+  echo "Warning: this php version of emajParallelRollback is deprecated. No functional improvement will be added ";
+  echo "in the future and it may be removed in a future version. It is strongly advisable to use emajParallelRollback.pl instead, ";
+  echo "which has the same features and parameters.\n";
 
 function abort($msg){
   echo $msg;
@@ -258,6 +261,9 @@ function print_help(){
  
   echo "$progName belongs to the E-Maj PostgreSQL extension (version $EmajVersion).\n";
   echo "It performs E-Maj rollback for one or several groups and a previously set mark, processing tables in parallel.\n\n";
+  echo "Warning: this php version of emajParallelRollback is deprecated. No functional improvement will be added ";
+  echo "in the future and it may be removed in a future version. It is strongly advisable to use emajParallelRollback.pl instead, ";
+  echo "which has the same features and parameters.\n\n";
   echo "Usage:\n";
   echo "  $progName -g <comma separated list of E-Maj group names> -m <E-Maj mark> -s <number of sessions> [OPTION]... \n";
   echo "\nOptions:\n";

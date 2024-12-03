@@ -7,21 +7,14 @@ E-Maj fournit un client externe qui se lance en ligne de commande et qui permet 
 Préalables
 ----------
 
-Deux outils équivalents sont en fait proposés, l’un codé en *php*, l’autre en *perl*. L’un ou l’autre nécessite que certains composants logiciel soient installés sur le serveur qui exécute cette commande (qui n'est pas nécessairement le même que celui qui héberge l’instance PostgreSQL) :
-
-* pour le client *php*, le logiciel **php** et son interface PostgreSQL
-* pour le client *perl*, le logiciel **perl** avec les modules *DBI* et *DBD::Pg*
+L’outil proposé est codé en *perl*. Il nécessite que le logiciel **perl** avec les modules *DBI* et *DBD::Pg* soient installés sur le serveur qui exécute cette commande (qui n'est pas nécessairement le même que celui qui héberge l’instance PostgreSQL).
 
 Pour disposer d’informations précises sur l’avancement des opérations de rollback en cours, il est nécessaire de valoriser le paramètre :doc:`dblink_user_password<parameters>` et de donner les droits d’exécution de la fonction *dblink_connect_u(text,text)*. :ref:`Plus de détails...<emaj_rollback_activity_prerequisites>`
 
 Syntaxe
 -------
 
-Les deux commandes php et perl partagent la même syntaxe ::
-
-   emajRollbackMonitor.php [OPTIONS]...
-
-et::
+La syntaxe de la commande est la suivante : ::
 
    emajRollbackMonitor.pl [OPTIONS]...
 
@@ -53,7 +46,7 @@ Exemples
 
 La commande ::
 
-   emajRollbackMonitor.php -i 3 -n 10
+   emajRollbackMonitor.pl -i 3 -n 10
 
 affiche 10 fois la liste des opérations de rollback en cours et celles des au plus 3 dernières opérations terminés depuis 24 heures, avec 3 secondes entre chaque affichage.
 

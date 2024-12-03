@@ -4,6 +4,8 @@ E-Maj - Change log
 ------
 ###Enhancements:###
   * Rollback monitor clients: allow infinite loop with command option -n 0.
+  * Both php CLI clients emajRollbackMonitor.php and emajParallelRollback.php
+    are deprecated. Use perl clients instead.
   * In emajParallelRollback and emajRollbackMonitor perl clients, enforce
     checks at connection time.
   * Minor code changes.

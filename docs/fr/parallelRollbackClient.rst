@@ -17,21 +17,14 @@ L’affectation des tables dans les sessions est réalisée de sorte que les dur
 Préalables
 ----------
 
-Deux outils équivalents sont en fait proposés, l’un codé en *php*, l’autre en *perl*. L’un ou l’autre nécessite que certains composants logiciel soient installés sur le serveur qui exécute cette commande (qui n'est pas nécessairement le même que celui qui héberge l’instance PostgreSQL) :
-
-* pour le client *php*, le logiciel **php** et son interface PostgreSQL
-* pour le client *perl*, le logiciel **perl** avec les modules *DBI* et *DBD::Pg*
+L’outil proposé est codé en *perl*. Il nécessite que le logiciel **perl** avec les modules *DBI* et *DBD::Pg* soient installés sur le serveur qui exécute cette commande (qui n'est pas nécessairement le même que celui qui héberge l’instance PostgreSQL).
 
 Le rollback de chaque session au sein d'une unique transaction implique l'utilisation de commit à deux phases. En conséquence, le paramètre **max_prepared_transactions** du fichier *postgresql.conf* doit être ajusté. La valeur par défaut du paramètre est 0. Il faut donc la modifier en spécifiant une valeur au moins égale au nombre maximum de *sessions* qui seront utilisées.
 
 Syntaxe
 -------
 
-Les deux commandes php et perl partagent la même syntaxe : ::
-
-   emajParallelRollback.php -g <nom.du.ou.des.groupes> -m <marque> -s <nombre.de.sessions> [OPTIONS]...
-
-et : ::
+La syntaxe de la commande est la suivante : ::
 
    emajParallelRollback.pl -g <nom.du.ou.des.groupes> -m <marque> -s <nombre.de.sessions> [OPTIONS]...
 
@@ -66,14 +59,14 @@ Le mot clé *'EMAJ_LAST_MARK'* peut être utilisé pour référencer la dernièr
 
 Il est possible de suivre l'avancement des opérations de rollback multi-sessions de la même manière que celui des opérations de rollbacks mono-session : fonction :ref:`emaj_rollback_activity()<emaj_rollback_activity>`, client en ligne de commande :doc:`emajRollbackMonitor<rollbackMonitorClient>` ou la page de suivi des rollbacks d’Emaj_web. Comme pour les rollbacks mono-session, le suivi détaillé de l’avancement de l’opération nécessite la valorisation du paramètre :doc:`dblink_user_password<parameters>`.
 
-Pour tester les commandes **emajParallelRollback**, E-Maj fournit un script, *emaj_prepare_parallel_rollback_test.sql*. Il prépare un environnement avec deux groupes de tables contenant quelques tables et séquences, sur lesquelles des mises à jour ont été effectuées, entrecoupées de marques. Suite à l'exécution de ce script sous *psql*, on peut lancer la commande telle qu'indiquée dans le message de fin d'exécution du script.
+Pour tester le client **emajParallelRollback**, E-Maj fournit un script, *emaj_prepare_parallel_rollback_test.sql*. Il prépare un environnement avec deux groupes de tables contenant quelques tables et séquences, sur lesquelles des mises à jour ont été effectuées, entrecoupées de marques. Suite à l'exécution de ce script sous *psql*, on peut lancer la commande telle qu'indiquée dans le message de fin d'exécution du script.
 
 Exemples
 --------
 
 La commande : ::
 
-   emajParallelRollback.php -d mydb -g myGroup1 -m Mark1 -s 3
+   emajParallelRollback.pl -d mydb -g myGroup1 -m Mark1 -s 3
 
 se connecte à la base de données *mydb* et exécute un rollback du groupe *myGroup1* à la marque *Mark1*, avec 3 sessions en parallèle.
 
