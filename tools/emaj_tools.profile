@@ -12,7 +12,7 @@ typeset -r EMAJ_SUPPORTED_PGVER=(11 12 13 14 15 16 17)
 typeset -r EMAJ_PGVARS=('DIR' 'BIN' 'SHARE')
 
 # Array of pseudo-envars
-typeset -r EMAJ_PGENVARS=('DATA' 'PORT' 'USER')
+typeset -r EMAJ_PGENVARS=('DATA' 'HOST' 'PORT' 'USER')
 
 # EMAJ_DIR is the root directory of E-Maj
 _FULLPATH=`readlink -f ${0}`
@@ -23,7 +23,7 @@ export EMAJ_DIR
 # PGVER is used to store the MAJOR version of PostgreSQL, it must be a integer
 typeset -i PGVER
 
-# EMAJ_TOOLSENV_FILE is the file that contain vars about E-MAJ Tools' environments
+# EMAJ_TOOLSENV_FILE is the file that contains vars about E-MAJ Tools' environments
 typeset -r EMAJ_TOOLSENV_FILE="${EMAJ_DIR}/tools/emaj_tools.env"
 
 # Load of the ${EMAJ_TOOLSENV_FILE} file
@@ -112,7 +112,7 @@ pg_check_vars() {
   return 0
 }
 
-# Function pg_check_var(): check if a required variable have an assigned value
+# Function pg_check_var(): check if a required variable has an assigned value
 # arguments: $1 pg major version
 #            $2 var to check
 pg_check_var() {
@@ -126,7 +126,7 @@ pg_check_var() {
   return 0
 }
 
-# Function pg_getvars(): get all variables necessary for use PostgreSQL cluster in E-Maj's scripts
+# Function pg_getvars(): get all variables needed by E-Maj's scripts to log on the PostgreSQL cluster
 # arguments: $1 pg major version
 #            $2 prefix added to the obtained variables
 pg_getvars() {

@@ -26,6 +26,7 @@ The vars for one version of PostgreSQL are:
 ... and for a cluster (only one cluster for a major version):
   PG<version_pg>_USER
   PG<version_pg>_DATA
+  PG<version_pg>_HOST
   PG<version_pg>_PORT
 This file is read by emaj_postgresql.profile.
 
