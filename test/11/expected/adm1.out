@@ -135,6 +135,9 @@ select 'select ok' as result from (select count(*) from emaj_mySchema1.myTbl1_lo
 -----------------------------
 -- forbiden direct call of SECURITY DEFINER functions
 -----------------------------
+select emaj._dblink_build_connect_string('dummy');
+ERROR:  _dblink_build_connect_string: the calling function is not allowed to reach this sensitive function.
+CONTEXT:  PL/pgSQL function emaj._dblink_build_connect_string(text) line 14 at RAISE
 select emaj._create_log_schema('illegal_schema','dummy');
 ERROR:  _create_log_schema: the calling function is not allowed to reach this sensitive function.
 CONTEXT:  PL/pgSQL function emaj._create_log_schema(text,text) line 16 at RAISE

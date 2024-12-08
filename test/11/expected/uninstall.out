@@ -20,7 +20,7 @@ create sequence emaj_emaj_demo_app_schema.not_an_emaj_seq;
 \set ON_ERROR_STOP ON
 \set ECHO none
 >>> Starting the E-Maj uninstallation procedure...
-psql:sql/emaj_uninstall.sql:23: WARNING:  emaj_drop_extension - schema consistency checks: Error: In the schema "emaj_emaj_demo_app_schema", the sequence "emaj_emaj_demo_app_schema"."not_an_emaj_seq" is not linked to any created tables group.
+psql:sql/emaj_uninstall.sql:23: WARNING:  emaj_drop_extension - schema consistency checks: Error: In schema "emaj_emaj_demo_app_schema", the sequence "emaj_emaj_demo_app_schema"."not_an_emaj_seq" is not linked to any created tables group.
 psql:sql/emaj_uninstall.sql:23: ERROR:  emaj_drop_extension: There are 1 unexpected objects in E-Maj schemas. Drop them before reexecuting the uninstall function.
 CONTEXT:  PL/pgSQL function emaj.emaj_drop_extension() line 49 at RAISE
 WARNING:  emaj_drop_extension: emaj_viewer role is also referenced in some other databases (postgres)

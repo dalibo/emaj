@@ -766,6 +766,38 @@ WITH inserted_time_stamp AS (
   SELECT time_id FROM inserted_time_stamp;
 $$;
 
+CREATE OR REPLACE FUNCTION emaj._dblink_build_connect_string(p_userPwd TEXT)
+RETURNS TEXT LANGUAGE plpgsql
+SECURITY DEFINER SET search_path = pg_catalog, pg_temp AS
+$_dblink_build_connect_string$
+-- This function builds the connect string for the dblink connection.
+-- Input:  user-password emaj parameter
+-- Output: connection string
+-- The function is defined as SECURITY DEFINER because reading the unix_socket_directories GUC needs to be at least a member
+--   of pg_read_all_settings.
+  DECLARE
+    v_stack                  TEXT;
+  BEGIN
+-- Check that the caller is allowed to do that.
+-- This prevents an untrusted user to get unix_socket_directories content.
+    GET DIAGNOSTICS v_stack = PG_CONTEXT;
+    IF v_stack NOT LIKE '%emaj._dblink_open_cnx(text)%' THEN
+      RAISE EXCEPTION '_dblink_build_connect_string: the calling function is not allowed to reach this sensitive function.';
+    END IF;
+-- Build and return the connect string to reach the same database on the same instance.
+-- If no IP connection is available, use the first socket directory as host parameter.
+   RETURN 'host=' || CASE
+                       WHEN current_setting('listen_addresses') = ''
+                         THEN coalesce(substring(current_setting('unix_socket_directories') from '(.*?)\s*,'),
+                                       current_setting('unix_socket_directories'))
+                       ELSE 'localhost'
+                     END
+       || ' port=' || current_setting('port')
+       || ' dbname=' || current_database()
+       || ' ' || p_userPwd;
+  END;
+$_dblink_build_connect_string$;
+
 CREATE OR REPLACE FUNCTION emaj._dblink_open_cnx(p_cnxName TEXT, OUT p_status INT, OUT p_schema TEXT)
 LANGUAGE plpgsql AS
 $_dblink_open_cnx$
@@ -791,8 +823,7 @@ $_dblink_open_cnx$
 --         name of the schema that holds the dblink extension (used later to schema qualify all calls to dblink functions)
   DECLARE
     v_nbCnx                  INT;
-    v_UserPassword           TEXT;
-    v_connectString          TEXT;
+    v_userPassword           TEXT;
   BEGIN
 -- Look for the schema holding the dblink functions.
 --   (NULL if the dblink_connect_u function is not available, which should not happen)
@@ -818,19 +849,16 @@ $_dblink_open_cnx$
         p_status = 0;                       -- the requested connection is already open
       ELSE
 -- So, get the 'dblink_user_password' parameter if exists, from emaj_param.
-        SELECT param_value_text INTO v_UserPassword
+        SELECT param_value_text INTO v_userPassword
           FROM emaj.emaj_param
           WHERE param_key = 'dblink_user_password';
         IF NOT FOUND THEN
           p_status = -5;                    -- no 'dblink_user_password' parameter is defined in the emaj_param table
         ELSE
--- ... build the connect string
-          v_connectString = 'host=localhost port=' || current_setting('port') ||
-                            ' dbname=' || current_database() || ' ' || v_userPassword;
--- ... and try to connect
+-- Try to connect.
           BEGIN
             EXECUTE format('SELECT %I.dblink_connect_u(%L ,%L)',
-                           p_schema, p_cnxName, v_connectString);
+                           p_schema, p_cnxName, emaj._dblink_build_connect_string(v_userPassword));
             p_status = 1;                   -- the connection is successful
           EXCEPTION
             WHEN OTHERS THEN

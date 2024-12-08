@@ -111,6 +111,117 @@ DROP FUNCTION IF EXISTS emaj._handle_trigger_fk_tbl(P_ACTION TEXT,P_FULLTABLENAM
 ------------------------------------------------------------------
 -- create new or modified functions                             --
 ------------------------------------------------------------------
+CREATE OR REPLACE FUNCTION emaj._dblink_build_connect_string(p_userPwd TEXT)
+RETURNS TEXT LANGUAGE plpgsql
+SECURITY DEFINER SET search_path = pg_catalog, pg_temp AS
+$_dblink_build_connect_string$
+-- This function builds the connect string for the dblink connection.
+-- Input:  user-password emaj parameter
+-- Output: connection string
+-- The function is defined as SECURITY DEFINER because reading the unix_socket_directories GUC needs to be at least a member
+--   of pg_read_all_settings.
+  DECLARE
+    v_stack                  TEXT;
+  BEGIN
+-- Check that the caller is allowed to do that.
+-- This prevents an untrusted user to get unix_socket_directories content.
+    GET DIAGNOSTICS v_stack = PG_CONTEXT;
+    IF v_stack NOT LIKE '%emaj._dblink_open_cnx(text)%' THEN
+      RAISE EXCEPTION '_dblink_build_connect_string: the calling function is not allowed to reach this sensitive function.';
+    END IF;
+-- Build and return the connect string to reach the same database on the same instance.
+-- If no IP connection is available, use the first socket directory as host parameter.
+   RETURN 'host=' || CASE
+                       WHEN current_setting('listen_addresses') = ''
+                         THEN coalesce(substring(current_setting('unix_socket_directories') from '(.*?)\s*,'),
+                                       current_setting('unix_socket_directories'))
+                       ELSE 'localhost'
+                     END
+       || ' port=' || current_setting('port')
+       || ' dbname=' || current_database()
+       || ' ' || p_userPwd;
+  END;
+$_dblink_build_connect_string$;
+
+CREATE OR REPLACE FUNCTION emaj._dblink_open_cnx(p_cnxName TEXT, OUT p_status INT, OUT p_schema TEXT)
+LANGUAGE plpgsql AS
+$_dblink_open_cnx$
+-- This function tries to open a named dblink connection.
+-- It uses as target: the current cluster (port), the current database and a role defined in the emaj_param table.
+-- This connection role must be defined in the emaj_param table with a row having:
+--   - param_key = 'dblink_user_password',
+--   - param_value_text = 'user=<user> password=<password>' with the rules that apply to usual libPQ connect strings.
+-- The password can be omited if the connection doesn't require it.
+-- The dblink_connect_u is used to open the connection so that emaj_adm but non superuser roles can access the
+--    cluster even when no password is required to log on.
+-- The function is directly called by Emaj_web.
+-- Input:  connection name
+-- Output: integer status return.
+--           1 successful connection
+--           0 already opened connection
+--          -1 dblink is not installed
+--          -2 dblink functions are not visible for the session (obsolete)
+--          -3 dblink functions execution is not granted to the role
+--          -4 the transaction isolation level is not READ COMMITTED
+--          -5 no 'dblink_user_password' parameter is defined in the emaj_param table
+--          -6 error at dblink_connect() call
+--         name of the schema that holds the dblink extension (used later to schema qualify all calls to dblink functions)
+  DECLARE
+    v_nbCnx                  INT;
+    v_userPassword           TEXT;
+  BEGIN
+-- Look for the schema holding the dblink functions.
+--   (NULL if the dblink_connect_u function is not available, which should not happen)
+    SELECT nspname INTO p_schema
+      FROM pg_catalog.pg_proc
+           JOIN pg_catalog.pg_namespace ON (pg_namespace.oid = pronamespace)
+      WHERE proname = 'dblink_connect_u'
+      LIMIT 1;
+    IF NOT FOUND THEN
+      p_status = -1;                      -- dblink is not installed
+    ELSIF NOT has_function_privilege(quote_ident(p_schema) || '.dblink_connect_u(text, text)', 'execute') THEN
+      p_status = -3;                      -- current role has not the execute rights on dblink functions
+    ELSIF (p_cnxName LIKE 'rlbk#%' OR p_cnxName = 'test') AND
+          current_setting('transaction_isolation') <> 'read committed' THEN
+      p_status = -4;                      -- 'rlbk#*' connection (used for rollbacks) must only come from a
+                                          --   READ COMMITTED transaction
+    ELSE
+      EXECUTE format('SELECT 0 WHERE %L = ANY (%I.dblink_get_connections())',
+                     p_cnxName, p_schema);
+      GET DIAGNOSTICS v_nbCnx = ROW_COUNT;
+      IF v_nbCnx > 0 THEN
+-- Dblink is usable, so search the requested connection name in dblink connections list.
+        p_status = 0;                       -- the requested connection is already open
+      ELSE
+-- So, get the 'dblink_user_password' parameter if exists, from emaj_param.
+        SELECT param_value_text INTO v_userPassword
+          FROM emaj.emaj_param
+          WHERE param_key = 'dblink_user_password';
+        IF NOT FOUND THEN
+          p_status = -5;                    -- no 'dblink_user_password' parameter is defined in the emaj_param table
+        ELSE
+-- Try to connect.
+          BEGIN
+            EXECUTE format('SELECT %I.dblink_connect_u(%L ,%L)',
+                           p_schema, p_cnxName, emaj._dblink_build_connect_string(v_userPassword));
+            p_status = 1;                   -- the connection is successful
+          EXCEPTION
+            WHEN OTHERS THEN
+              p_status = -6;                -- the connection attempt failed
+          END;
+        END IF;
+      END IF;
+    END IF;
+-- For connections used for rollback operations, record the dblink connection attempt in the emaj_hist table.
+    IF substring(p_cnxName FROM 1 FOR 5) = 'rlbk#' THEN
+      INSERT INTO emaj.emaj_hist (hist_function, hist_object, hist_wording)
+        VALUES ('DBLINK_OPEN_CNX', p_cnxName, 'Status = ' || p_status);
+    END IF;
+--
+    RETURN;
+  END;
+$_dblink_open_cnx$;
+
 CREATE OR REPLACE FUNCTION emaj._handle_trigger_fk_tbl(p_action TEXT, p_schema TEXT, p_table TEXT, p_objectName TEXT,
                                                        p_objectDef TEXT DEFAULT NULL)
 RETURNS VOID LANGUAGE plpgsql

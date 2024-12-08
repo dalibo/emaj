@@ -135,6 +135,9 @@ select 'select ok' as result from (select count(*) from emaj_mySchema1.myTbl1_lo
 -----------------------------
 -- forbiden direct call of SECURITY DEFINER functions
 -----------------------------
+select emaj._dblink_build_connect_string('dummy');
+ERROR:  _dblink_build_connect_string: the calling function is not allowed to reach this sensitive function.
+CONTEXT:  PL/pgSQL function emaj._dblink_build_connect_string(text) line 14 at RAISE
 select emaj._create_log_schema('illegal_schema','dummy');
 ERROR:  _create_log_schema: the calling function is not allowed to reach this sensitive function.
 CONTEXT:  PL/pgSQL function emaj._create_log_schema(text,text) line 16 at RAISE
@@ -665,79 +668,79 @@ select col11, col12, col13, emaj_verb, emaj_tuple, emaj_gid, emaj_user, emaj_use
     from emaj_mySchema1.myTbl1_log order by emaj_gid, emaj_tuple desc;
  col11 |   col12    | col13 | emaj_verb | emaj_tuple | emaj_gid | emaj_user | emaj_user_ip | extra_col_appname 
 -------+------------+-------+-----------+------------+----------+-----------+--------------+-------------------
-     1 | ABC        | \x0c  | INS       | NEW        | 12100001 | postgres  |              | psql
-     2 | ABC        | \x0c  | INS       | NEW        | 12100002 | postgres  |              | psql
-     3 | ABC        | \x0c  | INS       | NEW        | 12100003 | postgres  |              | psql
-     4 | ABC        | \x0c  | INS       | NEW        | 12100004 | postgres  |              | psql
-     5 | ABC        | \x0c  | INS       | NEW        | 12100005 | postgres  |              | psql
-     6 | ABC        | \x0c  | INS       | NEW        | 12100006 | postgres  |              | psql
-     7 | ABC        | \x0c  | INS       | NEW        | 12100007 | postgres  |              | psql
-     8 | ABC        | \x0c  | INS       | NEW        | 12100008 | postgres  |              | psql
-     9 | ABC        | \x0c  | INS       | NEW        | 12100009 | postgres  |              | psql
-    10 | ABC        | \x0c  | INS       | NEW        | 12100010 | postgres  |              | psql
-    11 | ABC        | \x0c  | INS       | NEW        | 12100011 | postgres  |              | psql
-     1 | ABC        | \x0c  | UPD       | OLD        | 12100012 | postgres  |              | psql
-     1 | ABC        | \x1c  | UPD       | NEW        | 12100012 | postgres  |              | psql
-     2 | ABC        | \x0c  | UPD       | OLD        | 12100013 | postgres  |              | psql
-     2 | ABC        | \x1c  | UPD       | NEW        | 12100013 | postgres  |              | psql
-     3 | ABC        | \x0c  | UPD       | OLD        | 12100014 | postgres  |              | psql
-     3 | ABC        | \x1c  | UPD       | NEW        | 12100014 | postgres  |              | psql
-    11 | ABC        | \x0c  | DEL       | OLD        | 12100017 | postgres  |              | psql
-    10 | ABC        | \x0c  | DEL       | OLD        | 12100035 | postgres  |              | psql
-     1 | ABC        | \x1c  | UPD       | OLD        | 12100037 | postgres  |              | psql
-     1 | DEF        | \x1c  | UPD       | NEW        | 12100037 | postgres  |              | psql
-     2 | ABC        | \x1c  | UPD       | OLD        | 12100038 | postgres  |              | psql
-     2 | DEF        | \x1c  | UPD       | NEW        | 12100038 | postgres  |              | psql
+     1 | ABC        | \x0c  | INS       | NEW        | 12100001 | postgres  | 127.0.0.1    | psql
+     2 | ABC        | \x0c  | INS       | NEW        | 12100002 | postgres  | 127.0.0.1    | psql
+     3 | ABC        | \x0c  | INS       | NEW        | 12100003 | postgres  | 127.0.0.1    | psql
+     4 | ABC        | \x0c  | INS       | NEW        | 12100004 | postgres  | 127.0.0.1    | psql
+     5 | ABC        | \x0c  | INS       | NEW        | 12100005 | postgres  | 127.0.0.1    | psql
+     6 | ABC        | \x0c  | INS       | NEW        | 12100006 | postgres  | 127.0.0.1    | psql
+     7 | ABC        | \x0c  | INS       | NEW        | 12100007 | postgres  | 127.0.0.1    | psql
+     8 | ABC        | \x0c  | INS       | NEW        | 12100008 | postgres  | 127.0.0.1    | psql
+     9 | ABC        | \x0c  | INS       | NEW        | 12100009 | postgres  | 127.0.0.1    | psql
+    10 | ABC        | \x0c  | INS       | NEW        | 12100010 | postgres  | 127.0.0.1    | psql
+    11 | ABC        | \x0c  | INS       | NEW        | 12100011 | postgres  | 127.0.0.1    | psql
+     1 | ABC        | \x0c  | UPD       | OLD        | 12100012 | postgres  | 127.0.0.1    | psql
+     1 | ABC        | \x1c  | UPD       | NEW        | 12100012 | postgres  | 127.0.0.1    | psql
+     2 | ABC        | \x0c  | UPD       | OLD        | 12100013 | postgres  | 127.0.0.1    | psql
+     2 | ABC        | \x1c  | UPD       | NEW        | 12100013 | postgres  | 127.0.0.1    | psql
+     3 | ABC        | \x0c  | UPD       | OLD        | 12100014 | postgres  | 127.0.0.1    | psql
+     3 | ABC        | \x1c  | UPD       | NEW        | 12100014 | postgres  | 127.0.0.1    | psql
+    11 | ABC        | \x0c  | DEL       | OLD        | 12100017 | postgres  | 127.0.0.1    | psql
+    10 | ABC        | \x0c  | DEL       | OLD        | 12100035 | postgres  | 127.0.0.1    | psql
+     1 | ABC        | \x1c  | UPD       | OLD        | 12100037 | postgres  | 127.0.0.1    | psql
+     1 | DEF        | \x1c  | UPD       | NEW        | 12100037 | postgres  | 127.0.0.1    | psql
+     2 | ABC        | \x1c  | UPD       | OLD        | 12100038 | postgres  | 127.0.0.1    | psql
+     2 | DEF        | \x1c  | UPD       | NEW        | 12100038 | postgres  | 127.0.0.1    | psql
 (23 rows)
 
 select col21, col22, col23, emaj_verb, emaj_tuple, emaj_gid, emaj_user, emaj_user_ip, extra_col_appname
     from emaj_mySchema1.myTbl2_log order by emaj_gid, emaj_tuple desc;
  col21 | col22 |   col23    | emaj_verb | emaj_tuple | emaj_gid | emaj_user | emaj_user_ip | extra_col_appname 
 -------+-------+------------+-----------+------------+----------+-----------+--------------+-------------------
-     1 | ABC   | 12-31-2010 | INS       | NEW        | 12100015 | postgres  |              | psql
-     2 | DEF   |            | INS       | NEW        | 12100018 | postgres  |              | psql
+     1 | ABC   | 12-31-2010 | INS       | NEW        | 12100015 | postgres  | 127.0.0.1    | psql
+     2 | DEF   |            | INS       | NEW        | 12100018 | postgres  | 127.0.0.1    | psql
 (2 rows)
 
 select col20, col21, col22, col23, emaj_verb, emaj_tuple, emaj_gid, emaj_user, emaj_user_ip, extra_col_appname
     from emaj_mySchema1.myTbl2b_log order by emaj_gid, emaj_tuple desc;
  col20 | col21 | col22 | col23 | emaj_verb | emaj_tuple | emaj_gid | emaj_user | emaj_user_ip | extra_col_appname 
 -------+-------+-------+-------+-----------+------------+----------+-----------+--------------+-------------------
-     3 |     1 |     1 | t     | INS       | NEW        | 12100016 | postgres  |              | psql
-     4 |     2 |   0.5 | t     | INS       | NEW        | 12100019 | postgres  |              | psql
+     3 |     1 |     1 | t     | INS       | NEW        | 12100016 | postgres  | 127.0.0.1    | psql
+     4 |     2 |   0.5 | t     | INS       | NEW        | 12100019 | postgres  | 127.0.0.1    | psql
 (2 rows)
 
 select col31, col33, emaj_verb, emaj_tuple, emaj_gid, emaj_user, emaj_user_ip, extra_col_appname
     from emaj_myschema1."myTbl3_log" order by emaj_gid, emaj_tuple desc;
  col31 | col33 | emaj_verb | emaj_tuple | emaj_gid | emaj_user | emaj_user_ip | extra_col_appname 
 -------+-------+-----------+------------+----------+-----------+--------------+-------------------
-    11 | 10.00 | INS       | NEW        | 12100020 | postgres  |              | psql
-    12 | 10.00 | INS       | NEW        | 12100021 | postgres  |              | psql
-    13 | 10.00 | INS       | NEW        | 12100022 | postgres  |              | psql
-    14 | 10.00 | INS       | NEW        | 12100023 | postgres  |              | psql
-    15 | 10.00 | INS       | NEW        | 12100024 | postgres  |              | psql
-    16 | 10.00 | INS       | NEW        | 12100025 | postgres  |              | psql
-    17 | 10.00 | INS       | NEW        | 12100026 | postgres  |              | psql
-    18 | 10.00 | INS       | NEW        | 12100027 | postgres  |              | psql
-    19 | 10.00 | INS       | NEW        | 12100028 | postgres  |              | psql
-    20 | 10.00 | INS       | NEW        | 12100029 | postgres  |              | psql
+    11 | 10.00 | INS       | NEW        | 12100020 | postgres  | 127.0.0.1    | psql
+    12 | 10.00 | INS       | NEW        | 12100021 | postgres  | 127.0.0.1    | psql
+    13 | 10.00 | INS       | NEW        | 12100022 | postgres  | 127.0.0.1    | psql
+    14 | 10.00 | INS       | NEW        | 12100023 | postgres  | 127.0.0.1    | psql
+    15 | 10.00 | INS       | NEW        | 12100024 | postgres  | 127.0.0.1    | psql
+    16 | 10.00 | INS       | NEW        | 12100025 | postgres  | 127.0.0.1    | psql
+    17 | 10.00 | INS       | NEW        | 12100026 | postgres  | 127.0.0.1    | psql
+    18 | 10.00 | INS       | NEW        | 12100027 | postgres  | 127.0.0.1    | psql
+    19 | 10.00 | INS       | NEW        | 12100028 | postgres  | 127.0.0.1    | psql
+    20 | 10.00 | INS       | NEW        | 12100029 | postgres  | 127.0.0.1    | psql
 (10 rows)
 
 select col41, col42, col43, col44, col45, emaj_verb, emaj_tuple, emaj_gid, emaj_user, emaj_user_ip, extra_col_appname
     from emaj_mySchema1.myTbl4_log order by emaj_gid, emaj_tuple desc;
  col41 | col42 | col43 | col44 | col45 | emaj_verb | emaj_tuple | emaj_gid | emaj_user | emaj_user_ip | extra_col_appname 
 -------+-------+-------+-------+-------+-----------+------------+----------+-----------+--------------+-------------------
-     1 | FK... |     1 |     1 | ABC   | INS       | NEW        | 12100030 | postgres  |              | psql
-     2 | FK... |     1 |     1 | ABC   | INS       | NEW        | 12100031 | postgres  |              | psql
-     1 | FK... |     1 |     1 | ABC   | UPD       | OLD        | 12100032 | postgres  |              | psql
-     1 | FK... |     2 |     1 | ABC   | UPD       | NEW        | 12100032 | postgres  |              | psql
-     2 | FK... |     1 |     1 | ABC   | UPD       | OLD        | 12100033 | postgres  |              | psql
-     2 | FK... |     2 |     1 | ABC   | UPD       | NEW        | 12100033 | postgres  |              | psql
-     3 | FK... |     1 |    10 | ABC   | INS       | NEW        | 12100034 | postgres  |              | psql
-     3 | FK... |     1 |    10 | ABC   | DEL       | OLD        | 12100036 | postgres  |              | psql
-     1 | FK... |     2 |     1 | ABC   | UPD       | OLD        | 12100039 | postgres  |              | psql
-     1 | FK... |     2 |       |       | UPD       | NEW        | 12100039 | postgres  |              | psql
-     2 | FK... |     2 |     1 | ABC   | UPD       | OLD        | 12100040 | postgres  |              | psql
-     2 | FK... |     2 |       |       | UPD       | NEW        | 12100040 | postgres  |              | psql
+     1 | FK... |     1 |     1 | ABC   | INS       | NEW        | 12100030 | postgres  | 127.0.0.1    | psql
+     2 | FK... |     1 |     1 | ABC   | INS       | NEW        | 12100031 | postgres  | 127.0.0.1    | psql
+     1 | FK... |     1 |     1 | ABC   | UPD       | OLD        | 12100032 | postgres  | 127.0.0.1    | psql
+     1 | FK... |     2 |     1 | ABC   | UPD       | NEW        | 12100032 | postgres  | 127.0.0.1    | psql
+     2 | FK... |     1 |     1 | ABC   | UPD       | OLD        | 12100033 | postgres  | 127.0.0.1    | psql
+     2 | FK... |     2 |     1 | ABC   | UPD       | NEW        | 12100033 | postgres  | 127.0.0.1    | psql
+     3 | FK... |     1 |    10 | ABC   | INS       | NEW        | 12100034 | postgres  | 127.0.0.1    | psql
+     3 | FK... |     1 |    10 | ABC   | DEL       | OLD        | 12100036 | postgres  | 127.0.0.1    | psql
+     1 | FK... |     2 |     1 | ABC   | UPD       | OLD        | 12100039 | postgres  | 127.0.0.1    | psql
+     1 | FK... |     2 |       |       | UPD       | NEW        | 12100039 | postgres  | 127.0.0.1    | psql
+     2 | FK... |     2 |     1 | ABC   | UPD       | OLD        | 12100040 | postgres  | 127.0.0.1    | psql
+     2 | FK... |     2 |       |       | UPD       | NEW        | 12100040 | postgres  | 127.0.0.1    | psql
 (12 rows)
 
 -- set sequence restart value

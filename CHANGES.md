@@ -15,6 +15,8 @@ E-Maj - Change log
     by E-Maj and not incremented later.
   * Fix emajStat that failed to report statistics when the user had not the
     SELECT right on all examined application sequences.
+  * Fix the dblink connection for parallel E-Maj rollbacks or rollback
+    monitoring, when the Postgres instance doesn't accept IP connections.
   * Let emaj_adm and emaj_viewer roles really work without any specific grant
     on application tables and sequences.
 

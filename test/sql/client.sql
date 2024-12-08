@@ -31,19 +31,19 @@ alter sequence mySchema2.mySeq1 restart 9999;
 --------------------------------------------
 -- parallel rollback, but with disabled dblink connection
 delete from emaj.emaj_param where param_key = 'dblink_user_password';
-\! ${EMAJ_DIR}/client/emajParallelRollback.php -h localhost -d regression -g "myGroup1,myGroup2" -m Multi-1 -s 3 -l -a
+\! ${EMAJ_DIR}/client/emajParallelRollback.php -d regression -g "myGroup1,myGroup2" -m Multi-1 -s 3 -l -a
 insert into emaj.emaj_param (param_key, param_value_text) 
   values ('dblink_user_password','user=postgres password=postgres');
 
 -- unlogged rollback for 2 groups in strict mode, after having performed a group configuration change
 select emaj.emaj_modify_table('myschema1', 'mytbl1', '{"priority": 2}'::jsonb);
-\! ${EMAJ_DIR}/client/emajParallelRollback.php -h localhost -d regression -g "myGroup1,myGroup2" -m Multi-1 -s 3 -l
+\! ${EMAJ_DIR}/client/emajParallelRollback.php -d regression -g "myGroup1,myGroup2" -m Multi-1 -s 3 -l
 
 -- unlogged rollback for 2 groups in unstrict mode
-\! ${EMAJ_DIR}/client/emajParallelRollback.php -h localhost -d regression -g "myGroup1,myGroup2" -m Multi-1 -s 3 -l -a
+\! ${EMAJ_DIR}/client/emajParallelRollback.php -d regression -g "myGroup1,myGroup2" -m Multi-1 -s 3 -l -a
 
 -- logged rollback for a single group and a single session
-\! ${EMAJ_DIR}/client/emajParallelRollback.php -h localhost -d regression -g myGroup1 -m Multi-1 -s 1 -a -c "Revert aborted ABC chain"
+\! ${EMAJ_DIR}/client/emajParallelRollback.php -d regression -g myGroup1 -m Multi-1 -s 1 -a -c "Revert aborted ABC chain"
 
 --------------------------------------------
 -- Prepare data for emajParallelRollback.pl
@@ -72,19 +72,19 @@ alter sequence mySchema2.mySeq1 restart 9999;
 --------------------------------------------
 -- parallel rollback, but with disabled dblink connection
 delete from emaj.emaj_param where param_key = 'dblink_user_password';
-\! ${EMAJ_DIR}/client/emajParallelRollback.pl -h localhost -d regression -g "myGroup1,myGroup2" -m Multi-1 -s 3 -l -a
+\! ${EMAJ_DIR}/client/emajParallelRollback.pl -d regression -g "myGroup1,myGroup2" -m Multi-1 -s 3 -l -a
 insert into emaj.emaj_param (param_key, param_value_text) 
   values ('dblink_user_password','user=postgres password=postgres');
 
 -- unlogged rollback for 2 groups in strict mode, after having performed a group configuration change
 select emaj.emaj_modify_table('myschema1', 'mytbl1', '{"priority": 1}'::jsonb);
-\! ${EMAJ_DIR}/client/emajParallelRollback.pl -h localhost -d regression -g "myGroup1,myGroup2" -m Multi-1 -s 3 -l
+\! ${EMAJ_DIR}/client/emajParallelRollback.pl -d regression -g "myGroup1,myGroup2" -m Multi-1 -s 3 -l
 
 -- unlogged rollback for 2 groups in unstrict mode
-\! ${EMAJ_DIR}/client/emajParallelRollback.pl -h localhost -d regression -g "myGroup1,myGroup2" -m Multi-1 -s 3 -l -a
+\! ${EMAJ_DIR}/client/emajParallelRollback.pl -d regression -g "myGroup1,myGroup2" -m Multi-1 -s 3 -l -a
 
 -- logged rollback for a single group and a single session
-\! ${EMAJ_DIR}/client/emajParallelRollback.pl -h localhost -d regression -g myGroup1 -m Multi-1 -s 1 -a -c "Revert aborted DEF chain"
+\! ${EMAJ_DIR}/client/emajParallelRollback.pl -d regression -g myGroup1 -m Multi-1 -s 1 -a -c "Revert aborted DEF chain"
 
 --------------------------------------------------------------
 --
@@ -146,12 +146,12 @@ insert into emaj.emaj_rlbk (rlbk_id, rlbk_groups, rlbk_mark, rlbk_mark_time_id, 
 --------------------------------------------
 -- call emajRollbackMonitor.php using an emaj_viewer role
 --------------------------------------------
-\! ${EMAJ_DIR}/client/emajRollbackMonitor.php -h localhost -d regression -U emaj_regression_tests_viewer_user -i 0.1 -n 2 -l 2 -a 12 -v -r
+\! ${EMAJ_DIR}/client/emajRollbackMonitor.php -d regression -U emaj_regression_tests_viewer_user -i 0.1 -n 2 -l 2 -a 12 -v -r
 
 --------------------------------------------
 -- call emajRollbackMonitor.pl using an emaj_viewer role
 --------------------------------------------
-\! ${EMAJ_DIR}/client/emajRollbackMonitor.pl -h localhost -d regression -U emaj_regression_tests_viewer_user -i 0.1 -n 2 -l 2 -a 12 -v -r
+\! ${EMAJ_DIR}/client/emajRollbackMonitor.pl -d regression -U emaj_regression_tests_viewer_user -i 0.1 -n 2 -l 2 -a 12 -v -r
 
 --------------------------------------------------------------
 --
@@ -162,4 +162,4 @@ insert into emaj.emaj_rlbk (rlbk_id, rlbk_groups, rlbk_mark, rlbk_mark_time_id, 
 select emaj.emaj_rename_mark_group('myGroup2','EMAJ_LAST_MARK','latest_mark');
 
 -- 2 displays with an emaj_viewer role with various options
-\! ${EMAJ_DIR}/client/emajStat.pl -h localhost -d regression -U emaj_regression_tests_viewer_user --regression-test --no-cls --interval 0.1 --iter 2 --include-group '1|2' --max-table 5 --exclude-sequence 'col31' --max-relation-name-length 23
+\! ${EMAJ_DIR}/client/emajStat.pl -d regression -U emaj_regression_tests_viewer_user --regression-test --no-cls --interval 0.1 --iter 2 --include-group '1|2' --max-table 5 --exclude-sequence 'col31' --max-relation-name-length 23
