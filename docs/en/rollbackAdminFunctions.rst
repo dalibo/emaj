@@ -36,8 +36,8 @@ More information about :doc:`multi-groups functions <multiGroupsFunctions>`.
 
 .. _emaj_rollback_activity:
 
-Monitoring rollback operations
-------------------------------
+Monitor rollback operations
+---------------------------
 
 When the volume of recorded updates to cancel leads to a long rollback, it may be interesting to monitor the operation to appreciate how it progresses. A function, named *emaj_rollback_activity()*, and a client, :doc:`emajRollbackMonitor.php <rollbackMonitorClient>`, fit this need. 
 
@@ -130,8 +130,8 @@ The remaining duration estimate is approximate. Its precision is similar to the 
 
 .. _emaj_comment_rollback:
 
-Commenting rollbacks
---------------------
+Comment a rollback operation
+----------------------------
 
 When calling *emaj_rollback_group()*, *emaj_logged_rollback_group()*, *emaj_rollback_groups()* or *emaj_logged_rollback_groups()* functions, one of the supplied parameters allows to record a comment associated to the rollback operation. Using the *emaj_comment_rollback()* function, this comment can be updated or deleted. The same function allows to set a comment when it has not been done at rollback submission time. ::
 
@@ -147,8 +147,8 @@ The comment can be added, modified or deleted when the operation is completed, b
 
 .. _emaj_consolidate_rollback_group:
 
-Logged rollback consolidation
------------------------------
+"Consolidate" a logged rollback
+-------------------------------
 
 Following the execution of a “*logged rollback*”, and once the rollback operation recording becomes useless, it is possible to “*consolidate*” this rollback, meaning to some extent to transform it into “*unlogged rollback*”. A the end of the consolidation operation, marks and logs between the rollback target mark and the end rollback mark are deleted. The *emaj_consolidate_rollback_group()* function fits this need.::
 
@@ -178,8 +178,8 @@ If a database has enough disk space, it may be interesting to replace a simple *
 
 .. _emaj_get_consolidable_rollbacks:
 
-List of “consolidable rollbacks”
---------------------------------
+List “consolidable rollbacks”
+-----------------------------
 
 The *emaj_get_consolidable_rollbacks()* function help to identify the rollbacks that may be consolidated.::
 
@@ -216,8 +216,8 @@ The *emaj_get_consolidable_rollbacks()* function may be used by *emaj_adm* and *
 
 .. _emaj_cleanup_rollback_state:
 
-Updating rollback operations state
-----------------------------------
+Update rollback operations state
+--------------------------------
 
 The *emaj_rlbk* technical table and its derived tables contain the history of E-Maj rollback operations.
 

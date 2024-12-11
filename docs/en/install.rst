@@ -1,8 +1,8 @@
-Installing the E-Maj software
-=============================
+Install the E-Maj software
+==========================
 
-Downloading sources
-*******************
+Download sources
+****************
 
 E-Maj is available for download on the Internet site **PGXN**, the PostgreSQL Extension Network (https://pgxn.org/dist/e-maj/).
 

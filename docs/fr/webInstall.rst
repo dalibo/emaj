@@ -1,5 +1,5 @@
-Installation du client Emaj_web
-===============================
+Installer le client Emaj_web
+============================
 
 Pré-requis
 ----------

@@ -3,7 +3,7 @@ Quick start
 
 The E-Maj installation is described in detail later. But the few following commands allow to quicky install and use E-Maj under Linux.
 
-Software install
+Install software
 ^^^^^^^^^^^^^^^^
 
 If the *pgxn* client is installed, a single command is required::
@@ -22,8 +22,8 @@ Otherwise::
 
 For more details, or in case of problem, look at :doc:`there <install>`.
 
-Extension install
-^^^^^^^^^^^^^^^^^
+Create the extension
+^^^^^^^^^^^^^^^^^^^^
 
 To install the emaj extension into a database, log on the target database, using a super-user role and execute::
 
@@ -35,8 +35,8 @@ For PostgreSQL versions prior 9.6, see :ref:`this chapter <create_emaj_extension
 
 With the latest statement, you give E-Maj administration grants to a particular role.  Then, this role can be used to execute all E-Maj operations, avoiding the use of superuser role.
 
-Extension use
-^^^^^^^^^^^^^
+Use the extension
+^^^^^^^^^^^^^^^^^
 
 You can now log on the database with the role having the E-Maj administration rights.
 
@@ -58,23 +58,23 @@ Note that only tables having a primary key will be effectively assigned to a *RO
 
 Then the typical commands sequence::
 
-  SELECT emaj.emaj_start_group('my_group', 'Mark-1');
+   SELECT emaj.emaj_start_group('my_group', 'Mark-1');
 
-  [INSERT/UPDATE/DELETE on tables]
+   [INSERT/UPDATE/DELETE on tables]
 
-  SELECT emaj.emaj_set_mark_group('my_group','Mark-2');
+   SELECT emaj.emaj_set_mark_group('my_group','Mark-2');
 
-  [INSERT/UPDATE/DELETE on tables]
+   [INSERT/UPDATE/DELETE on tables]
 
-  SELECT emaj.emaj_set_mark_group('my_group','Mark-3');
+   SELECT emaj.emaj_set_mark_group('my_group','Mark-3');
 
-  [INSERT/UPDATE/DELETE on tables]
+   [INSERT/UPDATE/DELETE on tables]
 
-  SELECT emaj.emaj_rollback_group('my_group','Mark-2');
+   SELECT emaj.emaj_rollback_group('my_group','Mark-2');
 
-  SELECT emaj.emaj_stop_group('my_group');
+   SELECT emaj.emaj_stop_group('my_group');
 
-  SELECT emaj.emaj_drop_group('my_group');
+   SELECT emaj.emaj_drop_group('my_group');
 
 will start the tables group, log updates and set several intermediate marks, go back to one of them, stop the recording and finally drop the group.
 

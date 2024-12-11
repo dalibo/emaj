@@ -3,8 +3,8 @@ Fonctions d'administration des rollbacks
 
 .. _emaj_estimate_rollback_group:
 
-Estimation de la durée d'un rollback
-------------------------------------
+Estimer la durée d'un rollback
+------------------------------
 
 La fonction *emaj_estimate_rollback_group()* permet d'obtenir une estimation de la durée que prendrait le rollback d'un groupe de tables à une marque donnée. Elle peut être appelée de la façon suivante ::
 
@@ -36,8 +36,8 @@ Plus d'information sur les :doc:`fonctions multi-groupes <multiGroupsFunctions>`
 
 .. _emaj_rollback_activity:
 
-Suivi des opérations de rollback en cours
------------------------------------------
+Suivre les opérations de rollback en cours
+------------------------------------------
 
 Lorsque le volume de mises à jour à annuler rend un rollback long, il peut être intéressant de suivre l'opération afin d'en apprécier l'avancement. Une fonction, *emaj_rollback_activity()*, et un client :doc:`emajRollbackMonitor.php <rollbackMonitorClient>` répondent à ce besoin.
 
@@ -130,8 +130,8 @@ L'estimation de la durée restante est approximative. Son degré de précision e
 
 .. _emaj_comment_rollback:
 
-Commentaires sur les rollbacks
-------------------------------
+Commenter une opération de rollback
+-----------------------------------
 
 L’un des paramètres d’appel des fonctions *emaj_rollback_group()*, *emaj_logged_rollback_group()*, *emaj_rollback_groups()* et *emaj_logged_rollback_groups()* permet d’enregistrer un commentaire associé à l’opération de rollback. Ce commentaire peut ensuite être modifié ou supprimé à l’aide de la fonction *emaj_comment_rollback()*. La fonction permet également d’enregistrer un commentaire quand celui-ci n’a pas été fourni au lancement de l’opération::
 
@@ -148,8 +148,8 @@ Le commentaire peut être ajouté, modifié ou supprimé quand l’opération de
 
 .. _emaj_consolidate_rollback_group:
 
-« Consolidation » d'un rollback tracé
--------------------------------------
+« Consolider » un rollback tracé
+--------------------------------
 
 Suite à l'exécution d'un « *rollback tracé* », et une fois que l'enregistrement de l'opération de rollback devient inutile, il est possible de « consolider » ce rollback, c'est à dire, en quelque sorte, de le transformer en « *rollback non tracé* ». A l'issue de l'opération de consolidation, les logs entre la marque cible du rollback et la marque de fin de rollback sont supprimés. La fonction *emaj_consolidate_rollback_group()* répond à ce besoin.::
 
@@ -179,8 +179,8 @@ Si une base n'a pas de contraintes d'espace disque trop fortes, il peut être in
 
 .. _emaj_get_consolidable_rollbacks:
 
-Liste des « rollbacks consolidables »
--------------------------------------
+Lister les « rollbacks consolidables »
+--------------------------------------
 
 La fonction *emaj_get_consolidable_rollbacks()* permet d'identifier les rollbacks susceptibles d'être consolidés ::
 
@@ -216,8 +216,8 @@ La fonction *emaj_get_consolidable_rollbacks()* est utilisable par les rôles *e
 
 .. _emaj_cleanup_rollback_state:
 
-Mise à jour de l'état des rollbacks
------------------------------------
+Mettre à jour l'état des rollbacks
+----------------------------------
 
 La table technique *emaj_rlbk*, et ses tables dérivées, contient l'historique des opérations de rollback E-Maj. 
 

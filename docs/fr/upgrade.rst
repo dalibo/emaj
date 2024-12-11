@@ -1,4 +1,4 @@
-Mise à jour d'une version E-Maj existante
+Mettre à jour une version E-Maj existante
 =========================================
 
 Démarche générale

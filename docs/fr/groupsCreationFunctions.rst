@@ -1,5 +1,5 @@
-Création et suppression des groupes de tables
-=============================================
+Créer et supprimer les groupes de tables
+========================================
 
 Principes de configuration des groupes de tables
 ------------------------------------------------
@@ -65,8 +65,8 @@ Lors du rollback E-Maj d’un groupe de tables, les triggers actifs (ENABLED) de
 
 .. _emaj_create_group:
 
-Création des groupes de tables
-------------------------------
+Créer des groupes de tables
+---------------------------
 
 Pour créer un groupe de tables, il suffit d'exécuter la requête SQL suivante ::
 
@@ -78,8 +78,8 @@ La fonction retourne le nombre de groupes créés, c’est à dire 1.
 
 .. _assign_table_sequence:
 
-Assignation de tables et séquences dans un groupe de tables
------------------------------------------------------------
+Assigner des tables et séquences à un groupe de tables
+------------------------------------------------------
 
 Six fonctions permettent d’ajouter des tables ou des séquences dans un groupe de tables.
 
@@ -170,8 +170,8 @@ Les fonctions d’assignation de tables dans un groupe de tables créent les tab
 
 .. _emaj_drop_group:
 
-Suppression d'un groupe de tables
----------------------------------
+Supprimer un groupe de tables
+-----------------------------
 
 Pour supprimer un groupe de tables créé au préalable par la fonction :ref:`emaj_create_group() <emaj_create_group>`, il faut que le groupe de tables à supprimer soit déjà arrêté. Si ce n'est pas le cas, il faut d’abord utiliser la fonction :ref:`emaj_stop_group() <emaj_stop_group>`.
 

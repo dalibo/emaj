@@ -1,5 +1,5 @@
-Other groups management functions
-=================================
+Other tables groups management functions
+========================================
 
 .. _emaj_reset_group:
 
@@ -16,8 +16,8 @@ Of course, in order to reset log tables, the tables group must be in *IDLE* stat
 
 .. _emaj_comment_group:
 
-Comments on groups
-------------------
+Comment a groups
+----------------
 
 In order to set a comment on any group, the following statement can be executed::
 
@@ -34,8 +34,8 @@ Comments are stored into the *group_comment* column from the *emaj_group* table,
 .. _emaj_protect_group:
 .. _emaj_unprotect_group:
 
-Protection of a tables group against rollbacks
-----------------------------------------------
+Protect a tables group against rollbacks
+----------------------------------------
 
 It may be useful at certain time to protect tables groups against accidental rollbacks, in particular with production databases. Two functions fit this need.
 
@@ -85,8 +85,8 @@ It is recommended to only use this function if it is really needed.
 
 .. _emaj_force_drop_group:
 
-Forced suppression of a tables group
-------------------------------------
+Forced drop of a tables group
+-----------------------------
 
 It may happen that a damaged tables group cannot be stopped. But not being stopped, it cannot be dropped. To be able to drop a tables group while it is still in *LOGGING* state, a special function exists.::
 
@@ -191,8 +191,8 @@ In a variation of the function, the first input parameter directly contains the 
 
 .. _emaj_forget_group:
 
-Erase traces from a tables group drop
--------------------------------------
+Erase traces from a dropped tables group
+----------------------------------------
 
 When a tables group is dropped, data about its previous life (creations, drops, starts, stops) are retained into two historical tables, with the same retention as for other :doc:`historical data<traces>`. But when dropping a tables group that had been mistakenly created, it may be useful to erase this traces immediately to avoid a pollution of these histories. A dedicated function is available for this purpose::
 

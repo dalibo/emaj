@@ -12,8 +12,8 @@ The *emaj_get_version()* function returns the current version identifier of the 
 
 .. _emaj_verify_all:
 
-Check the consistency of the E-Maj environment
-----------------------------------------------
+Check the E-Maj environment consistency
+---------------------------------------
 
 A function is also available to check the consistency of the E-Maj environment. 
 It consists in checking the integrity of all E-Maj schemas and all created tables groups. This function can be called with the following SQL statement::
@@ -51,8 +51,8 @@ Two functions sets allow to respectively export and import parameters configurat
 
 .. _export_param_conf:
 
-Exporting a parameters configuration
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+Export a parameters configuration
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 Two versions of the *emaj_export_parameters_configuration()* function export all the parameters registered in the :ref:`emaj_param<emaj_param>` table in a JSON structure.
 
@@ -81,8 +81,8 @@ If the file path is not supplied, the function directly returns the JSON structu
 
 .. _import_param_conf:
 
-Importing a parameters configuration
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+Import a parameters configuration
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 Two versions of the *emaj_import_parameters_configuration()* function import parameters from a JSON structure into the :ref:`emaj_param<emaj_param>` table.
 
@@ -118,8 +118,8 @@ As an alternative, the first input parameter of the function directly contains t
 
 .. _emaj_get_current_log_table:
 
-Getting the current log table linked to an application table
-------------------------------------------------------------
+Identify the current log table linked to an application table
+-------------------------------------------------------------
 
 The *emaj_get_current_log_table()* function allows to get the schema and table names of the current log table linked to a given application table. ::
 
@@ -138,7 +138,7 @@ It is possible to build a statement accessing a log table. For instance::
 
 .. _emaj_purge_histories:
 
-History data purge
+Purge history data
 ------------------
 
 E-Maj keeps some historical data: traces of elementary operations, E-Maj rollback details, tables groups structure changes (:ref:`more  details...<emaj_hist>`). Oldest traces are automaticaly purged by the extension. But it is also possible to purge these obsolete traces on demand using::
@@ -150,8 +150,8 @@ The *<retention.delay>* parameter is of type *INTERVAL*. It overloads the *'hist
 .. _emaj_disable_protection_by_event_triggers:
 .. _emaj_enable_protection_by_event_triggers:
 
-Deactivating or reactivating event triggers
--------------------------------------------
+Deactivate/reactive event triggers
+----------------------------------
 
 The E-Maj extension installation procedure activates :ref:`event triggers <event_triggers>` to protect it. Normally, these triggers must remain in their state. But if the E-Maj administrator needs to deactivate and the reactivate them, he can use 2 dedicated functions.
 

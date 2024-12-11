@@ -3,8 +3,8 @@ Marks management functions
 
 .. _emaj_comment_mark_group:
 
-Comments on marks
------------------
+Comment a mark
+--------------
 
 In order to set a comment on any mark, the following statement can be executed::
 
@@ -103,8 +103,8 @@ When associated, the functions *emaj_delete_before_mark_group()* and :ref:`emaj_
 .. _emaj_protect_mark_group:
 .. _emaj_unprotect_mark_group:
 
-Protection of a mark against rollbacks
---------------------------------------
+Protect a mark against rollbacks
+--------------------------------
 
 To complement the mechanism of :ref:`tables group protection <emaj_protect_group>` against accidental rollbacks, it is possible to set protection at mark level. Two functions fit this need.
 

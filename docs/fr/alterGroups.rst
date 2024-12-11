@@ -1,5 +1,5 @@
-Modification des groupes de tables
-==================================
+Modifier les groupes de tables
+==============================
 
 Généralités
 -----------
@@ -226,8 +226,8 @@ Si la structure d’une table applicative a été modifiée par mégarde alors q
 
 Quand une table change de groupe d’affectation, l’incidence sur la capacité de générer un script SQL ou de procéder à un rollback des groupes de tables source et destination est similaire à ce que serait la suppression de la table du groupe source puis son ajout dans le groupe destination.
 
-Réparation de groupe de tables
-------------------------------
+Réparer un groupe de tables
+---------------------------
 
 Même si les triggers sur événements mis en place avec E-Maj limitent les risques, il peut arriver que des composants E-Maj supportant une table applicative (table, fonction ou trigger de log) soient supprimés. Le groupe de tables contenant cette table ne peut alors plus fonctionner correctement.
 

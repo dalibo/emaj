@@ -3,8 +3,8 @@ Fonctions de gestion des marques
 
 .. _emaj_comment_mark_group:
 
-Commentaires sur les marques
-----------------------------
+Commenter une marque
+--------------------
 
 Il est possible de positionner un commentaire sur une marque quelconque. Pour se faire, il suffit d'exécuter la requête suivante ::
 
@@ -24,8 +24,8 @@ Les commentaires sont surtout intéressants avec l'utilisation des :doc:`clients
 
 .. _emaj_get_previous_mark_group:
 
-Recherche de marque
--------------------
+Rechercher une marque
+---------------------
 
 La fonction *emaj_get_previous_mark_group()* permet de connaître, pour un groupe de tables, le nom de la dernière marque qui précède soit une date et une heure donnée, soit une autre marque. ::
 
@@ -41,8 +41,8 @@ Dans la seconde forme, le mot clé '*EMAJ_LAST_MARK*' peut être utilisé comme 
 
 .. _emaj_rename_mark_group:
 
-Renommage d'une marque
-----------------------
+Renommer une marque
+-------------------
 
 Une marque précédemment posée par l'une des fonctions :ref:`emaj_create_group() <emaj_create_group>` ou :ref:`emaj_set_mark_group() <emaj_set_mark_group>` peut être renommée avec la commande SQL ::
 
@@ -56,8 +56,8 @@ Une marque portant le nouveau nom souhaité ne doit pas déjà exister pour le g
 
 .. _emaj_delete_mark_group:
 
-Effacement d'une marque
------------------------
+Effacer une marque
+------------------
 
 Une marque peut également être effacée par l'intermédiaire de la commande SQL ::
 
@@ -76,8 +76,8 @@ Si une table a été :ref:`détachée d’un groupe de tables<remove_table_seque
 
 .. _emaj_delete_before_mark_group:
 
-Effacement des marques les plus anciennes
------------------------------------------
+Effacer les marques les plus anciennes
+--------------------------------------
 
 Pour facilement effacer en une seule opération toutes les marques d'un groupe de tables antérieures à une marque donnée, on peut exécuter la requête ::
 
@@ -102,8 +102,8 @@ Associées, les fonctions *emaj_delete_before_mark_group()*, et :ref:`emaj_get_p
 .. _emaj_protect_mark_group:
 .. _emaj_unprotect_mark_group:
 
-Protection d'une marque contre les rollbacks
---------------------------------------------
+Protéger une marque contre les rollbacks
+----------------------------------------
 
 Pour compléter le mécanisme de :ref:`protection des groupes de tables <emaj_protect_group>` contre les rollbacks intempestifs, il est possible de positionner des protections au niveau des marques. Deux fonctions répondent à ce besoin.
 

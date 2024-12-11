@@ -12,8 +12,8 @@ La fonction *emaj_get_version()* retourne l’identifiant de la version courante
 
 .. _emaj_verify_all:
 
-Vérification de la consistance de l'environnement E-Maj
--------------------------------------------------------
+Vérifier la consistance de l'environnement E-Maj
+------------------------------------------------
 
 Une fonction permet de vérifier la consistance de l'environnement E-Maj. Cela consiste à  vérifier l'intégrité de chaque schéma d'E-Maj et de chaque groupe de tables créé. Cette fonction s'exécute par la requête SQL suivante ::
 
@@ -43,14 +43,14 @@ Si des anomalies sont détectées, par exemple suite à la suppression d'une tab
 
 .. _export_import_param_conf:
 
-Exporter et importer des configurations de paramètres
------------------------------------------------------
+Export et import des configurations de paramètres
+-------------------------------------------------
 
 Deux jeux de fonctions permettent de respectivement exporter et importer des jeux de paramètres. Elles peuvent être utiles pour déployer un jeu standardisé de paramètres sur plusieurs bases de données ou lors de :doc:`changements de version E-Maj<upgrade>` par désinstallation et réinstallation complète de l’extension.
 
 .. _export_param_conf:
 
-Export d’une configuration de paramètres
+Exporter une configuration de paramètres
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 Deux versions de la fonction *emaj_export_parameters_configuration()* exportent sous forme de structure JSON l’ensemble des paramètres de la configuration présents dans la table :ref:`emaj_param<emaj_param>`.
@@ -80,7 +80,7 @@ Si le chemin du fichier n’est pas renseigné, la fonction retourne directement
 
 .. _import_param_conf:
 
-Import d’une configuration de paramètres
+Importer une configuration de paramètres
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 Deux versions de la fonction *emaj_import_parameters_configuration()* importent des paramètres sous forme de structure JSON dans la table :ref:`emaj_param<emaj_param>`.
@@ -117,8 +117,8 @@ Dans une variante de la fonction, le premier paramètre en entrée contient dire
 
 .. _emaj_get_current_log_table:
 
-Identité de la table de log courante associée à une table applicative
----------------------------------------------------------------------
+Identifier la table de log courante associée à une table applicative
+--------------------------------------------------------------------
 
 La fonction *emaj_get_current_log_table()* permet d’obtenir le schéma et le nom de la table de log courante associée à une table applicative. ::
 
@@ -137,8 +137,8 @@ Il est ainsi possible de construire une requête accédant à une table de log. 
 
 .. _emaj_purge_histories:
 
-Purge des historiques
----------------------
+Purger les historiques
+----------------------
 
 E-Maj historise certaines données : traces globales de fonctionnement, détail des rollbacks E-Maj, évolutions de structures de groupes de tables (:ref:`plus de détails...<emaj_hist>`), Les traces les plus anciennes sont automatiquement purgées par l’extension. Mais une fonction permet également de déclencher la purge de manière manuelle ::
 
@@ -149,8 +149,8 @@ La paramètre <délai.rétention> est de type *INTERVAL*. Il surcharge le param�
 .. _emaj_disable_protection_by_event_triggers:
 .. _emaj_enable_protection_by_event_triggers:
 
-Désactivation/réactivation des triggers sur événements
-------------------------------------------------------
+Désactiver/réactiver les triggers sur événements
+------------------------------------------------
 
 L'installation de l'extension E-Maj créé et active des :ref:`triggers sur événements <event_triggers>` pour la protéger. En principe, ces triggers doivent rester en l'état. Mais si l'administrateur E-Maj a besoin de les désactiver puis les réactiver, il dispose de deux fonctions.
 

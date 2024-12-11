@@ -220,10 +220,10 @@ If the structure of an application table has been inadvertently changed while it
 
 When a table changes its affected group, the impact on the ability to generate a SQL script or to rollback the source and destination tables groups is similar to removing the table from its source group and then adding the table to the destination group.
 
-Reparing a tables group
------------------------
+Repare a tables group
+---------------------
 
-Eventhough the event triggers created with E-Maj limit the risk, some E-Maj components that support an application table (log table, function or trigger) may have been dropped. In such a case, the associated tables group cannot work correctly anymore.
+Eventhough the event triggers created by E-Maj limit the risk, some E-Maj components that support an application table (log table, function or trigger) may have been dropped. In such a case, the associated tables group cannot work correctly anymore.
 
 In order to solve the issue without stopping the tables group if it is in *LOGGING* state (and thus loose the benefits of the recorded logs), it is possible to remove the table from its group and then re-add it, by chaining both commands::
 
@@ -233,6 +233,6 @@ In order to solve the issue without stopping the tables group if it is in *LOGGI
 
 Of course, once the table is removed from its group, the content of the associated logs cannot be used for a potential rollback or script generation anymore.
 
-However, if the log sequence is missing (which should never be the case) and the tables group is in *LOGGING* state, it is necessary to  :ref:`force the group’s stop<emaj_force_stop_group>` before removing and re-assigning the table.
+However, if the log sequence is missing (which should never be the case) and the tables group is in *LOGGING* state, it is necessary to :ref:`force the group’s stop<emaj_force_stop_group>` before removing and re-assigning the table.
 
 It may also happen that an application table or sequence has been accidentaly dropped. In this case, the table of sequence can be simply a posteriori removed from its group, by executing the appropriate *emaj_remove_table()* or *emaj_remove_sequence()* function.

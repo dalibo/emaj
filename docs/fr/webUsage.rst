@@ -1,5 +1,5 @@
-Utilisation d'Emaj_web
-======================
+Utiliser Emaj_web
+=================
 
 Accès à Emaj_web et aux bases de données
 ----------------------------------------
@@ -192,8 +192,8 @@ Un bouton permet de changer le mode de désactivation lors des rollbacks E-Maj.
    Figure 12 – Liste des triggers applicatifs
 
 
-Suivi des opérations de rollback
---------------------------------
+Suivre les opérations de rollback
+---------------------------------
 
 Une page, accessible par l'icône « *Rollbacks* » de la barre globale, permet de suivre les opérations de rollback. Trois listes distinctes sont affichées :
 

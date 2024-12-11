@@ -1,8 +1,8 @@
 Uninstall
 =========
 
-Removing an E-Maj extension from a database
-*******************************************
+Remove an E-Maj extension from a database
+*****************************************
 
 To remove E-Maj from a database, the user must log on this database with *psql*, as a superuser.
 
@@ -29,8 +29,8 @@ This function performs the following steps:
 
 In E-Maj versions 4.4.0 and previous, the *emaj* extension removal was done by the execution of a *sql/emaj_uninstall.sql* script. Although deprecated, the removal can always be done the same manner.
 
-Uninstalling the E-Maj software
-*******************************
+Uninstall the E-Maj software
+****************************
 
 The way to uninstall the E-Maj software depends on the way it has been installed.
 

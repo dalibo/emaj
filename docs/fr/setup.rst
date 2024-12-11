@@ -1,5 +1,5 @@
-Création de l'extension E-Maj dans une base de données
-======================================================
+Créer l'extension emaj dans une base de données
+===============================================
 
 Si une extension existe déjà dans la base de données, mais dans une ancienne version d'E-Maj, il faut la :doc:`mettre à jour <upgrade>`.
 
@@ -19,7 +19,7 @@ Les tables techniques de l’extension sont créées dans le tablespace par déf
 
 .. _create_emaj_extension:
 
-Création standard de l’EXTENSION emaj
+Création standard de l’extension emaj
 -------------------------------------
 
 L'extension E-Maj peut maintenant être créée dans la base de données, en exécutant la commande SQL ::
@@ -55,9 +55,13 @@ Dans ce mode d’installation, toutes les optimisations des rollbacks E-Maj ne s
 Adaptation du fichier de configuration postgresql.conf
 ------------------------------------------------------
 
-Les fonctions principales d'E-Maj posent un verrou sur chacune des tables du groupe traité. Si le nombre de tables constituant le groupe est élevé, il peut s'avérer nécessaire d'augmenter la valeur du paramètre **max_locks_per_transaction** dans le fichier de configuration *postgresql.conf*. Ce paramètre entre dans le dimensionnement de la table en mémoire qui gère les verrous de l'instance. Sa valeur par défaut est de 64. On peut le porter à une valeur supérieure si une opération E-Maj échoue en retournant un message d'erreur indiquant clairement que toutes les entrées de la table des verrous sont utilisées.
+Deux paramètres de configuration peuvent devoir être modifiés dans le fichier *postgresql.conf* :
 
-De plus, si l'utilisation de l'outil de :doc:`rollback en parallèle <parallelRollbackClient>` est envisagée, il sera probablement nécessaire d'ajuster le paramètre **max_prepared_transactions**.
+  * **max_locks_per_transaction**, pour gérer des groupes de tables comprenant un nombre élevé de tables. Les fonctions principales d'E-Maj posent un verrou sur chacune des tables des groupes traités. Si une opération E-Maj échoue et retourne un message d'erreur indiquant que toutes les entrées de la table des verrous sont utilisées, la valeur de ce paramètre doit être augmentée. Sa valeur par défaut est de 64.
+
+  * **max_prepared_transactions**, pour pouvoir utiliser l'outil de :doc:`rollback E-Maj parallélisé<parallelRollbackClient>`. Par défaut, la valeur du paramètre est 0, bloquant l’utilisation de transactions préparées. La valeur du paramètre doit être au moins égale au nombre de rollbacks E-Maj parallélisés concurrents.
+
+La modification de ces paramètres nécessite un arrêt-relance de l’instance.
 
 
 Paramétrage d'E-Maj

@@ -1,5 +1,5 @@
-Installing the Emaj_web client
-==============================
+Install the Emaj_web client
+===========================
 
 Prerequisite
 ------------
@@ -7,15 +7,15 @@ Prerequisite
 *Emaj_web* requires a web server with a php interpreter, and its *pgsql* and *intl* extensions.
 
 
-Plug-in download
-----------------
+Download the software
+---------------------
 
 The *Emaj_web* application can be downloaded from the following git repository:
 https://github.com/dalibo/emaj_web
 
 
-Application configuration
--------------------------
+Configure Emaj_web
+------------------
 
 The configuration is centralized into a single file: *emaj_web/conf/config.inc.php*. It contains the general parameters of the applications, and the description of the PostgreSQL instances connections.
 

@@ -1,5 +1,5 @@
-Installation du logiciel E-Maj
-==============================
+Installer le logiciel E-Maj
+===========================
 
 Source de téléchargement
 ************************

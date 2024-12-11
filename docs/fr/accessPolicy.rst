@@ -1,5 +1,5 @@
-Mise en place de la politique d'accès à E-Maj
-=============================================
+Mettre en place la politique d'accès à E-Maj
+============================================
 
 Une mauvaise utilisation d'E-Maj peut mettre en cause l'intégrité des bases de données. Aussi convient-il de n'autoriser son usage qu'à des utilisateurs qualifiés et clairement identifiés comme tels.
 

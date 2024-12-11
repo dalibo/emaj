@@ -1,7 +1,7 @@
 Main functions
 ==============
 
-Before describing each main E-Maj function, it is interesting to have a global view on the typical operations chain. 
+Before describing each main E-Maj function, it is interesting to have a global view on the typical operations chain.
 
 Operations chain
 ----------------

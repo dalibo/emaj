@@ -3,8 +3,8 @@ Démarrage rapide
 
 L’installation d’E-Maj est présentée plus loin en détail. Mais les quelques commandes suivantes permettent de procéder rapidement à une installation et une utilisation sous Linux.
 
-Installation du logiciel
-^^^^^^^^^^^^^^^^^^^^^^^^
+Installer le logiciel
+^^^^^^^^^^^^^^^^^^^^^
 
 Si le client *pgxn* est installé, une simple commande suffit ::
 
@@ -22,8 +22,8 @@ Sinon ::
 
 Pour plus de détails, ou en cas de problème, allez :doc:`ici <install>`.
 
-Installation de l’extension
-^^^^^^^^^^^^^^^^^^^^^^^^^^^
+Créer l’extension
+^^^^^^^^^^^^^^^^^
 
 Pour installer l’extension emaj dans une base de données, connectez-vous à la base de données cible, en utilisant un rôle super-utilisateur et passez les commandes ::
 
@@ -35,8 +35,8 @@ Pour les versions de PostgreSQL antérieures à la version 9.6, se référer à 
 
 La dernière requête permet de donner les droits d’administration E-Maj à un rôle particulier. Par la suite, vous pourrez utiliser ce rôle pour exécuter les opérations E-Maj sans être connecté comme super-utilisateur.
 
-Utilisation de l’extension
-^^^^^^^^^^^^^^^^^^^^^^^^^^
+Utiliser l’extension
+^^^^^^^^^^^^^^^^^^^^
 
 Vous pouvez maintenant vous connecter à la base de données avec le rôle qui possède les droits d’administration E-Maj.
 
@@ -58,23 +58,23 @@ Notez que seules les tables ayant une clé primaire sont affectées à un groupe
 
 Ensuite, l’enchaînement typique de commandes ::
 
-  SELECT emaj.emaj_start_group('mon_groupe', 'Mark-1');
+   SELECT emaj.emaj_start_group('mon_groupe', 'Mark-1');
 
-  [INSERT/UPDATE/DELETE sur les tables du groupe]
+   [INSERT/UPDATE/DELETE sur les tables du groupe]
 
-  SELECT emaj.emaj_set_mark_group('mon_groupe','Mark-2');
+   SELECT emaj.emaj_set_mark_group('mon_groupe','Mark-2');
 
-  [INSERT/UPDATE/DELETE sur les tables du groupe]
+   [INSERT/UPDATE/DELETE sur les tables du groupe]
 
-  SELECT emaj.emaj_set_mark_group('mon_groupe','Mark-3');
+   SELECT emaj.emaj_set_mark_group('mon_groupe','Mark-3');
 
-  [INSERT/UPDATE/DELETE sur les tables du groupe]
+   [INSERT/UPDATE/DELETE sur les tables du groupe]
 
-  SELECT emaj.emaj_rollback_group('mon_groupe','Mark-2');
+   SELECT emaj.emaj_rollback_group('mon_groupe','Mark-2');
 
-  SELECT emaj.emaj_stop_group('mon_groupe');
+   SELECT emaj.emaj_stop_group('mon_groupe');
 
-  SELECT emaj.emaj_drop_group('mon_groupe');
+   SELECT emaj.emaj_drop_group('mon_groupe');
 
 permet de « démarrer » le groupe de tables, d'enregistrer les mises à jour en posant des marques intermédiaires, de revenir à l'une d'elles, d’arrêter l’enregistrement et enfin de supprimer le groupe.
 

@@ -1,5 +1,5 @@
-Changement de version de PostgreSQL
-===================================
+Changer de version de PostgreSQL
+================================
 
 Changement de version mineure de PostgreSQL
 -------------------------------------------

@@ -1,5 +1,5 @@
-PostgreSQL version upgrade
-==========================
+Upgrade the PostgreSQL version
+==============================
 
 Changing PostgreSQL minor versions
 ----------------------------------

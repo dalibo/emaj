@@ -1,10 +1,10 @@
-Autres fonctions de gestion des groupes
-=======================================
+Autres fonctions de gestion des groupes de tables
+=================================================
 
 .. _emaj_reset_group:
 
-Réinitialisation des tables de log d'un groupe
-----------------------------------------------
+Réinitialiser les tables de log d'un groupe
+-------------------------------------------
 
 En standard, et sauf indication contraire, les tables de log sont vidées lors du démarrage du groupe de tables auquel elles appartiennent. En cas de besoin, il est néanmoins possible de réinitialiser ces tables de log avec la commande SQL suivante ::
 
@@ -16,8 +16,8 @@ Pour réinitialiser les tables de log d'un groupe, ce dernier doit bien sûr êt
 
 .. _emaj_comment_group:
 
-Commentaires sur les groupes
-----------------------------
+Commenter un groupe de tables
+-----------------------------
 
 Il est possible de positionner un commentaire sur un groupe quelconque. Pour se faire, il suffit d'exécuter la requête suivante ::
 
@@ -34,8 +34,8 @@ Les commentaires sont stockés dans la colonne *group_comment* de la table *emaj
 .. _emaj_protect_group:
 .. _emaj_unprotect_group:
 
-Protection d'un groupe de tables contre les rollbacks
------------------------------------------------------
+Protéger un groupe de tables contre les rollbacks
+-------------------------------------------------
 
 Il peut être utile à certains moments de se protéger contre des rollbacks intempestifs de groupes de tables, en particulier sur des bases de données de production. Deux fonctions répondent à ce besoin.
 
@@ -99,14 +99,14 @@ Cette fonction *emaj_force_drop_group()* effectue le même traitement que la fon
 .. note::
    Depuis la création de la fonction :ref:`emaj_force_stop_group()<emaj_force_stop_group>`, cette fonction *emaj_force_drop_group()* devient en principe inutile. Elle est susceptible de disparaître dans une future version d'E-Maj.
 
-Exporter et importer des configurations de groupes de tables
-------------------------------------------------------------
+Export et import des configurations de groupes de tables
+--------------------------------------------------------
 
 Un jeu de fonctions permet d’exporter et d’importer des configurations de groupes de tables. Elles peuvent être utiles pour déployer un jeu standardisé de configuration de groupes de tables sur plusieurs bases de données ou lors de changements de version E-Maj par :ref:`désinstallation et réinstallation complète de l’extension<uninstall_reinstall>`.
 
 .. _export_groups_conf:
 
-Export d’une configuration de groupes de tables
+Exporter une configuration de groupes de tables
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 Deux versions de la fonction *emaj_export_groups_configuration()* exportent sous forme de structure JSON une description d’un ou plusieurs groupes de tables.
@@ -159,7 +159,7 @@ Si le chemin du fichier n’est pas renseigné (i.e. est valorisé à NULL), la 
 
 .. _import_groups_conf:
 
-Import d’une configuration de groupes de tables
+Importer une configuration de groupes de tables
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 Deux versions de la fonction *emaj_import_groups_configuration()* importent des groupes de tables décrits sous la forme de structure JSON.

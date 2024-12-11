@@ -13,8 +13,8 @@ L'enchaînement des opérations possibles pour un groupe de tables peut se maté
 
 .. _emaj_start_group:
 
-Démarrage d'un groupe de tables
--------------------------------
+Démarrer un groupe de tables
+----------------------------
 
 Démarrer un groupe de table consiste à activer l'enregistrement des mises à jour des tables du groupe. Pour ce faire, il faut exécuter la commande ::
 
@@ -47,8 +47,8 @@ Plus d'information sur les :doc:`fonctions multi-groupes <multiGroupsFunctions>`
 
 .. _emaj_set_mark_group:
 
-Pose d'une marque intermédiaire
--------------------------------
+Poser une marque intermédiaire
+------------------------------
 
 Lorsque toutes les tables et séquences d'un groupe sont jugées dans un état stable pouvant servir de référence pour un éventuel *rollback*, une marque peut être posée. Ceci s'effectue par la requête SQL suivante ::
 
@@ -79,8 +79,8 @@ Plus d'information sur les :doc:`fonctions multi-groupes <multiGroupsFunctions>`
 
 .. _emaj_rollback_group:
 
-Rollback simple d'un groupe de tables
--------------------------------------
+Exécuter un rollback E-maj simple d'un groupe de tables
+-------------------------------------------------------
 
 S'il est nécessaire de remettre les tables et séquences d'un groupe dans l'état dans lequel elles se trouvaient lors de la prise d'une marque, il faut procéder à un rollback. Pour un rollback simple (« *unlogged* » ou « *non tracé* »), il suffit d'exécuter la requête SQL suivante ::
 
@@ -119,8 +119,8 @@ Plus d'information sur les :doc:`fonctions multi-groupes <multiGroupsFunctions>`
 
 .. _emaj_logged_rollback_group:
 
-Rollback annulable ou tracé d'un groupe de tables
--------------------------------------------------
+Exécuter un rollback E-Maj annulable ou tracé d'un groupe de tables
+-------------------------------------------------------------------
 
 Une autre fonction permet d'exécuter un rollback de type « *logged* », Dans ce cas, les triggers de log sur les tables applicatives ne sont pas désactivés durant le rollback, de sorte que durant le rollback les mises à jours de tables appliquées sont elles-mêmes enregistrées dans les tables de log. Ainsi, il est ensuite possible d'annuler le rollback ou, en quelque sorte, de « rollbacker le rollback ». 
 
@@ -180,7 +180,7 @@ Plus d'information sur les :doc:`fonctions multi-groupes <multiGroupsFunctions>`
 
 .. _emaj_stop_group:
 
-Arrêt d'un groupe de tables
+Arrêter un groupe de tables
 ---------------------------
 
 Lorsqu'on souhaite arrêter l'enregistrement des mises à jour des tables d'un groupe, il est possible de désactiver le log par la commande SQL ::

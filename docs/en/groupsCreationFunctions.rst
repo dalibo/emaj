@@ -1,5 +1,5 @@
-Creating and dropping tables groups
-===================================
+Create and drop tables groups
+=============================
 
 Tables groups configuration principles
 --------------------------------------

@@ -1,5 +1,5 @@
-Using Emaj_web
-==============
+Use Emaj_web
+============
 
 Access to Emaj_web and databases
 --------------------------------
@@ -178,7 +178,6 @@ For both lists, the E-Maj properties and some general properties of each object 
    :align: center
 
    Figure 11 – Schema content and tables groups configuration.
-
 
 Triggers
 --------
