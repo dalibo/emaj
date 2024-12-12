@@ -135,6 +135,16 @@ if (!$isEmajAdm) {
 	die "Error: the user has not been granted emaj_adm rights.\n";
 }
 
+# Check that the max_prepared_transactions GUC has a nonzero value.
+$stmt[1] = qq(
+	SELECT CASE WHEN pg_catalog.current_setting('max_prepared_transactions')::int > 0 THEN 1 ELSE 0 END AS is_max_prep_tx_ok
+		);
+my ($isMaxPreparedTransactionOk) = $dbh[1]->selectrow_array($stmt[1])
+	or die("Error while checking the max_prepared_transactions GUC value.$DBI::errstr \n\n");
+if (!$isMaxPreparedTransactionOk) {
+	die "Error: the max_prepared_transactions postgres parameter is zero. No parallel rollback is possible.\n";
+}
+
 # Set the application_name.
 for (my $i = 1 ; $i <= $nbSession; $i++) {
   $dbh[$i]->do("SET application_name to '$APPNAME'")
