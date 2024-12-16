@@ -5546,12 +5546,13 @@ $_lock_groups$
     RETURN;
   END;
 $_lock_groups$;
-CREATE OR REPLACE FUNCTION emaj.emaj_create_group(p_groupName TEXT, p_isRollbackable BOOLEAN DEFAULT TRUE)
+CREATE OR REPLACE FUNCTION emaj.emaj_create_group(p_groupName TEXT, p_isRollbackable BOOLEAN DEFAULT TRUE, p_comment TEXT DEFAULT NULL)
 RETURNS INT LANGUAGE plpgsql AS
 $emaj_create_group$
 -- This function creates a group, for the moment empty.
 -- Input: group name,
 --        boolean indicating whether the group is rollbackable or not (true by default),
+--        optional comment.
 -- Output: 1 = number of created groups
   DECLARE
     v_function               TEXT = 'CREATE_GROUP';
@@ -5577,9 +5578,9 @@ $emaj_create_group$
     SELECT emaj._set_time_stamp(v_function, 'C') INTO v_timeId;
 -- Insert the row describing the group into the emaj_group and emaj_group_hist tables
 -- (The group_is_rlbk_protected boolean column is always initialized as not group_is_rollbackable).
-    INSERT INTO emaj.emaj_group (group_name, group_is_rollbackable, group_is_logging,
-                                 group_is_rlbk_protected, group_nb_table, group_nb_sequence)
-      VALUES (p_groupName, p_isRollbackable, FALSE, NOT p_isRollbackable, 0, 0);
+    INSERT INTO emaj.emaj_group (group_name, group_is_rollbackable, group_is_logging, group_is_rlbk_protected,
+                                 group_nb_table, group_nb_sequence, group_comment)
+      VALUES (p_groupName, p_isRollbackable, FALSE, NOT p_isRollbackable, 0, 0, p_comment);
     INSERT INTO emaj.emaj_group_hist (grph_group, grph_time_range, grph_is_rollbackable, grph_log_sessions)
       VALUES (p_groupName, int8range(v_timeId, NULL, '[]'), p_isRollbackable, 0);
 -- Insert a END event into the history.
@@ -5588,7 +5589,7 @@ $emaj_create_group$
     RETURN 1;
   END;
 $emaj_create_group$;
-COMMENT ON FUNCTION emaj.emaj_create_group(TEXT,BOOLEAN) IS
+COMMENT ON FUNCTION emaj.emaj_create_group(TEXT,BOOLEAN,TEXT) IS
 $$Creates an E-Maj group.$$;
 CREATE OR REPLACE FUNCTION emaj.emaj_comment_group(p_groupName TEXT, p_comment TEXT)
 RETURNS VOID LANGUAGE plpgsql AS
@@ -13801,7 +13802,7 @@ $do$
     RETURN;
   END;
 $do$;
-psql:sql/emaj-devel.sql:14063: NOTICE:  E-Maj installation: E-Maj successfully installed.
+psql:sql/emaj-devel.sql:14064: NOTICE:  E-Maj installation: E-Maj successfully installed.
 COMMIT;
 -- Test the dblink extension lack (this cannot be easily simulated in the verify.sql unit tests script when emaj is installed as an extension)
 begin;

@@ -155,7 +155,8 @@ Fonctions de niveau groupe de tables
 | <emaj_consolidate_rollback_group>`               | | marque.fin.rollback TEXT    |                                       |
 +--------------------------------------------------+-------------------------------+---------------------------------------+
 | :ref:`emaj_create_group                          | | groupe TEXT,                | 1 INT                                 |
-| <emaj_create_group>`                             | | [est.rollbackable BOOLEAN]  |                                       |
+| <emaj_create_group>`                             | | [est.rollbackable BOOLEAN], |                                       |
+|                                                  | | [commentaire TEXT]          |                                       |
 +--------------------------------------------------+-------------------------------+---------------------------------------+
 | :ref:`emaj_delete_before_mark_group              | | groupe TEXT,                | nb.marques.supprimées INT             |
 | <emaj_delete_before_mark_group>`                 | | marque TEXT                 |                                       |

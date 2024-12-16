@@ -68,11 +68,13 @@ Lors du rollback E-Maj d’un groupe de tables, les triggers actifs (ENABLED) de
 Créer des groupes de tables
 ---------------------------
 
-Pour créer un groupe de tables, il suffit d'exécuter la requête SQL suivante ::
+Pour créer un groupe de tables, il suffit d'exécuter la requête SQL suivante : ::
 
-   SELECT emaj.emaj_create_group('<nom.du.groupe>', <est.rollbackable>);
+   SELECT emaj.emaj_create_group('<nom.du.groupe>' [,<est.rollbackable> [,<commentaire>]]);
 
-Le second paramètre, de type booléen, indique si le groupe est de type *ROLLBACKABLE* avec la valeur vrai ou de type *AUDIT_ONLY* avec la valeur fausse. Si le second paramètre n'est pas fourni, le groupe à créer est considéré comme étant de type *ROLLBACKABLE*.
+Le second paramètre, de type booléen, indique si le groupe est de type *ROLLBACKABLE* avec la valeur *TRUE* ou de type *AUDIT_ONLY* avec la valeur *FALSE*. Si le second paramètre n'est pas fourni, le groupe à créer est considéré comme étant de type *ROLLBACKABLE*.
+
+Le troisième paramètre représente un commentaire à associer au groupe à créer. S’il n’est pas fourni ou s’il est valorisé à *NULL*, aucun commentaire n’est enregistré. Le commentaire peut être modifié ou supprimé ultérieurement avec la fonction :ref:`emaj_comment_group()<emaj_comment_group>`.
 
 La fonction retourne le nombre de groupes créés, c’est à dire 1.
 

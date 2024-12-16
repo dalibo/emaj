@@ -3,6 +3,8 @@ E-Maj - Change log
 <devel>
 ------
 ###Enhancements:###
+  * Add an optional p_comment parameter to the emaj_create_group() function to
+    directly record a comment for the created group.
   * Rollback monitor clients: allow infinite loop with command option -n 0.
   * Both php CLI clients emajRollbackMonitor.php and emajParallelRollback.php
     are deprecated. Use perl clients instead.

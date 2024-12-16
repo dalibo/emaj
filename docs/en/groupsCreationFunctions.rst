@@ -70,9 +70,11 @@ Create a tables group
 
 To create a tables group, just execute the following SQL statement::
 
-   SELECT emaj.emaj_create_group('<group.name>',<is_rollbackable>);
+   SELECT emaj.emaj_create_group('<group.name>' [,<is_rollbackable> [,<comment>]]);
 
 The second parameter, of type boolean, indicates whether the group's type is *ROLLBACKABLE* (with value *TRUE*) or *AUDIT_ONLY* (with value *FALSE*). If this second parameter is not supplied, the group is considered *ROLLBACKABLE*.
+
+The third parameter is an optional comment to describe the group. If it is not provided or if it is set to *NULL*, no comment is registered for the group. The comment can be modified or deleted later using the :ref:`emaj_comment_group()<emaj_comment_group>` function.
 
 The function returns the number of created groups, i.e. 1.
 

@@ -92,8 +92,11 @@ select emaj.emaj_assign_sequences('myschema2','.*','myseq2','myGroup2');
 (1 row)
 
 select emaj.emaj_create_group('emptyGroup');
-ERROR:  emaj_create_group: The group "emptyGroup" already exists.
-CONTEXT:  PL/pgSQL function emaj.emaj_create_group(text,boolean) line 23 at RAISE
+ emaj_create_group 
+-------------------
+                 1
+(1 row)
+
 select emaj.emaj_start_group('emptyGroup');
  emaj_start_group 
 ------------------

@@ -107,6 +107,7 @@ SELECT emaj._disable_event_triggers();
 -- drop obsolete functions or functions with modified interface --
 ------------------------------------------------------------------
 DROP FUNCTION IF EXISTS emaj._handle_trigger_fk_tbl(P_ACTION TEXT,P_FULLTABLENAME TEXT,P_OBJECTNAME TEXT,P_OBJECTDEF TEXT);
+DROP FUNCTION IF EXISTS emaj.emaj_create_group(P_GROUPNAME TEXT,P_ISROLLBACKABLE BOOLEAN);
 
 ------------------------------------------------------------------
 -- create new or modified functions                             --
@@ -974,6 +975,52 @@ $_lock_groups$
     RETURN;
   END;
 $_lock_groups$;
+
+CREATE OR REPLACE FUNCTION emaj.emaj_create_group(p_groupName TEXT, p_isRollbackable BOOLEAN DEFAULT TRUE, p_comment TEXT DEFAULT NULL)
+RETURNS INT LANGUAGE plpgsql AS
+$emaj_create_group$
+-- This function creates a group, for the moment empty.
+-- Input: group name,
+--        boolean indicating whether the group is rollbackable or not (true by default),
+--        optional comment.
+-- Output: 1 = number of created groups
+  DECLARE
+    v_function               TEXT = 'CREATE_GROUP';
+    v_timeId                 BIGINT;
+  BEGIN
+-- Insert a BEGIN event into the history.
+    INSERT INTO emaj.emaj_hist (hist_function, hist_event, hist_object, hist_wording)
+      VALUES (v_function, 'BEGIN', p_groupName, CASE WHEN p_isRollbackable THEN 'rollbackable' ELSE 'audit_only' END);
+-- Check that the group name is valid.
+    IF p_groupName IS NULL OR p_groupName = '' THEN
+      RAISE EXCEPTION 'emaj_create_group: The group name can''t be NULL or empty.';
+    END IF;
+-- Check that the group is not yet recorded in emaj_group table
+    IF EXISTS
+         (SELECT 0
+            FROM emaj.emaj_group
+            WHERE group_name = p_groupName
+         ) THEN
+      RAISE EXCEPTION 'emaj_create_group: The group "%" already exists.', p_groupName;
+    END IF;
+-- OK
+-- Get the time stamp of the operation.
+    SELECT emaj._set_time_stamp(v_function, 'C') INTO v_timeId;
+-- Insert the row describing the group into the emaj_group and emaj_group_hist tables
+-- (The group_is_rlbk_protected boolean column is always initialized as not group_is_rollbackable).
+    INSERT INTO emaj.emaj_group (group_name, group_is_rollbackable, group_is_logging, group_is_rlbk_protected,
+                                 group_nb_table, group_nb_sequence, group_comment)
+      VALUES (p_groupName, p_isRollbackable, FALSE, NOT p_isRollbackable, 0, 0, p_comment);
+    INSERT INTO emaj.emaj_group_hist (grph_group, grph_time_range, grph_is_rollbackable, grph_log_sessions)
+      VALUES (p_groupName, int8range(v_timeId, NULL, '[]'), p_isRollbackable, 0);
+-- Insert a END event into the history.
+    INSERT INTO emaj.emaj_hist (hist_function, hist_event, hist_object)
+      VALUES (v_function, 'END', p_groupName);
+    RETURN 1;
+  END;
+$emaj_create_group$;
+COMMENT ON FUNCTION emaj.emaj_create_group(TEXT,BOOLEAN,TEXT) IS
+$$Creates an E-Maj group.$$;
 
 CREATE OR REPLACE FUNCTION emaj._import_groups_conf_check(p_groupNames TEXT[])
 RETURNS SETOF emaj._report_message_type LANGUAGE plpgsql AS

@@ -19,7 +19,7 @@ Pour réinitialiser les tables de log d'un groupe, ce dernier doit bien sûr êt
 Commenter un groupe de tables
 -----------------------------
 
-Il est possible de positionner un commentaire sur un groupe quelconque. Pour se faire, il suffit d'exécuter la requête suivante ::
+Il est possible de positionner un commentaire sur un groupe quelconque lors de :ref:`sa création<emaj_create_group>`. Mais on peut le faire également plus tard avec : ::
 
    SELECT emaj.emaj_comment_group('<nom.du.groupe>', '<commentaire>');
 
@@ -28,8 +28,6 @@ La fonction ne retourne aucune donnée.
 Pour modifier un commentaire, il suffit d'exécuter à nouveau la fonction pour le même groupe de tables, avec le nouveau commentaire.
 
 Pour supprimer un commentaire, il suffit d'exécuter la fonction avec une valeur *NULL* pour le paramètre commentaire.
-
-Les commentaires sont stockés dans la colonne *group_comment* de la table *emaj.emaj_group* qui décrit les groupes.
 
 .. _emaj_protect_group:
 .. _emaj_unprotect_group:

@@ -804,6 +804,7 @@ select emaj.emaj_drop_group('myGroup1');
 select emaj.emaj_drop_group('myGroup2');
 select emaj.emaj_drop_group('myGroup4');
 select emaj.emaj_drop_group('myGroup5');
+select emaj.emaj_drop_group('emptyGroup');
 
 -- checks for group ownership change tests
 select * from emaj.emaj_relation_change where rlchg_time_id >= 10000 order by 1,2,3,4;

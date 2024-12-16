@@ -156,7 +156,8 @@ Groups level functions
 | <emaj_consolidate_rollback_group>`               | | end.rollback.mark TEXT      |                                       |
 +--------------------------------------------------+-------------------------------+---------------------------------------+
 | :ref:`emaj_create_group                          | | group TEXT,                 | 1 INT                                 |
-| <emaj_create_group>`                             | | [is.rollbackable BOOLEAN]   |                                       |
+| <emaj_create_group>`                             | | [is.rollbackable BOOLEAN],  |                                       |
+|                                                  | | [comment TEXT]              |                                       |
 +--------------------------------------------------+-------------------------------+---------------------------------------+
 | :ref:`emaj_delete_before_mark_group              | | group TEXT,                 | #.deleted.marks INT                   |
 | <emaj_delete_before_mark_group>`                 | | mark TEXT                   |                                       |

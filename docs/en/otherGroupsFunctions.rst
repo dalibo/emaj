@@ -19,7 +19,7 @@ Of course, in order to reset log tables, the tables group must be in *IDLE* stat
 Comment a groups
 ----------------
 
-In order to set a comment on any group, the following statement can be executed::
+It is possible to set a comment on a group :ref:`when it is created<emaj_create_group>`. But this can be also done later with::
 
    SELECT emaj.emaj_comment_group('<group.name>', '<comment>');
 

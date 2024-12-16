@@ -21,10 +21,10 @@ select public.handle_emaj_sequences(1000);
 -- invalid group names
 select emaj.emaj_create_group(NULL);
 ERROR:  emaj_create_group: The group name can't be NULL or empty.
-CONTEXT:  PL/pgSQL function emaj.emaj_create_group(text,boolean) line 15 at RAISE
+CONTEXT:  PL/pgSQL function emaj.emaj_create_group(text,boolean,text) line 16 at RAISE
 select emaj.emaj_create_group('',false);
 ERROR:  emaj_create_group: The group name can't be NULL or empty.
-CONTEXT:  PL/pgSQL function emaj.emaj_create_group(text,boolean) line 15 at RAISE
+CONTEXT:  PL/pgSQL function emaj.emaj_create_group(text,boolean,text) line 16 at RAISE
 -- should be OK
 select emaj.emaj_create_group('emptyGroup');
  emaj_create_group 
@@ -38,7 +38,7 @@ select emaj.emaj_create_group('myGroup1');
                  1
 (1 row)
 
-select emaj.emaj_create_group('myGroup2');
+select emaj.emaj_create_group('myGroup2', true, 'comment set et group''s creation');
  emaj_create_group 
 -------------------
                  1
@@ -71,7 +71,7 @@ select emaj.emaj_create_group('myGroup6');
 -- already created
 select emaj.emaj_create_group('myGroup1');
 ERROR:  emaj_create_group: The group "myGroup1" already exists.
-CONTEXT:  PL/pgSQL function emaj.emaj_create_group(text,boolean) line 23 at RAISE
+CONTEXT:  PL/pgSQL function emaj.emaj_create_group(text,boolean,text) line 24 at RAISE
 -----------------------------
 -- emaj_comment_group() tests
 -----------------------------
@@ -758,11 +758,11 @@ select emaj.emaj_assign_sequences('myschema1','my.*_seq','myseq1$','myGroup1');
 select group_name, group_is_rollbackable, group_last_alter_time_id, group_is_logging,
        group_is_rlbk_protected, group_nb_table, group_nb_sequence, group_comment
   from emaj.emaj_group order by group_name;
-    group_name    | group_is_rollbackable | group_last_alter_time_id | group_is_logging | group_is_rlbk_protected | group_nb_table | group_nb_sequence | group_comment  
-------------------+-----------------------+--------------------------+------------------+-------------------------+----------------+-------------------+----------------
+    group_name    | group_is_rollbackable | group_last_alter_time_id | group_is_logging | group_is_rlbk_protected | group_nb_table | group_nb_sequence |          group_comment          
+------------------+-----------------------+--------------------------+------------------+-------------------------+----------------+-------------------+---------------------------------
  emptyGroup       | t                     |                          | f                | f                       |              0 |                 0 | an empty group
  myGroup1         | t                     |                     1033 | f                | f                       |              5 |                 2 | 
- myGroup2         | t                     |                     1031 | f                | f                       |              8 |                 2 | 
+ myGroup2         | t                     |                     1031 | f                | f                       |              8 |                 2 | comment set et group's creation
  myGroup4         | t                     |                     1027 | f                | f                       |              5 |                 0 | 
  myGroup5         | f                     |                     1028 | f                | t                       |              2 |                 0 | 
  myGroup6         | t                     |                     1029 | f                | f                       |              4 |                 0 | 
@@ -958,9 +958,9 @@ select emaj.emaj_export_groups_configuration(:'EMAJTESTTMPDIR' || '/orig_groups_
 (1 row)
 
 \! wc -l $EMAJTESTTMPDIR/*.json
- 192 /tmp/emaj_12/create_drop/orig_groups_config_all.json
- 101 /tmp/emaj_12/create_drop/orig_groups_config_partial.json
- 293 total
+ 193 /tmp/emaj_12/create_drop/orig_groups_config_all.json
+ 102 /tmp/emaj_12/create_drop/orig_groups_config_partial.json
+ 295 total
 \! grep -v ', at ' $EMAJTESTTMPDIR/orig_groups_config_all.json
 {
   "tables_groups": [
@@ -1019,6 +1019,7 @@ select emaj.emaj_export_groups_configuration(:'EMAJTESTTMPDIR' || '/orig_groups_
     {
       "group": "myGroup2",
       "is_rollbackable": true,
+      "comment": "comment set et group's creation",
       "tables": [
         {
           "schema": "myschema2",
@@ -1354,20 +1355,20 @@ select emaj.emaj_import_groups_configuration(:'EMAJTESTTMPDIR' || '/modified_gro
 
 -- move a table and a sequence to another group
 -- the table myschema2.mytbl5 and the sequence myschema2.myseq1 are moved from myGroup2 to myGroup4
-\! sed -n -e '1,75p' $EMAJTESTTMPDIR/modified_groups_config_1.json >$EMAJTESTTMPDIR/modified_groups_config_2.json
+\! sed -n -e '1,76p' $EMAJTESTTMPDIR/modified_groups_config_1.json >$EMAJTESTTMPDIR/modified_groups_config_2.json
 --     remove the table and the sequence from myGroup2
-\! sed -n -e '80,96p' $EMAJTESTTMPDIR/modified_groups_config_1.json >>$EMAJTESTTMPDIR/modified_groups_config_2.json
-\! sed -n -e '101,107p' $EMAJTESTTMPDIR/modified_groups_config_1.json >>$EMAJTESTTMPDIR/modified_groups_config_2.json
+\! sed -n -e '81,97p' $EMAJTESTTMPDIR/modified_groups_config_1.json >>$EMAJTESTTMPDIR/modified_groups_config_2.json
+\! sed -n -e '102,108p' $EMAJTESTTMPDIR/modified_groups_config_1.json >>$EMAJTESTTMPDIR/modified_groups_config_2.json
 --     copy the moved table
-\! sed -n -e '76,79p' $EMAJTESTTMPDIR/modified_groups_config_1.json >>$EMAJTESTTMPDIR/modified_groups_config_2.json
+\! sed -n -e '77,80p' $EMAJTESTTMPDIR/modified_groups_config_1.json >>$EMAJTESTTMPDIR/modified_groups_config_2.json
 --     copy the other tables
-\! sed -n -e '108,127p' $EMAJTESTTMPDIR/modified_groups_config_1.json >>$EMAJTESTTMPDIR/modified_groups_config_2.json
+\! sed -n -e '109,128p' $EMAJTESTTMPDIR/modified_groups_config_1.json >>$EMAJTESTTMPDIR/modified_groups_config_2.json
 --     copy the sequences keyword
-\! sed -n -e '92,93p' $EMAJTESTTMPDIR/modified_groups_config_1.json >>$EMAJTESTTMPDIR/modified_groups_config_2.json
+\! sed -n -e '93,94p' $EMAJTESTTMPDIR/modified_groups_config_1.json >>$EMAJTESTTMPDIR/modified_groups_config_2.json
 --     copy the moved sequence
-\! sed -n -e '98,101p' $EMAJTESTTMPDIR/modified_groups_config_1.json >>$EMAJTESTTMPDIR/modified_groups_config_2.json
+\! sed -n -e '99,102p' $EMAJTESTTMPDIR/modified_groups_config_1.json >>$EMAJTESTTMPDIR/modified_groups_config_2.json
 --     copy the remaining json structure
-\! sed -n -e '128,$p' $EMAJTESTTMPDIR/modified_groups_config_1.json >>$EMAJTESTTMPDIR/modified_groups_config_2.json
+\! sed -n -e '129,$p' $EMAJTESTTMPDIR/modified_groups_config_1.json >>$EMAJTESTTMPDIR/modified_groups_config_2.json
 select emaj.emaj_import_groups_configuration(:'EMAJTESTTMPDIR' || '/modified_groups_config_2.json', array['myGroup2','myGroup4'], true);
  emaj_import_groups_configuration 
 ----------------------------------
@@ -1376,9 +1377,9 @@ select emaj.emaj_import_groups_configuration(:'EMAJTESTTMPDIR' || '/modified_gro
 
 -- remove a table and a sequence from a group
 -- the table myschema2.mytbl5 and the sequence myschema2.myseq1 are removed from myGroup4
-\! sed -n -e '1,99p' $EMAJTESTTMPDIR/modified_groups_config_2.json >$EMAJTESTTMPDIR/modified_groups_config_3.json
-\! sed -n -e '104,123p' $EMAJTESTTMPDIR/modified_groups_config_2.json >>$EMAJTESTTMPDIR/modified_groups_config_3.json
-\! sed -n -e '130,$p' $EMAJTESTTMPDIR/modified_groups_config_2.json >>$EMAJTESTTMPDIR/modified_groups_config_3.json
+\! sed -n -e '1,100p' $EMAJTESTTMPDIR/modified_groups_config_2.json >$EMAJTESTTMPDIR/modified_groups_config_3.json
+\! sed -n -e '105,124p' $EMAJTESTTMPDIR/modified_groups_config_2.json >>$EMAJTESTTMPDIR/modified_groups_config_3.json
+\! sed -n -e '131,$p' $EMAJTESTTMPDIR/modified_groups_config_2.json >>$EMAJTESTTMPDIR/modified_groups_config_3.json
 select emaj.emaj_import_groups_configuration(:'EMAJTESTTMPDIR' || '/modified_groups_config_3.json', array['myGroup4'], true);
  emaj_import_groups_configuration 
 ----------------------------------

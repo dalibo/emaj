@@ -3172,6 +3172,12 @@ select emaj.emaj_drop_group('myGroup5');
                3
 (1 row)
 
+select emaj.emaj_drop_group('emptyGroup');
+ emaj_drop_group 
+-----------------
+               0
+(1 row)
+
 -- checks for group ownership change tests
 select * from emaj.emaj_relation_change where rlchg_time_id >= 10000 order by 1,2,3,4;
  rlchg_time_id |  rlchg_schema  |   rlchg_tblseq    |      rlchg_change_kind      | rlchg_group | rlchg_new_schema | rlchg_new_tblseq | rlchg_new_group | rlchg_priority | rlchg_new_priority | rlchg_log_data_tsp | rlchg_new_log_data_tsp | rlchg_log_index_tsp | rlchg_new_log_index_tsp | rlchg_ignored_triggers | rlchg_new_ignored_triggers 
@@ -3316,7 +3322,8 @@ select time_id, time_last_emaj_gid, time_event from emaj.emaj_time_stamp where t
    10050 |           10000014 | D
    10051 |           10000014 | D
    10052 |           10000014 | D
-(46 rows)
+   10053 |           10000014 | D
+(47 rows)
 
 select hist_function, hist_event, hist_object,
        regexp_replace(regexp_replace(regexp_replace(hist_wording,
@@ -3734,7 +3741,10 @@ select hist_function, hist_event, hist_object,
  DROP_GROUP         | LOG_SCHEMA DROPPED           | emaj_myschema5               |                                                                                                                        | postgres
  DROP_GROUP         | LOG_SCHEMA DROPPED           | "emaj_phil's schema3"        |                                                                                                                        | postgres
  DROP_GROUP         | END                          | myGroup5                     | 3 tables/sequences processed                                                                                           | postgres
-(407 rows)
+ DROP_GROUP         | BEGIN                        | emptyGroup                   |                                                                                                                        | postgres
+ DROP_GROUP         | TIME STAMP SET               | 10053                        |                                                                                                                        | postgres
+ DROP_GROUP         | END                          | emptyGroup                   | 0 tables/sequences processed                                                                                           | postgres
+(410 rows)
 
 select nspname from pg_namespace where nspname like 'emaj%' order by nspname;
  nspname 
