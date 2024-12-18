@@ -6,7 +6,7 @@ Fonctions de gestion des marques
 Commenter une marque
 --------------------
 
-Il est possible de positionner un commentaire sur une marque quelconque. Pour se faire, il suffit d'exécuter la requête suivante ::
+Il est possible de positionner un commentaire sur une marque lors de :ref:`son enregistrement<emaj_set_mark_group>`. Mais on peut le faire également plus tard avec : ::
 
    SELECT emaj.emaj_comment_mark_group('<nom.du.groupe>', '<nom.de.marque>', '<commentaire>');
 
@@ -18,9 +18,7 @@ Pour modifier un commentaire, il suffit d'exécuter à nouveau la fonction pour 
 
 Pour supprimer un commentaire, il suffit d'exécuter la fonction avec une valeur *NULL* pour le paramètre commentaire.
 
-Les commentaires sont stockés dans la colonne *mark_comment* de la table *emaj.emaj_mark* qui décrit les marques.
-
-Les commentaires sont surtout intéressants avec l'utilisation des :doc:`clients web<webOverview>`. En effet, ces derniers les affichent systématiquement dans le tableau des marques d'un groupe.
+Les commentaires sont surtout intéressants avec l'utilisation d’:doc:`Emaj_web<webUsage>`, qui les affiche systématiquement dans le tableau des marques d'un groupe. Mais ils sont visibles également dans la colonne *mark_comment* de la table *emaj.emaj_mark*.
 
 .. _emaj_get_previous_mark_group:
 

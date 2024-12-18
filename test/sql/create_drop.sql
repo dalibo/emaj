@@ -24,7 +24,7 @@ select emaj.emaj_create_group('',false);
 -- should be OK
 select emaj.emaj_create_group('emptyGroup');
 select emaj.emaj_create_group('myGroup1');
-select emaj.emaj_create_group('myGroup2', true, 'comment set et group''s creation');
+select emaj.emaj_create_group('myGroup2', true, 'comment set at group''s creation');
 select emaj.emaj_create_group('phil''s group#3",',false);
 select emaj.emaj_create_group('myGroup4');
 select emaj.emaj_create_group('myGroup5',false);

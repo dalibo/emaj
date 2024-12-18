@@ -19,8 +19,8 @@ Située à gauche, l'arborescence de navigation offre la visibilité de toutes l
 
 Les deux icônes en bas et à droite (non visible ici) permettent d’ajuster la largeur de l’arborescence de navigation.
 
-Liste des groupes de tables
----------------------------
+Listes des groupes de tables
+----------------------------
 
 En sélectionnant une base de données, l'utilisateur accède à une page qui liste les groupes de tables créés dans cette base de données.
 

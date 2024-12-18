@@ -487,7 +487,7 @@ ERROR:  _verify_groups (6): In group "myGroup2", the structure of the applicatio
 CONTEXT:  PL/pgSQL function emaj._verify_groups(text[],boolean) line 181 at RAISE
 SQL statement "SELECT 0
       FROM emaj._verify_groups(array[p_groupName], TRUE)"
-PL/pgSQL function emaj.emaj_set_mark_group(text,text) line 18 at PERFORM
+PL/pgSQL function emaj.emaj_set_mark_group(text,text,text) line 18 at PERFORM
   rollback to savepoint sp1;
     select * from emaj.emaj_rollback_group('myGroup2','EMAJ_LAST_MARK');
 ERROR:  _verify_groups (6): In group "myGroup2", the structure of the application table "myschema2"."mytbl4" is not coherent with its log table ("emaj_myschema2"."mytbl4_log"). You may use "SELECT * FROM emaj.emaj_verify_all()" to look for other issues.
@@ -676,8 +676,8 @@ SQL statement "SELECT coalesce(sum(emaj._log_stat_tbl(emaj_relation, greatest(v_
           WHERE rel_group = v_group
             AND rel_kind = 'r'
             AND upper_inf(rel_time_range)"
-PL/pgSQL function emaj._set_mark_groups(text[],text,boolean,boolean,text,bigint,text) line 74 at SQL statement
-SQL statement "SELECT emaj._set_mark_groups(p_groupNames, v_markName, p_multiGroup, TRUE, NULL, v_timeId)"
+PL/pgSQL function emaj._set_mark_groups(text[],text,text,boolean,boolean,text,bigint,text) line 74 at SQL statement
+SQL statement "SELECT emaj._set_mark_groups(p_groupNames, v_markName, NULL, p_multiGroup, TRUE, NULL, v_timeId)"
 PL/pgSQL function emaj._stop_groups(text[],text,boolean,boolean) line 133 at PERFORM
 PL/pgSQL function emaj.emaj_stop_group(text,text) line 10 at RETURN
   rollback to savepoint sp1;
@@ -705,8 +705,8 @@ SQL statement "SELECT coalesce(sum(emaj._log_stat_tbl(emaj_relation, greatest(v_
           WHERE rel_group = v_group
             AND rel_kind = 'r'
             AND upper_inf(rel_time_range)"
-PL/pgSQL function emaj._set_mark_groups(text[],text,boolean,boolean,text,bigint,text) line 74 at SQL statement
-SQL statement "SELECT emaj._set_mark_groups(v_loggingGroups, v_markName, FALSE, TRUE, NULL, v_timeId)"
+PL/pgSQL function emaj._set_mark_groups(text[],text,text,boolean,boolean,text,bigint,text) line 74 at SQL statement
+SQL statement "SELECT emaj._set_mark_groups(v_loggingGroups, v_markName, NULL, FALSE, TRUE, NULL, v_timeId)"
 PL/pgSQL function emaj._remove_tables(text,text[],text,boolean,boolean) line 47 at PERFORM
 PL/pgSQL function emaj.emaj_remove_table(text,text,text) line 6 at RETURN
   rollback to savepoint sp1;

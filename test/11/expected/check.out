@@ -106,11 +106,11 @@ select funcname, calls from pg_stat_user_functions
  _change_log_index_tsp_tbl                 |     9
  _change_priority_tbl                      |    16
  _check_fk_groups                          |    91
- _check_group_names                        |  1156
+ _check_group_names                        |  1155
  _check_json_groups_conf                   |    43
  _check_json_param_conf                    |    15
  _check_json_table_properties              |    45
- _check_mark_name                          |   558
+ _check_mark_name                          |   557
  _check_marks_range                        |   181
  _check_new_mark                           |   468
  _check_tables_for_rollbackable_group      |    72
@@ -210,7 +210,7 @@ select funcname, calls from pg_stat_user_functions
  emaj_assign_tables                        |    26
  emaj_cleanup_rollback_state               |    10
  emaj_comment_group                        |     5
- emaj_comment_mark_group                   |    10
+ emaj_comment_mark_group                   |     9
  emaj_comment_rollback                     |     4
  emaj_consolidate_rollback_group           |    14
  emaj_create_group                         |    25
@@ -289,7 +289,7 @@ select funcname, calls from pg_stat_user_functions
 select sum(calls) from pg_stat_user_functions where funcname like E'emaj\\_%';
  sum  
 ------
- 1084
+ 1083
 (1 row)
 
 -----------------------------

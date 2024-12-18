@@ -356,7 +356,7 @@ select emaj.emaj_assign_sequences('myschema1','.*',null,'myGroup1');
                      2
 (1 row)
 
-select emaj.emaj_create_group('myGroup2');
+select emaj.emaj_create_group('myGroup2',true,'This is group #2');
  emaj_create_group 
 -------------------
                  1
@@ -488,7 +488,7 @@ select group_name, group_is_rollbackable, group_last_alter_time_id, group_is_log
 ------------+-----------------------+--------------------------+------------------+-------------------------+----------------+-------------------+------------------
  emptyGroup | t                     |                          | f                | f                       |              0 |                 0 | 
  myGroup1   | t                     |                    12011 | t                | f                       |              5 |                 2 | This is group #1
- myGroup2   | t                     |                    12014 | t                | f                       |              6 |                 2 | 
+ myGroup2   | t                     |                    12014 | t                | f                       |              6 |                 2 | This is group #2
 (3 rows)
 
 select * from emaj.emaj_group_hist order by grph_group, grph_time_range;

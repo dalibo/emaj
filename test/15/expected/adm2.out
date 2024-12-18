@@ -704,16 +704,10 @@ select nextval(E'"phil''s schema3"."phil''s seq\\1"');
 
 --
 set role emaj_regression_tests_adm_user2;
-select emaj.emaj_set_mark_groups(array['phil''s group#3",'],'phil''s mark #1');
+select emaj.emaj_set_mark_groups(array['phil''s group#3",'],'phil''s mark #1','Third mark set');
  emaj_set_mark_groups 
 ----------------------
                     4
-(1 row)
-
-select emaj.emaj_comment_mark_group('phil''s group#3",','phil''s mark #1','Third mark set');
- emaj_comment_mark_group 
--------------------------
- 
 (1 row)
 
 --
@@ -1026,7 +1020,6 @@ select hist_function, hist_event, hist_object,
  LOCK_GROUPS        | END                | phil's group#3",                     | 2 tables locked, 0 deadlock(s)                       | postgres
  SET_MARK_GROUPS    | TIME STAMP SET     | 14206                                |                                                      | postgres
  SET_MARK_GROUPS    | END                | phil's group#3",                     | phil's mark #1                                       | postgres
- COMMENT_MARK_GROUP |                    | phil's group#3",                     | Mark phil's mark #1                                  | postgres
  RENAME_MARK_GROUP  | BEGIN              | phil's group#3",                     | phil's mark #1                                       | postgres
  RENAME_MARK_GROUP  | END                | phil's group#3",                     | phil's mark #1 renamed phil's mark #3                | postgres
  DELETE_MARK_GROUP  | BEGIN              | phil's group#3",                     | M2_again!                                            | postgres
@@ -1058,7 +1051,7 @@ select hist_function, hist_event, hist_object,
  ROLLBACK_GROUP     | NOTICE             | Rollback id 14201                    | 0 / 2 sequences effectively processed.               | postgres
  DBLINK_CLOSE_CNX   |                    | rlbk#1                               |                                                      | postgres
  ROLLBACK_GROUP     | END                | phil's group#3",                     | Rollback_id 14201                                    | postgres
-(69 rows)
+(68 rows)
 
 -- user tables
 reset role;

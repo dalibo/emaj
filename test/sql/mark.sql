@@ -22,7 +22,7 @@ select emaj.emaj_set_mark_group('myGroup1','EMAJ_LAST_MARK');
 
 -- should be OK
 select emaj.emaj_set_mark_group('myGroup1','SM1');
-select emaj.emaj_set_mark_group('myGroup2','SM1');
+select emaj.emaj_set_mark_group('myGroup2','SM1','comment recorded at mark''s set');
 select emaj.emaj_set_mark_group('myGroup2','phil''s mark #1');
 select emaj.emaj_set_mark_group('emptyGroup','SM1');
 
@@ -76,7 +76,7 @@ select pg_sleep(0.001);
 select emaj.emaj_set_mark_groups('{"myGroup1","myGroup2"}');
 
 -- use of % in mark name
-select emaj.emaj_set_mark_groups('{"myGroup1","myGroup2"}','Bar%Foo');
+select emaj.emaj_set_mark_groups('{"myGroup1","myGroup2"}','Bar%Foo','comment recorded at mark''s set');
 
 -- check for emaj_set_mark_group() and emaj_set_mark_groups()
 select mark_group, regexp_replace(mark_name,E'\\d\\d\.\\d\\d\\.\\d\\d\\.\\d\\d\\d\\d','%','g'), mark_time_id, mark_is_rlbk_protected, mark_comment, mark_log_rows_before_next, mark_logged_rlbk_target_mark from emaj.emaj_mark order by mark_time_id, mark_group;

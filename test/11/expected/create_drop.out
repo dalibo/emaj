@@ -38,7 +38,7 @@ select emaj.emaj_create_group('myGroup1');
                  1
 (1 row)
 
-select emaj.emaj_create_group('myGroup2', true, 'comment set et group''s creation');
+select emaj.emaj_create_group('myGroup2', true, 'comment set at group''s creation');
  emaj_create_group 
 -------------------
                  1
@@ -761,7 +761,7 @@ select group_name, group_is_rollbackable, group_last_alter_time_id, group_is_log
 ------------------+-----------------------+--------------------------+------------------+-------------------------+----------------+-------------------+---------------------------------
  emptyGroup       | t                     |                          | f                | f                       |              0 |                 0 | an empty group
  myGroup1         | t                     |                     1029 | f                | f                       |              5 |                 2 | 
- myGroup2         | t                     |                     1027 | f                | f                       |              8 |                 2 | comment set et group's creation
+ myGroup2         | t                     |                     1027 | f                | f                       |              8 |                 2 | comment set at group's creation
  myGroup4         | t                     |                     1023 | f                | f                       |              5 |                 0 | 
  myGroup5         | f                     |                     1024 | f                | t                       |              2 |                 0 | 
  myGroup6         | t                     |                     1025 | f                | f                       |              4 |                 0 | 
@@ -1018,7 +1018,7 @@ select emaj.emaj_export_groups_configuration(:'EMAJTESTTMPDIR' || '/orig_groups_
     {
       "group": "myGroup2",
       "is_rollbackable": true,
-      "comment": "comment set et group's creation",
+      "comment": "comment set at group's creation",
       "tables": [
         {
           "schema": "myschema2",

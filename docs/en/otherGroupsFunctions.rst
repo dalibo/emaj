@@ -29,7 +29,7 @@ To modify an existing comment, just call the function again for the same tables 
 
 To delete a comment, just call the function, supplying a *NULL* value as comment.
 
-Comments are stored into the *group_comment* column from the *emaj_group* table, which describes … groups. 
+Comments are mostly interesting when :doc:`using Emaj_web<webUsage>`, that systematically displays them in the groups lists. But they can also be found in the *group_comment* column from the *emaj.emaj_group* table.
 
 .. _emaj_protect_group:
 .. _emaj_unprotect_group:

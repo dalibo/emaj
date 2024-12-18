@@ -285,10 +285,12 @@ Groups level functions
 |                                                  | | end.mark TEXT               |                                       |
 +--------------------------------------------------+-------------------------------+---------------------------------------+
 | :ref:`emaj_set_mark_group                        | | group TEXT,                 | #.tables.and.seq INT                  |
-| <emaj_set_mark_group>`                           | | [mark TEXT]                 |                                       |
+| <emaj_set_mark_group>`                           | | [mark TEXT],                |                                       |
+|                                                  | | [comment TEXT]              |                                       |
 +--------------------------------------------------+-------------------------------+---------------------------------------+
 | :doc:`emaj_set_mark_groups                       | | groups.array TEXT[],        | #.tables.and.seq INT                  |
-| <multiGroupsFunctions>`                          | | [mark TEXT]                 |                                       |
+| <multiGroupsFunctions>`                          | | [mark TEXT],                |                                       |
+|                                                  | | [comment TEXT]              |                                       |
 +--------------------------------------------------+-------------------------------+---------------------------------------+
 | :ref:`emaj_snap_group                            | | group TEXT,                 | #.tables.and.seq INT                  |
 | <emaj_snap_group>`                               | | directory TEXT,             |                                       |

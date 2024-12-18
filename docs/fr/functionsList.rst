@@ -266,13 +266,13 @@ Fonctions de niveau groupe de tables
 | :ref:`emaj_rollback_group                        | | groupe TEXT,                | SETOF (sévérité TEXT, message TEXT)   |
 | <emaj_rollback_group>`                           | | marque TEXT,                |                                       |
 |                                                  | | [est_modif_groupe_autorisé  |                                       |
-|                                                  | |  BOOLEAN]                   |                                       |
+|                                                  | |  BOOLEAN],                  |                                       |
 |                                                  | | [commentaire TEXT]          |                                       |
 +--------------------------------------------------+-------------------------------+---------------------------------------+
 | :doc:`emaj_rollback_groups                       | | tableau.groupes TEXT[],     | SETOF (sévérité TEXT, message TEXT)   |
 | <multiGroupsFunctions>`                          | | marque TEXT,                |                                       |
 |                                                  | | [est_modif_groupe_autorisé  |                                       |
-|                                                  | |  BOOLEAN]                   |                                       |
+|                                                  | |  BOOLEAN],                  |                                       |
 |                                                  | | [commentaire TEXT]          |                                       |
 +--------------------------------------------------+-------------------------------+---------------------------------------+
 | :ref:`emaj_sequence_stat_group                   | | groupe TEXT,                | SETOF emaj_sequence_stat_type         |
@@ -284,10 +284,12 @@ Fonctions de niveau groupe de tables
 |                                                  | | marque.fin TEXT             |                                       |
 +--------------------------------------------------+-------------------------------+---------------------------------------+
 | :ref:`emaj_set_mark_group                        | | groupe TEXT,                | nb.tables.et.seq INT                  |
-| <emaj_set_mark_group>`                           | | [marque TEXT]               |                                       |
+| <emaj_set_mark_group>`                           | | [marque TEXT],              |                                       |
+|                                                  | | [commentaire TEXT]          |                                       |
 +--------------------------------------------------+-------------------------------+---------------------------------------+
 | :doc:`emaj_set_mark_groups                       | | tableau.groupes TEXT[],     | nb.tables.et.seq INT                  |
-| <multiGroupsFunctions>`                          | | [marque TEXT]               |                                       |
+| <multiGroupsFunctions>`                          | | [marque TEXT],              |                                       |
+|                                                  | | [commentaire TEXT]          |                                       |
 +--------------------------------------------------+-------------------------------+---------------------------------------+
 | :ref:`emaj_snap_group                            | | groupe TEXT,                | nb.tables.et.seq INT                  |
 | <emaj_snap_group>`                               | | répertoire TEXT,            |                                       |

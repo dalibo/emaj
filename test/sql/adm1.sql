@@ -110,7 +110,7 @@ select emaj.emaj_assign_table('myschema1','myTbl3','myGroup1','{"priority":10,"l
 select emaj.emaj_assign_table('myschema1','mytbl4','myGroup1','{"priority":20,"log_data_tablespace":"tsplog1","log_index_tablespace":"tsp log''2"}'::jsonb);
 select emaj.emaj_assign_sequences('myschema1','.*',null,'myGroup1');
 
-select emaj.emaj_create_group('myGroup2');
+select emaj.emaj_create_group('myGroup2',true,'This is group #2');
 select emaj.emaj_assign_tables('myschema2','.*','mytbl[7,8]','myGroup2');
 select emaj.emaj_assign_sequences('myschema2','.*','myseq2','myGroup2');
 

@@ -19,8 +19,8 @@ On the left, the browser tree shows all the configured instances, that may be sp
 
 Both icons located at the bottom-right (not visible here) allow to adjust the browser width.
 
-Tables groups list
-------------------
+Tables groups lists
+-------------------
 
 By selecting a database, the user reaches a page that lists all tables groups created in this database.
 

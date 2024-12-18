@@ -6,7 +6,7 @@ Marks management functions
 Comment a mark
 --------------
 
-In order to set a comment on any mark, the following statement can be executed::
+It is possible to set a comment on a mark when :ref:`it is set<emaj_set_mark_group>`. But this can be also done later with::
 
    SELECT emaj.emaj_comment_mark_group('<group.name>', '<mark>', '<comment>');
 
@@ -18,9 +18,7 @@ To modify an existing comment, just call the function again for the same tables 
 
 To delete a comment, just call the function, supplying a *NULL* value as comment.
 
-Comments are stored into the *mark_comment* column from the *emaj_mark* table, which describes … marks. 
-
-Comments are mostly interesting when using the E-Maj :doc:`web clients<webOverview>`. Indeed, they systematically display the comments in the groups marks list.
+Comments are mostly interesting when using :doc:`Emaj_web<webUsage>`, that systematically displays them in the group marks list. But they can also be found in the *mark_comment* column from the *emaj.emaj_mark* table.
 
 .. _emaj_get_previous_mark_group:
 

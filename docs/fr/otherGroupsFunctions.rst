@@ -29,6 +29,8 @@ Pour modifier un commentaire, il suffit d'exécuter à nouveau la fonction pour 
 
 Pour supprimer un commentaire, il suffit d'exécuter la fonction avec une valeur *NULL* pour le paramètre commentaire.
 
+Les commentaires sont surtout intéressants avec :doc:`l'utilisation d’Emaj_web<webUsage>`, qui les affiche systématiquement dans les tableaux des groupes. Mais on peut également les retrouver dans la colonne *group_comment* de la table *emaj.emaj_group*.
+
 .. _emaj_protect_group:
 .. _emaj_unprotect_group:
 

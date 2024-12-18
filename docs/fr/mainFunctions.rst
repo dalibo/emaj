@@ -52,7 +52,7 @@ Poser une marque intermédiaire
 
 Lorsque toutes les tables et séquences d'un groupe sont jugées dans un état stable pouvant servir de référence pour un éventuel *rollback*, une marque peut être posée. Ceci s'effectue par la requête SQL suivante ::
 
-   SELECT emaj.emaj_set_mark_group('<nom.du.groupe>'[, '<nom.de.marque>']);
+   SELECT emaj.emaj_set_mark_group('<nom.du.groupe>' [,'<nom.de.marque>' [,‘<commentaire>’]]);
 
 Le groupe de tables doit être à l'état actif.
 
@@ -62,6 +62,8 @@ Le nom de la marque peut contenir un caractère générique '%'. Ce caractère e
 
 Si le paramètre représentant la marque n'est pas spécifié ou s'il est vide ou *NULL*, un nom est automatiquement généré : « *MARK_%* », où le caractère '%' représente l'heure courante, au format *hh.mn.ss.mmmm*.
  
+Le troisième paramètre représente un commentaire à associer à la marque à créer. S’il n’est pas fourni ou s’il est valorisé à *NULL*, aucun commentaire n’est enregistré. Le commentaire peut être modifié ou supprimé ultérieurement avec la fonction :ref:`emaj_comment_mark_group()<emaj_comment_mark_group>`.
+
 La fonction retourne le nombre de tables et de séquences contenues dans le groupe.
 
 La fonction *emaj_set_mark_group()* enregistre l'identité de la nouvelle marque, avec l'état des séquences applicatives appartenant au groupe, ainsi que l'état des séquences associées aux tables de log. Les séquences applicatives sont traitées en premier, pour enregistrer leur état au plus près du début de la transaction, ces séquences ne pouvant pas être protégées des mises à jour par des verrous.

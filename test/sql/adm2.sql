@@ -166,8 +166,7 @@ update "phil's tbl1" set "phil's col12" = 'DEF' where "phil's col11" <= 2;
 select nextval(E'"phil''s schema3"."phil''s seq\\1"');
 --
 set role emaj_regression_tests_adm_user2;
-select emaj.emaj_set_mark_groups(array['phil''s group#3",'],'phil''s mark #1');
-select emaj.emaj_comment_mark_group('phil''s group#3",','phil''s mark #1','Third mark set');
+select emaj.emaj_set_mark_groups(array['phil''s group#3",'],'phil''s mark #1','Third mark set');
 --
 select emaj.emaj_rename_mark_group('phil''s group#3",','phil''s mark #1','phil''s mark #3');
 -- 

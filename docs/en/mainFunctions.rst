@@ -52,7 +52,7 @@ Set an intermediate mark
 
 When all tables and sequences of a group are considered as being in a stable state that can be used for a potential rollback, a mark can be set. This is done with the following SQL statement::
 
-   SELECT emaj.emaj_set_mark_group('<group.name>', '<mark.name>');
+   SELECT emaj.emaj_set_mark_group('<group.name>' [,'<mark.name>' [,‘<comment>’]]);
 
 The tables group must be in *LOGGING* state.
 
@@ -61,6 +61,8 @@ A mark having the same name can not already exist for this tables group.
 The mark name may contain a generic '%' character. Then this character is replaced by the current time, with the pattern *hh.mn.ss.mmmm*.
 
 If the parameter representing the mark is not specified or is empty or *NULL*, a name is automatically generated: "*MARK_%*", where the '%' character represents the current time with a *hh.mn.ss.mmmm* pattern.
+
+The third parameter is an optional comment to describe the mark. If it is not provided or if it is set to *NULL*, no comment is registered for the mark. The comment can be modified or deleted later using the :ref:`emaj_comment_mark_group()<emaj_comment_mark_group>` function.
 
 The function returns the number of tables and sequences contained in the group.
 

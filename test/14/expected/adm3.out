@@ -752,7 +752,7 @@ ERROR:  _verify_groups (1): In group "phil's group#3",", the table "phil's schem
 CONTEXT:  PL/pgSQL function emaj._verify_groups(text[],boolean) line 39 at RAISE
 SQL statement "SELECT 0
       FROM emaj._verify_groups(array[p_groupName], TRUE)"
-PL/pgSQL function emaj.emaj_set_mark_group(text,text) line 18 at PERFORM
+PL/pgSQL function emaj.emaj_set_mark_group(text,text,text) line 18 at PERFORM
 rollback;
 select emaj.emaj_remove_table('phil''s schema3','mytbl4','remove_the_dropped_table');
 WARNING:  _check_tblseqs_array: In schema "phil's schema3", some tables (mytbl4) do not exist.
@@ -1477,8 +1477,8 @@ SQL statement "SELECT coalesce(sum(emaj._log_stat_tbl(emaj_relation, greatest(v_
           WHERE rel_group = v_group
             AND rel_kind = 'r'
             AND upper_inf(rel_time_range)"
-PL/pgSQL function emaj._set_mark_groups(text[],text,boolean,boolean,text,bigint,text) line 74 at SQL statement
-SQL statement "SELECT emaj._set_mark_groups(v_loggingGroups, v_markName, FALSE, TRUE, NULL, v_timeId)"
+PL/pgSQL function emaj._set_mark_groups(text[],text,text,boolean,boolean,text,bigint,text) line 74 at SQL statement
+SQL statement "SELECT emaj._set_mark_groups(v_loggingGroups, v_markName, NULL, FALSE, TRUE, NULL, v_timeId)"
 PL/pgSQL function emaj._remove_tables(text,text[],text,boolean,boolean) line 47 at PERFORM
 PL/pgSQL function emaj.emaj_remove_table(text,text,text) line 6 at RETURN
 select emaj.emaj_force_stop_group('grp_tmp');
@@ -2352,8 +2352,8 @@ select rlbk_id, rlbk_groups, rlbk_mark, rlbk_time_id, rlbk_is_logged, rlbk_is_al
    14001 | {myGroup1,myGroup2}           | Multi-2               |        14005 | f              | f                           |               1 |            11 |                4 |                 0 |                    0 | COMMITTED   |              14040 | public             | t                   | [ts]         | Notice: Rollback id = 14001.#Notice: 0 / 11 tables effectively processed.#Notice: 0 / 4 sequences effectively processed.
    14002 | {myGroup1,myGroup2}           | Multi-1               |        14006 | f              | f                           |               1 |            11 |                4 |                 0 |                    0 | COMMITTED   |              14054 | public             | t                   | [ts]         | Notice: Rollback id = 14002.#Notice: 0 / 11 tables effectively processed.#Notice: 0 / 4 sequences effectively processed.
    14003 | {myGroup2}                    | Multi-2               |        14011 | f              | f                           |               1 |             6 |                2 |                 0 |                    0 | COMMITTED   |              14092 | public             | t                   | [ts]         | Notice: Rollback id = 14003.#Notice: 0 / 6 tables effectively processed.#Notice: 0 / 2 sequences effectively processed.
-   14200 | {"phil's group#3\","}         | phil's mark #3        |        14207 | t              | f                           |               1 |             2 |                2 |                 0 |                    0 | COMMITTED   |              14242 | public             | t                   | [ts]         | Notice: Rollback id = 14200.#Notice: 0 / 2 tables effectively processed.#Notice: 0 / 2 sequences effectively processed.
-   14201 | {"phil's group#3\","}         | phil's mark #3        |        14209 | f              | f                           |               1 |             2 |                2 |                 0 |                    0 | COMMITTED   |              14257 | public             | t                   | [ts]         | Notice: Rollback id = 14201.#Notice: 0 / 2 tables effectively processed.#Notice: 0 / 2 sequences effectively processed.
+   14200 | {"phil's group#3\","}         | phil's mark #3        |        14207 | t              | f                           |               1 |             2 |                2 |                 0 |                    0 | COMMITTED   |              14241 | public             | t                   | [ts]         | Notice: Rollback id = 14200.#Notice: 0 / 2 tables effectively processed.#Notice: 0 / 2 sequences effectively processed.
+   14201 | {"phil's group#3\","}         | phil's mark #3        |        14209 | f              | f                           |               1 |             2 |                2 |                 0 |                    0 | COMMITTED   |              14256 | public             | t                   | [ts]         | Notice: Rollback id = 14201.#Notice: 0 / 2 tables effectively processed.#Notice: 0 / 2 sequences effectively processed.
    14300 | {myGroup1}                    | Multi-1               |        14300 | f              | f                           |               1 |             5 |                2 |                 1 |                    0 | COMMITTED   |              14300 | public             | t                   | [ts]         | Notice: Rollback id = 14300.#Notice: 1 / 5 tables effectively processed.#Notice: 0 / 2 sequences effectively processed.
    14400 | {myGroup1}                    | Multi-1               |        14400 | f              | f                           |               1 |             5 |                2 |                 1 |                    1 | ABORTED     |              14414 | public             | t                   | [ts]         | Notice: Rollback id = 14400.#Notice: 1 / 5 tables effectively processed.#Notice: 1 / 2 sequences effectively processed.
    14401 | {myGroup2}                    | Multi-1               |        14401 | f              | f                           |               1 |             6 |                2 |                 4 |                    1 | ABORTED     |              14427 | public             | t                   | [ts]         | Notice: Rollback id = 14401.#Notice: 4 / 6 tables effectively processed.#Notice: 1 / 2 sequences effectively processed.
