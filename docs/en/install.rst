@@ -64,16 +64,16 @@ Then decompress the downloaded archive file with the commands::
 
   cd e-maj-<version>/
 
+Edit the *emaj.control* file to set the *directory* parameter to the actual location of the E-Maj install SQL scripts (the absolute path of the *e-maj-<version>/sql* directory).
+
 Identify the precise location of the *SHAREDIR* directory. Depending on the PostgreSQL installation, the *pg_config --sharedir* shell command may directly report this directory name. Otherwise, look at typical locations like:
 
 * */usr/share/postgresql/<pg_version>* for Debian or Ubuntu
 * */usr/pgsql-<pg_version>/share* for RedHat or CentOS
 
-Copy some files to the extension directory of the postgresql version you want to use. As a super-user or pre-pended with sudo, type::
+Then copy the modified *emaj.control* file into the *extension* directory of the PostgreSQL version you want to use. As a super-user or pre-pended with sudo, type::
 
 	cp emaj.control <SHAREDIR_directory>/extension/.
-
-	cp sql/emaj--* <SHAREDIR_directory>/extension/.
 
 The latest E-Maj version is now installed and referenced by PostgreSQL. The e-maj-<version> directory contains the file tree :doc:`described here <content>`.
 
@@ -98,16 +98,7 @@ To install E-Maj on Windows:
 
 * Download the extension from the *pgxn.org* site,
 * Extract the file tree from the downloaded zip file,
-* Copy the files *emaj.control* and *sql/emaj--** into the share\\extension folder of the PostgreSQL installation folder (typically c:\\Program_Files\\PostgreSQL\\<postgres_version>)
+* Copy into the *share* folder of the PostgreSQL installation folder (typically *c:\\Program_Files\\PostgreSQL\\<postgres_version>\\share*):
 
-Alternate SQL scripts location for manual installations
-*******************************************************
-
-The *emaj.control* file located in the *SHAREDIR/extension* directory of the PostgreSQL version, may contain a directive that defines the directory where SQL installation scripts are located.
-
-So it is possible to only put the *emaj.control* file into this *SHAREDIR/extension* directory, by creating a pointer towards the script directory.
-
-To setup this, just:
-
-* copy the *emaj.contol* file from the root directory of the decompressed structure into the *SHAREDIR/extension* directory,
-* adjust the *directory* parameter of the *emaj.control* file to reflect the actual location of the E-Maj SQL scripts.
+  * the *emaj.control* file into *\\extension* ;
+  * and *sql\\emaj--** files into a new *\\emaj* subfolder.

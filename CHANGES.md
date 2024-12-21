@@ -14,6 +14,8 @@ E-Maj - Change log
   * Minor code changes.
 
 ###Bug fixes:###
+  * Fix the standart E-Maj software install procedure, to remove the need to
+    adjust the 'directory' clause in the emaj.control file.
   * emajStat.pl reported wrong changes number for sequences just rolled back
     by E-Maj and not incremented later.
   * Fix emajStat that failed to report statistics when the user had not the
