@@ -248,7 +248,7 @@ for PGUSERVER in ${EMAJ_USER_PGVER[@]//.}; do
 # Get PGSHARE for a specific version
   pg_getvar ${PGUSERVER} PGSHARE
   sudo cp ${EMAJ_DIR}/emaj.control ${PGSHARE}/extension/emaj.control
-  sudo sed -ri "s|^#directory\s+= .*$|directory = '${EMAJ_DIR}/sql/'|" ${PGSHARE}/extension/emaj.control
+  sudo sed -ri "s|^directory\s+= .*$|directory = '${EMAJ_DIR}/sql/'|" ${PGSHARE}/extension/emaj.control
 done
 
 # generate the psql install script
