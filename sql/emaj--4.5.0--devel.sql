@@ -2893,6 +2893,7 @@ $_rlbk_start_mark$
     v_rlbkDatetime           TIMESTAMPTZ;
     v_markTimeId             BIGINT;
     v_markName               TEXT;
+    v_markComment            TEXT;
     v_errorMsg               TEXT;
   BEGIN
     v_function = CASE WHEN p_multiGroup THEN 'ROLLBACK_GROUPS' ELSE 'ROLLBACK_GROUP' END;
@@ -2951,10 +2952,10 @@ $_rlbk_start_mark$
       RAISE EXCEPTION '_rlbk_start_mark: % Please retry.', v_errorMsg;
     END IF;
     IF v_isLoggedRlbk THEN
--- If rollback is a "logged" rollback, set a mark named with the pattern:
--- 'RLBK_<mark name to rollback to>_%_START', where % represents the rollback start time.
-      v_markName = 'RLBK_' || v_mark || '_' || substring(to_char(v_rlbkDatetime, 'HH24.MI.SS.US') from 1 for 13) || '_START';
-      PERFORM emaj._set_mark_groups(v_groupNames, v_markName, NULL, p_multiGroup, TRUE, NULL, v_timeId, v_dblinkSchema);
+-- If the rollback is "logged", set a mark named with the pattern: 'RLBK_<rollback_id>_START'.
+      v_markName = 'RLBK_' || p_rlbkId::text || '_START';
+      v_markComment = 'Automatically set at rollback to mark ' || v_mark || ' start';
+      PERFORM emaj._set_mark_groups(v_groupNames, v_markName, v_markComment, p_multiGroup, TRUE, NULL, v_timeId, v_dblinkSchema);
     END IF;
 --
     RETURN;
@@ -3172,6 +3173,7 @@ $_rlbk_end$
     v_ctrlDuration           INTERVAL;
     v_messages               TEXT[] = ARRAY[]::TEXT[];
     v_markName               TEXT;
+    v_markComment            TEXT;
     v_msg                    TEXT;
     v_msgList                TEXT;
     r_msg                    RECORD;
@@ -3364,11 +3366,11 @@ $_rlbk_end$
     LOOP
       v_messages = array_append(v_messages, 'Warning: ' || r_msg.message);
     END LOOP;
--- If rollback is a "logged" rollback, automatically set a mark representing the tables state just after the rollback.
--- This mark is named 'RLBK_<mark name to rollback to>_%_DONE', where % represents the rollback start time.
     IF v_isLoggedRlbk THEN
-      v_markName = 'RLBK_' || v_mark || '_' || substring(to_char(v_rlbkDatetime, 'HH24.MI.SS.US') from 1 for 13) || '_DONE';
-      PERFORM emaj._set_mark_groups(v_groupNames, v_markName, NULL, p_multiGroup, TRUE, v_mark);
+-- If the rollback is "logged", set a mark named with the pattern: 'RLBK_<rollback_id>_DONE'.
+      v_markName = 'RLBK_' || p_rlbkId::text || '_DONE';
+      v_markComment = 'Automatically set at rollback to mark ' || v_mark || ' end';
+      PERFORM emaj._set_mark_groups(v_groupNames, v_markName, v_markComment, p_multiGroup, TRUE, v_mark);
     END IF;
 -- Return and trace the execution report
     FOREACH v_msg IN ARRAY v_messages

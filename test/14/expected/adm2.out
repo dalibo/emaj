@@ -254,18 +254,18 @@ PL/pgSQL function emaj.emaj_rollback_group(text,text,boolean,text) line 8 at RET
 -----------------------------
 -- emaj tables
 select mark_group, regexp_replace(mark_name,E'\\d\\d\.\\d\\d\\.\\d\\d\\.\\d\\d\\d\\d','%','g'), mark_time_id, mark_is_rlbk_protected, mark_comment, mark_log_rows_before_next, mark_logged_rlbk_target_mark from emaj.emaj_mark order by mark_time_id, mark_group;
- mark_group |        regexp_replace        | mark_time_id | mark_is_rlbk_protected |   mark_comment   | mark_log_rows_before_next | mark_logged_rlbk_target_mark 
-------------+------------------------------+--------------+------------------------+------------------+---------------------------+------------------------------
- myGroup2   | M3                           |        12201 | f                      | This mark is old |                         0 | 
- myGroup1   | M4                           |        12401 | f                      |                  |                        10 | 
- myGroup1   | M5                           |        12402 | f                      |                  |                         3 | 
- myGroup1   | Before logged rollback to M4 |        12601 | f                      |                  |                        28 | 
- myGroup1   | STOP_%                       |        14000 | f                      |                  |                         0 | 
- myGroup2   | STOP_%                       |        14000 | f                      |                  |                         0 | 
- myGroup1   | Stop after rollback          |        14007 | f                      |                  |                         0 | 
- myGroup2   | Stop after rollback          |        14007 | f                      |                  |                         0 | 
- myGroup1   | Multi-1                      |        14009 | f                      |                  |                           | 
- myGroup2   | Multi-1                      |        14009 | f                      |                  |                           | 
+ mark_group |        regexp_replace        | mark_time_id | mark_is_rlbk_protected |                  mark_comment                  | mark_log_rows_before_next | mark_logged_rlbk_target_mark 
+------------+------------------------------+--------------+------------------------+------------------------------------------------+---------------------------+------------------------------
+ myGroup2   | M3                           |        12201 | f                      | This mark is old                               |                         0 | 
+ myGroup1   | M4                           |        12401 | f                      |                                                |                        10 | 
+ myGroup1   | M5                           |        12402 | f                      |                                                |                         3 | 
+ myGroup1   | Before logged rollback to M4 |        12601 | f                      | Automatically set at rollback to mark M4 start |                        28 | 
+ myGroup1   | STOP_%                       |        14000 | f                      |                                                |                         0 | 
+ myGroup2   | STOP_%                       |        14000 | f                      |                                                |                         0 | 
+ myGroup1   | Stop after rollback          |        14007 | f                      |                                                |                         0 | 
+ myGroup2   | Stop after rollback          |        14007 | f                      |                                                |                         0 | 
+ myGroup1   | Multi-1                      |        14009 | f                      |                                                |                           | 
+ myGroup2   | Multi-1                      |        14009 | f                      |                                                |                           | 
 (10 rows)
 
 select sequ_schema, sequ_name, sequ_time_id, sequ_last_val, sequ_is_called from emaj.emaj_sequence order by sequ_time_id, sequ_schema, sequ_name;
@@ -417,11 +417,11 @@ select hist_function, hist_event, hist_object,
  LOCK_GROUP               | BEGIN             | myGroup1,myGroup2            | Rollback session #1                                                                                                                    | postgres
  LOCK_GROUP               | END               | myGroup1,myGroup2            | Rollback session #1: 11 tables locked, 0 deadlock(s)                                                                                   | postgres
  ROLLBACK_GROUPS          | TIME STAMP SET    | 14003                        |                                                                                                                                        | postgres
- SET_MARK_GROUPS          | BEGIN             | myGroup1,myGroup2            | RLBK_Multi-1_%_START                                                                                                                   | postgres
- SET_MARK_GROUPS          | END               | myGroup1,myGroup2            | RLBK_Multi-1_%_START                                                                                                                   | postgres
- SET_MARK_GROUPS          | BEGIN             | myGroup1,myGroup2            | RLBK_Multi-1_%_DONE                                                                                                                    | postgres
+ SET_MARK_GROUPS          | BEGIN             | myGroup1,myGroup2            | RLBK_14000_START                                                                                                                       | postgres
+ SET_MARK_GROUPS          | END               | myGroup1,myGroup2            | RLBK_14000_START                                                                                                                       | postgres
+ SET_MARK_GROUPS          | BEGIN             | myGroup1,myGroup2            | RLBK_14000_DONE                                                                                                                        | postgres
  SET_MARK_GROUPS          | TIME STAMP SET    | 14004                        |                                                                                                                                        | postgres
- SET_MARK_GROUPS          | END               | myGroup1,myGroup2            | RLBK_Multi-1_%_DONE                                                                                                                    | postgres
+ SET_MARK_GROUPS          | END               | myGroup1,myGroup2            | RLBK_14000_DONE                                                                                                                        | postgres
  ROLLBACK_GROUPS          | NOTICE            | Rollback id 14000            | Rollback id = 14000.                                                                                                                   | postgres
  ROLLBACK_GROUPS          | NOTICE            | Rollback id 14000            | 0 / 11 tables effectively processed.                                                                                                   | postgres
  ROLLBACK_GROUPS          | NOTICE            | Rollback id 14000            | 0 / 4 sequences effectively processed.                                                                                                 | postgres
@@ -432,10 +432,10 @@ select hist_function, hist_event, hist_object,
  LOCK_GROUP               | BEGIN             | myGroup1,myGroup2            | Rollback session #1                                                                                                                    | postgres
  LOCK_GROUP               | END               | myGroup1,myGroup2            | Rollback session #1: 11 tables locked, 0 deadlock(s)                                                                                   | postgres
  ROLLBACK_GROUPS          | TIME STAMP SET    | 14005                        |                                                                                                                                        | postgres
- ROLLBACK_GROUPS          | MARK DELETED      | myGroup1                     | mark RLBK_Multi-1_%_START is deleted                                                                                                   | postgres
- ROLLBACK_GROUPS          | MARK DELETED      | myGroup2                     | mark RLBK_Multi-1_%_START is deleted                                                                                                   | postgres
- ROLLBACK_GROUPS          | MARK DELETED      | myGroup1                     | mark RLBK_Multi-1_%_DONE is deleted                                                                                                    | postgres
- ROLLBACK_GROUPS          | MARK DELETED      | myGroup2                     | mark RLBK_Multi-1_%_DONE is deleted                                                                                                    | postgres
+ ROLLBACK_GROUPS          | MARK DELETED      | myGroup1                     | mark RLBK_14000_START is deleted                                                                                                       | postgres
+ ROLLBACK_GROUPS          | MARK DELETED      | myGroup2                     | mark RLBK_14000_START is deleted                                                                                                       | postgres
+ ROLLBACK_GROUPS          | MARK DELETED      | myGroup1                     | mark RLBK_14000_DONE is deleted                                                                                                        | postgres
+ ROLLBACK_GROUPS          | MARK DELETED      | myGroup2                     | mark RLBK_14000_DONE is deleted                                                                                                        | postgres
  ROLLBACK_GROUPS          | NOTICE            | Rollback id 14001            | Rollback id = 14001.                                                                                                                   | postgres
  ROLLBACK_GROUPS          | NOTICE            | Rollback id 14001            | 0 / 11 tables effectively processed.                                                                                                   | postgres
  ROLLBACK_GROUPS          | NOTICE            | Rollback id 14001            | 0 / 4 sequences effectively processed.                                                                                                 | postgres
@@ -760,21 +760,21 @@ select * from emaj.emaj_rollback_group('phil''s group#3",','phil''s mark #3',fal
 -----------------------------
 -- emaj tables
 select mark_group, regexp_replace(mark_name,E'\\d\\d\.\\d\\d\\.\\d\\d\\.\\d\\d\\d\\d','%','g'), mark_time_id, mark_is_rlbk_protected, mark_comment, mark_log_rows_before_next, mark_logged_rlbk_target_mark from emaj.emaj_mark order by mark_time_id, mark_group;
-    mark_group    |        regexp_replace        | mark_time_id | mark_is_rlbk_protected |   mark_comment   | mark_log_rows_before_next | mark_logged_rlbk_target_mark 
-------------------+------------------------------+--------------+------------------------+------------------+---------------------------+------------------------------
- myGroup2         | M3                           |        12201 | f                      | This mark is old |                         0 | 
- myGroup1         | M4                           |        12401 | f                      |                  |                        10 | 
- myGroup1         | M5                           |        12402 | f                      |                  |                         3 | 
- myGroup1         | Before logged rollback to M4 |        12601 | f                      |                  |                        28 | 
- myGroup1         | STOP_%                       |        14000 | f                      |                  |                         0 | 
- myGroup2         | STOP_%                       |        14000 | f                      |                  |                         0 | 
- myGroup1         | Stop after rollback          |        14007 | f                      |                  |                         0 | 
- myGroup2         | Stop after rollback          |        14007 | f                      |                  |                         0 | 
- myGroup1         | Multi-1                      |        14009 | f                      |                  |                           | 
- myGroup2         | Multi-1                      |        14009 | f                      |                  |                           | 
- phil's group#3", | M1_rollbackable              |        14203 | f                      |                  |                        52 | 
- phil's group#3", | M2_rollbackable              |        14204 | f                      |                  |                         3 | 
- phil's group#3", | phil's mark #3               |        14206 | f                      | Third mark set   |                           | 
+    mark_group    |        regexp_replace        | mark_time_id | mark_is_rlbk_protected |                  mark_comment                  | mark_log_rows_before_next | mark_logged_rlbk_target_mark 
+------------------+------------------------------+--------------+------------------------+------------------------------------------------+---------------------------+------------------------------
+ myGroup2         | M3                           |        12201 | f                      | This mark is old                               |                         0 | 
+ myGroup1         | M4                           |        12401 | f                      |                                                |                        10 | 
+ myGroup1         | M5                           |        12402 | f                      |                                                |                         3 | 
+ myGroup1         | Before logged rollback to M4 |        12601 | f                      | Automatically set at rollback to mark M4 start |                        28 | 
+ myGroup1         | STOP_%                       |        14000 | f                      |                                                |                         0 | 
+ myGroup2         | STOP_%                       |        14000 | f                      |                                                |                         0 | 
+ myGroup1         | Stop after rollback          |        14007 | f                      |                                                |                         0 | 
+ myGroup2         | Stop after rollback          |        14007 | f                      |                                                |                         0 | 
+ myGroup1         | Multi-1                      |        14009 | f                      |                                                |                           | 
+ myGroup2         | Multi-1                      |        14009 | f                      |                                                |                           | 
+ phil's group#3", | M1_rollbackable              |        14203 | f                      |                                                |                        52 | 
+ phil's group#3", | M2_rollbackable              |        14204 | f                      |                                                |                         3 | 
+ phil's group#3", | phil's mark #3               |        14206 | f                      | Third mark set                                 |                           | 
 (13 rows)
 
 select sequ_schema, sequ_name, sequ_time_id, sequ_last_val, sequ_is_called from emaj.emaj_sequence order by sequ_time_id, sequ_schema, sequ_name;
@@ -1053,11 +1053,11 @@ select hist_function, hist_event, hist_object,
  LOCK_GROUP         | BEGIN              | phil's group#3",                     | Rollback session #1                                  | postgres
  LOCK_GROUP         | END                | phil's group#3",                     | Rollback session #1: 2 tables locked, 0 deadlock(s)  | postgres
  ROLLBACK_GROUP     | TIME STAMP SET     | 14207                                |                                                      | postgres
- SET_MARK_GROUP     | BEGIN              | phil's group#3",                     | RLBK_phil's mark #3_%_START                          | postgres
- SET_MARK_GROUP     | END                | phil's group#3",                     | RLBK_phil's mark #3_%_START                          | postgres
- SET_MARK_GROUP     | BEGIN              | phil's group#3",                     | RLBK_phil's mark #3_%_DONE                           | postgres
+ SET_MARK_GROUP     | BEGIN              | phil's group#3",                     | RLBK_14200_START                                     | postgres
+ SET_MARK_GROUP     | END                | phil's group#3",                     | RLBK_14200_START                                     | postgres
+ SET_MARK_GROUP     | BEGIN              | phil's group#3",                     | RLBK_14200_DONE                                      | postgres
  SET_MARK_GROUP     | TIME STAMP SET     | 14208                                |                                                      | postgres
- SET_MARK_GROUP     | END                | phil's group#3",                     | RLBK_phil's mark #3_%_DONE                           | postgres
+ SET_MARK_GROUP     | END                | phil's group#3",                     | RLBK_14200_DONE                                      | postgres
  ROLLBACK_GROUP     | NOTICE             | Rollback id 14200                    | Rollback id = 14200.                                 | postgres
  ROLLBACK_GROUP     | NOTICE             | Rollback id 14200                    | 0 / 2 tables effectively processed.                  | postgres
  ROLLBACK_GROUP     | NOTICE             | Rollback id 14200                    | 0 / 2 sequences effectively processed.               | postgres
@@ -1068,8 +1068,8 @@ select hist_function, hist_event, hist_object,
  LOCK_GROUP         | BEGIN              | phil's group#3",                     | Rollback session #1                                  | postgres
  LOCK_GROUP         | END                | phil's group#3",                     | Rollback session #1: 2 tables locked, 0 deadlock(s)  | postgres
  ROLLBACK_GROUP     | TIME STAMP SET     | 14209                                |                                                      | postgres
- ROLLBACK_GROUP     | MARK DELETED       | phil's group#3",                     | mark RLBK_phil's mark #3_%_START is deleted          | postgres
- ROLLBACK_GROUP     | MARK DELETED       | phil's group#3",                     | mark RLBK_phil's mark #3_%_DONE is deleted           | postgres
+ ROLLBACK_GROUP     | MARK DELETED       | phil's group#3",                     | mark RLBK_14200_START is deleted                     | postgres
+ ROLLBACK_GROUP     | MARK DELETED       | phil's group#3",                     | mark RLBK_14200_DONE is deleted                      | postgres
  ROLLBACK_GROUP     | NOTICE             | Rollback id 14201                    | Rollback id = 14201.                                 | postgres
  ROLLBACK_GROUP     | NOTICE             | Rollback id 14201                    | 0 / 2 tables effectively processed.                  | postgres
  ROLLBACK_GROUP     | NOTICE             | Rollback id 14201                    | 0 / 2 sequences effectively processed.               | postgres
@@ -2129,7 +2129,7 @@ select cons_group, regexp_replace(cons_end_rlbk_mark_name,E'\\d\\d\.\\d\\d\\.\\d
  cons_group | regexp_replace  | cons_target_rlbk_mark_name | cons_end_rlbk_mark_time_id | cons_target_rlbk_mark_time_id | cons_rows | cons_marks | cons_marks 
 ------------+-----------------+----------------------------+----------------------------+-------------------------------+-----------+------------+------------
  myGroup1   | RLBK_MC1_DONE   | MC1                        |                      14704 |                         14701 |        33 |          2 |          2
- myGroup1   | RLBK_MC3_%_DONE | MC3                        |                      14709 |                         14705 |        23 |          3 |          3
+ myGroup1   | RLBK_14701_DONE | MC3                        |                      14709 |                         14705 |        23 |          3 |          3
 (2 rows)
 
   
@@ -2140,7 +2140,7 @@ select cons_target_rlbk_mark_name, regexp_replace(cons_end_rlbk_mark_name,E'\\d\
  cons_target_rlbk_mark_name | regexp_replace  | emaj_consolidate_rollback_group 
 ----------------------------+-----------------+---------------------------------
  MC1                        | RLBK_MC1_DONE   |                               5
- MC3                        | RLBK_MC3_%_DONE |                               4
+ MC3                        | RLBK_14701_DONE |                               4
 (2 rows)
 
 select cons_group, regexp_replace(cons_end_rlbk_mark_name,E'\\d\\d\.\\d\\d\\.\\d\\d\\.\\d\\d\\d\\d','%','g'), 
@@ -2149,7 +2149,7 @@ select cons_group, regexp_replace(cons_end_rlbk_mark_name,E'\\d\\d\.\\d\\d\\.\\d
  cons_group | regexp_replace  | cons_target_rlbk_mark_name | cons_end_rlbk_mark_time_id | cons_target_rlbk_mark_time_id | cons_rows | cons_marks 
 ------------+-----------------+----------------------------+----------------------------+-------------------------------+-----------+------------
  myGroup1   | RLBK_MC1_DONE   | MC1                        |                      14704 |                         14701 |         0 |          0
- myGroup1   | RLBK_MC3_%_DONE | MC3                        |                      14709 |                         14705 |         0 |          0
+ myGroup1   | RLBK_14701_DONE | MC3                        |                      14709 |                         14705 |         0 |          0
 (2 rows)
 
 select stat_group, stat_schema, stat_table, stat_first_mark, stat_last_mark, stat_role, stat_verb, stat_rows
@@ -2432,28 +2432,28 @@ select * from myTbl2 order by col21;
 -----------------------------
 set role emaj_regression_tests_adm_user2;
 select mark_group, regexp_replace(mark_name,E'\\d\\d\.\\d\\d\\.\\d\\d\\.\\d\\d\\d\\d','%','g'), mark_time_id, mark_is_rlbk_protected, mark_comment, mark_log_rows_before_next, mark_logged_rlbk_target_mark from emaj.emaj_mark where mark_group = 'myGroup1' order by mark_time_id, mark_group;
- mark_group |        regexp_replace        | mark_time_id | mark_is_rlbk_protected | mark_comment | mark_log_rows_before_next | mark_logged_rlbk_target_mark 
-------------+------------------------------+--------------+------------------------+--------------+---------------------------+------------------------------
- myGroup1   | M4                           |        12401 | f                      |              |                        10 | 
- myGroup1   | M5                           |        12402 | f                      |              |                         3 | 
- myGroup1   | Before logged rollback to M4 |        12601 | f                      |              |                        28 | 
- myGroup1   | STOP_%                       |        14000 | f                      |              |                         0 | 
- myGroup1   | Stop after rollback          |        14007 | f                      |              |                         0 | 
- myGroup1   | Multi-1                      |        14009 | f                      |              |                        10 | 
- myGroup1   | MODIFY_%                     |        14700 | f                      |              |                         0 | 
- myGroup1   | MC1                          |        14701 | f                      |              |                         0 | 
- myGroup1   | RLBK_MC1_DONE                |        14704 | f                      |              |                         2 | MC1
- myGroup1   | MC3                          |        14705 | f                      |              |                         0 | 
- myGroup1   | RLBK_MC3_%_DONE              |        14709 | f                      |              |                         0 | MC3
- myGroup1   | MC6                          |        14710 | f                      |              |                         0 | 
- myGroup1   | RLBK_MC6_%_DONE              |        14717 | f                      |              |                         0 | MC6
- myGroup1   | MC10                         |        14718 | f                      |              |                         0 | 
- myGroup1   | RLBK_MC10_%_DONE             |        14723 | f                      |              |                         0 | MC10
- myGroup1   | MC15                         |        14724 | f                      |              |                         0 | 
- myGroup1   | RLBK_MC15_DONE               |        14727 | f                      |              |                         0 | MC15
- myGroup1   | MC17                         |        14728 | f                      |              |                         2 | 
- myGroup1   | RLBK_MC16_%_START            |        14729 | f                      |              |                        15 | 
- myGroup1   | RLBK_MC16_%_DONE             |        14730 | f                      |              |                           | 
+ mark_group |        regexp_replace        | mark_time_id | mark_is_rlbk_protected |                   mark_comment                   | mark_log_rows_before_next | mark_logged_rlbk_target_mark 
+------------+------------------------------+--------------+------------------------+--------------------------------------------------+---------------------------+------------------------------
+ myGroup1   | M4                           |        12401 | f                      |                                                  |                        10 | 
+ myGroup1   | M5                           |        12402 | f                      |                                                  |                         3 | 
+ myGroup1   | Before logged rollback to M4 |        12601 | f                      | Automatically set at rollback to mark M4 start   |                        28 | 
+ myGroup1   | STOP_%                       |        14000 | f                      |                                                  |                         0 | 
+ myGroup1   | Stop after rollback          |        14007 | f                      |                                                  |                         0 | 
+ myGroup1   | Multi-1                      |        14009 | f                      |                                                  |                        10 | 
+ myGroup1   | MODIFY_%                     |        14700 | f                      |                                                  |                         0 | 
+ myGroup1   | MC1                          |        14701 | f                      |                                                  |                         0 | 
+ myGroup1   | RLBK_MC1_DONE                |        14704 | f                      | Automatically set at rollback to mark MC1 end    |                         2 | MC1
+ myGroup1   | MC3                          |        14705 | f                      |                                                  |                         0 | 
+ myGroup1   | RLBK_14701_DONE              |        14709 | f                      | Automatically set at rollback to mark MC3 end    |                         0 | MC3
+ myGroup1   | MC6                          |        14710 | f                      |                                                  |                         0 | 
+ myGroup1   | RLBK_14703_DONE              |        14717 | f                      | Automatically set at rollback to mark MC6 end    |                         0 | MC6
+ myGroup1   | MC10                         |        14718 | f                      |                                                  |                         0 | 
+ myGroup1   | RLBK_14705_DONE              |        14723 | f                      | Automatically set at rollback to mark MC10 end   |                         0 | MC10
+ myGroup1   | MC15                         |        14724 | f                      |                                                  |                         0 | 
+ myGroup1   | RLBK_MC15_DONE               |        14727 | f                      | Automatically set at rollback to mark MC15 end   |                         0 | MC15
+ myGroup1   | MC17                         |        14728 | f                      |                                                  |                         2 | 
+ myGroup1   | RLBK_14707_START             |        14729 | f                      | Automatically set at rollback to mark MC16 start |                        15 | 
+ myGroup1   | RLBK_14707_DONE              |        14730 | f                      | Automatically set at rollback to mark MC16 end   |                           | 
 (20 rows)
 
 select sequ_schema, sequ_name, sequ_time_id, sequ_last_val, sequ_is_called from emaj.emaj_sequence where sequ_schema = 'emaj_myschema1' order by sequ_time_id, sequ_schema, sequ_name;
@@ -2657,8 +2657,8 @@ select hist_function, hist_event, hist_object,
  LOCK_GROUP             | BEGIN                      | myGroup1                     | Rollback session #1                                    | postgres
  LOCK_GROUP             | END                        | myGroup1                     | Rollback session #1: 5 tables locked, 0 deadlock(s)    | postgres
  ROLLBACK_GROUP         | TIME STAMP SET             | 14703                        |                                                        | postgres
- SET_MARK_GROUP         | BEGIN                      | myGroup1                     | RLBK_MC1_%_START                                       | postgres
- SET_MARK_GROUP         | END                        | myGroup1                     | RLBK_MC1_%_START                                       | postgres
+ SET_MARK_GROUP         | BEGIN                      | myGroup1                     | RLBK_14700_START                                       | postgres
+ SET_MARK_GROUP         | END                        | myGroup1                     | RLBK_14700_START                                       | postgres
  ROLLBACK_SEQUENCE      |                            | myschema1.mytbl2b_col20_seq  | RESTART 8                                              | postgres
  ROLLBACK_TABLE         | BEGIN                      | myschema1.mytbl1             | All log rows where emaj_gid > 14700000 and <= 14700019 | postgres
  ROLLBACK_TABLE         | END                        | myschema1.mytbl1             | 13 rolled back primary keys                            | postgres
@@ -2666,16 +2666,16 @@ select hist_function, hist_event, hist_object,
  ROLLBACK_TABLE         | END                        | myschema1.mytbl2             | 1 rolled back primary keys                             | postgres
  ROLLBACK_TABLE         | BEGIN                      | myschema1.mytbl2b            | All log rows where emaj_gid > 14700000 and <= 14700019 | postgres
  ROLLBACK_TABLE         | END                        | myschema1.mytbl2b            | 2 rolled back primary keys                             | postgres
- SET_MARK_GROUP         | BEGIN                      | myGroup1                     | RLBK_MC1_%_DONE                                        | postgres
+ SET_MARK_GROUP         | BEGIN                      | myGroup1                     | RLBK_14700_DONE                                        | postgres
  SET_MARK_GROUP         | TIME STAMP SET             | 14704                        |                                                        | postgres
- SET_MARK_GROUP         | END                        | myGroup1                     | RLBK_MC1_%_DONE                                        | postgres
+ SET_MARK_GROUP         | END                        | myGroup1                     | RLBK_14700_DONE                                        | postgres
  ROLLBACK_GROUP         | NOTICE                     | Rollback id 14700            | Rollback id = 14700.                                   | postgres
  ROLLBACK_GROUP         | NOTICE                     | Rollback id 14700            | 3 / 5 tables effectively processed.                    | postgres
  ROLLBACK_GROUP         | NOTICE                     | Rollback id 14700            | 1 / 2 sequences effectively processed.                 | postgres
  DBLINK_CLOSE_CNX       |                            | rlbk#1                       |                                                        | postgres
  ROLLBACK_GROUP         | END                        | myGroup1                     | Rollback_id 14700                                      | postgres
  RENAME_MARK_GROUP      | BEGIN                      | myGroup1                     | EMAJ_LAST_MARK                                         | postgres
- RENAME_MARK_GROUP      | END                        | myGroup1                     | RLBK_MC1_%_DONE renamed RLBK_MC1_DONE                  | postgres
+ RENAME_MARK_GROUP      | END                        | myGroup1                     | RLBK_14700_DONE renamed RLBK_MC1_DONE                  | postgres
  SET_MARK_GROUP         | BEGIN                      | myGroup1                     |                                                        | postgres
  LOCK_GROUP             | BEGIN                      | myGroup1                     |                                                        | postgres
  LOCK_GROUP             | END                        | myGroup1                     | 5 tables locked, 0 deadlock(s)                         | postgres
@@ -2697,16 +2697,16 @@ select hist_function, hist_event, hist_object,
  LOCK_GROUP             | BEGIN                      | myGroup1                     | Rollback session #1                                    | postgres
  LOCK_GROUP             | END                        | myGroup1                     | Rollback session #1: 5 tables locked, 0 deadlock(s)    | postgres
  ROLLBACK_GROUP         | TIME STAMP SET             | 14708                        |                                                        | postgres
- SET_MARK_GROUP         | BEGIN                      | myGroup1                     | RLBK_MC3_%_START                                       | postgres
- SET_MARK_GROUP         | END                        | myGroup1                     | RLBK_MC3_%_START                                       | postgres
+ SET_MARK_GROUP         | BEGIN                      | myGroup1                     | RLBK_14701_START                                       | postgres
+ SET_MARK_GROUP         | END                        | myGroup1                     | RLBK_14701_START                                       | postgres
  ROLLBACK_SEQUENCE      |                            | myschema1."myTbl3_col31_seq" | RESTART 21                                             | postgres
  ROLLBACK_TABLE         | BEGIN                      | myschema1."myTbl3"           | All log rows where emaj_gid > 14700035 and <= 14700047 | postgres
  ROLLBACK_TABLE         | END                        | myschema1."myTbl3"           | 10 rolled back primary keys                            | postgres
  ROLLBACK_TABLE         | BEGIN                      | myschema1.mytbl4             | All log rows where emaj_gid > 14700035 and <= 14700047 | postgres
  ROLLBACK_TABLE         | END                        | myschema1.mytbl4             | 1 rolled back primary keys                             | postgres
- SET_MARK_GROUP         | BEGIN                      | myGroup1                     | RLBK_MC3_%_DONE                                        | postgres
+ SET_MARK_GROUP         | BEGIN                      | myGroup1                     | RLBK_14701_DONE                                        | postgres
  SET_MARK_GROUP         | TIME STAMP SET             | 14709                        |                                                        | postgres
- SET_MARK_GROUP         | END                        | myGroup1                     | RLBK_MC3_%_DONE                                        | postgres
+ SET_MARK_GROUP         | END                        | myGroup1                     | RLBK_14701_DONE                                        | postgres
  ROLLBACK_GROUP         | NOTICE                     | Rollback id 14701            | Rollback id = 14701.                                   | postgres
  ROLLBACK_GROUP         | NOTICE                     | Rollback id 14701            | 2 / 5 tables effectively processed.                    | postgres
  ROLLBACK_GROUP         | NOTICE                     | Rollback id 14701            | 1 / 2 sequences effectively processed.                 | postgres
@@ -2714,7 +2714,7 @@ select hist_function, hist_event, hist_object,
  ROLLBACK_GROUP         | END                        | myGroup1                     | Rollback_id 14701                                      | postgres
  CONSOLIDATE_RLBK_GROUP | BEGIN                      | myGroup1                     | Erase all between marks MC1 and RLBK_MC1_DONE          | postgres
  CONSOLIDATE_RLBK_GROUP | END                        | myGroup1                     | 3 tables and 2 sequences processed ; 2 marks deleted   | postgres
- CONSOLIDATE_RLBK_GROUP | BEGIN                      | myGroup1                     | Erase all between marks MC3 and RLBK_MC3_%_DONE        | postgres
+ CONSOLIDATE_RLBK_GROUP | BEGIN                      | myGroup1                     | Erase all between marks MC3 and RLBK_14701_DONE        | postgres
  CONSOLIDATE_RLBK_GROUP | END                        | myGroup1                     | 2 tables and 2 sequences processed ; 3 marks deleted   | postgres
  SET_MARK_GROUP         | BEGIN                      | myGroup1                     |                                                        | postgres
  LOCK_GROUP             | BEGIN                      | myGroup1                     |                                                        | postgres
@@ -2737,22 +2737,22 @@ select hist_function, hist_event, hist_object,
  LOCK_GROUP             | BEGIN                      | myGroup1                     | Rollback session #1                                    | postgres
  LOCK_GROUP             | END                        | myGroup1                     | Rollback session #1: 5 tables locked, 0 deadlock(s)    | postgres
  ROLLBACK_GROUP         | TIME STAMP SET             | 14713                        |                                                        | postgres
- SET_MARK_GROUP         | BEGIN                      | myGroup1                     | RLBK_MC8_%_START                                       | postgres
- SET_MARK_GROUP         | END                        | myGroup1                     | RLBK_MC8_%_START                                       | postgres
+ SET_MARK_GROUP         | BEGIN                      | myGroup1                     | RLBK_14702_START                                       | postgres
+ SET_MARK_GROUP         | END                        | myGroup1                     | RLBK_14702_START                                       | postgres
  ROLLBACK_SEQUENCE      |                            | myschema1.mytbl2b_col20_seq  | RESTART 11                                             | postgres
  ROLLBACK_TABLE         | BEGIN                      | myschema1.mytbl2             | All log rows where emaj_gid > 14700077 and <= 14700079 | postgres
  ROLLBACK_TABLE         | END                        | myschema1.mytbl2             | 1 rolled back primary keys                             | postgres
  ROLLBACK_TABLE         | BEGIN                      | myschema1.mytbl2b            | All log rows where emaj_gid > 14700077 and <= 14700079 | postgres
  ROLLBACK_TABLE         | END                        | myschema1.mytbl2b            | 1 rolled back primary keys                             | postgres
- SET_MARK_GROUP         | BEGIN                      | myGroup1                     | RLBK_MC8_%_DONE                                        | postgres
+ SET_MARK_GROUP         | BEGIN                      | myGroup1                     | RLBK_14702_DONE                                        | postgres
  SET_MARK_GROUP         | TIME STAMP SET             | 14714                        |                                                        | postgres
- SET_MARK_GROUP         | END                        | myGroup1                     | RLBK_MC8_%_DONE                                        | postgres
+ SET_MARK_GROUP         | END                        | myGroup1                     | RLBK_14702_DONE                                        | postgres
  ROLLBACK_GROUP         | NOTICE                     | Rollback id 14702            | Rollback id = 14702.                                   | postgres
  ROLLBACK_GROUP         | NOTICE                     | Rollback id 14702            | 2 / 5 tables effectively processed.                    | postgres
  ROLLBACK_GROUP         | NOTICE                     | Rollback id 14702            | 1 / 2 sequences effectively processed.                 | postgres
  DBLINK_CLOSE_CNX       |                            | rlbk#1                       |                                                        | postgres
  ROLLBACK_GROUP         | END                        | myGroup1                     | Rollback_id 14702                                      | postgres
- CONSOLIDATE_RLBK_GROUP | BEGIN                      | myGroup1                     | Erase all between marks MC8 and RLBK_MC8_%_DONE        | postgres
+ CONSOLIDATE_RLBK_GROUP | BEGIN                      | myGroup1                     | Erase all between marks MC8 and RLBK_14702_DONE        | postgres
  CONSOLIDATE_RLBK_GROUP | END                        | myGroup1                     | 2 tables and 2 sequences processed ; 1 marks deleted   | postgres
  SET_MARK_GROUP         | BEGIN                      | myGroup1                     |                                                        | postgres
  LOCK_GROUP             | BEGIN                      | myGroup1                     |                                                        | postgres
@@ -2765,8 +2765,8 @@ select hist_function, hist_event, hist_object,
  LOCK_GROUP             | BEGIN                      | myGroup1                     | Rollback session #1                                    | postgres
  LOCK_GROUP             | END                        | myGroup1                     | Rollback session #1: 5 tables locked, 0 deadlock(s)    | postgres
  ROLLBACK_GROUP         | TIME STAMP SET             | 14716                        |                                                        | postgres
- SET_MARK_GROUP         | BEGIN                      | myGroup1                     | RLBK_MC6_%_START                                       | postgres
- SET_MARK_GROUP         | END                        | myGroup1                     | RLBK_MC6_%_START                                       | postgres
+ SET_MARK_GROUP         | BEGIN                      | myGroup1                     | RLBK_14703_START                                       | postgres
+ SET_MARK_GROUP         | END                        | myGroup1                     | RLBK_14703_START                                       | postgres
  ROLLBACK_SEQUENCE      |                            | myschema1."myTbl3_col31_seq" | RESTART 21                                             | postgres
  ROLLBACK_SEQUENCE      |                            | myschema1.mytbl2b_col20_seq  | RESTART 9                                              | postgres
  ROLLBACK_TABLE         | BEGIN                      | myschema1.mytbl1             | All log rows where emaj_gid > 14700058 and <= 14700093 | postgres
@@ -2779,15 +2779,15 @@ select hist_function, hist_event, hist_object,
  ROLLBACK_TABLE         | END                        | myschema1."myTbl3"           | 10 rolled back primary keys                            | postgres
  ROLLBACK_TABLE         | BEGIN                      | myschema1.mytbl2b            | All log rows where emaj_gid > 14700058 and <= 14700093 | postgres
  ROLLBACK_TABLE         | END                        | myschema1.mytbl2b            | 2 rolled back primary keys                             | postgres
- SET_MARK_GROUP         | BEGIN                      | myGroup1                     | RLBK_MC6_%_DONE                                        | postgres
+ SET_MARK_GROUP         | BEGIN                      | myGroup1                     | RLBK_14703_DONE                                        | postgres
  SET_MARK_GROUP         | TIME STAMP SET             | 14717                        |                                                        | postgres
- SET_MARK_GROUP         | END                        | myGroup1                     | RLBK_MC6_%_DONE                                        | postgres
+ SET_MARK_GROUP         | END                        | myGroup1                     | RLBK_14703_DONE                                        | postgres
  ROLLBACK_GROUP         | NOTICE                     | Rollback id 14703            | Rollback id = 14703.                                   | postgres
  ROLLBACK_GROUP         | NOTICE                     | Rollback id 14703            | 5 / 5 tables effectively processed.                    | postgres
  ROLLBACK_GROUP         | NOTICE                     | Rollback id 14703            | 2 / 2 sequences effectively processed.                 | postgres
  DBLINK_CLOSE_CNX       |                            | rlbk#1                       |                                                        | postgres
  ROLLBACK_GROUP         | END                        | myGroup1                     | Rollback_id 14703                                      | postgres
- CONSOLIDATE_RLBK_GROUP | BEGIN                      | myGroup1                     | Erase all between marks MC6 and RLBK_MC6_%_DONE        | postgres
+ CONSOLIDATE_RLBK_GROUP | BEGIN                      | myGroup1                     | Erase all between marks MC6 and RLBK_14703_DONE        | postgres
  CONSOLIDATE_RLBK_GROUP | END                        | myGroup1                     | 5 tables and 2 sequences processed ; 5 marks deleted   | postgres
  SET_MARK_GROUP         | BEGIN                      | myGroup1                     |                                                        | postgres
  LOCK_GROUP             | BEGIN                      | myGroup1                     |                                                        | postgres
@@ -2800,13 +2800,13 @@ select hist_function, hist_event, hist_object,
  LOCK_GROUP             | BEGIN                      | myGroup1                     | Rollback session #1                                    | postgres
  LOCK_GROUP             | END                        | myGroup1                     | Rollback session #1: 5 tables locked, 0 deadlock(s)    | postgres
  ROLLBACK_GROUP         | TIME STAMP SET             | 14719                        |                                                        | postgres
- SET_MARK_GROUP         | BEGIN                      | myGroup1                     | RLBK_MC10_%_START                                      | postgres
- SET_MARK_GROUP         | END                        | myGroup1                     | RLBK_MC10_%_START                                      | postgres
+ SET_MARK_GROUP         | BEGIN                      | myGroup1                     | RLBK_14704_START                                       | postgres
+ SET_MARK_GROUP         | END                        | myGroup1                     | RLBK_14704_START                                       | postgres
  ROLLBACK_TABLE         | BEGIN                      | myschema1.mytbl1             | All log rows where emaj_gid > 14700118 and <= 14700134 | postgres
  ROLLBACK_TABLE         | END                        | myschema1.mytbl1             | 11 rolled back primary keys                            | postgres
- SET_MARK_GROUP         | BEGIN                      | myGroup1                     | RLBK_MC10_%_DONE                                       | postgres
+ SET_MARK_GROUP         | BEGIN                      | myGroup1                     | RLBK_14704_DONE                                        | postgres
  SET_MARK_GROUP         | TIME STAMP SET             | 14720                        |                                                        | postgres
- SET_MARK_GROUP         | END                        | myGroup1                     | RLBK_MC10_%_DONE                                       | postgres
+ SET_MARK_GROUP         | END                        | myGroup1                     | RLBK_14704_DONE                                        | postgres
  ROLLBACK_GROUP         | NOTICE                     | Rollback id 14704            | Rollback id = 14704.                                   | postgres
  ROLLBACK_GROUP         | NOTICE                     | Rollback id 14704            | 1 / 5 tables effectively processed.                    | postgres
  ROLLBACK_GROUP         | NOTICE                     | Rollback id 14704            | 0 / 2 sequences effectively processed.                 | postgres
@@ -2823,21 +2823,21 @@ select hist_function, hist_event, hist_object,
  LOCK_GROUP             | BEGIN                      | myGroup1                     | Rollback session #1                                    | postgres
  LOCK_GROUP             | END                        | myGroup1                     | Rollback session #1: 5 tables locked, 0 deadlock(s)    | postgres
  ROLLBACK_GROUP         | TIME STAMP SET             | 14722                        |                                                        | postgres
- SET_MARK_GROUP         | BEGIN                      | myGroup1                     | RLBK_MC10_%_START                                      | postgres
- SET_MARK_GROUP         | END                        | myGroup1                     | RLBK_MC10_%_START                                      | postgres
+ SET_MARK_GROUP         | BEGIN                      | myGroup1                     | RLBK_14705_START                                       | postgres
+ SET_MARK_GROUP         | END                        | myGroup1                     | RLBK_14705_START                                       | postgres
  ROLLBACK_TABLE         | BEGIN                      | myschema1.mytbl1             | All log rows where emaj_gid > 14700118 and <= 14700142 | postgres
  ROLLBACK_TABLE         | END                        | myschema1.mytbl1             | 11 rolled back primary keys                            | postgres
  ROLLBACK_TABLE         | BEGIN                      | myschema1.mytbl4             | All log rows where emaj_gid > 14700118 and <= 14700142 | postgres
  ROLLBACK_TABLE         | END                        | myschema1.mytbl4             | 1 rolled back primary keys                             | postgres
- SET_MARK_GROUP         | BEGIN                      | myGroup1                     | RLBK_MC10_%_DONE                                       | postgres
+ SET_MARK_GROUP         | BEGIN                      | myGroup1                     | RLBK_14705_DONE                                        | postgres
  SET_MARK_GROUP         | TIME STAMP SET             | 14723                        |                                                        | postgres
- SET_MARK_GROUP         | END                        | myGroup1                     | RLBK_MC10_%_DONE                                       | postgres
+ SET_MARK_GROUP         | END                        | myGroup1                     | RLBK_14705_DONE                                        | postgres
  ROLLBACK_GROUP         | NOTICE                     | Rollback id 14705            | Rollback id = 14705.                                   | postgres
  ROLLBACK_GROUP         | NOTICE                     | Rollback id 14705            | 2 / 5 tables effectively processed.                    | postgres
  ROLLBACK_GROUP         | NOTICE                     | Rollback id 14705            | 0 / 2 sequences effectively processed.                 | postgres
  DBLINK_CLOSE_CNX       |                            | rlbk#1                       |                                                        | postgres
  ROLLBACK_GROUP         | END                        | myGroup1                     | Rollback_id 14705                                      | postgres
- CONSOLIDATE_RLBK_GROUP | BEGIN                      | myGroup1                     | Erase all between marks MC10 and RLBK_MC10_%_DONE      | postgres
+ CONSOLIDATE_RLBK_GROUP | BEGIN                      | myGroup1                     | Erase all between marks MC10 and RLBK_14705_DONE       | postgres
  CONSOLIDATE_RLBK_GROUP | END                        | myGroup1                     | 2 tables and 2 sequences processed ; 4 marks deleted   | postgres
  SET_MARK_GROUP         | BEGIN                      | myGroup1                     |                                                        | postgres
  LOCK_GROUP             | BEGIN                      | myGroup1                     |                                                        | postgres
@@ -2855,8 +2855,8 @@ select hist_function, hist_event, hist_object,
  LOCK_GROUP             | BEGIN                      | myGroup1                     | Rollback session #1                                    | postgres
  LOCK_GROUP             | END                        | myGroup1                     | Rollback session #1: 5 tables locked, 0 deadlock(s)    | postgres
  ROLLBACK_GROUP         | TIME STAMP SET             | 14726                        |                                                        | postgres
- SET_MARK_GROUP         | BEGIN                      | myGroup1                     | RLBK_MC15_%_START                                      | postgres
- SET_MARK_GROUP         | END                        | myGroup1                     | RLBK_MC15_%_START                                      | postgres
+ SET_MARK_GROUP         | BEGIN                      | myGroup1                     | RLBK_14706_START                                       | postgres
+ SET_MARK_GROUP         | END                        | myGroup1                     | RLBK_14706_START                                       | postgres
  ROLLBACK_SEQUENCE      |                            | myschema1.mytbl2b_col20_seq  | RESTART 9                                              | postgres
  ROLLBACK_TABLE         | BEGIN                      | myschema1.mytbl1             | All log rows where emaj_gid > 14700143 and <= 14700162 | postgres
  ROLLBACK_TABLE         | END                        | myschema1.mytbl1             | 13 rolled back primary keys                            | postgres
@@ -2864,16 +2864,16 @@ select hist_function, hist_event, hist_object,
  ROLLBACK_TABLE         | END                        | myschema1.mytbl2             | 1 rolled back primary keys                             | postgres
  ROLLBACK_TABLE         | BEGIN                      | myschema1.mytbl2b            | All log rows where emaj_gid > 14700143 and <= 14700162 | postgres
  ROLLBACK_TABLE         | END                        | myschema1.mytbl2b            | 2 rolled back primary keys                             | postgres
- SET_MARK_GROUP         | BEGIN                      | myGroup1                     | RLBK_MC15_%_DONE                                       | postgres
+ SET_MARK_GROUP         | BEGIN                      | myGroup1                     | RLBK_14706_DONE                                        | postgres
  SET_MARK_GROUP         | TIME STAMP SET             | 14727                        |                                                        | postgres
- SET_MARK_GROUP         | END                        | myGroup1                     | RLBK_MC15_%_DONE                                       | postgres
+ SET_MARK_GROUP         | END                        | myGroup1                     | RLBK_14706_DONE                                        | postgres
  ROLLBACK_GROUP         | NOTICE                     | Rollback id 14706            | Rollback id = 14706.                                   | postgres
  ROLLBACK_GROUP         | NOTICE                     | Rollback id 14706            | 3 / 5 tables effectively processed.                    | postgres
  ROLLBACK_GROUP         | NOTICE                     | Rollback id 14706            | 1 / 2 sequences effectively processed.                 | postgres
  DBLINK_CLOSE_CNX       |                            | rlbk#1                       |                                                        | postgres
  ROLLBACK_GROUP         | END                        | myGroup1                     | Rollback_id 14706                                      | postgres
  RENAME_MARK_GROUP      | BEGIN                      | myGroup1                     | EMAJ_LAST_MARK                                         | postgres
- RENAME_MARK_GROUP      | END                        | myGroup1                     | RLBK_MC15_%_DONE renamed RLBK_MC15_DONE                | postgres
+ RENAME_MARK_GROUP      | END                        | myGroup1                     | RLBK_14706_DONE renamed RLBK_MC15_DONE                 | postgres
  SET_MARK_GROUP         | BEGIN                      | myGroup1                     |                                                        | postgres
  LOCK_GROUP             | BEGIN                      | myGroup1                     |                                                        | postgres
  LOCK_GROUP             | END                        | myGroup1                     | 5 tables locked, 0 deadlock(s)                         | postgres
@@ -2885,17 +2885,17 @@ select hist_function, hist_event, hist_object,
  LOCK_GROUP             | BEGIN                      | myGroup1                     | Rollback session #1                                    | postgres
  LOCK_GROUP             | END                        | myGroup1                     | Rollback session #1: 5 tables locked, 0 deadlock(s)    | postgres
  ROLLBACK_GROUP         | TIME STAMP SET             | 14729                        |                                                        | postgres
- SET_MARK_GROUP         | BEGIN                      | myGroup1                     | RLBK_MC16_%_START                                      | postgres
- SET_MARK_GROUP         | END                        | myGroup1                     | RLBK_MC16_%_START                                      | postgres
+ SET_MARK_GROUP         | BEGIN                      | myGroup1                     | RLBK_14707_START                                       | postgres
+ SET_MARK_GROUP         | END                        | myGroup1                     | RLBK_14707_START                                       | postgres
  ROLLBACK_TABLE         | BEGIN                      | myschema1.mytbl1             | All log rows where emaj_gid > 14700160 and <= 14700178 | postgres
  ROLLBACK_TABLE         | END                        | myschema1.mytbl1             | 11 rolled back primary keys                            | postgres
  ROLLBACK_TABLE         | BEGIN                      | myschema1.mytbl2             | All log rows where emaj_gid > 14700160 and <= 14700178 | postgres
  ROLLBACK_TABLE         | END                        | myschema1.mytbl2             | 2 rolled back primary keys                             | postgres
  ROLLBACK_TABLE         | BEGIN                      | myschema1.mytbl2b            | All log rows where emaj_gid > 14700160 and <= 14700178 | postgres
  ROLLBACK_TABLE         | END                        | myschema1.mytbl2b            | 2 rolled back primary keys                             | postgres
- SET_MARK_GROUP         | BEGIN                      | myGroup1                     | RLBK_MC16_%_DONE                                       | postgres
+ SET_MARK_GROUP         | BEGIN                      | myGroup1                     | RLBK_14707_DONE                                        | postgres
  SET_MARK_GROUP         | TIME STAMP SET             | 14730                        |                                                        | postgres
- SET_MARK_GROUP         | END                        | myGroup1                     | RLBK_MC16_%_DONE                                       | postgres
+ SET_MARK_GROUP         | END                        | myGroup1                     | RLBK_14707_DONE                                        | postgres
  ROLLBACK_GROUP         | NOTICE                     | Rollback id 14707            | Rollback id = 14707.                                   | postgres
  ROLLBACK_GROUP         | NOTICE                     | Rollback id 14707            | 3 / 5 tables effectively processed.                    | postgres
  ROLLBACK_GROUP         | NOTICE                     | Rollback id 14707            | 0 / 2 sequences effectively processed.                 | postgres

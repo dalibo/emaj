@@ -150,10 +150,10 @@ Contrairement à la fonction *emaj_rollback_group()*, à l'issue de l'opération
 
 De plus, en début et en fin d'opération, la fonction pose automatiquement sur le groupe deux marques, nommées :
 
-* '*RLBK_<marque.du.rollback>_<heure_du_rollback>_START*'
-* '*RLBK_<marque.du.rollback>_<heure_du_rollback>_DONE*'
+* '*RLBK_<identifiant.du.rollback>_START*'
+* '*RLBK_<identifiant.du.rollback>_DONE*'
 
-où *<heure_du_rollback>* représente l'heure de début de la transaction effectuant le rollback, exprimée sous la forme « *heures.minutes.secondes.millisecondes* ».
+avec, pour chacune, un commentaire incluant le nom de la marque cible.
 
 Lorsque le volume de mises à jour à annuler est important et que l'opération de rollback est longue, il est possible de suivre l'avancement de l'opération à l'aide de la fonction :ref:`emaj_rollback_activity() <emaj_rollback_activity>` ou du client :doc:`emajRollbackMonitor <rollbackMonitorClient>`.
 
@@ -164,11 +164,11 @@ oDes rollbacks de différents types (*logged* / *unlogged*) peuvent être exécu
 * …
 * Pose de la marque M2
 * …
-* Logged rollback à M1 (générant les marques *RLBK_M1_<heure>_STRT*, puis *RLBK_M1_<heure>_DONE*)
+* Logged rollback à M1 (générant les marques *RLBK_<id.rlbk.1>_STRT*, puis *RLBK_<id.rlbk.1>_DONE*)
 * …
-* Rollback à RLBK_M1_<heure>_DONE (pour annuler le traitement d'après rollback)
+* Rollback à RLBK_<id.rlbk.1>_DONE (pour annuler le traitement d'après rollback)
 * …
-* Rollback à RLBK_M1_<heure>_STRT (pour finalement annuler le premier rollback)
+* Rollback à RLBK_<id.rlbk.1>_STRT (pour finalement annuler le premier rollback)
 
 Une :ref:`fonction de « consolidation »<emaj_consolidate_rollback_group>` de « *rollback tracé* » permet de transformer un rollback annulable en rollback simple.
 

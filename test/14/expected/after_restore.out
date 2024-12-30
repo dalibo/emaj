@@ -94,23 +94,23 @@ select emaj.emaj_set_mark_group('myGroup2','After restore mark');
 -----------------------------
 -- emaj tables
 select mark_group, regexp_replace(mark_name,E'\\d\\d\.\\d\\d\\.\\d\\d\\.\\d\\d\\d\\d','%','g'), mark_time_id, mark_is_rlbk_protected, mark_comment, mark_log_rows_before_next, mark_logged_rlbk_target_mark from emaj.emaj_mark order by mark_time_id, mark_group;
- mark_group |        regexp_replace        | mark_time_id | mark_is_rlbk_protected |   mark_comment   | mark_log_rows_before_next | mark_logged_rlbk_target_mark 
-------------+------------------------------+--------------+------------------------+------------------+---------------------------+------------------------------
- myGroup2   | M3                           |        12201 | f                      | This mark is old |                         0 | 
- myGroup1   | M4                           |        12401 | f                      |                  |                        10 | 
- myGroup1   | M5                           |        12402 | f                      |                  |                         3 | 
- myGroup1   | Before logged rollback to M4 |        12601 | f                      |                  |                        28 | 
- myGroup1   | STOP_%                       |        14000 | f                      |                  |                         0 | 
- myGroup2   | STOP_%                       |        14000 | f                      |                  |                         0 | 
- myGroup1   | Stop after rollback          |        14007 | f                      |                  |                         0 | 
- myGroup2   | Stop after rollback          |        14007 | f                      |                  |                         0 | 
- myGroup1   | Multi-1                      |        14009 | f                      |                  |                           | 
- myGroup2   | Multi-1                      |        14009 | f                      |                  |                        92 | 
- myGroup2   | RLBK_Multi-1_%_START         |        20001 | f                      |                  |                        32 | 
- myGroup2   | RLBK_Multi-1_%_DONE          |        20002 | f                      |                  |                        30 | Multi-1
- myGroup2   | RLBK_Multi-1_%_START         |        20201 | f                      |                  |                        32 | 
- myGroup2   | latest_mark                  |        20202 | f                      |                  |                        19 | Multi-1
- myGroup2   | After restore mark           |        20204 | f                      |                  |                           | 
+ mark_group |        regexp_replace        | mark_time_id | mark_is_rlbk_protected |                    mark_comment                     | mark_log_rows_before_next | mark_logged_rlbk_target_mark 
+------------+------------------------------+--------------+------------------------+-----------------------------------------------------+---------------------------+------------------------------
+ myGroup2   | M3                           |        12201 | f                      | This mark is old                                    |                         0 | 
+ myGroup1   | M4                           |        12401 | f                      |                                                     |                        10 | 
+ myGroup1   | M5                           |        12402 | f                      |                                                     |                         3 | 
+ myGroup1   | Before logged rollback to M4 |        12601 | f                      | Automatically set at rollback to mark M4 start      |                        28 | 
+ myGroup1   | STOP_%                       |        14000 | f                      |                                                     |                         0 | 
+ myGroup2   | STOP_%                       |        14000 | f                      |                                                     |                         0 | 
+ myGroup1   | Stop after rollback          |        14007 | f                      |                                                     |                         0 | 
+ myGroup2   | Stop after rollback          |        14007 | f                      |                                                     |                         0 | 
+ myGroup1   | Multi-1                      |        14009 | f                      |                                                     |                           | 
+ myGroup2   | Multi-1                      |        14009 | f                      |                                                     |                        92 | 
+ myGroup2   | RLBK_20000_START             |        20001 | f                      | Automatically set at rollback to mark Multi-1 start |                        32 | 
+ myGroup2   | RLBK_20000_DONE              |        20002 | f                      | Automatically set at rollback to mark Multi-1 end   |                        30 | Multi-1
+ myGroup2   | RLBK_20200_START             |        20201 | f                      | Automatically set at rollback to mark Multi-1 start |                        32 | 
+ myGroup2   | latest_mark                  |        20202 | f                      | Automatically set at rollback to mark Multi-1 end   |                        19 | Multi-1
+ myGroup2   | After restore mark           |        20204 | f                      |                                                     |                           | 
 (15 rows)
 
 select sequ_schema, sequ_name, sequ_time_id, sequ_last_val, sequ_is_called from emaj.emaj_sequence order by sequ_time_id, sequ_schema, sequ_name;
@@ -472,18 +472,18 @@ select * from emaj.emaj_rollback_group('myGroup2','Multi-1');
 -----------------------------
 -- emaj tables
 select mark_group, regexp_replace(mark_name,E'\\d\\d\.\\d\\d\\.\\d\\d\\.\\d\\d\\d\\d','%','g'), mark_time_id, mark_is_rlbk_protected, mark_comment, mark_log_rows_before_next, mark_logged_rlbk_target_mark from emaj.emaj_mark order by mark_time_id, mark_group;
- mark_group |        regexp_replace        | mark_time_id | mark_is_rlbk_protected |   mark_comment   | mark_log_rows_before_next | mark_logged_rlbk_target_mark 
-------------+------------------------------+--------------+------------------------+------------------+---------------------------+------------------------------
- myGroup2   | M3                           |        12201 | f                      | This mark is old |                         0 | 
- myGroup1   | M4                           |        12401 | f                      |                  |                        10 | 
- myGroup1   | M5                           |        12402 | f                      |                  |                         3 | 
- myGroup1   | Before logged rollback to M4 |        12601 | f                      |                  |                        28 | 
- myGroup1   | STOP_%                       |        14000 | f                      |                  |                         0 | 
- myGroup2   | STOP_%                       |        14000 | f                      |                  |                         0 | 
- myGroup1   | Stop after rollback          |        14007 | f                      |                  |                         0 | 
- myGroup2   | Stop after rollback          |        14007 | f                      |                  |                         0 | 
- myGroup1   | Multi-1                      |        14009 | f                      |                  |                           | 
- myGroup2   | Multi-1                      |        14009 | f                      |                  |                           | 
+ mark_group |        regexp_replace        | mark_time_id | mark_is_rlbk_protected |                  mark_comment                  | mark_log_rows_before_next | mark_logged_rlbk_target_mark 
+------------+------------------------------+--------------+------------------------+------------------------------------------------+---------------------------+------------------------------
+ myGroup2   | M3                           |        12201 | f                      | This mark is old                               |                         0 | 
+ myGroup1   | M4                           |        12401 | f                      |                                                |                        10 | 
+ myGroup1   | M5                           |        12402 | f                      |                                                |                         3 | 
+ myGroup1   | Before logged rollback to M4 |        12601 | f                      | Automatically set at rollback to mark M4 start |                        28 | 
+ myGroup1   | STOP_%                       |        14000 | f                      |                                                |                         0 | 
+ myGroup2   | STOP_%                       |        14000 | f                      |                                                |                         0 | 
+ myGroup1   | Stop after rollback          |        14007 | f                      |                                                |                         0 | 
+ myGroup2   | Stop after rollback          |        14007 | f                      |                                                |                         0 | 
+ myGroup1   | Multi-1                      |        14009 | f                      |                                                |                           | 
+ myGroup2   | Multi-1                      |        14009 | f                      |                                                |                           | 
 (10 rows)
 
 select time_id, time_last_emaj_gid, time_event from emaj.emaj_time_stamp order by time_id;

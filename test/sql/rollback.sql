@@ -312,7 +312,7 @@ select count(*) from myTbl4;
 
 -- set a mark
 select emaj.emaj_set_mark_group('myGroup1','Mark13');
-select mark_group, regexp_replace(mark_name,E'\\d\\d\.\\d\\d\\.\\d\\d\\.\\d\\d\\d\\d','%','g'),mark_time_id, mark_is_rlbk_protected, mark_comment, mark_log_rows_before_next, mark_logged_rlbk_target_mark from emaj.emaj_mark order by mark_time_id, mark_group;
+select mark_group, regexp_replace(mark_name,E'\\d\\d\.\\d\\d\\.\\d\\d\\.\\d\\d\\d\\d','%','g'), mark_time_id, mark_is_rlbk_protected, mark_comment, mark_log_rows_before_next, mark_logged_rlbk_target_mark from emaj.emaj_mark order by mark_time_id, mark_group;
 select sequ_schema, sequ_name, sequ_time_id, sequ_last_val, sequ_is_called from emaj.emaj_sequence order by sequ_time_id, sequ_schema, sequ_name;
 select tbl_schema, tbl_name, tbl_time_id, tbl_log_seq_last_val from emaj.emaj_table order by tbl_time_id, tbl_schema, tbl_name;
 select col11, col12, col13, emaj_verb, emaj_tuple, emaj_gid from emaj_myschema1.mytbl1_log order by emaj_gid, emaj_tuple desc;
@@ -572,13 +572,11 @@ insert into myTbl2 values (1000,'TC3',NULL);
 
 select emaj.emaj_rename_mark_group('myGroup1','Conso_M2','Renamed_conso_M2');
 select emaj.emaj_rename_mark_group('myGroup1','EMAJ_LAST_MARK','Renamed_last_mark');
-select cons_group, cons_target_rlbk_mark_name, cons_target_rlbk_mark_time_id, 
-       regexp_replace(cons_end_rlbk_mark_name,E'\\d\\d\.\\d\\d\\.\\d\\d\\.\\d\\d\\d\\d','%','g'), cons_end_rlbk_mark_time_id, cons_rows, cons_marks 
+select cons_group, cons_target_rlbk_mark_name, cons_target_rlbk_mark_time_id, cons_end_rlbk_mark_name, cons_end_rlbk_mark_time_id, cons_rows, cons_marks 
   from emaj.emaj_get_consolidable_rollbacks();
   
 select emaj.emaj_consolidate_rollback_group('myGroup1','Renamed_last_mark');
-select cons_group, cons_target_rlbk_mark_name, cons_target_rlbk_mark_time_id, 
-       regexp_replace(cons_end_rlbk_mark_name,E'\\d\\d\.\\d\\d\\.\\d\\d\\.\\d\\d\\d\\d','%','g'), cons_end_rlbk_mark_time_id, cons_rows, cons_marks
+select cons_group, cons_target_rlbk_mark_name, cons_target_rlbk_mark_time_id, cons_end_rlbk_mark_name, cons_end_rlbk_mark_time_id, cons_rows, cons_marks 
   from emaj.emaj_get_consolidable_rollbacks();
 
 -- consolidate a rollback already consolidated

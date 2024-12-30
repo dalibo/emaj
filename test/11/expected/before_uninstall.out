@@ -205,102 +205,258 @@ select sum(stat_rows) from emaj.emaj_log_stat_group('emaj demo group 1','MARK1',
 --- (unlogged) rollback to MARK2.
 ---
 select * from emaj.emaj_rollback_group('emaj demo group 1','MARK2');
-psql:sql/emaj_demo.sql:268: ERROR:  syntax error at or near "INTO"
-LINE 65:             INTO v_connectString;
-                     ^
-QUERY:  
--- This function tries to open a named dblink connection.
--- It uses as target: the current cluster (port), the current database and a role defined in the emaj_param table.
--- This connection role must be defined in the emaj_param table with a row having:
---   - param_key = 'dblink_user_password',
---   - param_value_text = 'user=<user> password=<password>' with the rules that apply to usual libPQ connect strings.
--- The password can be omited if the connection doesn't require it.
--- The dblink_connect_u is used to open the connection so that emaj_adm but non superuser roles can access the
---    cluster even when no password is required to log on.
--- The function is directly called by Emaj_web.
--- Input:  connection name
--- Output: integer status return.
---           1 successful connection
---           0 already opened connection
---          -1 dblink is not installed
---          -2 dblink functions are not visible for the session (obsolete)
---          -3 dblink functions execution is not granted to the role
---          -4 the transaction isolation level is not READ COMMITTED
---          -5 no 'dblink_user_password' parameter is defined in the emaj_param table
---          -6 error at dblink_connect() call
---         name of the schema that holds the dblink extension (used later to schema qualify all calls to dblink functions)
-  DECLARE
-    v_nbCnx                  INT;
-    v_UserPassword           TEXT;
-    v_connectString          TEXT;
-  BEGIN
--- Look for the schema holding the dblink functions.
---   (NULL if the dblink_connect_u function is not available, which should not happen)
-    SELECT nspname INTO p_schema
-      FROM pg_catalog.pg_proc
-           JOIN pg_catalog.pg_namespace ON (pg_namespace.oid = pronamespace)
-      WHERE proname = 'dblink_connect_u'
-      LIMIT 1;
-    IF NOT FOUND THEN
-      p_status = -1;                      -- dblink is not installed
-    ELSIF NOT has_function_privilege(quote_ident(p_schema) || '.dblink_connect_u(text, text)', 'execute') THEN
-      p_status = -3;                      -- current role has not the execute rights on dblink functions
-    ELSIF (p_cnxName LIKE 'rlbk#%' OR p_cnxName = 'test') AND
-          current_setting('transaction_isolation') <> 'read committed' THEN
-      p_status = -4;                      -- 'rlbk#*' connection (used for rollbacks) must only come from a
-                                          --   READ COMMITTED transaction
-    ELSE
-      EXECUTE format('SELECT 0 WHERE %L = ANY (%I.dblink_get_connections())',
-                     p_cnxName, p_schema);
-      GET DIAGNOSTICS v_nbCnx = ROW_COUNT;
-      IF v_nbCnx > 0 THEN
--- Dblink is usable, so search the requested connection name in dblink connections list.
-        p_status = 0;                       -- the requested connection is already open
-      ELSE
--- So, get the 'dblink_user_password' parameter if exists, from emaj_param.
-        SELECT param_value_text INTO v_UserPassword
-          FROM emaj.emaj_param
-          WHERE param_key = 'dblink_user_password';
-        IF NOT FOUND THEN
-          p_status = -5;                    -- no 'dblink_user_password' parameter is defined in the emaj_param table
-        ELSE
--- ... build the connect string
-          SELECT 'host=' || CASE WHEN current_setting('listen_addresses') = ''
-                              THEN '"' || current_setting('unix_socket_directory') || '"'
-                              ELSE 'localhost'
-                            END
-              || ' port=' || current_setting('port')
-              || ' dbname=' || current_database()
-              || ' ' || v_userPassword;
-            INTO v_connectString;
--- ... and try to connect
-          BEGIN
-            EXECUTE format('SELECT %I.dblink_connect_u(%L ,%L)',
-                           p_schema, p_cnxName, v_connectString);
-            p_status = 1;                   -- the connection is successful
-          EXCEPTION
-            WHEN OTHERS THEN
-              p_status = -6;                -- the connection attempt failed
-          END;
-        END IF;
-      END IF;
-    END IF;
--- For connections used for rollback operations, record the dblink connection attempt in the emaj_hist table.
-    IF substring(p_cnxName FROM 1 FOR 5) = 'rlbk#' THEN
-      INSERT INTO emaj.emaj_hist (hist_function, hist_object, hist_wording)
-        VALUES ('DBLINK_OPEN_CNX', p_cnxName, 'Status = ' || p_status);
-    END IF;
---
-    RETURN;
-  END;
-
-CONTEXT:  compilation of PL/pgSQL function "_dblink_open_cnx" near line 58
-SQL statement "SELECT p_status, (p_status >= 0), CASE WHEN p_status >= 0 THEN p_schema ELSE NULL END
-                                                                       FROM emaj._dblink_open_cnx('rlbk#1')"
-PL/pgSQL function emaj._rlbk_init(text[],text,boolean,integer,boolean,boolean,text) line 49 at SQL statement
+---
+--- Look at the known marks for our group 1. MARK 3 has disappeared.
+---
+select * from emaj.emaj_mark where mark_group = 'emaj demo group 1';
+---
+--- Count the total number of logged updates. 20 - among the 23 - have been rollbacked
+---
+select sum(stat_rows) from emaj.emaj_log_stat_group('emaj demo group 1','MARK1',NULL);
+---------------------------------------------------------------------------
+---                                                                     ---
+---  Let us chain again some updates and set marks.                     ---
+---                                                                     ---
+---------------------------------------------------------------------------
+---
+--- Perform some updates on myTbl1 and myTbl2.
+---
+insert into myTbl1 
+  select i, 'GHI', E'\\006\\007\\010'::bytea from generate_series (21,25) as i;
+delete from myTbl2 where col21 > 8;
+---
+--- Set MARK4.
+---
+select emaj.emaj_set_mark_group('emaj demo group 1','MARK4');
+---
+--- Perform some updates on myTbl1 and myTbl2.
+---
+update myTbl2 set col23 = col23 - '1 YEAR'::interval;
+update myTbl4 set col43 = NULL where col41 = 2;
+---
+--- Set MARK5.
+---
+select emaj.emaj_set_mark_group('emaj demo group 1','MARK5');
+---------------------------------------------------------------------------
+---                                                                     ---
+---  Let us perform a logged rollback of "emaj demo group 1" to MARK4.  ---
+---                                                                     ---
+---------------------------------------------------------------------------
+---
+--- First verify tables content.
+---
+select * from myTbl2 where col23 < current_date;
+select * from myTbl4 where col43 is NULL;
+---
+--- Perform a logged rollback to MARK2.
+---
+select * from emaj.emaj_logged_rollback_group('emaj demo group 1','MARK4');
+---
+--- Check the resulting tables content.
+---
+select * from myTbl2 where col23 < current_date;
+select * from myTbl4 where col43 is NULL;
+---
+--- Latests updates have been canceled. But the old MARK4 still exists. And 2 new marks frame the rollback operation.
+---
+select * from emaj.emaj_mark where mark_group = 'emaj demo group 1' order by mark_time_id;
+---
+--- And the rollback operation has been logged.
+---
+select * from emaj_emaj_demo_app_schema.mytbl4_log;
+---------------------------------------------------------------------------
+---                                                                     ---
+---  Let us improve our marks.                                          ---
+---                                                                     ---
+---------------------------------------------------------------------------
+---
+--- Remove the mark corresponding to the logged rollback start (RLBK_MARK4_<time>_START).
+---
+select emaj.emaj_delete_mark_group('emaj demo group 1',emaj.emaj_get_previous_mark_group('emaj demo group 1','EMAJ_LAST_MARK'));
+---
+--- Rename and comment the mark corresponding to the logged rollback stop (RLBK_MARK4_<time>_STOP).
+---
+select emaj.emaj_rename_mark_group('emaj demo group 1','EMAJ_LAST_MARK','End of rollback');
+select emaj.emaj_comment_mark_group('emaj demo group 1','End of rollback','This mark corresponds to the end of the logged rollback');
+---
+--- Look at the result in the emaj_group table.
+---
+select * from emaj.emaj_mark where mark_group = 'emaj demo group 1' order by mark_time_id;
+---
+--- Find the name of the mark set 1 micro-second ago.
+---
+select emaj.emaj_get_previous_mark_group('emaj demo group 1',current_timestamp - '1 microsecond'::interval);
+---------------------------------------------------------------------------
+---                                                                     ---
+---  Now, we can rollback ... our last rollback.                        ---
+---                                                                     ---
+---------------------------------------------------------------------------
+---
+--- (unlogged) rollback to MARK5.
+---
+select * from emaj.emaj_rollback_group('emaj demo group 1','MARK5');
+---
+--- ... and look at the result in the emaj_mark table.
+---
+select * from emaj.emaj_mark where mark_group = 'emaj demo group 1' order by mark_time_id;
+---------------------------------------------------------------------------
+---                                                                     ---
+---  Estimate how long a roolback would take.                           ---
+---                                                                     ---
+---------------------------------------------------------------------------
+---
+--- Estimate the duration of an unlogged rollback to the first mark.
+---  (See the documentation to see how this estimate is computed)
+---
+select emaj.emaj_estimate_rollback_group('emaj demo group 1','MARK1',false);
+---------------------------------------------------------------------------
+---                                                                     ---
+---  Let us start the second group and perform some table updates.      ---
+---                                                                     ---
+---------------------------------------------------------------------------
+---
+--- Start the second group to activate its log triggers.
+---
+select emaj.emaj_start_group('emaj demo group 2','MARK1');
+---
+--- perform some table updates and sequence changes.
+---
+insert into "myTbl3" (col33) select generate_series (1,10)*random();
+alter sequence emaj_demo_app_schema.mySeq1 increment 3 maxvalue 3000;
+select nextval('emaj_demo_app_schema.mySeq1');
+---------------------------------------------------------------------------
+---                                                                     ---
+---  Let us set a common mark on both groups and perform some updates.  ---
+---                                                                     ---
+---------------------------------------------------------------------------
+---
+--- Set a mark for both group in a single operation.
+---
+select emaj.emaj_set_mark_groups(array['emaj demo group 1','emaj demo group 2'],'COMMON_MARK2');
+---
+--- perform some table updates and sequence changes.
+---
+update "myTbl3" set col32 = col32 + '1 DAY'::interval where col31 <= 3;
+select nextval('emaj_demo_app_schema.mySeq1');
+insert into myTbl4 values (3,'XYZ',2,2,'ABC');
+select nextval('emaj_demo_app_schema.mySeq1');
+---
+--- look at the mySeq1 sequence table.
+---
+select * from emaj_demo_app_schema.mySeq1;
+---------------------------------------------------------------------------
+---                                                                     ---
+---  Let us rollback both groups together to COMMON_MARK2.              ---
+---                                                                     ---
+---------------------------------------------------------------------------
+---
+--- Look at the emaj_group table.
+---
+select * from emaj.emaj_mark where mark_group in ('emaj demo group 1','emaj demo group 2') order by mark_time_id;
+---
+--- Try first to rollback to MARK1 (each group has one MARK1 mark, but they do not represent the same point in time).
+---
+begin;
+select * from emaj.emaj_rollback_groups(array['emaj demo group 1','emaj demo group 2'],'MARK1');
+psql:sql/emaj_demo.sql:454: ERROR:  _check_mark_name: The mark "MARK1" does not represent the same point in time for all groups.
+CONTEXT:  PL/pgSQL function emaj._check_mark_name(text[],text,boolean) line 72 at RAISE
+SQL statement "SELECT emaj._check_mark_name(p_groupNames := p_groupNames, p_mark := p_mark, p_checkActive := TRUE)"
+PL/pgSQL function emaj._rlbk_check(text[],text,boolean,boolean) line 21 at SQL statement
+SQL statement "SELECT emaj._rlbk_check(p_groupNames, p_mark, p_isAlterGroupAllowed, FALSE)"
+PL/pgSQL function emaj._rlbk_init(text[],text,boolean,integer,boolean,boolean,text) line 25 at SQL statement
 SQL statement "SELECT emaj._rlbk_init(p_groupNames, p_mark, p_isLoggedRlbk, 1, p_multiGroup, p_isAlterGroupAllowed, p_comment)"
 PL/pgSQL function emaj._rlbk_groups(text[],text,boolean,boolean,boolean,text) line 26 at SQL statement
-PL/pgSQL function emaj.emaj_rollback_group(text,text,boolean,text) line 8 at RETURN QUERY
+PL/pgSQL function emaj.emaj_rollback_groups(text[],text,boolean,text) line 8 at RETURN QUERY
+rollback;
+---
+--- So now let us use the real common mark.
+---
+select * from emaj.emaj_rollback_groups(array['emaj demo group 1','emaj demo group 2'],'COMMON_MARK2');
+---
+--- Look at the mySeq1 sequence table to see the result of the rollback.
+---
+select * from emaj_demo_app_schema.mySeq1;
+---------------------------------------------------------------------------
+---                                                                     ---
+---  Now let us consider we can forget all what has been logged         ---
+---  before MARK5 for the first group.                                  ---
+---                                                                     ---
+---------------------------------------------------------------------------
+---
+--- Look at the log table linked to myTbl4.
+---
+select * from emaj_emaj_demo_app_schema.mytbl4_log;
+---
+--- Purge the obsolete log.
+---
+select emaj.emaj_delete_before_mark_group('emaj demo group 1','MARK5');
+---
+--- Look at the result in the log table and in the emaj_mark table.
+---
+select * from emaj_emaj_demo_app_schema.mytbl4_log;
+select * from emaj.emaj_mark where mark_group = 'emaj demo group 1' order by mark_time_id;
+---------------------------------------------------------------------------
+---                                                                     ---
+---  Our logging period is completed. Let us stop the groups.           ---
+---                                                                     ---
+---------------------------------------------------------------------------
+---
+--- Stop the first group.
+---
+select emaj.emaj_stop_group('emaj demo group 1');
+---
+--- Stop the second group and set a specific stop mark name.
+---
+select emaj.emaj_stop_group('emaj demo group 2','Our own stop mark for the second group');
+---
+--- The marks are still there but are logically deleted.
+---
+select * from emaj.emaj_mark where mark_group in ('emaj demo group 1','emaj demo group 2') order by mark_time_id;
+---
+--- The log rows are still there too, but are not usable for any rollback.
+---
+select * from emaj_emaj_demo_app_schema."myTbl3_log";
+---------------------------------------------------------------------------
+---                                                                     ---
+---  Sometimes, tables structure or tables groups content change...     ---
+---                                                                     ---
+---------------------------------------------------------------------------
+---
+--- While the first group is IDLE, alter the myTbl4 table.
+--- To do that, the table must be temporarily removed from its group.
+---
+select emaj.emaj_remove_table('emaj_demo_app_schema','mytbl4');
+alter table emaj_demo_app_schema.myTbl4 add column col46 bigint;
+select emaj.emaj_assign_table('emaj_demo_app_schema','mytbl4','emaj demo group 1');
+---
+--- Move mySeq1 sequence to the first group.
+---
+select emaj.emaj_move_sequence('emaj_demo_app_schema','myseq1','emaj demo group 1');
+---
+--- Verify that the whole E-Maj environment is in good shape.
+---
+select * from emaj.emaj_verify_all();
+---
+--- Both groups are now ready to be started.
+---
+---------------------------------------------------------------------------
+---                                                                     ---
+---  The emaj_hist table records all E-Maj events. It can be examined   ---
+---  by the administrator at any time if needed.                        ---
+---                                                                     ---
+---------------------------------------------------------------------------
+---
+--- Here is the part of the history that reflects the execution of this script.
+---
+select * from emaj.emaj_hist where hist_id >= (select hist_id from emaj.emaj_hist where hist_function = 'CREATE_GROUP' and hist_event = 'BEGIN' and hist_object = 'emaj demo group 1' order by hist_id desc limit 1);
+---
+--- The demo environment is left as is to let you play with it.
+--- To remove it, just execute:
+---     SELECT emaj.emaj_demo_cleanup();
+--- This demo script can be rerun as many times as you wish.
+---
+--- This ends the E-Maj demo. Thank You for using E-Maj and have fun!
+---
 ---------------------------------------------------------------------------
 ---                                                                     ---
 ---     Setting up an environment to test E-Maj parallel rollbacks      ---

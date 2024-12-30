@@ -1313,7 +1313,7 @@ select emaj.emaj_set_mark_group('myGroup1','Mark13');
                    7
 (1 row)
 
-select mark_group, regexp_replace(mark_name,E'\\d\\d\.\\d\\d\\.\\d\\d\\.\\d\\d\\d\\d','%','g'),mark_time_id, mark_is_rlbk_protected, mark_comment, mark_log_rows_before_next, mark_logged_rlbk_target_mark from emaj.emaj_mark order by mark_time_id, mark_group;
+select mark_group, regexp_replace(mark_name,E'\\d\\d\.\\d\\d\\.\\d\\d\\.\\d\\d\\d\\d','%','g'), mark_time_id, mark_is_rlbk_protected, mark_comment, mark_log_rows_before_next, mark_logged_rlbk_target_mark from emaj.emaj_mark order by mark_time_id, mark_group;
     mark_group    | regexp_replace | mark_time_id | mark_is_rlbk_protected |              mark_comment              | mark_log_rows_before_next | mark_logged_rlbk_target_mark 
 ------------------+----------------+--------------+------------------------+----------------------------------------+---------------------------+------------------------------
  emptyGroup       | SM2            |         3006 | f                      | a comment on a mark for an empty group |                         0 | Mark1
@@ -1445,19 +1445,19 @@ select * from emaj.emaj_logged_rollback_group('myGroup1','Mark12');
 
 -- check impact
 select mark_group, regexp_replace(mark_name,E'\\d\\d\.\\d\\d\\.\\d\\d\\.\\d\\d\\d\\d','%','g'), mark_time_id, mark_is_rlbk_protected, mark_comment, mark_log_rows_before_next, mark_logged_rlbk_target_mark from emaj.emaj_mark order by mark_time_id, mark_group;
-    mark_group    |   regexp_replace    | mark_time_id | mark_is_rlbk_protected |              mark_comment              | mark_log_rows_before_next | mark_logged_rlbk_target_mark 
-------------------+---------------------+--------------+------------------------+----------------------------------------+---------------------------+------------------------------
- emptyGroup       | SM2                 |         3006 | f                      | a comment on a mark for an empty group |                         0 | Mark1
- emptyGroup       | EGM3                |         3400 | f                      |                                        |                         0 | 
- emptyGroup       | EGM4                |         3401 | f                      |                                        |                           | 
- phil's group#3", | Mark4               |         3402 | f                      |                                        |                         0 | 
- phil's group#3", | Mark5               |         3403 | f                      |                                        |                           | 
- myGroup2         | Mark21              |         4029 | f                      |                                        |                           | 
- myGroup1         | Mark11              |         4035 | f                      |                                        |                        19 | 
- myGroup1         | Mark12              |         4036 | f                      |                                        |                        11 | 
- myGroup1         | Mark13              |         4037 | f                      |                                        |                         0 | 
- myGroup1         | RLBK_Mark12_%_START |         4038 | f                      |                                        |                        11 | 
- myGroup1         | RLBK_Mark12_%_DONE  |         4039 | f                      |                                        |                           | Mark12
+    mark_group    | regexp_replace  | mark_time_id | mark_is_rlbk_protected |                    mark_comment                    | mark_log_rows_before_next | mark_logged_rlbk_target_mark 
+------------------+-----------------+--------------+------------------------+----------------------------------------------------+---------------------------+------------------------------
+ emptyGroup       | SM2             |         3006 | f                      | a comment on a mark for an empty group             |                         0 | Mark1
+ emptyGroup       | EGM3            |         3400 | f                      |                                                    |                         0 | 
+ emptyGroup       | EGM4            |         3401 | f                      |                                                    |                           | 
+ phil's group#3", | Mark4           |         3402 | f                      |                                                    |                         0 | 
+ phil's group#3", | Mark5           |         3403 | f                      |                                                    |                           | 
+ myGroup2         | Mark21          |         4029 | f                      |                                                    |                           | 
+ myGroup1         | Mark11          |         4035 | f                      |                                                    |                        19 | 
+ myGroup1         | Mark12          |         4036 | f                      |                                                    |                        11 | 
+ myGroup1         | Mark13          |         4037 | f                      |                                                    |                         0 | 
+ myGroup1         | RLBK_4011_START |         4038 | f                      | Automatically set at rollback to mark Mark12 start |                        11 | 
+ myGroup1         | RLBK_4011_DONE  |         4039 | f                      | Automatically set at rollback to mark Mark12 end   |                           | Mark12
 (11 rows)
 
 select sequ_schema, sequ_name, sequ_time_id, sequ_last_val, sequ_is_called from emaj.emaj_sequence order by sequ_time_id, sequ_schema, sequ_name;
@@ -1581,21 +1581,21 @@ select * from emaj.emaj_logged_rollback_group('myGroup1','Mark11',false,'Logged 
 
 -- check impact
 select mark_group, regexp_replace(mark_name,E'\\d\\d\.\\d\\d\\.\\d\\d\\.\\d\\d\\d\\d','%','g'), mark_time_id, mark_is_rlbk_protected, mark_comment, mark_log_rows_before_next, mark_logged_rlbk_target_mark from emaj.emaj_mark order by mark_time_id, mark_group;
-    mark_group    |   regexp_replace    | mark_time_id | mark_is_rlbk_protected |              mark_comment              | mark_log_rows_before_next | mark_logged_rlbk_target_mark 
-------------------+---------------------+--------------+------------------------+----------------------------------------+---------------------------+------------------------------
- emptyGroup       | SM2                 |         3006 | f                      | a comment on a mark for an empty group |                         0 | Mark1
- emptyGroup       | EGM3                |         3400 | f                      |                                        |                         0 | 
- emptyGroup       | EGM4                |         3401 | f                      |                                        |                           | 
- phil's group#3", | Mark4               |         3402 | f                      |                                        |                         0 | 
- phil's group#3", | Mark5               |         3403 | f                      |                                        |                           | 
- myGroup2         | Mark21              |         4029 | f                      |                                        |                           | 
- myGroup1         | Mark11              |         4035 | f                      |                                        |                        19 | 
- myGroup1         | Mark12              |         4036 | f                      |                                        |                        11 | 
- myGroup1         | Mark13              |         4037 | f                      |                                        |                         0 | 
- myGroup1         | RLBK_Mark12_%_START |         4038 | f                      |                                        |                        11 | 
- myGroup1         | RLBK_Mark12_%_DONE  |         4039 | f                      |                                        |                         0 | Mark12
- myGroup1         | RLBK_Mark11_%_START |         4040 | f                      |                                        |                        14 | 
- myGroup1         | RLBK_Mark11_%_DONE  |         4041 | f                      |                                        |                           | Mark11
+    mark_group    | regexp_replace  | mark_time_id | mark_is_rlbk_protected |                    mark_comment                    | mark_log_rows_before_next | mark_logged_rlbk_target_mark 
+------------------+-----------------+--------------+------------------------+----------------------------------------------------+---------------------------+------------------------------
+ emptyGroup       | SM2             |         3006 | f                      | a comment on a mark for an empty group             |                         0 | Mark1
+ emptyGroup       | EGM3            |         3400 | f                      |                                                    |                         0 | 
+ emptyGroup       | EGM4            |         3401 | f                      |                                                    |                           | 
+ phil's group#3", | Mark4           |         3402 | f                      |                                                    |                         0 | 
+ phil's group#3", | Mark5           |         3403 | f                      |                                                    |                           | 
+ myGroup2         | Mark21          |         4029 | f                      |                                                    |                           | 
+ myGroup1         | Mark11          |         4035 | f                      |                                                    |                        19 | 
+ myGroup1         | Mark12          |         4036 | f                      |                                                    |                        11 | 
+ myGroup1         | Mark13          |         4037 | f                      |                                                    |                         0 | 
+ myGroup1         | RLBK_4011_START |         4038 | f                      | Automatically set at rollback to mark Mark12 start |                        11 | 
+ myGroup1         | RLBK_4011_DONE  |         4039 | f                      | Automatically set at rollback to mark Mark12 end   |                         0 | Mark12
+ myGroup1         | RLBK_4012_START |         4040 | f                      | Automatically set at rollback to mark Mark11 start |                        14 | 
+ myGroup1         | RLBK_4012_DONE  |         4041 | f                      | Automatically set at rollback to mark Mark11 end   |                           | Mark11
 (13 rows)
 
 select sequ_schema, sequ_name, sequ_time_id, sequ_last_val, sequ_is_called from emaj.emaj_sequence order by sequ_time_id, sequ_schema, sequ_name;
@@ -2370,14 +2370,13 @@ select emaj.emaj_rename_mark_group('myGroup1','EMAJ_LAST_MARK','Renamed_last_mar
  
 (1 row)
 
-select cons_group, cons_target_rlbk_mark_name, cons_target_rlbk_mark_time_id, 
-       regexp_replace(cons_end_rlbk_mark_name,E'\\d\\d\.\\d\\d\\.\\d\\d\\.\\d\\d\\d\\d','%','g'), cons_end_rlbk_mark_time_id, cons_rows, cons_marks 
+select cons_group, cons_target_rlbk_mark_name, cons_target_rlbk_mark_time_id, cons_end_rlbk_mark_name, cons_end_rlbk_mark_time_id, cons_rows, cons_marks 
   from emaj.emaj_get_consolidable_rollbacks();
- cons_group | cons_target_rlbk_mark_name | cons_target_rlbk_mark_time_id |    regexp_replace    | cons_end_rlbk_mark_time_id | cons_rows | cons_marks 
-------------+----------------------------+-------------------------------+----------------------+----------------------------+-----------+------------
- emptyGroup | EGM3                       |                          3400 | RLBK_EGM3_%_DONE     |                       4045 |         0 |          2
- myGroup1   | Conso_M1                   |                          4052 | RLBK_Conso_M1_%_DONE |                       4054 |         0 |          0
- myGroup1   | Renamed_conso_M2           |                          4055 | Renamed_last_mark    |                       4058 |        31 |          2
+ cons_group | cons_target_rlbk_mark_name | cons_target_rlbk_mark_time_id | cons_end_rlbk_mark_name | cons_end_rlbk_mark_time_id | cons_rows | cons_marks 
+------------+----------------------------+-------------------------------+-------------------------+----------------------------+-----------+------------
+ emptyGroup | EGM3                       |                          3400 | RLBK_4015_DONE          |                       4045 |         0 |          2
+ myGroup1   | Conso_M1                   |                          4052 | RLBK_4018_DONE          |                       4054 |         0 |          0
+ myGroup1   | Renamed_conso_M2           |                          4055 | Renamed_last_mark       |                       4058 |        31 |          2
 (3 rows)
 
   
@@ -2387,14 +2386,13 @@ select emaj.emaj_consolidate_rollback_group('myGroup1','Renamed_last_mark');
                                5
 (1 row)
 
-select cons_group, cons_target_rlbk_mark_name, cons_target_rlbk_mark_time_id, 
-       regexp_replace(cons_end_rlbk_mark_name,E'\\d\\d\.\\d\\d\\.\\d\\d\\.\\d\\d\\d\\d','%','g'), cons_end_rlbk_mark_time_id, cons_rows, cons_marks
+select cons_group, cons_target_rlbk_mark_name, cons_target_rlbk_mark_time_id, cons_end_rlbk_mark_name, cons_end_rlbk_mark_time_id, cons_rows, cons_marks 
   from emaj.emaj_get_consolidable_rollbacks();
- cons_group | cons_target_rlbk_mark_name | cons_target_rlbk_mark_time_id |    regexp_replace    | cons_end_rlbk_mark_time_id | cons_rows | cons_marks 
-------------+----------------------------+-------------------------------+----------------------+----------------------------+-----------+------------
- emptyGroup | EGM3                       |                          3400 | RLBK_EGM3_%_DONE     |                       4045 |         0 |          2
- myGroup1   | Conso_M1                   |                          4052 | RLBK_Conso_M1_%_DONE |                       4054 |         0 |          0
- myGroup1   | Renamed_conso_M2           |                          4055 | Renamed_last_mark    |                       4058 |         0 |          0
+ cons_group | cons_target_rlbk_mark_name | cons_target_rlbk_mark_time_id | cons_end_rlbk_mark_name | cons_end_rlbk_mark_time_id | cons_rows | cons_marks 
+------------+----------------------------+-------------------------------+-------------------------+----------------------------+-----------+------------
+ emptyGroup | EGM3                       |                          3400 | RLBK_4015_DONE          |                       4045 |         0 |          2
+ myGroup1   | Conso_M1                   |                          4052 | RLBK_4018_DONE          |                       4054 |         0 |          0
+ myGroup1   | Renamed_conso_M2           |                          4055 | Renamed_last_mark       |                       4058 |         0 |          0
 (3 rows)
 
 -- consolidate a rollback already consolidated
@@ -2405,15 +2403,15 @@ select emaj.emaj_consolidate_rollback_group('myGroup1','Renamed_last_mark');
 (1 row)
 
 select mark_group, regexp_replace(mark_name,E'\\d\\d\.\\d\\d\\.\\d\\d\\.\\d\\d\\d\\d','%','g'), mark_time_id, mark_is_rlbk_protected, mark_comment, mark_log_rows_before_next, mark_logged_rlbk_target_mark from emaj.emaj_mark where mark_group = 'myGroup1' order by mark_time_id, mark_group;
- mark_group |    regexp_replace    | mark_time_id | mark_is_rlbk_protected | mark_comment | mark_log_rows_before_next | mark_logged_rlbk_target_mark 
-------------+----------------------+--------------+------------------------+--------------+---------------------------+------------------------------
- myGroup1   | Mark11               |         4035 | f                      |              |                        19 | 
- myGroup1   | Mark12               |         4036 | f                      |              |                        11 | 
- myGroup1   | Mark13               |         4037 | f                      |              |                         0 | 
- myGroup1   | Conso_M1             |         4052 | f                      |              |                         0 | 
- myGroup1   | RLBK_Conso_M1_%_DONE |         4054 | f                      |              |                         0 | Conso_M1
- myGroup1   | Renamed_conso_M2     |         4055 | f                      |              |                         0 | 
- myGroup1   | Renamed_last_mark    |         4058 | f                      |              |                           | Renamed_conso_M2
+ mark_group |  regexp_replace   | mark_time_id | mark_is_rlbk_protected |                    mark_comment                    | mark_log_rows_before_next | mark_logged_rlbk_target_mark 
+------------+-------------------+--------------+------------------------+----------------------------------------------------+---------------------------+------------------------------
+ myGroup1   | Mark11            |         4035 | f                      |                                                    |                        19 | 
+ myGroup1   | Mark12            |         4036 | f                      |                                                    |                        11 | 
+ myGroup1   | Mark13            |         4037 | f                      |                                                    |                         0 | 
+ myGroup1   | Conso_M1          |         4052 | f                      |                                                    |                         0 | 
+ myGroup1   | RLBK_4018_DONE    |         4054 | f                      | Automatically set at rollback to mark Conso_M1 end |                         0 | Conso_M1
+ myGroup1   | Renamed_conso_M2  |         4055 | f                      |                                                    |                         0 | 
+ myGroup1   | Renamed_last_mark |         4058 | f                      | Automatically set at rollback to mark Conso_M2 end |                           | Renamed_conso_M2
 (7 rows)
 
 select sequ_schema, sequ_name, sequ_time_id, sequ_last_val, sequ_is_called from emaj.emaj_sequence where sequ_schema = 'emaj_myschema1' order by sequ_time_id, sequ_schema, sequ_name;
@@ -2533,12 +2531,12 @@ begin;
 (1 row)
 
   select * from emaj.emaj_mark where mark_group = 'emptyGroup' order by mark_time_id, mark_group;
- mark_group |   mark_name   | mark_time_id | mark_is_rlbk_protected |              mark_comment              | mark_log_rows_before_next | mark_logged_rlbk_target_mark 
-------------+---------------+--------------+------------------------+----------------------------------------+---------------------------+------------------------------
- emptyGroup | SM2           |         3006 | f                      | a comment on a mark for an empty group |                         0 | Mark1
- emptyGroup | EGM3          |         3400 | f                      |                                        |                         0 | 
- emptyGroup | end_rlbk_mark |         4045 | f                      |                                        |                         0 | EGM3
- emptyGroup | stop          |         4061 | f                      |                                        |                         0 | 
+ mark_group |   mark_name   | mark_time_id | mark_is_rlbk_protected |                  mark_comment                  | mark_log_rows_before_next | mark_logged_rlbk_target_mark 
+------------+---------------+--------------+------------------------+------------------------------------------------+---------------------------+------------------------------
+ emptyGroup | SM2           |         3006 | f                      | a comment on a mark for an empty group         |                         0 | Mark1
+ emptyGroup | EGM3          |         3400 | f                      |                                                |                         0 | 
+ emptyGroup | end_rlbk_mark |         4045 | f                      | Automatically set at rollback to mark EGM3 end |                         0 | EGM3
+ emptyGroup | stop          |         4061 | f                      |                                                |                         0 | 
 (4 rows)
 
 rollback;
@@ -3117,11 +3115,11 @@ select hist_id, hist_function, hist_event, hist_object, regexp_replace(regexp_re
     4162 | LOCK_GROUP             | BEGIN                      | myGroup1,myGroup2            | Rollback session #1                                                                              | postgres
     4163 | LOCK_GROUP             | END                        | myGroup1,myGroup2            | Rollback session #1: 13 tables locked, 0 deadlock(s)                                             | postgres
     4164 | ROLLBACK_GROUPS        | TIME STAMP SET             | 4023                         |                                                                                                  | postgres
-    4165 | SET_MARK_GROUPS        | BEGIN                      | myGroup1,myGroup2            | RLBK_Mark1B_%_START                                                                              | postgres
-    4166 | SET_MARK_GROUPS        | END                        | myGroup1,myGroup2            | RLBK_Mark1B_%_START                                                                              | postgres
-    4167 | SET_MARK_GROUPS        | BEGIN                      | myGroup1,myGroup2            | RLBK_Mark1B_%_DONE                                                                               | postgres
+    4165 | SET_MARK_GROUPS        | BEGIN                      | myGroup1,myGroup2            | RLBK_4007_START                                                                                  | postgres
+    4166 | SET_MARK_GROUPS        | END                        | myGroup1,myGroup2            | RLBK_4007_START                                                                                  | postgres
+    4167 | SET_MARK_GROUPS        | BEGIN                      | myGroup1,myGroup2            | RLBK_4007_DONE                                                                                   | postgres
     4168 | SET_MARK_GROUPS        | TIME STAMP SET             | 4024                         |                                                                                                  | postgres
-    4169 | SET_MARK_GROUPS        | END                        | myGroup1,myGroup2            | RLBK_Mark1B_%_DONE                                                                               | postgres
+    4169 | SET_MARK_GROUPS        | END                        | myGroup1,myGroup2            | RLBK_4007_DONE                                                                                   | postgres
     4170 | ROLLBACK_GROUPS        | NOTICE                     | Rollback id 4007             | Rollback id = 4007.                                                                              | postgres
     4171 | ROLLBACK_GROUPS        | NOTICE                     | Rollback id 4007             | 0 / 13 tables effectively processed.                                                             | postgres
     4172 | ROLLBACK_GROUPS        | NOTICE                     | Rollback id 4007             | 0 / 4 sequences effectively processed.                                                           | postgres
@@ -3132,11 +3130,11 @@ select hist_id, hist_function, hist_event, hist_object, regexp_replace(regexp_re
     4177 | LOCK_GROUP             | BEGIN                      | myGroup1,myGroup2            | Rollback session #1                                                                              | postgres
     4178 | LOCK_GROUP             | END                        | myGroup1,myGroup2            | Rollback session #1: 13 tables locked, 0 deadlock(s)                                             | postgres
     4179 | ROLLBACK_GROUPS        | TIME STAMP SET             | 4025                         |                                                                                                  | postgres
-    4180 | SET_MARK_GROUPS        | BEGIN                      | myGroup1,myGroup2            | RLBK_Mark1B_%_START                                                                              | postgres
-    4181 | SET_MARK_GROUPS        | END                        | myGroup1,myGroup2            | RLBK_Mark1B_%_START                                                                              | postgres
-    4182 | SET_MARK_GROUPS        | BEGIN                      | myGroup1,myGroup2            | RLBK_Mark1B_%_DONE                                                                               | postgres
+    4180 | SET_MARK_GROUPS        | BEGIN                      | myGroup1,myGroup2            | RLBK_4008_START                                                                                  | postgres
+    4181 | SET_MARK_GROUPS        | END                        | myGroup1,myGroup2            | RLBK_4008_START                                                                                  | postgres
+    4182 | SET_MARK_GROUPS        | BEGIN                      | myGroup1,myGroup2            | RLBK_4008_DONE                                                                                   | postgres
     4183 | SET_MARK_GROUPS        | TIME STAMP SET             | 4026                         |                                                                                                  | postgres
-    4184 | SET_MARK_GROUPS        | END                        | myGroup1,myGroup2            | RLBK_Mark1B_%_DONE                                                                               | postgres
+    4184 | SET_MARK_GROUPS        | END                        | myGroup1,myGroup2            | RLBK_4008_DONE                                                                                   | postgres
     4185 | ROLLBACK_GROUPS        | NOTICE                     | Rollback id 4008             | Rollback id = 4008.                                                                              | postgres
     4186 | ROLLBACK_GROUPS        | NOTICE                     | Rollback id 4008             | 0 / 13 tables effectively processed.                                                             | postgres
     4187 | ROLLBACK_GROUPS        | NOTICE                     | Rollback id 4008             | 0 / 4 sequences effectively processed.                                                           | postgres
@@ -3239,16 +3237,16 @@ select hist_id, hist_function, hist_event, hist_object, regexp_replace(regexp_re
     4284 | LOCK_GROUP             | BEGIN                      | myGroup1                     | Rollback session #1                                                                              | postgres
     4285 | LOCK_GROUP             | END                        | myGroup1                     | Rollback session #1: 5 tables locked, 0 deadlock(s)                                              | postgres
     4286 | ROLLBACK_GROUP         | TIME STAMP SET             | 4038                         |                                                                                                  | postgres
-    4287 | SET_MARK_GROUP         | BEGIN                      | myGroup1                     | RLBK_Mark12_%_START                                                                              | postgres
-    4288 | SET_MARK_GROUP         | END                        | myGroup1                     | RLBK_Mark12_%_START                                                                              | postgres
+    4287 | SET_MARK_GROUP         | BEGIN                      | myGroup1                     | RLBK_4011_START                                                                                  | postgres
+    4288 | SET_MARK_GROUP         | END                        | myGroup1                     | RLBK_4011_START                                                                                  | postgres
     4289 | ROLLBACK_SEQUENCE      |                            | myschema1."myTbl3_col31_seq" | RESTART 1                                                                                        | postgres
     4290 | ROLLBACK_TABLE         | BEGIN                      | myschema1."myTbl3"           | All log rows where emaj_gid > 4000058 and <= 4000069                                             | postgres
     4291 | ROLLBACK_TABLE         | END                        | myschema1."myTbl3"           | 10 rolled back primary keys                                                                      | postgres
     4292 | ROLLBACK_TABLE         | BEGIN                      | myschema1.mytbl4             | All log rows where emaj_gid > 4000058 and <= 4000069, in session_replication_role = replica mode | postgres
     4293 | ROLLBACK_TABLE         | END                        | myschema1.mytbl4             | 1 rolled back primary keys                                                                       | postgres
-    4294 | SET_MARK_GROUP         | BEGIN                      | myGroup1                     | RLBK_Mark12_%_DONE                                                                               | postgres
+    4294 | SET_MARK_GROUP         | BEGIN                      | myGroup1                     | RLBK_4011_DONE                                                                                   | postgres
     4295 | SET_MARK_GROUP         | TIME STAMP SET             | 4039                         |                                                                                                  | postgres
-    4296 | SET_MARK_GROUP         | END                        | myGroup1                     | RLBK_Mark12_%_DONE                                                                               | postgres
+    4296 | SET_MARK_GROUP         | END                        | myGroup1                     | RLBK_4011_DONE                                                                                   | postgres
     4297 | ROLLBACK_GROUP         | NOTICE                     | Rollback id 4011             | Rollback id = 4011.                                                                              | postgres
     4298 | ROLLBACK_GROUP         | NOTICE                     | Rollback id 4011             | 2 / 5 tables effectively processed.                                                              | postgres
     4299 | ROLLBACK_GROUP         | NOTICE                     | Rollback id 4011             | 1 / 2 sequences effectively processed.                                                           | postgres
@@ -3259,9 +3257,9 @@ select hist_id, hist_function, hist_event, hist_object, regexp_replace(regexp_re
     4304 | LOCK_GROUP             | BEGIN                      | myGroup1                     | Rollback session #1                                                                              | postgres
     4305 | LOCK_GROUP             | END                        | myGroup1                     | Rollback session #1: 5 tables locked, 0 deadlock(s)                                              | postgres
     4306 | ROLLBACK_GROUP         | TIME STAMP SET             | 4040                         |                                                                                                  | postgres
-    4307 | SET_MARK_GROUP         | BEGIN                      | myGroup1                     | RLBK_Mark11_%_START                                                                              | postgres
+    4307 | SET_MARK_GROUP         | BEGIN                      | myGroup1                     | RLBK_4012_START                                                                                  | postgres
     4308 | CLEANUP_RLBK_STATE     |                            | Rollback id 4011             | set to COMMITTED                                                                                 | postgres
-    4309 | SET_MARK_GROUP         | END                        | myGroup1                     | RLBK_Mark11_%_START                                                                              | postgres
+    4309 | SET_MARK_GROUP         | END                        | myGroup1                     | RLBK_4012_START                                                                                  | postgres
     4310 | ROLLBACK_SEQUENCE      |                            | myschema1.mytbl2b_col20_seq  | RESTART 1                                                                                        | postgres
     4311 | ROLLBACK_TABLE         | BEGIN                      | myschema1."myTbl3"           | All log rows where emaj_gid > 4000039 and <= 4000080                                             | postgres
     4312 | ROLLBACK_TABLE         | END                        | myschema1."myTbl3"           | 10 rolled back primary keys                                                                      | postgres
@@ -3273,9 +3271,9 @@ select hist_id, hist_function, hist_event, hist_object, regexp_replace(regexp_re
     4318 | ROLLBACK_TABLE         | END                        | myschema1.mytbl2b            | 2 rolled back primary keys                                                                       | postgres
     4319 | ROLLBACK_TABLE         | BEGIN                      | myschema1.mytbl4             | All log rows where emaj_gid > 4000039 and <= 4000080, in session_replication_role = replica mode | postgres
     4320 | ROLLBACK_TABLE         | END                        | myschema1.mytbl4             | 1 rolled back primary keys                                                                       | postgres
-    4321 | SET_MARK_GROUP         | BEGIN                      | myGroup1                     | RLBK_Mark11_%_DONE                                                                               | postgres
+    4321 | SET_MARK_GROUP         | BEGIN                      | myGroup1                     | RLBK_4012_DONE                                                                                   | postgres
     4322 | SET_MARK_GROUP         | TIME STAMP SET             | 4041                         |                                                                                                  | postgres
-    4323 | SET_MARK_GROUP         | END                        | myGroup1                     | RLBK_Mark11_%_DONE                                                                               | postgres
+    4323 | SET_MARK_GROUP         | END                        | myGroup1                     | RLBK_4012_DONE                                                                                   | postgres
     4324 | ROLLBACK_GROUP         | NOTICE                     | Rollback id 4012             | Rollback id = 4012.                                                                              | postgres
     4325 | ROLLBACK_GROUP         | NOTICE                     | Rollback id 4012             | 5 / 5 tables effectively processed.                                                              | postgres
     4326 | ROLLBACK_GROUP         | NOTICE                     | Rollback id 4012             | 1 / 2 sequences effectively processed.                                                           | postgres
@@ -3298,10 +3296,10 @@ select hist_id, hist_function, hist_event, hist_object, regexp_replace(regexp_re
     4343 | ROLLBACK_TABLE         | END                        | myschema1.mytbl2b            | 2 rolled back primary keys                                                                       | postgres
     4344 | ROLLBACK_TABLE         | BEGIN                      | myschema1.mytbl4             | All log rows where emaj_gid > 4000069 and <= 4000094, in session_replication_role = replica mode | postgres
     4345 | ROLLBACK_TABLE         | END                        | myschema1.mytbl4             | 1 rolled back primary keys                                                                       | postgres
-    4346 | ROLLBACK_GROUP         | MARK DELETED               | myGroup1                     | mark RLBK_Mark12_%_START is deleted                                                              | postgres
-    4347 | ROLLBACK_GROUP         | MARK DELETED               | myGroup1                     | mark RLBK_Mark12_%_DONE is deleted                                                               | postgres
-    4348 | ROLLBACK_GROUP         | MARK DELETED               | myGroup1                     | mark RLBK_Mark11_%_START is deleted                                                              | postgres
-    4349 | ROLLBACK_GROUP         | MARK DELETED               | myGroup1                     | mark RLBK_Mark11_%_DONE is deleted                                                               | postgres
+    4346 | ROLLBACK_GROUP         | MARK DELETED               | myGroup1                     | mark RLBK_4011_START is deleted                                                                  | postgres
+    4347 | ROLLBACK_GROUP         | MARK DELETED               | myGroup1                     | mark RLBK_4011_DONE is deleted                                                                   | postgres
+    4348 | ROLLBACK_GROUP         | MARK DELETED               | myGroup1                     | mark RLBK_4012_START is deleted                                                                  | postgres
+    4349 | ROLLBACK_GROUP         | MARK DELETED               | myGroup1                     | mark RLBK_4012_DONE is deleted                                                                   | postgres
     4350 | ROLLBACK_GROUP         | NOTICE                     | Rollback id 4013             | Rollback id = 4013.                                                                              | postgres
     4351 | ROLLBACK_GROUP         | NOTICE                     | Rollback id 4013             | 5 / 5 tables effectively processed.                                                              | postgres
     4352 | ROLLBACK_GROUP         | NOTICE                     | Rollback id 4013             | 2 / 2 sequences effectively processed.                                                           | postgres
@@ -3321,14 +3319,14 @@ select hist_id, hist_function, hist_event, hist_object, regexp_replace(regexp_re
     4366 | LOCK_GROUP             | BEGIN                      | emptyGroup                   | Rollback session #1                                                                              | postgres
     4367 | LOCK_GROUP             | END                        | emptyGroup                   | Rollback session #1: 0 tables locked, 0 deadlock(s)                                              | postgres
     4368 | ROLLBACK_GROUP         | TIME STAMP SET             | 4044                         |                                                                                                  | postgres
-    4369 | SET_MARK_GROUP         | BEGIN                      | emptyGroup                   | RLBK_EGM3_%_START                                                                                | postgres
+    4369 | SET_MARK_GROUP         | BEGIN                      | emptyGroup                   | RLBK_4015_START                                                                                  | postgres
     4370 | CLEANUP_RLBK_STATE     |                            | Rollback id 4012             | set to COMMITTED                                                                                 | postgres
     4371 | CLEANUP_RLBK_STATE     |                            | Rollback id 4013             | set to COMMITTED                                                                                 | postgres
     4372 | CLEANUP_RLBK_STATE     |                            | Rollback id 4014             | set to COMMITTED                                                                                 | postgres
-    4373 | SET_MARK_GROUP         | END                        | emptyGroup                   | RLBK_EGM3_%_START                                                                                | postgres
-    4374 | SET_MARK_GROUP         | BEGIN                      | emptyGroup                   | RLBK_EGM3_%_DONE                                                                                 | postgres
+    4373 | SET_MARK_GROUP         | END                        | emptyGroup                   | RLBK_4015_START                                                                                  | postgres
+    4374 | SET_MARK_GROUP         | BEGIN                      | emptyGroup                   | RLBK_4015_DONE                                                                                   | postgres
     4375 | SET_MARK_GROUP         | TIME STAMP SET             | 4045                         |                                                                                                  | postgres
-    4376 | SET_MARK_GROUP         | END                        | emptyGroup                   | RLBK_EGM3_%_DONE                                                                                 | postgres
+    4376 | SET_MARK_GROUP         | END                        | emptyGroup                   | RLBK_4015_DONE                                                                                   | postgres
     4377 | ROLLBACK_GROUP         | NOTICE                     | Rollback id 4015             | Rollback id = 4015.                                                                              | postgres
     4378 | ROLLBACK_GROUP         | NOTICE                     | Rollback id 4015             | no table and sequence to process                                                                 | postgres
     4379 | DBLINK_CLOSE_CNX       |                            | rlbk#1                       |                                                                                                  | postgres
@@ -3355,8 +3353,8 @@ select hist_id, hist_function, hist_event, hist_object, regexp_replace(regexp_re
     4400 | LOCK_GROUP             | BEGIN                      | myGroup4                     | Rollback session #1                                                                              | postgres
     4401 | LOCK_GROUP             | END                        | myGroup4                     | Rollback session #1: 6 tables locked, 0 deadlock(s)                                              | postgres
     4402 | ROLLBACK_GROUP         | TIME STAMP SET             | 4049                         |                                                                                                  | postgres
-    4403 | SET_MARK_GROUP         | BEGIN                      | myGroup4                     | RLBK_mark1_%_START                                                                               | postgres
-    4404 | SET_MARK_GROUP         | END                        | myGroup4                     | RLBK_mark1_%_START                                                                               | postgres
+    4403 | SET_MARK_GROUP         | BEGIN                      | myGroup4                     | RLBK_4016_START                                                                                  | postgres
+    4404 | SET_MARK_GROUP         | END                        | myGroup4                     | RLBK_4016_START                                                                                  | postgres
     4405 | ROLLBACK_TABLE         | BEGIN                      | myschema4.mypartp2           | All log rows where emaj_gid > 4000101 and <= 4000111                                             | postgres
     4406 | ROLLBACK_TABLE         | END                        | myschema4.mypartp2           | 2 rolled back primary keys                                                                       | postgres
     4407 | ROLLBACK_TABLE         | BEGIN                      | myschema4.mypartp1           | All log rows where emaj_gid > 4000101 and <= 4000111                                             | postgres
@@ -3369,9 +3367,9 @@ select hist_id, hist_function, hist_event, hist_object, regexp_replace(regexp_re
     4414 | ROLLBACK_TABLE         | END                        | myschema4.mytblm             | 2 rolled back primary keys                                                                       | postgres
     4415 | ROLLBACK_TABLE         | BEGIN                      | myschema4.mytblr             | All log rows where emaj_gid > 4000101 and <= 4000111                                             | postgres
     4416 | ROLLBACK_TABLE         | END                        | myschema4.mytblr             | 1 rolled back primary keys                                                                       | postgres
-    4417 | SET_MARK_GROUP         | BEGIN                      | myGroup4                     | RLBK_mark1_%_DONE                                                                                | postgres
+    4417 | SET_MARK_GROUP         | BEGIN                      | myGroup4                     | RLBK_4016_DONE                                                                                   | postgres
     4418 | SET_MARK_GROUP         | TIME STAMP SET             | 4050                         |                                                                                                  | postgres
-    4419 | SET_MARK_GROUP         | END                        | myGroup4                     | RLBK_mark1_%_DONE                                                                                | postgres
+    4419 | SET_MARK_GROUP         | END                        | myGroup4                     | RLBK_4016_DONE                                                                                   | postgres
     4420 | ROLLBACK_GROUP         | NOTICE                     | Rollback id 4016             | Rollback id = 4016.                                                                              | postgres
     4421 | ROLLBACK_GROUP         | NOTICE                     | Rollback id 4016             | 6 / 6 tables effectively processed.                                                              | postgres
     4422 | DBLINK_CLOSE_CNX       |                            | rlbk#1                       |                                                                                                  | postgres
@@ -3395,8 +3393,8 @@ select hist_id, hist_function, hist_event, hist_object, regexp_replace(regexp_re
     4440 | ROLLBACK_TABLE         | BEGIN                      | myschema4.mytblr             | All log rows where emaj_gid > 4000094 and <= 4000119                                             | postgres
     4441 | ROLLBACK_TABLE         | END                        | myschema4.mytblr             | 1 rolled back primary keys                                                                       | postgres
     4442 | ROLLBACK_GROUP         | MARK DELETED               | myGroup4                     | mark mark1 is deleted                                                                            | postgres
-    4443 | ROLLBACK_GROUP         | MARK DELETED               | myGroup4                     | mark RLBK_mark1_%_START is deleted                                                               | postgres
-    4444 | ROLLBACK_GROUP         | MARK DELETED               | myGroup4                     | mark RLBK_mark1_%_DONE is deleted                                                                | postgres
+    4443 | ROLLBACK_GROUP         | MARK DELETED               | myGroup4                     | mark RLBK_4016_START is deleted                                                                  | postgres
+    4444 | ROLLBACK_GROUP         | MARK DELETED               | myGroup4                     | mark RLBK_4016_DONE is deleted                                                                   | postgres
     4445 | ROLLBACK_GROUP         | NOTICE                     | Rollback id 4017             | Rollback id = 4017.                                                                              | postgres
     4446 | ROLLBACK_GROUP         | NOTICE                     | Rollback id 4017             | 6 / 6 tables effectively processed.                                                              | postgres
     4447 | DBLINK_CLOSE_CNX       |                            | rlbk#1                       |                                                                                                  | postgres
@@ -3416,17 +3414,17 @@ select hist_id, hist_function, hist_event, hist_object, regexp_replace(regexp_re
     4462 | LOCK_GROUP             | BEGIN                      | myGroup1                     | Rollback session #1                                                                              | postgres
     4463 | LOCK_GROUP             | END                        | myGroup1                     | Rollback session #1: 5 tables locked, 0 deadlock(s)                                              | postgres
     4464 | ROLLBACK_GROUP         | TIME STAMP SET             | 4053                         |                                                                                                  | postgres
-    4465 | SET_MARK_GROUP         | BEGIN                      | myGroup1                     | RLBK_Conso_M1_%_START                                                                            | postgres
-    4466 | SET_MARK_GROUP         | END                        | myGroup1                     | RLBK_Conso_M1_%_START                                                                            | postgres
-    4467 | SET_MARK_GROUP         | BEGIN                      | myGroup1                     | RLBK_Conso_M1_%_DONE                                                                             | postgres
+    4465 | SET_MARK_GROUP         | BEGIN                      | myGroup1                     | RLBK_4018_START                                                                                  | postgres
+    4466 | SET_MARK_GROUP         | END                        | myGroup1                     | RLBK_4018_START                                                                                  | postgres
+    4467 | SET_MARK_GROUP         | BEGIN                      | myGroup1                     | RLBK_4018_DONE                                                                                   | postgres
     4468 | SET_MARK_GROUP         | TIME STAMP SET             | 4054                         |                                                                                                  | postgres
-    4469 | SET_MARK_GROUP         | END                        | myGroup1                     | RLBK_Conso_M1_%_DONE                                                                             | postgres
+    4469 | SET_MARK_GROUP         | END                        | myGroup1                     | RLBK_4018_DONE                                                                                   | postgres
     4470 | ROLLBACK_GROUP         | NOTICE                     | Rollback id 4018             | Rollback id = 4018.                                                                              | postgres
     4471 | ROLLBACK_GROUP         | NOTICE                     | Rollback id 4018             | 0 / 5 tables effectively processed.                                                              | postgres
     4472 | ROLLBACK_GROUP         | NOTICE                     | Rollback id 4018             | 0 / 2 sequences effectively processed.                                                           | postgres
     4473 | DBLINK_CLOSE_CNX       |                            | rlbk#1                       |                                                                                                  | postgres
     4474 | ROLLBACK_GROUP         | END                        | myGroup1                     | Rollback_id 4018                                                                                 | postgres
-    4475 | CONSOLIDATE_RLBK_GROUP | BEGIN                      | myGroup1                     | Erase all between marks Conso_M1 and RLBK_Conso_M1_%_DONE                                        | postgres
+    4475 | CONSOLIDATE_RLBK_GROUP | BEGIN                      | myGroup1                     | Erase all between marks Conso_M1 and RLBK_4018_DONE                                              | postgres
     4476 | CONSOLIDATE_RLBK_GROUP | END                        | myGroup1                     | 0 tables and 2 sequences processed ; 1 marks deleted                                             | postgres
     4477 | SET_MARK_GROUP         | BEGIN                      | myGroup1                     |                                                                                                  | postgres
     4478 | LOCK_GROUP             | BEGIN                      | myGroup1                     |                                                                                                  | postgres
@@ -3444,8 +3442,8 @@ select hist_id, hist_function, hist_event, hist_object, regexp_replace(regexp_re
     4490 | LOCK_GROUP             | BEGIN                      | myGroup1                     | Rollback session #1                                                                              | postgres
     4491 | LOCK_GROUP             | END                        | myGroup1                     | Rollback session #1: 5 tables locked, 0 deadlock(s)                                              | postgres
     4492 | ROLLBACK_GROUP         | TIME STAMP SET             | 4057                         |                                                                                                  | postgres
-    4493 | SET_MARK_GROUP         | BEGIN                      | myGroup1                     | RLBK_Conso_M2_%_START                                                                            | postgres
-    4494 | SET_MARK_GROUP         | END                        | myGroup1                     | RLBK_Conso_M2_%_START                                                                            | postgres
+    4493 | SET_MARK_GROUP         | BEGIN                      | myGroup1                     | RLBK_4019_START                                                                                  | postgres
+    4494 | SET_MARK_GROUP         | END                        | myGroup1                     | RLBK_4019_START                                                                                  | postgres
     4495 | ROLLBACK_SEQUENCE      |                            | myschema1.mytbl2b_col20_seq  | RESTART 3                                                                                        | postgres
     4496 | ROLLBACK_TABLE         | BEGIN                      | myschema1.mytbl1             | All log rows where emaj_gid > 4000119 and <= 4000136, in session_replication_role = replica mode | postgres
     4497 | ROLLBACK_TABLE         | END                        | myschema1.mytbl1             | 12 rolled back primary keys                                                                      | postgres
@@ -3453,9 +3451,9 @@ select hist_id, hist_function, hist_event, hist_object, regexp_replace(regexp_re
     4499 | ROLLBACK_TABLE         | END                        | myschema1.mytbl2             | 1 rolled back primary keys                                                                       | postgres
     4500 | ROLLBACK_TABLE         | BEGIN                      | myschema1.mytbl2b            | All log rows where emaj_gid > 4000119 and <= 4000136                                             | postgres
     4501 | ROLLBACK_TABLE         | END                        | myschema1.mytbl2b            | 2 rolled back primary keys                                                                       | postgres
-    4502 | SET_MARK_GROUP         | BEGIN                      | myGroup1                     | RLBK_Conso_M2_%_DONE                                                                             | postgres
+    4502 | SET_MARK_GROUP         | BEGIN                      | myGroup1                     | RLBK_4019_DONE                                                                                   | postgres
     4503 | SET_MARK_GROUP         | TIME STAMP SET             | 4058                         |                                                                                                  | postgres
-    4504 | SET_MARK_GROUP         | END                        | myGroup1                     | RLBK_Conso_M2_%_DONE                                                                             | postgres
+    4504 | SET_MARK_GROUP         | END                        | myGroup1                     | RLBK_4019_DONE                                                                                   | postgres
     4505 | ROLLBACK_GROUP         | NOTICE                     | Rollback id 4019             | Rollback id = 4019.                                                                              | postgres
     4506 | ROLLBACK_GROUP         | NOTICE                     | Rollback id 4019             | 3 / 5 tables effectively processed.                                                              | postgres
     4507 | ROLLBACK_GROUP         | NOTICE                     | Rollback id 4019             | 1 / 2 sequences effectively processed.                                                           | postgres
@@ -3464,7 +3462,7 @@ select hist_id, hist_function, hist_event, hist_object, regexp_replace(regexp_re
     4510 | RENAME_MARK_GROUP      | BEGIN                      | myGroup1                     | Conso_M2                                                                                         | postgres
     4511 | RENAME_MARK_GROUP      | END                        | myGroup1                     | Conso_M2 renamed Renamed_conso_M2                                                                | postgres
     4512 | RENAME_MARK_GROUP      | BEGIN                      | myGroup1                     | EMAJ_LAST_MARK                                                                                   | postgres
-    4513 | RENAME_MARK_GROUP      | END                        | myGroup1                     | RLBK_Conso_M2_%_DONE renamed Renamed_last_mark                                                   | postgres
+    4513 | RENAME_MARK_GROUP      | END                        | myGroup1                     | RLBK_4019_DONE renamed Renamed_last_mark                                                         | postgres
     4514 | CONSOLIDATE_RLBK_GROUP | BEGIN                      | myGroup1                     | Erase all between marks Renamed_conso_M2 and Renamed_last_mark                                   | postgres
     4515 | CONSOLIDATE_RLBK_GROUP | END                        | myGroup1                     | 3 tables and 2 sequences processed ; 2 marks deleted                                             | postgres
     4516 | CONSOLIDATE_RLBK_GROUP | BEGIN                      | myGroup1                     | Erase all between marks Renamed_conso_M2 and Renamed_last_mark                                   | postgres
@@ -3479,7 +3477,7 @@ select hist_id, hist_function, hist_event, hist_object, regexp_replace(regexp_re
     4525 | ROLLBACK_TABLE         | END                        | myschema1.mytbl2             | 1 rolled back primary keys                                                                       | postgres
     4526 | ROLLBACK_TABLE         | BEGIN                      | myschema1.mytbl2b            | All log rows where emaj_gid > 4000119 and <= 4000152                                             | postgres
     4527 | ROLLBACK_TABLE         | END                        | myschema1.mytbl2b            | 1 rolled back primary keys                                                                       | postgres
-    4528 | ROLLBACK_GROUP         | MARK DELETED               | myGroup1                     | mark RLBK_Conso_M1_%_DONE is deleted                                                             | postgres
+    4528 | ROLLBACK_GROUP         | MARK DELETED               | myGroup1                     | mark RLBK_4018_DONE is deleted                                                                   | postgres
     4529 | ROLLBACK_GROUP         | MARK DELETED               | myGroup1                     | mark Renamed_conso_M2 is deleted                                                                 | postgres
     4530 | ROLLBACK_GROUP         | MARK DELETED               | myGroup1                     | mark Renamed_last_mark is deleted                                                                | postgres
     4531 | ROLLBACK_GROUP         | NOTICE                     | Rollback id 4020             | Rollback id = 4020.                                                                              | postgres

@@ -149,10 +149,10 @@ The E-Maj rollback takes into account the existing triggers and foreign keys on 
 Unlike with :ref:`emaj_rollback_group() <emaj_rollback_group>` function, at the end of the operation, the log tables content as well as the marks following the rollback mark remain.
 At the beginning and at the end of the operation, the function automatically sets on the group two marks named:
 
-* '*RLBK_<rollback.mark>_<rollback.time>_START*'
-* '*RLBK_<rollback.mark>_<rollback.time>_DONE*'
+* '*RLBK_<rollback.id>_START*'
+* '*RLBK_<rollback.id>_DONE*'
 
-where rollback.time represents the start time of the transaction performing the rollback, expressed as “hours.minutes.seconds.milliseconds”.
+with a comment for each including the target mark name.
 
 When the volume of updates to cancel is high and the rollback operation is therefore long, it is possible to monitor the operation using the :ref:`emaj_rollback_activity() <emaj_rollback_activity>` function or the :doc:`emajRollbackMonitor <rollbackMonitorClient>` client.
 
@@ -164,11 +164,11 @@ Rollback from different types (logged/unlogged) may be executed in sequence. For
 * …
 * Set Mark M2
 * …
-* Logged Rollback to M1 (generating RLBK_M1_<time>_STRT, and RLBK_M1_<time>_DONE)
+* Logged Rollback to M1 (generating RLBK_<rlbk.1.id>_STRT, and RLBK_<rlbk.1.id>_DONE)
 * …
-* Rollback to RLBK_M1_<time>_DONE (to cancel the updates performed after the first rollback)
+* Rollback to RLBK_<rlbk.1.id>_DONE (to cancel the updates performed after the first rollback)
 * …
-* Rollback to  RLBK_M1_<time>_STRT (to finally cancel the first rollback)
+* Rollback to  RLBK_<rlbk.1.id>_STRT (to finally cancel the first rollback)
 
 A :ref:`"consolidation" function <emaj_consolidate_rollback_group>` for “logged rollback“ allows to transform a logged rollback into a simple unlogged rollback.
 

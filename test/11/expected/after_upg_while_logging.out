@@ -276,13 +276,13 @@ set search_path=myschema1;
 delete from "myTbl3" where col31 between 14 and 18;
 --
 set role emaj_regression_tests_adm_user2;
-select emaj.emaj_rename_mark_group('myGroup1',mark_name,'Before logged rollback to M4') from emaj.emaj_mark where mark_name like 'RLBK_M4_%_START';
+select emaj.emaj_rename_mark_group('myGroup1',mark_name,'Before logged rollback to M4') from emaj.emaj_mark where mark_comment like '%to mark M4 start';
  emaj_rename_mark_group 
 ------------------------
  
 (1 row)
 
-select emaj.emaj_delete_mark_group('myGroup1',mark_name) from emaj.emaj_mark where mark_name like 'RLBK_M4_%_DONE';
+select emaj.emaj_delete_mark_group('myGroup1',mark_name) from emaj.emaj_mark where mark_comment like '%to mark M4 end';
  emaj_delete_mark_group 
 ------------------------
                       1
@@ -553,22 +553,22 @@ select hist_function, hist_event, hist_object,
  LOCK_GROUP               | BEGIN              | myGroup1                     | Rollback session #1                                                                           | postgres
  LOCK_GROUP               | END                | myGroup1                     | Rollback session #1: 4 tables locked, 0 deadlock(s)                                           | postgres
  ROLLBACK_GROUP           | TIME STAMP SET     | 20                           |                                                                                               | postgres
- SET_MARK_GROUP           | BEGIN              | myGroup1                     | RLBK_M2_%_START                                                                               | postgres
- SET_MARK_GROUP           | END                | myGroup1                     | RLBK_M2_%_START                                                                               | postgres
+ SET_MARK_GROUP           | BEGIN              | myGroup1                     | RLBK_6_START                                                                                  | postgres
+ SET_MARK_GROUP           | END                | myGroup1                     | RLBK_6_START                                                                                  | postgres
  ROLLBACK_TABLE           | BEGIN              | myschema1.mytbl4             | All log rows where emaj_gid > 29 and <= 85, in session_replication_role = replica mode        | postgres
  ROLLBACK_TABLE           | END                | myschema1.mytbl4             | 5 rolled back primary keys                                                                    | postgres
  ROLLBACK_TABLE           | BEGIN              | myschema1.mytbl1             | All log rows where emaj_gid > 29 and <= 85, in session_replication_role = replica mode        | postgres
  ROLLBACK_TABLE           | END                | myschema1.mytbl1             | 5 rolled back primary keys                                                                    | postgres
- SET_MARK_GROUP           | BEGIN              | myGroup1                     | RLBK_M2_%_DONE                                                                                | postgres
+ SET_MARK_GROUP           | BEGIN              | myGroup1                     | RLBK_6_DONE                                                                                   | postgres
  SET_MARK_GROUP           | TIME STAMP SET     | 21                           |                                                                                               | postgres
- SET_MARK_GROUP           | END                | myGroup1                     | RLBK_M2_%_DONE                                                                                | postgres
+ SET_MARK_GROUP           | END                | myGroup1                     | RLBK_6_DONE                                                                                   | postgres
  ROLLBACK_GROUP           | NOTICE             | Rollback id 6                | Rollback id = 6.                                                                              | postgres
  ROLLBACK_GROUP           | NOTICE             | Rollback id 6                | 2 / 4 tables effectively processed.                                                           | postgres
  ROLLBACK_GROUP           | NOTICE             | Rollback id 6                | 0 / 1 sequences effectively processed.                                                        | postgres
  ROLLBACK_GROUP           | WARNING            | Rollback id 6                | The table myschema1."myTbl3" has been left unchanged (not in group anymore since <timestamp>) | postgres
  ROLLBACK_GROUP           | END                | myGroup1                     | Rollback_id 6                                                                                 | postgres
  RENAME_MARK_GROUP        | BEGIN              | myGroup1                     | EMAJ_LAST_MARK                                                                                | postgres
- RENAME_MARK_GROUP        | END                | myGroup1                     | RLBK_M2_%_DONE renamed End_rollback_to_M2                                                     | postgres
+ RENAME_MARK_GROUP        | END                | myGroup1                     | RLBK_6_DONE renamed End_rollback_to_M2                                                        | postgres
  CONSOLIDATE_RLBK_GROUP   | BEGIN              | myGroup1                     | Erase all between marks M2 and End_rollback_to_M2                                             | postgres
  CONSOLIDATE_RLBK_GROUP   | END                | myGroup1                     | 2 tables and 1 sequences processed ; 3 marks deleted                                          | postgres
  SET_MARK_GROUP           | BEGIN              | myGroup1                     |                                                                                               | postgres
@@ -591,14 +591,14 @@ select hist_function, hist_event, hist_object,
  LOCK_GROUP               | BEGIN              | myGroup2                     | Rollback session #1                                                                           | postgres
  LOCK_GROUP               | END                | myGroup2                     | Rollback session #1: 4 tables locked, 0 deadlock(s)                                           | postgres
  ROLLBACK_GROUP           | TIME STAMP SET     | 25                           |                                                                                               | postgres
- SET_MARK_GROUP           | BEGIN              | myGroup2                     | RLBK_M2_%_START                                                                               | postgres
- SET_MARK_GROUP           | END                | myGroup2                     | RLBK_M2_%_START                                                                               | postgres
+ SET_MARK_GROUP           | BEGIN              | myGroup2                     | RLBK_7_START                                                                                  | postgres
+ SET_MARK_GROUP           | END                | myGroup2                     | RLBK_7_START                                                                                  | postgres
  ROLLBACK_SEQUENCE        |                    | myschema2.myseq1             | RESTART 1001 MAXVALUE 2000 CYCLE                                                              | postgres
  ROLLBACK_TABLE           | BEGIN              | myschema2.mytbl4             | All log rows where emaj_gid > 77 and <= 106, in session_replication_role = replica mode       | postgres
  ROLLBACK_TABLE           | END                | myschema2.mytbl4             | 2 rolled back primary keys                                                                    | postgres
- SET_MARK_GROUP           | BEGIN              | myGroup2                     | RLBK_M2_%_DONE                                                                                | postgres
+ SET_MARK_GROUP           | BEGIN              | myGroup2                     | RLBK_7_DONE                                                                                   | postgres
  SET_MARK_GROUP           | TIME STAMP SET     | 26                           |                                                                                               | postgres
- SET_MARK_GROUP           | END                | myGroup2                     | RLBK_M2_%_DONE                                                                                | postgres
+ SET_MARK_GROUP           | END                | myGroup2                     | RLBK_7_DONE                                                                                   | postgres
  ROLLBACK_GROUP           | NOTICE             | Rollback id 7                | Rollback id = 7.                                                                              | postgres
  ROLLBACK_GROUP           | NOTICE             | Rollback id 7                | 1 / 4 tables effectively processed.                                                           | postgres
  ROLLBACK_GROUP           | NOTICE             | Rollback id 7                | 1 / 2 sequences effectively processed.                                                        | postgres
@@ -616,8 +616,8 @@ select hist_function, hist_event, hist_object,
  ROLLBACK_GROUP           | MARK DELETED       | myGroup2                     | mark RLBK_M3_%_START is deleted                                                               | postgres
  ROLLBACK_GROUP           | MARK DELETED       | myGroup2                     | mark RLBK_M3_%_DONE is deleted                                                                | postgres
  ROLLBACK_GROUP           | MARK DELETED       | myGroup2                     | mark Common is deleted                                                                        | postgres
- ROLLBACK_GROUP           | MARK DELETED       | myGroup2                     | mark RLBK_M2_%_START is deleted                                                               | postgres
- ROLLBACK_GROUP           | MARK DELETED       | myGroup2                     | mark RLBK_M2_%_DONE is deleted                                                                | postgres
+ ROLLBACK_GROUP           | MARK DELETED       | myGroup2                     | mark RLBK_7_START is deleted                                                                  | postgres
+ ROLLBACK_GROUP           | MARK DELETED       | myGroup2                     | mark RLBK_7_DONE is deleted                                                                   | postgres
  ROLLBACK_GROUP           | NOTICE             | Rollback id 8                | Rollback id = 8.                                                                              | postgres
  ROLLBACK_GROUP           | NOTICE             | Rollback id 8                | 1 / 4 tables effectively processed.                                                           | postgres
  ROLLBACK_GROUP           | NOTICE             | Rollback id 8                | 1 / 2 sequences effectively processed.                                                        | postgres
@@ -643,25 +643,25 @@ select hist_function, hist_event, hist_object,
  LOCK_GROUP               | BEGIN              | myGroup1                     | Rollback session #1                                                                           | postgres
  LOCK_GROUP               | END                | myGroup1                     | Rollback session #1: 4 tables locked, 0 deadlock(s)                                           | postgres
  ROLLBACK_GROUP           | TIME STAMP SET     | 29                           |                                                                                               | postgres
- SET_MARK_GROUP           | BEGIN              | myGroup1                     | RLBK_M4_%_START                                                                               | postgres
- SET_MARK_GROUP           | END                | myGroup1                     | RLBK_M4_%_START                                                                               | postgres
+ SET_MARK_GROUP           | BEGIN              | myGroup1                     | RLBK_10_START                                                                                 | postgres
+ SET_MARK_GROUP           | END                | myGroup1                     | RLBK_10_START                                                                                 | postgres
  ROLLBACK_TABLE           | BEGIN              | myschema1.mytbl4             | All log rows where emaj_gid > 106 and <= 121, in session_replication_role = replica mode      | postgres
  ROLLBACK_TABLE           | END                | myschema1.mytbl4             | 2 rolled back primary keys                                                                    | postgres
  ROLLBACK_TABLE           | BEGIN              | myschema1.mytbl1             | All log rows where emaj_gid > 106 and <= 121, in session_replication_role = replica mode      | postgres
  ROLLBACK_TABLE           | END                | myschema1.mytbl1             | 1 rolled back primary keys                                                                    | postgres
- SET_MARK_GROUP           | BEGIN              | myGroup1                     | RLBK_M4_%_DONE                                                                                | postgres
+ SET_MARK_GROUP           | BEGIN              | myGroup1                     | RLBK_10_DONE                                                                                  | postgres
  SET_MARK_GROUP           | TIME STAMP SET     | 30                           |                                                                                               | postgres
- SET_MARK_GROUP           | END                | myGroup1                     | RLBK_M4_%_DONE                                                                                | postgres
+ SET_MARK_GROUP           | END                | myGroup1                     | RLBK_10_DONE                                                                                  | postgres
  ROLLBACK_GROUP           | NOTICE             | Rollback id 10               | Rollback id = 10.                                                                             | postgres
  ROLLBACK_GROUP           | NOTICE             | Rollback id 10               | 2 / 4 tables effectively processed.                                                           | postgres
  ROLLBACK_GROUP           | NOTICE             | Rollback id 10               | 0 / 1 sequences effectively processed.                                                        | postgres
  ROLLBACK_GROUP           | END                | myGroup1                     | Rollback_id 10                                                                                | postgres
  GEN_SQL_GROUP            | BEGIN              | myGroup1                     | From mark M1 to current state with tables/sequences filtering                                 | postgres
  GEN_SQL_GROUP            | END                | myGroup1                     | 36 generated statements - script exported into /dev/null                                      | postgres
- RENAME_MARK_GROUP        | BEGIN              | myGroup1                     | RLBK_M4_%_START                                                                               | postgres
- RENAME_MARK_GROUP        | END                | myGroup1                     | RLBK_M4_%_START renamed Before logged rollback to M4                                          | postgres
- DELETE_MARK_GROUP        | BEGIN              | myGroup1                     | RLBK_M4_%_DONE                                                                                | postgres
- DELETE_MARK_GROUP        | END                | myGroup1                     | RLBK_M4_%_DONE                                                                                | postgres
+ RENAME_MARK_GROUP        | BEGIN              | myGroup1                     | RLBK_10_START                                                                                 | postgres
+ RENAME_MARK_GROUP        | END                | myGroup1                     | RLBK_10_START renamed Before logged rollback to M4                                            | postgres
+ DELETE_MARK_GROUP        | BEGIN              | myGroup1                     | RLBK_10_DONE                                                                                  | postgres
+ DELETE_MARK_GROUP        | END                | myGroup1                     | RLBK_10_DONE                                                                                  | postgres
  DELETE_MARK_GROUP        | BEGIN              | myGroup1                     | M1                                                                                            | postgres
  DELETE_MARK_GROUP        | END                | myGroup1                     | M1                                                                                            | postgres
  DELETE_BEFORE_MARK_GROUP | BEGIN              | myGroup1                     | M4                                                                                            | postgres

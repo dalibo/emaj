@@ -514,9 +514,9 @@ delete from "myTbl3" where col31 = 17;
 delete from "myTbl3" where col31 = 18;
 --
 set role emaj_regression_tests_adm_user1;
-select emaj.emaj_rename_mark_group('myGroup1',mark_name,'Before logged rollback to M4') from emaj.emaj_mark where mark_name like 'RLBK_M4_%_START';
+select emaj.emaj_rename_mark_group('myGroup1',mark_name,'Before logged rollback to M4') from emaj.emaj_mark where mark_comment like '%to mark M4 start';
 -- 
-select emaj.emaj_delete_mark_group('myGroup1',mark_name) from emaj.emaj_mark where mark_name like 'RLBK_M4_%_DONE';
+select emaj.emaj_delete_mark_group('myGroup1',mark_name) from emaj.emaj_mark where mark_comment like '%to mark M4 end';
 select emaj.emaj_delete_mark_group('myGroup1','M1');
 --
 select emaj.emaj_delete_before_mark_group('myGroup1','M4');

@@ -6,6 +6,8 @@ E-Maj - Change log
   * Add an optional p_comment parameter to the emaj_create_group(),
     emaj_set_mark_group() and emaj_set_mark_groups() functions to directly
     record a comment for the created group or mark.
+  * Change the name pattern for both marks that are automatically set by the
+    logged rollback processing.
   * Rollback monitor clients: allow infinite loop with command option -n 0.
   * Both php CLI clients emajRollbackMonitor.php and emajParallelRollback.php
     are deprecated. Use perl clients instead.
