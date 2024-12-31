@@ -8,7 +8,7 @@ Après :doc:`installation <install>`, une version d’E-Maj contient les fichier
 +=============================================+=============================================================================+
 | sql/emaj--<version>.sql                     | script d’installation de l’extension                                        |
 +---------------------------------------------+-----------------------------------------------------------------------------+
-| sql/emaj-<version>.sql                      | script psql alternatif d’installation                                       |
+| sql/emaj-<version>.sql                      | script *psql* alternatif d’installation                                     |
 +---------------------------------------------+-----------------------------------------------------------------------------+
 | sql/emaj--4.4.0--4.5.0.sql                  | script d’upgrade de l’extension de 4.4.0 vers 4.5.0                         |
 +---------------------------------------------+-----------------------------------------------------------------------------+
@@ -36,11 +36,11 @@ Après :doc:`installation <install>`, une version d’E-Maj contient les fichier
 +---------------------------------------------+-----------------------------------------------------------------------------+
 | sql/emaj--2.3.1--3.0.0.sql                  | script d’upgrade de l’extension de 2.3.1 vers 3.0.0                         |
 +---------------------------------------------+-----------------------------------------------------------------------------+
-| sql/emaj_demo.sql                           | script psql de démonstration d' E-Maj                                       |
+| sql/emaj_demo.sql                           | script *psql* de démonstration d' E-Maj                                     |
 +---------------------------------------------+-----------------------------------------------------------------------------+
-| sql/emaj_prepare_parallel_rollback_test.sql | script psql de test pour les rollbacks parallélisés                         |
+| sql/emaj_prepare_parallel_rollback_test.sql | script *psql* de test pour les rollbacks parallélisés                       |
 +---------------------------------------------+-----------------------------------------------------------------------------+
-| sql/emaj_uninstall.sql                      | script psql de désinstallation                                              |
+| sql/emaj_uninstall.sql                      | script *psql* de désinstallation                                            |
 +---------------------------------------------+-----------------------------------------------------------------------------+
 | README.md                                   | documentation réduite de l'extension                                        |
 +---------------------------------------------+-----------------------------------------------------------------------------+
@@ -68,13 +68,13 @@ Après :doc:`installation <install>`, une version d’E-Maj contient les fichier
 +---------------------------------------------+-----------------------------------------------------------------------------+
 | doc/Emaj.<version>_pres.fr.pdf              | présentation en français de l'extension E-Maj (version pdf)                 |
 +---------------------------------------------+-----------------------------------------------------------------------------+
-| client/emajParallelRollback.php             | client php pour soumettre des rollbacks parallélisés                        |
+| client/emajParallelRollback.php             | client *php* pour soumettre des rollbacks parallélisés                      |
 +---------------------------------------------+-----------------------------------------------------------------------------+
-| client/emajParallelRollback.pl              | client perl pour soumettre des rollbacks parallélisés                       |
+| client/emajParallelRollback.pl              | client *perl* pour soumettre des rollbacks parallélisés                     |
 +---------------------------------------------+-----------------------------------------------------------------------------+
-| client/emajRollbackMonitor.php              | client php pour suivre les rollbacks                                        |
+| client/emajRollbackMonitor.php              | client *php* pour suivre les rollbacks                                      |
 +---------------------------------------------+-----------------------------------------------------------------------------+
-| client/emajRollbackMonitor.pl               | client perl pour suivre les rollbacks                                       |
+| client/emajRollbackMonitor.pl               | client *perl* pour suivre les rollbacks                                     |
 +---------------------------------------------+-----------------------------------------------------------------------------+
-| client/emajStat.pl                          | client perl pour suivre l'enregistrement des mises à jour                   |
+| client/emajStat.pl                          | client *perl* pour suivre l'enregistrement des mises à jour                 |
 +---------------------------------------------+-----------------------------------------------------------------------------+

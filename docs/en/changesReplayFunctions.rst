@@ -50,7 +50,7 @@ The statements are inserted into a single transaction. They are surrounded by a 
 
 At the end of the script, sequences belonging to the tables group are set to their final state.
 
-Then, the generated file may be executed as is by psql tool, using a connection role that has enough rights on accessed tables and sequences.
+Then, the generated file may be executed as is by *psql*, using a connection role that has enough rights on accessed tables and sequences.
 
 The used technology may result to doubled backslashes in the output file. These doubled characters must be suppressed before executing the script, for instance, in Unix/Linux environment, using a command like::
 

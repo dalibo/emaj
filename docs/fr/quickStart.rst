@@ -31,8 +31,6 @@ Pour installer l’extension emaj dans une base de données, connectez-vous à l
 
   GRANT emaj_adm TO <role>;
 
-Pour les versions de PostgreSQL antérieures à la version 9.6, se référer à ce :ref:`chapitre <create_emaj_extension>`.
-
 La dernière requête permet de donner les droits d’administration E-Maj à un rôle particulier. Par la suite, vous pourrez utiliser ce rôle pour exécuter les opérations E-Maj sans être connecté comme super-utilisateur.
 
 Utiliser l’extension

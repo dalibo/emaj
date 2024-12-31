@@ -15,7 +15,7 @@ If these *emaj_adm* and *emaj_viewer* roles own access rights on other applicati
 
 Allthough the *emaj* extension is usualy installed with a *CREATE EXTENSION* statement, it cannot be removed with a simple *DROP EXTENSION* statement. An event trigger blocks such a statement.
 
-Whatever the manner the *emaj* extension has been installed (using the standart *CREATE EXTENSION* statement or a psql script when adding an extension is forbidden), its removal just needs to execute the *emaj_drop_extension()* function::
+Whatever the manner the *emaj* extension has been installed (using the standart *CREATE EXTENSION* statement or a *psql* script when adding an extension is forbidden), its removal just needs to execute the *emaj_drop_extension()* function::
 
    SELECT emaj.emaj_drop_extension();
 

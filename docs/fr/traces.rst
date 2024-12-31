@@ -83,9 +83,9 @@ La colonne *hist_function* peut prendre les valeurs suivantes.
 +----------------------------------+---------------------------------------------------------------------------------------+
 | FORGET_GROUP                     | effacement des traces d’un groupe de tables supprimé                                  |
 +----------------------------------+---------------------------------------------------------------------------------------+
-| GEN_SQL_GROUP                    | génération d'un script psql pour un groupe de tables                                  |
+| GEN_SQL_GROUP                    | génération d'un script *psql* pour un groupe de tables                                |
 +----------------------------------+---------------------------------------------------------------------------------------+
-| GEN_SQL_GROUPS                   | génération d'un script psql pour plusieurs groupes de tables                          |
+| GEN_SQL_GROUPS                   | génération d'un script *psql* pour plusieurs groupes de tables                        |
 +----------------------------------+---------------------------------------------------------------------------------------+
 | IMPORT_GROUPS                    | import d’une configuration de groupes de tables                                       |
 +----------------------------------+---------------------------------------------------------------------------------------+

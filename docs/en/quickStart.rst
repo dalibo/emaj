@@ -31,8 +31,6 @@ To install the emaj extension into a database, log on the target database, using
 
   GRANT emaj_adm TO <role>;
 
-For PostgreSQL versions prior 9.6, see :ref:`this chapter <create_emaj_extension>`.
-
 With the latest statement, you give E-Maj administration grants to a particular role.  Then, this role can be used to execute all E-Maj operations, avoiding the use of superuser role.
 
 Use the extension

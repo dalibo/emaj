@@ -5,7 +5,7 @@ If an extension already exists in the database, but in an old E-Maj version, you
 
 The standart way to install E-Maj consists in creating an *EXTENSION* object (in the PostgreSQL terminology). To achieve this task, the user must be logged to the database as superuser.
 
-In environments for which this is not possible (cases of :ref:`minimum installation<minimum_install>`), a psql script can be executed.
+In environments for which this is not possible (cases of :ref:`minimum installation<minimum_install>`), a *psql* script can be executed.
 
 .. _preliminary_operations:
 

@@ -39,7 +39,7 @@ Enfin, le script d'installation examine la configuration de l'instance. Le cas �
 Création de l’extension par script
 ----------------------------------
 
-Lorsque la création de l’objet *EXTENSION* emaj n’est pas permise, il est possible de créer tous les composants nécessaires par un script psql ::
+Lorsque la création de l’objet *EXTENSION* emaj n’est pas permise, il est possible de créer tous les composants nécessaires par un script *psql* ::
 
 	\i <répertoire_emaj>/sql/emaj-<version>.sql
 
