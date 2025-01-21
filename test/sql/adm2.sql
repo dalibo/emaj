@@ -297,7 +297,6 @@ select sum(stat_rows) + 1 /* sequence change*/ as check from emaj.emaj_detailed_
 select emaj.emaj_gen_sql_group('myGroup1', 'Multi-1', NULL, NULL);
 \setenv FILE1 :EMAJTESTTMPDIR'/myGroup1_2.sql'
 \copy (select * from emaj_sql_script) to program 'cat >$FILE1'
-
 -- mask timestamp in initial comment and compare
 \! find $EMAJTESTTMPDIR -name '*.sql' -type f -print0 | xargs -0 sed -i -s 's/at .*$/at [ts]$/'
 \! diff $EMAJTESTTMPDIR/myGroup1.sql $EMAJTESTTMPDIR/myGroup1_2.sql

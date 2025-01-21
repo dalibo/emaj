@@ -602,9 +602,9 @@ ALTER TABLE mytbl2 DISABLE TRIGGER mytbl2trg;
 RESET search_path;
 ---
 --- emaj_prepare_parallel_rollback_test.sql script successfuly completed.
---- A parallel rollback can be performed, from the E-Maj main directory, using a command like:
-    ./client/emajParallelRollback.php -g 'emaj parallel rollback test group' -m BEFORE_PROC_2 -s 3 -v <and any needed connection parameters among -dhpUW>
---- "./client/emajParallelRollback.php --help" provides information about available parameters.
+--- A parallel rollback can be performed, using a command like:
+--- emajParallelRollback.pl -g 'emaj parallel rollback test group' -m BEFORE_PROC_2 -s 3 -v <and any needed connection parameters among -dhpUW>
+--- emajParallelRollback.pl --help" provides information about available parameters.
 ---
 -- Direct emaj extension drop attempt
 drop extension emaj cascade;

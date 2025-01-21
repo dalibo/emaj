@@ -265,7 +265,7 @@ NOTICE:  table "emaj_temp_script" does not exist, skipping
 
 select emaj.emaj_gen_sql_group('myGroup1','M1',NULL,'/dev/null',array['myschema1.myTbl3']);
 ERROR:  _gen_sql_groups: 1 tables/sequences (myschema1.myTbl3) had no pkey at M1 mark time.
-CONTEXT:  PL/pgSQL function emaj._gen_sql_groups(text[],boolean,text,text,text,text[]) line 65 at RAISE
+CONTEXT:  PL/pgSQL function emaj._gen_sql_groups(text[],boolean,text,text,text,text[],text) line 67 at RAISE
 PL/pgSQL function emaj.emaj_gen_sql_group(text,text,text,text,text[]) line 14 at RETURN
 -----------------------------
 -- Step 8 : for myGroup1, update tables, rename a mark, then delete 2 marks then delete all before a mark 
@@ -316,7 +316,7 @@ select emaj.emaj_start_group('myGroup6', 'Start G6');
 ERROR:  _check_group_names: The group "myGroup6" does not exist.
 CONTEXT:  PL/pgSQL function emaj._check_group_names(text[],boolean,boolean,boolean,boolean,boolean,boolean) line 42 at RAISE
 SQL statement "SELECT emaj._check_group_names(p_groupNames := p_groupNames, p_mayBeNull := p_multiGroup, p_lockGroups := TRUE, p_checkIdle := TRUE)"
-PL/pgSQL function emaj._start_groups(text[],text,boolean,boolean) line 21 at SQL statement
+PL/pgSQL function emaj._start_groups(text[],text,boolean,boolean) line 22 at SQL statement
 PL/pgSQL function emaj.emaj_start_group(text,text,boolean) line 12 at RETURN
 --
 reset role;
@@ -341,7 +341,7 @@ select emaj.emaj_stop_group('myGroup6');
 ERROR:  _check_group_names: The group "myGroup6" does not exist.
 CONTEXT:  PL/pgSQL function emaj._check_group_names(text[],boolean,boolean,boolean,boolean,boolean,boolean) line 42 at RAISE
 SQL statement "SELECT emaj._check_group_names(p_groupNames := p_groupNames, p_mayBeNull := p_multiGroup, p_lockGroups := TRUE)"
-PL/pgSQL function emaj._stop_groups(text[],text,boolean,boolean) line 24 at SQL statement
+PL/pgSQL function emaj._stop_groups(text[],text,boolean,boolean) line 25 at SQL statement
 PL/pgSQL function emaj.emaj_stop_group(text,text) line 10 at RETURN
 select emaj.emaj_drop_group('myGroup6');
 ERROR:  _check_group_names: The group "myGroup6" does not exist.

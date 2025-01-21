@@ -26,6 +26,8 @@ E-Maj - Change log
     monitoring, when the Postgres instance doesn't accept IP connections.
   * Let emaj_adm and emaj_viewer roles really work without any specific grant
     on application tables and sequences.
+  * Fix emaj functions exceptions raised when the emaj schema is set in the
+    search_path.
 
 4.5.0 (2025-Sept-6)
 ------

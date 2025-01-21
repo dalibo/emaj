@@ -759,40 +759,9 @@ WITH inserted_time_stamp AS (
   SELECT time_id FROM inserted_time_stamp;
 $$;
 
-CREATE OR REPLACE FUNCTION emaj._dblink_build_connect_string(p_userPwd TEXT)
-RETURNS TEXT LANGUAGE plpgsql
+CREATE OR REPLACE FUNCTION emaj._dblink_open_cnx(p_cnxName TEXT, p_callerRole TEXT, OUT p_status INT, OUT p_schema TEXT)
+LANGUAGE plpgsql
 SECURITY DEFINER SET search_path = pg_catalog, pg_temp AS
-$_dblink_build_connect_string$
--- This function builds the connect string for the dblink connection.
--- Input:  user-password emaj parameter
--- Output: connection string
--- The function is defined as SECURITY DEFINER because reading the unix_socket_directories GUC needs to be at least a member
---   of pg_read_all_settings.
-  DECLARE
-    v_stack                  TEXT;
-  BEGIN
--- Check that the caller is allowed to do that.
--- This prevents an untrusted user to get unix_socket_directories content.
-    GET DIAGNOSTICS v_stack = PG_CONTEXT;
-    IF v_stack NOT LIKE '%emaj._dblink_open_cnx(text)%' THEN
-      RAISE EXCEPTION '_dblink_build_connect_string: the calling function is not allowed to reach this sensitive function.';
-    END IF;
--- Build and return the connect string to reach the same database on the same instance.
--- If no IP connection is available, use the first socket directory as host parameter.
-   RETURN 'host=' || CASE
-                       WHEN current_setting('listen_addresses') = ''
-                         THEN coalesce(substring(current_setting('unix_socket_directories') from '(.*?)\s*,'),
-                                       current_setting('unix_socket_directories'))
-                       ELSE 'localhost'
-                     END
-       || ' port=' || current_setting('port')
-       || ' dbname=' || current_database()
-       || ' ' || p_userPwd;
-  END;
-$_dblink_build_connect_string$;
-
-CREATE OR REPLACE FUNCTION emaj._dblink_open_cnx(p_cnxName TEXT, OUT p_status INT, OUT p_schema TEXT)
-LANGUAGE plpgsql AS
 $_dblink_open_cnx$
 -- This function tries to open a named dblink connection.
 -- It uses as target: the current cluster (port), the current database and a role defined in the emaj_param table.
@@ -804,6 +773,7 @@ $_dblink_open_cnx$
 --    cluster even when no password is required to log on.
 -- The function is directly called by Emaj_web.
 -- Input:  connection name
+--         caller role to check for permissions
 -- Output: integer status return.
 --           1 successful connection
 --           0 already opened connection
@@ -814,9 +784,12 @@ $_dblink_open_cnx$
 --          -5 no 'dblink_user_password' parameter is defined in the emaj_param table
 --          -6 error at dblink_connect() call
 --         name of the schema that holds the dblink extension (used later to schema qualify all calls to dblink functions)
+-- The function is defined as SECURITY DEFINER because reading the unix_socket_directories GUC needs to be at least a member
+--   of pg_read_all_settings.
   DECLARE
     v_nbCnx                  INT;
     v_userPassword           TEXT;
+    v_connectString          TEXT;
   BEGIN
 -- Look for the schema holding the dblink functions.
 --   (NULL if the dblink_connect_u function is not available, which should not happen)
@@ -827,7 +800,7 @@ $_dblink_open_cnx$
       LIMIT 1;
     IF NOT FOUND THEN
       p_status = -1;                      -- dblink is not installed
-    ELSIF NOT has_function_privilege(quote_ident(p_schema) || '.dblink_connect_u(text, text)', 'execute') THEN
+    ELSIF NOT has_function_privilege(p_callerRole, quote_ident(p_schema) || '.dblink_connect_u(text, text)', 'execute') THEN
       p_status = -3;                      -- current role has not the execute rights on dblink functions
     ELSIF (p_cnxName LIKE 'rlbk#%' OR p_cnxName = 'test') AND
           current_setting('transaction_isolation') <> 'read committed' THEN
@@ -848,10 +821,21 @@ $_dblink_open_cnx$
         IF NOT FOUND THEN
           p_status = -5;                    -- no 'dblink_user_password' parameter is defined in the emaj_param table
         ELSE
+-- Build the connect string.
+          v_connectString = 'host='
+                         || CASE
+                              WHEN current_setting('listen_addresses') = ''
+                                THEN coalesce(substring(current_setting('unix_socket_directories') from '(.*?)\s*,'),
+                                              current_setting('unix_socket_directories'))
+                              ELSE 'localhost'
+                            END
+                         || ' port=' || current_setting('port')
+                         || ' dbname=' || current_database()
+                         || ' ' || v_userPassword;
 -- Try to connect.
           BEGIN
             EXECUTE format('SELECT %I.dblink_connect_u(%L ,%L)',
-                           p_schema, p_cnxName, emaj._dblink_build_connect_string(v_userPassword));
+                           p_schema, p_cnxName, v_connectString);
             p_status = 1;                   -- the connection is successful
           EXCEPTION
             WHEN OTHERS THEN
@@ -2010,11 +1994,14 @@ $_truncate_trigger_fnct$
 $_truncate_trigger_fnct$;
 
 CREATE OR REPLACE FUNCTION emaj._create_log_schemas(p_function TEXT)
-RETURNS VOID LANGUAGE plpgsql AS
+RETURNS VOID LANGUAGE plpgsql
+SECURITY DEFINER SET search_path = pg_catalog, pg_temp AS
 $_create_log_schemas$
 -- The function creates all log schemas that will be needed to create new log tables.
 -- The function is called at tables groups configuration import.
 -- Input: calling function to record into the emaj_hist table
+-- The function is defined as SECURITY DEFINER so that emaj_adm role can use it even if he has not been granted the CREATE privilege on
+--   the current database.
   DECLARE
     r_schema                 RECORD;
   BEGIN
@@ -2035,48 +2022,21 @@ $_create_log_schemas$
            ) THEN
         RAISE EXCEPTION '_create_log_schemas: The schema "%" should not exist. Drop it manually.',r_schema.log_schema;
       END IF;
--- Create the schema.
-      PERFORM emaj._create_log_schema(r_schema.log_schema, p_function);
+-- Create the schema and give the appropriate rights.
+      EXECUTE format('CREATE SCHEMA %I AUTHORIZATION emaj_adm',
+                     r_schema.log_schema);
+      EXECUTE format('GRANT USAGE ON SCHEMA %I TO emaj_viewer',
+                     r_schema.log_schema);
+-- And record the schema creation into the emaj_schema and the emaj_hist tables.
+      INSERT INTO emaj.emaj_schema (sch_name)
+        VALUES (r_schema.log_schema);
+      INSERT INTO emaj.emaj_hist (hist_function, hist_event, hist_object)
+        VALUES (p_function, 'LOG_SCHEMA CREATED', quote_ident(r_schema.log_schema));
     END LOOP;
 --
     RETURN;
   END;
 $_create_log_schemas$;
-
-CREATE OR REPLACE FUNCTION emaj._create_log_schema(p_schema TEXT, p_function TEXT)
-RETURNS VOID LANGUAGE plpgsql
-SECURITY DEFINER SET search_path = pg_catalog, pg_temp AS
-$_create_log_schema$
--- The function creates one log schema. It gives the appropriate rights to emaj users on the schema.
--- Input: schema to create
---        calling function to record into the emaj_hist table
--- The function is defined as SECURITY DEFINER so that emaj_adm role can use it even if he has not been granted the CREATE privilege on
---   the current database.
-  DECLARE
-    v_stack                  TEXT;
-  BEGIN
--- Check that the caller is allowed to do that.
--- This prevents against an emaj_adm role without CREATE privilege on the current database who would use the function to create any other
--- schema.
-    GET DIAGNOSTICS v_stack = PG_CONTEXT;
-    IF v_stack NOT LIKE '%emaj._create_log_schemas(text)%' AND
-       v_stack NOT LIKE '%emaj._assign_tables(text,text[],text,jsonb,text,boolean,boolean)%' THEN
-      RAISE EXCEPTION '_create_log_schema: the calling function is not allowed to reach this sensitive function.';
-    END IF;
--- Create the schema and give the appropriate rights.
-    EXECUTE format('CREATE SCHEMA %I AUTHORIZATION emaj_adm',
-                   p_schema);
-    EXECUTE format('GRANT USAGE ON SCHEMA %I TO emaj_viewer',
-                   p_schema);
--- And record the schema creation into the emaj_schema and the emaj_hist tables.
-    INSERT INTO emaj.emaj_schema (sch_name)
-      VALUES (p_schema);
-    INSERT INTO emaj.emaj_hist (hist_function, hist_event, hist_object)
-      VALUES (p_function, 'LOG_SCHEMA CREATED', quote_ident(p_schema));
---
-    RETURN;
-  END;
-$_create_log_schema$;
 
 CREATE OR REPLACE FUNCTION emaj._drop_log_schemas(p_function TEXT, p_isForced BOOLEAN)
 RETURNS VOID LANGUAGE plpgsql AS
@@ -2130,72 +2090,6 @@ $_drop_log_schemas$
   END;
 $_drop_log_schemas$;
 
-CREATE OR REPLACE FUNCTION emaj._handle_trigger_fk_tbl(p_action TEXT, p_schema TEXT, p_table TEXT, p_objectName TEXT,
-                                                       p_objectDef TEXT DEFAULT NULL)
-RETURNS VOID LANGUAGE plpgsql
-SECURITY DEFINER SET search_path = pg_catalog, pg_temp AS
-$_handle_trigger_fk_tbl$
--- The function performs an elementary action for a trigger or a foreign key on an application table.
--- Inputs: the action to perform: ENABLE_TRIGGER/DISABLE_TRIGGER/ADD_TRIGGER/DROP_TRIGGER/SET_TRIGGER/ADD_FK/DROP_FK
---         the schema of the application table
---         the application table name
---         the trigger or constraint name
---         the object definition for foreign keys, or the trigger type (ALWAYS/REPLICA/'') for triggers to enable or set
--- The function is defined as SECURITY DEFINER so that emaj_adm role can perform the action on any application table.
-  DECLARE
-    v_stack                  TEXT;
-  BEGIN
--- Check that the caller is allowed to do that.
-    GET DIAGNOSTICS v_stack = PG_CONTEXT;
-    IF v_stack NOT LIKE '%emaj._create_tbl(text,text,text,integer,text,text,text[],bigint,boolean)%' AND
-       v_stack NOT LIKE '%emaj._remove_tbl(text,text,text,boolean,bigint,text)%' AND
-       v_stack NOT LIKE '%emaj._drop_tbl(emaj.emaj_relation,bigint)%' AND
-       v_stack NOT LIKE '%emaj._start_groups(text[],text,boolean,boolean)%' AND
-       v_stack NOT LIKE '%emaj._stop_groups(text[],text,boolean,boolean)%' AND
-       v_stack NOT LIKE '%emaj._rlbk_session_exec(integer,integer)%' THEN
-      RAISE EXCEPTION '_handle_trigger_fk_tbl: the calling function is not allowed to reach this sensitive function.';
-    END IF;
--- Perform the requested action.
-    IF p_action = 'DISABLE_TRIGGER' THEN
-      EXECUTE format('ALTER TABLE %I.%I DISABLE TRIGGER %I',
-                     p_schema, p_table, p_objectName);
-    ELSIF p_action = 'ENABLE_TRIGGER' THEN
-      EXECUTE format('ALTER TABLE %I.%I ENABLE %s TRIGGER %I',
-                     p_schema, p_table, p_objectDef, p_objectName);
-    ELSIF p_action = 'ADD_TRIGGER' AND p_objectName = 'emaj_log_trg' THEN
-      EXECUTE format('CREATE TRIGGER emaj_log_trg'
-                     ' AFTER INSERT OR UPDATE OR DELETE ON %I.%I'
-                     '  FOR EACH ROW EXECUTE PROCEDURE %s()',
-                     p_schema, p_table, p_objectDef);
-    ELSIF p_action = 'ADD_TRIGGER' AND p_objectName = 'emaj_trunc_trg' THEN
-      EXECUTE format('CREATE TRIGGER emaj_trunc_trg'
-                     '  BEFORE TRUNCATE ON %I.%I'
-                     '  FOR EACH STATEMENT EXECUTE PROCEDURE emaj._truncate_trigger_fnct()',
-                     p_schema, p_table);
-    ELSIF p_action = 'DROP_TRIGGER' THEN
-      EXECUTE format('DROP TRIGGER IF EXISTS %I ON %I.%I',
-                     p_objectName, p_schema, p_table);
-    ELSIF p_action = 'SET_TRIGGER' THEN
-      EXECUTE format('ALTER TABLE %I.%I DISABLE TRIGGER %I, ENABLE %s TRIGGER %I',
-                     p_schema, p_table, p_objectName, p_objectDef, p_objectName);
-    ELSIF p_action = 'ADD_FK' THEN
-      EXECUTE format('ALTER TABLE %I.%I ADD CONSTRAINT %I %s',
-                     p_schema, p_table, p_objectName, p_objectDef);
-    ELSIF p_action = 'DROP_FK' THEN
-      EXECUTE format('ALTER TABLE %I.%I DROP CONSTRAINT %I',
-                     p_schema, p_table, p_objectName);
-    ELSIF p_action = 'SET_FK_DEFERRED' THEN
-      EXECUTE format('SET CONSTRAINTS %I.%I DEFERRED',
-                         p_schema, p_objectName);
-    ELSIF p_action = 'SET_FK_IMMEDIATE' THEN
-      EXECUTE format('SET CONSTRAINTS %I.%I IMMEDIATE',
-                         p_schema, p_objectName);
-    END IF;
---
-    RETURN;
-  END;
-$_handle_trigger_fk_tbl$;
-
 CREATE OR REPLACE FUNCTION emaj._build_path_name(p_dir TEXT, p_file TEXT)
 RETURNS TEXT LANGUAGE SQL IMMUTABLE AS
 $_build_path_name$
@@ -2204,87 +2098,6 @@ $_build_path_name$
 -- Both names are concatenated with a / character between.
 SELECT p_dir || '/' || translate(p_file, E' /\\|$<>*\'"', '__________');
 $_build_path_name$;
-
-CREATE OR REPLACE FUNCTION emaj._copy_from_file(p_destination_table TEXT, p_location TEXT)
-RETURNS VOID LANGUAGE plpgsql
-SECURITY DEFINER SET search_path = pg_catalog, pg_temp AS
-$_copy_from_file$
--- The function performs an elementary COPY FROM to load a file into a table.
--- Inputs: the schema qualified table to load (should be already double_quoted if needed)
---         the file to read
--- The function is defined as SECURITY DEFINER so that emaj roles can perform the COPY statement.
-  DECLARE
-    v_stack                  TEXT;
-  BEGIN
--- Check that the caller is allowed to do that.
-    GET DIAGNOSTICS v_stack = PG_CONTEXT;
-    IF v_stack NOT LIKE '%emaj.emaj_import_groups_configuration(text,text[],boolean,text)%' AND
-       v_stack NOT LIKE '%emaj.emaj_import_parameters_configuration(text,boolean)%' THEN
-      RAISE EXCEPTION '_copy_from_file: the calling function is not allowed to reach this sensitive function.';
-    END IF;
--- Perform the action.
-    EXECUTE format ('COPY %I FROM %L',
-                    p_destination_table, p_location);
---
-    RETURN;
-  END;
-$_copy_from_file$;
-
-CREATE OR REPLACE FUNCTION emaj._copy_to_file(p_source TEXT, p_location TEXT, p_copyOptions TEXT DEFAULT '',
-                                              p_removeEmptyFile BOOLEAN DEFAULT FALSE, p_psqlScript BOOLEAN DEFAULT FALSE)
-RETURNS INT LANGUAGE plpgsql
-SECURITY DEFINER SET search_path = pg_catalog, pg_temp AS
-$_copy_to_file$
--- The function performs an elementary COPY TO to unload a table or a statement's result to a file.
--- Inputs: the schema qualified table to unload (double_quoted if needed) or the SQL statement to execute (between parenthesis),
---         the output file pathname,
---         the options for the COPY statement,
---         a boolean indicating whether the output file has to be removed if it is empty,
---         a boolean indicating whether the output file is a psql script.
--- Output: the number of effectively writen file (0 or 1).
--- The function is defined as SECURITY DEFINER so that emaj roles can perform the COPY statement.
--- If the output file is a psql script, the '\\' are transformed into '\', using a sed command.
--- The caller is responsible for checking:
---  - the output file location (directory, permissions),
---  - the sed command availability when p_psqlScript is set to TRUE.
-  DECLARE
-    v_stack                  TEXT;
-    v_nbRows                 BIGINT;
-  BEGIN
--- Check that the caller is allowed to do that by checking the calling function.
-    GET DIAGNOSTICS v_stack = PG_CONTEXT;
-    IF v_stack NOT LIKE '%emaj.emaj_export_groups_configuration(text,text[])%' AND
-       v_stack NOT LIKE '%emaj.emaj_export_parameters_configuration(text)%' AND
-       v_stack NOT LIKE '%emaj.emaj_snap_group(text,text,text)%' AND
-       v_stack NOT LIKE '%emaj.emaj_dump_changes_group(text,text,text,text,text[],text)%' AND
-       v_stack NOT LIKE '%emaj.emaj_gen_sql_dump_changes_group(text,text,text,text,text[],text)%' AND
-       v_stack NOT LIKE '%emaj._gen_sql_groups(text[],boolean,text,text,text,text[])%' THEN
-      RAISE EXCEPTION '_copy_to_file: the calling function is not allowed to reach this sensitive function.';
-    END IF;
--- Perform the requested COPY TO action.
-    IF p_psqlScript THEN
--- For psql scripts, the doubled antislashes generated by the COPY processing are transformed into single antislashes.
---   This uses the 'sed' shell command.
-      EXECUTE format ('COPY %s TO PROGRAM ''sed "s/\\\\\\\\/\\\\/g" >%s'' %s',
-                      p_source, p_location, coalesce (p_copyOptions, ''));
-    ELSE
-      EXECUTE format ('COPY %s TO %L %s',
-                      p_source, p_location, coalesce (p_copyOptions, ''));
-    END IF;
--- If the output file is empty, remove it, if requested.
-    IF p_removeEmptyFile THEN
-      GET DIAGNOSTICS v_nbRows = ROW_COUNT;
-      IF v_nbRows = 0 THEN
--- The file is removed by calling a rm shell command through a COPY TO PROGRAM statement.
-        EXECUTE format ('COPY (SELECT NULL) TO PROGRAM ''rm %s''',
-                        p_location);
-        RETURN 0;
-       END IF;
-    END IF;
---
-    RETURN 1;
-  END;
-$_copy_to_file$;
 
 ---------------------------------------------------
 --                                               --
@@ -2358,7 +2171,8 @@ $$Assign tables on name patterns into a tables group.$$;
 
 CREATE OR REPLACE FUNCTION emaj._assign_tables(p_schema TEXT, p_tables TEXT[], p_group TEXT, p_properties JSONB, p_mark TEXT,
                                                p_multiTable BOOLEAN, p_arrayFromRegex BOOLEAN)
-RETURNS INTEGER LANGUAGE plpgsql AS
+RETURNS INTEGER LANGUAGE plpgsql
+SECURITY DEFINER SET search_path = pg_catalog, pg_temp AS
 $_assign_tables$
 -- The function effectively assigns tables into a tables group.
 -- Inputs: schema, array of table names, group name, properties as JSON structure
@@ -2367,6 +2181,8 @@ $_assign_tables$
 -- Outputs: number of tables effectively assigned to the tables group
 -- The JSONB p_properties parameter has the following structure '{"priority":..., "log_data_tablespace":..., "log_index_tablespace":...}'
 --   each properties being NULL by default
+-- The function is defined as SECURITY DEFINER so that emaj_adm role can use it even if he has not been granted the CREATE privilege on
+--   the current database, needed to create log schemas.
   DECLARE
     v_function               TEXT;
     v_groupIsRollbackable    BOOLEAN;
@@ -2544,8 +2360,16 @@ $_assign_tables$
              ) THEN
           RAISE EXCEPTION '_assign_tables: The schema "%" should not exist. Drop it manually.',v_logSchema;
         END IF;
--- Create the schema.
-        PERFORM emaj._create_log_schema(v_logSchema, CASE WHEN p_multiTable THEN 'ASSIGN_TABLES' ELSE 'ASSIGN_TABLE' END);
+-- Create the schema and give the appropriate rights.
+        EXECUTE format('CREATE SCHEMA %I AUTHORIZATION emaj_adm',
+                       v_logSchema);
+        EXECUTE format('GRANT USAGE ON SCHEMA %I TO emaj_viewer',
+                       v_logSchema);
+-- And record the schema creation into the emaj_schema and the emaj_hist tables.
+        INSERT INTO emaj.emaj_schema (sch_name)
+          VALUES (v_logSchema);
+        INSERT INTO emaj.emaj_hist (hist_function, hist_event, hist_object)
+          VALUES (CASE WHEN p_multiTable THEN 'ASSIGN_TABLES' ELSE 'ASSIGN_TABLE' END, 'LOG_SCHEMA CREATED', quote_ident(v_logSchema));
       END IF;
 -- Disable event triggers that protect emaj components and keep in memory these triggers name.
       SELECT emaj._disable_event_triggers() INTO v_eventTriggers;
@@ -3323,18 +3147,30 @@ $_create_tbl$
          || 'END;'
          || '$logfnct$ LANGUAGE plpgsql SECURITY DEFINER SET search_path = pg_catalog, pg_temp;';
 -- Create the log and truncate triggers.
-    PERFORM emaj._handle_trigger_fk_tbl('DROP_TRIGGER', p_schema, p_tbl, 'emaj_log_trg');
-    PERFORM emaj._handle_trigger_fk_tbl('ADD_TRIGGER', p_schema, p_tbl, 'emaj_log_trg', v_logFnctName);
-    PERFORM emaj._handle_trigger_fk_tbl('DROP_TRIGGER', p_schema, p_tbl, 'emaj_trunc_trg');
-    PERFORM emaj._handle_trigger_fk_tbl('ADD_TRIGGER', p_schema, p_tbl, 'emaj_trunc_trg');
+    EXECUTE format('DROP TRIGGER IF EXISTS emaj_log_trg ON %I.%I',
+                   p_schema, p_tbl);
+    EXECUTE format('CREATE TRIGGER emaj_log_trg'
+                   ' AFTER INSERT OR UPDATE OR DELETE ON %I.%I'
+                   '  FOR EACH ROW EXECUTE PROCEDURE %s()',
+                   p_schema, p_tbl, v_logFnctName);
+    EXECUTE format('DROP TRIGGER IF EXISTS emaj_trunc_trg ON %I.%I',
+                   p_schema, p_tbl);
+    EXECUTE format('CREATE TRIGGER emaj_trunc_trg'
+                   '  BEFORE TRUNCATE ON %I.%I'
+                   '  FOR EACH STATEMENT EXECUTE PROCEDURE emaj._truncate_trigger_fnct()',
+                   p_schema, p_tbl);
     IF p_groupIsLogging THEN
 -- If the group is in logging state, set the triggers as ALWAYS triggers, so that they can fire at rollback time.
-      PERFORM emaj._handle_trigger_fk_tbl('SET_TRIGGER', p_schema, p_tbl, 'emaj_log_trg', 'ALWAYS');
-      PERFORM emaj._handle_trigger_fk_tbl('SET_TRIGGER', p_schema, p_tbl, 'emaj_trunc_trg', 'ALWAYS');
+      EXECUTE format('ALTER TABLE %I.%I DISABLE TRIGGER emaj_log_trg, ENABLE ALWAYS TRIGGER emaj_log_trg',
+                     p_schema, p_tbl);
+      EXECUTE format('ALTER TABLE %I.%I DISABLE TRIGGER emaj_trunc_trg, ENABLE ALWAYS TRIGGER emaj_trunc_trg',
+                     p_schema, p_tbl);
     ELSE
 -- If the group is idle, deactivate the triggers (they will be enabled at emaj_start_group time).
-      PERFORM emaj._handle_trigger_fk_tbl('DISABLE_TRIGGER', p_schema, p_tbl, 'emaj_log_trg');
-      PERFORM emaj._handle_trigger_fk_tbl('DISABLE_TRIGGER', p_schema, p_tbl, 'emaj_trunc_trg');
+      EXECUTE format('ALTER TABLE %I.%I DISABLE TRIGGER emaj_log_trg',
+                     p_schema, p_tbl);
+      EXECUTE format('ALTER TABLE %I.%I DISABLE TRIGGER emaj_trunc_trg',
+                     p_schema, p_tbl);
     END IF;
 -- Set emaj_adm as owner of log objects.
     EXECUTE format('ALTER TABLE %s OWNER TO emaj_adm',
@@ -3701,7 +3537,8 @@ $_change_ignored_triggers_tbl$;
 
 CREATE OR REPLACE FUNCTION emaj._remove_tbl(p_schema TEXT, p_table TEXT, p_group TEXT, p_groupIsLogging BOOLEAN,
                                             p_timeId BIGINT, p_function TEXT)
-RETURNS VOID LANGUAGE plpgsql AS
+RETURNS VOID LANGUAGE plpgsql
+SECURITY DEFINER SET search_path = pg_catalog, pg_temp AS
 $_remove_tbl$
 -- The function removes a table from a group. It is called during an alter group or a dynamic removal operation.
 -- If the group is in idle state, it simply calls the _drop_tbl() function.
@@ -3709,6 +3546,7 @@ $_remove_tbl$
 -- time for instance).
 -- Required inputs: schema and sequence to remove, related group name and logging state,
 --                  time stamp id of the operation, main calling function.
+-- The function is defined as SECURITY DEFINER so that emaj_adm role can perform the action on any application table.
   DECLARE
     v_logSchema              TEXT;
     v_currentLogTable        TEXT;
@@ -3763,8 +3601,10 @@ $_remove_tbl$
                 AND relname = p_table
                 AND relkind = 'r'
            ) THEN
-        PERFORM emaj._handle_trigger_fk_tbl('DROP_TRIGGER', p_schema, p_table, 'emaj_log_trg');
-        PERFORM emaj._handle_trigger_fk_tbl('DROP_TRIGGER', p_schema, p_table, 'emaj_trunc_trg');
+        EXECUTE format('DROP TRIGGER IF EXISTS emaj_log_trg ON %I.%I',
+                       p_schema, p_table);
+        EXECUTE format('DROP TRIGGER IF EXISTS emaj_trunc_trg ON %I.%I',
+                       p_schema, p_table);
       END IF;
 -- Drop the log function and the log sequence.
 -- (but we keep the sequence related data in the emaj_table and the emaj_seq_hole tables)
@@ -3916,10 +3756,12 @@ $_move_tbl$
 $_move_tbl$;
 
 CREATE OR REPLACE FUNCTION emaj._drop_tbl(r_rel emaj.emaj_relation, p_timeId BIGINT)
-RETURNS VOID LANGUAGE plpgsql AS
+RETURNS VOID LANGUAGE plpgsql
+SECURITY DEFINER SET search_path = pg_catalog, pg_temp AS
 $_drop_tbl$
 -- The function deletes a timerange for a table. This centralizes the deletion of all what has been created by _create_tbl() function.
 -- Required inputs: row from emaj_relation corresponding to the appplication table to proccess, time id.
+-- The function is defined as SECURITY DEFINER so that emaj_adm role can perform the action on any application table.
   BEGIN
 -- If the table is currently linked to a group, drop the log trigger, function and sequence.
     IF upper_inf(r_rel.rel_time_range) THEN
@@ -3933,8 +3775,10 @@ $_drop_tbl$
                 AND relkind = 'r'
            ) THEN
 -- Drop the log and truncate triggers on the application table.
-        PERFORM emaj._handle_trigger_fk_tbl('DROP_TRIGGER', r_rel.rel_schema, r_rel.rel_tblseq, 'emaj_log_trg');
-        PERFORM emaj._handle_trigger_fk_tbl('DROP_TRIGGER', r_rel.rel_schema, r_rel.rel_tblseq, 'emaj_trunc_trg');
+        EXECUTE format('DROP TRIGGER IF EXISTS emaj_log_trg ON %I.%I',
+                       r_rel.rel_schema, r_rel.rel_tblseq);
+        EXECUTE format('DROP TRIGGER IF EXISTS emaj_trunc_trg ON %I.%I',
+                       r_rel.rel_schema, r_rel.rel_tblseq);
       END IF;
 -- Drop the log function.
       IF r_rel.rel_log_function IS NOT NULL THEN
@@ -4523,23 +4367,31 @@ $_create_seq$;
 
 CREATE OR REPLACE FUNCTION emaj._add_seq(p_schema TEXT, p_sequence TEXT, p_group TEXT, p_groupIsLogging BOOLEAN,
                                          p_timeId BIGINT, p_function TEXT)
-RETURNS VOID LANGUAGE plpgsql AS
+RETURNS VOID LANGUAGE plpgsql
+SECURITY DEFINER SET search_path = pg_catalog, pg_temp AS
 $_add_seq$
 -- The function adds a sequence to a group. It is called during an alter group or a dynamic assignment operation.
 -- If the group is in idle state, it simply calls the _create_seq() function.
 -- Otherwise, it calls the _create_seql() function, and records the current state of the sequence.
 -- Required inputs: schema and sequence to add, group name, priority, the group's logging state,
 --                  the time stamp id of the operation, main calling function.
+-- The function is defined as SECURITY DEFINER so that emaj_adm roles can use it even without SELECT right on the sequence.
   BEGIN
 -- Create the sequence.
     PERFORM emaj._create_seq(p_schema, p_sequence, p_group, p_timeId);
 -- If the group is in logging state, perform additional tasks.
     IF p_groupIsLogging THEN
 -- Record the new sequence state in the emaj_sequence table for the current alter_group mark.
-      INSERT INTO emaj.emaj_sequence (sequ_schema, sequ_name, sequ_time_id, sequ_last_val, sequ_start_val,
-                  sequ_increment, sequ_max_val, sequ_min_val, sequ_cache_val, sequ_is_cycled, sequ_is_called)
-        SELECT *
-          FROM emaj._get_current_sequence_state(p_schema, p_sequence, p_timeId);
+      EXECUTE format('INSERT INTO emaj.emaj_sequence (sequ_schema, sequ_name, sequ_time_id, sequ_last_val, sequ_start_val,'
+                     '            sequ_increment, sequ_max_val, sequ_min_val, sequ_cache_val, sequ_is_cycled, sequ_is_called)'
+                     '  SELECT nspname, relname, %s, sq.last_value, seqstart,'
+                     '         seqincrement, seqmax, seqmin, seqcache, seqcycle, sq.is_called'
+                     '    FROM %I.%I sq,'
+                     '       pg_catalog.pg_sequence s'
+                     '       JOIN pg_class c ON (c.oid = s.seqrelid)'
+                     '       JOIN pg_namespace n ON (n.oid = c.relnamespace)'
+                     '    WHERE nspname = %L AND relname = %L',
+                     p_timeId, p_schema, p_sequence, p_schema, p_sequence);
     END IF;
 -- Insert an entry into the emaj_relation_change table.
     INSERT INTO emaj.emaj_relation_change (rlchg_time_id, rlchg_schema, rlchg_tblseq, rlchg_change_kind, rlchg_group)
@@ -4813,9 +4665,14 @@ $_rlbk_seq$
         p_timeId, r_rel.rel_schema, r_rel.rel_tblseq;
     END IF;
 -- Read the current sequence's characteristics.
-    SELECT *
-      INTO curr_seq_rec
-      FROM emaj._get_current_sequence_state(r_rel.rel_schema, r_rel.rel_tblseq, NULL);
+    EXECUTE format('SELECT nspname, relname, 0, sq.last_value, seqstart, seqincrement, seqmax, seqmin, seqcache, seqcycle, sq.is_called'
+                   '  FROM %I.%I sq,'
+                   '       pg_catalog.pg_sequence s'
+                   '       JOIN pg_class c ON (c.oid = s.seqrelid)'
+                   '       JOIN pg_namespace n ON (n.oid = c.relnamespace)'
+                   '  WHERE nspname = %L AND relname = %L',
+                   r_rel.rel_schema, r_rel.rel_tblseq, r_rel.rel_schema, r_rel.rel_tblseq)
+      INTO STRICT curr_seq_rec;
 -- Build the ALTER SEQUENCE statement, depending on the differences between the current sequence state and its characteristics
 -- at the requested mark time.
     SELECT emaj._build_alter_seq(curr_seq_rec, mark_seq_rec) INTO v_stmt;
@@ -5010,7 +4867,8 @@ $_gen_sql_tbl$;
 
 CREATE OR REPLACE FUNCTION emaj._sequence_stat_seq(r_rel emaj.emaj_relation, p_beginTimeId BIGINT, p_endTimeId BIGINT,
                                                    OUT p_increments BIGINT, OUT p_hasStructureChanged BOOLEAN)
-LANGUAGE plpgsql AS
+LANGUAGE plpgsql
+SECURITY DEFINER SET search_path = pg_catalog, pg_temp AS
 $_sequence_stat_seq$
 -- This function compares the state of a single sequence between 2 time stamps or between a time stamp and the current state.
 -- It is called by the _sequence_stat_group() function.
@@ -5018,6 +4876,7 @@ $_sequence_stat_seq$
 --        the time stamp ids defining the time range to examine (a end time stamp id set to NULL indicates the current state).
 -- Output: number of sequence increments between both time stamps for the sequence
 --         a boolean indicating whether any structure property has been modified between both time stamps.
+-- The function is defined as SECURITY DEFINER so that emaj_adm and emaj_viewer roles can use it even without SELECT right on the sequence.
   DECLARE
     r_beginSeq               emaj.emaj_sequence%ROWTYPE;
     r_endSeq                 emaj.emaj_sequence%ROWTYPE;
@@ -5038,9 +4897,14 @@ $_sequence_stat_seq$
           AND sequ_name = r_rel.rel_tblseq
           AND sequ_time_id = p_endTimeId;
     ELSE
-      SELECT *
-        INTO r_endSeq
-        FROM emaj._get_current_sequence_state(r_rel.rel_schema, r_rel.rel_tblseq, NULL);
+      EXECUTE format('SELECT nspname, relname, 0, sq.last_value, seqstart, seqincrement, seqmax, seqmin, seqcache, seqcycle, sq.is_called'
+                     '  FROM %I.%I sq,'
+                     '       pg_catalog.pg_sequence s'
+                     '       JOIN pg_class c ON (c.oid = s.seqrelid)'
+                     '       JOIN pg_namespace n ON (n.oid = c.relnamespace)'
+                     '  WHERE nspname = %L AND relname = %L',
+                     r_rel.rel_schema, r_rel.rel_tblseq, r_rel.rel_schema, r_rel.rel_tblseq)
+        INTO STRICT r_endSeq;
     END IF;
 -- Compute the statistics
     p_increments = (r_endSeq.sequ_last_val - r_beginSeq.sequ_last_val) / r_beginSeq.sequ_increment
@@ -5056,7 +4920,8 @@ $_sequence_stat_seq$
 $_sequence_stat_seq$;
 
 CREATE OR REPLACE FUNCTION emaj._gen_sql_seq(r_rel emaj.emaj_relation, p_firstMarkTimeId BIGINT, p_lastMarkTimeId BIGINT, p_nbSeq BIGINT)
-RETURNS BIGINT LANGUAGE plpgsql AS
+RETURNS BIGINT LANGUAGE plpgsql
+SECURITY DEFINER SET search_path = pg_catalog, pg_temp AS
 $_gen_sql_seq$
 -- This function generates a SQL statement to set the final characteristics of a sequence.
 -- The statement is stored into a temporary table created by the _gen_sql_groups() calling function.
@@ -5065,6 +4930,7 @@ $_gen_sql_seq$
 --        the time id at requested start and end marks,
 --        the number of already processed sequences
 -- Output: number of generated SQL statements (0 or 1)
+-- The function is defined as SECURITY DEFINER so that emaj_adm and emaj_viewer roles can use it even without SELECT right on the sequence.
   DECLARE
     v_endTimeId              BIGINT;
     v_rqSeq                  TEXT;
@@ -5081,9 +4947,14 @@ $_gen_sql_seq$
 -- Get the sequence characteristics at end mark or the current state.
     IF p_lastMarkTimeId IS NULL AND upper_inf(r_rel.rel_time_range) THEN
 -- No supplied last mark and the sequence currently belongs to its group, so get the current sequence characteritics.
-      SELECT *
-        INTO trg_seq_rec
-        FROM emaj._get_current_sequence_state(r_rel.rel_schema, r_rel.rel_tblseq, NULL);
+      EXECUTE format('SELECT nspname, relname, 0, sq.last_value, seqstart, seqincrement, seqmax, seqmin, seqcache, seqcycle, sq.is_called'
+                     '  FROM %I.%I sq,'
+                     '       pg_catalog.pg_sequence s'
+                     '       JOIN pg_class c ON (c.oid = s.seqrelid)'
+                     '       JOIN pg_namespace n ON (n.oid = c.relnamespace)'
+                     '  WHERE nspname = %L AND relname = %L',
+                     r_rel.rel_schema, r_rel.rel_tblseq, r_rel.rel_schema, r_rel.rel_tblseq)
+        INTO STRICT trg_seq_rec;
     ELSE
 -- A last mark is supplied, or the sequence does not belong to its group anymore, so get the sequence characteristics
 -- from the emaj_sequence table.
@@ -5111,42 +4982,6 @@ $_gen_sql_seq$
     RETURN 0;
   END;
 $_gen_sql_seq$;
-
-CREATE OR REPLACE FUNCTION emaj._get_current_sequence_state(p_schema TEXT, p_sequence TEXT, p_timeId BIGINT)
-RETURNS emaj.emaj_sequence LANGUAGE plpgsql
-SECURITY DEFINER SET search_path = pg_catalog, pg_temp AS
-$_get_current_sequence_state$
--- The function returns the current state of a single sequence.
--- Input: schema and sequence name,
---        time_id to set the sequ_time_id to report
--- Output: an emaj_sequence record
--- The function is defined as SECURITY DEFINER so that emaj_adm and emaj_viewer roles can use it even without SELECT right on the sequence.
-  DECLARE
-    v_stack                  TEXT;
-    r_sequ                   emaj.emaj_sequence%ROWTYPE;
-  BEGIN
--- Check that the caller is allowed to do that.
--- This prevents against an emaj_adm or emaj_viewer role without SELECT privilege on the sequence to look at it.
-    GET DIAGNOSTICS v_stack = PG_CONTEXT;
-    IF v_stack NOT LIKE '%emaj._set_mark_groups(text[],text,text,boolean,boolean,text,bigint,text)%' AND
-       v_stack NOT LIKE '%emaj._rlbk_seq(emaj.emaj_relation,bigint)%' AND
-       v_stack NOT LIKE '%emaj._add_seq(text,text,text,boolean,bigint,text)%' AND
-       v_stack NOT LIKE '%emaj._sequence_stat_seq(emaj.emaj_relation,bigint,bigint)%' AND
-       v_stack NOT LIKE '%emaj._gen_sql_seq(emaj.emaj_relation,bigint,bigint,bigint)%' THEN
-      RAISE EXCEPTION '_get_current_sequence_state: the calling function is not allowed to reach this sensitive function.';
-    END IF;
--- Read the sequence.
-    EXECUTE format('SELECT nspname, relname, %s, sq.last_value, seqstart, seqincrement, seqmax, seqmin, seqcache, seqcycle, sq.is_called'
-                   '  FROM %I.%I sq,'
-                   '       pg_catalog.pg_sequence s'
-                   '       JOIN pg_class c ON (c.oid = s.seqrelid)'
-                   '       JOIN pg_namespace n ON (n.oid = c.relnamespace)'
-                   '  WHERE nspname = %L AND relname = %L',
-                   coalesce(p_timeId, 0), p_schema, p_sequence, p_schema, p_sequence)
-      INTO STRICT r_sequ;
-    RETURN r_sequ;
-  END;
-$_get_current_sequence_state$;
 
 CREATE OR REPLACE FUNCTION emaj._get_log_sequence_last_value(p_schema TEXT, p_sequence TEXT)
 RETURNS BIGINT LANGUAGE plpgsql AS
@@ -5924,12 +5759,14 @@ COMMENT ON FUNCTION emaj.emaj_export_groups_configuration(TEXT[]) IS
 $$Generates a json structure describing configured tables groups.$$;
 
 CREATE OR REPLACE FUNCTION emaj.emaj_export_groups_configuration(p_location TEXT, p_groups TEXT[] DEFAULT NULL)
-RETURNS INT LANGUAGE plpgsql AS
+RETURNS INT LANGUAGE plpgsql
+SECURITY DEFINER SET search_path = pg_catalog, pg_temp AS
 $emaj_export_groups_configuration$
 -- This function stores some or all configured tables groups configuration into a file on the server.
 -- The JSON structure is built by the _export_groups_conf() function.
 -- Input: an optional array of goup's names, NULL means all tables groups
 -- Output: the number of tables groups recorded in the file.
+-- The function is defined as SECURITY DEFINER so that emaj roles can perform the COPY statement.
   DECLARE
     v_groupsJson             JSON;
   BEGIN
@@ -5940,7 +5777,8 @@ $emaj_export_groups_configuration$
     INSERT INTO t
       SELECT line
         FROM regexp_split_to_table(v_groupsJson::TEXT, '\n') AS line;
-    PERFORM emaj._copy_to_file('t', p_location, NULL);
+    EXECUTE format ('COPY t TO %L',
+                    p_location);
     DROP TABLE t;
 -- Return the number of recorded tables groups.
     RETURN json_array_length(v_groupsJson->'tables_groups');
@@ -6089,7 +5927,8 @@ $$Import a json structure describing tables groups to create or alter.$$;
 
 CREATE OR REPLACE FUNCTION emaj.emaj_import_groups_configuration(p_location TEXT, p_groups TEXT[] DEFAULT NULL,
                                                                  p_allowGroupsUpdate BOOLEAN DEFAULT FALSE, p_mark TEXT DEFAULT 'IMPORT_%')
-RETURNS INT LANGUAGE plpgsql AS
+RETURNS INT LANGUAGE plpgsql
+SECURITY DEFINER SET search_path = pg_catalog, pg_temp AS
 $emaj_import_groups_configuration$
 -- This function imports a file containing a JSON formatted structure representing tables groups to create or update.
 -- This structure can have been generated by the emaj_export_groups_configuration() functions and may have been adapted by the user.
@@ -6099,13 +5938,15 @@ $emaj_import_groups_configuration$
 --        - an optional boolean indicating whether tables groups to import may already exist (FALSE by default)
 --        - an optional mark name to set for tables groups in logging state (IMPORT_% by default)
 -- Output: the number of created or altered tables groups
+-- The function is defined as SECURITY DEFINER so that emaj roles can perform the COPY statement.
   DECLARE
     v_groupsText             TEXT;
     v_json                   JSON;
   BEGIN
 -- Read the input file and put its content into a temporary table.
     CREATE TEMP TABLE t (groups TEXT);
-    PERFORM emaj._copy_from_file('t', p_location);
+    EXECUTE format ('COPY t FROM %L',
+                    p_location);
 -- Aggregate the lines into a single text variable.
     SELECT string_agg(groups, E'\n') INTO v_groupsText
       FROM t;
@@ -6896,13 +6737,15 @@ COMMENT ON FUNCTION emaj.emaj_start_groups(TEXT[],TEXT, BOOLEAN) IS
 $$Starts several E-Maj groups.$$;
 
 CREATE OR REPLACE FUNCTION emaj._start_groups(p_groupNames TEXT[], p_mark TEXT, p_multiGroup BOOLEAN, p_resetLog BOOLEAN)
-RETURNS INT LANGUAGE plpgsql AS
+RETURNS INT LANGUAGE plpgsql
+SECURITY DEFINER SET search_path = pg_catalog, pg_temp AS
 $_start_groups$
 -- This function activates the log triggers of all the tables for one or several groups and set a first mark.
 -- It also delete oldest rows in emaj_hist table.
 -- Input: array of group names, name of the mark to set, boolean indicating whether the function is called by a multi group function,
 --        boolean indicating whether the function must reset the group at start time
 -- Output: number of processed tables
+-- The function is defined as SECURITY DEFINER so that emaj_adm role can perform the action on any application table.
   DECLARE
     v_function               TEXT;
     v_timeId                 BIGINT;
@@ -6957,8 +6800,10 @@ $_start_groups$
       LOOP
         IF r_tblsq.rel_kind = 'r' THEN
 -- ... if it is a table, enable the emaj log and truncate triggers.
-          PERFORM emaj._handle_trigger_fk_tbl('ENABLE_TRIGGER', r_tblsq.rel_schema, r_tblsq.rel_tblseq, 'emaj_log_trg', 'ALWAYS');
-          PERFORM emaj._handle_trigger_fk_tbl('ENABLE_TRIGGER', r_tblsq.rel_schema, r_tblsq.rel_tblseq, 'emaj_trunc_trg', 'ALWAYS');
+          EXECUTE format('ALTER TABLE %I.%I ENABLE ALWAYS TRIGGER emaj_log_trg',
+                         r_tblsq.rel_schema, r_tblsq.rel_tblseq);
+          EXECUTE format('ALTER TABLE %I.%I ENABLE ALWAYS TRIGGER emaj_trunc_trg',
+                         r_tblsq.rel_schema, r_tblsq.rel_tblseq);
         END IF;
         v_nbTblSeq = v_nbTblSeq + 1;
       END LOOP;
@@ -7036,11 +6881,13 @@ COMMENT ON FUNCTION emaj.emaj_force_stop_group(TEXT) IS
 $$Forces an E-Maj group stop.$$;
 
 CREATE OR REPLACE FUNCTION emaj._stop_groups(p_groupNames TEXT[], p_mark TEXT, p_multiGroup BOOLEAN, p_isForced BOOLEAN)
-RETURNS INT LANGUAGE plpgsql AS
+RETURNS INT LANGUAGE plpgsql
+SECURITY DEFINER SET search_path = pg_catalog, pg_temp AS
 $_stop_groups$
 -- This function effectively de-activates the log triggers of all the tables for a group.
 -- Input: array of group names, a mark name to set, and a boolean indicating if the function is called by a multi group function
 -- Output: number of processed tables and sequences
+-- The function is defined as SECURITY DEFINER so that emaj_adm role can perform the action on any application table.
   DECLARE
     v_function               TEXT;
     v_groupList              TEXT;
@@ -7140,7 +6987,8 @@ $_stop_groups$
 -- ... and disable the emaj log and truncate triggers.
 -- Errors are captured so that emaj_force_stop_group() can be silently executed.
             BEGIN
-              PERFORM emaj._handle_trigger_fk_tbl('DISABLE_TRIGGER', r_tblsq.rel_schema, r_tblsq.rel_tblseq, 'emaj_log_trg');
+              EXECUTE format('ALTER TABLE %I.%I DISABLE TRIGGER emaj_log_trg',
+                             r_tblsq.rel_schema, r_tblsq.rel_tblseq);
             EXCEPTION
               WHEN undefined_object THEN
                 IF p_isForced THEN
@@ -7152,7 +7000,8 @@ $_stop_groups$
                 END IF;
             END;
             BEGIN
-              PERFORM emaj._handle_trigger_fk_tbl('DISABLE_TRIGGER', r_tblsq.rel_schema, r_tblsq.rel_tblseq, 'emaj_trunc_trg');
+              EXECUTE format('ALTER TABLE %I.%I DISABLE TRIGGER emaj_trunc_trg',
+                             r_tblsq.rel_schema, r_tblsq.rel_tblseq);
             EXCEPTION
               WHEN undefined_object THEN
                 IF p_isForced THEN
@@ -7351,7 +7200,8 @@ $$Sets a mark on several E-Maj groups.$$;
 CREATE OR REPLACE FUNCTION emaj._set_mark_groups(p_groupNames TEXT[], p_mark TEXT, p_comment TEXT, p_multiGroup BOOLEAN,
                                                  p_eventToRecord BOOLEAN, p_loggedRlbkTargetMark TEXT DEFAULT NULL,
                                                  p_timeId BIGINT DEFAULT NULL, p_dblinkSchema TEXT DEFAULT NULL)
-RETURNS INT LANGUAGE plpgsql AS
+RETURNS INT LANGUAGE plpgsql
+SECURITY DEFINER SET search_path = pg_catalog, pg_temp AS
 $_set_mark_groups$
 -- This function effectively inserts a mark in the emaj_mark table and takes an image of the sequences definitions for the array of groups.
 -- It also updates 1) the previous mark of each group to setup the mark_log_rows_before_next column with the number of rows recorded into
@@ -7366,6 +7216,7 @@ $_set_mark_groups$
 --        dblink schema when the mark is set by a rollback operation and dblink connection are used (NULL by default)
 -- Output: number of processed tables and sequences
 -- The insertion of the corresponding event in the emaj_hist table is performed by callers.
+-- The function is defined as SECURITY DEFINER so that emaj_adm roles can use it even without SELECT right on the sequence.
   DECLARE
     v_function               TEXT;
     v_nbSeq                  INT;
@@ -7375,6 +7226,7 @@ $_set_mark_groups$
     v_nbChanges              BIGINT;
     v_nbTbl                  INT;
     v_stmt                   TEXT;
+    r_seq                    RECORD;
   BEGIN
     v_function = CASE WHEN p_multiGroup THEN 'SET_MARK_GROUPS' ELSE 'SET_MARK_GROUP' END;
 -- If requested by the calling function, record the set mark begin in emaj_hist.
@@ -7388,21 +7240,28 @@ $_set_mark_groups$
     END IF;
 -- Record sequences state as early as possible (no lock protects them from other transactions activity).
 -- The join on pg_namespace and pg_class filters the potentially dropped application sequences.
-    WITH seq AS                          -- selected sequences
-      (SELECT rel_schema, rel_tblseq
-         FROM emaj.emaj_relation
-              JOIN pg_catalog.pg_class ON (relname = rel_tblseq)
-              JOIN pg_catalog.pg_namespace ON (pg_namespace.oid = relnamespace AND nspname = rel_schema)
-         WHERE upper_inf(rel_time_range)
-           AND rel_kind = 'S'
-           AND rel_group = ANY (p_groupNames)
-      )
-    INSERT INTO emaj.emaj_sequence (sequ_schema, sequ_name, sequ_time_id, sequ_last_val, sequ_start_val,
-                sequ_increment, sequ_max_val, sequ_min_val, sequ_cache_val, sequ_is_cycled, sequ_is_called)
-      SELECT t.*
-        FROM seq,
-             LATERAL emaj._get_current_sequence_state(rel_schema, rel_tblseq, p_timeId) AS t;
-    GET DIAGNOSTICS v_nbSeq = ROW_COUNT;
+    v_nbSeq = 0;
+    FOR r_seq IN
+      SELECT rel_schema, rel_tblseq
+        FROM emaj.emaj_relation
+             JOIN pg_catalog.pg_class ON (relname = rel_tblseq)
+             JOIN pg_catalog.pg_namespace ON (pg_namespace.oid = relnamespace AND nspname = rel_schema)
+        WHERE upper_inf(rel_time_range)
+          AND rel_kind = 'S'
+          AND rel_group = ANY (p_groupNames)
+    LOOP
+      EXECUTE format('INSERT INTO emaj.emaj_sequence (sequ_schema, sequ_name, sequ_time_id, sequ_last_val, sequ_start_val,'
+                     '            sequ_increment, sequ_max_val, sequ_min_val, sequ_cache_val, sequ_is_cycled, sequ_is_called)'
+                     '  SELECT nspname, relname, %s, sq.last_value, seqstart,'
+                     '         seqincrement, seqmax, seqmin, seqcache, seqcycle, sq.is_called'
+                     '    FROM %I.%I sq,'
+                     '       pg_catalog.pg_sequence s'
+                     '       JOIN pg_class c ON (c.oid = s.seqrelid)'
+                     '       JOIN pg_namespace n ON (n.oid = c.relnamespace)'
+                     '    WHERE nspname = %L AND relname = %L',
+                     p_timeId, r_seq.rel_schema, r_seq.rel_tblseq, r_seq.rel_schema, r_seq.rel_tblseq);
+      v_nbSeq = v_nbSeq + 1;
+    END LOOP;
 -- Record the number of log rows for the previous last mark of each selected group.
     FOREACH v_group IN ARRAY p_groupNames
     LOOP
@@ -8191,7 +8050,7 @@ $_rlbk_async$
 -- If dblink is used (which should always be true), try to open the first session connection (no error is issued if it is already opened).
     IF v_isDblinkUsed THEN
       SELECT p_status INTO v_dbLinkCnxStatus
-        FROM emaj._dblink_open_cnx('rlbk#1');
+        FROM emaj._dblink_open_cnx('rlbk#1', current_role);
       IF v_dbLinkCnxStatus < 0 THEN
         RAISE EXCEPTION '_rlbk_async: Error while opening the dblink session #1 (Status of the dblink connection attempt = %'
                         ' - see E-Maj documentation).',
@@ -8263,7 +8122,7 @@ $_rlbk_init$
 -- First try to open a dblink connection.
       SELECT p_status, (p_status >= 0), CASE WHEN p_status >= 0 THEN p_schema ELSE NULL END
         INTO v_dbLinkCnxStatus, v_isDblinkUsed, v_dbLinkSchema
-        FROM emaj._dblink_open_cnx('rlbk#1');
+        FROM emaj._dblink_open_cnx('rlbk#1', current_role);
 -- For parallel rollback (i.e. when nb sessions > 1), the dblink connection must be ok.
       IF p_nbSession > 1 AND NOT v_isDblinkUsed THEN
         RAISE EXCEPTION '_rlbk_init: Cannot use several sessions without dblink connection capability. (Status of the dblink'
@@ -9165,7 +9024,7 @@ $_rlbk_session_lock$
 -- For dblink session > 1, open the connection (the session 1 is already opened).
     IF p_session > 1 THEN
       SELECT p_status INTO v_dbLinkCnxStatus
-        FROM emaj._dblink_open_cnx('rlbk#' || p_session);
+        FROM emaj._dblink_open_cnx('rlbk#' || p_session, current_role);
       IF v_dbLinkCnxStatus < 0 THEN
         RAISE EXCEPTION '_rlbk_session_lock: Error while opening the dblink session #% (Status of the dblink connection attempt = %'
                         ' - see E-Maj documentation).',
@@ -9343,11 +9202,13 @@ $_rlbk_start_mark$
 $_rlbk_start_mark$;
 
 CREATE OR REPLACE FUNCTION emaj._rlbk_session_exec(p_rlbkId INT, p_session INT)
-RETURNS VOID LANGUAGE plpgsql AS
+RETURNS VOID LANGUAGE plpgsql
+SECURITY DEFINER SET search_path = pg_catalog, pg_temp AS
 $_rlbk_session_exec$
 -- This function executes the main part of a rollback operation.
 -- It executes the steps identified by _rlbk_planning() and stored into emaj_rlbk_plan, for one session.
 -- It updates the emaj_rlbk_plan table, using dblink connection if possible, giving a visibility of the rollback progress.
+-- The function is defined as SECURITY DEFINER so that emaj_adm role can perform the action on any application table.
   DECLARE
     v_stmt                   TEXT;
     v_groupNames             TEXT[];
@@ -9417,24 +9278,24 @@ $_rlbk_session_exec$
           PERFORM emaj._dblink_sql_exec('rlbk#' || p_session, v_stmt, v_dblinkSchema);
         WHEN 'DIS_APP_TRG' THEN
 -- Disable an application trigger.
-          PERFORM emaj._handle_trigger_fk_tbl('DISABLE_TRIGGER', r_step.rlbp_schema, r_step.rlbp_table,
-                                              r_step.rlbp_object);
+          EXECUTE format('ALTER TABLE %I.%I DISABLE TRIGGER %I',
+                         r_step.rlbp_schema, r_step.rlbp_table, r_step.rlbp_object);
         WHEN 'SET_ALWAYS_APP_TRG' THEN
 -- Set an application trigger as an ALWAYS trigger.
-          PERFORM emaj._handle_trigger_fk_tbl('SET_TRIGGER', r_step.rlbp_schema, r_step.rlbp_table,
-                                              r_step.rlbp_object, 'ALWAYS');
+          EXECUTE format('ALTER TABLE %I.%I DISABLE TRIGGER %I, ENABLE ALWAYS TRIGGER %I',
+                         r_step.rlbp_schema, r_step.rlbp_table, r_step.rlbp_object, r_step.rlbp_object);
         WHEN 'DIS_LOG_TRG' THEN
 -- Disable a log trigger.
-          PERFORM emaj._handle_trigger_fk_tbl('DISABLE_TRIGGER', r_step.rlbp_schema, r_step.rlbp_table,
-                                              'emaj_log_trg');
+          EXECUTE format('ALTER TABLE %I.%I DISABLE TRIGGER emaj_log_trg',
+                         r_step.rlbp_schema, r_step.rlbp_table);
         WHEN 'DROP_FK' THEN
 -- Delete a foreign key.
-          PERFORM emaj._handle_trigger_fk_tbl('DROP_FK', r_step.rlbp_schema, r_step.rlbp_table,
-                                              r_step.rlbp_object);
+          EXECUTE format('ALTER TABLE %I.%I DROP CONSTRAINT %I',
+                         r_step.rlbp_schema, r_step.rlbp_table, r_step.rlbp_object);
         WHEN 'SET_FK_DEF' THEN
 -- Set a foreign key deferred.
-          PERFORM emaj._handle_trigger_fk_tbl('SET_FK_DEFERRED', r_step.rlbp_schema, NULL,
-                                              r_step.rlbp_object);
+          EXECUTE format('SET CONSTRAINTS %I.%I DEFERRED',
+                             r_step.rlbp_schema, r_step.rlbp_object);
         WHEN 'RLBK_TABLE' THEN
 -- Process a table rollback.
 -- For tables added to the group after the rollback target mark, get the last sequence value specific to each table.
@@ -9461,24 +9322,24 @@ $_rlbk_session_exec$
               AND upper_inf(rel_time_range);
         WHEN 'SET_FK_IMM' THEN
 -- Set a foreign key immediate.
-          PERFORM emaj._handle_trigger_fk_tbl('SET_FK_IMMEDIATE', r_step.rlbp_schema, NULL,
-                                              r_step.rlbp_object);
+          EXECUTE format('SET CONSTRAINTS %I.%I IMMEDIATE',
+                             r_step.rlbp_schema, r_step.rlbp_object);
         WHEN 'ADD_FK' THEN
 -- Re-create a foreign key.
-          PERFORM emaj._handle_trigger_fk_tbl('ADD_FK', r_step.rlbp_schema, r_step.rlbp_table,
-                                              r_step.rlbp_object, r_step.rlbp_object_def);
+          EXECUTE format('ALTER TABLE %I.%I ADD CONSTRAINT %I %s',
+                         r_step.rlbp_schema, r_step.rlbp_table, r_step.rlbp_object, r_step.rlbp_object_def);
         WHEN 'ENA_APP_TRG' THEN
 -- Enable an application trigger.
-          PERFORM emaj._handle_trigger_fk_tbl('ENABLE_TRIGGER', r_step.rlbp_schema, r_step.rlbp_table,
-                                              r_step.rlbp_object, r_step.rlbp_app_trg_type);
+          EXECUTE format('ALTER TABLE %I.%I ENABLE %s TRIGGER %I',
+                         r_step.rlbp_schema, r_step.rlbp_table, r_step.rlbp_app_trg_type, r_step.rlbp_object);
         WHEN 'SET_LOCAL_APP_TRG' THEN
 -- Reset an application trigger to its common type.
-          PERFORM emaj._handle_trigger_fk_tbl('SET_TRIGGER', r_step.rlbp_schema, r_step.rlbp_table,
-                                              r_step.rlbp_object, '');
+          EXECUTE format('ALTER TABLE %I.%I DISABLE TRIGGER %I, ENABLE TRIGGER %I',
+                         r_step.rlbp_schema, r_step.rlbp_table, r_step.rlbp_object, r_step.rlbp_object);
         WHEN 'ENA_LOG_TRG' THEN
 -- Enable a log trigger.
-          PERFORM emaj._handle_trigger_fk_tbl('ENABLE_TRIGGER', r_step.rlbp_schema, r_step.rlbp_table,
-                                              'emaj_log_trg', 'ALWAYS');
+          EXECUTE format('ALTER TABLE %I.%I ENABLE ALWAYS TRIGGER emaj_log_trg',
+                         r_step.rlbp_schema, r_step.rlbp_table);
       END CASE;
 -- Update the emaj_rlbk_plan table to set the step duration as well as the quantity when it is relevant.
 -- The computed duration does not include the time needed to update the emaj_rlbk_plan table,
@@ -11056,7 +10917,8 @@ $$Generate SQL statements to dump recorded changes between two marks for applica
 
 CREATE OR REPLACE FUNCTION emaj.emaj_gen_sql_dump_changes_group(p_groupName TEXT, p_firstMark TEXT, p_lastMark TEXT,
                                                                 p_optionsList TEXT, p_tblseqs TEXT[], p_scriptLocation TEXT)
-RETURNS TEXT LANGUAGE plpgsql AS
+RETURNS TEXT LANGUAGE plpgsql
+SECURITY DEFINER SET search_path = pg_catalog, pg_temp AS
 $emaj_gen_sql_dump_changes_group$
 -- This function returns SQL statements that read log tables and sequences states to show the data changes recorded between 2 marks for
 --   a group.
@@ -11080,6 +10942,7 @@ $emaj_gen_sql_dump_changes_group$
 --        array of schema qualified table and sequence names to process (NULL to process all relations),
 --        the absolute pathname of the file that will hold the result (NULL to get the result from a temporary table).
 -- Output: Message with the number of generated SQL statements.
+-- The function is defined as SECURITY DEFINER so that emaj roles can perform the COPY statement.
   DECLARE
     v_nbStmt                 INT;
     v_isPsqlCopy             BOOLEAN;
@@ -11100,23 +10963,24 @@ $emaj_gen_sql_dump_changes_group$
 -- Process the emaj_temp_sql temporary table.
 -- An output file is supplied. So write the SQL script into the external file and drop the temporary table.
     IF v_isPsqlCopy THEN
--- If there are psql \copy meta-commands, ask the _copy_to_file() function to remove the doubled antislash characters.
+-- If there are psql \copy meta-commands, remove the doubled antislash characters.
       BEGIN
-        PERFORM emaj._copy_to_file('(SELECT sql_text FROM emaj_temp_sql ORDER BY sql_stmt_number, sql_line_number)',
-                                   p_scriptLocation, NULL, FALSE, TRUE);
+      EXECUTE format ('COPY (SELECT sql_text FROM emaj_temp_sql ORDER BY sql_stmt_number, sql_line_number)' ||
+                      ' TO PROGRAM ''sed "s/\\\\\\\\/\\\\/g" >%s'' ',
+                      p_scriptLocation);
       EXCEPTION
         WHEN OTHERS THEN
 --   If it fails (typically because the sed command is not available), write the script as is, and warn the user about the doubled
 --     antislashes he has to remove.
-          PERFORM emaj._copy_to_file('(SELECT sql_text FROM emaj_temp_sql ORDER BY sql_stmt_number, sql_line_number)',
-                                     p_scriptLocation, NULL, FALSE, FALSE);
+      EXECUTE format ('COPY (SELECT sql_text FROM emaj_temp_sql ORDER BY sql_stmt_number, sql_line_number) TO %L',
+                      p_scriptLocation);
           RAISE WARNING 'emaj_gen_sql_dump_changes_group: the shell sed command does not seem to exist.'
                         ' Generated doubled antislash characters will need to be removed manually.';
       END;
     ELSE
 -- There is no psql meta-command so no antislashes to remove.
-      PERFORM emaj._copy_to_file('(SELECT sql_text FROM emaj_temp_sql ORDER BY sql_stmt_number, sql_line_number)',
-                                 p_scriptLocation, NULL, FALSE, FALSE);
+      EXECUTE format ('COPY (SELECT sql_text FROM emaj_temp_sql ORDER BY sql_stmt_number, sql_line_number) TO %L',
+                      p_scriptLocation);
     END IF;
     DROP TABLE IF EXISTS emaj_temp_sql;
 -- Insert a END event into the history if a file has been generated.
@@ -11131,7 +10995,8 @@ $$Generate SQL statements into a file to dump recorded changes between two marks
 
 CREATE OR REPLACE FUNCTION emaj.emaj_dump_changes_group(p_groupName TEXT, p_firstMark TEXT, p_lastMark TEXT, p_optionsList TEXT,
                                                         p_tblseqs TEXT[], p_dir TEXT)
-RETURNS TEXT LANGUAGE plpgsql AS
+RETURNS TEXT LANGUAGE plpgsql
+SECURITY DEFINER SET search_path = pg_catalog, pg_temp AS
 $emaj_dump_changes_group$
 -- This function reads log tables and sequences states to export into files the data changes recorded between 2 marks for a group.
 -- The function performs COPY TO statements, using the options provided by the caller.
@@ -11153,12 +11018,14 @@ $emaj_dump_changes_group$
 --        array of schema qualified table and sequence names to process (NULL to process all relations),
 --        the absolute pathname of the directory where the files are to be created.
 -- Output: Message with the number of generated files (for tables and sequences, including the _INFO file).
+-- The function is defined as SECURITY DEFINER so that emaj roles can perform the COPY statement.
   DECLARE
     v_copyOptions            TEXT;
     v_noEmptyFiles           BOOLEAN;
     v_nbFile                 INT = 1;
     v_pathName               TEXT;
     v_copyResult             INT;
+    v_nbRows                 INT;
     v_stmt                   TEXT;
     r_sql                    RECORD;
   BEGIN
@@ -11175,7 +11042,8 @@ $emaj_dump_changes_group$
     IF p_dir IS NULL THEN
       RAISE EXCEPTION 'emaj_dump_changes_group: The directory parameter cannot be NULL.';
     END IF;
-    PERFORM emaj._copy_to_file('(SELECT '''')', p_dir || '/_INFO', v_copyOptions);
+    EXECUTE format ('COPY (SELECT '''') TO %L %s',
+                    p_dir || '/_INFO', coalesce(v_copyOptions, ''));
 -- Execute each generated SQL statement.
     FOR r_sql IN
       SELECT sql_stmt_number, sql_schema, sql_tblseq, sql_file_name_suffix, sql_text
@@ -11189,7 +11057,19 @@ $emaj_dump_changes_group$
         ELSE
 -- Otherwise, dump the log table or the sequence states.
           v_pathName = emaj._build_path_name(p_dir, r_sql.sql_schema || '_' || r_sql.sql_tblseq || r_sql.sql_file_name_suffix);
-          v_copyResult = emaj._copy_to_file('(' || r_sql.sql_text || ')', v_pathName, v_copyOptions, v_noEmptyFiles);
+          EXECUTE format ('COPY (%s) TO %L %s',
+                          r_sql.sql_text, v_pathName, coalesce(v_copyOptions, ''));
+          v_copyResult = 1;
+-- If the output file is empty, remove it, if requested.
+          IF v_noEmptyFiles THEN
+            GET DIAGNOSTICS v_nbRows = ROW_COUNT;
+            IF v_nbRows = 0 THEN
+-- The file is removed by calling a rm shell command through a COPY TO PROGRAM statement.
+              EXECUTE format ('COPY (SELECT NULL) TO PROGRAM ''rm %s''',
+                              v_pathName);
+              v_copyResult = 0;
+            END IF;
+          END IF;
           v_nbFile = v_nbFile + v_copyResult;
 -- Keep a trace of the dump execution.
           UPDATE emaj_temp_sql
@@ -11211,7 +11091,8 @@ $emaj_dump_changes_group$
                       ' || '' covers '' || sql_rel_kind || '' "'' || sql_schema || ''.'' || sql_tblseq || ''" from mark "'''
                       ' || sql_first_mark || ''" to mark "'' || sql_last_mark || ''"'''
                 'FROM emaj_temp_sql WHERE sql_line_number = 1 AND sql_result = 1)';
-    PERFORM emaj._copy_to_file(v_stmt, p_dir || '/_INFO');
+    EXECUTE format ('COPY %s TO %L',
+                    v_stmt, p_dir || '/_INFO');
 -- Drop the temporary table.
     DROP TABLE IF EXISTS emaj_temp_sql;
 -- Insert a END event into the history.
@@ -11862,7 +11743,8 @@ $_gen_sql_dump_changes_seq$
 $_gen_sql_dump_changes_seq$;
 
 CREATE OR REPLACE FUNCTION emaj.emaj_snap_group(p_groupName TEXT, p_dir TEXT, p_copyOptions TEXT)
-RETURNS INT LANGUAGE plpgsql AS
+RETURNS INT LANGUAGE plpgsql
+SECURITY DEFINER SET search_path = pg_catalog, pg_temp AS
 $emaj_snap_group$
 -- This function creates a file for each table and sequence belonging to the group.
 -- For tables, these files contain all rows sorted on primary key.
@@ -11879,6 +11761,7 @@ $emaj_snap_group$
 -- Input: group name,
 --        the absolute pathname of the directory where the files are to be created and the options to used in the COPY TO statements
 -- Output: number of processed tables and sequences
+-- The function is defined as SECURITY DEFINER so that emaj roles can perform the COPY statement.
   DECLARE
     v_nbRel                  INT = 0;
     r_tblsq                  RECORD;
@@ -11954,7 +11837,8 @@ $emaj_snap_group$
           END IF;
 --   Dump the table
           v_stmt = format('(SELECT * FROM %s ORDER BY %s)', v_fullTableName, v_colList);
-          PERFORM emaj._copy_to_file(v_stmt, v_pathName, p_copyOptions);
+          EXECUTE format ('COPY %s TO %L %s',
+                          v_stmt, v_pathName, coalesce(p_copyOptions, ''));
         WHEN 'S' THEN
 -- It is a sequence.
           v_stmt = format('(SELECT relname, rel.last_value, seqstart, seqincrement, seqmax, seqmin, seqcache, seqcycle, rel.is_called'
@@ -11965,13 +11849,15 @@ $emaj_snap_group$
                           '  WHERE nspname = %L AND relname = %L)',
                          r_tblsq.rel_schema, r_tblsq.rel_tblseq, r_tblsq.rel_schema, r_tblsq.rel_tblseq);
 --    Dump the sequence properties.
-          PERFORM emaj._copy_to_file(v_stmt, v_pathName, p_copyOptions);
+          EXECUTE format ('COPY %s TO %L %s',
+                          v_stmt, v_pathName, coalesce(p_copyOptions, ''));
       END CASE;
       v_nbRel = v_nbRel + 1;
     END LOOP;
 -- Create the _INFO file to keep general information about the snap operation.
     v_stmt = '(SELECT ' || quote_literal('E-Maj snap of tables group ' || p_groupName || ' at ' || transaction_timestamp()) || ')';
-    PERFORM emaj._copy_to_file(v_stmt, p_dir || '/_INFO', NULL);
+    EXECUTE format ('COPY %s TO %L',
+                    v_stmt, p_dir || '/_INFO');
 -- Insert a END event into the history.
     INSERT INTO emaj.emaj_hist (hist_function, hist_event, hist_object, hist_wording)
       VALUES ('SNAP_GROUP', 'END', p_groupName, v_nbRel || ' tables/sequences processed');
@@ -11999,7 +11885,7 @@ $emaj_gen_sql_group$
 -- Output: number of generated SQL statements (non counting comments and transaction management)
   BEGIN
 -- Call the _gen_sql_groups() function that effectively processes the request.
-    RETURN emaj._gen_sql_groups(array[p_groupName], FALSE, p_firstMark, p_lastMark, p_location, p_tblseqs);
+    RETURN emaj._gen_sql_groups(array[p_groupName], FALSE, p_firstMark, p_lastMark, p_location, p_tblseqs, current_user);
   END;
 $emaj_gen_sql_group$;
 COMMENT ON FUNCTION emaj.emaj_gen_sql_group(TEXT,TEXT,TEXT,TEXT,TEXT[]) IS
@@ -12022,16 +11908,17 @@ $emaj_gen_sql_groups$
 -- Output: number of generated SQL statements (non counting comments and transaction management)
   BEGIN
 -- Call the _gen_sql_groups() function that effectively processes the request.
-    RETURN emaj._gen_sql_groups(p_groupNames, TRUE, p_firstMark, p_lastMark, p_location, p_tblseqs);
+    RETURN emaj._gen_sql_groups(p_groupNames, TRUE, p_firstMark, p_lastMark, p_location, p_tblseqs, current_user);
   END;
 $emaj_gen_sql_groups$;
 COMMENT ON FUNCTION emaj.emaj_gen_sql_groups(TEXT[],TEXT,TEXT,TEXT,TEXT[]) IS
 $$Generates a sql script replaying all updates performed on a tables groups set between two marks and stores it into a given file.$$;
 
 CREATE OR REPLACE FUNCTION emaj._gen_sql_groups(p_groupNames TEXT[], p_multiGroup BOOLEAN, p_firstMark TEXT, p_lastMark TEXT,
-                                                p_location TEXT, p_tblseqs TEXT[])
+                                                p_location TEXT, p_tblseqs TEXT[], p_currentUser TEXT)
 RETURNS BIGINT LANGUAGE plpgsql
-SET DateStyle = 'ISO, YMD' SET standard_conforming_strings = ON AS
+SET DateStyle = 'ISO, YMD' SET standard_conforming_strings = ON
+SECURITY DEFINER SET search_path = pg_catalog, pg_temp AS
 $_gen_sql_groups$
 -- This function generates a SQL script representing all updates performed on a tables groups array between 2 marks
 -- or beetween a mark and the current state. The result is stored into an external file.
@@ -12046,7 +11933,9 @@ $_gen_sql_groups$
 --        - absolute pathname describing the file that will hold the result
 --          (may be NULL if the caller reads the temporary table that will hold the script after the function execution)
 --        - optional array of schema qualified table and sequence names to only process those tables and sequences
+--        - the current user of the calling function
 -- Output: number of generated SQL statements (non counting comments and transaction management)
+-- The function is defined as SECURITY DEFINER so that emaj roles can perform the COPY statement.
   DECLARE
     v_firstMarkTimeId        BIGINT;
     v_firstEmajGid           BIGINT;
@@ -12111,7 +12000,8 @@ $_gen_sql_groups$
       );
 -- Test the supplied output file to avoid to discover a bad file name after having spent a lot of time to build the script.
       IF p_location IS NOT NULL THEN
-        PERFORM emaj._copy_to_file('(SELECT 0)', p_location, NULL);
+        EXECUTE format ('COPY (SELECT 0) TO %L',
+                        p_location);
       END IF;
 -- End of checks.
 -- Insert initial comments, some session parameters setting:
@@ -12177,14 +12067,18 @@ $_gen_sql_groups$
         (NULL, 11, txid_current(), 'RESET datestyle;');
 -- If an output file is supplied, write the SQL script on the external file and drop the temporary table.
       IF p_location IS NOT NULL THEN
-        PERFORM emaj._copy_to_file('(SELECT scr_sql FROM emaj_temp_script ORDER BY scr_emaj_gid NULLS LAST, scr_subid)', p_location, NULL);
+        EXECUTE format ('COPY (SELECT scr_sql FROM emaj_temp_script ORDER BY scr_emaj_gid NULLS LAST, scr_subid) TO %L',
+                        p_location);
         DROP TABLE IF EXISTS emaj_temp_script;
       ELSE
--- Otherwise create a view to ease the generation script export.
+-- Otherwise create a view to ease the generation script export..;
         CREATE TEMPORARY VIEW emaj_sql_script AS
           SELECT scr_sql
             FROM emaj_temp_script
             ORDER BY scr_emaj_gid NULLS LAST, scr_subid;
+-- ... and grant SELECT privileges on the temporary view and the underneath temporary table to the current user.
+        EXECUTE format('GRANT SELECT ON emaj_sql_script, emaj_temp_script TO %I',
+                       p_currentUser);
       END IF;
 -- Return the number of sql verbs generated into the output file.
       v_cumNbSQL = v_cumNbSQL + v_nbSeq;
@@ -12367,11 +12261,13 @@ COMMENT ON FUNCTION emaj.emaj_export_parameters_configuration() IS
 $$Generates a json structure describing the E-Maj parameters.$$;
 
 CREATE OR REPLACE FUNCTION emaj.emaj_export_parameters_configuration(p_location TEXT)
-RETURNS INT LANGUAGE plpgsql AS
+RETURNS INT LANGUAGE plpgsql
+SECURITY DEFINER SET search_path = pg_catalog, pg_temp AS
 $emaj_export_parameters_configuration$
 -- This function stores the parameters configuration into a file on the server.
 -- The JSON structure is built by the _export_param_conf() function.
 -- Output: the number of parameters of the recorded JSON structure.
+-- The function is defined as SECURITY DEFINER so that emaj roles can perform the COPY statement.
   DECLARE
     v_paramsJson             JSON;
   BEGIN
@@ -12382,7 +12278,8 @@ $emaj_export_parameters_configuration$
     INSERT INTO t
       SELECT line
         FROM regexp_split_to_table(v_paramsJson::TEXT, '\n') AS line;
-    PERFORM emaj._copy_to_file('t', p_location, NULL);
+    EXECUTE format ('COPY t TO %L',
+                    p_location);
     DROP TABLE t;
 -- Return the number of recorded parameters.
     RETURN json_array_length(v_paramsJson->'parameters');
@@ -12479,7 +12376,8 @@ COMMENT ON FUNCTION emaj.emaj_import_parameters_configuration(JSON,BOOLEAN) IS
 $$Import a json structure describing E-Maj parameters to load.$$;
 
 CREATE OR REPLACE FUNCTION emaj.emaj_import_parameters_configuration(p_location TEXT, p_deleteCurrentConf BOOLEAN DEFAULT FALSE)
-RETURNS INT LANGUAGE plpgsql AS
+RETURNS INT LANGUAGE plpgsql
+SECURITY DEFINER SET search_path = pg_catalog, pg_temp AS
 $emaj_import_parameters_configuration$
 -- This function imports a file containing a JSON formatted structure representing E-Maj parameters to load.
 -- This structure can have been generated by the emaj_export_parameters_configuration() functions and may have been adapted by the user.
@@ -12488,6 +12386,7 @@ $emaj_import_parameters_configuration$
 --        - an optional boolean indicating whether the current parameters configuration must be deleted before loading the new parameters
 --          (by default, the parameter keys not referenced in the input json structure are kept unchanged)
 -- Output: the number of inserted or updated parameter keys
+-- The function is defined as SECURITY DEFINER so that emaj roles can perform the COPY statement.
   DECLARE
     v_paramsText             TEXT;
     v_paramsJson             JSON;
@@ -12498,7 +12397,8 @@ $emaj_import_parameters_configuration$
       VALUES ('IMPORT_PARAMETERS', 'BEGIN', 'Input file: ' || quote_literal(p_location));
 -- Read the input file and put its content into a temporary table.
     CREATE TEMP TABLE t (params TEXT);
-    PERFORM emaj._copy_from_file('t', p_location);
+    EXECUTE format ('COPY t FROM %L',
+                    p_location);
 -- Aggregate the lines into a single text variable.
     SELECT string_agg(params, E'\n') INTO v_paramsText
       FROM t;
@@ -13206,9 +13106,9 @@ $emaj_verify_all$
       END IF;
     END LOOP;
 -- Report a warning if dblink connections are not operational
-    IF has_function_privilege('emaj._dblink_open_cnx(text)', 'execute') THEN
+    IF has_function_privilege('emaj._dblink_open_cnx(text,text)', 'execute') THEN
       SELECT p_status, p_schema INTO v_status, v_schema
-        FROM emaj._dblink_open_cnx('test');
+        FROM emaj._dblink_open_cnx('test', current_role);
       CASE v_status
         WHEN 0, 1 THEN
           PERFORM emaj._dblink_close_cnx('test', v_schema);
@@ -13938,7 +13838,6 @@ GRANT EXECUTE ON FUNCTION emaj.emaj_get_current_log_table(p_app_schema TEXT, p_a
 GRANT EXECUTE ON FUNCTION emaj._log_stat_tbl(r_rel emaj.emaj_relation, p_firstMarkTimeId BIGINT, p_lastMarkTimeId BIGINT) TO emaj_viewer;
 GRANT EXECUTE ON FUNCTION emaj._sequence_stat_seq(r_rel emaj.emaj_relation, p_beginTimeId BIGINT, p_endTimeId BIGINT,
                                                   OUT p_increments BIGINT, OUT p_hasStructureChanged BOOLEAN) TO emaj_viewer;
-GRANT EXECUTE ON FUNCTION emaj._get_current_sequence_state(p_schema TEXT, p_sequence TEXT, p_timeId BIGINT) TO emaj_viewer;
 GRANT EXECUTE ON FUNCTION emaj._get_log_sequence_last_value(p_schema TEXT, p_sequence TEXT) TO emaj_viewer;
 GRANT EXECUTE ON FUNCTION emaj._get_app_sequence_last_value(p_schema TEXT, p_sequence TEXT) TO emaj_viewer;
 GRANT EXECUTE ON FUNCTION emaj._verify_groups(p_groupNames TEXT[], p_onErrorStop boolean) TO emaj_viewer;

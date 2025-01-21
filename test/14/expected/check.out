@@ -8,7 +8,7 @@ select count(*) from pg_proc, pg_namespace
   where pg_namespace.oid=pronamespace and nspname = 'emaj' and (proname like E'emaj\\_%' or proname like E'\\_%');
  count 
 -------
-   194
+   188
 (1 row)
 
 select count(*) from pg_proc, pg_namespace 
@@ -117,13 +117,9 @@ select funcname, calls from pg_stat_user_functions
  _check_tblseqs_array                      |   112
  _check_tblseqs_filter                     |    29
  _cleanup_rollback_state                   |   373
- _copy_from_file                           |    27
- _copy_to_file                             |   218
- _create_log_schema                        |    39
  _create_log_schemas                       |    21
  _create_seq                               |    46
  _create_tbl                               |   167
- _dblink_build_connect_string              |   118
  _dblink_close_cnx                         |   116
  _dblink_open_cnx                          |   138
  _dblink_sql_exec                          |  2511
@@ -152,12 +148,10 @@ select funcname, calls from pg_stat_user_functions
  _gen_sql_seq                              |    40
  _gen_sql_tbl                              |    51
  _get_app_sequence_last_value              |    23
- _get_current_sequence_state               |   987
  _get_default_tablespace                   |    11
  _get_lock_tblseqs_groups                  |   148
  _get_previous_mark_group                  |    38
  _get_sequences_last_value                 |     7
- _handle_trigger_fk_tbl                    |  2986
  _import_groups_conf                       |    20
  _import_groups_conf_alter                 |    20
  _import_groups_conf_check                 |    26
@@ -171,7 +165,7 @@ select funcname, calls from pg_stat_user_functions
  _move_sequences                           |    19
  _move_tables                              |    23
  _move_tbl                                 |    44
- _pg_version_num                           |   214
+ _pg_version_num                           |   248
  _purge_histories                          |    99
  _remove_seq                               |    15
  _remove_sequences                         |    20
@@ -283,7 +277,7 @@ select funcname, calls from pg_stat_user_functions
  emaj_unprotect_group                      |     7
  emaj_unprotect_mark_group                 |     6
  emaj_verify_all                           |    49
-(189 rows)
+(183 rows)
 
 -- count the total number of user-callable function calls (those who failed are not counted)
 select sum(calls) from pg_stat_user_functions where funcname like E'emaj\\_%';

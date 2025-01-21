@@ -38,16 +38,6 @@ select 'select ok' as result from (select count(*) from emaj.emaj_rlbk_stat) as 
 select 'select ok' as result from (select count(*) from emaj_mySchema1.myTbl1_log) as t;
 
 -----------------------------
--- forbiden direct call of SECURITY DEFINER functions
------------------------------
-select emaj._dblink_build_connect_string('dummy');
-select emaj._create_log_schema('illegal_schema','dummy');
-select emaj._handle_trigger_fk_tbl('illegal function', 'illegal schema', 'illegal_table', 'dummy');
-select emaj._copy_from_file('illegal_table', 'dummy_location');
-select emaj._copy_to_file('illegal_table', 'dummy_location', NULL);
-select emaj._get_current_sequence_state('illegal schema', 'illegal sequence', 0);
-
------------------------------
 -- stop, reset and drop existing groups
 -----------------------------
 select emaj.emaj_stop_group('myGroup1','Simple stop mark');

@@ -362,7 +362,7 @@ select emaj.emaj_gen_sql_group('myGroup2', 'Before ADD_SEQ', NULL, :'EMAJTESTTMP
 ERROR:  _check_tblseqs_filter: 1 tables/sequences (myschema2.myseq2) did not belong to any of the selected tables groups at start mark time.
 CONTEXT:  PL/pgSQL function emaj._check_tblseqs_filter(text[],text[],bigint,bigint,boolean) line 32 at RAISE
 SQL statement "SELECT emaj._check_tblseqs_filter(p_tblseqs, p_groupNames, v_firstMarkTimeId, v_lastMarkTimeId, TRUE)"
-PL/pgSQL function emaj._gen_sql_groups(text[],boolean,text,text,text,text[]) line 49 at SQL statement
+PL/pgSQL function emaj._gen_sql_groups(text[],boolean,text,text,text,text[],text) line 51 at SQL statement
 PL/pgSQL function emaj.emaj_gen_sql_group(text,text,text,text,text[]) line 14 at RETURN
 \! rm $EMAJTESTTMPDIR/myFile
 -- testing mark deletions
@@ -1221,7 +1221,7 @@ select emaj.emaj_gen_sql_group('myGroup2', 'Before ADD_TBL', NULL, :'EMAJTESTTMP
 ERROR:  _check_tblseqs_filter: 1 tables/sequences (myschema2.mytbl7) did not belong to any of the selected tables groups at start mark time.
 CONTEXT:  PL/pgSQL function emaj._check_tblseqs_filter(text[],text[],bigint,bigint,boolean) line 32 at RAISE
 SQL statement "SELECT emaj._check_tblseqs_filter(p_tblseqs, p_groupNames, v_firstMarkTimeId, v_lastMarkTimeId, TRUE)"
-PL/pgSQL function emaj._gen_sql_groups(text[],boolean,text,text,text,text[]) line 49 at SQL statement
+PL/pgSQL function emaj._gen_sql_groups(text[],boolean,text,text,text,text[],text) line 51 at SQL statement
 PL/pgSQL function emaj.emaj_gen_sql_group(text,text,text,text,text[]) line 14 at RETURN
 \! rm $EMAJTESTTMPDIR/script.sql
 rm: cannot remove '/tmp/emaj_15/alter_logging/script.sql': No such file or directory
@@ -2634,7 +2634,7 @@ select emaj.emaj_gen_sql_group('myGroup1', 'before move', NULL, :'EMAJTESTTMPDIR
 ERROR:  _check_tblseqs_filter: 2 tables/sequences (myschema2.myTbl3, myschema2.myTbl3_col31_seq) did not belong to any of the selected tables groups at start mark time.
 CONTEXT:  PL/pgSQL function emaj._check_tblseqs_filter(text[],text[],bigint,bigint,boolean) line 32 at RAISE
 SQL statement "SELECT emaj._check_tblseqs_filter(p_tblseqs, p_groupNames, v_firstMarkTimeId, v_lastMarkTimeId, TRUE)"
-PL/pgSQL function emaj._gen_sql_groups(text[],boolean,text,text,text,text[]) line 49 at SQL statement
+PL/pgSQL function emaj._gen_sql_groups(text[],boolean,text,text,text,text[],text) line 51 at SQL statement
 PL/pgSQL function emaj.emaj_gen_sql_group(text,text,text,text,text[]) line 14 at RETURN
 select emaj.emaj_gen_sql_groups('{"myGroup1","myGroup2"}', 'before move', NULL, :'EMAJTESTTMPDIR' || '/script3.sql',
   array['myschema2.myTbl3','myschema2.myTbl3_col31_seq']);
@@ -2660,7 +2660,7 @@ WARNING:  _import_groups_conf (2): in the group myGroup2, the table myschema2."m
 WARNING:  _import_groups_conf (2): in the group myGroup2, the sequence myschema2."myTbl3_col31_seq" already belongs to the group "myGroup1".
 ERROR:  _import_groups_conf: One or several errors have been detected in the JSON groups configuration.
 CONTEXT:  PL/pgSQL function emaj._import_groups_conf(json,text[],boolean,text,text) line 78 at RAISE
-PL/pgSQL function emaj.emaj_import_groups_configuration(text,text[],boolean,text) line 28 at RETURN
+PL/pgSQL function emaj.emaj_import_groups_configuration(text,text[],boolean,text) line 30 at RETURN
 select emaj.emaj_import_groups_configuration(:'EMAJTESTTMPDIR' || '/all_groups_conf.json', '{"myGroup1","myGroup2"}', true);
 NOTICE:  table "tmp_app_table" does not exist, skipping
 NOTICE:  table "tmp_app_sequence" does not exist, skipping
@@ -2923,10 +2923,7 @@ NOTICE:  trigger "emaj_trunc_trg" for relation "myschema1.mytbl4" does not exist
 ERROR:  update or delete on table "mytbl2" violates foreign key constraint "mytbl4_col43_fkey" on table "mytbl4"
 DETAIL:  Key (col21)=(1000) is still referenced from table "mytbl4".
 CONTEXT:  SQL statement "SET CONSTRAINTS myschema1.mytbl4_col43_fkey IMMEDIATE"
-PL/pgSQL function emaj._handle_trigger_fk_tbl(text,text,text,text,text) line 55 at EXECUTE
-SQL statement "SELECT emaj._handle_trigger_fk_tbl('SET_FK_IMMEDIATE', r_step.rlbp_schema, NULL,
-                                              r_step.rlbp_object)"
-PL/pgSQL function emaj._rlbk_session_exec(integer,integer) line 118 at PERFORM
+PL/pgSQL function emaj._rlbk_session_exec(integer,integer) line 119 at EXECUTE
 SQL statement "SELECT emaj._rlbk_session_exec(v_rlbkId, 1)"
 PL/pgSQL function emaj._rlbk_groups(text[],text,boolean,boolean,boolean,text) line 32 at PERFORM
 SQL statement "SELECT *
@@ -3061,7 +3058,7 @@ NOTICE:  trigger "emaj_log_trg" for relation "myschema1.mytbl1_new_name" does no
 alter table myschema1.mytbl1_new_name set schema public;
 select emaj.emaj_remove_table('myschema1','mytbl1_new_name');
 WARNING:  _check_tblseqs_array: In schema "myschema1", some tables (mytbl1_new_name) do not exist.
-NOTICE:  drop cascades to trigger emaj_log_trg on table mytbl1_new_name
+NOTICE:  drop cascades to trigger emaj_log_trg on table public.mytbl1_new_name
  emaj_remove_table 
 -------------------
                  1
