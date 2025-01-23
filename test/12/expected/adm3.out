@@ -13,25 +13,25 @@ select public.handle_emaj_sequences(17000);
 \set EMAJTESTTMPDIR `echo $EMAJTESTTMPDIR`
 \! mkdir -p $EMAJTESTTMPDIR
 set role emaj_regression_tests_adm_user1;
-set search_path=public,myschema1;
+set search_path = public,myschema1,emaj;
 -----------------------------
 -- Step 15 : export / import configurations
 -----------------------------
 -- save parameters on a file and reload them
-select emaj.emaj_export_parameters_configuration(:'EMAJTESTTMPDIR' || '/param_config.json');
+select emaj_export_parameters_configuration(:'EMAJTESTTMPDIR' || '/param_config.json');
  emaj_export_parameters_configuration 
 --------------------------------------
                                     3
 (1 row)
 
-select emaj.emaj_import_parameters_configuration(:'EMAJTESTTMPDIR' || '/param_config.json', true);
+select emaj_import_parameters_configuration(:'EMAJTESTTMPDIR' || '/param_config.json', true);
  emaj_import_parameters_configuration 
 --------------------------------------
                                     3
 (1 row)
 
 -- also save the groups configuration on a file
-select emaj.emaj_export_groups_configuration(:'EMAJTESTTMPDIR' || '/groups_config.json');
+select emaj_export_groups_configuration(:'EMAJTESTTMPDIR' || '/groups_config.json');
  emaj_export_groups_configuration 
 ----------------------------------
                                 3
@@ -76,13 +76,13 @@ select public.handle_emaj_sequences(17100);
 -----------------------------
 -- Step 16 : test transactions with several emaj operations
 -----------------------------
-select emaj.emaj_create_group('myGroup4');
+select emaj_create_group('myGroup4');
  emaj_create_group 
 -------------------
                  1
 (1 row)
 
-select emaj.emaj_assign_tables('myschema4','.*',null,'myGroup4');
+select emaj_assign_tables('myschema4','.*',null,'myGroup4');
 WARNING:  _assign_tables: Some partitionned tables (mytblp) are not selected.
 NOTICE:  table "mytblr_log" does not exist, skipping
 NOTICE:  trigger "emaj_log_trg" for relation "myschema4.mytblr" does not exist, skipping
@@ -110,37 +110,37 @@ NOTICE:  trigger "emaj_trunc_trg" for relation "myschema4.mypartp1" does not exi
 
 -- several similar operations in a single transaction, using different mark names
 begin;
-  select emaj.emaj_start_group('myGroup4','M1');
+  select emaj_start_group('myGroup4','M1');
  emaj_start_group 
 ------------------
                 6
 (1 row)
 
-  select emaj.emaj_set_mark_group('myGroup4','M2');
+  select emaj_set_mark_group('myGroup4','M2');
  emaj_set_mark_group 
 ---------------------
                    6
 (1 row)
 
-  select emaj.emaj_set_mark_group('myGroup4','M3');
+  select emaj_set_mark_group('myGroup4','M3');
  emaj_set_mark_group 
 ---------------------
                    6
 (1 row)
 
-  select emaj.emaj_stop_group('myGroup4','M4');
+  select emaj_stop_group('myGroup4','M4');
  emaj_stop_group 
 -----------------
                6
 (1 row)
 
-  select emaj.emaj_start_group('myGroup4','M5',false);
+  select emaj_start_group('myGroup4','M5',false);
  emaj_start_group 
 ------------------
                 6
 (1 row)
 
-  select emaj.emaj_stop_group('myGroup4','M6');
+  select emaj_stop_group('myGroup4','M6');
  emaj_stop_group 
 -----------------
                6
@@ -251,7 +251,7 @@ select public.handle_emaj_sequences(17200);
 -----------------------------
 -- Needs postgres 10+
 set role emaj_regression_tests_adm_user2;
-select emaj.emaj_start_group('myGroup4','Start');
+select emaj_start_group('myGroup4','Start');
  emaj_start_group 
 ------------------
                 6
@@ -259,7 +259,7 @@ select emaj.emaj_start_group('myGroup4','Start');
 
 reset role;
 insert into mySchema4.myTblP values (-1,'Stored in partition 1'), (1,'Stored in partition 2');
-select emaj.emaj_set_mark_group('myGroup4','M1');
+select emaj_set_mark_group('myGroup4','M1');
  emaj_set_mark_group 
 ---------------------
                    6
@@ -276,7 +276,7 @@ ALTER TABLE mySchema4.myPartP3 ADD PRIMARY KEY (col1);
 ERROR:  multiple primary keys for table "mypartp3" are not allowed
 grant all on mySchema4.myPartP3 to emaj_regression_tests_adm_user1, emaj_regression_tests_adm_user2;
 set role emaj_regression_tests_adm_user1;
-select emaj.emaj_assign_table('myschema4','mypartp3','myGroup4',null,'Add partition 3');
+select emaj_assign_table('myschema4','mypartp3','myGroup4',null,'Add partition 3');
 NOTICE:  table "mypartp3_log" does not exist, skipping
 NOTICE:  trigger "emaj_log_trg" for relation "myschema4.mypartp3" does not exist, skipping
 NOTICE:  trigger "emaj_trunc_trg" for relation "myschema4.mypartp3" does not exist, skipping
@@ -285,7 +285,7 @@ NOTICE:  trigger "emaj_trunc_trg" for relation "myschema4.mypartp3" does not exi
                  1
 (1 row)
 
-select emaj.emaj_assign_sequence('myschema4','mytblp_col3_seq','myGroup4','Add partition 3_seq');
+select emaj_assign_sequence('myschema4','mytblp_col3_seq','myGroup4','Add partition 3_seq');
  emaj_assign_sequence 
 ----------------------
                     1
@@ -295,13 +295,13 @@ reset role;
 insert into mySchema4.myTblP values (11,'Stored in partition 3');
 -- remove an obsolete partition ; in passing also remove the sequence linked to the serial column of the mother table
 set role emaj_regression_tests_adm_user1;
-select emaj.emaj_remove_table('myschema4','mypartp1','Remove partition 1');
+select emaj_remove_table('myschema4','mypartp1','Remove partition 1');
  emaj_remove_table 
 -------------------
                  1
 (1 row)
 
-select emaj.emaj_remove_sequence('myschema4','mytblp_col3_seq','Remove partition 1_seq');
+select emaj_remove_sequence('myschema4','mytblp_col3_seq','Remove partition 1_seq');
  emaj_remove_sequence 
 ----------------------
                     1
@@ -313,7 +313,7 @@ NOTICE:  drop cascades to constraint mytblr_col2_fkey on table myschema4.mytblr
 set role emaj_regression_tests_adm_user2;
 -- verify that emaj_adm has the proper grants to delete old marks leading to an old log table drop
 begin transaction;
-  select emaj.emaj_delete_before_mark_group('myGroup4','EMAJ_LAST_MARK');
+  select emaj_delete_before_mark_group('myGroup4','EMAJ_LAST_MARK');
  emaj_delete_before_mark_group 
 -------------------------------
                              5
@@ -322,7 +322,7 @@ begin transaction;
 rollback;
 -- look at statistics and log content
 select stat_group, stat_schema, stat_table, stat_first_mark, stat_last_mark, stat_rows
-  from emaj.emaj_log_stat_group('myGroup4','Start', NULL) order by 1,2,3,4;
+  from emaj_log_stat_group('myGroup4','Start', NULL) order by 1,2,3,4;
  stat_group | stat_schema | stat_table | stat_first_mark |   stat_last_mark   | stat_rows 
 ------------+-------------+------------+-----------------+--------------------+-----------
  myGroup4   | myschema4   | mypartp1   | Start           | Remove partition 1 |         1
@@ -359,16 +359,16 @@ select col1, col2, emaj_verb, emaj_tuple, emaj_gid from emaj_myschema4.mypartP1_
 
 -- rollback to a mark set before the first changes
 set role emaj_regression_tests_adm_user2;
-select * from emaj.emaj_rollback_group('myGroup4','Start');
+select * from emaj_rollback_group('myGroup4','Start');
 ERROR:  _rlbk_check: This rollback operation would cross some previous structure group change operations, which is not allowed by the current function parameters.
-CONTEXT:  PL/pgSQL function emaj._rlbk_check(text[],text,boolean,boolean) line 59 at RAISE
+CONTEXT:  PL/pgSQL function _rlbk_check(text[],text,boolean,boolean) line 59 at RAISE
 SQL statement "SELECT emaj._rlbk_check(p_groupNames, p_mark, p_isAlterGroupAllowed, FALSE)"
-PL/pgSQL function emaj._rlbk_init(text[],text,boolean,integer,boolean,boolean,text) line 25 at SQL statement
+PL/pgSQL function _rlbk_init(text[],text,boolean,integer,boolean,boolean,text) line 25 at SQL statement
 SQL statement "SELECT emaj._rlbk_init(p_groupNames, p_mark, p_isLoggedRlbk, 1, p_multiGroup, p_isAlterGroupAllowed, p_comment)"
-PL/pgSQL function emaj._rlbk_groups(text[],text,boolean,boolean,boolean,text) line 26 at SQL statement
-PL/pgSQL function emaj.emaj_rollback_group(text,text,boolean,text) line 8 at RETURN QUERY
+PL/pgSQL function _rlbk_groups(text[],text,boolean,boolean,boolean,text) line 26 at SQL statement
+PL/pgSQL function emaj_rollback_group(text,text,boolean,text) line 8 at RETURN QUERY
 select rlbk_severity, regexp_replace(rlbk_message,E'\\d\\d\\d\\d/\\d\\d\\/\\d\\d\\ \\d\\d\\:\\d\\d:\\d\\d .*?\\)','<timestamp>)','g')
-  from emaj.emaj_rollback_group('myGroup4','Start',true);
+  from emaj_rollback_group('myGroup4','Start',true);
  rlbk_severity |                                             regexp_replace                                              
 ---------------+---------------------------------------------------------------------------------------------------------
  Notice        | Rollback id = 17200.
@@ -382,7 +382,7 @@ select rlbk_severity, regexp_replace(rlbk_message,E'\\d\\d\\d\\d/\\d\\d\\/\\d\\d
 reset role;
 insert into mySchema4.myTblP values (1,'Initialy stored in partition 2'), (11,'Stored in partition 3');
 set role emaj_regression_tests_adm_user2;
-select emaj.emaj_set_mark_group('myGroup4','Before update');
+select emaj_set_mark_group('myGroup4','Before update');
  emaj_set_mark_group 
 ---------------------
                    6
@@ -391,7 +391,7 @@ select emaj.emaj_set_mark_group('myGroup4','Before update');
 reset role;
 update mySchema4.myTblP set col1 = 12 where col1=1;
 set role emaj_regression_tests_adm_user2;
-select * from emaj.emaj_logged_rollback_group('myGroup4','Before update');
+select * from emaj_logged_rollback_group('myGroup4','Before update');
  rlbk_severity |            rlbk_message             
 ---------------+-------------------------------------
  Notice        | Rollback id = 17201.
@@ -416,13 +416,13 @@ select col1, col2, col3, emaj_verb, emaj_tuple, emaj_gid from emaj_myschema4.myp
 (3 rows)
 
 set role emaj_regression_tests_adm_user2;
-select emaj.emaj_stop_group('myGroup4');
+select emaj_stop_group('myGroup4');
  emaj_stop_group 
 -----------------
                6
 (1 row)
 
-select emaj.emaj_drop_group('myGroup4');
+select emaj_drop_group('myGroup4');
  emaj_drop_group 
 -----------------
                6
@@ -572,13 +572,13 @@ select public.handle_emaj_sequences(17400);
 -- Step 18 : test defect with application table or sequence
 --           also test some changes on the unlogged and the with oids tables
 -----------------------------
-select emaj.emaj_create_group('phil''s group#3",',false);
+select emaj_create_group('phil''s group#3",',false);
  emaj_create_group 
 -------------------
                  1
 (1 row)
 
-select emaj.emaj_assign_tables('phil''s schema3','.*',null,'phil''s group#3",');
+select emaj_assign_tables('phil''s schema3','.*',null,'phil''s group#3",');
 NOTICE:  table "myTbl2\_log" does not exist, skipping
 NOTICE:  trigger "emaj_log_trg" for relation "phil's schema3.myTbl2\" does not exist, skipping
 NOTICE:  trigger "emaj_trunc_trg" for relation "phil's schema3.myTbl2\" does not exist, skipping
@@ -593,13 +593,13 @@ NOTICE:  trigger "emaj_trunc_trg" for relation "phil's schema3.phil's tbl1" does
                   3
 (1 row)
 
-select emaj.emaj_assign_sequences('phil''s schema3','.*',null,'phil''s group#3",');
+select emaj_assign_sequences('phil''s schema3','.*',null,'phil''s group#3",');
  emaj_assign_sequences 
 -----------------------
                      2
 (1 row)
 
-select emaj.emaj_assign_tables('myschema5','.*',null,'phil''s group#3",');
+select emaj_assign_tables('myschema5','.*',null,'phil''s group#3",');
 NOTICE:  table "myoidstbl_log" does not exist, skipping
 NOTICE:  trigger "emaj_log_trg" for relation "myschema5.myoidstbl" does not exist, skipping
 NOTICE:  trigger "emaj_trunc_trg" for relation "myschema5.myoidstbl" does not exist, skipping
@@ -611,7 +611,7 @@ NOTICE:  trigger "emaj_trunc_trg" for relation "myschema5.myunloggedtbl" does no
                   2
 (1 row)
 
-select emaj.emaj_start_group('phil''s group#3",','start');
+select emaj_start_group('phil''s group#3",','start');
  emaj_start_group 
 ------------------
                 7
@@ -651,7 +651,7 @@ select col1, emaj_verb, emaj_tuple, emaj_gid, emaj_user from emaj_myschema5.myOi
 (6 rows)
 
 -- disable event triggers for this step and change an application table structure
-select emaj.emaj_disable_protection_by_event_triggers();
+select emaj_disable_protection_by_event_triggers();
  emaj_disable_protection_by_event_triggers 
 -------------------------------------------
                                          3
@@ -663,7 +663,7 @@ select emaj.emaj_disable_protection_by_event_triggers();
 reset role;
 alter table "phil's schema3".mytbl4 alter column col45 type char(11);
 set role emaj_regression_tests_adm_user1;
-select * from emaj.emaj_verify_all();
+select * from emaj_verify_all();
                                                                                         emaj_verify_all                                                                                        
 -----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
  Error: In tables group "phil's group#3",", the structure of the application table "phil's schema3"."mytbl4" is not coherent with its log table ("emaj_phil's schema3"."mytbl4_log").
@@ -672,13 +672,13 @@ select * from emaj.emaj_verify_all();
  Warning: Some E-Maj event triggers are disabled. You may enable them using the emaj_enable_protection_by_event_triggers() function.
 (4 rows)
 
-select emaj.emaj_remove_table('phil''s schema3','mytbl4','remove_the_damaged_table');
+select emaj_remove_table('phil''s schema3','mytbl4','remove_the_damaged_table');
  emaj_remove_table 
 -------------------
                  1
 (1 row)
 
-select emaj.emaj_assign_table('phil''s schema3', 'mytbl4', 'phil''s group#3",', null, 're_add_the_table');
+select emaj_assign_table('phil''s schema3', 'mytbl4', 'phil''s group#3",', null, 're_add_the_table');
 NOTICE:  table "mytbl4_log" does not exist, skipping
 NOTICE:  trigger "emaj_log_trg" for relation "phil's schema3.mytbl4" does not exist, skipping
 NOTICE:  trigger "emaj_trunc_trg" for relation "phil's schema3.mytbl4" does not exist, skipping
@@ -700,7 +700,7 @@ select * from emaj.emaj_relation where rel_schema = 'phil''s schema3' and rel_tb
 reset role;
 drop table "emaj_phil's schema3".mytbl4_log;
 set role emaj_regression_tests_adm_user1;
-select * from emaj.emaj_verify_all();
+select * from emaj_verify_all();
                                                                                         emaj_verify_all                                                                                        
 -----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
  Error: In tables group "phil's group#3",", the log table "emaj_phil's schema3"."mytbl4_log" is not found.
@@ -709,7 +709,7 @@ select * from emaj.emaj_verify_all();
  Warning: Some E-Maj event triggers are disabled. You may enable them using the emaj_enable_protection_by_event_triggers() function.
 (4 rows)
 
-select emaj.emaj_remove_table('phil''s schema3','mytbl4','remove_the_damaged_table_2');
+select emaj_remove_table('phil''s schema3','mytbl4','remove_the_damaged_table_2');
 NOTICE:  relation "mytbl4_log" does not exist, skipping
 NOTICE:  relation "mytbl4_log_idx" does not exist, skipping
  emaj_remove_table 
@@ -717,7 +717,7 @@ NOTICE:  relation "mytbl4_log_idx" does not exist, skipping
                  1
 (1 row)
 
-select emaj.emaj_assign_table('phil''s schema3', 'mytbl4', 'phil''s group#3",', null, 're_add_the_table_2');
+select emaj_assign_table('phil''s schema3', 'mytbl4', 'phil''s group#3",', null, 're_add_the_table_2');
 NOTICE:  table "mytbl4_log" does not exist, skipping
 NOTICE:  trigger "emaj_log_trg" for relation "phil's schema3.mytbl4" does not exist, skipping
 NOTICE:  trigger "emaj_trunc_trg" for relation "phil's schema3.mytbl4" does not exist, skipping
@@ -745,14 +745,14 @@ alter sequence "phil's schema3"."phil's seq\1" rename to "phil's seq\1_sav";
 set role emaj_regression_tests_adm_user2;
 -- try to set a mark
 begin;
-  select emaj.emaj_set_mark_group('phil''s group#3",','should fails');
+  select emaj_set_mark_group('phil''s group#3",','should fails');
 ERROR:  _verify_groups (1): In group "phil's group#3",", the table "phil's schema3"."mytbl4" does not exist any more. You may use "SELECT * FROM emaj.emaj_verify_all()" to look for other issues.
 CONTEXT:  PL/pgSQL function emaj._verify_groups(text[],boolean) line 39 at RAISE
 SQL statement "SELECT 0
       FROM emaj._verify_groups(array[p_groupName], TRUE)"
-PL/pgSQL function emaj.emaj_set_mark_group(text,text,text) line 18 at PERFORM
+PL/pgSQL function emaj_set_mark_group(text,text,text) line 18 at PERFORM
 rollback;
-select emaj.emaj_remove_table('phil''s schema3','mytbl4','remove_the_dropped_table');
+select emaj_remove_table('phil''s schema3','mytbl4','remove_the_dropped_table');
 WARNING:  _check_tblseqs_array: In schema "phil's schema3", some tables (mytbl4) do not exist.
 NOTICE:  drop cascades to trigger emaj_log_trg on table "phil's schema3".mytbl4_sav
  emaj_remove_table 
@@ -760,7 +760,7 @@ NOTICE:  drop cascades to trigger emaj_log_trg on table "phil's schema3".mytbl4_
                  1
 (1 row)
 
-select emaj.emaj_remove_sequence('phil''s schema3','phil''s seq\1','remove_the_dropped_seq');
+select emaj_remove_sequence('phil''s schema3','phil''s seq\1','remove_the_dropped_seq');
 WARNING:  _check_tblseqs_array: In schema "phil's schema3", some sequences ("phil's seq\1") do not exist.
  emaj_remove_sequence 
 ----------------------
@@ -778,7 +778,7 @@ alter table "phil's schema3".mytbl4_sav rename to mytbl4;
 alter table "phil's schema3".mytbl4 alter column col45 type char(10);
 alter sequence "phil's schema3"."phil's seq\1_sav" rename to "phil's seq\1";
 set role emaj_regression_tests_adm_user1;
-select emaj.emaj_assign_table('phil''s schema3','mytbl4','phil''s group#3",',null,'revert_last_changes_tbl');
+select emaj_assign_table('phil''s schema3','mytbl4','phil''s group#3",',null,'revert_last_changes_tbl');
 NOTICE:  table "mytbl4_log" does not exist, skipping
 NOTICE:  trigger "emaj_log_trg" for relation "phil's schema3.mytbl4" does not exist, skipping
  emaj_assign_table 
@@ -786,26 +786,26 @@ NOTICE:  trigger "emaj_log_trg" for relation "phil's schema3.mytbl4" does not ex
                  1
 (1 row)
 
-select emaj.emaj_assign_sequence('phil''s schema3','phil''s seq\1','phil''s group#3",','revert_last_changes_seq');
+select emaj_assign_sequence('phil''s schema3','phil''s seq\1','phil''s group#3",','revert_last_changes_seq');
  emaj_assign_sequence 
 ----------------------
                     1
 (1 row)
 
 -- ree-nable the event triggers and drop the group
-select emaj.emaj_enable_protection_by_event_triggers();
+select emaj_enable_protection_by_event_triggers();
  emaj_enable_protection_by_event_triggers 
 ------------------------------------------
                                         3
 (1 row)
 
-select emaj.emaj_stop_group('phil''s group#3",');
+select emaj_stop_group('phil''s group#3",');
  emaj_stop_group 
 -----------------
                7
 (1 row)
 
-select emaj.emaj_drop_group('phil''s group#3",');
+select emaj_drop_group('phil''s group#3",');
 NOTICE:  table "mytbl4_log_2" does not exist, skipping
  emaj_drop_group 
 -----------------
@@ -966,32 +966,32 @@ select public.handle_emaj_sequences(17600);
 -- create, start and populate groups
 -- grp_tmp is empty, grp_tmp_3 and grp_tmp_4 contains tables and sequences frop respectively phil''s schema3 and myschema4
 -- grp_tmp_4 is started before being populated
-select emaj.emaj_create_group('grp_tmp');
+select emaj_create_group('grp_tmp');
  emaj_create_group 
 -------------------
                  1
 (1 row)
 
-select emaj.emaj_create_group('grp_tmp_3');
+select emaj_create_group('grp_tmp_3');
  emaj_create_group 
 -------------------
                  1
 (1 row)
 
-select emaj.emaj_create_group('grp_tmp_4');
+select emaj_create_group('grp_tmp_4');
  emaj_create_group 
 -------------------
                  1
 (1 row)
 
-select emaj.emaj_start_groups('{"grp_tmp","grp_tmp_4"}','Start');
+select emaj_start_groups('{"grp_tmp","grp_tmp_4"}','Start');
  emaj_start_groups 
 -------------------
                  0
 (1 row)
 
 begin;
-  select emaj.emaj_assign_tables('phil''s schema3','.*','','grp_tmp_3');
+  select emaj_assign_tables('phil''s schema3','.*','','grp_tmp_3');
 NOTICE:  table "myTbl2\_log" does not exist, skipping
 NOTICE:  trigger "emaj_log_trg" for relation "phil's schema3.myTbl2\" does not exist, skipping
 NOTICE:  trigger "emaj_trunc_trg" for relation "phil's schema3.myTbl2\" does not exist, skipping
@@ -1006,13 +1006,13 @@ NOTICE:  trigger "emaj_trunc_trg" for relation "phil's schema3.phil's tbl1" does
                   3
 (1 row)
 
-  select emaj.emaj_assign_sequences('phil''s schema3','.*','','grp_tmp_3');
+  select emaj_assign_sequences('phil''s schema3','.*','','grp_tmp_3');
  emaj_assign_sequences 
 -----------------------
                      2
 (1 row)
 
-  select emaj.emaj_assign_tables('myschema4','.*','','grp_tmp_4');
+  select emaj_assign_tables('myschema4','.*','','grp_tmp_4');
 WARNING:  _assign_tables: Some partitionned tables (mytblp) are not selected.
 NOTICE:  table "mypartp3_log" does not exist, skipping
 NOTICE:  trigger "emaj_log_trg" for relation "myschema4.mypartp3" does not exist, skipping
@@ -1038,33 +1038,33 @@ NOTICE:  trigger "emaj_trunc_trg" for relation "myschema4.mytblc1" does not exis
                   6
 (1 row)
 
-  select emaj.emaj_assign_sequences('myschema4','.*','','grp_tmp_4');
+  select emaj_assign_sequences('myschema4','.*','','grp_tmp_4');
  emaj_assign_sequences 
 -----------------------
                      2
 (1 row)
 
-  select emaj.emaj_modify_table('myschema4','mytblm','{"ignored_triggers": "mytblm_insert_trigger"}'::jsonb);
+  select emaj_modify_table('myschema4','mytblm','{"ignored_triggers": "mytblm_insert_trigger"}'::jsonb);
  emaj_modify_table 
 -------------------
                  1
 (1 row)
 
 commit;
-select emaj.emaj_start_group('grp_tmp_3','Start');
+select emaj_start_group('grp_tmp_3','Start');
  emaj_start_group 
 ------------------
                 5
 (1 row)
 
-select emaj.emaj_set_mark_groups('{"grp_tmp_3","grp_tmp_4","grp_tmp"}','Mk1');
+select emaj_set_mark_groups('{"grp_tmp_3","grp_tmp_4","grp_tmp"}','Mk1');
  emaj_set_mark_groups 
 ----------------------
                    13
 (1 row)
 
 -- export the initial groups configuration
-select emaj.emaj_export_groups_configuration(:'EMAJTESTTMPDIR' || '/groups_config.json', array['grp_tmp','grp_tmp_3','grp_tmp_4']);
+select emaj_export_groups_configuration(:'EMAJTESTTMPDIR' || '/groups_config.json', array['grp_tmp','grp_tmp_3','grp_tmp_4']);
  emaj_export_groups_configuration 
 ----------------------------------
                                 3
@@ -1078,7 +1078,7 @@ delete from "phil's schema3"."myTbl2\";
 insert into "phil's schema3"."myTbl2\" (col22,col23)
   select 'After Mk1','12-31-2020' from generate_series(1,3);
 set role emaj_regression_tests_adm_user1;
-select emaj.emaj_set_mark_groups('{"grp_tmp_3","grp_tmp_4","grp_tmp"}','Mk2');
+select emaj_set_mark_groups('{"grp_tmp_3","grp_tmp_4","grp_tmp"}','Mk2');
  emaj_set_mark_groups 
 ----------------------
                    13
@@ -1097,7 +1097,7 @@ insert into myschema4.mytblm
   select '2006-06-30'::date + ('1 year'::interval) * i, i, 'After Mk2'
     from generate_series(0,9) i;
 set role emaj_regression_tests_adm_user1;
-select emaj.emaj_set_mark_groups('{"grp_tmp_3","grp_tmp_4","grp_tmp"}','Mk3');
+select emaj_set_mark_groups('{"grp_tmp_3","grp_tmp_4","grp_tmp"}','Mk3');
  emaj_set_mark_groups 
 ----------------------
                    13
@@ -1110,7 +1110,7 @@ update myschema4.mytblm set col3 = 'After Mk2 and updated after Mk3'
   where col1 > '2013-01-01';
 -- rollback to the previous mark
 set role emaj_regression_tests_adm_user1;
-select * from emaj.emaj_rollback_groups('{"grp_tmp_3","grp_tmp_4","grp_tmp"}','Mk3');
+select * from emaj_rollback_groups('{"grp_tmp_3","grp_tmp_4","grp_tmp"}','Mk3');
  rlbk_severity |              rlbk_message              
 ---------------+----------------------------------------
  Notice        | Rollback id = 17600.
@@ -1119,20 +1119,20 @@ select * from emaj.emaj_rollback_groups('{"grp_tmp_3","grp_tmp_4","grp_tmp"}','M
 (3 rows)
 
 -- change some priority and log tablespaces
-select emaj.emaj_modify_tables('phil''s schema3','.*tbl1','','{"priority":-1,"log_data_tablespace":"tsp log''2"}'::jsonb,'Modify 1 table');
+select emaj_modify_tables('phil''s schema3','.*tbl1','','{"priority":-1,"log_data_tablespace":"tsp log''2"}'::jsonb,'Modify 1 table');
  emaj_modify_tables 
 --------------------
                   1
 (1 row)
 
 -- move all tables and sequences into grp_tmp and set a common mark
-select emaj.emaj_move_tables('phil''s schema3','.*','','grp_tmp','Move_tbl_3_to_tmp');
+select emaj_move_tables('phil''s schema3','.*','','grp_tmp','Move_tbl_3_to_tmp');
  emaj_move_tables 
 ------------------
                 3
 (1 row)
 
-select * from emaj.emaj_verify_all();
+select * from emaj_verify_all();
                                                                                            emaj_verify_all                                                                                           
 -----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
  Warning: In tables group "grp_tmp_4", the sequence "myschema4"."mytblp_col3_seq" is linked to the table "myschema4"."mytblp" but this table does not belong to any tables group.
@@ -1142,25 +1142,25 @@ select * from emaj.emaj_verify_all();
  No error detected
 (5 rows)
 
-select emaj.emaj_move_sequences('phil''s schema3','.*','','grp_tmp','Move_seq_3_to_tmp');
+select emaj_move_sequences('phil''s schema3','.*','','grp_tmp','Move_seq_3_to_tmp');
  emaj_move_sequences 
 ---------------------
                    2
 (1 row)
 
-select emaj.emaj_move_tables('myschema4','.*','','grp_tmp','Move_tbl_4_to_tmp');
+select emaj_move_tables('myschema4','.*','','grp_tmp','Move_tbl_4_to_tmp');
  emaj_move_tables 
 ------------------
                 6
 (1 row)
 
-select emaj.emaj_move_sequences('myschema4','.*','','grp_tmp','Move_seq_4_to_tmp');
+select emaj_move_sequences('myschema4','.*','','grp_tmp','Move_seq_4_to_tmp');
  emaj_move_sequences 
 ---------------------
                    2
 (1 row)
 
-select emaj.emaj_set_mark_groups('{"grp_tmp_3","grp_tmp_4","grp_tmp"}','Mk4');
+select emaj_set_mark_groups('{"grp_tmp_3","grp_tmp_4","grp_tmp"}','Mk4');
  emaj_set_mark_groups 
 ----------------------
                    13
@@ -1175,7 +1175,7 @@ delete from "phil's schema3"."myTbl2\"
 delete from "phil's schema3".mytbl4
   where col41 = 4;
 set role emaj_regression_tests_adm_user1;
-select emaj.emaj_set_mark_groups('{"grp_tmp_3","grp_tmp_4","grp_tmp"}','Mk5');
+select emaj_set_mark_groups('{"grp_tmp_3","grp_tmp_4","grp_tmp"}','Mk5');
  emaj_set_mark_groups 
 ----------------------
                    13
@@ -1192,7 +1192,7 @@ select nextval(E'"phil''s schema3"."phil''s seq\\1"');
 (1 row)
 
 set role emaj_regression_tests_adm_user1;
-select emaj.emaj_set_mark_groups('{"grp_tmp_3","grp_tmp_4","grp_tmp"}','Mk6');
+select emaj_set_mark_groups('{"grp_tmp_3","grp_tmp_4","grp_tmp"}','Mk6');
  emaj_set_mark_groups 
 ----------------------
                    13
@@ -1203,13 +1203,13 @@ update myschema4.mytblm set col3 = 'After Mk5 and updated after Mk6'
   where col1 > '2017-01-01';
 -- remove the table mytblm and the sequence phil's seq\1
 set role emaj_regression_tests_adm_user1;
-select emaj.emaj_remove_table('myschema4','mytblc1','Remove_mytblc1');
+select emaj_remove_table('myschema4','mytblc1','Remove_mytblc1');
  emaj_remove_table 
 -------------------
                  1
 (1 row)
 
-select emaj.emaj_remove_sequence('phil''s schema3','phil''s seq\1','Remove_myseq1');
+select emaj_remove_sequence('phil''s schema3','phil''s seq\1','Remove_myseq1');
  emaj_remove_sequence 
 ----------------------
                     1
@@ -1217,7 +1217,7 @@ select emaj.emaj_remove_sequence('phil''s schema3','phil''s seq\1','Remove_myseq
 
 -- logged rollback to Mk5
 select rlbk_severity, regexp_replace(rlbk_message,E'\\d\\d\\d\\d/\\d\\d\\/\\d\\d\\ \\d\\d\\:\\d\\d:\\d\\d .*?\\)','<timestamp>)','g')
-  from emaj.emaj_logged_rollback_groups('{"grp_tmp_3","grp_tmp_4","grp_tmp"}','Mk5', true);
+  from emaj_logged_rollback_groups('{"grp_tmp_3","grp_tmp_4","grp_tmp"}','Mk5', true);
  rlbk_severity |                                                regexp_replace                                                 
 ---------------+---------------------------------------------------------------------------------------------------------------
  Notice        | Rollback id = 17601.
@@ -1227,7 +1227,7 @@ select rlbk_severity, regexp_replace(rlbk_message,E'\\d\\d\\d\\d/\\d\\d\\/\\d\\d
  Warning       | The sequence "phil's schema3"."phil's seq\1" has been left unchanged (not in group anymore since <timestamp>)
 (5 rows)
 
-select emaj.emaj_rename_mark_group(group_name,'EMAJ_LAST_MARK','End_logged_rollback')
+select emaj_rename_mark_group(group_name,'EMAJ_LAST_MARK','End_logged_rollback')
   from (values ('grp_tmp_3'),('grp_tmp_4'),('grp_tmp')) as t(group_name);
  emaj_rename_mark_group 
 ------------------------
@@ -1241,7 +1241,7 @@ reset role;
 delete from myschema4.mytblm
   where col1 = '2018-06-30';
 set role emaj_regression_tests_adm_user1;
-select emaj.emaj_set_mark_groups('{"grp_tmp_3","grp_tmp_4","grp_tmp"}','Mk7');
+select emaj_set_mark_groups('{"grp_tmp_3","grp_tmp_4","grp_tmp"}','Mk7');
  emaj_set_mark_groups 
 ----------------------
                    11
@@ -1251,7 +1251,7 @@ reset role;
 delete from mySchema4.mytblm;
 -- consolidate the logged rollback
 set role emaj_regression_tests_adm_user1;
-select * from emaj.emaj_get_consolidable_rollbacks() order by 1,2;
+select * from emaj_get_consolidable_rollbacks() order by 1,2;
  cons_group | cons_target_rlbk_mark_name | cons_target_rlbk_mark_time_id | cons_end_rlbk_mark_name | cons_end_rlbk_mark_time_id | cons_rows | cons_marks 
 ------------+----------------------------+-------------------------------+-------------------------+----------------------------+-----------+------------
  grp_tmp    | Mk5                        |                         17620 | End_logged_rollback     |                      17625 |        12 |          4
@@ -1259,14 +1259,14 @@ select * from emaj.emaj_get_consolidable_rollbacks() order by 1,2;
  grp_tmp_4  | Mk5                        |                         17620 | End_logged_rollback     |                      17625 |         0 |          2
 (3 rows)
 
-select emaj.emaj_consolidate_rollback_group('grp_tmp','End_logged_rollback');
+select emaj_consolidate_rollback_group('grp_tmp','End_logged_rollback');
  emaj_consolidate_rollback_group 
 ---------------------------------
                                5
 (1 row)
 
 select stat_group, stat_schema, stat_table, stat_first_mark, stat_last_mark, stat_rows
-  from emaj.emaj_log_stat_groups('{"grp_tmp_3","grp_tmp_4","grp_tmp"}','Mk1',null)
+  from emaj_log_stat_groups('{"grp_tmp_3","grp_tmp_4","grp_tmp"}','Mk1',null)
   order by stat_first_mark_datetime, stat_schema, stat_table;
  stat_group |  stat_schema   | stat_table  |  stat_first_mark  |  stat_last_mark   | stat_rows 
 ------------+----------------+-------------+-------------------+-------------------+-----------
@@ -1339,7 +1339,7 @@ select mark_time_id, regexp_replace(mark_name,E'\\d\\d\.\\d\\d\\.\\d\\d\\.\\d\\d
 (40 rows)
 
 -- generate sql script
-select emaj.emaj_gen_sql_groups('{"grp_tmp_3","grp_tmp_4","grp_tmp"}','Mk1',null,:'EMAJTESTTMPDIR' || '/allGroups.sql');
+select emaj_gen_sql_groups('{"grp_tmp_3","grp_tmp_4","grp_tmp"}','Mk1',null,:'EMAJTESTTMPDIR' || '/allGroups.sql');
 NOTICE:  table "emaj_temp_script" does not exist, skipping
  emaj_gen_sql_groups 
 ---------------------
@@ -1348,7 +1348,7 @@ NOTICE:  table "emaj_temp_script" does not exist, skipping
 
 --  \! grep -iP '(insert|update|delete|alter)' $EMAJTESTTMPDIR/allGroups.sql
 -- revert the priority and log tablespaces changes
-select emaj.emaj_modify_tables('phil''s schema3','.*tbl1','','{"priority":null,"log_data_tablespace":null}'::jsonb,'revert changes for 1 table');
+select emaj_modify_tables('phil''s schema3','.*tbl1','','{"priority":null,"log_data_tablespace":null}'::jsonb,'revert changes for 1 table');
  emaj_modify_tables 
 --------------------
                   1
@@ -1356,16 +1356,16 @@ select emaj.emaj_modify_tables('phil''s schema3','.*tbl1','','{"priority":null,"
 
 -- rollback to a mark set before the tables and sequences move
 select rlbk_severity, regexp_replace(rlbk_message,E'\\d\\d\\d\\d/\\d\\d\\/\\d\\d\\ \\d\\d\\:\\d\\d:\\d\\d .*?\\)','<timestamp>)','g')
-  from emaj.emaj_rollback_groups('{"grp_tmp_3","grp_tmp_4","grp_tmp"}','Mk3', false);
+  from emaj_rollback_groups('{"grp_tmp_3","grp_tmp_4","grp_tmp"}','Mk3', false);
 ERROR:  _rlbk_check: This rollback operation would cross some previous structure group change operations, which is not allowed by the current function parameters.
-CONTEXT:  PL/pgSQL function emaj._rlbk_check(text[],text,boolean,boolean) line 59 at RAISE
+CONTEXT:  PL/pgSQL function _rlbk_check(text[],text,boolean,boolean) line 59 at RAISE
 SQL statement "SELECT emaj._rlbk_check(p_groupNames, p_mark, p_isAlterGroupAllowed, FALSE)"
-PL/pgSQL function emaj._rlbk_init(text[],text,boolean,integer,boolean,boolean,text) line 25 at SQL statement
+PL/pgSQL function _rlbk_init(text[],text,boolean,integer,boolean,boolean,text) line 25 at SQL statement
 SQL statement "SELECT emaj._rlbk_init(p_groupNames, p_mark, p_isLoggedRlbk, 1, p_multiGroup, p_isAlterGroupAllowed, p_comment)"
-PL/pgSQL function emaj._rlbk_groups(text[],text,boolean,boolean,boolean,text) line 26 at SQL statement
-PL/pgSQL function emaj.emaj_rollback_groups(text[],text,boolean,text) line 8 at RETURN QUERY
+PL/pgSQL function _rlbk_groups(text[],text,boolean,boolean,boolean,text) line 26 at SQL statement
+PL/pgSQL function emaj_rollback_groups(text[],text,boolean,text) line 8 at RETURN QUERY
 select rlbk_severity, regexp_replace(rlbk_message,E'\\d\\d\\d\\d/\\d\\d\\/\\d\\d\\ \\d\\d\\:\\d\\d:\\d\\d .*?\\)','<timestamp>)','g')
-  from emaj.emaj_rollback_groups('{"grp_tmp_3","grp_tmp_4","grp_tmp"}','Mk3',true);
+  from emaj_rollback_groups('{"grp_tmp_3","grp_tmp_4","grp_tmp"}','Mk3',true);
  rlbk_severity |                                                         regexp_replace                                                         
 ---------------+--------------------------------------------------------------------------------------------------------------------------------
  Notice        | Rollback id = 17602.
@@ -1389,7 +1389,7 @@ select rlbk_severity, regexp_replace(rlbk_message,E'\\d\\d\\d\\d/\\d\\d\\/\\d\\d
 (18 rows)
 
 select stat_group, stat_schema, stat_table, stat_first_mark, stat_last_mark, stat_rows
-  from emaj.emaj_log_stat_groups('{"grp_tmp_3","grp_tmp_4","grp_tmp"}','Mk1',null)
+  from emaj_log_stat_groups('{"grp_tmp_3","grp_tmp_4","grp_tmp"}','Mk1',null)
   order by stat_first_mark_datetime, stat_schema, stat_table;
  stat_group |  stat_schema   | stat_table  | stat_first_mark | stat_last_mark | stat_rows 
 ------------+----------------+-------------+-----------------+----------------+-----------
@@ -1414,7 +1414,7 @@ select stat_group, stat_schema, stat_table, stat_first_mark, stat_last_mark, sta
 (18 rows)
 
 -- delete all marks before Mk3
-select emaj.emaj_delete_before_mark_group(group_name,'Mk3')
+select emaj_delete_before_mark_group(group_name,'Mk3')
   from (values ('grp_tmp_3'),('grp_tmp_4'),('grp_tmp')) as t(group_name);
  emaj_delete_before_mark_group 
 -------------------------------
@@ -1425,14 +1425,14 @@ select emaj.emaj_delete_before_mark_group(group_name,'Mk3')
 
 -- test a remove_table following log sequence deletion
 reset role;
-select emaj.emaj_disable_protection_by_event_triggers();
+select emaj_disable_protection_by_event_triggers();
  emaj_disable_protection_by_event_triggers 
 -------------------------------------------
                                          3
 (1 row)
 
 drop sequence "emaj_phil's schema3".mytbl4_log_seq;
-select emaj.emaj_enable_protection_by_event_triggers();
+select emaj_enable_protection_by_event_triggers();
  emaj_enable_protection_by_event_triggers 
 ------------------------------------------
                                         3
@@ -1440,7 +1440,7 @@ select emaj.emaj_enable_protection_by_event_triggers();
 
 set role emaj_regression_tests_adm_user2;
 -- note that the warning about the mytblp_col3_seq sequence is normal
-select * from emaj.emaj_verify_all();
+select * from emaj_verify_all();
                                                                                         emaj_verify_all                                                                                        
 -----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
  Error: In tables group "grp_tmp", the log sequence "emaj_phil's schema3"."mytbl4_log_seq" is not found.
@@ -1450,7 +1450,7 @@ select * from emaj.emaj_verify_all();
 (4 rows)
 
 --     a removal while the group is LOGGING fails
-select emaj.emaj_remove_table('phil''s schema3','mytbl4');
+select emaj_remove_table('phil''s schema3','mytbl4');
 ERROR:  relation "emaj_phil's schema3.mytbl4_log_seq" does not exist
 CONTEXT:  SQL statement "SELECT pg_sequence_last_value((quote_ident(p_schema) || '.' || quote_ident(p_sequence))::regclass)"
 PL/pgSQL function emaj._get_log_sequence_last_value(text,text) line 12 at SQL statement
@@ -1475,22 +1475,22 @@ SQL statement "SELECT coalesce(sum(emaj._log_stat_tbl(emaj_relation, greatest(v_
             AND upper_inf(rel_time_range)"
 PL/pgSQL function emaj._set_mark_groups(text[],text,text,boolean,boolean,text,bigint,text) line 83 at SQL statement
 SQL statement "SELECT emaj._set_mark_groups(v_loggingGroups, v_markName, NULL, FALSE, TRUE, NULL, v_timeId)"
-PL/pgSQL function emaj._remove_tables(text,text[],text,boolean,boolean) line 47 at PERFORM
-PL/pgSQL function emaj.emaj_remove_table(text,text,text) line 6 at RETURN
-select emaj.emaj_force_stop_group('grp_tmp');
+PL/pgSQL function _remove_tables(text,text[],text,boolean,boolean) line 47 at PERFORM
+PL/pgSQL function emaj_remove_table(text,text,text) line 6 at RETURN
+select emaj_force_stop_group('grp_tmp');
  emaj_force_stop_group 
 -----------------------
                     11
 (1 row)
 
-select emaj.emaj_remove_table('phil''s schema3','mytbl4');
+select emaj_remove_table('phil''s schema3','mytbl4');
 NOTICE:  sequence "mytbl4_log_seq" does not exist, skipping
  emaj_remove_table 
 -------------------
                  1
 (1 row)
 
-select emaj.emaj_assign_table('phil''s schema3','mytbl4','grp_tmp');
+select emaj_assign_table('phil''s schema3','mytbl4','grp_tmp');
 NOTICE:  table "mytbl4_log" does not exist, skipping
 NOTICE:  trigger "emaj_log_trg" for relation "phil's schema3.mytbl4" does not exist, skipping
 NOTICE:  trigger "emaj_trunc_trg" for relation "phil's schema3.mytbl4" does not exist, skipping
@@ -1499,7 +1499,7 @@ NOTICE:  trigger "emaj_trunc_trg" for relation "phil's schema3.mytbl4" does not 
                  1
 (1 row)
 
-select * from emaj.emaj_verify_all();
+select * from emaj_verify_all();
                                                                                         emaj_verify_all                                                                                        
 -----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
  Warning: In tables group "grp_tmp", the sequence "myschema4"."mytblp_col3_seq" is linked to the table "myschema4"."mytblp" but this table does not belong to any tables group.
@@ -1508,14 +1508,14 @@ select * from emaj.emaj_verify_all();
  No error detected
 (4 rows)
 
-select emaj.emaj_start_group('grp_tmp','Group restart');
+select emaj_start_group('grp_tmp','Group restart');
  emaj_start_group 
 ------------------
                11
 (1 row)
 
 -- import the groups configuration
-select emaj.emaj_import_groups_configuration(:'EMAJTESTTMPDIR' || '/groups_config.json', null, true, 'REVERT_CHANGES');
+select emaj_import_groups_configuration(:'EMAJTESTTMPDIR' || '/groups_config.json', null, true, 'REVERT_CHANGES');
 NOTICE:  table "tmp_app_table" does not exist, skipping
 NOTICE:  table "tmp_app_sequence" does not exist, skipping
 NOTICE:  table "mytblc1_log" does not exist, skipping
@@ -1527,37 +1527,37 @@ NOTICE:  trigger "emaj_trunc_trg" for relation "myschema4.mytblc1" does not exis
 (1 row)
 
 -- reset groups at their initial state
-select emaj.emaj_stop_group('grp_tmp_3');
+select emaj_stop_group('grp_tmp_3');
  emaj_stop_group 
 -----------------
                5
 (1 row)
 
-select emaj.emaj_drop_group('grp_tmp_3');
+select emaj_drop_group('grp_tmp_3');
  emaj_drop_group 
 -----------------
                5
 (1 row)
 
-select emaj.emaj_set_mark_group('grp_tmp_4','Last_mark');
+select emaj_set_mark_group('grp_tmp_4','Last_mark');
  emaj_set_mark_group 
 ---------------------
                    8
 (1 row)
 
-select emaj.emaj_force_drop_group('grp_tmp_4');
+select emaj_force_drop_group('grp_tmp_4');
  emaj_force_drop_group 
 -----------------------
                      8
 (1 row)
 
-select emaj.emaj_stop_group('grp_tmp');
+select emaj_stop_group('grp_tmp');
  emaj_stop_group 
 -----------------
                0
 (1 row)
 
-select emaj.emaj_drop_group('grp_tmp');
+select emaj_drop_group('grp_tmp');
  emaj_drop_group 
 -----------------
                0
@@ -2068,7 +2068,7 @@ select public.handle_emaj_sequences(18000);
 -----------------------------
 -- Step 20 : test emaj_gen_sql_dump_changes_group() and emaj_dump_changes_group()
 -----------------------------
-select emaj.emaj_gen_sql_dump_changes_group('myGroup1','M4','M5','Consolidation=FULL',NULL,:'EMAJTESTTMPDIR' || '/dump_changes.sql');
+select emaj_gen_sql_dump_changes_group('myGroup1','M4','M5','Consolidation=FULL',NULL,:'EMAJTESTTMPDIR' || '/dump_changes.sql');
 NOTICE:  table "emaj_temp_sql" does not exist, skipping
                             emaj_gen_sql_dump_changes_group                            
 ---------------------------------------------------------------------------------------
@@ -2077,7 +2077,7 @@ NOTICE:  table "emaj_temp_sql" does not exist, skipping
 
 \! wc -l $EMAJTESTTMPDIR/dump_changes.sql
 17 /tmp/emaj_12/adm3/dump_changes.sql
-select emaj.emaj_dump_changes_group('myGroup1','M4','M5',NULL,'{"myschema1.myTbl3"}',:'EMAJTESTTMPDIR');
+select emaj_dump_changes_group('myGroup1','M4','M5',NULL,'{"myschema1.myTbl3"}',:'EMAJTESTTMPDIR');
 NOTICE:  table "emaj_temp_sql" does not exist, skipping
             emaj_dump_changes_group             
 ------------------------------------------------
@@ -2089,9 +2089,9 @@ NOTICE:  table "emaj_temp_sql" does not exist, skipping
    4 /tmp/emaj_12/adm3/_INFO
   24 total
 -- Build the table/sequence names array using the emaj_log_stat_group() function result
-SELECT emaj.emaj_gen_sql_dump_changes_group('myGroup1','M4','M5',
+SELECT emaj_gen_sql_dump_changes_group('myGroup1','M4','M5',
                                             'EMAJ_COLUMNS=(emaj_tuple, emaj_gid, emaj_verb), CONSOLIDATION=FULL, ORDER_BY=TIME',
-                                            (SELECT array_agg(distinct stat_schema || '.' || stat_table) FROM emaj.emaj_log_stat_group('myGroup1','M4','M5'))
+                                            (SELECT array_agg(distinct stat_schema || '.' || stat_table) FROM emaj_log_stat_group('myGroup1','M4','M5'))
                                            );
 NOTICE:  table "emaj_temp_sql" does not exist, skipping
                     emaj_gen_sql_dump_changes_group                    
@@ -2122,7 +2122,7 @@ DO $$
 DECLARE
   v_stmt TEXT;
 BEGIN
-  PERFORM emaj.emaj_gen_sql_dump_changes_group('myGroup1','M4','M5', 'CONSOLIDATION=FULL, EMAJ_COLUMNS=MIN', ARRAY['myschema1.myTbl3']);
+  PERFORM emaj_gen_sql_dump_changes_group('myGroup1','M4','M5', 'CONSOLIDATION=FULL, EMAJ_COLUMNS=MIN', ARRAY['myschema1.myTbl3']);
   SELECT sql_text INTO v_stmt FROM emaj_temp_sql WHERE sql_schema = 'myschema1' and sql_tblseq = 'myTbl3' AND sql_line_number = 1;
   EXECUTE 'CREATE TABLE public.myTbl3_cons_log_table_M4_M5 AS ' || v_stmt;
   EXECUTE 'CREATE VIEW public.myTbl3_cons_log_view_M4_M5 AS ' || v_stmt;
@@ -2149,19 +2149,19 @@ DROP VIEW IF EXISTS public.myTbl3_cons_log_view_M4_M5;
 -- Step 21 : test TRUNCATE (log, statistics, rollback, sql generation and replay)
 -----------------------------
 SET client_min_messages TO WARNING;
-select emaj.emaj_create_group('truncateTestGroup');
+select emaj_create_group('truncateTestGroup');
  emaj_create_group 
 -------------------
                  1
 (1 row)
 
-select emaj.emaj_assign_tables('phil''s schema3','.*','','truncateTestGroup');
+select emaj_assign_tables('phil''s schema3','.*','','truncateTestGroup');
  emaj_assign_tables 
 --------------------
                   3
 (1 row)
 
-select emaj.emaj_assign_tables('myschema4','.*','','truncateTestGroup');
+select emaj_assign_tables('myschema4','.*','','truncateTestGroup');
 WARNING:  _assign_tables: Some partitionned tables (mytblp) are not selected.
 WARNING:  _create_tbl: The table "myschema4.mytblm" has triggers that will be automatically disabled during E-Maj rollback operations (mytblm_insert_trigger). Use the emaj_modify_table() function to change this behaviour.
  emaj_assign_tables 
@@ -2170,7 +2170,7 @@ WARNING:  _create_tbl: The table "myschema4.mytblm" has triggers that will be au
 (1 row)
 
 RESET client_min_messages;
-select emaj.emaj_start_group('truncateTestGroup','M1');
+select emaj_start_group('truncateTestGroup','M1');
  emaj_start_group 
 ------------------
                 9
@@ -2201,14 +2201,14 @@ select is_called, last_value from "emaj_phil's schema3"."phil's tbl1_log_seq";
  t         |         19
 (1 row)
 
-select emaj.emaj_set_mark_group('truncateTestGroup','M2');
+select emaj_set_mark_group('truncateTestGroup','M2');
  emaj_set_mark_group 
 ---------------------
                    9
 (1 row)
 
 select stat_group, stat_schema, stat_table, stat_first_mark, stat_last_mark, stat_role, stat_verb, stat_rows
-  from emaj.emaj_detailed_log_stat_group('truncateTestGroup','M1',null);
+  from emaj_detailed_log_stat_group('truncateTestGroup','M1',null);
     stat_group     |  stat_schema   | stat_table  | stat_first_mark | stat_last_mark | stat_role | stat_verb | stat_rows 
 -------------------+----------------+-------------+-----------------+----------------+-----------+-----------+-----------
  truncateTestGroup | myschema4      | mypartp3    | M1              |                | postgres  | TRUNCATE  |         1
@@ -2218,7 +2218,7 @@ select stat_group, stat_schema, stat_table, stat_first_mark, stat_last_mark, sta
  truncateTestGroup | phil's schema3 | phil's tbl1 | M1              |                | postgres  | TRUNCATE  |        19
 (5 rows)
 
-SELECT emaj.emaj_dump_changes_group('truncateTestGroup', 'M1', 'M2', 'CONSOLIDATION=NONE, EMAJ_COLUMNS=MIN', '{"myschema4.mypartp3"}', :'EMAJTESTTMPDIR');
+SELECT emaj_dump_changes_group('truncateTestGroup', 'M1', 'M2', 'CONSOLIDATION=NONE, EMAJ_COLUMNS=MIN', '{"myschema4.mypartp3"}', :'EMAJTESTTMPDIR');
             emaj_dump_changes_group             
 ------------------------------------------------
  2 files have been created in /tmp/emaj_12/adm3
@@ -2226,7 +2226,7 @@ SELECT emaj.emaj_dump_changes_group('truncateTestGroup', 'M1', 'M2', 'CONSOLIDAT
 
 \! cat $EMAJTESTTMPDIR/myschema4_mypartp3.changes
 11	Stored in partition 3	9	18000045	OLD
-SELECT emaj.emaj_dump_changes_group('truncateTestGroup', 'M1', 'M2', 'CONSOLIDATION=PARTIAL', '{"myschema4.mypartp3"}', :'EMAJTESTTMPDIR');
+SELECT emaj_dump_changes_group('truncateTestGroup', 'M1', 'M2', 'CONSOLIDATION=PARTIAL', '{"myschema4.mypartp3"}', :'EMAJTESTTMPDIR');
 NOTICE:  table "emaj_temp_sql" does not exist, skipping
             emaj_dump_changes_group             
 ------------------------------------------------
@@ -2236,7 +2236,7 @@ NOTICE:  table "emaj_temp_sql" does not exist, skipping
 \! cat $EMAJTESTTMPDIR/myschema4_mypartp3.changes
 11	OLD	Stored in partition 3	9
 \! rm $EMAJTESTTMPDIR/*
-select * from emaj.emaj_logged_rollback_group('truncateTestGroup','M1', false);
+select * from emaj_logged_rollback_group('truncateTestGroup','M1', false);
  rlbk_severity |            rlbk_message             
 ---------------+-------------------------------------
  Notice        | Rollback id = 18000.
@@ -2244,7 +2244,7 @@ select * from emaj.emaj_logged_rollback_group('truncateTestGroup','M1', false);
 (2 rows)
 
 select stat_group, stat_schema, stat_table, stat_first_mark, stat_last_mark, stat_role, stat_verb, stat_rows
-  from emaj.emaj_detailed_log_stat_group('truncateTestGroup','M1',null);
+  from emaj_detailed_log_stat_group('truncateTestGroup','M1',null);
     stat_group     |  stat_schema   | stat_table  | stat_first_mark | stat_last_mark | stat_role | stat_verb | stat_rows 
 -------------------+----------------+-------------+-----------------+----------------+-----------+-----------+-----------
  truncateTestGroup | myschema4      | mypartp3    | M1              |                | postgres  | INSERT    |         1
@@ -2259,7 +2259,7 @@ select stat_group, stat_schema, stat_table, stat_first_mark, stat_last_mark, sta
  truncateTestGroup | phil's schema3 | phil's tbl1 | M1              |                | postgres  | TRUNCATE  |        19
 (10 rows)
 
-select emaj.emaj_gen_sql_group('truncateTestGroup','M1','M2',:'EMAJTESTTMPDIR' || '/gensql.sql');
+select emaj_gen_sql_group('truncateTestGroup','M1','M2',:'EMAJTESTTMPDIR' || '/gensql.sql');
 NOTICE:  table "emaj_temp_script" does not exist, skipping
  emaj_gen_sql_group 
 --------------------
@@ -2267,8 +2267,8 @@ NOTICE:  table "emaj_temp_script" does not exist, skipping
 (1 row)
 
 -- TODO: replace the previous statement by the next one, once the issue with the emaj_logged_rollback_group() and emaj_gen_sql_groups() functions will be fixed
---select emaj.emaj_gen_sql_group('truncateTestGroup','M1',null,:'EMAJTESTTMPDIR' || '/gensql.sql');
-select * from emaj.emaj_rollback_group('truncateTestGroup','M1', false);
+--select emaj_gen_sql_group('truncateTestGroup','M1',null,:'EMAJTESTTMPDIR' || '/gensql.sql');
+select * from emaj_rollback_group('truncateTestGroup','M1', false);
  rlbk_severity |            rlbk_message             
 ---------------+-------------------------------------
  Notice        | Rollback id = 18001.
@@ -2302,20 +2302,20 @@ RESET escape_string_warning;
 RESET datestyle;
 \! rm $EMAJTESTTMPDIR/*
 set role emaj_regression_tests_adm_user2;
-select emaj.emaj_stop_group('truncateTestGroup');
+select emaj_stop_group('truncateTestGroup');
  emaj_stop_group 
 -----------------
                9
 (1 row)
 
-select emaj.emaj_drop_group('truncateTestGroup');
+select emaj_drop_group('truncateTestGroup');
  emaj_drop_group 
 -----------------
                9
 (1 row)
 
 -- first set all rollback events state
-select emaj.emaj_cleanup_rollback_state();
+select emaj_cleanup_rollback_state();
  emaj_cleanup_rollback_state 
 -----------------------------
                            0
@@ -2468,7 +2468,7 @@ select rlbp_rlbk_id, rlbp_step, rlbp_schema, rlbp_table, rlbp_object, rlbp_targe
         12501 | DELETE_LOG         | myschema2      | mytbl4                                                          |                   |               12201 |                 3 |            1 |                                                                                                                                                                                             |                   |                           |                       6 |                    3 |             6
         12501 | DELETE_LOG         | myschema2      | mytbl5                                                          |                   |               12201 |                 4 |            1 |                                                                                                                                                                                             |                   |                           |                       3 |                    3 |             3
         12501 | DELETE_LOG         | myschema2      | mytbl6                                                          |                   |               12201 |                 2 |            1 |                                                                                                                                                                                             |                   |                           |                       9 |                    3 |             9
-        12501 | SET_FK_IMM         | myschema2      | mytbl6                                                          | mytbl6_col61_fkey |                     |                 2 |            1 |                                                                                                                                                                                             |                   |                           |                       9 |                    2 |              
+        12501 | SET_FK_IMM         | myschema2      | mytbl6                                                          | mytbl6_col61_fkey |                     |                 2 |            1 |                                                                                                                                                                                             |                   |                           |                       9 |                    3 |              
         12501 | SET_FK_IMM         | myschema2      | mytbl8                                                          | mytbl8_col81_fkey |                     |                 2 |            1 |                                                                                                                                                                                             |                   |                           |                       9 |                    3 |              
         12501 | ENA_LOG_TRG        | myschema2      | mytbl4                                                          |                   |                     |                 3 |            1 |                                                                                                                                                                                             |                   |                           |                         |                    2 |              
         12501 | ENA_LOG_TRG        | myschema2      | mytbl5                                                          |                   |                     |                 4 |            1 |                                                                                                                                                                                             |                   |                           |                         |                    2 |              
@@ -2528,7 +2528,7 @@ select rlbp_rlbk_id, rlbp_step, rlbp_schema, rlbp_table, rlbp_object, rlbp_targe
         14401 | DELETE_LOG         | myschema2      | mytbl2                                                          |                   |               14009 |                 5 |            1 |                                                                                                                                                                                             |                   |                           |                       2 |                    3 |             2
         14401 | DELETE_LOG         | myschema2      | mytbl5                                                          |                   |               14009 |                 4 |            1 |                                                                                                                                                                                             |                   |                           |                       3 |                    1 |             4
         14401 | DELETE_LOG         | myschema2      | mytbl6                                                          |                   |               14009 |                 2 |            1 |                                                                                                                                                                                             |                   |                           |                      17 |                    1 |            26
-        14401 | SET_FK_IMM         | myschema2      | mytbl6                                                          | mytbl6_col61_fkey |                     |                 2 |            1 |                                                                                                                                                                                             |                   |                           |                      17 |                    2 |              
+        14401 | SET_FK_IMM         | myschema2      | mytbl6                                                          | mytbl6_col61_fkey |                     |                 2 |            1 |                                                                                                                                                                                             |                   |                           |                      17 |                    3 |              
         14401 | SET_FK_IMM         | myschema2      | mytbl8                                                          | mytbl8_col81_fkey |                     |                 2 |            1 |                                                                                                                                                                                             |                   |                           |                      17 |                    3 |              
         14401 | ENA_LOG_TRG        | myschema2      | mytbl1                                                          |                   |                     |                 3 |            1 |                                                                                                                                                                                             |                   |                           |                         |                    2 |              
         14401 | ENA_LOG_TRG        | myschema2      | mytbl2                                                          |                   |                     |                 5 |            1 |                                                                                                                                                                                             |                   |                           |                         |                    2 |              
@@ -3077,18 +3077,18 @@ select * from emaj.emaj_group_hist order by grph_group, grph_time_range;
 -----------------------------
 -- check grants on other functions to emaj_adm role
 -----------------------------
-select emaj.emaj_get_previous_mark_group('dummyGroup', 'EMAJ_LAST_MARK');
+select emaj_get_previous_mark_group('dummyGroup', 'EMAJ_LAST_MARK');
 ERROR:  _check_group_names: The group "dummyGroup" does not exist.
 CONTEXT:  PL/pgSQL function emaj._check_group_names(text[],boolean,boolean,boolean,boolean,boolean,boolean) line 42 at RAISE
 SQL statement "SELECT emaj._check_group_names(p_groupNames := ARRAY[p_groupName], p_mayBeNull := FALSE, p_lockGroups := FALSE)"
-PL/pgSQL function emaj.emaj_get_previous_mark_group(text,text) line 9 at PERFORM
-select emaj.emaj_estimate_rollback_groups(array['dummyGroup'], 'dummyMark', FALSE);
+PL/pgSQL function emaj_get_previous_mark_group(text,text) line 9 at PERFORM
+select emaj_estimate_rollback_groups(array['dummyGroup'], 'dummyMark', FALSE);
 ERROR:  _check_group_names: The group "dummyGroup" does not exist.
 CONTEXT:  PL/pgSQL function emaj._check_group_names(text[],boolean,boolean,boolean,boolean,boolean,boolean) line 42 at RAISE
 SQL statement "SELECT emaj._check_group_names(p_groupNames := p_groupNames, p_mayBeNull := p_multiGroup, p_lockGroups := FALSE)"
 PL/pgSQL function emaj._estimate_rollback_groups(text[],boolean,text,boolean) line 18 at SQL statement
-PL/pgSQL function emaj.emaj_estimate_rollback_groups(text[],text,boolean) line 7 at RETURN
-select * from emaj.emaj_rollback_activity();
+PL/pgSQL function emaj_estimate_rollback_groups(text[],text,boolean) line 7 at RETURN
+select * from emaj_rollback_activity();
  rlbk_id | rlbk_groups | rlbk_mark | rlbk_mark_datetime | rlbk_is_logged | rlbk_is_alter_group_allowed | rlbk_comment | rlbk_nb_session | rlbk_nb_table | rlbk_nb_sequence | rlbk_eff_nb_table | rlbk_eff_nb_sequence | rlbk_status | rlbk_start_datetime | rlbk_planning_duration | rlbk_locking_duration | rlbk_elapse | rlbk_remaining | rlbk_completion_pct 
 ---------+-------------+-----------+--------------------+----------------+-----------------------------+--------------+-----------------+---------------+------------------+-------------------+----------------------+-------------+---------------------+------------------------+-----------------------+-------------+----------------+---------------------
 (0 rows)
@@ -3099,7 +3099,7 @@ select substr(pg_size_pretty(pg_database_size(current_database())),1,0);
  
 (1 row)
 
-select emaj.emaj_forget_group('dummyGroup');
+select emaj_forget_group('dummyGroup');
 WARNING:  emaj_forget_group: the tables group "dummyGroup" has not been found in history tables
  emaj_forget_group 
 -------------------
