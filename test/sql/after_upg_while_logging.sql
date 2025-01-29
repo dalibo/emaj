@@ -3,11 +3,11 @@
 -- This script is the part of operations performed after the upgrade
 --
 -- Revoke rights granted before the upgrade.
-revoke all on schema mySchema1, mySchema2, "phil's schema3", mySchema4, mySchema5, mySchema6
+revoke all on schema mySchema1, mySchema2, "phil's schema""3", mySchema4, mySchema5, mySchema6
   from emaj_regression_tests_adm_user1, emaj_regression_tests_adm_user2;
-revoke all on all tables in schema mySchema1, mySchema2, "phil's schema3", mySchema4, mySchema5, mySchema6
+revoke all on all tables in schema mySchema1, mySchema2, "phil's schema""3", mySchema4, mySchema5, mySchema6
   from emaj_regression_tests_adm_user1, emaj_regression_tests_adm_user2;
-revoke all on all sequences in schema mySchema1, mySchema2, "phil's schema3", mySchema4, mySchema5, mySchema6
+revoke all on all sequences in schema mySchema1, mySchema2, "phil's schema""3", mySchema4, mySchema5, mySchema6
   from emaj_regression_tests_adm_user1, emaj_regression_tests_adm_user2;
 
 -----------------------------

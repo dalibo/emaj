@@ -8,11 +8,11 @@ SET datestyle TO ymd;
 -----------------------------
 grant emaj_adm to emaj_regression_tests_adm_user1, emaj_regression_tests_adm_user2;
 -- Give rights while we are in an emaj version 4.5.0 or earlier.
-grant all on schema mySchema1, mySchema2, "phil's schema3", mySchema4, mySchema5, mySchema6
+grant all on schema mySchema1, mySchema2, "phil's schema""3", mySchema4, mySchema5, mySchema6
   to emaj_regression_tests_adm_user1, emaj_regression_tests_adm_user2;
-grant all on all tables in schema mySchema1, mySchema2, "phil's schema3", mySchema4, mySchema5, mySchema6
+grant all on all tables in schema mySchema1, mySchema2, "phil's schema""3", mySchema4, mySchema5, mySchema6
   to emaj_regression_tests_adm_user1, emaj_regression_tests_adm_user2;
-grant all on all sequences in schema mySchema1, mySchema2, "phil's schema3", mySchema4, mySchema5, mySchema6
+grant all on all sequences in schema mySchema1, mySchema2, "phil's schema""3", mySchema4, mySchema5, mySchema6
   to emaj_regression_tests_adm_user1, emaj_regression_tests_adm_user2;
 
 -----------------------------
@@ -37,8 +37,8 @@ select emaj.emaj_assign_tables('myschema2','{"mytbl1", "mytbl2", "myTbl3", "mytb
 select emaj.emaj_assign_sequences('myschema2','{"myTbl3_col31_seq","myseq1"}','myGroup2');
 
 -- The third group name contains space, comma # and '
-select emaj.emaj_assign_tables('phil''s schema3','.*','mytbl4','phil''s group#3",');
-select emaj.emaj_assign_sequence('phil''s schema3',E'phil''s seq\\1','phil''s group#3",');
+select emaj.emaj_assign_tables('phil''s schema"3','.*','my"tbl4','phil''s group#3",');
+select emaj.emaj_assign_sequence('phil''s schema"3',E'phil''s"seq\\1','phil''s group#3",');
 
 -- Group with long name tables
 select emaj.emaj_assign_tables('myschema6','.*',NULL,'myGroup6');

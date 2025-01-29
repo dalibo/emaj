@@ -692,10 +692,10 @@ select emaj.emaj_delete_mark_group('myGroup1','EMAJ_LAST_MARK');
 SELECT emaj.emaj_dump_changes_group('phil''s group#3",', 'Mark4', 'Mark5', 'CONSOLIDATION=NONE', NULL, :'EMAJTESTTMPDIR');
 \! ls -1sS $EMAJTESTTMPDIR
 \! grep -v '  started at ' $EMAJTESTTMPDIR/_INFO
-\! cat $EMAJTESTTMPDIR/"phil's_schema3_myTbl2__col21_seq.changes"
+\! cat $EMAJTESTTMPDIR/phil_s_schema_3_myTbl2__col21_seq.changes
 
-SELECT emaj.emaj_dump_changes_group('phil''s group#3",', 'Mark4', 'Mark5', 'CONSOLIDATION=PARTIAL', '{"phil''s schema3.phil''s tbl1"}', :'EMAJTESTTMPDIR');
-SELECT emaj.emaj_dump_changes_group('phil''s group#3",', 'Mark4', 'Mark5', 'CONSOLIDATION=FULL', '{"phil''s schema3.phil''s tbl1"}', :'EMAJTESTTMPDIR');
+SELECT emaj.emaj_dump_changes_group('phil''s group#3",', 'Mark4', 'Mark5', 'CONSOLIDATION=PARTIAL', '{"phil''s schema\"3.phil''s tbl1"}', :'EMAJTESTTMPDIR');
+SELECT emaj.emaj_dump_changes_group('phil''s group#3",', 'Mark4', 'Mark5', 'CONSOLIDATION=FULL', '{"phil''s schema\"3.phil''s tbl1"}', :'EMAJTESTTMPDIR');
 \! rm $EMAJTESTTMPDIR/*
 
 -- Checks for emaj_dump_changes_group() and emaj_gen_sql_dump_changes_group()
@@ -803,7 +803,7 @@ select emaj.emaj_gen_sql_group('myGroup2', 'Mark21', 'EMAJ_LAST_MARK', :'EMAJTES
      'myschema2.myTbl3_col31_seq']);
 -- only 1 table (with a strange name and belonging to a group having another table without pkey)
 select emaj.emaj_gen_sql_group('phil''s group#3",', 'Mark4', 'EMAJ_LAST_MARK', :'EMAJTESTTMPDIR' || '/myFile', array[
-     'phil''s schema3.phil''s tbl1']);
+     'phil''s schema"3.phil''s tbl1']);
 -- several groups and 1 table of each, with redondancy in the tables array
 select emaj.emaj_gen_sql_groups(array['myGroup1','myGroup2'], 'Multi-1', 'Multi-3', :'EMAJTESTTMPDIR' || '/myFile', array[
      'myschema1.mytbl4','myschema2.mytbl4','myschema1.mytbl4','myschema2.mytbl4']);

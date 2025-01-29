@@ -883,45 +883,45 @@ select mark_group, regexp_replace(mark_name,E'\\d\\d\.\\d\\d\\.\\d\\d\\.\\d\\d\\
 (8 rows)
 
 select sequ_schema, sequ_name, sequ_time_id, sequ_last_val, sequ_is_called from emaj.emaj_sequence order by sequ_time_id, sequ_schema, sequ_name;
-  sequ_schema   |     sequ_name     | sequ_time_id | sequ_last_val | sequ_is_called 
-----------------+-------------------+--------------+---------------+----------------
- phil's schema3 | myTbl2\_col21_seq |         3402 |             1 | f
- phil's schema3 | phil's seq\1      |         3402 |          1000 | f
- phil's schema3 | myTbl2\_col21_seq |         3403 |             1 | f
- phil's schema3 | phil's seq\1      |         3403 |          1000 | f
- myschema1      | myTbl3_col31_seq  |         4028 |             1 | f
- myschema1      | mytbl2b_col20_seq |         4028 |             1 | f
- myschema2      | myTbl3_col31_seq  |         4029 |             1 | f
- myschema2      | myseq1            |         4029 |          1000 | f
- myschema1      | myTbl3_col31_seq  |         4030 |             1 | f
- myschema1      | mytbl2b_col20_seq |         4030 |             6 | t
+   sequ_schema   |     sequ_name     | sequ_time_id | sequ_last_val | sequ_is_called 
+-----------------+-------------------+--------------+---------------+----------------
+ phil's schema"3 | myTbl2\_col21_seq |         3402 |             1 | f
+ phil's schema"3 | phil's"seq\1      |         3402 |          1000 | f
+ phil's schema"3 | myTbl2\_col21_seq |         3403 |             1 | f
+ phil's schema"3 | phil's"seq\1      |         3403 |          1000 | f
+ myschema1       | myTbl3_col31_seq  |         4028 |             1 | f
+ myschema1       | mytbl2b_col20_seq |         4028 |             1 | f
+ myschema2       | myTbl3_col31_seq  |         4029 |             1 | f
+ myschema2       | myseq1            |         4029 |          1000 | f
+ myschema1       | myTbl3_col31_seq  |         4030 |             1 | f
+ myschema1       | mytbl2b_col20_seq |         4030 |             6 | t
 (10 rows)
 
 select tbl_schema, tbl_name, tbl_time_id, tbl_log_seq_last_val from emaj.emaj_table order by tbl_time_id, tbl_schema, tbl_name;
-   tbl_schema   |  tbl_name   | tbl_time_id | tbl_log_seq_last_val 
-----------------+-------------+-------------+----------------------
- phil's schema3 | myTbl2\     |        3402 |                    0
- phil's schema3 | phil's tbl1 |        3402 |                    0
- phil's schema3 | myTbl2\     |        3403 |                    0
- phil's schema3 | phil's tbl1 |        3403 |                    0
- myschema1      | myTbl3      |        4028 |                    0
- myschema1      | mytbl1      |        4028 |                    0
- myschema1      | mytbl2      |        4028 |                    0
- myschema1      | mytbl2b     |        4028 |                    0
- myschema1      | mytbl4      |        4028 |                    0
- myschema2      | myTbl3      |        4029 |                    0
- myschema2      | mytbl1      |        4029 |                    0
- myschema2      | mytbl2      |        4029 |                    0
- myschema2      | mytbl4      |        4029 |                    0
- myschema2      | mytbl5      |        4029 |                    0
- myschema2      | mytbl6      |        4029 |                    0
- myschema2      | mytbl7      |        4029 |                    0
- myschema2      | mytbl8      |        4029 |                    0
- myschema1      | myTbl3      |        4030 |                    0
- myschema1      | mytbl1      |        4030 |                   15
- myschema1      | mytbl2      |        4030 |                    6
- myschema1      | mytbl2b     |        4030 |                    6
- myschema1      | mytbl4      |        4030 |                    0
+   tbl_schema    |  tbl_name   | tbl_time_id | tbl_log_seq_last_val 
+-----------------+-------------+-------------+----------------------
+ phil's schema"3 | myTbl2\     |        3402 |                    0
+ phil's schema"3 | phil's tbl1 |        3402 |                    0
+ phil's schema"3 | myTbl2\     |        3403 |                    0
+ phil's schema"3 | phil's tbl1 |        3403 |                    0
+ myschema1       | myTbl3      |        4028 |                    0
+ myschema1       | mytbl1      |        4028 |                    0
+ myschema1       | mytbl2      |        4028 |                    0
+ myschema1       | mytbl2b     |        4028 |                    0
+ myschema1       | mytbl4      |        4028 |                    0
+ myschema2       | myTbl3      |        4029 |                    0
+ myschema2       | mytbl1      |        4029 |                    0
+ myschema2       | mytbl2      |        4029 |                    0
+ myschema2       | mytbl4      |        4029 |                    0
+ myschema2       | mytbl5      |        4029 |                    0
+ myschema2       | mytbl6      |        4029 |                    0
+ myschema2       | mytbl7      |        4029 |                    0
+ myschema2       | mytbl8      |        4029 |                    0
+ myschema1       | myTbl3      |        4030 |                    0
+ myschema1       | mytbl1      |        4030 |                   15
+ myschema1       | mytbl2      |        4030 |                    6
+ myschema1       | mytbl2b     |        4030 |                    6
+ myschema1       | mytbl4      |        4030 |                    0
 (22 rows)
 
 select * from emaj.emaj_log_session where lses_group = 'myGroup1' and upper_inf(lses_time_range) order by lses_group, lses_time_range;
@@ -968,52 +968,52 @@ select mark_group, regexp_replace(mark_name,E'\\d\\d\.\\d\\d\\.\\d\\d\\.\\d\\d\\
 (9 rows)
 
 select sequ_schema, sequ_name, sequ_time_id, sequ_last_val, sequ_is_called from emaj.emaj_sequence order by sequ_time_id, sequ_schema, sequ_name;
-  sequ_schema   |     sequ_name     | sequ_time_id | sequ_last_val | sequ_is_called 
-----------------+-------------------+--------------+---------------+----------------
- phil's schema3 | myTbl2\_col21_seq |         3402 |             1 | f
- phil's schema3 | phil's seq\1      |         3402 |          1000 | f
- phil's schema3 | myTbl2\_col21_seq |         3403 |             1 | f
- phil's schema3 | phil's seq\1      |         3403 |          1000 | f
- myschema1      | myTbl3_col31_seq  |         4028 |             1 | f
- myschema1      | mytbl2b_col20_seq |         4028 |             1 | f
- myschema2      | myTbl3_col31_seq  |         4029 |             1 | f
- myschema2      | myseq1            |         4029 |          1000 | f
- myschema1      | myTbl3_col31_seq  |         4030 |             1 | f
- myschema1      | mytbl2b_col20_seq |         4030 |             6 | t
- myschema1      | myTbl3_col31_seq  |         4031 |            10 | t
- myschema1      | mytbl2b_col20_seq |         4031 |             6 | t
+   sequ_schema   |     sequ_name     | sequ_time_id | sequ_last_val | sequ_is_called 
+-----------------+-------------------+--------------+---------------+----------------
+ phil's schema"3 | myTbl2\_col21_seq |         3402 |             1 | f
+ phil's schema"3 | phil's"seq\1      |         3402 |          1000 | f
+ phil's schema"3 | myTbl2\_col21_seq |         3403 |             1 | f
+ phil's schema"3 | phil's"seq\1      |         3403 |          1000 | f
+ myschema1       | myTbl3_col31_seq  |         4028 |             1 | f
+ myschema1       | mytbl2b_col20_seq |         4028 |             1 | f
+ myschema2       | myTbl3_col31_seq  |         4029 |             1 | f
+ myschema2       | myseq1            |         4029 |          1000 | f
+ myschema1       | myTbl3_col31_seq  |         4030 |             1 | f
+ myschema1       | mytbl2b_col20_seq |         4030 |             6 | t
+ myschema1       | myTbl3_col31_seq  |         4031 |            10 | t
+ myschema1       | mytbl2b_col20_seq |         4031 |             6 | t
 (12 rows)
 
 select tbl_schema, tbl_name, tbl_time_id, tbl_log_seq_last_val from emaj.emaj_table order by tbl_time_id, tbl_schema, tbl_name;
-   tbl_schema   |  tbl_name   | tbl_time_id | tbl_log_seq_last_val 
-----------------+-------------+-------------+----------------------
- phil's schema3 | myTbl2\     |        3402 |                    0
- phil's schema3 | phil's tbl1 |        3402 |                    0
- phil's schema3 | myTbl2\     |        3403 |                    0
- phil's schema3 | phil's tbl1 |        3403 |                    0
- myschema1      | myTbl3      |        4028 |                    0
- myschema1      | mytbl1      |        4028 |                    0
- myschema1      | mytbl2      |        4028 |                    0
- myschema1      | mytbl2b     |        4028 |                    0
- myschema1      | mytbl4      |        4028 |                    0
- myschema2      | myTbl3      |        4029 |                    0
- myschema2      | mytbl1      |        4029 |                    0
- myschema2      | mytbl2      |        4029 |                    0
- myschema2      | mytbl4      |        4029 |                    0
- myschema2      | mytbl5      |        4029 |                    0
- myschema2      | mytbl6      |        4029 |                    0
- myschema2      | mytbl7      |        4029 |                    0
- myschema2      | mytbl8      |        4029 |                    0
- myschema1      | myTbl3      |        4030 |                    0
- myschema1      | mytbl1      |        4030 |                   15
- myschema1      | mytbl2      |        4030 |                    6
- myschema1      | mytbl2b     |        4030 |                    6
- myschema1      | mytbl4      |        4030 |                    0
- myschema1      | myTbl3      |        4031 |                   10
- myschema1      | mytbl1      |        4031 |                   15
- myschema1      | mytbl2      |        4031 |                    6
- myschema1      | mytbl2b     |        4031 |                    6
- myschema1      | mytbl4      |        4031 |                    2
+   tbl_schema    |  tbl_name   | tbl_time_id | tbl_log_seq_last_val 
+-----------------+-------------+-------------+----------------------
+ phil's schema"3 | myTbl2\     |        3402 |                    0
+ phil's schema"3 | phil's tbl1 |        3402 |                    0
+ phil's schema"3 | myTbl2\     |        3403 |                    0
+ phil's schema"3 | phil's tbl1 |        3403 |                    0
+ myschema1       | myTbl3      |        4028 |                    0
+ myschema1       | mytbl1      |        4028 |                    0
+ myschema1       | mytbl2      |        4028 |                    0
+ myschema1       | mytbl2b     |        4028 |                    0
+ myschema1       | mytbl4      |        4028 |                    0
+ myschema2       | myTbl3      |        4029 |                    0
+ myschema2       | mytbl1      |        4029 |                    0
+ myschema2       | mytbl2      |        4029 |                    0
+ myschema2       | mytbl4      |        4029 |                    0
+ myschema2       | mytbl5      |        4029 |                    0
+ myschema2       | mytbl6      |        4029 |                    0
+ myschema2       | mytbl7      |        4029 |                    0
+ myschema2       | mytbl8      |        4029 |                    0
+ myschema1       | myTbl3      |        4030 |                    0
+ myschema1       | mytbl1      |        4030 |                   15
+ myschema1       | mytbl2      |        4030 |                    6
+ myschema1       | mytbl2b     |        4030 |                    6
+ myschema1       | mytbl4      |        4030 |                    0
+ myschema1       | myTbl3      |        4031 |                   10
+ myschema1       | mytbl1      |        4031 |                   15
+ myschema1       | mytbl2      |        4031 |                    6
+ myschema1       | mytbl2b     |        4031 |                    6
+ myschema1       | mytbl4      |        4031 |                    2
 (27 rows)
 
 select col11, col12, col13, emaj_verb, emaj_tuple, emaj_gid from emaj_myschema1.mytbl1_log order by emaj_gid, emaj_tuple desc;
@@ -1110,45 +1110,45 @@ select mark_group, regexp_replace(mark_name,E'\\d\\d\.\\d\\d\\.\\d\\d\\.\\d\\d\\
 (8 rows)
 
 select sequ_schema, sequ_name, sequ_time_id, sequ_last_val, sequ_is_called from emaj.emaj_sequence order by sequ_time_id, sequ_schema, sequ_name;
-  sequ_schema   |     sequ_name     | sequ_time_id | sequ_last_val | sequ_is_called 
-----------------+-------------------+--------------+---------------+----------------
- phil's schema3 | myTbl2\_col21_seq |         3402 |             1 | f
- phil's schema3 | phil's seq\1      |         3402 |          1000 | f
- phil's schema3 | myTbl2\_col21_seq |         3403 |             1 | f
- phil's schema3 | phil's seq\1      |         3403 |          1000 | f
- myschema1      | myTbl3_col31_seq  |         4028 |             1 | f
- myschema1      | mytbl2b_col20_seq |         4028 |             1 | f
- myschema2      | myTbl3_col31_seq  |         4029 |             1 | f
- myschema2      | myseq1            |         4029 |          1000 | f
- myschema1      | myTbl3_col31_seq  |         4030 |             1 | f
- myschema1      | mytbl2b_col20_seq |         4030 |             6 | t
+   sequ_schema   |     sequ_name     | sequ_time_id | sequ_last_val | sequ_is_called 
+-----------------+-------------------+--------------+---------------+----------------
+ phil's schema"3 | myTbl2\_col21_seq |         3402 |             1 | f
+ phil's schema"3 | phil's"seq\1      |         3402 |          1000 | f
+ phil's schema"3 | myTbl2\_col21_seq |         3403 |             1 | f
+ phil's schema"3 | phil's"seq\1      |         3403 |          1000 | f
+ myschema1       | myTbl3_col31_seq  |         4028 |             1 | f
+ myschema1       | mytbl2b_col20_seq |         4028 |             1 | f
+ myschema2       | myTbl3_col31_seq  |         4029 |             1 | f
+ myschema2       | myseq1            |         4029 |          1000 | f
+ myschema1       | myTbl3_col31_seq  |         4030 |             1 | f
+ myschema1       | mytbl2b_col20_seq |         4030 |             6 | t
 (10 rows)
 
 select tbl_schema, tbl_name, tbl_time_id, tbl_log_seq_last_val from emaj.emaj_table order by tbl_time_id, tbl_schema, tbl_name;
-   tbl_schema   |  tbl_name   | tbl_time_id | tbl_log_seq_last_val 
-----------------+-------------+-------------+----------------------
- phil's schema3 | myTbl2\     |        3402 |                    0
- phil's schema3 | phil's tbl1 |        3402 |                    0
- phil's schema3 | myTbl2\     |        3403 |                    0
- phil's schema3 | phil's tbl1 |        3403 |                    0
- myschema1      | myTbl3      |        4028 |                    0
- myschema1      | mytbl1      |        4028 |                    0
- myschema1      | mytbl2      |        4028 |                    0
- myschema1      | mytbl2b     |        4028 |                    0
- myschema1      | mytbl4      |        4028 |                    0
- myschema2      | myTbl3      |        4029 |                    0
- myschema2      | mytbl1      |        4029 |                    0
- myschema2      | mytbl2      |        4029 |                    0
- myschema2      | mytbl4      |        4029 |                    0
- myschema2      | mytbl5      |        4029 |                    0
- myschema2      | mytbl6      |        4029 |                    0
- myschema2      | mytbl7      |        4029 |                    0
- myschema2      | mytbl8      |        4029 |                    0
- myschema1      | myTbl3      |        4030 |                    0
- myschema1      | mytbl1      |        4030 |                   15
- myschema1      | mytbl2      |        4030 |                    6
- myschema1      | mytbl2b     |        4030 |                    6
- myschema1      | mytbl4      |        4030 |                    0
+   tbl_schema    |  tbl_name   | tbl_time_id | tbl_log_seq_last_val 
+-----------------+-------------+-------------+----------------------
+ phil's schema"3 | myTbl2\     |        3402 |                    0
+ phil's schema"3 | phil's tbl1 |        3402 |                    0
+ phil's schema"3 | myTbl2\     |        3403 |                    0
+ phil's schema"3 | phil's tbl1 |        3403 |                    0
+ myschema1       | myTbl3      |        4028 |                    0
+ myschema1       | mytbl1      |        4028 |                    0
+ myschema1       | mytbl2      |        4028 |                    0
+ myschema1       | mytbl2b     |        4028 |                    0
+ myschema1       | mytbl4      |        4028 |                    0
+ myschema2       | myTbl3      |        4029 |                    0
+ myschema2       | mytbl1      |        4029 |                    0
+ myschema2       | mytbl2      |        4029 |                    0
+ myschema2       | mytbl4      |        4029 |                    0
+ myschema2       | mytbl5      |        4029 |                    0
+ myschema2       | mytbl6      |        4029 |                    0
+ myschema2       | mytbl7      |        4029 |                    0
+ myschema2       | mytbl8      |        4029 |                    0
+ myschema1       | myTbl3      |        4030 |                    0
+ myschema1       | mytbl1      |        4030 |                   15
+ myschema1       | mytbl2      |        4030 |                    6
+ myschema1       | mytbl2b     |        4030 |                    6
+ myschema1       | mytbl4      |        4030 |                    0
 (22 rows)
 
 select sqhl_schema, sqhl_table, sqhl_begin_time_id, sqhl_end_time_id, sqhl_hole_size from emaj.emaj_seq_hole order by 1,2,3;
@@ -1208,45 +1208,45 @@ select mark_group, regexp_replace(mark_name,E'\\d\\d\.\\d\\d\\.\\d\\d\\.\\d\\d\\
 (8 rows)
 
 select sequ_schema, sequ_name, sequ_time_id, sequ_last_val, sequ_is_called from emaj.emaj_sequence order by sequ_time_id, sequ_schema, sequ_name;
-  sequ_schema   |     sequ_name     | sequ_time_id | sequ_last_val | sequ_is_called 
-----------------+-------------------+--------------+---------------+----------------
- phil's schema3 | myTbl2\_col21_seq |         3402 |             1 | f
- phil's schema3 | phil's seq\1      |         3402 |          1000 | f
- phil's schema3 | myTbl2\_col21_seq |         3403 |             1 | f
- phil's schema3 | phil's seq\1      |         3403 |          1000 | f
- myschema1      | myTbl3_col31_seq  |         4028 |             1 | f
- myschema1      | mytbl2b_col20_seq |         4028 |             1 | f
- myschema2      | myTbl3_col31_seq  |         4029 |             1 | f
- myschema2      | myseq1            |         4029 |          1000 | f
- myschema1      | myTbl3_col31_seq  |         4034 |             1 | f
- myschema1      | mytbl2b_col20_seq |         4034 |             1 | f
+   sequ_schema   |     sequ_name     | sequ_time_id | sequ_last_val | sequ_is_called 
+-----------------+-------------------+--------------+---------------+----------------
+ phil's schema"3 | myTbl2\_col21_seq |         3402 |             1 | f
+ phil's schema"3 | phil's"seq\1      |         3402 |          1000 | f
+ phil's schema"3 | myTbl2\_col21_seq |         3403 |             1 | f
+ phil's schema"3 | phil's"seq\1      |         3403 |          1000 | f
+ myschema1       | myTbl3_col31_seq  |         4028 |             1 | f
+ myschema1       | mytbl2b_col20_seq |         4028 |             1 | f
+ myschema2       | myTbl3_col31_seq  |         4029 |             1 | f
+ myschema2       | myseq1            |         4029 |          1000 | f
+ myschema1       | myTbl3_col31_seq  |         4034 |             1 | f
+ myschema1       | mytbl2b_col20_seq |         4034 |             1 | f
 (10 rows)
 
 select tbl_schema, tbl_name, tbl_time_id, tbl_log_seq_last_val from emaj.emaj_table order by tbl_time_id, tbl_schema, tbl_name;
-   tbl_schema   |  tbl_name   | tbl_time_id | tbl_log_seq_last_val 
-----------------+-------------+-------------+----------------------
- phil's schema3 | myTbl2\     |        3402 |                    0
- phil's schema3 | phil's tbl1 |        3402 |                    0
- phil's schema3 | myTbl2\     |        3403 |                    0
- phil's schema3 | phil's tbl1 |        3403 |                    0
- myschema1      | myTbl3      |        4028 |                    0
- myschema1      | mytbl1      |        4028 |                    0
- myschema1      | mytbl2      |        4028 |                    0
- myschema1      | mytbl2b     |        4028 |                    0
- myschema1      | mytbl4      |        4028 |                    0
- myschema2      | myTbl3      |        4029 |                    0
- myschema2      | mytbl1      |        4029 |                    0
- myschema2      | mytbl2      |        4029 |                    0
- myschema2      | mytbl4      |        4029 |                    0
- myschema2      | mytbl5      |        4029 |                    0
- myschema2      | mytbl6      |        4029 |                    0
- myschema2      | mytbl7      |        4029 |                    0
- myschema2      | mytbl8      |        4029 |                    0
- myschema1      | myTbl3      |        4034 |                   10
- myschema1      | mytbl1      |        4034 |                   15
- myschema1      | mytbl2      |        4034 |                    6
- myschema1      | mytbl2b     |        4034 |                    6
- myschema1      | mytbl4      |        4034 |                    2
+   tbl_schema    |  tbl_name   | tbl_time_id | tbl_log_seq_last_val 
+-----------------+-------------+-------------+----------------------
+ phil's schema"3 | myTbl2\     |        3402 |                    0
+ phil's schema"3 | phil's tbl1 |        3402 |                    0
+ phil's schema"3 | myTbl2\     |        3403 |                    0
+ phil's schema"3 | phil's tbl1 |        3403 |                    0
+ myschema1       | myTbl3      |        4028 |                    0
+ myschema1       | mytbl1      |        4028 |                    0
+ myschema1       | mytbl2      |        4028 |                    0
+ myschema1       | mytbl2b     |        4028 |                    0
+ myschema1       | mytbl4      |        4028 |                    0
+ myschema2       | myTbl3      |        4029 |                    0
+ myschema2       | mytbl1      |        4029 |                    0
+ myschema2       | mytbl2      |        4029 |                    0
+ myschema2       | mytbl4      |        4029 |                    0
+ myschema2       | mytbl5      |        4029 |                    0
+ myschema2       | mytbl6      |        4029 |                    0
+ myschema2       | mytbl7      |        4029 |                    0
+ myschema2       | mytbl8      |        4029 |                    0
+ myschema1       | myTbl3      |        4034 |                   10
+ myschema1       | mytbl1      |        4034 |                   15
+ myschema1       | mytbl2      |        4034 |                    6
+ myschema1       | mytbl2b     |        4034 |                    6
+ myschema1       | mytbl4      |        4034 |                    2
 (22 rows)
 
 select sqhl_schema, sqhl_table, sqhl_begin_time_id, sqhl_end_time_id, sqhl_hole_size from emaj.emaj_seq_hole order by 1,2,3;
@@ -1402,52 +1402,52 @@ select mark_group, regexp_replace(mark_name,E'\\d\\d\.\\d\\d\\.\\d\\d\\.\\d\\d\\
 (9 rows)
 
 select sequ_schema, sequ_name, sequ_time_id, sequ_last_val, sequ_is_called from emaj.emaj_sequence order by sequ_time_id, sequ_schema, sequ_name;
-  sequ_schema   |     sequ_name     | sequ_time_id | sequ_last_val | sequ_is_called 
-----------------+-------------------+--------------+---------------+----------------
- phil's schema3 | myTbl2\_col21_seq |         3402 |             1 | f
- phil's schema3 | phil's seq\1      |         3402 |          1000 | f
- phil's schema3 | myTbl2\_col21_seq |         3403 |             1 | f
- phil's schema3 | phil's seq\1      |         3403 |          1000 | f
- myschema2      | myTbl3_col31_seq  |         4029 |             1 | f
- myschema2      | myseq1            |         4029 |          1000 | f
- myschema1      | myTbl3_col31_seq  |         4035 |             1 | f
- myschema1      | mytbl2b_col20_seq |         4035 |             1 | f
- myschema1      | myTbl3_col31_seq  |         4036 |             1 | f
- myschema1      | mytbl2b_col20_seq |         4036 |             2 | t
- myschema1      | myTbl3_col31_seq  |         4037 |            10 | t
- myschema1      | mytbl2b_col20_seq |         4037 |             2 | t
+   sequ_schema   |     sequ_name     | sequ_time_id | sequ_last_val | sequ_is_called 
+-----------------+-------------------+--------------+---------------+----------------
+ phil's schema"3 | myTbl2\_col21_seq |         3402 |             1 | f
+ phil's schema"3 | phil's"seq\1      |         3402 |          1000 | f
+ phil's schema"3 | myTbl2\_col21_seq |         3403 |             1 | f
+ phil's schema"3 | phil's"seq\1      |         3403 |          1000 | f
+ myschema2       | myTbl3_col31_seq  |         4029 |             1 | f
+ myschema2       | myseq1            |         4029 |          1000 | f
+ myschema1       | myTbl3_col31_seq  |         4035 |             1 | f
+ myschema1       | mytbl2b_col20_seq |         4035 |             1 | f
+ myschema1       | myTbl3_col31_seq  |         4036 |             1 | f
+ myschema1       | mytbl2b_col20_seq |         4036 |             2 | t
+ myschema1       | myTbl3_col31_seq  |         4037 |            10 | t
+ myschema1       | mytbl2b_col20_seq |         4037 |             2 | t
 (12 rows)
 
 select tbl_schema, tbl_name, tbl_time_id, tbl_log_seq_last_val from emaj.emaj_table order by tbl_time_id, tbl_schema, tbl_name;
-   tbl_schema   |  tbl_name   | tbl_time_id | tbl_log_seq_last_val 
-----------------+-------------+-------------+----------------------
- phil's schema3 | myTbl2\     |        3402 |                    0
- phil's schema3 | phil's tbl1 |        3402 |                    0
- phil's schema3 | myTbl2\     |        3403 |                    0
- phil's schema3 | phil's tbl1 |        3403 |                    0
- myschema2      | myTbl3      |        4029 |                    0
- myschema2      | mytbl1      |        4029 |                    0
- myschema2      | mytbl2      |        4029 |                    0
- myschema2      | mytbl4      |        4029 |                    0
- myschema2      | mytbl5      |        4029 |                    0
- myschema2      | mytbl6      |        4029 |                    0
- myschema2      | mytbl7      |        4029 |                    0
- myschema2      | mytbl8      |        4029 |                    0
- myschema1      | myTbl3      |        4035 |                   10
- myschema1      | mytbl1      |        4035 |                   15
- myschema1      | mytbl2      |        4035 |                    6
- myschema1      | mytbl2b     |        4035 |                    6
- myschema1      | mytbl4      |        4035 |                    2
- myschema1      | myTbl3      |        4036 |                   10
- myschema1      | mytbl1      |        4036 |                   30
- myschema1      | mytbl2      |        4036 |                    8
- myschema1      | mytbl2b     |        4036 |                    8
- myschema1      | mytbl4      |        4036 |                    2
- myschema1      | myTbl3      |        4037 |                   20
- myschema1      | mytbl1      |        4037 |                   30
- myschema1      | mytbl2      |        4037 |                    8
- myschema1      | mytbl2b     |        4037 |                    8
- myschema1      | mytbl4      |        4037 |                    3
+   tbl_schema    |  tbl_name   | tbl_time_id | tbl_log_seq_last_val 
+-----------------+-------------+-------------+----------------------
+ phil's schema"3 | myTbl2\     |        3402 |                    0
+ phil's schema"3 | phil's tbl1 |        3402 |                    0
+ phil's schema"3 | myTbl2\     |        3403 |                    0
+ phil's schema"3 | phil's tbl1 |        3403 |                    0
+ myschema2       | myTbl3      |        4029 |                    0
+ myschema2       | mytbl1      |        4029 |                    0
+ myschema2       | mytbl2      |        4029 |                    0
+ myschema2       | mytbl4      |        4029 |                    0
+ myschema2       | mytbl5      |        4029 |                    0
+ myschema2       | mytbl6      |        4029 |                    0
+ myschema2       | mytbl7      |        4029 |                    0
+ myschema2       | mytbl8      |        4029 |                    0
+ myschema1       | myTbl3      |        4035 |                   10
+ myschema1       | mytbl1      |        4035 |                   15
+ myschema1       | mytbl2      |        4035 |                    6
+ myschema1       | mytbl2b     |        4035 |                    6
+ myschema1       | mytbl4      |        4035 |                    2
+ myschema1       | myTbl3      |        4036 |                   10
+ myschema1       | mytbl1      |        4036 |                   30
+ myschema1       | mytbl2      |        4036 |                    8
+ myschema1       | mytbl2b     |        4036 |                    8
+ myschema1       | mytbl4      |        4036 |                    2
+ myschema1       | myTbl3      |        4037 |                   20
+ myschema1       | mytbl1      |        4037 |                   30
+ myschema1       | mytbl2      |        4037 |                    8
+ myschema1       | mytbl2b     |        4037 |                    8
+ myschema1       | mytbl4      |        4037 |                    3
 (27 rows)
 
 select col11, col12, col13, emaj_verb, emaj_tuple, emaj_gid from emaj_myschema1.mytbl1_log order by emaj_gid, emaj_tuple desc;
@@ -1535,66 +1535,66 @@ select mark_group, regexp_replace(mark_name,E'\\d\\d\.\\d\\d\\.\\d\\d\\.\\d\\d\\
 (11 rows)
 
 select sequ_schema, sequ_name, sequ_time_id, sequ_last_val, sequ_is_called from emaj.emaj_sequence order by sequ_time_id, sequ_schema, sequ_name;
-  sequ_schema   |     sequ_name     | sequ_time_id | sequ_last_val | sequ_is_called 
-----------------+-------------------+--------------+---------------+----------------
- phil's schema3 | myTbl2\_col21_seq |         3402 |             1 | f
- phil's schema3 | phil's seq\1      |         3402 |          1000 | f
- phil's schema3 | myTbl2\_col21_seq |         3403 |             1 | f
- phil's schema3 | phil's seq\1      |         3403 |          1000 | f
- myschema2      | myTbl3_col31_seq  |         4029 |             1 | f
- myschema2      | myseq1            |         4029 |          1000 | f
- myschema1      | myTbl3_col31_seq  |         4035 |             1 | f
- myschema1      | mytbl2b_col20_seq |         4035 |             1 | f
- myschema1      | myTbl3_col31_seq  |         4036 |             1 | f
- myschema1      | mytbl2b_col20_seq |         4036 |             2 | t
- myschema1      | myTbl3_col31_seq  |         4037 |            10 | t
- myschema1      | mytbl2b_col20_seq |         4037 |             2 | t
- myschema1      | myTbl3_col31_seq  |         4038 |            10 | t
- myschema1      | mytbl2b_col20_seq |         4038 |             2 | t
- myschema1      | myTbl3_col31_seq  |         4039 |             1 | f
- myschema1      | mytbl2b_col20_seq |         4039 |             2 | t
+   sequ_schema   |     sequ_name     | sequ_time_id | sequ_last_val | sequ_is_called 
+-----------------+-------------------+--------------+---------------+----------------
+ phil's schema"3 | myTbl2\_col21_seq |         3402 |             1 | f
+ phil's schema"3 | phil's"seq\1      |         3402 |          1000 | f
+ phil's schema"3 | myTbl2\_col21_seq |         3403 |             1 | f
+ phil's schema"3 | phil's"seq\1      |         3403 |          1000 | f
+ myschema2       | myTbl3_col31_seq  |         4029 |             1 | f
+ myschema2       | myseq1            |         4029 |          1000 | f
+ myschema1       | myTbl3_col31_seq  |         4035 |             1 | f
+ myschema1       | mytbl2b_col20_seq |         4035 |             1 | f
+ myschema1       | myTbl3_col31_seq  |         4036 |             1 | f
+ myschema1       | mytbl2b_col20_seq |         4036 |             2 | t
+ myschema1       | myTbl3_col31_seq  |         4037 |            10 | t
+ myschema1       | mytbl2b_col20_seq |         4037 |             2 | t
+ myschema1       | myTbl3_col31_seq  |         4038 |            10 | t
+ myschema1       | mytbl2b_col20_seq |         4038 |             2 | t
+ myschema1       | myTbl3_col31_seq  |         4039 |             1 | f
+ myschema1       | mytbl2b_col20_seq |         4039 |             2 | t
 (16 rows)
 
 select tbl_schema, tbl_name, tbl_time_id, tbl_log_seq_last_val from emaj.emaj_table order by tbl_time_id, tbl_schema, tbl_name;
-   tbl_schema   |  tbl_name   | tbl_time_id | tbl_log_seq_last_val 
-----------------+-------------+-------------+----------------------
- phil's schema3 | myTbl2\     |        3402 |                    0
- phil's schema3 | phil's tbl1 |        3402 |                    0
- phil's schema3 | myTbl2\     |        3403 |                    0
- phil's schema3 | phil's tbl1 |        3403 |                    0
- myschema2      | myTbl3      |        4029 |                    0
- myschema2      | mytbl1      |        4029 |                    0
- myschema2      | mytbl2      |        4029 |                    0
- myschema2      | mytbl4      |        4029 |                    0
- myschema2      | mytbl5      |        4029 |                    0
- myschema2      | mytbl6      |        4029 |                    0
- myschema2      | mytbl7      |        4029 |                    0
- myschema2      | mytbl8      |        4029 |                    0
- myschema1      | myTbl3      |        4035 |                   10
- myschema1      | mytbl1      |        4035 |                   15
- myschema1      | mytbl2      |        4035 |                    6
- myschema1      | mytbl2b     |        4035 |                    6
- myschema1      | mytbl4      |        4035 |                    2
- myschema1      | myTbl3      |        4036 |                   10
- myschema1      | mytbl1      |        4036 |                   30
- myschema1      | mytbl2      |        4036 |                    8
- myschema1      | mytbl2b     |        4036 |                    8
- myschema1      | mytbl4      |        4036 |                    2
- myschema1      | myTbl3      |        4037 |                   20
- myschema1      | mytbl1      |        4037 |                   30
- myschema1      | mytbl2      |        4037 |                    8
- myschema1      | mytbl2b     |        4037 |                    8
- myschema1      | mytbl4      |        4037 |                    3
- myschema1      | myTbl3      |        4038 |                   20
- myschema1      | mytbl1      |        4038 |                   30
- myschema1      | mytbl2      |        4038 |                    8
- myschema1      | mytbl2b     |        4038 |                    8
- myschema1      | mytbl4      |        4038 |                    3
- myschema1      | myTbl3      |        4039 |                   30
- myschema1      | mytbl1      |        4039 |                   30
- myschema1      | mytbl2      |        4039 |                    8
- myschema1      | mytbl2b     |        4039 |                    8
- myschema1      | mytbl4      |        4039 |                    4
+   tbl_schema    |  tbl_name   | tbl_time_id | tbl_log_seq_last_val 
+-----------------+-------------+-------------+----------------------
+ phil's schema"3 | myTbl2\     |        3402 |                    0
+ phil's schema"3 | phil's tbl1 |        3402 |                    0
+ phil's schema"3 | myTbl2\     |        3403 |                    0
+ phil's schema"3 | phil's tbl1 |        3403 |                    0
+ myschema2       | myTbl3      |        4029 |                    0
+ myschema2       | mytbl1      |        4029 |                    0
+ myschema2       | mytbl2      |        4029 |                    0
+ myschema2       | mytbl4      |        4029 |                    0
+ myschema2       | mytbl5      |        4029 |                    0
+ myschema2       | mytbl6      |        4029 |                    0
+ myschema2       | mytbl7      |        4029 |                    0
+ myschema2       | mytbl8      |        4029 |                    0
+ myschema1       | myTbl3      |        4035 |                   10
+ myschema1       | mytbl1      |        4035 |                   15
+ myschema1       | mytbl2      |        4035 |                    6
+ myschema1       | mytbl2b     |        4035 |                    6
+ myschema1       | mytbl4      |        4035 |                    2
+ myschema1       | myTbl3      |        4036 |                   10
+ myschema1       | mytbl1      |        4036 |                   30
+ myschema1       | mytbl2      |        4036 |                    8
+ myschema1       | mytbl2b     |        4036 |                    8
+ myschema1       | mytbl4      |        4036 |                    2
+ myschema1       | myTbl3      |        4037 |                   20
+ myschema1       | mytbl1      |        4037 |                   30
+ myschema1       | mytbl2      |        4037 |                    8
+ myschema1       | mytbl2b     |        4037 |                    8
+ myschema1       | mytbl4      |        4037 |                    3
+ myschema1       | myTbl3      |        4038 |                   20
+ myschema1       | mytbl1      |        4038 |                   30
+ myschema1       | mytbl2      |        4038 |                    8
+ myschema1       | mytbl2b     |        4038 |                    8
+ myschema1       | mytbl4      |        4038 |                    3
+ myschema1       | myTbl3      |        4039 |                   30
+ myschema1       | mytbl1      |        4039 |                   30
+ myschema1       | mytbl2      |        4039 |                    8
+ myschema1       | mytbl2b     |        4039 |                    8
+ myschema1       | mytbl4      |        4039 |                    4
 (37 rows)
 
 select sqhl_schema, sqhl_table, sqhl_begin_time_id, sqhl_end_time_id, sqhl_hole_size from emaj.emaj_seq_hole order by 1,2,3;
@@ -1673,80 +1673,80 @@ select mark_group, regexp_replace(mark_name,E'\\d\\d\.\\d\\d\\.\\d\\d\\.\\d\\d\\
 (13 rows)
 
 select sequ_schema, sequ_name, sequ_time_id, sequ_last_val, sequ_is_called from emaj.emaj_sequence order by sequ_time_id, sequ_schema, sequ_name;
-  sequ_schema   |     sequ_name     | sequ_time_id | sequ_last_val | sequ_is_called 
-----------------+-------------------+--------------+---------------+----------------
- phil's schema3 | myTbl2\_col21_seq |         3402 |             1 | f
- phil's schema3 | phil's seq\1      |         3402 |          1000 | f
- phil's schema3 | myTbl2\_col21_seq |         3403 |             1 | f
- phil's schema3 | phil's seq\1      |         3403 |          1000 | f
- myschema2      | myTbl3_col31_seq  |         4029 |             1 | f
- myschema2      | myseq1            |         4029 |          1000 | f
- myschema1      | myTbl3_col31_seq  |         4035 |             1 | f
- myschema1      | mytbl2b_col20_seq |         4035 |             1 | f
- myschema1      | myTbl3_col31_seq  |         4036 |             1 | f
- myschema1      | mytbl2b_col20_seq |         4036 |             2 | t
- myschema1      | myTbl3_col31_seq  |         4037 |            10 | t
- myschema1      | mytbl2b_col20_seq |         4037 |             2 | t
- myschema1      | myTbl3_col31_seq  |         4038 |            10 | t
- myschema1      | mytbl2b_col20_seq |         4038 |             2 | t
- myschema1      | myTbl3_col31_seq  |         4039 |             1 | f
- myschema1      | mytbl2b_col20_seq |         4039 |             2 | t
- myschema1      | myTbl3_col31_seq  |         4040 |             1 | f
- myschema1      | mytbl2b_col20_seq |         4040 |             2 | t
- myschema1      | myTbl3_col31_seq  |         4041 |             1 | f
- myschema1      | mytbl2b_col20_seq |         4041 |             1 | f
+   sequ_schema   |     sequ_name     | sequ_time_id | sequ_last_val | sequ_is_called 
+-----------------+-------------------+--------------+---------------+----------------
+ phil's schema"3 | myTbl2\_col21_seq |         3402 |             1 | f
+ phil's schema"3 | phil's"seq\1      |         3402 |          1000 | f
+ phil's schema"3 | myTbl2\_col21_seq |         3403 |             1 | f
+ phil's schema"3 | phil's"seq\1      |         3403 |          1000 | f
+ myschema2       | myTbl3_col31_seq  |         4029 |             1 | f
+ myschema2       | myseq1            |         4029 |          1000 | f
+ myschema1       | myTbl3_col31_seq  |         4035 |             1 | f
+ myschema1       | mytbl2b_col20_seq |         4035 |             1 | f
+ myschema1       | myTbl3_col31_seq  |         4036 |             1 | f
+ myschema1       | mytbl2b_col20_seq |         4036 |             2 | t
+ myschema1       | myTbl3_col31_seq  |         4037 |            10 | t
+ myschema1       | mytbl2b_col20_seq |         4037 |             2 | t
+ myschema1       | myTbl3_col31_seq  |         4038 |            10 | t
+ myschema1       | mytbl2b_col20_seq |         4038 |             2 | t
+ myschema1       | myTbl3_col31_seq  |         4039 |             1 | f
+ myschema1       | mytbl2b_col20_seq |         4039 |             2 | t
+ myschema1       | myTbl3_col31_seq  |         4040 |             1 | f
+ myschema1       | mytbl2b_col20_seq |         4040 |             2 | t
+ myschema1       | myTbl3_col31_seq  |         4041 |             1 | f
+ myschema1       | mytbl2b_col20_seq |         4041 |             1 | f
 (20 rows)
 
 select tbl_schema, tbl_name, tbl_time_id, tbl_log_seq_last_val from emaj.emaj_table order by tbl_time_id, tbl_schema, tbl_name;
-   tbl_schema   |  tbl_name   | tbl_time_id | tbl_log_seq_last_val 
-----------------+-------------+-------------+----------------------
- phil's schema3 | myTbl2\     |        3402 |                    0
- phil's schema3 | phil's tbl1 |        3402 |                    0
- phil's schema3 | myTbl2\     |        3403 |                    0
- phil's schema3 | phil's tbl1 |        3403 |                    0
- myschema2      | myTbl3      |        4029 |                    0
- myschema2      | mytbl1      |        4029 |                    0
- myschema2      | mytbl2      |        4029 |                    0
- myschema2      | mytbl4      |        4029 |                    0
- myschema2      | mytbl5      |        4029 |                    0
- myschema2      | mytbl6      |        4029 |                    0
- myschema2      | mytbl7      |        4029 |                    0
- myschema2      | mytbl8      |        4029 |                    0
- myschema1      | myTbl3      |        4035 |                   10
- myschema1      | mytbl1      |        4035 |                   15
- myschema1      | mytbl2      |        4035 |                    6
- myschema1      | mytbl2b     |        4035 |                    6
- myschema1      | mytbl4      |        4035 |                    2
- myschema1      | myTbl3      |        4036 |                   10
- myschema1      | mytbl1      |        4036 |                   30
- myschema1      | mytbl2      |        4036 |                    8
- myschema1      | mytbl2b     |        4036 |                    8
- myschema1      | mytbl4      |        4036 |                    2
- myschema1      | myTbl3      |        4037 |                   20
- myschema1      | mytbl1      |        4037 |                   30
- myschema1      | mytbl2      |        4037 |                    8
- myschema1      | mytbl2b     |        4037 |                    8
- myschema1      | mytbl4      |        4037 |                    3
- myschema1      | myTbl3      |        4038 |                   20
- myschema1      | mytbl1      |        4038 |                   30
- myschema1      | mytbl2      |        4038 |                    8
- myschema1      | mytbl2b     |        4038 |                    8
- myschema1      | mytbl4      |        4038 |                    3
- myschema1      | myTbl3      |        4039 |                   30
- myschema1      | mytbl1      |        4039 |                   30
- myschema1      | mytbl2      |        4039 |                    8
- myschema1      | mytbl2b     |        4039 |                    8
- myschema1      | mytbl4      |        4039 |                    4
- myschema1      | myTbl3      |        4040 |                   30
- myschema1      | mytbl1      |        4040 |                   30
- myschema1      | mytbl2      |        4040 |                    8
- myschema1      | mytbl2b     |        4040 |                    8
- myschema1      | mytbl4      |        4040 |                    4
- myschema1      | myTbl3      |        4041 |                   30
- myschema1      | mytbl1      |        4041 |                   40
- myschema1      | mytbl2      |        4041 |                   10
- myschema1      | mytbl2b     |        4041 |                   10
- myschema1      | mytbl4      |        4041 |                    4
+   tbl_schema    |  tbl_name   | tbl_time_id | tbl_log_seq_last_val 
+-----------------+-------------+-------------+----------------------
+ phil's schema"3 | myTbl2\     |        3402 |                    0
+ phil's schema"3 | phil's tbl1 |        3402 |                    0
+ phil's schema"3 | myTbl2\     |        3403 |                    0
+ phil's schema"3 | phil's tbl1 |        3403 |                    0
+ myschema2       | myTbl3      |        4029 |                    0
+ myschema2       | mytbl1      |        4029 |                    0
+ myschema2       | mytbl2      |        4029 |                    0
+ myschema2       | mytbl4      |        4029 |                    0
+ myschema2       | mytbl5      |        4029 |                    0
+ myschema2       | mytbl6      |        4029 |                    0
+ myschema2       | mytbl7      |        4029 |                    0
+ myschema2       | mytbl8      |        4029 |                    0
+ myschema1       | myTbl3      |        4035 |                   10
+ myschema1       | mytbl1      |        4035 |                   15
+ myschema1       | mytbl2      |        4035 |                    6
+ myschema1       | mytbl2b     |        4035 |                    6
+ myschema1       | mytbl4      |        4035 |                    2
+ myschema1       | myTbl3      |        4036 |                   10
+ myschema1       | mytbl1      |        4036 |                   30
+ myschema1       | mytbl2      |        4036 |                    8
+ myschema1       | mytbl2b     |        4036 |                    8
+ myschema1       | mytbl4      |        4036 |                    2
+ myschema1       | myTbl3      |        4037 |                   20
+ myschema1       | mytbl1      |        4037 |                   30
+ myschema1       | mytbl2      |        4037 |                    8
+ myschema1       | mytbl2b     |        4037 |                    8
+ myschema1       | mytbl4      |        4037 |                    3
+ myschema1       | myTbl3      |        4038 |                   20
+ myschema1       | mytbl1      |        4038 |                   30
+ myschema1       | mytbl2      |        4038 |                    8
+ myschema1       | mytbl2b     |        4038 |                    8
+ myschema1       | mytbl4      |        4038 |                    3
+ myschema1       | myTbl3      |        4039 |                   30
+ myschema1       | mytbl1      |        4039 |                   30
+ myschema1       | mytbl2      |        4039 |                    8
+ myschema1       | mytbl2b     |        4039 |                    8
+ myschema1       | mytbl4      |        4039 |                    4
+ myschema1       | myTbl3      |        4040 |                   30
+ myschema1       | mytbl1      |        4040 |                   30
+ myschema1       | mytbl2      |        4040 |                    8
+ myschema1       | mytbl2b     |        4040 |                    8
+ myschema1       | mytbl4      |        4040 |                    4
+ myschema1       | myTbl3      |        4041 |                   30
+ myschema1       | mytbl1      |        4041 |                   40
+ myschema1       | mytbl2      |        4041 |                   10
+ myschema1       | mytbl2b     |        4041 |                   10
+ myschema1       | mytbl4      |        4041 |                    4
 (47 rows)
 
 select sqhl_schema, sqhl_table, sqhl_begin_time_id, sqhl_end_time_id, sqhl_hole_size from emaj.emaj_seq_hole order by 1,2,3;
@@ -1859,52 +1859,52 @@ select mark_group, regexp_replace(mark_name,E'\\d\\d\.\\d\\d\\.\\d\\d\\.\\d\\d\\
 (9 rows)
 
 select sequ_schema, sequ_name, sequ_time_id, sequ_last_val, sequ_is_called from emaj.emaj_sequence order by sequ_time_id, sequ_schema, sequ_name;
-  sequ_schema   |     sequ_name     | sequ_time_id | sequ_last_val | sequ_is_called 
-----------------+-------------------+--------------+---------------+----------------
- phil's schema3 | myTbl2\_col21_seq |         3402 |             1 | f
- phil's schema3 | phil's seq\1      |         3402 |          1000 | f
- phil's schema3 | myTbl2\_col21_seq |         3403 |             1 | f
- phil's schema3 | phil's seq\1      |         3403 |          1000 | f
- myschema2      | myTbl3_col31_seq  |         4029 |             1 | f
- myschema2      | myseq1            |         4029 |          1000 | f
- myschema1      | myTbl3_col31_seq  |         4035 |             1 | f
- myschema1      | mytbl2b_col20_seq |         4035 |             1 | f
- myschema1      | myTbl3_col31_seq  |         4036 |             1 | f
- myschema1      | mytbl2b_col20_seq |         4036 |             2 | t
- myschema1      | myTbl3_col31_seq  |         4037 |            10 | t
- myschema1      | mytbl2b_col20_seq |         4037 |             2 | t
+   sequ_schema   |     sequ_name     | sequ_time_id | sequ_last_val | sequ_is_called 
+-----------------+-------------------+--------------+---------------+----------------
+ phil's schema"3 | myTbl2\_col21_seq |         3402 |             1 | f
+ phil's schema"3 | phil's"seq\1      |         3402 |          1000 | f
+ phil's schema"3 | myTbl2\_col21_seq |         3403 |             1 | f
+ phil's schema"3 | phil's"seq\1      |         3403 |          1000 | f
+ myschema2       | myTbl3_col31_seq  |         4029 |             1 | f
+ myschema2       | myseq1            |         4029 |          1000 | f
+ myschema1       | myTbl3_col31_seq  |         4035 |             1 | f
+ myschema1       | mytbl2b_col20_seq |         4035 |             1 | f
+ myschema1       | myTbl3_col31_seq  |         4036 |             1 | f
+ myschema1       | mytbl2b_col20_seq |         4036 |             2 | t
+ myschema1       | myTbl3_col31_seq  |         4037 |            10 | t
+ myschema1       | mytbl2b_col20_seq |         4037 |             2 | t
 (12 rows)
 
 select tbl_schema, tbl_name, tbl_time_id, tbl_log_seq_last_val from emaj.emaj_table order by tbl_time_id, tbl_schema, tbl_name;
-   tbl_schema   |  tbl_name   | tbl_time_id | tbl_log_seq_last_val 
-----------------+-------------+-------------+----------------------
- phil's schema3 | myTbl2\     |        3402 |                    0
- phil's schema3 | phil's tbl1 |        3402 |                    0
- phil's schema3 | myTbl2\     |        3403 |                    0
- phil's schema3 | phil's tbl1 |        3403 |                    0
- myschema2      | myTbl3      |        4029 |                    0
- myschema2      | mytbl1      |        4029 |                    0
- myschema2      | mytbl2      |        4029 |                    0
- myschema2      | mytbl4      |        4029 |                    0
- myschema2      | mytbl5      |        4029 |                    0
- myschema2      | mytbl6      |        4029 |                    0
- myschema2      | mytbl7      |        4029 |                    0
- myschema2      | mytbl8      |        4029 |                    0
- myschema1      | myTbl3      |        4035 |                   10
- myschema1      | mytbl1      |        4035 |                   15
- myschema1      | mytbl2      |        4035 |                    6
- myschema1      | mytbl2b     |        4035 |                    6
- myschema1      | mytbl4      |        4035 |                    2
- myschema1      | myTbl3      |        4036 |                   10
- myschema1      | mytbl1      |        4036 |                   30
- myschema1      | mytbl2      |        4036 |                    8
- myschema1      | mytbl2b     |        4036 |                    8
- myschema1      | mytbl4      |        4036 |                    2
- myschema1      | myTbl3      |        4037 |                   20
- myschema1      | mytbl1      |        4037 |                   30
- myschema1      | mytbl2      |        4037 |                    8
- myschema1      | mytbl2b     |        4037 |                    8
- myschema1      | mytbl4      |        4037 |                    3
+   tbl_schema    |  tbl_name   | tbl_time_id | tbl_log_seq_last_val 
+-----------------+-------------+-------------+----------------------
+ phil's schema"3 | myTbl2\     |        3402 |                    0
+ phil's schema"3 | phil's tbl1 |        3402 |                    0
+ phil's schema"3 | myTbl2\     |        3403 |                    0
+ phil's schema"3 | phil's tbl1 |        3403 |                    0
+ myschema2       | myTbl3      |        4029 |                    0
+ myschema2       | mytbl1      |        4029 |                    0
+ myschema2       | mytbl2      |        4029 |                    0
+ myschema2       | mytbl4      |        4029 |                    0
+ myschema2       | mytbl5      |        4029 |                    0
+ myschema2       | mytbl6      |        4029 |                    0
+ myschema2       | mytbl7      |        4029 |                    0
+ myschema2       | mytbl8      |        4029 |                    0
+ myschema1       | myTbl3      |        4035 |                   10
+ myschema1       | mytbl1      |        4035 |                   15
+ myschema1       | mytbl2      |        4035 |                    6
+ myschema1       | mytbl2b     |        4035 |                    6
+ myschema1       | mytbl4      |        4035 |                    2
+ myschema1       | myTbl3      |        4036 |                   10
+ myschema1       | mytbl1      |        4036 |                   30
+ myschema1       | mytbl2      |        4036 |                    8
+ myschema1       | mytbl2b     |        4036 |                    8
+ myschema1       | mytbl4      |        4036 |                    2
+ myschema1       | myTbl3      |        4037 |                   20
+ myschema1       | mytbl1      |        4037 |                   30
+ myschema1       | mytbl2      |        4037 |                    8
+ myschema1       | mytbl2b     |        4037 |                    8
+ myschema1       | mytbl4      |        4037 |                    3
 (27 rows)
 
 select sqhl_schema, sqhl_table, sqhl_begin_time_id, sqhl_end_time_id, sqhl_hole_size from emaj.emaj_seq_hole order by 1,2,3;
@@ -2494,61 +2494,61 @@ select sequ_schema, sequ_name, sequ_time_id, sequ_last_val, sequ_is_called from 
 (0 rows)
 
 select tbl_schema, tbl_name, tbl_time_id, tbl_log_seq_last_val from emaj.emaj_table order by tbl_time_id, tbl_schema, tbl_name;
-   tbl_schema   |  tbl_name   | tbl_time_id | tbl_log_seq_last_val 
-----------------+-------------+-------------+----------------------
- phil's schema3 | myTbl2\     |        3402 |                    0
- phil's schema3 | phil's tbl1 |        3402 |                    0
- phil's schema3 | myTbl2\     |        3403 |                    0
- phil's schema3 | phil's tbl1 |        3403 |                    0
- myschema2      | myTbl3      |        4029 |                    0
- myschema2      | mytbl1      |        4029 |                    0
- myschema2      | mytbl2      |        4029 |                    0
- myschema2      | mytbl4      |        4029 |                    0
- myschema2      | mytbl5      |        4029 |                    0
- myschema2      | mytbl6      |        4029 |                    0
- myschema2      | mytbl7      |        4029 |                    0
- myschema2      | mytbl8      |        4029 |                    0
- myschema1      | myTbl3      |        4035 |                   10
- myschema1      | mytbl1      |        4035 |                   15
- myschema1      | mytbl2      |        4035 |                    6
- myschema1      | mytbl2b     |        4035 |                    6
- myschema1      | mytbl4      |        4035 |                    2
- myschema1      | myTbl3      |        4036 |                   10
- myschema1      | mytbl1      |        4036 |                   30
- myschema1      | mytbl2      |        4036 |                    8
- myschema1      | mytbl2b     |        4036 |                    8
- myschema1      | mytbl4      |        4036 |                    2
- myschema1      | myTbl3      |        4037 |                   20
- myschema1      | mytbl1      |        4037 |                   30
- myschema1      | mytbl2      |        4037 |                    8
- myschema1      | mytbl2b     |        4037 |                    8
- myschema1      | mytbl4      |        4037 |                    3
- myschema4      | mypartp1    |        4047 |                    0
- myschema4      | mypartp2    |        4047 |                    0
- myschema4      | mytblc1     |        4047 |                    0
- myschema4      | mytblc2     |        4047 |                    0
- myschema4      | mytblm      |        4047 |                    0
- myschema4      | mytblr      |        4047 |                    0
- myschema1      | myTbl3      |        4052 |                   30
- myschema1      | mytbl1      |        4052 |                   40
- myschema1      | mytbl2      |        4052 |                   10
- myschema1      | mytbl2b     |        4052 |                   10
- myschema1      | mytbl4      |        4052 |                    4
- myschema1      | myTbl3      |        4054 |                   30
- myschema1      | mytbl1      |        4054 |                   40
- myschema1      | mytbl2      |        4054 |                   10
- myschema1      | mytbl2b     |        4054 |                   10
- myschema1      | mytbl4      |        4054 |                    4
- myschema1      | myTbl3      |        4055 |                   30
- myschema1      | mytbl1      |        4055 |                   40
- myschema1      | mytbl2      |        4055 |                   10
- myschema1      | mytbl2b     |        4055 |                   10
- myschema1      | mytbl4      |        4055 |                    4
- myschema1      | myTbl3      |        4058 |                   30
- myschema1      | mytbl1      |        4058 |                   64
- myschema1      | mytbl2      |        4058 |                   13
- myschema1      | mytbl2b     |        4058 |                   14
- myschema1      | mytbl4      |        4058 |                    4
+   tbl_schema    |  tbl_name   | tbl_time_id | tbl_log_seq_last_val 
+-----------------+-------------+-------------+----------------------
+ phil's schema"3 | myTbl2\     |        3402 |                    0
+ phil's schema"3 | phil's tbl1 |        3402 |                    0
+ phil's schema"3 | myTbl2\     |        3403 |                    0
+ phil's schema"3 | phil's tbl1 |        3403 |                    0
+ myschema2       | myTbl3      |        4029 |                    0
+ myschema2       | mytbl1      |        4029 |                    0
+ myschema2       | mytbl2      |        4029 |                    0
+ myschema2       | mytbl4      |        4029 |                    0
+ myschema2       | mytbl5      |        4029 |                    0
+ myschema2       | mytbl6      |        4029 |                    0
+ myschema2       | mytbl7      |        4029 |                    0
+ myschema2       | mytbl8      |        4029 |                    0
+ myschema1       | myTbl3      |        4035 |                   10
+ myschema1       | mytbl1      |        4035 |                   15
+ myschema1       | mytbl2      |        4035 |                    6
+ myschema1       | mytbl2b     |        4035 |                    6
+ myschema1       | mytbl4      |        4035 |                    2
+ myschema1       | myTbl3      |        4036 |                   10
+ myschema1       | mytbl1      |        4036 |                   30
+ myschema1       | mytbl2      |        4036 |                    8
+ myschema1       | mytbl2b     |        4036 |                    8
+ myschema1       | mytbl4      |        4036 |                    2
+ myschema1       | myTbl3      |        4037 |                   20
+ myschema1       | mytbl1      |        4037 |                   30
+ myschema1       | mytbl2      |        4037 |                    8
+ myschema1       | mytbl2b     |        4037 |                    8
+ myschema1       | mytbl4      |        4037 |                    3
+ myschema4       | mypartp1    |        4047 |                    0
+ myschema4       | mypartp2    |        4047 |                    0
+ myschema4       | mytblc1     |        4047 |                    0
+ myschema4       | mytblc2     |        4047 |                    0
+ myschema4       | mytblm      |        4047 |                    0
+ myschema4       | mytblr      |        4047 |                    0
+ myschema1       | myTbl3      |        4052 |                   30
+ myschema1       | mytbl1      |        4052 |                   40
+ myschema1       | mytbl2      |        4052 |                   10
+ myschema1       | mytbl2b     |        4052 |                   10
+ myschema1       | mytbl4      |        4052 |                    4
+ myschema1       | myTbl3      |        4054 |                   30
+ myschema1       | mytbl1      |        4054 |                   40
+ myschema1       | mytbl2      |        4054 |                   10
+ myschema1       | mytbl2b     |        4054 |                   10
+ myschema1       | mytbl4      |        4054 |                    4
+ myschema1       | myTbl3      |        4055 |                   30
+ myschema1       | mytbl1      |        4055 |                   40
+ myschema1       | mytbl2      |        4055 |                   10
+ myschema1       | mytbl2b     |        4055 |                   10
+ myschema1       | mytbl4      |        4055 |                    4
+ myschema1       | myTbl3      |        4058 |                   30
+ myschema1       | mytbl1      |        4058 |                   64
+ myschema1       | mytbl2      |        4058 |                   13
+ myschema1       | mytbl2b     |        4058 |                   14
+ myschema1       | mytbl4      |        4058 |                    4
 (53 rows)
 
 select sqhl_schema, sqhl_table, sqhl_begin_time_id, sqhl_end_time_id, sqhl_hole_size from emaj.emaj_seq_hole where sqhl_schema = 'myschema1' order by 1,2,3;
@@ -2634,26 +2634,26 @@ begin;
 (0 rows)
 
   select tbl_schema, tbl_name, tbl_time_id, tbl_log_seq_last_val from emaj.emaj_table order by tbl_schema, tbl_name, tbl_time_id;
-   tbl_schema   |  tbl_name   | tbl_time_id | tbl_log_seq_last_val 
-----------------+-------------+-------------+----------------------
- myschema2      | myTbl3      |        4029 |                    0
- myschema2      | mytbl1      |        4029 |                    0
- myschema2      | mytbl2      |        4029 |                    0
- myschema2      | mytbl4      |        4029 |                    0
- myschema2      | mytbl5      |        4029 |                    0
- myschema2      | mytbl6      |        4029 |                    0
- myschema2      | mytbl7      |        4029 |                    0
- myschema2      | mytbl8      |        4029 |                    0
- myschema4      | mypartp1    |        4047 |                    0
- myschema4      | mypartp2    |        4047 |                    0
- myschema4      | mytblc1     |        4047 |                    0
- myschema4      | mytblc2     |        4047 |                    0
- myschema4      | mytblm      |        4047 |                    0
- myschema4      | mytblr      |        4047 |                    0
- phil's schema3 | myTbl2\     |        3402 |                    0
- phil's schema3 | myTbl2\     |        3403 |                    0
- phil's schema3 | phil's tbl1 |        3402 |                    0
- phil's schema3 | phil's tbl1 |        3403 |                    0
+   tbl_schema    |  tbl_name   | tbl_time_id | tbl_log_seq_last_val 
+-----------------+-------------+-------------+----------------------
+ myschema2       | myTbl3      |        4029 |                    0
+ myschema2       | mytbl1      |        4029 |                    0
+ myschema2       | mytbl2      |        4029 |                    0
+ myschema2       | mytbl4      |        4029 |                    0
+ myschema2       | mytbl5      |        4029 |                    0
+ myschema2       | mytbl6      |        4029 |                    0
+ myschema2       | mytbl7      |        4029 |                    0
+ myschema2       | mytbl8      |        4029 |                    0
+ myschema4       | mypartp1    |        4047 |                    0
+ myschema4       | mypartp2    |        4047 |                    0
+ myschema4       | mytblc1     |        4047 |                    0
+ myschema4       | mytblc2     |        4047 |                    0
+ myschema4       | mytblm      |        4047 |                    0
+ myschema4       | mytblr      |        4047 |                    0
+ phil's schema"3 | myTbl2\     |        3402 |                    0
+ phil's schema"3 | myTbl2\     |        3403 |                    0
+ phil's schema"3 | phil's tbl1 |        3402 |                    0
+ phil's schema"3 | phil's tbl1 |        3403 |                    0
 (18 rows)
 
   select sqhl_schema, sqhl_table, sqhl_begin_time_id, sqhl_end_time_id, sqhl_hole_size from emaj.emaj_seq_hole where sqhl_schema = 'myschema1' order by 1,2,3;

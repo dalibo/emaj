@@ -8,11 +8,11 @@ SET datestyle TO ymd;
 -----------------------------
 grant emaj_adm to emaj_regression_tests_adm_user1, emaj_regression_tests_adm_user2;
 -- Give rights while we are in an emaj version 4.5.0 or earlier.
-grant all on schema mySchema1, mySchema2, "phil's schema3", mySchema4, mySchema5, mySchema6
+grant all on schema mySchema1, mySchema2, "phil's schema""3", mySchema4, mySchema5, mySchema6
   to emaj_regression_tests_adm_user1, emaj_regression_tests_adm_user2;
-grant all on all tables in schema mySchema1, mySchema2, "phil's schema3", mySchema4, mySchema5, mySchema6
+grant all on all tables in schema mySchema1, mySchema2, "phil's schema""3", mySchema4, mySchema5, mySchema6
   to emaj_regression_tests_adm_user1, emaj_regression_tests_adm_user2;
-grant all on all sequences in schema mySchema1, mySchema2, "phil's schema3", mySchema4, mySchema5, mySchema6
+grant all on all sequences in schema mySchema1, mySchema2, "phil's schema""3", mySchema4, mySchema5, mySchema6
   to emaj_regression_tests_adm_user1, emaj_regression_tests_adm_user2;
 -----------------------------
 -- create groups
@@ -116,19 +116,19 @@ select emaj.emaj_assign_sequences('myschema2','{"myTbl3_col31_seq","myseq1"}','m
 (1 row)
 
 -- The third group name contains space, comma # and '
-select emaj.emaj_assign_tables('phil''s schema3','.*','mytbl4','phil''s group#3",');
+select emaj.emaj_assign_tables('phil''s schema"3','.*','my"tbl4','phil''s group#3",');
 NOTICE:  table "myTbl2\_log" does not exist, skipping
-NOTICE:  trigger "emaj_log_trg" for relation "phil's schema3.myTbl2\" does not exist, skipping
-NOTICE:  trigger "emaj_trunc_trg" for relation "phil's schema3.myTbl2\" does not exist, skipping
+NOTICE:  trigger "emaj_log_trg" for relation "phil's schema"3.myTbl2\" does not exist, skipping
+NOTICE:  trigger "emaj_trunc_trg" for relation "phil's schema"3.myTbl2\" does not exist, skipping
 NOTICE:  table "phil's tbl1_log" does not exist, skipping
-NOTICE:  trigger "emaj_log_trg" for relation "phil's schema3.phil's tbl1" does not exist, skipping
-NOTICE:  trigger "emaj_trunc_trg" for relation "phil's schema3.phil's tbl1" does not exist, skipping
+NOTICE:  trigger "emaj_log_trg" for relation "phil's schema"3.phil's tbl1" does not exist, skipping
+NOTICE:  trigger "emaj_trunc_trg" for relation "phil's schema"3.phil's tbl1" does not exist, skipping
  emaj_assign_tables 
 --------------------
                   2
 (1 row)
 
-select emaj.emaj_assign_sequence('phil''s schema3',E'phil''s seq\\1','phil''s group#3",');
+select emaj.emaj_assign_sequence('phil''s schema"3',E'phil''s"seq\\1','phil''s group#3",');
  emaj_assign_sequence 
 ----------------------
                     1
@@ -456,106 +456,106 @@ select mark_group, regexp_replace(mark_name,E'\\d\\d\.\\d\\d\\.\\d\\d\\.\\d\\d\\
 
 select sequ_schema, sequ_name, sequ_time_id, sequ_last_val, sequ_is_called
   from emaj.emaj_sequence order by sequ_time_id, sequ_schema, sequ_name;
-  sequ_schema   |    sequ_name     | sequ_time_id | sequ_last_val | sequ_is_called 
-----------------+------------------+--------------+---------------+----------------
- myschema1      | myTbl3_col31_seq |           15 |             1 | f
- myschema2      | myTbl3_col31_seq |           15 |             1 | f
- myschema2      | myseq1           |           15 |          1000 | f
- phil's schema3 | phil's seq\1     |           16 |          1000 | f
- myschema1      | myTbl3_col31_seq |           17 |            10 | t
- myschema1      | myTbl3_col31_seq |           18 |            10 | t
- myschema2      | myTbl3_col31_seq |           21 |            10 | t
- myschema2      | myseq1           |           21 |          1000 | t
- myschema2      | myTbl3_col31_seq |           22 |            10 | t
- myschema2      | myseq1           |           22 |          1003 | t
- myschema2      | myTbl3_col31_seq |           23 |            10 | t
- myschema2      | myseq1           |           23 |          1003 | t
- myschema2      | myTbl3_col31_seq |           24 |            10 | t
- myschema2      | myseq1           |           24 |          1001 | f
- myschema2      | myTbl3_col31_seq |           25 |            10 | t
- myschema2      | myseq1           |           25 |          1001 | f
- myschema2      | myTbl3_col31_seq |           26 |            10 | t
- myschema2      | myseq1           |           26 |          1004 | f
- myschema1      | myTbl3_col31_seq |           27 |            10 | t
- myschema2      | myTbl3_col31_seq |           27 |            10 | t
- myschema2      | myseq1           |           27 |          1004 | f
- myschema1      | myTbl3_col31_seq |           28 |            10 | t
+   sequ_schema   |    sequ_name     | sequ_time_id | sequ_last_val | sequ_is_called 
+-----------------+------------------+--------------+---------------+----------------
+ myschema1       | myTbl3_col31_seq |           15 |             1 | f
+ myschema2       | myTbl3_col31_seq |           15 |             1 | f
+ myschema2       | myseq1           |           15 |          1000 | f
+ phil's schema"3 | phil's"seq\1     |           16 |          1000 | f
+ myschema1       | myTbl3_col31_seq |           17 |            10 | t
+ myschema1       | myTbl3_col31_seq |           18 |            10 | t
+ myschema2       | myTbl3_col31_seq |           21 |            10 | t
+ myschema2       | myseq1           |           21 |          1000 | t
+ myschema2       | myTbl3_col31_seq |           22 |            10 | t
+ myschema2       | myseq1           |           22 |          1003 | t
+ myschema2       | myTbl3_col31_seq |           23 |            10 | t
+ myschema2       | myseq1           |           23 |          1003 | t
+ myschema2       | myTbl3_col31_seq |           24 |            10 | t
+ myschema2       | myseq1           |           24 |          1001 | f
+ myschema2       | myTbl3_col31_seq |           25 |            10 | t
+ myschema2       | myseq1           |           25 |          1001 | f
+ myschema2       | myTbl3_col31_seq |           26 |            10 | t
+ myschema2       | myseq1           |           26 |          1004 | f
+ myschema1       | myTbl3_col31_seq |           27 |            10 | t
+ myschema2       | myTbl3_col31_seq |           27 |            10 | t
+ myschema2       | myseq1           |           27 |          1004 | f
+ myschema1       | myTbl3_col31_seq |           28 |            10 | t
 (22 rows)
 
 select tbl_schema, tbl_name, tbl_time_id, tbl_tuples, tbl_pages, tbl_log_seq_last_val
   from emaj.emaj_table order by tbl_time_id, tbl_schema, tbl_name;
-   tbl_schema   |                        tbl_name                         | tbl_time_id | tbl_tuples | tbl_pages | tbl_log_seq_last_val 
-----------------+---------------------------------------------------------+-------------+------------+-----------+----------------------
- myschema1      | myTbl3                                                  |          15 |          0 |         0 |                    0
- myschema1      | mytbl1                                                  |          15 |          0 |         0 |                    0
- myschema1      | mytbl2                                                  |          15 |          0 |         0 |                    0
- myschema1      | mytbl2b                                                 |          15 |          0 |         0 |                    0
- myschema1      | mytbl4                                                  |          15 |          0 |         0 |                    0
- myschema2      | myTbl3                                                  |          15 |          0 |         0 |                    0
- myschema2      | mytbl1                                                  |          15 |          0 |         0 |                    0
- myschema2      | mytbl2                                                  |          15 |          0 |         0 |                    0
- myschema2      | mytbl4                                                  |          15 |          0 |         0 |                    0
- phil's schema3 | myTbl2\                                                 |          16 |          0 |         0 |                    0
- phil's schema3 | phil's tbl1                                             |          16 |          0 |         0 |                    0
- myschema1      | myTbl3                                                  |          17 |          0 |         0 |                   10
- myschema1      | mytbl1                                                  |          17 |          0 |         0 |                   15
- myschema1      | mytbl2                                                  |          17 |          0 |         0 |                    2
- myschema1      | mytbl2b                                                 |          17 |          0 |         0 |                    2
- myschema1      | mytbl4                                                  |          17 |          0 |         0 |                    0
- myschema1      | myTbl3                                                  |          18 |          0 |         0 |                   10
- myschema1      | mytbl1                                                  |          18 |          0 |         0 |                   18
- myschema1      | mytbl2                                                  |          18 |          0 |         0 |                    2
- myschema1      | mytbl2b                                                 |          18 |          0 |         0 |                    2
- myschema1      | mytbl4                                                  |          18 |          0 |         0 |                    8
- myschema2      | myTbl3                                                  |          21 |          0 |         0 |                   10
- myschema2      | mytbl1                                                  |          21 |          0 |         0 |                   15
- myschema2      | mytbl2                                                  |          21 |          0 |         0 |                    2
- myschema2      | mytbl4                                                  |          21 |          0 |         0 |                    0
- myschema2      | myTbl3                                                  |          22 |          0 |         0 |                   10
- myschema2      | mytbl1                                                  |          22 |          0 |         0 |                   15
- myschema2      | mytbl2                                                  |          22 |          0 |         0 |                    2
- myschema2      | mytbl4                                                  |          22 |          0 |         0 |                    4
- myschema2      | myTbl3                                                  |          23 |          0 |         0 |                   10
- myschema2      | mytbl1                                                  |          23 |          0 |         0 |                   15
- myschema2      | mytbl2                                                  |          23 |          0 |         0 |                    2
- myschema2      | mytbl4                                                  |          23 |          0 |         0 |                    4
- myschema2      | myTbl3                                                  |          24 |          0 |         0 |                   10
- myschema2      | mytbl1                                                  |          24 |          0 |         0 |                   15
- myschema2      | mytbl2                                                  |          24 |          0 |         0 |                    2
- myschema2      | mytbl4                                                  |          24 |          0 |         0 |                    6
- myschema2      | myTbl3                                                  |          25 |          0 |         0 |                   10
- myschema2      | mytbl1                                                  |          25 |          0 |         0 |                   15
- myschema2      | mytbl2                                                  |          25 |          0 |         0 |                    2
- myschema2      | mytbl4                                                  |          25 |          0 |         0 |                    6
- myschema2      | myTbl3                                                  |          26 |          0 |         0 |                   10
- myschema2      | mytbl1                                                  |          26 |          0 |         0 |                   15
- myschema2      | mytbl2                                                  |          26 |          0 |         0 |                    2
- myschema2      | mytbl4                                                  |          26 |          0 |         0 |                    8
- myschema1      | myTbl3                                                  |          27 |          0 |         0 |                   10
- myschema1      | mytbl1                                                  |          27 |          0 |         0 |                   24
- myschema1      | mytbl2                                                  |          27 |          0 |         0 |                    3
- myschema1      | mytbl2b                                                 |          27 |          0 |         0 |                    3
- myschema1      | mytbl4                                                  |          27 |          0 |         0 |                    9
- myschema2      | myTbl3                                                  |          27 |          0 |         0 |                   10
- myschema2      | mytbl1                                                  |          27 |          0 |         0 |                   15
- myschema2      | mytbl2                                                  |          27 |          0 |         0 |                    2
- myschema2      | mytbl4                                                  |          27 |          0 |         0 |                    8
- myschema1      | myTbl3                                                  |          28 |          0 |         0 |                   10
- myschema1      | mytbl1                                                  |          28 |          0 |         0 |                   24
- myschema1      | mytbl2                                                  |          28 |          0 |         0 |                    3
- myschema1      | mytbl2b                                                 |          28 |          0 |         0 |                    3
- myschema1      | mytbl4                                                  |          28 |          0 |         0 |                    9
- myschema6      | table_with_50_characters_long_name_____0_________0      |          29 |          0 |         0 |                    0
- myschema6      | table_with_51_characters_long_name_____0_________0a     |          29 |          0 |         0 |                    0
- myschema6      | table_with_55_characters_long_name_____0_________0abcde |          29 |          0 |         0 |                    0
- myschema6      | table_with_55_characters_long_name_____0_________0fghij |          29 |          0 |         0 |                    0
- myschema6      | table_with_50_characters_long_name_____0_________0      |          30 |          0 |         0 |                    0
- myschema6      | table_with_51_characters_long_name_____0_________0a     |          30 |          0 |         0 |                    0
- myschema6      | table_with_55_characters_long_name_____0_________0abcde |          30 |          0 |         0 |                    0
- myschema6      | table_with_55_characters_long_name_____0_________0fghij |          30 |          0 |         0 |                    0
- myschema6      | table_with_50_characters_long_name_____0_________0      |          31 |          0 |         0 |                    0
- myschema6      | table_with_51_characters_long_name_____0_________0a     |          31 |          0 |         0 |                    0
- myschema6      | table_with_55_characters_long_name_____0_________0fghij |          31 |          0 |         0 |                    0
+   tbl_schema    |                        tbl_name                         | tbl_time_id | tbl_tuples | tbl_pages | tbl_log_seq_last_val 
+-----------------+---------------------------------------------------------+-------------+------------+-----------+----------------------
+ myschema1       | myTbl3                                                  |          15 |          0 |         0 |                    0
+ myschema1       | mytbl1                                                  |          15 |          0 |         0 |                    0
+ myschema1       | mytbl2                                                  |          15 |          0 |         0 |                    0
+ myschema1       | mytbl2b                                                 |          15 |          0 |         0 |                    0
+ myschema1       | mytbl4                                                  |          15 |          0 |         0 |                    0
+ myschema2       | myTbl3                                                  |          15 |          0 |         0 |                    0
+ myschema2       | mytbl1                                                  |          15 |          0 |         0 |                    0
+ myschema2       | mytbl2                                                  |          15 |          0 |         0 |                    0
+ myschema2       | mytbl4                                                  |          15 |          0 |         0 |                    0
+ phil's schema"3 | myTbl2\                                                 |          16 |          0 |         0 |                    0
+ phil's schema"3 | phil's tbl1                                             |          16 |          0 |         0 |                    0
+ myschema1       | myTbl3                                                  |          17 |          0 |         0 |                   10
+ myschema1       | mytbl1                                                  |          17 |          0 |         0 |                   15
+ myschema1       | mytbl2                                                  |          17 |          0 |         0 |                    2
+ myschema1       | mytbl2b                                                 |          17 |          0 |         0 |                    2
+ myschema1       | mytbl4                                                  |          17 |          0 |         0 |                    0
+ myschema1       | myTbl3                                                  |          18 |          0 |         0 |                   10
+ myschema1       | mytbl1                                                  |          18 |          0 |         0 |                   18
+ myschema1       | mytbl2                                                  |          18 |          0 |         0 |                    2
+ myschema1       | mytbl2b                                                 |          18 |          0 |         0 |                    2
+ myschema1       | mytbl4                                                  |          18 |          0 |         0 |                    8
+ myschema2       | myTbl3                                                  |          21 |          0 |         0 |                   10
+ myschema2       | mytbl1                                                  |          21 |          0 |         0 |                   15
+ myschema2       | mytbl2                                                  |          21 |          0 |         0 |                    2
+ myschema2       | mytbl4                                                  |          21 |          0 |         0 |                    0
+ myschema2       | myTbl3                                                  |          22 |          0 |         0 |                   10
+ myschema2       | mytbl1                                                  |          22 |          0 |         0 |                   15
+ myschema2       | mytbl2                                                  |          22 |          0 |         0 |                    2
+ myschema2       | mytbl4                                                  |          22 |          0 |         0 |                    4
+ myschema2       | myTbl3                                                  |          23 |          0 |         0 |                   10
+ myschema2       | mytbl1                                                  |          23 |          0 |         0 |                   15
+ myschema2       | mytbl2                                                  |          23 |          0 |         0 |                    2
+ myschema2       | mytbl4                                                  |          23 |          0 |         0 |                    4
+ myschema2       | myTbl3                                                  |          24 |          0 |         0 |                   10
+ myschema2       | mytbl1                                                  |          24 |          0 |         0 |                   15
+ myschema2       | mytbl2                                                  |          24 |          0 |         0 |                    2
+ myschema2       | mytbl4                                                  |          24 |          0 |         0 |                    6
+ myschema2       | myTbl3                                                  |          25 |          0 |         0 |                   10
+ myschema2       | mytbl1                                                  |          25 |          0 |         0 |                   15
+ myschema2       | mytbl2                                                  |          25 |          0 |         0 |                    2
+ myschema2       | mytbl4                                                  |          25 |          0 |         0 |                    6
+ myschema2       | myTbl3                                                  |          26 |          0 |         0 |                   10
+ myschema2       | mytbl1                                                  |          26 |          0 |         0 |                   15
+ myschema2       | mytbl2                                                  |          26 |          0 |         0 |                    2
+ myschema2       | mytbl4                                                  |          26 |          0 |         0 |                    8
+ myschema1       | myTbl3                                                  |          27 |          0 |         0 |                   10
+ myschema1       | mytbl1                                                  |          27 |          0 |         0 |                   24
+ myschema1       | mytbl2                                                  |          27 |          0 |         0 |                    3
+ myschema1       | mytbl2b                                                 |          27 |          0 |         0 |                    3
+ myschema1       | mytbl4                                                  |          27 |          0 |         0 |                    9
+ myschema2       | myTbl3                                                  |          27 |          0 |         0 |                   10
+ myschema2       | mytbl1                                                  |          27 |          0 |         0 |                   15
+ myschema2       | mytbl2                                                  |          27 |          0 |         0 |                    2
+ myschema2       | mytbl4                                                  |          27 |          0 |         0 |                    8
+ myschema1       | myTbl3                                                  |          28 |          0 |         0 |                   10
+ myschema1       | mytbl1                                                  |          28 |          0 |         0 |                   24
+ myschema1       | mytbl2                                                  |          28 |          0 |         0 |                    3
+ myschema1       | mytbl2b                                                 |          28 |          0 |         0 |                    3
+ myschema1       | mytbl4                                                  |          28 |          0 |         0 |                    9
+ myschema6       | table_with_50_characters_long_name_____0_________0      |          29 |          0 |         0 |                    0
+ myschema6       | table_with_51_characters_long_name_____0_________0a     |          29 |          0 |         0 |                    0
+ myschema6       | table_with_55_characters_long_name_____0_________0abcde |          29 |          0 |         0 |                    0
+ myschema6       | table_with_55_characters_long_name_____0_________0fghij |          29 |          0 |         0 |                    0
+ myschema6       | table_with_50_characters_long_name_____0_________0      |          30 |          0 |         0 |                    0
+ myschema6       | table_with_51_characters_long_name_____0_________0a     |          30 |          0 |         0 |                    0
+ myschema6       | table_with_55_characters_long_name_____0_________0abcde |          30 |          0 |         0 |                    0
+ myschema6       | table_with_55_characters_long_name_____0_________0fghij |          30 |          0 |         0 |                    0
+ myschema6       | table_with_50_characters_long_name_____0_________0      |          31 |          0 |         0 |                    0
+ myschema6       | table_with_51_characters_long_name_____0_________0a     |          31 |          0 |         0 |                    0
+ myschema6       | table_with_55_characters_long_name_____0_________0fghij |          31 |          0 |         0 |                    0
 (70 rows)
 
 select sqhl_schema, sqhl_table, sqhl_begin_time_id, sqhl_end_time_id, sqhl_hole_size
@@ -569,32 +569,32 @@ select sqhl_schema, sqhl_table, sqhl_begin_time_id, sqhl_end_time_id, sqhl_hole_
 (4 rows)
 
 select * from emaj.emaj_relation_change order by 1,2,3,4,5;
- rlchg_time_id |  rlchg_schema  |                      rlchg_tblseq                       | rlchg_change_kind |   rlchg_group    | rlchg_new_schema | rlchg_new_tblseq | rlchg_new_group | rlchg_priority | rlchg_new_priority | rlchg_log_data_tsp | rlchg_new_log_data_tsp | rlchg_log_index_tsp | rlchg_new_log_index_tsp | rlchg_ignored_triggers | rlchg_new_ignored_triggers 
----------------+----------------+---------------------------------------------------------+-------------------+------------------+------------------+------------------+-----------------+----------------+--------------------+--------------------+------------------------+---------------------+-------------------------+------------------------+----------------------------
-             5 | myschema1      | myTbl3                                                  | ADD_TABLE         | myGroup1         |                  |                  |                 |                |                    |                    |                        |                     |                         |                        | 
-             5 | myschema1      | mytbl1                                                  | ADD_TABLE         | myGroup1         |                  |                  |                 |                |                    |                    |                        |                     |                         |                        | 
-             5 | myschema1      | mytbl2                                                  | ADD_TABLE         | myGroup1         |                  |                  |                 |                |                    |                    |                        |                     |                         |                        | 
-             5 | myschema1      | mytbl2b                                                 | ADD_TABLE         | myGroup1         |                  |                  |                 |                |                    |                    |                        |                     |                         |                        | 
-             5 | myschema1      | mytbl4                                                  | ADD_TABLE         | myGroup1         |                  |                  |                 |                |                    |                    |                        |                     |                         |                        | 
-             6 | myschema1      | mytbl1                                                  | CHANGE_PRIORITY   | myGroup1         |                  |                  |                 |                |                 20 |                    |                        |                     |                         |                        | 
-             7 | myschema1      | myTbl3                                                  | CHANGE_PRIORITY   | myGroup1         |                  |                  |                 |                |                 10 |                    |                        |                     |                         |                        | 
-             8 | myschema1      | mytbl4                                                  | CHANGE_PRIORITY   | myGroup1         |                  |                  |                 |                |                 20 |                    |                        |                     |                         |                        | 
-             9 | myschema1      | myTbl3_col31_seq                                        | ADD_SEQUENCE      | myGroup1         |                  |                  |                 |                |                    |                    |                        |                     |                         |                        | 
-            10 | myschema2      | myTbl3                                                  | ADD_TABLE         | myGroup2         |                  |                  |                 |                |                    |                    |                        |                     |                         |                        | 
-            10 | myschema2      | mytbl1                                                  | ADD_TABLE         | myGroup2         |                  |                  |                 |                |                    |                    |                        |                     |                         |                        | 
-            10 | myschema2      | mytbl2                                                  | ADD_TABLE         | myGroup2         |                  |                  |                 |                |                    |                    |                        |                     |                         |                        | 
-            10 | myschema2      | mytbl4                                                  | ADD_TABLE         | myGroup2         |                  |                  |                 |                |                    |                    |                        |                     |                         |                        | 
-            11 | myschema2      | myTbl3_col31_seq                                        | ADD_SEQUENCE      | myGroup2         |                  |                  |                 |                |                    |                    |                        |                     |                         |                        | 
-            11 | myschema2      | myseq1                                                  | ADD_SEQUENCE      | myGroup2         |                  |                  |                 |                |                    |                    |                        |                     |                         |                        | 
-            12 | phil's schema3 | myTbl2\                                                 | ADD_TABLE         | phil's group#3", |                  |                  |                 |                |                    |                    |                        |                     |                         |                        | 
-            12 | phil's schema3 | phil's tbl1                                             | ADD_TABLE         | phil's group#3", |                  |                  |                 |                |                    |                    |                        |                     |                         |                        | 
-            13 | phil's schema3 | phil's seq\1                                            | ADD_SEQUENCE      | phil's group#3", |                  |                  |                 |                |                    |                    |                        |                     |                         |                        | 
-            14 | myschema6      | table_with_50_characters_long_name_____0_________0      | ADD_TABLE         | myGroup6         |                  |                  |                 |                |                    |                    |                        |                     |                         |                        | 
-            14 | myschema6      | table_with_51_characters_long_name_____0_________0a     | ADD_TABLE         | myGroup6         |                  |                  |                 |                |                    |                    |                        |                     |                         |                        | 
-            14 | myschema6      | table_with_55_characters_long_name_____0_________0abcde | ADD_TABLE         | myGroup6         |                  |                  |                 |                |                    |                    |                        |                     |                         |                        | 
-            14 | myschema6      | table_with_55_characters_long_name_____0_________0fghij | ADD_TABLE         | myGroup6         |                  |                  |                 |                |                    |                    |                        |                     |                         |                        | 
-            28 | myschema1      | myTbl3                                                  | REMOVE_TABLE      | myGroup1         |                  |                  |                 |                |                    |                    |                        |                     |                         |                        | 
-            30 | myschema6      | table_with_55_characters_long_name_____0_________0abcde | REMOVE_TABLE      | myGroup6         |                  |                  |                 |                |                    |                    |                        |                     |                         |                        | 
+ rlchg_time_id |  rlchg_schema   |                      rlchg_tblseq                       | rlchg_change_kind |   rlchg_group    | rlchg_new_schema | rlchg_new_tblseq | rlchg_new_group | rlchg_priority | rlchg_new_priority | rlchg_log_data_tsp | rlchg_new_log_data_tsp | rlchg_log_index_tsp | rlchg_new_log_index_tsp | rlchg_ignored_triggers | rlchg_new_ignored_triggers 
+---------------+-----------------+---------------------------------------------------------+-------------------+------------------+------------------+------------------+-----------------+----------------+--------------------+--------------------+------------------------+---------------------+-------------------------+------------------------+----------------------------
+             5 | myschema1       | myTbl3                                                  | ADD_TABLE         | myGroup1         |                  |                  |                 |                |                    |                    |                        |                     |                         |                        | 
+             5 | myschema1       | mytbl1                                                  | ADD_TABLE         | myGroup1         |                  |                  |                 |                |                    |                    |                        |                     |                         |                        | 
+             5 | myschema1       | mytbl2                                                  | ADD_TABLE         | myGroup1         |                  |                  |                 |                |                    |                    |                        |                     |                         |                        | 
+             5 | myschema1       | mytbl2b                                                 | ADD_TABLE         | myGroup1         |                  |                  |                 |                |                    |                    |                        |                     |                         |                        | 
+             5 | myschema1       | mytbl4                                                  | ADD_TABLE         | myGroup1         |                  |                  |                 |                |                    |                    |                        |                     |                         |                        | 
+             6 | myschema1       | mytbl1                                                  | CHANGE_PRIORITY   | myGroup1         |                  |                  |                 |                |                 20 |                    |                        |                     |                         |                        | 
+             7 | myschema1       | myTbl3                                                  | CHANGE_PRIORITY   | myGroup1         |                  |                  |                 |                |                 10 |                    |                        |                     |                         |                        | 
+             8 | myschema1       | mytbl4                                                  | CHANGE_PRIORITY   | myGroup1         |                  |                  |                 |                |                 20 |                    |                        |                     |                         |                        | 
+             9 | myschema1       | myTbl3_col31_seq                                        | ADD_SEQUENCE      | myGroup1         |                  |                  |                 |                |                    |                    |                        |                     |                         |                        | 
+            10 | myschema2       | myTbl3                                                  | ADD_TABLE         | myGroup2         |                  |                  |                 |                |                    |                    |                        |                     |                         |                        | 
+            10 | myschema2       | mytbl1                                                  | ADD_TABLE         | myGroup2         |                  |                  |                 |                |                    |                    |                        |                     |                         |                        | 
+            10 | myschema2       | mytbl2                                                  | ADD_TABLE         | myGroup2         |                  |                  |                 |                |                    |                    |                        |                     |                         |                        | 
+            10 | myschema2       | mytbl4                                                  | ADD_TABLE         | myGroup2         |                  |                  |                 |                |                    |                    |                        |                     |                         |                        | 
+            11 | myschema2       | myTbl3_col31_seq                                        | ADD_SEQUENCE      | myGroup2         |                  |                  |                 |                |                    |                    |                        |                     |                         |                        | 
+            11 | myschema2       | myseq1                                                  | ADD_SEQUENCE      | myGroup2         |                  |                  |                 |                |                    |                    |                        |                     |                         |                        | 
+            12 | phil's schema"3 | myTbl2\                                                 | ADD_TABLE         | phil's group#3", |                  |                  |                 |                |                    |                    |                        |                     |                         |                        | 
+            12 | phil's schema"3 | phil's tbl1                                             | ADD_TABLE         | phil's group#3", |                  |                  |                 |                |                    |                    |                        |                     |                         |                        | 
+            13 | phil's schema"3 | phil's"seq\1                                            | ADD_SEQUENCE      | phil's group#3", |                  |                  |                 |                |                    |                    |                        |                     |                         |                        | 
+            14 | myschema6       | table_with_50_characters_long_name_____0_________0      | ADD_TABLE         | myGroup6         |                  |                  |                 |                |                    |                    |                        |                     |                         |                        | 
+            14 | myschema6       | table_with_51_characters_long_name_____0_________0a     | ADD_TABLE         | myGroup6         |                  |                  |                 |                |                    |                    |                        |                     |                         |                        | 
+            14 | myschema6       | table_with_55_characters_long_name_____0_________0abcde | ADD_TABLE         | myGroup6         |                  |                  |                 |                |                    |                    |                        |                     |                         |                        | 
+            14 | myschema6       | table_with_55_characters_long_name_____0_________0fghij | ADD_TABLE         | myGroup6         |                  |                  |                 |                |                    |                    |                        |                     |                         |                        | 
+            28 | myschema1       | myTbl3                                                  | REMOVE_TABLE      | myGroup1         |                  |                  |                 |                |                    |                    |                        |                     |                         |                        | 
+            30 | myschema6       | table_with_55_characters_long_name_____0_________0abcde | REMOVE_TABLE      | myGroup6         |                  |                  |                 |                |                    |                    |                        |                     |                         |                        | 
 (24 rows)
 
 -- log tables

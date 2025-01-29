@@ -246,180 +246,180 @@ select time_id, time_last_emaj_gid, time_event from emaj.emaj_time_stamp where t
 (16 rows)
 
 select sequ_schema, sequ_name, sequ_time_id, sequ_last_val, sequ_is_called from emaj.emaj_sequence order by sequ_time_id, sequ_schema, sequ_name;
-  sequ_schema   |     sequ_name     | sequ_time_id | sequ_last_val | sequ_is_called 
-----------------+-------------------+--------------+---------------+----------------
- phil's schema3 | myTbl2\_col21_seq |         2004 |             1 | f
- phil's schema3 | phil's seq\1      |         2004 |          1000 | f
- myschema1      | myTbl3_col31_seq  |         3000 |             1 | f
- myschema1      | mytbl2b_col20_seq |         3000 |             1 | f
- myschema2      | myTbl3_col31_seq  |         3001 |             1 | f
- myschema2      | myseq1            |         3001 |          1000 | f
- myschema1      | myTbl3_col31_seq  |         3003 |             1 | f
- myschema1      | mytbl2b_col20_seq |         3003 |             1 | f
- myschema2      | myTbl3_col31_seq  |         3004 |             1 | f
- myschema2      | myseq1            |         3004 |          1000 | f
- myschema2      | myTbl3_col31_seq  |         3005 |             1 | f
- myschema2      | myseq1            |         3005 |          1000 | f
- myschema1      | myTbl3_col31_seq  |         3007 |             1 | f
- myschema1      | mytbl2b_col20_seq |         3007 |             1 | f
- myschema2      | myTbl3_col31_seq  |         3008 |             1 | f
- myschema2      | myseq1            |         3008 |          1000 | f
- myschema2      | myTbl3_col31_seq  |         3009 |             1 | f
- myschema2      | myseq1            |         3009 |          1000 | f
- myschema1      | myTbl3_col31_seq  |         3010 |             1 | f
- myschema1      | mytbl2b_col20_seq |         3010 |             1 | f
- myschema1      | myTbl3_col31_seq  |         3011 |             1 | f
- myschema1      | mytbl2b_col20_seq |         3011 |             1 | f
- myschema2      | myTbl3_col31_seq  |         3011 |             1 | f
- myschema2      | myseq1            |         3011 |          1000 | f
- myschema1      | myTbl3_col31_seq  |         3012 |             1 | f
- myschema1      | mytbl2b_col20_seq |         3012 |             1 | f
- myschema2      | myTbl3_col31_seq  |         3012 |             1 | f
- myschema2      | myseq1            |         3012 |          1000 | f
- myschema1      | myTbl3_col31_seq  |         3013 |             1 | f
- myschema1      | mytbl2b_col20_seq |         3013 |             1 | f
- myschema2      | myTbl3_col31_seq  |         3013 |             1 | f
- myschema2      | myseq1            |         3013 |          1000 | f
- myschema1      | myTbl3_col31_seq  |         3014 |             1 | f
- myschema1      | mytbl2b_col20_seq |         3014 |             1 | f
- myschema2      | myTbl3_col31_seq  |         3014 |             1 | f
- myschema2      | myseq1            |         3014 |          1000 | f
- myschema1      | myTbl3_col31_seq  |         3015 |             1 | f
- myschema1      | mytbl2b_col20_seq |         3015 |             1 | f
- myschema2      | myTbl3_col31_seq  |         3015 |             1 | f
- myschema2      | myseq1            |         3015 |          1000 | f
+   sequ_schema   |     sequ_name     | sequ_time_id | sequ_last_val | sequ_is_called 
+-----------------+-------------------+--------------+---------------+----------------
+ phil's schema"3 | myTbl2\_col21_seq |         2004 |             1 | f
+ phil's schema"3 | phil's"seq\1      |         2004 |          1000 | f
+ myschema1       | myTbl3_col31_seq  |         3000 |             1 | f
+ myschema1       | mytbl2b_col20_seq |         3000 |             1 | f
+ myschema2       | myTbl3_col31_seq  |         3001 |             1 | f
+ myschema2       | myseq1            |         3001 |          1000 | f
+ myschema1       | myTbl3_col31_seq  |         3003 |             1 | f
+ myschema1       | mytbl2b_col20_seq |         3003 |             1 | f
+ myschema2       | myTbl3_col31_seq  |         3004 |             1 | f
+ myschema2       | myseq1            |         3004 |          1000 | f
+ myschema2       | myTbl3_col31_seq  |         3005 |             1 | f
+ myschema2       | myseq1            |         3005 |          1000 | f
+ myschema1       | myTbl3_col31_seq  |         3007 |             1 | f
+ myschema1       | mytbl2b_col20_seq |         3007 |             1 | f
+ myschema2       | myTbl3_col31_seq  |         3008 |             1 | f
+ myschema2       | myseq1            |         3008 |          1000 | f
+ myschema2       | myTbl3_col31_seq  |         3009 |             1 | f
+ myschema2       | myseq1            |         3009 |          1000 | f
+ myschema1       | myTbl3_col31_seq  |         3010 |             1 | f
+ myschema1       | mytbl2b_col20_seq |         3010 |             1 | f
+ myschema1       | myTbl3_col31_seq  |         3011 |             1 | f
+ myschema1       | mytbl2b_col20_seq |         3011 |             1 | f
+ myschema2       | myTbl3_col31_seq  |         3011 |             1 | f
+ myschema2       | myseq1            |         3011 |          1000 | f
+ myschema1       | myTbl3_col31_seq  |         3012 |             1 | f
+ myschema1       | mytbl2b_col20_seq |         3012 |             1 | f
+ myschema2       | myTbl3_col31_seq  |         3012 |             1 | f
+ myschema2       | myseq1            |         3012 |          1000 | f
+ myschema1       | myTbl3_col31_seq  |         3013 |             1 | f
+ myschema1       | mytbl2b_col20_seq |         3013 |             1 | f
+ myschema2       | myTbl3_col31_seq  |         3013 |             1 | f
+ myschema2       | myseq1            |         3013 |          1000 | f
+ myschema1       | myTbl3_col31_seq  |         3014 |             1 | f
+ myschema1       | mytbl2b_col20_seq |         3014 |             1 | f
+ myschema2       | myTbl3_col31_seq  |         3014 |             1 | f
+ myschema2       | myseq1            |         3014 |          1000 | f
+ myschema1       | myTbl3_col31_seq  |         3015 |             1 | f
+ myschema1       | mytbl2b_col20_seq |         3015 |             1 | f
+ myschema2       | myTbl3_col31_seq  |         3015 |             1 | f
+ myschema2       | myseq1            |         3015 |          1000 | f
 (40 rows)
 
 select tbl_schema, tbl_name, tbl_time_id, tbl_tuples, tbl_pages, tbl_log_seq_last_val from emaj.emaj_table order by tbl_time_id, tbl_schema, tbl_name;
-   tbl_schema   |  tbl_name   | tbl_time_id | tbl_tuples | tbl_pages | tbl_log_seq_last_val 
-----------------+-------------+-------------+------------+-----------+----------------------
- phil's schema3 | myTbl2\     |        2004 |          0 |         0 |                    0
- phil's schema3 | phil's tbl1 |        2004 |          0 |         0 |                    0
- myschema1      | myTbl3      |        3000 |          0 |         0 |                    0
- myschema1      | mytbl1      |        3000 |          0 |         0 |                    0
- myschema1      | mytbl2      |        3000 |          0 |         0 |                    0
- myschema1      | mytbl2b     |        3000 |          0 |         0 |                    0
- myschema1      | mytbl4      |        3000 |          0 |         0 |                    0
- myschema2      | myTbl3      |        3001 |          0 |         0 |                    0
- myschema2      | mytbl1      |        3001 |          0 |         0 |                    0
- myschema2      | mytbl2      |        3001 |          0 |         0 |                    0
- myschema2      | mytbl4      |        3001 |          0 |         0 |                    0
- myschema2      | mytbl5      |        3001 |          0 |         0 |                    0
- myschema2      | mytbl6      |        3001 |          0 |         0 |                    0
- myschema2      | mytbl7      |        3001 |          0 |         0 |                    0
- myschema2      | mytbl8      |        3001 |          0 |         0 |                    0
- myschema1      | myTbl3      |        3003 |          0 |         0 |                    0
- myschema1      | mytbl1      |        3003 |          0 |         0 |                    0
- myschema1      | mytbl2      |        3003 |          0 |         0 |                    0
- myschema1      | mytbl2b     |        3003 |          0 |         0 |                    0
- myschema1      | mytbl4      |        3003 |          0 |         0 |                    0
- myschema2      | myTbl3      |        3004 |          0 |         0 |                    0
- myschema2      | mytbl1      |        3004 |          0 |         0 |                    0
- myschema2      | mytbl2      |        3004 |          0 |         0 |                    0
- myschema2      | mytbl4      |        3004 |          0 |         0 |                    0
- myschema2      | mytbl5      |        3004 |          0 |         0 |                    0
- myschema2      | mytbl6      |        3004 |          0 |         0 |                    0
- myschema2      | mytbl7      |        3004 |          0 |         0 |                    0
- myschema2      | mytbl8      |        3004 |          0 |         0 |                    0
- myschema2      | myTbl3      |        3005 |          0 |         0 |                    0
- myschema2      | mytbl1      |        3005 |          0 |         0 |                    0
- myschema2      | mytbl2      |        3005 |          0 |         0 |                    0
- myschema2      | mytbl4      |        3005 |          0 |         0 |                    0
- myschema2      | mytbl5      |        3005 |          0 |         0 |                    0
- myschema2      | mytbl6      |        3005 |          0 |         0 |                    0
- myschema2      | mytbl7      |        3005 |          0 |         0 |                    0
- myschema2      | mytbl8      |        3005 |          0 |         0 |                    0
- myschema1      | myTbl3      |        3007 |          0 |         0 |                    0
- myschema1      | mytbl1      |        3007 |          0 |         0 |                    0
- myschema1      | mytbl2      |        3007 |          0 |         0 |                    0
- myschema1      | mytbl2b     |        3007 |          0 |         0 |                    0
- myschema1      | mytbl4      |        3007 |          0 |         0 |                    0
- myschema2      | myTbl3      |        3008 |          0 |         0 |                    0
- myschema2      | mytbl1      |        3008 |          0 |         0 |                    0
- myschema2      | mytbl2      |        3008 |          0 |         0 |                    0
- myschema2      | mytbl4      |        3008 |          0 |         0 |                    0
- myschema2      | mytbl5      |        3008 |          0 |         0 |                    0
- myschema2      | mytbl6      |        3008 |          0 |         0 |                    0
- myschema2      | mytbl7      |        3008 |          0 |         0 |                    0
- myschema2      | mytbl8      |        3008 |          0 |         0 |                    0
- myschema2      | myTbl3      |        3009 |          0 |         0 |                    0
- myschema2      | mytbl1      |        3009 |          0 |         0 |                    0
- myschema2      | mytbl2      |        3009 |          0 |         0 |                    0
- myschema2      | mytbl4      |        3009 |          0 |         0 |                    0
- myschema2      | mytbl5      |        3009 |          0 |         0 |                    0
- myschema2      | mytbl6      |        3009 |          0 |         0 |                    0
- myschema2      | mytbl7      |        3009 |          0 |         0 |                    0
- myschema2      | mytbl8      |        3009 |          0 |         0 |                    0
- myschema1      | myTbl3      |        3010 |          0 |         0 |                    0
- myschema1      | mytbl1      |        3010 |          0 |         0 |                    0
- myschema1      | mytbl2      |        3010 |          0 |         0 |                    0
- myschema1      | mytbl2b     |        3010 |          0 |         0 |                    0
- myschema1      | mytbl4      |        3010 |          0 |         0 |                    0
- myschema1      | myTbl3      |        3011 |          0 |         0 |                    0
- myschema1      | mytbl1      |        3011 |          0 |         0 |                    0
- myschema1      | mytbl2      |        3011 |          0 |         0 |                    0
- myschema1      | mytbl2b     |        3011 |          0 |         0 |                    0
- myschema1      | mytbl4      |        3011 |          0 |         0 |                    0
- myschema2      | myTbl3      |        3011 |          0 |         0 |                    0
- myschema2      | mytbl1      |        3011 |          0 |         0 |                    0
- myschema2      | mytbl2      |        3011 |          0 |         0 |                    0
- myschema2      | mytbl4      |        3011 |          0 |         0 |                    0
- myschema2      | mytbl5      |        3011 |          0 |         0 |                    0
- myschema2      | mytbl6      |        3011 |          0 |         0 |                    0
- myschema2      | mytbl7      |        3011 |          0 |         0 |                    0
- myschema2      | mytbl8      |        3011 |          0 |         0 |                    0
- myschema1      | myTbl3      |        3012 |          0 |         0 |                    0
- myschema1      | mytbl1      |        3012 |          0 |         0 |                    0
- myschema1      | mytbl2      |        3012 |          0 |         0 |                    0
- myschema1      | mytbl2b     |        3012 |          0 |         0 |                    0
- myschema1      | mytbl4      |        3012 |          0 |         0 |                    0
- myschema2      | myTbl3      |        3012 |          0 |         0 |                    0
- myschema2      | mytbl1      |        3012 |          0 |         0 |                    0
- myschema2      | mytbl2      |        3012 |          0 |         0 |                    0
- myschema2      | mytbl4      |        3012 |          0 |         0 |                    0
- myschema2      | mytbl5      |        3012 |          0 |         0 |                    0
- myschema2      | mytbl6      |        3012 |          0 |         0 |                    0
- myschema2      | mytbl7      |        3012 |          0 |         0 |                    0
- myschema2      | mytbl8      |        3012 |          0 |         0 |                    0
- myschema1      | myTbl3      |        3013 |          0 |         0 |                    0
- myschema1      | mytbl1      |        3013 |          0 |         0 |                    0
- myschema1      | mytbl2      |        3013 |          0 |         0 |                    0
- myschema1      | mytbl2b     |        3013 |          0 |         0 |                    0
- myschema1      | mytbl4      |        3013 |          0 |         0 |                    0
- myschema2      | myTbl3      |        3013 |          0 |         0 |                    0
- myschema2      | mytbl1      |        3013 |          0 |         0 |                    0
- myschema2      | mytbl2      |        3013 |          0 |         0 |                    0
- myschema2      | mytbl4      |        3013 |          0 |         0 |                    0
- myschema2      | mytbl5      |        3013 |          0 |         0 |                    0
- myschema2      | mytbl6      |        3013 |          0 |         0 |                    0
- myschema2      | mytbl7      |        3013 |          0 |         0 |                    0
- myschema2      | mytbl8      |        3013 |          0 |         0 |                    0
- myschema1      | myTbl3      |        3014 |          0 |         0 |                    0
- myschema1      | mytbl1      |        3014 |          0 |         0 |                    0
- myschema1      | mytbl2      |        3014 |          0 |         0 |                    0
- myschema1      | mytbl2b     |        3014 |          0 |         0 |                    0
- myschema1      | mytbl4      |        3014 |          0 |         0 |                    0
- myschema2      | myTbl3      |        3014 |          0 |         0 |                    0
- myschema2      | mytbl1      |        3014 |          0 |         0 |                    0
- myschema2      | mytbl2      |        3014 |          0 |         0 |                    0
- myschema2      | mytbl4      |        3014 |          0 |         0 |                    0
- myschema2      | mytbl5      |        3014 |          0 |         0 |                    0
- myschema2      | mytbl6      |        3014 |          0 |         0 |                    0
- myschema2      | mytbl7      |        3014 |          0 |         0 |                    0
- myschema2      | mytbl8      |        3014 |          0 |         0 |                    0
- myschema1      | myTbl3      |        3015 |          0 |         0 |                    0
- myschema1      | mytbl1      |        3015 |          0 |         0 |                    0
- myschema1      | mytbl2      |        3015 |          0 |         0 |                    0
- myschema1      | mytbl2b     |        3015 |          0 |         0 |                    0
- myschema1      | mytbl4      |        3015 |          0 |         0 |                    0
- myschema2      | myTbl3      |        3015 |          0 |         0 |                    0
- myschema2      | mytbl1      |        3015 |          0 |         0 |                    0
- myschema2      | mytbl2      |        3015 |          0 |         0 |                    0
- myschema2      | mytbl4      |        3015 |          0 |         0 |                    0
- myschema2      | mytbl5      |        3015 |          0 |         0 |                    0
- myschema2      | mytbl6      |        3015 |          0 |         0 |                    0
- myschema2      | mytbl7      |        3015 |          0 |         0 |                    0
- myschema2      | mytbl8      |        3015 |          0 |         0 |                    0
+   tbl_schema    |  tbl_name   | tbl_time_id | tbl_tuples | tbl_pages | tbl_log_seq_last_val 
+-----------------+-------------+-------------+------------+-----------+----------------------
+ phil's schema"3 | myTbl2\     |        2004 |          0 |         0 |                    0
+ phil's schema"3 | phil's tbl1 |        2004 |          0 |         0 |                    0
+ myschema1       | myTbl3      |        3000 |          0 |         0 |                    0
+ myschema1       | mytbl1      |        3000 |          0 |         0 |                    0
+ myschema1       | mytbl2      |        3000 |          0 |         0 |                    0
+ myschema1       | mytbl2b     |        3000 |          0 |         0 |                    0
+ myschema1       | mytbl4      |        3000 |          0 |         0 |                    0
+ myschema2       | myTbl3      |        3001 |          0 |         0 |                    0
+ myschema2       | mytbl1      |        3001 |          0 |         0 |                    0
+ myschema2       | mytbl2      |        3001 |          0 |         0 |                    0
+ myschema2       | mytbl4      |        3001 |          0 |         0 |                    0
+ myschema2       | mytbl5      |        3001 |          0 |         0 |                    0
+ myschema2       | mytbl6      |        3001 |          0 |         0 |                    0
+ myschema2       | mytbl7      |        3001 |          0 |         0 |                    0
+ myschema2       | mytbl8      |        3001 |          0 |         0 |                    0
+ myschema1       | myTbl3      |        3003 |          0 |         0 |                    0
+ myschema1       | mytbl1      |        3003 |          0 |         0 |                    0
+ myschema1       | mytbl2      |        3003 |          0 |         0 |                    0
+ myschema1       | mytbl2b     |        3003 |          0 |         0 |                    0
+ myschema1       | mytbl4      |        3003 |          0 |         0 |                    0
+ myschema2       | myTbl3      |        3004 |          0 |         0 |                    0
+ myschema2       | mytbl1      |        3004 |          0 |         0 |                    0
+ myschema2       | mytbl2      |        3004 |          0 |         0 |                    0
+ myschema2       | mytbl4      |        3004 |          0 |         0 |                    0
+ myschema2       | mytbl5      |        3004 |          0 |         0 |                    0
+ myschema2       | mytbl6      |        3004 |          0 |         0 |                    0
+ myschema2       | mytbl7      |        3004 |          0 |         0 |                    0
+ myschema2       | mytbl8      |        3004 |          0 |         0 |                    0
+ myschema2       | myTbl3      |        3005 |          0 |         0 |                    0
+ myschema2       | mytbl1      |        3005 |          0 |         0 |                    0
+ myschema2       | mytbl2      |        3005 |          0 |         0 |                    0
+ myschema2       | mytbl4      |        3005 |          0 |         0 |                    0
+ myschema2       | mytbl5      |        3005 |          0 |         0 |                    0
+ myschema2       | mytbl6      |        3005 |          0 |         0 |                    0
+ myschema2       | mytbl7      |        3005 |          0 |         0 |                    0
+ myschema2       | mytbl8      |        3005 |          0 |         0 |                    0
+ myschema1       | myTbl3      |        3007 |          0 |         0 |                    0
+ myschema1       | mytbl1      |        3007 |          0 |         0 |                    0
+ myschema1       | mytbl2      |        3007 |          0 |         0 |                    0
+ myschema1       | mytbl2b     |        3007 |          0 |         0 |                    0
+ myschema1       | mytbl4      |        3007 |          0 |         0 |                    0
+ myschema2       | myTbl3      |        3008 |          0 |         0 |                    0
+ myschema2       | mytbl1      |        3008 |          0 |         0 |                    0
+ myschema2       | mytbl2      |        3008 |          0 |         0 |                    0
+ myschema2       | mytbl4      |        3008 |          0 |         0 |                    0
+ myschema2       | mytbl5      |        3008 |          0 |         0 |                    0
+ myschema2       | mytbl6      |        3008 |          0 |         0 |                    0
+ myschema2       | mytbl7      |        3008 |          0 |         0 |                    0
+ myschema2       | mytbl8      |        3008 |          0 |         0 |                    0
+ myschema2       | myTbl3      |        3009 |          0 |         0 |                    0
+ myschema2       | mytbl1      |        3009 |          0 |         0 |                    0
+ myschema2       | mytbl2      |        3009 |          0 |         0 |                    0
+ myschema2       | mytbl4      |        3009 |          0 |         0 |                    0
+ myschema2       | mytbl5      |        3009 |          0 |         0 |                    0
+ myschema2       | mytbl6      |        3009 |          0 |         0 |                    0
+ myschema2       | mytbl7      |        3009 |          0 |         0 |                    0
+ myschema2       | mytbl8      |        3009 |          0 |         0 |                    0
+ myschema1       | myTbl3      |        3010 |          0 |         0 |                    0
+ myschema1       | mytbl1      |        3010 |          0 |         0 |                    0
+ myschema1       | mytbl2      |        3010 |          0 |         0 |                    0
+ myschema1       | mytbl2b     |        3010 |          0 |         0 |                    0
+ myschema1       | mytbl4      |        3010 |          0 |         0 |                    0
+ myschema1       | myTbl3      |        3011 |          0 |         0 |                    0
+ myschema1       | mytbl1      |        3011 |          0 |         0 |                    0
+ myschema1       | mytbl2      |        3011 |          0 |         0 |                    0
+ myschema1       | mytbl2b     |        3011 |          0 |         0 |                    0
+ myschema1       | mytbl4      |        3011 |          0 |         0 |                    0
+ myschema2       | myTbl3      |        3011 |          0 |         0 |                    0
+ myschema2       | mytbl1      |        3011 |          0 |         0 |                    0
+ myschema2       | mytbl2      |        3011 |          0 |         0 |                    0
+ myschema2       | mytbl4      |        3011 |          0 |         0 |                    0
+ myschema2       | mytbl5      |        3011 |          0 |         0 |                    0
+ myschema2       | mytbl6      |        3011 |          0 |         0 |                    0
+ myschema2       | mytbl7      |        3011 |          0 |         0 |                    0
+ myschema2       | mytbl8      |        3011 |          0 |         0 |                    0
+ myschema1       | myTbl3      |        3012 |          0 |         0 |                    0
+ myschema1       | mytbl1      |        3012 |          0 |         0 |                    0
+ myschema1       | mytbl2      |        3012 |          0 |         0 |                    0
+ myschema1       | mytbl2b     |        3012 |          0 |         0 |                    0
+ myschema1       | mytbl4      |        3012 |          0 |         0 |                    0
+ myschema2       | myTbl3      |        3012 |          0 |         0 |                    0
+ myschema2       | mytbl1      |        3012 |          0 |         0 |                    0
+ myschema2       | mytbl2      |        3012 |          0 |         0 |                    0
+ myschema2       | mytbl4      |        3012 |          0 |         0 |                    0
+ myschema2       | mytbl5      |        3012 |          0 |         0 |                    0
+ myschema2       | mytbl6      |        3012 |          0 |         0 |                    0
+ myschema2       | mytbl7      |        3012 |          0 |         0 |                    0
+ myschema2       | mytbl8      |        3012 |          0 |         0 |                    0
+ myschema1       | myTbl3      |        3013 |          0 |         0 |                    0
+ myschema1       | mytbl1      |        3013 |          0 |         0 |                    0
+ myschema1       | mytbl2      |        3013 |          0 |         0 |                    0
+ myschema1       | mytbl2b     |        3013 |          0 |         0 |                    0
+ myschema1       | mytbl4      |        3013 |          0 |         0 |                    0
+ myschema2       | myTbl3      |        3013 |          0 |         0 |                    0
+ myschema2       | mytbl1      |        3013 |          0 |         0 |                    0
+ myschema2       | mytbl2      |        3013 |          0 |         0 |                    0
+ myschema2       | mytbl4      |        3013 |          0 |         0 |                    0
+ myschema2       | mytbl5      |        3013 |          0 |         0 |                    0
+ myschema2       | mytbl6      |        3013 |          0 |         0 |                    0
+ myschema2       | mytbl7      |        3013 |          0 |         0 |                    0
+ myschema2       | mytbl8      |        3013 |          0 |         0 |                    0
+ myschema1       | myTbl3      |        3014 |          0 |         0 |                    0
+ myschema1       | mytbl1      |        3014 |          0 |         0 |                    0
+ myschema1       | mytbl2      |        3014 |          0 |         0 |                    0
+ myschema1       | mytbl2b     |        3014 |          0 |         0 |                    0
+ myschema1       | mytbl4      |        3014 |          0 |         0 |                    0
+ myschema2       | myTbl3      |        3014 |          0 |         0 |                    0
+ myschema2       | mytbl1      |        3014 |          0 |         0 |                    0
+ myschema2       | mytbl2      |        3014 |          0 |         0 |                    0
+ myschema2       | mytbl4      |        3014 |          0 |         0 |                    0
+ myschema2       | mytbl5      |        3014 |          0 |         0 |                    0
+ myschema2       | mytbl6      |        3014 |          0 |         0 |                    0
+ myschema2       | mytbl7      |        3014 |          0 |         0 |                    0
+ myschema2       | mytbl8      |        3014 |          0 |         0 |                    0
+ myschema1       | myTbl3      |        3015 |          0 |         0 |                    0
+ myschema1       | mytbl1      |        3015 |          0 |         0 |                    0
+ myschema1       | mytbl2      |        3015 |          0 |         0 |                    0
+ myschema1       | mytbl2b     |        3015 |          0 |         0 |                    0
+ myschema1       | mytbl4      |        3015 |          0 |         0 |                    0
+ myschema2       | myTbl3      |        3015 |          0 |         0 |                    0
+ myschema2       | mytbl1      |        3015 |          0 |         0 |                    0
+ myschema2       | mytbl2      |        3015 |          0 |         0 |                    0
+ myschema2       | mytbl4      |        3015 |          0 |         0 |                    0
+ myschema2       | mytbl5      |        3015 |          0 |         0 |                    0
+ myschema2       | mytbl6      |        3015 |          0 |         0 |                    0
+ myschema2       | mytbl7      |        3015 |          0 |         0 |                    0
+ myschema2       | mytbl8      |        3015 |          0 |         0 |                    0
 (127 rows)
 
 select hist_id, hist_function, hist_event, hist_object, 
@@ -759,180 +759,180 @@ select mark_group, regexp_replace(mark_name,E'\\d\\d\.\\d\\d\\.\\d\\d\\.\\d\\d\\
 (22 rows)
 
 select sequ_schema, sequ_name, sequ_time_id, sequ_last_val, sequ_is_called from emaj.emaj_sequence order by sequ_time_id, sequ_schema, sequ_name;
-  sequ_schema   |     sequ_name     | sequ_time_id | sequ_last_val | sequ_is_called 
-----------------+-------------------+--------------+---------------+----------------
- phil's schema3 | myTbl2\_col21_seq |         2004 |             1 | f
- phil's schema3 | phil's seq\1      |         2004 |          1000 | f
- myschema1      | myTbl3_col31_seq  |         3000 |             1 | f
- myschema1      | mytbl2b_col20_seq |         3000 |             1 | f
- myschema2      | myTbl3_col31_seq  |         3001 |             1 | f
- myschema2      | myseq1            |         3001 |          1000 | f
- myschema1      | myTbl3_col31_seq  |         3003 |             1 | f
- myschema1      | mytbl2b_col20_seq |         3003 |             1 | f
- myschema2      | myTbl3_col31_seq  |         3004 |             1 | f
- myschema2      | myseq1            |         3004 |          1000 | f
- myschema2      | myTbl3_col31_seq  |         3005 |             1 | f
- myschema2      | myseq1            |         3005 |          1000 | f
- myschema1      | myTbl3_col31_seq  |         3007 |             1 | f
- myschema1      | mytbl2b_col20_seq |         3007 |             1 | f
- myschema2      | myTbl3_col31_seq  |         3008 |             1 | f
- myschema2      | myseq1            |         3008 |          1000 | f
- myschema2      | myTbl3_col31_seq  |         3009 |             1 | f
- myschema2      | myseq1            |         3009 |          1000 | f
- myschema1      | myTbl3_col31_seq  |         3010 |             1 | f
- myschema1      | mytbl2b_col20_seq |         3010 |             1 | f
- myschema1      | myTbl3_col31_seq  |         3011 |             1 | f
- myschema1      | mytbl2b_col20_seq |         3011 |             1 | f
- myschema2      | myTbl3_col31_seq  |         3011 |             1 | f
- myschema2      | myseq1            |         3011 |          1000 | f
- myschema1      | myTbl3_col31_seq  |         3012 |             1 | f
- myschema1      | mytbl2b_col20_seq |         3012 |             1 | f
- myschema2      | myTbl3_col31_seq  |         3012 |             1 | f
- myschema2      | myseq1            |         3012 |          1000 | f
- myschema1      | myTbl3_col31_seq  |         3013 |             1 | f
- myschema1      | mytbl2b_col20_seq |         3013 |             1 | f
- myschema2      | myTbl3_col31_seq  |         3013 |             1 | f
- myschema2      | myseq1            |         3013 |          1000 | f
- myschema1      | myTbl3_col31_seq  |         3014 |             1 | f
- myschema1      | mytbl2b_col20_seq |         3014 |             1 | f
- myschema2      | myTbl3_col31_seq  |         3014 |             1 | f
- myschema2      | myseq1            |         3014 |          1000 | f
- myschema1      | myTbl3_col31_seq  |         3015 |             1 | f
- myschema1      | mytbl2b_col20_seq |         3015 |             1 | f
- myschema2      | myTbl3_col31_seq  |         3015 |             1 | f
- myschema2      | myseq1            |         3015 |          1000 | f
+   sequ_schema   |     sequ_name     | sequ_time_id | sequ_last_val | sequ_is_called 
+-----------------+-------------------+--------------+---------------+----------------
+ phil's schema"3 | myTbl2\_col21_seq |         2004 |             1 | f
+ phil's schema"3 | phil's"seq\1      |         2004 |          1000 | f
+ myschema1       | myTbl3_col31_seq  |         3000 |             1 | f
+ myschema1       | mytbl2b_col20_seq |         3000 |             1 | f
+ myschema2       | myTbl3_col31_seq  |         3001 |             1 | f
+ myschema2       | myseq1            |         3001 |          1000 | f
+ myschema1       | myTbl3_col31_seq  |         3003 |             1 | f
+ myschema1       | mytbl2b_col20_seq |         3003 |             1 | f
+ myschema2       | myTbl3_col31_seq  |         3004 |             1 | f
+ myschema2       | myseq1            |         3004 |          1000 | f
+ myschema2       | myTbl3_col31_seq  |         3005 |             1 | f
+ myschema2       | myseq1            |         3005 |          1000 | f
+ myschema1       | myTbl3_col31_seq  |         3007 |             1 | f
+ myschema1       | mytbl2b_col20_seq |         3007 |             1 | f
+ myschema2       | myTbl3_col31_seq  |         3008 |             1 | f
+ myschema2       | myseq1            |         3008 |          1000 | f
+ myschema2       | myTbl3_col31_seq  |         3009 |             1 | f
+ myschema2       | myseq1            |         3009 |          1000 | f
+ myschema1       | myTbl3_col31_seq  |         3010 |             1 | f
+ myschema1       | mytbl2b_col20_seq |         3010 |             1 | f
+ myschema1       | myTbl3_col31_seq  |         3011 |             1 | f
+ myschema1       | mytbl2b_col20_seq |         3011 |             1 | f
+ myschema2       | myTbl3_col31_seq  |         3011 |             1 | f
+ myschema2       | myseq1            |         3011 |          1000 | f
+ myschema1       | myTbl3_col31_seq  |         3012 |             1 | f
+ myschema1       | mytbl2b_col20_seq |         3012 |             1 | f
+ myschema2       | myTbl3_col31_seq  |         3012 |             1 | f
+ myschema2       | myseq1            |         3012 |          1000 | f
+ myschema1       | myTbl3_col31_seq  |         3013 |             1 | f
+ myschema1       | mytbl2b_col20_seq |         3013 |             1 | f
+ myschema2       | myTbl3_col31_seq  |         3013 |             1 | f
+ myschema2       | myseq1            |         3013 |          1000 | f
+ myschema1       | myTbl3_col31_seq  |         3014 |             1 | f
+ myschema1       | mytbl2b_col20_seq |         3014 |             1 | f
+ myschema2       | myTbl3_col31_seq  |         3014 |             1 | f
+ myschema2       | myseq1            |         3014 |          1000 | f
+ myschema1       | myTbl3_col31_seq  |         3015 |             1 | f
+ myschema1       | mytbl2b_col20_seq |         3015 |             1 | f
+ myschema2       | myTbl3_col31_seq  |         3015 |             1 | f
+ myschema2       | myseq1            |         3015 |          1000 | f
 (40 rows)
 
 select tbl_schema, tbl_name, tbl_time_id, tbl_log_seq_last_val from emaj.emaj_table order by tbl_time_id, tbl_schema, tbl_name;
-   tbl_schema   |  tbl_name   | tbl_time_id | tbl_log_seq_last_val 
-----------------+-------------+-------------+----------------------
- phil's schema3 | myTbl2\     |        2004 |                    0
- phil's schema3 | phil's tbl1 |        2004 |                    0
- myschema1      | myTbl3      |        3000 |                    0
- myschema1      | mytbl1      |        3000 |                    0
- myschema1      | mytbl2      |        3000 |                    0
- myschema1      | mytbl2b     |        3000 |                    0
- myschema1      | mytbl4      |        3000 |                    0
- myschema2      | myTbl3      |        3001 |                    0
- myschema2      | mytbl1      |        3001 |                    0
- myschema2      | mytbl2      |        3001 |                    0
- myschema2      | mytbl4      |        3001 |                    0
- myschema2      | mytbl5      |        3001 |                    0
- myschema2      | mytbl6      |        3001 |                    0
- myschema2      | mytbl7      |        3001 |                    0
- myschema2      | mytbl8      |        3001 |                    0
- myschema1      | myTbl3      |        3003 |                    0
- myschema1      | mytbl1      |        3003 |                    0
- myschema1      | mytbl2      |        3003 |                    0
- myschema1      | mytbl2b     |        3003 |                    0
- myschema1      | mytbl4      |        3003 |                    0
- myschema2      | myTbl3      |        3004 |                    0
- myschema2      | mytbl1      |        3004 |                    0
- myschema2      | mytbl2      |        3004 |                    0
- myschema2      | mytbl4      |        3004 |                    0
- myschema2      | mytbl5      |        3004 |                    0
- myschema2      | mytbl6      |        3004 |                    0
- myschema2      | mytbl7      |        3004 |                    0
- myschema2      | mytbl8      |        3004 |                    0
- myschema2      | myTbl3      |        3005 |                    0
- myschema2      | mytbl1      |        3005 |                    0
- myschema2      | mytbl2      |        3005 |                    0
- myschema2      | mytbl4      |        3005 |                    0
- myschema2      | mytbl5      |        3005 |                    0
- myschema2      | mytbl6      |        3005 |                    0
- myschema2      | mytbl7      |        3005 |                    0
- myschema2      | mytbl8      |        3005 |                    0
- myschema1      | myTbl3      |        3007 |                    0
- myschema1      | mytbl1      |        3007 |                    0
- myschema1      | mytbl2      |        3007 |                    0
- myschema1      | mytbl2b     |        3007 |                    0
- myschema1      | mytbl4      |        3007 |                    0
- myschema2      | myTbl3      |        3008 |                    0
- myschema2      | mytbl1      |        3008 |                    0
- myschema2      | mytbl2      |        3008 |                    0
- myschema2      | mytbl4      |        3008 |                    0
- myschema2      | mytbl5      |        3008 |                    0
- myschema2      | mytbl6      |        3008 |                    0
- myschema2      | mytbl7      |        3008 |                    0
- myschema2      | mytbl8      |        3008 |                    0
- myschema2      | myTbl3      |        3009 |                    0
- myschema2      | mytbl1      |        3009 |                    0
- myschema2      | mytbl2      |        3009 |                    0
- myschema2      | mytbl4      |        3009 |                    0
- myschema2      | mytbl5      |        3009 |                    0
- myschema2      | mytbl6      |        3009 |                    0
- myschema2      | mytbl7      |        3009 |                    0
- myschema2      | mytbl8      |        3009 |                    0
- myschema1      | myTbl3      |        3010 |                    0
- myschema1      | mytbl1      |        3010 |                    0
- myschema1      | mytbl2      |        3010 |                    0
- myschema1      | mytbl2b     |        3010 |                    0
- myschema1      | mytbl4      |        3010 |                    0
- myschema1      | myTbl3      |        3011 |                    0
- myschema1      | mytbl1      |        3011 |                    0
- myschema1      | mytbl2      |        3011 |                    0
- myschema1      | mytbl2b     |        3011 |                    0
- myschema1      | mytbl4      |        3011 |                    0
- myschema2      | myTbl3      |        3011 |                    0
- myschema2      | mytbl1      |        3011 |                    0
- myschema2      | mytbl2      |        3011 |                    0
- myschema2      | mytbl4      |        3011 |                    0
- myschema2      | mytbl5      |        3011 |                    0
- myschema2      | mytbl6      |        3011 |                    0
- myschema2      | mytbl7      |        3011 |                    0
- myschema2      | mytbl8      |        3011 |                    0
- myschema1      | myTbl3      |        3012 |                    0
- myschema1      | mytbl1      |        3012 |                    0
- myschema1      | mytbl2      |        3012 |                    0
- myschema1      | mytbl2b     |        3012 |                    0
- myschema1      | mytbl4      |        3012 |                    0
- myschema2      | myTbl3      |        3012 |                    0
- myschema2      | mytbl1      |        3012 |                    0
- myschema2      | mytbl2      |        3012 |                    0
- myschema2      | mytbl4      |        3012 |                    0
- myschema2      | mytbl5      |        3012 |                    0
- myschema2      | mytbl6      |        3012 |                    0
- myschema2      | mytbl7      |        3012 |                    0
- myschema2      | mytbl8      |        3012 |                    0
- myschema1      | myTbl3      |        3013 |                    0
- myschema1      | mytbl1      |        3013 |                    0
- myschema1      | mytbl2      |        3013 |                    0
- myschema1      | mytbl2b     |        3013 |                    0
- myschema1      | mytbl4      |        3013 |                    0
- myschema2      | myTbl3      |        3013 |                    0
- myschema2      | mytbl1      |        3013 |                    0
- myschema2      | mytbl2      |        3013 |                    0
- myschema2      | mytbl4      |        3013 |                    0
- myschema2      | mytbl5      |        3013 |                    0
- myschema2      | mytbl6      |        3013 |                    0
- myschema2      | mytbl7      |        3013 |                    0
- myschema2      | mytbl8      |        3013 |                    0
- myschema1      | myTbl3      |        3014 |                    0
- myschema1      | mytbl1      |        3014 |                    0
- myschema1      | mytbl2      |        3014 |                    0
- myschema1      | mytbl2b     |        3014 |                    0
- myschema1      | mytbl4      |        3014 |                    0
- myschema2      | myTbl3      |        3014 |                    0
- myschema2      | mytbl1      |        3014 |                    0
- myschema2      | mytbl2      |        3014 |                    0
- myschema2      | mytbl4      |        3014 |                    0
- myschema2      | mytbl5      |        3014 |                    0
- myschema2      | mytbl6      |        3014 |                    0
- myschema2      | mytbl7      |        3014 |                    0
- myschema2      | mytbl8      |        3014 |                    0
- myschema1      | myTbl3      |        3015 |                    0
- myschema1      | mytbl1      |        3015 |                    0
- myschema1      | mytbl2      |        3015 |                    0
- myschema1      | mytbl2b     |        3015 |                    0
- myschema1      | mytbl4      |        3015 |                    0
- myschema2      | myTbl3      |        3015 |                    0
- myschema2      | mytbl1      |        3015 |                    0
- myschema2      | mytbl2      |        3015 |                    0
- myschema2      | mytbl4      |        3015 |                    0
- myschema2      | mytbl5      |        3015 |                    0
- myschema2      | mytbl6      |        3015 |                    0
- myschema2      | mytbl7      |        3015 |                    0
- myschema2      | mytbl8      |        3015 |                    0
+   tbl_schema    |  tbl_name   | tbl_time_id | tbl_log_seq_last_val 
+-----------------+-------------+-------------+----------------------
+ phil's schema"3 | myTbl2\     |        2004 |                    0
+ phil's schema"3 | phil's tbl1 |        2004 |                    0
+ myschema1       | myTbl3      |        3000 |                    0
+ myschema1       | mytbl1      |        3000 |                    0
+ myschema1       | mytbl2      |        3000 |                    0
+ myschema1       | mytbl2b     |        3000 |                    0
+ myschema1       | mytbl4      |        3000 |                    0
+ myschema2       | myTbl3      |        3001 |                    0
+ myschema2       | mytbl1      |        3001 |                    0
+ myschema2       | mytbl2      |        3001 |                    0
+ myschema2       | mytbl4      |        3001 |                    0
+ myschema2       | mytbl5      |        3001 |                    0
+ myschema2       | mytbl6      |        3001 |                    0
+ myschema2       | mytbl7      |        3001 |                    0
+ myschema2       | mytbl8      |        3001 |                    0
+ myschema1       | myTbl3      |        3003 |                    0
+ myschema1       | mytbl1      |        3003 |                    0
+ myschema1       | mytbl2      |        3003 |                    0
+ myschema1       | mytbl2b     |        3003 |                    0
+ myschema1       | mytbl4      |        3003 |                    0
+ myschema2       | myTbl3      |        3004 |                    0
+ myschema2       | mytbl1      |        3004 |                    0
+ myschema2       | mytbl2      |        3004 |                    0
+ myschema2       | mytbl4      |        3004 |                    0
+ myschema2       | mytbl5      |        3004 |                    0
+ myschema2       | mytbl6      |        3004 |                    0
+ myschema2       | mytbl7      |        3004 |                    0
+ myschema2       | mytbl8      |        3004 |                    0
+ myschema2       | myTbl3      |        3005 |                    0
+ myschema2       | mytbl1      |        3005 |                    0
+ myschema2       | mytbl2      |        3005 |                    0
+ myschema2       | mytbl4      |        3005 |                    0
+ myschema2       | mytbl5      |        3005 |                    0
+ myschema2       | mytbl6      |        3005 |                    0
+ myschema2       | mytbl7      |        3005 |                    0
+ myschema2       | mytbl8      |        3005 |                    0
+ myschema1       | myTbl3      |        3007 |                    0
+ myschema1       | mytbl1      |        3007 |                    0
+ myschema1       | mytbl2      |        3007 |                    0
+ myschema1       | mytbl2b     |        3007 |                    0
+ myschema1       | mytbl4      |        3007 |                    0
+ myschema2       | myTbl3      |        3008 |                    0
+ myschema2       | mytbl1      |        3008 |                    0
+ myschema2       | mytbl2      |        3008 |                    0
+ myschema2       | mytbl4      |        3008 |                    0
+ myschema2       | mytbl5      |        3008 |                    0
+ myschema2       | mytbl6      |        3008 |                    0
+ myschema2       | mytbl7      |        3008 |                    0
+ myschema2       | mytbl8      |        3008 |                    0
+ myschema2       | myTbl3      |        3009 |                    0
+ myschema2       | mytbl1      |        3009 |                    0
+ myschema2       | mytbl2      |        3009 |                    0
+ myschema2       | mytbl4      |        3009 |                    0
+ myschema2       | mytbl5      |        3009 |                    0
+ myschema2       | mytbl6      |        3009 |                    0
+ myschema2       | mytbl7      |        3009 |                    0
+ myschema2       | mytbl8      |        3009 |                    0
+ myschema1       | myTbl3      |        3010 |                    0
+ myschema1       | mytbl1      |        3010 |                    0
+ myschema1       | mytbl2      |        3010 |                    0
+ myschema1       | mytbl2b     |        3010 |                    0
+ myschema1       | mytbl4      |        3010 |                    0
+ myschema1       | myTbl3      |        3011 |                    0
+ myschema1       | mytbl1      |        3011 |                    0
+ myschema1       | mytbl2      |        3011 |                    0
+ myschema1       | mytbl2b     |        3011 |                    0
+ myschema1       | mytbl4      |        3011 |                    0
+ myschema2       | myTbl3      |        3011 |                    0
+ myschema2       | mytbl1      |        3011 |                    0
+ myschema2       | mytbl2      |        3011 |                    0
+ myschema2       | mytbl4      |        3011 |                    0
+ myschema2       | mytbl5      |        3011 |                    0
+ myschema2       | mytbl6      |        3011 |                    0
+ myschema2       | mytbl7      |        3011 |                    0
+ myschema2       | mytbl8      |        3011 |                    0
+ myschema1       | myTbl3      |        3012 |                    0
+ myschema1       | mytbl1      |        3012 |                    0
+ myschema1       | mytbl2      |        3012 |                    0
+ myschema1       | mytbl2b     |        3012 |                    0
+ myschema1       | mytbl4      |        3012 |                    0
+ myschema2       | myTbl3      |        3012 |                    0
+ myschema2       | mytbl1      |        3012 |                    0
+ myschema2       | mytbl2      |        3012 |                    0
+ myschema2       | mytbl4      |        3012 |                    0
+ myschema2       | mytbl5      |        3012 |                    0
+ myschema2       | mytbl6      |        3012 |                    0
+ myschema2       | mytbl7      |        3012 |                    0
+ myschema2       | mytbl8      |        3012 |                    0
+ myschema1       | myTbl3      |        3013 |                    0
+ myschema1       | mytbl1      |        3013 |                    0
+ myschema1       | mytbl2      |        3013 |                    0
+ myschema1       | mytbl2b     |        3013 |                    0
+ myschema1       | mytbl4      |        3013 |                    0
+ myschema2       | myTbl3      |        3013 |                    0
+ myschema2       | mytbl1      |        3013 |                    0
+ myschema2       | mytbl2      |        3013 |                    0
+ myschema2       | mytbl4      |        3013 |                    0
+ myschema2       | mytbl5      |        3013 |                    0
+ myschema2       | mytbl6      |        3013 |                    0
+ myschema2       | mytbl7      |        3013 |                    0
+ myschema2       | mytbl8      |        3013 |                    0
+ myschema1       | myTbl3      |        3014 |                    0
+ myschema1       | mytbl1      |        3014 |                    0
+ myschema1       | mytbl2      |        3014 |                    0
+ myschema1       | mytbl2b     |        3014 |                    0
+ myschema1       | mytbl4      |        3014 |                    0
+ myschema2       | myTbl3      |        3014 |                    0
+ myschema2       | mytbl1      |        3014 |                    0
+ myschema2       | mytbl2      |        3014 |                    0
+ myschema2       | mytbl4      |        3014 |                    0
+ myschema2       | mytbl5      |        3014 |                    0
+ myschema2       | mytbl6      |        3014 |                    0
+ myschema2       | mytbl7      |        3014 |                    0
+ myschema2       | mytbl8      |        3014 |                    0
+ myschema1       | myTbl3      |        3015 |                    0
+ myschema1       | mytbl1      |        3015 |                    0
+ myschema1       | mytbl2      |        3015 |                    0
+ myschema1       | mytbl2b     |        3015 |                    0
+ myschema1       | mytbl4      |        3015 |                    0
+ myschema2       | myTbl3      |        3015 |                    0
+ myschema2       | mytbl1      |        3015 |                    0
+ myschema2       | mytbl2      |        3015 |                    0
+ myschema2       | mytbl4      |        3015 |                    0
+ myschema2       | mytbl5      |        3015 |                    0
+ myschema2       | mytbl6      |        3015 |                    0
+ myschema2       | mytbl7      |        3015 |                    0
+ myschema2       | mytbl8      |        3015 |                    0
 (127 rows)
 
 select time_id, time_last_emaj_gid, time_event from emaj.emaj_time_stamp where time_id >= 3200 order by time_id;
@@ -1438,55 +1438,55 @@ select mark_group, regexp_replace(mark_name,E'\\d\\d\.\\d\\d\\.\\d\\d\\.\\d\\d\\
 (9 rows)
 
 select sequ_schema, sequ_name, sequ_time_id, sequ_last_val, sequ_is_called from emaj.emaj_sequence order by sequ_time_id, sequ_schema, sequ_name;
-  sequ_schema   |     sequ_name     | sequ_time_id | sequ_last_val | sequ_is_called 
-----------------+-------------------+--------------+---------------+----------------
- myschema1      | myTbl3_col31_seq  |         3011 |             1 | f
- myschema1      | mytbl2b_col20_seq |         3011 |             1 | f
- myschema2      | myTbl3_col31_seq  |         3015 |             1 | f
- myschema2      | myseq1            |         3015 |          1000 | f
- phil's schema3 | myTbl2\_col21_seq |         3402 |             1 | f
- phil's schema3 | phil's seq\1      |         3402 |          1000 | f
- phil's schema3 | myTbl2\_col21_seq |         3403 |             1 | f
- phil's schema3 | phil's seq\1      |         3403 |          1000 | f
- myschema1      | myTbl3_col31_seq  |         3600 |             1 | f
- myschema1      | mytbl2b_col20_seq |         3600 |             1 | f
- myschema2      | myTbl3_col31_seq  |         3601 |             1 | f
- myschema2      | myseq1            |         3601 |          1000 | f
+   sequ_schema   |     sequ_name     | sequ_time_id | sequ_last_val | sequ_is_called 
+-----------------+-------------------+--------------+---------------+----------------
+ myschema1       | myTbl3_col31_seq  |         3011 |             1 | f
+ myschema1       | mytbl2b_col20_seq |         3011 |             1 | f
+ myschema2       | myTbl3_col31_seq  |         3015 |             1 | f
+ myschema2       | myseq1            |         3015 |          1000 | f
+ phil's schema"3 | myTbl2\_col21_seq |         3402 |             1 | f
+ phil's schema"3 | phil's"seq\1      |         3402 |          1000 | f
+ phil's schema"3 | myTbl2\_col21_seq |         3403 |             1 | f
+ phil's schema"3 | phil's"seq\1      |         3403 |          1000 | f
+ myschema1       | myTbl3_col31_seq  |         3600 |             1 | f
+ myschema1       | mytbl2b_col20_seq |         3600 |             1 | f
+ myschema2       | myTbl3_col31_seq  |         3601 |             1 | f
+ myschema2       | myseq1            |         3601 |          1000 | f
 (12 rows)
 
 select tbl_schema, tbl_name, tbl_time_id, tbl_log_seq_last_val from emaj.emaj_table order by tbl_time_id, tbl_schema, tbl_name;
-   tbl_schema   |  tbl_name   | tbl_time_id | tbl_log_seq_last_val 
-----------------+-------------+-------------+----------------------
- myschema1      | myTbl3      |        3011 |                    0
- myschema1      | mytbl1      |        3011 |                    0
- myschema1      | mytbl2      |        3011 |                    0
- myschema1      | mytbl2b     |        3011 |                    0
- myschema1      | mytbl4      |        3011 |                    0
- myschema2      | myTbl3      |        3015 |                    0
- myschema2      | mytbl1      |        3015 |                    0
- myschema2      | mytbl2      |        3015 |                    0
- myschema2      | mytbl4      |        3015 |                    0
- myschema2      | mytbl5      |        3015 |                    0
- myschema2      | mytbl6      |        3015 |                    0
- myschema2      | mytbl7      |        3015 |                    0
- myschema2      | mytbl8      |        3015 |                    0
- phil's schema3 | myTbl2\     |        3402 |                    0
- phil's schema3 | phil's tbl1 |        3402 |                    0
- phil's schema3 | myTbl2\     |        3403 |                    0
- phil's schema3 | phil's tbl1 |        3403 |                    0
- myschema1      | myTbl3      |        3600 |                    0
- myschema1      | mytbl1      |        3600 |                    0
- myschema1      | mytbl2      |        3600 |                    0
- myschema1      | mytbl2b     |        3600 |                    0
- myschema1      | mytbl4      |        3600 |                    0
- myschema2      | myTbl3      |        3601 |                    0
- myschema2      | mytbl1      |        3601 |                    0
- myschema2      | mytbl2      |        3601 |                    0
- myschema2      | mytbl4      |        3601 |                    0
- myschema2      | mytbl5      |        3601 |                    0
- myschema2      | mytbl6      |        3601 |                    0
- myschema2      | mytbl7      |        3601 |                    0
- myschema2      | mytbl8      |        3601 |                    0
+   tbl_schema    |  tbl_name   | tbl_time_id | tbl_log_seq_last_val 
+-----------------+-------------+-------------+----------------------
+ myschema1       | myTbl3      |        3011 |                    0
+ myschema1       | mytbl1      |        3011 |                    0
+ myschema1       | mytbl2      |        3011 |                    0
+ myschema1       | mytbl2b     |        3011 |                    0
+ myschema1       | mytbl4      |        3011 |                    0
+ myschema2       | myTbl3      |        3015 |                    0
+ myschema2       | mytbl1      |        3015 |                    0
+ myschema2       | mytbl2      |        3015 |                    0
+ myschema2       | mytbl4      |        3015 |                    0
+ myschema2       | mytbl5      |        3015 |                    0
+ myschema2       | mytbl6      |        3015 |                    0
+ myschema2       | mytbl7      |        3015 |                    0
+ myschema2       | mytbl8      |        3015 |                    0
+ phil's schema"3 | myTbl2\     |        3402 |                    0
+ phil's schema"3 | phil's tbl1 |        3402 |                    0
+ phil's schema"3 | myTbl2\     |        3403 |                    0
+ phil's schema"3 | phil's tbl1 |        3403 |                    0
+ myschema1       | myTbl3      |        3600 |                    0
+ myschema1       | mytbl1      |        3600 |                    0
+ myschema1       | mytbl2      |        3600 |                    0
+ myschema1       | mytbl2b     |        3600 |                    0
+ myschema1       | mytbl4      |        3600 |                    0
+ myschema2       | myTbl3      |        3601 |                    0
+ myschema2       | mytbl1      |        3601 |                    0
+ myschema2       | mytbl2      |        3601 |                    0
+ myschema2       | mytbl4      |        3601 |                    0
+ myschema2       | mytbl5      |        3601 |                    0
+ myschema2       | mytbl6      |        3601 |                    0
+ myschema2       | mytbl7      |        3601 |                    0
+ myschema2       | mytbl8      |        3601 |                    0
 (30 rows)
 
 -----------------------------

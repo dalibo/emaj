@@ -29,11 +29,11 @@ $$;
 -- drop emaj_adm roles
 -----------------------------
 revoke emaj_adm from emaj_regression_tests_adm_user1, emaj_regression_tests_adm_user2;
-revoke all on schema mySchema1, mySchema2, "phil's schema3", mySchema4, mySchema5, mySchema6
+revoke all on schema mySchema1, mySchema2, "phil's schema""3", mySchema4, mySchema5, mySchema6
   from emaj_regression_tests_adm_user1, emaj_regression_tests_adm_user2;
-revoke all on all tables in schema mySchema1, mySchema2, "phil's schema3", mySchema4, mySchema5, mySchema6
+revoke all on all tables in schema mySchema1, mySchema2, "phil's schema""3", mySchema4, mySchema5, mySchema6
   from emaj_regression_tests_adm_user1, emaj_regression_tests_adm_user2;
-revoke all on all sequences in schema mySchema1, mySchema2, "phil's schema3", mySchema4, mySchema5, mySchema6
+revoke all on all sequences in schema mySchema1, mySchema2, "phil's schema""3", mySchema4, mySchema5, mySchema6
   from emaj_regression_tests_adm_user1, emaj_regression_tests_adm_user2;
 revoke all on tablespace tsplog1, "tsp log'2", tspemaj_renamed
   from emaj_regression_tests_adm_user1, emaj_regression_tests_adm_user2;
@@ -43,9 +43,9 @@ drop role emaj_regression_tests_adm_user1, emaj_regression_tests_adm_user2;
 -----------------------------
 -- drop emaj_regression_tests_viewer_user role
 -----------------------------
-revoke all on schema mySchema1, mySchema2, "phil's schema3", mySchema4, mySchema5, mySchema6 from emaj_regression_tests_viewer_user;
-revoke all on all tables in schema mySchema1, mySchema2, "phil's schema3", mySchema4, mySchema5, mySchema6 from emaj_regression_tests_viewer_user;
-revoke all on all sequences in schema mySchema1, mySchema2, "phil's schema3", mySchema4, mySchema5, mySchema6 from emaj_regression_tests_viewer_user;
+revoke all on schema mySchema1, mySchema2, "phil's schema""3", mySchema4, mySchema5, mySchema6 from emaj_regression_tests_viewer_user;
+revoke all on all tables in schema mySchema1, mySchema2, "phil's schema""3", mySchema4, mySchema5, mySchema6 from emaj_regression_tests_viewer_user;
+revoke all on all sequences in schema mySchema1, mySchema2, "phil's schema""3", mySchema4, mySchema5, mySchema6 from emaj_regression_tests_viewer_user;
 drop role emaj_regression_tests_viewer_user;
 
 -----------------------------

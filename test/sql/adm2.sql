@@ -132,27 +132,27 @@ select public.handle_emaj_sequences(14200);
 -- prepare phil's group#3, group
 --
 reset role;
-alter table "phil's schema3"."myTbl2\" add primary key (col21);
+alter table "phil's schema""3"."myTbl2\" add primary key (col21);
 set role emaj_regression_tests_adm_user2;
 
 select emaj.emaj_create_group('phil''s group#3",');
-select emaj.emaj_assign_tables('phil''s schema3','.*','mytbl4','phil''s group#3",');
-select emaj.emaj_assign_sequences('phil''s schema3','.*',null,'phil''s group#3",');
+select emaj.emaj_assign_tables('phil''s schema"3','.*','my"tbl4','phil''s group#3",');
+select emaj.emaj_assign_sequences('phil''s schema"3','.*',null,'phil''s group#3",');
 
 select emaj.emaj_start_group('phil''s group#3",','M1_rollbackable');
 --
 reset role;
-set search_path=public,"phil's schema3";
+set search_path=public,"phil's schema""3";
 --
 insert into "phil's tbl1" select i, 'AB''C', E'\\014'::bytea from generate_series (1,31) as i;
-update "phil's tbl1" set "phil\s col13" = E'\\034'::bytea where "phil's col11" <= 3;
-update "phil's tbl1" set "phil\s col13" = E'\\034'''::bytea where "phil's col11" between 18 and 22;
-insert into myTbl4 (col41) values (1);
-insert into myTbl4 (col41) values (2);
+update "phil's tbl1" set "phil\s""col13" = E'\\034'::bytea where "phil's col11" <= 3;
+update "phil's tbl1" set "phil\s""col13" = E'\\034'''::bytea where "phil's col11" between 18 and 22;
+insert into "my""tbl4" (col41) values (1);
+insert into "my""tbl4" (col41) values (2);
 insert into "myTbl2\" values (1,'ABC','2010-12-31');
 delete from "phil's tbl1" where "phil's col11" > 20;
 insert into "myTbl2\" values (2,'DEF',NULL);
-select nextval(E'"phil''s schema3"."phil''s seq\\1"');
+select nextval(E'"phil''s schema""3"."phil''s""seq\\1"');
 --
 
 set role emaj_regression_tests_adm_user2;
@@ -163,7 +163,7 @@ reset role;
 delete from "phil's tbl1" where "phil's col11" = 10;
 update "phil's tbl1" set "phil's col12" = 'DEF' where "phil's col11" <= 2;
 
-select nextval(E'"phil''s schema3"."phil''s seq\\1"');
+select nextval(E'"phil''s schema""3"."phil''s""seq\\1"');
 --
 set role emaj_regression_tests_adm_user2;
 select emaj.emaj_set_mark_groups(array['phil''s group#3",'],'phil''s mark #1','Third mark set');
@@ -200,12 +200,12 @@ select hist_function, hist_event, hist_object,
 
 -- user tables
 reset role;
-select * from "phil's schema3"."phil's tbl1" order by "phil's col11","phil's col12";
-select * from "phil's schema3"."myTbl2\" order by col21;
+select * from "phil's schema""3"."phil's tbl1" order by "phil's col11","phil's col12";
+select * from "phil's schema""3"."myTbl2\" order by col21;
 -- log tables
 set role emaj_regression_tests_adm_user2;
-select "phil's col11", "phil's col12", "phil\s col13", emaj_verb, emaj_tuple, emaj_gid from "emaj_phil's schema3"."phil's tbl1_log" order by emaj_gid, emaj_tuple desc;
-select col21, col22, col23, emaj_verb, emaj_tuple, emaj_gid from "emaj_phil's schema3"."myTbl2\_log" order by emaj_gid, emaj_tuple desc;
+select "phil's col11", "phil's col12", "phil\s""col13", emaj_verb, emaj_tuple, emaj_gid from "emaj_phil's schema""3"."phil's tbl1_log" order by emaj_gid, emaj_tuple desc;
+select col21, col22, col23, emaj_verb, emaj_tuple, emaj_gid from "emaj_phil's schema""3"."myTbl2\_log" order by emaj_gid, emaj_tuple desc;
 
 -- set sequence restart value
 select public.handle_emaj_sequences(14300);
@@ -369,25 +369,25 @@ select public.handle_emaj_sequences(14500);
 select emaj.emaj_stop_group('phil''s group#3",');
 
 -- remove the "phil's tbl1" table, rename it and reassign it to its group
-select emaj.emaj_remove_table('phil''s schema3','phil''s tbl1');
+select emaj.emaj_remove_table('phil''s schema"3','phil''s tbl1');
 
 reset role;
-alter table "phil's schema3"."phil's tbl1" rename to table_with_very_looooooooooooooooooooooooooooooooooooooong_name;
+alter table "phil's schema""3"."phil's tbl1" rename to table_with_very_looooooooooooooooooooooooooooooooooooooong_name;
 
 set role emaj_regression_tests_adm_user1;
-select emaj.emaj_assign_table('phil''s schema3', 'table_with_very_looooooooooooooooooooooooooooooooooooooong_name', 'phil''s group#3",');
+select emaj.emaj_assign_table('phil''s schema"3', 'table_with_very_looooooooooooooooooooooooooooooooooooooong_name', 'phil''s group#3",');
 
 -- use the table and its group
 select emaj.emaj_start_group('phil''s group#3",','M1_after_table_rename');
 
 reset role;
-update "phil's schema3".table_with_very_looooooooooooooooooooooooooooooooooooooong_name set "phil's col12" = 'GHI' where "phil's col11" between 6 and 9;
+update "phil's schema""3".table_with_very_looooooooooooooooooooooooooooooooooooooong_name set "phil's col12" = 'GHI' where "phil's col11" between 6 and 9;
 
 set role emaj_regression_tests_adm_user1;
 select emaj.emaj_set_mark_group('phil''s group#3",','M2');
 
 reset role;
-delete from "phil's schema3".table_with_very_looooooooooooooooooooooooooooooooooooooong_name where "phil's col11" > 18;
+delete from "phil's schema""3".table_with_very_looooooooooooooooooooooooooooooooooooooong_name where "phil's col11" > 18;
 
 set role emaj_regression_tests_adm_user1;
 select * from emaj.emaj_rollback_group('phil''s group#3",','M1_after_table_rename',false) order by 1,2;
@@ -396,7 +396,7 @@ select emaj.emaj_drop_group('phil''s group#3",');
 
 --
 reset role;
-alter table "phil's schema3".table_with_very_looooooooooooooooooooooooooooooooooooooong_name rename to "phil's tbl1";
+alter table "phil's schema""3".table_with_very_looooooooooooooooooooooooooooooooooooooong_name rename to "phil's tbl1";
 
 -----------------------------
 -- Checking step 12

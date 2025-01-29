@@ -54,8 +54,8 @@ select * from emaj_myschema2.mytbl1_log_seq;
 select * from emaj_myschema2.mytbl2_log_seq;
 select * from emaj_myschema2."myTbl3_log_seq";
 select * from emaj_myschema2.mytbl4_log_seq;
-select * from "emaj_phil's schema3"."phil's tbl1_log_seq";
-select * from "emaj_phil's schema3"."myTbl2\_log_seq";
+select * from "emaj_phil's schema""3"."phil's tbl1_log_seq";
+select * from "emaj_phil's schema""3"."myTbl2\_log_seq";
 
 -----------------------------
 -- Check the tables and sequences after upgrade

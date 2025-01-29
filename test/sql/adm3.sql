@@ -175,8 +175,8 @@ select public.handle_emaj_sequences(17400);
 --           also test some changes on the unlogged and the with oids tables
 -----------------------------
 select emaj_create_group('phil''s group#3",',false);
-select emaj_assign_tables('phil''s schema3','.*',null,'phil''s group#3",');
-select emaj_assign_sequences('phil''s schema3','.*',null,'phil''s group#3",');
+select emaj_assign_tables('phil''s schema"3','.*',null,'phil''s group#3",');
+select emaj_assign_sequences('phil''s schema"3','.*',null,'phil''s group#3",');
 select emaj_assign_tables('myschema5','.*',null,'phil''s group#3",');
 
 select emaj_start_group('phil''s group#3",','start');
@@ -204,36 +204,36 @@ select emaj_disable_protection_by_event_triggers();
 -- test remove_and_add operations to repair an application table
 -----------------------------
 reset role;
-alter table "phil's schema3".mytbl4 alter column col45 type char(11);
+alter table "phil's schema""3"."my""tbl4" alter column col45 type char(11);
 
 set role emaj_regression_tests_adm_user1;
 select * from emaj_verify_all();
-select emaj_remove_table('phil''s schema3','mytbl4','remove_the_damaged_table');
-select emaj_assign_table('phil''s schema3', 'mytbl4', 'phil''s group#3",', null, 're_add_the_table');
+select emaj_remove_table('phil''s schema"3','my"tbl4','remove_the_damaged_table');
+select emaj_assign_table('phil''s schema"3', 'my"tbl4', 'phil''s group#3",', null, 're_add_the_table');
 
-select * from emaj.emaj_relation where rel_schema = 'phil''s schema3' and rel_tblseq = 'mytbl4' order by rel_time_range;
+select * from emaj.emaj_relation where rel_schema = 'phil''s schema"3' and rel_tblseq = 'my"tbl4' order by rel_time_range;
 
 -----------------------------
 -- test a remove operation to fix the case of a dropped log table, log sequence or log function
 -----------------------------
 reset role;
-drop table "emaj_phil's schema3".mytbl4_log;
+drop table "emaj_phil's schema""3"."my""tbl4_log";
 
 set role emaj_regression_tests_adm_user1;
 select * from emaj_verify_all();
-select emaj_remove_table('phil''s schema3','mytbl4','remove_the_damaged_table_2');
-select emaj_assign_table('phil''s schema3', 'mytbl4', 'phil''s group#3",', null, 're_add_the_table_2');
+select emaj_remove_table('phil''s schema"3','my"tbl4','remove_the_damaged_table_2');
+select emaj_assign_table('phil''s schema"3', 'my"tbl4', 'phil''s group#3",', null, 're_add_the_table_2');
 
 select rel_schema, rel_tblseq, rel_time_range, rel_group, rel_kind
-  from emaj.emaj_relation where rel_schema = 'phil''s schema3' and rel_tblseq = 'mytbl4' order by rel_time_range;
+  from emaj.emaj_relation where rel_schema = 'phil''s schema"3' and rel_tblseq = 'my"tbl4' order by rel_time_range;
 
 -----------------------------
 -- test a remove operation to fix the case of a dropped application table or sequence
 -----------------------------
 -- in fact just rename the table and the sequence
 reset role;
-alter table "phil's schema3".mytbl4 rename to mytbl4_sav;
-alter sequence "phil's schema3"."phil's seq\1" rename to "phil's seq\1_sav";
+alter table "phil's schema""3"."my""tbl4" rename to mytbl4_sav;
+alter sequence "phil's schema""3"."phil's""seq\1" rename to "phil's""seq\1_sav";
 
 set role emaj_regression_tests_adm_user2;
 
@@ -242,21 +242,21 @@ begin;
   select emaj_set_mark_group('phil''s group#3",','should fails');
 rollback;
 
-select emaj_remove_table('phil''s schema3','mytbl4','remove_the_dropped_table');
-select emaj_remove_sequence('phil''s schema3','phil''s seq\1','remove_the_dropped_seq');
+select emaj_remove_table('phil''s schema"3','my"tbl4','remove_the_dropped_table');
+select emaj_remove_sequence('phil''s schema"3','phil''s"seq\1','remove_the_dropped_seq');
 
 -- check that the log table does not exist anymore
-select count(*) from "emaj_phil's schema3".mytbl4_log;
+select count(*) from "emaj_phil's schema3"."my""tbl4_log";
 
 -- revert the changes
 reset role;
-alter table "phil's schema3".mytbl4_sav rename to mytbl4;
-alter table "phil's schema3".mytbl4 alter column col45 type char(10);
-alter sequence "phil's schema3"."phil's seq\1_sav" rename to "phil's seq\1";
+alter table "phil's schema""3".mytbl4_sav rename to "my""tbl4";
+alter table "phil's schema""3"."my""tbl4" alter column col45 type char(10);
+alter sequence "phil's schema""3"."phil's""seq\1_sav" rename to "phil's""seq\1";
 
 set role emaj_regression_tests_adm_user1;
-select emaj_assign_table('phil''s schema3','mytbl4','phil''s group#3",',null,'revert_last_changes_tbl');
-select emaj_assign_sequence('phil''s schema3','phil''s seq\1','phil''s group#3",','revert_last_changes_seq');
+select emaj_assign_table('phil''s schema"3','my"tbl4','phil''s group#3",',null,'revert_last_changes_tbl');
+select emaj_assign_sequence('phil''s schema"3','phil''s"seq\1','phil''s group#3",','revert_last_changes_seq');
 
 -- ree-nable the event triggers and drop the group
 select emaj_enable_protection_by_event_triggers();
@@ -291,8 +291,8 @@ select emaj_create_group('grp_tmp_3');
 select emaj_create_group('grp_tmp_4');
 select emaj_start_groups('{"grp_tmp","grp_tmp_4"}','Start');
 begin;
-  select emaj_assign_tables('phil''s schema3','.*','','grp_tmp_3');
-  select emaj_assign_sequences('phil''s schema3','.*','','grp_tmp_3');
+  select emaj_assign_tables('phil''s schema"3','.*','','grp_tmp_3');
+  select emaj_assign_sequences('phil''s schema"3','.*','','grp_tmp_3');
   select emaj_assign_tables('myschema4','.*','','grp_tmp_4');
   select emaj_assign_sequences('myschema4','.*','','grp_tmp_4');
   select emaj_modify_table('myschema4','mytblm','{"ignored_triggers": "mytblm_insert_trigger"}'::jsonb);
@@ -305,19 +305,19 @@ select emaj_export_groups_configuration(:'EMAJTESTTMPDIR' || '/groups_config.jso
 
 -- perform some changes and set marks
 reset role;
-insert into "phil's schema3".mytbl4 (col41)
+insert into "phil's schema""3"."my""tbl4" (col41)
   select i from generate_series(3,8) i;
-delete from "phil's schema3"."myTbl2\";
-insert into "phil's schema3"."myTbl2\" (col22,col23)
+delete from "phil's schema""3"."myTbl2\";
+insert into "phil's schema""3"."myTbl2\" (col22,col23)
   select 'After Mk1','12-31-2020' from generate_series(1,3);
 
 set role emaj_regression_tests_adm_user1;
 select emaj_set_mark_groups('{"grp_tmp_3","grp_tmp_4","grp_tmp"}','Mk2');
 
 reset role;
-insert into "phil's schema3"."myTbl2\" (col22,col23)
+insert into "phil's schema""3"."myTbl2\" (col22,col23)
   select 'After Mk2','12-31-2030' from generate_series(1,3);
-select nextval(E'"phil''s schema3"."phil''s seq\\1"');
+select nextval(E'"phil''s schema""3"."phil''s""seq\\1"');
 insert into myschema4.mytblm
   select '2006-06-30'::date + ('1 year'::interval) * i, i, 'After Mk2'
     from generate_series(0,9) i;
@@ -336,12 +336,12 @@ set role emaj_regression_tests_adm_user1;
 select * from emaj_rollback_groups('{"grp_tmp_3","grp_tmp_4","grp_tmp"}','Mk3');
 
 -- change some priority and log tablespaces
-select emaj_modify_tables('phil''s schema3','.*tbl1','','{"priority":-1,"log_data_tablespace":"tsp log''2"}'::jsonb,'Modify 1 table');
+select emaj_modify_tables('phil''s schema"3','.*tbl1','','{"priority":-1,"log_data_tablespace":"tsp log''2"}'::jsonb,'Modify 1 table');
 
 -- move all tables and sequences into grp_tmp and set a common mark
-select emaj_move_tables('phil''s schema3','.*','','grp_tmp','Move_tbl_3_to_tmp');
+select emaj_move_tables('phil''s schema"3','.*','','grp_tmp','Move_tbl_3_to_tmp');
 select * from emaj_verify_all();
-select emaj_move_sequences('phil''s schema3','.*','','grp_tmp','Move_seq_3_to_tmp');
+select emaj_move_sequences('phil''s schema"3','.*','','grp_tmp','Move_seq_3_to_tmp');
 select emaj_move_tables('myschema4','.*','','grp_tmp','Move_tbl_4_to_tmp');
 select emaj_move_sequences('myschema4','.*','','grp_tmp','Move_seq_4_to_tmp');
 
@@ -349,11 +349,11 @@ select emaj_set_mark_groups('{"grp_tmp_3","grp_tmp_4","grp_tmp"}','Mk4');
 
 -- perform some other changes and set marks
 reset role;
-update "phil's schema3".mytbl4 set col42 = 'Updated after Mk4'
+update "phil's schema""3"."my""tbl4" set col42 = 'Updated after Mk4'
   where col41 > 5;
-delete from "phil's schema3"."myTbl2\"
+delete from "phil's schema""3"."myTbl2\"
   where col21 = 4;
-delete from "phil's schema3".mytbl4
+delete from "phil's schema""3"."my""tbl4"
   where col41 = 4;
 
 set role emaj_regression_tests_adm_user1;
@@ -363,7 +363,7 @@ reset role;
 insert into myschema4.mytblm
   select '2017-06-30'::date + ('1 year'::interval) * i, 5, 'After Mk5'
     from generate_series(0,3) i;
-select nextval(E'"phil''s schema3"."phil''s seq\\1"');
+select nextval(E'"phil''s schema""3"."phil''s""seq\\1"');
 
 set role emaj_regression_tests_adm_user1;
 select emaj_set_mark_groups('{"grp_tmp_3","grp_tmp_4","grp_tmp"}','Mk6');
@@ -375,7 +375,7 @@ update myschema4.mytblm set col3 = 'After Mk5 and updated after Mk6'
 -- remove the table mytblm and the sequence phil's seq\1
 set role emaj_regression_tests_adm_user1;
 select emaj_remove_table('myschema4','mytblc1','Remove_mytblc1');
-select emaj_remove_sequence('phil''s schema3','phil''s seq\1','Remove_myseq1');
+select emaj_remove_sequence('phil''s schema"3','phil''s"seq\1','Remove_myseq1');
 
 -- logged rollback to Mk5
 select rlbk_severity, regexp_replace(rlbk_message,E'\\d\\d\\d\\d/\\d\\d\\/\\d\\d\\ \\d\\d\\:\\d\\d:\\d\\d .*?\\)','<timestamp>)','g')
@@ -412,7 +412,7 @@ select emaj_gen_sql_groups('{"grp_tmp_3","grp_tmp_4","grp_tmp"}','Mk1',null,:'EM
 --  \! grep -iP '(insert|update|delete|alter)' $EMAJTESTTMPDIR/allGroups.sql
 
 -- revert the priority and log tablespaces changes
-select emaj_modify_tables('phil''s schema3','.*tbl1','','{"priority":null,"log_data_tablespace":null}'::jsonb,'revert changes for 1 table');
+select emaj_modify_tables('phil''s schema"3','.*tbl1','','{"priority":null,"log_data_tablespace":null}'::jsonb,'revert changes for 1 table');
 
 -- rollback to a mark set before the tables and sequences move
 select rlbk_severity, regexp_replace(rlbk_message,E'\\d\\d\\d\\d/\\d\\d\\/\\d\\d\\ \\d\\d\\:\\d\\d:\\d\\d .*?\\)','<timestamp>)','g')
@@ -431,17 +431,17 @@ select emaj_delete_before_mark_group(group_name,'Mk3')
 -- test a remove_table following log sequence deletion
 reset role;
 select emaj_disable_protection_by_event_triggers();
-drop sequence "emaj_phil's schema3".mytbl4_log_seq;
+drop sequence "emaj_phil's schema""3"."my""tbl4_log_seq";
 select emaj_enable_protection_by_event_triggers();
 
 set role emaj_regression_tests_adm_user2;
 -- note that the warning about the mytblp_col3_seq sequence is normal
 select * from emaj_verify_all();
 --     a removal while the group is LOGGING fails
-select emaj_remove_table('phil''s schema3','mytbl4');
+select emaj_remove_table('phil''s schema"3','my"tbl4');
 select emaj_force_stop_group('grp_tmp');
-select emaj_remove_table('phil''s schema3','mytbl4');
-select emaj_assign_table('phil''s schema3','mytbl4','grp_tmp');
+select emaj_remove_table('phil''s schema"3','my"tbl4');
+select emaj_assign_table('phil''s schema"3','my"tbl4','grp_tmp');
 select * from emaj_verify_all();
 select emaj_start_group('grp_tmp','Group restart');
 
@@ -457,7 +457,7 @@ select emaj_stop_group('grp_tmp');
 select emaj_drop_group('grp_tmp');
 
 select * from emaj.emaj_rel_hist order by 1,2,3;
-select count(*) from emaj.emaj_relation where rel_schema in ('phil''s schema3','myschema4');
+select count(*) from emaj.emaj_relation where rel_schema in ('phil''s schema"3','myschema4');
 
 -----------------------------
 -- Checking step 19
@@ -519,21 +519,21 @@ DROP VIEW IF EXISTS public.myTbl3_cons_log_view_M4_M5;
 
 SET client_min_messages TO WARNING;
 select emaj_create_group('truncateTestGroup');
-select emaj_assign_tables('phil''s schema3','.*','','truncateTestGroup');
+select emaj_assign_tables('phil''s schema"3','.*','','truncateTestGroup');
 select emaj_assign_tables('myschema4','.*','','truncateTestGroup');
 RESET client_min_messages;
 select emaj_start_group('truncateTestGroup','M1');
 
 reset role;
-truncate "phil's schema3"."phil's tbl1" cascade;
+truncate "phil's schema""3"."phil's tbl1" cascade;
 truncate myschema4.myTblC2;
 truncate myschema4.myPartP3;
 
-select count(*) from "phil's schema3"."phil's tbl1";
+select count(*) from "phil's schema""3"."phil's tbl1";
 
 set role emaj_regression_tests_adm_user2;
-select count(*) from "emaj_phil's schema3"."phil's tbl1_log";
-select is_called, last_value from "emaj_phil's schema3"."phil's tbl1_log_seq";
+select count(*) from "emaj_phil's schema""3"."phil's tbl1_log";
+select is_called, last_value from "emaj_phil's schema""3"."phil's tbl1_log_seq";
 
 select emaj_set_mark_group('truncateTestGroup','M2');
 

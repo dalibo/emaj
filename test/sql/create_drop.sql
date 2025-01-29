@@ -91,7 +91,7 @@ select emaj.emaj_assign_table('myschema5','myoidstbl','myGroup1');
 select emaj.emaj_remove_table('myschema5','myoidstbl');
 
 -- table without PKEY on a rollbackable group
-select emaj.emaj_assign_table('phil''s schema3','myTbl2\','myGroup1');
+select emaj.emaj_assign_table('phil''s schema"3','myTbl2\','myGroup1');
 
 -- invalid priority
 select emaj.emaj_assign_table('myschema1','mytbl1','myGroup1','{"priority":"not_numeric"}'::jsonb);
@@ -175,7 +175,7 @@ select emaj.emaj_assign_tables('myschema1',null,'phil''s group#3",');
 select emaj.emaj_assign_tables('myschema1',array[''],'phil''s group#3",');
 
 -- ok (with a duplicate table name)
-select emaj.emaj_assign_tables('phil''s schema3',array['phil''s tbl1',E'myTbl2\\','phil''s tbl1'],'phil''s group#3",');
+select emaj.emaj_assign_tables('phil''s schema"3',array['phil''s tbl1',E'myTbl2\\','phil''s tbl1'],'phil''s group#3",');
 
 -----------------------------------
 -- emaj_assign_tables with filters
@@ -207,7 +207,7 @@ begin;
     where relnamespace = pg_namespace.oid and relname = 'mytemptbl';
 rollback;
 -- table without pkey for a rollbackable group
-select emaj.emaj_assign_tables('phil''s schema3','myTbl2\\','','myGroup2');
+select emaj.emaj_assign_tables('phil''s schema"3','myTbl2\\','','myGroup2');
 
 -- OK
 select emaj.emaj_assign_tables('myschema2','mytbl.*','mytbl(5|6)$','myGroup2');
@@ -264,7 +264,7 @@ select emaj.emaj_assign_sequences('myschema2',array[''],'myGroup2');
 select emaj.emaj_assign_sequences('myschema2',array['myTbl3_col31_seq','myTbl3_col31_seq'],'myGroup2');
 
 -- assign sequences with double_quoted names
-select emaj.emaj_assign_sequences('phil''s schema3',array[E'myTbl2\\_col21_seq',E'phil''s seq\\1'],'phil''s group#3",');
+select emaj.emaj_assign_sequences('phil''s schema"3',array[E'myTbl2\\_col21_seq',E'phil''s"seq\\1'],'phil''s group#3",');
 
 -----------------------------------
 -- emaj_assign_sequences with filters

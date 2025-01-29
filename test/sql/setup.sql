@@ -222,39 +222,39 @@ CREATE SEQUENCE mySeq2;
 -- Third schema (for an audit_only group)
 --
 
-DROP SCHEMA IF EXISTS "phil's schema3" CASCADE;
-CREATE SCHEMA "phil's schema3";
+DROP SCHEMA IF EXISTS "phil's schema""3" CASCADE;
+CREATE SCHEMA "phil's schema""3";
 
-SET search_path="phil's schema3";
+SET search_path="phil's schema""3";
 
 DROP TABLE IF EXISTS "phil's tbl1" ;
 CREATE TABLE "phil's tbl1" (
-  "phil's col11" DECIMAL (7)      NOT NULL,
-  "phil's col12" CHAR (10)        NOT NULL,
-  "phil\s col13" BYTEA            ,
+  "phil's col11"   DECIMAL (7)      NOT NULL,
+  "phil's col12"   CHAR (10)        NOT NULL,
+  "phil\s""col13"  BYTEA            ,
   PRIMARY KEY ("phil's col11","phil's col12")
 );
 
 DROP TABLE IF EXISTS "myTbl2\" ;
 CREATE TABLE "myTbl2\" (
-  col21       SERIAL           NOT NULL,
-  col22       TEXT             ,
-  col23       DATE
+  col21            SERIAL           NOT NULL,
+  col22            TEXT             ,
+  col23            DATE
 );
 
-DROP TABLE IF EXISTS myTbl4 ;
-CREATE TABLE myTbl4 (
-  col41       INT              NOT NULL,
-  col42       TEXT             ,
-  col43       INT              ,
-  col44       DECIMAL(7)       ,
-  col45       CHAR(10)         ,
+DROP TABLE IF EXISTS "my""tbl4" ;
+CREATE TABLE "my""tbl4" (
+  col41            INT              NOT NULL,
+  col42            TEXT             ,
+  col43            INT              ,
+  col44            DECIMAL(7)       ,
+  col45            CHAR(10)         ,
   PRIMARY KEY (col41),
-  CONSTRAINT mytbl4_col44_fkey FOREIGN KEY (col44,col45) REFERENCES "phil's tbl1" ("phil's col11","phil's col12") ON DELETE CASCADE ON UPDATE SET NULL
+  CONSTRAINT "my""tbl4_col44_fkey" FOREIGN KEY (col44,col45) REFERENCES "phil's tbl1" ("phil's col11","phil's col12") ON DELETE CASCADE ON UPDATE SET NULL
 );
-ALTER TABLE "myTbl2\" ADD CONSTRAINT mytbl2_col21_fkey FOREIGN KEY (col21) REFERENCES myTbl4 (col41);
+ALTER TABLE "myTbl2\" ADD CONSTRAINT mytbl2_col21_fkey FOREIGN KEY (col21) REFERENCES "my""tbl4" (col41);
 
-CREATE SEQUENCE "phil's seq\1" MINVALUE 1000 MAXVALUE 2000 CYCLE;
+CREATE SEQUENCE "phil's""seq\1" MINVALUE 1000 MAXVALUE 2000 CYCLE;
 
 --
 -- Fourth schema (for partitioning)

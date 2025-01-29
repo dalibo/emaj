@@ -791,37 +791,37 @@ select public.handle_emaj_sequences(5200);
 -- get all groups, tables and sequences
 select * from emaj._get_sequences_last_value(null, null, null, null, null, null)
   where p_key <> 'current_epoch' order by 1;
-              p_key               | p_value 
-----------------------------------+---------
- emaj.emaj_global_seq             | 5200000
- emaj.emaj_time_stamp_time_id_seq | 5199
- myschema1.myTbl3                 | 30
- myschema1.myTbl3_col31_seq       | 10
- myschema1.mytbl1                 | 64
- myschema1.mytbl2                 | 14
- myschema1.mytbl2b                | 15
- myschema1.mytbl2b_col20_seq      | 2
- myschema1.mytbl4                 | 4
- myschema2.myTbl3                 | 10
- myschema2.myTbl3_col31_seq       | 10
- myschema2.myseq1                 | 1002
- myschema2.mytbl1                 | 10700
- myschema2.mytbl2                 | 900
- myschema2.mytbl4                 | 100
- myschema2.mytbl5                 | 0
- myschema2.mytbl6                 | 0
- myschema2.mytbl7                 | 0
- myschema2.mytbl8                 | 0
- myschema4.mypartp1               | 3
- myschema4.mypartp2               | 8
- myschema4.mytblc1                | 3
- myschema4.mytblc2                | 3
- myschema4.mytblm                 | 3
- myschema4.mytblr                 | 2
- phil's schema3.myTbl2\           | 0
- phil's schema3.myTbl2\_col21_seq | 0
- phil's schema3.phil's seq\1      | 999
- phil's schema3.phil's tbl1       | 0
+               p_key               | p_value 
+-----------------------------------+---------
+ emaj.emaj_global_seq              | 5200000
+ emaj.emaj_time_stamp_time_id_seq  | 5199
+ myschema1.myTbl3                  | 30
+ myschema1.myTbl3_col31_seq        | 10
+ myschema1.mytbl1                  | 64
+ myschema1.mytbl2                  | 14
+ myschema1.mytbl2b                 | 15
+ myschema1.mytbl2b_col20_seq       | 2
+ myschema1.mytbl4                  | 4
+ myschema2.myTbl3                  | 10
+ myschema2.myTbl3_col31_seq        | 10
+ myschema2.myseq1                  | 1002
+ myschema2.mytbl1                  | 10700
+ myschema2.mytbl2                  | 900
+ myschema2.mytbl4                  | 100
+ myschema2.mytbl5                  | 0
+ myschema2.mytbl6                  | 0
+ myschema2.mytbl7                  | 0
+ myschema2.mytbl8                  | 0
+ myschema4.mypartp1                | 3
+ myschema4.mypartp2                | 8
+ myschema4.mytblc1                 | 3
+ myschema4.mytblc2                 | 3
+ myschema4.mytblm                  | 3
+ myschema4.mytblr                  | 2
+ phil's schema"3.myTbl2\           | 0
+ phil's schema"3.myTbl2\_col21_seq | 0
+ phil's schema"3.phil's tbl1       | 0
+ phil's schema"3.phil's"seq\1      | 999
 (29 rows)
 
 -- filter on groups
@@ -857,21 +857,21 @@ select p_key from emaj._get_sequences_last_value('Group', null, null, null, null
 (26 rows)
 
 select p_key from emaj._get_sequences_last_value(null, 'Group', null, null, null, null) order by 1;
-              p_key               
-----------------------------------
+               p_key               
+-----------------------------------
  current_epoch
  emaj.emaj_global_seq
  emaj.emaj_time_stamp_time_id_seq
- phil's schema3.myTbl2\
- phil's schema3.myTbl2\_col21_seq
- phil's schema3.phil's seq\1
- phil's schema3.phil's tbl1
+ phil's schema"3.myTbl2\
+ phil's schema"3.myTbl2\_col21_seq
+ phil's schema"3.phil's tbl1
+ phil's schema"3.phil's"seq\1
 (7 rows)
 
 -- filter on tables and sequences
 select p_key from emaj._get_sequences_last_value(null, null, 'tbl2|tbl4', '2b', 'col', 'myschema2') order by 1;
-              p_key               
-----------------------------------
+               p_key               
+-----------------------------------
  current_epoch
  emaj.emaj_global_seq
  emaj.emaj_time_stamp_time_id_seq
@@ -881,7 +881,7 @@ select p_key from emaj._get_sequences_last_value(null, null, 'tbl2|tbl4', '2b', 
  myschema1.mytbl4
  myschema2.mytbl2
  myschema2.mytbl4
- phil's schema3.myTbl2\_col21_seq
+ phil's schema"3.myTbl2\_col21_seq
 (10 rows)
 
 -----------------------------
@@ -1333,7 +1333,7 @@ SQL statement "SELECT p_nbStmt
                           FROM emaj._gen_sql_dump_changes_group(p_groupName, p_firstMark, p_lastMark, p_optionsList, p_tblseqs, TRUE)"
 PL/pgSQL function emaj.emaj_gen_sql_dump_changes_group(text,text,text,text,text[]) line 25 at SQL statement
 select emaj.emaj_gen_sql_dump_changes_group('phil''s group#3",', 'Mark4', 'Mark5', 'COLS_ORDER = PK', NULL);
-ERROR:  _gen_sql_dump_changes_group: A CONSOLIDATION level set to PARTIAL or FULL or a COLS_ORDER set to PK or an ORDER_BY set to PK cannot support tables without primary key. And no primary key is defined for tables "phil's schema3.myTbl2\"
+ERROR:  _gen_sql_dump_changes_group: A CONSOLIDATION level set to PARTIAL or FULL or a COLS_ORDER set to PK or an ORDER_BY set to PK cannot support tables without primary key. And no primary key is defined for tables "phil's schema"3.myTbl2\"
 CONTEXT:  PL/pgSQL function emaj._gen_sql_dump_changes_group(text,text,text,text,text[],boolean) line 211 at RAISE
 SQL statement "SELECT p_nbStmt
                           FROM emaj._gen_sql_dump_changes_group(p_groupName, p_firstMark, p_lastMark, p_optionsList, p_tblseqs, TRUE)"
@@ -1351,13 +1351,13 @@ SQL statement "SELECT p_nbStmt
                           FROM emaj._gen_sql_dump_changes_group(p_groupName, p_firstMark, p_lastMark, p_optionsList, p_tblseqs, TRUE)"
 PL/pgSQL function emaj.emaj_gen_sql_dump_changes_group(text,text,text,text,text[]) line 25 at SQL statement
 select emaj.emaj_gen_sql_dump_changes_group('phil''s group#3",', 'Mark4', 'Mark5', 'CONSOLIDATION = FULL', NULL);
-ERROR:  _gen_sql_dump_changes_group: A CONSOLIDATION level set to PARTIAL or FULL or a COLS_ORDER set to PK or an ORDER_BY set to PK cannot support tables without primary key. And no primary key is defined for tables "phil's schema3.myTbl2\"
+ERROR:  _gen_sql_dump_changes_group: A CONSOLIDATION level set to PARTIAL or FULL or a COLS_ORDER set to PK or an ORDER_BY set to PK cannot support tables without primary key. And no primary key is defined for tables "phil's schema"3.myTbl2\"
 CONTEXT:  PL/pgSQL function emaj._gen_sql_dump_changes_group(text,text,text,text,text[],boolean) line 211 at RAISE
 SQL statement "SELECT p_nbStmt
                           FROM emaj._gen_sql_dump_changes_group(p_groupName, p_firstMark, p_lastMark, p_optionsList, p_tblseqs, TRUE)"
 PL/pgSQL function emaj.emaj_gen_sql_dump_changes_group(text,text,text,text,text[]) line 25 at SQL statement
 select emaj.emaj_gen_sql_dump_changes_group('phil''s group#3",', 'Mark4', 'Mark5', 'CONSOLIDATION = partial', NULL);
-ERROR:  _gen_sql_dump_changes_group: A CONSOLIDATION level set to PARTIAL or FULL or a COLS_ORDER set to PK or an ORDER_BY set to PK cannot support tables without primary key. And no primary key is defined for tables "phil's schema3.myTbl2\"
+ERROR:  _gen_sql_dump_changes_group: A CONSOLIDATION level set to PARTIAL or FULL or a COLS_ORDER set to PK or an ORDER_BY set to PK cannot support tables without primary key. And no primary key is defined for tables "phil's schema"3.myTbl2\"
 CONTEXT:  PL/pgSQL function emaj._gen_sql_dump_changes_group(text,text,text,text,text[],boolean) line 211 at RAISE
 SQL statement "SELECT p_nbStmt
                           FROM emaj._gen_sql_dump_changes_group(p_groupName, p_firstMark, p_lastMark, p_optionsList, p_tblseqs, TRUE)"
@@ -1401,7 +1401,7 @@ SQL statement "SELECT p_nbStmt
                           FROM emaj._gen_sql_dump_changes_group(p_groupName, p_firstMark, p_lastMark, p_optionsList, p_tblseqs, TRUE)"
 PL/pgSQL function emaj.emaj_gen_sql_dump_changes_group(text,text,text,text,text[]) line 25 at SQL statement
 select emaj.emaj_gen_sql_dump_changes_group('phil''s group#3",', 'Mark4', 'Mark5', 'ORDER_BY = pk', NULL);
-ERROR:  _gen_sql_dump_changes_group: A CONSOLIDATION level set to PARTIAL or FULL or a COLS_ORDER set to PK or an ORDER_BY set to PK cannot support tables without primary key. And no primary key is defined for tables "phil's schema3.myTbl2\"
+ERROR:  _gen_sql_dump_changes_group: A CONSOLIDATION level set to PARTIAL or FULL or a COLS_ORDER set to PK or an ORDER_BY set to PK cannot support tables without primary key. And no primary key is defined for tables "phil's schema"3.myTbl2\"
 CONTEXT:  PL/pgSQL function emaj._gen_sql_dump_changes_group(text,text,text,text,text[],boolean) line 211 at RAISE
 SQL statement "SELECT p_nbStmt
                           FROM emaj._gen_sql_dump_changes_group(p_groupName, p_firstMark, p_lastMark, p_optionsList, p_tblseqs, TRUE)"
@@ -2295,27 +2295,28 @@ NOTICE:  table "emaj_temp_sql" does not exist, skipping
 \! ls -1sS $EMAJTESTTMPDIR
 total 12
 4 _INFO
-4 phil_s_schema3_myTbl2__col21_seq.changes
-4 phil_s_schema3_phil_s_seq_1.changes
-0 phil_s_schema3_myTbl2_.changes
-0 phil_s_schema3_phil_s_tbl1.changes
+4 phil_s_schema_3_myTbl2__col21_seq.changes
+4 phil_s_schema_3_phil_s_seq_1.changes
+0 phil_s_schema_3_myTbl2_.changes
+0 phil_s_schema_3_phil_s_tbl1.changes
 \! grep -v '  started at ' $EMAJTESTTMPDIR/_INFO
 Dump logged changes for the group "phil's group#3"," between mark "Mark4" and mark "Mark5"
   using options "CONSOLIDATION=NONE"
-File phil's_schema3_myTbl2_.changes covers table "phil's schema3.myTbl2\\" from mark "Mark4" to mark "Mark5"
-File phil's_schema3_phil's_tbl1.changes covers table "phil's schema3.phil's tbl1" from mark "Mark4" to mark "Mark5"
-File phil's_schema3_myTbl2__col21_seq.changes covers sequence "phil's schema3.myTbl2\\_col21_seq" from mark "Mark4" to mark "Mark5"
-File phil's_schema3_phil's_seq_1.changes covers sequence "phil's schema3.phil's seq\\1" from mark "Mark4" to mark "Mark5"
-\! cat $EMAJTESTTMPDIR/"phil's_schema3_myTbl2__col21_seq.changes"
-cat: "/tmp/emaj_11/misc/phil's_schema3_myTbl2__col21_seq.changes": No such file or directory
-SELECT emaj.emaj_dump_changes_group('phil''s group#3",', 'Mark4', 'Mark5', 'CONSOLIDATION=PARTIAL', '{"phil''s schema3.phil''s tbl1"}', :'EMAJTESTTMPDIR');
+File phil's_schema"3_myTbl2_.changes covers table "phil's schema"3.myTbl2\\" from mark "Mark4" to mark "Mark5"
+File phil's_schema"3_phil's_tbl1.changes covers table "phil's schema"3.phil's tbl1" from mark "Mark4" to mark "Mark5"
+File phil's_schema"3_myTbl2__col21_seq.changes covers sequence "phil's schema"3.myTbl2\\_col21_seq" from mark "Mark4" to mark "Mark5"
+File phil's_schema"3_phil's"seq_1.changes covers sequence "phil's schema"3.phil's"seq\\1" from mark "Mark4" to mark "Mark5"
+\! cat $EMAJTESTTMPDIR/phil_s_schema_3_myTbl2__col21_seq.changes
+OLD	phil's schema"3	myTbl2\\_col21_seq	3402	1	1	1	2147483647	1	1	f	f
+NEW	phil's schema"3	myTbl2\\_col21_seq	3403	1	1	1	2147483647	1	1	f	f
+SELECT emaj.emaj_dump_changes_group('phil''s group#3",', 'Mark4', 'Mark5', 'CONSOLIDATION=PARTIAL', '{"phil''s schema\"3.phil''s tbl1"}', :'EMAJTESTTMPDIR');
 NOTICE:  table "emaj_temp_sql" does not exist, skipping
             emaj_dump_changes_group             
 ------------------------------------------------
  2 files have been created in /tmp/emaj_11/misc
 (1 row)
 
-SELECT emaj.emaj_dump_changes_group('phil''s group#3",', 'Mark4', 'Mark5', 'CONSOLIDATION=FULL', '{"phil''s schema3.phil''s tbl1"}', :'EMAJTESTTMPDIR');
+SELECT emaj.emaj_dump_changes_group('phil''s group#3",', 'Mark4', 'Mark5', 'CONSOLIDATION=FULL', '{"phil''s schema\"3.phil''s tbl1"}', :'EMAJTESTTMPDIR');
 NOTICE:  table "emaj_temp_sql" does not exist, skipping
             emaj_dump_changes_group             
 ------------------------------------------------
@@ -2561,7 +2562,7 @@ PL/pgSQL function emaj._gen_sql_groups(text[],boolean,text,text,text,text[],text
 PL/pgSQL function emaj.emaj_gen_sql_groups(text[],text,text,text,text[]) line 14 at RETURN
 -- the tables group contains a table without pkey
 select emaj.emaj_gen_sql_group('phil''s group#3",', 'Mark4', 'EMAJ_LAST_MARK', :'EMAJTESTTMPDIR' || '/Group3');
-ERROR:  _gen_sql_groups: 1 tables/sequences (phil's schema3.myTbl2\) had no pkey at Mark4 mark time.
+ERROR:  _gen_sql_groups: 1 tables/sequences (phil's schema"3.myTbl2\) had no pkey at Mark4 mark time.
 CONTEXT:  PL/pgSQL function emaj._gen_sql_groups(text[],boolean,text,text,text,text[],text) line 67 at RAISE
 PL/pgSQL function emaj.emaj_gen_sql_group(text,text,text,text,text[]) line 14 at RETURN
 -- invalid location path name
@@ -2681,7 +2682,7 @@ NOTICE:  table "emaj_temp_script" does not exist, skipping
 
 -- only 1 table (with a strange name and belonging to a group having another table without pkey)
 select emaj.emaj_gen_sql_group('phil''s group#3",', 'Mark4', 'EMAJ_LAST_MARK', :'EMAJTESTTMPDIR' || '/myFile', array[
-     'phil''s schema3.phil''s tbl1']);
+     'phil''s schema"3.phil''s tbl1']);
 NOTICE:  table "emaj_temp_script" does not exist, skipping
  emaj_gen_sql_group 
 --------------------

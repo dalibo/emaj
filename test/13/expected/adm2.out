@@ -622,7 +622,7 @@ select public.handle_emaj_sequences(14200);
 -- prepare phil's group#3, group
 --
 reset role;
-alter table "phil's schema3"."myTbl2\" add primary key (col21);
+alter table "phil's schema""3"."myTbl2\" add primary key (col21);
 set role emaj_regression_tests_adm_user2;
 select emaj.emaj_create_group('phil''s group#3",');
  emaj_create_group 
@@ -630,27 +630,27 @@ select emaj.emaj_create_group('phil''s group#3",');
                  1
 (1 row)
 
-select emaj.emaj_assign_tables('phil''s schema3','.*','mytbl4','phil''s group#3",');
+select emaj.emaj_assign_tables('phil''s schema"3','.*','my"tbl4','phil''s group#3",');
 NOTICE:  table "myTbl2\_log" does not exist, skipping
-NOTICE:  trigger "emaj_log_trg" for relation "phil's schema3.myTbl2\" does not exist, skipping
-NOTICE:  trigger "emaj_trunc_trg" for relation "phil's schema3.myTbl2\" does not exist, skipping
+NOTICE:  trigger "emaj_log_trg" for relation "phil's schema"3.myTbl2\" does not exist, skipping
+NOTICE:  trigger "emaj_trunc_trg" for relation "phil's schema"3.myTbl2\" does not exist, skipping
 NOTICE:  table "phil's tbl1_log" does not exist, skipping
-NOTICE:  trigger "emaj_log_trg" for relation "phil's schema3.phil's tbl1" does not exist, skipping
-NOTICE:  trigger "emaj_trunc_trg" for relation "phil's schema3.phil's tbl1" does not exist, skipping
+NOTICE:  trigger "emaj_log_trg" for relation "phil's schema"3.phil's tbl1" does not exist, skipping
+NOTICE:  trigger "emaj_trunc_trg" for relation "phil's schema"3.phil's tbl1" does not exist, skipping
  emaj_assign_tables 
 --------------------
                   2
 (1 row)
 
-select emaj.emaj_assign_sequences('phil''s schema3','.*',null,'phil''s group#3",');
+select emaj.emaj_assign_sequences('phil''s schema"3','.*',null,'phil''s group#3",');
  emaj_assign_sequences 
 -----------------------
                      2
 (1 row)
 
 select emaj.emaj_start_group('phil''s group#3",','M1_rollbackable');
-WARNING:  _check_fk_groups: The foreign key "mytbl2_col21_fkey" on the table "phil's schema3.myTbl2\" references the table "phil's schema3.mytbl4" that is outside the groups (phil's group#3",).
-WARNING:  _check_fk_groups: The table "phil's schema3.phil's tbl1" is referenced by the foreign key "mytbl4_col44_fkey" on the table "phil's schema3.mytbl4" that is outside the groups (phil's group#3",).
+WARNING:  _check_fk_groups: The foreign key "mytbl2_col21_fkey" on the table "phil's schema"3.myTbl2\" references the table "phil's schema"3.my"tbl4" that is outside the groups (phil's group#3",).
+WARNING:  _check_fk_groups: The table "phil's schema"3.phil's tbl1" is referenced by the foreign key "my"tbl4_col44_fkey" on the table "phil's schema"3.my"tbl4" that is outside the groups (phil's group#3",).
  emaj_start_group 
 ------------------
                 4
@@ -658,17 +658,17 @@ WARNING:  _check_fk_groups: The table "phil's schema3.phil's tbl1" is referenced
 
 --
 reset role;
-set search_path=public,"phil's schema3";
+set search_path=public,"phil's schema""3";
 --
 insert into "phil's tbl1" select i, 'AB''C', E'\\014'::bytea from generate_series (1,31) as i;
-update "phil's tbl1" set "phil\s col13" = E'\\034'::bytea where "phil's col11" <= 3;
-update "phil's tbl1" set "phil\s col13" = E'\\034'''::bytea where "phil's col11" between 18 and 22;
-insert into myTbl4 (col41) values (1);
-insert into myTbl4 (col41) values (2);
+update "phil's tbl1" set "phil\s""col13" = E'\\034'::bytea where "phil's col11" <= 3;
+update "phil's tbl1" set "phil\s""col13" = E'\\034'''::bytea where "phil's col11" between 18 and 22;
+insert into "my""tbl4" (col41) values (1);
+insert into "my""tbl4" (col41) values (2);
 insert into "myTbl2\" values (1,'ABC','2010-12-31');
 delete from "phil's tbl1" where "phil's col11" > 20;
 insert into "myTbl2\" values (2,'DEF',NULL);
-select nextval(E'"phil''s schema3"."phil''s seq\\1"');
+select nextval(E'"phil''s schema""3"."phil''s""seq\\1"');
  nextval 
 ---------
     1000
@@ -692,7 +692,7 @@ select emaj.emaj_set_mark_group('phil''s group#3",','M2_again!');
 reset role;
 delete from "phil's tbl1" where "phil's col11" = 10;
 update "phil's tbl1" set "phil's col12" = 'DEF' where "phil's col11" <= 2;
-select nextval(E'"phil''s schema3"."phil''s seq\\1"');
+select nextval(E'"phil''s schema""3"."phil''s""seq\\1"');
  nextval 
 ---------
     1001
@@ -722,10 +722,10 @@ select emaj.emaj_delete_mark_group('phil''s group#3",','M2_again!');
 
 --
 select stat_group, stat_schema, stat_table, stat_first_mark, stat_last_mark, stat_rows from emaj.emaj_log_stat_group('phil''s group#3",','M1_rollbackable','');
-    stat_group    |  stat_schema   | stat_table  | stat_first_mark | stat_last_mark | stat_rows 
-------------------+----------------+-------------+-----------------+----------------+-----------
- phil's group#3", | phil's schema3 | myTbl2\     | M1_rollbackable |                |         2
- phil's group#3", | phil's schema3 | phil's tbl1 | M1_rollbackable |                |        53
+    stat_group    |   stat_schema   | stat_table  | stat_first_mark | stat_last_mark | stat_rows 
+------------------+-----------------+-------------+-----------------+----------------+-----------
+ phil's group#3", | phil's schema"3 | myTbl2\     | M1_rollbackable |                |         2
+ phil's group#3", | phil's schema"3 | phil's tbl1 | M1_rollbackable |                |        53
 (2 rows)
 
 select stat_group, stat_schema, stat_table, stat_first_mark, stat_last_mark, stat_role, stat_verb, stat_rows
@@ -774,99 +774,99 @@ select mark_group, regexp_replace(mark_name,E'\\d\\d\.\\d\\d\\.\\d\\d\\.\\d\\d\\
 (13 rows)
 
 select sequ_schema, sequ_name, sequ_time_id, sequ_last_val, sequ_is_called from emaj.emaj_sequence order by sequ_time_id, sequ_schema, sequ_name;
-  sequ_schema   |     sequ_name     | sequ_time_id | sequ_last_val | sequ_is_called 
-----------------+-------------------+--------------+---------------+----------------
- myschema2      | myTbl3_col31_seq  |        12201 |            20 | t
- myschema2      | myseq1            |        12201 |          1003 | t
- myschema1      | myTbl3_col31_seq  |        12401 |            20 | t
- myschema1      | mytbl2b_col20_seq |        12401 |             5 | t
- myschema1      | myTbl3_col31_seq  |        12402 |            20 | t
- myschema1      | mytbl2b_col20_seq |        12402 |             5 | t
- myschema1      | myTbl3_col31_seq  |        12601 |            20 | t
- myschema1      | mytbl2b_col20_seq |        12601 |             5 | t
- myschema1      | myTbl3_col31_seq  |        14000 |            20 | t
- myschema1      | mytbl2b_col20_seq |        14000 |             5 | t
- myschema2      | myTbl3_col31_seq  |        14000 |            20 | t
- myschema2      | myseq1            |        14000 |          1004 | f
- myschema1      | myTbl3_col31_seq  |        14007 |            20 | t
- myschema1      | mytbl2b_col20_seq |        14007 |             5 | t
- myschema2      | myTbl3_col31_seq  |        14007 |            20 | t
- myschema2      | myseq1            |        14007 |          1004 | f
- myschema1      | myTbl3_col31_seq  |        14009 |            20 | t
- myschema1      | mytbl2b_col20_seq |        14009 |             5 | t
- myschema2      | myTbl3_col31_seq  |        14009 |            20 | t
- myschema2      | myseq1            |        14009 |          1004 | f
- phil's schema3 | myTbl2\_col21_seq |        14203 |             1 | f
- phil's schema3 | phil's seq\1      |        14203 |          1000 | f
- phil's schema3 | myTbl2\_col21_seq |        14204 |             1 | f
- phil's schema3 | phil's seq\1      |        14204 |          1000 | t
- phil's schema3 | myTbl2\_col21_seq |        14206 |             1 | f
- phil's schema3 | phil's seq\1      |        14206 |          1001 | t
+   sequ_schema   |     sequ_name     | sequ_time_id | sequ_last_val | sequ_is_called 
+-----------------+-------------------+--------------+---------------+----------------
+ myschema2       | myTbl3_col31_seq  |        12201 |            20 | t
+ myschema2       | myseq1            |        12201 |          1003 | t
+ myschema1       | myTbl3_col31_seq  |        12401 |            20 | t
+ myschema1       | mytbl2b_col20_seq |        12401 |             5 | t
+ myschema1       | myTbl3_col31_seq  |        12402 |            20 | t
+ myschema1       | mytbl2b_col20_seq |        12402 |             5 | t
+ myschema1       | myTbl3_col31_seq  |        12601 |            20 | t
+ myschema1       | mytbl2b_col20_seq |        12601 |             5 | t
+ myschema1       | myTbl3_col31_seq  |        14000 |            20 | t
+ myschema1       | mytbl2b_col20_seq |        14000 |             5 | t
+ myschema2       | myTbl3_col31_seq  |        14000 |            20 | t
+ myschema2       | myseq1            |        14000 |          1004 | f
+ myschema1       | myTbl3_col31_seq  |        14007 |            20 | t
+ myschema1       | mytbl2b_col20_seq |        14007 |             5 | t
+ myschema2       | myTbl3_col31_seq  |        14007 |            20 | t
+ myschema2       | myseq1            |        14007 |          1004 | f
+ myschema1       | myTbl3_col31_seq  |        14009 |            20 | t
+ myschema1       | mytbl2b_col20_seq |        14009 |             5 | t
+ myschema2       | myTbl3_col31_seq  |        14009 |            20 | t
+ myschema2       | myseq1            |        14009 |          1004 | f
+ phil's schema"3 | myTbl2\_col21_seq |        14203 |             1 | f
+ phil's schema"3 | phil's"seq\1      |        14203 |          1000 | f
+ phil's schema"3 | myTbl2\_col21_seq |        14204 |             1 | f
+ phil's schema"3 | phil's"seq\1      |        14204 |          1000 | t
+ phil's schema"3 | myTbl2\_col21_seq |        14206 |             1 | f
+ phil's schema"3 | phil's"seq\1      |        14206 |          1001 | t
 (26 rows)
 
 select tbl_schema, tbl_name, tbl_time_id, tbl_log_seq_last_val from emaj.emaj_table order by tbl_time_id, tbl_schema, tbl_name;
-   tbl_schema   |  tbl_name   | tbl_time_id | tbl_log_seq_last_val 
-----------------+-------------+-------------+----------------------
- myschema2      | myTbl3      |       12201 |                   10
- myschema2      | mytbl1      |       12201 |                   15
- myschema2      | mytbl2      |       12201 |                    2
- myschema2      | mytbl4      |       12201 |                    4
- myschema2      | mytbl5      |       12201 |                    4
- myschema2      | mytbl6      |       12201 |                   14
- myschema1      | myTbl3      |       12401 |                   10
- myschema1      | mytbl1      |       12401 |                   30
- myschema1      | mytbl2      |       12401 |                    3
- myschema1      | mytbl2b     |       12401 |                    3
- myschema1      | mytbl4      |       12401 |                    8
- myschema1      | myTbl3      |       12402 |                   20
- myschema1      | mytbl1      |       12402 |                   30
- myschema1      | mytbl2      |       12402 |                    3
- myschema1      | mytbl2b     |       12402 |                    3
- myschema1      | mytbl4      |       12402 |                    8
- myschema1      | myTbl3      |       12601 |                   20
- myschema1      | mytbl1      |       12601 |                   32
- myschema1      | mytbl2      |       12601 |                    3
- myschema1      | mytbl2b     |       12601 |                    3
- myschema1      | mytbl4      |       12601 |                   12
- myschema1      | myTbl3      |       14000 |                   45
- myschema1      | mytbl1      |       14000 |                   33
- myschema1      | mytbl2      |       14000 |                    3
- myschema1      | mytbl2b     |       14000 |                    3
- myschema1      | mytbl4      |       14000 |                   14
- myschema2      | myTbl3      |       14000 |                   10
- myschema2      | mytbl1      |       14000 |                   15
- myschema2      | mytbl2      |       14000 |                    2
- myschema2      | mytbl4      |       14000 |                   10
- myschema2      | mytbl5      |       14000 |                    7
- myschema2      | mytbl6      |       14000 |                   23
- myschema1      | myTbl3      |       14007 |                   45
- myschema1      | mytbl1      |       14007 |                   33
- myschema1      | mytbl2      |       14007 |                    3
- myschema1      | mytbl2b     |       14007 |                    3
- myschema1      | mytbl4      |       14007 |                   14
- myschema2      | myTbl3      |       14007 |                   10
- myschema2      | mytbl1      |       14007 |                   15
- myschema2      | mytbl2      |       14007 |                    2
- myschema2      | mytbl4      |       14007 |                   10
- myschema2      | mytbl5      |       14007 |                    7
- myschema2      | mytbl6      |       14007 |                   23
- myschema1      | myTbl3      |       14009 |                   45
- myschema1      | mytbl1      |       14009 |                   33
- myschema1      | mytbl2      |       14009 |                    3
- myschema1      | mytbl2b     |       14009 |                    3
- myschema1      | mytbl4      |       14009 |                   14
- myschema2      | myTbl3      |       14009 |                   10
- myschema2      | mytbl1      |       14009 |                   15
- myschema2      | mytbl2      |       14009 |                    2
- myschema2      | mytbl4      |       14009 |                   10
- myschema2      | mytbl5      |       14009 |                    7
- myschema2      | mytbl6      |       14009 |                   23
- phil's schema3 | myTbl2\     |       14203 |                    0
- phil's schema3 | phil's tbl1 |       14203 |                    0
- phil's schema3 | myTbl2\     |       14204 |                    2
- phil's schema3 | phil's tbl1 |       14204 |                   50
- phil's schema3 | myTbl2\     |       14206 |                    2
- phil's schema3 | phil's tbl1 |       14206 |                   53
+   tbl_schema    |  tbl_name   | tbl_time_id | tbl_log_seq_last_val 
+-----------------+-------------+-------------+----------------------
+ myschema2       | myTbl3      |       12201 |                   10
+ myschema2       | mytbl1      |       12201 |                   15
+ myschema2       | mytbl2      |       12201 |                    2
+ myschema2       | mytbl4      |       12201 |                    4
+ myschema2       | mytbl5      |       12201 |                    4
+ myschema2       | mytbl6      |       12201 |                   14
+ myschema1       | myTbl3      |       12401 |                   10
+ myschema1       | mytbl1      |       12401 |                   30
+ myschema1       | mytbl2      |       12401 |                    3
+ myschema1       | mytbl2b     |       12401 |                    3
+ myschema1       | mytbl4      |       12401 |                    8
+ myschema1       | myTbl3      |       12402 |                   20
+ myschema1       | mytbl1      |       12402 |                   30
+ myschema1       | mytbl2      |       12402 |                    3
+ myschema1       | mytbl2b     |       12402 |                    3
+ myschema1       | mytbl4      |       12402 |                    8
+ myschema1       | myTbl3      |       12601 |                   20
+ myschema1       | mytbl1      |       12601 |                   32
+ myschema1       | mytbl2      |       12601 |                    3
+ myschema1       | mytbl2b     |       12601 |                    3
+ myschema1       | mytbl4      |       12601 |                   12
+ myschema1       | myTbl3      |       14000 |                   45
+ myschema1       | mytbl1      |       14000 |                   33
+ myschema1       | mytbl2      |       14000 |                    3
+ myschema1       | mytbl2b     |       14000 |                    3
+ myschema1       | mytbl4      |       14000 |                   14
+ myschema2       | myTbl3      |       14000 |                   10
+ myschema2       | mytbl1      |       14000 |                   15
+ myschema2       | mytbl2      |       14000 |                    2
+ myschema2       | mytbl4      |       14000 |                   10
+ myschema2       | mytbl5      |       14000 |                    7
+ myschema2       | mytbl6      |       14000 |                   23
+ myschema1       | myTbl3      |       14007 |                   45
+ myschema1       | mytbl1      |       14007 |                   33
+ myschema1       | mytbl2      |       14007 |                    3
+ myschema1       | mytbl2b     |       14007 |                    3
+ myschema1       | mytbl4      |       14007 |                   14
+ myschema2       | myTbl3      |       14007 |                   10
+ myschema2       | mytbl1      |       14007 |                   15
+ myschema2       | mytbl2      |       14007 |                    2
+ myschema2       | mytbl4      |       14007 |                   10
+ myschema2       | mytbl5      |       14007 |                    7
+ myschema2       | mytbl6      |       14007 |                   23
+ myschema1       | myTbl3      |       14009 |                   45
+ myschema1       | mytbl1      |       14009 |                   33
+ myschema1       | mytbl2      |       14009 |                    3
+ myschema1       | mytbl2b     |       14009 |                    3
+ myschema1       | mytbl4      |       14009 |                   14
+ myschema2       | myTbl3      |       14009 |                   10
+ myschema2       | mytbl1      |       14009 |                   15
+ myschema2       | mytbl2      |       14009 |                    2
+ myschema2       | mytbl4      |       14009 |                   10
+ myschema2       | mytbl5      |       14009 |                    7
+ myschema2       | mytbl6      |       14009 |                   23
+ phil's schema"3 | myTbl2\     |       14203 |                    0
+ phil's schema"3 | phil's tbl1 |       14203 |                    0
+ phil's schema"3 | myTbl2\     |       14204 |                    2
+ phil's schema"3 | phil's tbl1 |       14204 |                   50
+ phil's schema"3 | myTbl2\     |       14206 |                    2
+ phil's schema"3 | phil's tbl1 |       14206 |                   53
 (60 rows)
 
 select sqhl_schema, sqhl_table, sqhl_begin_time_id, sqhl_end_time_id, sqhl_hole_size from emaj.emaj_seq_hole order by 1,2,3;
@@ -977,82 +977,82 @@ select hist_function, hist_event, hist_object,
             E'\\[.+\\]','(timestamp)','g'), 
        hist_user
   from emaj.emaj_hist where hist_id >= 14200 order by hist_id;
-   hist_function    |     hist_event     |             hist_object              |                    regexp_replace                    | hist_user 
---------------------+--------------------+--------------------------------------+------------------------------------------------------+-----------
- CREATE_GROUP       | BEGIN              | phil's group#3",                     | rollbackable                                         | postgres
- CREATE_GROUP       | TIME STAMP SET     | 14200                                |                                                      | postgres
- CREATE_GROUP       | END                | phil's group#3",                     |                                                      | postgres
- ASSIGN_TABLES      | BEGIN              |                                      |                                                      | postgres
- ASSIGN_TABLES      | TIME STAMP SET     | 14201                                |                                                      | postgres
- ASSIGN_TABLES      | LOG_SCHEMA CREATED | "emaj_phil's schema3"                |                                                      | postgres
- ASSIGN_TABLES      | TABLE ADDED        | "phil's schema3"."myTbl2\"           | To the idle group phil's group#3",                   | postgres
- ASSIGN_TABLES      | TABLE ADDED        | "phil's schema3"."phil's tbl1"       | To the idle group phil's group#3",                   | postgres
- ASSIGN_TABLES      | END                |                                      | 2 tables assigned to the group phil's group#3",      | postgres
- ASSIGN_SEQUENCES   | BEGIN              |                                      |                                                      | postgres
- ASSIGN_SEQUENCES   | TIME STAMP SET     | 14202                                |                                                      | postgres
- ASSIGN_SEQUENCES   | SEQUENCE ADDED     | "phil's schema3"."myTbl2\_col21_seq" | To the idle group phil's group#3",                   | postgres
- ASSIGN_SEQUENCES   | SEQUENCE ADDED     | "phil's schema3"."phil's seq\1"      | To the idle group phil's group#3",                   | postgres
- ASSIGN_SEQUENCES   | END                |                                      | 2 sequences assigned to the group phil's group#3",   | postgres
- START_GROUP        | BEGIN              | phil's group#3",                     | With log reset                                       | postgres
- START_GROUP        | TIME STAMP SET     | 14203                                |                                                      | postgres
- LOCK_GROUP         | BEGIN              | phil's group#3",                     |                                                      | postgres
- LOCK_GROUP         | END                | phil's group#3",                     | 2 tables locked, 0 deadlock(s)                       | postgres
- SET_MARK_GROUP     | BEGIN              | phil's group#3",                     | M1_rollbackable                                      | postgres
- CLEANUP_RLBK_STATE |                    | Rollback id 14003                    | set to COMMITTED                                     | postgres
- SET_MARK_GROUP     | END                | phil's group#3",                     | M1_rollbackable                                      | postgres
- START_GROUP        | END                | phil's group#3",                     | 4 tables/sequences processed                         | postgres
- SET_MARK_GROUP     | BEGIN              | phil's group#3",                     |                                                      | postgres
- LOCK_GROUP         | BEGIN              | phil's group#3",                     |                                                      | postgres
- LOCK_GROUP         | END                | phil's group#3",                     | 2 tables locked, 0 deadlock(s)                       | postgres
- SET_MARK_GROUP     | TIME STAMP SET     | 14204                                |                                                      | postgres
- SET_MARK_GROUP     | END                | phil's group#3",                     | M2_rollbackable                                      | postgres
- SET_MARK_GROUP     | BEGIN              | phil's group#3",                     |                                                      | postgres
- LOCK_GROUP         | BEGIN              | phil's group#3",                     |                                                      | postgres
- LOCK_GROUP         | END                | phil's group#3",                     | 2 tables locked, 0 deadlock(s)                       | postgres
- SET_MARK_GROUP     | TIME STAMP SET     | 14205                                |                                                      | postgres
- SET_MARK_GROUP     | END                | phil's group#3",                     | M2_again!                                            | postgres
- SET_MARK_GROUPS    | BEGIN              | phil's group#3",                     | phil's mark #1                                       | postgres
- LOCK_GROUPS        | BEGIN              | phil's group#3",                     |                                                      | postgres
- LOCK_GROUPS        | END                | phil's group#3",                     | 2 tables locked, 0 deadlock(s)                       | postgres
- SET_MARK_GROUPS    | TIME STAMP SET     | 14206                                |                                                      | postgres
- SET_MARK_GROUPS    | END                | phil's group#3",                     | phil's mark #1                                       | postgres
- RENAME_MARK_GROUP  | BEGIN              | phil's group#3",                     | phil's mark #1                                       | postgres
- RENAME_MARK_GROUP  | END                | phil's group#3",                     | phil's mark #1 renamed phil's mark #3                | postgres
- DELETE_MARK_GROUP  | BEGIN              | phil's group#3",                     | M2_again!                                            | postgres
- DELETE_MARK_GROUP  | END                | phil's group#3",                     | M2_again!                                            | postgres
- ROLLBACK_GROUP     | BEGIN              | phil's group#3",                     | Logged rollback to mark phil's mark #3 (timestamp)   | postgres
- DBLINK_OPEN_CNX    |                    | rlbk#1                               | Status = 1                                           | postgres
- LOCK_GROUP         | BEGIN              | phil's group#3",                     | Rollback session #1                                  | postgres
- LOCK_GROUP         | END                | phil's group#3",                     | Rollback session #1: 2 tables locked, 0 deadlock(s)  | postgres
- ROLLBACK_GROUP     | TIME STAMP SET     | 14207                                |                                                      | postgres
- SET_MARK_GROUP     | BEGIN              | phil's group#3",                     | RLBK_14200_START                                     | postgres
- SET_MARK_GROUP     | END                | phil's group#3",                     | RLBK_14200_START                                     | postgres
- SET_MARK_GROUP     | BEGIN              | phil's group#3",                     | RLBK_14200_DONE                                      | postgres
- SET_MARK_GROUP     | TIME STAMP SET     | 14208                                |                                                      | postgres
- SET_MARK_GROUP     | END                | phil's group#3",                     | RLBK_14200_DONE                                      | postgres
- ROLLBACK_GROUP     | NOTICE             | Rollback id 14200                    | Rollback id = 14200.                                 | postgres
- ROLLBACK_GROUP     | NOTICE             | Rollback id 14200                    | 0 / 2 tables effectively processed.                  | postgres
- ROLLBACK_GROUP     | NOTICE             | Rollback id 14200                    | 0 / 2 sequences effectively processed.               | postgres
- DBLINK_CLOSE_CNX   |                    | rlbk#1                               |                                                      | postgres
- ROLLBACK_GROUP     | END                | phil's group#3",                     | Rollback_id 14200                                    | postgres
- ROLLBACK_GROUP     | BEGIN              | phil's group#3",                     | Unlogged rollback to mark phil's mark #3 (timestamp) | postgres
- DBLINK_OPEN_CNX    |                    | rlbk#1                               | Status = 1                                           | postgres
- LOCK_GROUP         | BEGIN              | phil's group#3",                     | Rollback session #1                                  | postgres
- LOCK_GROUP         | END                | phil's group#3",                     | Rollback session #1: 2 tables locked, 0 deadlock(s)  | postgres
- ROLLBACK_GROUP     | TIME STAMP SET     | 14209                                |                                                      | postgres
- ROLLBACK_GROUP     | MARK DELETED       | phil's group#3",                     | mark RLBK_14200_START is deleted                     | postgres
- ROLLBACK_GROUP     | MARK DELETED       | phil's group#3",                     | mark RLBK_14200_DONE is deleted                      | postgres
- ROLLBACK_GROUP     | NOTICE             | Rollback id 14201                    | Rollback id = 14201.                                 | postgres
- ROLLBACK_GROUP     | NOTICE             | Rollback id 14201                    | 0 / 2 tables effectively processed.                  | postgres
- ROLLBACK_GROUP     | NOTICE             | Rollback id 14201                    | 0 / 2 sequences effectively processed.               | postgres
- DBLINK_CLOSE_CNX   |                    | rlbk#1                               |                                                      | postgres
- ROLLBACK_GROUP     | END                | phil's group#3",                     | Rollback_id 14201                                    | postgres
+   hist_function    |     hist_event     |              hist_object               |                    regexp_replace                    | hist_user 
+--------------------+--------------------+----------------------------------------+------------------------------------------------------+-----------
+ CREATE_GROUP       | BEGIN              | phil's group#3",                       | rollbackable                                         | postgres
+ CREATE_GROUP       | TIME STAMP SET     | 14200                                  |                                                      | postgres
+ CREATE_GROUP       | END                | phil's group#3",                       |                                                      | postgres
+ ASSIGN_TABLES      | BEGIN              |                                        |                                                      | postgres
+ ASSIGN_TABLES      | TIME STAMP SET     | 14201                                  |                                                      | postgres
+ ASSIGN_TABLES      | LOG_SCHEMA CREATED | "emaj_phil's schema""3"                |                                                      | postgres
+ ASSIGN_TABLES      | TABLE ADDED        | "phil's schema""3"."myTbl2\"           | To the idle group phil's group#3",                   | postgres
+ ASSIGN_TABLES      | TABLE ADDED        | "phil's schema""3"."phil's tbl1"       | To the idle group phil's group#3",                   | postgres
+ ASSIGN_TABLES      | END                |                                        | 2 tables assigned to the group phil's group#3",      | postgres
+ ASSIGN_SEQUENCES   | BEGIN              |                                        |                                                      | postgres
+ ASSIGN_SEQUENCES   | TIME STAMP SET     | 14202                                  |                                                      | postgres
+ ASSIGN_SEQUENCES   | SEQUENCE ADDED     | "phil's schema""3"."myTbl2\_col21_seq" | To the idle group phil's group#3",                   | postgres
+ ASSIGN_SEQUENCES   | SEQUENCE ADDED     | "phil's schema""3"."phil's""seq\1"     | To the idle group phil's group#3",                   | postgres
+ ASSIGN_SEQUENCES   | END                |                                        | 2 sequences assigned to the group phil's group#3",   | postgres
+ START_GROUP        | BEGIN              | phil's group#3",                       | With log reset                                       | postgres
+ START_GROUP        | TIME STAMP SET     | 14203                                  |                                                      | postgres
+ LOCK_GROUP         | BEGIN              | phil's group#3",                       |                                                      | postgres
+ LOCK_GROUP         | END                | phil's group#3",                       | 2 tables locked, 0 deadlock(s)                       | postgres
+ SET_MARK_GROUP     | BEGIN              | phil's group#3",                       | M1_rollbackable                                      | postgres
+ CLEANUP_RLBK_STATE |                    | Rollback id 14003                      | set to COMMITTED                                     | postgres
+ SET_MARK_GROUP     | END                | phil's group#3",                       | M1_rollbackable                                      | postgres
+ START_GROUP        | END                | phil's group#3",                       | 4 tables/sequences processed                         | postgres
+ SET_MARK_GROUP     | BEGIN              | phil's group#3",                       |                                                      | postgres
+ LOCK_GROUP         | BEGIN              | phil's group#3",                       |                                                      | postgres
+ LOCK_GROUP         | END                | phil's group#3",                       | 2 tables locked, 0 deadlock(s)                       | postgres
+ SET_MARK_GROUP     | TIME STAMP SET     | 14204                                  |                                                      | postgres
+ SET_MARK_GROUP     | END                | phil's group#3",                       | M2_rollbackable                                      | postgres
+ SET_MARK_GROUP     | BEGIN              | phil's group#3",                       |                                                      | postgres
+ LOCK_GROUP         | BEGIN              | phil's group#3",                       |                                                      | postgres
+ LOCK_GROUP         | END                | phil's group#3",                       | 2 tables locked, 0 deadlock(s)                       | postgres
+ SET_MARK_GROUP     | TIME STAMP SET     | 14205                                  |                                                      | postgres
+ SET_MARK_GROUP     | END                | phil's group#3",                       | M2_again!                                            | postgres
+ SET_MARK_GROUPS    | BEGIN              | phil's group#3",                       | phil's mark #1                                       | postgres
+ LOCK_GROUPS        | BEGIN              | phil's group#3",                       |                                                      | postgres
+ LOCK_GROUPS        | END                | phil's group#3",                       | 2 tables locked, 0 deadlock(s)                       | postgres
+ SET_MARK_GROUPS    | TIME STAMP SET     | 14206                                  |                                                      | postgres
+ SET_MARK_GROUPS    | END                | phil's group#3",                       | phil's mark #1                                       | postgres
+ RENAME_MARK_GROUP  | BEGIN              | phil's group#3",                       | phil's mark #1                                       | postgres
+ RENAME_MARK_GROUP  | END                | phil's group#3",                       | phil's mark #1 renamed phil's mark #3                | postgres
+ DELETE_MARK_GROUP  | BEGIN              | phil's group#3",                       | M2_again!                                            | postgres
+ DELETE_MARK_GROUP  | END                | phil's group#3",                       | M2_again!                                            | postgres
+ ROLLBACK_GROUP     | BEGIN              | phil's group#3",                       | Logged rollback to mark phil's mark #3 (timestamp)   | postgres
+ DBLINK_OPEN_CNX    |                    | rlbk#1                                 | Status = 1                                           | postgres
+ LOCK_GROUP         | BEGIN              | phil's group#3",                       | Rollback session #1                                  | postgres
+ LOCK_GROUP         | END                | phil's group#3",                       | Rollback session #1: 2 tables locked, 0 deadlock(s)  | postgres
+ ROLLBACK_GROUP     | TIME STAMP SET     | 14207                                  |                                                      | postgres
+ SET_MARK_GROUP     | BEGIN              | phil's group#3",                       | RLBK_14200_START                                     | postgres
+ SET_MARK_GROUP     | END                | phil's group#3",                       | RLBK_14200_START                                     | postgres
+ SET_MARK_GROUP     | BEGIN              | phil's group#3",                       | RLBK_14200_DONE                                      | postgres
+ SET_MARK_GROUP     | TIME STAMP SET     | 14208                                  |                                                      | postgres
+ SET_MARK_GROUP     | END                | phil's group#3",                       | RLBK_14200_DONE                                      | postgres
+ ROLLBACK_GROUP     | NOTICE             | Rollback id 14200                      | Rollback id = 14200.                                 | postgres
+ ROLLBACK_GROUP     | NOTICE             | Rollback id 14200                      | 0 / 2 tables effectively processed.                  | postgres
+ ROLLBACK_GROUP     | NOTICE             | Rollback id 14200                      | 0 / 2 sequences effectively processed.               | postgres
+ DBLINK_CLOSE_CNX   |                    | rlbk#1                                 |                                                      | postgres
+ ROLLBACK_GROUP     | END                | phil's group#3",                       | Rollback_id 14200                                    | postgres
+ ROLLBACK_GROUP     | BEGIN              | phil's group#3",                       | Unlogged rollback to mark phil's mark #3 (timestamp) | postgres
+ DBLINK_OPEN_CNX    |                    | rlbk#1                                 | Status = 1                                           | postgres
+ LOCK_GROUP         | BEGIN              | phil's group#3",                       | Rollback session #1                                  | postgres
+ LOCK_GROUP         | END                | phil's group#3",                       | Rollback session #1: 2 tables locked, 0 deadlock(s)  | postgres
+ ROLLBACK_GROUP     | TIME STAMP SET     | 14209                                  |                                                      | postgres
+ ROLLBACK_GROUP     | MARK DELETED       | phil's group#3",                       | mark RLBK_14200_START is deleted                     | postgres
+ ROLLBACK_GROUP     | MARK DELETED       | phil's group#3",                       | mark RLBK_14200_DONE is deleted                      | postgres
+ ROLLBACK_GROUP     | NOTICE             | Rollback id 14201                      | Rollback id = 14201.                                 | postgres
+ ROLLBACK_GROUP     | NOTICE             | Rollback id 14201                      | 0 / 2 tables effectively processed.                  | postgres
+ ROLLBACK_GROUP     | NOTICE             | Rollback id 14201                      | 0 / 2 sequences effectively processed.               | postgres
+ DBLINK_CLOSE_CNX   |                    | rlbk#1                                 |                                                      | postgres
+ ROLLBACK_GROUP     | END                | phil's group#3",                       | Rollback_id 14201                                    | postgres
 (68 rows)
 
 -- user tables
 reset role;
-select * from "phil's schema3"."phil's tbl1" order by "phil's col11","phil's col12";
- phil's col11 | phil's col12 | phil\s col13 
+select * from "phil's schema""3"."phil's tbl1" order by "phil's col11","phil's col12";
+ phil's col11 | phil's col12 | phil\s"col13 
 --------------+--------------+--------------
             1 | DEF          | \x1c
             2 | DEF          | \x1c
@@ -1075,7 +1075,7 @@ select * from "phil's schema3"."phil's tbl1" order by "phil's col11","phil's col
            20 | AB'C         | \x1c27
 (19 rows)
 
-select * from "phil's schema3"."myTbl2\" order by col21;
+select * from "phil's schema""3"."myTbl2\" order by col21;
  col21 | col22 |   col23    
 -------+-------+------------
      1 | ABC   | 12-31-2010
@@ -1084,8 +1084,8 @@ select * from "phil's schema3"."myTbl2\" order by col21;
 
 -- log tables
 set role emaj_regression_tests_adm_user2;
-select "phil's col11", "phil's col12", "phil\s col13", emaj_verb, emaj_tuple, emaj_gid from "emaj_phil's schema3"."phil's tbl1_log" order by emaj_gid, emaj_tuple desc;
- phil's col11 | phil's col12 | phil\s col13 | emaj_verb | emaj_tuple | emaj_gid 
+select "phil's col11", "phil's col12", "phil\s""col13", emaj_verb, emaj_tuple, emaj_gid from "emaj_phil's schema""3"."phil's tbl1_log" order by emaj_gid, emaj_tuple desc;
+ phil's col11 | phil's col12 | phil\s"col13 | emaj_verb | emaj_tuple | emaj_gid 
 --------------+--------------+--------------+-----------+------------+----------
             1 | AB'C         | \x0c         | INS       | NEW        | 14200001
             2 | AB'C         | \x0c         | INS       | NEW        | 14200002
@@ -1152,7 +1152,7 @@ select "phil's col11", "phil's col12", "phil\s col13", emaj_verb, emaj_tuple, em
             2 | DEF          | \x1c         | UPD       | NEW        | 14200055
 (63 rows)
 
-select col21, col22, col23, emaj_verb, emaj_tuple, emaj_gid from "emaj_phil's schema3"."myTbl2\_log" order by emaj_gid, emaj_tuple desc;
+select col21, col22, col23, emaj_verb, emaj_tuple, emaj_gid from "emaj_phil's schema""3"."myTbl2\_log" order by emaj_gid, emaj_tuple desc;
  col21 | col22 |   col23    | emaj_verb | emaj_tuple | emaj_gid 
 -------+-------+------------+-----------+------------+----------
      1 | ABC   | 12-31-2010 | INS       | NEW        | 14200040
@@ -1383,10 +1383,10 @@ myschema2_mytbl2.snap
 myschema2_mytbl4.snap
 myschema2_mytbl5.snap
 myschema2_mytbl6.snap
-phil_s_schema3_myTbl2_.snap
-phil_s_schema3_myTbl2__col21_seq.snap
-phil_s_schema3_phil_s_seq_1.snap
-phil_s_schema3_phil_s_tbl1.snap
+phil_s_schema_3_myTbl2_.snap
+phil_s_schema_3_myTbl2__col21_seq.snap
+phil_s_schema_3_phil_s_seq_1.snap
+phil_s_schema_3_phil_s_tbl1.snap
 -- generate a sql script for each active group (and check the result with detailed log statistics + number of sequences)
 select emaj.emaj_gen_sql_group('myGroup1', 'Multi-1', NULL, :'EMAJTESTTMPDIR' || '/myGroup1.sql');
 NOTICE:  table "emaj_temp_script" does not exist, skipping
@@ -1574,62 +1574,62 @@ SET standard_conforming_strings = OFF;
 SET escape_string_warning = OFF;
 SET datestyle = 'ISO, YMD';
 --BEGIN TRANSACTION;
-INSERT INTO "phil's schema3"."phil's tbl1" VALUES (1, 'AB''C', E'\\x0c');
-INSERT INTO "phil's schema3"."phil's tbl1" VALUES (2, 'AB''C', E'\\x0c');
-INSERT INTO "phil's schema3"."phil's tbl1" VALUES (3, 'AB''C', E'\\x0c');
-INSERT INTO "phil's schema3"."phil's tbl1" VALUES (4, 'AB''C', E'\\x0c');
-INSERT INTO "phil's schema3"."phil's tbl1" VALUES (5, 'AB''C', E'\\x0c');
-INSERT INTO "phil's schema3"."phil's tbl1" VALUES (6, 'AB''C', E'\\x0c');
-INSERT INTO "phil's schema3"."phil's tbl1" VALUES (7, 'AB''C', E'\\x0c');
-INSERT INTO "phil's schema3"."phil's tbl1" VALUES (8, 'AB''C', E'\\x0c');
-INSERT INTO "phil's schema3"."phil's tbl1" VALUES (9, 'AB''C', E'\\x0c');
-INSERT INTO "phil's schema3"."phil's tbl1" VALUES (10, 'AB''C', E'\\x0c');
-INSERT INTO "phil's schema3"."phil's tbl1" VALUES (11, 'AB''C', E'\\x0c');
-INSERT INTO "phil's schema3"."phil's tbl1" VALUES (12, 'AB''C', E'\\x0c');
-INSERT INTO "phil's schema3"."phil's tbl1" VALUES (13, 'AB''C', E'\\x0c');
-INSERT INTO "phil's schema3"."phil's tbl1" VALUES (14, 'AB''C', E'\\x0c');
-INSERT INTO "phil's schema3"."phil's tbl1" VALUES (15, 'AB''C', E'\\x0c');
-INSERT INTO "phil's schema3"."phil's tbl1" VALUES (16, 'AB''C', E'\\x0c');
-INSERT INTO "phil's schema3"."phil's tbl1" VALUES (17, 'AB''C', E'\\x0c');
-INSERT INTO "phil's schema3"."phil's tbl1" VALUES (18, 'AB''C', E'\\x0c');
-INSERT INTO "phil's schema3"."phil's tbl1" VALUES (19, 'AB''C', E'\\x0c');
-INSERT INTO "phil's schema3"."phil's tbl1" VALUES (20, 'AB''C', E'\\x0c');
-INSERT INTO "phil's schema3"."phil's tbl1" VALUES (21, 'AB''C', E'\\x0c');
-INSERT INTO "phil's schema3"."phil's tbl1" VALUES (22, 'AB''C', E'\\x0c');
-INSERT INTO "phil's schema3"."phil's tbl1" VALUES (23, 'AB''C', E'\\x0c');
-INSERT INTO "phil's schema3"."phil's tbl1" VALUES (24, 'AB''C', E'\\x0c');
-INSERT INTO "phil's schema3"."phil's tbl1" VALUES (25, 'AB''C', E'\\x0c');
-INSERT INTO "phil's schema3"."phil's tbl1" VALUES (26, 'AB''C', E'\\x0c');
-INSERT INTO "phil's schema3"."phil's tbl1" VALUES (27, 'AB''C', E'\\x0c');
-INSERT INTO "phil's schema3"."phil's tbl1" VALUES (28, 'AB''C', E'\\x0c');
-INSERT INTO "phil's schema3"."phil's tbl1" VALUES (29, 'AB''C', E'\\x0c');
-INSERT INTO "phil's schema3"."phil's tbl1" VALUES (30, 'AB''C', E'\\x0c');
-INSERT INTO "phil's schema3"."phil's tbl1" VALUES (31, 'AB''C', E'\\x0c');
-UPDATE ONLY "phil's schema3"."phil's tbl1" SET "phil's col11" = 1, "phil's col12" = 'AB''C', "phil\s col13" = E'\\x1c' WHERE "phil's col11" = 1 AND "phil's col12" = 'AB''C';
-UPDATE ONLY "phil's schema3"."phil's tbl1" SET "phil's col11" = 2, "phil's col12" = 'AB''C', "phil\s col13" = E'\\x1c' WHERE "phil's col11" = 2 AND "phil's col12" = 'AB''C';
-UPDATE ONLY "phil's schema3"."phil's tbl1" SET "phil's col11" = 3, "phil's col12" = 'AB''C', "phil\s col13" = E'\\x1c' WHERE "phil's col11" = 3 AND "phil's col12" = 'AB''C';
-UPDATE ONLY "phil's schema3"."phil's tbl1" SET "phil's col11" = 18, "phil's col12" = 'AB''C', "phil\s col13" = E'\\x1c27' WHERE "phil's col11" = 18 AND "phil's col12" = 'AB''C';
-UPDATE ONLY "phil's schema3"."phil's tbl1" SET "phil's col11" = 19, "phil's col12" = 'AB''C', "phil\s col13" = E'\\x1c27' WHERE "phil's col11" = 19 AND "phil's col12" = 'AB''C';
-UPDATE ONLY "phil's schema3"."phil's tbl1" SET "phil's col11" = 20, "phil's col12" = 'AB''C', "phil\s col13" = E'\\x1c27' WHERE "phil's col11" = 20 AND "phil's col12" = 'AB''C';
-UPDATE ONLY "phil's schema3"."phil's tbl1" SET "phil's col11" = 21, "phil's col12" = 'AB''C', "phil\s col13" = E'\\x1c27' WHERE "phil's col11" = 21 AND "phil's col12" = 'AB''C';
-UPDATE ONLY "phil's schema3"."phil's tbl1" SET "phil's col11" = 22, "phil's col12" = 'AB''C', "phil\s col13" = E'\\x1c27' WHERE "phil's col11" = 22 AND "phil's col12" = 'AB''C';
-INSERT INTO "phil's schema3"."myTbl2\" VALUES (1, 'ABC', '2010-12-31');
-DELETE FROM ONLY "phil's schema3"."phil's tbl1" WHERE "phil's col11" = 23 AND "phil's col12" = 'AB''C';
-DELETE FROM ONLY "phil's schema3"."phil's tbl1" WHERE "phil's col11" = 24 AND "phil's col12" = 'AB''C';
-DELETE FROM ONLY "phil's schema3"."phil's tbl1" WHERE "phil's col11" = 25 AND "phil's col12" = 'AB''C';
-DELETE FROM ONLY "phil's schema3"."phil's tbl1" WHERE "phil's col11" = 26 AND "phil's col12" = 'AB''C';
-DELETE FROM ONLY "phil's schema3"."phil's tbl1" WHERE "phil's col11" = 27 AND "phil's col12" = 'AB''C';
-DELETE FROM ONLY "phil's schema3"."phil's tbl1" WHERE "phil's col11" = 28 AND "phil's col12" = 'AB''C';
-DELETE FROM ONLY "phil's schema3"."phil's tbl1" WHERE "phil's col11" = 29 AND "phil's col12" = 'AB''C';
-DELETE FROM ONLY "phil's schema3"."phil's tbl1" WHERE "phil's col11" = 30 AND "phil's col12" = 'AB''C';
-DELETE FROM ONLY "phil's schema3"."phil's tbl1" WHERE "phil's col11" = 31 AND "phil's col12" = 'AB''C';
-DELETE FROM ONLY "phil's schema3"."phil's tbl1" WHERE "phil's col11" = 21 AND "phil's col12" = 'AB''C';
-DELETE FROM ONLY "phil's schema3"."phil's tbl1" WHERE "phil's col11" = 22 AND "phil's col12" = 'AB''C';
-INSERT INTO "phil's schema3"."myTbl2\" VALUES (2, 'DEF', NULL);
-DELETE FROM ONLY "phil's schema3"."phil's tbl1" WHERE "phil's col11" = 10 AND "phil's col12" = 'AB''C';
-UPDATE ONLY "phil's schema3"."phil's tbl1" SET "phil's col11" = 1, "phil's col12" = 'DEF', "phil\s col13" = E'\\x1c' WHERE "phil's col11" = 1 AND "phil's col12" = 'AB''C';
-UPDATE ONLY "phil's schema3"."phil's tbl1" SET "phil's col11" = 2, "phil's col12" = 'DEF', "phil\s col13" = E'\\x1c' WHERE "phil's col11" = 2 AND "phil's col12" = 'AB''C';
-ALTER SEQUENCE "phil's schema3"."phil's seq\1"  RESTART 1002;
+INSERT INTO "phil's schema""3"."phil's tbl1" VALUES (1, 'AB''C', E'\\x0c');
+INSERT INTO "phil's schema""3"."phil's tbl1" VALUES (2, 'AB''C', E'\\x0c');
+INSERT INTO "phil's schema""3"."phil's tbl1" VALUES (3, 'AB''C', E'\\x0c');
+INSERT INTO "phil's schema""3"."phil's tbl1" VALUES (4, 'AB''C', E'\\x0c');
+INSERT INTO "phil's schema""3"."phil's tbl1" VALUES (5, 'AB''C', E'\\x0c');
+INSERT INTO "phil's schema""3"."phil's tbl1" VALUES (6, 'AB''C', E'\\x0c');
+INSERT INTO "phil's schema""3"."phil's tbl1" VALUES (7, 'AB''C', E'\\x0c');
+INSERT INTO "phil's schema""3"."phil's tbl1" VALUES (8, 'AB''C', E'\\x0c');
+INSERT INTO "phil's schema""3"."phil's tbl1" VALUES (9, 'AB''C', E'\\x0c');
+INSERT INTO "phil's schema""3"."phil's tbl1" VALUES (10, 'AB''C', E'\\x0c');
+INSERT INTO "phil's schema""3"."phil's tbl1" VALUES (11, 'AB''C', E'\\x0c');
+INSERT INTO "phil's schema""3"."phil's tbl1" VALUES (12, 'AB''C', E'\\x0c');
+INSERT INTO "phil's schema""3"."phil's tbl1" VALUES (13, 'AB''C', E'\\x0c');
+INSERT INTO "phil's schema""3"."phil's tbl1" VALUES (14, 'AB''C', E'\\x0c');
+INSERT INTO "phil's schema""3"."phil's tbl1" VALUES (15, 'AB''C', E'\\x0c');
+INSERT INTO "phil's schema""3"."phil's tbl1" VALUES (16, 'AB''C', E'\\x0c');
+INSERT INTO "phil's schema""3"."phil's tbl1" VALUES (17, 'AB''C', E'\\x0c');
+INSERT INTO "phil's schema""3"."phil's tbl1" VALUES (18, 'AB''C', E'\\x0c');
+INSERT INTO "phil's schema""3"."phil's tbl1" VALUES (19, 'AB''C', E'\\x0c');
+INSERT INTO "phil's schema""3"."phil's tbl1" VALUES (20, 'AB''C', E'\\x0c');
+INSERT INTO "phil's schema""3"."phil's tbl1" VALUES (21, 'AB''C', E'\\x0c');
+INSERT INTO "phil's schema""3"."phil's tbl1" VALUES (22, 'AB''C', E'\\x0c');
+INSERT INTO "phil's schema""3"."phil's tbl1" VALUES (23, 'AB''C', E'\\x0c');
+INSERT INTO "phil's schema""3"."phil's tbl1" VALUES (24, 'AB''C', E'\\x0c');
+INSERT INTO "phil's schema""3"."phil's tbl1" VALUES (25, 'AB''C', E'\\x0c');
+INSERT INTO "phil's schema""3"."phil's tbl1" VALUES (26, 'AB''C', E'\\x0c');
+INSERT INTO "phil's schema""3"."phil's tbl1" VALUES (27, 'AB''C', E'\\x0c');
+INSERT INTO "phil's schema""3"."phil's tbl1" VALUES (28, 'AB''C', E'\\x0c');
+INSERT INTO "phil's schema""3"."phil's tbl1" VALUES (29, 'AB''C', E'\\x0c');
+INSERT INTO "phil's schema""3"."phil's tbl1" VALUES (30, 'AB''C', E'\\x0c');
+INSERT INTO "phil's schema""3"."phil's tbl1" VALUES (31, 'AB''C', E'\\x0c');
+UPDATE ONLY "phil's schema""3"."phil's tbl1" SET "phil's col11" = 1, "phil's col12" = 'AB''C', "phil\s""col13" = E'\\x1c' WHERE "phil's col11" = 1 AND "phil's col12" = 'AB''C';
+UPDATE ONLY "phil's schema""3"."phil's tbl1" SET "phil's col11" = 2, "phil's col12" = 'AB''C', "phil\s""col13" = E'\\x1c' WHERE "phil's col11" = 2 AND "phil's col12" = 'AB''C';
+UPDATE ONLY "phil's schema""3"."phil's tbl1" SET "phil's col11" = 3, "phil's col12" = 'AB''C', "phil\s""col13" = E'\\x1c' WHERE "phil's col11" = 3 AND "phil's col12" = 'AB''C';
+UPDATE ONLY "phil's schema""3"."phil's tbl1" SET "phil's col11" = 18, "phil's col12" = 'AB''C', "phil\s""col13" = E'\\x1c27' WHERE "phil's col11" = 18 AND "phil's col12" = 'AB''C';
+UPDATE ONLY "phil's schema""3"."phil's tbl1" SET "phil's col11" = 19, "phil's col12" = 'AB''C', "phil\s""col13" = E'\\x1c27' WHERE "phil's col11" = 19 AND "phil's col12" = 'AB''C';
+UPDATE ONLY "phil's schema""3"."phil's tbl1" SET "phil's col11" = 20, "phil's col12" = 'AB''C', "phil\s""col13" = E'\\x1c27' WHERE "phil's col11" = 20 AND "phil's col12" = 'AB''C';
+UPDATE ONLY "phil's schema""3"."phil's tbl1" SET "phil's col11" = 21, "phil's col12" = 'AB''C', "phil\s""col13" = E'\\x1c27' WHERE "phil's col11" = 21 AND "phil's col12" = 'AB''C';
+UPDATE ONLY "phil's schema""3"."phil's tbl1" SET "phil's col11" = 22, "phil's col12" = 'AB''C', "phil\s""col13" = E'\\x1c27' WHERE "phil's col11" = 22 AND "phil's col12" = 'AB''C';
+INSERT INTO "phil's schema""3"."myTbl2\" VALUES (1, 'ABC', '2010-12-31');
+DELETE FROM ONLY "phil's schema""3"."phil's tbl1" WHERE "phil's col11" = 23 AND "phil's col12" = 'AB''C';
+DELETE FROM ONLY "phil's schema""3"."phil's tbl1" WHERE "phil's col11" = 24 AND "phil's col12" = 'AB''C';
+DELETE FROM ONLY "phil's schema""3"."phil's tbl1" WHERE "phil's col11" = 25 AND "phil's col12" = 'AB''C';
+DELETE FROM ONLY "phil's schema""3"."phil's tbl1" WHERE "phil's col11" = 26 AND "phil's col12" = 'AB''C';
+DELETE FROM ONLY "phil's schema""3"."phil's tbl1" WHERE "phil's col11" = 27 AND "phil's col12" = 'AB''C';
+DELETE FROM ONLY "phil's schema""3"."phil's tbl1" WHERE "phil's col11" = 28 AND "phil's col12" = 'AB''C';
+DELETE FROM ONLY "phil's schema""3"."phil's tbl1" WHERE "phil's col11" = 29 AND "phil's col12" = 'AB''C';
+DELETE FROM ONLY "phil's schema""3"."phil's tbl1" WHERE "phil's col11" = 30 AND "phil's col12" = 'AB''C';
+DELETE FROM ONLY "phil's schema""3"."phil's tbl1" WHERE "phil's col11" = 31 AND "phil's col12" = 'AB''C';
+DELETE FROM ONLY "phil's schema""3"."phil's tbl1" WHERE "phil's col11" = 21 AND "phil's col12" = 'AB''C';
+DELETE FROM ONLY "phil's schema""3"."phil's tbl1" WHERE "phil's col11" = 22 AND "phil's col12" = 'AB''C';
+INSERT INTO "phil's schema""3"."myTbl2\" VALUES (2, 'DEF', NULL);
+DELETE FROM ONLY "phil's schema""3"."phil's tbl1" WHERE "phil's col11" = 10 AND "phil's col12" = 'AB''C';
+UPDATE ONLY "phil's schema""3"."phil's tbl1" SET "phil's col11" = 1, "phil's col12" = 'DEF', "phil\s""col13" = E'\\x1c' WHERE "phil's col11" = 1 AND "phil's col12" = 'AB''C';
+UPDATE ONLY "phil's schema""3"."phil's tbl1" SET "phil's col11" = 2, "phil's col12" = 'DEF', "phil\s""col13" = E'\\x1c' WHERE "phil's col11" = 2 AND "phil's col12" = 'AB''C';
+ALTER SEQUENCE "phil's schema""3"."phil's""seq\1"  RESTART 1002;
 --COMMIT;
 RESET standard_conforming_strings;
 RESET escape_string_warning;
@@ -1666,11 +1666,11 @@ diff --exclude _INFO_s /tmp/emaj_13/adm2/snaps1/myschema1_mytbl2b_col20_seq.snap
 < mytbl2b_col20_seq,7,1,1,2147483647,1,1,f,t
 ---
 > mytbl2b_col20_seq,8,1,1,2147483647,1,1,f,f
-diff --exclude _INFO_s /tmp/emaj_13/adm2/snaps1/phil_s_schema3_phil_s_seq_1.snap /tmp/emaj_13/adm2/snaps2/phil_s_schema3_phil_s_seq_1.snap
+diff --exclude _INFO_s /tmp/emaj_13/adm2/snaps1/phil_s_schema_3_phil_s_seq_1.snap /tmp/emaj_13/adm2/snaps2/phil_s_schema_3_phil_s_seq_1.snap
 2c2
-< phil's seq\1,1001,1000,1,2000,1000,1,t,t
+< "phil's""seq\1",1001,1000,1,2000,1000,1,t,t
 ---
-> phil's seq\1,1002,1000,1,2000,1000,1,t,f
+> "phil's""seq\1",1002,1000,1,2000,1000,1,t,f
 -- reset the sequence myschema2.myseq1 to its previous characteristics
 reset role;
 alter sequence myschema2.myseq1 restart 1004 start 1000 increment 1 maxvalue 9223372036854775807 minvalue 1000 cache 1 no cycle;
@@ -1728,19 +1728,19 @@ select emaj.emaj_stop_group('phil''s group#3",');
 (1 row)
 
 -- remove the "phil's tbl1" table, rename it and reassign it to its group
-select emaj.emaj_remove_table('phil''s schema3','phil''s tbl1');
+select emaj.emaj_remove_table('phil''s schema"3','phil''s tbl1');
  emaj_remove_table 
 -------------------
                  1
 (1 row)
 
 reset role;
-alter table "phil's schema3"."phil's tbl1" rename to table_with_very_looooooooooooooooooooooooooooooooooooooong_name;
+alter table "phil's schema""3"."phil's tbl1" rename to table_with_very_looooooooooooooooooooooooooooooooooooooong_name;
 set role emaj_regression_tests_adm_user1;
-select emaj.emaj_assign_table('phil''s schema3', 'table_with_very_looooooooooooooooooooooooooooooooooooooong_name', 'phil''s group#3",');
+select emaj.emaj_assign_table('phil''s schema"3', 'table_with_very_looooooooooooooooooooooooooooooooooooooong_name', 'phil''s group#3",');
 NOTICE:  table "table_with_very_looooooooooooooooooooooooooooooooo#1_log" does not exist, skipping
-NOTICE:  trigger "emaj_log_trg" for relation "phil's schema3.table_with_very_looooooooooooooooooooooooooooooooooooooong_name" does not exist, skipping
-NOTICE:  trigger "emaj_trunc_trg" for relation "phil's schema3.table_with_very_looooooooooooooooooooooooooooooooooooooong_name" does not exist, skipping
+NOTICE:  trigger "emaj_log_trg" for relation "phil's schema"3.table_with_very_looooooooooooooooooooooooooooooooooooooong_name" does not exist, skipping
+NOTICE:  trigger "emaj_trunc_trg" for relation "phil's schema"3.table_with_very_looooooooooooooooooooooooooooooooooooooong_name" does not exist, skipping
  emaj_assign_table 
 -------------------
                  1
@@ -1748,15 +1748,15 @@ NOTICE:  trigger "emaj_trunc_trg" for relation "phil's schema3.table_with_very_l
 
 -- use the table and its group
 select emaj.emaj_start_group('phil''s group#3",','M1_after_table_rename');
-WARNING:  _check_fk_groups: The foreign key "mytbl2_col21_fkey" on the table "phil's schema3.myTbl2\" references the table "phil's schema3.mytbl4" that is outside the groups (phil's group#3",).
-WARNING:  _check_fk_groups: The table "phil's schema3.table_with_very_looooooooooooooooooooooooooooooooooooooong_name" is referenced by the foreign key "mytbl4_col44_fkey" on the table "phil's schema3.mytbl4" that is outside the groups (phil's group#3",).
+WARNING:  _check_fk_groups: The foreign key "mytbl2_col21_fkey" on the table "phil's schema"3.myTbl2\" references the table "phil's schema"3.my"tbl4" that is outside the groups (phil's group#3",).
+WARNING:  _check_fk_groups: The table "phil's schema"3.table_with_very_looooooooooooooooooooooooooooooooooooooong_name" is referenced by the foreign key "my"tbl4_col44_fkey" on the table "phil's schema"3.my"tbl4" that is outside the groups (phil's group#3",).
  emaj_start_group 
 ------------------
                 4
 (1 row)
 
 reset role;
-update "phil's schema3".table_with_very_looooooooooooooooooooooooooooooooooooooong_name set "phil's col12" = 'GHI' where "phil's col11" between 6 and 9;
+update "phil's schema""3".table_with_very_looooooooooooooooooooooooooooooooooooooong_name set "phil's col12" = 'GHI' where "phil's col11" between 6 and 9;
 set role emaj_regression_tests_adm_user1;
 select emaj.emaj_set_mark_group('phil''s group#3",','M2');
  emaj_set_mark_group 
@@ -1765,7 +1765,7 @@ select emaj.emaj_set_mark_group('phil''s group#3",','M2');
 (1 row)
 
 reset role;
-delete from "phil's schema3".table_with_very_looooooooooooooooooooooooooooooooooooooong_name where "phil's col11" > 18;
+delete from "phil's schema""3".table_with_very_looooooooooooooooooooooooooooooooooooooong_name where "phil's col11" > 18;
 set role emaj_regression_tests_adm_user1;
 select * from emaj.emaj_rollback_group('phil''s group#3",','M1_after_table_rename',false) order by 1,2;
  rlbk_severity |              rlbk_message              
@@ -1789,7 +1789,7 @@ select emaj.emaj_drop_group('phil''s group#3",');
 
 --
 reset role;
-alter table "phil's schema3".table_with_very_looooooooooooooooooooooooooooooooooooooong_name rename to "phil's tbl1";
+alter table "phil's schema""3".table_with_very_looooooooooooooooooooooooooooooooooooooong_name rename to "phil's tbl1";
 -----------------------------
 -- Checking step 12
 -----------------------------
@@ -1814,66 +1814,66 @@ select hist_function, hist_event, hist_object,
             E'\\[.+\\]','(timestamp)','g'), 
        hist_user
   from emaj.emaj_hist where hist_id >= 14500 order by hist_id;
-   hist_function    |     hist_event     |                                   hist_object                                    |                       regexp_replace                        | hist_user 
---------------------+--------------------+----------------------------------------------------------------------------------+-------------------------------------------------------------+-----------
- STOP_GROUP         | BEGIN              | phil's group#3",                                                                 |                                                             | postgres
- STOP_GROUP         | TIME STAMP SET     | 14500                                                                            |                                                             | postgres
- LOCK_GROUP         | BEGIN              | phil's group#3",                                                                 |                                                             | postgres
- LOCK_GROUP         | END                | phil's group#3",                                                                 | 2 tables locked, 0 deadlock(s)                              | postgres
- SET_MARK_GROUP     | BEGIN              | phil's group#3",                                                                 | STOP_%                                                      | postgres
- CLEANUP_RLBK_STATE |                    | Rollback id 14200                                                                | set to COMMITTED                                            | postgres
- CLEANUP_RLBK_STATE |                    | Rollback id 14201                                                                | set to COMMITTED                                            | postgres
- CLEANUP_RLBK_STATE |                    | Rollback id 14300                                                                | set to COMMITTED                                            | postgres
- CLEANUP_RLBK_STATE |                    | Rollback id 14400                                                                | set to ABORTED                                              | postgres
- CLEANUP_RLBK_STATE |                    | Rollback id 14401                                                                | set to ABORTED                                              | postgres
- CLEANUP_RLBK_STATE |                    | Rollback id 14402                                                                | set to ABORTED                                              | postgres
- SET_MARK_GROUP     | END                | phil's group#3",                                                                 | STOP_%                                                      | postgres
- STOP_GROUP         | END                | phil's group#3",                                                                 | 4 tables/sequences processed                                | postgres
- REMOVE_TABLE       | BEGIN              |                                                                                  |                                                             | postgres
- REMOVE_TABLE       | TIME STAMP SET     | 14501                                                                            |                                                             | postgres
- REMOVE_TABLE       | TABLE REMOVED      | "phil's schema3"."phil's tbl1"                                                   | From the idle group phil's group#3",                        | postgres
- REMOVE_TABLE       | END                |                                                                                  | 1 tables removed from their groups                          | postgres
- ASSIGN_TABLE       | BEGIN              |                                                                                  |                                                             | postgres
- ASSIGN_TABLE       | TIME STAMP SET     | 14502                                                                            |                                                             | postgres
- ASSIGN_TABLE       | TABLE ADDED        | "phil's schema3".table_with_very_looooooooooooooooooooooooooooooooooooooong_name | To the idle group phil's group#3",                          | postgres
- ASSIGN_TABLE       | END                |                                                                                  | 1 tables assigned to the group phil's group#3",             | postgres
- START_GROUP        | BEGIN              | phil's group#3",                                                                 | With log reset                                              | postgres
- START_GROUP        | TIME STAMP SET     | 14503                                                                            |                                                             | postgres
- LOCK_GROUP         | BEGIN              | phil's group#3",                                                                 |                                                             | postgres
- LOCK_GROUP         | END                | phil's group#3",                                                                 | 2 tables locked, 0 deadlock(s)                              | postgres
- SET_MARK_GROUP     | BEGIN              | phil's group#3",                                                                 | M1_after_table_rename                                       | postgres
- SET_MARK_GROUP     | END                | phil's group#3",                                                                 | M1_after_table_rename                                       | postgres
- START_GROUP        | END                | phil's group#3",                                                                 | 4 tables/sequences processed                                | postgres
- SET_MARK_GROUP     | BEGIN              | phil's group#3",                                                                 |                                                             | postgres
- LOCK_GROUP         | BEGIN              | phil's group#3",                                                                 |                                                             | postgres
- LOCK_GROUP         | END                | phil's group#3",                                                                 | 2 tables locked, 0 deadlock(s)                              | postgres
- SET_MARK_GROUP     | TIME STAMP SET     | 14504                                                                            |                                                             | postgres
- SET_MARK_GROUP     | END                | phil's group#3",                                                                 | M2                                                          | postgres
- ROLLBACK_GROUP     | BEGIN              | phil's group#3",                                                                 | Unlogged rollback to mark M1_after_table_rename (timestamp) | postgres
- DBLINK_OPEN_CNX    |                    | rlbk#1                                                                           | Status = 1                                                  | postgres
- LOCK_GROUP         | BEGIN              | phil's group#3",                                                                 | Rollback session #1                                         | postgres
- LOCK_GROUP         | END                | phil's group#3",                                                                 | Rollback session #1: 2 tables locked, 0 deadlock(s)         | postgres
- ROLLBACK_GROUP     | TIME STAMP SET     | 14505                                                                            |                                                             | postgres
- ROLLBACK_TABLE     | BEGIN              | "phil's schema3".table_with_very_looooooooooooooooooooooooooooooooooooooong_name | All log rows where emaj_gid > 14500000 and <= 14500006      | postgres
- ROLLBACK_TABLE     | END                | "phil's schema3".table_with_very_looooooooooooooooooooooooooooooooooooooong_name | 10 rolled back primary keys                                 | postgres
- ROLLBACK_GROUP     | MARK DELETED       | phil's group#3",                                                                 | mark M2 is deleted                                          | postgres
- ROLLBACK_GROUP     | NOTICE             | Rollback id 14500                                                                | Rollback id = 14500.                                        | postgres
- ROLLBACK_GROUP     | NOTICE             | Rollback id 14500                                                                | 1 / 2 tables effectively processed.                         | postgres
- ROLLBACK_GROUP     | NOTICE             | Rollback id 14500                                                                | 0 / 2 sequences effectively processed.                      | postgres
- DBLINK_CLOSE_CNX   |                    | rlbk#1                                                                           |                                                             | postgres
- ROLLBACK_GROUP     | END                | phil's group#3",                                                                 | Rollback_id 14500                                           | postgres
- STOP_GROUP         | BEGIN              | phil's group#3",                                                                 |                                                             | postgres
- STOP_GROUP         | TIME STAMP SET     | 14506                                                                            |                                                             | postgres
- LOCK_GROUP         | BEGIN              | phil's group#3",                                                                 |                                                             | postgres
- LOCK_GROUP         | END                | phil's group#3",                                                                 | 2 tables locked, 0 deadlock(s)                              | postgres
- SET_MARK_GROUP     | BEGIN              | phil's group#3",                                                                 | STOP_%                                                      | postgres
- CLEANUP_RLBK_STATE |                    | Rollback id 14500                                                                | set to COMMITTED                                            | postgres
- SET_MARK_GROUP     | END                | phil's group#3",                                                                 | STOP_%                                                      | postgres
- STOP_GROUP         | END                | phil's group#3",                                                                 | 4 tables/sequences processed                                | postgres
- DROP_GROUP         | BEGIN              | phil's group#3",                                                                 |                                                             | postgres
- DROP_GROUP         | TIME STAMP SET     | 14507                                                                            |                                                             | postgres
- DROP_GROUP         | LOG_SCHEMA DROPPED | "emaj_phil's schema3"                                                            |                                                             | postgres
- DROP_GROUP         | END                | phil's group#3",                                                                 | 4 tables/sequences processed                                | postgres
+   hist_function    |     hist_event     |                                    hist_object                                     |                       regexp_replace                        | hist_user 
+--------------------+--------------------+------------------------------------------------------------------------------------+-------------------------------------------------------------+-----------
+ STOP_GROUP         | BEGIN              | phil's group#3",                                                                   |                                                             | postgres
+ STOP_GROUP         | TIME STAMP SET     | 14500                                                                              |                                                             | postgres
+ LOCK_GROUP         | BEGIN              | phil's group#3",                                                                   |                                                             | postgres
+ LOCK_GROUP         | END                | phil's group#3",                                                                   | 2 tables locked, 0 deadlock(s)                              | postgres
+ SET_MARK_GROUP     | BEGIN              | phil's group#3",                                                                   | STOP_%                                                      | postgres
+ CLEANUP_RLBK_STATE |                    | Rollback id 14200                                                                  | set to COMMITTED                                            | postgres
+ CLEANUP_RLBK_STATE |                    | Rollback id 14201                                                                  | set to COMMITTED                                            | postgres
+ CLEANUP_RLBK_STATE |                    | Rollback id 14300                                                                  | set to COMMITTED                                            | postgres
+ CLEANUP_RLBK_STATE |                    | Rollback id 14400                                                                  | set to ABORTED                                              | postgres
+ CLEANUP_RLBK_STATE |                    | Rollback id 14401                                                                  | set to ABORTED                                              | postgres
+ CLEANUP_RLBK_STATE |                    | Rollback id 14402                                                                  | set to ABORTED                                              | postgres
+ SET_MARK_GROUP     | END                | phil's group#3",                                                                   | STOP_%                                                      | postgres
+ STOP_GROUP         | END                | phil's group#3",                                                                   | 4 tables/sequences processed                                | postgres
+ REMOVE_TABLE       | BEGIN              |                                                                                    |                                                             | postgres
+ REMOVE_TABLE       | TIME STAMP SET     | 14501                                                                              |                                                             | postgres
+ REMOVE_TABLE       | TABLE REMOVED      | "phil's schema""3"."phil's tbl1"                                                   | From the idle group phil's group#3",                        | postgres
+ REMOVE_TABLE       | END                |                                                                                    | 1 tables removed from their groups                          | postgres
+ ASSIGN_TABLE       | BEGIN              |                                                                                    |                                                             | postgres
+ ASSIGN_TABLE       | TIME STAMP SET     | 14502                                                                              |                                                             | postgres
+ ASSIGN_TABLE       | TABLE ADDED        | "phil's schema""3".table_with_very_looooooooooooooooooooooooooooooooooooooong_name | To the idle group phil's group#3",                          | postgres
+ ASSIGN_TABLE       | END                |                                                                                    | 1 tables assigned to the group phil's group#3",             | postgres
+ START_GROUP        | BEGIN              | phil's group#3",                                                                   | With log reset                                              | postgres
+ START_GROUP        | TIME STAMP SET     | 14503                                                                              |                                                             | postgres
+ LOCK_GROUP         | BEGIN              | phil's group#3",                                                                   |                                                             | postgres
+ LOCK_GROUP         | END                | phil's group#3",                                                                   | 2 tables locked, 0 deadlock(s)                              | postgres
+ SET_MARK_GROUP     | BEGIN              | phil's group#3",                                                                   | M1_after_table_rename                                       | postgres
+ SET_MARK_GROUP     | END                | phil's group#3",                                                                   | M1_after_table_rename                                       | postgres
+ START_GROUP        | END                | phil's group#3",                                                                   | 4 tables/sequences processed                                | postgres
+ SET_MARK_GROUP     | BEGIN              | phil's group#3",                                                                   |                                                             | postgres
+ LOCK_GROUP         | BEGIN              | phil's group#3",                                                                   |                                                             | postgres
+ LOCK_GROUP         | END                | phil's group#3",                                                                   | 2 tables locked, 0 deadlock(s)                              | postgres
+ SET_MARK_GROUP     | TIME STAMP SET     | 14504                                                                              |                                                             | postgres
+ SET_MARK_GROUP     | END                | phil's group#3",                                                                   | M2                                                          | postgres
+ ROLLBACK_GROUP     | BEGIN              | phil's group#3",                                                                   | Unlogged rollback to mark M1_after_table_rename (timestamp) | postgres
+ DBLINK_OPEN_CNX    |                    | rlbk#1                                                                             | Status = 1                                                  | postgres
+ LOCK_GROUP         | BEGIN              | phil's group#3",                                                                   | Rollback session #1                                         | postgres
+ LOCK_GROUP         | END                | phil's group#3",                                                                   | Rollback session #1: 2 tables locked, 0 deadlock(s)         | postgres
+ ROLLBACK_GROUP     | TIME STAMP SET     | 14505                                                                              |                                                             | postgres
+ ROLLBACK_TABLE     | BEGIN              | "phil's schema""3".table_with_very_looooooooooooooooooooooooooooooooooooooong_name | All log rows where emaj_gid > 14500000 and <= 14500006      | postgres
+ ROLLBACK_TABLE     | END                | "phil's schema""3".table_with_very_looooooooooooooooooooooooooooooooooooooong_name | 10 rolled back primary keys                                 | postgres
+ ROLLBACK_GROUP     | MARK DELETED       | phil's group#3",                                                                   | mark M2 is deleted                                          | postgres
+ ROLLBACK_GROUP     | NOTICE             | Rollback id 14500                                                                  | Rollback id = 14500.                                        | postgres
+ ROLLBACK_GROUP     | NOTICE             | Rollback id 14500                                                                  | 1 / 2 tables effectively processed.                         | postgres
+ ROLLBACK_GROUP     | NOTICE             | Rollback id 14500                                                                  | 0 / 2 sequences effectively processed.                      | postgres
+ DBLINK_CLOSE_CNX   |                    | rlbk#1                                                                             |                                                             | postgres
+ ROLLBACK_GROUP     | END                | phil's group#3",                                                                   | Rollback_id 14500                                           | postgres
+ STOP_GROUP         | BEGIN              | phil's group#3",                                                                   |                                                             | postgres
+ STOP_GROUP         | TIME STAMP SET     | 14506                                                                              |                                                             | postgres
+ LOCK_GROUP         | BEGIN              | phil's group#3",                                                                   |                                                             | postgres
+ LOCK_GROUP         | END                | phil's group#3",                                                                   | 2 tables locked, 0 deadlock(s)                              | postgres
+ SET_MARK_GROUP     | BEGIN              | phil's group#3",                                                                   | STOP_%                                                      | postgres
+ CLEANUP_RLBK_STATE |                    | Rollback id 14500                                                                  | set to COMMITTED                                            | postgres
+ SET_MARK_GROUP     | END                | phil's group#3",                                                                   | STOP_%                                                      | postgres
+ STOP_GROUP         | END                | phil's group#3",                                                                   | 4 tables/sequences processed                                | postgres
+ DROP_GROUP         | BEGIN              | phil's group#3",                                                                   |                                                             | postgres
+ DROP_GROUP         | TIME STAMP SET     | 14507                                                                              |                                                             | postgres
+ DROP_GROUP         | LOG_SCHEMA DROPPED | "emaj_phil's schema""3"                                                            |                                                             | postgres
+ DROP_GROUP         | END                | phil's group#3",                                                                   | 4 tables/sequences processed                                | postgres
 (58 rows)
 
 -- set sequence restart value

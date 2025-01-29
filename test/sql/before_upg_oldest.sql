@@ -9,11 +9,11 @@ SET datestyle TO ymd;
 grant emaj_adm to emaj_regression_tests_adm_user1, emaj_regression_tests_adm_user2;
 
 -- Give rights while we are in an emaj version 4.5.0 or earlier.
-grant all on schema mySchema1, mySchema2, "phil's schema3", mySchema4, mySchema5, mySchema6
+grant all on schema mySchema1, mySchema2, "phil's schema""3", mySchema4, mySchema5, mySchema6
   to emaj_regression_tests_adm_user1, emaj_regression_tests_adm_user2;
-grant all on all tables in schema mySchema1, mySchema2, "phil's schema3", mySchema4, mySchema5, mySchema6
+grant all on all tables in schema mySchema1, mySchema2, "phil's schema""3", mySchema4, mySchema5, mySchema6
   to emaj_regression_tests_adm_user1, emaj_regression_tests_adm_user2;
-grant all on all sequences in schema mySchema1, mySchema2, "phil's schema3", mySchema4, mySchema5, mySchema6
+grant all on all sequences in schema mySchema1, mySchema2, "phil's schema""3", mySchema4, mySchema5, mySchema6
   to emaj_regression_tests_adm_user1, emaj_regression_tests_adm_user2;
 
 -----------------------------
@@ -34,9 +34,9 @@ insert into emaj.emaj_group_def values ('myGroup2','myschema2','myTbl3');
 insert into emaj.emaj_group_def values ('myGroup2','myschema2','mytbl4');
 insert into emaj.emaj_group_def values ('myGroup2','myschema2','myseq1');
 -- The third group name contains space, comma # and '
-insert into emaj.emaj_group_def values ('phil''s group#3",','phil''s schema3','phil''s tbl1');
-insert into emaj.emaj_group_def values ('phil''s group#3",','phil''s schema3',E'myTbl2\\');
-insert into emaj.emaj_group_def values ('phil''s group#3",','phil''s schema3',E'phil''s seq\\1');
+insert into emaj.emaj_group_def values ('phil''s group#3",','phil''s schema"3','phil''s tbl1');
+insert into emaj.emaj_group_def values ('phil''s group#3",','phil''s schema"3',E'myTbl2\\');
+insert into emaj.emaj_group_def values ('phil''s group#3",','phil''s schema"3',E'phil''s"seq\\1');
 -- Group with long name tables (the 2.3.1 E-Maj version doesn't support such long names)
 --insert into emaj.emaj_group_def values ('myGroup6','myschema6','table_with_50_characters_long_name_____0_________0');
 --insert into emaj.emaj_group_def values ('myGroup6','myschema6','table_with_51_characters_long_name_____0_________0a');
