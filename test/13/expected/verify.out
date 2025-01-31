@@ -83,6 +83,21 @@ begin;
   rollback;
 end;
 WARNING:  there is no transaction in progress
+-- Test a dblink_user_password without emaj_adm rights
+begin;
+  update emaj.emaj_param set param_value_text = 'user=emaj_regression_tests_viewer_user password=viewer' 
+    where param_key = 'dblink_user_password';
+  select * from emaj.emaj_verify_all();
+                                                           emaj_verify_all                                                           
+-------------------------------------------------------------------------------------------------------------------------------------
+ Warning: The role set in the 'dblink_user_password' parameter has not emaj_adm rights.
+ Warning: Some E-Maj event triggers are disabled. You may enable them using the emaj_enable_protection_by_event_triggers() function.
+ No error detected
+(3 rows)
+
+  rollback;
+end;
+WARNING:  there is no transaction in progress
 --
 -- log schemas content errors tests
 --

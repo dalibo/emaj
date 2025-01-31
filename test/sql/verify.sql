@@ -45,6 +45,14 @@ begin;
   rollback;
 end;
 
+-- Test a dblink_user_password without emaj_adm rights
+begin;
+  update emaj.emaj_param set param_value_text = 'user=emaj_regression_tests_viewer_user password=viewer' 
+    where param_key = 'dblink_user_password';
+  select * from emaj.emaj_verify_all();
+  rollback;
+end;
+
 --
 -- log schemas content errors tests
 --

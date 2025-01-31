@@ -13,6 +13,8 @@ E-Maj - Change log
     are deprecated. Use perl clients instead.
   * In emajParallelRollback and emajRollbackMonitor perl clients, enforce
     checks at connection time.
+  * Add a check that the role defined by the 'dblink_user_password' parameter
+    used by E-Maj rollbacks to monitor them has emaj_adm rights.
   * Minor code changes.
 
 ###Bug fixes:###

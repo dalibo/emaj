@@ -121,7 +121,7 @@ select funcname, calls from pg_stat_user_functions
  _create_seq                               |    46
  _create_tbl                               |   167
  _dblink_close_cnx                         |   116
- _dblink_open_cnx                          |   138
+ _dblink_open_cnx                          |   139
  _dblink_sql_exec                          |  2241
  _delete_before_mark_group                 |    23
  _delete_between_marks_group               |    14
@@ -133,7 +133,7 @@ select funcname, calls from pg_stat_user_functions
  _drop_log_schemas                         |   130
  _drop_seq                                 |    69
  _drop_tbl                                 |   215
- _emaj_param_change_fnct                   |    45
+ _emaj_param_change_fnct                   |    46
  _enable_event_triggers                    |   313
  _estimate_rlbk_step_duration              |   772
  _estimate_rollback_groups                 |    13
@@ -194,8 +194,8 @@ select funcname, calls from pg_stat_user_functions
  _start_groups                             |    53
  _stop_groups                              |    66
  _truncate_trigger_fnct                    |    16
- _verify_all_groups                        |    49
- _verify_all_schemas                       |    49
+ _verify_all_groups                        |    50
+ _verify_all_schemas                       |    50
  emaj_assign_sequence                      |     6
  emaj_assign_sequences                     |     7
  emaj_assign_sequences                     |    13
@@ -276,14 +276,14 @@ select funcname, calls from pg_stat_user_functions
  emaj_stop_groups                          |     9
  emaj_unprotect_group                      |     7
  emaj_unprotect_mark_group                 |     6
- emaj_verify_all                           |    49
+ emaj_verify_all                           |    50
 (183 rows)
 
 -- count the total number of user-callable function calls (those who failed are not counted)
 select sum(calls) from pg_stat_user_functions where funcname like E'emaj\\_%';
  sum  
 ------
- 1085
+ 1086
 (1 row)
 
 -----------------------------

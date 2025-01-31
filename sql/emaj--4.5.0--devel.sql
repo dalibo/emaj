@@ -145,6 +145,7 @@ $_dblink_open_cnx$
 --          -4 the transaction isolation level is not READ COMMITTED
 --          -5 no 'dblink_user_password' parameter is defined in the emaj_param table
 --          -6 error at dblink_connect() call
+--          -7 the dblink user/password from emaj_param has not emaj_adm rights
 --         name of the schema that holds the dblink extension (used later to schema qualify all calls to dblink functions)
 -- The function is defined as SECURITY DEFINER because reading the unix_socket_directories GUC needs to be at least a member
 --   of pg_read_all_settings.
@@ -152,6 +153,8 @@ $_dblink_open_cnx$
     v_nbCnx                  INT;
     v_userPassword           TEXT;
     v_connectString          TEXT;
+    v_stmt                   TEXT;
+    v_isEmajadm              BOOLEAN;
   BEGIN
 -- Look for the schema holding the dblink functions.
 --   (NULL if the dblink_connect_u function is not available, which should not happen)
@@ -164,7 +167,7 @@ $_dblink_open_cnx$
       p_status = -1;                      -- dblink is not installed
     ELSIF NOT has_function_privilege(p_callerRole, quote_ident(p_schema) || '.dblink_connect_u(text, text)', 'execute') THEN
       p_status = -3;                      -- current role has not the execute rights on dblink functions
-    ELSIF (p_cnxName LIKE 'rlbk#%' OR p_cnxName = 'test') AND
+    ELSIF (p_cnxName LIKE 'rlbk#%' OR p_cnxName = 'emaj_verify_all') AND
           current_setting('transaction_isolation') <> 'read committed' THEN
       p_status = -4;                      -- 'rlbk#*' connection (used for rollbacks) must only come from a
                                           --   READ COMMITTED transaction
@@ -199,6 +202,18 @@ $_dblink_open_cnx$
             EXECUTE format('SELECT %I.dblink_connect_u(%L ,%L)',
                            p_schema, p_cnxName, v_connectString);
             p_status = 1;                   -- the connection is successful
+-- For E-Maj rollback first connections and test connections, check the role is member of emaj_adm.
+            IF (p_cnxName LIKE 'rlbk#1' OR p_cnxName = 'emaj_verify_all') THEN
+              v_stmt = 'SELECT pg_has_role(''emaj_adm'', ''MEMBER'') AS is_emaj_adm';
+              EXECUTE format('SELECT is_emaj_adm FROM %I.dblink(%L, %L) AS (is_emaj_adm BOOLEAN)',
+                             p_schema, p_cnxName, v_stmt)
+                INTO v_isEmajadm;
+              IF NOT v_isEmajadm THEN
+                p_status = -7;              -- the dblink user/password from emaj_param has not emaj_adm rights
+                EXECUTE format('SELECT %I.dblink_disconnect(%L)',
+                               p_schema, p_cnxName);
+              END IF;
+            END IF;
           EXCEPTION
             WHEN OTHERS THEN
               p_status = -6;                -- the connection attempt failed
@@ -5051,10 +5066,10 @@ $emaj_verify_all$
 -- Report a warning if dblink connections are not operational
     IF has_function_privilege('emaj._dblink_open_cnx(text,text)', 'execute') THEN
       SELECT p_status, p_schema INTO v_status, v_schema
-        FROM emaj._dblink_open_cnx('test', current_role);
+        FROM emaj._dblink_open_cnx('emaj_verify_all', current_role);
       CASE v_status
         WHEN 0, 1 THEN
-          PERFORM emaj._dblink_close_cnx('test', v_schema);
+          PERFORM emaj._dblink_close_cnx('emaj_verify_all', v_schema);
         WHEN -1 THEN
           RETURN NEXT 'Warning: The dblink extension is not installed.';
         WHEN -3 THEN
@@ -5065,6 +5080,8 @@ $emaj_verify_all$
           RETURN NEXT 'Warning: The ''dblink_user_password'' parameter value is not set in the emaj_param table.';
         WHEN -6 THEN
           RETURN NEXT 'Warning: The dblink connection test failed. The ''dblink_user_password'' parameter value is probably incorrect.';
+        WHEN -7 THEN
+          RETURN NEXT 'Warning: The role set in the ''dblink_user_password'' parameter has not emaj_adm rights.';
         ELSE
           RETURN NEXT format('Warning: The dblink connection test failed for an unknown reason (status = %s).',
                              v_status::TEXT);

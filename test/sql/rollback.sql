@@ -169,6 +169,7 @@ select emaj.emaj_set_mark_groups('{"myGroup1","myGroup2"}','Mark1B');
 
 -- no user/password defined in emaj_param
 select * from emaj.emaj_rollback_groups('{"myGroup1","myGroup2"}','EMAJ_LAST_MARK');
+
 -- bad user/password defined in emaj_param
 insert into emaj.emaj_param (param_key, param_value_text) 
   values ('dblink_user_password','user=<user> password=<password>');
