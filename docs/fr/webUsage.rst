@@ -1,6 +1,16 @@
 Utiliser Emaj_web
 =================
 
+.. raw:: html
+
+    <style>
+      img.screenshot {
+		margin-bottom: 10px;
+        border: 1px solid grey;
+		box-shadow: 3px 3px 6px rgba(0, 0, 0, 0.4);
+      }
+    </style>
+
 Accès à Emaj_web et aux bases de données
 ----------------------------------------
 
@@ -13,9 +23,10 @@ Une fois connecté à une base de données dans laquelle l'extension emaj a ét�
 Située à gauche, l'arborescence de navigation offre la visibilité de toutes les instances configurées, réparties éventuellement dans des groupes d’instances, et des bases de données qu’elles contiennent. En dépliant l’objet base de données, on accède aux groupes de tables E-Maj et aux schémas existants.
 
 .. figure:: images/emajweb_browser.png
-	:align: center
+   :align: center
+   :class: screenshot
 
-	Figure 1 – Arborescence de navigation.
+   Figure 1 – Arborescence de navigation.
 
 Les deux icônes en bas et à droite (non visible ici) permettent d’ajuster la largeur de l’arborescence de navigation.
 
@@ -26,6 +37,7 @@ En sélectionnant une base de données, l'utilisateur accède à une page qui li
 
 .. figure:: images/emajweb_groups.png
    :align: center
+   :class: screenshot
 
    Figure 2 – Liste des groupes de tables.
 
@@ -63,11 +75,13 @@ Deux barres d'icônes permettent de naviguer dans les différentes fonctions d'E
 
 .. figure:: images/emajweb_maintabs.png
    :align: center
+   :class: screenshot
 
    Figure 3 – Barre d'icônes principale.
 
 .. figure:: images/emajweb_groupstabs.png
    :align: center
+   :class: screenshot
 
    Figure 4 – Barre d'icônes des groupes de tables.
 
@@ -79,6 +93,7 @@ Sur la plupart des tableaux également, une icône à gauche de la ligne de titr
 
 .. figure:: images/emajweb_filter.png
    :align: center
+   :class: screenshot
 
    Figure 5 – Filtrage des groupes de tables démarrés. Ne sont affichés ici que les groupes de tables dont le nom comprend « *my* » et contenant plus de 2 marques, cette liste étant triée par ordre décroissant du nombre de tables.
 
@@ -96,6 +111,7 @@ Depuis la page listant les groupes de tables, il est possible d'en savoir davant
 
 .. figure:: images/emajweb_groupproperties.png
    :align: center
+   :class: screenshot
 
    Figure 6 – Détail d'un groupe de tables
 
@@ -131,6 +147,7 @@ La figure suivante montre un exemple de statistiques détaillées pour les table
 
 .. figure:: images/emajweb_groupstat.png
    :align: center
+   :class: screenshot
 
    Figure 7 – Statistiques détaillées des mises à jour enregistrées entre 2 marques
 
@@ -140,6 +157,7 @@ Sur chacune des lignes du tableau de statistiques, un bouton permet à l'utilisa
 
 .. figure:: images/emajweb_changesform.png
    :align: center
+   :class: screenshot
 
    Figure 8 – Formulaire de génération des requêtes de consultation des changements 
 
@@ -152,6 +170,7 @@ Pour chaque table du groupe, le tableau affiché reprend ses propriétés E-Maj,
 
 .. figure:: images/emajweb_groupcontent.png
    :align: center
+   :class: screenshot
 
    Figure 9 – Contenu d'un groupe de tables.
 
@@ -162,6 +181,7 @@ L’onglet « *Historique* » permet de visualiser les périodes durant lesque
 
 .. figure:: images/emajweb_grouphistory.png
    :align: center
+   :class: screenshot
 
    Figure 10 – Historique d'un groupe de tables.
 
@@ -176,6 +196,7 @@ Pour chaque liste, on trouve les propriétés E-Maj et quelques caractéristique
 
 .. figure:: images/emajweb_schemas.png
    :align: center
+   :class: screenshot
 
    Figure 11 – Contenu des schémas et configuration des groupes de tables.
 
@@ -188,6 +209,7 @@ Un bouton permet de changer le mode de désactivation lors des rollbacks E-Maj.
 
 .. figure:: images/emajweb_triggers.png
    :align: center
+   :class: screenshot
 
    Figure 12 – Liste des triggers applicatifs
 
@@ -205,6 +227,7 @@ Pour chaque rollback tracé consolidable listé, un bouton permet d’exécuter 
 
 .. figure:: images/emajweb_rollbacks.png
    :align: center
+   :class: screenshot
 
    Figure 13 – Suivi des opérations de rollback.
 
@@ -220,6 +243,7 @@ On y trouve plus précisément des données concernant :
 
 .. figure:: images/emajweb_rollbackdetails.png
    :align: center
+   :class: screenshot
 
    Figure 14 – Détails d’une opération de rollback.
 
@@ -242,5 +266,6 @@ Deux boutons en bas de page permettent d’exporter ou d’importer une configur
 
 .. figure:: images/emajweb_emaj.png
    :align: center
+   :class: screenshot
 
    Figure 15 – État de l'environnement E-Maj 

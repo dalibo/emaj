@@ -1,6 +1,16 @@
 Use Emaj_web
 ============
 
+.. raw:: html
+
+    <style>
+      img.screenshot {
+		margin-bottom: 10px;
+        border: 1px solid grey;
+		box-shadow: 3px 3px 6px rgba(0, 0, 0, 0.4);
+      }
+    </style>
+
 Access to Emaj_web and databases
 --------------------------------
 
@@ -13,9 +23,10 @@ Once connected to a database where the *emaj* extension has been installed, the 
 On the left, the browser tree shows all the configured instances, that may be split into instances groups, and all the databases they contain. By unfolding a database object, the user reaches the E-Maj tables groups and the existing schemas.
 
 .. figure:: images/emajweb_browser.png
-	:align: center
+   :align: center
+   :class: screenshot
 
-	Figure 1 – The browser tree.
+   Figure 1 – The browser tree.
 
 Both icons located at the bottom-right (not visible here) allow to adjust the browser width.
 
@@ -26,6 +37,7 @@ By selecting a database, the user reaches a page that lists all tables groups cr
 
 .. figure:: images/emajweb_groups.png
    :align: center
+   :class: screenshot
 
    Figure 2 – Tables groups list.
 
@@ -63,11 +75,13 @@ The user can navigate in Emaj_web functions using two icon bars: one for the gen
 
 .. figure:: images/emajweb_maintabs.png
    :align: center
+   :class: screenshot
 
    Figure 3 – Main icons bar.
 
 .. figure:: images/emajweb_groupstabs.png
    :align: center
+   :class: screenshot
 
    Figure 4 – Tables groups icons bar.
 
@@ -79,6 +93,7 @@ On most tables too, an icon located at the left of the header row, let show or h
 
 .. figure:: images/emajweb_filter.png
    :align: center
+   :class: screenshot
 
    Figure 5 – Filtering the tables groups in *LOGGING* state. Here, only tables groups whose name contains “my” and having more than 2 marks are displayed, sorted in descending order by number of tables.
 
@@ -95,6 +110,7 @@ From the tables groups list page, it is possible to get more information about a
 
 .. figure:: images/emajweb_groupproperties.png
    :align: center
+   :class: screenshot
 
    Figure 6 – Details of a tables group
 
@@ -131,6 +147,7 @@ The figure below shows an example of detailed statistics for tables.
 
 .. figure:: images/emajweb_groupstat.png
    :align: center
+   :class: screenshot
 
    Figure 7 – Detailed statistics about updates recorded between two marks
 
@@ -140,6 +157,7 @@ On each line of the statistics table, the user can click on a button to easily l
 
 .. figure:: images/emajweb_changesform.png
    :align: center
+   :class: screenshot
 
    Figure 8 – Form to generate the SQL statement displaying table changes
 
@@ -152,6 +170,7 @@ For each table belonging to the group, the displayed sheet shows its E-Maj chara
 
 .. figure:: images/emajweb_groupcontent.png
    :align: center
+   :class: screenshot
 
    Figure 9 – A tables group's content.
 
@@ -162,6 +181,7 @@ The “*History*” tab displays the periods of time when the tables group exist
 
 .. figure:: images/emajweb_grouphistory.png
    :align: center
+   :class: screenshot
 
 Figure 10 – A tables group’s history.
 
@@ -176,6 +196,7 @@ For both lists, the E-Maj properties and some general properties of each object 
 
 .. figure:: images/emajweb_schemas.png
    :align: center
+   :class: screenshot
 
    Figure 11 – Schema content and tables groups configuration.
 
@@ -188,6 +209,7 @@ A button allows to switch their de-activation mode at E-Maj rollback time.
 
 .. figure:: images/emajweb_triggers.png
    :align: center
+   :class: screenshot
 
    Figure 12 – Application triggers list.
 
@@ -204,6 +226,7 @@ For each consolidable rollback, a button allows to effectively consolidate the o
 
 .. figure:: images/emajweb_rollbacks.png
    :align: center
+   :class: screenshot
 
    Figure 13 – Rollback operations monitoring.
 
@@ -219,6 +242,7 @@ More precisely, are displayed:
 
 .. figure:: images/emajweb_rollbackdetails.png
    :align: center
+   :class: screenshot
 
    Figure 14 – Details of a Rollback operation.
 
@@ -241,5 +265,6 @@ Two buttons allow to export and import parameters configurations to or from a lo
 
 .. figure:: images/emajweb_emaj.png
    :align: center
+   :class: screenshot
 
    Figure 15 – The E-Maj environment state.
