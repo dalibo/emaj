@@ -200,6 +200,25 @@ Pour chaque liste, on trouve les propriétés E-Maj et quelques caractéristique
 
    Figure 11 – Contenu des schémas et configuration des groupes de tables.
 
+En cliquant sur un nom de table ou de séquence ou sur une icône œil associée, on peut obtenir des détails sur les caractéristiques et le contenu de la table ou de la séquence.
+
+Pour les tables, l’onglet *"Propriétés"* montre la structure de la table, ses propriétés E-Maj (historique de rattachement aux groupes de tables) et ses éventuels triggers. L’onglet *"Contenu"* permet de visualiser les lignes présentes dans la table.
+
+.. figure:: images/emajweb_tableproperties.png
+   :align: center
+   :class: screenshot
+
+   Figure 12 – Propriétés d’une table.
+
+Pour les séquences, l’unique onglet *"Propriétés"* montre les caractéristiques de la séquence et ses propriétés E-Maj.
+
+.. figure:: images/emajweb_sequenceproperties.png
+   :align: center
+   :class: screenshot
+
+   Figure 13 – Propriétés d’une séquence.
+
+
 Triggers
 --------
 
@@ -211,7 +230,7 @@ Un bouton permet de changer le mode de désactivation lors des rollbacks E-Maj.
    :align: center
    :class: screenshot
 
-   Figure 12 – Liste des triggers applicatifs
+   Figure 14 – Liste des triggers applicatifs
 
 
 Suivre les opérations de rollback
@@ -229,7 +248,7 @@ Pour chaque rollback tracé consolidable listé, un bouton permet d’exécuter 
    :align: center
    :class: screenshot
 
-   Figure 13 – Suivi des opérations de rollback.
+   Figure 15 – Suivi des opérations de rollback.
 
 En cliquant sur un identifiant de rollback dans l’un de ces tableaux, on accède à une page présentant des informations détaillées sur le déroulement en cours ou passé de l’opération sélectionnée.
 
@@ -245,7 +264,38 @@ On y trouve plus précisément des données concernant :
    :align: center
    :class: screenshot
 
-   Figure 14 – Détails d’une opération de rollback.
+   Figure 16 – Détails d’une opération de rollback.
+
+Activité E-Maj
+--------------
+
+L’onglet *"Activité"* permet de suivre en temps réel l’activité de mise à jour des triggers de log E-Maj.
+
+.. figure:: images/emajweb_activity.png
+   :align: center
+   :class: screenshot
+
+   Figure 17 – Activité E-Maj.
+
+Le formulaire en haut de page permet de définir ce que l’on veut suivre, par défaut les 5 groupes de tables les plus actifs, les 20 tables et les 20 séquences les plus actives. Des expressions rationnelles peuvent être valorisées pour filtrer (inclure ou exclure) les groupes de tables, tables et séquences.
+
+Sous le formulaire, sont affichés les indicateurs d’activité :
+
+* au niveau global (tout groupes de tables confondus),
+* pour les groupes de tables sélectionnés,
+* pour les tables sélectionnées des groupes de tables sélectionnés,
+* pour les séquences sélectionnées des groupes de tables sélectionnés.
+
+Quatre indicateurs d’activité sont calculés :
+
+* le nombre de mises à jour depuis la dernière marque posée pour le groupe de tables,
+* le débit depuis la dernière marque, exprimé en nombre de mises à jour par seconde,
+* le nombre de mises à jour depuis le dernier affichage,
+* le débit depuis le dernier affichage.
+
+Les groupes, tables et séquences sont triés par ordre décroissant du nombre de mises à jour soit depuis le dernier affichage (valeur par défaut), soit depuis la dernière marque.
+
+La page peut être rafraichie soit manuellement soit automatiquement. Le délai de rafraichissement automatique est configurable pour l’installation Emaj_web (10 secondes par défaut).
 
 État de l'environnement E-Maj
 -----------------------------
@@ -268,4 +318,4 @@ Deux boutons en bas de page permettent d’exporter ou d’importer une configur
    :align: center
    :class: screenshot
 
-   Figure 15 – État de l'environnement E-Maj 
+   Figure 18 – État de l'environnement E-Maj 

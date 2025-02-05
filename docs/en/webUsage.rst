@@ -200,10 +200,28 @@ For both lists, the E-Maj properties and some general properties of each object 
 
    Figure 11 – Schema content and tables groups configuration.
 
+By clicking on a table or sequence name or on an eye icon, one gets details about the table or sequence characteristics and content.
+
+Regarding tables, the *"Properties"* tab shows the table structure, its E-Maj properties (the history of the group assignments) and its triggers. The *"Content"* tab allows to visualize the table rows.
+
+.. figure:: images/emajweb_tableproperties.png
+   :align: center
+   :class: screenshot
+
+   Figure 12 – Table properties.
+
+Regarding sequences, the unique *"Properties"* tab shows the sequence characteristics and its E-Maj properties.
+
+.. figure:: images/emajweb_sequenceproperties.png
+   :align: center
+   :class: screenshot
+
+   Figure 13 – Sequence properties.
+
 Triggers
 --------
 
-The "*Triggers*"tab lists the application triggers (those not linked to E-Maj), with their main characteristics. 
+The "*Triggers*" tab lists the application triggers (those not linked to E-Maj), with their main characteristics. 
 
 A button allows to switch their de-activation mode at E-Maj rollback time.
 
@@ -211,7 +229,7 @@ A button allows to switch their de-activation mode at E-Maj rollback time.
    :align: center
    :class: screenshot
 
-   Figure 12 – Application triggers list.
+   Figure 14 – Application triggers list.
 
 Monitoring rollback operations
 ------------------------------
@@ -228,7 +246,7 @@ For each consolidable rollback, a button allows to effectively consolidate the o
    :align: center
    :class: screenshot
 
-   Figure 13 – Rollback operations monitoring.
+   Figure 15 – Rollback operations monitoring.
 
 Clicking on a rollback identifier in one of these tables displays a page that shows information details about the selected in progress or completed operation.
 
@@ -244,7 +262,38 @@ More precisely, are displayed:
    :align: center
    :class: screenshot
 
-   Figure 14 – Details of a Rollback operation.
+   Figure 16 – Details of a Rollback operation.
+
+E-Maj activity
+--------------
+
+The *"Activity"* tab allows to monitor in real time the activity of E-Maj log triggers.
+
+.. figure:: images/emajweb_activity.png
+   :align: center
+   :class: screenshot
+
+   Figure 17 – E-Maj activity.
+
+At the page top, the form alllows to define the monitoring wishes, by default the 5 most active tables groups, the 20 most active tables and the 20 most active sequences. Regular expressions may be set to filter (include or exclude) tables groups, tables and sequences.
+
+The activity indicators are displayed under the form:
+
+* at a global level (all groups, tables and sequences),
+* for the selected tables groups,
+* for the selected tables of selected tables groups,
+* for the selected sequences of selected tables groups.
+
+Four activity indicators are computed:
+
+* the number of changes since the latest mark set for the tables group,
+* the throughput since the latest mark, in number of changes per second,
+* the number of changes since the last display,
+* the throughput since the last display.
+
+Groups, tables and sequences are displayed and filtered in descending order by the number of changes since either the last display (by default) or the latest mark.
+
+The page can be refreshed either manually or automatically. The automatic refresh delay is set in the Emaj_web configuration (10 seconds by default).
 
 E-Maj environment state
 -----------------------
@@ -267,4 +316,4 @@ Two buttons allow to export and import parameters configurations to or from a lo
    :align: center
    :class: screenshot
 
-   Figure 15 – The E-Maj environment state.
+   Figure 18 – The E-Maj environment state.
