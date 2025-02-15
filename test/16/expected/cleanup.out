@@ -41,6 +41,8 @@ revoke all on schema mySchema1, mySchema2, "phil's schema""3", mySchema4, mySche
 revoke all on all tables in schema mySchema1, mySchema2, "phil's schema""3", mySchema4, mySchema5, mySchema6 from emaj_regression_tests_viewer_user;
 revoke all on all sequences in schema mySchema1, mySchema2, "phil's schema""3", mySchema4, mySchema5, mySchema6 from emaj_regression_tests_viewer_user;
 drop role emaj_regression_tests_viewer_user;
+ERROR:  role "emaj_regression_tests_viewer_user" cannot be dropped because some objects depend on it
+DETAIL:  16 objects in database postgres
 -----------------------------
 -- drop emaj_regression_tests_anonym_user role
 -----------------------------

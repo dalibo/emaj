@@ -83,9 +83,15 @@ set role emaj_regression_tests_adm_user2;
 select emaj_start_group('myGroup4','Start');
 
 reset role;
-insert into mySchema4.myTblP values (-1,'Stored in partition 1'), (1,'Stored in partition 2');
+insert into mySchema4.myTblR1 values (-2), (-1), (0), (1), (2), (11);
+insert into mySchema4.myTblP values (-2, 'A', 'Stored in partition 1A'), (-1, 'P', 'Stored in partition 1B'),
+									(0, 'Q', 'Stored in partition 2'), (1, 'X', 'Stored in partition 2'),
+									(2, 'Y', 'Also stored in partition 2');
+----insert into mySchema4.myTblP values (-1,'Stored in partition 1'), (1,'Stored in partition 2');
+
 select emaj_set_mark_group('myGroup4','M1');
-update mySchema4.myTblP set col1 = 2 where col1 = 1;
+----update mySchema4.myTblP set col1 = 2 where col1 = 1;
+update myschema4.myTblP set col1 = -2, col3 = 'Moved to partition 1B' where col1 = 2;
 
 -- create a new partition and add it into the group ; in passing also add the sequence linked to the serial column of the mother table
 CREATE TABLE mySchema4.myPartP3 PARTITION OF mySchema4.myTblP FOR VALUES FROM (10) TO (19);
@@ -97,18 +103,18 @@ grant all on mySchema4.myPartP3 to emaj_regression_tests_adm_user1, emaj_regress
 
 set role emaj_regression_tests_adm_user1;
 select emaj_assign_table('myschema4','mypartp3','myGroup4',null,'Add partition 3');
-select emaj_assign_sequence('myschema4','mytblp_col3_seq','myGroup4','Add partition 3_seq');
+select emaj_assign_sequence('myschema4','mytblp_col4_seq','myGroup4','Add partition 3_seq');
 
 reset role;
-insert into mySchema4.myTblP values (11,'Stored in partition 3');
+insert into mySchema4.myTblP values (11, 'A', 'Stored in partition 3');
 
--- remove an obsolete partition ; in passing also remove the sequence linked to the serial column of the mother table
+-- remove obsolete partitions ; in passing also remove the sequence linked to the serial column of the mother table
 set role emaj_regression_tests_adm_user1;
-select emaj_remove_table('myschema4','mypartp1','Remove partition 1');
-select emaj_remove_sequence('myschema4','mytblp_col3_seq','Remove partition 1_seq');
+select emaj_remove_tables('myschema4', ARRAY['mypartp1a', 'mypartp1b'], 'Remove partition 1a & 1b');
+select emaj_remove_sequence('myschema4','mytblp_col4_seq','Remove partition 1_seq');
 
 reset role;
-drop table mySchema4.myPartP1 cascade;
+drop table mySchema4.myPartP1a, mySchema4.myPartP1b cascade;
 set role emaj_regression_tests_adm_user2;
 
 -- verify that emaj_adm has the proper grants to delete old marks leading to an old log table drop
@@ -124,8 +130,8 @@ select rel_schema, rel_tblseq, rel_time_range, rel_group, rel_kind, rel_log_sche
   from emaj.emaj_relation where rel_schema = 'myschema4' and rel_tblseq like 'mypar%' order by rel_tblseq, rel_time_range;
 
 reset role;
-select col1, col2, emaj_verb, emaj_tuple, emaj_gid from emaj_myschema4.mypartP3_log order by emaj_gid;
-select col1, col2, emaj_verb, emaj_tuple, emaj_gid from emaj_myschema4.mypartP1_log_1 order by emaj_gid;
+select col1, col2, col3, col4, emaj_verb, emaj_tuple, emaj_gid from emaj_myschema4.mypartP3_log order by emaj_gid;
+select col1, col2, col3, col4, emaj_verb, emaj_tuple, emaj_gid from emaj_myschema4.mypartP1a_log_1 order by emaj_gid;
 
 -- rollback to a mark set before the first changes
 set role emaj_regression_tests_adm_user2;
@@ -133,24 +139,6 @@ select * from emaj_rollback_group('myGroup4','Start');
 select rlbk_severity, regexp_replace(rlbk_message,E'\\d\\d\\d\\d/\\d\\d\\/\\d\\d\\ \\d\\d\\:\\d\\d:\\d\\d .*?\\)','<timestamp>)','g')
   from emaj_rollback_group('myGroup4','Start',true);
 
--- testing a row update leading to a partition change (needs pg 11)
-reset role;
-insert into mySchema4.myTblP values (1,'Initialy stored in partition 2'), (11,'Stored in partition 3');
-
-set role emaj_regression_tests_adm_user2;
-select emaj_set_mark_group('myGroup4','Before update');
-
-reset role;
-update mySchema4.myTblP set col1 = 12 where col1=1;
-
-set role emaj_regression_tests_adm_user2;
-select * from emaj_logged_rollback_group('myGroup4','Before update');
-
-reset role;
-select col1, col2, col3, emaj_verb, emaj_tuple, emaj_gid from emaj_myschema4.mypartP2_log;
-select col1, col2, col3, emaj_verb, emaj_tuple, emaj_gid from emaj_myschema4.mypartP3_log;
-
-set role emaj_regression_tests_adm_user2;
 select emaj_stop_group('myGroup4');
 select emaj_drop_group('myGroup4');
 

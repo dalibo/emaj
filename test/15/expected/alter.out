@@ -56,13 +56,13 @@ select emaj.emaj_drop_group('phil''s group#3",');
 select emaj.emaj_force_stop_group('myGroup4');
  emaj_force_stop_group 
 -----------------------
-                     6
+                     8
 (1 row)
 
 select emaj.emaj_drop_group('myGroup4');
  emaj_drop_group 
 -----------------
-               6
+               8
 (1 row)
 
 select emaj.emaj_force_stop_group('emptyGroup');
@@ -87,6 +87,9 @@ select emaj.emaj_create_group('myGroup1');
 SET client_min_messages TO WARNING;
 select emaj.emaj_import_groups_configuration(:'EMAJTESTTMPDIR' || '/../all_groups_config.json', array['myGroup1','myGroup2','emptyGroup','myGroup4','myGroup5'], true);
 WARNING:  _create_tbl: The table "myschema1.mytbl2" has triggers that will be automatically disabled during E-Maj rollback operations (mytbl2trg1, mytbl2trg2). Use the emaj_modify_table() function to change this behaviour.
+WARNING:  _create_tbl: The table "myschema4.mypartp1a" has triggers that will be automatically disabled during E-Maj rollback operations (z_min_update). Use the emaj_modify_table() function to change this behaviour.
+WARNING:  _create_tbl: The table "myschema4.mypartp1b" has triggers that will be automatically disabled during E-Maj rollback operations (z_min_update). Use the emaj_modify_table() function to change this behaviour.
+WARNING:  _create_tbl: The table "myschema4.mypartp2" has triggers that will be automatically disabled during E-Maj rollback operations (z_min_update). Use the emaj_modify_table() function to change this behaviour.
 WARNING:  _create_tbl: The table "myschema4.mytblm" has triggers that will be automatically disabled during E-Maj rollback operations (mytblm_insert_trigger). Use the emaj_modify_table() function to change this behaviour.
  emaj_import_groups_configuration 
 ----------------------------------
@@ -404,12 +407,14 @@ select * from emaj.emaj_relation_change where rlchg_time_id >= 8000 order by 1,2
           8004 | phil's schema"3 | myTbl2\_col21_seq | REMOVE_SEQUENCE   | phil's group#3", |                  |                  |                 |                |                    |                    |                        |                     |                         |                        | 
           8004 | phil's schema"3 | phil's tbl1       | REMOVE_TABLE      | phil's group#3", |                  |                  |                 |                |                    |                    |                        |                     |                         |                        | 
           8004 | phil's schema"3 | phil's"seq\1      | REMOVE_SEQUENCE   | phil's group#3", |                  |                  |                 |                |                    |                    |                        |                     |                         |                        | 
-          8006 | myschema4       | mypartp1          | REMOVE_TABLE      | myGroup4         |                  |                  |                 |                |                    |                    |                        |                     |                         |                        | 
+          8006 | myschema4       | mypartp1a         | REMOVE_TABLE      | myGroup4         |                  |                  |                 |                |                    |                    |                        |                     |                         |                        | 
+          8006 | myschema4       | mypartp1b         | REMOVE_TABLE      | myGroup4         |                  |                  |                 |                |                    |                    |                        |                     |                         |                        | 
           8006 | myschema4       | mypartp2          | REMOVE_TABLE      | myGroup4         |                  |                  |                 |                |                    |                    |                        |                     |                         |                        | 
           8006 | myschema4       | mytblc1           | REMOVE_TABLE      | myGroup4         |                  |                  |                 |                |                    |                    |                        |                     |                         |                        | 
           8006 | myschema4       | mytblc2           | REMOVE_TABLE      | myGroup4         |                  |                  |                 |                |                    |                    |                        |                     |                         |                        | 
           8006 | myschema4       | mytblm            | REMOVE_TABLE      | myGroup4         |                  |                  |                 |                |                    |                    |                        |                     |                         |                        | 
-          8006 | myschema4       | mytblr            | REMOVE_TABLE      | myGroup4         |                  |                  |                 |                |                    |                    |                        |                     |                         |                        | 
+          8006 | myschema4       | mytblr1           | REMOVE_TABLE      | myGroup4         |                  |                  |                 |                |                    |                    |                        |                     |                         |                        | 
+          8006 | myschema4       | mytblr2           | REMOVE_TABLE      | myGroup4         |                  |                  |                 |                |                    |                    |                        |                     |                         |                        | 
           8010 | myschema1       | myTbl3            | ADD_TABLE         | myGroup1         |                  |                  |                 |                |                    |                    |                        |                     |                         |                        | 
           8010 | myschema1       | myTbl3_col31_seq  | ADD_SEQUENCE      | myGroup1         |                  |                  |                 |                |                    |                    |                        |                     |                         |                        | 
           8010 | myschema1       | mytbl1            | ADD_TABLE         | myGroup1         |                  |                  |                 |                |                    |                    |                        |                     |                         |                        | 
@@ -427,7 +432,8 @@ select * from emaj.emaj_relation_change where rlchg_time_id >= 8000 order by 1,2
           8010 | myschema2       | mytbl6            | ADD_TABLE         | myGroup2         |                  |                  |                 |                |                    |                    |                        |                     |                         |                        | 
           8010 | myschema2       | mytbl7            | ADD_TABLE         | myGroup2         |                  |                  |                 |                |                    |                    |                        |                     |                         |                        | 
           8010 | myschema2       | mytbl8            | ADD_TABLE         | myGroup2         |                  |                  |                 |                |                    |                    |                        |                     |                         |                        | 
-          8010 | myschema4       | mypartp1          | ADD_TABLE         | myGroup4         |                  |                  |                 |                |                    |                    |                        |                     |                         |                        | 
+          8010 | myschema4       | mypartp1a         | ADD_TABLE         | myGroup4         |                  |                  |                 |                |                    |                    |                        |                     |                         |                        | 
+          8010 | myschema4       | mypartp1b         | ADD_TABLE         | myGroup4         |                  |                  |                 |                |                    |                    |                        |                     |                         |                        | 
           8010 | myschema4       | mypartp2          | ADD_TABLE         | myGroup4         |                  |                  |                 |                |                    |                    |                        |                     |                         |                        | 
           8010 | myschema4       | mytblc1           | ADD_TABLE         | myGroup4         |                  |                  |                 |                |                    |                    |                        |                     |                         |                        | 
           8010 | myschema4       | mytblc2           | ADD_TABLE         | myGroup4         |                  |                  |                 |                |                    |                    |                        |                     |                         |                        | 
@@ -451,7 +457,7 @@ select * from emaj.emaj_relation_change where rlchg_time_id >= 8000 order by 1,2
           8019 | myschema1       | mytbl4            | ADD_TABLE         | myGroup1         |                  |                  |                 |                |                    |                    |                        |                     |                         |                        | 
           8019 | myschema2       | myTbl3_col31_seq  | ADD_SEQUENCE      | myGroup2         |                  |                  |                 |                |                    |                    |                        |                     |                         |                        | 
           8019 | myschema2       | myseq1            | ADD_SEQUENCE      | myGroup2         |                  |                  |                 |                |                    |                    |                        |                     |                         |                        | 
-(68 rows)
+(71 rows)
 
 select time_id, time_last_emaj_gid, time_event from emaj.emaj_time_stamp where time_id >= 8000 order by time_id;
  time_id | time_last_emaj_gid | time_event 
@@ -518,12 +524,12 @@ select hist_function, hist_event, hist_object,
  FORCE_STOP_GROUP | BEGIN              | myGroup4                                           |                                                            | postgres
  FORCE_STOP_GROUP | TIME STAMP SET     | 8005                                               |                                                            | postgres
  LOCK_GROUP       | BEGIN              | myGroup4                                           |                                                            | postgres
- LOCK_GROUP       | END                | myGroup4                                           | 6 tables locked, 0 deadlock(s)                             | postgres
- FORCE_STOP_GROUP | END                | myGroup4                                           | 6 tables/sequences processed                               | postgres
+ LOCK_GROUP       | END                | myGroup4                                           | 8 tables locked, 0 deadlock(s)                             | postgres
+ FORCE_STOP_GROUP | END                | myGroup4                                           | 8 tables/sequences processed                               | postgres
  DROP_GROUP       | BEGIN              | myGroup4                                           |                                                            | postgres
  DROP_GROUP       | TIME STAMP SET     | 8006                                               |                                                            | postgres
  DROP_GROUP       | LOG_SCHEMA DROPPED | emaj_myschema4                                     |                                                            | postgres
- DROP_GROUP       | END                | myGroup4                                           | 6 tables/sequences processed                               | postgres
+ DROP_GROUP       | END                | myGroup4                                           | 8 tables/sequences processed                               | postgres
  FORCE_STOP_GROUP | BEGIN              | emptyGroup                                         |                                                            | postgres
  FORCE_STOP_GROUP | TIME STAMP SET     | 8007                                               |                                                            | postgres
  LOCK_GROUP       | BEGIN              | emptyGroup                                         |                                                            | postgres
@@ -558,7 +564,8 @@ select hist_function, hist_event, hist_object,
  IMPORT_GROUPS    | TABLE ADDED        | myschema2.mytbl6                                   | To the idle group myGroup2                                 | postgres
  IMPORT_GROUPS    | TABLE ADDED        | myschema2.mytbl7                                   | To the idle group myGroup2                                 | postgres
  IMPORT_GROUPS    | TABLE ADDED        | myschema2.mytbl8                                   | To the idle group myGroup2                                 | postgres
- IMPORT_GROUPS    | TABLE ADDED        | myschema4.mypartp1                                 | To the idle group myGroup4                                 | postgres
+ IMPORT_GROUPS    | TABLE ADDED        | myschema4.mypartp1a                                | To the idle group myGroup4                                 | postgres
+ IMPORT_GROUPS    | TABLE ADDED        | myschema4.mypartp1b                                | To the idle group myGroup4                                 | postgres
  IMPORT_GROUPS    | TABLE ADDED        | myschema4.mypartp2                                 | To the idle group myGroup4                                 | postgres
  IMPORT_GROUPS    | TABLE ADDED        | myschema4.mytblc1                                  | To the idle group myGroup4                                 | postgres
  IMPORT_GROUPS    | TABLE ADDED        | myschema4.mytblc2                                  | To the idle group myGroup4                                 | postgres
@@ -645,7 +652,7 @@ select hist_function, hist_event, hist_object,
  IMPORT_GROUPS    | SEQUENCE ADDED     | myschema2."myTbl3_col31_seq"                       | To the idle group myGroup2                                 | postgres
  IMPORT_GROUPS    | SEQUENCE ADDED     | myschema2.myseq1                                   | To the idle group myGroup2                                 | postgres
  IMPORT_GROUPS    | END                |                                                    | 4 created or altered tables groups                         | postgres
-(158 rows)
+(159 rows)
 
 -- set sequence restart value
 select public.handle_emaj_sequences(8200);
@@ -1037,7 +1044,7 @@ select group_last_alter_time_id, group_nb_table, group_nb_sequence from emaj.ema
   where group_name in ('myGroup1','myGroup2','myGroup4') order by 1 desc ,2,3;
  group_last_alter_time_id | group_nb_table | group_nb_sequence 
 --------------------------+----------------+-------------------
-                     8207 |              5 |                 0
+                     8207 |              6 |                 0
                      8207 |              8 |                 2
                      8205 |              5 |                 2
 (3 rows)

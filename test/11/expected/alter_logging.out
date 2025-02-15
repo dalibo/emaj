@@ -759,8 +759,11 @@ select * from emaj.emaj_verify_all();
 -----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
  Warning: In tables group "myGroup2", the foreign key "mytbl6_col61_fkey" on the table "myschema2"."mytbl6" references the table "myschema2"."mytbl7" that does not belong to any group.
  Warning: In tables group "myGroup2", the table "myschema2"."mytbl6" is referenced by the foreign key "mytbl8_col81_fkey" of the table "myschema2"."mytbl8" that does not belong to any group.
+ Warning: In tables group "myGroup4", the foreign key "mytblp_col1_fkey" on the table "myschema4"."mypartp1a" references the table "myschema4"."mytblr1" that does not belong to any group.
+ Warning: In tables group "myGroup4", the foreign key "mytblp_col1_fkey" on the table "myschema4"."mypartp1b" references the table "myschema4"."mytblr1" that does not belong to any group.
+ Warning: In tables group "myGroup4", the foreign key "mytblp_col1_fkey" on the table "myschema4"."mypartp2" references the table "myschema4"."mytblr1" that does not belong to any group.
  No error detected
-(3 rows)
+(6 rows)
 
 --testing snap, dump changes and sql generation
 select emaj.emaj_snap_group('myGroup1',:'EMAJTESTTMPDIR' || '/snap','');
@@ -1414,8 +1417,11 @@ begin;
 -----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
  Error: In tables group "myGroup2", the log table "emaj_myschema2"."mytbl7_log" is not found.
  Warning: In tables group "myGroup2", the table "myschema2"."mytbl6" is referenced by the foreign key "mytbl8_col81_fkey" of the table "myschema2"."mytbl8" that does not belong to any group.
+ Warning: In tables group "myGroup4", the foreign key "mytblp_col1_fkey" on the table "myschema4"."mypartp1a" references the table "myschema4"."mytblr1" that does not belong to any group.
+ Warning: In tables group "myGroup4", the foreign key "mytblp_col1_fkey" on the table "myschema4"."mypartp1b" references the table "myschema4"."mytblr1" that does not belong to any group.
+ Warning: In tables group "myGroup4", the foreign key "mytblp_col1_fkey" on the table "myschema4"."mypartp2" references the table "myschema4"."mytblr1" that does not belong to any group.
  Warning: Some E-Maj event triggers are disabled. You may enable them using the emaj_enable_protection_by_event_triggers() function.
-(3 rows)
+(6 rows)
 
   select emaj.emaj_enable_protection_by_event_triggers();
  emaj_enable_protection_by_event_triggers 
@@ -1707,8 +1713,11 @@ select * from emaj.emaj_verify_all();
  Warning: In tables group "myGroup1", the sequence "myschema1"."mytbl2b_col20_seq" is linked to the table "myschema1"."mytbl2b" but this table does not belong to any tables group.
  Warning: In tables group "myGroup2", the foreign key "mytbl6_col61_fkey" on the table "myschema2"."mytbl6" references the table "myschema2"."mytbl7" that does not belong to any group.
  Warning: In tables group "myGroup2", the table "myschema2"."mytbl6" is referenced by the foreign key "mytbl8_col81_fkey" of the table "myschema2"."mytbl8" that does not belong to any group.
+ Warning: In tables group "myGroup4", the foreign key "mytblp_col1_fkey" on the table "myschema4"."mypartp1a" references the table "myschema4"."mytblr1" that does not belong to any group.
+ Warning: In tables group "myGroup4", the foreign key "mytblp_col1_fkey" on the table "myschema4"."mypartp1b" references the table "myschema4"."mytblr1" that does not belong to any group.
+ Warning: In tables group "myGroup4", the foreign key "mytblp_col1_fkey" on the table "myschema4"."mypartp2" references the table "myschema4"."mytblr1" that does not belong to any group.
  No error detected
-(5 rows)
+(8 rows)
 
 -- test statistics following a rollback targeting a mark set before a REMOVE_TBL
 begin;
@@ -2929,7 +2938,7 @@ select * from emaj.emaj_rollback_group('myGroup1','EMAJ_LAST_MARK');
 select emaj.emaj_move_tables('myschema4','.*','','myGroup1','MOVE_TBL_idle_to_logging');
  emaj_move_tables 
 ------------------
-                5
+                6
 (1 row)
 
 select emaj.emaj_move_sequences('myschema2','.*','','myGroup1','MOVE_SEQ_idle_to_logging');
@@ -2955,7 +2964,7 @@ PL/pgSQL function emaj.emaj_move_sequences(text,text,text,text,text) line 11 at 
 select emaj.emaj_move_tables('myschema4','.*','','myGroup2','MOVE_TBL_logging_to_logging');
  emaj_move_tables 
 ------------------
-                5
+                6
 (1 row)
 
 select emaj.emaj_move_sequences('myschema2','.*','','myGroup2','MOVE_SEQ_logging_to_logging');
@@ -2987,7 +2996,7 @@ rollback;
 select emaj.emaj_move_tables('myschema4','.*','','myGroup4','MOVE_TBL_logging_to_idle');
  emaj_move_tables 
 ------------------
-                5
+                6
 (1 row)
 
 select emaj.emaj_move_sequences('myschema2','.*','','myGroup4','MOVE_SEQ_logging_to_idle');
@@ -3011,7 +3020,10 @@ select * from emaj.emaj_verify_all();
  Warning: In tables group "myGroup2", the foreign key "mytbl4_col43_fkey" on the table "myschema2"."mytbl4" references the table "myschema2"."mytbl2" that belongs to another group ("myGroup1")
  Warning: In tables group "myGroup2", the foreign key "mytbl6_col61_fkey" on the table "myschema2"."mytbl6" references the table "myschema2"."mytbl7" that does not belong to any group.
  Warning: In tables group "myGroup2", the table "myschema2"."mytbl6" is referenced by the foreign key "mytbl8_col81_fkey" of the table "myschema2"."mytbl8" that does not belong to any group.
-(5 rows)
+ Warning: In tables group "myGroup4", the foreign key "mytblp_col1_fkey" on the table "myschema4"."mypartp1a" references the table "myschema4"."mytblr1" that does not belong to any group.
+ Warning: In tables group "myGroup4", the foreign key "mytblp_col1_fkey" on the table "myschema4"."mypartp1b" references the table "myschema4"."mytblr1" that does not belong to any group.
+ Warning: In tables group "myGroup4", the foreign key "mytblp_col1_fkey" on the table "myschema4"."mypartp2" references the table "myschema4"."mytblr1" that does not belong to any group.
+(8 rows)
 
 select emaj.emaj_move_table('myschema2','mytbl2','myGroup2','Move a table with fkey back');
  emaj_move_table 
@@ -3090,12 +3102,12 @@ select emaj.emaj_stop_group('myGroup2');
 select emaj.emaj_gen_sql_dump_changes_group('myGroup1','Mk1','EMAJ_LAST_MARK',NULL,NULL);
                     emaj_gen_sql_dump_changes_group                     
 ------------------------------------------------------------------------
- 27 SQL statements are available in the "emaj_temp_sql" temporary table
+ 28 SQL statements are available in the "emaj_temp_sql" temporary table
 (1 row)
 
 select regexp_replace(sql_text, E'\\d\\d\.\\d\\d\\.\\d\\d\\.\\d\\d\\d\\d','<timestamp>','g') from emaj_temp_sql where sql_line_number = 0;
-                                                           regexp_replace                                                            
--------------------------------------------------------------------------------------------------------------------------------------
+                                                            regexp_replace                                                            
+--------------------------------------------------------------------------------------------------------------------------------------
  -- Generated SQL for dumping changes in tables group "myGroup1" between marks "Mk1" and "STOP_<timestamp>"
  -- Dump changes for table myschema1.myTbl3 between marks "Mk1" and "[deleted mark]" (2 changes)
  -- Dump changes for table myschema1.myTbl3 between marks "[deleted mark]" and "STOP_<timestamp>" (0 changes)
@@ -3111,7 +3123,8 @@ select regexp_replace(sql_text, E'\\d\\d\.\\d\\d\\.\\d\\d\\.\\d\\d\\d\\d','<time
  -- Dump changes for table myschema1.mytbl4 between marks "Assign_mytbl4" and "STOP_<timestamp>" (0 changes)
  -- Dump changes for table myschema2.myTbl3 between marks "[deleted mark]" and "IMPORT_<timestamp>" (6 changes)
  -- Dump changes for table myschema2.mytbl2 between marks "Move a table with fkey" and "Move a table with fkey back" (0 changes)
- -- Dump changes for table myschema4.mypartp1 between marks "MOVE_TBL_idle_to_logging" and "MOVE_TBL_logging_to_logging" (0 changes)
+ -- Dump changes for table myschema4.mypartp1a between marks "MOVE_TBL_idle_to_logging" and "MOVE_TBL_logging_to_logging" (0 changes)
+ -- Dump changes for table myschema4.mypartp1b between marks "MOVE_TBL_idle_to_logging" and "MOVE_TBL_logging_to_logging" (0 changes)
  -- Dump changes for table myschema4.mypartp2 between marks "MOVE_TBL_idle_to_logging" and "MOVE_TBL_logging_to_logging" (0 changes)
  -- Dump changes for table myschema4.mytblc1 between marks "MOVE_TBL_idle_to_logging" and "MOVE_TBL_logging_to_logging" (0 changes)
  -- Dump changes for table myschema4.mytblc2 between marks "MOVE_TBL_idle_to_logging" and "MOVE_TBL_logging_to_logging" (0 changes)
@@ -3124,7 +3137,7 @@ select regexp_replace(sql_text, E'\\d\\d\.\\d\\d\\.\\d\\d\\.\\d\\d\\d\\d','<time
  -- Dump changes for sequence myschema2.myTbl3_col31_seq between marks "MOVE_SEQ_idle_to_logging" and "MOVE_SEQ_logging_to_logging"
  -- Dump changes for sequence myschema2.myseq1 between marks "MOVE_SEQ_idle_to_logging" and "MOVE_SEQ_logging_to_logging"
  -- Dump changes for sequence myschema2.myseq2 between marks "MOVE_SEQ_idle_to_logging" and "MOVE_SEQ_logging_to_logging"
-(28 rows)
+(29 rows)
 
 select emaj.emaj_drop_group('myGroup1');
  emaj_drop_group 
@@ -3142,7 +3155,7 @@ NOTICE:  table "mytbl1_log_2" does not exist, skipping
 select emaj.emaj_drop_group('myGroup4');
  emaj_drop_group 
 -----------------
-               8
+               9
 (1 row)
 
 select emaj.emaj_drop_group('myGroup5');
@@ -3194,7 +3207,8 @@ select * from emaj.emaj_relation_change where rlchg_time_id >= 10000 order by 1,
          10026 | myschema1       | mytbl4            | ADD_TABLE                   | myGroup1    |                  |                  |                 |                |                    |                    |                        |                     |                         |                        | 
          10027 | myschema1       | mytbl4            | REMOVE_TABLE                | myGroup1    |                  |                  |                 |                |                    |                    |                        |                     |                         |                        | 
          10028 | myschema1       | mytbl4            | ADD_TABLE                   | myGroup1    |                  |                  |                 |                |                    |                    |                        |                     |                         |                        | 
-         10033 | myschema4       | mypartp1          | MOVE_TABLE                  | myGroup4    |                  |                  | myGroup1        |                |                    |                    |                        |                     |                         |                        | 
+         10033 | myschema4       | mypartp1a         | MOVE_TABLE                  | myGroup4    |                  |                  | myGroup1        |                |                    |                    |                        |                     |                         |                        | 
+         10033 | myschema4       | mypartp1b         | MOVE_TABLE                  | myGroup4    |                  |                  | myGroup1        |                |                    |                    |                        |                     |                         |                        | 
          10033 | myschema4       | mypartp2          | MOVE_TABLE                  | myGroup4    |                  |                  | myGroup1        |                |                    |                    |                        |                     |                         |                        | 
          10033 | myschema4       | mytblc1           | MOVE_TABLE                  | myGroup4    |                  |                  | myGroup1        |                |                    |                    |                        |                     |                         |                        | 
          10033 | myschema4       | mytblc2           | MOVE_TABLE                  | myGroup4    |                  |                  | myGroup1        |                |                    |                    |                        |                     |                         |                        | 
@@ -3202,7 +3216,8 @@ select * from emaj.emaj_relation_change where rlchg_time_id >= 10000 order by 1,
          10034 | myschema2       | myTbl3_col31_seq  | MOVE_SEQUENCE               | myGroup2    |                  |                  | myGroup1        |                |                    |                    |                        |                     |                         |                        | 
          10034 | myschema2       | myseq1            | MOVE_SEQUENCE               | myGroup2    |                  |                  | myGroup1        |                |                    |                    |                        |                     |                         |                        | 
          10034 | myschema2       | myseq2            | MOVE_SEQUENCE               | myGroup2    |                  |                  | myGroup1        |                |                    |                    |                        |                     |                         |                        | 
-         10035 | myschema4       | mypartp1          | MOVE_TABLE                  | myGroup1    |                  |                  | myGroup2        |                |                    |                    |                        |                     |                         |                        | 
+         10035 | myschema4       | mypartp1a         | MOVE_TABLE                  | myGroup1    |                  |                  | myGroup2        |                |                    |                    |                        |                     |                         |                        | 
+         10035 | myschema4       | mypartp1b         | MOVE_TABLE                  | myGroup1    |                  |                  | myGroup2        |                |                    |                    |                        |                     |                         |                        | 
          10035 | myschema4       | mypartp2          | MOVE_TABLE                  | myGroup1    |                  |                  | myGroup2        |                |                    |                    |                        |                     |                         |                        | 
          10035 | myschema4       | mytblc1           | MOVE_TABLE                  | myGroup1    |                  |                  | myGroup2        |                |                    |                    |                        |                     |                         |                        | 
          10035 | myschema4       | mytblc2           | MOVE_TABLE                  | myGroup1    |                  |                  | myGroup2        |                |                    |                    |                        |                     |                         |                        | 
@@ -3210,7 +3225,8 @@ select * from emaj.emaj_relation_change where rlchg_time_id >= 10000 order by 1,
          10036 | myschema2       | myTbl3_col31_seq  | MOVE_SEQUENCE               | myGroup1    |                  |                  | myGroup2        |                |                    |                    |                        |                     |                         |                        | 
          10036 | myschema2       | myseq1            | MOVE_SEQUENCE               | myGroup1    |                  |                  | myGroup2        |                |                    |                    |                        |                     |                         |                        | 
          10036 | myschema2       | myseq2            | MOVE_SEQUENCE               | myGroup1    |                  |                  | myGroup2        |                |                    |                    |                        |                     |                         |                        | 
-         10037 | myschema4       | mypartp1          | MOVE_TABLE                  | myGroup2    |                  |                  | myGroup4        |                |                    |                    |                        |                     |                         |                        | 
+         10037 | myschema4       | mypartp1a         | MOVE_TABLE                  | myGroup2    |                  |                  | myGroup4        |                |                    |                    |                        |                     |                         |                        | 
+         10037 | myschema4       | mypartp1b         | MOVE_TABLE                  | myGroup2    |                  |                  | myGroup4        |                |                    |                    |                        |                     |                         |                        | 
          10037 | myschema4       | mypartp2          | MOVE_TABLE                  | myGroup2    |                  |                  | myGroup4        |                |                    |                    |                        |                     |                         |                        | 
          10037 | myschema4       | mytblc1           | MOVE_TABLE                  | myGroup2    |                  |                  | myGroup4        |                |                    |                    |                        |                     |                         |                        | 
          10037 | myschema4       | mytblc2           | MOVE_TABLE                  | myGroup2    |                  |                  | myGroup4        |                |                    |                    |                        |                     |                         |                        | 
@@ -3242,7 +3258,8 @@ select * from emaj.emaj_relation_change where rlchg_time_id >= 10000 order by 1,
          10051 | myschema2       | myTbl3_col31_seq  | REMOVE_SEQUENCE             | myGroup4    |                  |                  |                 |                |                    |                    |                        |                     |                         |                        | 
          10051 | myschema2       | myseq1            | REMOVE_SEQUENCE             | myGroup4    |                  |                  |                 |                |                    |                    |                        |                     |                         |                        | 
          10051 | myschema2       | myseq2            | REMOVE_SEQUENCE             | myGroup4    |                  |                  |                 |                |                    |                    |                        |                     |                         |                        | 
-         10051 | myschema4       | mypartp1          | REMOVE_TABLE                | myGroup4    |                  |                  |                 |                |                    |                    |                        |                     |                         |                        | 
+         10051 | myschema4       | mypartp1a         | REMOVE_TABLE                | myGroup4    |                  |                  |                 |                |                    |                    |                        |                     |                         |                        | 
+         10051 | myschema4       | mypartp1b         | REMOVE_TABLE                | myGroup4    |                  |                  |                 |                |                    |                    |                        |                     |                         |                        | 
          10051 | myschema4       | mypartp2          | REMOVE_TABLE                | myGroup4    |                  |                  |                 |                |                    |                    |                        |                     |                         |                        | 
          10051 | myschema4       | mytblc1           | REMOVE_TABLE                | myGroup4    |                  |                  |                 |                |                    |                    |                        |                     |                         |                        | 
          10051 | myschema4       | mytblc2           | REMOVE_TABLE                | myGroup4    |                  |                  |                 |                |                    |                    |                        |                     |                         |                        | 
@@ -3250,7 +3267,7 @@ select * from emaj.emaj_relation_change where rlchg_time_id >= 10000 order by 1,
          10052 | myschema5       | myoidstbl         | REMOVE_TABLE                | myGroup5    |                  |                  |                 |                |                    |                    |                        |                     |                         |                        | 
          10052 | myschema5       | myunloggedtbl     | REMOVE_TABLE                | myGroup5    |                  |                  |                 |                |                    |                    |                        |                     |                         |                        | 
          10052 | phil's schema"3 | myTbl2\           | REMOVE_TABLE                | myGroup5    |                  |                  |                 |                |                    |                    |                        |                     |                         |                        | 
-(89 rows)
+(93 rows)
 
 select time_id, time_last_emaj_gid, time_event from emaj.emaj_time_stamp where time_id >= 10000 order by time_id;
  time_id | time_last_emaj_gid | time_event 
@@ -3563,16 +3580,17 @@ select hist_function, hist_event, hist_object,
  SET_MARK_GROUPS    | BEGIN                        | myGroup1                     | MOVE_TBL_idle_to_logging                                                                                               | postgres
  CLEANUP_RLBK_STATE |                              | Rollback id 10005            | set to COMMITTED                                                                                                       | postgres
  SET_MARK_GROUPS    | END                          | myGroup1                     | MOVE_TBL_idle_to_logging                                                                                               | postgres
- MOVE_TABLES        | TABLE MOVED                  | myschema4.mypartp1           | From the idle group myGroup4 to the logging group myGroup1                                                             | postgres
+ MOVE_TABLES        | TABLE MOVED                  | myschema4.mypartp1a          | From the idle group myGroup4 to the logging group myGroup1                                                             | postgres
+ MOVE_TABLES        | TABLE MOVED                  | myschema4.mypartp1b          | From the idle group myGroup4 to the logging group myGroup1                                                             | postgres
  MOVE_TABLES        | TABLE MOVED                  | myschema4.mypartp2           | From the idle group myGroup4 to the logging group myGroup1                                                             | postgres
  MOVE_TABLES        | TABLE MOVED                  | myschema4.mytblc1            | From the idle group myGroup4 to the logging group myGroup1                                                             | postgres
  MOVE_TABLES        | TABLE MOVED                  | myschema4.mytblc2            | From the idle group myGroup4 to the logging group myGroup1                                                             | postgres
  MOVE_TABLES        | TABLE MOVED                  | myschema4.mytblm             | From the idle group myGroup4 to the logging group myGroup1                                                             | postgres
- MOVE_TABLES        | END                          |                              | 5 tables moved to the tables group myGroup1                                                                            | postgres
+ MOVE_TABLES        | END                          |                              | 6 tables moved to the tables group myGroup1                                                                            | postgres
  MOVE_SEQUENCES     | BEGIN                        |                              |                                                                                                                        | postgres
  MOVE_SEQUENCES     | TIME STAMP SET               | 10034                        |                                                                                                                        | postgres
  LOCK_GROUP         | BEGIN                        | myGroup1,myGroup2            |                                                                                                                        | postgres
- LOCK_GROUP         | END                          | myGroup1,myGroup2            | 16 tables locked, 0 deadlock(s)                                                                                        | postgres
+ LOCK_GROUP         | END                          | myGroup1,myGroup2            | 17 tables locked, 0 deadlock(s)                                                                                        | postgres
  SET_MARK_GROUPS    | BEGIN                        | myGroup1,myGroup2            | MOVE_SEQ_idle_to_logging                                                                                               | postgres
  SET_MARK_GROUPS    | END                          | myGroup1,myGroup2            | MOVE_SEQ_idle_to_logging                                                                                               | postgres
  MOVE_SEQUENCES     | SEQUENCE MOVED               | myschema2."myTbl3_col31_seq" | From the logging group myGroup2 to the logging group myGroup1                                                          | postgres
@@ -3582,19 +3600,20 @@ select hist_function, hist_event, hist_object,
  MOVE_TABLES        | BEGIN                        |                              |                                                                                                                        | postgres
  MOVE_TABLES        | TIME STAMP SET               | 10035                        |                                                                                                                        | postgres
  LOCK_GROUP         | BEGIN                        | myGroup1,myGroup2            |                                                                                                                        | postgres
- LOCK_GROUP         | END                          | myGroup1,myGroup2            | 16 tables locked, 0 deadlock(s)                                                                                        | postgres
+ LOCK_GROUP         | END                          | myGroup1,myGroup2            | 17 tables locked, 0 deadlock(s)                                                                                        | postgres
  SET_MARK_GROUPS    | BEGIN                        | myGroup1,myGroup2            | MOVE_TBL_logging_to_logging                                                                                            | postgres
  SET_MARK_GROUPS    | END                          | myGroup1,myGroup2            | MOVE_TBL_logging_to_logging                                                                                            | postgres
- MOVE_TABLES        | TABLE MOVED                  | myschema4.mypartp1           | From the logging group myGroup1 to the logging group myGroup2                                                          | postgres
+ MOVE_TABLES        | TABLE MOVED                  | myschema4.mypartp1a          | From the logging group myGroup1 to the logging group myGroup2                                                          | postgres
+ MOVE_TABLES        | TABLE MOVED                  | myschema4.mypartp1b          | From the logging group myGroup1 to the logging group myGroup2                                                          | postgres
  MOVE_TABLES        | TABLE MOVED                  | myschema4.mypartp2           | From the logging group myGroup1 to the logging group myGroup2                                                          | postgres
  MOVE_TABLES        | TABLE MOVED                  | myschema4.mytblc1            | From the logging group myGroup1 to the logging group myGroup2                                                          | postgres
  MOVE_TABLES        | TABLE MOVED                  | myschema4.mytblc2            | From the logging group myGroup1 to the logging group myGroup2                                                          | postgres
  MOVE_TABLES        | TABLE MOVED                  | myschema4.mytblm             | From the logging group myGroup1 to the logging group myGroup2                                                          | postgres
- MOVE_TABLES        | END                          |                              | 5 tables moved to the tables group myGroup2                                                                            | postgres
+ MOVE_TABLES        | END                          |                              | 6 tables moved to the tables group myGroup2                                                                            | postgres
  MOVE_SEQUENCES     | BEGIN                        |                              |                                                                                                                        | postgres
  MOVE_SEQUENCES     | TIME STAMP SET               | 10036                        |                                                                                                                        | postgres
  LOCK_GROUP         | BEGIN                        | myGroup1,myGroup2            |                                                                                                                        | postgres
- LOCK_GROUP         | END                          | myGroup1,myGroup2            | 16 tables locked, 0 deadlock(s)                                                                                        | postgres
+ LOCK_GROUP         | END                          | myGroup1,myGroup2            | 17 tables locked, 0 deadlock(s)                                                                                        | postgres
  SET_MARK_GROUPS    | BEGIN                        | myGroup1,myGroup2            | MOVE_SEQ_logging_to_logging                                                                                            | postgres
  SET_MARK_GROUPS    | END                          | myGroup1,myGroup2            | MOVE_SEQ_logging_to_logging                                                                                            | postgres
  MOVE_SEQUENCES     | SEQUENCE MOVED               | myschema2."myTbl3_col31_seq" | From the logging group myGroup1 to the logging group myGroup2                                                          | postgres
@@ -3604,15 +3623,16 @@ select hist_function, hist_event, hist_object,
  MOVE_TABLES        | BEGIN                        |                              |                                                                                                                        | postgres
  MOVE_TABLES        | TIME STAMP SET               | 10037                        |                                                                                                                        | postgres
  LOCK_GROUP         | BEGIN                        | myGroup2                     |                                                                                                                        | postgres
- LOCK_GROUP         | END                          | myGroup2                     | 11 tables locked, 0 deadlock(s)                                                                                        | postgres
+ LOCK_GROUP         | END                          | myGroup2                     | 12 tables locked, 0 deadlock(s)                                                                                        | postgres
  SET_MARK_GROUPS    | BEGIN                        | myGroup2                     | MOVE_TBL_logging_to_idle                                                                                               | postgres
  SET_MARK_GROUPS    | END                          | myGroup2                     | MOVE_TBL_logging_to_idle                                                                                               | postgres
- MOVE_TABLES        | TABLE MOVED                  | myschema4.mypartp1           | From the logging group myGroup2 to the idle group myGroup4                                                             | postgres
+ MOVE_TABLES        | TABLE MOVED                  | myschema4.mypartp1a          | From the logging group myGroup2 to the idle group myGroup4                                                             | postgres
+ MOVE_TABLES        | TABLE MOVED                  | myschema4.mypartp1b          | From the logging group myGroup2 to the idle group myGroup4                                                             | postgres
  MOVE_TABLES        | TABLE MOVED                  | myschema4.mypartp2           | From the logging group myGroup2 to the idle group myGroup4                                                             | postgres
  MOVE_TABLES        | TABLE MOVED                  | myschema4.mytblc1            | From the logging group myGroup2 to the idle group myGroup4                                                             | postgres
  MOVE_TABLES        | TABLE MOVED                  | myschema4.mytblc2            | From the logging group myGroup2 to the idle group myGroup4                                                             | postgres
  MOVE_TABLES        | TABLE MOVED                  | myschema4.mytblm             | From the logging group myGroup2 to the idle group myGroup4                                                             | postgres
- MOVE_TABLES        | END                          |                              | 5 tables moved to the tables group myGroup4                                                                            | postgres
+ MOVE_TABLES        | END                          |                              | 6 tables moved to the tables group myGroup4                                                                            | postgres
  MOVE_SEQUENCES     | BEGIN                        |                              |                                                                                                                        | postgres
  MOVE_SEQUENCES     | TIME STAMP SET               | 10038                        |                                                                                                                        | postgres
  LOCK_GROUP         | BEGIN                        | myGroup2                     |                                                                                                                        | postgres
@@ -3714,7 +3734,7 @@ select hist_function, hist_event, hist_object,
  DROP_GROUP         | BEGIN                        | myGroup4                     |                                                                                                                        | postgres
  DROP_GROUP         | TIME STAMP SET               | 10051                        |                                                                                                                        | postgres
  DROP_GROUP         | LOG_SCHEMA DROPPED           | emaj_myschema4               |                                                                                                                        | postgres
- DROP_GROUP         | END                          | myGroup4                     | 8 tables/sequences processed                                                                                           | postgres
+ DROP_GROUP         | END                          | myGroup4                     | 9 tables/sequences processed                                                                                           | postgres
  DROP_GROUP         | BEGIN                        | myGroup5                     |                                                                                                                        | postgres
  DROP_GROUP         | TIME STAMP SET               | 10052                        |                                                                                                                        | postgres
  DROP_GROUP         | LOG_SCHEMA DROPPED           | emaj_myschema5               |                                                                                                                        | postgres
@@ -3723,7 +3743,7 @@ select hist_function, hist_event, hist_object,
  DROP_GROUP         | BEGIN                        | emptyGroup                   |                                                                                                                        | postgres
  DROP_GROUP         | TIME STAMP SET               | 10053                        |                                                                                                                        | postgres
  DROP_GROUP         | END                          | emptyGroup                   | 0 tables/sequences processed                                                                                           | postgres
-(410 rows)
+(413 rows)
 
 select nspname from pg_namespace where nspname like 'emaj%' order by nspname;
  nspname 
@@ -3829,11 +3849,16 @@ select * from emaj.emaj_rel_hist order by 1,2,3;
  myschema2       | mytbl7            | [9510,9511)     | myGroup2         | r
  myschema2       | mytbl8            | [2000,8002)     | myGroup2         | r
  myschema2       | mytbl8            | [8010,9000)     | myGroup2         | r
- myschema4       | mypartp1          | [1023,8006)     | myGroup4         | r
- myschema4       | mypartp1          | [8010,10033)    | myGroup4         | r
- myschema4       | mypartp1          | [10033,10035)   | myGroup1         | r
- myschema4       | mypartp1          | [10035,10037)   | myGroup2         | r
- myschema4       | mypartp1          | [10037,10051)   | myGroup4         | r
+ myschema4       | mypartp1a         | [1023,8006)     | myGroup4         | r
+ myschema4       | mypartp1a         | [8010,10033)    | myGroup4         | r
+ myschema4       | mypartp1a         | [10033,10035)   | myGroup1         | r
+ myschema4       | mypartp1a         | [10035,10037)   | myGroup2         | r
+ myschema4       | mypartp1a         | [10037,10051)   | myGroup4         | r
+ myschema4       | mypartp1b         | [1023,8006)     | myGroup4         | r
+ myschema4       | mypartp1b         | [8010,10033)    | myGroup4         | r
+ myschema4       | mypartp1b         | [10033,10035)   | myGroup1         | r
+ myschema4       | mypartp1b         | [10035,10037)   | myGroup2         | r
+ myschema4       | mypartp1b         | [10037,10051)   | myGroup4         | r
  myschema4       | mypartp2          | [1023,8006)     | myGroup4         | r
  myschema4       | mypartp2          | [8010,10033)    | myGroup4         | r
  myschema4       | mypartp2          | [10033,10035)   | myGroup1         | r
@@ -3854,7 +3879,8 @@ select * from emaj.emaj_rel_hist order by 1,2,3;
  myschema4       | mytblm            | [10033,10035)   | myGroup1         | r
  myschema4       | mytblm            | [10035,10037)   | myGroup2         | r
  myschema4       | mytblm            | [10037,10051)   | myGroup4         | r
- myschema4       | mytblr            | [4046,8006)     | myGroup4         | r
+ myschema4       | mytblr1           | [4067,8006)     | myGroup4         | r
+ myschema4       | mytblr2           | [4046,8006)     | myGroup4         | r
  myschema5       | myoidstbl         | [8010,10052)    | myGroup5         | r
  myschema5       | myunloggedtbl     | [8010,10052)    | myGroup5         | r
  phil's schema"3 | myTbl2\           | [1019,8004)     | phil's group#3", | r
@@ -3863,14 +3889,14 @@ select * from emaj.emaj_rel_hist order by 1,2,3;
  phil's schema"3 | phil's tbl1       | [1019,8004)     | phil's group#3", | r
  phil's schema"3 | phil's"seq\1      | [1028,8004)     | phil's group#3", | S
  public          | mytbl1_new_name   | [10044,10045)   | myGroup1         | r
-(123 rows)
+(129 rows)
 
 select rlbk_id, rlbk_status, rlbk_comment from emaj.emaj_rlbk where rlbk_comment is not null order by 1;
  rlbk_id | rlbk_status |                  rlbk_comment                  
 ---------+-------------+------------------------------------------------
     4010 | COMMITTED   | Rollback set by the 'rollback.sql' script
     4012 | COMMITTED   | Logged rollback set by the rollback.sql script
-    4017 | COMMITTED   | my comment
+    4019 | COMMITTED   | my comment
     9705 | COMMITTED   | Rollback 2 groups crossing an alter group
    10002 | COMMITTED   | Logged rollback on 2 groups
 (5 rows)

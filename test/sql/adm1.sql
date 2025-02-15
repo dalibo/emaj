@@ -71,7 +71,7 @@ insert into myschema2.myTbl6 (col61) values (0);
 insert into myschema2.myTbl8 (col81) values (0);
 alter sequence mySchema2.mySeq1 restart 1000;
 truncate mySchema4.myTblM, mySchema4.myTblC1, mySchema4.myTblC2;
-truncate mySchema4.myTblP, mySchema4.myPartP1, mySchema4.myPartP2 CASCADE;
+truncate mySchema4.myTblP, mySchema4.myPartP1a, mySchema4.myPartP1b, mySchema4.myPartP2, mySchema4.myTblR1, mySchema4.myTblR2 CASCADE;
 -- analyze to get some statistics
 analyze;
 

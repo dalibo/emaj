@@ -563,13 +563,13 @@ select * from emaj.emaj_detailed_log_stat_group('emptyGroup','SM2',NULL);
 select emaj.emaj_stop_group('myGroup4', 'myGroup4_stop');
  emaj_stop_group 
 -----------------
-               6
+               8
 (1 row)
 
 select emaj.emaj_start_group('myGroup4', 'myGroup4_restart', false);
  emaj_start_group 
 ------------------
-                6
+                8
 (1 row)
 
 select stat_group, stat_schema, stat_table, stat_first_mark, stat_last_mark, stat_rows
@@ -578,13 +578,15 @@ select stat_group, stat_schema, stat_table, stat_first_mark, stat_last_mark, sta
 WARNING:  Between marks "myGroup4_start" and "myGroup4_restart", the tables group "myGroup4" has not been always in logging state. Some data changes may not have been recorded.
  stat_group | stat_schema | stat_table | stat_first_mark |  stat_last_mark  | stat_rows 
 ------------+-------------+------------+-----------------+------------------+-----------
- myGroup4   | myschema4   | mypartp1   | myGroup4_start  | myGroup4_restart |         0
+ myGroup4   | myschema4   | mypartp1a  | myGroup4_start  | myGroup4_restart |         0
+ myGroup4   | myschema4   | mypartp1b  | myGroup4_start  | myGroup4_restart |         0
  myGroup4   | myschema4   | mypartp2   | myGroup4_start  | myGroup4_restart |         0
  myGroup4   | myschema4   | mytblc1    | myGroup4_start  | myGroup4_restart |         0
  myGroup4   | myschema4   | mytblc2    | myGroup4_start  | myGroup4_restart |         0
  myGroup4   | myschema4   | mytblm     | myGroup4_start  | myGroup4_restart |         0
- myGroup4   | myschema4   | mytblr     | myGroup4_start  | myGroup4_restart |         0
-(6 rows)
+ myGroup4   | myschema4   | mytblr1    | Assign mytblr1  | myGroup4_restart |         0
+ myGroup4   | myschema4   | mytblr2    | myGroup4_start  | myGroup4_restart |         0
+(8 rows)
 
 select stat_group, stat_schema, stat_table, stat_first_mark, stat_last_mark, stat_rows
   from emaj.emaj_log_stat_group('myGroup4','myGroup4_start','')
@@ -592,13 +594,15 @@ select stat_group, stat_schema, stat_table, stat_first_mark, stat_last_mark, sta
 WARNING:  Since mark "myGroup4_start", the tables group "myGroup4" has not been always in logging state. Some data changes may not have been recorded.
  stat_group | stat_schema | stat_table | stat_first_mark | stat_last_mark | stat_rows 
 ------------+-------------+------------+-----------------+----------------+-----------
- myGroup4   | myschema4   | mypartp1   | myGroup4_start  |                |         0
+ myGroup4   | myschema4   | mypartp1a  | myGroup4_start  |                |         0
+ myGroup4   | myschema4   | mypartp1b  | myGroup4_start  |                |         0
  myGroup4   | myschema4   | mypartp2   | myGroup4_start  |                |         0
  myGroup4   | myschema4   | mytblc1    | myGroup4_start  |                |         0
  myGroup4   | myschema4   | mytblc2    | myGroup4_start  |                |         0
  myGroup4   | myschema4   | mytblm     | myGroup4_start  |                |         0
- myGroup4   | myschema4   | mytblr     | myGroup4_start  |                |         0
-(6 rows)
+ myGroup4   | myschema4   | mytblr1    | Assign mytblr1  |                |         0
+ myGroup4   | myschema4   | mytblr2    | myGroup4_start  |                |         0
+(8 rows)
 
 -----------------------------
 -- emaj_sequence_stat_group(), emaj_sequence_stat_groups() test
@@ -765,17 +769,17 @@ select hist_id, hist_function, hist_event, hist_object,
     5053 | STOP_GROUP      | BEGIN          | myGroup4          |                                 | postgres
     5054 | STOP_GROUP      | TIME STAMP SET | 5008              |                                 | postgres
     5055 | LOCK_GROUP      | BEGIN          | myGroup4          |                                 | postgres
-    5056 | LOCK_GROUP      | END            | myGroup4          | 6 tables locked, 0 deadlock(s)  | postgres
+    5056 | LOCK_GROUP      | END            | myGroup4          | 8 tables locked, 0 deadlock(s)  | postgres
     5057 | SET_MARK_GROUP  | BEGIN          | myGroup4          | myGroup4_stop                   | postgres
     5058 | SET_MARK_GROUP  | END            | myGroup4          | myGroup4_stop                   | postgres
-    5059 | STOP_GROUP      | END            | myGroup4          | 6 tables/sequences processed    | postgres
+    5059 | STOP_GROUP      | END            | myGroup4          | 8 tables/sequences processed    | postgres
     5060 | START_GROUP     | BEGIN          | myGroup4          | Without log reset               | postgres
     5061 | START_GROUP     | TIME STAMP SET | 5009              |                                 | postgres
     5062 | LOCK_GROUP      | BEGIN          | myGroup4          |                                 | postgres
-    5063 | LOCK_GROUP      | END            | myGroup4          | 6 tables locked, 0 deadlock(s)  | postgres
+    5063 | LOCK_GROUP      | END            | myGroup4          | 8 tables locked, 0 deadlock(s)  | postgres
     5064 | SET_MARK_GROUP  | BEGIN          | myGroup4          | myGroup4_restart                | postgres
     5065 | SET_MARK_GROUP  | END            | myGroup4          | myGroup4_restart                | postgres
-    5066 | START_GROUP     | END            | myGroup4          | 6 tables/sequences processed    | postgres
+    5066 | START_GROUP     | END            | myGroup4          | 8 tables/sequences processed    | postgres
 (55 rows)
 
 -- set sequence restart value
@@ -812,17 +816,19 @@ select * from emaj._get_sequences_last_value(null, null, null, null, null, null)
  myschema2.mytbl6                  | 0
  myschema2.mytbl7                  | 0
  myschema2.mytbl8                  | 0
- myschema4.mypartp1                | 3
+ myschema4.mypartp1a               | 1
+ myschema4.mypartp1b               | 3
  myschema4.mypartp2                | 8
  myschema4.mytblc1                 | 3
  myschema4.mytblc2                 | 3
  myschema4.mytblm                  | 3
- myschema4.mytblr                  | 2
+ myschema4.mytblr1                 | 0
+ myschema4.mytblr2                 | 2
  phil's schema"3.myTbl2\           | 0
  phil's schema"3.myTbl2\_col21_seq | 0
  phil's schema"3.phil's tbl1       | 0
  phil's schema"3.phil's"seq\1      | 999
-(29 rows)
+(31 rows)
 
 -- filter on groups
 select p_key from emaj._get_sequences_last_value('Group', null, null, null, null, null) order by 1;
@@ -848,13 +854,15 @@ select p_key from emaj._get_sequences_last_value('Group', null, null, null, null
  myschema2.mytbl6
  myschema2.mytbl7
  myschema2.mytbl8
- myschema4.mypartp1
+ myschema4.mypartp1a
+ myschema4.mypartp1b
  myschema4.mypartp2
  myschema4.mytblc1
  myschema4.mytblc2
  myschema4.mytblm
- myschema4.mytblr
-(26 rows)
+ myschema4.mytblr1
+ myschema4.mytblr2
+(28 rows)
 
 select p_key from emaj._get_sequences_last_value(null, 'Group', null, null, null, null) order by 1;
                p_key               

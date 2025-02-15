@@ -211,19 +211,19 @@ select * from emaj.emaj_seq_hole;
 select count(*) from emaj.emaj_rlbk;
  count 
 -------
-    38
+    40
 (1 row)
 
 select count(*) from emaj.emaj_rlbk_session;
  count 
 -------
-    38
+    40
 (1 row)
 
 select count(*) from emaj.emaj_rlbk_plan;
  count 
 -------
-   247
+   315
 (1 row)
 
 select count(*) from emaj.emaj_rlbk_stat;
@@ -243,8 +243,7 @@ insert into myschema2.myTbl6 (col61) values (0);
 insert into myschema2.myTbl8 (col81) values (0);
 alter sequence mySchema2.mySeq1 restart 1000;
 truncate mySchema4.myTblM, mySchema4.myTblC1, mySchema4.myTblC2;
-truncate mySchema4.myTblP, mySchema4.myPartP1, mySchema4.myPartP2 CASCADE;
-NOTICE:  truncate cascades to table "mytblr"
+truncate mySchema4.myTblP, mySchema4.myPartP1a, mySchema4.myPartP1b, mySchema4.myPartP2, mySchema4.myTblR1, mySchema4.myTblR2 CASCADE;
 -- analyze to get some statistics
 analyze;
 set role emaj_regression_tests_adm_user2;
@@ -262,7 +261,7 @@ select hist_function, hist_event, hist_wording
   hist_function  | hist_event |                                                                                      hist_wording                                                                                      
 -----------------+------------+----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
  PURGE_HISTORIES | BEGIN      | Retention delay @ 0
- PURGE_HISTORIES |            | 25 emaj_hist rows deleted ; 17 log session rows deleted ; 13 group history rows deleted ; 138 relation history rows deleted ; 94 relation changes deleted ; 38 rollback events deleted
+ PURGE_HISTORIES |            | 25 emaj_hist rows deleted ; 17 log session rows deleted ; 13 group history rows deleted ; 144 relation history rows deleted ; 95 relation changes deleted ; 40 rollback events deleted
  PURGE_HISTORIES | END        | 
 (3 rows)
 

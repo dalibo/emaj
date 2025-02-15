@@ -379,24 +379,44 @@ select * from emaj.emaj_logged_rollback_group('emptyGroup','EGM3');
 -----------------------------
 -- test use of partitionned tables
 -----------------------------
-select emaj.emaj_assign_table('myschema4', 'mytblr','myGroup4');
+insert into mySchema4.myTblR1 values (-2), (-1), (0), (1), (2);
+select emaj.emaj_assign_table('myschema4', 'mytblr2', 'myGroup4');
 select emaj.emaj_start_group('myGroup4','myGroup4_start');
-insert into myschema4.myTblM values ('2001-09-11',0,'abc'),('2011-09-11',10,'def'),('2021-09-11',20,'ghi');
-insert into myschema4.myTblP values (-1,'abc'),(0,'def'),(1,'ghi'),(2,'jkl');
+
+insert into myschema4.myTblM values ('2001-09-11',0, 'abc'),('2011-09-11',10, 'def'),('2021-09-11',20, 'ghi');
+insert into mySchema4.myTblP values (-2, 'A', 'Stored in partition 1A'), (-1, 'P', 'Stored in partition 1B'),
+									(0, 'Q', 'Stored in partition 2'), (1, 'X', 'Stored in partition 2'),
+									(2, 'Y', 'Also stored in partition 2');
 
 select emaj.emaj_set_mark_group('myGroup4','mark1');
 truncate myschema4.myTblM;
-update myschema4.myTblP set col2 = 'DEF' where col1 = 0;
-update myschema4.myTblP set col1 = -2 where col1 = 2;
-insert into myschema4.mytblr (col2,col3) values (1, 'abc');
 
+update myschema4.myTblP set col3 = 'Updated column' where col1 = 0;
+update myschema4.myTblP set col1 = -2, col3 = 'Moved to partition 1B' where col1 = 2;
+insert into myschema4.mytblr2 (col2, col3) values (1, 'X');
+
+begin;
+-- failing rollback because mytblr1 is outside the 'myGroup4' and the FK on it is immediate and has a ON DELETE CASCADE clause
+  select * from emaj.emaj_logged_rollback_group('myGroup4','mark1');
+rollback;
+
+begin;
+-- failing rollback because mytblr1 is outside the 'myGroup4' and the FK on it is immediate
+  alter table myschema4.myTblP drop constraint mytblp_col1_fkey, add foreign key (col1) references myschema4.mytblr1(col1);
+  select * from emaj.emaj_logged_rollback_group('myGroup4','mark1');
+rollback;
+
+-- should be OK
+alter table myschema4.myTblP drop constraint mytblp_col1_fkey, add foreign key (col1) references myschema4.mytblr1(col1)
+  deferrable initially immediate;
 select * from emaj.emaj_logged_rollback_group('myGroup4','mark1');
 
 select col1, col2, col3, emaj_verb, emaj_tuple, emaj_gid from emaj_myschema4.mytblm_log;
 select col1, col2, col3, emaj_verb, emaj_tuple, emaj_gid from emaj_myschema4.mytblc1_log;
 select col1, col2, col3, emaj_verb, emaj_tuple, emaj_gid from emaj_myschema4.mytblc2_log;
-select col1, col2, emaj_verb, emaj_tuple, emaj_gid from emaj_myschema4.mypartp1_log;
-select col1, col2, emaj_verb, emaj_tuple, emaj_gid from emaj_myschema4.mypartp2_log;
+select col1, col2, col3, col4, emaj_verb, emaj_tuple, emaj_gid from emaj_myschema4.mypartp1a_log;
+select col1, col2, col3, col4, emaj_verb, emaj_tuple, emaj_gid from emaj_myschema4.mypartp1b_log;
+select col1, col2, col3, col4, emaj_verb, emaj_tuple, emaj_gid from emaj_myschema4.mypartp2_log;
 
 -- use the functions dedicated to emaj_web
 -- for an equivalent of "select * from emaj.emaj_rollback_group('myGroup4','myGroup4_start',true,'my comment');"
@@ -619,6 +639,9 @@ rollback;
 select rlbk_id, rlbk_status, rlbk_begin_hist_id, rlbk_nb_session from emaj.emaj_rlbk
   where rlbk_status in ('PLANNING', 'LOCKING', 'EXECUTING', 'COMPLETED') order by rlbk_id;
 select emaj.emaj_cleanup_rollback_state();
+
+-- Finaly add mytblr1 to the group
+select emaj.emaj_assign_table('myschema4', 'mytblr1', 'myGroup4', null, 'Assign mytblr1');
 
 -----------------------------
 -- check application triggers state

@@ -250,7 +250,7 @@ select hist_function, hist_event, hist_object,
 -----------------+----------------+-------------+----------------------------------------------------------------------------------------------------------------------------+-----------
  START_GROUP     | BEGIN          | myGroup1    | With log reset                                                                                                             | postgres
  START_GROUP     | TIME STAMP SET | 2002        |                                                                                                                            | postgres
- PURGE_HISTORIES |                |             | 332 emaj_hist rows deleted ; 5 group history rows deleted ; 39 relation history rows deleted ; 37 relation changes deleted | postgres
+ PURGE_HISTORIES |                |             | 333 emaj_hist rows deleted ; 5 group history rows deleted ; 39 relation history rows deleted ; 37 relation changes deleted | postgres
  LOCK_GROUP      | BEGIN          | myGroup1    |                                                                                                                            | postgres
  LOCK_GROUP      | END            | myGroup1    | 5 tables locked, 0 deadlock(s)                                                                                             | postgres
  SET_MARK_GROUP  | BEGIN          | myGroup1    | Mark1                                                                                                                      | postgres
@@ -416,7 +416,7 @@ select hist_id, hist_function, hist_event, hist_object,
 ---------+-----------------+-------------------+-------------------+----------------------------------------------------------------------------------------------------------------------------+-----------
     2046 | START_GROUP     | BEGIN             | myGroup1          | With log reset                                                                                                             | postgres
     2047 | START_GROUP     | TIME STAMP SET    | 2002              |                                                                                                                            | postgres
-    2048 | PURGE_HISTORIES |                   |                   | 332 emaj_hist rows deleted ; 5 group history rows deleted ; 39 relation history rows deleted ; 37 relation changes deleted | postgres
+    2048 | PURGE_HISTORIES |                   |                   | 333 emaj_hist rows deleted ; 5 group history rows deleted ; 39 relation history rows deleted ; 37 relation changes deleted | postgres
     2049 | LOCK_GROUP      | BEGIN             | myGroup1          |                                                                                                                            | postgres
     2050 | LOCK_GROUP      | END               | myGroup1          | 5 tables locked, 0 deadlock(s)                                                                                             | postgres
     2051 | SET_MARK_GROUP  | BEGIN             | myGroup1          | Mark1                                                                                                                      | postgres
