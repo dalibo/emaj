@@ -84,3 +84,5 @@ The technical way to disable or not the application triggers depends on the *ses
 If *session_replication_role* equals *'replica'*, then the enabled triggers at the E-Maj rollback start are not called. If a trigger is declared as ‘not to be disabled', it is temporarily changed into an *ALWAYS* trigger during the operation.
 
 If *session_replication_role* keeps its default value, enabled triggers to neutralize are just temporarily disabled during the operation.
+
+In a declarative partitionning context, it is possible to create a trigger on a partitionned table. As a result, each partition of the table inherits the trigger. There is no pratical issue with this on E-Maj rollbacks. If one wishes to let the trigger enabled during the rollback, it must be declared as such for each partition.

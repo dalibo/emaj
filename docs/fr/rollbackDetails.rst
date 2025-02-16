@@ -79,10 +79,12 @@ Les clés étrangères (*FOREIGN KEYs*) définies au niveau des tables partition
 Gestion des triggers applicatifs
 --------------------------------
 
-Si des tables du groupe à traiter possèdent des triggers (déclencheurs), autres que ceux générés par E-Maj, ceux-ci sont, par défaut, temporairement désactivés pendant l’opération de rollback E-Maj. Lors de l’:ref:`assignation d’une table<assign_table_sequence>` à un groupe de tables, ou bien en :ref:`important une configuration de groupe de tables<import_groups_conf>`, on peut enregistrer des triggers comme « ne devant pas être automatiquement désactivés lors du rollback ».
+Si des tables du groupe à traiter possèdent des triggers (déclencheurs), autres que ceux générés par E-Maj, ceux-ci sont temporairement désactivés pendant l’opération de rollback E-Maj. Mais ce comportement par défaut peut être modifié. Lors de l’:ref:`assignation d’une table<assign_table_sequence>` à un groupe de tables, ou bien en :ref:`important une configuration de groupe de tables<import_groups_conf>`, on peut enregistrer des triggers comme « ne devant pas être automatiquement désactivés lors du rollback ».
 
 Les moyens internes mis en œuvre pour désactiver ou non les triggers applicatifs varient selon la valeur du paramètre de session *session_replication_role* positionnée lors du traitement de chaque table concernée.
 
 Si *session_replication_role* a la valeur ‘replica’, alors les triggers actifs au lancement de l’opération de rollback E-Maj ne sont en fait pas appelés. Si un trigger est défini comme « ne devant pas être désactivé », il est temporairement transformé en trigger de type *ALWAYS* pour la durée de l’opération.
 
 Si *session_replication_role* garde sa valeur standard, alors les triggers actifs à désactiver le sont temporairement pour la durée de l’opération.
+
+Dans un contexte de partitionnement déclaratif, il est possible de créer un trigger sur une table partitionnée. Chacune des partitions de la table hérite alors automatiquement du trigger. Cette pratique ne pose pas de problème particulier dans le fonctionnement des rollbacks E-Maj. Si on souhaite que les triggers restent actifs durant les rollbacks, il faut les déclarer comme tel pour chacune des partitions concernées.
