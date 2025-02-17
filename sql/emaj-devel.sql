@@ -8292,6 +8292,7 @@ $_rlbk_planning$
     v_minSession             INT;
     v_minDuration            INTERVAL;
     v_nbStep                 INT;
+    v_fkList                 TEXT;
     r_tbl                    RECORD;
     r_fk                     RECORD;
     r_batch                  RECORD;
@@ -8625,7 +8626,7 @@ $_rlbk_planning$
       LOOP
 -- Depending on the foreign key characteristics, record as 'to be dropped' or 'to be set deferred' or 'to just be reset immediate'.
         IF NOT r_fk.condeferrable OR r_fk.confupdtype <> 'a' OR r_fk.confdeltype <> 'a' THEN
--- Non deferrable fkeys and deferrable fkeys with an action for UPDATE or DELETE other than 'no action' need to be dropped.
+-- Non deferrable fkeys and fkeys with an action for UPDATE or DELETE other than 'no action' need to be dropped.
           INSERT INTO emaj.emaj_rlbk_plan (
             rlbp_rlbk_id, rlbp_step, rlbp_schema, rlbp_table, rlbp_object, rlbp_batch_number,
             rlbp_estimated_duration, rlbp_estimate_method
@@ -8681,6 +8682,20 @@ $_rlbk_planning$
             );
         END IF;
       END LOOP;
+-- Raise an exception if DROP_FK steps concerns inherited FK (i.e. FK set on a partitionned table)
+      SELECT string_agg(rlbp_schema || '.' || rlbp_table || '.' || rlbp_object, ', ')
+        INTO v_fkList
+        FROM emaj.emaj_rlbk_plan r
+             JOIN pg_catalog.pg_class t ON (t.relname = r.rlbp_table)
+             JOIN pg_catalog.pg_namespace n ON (t.relnamespace  = n.oid AND n.nspname = r.rlbp_schema)
+             JOIN pg_catalog.pg_constraint c ON (c.conrelid = t.oid AND c.conname = r.rlbp_object)
+        WHERE rlbp_rlbk_id = p_rlbkId
+          AND rlbp_step = 'DROP_FK'
+          AND coninhcount > 0;
+      IF v_fkList IS NOT NULL THEN
+        RAISE EXCEPTION '_rlbk_planning: Some foreign keys (%) would need to be temporarily dropped during the operation. '
+                        'But this would fail because they are inherited from a partitionned table.', v_fkList;
+      END IF;
 --
 -- Now compute the estimation duration for each complex step ('RLBK_TABLE', 'DELETE_LOG', 'ADD_FK', 'SET_FK_IMM').
 --

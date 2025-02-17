@@ -633,21 +633,19 @@ select time_id, time_last_emaj_gid, time_event from emaj.emaj_time_stamp order b
     4047 |            4000094 | S
     4048 |            4000102 | M
     4049 |            4000112 | R
-    4050 |            4000112 | R
-    4051 |            4000112 | R
+    4050 |            4000120 | M
+    4051 |            4000120 | R
     4052 |            4000120 | M
     4053 |            4000120 | R
     4054 |            4000120 | M
-    4055 |            4000120 | R
-    4056 |            4000120 | M
-    4057 |            4000120 | M
-    4058 |            4000135 | M
-    4059 |            4000137 | R
-    4060 |            4000151 | M
-    4061 |            4000153 | R
-    4062 |            4000153 | A
-    4066 |            4000153 | R
-    4067 |            4000153 | A
+    4055 |            4000120 | M
+    4056 |            4000135 | M
+    4057 |            4000137 | R
+    4058 |            4000151 | M
+    4059 |            4000153 | R
+    4060 |            4000153 | A
+    4064 |            4000153 | R
+    4065 |            4000153 | A
     5000 |            5000000 | X
     5002 |            5000000 | S
     5003 |            5000000 | M
@@ -1001,7 +999,7 @@ select time_id, time_last_emaj_gid, time_event from emaj.emaj_time_stamp order b
    20203 |           20000272 | R
    20204 |           20000291 | M
    20205 |           20000291 | R
-(512 rows)
+(510 rows)
 
 select sequ_schema, sequ_name, sequ_time_id, sequ_last_val, sequ_is_called from emaj.emaj_sequence order by sequ_time_id, sequ_schema, sequ_name;
  sequ_schema |     sequ_name     | sequ_time_id | sequ_last_val | sequ_is_called 

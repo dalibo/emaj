@@ -3879,7 +3879,7 @@ select * from emaj.emaj_rel_hist order by 1,2,3;
  myschema4       | mytblm            | [10033,10035)   | myGroup1         | r
  myschema4       | mytblm            | [10035,10037)   | myGroup2         | r
  myschema4       | mytblm            | [10037,10051)   | myGroup4         | r
- myschema4       | mytblr1           | [4067,8006)     | myGroup4         | r
+ myschema4       | mytblr1           | [4065,8006)     | myGroup4         | r
  myschema4       | mytblr2           | [4046,8006)     | myGroup4         | r
  myschema5       | myoidstbl         | [8010,10052)    | myGroup5         | r
  myschema5       | myunloggedtbl     | [8010,10052)    | myGroup5         | r

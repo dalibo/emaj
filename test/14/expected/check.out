@@ -116,13 +116,13 @@ select funcname, calls from pg_stat_user_functions
  _check_tables_for_rollbackable_group      |    74
  _check_tblseqs_array                      |   112
  _check_tblseqs_filter                     |    29
- _cleanup_rollback_state                   |   373
+ _cleanup_rollback_state                   |   371
  _create_log_schemas                       |    21
  _create_seq                               |    46
  _create_tbl                               |   174
  _dblink_close_cnx                         |   115
  _dblink_open_cnx                          |   140
- _dblink_sql_exec                          |  2563
+ _dblink_sql_exec                          |  2549
  _delete_before_mark_group                 |    23
  _delete_between_marks_group               |    14
  _delete_intermediate_mark_group           |    23
@@ -135,7 +135,7 @@ select funcname, calls from pg_stat_user_functions
  _drop_tbl                                 |   227
  _emaj_param_change_fnct                   |    46
  _enable_event_triggers                    |   314
- _estimate_rlbk_step_duration              |   905
+ _estimate_rlbk_step_duration              |   879
  _estimate_rollback_groups                 |    13
  _event_trigger_sql_drop_fnct              |   295
  _event_trigger_table_rewrite_fnct         |     4
@@ -176,21 +176,21 @@ select funcname, calls from pg_stat_user_functions
  _rlbk_async                               |     2
  _rlbk_check                               |   103
  _rlbk_end                                 |    79
- _rlbk_error                               |     3
+ _rlbk_error                               |     1
  _rlbk_groups                              |    75
- _rlbk_init                                |    83
- _rlbk_planning                            |    96
+ _rlbk_init                                |    81
+ _rlbk_planning                            |    94
  _rlbk_seq                                 |   179
  _rlbk_session_exec                        |    83
- _rlbk_session_lock                        |    87
+ _rlbk_session_lock                        |    85
  _rlbk_set_batch_number                    |   237
- _rlbk_start_mark                          |    83
+ _rlbk_start_mark                          |    81
  _rlbk_tbl                                 |   145
  _rollback_activity                        |    17
  _sequence_stat_groups                     |    16
  _sequence_stat_seq                        |    36
- _set_mark_groups                          |   357
- _set_time_stamp                           |   595
+ _set_mark_groups                          |   355
+ _set_time_stamp                           |   593
  _start_groups                             |    53
  _stop_groups                              |    66
  _truncate_trigger_fnct                    |    15

@@ -223,7 +223,7 @@ select count(*) from emaj.emaj_rlbk_session;
 select count(*) from emaj.emaj_rlbk_plan;
  count 
 -------
-   270
+   226
 (1 row)
 
 select count(*) from emaj.emaj_rlbk_stat;

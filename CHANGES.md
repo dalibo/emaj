@@ -15,6 +15,7 @@ E-Maj - Change log
     checks at connection time.
   * Add a check that the role defined by the 'dblink_user_password' parameter
     used by E-Maj rollbacks to monitor them has emaj_adm rights.
+  * Add checks to handle foreign keys set on partitionned tables.
   * Minor code changes.
 
 ###Bug fixes:###
