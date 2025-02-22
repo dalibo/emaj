@@ -5394,6 +5394,7 @@ $_check_fk_groups$
 -- Tables from audit_only groups are ignored in this check because they will never be rolled back.
 -- Input: group names array
   DECLARE
+    v_isEmajExtension        BOOLEAN;
     r_fk                     RECORD;
   BEGIN
 -- Issue a warning if a table of the groups has a foreign key that references a table outside the groups.
@@ -5454,6 +5455,43 @@ $_check_fk_groups$
       RAISE WARNING '_check_fk_groups: The table "%.%" is referenced by the foreign key "%" on the table "%.%" that is outside'
                     ' the groups (%).', r_fk.rel_schema, r_fk.rel_tblseq, r_fk.conname, r_fk.nspname, r_fk.relname,
                     array_to_string(p_groupNames,',');
+    END LOOP;
+-- Issue a warning for rollbackable groups if a FK on a partition is actualy set on the partitionned table.
+-- The warning message depends on the FK characteristics.
+    v_isEmajExtension = EXISTS (SELECT 1 FROM pg_catalog.pg_extension WHERE extname = 'emaj');
+    FOR r_fk IN
+      SELECT rel_schema, rel_tblseq, c.conname, confupdtype, confdeltype, condeferrable
+        FROM emaj.emaj_relation r
+             JOIN emaj.emaj_group g ON (g.group_name = r.rel_group)
+             JOIN pg_catalog.pg_class t ON (t.relname = r.rel_tblseq)
+             JOIN pg_catalog.pg_namespace n ON (t.relnamespace  = n.oid AND n.nspname = r.rel_schema)
+             JOIN pg_catalog.pg_constraint c ON (c.conrelid = t.oid)
+        WHERE contype = 'f'                                         -- FK constraints only
+          AND coninhcount > 0                                       -- inherited FK
+          AND upper_inf(r.rel_time_range)
+          AND r.rel_group = ANY (p_groupNames)                      -- only tables currently belonging to the selected groups
+          AND g.group_is_rollbackable                               -- only tables from rollbackable groups
+          AND r.rel_kind = 'r'                                      -- only constraints referencing true tables, ie. excluding
+                                                                    --   partitionned tables
+    LOOP
+      IF r_fk.confupdtype = 'a' AND r_fk.confdeltype = 'a' AND NOT r_fk.condeferrable THEN
+        -- Advise DEFERRABLE FK if there is no ON UPDATE|DELETE clause.
+        RAISE WARNING '_check_fk_groups: The foreign key "%" on the table "%.%" is inherited from a partitionned table. It should'
+                      ' be set as DEFERRABLE to avoid E-Maj rollback failure.',
+                      r_fk.conname, r_fk.rel_schema, r_fk.rel_tblseq;
+      ELSIF r_fk.confupdtype <> 'a' OR r_fk.confdeltype <> 'a' THEN
+        -- Warn about potential rollback failure with FK having ON UPDATE|DELETE clause.
+        IF v_isEmajExtension THEN
+          RAISE WARNING '_check_fk_groups: The foreign key "%" on the table "%.%" is inherited from a partitionned table. Beware to'
+                        ' have all partitions in the same tables groups to avoid E-Maj rollback failure.',
+                        r_fk.conname, r_fk.rel_schema, r_fk.rel_tblseq;
+        ELSE
+          RAISE WARNING '_check_fk_groups: The foreign key "%" on the table "%.%" is inherited from a partitionned table and has'
+                        ' ON DELETE and/or ON UPDATE clause. This will generate E-Maj rollback failures because it is not possible'
+                        ' to temporarily drop and recreate this FK.',
+                        r_fk.conname, r_fk.rel_schema, r_fk.rel_tblseq;
+        END IF;
+      END IF;
     END LOOP;
 --
     RETURN;

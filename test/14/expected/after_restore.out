@@ -551,8 +551,8 @@ select time_id, time_last_emaj_gid, time_event from emaj.emaj_time_stamp order b
     2005 |            2000000 | S
     2006 |            2000000 | X
     2007 |            2000000 | X
-    2009 |            2000000 | S
-    2010 |            2000000 | S
+    2011 |            2000000 | S
+    2012 |            2000000 | S
     2201 |            2200000 | X
     2202 |            2200000 | X
     2203 |            2200000 | X

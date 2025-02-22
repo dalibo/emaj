@@ -131,12 +131,26 @@ select emaj.emaj_start_group('emptyGroup','Mark1');
 select emaj.emaj_stop_group('myGroup1');
 select emaj.emaj_stop_group('myGroup2');
 
--- should be OK, with a warning on fkey between tables from different groups
+-- Warnings on FK
+
+-- warning on fkey between tables from different groups
 begin;
-  alter table myschema2.myTbl4 drop constraint mytbl4_col44_fkey;
-  alter table myschema2.myTbl4 add constraint mytbl4_col44_fkey 
-    FOREIGN KEY (col44,col45) REFERENCES myschema1.myTbl1 (col11,col12) ON DELETE CASCADE ON UPDATE SET NULL;
+  alter table myschema2.myTbl4 drop constraint mytbl4_col44_fkey, add constraint mytbl4_col44_fkey 
+    foreign key (col44,col45) references myschema1.myTbl1 (col11,col12) on delete cascade on update set null;
   select emaj.emaj_start_group('myGroup2','Mark2');
+rollback;
+
+-- Warning on non deferrable fkey set on partitionned table
+begin;
+  alter table myschema4.myTblP drop constraint mytblp_col1_fkey, add foreign key (col1) references myschema4.mytblr1(col1);
+  select emaj.emaj_start_group('myGroup4','Mark1');
+rollback;
+
+-- Warning on fkey set on partitionned table with ON UPDATE|DELETE clause
+begin;
+  alter table myschema4.myTblP drop constraint mytblp_col1_fkey, add foreign key (col1) references myschema4.mytblr1(col1)
+    on update set null;
+  select emaj.emaj_start_group('myGroup4','Mark1');
 rollback;
 
 -- start with generated mark name

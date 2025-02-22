@@ -157,6 +157,8 @@ use warnings; use strict;
        && $msgs{$fnctId} ne 'EXCEPTION:_export_param_conf: The generated JSON structure is not properly formatted. '
        && $msgs{$fnctId} ne 'EXCEPTION:_rlbk_async: Error while opening the dblink session #1 (Status of the dblink connection attempt = %'
        && $msgs{$fnctId} ne 'EXCEPTION:_rlbk_async: The function is called but dblink cannot be used. This is an error from the client side.'
+                            # error messages that only appear when E-Maj is nt installed as an extension
+       && $msgs{$fnctId} ne 'WARNING:_check_fk_groups: The foreign key "%" on the table "%.%" is inherited from a partitionned table and has'
                             # error messages that can in fact not be encountered in the current version
        && $msgs{$fnctId} ne 'EXCEPTION:_check_mark_name: The groups "%" have no mark.'
        && $msgs{$fnctId} ne 'EXCEPTION:alter_exec: Internal error, trying to repair a sequence (%.%) is abnormal.'
