@@ -68,13 +68,22 @@ Si au contraire l’une au moins des tables liées à une table donnée n’appa
 
 Dans ce second cas de figure, ce contrôle d’intégrité est réalisé :
 
-* soit en reportant les contrôles en fin de transaction par une requête *SET CONSTRAINTS … DEFERRED*, si nécessaire ;
+* soit en effectuant les contrôles en fin de transaction, en exécutant une requête *SET CONSTRAINTS … DEFERRED* si la clé est déclarée *DEFERRABLE INITIALY IMMEDIATE* ;
 * soit en supprimant la clé étrangère avant le rollback de la table puis en la recréant après.
 
 La première option est choisie si la clé étrangère est déclarée *DEFERRABLE* et si elle ne porte pas de clause *ON DELETE* ou *ON UPDATE*.
 
-Les clés étrangères (*FOREIGN KEYs*) définies au niveau des tables partitionnées ne sont pas supportées par les opérations de rollback E-Maj. En effet, il n’est pas possible de supprimer puis recréer la clé étrangère sur une seule partition, en cas de besoin. Et il n'est pas possible non plus de purement supprimer et recréer la clé sur la table partitionnée, car d’autres partitions hors des groupes de tables concernées par le rollback peuvent nécessiter de conserver la contrainte active durant l’opération. Pour contourner cette limite, les clés étrangères peuvent être créées au niveau de chaque partition élémentaire.
+.. _fk_on_partitionned_tables:
 
+Les clés étrangères définies au niveau des tables partitionnées ne sont pas supportées par les opérations de rollback E-Maj si :
+
+* les tables/partitions reliées par ces clés n’appartiennent pas toutes aux mêmes groupes de tables à traiter,
+* et les clés sont de type *IMMEDIATE* ou bien portent des clauses *ON DELETE* ou *ON UPDATE*.
+
+En effet, il n’est pas possible de supprimer puis recréer une clé étrangère sur une seule partition. Pour contourner ces limites :
+
+* les clés étrangères de type *IMMEDIATE* (état par défaut) peuvent facilement être créées *DEFERRABLE INITIALY IMMEDIATE*,
+* les clés étrangères ayant des clauses *ON DELETE* ou *ON UPDATE* peuvent être créées au niveau de chaque partition élémentaire.
 
 Gestion des triggers applicatifs
 --------------------------------

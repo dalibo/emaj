@@ -67,12 +67,22 @@ On the contrary, if tables are linked to other tables that do not belong to the 
 
 In this second case, checking the referential integrity is performed:
 
-* either by pushing the checks at the end of the transaction, with a *SET CONSTRAINTS … DEFERRED* statement, if needed;
+* either by pushing the checks at the end of the transaction, with a *SET CONSTRAINTS … DEFERRED* statement executed if the key is declared *DEFERRABLE INITIALY IMMEDIATE*;
 * or by dropping the foreign key before rollbacking the table and recreating it after.
 
 The first option is choosen if the foreign key is declared *DEFERRABLE* and does not hold an *ON DELETE* or *ON UPDATE* clause.
 
-*FOREIGN KEYs* defined on partitionned tables are not supported by E-Maj rollback operations. Indeed, it is impossible to drop and recreate such a foreign key for just a partition, if needed. And it is also impossible to simply drop and recreate the foreign key on the partitionned table because other partitions located outside the rolled back tables groups may need to keep the foreign key enabled during the operation. As a workaround, foreign keys can be created on each elementary partition.
+.. _fk_on_partitionned_tables:
+
+*FOREIGN KEYs* defined on partitionned tables are not supported by E-Maj rollback operations if:
+
+* tables/partitions linked by these keys do not all belong to the same tables groups to process,
+* and these keys are of type *IMMEDIATE* or hold *ON DELETE* or *ON UPDATE* clauses.
+
+Indeed, it is impossible to drop and recreate such a foreign key for just a partition. As a workaround:
+
+* foreign keys of type *IMMEDIATE* (the default state) can easily be declared as *DEFERRABLE INITIALY IMMEDIATE*,
+* foreign keys having *ON DELETE* or *ON UPDATE* clauses can be created on each elementary partition.
 
 Application triggers management
 -------------------------------
