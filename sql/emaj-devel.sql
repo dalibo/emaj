@@ -5489,13 +5489,13 @@ $_check_fk_groups$
       ELSIF r_fk.confupdtype <> 'a' OR r_fk.confdeltype <> 'a' THEN
         -- Warn about potential rollback failure with FK having ON UPDATE|DELETE clause.
         IF v_isEmajExtension THEN
-          RAISE WARNING '_check_fk_groups: The foreign key "%" on the table "%.%" is inherited from a partitionned table. Beware to'
-                        ' have all partitions in the same tables groups to avoid E-Maj rollback failure.',
+          RAISE WARNING '_check_fk_groups: The foreign key "%" on the table "%.%" is inherited from a partitionned table. An E-Maj'
+                        ' rollback targeting a mark set before the latest table assignement could fail.',
                         r_fk.conname, r_fk.rel_schema, r_fk.rel_tblseq;
         ELSE
           RAISE WARNING '_check_fk_groups: The foreign key "%" on the table "%.%" is inherited from a partitionned table and has'
-                        ' ON DELETE and/or ON UPDATE clause. This will generate E-Maj rollback failures because it is not possible'
-                        ' to temporarily drop and recreate this FK.',
+                        ' ON DELETE and/or ON UPDATE clause. This will generate E-Maj rollback failures if this FK needs to be'
+                        ' temporarily dropped and recreated.',
                         r_fk.conname, r_fk.rel_schema, r_fk.rel_tblseq;
         END IF;
       END IF;
