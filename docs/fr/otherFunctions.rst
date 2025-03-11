@@ -33,7 +33,8 @@ La fonction retourne un ensemble de lignes qui décrivent les éventuelles anoma
 La fonction retourne également des avertissements quand :
 
 * une séquence associée à une colonne est assignée à un groupe de tables mais la table associée ne fait pas partie de ce groupe de tables,
-* une table d’un groupe est liée à une autre table par une clé étrangère, mais la table associée ne font pas partie du même groupe de tables,
+* une table d’un groupe est liée à une autre table par une clé étrangère, mais la table associée ne fait pas partie du même groupe de tables,
+* une clé étrangère est héritée d’une table partitionnées mais soit n’est pas *DEFERRABLE* soit porte une clause *ON DELETE* ou *ON UPDATE*, empêchant dans les deux cas sa suppression/recréation éventuelle lors d’une opération de rollback E-Maj,
 * la connexion dblink n’est pas opérationnelle,
 * des event triggers de protection E-Maj sont manquants ou désactivés.
 

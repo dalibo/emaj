@@ -12947,13 +12947,16 @@ $_verify_all_groups$
              WHERE tbl_group <> seq_group
            ORDER BY 1,2,3
         ) AS t;
--- Detect tables linked by a foreign key but not belonging to the same tables group.
+-- Detect tables linked by a foreign key but not belonging to the same tables group and inherited FK that cannot be dropped and
+--   recreated at rollback time.
     RETURN QUERY
       SELECT msg FROM
         (WITH fk_dependencies AS             -- all foreign keys that link 2 tables at least one of both belongs to a tables group
-           (SELECT n.nspname AS tbl_schema, t.relname AS tbl_name, c.conname, nf.nspname AS reftbl_schema, tf.relname AS reftbl_name,
-                 r.rel_group AS tbl_group, g.group_is_rollbackable AS tbl_group_is_rollbackable,
-                 rf.rel_group AS reftbl_group, gf.group_is_rollbackable AS reftbl_group_is_rollbackable
+           (SELECT n.nspname AS tbl_schema, t.relname AS tbl_name,
+                   c.conname, c. coninhcount, c.condeferrable, c.confdeltype, c.confupdtype,
+                   nf.nspname AS reftbl_schema, tf.relname AS reftbl_name,
+                   r.rel_group AS tbl_group, g.group_is_rollbackable AS tbl_group_is_rollbackable,
+                   rf.rel_group AS reftbl_group, gf.group_is_rollbackable AS reftbl_group_is_rollbackable
               FROM pg_catalog.pg_constraint c
                    JOIN pg_catalog.pg_class t      ON (t.oid = c.conrelid)
                    JOIN pg_catalog.pg_namespace n  ON (n.oid = t.relnamespace)
@@ -12966,40 +12969,61 @@ $_verify_all_groups$
                                                        AND upper_inf(rf.rel_time_range))
                    LEFT OUTER JOIN emaj.emaj_group gf ON (gf.group_name = rf.rel_group)
               WHERE contype = 'f'                                         -- FK constraints only
+                AND t.relkind = 'r' AND tf.relkind = 'r'                  -- excluding partitionned tables
                 AND (r.rel_group IS NOT NULL OR rf.rel_group IS NOT NULL) -- at least the table or the referenced table belongs to
                                                                           -- a tables group
-                AND t.relkind = 'r'                                       -- only constraint linking true tables, ie. excluding
-                AND tf.relkind = 'r'                                      --   partitionned tables
            )
+-- Referenced table not in a group.
            SELECT tbl_schema, tbl_name,
                   'Warning: In tables group "' || tbl_group || '", the foreign key "' || conname ||
-                  '" on the table "' || tbl_schema || '"."' || tbl_name ||
-                  '" references the table "' || reftbl_schema || '"."' || reftbl_name || '" that does not belong to any group.' AS msg
+                  '" on "' || tbl_schema || '"."' || tbl_name || '" references the table "' ||
+                  reftbl_schema || '"."' || reftbl_name || '" that does not belong to any group.' AS msg
              FROM fk_dependencies
              WHERE tbl_group IS NOT NULL
                AND tbl_group_is_rollbackable
                AND reftbl_group IS NULL
          UNION ALL
+-- Referencing table not in a group.
            SELECT tbl_schema, tbl_name,
                   'Warning: In tables group "' || reftbl_group || '", the table "' || reftbl_schema || '"."' || reftbl_name ||
-                  '" is referenced by the foreign key "' || conname ||
-                  '" of the table "' || tbl_schema || '"."' || tbl_name || '" that does not belong to any group.' AS msg
+                  '" is referenced by the foreign key "' || conname || '" on "' ||
+                  tbl_schema || '"."' || tbl_name || '" that does not belong to any group.' AS msg
              FROM fk_dependencies
              WHERE reftbl_group IS NOT NULL
                AND reftbl_group_is_rollbackable
                AND tbl_group IS NULL
-        UNION ALL
-          SELECT tbl_schema, tbl_name,
-                 'Warning: In tables group "' || tbl_group || '", the foreign key "' || conname ||
-                 '" on the table "' || tbl_schema || '"."' || tbl_name ||
-                 '" references the table "' || reftbl_schema || '"."' || reftbl_name || '" that belongs to another group ("' ||
-                 reftbl_group || '")' AS msg
-            FROM fk_dependencies
-            WHERE tbl_group IS NOT NULL
-              AND reftbl_group IS NOT NULL
-              AND tbl_group <> reftbl_group
-              AND (tbl_group_is_rollbackable OR reftbl_group_is_rollbackable)
-          ORDER BY 1,2,3
+         UNION ALL
+-- Both tables in different groups.
+           SELECT tbl_schema, tbl_name,
+                  'Warning: In tables group "' || tbl_group || '", the foreign key "' || conname ||
+                  '" on "' || tbl_schema || '"."' || tbl_name || '" references the table "' ||
+                  reftbl_schema || '"."' || reftbl_name || '" that belongs to another group ("' ||
+                  reftbl_group || '")' AS msg
+             FROM fk_dependencies
+             WHERE tbl_group IS NOT NULL
+               AND reftbl_group IS NOT NULL
+               AND tbl_group <> reftbl_group
+               AND (tbl_group_is_rollbackable OR reftbl_group_is_rollbackable)
+-- Inherited FK that cannot be dropped/recreated.
+         UNION ALL
+           SELECT tbl_schema, tbl_name,
+                  'Warning: The foreign key "' || conname || '" on "' || tbl_schema || '"."' || tbl_name || '" is inherited'
+                  ' from a partitionned table and is not deferrable. This could block E-Maj rollbacks.' AS msg
+             FROM fk_dependencies
+             WHERE coninhcount > 0
+               AND NOT condeferrable
+               AND ((tbl_group IS NOT NULL AND tbl_group_is_rollbackable) OR
+                    (reftbl_group IS NOT NULL AND reftbl_group_is_rollbackable))
+         UNION ALL
+           SELECT tbl_schema, tbl_name,
+                  'Warning: The foreign key "' || conname || '" on "' || tbl_schema || '"."' || tbl_name || '" has ON DELETE'
+                  ' / ON UPDATE clauses and is inherited from a partitionned table. This could block E-Maj rollbacks.' AS msg
+             FROM fk_dependencies
+             WHERE coninhcount > 0
+               AND (confdeltype <> 'a' OR confupdtype <> 'a')
+               AND ((tbl_group IS NOT NULL AND tbl_group_is_rollbackable) OR
+                    (reftbl_group IS NOT NULL AND reftbl_group_is_rollbackable))
+           ORDER BY 1,2,3
         ) AS t;
 --
     RETURN;

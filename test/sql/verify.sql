@@ -53,6 +53,39 @@ begin;
   rollback;
 end;
 
+-- Warnings on foreign keys
+begin;
+-- FK with one of both tables outside the tables group
+  select emaj.emaj_remove_tables('myschema2', '{"mytbl7","mytbl8"}');
+  select * from emaj.emaj_verify_all();
+rollback;
+
+begin;
+-- FK with both tables in different tables groups
+  select emaj.emaj_move_table('myschema2', 'mytbl7', 'myGroup1');
+  select * from emaj.emaj_verify_all();
+rollback;
+
+begin;
+-- inherited FK IMMEDIATE
+  alter table myschema4.myTblP drop constraint mytblp_col1_fkey, add foreign key (col1) references myschema4.mytblr1(col1);
+  do $$ begin if emaj._pg_version_num() >= 120000 then
+      alter table myschema4.myTblR2 add foreign key (col2, col3) references myschema4.myTblP(col1, col2);     -- Fails with PG 11-
+    end if; end; $$;
+  select * from emaj.emaj_verify_all();
+rollback;
+
+begin;
+-- inherited FK with a ON DELETE|UPDATE clause
+  alter table myschema4.myTblP drop constraint mytblp_col1_fkey, add foreign key (col1) references myschema4.mytblr1(col1)
+    on update cascade deferrable initially deferred;
+  do $$ begin if emaj._pg_version_num() >= 120000 then
+    alter table myschema4.myTblR2 add foreign key (col2, col3) references myschema4.myTblP(col1, col2)     -- Fails with PG 11-
+      on delete restrict deferrable initially immediate;
+    end if; end; $$;
+  select * from emaj.emaj_verify_all();
+rollback;
+
 --
 -- log schemas content errors tests
 --
