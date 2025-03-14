@@ -190,11 +190,23 @@ CREATE TABLE myTbl6 (
   col63       BOX              ,
   col64       CIRCLE           ,
   col65       PATH             ,
-  col66       inet             ,
+  col66       INET             ,
   col67       myEnum           ,
   col68       myComposite      ,
-  PRIMARY KEY (col61)
+--col69       POINT            GENERATED ALWAYS AS (point(col63)) STORED,     -- fails in PG11-
+  PRIMARY KEY (col61),
+  EXCLUDE USING gist (col63 WITH &&)
 );
+
+DO $$
+BEGIN
+  IF emaj._pg_version_num() >= 120000 THEN
+    EXECUTE 'ALTER TABLE myTbl6 ADD COLUMN col69 POINT GENERATED ALWAYS AS (point(col63)) STORED';
+  ELSE
+    EXECUTE 'ALTER TABLE myTbl6 ADD COLUMN col69 POINT';
+  END IF;
+END;
+$$;
 
 -- This table will remain outside table groups
 DROP TABLE IF EXISTS myTbl7 ;

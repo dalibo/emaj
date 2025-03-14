@@ -83,7 +83,7 @@ select emaj_create_group('myGroup4');
 (1 row)
 
 select emaj_assign_tables('myschema4','.*',null,'myGroup4');
-WARNING:  _assign_tables: Some partitionned tables (mytblp, mypartp1) are not selected.
+WARNING:  _assign_tables: Some partitionned tables (mypartp1, mytblp) are not selected.
 NOTICE:  table "mytblm_log" does not exist, skipping
 NOTICE:  trigger "emaj_log_trg" for relation "myschema4.mytblm" does not exist, skipping
 NOTICE:  trigger "emaj_trunc_trg" for relation "myschema4.mytblm" does not exist, skipping
@@ -964,7 +964,7 @@ NOTICE:  trigger "emaj_trunc_trg" for relation "phil's schema"3.phil's tbl1" doe
 (1 row)
 
   select emaj_assign_tables('myschema4','.*','','grp_tmp_4');
-WARNING:  _assign_tables: Some partitionned tables (mytblp, mypartp1) are not selected.
+WARNING:  _assign_tables: Some partitionned tables (mypartp1, mytblp) are not selected.
 NOTICE:  table "mypartp3_log" does not exist, skipping
 NOTICE:  trigger "emaj_log_trg" for relation "myschema4.mypartp3" does not exist, skipping
 NOTICE:  trigger "emaj_trunc_trg" for relation "myschema4.mypartp3" does not exist, skipping
@@ -2124,7 +2124,7 @@ select emaj_assign_tables('phil''s schema"3','.*','','truncateTestGroup');
 (1 row)
 
 select emaj_assign_tables('myschema4','.*','','truncateTestGroup');
-WARNING:  _assign_tables: Some partitionned tables (mytblp, mypartp1) are not selected.
+WARNING:  _assign_tables: Some partitionned tables (mypartp1, mytblp) are not selected.
 WARNING:  _create_tbl: The table "myschema4.mytblm" has triggers that will be automatically disabled during E-Maj rollback operations (mytblm_insert_trigger). Use the emaj_modify_table() function to change this behaviour.
  emaj_assign_tables 
 --------------------
