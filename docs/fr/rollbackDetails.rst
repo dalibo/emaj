@@ -40,6 +40,8 @@ A chaque étape élémentaire, la fonction qui pilote l’exécution du plan met
 
 Si le paramètre *dblink_user_password* est valorisé et si le droit d’exécution de la fonction *dblink_connect_u* a été donné à l’adminstrateur lancant l’opération de rollback, les mises à jour de la table *emaj_rlbk_plan* sont réalisées dans des transactions autonomes, de sorte qu’il est possible de visualiser l’avancement du rollback en temps réel. C’est ce que font la fonction :ref:`emaj_rollback_activity()<emaj_rollback_activity>` et les clients :doc:`emajRollbackMonitor<parallelRollbackClient>` et :doc:`Emaj_web<webUsage>`. Si la connexion dblink n’est pas utilisable, la fonction :ref:`emaj_verify_all()<emaj_verify_all>` en indique la raison.
 
+.. _single_table_rollback:
+
 Traitement de rollback d’une table
 ----------------------------------
 
@@ -56,7 +58,7 @@ Pour optimiser l’opération et éviter que chaque mise à jour élémentaire �
 Gestion des clés étrangères
 ---------------------------
 
-Si une table impactée par le rollback possède une clé étrangère (*foreign key*) ou est référencée dans une clé étrangère appartenant à une autre table, alors la présence de cette clé étrangère doit être prise en compte par l'opération de rollback.
+Si une table impactée par le rollback possède une clé étrangère (*FOREIGN KEY*) ou est référencée dans une clé étrangère appartenant à une autre table, alors la présence de cette clé étrangère doit être prise en compte par l'opération de rollback.
 
 Différents cas de figure se présentent, induisant plusieurs modes de fonctionnement.
 
@@ -84,6 +86,13 @@ En effet, il n’est pas possible de supprimer puis recréer une clé étrangèr
 
 * les clés étrangères de type *IMMEDIATE* (état par défaut) peuvent facilement être créées *DEFERRABLE INITIALY IMMEDIATE*,
 * les clés étrangères ayant des clauses *ON DELETE* ou *ON UPDATE* peuvent être créées au niveau de chaque partition élémentaire.
+
+Autres contraintes d’intégrité
+------------------------------
+
+Les tables peuvent porter d’autres contraintes d’intégrité : *NOT NULL*, *CHECK*, *UNIQUE* et *EXCLUDE*. Mais celles-ci ne concernent que le contenu de la table qui les porte, sans lien avec d’autres tables.
+
+Lors d’un rollback E-Maj, ces contraintes sont vérifiées par PostgreSQL, immediatement à chaque changement de donnée, ou à la fin de la transaction pour les contraintes *UNIQUE* et *EXCLUDE* qui sont définies comme *DEFERRED*. Compte tenu du :ref:`fonctionnement du rollback E-Maj d’une table<single_table_rollback>`, aucune action particulière n’est effectuée pour supporter ces contraintes, et aucune violation d’intégrité n’est à craindre si toutes les contraintes existaient déjà lors de la pose de la marque cible du rollback E-Maj.
 
 Gestion des triggers applicatifs
 --------------------------------

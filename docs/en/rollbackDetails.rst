@@ -40,6 +40,8 @@ For each elementary step, the function that drives the plan execution updates th
 
 If the *dblink_user_password* parameter is set and the execution right on the *dblink_connect_u* function has been given to the E-Maj administrator submitting the rollback, the *emaj_rlbk_plan* updates are processed into autonomous transactions, so that it is possible to look at the rollback operation in real time. That’s what the :ref:`emaj_rollback_activity()<emaj_rollback_activity>` function and the :doc:`emajRollbackMonitor<parallelRollbackClient>` and :doc:`Emaj_web<webUsage>` clients do. If the dblink connection is not operational, the :ref:`emaj_verify_all()<emaj_verify_all>` function explains why.
 
+.. _single_table_rollback:
+
 Rollbacking a table
 -------------------
 
@@ -83,6 +85,13 @@ Indeed, it is impossible to drop and recreate such a foreign key for just a part
 
 * foreign keys of type *IMMEDIATE* (the default state) can easily be declared as *DEFERRABLE INITIALY IMMEDIATE*,
 * foreign keys having *ON DELETE* or *ON UPDATE* clauses can be created on each elementary partition.
+
+Other integrity constraints
+---------------------------
+
+Tables may hold other integrity constraints: *NOT NULL*, *CHECK*, *UNIQUE* and *EXCLUDE*. But these constraints only concern the content of the table that holds them, without any link with other tables.
+
+During an E-Maj rollback, these constraints are verified by PostgreSQL, immediately at data change, or at the transaction end for *UNIQUE* or *EXCLUDE* constraints that are defined as *DEFERRED*. Considering the :ref:`way elementary tables are rolled back<single_table_rollback>`, no specific action is performed to support these constraints, and no integrity violation should arise if all these integrity constraints already existed when the rollback target mark was set.
 
 Application triggers management
 -------------------------------
