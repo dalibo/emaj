@@ -1,7 +1,7 @@
-                                                                                      emaj_verify_all                                                                                       
---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
- Warning: In the group "myGroup2", the foreign key "mytbl6_col61_fkey" on the table "myschema2"."mytbl6" references the table "myschema2"."mytbl7" that does not belong to any group.
- Warning: In the group "myGroup2", the table "myschema2"."mytbl6" is referenced by the foreign key "mytbl8_col81_fkey" of the table "myschema2"."mytbl8" that does not belong to any group.
+                                                                                   emaj_verify_all                                                                                   
+-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+ Warning: In tables group "myGroup2", the foreign key "mytbl6_col61_fkey" on "myschema2"."mytbl6" references the table "myschema2"."mytbl7" that does not belong to any group.
+ Warning: In tables group "myGroup2", the table "myschema2"."mytbl6" is referenced by the foreign key "mytbl8_col81_fkey" on "myschema2"."mytbl8" that does not belong to any group.
  Warning: The max_prepared_transactions parameter value (0) on this cluster is too low to launch parallel rollback.
  No error detected
 (4 rows)
