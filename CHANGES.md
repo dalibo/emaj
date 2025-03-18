@@ -1,6 +1,7 @@
 E-Maj - Change log
 ==================
-<devel>
+
+4.6.0 (2025-Mar-17)
 ------
 ###Enhancements:###
   * Add an optional p_comment parameter to the emaj_create_group(),

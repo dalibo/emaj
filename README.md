@@ -3,7 +3,7 @@ E-Maj
 
 E-Maj: logs and rollbacks tables content changes
 
-Version: <devel>
+Version: 4.6.0
 
 
 License

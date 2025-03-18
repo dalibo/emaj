@@ -1,7 +1,7 @@
 # File:	emaj.control
 # E-Maj extension
 
-default_version = 'devel'
+default_version = '4.6.0'
 comment         = 'E-Maj extension enables fine-grained write logging and time travel on subsets of the database.'
 directory       = 'emaj'
 superuser       = true
