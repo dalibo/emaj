@@ -2631,7 +2631,9 @@ select sequ_schema, sequ_name, sequ_time_id, sequ_last_val, sequ_is_called from 
  myschema1   | mytbl2b_col20_seq |        12402 |             5 | t
  myschema1   | myTbl3_col31_seq  |        12601 |            20 | t
  myschema1   | mytbl2b_col20_seq |        12601 |             5 | t
-(12 rows)
+ myschema1   | myTbl3_col31_seq  |        12602 |            20 | t
+ myschema1   | mytbl2b_col20_seq |        12602 |             5 | t
+(14 rows)
 
 select tbl_schema, tbl_name, tbl_time_id, tbl_log_seq_last_val from emaj.emaj_table order by tbl_time_id, tbl_schema, tbl_name;
  tbl_schema | tbl_name | tbl_time_id | tbl_log_seq_last_val 
@@ -2669,7 +2671,12 @@ select tbl_schema, tbl_name, tbl_time_id, tbl_log_seq_last_val from emaj.emaj_ta
  myschema1  | mytbl2   |       12601 |                    3
  myschema1  | mytbl2b  |       12601 |                    3
  myschema1  | mytbl4   |       12601 |                   12
-(33 rows)
+ myschema1  | myTbl3   |       12602 |                   40
+ myschema1  | mytbl1   |       12602 |                   33
+ myschema1  | mytbl2   |       12602 |                    3
+ myschema1  | mytbl2b  |       12602 |                    3
+ myschema1  | mytbl4   |       12602 |                   14
+(38 rows)
 
 select sqhl_schema, sqhl_table, sqhl_begin_time_id, sqhl_end_time_id, sqhl_hole_size from emaj.emaj_seq_hole order by 1,2,3;
  sqhl_schema | sqhl_table | sqhl_begin_time_id | sqhl_end_time_id | sqhl_hole_size 

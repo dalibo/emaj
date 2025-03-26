@@ -396,7 +396,8 @@ begin;
  sequ_schema | sequ_name | sequ_time_id | sequ_last_val | sequ_start_val | sequ_increment |    sequ_max_val     | sequ_min_val | sequ_cache_val | sequ_is_cycled | sequ_is_called 
 -------------+-----------+--------------+---------------+----------------+----------------+---------------------+--------------+----------------+----------------+----------------
  myschema2   | myseq2    |         9102 |             2 |              1 |              1 | 9223372036854775807 |            1 |              1 | f              | t
-(1 row)
+ myschema2   | myseq2    |         9103 |             3 |              1 |              1 | 9223372036854775807 |            1 |              1 | f              | t
+(2 rows)
 
 rollback;
 begin;
@@ -871,9 +872,11 @@ begin;
 
   select * from emaj.emaj_sequence where sequ_schema = 'myschema1'
     and sequ_time_id not in (select distinct mark_time_id from emaj.emaj_mark where mark_group = 'myGroup1');
- sequ_schema | sequ_name | sequ_time_id | sequ_last_val | sequ_start_val | sequ_increment | sequ_max_val | sequ_min_val | sequ_cache_val | sequ_is_cycled | sequ_is_called 
--------------+-----------+--------------+---------------+----------------+----------------+--------------+--------------+----------------+----------------+----------------
-(0 rows)
+ sequ_schema |     sequ_name     | sequ_time_id | sequ_last_val | sequ_start_val | sequ_increment | sequ_max_val | sequ_min_val | sequ_cache_val | sequ_is_cycled | sequ_is_called 
+-------------+-------------------+--------------+---------------+----------------+----------------+--------------+--------------+----------------+----------------+----------------
+ myschema1   | myTbl3_col31_seq  |         9301 |            11 |              1 |              1 |   2147483647 |            1 |              1 | f              | f
+ myschema1   | mytbl2b_col20_seq |         9301 |             3 |              1 |              1 |   2147483647 |            1 |              1 | f              | f
+(2 rows)
 
   -- testing rollback
   select rlbk_severity, regexp_replace(rlbk_message,E'\\d\\d\\d\\d/\\d\\d\\/\\d\\d\\ \\d\\d\\:\\d\\d:\\d\\d .*?\\)','<timestamp>)','g')
@@ -1254,7 +1257,8 @@ begin;
 ------------+----------+-------------+----------------------
  myschema2  | mytbl7   |        9502 |                    0
  myschema2  | mytbl7   |        9504 |                    2
-(2 rows)
+ myschema2  | mytbl7   |        9505 |                    3
+(3 rows)
 
 rollback;
 begin;

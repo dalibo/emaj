@@ -7788,35 +7788,44 @@ $_delete_intermediate_mark_group$
 -- The statistical mark_log_rows_before_next column's content of the previous mark is also maintained.
 -- Input: group name, mark name, mark id and mark time stamp id of the mark to delete
   DECLARE
+    v_lsesTimeRange          INT8RANGE;
     v_previousMark           TEXT;
     v_nextMark               TEXT;
     v_previousMarkTimeId     BIGINT;
     v_nextMarkTimeId         BIGINT;
   BEGIN
--- Delete the sequences related to the mark to delete.
--- Delete first data related to the application sequences (those attached to the group at the set mark time, but excluding the time
+-- Get the log session time range that contains the mark time id.
+    SELECT lses_time_range
+      INTO STRICT v_lsesTimeRange
+      FROM emaj.emaj_log_session
+      WHERE lses_group = p_groupName
+        AND p_markTimeId <@ lses_time_range;
+-- Delete the sequences related to the mark to delete, if it is not a log session boundary.
+    IF p_markTimeId <> lower(v_lsesTimeRange) AND p_markTimeId <> upper(v_lsesTimeRange) - 1 THEN
+-- Delete data related to the application sequences (those attached to the group at the set mark time, but excluding the relation time
 -- range bounds).
-    DELETE FROM emaj.emaj_sequence
-      USING emaj.emaj_relation
-      WHERE sequ_schema = rel_schema
-        AND sequ_name = rel_tblseq
-        AND rel_time_range @> sequ_time_id
-        AND rel_group = p_groupName
-        AND rel_kind = 'S'
-        AND sequ_time_id = p_markTimeId
-        AND lower(rel_time_range) <> sequ_time_id;
--- Delete then data related to the log sequences for tables (those attached to the group at the set mark time, but excluding the time
+      DELETE FROM emaj.emaj_sequence
+        USING emaj.emaj_relation
+        WHERE sequ_schema = rel_schema
+          AND sequ_name = rel_tblseq
+          AND rel_time_range @> sequ_time_id
+          AND rel_group = p_groupName
+          AND rel_kind = 'S'
+          AND sequ_time_id = p_markTimeId
+          AND lower(rel_time_range) <> sequ_time_id;
+-- Delete data related to the log sequences for tables (those attached to the group at the set mark time, but excluding the relation time
 -- range bounds).
-    DELETE FROM emaj.emaj_table
-      USING emaj.emaj_relation
-      WHERE tbl_schema = rel_schema
-        AND tbl_name = rel_tblseq
-        AND rel_time_range @> tbl_time_id
-        AND rel_group = p_groupName
-        AND rel_kind = 'r'
-        AND tbl_time_id = p_markTimeId
-        AND lower(rel_time_range) <> tbl_time_id;
--- Physically Delete the mark from emaj_mark.
+      DELETE FROM emaj.emaj_table
+        USING emaj.emaj_relation
+        WHERE tbl_schema = rel_schema
+          AND tbl_name = rel_tblseq
+          AND rel_time_range @> tbl_time_id
+          AND rel_group = p_groupName
+          AND rel_kind = 'r'
+          AND tbl_time_id = p_markTimeId
+          AND lower(rel_time_range) <> tbl_time_id;
+    END IF;
+-- Physically delete the mark from emaj_mark.
     DELETE FROM emaj.emaj_mark
       WHERE mark_group = p_groupName
         AND mark_name = p_markName;

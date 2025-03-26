@@ -103,6 +103,108 @@ SELECT emaj._disable_event_triggers();
 
 
 --<begin_functions>                              pattern used by the tool that extracts and insert the functions definition
+------------------------------------------------------------------
+-- drop obsolete functions or functions with modified interface --
+------------------------------------------------------------------
+
+------------------------------------------------------------------
+-- create new or modified functions                             --
+------------------------------------------------------------------
+CREATE OR REPLACE FUNCTION emaj._delete_intermediate_mark_group(p_groupName TEXT, p_markName TEXT, p_markTimeId BIGINT)
+RETURNS VOID LANGUAGE plpgsql AS
+$_delete_intermediate_mark_group$
+-- This function effectively deletes an intermediate mark for a group.
+-- It is called by the emaj_delete_mark_group() function.
+-- It deletes rows corresponding to the mark to delete from emaj_mark and emaj_sequence.
+-- The statistical mark_log_rows_before_next column's content of the previous mark is also maintained.
+-- Input: group name, mark name, mark id and mark time stamp id of the mark to delete
+  DECLARE
+    v_lsesTimeRange          INT8RANGE;
+    v_previousMark           TEXT;
+    v_nextMark               TEXT;
+    v_previousMarkTimeId     BIGINT;
+    v_nextMarkTimeId         BIGINT;
+  BEGIN
+-- Get the log session time range that contains the mark time id.
+    SELECT lses_time_range
+      INTO STRICT v_lsesTimeRange
+      FROM emaj.emaj_log_session
+      WHERE lses_group = p_groupName
+        AND p_markTimeId <@ lses_time_range;
+-- Delete the sequences related to the mark to delete, if it is not a log session boundary.
+    IF p_markTimeId <> lower(v_lsesTimeRange) AND p_markTimeId <> upper(v_lsesTimeRange) - 1 THEN
+-- Delete data related to the application sequences (those attached to the group at the set mark time, but excluding the relation time
+-- range bounds).
+      DELETE FROM emaj.emaj_sequence
+        USING emaj.emaj_relation
+        WHERE sequ_schema = rel_schema
+          AND sequ_name = rel_tblseq
+          AND rel_time_range @> sequ_time_id
+          AND rel_group = p_groupName
+          AND rel_kind = 'S'
+          AND sequ_time_id = p_markTimeId
+          AND lower(rel_time_range) <> sequ_time_id;
+-- Delete data related to the log sequences for tables (those attached to the group at the set mark time, but excluding the relation time
+-- range bounds).
+      DELETE FROM emaj.emaj_table
+        USING emaj.emaj_relation
+        WHERE tbl_schema = rel_schema
+          AND tbl_name = rel_tblseq
+          AND rel_time_range @> tbl_time_id
+          AND rel_group = p_groupName
+          AND rel_kind = 'r'
+          AND tbl_time_id = p_markTimeId
+          AND lower(rel_time_range) <> tbl_time_id;
+    END IF;
+-- Physically delete the mark from emaj_mark.
+    DELETE FROM emaj.emaj_mark
+      WHERE mark_group = p_groupName
+        AND mark_name = p_markName;
+-- Adjust the mark_log_rows_before_next column of the previous mark.
+-- Get the name of the mark immediately preceeding the mark to delete.
+    SELECT mark_name, mark_time_id INTO v_previousMark, v_previousMarkTimeId
+      FROM emaj.emaj_mark
+      WHERE mark_group = p_groupName
+        AND mark_time_id < p_markTimeId
+      ORDER BY mark_time_id DESC
+      LIMIT 1;
+-- Get the name of the first mark succeeding the mark to delete.
+    SELECT mark_name, mark_time_id INTO v_nextMark, v_nextMarkTimeId
+      FROM emaj.emaj_mark
+      WHERE mark_group = p_groupName
+        AND mark_time_id > p_markTimeId
+      ORDER BY mark_time_id
+      LIMIT 1;
+    IF NOT FOUND THEN
+-- No next mark, so update the previous mark with NULL.
+      UPDATE emaj.emaj_mark
+        SET mark_log_rows_before_next = NULL
+        WHERE mark_group = p_groupName
+          AND mark_name = v_previousMark;
+    ELSE
+-- Update the previous mark by computing the sum of _log_stat_tbl() call's result for all relations that belonged
+-- to the group at the time when the mark before the deleted mark had been set.
+      UPDATE emaj.emaj_mark
+        SET mark_log_rows_before_next =
+          (SELECT sum(emaj._log_stat_tbl(emaj_relation, v_previousMarkTimeId, v_nextMarkTimeId))
+             FROM emaj.emaj_relation
+             WHERE rel_group = p_groupName
+               AND rel_kind = 'r'
+               AND rel_time_range @> v_previousMarkTimeId
+          )
+        WHERE mark_group = p_groupName
+          AND mark_name = v_previousMark;
+    END IF;
+-- Reset the mark_logged_rlbk_target_mark column to null for other marks of the group that may have the deleted mark
+-- as target mark from a previous logged rollback operation.
+    UPDATE emaj.emaj_mark
+      SET mark_logged_rlbk_target_mark = NULL
+      WHERE mark_group = p_groupName
+        AND mark_logged_rlbk_target_mark = p_markName;
+--
+    RETURN;
+  END;
+$_delete_intermediate_mark_group$;
 
 --<end_functions>                                pattern used by the tool that extracts and insert the functions definition
 ------------------------------------------

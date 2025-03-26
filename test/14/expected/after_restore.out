@@ -124,10 +124,16 @@ select sequ_schema, sequ_name, sequ_time_id, sequ_last_val, sequ_is_called from 
  myschema1   | myTbl3_col31_seq  |        12402 |            20 | t
  myschema1   | mytbl2b_col20_seq |        12601 |             5 | t
  myschema1   | myTbl3_col31_seq  |        12601 |            20 | t
+ myschema1   | mytbl2b_col20_seq |        12602 |             5 | t
+ myschema1   | myTbl3_col31_seq  |        12602 |            20 | t
  myschema1   | mytbl2b_col20_seq |        14000 |             5 | t
  myschema1   | myTbl3_col31_seq  |        14000 |            20 | t
  myschema2   | myseq1            |        14000 |          1004 | f
  myschema2   | myTbl3_col31_seq  |        14000 |            20 | t
+ myschema1   | mytbl2b_col20_seq |        14001 |             5 | t
+ myschema1   | myTbl3_col31_seq  |        14001 |            20 | t
+ myschema2   | myseq1            |        14001 |          1004 | f
+ myschema2   | myTbl3_col31_seq  |        14001 |            20 | t
  myschema1   | mytbl2b_col20_seq |        14007 |             5 | t
  myschema1   | myTbl3_col31_seq  |        14007 |            20 | t
  myschema2   | myseq1            |        14007 |          1004 | f
@@ -136,6 +142,8 @@ select sequ_schema, sequ_name, sequ_time_id, sequ_last_val, sequ_is_called from 
  myschema1   | myTbl3_col31_seq  |        14009 |            20 | t
  myschema2   | myseq1            |        14009 |          1004 | f
  myschema2   | myTbl3_col31_seq  |        14009 |            20 | t
+ myschema2   | myseq1            |        14010 |          1004 | f
+ myschema2   | myTbl3_col31_seq  |        14010 |            20 | t
  myschema2   | myseq1            |        20001 |          9999 | f
  myschema2   | myTbl3_col31_seq  |        20001 |            20 | t
  myschema2   | myseq1            |        20002 |          1004 | f
@@ -146,7 +154,7 @@ select sequ_schema, sequ_name, sequ_time_id, sequ_last_val, sequ_is_called from 
  myschema2   | myTbl3_col31_seq  |        20202 |            20 | t
  myschema2   | myseq1            |        20204 |          1004 | t
  myschema2   | myTbl3_col31_seq  |        20204 |            20 | t
-(30 rows)
+(38 rows)
 
 select tbl_schema, tbl_name, tbl_time_id, tbl_log_seq_last_val from emaj.emaj_table order by tbl_time_id, tbl_schema, tbl_name;
  tbl_schema | tbl_name | tbl_time_id | tbl_log_seq_last_val 
@@ -172,6 +180,11 @@ select tbl_schema, tbl_name, tbl_time_id, tbl_log_seq_last_val from emaj.emaj_ta
  myschema1  | mytbl2b  |       12601 |                    3
  myschema1  | myTbl3   |       12601 |                   20
  myschema1  | mytbl4   |       12601 |                   12
+ myschema1  | mytbl1   |       12602 |                   33
+ myschema1  | mytbl2   |       12602 |                    3
+ myschema1  | mytbl2b  |       12602 |                    3
+ myschema1  | myTbl3   |       12602 |                   40
+ myschema1  | mytbl4   |       12602 |                   14
  myschema1  | mytbl1   |       14000 |                   33
  myschema1  | mytbl2   |       14000 |                    3
  myschema1  | mytbl2b  |       14000 |                    3
@@ -183,6 +196,17 @@ select tbl_schema, tbl_name, tbl_time_id, tbl_log_seq_last_val from emaj.emaj_ta
  myschema2  | mytbl4   |       14000 |                   10
  myschema2  | mytbl5   |       14000 |                    7
  myschema2  | mytbl6   |       14000 |                   23
+ myschema1  | mytbl1   |       14001 |                   33
+ myschema1  | mytbl2   |       14001 |                    3
+ myschema1  | mytbl2b  |       14001 |                    3
+ myschema1  | myTbl3   |       14001 |                   45
+ myschema1  | mytbl4   |       14001 |                   14
+ myschema2  | mytbl1   |       14001 |                   15
+ myschema2  | mytbl2   |       14001 |                    2
+ myschema2  | myTbl3   |       14001 |                   10
+ myschema2  | mytbl4   |       14001 |                   10
+ myschema2  | mytbl5   |       14001 |                    7
+ myschema2  | mytbl6   |       14001 |                   23
  myschema1  | mytbl1   |       14007 |                   33
  myschema1  | mytbl2   |       14007 |                    3
  myschema1  | mytbl2b  |       14007 |                    3
@@ -205,6 +229,12 @@ select tbl_schema, tbl_name, tbl_time_id, tbl_log_seq_last_val from emaj.emaj_ta
  myschema2  | mytbl4   |       14009 |                   10
  myschema2  | mytbl5   |       14009 |                    7
  myschema2  | mytbl6   |       14009 |                   23
+ myschema2  | mytbl1   |       14010 |                   15
+ myschema2  | mytbl2   |       14010 |                    2
+ myschema2  | myTbl3   |       14010 |                   10
+ myschema2  | mytbl4   |       14010 |                   10
+ myschema2  | mytbl5   |       14010 |                    7
+ myschema2  | mytbl6   |       14010 |                   23
  myschema2  | mytbl1   |       20001 |                   31
  myschema2  | mytbl2   |       20001 |                   10
  myschema2  | myTbl3   |       20001 |                   20
@@ -235,7 +265,7 @@ select tbl_schema, tbl_name, tbl_time_id, tbl_log_seq_last_val from emaj.emaj_ta
  myschema2  | mytbl4   |       20204 |                   18
  myschema2  | mytbl5   |       20204 |                   19
  myschema2  | mytbl6   |       20204 |                   89
-(84 rows)
+(106 rows)
 
 -- user tables
 select * from mySchema2.myTbl1 order by col11,col12;
@@ -1012,10 +1042,16 @@ select sequ_schema, sequ_name, sequ_time_id, sequ_last_val, sequ_is_called from 
  myschema1   | myTbl3_col31_seq  |        12402 |            20 | t
  myschema1   | mytbl2b_col20_seq |        12601 |             5 | t
  myschema1   | myTbl3_col31_seq  |        12601 |            20 | t
+ myschema1   | mytbl2b_col20_seq |        12602 |             5 | t
+ myschema1   | myTbl3_col31_seq  |        12602 |            20 | t
  myschema1   | mytbl2b_col20_seq |        14000 |             5 | t
  myschema1   | myTbl3_col31_seq  |        14000 |            20 | t
  myschema2   | myseq1            |        14000 |          1004 | f
  myschema2   | myTbl3_col31_seq  |        14000 |            20 | t
+ myschema1   | mytbl2b_col20_seq |        14001 |             5 | t
+ myschema1   | myTbl3_col31_seq  |        14001 |            20 | t
+ myschema2   | myseq1            |        14001 |          1004 | f
+ myschema2   | myTbl3_col31_seq  |        14001 |            20 | t
  myschema1   | mytbl2b_col20_seq |        14007 |             5 | t
  myschema1   | myTbl3_col31_seq  |        14007 |            20 | t
  myschema2   | myseq1            |        14007 |          1004 | f
@@ -1024,7 +1060,7 @@ select sequ_schema, sequ_name, sequ_time_id, sequ_last_val, sequ_is_called from 
  myschema1   | myTbl3_col31_seq  |        14009 |            20 | t
  myschema2   | myseq1            |        14009 |          1004 | f
  myschema2   | myTbl3_col31_seq  |        14009 |            20 | t
-(20 rows)
+(26 rows)
 
 select tbl_schema, tbl_name, tbl_time_id, tbl_log_seq_last_val from emaj.emaj_table order by tbl_time_id, tbl_schema, tbl_name;
  tbl_schema | tbl_name | tbl_time_id | tbl_log_seq_last_val 
@@ -1050,6 +1086,11 @@ select tbl_schema, tbl_name, tbl_time_id, tbl_log_seq_last_val from emaj.emaj_ta
  myschema1  | mytbl2b  |       12601 |                    3
  myschema1  | myTbl3   |       12601 |                   20
  myschema1  | mytbl4   |       12601 |                   12
+ myschema1  | mytbl1   |       12602 |                   33
+ myschema1  | mytbl2   |       12602 |                    3
+ myschema1  | mytbl2b  |       12602 |                    3
+ myschema1  | myTbl3   |       12602 |                   40
+ myschema1  | mytbl4   |       12602 |                   14
  myschema1  | mytbl1   |       14000 |                   33
  myschema1  | mytbl2   |       14000 |                    3
  myschema1  | mytbl2b  |       14000 |                    3
@@ -1061,6 +1102,17 @@ select tbl_schema, tbl_name, tbl_time_id, tbl_log_seq_last_val from emaj.emaj_ta
  myschema2  | mytbl4   |       14000 |                   10
  myschema2  | mytbl5   |       14000 |                    7
  myschema2  | mytbl6   |       14000 |                   23
+ myschema1  | mytbl1   |       14001 |                   33
+ myschema1  | mytbl2   |       14001 |                    3
+ myschema1  | mytbl2b  |       14001 |                    3
+ myschema1  | myTbl3   |       14001 |                   45
+ myschema1  | mytbl4   |       14001 |                   14
+ myschema2  | mytbl1   |       14001 |                   15
+ myschema2  | mytbl2   |       14001 |                    2
+ myschema2  | myTbl3   |       14001 |                   10
+ myschema2  | mytbl4   |       14001 |                   10
+ myschema2  | mytbl5   |       14001 |                    7
+ myschema2  | mytbl6   |       14001 |                   23
  myschema1  | mytbl1   |       14007 |                   33
  myschema1  | mytbl2   |       14007 |                    3
  myschema1  | mytbl2b  |       14007 |                    3
@@ -1083,7 +1135,7 @@ select tbl_schema, tbl_name, tbl_time_id, tbl_log_seq_last_val from emaj.emaj_ta
  myschema2  | mytbl4   |       14009 |                   10
  myschema2  | mytbl5   |       14009 |                    7
  myschema2  | mytbl6   |       14009 |                   23
-(54 rows)
+(70 rows)
 
 -- user tables
 select * from mySchema2.myTbl1 order by col11,col12;
