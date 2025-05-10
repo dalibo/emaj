@@ -3302,8 +3302,8 @@ select hist_id, hist_function, hist_event, hist_object, regexp_replace(regexp_re
     4164 | ROLLBACK_GROUPS        | TIME STAMP SET             | 4023                         |                                                                                                  | postgres
     4165 | SET_MARK_GROUPS        | BEGIN                      | myGroup1,myGroup2            | RLBK_4007_START                                                                                  | postgres
     4166 | SET_MARK_GROUPS        | END                        | myGroup1,myGroup2            | RLBK_4007_START                                                                                  | postgres
-    4167 | SET_MARK_GROUPS        | BEGIN                      | myGroup1,myGroup2            | RLBK_4007_DONE                                                                                   | postgres
-    4168 | SET_MARK_GROUPS        | TIME STAMP SET             | 4024                         |                                                                                                  | postgres
+    4167 | ROLLBACK_GROUPS        | TIME STAMP SET             | 4024                         |                                                                                                  | postgres
+    4168 | SET_MARK_GROUPS        | BEGIN                      | myGroup1,myGroup2            | RLBK_4007_DONE                                                                                   | postgres
     4169 | SET_MARK_GROUPS        | END                        | myGroup1,myGroup2            | RLBK_4007_DONE                                                                                   | postgres
     4170 | ROLLBACK_GROUPS        | NOTICE                     | Rollback id 4007             | Rollback id = 4007.                                                                              | postgres
     4171 | ROLLBACK_GROUPS        | NOTICE                     | Rollback id 4007             | 0 / 13 tables effectively processed.                                                             | postgres
@@ -3317,8 +3317,8 @@ select hist_id, hist_function, hist_event, hist_object, regexp_replace(regexp_re
     4179 | ROLLBACK_GROUPS        | TIME STAMP SET             | 4025                         |                                                                                                  | postgres
     4180 | SET_MARK_GROUPS        | BEGIN                      | myGroup1,myGroup2            | RLBK_4008_START                                                                                  | postgres
     4181 | SET_MARK_GROUPS        | END                        | myGroup1,myGroup2            | RLBK_4008_START                                                                                  | postgres
-    4182 | SET_MARK_GROUPS        | BEGIN                      | myGroup1,myGroup2            | RLBK_4008_DONE                                                                                   | postgres
-    4183 | SET_MARK_GROUPS        | TIME STAMP SET             | 4026                         |                                                                                                  | postgres
+    4182 | ROLLBACK_GROUPS        | TIME STAMP SET             | 4026                         |                                                                                                  | postgres
+    4183 | SET_MARK_GROUPS        | BEGIN                      | myGroup1,myGroup2            | RLBK_4008_DONE                                                                                   | postgres
     4184 | SET_MARK_GROUPS        | END                        | myGroup1,myGroup2            | RLBK_4008_DONE                                                                                   | postgres
     4185 | ROLLBACK_GROUPS        | NOTICE                     | Rollback id 4008             | Rollback id = 4008.                                                                              | postgres
     4186 | ROLLBACK_GROUPS        | NOTICE                     | Rollback id 4008             | 0 / 13 tables effectively processed.                                                             | postgres
@@ -3429,8 +3429,8 @@ select hist_id, hist_function, hist_event, hist_object, regexp_replace(regexp_re
     4291 | ROLLBACK_TABLE         | END                        | myschema1."myTbl3"           | 10 rolled back primary keys                                                                      | postgres
     4292 | ROLLBACK_TABLE         | BEGIN                      | myschema1.mytbl4             | All log rows where emaj_gid > 4000058 and <= 4000069, in session_replication_role = replica mode | postgres
     4293 | ROLLBACK_TABLE         | END                        | myschema1.mytbl4             | 1 rolled back primary keys                                                                       | postgres
-    4294 | SET_MARK_GROUP         | BEGIN                      | myGroup1                     | RLBK_4011_DONE                                                                                   | postgres
-    4295 | SET_MARK_GROUP         | TIME STAMP SET             | 4039                         |                                                                                                  | postgres
+    4294 | ROLLBACK_GROUP         | TIME STAMP SET             | 4039                         |                                                                                                  | postgres
+    4295 | SET_MARK_GROUP         | BEGIN                      | myGroup1                     | RLBK_4011_DONE                                                                                   | postgres
     4296 | SET_MARK_GROUP         | END                        | myGroup1                     | RLBK_4011_DONE                                                                                   | postgres
     4297 | ROLLBACK_GROUP         | NOTICE                     | Rollback id 4011             | Rollback id = 4011.                                                                              | postgres
     4298 | ROLLBACK_GROUP         | NOTICE                     | Rollback id 4011             | 2 / 5 tables effectively processed.                                                              | postgres
@@ -3456,8 +3456,8 @@ select hist_id, hist_function, hist_event, hist_object, regexp_replace(regexp_re
     4318 | ROLLBACK_TABLE         | END                        | myschema1.mytbl2b            | 2 rolled back primary keys                                                                       | postgres
     4319 | ROLLBACK_TABLE         | BEGIN                      | myschema1.mytbl4             | All log rows where emaj_gid > 4000039 and <= 4000080, in session_replication_role = replica mode | postgres
     4320 | ROLLBACK_TABLE         | END                        | myschema1.mytbl4             | 1 rolled back primary keys                                                                       | postgres
-    4321 | SET_MARK_GROUP         | BEGIN                      | myGroup1                     | RLBK_4012_DONE                                                                                   | postgres
-    4322 | SET_MARK_GROUP         | TIME STAMP SET             | 4041                         |                                                                                                  | postgres
+    4321 | ROLLBACK_GROUP         | TIME STAMP SET             | 4041                         |                                                                                                  | postgres
+    4322 | SET_MARK_GROUP         | BEGIN                      | myGroup1                     | RLBK_4012_DONE                                                                                   | postgres
     4323 | SET_MARK_GROUP         | END                        | myGroup1                     | RLBK_4012_DONE                                                                                   | postgres
     4324 | ROLLBACK_GROUP         | NOTICE                     | Rollback id 4012             | Rollback id = 4012.                                                                              | postgres
     4325 | ROLLBACK_GROUP         | NOTICE                     | Rollback id 4012             | 5 / 5 tables effectively processed.                                                              | postgres
@@ -3509,8 +3509,8 @@ select hist_id, hist_function, hist_event, hist_object, regexp_replace(regexp_re
     4371 | CLEANUP_RLBK_STATE     |                            | Rollback id 4013             | set to COMMITTED                                                                                 | postgres
     4372 | CLEANUP_RLBK_STATE     |                            | Rollback id 4014             | set to COMMITTED                                                                                 | postgres
     4373 | SET_MARK_GROUP         | END                        | emptyGroup                   | RLBK_4015_START                                                                                  | postgres
-    4374 | SET_MARK_GROUP         | BEGIN                      | emptyGroup                   | RLBK_4015_DONE                                                                                   | postgres
-    4375 | SET_MARK_GROUP         | TIME STAMP SET             | 4045                         |                                                                                                  | postgres
+    4374 | ROLLBACK_GROUP         | TIME STAMP SET             | 4045                         |                                                                                                  | postgres
+    4375 | SET_MARK_GROUP         | BEGIN                      | emptyGroup                   | RLBK_4015_DONE                                                                                   | postgres
     4376 | SET_MARK_GROUP         | END                        | emptyGroup                   | RLBK_4015_DONE                                                                                   | postgres
     4377 | ROLLBACK_GROUP         | NOTICE                     | Rollback id 4015             | Rollback id = 4015.                                                                              | postgres
     4378 | ROLLBACK_GROUP         | NOTICE                     | Rollback id 4015             | no table and sequence to process                                                                 | postgres
@@ -3554,8 +3554,8 @@ select hist_id, hist_function, hist_event, hist_object, regexp_replace(regexp_re
     4420 | ROLLBACK_TABLE         | END                        | myschema4.mytblc2            | 2 rolled back primary keys                                                                       | postgres
     4421 | ROLLBACK_TABLE         | BEGIN                      | myschema4.mytblm             | All log rows where emaj_gid > 4000102 and <= 4000112                                             | postgres
     4422 | ROLLBACK_TABLE         | END                        | myschema4.mytblm             | 2 rolled back primary keys                                                                       | postgres
-    4423 | SET_MARK_GROUP         | BEGIN                      | myGroup4                     | RLBK_4018_DONE                                                                                   | postgres
-    4424 | SET_MARK_GROUP         | TIME STAMP SET             | 4050                         |                                                                                                  | postgres
+    4423 | ROLLBACK_GROUP         | TIME STAMP SET             | 4050                         |                                                                                                  | postgres
+    4424 | SET_MARK_GROUP         | BEGIN                      | myGroup4                     | RLBK_4018_DONE                                                                                   | postgres
     4425 | SET_MARK_GROUP         | END                        | myGroup4                     | RLBK_4018_DONE                                                                                   | postgres
     4426 | ROLLBACK_GROUP         | NOTICE                     | Rollback id 4018             | Rollback id = 4018.                                                                              | postgres
     4427 | ROLLBACK_GROUP         | NOTICE                     | Rollback id 4018             | 6 / 7 tables effectively processed.                                                              | postgres
@@ -3605,8 +3605,8 @@ select hist_id, hist_function, hist_event, hist_object, regexp_replace(regexp_re
     4472 | ROLLBACK_GROUP         | TIME STAMP SET             | 4053                         |                                                                                                  | postgres
     4473 | SET_MARK_GROUP         | BEGIN                      | myGroup1                     | RLBK_4020_START                                                                                  | postgres
     4474 | SET_MARK_GROUP         | END                        | myGroup1                     | RLBK_4020_START                                                                                  | postgres
-    4475 | SET_MARK_GROUP         | BEGIN                      | myGroup1                     | RLBK_4020_DONE                                                                                   | postgres
-    4476 | SET_MARK_GROUP         | TIME STAMP SET             | 4054                         |                                                                                                  | postgres
+    4475 | ROLLBACK_GROUP         | TIME STAMP SET             | 4054                         |                                                                                                  | postgres
+    4476 | SET_MARK_GROUP         | BEGIN                      | myGroup1                     | RLBK_4020_DONE                                                                                   | postgres
     4477 | SET_MARK_GROUP         | END                        | myGroup1                     | RLBK_4020_DONE                                                                                   | postgres
     4478 | ROLLBACK_GROUP         | NOTICE                     | Rollback id 4020             | Rollback id = 4020.                                                                              | postgres
     4479 | ROLLBACK_GROUP         | NOTICE                     | Rollback id 4020             | 0 / 5 tables effectively processed.                                                              | postgres
@@ -3640,8 +3640,8 @@ select hist_id, hist_function, hist_event, hist_object, regexp_replace(regexp_re
     4507 | ROLLBACK_TABLE         | END                        | myschema1.mytbl2             | 1 rolled back primary keys                                                                       | postgres
     4508 | ROLLBACK_TABLE         | BEGIN                      | myschema1.mytbl2b            | All log rows where emaj_gid > 4000120 and <= 4000137                                             | postgres
     4509 | ROLLBACK_TABLE         | END                        | myschema1.mytbl2b            | 2 rolled back primary keys                                                                       | postgres
-    4510 | SET_MARK_GROUP         | BEGIN                      | myGroup1                     | RLBK_4021_DONE                                                                                   | postgres
-    4511 | SET_MARK_GROUP         | TIME STAMP SET             | 4058                         |                                                                                                  | postgres
+    4510 | ROLLBACK_GROUP         | TIME STAMP SET             | 4058                         |                                                                                                  | postgres
+    4511 | SET_MARK_GROUP         | BEGIN                      | myGroup1                     | RLBK_4021_DONE                                                                                   | postgres
     4512 | SET_MARK_GROUP         | END                        | myGroup1                     | RLBK_4021_DONE                                                                                   | postgres
     4513 | ROLLBACK_GROUP         | NOTICE                     | Rollback id 4021             | Rollback id = 4021.                                                                              | postgres
     4514 | ROLLBACK_GROUP         | NOTICE                     | Rollback id 4021             | 3 / 5 tables effectively processed.                                                              | postgres

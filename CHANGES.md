@@ -6,7 +6,8 @@ E-Maj - Change log
   * Minor code changes.
 
 ###Bug fixes:###
-
+  * In rollback processing, fix the way the end rollback mark time-stamp is
+    set.
 
 
 4.6.0 (2025-Mar-17)

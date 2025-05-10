@@ -298,7 +298,7 @@ CREATE INDEX emaj_rel_hist_idx1 ON emaj.emaj_rel_hist ((upper(relh_time_range)))
 COMMENT ON TABLE emaj.emaj_rel_hist IS
 $$Contains the history of groups content.$$;
 
--- Table containing the relation changes, i.e. the events that lead to changes in the tables groups structure changes.
+-- Table containing the relation changes, i.e. the events that lead to changes in the tables groups structure.
 CREATE TABLE emaj.emaj_relation_change (
   rlchg_time_id                 BIGINT      NOT NULL,       -- time stamp id of the change operation
   rlchg_schema                  TEXT        NOT NULL,       -- current or old schema name
@@ -9491,6 +9491,7 @@ $_rlbk_end$
     v_ctrlDuration           INTERVAL;
     v_messages               TEXT[] = ARRAY[]::TEXT[];
     v_markName               TEXT;
+    v_timeId                 BIGINT;
     v_markComment            TEXT;
     v_msg                    TEXT;
     v_msgList                TEXT;
@@ -9688,7 +9689,11 @@ $_rlbk_end$
 -- If the rollback is "logged", set a mark named with the pattern: 'RLBK_<rollback_id>_DONE'.
       v_markName = 'RLBK_' || p_rlbkId::text || '_DONE';
       v_markComment = 'Automatically set at rollback to mark ' || v_mark || ' end';
-      PERFORM emaj._set_mark_groups(v_groupNames, v_markName, v_markComment, p_multiGroup, TRUE, v_mark);
+--   Get a timestamp via dblink, if it is usable,
+      v_stmt = 'SELECT emaj._set_time_stamp(''' || v_function || ''', ''M'')';
+      SELECT emaj._dblink_sql_exec('rlbk#1', v_stmt, v_dblinkSchema) INTO v_timeId;
+--   ... and effectively set the mark.
+      PERFORM emaj._set_mark_groups(v_groupNames, v_markName, v_markComment, p_multiGroup, TRUE, v_mark, v_timeId, v_dblinkSchema);
     END IF;
 -- Return and trace the execution report
     FOREACH v_msg IN ARRAY v_messages

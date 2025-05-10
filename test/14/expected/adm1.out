@@ -1217,8 +1217,8 @@ select hist_function, hist_event, hist_object,
  ROLLBACK_TABLE    | END            | myschema2.mytbl6  | 3 rolled back primary keys                             | postgres
  ROLLBACK_TABLE    | BEGIN          | myschema2.mytbl5  | All log rows where emaj_gid > 12200041 and <= 12300000 | postgres
  ROLLBACK_TABLE    | END            | myschema2.mytbl5  | 1 rolled back primary keys                             | postgres
+ ROLLBACK_GROUP    | TIME STAMP SET | 12301             |                                                        | postgres
  SET_MARK_GROUP    | BEGIN          | myGroup2          | RLBK_12300_DONE                                        | postgres
- SET_MARK_GROUP    | TIME STAMP SET | 12301             |                                                        | postgres
  SET_MARK_GROUP    | END            | myGroup2          | RLBK_12300_DONE                                        | postgres
  ROLLBACK_GROUP    | NOTICE         | Rollback id 12300 | Rollback id = 12300.                                   | postgres
  ROLLBACK_GROUP    | NOTICE         | Rollback id 12300 | 3 / 6 tables effectively processed.                    | postgres
@@ -1238,8 +1238,8 @@ select hist_function, hist_event, hist_object,
  ROLLBACK_TABLE    | END            | myschema2.mytbl4  | 2 rolled back primary keys                             | postgres
  ROLLBACK_TABLE    | BEGIN          | myschema2.mytbl5  | All log rows where emaj_gid > 12200049 and <= 12300006 | postgres
  ROLLBACK_TABLE    | END            | myschema2.mytbl5  | 1 rolled back primary keys                             | postgres
+ ROLLBACK_GROUP    | TIME STAMP SET | 12303             |                                                        | postgres
  SET_MARK_GROUP    | BEGIN          | myGroup2          | RLBK_12301_DONE                                        | postgres
- SET_MARK_GROUP    | TIME STAMP SET | 12303             |                                                        | postgres
  SET_MARK_GROUP    | END            | myGroup2          | RLBK_12301_DONE                                        | postgres
  ROLLBACK_GROUP    | NOTICE         | Rollback id 12301 | Rollback id = 12301.                                   | postgres
  ROLLBACK_GROUP    | NOTICE         | Rollback id 12301 | 3 / 6 tables effectively processed.                    | postgres
@@ -1949,8 +1949,8 @@ select hist_function, hist_event, hist_object,
  ROLLBACK_TABLE    | END            | myschema2.mytbl4  | 2 rolled back primary keys                             | postgres
  ROLLBACK_TABLE    | BEGIN          | myschema2.mytbl5  | All log rows where emaj_gid > 12200041 and <= 12500000 | postgres
  ROLLBACK_TABLE    | END            | myschema2.mytbl5  | 1 rolled back primary keys                             | postgres
+ ROLLBACK_GROUP    | TIME STAMP SET | 12501             |                                                        | postgres
  SET_MARK_GROUP    | BEGIN          | myGroup2          | RLBK_12500_DONE                                        | postgres
- SET_MARK_GROUP    | TIME STAMP SET | 12501             |                                                        | postgres
  SET_MARK_GROUP    | END            | myGroup2          | RLBK_12500_DONE                                        | postgres
  ROLLBACK_GROUP    | NOTICE         | Rollback id 12500 | Rollback id = 12500.                                   | postgres
  ROLLBACK_GROUP    | NOTICE         | Rollback id 12500 | 3 / 6 tables effectively processed.                    | postgres
@@ -2362,8 +2362,8 @@ select hist_function, hist_event, hist_object,
  ROLLBACK_TABLE     | END            | myschema1.mytbl1   | 1 rolled back primary keys                             | postgres
  ROLLBACK_TABLE     | BEGIN          | myschema1.mytbl4   | All log rows where emaj_gid > 12400014 and <= 12600006 | postgres
  ROLLBACK_TABLE     | END            | myschema1.mytbl4   | 2 rolled back primary keys                             | postgres
+ ROLLBACK_GROUP     | TIME STAMP SET | 12602              |                                                        | postgres
  SET_MARK_GROUP     | BEGIN          | myGroup1           | RLBK_12601_DONE                                        | postgres
- SET_MARK_GROUP     | TIME STAMP SET | 12602              |                                                        | postgres
  SET_MARK_GROUP     | END            | myGroup1           | RLBK_12601_DONE                                        | postgres
  ROLLBACK_GROUP     | NOTICE         | Rollback id 12601  | Rollback id = 12601.                                   | postgres
  ROLLBACK_GROUP     | NOTICE         | Rollback id 12601  | 3 / 5 tables effectively processed.                    | postgres

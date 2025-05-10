@@ -650,8 +650,8 @@ select hist_function, hist_event, hist_object,
  SET_MARK_GROUP         | BEGIN            | myGroup2         | RLBK_9101_START                                                                                            | postgres
  SET_MARK_GROUP         | END              | myGroup2         | RLBK_9101_START                                                                                            | postgres
  ROLLBACK_SEQUENCE      |                  | myschema2.myseq2 | RESTART 3                                                                                                  | postgres
+ ROLLBACK_GROUP         | TIME STAMP SET   | 9106             |                                                                                                            | postgres
  SET_MARK_GROUP         | BEGIN            | myGroup2         | RLBK_9101_DONE                                                                                             | postgres
- SET_MARK_GROUP         | TIME STAMP SET   | 9106             |                                                                                                            | postgres
  SET_MARK_GROUP         | END              | myGroup2         | RLBK_9101_DONE                                                                                             | postgres
  ROLLBACK_GROUP         | NOTICE           | Rollback id 9101 | Rollback id = 9101.                                                                                        | postgres
  ROLLBACK_GROUP         | NOTICE           | Rollback id 9101 | 0 / 6 tables effectively processed.                                                                        | postgres
@@ -994,9 +994,10 @@ select time_id, time_last_emaj_gid, time_event from emaj.emaj_time_stamp where t
     9302 |            9300000 | A
     9303 |            9300000 | M
     9304 |            9300000 | R
+    9305 |            9300000 | M
     9306 |            9300000 | R
     9309 |            9300000 | I
-(7 rows)
+(8 rows)
 
 select hist_function, hist_event, hist_object,
        regexp_replace(regexp_replace(regexp_replace(hist_wording,
@@ -1035,6 +1036,7 @@ select hist_function, hist_event, hist_object,
  SET_MARK_GROUP     | END              | myGroup1                     | After_remove                                                                        | postgres
  GEN_SQL_GROUP      | BEGIN            | myGroup1                     | From mark Mk1 to mark EMAJ_LAST_MARK with tables/sequences filtering                | postgres
  GEN_SQL_GROUP      | END              | myGroup1                     | 0 generated statements - script exported into /tmp/emaj_14/alter_logging/script.sql | postgres
+ ROLLBACK_GROUP     | TIME STAMP SET   | 9305                         |                                                                                     | postgres
  IMPORT_GROUPS      | BEGIN            | myGroup1                     | Input file: '/tmp/emaj_14/alter_logging/all_groups_conf.json'                       | postgres
  IMPORT_GROUPS      | TIME STAMP SET   | 9309                         |                                                                                     | postgres
  LOCK_GROUPS        | BEGIN            | myGroup1                     |                                                                                     | postgres
@@ -1045,7 +1047,7 @@ select hist_function, hist_event, hist_object,
  SET_MARK_GROUPS    | END              | myGroup1                     | Revert_sequences_removal                                                            | postgres
  IMPORT_GROUPS      | SEQUENCE ADDED   | myschema1."myTbl3_col31_seq" | To the logging group myGroup1                                                       | postgres
  IMPORT_GROUPS      | END              |                              | 1 created or altered tables groups                                                  | postgres
-(38 rows)
+(39 rows)
 
 -- set sequence restart value
 select public.handle_emaj_sequences(9500);
@@ -1599,8 +1601,8 @@ select hist_function, hist_event, hist_object,
  SET_MARK_GROUP         | END            | myGroup2         | RLBK_9501_START                                                                                   | postgres
  ROLLBACK_TABLE         | BEGIN          | myschema2.mytbl7 | All log rows where emaj_gid > 9500000 and <= 9500003                                              | postgres
  ROLLBACK_TABLE         | END            | myschema2.mytbl7 | 4 rolled back primary keys                                                                        | postgres
+ ROLLBACK_GROUP         | TIME STAMP SET | 9508             |                                                                                                   | postgres
  SET_MARK_GROUP         | BEGIN          | myGroup2         | RLBK_9501_DONE                                                                                    | postgres
- SET_MARK_GROUP         | TIME STAMP SET | 9508             |                                                                                                   | postgres
  SET_MARK_GROUP         | END            | myGroup2         | RLBK_9501_DONE                                                                                    | postgres
  ROLLBACK_GROUP         | NOTICE         | Rollback id 9501 | Rollback id = 9501.                                                                               | postgres
  ROLLBACK_GROUP         | NOTICE         | Rollback id 9501 | 1 / 7 tables effectively processed.                                                               | postgres
@@ -2287,8 +2289,8 @@ select hist_function, hist_event, hist_object,
  ROLLBACK_SEQUENCE      |                | myschema1."myTbl3_col31_seq" | RESTART 11                                                                                                             | postgres
  ROLLBACK_TABLE         | BEGIN          | myschema1.mytbl1             | All log rows where emaj_gid > 9300000 and <= 9700003                                                                   | postgres
  ROLLBACK_TABLE         | END            | myschema1.mytbl1             | 1 rolled back primary keys                                                                                             | postgres
+ ROLLBACK_GROUP         | TIME STAMP SET | 9706                         |                                                                                                                        | postgres
  SET_MARK_GROUP         | BEGIN          | myGroup1                     | RLBK_9701_DONE                                                                                                         | postgres
- SET_MARK_GROUP         | TIME STAMP SET | 9706                         |                                                                                                                        | postgres
  SET_MARK_GROUP         | END            | myGroup1                     | RLBK_9701_DONE                                                                                                         | postgres
  ROLLBACK_GROUP         | NOTICE         | Rollback id 9701             | Rollback id = 9701.                                                                                                    | postgres
  ROLLBACK_GROUP         | NOTICE         | Rollback id 9701             | 1 / 3 tables effectively processed.                                                                                    | postgres
@@ -2361,8 +2363,8 @@ select hist_function, hist_event, hist_object,
  SET_MARK_GROUPS        | BEGIN          | myGroup1,myGroup2            | RLBK_9704_START                                                                                                        | postgres
  CLEANUP_RLBK_STATE     |                | Rollback id 9703             | set to COMMITTED                                                                                                       | postgres
  SET_MARK_GROUPS        | END            | myGroup1,myGroup2            | RLBK_9704_START                                                                                                        | postgres
+ ROLLBACK_GROUPS        | TIME STAMP SET | 9717                         |                                                                                                                        | postgres
  SET_MARK_GROUPS        | BEGIN          | myGroup1,myGroup2            | RLBK_9704_DONE                                                                                                         | postgres
- SET_MARK_GROUPS        | TIME STAMP SET | 9717                         |                                                                                                                        | postgres
  SET_MARK_GROUPS        | END            | myGroup1,myGroup2            | RLBK_9704_DONE                                                                                                         | postgres
  ROLLBACK_GROUPS        | NOTICE         | Rollback id 9704             | Rollback id = 9704.                                                                                                    | postgres
  ROLLBACK_GROUPS        | NOTICE         | Rollback id 9704             | 0 / 11 tables effectively processed.                                                                                   | postgres
@@ -3375,8 +3377,8 @@ select hist_function, hist_event, hist_object,
  SET_MARK_GROUPS    | END                          | myGroup1,myGroup2            | RLBK_10002_START                                                                                                       | postgres
  ROLLBACK_TABLE     | BEGIN                        | myschema2."myTbl3"           | All log rows where emaj_gid > 10000003 and <= 10000005                                                                 | postgres
  ROLLBACK_TABLE     | END                          | myschema2."myTbl3"           | 2 rolled back primary keys                                                                                             | postgres
+ ROLLBACK_GROUPS    | TIME STAMP SET               | 10012                        |                                                                                                                        | postgres
  SET_MARK_GROUPS    | BEGIN                        | myGroup1,myGroup2            | RLBK_10002_DONE                                                                                                        | postgres
- SET_MARK_GROUPS    | TIME STAMP SET               | 10012                        |                                                                                                                        | postgres
  SET_MARK_GROUPS    | END                          | myGroup1,myGroup2            | RLBK_10002_DONE                                                                                                        | postgres
  ROLLBACK_GROUPS    | NOTICE                       | Rollback id 10002            | Rollback id = 10002.                                                                                                   | postgres
  ROLLBACK_GROUPS    | NOTICE                       | Rollback id 10002            | 1 / 11 tables effectively processed.                                                                                   | postgres
