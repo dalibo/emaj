@@ -3,12 +3,12 @@ E-Maj - Change log
 <devel>
 ------
 ###Enhancements:###
+  * E-Maj is compatible with PostgreSQL V18.
   * Minor code changes.
 
 ###Bug fixes:###
   * In rollback processing, fix the way the end rollback mark time-stamp is
     set.
-
 
 4.6.0 (2025-Mar-17)
 ------
@@ -45,7 +45,7 @@ E-Maj - Change log
 4.5.0 (2025-Sept-6)
 ------
 ###Enhancements:###
-  * Support of PG17
+  * E-Maj is compatible with PostgreSQL V17.
   * Add a Makefile to help installing and uninstalling the E-Maj software,
     allowing also the pgxn client's usage.
   * Move the code of the emaj_uninstall.sql script into a new
@@ -118,7 +118,7 @@ E-Maj - Change log
 4.3.0 (2023-Sept-18)
 ------
 ### Enhancements: ###
-  * Support of PG16.
+  * E-Maj is compatible with PostgreSQL V16.
   * Replace the emaj_snap_log_group() function by two new functions,
     emaj_dump_changes_group() and emaj_gen_sql_dump_changes_group(),
    oviding much more flexibility in data changes analysis, thanks to

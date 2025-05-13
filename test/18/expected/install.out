@@ -1,0 +1,93 @@
+-- install.sql : install E-Maj as an extension
+--
+-----------------------------
+-- emaj installation as extension
+-----------------------------
+CREATE EXTENSION emaj VERSION 'devel' CASCADE;
+NOTICE:  installing required extension "dblink"
+NOTICE:  installing required extension "btree_gist"
+-----------------------------
+-- verify that dropping the extension is blocked by event trigger
+-----------------------------
+BEGIN;
+  DROP EXTENSION emaj CASCADE;
+ERROR:  E-Maj event trigger: Attempting to drop the emaj extension. Please execute the emaj.emaj_drop_extension() function if you really want to remove all E-Maj components.
+CONTEXT:  PL/pgSQL function _emaj_protection_event_trigger_fnct() line 22 at RAISE
+ROLLBACK;
+-----------------------------
+-- check installation
+-----------------------------
+-- check impact in catalog
+select extname, extversion from pg_extension where extname = 'emaj';
+ extname | extversion 
+---------+------------
+ emaj    | devel
+(1 row)
+
+select relname from pg_catalog.pg_class, 
+                    (select unnest(extconfig) as oid from pg_catalog.pg_extension where extname = 'emaj') as t 
+  where t.oid = pg_class.oid
+  order by 1;
+           relname           
+-----------------------------
+ emaj_global_seq
+ emaj_group
+ emaj_group_hist
+ emaj_hist
+ emaj_hist_hist_id_seq
+ emaj_log_session
+ emaj_mark
+ emaj_param
+ emaj_rel_hist
+ emaj_relation
+ emaj_relation_change
+ emaj_rlbk
+ emaj_rlbk_plan
+ emaj_rlbk_rlbk_id_seq
+ emaj_rlbk_session
+ emaj_rlbk_stat
+ emaj_schema
+ emaj_seq_hole
+ emaj_sequence
+ emaj_table
+ emaj_time_stamp
+ emaj_time_stamp_time_id_seq
+ emaj_version_hist
+(23 rows)
+
+-- check the emaj_version_hist content
+select verh_version from emaj.emaj_version_hist;
+ verh_version 
+--------------
+ <devel>
+(1 row)
+
+select emaj.emaj_get_version();
+ emaj_get_version 
+------------------
+ <devel>
+(1 row)
+
+-- check history
+select hist_id, hist_function, hist_event, hist_object, hist_wording, hist_user from emaj.emaj_hist order by hist_id;
+ hist_id | hist_function | hist_event |  hist_object  |       hist_wording       | hist_user 
+---------+---------------+------------+---------------+--------------------------+-----------
+       1 | EMAJ_INSTALL  |            | E-Maj <devel> | Initialisation completed | postgres
+(1 row)
+
+delete from emaj.emaj_hist;
+-- reset function calls statistics (so the check.sql output is stable with all installation paths)
+-- wait during half a second to let the statistics collector aggregate the latest stats
+select pg_sleep(1.2);
+ pg_sleep 
+----------
+ 
+(1 row)
+
+with reset as (select funcid, pg_stat_reset_single_function_counters(funcid) from pg_stat_user_functions
+                 where (funcname like E'emaj\\_%' or funcname like E'\\_%') )
+  select * from reset where funcid is null;
+ funcid | pg_stat_reset_single_function_counters 
+--------+----------------------------------------
+(0 rows)
+
