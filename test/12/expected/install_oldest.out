@@ -8,7 +8,7 @@ SET default_tablespace TO tspemaj;
 ------------------------------------------------------------
 -- emaj installation in its oldest version as an extension
 ------------------------------------------------------------
-CREATE EXTENSION emaj VERSION '2.3.1' CASCADE;
+CREATE EXTENSION emaj VERSION '3.1.0' CASCADE;
 NOTICE:  installing required extension "dblink"
 NOTICE:  installing required extension "btree_gist"
 ------------------------------------------------------------
@@ -18,13 +18,13 @@ NOTICE:  installing required extension "btree_gist"
 select extname, extversion from pg_extension where extname = 'emaj';
  extname | extversion 
 ---------+------------
- emaj    | 2.3.1
+ emaj    | 3.1.0
 (1 row)
 
 -- check the emaj_param content
 SELECT param_value_text FROM emaj.emaj_param WHERE param_key = 'emaj_version';
  param_value_text 
 ------------------
- 2.3.1
+ 3.1.0
 (1 row)
 

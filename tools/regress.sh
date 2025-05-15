@@ -28,21 +28,21 @@
 # EMAJ_REGTEST_MENU_ACTIONS        : Contains the functions to be executed according to the regression test and the PostgreSQL version (do not fill this array)
 # EMAJ_REGTEST_MENU                : Contains the menu's entries (do not fill this array)
 typeset -r EMAJ_REGTEST_STANDART=('install' 'setup' 'create_drop' 'start_stop' 'mark' 'rollback' 'misc' 'verify' 'alter' 'alter_logging' 'viewer' 'adm1' 'adm2' 'adm3' 'client' 'check' 'cleanup')
-typeset -r EMAJ_REGTEST_STANDART_PGVER='11 12 13 15 16 17 18'
+typeset -r EMAJ_REGTEST_STANDART_PGVER='11 12 13 14 15 16 18'
 typeset -r EMAJ_REGTEST_PSQL=('install_psql' 'setup' 'create_drop' 'start_stop' 'mark' 'rollback' 'misc' 'verify' 'alter' 'alter_logging' 'viewer' 'adm1' 'adm2' 'adm3' 'client' 'check' 'cleanup')
-typeset -r EMAJ_REGTEST_PSQL_PGVER=(14)
+typeset -r EMAJ_REGTEST_PSQL_PGVER=(17)
 typeset -r EMAJ_REGTEST_UPGRADE=('install_upgrade' 'setup' 'create_drop' 'start_stop' 'mark' 'rollback' 'misc' 'verify' 'alter' 'alter_logging' 'viewer' 'adm1' 'adm2' 'adm3' 'client' 'check' 'cleanup')
-typeset -r EMAJ_REGTEST_UPGRADE_PGVER='11 12 13 15 16 17 18'
+typeset -r EMAJ_REGTEST_UPGRADE_PGVER='11 12 13 14 15 16 18'
 typeset -r EMAJ_REGTEST_MIXED=('install_previous' 'setup' 'before_upg_while_logging' 'upgrade_while_logging' 'after_upg_while_logging' 'cleanup')
-typeset -r EMAJ_REGTEST_MIXED_PGVER=(12 14)
+typeset -r EMAJ_REGTEST_MIXED_PGVER=(14 16)
 typeset -r EMAJ_REGTEST_UPG_OLDEST=('install_oldest' 'setup' 'before_upg_oldest' 'upgrade_while_logging' 'after_upg_while_logging' 'cleanup')
-typeset -r EMAJ_REGTEST_UPG_OLDEST_PGVER=(11)
-typeset -r EMAJ_REGTEST_DUMP_RESTORE_PGVER=('11!14')
-typeset -r EMAJ_REGTEST_PGUPGRADE_PGVER='12!15'
+typeset -r EMAJ_REGTEST_UPG_OLDEST_PGVER=(12)
+typeset -r EMAJ_REGTEST_DUMP_RESTORE_PGVER=('13!17')
+typeset -r EMAJ_REGTEST_PGUPGRADE_PGVER='13!17'
 typeset -r EMAJ_REGTEST_UNINSTALL=('install' 'setup' 'before_uninstall' 'uninstall' 'install' 'cleanup')
-typeset -r EMAJ_REGTEST_UNINSTALL_PGVER=(11)
+typeset -r EMAJ_REGTEST_UNINSTALL_PGVER=(16)
 typeset -r EMAJ_REGTEST_UNINST_PSQL=('install_psql' 'setup' 'before_uninstall' 'uninstall_psql' 'install_psql' 'cleanup')
-typeset -r EMAJ_REGTEST_UNINST_PSQL_PGVER=(14)
+typeset -r EMAJ_REGTEST_UNINST_PSQL_PGVER=(17)
 
 declare -A EMAJ_REGTEST_MENU_ACTIONS
 declare -A EMAJ_REGTEST_MENU
@@ -218,7 +218,7 @@ pg_upgrade_test()
   echo " "
   echo "--> checking the E-Maj environment"
   echo " "
-  ${newPGBIN}/psql -p ${newPGPORT} -U ${newPGUSER} regression <<-END_PSQL >${EMAJ_DIR}/test/${2}/results/pgUpgrade.out 2>&1
+  ${newPGBIN}/psql -p ${newPGPORT} -U ${newPGUSER} regression <<-END_PSQL >${EMAJ_DIR}/test/${2}/results/pg_upgrade.out 2>&1
 	select emaj.emaj_verify_all();
 	END_PSQL
   echo " "
@@ -233,7 +233,7 @@ pg_upgrade_test()
   echo " "
   echo "--> compare the emaj_upgrade_after_postgres_upgrade.sql output with expected results (should not return anything)"
   echo " "
-  diff -c3 ${EMAJ_DIR}/test/${2}/expected/pgUpgrade.out ${EMAJ_DIR}/test/${2}/results/pgUpgrade.out #| tee ${EMAJ_DIR}/test/${2}/pgUpgrade.diff
+  diff -c3 ${EMAJ_DIR}/test/${2}/expected/pg_upgrade.out ${EMAJ_DIR}/test/${2}/results/pg_upgrade.out #| tee ${EMAJ_DIR}/test/${2}/pg_upgrade.diff
   return 0
 }
 

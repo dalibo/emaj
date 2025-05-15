@@ -122,7 +122,7 @@ select funcname, calls from pg_stat_user_functions
  _create_tbl                               |   174
  _dblink_close_cnx                         |   119
  _dblink_open_cnx                          |   144
- _dblink_sql_exec                          |  2585
+ _dblink_sql_exec                          |  2317
  _delete_before_mark_group                 |    23
  _delete_between_marks_group               |    14
  _delete_intermediate_mark_group           |    23
@@ -135,9 +135,9 @@ select funcname, calls from pg_stat_user_functions
  _drop_tbl                                 |   227
  _emaj_param_change_fnct                   |    46
  _enable_event_triggers                    |   319
- _estimate_rlbk_step_duration              |   879
+ _estimate_rlbk_step_duration              |   791
  _estimate_rollback_groups                 |    13
- _event_trigger_sql_drop_fnct              |   295
+ _event_trigger_sql_drop_fnct              |   207
  _event_trigger_table_rewrite_fnct         |     5
  _export_groups_conf                       |    11
  _export_param_conf                        |     7
@@ -165,7 +165,7 @@ select funcname, calls from pg_stat_user_functions
  _move_sequences                           |    19
  _move_tables                              |    24
  _move_tbl                                 |    50
- _pg_version_num                           |   254
+ _pg_version_num                           |   289
  _purge_histories                          |   101
  _remove_seq                               |    15
  _remove_sequences                         |    20
@@ -183,7 +183,7 @@ select funcname, calls from pg_stat_user_functions
  _rlbk_seq                                 |   179
  _rlbk_session_exec                        |    83
  _rlbk_session_lock                        |    85
- _rlbk_set_batch_number                    |   237
+ _rlbk_set_batch_number                    |   189
  _rlbk_start_mark                          |    81
  _rlbk_tbl                                 |   145
  _rollback_activity                        |    17

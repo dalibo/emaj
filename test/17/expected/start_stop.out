@@ -334,9 +334,9 @@ WARNING:  _check_fk_groups: The foreign key "mytblp_col1_fkey" on the table "mys
 WARNING:  _check_fk_groups: The table "myschema4.mypartp1a" is referenced by the foreign key "mytblr2_col2_col3_fkey2" on the table "myschema4.mytblr2" that is outside the groups (myGroup4).
 WARNING:  _check_fk_groups: The table "myschema4.mypartp1b" is referenced by the foreign key "mytblr2_col2_col3_fkey3" on the table "myschema4.mytblr2" that is outside the groups (myGroup4).
 WARNING:  _check_fk_groups: The table "myschema4.mypartp2" is referenced by the foreign key "mytblr2_col2_col3_fkey4" on the table "myschema4.mytblr2" that is outside the groups (myGroup4).
-WARNING:  _check_fk_groups: The foreign key "mytblp_col1_fkey" on the table "myschema4.mypartp2" is inherited from a partitionned table. An E-Maj rollback targeting a mark set before the latest table assignement could fail.
-WARNING:  _check_fk_groups: The foreign key "mytblp_col1_fkey" on the table "myschema4.mypartp1b" is inherited from a partitionned table. An E-Maj rollback targeting a mark set before the latest table assignement could fail.
-WARNING:  _check_fk_groups: The foreign key "mytblp_col1_fkey" on the table "myschema4.mypartp1a" is inherited from a partitionned table. An E-Maj rollback targeting a mark set before the latest table assignement could fail.
+WARNING:  _check_fk_groups: The foreign key "mytblp_col1_fkey" on the table "myschema4.mypartp2" is inherited from a partitionned table and has ON DELETE and/or ON UPDATE clause. This will generate E-Maj rollback failures if this FK needs to be temporarily dropped and recreated.
+WARNING:  _check_fk_groups: The foreign key "mytblp_col1_fkey" on the table "myschema4.mypartp1b" is inherited from a partitionned table and has ON DELETE and/or ON UPDATE clause. This will generate E-Maj rollback failures if this FK needs to be temporarily dropped and recreated.
+WARNING:  _check_fk_groups: The foreign key "mytblp_col1_fkey" on the table "myschema4.mypartp1a" is inherited from a partitionned table and has ON DELETE and/or ON UPDATE clause. This will generate E-Maj rollback failures if this FK needs to be temporarily dropped and recreated.
  emaj_start_group 
 ------------------
                 6

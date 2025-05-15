@@ -1064,7 +1064,7 @@ rollback;
 select emaj.emaj_estimate_rollback_group('myGroup2','Mark21',FALSE);
  emaj_estimate_rollback_group 
 ------------------------------
- @ 1.4086 secs
+ @ 1.4291 secs
 (1 row)
 
 -- should return 1.4086 sec (or 1.4291 sec is emaj is not an extension)
@@ -1078,7 +1078,7 @@ begin;
   select emaj.emaj_estimate_rollback_groups('{"myGroup2"}','Mark21',TRUE);
  emaj_estimate_rollback_groups 
 -------------------------------
- @ 1.814 secs
+ @ 1.8285 secs
 (1 row)
 
 -- should return 1.814 sec (or 1.8285 sec is emaj is not an extension)
@@ -1103,7 +1103,7 @@ insert into emaj.emaj_rlbk_stat values
 select emaj.emaj_estimate_rollback_group('myGroup2','Mark21',FALSE);
  emaj_estimate_rollback_group 
 ------------------------------
- @ 1.4071 secs
+ @ 1.435306 secs
 (1 row)
 
 -- should return 1.4071 sec (or 1.435306 sec is emaj is not an extension)
@@ -1125,7 +1125,7 @@ insert into emaj.emaj_rlbk_stat values
 select emaj.emaj_estimate_rollback_group('myGroup2','Mark21',FALSE);
  emaj_estimate_rollback_group 
 ------------------------------
- @ 2.275704 secs
+ @ 2.30391 secs
 (1 row)
 
 -- should return 2.275704 sec (or 2.30391 sec is emaj is not an extension)
@@ -1153,7 +1153,7 @@ insert into emaj.emaj_rlbk_stat values
 select emaj.emaj_estimate_rollback_group('myGroup2','Mark21',FALSE);
  emaj_estimate_rollback_group 
 ------------------------------
- @ 2.643791 secs
+ @ 2.668997 secs
 (1 row)
 
 -- should return 2.643791 sec (or 2.668997 sec is emaj is not an extension)
@@ -1171,7 +1171,7 @@ begin;
   select emaj.emaj_estimate_rollback_groups('{"myGroup1","myGroup2"}','Multi-1',FALSE);
  emaj_estimate_rollback_groups 
 -------------------------------
- @ 2.675001 secs
+ @ 2.730913 secs
 (1 row)
 
 -- should return 2.675001 sec (or 2.730913 sec is emaj is not an extension)
@@ -2390,73 +2390,73 @@ NOTICE:  table "emaj_temp_sql" does not exist, skipping
 select hist_id, hist_function, hist_event, hist_object, 
        regexp_replace(regexp_replace(hist_wording,E'\\d\\d\.\\d\\d\\.\\d\\d\\.\\d\\d\\d\\d','%','g'),E'\\[.+\\]','(timestamp)','g'), hist_user
   from (select * from emaj.emaj_hist where hist_id >= 5400 order by hist_id) as t;
- hist_id |       hist_function        |   hist_event   |         hist_object          |                                          regexp_replace                                          | hist_user 
----------+----------------------------+----------------+------------------------------+--------------------------------------------------------------------------------------------------+-----------
-    5410 | GEN_SQL_DUMP_CHANGES_GROUP | BEGIN          | myGroup2                     | From mark Mark21 to Mark23 towards /tmp/emaj_17/misc/sql_script                                  | postgres
-    5411 | GEN_SQL_DUMP_CHANGES_GROUP | END            | myGroup2                     | 2 generated SQL statements                                                                       | postgres
-    5412 | GEN_SQL_DUMP_CHANGES_GROUP | BEGIN          | myGroup2                     | From mark Mark21 to Mark23 towards /tmp/emaj_17/misc/sql_script                                  | postgres
-    5413 | GEN_SQL_DUMP_CHANGES_GROUP | END            | myGroup2                     | 2 generated SQL statements                                                                       | postgres
-    5414 | GEN_SQL_DUMP_CHANGES_GROUP | BEGIN          | myGroup2                     | From mark Mark21 to Mark23 towards /tmp/emaj_17/misc/sql_script                                  | postgres
-    5415 | GEN_SQL_DUMP_CHANGES_GROUP | END            | myGroup2                     | 2 generated SQL statements                                                                       | postgres
-    5416 | SET_MARK_GROUP             | BEGIN          | myGroup1                     |                                                                                                  | postgres
-    5417 | LOCK_GROUP                 | BEGIN          | myGroup1                     |                                                                                                  | postgres
-    5418 | LOCK_GROUP                 | END            | myGroup1                     | 5 tables locked, 0 deadlock(s)                                                                   | postgres
-    5419 | SET_MARK_GROUP             | TIME STAMP SET | 5400                         |                                                                                                  | postgres
-    5420 | SET_MARK_GROUP             | END            | myGroup1                     | Dump_changes_tests_M1                                                                            | postgres
-    5421 | SET_MARK_GROUP             | BEGIN          | myGroup1                     |                                                                                                  | postgres
-    5422 | LOCK_GROUP                 | BEGIN          | myGroup1                     |                                                                                                  | postgres
-    5423 | LOCK_GROUP                 | END            | myGroup1                     | 5 tables locked, 0 deadlock(s)                                                                   | postgres
-    5424 | SET_MARK_GROUP             | TIME STAMP SET | 5401                         |                                                                                                  | postgres
-    5425 | SET_MARK_GROUP             | END            | myGroup1                     | Dump_changes_tests_M2                                                                            | postgres
-    5426 | SET_MARK_GROUP             | BEGIN          | myGroup1                     |                                                                                                  | postgres
-    5427 | LOCK_GROUP                 | BEGIN          | myGroup1                     |                                                                                                  | postgres
-    5428 | LOCK_GROUP                 | END            | myGroup1                     | 5 tables locked, 0 deadlock(s)                                                                   | postgres
-    5429 | SET_MARK_GROUP             | TIME STAMP SET | 5402                         |                                                                                                  | postgres
-    5430 | SET_MARK_GROUP             | END            | myGroup1                     | Dump_changes_tests_M3                                                                            | postgres
-    5431 | SET_MARK_GROUP             | BEGIN          | myGroup1                     |                                                                                                  | postgres
-    5432 | LOCK_GROUP                 | BEGIN          | myGroup1                     |                                                                                                  | postgres
-    5433 | LOCK_GROUP                 | END            | myGroup1                     | 5 tables locked, 0 deadlock(s)                                                                   | postgres
-    5434 | SET_MARK_GROUP             | TIME STAMP SET | 5403                         |                                                                                                  | postgres
-    5435 | SET_MARK_GROUP             | END            | myGroup1                     | Dump_changes_tests_M4                                                                            | postgres
-    5436 | DUMP_CHANGES_GROUP         | BEGIN          | myGroup1                     | From mark Dump_changes_tests_M2 to Dump_changes_tests_M3 towards /tmp/emaj_17/misc               | postgres
-    5437 | DUMP_CHANGES_GROUP         | END            | myGroup1                     | 4 generated files                                                                                | postgres
-    5438 | DUMP_CHANGES_GROUP         | BEGIN          | myGroup1                     | From mark Dump_changes_tests_M3 to Dump_changes_tests_M4 towards /tmp/emaj_17/misc               | postgres
-    5439 | DUMP_CHANGES_GROUP         | END            | myGroup1                     | 4 generated files                                                                                | postgres
-    5440 | DUMP_CHANGES_GROUP         | BEGIN          | myGroup1                     | From mark Dump_changes_tests_M2 to Dump_changes_tests_M4 towards /tmp/emaj_17/misc               | postgres
-    5441 | DUMP_CHANGES_GROUP         | END            | myGroup1                     | 8 generated files                                                                                | postgres
-    5442 | DUMP_CHANGES_GROUP         | BEGIN          | myGroup1                     | From mark Dump_changes_tests_M2 to Dump_changes_tests_M4 towards /tmp/emaj_17/misc               | postgres
-    5443 | DUMP_CHANGES_GROUP         | END            | myGroup1                     | 8 generated files                                                                                | postgres
-    5444 | DUMP_CHANGES_GROUP         | BEGIN          | myGroup2                     | From mark Multi-2 to Multi-3 towards /tmp/emaj_17/misc                                           | postgres
-    5445 | DUMP_CHANGES_GROUP         | END            | myGroup2                     | 3 generated files                                                                                | postgres
-    5446 | DUMP_CHANGES_GROUP         | BEGIN          | myGroup2                     | From mark Multi-2 to Multi-3 towards /tmp/emaj_17/misc                                           | postgres
-    5447 | DUMP_CHANGES_GROUP         | END            | myGroup2                     | 3 generated files                                                                                | postgres
-    5448 | GEN_SQL_DUMP_CHANGES_GROUP | BEGIN          | myGroup1                     | From mark Dump_changes_tests_M2 to Dump_changes_tests_M4 towards /tmp/emaj_17/misc/sql_script    | postgres
-    5449 | GEN_SQL_DUMP_CHANGES_GROUP | END            | myGroup1                     | 9 generated SQL statements                                                                       | postgres
-    5450 | ROLLBACK_GROUP             | BEGIN          | myGroup1                     | Unlogged rollback to mark Dump_changes_tests_M1 (timestamp)                                      | postgres
-    5451 | DBLINK_OPEN_CNX            |                | rlbk#1                       | Status = 1                                                                                       | postgres
-    5452 | LOCK_GROUP                 | BEGIN          | myGroup1                     | Rollback session #1                                                                              | postgres
-    5453 | LOCK_GROUP                 | END            | myGroup1                     | Rollback session #1: 5 tables locked, 0 deadlock(s)                                              | postgres
-    5454 | ROLLBACK_GROUP             | TIME STAMP SET | 5404                         |                                                                                                  | postgres
-    5455 | ROLLBACK_SEQUENCE          |                | myschema1."myTbl3_col31_seq" | RESTART 11                                                                                       | postgres
-    5456 | ROLLBACK_TABLE             | BEGIN          | myschema1.mytbl4             | All log rows where emaj_gid > 5400000 and <= 5400025, in session_replication_role = replica mode | postgres
-    5457 | ROLLBACK_TABLE             | END            | myschema1.mytbl4             | 13 rolled back primary keys                                                                      | postgres
-    5458 | ROLLBACK_GROUP             | MARK DELETED   | myGroup1                     | mark Dump_changes_tests_M2 is deleted                                                            | postgres
-    5459 | ROLLBACK_GROUP             | MARK DELETED   | myGroup1                     | mark Dump_changes_tests_M3 is deleted                                                            | postgres
-    5460 | ROLLBACK_GROUP             | MARK DELETED   | myGroup1                     | mark Dump_changes_tests_M4 is deleted                                                            | postgres
-    5461 | ROLLBACK_GROUP             | NOTICE         | Rollback id 5400             | Rollback id = 5400.                                                                              | postgres
-    5462 | ROLLBACK_GROUP             | NOTICE         | Rollback id 5400             | 1 / 5 tables effectively processed.                                                              | postgres
-    5463 | ROLLBACK_GROUP             | NOTICE         | Rollback id 5400             | 1 / 2 sequences effectively processed.                                                           | postgres
-    5464 | DBLINK_CLOSE_CNX           |                | rlbk#1                       |                                                                                                  | postgres
-    5465 | ROLLBACK_GROUP             | END            | myGroup1                     | Rollback_id 5400                                                                                 | postgres
-    5466 | CLEANUP_RLBK_STATE         |                | Rollback id 5400             | set to COMMITTED                                                                                 | postgres
-    5467 | DELETE_MARK_GROUP          | BEGIN          | myGroup1                     | EMAJ_LAST_MARK                                                                                   | postgres
-    5468 | DELETE_MARK_GROUP          | END            | myGroup1                     | Dump_changes_tests_M1                                                                            | postgres
-    5469 | DUMP_CHANGES_GROUP         | BEGIN          | phil's group#3",             | From mark Mark4 to Mark5 towards /tmp/emaj_17/misc                                               | postgres
-    5470 | DUMP_CHANGES_GROUP         | END            | phil's group#3",             | 5 generated files                                                                                | postgres
-    5471 | DUMP_CHANGES_GROUP         | BEGIN          | phil's group#3",             | From mark Mark4 to Mark5 towards /tmp/emaj_17/misc                                               | postgres
-    5472 | DUMP_CHANGES_GROUP         | END            | phil's group#3",             | 2 generated files                                                                                | postgres
-    5473 | DUMP_CHANGES_GROUP         | BEGIN          | phil's group#3",             | From mark Mark4 to Mark5 towards /tmp/emaj_17/misc                                               | postgres
-    5474 | DUMP_CHANGES_GROUP         | END            | phil's group#3",             | 2 generated files                                                                                | postgres
+ hist_id |       hist_function        |   hist_event   |         hist_object          |                                        regexp_replace                                         | hist_user 
+---------+----------------------------+----------------+------------------------------+-----------------------------------------------------------------------------------------------+-----------
+    5410 | GEN_SQL_DUMP_CHANGES_GROUP | BEGIN          | myGroup2                     | From mark Mark21 to Mark23 towards /tmp/emaj_17/misc/sql_script                               | postgres
+    5411 | GEN_SQL_DUMP_CHANGES_GROUP | END            | myGroup2                     | 2 generated SQL statements                                                                    | postgres
+    5412 | GEN_SQL_DUMP_CHANGES_GROUP | BEGIN          | myGroup2                     | From mark Mark21 to Mark23 towards /tmp/emaj_17/misc/sql_script                               | postgres
+    5413 | GEN_SQL_DUMP_CHANGES_GROUP | END            | myGroup2                     | 2 generated SQL statements                                                                    | postgres
+    5414 | GEN_SQL_DUMP_CHANGES_GROUP | BEGIN          | myGroup2                     | From mark Mark21 to Mark23 towards /tmp/emaj_17/misc/sql_script                               | postgres
+    5415 | GEN_SQL_DUMP_CHANGES_GROUP | END            | myGroup2                     | 2 generated SQL statements                                                                    | postgres
+    5416 | SET_MARK_GROUP             | BEGIN          | myGroup1                     |                                                                                               | postgres
+    5417 | LOCK_GROUP                 | BEGIN          | myGroup1                     |                                                                                               | postgres
+    5418 | LOCK_GROUP                 | END            | myGroup1                     | 5 tables locked, 0 deadlock(s)                                                                | postgres
+    5419 | SET_MARK_GROUP             | TIME STAMP SET | 5400                         |                                                                                               | postgres
+    5420 | SET_MARK_GROUP             | END            | myGroup1                     | Dump_changes_tests_M1                                                                         | postgres
+    5421 | SET_MARK_GROUP             | BEGIN          | myGroup1                     |                                                                                               | postgres
+    5422 | LOCK_GROUP                 | BEGIN          | myGroup1                     |                                                                                               | postgres
+    5423 | LOCK_GROUP                 | END            | myGroup1                     | 5 tables locked, 0 deadlock(s)                                                                | postgres
+    5424 | SET_MARK_GROUP             | TIME STAMP SET | 5401                         |                                                                                               | postgres
+    5425 | SET_MARK_GROUP             | END            | myGroup1                     | Dump_changes_tests_M2                                                                         | postgres
+    5426 | SET_MARK_GROUP             | BEGIN          | myGroup1                     |                                                                                               | postgres
+    5427 | LOCK_GROUP                 | BEGIN          | myGroup1                     |                                                                                               | postgres
+    5428 | LOCK_GROUP                 | END            | myGroup1                     | 5 tables locked, 0 deadlock(s)                                                                | postgres
+    5429 | SET_MARK_GROUP             | TIME STAMP SET | 5402                         |                                                                                               | postgres
+    5430 | SET_MARK_GROUP             | END            | myGroup1                     | Dump_changes_tests_M3                                                                         | postgres
+    5431 | SET_MARK_GROUP             | BEGIN          | myGroup1                     |                                                                                               | postgres
+    5432 | LOCK_GROUP                 | BEGIN          | myGroup1                     |                                                                                               | postgres
+    5433 | LOCK_GROUP                 | END            | myGroup1                     | 5 tables locked, 0 deadlock(s)                                                                | postgres
+    5434 | SET_MARK_GROUP             | TIME STAMP SET | 5403                         |                                                                                               | postgres
+    5435 | SET_MARK_GROUP             | END            | myGroup1                     | Dump_changes_tests_M4                                                                         | postgres
+    5436 | DUMP_CHANGES_GROUP         | BEGIN          | myGroup1                     | From mark Dump_changes_tests_M2 to Dump_changes_tests_M3 towards /tmp/emaj_17/misc            | postgres
+    5437 | DUMP_CHANGES_GROUP         | END            | myGroup1                     | 4 generated files                                                                             | postgres
+    5438 | DUMP_CHANGES_GROUP         | BEGIN          | myGroup1                     | From mark Dump_changes_tests_M3 to Dump_changes_tests_M4 towards /tmp/emaj_17/misc            | postgres
+    5439 | DUMP_CHANGES_GROUP         | END            | myGroup1                     | 4 generated files                                                                             | postgres
+    5440 | DUMP_CHANGES_GROUP         | BEGIN          | myGroup1                     | From mark Dump_changes_tests_M2 to Dump_changes_tests_M4 towards /tmp/emaj_17/misc            | postgres
+    5441 | DUMP_CHANGES_GROUP         | END            | myGroup1                     | 8 generated files                                                                             | postgres
+    5442 | DUMP_CHANGES_GROUP         | BEGIN          | myGroup1                     | From mark Dump_changes_tests_M2 to Dump_changes_tests_M4 towards /tmp/emaj_17/misc            | postgres
+    5443 | DUMP_CHANGES_GROUP         | END            | myGroup1                     | 8 generated files                                                                             | postgres
+    5444 | DUMP_CHANGES_GROUP         | BEGIN          | myGroup2                     | From mark Multi-2 to Multi-3 towards /tmp/emaj_17/misc                                        | postgres
+    5445 | DUMP_CHANGES_GROUP         | END            | myGroup2                     | 3 generated files                                                                             | postgres
+    5446 | DUMP_CHANGES_GROUP         | BEGIN          | myGroup2                     | From mark Multi-2 to Multi-3 towards /tmp/emaj_17/misc                                        | postgres
+    5447 | DUMP_CHANGES_GROUP         | END            | myGroup2                     | 3 generated files                                                                             | postgres
+    5448 | GEN_SQL_DUMP_CHANGES_GROUP | BEGIN          | myGroup1                     | From mark Dump_changes_tests_M2 to Dump_changes_tests_M4 towards /tmp/emaj_17/misc/sql_script | postgres
+    5449 | GEN_SQL_DUMP_CHANGES_GROUP | END            | myGroup1                     | 9 generated SQL statements                                                                    | postgres
+    5450 | ROLLBACK_GROUP             | BEGIN          | myGroup1                     | Unlogged rollback to mark Dump_changes_tests_M1 (timestamp)                                   | postgres
+    5451 | DBLINK_OPEN_CNX            |                | rlbk#1                       | Status = 1                                                                                    | postgres
+    5452 | LOCK_GROUP                 | BEGIN          | myGroup1                     | Rollback session #1                                                                           | postgres
+    5453 | LOCK_GROUP                 | END            | myGroup1                     | Rollback session #1: 5 tables locked, 0 deadlock(s)                                           | postgres
+    5454 | ROLLBACK_GROUP             | TIME STAMP SET | 5404                         |                                                                                               | postgres
+    5455 | ROLLBACK_SEQUENCE          |                | myschema1."myTbl3_col31_seq" | RESTART 11                                                                                    | postgres
+    5456 | ROLLBACK_TABLE             | BEGIN          | myschema1.mytbl4             | All log rows where emaj_gid > 5400000 and <= 5400025                                          | postgres
+    5457 | ROLLBACK_TABLE             | END            | myschema1.mytbl4             | 13 rolled back primary keys                                                                   | postgres
+    5458 | ROLLBACK_GROUP             | MARK DELETED   | myGroup1                     | mark Dump_changes_tests_M2 is deleted                                                         | postgres
+    5459 | ROLLBACK_GROUP             | MARK DELETED   | myGroup1                     | mark Dump_changes_tests_M3 is deleted                                                         | postgres
+    5460 | ROLLBACK_GROUP             | MARK DELETED   | myGroup1                     | mark Dump_changes_tests_M4 is deleted                                                         | postgres
+    5461 | ROLLBACK_GROUP             | NOTICE         | Rollback id 5400             | Rollback id = 5400.                                                                           | postgres
+    5462 | ROLLBACK_GROUP             | NOTICE         | Rollback id 5400             | 1 / 5 tables effectively processed.                                                           | postgres
+    5463 | ROLLBACK_GROUP             | NOTICE         | Rollback id 5400             | 1 / 2 sequences effectively processed.                                                        | postgres
+    5464 | DBLINK_CLOSE_CNX           |                | rlbk#1                       |                                                                                               | postgres
+    5465 | ROLLBACK_GROUP             | END            | myGroup1                     | Rollback_id 5400                                                                              | postgres
+    5466 | CLEANUP_RLBK_STATE         |                | Rollback id 5400             | set to COMMITTED                                                                              | postgres
+    5467 | DELETE_MARK_GROUP          | BEGIN          | myGroup1                     | EMAJ_LAST_MARK                                                                                | postgres
+    5468 | DELETE_MARK_GROUP          | END            | myGroup1                     | Dump_changes_tests_M1                                                                         | postgres
+    5469 | DUMP_CHANGES_GROUP         | BEGIN          | phil's group#3",             | From mark Mark4 to Mark5 towards /tmp/emaj_17/misc                                            | postgres
+    5470 | DUMP_CHANGES_GROUP         | END            | phil's group#3",             | 5 generated files                                                                             | postgres
+    5471 | DUMP_CHANGES_GROUP         | BEGIN          | phil's group#3",             | From mark Mark4 to Mark5 towards /tmp/emaj_17/misc                                            | postgres
+    5472 | DUMP_CHANGES_GROUP         | END            | phil's group#3",             | 2 generated files                                                                             | postgres
+    5473 | DUMP_CHANGES_GROUP         | BEGIN          | phil's group#3",             | From mark Mark4 to Mark5 towards /tmp/emaj_17/misc                                            | postgres
+    5474 | DUMP_CHANGES_GROUP         | END            | phil's group#3",             | 2 generated files                                                                             | postgres
 (65 rows)
 
 -- set sequence restart value
