@@ -2018,8 +2018,8 @@ WARNING:  _check_fk_groups: The foreign key "mytblp_col1_fkey" on the table "mys
 WARNING:  _check_fk_groups: The foreign key "mytblp_col1_fkey" on the table "myschema4.mypartp1b" references the table "myschema4.mytblr1" that is outside the groups (myGroup4).
 WARNING:  _check_fk_groups: The foreign key "mytblp_col1_fkey" on the table "myschema4.mypartp2" references the table "myschema4.mytblr1" that is outside the groups (myGroup4).
 WARNING:  _check_fk_groups: The foreign key "mytblp_col1_fkey" on the table "myschema4.mypartp2" is inherited from a partitionned table. An E-Maj rollback targeting a mark set before the latest table assignement could fail.
-WARNING:  _check_fk_groups: The foreign key "mytblp_col1_fkey" on the table "myschema4.mypartp1b" is inherited from a partitionned table. An E-Maj rollback targeting a mark set before the latest table assignement could fail.
 WARNING:  _check_fk_groups: The foreign key "mytblp_col1_fkey" on the table "myschema4.mypartp1a" is inherited from a partitionned table. An E-Maj rollback targeting a mark set before the latest table assignement could fail.
+WARNING:  _check_fk_groups: The foreign key "mytblp_col1_fkey" on the table "myschema4.mypartp1b" is inherited from a partitionned table. An E-Maj rollback targeting a mark set before the latest table assignement could fail.
  emaj_start_group 
 ------------------
                 7

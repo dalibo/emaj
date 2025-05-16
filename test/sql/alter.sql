@@ -219,7 +219,7 @@ select emaj.emaj_move_tables('myschema1','my(t|T)bl.*','mytbl2$','myGroup1');
 select emaj.emaj_move_tables('myschema1','.*','','myGroup1');
 
 -- bad table type for target rollbackable group
-select emaj.emaj_move_tables('myschema5', '.*', 'oids', 'myGroup1');     -- to exclude 'myoidstbl'
+select emaj.emaj_move_tables('myschema5', '.*', '', 'myGroup1');
 select emaj.emaj_move_tables('phil''s schema"3', 'bl2', '', 'myGroup1');  -- to select 'mytbl2\'
 
 select * from emaj.emaj_relation_change where rlchg_time_id > 8000 order by 1 desc,2,3,4 limit 6;

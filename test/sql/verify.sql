@@ -219,12 +219,6 @@ begin;                                                                        --
   alter table "phil's schema""3"."myTbl2\" set unlogged;                        -- table from an audit_only group
   select * from emaj.emaj_verify_all() t(msg) where msg like 'Error%';
 rollback;
--- detection of tables altered as WITH OIDS (PG12+ generates an error)
-begin;
-  alter table myschema1.mytbl4 set with oids;                                 -- table from a rollbackable group
-  alter table "phil's schema""3"."myTbl2\" set with oids;                       -- table from an audit_only group
-  select * from emaj.emaj_verify_all() t(msg) where msg like 'Error%';
-rollback;
 -- detection of modified primary key
 begin;
   alter table myschema1.mytbl4 drop constraint mytbl4_pkey;

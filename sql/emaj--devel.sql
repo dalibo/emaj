@@ -1483,25 +1483,6 @@ $_check_tables_for_rollbackable_group$
         p_tables = array(SELECT unnest(p_tables) EXCEPT SELECT unnest(v_array));
       END IF;
     END IF;
--- With PG11-, check or discard WITH OIDS tables.
-    IF emaj._pg_version_num() < 120000 THEN
-      SELECT string_agg(quote_ident(relname), ', '), array_agg(relname) INTO v_list, v_array
-        FROM pg_catalog.pg_class
-             JOIN pg_catalog.pg_namespace ON (pg_namespace.oid = relnamespace)
-        WHERE nspname = p_schema
-          AND relname = ANY(p_tables)
-          AND relkind = 'r'
-          AND relhasoids;
-      IF v_list IS NOT NULL THEN
-        IF NOT p_arrayFromRegex THEN
-          RAISE EXCEPTION '%: In schema %, some tables (%) are declared WITH OIDS.', p_callingFunction, quote_ident(p_schema), v_list;
-        ELSE
-          RAISE WARNING '%: Some WITH OIDS tables (%) are not selected.', p_callingFunction, v_list;
-          -- remove these tables from the tables to process
-          p_tables = array(SELECT unnest(p_tables) EXCEPT SELECT unnest(v_array));
-        END IF;
-      END IF;
-    END IF;
 --
     RETURN p_tables;
   END;
@@ -3293,13 +3274,12 @@ $_build_sql_tbl$
                '       count(*) FILTER (WHERE attgenerated <> '''')'
 --                             the number of GENERATED ALWAYS AS (expression) columns
                '  FROM ('
-               '  SELECT attname, attidentity, %s AS attgenerated'
+               '  SELECT attname, attidentity, attgenerated'
                '    FROM pg_catalog.pg_attribute'
                '    WHERE attrelid = %s::regclass'
                '      AND attnum > 0 AND NOT attisdropped'
                '  ORDER BY attnum) AS t';
       EXECUTE format(v_stmt,
-                     CASE WHEN emaj._pg_version_num() >= 120000 THEN 'attgenerated' ELSE '''''::TEXT' END,
                      quote_literal(p_fullTableName))
         INTO p_rlbkColList, p_genColList, p_nbGenAlwaysIdentCol, v_nbGenAlwaysExprCol;
       IF v_nbGenAlwaysExprCol = 0 THEN
@@ -3313,12 +3293,11 @@ $_build_sql_tbl$
       p_genValList = '';
       p_genSetList = '';
       FOR r_col IN EXECUTE format(
-        ' SELECT attname, format_type(atttypid,atttypmod) AS format_type, attidentity, %s AS attgenerated'
+        ' SELECT attname, format_type(atttypid,atttypmod) AS format_type, attidentity, attgenerated'
         ' FROM pg_catalog.pg_attribute'
         ' WHERE attrelid = %s::regclass'
         '   AND attnum > 0 AND NOT attisdropped'
         ' ORDER BY attnum',
-        CASE WHEN emaj._pg_version_num() >= 120000 THEN 'attgenerated' ELSE '''''::TEXT' END,
         quote_literal(p_fullTableName))
       LOOP
 -- Test if the column format (up to the parenthesis) belongs to the list of formats that do not require any quotation (like numeric
@@ -5290,27 +5269,6 @@ $_verify_groups$
       IF p_onErrorStop THEN RAISE EXCEPTION '_verify_groups (8): % %',r_object.msg,v_hint; END IF;
       RETURN NEXT r_object;
     END LOOP;
--- For rollbackable groups, with PG 11-, check that no table has been altered as WITH OIDS after tables groups creation.
-    IF emaj._pg_version_num() < 120000 THEN
-      FOR r_object IN
-        SELECT rel_schema, rel_tblseq, rel_group,
-               'In rollbackable group "' || rel_group || '", the table "' ||
-               rel_schema || '"."' || rel_tblseq || '" is declared WITH OIDS.' AS msg
-          FROM emaj.emaj_relation
-               JOIN emaj.emaj_group ON (group_name = rel_group)
-               JOIN pg_catalog.pg_class ON (relname = rel_tblseq)
-               JOIN pg_catalog.pg_namespace ON (pg_namespace.oid = relnamespace AND nspname = rel_schema)
-          WHERE rel_group = ANY (p_groups)
-            AND rel_kind = 'r'
-            AND upper_inf(rel_time_range)
-            AND group_is_rollbackable
-            AND relhasoids
-          ORDER BY 1,2,3
-      LOOP
-        IF p_onErrorStop THEN RAISE EXCEPTION '_verify_groups (9): % %',r_object.msg,v_hint; END IF;
-        RETURN NEXT r_object;
-      END LOOP;
-    END IF;
 -- Check that the primary key structure of all tables belonging to rollbackable groups is unchanged.
     FOR r_object IN
       SELECT rel_schema, rel_tblseq, rel_group,
@@ -6378,17 +6336,6 @@ $_import_groups_conf_check$
              JOIN pg_catalog.pg_namespace ON (pg_namespace.oid = relnamespace AND nspname = tmp_schema)
         WHERE relkind = 'r'
           AND relpersistence = 'u';
--- With PG11- check no table is a WITH OIDS table (blocking rollbackable groups only).
-    IF emaj._pg_version_num() < 120000 THEN
-      RETURN QUERY
-        SELECT 21, 2, tmp_group, tmp_schema, tmp_tbl_name, NULL::TEXT, NULL::INT,
-               format('in the group %s, the table %s.%s is declared WITH OIDS.',
-                      tmp_group, quote_ident(tmp_schema), quote_ident(tmp_tbl_name))
-          FROM tmp_app_table
-               JOIN pg_catalog.pg_class ON (relname = tmp_tbl_name)
-               JOIN pg_catalog.pg_namespace ON (pg_namespace.oid = relnamespace AND nspname = tmp_schema)
-          WHERE relkind = 'r' AND relhasoids;
-    END IF;
 -- Check every table has a primary key (blocking rollbackable groups only).
     RETURN QUERY
       SELECT 22, 2, tmp_group, tmp_schema, tmp_tbl_name, NULL::TEXT, NULL::INT,
@@ -12821,21 +12768,6 @@ $_verify_all_groups$
           AND group_is_rollbackable
           AND relpersistence <> 'p'
         ORDER BY rel_schema, rel_tblseq, 1;
--- With PG 11-, check that all tables are WITHOUT OIDS (i.e. have not been altered as WITH OIDS after their tables group creation).
-    IF emaj._pg_version_num() < 120000 THEN
-      RETURN QUERY
-        SELECT 'Error: In the rollbackable group "' || rel_group || '", the table "' ||
-               rel_schema || '"."' || rel_tblseq || '" is WITH OIDS.' AS msg
-          FROM emaj.emaj_relation
-               JOIN emaj.emaj_group ON (group_name = rel_group)
-               JOIN pg_catalog.pg_class ON (relname = rel_tblseq)
-               JOIN pg_catalog.pg_namespace ON (pg_namespace.oid = relnamespace AND nspname = rel_schema)
-          WHERE upper_inf(rel_time_range)
-            AND rel_kind = 'r'
-            AND group_is_rollbackable
-            AND relhasoids
-          ORDER BY rel_schema, rel_tblseq, 1;
-    END IF;
 -- Check the primary key structure of all tables belonging to rollbackable groups is unchanged.
     RETURN QUERY
       SELECT 'Error: In the rollbackable group "' || rel_group || '", the primary key of the table "' ||
@@ -13186,9 +13118,9 @@ $emaj_verify_all$
   BEGIN
 -- Global checks.
 -- Detect if the current postgres version is at least 11.
-    IF emaj._pg_version_num() < 110000 THEN
+    IF emaj._pg_version_num() < 120000 THEN
       RETURN NEXT 'Error: The current postgres version (' || version()
-               || ') is not compatible with this E-Maj version. It should be at least 11';
+               || ') is not compatible with this E-Maj version. It should be at least 12';
       v_errorFound = TRUE;
     END IF;
 -- Check all E-Maj schemas.

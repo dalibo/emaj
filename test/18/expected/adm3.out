@@ -562,33 +562,27 @@ select emaj_assign_sequences('phil''s schema"3','.*',null,'phil''s group#3",');
 (1 row)
 
 select emaj_assign_tables('myschema5','.*',null,'phil''s group#3",');
-NOTICE:  table "myoidstbl_log" does not exist, skipping
-NOTICE:  trigger "emaj_log_trg" for relation "myschema5.myoidstbl" does not exist, skipping
-NOTICE:  trigger "emaj_trunc_trg" for relation "myschema5.myoidstbl" does not exist, skipping
 NOTICE:  table "myunloggedtbl_log" does not exist, skipping
 NOTICE:  trigger "emaj_log_trg" for relation "myschema5.myunloggedtbl" does not exist, skipping
 NOTICE:  trigger "emaj_trunc_trg" for relation "myschema5.myunloggedtbl" does not exist, skipping
  emaj_assign_tables 
 --------------------
-                  2
+                  1
 (1 row)
 
 select emaj_start_group('phil''s group#3",','start');
  emaj_start_group 
 ------------------
-                7
+                6
 (1 row)
 
 -----------------------------
--- test changes on the unlogged and the with oids tables
+-- test changes on the unlogged table
 -----------------------------
 reset role;
 insert into myschema5.myUnloggedTbl values (10),(11),(12);
 update myschema5.myUnloggedTbl set col1 = 13 where col1 = 12;
 delete from myschema5.myUnloggedTbl where col1 = 10;
-insert into myschema5.myOidsTbl values (20),(21),(22);
-update myschema5.myOidsTbl set col1 = 23 where col1 = 22;
-delete from myschema5.myOidsTbl where col1 = 21;
 set role emaj_regression_tests_adm_user2;
 select col1, emaj_verb, emaj_tuple, emaj_gid, emaj_user from emaj_myschema5.myUnloggedTbl_log order by emaj_gid;
  col1 | emaj_verb | emaj_tuple | emaj_gid | emaj_user 
@@ -599,17 +593,6 @@ select col1, emaj_verb, emaj_tuple, emaj_gid, emaj_user from emaj_myschema5.myUn
    12 | UPD       | OLD        | 17400004 | postgres
    13 | UPD       | NEW        | 17400004 | postgres
    10 | DEL       | OLD        | 17400005 | postgres
-(6 rows)
-
-select col1, emaj_verb, emaj_tuple, emaj_gid, emaj_user from emaj_myschema5.myOidsTbl_log order by emaj_gid;
- col1 | emaj_verb | emaj_tuple | emaj_gid | emaj_user 
-------+-----------+------------+----------+-----------
-   20 | INS       | NEW        | 17400006 | postgres
-   21 | INS       | NEW        | 17400007 | postgres
-   22 | INS       | NEW        | 17400008 | postgres
-   22 | UPD       | OLD        | 17400009 | postgres
-   23 | UPD       | NEW        | 17400009 | postgres
-   21 | DEL       | OLD        | 17400010 | postgres
 (6 rows)
 
 -- disable event triggers for this step and change an application table structure
@@ -760,14 +743,14 @@ select emaj_enable_protection_by_event_triggers();
 select emaj_stop_group('phil''s group#3",');
  emaj_stop_group 
 -----------------
-               7
+               6
 (1 row)
 
 select emaj_drop_group('phil''s group#3",');
 NOTICE:  table "my"tbl4_log_2" does not exist, skipping
  emaj_drop_group 
 -----------------
-               7
+               6
 (1 row)
 
 -----------------------------
@@ -782,16 +765,16 @@ select time_id, time_last_emaj_gid, time_event from emaj.emaj_time_stamp where t
    17402 |           17400000 | A
    17403 |           17400000 | A
    17404 |           17400000 | S
-   17405 |           17400010 | A
-   17406 |           17400010 | A
-   17407 |           17400010 | A
-   17408 |           17400010 | A
-   17409 |           17400010 | A
-   17410 |           17400010 | A
-   17411 |           17400010 | A
-   17412 |           17400010 | A
-   17413 |           17400010 | X
-   17414 |           17400010 | D
+   17405 |           17400005 | A
+   17406 |           17400005 | A
+   17407 |           17400005 | A
+   17408 |           17400005 | A
+   17409 |           17400005 | A
+   17410 |           17400005 | A
+   17411 |           17400005 | A
+   17412 |           17400005 | A
+   17413 |           17400005 | X
+   17414 |           17400005 | D
 (15 rows)
 
 select hist_function, hist_event, hist_object,
@@ -821,21 +804,20 @@ select hist_function, hist_event, hist_object,
  ASSIGN_TABLES      | BEGIN                   |                                        |                                                                | postgres
  ASSIGN_TABLES      | TIME STAMP SET          | 17403                                  |                                                                | postgres
  ASSIGN_TABLES      | LOG_SCHEMA CREATED      | emaj_myschema5                         |                                                                | postgres
- ASSIGN_TABLES      | TABLE ADDED             | myschema5.myoidstbl                    | To the idle group phil's group#3",                             | postgres
  ASSIGN_TABLES      | TABLE ADDED             | myschema5.myunloggedtbl                | To the idle group phil's group#3",                             | postgres
- ASSIGN_TABLES      | END                     |                                        | 2 tables assigned to the group phil's group#3",                | postgres
+ ASSIGN_TABLES      | END                     |                                        | 1 tables assigned to the group phil's group#3",                | postgres
  START_GROUP        | BEGIN                   | phil's group#3",                       | With log reset                                                 | postgres
  START_GROUP        | TIME STAMP SET          | 17404                                  |                                                                | postgres
  LOCK_GROUP         | BEGIN                   | phil's group#3",                       |                                                                | postgres
- LOCK_GROUP         | END                     | phil's group#3",                       | 5 tables locked, 0 deadlock(s)                                 | postgres
+ LOCK_GROUP         | END                     | phil's group#3",                       | 4 tables locked, 0 deadlock(s)                                 | postgres
  SET_MARK_GROUP     | BEGIN                   | phil's group#3",                       | start                                                          | postgres
  SET_MARK_GROUP     | END                     | phil's group#3",                       | start                                                          | postgres
- START_GROUP        | END                     | phil's group#3",                       | 7 tables/sequences processed                                   | postgres
+ START_GROUP        | END                     | phil's group#3",                       | 6 tables/sequences processed                                   | postgres
  DISABLE_PROTECTION | EVENT TRIGGERS DISABLED |                                        | emaj_protection_trg, emaj_sql_drop_trg, emaj_table_rewrite_trg | postgres
  REMOVE_TABLE       | BEGIN                   |                                        |                                                                | postgres
  REMOVE_TABLE       | TIME STAMP SET          | 17405                                  |                                                                | postgres
  LOCK_GROUP         | BEGIN                   | phil's group#3",                       |                                                                | postgres
- LOCK_GROUP         | END                     | phil's group#3",                       | 5 tables locked, 0 deadlock(s)                                 | postgres
+ LOCK_GROUP         | END                     | phil's group#3",                       | 4 tables locked, 0 deadlock(s)                                 | postgres
  SET_MARK_GROUP     | BEGIN                   | phil's group#3",                       | remove_the_damaged_table                                       | postgres
  SET_MARK_GROUP     | END                     | phil's group#3",                       | remove_the_damaged_table                                       | postgres
  REMOVE_TABLE       | TABLE REMOVED           | "phil's schema""3"."my""tbl4"          | From the logging group phil's group#3",                        | postgres
@@ -843,7 +825,7 @@ select hist_function, hist_event, hist_object,
  ASSIGN_TABLE       | BEGIN                   |                                        |                                                                | postgres
  ASSIGN_TABLE       | TIME STAMP SET          | 17406                                  |                                                                | postgres
  LOCK_GROUP         | BEGIN                   | phil's group#3",                       |                                                                | postgres
- LOCK_GROUP         | END                     | phil's group#3",                       | 4 tables locked, 0 deadlock(s)                                 | postgres
+ LOCK_GROUP         | END                     | phil's group#3",                       | 3 tables locked, 0 deadlock(s)                                 | postgres
  SET_MARK_GROUP     | BEGIN                   | phil's group#3",                       | re_add_the_table                                               | postgres
  SET_MARK_GROUP     | END                     | phil's group#3",                       | re_add_the_table                                               | postgres
  ASSIGN_TABLE       | TABLE ADDED             | "phil's schema""3"."my""tbl4"          | To the logging group phil's group#3",                          | postgres
@@ -851,7 +833,7 @@ select hist_function, hist_event, hist_object,
  REMOVE_TABLE       | BEGIN                   |                                        |                                                                | postgres
  REMOVE_TABLE       | TIME STAMP SET          | 17407                                  |                                                                | postgres
  LOCK_GROUP         | BEGIN                   | phil's group#3",                       |                                                                | postgres
- LOCK_GROUP         | END                     | phil's group#3",                       | 5 tables locked, 0 deadlock(s)                                 | postgres
+ LOCK_GROUP         | END                     | phil's group#3",                       | 4 tables locked, 0 deadlock(s)                                 | postgres
  SET_MARK_GROUP     | BEGIN                   | phil's group#3",                       | remove_the_damaged_table_2                                     | postgres
  SET_MARK_GROUP     | END                     | phil's group#3",                       | remove_the_damaged_table_2                                     | postgres
  REMOVE_TABLE       | TABLE REMOVED           | "phil's schema""3"."my""tbl4"          | From the logging group phil's group#3",                        | postgres
@@ -859,7 +841,7 @@ select hist_function, hist_event, hist_object,
  ASSIGN_TABLE       | BEGIN                   |                                        |                                                                | postgres
  ASSIGN_TABLE       | TIME STAMP SET          | 17408                                  |                                                                | postgres
  LOCK_GROUP         | BEGIN                   | phil's group#3",                       |                                                                | postgres
- LOCK_GROUP         | END                     | phil's group#3",                       | 4 tables locked, 0 deadlock(s)                                 | postgres
+ LOCK_GROUP         | END                     | phil's group#3",                       | 3 tables locked, 0 deadlock(s)                                 | postgres
  SET_MARK_GROUP     | BEGIN                   | phil's group#3",                       | re_add_the_table_2                                             | postgres
  SET_MARK_GROUP     | END                     | phil's group#3",                       | re_add_the_table_2                                             | postgres
  ASSIGN_TABLE       | TABLE ADDED             | "phil's schema""3"."my""tbl4"          | To the logging group phil's group#3",                          | postgres
@@ -867,7 +849,7 @@ select hist_function, hist_event, hist_object,
  REMOVE_TABLE       | BEGIN                   |                                        |                                                                | postgres
  REMOVE_TABLE       | TIME STAMP SET          | 17409                                  |                                                                | postgres
  LOCK_GROUP         | BEGIN                   | phil's group#3",                       |                                                                | postgres
- LOCK_GROUP         | END                     | phil's group#3",                       | 4 tables locked, 0 deadlock(s)                                 | postgres
+ LOCK_GROUP         | END                     | phil's group#3",                       | 3 tables locked, 0 deadlock(s)                                 | postgres
  SET_MARK_GROUP     | BEGIN                   | phil's group#3",                       | remove_the_dropped_table                                       | postgres
  SET_MARK_GROUP     | END                     | phil's group#3",                       | remove_the_dropped_table                                       | postgres
  REMOVE_TABLE       | TABLE REMOVED           | "phil's schema""3"."my""tbl4"          | From the logging group phil's group#3",                        | postgres
@@ -875,7 +857,7 @@ select hist_function, hist_event, hist_object,
  REMOVE_SEQUENCE    | BEGIN                   |                                        |                                                                | postgres
  REMOVE_SEQUENCE    | TIME STAMP SET          | 17410                                  |                                                                | postgres
  LOCK_GROUP         | BEGIN                   | phil's group#3",                       |                                                                | postgres
- LOCK_GROUP         | END                     | phil's group#3",                       | 4 tables locked, 0 deadlock(s)                                 | postgres
+ LOCK_GROUP         | END                     | phil's group#3",                       | 3 tables locked, 0 deadlock(s)                                 | postgres
  SET_MARK_GROUP     | BEGIN                   | phil's group#3",                       | remove_the_dropped_seq                                         | postgres
  SET_MARK_GROUP     | END                     | phil's group#3",                       | remove_the_dropped_seq                                         | postgres
  REMOVE_SEQUENCE    | SEQUENCE REMOVED        | "phil's schema""3"."phil's""seq\1"     | From the logging group phil's group#3",                        | postgres
@@ -883,7 +865,7 @@ select hist_function, hist_event, hist_object,
  ASSIGN_TABLE       | BEGIN                   |                                        |                                                                | postgres
  ASSIGN_TABLE       | TIME STAMP SET          | 17411                                  |                                                                | postgres
  LOCK_GROUP         | BEGIN                   | phil's group#3",                       |                                                                | postgres
- LOCK_GROUP         | END                     | phil's group#3",                       | 4 tables locked, 0 deadlock(s)                                 | postgres
+ LOCK_GROUP         | END                     | phil's group#3",                       | 3 tables locked, 0 deadlock(s)                                 | postgres
  SET_MARK_GROUP     | BEGIN                   | phil's group#3",                       | revert_last_changes_tbl                                        | postgres
  SET_MARK_GROUP     | END                     | phil's group#3",                       | revert_last_changes_tbl                                        | postgres
  ASSIGN_TABLE       | TABLE ADDED             | "phil's schema""3"."my""tbl4"          | To the logging group phil's group#3",                          | postgres
@@ -891,7 +873,7 @@ select hist_function, hist_event, hist_object,
  ASSIGN_SEQUENCE    | BEGIN                   |                                        |                                                                | postgres
  ASSIGN_SEQUENCE    | TIME STAMP SET          | 17412                                  |                                                                | postgres
  LOCK_GROUP         | BEGIN                   | phil's group#3",                       |                                                                | postgres
- LOCK_GROUP         | END                     | phil's group#3",                       | 5 tables locked, 0 deadlock(s)                                 | postgres
+ LOCK_GROUP         | END                     | phil's group#3",                       | 4 tables locked, 0 deadlock(s)                                 | postgres
  SET_MARK_GROUP     | BEGIN                   | phil's group#3",                       | revert_last_changes_seq                                        | postgres
  SET_MARK_GROUP     | END                     | phil's group#3",                       | revert_last_changes_seq                                        | postgres
  ASSIGN_SEQUENCE    | SEQUENCE ADDED          | "phil's schema""3"."phil's""seq\1"     | To the logging group phil's group#3",                          | postgres
@@ -900,16 +882,16 @@ select hist_function, hist_event, hist_object,
  STOP_GROUP         | BEGIN                   | phil's group#3",                       |                                                                | postgres
  STOP_GROUP         | TIME STAMP SET          | 17413                                  |                                                                | postgres
  LOCK_GROUP         | BEGIN                   | phil's group#3",                       |                                                                | postgres
- LOCK_GROUP         | END                     | phil's group#3",                       | 5 tables locked, 0 deadlock(s)                                 | postgres
+ LOCK_GROUP         | END                     | phil's group#3",                       | 4 tables locked, 0 deadlock(s)                                 | postgres
  SET_MARK_GROUP     | BEGIN                   | phil's group#3",                       | STOP_%                                                         | postgres
  SET_MARK_GROUP     | END                     | phil's group#3",                       | STOP_%                                                         | postgres
- STOP_GROUP         | END                     | phil's group#3",                       | 7 tables/sequences processed                                   | postgres
+ STOP_GROUP         | END                     | phil's group#3",                       | 6 tables/sequences processed                                   | postgres
  DROP_GROUP         | BEGIN                   | phil's group#3",                       |                                                                | postgres
  DROP_GROUP         | TIME STAMP SET          | 17414                                  |                                                                | postgres
  DROP_GROUP         | LOG_SCHEMA DROPPED      | emaj_myschema5                         |                                                                | postgres
  DROP_GROUP         | LOG_SCHEMA DROPPED      | "emaj_phil's schema""3"                |                                                                | postgres
- DROP_GROUP         | END                     | phil's group#3",                       | 7 tables/sequences processed                                   | postgres
-(106 rows)
+ DROP_GROUP         | END                     | phil's group#3",                       | 6 tables/sequences processed                                   | postgres
+(105 rows)
 
 -- set sequence restart value
 select public.handle_emaj_sequences(17600);
@@ -1567,7 +1549,6 @@ select * from emaj.emaj_rel_hist order by 1,2,3;
  myschema4       | mytblr2_col1_seq                                                | [17607,17618)   | grp_tmp_4        | S
  myschema4       | mytblr2_col1_seq                                                | [17618,17634)   | grp_tmp          | S
  myschema4       | mytblr2_col1_seq                                                | [17634,17638)   | grp_tmp_4        | S
- myschema5       | myoidstbl                                                       | [17403,17414)   | phil's group#3", | r
  myschema5       | myunloggedtbl                                                   | [17403,17414)   | phil's group#3", | r
  phil's schema"3 | my"tbl4                                                         | [17401,17405)   | phil's group#3", | r
  phil's schema"3 | my"tbl4                                                         | [17406,17407)   | phil's group#3", | r
@@ -1599,7 +1580,7 @@ select * from emaj.emaj_rel_hist order by 1,2,3;
  phil's schema"3 | phil's"seq\1                                                    | [17616,17623)   | grp_tmp          | S
  phil's schema"3 | phil's"seq\1                                                    | [17634,17636)   | grp_tmp_3        | S
  phil's schema"3 | table_with_very_looooooooooooooooooooooooooooooooooooooong_name | [14502,14507)   | phil's group#3", | r
-(69 rows)
+(68 rows)
 
 select count(*) from emaj.emaj_relation where rel_schema in ('phil''s schema"3','myschema4');
  count 
@@ -3027,7 +3008,7 @@ select * from emaj.emaj_log_session where lower(lses_time_range) >= 12000 order 
  myGroup4          | [17200,17208)   |          7 |            14
  phil's group#3",  | [14203,14501)   |          7 |           110
  phil's group#3",  | [14503,14507)   |          3 |             4
- phil's group#3",  | [17404,17414)   |         10 |            10
+ phil's group#3",  | [17404,17414)   |         10 |             5
  truncateTestGroup | [18003,18009)   |          5 |           117
 (17 rows)
 

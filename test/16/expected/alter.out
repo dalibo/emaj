@@ -438,7 +438,6 @@ select * from emaj.emaj_relation_change where rlchg_time_id >= 8000 order by 1,2
           8010 | myschema4       | mytblc1           | ADD_TABLE         | myGroup4         |                  |                  |                 |                |                    |                    |                        |                     |                         |                        | 
           8010 | myschema4       | mytblc2           | ADD_TABLE         | myGroup4         |                  |                  |                 |                |                    |                    |                        |                     |                         |                        | 
           8010 | myschema4       | mytblm            | ADD_TABLE         | myGroup4         |                  |                  |                 |                |                    |                    |                        |                     |                         |                        | 
-          8010 | myschema5       | myoidstbl         | ADD_TABLE         | myGroup5         |                  |                  |                 |                |                    |                    |                        |                     |                         |                        | 
           8010 | myschema5       | myunloggedtbl     | ADD_TABLE         | myGroup5         |                  |                  |                 |                |                    |                    |                        |                     |                         |                        | 
           8011 | phil's schema"3 | myTbl2\           | ADD_TABLE         | myGroup5         |                  |                  |                 |                |                    |                    |                        |                     |                         |                        | 
           8012 | myschema1       | mytbl1            | REMOVE_TABLE      | myGroup1         |                  |                  |                 |                |                    |                    |                        |                     |                         |                        | 
@@ -457,7 +456,7 @@ select * from emaj.emaj_relation_change where rlchg_time_id >= 8000 order by 1,2
           8019 | myschema1       | mytbl4            | ADD_TABLE         | myGroup1         |                  |                  |                 |                |                    |                    |                        |                     |                         |                        | 
           8019 | myschema2       | myTbl3_col31_seq  | ADD_SEQUENCE      | myGroup2         |                  |                  |                 |                |                    |                    |                        |                     |                         |                        | 
           8019 | myschema2       | myseq1            | ADD_SEQUENCE      | myGroup2         |                  |                  |                 |                |                    |                    |                        |                     |                         |                        | 
-(71 rows)
+(70 rows)
 
 select time_id, time_last_emaj_gid, time_event from emaj.emaj_time_stamp where time_id >= 8000 order by time_id;
  time_id | time_last_emaj_gid | time_event 
@@ -570,7 +569,6 @@ select hist_function, hist_event, hist_object,
  IMPORT_GROUPS    | TABLE ADDED        | myschema4.mytblc1                                  | To the idle group myGroup4                                 | postgres
  IMPORT_GROUPS    | TABLE ADDED        | myschema4.mytblc2                                  | To the idle group myGroup4                                 | postgres
  IMPORT_GROUPS    | TABLE ADDED        | myschema4.mytblm                                   | To the idle group myGroup4                                 | postgres
- IMPORT_GROUPS    | TABLE ADDED        | myschema5.myoidstbl                                | To the idle group myGroup5                                 | postgres
  IMPORT_GROUPS    | TABLE ADDED        | myschema5.myunloggedtbl                            | To the idle group myGroup5                                 | postgres
  IMPORT_GROUPS    | SEQUENCE ADDED     | myschema1."myTbl3_col31_seq"                       | To the idle group myGroup1                                 | postgres
  IMPORT_GROUPS    | SEQUENCE ADDED     | myschema1.mytbl2b_col20_seq                        | To the idle group myGroup1                                 | postgres
@@ -652,7 +650,7 @@ select hist_function, hist_event, hist_object,
  IMPORT_GROUPS    | SEQUENCE ADDED     | myschema2."myTbl3_col31_seq"                       | To the idle group myGroup2                                 | postgres
  IMPORT_GROUPS    | SEQUENCE ADDED     | myschema2.myseq1                                   | To the idle group myGroup2                                 | postgres
  IMPORT_GROUPS    | END                |                                                    | 4 created or altered tables groups                         | postgres
-(159 rows)
+(158 rows)
 
 -- set sequence restart value
 select public.handle_emaj_sequences(8200);
@@ -839,7 +837,7 @@ select emaj.emaj_move_tables('myschema1','.*','','myGroup1');
 (1 row)
 
 -- bad table type for target rollbackable group
-select emaj.emaj_move_tables('myschema5', '.*', 'oids', 'myGroup1');     -- to exclude 'myoidstbl'
+select emaj.emaj_move_tables('myschema5', '.*', '', 'myGroup1');
 WARNING:  _move_tables: Some UNLOGGED tables (myunloggedtbl) are not selected.
 WARNING:  _move_tables: No table to process.
  emaj_move_tables 

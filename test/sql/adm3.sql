@@ -170,20 +170,15 @@ select emaj_assign_tables('myschema5','.*',null,'phil''s group#3",');
 select emaj_start_group('phil''s group#3",','start');
 
 -----------------------------
--- test changes on the unlogged and the with oids tables
+-- test changes on the unlogged table
 -----------------------------
 reset role;
 insert into myschema5.myUnloggedTbl values (10),(11),(12);
 update myschema5.myUnloggedTbl set col1 = 13 where col1 = 12;
 delete from myschema5.myUnloggedTbl where col1 = 10;
-insert into myschema5.myOidsTbl values (20),(21),(22);
-update myschema5.myOidsTbl set col1 = 23 where col1 = 22;
-delete from myschema5.myOidsTbl where col1 = 21;
 
 set role emaj_regression_tests_adm_user2;
 select col1, emaj_verb, emaj_tuple, emaj_gid, emaj_user from emaj_myschema5.myUnloggedTbl_log order by emaj_gid;
-select col1, emaj_verb, emaj_tuple, emaj_gid, emaj_user from emaj_myschema5.myOidsTbl_log order by emaj_gid;
-
 
 -- disable event triggers for this step and change an application table structure
 select emaj_disable_protection_by_event_triggers();

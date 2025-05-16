@@ -84,10 +84,6 @@ $$;
 
 -- UNLOGGED table on a rollbackable group
 select emaj.emaj_assign_table('myschema5','myunloggedtbl','myGroup1');
--- table WITH OIDS on a rollbackable group - should fail
-select emaj.emaj_assign_table('myschema5','myoidstbl','myGroup1');
--- the table is removed with PG12+: in these version the myoids table has no OIDS as this propertiy doesn't exist anymore
-select emaj.emaj_remove_table('myschema5','myoidstbl');
 
 -- table without PKEY on a rollbackable group
 select emaj.emaj_assign_table('phil''s schema"3','myTbl2\','myGroup1');
@@ -193,9 +189,7 @@ select emaj.emaj_assign_tables('myschema2','mytbl1','mytbl1','myGroup2');
 -- excluded tables
 -- bad types
 select emaj.emaj_assign_tables('myschema4','mytblp$','','myGroup2');
-select emaj.emaj_assign_tables('myschema5','unlogged|oids','','myGroup2');
--- the myoidstbl table is removed with PG12+: in these version the myoids table has no OIDS as this propertiy doesn't exist anymore
-select emaj.emaj_remove_table('myschema5','myoidstbl');
+select emaj.emaj_assign_tables('myschema5','unlogged','','myGroup2');
 -- temp table
 begin;
   CREATE TEMPORARY TABLE myTempTbl (
@@ -219,7 +213,7 @@ select emaj.emaj_assign_tables('myschema2','mytbl(5|6)$','','myGroup2');
 -- assign partitions
 select emaj.emaj_assign_tables('myschema4','.*','mytbl(p|r.)$','myGroup4');
 
--- assign unlogged and withoids tables in an audit_only group
+-- assign the unlogged table in an audit_only group
 select emaj.emaj_assign_tables('myschema5','.*',null,'myGroup5');
 
 -- assign tables with very long names

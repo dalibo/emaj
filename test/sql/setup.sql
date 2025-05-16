@@ -374,23 +374,6 @@ CREATE UNLOGGED TABLE myUnloggedTbl (
   PRIMARY KEY (col1)
 );
 
-DO $$
-BEGIN
-  DROP TABLE IF EXISTS myOidsTbl;
-  IF emaj._pg_version_num() < 120000 THEN
-    EXECUTE 'CREATE TABLE myOidsTbl (
-      col1       INT     NOT NULL,
-      PRIMARY KEY (col1)
-    ) WITH OIDS;';
-  ELSE
-    EXECUTE 'CREATE TABLE myOidsTbl (
-      col1       INT     NOT NULL,
-      PRIMARY KEY (col1)
-    );';
-  END IF;
-END;
-$$;
-
 --
 -- sixth schema (for tables with very long names)
 --
