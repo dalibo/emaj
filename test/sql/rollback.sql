@@ -244,7 +244,7 @@ select sequ_schema, sequ_name, sequ_time_id, sequ_last_val, sequ_is_called from 
 select tbl_schema, tbl_name, tbl_time_id, tbl_log_seq_last_val from emaj.emaj_table order by tbl_time_id, tbl_schema, tbl_name;
 select col11, col12, col13, emaj_verb, emaj_tuple, emaj_gid from emaj_myschema1.mytbl1_log order by emaj_gid, emaj_tuple desc;
 select col21, col22, emaj_verb, emaj_tuple, emaj_gid from emaj_myschema1.mytbl2_log order by emaj_gid, emaj_tuple desc;
-select col20, col21, col22, col23, emaj_verb, emaj_tuple, emaj_gid from emaj_myschema1.mytbl2b_log order by emaj_gid, emaj_tuple desc;
+select col20, col21, col22, col23, col24, emaj_verb, emaj_tuple, emaj_gid from emaj_myschema1.mytbl2b_log order by emaj_gid, emaj_tuple desc;
 select col31, col33, emaj_verb, emaj_tuple, emaj_gid from emaj_myschema1."myTbl3_log" order by emaj_gid, emaj_tuple desc;
 select col41, col42, col43, col44, col45, emaj_verb, emaj_tuple, emaj_gid from emaj_myschema1.myTbl4_log order by emaj_gid, emaj_tuple desc;
 
@@ -270,7 +270,7 @@ select tbl_schema, tbl_name, tbl_time_id, tbl_log_seq_last_val from emaj.emaj_ta
 select sqhl_schema, sqhl_table, sqhl_begin_time_id, sqhl_end_time_id, sqhl_hole_size from emaj.emaj_seq_hole order by 1,2,3;
 select col11, col12, col13, emaj_verb, emaj_tuple, emaj_gid from emaj_myschema1.myTbl1_log order by emaj_gid, emaj_tuple desc;
 select col21, col22, emaj_verb, emaj_tuple, emaj_gid from emaj_myschema1.myTbl2_log order by emaj_gid, emaj_tuple desc;
-select col20, col21, col22, col23, emaj_verb, emaj_tuple, emaj_gid from emaj_myschema1.myTbl2b_log order by emaj_gid, emaj_tuple desc;
+select col20, col21, col22, col23, col24, emaj_verb, emaj_tuple, emaj_gid from emaj_myschema1.myTbl2b_log order by emaj_gid, emaj_tuple desc;
 select col11, col12, col13 from myschema1.myTbl1 order by col11, col12;
 select col21, col22 from myschema1.myTbl2 order by col21;
 select col20, col21 from myschema1.myTbl2b order by col20;
@@ -318,7 +318,7 @@ select sequ_schema, sequ_name, sequ_time_id, sequ_last_val, sequ_is_called from 
 select tbl_schema, tbl_name, tbl_time_id, tbl_log_seq_last_val from emaj.emaj_table order by tbl_time_id, tbl_schema, tbl_name;
 select col11, col12, col13, emaj_verb, emaj_tuple, emaj_gid from emaj_myschema1.mytbl1_log order by emaj_gid, emaj_tuple desc;
 select col21, col22, emaj_verb, emaj_tuple, emaj_gid from emaj_myschema1.mytbl2_log order by emaj_gid, emaj_tuple desc;
-select col20, col21, col22, col23, emaj_verb, emaj_tuple, emaj_gid from emaj_myschema1.mytbl2b_log order by emaj_gid, emaj_tuple desc;
+select col20, col21, col22, col23, col24, emaj_verb, emaj_tuple, emaj_gid from emaj_myschema1.mytbl2b_log order by emaj_gid, emaj_tuple desc;
 select col31, col33, emaj_verb, emaj_tuple, emaj_gid from emaj_myschema1."myTbl3_log" order by emaj_gid, emaj_tuple desc;
 select col41, col42, col43, col44, col45, emaj_verb, emaj_tuple, emaj_gid from emaj_myschema1.myTbl4_log order by emaj_gid, emaj_tuple desc;
 
@@ -343,7 +343,7 @@ select tbl_schema, tbl_name, tbl_time_id, tbl_log_seq_last_val from emaj.emaj_ta
 select sqhl_schema, sqhl_table, sqhl_begin_time_id, sqhl_end_time_id, sqhl_hole_size from emaj.emaj_seq_hole order by 1,2,3;
 select col11, col12, col13, emaj_verb, emaj_tuple, emaj_gid from emaj_myschema1.myTbl1_log order by emaj_gid, emaj_tuple desc;
 select col21, col22, emaj_verb, emaj_tuple, emaj_gid from emaj_myschema1.myTbl2_log order by emaj_gid, emaj_tuple desc;
-select col20, col21, col22, col23, emaj_verb, emaj_tuple, emaj_gid from emaj_myschema1.myTbl2b_log order by emaj_gid, emaj_tuple desc;
+select col20, col21, col22, col23, col24, emaj_verb, emaj_tuple, emaj_gid from emaj_myschema1.myTbl2b_log order by emaj_gid, emaj_tuple desc;
 select col11, col12, col13 from myschema1.myTbl1 order by col11, col12;
 select col21, col22 from myschema1.myTbl2 order by col21;
 select col20, col21 from myschema1.myTbl2b order by col20;
@@ -365,7 +365,7 @@ select tbl_schema, tbl_name, tbl_time_id, tbl_log_seq_last_val from emaj.emaj_ta
 select sqhl_schema, sqhl_table, sqhl_begin_time_id, sqhl_end_time_id, sqhl_hole_size from emaj.emaj_seq_hole order by 1,2,3;
 select col11, col12, col13, emaj_verb, emaj_tuple, emaj_gid from emaj_myschema1.myTbl1_log order by emaj_gid, emaj_tuple desc;
 select col21, col22, emaj_verb, emaj_tuple, emaj_gid from emaj_myschema1.myTbl2_log order by emaj_gid, emaj_tuple desc;
-select col20, col21, col22, col23, emaj_verb, emaj_tuple, emaj_gid from emaj_myschema1.myTbl2b_log order by emaj_gid, emaj_tuple desc;
+select col20, col21, col22, col23, col24, emaj_verb, emaj_tuple, emaj_gid from emaj_myschema1.myTbl2b_log order by emaj_gid, emaj_tuple desc;
 select col11, col12, col13 from myschema1.myTbl1 order by col11, col12;
 select col21, col22 from myschema1.myTbl2 order by col21;
 select col20, col21 from myschema1.myTbl2b order by col20;

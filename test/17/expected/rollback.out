@@ -1052,15 +1052,15 @@ select col21, col22, emaj_verb, emaj_tuple, emaj_gid from emaj_myschema1.mytbl2_
      3 |       | DEL       | OLD        |  4000026
 (8 rows)
 
-select col20, col21, col22, col23, emaj_verb, emaj_tuple, emaj_gid from emaj_myschema1.mytbl2b_log order by emaj_gid, emaj_tuple desc;
- col20 | col21 |       col22        | col23 | emaj_verb | emaj_tuple | emaj_gid 
--------+-------+--------------------+-------+-----------+------------+----------
-     1 |     1 |                  1 | t     | INS       | NEW        |  4000016
-     2 |     2 |                0.5 | t     | INS       | NEW        |  4000019
-     3 |     3 | 0.3333333333333333 | t     | INS       | NEW        |  4000021
-     4 |     2 |                0.5 | t     | INS       | NEW        |  4000023
-     5 |     3 | 0.3333333333333333 | t     | INS       | NEW        |  4000025
-     6 |     3 | 0.3333333333333333 | t     | INS       | NEW        |  4000027
+select col20, col21, col22, col23, col24, emaj_verb, emaj_tuple, emaj_gid from emaj_myschema1.mytbl2b_log order by emaj_gid, emaj_tuple desc;
+ col20 | col21 |       col22        |         col23         | col24 | emaj_verb | emaj_tuple | emaj_gid 
+-------+-------+--------------------+-----------------------+-------+-----------+------------+----------
+     1 |     1 |                  1 |    0.7071067811865476 | t     | INS       | NEW        |  4000016
+     2 |     2 |                0.5 | 6.123233995736766e-17 | t     | INS       | NEW        |  4000019
+     3 |     3 | 0.3333333333333333 |   -0.7071067811865475 | t     | INS       | NEW        |  4000021
+     4 |     2 |                0.5 | 6.123233995736766e-17 | t     | INS       | NEW        |  4000023
+     5 |     3 | 0.3333333333333333 |   -0.7071067811865475 | t     | INS       | NEW        |  4000025
+     6 |     3 | 0.3333333333333333 |   -0.7071067811865475 | t     | INS       | NEW        |  4000027
 (6 rows)
 
 select col31, col33, emaj_verb, emaj_tuple, emaj_gid from emaj_myschema1."myTbl3_log" order by emaj_gid, emaj_tuple desc;
@@ -1269,9 +1269,9 @@ select col21, col22, emaj_verb, emaj_tuple, emaj_gid from emaj_myschema1.myTbl2_
 -------+-------+-----------+------------+----------
 (0 rows)
 
-select col20, col21, col22, col23, emaj_verb, emaj_tuple, emaj_gid from emaj_myschema1.myTbl2b_log order by emaj_gid, emaj_tuple desc;
- col20 | col21 | col22 | col23 | emaj_verb | emaj_tuple | emaj_gid 
--------+-------+-------+-------+-----------+------------+----------
+select col20, col21, col22, col23, col24, emaj_verb, emaj_tuple, emaj_gid from emaj_myschema1.myTbl2b_log order by emaj_gid, emaj_tuple desc;
+ col20 | col21 | col22 | col23 | col24 | emaj_verb | emaj_tuple | emaj_gid 
+-------+-------+-------+-------+-------+-----------+------------+----------
 (0 rows)
 
 select col11, col12, col13 from myschema1.myTbl1 order by col11, col12;
@@ -1480,11 +1480,11 @@ select col21, col22, emaj_verb, emaj_tuple, emaj_gid from emaj_myschema1.mytbl2_
      2 | DEF   | INS       | NEW        |  4000057
 (2 rows)
 
-select col20, col21, col22, col23, emaj_verb, emaj_tuple, emaj_gid from emaj_myschema1.mytbl2b_log order by emaj_gid, emaj_tuple desc;
- col20 | col21 | col22 | col23 | emaj_verb | emaj_tuple | emaj_gid 
--------+-------+-------+-------+-----------+------------+----------
-     1 |     1 |     1 | t     | INS       | NEW        |  4000055
-     2 |     2 |   0.5 | t     | INS       | NEW        |  4000058
+select col20, col21, col22, col23, col24, emaj_verb, emaj_tuple, emaj_gid from emaj_myschema1.mytbl2b_log order by emaj_gid, emaj_tuple desc;
+ col20 | col21 | col22 |         col23         | col24 | emaj_verb | emaj_tuple | emaj_gid 
+-------+-------+-------+-----------------------+-------+-----------+------------+----------
+     1 |     1 |     1 |    0.7071067811865476 | t     | INS       | NEW        |  4000055
+     2 |     2 |   0.5 | 6.123233995736766e-17 | t     | INS       | NEW        |  4000058
 (2 rows)
 
 select col31, col33, emaj_verb, emaj_tuple, emaj_gid from emaj_myschema1."myTbl3_log" order by emaj_gid, emaj_tuple desc;
@@ -1796,13 +1796,13 @@ select col21, col22, emaj_verb, emaj_tuple, emaj_gid from emaj_myschema1.myTbl2_
      2 | DEF   | DEL       | OLD        |  4000092
 (4 rows)
 
-select col20, col21, col22, col23, emaj_verb, emaj_tuple, emaj_gid from emaj_myschema1.myTbl2b_log order by emaj_gid, emaj_tuple desc;
- col20 | col21 | col22 | col23 | emaj_verb | emaj_tuple | emaj_gid 
--------+-------+-------+-------+-----------+------------+----------
-     1 |     1 |     1 | t     | INS       | NEW        |  4000055
-     2 |     2 |   0.5 | t     | INS       | NEW        |  4000058
-     1 |     1 |     1 | t     | DEL       | OLD        |  4000093
-     2 |     2 |   0.5 | t     | DEL       | OLD        |  4000094
+select col20, col21, col22, col23, col24, emaj_verb, emaj_tuple, emaj_gid from emaj_myschema1.myTbl2b_log order by emaj_gid, emaj_tuple desc;
+ col20 | col21 | col22 |         col23         | col24 | emaj_verb | emaj_tuple | emaj_gid 
+-------+-------+-------+-----------------------+-------+-----------+------------+----------
+     1 |     1 |     1 |    0.7071067811865476 | t     | INS       | NEW        |  4000055
+     2 |     2 |   0.5 | 6.123233995736766e-17 | t     | INS       | NEW        |  4000058
+     1 |     1 |     1 |    0.7071067811865476 | t     | DEL       | OLD        |  4000093
+     2 |     2 |   0.5 | 6.123233995736766e-17 | t     | DEL       | OLD        |  4000094
 (4 rows)
 
 select col11, col12, col13 from myschema1.myTbl1 order by col11, col12;
@@ -1947,11 +1947,11 @@ select col21, col22, emaj_verb, emaj_tuple, emaj_gid from emaj_myschema1.myTbl2_
      2 | DEF   | INS       | NEW        |  4000057
 (2 rows)
 
-select col20, col21, col22, col23, emaj_verb, emaj_tuple, emaj_gid from emaj_myschema1.myTbl2b_log order by emaj_gid, emaj_tuple desc;
- col20 | col21 | col22 | col23 | emaj_verb | emaj_tuple | emaj_gid 
--------+-------+-------+-------+-----------+------------+----------
-     1 |     1 |     1 | t     | INS       | NEW        |  4000055
-     2 |     2 |   0.5 | t     | INS       | NEW        |  4000058
+select col20, col21, col22, col23, col24, emaj_verb, emaj_tuple, emaj_gid from emaj_myschema1.myTbl2b_log order by emaj_gid, emaj_tuple desc;
+ col20 | col21 | col22 |         col23         | col24 | emaj_verb | emaj_tuple | emaj_gid 
+-------+-------+-------+-----------------------+-------+-----------+------------+----------
+     1 |     1 |     1 |    0.7071067811865476 | t     | INS       | NEW        |  4000055
+     2 |     2 |   0.5 | 6.123233995736766e-17 | t     | INS       | NEW        |  4000058
 (2 rows)
 
 select col11, col12, col13 from myschema1.myTbl1 order by col11, col12;
@@ -2018,8 +2018,8 @@ WARNING:  _check_fk_groups: The foreign key "mytblp_col1_fkey" on the table "mys
 WARNING:  _check_fk_groups: The foreign key "mytblp_col1_fkey" on the table "myschema4.mypartp1b" references the table "myschema4.mytblr1" that is outside the groups (myGroup4).
 WARNING:  _check_fk_groups: The foreign key "mytblp_col1_fkey" on the table "myschema4.mypartp2" references the table "myschema4.mytblr1" that is outside the groups (myGroup4).
 WARNING:  _check_fk_groups: The foreign key "mytblp_col1_fkey" on the table "myschema4.mypartp2" is inherited from a partitionned table and has ON DELETE and/or ON UPDATE clause. This will generate E-Maj rollback failures if this FK needs to be temporarily dropped and recreated.
-WARNING:  _check_fk_groups: The foreign key "mytblp_col1_fkey" on the table "myschema4.mypartp1a" is inherited from a partitionned table and has ON DELETE and/or ON UPDATE clause. This will generate E-Maj rollback failures if this FK needs to be temporarily dropped and recreated.
 WARNING:  _check_fk_groups: The foreign key "mytblp_col1_fkey" on the table "myschema4.mypartp1b" is inherited from a partitionned table and has ON DELETE and/or ON UPDATE clause. This will generate E-Maj rollback failures if this FK needs to be temporarily dropped and recreated.
+WARNING:  _check_fk_groups: The foreign key "mytblp_col1_fkey" on the table "myschema4.mypartp1a" is inherited from a partitionned table and has ON DELETE and/or ON UPDATE clause. This will generate E-Maj rollback failures if this FK needs to be temporarily dropped and recreated.
  emaj_start_group 
 ------------------
                 7

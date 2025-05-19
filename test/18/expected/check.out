@@ -165,7 +165,7 @@ select funcname, calls from pg_stat_user_functions
  _move_sequences                           |    19
  _move_tables                              |    24
  _move_tbl                                 |    50
- _pg_version_num                           |    24
+ _pg_version_num                           |    23
  _purge_histories                          |   101
  _remove_seq                               |    15
  _remove_sequences                         |    20

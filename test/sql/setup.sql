@@ -56,20 +56,13 @@ CREATE TABLE myTbl4 (
 DO $$
 BEGIN
   DROP TABLE IF EXISTS myTbl2b ;
-  IF emaj._pg_version_num() < 100000 THEN
-    EXECUTE 'CREATE TABLE myTbl2b (
-      col20       SERIAL           NOT NULL,
-      col21       INT              NOT NULL,
-      col22       FLOAT,
-      col23       BOOLEAN          DEFAULT TRUE,
-      PRIMARY KEY (col20)
-    );';
-  ELSIF emaj._pg_version_num() < 120000 THEN
+  IF emaj._pg_version_num() < 180000 THEN
     EXECUTE 'CREATE TABLE myTbl2b (
       col20       INT              NOT NULL GENERATED ALWAYS AS IDENTITY,
       col21       INT              NOT NULL,
-      col22       FLOAT,
-      col23       BOOLEAN          DEFAULT TRUE,
+      col22       FLOAT            GENERATED ALWAYS AS (1::float / col21) STORED,
+      col23       FLOAT            GENERATED ALWAYS AS (cos(col21 * pi() / 4)) STORED,
+      col24       BOOLEAN          DEFAULT TRUE,
       PRIMARY KEY (col20)
     );';
   ELSE
@@ -77,7 +70,8 @@ BEGIN
       col20       INT              NOT NULL GENERATED ALWAYS AS IDENTITY,
       col21       INT              NOT NULL,
       col22       FLOAT            GENERATED ALWAYS AS (1::float / col21) STORED,
-      col23       BOOLEAN          DEFAULT TRUE,
+      col23       FLOAT            GENERATED ALWAYS AS (cos(col21 * pi() / 4)),
+      col24       BOOLEAN          DEFAULT TRUE,
       PRIMARY KEY (col20)
     );';
   END IF;
