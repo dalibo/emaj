@@ -587,6 +587,118 @@ $_verify_groups$
   END;
 $_verify_groups$;
 
+CREATE OR REPLACE FUNCTION emaj._check_fk_groups(p_groupNames TEXT[])
+RETURNS VOID LANGUAGE plpgsql AS
+$_check_fk_groups$
+-- This function checks foreign key constraints for tables of a groups array.
+-- Tables from audit_only groups are ignored in this check because they will never be rolled back.
+-- Input: group names array
+  DECLARE
+    v_isEmajExtension        BOOLEAN;
+    r_fk                     RECORD;
+  BEGIN
+-- Issue a warning if a table of the groups has a foreign key that references a table outside the groups.
+    FOR r_fk IN
+      SELECT c.conname,r.rel_schema,r.rel_tblseq,nf.nspname,tf.relname
+        FROM emaj.emaj_relation r
+             JOIN emaj.emaj_group g ON (g.group_name = r.rel_group)
+             JOIN pg_catalog.pg_class t ON (t.relname = r.rel_tblseq)
+             JOIN pg_catalog.pg_namespace n ON (t.relnamespace = n.oid AND n.nspname = r.rel_schema)
+             JOIN pg_catalog.pg_constraint c ON (c.conrelid  = t.oid)
+             JOIN pg_catalog.pg_class tf ON (tf.oid = c.confrelid)
+             JOIN pg_catalog.pg_namespace nf ON (nf.oid = tf.relnamespace)
+        WHERE contype = 'f'                                         -- FK constraints only
+          AND upper_inf(r.rel_time_range)
+          AND r.rel_group = ANY (p_groupNames)                      -- only tables currently belonging to the selected groups
+          AND g.group_is_rollbackable                               -- only tables from rollbackable groups
+          AND tf.relkind = 'r'                                      -- only constraints referencing true tables, ie. excluding
+                                                                    --   partitionned tables
+          AND NOT EXISTS                                            -- referenced table currently outside the groups
+                (SELECT 0
+                   FROM emaj.emaj_relation
+                   WHERE rel_schema = nf.nspname
+                     AND rel_tblseq = tf.relname
+                     AND upper_inf(rel_time_range)
+                     AND rel_group = ANY (p_groupNames)
+                )
+        ORDER BY 1,2,3
+    LOOP
+      RAISE WARNING '_check_fk_groups: The foreign key "%" on the table "%.%" references the table "%.%" that is outside the groups (%).',
+        r_fk.conname,r_fk.rel_schema,r_fk.rel_tblseq,r_fk.nspname,r_fk.relname,array_to_string(p_groupNames,',');
+    END LOOP;
+-- Issue a warning if a table of the groups is referenced by a table outside the groups.
+    FOR r_fk IN
+      SELECT c.conname,n.nspname,t.relname,r.rel_schema,r.rel_tblseq
+        FROM emaj.emaj_relation r
+             JOIN emaj.emaj_group g ON (g.group_name = r.rel_group)
+             JOIN pg_catalog.pg_class tf ON (tf.relname = r.rel_tblseq)
+             JOIN pg_catalog.pg_namespace nf ON (nf.oid = tf.relnamespace AND nf.nspname = r.rel_schema)
+             JOIN pg_catalog.pg_constraint c ON (c.confrelid  = tf.oid)
+             JOIN pg_catalog.pg_class t ON (t.oid = c.conrelid)
+             JOIN pg_catalog.pg_namespace n ON (n.oid = t.relnamespace)
+        WHERE contype = 'f'                                         -- FK constraints only
+          AND upper_inf(r.rel_time_range)
+          AND r.rel_group = ANY (p_groupNames)                      -- only tables currently belonging to the selected groups
+          AND g.group_is_rollbackable                               -- only tables from rollbackable groups
+          AND t.relkind = 'r'                                       -- only constraints referenced by true tables, ie. excluding
+                                                                    --   partitionned tables
+          AND NOT EXISTS                                            -- referenced table outside the groups
+                (SELECT 0
+                   FROM emaj.emaj_relation
+                   WHERE rel_schema = n.nspname
+                     AND rel_tblseq = t.relname
+                     AND upper_inf(rel_time_range)
+                     AND rel_group = ANY (p_groupNames)
+                )
+        ORDER BY 1,2,3
+    LOOP
+      RAISE WARNING '_check_fk_groups: The table "%.%" is referenced by the foreign key "%" on the table "%.%" that is outside'
+                    ' the groups (%).', r_fk.rel_schema, r_fk.rel_tblseq, r_fk.conname, r_fk.nspname, r_fk.relname,
+                    array_to_string(p_groupNames,',');
+    END LOOP;
+-- Issue a warning for rollbackable groups if a FK on a partition is actualy set on the partitionned table.
+-- The warning message depends on the FK characteristics.
+    v_isEmajExtension = EXISTS (SELECT 1 FROM pg_catalog.pg_extension WHERE extname = 'emaj');
+    FOR r_fk IN
+      SELECT rel_schema, rel_tblseq, c.conname, confupdtype, confdeltype, condeferrable
+        FROM emaj.emaj_relation r
+             JOIN emaj.emaj_group g ON (g.group_name = r.rel_group)
+             JOIN pg_catalog.pg_class t ON (t.relname = r.rel_tblseq)
+             JOIN pg_catalog.pg_namespace n ON (t.relnamespace  = n.oid AND n.nspname = r.rel_schema)
+             JOIN pg_catalog.pg_constraint c ON (c.conrelid = t.oid)
+        WHERE contype = 'f'                                         -- FK constraints only
+          AND coninhcount > 0                                       -- inherited FK
+          AND upper_inf(r.rel_time_range)
+          AND r.rel_group = ANY (p_groupNames)                      -- only tables currently belonging to the selected groups
+          AND g.group_is_rollbackable                               -- only tables from rollbackable groups
+          AND r.rel_kind = 'r'                                      -- only constraints referencing true tables, ie. excluding
+                                                                    --   partitionned tables
+        ORDER BY 1,2,3
+    LOOP
+      IF r_fk.confupdtype = 'a' AND r_fk.confdeltype = 'a' AND NOT r_fk.condeferrable THEN
+        -- Advise DEFERRABLE FK if there is no ON UPDATE|DELETE clause.
+        RAISE WARNING '_check_fk_groups: The foreign key "%" on the table "%.%" is inherited from a partitionned table. It should'
+                      ' be set as DEFERRABLE to avoid E-Maj rollback failure.',
+                      r_fk.conname, r_fk.rel_schema, r_fk.rel_tblseq;
+      ELSIF r_fk.confupdtype <> 'a' OR r_fk.confdeltype <> 'a' THEN
+        -- Warn about potential rollback failure with FK having ON UPDATE|DELETE clause.
+        IF v_isEmajExtension THEN
+          RAISE WARNING '_check_fk_groups: The foreign key "%" on the table "%.%" is inherited from a partitionned table. An E-Maj'
+                        ' rollback targeting a mark set before the latest table assignement could fail.',
+                        r_fk.conname, r_fk.rel_schema, r_fk.rel_tblseq;
+        ELSE
+          RAISE WARNING '_check_fk_groups: The foreign key "%" on the table "%.%" is inherited from a partitionned table and has'
+                        ' ON DELETE and/or ON UPDATE clause. This will generate E-Maj rollback failures if this FK needs to be'
+                        ' temporarily dropped and recreated.',
+                        r_fk.conname, r_fk.rel_schema, r_fk.rel_tblseq;
+        END IF;
+      END IF;
+    END LOOP;
+--
+    RETURN;
+  END;
+$_check_fk_groups$;
+
 CREATE OR REPLACE FUNCTION emaj._import_groups_conf_check(p_groupNames TEXT[])
 RETURNS SETOF emaj._report_message_type LANGUAGE plpgsql AS
 $_import_groups_conf_check$

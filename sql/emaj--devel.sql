@@ -5431,6 +5431,7 @@ $_check_fk_groups$
           AND g.group_is_rollbackable                               -- only tables from rollbackable groups
           AND r.rel_kind = 'r'                                      -- only constraints referencing true tables, ie. excluding
                                                                     --   partitionned tables
+        ORDER BY 1,2,3
     LOOP
       IF r_fk.confupdtype = 'a' AND r_fk.confdeltype = 'a' AND NOT r_fk.condeferrable THEN
         -- Advise DEFERRABLE FK if there is no ON UPDATE|DELETE clause.

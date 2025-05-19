@@ -5314,6 +5314,7 @@ $_check_fk_groups$
           AND g.group_is_rollbackable                               -- only tables from rollbackable groups
           AND r.rel_kind = 'r'                                      -- only constraints referencing true tables, ie. excluding
                                                                     --   partitionned tables
+        ORDER BY 1,2,3
     LOOP
       IF r_fk.confupdtype = 'a' AND r_fk.confdeltype = 'a' AND NOT r_fk.condeferrable THEN
         -- Advise DEFERRABLE FK if there is no ON UPDATE|DELETE clause.
@@ -13749,7 +13750,7 @@ $do$
     RETURN;
   END;
 $do$;
-psql:sql/emaj-devel.sql:14005: NOTICE:  E-Maj installation: E-Maj successfully installed.
+psql:sql/emaj-devel.sql:14006: NOTICE:  E-Maj installation: E-Maj successfully installed.
 COMMIT;
 -- Test the dblink extension lack (this cannot be easily simulated in the verify.sql unit tests script when emaj is installed as an extension)
 begin;
