@@ -114,7 +114,7 @@ However, because of the way PostgreSQL manages sequences, the sequences' current
 Integrated logical replication
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Starting with version 10, PostgreSQL includes logical replication mechanisms. The replication granularity is the table. The *publication* object used with the logical replication is quite close to the E-Maj tables group concept, except that a *publication* cannot contain sequences.
+PostgreSQL includes logical replication mechanisms. The replication granularity is the table. The *publication* object used with the logical replication is quite close to the E-Maj tables group concept, except that a *publication* cannot contain sequences.
 
 **Replication of application tables managed by E-Maj**
 

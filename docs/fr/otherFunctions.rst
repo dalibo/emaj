@@ -159,7 +159,7 @@ Pour désactiver les triggers sur événement existants ::
 
    SELECT emaj.emaj_disable_protection_by_event_triggers();
 
-La fonction retourne le nombre de triggers désactivés (cette valeur dépend de la version de PostgreSQL installée).
+La fonction retourne le nombre de triggers désactivés.
 
 Pour réactiver les triggers sur événement existants ::
 

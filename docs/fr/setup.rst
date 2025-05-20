@@ -26,7 +26,7 @@ L'extension E-Maj peut maintenant être créée dans la base de données, en ex�
 
    CREATE EXTENSION emaj CASCADE;
 
-Après avoir vérifié que la version de PostgreSQL est supérieure ou égale à la version 11, le script crée le schéma *emaj* avec ses tables techniques, ses fonctions et quelques autres objets.
+Après avoir vérifié que la version de PostgreSQL est compatible avec cette version d’E-Maj, le script crée le schéma *emaj* avec ses tables techniques, ses fonctions et quelques autres objets.
 
 .. caution::
 

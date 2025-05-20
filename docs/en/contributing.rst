@@ -112,7 +112,7 @@ Through the *rollback* functions, the E-Maj extension updates database content. 
 Create PostgreSQL instances
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-The ideal is to be able to test E-Maj with all PostgreSQL versions that are supported by the extension (currently from version 9.5 to version 11).
+The ideal is to be able to test E-Maj with all PostgreSQL versions that are supported by the extension.
 
 The *tools/create_cluster.sh* script helps in creating a test instance. Its content may show the characteristics of the instance to create. It can also be executed (after parameters setting as indicated in *tools/README*)::
 

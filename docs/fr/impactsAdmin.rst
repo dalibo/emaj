@@ -116,7 +116,7 @@ Néanmoins, compte tenu de la façon dont PostgreSQL gère les séquences, la va
 Réplication logique intégrée
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Les versions 10 et suivantes de PostgreSQL intègrent des mécanismes de réplication logique. La granularité de réplication est ici la table. L’objet de publication utilisé dans la réplication logique est assez proche du concept de groupes de tables E-Maj, à ceci près qu’une publication ne peut contenir de séquences.
+PostgreSQL intègre des mécanismes de réplication logique. La granularité de réplication est ici la table. L’objet de publication utilisé dans la réplication logique est assez proche du concept de groupes de tables E-Maj, à ceci près qu’une publication ne peut contenir de séquences.
 
 **Réplication de tables applicatives gérées par E-Maj**
 

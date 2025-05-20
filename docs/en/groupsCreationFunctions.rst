@@ -32,9 +32,9 @@ But **at a given time**, a table or a sequence cannot be assigned to more than *
 
 All tables assigned to a *ROLLBACKABLE* group must have an explicit primary key (*PRIMARY KEY* clause in *CREATE TABLE* or *ALTER TABLE*).
 
-E-Maj can process elementary partitions of partitionned tables created with the declarative DDL (with PostgreSQL 10+). They are processed as any other tables. However, as there is no need to protect mother tables, which remain empty, E-Maj refuses to include them in tables groups. All partitions of a partitionned table do not need to belong to a tables group. Partitions of a partitionned table can be assigned to different tables groups.
+E-Maj can process elementary partitions of partitionned tables created with the declarative DDL. They are processed as any other tables. However, as there is no need to protect mother tables, which remain empty, E-Maj refuses to include them in tables groups. All partitions of a partitionned table do not need to belong to a tables group. Partitions of a partitionned table can be assigned to different tables groups.
 
-By their nature, *TEMPORARY TABLE* are not supported by E-Maj. *UNLOGGED* tables and tables created as *WITH OIDS* can only be members of *AUDIT_ONLY* tables groups.
+By their nature, *TEMPORARY TABLE* are not supported by E-Maj. *UNLOGGED* tables can only be members of *AUDIT_ONLY* tables groups.
 
 If a sequence is associated to an application table, it is advisable to assign it into the same group as its table, so that, in case of E-maj rollback, the sequence can be reset to its state at the set mark time. If it were not the case, an E-Maj rollback would simply generate a hole in the sequence values.
 

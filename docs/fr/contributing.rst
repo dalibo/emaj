@@ -115,7 +115,7 @@ L’extension E-Maj, par les fonctions de *rollback*, modifie le contenu des bas
 Créer des instances PostgreSQL
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-L’idéal est de pouvoir tester E-Maj avec toutes les versions PostgreSQL supportées par l’extension (actuellement de la version 9.5 à la version 11).
+L’idéal est de pouvoir tester E-Maj avec toutes les versions PostgreSQL supportées par l’extension.
 
 Le script *tools/create_cluster.sh* est une aide à la création des instances de test. On peut s’inspirer de son contenu pour voir les caractéristiques des instances à créer. On peut aussi l’exécuter (après paramétrage comme indiqué dans *tools/README*) ::
 

@@ -12,7 +12,7 @@ The **tables group** represents a set of **application tables** that live at the
 
 At a given time, a tables group is either in a **LOGGING** state or in a **IDLE** state. The *LOGGING* state means that all updates applied on the tables of the group are recorded.
 
-A tables group can be either **ROLLBACKABLE**, which is the standard case, or **AUDIT_ONLY**. In this latter case, it is not possible to rollback the group. But using this type of group allows to record tables updates for auditing purposes, even with tables that have no explicitely created primary key or with tables of type *UNLOGGED* or *WITH OIDS*.
+A tables group can be either **ROLLBACKABLE**, which is the standard case, or **AUDIT_ONLY**. In this latter case, it is not possible to rollback the group. But using this type of group allows to record tables updates for auditing purposes, even with tables that have no explicitely created primary key or with tables of type *UNLOGGED*.
 
 Mark
 ****
