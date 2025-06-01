@@ -257,6 +257,7 @@ CREATE TABLE emaj.emaj_relation (
                                                            -- created on the application table
   rel_ignored_triggers         TEXT[],                     -- names array of application trigger to ignore at rollback time
   rel_pk_cols                  TEXT[],                     -- PK columns names array
+  rel_gen_expr_cols            TEXT[],                     -- generated as expression columns names array
   rel_emaj_verb_attnum         SMALLINT,                   -- column number (attnum) of the log table's emaj_verb column in the
                                                            --   pg_attribute table
   rel_has_always_ident_col     BOOLEAN,                    -- are there any "generated always as identity" column ?
@@ -3033,6 +3034,7 @@ $_create_tbl$
     v_dataTblSpace           TEXT;
     v_idxTblSpace            TEXT;
     v_pkCols                 TEXT[];
+    v_genExprCols            TEXT[];
     v_rlbkColList            TEXT;
     v_genColList             TEXT;
     v_genValList             TEXT;
@@ -3190,17 +3192,17 @@ $_create_tbl$
 -- Build the PK columns names array and some pieces of SQL statements that will be needed at table rollback and gen_sql times.
 -- They are left NULL if the table has no pkey.
     SELECT * FROM emaj._build_sql_tbl(v_fullTableName)
-      INTO v_pkCols, v_rlbkColList, v_genColList, v_genValList, v_genSetList, v_genPkConditions, v_nbGenAlwaysIdentCol;
+      INTO v_pkCols, v_genExprCols, v_rlbkColList, v_genColList, v_genValList, v_genSetList, v_genPkConditions, v_nbGenAlwaysIdentCol;
 -- Register the table into emaj_relation.
     INSERT INTO emaj.emaj_relation
                (rel_schema, rel_tblseq, rel_time_range, rel_group, rel_priority,
                 rel_log_schema, rel_log_dat_tsp, rel_log_idx_tsp, rel_kind, rel_log_table,
-                rel_log_index, rel_log_sequence, rel_log_function, rel_ignored_triggers, rel_pk_cols,
+                rel_log_index, rel_log_sequence, rel_log_function, rel_ignored_triggers, rel_pk_cols, rel_gen_expr_cols,
                 rel_emaj_verb_attnum, rel_has_always_ident_col, rel_sql_rlbk_columns,
                 rel_sql_gen_ins_col, rel_sql_gen_ins_val, rel_sql_gen_upd_set, rel_sql_gen_pk_conditions)
         VALUES (p_schema, p_tbl, int8range(p_timeId, NULL, '[)'), p_groupName, p_priority,
                 v_logSchema, p_logDatTsp, p_logIdxTsp, 'r', v_baseLogTableName,
-                v_baseLogIdxName, v_baseSequenceName, v_baseLogFnctName, p_ignoredTriggers, v_pkCols,
+                v_baseLogIdxName, v_baseSequenceName, v_baseLogFnctName, p_ignoredTriggers, v_pkCols, v_genExprCols,
                 v_attnum, v_nbGenAlwaysIdentCol > 0, v_rlbkColList,
                 v_genColList, v_genValList, v_genSetList, v_genPkConditions);
 -- Check if the table has application (neither internal - ie. created for fk - nor previously created by emaj) triggers not already
@@ -3225,9 +3227,9 @@ $_create_tbl$
   END;
 $_create_tbl$;
 
-CREATE OR REPLACE FUNCTION emaj._build_sql_tbl(p_fullTableName TEXT, OUT p_pkCols TEXT[], OUT p_rlbkColList TEXT,
-                                               OUT p_genColList TEXT, OUT p_genValList TEXT, OUT p_genSetList TEXT,
-                                               OUT p_genPkConditions TEXT, OUT p_nbGenAlwaysIdentCol INT)
+CREATE OR REPLACE FUNCTION emaj._build_sql_tbl(p_fullTableName TEXT, OUT p_pkCols TEXT[], OUT p_genExprCols TEXT[],
+                                               OUT p_rlbkColList TEXT, OUT p_genColList TEXT, OUT p_genValList TEXT,
+                                               OUT p_genSetList TEXT, OUT p_genPkConditions TEXT, OUT p_nbGenAlwaysIdentCol INT)
 LANGUAGE plpgsql AS
 $_build_sql_tbl$
 -- This function builds, for one application table:
@@ -3241,8 +3243,6 @@ $_build_sql_tbl$
 -- Input: the full application table name
 -- Output: PK columns names array, 5 pieces of SQL, and the number of columns declared GENERATED ALWAYS AS IDENTITY
   DECLARE
-    v_stmt                   TEXT;
-    v_nbGenAlwaysExprCol     INTEGER;
     v_unquotedType           CONSTANT TEXT[] = array['smallint','integer','bigint','numeric','decimal',
                                                      'int2','int4','int8','serial','bigserial',
                                                      'real','double precision','float','float4','float8','oid'];
@@ -3269,28 +3269,32 @@ $_build_sql_tbl$
              AND attisdropped = FALSE
            ORDER BY attnum
         ) AS t;
+-- Build the generated columns array.
+    SELECT array_agg(attname ORDER BY attnum)
+      INTO p_genExprCols
+      FROM pg_catalog.pg_attribute
+      WHERE attrelid = p_fullTableName::regclass
+        AND attnum > 0
+        AND attisdropped = FALSE
+        AND attgenerated <> '';
 -- Retrieve from pg_attribute simple columns list and indicators.
 -- If the table has no pkey, keep all the sql pieces to NULL (rollback or sql script generation operations being impossible).
     IF p_pkCols IS NOT NULL THEN
-      v_stmt = 'SELECT string_agg(''tbl.'' || quote_ident(attname), '','') FILTER (WHERE attgenerated = ''''),'
---                             the columns list for rollback, excluding the GENERATED ALWAYS AS (expression) columns
-               '       string_agg(quote_ident(replace(attname,'''''''','''''''''''')), '', '') FILTER (WHERE attgenerated = ''''),'
---                             the INSERT columns list for sql generation, excluding the GENERATED ALWAYS AS (expression) columns
-               '       count(*) FILTER (WHERE attidentity = ''a''),'
---                             the number of GENERATED ALWAYS AS IDENTITY columns
-               '       count(*) FILTER (WHERE attgenerated <> '''')'
---                             the number of GENERATED ALWAYS AS (expression) columns
-               '  FROM ('
-               '  SELECT attname, attidentity, attgenerated'
-               '    FROM pg_catalog.pg_attribute'
-               '    WHERE attrelid = %s::regclass'
-               '      AND attnum > 0 AND NOT attisdropped'
-               '  ORDER BY attnum) AS t';
-      EXECUTE format(v_stmt,
-                     quote_literal(p_fullTableName))
-        INTO p_rlbkColList, p_genColList, p_nbGenAlwaysIdentCol, v_nbGenAlwaysExprCol;
-      IF v_nbGenAlwaysExprCol = 0 THEN
--- If the table doesn't contain any generated columns, there is no need for the columns list in the INSERT clause.
+      SELECT string_agg('tbl.' || quote_ident(attname), ',') FILTER (WHERE attgenerated = ''),
+--               the columns list for rollback, excluding the GENERATED ALWAYS AS (expression) columns
+             string_agg(quote_ident(attname), ', ') FILTER (WHERE attgenerated = ''),
+--               the INSERT columns list for sql generation, excluding the GENERATED ALWAYS AS (expression) columns
+             count(*) FILTER (WHERE attidentity = 'a')
+--               the number of GENERATED ALWAYS AS IDENTITY columns
+        INTO p_rlbkColList, p_genColList, p_nbGenAlwaysIdentCol
+        FROM (
+          SELECT attname, attidentity, attgenerated
+            FROM pg_catalog.pg_attribute
+            WHERE attrelid = p_fullTableName::regclass
+              AND attnum > 0 AND NOT attisdropped
+          ORDER BY attnum) AS t;
+      IF p_genExprCols IS NULL THEN
+-- If the table doesn't contain any generated as expression columns, there is no need for the columns list in the INSERT clause.
         p_genColList = '';
       END IF;
 -- Retrieve from pg_attribute all columns of the application table and build :
@@ -3712,13 +3716,13 @@ $_move_tbl$
         AND upper_inf(rel_time_range);
     INSERT INTO emaj.emaj_relation (rel_schema, rel_tblseq, rel_time_range, rel_group, rel_kind, rel_priority, rel_log_schema,
                                     rel_log_table, rel_log_dat_tsp, rel_log_index, rel_log_idx_tsp, rel_log_sequence, rel_log_function,
-                                    rel_ignored_triggers, rel_pk_cols, rel_emaj_verb_attnum, rel_has_always_ident_col,
+                                    rel_ignored_triggers, rel_pk_cols, rel_gen_expr_cols, rel_emaj_verb_attnum, rel_has_always_ident_col,
                                     rel_sql_rlbk_columns,
                                     rel_sql_gen_ins_col, rel_sql_gen_ins_val, rel_sql_gen_upd_set, rel_sql_gen_pk_conditions,
                                     rel_log_seq_last_value)
       SELECT rel_schema, rel_tblseq, int8range(p_timeId, NULL, '[)'), p_newGroup, rel_kind, rel_priority, rel_log_schema,
              v_currentLogTable, rel_log_dat_tsp, v_currentLogIndex, rel_log_idx_tsp, rel_log_sequence, rel_log_function,
-             rel_ignored_triggers, rel_pk_cols, rel_emaj_verb_attnum, rel_has_always_ident_col,
+             rel_ignored_triggers, rel_pk_cols, rel_gen_expr_cols, rel_emaj_verb_attnum, rel_has_always_ident_col,
              rel_sql_rlbk_columns,
              rel_sql_gen_ins_col, rel_sql_gen_ins_val, rel_sql_gen_upd_set, rel_sql_gen_pk_conditions,
              rel_log_seq_last_value
@@ -5303,6 +5307,35 @@ $_verify_groups$
              GROUP BY 1,2,3,4
           ) AS t
         WHERE registered_pk_columns <> current_pk_columns
+        ORDER BY 1,2,3
+    LOOP
+      IF p_onErrorStop THEN RAISE EXCEPTION '_verify_groups (9): % %',r_object.msg,v_hint; END IF;
+      RETURN NEXT r_object;
+    END LOOP;
+-- Check that the "GENERATED AS expression" columns list of all tables have not changed.
+-- (The expression of virtual generated columns be changed, without generating any trouble)
+    FOR r_object IN
+      SELECT rel_schema, rel_tblseq, rel_group,
+             'In group "' || rel_group || '", the "GENERATED AS expression" columns list of the table "' ||
+             rel_schema || '"."' || rel_tblseq || '" has changed (' ||
+             registered_gen_columns || ' => ' || current_gen_columns || ').' AS msg
+        FROM
+          (SELECT rel_schema, rel_tblseq, rel_group,
+                  coalesce(array_to_string(rel_gen_expr_cols, ','), '<none>') AS registered_gen_columns,
+                  coalesce(string_agg(attname, ',' ORDER BY attnum), '<none>') AS current_gen_columns
+             FROM emaj.emaj_relation
+                  JOIN pg_catalog.pg_class ON (relname = rel_tblseq)
+                  JOIN pg_catalog.pg_namespace ON (pg_namespace.oid = relnamespace AND nspname = rel_schema)
+                  JOIN pg_catalog.pg_attribute ON (pg_attribute.attrelid = pg_class.oid)
+             WHERE rel_group = ANY (p_groups)
+               AND rel_kind = 'r'
+               AND upper_inf(rel_time_range)
+               AND attgenerated <> ''
+               AND attnum > 0
+               AND NOT attisdropped
+             GROUP BY 1,2,3,4
+          ) AS t
+        WHERE registered_gen_columns <> current_gen_columns
         ORDER BY 1,2,3
     LOOP
       IF p_onErrorStop THEN RAISE EXCEPTION '_verify_groups (10): % %',r_object.msg,v_hint; END IF;
@@ -12801,6 +12834,29 @@ $_verify_all_groups$
              GROUP BY 1,2,3,4
           ) AS t
         WHERE registered_pk_columns <> current_pk_columns
+        ORDER BY rel_schema, rel_tblseq, 1;
+-- Check that the "GENERATED AS expression" columns list of all tables have not changed.
+-- (The expression of virtual generated columns be changed, without generating any trouble)
+    RETURN QUERY
+      SELECT 'Error: In group "' || rel_group || '", the "GENERATED AS expression" columns list of the table "' ||
+             rel_schema || '"."' || rel_tblseq || '" has changed (' ||
+             registered_gen_columns || ' => ' || current_gen_columns || ').' AS msg
+        FROM
+          (SELECT rel_schema, rel_tblseq, rel_group,
+                  coalesce(array_to_string(rel_gen_expr_cols, ','), '<none>') AS registered_gen_columns,
+                  coalesce(string_agg(attname, ',' ORDER BY attnum), '<none>') AS current_gen_columns
+             FROM emaj.emaj_relation
+                  JOIN pg_catalog.pg_class ON (relname = rel_tblseq)
+                  JOIN pg_catalog.pg_namespace ON (pg_namespace.oid = relnamespace AND nspname = rel_schema)
+                  JOIN pg_catalog.pg_attribute ON (pg_attribute.attrelid = pg_class.oid)
+             WHERE rel_kind = 'r'
+               AND upper_inf(rel_time_range)
+               AND attgenerated <> ''
+               AND attnum > 0
+               AND NOT attisdropped
+             GROUP BY 1,2,3,4
+          ) AS t
+        WHERE registered_gen_columns <> current_gen_columns
         ORDER BY rel_schema, rel_tblseq, 1;
 -- Check the array of triggers to ignore at rollback time only contains existing triggers.
     RETURN QUERY

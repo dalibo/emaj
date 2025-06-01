@@ -216,13 +216,23 @@ rollback;
 -- detection of tables altered as UNLOGGED
 begin;                                                                        -- needs 9.5+
   alter table myschema1.mytbl4 set unlogged;                                  -- table from a rollbackable group
-  alter table "phil's schema""3"."myTbl2\" set unlogged;                        -- table from an audit_only group
+  alter table "phil's schema""3"."myTbl2\" set unlogged;                      -- table from an audit_only group
   select * from emaj.emaj_verify_all() t(msg) where msg like 'Error%';
 rollback;
 -- detection of modified primary key
 begin;
   alter table myschema1.mytbl4 drop constraint mytbl4_pkey;
   alter table myschema1.mytbl4 add primary key (col41, col42);
+  select * from emaj.emaj_verify_all() t(msg) where msg like 'Error%';
+rollback;
+-- detection of STORED generated column whose expression has been dropped
+begin;
+  alter table myschema1.mytbl2b alter column col22 drop expression;
+  select * from emaj.emaj_verify_all() t(msg) where msg like 'Error%';
+rollback;
+-- detection of a column transformed into generated column
+begin;
+  alter table myschema1.mytbl2b drop column col24, add column col24 BOOLEAN GENERATED ALWAYS AS (col21 > 3) STORED;
   select * from emaj.emaj_verify_all() t(msg) where msg like 'Error%';
 rollback;
 -- detection of a corrupted log table (missing some technical columns)

@@ -16,6 +16,7 @@ These **tables group integrity checks** verify that:
 * each application sequence or table of the group always exists, 
 * each table of the group has its log table, its log function and its triggers,
 * the log tables structure always reflects the related application tables structure, and contains all required technical columns,
+* for each table, the generated columns list is unchanged,
 * for *ROLLBACKABLE* tables groups, no table has been altered as *UNLOGGED*,
 * for *ROLLBACKABLE* tables groups, application tables have their primary key and their structure has not changed.
 

@@ -16,6 +16,7 @@ Ces **contrôles d'intégrité du groupe de tables** vérifient que :
 * chaque séquence ou chaque table applicative du groupe existe toujours bien, 
 * chacune des tables d'un groupe a toujours sa table de log associée, sa fonction de log ainsi que ses triggers,
 * la structure des tables de log est toujours en phase avec celle des tables applicatives associées, et comprend toujours les colonnes techniques nécessaires,
+* la liste des colonnes générées de chaque table n’a pas changé,
 * pour les groupes de tables "rollbackables", aucune table n'a été transformée en table *UNLOGGED*,
 * pour les groupes de tables "rollbackables", les tables applicatives ont toujours leur clé primaire et que leur structure n’a pas changé.
 

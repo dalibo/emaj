@@ -470,7 +470,7 @@ rollback;
 -- detection of tables altered as UNLOGGED
 begin;                                                                        -- needs 9.5+
   alter table myschema1.mytbl4 set unlogged;                                  -- table from a rollbackable group
-  alter table "phil's schema""3"."myTbl2\" set unlogged;                        -- table from an audit_only group
+  alter table "phil's schema""3"."myTbl2\" set unlogged;                      -- table from an audit_only group
   select * from emaj.emaj_verify_all() t(msg) where msg like 'Error%';
                                                msg                                                
 --------------------------------------------------------------------------------------------------
@@ -486,6 +486,26 @@ begin;
                                                                    msg                                                                    
 ------------------------------------------------------------------------------------------------------------------------------------------
  Error: In the rollbackable group "myGroup1", the primary key of the table "myschema1"."mytbl4" has changed (col41,col43 => col41,col42).
+(1 row)
+
+rollback;
+-- detection of STORED generated column whose expression has been dropped
+begin;
+  alter table myschema1.mytbl2b alter column col22 drop expression;
+  select * from emaj.emaj_verify_all() t(msg) where msg like 'Error%';
+                                                                      msg                                                                      
+-----------------------------------------------------------------------------------------------------------------------------------------------
+ Error: In group "myGroup1", the "GENERATED AS expression" columns list of the table "myschema1"."mytbl2b" has changed (col22,col23 => col23).
+(1 row)
+
+rollback;
+-- detection of a column transformed into generated column
+begin;
+  alter table myschema1.mytbl2b drop column col24, add column col24 BOOLEAN GENERATED ALWAYS AS (col21 > 3) STORED;
+  select * from emaj.emaj_verify_all() t(msg) where msg like 'Error%';
+                                                                            msg                                                                            
+-----------------------------------------------------------------------------------------------------------------------------------------------------------
+ Error: In group "myGroup1", the "GENERATED AS expression" columns list of the table "myschema1"."mytbl2b" has changed (col22,col23 => col22,col23,col24).
 (1 row)
 
 rollback;

@@ -97,6 +97,16 @@ begin;
   alter table myschema1.mytbl4 add primary key (col41, col42);
   select emaj.emaj_start_group('myGroup1','M1');
 rollback;
+-- detection of STORED generated column whose expression has been dropped
+begin;
+  alter table myschema1.mytbl2b alter column col22 drop expression;
+  select emaj.emaj_start_group('myGroup1','M1');
+rollback;
+-- detection of a column transformed into generated column
+begin;
+  alter table myschema1.mytbl2b drop column col24, add column col24 BOOLEAN GENERATED ALWAYS AS (col21 > 3) STORED;
+  select emaj.emaj_start_group('myGroup1','M1');
+rollback;
 -- detection of a log table missing a technical column
 begin;
   alter table emaj_myschema1.mytbl1_log drop column emaj_verb;

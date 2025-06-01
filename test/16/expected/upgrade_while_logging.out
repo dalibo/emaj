@@ -46,7 +46,7 @@ select relname from pg_catalog.pg_class,
  emaj_version_hist
 (23 rows)
 
-  select * from emaj.emaj_verify_all();
+select * from emaj.emaj_verify_all();
                                                                                  emaj_verify_all                                                                                  
 ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
  Warning: In tables group "myGroup1", the sequence "myschema1"."myTbl3_col31_seq" is linked to the table "myschema1"."myTbl3" but this table does not belong to any tables group.
@@ -57,6 +57,16 @@ select relname from pg_catalog.pg_class,
 -- process the extension upgrade
 ALTER EXTENSION emaj UPDATE TO 'devel';
 WARNING:  E-Maj upgrade: the E-Maj environment health check reports warning. You may execute "SELECT * FROM emaj.emaj_verify_all();" to get more details.
+NOTICE:  drop cascades to 9 other objects
+DETAIL:  drop cascades to function _drop_tbl(emaj_relation,bigint)
+drop cascades to function _drop_seq(emaj_relation,bigint)
+drop cascades to function _rlbk_tbl(emaj_relation,bigint,bigint,integer,boolean,boolean)
+drop cascades to function _delete_log_tbl(emaj_relation,bigint,bigint,bigint)
+drop cascades to function _rlbk_seq(emaj_relation,bigint)
+drop cascades to function _log_stat_tbl(emaj_relation,bigint,bigint)
+drop cascades to function _gen_sql_tbl(emaj_relation,bigint,bigint)
+drop cascades to function _sequence_stat_seq(emaj_relation,bigint,bigint)
+drop cascades to function _gen_sql_seq(emaj_relation,bigint,bigint,bigint)
 -----------------------------
 -- check installation
 -----------------------------
@@ -418,6 +428,7 @@ Tablespace: "tspemaj"
  rel_log_function          | text      |           |          | 
  rel_ignored_triggers      | text[]    |           |          | 
  rel_pk_cols               | text[]    |           |          | 
+ rel_gen_expr_cols         | text[]    |           |          | 
  rel_emaj_verb_attnum      | smallint  |           |          | 
  rel_has_always_ident_col  | boolean   |           |          | 
  rel_sql_rlbk_columns      | text      |           |          | 
@@ -1335,243 +1346,29 @@ select * from "emaj_phil's schema""3"."myTbl2\_log_seq";
 -----------------------------
 -- emaj tables and sequences
 -- technical tables
-select * from emaj.emaj_sequence order by sequ_schema, sequ_name, sequ_time_id;
-   sequ_schema   |    sequ_name     | sequ_time_id | sequ_last_val | sequ_start_val | sequ_increment |    sequ_max_val     | sequ_min_val | sequ_cache_val | sequ_is_cycled | sequ_is_called 
------------------+------------------+--------------+---------------+----------------+----------------+---------------------+--------------+----------------+----------------+----------------
- myschema1       | myTbl3_col31_seq |           15 |             1 |              1 |              1 |          2147483647 |            1 |              1 | f              | f
- myschema1       | myTbl3_col31_seq |           17 |            10 |              1 |              1 |          2147483647 |            1 |              1 | f              | t
- myschema1       | myTbl3_col31_seq |           18 |            10 |              1 |              1 |          2147483647 |            1 |              1 | f              | t
- myschema1       | myTbl3_col31_seq |           27 |            10 |              1 |              1 |          2147483647 |            1 |              1 | f              | t
- myschema1       | myTbl3_col31_seq |           28 |            10 |              1 |              1 |          2147483647 |            1 |              1 | f              | t
- myschema2       | myTbl3_col31_seq |           15 |             1 |              1 |              1 |          2147483647 |            1 |              1 | f              | f
- myschema2       | myTbl3_col31_seq |           21 |            10 |              1 |              1 |          2147483647 |            1 |              1 | f              | t
- myschema2       | myTbl3_col31_seq |           22 |            10 |              1 |              1 |          2147483647 |            1 |              1 | f              | t
- myschema2       | myTbl3_col31_seq |           23 |            10 |              1 |              1 |          2147483647 |            1 |              1 | f              | t
- myschema2       | myTbl3_col31_seq |           24 |            10 |              1 |              1 |          2147483647 |            1 |              1 | f              | t
- myschema2       | myTbl3_col31_seq |           25 |            10 |              1 |              1 |          2147483647 |            1 |              1 | f              | t
- myschema2       | myTbl3_col31_seq |           26 |            10 |              1 |              1 |          2147483647 |            1 |              1 | f              | t
- myschema2       | myTbl3_col31_seq |           27 |            10 |              1 |              1 |          2147483647 |            1 |              1 | f              | t
- myschema2       | myseq1           |           15 |          1000 |           1000 |              1 |                2000 |         1000 |              1 | t              | f
- myschema2       | myseq1           |           21 |          1000 |           1000 |              1 |                2000 |         1000 |              1 | t              | t
- myschema2       | myseq1           |           22 |          1003 |           1000 |              1 | 9223372036854775807 |         1000 |              1 | f              | t
- myschema2       | myseq1           |           23 |          1003 |           1000 |              1 | 9223372036854775807 |         1000 |              1 | f              | t
- myschema2       | myseq1           |           24 |          1001 |           1000 |              1 |                2000 |         1000 |              1 | t              | f
- myschema2       | myseq1           |           25 |          1001 |           1000 |              1 |                2000 |         1000 |              1 | t              | f
- myschema2       | myseq1           |           26 |          1004 |           1000 |              1 | 9223372036854775807 |         1000 |              1 | f              | f
- myschema2       | myseq1           |           27 |          1004 |           1000 |              1 | 9223372036854775807 |         1000 |              1 | f              | f
- phil's schema"3 | phil's"seq\1     |           16 |          1000 |           1000 |              1 |                2000 |         1000 |              1 | t              | f
-(22 rows)
-
-select * from emaj.emaj_table order by tbl_schema, tbl_name, tbl_time_id;
-   tbl_schema    |                        tbl_name                         | tbl_time_id | tbl_pages | tbl_tuples | tbl_log_seq_last_val 
------------------+---------------------------------------------------------+-------------+-----------+------------+----------------------
- myschema1       | myTbl3                                                  |          15 |         0 |         -1 |                    0
- myschema1       | myTbl3                                                  |          17 |         0 |         -1 |                   10
- myschema1       | myTbl3                                                  |          18 |         0 |         -1 |                   10
- myschema1       | myTbl3                                                  |          27 |         0 |         -1 |                   10
- myschema1       | myTbl3                                                  |          28 |         0 |         -1 |                   10
- myschema1       | mytbl1                                                  |          15 |         0 |         -1 |                    0
- myschema1       | mytbl1                                                  |          17 |         0 |         -1 |                   15
- myschema1       | mytbl1                                                  |          18 |         0 |         -1 |                   18
- myschema1       | mytbl1                                                  |          27 |         0 |         -1 |                   24
- myschema1       | mytbl1                                                  |          28 |         0 |         -1 |                   24
- myschema1       | mytbl2                                                  |          15 |         0 |         -1 |                    0
- myschema1       | mytbl2                                                  |          17 |         0 |         -1 |                    2
- myschema1       | mytbl2                                                  |          18 |         0 |         -1 |                    2
- myschema1       | mytbl2                                                  |          27 |         0 |         -1 |                    3
- myschema1       | mytbl2                                                  |          28 |         0 |         -1 |                    3
- myschema1       | mytbl2b                                                 |          15 |         0 |         -1 |                    0
- myschema1       | mytbl2b                                                 |          17 |         0 |         -1 |                    2
- myschema1       | mytbl2b                                                 |          18 |         0 |         -1 |                    2
- myschema1       | mytbl2b                                                 |          27 |         0 |         -1 |                    3
- myschema1       | mytbl2b                                                 |          28 |         0 |         -1 |                    3
- myschema1       | mytbl4                                                  |          15 |         0 |         -1 |                    0
- myschema1       | mytbl4                                                  |          17 |         0 |         -1 |                    0
- myschema1       | mytbl4                                                  |          18 |         0 |         -1 |                    8
- myschema1       | mytbl4                                                  |          27 |         0 |         -1 |                    9
- myschema1       | mytbl4                                                  |          28 |         0 |         -1 |                    9
- myschema2       | myTbl3                                                  |          15 |         0 |         -1 |                    0
- myschema2       | myTbl3                                                  |          21 |         0 |         -1 |                   10
- myschema2       | myTbl3                                                  |          22 |         0 |         -1 |                   10
- myschema2       | myTbl3                                                  |          23 |         0 |         -1 |                   10
- myschema2       | myTbl3                                                  |          24 |         0 |         -1 |                   10
- myschema2       | myTbl3                                                  |          25 |         0 |         -1 |                   10
- myschema2       | myTbl3                                                  |          26 |         0 |         -1 |                   10
- myschema2       | myTbl3                                                  |          27 |         0 |         -1 |                   10
- myschema2       | mytbl1                                                  |          15 |         0 |         -1 |                    0
- myschema2       | mytbl1                                                  |          21 |         0 |         -1 |                   15
- myschema2       | mytbl1                                                  |          22 |         0 |         -1 |                   15
- myschema2       | mytbl1                                                  |          23 |         0 |         -1 |                   15
- myschema2       | mytbl1                                                  |          24 |         0 |         -1 |                   15
- myschema2       | mytbl1                                                  |          25 |         0 |         -1 |                   15
- myschema2       | mytbl1                                                  |          26 |         0 |         -1 |                   15
- myschema2       | mytbl1                                                  |          27 |         0 |         -1 |                   15
- myschema2       | mytbl2                                                  |          15 |         0 |         -1 |                    0
- myschema2       | mytbl2                                                  |          21 |         0 |         -1 |                    2
- myschema2       | mytbl2                                                  |          22 |         0 |         -1 |                    2
- myschema2       | mytbl2                                                  |          23 |         0 |         -1 |                    2
- myschema2       | mytbl2                                                  |          24 |         0 |         -1 |                    2
- myschema2       | mytbl2                                                  |          25 |         0 |         -1 |                    2
- myschema2       | mytbl2                                                  |          26 |         0 |         -1 |                    2
- myschema2       | mytbl2                                                  |          27 |         0 |         -1 |                    2
- myschema2       | mytbl4                                                  |          15 |         0 |         -1 |                    0
- myschema2       | mytbl4                                                  |          21 |         0 |         -1 |                    0
- myschema2       | mytbl4                                                  |          22 |         0 |         -1 |                    4
- myschema2       | mytbl4                                                  |          23 |         0 |         -1 |                    4
- myschema2       | mytbl4                                                  |          24 |         0 |         -1 |                    6
- myschema2       | mytbl4                                                  |          25 |         0 |         -1 |                    6
- myschema2       | mytbl4                                                  |          26 |         0 |         -1 |                    8
- myschema2       | mytbl4                                                  |          27 |         0 |         -1 |                    8
- myschema6       | table_with_50_characters_long_name_____0_________0      |          29 |         0 |         -1 |                    0
- myschema6       | table_with_50_characters_long_name_____0_________0      |          30 |         0 |         -1 |                    0
- myschema6       | table_with_50_characters_long_name_____0_________0      |          31 |         0 |         -1 |                    0
- myschema6       | table_with_51_characters_long_name_____0_________0a     |          29 |         0 |         -1 |                    0
- myschema6       | table_with_51_characters_long_name_____0_________0a     |          30 |         0 |         -1 |                    0
- myschema6       | table_with_51_characters_long_name_____0_________0a     |          31 |         0 |         -1 |                    0
- myschema6       | table_with_55_characters_long_name_____0_________0abcde |          29 |         0 |         -1 |                    0
- myschema6       | table_with_55_characters_long_name_____0_________0abcde |          30 |         0 |         -1 |                    0
- myschema6       | table_with_55_characters_long_name_____0_________0fghij |          29 |         0 |         -1 |                    0
- myschema6       | table_with_55_characters_long_name_____0_________0fghij |          30 |         0 |         -1 |                    0
- myschema6       | table_with_55_characters_long_name_____0_________0fghij |          31 |         0 |         -1 |                    0
- phil's schema"3 | myTbl2\                                                 |          16 |         0 |         -1 |                    0
- phil's schema"3 | phil's tbl1                                             |          16 |         0 |         -1 |                    0
-(70 rows)
-
--- log tables
-select col11, col12, col13, emaj_verb, emaj_tuple, emaj_gid from emaj_mySchema1.myTbl1_log order by emaj_gid, emaj_tuple desc;
- col11 |   col12    | col13 | emaj_verb | emaj_tuple | emaj_gid 
--------+------------+-------+-----------+------------+----------
-     1 | ABC        | \x0c  | INS       | NEW        |        1
-     2 | ABC        | \x0c  | INS       | NEW        |        2
-     3 | ABC        | \x0c  | INS       | NEW        |        3
-     4 | ABC        | \x0c  | INS       | NEW        |        4
-     5 | ABC        | \x0c  | INS       | NEW        |        5
-     6 | ABC        | \x0c  | INS       | NEW        |        6
-     7 | ABC        | \x0c  | INS       | NEW        |        7
-     8 | ABC        | \x0c  | INS       | NEW        |        8
-     9 | ABC        | \x0c  | INS       | NEW        |        9
-    10 | ABC        | \x0c  | INS       | NEW        |       10
-    11 | ABC        | \x0c  | INS       | NEW        |       11
-     1 | ABC        | \x0c  | UPD       | OLD        |       12
-     1 | ABC        | \x1c  | UPD       | NEW        |       12
-     2 | ABC        | \x0c  | UPD       | OLD        |       13
-     2 | ABC        | \x1c  | UPD       | NEW        |       13
-     3 | ABC        | \x0c  | UPD       | OLD        |       14
-     3 | ABC        | \x1c  | UPD       | NEW        |       14
-    11 | ABC        | \x0c  | DEL       | OLD        |       17
-    10 | ABC        | \x0c  | DEL       | OLD        |       35
-     1 | ABC        | \x1c  | UPD       | OLD        |       37
-     1 | DEF        | \x1c  | UPD       | NEW        |       37
-     2 | ABC        | \x1c  | UPD       | OLD        |       38
-     2 | DEF        | \x1c  | UPD       | NEW        |       38
-(23 rows)
-
-select col21, col22, col23, emaj_verb, emaj_tuple, emaj_gid from emaj_mySchema1.myTbl2_log order by emaj_gid, emaj_tuple desc;
- col21 | col22 |   col23    | emaj_verb | emaj_tuple | emaj_gid 
--------+-------+------------+-----------+------------+----------
-     1 | ABC   | 12-31-2010 | INS       | NEW        |       15
-     2 | DEF   |            | INS       | NEW        |       18
-(2 rows)
-
-select col20, col21, col22, col23, col24, emaj_verb, emaj_tuple, emaj_gid from emaj_mySchema1.myTbl2b_log order by emaj_gid, emaj_tuple desc;
- col20 | col21 | col22 |         col23         | col24 | emaj_verb | emaj_tuple | emaj_gid 
--------+-------+-------+-----------------------+-------+-----------+------------+----------
-     1 |     1 |     1 |    0.7071067811865476 | t     | INS       | NEW        |       16
-     2 |     2 |   0.5 | 6.123233995736766e-17 | t     | INS       | NEW        |       19
-(2 rows)
-
-select col31, col33, emaj_verb, emaj_tuple, emaj_gid from emaj_myschema1."myTbl3_log_1" order by emaj_gid, emaj_tuple desc;
- col31 | col33 | emaj_verb | emaj_tuple | emaj_gid 
--------+-------+-----------+------------+----------
-     1 | 10.00 | INS       | NEW        |       20
-     2 | 10.00 | INS       | NEW        |       21
-     3 | 10.00 | INS       | NEW        |       22
-     4 | 10.00 | INS       | NEW        |       23
-     5 | 10.00 | INS       | NEW        |       24
-     6 | 10.00 | INS       | NEW        |       25
-     7 | 10.00 | INS       | NEW        |       26
-     8 | 10.00 | INS       | NEW        |       27
-     9 | 10.00 | INS       | NEW        |       28
-    10 | 10.00 | INS       | NEW        |       29
-(10 rows)
-
-select col41, col42, col43, col44, col45, emaj_verb, emaj_tuple, emaj_gid from emaj_mySchema1.myTbl4_log order by emaj_gid, emaj_tuple desc;
- col41 | col42 | col43 | col44 |   col45    | emaj_verb | emaj_tuple | emaj_gid 
--------+-------+-------+-------+------------+-----------+------------+----------
-     1 | FK... |     1 |     1 | ABC        | INS       | NEW        |       30
-     2 | FK... |     1 |     1 | ABC        | INS       | NEW        |       31
-     1 | FK... |     1 |     1 | ABC        | UPD       | OLD        |       32
-     1 | FK... |     2 |     1 | ABC        | UPD       | NEW        |       32
-     2 | FK... |     1 |     1 | ABC        | UPD       | OLD        |       33
-     2 | FK... |     2 |     1 | ABC        | UPD       | NEW        |       33
-     3 | FK... |     1 |    10 | ABC        | INS       | NEW        |       34
-     3 | FK... |     1 |    10 | ABC        | DEL       | OLD        |       36
-     1 | FK... |     2 |     1 | ABC        | UPD       | OLD        |       39
-     1 | FK... |     2 |       |            | UPD       | NEW        |       39
-     2 | FK... |     2 |     1 | ABC        | UPD       | OLD        |       40
-     2 | FK... |     2 |       |            | UPD       | NEW        |       40
-(12 rows)
-
---
-select col11, col12, col13, emaj_verb, emaj_tuple, emaj_gid from emaj_mySchema2.myTbl1_log order by emaj_gid, emaj_tuple desc;
- col11 |   col12    | col13 | emaj_verb | emaj_tuple | emaj_gid 
--------+------------+-------+-----------+------------+----------
-     1 | ABC        | \x0c  | INS       | NEW        |       50
-     2 | ABC        | \x0c  | INS       | NEW        |       51
-     3 | ABC        | \x0c  | INS       | NEW        |       52
-     4 | ABC        | \x0c  | INS       | NEW        |       53
-     5 | ABC        | \x0c  | INS       | NEW        |       54
-     6 | ABC        | \x0c  | INS       | NEW        |       55
-     7 | ABC        | \x0c  | INS       | NEW        |       56
-     8 | ABC        | \x0c  | INS       | NEW        |       57
-     9 | ABC        | \x0c  | INS       | NEW        |       58
-    10 | ABC        | \x0c  | INS       | NEW        |       59
-    11 | ABC        | \x0c  | INS       | NEW        |       60
-     1 | ABC        | \x0c  | UPD       | OLD        |       61
-     1 | ABC        | \x1c  | UPD       | NEW        |       61
-     2 | ABC        | \x0c  | UPD       | OLD        |       62
-     2 | ABC        | \x1c  | UPD       | NEW        |       62
-     3 | ABC        | \x0c  | UPD       | OLD        |       63
-     3 | ABC        | \x1c  | UPD       | NEW        |       63
-    11 | ABC        | \x0c  | DEL       | OLD        |       65
-(18 rows)
-
-select col21, col22, col23, emaj_verb, emaj_tuple, emaj_gid from emaj_mySchema2.myTbl2_log order by emaj_gid, emaj_tuple desc;
- col21 | col22 |   col23    | emaj_verb | emaj_tuple | emaj_gid 
--------+-------+------------+-----------+------------+----------
-     1 | ABC   | 01-01-2010 | INS       | NEW        |       64
-     2 | DEF   |            | INS       | NEW        |       66
-(2 rows)
-
-select col31, col33, emaj_verb, emaj_tuple, emaj_gid from emaj_myschema2."myTbl3_log" order by emaj_gid, emaj_tuple desc;
- col31 | col33 | emaj_verb | emaj_tuple | emaj_gid 
--------+-------+-----------+------------+----------
-     1 | 10.00 | INS       | NEW        |       67
-     2 | 10.00 | INS       | NEW        |       68
-     3 | 10.00 | INS       | NEW        |       69
-     4 | 10.00 | INS       | NEW        |       70
-     5 | 10.00 | INS       | NEW        |       71
-     6 | 10.00 | INS       | NEW        |       72
-     7 | 10.00 | INS       | NEW        |       73
-     8 | 10.00 | INS       | NEW        |       74
-     9 | 10.00 | INS       | NEW        |       75
-    10 | 10.00 | INS       | NEW        |       76
-(10 rows)
-
-select col41, col42, col43, col44, col45, emaj_verb, emaj_tuple, emaj_gid from emaj_mySchema2.myTbl4_log order by emaj_gid, emaj_tuple desc;
- col41 | col42 | col43 | col44 |   col45    | emaj_verb | emaj_tuple | emaj_gid 
--------+-------+-------+-------+------------+-----------+------------+----------
-     1 | FK... |     1 |     1 | ABC        | INS       | NEW        |       77
-     2 | FK... |     1 |     1 | ABC        | INS       | NEW        |       78
-     1 | FK... |     1 |     1 | ABC        | UPD       | OLD        |       79
-     1 | FK... |     2 |     1 | ABC        | UPD       | NEW        |       79
-     2 | FK... |     1 |     1 | ABC        | UPD       | OLD        |       80
-     2 | FK... |     2 |     1 | ABC        | UPD       | NEW        |       80
-     1 | FK... |     2 |     1 | ABC        | DEL       | OLD        |       81
-     2 | FK... |     2 |     1 | ABC        | DEL       | OLD        |       82
-     1 | FK... |     2 |     1 | ABC        | INS       | NEW        |       83
-     2 | FK... |     2 |     1 | ABC        | INS       | NEW        |       84
-(10 rows)
+select rel_schema, rel_tblseq, rel_time_range, rel_gen_expr_cols from emaj.emaj_relation order by 1,2,3;
+   rel_schema    |                       rel_tblseq                        | rel_time_range | rel_gen_expr_cols 
+-----------------+---------------------------------------------------------+----------------+-------------------
+ myschema1       | myTbl3                                                  | [5,28)         | 
+ myschema1       | myTbl3_col31_seq                                        | [9,)           | 
+ myschema1       | mytbl1                                                  | [5,)           | 
+ myschema1       | mytbl2                                                  | [5,)           | 
+ myschema1       | mytbl2b                                                 | [5,)           | {col22,col23}
+ myschema1       | mytbl4                                                  | [5,)           | 
+ myschema2       | myTbl3                                                  | [10,)          | 
+ myschema2       | myTbl3_col31_seq                                        | [11,)          | 
+ myschema2       | myseq1                                                  | [11,)          | 
+ myschema2       | mytbl1                                                  | [10,)          | 
+ myschema2       | mytbl2                                                  | [10,)          | 
+ myschema2       | mytbl4                                                  | [10,)          | 
+ myschema6       | table_with_50_characters_long_name_____0_________0      | [14,)          | 
+ myschema6       | table_with_51_characters_long_name_____0_________0a     | [14,)          | 
+ myschema6       | table_with_55_characters_long_name_____0_________0abcde | [14,30)        | 
+ myschema6       | table_with_55_characters_long_name_____0_________0fghij | [14,)          | 
+ phil's schema"3 | myTbl2\                                                 | [12,)          | 
+ phil's schema"3 | phil's tbl1                                             | [12,)          | 
+ phil's schema"3 | phil's"seq\1                                            | [13,)          | 
+(19 rows)
 
 -- check the environment integrity
 select * from emaj.emaj_verify_all();

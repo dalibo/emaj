@@ -4,6 +4,8 @@ E-Maj - Change log
 ------
 ###Enhancements:###
   * E-Maj is compatible with PostgreSQL V18.
+  * Add checks on the stability of "GENERATED ALWAYS AS expression" columns
+    in application tables.
   * Minor code changes.
 
 ###Bug fixes:###
