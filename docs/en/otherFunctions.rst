@@ -154,7 +154,7 @@ The *<retention.delay>* parameter is of type *INTERVAL*. It overloads the *'hist
 Deactivate/reactive event triggers
 ----------------------------------
 
-The E-Maj extension installation procedure activates :ref:`event triggers <event_triggers>` to protect it. Normally, these triggers must remain in their state. But if the E-Maj administrator needs to deactivate and the reactivate them, he can use 2 dedicated functions.
+The E-Maj extension installation procedure activates :ref:`event triggers <event_triggers>` to protect it. Normally, these triggers must remain in their state. But if the E-Maj administrator absolutely needs to temporarily deactivate them, he can use 2 dedicated functions.
 
 To deactivate the existing event triggers::
 

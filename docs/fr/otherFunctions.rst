@@ -153,7 +153,7 @@ La paramètre <délai.rétention> est de type *INTERVAL*. Il surcharge le param�
 Désactiver/réactiver les triggers sur événements
 ------------------------------------------------
 
-L'installation de l'extension E-Maj créé et active des :ref:`triggers sur événements <event_triggers>` pour la protéger. En principe, ces triggers doivent rester en l'état. Mais si l'administrateur E-Maj a besoin de les désactiver puis les réactiver, il dispose de deux fonctions.
+L'installation de l'extension E-Maj créé et active des :ref:`triggers sur événements <event_triggers>` pour la protéger. En principe, ces triggers doivent rester en l'état. Mais si l'administrateur E-Maj a absolument besoin de les désactiver temporairement, il dispose de deux fonctions.
 
 Pour désactiver les triggers sur événement existants ::
 
